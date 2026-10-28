@@ -6626,65 +6626,118 @@ guide you. In your session review notes on the step back in place from all memor
 - **The wall knows the kinds in each hour, and who has the bag (21 Oct 2026, 2026-10-21f).** Ricky: "hour by hour what's being actioned, the task type should be in a colour inside the green, as well who does the bag as well built in". `wallStaff_` now sends each person's `hourKinds` (per hour, the closes with a note by `wallKind_`: new, orphan, retention, claims, other) and `bag` ({who, at, h, cutoff, covering}) from `mailbagRouter_` (the weekly rota, the next one in when the router is out) and `mailbagLeaves_` (12 noon unless `MAILBAG_AT`), papers in a quarter of an hour before. The wall colours each green hour by kind and rings the bag's hour in gold. Tests: `tests/test-wall2.js`.
 - **Sample ratings for the Branch Manager (21 Oct 2026, 2026-10-21g).** Ricky, 1:55pm: "send some samples to see the revised and let me click". `rateSamples(n)` in the editor, or **Send me sample ratings** on his Ratings page (a signed POST `rs=ricky&f=rate&k=…&act=samples` through `replyPost_`, him alone, not `RATE_PAGE_ALSO`; a second press within `RATE.SAMPLE_GAP_MIN` = 2 minutes sends nothing), sends up to `RATE.SAMPLES` = 3 agent rating e-mails in the real format (`rateAgentMail_`, subject `[Sample] …`) to `managerEmails_()` only, each from one of the latest real agent rows (its subject from the timeline's open step, kind, days, closer, the closing note as what was done, and the record's columns), or from `RATE_SAMPLE_MADE` (no client) when there are none; then one e-mail with every sample's five stars, its card and his page. Each sample is a row of its own (Kind and Status `sample`, Email his), so the stars, the thank-you page, a comment and the 1–2 star alert (`[Sample] Low rating …`, with See the whole task) all work. `rateIsSample_`: no Chatter post from `rateClick_` or `ratePost_`, `&out=1` changes nothing, and `rateStats_` (the week, the game's cards and board, the Service Star, his day page, the wall's `svc` and ticker) and `rateRun_`'s cap, cool-down and opt-outs skip it. His page marks sample cards (dashed, Sample), has Hide samples, and never counts them in the week. Agent e-mails only: client mail stays held. Test: `tests/test-rate-samples.js`.
 
-## The FY27 blast-off — the shield is the cocoon
+## `/blastoff/` — the FY27 rise, and what the film may not say
 
-`blastoff/` (short address `/blastoff`) and `tools/film/build-blastoff.py`. Asked
-for on 28 October 2026, for the branch group the next morning and as the opener
-in the room on Friday: *"need to do a blast off tomorrow a refresh or rebiirth
-comming out of a cocoon etc"*, with the roll-out of the new way forward at the
-Friday meeting itself. Shown the choice, he took **a sixty-second blast-off plus
-the existing `/howweworkvid/` for the room** over a second long film, and
-**cocoon to flight, literal** over dawn or a countdown.
+Asked for on 28 October 2026, the evening before the branch group sees it:
+*"we had about 12 agents who left us... it's our first meeting coming together
+after they have left. We want to rise strong and something that signifies the
+uprise. So even more powerful, more graphs, more charts, more colors, more
+graphics, more motion."*
 
-- **The chrysalis is the branch's own shield.** `logo-mark.svg`'s path, cut down
-  its centre line into two halves: sealed and lit along the seam, filled with
-  the year's figures and then with the lattice of the new way of working, split
-  open with light flooding through, swung wide like wings, and closed back whole
-  with the check stroking on. One object across eleven scenes, so the film reads
-  as one thing becoming itself. **Never a drawn butterfly** — the rule that took
-  the cartoon car off the motor page: abstract and geometric, or it reads as a
-  child's drawing.
-- **The look is Wall Intelligence's**, not the branch's hard palette: warm
-  graphite `#121317`, gold `#E3B85A`, teal `#4FC1B0`. It plays beside
-  `/howweworkvid/`, which is recorded off that wall, so it has to look like its
-  sibling. `#efc24b` and `#00CFEA` were chosen for a near-black page and read as
-  neon on graphite.
-- **The shell is donthaveanagent's, and it leaks.** `client-film.html` supplies
-  the `SC` / `go` / `paused` contract that `render.js` drives, and with it The
-  Knot in Ink & Coral in the chrome, coral progress bars and a WhatsApp button
-  these scenes do not carry. All three are replaced or guarded in the builder:
-  two marks, two products, on purpose, and a branch film carrying the other
-  one is the exact error the mark rule warns about.
-- **A class the shell already styles wins silently.** The first cut used
-  `.stage`, the shell's own, and its rule collapsed the stage from 461px to 146
-  — the shield rendered at a sixth of its size and the metaphor the whole film
-  rests on was a smudge, with nothing in the console. Every scene class is
-  `bo`-prefixed now, and `build-blastoff.py` refuses to write a page whose
-  scenes use a class the shell styles, as `build-boardfilm.py` does.
-- **The mixer crops the bottom 104px away.** `mixany.py` takes 1280x616 out of
-  the frame and pads the caption strip back under it, so anything laid out
-  against the bottom of a 720px page is cut in half in the MP4; the first cut
-  lost the foot of "The system sets the day" and of "Friday 12 noon". The scene
-  box therefore ends at 616 and every percentage inside it is a percentage of
-  what survives.
-- **The caption strip is a setting now.** It was `0x1B2A44` for every film,
-  because every film was donthaveanagent's; on warm graphite that navy is a
-  stripe of another brand across the foot of the screen. `capbg` in `films.json`
-  sets it (`17191E` here) and defaults to the old value, so no other film moves.
-- **The voice is Andrew Expressive** (`en-US-AndrewMultilingualNeural`, +0%),
-  made on the `tts-run` runner with `"check": true`; all eleven clips came back
-  English at 0.99. The captions are built from the runner's `words.json`, with
-  the punctuation walked back on from the line itself, because edge-tts emits
-  bare words and a burned-in caption should read as a sentence.
-- **The music is the branch's own theme**, not the Kevin MacLeod track, so the
-  page carries no CC BY credit and it sounds like `/howweworkvid/`.
-- **Nothing on screen is a client.** No name, no count, no figure off any sheet.
+**One address, one film.** The first cut (the cocoon, 1:06, 28 October) was
+replaced at the same URL the same evening rather than published beside it: the
+link was already out, and two blast-offs is one too many to send a branch.
+`build-blastoff.py` and its lines and timing were deleted with it — two
+builders writing one `blastoff.mp4` is how the wrong cut ships. Git has the
+first cut if it is ever wanted.
 
-To re-cut it: edit `tools/film/blastoff-lines.json`, push a `tts/job.json` to
-`tts-run`, import the clips to `tools/film/voblastoff` as `NN.wav` (**the mixer
-reads WAV, not MP3**) with their `NN.vtt`, re-time `blastoff-timing.json` from
-the audio, then `build-blastoff.py`, `sfx.py`, `usetrack.py ../../rr-branch-theme.mp3
-blastoff`, `render.js`, `mixany.py`.
+### What it may not say, which decided the whole script
+
+**Nobody who left is characterised, and nobody is counted.** The rule on the
+transition letters is that Guardian Life's notice is stated and nothing else:
+no reason, no adjective, no number. This file sits at a **public** URL that
+anybody can forward, so it holds to that harder, not more loosely. The film
+says *"This branch took a hit. People left. The work didn't."* and never
+returns to them. The crack across the shield says the rest.
+
+**No client anything.** Never a client name and never a client count in an
+MP4. So the orphan campaign's own figures — which are client counts — are not
+in it, however good they would look. Every number on screen is about our own
+people, our own year, and Friday's own agenda.
+
+**What is left is the stronger answer anyway: count who stayed.** The spine of
+the film is the branch's own roster, read out of Salesforce on 28 October 2026
+— the active AGENT contacts of the two units, Ricky_Rampersad and
+Akaash_Kalladeen. Twenty-two carry a hire date, **263.0 years between them**,
+eleven at ten years or more, three joined in the last three. Twenty-three are
+active (one has no hire date on file), and the five of the support team are on
+screen beside them, because leaving them out of "who stayed" would be a lie by
+omission.
+
+**The bars show FULL years, and say so.** They sum to 252 and the headline says
+263; the difference is the part years, and the chart carries the line *"full
+years each · 263 in all"* so anybody who adds them up can reconcile the two.
+Flooring rather than rounding also keeps the bands honest — Randolph is 9.94
+years in, and rounding put a "10" on a bar that the ten-year colour does not
+claim. Anyone under a year reads `<1`, never `0`.
+
+### The palette is doing a job, not decorating
+
+"More colours" was answered with **two accents and a recessive neutral**, each
+carrying a band the narration names, not a hue per person:
+
+| | |
+|---|---|
+| gold `#E3B85A` | ten years or more (11) |
+| teal `#4FC1B0` | joined in the last three (3) |
+| slate `#5B6472` | the eight between, recessive |
+| cold `#7FB2D9` | the hit, scenes 1–3 only |
+
+Run through the dataviz validator against the ground `#121317`: worst adjacent
+pair **ΔE 18.2 normal vision, 11.4 protan**, every slot over 3:1. The legend
+names all three, so identity is never colour alone. **A sequential ramp was
+tried first and rejected on meaning, not on colour**: it dimmed the newest
+people in a film about who stayed. The colour journey cold → warm across the
+film is the emotional arc, and it is the only reason there is a fourth hue.
+
+### What the pipeline taught, this time
+
+- **`importvox.py` built captions with no punctuation**, because edge-tts's
+  WordBoundary events carry the bare word. Worse, its own sentence-end test
+  could then never fire, so cues only ever broke at the nine-word ceiling and
+  read as run-ons: *"Twenty-three agents and managers Five more behind them"*.
+  It now takes `--lines <film>-lines.json` and walks the punctuation back on
+  from the line as written, and a sentence over the ceiling is split into
+  near-equal halves rather than chopped, so no cue ends on an orphan word. The
+  backtrack has to treat a hyphen as part of a word, or "Twenty-three" comes
+  back as "three". `--lines` also carries each scene's `extra`, so a re-cut
+  reproduces the timing.
+- **`data-d` is milliseconds and `importvox.py` writes seconds.** The older
+  hand-built timing files are in milliseconds. Mixing them builds an
+  eighteen-scene film 0.1s long, and nothing complains. The unit is now decided
+  out loud in the builder.
+- **`.rscap` was a grid**, so every word of a kinetic headline became its own
+  grid row — eight lines of one word, and in one scene they ran straight
+  through the crop. Words need one block to flow inside.
+- **`.rssh.gold path` matched the check too** and painted it gold on gold, so
+  the one stroke the close is built around was invisible. It takes the casing
+  the mark itself uses: a dark stroke under a white one.
+- The three faults the first cut turned up still stand and are still guarded:
+  the shell is donthaveanagent's and leaks The Knot, coral bars and a WhatsApp
+  button; a scene class the shell already styles wins silently (the builder
+  refuses to write one); and **the mixer crops the bottom 104px away**, so the
+  scene box ends at 616.
+
+### Re-cutting it
+
+Edit `tools/film/rise-lines.json`, push a `tts/job.json` to `tts-run` (**check
+the run was not replaced before it ran** — another session's push 58 seconds
+later took this one's place once already), then:
+
+```bash
+cd tools/film
+python3 importvox.py <tts/out/rise> vorise 1.15 --timing rise-timing.json --lines rise-lines.json
+python3 build-risefilm.py
+python3.13 sfx.py "$(…films.json rise…)" sfx-rise.wav
+python3.13 usetrack.py ../../rr-branch-theme.mp3 rise
+node render.js ../../blastoff/film.html cap-rise 30
+python3.13 mixany.py "$(…films.json rise…)" ../../blastoff/blastoff.mp4
+```
+
+The music is the branch's own theme, so the page carries no licence credit, and
+the look is Wall Intelligence's own values because this plays beside
+`/howweworkvid/`. Voice: Andrew Expressive, all eighteen clips Whisper-checked
+English at 0.97 or better. The poster is cut from the finished MP4 at 86.4s.
 
 ## Web fonts — non-blocking, with a fallback that does not move the page
 
