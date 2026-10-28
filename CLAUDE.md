@@ -5362,6 +5362,23 @@ section links it.
   the why moment, the people cards landing in turn (`--i` stagger) with a ring off each face, the lead face breathing,
   the pills and the booking form's focus ring and done screen. Audit 28/28; the stale WhatsApp link check in
   `audit.js` now expects `#talk`.
+- **The trailer redrawn, and the door replaced by the stage (28 October 2026, night).** "Horrible door and you can do
+  better on the motion and graphics and card and scale as well creativity and apealing to what will want to have a
+  person experience or non experience join us as we are a different branch". The door was a drawn arch with two
+  leaves; it read as a cartoon. **The door is now the branch's own stage** (`blk_gate` in `build-recruitfilm.py`,
+  scenes 6 of the trailer and 30 of the film): the shield with the five gates on the inner ring and the five tools on
+  the outer, opening like an iris on the word "open" (`.iris-wrap` scales from nothing, the mark pops in, a flash
+  leaves it, the chips land in turn), the two audiences either side, and "1 confidential conversation · 20 minutes ·
+  this week" as one line. Every trailer scene was redrawn larger, each with a graphic that moves on its word
+  (`blk_chart`, `blk_gives`, `blk_seats`, `blk_stage`, the booking card on the CTA): the question beside a bar chart
+  whose last bar breaks a dashed ceiling with sparks on "ceiling"; three white cards with an income line drawn past a
+  dashed salary band, a week whose Tuesday and Thursday blocks fill, and a family under an arc that draws itself; the
+  Branch Manager as a coach card above the week and the note; the five seats as five tiles that each light with their
+  step of the build on its word, a rail filling across them; the booking card typing a name, choosing the pills,
+  pressing Book and confirming "he reads it himself"; the close on the stage. All made of the page's own tokens and
+  helpers; no new colour. The portrait and square rules at the foot of the stylesheet restack each block. `scenes.js`
+  in the scratchpad shot all eight in both frames before the render. The feed ads (`ad-a`, `ad-b`) keep their own
+  scenes; the ad hook, match and seats were not redrawn.
 - **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and
   rendered frame by frame: a wine band on every cut (the streak), a slow push-in on every scene for its whole
   length (`--kb`, written by `scene()`), the cards floating and catching a passing light (`.fl`: overflow hidden,
