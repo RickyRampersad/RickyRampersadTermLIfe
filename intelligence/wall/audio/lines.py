@@ -135,6 +135,14 @@ WALLS = {
         "Last week's champion is celebrated at the Wednesday meeting.",
         "Below, who looks after whom: each agent, the support person beside them, and the questionnaires they have brought in.",
     ],
+    'orphans-driver': [                # The Branch Manager's drive (28 Oct 2026)
+        "This is the Branch Manager's drive on the orphan campaign.",
+        "Every prompt he puts on the tasks is counted, in his own words and from the automation he set going.",
+        "His automation writes to clients, briefs the agents, and alerts the branch. Every one is counted here.",
+        "This ring shows when the team answers his prompts: the same day, the next working day, or later.",
+        "Day by day, his prompts stand beside the team's notes.",
+        "And for each member of the team: how many notes came after a prompt, and what those notes say.",
+    ],
     'index': [                                   # The 45-Day Line
         "This is the forty five day line.",
         "Past the grace period. Still early enough that a phone call works.",
