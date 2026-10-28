@@ -1635,21 +1635,31 @@ function floorSection(d) {
      *  register — see apiAddContribution_.                        */
     out += '<div class="card"><div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:13px">' +
       "The floor opens on the day. Until then this is where you say what you are bringing — " +
-      "pick the item, answer its question, and it is on the agenda before anybody sits down." +
+      "pick the item, answer its question, and it is on the agenda before anybody sits down. " +
+      "Everything written is read in the room before anybody speaks." +
       "</div>" +
-      '<div class="row2" style="margin-bottom:10px">' +
+      /*  Three pickers, and the middle one earns its place: tagging each
+       *  answer with the part of the work it belongs to is what makes
+       *  what comes back sort by line instead of arriving as a pile.
+       *  The list is the Topics tab the project already seeds.        */
+      '<div class="row3" style="margin-bottom:10px">' +
       '<div class="field" style="margin-bottom:0"><label for="fl-agenda">Which item</label>' +
       '<select id="fl-agenda"><option value="">The meeting as a whole</option>' +
       (d.agenda || []).map(function (a) {
         return '<option value="' + esc(a.id) + '">' + esc(a.order + ". " + a.title) + "</option>";
+      }).join("") + "</select></div>" +
+      '<div class="field" style="margin-bottom:0"><label for="fl-topic">Which part of the work</label>' +
+      '<select id="fl-topic"><option value="">Not one in particular</option>' +
+      (d.topicList || []).map(function (t) {
+        return '<option value="' + esc(t) + '">' + esc(t) + "</option>";
       }).join("") + "</select></div>" +
       '<div class="field" style="margin-bottom:0"><label for="fl-kind">What is this</label>' +
       '<select id="fl-kind">' + (d.kinds || ["Point"]).map(function (k) {
         return '<option value="' + esc(k) + '">' + esc(k) + "</option>";
       }).join("") + "</select></div></div>" +
       '<div class="hint" id="fl-ask" style="margin:-4px 0 12px"></div>' +
-      '<div class="field"><label for="fl-body">What you want on the agenda</label>' +
-      '<textarea id="fl-body" placeholder="One thing you want us to push, and one thing you want us to fix…"></textarea></div>' +
+      '<div class="field"><label for="fl-body">Your answer</label>' +
+      '<textarea id="fl-body" placeholder="Name one thing, and say what it changed or what it costs…"></textarea></div>' +
       '<div class="msg" id="fl-msg"></div>' +
       '<div class="btn-row"><button class="btn teal sm" id="fl-go">Put it on the agenda</button>' +
       (isStaff() ? '<select id="fl-vis" style="width:auto;padding:8px 11px;font-size:12px">' +

@@ -954,6 +954,58 @@ beside the standing meetings.
 **Published, not draft.** A draft is staff-only, so an agent opening the app
 would see nothing at all. The seeder writes `published` on purpose.
 
+### Why the agenda is shaped the way it is
+
+Four findings shaped it, and each one is visible on the screen rather than in
+a comment nobody reads.
+
+**Every item says which of the three kinds it is.** McKinsey's guidance sorts
+every meeting into information sharing, discussion (creative solutions and
+coordination) and decision making; their explainer reports 61% of executives
+saying at least half the time they spent making decisions was ineffective. The
+commonest way that happens is an item nobody has labelled, so a discussion
+drifts into a briefing or a decision is never actually taken. `Section` carries
+the type, and the page already prints it as the eyebrow above every title.
+`seedFridayMeeting` reports the split and **warns if information ever grows to
+equal discussion**, because at that point the agenda has drifted back into a
+briefing.
+
+**People write before they meet, alone.** Rietzschel, Nijstad and Stroebe
+(2006) found nominal groups — generating alone, pooled afterwards — produce
+more ideas, and more original ones, than a group talking it through. Edmondson
+is blunt about the other half: the people at the top of a hierarchy have the
+most psychological safety, and people lower down often stay quiet whatever
+they are thinking. In a room where the branch manager speaks first, the first
+voice anchors every voice after it. The pre-meeting box is the fix for both,
+and it is why the item asking what this branch should be known for is led by
+the unit manager rather than the chair: the room answers whoever asked.
+
+**The meeting opens by reading, not by presenting.** Bezos on the six-pager:
+people bluff their way through a pre-read, so the time to read has to be
+carved out of the meeting itself. Item 1 is ten minutes of silence. It is also
+what keeps the meeting to ninety minutes — summarising is what makes a meeting
+long.
+
+**Three questions, not nine, and never "why".** Practitioner guidance on
+survey wording is consistent on opening with *what* or *how* rather than
+*why*, which reads as an accusation and gets a defence back; on one topic per
+question; and on two or three open-ended items, because more than that is
+answered worse. `FRIDAY.ANSWER_AT_LEAST` is 3. The test holds every question
+to a *what / how / which* stem, and fails if any of them contains the word
+*why*. "Describe what happens, not who" sits on the hard one by design: a
+complaint about a person closes a room, a description of a process does not.
+
+Each answer is also tagged with the part of the work it belongs to, off the
+**Topics** tab the project already seeds, so what comes back sorts by line
+instead of arriving as a pile.
+
+*A caveat worth keeping.* The brainwriting claims in circulation — "always
+more ideas", "20% more, 42% more original" — come from consultancy blogs that
+cite no study. The nominal-group finding is the one with a paper behind it.
+Likewise the 2×2 of speaking and silence attributed to Edmondson, and the "93%
+of 805 leaders" figure, could not be traced to her own writing and are not
+used here.
+
 ### The register still has to tell the truth
 
 People are meant to open a meeting the day before, read it and say what they

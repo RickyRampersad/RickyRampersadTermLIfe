@@ -76,29 +76,60 @@ ok('it opens before the meeting starts', open < env.atTime_(m['Date'], m['Start'
 ok('and closes after it', close > open);
 
 let ag = rows('TAB_AGENDA').filter(a => String(a['Meeting ID']) === String(m['ID']));
-ok('eight agenda items', ag.length === 8, ag.length);
-ok('ninety minutes in all',
-  ag.reduce((n, a) => n + env.num_(a['Allotted (min)']), 0) === 90,
-  ag.reduce((n, a) => n + env.num_(a['Allotted (min)']), 0));
-const floor = ag.filter(a => String(a['Section']) === 'The floor');
-ok('the floor is one item of twenty-five minutes', floor.length === 1 && env.num_(floor[0]['Allotted (min)']) === 25);
-ok('and the floor is the longest item on the agenda',
-  Math.max(...ag.map(a => env.num_(a['Allotted (min)']))) === env.num_(floor[0]['Allotted (min)'])); 
+const mins = ag.reduce((n, a) => n + env.num_(a['Allotted (min)']), 0);
+ok('seven agenda items', ag.length === 7, ag.length);
+ok('ninety minutes in all', mins === 90, mins);
+
+/* McKinsey sorts every meeting into information sharing, discussion or
+   decision making, and an item nobody has labelled is how a discussion
+   drifts into a briefing. Every item here carries its type as its Section,
+   which the page prints as the eyebrow above the title. */
+const by = {};
+ag.forEach(a => { by[String(a['Section'])] = (by[String(a['Section'])] || 0) + env.num_(a['Allotted (min)']); });
+ok('every item is labelled information, discussion or a decision',
+  ag.every(a => ['Information', 'Discussion', 'Decision'].indexOf(String(a['Section'])) > -1),
+  ag.map(a => a['Section']).join(', '));
+ok('it is a DISCUSSION meeting: discussion outweighs information',
+  by.Discussion > by.Information, JSON.stringify(by));
+ok('and something actually gets decided', by.Decision >= 15, JSON.stringify(by));
+ok('what is not working is the longest item on the agenda',
+  env.num_(ag.filter(a => /not working/i.test(String(a['Title'])))[0]['Allotted (min)']) ===
+  Math.max(...ag.map(a => env.num_(a['Allotted (min)'])))); 
 // Every item but the closing announcement asks a question, because a question
 // is the only thing a person can answer the day before. The spec marks that
 // one item `tell: true`, so a question going missing from any other is a fail.
 const asks = env.FRIDAY.AGENDA.filter(it => !it.tell).map(it => it.title);
 const ask = ag.filter(a => asks.indexOf(String(a['Title'])) > -1);
-ok('seven of the eight items ask a question', ask.length === 7, ask.length);
+ok('five of the seven items ask a question', ask.length === 5, ask.length);
 ok('and every one of them really does ask', ask.every(a => /\?/.test(String(a['Detail']))),
   ask.filter(a => !/\?/.test(String(a['Detail']))).map(a => a['Title']).join('; '));
+/* "Why" reads as an accusation and gets a defence back, not an answer;
+   practitioner guidance on survey wording is consistent on opening with what
+   or how. Which is allowed: it is a pick from a set, not an interrogation. */
+ok('every question opens with what, how or which',
+  ask.every(a => /Question: (what|how|which)\b/i.test(String(a['Detail']))),
+  ask.filter(a => !/Question: (what|how|which)\b/i.test(String(a['Detail']))).map(a => a['Title']).join('; '));
+ok('and not one of them asks anybody why',
+  ask.every(a => !/\bwhy\b/i.test(String(a['Detail']))),
+  ask.filter(a => /\bwhy\b/i.test(String(a['Detail']))).map(a => a['Title']).join('; '));
+ok('the hard one asks for the process, not the person',
+  /not who/i.test(String(ag.filter(a => /not working/i.test(String(a['Title'])))[0]['Detail'])));
+ok('people are asked for three answers, not nine', env.FRIDAY.ANSWER_AT_LEAST === 3);
+ok('and the pre-read tells them so', /at least three/i.test(String(m['Pre-Read'])));
+ok('the pre-read says the meeting opens by reading what came in',
+  /ten minutes of silence/i.test(String(m['Pre-Read'])));
 ok('every item is for everyone', ag.every(a => String(a['Visibility']) === 'all'));
-ok('the unit manager presents the two that are his',
-  ag.filter(a => String(a['Presenter Email']) === 'um@example.com').length === 2);
-ok('the floor belongs to the room, not a presenter',
-  String(floor[0]['Presenter Name']) === 'Everyone' && !String(floor[0]['Presenter Email']));
-ok('the order runs 1..8 with no gap',
-  ag.map(a => env.num_(a['Order'])).sort((x, y) => x - y).join() === '1,2,3,4,5,6,7,8');
+/* The branch manager does not run the item that asks the room what this
+   branch should be known for: the room answers whoever asked it. */
+ok('the unit manager leads the culture discussion',
+  String(ag.filter(a => /known for/i.test(String(a['Title'])))[0]['Presenter Email']) === 'um@example.com');
+ok('the two "what is working / not working" items belong to the room',
+  ag.filter(a => /working/i.test(String(a['Title'])))
+    .every(a => String(a['Presenter Name']) === 'Everyone' && !String(a['Presenter Email'])));
+ok('the meeting opens with reading, not with a presentation',
+  /read it/i.test(String(ag[0]['Title'])) && /silence/i.test(String(ag[0]['Detail'])));
+ok('the order runs 1..7 with no gap',
+  ag.map(a => env.num_(a['Order'])).sort((x, y) => x - y).join() === '1,2,3,4,5,6,7');
 ok('the summary says the roster can sign in', /can sign in with the code/.test(summary), summary);
 
 console.log('\nRUN IT AGAIN (an edit must not make a second meeting)');
@@ -106,7 +137,7 @@ env.seedFridayMeeting();
 mtgs = rows('TAB_MEETINGS').filter(x => String(x['Ref']) === env.FRIDAY.REF);
 ag = rows('TAB_AGENDA').filter(a => String(a['Meeting ID']) === String(m['ID']));
 ok('still one meeting', mtgs.length === 1, mtgs.length);
-ok('still eight agenda items, not sixteen', ag.length === 8, ag.length);
+ok('still seven agenda items, not fourteen', ag.length === 7, ag.length);
 ok('the ID did not change, so attendance keeps pointing at it',
   String(mtgs[0]['ID']) === String(m['ID']));
 
@@ -119,7 +150,7 @@ ok('the summary names how many cannot sign in yet',
 
 console.log('\nSAYING SOMETHING THE DAY BEFORE');
 const MID = String(m['ID']);
-const agId = String(ag.filter(a => env.num_(a['Order']) === 6)[0]['ID']);
+const agId = String(ag.filter(a => /not working/i.test(String(a['Title'])))[0]['ID']);
 const tokenFor = email => {
   const r = env.readPeople_().filter(p => p.email === email)[0];
   env.setCell_(env.MEET.TAB_PEOPLE, r._row, 'Token', 'tok-' + email);
