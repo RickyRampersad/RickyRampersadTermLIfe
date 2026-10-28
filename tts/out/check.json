@@ -1,32 +1,32 @@
 {
- "tts/out/wallissued/01.mp3": [
+ "tts/out/wallday/01.mp3": [
   "en",
-  0.991,
-  "This is what the branch has issued this month from Guardians Production Report."
+  0.99,
+  "This is the Branch's Day, hour by hour, from Salesforce."
  ],
- "tts/out/wallissued/02.mp3": [
-  "en",
-  0.997,
-  "The big number is every policy settled since the first and the annual premium on them."
- ],
- "tts/out/wallissued/03.mp3": [
+ "tts/out/wallday/02.mp3": [
   "en",
   0.997,
-  "The bar is a usual month for the people here now. The mark on it is where a usual month would be by today."
+  "Along the top are the time blocks, what was closed in each hour by task type, and under what was worked on and not yet closed."
  ],
- "tts/out/wallissued/04.mp3": [
-  "en",
-  0.989,
-  "Under it, week by week, and where we were on this same day last month."
- ],
- "tts/out/wallissued/05.mp3": [
-  "en",
-  0.994,
-  "on the right, each unit, then each agent in name order. Nobody is ranked here."
- ],
- "tts/out/wallissued/06.mp3": [
+ "tts/out/wallday/03.mp3": [
   "en",
   0.996,
-  "Each bar is that person against their own usual month, and green is past it. No client is named here."
+  "The gold line is where the clock is now."
+ ],
+ "tts/out/wallday/04.mp3": [
+  "en",
+  0.996,
+  "Below, each desk across the same hours with what they closed, what they worked on, and how old that work is."
+ ],
+ "tts/out/wallday/05.mp3": [
+  "en",
+  0.999,
+  "The last row is the branch manager. The birthday emails and the notes that run as him kept apart from the desk's totals."
+ ],
+ "tts/out/wallday/06.mp3": [
+  "en",
+  0.995,
+  "Along the foot, the agents whose work was closed today, each desk against its own day, nobody ranked, and no client is named here."
  ]
 }
