@@ -6874,11 +6874,22 @@ function onOpen() {
  *  The sheet id goes in a Script Property, never in this file: these
  *  .gs files are published on the branch site.
  *
- *  It only ever fills a blank or replaces a code that has changed,
- *  and it never creates a person — somebody who is not on the
- *  meeting roster is reported back rather than added, because who
- *  belongs in a branch meeting is the manager's call, not the skill
- *  bank's.
+ *  It adds anybody on the skill bank who is not on People yet, and
+ *  brings the rest into line: the number, the e-mail, the name, the
+ *  unit and Active. A blank Access Code is filled and a changed one
+ *  replaced; a blank one on the skill bank is left alone, so an empty
+ *  cell there never locks somebody out.
+ *
+ *  It also carries the Password column across, hashed, so the branch
+ *  signs in with the password they already use for the fact find
+ *  rather than picking a PIN the first time. THIS IS THE STEP THAT
+ *  DECIDES WHETHER ANYBODY CAN SIGN IN: until it is run, the People
+ *  tab holds only the manager that setupMeetings() seeded, and a
+ *  meeting opened in that state marks the whole branch absent.
+ *
+ *  The manager's own role survives a pull. The skill bank calls
+ *  everybody an agent, and a pull that quietly demoted the branch
+ *  manager would take away the one access that can put it back.
  */
 function pullRoster(sheetId) {
   sheetId = str_(sheetId) ||
