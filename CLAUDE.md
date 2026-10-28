@@ -612,6 +612,32 @@ It pings the Apps Script in `gs/views-counter.gs`, which appends
 - Redirect stubs (`about-us/`, `health-1/`, `xpress-life-application/`) and
   `apps-script/` templates deliberately carry no beacon.
 
+**Wire it with `tools/wire-views.py`, never by hand.** `python3
+tools/wire-views.py <the /exec URL>` rewrites every beacon at once,
+`--unwire` puts the placeholder back and `--check` reports without touching
+anything. It refuses an address that is not an Apps Script `/exec`, and it
+edits **only the string inside the beacon block**, which is the whole reason
+it exists: a blunt find-and-replace hits each page's own `API_URL` too.
+
+**The beacon is not the place for any other backend.** Found on 26 October
+2026: six pages (`mycover/`, `motor-quote/`, and four under `renewals/`) had
+the **Branch Intelligence** `/exec` pasted into their beacon, so every
+visitor to them fired an unauthenticated request at `Intelligence.gs` and
+got back `403 {"authRequired":true}`. Nothing was recorded and the wrong
+server was being hit. They are back on the placeholder. The Intelligence URL
+belongs in the 23 pages that genuinely use it (`intelligence/`, `kpi/`,
+`premium-due/`, `myworkday/`, `wall/`) and nowhere else.
+
+**It has never recorded a view.** The "RRB Site View Counter" sheet was
+created 7 September 2026 and has not been written to since; there is no
+"RRB Views" script project in Drive, so `gs/views-counter.gs` has never been
+deployed. Until it is, all 157 beacons are inert — the guard
+`if(u.indexOf('http')!==0)return` makes an un-wired beacon cost the visitor
+nothing, which is why this has been invisible. Deploying needs a browser
+(Apps Script's API is not reachable from a session), so it is the branch
+manager's to do: **Deploy → New deployment → Web app, Execute as: Me, Who
+has access: Anyone**, then hand over the `/exec` URL.
+
 ---
 ---
 
