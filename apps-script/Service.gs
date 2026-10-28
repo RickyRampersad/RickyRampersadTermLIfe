@@ -197,6 +197,9 @@ function doPost(e) {
     if (/^gcm\./.test(String(body.action || '')) && typeof gcmDoPost_ === 'function') return json_(gcmDoPost_(body));
     /* the strategic meeting page (StrategicMeeting.gs, 20 October 2026): a contribution logged or taken back, the AI guide */
     if (/^sm\./.test(String(body.action || '')) && typeof smDoPost_ === 'function') return json_(smDoPost_(body));
+    /* the branch's own six forms (Quotes.gs, 22 October 2026): the motor, property, critical
+       illness, key person, OAS and Xpress Life pages that replaced the homepage's JotForms */
+    if (/^q\./.test(String(body.action || '')) && typeof quoteDoPost_ === 'function') return json_(quoteDoPost_(body));
     /* a client's own words from /your-policy/words (2 October 2026): too long for a link, so they come as a POST */
     if (body.action === 'resp') return json_(clientResponse_(body));
     if (body.action !== 'service') return json_({ ok: false, error: 'Unknown action' });
@@ -223,13 +226,15 @@ function doGet(e) {
   if (/^gcm\./.test(String(p.action || '')) && typeof gcmDoGet_ === 'function') return json_(gcmDoGet_(p));
   /* the strategic meeting page (StrategicMeeting.gs, 20 October 2026): sign-in, the contributions, the live counts */
   if (/^sm\./.test(String(p.action || '')) && typeof smDoGet_ === 'function') return json_(smDoGet_(p));
+  /* the branch's own six forms (Quotes.gs): a check from a browser that the live deployment carries them */
+  if (/^q\./.test(String(p.action || '')) && typeof quoteDoGet_ === 'function') return json_(quoteDoGet_(p));
   if (p.action === 'ping') {
     /* campaign: the transition pages ask for this before they trust the
        backend with a verdict or a client's tap. It is absent from any
        deployment older than the resp/feedback actions, so the pages show
        their amber notice until a New version of this code is published. */
     return json_({ ok: true, service: 'Service Questionnaire', configured: !!SVC.CS_EMAIL,
-                   automation: automationOn_(), campaign: 7 });   // 3: the assignment board (board, assign, update); 4: the Client Book (book); 5: a client's own words from the words page; 6: sign-in by role from the Users tab; 7: one client's history, Salesforce tasks and comments (detail, comment), and the TT$200 claims
+                   automation: automationOn_(), campaign: 7, quotes: (typeof quoteDoGet_ === 'function') ? 1 : 0 });   // 3: the assignment board (board, assign, update); 4: the Client Book (book); 5: a client's own words from the words page; 6: sign-in by role from the Users tab; 7: one client's history, Salesforce tasks and comments (detail, comment), and the TT$200 claims
   }
   if (p.action === 'status') {
     return json_(statusFor_(p.ref, p.code));

@@ -6,16 +6,28 @@
 <title>Timed Test | SEA &amp; CSEC Study Hub</title>
 <meta name="robots" content="noindex"/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="assets/csec.css"/>
 <style>
-  .timer{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.4rem;color:var(--gold);
+/* rrb-font-fallbacks */
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+
+
+
+
+  .timer{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:1.4rem;color:var(--gold);
          padding:6px 14px;border-radius:10px;background:rgba(0,0,0,.28);border:1px solid var(--line)}
   .timer.warn{color:#f87171;border-color:rgba(248,113,113,.45);animation:pulse 1s infinite}
   @keyframes pulse{50%{opacity:.55}}
   .navgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:7px}
   .nb{aspect-ratio:1;border-radius:8px;border:1px solid var(--line);background:rgba(0,0,0,.22);
-      color:var(--muted);font-family:'Montserrat',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer}
+      color:var(--muted);font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer}
   .nb.done{background:rgba(0,207,234,.2);border-color:rgba(0,207,234,.45);color:var(--teal)}
   .nb.flag{background:rgba(239,194,75,.2);border-color:rgba(239,194,75,.5);color:var(--gold)}
   .nb.here{outline:2px solid var(--gold);outline-offset:1px}

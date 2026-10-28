@@ -19,8 +19,24 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
 <title>Branch Meeting Builder | Ricky Rampersad Branch</title>
 <meta name="robots" content="noindex"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'DM Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.31%;ascent-override:95.10%;descent-override:29.72%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:102.04%;ascent-override:97.22%;descent-override:30.38%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.79%;ascent-override:94.67%;descent-override:29.58%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.76%;ascent-override:91.21%;descent-override:28.50%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+
+
+
+
   :root{
     --bg:#121820; --bg2:#1C242E; --card:#25303C; --card2:#2E3B49;
     --accent:#3B9EFF; --accent-dark:#2C7FD4; --text:#EAF0F6; --muted:#9CAEBF; --dim:#6C7E90;
@@ -29,14 +45,14 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{
-    font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
     background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(59,158,255,.07),transparent),
       linear-gradient(180deg,var(--bg) 0%,var(--bg2) 50%,var(--bg) 100%);
     background-attachment:fixed;
   }
   a{color:inherit}
   .wrap{max-width:1060px;margin:0 auto;padding:0 16px}
-  h1,h2,h3,h4{font-family:'Montserrat',sans-serif}
+  h1,h2,h3,h4{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif}
 
   /* ---------- sign in ---------- */
   #gate,#door{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;
@@ -50,10 +66,14 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .gate-card .mark{width:58px;height:58px;margin:0 auto 14px}
   .gate-card h1{font-weight:800;font-size:20px;text-align:center;color:var(--accent);margin-bottom:6px}
   .gate-card .sub{font-size:12.5px;color:var(--muted);text-align:center;margin-bottom:22px;line-height:1.6}
-  label{display:block;font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.6px;
+  label{display:block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.6px;
     text-transform:uppercase;color:var(--accent-dark);margin:0 0 6px}
   input,select,textarea{width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line);
-    background:rgba(0,0,0,.3);color:var(--text);font-size:14.5px;font-family:'DM Sans',sans-serif;outline:none}
+    background:rgba(0,0,0,.3);color:var(--text);
+    /* max(16px, 1rem), never 14.5px: iOS zooms the page in when a control
+       it focuses computes under 16px, and it does not zoom back out. The
+       floor composer is typed into on a phone, in the room. */
+    font-size:max(16px, 1rem);font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',sans-serif;outline:none}
   input:focus,select:focus,textarea:focus{border-color:rgba(0,207,234,.55)}
   textarea{resize:vertical;min-height:92px;line-height:1.65}
   select option{background:#1C242E}
@@ -62,7 +82,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
   @media(max-width:620px){.row2,.row3{grid-template-columns:1fr}}
 
-  button{font-family:'Montserrat',sans-serif;cursor:pointer;border:none;border-radius:11px;font-weight:800}
+  button{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;cursor:pointer;border:none;border-radius:11px;font-weight:800}
   .btn{padding:13px 18px;font-size:13.5px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#06141F;width:100%}
   .btn:disabled{opacity:.45;cursor:not-allowed}
   .btn.teal{background:linear-gradient(135deg,var(--support),var(--support-dark));color:#06201C}
@@ -86,18 +106,18 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .nav-inner{max-width:1060px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:12px;height:60px}
   .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto;min-width:0}
   .nav-brand .mark{width:30px;height:30px;flex-shrink:0}
-  .nav-brand b{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13.5px;color:var(--accent);line-height:1.15;display:block}
+  .nav-brand b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:13.5px;color:var(--accent);line-height:1.15;display:block}
   .nav-brand span{font-size:10.5px;color:var(--dim)}
   .who{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted);white-space:nowrap}
   .avatar{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));
-    color:#06141F;display:grid;place-items:center;font-family:'Montserrat',sans-serif;font-weight:800;font-size:12px}
+    color:#06141F;display:grid;place-items:center;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:12px}
   .who .out{color:var(--dim);cursor:pointer;text-decoration:none;font-weight:700;font-size:11.5px}
   .who .out:hover{color:var(--red)}
   @media(max-width:600px){.who .nm{display:none}}
 
   .tabs{display:flex;gap:4px;overflow-x:auto;padding:12px 0 0;scrollbar-width:none}
   .tabs::-webkit-scrollbar{display:none}
-  .tab{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;padding:9px 14px;border-radius:10px;
+  .tab{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:12px;font-weight:700;padding:9px 14px;border-radius:10px;
     color:var(--muted);background:none;white-space:nowrap;border:1px solid transparent}
   .tab:hover{color:var(--text);background:rgba(255,255,255,.05)}
   /* The framework tab is a link, not a view, so it needs the anchor
@@ -108,12 +128,12 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     background:rgba(255,122,122,.22);color:var(--red);font-size:10.5px;line-height:17px;text-align:center}
 
   .page-head{padding:26px 0 4px}
-  .page-head .kicker{font-family:'Montserrat',sans-serif;font-size:10.5px;letter-spacing:2.6px;
+  .page-head .kicker{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:10.5px;letter-spacing:2.6px;
     text-transform:uppercase;color:var(--accent-dark);font-weight:700;margin-bottom:7px}
   .page-head h1{font-weight:900;font-size:clamp(22px,4.4vw,30px);margin-bottom:7px;line-height:1.2}
   .page-head p{color:var(--muted);font-size:13.5px;max-width:640px;line-height:1.65}
   section{padding:24px 0 4px}
-  .section-label{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:2.4px;
+  .section-label{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:10px;font-weight:700;letter-spacing:2.4px;
     text-transform:uppercase;color:var(--accent);margin-bottom:13px;display:flex;align-items:center;gap:10px}
   .section-label::after{content:'';flex:1;height:1px;background:rgba(59,158,255,.2)}
 
@@ -127,7 +147,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
   @media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
 
-  .badge{display:inline-block;font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:800;
+  .badge{display:inline-block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:9.5px;font-weight:800;
     letter-spacing:1.1px;text-transform:uppercase;padding:3px 8px;border-radius:6px;vertical-align:middle}
   .b-all{background:rgba(0,207,234,.14);color:var(--support);border:1px solid rgba(0,207,234,.3)}
   .b-staff{background:rgba(59,158,255,.14);color:var(--accent);border:1px solid rgba(59,158,255,.32)}
@@ -138,7 +158,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .b-dim{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--line)}
 
   .stat{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:13px;padding:14px 16px;text-align:center}
-  .stat b{display:block;font-family:'Montserrat',sans-serif;font-size:24px;font-weight:900;line-height:1.1}
+  .stat b{display:block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:24px;font-weight:900;line-height:1.1}
   .stat span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1.3px;font-weight:700}
   .stat.green b{color:var(--green)} .stat.amber b{color:var(--amber)}
   .stat.red b{color:var(--red)} .stat.teal b{color:var(--support)} .stat.gold b{color:var(--accent)}
@@ -152,10 +172,10 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     cursor:pointer;transition:transform .16s,border-color .16s;text-align:left;width:100%;color:inherit}
   .mtg:hover{transform:translateY(-2px);border-color:rgba(59,158,255,.4)}
   .mtg .when{flex-shrink:0;width:56px;text-align:center;border-right:1px solid var(--line);padding-right:12px}
-  .mtg .when b{display:block;font-family:'Montserrat',sans-serif;font-size:20px;font-weight:900;color:var(--accent);line-height:1}
+  .mtg .when b{display:block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:20px;font-weight:900;color:var(--accent);line-height:1}
   .mtg .when span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;font-weight:700}
   .mtg .body{flex:1;min-width:0}
-  .mtg .body b{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;display:block;margin-bottom:3px}
+  .mtg .body b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:14px;font-weight:700;display:block;margin-bottom:3px}
   .mtg .body .meta{font-size:11.5px;color:var(--muted);line-height:1.6}
   .mtg .tags{margin-top:7px;display:flex;gap:5px;flex-wrap:wrap}
 
@@ -179,12 +199,12 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .live-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;
     animation:pulse 1.6s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
-  .live-clock{font-family:'Montserrat',sans-serif;font-weight:900;font-size:30px;line-height:1;
+  .live-clock{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:900;font-size:30px;line-height:1;
     letter-spacing:-.5px;font-variant-numeric:tabular-nums}
   .live-clock.over{color:var(--red)}
   .live-meta{font-size:12px;color:var(--muted);line-height:1.6}
   .live-now{background:rgba(0,0,0,.25);border-radius:11px;padding:11px 14px;margin-top:10px;font-size:12.5px}
-  .live-now b{font-family:'Montserrat',sans-serif;font-size:13.5px}
+  .live-now b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:13.5px}
 
   /*  THE TICKER.
    *
@@ -198,9 +218,9 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .tick-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
   .tick-head .lbl{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
     font-weight:700;color:var(--red)}
-  .tick-head b{font-family:'Montserrat',sans-serif;font-size:14px;color:var(--text)}
+  .tick-head b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:14px;color:var(--text)}
   .tick-row{display:flex;align-items:flex-end;gap:14px;margin-top:9px;flex-wrap:wrap}
-  .tick-num{font-family:'Montserrat',sans-serif;font-weight:900;font-size:40px;line-height:1;
+  .tick-num{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:900;font-size:40px;line-height:1;
     letter-spacing:-1px;color:var(--green);font-variant-numeric:tabular-nums}
   .tick-num.warn{color:var(--amber)}
   .tick-num.over{color:var(--red)}
@@ -220,12 +240,12 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .said{display:flex;gap:11px;padding:12px 0;border-bottom:1px solid var(--line)}
   .said:last-child{border-bottom:none}
   .said .av{width:32px;height:32px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;
-    font-family:'Montserrat',sans-serif;font-weight:800;font-size:11px;
+    font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:11px;
     background:rgba(0,207,234,.14);color:var(--support);border:1px solid rgba(0,207,234,.28)}
   .said .av.staff{background:rgba(59,158,255,.14);color:var(--accent);border-color:rgba(59,158,255,.3)}
   .said .c{flex:1;min-width:0}
   .said .c .hd{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
-  .said .c .hd b{font-family:'Montserrat',sans-serif;font-size:12.5px}
+  .said .c .hd b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:12.5px}
   .said .c .hd .t{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
   .said .c .bd{font-size:13px;line-height:1.7;white-space:pre-wrap}
   .said .c .tp{margin-top:6px;display:flex;gap:5px;flex-wrap:wrap}
@@ -242,9 +262,9 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   /* ---------- agenda ---------- */
   .ag{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
   .ag:last-child{border-bottom:none}
-  .ag .clock{flex-shrink:0;width:64px;font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:800;color:var(--accent);padding-top:2px}
+  .ag .clock{flex-shrink:0;width:64px;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:12.5px;font-weight:800;color:var(--accent);padding-top:2px}
   .ag .main{flex:1;min-width:0}
-  .ag .main b{font-size:14px;font-weight:700;font-family:'Montserrat',sans-serif;display:block;margin-bottom:3px}
+  .ag .main b{font-size:14px;font-weight:700;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;display:block;margin-bottom:3px}
   .ag .main .det{font-size:12.5px;color:var(--muted);line-height:1.65;margin-top:3px;white-space:pre-wrap}
   .ag .main .who2{font-size:11.5px;color:var(--dim);margin-top:5px}
   .ag .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;align-items:center}
@@ -258,7 +278,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   /* ---------- tables ---------- */
   .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px}
   table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px}
-  th{font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;
+  th{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;
     color:var(--accent-dark);text-align:left;padding:9px 11px;border-bottom:1px solid rgba(59,158,255,.22);white-space:nowrap}
   td{padding:10px 11px;border-bottom:1px solid var(--line);color:var(--text);vertical-align:top;line-height:1.55}
   tr:last-child td{border-bottom:none}
@@ -288,7 +308,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .bar{height:7px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:7px}
   .bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green),var(--support))}
   .back{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);
-    text-decoration:none;cursor:pointer;font-weight:700;font-family:'Montserrat',sans-serif;margin-bottom:4px}
+    text-decoration:none;cursor:pointer;font-weight:700;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;margin-bottom:4px}
   .back:hover{color:var(--support)}
   .spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.25);
     border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
@@ -326,7 +346,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     <div class="field">
       <label for="dr-code">Access code</label>
       <input id="dr-code" type="password" autocomplete="off" placeholder="ACCESS CODE"
-             style="text-align:center;letter-spacing:2px;font-family:'Montserrat',sans-serif;font-weight:700"/>
+             style="text-align:center;letter-spacing:2px;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:700"/>
     </div>
     <button class="btn" id="dr-go">Enter</button>
     <div class="msg" id="dr-msg"></div>
@@ -864,19 +884,18 @@ function nextMeetingBlock(m) {
     return head + '<div class="checkin">' +
       "<h2>Are you here?</h2>" +
       "<p>Pressing this puts you on the attendance register for this meeting, " +
-      "time-stamped. There is nothing else to sign. If you do not sign in, you are marked absent.</p>" +
+      "time-stamped. There is nothing else to sign. Sign in after the meeting has " +
+      "started and you are recorded present but late. Do not sign in at all and you " +
+      "are absent.</p>" +
       '<button class="btn big-btn" data-checkin="' + esc(m.id) + '">✓ &nbsp;I am here</button>' +
-      '<div class="btn-row" style="justify-content:center;margin-top:10px">' +
-      '<button class="btn ghost auto" data-excuse="' + esc(m.id) + '">I cannot attend</button></div>' +
       '<div class="hint" style="text-align:center">Check-in closes ' + esc(m.checkInClosesAt) + "</div></div>";
   }
 
   return head + '<div class="checkin shut">' +
     "<h2>Check-in opens " + esc(m.checkInOpensAt || "closer to the time") + "</h2>" +
-    "<p>Come back then and sign in — that is the register, and not signing in is recorded as absent. " +
-    "If you cannot attend, log it now so the reason is on the record.</p>" +
+    "<p>Come back then and sign in — that is the register. Signing in after the meeting " +
+    "has started is recorded present but late, and not signing in at all is absent.</p>" +
     '<div class="btn-row" style="justify-content:center">' +
-    '<button class="btn ghost auto" data-excuse="' + esc(m.id) + '">I cannot attend</button>' +
     '<button class="btn teal auto" data-open="' + esc(m.id) + '">Open the meeting</button></div></div>';
 }
 
@@ -906,9 +925,6 @@ function wireMeetingRows() {
 function wireCheckIn() {
   Array.prototype.forEach.call(document.querySelectorAll("[data-checkin]"), function (b) {
     b.onclick = function () { checkIn(b.getAttribute("data-checkin"), b); };
-  });
-  Array.prototype.forEach.call(document.querySelectorAll("[data-excuse]"), function (b) {
-    b.onclick = function () { excuseModal(b.getAttribute("data-excuse")); };
   });
 }
 
@@ -956,67 +972,19 @@ function confirmModal(title, text, label, onYes) {
   $("m-no").onclick = closeModal;
 }
 
-/*  THE APOLOGY. Picked from a list, never typed.
+/*  THE SELF-SERVICE APOLOGY WAS TAKEN OUT ON 28 OCTOBER 2026.
  *
- *  A typed reason gives "personal", "busy" and "sorry", which cannot
- *  be counted, so the wall could never show which reason is the one
- *  worth doing something about. The list comes from the backend
- *  (APOLOGY_REASONS) so the two can never drift apart — a reason this
- *  page invented would be refused on arrival.
+ *  Asked for in these words: "dont give the opportunity to say cannot
+ *  attend". A person can put themselves in three states and only
+ *  three — present, present but late, and absent for not signing in
+ *  — so the modal that chose a reason, its reason list and its
+ *  handler are gone from here, and the backend's apiExcuse_ refuses.
  *
- *  The note box only appears for "Something else", because that is
- *  the only reason the backend accepts free text against.
+ *  What stays, deliberately: the "You logged that you cannot attend"
+ *  cards. Branch staff can still record an apology on somebody's
+ *  behalf through the register, and that person has to be shown the
+ *  right thing when they open the meeting.
  */
-var APOLOGY_FALLBACK = ["With a client", "Client appointment I could not move",
-  "On a medical or hospital visit", "Unwell", "Family or personal emergency",
-  "On leave or out of the country", "Training or an exam",
-  "At head office or another branch", "Travel or transport problem", "Something else"];
-
-function apologyReasons() {
-  return (S.detail && S.detail.apologyReasons && S.detail.apologyReasons.length)
-    ? S.detail.apologyReasons : APOLOGY_FALLBACK;
-}
-function apologyOther() {
-  return (S.detail && S.detail.apologyOther) || "Something else";
-}
-
-function excuseModal(id) {
-  var reasons = apologyReasons(), other = apologyOther();
-  openModal("I cannot attend this meeting",
-    "Pick the reason. It goes on the register beside your name and is counted on the branch wall. " +
-    "You will not be able to open the meeting pack once this is logged — if that changes, sign in and it opens.",
-    '<div class="field"><label for="ex-why">Reason</label>' +
-    '<select id="ex-why"><option value="">Choose one…</option>' +
-    reasons.map(function (r) { return '<option value="' + esc(r) + '">' + esc(r) + "</option>"; }).join("") +
-    "</select></div>" +
-    '<div class="field" id="ex-note-wrap" style="display:none">' +
-    '<label for="ex-note">Say in a line what it is</label>' +
-    '<textarea id="ex-note" maxlength="300" placeholder="A short line — this is the only reason that takes one."></textarea></div>' +
-    '<div class="msg" id="ex-msg"></div>' +
-    '<div class="btn-row"><button class="btn auto" id="ex-go">Log it</button>' +
-    '<button class="btn ghost auto" id="ex-cancel">Cancel</button></div>');
-
-  $("ex-why").onchange = function () {
-    $("ex-note-wrap").style.display = this.value === other ? "block" : "none";
-  };
-  $("ex-cancel").onclick = closeModal;
-  $("ex-go").onclick = function () {
-    var why = $("ex-why").value;
-    var note = $("ex-note") ? $("ex-note").value.trim() : "";
-    if (!why) return say("ex-msg", "Pick the reason you cannot attend.");
-    if (why === other && note.length < 3) return say("ex-msg", "Say in a line what the reason is.");
-    $("ex-go").disabled = true;
-    post("excuse", { meetingId: id, reason: why, note: note, device: navigator.userAgent })
-      .then(guard)
-      .then(function (res) {
-        $("ex-go").disabled = false;
-        if (!res.ok) return say("ex-msg", res.error);
-        closeModal();
-        if (S.view === "meeting") loadMeeting(id); else loadHome();
-      })
-      .catch(function () { $("ex-go").disabled = false; say("ex-msg", "No connection — try again."); });
-  };
-}
 
 /* ---------------- one meeting ---------------- */
 
@@ -1465,8 +1433,8 @@ function checkinBlock(m) {
       ". If you were there and did not log in, ask branch staff to correct the register.</p></div>";
   }
   return '<div class="checkin shut"><h2>Check-in opens ' + esc(m.checkInOpensAt) + "</h2>" +
-    "<p>Sign in when the meeting starts. If you cannot attend, log it now.</p>" +
-    '<button class="btn ghost auto" data-excuse="' + esc(m.id) + '">I cannot attend</button></div>';
+    "<p>Sign in when the meeting starts. After it has started you are present but late; " +
+    "no sign-in at all is absent.</p></div>";
 }
 
 function agendaRow(a) {
@@ -1570,6 +1538,11 @@ function floorSection(d) {
   var m = d.meeting, sn = d.session, list = d.contributions || [];
   var mine = m.me && (m.me.status === "present" || m.me.status === "late");
   var live = sn && sn.running;
+  /*  Still to come: not started, not over, and the register has not
+     opened yet. That last part is what keeps the pre-meeting box
+     from showing on the morning of, when signing in is the thing to
+     do and the floor is minutes away. */
+  var upcoming = !live && !m.past && !m.checkInOpen;
 
   var out = '<section><div class="section-label">The floor' +
     (list.length ? " — " + list.length + " contribution" + (list.length === 1 ? "" : "s") : "") +
@@ -1601,11 +1574,52 @@ function floorSection(d) {
     out += '<div class="card flat"><div style="font-size:13px;color:var(--muted);line-height:1.7">' +
       "Sign in to the meeting above and the floor opens — you can put a point, a question or " +
       "a commitment on the record as it happens.</div></div>";
+  } else if (upcoming) {
+    /*  BEFORE THE DAY. The floor is shut, because the floor is the
+     *  record of what was said in the room. This is the other thing:
+     *  the agenda is published with a question against every item,
+     *  and this is where a person answers one. It lands on the
+     *  agenda, not on the floor, and it does not put anybody on the
+     *  register — see apiAddContribution_.                        */
+    out += '<div class="card"><div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:13px">' +
+      "The floor opens on the day. Until then this is where you say what you are bringing — " +
+      "pick the item, answer its question, and it is on the agenda before anybody sits down. " +
+      "Everything written is read in the room before anybody speaks." +
+      "</div>" +
+      /*  Three pickers, and the middle one earns its place: tagging each
+       *  answer with the part of the work it belongs to is what makes
+       *  what comes back sort by line instead of arriving as a pile.
+       *  The list is the Topics tab the project already seeds.        */
+      '<div class="row3" style="margin-bottom:10px">' +
+      '<div class="field" style="margin-bottom:0"><label for="fl-agenda">Which item</label>' +
+      '<select id="fl-agenda"><option value="">The meeting as a whole</option>' +
+      (d.agenda || []).map(function (a) {
+        return '<option value="' + esc(a.id) + '">' + esc(a.order + ". " + a.title) + "</option>";
+      }).join("") + "</select></div>" +
+      '<div class="field" style="margin-bottom:0"><label for="fl-topic">Which part of the work</label>' +
+      '<select id="fl-topic"><option value="">Not one in particular</option>' +
+      (d.topicList || []).map(function (t) {
+        return '<option value="' + esc(t) + '">' + esc(t) + "</option>";
+      }).join("") + "</select></div>" +
+      '<div class="field" style="margin-bottom:0"><label for="fl-kind">What is this</label>' +
+      '<select id="fl-kind">' + (d.kinds || ["Point"]).map(function (k) {
+        return '<option value="' + esc(k) + '">' + esc(k) + "</option>";
+      }).join("") + "</select></div></div>" +
+      '<div class="hint" id="fl-ask" style="margin:-4px 0 12px"></div>' +
+      '<div class="field"><label for="fl-body">Your answer</label>' +
+      '<textarea id="fl-body" placeholder="Name one thing, and say what it changed or what it costs…"></textarea></div>' +
+      '<div class="msg" id="fl-msg"></div>' +
+      '<div class="btn-row"><button class="btn teal sm" id="fl-go">Put it on the agenda</button>' +
+      (isStaff() ? '<select id="fl-vis" style="width:auto;padding:8px 11px;font-size:12px">' +
+        '<option value="all">Everyone</option><option value="staff">Staff only</option></select>' : "") +
+      "</div></div>";
   }
 
   if (!list.length) {
     out += '<div class="empty" style="padding:26px"><span class="big">💬</span>' +
-      (live ? "Nothing on the record yet." : "No contributions were logged for this meeting.") +
+      (live ? "Nothing on the record yet."
+        : upcoming ? "Nothing brought in yet — be the first."
+        : "No contributions were logged for this meeting.") +
       "</div></section>";
     return out;
   }
@@ -1618,7 +1632,9 @@ function floorSection(d) {
       '<div class="c"><div class="hd"><b>' + esc(c.name) + "</b>" +
       '<span class="badge ' + kindBadge(c.kind) + '">' + esc(c.kind) + "</span>" +
       (c.visibility !== "all" ? " " + visBadge(c.visibility) : "") +
-      '<span class="t">' + esc(c.time) + (c.offset ? " · " + c.offset + " min in" : "") + "</span>" +
+      '<span class="t">' + esc(c.time) +
+      (c.offset < 0 ? " · brought in beforehand"
+        : c.offset ? " · " + c.offset + " min in" : "") + "</span>" +
       (canEdit ? '<button class="btn ghost sm" style="margin-left:auto;padding:3px 8px;font-size:10.5px" ' +
         'data-con="' + esc(c.id) + '">Edit</button>' : "") + "</div>" +
       '<div class="bd">' + escLines(c.body) + "</div>" +
@@ -1668,7 +1684,11 @@ function wireFloor(d) {
     go.disabled = true;
     post("contribute", {
       meetingId: m.id, body: body, kind: $("fl-kind").value,
-      topics: $("fl-topic").value, agendaId: (d.session && d.session.currentAgendaId) || "",
+      topics: $("fl-topic") ? $("fl-topic").value : "",
+      // Before the meeting a person picks the item; during it, the
+      // item the chair has on the clock.
+      agendaId: $("fl-agenda") ? $("fl-agenda").value
+        : ((d.session && d.session.currentAgendaId) || ""),
       visibility: $("fl-vis") ? $("fl-vis").value : "all",
       clipId: S.pendingClip || ""
     }).then(guard).then(function (res) {
@@ -1678,6 +1698,19 @@ function wireFloor(d) {
       loadMeeting(m.id);
     }).catch(function () { go.disabled = false; say("fl-msg", "No connection — try again."); });
   };
+
+  /*  The item's own question, shown under the picker, because an
+     item title alone is not something a person can answer. */
+  var pick = $("fl-agenda"), ask = $("fl-ask");
+  if (pick && ask) {
+    var showAsk = function () {
+      var a = (d.agenda || []).filter(function (x) { return x.id === pick.value; })[0];
+      ask.textContent = a && a.detail ? a.detail : "";
+      ask.style.display = ask.textContent ? "" : "none";
+    };
+    pick.onchange = showAsk;
+    showAsk();
+  }
 
   var rec = $("fl-rec");
   if (rec) rec.onclick = function () { toggleRecording(m.id, d.maxClipMinutes || 15); };

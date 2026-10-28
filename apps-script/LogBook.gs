@@ -91,8 +91,9 @@ var LB = {
   CUTOFF_HOUR: 12,
   BAG: { CUTOFF: 12, AT: 13, NUDGE: 11, GRACE_MIN: 60, ROTA_FROM: '2026-10-19',
          /* The branch's rota (17 October 2026): the three who do transmittals, one week each, Azariah first
-            from 19 October. Kamla does not do transmittals and is never on it. A Bag Rota tab overrides this. */
-         ROTA: [{ who: 'Azariah', leaves: '4:00 pm' }, { who: 'Elizabeth', also: 'Liz', leaves: '3:00 pm' }, { who: 'Sasha', leaves: '2:00 pm' }] },
+            from 19 October. Kamla does not do transmittals and is never on it. A Bag Rota tab overrides this.
+            Elizabeth goes home at 4 from 23 October 2026 (her day is now 8 to 4). */
+         ROTA: [{ who: 'Azariah', leaves: '4:00 pm' }, { who: 'Elizabeth', also: 'Liz', leaves: '4:00 pm' }, { who: 'Sasha', leaves: '2:00 pm' }] },
   CONTRACT_DAYS: 20, CONTRACT_WARN: [15, 18],
   NUDGE_DAYS: [1, 3],             // logged and not handed in: the agent is reminded on these working days
   REASON_COVERS: 1,               // a reason given covers the rest of that working day and the next
@@ -206,6 +207,8 @@ var LB_DOCS = [  // [name, times in the history, [[department, times]...], [[sen
   ["Claim Submission Form - Life & CI", 23, [["GLOC CLAIMS - CUSTOMER SUPPORT", 17], ["RECORDS MANAGEMENT DEPT", 4], ["GIA TASK REQUEST", 1]], [["Proof of ID", 82], ["Policy Contract", 53], ["Death Certificate", 41]], "CLAIM SUBMISSION"],
   ["Service Questionnaire", 30, [["RECORDS MANAGEMENT DEPT", 30]], [["OAS Declaration", 46]], "SERVIC(E|ING) QUESTIONNAIRE|^QUESTIONNAIRE$"],
   ["Declaration of Insurability", 15, [["RECORDS MANAGEMENT DEPT", 10], ["DELTA FORCE QUERY", 3], ["GLOC REDATES, REINSTATEMENTS & INCREASES", 2]], [["Quotation", 33]], "DECLARATION OF INSURABILITY|^DOI$"],
+  ["Declaration 1", 0, [["RECORDS MANAGEMENT DEPT", 1]], [], "^DECLARATION ?(1|ONE|I)$"],  // 27 Oct 2026: on the old form, asked back
+  ["Declaration 2", 0, [["RECORDS MANAGEMENT DEPT", 1]], [], "^DECLARATION ?(2|TWO|II)$"],
   ["Quotation", 14, [["GLOC REDATES, REINSTATEMENTS & INCREASES", 6], ["RECORDS MANAGEMENT DEPT", 3], ["DELTA FORCE QUERY", 3]], [["Proof of ID", 67], ["FATCA Form", 50], ["Conversion Form", 50]], "^QUOTATION"],
   ["Rollover Letter", 14, [["GLOC BIR DEPARTMENT", 12], ["GLOC CS RSC - CHAGUANAS", 1], ["RECORDS MANAGEMENT DEPT", 1]], [["Proof of ID", 71], ["Policy Contract", 71]], "ROLLOVER"],
   ["NPW Letter", 13, [["CLIENT ACQUISITION DEPARTMENT", 7], ["RECORDS MANAGEMENT DEPT", 5], ["CGU - GLOC CORPORATE GROUP UNIT", 1]], [["Policy Contract", 46], ["Proof of ID", 31]], "^NPW"],
@@ -724,6 +727,112 @@ function lbFindAgent_(no) {
   return k ? lbAgents_().filter(function (a) { return a.key === k; })[0] || null : null;
 }
 
+/* Who staff may log documents for (the "Choose the agent" list on Documents
+   and Contract for delivery). 23 October 2026, from the counter: "Aleema nor
+   Javid name is not listed on the contract delivery or yours Ricky Rampersad".
+   The sign-in lists hold only the agents who use the fact find, and the
+   Branch Manager was filtered out as staff. So the list is:
+   1. everyone active on the sign-in lists who is not pure staff (the Branch
+      Manager stays: he writes business too);
+   2. every agent Salesforce shows as Active, with the number read off the
+      AgentName__c of a policy written in the last three years ("A04020 -
+      Javid Ali"); kept six hours. Anyone the sign-in lists mark inactive
+      (a former agent) is never added back from Salesforce.
+   Signing in is unchanged: only the sign-in lists open the Log Book. */
+var LB_PICK_EXTRA = ['Mala Balkaran'];
+var LB_PICK_READ_ = null;
+function lbPickAgents_() {
+  if (LB_PICK_READ_) return LB_PICK_READ_;
+  var all = lbAgents_(), out = [], seen = {}, off = {};
+  all.forEach(function (a) {
+    if (!a.active) { off[a.key] = 1; var nk = lbNameKey_(a.name); if (nk) off['n:' + nk] = 1; return; }
+    if (lbIsDriverRole_(a.role)) return;
+    if (seen[a.key] || lbPickHas_(out, a.name)) return;
+    seen[a.key] = 1; out.push(a);
+  });
+  /* The staff hand papers in too (23 October 2026: "use her name alone as she is
+     a sales support, also ensure all my staff is also added"). Staff with no
+     agent number go in by name: the RR Operations Access tab, then the
+     LB_PICK_EXTRA Script property and LB_PICK_EXTRA below (comma-separated names). */
+  var byName = function (name, role, email) {
+    name = String(name || '').replace(/\s+/g, ' ').trim();
+    var nk = lbNameKey_(name), k = lbAgentKey_(name);
+    if (!nk || !k || off['n:' + nk]) return;
+    if (lbPickHas_(out, name)) return;
+    seen[k] = 1;
+    out.push({ agentNo: name, name: name, email: email || '', unit: '', role: role || 'Staff', active: true, key: k, staff: true });
+  };
+  try {
+    var sh = dbSheet_(DB.TABS.ACCESS, DB_ACCESS_COLUMNS), hm = dbHeaderMap_(sh), last = sh.getLastRow();
+    if (last > 1) sh.getRange(2, 1, last - 1, hm.head.length).getValues().forEach(function (r) {
+      var act = String(r[hm.map['Active']] == null ? 'yes' : r[hm.map['Active']]).trim();
+      var role = String(r[hm.map['Role']] || 'Staff').trim() || 'Staff';
+      if (/^(no|false|not active|inactive|resigned|terminated)/i.test(act) || lbIsDriverRole_(role)) return;
+      byName(r[hm.map['Name']], role, 'Email' in hm.map ? String(r[hm.map['Email']] || '').trim() : '');
+    });
+  } catch (e) { Logger.log('pick list access tab: ' + e); }
+  String(dbProp_('LB_PICK_EXTRA', '')).split(',').concat(LB_PICK_EXTRA).forEach(function (n) { byName(n, 'Sales Support'); });
+  lbSfActiveAgents_().forEach(function (a) {
+    var k = lbAgentKey_(a.agentNo);
+    if (!k || seen[k] || off[k] || off['n:' + lbNameKey_(a.name)] || lbPickHas_(out, a.name)) return;
+    seen[k] = 1; out.push({ agentNo: a.agentNo, name: a.name, email: a.email, unit: '', role: 'Agent', active: true, key: k, sf: true });
+  });
+  out.sort(function (x, y) { return String(x.name).localeCompare(String(y.name)); });
+  LB_PICK_READ_ = out;
+  return out;
+}
+
+/* Is this person already on the list? The two sign-in lists write one person
+   differently ("SASHA LALLA" on one, "Sasha Lalla-Jagassar" on the other), so
+   the same first name with every other part of the shorter name inside the
+   longer counts as the same person (23 October 2026: "there is now a
+   duplication for RRB support staff"). A first name alone matches nobody. */
+var LB_PICK_NICK = { liz: 'elizabeth', lizzy: 'elizabeth', beth: 'elizabeth' };
+function lbPickWords_(name) {
+  var w = lbNameKey_(String(name || '').replace(/^\s*A?\d+\s*-\s*/i, '')).split(' ').filter(String);
+  if (w.length && LB_PICK_NICK[w[0]]) w[0] = LB_PICK_NICK[w[0]];
+  return w;
+}
+function lbPickHas_(list, name) {
+  var a = lbPickWords_(name);
+  if (!a.length) return false;
+  return list.some(function (x) {
+    var b = lbPickWords_(x.name);
+    if (!b.length || a[0] !== b[0]) return false;
+    if (a.join(' ') === b.join(' ')) return true;
+    var s = a.length <= b.length ? a : b, l = s === a ? b : a;
+    if (s.length < 2) return false;
+    return s.slice(1).every(function (w) { return l.slice(1).some(function (v) { return v === w || v.indexOf(w) === 0 || w.indexOf(v) === 0; }); });
+  });
+}
+
+/* Salesforce's active agents with their numbers: [{agentNo, name, email}]. */
+function lbSfActiveAgents_() {
+  var cache = null, key = 'lb_sf_agents_v2';
+  try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
+  if (typeof dbSfConfigured_ !== 'function' || !dbSfConfigured_()) return [];
+  var out = [];
+  try {
+    var people = {};
+    dbSoql_("SELECT Name, Email FROM Contact WHERE RecordType.Name = 'AGENT' AND Employment_Status__c = 'Active' LIMIT 500")
+      .forEach(function (r) {
+        var nk = lbNameKey_(r.Name);
+        if (nk) people[nk] = { name: String(r.Name || '').replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim(), email: String(r.Email || '').trim() };
+      });
+    /* One small read per agent: a single read of every recent policy came
+       back one page (2,000 of 5,886 on 23 Oct 2026) and missed Aleema. */
+    Object.keys(people).forEach(function (nk) {
+      var p = people[nk];
+      var r = dbSoql_('SELECT AgentName__c FROM CLIENT_PORTFOLIO__c WHERE AgentName__c LIKE ' +
+                      dbQuote_('% - ' + p.name.replace(/[%_]/g, '')) + ' ORDER BY CreatedDate DESC LIMIT 1')[0];
+      var m = r && String(r.AgentName__c || '').match(/^\s*(A?\d+)\s*-\s*(.+?)\s*$/i);
+      if (m && lbNameKey_(m[2]) === nk) out.push({ agentNo: m[1].toUpperCase(), name: p.name, email: p.email });
+    });
+    try { if (cache) cache.put(key, JSON.stringify(out), 6 * 3600); } catch (e) {}
+  } catch (e) { Logger.log('Salesforce agents: ' + e); }
+  return out;
+}
+
 /* A staff member's address: the RR Operations Access tab, else the fact find's. */
 function lbStaffEmail_(name) {
   var want = String(name || '').trim().toLowerCase();
@@ -838,7 +947,7 @@ function lbIntelPerson_(who, code) {
 /** Sign-in by agent number and password, both. A refusal never says which
  *  was wrong. Ten wrong tries on one number close it for fifteen minutes. */
 function lbLogin_(b) {
-  LB_AGENTS_READ_ = null;
+  LB_AGENTS_READ_ = null; LB_PICK_READ_ = null;
   var no = dbClean_(b.agentNo, 20), code = dbClean_(b.code, 40);
   if (!no || !code) throw new Error('Enter your agent number and your password.');
   var key = 'lb_fail_' + lbAgentKey_(no);
@@ -883,7 +992,7 @@ function lbLoginApps_(staff) { return staff ? 'logbook,delivery-book' : 'logbook
 
 /* Called by DeliveryBook.gs's doPost for every action that starts "lb.". */
 function lbHandle_(b) {
-  LB_READ_ = null; LB_AGENTS_READ_ = null; LB_HOURS_ = null;
+  LB_READ_ = null; LB_AGENTS_READ_ = null; LB_PICK_READ_ = null; LB_HOURS_ = null;
   if (b.action === 'lb.login') return lbLogin_(b);
   var who = lbSession_(b.token);
   if (!who) return { ok: false, error: 'signed-out' };
@@ -917,8 +1026,7 @@ function lbHandle_(b) {
     case 'lb.trainSubmit':  return lbTrainSubmit_(b, who);
     case 'lb.trainView':    return lbTrainView_(b, who);
     case 'lb.baginfo':      return { ok: true, bag: lbBagInfo_(new Date()) };
-    case 'lb.agents':       return { ok: true, agents: lbAgents_().filter(function (a) { return a.active && !lbIsStaffRole_(a.role); })
-                                       .map(function (a) { return { agentNo: a.agentNo, name: a.name, unit: a.unit }; }) };
+    case 'lb.agents':       return { ok: true, agents: lbPickAgents_().map(function (a) { return { agentNo: a.agentNo, name: a.name, unit: a.unit, staff: !!a.staff || lbIsStaffRole_(a.role), role: a.role || '' }; }) };
     default:                return { ok: false, error: 'Unknown action' };
   }
 }
@@ -1025,7 +1133,8 @@ function lbValidate_(b, who) {
   if (who.isAgent) {
     out.agent = { agentNo: who.agentNo, name: who.name, email: who.email, unit: who.unit };
   } else {
-    var a = lbFindAgent_(d.agentNo);
+    var k = lbAgentKey_(d.agentNo);
+    var a = k ? lbPickAgents_().filter(function (x) { return x.key === k; })[0] : null;
     if (!a) throw new Error('Choose the agent these documents are from.');
     out.agent = { agentNo: a.agentNo, name: a.name, email: a.email, unit: a.unit };
   }
@@ -1087,8 +1196,15 @@ function lbValidate_(b, who) {
       if (it.portfolioId && !mine.portfolios[it.portfolioId]) throw new Error('Policy ' + it.policy + ' is not one of yours.');
     });
   }
-  if (d.declared !== true) throw new Error('Tick the declaration.');
-  out.declaration = contract ? LB.DECLARE_CONTRACT : LB.DECLARE_DOCS;
+  /* Both declarations, every time (27 October 2026: "Declaration 1 and Declaration 2 these were there
+     before and agents not seeing this"). A page from before sends declared alone and is taken as before. */
+  if (d.declared !== true) throw new Error('Tick Declaration 1 and Declaration 2.');
+  if ('declared1' in d || 'declared2' in d) {
+    if (d.declared1 !== true || d.declared2 !== true) throw new Error('Tick Declaration 1 and Declaration 2.');
+    out.declaration = 'Declaration 1: ' + LB.DECLARE_DOCS + ' | Declaration 2: ' + LB.DECLARE_CONTRACT;
+  } else {
+    out.declaration = contract ? LB.DECLARE_CONTRACT : LB.DECLARE_DOCS;
+  }
   out.notes = dbClean_(d.notes, 500);
   return out;
 }
@@ -1924,7 +2040,7 @@ function lbConfirmAsk_(t) {
 /* The department's tap. Yes is recorded at once. No asks what is missing
    (optional), then goes to sales support and opens the Salesforce tasks. */
 function lbConfirmPage_(p) {
-  LB_READ_ = null; LB_AGENTS_READ_ = null;
+  LB_READ_ = null; LB_AGENTS_READ_ = null; LB_PICK_READ_ = null;
   var no = dbClean_(p.lbc, 20);
   if (!no || String(p.k || '') !== lbConfirmSign_(no)) return dbHtml_('<h1>This link has expired</h1><p>Reply to the e-mail instead and we will follow up.</p>');
   var t = lbTransRows_().filter(function (x) { return x.no === no; })[0];
@@ -2079,6 +2195,16 @@ function lbAppMail_(o) {
    rickyrampersadbranch.com … any other emails with communications"): Microsoft Graph, as
    support@rickyrampersadbranch.com, saved in its Sent Items, when MS_TENANT, MS_CLIENT and MS_SECRET are in
    this project's Script properties. Returns true when Microsoft took it; false sends the caller to Gmail. */
+/* The test copy's Cc. DeliveryBook.gs's dbTestCc_ when the project has it; the
+   live project's older Delivery.gs did not, and every Log It in test mode failed
+   with "dbTestCc_ is not defined" (23 October 2026), so this file carries its own. */
+function lbTestCc_(to) {
+  if (typeof dbTestCc_ === 'function') return dbTestCc_(to);
+  var list = String(dbProp_('DB_TEST_CC') || (lbSalesSupport_() + ',support@rickyrampersadbranch.com')).split(/[,;\s]+/);
+  var seen = {}; [].concat(to || []).forEach(function (t) { seen[String(t).toLowerCase()] = 1; });
+  return list.filter(function (x) { var k = x.toLowerCase(); if (!/@/.test(x) || seen[k]) return false; seen[k] = 1; return true; });
+}
+
 function lbGraphSend_(to, cc, subject, html, replyTo) {
   if (!lbGraphReady_() || !to.length) return false;
   try {
@@ -2135,7 +2261,7 @@ function lbMail_(m) {
     html = '<div style="background:#eef4ff;border:1px solid #6FA8FF;padding:10px 14px;font-family:Arial;font-size:13px">' +
       'TEST — in live mode this would go to <b>' + dbEsc_(to.join(', ')) + '</b>' + (cc.length ? ', copied to ' + dbEsc_(cc.join(', ')) : '') + '.</div>' + html;
     to = [dbProp_('DB_TEST_INBOX') || Session.getEffectiveUser().getEmail()];
-    cc = dbTestCc_(to);
+    cc = lbTestCc_(to);
     subject = '[TEST] ' + subject;
   }
   if (lbGraphSend_(to, cc, subject, html, lbSalesSupport_())) return (dbMode_() === 'live' ? 'Sent' : 'Test copy sent') + ' from ' + lbSupportFrom_();

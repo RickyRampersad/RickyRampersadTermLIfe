@@ -14,12 +14,22 @@
 <meta property="og:image" content="https://rickyrampersadbranch.com/workday/video/poster-laptop.jpg">
 <link rel="icon" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Plus Jakarta Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.08%;ascent-override:99.73%;descent-override:21.33%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:99.93%;ascent-override:103.88%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.55%;ascent-override:99.28%;descent-override:21.23%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:106.52%;ascent-override:97.45%;descent-override:20.84%;line-gap-override:0.00%}
+
+
+
+
 :root{--ink:#17181D;--mute:#7A7280;--line:rgba(60,40,20,.10);--hl1:#F08A24;--hl2:#D9480F;--card:#FFFFFF}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;min-height:100vh;font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);
+body{margin:0;min-height:100vh;font-family:'Plus Jakarta Sans', 'Plus Jakarta Sans Fallback', 'Plus Jakarta Sans Fallback R',system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);
   background:radial-gradient(900px 600px at 0% 0%,rgba(255,170,90,.28),transparent 60%),radial-gradient(800px 600px at 100% 100%,rgba(120,205,180,.22),transparent 60%),linear-gradient(160deg,#FFFDF8,#F6EDE0);
   padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
 .wrap{max-width:1180px;margin:0 auto;padding:28px 16px 40px}

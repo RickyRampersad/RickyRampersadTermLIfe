@@ -122,14 +122,17 @@ function wbBuild_() {
       'SELECT Claim_Reference__c, Claim_Type__c, Days_Pending__c FROM Claims_Revised__c ' +
       "WHERE Claim_Status__c = 'Opened' ORDER BY Days_Pending__c DESC NULLS LAST LIMIT 6"
     ).map(function (r) {
-      return { ref: r.Claim_Reference__c || '(no reference)', type: r.Claim_Type__c || 'Unclassified',
-               days: Math.round(r.Days_Pending__c || 0) };
+      return {
+        ref: wbClaimRef_(r.Claim_Reference__c),
+        type: r.Claim_Type__c || 'Unclassified',
+        days: Math.round(r.Days_Pending__c || 0)
+      };
     }),
     topOpps: wbQ_(
       'SELECT Name, StageName, Amount FROM Opportunity WHERE IsClosed = false ' +
       'ORDER BY Amount DESC NULLS LAST LIMIT 7'
     ).map(function (r) {
-      return { name: wbOppLabel_(r.Name), stage: r.StageName, amt: Math.round(r.Amount || 0) };
+      return { name: wbOppLabel_(r.Name), stage: wbStage_(r.StageName), amt: Math.round(r.Amount || 0) };
     }),
     legacy: wbLegacy_(),
     production: wbProduction_(),
@@ -913,6 +916,39 @@ function wbRiskLabel_(policy) {
   if (p.indexOf('AP') > -1) return 'Motor';
   return 'Policy';
 }
+
+// A claim reference is "07252023JOT0028" — a date, the insured's initials and
+// a sequence. This feed sits on an "Anyone" URL and goes on a wall the whole
+// office walks past, so the reference is cut to its last four. That is enough
+// to find the file in Salesforce and not enough to identify anybody from the
+// screen. Named references that carry no client ("TBA", "Pre-Certification")
+// read as words, so they are kept whole.
+function wbClaimRef_(ref) {
+  var s = String(ref || '').trim();
+  if (!s) return '(no reference)';
+  if (/^TBA$/i.test(s)) return '(reference TBA)';
+  var tail = s.match(/(\d{3,})\s*$/);
+  if (!tail) return s;                       // "Pre-Certification" — a word, not a file number
+  var seq = tail[1].slice(-4);
+  // Anything readable in front ("Best Doctors - 503") is kept as the label;
+  // a bare code ("07252023JOT0028") is announced as a claim.
+  var head = (s.match(/^[A-Za-z][A-Za-z ]*/) || [''])[0].replace(/\s+$/, '');
+  return (head ? head + ' ' : 'Claim ') + '…' + seq;
+}
+
+// Salesforce stage names as the branch says them, not as the picklist spells
+// them. "Proposal/Price Quote" on a wall reads like a database field.
+var WB_STAGE = {
+  'Proposal/Price Quote': 'Proposal / quote',
+  'Value Proposition': 'Value proposition',
+  'Id. Decision Makers': 'Id. decision makers',
+  'Negotiation/Review': 'Negotiation / review',
+  'Perception Analysis': 'Perception analysis',
+  'Needs Analysis': 'Needs analysis',
+  'Qualification': 'Qualification',
+  'Prospecting': 'Prospecting'
+};
+function wbStage_(s) { return WB_STAGE[s] || s || ''; }
 
 // Opportunity names carry full client names ("OPP Life - Sean Sookoo") —
 // trim the prefix and shorten the person to first name + initial.

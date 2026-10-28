@@ -9,19 +9,33 @@
 <link rel="icon" href="board-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.08%;ascent-override:99.73%;descent-override:21.33%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:99.93%;ascent-override:103.88%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.55%;ascent-override:99.28%;descent-override:21.23%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:106.52%;ascent-override:97.45%;descent-override:20.84%;line-gap-override:0.00%}
+
+
+
+
   /* The house palette, the same tokens as responses.html and the manual. */
   :root{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#64798e;--gold:#efc24b;--gold2:#c9942c;--teal:#00CFEA;--teal2:#0aa8bf;--tdark:#07606f;
     --paper:#eef4f7;--card:#fff;--line:#d7e3ea;--stop:#8a3324;--stopbg:#fdeeea;--ok:#1f6f4a;--okbg:#eef7f2;--warnbg:#fff6df;--notebg:#eafaFD;
-    --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --f:'Plus Jakarta Sans', 'Plus Jakarta Sans Fallback', 'Plus Jakarta Sans Fallback R',Inter, 'Inter Fallback', 'Inter Fallback R',system-ui,sans-serif;
     /* Chart colours. The four letter families were validated together against the white card
        (dataviz validator: every hard check passes; gold and teal sit under 3:1 so every chart
        carries visible numbers and a table twin). One slate hue for every single-series chart. */
     --fam-notice:#b5452e;--fam-action:#c9942c;--fam-keep:#0aa8bf;--fam-return:#1c5cab;--fam-none:#9aa9b7;
     --series:#2b4a68;--held:#c5cfd8;--grid:#e6edf2;--axis:#c9d6df}
   *{box-sizing:border-box}
-  body{margin:0;background:var(--paper);color:var(--body);font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;overflow-x:hidden}
+  body{margin:0;background:var(--paper);color:var(--body);font:15px/1.55 Inter, 'Inter Fallback', 'Inter Fallback R',-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;overflow-x:hidden}
   .wrap{width:min(1200px,100% - 32px);margin:0 auto}
   header{background:var(--navy);color:#eaf4ff;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--gold),var(--teal)) 1}
   header .wrap{display:flex;align-items:center;gap:12px;padding:12px 0;flex-wrap:wrap}
@@ -39,7 +53,7 @@
   .sub{color:var(--dim);margin:0 0 18px;font-size:14px}
   .sub a{color:var(--tdark)}
   h2{font-family:var(--f);font-weight:800;font-size:18px;color:var(--ink);margin:30px 0 8px;letter-spacing:-.3px}
-  h2 small{font-family:Inter,system-ui,sans-serif;font-weight:500;font-size:13px;color:var(--dim);margin-left:8px}
+  h2 small{font-family:Inter, 'Inter Fallback', 'Inter Fallback R',system-ui,sans-serif;font-weight:500;font-size:13px;color:var(--dim);margin-left:8px}
   h3{font-family:var(--f);font-weight:800;font-size:14px;color:var(--ink);margin:0 0 8px}
   .note{color:var(--dim);font-size:13px;margin:6px 0 0}
   /* hero */
@@ -68,9 +82,9 @@
   .grid2{display:grid;gap:14px}
   @media(min-width:900px){.grid2{grid-template-columns:3fr 2fr}}
   .card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px 18px;min-width:0}
-  .card h3 small{font-weight:500;color:var(--dim);font-family:Inter,system-ui,sans-serif;font-size:12.5px;margin-left:6px}
+  .card h3 small{font-weight:500;color:var(--dim);font-family:Inter, 'Inter Fallback', 'Inter Fallback R',system-ui,sans-serif;font-size:12.5px;margin-left:6px}
   .chart{width:100%;min-width:0}
-  .chart svg{display:block;width:100%;height:auto;font-family:Inter,system-ui,sans-serif}
+  .chart svg{display:block;width:100%;height:auto;font-family:Inter, 'Inter Fallback', 'Inter Fallback R',system-ui,sans-serif}
   .chart text{fill:var(--body);font-size:12px}
   .chart text.lab{fill:var(--ink);font-weight:600}
   .chart text.dim{fill:var(--dim);font-size:11px}

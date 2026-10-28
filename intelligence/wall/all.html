@@ -48,12 +48,25 @@
 <link rel="stylesheet" media="print" onload="this.media='all'"
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.08%;ascent-override:99.73%;descent-override:21.33%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:99.93%;ascent-override:103.88%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.55%;ascent-override:99.28%;descent-override:21.23%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:106.52%;ascent-override:97.45%;descent-override:20.84%;line-gap-override:0.00%}
+
+
+
+
   :root{
     --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
     --line:rgba(255,255,255,.11);
     --blue:#37b1ec; --gold:#efc24b; --gold2:#c9942c;
-    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
-    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+    --font-d:'Plus Jakarta Sans', 'Plus Jakarta Sans Fallback', 'Plus Jakarta Sans Fallback R',Inter, 'Inter Fallback', 'Inter Fallback R',system-ui,sans-serif;
+    --font-b:Inter, 'Inter Fallback', 'Inter Fallback R',system-ui,-apple-system,'Segoe UI',sans-serif;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -222,7 +235,7 @@
     <div class="mark"><img src="../../logo-mark.png" alt=""></div>
     <div>
       <h1>The Branch Intelligence Wall</h1>
-      <p id="bootSub">Eleven screens, one after another. Reading Salesforce…</p>
+      <p id="bootSub">Fifteen screens, one after another. Reading Salesforce…</p>
     </div>
   </div>
 </div>
@@ -237,7 +250,8 @@ var SLIDES = [
      the branch itself was doing today. These two answer that, and they go
      first because a room reads the top of the hour. */
   { file:'day.html',        tab:'The day so far',    secs:24 },
-  { file:'blocks.html',     tab:'The day in blocks', secs:20 },
+  /* No blocks since 17 October: the system sets each desk's day at check-in. This stop is that day (27 October 2026). */
+  { file:'blocks.html',     tab:'The system\u2019s day', secs:24 },
   /* The pipeline, before the book: a case pending is one that has not become
      a policy yet, and it is the only screen here that can still be changed
      by somebody picking up a phone this afternoon. */
@@ -261,7 +275,14 @@ var SLIDES = [
      Salesforce." The board says what is on each agent's desk; this says
      who is holding each requirement, which is the other way to read the
      same join and the one a branch meeting argues from. */
-  { file:'codes.html',      tab:'Pending \u00b7 code by code', secs:22 },
+  { file:'codes.html',      tab:'Pending \u00b7 code by code', secs:34 },
+  /* WHAT BECAME A POLICY, asked for on 28 October 2026: "and what about the
+     policies issued this month by agent and unit?". After the four pending
+     stops, the month's issued business from Guardian's production report:
+     each unit and each agent against their own usual month, never ranked.
+     Code by code holds longer since the same day: its pages turn every eight
+     seconds and every code has to come round. */
+  { file:'issued.html',     tab:'Issued this month', secs:24 },
   /* Ready to settle, whose move is it and who is holding it up were three
      slides here until 17 September 2026. All three read the pending feed, and
      the rebuilt pending screen now carries what they said — what can be
@@ -663,7 +684,7 @@ setInterval(function () {
 if (LONE) {
   try {
     document.getElementById('bootSub').textContent =
-      'Eleven screens, one after another. One at a time on a phone.';
+      'Fifteen screens, one after another. One at a time on a phone.';
   } catch (e) {}
 }
 

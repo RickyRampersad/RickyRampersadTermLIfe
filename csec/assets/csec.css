@@ -1,3 +1,12 @@
+/* rrb-font-fallbacks */
+@font-face{font-family:'DM Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.31%;ascent-override:95.10%;descent-override:29.72%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:102.04%;ascent-override:97.22%;descent-override:30.38%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.79%;ascent-override:94.67%;descent-override:29.58%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.76%;ascent-override:91.21%;descent-override:28.50%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
 /* SEA & CSEC Study Hub — shared styles. Branch palette, per CLAUDE.md. */
 :root{
   --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
@@ -8,7 +17,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{
-  font-family:'DM Sans',system-ui,-apple-system,sans-serif;
+  font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',system-ui,-apple-system,sans-serif;
   background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;
   background-image:
     radial-gradient(ellipse 80% 50% at 50% -20%,rgba(0,207,234,.08),transparent),
@@ -16,7 +25,7 @@ body{
   background-attachment:fixed;
 }
 a{color:inherit}
-h1,h2,h3,h4{font-family:'Montserrat',system-ui,sans-serif;line-height:1.2}
+h1,h2,h3,h4{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',system-ui,sans-serif;line-height:1.2}
 
 .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
 .narrow{max-width:640px}
@@ -31,7 +40,7 @@ header.top{
 .topbar{display:flex;align-items:center;gap:14px;padding:12px 0}
 .topbar .mark{width:42px;height:42px;flex:none}
 .brandtext{display:flex;flex-direction:column;line-height:1.15;min-width:0}
-.brandtext b{font-family:'Montserrat',sans-serif;font-weight:800;font-size:.98rem;letter-spacing:.2px}
+.brandtext b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:.98rem;letter-spacing:.2px}
 .brandtext span{font-size:.72rem;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
 .topnav{margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .topnav a{
@@ -51,7 +60,7 @@ header.top{
   font-weight:700;margin-bottom:7px;
 }
 .section-label{
-  font-family:'Montserrat',sans-serif;font-size:.74rem;letter-spacing:1.5px;text-transform:uppercase;
+  font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.74rem;letter-spacing:1.5px;text-transform:uppercase;
   color:var(--muted);font-weight:700;margin:30px 0 12px;
 }
 
@@ -70,7 +79,7 @@ header.top{
 /* ---- buttons ---- */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  font-family:'Montserrat',sans-serif;font-weight:700;font-size:.88rem;
+  font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:700;font-size:.88rem;
   padding:11px 20px;border-radius:11px;border:none;cursor:pointer;text-decoration:none;
   background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f;
   transition:transform .15s ease,box-shadow .15s ease;
@@ -99,7 +108,7 @@ select.fi option{background:var(--card)}
 .tile{
   background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;
 }
-.tile .big{font-family:'Montserrat',sans-serif;font-size:1.75rem;font-weight:800;color:var(--gold);line-height:1.1}
+.tile .big{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:1.75rem;font-weight:800;color:var(--gold);line-height:1.1}
 .tile .lab{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:5px}
 .tile.teal .big{color:var(--teal)}
 
@@ -112,7 +121,7 @@ select.fi option{background:var(--card)}
 }
 .subj-card:hover{transform:translateY(-2px);border-color:rgba(239,194,75,.4)}
 .subj-card .ico{font-size:1.5rem}
-.subj-card .nm{font-family:'Montserrat',sans-serif;font-weight:700;font-size:.88rem;margin:8px 0 2px}
+.subj-card .nm{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:700;font-size:.88rem;margin:8px 0 2px}
 .subj-card .meta{font-size:.72rem;color:var(--muted)}
 
 /* ---- progress bar ---- */
@@ -162,7 +171,7 @@ a.row:hover{background:rgba(255,255,255,.055);border-color:rgba(239,194,75,.35)}
 .opt:hover:not(:disabled){border-color:var(--teal);background:rgba(0,207,234,.07)}
 .opt .k{
   flex:none;width:25px;height:25px;border-radius:7px;background:rgba(255,255,255,.09);
-  display:grid;place-items:center;font-weight:700;font-size:.8rem;font-family:'Montserrat',sans-serif;
+  display:grid;place-items:center;font-weight:700;font-size:.8rem;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;
 }
 .opt.right{border-color:var(--good);background:rgba(74,222,128,.13)}
 .opt.right .k{background:var(--good);color:#07131f}
@@ -190,7 +199,7 @@ footer.foot a{color:var(--gold);text-decoration:none}
 .hidden{display:none !important}
 table.tbl{width:100%;border-collapse:collapse;font-size:.87rem}
 table.tbl th,table.tbl td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
-table.tbl th{font-family:'Montserrat',sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:.9px;color:var(--muted)}
+table.tbl th{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:.9px;color:var(--muted)}
 .scrollx{overflow-x:auto}
 @media (max-width:640px){
   .topnav a{padding:6px 9px;font-size:.76rem}
