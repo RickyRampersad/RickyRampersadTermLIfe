@@ -3506,17 +3506,41 @@ function apiAddContribution_(body) {
   var text = str_(body.body);
   if (text.length < 2) return { ok: false, error: 'Write what you want on the record.' };
 
-  // You have to be in the room. The register already knows whether you are.
-  var att = readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
-    return str_(a['Meeting ID']) === str_(m['ID']) && low_(a['Email']) === me.email;
-  })[0];
-  if (!att || ['present', 'late'].indexOf(low_(att['Status'])) === -1) {
-    return { ok: false, error: 'Sign in to the meeting first — that is what puts you in the room.' };
-  }
-
   var sn = sessionFor_(m['ID']);
   var started = sn ? asDate_(sn['Started']) : null;
-  var offset = started ? Math.round((Date.now() - started.getTime()) / 60000) : 0;
+
+  /*  BEFORE THE MEETING THE FLOOR IS SHUT, BUT THE AGENDA IS OPEN.
+   *
+   *  A contribution made in the room is the record of something SAID
+   *  in it, so it needs the register — that rule is below and it does
+   *  not move. But a person reading the agenda the day before has
+   *  something to say about it, and there are only two ways to take
+   *  it: open the register early, which marks them present at a
+   *  meeting that has not happened, or lose the point. Neither is
+   *  acceptable, so there is a third thing.
+   *
+   *  Until the register opens, and while no session has started, a
+   *  contribution is taken as BROUGHT IN BEFOREHAND and stamped with
+   *  an offset of -1. Nothing else ever writes a negative offset, so
+   *  the floor tells the two apart without a new column, and
+   *  floorStats_ counts only what was said in the room — otherwise a
+   *  person who wrote in on Thursday and sat silent on Friday would
+   *  read as having held the floor.                                */
+  var w = checkinWindow_(m);
+  var early = !started && !!(w.open && Date.now() < w.open.getTime());
+
+  if (!early) {
+    // You have to be in the room. The register already knows whether you are.
+    var att = readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
+      return str_(a['Meeting ID']) === str_(m['ID']) && low_(a['Email']) === me.email;
+    })[0];
+    if (!att || ['present', 'late'].indexOf(low_(att['Status'])) === -1) {
+      return { ok: false, error: 'Sign in to the meeting first — that is what puts you in the room.' };
+    }
+  }
+
+  var offset = early ? -1
+    : (started ? Math.round((Date.now() - started.getTime()) / 60000) : 0);
 
   var kind = CONTRIB_KINDS.indexOf(str_(body.kind)) > -1 ? str_(body.kind) : 'Point';
   var agendaId = str_(body.agendaId) || (sn ? str_(sn['Current Agenda ID']) : '');
@@ -3576,7 +3600,14 @@ function contributionsFor_(m, person) {
 /** Who actually said something, and how much. Silence is visible too. */
 function floorStats_(contribs, register) {
   var per = {};
-  contribs.forEach(function (c) {
+  /*  Only what was said IN THE ROOM. A contribution brought in before
+   *  the meeting carries an offset of -1 (see apiAddContribution_);
+   *  counting it here would move a person out of "in the room,
+   *  nothing on the record", which is the one thing this measure is
+   *  for. They are reported on their own, below.                   */
+  var room = contribs.filter(function (c) { return num_(c.offset) >= 0; });
+  var early = contribs.filter(function (c) { return num_(c.offset) < 0; });
+  room.forEach(function (c) {
     if (!per[c.email]) per[c.email] = { email: c.email, name: c.name, role: c.role, count: 0, kinds: {} };
     per[c.email].count++;
     per[c.email].kinds[c.kind] = (per[c.email].kinds[c.kind] || 0) + 1;
@@ -3595,7 +3626,21 @@ function floorStats_(contribs, register) {
     silent.sort(function (a, b) { return a.name.localeCompare(b.name); });
   }
 
-  return { total: contribs.length, spoke: spoke, silent: silent };
+  var broughtIn = {};
+  early.forEach(function (c) {
+    if (!broughtIn[c.email]) broughtIn[c.email] = { email: c.email, name: c.name, role: c.role, count: 0 };
+    broughtIn[c.email].count++;
+  });
+
+  return {
+    total: room.length,
+    spoke: spoke,
+    silent: silent,
+    // Brought in before the meeting: counted apart, never as the floor.
+    earlyTotal: early.length,
+    broughtIn: Object.keys(broughtIn).map(function (e) { return broughtIn[e]; })
+      .sort(function (a, b) { return b.count - a.count; })
+  };
 }
 
 /* ======================== topics ======================== */
