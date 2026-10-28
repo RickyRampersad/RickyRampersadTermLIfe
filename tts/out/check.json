@@ -1,12 +1,57 @@
 {
- "tts/out/wallday2/01.mp3": [
+ "tts/out/blastoff/01.mp3": [
   "en",
-  0.998,
-  "The top then turns to each desk's ring, what they have closed against their day and the white mark where the clock is."
+  0.996,
+  "Something's been building in this branch, quietly, for months."
  ],
- "tts/out/wallday2/02.mp3": [
+ "tts/out/blastoff/02.mp3": [
+  "en",
+  0.995,
+  "A new financial year, 30 days old, and every goal plan is in."
+ ],
+ "tts/out/blastoff/03.mp3": [
+  "en",
+  0.994,
+  "One sign in now. One app. The system sets her day and the wall shows the score."
+ ],
+ "tts/out/blastoff/04.mp3": [
+  "en",
+  0.994,
+  "That was the quiet part."
+ ],
+ "tts/out/blastoff/05.mp3": [
+  "en",
+  0.992,
+  "This is the part where we come out."
+ ],
+ "tts/out/blastoff/06.mp3": [
   "en",
   0.997,
-  "Then the agents serve today, each bubble is the work done for one agent, and its ring is how much of it was closed. Nobody is ranked, and no client is named here."
+  "Last week Akash and I took this branch to the company. Our record on the table."
+ ],
+ "tts/out/blastoff/07.mp3": [
+  "en",
+  0.998,
+  "Friday, 12 noon, we come back to you, not a brief you, to hear you."
+ ],
+ "tts/out/blastoff/08.mp3": [
+  "en",
+  0.995,
+  "Everything you write before Friday is red in the room in silence before anybody speaks."
+ ],
+ "tts/out/blastoff/09.mp3": [
+  "en",
+  0.992,
+  "The quietest person in this branch, read as carefully as the loudest."
+ ],
+ "tts/out/blastoff/10.mp3": [
+  "en",
+  0.998,
+  "So open the Meetings page and answer three questions. Say the thing you'd say in the car park."
+ ],
+ "tts/out/blastoff/11.mp3": [
+  "en",
+  0.989,
+  "Friday, 12 noon. Let's begin."
  ]
 }
