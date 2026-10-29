@@ -639,7 +639,30 @@ function doLogin() {
         $("en-email").value = email;
         return say("en-msg", "There is no password on your record yet — set a PIN here, or ask the branch manager to pull the roster from the Agent Skill Bank.", "info");
       }
-      if (!res.ok) return say("li-msg", res.error || "That did not work.");
+      if (!res.ok) {
+        //  A BACKEND PASTED BEFORE 28 OCTOBER STILL WANTS A PASSWORD, and
+        //  this page no longer sends one, so every sign-in would be refused
+        //  between publishing the page and publishing the script. Rather
+        //  than lock the branch out in that window, the password box comes
+        //  back the first time a number alone is turned away, and the next
+        //  try sends it. It disappears again the moment the script is
+        //  published, because the number alone starts working.
+        if (!pin) {
+          $("li-pin").type = "password";
+          $("li-pin").placeholder = "Your portal password";
+          var lab = document.createElement("div");
+          lab.className = "field";
+          lab.id = "li-pin-wrap";
+          if (!$("li-pin-wrap")) {
+            $("li-pin").parentNode.insertBefore(lab, $("li-pin"));
+            lab.appendChild($("li-pin"));
+          }
+          $("li-pin").focus();
+          return say("li-msg", "The branch system has not been updated yet, so it still wants a password. "
+            + "Use the same one as the agent and staff portals.");
+        }
+        return say("li-msg", res.error || "That did not work.");
+      }
       onSignedIn(res);
     })
     .catch(function () {
