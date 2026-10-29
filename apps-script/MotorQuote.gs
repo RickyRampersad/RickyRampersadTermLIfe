@@ -65,7 +65,7 @@
  */
 
 var MQ = {
-  VERSION: '2026-10-26e',
+  VERSION: '2026-10-29a',
   BRAND: 'Ricky Rampersad Branch',
   LOGO: 'https://rickyrampersadbranch.com/orphan-transition/board-mark.png',   // the blue shield (the manager's choice, 21 Oct 2026); hosted PNG: Gmail strips SVG and data URIs
   SITE: 'https://rickyrampersadbranch.com/motor-quote/',
@@ -228,6 +228,16 @@ function mqJson_(o) {
 function mqProps_() { return PropertiesService.getScriptProperties(); }
 function mqProp_(k, d) { var v = mqProps_().getProperty(k); return v == null || v === '' ? (d == null ? '' : d) : v; }
 function mqMode_() { return String(mqProp_('MQ_MODE', 'test')).toLowerCase() === 'live' ? 'live' : 'test'; }
+/** Who may receive their own e-mail in test mode: an active agent of the branch's units, an address on the
+ *  MQ_TESTERS Script property (comma-separated: the staff trying it out), and the test inbox itself. */
+function mqTester_(email) {
+  var e = mqNormEmail_(email);
+  if (!e) return false;
+  if (e === mqNormEmail_(mqTestInbox_())) return true;
+  var list = String(mqProp_('MQ_TESTERS') || '').split(/[,;\s]+/).map(mqNormEmail_).filter(Boolean);
+  if (list.indexOf(e) >= 0) return true;
+  try { return !!mqAgentByEmail_(e); } catch (x) { return false; }
+}
 function mqTestInbox_() { return mqProp_('MQ_TEST_INBOX') || Session.getEffectiveUser().getEmail(); }
 function mqQuotesTo_() { return mqProp_('MQ_QUOTES_TO', MQ.QUOTES_TO); }
 /* Renewals go to the quotes desk unless MQ_RENEW_TO names another address. */
@@ -1745,7 +1755,14 @@ function mqMail_(m) {
   if (mqMode_() !== 'live') {
     html = '<div style="background:#fff7df;border:1px solid #efc24b;padding:10px 14px;font-family:Arial;font-size:13px;color:#5c3d00">' +
       'TEST MODE: in live mode this would go to <b>' + mqEsc_(to.join(', ')) + '</b>' + (cc.length ? ', copied to ' + mqEsc_(cc.join(', ')) : '') + '.</div>' + html;
-    to = [mqTestInbox_()]; cc = []; subject = '[TEST] ' + subject;
+    /* A tester (a branch agent, or someone on MQ_TESTERS) still gets their own e-mail, so they can sign in and see
+       their copies while the branch tries it out. A client and the quotes desk never do until mqGoLive(). */
+    var inbox = mqTestInbox_(), keepTo = to.filter(mqTester_), keepCc = cc.filter(mqTester_);
+    if (keepTo.length) { to = keepTo; cc = keepCc.concat([inbox]); }
+    else { to = [inbox]; cc = keepCc; }
+    var low = to.map(function (x) { return x.toLowerCase(); }), seenCc = {};
+    cc = cc.filter(function (x) { var k = x.toLowerCase(); if (low.indexOf(k) >= 0 || seenCc[k]) return false; seenCc[k] = 1; return true; });
+    subject = '[TEST] ' + subject;
   }
   var atts = (m.attachments || []).filter(Boolean);
   if (mqGraphReady_()) {
