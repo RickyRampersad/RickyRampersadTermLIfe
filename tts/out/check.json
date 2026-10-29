@@ -1,62 +1,17 @@
 {
- "tts/out/mtsign/01.mp3": [
-  "en",
-  0.999,
-  "Tomorrow, we meet at 12. Here's how you get in and what we expect of you."
- ],
- "tts/out/mtsign/02.mp3": [
-  "en",
-  0.992,
-  "Open Rikki Ramperset Branch dot com slash meetings."
- ],
- "tts/out/mtsign/03.mp3": [
-  "en",
-  0.998,
-  "Type your agent number, the one on your card, no password, nothing else to remember."
- ],
- "tts/out/mtsign/04.mp3": [
-  "en",
-  0.993,
-  "That gets you into the room. It is not mark you present."
- ],
- "tts/out/mtsign/05.mp3": [
+ "tts/out/mtfix/01.mp3": [
   "en",
   0.996,
-  "The meeting card asks, are you here? Press it."
+  "That gets you into the room. You're not marked present yet."
  ],
- "tts/out/mtsign/06.mp3": [
+ "tts/out/mtfix/02.mp3": [
   "en",
-  0.997,
-  "That tap is the register. It timestamps you and there is nothing else to sign."
+  0.996,
+  "The button opens at half past 11. We start at 12."
  ],
- "tts/out/mtsign/07.mp3": [
-  "en",
-  0.993,
-  "Sign in and never press it and the register has you absent so press it"
- ],
- "tts/out/mtsign/08.mp3": [
-  "en",
-  0.991,
-  "Check and opens at half past 11. We start at 12."
- ],
- "tts/out/mtsign/09.mp3": [
-  "en",
-  0.976,
-  "90 minutes, 10 to read, 50 to discuss, 20 to decide."
- ],
- "tts/out/mtsign/10.mp3": [
-  "en",
-  0.998,
-  "Nothing leaves that room without a name and a date on it."
- ],
- "tts/out/mtsign/11.mp3": [
-  "en",
-  0.999,
-  "Looking in rather than attending, sign in as 0, 0, 0, 0, then give us your name and role."
- ],
- "tts/out/mtsign/12.mp3": [
+ "tts/out/mtfix/03.mp3": [
   "en",
   0.995,
-  "Try to sign in tonight. If you can't get in, say so tonight, not a half past eleven."
+  "Try tonight. If you can't get in, say so tonight, not at half past 11."
  ]
 }
