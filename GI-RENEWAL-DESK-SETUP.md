@@ -61,6 +61,53 @@ Until **`girGoLive`** is run from the editor:
 
 `girTestMode` puts it back. `girTickNow` runs the hourly follow-ups at once.
 
+## Training: a practice run
+
+Test mode is where staff train, on this month's real renewals, read from
+Salesforce. Nothing practised reaches a client, Guardian General or Salesforce:
+
+- the test letter goes to whoever approves it, the person who has the renewal
+  and the test inbox. Each of them can open **rickyrampersadbranch.com/myrenewal**,
+  enter their own e-mail, and answer it as the client. The client's page says
+  "Practice letter";
+- a comment, or an answer given as the client, stays on the desk's log. It never
+  goes onto a real Salesforce task;
+- every e-mail to the team says **[TEST]**;
+- a staff address cannot be saved as the client's e-mail;
+- leave "really going ahead" **unticked** on the approve and proceed steps. Ticked,
+  Salesforce is written for real, and that renewal can no longer be started again.
+
+**One session, start to finish** (about 30 minutes a person):
+
+1. The trainee signs in at **rickyrampersadbranch.com/renewaldesk**, picks next
+   month and a line, opens a renewal and presses **Take it**.
+2. **Last year**: read the history and what the record says.
+3. **Notice**: find Guardian General's notice in support@ and read it, or type its
+   figures; check every one and save.
+4. **Values**: confirm each vehicle's or property's value.
+5. **Letter**: Draft with AI, read every word, change what is needed, preview,
+   then **Send for approval**.
+6. **The approver** (the branch manager or the Branch Manager's Assistant) opens the
+   e-mail's link, reads it, sends it back once with a note, then approves it.
+7. **The trainee as the client**: the letter is in their inbox. They sign in at
+   /myrenewal with the code, read the history, ask a question, then approve with a
+   changed value.
+8. **Proceed to renew**, unticked: the instruction comes to the team marked TEST.
+   Mark Guardian General's reply, delivered and paid by hand.
+9. **Start again** for the next trainee: under "Every step so far", **Practice:
+   back to the letter** (the next person starts at the approval) or **Practice:
+   start from the beginning**. The branch manager, the Branch Manager's Assistant,
+   or the person who has the renewal can press them.
+
+Between sessions, **`girClearPractice`** in the editor puts every practice renewal
+back to its letter at once.
+
+**`girGoLive` clears the practice first.** Every renewal practised in test mode
+goes back to its letter, which must be sent for approval again before it goes, so
+nothing practised reads as sent. Any staff address left as a client's e-mail is
+taken off. A renewal Salesforce was written for is left as it is and named in the
+message.
+
 **The day you run `girGoLive`, clients get one door.** The homepage's "Renew my
 policy" opens the old renewal page, which then shows "Renewing this month? Sign in
 with my e-mail" above its access-code box, so a client with a new letter and a

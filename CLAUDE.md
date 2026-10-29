@@ -5569,14 +5569,34 @@ is separate and untouched.
   the letter); at 7 days a call task and the approvers asked to decide.
 - **Test mode until `girGoLive`** (`GIR_LIVE`): client and Guardian General mail to the person who pressed and the test
   inbox, marked TEST; Salesforce written only on a ticked "really going ahead". `girTestMode`, `girTickNow`.
+- **Practice runs for training** (29 October 2026: "want to test this as I want to do the training with staff"). Staff
+  practise on the month's real renewals in test mode, so nothing practised may leak into Salesforce or to a client:
+  - **The test letter** goes to the approver, the person who has the renewal (`Holder e-mail`) and `GIR_TEST_TO`; `Sent to`
+    keeps every address, and any of them signs in at `/myrenewal/` to answer it as the client (`girSentTo_`). The
+    reminders go to the same list. The client's card says "Practice letter" (`practice` in `girView_`).
+  - **Nothing reaches a real task**: a comment in test mode with no task of the desk's own stays on the desk's log
+    (`comment (test)`); a client's answer on a Test row never looks for last year's open renewal task. A Test row's task
+    exists only when the approver ticked "really going ahead".
+  - **A practice instruction never takes Guardian General's real mail** about the policy as its reply (hourly run).
+  - **Every internal e-mail in test mode** is marked `[TEST]` (`girInternal_`).
+  - **A staff address is never the client's e-mail** (`girOurAddress_`: support@, the branch's mailboxes, anyone on the
+    Agent Skill Bank, `GIR.TEST_TO`).
+  - **Start again** (`reset` act, `girPracticeFor_`, `girPracticePatch_`): the approver, or the person who has the renewal,
+    puts it back to its letter (notice, values and letter kept; needs approving again) or to the beginning (everything
+    cleared), from two buttons under "Every step so far". Never once Salesforce was written for it (`New trans`); live,
+    only a Test row.
+  - **`girGoLive` clears the practice first** (`girClearPractice_`; `girClearPractice` on the editor's Run button between
+    sessions): every Test row back to its letter, a staff address taken off any row, a row Salesforce was written for left
+    and named.
 - **Who signs in**: the group client management sign-in (`gcmWho_`; the branch app's `sso.js` fills it). Pawan must be on
   the Agent Skill Bank as staff with a Password; a Driver role is refused here. The record is the **GI Renewals** and **GI
   Renewal Log** tabs of the group sheet.
 - **The look** is the motor quote's: light, soft ocean blue, the blue shield (`orphan-transition/board-mark.png`), on both
   the desk and the client's page; the e-mails carry the gold `logo-mark.png`.
 - Tests in the scratchpad (`gir/`): `flow-test.js` (114, the whole journey in Node on a made-up book, three years of
-  billing, payments and an old renewal task with notes), `desk-test.js` (32, Playwright, the desk with a made-up notice PDF
-  read by pdf.js, and the year folds), `client-test.js` (38, the client's page on a phone and a desk, the years in full, and
+  billing, payments and an old renewal task with notes), `practice-test.js` (41, a training run from the letter to go live),
+  `desk-test.js` (36, Playwright, the desk with a made-up notice PDF read by pdf.js, the year folds and the practice
+  buttons), `client-test.js` (40, the client's page on a phone and a desk, the years in full, and
   a group's tab) and `door-test.js` (12, the old page in test mode, live, and with no backend). `read-test.js` checks the notice reader on real notice texts kept in the scratchpad only.
 
 ## The branch's own forms — no client link opens a JotForm
