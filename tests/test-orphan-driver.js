@@ -232,6 +232,25 @@ const dd = Object.fromEntries((DR.days || []).map(x => [x.d, x]));
 if (dd[TODAY]) ok('today: one prompt by hand, five by automation, two notes, one after a prompt', dd[TODAY].hand === 1 && dd[TODAY].auto === 5 && dd[TODAY].notes === 2 && dd[TODAY].after === 1, JSON.stringify(dd[TODAY]));
 ok('named on the board by him: none in this sample; the namers are read', DR.named && typeof DR.named.board === 'number');
 
+console.log('\nThe flow, the hours, the speed, the weeks:');
+const FL = DR.flow || {};
+const sumObj = o => Object.values(o || {}).reduce((a, b) => a + b, 0);
+ok('every prompt is in the flow once, by kind', Object.values(FL.kinds || {}).reduce((a, k) => a + sumObj(k), 0) === AN.prompts, JSON.stringify(FL.kinds));
+ok('and once by who answered it, or whose task it waits on', ['same', 'next', 'later', 'open'].reduce((a, w) => a + sumObj((FL.who || {})[w]), 0) === AN.prompts, JSON.stringify(FL.who));
+ok('the kinds: his own words, the chase, the instructions, the moves, the lists', FL.kinds.hand && FL.kinds.chase && FL.kinds.instr && FL.kinds.move && FL.kinds.list
+  && sumObj(FL.kinds.hand) === 2 && sumObj(FL.kinds.chase) === 5 && sumObj(FL.kinds.instr) === 2 && sumObj(FL.kinds.list) === 2, JSON.stringify(FL.kinds));
+ok('prompts left open wait on whoever holds the task', (FL.who.open.sasha || 0) >= 1 && (FL.who.open.liz || 0) >= 1, JSON.stringify(FL.who.open));
+const HR = DR.hours || {};
+ok('the hours, 5:00 to 19:00, every prompt and every note counted once', HR.from === 5 && HR.prompts.length === 15 && HR.prompts.reduce((a, b) => a + b, 0) === AN.prompts
+  && HR.notes.reduce((a, b) => a + b, 0) === DR.notes && HR.peakPrompts >= 5 && HR.peakPrompts <= 19, JSON.stringify(HR));
+const WV = DR.wave || {};
+ok('the speed: every answer in one bucket, and the median', WV.counts.reduce((a, b) => a + b, 0) === AN.answered && WV.answered === AN.answered && typeof WV.median === 'number' && WV.within4 <= WV.within24, JSON.stringify(WV));
+ok('each person\'s median hours to answer', DR.team.every(p => p.hours === null || typeof p.hours === 'number') && typeof TM.Azariah.hours === 'number', JSON.stringify(DR.team.map(p => [p.name, p.hours])));
+ok('the weeks: prompts and notes, oldest first', (DR.weeks || []).length >= 1 && DR.weeks.reduce((a, w) => a + w.prompts, 0) === AN.prompts && DR.weeks.reduce((a, w) => a + w.notes, 0) === DR.notes, JSON.stringify(DR.weeks));
+ok('the lift: the team\'s notes on his busiest days against his quietest', DR.lift === null || (typeof DR.lift.busy === 'number' && typeof DR.lift.quiet === 'number' && DR.lift.busyPrompts >= DR.lift.quietPrompts), JSON.stringify(DR.lift));
+ok('the stream: up to twenty working days, today last', (DR.stream || []).length >= 1 && DR.stream.length <= 20 && (DR.stream[DR.stream.length - 1].d === TODAY || e.Utilities.formatDate(new Date(), TZ, 'u') > 5), JSON.stringify((DR.stream || []).map(x => x.d)));
+ok('parked: two notes left a client with him; one still waits on him now', DR.parked && DR.parked.notes === 2 && DR.parked.tasks === 2 && DR.parked.now === 1, JSON.stringify(DR.parked));
+
 console.log('\nNothing about a client:');
 ['tokA', 'tokB', 'Alice', 'Abel', 'Brian', 'Carla', 'Dara', '5000000', '5009990', TA.slice(0, 15), 'voicemail', 'where are we', 'Pending', 'Met the client', 'wrote in this morning'].forEach(s => ok('no "' + s + '"', body.indexOf(s) < 0));
 ok('no staff surname', !/Lalla|Jagassar|Griffith|Dookran|Ramnanan\b/.test(body), (body.match(/.{30}(Lalla|Jagassar|Griffith|Dookran|Ramnanan\b).{30}/) || [])[0]);

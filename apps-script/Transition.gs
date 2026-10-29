@@ -13208,7 +13208,9 @@ function tOwallSaid_(s) {
 var T_DRIVE = {
   TEAM: [{ key: 'liz', name: 'Liz' }, { key: 'sasha', name: 'Sasha' }, { key: 'azariah', name: 'Azariah' }, { key: 'kamla', name: 'Kamla' }],
   PROMPT: { own: 'hand', chase: 'auto', list: 'auto', intel: 'auto', follow: 'auto', move: 'auto' },   // a hold notice, a naming and a record are not prompts
-  DAYS: 10,
+  DAYS: 10, STREAM: 20, WEEKS: 5,
+  HOURS: [5, 19],                                   // the hours drawn, his day from 5:00; earlier and later fold into the ends
+  WAVE: [1, 2, 4, 8, 24, 48, 72, 1e9],              // hours from a prompt to the first word after it, as buckets
   /* what a note by the team says. A note can say several things; its reading is the first that fits, in this order */
   PARK: /who (?:to|i can|should|this should be) (?:have (?:this|it) )?(?:assign|be assigned)|advise (?:on )?who|confirm who|\bRR to assign|agent to be assigned|(?:awa\w*ting|waiting (?:on|for)) (?:call )?(?:new |an? |the )?agent|new agent to be assigned|awaiting (?:agent )?assignment|(?:awa\w*ting|waiting)(?: for| on)? (?:the )?assignment of (?:an? |new )?agent|needs? an agent assigned/i,
   ASK: /(?:@Ricky Rampersad|Mr\.? Rampersad|\bRR\b)[\s\S]*?(?:\?|advise|guidance|confirm|please|kindly|reminder)/i,
@@ -13324,29 +13326,45 @@ function tOwallMail_(s) {
 function tOwallDriver_(today, tz) {
   var D = tCupData_(), T = D.tasks || {}, per = tCupPeriods_(today);
   var dayOf = function (m) { return m ? Utilities.formatDate(new Date(m), tz, 'yyyy-MM-dd') : ''; };
-  /* the last ten working days, oldest first */
-  var days = [], d = new Date(today + 'T12:00:00');
-  for (var g = 0; days.length < T_DRIVE.DAYS && g < 30; g++) {
+  var hourOf = function (m) { return Number(Utilities.formatDate(new Date(m), tz, 'H')); };
+  /* every working day since the first letters, oldest first; the last ten are the bars, the last twenty the stream */
+  var all = [], d = new Date(today + 'T12:00:00');
+  for (var g = 0; g < 120; g++) {
     var ymd = Utilities.formatDate(d, tz, 'yyyy-MM-dd'), wd = Number(Utilities.formatDate(d, tz, 'u'));
-    if (wd <= 5 && ymd >= T_OWALL2.FROM) days.unshift(ymd);
+    if (ymd < T_OWALL2.FROM) break;
+    if (wd <= 5) all.unshift(ymd);
     d = new Date(d.getTime() - 86400000);
   }
+  var days = all.slice(-T_DRIVE.DAYS), stream = all.slice(-T_DRIVE.STREAM);
   var DAY = {};
-  days.forEach(function (x) { DAY[x] = { d: x, hand: 0, auto: 0, notes: 0, after: 0 }; });
+  all.forEach(function (x) { DAY[x] = { d: x, hand: 0, auto: 0, notes: 0, after: 0 }; });
   var KINDS = ['own', 'chase', 'list', 'intel', 'follow', 'move', 'hold', 'name', 'auto'];
   var blankK = function () { var o = {}; KINDS.forEach(function (k) { o[k] = 0; }); return o; };
   var posts = { all: blankK(), week: blankK(), today: blankK() };
   var inP = function (x, w) { return x && x >= w.from && x <= w.to; };
   var ans = { prompts: 0, answered: 0, same: 0, next: 0, later: 0, open: 0, hand: { prompts: 0, answered: 0, same: 0 } };
   var S = {};
-  T_DRIVE.TEAM.forEach(function (p) { S[p.key] = { key: p.key, name: p.name, notes: 0, after: 0, own: 0, answered: 0, same: 0, waiting: 0, closes: 0, th: {}, read: { drive: 0, park: 0, record: 0, status: 0 }, week: { notes: 0, after: 0 } }; });
+  T_DRIVE.TEAM.forEach(function (p) { S[p.key] = { key: p.key, name: p.name, notes: 0, after: 0, own: 0, answered: 0, same: 0, waiting: 0, closes: 0, hrs: [], th: {}, read: { drive: 0, park: 0, record: 0, status: 0 }, week: { notes: 0, after: 0 } }; });
+  /* the flow: each prompt, by kind, to when it was answered, to who answered it (or whose task it waits on) */
+  var GROUP = { own: 'hand', chase: 'chase', follow: 'instr', move: 'move', list: 'list', intel: 'list' };
+  var flow = { kinds: {}, who: { same: {}, next: {}, later: {}, open: {} } };
+  ['hand', 'chase', 'instr', 'move', 'list'].forEach(function (k) { flow.kinds[k] = { same: 0, next: 0, later: 0, open: 0 }; });
+  var bump = function (o, k) { o[k] = (o[k] || 0) + 1; };
+  /* the hour of day: his prompts and the team's notes, 5:00 to 19:00 */
+  var H0 = T_DRIVE.HOURS[0], H1 = T_DRIVE.HOURS[1], hours = { prompts: [], notes: [] };
+  for (var h = H0; h <= H1; h++) { hours.prompts.push(0); hours.notes.push(0); }
+  var hBump = function (arr, m) { var x = hourOf(m); if (x < H0) x = H0; if (x > H1) x = H1; arr[x - H0]++; };
+  /* how fast: hours from a prompt to the first word after it */
+  var WAVE = T_DRIVE.WAVE, wave = WAVE.map(function () { return 0; }), hrsAll = [];
+  var weeks = {}, wk = function (x) { var k = tOwallMonday_(x); return weeks[k] = weeks[k] || { w: k, prompts: 0, answered: 0, same: 0, notes: 0, after: 0 }; };
+  var parked = { notes: 0, tasks: 0, now: 0 };
   var tasksTouched = 0;
   Object.keys(T).forEach(function (id) {
-    var t = T[id], pending = [], any = false;
+    var t = T[id], pending = [], any = false, lastPark = 0, lastBm = 0, closedAt = 0, hadPark = false;
     t.e.forEach(function (e) {
       var dd = dayOf(e.t);
       if (e.w === 'bm') {
-        any = true;
+        any = true; lastBm = e.t;
         posts.all[e.k]++;
         if (inP(dd, per.week)) posts.week[e.k]++;
         if (dd === today) posts.today[e.k]++;
@@ -13354,7 +13372,9 @@ function tOwallDriver_(today, tz) {
         if (!how) return;
         if (DAY[dd]) DAY[dd][how]++;
         ans.prompts++; if (how === 'hand') ans.hand.prompts++;
-        pending.push({ t: e.t, d: dd, how: how });
+        hBump(hours.prompts, e.t);
+        if (dd) wk(dd).prompts++;
+        pending.push({ t: e.t, d: dd, how: how, g: GROUP[e.k] || 'list' });
         return;
       }
       var s = S[e.w];
@@ -13367,34 +13387,69 @@ function tOwallDriver_(today, tz) {
         s.read[tOwallReading_(e.th)]++;
         if (inP(dd, per.week)) { s.week.notes++; if (after) s.week.after++; }
         if (DAY[dd]) { DAY[dd].notes++; if (after) DAY[dd].after++; }
-      } else if (e.k === 'c') s.closes++;
+        if (dd) { var W = wk(dd); W.notes++; if (after) W.after++; }
+        hBump(hours.notes, e.t);
+        if (/p/.test(String(e.th || ''))) { parked.notes++; lastPark = e.t; hadPark = true; }
+      } else if (e.k === 'c') { s.closes++; closedAt = e.t; }
       /* every prompt still open on this task is answered by this entry */
       pending.forEach(function (p) {
         ans.answered++; s.answered++;
         var same = p.d === dd, wdays = same ? 0 : tWorkingDays_(new Date(p.t), new Date(e.t));
-        if (same) { ans.same++; s.same++; } else if (wdays <= 1) ans.next++; else ans.later++;
+        var when = same ? 'same' : wdays <= 1 ? 'next' : 'later';
+        ans[when]++; if (same) s.same++;
         if (p.how === 'hand') { ans.hand.answered++; if (same) ans.hand.same++; }
+        flow.kinds[p.g][when]++; bump(flow.who[when], e.w);
+        var hr = Math.max(0, (e.t - p.t) / 3600000);
+        hrsAll.push(hr); s.hrs.push(hr);
+        for (var b = 0; b < WAVE.length; b++) if (hr <= WAVE[b] || b === WAVE.length - 1) { wave[b]++; break; }
+        if (p.d) { var PW = wk(p.d); PW.answered++; if (same) PW.same++; }
       });
       pending = [];
     });
-    pending.forEach(function () { ans.open++; if (S[t.o]) S[t.o].waiting++; });
+    pending.forEach(function (p) { ans.open++; if (S[t.o]) S[t.o].waiting++; flow.kinds[p.g].open++; bump(flow.who.open, S[t.o] ? t.o : 'other'); });
+    if (hadPark) parked.tasks++;
+    /* still waiting on him: the last word on the task leaves it with him, and nothing from him or a close came after */
+    if (lastPark && lastPark > lastBm && lastPark > closedAt && t.e[t.e.length - 1].t === lastPark) parked.now++;
     if (any) tasksTouched++;
   });
+  var med = function (a) { a = a.slice().sort(function (x, y) { return x - y; }); if (!a.length) return null; var m = Math.floor(a.length / 2); return Math.round(10 * (a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2)) / 10; };
   var sumK = function (o, ks) { return ks.reduce(function (a, k) { return a + (o[k] || 0); }, 0); };
   var team = T_DRIVE.TEAM.map(function (p) {
     var s = S[p.key], th = {};
     ['r', 't', 'p', 'k', 'z', 'a', 'q', 'm', 'd', 'n', 'v', 'x'].forEach(function (c) { th[c] = s.th[c] || 0; });
     return { name: s.name, notes: s.notes, after: s.after, own: s.own, answered: s.answered, same: s.same, waiting: s.waiting, closes: s.closes,
-      themes: th, read: s.read, week: s.week };
+      hours: med(s.hrs), themes: th, read: s.read, week: s.week };
   }).filter(function (p) { return p.notes || p.answered || p.waiting; });
   var notes = team.reduce(function (a, p) { return a + p.notes; }, 0), after = team.reduce(function (a, p) { return a + p.after; }, 0);
+  /* the lift: the team's notes on the days he prompted most, against the days he prompted least (working days, not today) */
+  var past = all.filter(function (x) { return x !== today; }).map(function (x) { return DAY[x]; });
+  var lift = null;
+  if (past.length >= 6) {
+    var byP = past.slice().sort(function (a, b) { return (a.hand + a.auto) - (b.hand + b.auto); }), half = Math.floor(byP.length / 2);
+    var avg = function (arr, f) { return arr.length ? Math.round(10 * arr.reduce(function (a, x) { return a + f(x); }, 0) / arr.length) / 10 : 0; };
+    var lo = byP.slice(0, half), hi = byP.slice(byP.length - half);
+    var xs = past.map(function (x) { return x.hand + x.auto; }), ys = past.map(function (x) { return x.notes; });
+    var mx = xs.reduce(function (a, b) { return a + b; }, 0) / xs.length, my = ys.reduce(function (a, b) { return a + b; }, 0) / ys.length;
+    var cov = 0, vx = 0, vy = 0;
+    xs.forEach(function (x, k) { cov += (x - mx) * (ys[k] - my); vx += (x - mx) * (x - mx); vy += (ys[k] - my) * (ys[k] - my); });
+    lift = { busy: avg(hi, function (x) { return x.notes; }), quiet: avg(lo, function (x) { return x.notes; }), busyPrompts: avg(hi, function (x) { return x.hand + x.auto; }),
+      quietPrompts: avg(lo, function (x) { return x.hand + x.auto; }), r: vx && vy ? Math.round(100 * cov / Math.sqrt(vx * vy)) / 100 : null, days: past.length };
+  }
+  /* the busiest hours */
+  var peak = function (arr) { var b = 0; arr.forEach(function (v, k) { if (v > arr[b]) b = k; }); return H0 + b; };
+  var within = function (h) { return hrsAll.filter(function (x) { return x <= h; }).length; };
+  var mkDay = function (x) { var o = DAY[x]; return { d: x, label: Utilities.formatDate(new Date(x + 'T12:00:00'), tz, 'EEE d'), hand: o.hand, auto: o.auto, notes: o.notes, after: o.after }; };
+  var wkList = Object.keys(weeks).sort().slice(-T_DRIVE.WEEKS).map(function (k) { var w = weeks[k]; return { w: tDmy_(k).replace(/ \d{4}$/, ''), prompts: w.prompts, answered: w.answered, same: w.same, notes: w.notes, after: w.after }; });
   return { since: T_OWALL2.FROM, periods: { week: per.week.from },
     posts: { all: posts.all, week: posts.week, today: posts.today,
       hand: { all: posts.all.own, week: posts.week.own, today: posts.today.own },
       auto: { all: sumK(posts.all, ['chase', 'list', 'intel', 'follow', 'move']), week: sumK(posts.week, ['chase', 'list', 'intel', 'follow', 'move']), today: sumK(posts.today, ['chase', 'list', 'intel', 'follow', 'move']) },
       tasks: tasksTouched },
     answer: ans, notes: notes, after: after, team: team,
-    days: days.map(function (x) { var o = DAY[x]; return { d: x, label: Utilities.formatDate(new Date(x + 'T12:00:00'), tz, 'EEE d'), hand: o.hand, auto: o.auto, notes: o.notes, after: o.after }; }) };
+    flow: flow, hours: { from: H0, prompts: hours.prompts, notes: hours.notes, peakPrompts: peak(hours.prompts), peakNotes: peak(hours.notes) },
+    wave: { edges: WAVE, counts: wave, median: med(hrsAll), within4: within(4), within24: within(24), answered: hrsAll.length },
+    weeks: wkList, lift: lift, parked: parked,
+    days: days.map(mkDay), stream: stream.map(mkDay) };
 }
 
 /* ── the First-Contact Cup ────────────────────────────────────────────────────────────────────────────────────────────
