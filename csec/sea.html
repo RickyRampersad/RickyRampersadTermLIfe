@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SEA Papers | SEA &amp; CSEC Study Hub</title>
+<title>SEA Papers | SEA Study Hub</title>
+<meta name="description" content="Practice papers and mock examinations for the Secondary Entrance Assessment, built to the Ministry of Education’s blueprint: Mathematics, English Language Arts and the Writing paper, each to the real item count, marks and time."/>
+<meta property="og:description" content="SEA practice papers and timed mocks in Mathematics, English Language Arts and Writing, built to the Ministry’s Assessment Framework."/>
 <meta name="robots" content="noindex"/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -116,9 +118,9 @@
       <div class="pagehead">
         <div class="eyebrow">Built to the Ministry blueprint</div>
         <h1>SEA practice papers</h1>
-        <p>Twelve practice papers and two mock examinations in each of the three papers a child
-           actually sits. Every one is built to the item counts, mark allocation and working time
-           set out in the Ministry&rsquo;s <b>Assessment Framework 2025&ndash;2028</b>.</p>
+        <p id="intro"><span id="intro-count">Practice papers and mock examinations</span> in each of the three
+           papers a child sits in Standard 5. Every one is built to the item counts, mark allocation
+           and working time set out in the Ministry&rsquo;s <b>Assessment Framework 2025&ndash;2028</b>.</p>
       </div>
 
       <div class="card" style="margin-bottom:20px">
@@ -259,6 +261,21 @@
   var tab=(want&&SUBJ.indexOf(want)>-1)?want:SUBJ[0];
   var paper=null, idx=0, answers={}, tick=null, left=0, started=0, pick=-1;
   var ticked={}, numOk=false, formOk=false;
+  /* The counts come off the data, never the copy, so the page cannot say
+     "twelve" after sea-papers.js has moved to ten. */
+  var TOTAL=S.practiceCount+S.mockCount;
+  var PROMPTS=(S.writing||[]).reduce(function(a,w){ return a+((w.prompts||[]).length); },0);
+  function num(n){
+    var W=['no','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen',
+           'fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty'];
+    if(W[n]) return W[n];
+    var T=['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+    if(n>20&&n<100) return T[Math.floor(n/10)]+(n%10?'-'+W[n%10]:'');
+    return String(n);
+  }
+  function cap(t){ return t.charAt(0).toUpperCase()+t.slice(1); }
+  $('intro-count').textContent=cap(num(S.practiceCount))+' practice '+(S.practiceCount===1?'paper':'papers')+
+    ' and '+num(S.mockCount)+' mock '+(S.mockCount===1?'examination':'examinations');
 
   /* ---------------- blueprint summary ---------------- */
   $('bp').innerHTML=B.order.map(function(k){
@@ -285,19 +302,19 @@
   function drawPapers(){
     var d=$('depth');
     if(tab==='p-ela-writing'){
-      d.innerHTML='All fourteen writing papers are written out in full &mdash; forty-two prompts, none repeated. '+
+      d.innerHTML='All '+num(TOTAL)+' writing papers are written out in full &mdash; '+num(PROMPTS)+' topics, none repeated. '+
                   'The writing paper is marked by you or by a parent against the Ministry&rsquo;s four criteria, '+
                   'because no program can mark a child&rsquo;s story honestly.';
     } else {
       var dep=CSEC.seaDepth(tab);
       var need=B[tab].strands.map(function(s){return s.items;}).reduce(function(a,b){return a+b;},0);
-      d.innerHTML=dep.papers>=14
-        ? 'All fourteen papers are built from entirely separate questions.'
+      d.innerHTML=dep.papers>=TOTAL
+        ? 'All '+num(TOTAL)+' papers are built from entirely separate questions.'
         : '<b>Straight from us, so you are not surprised:</b> the bank currently supports <b>'+dep.papers+
           ' completely separate '+(dep.papers===1?'paper':'papers')+'</b>. After that, questions begin to reappear '+
           'across papers &mdash; never twice inside the same paper. The tightest topic is <b>'+CSEC.esc(dep.strand)+
-          '</b>: '+dep.have+' questions written, '+dep.need+' needed per paper. Fourteen separate papers needs '+
-          (need*14)+' questions in this subject.';
+          '</b>: '+dep.have+' questions written, '+dep.need+' needed per paper. '+cap(num(TOTAL))+' separate papers need '+
+          (need*TOTAL)+' questions in this subject.';
     }
     $('papers').innerHTML=CSEC.seaPapers(tab).map(function(p){
       var done=sat(tab,p.n);

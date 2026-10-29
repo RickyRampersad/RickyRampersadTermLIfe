@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SEA &amp; CSEC Study Hub — Flyer</title>
+<title>Flyer | SEA Study Hub</title>
 <meta name="robots" content="noindex"/>
+<meta name="description" content="A one-page flyer for the SEA Study Hub: free practice, mock papers and guided methods for Standard 1 to Standard 5, built in Trinidad for branch families."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -108,17 +109,17 @@ h2{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans
     <div class="free">FREE</div>
   </div>
 
-  <h1>Your child has five years<br>to get ready for <em>CSEC</em>.</h1>
+  <h1>Your child has five years<br>to get ready for the <em>SEA</em>.</h1>
   <p class="lead">Most of them are spent wondering whether the work is going in. The Study Hub
-  follows the real syllabus from Form 1 to Form 5, sets ten minutes a night aimed at whatever is
-  weakest, and shows you honestly how it is going. Built here in Trinidad, free for branch families,
-  nothing to install.</p>
+  follows the primary curriculum from Standard 1 to Standard 5 and the Ministry&rsquo;s own SEA blueprint, sets ten minutes a night
+  aimed at whatever is weakest, and shows you honestly how it is going. Built here in Trinidad, free
+  for branch families, nothing to install.</p>
 
   <div class="stats">
-    <div class="stat"><b id="f-subj">31</b><span>subjects</span></div>
-    <div class="stat"><b id="f-q">677</b><span>practice questions</span></div>
-    <div class="stat"><b id="f-g">24</b><span>worked methods</span></div>
-    <div class="stat"><b id="f-years">10</b><span>years tracked</span></div>
+    <div class="stat"><b id="f-subj">8</b><span>primary subjects</span></div>
+    <div class="stat"><b id="f-q">309</b><span>practice questions</span></div>
+    <div class="stat"><b id="f-g">18</b><span>guided methods</span></div>
+    <div class="stat"><b id="f-years">5</b><span>years to the SEA</span></div>
     <div class="stat"><b>$0</b><span>to use</span></div>
   </div>
 
@@ -128,18 +129,18 @@ h2{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans
       <div class="pt"><span class="ico">1</span><span><b>A plan for tonight</b>
         <span>Six topics chosen from what they got wrong, what is due for review, and what they have not started.</span></span></div>
       <div class="pt"><span class="ico">2</span><span><b>The method, not just the answer</b>
-        <span>Worked walkthroughs for the question types that carry the most marks, with the mistakes that lose them.</span></span></div>
-      <div class="pt"><span class="ico">3</span><span><b>Timed tests at exam pace</b>
-        <span>Ninety seconds a question, no answers until they submit, then a full review.</span></span></div>
+        <span>Guided methods for the question types that carry the most marks<span id="f-gw-wrap">, <span id="f-gw">12</span> of them for the writing paper</span>, with the mistakes that lose them.</span></span></div>
+      <div class="pt"><span class="ico">3</span><span><b>Mock papers at the real timing</b>
+        <span>Built to the SEA blueprint: 40 Mathematics items in 75 minutes, about 1 minute 50 seconds each. No answers until they submit, then a full review.</span></span></div>
     </div>
     <div class="col">
       <h2>What you get</h2>
       <div class="pt"><span class="ico">4</span><span><b>The three topics to ask about</b>
-        <span>Not &ldquo;Maths 62%&rdquo; but &ldquo;Consumer Arithmetic 45%&rdquo;. A better question than &ldquo;is your homework done&rdquo;.</span></span></div>
+        <span>Not &ldquo;Maths 62%&rdquo; but &ldquo;Fractions 45%&rdquo;. A better question than &ldquo;is your homework done&rdquo;.</span></span></div>
       <div class="pt"><span class="ico">5</span><span><b>Whether the habit is real</b>
         <span>Twenty-eight squares, one per day. Gaps in that grid explain most falling marks.</span></span></div>
-      <div class="pt"><span class="ico">6</span><span><b>What the year is for</b>
-        <span>Form 3 decides subject choice. Form 4 starts the SBA. Nothing should arrive as a surprise.</span></span></div>
+      <div class="pt"><span class="ico">6</span><span><b>What the years are for</b>
+        <span>Five years, one examination, sat in Standard 5. The SEA mark decides which secondary school your child is placed in. Each Standard builds on the one before, so nothing should arrive as a surprise.</span></span></div>
     </div>
   </div>
 
@@ -155,9 +156,10 @@ h2{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans
     </div>
   </div>
 
-  <p class="small"><b>Being straight with you:</b> this does not replace school, a teacher, or real
-  CXC past papers &mdash; it builds the nightly habit and finds the weak topics. The readiness score
-  it shows is our own indicator from practice in the hub, <b>not a predicted CSEC grade</b>. If you
+  <p class="small"><b>Being straight with you:</b> this does not replace school, a teacher, or the
+  Ministry&rsquo;s own SEA past papers, which are published free and linked from the hub &mdash; it
+  builds the nightly habit and finds the weak topics. The readiness band it shows is our own
+  indicator from practice in the hub, <b>not a predicted SEA mark</b>. If you
   use the optional family sync, the names and scores in your group are readable by anyone holding
   your group code, so share it only with family and your child&rsquo;s teacher. You can delete your
   data from it at any time.</p>
@@ -177,11 +179,16 @@ h2{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans
 (function(){
   function set(id,n){ var e=document.getElementById(id); if(e&&n) e.textContent=n; }
   try{
-    var C=window.CSEC_CURRICULUM||{};
+    var C=window.CSEC_CURRICULUM||{}, G=window.CSEC_GUIDES||[];
     set('f-q',(window.CSEC_QUESTIONS||[]).length);
-    set('f-g',(window.CSEC_GUIDES||[]).length);
+    set('f-g',G.length);
     set('f-years',(C.levels||[]).length);
     set('f-subj',Object.keys(C.subjects||{}).length);
+    /* The writing-paper count is a clause, so with none to count the clause goes
+       rather than a stale number staying on the sheet. */
+    var gw=G.filter(function(g){ return g.subj==='p-ela-writing'; }).length;
+    var wrap=document.getElementById('f-gw-wrap');
+    if(gw) set('f-gw',gw); else if(wrap&&wrap.parentNode) wrap.parentNode.removeChild(wrap);
   }catch(e){}
 })();
 </script>

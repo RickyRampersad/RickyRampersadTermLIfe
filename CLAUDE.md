@@ -5922,6 +5922,40 @@ has the steps.
 - Stage, question and check keys must match between the page (`STAGES`, `WHY`, `CHECKS`) and the script
   (`ESSAY_STAGES`, `ESSAY_WHY`, `ESSAY_CHECKS`); the test compares them.
 
+## The Study Hub — SEA only
+
+`csec/` is the Study Hub at rickyrampersadbranch.com/csec, built for a child of
+the branch manager's who is sitting the SEA. It began as a CSEC hub, grew a
+primary ladder, and on **16 October 2026** was made for the SEA alone: *"ok want
+sea only"*, said three times, the last after the guide list had been scoped and
+the product still said CSEC on its front door.
+
+- **The switch is `CSEC_SCOPE` at the top of `csec/data/curriculum.js`.** Under
+  `'sea'` every secondary subject, level, stage, roadmap entry and resource
+  group is cut from the data before any page reads it, and `questions.js` and
+  `guides.js` trim themselves the same way. The CSEC data is still in the
+  files, unreachable. The page copy was rewritten to match; nothing visible
+  names CSEC, CXC, the SBA or a Form. The folder and the address stay `csec/`,
+  because that is the link families already hold.
+- **`csec/tests/scope.js` holds it.** Every page, as student, parent and
+  teacher, fails on any visible trace of the old ladder. Run the five suites
+  in `csec/tests/` before pushing (`README.md` there says how).
+- **The code names stay.** `CSEC.esc`, `window.CSEC_GUIDES`, `csec-config.js`
+  are identifiers, not copy. Renaming them buys nothing and breaks everything.
+- **`/sea/` is a different product** — the RRB Academy, the manager's own, with
+  its own backend and passwords. On 16 October 2026 a session overwrote it
+  by mistake and restored it byte for byte; *"dont wan this in my acadeny
+  module as this is different ok"*. Never write into `sea/` from Study Hub work.
+- **No child's name or script enters the repository.** The marks that shaped
+  the writing module (Content 0, the other three criteria 5 each — an off-topic
+  answer, not weak writing) are described, never attributed. A second child's
+  test was shared in confidence to build the skill set and stays out of the
+  repository entirely.
+- **The writing guides keep one house style**, held by `csec/tests/guides.js`:
+  one guide owns the clock, one name per thing, no priced marks, identical
+  letter headings, every model sentence correct Standard English because a
+  child copies it. The header of the SEA block in `guides.js` lists the rules.
+
 ## The Premium Due Desk — checked by a person, sent at ten
 
 `premium-due/` and `apps-script/PremiumDueDesk.gs`, in the Branch Intelligence

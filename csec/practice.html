@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Practice | SEA &amp; CSEC Study Hub</title>
+<title>Practice | SEA Study Hub</title>
+<meta name="description" content="Short practice sessions for the Secondary Entrance Assessment: Mathematics, English Language Arts and Writing questions for Standard 1 to Standard 5, with the answer and the reasoning after every one."/>
+<meta property="og:description" content="Short practice sessions for the Secondary Entrance Assessment, Standard 1 to Standard 5, with the answer and the reasoning after every question."/>
 <meta name="robots" content="noindex"/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,8 +65,8 @@
 
       <div class="note" style="margin-top:18px">
         <b>How this works.</b> You get the answer and the reasoning immediately, because a mistake you
-        do not understand is a mistake you will make again. Every question is tagged to a CSEC
-        syllabus strand — miss one and that strand comes back tomorrow.
+        do not understand is a mistake you will make again. Every question is tagged to a strand of
+        the SEA syllabus — miss one and that strand comes back tomorrow.
       </div>
     </section>
 
@@ -172,7 +174,7 @@
   if(params.get('mode')==='plan')       $('s-what').value='plan';
   else if(params.get('strand'))         $('s-what').value='strand:'+params.get('strand');
   else if(params.get('subject'))        $('s-what').value='subject:'+params.get('subject');
-  $('s-sub').textContent=CSEC.levelLabel(me.level)+' · questions come from your syllabus, up to one year ahead.';
+  $('s-sub').textContent=CSEC.levelLabel(me.level)+' · questions come from your Standard\u2019s syllabus, up to one year ahead.';
 
   /* ---------- assemble the deck ---------- */
   function build(){
@@ -351,12 +353,13 @@
 </script>
 
 <script>
-/* SEA papers belong to the primary ladder. A Form 1-5 student should not see
-   the link at all; parents and teachers keep it, since they may have a child
-   in Standard 1-5. */
+/* The SEA papers link is for a student on the ladder, Standard 1 to Standard 5.
+   The ladder is read from the data, never written here: a student whose level
+   sits above its last rung does not see the link. Parents and teachers keep it. */
 (function(){try{
   var me=CSEC.current&&CSEC.current(), a=document.querySelector('.topnav a[href="sea.html"]');
-  if(a&&me&&me.role==='student'&&me.level>5) a.parentNode.removeChild(a);
+  var ladder=(CSEC.levels||[]), last=ladder.length?ladder[ladder.length-1].n:null;
+  if(a&&me&&me.role==='student'&&last!=null&&me.level>last) a.parentNode.removeChild(a);
 }catch(e){}})();
 </script>
 

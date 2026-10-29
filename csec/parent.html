@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Parent View | SEA &amp; CSEC Study Hub</title>
+<title>Parent View | SEA Study Hub</title>
 <meta name="robots" content="noindex"/>
+<meta name="description" content="A parent’s view of a child’s progress towards the Secondary Entrance Assessment: the habit, the accuracy, the weak topics to ask about tonight, and recent sessions, from Standard 1 to Standard 5."/>
+<meta property="og:description" content="A parent’s view of progress towards the SEA: the habit, the accuracy, the weak topics to ask about tonight, and recent sessions, from Standard 1 to Standard 5."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,9 +65,9 @@
       <a class="card" href="kpi.html" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:14px;text-decoration:none">
         <div style="font-size:1.7rem">📊</div>
         <div style="flex:1;min-width:200px">
-          <h3>Readiness index and the five-year record</h3>
-          <p class="sub">Projected grade bands per subject, syllabus coverage, retention, timed-test
-          results, and the term-by-term chart from Form 1 through to the examination.</p>
+          <h3 id="kpi-title">Readiness index and the record year by year</h3>
+          <p class="sub" id="kpi-sub">A readiness band per subject, coverage of the curriculum, retention, timed-test
+          results, and the term-by-term chart from the first year through to the SEA.</p>
         </div>
         <span class="r-arrow">→</span>
       </a>
@@ -86,7 +88,7 @@
         <div class="section-label">The three topics to ask about tonight</div>
         <div class="rows" id="weak"></div>
         <div class="note" style="margin-top:14px">
-          These are the syllabus topics with the lowest accuracy and enough attempts to be meaningful.
+          These are the topics with the lowest accuracy and enough attempts to be meaningful.
           Asking "show me a question on <i>this</i>" is more useful than asking whether homework is done.
         </div>
       </div>
@@ -111,14 +113,15 @@
           square on this page is the number to watch — gaps in it explain most falling marks.</p>
         </div>
         <div class="card">
-          <h3>Form 3 is the decision year</h3>
-          <p class="sub">Subject choices for CSEC are made on Form 3 performance. A weak strand fixed
-          in Form 2 costs an evening; the same gap in Form 4 costs a grade.</p>
+          <h3 id="yr-title">The last year is the examination year</h3>
+          <p class="sub" id="yr-sub">The SEA mark decides which secondary school a child is placed in. A weak strand
+          fixed early costs an evening; the same gap in the examination year costs marks.</p>
         </div>
         <div class="card">
-          <h3>Download the syllabus</h3>
-          <p class="sub">CXC publishes every CSEC syllabus free. It lists exactly what the examiner can
-          ask. <a href="papers.html" style="color:var(--gold)">The Past papers page</a> links each one.</p>
+          <h3>Download the past papers</h3>
+          <p class="sub">The Ministry of Education publishes SEA past papers, specimen papers and mark schemes free.
+          They show exactly what the examiner asks. <a href="papers.html" style="color:var(--gold)">The Resources page</a>
+          links <span id="res-count">each one</span>.</p>
         </div>
       </div>
     </div>
@@ -146,6 +149,20 @@
   if(!kids.length){ $('nostudents').classList.remove('hidden'); return; }
   $('body').classList.remove('hidden');
 
+  /* The years are read off the ladder, never typed here. Under this product the
+     ladder is Standard 1 to Standard 5 and the examination is the SEA. */
+  var L=CSEC.levels||[];
+  if(L.length){
+    var first=L[0].label, last=L[L.length-1].label, mid=L[Math.floor((L.length-1)/2)].label;
+    var exam=(CSEC.countdown(L[L.length-1].n)||{}).exam||'SEA';
+    $('kpi-title').textContent='Readiness index and the '+L.length+'-year record';
+    $('kpi-sub').textContent='A readiness band per subject, coverage of the curriculum, retention, timed-test results, and the term-by-term chart from '+first+' through to the '+exam+'.';
+    $('yr-title').textContent=last+' is the examination year';
+    $('yr-sub').textContent='The '+exam+' is sat in '+last+', and the mark decides which secondary school a child is placed in. A weak strand fixed in '+mid+' costs an evening; the same gap in '+last+' costs marks.';
+  }
+  var nres=((C.resources||{}).sea||[]).length;
+  $('res-count').textContent=nres? nres+' of them' : 'each one';
+
   $('pick').innerHTML=kids.map(function(k){
     return '<option value="'+esc(k.id)+'">'+esc(k.name)+' — '+CSEC.levelLabel(k.level)+'</option>';
   }).join('');
@@ -157,7 +174,7 @@
     var cd=CSEC.countdown(kid.level);
 
     $('hd-title').textContent=kid.name;
-    $('hd-sub').textContent=kid.school+' · '+CSEC.levelLabel(kid.level)+' · sits '+cd.exam+' in '+cd.year;
+    $('hd-sub').textContent=[kid.school, CSEC.levelLabel(kid.level), cd.exam? 'sits the '+cd.exam+' in '+cd.year : ''].filter(Boolean).join(' · ');
 
     /* sessions in the last 7 days */
     var weekAgo=Date.now()-7*86400000;
@@ -174,7 +191,7 @@
       lines.push('<b>'+esc(kid.name)+' has not answered any questions yet.</b> Nothing here is a judgement on the work being done at school — the hub simply has no data until practice starts.');
     } else {
       lines.push('<b>'+esc(kid.name)+' has answered '+ov.seen+' questions with '+ov.pct+'% accuracy across '+ov.subjectsStarted+' of '+(kid.subjects||[]).length+' subjects.</b>');
-      if(st.current>=5) lines.push('The streak is '+st.current+' days — that is the habit working, and it is the single best predictor of the eventual grade.');
+      if(st.current>=5) lines.push('The streak is '+st.current+' days — that is the habit working, and it is the single best predictor of the eventual mark.');
       else if(st.current>0) lines.push('Current streak is '+st.current+' day'+(st.current===1?'':'s')+'. Getting that above five is worth more than any single long session.');
       else lines.push('There is no active streak. The last practice was '+(pr.days.length? 'on '+pr.days[pr.days.length-1] : 'never')+'.');
 

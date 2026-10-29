@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Syllabus Browser | SEA &amp; CSEC Study Hub</title>
-<meta name="description" content="The Standard 1 to Form 5 road through SEA to CSEC — what matters in each year, a countdown to the examination, and the full syllabus strand list for every subject."/>
+<title>Syllabus Browser | SEA Study Hub</title>
+<meta name="description" content="The Standard 1 to Standard 5 road to the SEA — what each year is for, a countdown to the examination, and the full strand list for every primary subject."/>
+<meta property="og:title" content="Syllabus Browser | SEA Study Hub"/>
+<meta property="og:description" content="The Standard 1 to Standard 5 road to the SEA — what each year is for, a countdown to the examination, and the full strand list for every primary subject."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,9 +36,9 @@
   <div class="wrap">
 
     <div class="pagehead">
-      <div class="eyebrow">Form 1 → Form 5</div>
+      <div class="eyebrow">Standard 1 → Standard 5</div>
       <h1>The syllabus, strand by strand</h1>
-      <p>Every CSEC syllabus section for every subject, with the forms each is normally taught in
+      <p>Every strand of every primary subject, with the Standards each is normally taught in
          and how you are doing on it. For what each <i>year</i> is for, see
          <a href="journey.html" style="color:var(--gold)">your journey →</a></p>
     </div>
@@ -45,28 +47,18 @@
     <div class="card" style="margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
         <div style="flex:1;min-width:200px">
-          <label class="fl" for="formsel">I am currently in</label>
-          <select class="fi" id="formsel" style="max-width:260px">
-            <optgroup label="Primary school">
-              <option value="1">Standard 1</option><option value="2">Standard 2</option>
-              <option value="3">Standard 3</option><option value="4">Standard 4</option>
-              <option value="5">Standard 5 — SEA year</option>
-            </optgroup>
-            <optgroup label="Secondary school">
-              <option value="6">Form 1</option><option value="7">Form 2</option>
-              <option value="8" selected>Form 3</option><option value="9">Form 4</option>
-              <option value="10">Form 5 — CSEC year</option>
-            </optgroup>
-          </select>
+          <label class="fl" for="formsel" id="formlab">I am currently in</label>
+          <!-- the years are written from CSEC.levels, so this list can never drift from the data -->
+          <select class="fi" id="formsel" style="max-width:260px"></select>
         </div>
         <div class="grid g3" style="flex:2;min-width:280px">
-          <div class="tile"><div class="big" id="cd-year">—</div><div class="lab">CSEC year</div></div>
+          <div class="tile"><div class="big" id="cd-year">—</div><div class="lab" id="cd-exam">SEA year</div></div>
           <div class="tile teal"><div class="big" id="cd-months">—</div><div class="lab">Months away</div></div>
           <div class="tile"><div class="big" id="cd-days">—</div><div class="lab">Days away</div></div>
         </div>
       </div>
       <p class="sub" style="margin-top:14px">
-        CSEC examinations are written in May and June. The countdown runs to 1 May of your examination year.
+        The SEA is sat in March of Standard 5. The countdown runs to March of the examination year.
       </p>
     </div>
 
@@ -74,8 +66,8 @@
       <div style="font-size:1.7rem">🧭</div>
       <div style="flex:1;min-width:200px">
         <h3>What is this year actually for?</h3>
-        <p class="sub">The guided journey breaks each form into its three terms, shows what is new
-        this year, what you are still carrying from below, and every milestone ahead, through SEA and on to CSEC.</p>
+        <p class="sub">The guided journey breaks each Standard into its three terms, shows what is new
+        this year, what you are still carrying from the year before, and every milestone ahead, up to the SEA.</p>
       </div>
       <span class="r-arrow">→</span>
     </a>
@@ -90,10 +82,11 @@
     <div class="rows" id="strands"></div>
 
     <div class="note" style="margin-top:20px">
-      <b>These strands follow the CSEC syllabus sections.</b> The syllabus itself is published free by
-      CXC and lists exactly what an examiner is allowed to ask — download it for each of your subjects
-      from the <a href="papers.html" style="color:var(--gold)">Past papers page</a>. The blue markers show
-      the forms in which a strand is normally taught in Trinidad and Tobago; schools vary, so treat
+      <b>These strands follow the Ministry of Education's primary curriculum guides and its SEA
+      Assessment Framework</b>, which set out what the three papers may test. The Ministry also publishes
+      past papers, specimen papers and mark schemes free; the
+      <a href="papers.html" style="color:var(--gold)">Resources page</a> lists them. The blue markers show
+      the Standards in which a strand is normally taught in Trinidad and Tobago; schools vary, so treat
       them as a guide rather than a timetable.
     </div>
 
@@ -120,21 +113,30 @@
     ? '<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
       '<a href="journey.html">Journey</a>'+
     (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
-      /* SEA papers are for the primary ladder only; a Form 3 has no use for them. */
-      ((me.role!=='student'||me.level<=5)?'<a href="sea.html">SEA Papers</a>':'')+
+      /* SEA papers are for a student whose next examination is the SEA. */
+      ((me.role!=='student'||((CSEC.nextExam(me.level)||{}).exam==='SEA'))?'<a href="sea.html">SEA Papers</a>':'')+
       '<a href="guides.html">Guides</a><a href="kpi.html">KPIs</a>'+
       '<a href="planner.html" class="on">Syllabus</a><a href="papers.html">Resources</a><a href="settings.html">Settings</a>'
     : '<a href="start.html">Start here</a><a href="index.html">Sign in</a><a href="journey.html">Journey</a><a href="guides.html">Guides</a>'+
       '<a href="planner.html" class="on">Syllabus</a><a href="papers.html">Resources</a>';
 
-  var form = me && me.role==='student' ? me.level : 8;
+  /* The ladder is whatever the data says it is. A parent or teacher views the
+     top of it (the examination year), never a literal level number. */
+  var LV=CSEC.levels||[], TOP=LV.length?LV[LV.length-1].n:5;
+  $('formsel').innerHTML=LV.map(function(l){
+    var ex=CSEC.nextExam(l.n), tag=(ex&&ex.examLevel===l.n)?' \u2014 '+ex.exam+' year':'';
+    return '<option value="'+l.n+'">'+esc(l.label+tag)+'</option>';
+  }).join('');
+  if(!(me && me.role==='student')) $('formlab').textContent='The child is in';
+  var form = me && me.role==='student' && CSEC.levelInfo(me.level) ? me.level : TOP;
   $('formsel').value=String(form);
 
   /* ---------------- countdown + roadmap ---------------- */
   function paintForm(){
-    form=parseInt($('formsel').value,10)||8;
+    form=parseInt($('formsel').value,10)||TOP;
     var cd=CSEC.countdown(form);
-    $('cd-year').textContent=cd.year;
+    $('cd-exam').textContent=(cd.exam||'SEA')+' year';
+    $('cd-year').textContent=cd.year||'\u2014';
     $('cd-months').textContent=cd.months;
     $('cd-days').textContent=cd.days;
 
@@ -157,9 +159,9 @@
     $('subjmeta').innerHTML='<b>'+esc(s.blurb)+'</b><br>'+esc(s.papers);
     $('strands').innerHTML=s.strands.map(function(t){
       var marks='';
-      for(var f=1;f<=5;f++){
-        marks+='<i class="'+(t.levels.indexOf(f)>-1?'on':'')+'" title="'+CSEC.levelLabel(f)+'">'+f+'</i>';
-      }
+      LV.forEach(function(l){
+        marks+='<i class="'+(t.levels.indexOf(l.n)>-1?'on':'')+'" title="'+esc(l.label)+'">'+l.n+'</i>';
+      });
       var stat = me && me.role==='student' ? CSEC.strandStat(me.id,t.id) : null;
       var badge = !stat ? ''
         : stat.pct==null ? '<span class="pill mute">not started</span>'

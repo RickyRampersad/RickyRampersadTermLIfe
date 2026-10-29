@@ -1,8 +1,12 @@
 # Study Hub — launch pack
 
-Launching to **Ricky Rampersad Branch client families** with school-age children
-— **Standard 1 through Form 5**, covering both SEA and CSEC. Free, no app,
-works in any browser.
+Launching to **Ricky Rampersad Branch client families** with children in
+primary school — **Standard 1 to Standard 5**, five years to the SEA. Free, no
+app, works in any browser.
+
+Since 16 October 2026 the hub is for the SEA alone. The switch is
+`CSEC_SCOPE` at the top of `csec/data/curriculum.js`; `csec/tests/scope.js`
+holds every page to it.
 
 ---
 
@@ -28,8 +32,8 @@ announcement below promises it, so do this first.
 |---|---|
 | ☐ | On your phone: create a parent profile, **write down the recovery code** |
 | ☐ | Settings → create a family group, note the code |
-| ☐ | Create a student profile, pick the year (Standard or Form), check the subject list |
-| ☐ | Create a second profile at a **primary** level and confirm it counts down to SEA, not CSEC |
+| ☐ | Create a student profile, pick the year (Standard 1 to 5), check the subject list |
+| ☐ | Create a second profile at Standard 3 and confirm it counts down to the SEA |
 | ☐ | Do ten practice questions |
 | ☐ | On a **different** device: create a profile, join with the code |
 | ☐ | Confirm the student and their progress appear |
@@ -52,19 +56,22 @@ finding, one specific ask. Bold is `*single asterisks*`. Do not hard-wrap
 paragraphs — WhatsApp reflows and wrapped text arrives ragged.
 
 ```
-*A Form 3 student sits CSEC in 961 days. That is 961 nights, and most of them go to waste.*
+*Only one of the four marks on the SEA writing paper is for answering the question. A child who writes beautifully about the wrong topic loses it whole.*
 
-CXC gives the full syllabus away free — the exact document the examiner works from. It is the most useful thing in the whole process and almost nobody in a family home has opened one.
+That is the commonest way a capable child drops marks on the paper that places them in a secondary school, and nobody tells the family.
 
-The Study Hub is live and free for your client families. Ten minutes a night aimed at whatever their child is weakest on, Form 1 to Form 5, nothing to install. It is a reason to call a client that has nothing to do with selling them anything.
+The Study Hub is live and free for your client families. Ten minutes a night on whatever their child is weakest at, the Ministry's own past papers, and a guided method for reading the topic before writing a word. Standard 1 to Standard 5, nothing to install.
 
 Reply with one family you are sending it to this week.
 
 rickyrampersadbranch.com/csec
 ```
 
-*(96 words. Update the 961 if you send this much later — a Form 3 countdown is
-on `csec/journey.html`.)*
+*(104 words. The finding is from the Ministry's own writing rubric: Content is
+the one criterion scored against the topic; Language Use, Grammar and
+Mechanics, and Organisation are scored on the writing itself. A Standard 5
+sits the SEA in about 136 days from 16 October 2026, if you want a countdown
+instead — the hub's own is on `csec/journey.html`.)*
 
 ---
 
@@ -107,11 +114,10 @@ to have been oversold.
 
 State these rather than waiting to be caught out:
 
-- **781 questions.** Every strand in every default subject carries at least
-  four. Primary is the deeper half (median 8) because the SEA papers demanded
-  it; secondary sits at a median of 5 — enough for a nightly habit across a
-  whole subject list, **not** a bank a Form 5 can revise a subject from. Say
-  this rather than letting families find it.
+- **309 questions across 44 strands.** Every strand in every default subject
+  carries at least four, with a median of about eight. Enough for a nightly
+  habit; **not** a bank a Standard 5 can revise a whole subject from. Say this
+  rather than letting families find it.
 - **SEA papers: 4 complete Mathematics papers and 2 complete ELA papers.**
   Twelve practice papers and two mocks are offered in each subject, all built to
   the Ministry's published blueprint. Beyond the fourth Maths and second ELA
@@ -121,19 +127,22 @@ State these rather than waiting to be caught out:
 - **The Writing paper is marked by you, not by the app.** Three prompts, a
   50-minute clock, then the Ministry's four criteria and a link to its marked
   exemplars. This is deliberate: no program can mark a child's story honestly.
-- **24 worked methods against 130 strands.** This is now the real gap, and the
-  more important one: a question tells a child they were wrong, a guide tells
-  them how to be right. Mathematics has twelve of the twenty-four. Spanish,
-  French, Social Studies, Visual Arts and PE have none yet.
-- **The readiness band is unvalidated.** It has never been checked against a real
-  CSEC result, because there has not been one. It is an internal indicator and
-  the page says so above the number.
-- **No CSEC past papers.** By choice — they are copyright CXC. **SEA past
-  papers are a different story**: the Ministry publishes 2024 and 2025 free, and
-  they are linked on the Resources page. For a Standard 4 or 5 that is the most
-  valuable thing in the hub, and it is worth saying so in the announcement. The Resources page
-  links the official free syllabuses, specimen papers and mark schemes, the
-  Ministry's worked solutions, and twelve international sites.
+- **18 guided methods, 12 of them for the writing paper.** A question tells a
+  child they were wrong; a method tells them how to be right. The writing
+  paper is covered end to end — reading the topic, the letter, the report,
+  given sentences, opening, middle and ending, showing not telling, speech,
+  how long and how to spend the fifty minutes. Mathematics and ELA reading
+  have a handful each; Science, Social Studies, Spanish, Visual Arts and PE
+  have none yet.
+- **The readiness band is unvalidated.** It has never been checked against a
+  real SEA result, because there has not been one. It is an internal indicator
+  and the page says so above the number.
+- **The real past papers are the Ministry's, and they are free.** The 2024
+  and 2025 SEA papers, the specimen papers and the mark schemes are published
+  by the Ministry of Education and linked on the Resources page. For a
+  Standard 4 or 5 that is the most valuable thing in the hub, and it is worth
+  saying so in the announcement. The hub's own practice questions are
+  original; it copies nothing.
 - **Sync is last-write-wins per profile.** Two devices editing the same student
   in the same minute: the later write wins. Fine for a family, worth knowing for
   a class of thirty.

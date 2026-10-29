@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Settings | SEA &amp; CSEC Study Hub</title>
+<title>Settings | SEA Study Hub</title>
 <meta name="robots" content="noindex"/>
+<meta name="description" content="Settings for the SEA Study Hub: subjects, profile, PINs, moving up a standard, sync across devices and backup."/>
+<meta property="og:description" content="Settings for the SEA Study Hub: subjects, profile, PINs, moving up a standard, sync across devices and backup."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -57,13 +59,13 @@
         <select class="fi" id="who"></select>
       </div>
       <p class="sub" style="margin-bottom:14px">
-        Tick every subject you actually take. This drives the daily plan, the mastery rings and the
-        syllabus browser — so it is worth getting exactly right.
+        Tick every subject the child actually takes. The three SEA papers come first. This drives the
+        daily plan, the mastery rings and the syllabus browser, so it is worth getting exactly right.
       </p>
       <div class="subjpick" id="subjpick"></div>
       <div style="margin-top:16px;display:flex;gap:9px;flex-wrap:wrap">
         <button class="btn" id="save-subj">Save subjects</button>
-        <button class="btn ghost" id="reset-subj">Reset to the default 14</button>
+        <button class="btn ghost" id="reset-subj">Reset to the default subjects</button>
       </div>
       <div class="ok hidden" id="subj-ok"></div>
     </div>
@@ -78,8 +80,8 @@
         </div>
         <div class="field" id="p-formwrap">
           <label class="fl" for="p-form">Current year</label>
-          <!-- Filled from the ladder itself: Standard 1 to Form 5. It listed five
-               forms until now, so a primary child could not pick their own year. -->
+          <!-- Filled from the ladder itself, Standard 1 to Standard 5, so the list
+               can never disagree with the data. -->
           <select class="fi" id="p-form"></select>
         </div>
       </div>
@@ -155,14 +157,15 @@
       </div>
     </div>
 
-    <!-- ---------- moving up a form ---------- -->
-    <div class="section-label">Moving up a form</div>
+    <!-- ---------- moving up a standard ---------- -->
+    <div class="section-label">Moving up a standard</div>
     <div class="card" style="margin-bottom:14px" id="promo-card">
       <p class="sub" style="margin-bottom:16px">
-        At the end of the school year, move the student up. Everything already learned carries
-        forward — she has not forgotten Form 2 mathematics — but the year is stamped into the
-        record, the syllabus for the new form opens up, and the old year stays visible on the
+        At the end of the school year, move the child up. Everything already learned carries
+        forward — Standard 2 mathematics is not forgotten — but the year is stamped into the
+        record, the syllabus for the new standard opens up, and the old year stays visible on the
         <a href="kpi.html" style="color:var(--gold)">KPI timeline</a> for all five years.
+        Standard 5 is the top of the ladder: it is the SEA year, and the last year on this hub.
       </p>
       <div class="grid g2">
         <div class="field">
@@ -175,7 +178,7 @@
         </div>
       </div>
       <div id="pr-now" class="note" style="margin-bottom:14px"></div>
-      <button class="btn" id="pr-go">Move up a form</button>
+      <button class="btn" id="pr-go">Move up a standard</button>
       <div class="ok hidden" id="pr-ok"></div>
       <div class="err" id="pr-err"></div>
     </div>
@@ -324,13 +327,15 @@
 (function(){
   var me=CSEC.requireRole(['student','parent','teacher']); if(!me) return;
   var $=function(id){return document.getElementById(id);}, esc=CSEC.esc, C=CSEC.curriculum;
+  /* The ladder comes from the data: Standard 1 to Standard 5. The last rung is
+     the SEA year, and nothing on this page names a year above it by hand. */
+  var LADDER=CSEC.levels||[], TOP=LADDER[LADDER.length-1]||{n:5,label:'Standard 5'};
   var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
 
   $('nav').innerHTML='<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
     '<a href="journey.html">Journey</a>'+
     (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
-      /* SEA papers are for the primary ladder only; a Form 3 has no use for them. */
-      ((me.role!=='student'||me.level<=5)?'<a href="sea.html">SEA Papers</a>':'')+
+    '<a href="sea.html">SEA Papers</a>'+
     '<a href="guides.html">Guides</a><a href="kpi.html">KPIs</a>'+
     '<a href="planner.html">Syllabus</a><a href="papers.html">Resources</a>'+
     '<a href="settings.html" class="on">Settings</a><a href="#" id="signout">Sign out</a>';
@@ -407,15 +412,15 @@
     var id=targetId(); if(!id) return;
     CSEC.updateProfile(id,{subjects:C.defaultSelection.slice()});
     if(id===me.id) me=CSEC.profile(id);
-    paintSubjects(); flash('subj-ok','Reset to the default 14 subjects.');
+    paintSubjects(); flash('subj-ok','Reset to the default '+(C.defaultSelection||[]).length+' subjects.');
   });
 
   /* ---------------- profile ---------------- */
   $('p-name').value=me.name;
   $('p-school').value=me.school||'';
-  $('p-form').innerHTML=(CSEC.levels||[]).map(function(l){
+  $('p-form').innerHTML=LADDER.map(function(l){
     return '<option value="'+l.n+'">'+CSEC.esc(l.label)+'</option>'; }).join('');
-  $('p-form').value=String(me.level||8);
+  $('p-form').value=String(me.level||TOP.n);
   if(me.role!=='student') $('p-formwrap').classList.add('hidden');
 
   $('save-prof').addEventListener('click',function(){
@@ -429,8 +434,7 @@
     if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
       $('prof-err').textContent='That does not look like an e-mail address.'; return;
     }
-    /* This wrote `form`, which nothing has read since the ladder went to ten
-       levels, so changing the year did nothing at all. */
+    /* The year is `level`, the number on the ladder; nothing reads `form`. */
     var patch={name:name,school:$('p-school').value.trim(),
                level:parseInt($('p-form').value,10)||me.level, email:email};
     if(pin){ patch.pin = /^none$/i.test(pin) ? '' : pin; }
@@ -612,7 +616,7 @@
     var blob=new Blob([JSON.stringify(CSEC.exportAll(),null,2)],{type:'application/json'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download='csec-study-hub-backup-'+CSEC.today()+'.json';
+    a.download='sea-study-hub-backup-'+CSEC.today()+'.json';
     document.body.appendChild(a); a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
     flash('bk-ok','Backup downloaded.');
@@ -636,7 +640,7 @@
     this.value='';
   });
 
-  /* ---------------- moving up a form ---------------- */
+  /* ---------------- moving up a standard ---------------- */
   if(!targets.length){
     $('promo-card').classList.add('hidden');
   } else {
@@ -646,9 +650,12 @@
 
     function paintPromo(){
       var kid=CSEC.profile($('pr-who').value); if(!kid) return;
-      var opts='';
-      for(var f=kid.level+1; f<=10; f++) opts+='<option value="'+f+'">'+CSEC.levelLabel(f)+'</option>';
-      $('pr-to').innerHTML = opts || '<option value="">— already in Form 5 —</option>';
+      /* The years above the child's, read off the ladder. A record whose year is
+         not on the ladder at all is offered every standard, so it can be put right. */
+      var onLadder=!!CSEC.levelInfo(kid.level);
+      var opts=LADDER.filter(function(l){ return !onLadder || l.n>kid.level; }).map(function(l){
+        return '<option value="'+l.n+'">'+esc(l.label)+'</option>'; }).join('');
+      $('pr-to').innerHTML = opts || '<option value="">— already in '+esc(TOP.label)+' —</option>';
       $('pr-go').disabled = !opts;
 
       var ov=CSEC.overallStat(kid.id), cov=CSEC.coverage(kid.id);
@@ -656,8 +663,9 @@
       $('pr-now').innerHTML='<b>'+esc(kid.name)+' is in '+CSEC.levelLabel(kid.level)+'.</b> '+
         (ov.seen? ov.seen+' questions answered at '+ov.pct+'% accuracy, '+cov.pct+'% of the '+CSEC.levelLabel(kid.level)+' syllabus met.'
                 : 'No practice recorded yet.')+
-        ' Sits '+cd.exam+' in '+cd.year+'.'+
-        (kid.level===10 ? ' This is the examination year — there is nowhere further to move.' : '');
+        (cd.exam ? ' Sits the '+esc(cd.exam)+' in '+esc(TOP.label)+'.' : '')+
+        (kid.level===TOP.n ? ' This is the SEA year, the last on this hub: there is nowhere further to move.' : '')+
+        (!onLadder ? ' This year is not on the ladder. Choose the standard the child is in and move.' : '');
     }
     $('pr-who').addEventListener('change',paintPromo);
     $('pr-to').addEventListener('change',function(){});
@@ -667,10 +675,10 @@
       var kid=CSEC.profile($('pr-who').value); if(!kid) return;
       var to=parseInt($('pr-to').value,10);
       $('pr-err').textContent='';
-      if(!to){ $('pr-err').textContent='There is no form above Form 5.'; return; }
+      if(!to){ $('pr-err').textContent='There is no year above '+TOP.label+'. The SEA year is the last on this hub.'; return; }
       if(!confirm('Move '+kid.name+' from '+CSEC.levelLabel(kid.level)+' to '+CSEC.levelLabel(to)+'?\n\n'+
                   'Practice history is kept and a snapshot of '+CSEC.levelLabel(kid.level)+' is written to the record. '+
-                  'This can only be undone by moving the form back in this same panel.')) return;
+                  'This can only be undone by moving the year back in this same panel.')) return;
       var r=CSEC.promote(kid.id,to);
       if(!r){ $('pr-err').textContent='Could not move up.'; return; }
       if(kid.id===me.id) me=CSEC.profile(me.id);
