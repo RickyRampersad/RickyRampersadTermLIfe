@@ -6340,6 +6340,18 @@ and graphics as well easy to manoeuvre and understand", in the motor quote's loo
 - Tests: `tests/e2e-renewal-portal.js` (211), `e2e-renewal-property.js` (80), `e2e-renewal-staff.js` (101),
   `e2e-renewal-board.js` (125, the real RenewalBoard.gs as admin, staff and agent), `e2e-renewal-site.js` (240), each
   at 360, 390 and 1366 wide with reduced motion.
+- **Sign-ins, the sum insured and one-tap buttons, from pull request #283** (merged 29 October 2026, the fixes only, at
+  the branch manager's choice). `RenewalTeam.gs` (a seventh file, menu "Who can sign in") puts Ricky (admin), Kamla
+  (manager) and Pawan (staff) on the Staff tab and issues six-digit access codes that never begin with a zero. It
+  creates the access-code column, which nothing had made: a blank code read as "no code needed", so anyone with the
+  link and an e-mail on the tab could open the board. `sfSumInsured_` (SalesforceSync.gs) reads `Total_Value__c`, then
+  `Total_Property_Cover__c`, then `Cover1__c`, because the rollup read 0 on every November property renewal. The motor
+  e-mail carries the property e-mail's three one-tap choices, worded by line (`stageTaps_`), and both e-mails a "Lost
+  this e-mail?" line (`lostLink_`); a tap opens the portal with the choice ticked and the words "Carried over from your
+  e-mail", and never sends it (`preselect` in Portal.html). The board's backend gained the readiness check
+  (`boardReadiness`), the second-vehicle fix (`rowIndex`) and an `invite` action the page does not use yet. **Left out:**
+  the new board at `/renewals` and its `Renewals.gs`, because `/renewals/` is the Renewals wall on the TV
+  (WALL-SETUP.md) and the GI renewal desk now does that job.
 - To put it live: merge, then paste `Code.gs`, `RenewalBoard.gs`, `Portal.html`, `PropertyPortal.html`, `Staff.html`,
   `Board.html` and the new `RenewalTheme.html` into the Renewal Platform project (plus `SalesforceSync.gs` and
   `Property.gs` from the board's change), and publish a New version (pencil, never New deployment).
