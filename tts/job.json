@@ -1,22 +1,10 @@
 {
- "voice": "en-US-AndrewMultilingualNeural",
- "rate": "+0%",
- "check": true,
- "films": {
-  "mqlaunch": [
-   "Motor quotes have moved home. No more JotForm. This is the branch's own motor quote, built for you and your clients.",
-   "The old form had forty-one questions. In all its time, it was filled in twice. No reference, no record, and nobody followed up.",
-   "Now your client signs in with their e-mail. We send them a six-digit code. There's no password to forget.",
-   "If they're already with Guardian, their record fills itself in. Their details, their driver's permit, and every vehicle we insure, with the premium year by year.",
-   "Then three clear choices. Renew a vehicle we insure, get a quote for a new one, or accept the quote we've sent.",
-   "Buying a new car? Just snap the dealer's invoice. The make, model, year, chassis and price fill themselves in.",
-   "And you can place the quote for your client. Sign in with your work e-mail, type in your client's e-mail, and you're the producer on it.",
-   "When it's sent, Guardian's own quotation request form is filled in and goes to the quotes desk, with every document attached. Your client gets a receipt with a reference, and you're copied.",
-   "In Salesforce, a new client's contact, the opportunity and the task are made for you. Nothing is keyed in twice.",
-   "When your client accepts, they sign Guardian's proposal and the Know Your Policy form, right there on their phone.",
-   "And renewals? They go straight to the renewal portal, so every renewal lives in one place.",
-   "Right now, it's in test mode. Sign in with your work e-mail, and your code comes straight to you. Place a quote for a client. Nothing reaches Guardian, and your client isn't e-mailed.",
-   "So this week, try it with one client, and tell us what you think. Ricky Rampersad branch dot com, slash motor quote."
-  ]
- }
+  "voice": "en-US-AndrewMultilingualNeural",
+  "rate": "+0%",
+  "check": true,
+  "films": {
+    "riseout": [
+      "People retire. People vest. Some move on. In thirty-two years, this branch has had three terminations."
+    ]
+  }
 }
