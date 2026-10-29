@@ -3,13 +3,8 @@
  "rate": "-12%",
  "check": true,
  "films": {
-  "walldriver2": [
-   "This is the Branch Manager's drive on the orphan campaign.",
-   "Every prompt he puts on the tasks flows from left to right, from his own words and his automation to the team's answer.",
-   "Follow each ribbon: answered the same day, the next working day, later, or not yet, and by whom.",
-   "Hour by hour, see when he prompts, and when the team writes.",
-   "Day by day, his prompts and the team's notes flow side by side.",
-   "And for each of the team: how fast they answer, and how many prompts still wait on them."
+  "walldriver2b": [
+   "Follow each ribbon to see when it was answered, the same day, the next working day, later, or not yet, and who answered it."
   ]
  }
 }
