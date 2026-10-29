@@ -87,6 +87,15 @@ WALLS = {
         "Underneath, the records over a year old still marked pending. Those are not work. Close them in Salesforce.",
         "It reads Salesforce every hour. No client is named here.",
     ],
+    'transmittal': [                             # The Transmittal: in, out, and on the bag (28 Oct 2026)
+        "This is the transmittal: the papers our agents bring in, and how fast they leave the branch.",
+        "The big number is what went out today.",
+        "Papers in by the cut-off go on that day's bag. After it, they wait for the next one.",
+        "The charts show today hour by hour, and the last fifteen working days: what came in, what went out, and what made its bag.",
+        "On the right, what is still waiting. A name there means papers logged and not yet handed in.",
+        "The green bars are the digital Log Book. The grey mark is where the old paper book stood.",
+        "No client is named here. Counts and first names only.",
+    ],
     'reqs': [                                    # Branch Pending · what is outstanding, and who is chasing it (27 Oct 2026)
         "This is what is still outstanding on our pending cases, from today's pending report.",
         "The big number is every requirement still waiting to be received.",

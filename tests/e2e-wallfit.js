@@ -37,6 +37,7 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
 const PAGES = [
   ['The day so far',    '/intelligence/wall/day.html'],
   ['The day, hour by hour', '/intelligence/wall/blocks.html'],
+  ['The transmittal',   '/intelligence/wall/transmittal.html'],
   ['Pending · policies',     '/intelligence/wall/pending.html'],
   ['Pending · requirements', '/intelligence/wall/reqs.html'],
   ['Pending · increases & group', '/intelligence/wall/increases.html'],

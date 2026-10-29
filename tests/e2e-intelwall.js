@@ -28,7 +28,7 @@ const server = http.createServer((req, res) => {
 });
 let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
-const ORDER = ['day.html', 'blocks.html', 'pending.html', 'reqs.html', 'increases.html',
+const ORDER = ['day.html', 'blocks.html', 'transmittal.html', 'pending.html', 'reqs.html', 'increases.html',
                'codes.html', 'issued.html', 'orphans.html', 'orphans-results.html', 'orphans-cup.html',
                'index.html', 'lapses.html',
                'possession.html', 'delivery.html', 'licence.html', 'book.html',
@@ -87,8 +87,8 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
      stops[0] && stops[0].name);
   /* The pending wall is two stops since 17 September 2026, so the fourth is
      its own second half rather than the dues line. */
-  ok('  the pending wall\'s requirements fourth', stops[3] && /requirements/i.test(stops[3].name),
-     stops[3] && stops[3].name);
+  ok('  the pending wall\'s requirements fifth', stops[4] && /requirements/i.test(stops[4].name),
+     stops[4] && stops[4].name);
   ok('  and ' + LAST_TAB + ' last',
      stops[ORDER.length - 1] && stops[ORDER.length - 1].name === LAST_TAB,
      stops[ORDER.length - 1] && stops[ORDER.length - 1].name);
