@@ -7242,6 +7242,55 @@ POST as `0000` for this one. **Probe the thing the branch will actually do**,
 and do it on the guest number, which touches no agent's row and no lockout
 counter.
 
+### 0000 is the door, not the identity — 29 October 2026
+
+Asked for in these words: *"guest should have a code 0000 and prompts the
+guest name, the guest first name, the guest first and last name, so we will
+know who visited us … as well their role in the organization, or what's their
+job."*
+
+**Being off the roll and being anonymous are two different things.** The 28
+October decision needed only the first — three executives must not be counted
+as absent branch members and drop the month's attendance — and delivered it by
+making the guest anonymous as well, which was never required. `role === 'guest'`
+is what keeps them off: `roster_()` and the ping both filter it, so the
+denominator is safe however many people look in, named or not.
+
+So `0000` is the door. It answers **`needGuest`** — a welcome, not a refusal,
+and the page must not render it as one — and asks for first name, last name and
+role. Each visitor gets **their own People row**, keyed `first.last@guest.invalid`
+so the same person returning lands back on it, and **their own token**. The
+shared row was worse than anonymous: two executives looking in at once took
+turns owning the one token and knocked each other out.
+
+Their Agent No stays `0000`, which is what keeps `isStandingGuest_` true for
+them — a visitor is invited to whatever meeting is open and nothing else — and
+`normNo_` strips it to `''`, so it can never collide with a real agent number.
+
+**A VISITOR IS NEVER ON THE REGISTER, and this is the trap to remember.**
+`register_` builds its groups from the attendance rows but takes its absents
+from `rosterFor_`, which excludes a guest. An attendance row for a visitor is
+therefore counted present against a roll that does not contain them, and three
+of them push the branch past 100% — the exact harm the anonymous guest was
+meant to prevent. `apiCheckIn_` refuses to write one for a guest; the visit
+goes in the visitors' book, and `register_` returns `visitors` **beside the
+count and never inside it**. Any future route that writes attendance has to
+make the same check.
+
+**The visitors' book is the durable record**, not the People row: a roster pull
+may clear the row, and the book keeps when, which meeting, the name and the
+job. It is written at **sign-in**, not at check-in, so it fills whether or not
+the check-in window is open — which is why it catches somebody who only looked
+in at the film.
+
+The name is self-reported, like the agent number. The register says who *said*
+they were here; the book says who *said* they looked in. That was accepted when
+the shared code went, and it does not change.
+
+`ensureTab_` backfills a missing tab and a missing column on the next call, so
+a new column on People or a new tab needs no setup step — add it to `SCHEMA`
+and it appears.
+
 ## `/branchmeet/` — the FY27 rise, and what the film may not say
 
 Asked for on 28 October 2026, the evening before the branch group sees it:
