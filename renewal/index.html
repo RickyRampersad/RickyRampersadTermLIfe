@@ -231,6 +231,11 @@
   .rr .footer .contact a{display:inline-flex;align-items:center;gap:8px;font-weight:700;text-decoration:none;min-height:36px;overflow-wrap:anywhere}
   .rr .footer .contact .ii{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--sky);color:var(--blue);flex:none}
   .rr .disclaimer{grid-column:1/-1;font-size:.78rem;color:var(--dim);margin:0;border-top:1px solid var(--soft);padding-top:12px}
+  .rr .newdoor{text-align:center}
+  .rr .newdoor[hidden]{display:none}
+  .rr .newdoor h2{margin:6px auto 8px;max-width:30ch}
+  .rr .newdoor .muted{max-width:560px;margin:0 auto 14px}
+  .rr .newdoor .small{font-size:.85rem;margin:12px auto 0}
 </style>
 </head>
 <body class="rr">
@@ -243,6 +248,16 @@
 </header>
 
 <main class="rr-main">
+
+  <!-- The new renewal page (/myrenewal/): shown by itself once the renewal desk is live (gcm.ping renewals.live).
+       Clients holding an access code from an earlier letter still sign in below. -->
+  <section class="rr-card newdoor" id="newdoor" hidden>
+    <p class="eyebrow"><span class="ii" data-i="renew"></span> Renewing this month?</p>
+    <h2>See your renewal, every year since your policy began, and approve it</h2>
+    <p class="muted">If our renewal letter came to your e-mail, sign in with that address. We send you a six-digit code; there is no password. Nothing is renewed until you say yes.</p>
+    <a class="rr-btn main" href="/myrenewal/"><span class="ii" data-i="send"></span> Sign in with my e-mail</a>
+    <p class="muted small">Have an access code from an earlier letter? Use it below.</p>
+  </section>
 
   <!-- the first screen: what this is, and what to do next -->
   <section class="rr-card hero" id="top">
@@ -987,6 +1002,19 @@ if (window.RR) RR.init();
 (function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
 (new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
 }catch(e){}})();
+</script>
+<script>
+/* Once the renewal desk is live, this page offers its sign-in first. In test mode, or if the branch backend does not answer
+   in six seconds, nothing changes. */
+(function () {
+  var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+  if (!window.fetch || /[?&](t|token)=/.test(location.search)) return;
+  var ctl = window.AbortController ? new AbortController() : null, stop = ctl ? setTimeout(function () { ctl.abort(); }, 6000) : 0;
+  fetch(SVC + '?action=gcm.ping', ctl ? { signal: ctl.signal } : {}).then(function (r) { return r.json(); }).then(function (j) {
+    clearTimeout(stop);
+    if (j && j.renewals && j.renewals.live) document.getElementById('newdoor').hidden = false;
+  }).catch(function () {});
+})();
 </script>
 </body>
 </html>

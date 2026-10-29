@@ -55,6 +55,7 @@
   .wrap{max-width:680px;margin:0 auto;padding:0 16px calc(28px + env(safe-area-inset-bottom))}
   .eyebrow{font:800 11px/1 var(--fb);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
   header.top{padding:18px 0 6px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+  #toapp{color:inherit;font-weight:800;text-decoration:none;margin-right:8px} #toapp:hover{text-decoration:underline}
   h1{font:800 clamp(22px,6vw,28px)/1.15 var(--fd);margin:6px 0 2px;color:var(--navy);letter-spacing:-.01em}
   .sub{color:var(--muted);font-size:13.5px}
   .clock{font:700 13px/1 var(--fd);color:var(--muted);white-space:nowrap;text-align:right}
@@ -123,7 +124,42 @@
   ul.list li:first-child{border-top:0}
   @keyframes slide{to{opacity:1;transform:none}}
   .ic{flex:none;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font:800 13px/1 var(--fd);background:var(--soft);color:var(--good);margin-top:1px}
-  .ic.no{color:var(--bad)} .ic.late{color:var(--bad)} .ic.due{color:var(--warn)} .ic.k{color:var(--navy)}
+  #closeday{display:flex;margin-top:14px}
+  /* The agents' My day (27 Oct 2026): the two pages their e-mails carry, from the branch app. */
+  .ag{position:relative;overflow:hidden}
+  .ag .step{display:flex;gap:14px;align-items:center}
+  .ag .num{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font:800 18px/1 var(--fd);color:#141C4A;background:linear-gradient(135deg,#F6C76A,#E3B23C)}
+  .ag.pm .num{background:linear-gradient(135deg,#9AD9BE,#3E9C72);color:#fff}
+  .ag .t{font:800 18px/1.2 var(--fd);color:var(--navy)} .ag .s{color:var(--muted);font-size:13.5px;margin-top:2px}
+  .ag .ok{display:inline-block;font:800 11px/1 var(--fb);letter-spacing:.04em;padding:4px 7px;border-radius:6px;background:var(--soft);color:var(--good);margin-left:6px;vertical-align:2px}
+  .ag .go{display:flex}
+  .ag::after{content:"";position:absolute;right:-40px;top:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(227,178,60,.22),transparent 70%);animation:glow 4s ease-in-out infinite alternate}
+  .ag.pm::after{background:radial-gradient(circle,rgba(62,156,114,.2),transparent 70%)}
+  @keyframes glow{to{transform:translate(-18px,14px) scale(1.15)}}
+  .tip{font-size:13px;color:var(--muted);line-height:1.5}
+  /* The register (27 Oct 2026): the last five working days, desk by desk. */
+  .att{width:100%;border-collapse:separate;border-spacing:3px;table-layout:fixed}
+  .att th{font:700 11px/1.2 var(--fb);color:var(--muted);text-align:center;padding:2px 0}
+  .att th:first-child{width:62px;text-align:left}
+  .att td{font:600 11.5px/1.25 var(--fb);text-align:center;border-radius:8px;padding:7px 2px;background:var(--soft);color:var(--muted);overflow-wrap:anywhere;vertical-align:middle}
+  .att td.nm{background:none;text-align:left;font:800 13px/1.2 var(--fd);color:var(--navy);padding-left:0}
+  .att td.in{background:rgba(62,156,114,.13);color:var(--good)} .att td.late{background:rgba(194,106,4,.13);color:var(--warn)}
+  .att td.absent{background:rgba(200,64,47,.12);color:var(--bad)} .att td.none,.att td.notin{background:transparent;border:1.5px dashed rgba(194,106,4,.55);color:var(--warn)}
+  .att td small{display:block;font-weight:500;font-size:10.5px;opacity:.85}
+  .att td b.t{display:block;white-space:nowrap;font-weight:700}
+  .att td small.out{margin-top:3px;padding-top:3px;border-top:1px solid rgba(127,127,127,.25);color:var(--ink);opacity:.8}
+  .att td small.out.early{color:var(--warn);opacity:1} .att td small.out.none{color:var(--muted)}
+  .att td[data-mark]{cursor:pointer} .att td[data-mark]:hover{filter:brightness(.96)}
+  .markbox{margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+  .markbox .q{font:800 14px/1.3 var(--fd);color:var(--navy);margin-bottom:8px}
+  .markbox .row{display:flex;flex-wrap:wrap;gap:8px}
+  .markbox .row button{flex:1 1 auto;padding:11px 12px;font-size:14px;background:var(--card);color:var(--navy);border:1.5px solid var(--line)}
+  .markbox input{width:100%;box-sizing:border-box;margin-top:8px;padding:11px 12px;border-radius:10px;border:1.5px solid var(--line);font:500 15px var(--fb);background:var(--card);color:var(--ink)}
+  .attkey{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .tip b{color:var(--ink)}
+  .closed{margin-top:12px;font-size:14px;color:var(--muted)} .closed b{color:var(--good)} .closed a{color:inherit;font-weight:700}
+  .ic.no{color:var(--bad)} .ic.late{color:var(--bad)} .ic.due{color:var(--warn)} .ic.k{color:var(--navy)} .ic.todo{color:var(--muted)}
+  .li .s.done{text-decoration:line-through;color:var(--muted)} .li .s.done a{color:inherit}
   .li{flex:1;min-width:0}
   .li .s{overflow-wrap:anywhere}
   .li small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px}
@@ -158,6 +194,53 @@
   .skel{height:14px;border-radius:7px;background:linear-gradient(90deg,var(--track),var(--soft),var(--track));background-size:200% 100%;animation:sheen 1.4s linear infinite;margin:8px 0}
   .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translate(-50%,30px);opacity:0;background:var(--navy);color:var(--bg);padding:11px 16px;border-radius:12px;font:700 14px/1.3 var(--fb);transition:.35s var(--ease);z-index:9;max-width:calc(100% - 32px);text-align:center}
   .toast.on{transform:translate(-50%,0);opacity:1}
+  /* The one screen (29 Oct 2026): the task cards, what came up, the close-out and the update bar, here. */
+  .upline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;font-size:12px;color:var(--muted)}
+  .upline a{font-weight:800;cursor:pointer;text-decoration:underline;text-underline-offset:2px;color:var(--ink)}
+  .upd{display:flex;align-items:center;gap:10px;margin-top:8px;padding:9px 12px;border-radius:12px;background:var(--soft);border:1.5px solid var(--gold);font:700 13px/1.35 var(--fb);color:var(--ink);animation:rise .4s var(--ease)}
+  .upd[hidden]{display:none}
+  .upd span{flex:1;min-width:0} .upd button{flex:none;min-height:38px;padding:9px 14px;font-size:13.5px;background:var(--gold);color:#141C4A}
+  ul.list li.tk{flex-wrap:wrap}
+  li.tk .li .s{cursor:pointer} li.tk .li .s::after{content:" \25BE";color:var(--muted);font-size:.85em}
+  li.tk.open .li .s::after{content:" \25B4"}
+  .tc{flex:0 0 100%;margin:8px 0 2px 34px;padding:12px;border-radius:12px;background:var(--soft);border:1px solid var(--line);animation:rise .35s var(--ease)}
+  .tc[hidden]{display:none}
+  @media (max-width:420px){ .tc{margin-left:0} }
+  .tc .lab{font:700 12px/1.4 var(--fb);color:var(--muted);margin-bottom:6px} .tc .lab .bdg{display:inline-block;font:800 10.5px/1 var(--fb);letter-spacing:.05em;text-transform:uppercase;padding:4px 7px;border-radius:6px;background:var(--card);color:var(--ink);margin-right:6px}
+  .tc .lab .bdg.r{color:var(--bad)}
+  .tc .todo{font-size:14px;line-height:1.45;color:var(--ink)} .tc .todo b{color:var(--navy)}
+  .tc .nx{font:700 13.5px/1.4 var(--fb);color:var(--bad);margin-top:4px}
+  .tc .hint{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .tc .notes{margin:8px 0 2px;font-size:12.5px;color:var(--muted)} .tc .notes div{margin-top:3px;overflow-wrap:anywhere} .tc .notes b{color:var(--ink)}
+  .tpl{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 6px}
+  .tpl button{min-height:0;flex:1 1 auto;padding:8px 10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;font:600 12.5px/1.35 var(--fb);text-align:left}
+  .tpl button i{font-style:normal;font:800 10px/1 var(--fb);letter-spacing:.06em;text-transform:uppercase;margin-right:6px;padding:2px 7px;border-radius:999px;background:var(--soft);color:var(--muted);vertical-align:1px}
+  .tpl button i.c{color:var(--good)} .tpl button i.m{color:var(--warn)}
+  .tc textarea,.cl textarea,.sc textarea{width:100%;min-height:84px;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:15px/1.45 var(--fb);color:var(--ink);background:var(--card);resize:vertical}
+  .tc textarea:focus,.cl textarea:focus,.sc textarea:focus{outline:none;border-color:var(--good)}
+  .tc .cai{width:100%;margin:6px 0;background:transparent;color:var(--gold);border:1.5px dashed var(--gold);font-size:14px;min-height:44px}
+  .tc .dt{display:block;font-size:12.5px;color:var(--muted);margin:4px 0 8px}
+  .tc input[type=date],.cl input[type=date],.cl input[type=text],.cl select,.sc select{display:block;width:100%;margin-top:4px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font:600 15px var(--fb);background:var(--card);color:var(--ink);min-height:44px}
+  .cbt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .cbt button{min-height:46px;padding:10px 4px;font-size:14px}
+  .cbt .c{background:var(--good);color:#fff} .cbt .m{background:var(--warn);color:#fff} .cbt .n{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+  .cbt button[disabled],.tc .cai[disabled]{opacity:.5}
+  .cst{font-size:12.5px;color:var(--muted);margin-top:6px;min-height:16px} .cst.ok{color:var(--good);font-weight:800} .cst.bad{color:var(--bad);font-weight:700}
+  .tc .sf{display:inline-block;margin-top:8px;font:700 12.5px var(--fb);color:var(--muted)}
+  .sc .row{display:flex;gap:8px;margin-top:8px} .sc .row select{flex:1;margin:0} .sc .row .go{margin:0;width:auto;flex:none;padding:0 18px}
+  .sc .res div{font-size:13px;margin-top:4px} .sc .res .bad{color:var(--bad)}
+  .cl .grp{margin-top:14px} .cl .grp h3{font:800 14px/1.3 var(--fd);color:var(--navy);margin:0 0 6px}
+  .cl .it{padding:10px 0;border-top:1px solid var(--line)} .cl .it:first-of-type{border-top:0}
+  .cl .it .s{font:600 14px/1.4 var(--fb);overflow-wrap:anywhere}
+  .cl .seg{display:flex;gap:6px;margin-top:6px} .cl .seg label{flex:1;display:flex}
+  .cl .seg input{position:absolute;opacity:0;pointer-events:none}
+  .cl .seg span{flex:1;text-align:center;padding:11px 6px;border-radius:10px;border:1.5px solid var(--line);font:800 13.5px/1.2 var(--fd);cursor:pointer;color:var(--muted)}
+  .cl .seg input:checked+span{border-color:var(--good);color:var(--good);background:var(--card)}
+  .cl .seg input[value^="Not"]:checked+span{border-color:var(--bad);color:var(--bad)}
+  .cl .done div{font-size:13.5px;color:var(--good);margin-top:2px}
+  .cl .out{display:flex;gap:10px;align-items:center;font:800 14px var(--fd);margin-top:14px} .cl .out input{width:22px;height:22px}
+  .more[hidden]{display:none}
+  .showmore{width:100%;margin-top:6px;background:transparent;color:var(--ink);border:1.5px solid var(--line)}
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation:none!important;transition:none!important} .card,ul.list li{opacity:1;transform:none} }
 </style>
 </head>
@@ -165,7 +248,7 @@
 <div class="wrap">
   <header class="top">
     <div>
-      <div class="eyebrow">Ricky Rampersad Branch · My workday</div>
+      <div class="eyebrow"><a id="toapp" href="/rroperations/" hidden>&larr; Branch app</a> Ricky Rampersad Branch · My workday</div>
       <h1 id="hello">Your day</h1>
       <div class="sub" id="when">&nbsp;</div>
     </div>
@@ -183,6 +266,8 @@
       <div class="now" id="nowm" title="Where the working day is now"></div>
     </div>
     <div class="pace" id="pace">&nbsp;</div>
+    <div class="upline"><span id="upat">&nbsp;</span><a id="uprefresh" role="button" tabindex="0">Refresh</a></div>
+    <div class="upd" id="upd" hidden><span id="updt"></span><button type="button" id="updgo">Refresh</button></div>
   </section>
 
   <div id="notice"></div>
@@ -206,12 +291,22 @@
     get: function (k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
     set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   };
-  // The link carries who you are and your key. Opened from the home screen without them, the last link on this phone is used.
-  var P = Q.get("p") || "", K = Q.get("k") || "";
-  if (P && K) store.set("wd_link", { p: P, k: K }); else { var last = store.get("wd_link"); if (last) { P = last.p; K = last.k; } }
+  // Who you are, one of two ways. The e-mail's link carries your name and key (p, k); opened from the home screen without
+  // them, the last link on this phone is used. Or the branch app's sign-in (26 Oct 2026, "My day" in the app, ?app=1):
+  // the app keeps it under rrb-ops-session on this site and the tracker asks the app who it is. From the app, the app's
+  // sign-in wins; otherwise a link does, and the app's sign-in is the fallback when this phone has no link.
+  var P = Q.get("p") || "", K = Q.get("k") || "", OPS = "", fromApp = Q.get("app") === "1", ses = null;
+  try { ses = JSON.parse(localStorage.getItem("rrb-ops-session") || "null"); } catch (e) {}
+  var appTok = ses && ses.token ? String(ses.token) : "";
+  if (P && K) store.set("wd_link", { p: P, k: K });
+  else if (fromApp && appTok) OPS = appTok;
+  else { var last = store.get("wd_link"); if (last) { P = last.p; K = last.k; } else if (appTok) OPS = appTok; }
+  var WHO = OPS ? "app_" + String(ses.agentNo || ses.name || "") : P;
+  function auth(body) { if (OPS) { body.set("wd", "app"); body.set("ops", OPS); } else { body.set("wd", P); body.set("k", K); } return body; }
+  if (OPS || fromApp) { var ta = document.getElementById("toapp"); if (ta) ta.hidden = false; }
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
-  var M = null, busy = false;
+  var M = null, busy = false, pending = null;
 
   function tick() {
     var d = new Date();
@@ -285,24 +380,32 @@
       "</div></div></div>" + '<button class="go" id="ci">Check in now</button><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:8px">Checking in before noon brings back the work nobody has touched.</div></div>';
     if (!c.at) return '<div class="card"><div class="ci"><div class="dot">' + "&#9654;" + '</div><div><div class="t">Start your day</div><div class="s">Your day starts at ' + esc(m.start) + ". Checking in is the register.</div></div></div>" +
       '<button class="go" id="ci">Check in and start my day</button></div>';
-    var late = Number(c.late || 0);
+    var late = Number(c.late || 0), cl = m.close;
+    // Close my day (27 Oct 2026): the close-out, from here, with or without the e-mail.
+    // Close my day (27 Oct 2026), here on this screen since 29 Oct: the button goes to the close-out at the foot of the page.
+    var close = c.out ? '<div class="closed"><b>Day closed</b> · signed out ' + esc(c.out) + ".</div>"
+      : m.closeInline ? '<button type="button" class="btn go" id="closeday" data-closego>Close my day</button><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:8px">At the end of your day' + (cl && cl.end ? " (" + esc(cl.end) + ")" : "") + ": it is at the bottom of this page.</div>"
+      : cl ? '<a class="btn go" id="closeday" href="' + esc(cl.url) + '">Close my day</a><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:8px">At the end of your day' + (cl.end ? " (" + esc(cl.end) + ")" : "") + ': a reason and a new date for anything not done, the checks, and sign out.</div>'
+      : '<button type="button" class="btn go" id="closeday" data-signout>Check out</button><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:8px">When you leave: the register\'s sign-out.</div>';
     return '<div class="card"><div class="ci"><div class="dot' + (late ? " late" : "") + '">&#10003;</div><div><div class="t">In at ' + esc(c.at) + (late ? " · " + late + " min late" : " · on time") + "</div>" +
-      '<div class="s">Your day started at ' + esc(m.start) + (c.out ? " · signed out " + esc(c.out) : "") + "</div></div></div></div>";
+      '<div class="s">Your day started at ' + esc(m.start) + (c.out ? " · signed out " + esc(c.out) : "") + "</div></div></div>" + close + "</div>";
   }
   // A first name from "Sasha Lalla-Jagassar" or "kamla.dookran@myguardiangroup.com".
+  // A task type in words, from the tracker's own labels when it sent them (29 Oct 2026: "Renewa/PDl/Bill" read as code).
+  function tyName(t) { var l = M && M.types ? M.types.filter(function (x) { return x.k === t; })[0] : null; return l && l.l ? l.l : t; }
   function firstOf(by) { var b = String(by || "").trim(); if (!b) return "Someone"; if (b.indexOf("@") > -1) b = b.split("@")[0].split(/[._-]/)[0]; b = b.split(/\s+/)[0]; return b.charAt(0).toUpperCase() + b.slice(1); }
   function waitingCard(m) {
     var w = m.waiting; if (!w) return "";
     if (!w.length) return '<div class="card"><div class="ch"><h2>Waiting on you</h2></div><div class="empty">Nobody is waiting on your word. Well done.</div></div>';
     var desks = m.desks || [];
-    return '<div class="card" id="waiting"><div class="ch"><h2>Waiting on you</h2><span class="n">' + w.length + "</span></div>" + w.map(function (x) {
+    return '<div class="card" id="waiting"><div class="ch"><h2>Waiting on you</h2><span class="n">' + w.length + "</span></div>" + w.map(function (x, wi) {
       var sel = x.k === "inbox" && desks.length ? '<select aria-label="Post to" data-to>' + desks.map(function (d) { return '<option value="' + esc(d.sid) + '"' + (d.sid === (x.to || "ricky") ? " selected" : "") + ">" + esc(d.first) + "</option>"; }).join("") + "</select>" : "";
-      return '<div class="wt" data-k="' + esc(x.k) + '" data-id="' + esc(x.id) + '"><div class="who">' + esc(firstOf(x.by)) + " <span>· " + esc(x.s) + "</span></div>" +
+      return '<div class="wt' + (wi >= 10 ? ' more' : '') + '"' + (wi >= 10 ? ' hidden' : '') + ' data-k="' + esc(x.k) + '" data-id="' + esc(x.id) + '"><div class="who">' + esc(firstOf(x.by)) + " <span>· " + esc(x.s) + "</span></div>" +
         (x.said ? '<div class="said">"' + esc(x.said) + '"</div>' : "") +
         (x.read || x.next || x.done ? '<div class="rd">' + (x.done ? "<b>Done so far:</b> " + esc(x.done) + "<br>" : "") + (x.read ? "<b>Claude:</b> " + esc(x.read) : "") + (x.next ? (x.read ? "<br>" : "") + "<b>Next:</b> " + esc(x.next) : "") + "</div>" : "") +
         '<textarea aria-label="Your answer" placeholder="' + (x.draft ? "" : "Claude has not written this one yet. Type your answer.") + '">' + esc(x.draft || "") + "</textarea>" +
         '<div class="act">' + sel + '<button class="go" data-post>Post</button></div></div>';
-    }).join("") + "</div>";
+    }).join("") + (w.length > 10 ? '<button type="button" class="showmore" data-more>Show ' + (w.length - 10) + " more</button>" : "") + "</div>";
   }
   function achievedCard(m) {
     var a = m.achieved || [], lab = { close: "Closed", note: "Note", email: "E-mail", task: "Task", inbox: "Inbox", draft: "Note", move: "Moved" };
@@ -314,14 +417,52 @@
     return '<div class="card"><div class="ch"><h2>What you have achieved today</h2><span class="n">' + a.length + "</span></div>" +
       (a.length ? '<ul class="list">' + items + "</ul>" : '<div class="empty">Nothing closed yet today. Your first close shows here, with your note.</div>') + "</div>";
   }
-  function nextCard(m) {
-    var n = m.next || [];
-    if (!n.length) return '<div class="card"><div class="ch"><h2>' + (m.waiting ? "Your own tasks today" : "Next up") + '</h2></div><div class="empty">Nothing overdue or due today. Well done.</div></div>';
-    return '<div class="card"><div class="ch"><h2>' + (m.waiting ? "Your own tasks today" : "Next up") + '</h2><span class="n">oldest first</span></div><ul class="list">' + n.map(function (x, i) {
-      var s = x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.s) + "</a>" : esc(x.s);
-      return '<li style="animation-delay:' + i * 0.04 + 's"><span class="ic ' + (x.late ? "late" : "due") + '">' + (x.late ? "!" : "&#8226;") + '</span><div class="li"><div class="s">' + s + "</div><small>" +
-        (x.late ? "Overdue since " + esc(x.due) : "Due today") + (x.ty && x.ty !== "Untyped" ? " · " + esc(x.ty) : "") + "</small></div></li>";
+  /* The day's list (27 Oct 2026): set by the system when you check in; each ticks itself when closed in Salesforce. */
+  function listCard(m) {
+    var l = m.list; if (!l) return "";
+    var done = l.filter(function (x) { return x.done; }).length;
+    if (!l.length) return '<div class="card"><div class="ch"><h2>Your list today</h2></div><div class="empty">' + (m.listSet ? "Your list is clear." : "Nothing to set yet: nothing is overdue or due today.") + "</div></div>";
+    return '<div class="card" id="list"><div class="ch"><h2>Your list today</h2><span class="n">' + (m.listSet ? done + " of " + l.length + " done" : "set when you check in") + '</span></div><ul class="list">' + l.map(function (x, i) {
+      var card = m.types && !x.done && x.id, s = card ? esc(x.s) : x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.s) + "</a>" : esc(x.s);
+      return '<li class="' + (card ? "tk" : "") + '"' + (card ? ' data-id="' + esc(x.id) + '" data-url="' + esc(x.url || "") + '"' : "") + ' style="animation-delay:' + i * 0.03 + 's"><span class="ic ' + (x.done ? "" : "todo") + '">' + (x.done ? "&#10003;" : "&#9675;") + '</span><div class="li"><div class="s' + (x.done ? " done" : "") + '"' + (card ? ' data-open role="button" tabindex="0"' : "") + ">" + s + "</div><small>" +
+        (x.done ? "Closed today" : card ? "Tap it: what to do, a note, and Close, Move or Note from here" : "Open it in Salesforce, do it, note it in the client's words, close it") + (x.ty && x.ty !== "Untyped" ? " · " + esc(tyName(x.ty)) : "") + "</small></div>" + (card ? '<div class="tc" hidden></div>' : "") + "</li>";
     }).join("") + "</ul></div>";
+  }
+  function nextCard(m) {
+    var on = {}, hasList = !!(m.list && m.list.length); (m.list || []).forEach(function (x) { if (x.id) on[x.id] = 1; });
+    var n = (m.next || []).filter(function (x) { return !(x.id && on[x.id]); });
+    if (hasList && !n.length) return "";
+    if (hasList) return '<div class="card"><div class="ch"><h2>Also overdue or due</h2><span class="n">oldest first</span></div><ul class="list">' + n.map(taskLi(m)).join("") + "</ul></div>";
+    if (!n.length) return '<div class="card"><div class="ch"><h2>' + (m.waiting ? "Your own tasks today" : "Next up") + '</h2></div><div class="empty">Nothing overdue or due today. Well done.</div></div>';
+    return '<div class="card"><div class="ch"><h2>' + (m.waiting ? "Your own tasks today" : "Next up") + '</h2><span class="n">oldest first</span></div><ul class="list">' + n.map(taskLi(m)).join("") + "</ul></div>";
+  }
+  /* A task in the overdue-and-due lists: for a desk, a card opens under it (29 Oct 2026); otherwise a link to Salesforce. */
+  function taskLi(m) {
+    return function (x, i) {
+      var card = m.types && x.id, s = card ? esc(x.s) : x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.s) + "</a>" : esc(x.s);
+      return '<li class="' + (card ? "tk" : "") + '"' + (card ? ' data-id="' + esc(x.id) + '" data-url="' + esc(x.url || "") + '"' : "") + ' style="animation-delay:' + i * 0.04 + 's"><span class="ic ' + (x.late ? "late" : "due") + '">' + (x.late ? "!" : "&#8226;") + '</span><div class="li"><div class="s"' + (card ? ' data-open role="button" tabindex="0"' : "") + ">" + s + "</div><small>" +
+        (x.late ? "Overdue since " + esc(x.due) : "Due today") + (x.ty && x.ty !== "Untyped" ? " · " + esc(tyName(x.ty)) : "") + "</small></div>" + (card ? '<div class="tc" hidden></div>' : "") + "</li>";
+    };
+  }
+  /* What came up (the scrub): one a line, each a Salesforce task in your day. */
+  function scrubCard(m) {
+    if (!m.types) return "";
+    return '<div class="card sc" id="scrub"><div class="ch"><h2>Add to my day</h2><span class="n">inbox, WhatsApp, calls</span></div>' +
+      '<div class="tip" style="margin-bottom:8px">Anything that came up and needs doing: one a line. Each becomes a Salesforce task in your name, due today.</div>' +
+      '<textarea id="scrubt" placeholder="e.g. Agent Persad asked for the Mohammed medical requirements"></textarea>' +
+      '<div class="row"><select id="scrubty" aria-label="Task type">' + m.types.map(function (t) { return '<option value="' + esc(t.k) + '"' + (t.k === "Servicing" ? " selected" : "") + ">" + esc(t.l) + "</option>"; }).join("") + "</select>" +
+      '<button type="button" class="go" data-scrub>Add</button></div><div class="res" id="scrubres"></div></div>';
+  }
+  /* The end of the day, at the foot of the page: the close-out for a desk, the sign-out for the managers. */
+  function closeCard(m) {
+    var c = m.checkin || {};
+    if (!c.at || c.status === "absent") return "";
+    if (c.out) return '<div class="card" id="closecard"><div class="ch"><h2>Your day is closed</h2></div><div class="closed"><b>Signed out ' + esc(c.out) + '.</b> Thank you.</div></div>';
+    if (m.closeInline) return '<div class="card cl" id="closecard"><div class="ch"><h2>Close my day</h2><span class="n">' + (m.close && m.close.end ? "by " + esc(m.close.end) : "") + "</span></div>" +
+      '<div class="tip">What you set out to do and what is done; a reason and a new date for anything not done; the three checks; and you are signed out. It goes to Mr Rampersad and sales support.</div>' +
+      '<div id="closebody"><button type="button" class="go" data-closego>Close my day</button></div></div>';
+    if (m.close) return "";
+    return '<div class="card" id="closecard"><div class="ch"><h2>Check out</h2></div><div class="tip">When you leave: the register\'s sign-out.</div><button type="button" class="go" data-signout>Check out</button></div>';
   }
   function barsCard(m) {
     var b = m.bars || []; if (!b.length) return "";
@@ -340,18 +481,80 @@
         '<div class="v">' + (x.closed == null ? "–" : "<b>" + x.closed + "</b>/" + x.target) + "</div></div>";
     }).join("") + "</div>";
   }
-  function footCard(m) {
-    return '<div class="foot"><a class="btn go" href="' + esc(m.full) + '">' + esc(m.fullLabel || "Open my day page") + " &rarr;</a>" +
-      '<div style="color:var(--muted);font-size:12.5px;text-align:center">Your drafts, your inbox with Claude\'s notes, and every task card are on your day page.</div></div>';
-  }
 
+  // The agents' My day (27 Oct 2026): Project my day and Close off my day, the same pages the e-mails open.
+  function agentCards(m) {
+    if (!m.on) return '<div class="card"><div class="ch"><h2>Your day, from the branch</h2></div><div class="tip">Your daily e-mails and this page start when the branch adds you to the agents\' day. Until then, carry on as you are. <a href="' + esc(m.film) + '">See how it works &rarr;</a></div></div>';
+    var p = m.project || {}, c = m.close || {}, ml = m.mailed || {};
+    return '<div class="card ag"><div class="step"><div class="num">1</div><div><div class="t">Project my day' + (p.done ? '<span class="ok">DONE</span>' : '') + '</div>' +
+        '<div class="s">' + (p.done ? 'Saved. Open it again to change a number or comment on a client.' : 'A number against each line, and a comment on any client the team is working for you. By ' + esc(p.by || '10:30am') + '.') + '</div></div></div>' +
+        '<a class="btn go" id="agproj" href="' + esc(p.url) + '" target="_blank" rel="noopener">' + (p.done ? 'Open my projection' : 'Project my day') + ' &rarr;</a></div>' +
+      '<div class="card ag pm"><div class="step"><div class="num">2</div><div><div class="t">Close off my day' + (c.done ? '<span class="ok">DONE</span>' : '') + '</div>' +
+        '<div class="s">' + (c.done ? 'Closed off. Open it again to correct a number.' : 'At ' + esc(c.at || '5:30pm') + ': what you actually did, 0 where nothing was. No answer reads as nothing done.') + '</div></div></div>' +
+        '<a class="btn ' + (c.open || c.done ? 'go' : 'ghost') + '" id="agclose" href="' + esc(c.url) + '" target="_blank" rel="noopener" style="display:flex;width:100%;margin-top:12px">' + (c.done ? 'Open my close-off' : 'Close off my day') + ' &rarr;</a></div>' +
+      '<div class="card"><div class="tip">' + (ml.am ? 'Your morning e-mail went at <b>' + esc(ml.am) + '</b>. ' : 'No e-mail this morning? This page is the same day, any time. ') +
+        'If a page says <b>Sorry, unable to open the file</b>, your phone is signed in to more than one Google account: press and hold the button, copy the link, and open it in a private window.' +
+        ' <a href="' + esc(m.film) + '">Watch the 2-minute film &rarr;</a></div></div>';
+  }
+  // The register (27 Oct 2026): the last five working days; a day with no sign-in can be marked absent with a reason.
+  function attCard(m) {
+    var a = m.att; if (!a || !a.desks) return "";
+    var cell = function (x, d, day) {
+      var mark = d.mark && (x.st === "none" || x.st === "notin" || (x.st === "absent" && x.auto)) ? ' data-mark="' + esc(d.sid) + '|' + esc(day.d) + '|' + esc(d.first) + '|' + esc(day.l) + '"' : "";
+      // In, and out (28 Oct 2026): the time they left under the time they came, early in amber, no sign-out said so.
+      var out = x.o ? '<small class="out' + (x.early ? ' early' : '') + '">left ' + esc(x.o) + (x.early ? " · " + x.early + " min early" : "") + "</small>"
+        : x.noout ? '<small class="out none">no sign-out</small>' : "";
+      if (x.st === "in") return '<td class="in"' + mark + '><b class="t">' + esc(x.t) + "</b>" + out + "</td>";
+      if (x.st === "late") return '<td class="late"' + mark + '><b class="t">' + esc(x.t) + "</b><small>" + x.late + " min late</small>" + out + "</td>";
+      if (x.st === "absent") return '<td class="absent"' + mark + '>Absent<small>' + esc(x.why) + (x.by ? " · " + esc(x.by) : "") + "</small></td>";
+      if (x.st === "none") return '<td class="none"' + mark + '>No record' + (mark ? "<small>tap to mark</small>" : "") + "</td>";
+      if (x.st === "notin") return '<td class="notin"' + mark + '>Not in' + (mark ? "<small>tap to mark</small>" : "") + "</td>";
+      return "<td>&middot;</td>";
+    };
+    return '<div class="card" id="attcard"><div class="ch"><h2>Attendance</h2><span class="n">last ' + a.days.length + ' working days</span></div>' +
+      '<table class="att"><tr><th></th>' + a.days.map(function (d) { return "<th>" + esc(d.l) + "</th>"; }).join("") + "</tr>" +
+      a.desks.map(function (d) { return '<tr><td class="nm">' + esc(d.first) + "</td>" + d.cells.map(function (x, i) { return cell(x, d, a.days[i]); }).join("") + "</tr>"; }).join("") +
+      '</table><div id="markbox"></div><div class="attkey">Each day: the time in, and under it the time they left. <b>No record</b>: nothing was written that day (no sign-in, and no morning e-mail to mark it). Tap one to say why.</div></div>';
+  }
+  document.addEventListener("click", function (e) {
+    var td = e.target.closest && e.target.closest("td[data-mark]"); if (!td) return;
+    var p = td.getAttribute("data-mark").split("|"), box = $("markbox"); if (!box) return;
+    box.innerHTML = '<div class="markbox"><div class="q">' + esc(p[2]) + ", " + esc(p[3]) + ': not in. Why?</div><div class="row">' +
+      '<button type="button" data-why="Sick">Sick</button><button type="button" data-why="On leave">On leave</button><button type="button" data-why="">Other…</button></div>' +
+      '<input type="text" id="whyother" placeholder="In a few words, then press Other again" hidden></div>';
+    box.setAttribute("data-who", p[0]); box.setAttribute("data-date", p[1]); box.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  });
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-why]"); if (!b) return;
+    var box = $("markbox"), inp = $("whyother"), why = b.getAttribute("data-why");
+    if (!why) { if (inp.hidden) { inp.hidden = false; inp.focus(); return; } why = (inp.value || "").trim(); if (!why) { inp.focus(); return; } }
+    b.disabled = true; b.textContent = "Saving…";
+    var body = auth(new URLSearchParams()); body.set("act", "absent"); body.set("who", box.getAttribute("data-who")); body.set("date", box.getAttribute("data-date")); body.set("why", why);
+    fetch(TRACKER, { method: "POST", body: body, redirect: "follow" }).then(function (r) { return r.json(); })
+      .then(function (m) { if (!m || !m.ok) { b.disabled = false; b.textContent = why || "Other…"; toast((m && m.error) || "That did not save. Try again."); return; } store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); toast("Marked absent: " + why + "."); })
+      .catch(function () { b.disabled = false; b.textContent = why || "Other…"; toast("That did not reach the tracker. Try again."); });
+  });
+  function drawAgent(m, cached) {
+    M = m;
+    $("hello").textContent = greet(m.first || "");
+    $("when").textContent = (m.date || "") + " · agent";
+    $("hours").textContent = "";
+    $("prog").style.display = "none";
+    $("main").innerHTML = agentCards(m);
+    $("asat").textContent = (cached ? "As at " : "Updated ") + (m.at || "") + (cached ? " · updating…" : "");
+  }
   function draw(m, cached) {
+    if (m && m.agent) return drawAgent(m, cached);
+    $("prog").style.display = "";
     M = m;
     $("hello").textContent = greet(m.first || "");
     $("when").textContent = (m.date || "") + (m.hours ? " · " + m.hours : "");
     $("hours").textContent = m.lunch && m.lunch !== "Flexible" ? "lunch " + m.lunch : "";
     drawProgress(m);
-    $("main").innerHTML = checkinCard(m) + waitingCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + footCard(m);
+    // One screen (29 Oct 2026): no "Open My day" foot; what the white page did is here.
+    $("main").innerHTML = checkinCard(m) + waitingCard(m) + attCard(m) + listCard(m) + scrubCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + closeCard(m);
+    $("upd").hidden = true; pending = null;
+    $("upat").textContent = (cached ? "As at " : "Updated ") + (m.at || "") + (cached ? " · updating…" : "");
     requestAnimationFrame(function () {
       Array.prototype.forEach.call(document.querySelectorAll(".bb"), function (e) { var t = e.parentNode.clientHeight - 18; e.style.height = Math.max(4, Math.round(t * Number(e.getAttribute("data-h") || 0) / 100)) + "px"; });
       Array.prototype.forEach.call(document.querySelectorAll(".mini i"), function (e) { e.style.width = e.getAttribute("data-w") + "%"; });
@@ -362,23 +565,62 @@
 
   function fail(msg) {
     if (M) { notice(esc(msg) + ' <a href="#" id="again">Try again</a>', true); $("asat").textContent = "As at " + (M.at || ""); }
-    else { notice(esc(msg) + ' <a href="#" id="again">Try again</a>', true); $("of").textContent = "Not opened"; $("main").innerHTML = ""; }
-    var a = $("again"); if (a) a.addEventListener("click", function (e) { e.preventDefault(); load(); });
+    else {
+      // 28 Oct 2026: Azariah, 8:04, "Still trying to get into my day": the day would not open, so she could not check in, and the
+      // clock had her late at 8:07. When the day will not open, the check-in still goes: it records the time now, and the day follows.
+      notice(esc(msg) + ' <a href="#" id="again">Try again</a>', true); $("of").textContent = "Not open yet";
+      $("main").innerHTML = '<div class="card"><div class="ci"><div class="dot">&#9654;</div><div><div class="t">Check in now</div><div class="s">Your day is slow to open. ' +
+        'Check in here and the time you came is recorded now; your day opens after.</div></div></div><button class="go" id="cinow">Check in and start my day</button></div>';
+      var cn = $("cinow"); if (cn) cn.addEventListener("click", checkIn);
+    }
+    var a = $("again"); if (a) a.addEventListener("click", function (e) { e.preventDefault(); load.tries = 0; load(); });
   }
-  function load() {
-    if (!P || !K) { notice("Open this page from the <b>My workday</b> link in your morning e-mail. After that it opens from your home screen.", false); $("of").textContent = ""; $("main").innerHTML = ""; return; }
+  /* THE UPDATE BAR (29 Oct 2026, Ricky: "if they see the update on it, so they can leave that screen and refresh"). Every two
+     minutes the day is read again. With nothing typed and no card open, it is simply redrawn; otherwise the new day waits and a
+     bar at the top says what changed, with Refresh, so a half-written note is never wiped. */
+  function dirty() {
+    var main = $("main"); if (!main || !M) return false;
+    if (main.querySelector(".tc:not([hidden])") || $("closeform")) return true;
+    var els = main.querySelectorAll("textarea, input[type=text]");
+    for (var i = 0; i < els.length; i++) if (els[i].value && els[i].value !== els[i].defaultValue) return true;
+    var a = document.activeElement; return !!(a && main.contains(a) && /^(TEXTAREA|INPUT|SELECT)$/.test(a.tagName));
+  }
+  function changes(a, b) {
+    var ga = a.progress || {}, gb = b.progress || {}, out = [], n = function (x) { return Number(x || 0); };
+    if (gb.lead) { if (n(gb.waiting) > n(ga.waiting)) out.push((n(gb.waiting) - n(ga.waiting)) + " new waiting on you"); if (n(gb.cleared) > n(ga.cleared)) out.push((n(gb.cleared) - n(ga.cleared)) + " more cleared"); }
+    else {
+      if (n(gb.closed) > n(ga.closed)) out.push((n(gb.closed) - n(ga.closed)) + " more closed");
+      if ((b.next || []).length > (a.next || []).length) out.push(((b.next || []).length - (a.next || []).length) + " new due");
+      if ((b.list || []).length > (a.list || []).length) out.push(((b.list || []).length - (a.list || []).length) + " new on your list");
+    }
+    var ta = (a.team || []).filter(function (x) { return x.at; }).length, tb = (b.team || []).filter(function (x) { return x.at; }).length;
+    if (tb > ta) out.push((tb - ta) + " more of the team in");
+    return out;
+  }
+  function banner(m) {
+    var ch = changes(M, m);
+    $("updt").textContent = "Updated " + (m.at || "") + (ch.length ? ": " + ch.join(" · ") : "") + ". Refresh when you are ready" + (dirty() ? " (what you have typed stays until then)" : "") + ".";
+    $("upd").hidden = false;
+  }
+  function load(silent) {
+    if (!OPS && (!P || !K)) { notice('Open <b>My day</b> in the <a href="/rroperations/">branch app</a>, or the <b>My workday</b> link in your morning e-mail. After that it opens from your home screen.', false); $("of").textContent = ""; $("main").innerHTML = ""; return; }
     if (busy) return; busy = true;
-    var ctl = window.AbortController ? new AbortController() : null, timer = setTimeout(function () { if (ctl) ctl.abort(); }, 45000);
-    fetch(TRACKER + "?wd=" + encodeURIComponent(P) + "&k=" + encodeURIComponent(K) + "&t=" + Date.now(), { redirect: "follow", cache: "no-store", signal: ctl ? ctl.signal : undefined })
+    // 27 Oct 2026: a phone can let go of a slow first answer of the day; it waits up to 90 s and tries once more by itself.
+    var ctl = window.AbortController ? new AbortController() : null, timer = setTimeout(function () { if (ctl) ctl.abort(); }, 90000);
+    fetch(TRACKER + "?" + auth(new URLSearchParams()).toString() + "&t=" + Date.now(), { redirect: "follow", cache: "no-store", signal: ctl ? ctl.signal : undefined })
       .then(function (r) { return r.json(); })
-      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { fail((m && m.error) || "The tracker did not answer."); return; } notice(""); store.set("wd_day_" + P, { day: m.day, m: m }); draw(m, false); })
-      .catch(function () { clearTimeout(timer); busy = false; fail("The tracker did not answer this time."); });
+      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { if (!silent) fail((m && m.error) || "The tracker did not answer."); return; } load.tries = 0; notice(""); store.set("wd_day_" + WHO, { day: m.day, m: m });
+        if (silent === true && dirty()) { pending = m; banner(m); return; } draw(m, false); })
+      // Three more tries, further apart (2, 5 and 10 seconds), before it says so: a busy minute at the tracker passes (28 Oct 2026).
+      .catch(function () { clearTimeout(timer); busy = false; if (silent === true) return; load.tries = (load.tries || 0) + 1;
+        if (load.tries <= 3) { if (!M) $("of").textContent = "Still opening your day… (try " + (load.tries + 1) + " of 4)"; setTimeout(load, [0, 2000, 5000, 10000][load.tries]); return; }
+        load.tries = 0; fail("The tracker did not answer this time."); });
   }
   function post(btn) {
     var row = btn.closest(".wt"), ta = row.querySelector("textarea"), sel = row.querySelector("select[data-to]"), text = (ta.value || "").trim();
     if (!text) { ta.focus(); toast("Write your answer first."); return; }
     btn.disabled = true; var was = btn.textContent; btn.textContent = "Posting…";
-    var body = new URLSearchParams(); body.set("wd", P); body.set("k", K); body.set("act", "post"); body.set("kind", row.getAttribute("data-k")); body.set("id", row.getAttribute("data-id")); body.set("text", text);
+    var body = auth(new URLSearchParams()); body.set("act", "post"); body.set("kind", row.getAttribute("data-k")); body.set("id", row.getAttribute("data-id")); body.set("text", text);
     if (sel) body.set("to", sel.value);
     fetch(TRACKER, { method: "POST", body: body, redirect: "follow" })
       .then(function (r) { return r.json(); })
@@ -386,32 +628,173 @@
         if (!r || !r.ok) { btn.disabled = false; btn.textContent = was; toast((r && r.error) || "That did not post. Try again."); return; }
         row.style.maxHeight = row.offsetHeight + "px"; requestAnimationFrame(function () { row.classList.add("gone"); });
         toast("Done: " + (r.res || "posted") + ".");
-        setTimeout(load, 900);
+        setTimeout(function () { load(true); }, 900);
       })
       .catch(function () { btn.disabled = false; btn.textContent = was; toast("That did not reach the tracker. Try again."); });
   }
   document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-post]"); if (b) { e.preventDefault(); post(b); } });
   function checkIn(e) {
     var b = e.currentTarget; b.disabled = true; b.textContent = "Checking in…";
-    var body = new URLSearchParams(); body.set("wd", P); body.set("k", K); body.set("act", "checkin");
+    var body = auth(new URLSearchParams()); body.set("act", "checkin");
     fetch(TRACKER, { method: "POST", body: body, redirect: "follow" })
       .then(function (r) { return r.json(); })
       .then(function (m) {
         if (!m || !m.ok) { b.disabled = false; b.textContent = "Check in and start my day"; toast((m && m.error) || "That did not record. Try again."); return; }
-        store.set("wd_day_" + P, { day: m.day, m: m }); draw(m, false);
+        store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false);
         toast(m.checkedIn && m.checkedIn.first === false ? "You were already in at " + m.checkedIn.at : "Checked in at " + (m.checkedIn ? m.checkedIn.at : m.at) + ". Have a good day.");
       })
       .catch(function () { b.disabled = false; b.textContent = "Check in and start my day"; toast("That did not reach the tracker. Try again."); });
   }
 
   // At once: the last copy this phone saw today, then the live day.
-  var keep = P ? store.get("wd_day_" + P) : null, today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Port_of_Spain" });
+  var keep = WHO ? store.get("wd_day_" + WHO) : null, today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Port_of_Spain" });
   if (keep && keep.m && keep.day === today) draw(keep.m, true);
   load();
-  $("refresh").addEventListener("click", load);
-  $("refresh").addEventListener("keydown", function (e) { if (e.key === "Enter") load(); });
-  setInterval(function () { if (document.visibilityState === "visible") load(); }, 5 * 60 * 1000);
-  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && M && Date.now() - (load.t || 0) > 60000) { load.t = Date.now(); load(); } });
+  var refreshNow = function () { if (pending) { draw(pending, false); return; } load(); };
+  $("refresh").addEventListener("click", refreshNow);
+  $("refresh").addEventListener("keydown", function (e) { if (e.key === "Enter") refreshNow(); });
+  $("uprefresh").addEventListener("click", refreshNow);
+  $("uprefresh").addEventListener("keydown", function (e) { if (e.key === "Enter") refreshNow(); });
+  $("updgo").addEventListener("click", refreshNow);
+  setInterval(function () { if (document.visibilityState === "visible") load(true); }, 2 * 60 * 1000);
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && M && Date.now() - (load.t || 0) > 60000) { load.t = Date.now(); load(true); } });
+
+  /* ── The one screen (29 Oct 2026): the task cards, what came up, the close-out, the sign-out ── */
+  function api(params) {
+    var body = auth(new URLSearchParams()); Object.keys(params).forEach(function (k) { if (params[k] != null) body.set(k, params[k]); });
+    return fetch(TRACKER, { method: "POST", body: body, redirect: "follow" }).then(function (r) { return r.json(); });
+  }
+  function cardHtml(c, url) {
+    var notes = (c.notes || []).map(function (n) { return "<div>" + (n.reply ? "&#8627; " : "") + "<b>" + esc(n.who) + "</b>" + (n.day ? " · " + esc(n.day) : "") + ": " + esc(n.s) + "</div>"; }).join("");
+    return '<div class="lab"><span class="bdg' + (c.must ? " r" : "") + '">' + esc(c.label || "Task") + "</span>" + (c.client ? esc(c.client) : "") + (c.policy ? " · " + esc(c.policy) : "") + "</div>" +
+      '<div class="todo"><b>What to do:</b> ' + esc(c.todo) + "</div>" + (c.next ? '<div class="nx">' + esc(c.next) + "</div>" : "") + (c.close ? '<div class="hint">' + esc(c.close) + "</div>" : "") +
+      '<div class="notes">' + (notes || "No notes on Chatter yet.") + (c.more ? "<div>and " + c.more + " earlier</div>" : "") + "</div>" +
+      '<div class="tpl">' + (c.tpl || []).map(function (t) { return '<button type="button" data-tpl data-a="' + esc(t.a) + '" data-n="' + esc(t.n) + '"><i class="' + (t.a === "close" ? "c" : t.a === "move" ? "m" : "") + '">' + (t.a === "close" ? "closes" : t.a === "move" ? "moves" : "note") + "</i>" + esc(t.n) + "</button>"; }).join("") + "</div>" +
+      '<textarea data-note placeholder="What was done, who you spoke to, the outcome and the next step. It goes on the task\'s Chatter."></textarea>' +
+      '<button type="button" class="cai" data-cact="draft">&#10024; Draft with Claude</button>' +
+      '<label class="dt">Or it cannot be done today: the new date<input type="date" data-to min="' + esc(c.min || "") + '"></label>' +
+      '<div class="cbt"><button type="button" class="c" data-cact="close">Close now</button><button type="button" class="m" data-cact="move">Move now</button><button type="button" class="n" data-cact="note">Post note</button></div>' +
+      '<div class="cst">Close now, Move now or Post note: it is done at once, with your note on Chatter.</div>' + (url ? '<a class="sf" href="' + esc(url) + '" target="_blank" rel="noopener">Open in Salesforce &#8599;</a>' : "");
+  }
+  function openCard(li) {
+    var tc = li.querySelector(".tc"); if (!tc) return;
+    if (!tc.hidden) { if (!tc.querySelector("textarea") || !tc.querySelector("textarea").value) { tc.hidden = true; li.classList.remove("open"); } else tc.querySelector("textarea").focus(); return; }
+    tc.hidden = false; li.classList.add("open");
+    if (tc.getAttribute("data-loaded")) return;
+    tc.innerHTML = '<div class="skel" style="width:60%"></div><div class="skel"></div><div class="skel" style="width:80%"></div>';
+    api({ act: "card", sub: "open", id: li.getAttribute("data-id") }).then(function (c) {
+      if (!c || !c.ok) { tc.innerHTML = '<div class="cst bad">' + esc((c && c.error) || "That did not open.") + "</div>"; return; }
+      tc.setAttribute("data-loaded", "1"); tc.innerHTML = cardHtml(c, li.getAttribute("data-url"));
+    }).catch(function () { tc.innerHTML = '<div class="cst bad">That did not reach the tracker. Tap the task again.</div>'; });
+  }
+  function blankSel(ta) { var i = ta.value.indexOf("["); ta.focus(); if (i > -1) { var j = ta.value.indexOf("]", i); try { ta.setSelectionRange(i, j > i ? j + 1 : i); } catch (e) {} } }
+  function cardAct(btn) {
+    var tc = btn.closest(".tc"), li = btn.closest("li.tk"), ta = tc.querySelector("[data-note]"), to = tc.querySelector("[data-to]"), st = tc.querySelector(".cst"), act = btn.getAttribute("data-cact");
+    var bs = tc.querySelectorAll(".cbt button,.cai"), on = function (v) { for (var i = 0; i < bs.length; i++) bs[i].disabled = !v; };
+    if (act !== "draft" && !(ta.value || "").trim()) { st.className = "cst bad"; st.textContent = act === "close" ? "Say what was done first, in the note." : act === "move" ? "Say why the date moves, in the note." : "Write the note first."; ta.focus(); return; }
+    if (act === "move" && !to.value) { st.className = "cst bad"; st.textContent = "Choose the new date first."; try { to.focus(); if (to.showPicker) to.showPicker(); } catch (e) {} return; }
+    on(false); st.className = "cst"; st.textContent = act === "draft" ? "Claude is writing the note…" : "Saving…";
+    api({ act: "card", sub: act, id: li.getAttribute("data-id"), note: ta.value, to: to.value }).then(function (r) {
+      on(true); r = r || {};
+      if (!r.ok) { st.className = "cst bad"; st.textContent = r.error || "That did not save."; return; }
+      if (act === "draft") { ta.value = r.note || ta.value; st.className = "cst" + (r.warn ? " bad" : ""); st.textContent = r.warn || "Claude's note is in the box: check it, fill any [blanks], then Close now, Move now or Post note."; if (/\[/.test(ta.value)) blankSel(ta); return; }
+      ta.value = ""; ta.defaultValue = ""; if (to) to.value = ""; st.className = "cst ok"; st.textContent = "\u2713 " + (r.msg || "Saved");
+      if (r.act === "close" || r.act === "move") {
+        var ic = li.querySelector(".ic"); if (ic) { ic.className = "ic"; ic.innerHTML = "&#10003;"; }
+        var sx = li.querySelector(".li .s"); if (sx && r.act === "close") sx.classList.add("done");
+        var sm = li.querySelector(".li small"); if (sm) sm.textContent = r.msg || "";
+        setTimeout(function () { tc.hidden = true; li.classList.remove("open"); load(true); }, 1400);
+        toast(r.msg || "Saved.");
+      }
+    }).catch(function () { on(true); st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function scrub(btn) {
+    var ta = $("scrubt"), res = $("scrubres"), lines = (ta.value || "").trim();
+    if (!lines) { ta.focus(); toast("Write what came up first: one a line."); return; }
+    btn.disabled = true; btn.textContent = "Adding…";
+    api({ act: "scrub", lines: lines, type: $("scrubty").value }).then(function (r) {
+      btn.disabled = false; btn.textContent = "Add";
+      if (!r || !r.ok) { toast((r && r.error) || "That did not add. Try again."); return; }
+      ta.value = ""; res.innerHTML = r.out.map(function (o) { return '<div class="' + (o.ok ? "" : "bad") + '">' + (o.ok ? "&#10003; " : "&#9888; ") + esc(o.s) + " · <b>" + esc(o.res) + "</b></div>"; }).join("");
+      toast(r.out.filter(function (o) { return o.ok; }).length + " added to your day."); setTimeout(function () { load(true); }, 1200);
+    }).catch(function () { btn.disabled = false; btn.textContent = "Add"; toast("That did not reach the tracker. Try again."); });
+  }
+  function closeFormHtml(f) {
+    var radios = function (name, vals, sel, attr) { return '<div class="seg">' + vals.map(function (v) { return '<label><input type="radio" name="' + esc(name) + '" value="' + esc(v[0]) + '"' + (sel === v[0] ? " checked" : "") + (attr || "") + "><span>" + esc(v[1]) + "</span></label>"; }).join("") + "</div>"; };
+    var h = '<div id="closeform"><div class="grp done"><h3>What you set out to do' + (f.done.length + f.open.length ? " · " + f.done.length + " of " + (f.done.length + f.open.length) + " done" : "") + "</h3>" +
+      (f.done.length ? f.done.map(function (x) { return "<div>&#10003; " + esc(x) + "</div>"; }).join("") : '<div class="tip">Nothing closed from it yet.</div>') + "</div>";
+    if (f.open.length) h += '<div class="grp"><h3>Not done: a reason and a new date</h3><div class="tip">The new date goes on the task in Salesforce, the reason on its Chatter.</div>' + f.open.map(function (t) {
+      return '<div class="it"><div class="s">' + esc(t.s) + '</div><input type="text" data-r="' + esc(t.id) + '" value="' + esc(t.r) + '" placeholder="Not done because..."><label class="tip">New date<input type="date" data-d="' + esc(t.id) + '" min="' + esc(f.min) + '" value="' + esc(t.d) + '"></label></div>'; }).join("") + "</div>";
+    if (f.checks.length) h += '<div class="grp"><h3>The checks</h3>' + f.checks.map(function (c) {
+      var not = !c.done && c.r;
+      return '<div class="it"><div class="s">' + esc(c.s) + "</div>" + radios("c_" + c.id, [["Done", "Done"], ["Not done", "Not done"]], c.done ? "Done" : not ? "Not done" : "", ' data-chk="' + esc(c.id) + '"') +
+        '<input type="text" data-cr="' + esc(c.id) + '" value="' + esc(c.r) + '" placeholder="What is left, and why"' + (not ? "" : " hidden") + "></div>"; }).join("") + "</div>";
+    var mb = f.mailbag;
+    if (mb) h += '<div class="grp"><h3>The mailbag' + (mb.router ? " · you route it this week" : " · " + esc(mb.routerName) + " routes it this week") + "</h3>" +
+      '<div class="tip">' + (mb.router ? esc(mb.n) + " collected today" + (mb.backlog ? " · <b>" + esc(mb.backlog) + " not yet sent</b>" : "") : "You collected <b>" + esc(mb.n) + "</b> document" + (mb.n === 1 ? "" : "s") + " today.") + "</div>" +
+      radios("mb", mb.router ? [["Sent", "The " + mb.leaves + " bag went"], ["Not sent", "It did not go"]] : [["Handed over", "All handed to " + mb.routerName], ["Not handed over", "Some still with me"]], "", " data-mb") +
+      '<select data-mbr hidden><option value="">Why?</option>' + (mb.reasons || []).map(function (r) { return '<option value="' + esc(r) + '">' + esc(r) + "</option>"; }).join("") + "</select>" +
+      '<input type="text" data-mbn placeholder="' + (mb.router ? "Note: tracking number, courier, or what is still to go" : "Note") + '"></div>';
+    if (f.inno) h += '<div class="grp"><h3>Innovation hour · what moved?</h3><textarea data-inno placeholder="What you built, tested or found, and the next step">' + esc(f.innoSaid) + "</textarea></div>";
+    h += '<div class="grp"><h3>Comment for Mr Rampersad</h3><textarea data-comment placeholder="Anything he should know before tomorrow"></textarea></div>' +
+      '<label class="out"><input type="checkbox" data-out checked> Sign me out now: this is the register</label>' +
+      '<button type="button" class="go" data-closesend>Close my day and sign out</button><div class="cst" id="closest"></div></div>';
+    return h;
+  }
+  function closeOpen() {
+    var card = $("closecard"), body = $("closebody"); if (!card) return;
+    card.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!body || $("closeform")) return;
+    body.innerHTML = '<div class="skel" style="width:50%"></div><div class="skel"></div><div class="skel" style="width:70%"></div>';
+    api({ act: "closeform" }).then(function (r) {
+      if (!r || !r.ok) { body.innerHTML = '<div class="cst bad">' + esc((r && r.error) || "The close-out did not open.") + '</div><button type="button" class="go" data-closego>Try again</button>'; return; }
+      body.innerHTML = closeFormHtml(r.form);
+    }).catch(function () { body.innerHTML = '<div class="cst bad">That did not reach the tracker.</div><button type="button" class="go" data-closego>Try again</button>'; });
+  }
+  function closeSend(btn) {
+    var f = $("closeform"), st = $("closest"), q = { act: "close" }, missing = 0;
+    Array.prototype.forEach.call(f.querySelectorAll("[data-r]"), function (i) { var id = i.getAttribute("data-r"), d = f.querySelector('[data-d="' + id + '"]'); q["r_" + id] = i.value.trim(); q["d_" + id] = d ? d.value : ""; if (!q["r_" + id] || !q["d_" + id]) missing++; });
+    var names = {}; Array.prototype.forEach.call(f.querySelectorAll("[data-chk]"), function (i) { names[i.name] = i.getAttribute("data-chk"); });
+    Object.keys(names).forEach(function (n) { var c = f.querySelector('input[name="' + n + '"]:checked'), id = names[n], cr = f.querySelector('[data-cr="' + id + '"]');
+      if (!c) { missing++; return; } q[n] = c.value; q["cr_" + id] = cr ? cr.value.trim() : ""; if (c.value === "Not done" && !q["cr_" + id]) missing++; });
+    var mb = f.querySelector('input[name="mb"]:checked');
+    if (f.querySelector('input[name="mb"]')) { if (!mb) missing++; else { q.mb = mb.value; q.mbr = (f.querySelector("[data-mbr]") || {}).value || ""; q.mbn = (f.querySelector("[data-mbn]") || {}).value || ""; if (/Not/.test(mb.value) && !q.mbr) missing++; } }
+    var inno = f.querySelector("[data-inno]"); if (inno) { q.inno = inno.value.trim(); if (!q.inno) missing++; }
+    q.comment = (f.querySelector("[data-comment]") || {}).value || ""; if ((f.querySelector("[data-out]") || {}).checked) q.out = "1";
+    if (missing) { st.className = "cst bad"; st.textContent = missing + " answer" + (missing === 1 ? " is" : "s are") + " missing: every task not done needs a reason and a new date, and every check an answer."; return; }
+    btn.disabled = true; btn.textContent = "Closing your day…"; st.className = "cst"; st.textContent = "";
+    api(q).then(function (m) {
+      if (!m || !m.ok) { btn.disabled = false; btn.textContent = "Close my day and sign out"; st.className = "cst bad"; st.textContent = (m && m.error) || "That did not save. Try again."; return; }
+      store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); window.scrollTo({ top: 0, behavior: "smooth" });
+      toast("Your day is closed." + (m.closed && m.closed.out ? " Signed out at " + m.closed.out + "." : ""));
+    }).catch(function () { btn.disabled = false; btn.textContent = "Close my day and sign out"; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function signOut(btn) {
+    btn.disabled = true; btn.textContent = "Checking out…";
+    api({ act: "signout" }).then(function (m) {
+      if (!m || !m.ok) { btn.disabled = false; btn.textContent = "Check out"; toast((m && m.error) || "That did not sign you out."); return; }
+      store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); toast("Checked out" + (m.signedOut ? " at " + m.signedOut : "") + ". Thank you.");
+    }).catch(function () { btn.disabled = false; btn.textContent = "Check out"; toast("That did not reach the tracker. Try again."); });
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest ? e.target : null; if (!t) return;
+    var b;
+    if ((b = t.closest("[data-more]"))) { Array.prototype.forEach.call(document.querySelectorAll("#waiting .more"), function (x) { x.hidden = false; }); b.remove(); return; }
+    if ((b = t.closest("[data-open]"))) { openCard(b.closest("li.tk")); return; }
+    if ((b = t.closest("[data-tpl]"))) { var tc = b.closest(".tc"), ta = tc.querySelector("[data-note]"), to = tc.querySelector("[data-to]"); ta.value = b.getAttribute("data-n");
+      if (b.getAttribute("data-a") === "move" && to) { try { to.focus(); if (to.showPicker) to.showPicker(); } catch (x) {} } blankSel(ta); return; }
+    if ((b = t.closest("[data-cact]"))) { cardAct(b); return; }
+    if ((b = t.closest("[data-scrub]"))) { scrub(b); return; }
+    if ((b = t.closest("[data-closego]"))) { closeOpen(); return; }
+    if ((b = t.closest("[data-closesend]"))) { closeSend(b); return; }
+    if ((b = t.closest("[data-signout]"))) { signOut(b); return; }
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Enter" && e.target && e.target.hasAttribute && e.target.hasAttribute("data-open")) { e.preventDefault(); openCard(e.target.closest("li.tk")); } });
+  document.addEventListener("change", function (e) {
+    var t = e.target; if (!t || !t.closest) return;
+    if (t.hasAttribute("data-chk")) { var cr = t.closest(".it").querySelector("[data-cr]"); if (cr) cr.hidden = t.value !== "Not done"; }
+    if (t.hasAttribute("data-mb")) { var s2 = t.closest(".grp").querySelector("[data-mbr]"); if (s2) s2.hidden = !/Not/.test(t.value); }
+  });
 })();
 </script>
 </body>

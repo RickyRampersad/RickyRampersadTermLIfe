@@ -317,6 +317,13 @@ h2{font-size:21px}
 .pv{background:var(--primarySoft);border:1px solid var(--primaryLine);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14px}
 .pvw{margin:6px 0 0;padding-left:18px;color:var(--warn);font-size:13px}
 .bill-tiles{margin:12px 0 6px}
+/* what the upload wrote in Salesforce (27 October 2026) */
+.sfw{border:1px solid var(--primaryLine);border-left:4px solid var(--primary);border-radius:10px;background:var(--primarySoft);padding:10px 12px;margin:10px 0;font-size:14px}
+.sfw.ok{border-color:#B7DEC4;border-left-color:var(--good);background:var(--goodBg)}.sfw.err{border-color:#F3C2BD;border-left-color:var(--bad);background:var(--badBg)}
+.sfw-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}.sfw-h a{overflow-wrap:anywhere}
+.sfw .tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:#fff;border:1px solid var(--line);border-radius:99px;padding:1px 8px;margin-right:6px;color:var(--ink2)}
+.sfw details{margin:6px 0}.sfw table{background:#fff}.sfw-t ul{margin:4px 0 6px;padding-left:0;list-style:none}.sfw-t li{margin:4px 0;overflow-wrap:anywhere}
+.sfw .btn{margin-top:6px}.sfw .bad{color:var(--badText)}
 .findings h4{margin:14px 0 6px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .findings h4 .n{background:var(--sunken);border-radius:99px;padding:0 8px;margin-left:4px}
 .findings h4.f-fix{color:var(--badText)}.findings h4.f-check{color:var(--warn)}.findings h4.f-ok{color:var(--good)}
@@ -368,3 +375,13 @@ h2{font-size:21px}
 .bdep.wide{grid-template-columns:1fr 2fr .8fr 1.2fr 1.4fr}
 .bform .bad{color:var(--badText)}
 @media (max-width:640px){.bdep,.bdep.ben,.bdep.wide{grid-template-columns:1fr 1fr}.bform .fprev iframe{height:460px}.bform .fsw{grid-template-columns:1fr}}
+
+/* on hold (27 October 2026): a slate mark and a quiet band, so a held group reads as paused, not as a fault */
+:root{--holdMark:#5A687D;--holdBg:#EEF1F5;--holdText:#334155}
+.chip.hold{background:var(--holdBg);border-color:transparent;color:var(--holdText)}.chip.hold i{background:var(--holdMark)}
+.acc.r-hold{border-left-color:var(--holdMark);background:linear-gradient(90deg,var(--holdBg),transparent 40%)}.card.r-hold{border-left-color:var(--holdMark)}
+.hold{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin:12px 0;padding:12px 14px;border-radius:10px;border:1px solid #D5DCE6;border-left:5px solid var(--holdMark);background:var(--holdBg);color:var(--holdText);font-size:15px}
+.hold > div{flex:1 1 22rem;min-width:0}.hold .small{margin-top:4px}.hold ul{margin:6px 0 0;padding-left:18px}.hold li{margin:4px 0}
+.hold.on{border-color:#F3C58C;border-left-color:var(--warnMark);background:#FFF6E6;color:#5A3A00}
+.hold.idle{background:transparent;border-style:dashed;border-left-style:solid}
+

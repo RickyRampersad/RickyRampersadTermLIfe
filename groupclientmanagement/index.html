@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
 <noscript><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
-<link rel="stylesheet" href="gcm.css">
+<link rel="stylesheet" href="gcm.css?v=2026-10-27c">
 <script src="/rroperations/sso.js"></script>
 </head>
 <body>
@@ -40,6 +40,18 @@
 const SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/* A preview is the e-mail as it goes, in a frame where nothing runs, so a sign-in opened inside it can never work
+   (27 October 2026: "Group log on not working", the group's page opened inside the letter preview). Its links open in a
+   tab of their own, and a link to the group's page says it came from a preview, so a staff member trying the sign-in is
+   never counted as the group opening its page. */
+const PV_SANDBOX = 'allow-popups allow-popups-to-escape-sandbox';
+function pvDoc(html) {
+  html = String(html || '').replace(/([?&;]from=)(letter|welcome|reminder|bill)\b/g, '$1preview');
+  const b = '<base target="_blank">';
+  if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, m => m + b);
+  const d = /^\s*<!doctype[^>]*>/i.exec(html);
+  return d ? d[0] + b + html.slice(d[0].length) : b + html;
+}
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAYS = ['','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const dmy = s => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? (+m[3]) + ' ' + MON[+m[2] - 1] + ' ' + m[1] : ''; };
@@ -108,6 +120,7 @@ async function refresh() {
 
 /* ---- the board ---- */
 function weekChip(s) {
+  if (s.hold) return '<span class="chip hold"><i></i>On hold' + (s.week === 'queued' ? ' · approved, waits' : '') + '</span>';
   if (s.week === 'queued') return '<span class="chip good"><i></i>Approved · goes ' + esc(s.approved.for) + '</span>';
   if (s.week === 'sent') return '<span class="chip good"><i></i>Sent ' + esc(s.sentThisWeek) + '</span>';
   return '<span class="chip bad"><i></i>Approve for ' + esc(s.nextSendLabel || 'Monday') + '</span>';
@@ -117,7 +130,7 @@ function groupCard(g) {
   return '<button class="card' + (g.account ? ' r-' + rowState(g) : '') + '" type="button" data-g="' + esc(g.key) + '"><h4>' + esc(g.name) + '</h4>' +
     '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') +
     (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') + (s.needReason ? '<span class="chip bad"><i></i>' + s.needReason + ' need' + (s.needReason === 1 ? 's' : '') + ' a reason for the group</span>' : '') +
-    (!s.ready ? '<span class="chip warn"><i></i>' + esc(s.why) + '</span>' : '') + '</div>' +
+    (!s.ready && !s.hold ? '<span class="chip warn"><i></i>' + esc(s.why) + '</span>' : '') + '</div>' +
     (BOARD.role !== 'staff' && (!g.assigned || !g.ownerActive) ? '<div class="chips"><span class="chip bad"><i></i>' + (g.assigned ? 'Owner ' + esc(g.assigned) + ' is inactive in Salesforce' : 'No owner in Salesforce') + '</span></div>' : '') +
     '<div class="small muted">' + (g.own ? '<b>Yours</b>' : 'Looked after by <b>' + esc(g.assigned || 'nobody') + '</b>') + (g.canAct === false ? ' · read only' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') + '</div>' +
     (g.account ? '<div class="small muted" style="overflow-wrap:anywhere">Letters to ' + esc(g.account.contact || g.account.to.join(', ') || 'nobody yet') + ' · ' +
@@ -130,10 +143,13 @@ function render() {
   let h = '';
   if (!d.salesforce) h += '<div class="note bad">Salesforce is not linked to the backend yet, so no tasks can be read. Copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into the project’s Script properties, then run gcmRefresh.</div>';
   if (!d.refreshed && d.salesforce) h += '<div class="note">The Group Tasks tab has not been filled yet: press “Refresh from Salesforce”.</div>';
-  if (d.nextSend) h += '<div class="note info"><div><b>The letters go out by themselves on ' + esc(d.nextSend) + '.</b> Before then, open each group marked “Approve for Monday”, check every item against Salesforce and the latest billing, preview the letter and approve it. A new item after you approve holds the letter until you look again.</div></div>';
+  const allHeld = !!(d.hold && d.hold.all);
+  if (allHeld) h += holdHtml(d, true);   // every group on hold: said first, and the note that the letters go is left out
+  if (d.nextSend && !allHeld) h += '<div class="note info"><div><b>The letters go out by themselves on ' + esc(d.nextSend) + '.</b> Before then, open each group marked “Approve for Monday”, check every item against Salesforce and the latest billing, preview the letter and approve it. A new item after you approve holds the letter until you look again.</div></div>';
   if (d.billingDay) h += '<div class="note info"><div><b>The group bills go out by themselves on ' + esc(d.billingDay.label) + (d.billingDay.isDay ? ' (today)' : d.billingDay.daysTo ? ' (in ' + d.billingDay.daysTo + ' day' + (d.billingDay.daysTo === 1 ? '' : 's') + ')' : '') + '.</b> That is the 26th, or the next working day when the 26th is a weekend or a public holiday. Before then, open each account’s Billing review: upload the month’s bill on each line, check it against Salesforce, mark it reconciled and approve it with the PDF attached. At ' + (d.billingDay.reportHour || 13) + ':00 on ' + esc(d.billingDay.reportLabel ? d.billingDay.reportLabel.replace(/, \d+:\d+$/, '') : 'the 25th') + ' the branch manager has the report of who has worked each group. A bill approved after the ' + d.billingDay.hour + ':00 run goes at ' + d.billingDay.hour + ':00 the next working day, or with Send now, and the branch manager is told at 10:30.' + (d.billingLive ? '' : ' The bills are in test mode (gblGoLive switches them on).') + (d.billingDay.drive ? '' : ' <b>The Drive folder is not linked</b> (GCM_FORMS_FOLDER), so a bill cannot be approved with its PDF yet.') + '</div></div>';
   if (d.canRehearse) h += '<div class="note"><b>Test the run first.</b> “Rehearse now” writes every approved letter exactly as the ' + esc(d.nextSend || 'Monday') + ' run would, and sends it only to the person who approved it and the branch, marked TEST, with one summary of what would go and what would wait. Nothing reaches a group, and nothing is marked as sent. <button class="btn ghost sm" type="button" id="rh">Rehearse now</button></div>';
   if (!TAB) TAB = d.role === 'staff' ? 'groups' : 'dash';
+  if (!allHeld) h += holdHtml(d, TAB === 'dash');
   if (!FILT.owner) FILT.owner = d.role === 'staff' && d.groups.some(g => g.own) ? 'mine' : 'all';
   h += '<div class="tabs" role="tablist"><button class="tab" role="tab" data-t="groups" aria-selected="' + (TAB === 'groups') + '">Groups</button><button class="tab" role="tab" data-t="dash" aria-selected="' + (TAB === 'dash') + '">Team dashboard · every account</button></div>';
   h += TAB === 'dash' && d.analytics ? accountsHtml(d) + dash(d.analytics) : groupsHtml(d);
@@ -147,7 +163,58 @@ function render() {
   app.querySelectorAll('[data-fs]').forEach(b => b.onclick = () => { FILT.status = b.dataset.fs; if (b.dataset.fo2) FILT.owner = b.dataset.fo2; saveFilt(); TAB = 'groups'; render(); });
   app.querySelectorAll('[data-gn]').forEach(b => b.onclick = () => { const g = BOARD.groups.find(x => x.name === b.dataset.gn); if (g) openGroup(g.key); });
   if ($('rh')) $('rh').onclick = rehearse;
+  app.querySelectorAll('[data-hold]').forEach(b => b.onclick = () => openHold(b.dataset.hold, b.dataset.on === '1'));
   window.scrollTo(0, 0);
+}
+
+/* ---- on hold (27 October 2026: "should you not have instead of the script properties the ability to hold all groups").
+   The branch manager and the deputy hold every group, or one group from its row, with a reason; everyone sees the hold.
+   On hold nothing goes to the group: no letter, welcome or reminder, and nobody is chased for it. Bills are not part of it. */
+function holdHtml(d, full) {
+  const h = d.hold;
+  if (!h) return '';
+  const groups = h.groups || [], can = !!d.canHold;
+  if (h.all) return '<div class="hold on" role="status"><div><b>Every group letter is on hold</b> since ' + esc(h.all.at || '') + (h.all.by ? ', by ' + esc(h.all.by) : '') +
+    (h.all.why ? ': “' + esc(h.all.why) + '”' : '') + '.<div class="small">No letter, welcome or reminder goes to any group, and nobody is chased. An approved letter waits: it goes on Monday only if the hold is lifted before 10:00. Bills are not affected.</div></div>' +
+    (can ? '<button class="btn" type="button" data-hold="all" data-on="0">Lift the hold</button>' : '') + '</div>';
+  let x = '';
+  if (groups.length) x += '<div class="hold some" role="status"><div><b>' + groups.length + ' group' + (groups.length === 1 ? ' is' : 's are') + ' on hold</b>: nothing goes to ' + (groups.length === 1 ? 'it' : 'them') + ' and nobody is chased.' +
+    '<ul>' + groups.map(g => '<li><b>' + esc(g.name) + '</b>' + (g.why ? ' · ' + esc(g.why) : '') + (g.by ? ' · ' + esc(g.by) + (g.at ? ', ' + esc(g.at) : '') : '') +
+      (can ? ' <button class="btn ghost sm" type="button" data-hold="' + esc(g.key) + '" data-on="0">Lift</button>' : '') + '</li>').join('') + '</ul></div></div>';
+  if (can && full) x += '<div class="hold idle"><div><b>Need to stop the letters?</b> Hold every group at once, or one group from its row below (Put on hold). You will be asked why, and the team sees it.</div>' +
+    '<button class="btn ghost" type="button" data-hold="all" data-on="1">Hold every group…</button></div>';
+  return x;
+}
+const HOLD_WHY = ['Testing the billing on this account', 'Checking the letters before they go', 'Waiting on Salesforce to be put right', 'The branch is closed'];
+function openHold(what, on) {
+  const all = what === 'all', nm = all ? 'every group' : nameOf(what);
+  $('dlgT').textContent = (on ? 'Put on hold · ' : 'Lift the hold · ') + (all ? 'every group' : nm);
+  let h = on
+    ? '<p>' + (all ? 'Nothing goes to <b>any group</b>' : 'Nothing goes to <b>' + esc(nm) + '</b>') + ' until you lift it: no weekly letter, no welcome, no reminder to rate us, and no letter sent again. The 10:30 run asks nobody why, and opens no task. ' +
+      'A letter already approved for Monday waits: it goes only if the hold is lifted before 10:00, otherwise it is approved again after. Bills are not part of the hold.</p>' +
+      '<label for="hdWhy" style="display:block;font-weight:600;margin:12px 0 4px">Why? The team sees this</label><textarea class="field" id="hdWhy" rows="2" maxlength="300" style="width:100%;min-height:64px"></textarea>' +
+      '<div class="chips" style="margin:6px 0 12px">' + HOLD_WHY.map(w => '<button class="chip" type="button" data-hw="' + esc(w) + '">' + esc(w) + '</button>').join('') + '</div>' +
+      '<div class="row"><button class="btn" type="button" id="hdGo" disabled>' + (all ? 'Hold every group' : 'Put ' + esc(nm) + ' on hold') + '</button><button class="btn ghost" type="button" onclick="dlg.close()">Cancel</button></div>'
+    : '<p>' + (all ? 'The letters, welcomes and reminders go again as normal' : esc(nm) + ' goes back on the weekly letter') + '. ' +
+      (all ? 'A letter approved for Monday goes as planned; a group held one by one stays on hold.' : 'Check it and approve its letter for ' + esc((BOARD && BOARD.nextSend) || 'Monday') + '.') + '</p>' +
+      '<div class="row"><button class="btn" type="button" id="hdGo">' + (all ? 'Lift the hold' : 'Put ' + esc(nm) + ' back') + '</button><button class="btn ghost" type="button" onclick="dlg.close()">Cancel</button></div>';
+  $('dlgB').innerHTML = h;
+  if (!dlg.open) dlg.showModal();
+  const why = $('hdWhy'), go = $('hdGo');
+  if (why) {
+    const fit = () => { go.disabled = why.value.trim().length < 5; };
+    why.oninput = fit;
+    $('dlgB').querySelectorAll('[data-hw]').forEach(b => b.onclick = () => { why.value = b.dataset.hw; fit(); why.focus(); });
+    why.focus();
+  }
+  go.onclick = async () => {
+    go.disabled = true; go.textContent = on ? 'Holding…' : 'Lifting…';
+    const r = await post({ action: 'gcm.hold', what: all ? 'all' : 'group', group: all ? '' : nm, on: on, why: why ? why.value.trim() : '' });
+    if (!r.ok) { toast(r.error || 'Nothing changed', true); go.disabled = false; go.textContent = on ? 'Try again' : 'Try again'; return; }
+    dlg.close(); toast(r.said || 'Done');
+    const d = await api({ action: 'gcm.board' }); if (d.ok) BOARD = d;
+    if (VIEW === 'group' && GROUP) openGroup(GROUP.group.key); else render();
+  };
 }
 async function rehearse() {
   const b = $('rh'); b.disabled = true; b.textContent = 'Rehearsing… (about a minute)';
@@ -155,11 +222,11 @@ async function rehearse() {
   b.disabled = false; b.textContent = 'Rehearse now';
   toast(r.ok ? r.said : (r.error || 'The rehearsal did not run'), !r.ok);
 }
-const STATUS = [['all', 'All'], ['due', 'To approve'], ['queued', 'Approved'], ['sent', 'Sent this week'], ['late', 'Past target'], ['reason', 'Needs a reason'], ['waiting', 'Waiting on the group'], ['notready', 'Not ready']];
+const STATUS = [['all', 'All'], ['due', 'To approve'], ['queued', 'Approved'], ['sent', 'Sent this week'], ['late', 'Past target'], ['reason', 'Needs a reason'], ['waiting', 'Waiting on the group'], ['notready', 'Not ready'], ['hold', 'On hold']];
 function statusOf(g, k) {
   const s = g.stats;
   return k === 'all' || (k === 'due' && s.week === 'due') || (k === 'queued' && s.week === 'queued') || (k === 'sent' && s.week === 'sent') ||
-    (k === 'late' && s.late > 0) || (k === 'reason' && s.needReason > 0) || (k === 'waiting' && s.waiting > 0) || (k === 'notready' && !s.ready);
+    (k === 'late' && s.late > 0) || (k === 'reason' && s.needReason > 0) || (k === 'waiting' && s.waiting > 0) || (k === 'notready' && !s.ready && !s.hold) || (k === 'hold' && !!s.hold);
 }
 function ownerOf(g, k) { return k === 'all' || (k === 'mine' && g.own) || g.assigned === k; }
 function groupsHtml(d) {
@@ -169,7 +236,7 @@ function groupsHtml(d) {
   const due = shown.filter(g => g.stats.week === 'due').length;
   const today = shown.flatMap(g => g.doneToday.map(x => Object.assign({ group: g.name }, x)));
   const opt = (v, label, on) => '<option value="' + esc(v) + '"' + (on ? ' selected' : '') + '>' + esc(label) + '</option>';
-  const MARK = { due: 'var(--bad)', queued: 'var(--good)', sent: 'var(--good)', late: 'var(--bad)', reason: 'var(--bad)', waiting: 'var(--warnMark)', notready: 'var(--warnMark)' };
+  const MARK = { due: 'var(--bad)', queued: 'var(--good)', sent: 'var(--good)', late: 'var(--bad)', reason: 'var(--bad)', waiting: 'var(--warnMark)', notready: 'var(--warnMark)', hold: 'var(--holdMark)' };
   let h = '<div class="toolbar"><div class="r1"><label class="sel">Looked after by <select id="grOwner">' +
     (d.groups.some(g => g.own) ? opt('mine', 'Mine (' + d.groups.filter(g => g.own).length + ')', FILT.owner === 'mine') : '') + opt('all', 'Everyone (' + d.groups.length + ')', FILT.owner === 'all') +
     owners.map(o => opt(o, o + ' (' + d.groups.filter(g => g.assigned === o).length + ')', FILT.owner === o)).join('') + '</select></label>' +
@@ -223,16 +290,17 @@ function hello(d) {
 /* each filter's mark: the colour of the state it finds, always beside its words */
 const ACC_SHOW = [['all', 'All', ''], ['billing', 'Billing to do', 'var(--warnMark)'], ['due', 'Letter to approve', 'var(--bad)'], ['welcome', 'Welcome to send', 'var(--info)'], ['sent', 'A letter has gone', 'var(--good)'],
   ['answered', 'Answered us', 'var(--good)'], ['notrated', 'Not rated their last letter', 'var(--warnMark)'], ['opened', 'Opened their page', 'var(--info)'],
-  ['setup', 'Needs set-up', 'var(--warnMark)'], ['pending', 'Applications or increases pending', '#5B6B82']];
+  ['setup', 'Needs set-up', 'var(--warnMark)'], ['hold', 'On hold', 'var(--holdMark)'], ['pending', 'Applications or increases pending', '#5B6B82']];
 function accShow(g, k) {
   const a = g.account, s = g.stats;
   return k === 'all' || (k === 'welcome' && !a.welcome && !a.welcomeWhy) || (k === 'due' && s.week === 'due' && s.ready) || (k === 'sent' && !!a.last) ||
-    (k === 'answered' && !!a.answer) || (k === 'setup' && !!(a.mailWhy || !s.ready || !g.assigned || !g.ownerActive)) || (k === 'pending' && !!a.pending) ||
+    (k === 'answered' && !!a.answer) || (k === 'setup' && !s.hold && !!(a.mailWhy || !s.ready || !g.assigned || !g.ownerActive)) || (k === 'hold' && !!s.hold) || (k === 'pending' && !!a.pending) ||
     (k === 'notrated' && !!a.rate && a.rate.kind !== 'rated') || (k === 'opened' && !!a.views) || (k === 'billing' && blTodo(g));
 }
 /* the row's rail: red when something is due from us, amber when the account needs setting up, green when the week is done */
 function rowState(g) {
   const a = g.account, s = g.stats;
+  if (s.hold) return 'hold';
   if (a.mailWhy || !s.ready || !g.assigned || !g.ownerActive) return 'warn';
   if ((s.week === 'due') || s.late) return 'bad';
   if (a.welcome && s.week !== 'due') return 'good';
@@ -268,7 +336,7 @@ function accountsHtml(d) {
       esc(l) + '<span class="n">' + byOwner.filter(g => accShow(g, k)).length + '</span></button>').join('') + '</div></div>';
   h += '<div class="acctable"><div class="acc head" aria-hidden="true"><div>Group</div><div>Looked after by</div><div>Letters go to</div><div>Welcome</div><div>This week’s letter</div><div>Opened · rated</div><div style="text-align:right">Send</div></div>' +
     (shown.length ? shown.map(accRow).join('') : '<p class="muted" style="padding:16px">No account matches. <button class="btn ghost sm" type="button" id="accClr2">Clear filters</button></p>') + '</div>' +
-    '<div class="key2" aria-hidden="true"><span><i style="background:var(--bad)"></i>something is due from us</span><span><i style="background:var(--warnMark)"></i>needs setting up</span><span><i style="background:var(--info)"></i>in hand</span><span><i style="background:var(--good)"></i>welcomed, and this week’s letter approved or sent</span></div>';
+    '<div class="key2" aria-hidden="true"><span><i style="background:var(--bad)"></i>something is due from us</span><span><i style="background:var(--warnMark)"></i>needs setting up</span><span><i style="background:var(--info)"></i>in hand</span><span><i style="background:var(--holdMark)"></i>on hold</span><span><i style="background:var(--good)"></i>welcomed, and this week’s letter approved or sent</span></div>';
   return h;
 }
 /* "2 applications, 1 increase pending": a backend without the split says applications */
@@ -285,7 +353,9 @@ function accRow(g) {
     (a.mailWhy && a.to.length ? '<span class="chip bad"><i></i>our own address</span>' : '') : '<span class="chip bad"><i></i>No contact e-mail</span><div class="sub">Give the account a Contact Person in Salesforce</div>';
   const wel = a.welcome ? '<span class="chip good"><i></i>Welcomed ' + esc(dayOf(a.welcome.at)) + '</span><div class="sub">' + esc((shortAt(a.welcome.at).split(', ')[1] || '')) + ' · ' + esc(a.welcome.by) + (a.welcome.again ? ' · sent again' : '') + '</div>'
     : a.welcomeWhy ? '<span class="chip warn"><i></i>Not yet</span><div class="sub">' + esc(a.welcomeWhy) + '</div>' : '<span class="chip"><i style="background:#9aa5b1"></i>Not sent yet</span>';
-  const wk = (s.week === 'queued' ? '<span class="chip good"><i></i>Approved</span><div class="sub">goes ' + esc(s.approved.for) + ' · ' + esc(s.approved.by) + '</div>'
+  const wk = (s.hold ? '<span class="chip hold"><i></i>On hold</span><div class="sub">' + esc(s.hold.replace(/^On hold: ?/, '')) + '</div>' +
+      (s.week === 'queued' ? '<div class="sub">approved for ' + esc(s.approved.for) + ': it goes only if the hold is lifted first</div>' : '')
+    : s.week === 'queued' ? '<span class="chip good"><i></i>Approved</span><div class="sub">goes ' + esc(s.approved.for) + ' · ' + esc(s.approved.by) + '</div>'
     : s.week === 'sent' ? '<span class="chip good"><i></i>Sent ' + esc(dayOf(s.sentThisWeek)) + '</span><div class="sub">' + esc(shortAt(s.sentThisWeek).split(', ')[1] || '') + (a.last ? ' · ' + esc(a.last.by) : '') + '</div>'
     : !s.ready ? '<span class="chip warn"><i></i>Not ready</span><div class="sub">' + esc(s.why) + '</div>'
     : '<span class="chip bad"><i></i>To approve</span><div class="sub">for ' + esc(s.nextSendLabel) + '</div>') +
@@ -295,9 +365,11 @@ function accRow(g) {
   if (g.canAct) {
     if (!a.welcomeWhy) acts += '<button class="btn ' + (a.welcome ? 'ghost' : '') + '" type="button" data-act="welcome" data-k="' + esc(g.key) + '">' + (a.welcome ? 'Resend welcome' : 'Send welcome') + '</button>';
     if (s.ready && !a.mailWhy) acts += '<button class="btn ' + (s.week === 'due' ? '' : 'ghost') + '" type="button" data-act="letter" data-k="' + esc(g.key) + '">' + (s.week === 'due' ? 'Check and send' : 'Send letter') + '</button>';
-    if (a.last && a.last.again && !a.mailWhy) acts += '<button class="btn ghost" type="button" data-act="again" data-k="' + esc(g.key) + '">Resend last letter</button>';
+    if (a.last && a.last.again && !a.mailWhy && !s.hold) acts += '<button class="btn ghost" type="button" data-act="again" data-k="' + esc(g.key) + '">Resend last letter</button>';
     if (canRemind(g, a, s)) acts += remindBtn(g.key, a);
   }
+  if (BOARD.canHold && !(BOARD.hold && BOARD.hold.all) && (!s.hold || (BOARD.hold && (BOARD.hold.groups || []).some(x => x.key === g.key))))
+    acts += '<button class="btn ghost" type="button" data-hold="' + esc(g.key) + '" data-on="' + (s.hold ? '0' : '1') + '">' + (s.hold ? 'Lift the hold' : 'Put on hold') + '</button>';
   acts += '<button class="btn ghost" type="button" data-bill="' + esc(g.key) + '">Billing</button><button class="btn ghost" type="button" data-g="' + esc(g.key) + '">Open</button>';
   return '<div class="acc r-' + rowState(g) + '"><div>' + L('Group') + '<button class="gname" type="button" data-g="' + esc(g.key) + '">' + esc(g.name) + '</button><div class="sub">List bill ' + esc(g.bills.join(', ') || 'none') +
     ' · ' + s.open + ' open' + (s.late ? ' · <b style="color:var(--badText)">' + s.late + ' past target</b>' : '') + '</div>' +
@@ -343,7 +415,7 @@ async function openAct(kind, key) {
     'Until they respond, one goes by itself every working day.</p>' +
     (r.wrote ? '<div class="note">They wrote to us by e-mail ' + esc(r.wrote.at) + ': “' + esc(r.wrote.subject) + '” (' + esc(r.wrote.from) + '). The automatic reminder stops for this letter: a reply from you may be better than a reminder.</div>' : '');
   if (kind === 'letter' && r.approved) h += '<p class="small"><span class="chip good"><i></i>Approved by ' + esc(r.approved.by) + '</span> It goes ' + esc(r.approved.for) + ' by itself. Send now only if the group needs it today.</p>';
-  h += '<iframe title="The e-mail as it goes" sandbox=""></iframe>';
+  h += '<iframe title="The e-mail as it goes" sandbox="' + PV_SANDBOX + '"></iframe>';
   const ready = kind === 'letter' ? r.ready : r.ready;
   if (r.canAct === false) h += '<div class="note">Read only: this group is looked after by a colleague.</div>';
   else if (!ready) h += '<div class="note bad">Cannot go yet: ' + esc(r.why || '') + '.</div>' + (kind === 'letter' ? '<div class="row"><button class="btn" type="button" data-open="' + esc(key) + '">Open the group to put it right</button></div>' : '');
@@ -358,7 +430,7 @@ async function openAct(kind, key) {
       '<p class="small muted" style="margin-top:8px">' + (kind === 'letter' ? 'It goes from support@, written again from Salesforce the moment you press. Send now closes any approval for Monday.' : 'It goes from support@ and is logged on the account with your name.') + '</p>';
   }
   $('dlgB').innerHTML = h;
-  $('dlgB').querySelector('iframe').srcdoc = html;
+  $('dlgB').querySelector('iframe').srcdoc = pvDoc(html);
   $('dlgB').querySelectorAll('[data-open]').forEach(b => b.onclick = () => { dlg.close(); openGroup(b.dataset.open); });
   const ck = $('dlgCk'); if (!ck) return;
   ck.onchange = () => ['dlgGo', 'dlgAp'].map($).filter(Boolean).forEach(b => { b.disabled = !ck.checked; });
@@ -462,7 +534,7 @@ function dash(a) {
   }
   h += '<h2 id="told">What groups told us <span class="muted small">the last 30 days: changes, “not ours”, ratings of 3 or less, and every comment</span></h2>' + (a.responses.length
     ? '<ul class="feed">' + a.responses.map(r => '<li class="click" data-gn="' + esc(r.group) + '"><b>' + esc(r.group) + '</b> <span class="muted small">' + esc(r.at) + ' · ' + esc(r.name) + ' · ' + esc(r.staff) + '</span><br>' +
-      (r.rating ? '<b>' + r.rating + '★</b> ' : '') + (r.verdict ? esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.task) + ' ' : '') + (r.note ? '“' + esc(r.note) + '”' : '') + (r.comment ? '“' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>'
+      (r.rating ? '<b>' + r.rating + '★</b> ' : '') + (r.about ? '<span class="muted">for ' + esc(r.about) + ':</span> ' : '') + (r.verdict ? esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.task) + ' ' : '') + (r.note ? '“' + esc(r.note) + '”' : '') + (r.comment ? '“' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>'
     : '<p class="muted">No answers needing attention yet.</p>');
   return h;
 }
@@ -577,7 +649,7 @@ function drawGroup() {
       esc(x.at) + ' · ' + esc(x.staff) + (x.kind === 'letter' ? ' · ' + x.items + ' items' : '') + (x.to ? ' · to ' + esc(x.to) : '') + (/^failed/i.test(x.status) ? ' · <b style="color:var(--badText)">' + esc(x.status) + '</b>' : '') + '</li>').join('') + '</ul>' : '<p class="muted">Nothing yet.</p>') +
     (Array.isArray(d.views) ? '<h3>Who opened their page</h3>' + (d.views.length ? '<ul class="feed">' + d.views.map(v => '<li>' + esc(v.at) + (v.name ? ' · <b>' + esc(v.name) + '</b>' : ' · <span class="muted">name not known until they answer from that device</span>') +
       (DEV[v.device] ? ' · ' + DEV[v.device] : '') + (v.from ? ' · from the ' + esc(v.from) : '') + '</li>').join('') + '</ul>' : '<p class="muted">No sign-in on record yet.</p>') : '') +
-    '<h3>What the group told us</h3>' + (d.responses.length ? '<ul class="feed">' + d.responses.map(r => '<li>' + esc(r.at) + ' · <b>' + esc(r.name) + '</b>' + (r.rating ? ' · ' + r.rating + '★' : '') + (r.verdict ? ' · ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.title) : '') + (r.note ? ' “' + esc(r.note) + '”' : '') + (r.comment ? ' “' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>' : '<p class="muted">No answers yet.</p>');
+    '<h3>What the group told us</h3>' + (d.responses.length ? '<ul class="feed">' + d.responses.map(r => '<li>' + esc(r.at) + ' · <b>' + esc(r.name) + '</b>' + (r.rating ? ' · ' + r.rating + '★' : '') + (r.about ? ' <span class="muted">for ' + esc(r.about) + '</span>' : '') + (r.verdict ? ' · ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.title) : '') + (r.note ? ' “' + esc(r.note) + '”' : '') + (r.comment ? ' “' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>' : '<p class="muted">No answers yet.</p>');
   $('app').innerHTML = h;
   $('bk').onclick = render;
   if ($('bkBill')) $('bkBill').onclick = () => openBilling(g.key);
@@ -682,14 +754,14 @@ async function preview() {
   const r = await api({ action: 'gcm.preview', group: GROUP.group.key, intro: $('intro').value });
   if (!r.ok) { box.innerHTML = '<div class="note bad">' + esc(r.error) + '</div>'; return; }
   box.innerHTML = '<p class="small" style="margin:12px 0 6px">To ' + (r.to.length ? toLine(r) : '<b>nobody</b>') + ' · hidden copy to ' + esc(r.copy.join(', ')) + ' · subject <b>' + esc(r.letter.subject) + '</b></p>' +
-    '<iframe class="preview" title="Letter preview" sandbox=""></iframe>' +
+    '<iframe class="preview" title="Letter preview" sandbox="' + PV_SANDBOX + '"></iframe>' +
     (r.canAct === false ? '<div class="note">This is the letter as it would go. Approving it is for ' + esc(GROUP.group.assigned ? GROUP.group.assigned.split(' ')[0] + ', ' : '') + 'the assistant branch manager or the branch manager.</div>' :
      r.ready ? '<label class="toggle" style="margin:12px 0"><input type="checkbox" id="ck"> I have checked every item against Salesforce and the latest billing</label><div style="display:flex;gap:8px;flex-wrap:wrap">' +
       '<button class="btn gold" type="button" id="ap" disabled>Approve for ' + esc(r.nextSend) + '</button>' +
       (r.canSendNow ? (r.mail ? '<button class="btn ghost" type="button" id="sd" disabled>Send now instead</button>' : '') + '<button class="btn ghost" type="button" id="ol" disabled>Open in Outlook instead</button>' : '') + '</div>' +
       '<p class="small muted" style="margin-top:8px">At ' + esc(r.nextSend) + ' the letter is written again from Salesforce and sent from support@. If a new item appears after you approve, it waits and you are told by e-mail. Send now goes at once and closes the approval.</p>'
       : '<div class="note bad">Cannot approve yet: ' + esc(r.why) + '.</div>');
-  box.querySelector('iframe').srcdoc = r.letter.html;
+  box.querySelector('iframe').srcdoc = pvDoc(r.letter.html);
   const ck = $('ck'); if (!ck) return;
   ck.onchange = () => ['ap', 'sd', 'ol'].map($).filter(Boolean).forEach(b => { b.disabled = !ck.checked; });
   $('ap').onclick = approve;

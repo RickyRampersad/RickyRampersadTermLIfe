@@ -1264,6 +1264,13 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
   body { background: #fff; color: #000; }
   a::after { content: ' (' attr(href) ')'; font-size: .85em; color: #555; }
 }
+/* the careers film, through the branch's own player */
+#careers .vwrap{--dp-accent:#00728d;position:relative;border-radius:var(--r,1rem);overflow:hidden;background:#0d1f33;aspect-ratio:16/9;box-shadow:var(--e3,0 18px 40px hsl(32deg 20% 42% / .18))}
+#careers .vwrap video{width:100%;height:100%;display:block;object-fit:contain;background:#0d1f33}
+#careers .vcover{position:absolute;inset:0;background-size:cover;background-position:center;display:grid;place-items:center;cursor:pointer;z-index:4}
+#careers .vcover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,31,51,.1),rgba(13,31,51,.55))}
+#careers .vcover .pl{position:relative;z-index:2;display:flex;align-items:center;gap:.7rem;background:#fff;color:#14171E;border-radius:999px;padding:.85rem 1.4rem;font:600 1rem/1 var(--text);box-shadow:0 10px 30px rgba(4,14,26,.35)}
+#careers .vcover .pl svg{width:1.1rem;height:1.1rem}
 </style>
 </head>
 <body>
@@ -1779,15 +1786,22 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 <!-- ═══ CAREERS — editorial, with the pull quote carrying it ═══ -->
 <section id="careers" class="layout">
   <div class="lede">
-    <span class="eyebrow">Careers &middot; now selecting &middot; Chaguanas</span>
+    <span class="eyebrow">Careers &middot; FY27&rsquo;s first class, selected now &middot; Chaguanas</span>
     <h2 data-words>The environment decides. We select the driven.</h2>
-    <p>Talent gets you in the game — environment decides how far you go. This is a 23&times; MDRT branch with 32 years in Trinidad, opening a handful of seats to proven advisors ready for a branch that backs them, and to sharp newcomers ready to be built properly.</p>
+    <p>Talent gets you in the game. The environment decides how far you go. Seven places in the first class of FY27, and one seat for a sales manager: for advisors who are good at this and stuck where they are, and for people who want a career with no ceiling and are afraid of the first year. Both start with one confidential conversation.</p>
+  </div>
+
+  <div class="vwrap wide" style="margin-bottom:var(--sp-xl)">
+    <video playsinline preload="none" poster="/agentmgt/trailer.jpg" data-scenes="8.9,15.1,13.2,13.1,9.4,12.6,10.2,4.3" data-chapters="A question|Not alone|Never from zero|Your rhythm|No ceiling|One conversation|Book it|The environment decides">
+      <source src="/agentmgt/trailer.mp4" type="video/mp4">
+    </video>
+    <div class="vcover" style="background-image:url(/agentmgt/trailer.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#14171E" aria-hidden="true" focusable="false"><path d="M7 4l13 8-13 8z"/></svg>Watch &middot; 1:27</div></div>
   </div>
 
   <div class="g-2" style="gap:var(--sp-xl);align-items:start;margin-bottom:var(--sp-xl)">
     <figure class="card rise" style="padding:var(--sp-l)">
       <blockquote style="font-family:var(--display);font-size:var(--f-2);font-weight:500;color:var(--ink);letter-spacing:-.018em;line-height:1.35">
-        &ldquo;Talent is everywhere in Trinidad. Environments that turn talent into MDRT qualifiers are not. That's the difference we sell — to our advisors first.&rdquo;
+        &ldquo;Talent is everywhere in Trinidad. Environments that turn talent into top producers are not. That's the difference we sell — to our advisors first.&rdquo;
       </blockquote>
       <figcaption style="display:flex;align-items:center;gap:var(--sp-xs);margin-top:var(--sp-m);padding-top:var(--sp-m);border-top:1px solid var(--line)">
         <span class="chip" style="margin:0;width:2.25rem;height:2.25rem"><svg aria-hidden="true" focusable="false" width="18" height="18"><use href="#i-user"/></svg></span>
@@ -1796,28 +1810,30 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
     </figure>
 
     <div class="g-2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:var(--sp-s)">
-      <div class="card rise"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-trophy"/></svg></span><h3 style="font-size:var(--f-0)">A living MDRT culture</h3><p>Twenty-three qualifications aren't luck — they're a system.</p></div>
-      <div class="card rise"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-users"/></svg></span><h3 style="font-size:var(--f-0)">Mentorship by design</h3><p>Our Executive Agents and Senior Sales Consultants are required to mentor.</p></div>
-      <div class="card rise"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-target"/></svg></span><h3 style="font-size:var(--f-0)">A manager in your corner</h3><p>Every advisor here was interviewed and selected personally — then coached after.</p></div>
-      <div class="card rise"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-medal"/></svg></span><h3 style="font-size:var(--f-0)">Recognition on a schedule</h3><p>Promotions announced on stage — Blastoff in January, Mid-Year in July.</p></div>
+      <div class="card rise"><span class="chip" style="margin:0 0 var(--sp-s);width:2.5rem;height:2.5rem"><svg aria-hidden="true" focusable="false"><use href="#i-users"/></svg></span><h3 style="font-size:var(--f-0)">Never from zero</h3><p>Clients whose agent has moved on are matched to you, household by household, with the file and the first thing to say. Leads land on your own board, in the prospect's words.</p></div>
+      <div class="card rise"><span class="chip" style="margin:0 0 var(--sp-s);width:2.5rem;height:2.5rem"><svg aria-hidden="true" focusable="false"><use href="#i-chat"/></svg></span><h3 style="font-size:var(--f-0)">A coach, not a clock</h3><p>The system does the admin. Your manager sees your week before Friday and sits with you on it: a coaching sheet, not a report card.</p></div>
+      <div class="card rise"><span class="chip" style="margin:0 0 var(--sp-s);width:2.5rem;height:2.5rem"><svg aria-hidden="true" focusable="false"><use href="#i-trophy"/></svg></span><h3 style="font-size:var(--f-0)">People who have done it, beside you</h3><p>Twenty-three MDRT qualifications have been earned at this table. You sit beside the people who earned them, and the Branch Manager interviews, selects and coaches you personally.</p></div>
+      <div class="card rise"><span class="chip" style="margin:0 0 var(--sp-s);width:2.5rem;height:2.5rem"><svg aria-hidden="true" focusable="false"><use href="#i-medal"/></svg></span><h3 style="font-size:var(--f-0)">Your wins, said out loud</h3><p>Every Wednesday the branch meets and the week's wins are named, agents and staff alike. Promotions are announced on stage at Blastoff and Mid-Year.</p></div>
     </div>
   </div>
 
-  <h3 class="group-h">The selection &mdash; five gates, deliberately</h3>
+  <h3 class="group-h">The selection &mdash; five gates, LIMRA's process</h3>
   <div class="g-4" style="gap:var(--sp-s);margin-bottom:var(--sp-l)">
-    <div class="card" style="padding:var(--sp-s)"><p style="font-size:var(--f--2);color:var(--action);font-weight:600">Gate 1</p><h3 style="font-size:var(--f-0)">Apply &amp; screen</h3></div>
-    <div class="card" style="padding:var(--sp-s)"><p style="font-size:var(--f--2);color:var(--action);font-weight:600">Gate 2</p><h3 style="font-size:var(--f-0)">Meet the Branch Manager</h3></div>
-    <div class="card" style="padding:var(--sp-s)"><p style="font-size:var(--f--2);color:var(--action);font-weight:600">Gate 3</p><h3 style="font-size:var(--f-0)">Discovery sessions</h3></div>
-    <div class="card" style="padding:var(--sp-s)"><p style="font-size:var(--f--2);color:var(--action);font-weight:600">Gate 4</p><h3 style="font-size:var(--f-0)">Scientific assessment</h3></div>
-    <div class="card" style="padding:var(--sp-s)"><p style="font-size:var(--f--2);color:var(--action);font-weight:600">Gate 5</p><h3 style="font-size:var(--f-0)">Final selection</h3></div>
+    <div class="card" style="padding:var(--sp-s)"><p style="font-size:var(--f--2);color:var(--action);font-weight:600">Gate 1</p><h3 style="font-size:var(--f-0)">Apply &middot; reviewed within 48 h</h3></div>
+    <div class="card" style="padding:var(--sp-s)"><p style="font-size:var(--f--2);color:var(--action);font-weight:600">Gate 2</p><h3 style="font-size:var(--f-0)">The Branch Manager, in person</h3></div>
+    <div class="card" style="padding:var(--sp-s)"><p style="font-size:var(--f--2);color:var(--action);font-weight:600">Gate 3</p><h3 style="font-size:var(--f-0)">The digital market survey</h3></div>
+    <div class="card" style="padding:var(--sp-s)"><p style="font-size:var(--f--2);color:var(--action);font-weight:600">Gate 4</p><h3 style="font-size:var(--f-0)">POP7, the profile</h3></div>
+    <div class="card" style="padding:var(--sp-s)"><p style="font-size:var(--f--2);color:var(--action);font-weight:600">Gate 5</p><h3 style="font-size:var(--f-0)">Selected, then built</h3></div>
   </div>
 
   <div class="hero-cta">
-    <a class="btn btn-1 ext" href="https://agentmgt.com/" target="_blank" rel="noopener">Start the selection — 2 min</a>
-    <a class="btn btn-2 ext" href="https://agentmgt.com/#quiz" target="_blank" rel="noopener">Take the 60-second test</a>
-    <a class="btn btn-3 ext" href="https://careerpathrrb.netlify.app/" target="_blank" rel="noopener">See the career path</a>
+    <a class="btn btn-1" href="/careers/#talk">Book a confidential conversation &mdash; 20 min</a>
+    <a class="btn btn-2" href="/careers/#apply">Start the selection &mdash; 2 min</a>
+    <a class="btn btn-2" href="/careers/#quiz">Take the 60-second test</a>
+    <a class="btn btn-3" href="/careers/#film">The whole journey &middot; 7:34</a>
+    <a class="btn btn-3" href="/careers/#path">See the career path</a>
   </div>
-  <p class="cc-n" style="margin-top:var(--sp-s)">Confidential for practising advisors &middot; reviewed within 48 hours &middot; newcomers fully trained &middot; applications are received through Guardian Life of the Caribbean.</p>
+  <p class="cc-n" style="margin-top:var(--sp-s)">Confidential for practising advisors &middot; reviewed within 48 hours &middot; newcomers fully trained &middot; everything is on one page: <a href="/careers/">rickyrampersadbranch.com/careers</a> &middot; applications are received through Guardian Life of the Caribbean.</p>
 </section>
 
 <!-- ═══ FAQ — one column, held to a readable measure ═══ -->
@@ -2302,6 +2318,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 }
 </script>
 
+<script src="/orphan-video/player.js" defer></script>
 <!-- rrb-views -->
 <script>
 (function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{

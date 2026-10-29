@@ -28,8 +28,8 @@ const server = http.createServer((req, res) => {
 });
 let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
-const ORDER = ['day.html', 'blocks.html', 'pending.html', 'reqs.html', 'increases.html',
-               'codes.html',
+const ORDER = ['day.html', 'blocks.html', 'transmittal.html', 'pending.html', 'reqs.html', 'increases.html',
+               'codes.html', 'issued.html', 'orphans.html', 'orphans-results.html', 'orphans-cup.html', 'orphans-driver.html',
                'index.html', 'lapses.html',
                'possession.html', 'delivery.html', 'licence.html', 'book.html',
                'conversion.html', 'riders.html'];
@@ -87,15 +87,15 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
      stops[0] && stops[0].name);
   /* The pending wall is two stops since 17 September 2026, so the fourth is
      its own second half rather than the dues line. */
-  ok('  the pending wall\'s requirements fourth', stops[3] && /requirements/i.test(stops[3].name),
-     stops[3] && stops[3].name);
+  ok('  the pending wall\'s requirements fifth', stops[4] && /requirements/i.test(stops[4].name),
+     stops[4] && stops[4].name);
   ok('  and ' + LAST_TAB + ' last',
      stops[ORDER.length - 1] && stops[ORDER.length - 1].name === LAST_TAB,
      stops[ORDER.length - 1] && stops[ORDER.length - 1].name);
   ok('  the story you are on is named beside them',
      /The day so far/.test(await s.page.locator('#state').innerText()),
      await s.page.locator('#state').innerText());
-  await s.page.waitForTimeout(20000);          // stagger is 1.5s apart: every frame assigned inside this
+  await s.page.waitForTimeout(29000);          // stagger is 1.5s apart: nineteen frames, the last asked for at 27s
   ok('every story is loaded in its own frame, in the film\'s order', JSON.stringify(await srcs(s.page)) === JSON.stringify(ORDER), JSON.stringify(await srcs(s.page)));
   const first = await s.page.frames().filter(f => f.url().endsWith('/day.html')).length;
   ok('the first story really rendered inside its frame', first === 1);
@@ -150,9 +150,9 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   ok('the line has not faded', hb.op === '1' && hb.vis === 'visible' && hb.top === 0, JSON.stringify(hb));
   ok('and the timer is on it, on screen', hb.in && hb.stateIn, JSON.stringify(hb));
   const hudText = () => s.page.locator('#state').innerText();
-  const SLIDE_NAMES = ['The day so far', 'The day in blocks', 'What is pending', 'Premium dues',
+  const SLIDE_NAMES = ['The day so far', 'The system\u2019s day', 'What is pending', 'Premium dues',
                        'Lapses', 'In our possession', 'With the agent', 'The licence year',
-                       'Birthdays today', 'Conversions', LAST_TAB];
+                       'Birthdays today', 'Conversions', LAST_TAB, 'Issued this month', 'The orphan campaign', 'Orphan results', 'First-Contact Cup'];
   // Not pinned to one slide: the rail takes four seconds to fade and the dwell
   // here is five, so the wall may legitimately have turned by now. What must
   // hold is the shape — which story of how many, named, and the seconds left.

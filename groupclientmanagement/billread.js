@@ -31,7 +31,7 @@
     s = String(s || '').trim();
     var m = /^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/.exec(s);
     if (m && monIx(m[2]) >= 0) return m[3] + '-' + pad(monIx(m[2]) + 1) + '-' + pad(+m[1]);
-    m = /^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})$/.exec(s);
+    m = /^([A-Za-z]+)\s+(\d{1,2})(?:ST|ND|RD|TH)?,?\s+(\d{4})$/i.exec(s);
     if (m && monIx(m[1]) >= 0) return m[3] + '-' + pad(monIx(m[1]) + 1) + '-' + pad(+m[2]);
     m = /^(\d{1,2})(?:ST|ND|RD|TH)?\s+([A-Za-z]+),?\s+(\d{4})$/i.exec(s);
     if (m && monIx(m[2]) >= 0) return m[3] + '-' + pad(monIx(m[2]) + 1) + '-' + pad(+m[1]);
@@ -96,7 +96,7 @@
     var t = L.join('\n');
     if (/Group Health (Invoice|Payment Transmittal)/i.test(t)) return 'health';
     /* the covering letter names the statement too, so it is told first */
-    if (/GROUP LIFE ASSURANCE PLAN NO/i.test(t) || /Monthly Billing along with Statement/i.test(t)) return 'lifeLetter';
+    if (/GROUP LIFE ASSURANCE PLAN\b/i.test(t) || /Monthly Billing (along with Statement|for\s+[A-Za-z]+\s+\d{4})/i.test(t)) return 'lifeLetter';
     if (/STATEMENT OF ADJUSTMENTS? AS AT/i.test(t)) return 'lifeAdj';
     if (/Monthly Billing\s*:/i.test(t) && /POLICY NO\s*:/i.test(t)) return 'lifeBill';
     return 'unknown';
@@ -197,27 +197,50 @@
 
   /* ── Group Life: the member bill ─────────────────────────────────────────────────────────── */
   var N = '\\(?-?[\\d,]*\\.?\\d+\\)?';
-  var LIFE_ROW = new RegExp('^(\\d{1,5})\\s+(.+?)\\s+(' + N + ')\\s+(' + N + ')\\s+(' + N + ')\\s+(' + N + ')\\s+(' + N + ')\\s+(' + N + ')\\s+(' + N + ')\\s+(' + N + ')\\s+(' + N + ')\\s+(' + N + ')$');
+  /* Guardian's group life plans come in two layouts (27 October 2026: the second group's bill read no members at all):
+     with New Life cover, ten figures a row (the three sums assured, six premiums, the total); without it, seven (two sums,
+     four premiums, the total). A row is read by how many figures it carries; the statement's rows the same way. */
+  var LIFE_COLS = {
+    10: ['basic', 'add', 'newLife', 'pBasic', 'pBasicX', 'pAdd', 'pAddX', 'pNew', 'pNewX', 'premium'],
+    7: ['basic', 'add', 'pBasic', 'pBasicX', 'pAdd', 'pAddX', 'premium']
+  };
+  function lifeFig(v) {
+    var cols = LIFE_COLS[v.length]; if (!cols) return null;
+    var o = { basic: 0, add: 0, newLife: 0, pBasic: 0, pBasicX: 0, pAdd: 0, pAddX: 0, pNew: 0, pNewX: 0, premium: 0 };
+    cols.forEach(function (c, i) { o[c] = v[i]; });
+    return o;
+  }
+  var LIFE_ROW = new RegExp('^(\\d{1,5})\\s+(.+?)((?:\\s+' + N + '){7,10})$');
   function readLifeBill(L) {
-    var b = { kind: 'lifeBill', line: 'life', group: '', ref: '', month: '', dated: '', members: [], totals: null, total: 0, rates: null, warnings: [] };
+    var b = { kind: 'lifeBill', line: 'life', group: '', ref: '', month: '', dated: '', members: [], totals: null, total: 0, lives: 0, rates: null, warnings: [] };
+    var odd = 0;
     L.forEach(function (s, i) {
       var t = s.trim(), m;
       if (!t) return;
-      if ((m = /Monthly Billing\s*:\s*(.+)$/i.exec(t))) { if (!b.month) b.month = month(m[1]); if (!b.group && i > 0) b.group = L[i - 1].trim(); return; }
+      if ((m = /Monthly Billing\s*:\s*(.+)$/i.exec(t))) {
+        if (!b.month) b.month = month(m[1]);
+        /* the company is the line above, past any "GL POLICY NO" line (one layout puts it between the two) */
+        for (var j = i - 1; j >= 0 && !b.group; j--) { var u = L[j].trim(); if (u && !/POLICY NO|^GL$|<<page>>/i.test(u)) b.group = u; }
+        return;
+      }
       if ((m = /POLICY NO\s*:\s*(.+)$/i.exec(t))) { if (!b.ref) b.ref = m[1].trim(); return; }
+      if ((m = /^No\.? of Lives:?\s+(\d+)/i.exec(t))) { if (!b.lives) b.lives = +m[1]; return; }
       if ((m = /^GRAND TOTAL:?\s+(.+)$/i.exec(t))) {
         var v = m[1].trim().split(/\s+/).map(num);
-        if (v.length >= 10) b.totals = { basic: v[0], add: v[1], newLife: v[2], pBasic: v[3], pBasicX: v[4], pAdd: v[5], pAddX: v[6], pNew: v[7], pNewX: v[8], premium: v[v.length - 1] };
+        b.totals = lifeFig(v);
         b.total = v[v.length - 1];
         return;
       }
       if (!b.dated && (m = /(\d{1,2}-[A-Za-z]{3}-\d{4})\s+Page\s+\d/i.exec(t))) b.dated = ymd(m[1]);
       if ((m = LIFE_ROW.exec(t))) {
-        var p = m.slice(3).map(num);
-        b.members.push({ id: m[1], cert: m[1], name: m[2].trim(), basic: p[0], add: p[1], newLife: p[2], pBasic: p[3], pBasicX: p[4], pAdd: p[5], pAddX: p[6], pNew: p[7], pNewX: p[8], premium: p[9] });
+        var f = lifeFig(m[3].trim().split(/\s+/).map(num));
+        if (!f) { odd++; return; }
+        b.members.push(Object.assign({ id: m[1], cert: m[1], name: m[2].trim() }, f));
       }
     });
+    if (odd) b.warnings.push(odd + ' row' + (odd === 1 ? '' : 's') + ' of the life bill carry a number of figures the reader does not know: check them by eye.');
     lifeChecks(b);
+    if (b.lives && b.members.length && b.lives !== b.members.length) b.warnings.push('The bill says ' + b.lives + ' lives; ' + b.members.length + ' were read.');
     return b;
   }
   /* the rates are the ones most members are charged (per 1,000 a month): a member charged at another is a question */
@@ -250,7 +273,7 @@
   }
 
   /* ── Group Life: the Statement of Adjustment ─────────────────────────────────────────────── */
-  var ADJ_ROW = new RegExp('^(\\d{1,5})\\s+(.+?)\\s+(\\d{1,3})\\s+((?:' + N + '\\s+){9}' + N + ')$');
+  var ADJ_ROW = new RegExp('^(\\d{1,5})\\s+(.+?)\\s+(\\d{1,3})((?:\\s+' + N + '){7,10})$');
   function readLifeAdj(L) {
     var b = { kind: 'lifeAdj', line: 'life', group: '', ref: '', month: '', before: 0, after: 0, adjustments: [], warnings: [] };
     var section = '', asAt = '';
@@ -262,13 +285,15 @@
       if ((m = /^PREMIUM DUE BEFORE ADJUSTMENTS?:\s+(.+)$/i.exec(t))) { var v = m[1].trim().split(/\s+/); b.before = num(v[v.length - 1]); return; }
       if ((m = /^PREMIUM DUE AFTER ADJUSTMENTS?:\s+(.+)$/i.exec(t))) { var w = m[1].trim().split(/\s+/); b.after = num(w[w.length - 1]); return; }
       if (/^NET ADJUSTMENTS?/i.test(t)) return;
-      if ((m = /^(LESS|ADD|PLUS)\b\s*(.*)$/i.exec(t))) { section = (m[1] + ' ' + m[2]).toUpperCase(); asAt = ymd((/AS AT\s+(.+)$/i.exec(m[2]) || [])[1] || ''); return; }
-      if (!asAt && /^\d{1,2}(ST|ND|RD|TH)?\s+[A-Z]+\s+\d{4}$/i.test(t)) { asAt = ymd(t); return; }
+      if ((m = /^(LESS|ADD|PLUS)\b\s*(.*)$/i.exec(t))) { section = (m[1] + ' ' + m[2]).toUpperCase(); asAt = ymd((/AS AT:?\s*(.+)$/i.exec(m[2]) || [])[1] || ''); return; }
+      /* the date under the heading: "31ST AUGUST 2026" on one plan's statement, "AUGUST 31ST 2026" on another's */
+      if (!asAt && (/^\d{1,2}(ST|ND|RD|TH)?\s+[A-Z]+,?\s+\d{4}$/i.test(t) || /^[A-Z]+\s+\d{1,2}(ST|ND|RD|TH)?,?\s+\d{4}$/i.test(t))) { asAt = ymd(t); return; }
       if ((m = ADJ_ROW.exec(t))) {
-        var p = m[4].trim().split(/\s+/).map(num);
-        var kind = /TERMINAT|DELET|CANCEL|LEAV|RESIGN/.test(section) ? 'left' : /ADDITION|NEW|ENTRANT|ENROL|JOIN/.test(section) ? 'joined' : /INCREASE|DECREASE|SALAR|CHANGE|AMEND/.test(section) ? 'cover' : (p[9] < 0 ? 'left' : 'joined');
+        var f = lifeFig(m[4].trim().split(/\s+/).map(num));
+        if (!f) return;
+        var kind = /TERMINAT|DELET|CANCEL|LEAV|RESIGN/.test(section) ? 'left' : /ADDITION|NEW|ENTRANT|ENROL|JOIN/.test(section) ? 'joined' : /INCREASE|DECREASE|SALAR|CHANGE|AMEND/.test(section) ? 'cover' : (f.premium < 0 ? 'left' : 'joined');
         b.adjustments.push({ cert: m[1], id: m[1], name: m[2].trim(), periods: +m[3], kind: kind, asAt: asAt, section: section.replace(/\s+/g, ' ').trim(),
-          basic: p[0], add: p[1], newLife: p[2], premium: p[9] });
+          basic: f.basic, add: f.add, newLife: f.newLife, premium: f.premium });
       }
     });
     var net = round(b.adjustments.reduce(function (s, x) { return s + x.premium; }, 0));
@@ -280,11 +305,11 @@
   function readLifeLetter(L) {
     var b = { kind: 'lifeLetter', line: 'life', group: '', ref: '', month: '', dated: '', due: 0, warnings: [] };
     var t = L.join(' ').replace(/\s+/g, ' '), m;
-    if ((m = /PLAN NO\s*:?\s*([A-Z]{2,5}\s?\d{2,6})/i.exec(t))) b.ref = m[1];
-    if ((m = /Statement of Adjustments? for\s+([A-Z]+\s+\d{4})/i.exec(t))) b.month = month(m[1]);
+    if ((m = /ASSURANCE PLAN(?:\s+NO\.?)?\s*:?\s*([A-Z]{2,5}\s?\d{2,6})/i.exec(t))) b.ref = m[1];
+    if ((m = /Statement of Adjustments? for\s+([A-Z]+\s+\d{4})/i.exec(t)) || (m = /Monthly Billing for\s+([A-Z]+\s+\d{4})/i.exec(t))) b.month = month(m[1]);
     if ((m = /amount of\s+(\$?[\d,]+\.\d\d)\s+due/i.exec(t))) b.due = num(m[1]);
     if ((m = /^([A-Z][a-z]+ \d{1,2}, \d{4})/.exec(L[0] || ''))) b.dated = ymd(m[1]);
-    for (var i = 0; i < L.length; i++) if (/GROUP LIFE ASSURANCE PLAN NO/i.test(L[i]) && i > 0) { b.group = L[i - 1].trim(); break; }
+    for (var i = 0; i < L.length; i++) if (/GROUP LIFE ASSURANCE PLAN\b/i.test(L[i]) && i > 0) { b.group = L[i - 1].trim(); break; }
     if ((m = /within\s+[a-z\- ]*\(?(\d{2})\)?\s*days/i.exec(t))) b.reportDays = +m[1];
     return b;
   }

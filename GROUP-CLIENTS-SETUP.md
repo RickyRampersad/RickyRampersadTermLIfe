@@ -294,6 +294,10 @@ something is written.
   `ANTHROPIC_API_KEY`.
 - **Paste both files**: `GroupBilling.gs` and `GroupClients.gs` (the two Your people routes, `gcm.clientPeople` and `gcm.clientPost`, the door's four routes, `gcm.billAsk`, `gcm.billTaskUpdates`, `gcm.billPeople` and `gcm.billStatement`, the two form routes, `gcm.clientForm` and
   `gcm.clientFormSend`, and the chase in the group day are in GroupClients.gs), then a New version.
+- **The upload writes Salesforce** (27 October 2026): a health or life bill brings the month's billing record into line
+  (or makes it from last month's) and opens a task per termination, per tier change and one to query the adjustments,
+  for the account owner. Nothing to set. To stop it, set the Script property **`GCM_BILL_SF`** to `off`; the page's
+  "Bring Salesforce in line with the bill" still works by hand.
 - **Script properties**: none new. `GCM_BILL_LIVE` is set by `gblGoLive`. The AI read uses `ANTHROPIC_API_KEY` as
   the rest of the page does. While the bills are in test mode (before `gblGoLive`) the 10:30 asks nobody and opens no task; the branch manager's summary says what it would have asked.
 

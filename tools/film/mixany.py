@@ -36,6 +36,7 @@ ASS = CFG['ass']
 W, H = CFG.get('w', 1280), CFG.get('h', 720)
 CAPMODE = CFG.get('capmode', 'strip')          # 'strip' | 'over'
 PIC_H = CFG.get('pic', 616) if CAPMODE == 'strip' else H
+CAPBG = CFG.get('capbg', '1B2A44')   # the strip behind burned-in captions
 
 def rd(p):
     with wave.open(p) as w:
@@ -203,7 +204,7 @@ print(f'captions: {len(lines)} cues, 0 overlaps by construction, last ends {line
 # strip: fit the whole frame, take the picture off the top, pad the band back
 # on underneath. over: fit the frame and leave it alone.
 _geom = (f'scale={W}:{H}:force_original_aspect_ratio=decrease,'
-         f'crop={W}:{PIC_H}:0:0,pad={W}:{H}:0:0:color=0x1B2A44,'
+         f'crop={W}:{PIC_H}:0:0,pad={W}:{H}:0:0:color=0x{CAPBG},'
          if CAPMODE == 'strip' else
          f'scale={W}:{H}:force_original_aspect_ratio=decrease,')
 VF = (f'trim=start={LEAD},setpts=(PTS-STARTPTS)/{STRETCH},'

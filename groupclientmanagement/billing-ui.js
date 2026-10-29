@@ -85,7 +85,8 @@ function blLineCard(o) {
     h += '<div class="tiles bill-tiles"><div class="tile"><b>' + esc(blMoney(b.due)) + '</b><span>due for ' + esc(blMon(b.month)) + (b.dueBy ? ' · by ' + esc(dmy(b.dueBy)) : '') + '</span></div>' +
       '<div class="tile"><b>' + b.members + '</b><span>' + (o.line === 'listbill' ? 'policies' : 'members') + ' on the bill</span></div>' +
       (b.arrears ? '<div class="tile alert"><b>' + esc(blMoney(b.arrears)) + '</b><span>earlier months shown unpaid</span></div>' : '') +
-      '<div class="tile' + (Math.abs(v) > 0.05 ? ' alert' : '') + '"><b>' + (b.sfRecord ? esc(blMoney(b.sfBilled)) : '–') + '</b><span>in Salesforce' + (b.sfRecord ? (Math.abs(v) > 0.05 ? ' · ' + (v > 0 ? esc(blMoney(v)) + ' too high' : esc(blMoney(-v)) + ' short') : ' · agrees') : ' · no record') + '</span></div></div>' +
+      '<div class="tile' + (Math.abs(v) > 0.05 ? ' alert' : '') + '"><b>' + (b.sfRecord ? esc(blMoney(b.sfBilled)) : '–') + '</b><span>billed in Salesforce' + (b.sfRecord ? (Math.abs(v) > 0.05 ? ' · ' + (v > 0 ? esc(blMoney(v)) + ' more than' : esc(blMoney(-v)) + ' short of') + ' the ' + esc(blMoney(blCharged(o.line, b))) + ' charged' : ' · the same as the ' + esc(blMoney(blCharged(o.line, b))) + ' charged') : ' · no record') + '</span></div></div>' +
+      blSfwPanel(o) +
       '<p class="small muted">' + (b.ref ? 'Ref ' + esc(b.ref) + ' · ' : '') + (b.dated ? 'dated ' + esc(dmy(b.dated)) + ' · ' : '') + 'uploaded by ' + esc(b.by) + ' ' + esc(b.checkedAt) + (b.files ? ' · ' + esc(b.files) : '') + (b.reconciledAt ? ' · <b>reconciled ' + esc(b.reconciledAt) + ' by ' + esc(b.reconciledBy) + '</b>' : '') + (b.sentAt ? ' · <b>sent ' + esc(b.sentAt) + '</b>' : '') +
       (can && !BILL_READ[o.line] ? ' · <button class="lnk" type="button" data-reup="' + o.line + '">upload again</button>' : '') + '</p>';
     h += blFindings(o);
@@ -121,6 +122,7 @@ function blFindings(o) {
         (f.members && f.members.length ? '<details><summary>' + f.members.length + ' named</summary><ul>' + f.members.map(m => '<li>' + esc(m.name) + (m.id ? ' · ' + esc(m.id) : '') + (m.premium != null ? ' · ' + esc(blMoney(m.bill != null ? m.bill : m.premium)) : '') + (m.sf != null ? ' (Salesforce ' + esc(blMoney(m.sf)) + ')' : '') + (m.start ? ' · from ' + esc(dmy(m.start)) : '') + '</li>').join('') + '</ul></details>' : '') + '</div>' +
         (r ? '<div class="fr">Resolved by ' + esc(r.by) + ' ' + esc(r.at) + ': ' + esc(r.note) + '</div>' : can && lvl !== 'ok' ? '<div class="fa">' +
           (f.action === 'sfAmount' ? '<button class="btn sm" type="button" data-fix="sfAmount" data-line="' + o.line + '">Set Salesforce to ' + esc(blMoney(f.data.want)) + '</button>' : '') +
+          (f.action === 'sfWrite' ? '<button class="btn sm" type="button" data-fix="sfWrite" data-line="' + o.line + '">' + (f.kind === 'norecord' ? 'Make it in Salesforce from the bill' : 'Bring Salesforce in line with the bill') + '</button>' : '') +
           '<button class="btn sm ghost" type="button" data-task="' + o.line + '" data-f="' + esc(f.id) + '">Open a task for it</button>' +
           (f.action === 'payment' ? '<button class="btn sm ghost" type="button" data-pay="' + o.line + '" data-month="' + esc(f.data.month) + '" data-amount="' + esc(f.data.amount) + '">Record the payment</button>' : '') +
           '<button class="btn sm ghost" type="button" data-resolve="' + esc(f.id) + '" data-line="' + o.line + '">Resolve with a note</button></div>' : '') + '</div>';
@@ -241,7 +243,7 @@ const blWorkDays = n => { const d = new Date(); let k = 0; while (k < n) { d.set
 function blKindOf(f) {
   if (f.data && f.data.kind && BL_TASKS[f.data.kind]) return f.data.kind;
   if (f.action === 'payment') return 'payment';
-  if (f.action === 'sfAmount') return 'amount';
+  if (f.action === 'sfAmount' || f.action === 'sfWrite') return 'amount';
   if (/back-?charge|credit|adjust/i.test(f.text) && f.who !== 'salesforce') return 'backcharge';
   if (/\brate\b|31-day|31 day/i.test(f.text)) return 'rate';
   if (f.who === 'group') return 'group';
@@ -544,10 +546,31 @@ function blBindLines() {
 async function blFix(b) {
   const line = b.dataset.line, act = b.dataset.fix;
   b.disabled = true;
-  if (act === 'sfAmount') {
-    const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'sfAmount' });
-    toast(r.ok ? r.said : (r.error || 'Not set'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month); else b.disabled = false;
+  if (act === 'sfAmount' || act === 'sfWrite') {
+    const t0 = b.textContent; b.textContent = 'Writing to Salesforce…';
+    const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act });
+    toast(r.ok ? r.said : (r.error || 'Not written'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month); else { b.disabled = false; b.textContent = t0; }
   }
+}
+/** What the bill charged before credits: what the team keys as Group Billing Premiums (health's current month, life's gross). */
+function blCharged(line, b) { return line === 'listbill' ? b.due : (b.current || b.due); }
+const BL_SFW_HEAD = { created: 'Made in Salesforce from this bill', updated: 'Salesforce brought into line with this bill', same: 'Salesforce already matches this bill', held: 'Salesforce not written yet' };
+/** What the upload wrote in Salesforce (27 October 2026): the month's billing record, made or brought into line with the
+ *  bill, every field it changed with what it was, and the tasks it opened. One press does it again. */
+function blSfwPanel(o) {
+  const b = o.bill; if (!b || (o.line !== 'health' && o.line !== 'life')) return '';
+  const w = b.sfWrite, can = BILL.canAct !== false, done = w && /^(created|updated|same)$/.test(w.action);
+  let h = '<div class="sfw' + (w && w.errors && w.errors.length ? ' err' : done ? ' ok' : '') + '"><div class="sfw-h"><span class="tag">' + (done ? 'Salesforce' : 'Salesforce: to do') + '</span><b>' + esc(w ? (BL_SFW_HEAD[w.action] || 'Salesforce not written') : 'Not written to Salesforce yet') + '</b>' +
+    (w && w.name ? ' · ' + (w.url ? '<a href="' + esc(w.url) + '" target="_blank" rel="noopener">' + esc(w.name) + '</a>' : esc(w.name)) : '') + (w && w.by ? ' <span class="small muted">' + esc(w.by) + ', ' + esc(w.at) + '</span>' : '') + '</div>';
+  if (w && w.why) h += '<p class="small">' + esc(w.why) + '</p>';
+  if (w && w.changed && w.changed.length) h += '<details><summary>' + w.changed.length + ' field' + (w.changed.length === 1 ? '' : 's') + ' written, from the bill</summary><div class="scroll"><table class="t small"><thead><tr><th>Field</th><th>Was</th><th>Now</th></tr></thead><tbody>' +
+    w.changed.map(c => '<tr><td>' + esc(c.label) + '</td><td class="muted">' + (w.action === 'created' ? '–' : esc(c.from)) + '</td><td><b>' + esc(c.to) + '</b></td></tr>').join('') + '</tbody></table></div></details>';
+  if (w && w.tasks && w.tasks.length) h += '<div class="small sfw-t"><b>' + w.tasks.length + ' task' + (w.tasks.length === 1 ? '' : 's') + ' opened for the account owner</b><ul>' +
+    w.tasks.map(t => '<li><span class="tag">' + esc({ leaver: 'Termination', leavers: 'Terminations', tier: 'Tier change', adjust: 'Adjustments' }[t.kind] || 'Task') + '</span>' + (t.url ? '<a href="' + esc(t.url) + '" target="_blank" rel="noopener">' + esc(t.subject) + '</a>' : esc(t.subject)) + '</li>').join('') + '</ul></div>';
+  if (w && w.skipped && w.skipped.length) h += '<details class="small"><summary>' + w.skipped.length + ' already in Salesforce, not opened again</summary><ul>' + w.skipped.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></details>';
+  if (w && w.errors && w.errors.length) h += '<p class="small bad">' + w.errors.map(esc).join('<br>') + '</p>';
+  if (can) h += '<button class="btn sm' + (done ? ' ghost' : '') + '" type="button" data-fix="sfWrite" data-line="' + o.line + '">' + (done ? 'Check Salesforce against the bill again' : 'Bring Salesforce in line with the bill') + '</button>';
+  return h + '</div>';
 }
 async function blResolve(line, id) {
   const note = prompt('What was done, or why this is not a problem?'); if (note == null) return;

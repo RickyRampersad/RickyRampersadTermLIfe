@@ -207,6 +207,8 @@ var LB_DOCS = [  // [name, times in the history, [[department, times]...], [[sen
   ["Claim Submission Form - Life & CI", 23, [["GLOC CLAIMS - CUSTOMER SUPPORT", 17], ["RECORDS MANAGEMENT DEPT", 4], ["GIA TASK REQUEST", 1]], [["Proof of ID", 82], ["Policy Contract", 53], ["Death Certificate", 41]], "CLAIM SUBMISSION"],
   ["Service Questionnaire", 30, [["RECORDS MANAGEMENT DEPT", 30]], [["OAS Declaration", 46]], "SERVIC(E|ING) QUESTIONNAIRE|^QUESTIONNAIRE$"],
   ["Declaration of Insurability", 15, [["RECORDS MANAGEMENT DEPT", 10], ["DELTA FORCE QUERY", 3], ["GLOC REDATES, REINSTATEMENTS & INCREASES", 2]], [["Quotation", 33]], "DECLARATION OF INSURABILITY|^DOI$"],
+  ["Declaration 1", 0, [["RECORDS MANAGEMENT DEPT", 1]], [], "^DECLARATION ?(1|ONE|I)$"],  // 27 Oct 2026: on the old form, asked back
+  ["Declaration 2", 0, [["RECORDS MANAGEMENT DEPT", 1]], [], "^DECLARATION ?(2|TWO|II)$"],
   ["Quotation", 14, [["GLOC REDATES, REINSTATEMENTS & INCREASES", 6], ["RECORDS MANAGEMENT DEPT", 3], ["DELTA FORCE QUERY", 3]], [["Proof of ID", 67], ["FATCA Form", 50], ["Conversion Form", 50]], "^QUOTATION"],
   ["Rollover Letter", 14, [["GLOC BIR DEPARTMENT", 12], ["GLOC CS RSC - CHAGUANAS", 1], ["RECORDS MANAGEMENT DEPT", 1]], [["Proof of ID", 71], ["Policy Contract", 71]], "ROLLOVER"],
   ["NPW Letter", 13, [["CLIENT ACQUISITION DEPARTMENT", 7], ["RECORDS MANAGEMENT DEPT", 5], ["CGU - GLOC CORPORATE GROUP UNIT", 1]], [["Policy Contract", 46], ["Proof of ID", 31]], "^NPW"],
@@ -992,6 +994,9 @@ function lbLoginApps_(staff) { return staff ? 'logbook,delivery-book' : 'logbook
 function lbHandle_(b) {
   LB_READ_ = null; LB_AGENTS_READ_ = null; LB_PICK_READ_ = null; LB_HOURS_ = null;
   if (b.action === 'lb.login') return lbLogin_(b);
+  /* The Branch Intelligence wall's transmittal stop (28 October 2026). Counts and first names only, no sign-in:
+     the screen hangs in the branch and holds no client, no policy and no document's detail. */
+  if (b.action === 'lb.wall') return lbWall_(b);
   var who = lbSession_(b.token);
   if (!who) return { ok: false, error: 'signed-out' };
   /* The branch app's one sign-in (18 October 2026: "when they log in they should not have to log back into all the
@@ -1194,8 +1199,15 @@ function lbValidate_(b, who) {
       if (it.portfolioId && !mine.portfolios[it.portfolioId]) throw new Error('Policy ' + it.policy + ' is not one of yours.');
     });
   }
-  if (d.declared !== true) throw new Error('Tick the declaration.');
-  out.declaration = contract ? LB.DECLARE_CONTRACT : LB.DECLARE_DOCS;
+  /* Both declarations, every time (27 October 2026: "Declaration 1 and Declaration 2 these were there
+     before and agents not seeing this"). A page from before sends declared alone and is taken as before. */
+  if (d.declared !== true) throw new Error('Tick Declaration 1 and Declaration 2.');
+  if ('declared1' in d || 'declared2' in d) {
+    if (d.declared1 !== true || d.declared2 !== true) throw new Error('Tick Declaration 1 and Declaration 2.');
+    out.declaration = 'Declaration 1: ' + LB.DECLARE_DOCS + ' | Declaration 2: ' + LB.DECLARE_CONTRACT;
+  } else {
+    out.declaration = contract ? LB.DECLARE_CONTRACT : LB.DECLARE_DOCS;
+  }
   out.notes = dbClean_(d.notes, 500);
   return out;
 }
@@ -2539,6 +2551,142 @@ function lbStats_(b, who) {
     daily: Object.keys(daily).sort().map(function (k) { return daily[k]; }),
     reasons: Object.keys(reasons).map(function (k) { return { reason: k, n: reasons[k] }; })
       .sort(function (a, c) { return c.n - a.n; }).slice(0, 12),
+  };
+}
+
+
+/* ============================== the wall ============================== */
+
+/**
+ * The transmittal stop on the Branch Intelligence wall (intelligence/wall/transmittal.html), asked for on 28 October
+ * 2026: "can you build a wall with the transmittal on the branch intelligence wall". What the screen may show: counts,
+ * hours, department names, and people by first name. Never a client, a policy number, a note or a reason's words.
+ * Kept three minutes, so a wall that refreshes never reads the book twice in a run of screens.
+ */
+var LB_WALL = { CACHE_SEC: 180, DAYS: 30, SERIES: 15, OLD_SAME_DAY: 41, OLD_WITHIN1: 72 };
+function lbWall_(b) {
+  var cache = CacheService.getScriptCache(), key = 'lb_wall_v1';
+  if (!(b && b.fresh)) { var hit = cache.get(key); if (hit) { try { return JSON.parse(hit); } catch (e) {} } }
+  var out = lbWallBuild_(new Date());
+  try { var txt = JSON.stringify(out); if (txt.length < 95000) cache.put(key, txt, LB_WALL.CACHE_SEC); } catch (e) {}
+  return out;
+}
+function lbFirst_(n) {
+  var s = String(n || '').replace(/^\s*agent\s+/i, '').trim();
+  /* A sign-in by agent number writes the number ("SL002", "AG-003", "A10024 - Name"): read the person's name. */
+  var m = /^([a-z]{0,4}-?\d{2,6})\b\s*[-\u2013:]?\s*(.*)$/i.exec(s);
+  if (m) {
+    s = m[2];
+    if (!s) { try { var a = lbFindAgent_(m[1]); s = a && a.name ? a.name : ''; } catch (e) { s = ''; } }
+  }
+  s = s.replace(/^\s*A?\d+\s*-\s*/i, '').trim();
+  return s ? lbTitle_(s.split(/\s+/)[0]) : '';
+}
+function lbWallBuild_(now) {
+  var today = lbDay_(now), work = lbIsWorkDay_(today);
+  var rows = lbRows_().filter(function (r) { return r.source !== 'Imported' && r.status !== 'Cancelled'; });
+  var docs = rows.filter(function (r) { return r.type === LB.TYPES[0]; });
+  var pct = function (a, n) { return n ? Math.round(a * 100 / n) : null; };
+  var isToday = function (d) { return d && lbDay_(d) === today; };
+  var bump = function (m, k, f, n) { if (!k) return; var o = m[k] = m[k] || { name: k }; o[f] = (o[f] || 0) + (n == null ? 1 : n); };
+  var list = function (m, by) { return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, c) { return (c[by] || 0) - (a[by] || 0); }); };
+
+  /* today, hour by hour */
+  var hours = [];
+  for (var h = 7; h <= 17; h++) hours.push({ h: h, logged: 0, received: 0, sent: 0 });
+  var slot = function (d) { var x = Math.max(7, Math.min(17, lbHour_(d))); return hours[x - 7]; };
+  var t = { logged: 0, received: 0, sent: 0, docsSent: 0, onBag: 0, missed: 0, returned: 0 };
+  var staff = {}, agents = {}, depts = {};
+  docs.forEach(function (r) {
+    if (isToday(r.loggedAt)) { t.logged++; slot(r.loggedAt).logged++; bump(agents, lbFirst_(r.agent), 'today'); }
+    if (isToday(r.receivedAt)) { t.received++; slot(r.receivedAt).received++; bump(staff, lbFirst_(r.receivedBy), 'received'); }
+    if (r.status === 'Sent' && isToday(r.sentAt)) {
+      t.sent++; t.docsSent += r.quantity; slot(r.sentAt).sent++;
+      bump(staff, lbFirst_(r.sentBy), 'sent');
+      bump(depts, r.department, 'lines'); bump(depts, r.department, 'docs', r.quantity);
+      if (lbOnBag_(r)) t.onBag++; else t.missed++;
+    }
+    if (isToday(r.returnedAt)) t.returned++;
+  });
+  var transToday = lbTransRows_().filter(function (x) { return x.status !== 'Cancelled' && isToday(x.sentAt); });
+  transToday.forEach(function (x) { bump(depts, x.department, 'transmittals'); });
+
+  /* waiting now */
+  var logged = docs.filter(function (r) { return r.status === 'Logged'; });
+  var received = docs.filter(function (r) { return r.status === 'Received'; });
+  var late = received.filter(function (r) { return lbIsLate_(r, now); });
+  var waitAgents = {};
+  logged.forEach(function (r) { bump(waitAgents, lbFirst_(r.agent), 'n'); });
+  var ages = [{ k: 'Today', n: 0 }, { k: '1 day', n: 0 }, { k: '2–3 days', n: 0 }, { k: '4+ days', n: 0 }];
+  logged.concat(received).forEach(function (r) {
+    var d = lbWorkDays_(r.receivedAt || r.loggedAt, now) || 0;
+    ages[d <= 0 ? 0 : d === 1 ? 1 : d <= 3 ? 2 : 3].n++;
+  });
+  var nextBag = received.filter(function (r) { return !lbIsLate_(r, now); }).length;
+
+  /* the last 30 days, the digital book only */
+  var since = new Date(now.getTime() - LB_WALL.DAYS * 86400000);
+  var recent = docs.filter(function (r) { return r.loggedAt && r.loggedAt >= since; });
+  var sent30 = recent.filter(function (r) { return r.status === 'Sent' && r.receivedAt && r.sentAt; });
+  var wd = sent30.map(function (r) { return lbWorkDays_(r.receivedAt, r.sentAt); }).filter(function (x) { return x != null && x >= 0; });
+  var onBag30 = sent30.filter(function (r) { return lbOnBag_(r); }).length;
+  var stuck30 = recent.filter(function (r) { return r.status === 'Received' && r.receivedAt && lbIsLate_(r, now); });
+  var hrs = recent.filter(function (r) { return r.receivedAt && r.loggedAt; }).map(function (r) { return (r.receivedAt - r.loggedAt) / 3600000; })
+    .filter(function (x) { return x >= 0; }).sort(function (a, c) { return a - c; });
+  var med = hrs.length ? Math.round(hrs[Math.floor(hrs.length / 2)] * 10) / 10 : null;
+  recent.forEach(function (r) {
+    if (r.status === 'Sent' && r.sentBy) bump(staff, lbFirst_(r.sentBy), 'sent30');
+    if (r.receivedBy) bump(staff, lbFirst_(r.receivedBy), 'received30');
+    bump(agents, lbFirst_(r.agent), 'n30');
+  });
+
+  /* day by day: the last working days */
+  var series = [], d0 = today;
+  while (series.length < LB_WALL.SERIES) {
+    if (lbIsWorkDay_(d0)) series.unshift({ day: d0, logged: 0, sent: 0, onBag: 0 });
+    var x = new Date(d0 + 'T12:00:00Z'); x = new Date(x.getTime() - 86400000); d0 = Utilities.formatDate(x, 'UTC', 'yyyy-MM-dd');
+  }
+  var sIx = {}; series.forEach(function (s, i) { sIx[s.day] = i; });
+  docs.forEach(function (r) {
+    var a = r.loggedAt && sIx[lbDay_(r.loggedAt)]; if (a != null && r.loggedAt) series[a].logged++;
+    if (r.status === 'Sent' && r.sentAt) { var b2 = sIx[lbDay_(r.sentAt)]; if (b2 != null) { series[b2].sent++; if (lbOnBag_(r)) series[b2].onBag++; } }
+  });
+  series.forEach(function (s) { s.label = Utilities.formatDate(lbAt_(s.day, 12, 0), dbTz_(), 'EEE d'); });
+
+  /* the departments' answers */
+  var trans = lbTransRows_().filter(function (x) { return x.status === 'Sent' && x.sentAt && x.sentAt >= since; });
+  var conf = { transmittals: trans.length, asked: 0, yes: 0, no: 0, waiting: 0 };
+  trans.forEach(function (x) { if (x.askedAt) conf.asked++; if (x.answer === 'Yes') conf.yes++; else if (x.answer === 'No') conf.no++; else if (x.askedAt) conf.waiting++; });
+
+  /* contracts to deliver */
+  var withAgent = rows.filter(function (r) { return r.type === LB.TYPES[1] && r.status === 'With agent' && r.loggedAt; });
+  var contracts = {
+    open: withAgent.length,
+    due: withAgent.filter(function (r) { var c = lbCalDays_(r.loggedAt, now); return c >= 15 && c < 20; }).length,
+    past: withAgent.filter(function (r) { return lbCalDays_(r.loggedAt, now) >= 20; }).length,
+    delivered30: rows.filter(function (r) { return r.type === LB.TYPES[1] && r.status === 'Delivered' && r.deliveredAt && r.deliveredAt >= since; }).length,
+  };
+
+  var bag = lbBagInfo_(now);
+  return {
+    ok: true, now: now.toISOString(), today: today, workDay: work,
+    bag: { cutoff: bag.cutoff, at: bag.at, gone: bag.gone, open: bag.open, bagDayLabel: bag.bagDayLabel,
+           duty: bag.duty ? { name: lbFirst_(bag.duty.name), next: lbFirst_(bag.duty.next), week: bag.duty.week } : null,
+           inAt: bag.log && bag.log.inAt || '', outAt: bag.log && bag.log.outAt || '' },
+    today: t, hours: hours, transmittals: transToday.length,
+    waiting: { logged: logged.length, received: received.length, late: late.length,
+               lateNoReason: late.filter(function (r) { return !lbReasonFresh_(r, now); }).length,
+               nextBag: nextBag, ages: ages, agents: list(waitAgents, 'n').slice(0, 8) },
+    /* A paper signed for and still not sent once its bag has gone counts against every share, so the room never reads
+       100% beside papers that missed their bag. One still waiting past a working day counts against "within a day". */
+    days30: { lines: recent.length, sent: sent30.length, stuck: stuck30.length,
+              sameDayPct: pct(wd.filter(function (x) { return x === 0; }).length, wd.length + stuck30.length),
+              within1Pct: pct(wd.filter(function (x) { return x <= 1; }).length, wd.length + stuck30.filter(function (r) { return lbWorkDays_(r.receivedAt, now) > 1; }).length),
+              onBagPct: pct(onBag30, sent30.length + stuck30.length), medHours: med,
+              oldSameDay: LB_WALL.OLD_SAME_DAY, oldWithin1: LB_WALL.OLD_WITHIN1 },
+    series: series, depts: list(depts, 'lines').slice(0, 8), confirm: conf, contracts: contracts,
+    staff: list(staff, 'sent30').filter(function (s) { return s.name; }).slice(0, 6),
+    agents: list(agents, 'n30').filter(function (a) { return a.name; }).slice(0, 8),
   };
 }
 

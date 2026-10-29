@@ -73,6 +73,11 @@ var MEET = {
   BRANCH: 'Ricky Rampersad Branch',
   BRANCH_SHORT: 'TV Branch',
 
+  /*  Bumped whenever this file changes in a way a deployment has to
+   *  carry. `?action=ping` reports it, so a browser can tell a live
+   *  build from one pasted six weeks ago without anybody guessing. */
+  VERSION: '2026-10-28',
+
   /* Typed once, when someone sets their PIN for the first time. It
      stops a stranger who guesses a branch email address from claiming
      an account before its owner does — it is not the sign-in
@@ -99,10 +104,20 @@ var MEET = {
   MAX_ATTEMPTS: 5,
   LOCKOUT_MINUTES: 15,
 
-  /* A sign-in this many minutes after the start time is recorded
-     as Late rather than Present. Per-meeting override lives on
-     the Meetings tab. */
-  LATE_AFTER_MINUTES: 10,
+  /*  A sign-in this many minutes after the start time is recorded as
+   *  Late rather than Present.
+   *
+   *  ZERO SINCE 28 OCTOBER 2026, at the branch manager's word: "if they
+   *  log in after the time it started they are present but late". There
+   *  is no grace. A meeting that starts at twelve starts at twelve, and
+   *  ten minutes of grace is ten minutes the people who were on time
+   *  spend waiting.
+   *
+   *  It is still a per-meeting override on the Meetings tab, so a
+   *  meeting that genuinely needs a few minutes can carry them in its
+   *  own `Late After (min)` cell without changing this rule for every
+   *  other one. */
+  LATE_AFTER_MINUTES: 0,
 
   /* Check-in opens this long before the start time by default. */
   CHECKIN_OPENS_BEFORE: 30,
@@ -120,6 +135,25 @@ var MEET = {
   FOLDER_PROP: 'MEETINGS_FOLDER_ID',
 
   TAB_PEOPLE:     'People',
+  /*  THE SIGN-IN IS MEANT TO BE PUBLISHED. Decided 28 October 2026:
+   *  'only the agent number[,] guest can come in and you can put the
+   *  guest as 0000[,] this can be displayed as executives are looking
+   *  in the what app group.'
+   *
+   *  So the number on the card is the whole sign-in, and 0000 lets a
+   *  visitor look in. What that buys is a room that gets through the
+   *  door at 11:30 instead of a branch standing in a corridor typing
+   *  passwords while the register marks them absent. What it costs is
+   *  that a number is not a secret: anybody holding the list could
+   *  sign in as somebody else, so the register says who said they were
+   *  here, not who was. The branch manager made that trade knowingly
+   *  and asked for the number to go in the WhatsApp group.
+   *
+   *  A guest is never on the roll — roster_() is the denominator the
+   *  register is measured against, and three executives looking in
+   *  must not drop the branch's attendance for the month. */
+  GUEST_NO:       '0000',
+  GUEST_NAME:     'Visitor',
   TAB_MEETINGS:   'Meetings',
   TAB_AGENDA:     'Agenda',
   TAB_UPLOADS:    'Uploads',
@@ -806,6 +840,10 @@ function canOpenMeeting_(person, m) {
   // meeting ever held, including the minutes of the ones they were not
   // at. They get the meeting that names them and nothing else.
   if (person.role === 'guest') {
+    // The standing visitor looks in on whatever is open. Draft and
+    // cancelled are already refused above, so this is the live meeting and
+    // nothing else; a guest named against one meeting still gets that one.
+    if (isStandingGuest_(person)) return true;
     return low_(m['Guest']).indexOf(person.email) > -1 ||
            low_(m['Guest']).indexOf(low_(person.name)) > -1 ||
            isParticipant_(m, person);
@@ -965,18 +1003,77 @@ function sameCode_(given, held) {
   return !!a && !!b && a === b;
 }
 
+/** The standing visitor. A real People row rather than a session invented in
+ *  memory, because every screen behind the door resolves a token by reading
+ *  that tab — a synthetic guest would sign in and then fail on the next call.
+ *  Role 'guest', so it is off the roll by the rule above. */
+function guestRow_() {
+  //  NOT findPersonByAgentNo_: normNo_ strips leading zeros, so it turns
+  //  '0000' into nothing and gives up before it looks. Left that way the
+  //  lookup never matches, every guest sign-in appends another Visitor row,
+  //  and every one of them is still told guest sign-in is not set up.
+  var p = guestFind_();
+  if (p) return p;
+  //  readPeople_ drops any row with no e-mail, so the guest needs one or it
+  //  is written and then never found again. .invalid is the TLD reserved for
+  //  exactly this (RFC 2606): it cannot resolve and cannot be delivered to,
+  //  so the row can never quietly become a real mailbox somebody writes to.
+  appendRow_(MEET.TAB_PEOPLE, {
+    'Agent No': MEET.GUEST_NO, 'Email': '0000@guest.invalid', 'Name': MEET.GUEST_NAME,
+    'Role': 'guest', 'Unit': '', 'Active': 'Yes', 'Added': new Date(),
+    'Added By': 'the standing guest number'
+  });
+  return guestFind_();
+}
+
+function guestFind_() {
+  var want = MEET.GUEST_NO;
+  return readPeople_().filter(function (p) {
+    return str_(p.agentNo).replace(/\s+/g, '') === want;
+  })[0] || null;
+}
+
+function isStandingGuest_(person) {
+  return !!person && person.role === 'guest' &&
+         str_(person.agentNo).replace(/\s+/g, '') === MEET.GUEST_NO;
+}
+
 function apiLogin_(body) {
   // 'who' is the agent number or an e-mail; the older keys are kept so
   // a copy of the page still open in somebody's browser keeps working.
   var who = str_(body.who || body.agentNo || body.email);
   var pin = str_(body.password || body.code || body.pin);
 
+  // 0000 is the standing guest number, and it is published on purpose.
+  if (str_(who).replace(/\s+/g, '') === MEET.GUEST_NO) {
+    var g = guestRow_();
+    if (!g) return { ok: false, error: 'Guest sign-in is not set up yet. Speak to the branch manager.' };
+    var gt = g.token || makeToken_();
+    setCell_(MEET.TAB_PEOPLE, g._row, 'Token', gt);
+    setCell_(MEET.TAB_PEOPLE, g._row, 'Last Seen', new Date());
+    log_('login', g.name, 'guest', '', 'Looked in as a guest');
+    return { ok: true, token: gt, user: publicUser_(g) };
+  }
+
   var p = findSignIn_(who);
-  // Same wording whether the number is unknown or the password is
-  // wrong, so the box cannot be used to find out who is on the branch.
-  var generic = { ok: false, error: 'That agent number and password do not match.' };
+  var generic = { ok: false, error: 'That agent number is not on the roll. Use 0000 to look in as a guest.' };
   if (!p) return generic;
   if (!p.active) return { ok: false, error: 'Your access has been turned off. Speak to the branch manager.' };
+
+  //  THE NUMBER IS THE SIGN-IN. A password is still accepted from anyone
+  //  who has one and from a copy of the page still open somewhere, but it
+  //  is no longer asked for: see the note on MEET.GUEST_NO for why, and for
+  //  what it costs. Nobody is sent to enrol any more — being on the roll is
+  //  what lets you in, and the pull is what puts you on it.
+  if (!pin) {
+    var t0 = p.token || makeToken_();
+    setCell_(MEET.TAB_PEOPLE, p._row, 'Token', t0);
+    setCell_(MEET.TAB_PEOPLE, p._row, 'Attempts', 0);
+    setCell_(MEET.TAB_PEOPLE, p._row, 'Locked Until', '');
+    setCell_(MEET.TAB_PEOPLE, p._row, 'Last Seen', new Date());
+    log_('login', p.name, p.role, p.email, 'Signed in with their agent number');
+    return { ok: true, token: t0, user: publicUser_(p) };
+  }
   if (!p.hash && !p.code) return { ok: false, error: 'needs-enrol', needsEnrol: true };
 
   if (p.lockedUntil && p.lockedUntil.getTime() > Date.now()) {
@@ -1124,9 +1221,24 @@ function checkinWindow_(m) {
 function statusForNow_(m, when) {
   var w = checkinWindow_(m);
   if (!w.start) return { status: 'present', late: 0 };
-  var grace = num_(m['Late After (min)']) || MEET.LATE_AFTER_MINUTES;
-  var lateBy = Math.round((when.getTime() - w.start.getTime()) / 60000);
-  if (lateBy > grace) return { status: 'late', late: lateBy };
+
+  /*  AN EXPLICIT ZERO IS NOT AN EMPTY CELL. `num_(cell) || DEFAULT`
+   *  throws a deliberate 0 away and hands back the default instead,
+   *  which is how a meeting set to no grace would quietly keep ten
+   *  minutes of it. Empty means "use the branch default"; a number,
+   *  zero included, means that number. */
+  var cell = str_(m['Late After (min)']);
+  var grace = cell === '' ? MEET.LATE_AFTER_MINUTES : num_(cell);
+
+  /*  Decided on the clock, in milliseconds, not on a rounded count of
+   *  minutes: with no grace, a sign-in at 12:00:30 is after a meeting
+   *  that started at 12:00, and rounding would have called it present.
+   *  The minutes are only how it is written down afterwards, and they
+   *  never read zero on a late row. */
+  var byMs = when.getTime() - w.start.getTime();
+  if (byMs > grace * 60000) {
+    return { status: 'late', late: Math.max(1, Math.round(byMs / 60000)) };
+  }
   return { status: 'present', late: 0 };
 }
 
@@ -1580,7 +1692,36 @@ function apiCheckIn_(body) {
  *  refused rather than quietly stored, because the whole point of
  *  the list is that every apology lands in a box the wall can count.
  */
+/*  NOBODY EXCUSES THEMSELVES, SINCE 28 OCTOBER 2026.
+ *
+ *  Asked for in these words: "dont give the opportunity to say cannot
+ *  attend". The register now has three states a person can put
+ *  themselves in, and only three: present, present but late, and
+ *  absent for not signing in. An apology a person files for themselves
+ *  is the fourth, and it is the one that empties a room — it costs
+ *  nothing to file and it reads on the register as though it were
+ *  settled.
+ *
+ *  The route is kept and refuses, rather than being deleted, because a
+ *  browser holding an older copy of the page would otherwise post into
+ *  nothing and show the person a success they did not get.
+ *
+ *  Staff can still record an apology on someone's behalf through the
+ *  register (apiMarkAttendance_). That is a different thing: a manager
+ *  deciding that approved leave is not an absence, with their name
+ *  against the decision.                                            */
 function apiExcuse_(body) {
+  requireUser_(body.token);
+  return { ok: false, excuseClosed: true,
+           error: 'Sign in on the day \u2014 that is the register. Signing in after the ' +
+                  'meeting has started is recorded present but late. If you genuinely ' +
+                  'cannot be there, speak to the branch manager: only branch staff can ' +
+                  'record an apology.' };
+}
+
+/*  The old self-service apology, kept for the record of what it did and
+ *  for the day somebody asks for it back. It is not routed.         */
+function apiExcuseRetired_(body) {
   var me = requireUser_(body.token);
   var m = findMeeting_(body.meetingId);
   if (!m) return { ok: false, error: 'That meeting no longer exists.' };
@@ -3506,17 +3647,41 @@ function apiAddContribution_(body) {
   var text = str_(body.body);
   if (text.length < 2) return { ok: false, error: 'Write what you want on the record.' };
 
-  // You have to be in the room. The register already knows whether you are.
-  var att = readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
-    return str_(a['Meeting ID']) === str_(m['ID']) && low_(a['Email']) === me.email;
-  })[0];
-  if (!att || ['present', 'late'].indexOf(low_(att['Status'])) === -1) {
-    return { ok: false, error: 'Sign in to the meeting first — that is what puts you in the room.' };
-  }
-
   var sn = sessionFor_(m['ID']);
   var started = sn ? asDate_(sn['Started']) : null;
-  var offset = started ? Math.round((Date.now() - started.getTime()) / 60000) : 0;
+
+  /*  BEFORE THE MEETING THE FLOOR IS SHUT, BUT THE AGENDA IS OPEN.
+   *
+   *  A contribution made in the room is the record of something SAID
+   *  in it, so it needs the register — that rule is below and it does
+   *  not move. But a person reading the agenda the day before has
+   *  something to say about it, and there are only two ways to take
+   *  it: open the register early, which marks them present at a
+   *  meeting that has not happened, or lose the point. Neither is
+   *  acceptable, so there is a third thing.
+   *
+   *  Until the register opens, and while no session has started, a
+   *  contribution is taken as BROUGHT IN BEFOREHAND and stamped with
+   *  an offset of -1. Nothing else ever writes a negative offset, so
+   *  the floor tells the two apart without a new column, and
+   *  floorStats_ counts only what was said in the room — otherwise a
+   *  person who wrote in on Thursday and sat silent on Friday would
+   *  read as having held the floor.                                */
+  var w = checkinWindow_(m);
+  var early = !started && !!(w.open && Date.now() < w.open.getTime());
+
+  if (!early) {
+    // You have to be in the room. The register already knows whether you are.
+    var att = readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
+      return str_(a['Meeting ID']) === str_(m['ID']) && low_(a['Email']) === me.email;
+    })[0];
+    if (!att || ['present', 'late'].indexOf(low_(att['Status'])) === -1) {
+      return { ok: false, error: 'Sign in to the meeting first — that is what puts you in the room.' };
+    }
+  }
+
+  var offset = early ? -1
+    : (started ? Math.round((Date.now() - started.getTime()) / 60000) : 0);
 
   var kind = CONTRIB_KINDS.indexOf(str_(body.kind)) > -1 ? str_(body.kind) : 'Point';
   var agendaId = str_(body.agendaId) || (sn ? str_(sn['Current Agenda ID']) : '');
@@ -3576,7 +3741,14 @@ function contributionsFor_(m, person) {
 /** Who actually said something, and how much. Silence is visible too. */
 function floorStats_(contribs, register) {
   var per = {};
-  contribs.forEach(function (c) {
+  /*  Only what was said IN THE ROOM. A contribution brought in before
+   *  the meeting carries an offset of -1 (see apiAddContribution_);
+   *  counting it here would move a person out of "in the room,
+   *  nothing on the record", which is the one thing this measure is
+   *  for. They are reported on their own, below.                   */
+  var room = contribs.filter(function (c) { return num_(c.offset) >= 0; });
+  var early = contribs.filter(function (c) { return num_(c.offset) < 0; });
+  room.forEach(function (c) {
     if (!per[c.email]) per[c.email] = { email: c.email, name: c.name, role: c.role, count: 0, kinds: {} };
     per[c.email].count++;
     per[c.email].kinds[c.kind] = (per[c.email].kinds[c.kind] || 0) + 1;
@@ -3595,7 +3767,21 @@ function floorStats_(contribs, register) {
     silent.sort(function (a, b) { return a.name.localeCompare(b.name); });
   }
 
-  return { total: contribs.length, spoke: spoke, silent: silent };
+  var broughtIn = {};
+  early.forEach(function (c) {
+    if (!broughtIn[c.email]) broughtIn[c.email] = { email: c.email, name: c.name, role: c.role, count: 0 };
+    broughtIn[c.email].count++;
+  });
+
+  return {
+    total: room.length,
+    spoke: spoke,
+    silent: silent,
+    // Brought in before the meeting: counted apart, never as the floor.
+    earlyTotal: early.length,
+    broughtIn: Object.keys(broughtIn).map(function (e) { return broughtIn[e]; })
+      .sort(function (a, b) { return b.count - a.count; })
+  };
 }
 
 /* ======================== topics ======================== */
@@ -6398,13 +6584,103 @@ function doGet(e) {
       case 'goals':      out = apiGoals_(p.token); break;
       case 'chases':     out = apiChases_(p.token); break;
       case 'service':    out = apiService_(p.token); break;
-      case 'ping':       out = { ok: true, app: 'Branch Meeting Builder', branch: MEET.BRANCH }; break;
+      case 'ping':       out = apiPing_(); break;
       default:           out = { ok: false, error: 'Unknown action.' };
     }
   } catch (err) {
     out = { ok: false, error: String(err && err.message ? err.message : err) };
   }
   return json_(out);
+}
+
+/*  WHAT PING ANSWERS, AND WHY.
+ *
+ *  "Is it working?" is four questions, and ping used to answer none of
+ *  them: it said the app's name whether or not the project had been
+ *  pasted, redeployed or seeded, so a browser could not tell a live
+ *  build from a six-week-old one. It now says which build is
+ *  deployed, whether the one-off file is in the project, whether the
+ *  meeting has been seeded and can be opened, and — the thing that
+ *  actually goes wrong — how many people on the roll still cannot
+ *  sign in.
+ *
+ *  THIS ANSWER IS PUBLIC. The /exec address sits in a public
+ *  repository, so anything returned here is readable by anyone. It
+ *  carries settings and counts only: never a name, a meeting's title,
+ *  an agenda item, a code, or anything a person said. Keep it that
+ *  way — a count is operational, a title is the branch's business.
+ *
+ *  Nothing here may throw. A ping that fails is indistinguishable
+ *  from a backend that is down, which is the one thing it exists to
+ *  tell apart, so every part is read inside its own try.          */
+function apiPing_() {
+  var out = {
+    ok: true,
+    app: 'Branch Meeting Builder',
+    branch: MEET.BRANCH,
+    version: MEET.VERSION,
+    /* The register has three states a person can put themselves in,
+       and only three. See apiExcuse_. */
+    register: {
+      selfExcuse: false,
+      lateAfterMinutes: MEET.LATE_AFTER_MINUTES
+    }
+  };
+
+  /* Is the one-off file in the project at all? */
+  try { out.oneOff = (typeof seedFridayMeeting === 'function'); }
+  catch (e) { out.oneOff = false; }
+
+  /* Has it been seeded, and can a person open it today? */
+  try {
+    if (typeof FRIDAY !== 'undefined' && FRIDAY && FRIDAY.REF) {
+      var m = meetingRows_().filter(function (r) {
+        return str_(r['Ref']) === FRIDAY.REF;
+      })[0];
+      if (!m) {
+        out.meeting = { ref: FRIDAY.REF, seeded: false };
+      } else {
+        var w = checkinWindow_(m);
+        var now = Date.now();
+        var items = readTab_(MEET.TAB_AGENDA).filter(function (a) {
+          return str_(a['Meeting ID']) === str_(m['ID']);
+        });
+        out.meeting = {
+          ref: FRIDAY.REF,
+          seeded: true,
+          status: low_(m['Status']),
+          /* Published, or an agent opens the app and sees nothing. */
+          openToEveryone: low_(m['Status']) !== 'draft',
+          date: fmtDate_(m['Date']),
+          /*  Sheets stores a time-only cell as a Date on its own 1899
+           *  epoch, so str_() on it prints "Sat Dec 30 1899 12:00:00"
+           *  and reads as a meeting set in the wrong century. The
+           *  register was never wrong — checkinWindow_ goes through
+           *  atTime_, which lifts the hours and minutes onto the
+           *  meeting's own date — but this line is what a person
+           *  checks the deployment with, so it is formatted the same
+           *  way the meeting card formats it. */
+          start: fmtTime_(atTime_(m['Date'], m['Start'])),
+          agendaItems: items.length,
+          minutes: items.reduce(function (n, a) { return n + num_(a['Allotted (min)']); }, 0),
+          lateAfterMinutes: num_(str_(m['Late After (min)']) === '' ? MEET.LATE_AFTER_MINUTES : m['Late After (min)']),
+          checkInOpensAt: w.open ? fmtStamp_(w.open) : '',
+          checkInOpenNow: !!(w.open && w.close && now >= w.open.getTime() && now <= w.close.getTime())
+        };
+      }
+    }
+  } catch (e) { out.meeting = { error: 'could not be read' }; }
+
+  /*  The one that actually goes wrong. Somebody with no access code
+   *  is not told they cannot sign in — they are marked absent for a
+   *  meeting they came to. Counts only, never a name.             */
+  try {
+    var roll = readPeople_().filter(function (p) { return p.active && p.role !== 'guest'; });
+    var can = roll.filter(function (p) { return !!(p.code || p.hash); });
+    out.roster = { onTheRoll: roll.length, canSignIn: can.length, cannot: roll.length - can.length };
+  } catch (e) { out.roster = { error: 'could not be read' }; }
+
+  return out;
 }
 
 function doPost(e) {
@@ -6688,11 +6964,22 @@ function onOpen() {
  *  The sheet id goes in a Script Property, never in this file: these
  *  .gs files are published on the branch site.
  *
- *  It only ever fills a blank or replaces a code that has changed,
- *  and it never creates a person — somebody who is not on the
- *  meeting roster is reported back rather than added, because who
- *  belongs in a branch meeting is the manager's call, not the skill
- *  bank's.
+ *  It adds anybody on the skill bank who is not on People yet, and
+ *  brings the rest into line: the number, the e-mail, the name, the
+ *  unit and Active. A blank Access Code is filled and a changed one
+ *  replaced; a blank one on the skill bank is left alone, so an empty
+ *  cell there never locks somebody out.
+ *
+ *  It also carries the Password column across, hashed, so the branch
+ *  signs in with the password they already use for the fact find
+ *  rather than picking a PIN the first time. THIS IS THE STEP THAT
+ *  DECIDES WHETHER ANYBODY CAN SIGN IN: until it is run, the People
+ *  tab holds only the manager that setupMeetings() seeded, and a
+ *  meeting opened in that state marks the whole branch absent.
+ *
+ *  The manager's own role survives a pull. The skill bank calls
+ *  everybody an agent, and a pull that quietly demoted the branch
+ *  manager would take away the one access that can put it back.
  */
 function pullRoster(sheetId) {
   sheetId = str_(sheetId) ||

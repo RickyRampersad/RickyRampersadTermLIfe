@@ -106,6 +106,8 @@ async function common(page, name, w) {
     await page.route('**/*', (rt) => {
       const u = rt.request().url();
       if (u.startsWith(base)) return rt.continue();
+      // The renewal desk's status check (gcm.ping) is not a visit to the portal: answer it "not live".
+      if (u.startsWith('https://script.google.com/') && /[?&]action=gcm\.ping/.test(u)) return rt.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"renewals":{"live":false}}' });
       if (u.startsWith('https://script.google.com/')) { page.portal.push(u); return rt.fulfill({ status: 200, contentType: 'text/html', body: '<p>portal</p>' }); }
       return rt.abort();
     });
@@ -226,6 +228,22 @@ async function common(page, name, w) {
       ok(true, 'form: with no API_URL it still shows the success box (mail fallback)');
     }
 
+    // once the renewal desk is live, the page offers its e-mail sign-in first
+    {
+      const pl = await newPage(w, h);
+      await pl.route(/action=gcm\.ping/, rt => rt.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"renewals":{"live":true}}' }));
+      await pl.goto(base + '/renewal/index.html', { waitUntil: 'load' });
+      await pl.waitForSelector('#newdoor:not([hidden])', { timeout: 4000 }).catch(() => {});
+      ok(await pl.$eval('#newdoor', d => !d.hidden && getComputedStyle(d).display !== 'none' && !!d.querySelector('a[href="/myrenewal/"]')), 'new door: shown with the e-mail sign-in once the desk is live');
+      await pl.close();
+    }
+    {
+      const pn = await newPage(w, h);
+      await pn.goto(base + '/renewal/index.html', { waitUntil: 'load' });
+      await pn.waitForTimeout(300);
+      ok(await pn.$eval('#newdoor', d => getComputedStyle(d).display === 'none'), 'new door: hidden while the desk is in test mode');
+      await pn.close();
+    }
     // sign-in hands over to the secure portal
     const pg2 = await newPage(w, h);
     await pg2.goto(base + '/renewal/index.html', { waitUntil: 'load' });

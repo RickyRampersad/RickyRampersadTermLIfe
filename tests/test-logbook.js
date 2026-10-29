@@ -239,7 +239,8 @@ let agent, staff, mgr;
   mgr = env.lbSession_(env.dbLogin_({ code: 'MGR9' }).token);
   ok('no policy is refused', throws(() => env.lbSubmit_({ entry: entry({ items: [{ document: 'Proof of ID', department: 'GLOC CS RSC - CHAGUANAS' }] }) }, agent), /policy number/));
   ok('"Other" needs a note', throws(() => env.lbSubmit_({ entry: entry({ items: [{ document: 'Other', department: 'MAIL TEAM QUERY' }] }) }, agent), /Other/));
-  ok('no declaration is refused', throws(() => env.lbSubmit_({ entry: entry({ declared: false }) }, agent), /declaration/));
+  ok('no declaration is refused', throws(() => env.lbSubmit_({ entry: entry({ declared: false }) }, agent), /Declaration/));
+  ok('both declarations are needed', throws(() => env.lbSubmit_({ entry: entry({ declared: true, declared1: true, declared2: false }) }, agent), /Declaration 1 and Declaration 2/));
   ok('a department not on the list is refused', throws(() => env.lbSubmit_({ entry: entry({ items: [{ document: 'PMAR', department: 'Nowhere', policy: '1' }] }) }, agent), /department/));
   ok('staff must say whose documents', throws(() => env.lbSubmit_({ entry: entry() }, staff), /agent/));
   const before = env.__mail.length;
@@ -609,6 +610,13 @@ console.log('the bag');
      env.lbOnBag_(sent) === true && env.lbBagsLate_(nextDay) === 1 && env.lbOnBag_(imported) === true);
   const st = env.lbStats_({ days: 30 }, staff);
   ok('the insights carry the bag', st.bag && Array.isArray(st.bag.byHour) && 'onBagPct' in st.bag);
+  // the Branch Intelligence wall's transmittal stop: no sign-in, counts and first names only
+  env.LB_READ_ = null;
+  const w = env.lbHandle_({ action: 'lb.wall', fresh: true });
+  const wt = JSON.stringify(w);
+  ok('the wall answers without a sign-in', w.ok && Array.isArray(w.hours) && w.hours.length === 11 && w.series.length === 15 && w.waiting && w.days30 && w.bag);
+  ok('the wall carries no client, policy or note', !/Pretend|9000000001|anika@|Sealed/.test(wt), wt.slice(0, 200));
+  ok('people by first name only', (w.staff || []).concat(w.agents || [], w.waiting.agents || []).every(x => !/\s/.test(x.name)));
 }
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');
