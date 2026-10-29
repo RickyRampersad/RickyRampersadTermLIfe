@@ -153,6 +153,64 @@ FFDATA = [
     ('<b class="rscnt">2&ndash;3</b>', 'days to an answer', 'median, each manager'),
 ]
 
+#  The CBTT Market Conduct Guideline (July 2023, under the Insurance Act 2018),
+#  clause by clause, against what the branch actually does. The same seven the
+#  FY27 wall carries on w23, so the wall and this film cannot drift apart.
+#  Framed here as what it does for the AGENT, which is the question he asked:
+#  how do we protect our agents.
+CONDUCT = [
+    ('5.2',   'Needs before a recommendation', 'the fact find, every time'),
+    ('5.2.2', 'Advice in writing, plain words', 'the client gets it, and keeps it'),
+    ('5.3.1', 'Intermediaries monitored',      'checked, signed off, followed up'),
+    ('5.4.2', 'Delivered in 20 business days', 'tracked to the signature'),
+    ('5.4.3', 'Kept informed after the sale',  'premium dues, handovers, reviews'),
+    ('5.6',   'Their information kept private','you see your clients, nobody else'),
+    ('5.7',   'Complaints answered promptly',  'logged, owned, answered on time'),
+]
+
+#  The journey, not the transaction. Every one of these fires on its own, out
+#  of the branch's own systems — no client is named and no count is given.
+JOURNEY = [
+    ('onboarded',     'the welcome, and who looks after you'),
+    ('the birthday',  'a note in their birthday month'),
+    ('a premium due', '45, 60, 75 and 90 days'),
+    ('a requirement', 'chased until it clears'),
+    ('the contract',  'tracked to the signature'),
+    ('six months',    'and a review, for life'),
+]
+
+#  The orphan campaign, this branch's own. Letters and reminders are OUR
+#  output; the files are OUR files. Read off Salesforce on 29 October 2026:
+#  349 tasks opened since 25 September, 158 of them already Completed.
+#  NO CLIENT COUNT, no household count, no book size — that is a client count
+#  by another name and it may not go in an MP4 at a public URL.
+ORPHAN = [
+    ('<b class="rscnt">3,000</b>', 'letters and reminders', 'nearly'),
+    ('<b class="rscnt cnt" data-to="349" data-at="420" data-sep="1">349</b>',
+     'files opened', 'since 25 September'),
+    ('<b class="rscnt cnt" data-to="158" data-at="700" data-sep="1">158</b>',
+     'already closed', 'and the rest are live'),
+]
+
+#  What an agent has behind them. Named services only, no figures.
+EQUIP = [
+    ('Query Pal',   'a client question answered, any hour'),
+    ('Your clients','they sign in themselves, on our site'),
+    ('One sign-in', 'and every tool sits behind it'),
+]
+
+#  The fact find, in the order it actually runs since the rebuild. THE CLIENT
+#  APPROVES BEFORE THE MANAGER SEES IT. Before the rebuild a manager approved
+#  it and the client signed afterwards; that is the thing this scene exists to
+#  correct, so do not reorder these without being told to.
+FFSTEPS = [
+    ('You',        'meet your client'),
+    ('The draft',  'goes to them, in plain words'),
+    ('Your client','approves it first'),
+    ('A manager',  'reviews it, and signs'),
+    ('On file',    'and the clock starts'),
+]
+
 PEOPLE = []
 for nm, y, m in ROSTER:
     yrs = (TODAY - date(y, m, 1)).days / 365.25
@@ -362,17 +420,26 @@ def spoken(n):
 
 
 def _say(key):
-    return next(x['say'] for x in LINES['scenes'] if x['v'] == key).lower()
+    #  None when this cut does not carry the scene, so a line that was CUT does
+    #  not crash the build — but a line that is still in it is still asserted.
+    return next((x['say'].lower() for x in LINES['scenes'] if x['v'] == key), None)
 
 
-for key, want in (('count', HEADCOUNT), ('years', TOTAL), ('mix', LONG)):
+#  A line is recorded once and then lives in an MP4 nobody re-reads, so every
+#  derived figure is spelled out in words here and checked against the roster.
+#  This is what caught three stale lines when two names came off the roster.
+_skipped = []
+for key, want in (('count', HEADCOUNT), ('years', TOTAL), ('mix', LONG),
+                  ('mix', NEW), ('built', len(BUILT))):
     said = _say(key)
-    assert spoken(want) in said, (
-        f'scene {key!r} says {said!r} but the roster now gives {want} '
+    if said is None:
+        _skipped.append(key); continue
+    assert spoken(want) in said or str(want) in said, (
+        f'scene {key!r} says {said!r} but the record now gives {want} '
         f'({spoken(want)}). Edit rise-lines.json and re-voice that line.')
-assert spoken(NEW) in _say('mix'), 'the mix line has the wrong new-joiner count'
-assert str(len(BUILT)) in _say('built') or spoken(len(BUILT)) in _say('built'), \
-    'the built line and BUILT disagree on how many things went live'
+if _skipped:
+    print('  (not in this cut, so not checked: '
+          + ', '.join(sorted(set(_skipped))) + ')')
 
 # ── the scenes ───────────────────────────────────────────────────────────────
 
@@ -552,7 +619,9 @@ def V(name, s):
                 f'<span class="rsbigl">papers through the Log Book</span></div>'
                 f'<div class="rsdonut mid">'
                 f'{donut(72, 100, "on to Guardian inside one working day", mid="72%")}'
-                f'</div></div>')
+                f'</div>'
+                f'<div class="rsfoot">the old form scrapped &middot; '
+                f'the transmittal is ours now</div></div>')
 
     # 12c · the fact find. His own line from the FY27 wall, and the one number
     #       in this film that is a nought on purpose.
@@ -721,6 +790,11 @@ def V(name, s):
                 f'<div class="rshead">{cnt(15, 260)}'
                 f'<span class="rsbigl">years of running on our own screens</span></div>'
                 f'<div class="rsrail"><span class="rsrl"></span>{rail}</div>'
+                f'<div class="rstiles sm3">' + ''.join(
+                    f'<div class="rstile sm" style="--i:{i}">'
+                    f'{cnt(n, 900 + i * 200, sep=True)}'
+                    f'<span class="rstily">{lab}</span><em>{span}</em></div>'
+                    for i, (n, lab, span) in enumerate(FORMS)) + '</div>'
                 f'<div class="rsfoot">earliest record on file for each, read from Salesforce</div></div>')
 
     # 9c · the volume behind it, three counters that flip up in turn.
@@ -751,9 +825,7 @@ def V(name, s):
     # 12d · the date, and the thing itself. The five screens are the client's
     #       own journey through it, in order.
     if name == 'ffnew':
-        order = [('ffdraft', 'the draft, to the client'),
-                 ('ffsign', "the manager's sign-off"),
-                 ('ffok', 'the client confirms'),
+        order = [('ffok', 'your client approves'),
                  ('ffrate', 'signed, and rated'),
                  ('ffins', 'what the branch sees')]
         strip = ''.join(
@@ -761,7 +833,7 @@ def V(name, s):
             for i, (k, c) in enumerate(order))
         return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
                 f'<div class="rshead sm">1 August 2026 &middot; rebuilt</div>'
-                f'<div class="rssteps">{strip}</div></div>')
+                f'<div class="rssteps three">{strip}</div></div>')
 
     # 12e · and what it has done since. FactFind360's own wall feed, read on
     #       29 October 2026. Counts, days and shares: no money at a public URL.
@@ -784,6 +856,151 @@ def V(name, s):
         return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
                 f'<div class="rsquads three">{cards}</div>'
                 f'<div class="rsfoot">live on the walls, all day, sample figures on screen</div></div>')
+
+
+    # ── where we were, and why "ninety days" undersells it ─────────────────
+    # 8a · the pioneer beat. This branch led the team that built the company's
+    #      first digital application with a digital signature on it, at the
+    #      then chief executive's request. HE ASKED FOR NO NAMES, so the page
+    #      names nobody and no date is invented: the branch has the story, the
+    #      repository has no record of when it shipped.
+    if name == 'first':
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsfirst">'
+                f'<div class="rsdoc2"><span class="rsdl"></span><span class="rsdl"></span>'
+                f'<span class="rsdl sh"></span>'
+                f'<svg class="rssig" viewBox="0 0 220 60" fill="none">'
+                f'<path d="M8 44c18-30 26-28 30-10s10 22 20 2 16-26 22-6 12 20 22 2 18-18 30-6 22 10 38 2" '
+                f'stroke="var(--cy)" stroke-width="3.4" stroke-linecap="round"/></svg>'
+                f'<span class="rsstamp">FIRST</span></div>'
+                f'<div class="rsfl"><b>We led the team that built it.</b>'
+                f'<i>this company&rsquo;s first digital application, signed on screen</i></div>'
+                f'</div></div>')
+
+    # 8b · and what that makes the AI year: not a start, a sharpening. He was
+    #      explicit that the ninety-day framing undersells the record.
+    if name == 'ai':
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsai">'
+                f'<div class="rsaib"><span>what we already had</span><i></i></div>'
+                f'<div class="rsaip"><span class="rsaid"></span>'
+                f'<span class="rsail">AI</span></div>'
+                f'<div class="rsaib lit"><span>far more robust</span><i></i></div>'
+                f'</div>'
+                f'<div class="rsfoot">not a new system &middot; the same work, sharpened</div></div>')
+
+    # ── the fact find, in the order it actually runs ────────────────────────
+    # 12d2 · THE CORRECTION. The client approves BEFORE a manager sees it.
+    #        Drawn, not shot: the captured screens are of the old order and a
+    #        room reads screens. The struck line underneath says what changed.
+    if name == 'ffflow':
+        steps = ''.join(
+            f'<div class="rsfstep{" lit" if i == 2 else ""}" style="--i:{i}">'
+            f'<span class="rsfnum">{i + 1}</span>'
+            f'<b>{a}</b><i>{b}</i></div>'
+            for i, (a, b) in enumerate(FFSTEPS))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsflow"><span class="rsfarr"></span>{steps}</div>'
+                f'<div class="rsfwas"><s>a manager approved it, then the client '
+                f'signed</s><em>not any more</em></div></div>')
+
+    # 12f · and the training behind it. Paper on the left, a full recommendation
+    #       on the right. No agent is named: a named before-and-after is a
+    #       judgement on a person at a public URL.
+    if name == 'ffagents':
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rspaper">'
+                f'<div class="rspap old"><span></span><span></span><span></span>'
+                f'<span></span><em>on paper</em></div>'
+                f'<span class="rsfarr2"></span>'
+                f'{shot("ffdraft", cls="rspapn")}'
+                f'</div><div class="rsfoot">training runs every week &middot; '
+                f'sample data on screen</div></div>')
+
+    # ── what it protects ───────────────────────────────────────────────────
+    # 12g · market conduct, clause by clause. The same seven the FY27 wall
+    #       carries. Framed as what it does for the agent.
+    if name == 'conduct':
+        rows = ''.join(
+            f'<div class="rsclz" style="--i:{i}"><b>{c}</b>'
+            f'<span>{what}</span><i>{us}</i></div>'
+            for i, (c, what, us) in enumerate(CONDUCT))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsclx">{rows}</div>'
+                f'<div class="rsfoot">Market Conduct Guideline &middot; '
+                f'under the Insurance Act</div></div>')
+
+    # 12h · fraud. No statistic is invented here: the claim is that a proper
+    #       fact find surfaces it early, and that the surveys explained the
+    #       resistance. A file is scanned and three flags come up.
+    if name == 'fraud':
+        flags = ''.join(f'<span class="rsflg" style="--i:{i}"></span>'
+                        for i in range(3))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsfr"><div class="rsfrd">'
+                f'<span class="rsdl"></span><span class="rsdl"></span>'
+                f'<span class="rsdl sh"></span><span class="rsdl"></span>'
+                f'<span class="rsscan"></span>{flags}</div>'
+                f'<div class="rsfrl"><b>Caught at the fact find</b>'
+                f'<i>before it is written, not after</i></div></div>'
+                f'<div class="rsfoot">and the surveys told us why people were '
+                f'pushing back</div></div>')
+
+    # ── the journey ────────────────────────────────────────────────────────
+    # 12i · a ring of six events with a dot running it. Every one fires on its
+    #       own out of the branch's systems. No client, no count.
+    if name == 'journey':
+        n = len(JOURNEY)
+        ev = ''.join(
+            f'<div class="rsjev" style="--a:{i * 360 / n:.1f}deg;--i:{i}">'
+            f'<span class="rsjd"></span><b>{a}</b><i>{b}</i></div>'
+            for i, (a, b) in enumerate(JOURNEY))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsjour"><span class="rsjr"></span>'
+                f'<span class="rsjrun"></span>{ev}'
+                f'<div class="rsjc"><b>one client</b><i>for life</i></div></div></div>')
+
+    # 12j · the orphan campaign. OUR letters, OUR files. See ORPHAN.
+    if name == 'orphan':
+        tiles = ''.join(
+            f'<div class="rstile" style="--i:{i}">{v}'
+            f'<span class="rstily">{lab}</span><em>{sub}</em></div>'
+            for i, (v, lab, sub) in enumerate(ORPHAN))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rstiles">{tiles}</div>'
+                f'<div class="rsfoot">this branch, on its own book, '
+                f'since 25 September</div></div>')
+
+    # 12k · equipped. Three services, named, no figures.
+    if name == 'equipped':
+        cards = ''.join(
+            f'<div class="rseq" style="--i:{i}"><b>{a}</b><i>{b}</i></div>'
+            for i, (a, b) in enumerate(EQUIP))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsequip">{cards}</div>'
+                f'<div class="rsfoot">querymypolicy.com &middot; '
+                f'rickyrampersadbranch.com</div></div>')
+
+    # 16c2 · the wall outside, where everybody walks past. The accountability
+    #        beat he asked for, said as the branch says it.
+    if name == 'outside':
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsout">{shot("wday", cls="rsoutw")}'
+                f'<div class="rsoutp">{person("", "--i:0")}{person("", "--i:1")}'
+                f'{person("", "--i:2")}</div></div>'
+                f'<div class="rsfoot">what&rsquo;s done, what&rsquo;s late, '
+                f'and whose name is on it</div></div>')
+
+    # 17a · the commitment. His own words, and the heart of the film.
+    if name == 'commit':
+        return (f'<div class="rscap wide"><div class="rscom">'
+                f'<div class="rshead">{cnt(35, 300)}'
+                f'<span class="rsbigl">years in this business</span></div>'
+                f'<div class="rscoml">The only way you guide people and still '
+                f'scale is to put everything you know where '
+                f'<b>everybody</b> can reach it.</div>'
+                f'<div class="rsfoot">the promise <b>Akaash</b> and I have made to you'
+                f'</div></div></div>')
 
     if name == 'rise':
         ck = (f'<path class="ckc" d="{CHECK}"/>'
@@ -816,7 +1033,13 @@ CHAPTER = {
     'signin': 'How you get in', 'rise': 'We rise together',
     'digital': 'Fifteen years digital', 'forms': 'The volume behind it',
     'replica': 'What we run on', 'ffnew': 'The fact find, rebuilt',
-    'ffdata': 'What it has done since', 'prod': 'The walls'}
+    'ffdata': 'What it has done since', 'prod': 'The walls',
+    'first': 'We led the first one', 'ai': 'What changed this year',
+    'ffflow': 'The order, corrected', 'ffagents': 'Training is still running',
+    'conduct': 'This protects you', 'fraud': 'Caught early',
+    'journey': 'A journey, not a sale', 'orphan': 'What we took on',
+    'equipped': 'You are equipped', 'outside': 'On the wall outside',
+    'commit': 'Thirty-five years'}
 # A scene with no name would hand the rail a dump of its own first words, so
 # say so at build time rather than find out on the page.
 _missing = [q['v'] for q in LINES['scenes'] if q['v'] not in CHAPTER]
@@ -1339,6 +1562,176 @@ CSS = r"""
   animation:rsQuad .75s calc(.5s + var(--i)*.26s) both}
 .rs .rsquad i{font-size:1.05vw;font-style:normal;color:var(--mut)}
 @keyframes rsQuad{from{opacity:0;transform:scale(.88) translateY(2vh)}to{opacity:1;transform:none}}
+
+/* ══ the 29 October re-cut ════════════════════════════════════════════════
+   New classes only. A class this sheet ALREADY uses wins silently and both
+   rules look legitimate on their own: .rstl was the story rail and reusing it
+   as a tile label dragged every tile to 280px. Grep this block before naming
+   anything, and never fix a collision with a blanket rename — the sed that
+   "fixed" .rstl renamed the rail too and dropped a whole scene off the frame. */
+
+/* 8a · we led the first one */
+.rs .rsfirst{display:grid;grid-template-columns:auto auto;align-items:center;
+  gap:3vw;justify-content:center;margin-top:1.4vh}
+.rs .rsdoc2{position:relative;width:26vw;padding:2.2vh 1.6vw 3.4vh;border-radius:.7vh;
+  background:#0E1930;border:1px solid var(--line);display:grid;gap:1.1vh;
+  opacity:0;animation:fUp .7s .35s both}
+.rs .rsdl{height:.85vh;border-radius:.4vh;background:#1C2B4C;
+  transform:scaleX(0);transform-origin:left;animation:growX .5s both}
+.rs .rsdoc2 .rsdl:nth-child(1){animation-delay:.6s}
+.rs .rsdoc2 .rsdl:nth-child(2){animation-delay:.74s;width:84%}
+.rs .rsdl.sh{width:58%;animation-delay:.88s}
+.rs .rssig{position:absolute;left:1.6vw;bottom:1.1vh;width:14vw;height:4.4vh}
+.rs .rssig path{stroke-dasharray:420;stroke-dashoffset:420;
+  animation:ckDraw 1.5s 1.35s forwards}
+.rs .rsstamp{position:absolute;right:-1.1vw;top:-1.3vh;padding:.5vh 1vw;
+  border-radius:.4vh;background:var(--cy);color:#07131F;font-weight:800;
+  font-size:1.15vw;letter-spacing:.12em;transform:rotate(-8deg) scale(0);
+  animation:numPop .5s 2.5s both}
+.rs .rsfl{display:grid;gap:.9vh;max-width:28vw;opacity:0;
+  animation:fUp .7s 1.1s both}
+.rs .rsfl b{font-size:2.5vw;line-height:1.14;font-weight:800}
+.rs .rsfl i{font-style:normal;font-size:1.25vw;color:var(--mut);line-height:1.4}
+
+/* 8b · what changed this year */
+.rs .rsai{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  gap:1.8vw;margin-top:2vh;width:66vw}
+.rs .rsaib{display:grid;gap:.9vh;opacity:0;animation:fUp .6s both}
+.rs .rsaib:nth-child(1){animation-delay:.4s}
+.rs .rsaib.lit{animation-delay:1.5s}
+.rs .rsaib span{font-size:1.5vw;color:var(--mut);text-align:center}
+.rs .rsaib.lit span{color:var(--ink);font-weight:700}
+.rs .rsaib i{display:block;height:1.1vh;border-radius:.55vh;background:#1C2B4C;
+  transform:scaleX(0);animation:growX .55s .6s both}
+.rs .rsaib.lit i{height:2vh;border-radius:1vh;
+  background:linear-gradient(90deg,var(--peri),var(--cy));
+  animation-delay:1.7s;box-shadow:0 0 2.4vh rgba(0,229,255,.4)}
+.rs .rsaip{position:relative;display:grid;place-items:center;
+  width:7.2vw;height:7.2vw;border-radius:50%;background:#0E1930;
+  border:2px solid var(--cy);opacity:0;animation:fUp .55s 1.15s both}
+.rs .rsaid{position:absolute;inset:0;border-radius:50%;
+  border:2px solid var(--cy);opacity:.5;animation:rsPing 2.6s 1.6s infinite}
+.rs .rsail{font-size:2vw;font-weight:800;color:var(--cy);letter-spacing:.06em}
+
+/* 12d2 · the fact find order, corrected */
+.rs .rsflow{position:relative;display:grid;
+  grid-template-columns:repeat(5,1fr);gap:1.1vw;width:76vw;margin-top:2.2vh}
+.rs .rsfarr{position:absolute;left:0;right:0;top:3.1vh;height:2px;
+  background:var(--line);transform:scaleX(0);transform-origin:left;
+  animation:growX 1.5s .45s both}
+.rs .rsfstep{position:relative;display:grid;justify-items:center;gap:.7vh;
+  text-align:center;opacity:0;animation:fUp .55s calc(.6s + var(--i)*.2s) both}
+.rs .rsfnum{display:grid;place-items:center;width:4.4vh;height:4.4vh;
+  border-radius:50%;background:#0E1930;border:2px solid var(--line);
+  font-weight:800;font-size:1.4vw;color:var(--mut);position:relative;z-index:1}
+.rs .rsfstep.lit .rsfnum{border-color:var(--cy);color:#07131F;background:var(--cy);
+  box-shadow:0 0 2.6vh rgba(0,229,255,.5)}
+.rs .rsfstep b{font-size:1.45vw;font-weight:800}
+.rs .rsfstep.lit b{color:var(--cy)}
+.rs .rsfstep i{font-style:normal;font-size:1.1vw;color:var(--mut);line-height:1.35}
+.rs .rsfwas{display:grid;gap:.6vh;margin-top:2.6vh;justify-items:center;
+  opacity:0;animation:fUp .6s 2.1s both}
+.rs .rsfwas s{font-size:1.25vw;color:var(--dim)}
+.rs .rsfwas em{font-style:normal;font-size:1.35vw;font-weight:800;color:var(--cy)}
+
+/* 12f · paper, to a full recommendation */
+.rs .rspaper{display:grid;grid-template-columns:auto auto auto;gap:2.4vw;
+  align-items:center;justify-content:center;margin-top:1.6vh}
+.rs .rspap{display:grid;gap:1.6vh;width:16vw;padding:4vh 1.6vw;border-radius:.6vh;
+  background:#0C1527;border:1px dashed #27374F;opacity:0;
+  animation:fUp .6s .4s both;filter:grayscale(1)}
+.rs .rspap span{height:.8vh;border-radius:.4vh;background:#223150}
+.rs .rspap span:nth-child(2){width:78%}
+.rs .rspap span:nth-child(4){width:60%}
+.rs .rspap em{font-style:normal;font-size:1.1vw;color:var(--dim);margin-top:.6vh}
+.rs .rsfarr2{position:relative;width:5vw;height:.55vh;border-radius:.3vh;
+  background:linear-gradient(90deg,#27374F,var(--cy));
+  transform:scaleX(0);transform-origin:left;animation:growX .6s 1.05s both}
+.rs .rsfarr2::after{content:"";position:absolute;right:-.2vw;top:50%;
+  width:1.3vh;height:1.3vh;border-top:.35vh solid var(--cy);
+  border-right:.35vh solid var(--cy);transform:translateY(-50%) rotate(45deg)}
+.rs .rsshot.rspapn{width:15vw;max-height:40vh;animation-delay:1.3s}
+.rs .rsshot.rspapn img{object-fit:cover;object-position:top}
+
+/* 12g · market conduct */
+.rs .rsclx{display:grid;gap:.72vh;width:76vw;margin-top:1.4vh}
+.rs .rsclz{display:grid;grid-template-columns:5.4vw 1fr 1fr;align-items:baseline;
+  gap:1.2vw;padding:.72vh 1vw;border-radius:.5vh;background:#0C1527;
+  border-left:3px solid var(--cy);opacity:0;
+  animation:fRt .5s calc(.45s + var(--i)*.15s) both}
+.rs .rsclz b{font-size:1.2vw;color:var(--cy);font-weight:800}
+.rs .rsclz span{font-size:1.28vw;font-weight:700}
+.rs .rsclz i{font-style:normal;font-size:1.15vw;color:var(--mut)}
+
+/* 12h · fraud, caught at the fact find */
+.rs .rsfr{display:grid;grid-template-columns:auto auto;gap:3vw;
+  align-items:center;justify-content:center;margin-top:1.8vh}
+.rs .rsfrd{position:relative;width:27vw;padding:2.6vh 1.6vw;border-radius:.7vh;
+  background:#0E1930;border:1px solid var(--line);display:grid;gap:1.3vh;
+  overflow:hidden;opacity:0;animation:fUp .6s .35s both}
+.rs .rsfrd .rsdl{animation-delay:.7s}
+.rs .rsscan{position:absolute;left:0;right:0;height:26%;
+  background:linear-gradient(180deg,transparent,rgba(0,229,255,.22),transparent);
+  animation:rsScan 2.1s 1s 2 ease-in-out}
+.rs .rsflg{position:absolute;right:1vw;width:1.5vh;height:1.5vh;border-radius:50%;
+  background:#D9534F;box-shadow:0 0 1.6vh rgba(217,83,79,.6);
+  top:calc(2.8vh + var(--i)*2.9vh);transform:scale(0);
+  animation:numPop .4s calc(2.4s + var(--i)*.26s) both}
+.rs .rsfrl{display:grid;gap:.8vh;max-width:26vw;opacity:0;animation:fUp .6s 2.9s both}
+.rs .rsfrl b{font-size:2.2vw;font-weight:800}
+.rs .rsfrl i{font-style:normal;font-size:1.25vw;color:var(--mut)}
+@keyframes rsScan{from{top:-26%}to{top:100%}}
+
+/* 12i · the journey */
+.rs .rsjour{position:relative;width:46vh;height:46vh;margin-top:.4vh;
+  display:grid;place-items:center}
+.rs .rsjr{position:absolute;inset:6vh;border-radius:50%;border:2px dashed #243655}
+.rs .rsjrun{position:absolute;width:1.9vh;height:1.9vh;border-radius:50%;
+  background:var(--cy);box-shadow:0 0 2.4vh rgba(0,229,255,.7);
+  offset-path:circle(17vh at 50% 50%);animation:rsRun 9s 1s linear infinite}
+.rs .rsjev{position:absolute;left:50%;top:50%;width:17vw;
+  display:grid;justify-items:center;gap:.2vh;text-align:center;opacity:0;
+  transform:translate(-50%,-50%) rotate(var(--a)) translateY(-20vh)
+            rotate(calc(-1*var(--a)));
+  animation:rsJev .5s calc(.5s + var(--i)*.17s) both}
+@keyframes rsJev{to{opacity:1}}
+.rs .rsjd{width:1.5vh;height:1.5vh;border-radius:50%;background:var(--peri);
+  box-shadow:0 0 1.4vh rgba(124,140,248,.6);margin-bottom:.3vh}
+.rs .rsjev b{font-size:1.25vw;font-weight:800;white-space:nowrap}
+.rs .rsjev i{font-style:normal;font-size:1.02vw;color:var(--mut);line-height:1.25}
+.rs .rsjc{display:grid;justify-items:center;gap:.3vh;opacity:0;
+  animation:fUp .6s 1.7s both}
+.rs .rsjc b{font-size:1.9vw;font-weight:800}
+.rs .rsjc i{font-style:normal;font-size:1.15vw;color:var(--cy)}
+@keyframes rsRun{to{offset-distance:100%}}
+
+/* 12k · equipped */
+.rs .rsequip{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6vw;
+  width:70vw;margin-top:2vh}
+.rs .rseq{display:grid;gap:.9vh;padding:2.4vh 1.5vw;border-radius:.7vh;
+  background:#0E1930;border:1px solid var(--line);border-top:3px solid var(--cy);
+  opacity:0;animation:rsTile .6s calc(.5s + var(--i)*.22s) both}
+.rs .rseq b{font-size:1.8vw;font-weight:800}
+.rs .rseq i{font-style:normal;font-size:1.15vw;color:var(--mut);line-height:1.4}
+
+/* 16c2 · the wall outside */
+.rs .rsout{position:relative;display:grid;justify-items:center;margin-top:1.2vh}
+.rs .rsshot.rsoutw{width:46vw;border-width:4px}
+.rs .rsoutp{position:absolute;bottom:-1vh;left:50%;transform:translateX(-50%);
+  display:flex;gap:3.4vw}
+.rs .rsoutp svg{width:4.4vh;height:auto;opacity:0;
+  animation:fUp .6s calc(1.2s + var(--i)*.22s) both}
+
+/* 17a · the commitment */
+.rs .rscom{display:grid;justify-items:center;gap:1.6vh;max-width:68vw}
+.rs .rscoml{font-size:2.1vw;line-height:1.3;text-align:center;font-weight:600;
+  opacity:0;animation:fUp .7s 1.1s both}
+.rs .rscoml b{color:var(--cy);font-weight:800}
+.rs .rscom .rsfoot b{color:var(--ink);font-weight:800}
+
+/* small shared bits */
+.rs .rstiles.sm3{margin-top:1.6vh;gap:1.2vw}
+.rs .rssteps.three{grid-template-columns:repeat(3,auto)}
 """
 
 
