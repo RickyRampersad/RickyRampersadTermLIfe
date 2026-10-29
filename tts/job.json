@@ -3,31 +3,14 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "rise": [
-   "This branch took a hit.",
-   "People left. The work didn't.",
-   "Nothing here fell over.",
-   "The month it happened, we closed two hundred and four requests. This month, two hundred and forty.",
-   "So before Friday, look at who's still standing.",
-   "Twenty-one agents and managers. Five more behind them.",
-   "Between us, two hundred and twenty-one years of this work.",
-   "Nine of us have been at it more than ten years. Three joined in the last three.",
-   "Put us all on one line and it runs from nineteen ninety-three to this year.",
-   "And while all of that was happening, we rebuilt how this branch runs.",
-   "Eighteen of the things you use every day went live in the last ninety days.",
-   "One sign-in now. Fifty tools behind it.",
-   "The system sets your day before you're even up.",
-   "The wall shows the score, and everybody sees the same numbers.",
-   "In the last twelve months, this team closed two thousand four hundred and ninety-five requests.",
-   "Three thousand six hundred papers went through the Log Book. Nearly three quarters reached Guardian inside one working day.",
-   "And since the digital fact find went live, not one of those cases has lapsed.",
-   "FY27 is thirty days old, and every goal plan is in.",
-   "The cracks are still there. We didn't hide them. They're part of the shield now.",
-   "We're not going back to what this branch was. We're going somewhere better.",
-   "Friday. Twelve noon. Ninety minutes.",
-   "Seventy-five of those minutes belong to you, not to me.",
-   "Three questions are already waiting for you. Answer one tonight.",
-   "We rise together."
+  "film18b": [
+   "Dashboards everywhere. The production wall runs twenty-four seven: your week, your month, your year, picked up for production, on the screen in the branch and on your phone. Nobody here waits for a month-end report to know where they stand."
+  ],
+  "film20b": [
+   "And none of this is a mock-up. These are the screens. The client's draft on fact find three sixty. Your manager's sign-off. The client's approval, from their own inbox, with their rating of you. The reminders the system sends when a fact find is started and never sent, or never closed. The Log Book in your hand, and the transmittal it builds. The branch app, every tool behind one sign-in. Built here, in Chaguanas, for this branch."
+  ],
+  "film25b": [
+   "And after the sale, the system keeps serving. The policy is delivered and signed for on the Delivery Book, and the client gets an e-mail the same day, with five stars to rate you. Your clients' premiums are watched for you: at forty-five, sixty, seventy-five and ninety days a letter goes, checked by a person, sent at ten. A review every six months and every birthday month. A question answered inside the turnaround. Happy clients rate their agents, and the branch sees it."
   ]
  }
 }
