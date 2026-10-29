@@ -63,7 +63,8 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     ok('what is on the list is not repeated under Next up', /Also overdue or due/.test(await page.textContent('#main')) && (await page.$$('#main a[href="https://sf.example/00T9"]')).length === 1 && /Statement request/.test(await page.textContent('#main')));
     const bars = await page.$$eval('.bb', es => es.map(e => e.getBoundingClientRect().height));
     ok('five bars, grown to their numbers, the tallest the best day', bars.length === 5 && bars[1] === Math.max(...bars) && bars[1] > bars[3] && bars[3] > bars[0] && bars[0] > bars[2] && bars[4] > 0, bars.map(Math.round).join(','));
-    ok('one button to the full day page', /Open my day page/.test(await page.textContent('.foot')) && (await page.getAttribute('.foot a', 'href')).includes('f=plan'));
+    // One screen since 29 Oct 2026: no button to the white page, and nothing sends anyone there.
+    ok('no button to the white page: this is the one screen', !(await page.$('.foot')) && !/slower Google page|Open my day page/.test(await page.textContent('#main')));
     const wide = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     ok('nothing off the side', wide <= 0, String(wide));
     if (OUT) await page.screenshot({ path: path.join(OUT, 'workday-' + vp.n + '.png'), fullPage: true });
