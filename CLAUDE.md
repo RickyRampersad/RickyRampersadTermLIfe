@@ -7564,6 +7564,110 @@ The figures guard now **tolerates a cut scene** instead of crashing on it, and
 prints which ones it did not check, so cutting a line is visible rather than
 silent. It still fails on a line that is in the cut and carries a stale number.
 
+### People, not dots — and three things that may not be counted — 29 October 2026
+
+Asked for in these words: *"can't we have a more impactful number with figurines
+of men and women and drop off a couple and rise to the top with those who's
+standing? Make much more, add a lot more motion and graphics to make an
+impact."* Then, the same afternoon: *"in the timeline some retired, some
+resigned, 2 was terminated and some vested, so highlight in branch as ours we
+only had 3 terminations, Anasha and Aiden, this will make an impact."*
+
+**40 scenes, 5:09.** The opening is now one story told across four beats: a cold
+scattered crowd, three of them sink away, the rest rise and warm into ordered
+rows, and the figure lands beside them.
+
+#### Sex comes off the record, never off a first name
+
+`ROSTER` carries a fourth field and `SUPPORT` a second, read from each person's
+own Salesforce Contact — `Salutation`, and `Gender__c` where it is filled —
+pulled on 29 October 2026. **Do not guess it from a name.** A wrong guess
+misgenders a colleague on a film the whole branch sits down and watches, and a
+name is not evidence. `MEN` and `WOMEN` are derived from those fields like every
+other figure here, so they cannot drift from the roster: **16 men and 10 women**,
+being 15 and 6 among the agents and managers and four women and one man on the
+support team.
+
+`person()` draws two silhouettes on one 24×27 canvas so a mixed row still lines
+up. The woman is **hair framing the head and falling either side**, with
+slightly narrower shoulders — not the toilet-door dress, which reads as dated
+and is unrecognisable at the size these actually render. Hair is the only
+difference that survives at twenty pixels, which is why it carries it.
+
+#### The crowd is not a count, and must never become one
+
+The house rule is that nobody who leaves is characterised **or counted**, and
+this file sits at a public, forwardable URL. So the `left` scene is a *scatter*,
+not a row: 45 figures with jitter wider than the column pitch, staggered rows,
+and scale and opacity by depth. There is no caption, no number on screen and no
+number in the line. **Three** sink away — his own "a couple", a visual device,
+not the branch's arithmetic. **Do not make it twelve.**
+
+The first cut jittered by a seventh of the pitch and rendered as a tidy grid of
+34 — which is to say, as a number. If the eye can resolve a count out of it, it
+is wrong.
+
+#### The names he asked for are not in the film
+
+He asked for two people to be named as terminated. They are not in it and must
+not be added. Naming a person as terminated at a public URL is the single most
+exposing line that could go on one, and it is the exact harm the no-naming rule
+exists to prevent. The count makes his point and names nobody.
+
+**The figure is the branch's own, on his word**, asked and answered the same day
+(he chose "say three, on your word" over three alternatives). It is labelled on
+screen as the branch's own record, because the system does not support it:
+Salesforce's `Employment_Status__c` gives **four** Terminated under the two
+current units — 2012, 2015, 2018 and 2019 — and does not carry the September
+2026 case at all; and unit membership today is not thirty-two years of branch
+history, since the old units are gone. So the screen says whose record it is
+rather than passing it off as Salesforce's. If that number is ever changed it is
+one constant and one re-voiced line.
+
+The `outcome` scene puts it beside the ordinary outcomes — retired, vested,
+resigned — which is what reframes September as thirty-two years of branch life.
+Those are **his own four words**, and the first cut softened "resigned" to
+"moved on", which is a euphemism sitting among three HR terms: the parallel is
+what makes the row read as ordinary branch life rather than as a verdict.
+Those three carry no figures and no counts: there is no reliable split behind
+them (`Not Active` is a catch-all over twenty people), and a silhouette on the
+terminated tile would invite the eye to read a sex or a face onto three real
+people.
+
+#### Four traps, three of them the same trap
+
+- **`fIn` ends on `transform: none`**, so it wipes the `translateX(-50%)` that
+  places an element, and the rise's ground glow slid out to the right as a grey
+  smear. **Third time this has cost a shot** — the journey ring and the AI badge
+  were the first two. Anything placed by a transform gets a keyframe that moves
+  **opacity alone**; `rsFade` is that keyframe.
+- **`numPop` never touches opacity** — it is `scale(1)` → `1.07` → `scale(1)`,
+  so anything set `opacity: 0` and animated with it stays invisible for ever.
+  An element starting at `scale(0)` is fine, because numPop's own 0% frame
+  restores it.
+- **A `::after` with `inset: 0` and a gradient is not a light sweep**, it is a
+  slab of painted ground beside the subject, and it reads as a rendering fault.
+  A sweep lights the **subject**: here a brightness pulse on the figures
+  themselves, delayed by column.
+- **`.small` is the shell's**, and the class-collision guard caught it — the
+  fourth time that guard has earned its keep. It still does **not** cover a
+  collision with this film's own sheet, so grep the film's CSS before naming a
+  class, and never fix a collision with a blanket `sed` rename.
+
+#### Two children of `.inner` is a 165px hole
+
+`.rs .inner` is a grid with `gap: 0` and `place-items: center`, so two children
+become two **stretched** rows and each centres in its own half. The headline and
+the wave sat 165px apart for that reason alone. One child — the wave inside the
+`.rscap` — and `.rscap`'s own 1.6vh gap is the whole of it.
+
+#### The page's running time is guarded now
+
+The page states the film's length twice, and it goes stale every time a scene is
+added. That is the same class of fault as a stale headcount, so the builder
+checks it the same way rather than leaving it to memory: the stated `m:ss` has
+to match `sum(SECS)`, and a mismatch names the right value.
+
 ### Re-cutting it
 
 Edit `tools/film/rise-lines.json`, push a `tts/job.json` to `tts-run` (**check
@@ -7591,12 +7695,23 @@ one pass, which is how the 29 October cues were made.
 
 The music is the branch's own theme, so the page carries no licence credit.
 `capbg` in films.json is `070F26`, so the burned-in caption strip is the film's
-own navy and not donthaveanagent's. Voice: Andrew Expressive, all thirty-nine
+own navy and not donthaveanagent's. Voice: Andrew Expressive, all forty
 clips checked for their language **and their words** (`wordcheck.py` in the
 session scratchpad; see the strict word check above). **Re-voice only the lines
 that changed**, under a key of their own (`risefix`, `risefix2`), and copy each
 clip onto its real index before `importvox.py` runs: the runner numbers a job's
-lines from 01, so a six-line fix lands as 01–06 and has to be mapped back. The poster is cut from the finished MP4 at 2.5 seconds before the end —
+lines from 01, so a six-line fix lands as 01–06 and has to be mapped back.
+
+**Inserting a scene means renumbering the vox**, because `importvox.py` reads a
+whole runner directory and numbers the timing from it. Stage a copy of the last
+full run (`vox39` etc. in the session scratchpad), shift every clip at or after
+the insertion point up by one **newest first** so nothing is overwritten on the
+way past, drop the new clip in at its real index, and run `importvox.py` on the
+staged directory. `tools/film/vorise` itself has to be shifted the same way, or
+the mixer re-encodes the old voice under the new timing and the caption gives it
+away. Check the printed durations against the previous list: every unchanged
+scene should come back identical, which is how you know the mapping was right.
+The poster is cut from the finished MP4 at 2.5 seconds before the end —
 the mended shield on the close, which is the one frame that says what the film
 is for.
 
