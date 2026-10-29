@@ -1,7 +1,47 @@
 {
- "tts/out/riseout2/01.mp3": [
+ "tts/out/risefix3/01.mp3": [
   "en",
-  0.994,
-  "People retire. People vest. Some resign. In 32 years, this branch has had three terminations."
+  0.995,
+  "19 agents, two managers, and five behind them, three in support, the branch manager's assistant and our driver. Not one of them has left."
+ ],
+ "tts/out/risefix3/02.mp3": [
+  "en",
+  0.995,
+  "87 agents have come through this branch in the 16 years the record covers. 51 resigned for a tired out of it, three left vested, two transferred inside Guardian, and in all that time two were terminated."
+ ],
+ "tts/out/risefix3/03.mp3": [
+  "en",
+  0.998,
+  "When this company launched its first digital application with a digital signature on it, this branch led the team that built it. So it didn't go digital this year. Our first digital submission was filed in 2011."
+ ],
+ "tts/out/risefix3/04.mp3": [
+  "en",
+  0.992,
+  "We don't do AI for the sake of it. We use it to make what we already have far more robust."
+ ],
+ "tts/out/risefix3/05.mp3": [
+  "en",
+  0.995,
+  "144 FACT finds this year 63 already through a manager and one in five came back for more work. The training runs every week and agents who started this on paper are turning out full recommendations now."
+ ],
+ "tts/out/risefix3/06.mp3": [
+  "en",
+  0.999,
+  "Here's the part nobody talks about. All of this protects you. Market conduct, clause by clause, and our fact-find answers everyone. Fraud is rising across this industry. Early detection is the job of a proper fact-find and the surveys told us why people push back."
+ ],
+ "tts/out/risefix3/07.mp3": [
+  "en",
+  0.995,
+  "Production, goals, pinnings, the transmittal, live on the walls in here all day, and on the wall outside where everybody walks past. What's done? What's late? And whose name is on it?"
+ ],
+ "tts/out/risefix3/08.mp3": [
+  "en",
+  0.962,
+  "And there's a way out for..."
+ ],
+ "tts/out/risefix3/09.mp3": [
+  "en",
+  0.993,
+  "Friday, 12 noon, 90 minutes. 75 of them belong to you, not to me."
  ]
 }
