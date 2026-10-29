@@ -333,29 +333,18 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
 </head>
 <body>
 
-<!-- ======================= THE DOOR: branch access code ======================= -->
-<!-- The same gate as staff.html and agent.html, using the same codes, so the
-     app is reached the way every other part of the site is. The personal
-     sign-in behind it is what identifies the person — a shared code cannot
-     tell you who walked in, and the register depends on knowing. -->
-<div id="door">
-  <div class="gate-card">
-    <div class="mark"><img src="/logo-mark.png" alt=""></div>
-    <h1>Management Meetings</h1>
-    <p class="sub">Ricky Rampersad Branch<br>Enter your branch access code.</p>
-    <div class="field">
-      <label for="dr-code">Access code</label>
-      <input id="dr-code" type="password" autocomplete="off" placeholder="ACCESS CODE"
-             style="text-align:center;letter-spacing:2px;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:700"/>
-    </div>
-    <button class="btn" id="dr-go">Enter</button>
-    <div class="msg" id="dr-msg"></div>
-    <p class="hint">The same code as the Staff and Agent portals. You will sign in
-      with your own email and PIN on the next screen — that is what puts you on
-      the attendance register.</p>
-    <div class="switch"><a href="https://rickyrampersadbranch.com/staff.html">← Back to the portal</a></div>
-  </div>
-</div>
+<!-- THE SHARED DOOR IS GONE, 28 October 2026, at the branch manager's word:
+     "only the agent number[,] guest can come in and you can put the guest as
+     0000[,] this can be displayed as executives are looking in the what app
+     group."
+
+     It asked for a code that was sitting in this file's own source, so it
+     protected nothing, and it stood in front of the one gate that does
+     identify a person. On a Friday at 11:30 it was thirty people meeting an
+     unexplained box while the register marked them absent — which is exactly
+     what happened to the branch manager himself the night before.
+
+     The agent number is the sign-in now, and 0000 looks in. -->
 
 <!-- ============================ SIGN IN ============================ -->
 <div id="gate" style="display:none">
@@ -370,15 +359,12 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
         <label for="li-email">Agent number</label>
         <input id="li-email" type="text" inputmode="numeric" autocomplete="username" placeholder="Your agent number"/>
       </div>
-      <div class="field">
-        <label for="li-pin">Password</label>
-        <input id="li-pin" type="password" autocomplete="current-password" placeholder="The same password as the portals"/>
-      </div>
       <button class="btn" id="li-go">Sign in</button>
       <div class="msg" id="li-msg"></div>
-      <div class="switch">Your agent number and password, the same ones the agent and staff portals use.<br>
-        No agent number? Use your work e-mail in the first box.<br>
-        Not on the skill bank yet? <a id="to-enrol">Set up a PIN</a></div>
+      <div class="switch">Your agent number is your sign-in &mdash; the one on your card.<br>
+        No agent number? Use your work e-mail in the box instead.<br>
+        Looking in rather than attending? Sign in as <b>0000</b>.</div>
+      <input id="li-pin" type="hidden" value=""/>
     </div>
 
     <!-- first time -->
@@ -488,13 +474,6 @@ var CONFIG = {
 };
 
 var TOKEN_KEY = "rrb-meetings-token";
-
-/* The branch access codes, the same ones the Staff and Agent portals use.
-   This is the front door only — it says you belong to the branch, not who
-   you are. Attendance needs a name, so the personal sign-in behind it is
-   what actually identifies anyone. */
-var DOOR_KEY = "rrb-mm-door";
-var DOOR_CODES = ["STAFF2026", "AGENT2026"];
 
 var S = {
   token: null,
@@ -613,22 +592,7 @@ function guard(res) {
 
 /* ---------------- sign in ---------------- */
 
-function doorOpen() {
-  try { return sessionStorage.getItem(DOOR_KEY) === "1"; } catch (e) { return false; }
-}
-
-function openDoor() {
-  var v = $("dr-code").value.trim().toUpperCase();
-  if (DOOR_CODES.indexOf(v) === -1) {
-    return say("dr-msg", "That code is not right. It is the same one as the Staff or Agent portal.");
-  }
-  try { sessionStorage.setItem(DOOR_KEY, "1"); } catch (e) { /* private mode */ }
-  $("door").style.display = "none";
-  resume();
-}
-
 function showGate(which) {
-  $("door").style.display = "none";
   $("gate").style.display = "flex";
   $("app").style.display = "none";
   $("gate-login").style.display = which === "enrol" ? "none" : "block";
@@ -657,14 +621,17 @@ function onSignedIn(res) {
 
 function doLogin() {
   var email = $("li-email").value.trim();
-  var pin = $("li-pin").value.trim();
-  if (!email || !pin) return say("li-msg", "Enter your agent number and password.");
+  var pin = $("li-pin").value.trim();          // hidden now; a password is still sent if one is there
+  if (!email) return say("li-msg", "Enter your agent number, or 0000 to look in as a guest.");
   $("li-go").disabled = true;
   say("li-msg", "");
-  // 'who' takes the agent number or an e-mail; the older keys go with
-  // it so a backend that has not been pasted yet still answers, and
-  // nobody is locked out on the morning of a meeting.
-  apiPost({ action: "login", who: email, password: pin, email: email, code: pin, pin: pin })
+  // 'who' takes the agent number, 0000, or an e-mail. The password keys go
+  // with it only when there is one, so a backend pasted before 28 October
+  // still answers for anyone who has a password, and nobody is locked out on
+  // the morning of a meeting.
+  apiPost(pin
+    ? { action: "login", who: email, password: pin, email: email, code: pin, pin: pin }
+    : { action: "login", who: email, email: email })
     .then(function (res) {
       $("li-go").disabled = false;
       if (res.needsEnrol) {
@@ -672,7 +639,30 @@ function doLogin() {
         $("en-email").value = email;
         return say("en-msg", "There is no password on your record yet — set a PIN here, or ask the branch manager to pull the roster from the Agent Skill Bank.", "info");
       }
-      if (!res.ok) return say("li-msg", res.error || "That did not work.");
+      if (!res.ok) {
+        //  A BACKEND PASTED BEFORE 28 OCTOBER STILL WANTS A PASSWORD, and
+        //  this page no longer sends one, so every sign-in would be refused
+        //  between publishing the page and publishing the script. Rather
+        //  than lock the branch out in that window, the password box comes
+        //  back the first time a number alone is turned away, and the next
+        //  try sends it. It disappears again the moment the script is
+        //  published, because the number alone starts working.
+        if (!pin) {
+          $("li-pin").type = "password";
+          $("li-pin").placeholder = "Your portal password";
+          var lab = document.createElement("div");
+          lab.className = "field";
+          lab.id = "li-pin-wrap";
+          if (!$("li-pin-wrap")) {
+            $("li-pin").parentNode.insertBefore(lab, $("li-pin"));
+            lab.appendChild($("li-pin"));
+          }
+          $("li-pin").focus();
+          return say("li-msg", "The branch system has not been updated yet, so it still wants a password. "
+            + "Use the same one as the agent and staff portals.");
+        }
+        return say("li-msg", res.error || "That did not work.");
+      }
       onSignedIn(res);
     })
     .catch(function () {
@@ -3473,25 +3463,7 @@ function setupNotice() {
 function boot() {
   $("yr").textContent = new Date().getFullYear();
 
-  // The door still applies when the backend is not connected — the setup
-  // notice describes the branch's own system and is not for passers-by.
-  if (!CONFIG.API_URL) {
-    if (!doorOpen()) {
-      $("door").style.display = "flex";
-      $("dr-go").onclick = function () {
-        var v = $("dr-code").value.trim().toUpperCase();
-        if (DOOR_CODES.indexOf(v) === -1) {
-          return say("dr-msg", "That code is not right. It is the same one as the Staff or Agent portal.");
-        }
-        try { sessionStorage.setItem(DOOR_KEY, "1"); } catch (e) { /* private mode */ }
-        setupNotice();
-      };
-      $("dr-code").addEventListener("keydown", function (e) { if (e.key === "Enter") $("dr-go").click(); });
-      $("dr-code").focus();
-      return;
-    }
-    return setupNotice();
-  }
+  if (!CONFIG.API_URL) return setupNotice();
 
   $("li-go").onclick = doLogin;
   $("en-go").onclick = doEnrol;
@@ -3517,15 +3489,6 @@ function boot() {
     if (t) apiPost({ action: "signOut", token: t }).catch(function () { /* already gone */ });
   };
 
-  $("dr-go").onclick = openDoor;
-  $("dr-code").addEventListener("keydown", function (e) { if (e.key === "Enter") openDoor(); });
-
-  if (!doorOpen()) {
-    $("door").style.display = "flex";
-    $("dr-code").focus();
-    return;
-  }
-  $("door").style.display = "none";
   resume();
 }
 

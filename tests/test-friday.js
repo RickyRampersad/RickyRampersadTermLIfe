@@ -235,6 +235,34 @@ const noCell = Object.assign({}, m); noCell['Late After (min)'] = '';
 ok('an empty cell falls back to the branch default, an explicit 0 does not',
   env.statusForNow_(noCell, new Date(start.getTime() + 60000)).status === 'late');
 
+/*  THE CELL IS NOT A STRING. Google Sheets keeps a time-only cell as a Date
+ *  on its own 1899 epoch, so the live sheet hands back
+ *  "Sat Dec 30 1899 12:00:00" where this harness had been handing back
+ *  "12:00 PM". Every check above would pass on a build where the register
+ *  read 1899 and marked the whole branch a century late, so the same
+ *  arithmetic is run again against what Sheets really stores. */
+const sheetsTime = Object.assign({}, m);
+sheetsTime['Start'] = new Date(1899, 11, 30, 12, 0, 0);
+const sStart = env.atTime_(sheetsTime['Date'], sheetsTime['Start']);
+const mStart = env.asDate_(m['Date']);
+ok('a time-only cell is lifted onto the meeting\u2019s own date, not 1899',
+  sStart && sStart.getFullYear() === mStart.getFullYear() &&
+  sStart.getMonth() === mStart.getMonth() && sStart.getDate() === mStart.getDate(),
+  sStart && sStart.toString());
+ok('and it keeps the hour and minute off the cell',
+  sStart.getHours() === 12 && sStart.getMinutes() === 0, sStart && sStart.toString());
+const sAt = (ms) => env.statusForNow_(sheetsTime, new Date(sStart.getTime() + ms));
+ok('the register is right on a real Sheets time: on the minute is present',
+  sAt(0).status === 'present', JSON.stringify(sAt(0)));
+ok('and thirty seconds after is late, by one',
+  sAt(30000).status === 'late' && sAt(30000).late === 1, JSON.stringify(sAt(30000)));
+
+/*  And the ping, which is the one thing a person checks a deployment with,
+ *  prints the time rather than the 1899 stamp. */
+const pingStart = env.fmtTime_(env.atTime_(sheetsTime['Date'], sheetsTime['Start']));
+ok('ping prints the start as a time, never the 1899 stamp',
+  pingStart.indexOf('1899') === -1 && /\d/.test(pingStart), pingStart);
+
 ok('nobody can excuse themselves any more',
   env.apiExcuse_({ token: tOne, meetingId: MID, reason: 'Client appointment' }).ok === false);
 ok('and it says what to do instead',
@@ -273,6 +301,56 @@ const flat = JSON.stringify(png);
  '11111111', '22222222', '99999999', env.FRIDAY.TITLE, 'What is not working']
   .forEach(secret => ok('ping never leaks ' + JSON.stringify(secret),
     flat.indexOf(secret) === -1, flat.slice(0, 300)));
+
+/* ── the sign-in, 28 October 2026 ──────────────────────────────────────────
+   The branch manager published the way in: the agent number alone, and 0000
+   for a visitor, because a room that cannot get through the door at 11:30 is
+   a register full of absences. These hold it to that, and to the one thing it
+   must still not do — let a guest into the roll, which would mark executives
+   looking in as absent branch members and drop the month's attendance. */
+console.log('\nTHE SIGN-IN');
+
+const liA = env.apiLogin_({ who: 'A00003' });
+ok('the agent number alone signs you in', liA.ok === true && !!liA.token, JSON.stringify(liA));
+ok('and it is that agent', liA.ok && liA.user && liA.user.name === 'Agent One',
+  liA.user && liA.user.name);
+
+const liPw = env.apiLogin_({ who: 'A00003', password: '33333333' });
+ok('a password still works for anyone who types one', liPw.ok === true, JSON.stringify(liPw));
+
+const liBad = env.apiLogin_({ who: 'A00003', password: 'nope' });
+ok('but a wrong password is still refused', liBad.ok === false, JSON.stringify(liBad));
+
+const liUnknown = env.apiLogin_({ who: 'A99999' });
+ok('a number not on the roll is refused', liUnknown.ok === false);
+ok('and is pointed at the guest number', /0000/.test(String(liUnknown.error)), liUnknown.error);
+
+const liOff = (() => {
+  env.appendRow_(env.MEET.TAB_PEOPLE, { 'Agent No': 'A00009', 'Name': 'Gone',
+    'Role': 'agent', 'Active': 'No' });
+  return env.apiLogin_({ who: 'A00009' });
+})();
+ok('an agent whose access is off still cannot sign in', liOff.ok === false, JSON.stringify(liOff));
+
+const g1 = env.apiLogin_({ who: '0000' });
+ok('0000 lets a visitor look in', g1.ok === true && !!g1.token, JSON.stringify(g1));
+ok('and they come in as a guest', g1.ok && g1.user && g1.user.role === 'guest',
+  g1.user && g1.user.role);
+
+const g2 = env.apiLogin_({ who: ' 0000 ' });
+ok('twice over, on the one row', g2.ok === true &&
+  rows('TAB_PEOPLE').filter(r => env.str_(r['Agent No']) === '0000').length === 1);
+
+ok('a guest is never on the roll', env.roster_().every(r =>
+  env.str_(r['Agent No']) !== '0000' && env.low_(r['Role']) !== 'guest'));
+
+/* The one that matters on the day: a visitor can open the live meeting, and
+   cannot open a draft — which the check above them already refuses. */
+const vis = env.readPeople_().filter(p => env.str_(p.agentNo) === '0000')[0];
+const live = rows('TAB_MEETINGS').filter(m => env.str_(m['Ref']) === 'MD-2026-10-30')[0];
+ok('a visitor can open the meeting that is published', env.canOpenMeeting_(vis, live) === true);
+ok('and a draft is still shut to them',
+  env.canOpenMeeting_(vis, Object.assign({}, live, { Status: 'Draft' })) === false);
 
 /* A backend with Meetings.gs and nothing else must still answer. */
 const seed = env.seedFridayMeeting, FRI = env.FRIDAY;

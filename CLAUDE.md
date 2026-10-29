@@ -6752,6 +6752,355 @@ guide you. In your session review notes on the step back in place from all memor
 - **The wall knows the kinds in each hour, and who has the bag (21 Oct 2026, 2026-10-21f).** Ricky: "hour by hour what's being actioned, the task type should be in a colour inside the green, as well who does the bag as well built in". `wallStaff_` now sends each person's `hourKinds` (per hour, the closes with a note by `wallKind_`: new, orphan, retention, claims, other) and `bag` ({who, at, h, cutoff, covering}) from `mailbagRouter_` (the weekly rota, the next one in when the router is out) and `mailbagLeaves_` (12 noon unless `MAILBAG_AT`), papers in a quarter of an hour before. The wall colours each green hour by kind and rings the bag's hour in gold. Tests: `tests/test-wall2.js`.
 - **Sample ratings for the Branch Manager (21 Oct 2026, 2026-10-21g).** Ricky, 1:55pm: "send some samples to see the revised and let me click". `rateSamples(n)` in the editor, or **Send me sample ratings** on his Ratings page (a signed POST `rs=ricky&f=rate&k=…&act=samples` through `replyPost_`, him alone, not `RATE_PAGE_ALSO`; a second press within `RATE.SAMPLE_GAP_MIN` = 2 minutes sends nothing), sends up to `RATE.SAMPLES` = 3 agent rating e-mails in the real format (`rateAgentMail_`, subject `[Sample] …`) to `managerEmails_()` only, each from one of the latest real agent rows (its subject from the timeline's open step, kind, days, closer, the closing note as what was done, and the record's columns), or from `RATE_SAMPLE_MADE` (no client) when there are none; then one e-mail with every sample's five stars, its card and his page. Each sample is a row of its own (Kind and Status `sample`, Email his), so the stars, the thank-you page, a comment and the 1–2 star alert (`[Sample] Low rating …`, with See the whole task) all work. `rateIsSample_`: no Chatter post from `rateClick_` or `ratePost_`, `&out=1` changes nothing, and `rateStats_` (the week, the game's cards and board, the Service Star, his day page, the wall's `svc` and ticker) and `rateRun_`'s cap, cool-down and opt-outs skip it. His page marks sample cards (dashed, Sample), has Hide samples, and never counts them in the week. Agent e-mails only: client mail stays held. Test: `tests/test-rate-samples.js`.
 
+## The meeting sign-in — the agent number is the whole of it
+
+Decided 28 October 2026, in these words: *"only the agent number[,] guest can
+come in and you can put the guest as 0000[,] this can be displayed as
+executives are looking in the what app group."*
+
+**The shared branch code is gone.** `/meetings/` used to ask for `STAFF2026` or
+`AGENT2026` before the personal sign-in. Those codes were sitting in the page's
+own source, so the door protected nothing, and it stood in front of the one
+gate that does identify a person. It is what locked the branch manager out of
+his own meeting the night before, and on a Friday at 11:30 it is thirty people
+meeting an unexplained box while the register marks them absent.
+
+**The number on the card signs you in, and that is the register.** A password
+is still accepted from anybody who types one, so a page left open somewhere
+keeps working, but nothing asks for one and nobody is sent to enrol. Being on
+the roll is what lets you in, and `pullRoster` is what puts you on it.
+
+**`0000` looks in**, as a `guest`. A guest is never on the roll — `roster_()`
+is the denominator the register is measured against, and three executives
+looking in must not be counted as absent branch members and drop the month's
+attendance. The standing visitor opens whatever meeting is published, and a
+guest named against one meeting still gets that one only.
+
+**What this costs, and he took it knowingly:** a number is not a secret, so the
+register says who *said* they were here, not who was. He asked for the number
+to go in the WhatsApp group.
+
+Two traps, both of which make the guest fail silently:
+
+- **`normNo_` strips leading zeros**, so it turns `0000` into nothing and
+  `findPersonByAgentNo_` gives up before it looks. Left that way, every guest
+  sign-in appends another Visitor row and every one of them is still told guest
+  sign-in is not set up. `guestFind_` compares the number exactly.
+- **`readPeople_` drops any row with no e-mail**, so the Visitor row is written
+  and then never found again. It carries `0000@guest.invalid` — the TLD
+  reserved for exactly this, which cannot resolve or be delivered to, so the
+  row can never quietly become a mailbox somebody writes to.
+
+`tests/test-friday.js` covers it (100 checks), and the page is driven in a real
+browser against a mocked backend in the session scratchpad.
+
+## `/blastoff/` — the FY27 rise, and what the film may not say
+
+Asked for on 28 October 2026, the evening before the branch group sees it:
+*"we had about 12 agents who left us... it's our first meeting coming together
+after they have left. We want to rise strong and something that signifies the
+uprise. So even more powerful, more graphs, more charts, more colors, more
+graphics, more motion."*
+
+**One address, one film.** The first cut (the cocoon, 1:06, 28 October) was
+replaced at the same URL the same evening rather than published beside it: the
+link was already out, and two blast-offs is one too many to send a branch.
+`build-blastoff.py` and its lines and timing were deleted with it — two
+builders writing one `blastoff.mp4` is how the wrong cut ships. Git has the
+first cut if it is ever wanted.
+
+### What it may not say, which decided the whole script
+
+**Nobody who left is characterised, and nobody is counted.** The rule on the
+transition letters is that Guardian Life's notice is stated and nothing else:
+no reason, no adjective, no number. This file sits at a **public** URL that
+anybody can forward, so it holds to that harder, not more loosely. The film
+says *"This branch took a hit. People left. The work didn't."* and never
+returns to them. The crack across the shield says the rest.
+
+**No client anything.** Never a client name and never a client count in an
+MP4. So the orphan campaign's own figures — which are client counts — are not
+in it, however good they would look. Every number on screen is about our own
+people, our own year, and Friday's own agenda.
+
+**Four branch papers went in on 29 October, and most of what is in them may
+not be.** The branch manager sent the Three-Year Plan executive summary, the
+Note for the Record of the Branch Progression meeting of 12 October, the
+Production and Manpower Record 2014–2026, and a unit's own three-year plan,
+asking for "the career path and our revised strategic plan". **They are
+confidential and the film is not.** What stayed out, and must stay out of
+anything at a public address:
+
+- the competitor by name, and the person who runs it;
+- the mediation, what was refused there, and the assurances given about
+  re-contracting;
+- anyone who left, by name, rank or number — including the two managers this
+  branch grew who are now gone, which is why the career-path scene shows the
+  **ladder** and not who climbed it;
+- any agent's own quota miss, persistency or stated intent to leave, all of
+  which the unit plan sets out by first name;
+- every dollar figure: the quotas, settled API, production per agent;
+- the quota-attainment ranking (#13 of 14), which is also the one number in
+  those papers that would flatten a room.
+
+What came out of them and **is** in the film is the branch's own quality
+record, which is the part worth saying out loud: the lowest lapse rate of
+every branch, 4.96% against 8.82% for the main branches to 31 August; 67% of
+agents still here after a year against a published 55–60%; 31% at four years
+against about 16%; 67% of the 2023 intake kept to August against 48% across
+the network; the career ladder; and the plan's horizon, 1 October 2026 to
+30 September 2029. If he ever wants the money or the ranking in, the film has
+to move behind the meeting sign-in first — it cannot be done at `/blastoff/`.
+
+**One figure was left alone on purpose.** The Note for the Record says the
+branch manager has 35 years in the business; Salesforce gives his hire date as
+December 1993, which is what the chart draws and what the total is built from.
+Both can be true — the business is not the same as this company — but the film
+states neither, because a spoken 35 beside a drawn 32 is the kind of
+contradiction a room catches in a second.
+
+**No client anything, still.** Never a client name and never a client count in
+an MP4. The orphan campaign opened 347 follow-up tasks in October, which is a
+fine number and reads as a client count, so it is not in the film either.
+
+**What is left is the stronger answer anyway: count who stayed.** The spine of
+the film is the branch's own roster, read out of Salesforce on 28 October 2026
+— the active AGENT contacts of the two units, Ricky_Rampersad and
+Akaash_Kalladeen. **Two came off on 29 October on his word** ("take out javid,
+aleema"), both carrying twenty years, so the headcount, the total and the
+ten-year band all moved with them: **twenty on the chart, 221 years between
+them**, nine at ten years or more, three joined in the last three. Twenty-one
+are active (one has no hire date on file), and the five of the support team
+are on screen beside them, because leaving them out of "who stayed" would be a
+lie by omission: twenty-six still here.
+
+**Every narrated figure is asserted against the roster.** A line is recorded
+once and then lives in an MP4 nobody re-reads, so `build-risefilm.py` spells
+the derived numbers out in words and refuses to write the page if the script
+disagrees with them — which is exactly what caught the three stale lines when
+those two names came out. Change the roster, and the build tells you which
+line to re-voice.
+
+**The bars show FULL years, and say so.** The chart carries the line *"full
+years each · 221 in all"* so anybody who adds them up can reconcile the two.
+Flooring rather than rounding also keeps the bands honest — Randolph is 9.94
+years in, and rounding put a "10" on a bar that the ten-year colour does not
+claim. Anyone under a year reads `<1`, never `0`.
+
+### What the branch's own systems put in it
+
+Six scenes are measurements rather than claims, and each names where it came
+from on screen or in the builder's comment:
+
+- **the rise**: 204 requests closed in September, 240 in October, read off
+  Salesforce over the five support desks with logged e-mails and the birthday
+  flow left out — counted, those are five times the volume and would flatter
+  the record into meaninglessness. October still had two days to run when the
+  film was cut, and the foot says so, because a figure that is going to grow
+  is stronger stated short than rounded up;
+- **the work**: 2,495 requests closed in twelve months, by kind;
+- **the papers**: 3,634 lines through the Log Book and 72% on to Guardian
+  inside one working day, measured off the old book rather than claimed;
+- **since August**: eighteen things live in ninety days, the list being
+  `BUILT` in the builder, and the spoken count is `len(BUILT)` so adding one
+  and forgetting the line fails the build;
+- **the branch on one line**: a dot per person at the year they joined, 1993
+  to now;
+- **the fact find**: not one of those cases lapsed, which is his own line from
+  the FY27 wall.
+
+
+### The palette is doing a job, not decorating — and it is not gold
+
+Gold is out, same evening, in these words: *"Change the entire color to much
+more polished and professional. Hate the gold!!!"* That is the fifth time the
+gold has been turned down (the board films, the group letters, the agent
+introduction, the homepage, this). **Do not reach for it again on anything new
+without being asked for it by name.** `logo-mark.png` stays gold and untouched,
+because the client letters already sent load it.
+
+The film moved to the **midnight blue he chose for the three board films on 15
+October**, which also puts it in one family with the board pages, RR Operations
+and the Log Book films instead of standing alone. The page at `/blastoff/`
+moved with it and carries `orphan-transition/board-mark.svg`, the blue shield,
+not the gold one.
+
+**Then he asked twice for "more color options", so he picks, not me.** There
+are eight, as `PALETTES` in `build-risefilm.py`: *blue* (the board films'),
+*ink* (platinum on near-black, the most restrained), *emerald*, *violet* (the
+purple he liked once), *crimson*, *white* (near-white on midnight, the most
+premium), *rose* and *teal*. `RISE_PAL=<name> python3 build-risefilm.py`
+repaints the whole film; add `RISE_VARIANT=1` to write `film-<name>.html`
+beside it instead of over the real page, which is how the comparison sheet is
+shot — the same three frames in every palette, because a palette judged on
+different pictures is not judged at all. **Those variant files are never
+committed**: they are 516 KB each, they would be served at
+`/blastoff/film-crimson.html`, and one command regenerates any of them.
+
+Each is a repaint of one baseline by exact hex in a single pass, longest
+literal first, so a value a palette maps *to* can never be read back as a value
+to map *from*. Two were rejected on the measurements rather than on taste:
+emerald with a sky-blue second accent collapses for a tritan viewer (ΔE 5.5),
+and an ice-and-steel pair on the ink ground measures ΔE 13.8 in full colour
+vision, under the floor of 15.
+
+"More colours" is still answered with **two accents and a recessive neutral**,
+each carrying a band the narration names, never a hue per person:
+
+| | |
+|---|---|
+| ground `#070F26` | near-black navy, the board films' own |
+| cyan `#00E5FF` | ten years or more (11) |
+| periwinkle `#7C8CF8` | joined in the last three (3) |
+| slate `#5E6B85` | the eight between, recessive |
+| blue `#1D5BC4` → `#2A6DE0` | structure: the shield, the bar gradients |
+| cold `#8295B5` | the hit, scenes 1–3 only |
+
+Run through the dataviz validator against the ground: worst adjacent pair
+**ΔE 19.0 normal vision, 18.3 deutan**, every slot over 3:1. The legend names
+all three, so identity is never colour alone. Two palettes were rejected by the
+validator first — cyan with the corporate blue `#2A6DE0` fails against the
+slate at ΔE 13.9, below the floor where full-colour vision can separate them.
+
+**A sequential ramp was tried before any of this and rejected on meaning, not
+on colour**: it dimmed the newest people in a film about who stayed. The colour
+journey cold → cyan across the film is the emotional arc, and the mend is cyan
+light running through the crack rather than molten gold.
+
+### What the pipeline taught, this time
+
+- **`importvox.py` built captions with no punctuation**, because edge-tts's
+  WordBoundary events carry the bare word. Worse, its own sentence-end test
+  could then never fire, so cues only ever broke at the nine-word ceiling and
+  read as run-ons: *"Twenty-three agents and managers Five more behind them"*.
+  It now takes `--lines <film>-lines.json` and walks the punctuation back on
+  from the line as written, and a sentence over the ceiling is split into
+  near-equal halves rather than chopped, so no cue ends on an orphan word. The
+  backtrack has to treat a hyphen as part of a word, or "Twenty-three" comes
+  back as "three". `--lines` also carries each scene's `extra`, so a re-cut
+  reproduces the timing.
+- **`data-d` is milliseconds and `importvox.py` writes seconds.** The older
+  hand-built timing files are in milliseconds. Mixing them builds an
+  eighteen-scene film 0.1s long, and nothing complains. The unit is now decided
+  out loud in the builder.
+- **`.rscap` was a grid**, so every word of a kinetic headline became its own
+  grid row — eight lines of one word, and in one scene they ran straight
+  through the crop. Words need one block to flow inside.
+- **`.rssh.gold path` matched the check too** and painted it gold on gold, so
+  the one stroke the close is built around was invisible. It takes the casing
+  the mark itself uses: a dark stroke under a white one.
+- The three faults the first cut turned up still stand and are still guarded:
+  the shell is donthaveanagent's and leaks The Knot, coral bars and a WhatsApp
+  button; a scene class the shell already styles wins silently (the builder
+  refuses to write one); and **the mixer crops the bottom 104px away**, so the
+  scene box ends at 616.
+
+### Two traps in the film shell, both of which draw nothing at all
+
+- **`grow` and `grow2` animate `width`.** A rule that starts at
+  `transform: scale(0)` and names one of them is filled `both` against a
+  transform nothing ever changes, so it renders at zero for the whole scene.
+  Three elements were invisible this way — the comparison bars, the timeline
+  rail — and each read as a missing element rather than a broken animation,
+  which is the hard kind of bug to see. `growY` and `growX` animate the
+  transform; use those for anything that grows from a scale.
+- **A flex item shrinks by default.** The comparison column holds a number, a
+  bar and a label, so it overflows on purpose; the bar was the thing that gave
+  way and rendered at zero height. `flex: none`, and size the bar off a length
+  rather than a percentage of a box it is overflowing.
+
+The class-collision guard earned its keep twice more: `.us` and `.mark` are
+both styled by the shell, so a comparison bar and a benchmark marker were
+silently taking the shell's rules. It refuses to write the page and names the
+class.
+
+**`data-sep` on a counter** is new in `render.js` and opt-in, so every film
+built before it is unchanged: with it, a four-figure count reads 2,495 rather
+than 2495, on the markup and on every frame the renderer writes.
+
+### People, the sign-in, and motion everywhere — 29 October 2026
+
+Asked for in these words: *"ok so more motition and beter icons show ppeople
+not dots and at the emd where is the log in!!! to log in with agent number and
+guest a code 000 can you please ad a lot more motion , charts and graphics make
+thing move and a wow"*. 3:13 now, 29 scenes.
+
+**People, not dots.** Everywhere the film counted a person it drew a disc, and
+a disc is a data point rather than a colleague. `person()` draws a head and
+shoulders on a 24×27 canvas with the initial under it; the roster scene is
+twenty-one cyan figures and five periwinkle, and the timeline scene stands them
+on the 1993→2026 line under their names. The bands still carry their meaning in
+colour *and* in the legend, so identity is never colour alone.
+
+**The sign-in is a scene, because the film is what the branch will actually
+watch.** It comes second to last: two cards side by side — **YOU · Agent
+number**, a boxed `A•••••` with a caret blinking in it, "That is the whole
+sign-in. Signing in is the register"; and **A VISITOR**, a `0 0 0 0` keypad
+popping in, "Four zeros. Guests are never on the roll" — then
+`rickyrampersadbranch.com/meetings`. The narration spells the code out
+("zero, zero, zero, zero"): Whisper heard "four zeros" as "40s" on the first
+take, and a spoken code that comes out wrong is worse than no code.
+
+**The motion layer, all of it CSS so render.js can seek it.** A travelling
+sheen on every bar and every card, counters that pop as they land, an eyebrow
+rule that draws itself, and fourteen motes drifting behind every scene. The
+motes are **seeded from the scene's index, never random**: render.js draws each
+frame on its own, so a random field jitters between frames instead of drifting.
+
+**The player's rail knows the scenes now.** `chapters.py` gained
+`blastoff/film.html`, and a scene may name itself with **`data-ch`**, which
+wins over anything read off the picture. That is new and opt-in, so every film
+built before it is unchanged. It was needed here because several scenes carry
+no eyebrow at all — the opening three, the mended shield, the close — and the
+fallback handed the rail its own first words, which on a kinetic headline is a
+dump of fragments and on the roster scene is a row of bare initials.
+
+**The page's figures are guarded too, and the guard has to read the prose.**
+The builder now checks `blastoff/index.html` for the spoken headcount, the
+spoken total and the numeric total in the meta descriptions, after the film is
+written — so a stale page names what to change instead of blocking the rebuild.
+The first cut of that check searched the raw markup and passed on a lede still
+saying *twenty-eight of us and two hundred and sixty-three years*: the player's
+own `data-chapters` attribute carries "Twenty-six still here", which satisfied
+the substring. It strips tags and reads the text, and reads the meta
+descriptions from their own `content` attributes.
+
+**The page said the wrong thing about signing in, and that is the rule, not a
+typo.** It promised the branch access code and then an e-mail and a PIN. The
+shared door went on 28 October and the sign-in is the agent number alone —
+which is what the film now narrates, so the page had to say it too. A promise
+made in one place has to be kept in the other.
+
+### Re-cutting it
+
+Edit `tools/film/rise-lines.json`, push a `tts/job.json` to `tts-run` (**check
+the run was not replaced before it ran** — another session's push 58 seconds
+later took this one's place once already), then:
+
+```bash
+cd tools/film
+python3 importvox.py <tts/out/rise> vorise 1.15 --timing rise-timing.json --lines rise-lines.json
+python3 build-risefilm.py
+python3.13 sfx.py "$(…films.json rise…)" sfx-rise.wav
+python3.13 usetrack.py ../../rr-branch-theme.mp3 rise
+node render.js ../../blastoff/film.html cap-rise 30
+python3.13 mixany.py "$(…films.json rise…)" ../../blastoff/blastoff.mp4
+```
+
+**`importvox.py` does not write `films.json`.** It prints the durations and
+writes the timing file; `durs`, `dur`, and the two cue lists have to be put in
+by hand, and the cue lists are the easy thing to miss — `dark` is scene
+*indices* and `hits` is *seconds*, so both move whenever a scene is inserted.
+Derive them from the timing file's own scene starts rather than guessing:
+inserting ten scenes left the old cues pointing at the wrong moments entirely.
+
+The music is the branch's own theme, so the page carries no licence credit.
+`capbg` in films.json is `070F26`, so the burned-in caption strip is the film's
+own navy and not donthaveanagent's. Voice: Andrew Expressive, all twenty-nine clips Whisper-checked
+English at 0.97 or better. The poster is cut from the finished MP4 at
+192.0s — the mended shield on the close, which is the one frame that says
+what the film is for.
+
 ## Web fonts — non-blocking, with a fallback that does not move the page
 
 A plain `<link rel="stylesheet">` to `fonts.googleapis.com` holds up first
