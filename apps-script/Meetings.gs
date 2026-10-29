@@ -135,6 +135,25 @@ var MEET = {
   FOLDER_PROP: 'MEETINGS_FOLDER_ID',
 
   TAB_PEOPLE:     'People',
+  /*  THE SIGN-IN IS MEANT TO BE PUBLISHED. Decided 28 October 2026:
+   *  'only the agent number[,] guest can come in and you can put the
+   *  guest as 0000[,] this can be displayed as executives are looking
+   *  in the what app group.'
+   *
+   *  So the number on the card is the whole sign-in, and 0000 lets a
+   *  visitor look in. What that buys is a room that gets through the
+   *  door at 11:30 instead of a branch standing in a corridor typing
+   *  passwords while the register marks them absent. What it costs is
+   *  that a number is not a secret: anybody holding the list could
+   *  sign in as somebody else, so the register says who said they were
+   *  here, not who was. The branch manager made that trade knowingly
+   *  and asked for the number to go in the WhatsApp group.
+   *
+   *  A guest is never on the roll — roster_() is the denominator the
+   *  register is measured against, and three executives looking in
+   *  must not drop the branch's attendance for the month. */
+  GUEST_NO:       '0000',
+  GUEST_NAME:     'Visitor',
   TAB_MEETINGS:   'Meetings',
   TAB_AGENDA:     'Agenda',
   TAB_UPLOADS:    'Uploads',
@@ -821,6 +840,10 @@ function canOpenMeeting_(person, m) {
   // meeting ever held, including the minutes of the ones they were not
   // at. They get the meeting that names them and nothing else.
   if (person.role === 'guest') {
+    // The standing visitor looks in on whatever is open. Draft and
+    // cancelled are already refused above, so this is the live meeting and
+    // nothing else; a guest named against one meeting still gets that one.
+    if (isStandingGuest_(person)) return true;
     return low_(m['Guest']).indexOf(person.email) > -1 ||
            low_(m['Guest']).indexOf(low_(person.name)) > -1 ||
            isParticipant_(m, person);
@@ -980,18 +1003,77 @@ function sameCode_(given, held) {
   return !!a && !!b && a === b;
 }
 
+/** The standing visitor. A real People row rather than a session invented in
+ *  memory, because every screen behind the door resolves a token by reading
+ *  that tab — a synthetic guest would sign in and then fail on the next call.
+ *  Role 'guest', so it is off the roll by the rule above. */
+function guestRow_() {
+  //  NOT findPersonByAgentNo_: normNo_ strips leading zeros, so it turns
+  //  '0000' into nothing and gives up before it looks. Left that way the
+  //  lookup never matches, every guest sign-in appends another Visitor row,
+  //  and every one of them is still told guest sign-in is not set up.
+  var p = guestFind_();
+  if (p) return p;
+  //  readPeople_ drops any row with no e-mail, so the guest needs one or it
+  //  is written and then never found again. .invalid is the TLD reserved for
+  //  exactly this (RFC 2606): it cannot resolve and cannot be delivered to,
+  //  so the row can never quietly become a real mailbox somebody writes to.
+  appendRow_(MEET.TAB_PEOPLE, {
+    'Agent No': MEET.GUEST_NO, 'Email': '0000@guest.invalid', 'Name': MEET.GUEST_NAME,
+    'Role': 'guest', 'Unit': '', 'Active': 'Yes', 'Added': new Date(),
+    'Added By': 'the standing guest number'
+  });
+  return guestFind_();
+}
+
+function guestFind_() {
+  var want = MEET.GUEST_NO;
+  return readPeople_().filter(function (p) {
+    return str_(p.agentNo).replace(/\s+/g, '') === want;
+  })[0] || null;
+}
+
+function isStandingGuest_(person) {
+  return !!person && person.role === 'guest' &&
+         str_(person.agentNo).replace(/\s+/g, '') === MEET.GUEST_NO;
+}
+
 function apiLogin_(body) {
   // 'who' is the agent number or an e-mail; the older keys are kept so
   // a copy of the page still open in somebody's browser keeps working.
   var who = str_(body.who || body.agentNo || body.email);
   var pin = str_(body.password || body.code || body.pin);
 
+  // 0000 is the standing guest number, and it is published on purpose.
+  if (str_(who).replace(/\s+/g, '') === MEET.GUEST_NO) {
+    var g = guestRow_();
+    if (!g) return { ok: false, error: 'Guest sign-in is not set up yet. Speak to the branch manager.' };
+    var gt = g.token || makeToken_();
+    setCell_(MEET.TAB_PEOPLE, g._row, 'Token', gt);
+    setCell_(MEET.TAB_PEOPLE, g._row, 'Last Seen', new Date());
+    log_('login', g.name, 'guest', '', 'Looked in as a guest');
+    return { ok: true, token: gt, user: publicUser_(g) };
+  }
+
   var p = findSignIn_(who);
-  // Same wording whether the number is unknown or the password is
-  // wrong, so the box cannot be used to find out who is on the branch.
-  var generic = { ok: false, error: 'That agent number and password do not match.' };
+  var generic = { ok: false, error: 'That agent number is not on the roll. Use 0000 to look in as a guest.' };
   if (!p) return generic;
   if (!p.active) return { ok: false, error: 'Your access has been turned off. Speak to the branch manager.' };
+
+  //  THE NUMBER IS THE SIGN-IN. A password is still accepted from anyone
+  //  who has one and from a copy of the page still open somewhere, but it
+  //  is no longer asked for: see the note on MEET.GUEST_NO for why, and for
+  //  what it costs. Nobody is sent to enrol any more — being on the roll is
+  //  what lets you in, and the pull is what puts you on it.
+  if (!pin) {
+    var t0 = p.token || makeToken_();
+    setCell_(MEET.TAB_PEOPLE, p._row, 'Token', t0);
+    setCell_(MEET.TAB_PEOPLE, p._row, 'Attempts', 0);
+    setCell_(MEET.TAB_PEOPLE, p._row, 'Locked Until', '');
+    setCell_(MEET.TAB_PEOPLE, p._row, 'Last Seen', new Date());
+    log_('login', p.name, p.role, p.email, 'Signed in with their agent number');
+    return { ok: true, token: t0, user: publicUser_(p) };
+  }
   if (!p.hash && !p.code) return { ok: false, error: 'needs-enrol', needsEnrol: true };
 
   if (p.lockedUntil && p.lockedUntil.getTime() > Date.now()) {
@@ -6570,7 +6652,15 @@ function apiPing_() {
           /* Published, or an agent opens the app and sees nothing. */
           openToEveryone: low_(m['Status']) !== 'draft',
           date: fmtDate_(m['Date']),
-          start: str_(m['Start']),
+          /*  Sheets stores a time-only cell as a Date on its own 1899
+           *  epoch, so str_() on it prints "Sat Dec 30 1899 12:00:00"
+           *  and reads as a meeting set in the wrong century. The
+           *  register was never wrong — checkinWindow_ goes through
+           *  atTime_, which lifts the hours and minutes onto the
+           *  meeting's own date — but this line is what a person
+           *  checks the deployment with, so it is formatted the same
+           *  way the meeting card formats it. */
+          start: fmtTime_(atTime_(m['Date'], m['Start'])),
           agendaItems: items.length,
           minutes: items.reduce(function (n, a) { return n + num_(a['Allotted (min)']); }, 0),
           lateAfterMinutes: num_(str_(m['Late After (min)']) === '' ? MEET.LATE_AFTER_MINUTES : m['Late After (min)']),
@@ -6874,11 +6964,22 @@ function onOpen() {
  *  The sheet id goes in a Script Property, never in this file: these
  *  .gs files are published on the branch site.
  *
- *  It only ever fills a blank or replaces a code that has changed,
- *  and it never creates a person — somebody who is not on the
- *  meeting roster is reported back rather than added, because who
- *  belongs in a branch meeting is the manager's call, not the skill
- *  bank's.
+ *  It adds anybody on the skill bank who is not on People yet, and
+ *  brings the rest into line: the number, the e-mail, the name, the
+ *  unit and Active. A blank Access Code is filled and a changed one
+ *  replaced; a blank one on the skill bank is left alone, so an empty
+ *  cell there never locks somebody out.
+ *
+ *  It also carries the Password column across, hashed, so the branch
+ *  signs in with the password they already use for the fact find
+ *  rather than picking a PIN the first time. THIS IS THE STEP THAT
+ *  DECIDES WHETHER ANYBODY CAN SIGN IN: until it is run, the People
+ *  tab holds only the manager that setupMeetings() seeded, and a
+ *  meeting opened in that state marks the whole branch absent.
+ *
+ *  The manager's own role survives a pull. The skill bank calls
+ *  everybody an agent, and a pull that quietly demoted the branch
+ *  manager would take away the one access that can put it back.
  */
 function pullRoster(sheetId) {
   sheetId = str_(sheetId) ||
