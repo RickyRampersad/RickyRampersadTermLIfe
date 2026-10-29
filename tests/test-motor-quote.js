@@ -621,6 +621,26 @@ const PFILES = [{ kind: 'quote', name: 'quote.pdf', type: 'application/pdf', dat
     const cm = post(env, { action: 'me', token: ct });
     ok('the client sees it too when they sign in, without the agent\'s label on it', cm.requests.length === 1 && cm.requests[0].client === '');
   }
+  /* Test mode: a branch agent can try it. Their own code and copies reach them; the client and the desk never do. */
+  {
+    const { env, mails } = world(Object.assign({}, SFPROPS, { MQ_TESTERS: 'sasha.staff@example.com' }));
+    post(env, { action: 'requestCode', email: AGENT });
+    const code = mails[mails.length - 1];
+    ok('test mode: an agent gets their own sign-in code, marked TEST, the test inbox copied', code.to === AGENT && /^\[TEST\] 211110 is your/.test(code.subject) && code.cc === 'test@example.com');
+    post(env, { action: 'requestCode', email: 'sasha.staff@example.com' });
+    ok('test mode: someone on MQ_TESTERS gets their own code too', mails[mails.length - 1].to === 'sasha.staff@example.com');
+    post(env, { action: 'requestCode', email: 'stranger@example.com' });
+    ok('test mode: anyone else\'s code still goes to the test inbox', mails[mails.length - 1].to === 'test@example.com');
+    post(env, { action: 'requestCode', email: 'omar.else@example.com' });
+    ok('test mode: another branch\'s agent is not a tester', mails[mails.length - 1].to === 'test@example.com');
+    const tok = signIn(env, AGENT);
+    const n0 = mails.length;
+    const r = post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, { name: 'Dev Madeup', clientEmail: 'dev.client@example.com', clientStatus: 'new' }) });
+    const sent = mails.slice(n0);
+    const rcpt = sent.find(m => /We have your motor quote request/.test(m.subject)), desk = sent.find(m => /Motor quote request/.test(m.subject) && m !== rcpt);
+    ok('test mode: the client\'s receipt goes to the test inbox, the agent copied', r.ok && rcpt && rcpt.to === 'test@example.com' && rcpt.cc === AGENT && /would go to <b>dev.client@example.com/.test(rcpt.htmlBody));
+    ok('test mode: the quotes desk never hears; its copy goes to the test inbox, the agent copied', desk && desk.to === 'test@example.com' && String(desk.cc).indexOf(AGENT) > -1 && !/crmsquotes|guardianonline/i.test((desk.to || '') + (desk.cc || '')) && /^\[TEST\]/.test(desk.subject));
+  }
   /* The agent's client is already with us: found by their e-mail, never by the agent's. */
   {
     const { env, SF } = world(Object.assign({}, SFPROPS, OWN));
