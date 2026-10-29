@@ -194,7 +194,7 @@ function panel(i) {
     return '<h2>Guardian General\'s renewal notice</h2><p class="lead">The new premium is on Guardian General\'s notice: a PDF on their reminder in support@. The desk reads it; you check the figures and save.</p>' +
       (n ? '<div class="banner info"><b>Saved by ' + esc(n.by) + ', ' + esc(n.at) + ':</b> ' + money(n.total) + ' tax included, ' + esc(dmy(n.from)) + ' to ' + esc(dmy(n.to)) + (n.tranId ? ' · Tran Id ' + esc(n.tranId) : '') + '. Read another to replace it.</div>' : '') +
       '<div class="acts"><button class="btn" type="button" id="nFind">Find it in support@</button><label class="btn ghost" for="nFile" style="cursor:pointer">Upload the PDF</label><input id="nFile" type="file" accept="application/pdf" hidden><button class="btn ghost" type="button" id="nType">Type the figures</button></div>' +
-      '<div id="nFound" class="found"></div><div id="nForm"></div>';
+      '<div id="nFound" class="found"></div><div id="nForm"></div>' + reqHtml(d);
   }
   if (i === 2) {
     const n = d.notice || {};
@@ -327,6 +327,34 @@ function itemLabel(x) {
 }
 const ptHtml = p => '<div class="pt"><input class="field" data-pt="t" value="' + esc(p.title || '') + '" placeholder="A short title" aria-label="Point title"><textarea class="field" data-pt="x" style="min-height:60px;margin-top:6px" aria-label="Point text">' + esc(p.text || '') + '</textarea><button class="btn ghost sm" type="button" onclick="this.parentNode.remove()" style="margin-top:6px">Remove</button></div>';
 
+/* ── what Guardian General needs: a Servicing task for sales support, and its due diligence form ── */
+function reqHtml(d) {
+  const q = d.req || {}, list = q.list || [];
+  if (!d.notice || !list.length) return '';
+  const t = q.task, link = id => d.sfUrl && id ? '<a target="_blank" rel="noopener" href="' + esc(d.sfUrl + id) + '">' : '', end = id => d.sfUrl && id ? '</a>' : '';
+  let h = '<div class="pt" style="background:#fff;margin-top:16px"><h3 style="font-size:1rem;margin:0 0 6px">What Guardian General needs before it renews</h3><ul class="small" style="padding-left:18px;margin:0 0 8px">' + list.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+  if (t) h += '<div class="banner info" style="margin:8px 0 0"><b>' + link(t.id) + 'The Servicing task is open' + end(t.id) + '</b> for ' + esc(t.owner || 'sales support') + (t.due ? ', due ' + esc(dmy(t.due)) : '') + ' (opened by ' + esc(t.by || '') + ', ' + esc(t.at || '') + ').' +
+    (t.form ? (t.form.attached ? ' Guardian General\'s due diligence check list is attached to it, filled in.' : ' The due diligence form did not attach' + (t.form.why ? ': ' + esc(t.form.why) : '') + '.') : '') + '</div>';
+  else {
+    const pool = q.pool || [], sug = q.suggest || {};
+    h += '<p class="small">One Servicing task goes on last year\'s billing record for a person on the sales support team to follow up: ' + (sug.name ? '<b>' + esc(sug.name) + '</b> (' + esc(sug.via || '') + ')' : 'the team') + ', unless you choose someone else.' + (q.company ? ' Guardian General\'s due diligence check list (company) is filled from Salesforce and the notice and attached to it.' : '') + '</p>' +
+      '<div class="grid2"><div><label class="l" for="rqTo">Who follows up</label><select class="field" id="rqTo">' + pool.map(p => '<option' + (p === sug.name ? ' selected' : '') + '>' + esc(p) + '</option>').join('') + '</select></div></div>' +
+      (ONE.live ? '' : '<label class="tickrow"><input type="checkbox" id="rqReal"> This is real: open the task in Salesforce (test mode never opens it otherwise)</label>') +
+      '<div class="acts"><button class="btn" type="button" id="rqGo">Open the task for sales support</button></div>';
+  }
+  if (q.company) h += '<div class="acts" style="margin-top:6px"><button class="btn ghost sm" type="button" id="rqForm">Download the due diligence form, filled</button></div><div id="rqMiss" class="small muted"></div>';
+  return h + '</div>';
+}
+async function reqForm() {
+  const b = $('rqForm'); b.disabled = true; b.textContent = 'Filling the form…';
+  const r = await act('reqform', {});
+  b.disabled = false; b.textContent = 'Download the due diligence form, filled';
+  if (!r.ok) { toast(r.error, true); return; }
+  const bin = atob(r.b64), u = new Uint8Array(bin.length); for (let j = 0; j < bin.length; j++) u[j] = bin.charCodeAt(j);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([u], { type: 'application/pdf' })); a.download = r.name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  if (r.missing && r.missing.length) $('rqMiss').innerHTML = 'Left for the client and the salesperson: ' + r.missing.map(esc).join(', ') + '.';
+}
+
 /* ── the presses ── */
 async function doAct(a, extra, msgOk) {
   const r = await act(a, extra);
@@ -364,6 +392,8 @@ function wire(i) {
   if (i === 1) {
     on('nFind', findNotice); on('nType', () => noticeForm(ONE.notice || { policy: ONE.r.policy, items: [], reqs: [] }, null));
     $('nFile').onchange = async e => { const f = e.target.files[0]; if (!f) return; readPdf(await f.arrayBuffer(), f.name); };
+    on('rqGo', async () => { const b = $('rqGo'); b.disabled = true; b.textContent = 'Opening it in Salesforce…'; const r = await doAct('reqtask', { to: $('rqTo') ? $('rqTo').value : '', really: $('rqReal') && $('rqReal').checked ? 'Y' : '' }); if (!r.ok) { b.disabled = false; b.textContent = 'Open the task for sales support'; } });
+    on('rqForm', reqForm);
   }
   if (i === 2) on('vSave', async () => { const v = {}; document.querySelectorAll('[data-id]').forEach(el => { const n = Number(el.value.replace(/[^0-9.]/g, '')); if (n > 0) v[el.dataset.id] = n; }); if (!Object.keys(v).length) { toast('Type at least one value.', true); return; } await doAct('values', { values: v }); });
   if (i === 3) {
@@ -421,11 +451,12 @@ function noticeForm(n, name) {
     '<div><label class="l" for="nTot">Total, tax included</label><input class="field" inputmode="decimal" id="nTot" value="' + (n.total || '') + '"></div></div>' +
     (items.length ? '<h3 style="font-size:.95rem;margin:14px 0 4px">What the notice lists</h3><div class="tw"><table class="t"><thead><tr><th>Item</th><th class="n">Value</th><th class="n">Premium</th></tr></thead><tbody>' + items.map((x, k) => '<tr><td>' + esc(x.reg ? x.reg + ' ' + (x.desc || '') : x.location || x.type || x.desc || 'Item') + '</td><td class="n"><input class="field" style="min-width:7rem" data-iv="' + k + '" value="' + (x.value || '') + '" aria-label="Value"></td><td class="n">' + (x.premium ? money(x.premium) : '') + '</td></tr>').join('') + '</tbody></table></div>' : '') +
     '<label class="l" for="nReqs">What Guardian General needs with the renewal (one a line)</label><textarea class="field" id="nReqs" style="min-height:70px">' + esc((n.reqs || []).join('\n')) + '</textarea>' +
+    '<label class="tickrow"><input type="checkbox" id="nKyc"' + (n.kyc ? ' checked' : '') + '> The notice also asks for any outstanding "Know Your Customer" documents</label>' +
     '<div class="acts"><button class="btn" type="button" id="nSave">Save the notice</button></div></div>';
   $('nSave').onclick = async () => {
     const num = id => Number(($(id).value || '').replace(/[^0-9.]/g, '')) || 0;
     const out = Object.assign({}, NOTICE_DRAFT, { policy: $('nPol').value.trim(), key: GirRead.polKey($('nPol').value), tranId: $('nTran').value.trim(), from: $('nFrom').value, to: $('nTo').value,
-      premium: num('nPrem'), tax: num('nTax'), total: num('nTot'), reqs: $('nReqs').value.split('\n').map(s => s.trim()).filter(String) });
+      premium: num('nPrem'), tax: num('nTax'), total: num('nTot'), reqs: $('nReqs').value.split('\n').map(s => s.trim()).filter(String), kyc: $('nKyc').checked });
     out.items = (NOTICE_DRAFT.items || []).map((x, k) => { const el = document.querySelector('[data-iv="' + k + '"]'); return Object.assign({}, x, { value: el ? Number(el.value.replace(/[^0-9.]/g, '')) || 0 : x.value }); });
     const r = await act('notice', { notice: out, confirmOther: $('nOther') && $('nOther').checked ? 'Y' : '' });
     if (!r.ok) { toast(r.error, true); return; }

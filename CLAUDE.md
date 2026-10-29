@@ -5619,6 +5619,46 @@ is separate and untouched.
     premium agreed with the bill on 19 before and 22 after, and none got worse. The three still apart are bills shared by
     two policies. `gir/real/real-check.js` runs it on the pull kept in the scratchpad (client data, never the repository).
   - `gir/dup-test.js` (25 checks) covers it on made-up records of the same shapes.
+- **What Guardian General's notice asks for becomes a Servicing task for sales support, with its due diligence form
+  filled** (29 October 2026, with a plant and machinery notice in hand: "whats ever on the letter guardian needs a task is
+  opened as well if a form prefilled and assign to the sales support team to follow up, not only pawan … the task type is
+  servicing and related to the transaction year or the risk").
+  - **The reader** (`girread.js`) now reads the newer notice layout:
+    - "Submission of the undermentioned required on/before … renewal: (a) … (d)";
+    - the Know Your Customer line (`kyc`);
+    - "Sum Insured/Limit of Liability: <label>: $ <amount with cents>". Until then the item read TT$0, with the label run
+      into the location;
+    - the producer, and the address the notice went to.
+
+    The notice form has a tick for the KYC line.
+  - **The task** (`girReqTask_`, `GIR_REQ`) opens in Salesforce:
+    - Task_Type__c `Servicing`, on the term's billing record (`r.trans[0]`), else the cover term, with the contact;
+    - subject `Renewal Due <d/m/yyyy> - Renewal Requirements and KYC Documents - <policy> - <client>`, after Pawan's own
+      "Request for Proposal Form and KYC Documents" task;
+    - due ten days before the renewal, never sooner than two working days; each item a `[ ]` line.
+  - **The owner** (`girReqOwner_`): the person chosen on the desk, else the account owner when they are on the pool
+    (`GIR_REQ.POOL`, or the `GIR_REQ_POOL` Script property), else whoever of the pool has the fewest open requirement
+    tasks. A Chatter post mentions them, and they and the sales support inbox each get an e-mail.
+  - **One a renewal:** the **Req task** column on GI Renewals (added at the end of `GIR_HEAD`) is authoritative, so it
+    never opens twice, open or closed. `reset` leaves it alone, since it is a real task.
+  - **When:** live, on the notice save. In test mode, from the desk (act `reqtask`) only with `really`, or at Proceed with
+    Salesforce written.
+  - **The form, for a company** (`girIsCompany_`: a commercial or business account, or a company word in the name):
+    Guardian General's Customer Due Diligence Check List (GGIL-CDD Checklist/Incorporated Entities-300611-Version 1.0).
+    - It came as a blank attached to an underwriter's e-mail of 21 October, and lives at
+      `renewaldesk/forms/GGIL-CDD-Company.pdf`; a file of that name in `GCM_FORMS_FOLDER` wins.
+    - The scan is flat and both pages are stored at /Rotate 270, page 2 the other way up. `girCddPdf_` turns page 1 to 0
+      and page 2 to 180, and draws at points measured upright (`GIR_CDD`). Page 2's text goes inside a 180-degree
+      transformation matrix rather than a `rotate` option, which pdf-lib's validator refused in the test harness.
+    - From the account and the notice (`girCddData_`): broker, policy, name, place of business, telephone, fax, e-mail,
+      the owner type tick, the policy type tick (`GIR_CDD_TYPE`: liability, workers' compensation and bonds are
+      Accident, machinery Engineering), the annual premium, the value insured, Section H, and the salesperson's name.
+    - Left for a person: incorporation, the registered office, the company type, the documents, the signature and dates.
+    - It goes on the task as a ContentVersion (`girAttach_`), else on the billing record. Act `reqform` downloads it filled
+      on the desk, opening nothing.
+  - **Insight:** "The notice and Salesforce disagree on the sum insured" (more than 5% apart, not motor). The first notice
+    read had about half the sum Salesforce carries.
+  - Tests: `gir/req-test.js` (36, Node) and `gir/req-page.js` (16, Playwright, a laptop and a phone).
 - Tests in the scratchpad (`gir/`): `flow-test.js` (114, the whole journey in Node on a made-up book, three years of
   billing, payments and an old renewal task with notes), `practice-test.js` (41, a training run from the letter to go live),
   `desk-test.js` (36, Playwright, the desk with a made-up notice PDF read by pdf.js, the year folds and the practice
