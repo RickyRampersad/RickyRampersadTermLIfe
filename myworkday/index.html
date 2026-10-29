@@ -156,6 +156,8 @@
   .markbox .row button{flex:1 1 auto;padding:11px 12px;font-size:14px;background:var(--card);color:var(--navy);border:1.5px solid var(--line)}
   .markbox input{width:100%;box-sizing:border-box;margin-top:8px;padding:11px 12px;border-radius:10px;border:1.5px solid var(--line);font:500 15px var(--fb);background:var(--card);color:var(--ink)}
   .attkey{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .att td.wait{background:transparent;border:1.5px dashed var(--line);color:var(--muted)}
+  .markbox .mkn{font-size:12px;line-height:1.5;color:var(--muted);margin-top:9px}
   .tip b{color:var(--ink)}
   .closed{margin-top:12px;font-size:14px;color:var(--muted)} .closed b{color:var(--good)} .closed a{color:inherit;font-weight:700}
   .ic.no{color:var(--bad)} .ic.late{color:var(--bad)} .ic.due{color:var(--warn)} .ic.k{color:var(--navy)} .ic.todo{color:var(--muted)}
@@ -354,7 +356,7 @@
   var prog = $("prog");
   window.addEventListener("scroll", function () { prog.classList.toggle("stuck", window.scrollY > 8); }, { passive: true });
 
-  function toast(t) { var e = $("toast"); e.textContent = t; e.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(function () { e.classList.remove("on"); }, 3200); }
+  function toast(t) { var e = $("toast"); e.textContent = t; e.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(function () { e.classList.remove("on"); }, Math.max(3200, String(t).length * 55)); }
   function notice(html, bad) { $("notice").innerHTML = html ? '<div class="notice' + (bad ? " bad" : "") + '">' + html + "</div>" : ""; }
   function countUp(el, to) {
     var from = Number(el.getAttribute("data-v") || 0), t0 = performance.now(), dur = 1100;
@@ -604,7 +606,8 @@
   function attCard(m) {
     var a = m.att; if (!a || !a.desks) return "";
     var cell = function (x, d, day) {
-      var mark = d.mark && (x.st === "none" || x.st === "notin" || (x.st === "absent" && x.auto)) ? ' data-mark="' + esc(d.sid) + '|' + esc(day.d) + '|' + esc(d.first) + '|' + esc(day.l) + '"' : "";
+      // Today before the day starts too (29 Oct 2026): "a staff is saying they are not well and will not be out".
+      var mark = d.mark && (x.st === "none" || x.st === "notin" || x.st === "wait" || (x.st === "absent" && x.auto)) ? ' data-mark="' + esc(d.sid) + '|' + esc(day.d) + '|' + esc(d.first) + '|' + esc(day.l) + '|' + (x.st === "wait" ? "ahead" : "") + '"' : "";
       // In, and out (28 Oct 2026): the time they left under the time they came, early in amber, no sign-out said so.
       var out = x.o ? '<small class="out' + (x.early ? ' early' : '') + '">left ' + esc(x.o) + (x.early ? " · " + x.early + " min early" : "") + "</small>"
         : x.noout ? '<small class="out none">no sign-out</small>' : "";
@@ -613,29 +616,34 @@
       if (x.st === "absent") return '<td class="absent"' + mark + '>Absent<small>' + esc(x.why) + (x.by ? " · " + esc(x.by) : "") + "</small></td>";
       if (x.st === "none") return '<td class="none"' + mark + '>No record' + (mark ? "<small>tap to mark</small>" : "") + "</td>";
       if (x.st === "notin") return '<td class="notin"' + mark + '>Not in' + (mark ? "<small>tap to mark</small>" : "") + "</td>";
+      if (x.st === "wait") return '<td class="wait"' + mark + '>Not yet' + (mark ? "<small>tap to mark</small>" : "") + "</td>";
       return "<td>&middot;</td>";
     };
     return '<div class="card" id="attcard"><div class="ch"><h2>Attendance</h2><span class="n">last ' + a.days.length + ' working days</span></div>' +
       '<table class="att"><tr><th></th>' + a.days.map(function (d) { return "<th>" + esc(d.l) + "</th>"; }).join("") + "</tr>" +
       a.desks.map(function (d) { return '<tr><td class="nm">' + esc(d.first) + "</td>" + d.cells.map(function (x, i) { return cell(x, d, a.days[i]); }).join("") + "</tr>"; }).join("") +
-      '</table><div id="markbox"></div><div class="attkey">Each day: the time in, and under it the time they left. <b>No record</b>: nothing was written that day (no sign-in, and no morning e-mail to mark it). Tap one to say why.</div></div>';
+      '</table><div id="markbox"></div><div class="attkey">Each day: the time in, and under it the time they left. <b>No record</b>: nothing was written that day (no sign-in, and no morning e-mail to mark it). Tap one to say why. <b>Not yet</b>: today, before their day starts; tap it when someone says they are not coming in.</div></div>';
   }
   document.addEventListener("click", function (e) {
     var td = e.target.closest && e.target.closest("td[data-mark]"); if (!td) return;
     var p = td.getAttribute("data-mark").split("|"), box = $("markbox"); if (!box) return;
-    box.innerHTML = '<div class="markbox"><div class="q">' + esc(p[2]) + ", " + esc(p[3]) + ': not in. Why?</div><div class="row">' +
+    var today = p[1] === new Date().toLocaleDateString("en-CA", { timeZone: "America/Port_of_Spain" });
+    box.innerHTML = '<div class="markbox"><div class="q">' + esc(p[2]) + ", " + esc(p[3]) + (p[4] === "ahead" ? ": not coming in today? Why?" : ": not in. Why?") + '</div><div class="row">' +
       '<button type="button" data-why="Sick">Sick</button><button type="button" data-why="On leave">On leave</button><button type="button" data-why="">Other…</button></div>' +
-      '<input type="text" id="whyother" placeholder="In a few words, then press Other again" hidden></div>';
+      '<input type="text" id="whyother" placeholder="In a few words, then press Other again" hidden>' +
+      (today ? '<div class="mkn">This marks the register, moves ' + esc(p[2]) + '\'s due work to whoever is in today (money and claims to the BMA first), and e-mails ' + esc(p[2]) + ' for the record, copying the team. The reason is in the e-mail as you choose it: keep it general.</div>' : "") + "</div>";
     box.setAttribute("data-who", p[0]); box.setAttribute("data-date", p[1]); box.scrollIntoView({ block: "nearest", behavior: "smooth" });
   });
   document.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-why]"); if (!b) return;
     var box = $("markbox"), inp = $("whyother"), why = b.getAttribute("data-why");
     if (!why) { if (inp.hidden) { inp.hidden = false; inp.focus(); return; } why = (inp.value || "").trim(); if (!why) { inp.focus(); return; } }
-    b.disabled = true; b.textContent = "Saving…";
+    b.disabled = true; b.textContent = box.getAttribute("data-date") === new Date().toLocaleDateString("en-CA", { timeZone: "America/Port_of_Spain" }) ? "Marking and moving the work…" : "Saving…";
     var body = auth(new URLSearchParams()); body.set("act", "absent"); body.set("who", box.getAttribute("data-who")); body.set("date", box.getAttribute("data-date")); body.set("why", why);
     fetch(TRACKER, { method: "POST", body: body, redirect: "follow" }).then(function (r) { return r.json(); })
-      .then(function (m) { if (!m || !m.ok) { b.disabled = false; b.textContent = why || "Other…"; toast((m && m.error) || "That did not save. Try again."); return; } store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); toast("Marked absent: " + why + "."); })
+      .then(function (m) { if (!m || !m.ok) { b.disabled = false; b.textContent = why || "Other…"; toast((m && m.error) || "That did not save. Try again."); return; } m._t = Date.now(); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false);
+        var k = m.marked || {}, who = box.getAttribute("data-who"), nm = (who || "").charAt(0).toUpperCase() + (who || "").slice(1);
+        toast("Marked absent: " + why + "." + (k.moved != null ? " " + k.moved + " task" + (k.moved === 1 ? "" : "s") + (k.already ? " already moved this morning" : " moved") + (k.mailed ? "; " + nm + " and the team told." : k.mailWhy ? "; notice not sent (" + k.mailWhy + ")." : ".") : "")); })
       .catch(function () { b.disabled = false; b.textContent = why || "Other…"; toast("That did not reach the tracker. Try again."); });
   });
   function drawAgent(m, cached) {
