@@ -40,23 +40,19 @@ var RB = {
 
 function renewalBoardMenu_(ui) {
   return ui.createMenu('📋 Renewal board')
-    .addItem('Where the board is now', 'showBoardLink')
+    .addItem('The board\u2019s link', 'showBoardLink')
     .addItem('Check it is ready (before anyone signs in)', 'boardReadiness');
 }
 
 /** The board's link, which is the staff link with ?board= in place of ?staff=. */
 function showBoardLink() {
+  var key = staffKey_();
   SpreadsheetApp.getUi().alert('The renewal board',
-    'https://rickyrampersadbranch.com/renewals\n\n' +
-    'The board is on the branch’s own site now. It reads Salesforce live and ' +
-    'shows one card per POLICY rather than one row per vehicle, so a fleet client ' +
-    'is one conversation instead of sixty rows.\n\n' +
-    'There is no key in that address. Each person signs in with their own work ' +
-    'e-mail and their own access code from the Staff tab, and what they see is ' +
-    'decided by their Role. Somebody with no access code cannot get in at all — ' +
-    'issue them one from "Who can sign in".\n\n' +
-    'The old ?board= link still opens and simply points here, so nobody is left ' +
-    'on a dead address.',
+    (key ? CONFIG.WEBAPP_URL + (CONFIG.WEBAPP_URL.indexOf('?') > -1 ? '&' : '?') + 'board=' + encodeURIComponent(key)
+         : 'The staff key is not set, so the board has no link yet.') + '\n\n' +
+    'Each person signs in with their own work e-mail and the access code beside ' +
+    'their name on the Staff tab, and what they see is decided by their Role. ' +
+    'Somebody with no access code cannot get in: issue them one from "Who can sign in".',
     SpreadsheetApp.getUi().ButtonSet.OK);
 }
 

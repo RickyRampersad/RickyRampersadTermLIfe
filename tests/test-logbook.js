@@ -99,7 +99,7 @@ function world(props) {
 
 const SIG = 'data:image/png;base64,' + Buffer.from('signature').toString('base64');
 const entry = (over) => Object.assign({
-  type: 'Documents for Guardian', client: 'Anika Pretend', contactId: '003000000000001AAA', declared: true,
+  type: 'Documents for Guardian', client: 'Anika Pretend', contactId: '003000000000001AAA', declared: true, handedTo: '__later',
   items: [
     { document: 'Signed Script', department: 'RECORDS MANAGEMENT DEPT', policy: '9000000001', portfolioId: 'a02000000000002AAA', type: 'LIFE' },
     { document: 'Proof of ID', department: 'GLOC CS RSC - CHAGUANAS', policy: '9000000001', portfolioId: 'a02000000000002AAA' },
@@ -239,7 +239,8 @@ let agent, staff, mgr;
   mgr = env.lbSession_(env.dbLogin_({ code: 'MGR9' }).token);
   ok('no policy is refused', throws(() => env.lbSubmit_({ entry: entry({ items: [{ document: 'Proof of ID', department: 'GLOC CS RSC - CHAGUANAS' }] }) }, agent), /policy number/));
   ok('"Other" needs a note', throws(() => env.lbSubmit_({ entry: entry({ items: [{ document: 'Other', department: 'MAIL TEAM QUERY' }] }) }, agent), /Other/));
-  ok('no declaration is refused', throws(() => env.lbSubmit_({ entry: entry({ declared: false }) }, agent), /declaration/));
+  ok('no declaration is refused', throws(() => env.lbSubmit_({ entry: entry({ declared: false }) }, agent), /Declaration/));
+  ok('both declarations are needed', throws(() => env.lbSubmit_({ entry: entry({ declared: true, declared1: true, declared2: false }) }, agent), /Declaration 1 and Declaration 2/));
   ok('a department not on the list is refused', throws(() => env.lbSubmit_({ entry: entry({ items: [{ document: 'PMAR', department: 'Nowhere', policy: '1' }] }) }, agent), /department/));
   ok('staff must say whose documents', throws(() => env.lbSubmit_({ entry: entry() }, staff), /agent/));
   const before = env.__mail.length;
@@ -550,6 +551,68 @@ console.log('companions, digest, the e-mails');
 }
 
 
+/* ── handed to: the agent names who has the papers; they sign on the phone ── */
+console.log('handed to');
+{
+  const env = world();
+  const agent = env.lbSession_(env.lbLogin_({ agentNo: 'A10001', code: '4821' }).token);
+  const sam = env.lbSession_(env.dbLogin_({ code: 'SAM1' }).token);
+  const mo = env.lbSession_(env.dbLogin_({ code: 'MGR9' }).token);
+  const cfg = env.lbConfig_(agent);
+  const names = cfg.staff.map(s => s.name);
+  ok('the agent picks from the staff with the Log Book', names.includes('Sam Support') && names.includes('Mo Manager') && !names.includes('Pat Courier') && cfg.later === '__later');
+  ok('who has the papers must be said', throws(() => env.lbSubmit_({ entry: entry({ handedTo: '' }) }, agent), /handing the papers to/));
+  ok('only someone on the list', throws(() => env.lbSubmit_({ entry: entry({ handedTo: 'Nobody Here' }) }, agent), /from the list/));
+  const before = env.__mail.length;
+  const r = env.lbSubmit_({ entry: entry({ handedTo: 'Sam Support' }) }, agent);
+  const row = () => tab(env, 'Log Book').find(x => x[0] === r.ref + '-1');
+  ok('the line carries who it was handed to, and when', r.handedTo === 'Sam Support' && row()[col(env, 'Log Book', 'Handed To')] === 'Sam Support' &&
+     row()[col(env, 'Log Book', 'Handed At')] instanceof Date);
+  const mails = env.__mail.slice(before);
+  const rec = mails.find(m => /ana@example\.com/.test(m.htmlBody) && /Log Book: Anika/.test(m.subject));
+  const hand = mails.find(m => /Sign for these/.test(m.subject));
+  ok('the agent\'s copy says who has them', rec && /handed to Sam Support/.test(rec.htmlBody));
+  ok('the staff member is asked to sign, sales support copied', hand && /sam@example\.com/.test(hand.htmlBody) && /rickyrampersadsalessupport/.test(hand.htmlBody) &&
+     /Open the Log Book and sign/.test(hand.htmlBody) && /logbook\/#queue/.test(hand.htmlBody));
+  // logged a working day ago: the agent is not nudged, the papers are with Sam
+  setCell(env, r.ref + '-1', 'Logged At', DAYS(1)); setCell(env, r.ref + '-2', 'Logged At', DAYS(1));
+  env.LB_READ_ = null;
+  const n0 = env.__mail.length;
+  env.lbNudgeAgents_(NOW);
+  ok('no "hand them in" reminder once a staff member has them', !env.__mail.slice(n0).some(m => /not yet handed in/.test(m.subject)));
+  // three hours on, not signed for: Sam is asked, the agent and sales support copied
+  const later = new Date(); setCell(env, r.ref + '-1', 'Handed At', new Date(later - 3 * 3600000)); setCell(env, r.ref + '-2', 'Handed At', new Date(later - 3 * 3600000));
+  env.LB_READ_ = null;
+  const n1 = env.__mail.length;
+  ok('not signed for after two hours: chased', /2 lines, 1 e-mails/.test(env.lbChaseHanded_(later)));
+  const ch = env.__mail[n1];
+  ok('to the person named, the agent copied', ch && /Not signed for/.test(ch.subject) && /sam@example\.com/.test(ch.htmlBody) && /ana@example\.com/.test(ch.htmlBody));
+  env.LB_READ_ = null;
+  ok('once a working day', /0 e-mails|none/.test(env.lbChaseHanded_(later)));
+  env.LB_READ_ = null;
+  ok('the digest shows papers handed and not signed for', /Handed to staff and not signed for/.test((env.lbDigestSend_(later), env.__mail[env.__mail.length - 1].htmlBody)));
+  // the manager signs in Sam's place: allowed, and the line says so; the agent gets the proof
+  env.LB_READ_ = null;
+  const n2 = env.__mail.length;
+  const got = env.lbReceive_({ ids: [r.ref + '-1', r.ref + '-2'], signature: SIG }, mo);
+  ok('signed for by someone else: allowed and flagged', got.ok && /Handed to Sam Support, signed for by Mo Manager/.test(row()[col(env, 'Log Book', 'Flags')]));
+  const proof = env.__mail.slice(n2).find(m => /Signed for by Mo/.test(m.subject));
+  ok('the agent is e-mailed the moment it is signed', proof && /ana@example\.com/.test(proof.htmlBody) && /signed for the documents below/.test(proof.htmlBody));
+  // "not with me"
+  const r2 = env.lbSubmit_({ entry: entry({ handedTo: 'Sam Support', items: [{ document: 'PMAR', department: 'RECORDS MANAGEMENT DEPT', policy: '9000000001', portfolioId: 'a02000000000002AAA' }] }), confirmDuplicates: true, confirmMissing: true }, agent);
+  const n3 = env.__mail.length;
+  ok('"not with me" takes the name off', env.lbNotWithMe_({ ids: [r2.ref + '-1'] }, sam).ok &&
+     tab(env, 'Log Book').find(x => x[0] === r2.ref + '-1')[col(env, 'Log Book', 'Handed To')] === '' &&
+     /Not with Sam Support/.test(tab(env, 'Log Book').find(x => x[0] === r2.ref + '-1')[col(env, 'Log Book', 'Flags')]));
+  ok('and the agent is asked who has them', env.__mail.slice(n3).some(m => /not with Sam/.test(m.subject) && /ana@example\.com/.test(m.htmlBody)));
+  // logged ahead, named later from My log
+  const r3 = env.lbSubmit_({ entry: entry({ handedTo: '__later', items: [{ document: 'Proof of ID', department: 'GLOC CS RSC - CHAGUANAS', policy: '9000000001', portfolioId: 'a02000000000002AAA' }] }), confirmDuplicates: true, confirmMissing: true }, agent);
+  ok('logged ahead: no one named yet', tab(env, 'Log Book').find(x => x[0] === r3.ref + '-1')[col(env, 'Log Book', 'Handed To')] === '');
+  const h = env.lbHandTo_({ ref: r3.ref, handedTo: 'sam support' }, agent);
+  ok('named later from My log, and that person is asked to sign', h.ok && h.handedTo === 'Sam Support' && /sent/i.test(h.mail));
+  ok('a contract needs no hand-in', env.lbSubmit_({ entry: entry({ type: 'Contract for delivery', handedTo: '', items: [{ policy: '9000000001', portfolioId: 'a02000000000002AAA' }] }) }, agent).ok);
+  ok('the agent\'s list shows who has it', env.lbMine_({}, agent).lines.some(l => l.handedTo === 'Sam Support'));
+}
 /* ── the bag ───────────────────────────────────────────────────────── */
 console.log('the bag');
 {
@@ -609,6 +672,13 @@ console.log('the bag');
      env.lbOnBag_(sent) === true && env.lbBagsLate_(nextDay) === 1 && env.lbOnBag_(imported) === true);
   const st = env.lbStats_({ days: 30 }, staff);
   ok('the insights carry the bag', st.bag && Array.isArray(st.bag.byHour) && 'onBagPct' in st.bag);
+  // the Branch Intelligence wall's transmittal stop: no sign-in, counts and first names only
+  env.LB_READ_ = null;
+  const w = env.lbHandle_({ action: 'lb.wall', fresh: true });
+  const wt = JSON.stringify(w);
+  ok('the wall answers without a sign-in', w.ok && Array.isArray(w.hours) && w.hours.length === 11 && w.series.length === 15 && w.waiting && w.days30 && w.bag);
+  ok('the wall carries no client, policy or note', !/Pretend|9000000001|anika@|Sealed/.test(wt), wt.slice(0, 200));
+  ok('people by first name only', (w.staff || []).concat(w.agents || [], w.waiting.agents || []).every(x => !/\s/.test(x.name)));
 }
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');

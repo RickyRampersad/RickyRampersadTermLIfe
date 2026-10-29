@@ -71,7 +71,12 @@ var QUOTE = {
     'critical-illness': { code: 'QC', line: 'Critical illness',  title: 'Critical illness quote' },
     'key-person':       { code: 'QK', line: 'Key person',        title: 'Key person protection quote' },
     'oas':              { code: 'QO', line: 'OAS enrolment',     title: 'OAS enrolment' },
-    'xpress-life':      { code: 'QX', line: 'Xpress Life',       title: 'Xpress Life application' }
+    'xpress-life':      { code: 'QX', line: 'Xpress Life',       title: 'Xpress Life application' },
+    /* The careers page's booking: a confidential conversation with the Branch
+       Manager. It goes to him alone, never to the sales support inbox, because
+       the person asking may be contracted elsewhere today. */
+    'careers':          { code: 'QT', line: 'Careers', title: 'Confidential conversation', to: 'manager',
+                          client: 'Your request is with Mr Rampersad himself. Nobody else in the branch sees it.' }
   },
 
   /* The line of the summary column, per form: the two or three answers a
@@ -82,7 +87,8 @@ var QUOTE = {
     'critical-illness': ['for_whom', 'life_dob', 'life_smoke', 'sum_want'],
     'key-person':       ['biz_name', 'kp_count', 'kp_role', 'kp_why', 'sum_want'],
     'oas':              ['emp_name', 'contrib', 'pay_how'],
-    'xpress-life':      ['for_whom', 'life_dob', 'life_smoke', 'sum_want', 'how_finish']
+    'xpress-life':      ['for_whom', 'life_dob', 'life_smoke', 'sum_want', 'how_finish'],
+    'careers':          ['who', 'when_talk', 'note']
   },
 
   /* A client who taps send twice, or whose connection retries, must not
@@ -102,12 +108,15 @@ var QUOTE = {
             'Sign it, send it back, and your first contribution goes on the next run.'],
     apply: ['The branch opens your file under this reference straight away.',
             'A licensed agent calls you at the time you chose.',
-            'Five health questions, no medical exam, and the cover is issued.']
+            'Five health questions, no medical exam, and the cover is issued.'],
+    talk:  ['Mr Rampersad reads it himself. Your name reaches nobody else.',
+            'He calls you at the time you chose, within two working days, for twenty minutes.',
+            'Your questions and the branch\'s own figures, no pitch. Then you decide.']
   },
 
   KIND: {
     'motor': 'quote', 'property': 'quote', 'critical-illness': 'quote',
-    'key-person': 'quote', 'oas': 'enrol', 'xpress-life': 'apply'
+    'key-person': 'quote', 'oas': 'enrol', 'xpress-life': 'apply', 'careers': 'talk'
   },
 
   BRANCH_TEL: '(868) 226-6461',
@@ -399,7 +408,9 @@ function quoteTeamMail_(ref, def, row, answers, now) {
     +   '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-top:8px">'
     +   answers.html + '</table>'
     +   '<p style="margin:22px 0 0;font:400 14px/1.6 Arial,sans-serif;color:#5b6670">'
-    +   'The client has been sent this reference and told a licensed agent will call them '
+    +   (def.to === 'manager'
+        ? 'They have been sent this reference and told you will call them yourself '
+        : 'The client has been sent this reference and told a licensed agent will call them ')
     +   (row['Best time'] ? 'in the ' + String(row['Best time']).toLowerCase() : 'shortly')
     +   '. Mark the row when you have.</p>'
     + '</div></div>'
@@ -408,9 +419,12 @@ function quoteTeamMail_(ref, def, row, answers, now) {
     + 'Do not forward outside the branch.</p>'
     + '</div>';
 
+  /* A careers booking goes to the Branch Manager alone (def.to): the person
+     asking may be contracted elsewhere today, and the page promised nobody
+     else would see their name. */
   MailApp.sendEmail({
-    to: QUOTE.TO(),
-    cc: QUOTE.CC().join(','),
+    to: def.to === 'manager' ? SVC.AGENT_EMAIL : QUOTE.TO(),
+    cc: def.to === 'manager' ? '' : QUOTE.CC().join(','),
     name: SVC.FROM_NAME,
     replyTo: row['E-mail'],
     subject: 'New ' + def.line + ' request · ' + ref + ' · ' + row['Name'],
@@ -447,7 +461,8 @@ function quoteClientMail_(ref, def, form, row) {
     + '</div>'
     + '<div style="padding:26px">'
     +   '<p style="margin:0 0 18px;font:400 15px/1.65 Arial,sans-serif;color:#2b3b47">'
-    +   'Your ' + quoteEsc_(def.title.toLowerCase()) + ' is with our branch team. '
+    +   (def.client ? quoteEsc_(def.client) + ' '
+        : 'Your ' + quoteEsc_(def.title.toLowerCase()) + ' is with our branch team. ')
     +   'Keep the reference below &mdash; quote it whenever you call us about this.</p>'
     +   '<div style="margin:0 0 20px;padding:14px 18px;background:#e8f3f6;border:1px solid #00728d;border-radius:10px">'
     +     '<div style="font:700 11px/1.4 Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#005a70">Your reference</div>'

@@ -80,6 +80,22 @@
  * Mail follows DB_MODE: in test (the default) every e-mail goes to
  * DB_TEST_INBOX with a banner naming who it was for.
  *
+ * ── HANDED TO (17 October 2026) ──────────────────────────────────────────
+ * "Staff is collecting documents, but when I'm looking at when the
+ * transmittals are going down, departments being lost … it must be that staff
+ * signs for the document on their digital log, so who it was given to. So that
+ * dropdown has to be who it's handed to. The staff signs on their phones …
+ * accept it." So the agent names the staff member they hand the papers to
+ * (or "not yet" when they log ahead of handing in, and name them later from
+ * My log). That person is e-mailed at once to sign for them on their phone;
+ * the agent is e-mailed the moment they do. Papers handed to someone and not
+ * signed for after LB.ACCEPT_HOURS are chased to that person, sales support
+ * and the agent copied, once a working day; the agent's own "hand them in"
+ * reminder stops, because the papers are no longer theirs to account for.
+ * "Not with me" from the named person clears the name, flags the line and
+ * tells the agent. Signed by someone other than the named person: allowed
+ * (cover), and the line says so.
+ *
  * Nothing here is client data, and nothing client-identifying may be added to
  * this file: the repository is public. The tables below are names of
  * departments and forms, and counts.
@@ -111,7 +127,10 @@ var LB = {
   CONFIRM_DAYS: 3,
   COMPANION_PCT: 70,              // a document that travels with another this often is asked about when missing
   DIGEST_HOUR: 17,                // the branch manager's daily digest
-  NEVER_IN_DAYS: 3,               // logged and not handed in after this many working days: counted against the agent                // working days after a transmittal, the department is asked "did you get it"
+  NEVER_IN_DAYS: 3,               // logged and not handed in after this many working days: counted against the agent
+  ACCEPT_HOURS: 2,                // handed to a staff member and not signed for after this many hours: they are asked
+  LATER: '__later',               // "Not yet: I will hand them in later"
+  PAGE: 'https://rickyrampersadbranch.com/logbook',
   SUPPORT_FROM: 'support@rickyrampersadbranch.com',
   DECLARE_DOCS: 'I confirm these are the documents I am handing to the branch, complete and signed where they must be.',
   DECLARE_CONTRACT: 'I, the agent listed on the insurance policy contract, confirm that I have received the contract for my ' +
@@ -124,6 +143,7 @@ var LB_COLUMNS = [
   'Agent No', 'Agent', 'Agent Email', 'Unit',
   'Client', 'Salesforce Contact', 'Client Email', 'Policy #', 'Record Type', 'Plan', 'Portfolio Id',
   'Document', 'Quantity', 'Item Note', 'Department', 'Suggested Department', 'Notes', 'Declaration',
+  'Handed To', 'Handed At',
   'Received At', 'Received By', 'Receipt Signature', 'Routing Changed',
   'Transmittal', 'Sent At', 'Sent By', 'Tracking #',
   'Late Reason', 'Reason At', 'Reason By',
@@ -207,6 +227,8 @@ var LB_DOCS = [  // [name, times in the history, [[department, times]...], [[sen
   ["Claim Submission Form - Life & CI", 23, [["GLOC CLAIMS - CUSTOMER SUPPORT", 17], ["RECORDS MANAGEMENT DEPT", 4], ["GIA TASK REQUEST", 1]], [["Proof of ID", 82], ["Policy Contract", 53], ["Death Certificate", 41]], "CLAIM SUBMISSION"],
   ["Service Questionnaire", 30, [["RECORDS MANAGEMENT DEPT", 30]], [["OAS Declaration", 46]], "SERVIC(E|ING) QUESTIONNAIRE|^QUESTIONNAIRE$"],
   ["Declaration of Insurability", 15, [["RECORDS MANAGEMENT DEPT", 10], ["DELTA FORCE QUERY", 3], ["GLOC REDATES, REINSTATEMENTS & INCREASES", 2]], [["Quotation", 33]], "DECLARATION OF INSURABILITY|^DOI$"],
+  ["Declaration 1", 0, [["RECORDS MANAGEMENT DEPT", 1]], [], "^DECLARATION ?(1|ONE|I)$"],  // 27 Oct 2026: on the old form, asked back
+  ["Declaration 2", 0, [["RECORDS MANAGEMENT DEPT", 1]], [], "^DECLARATION ?(2|TWO|II)$"],
   ["Quotation", 14, [["GLOC REDATES, REINSTATEMENTS & INCREASES", 6], ["RECORDS MANAGEMENT DEPT", 3], ["DELTA FORCE QUERY", 3]], [["Proof of ID", 67], ["FATCA Form", 50], ["Conversion Form", 50]], "^QUOTATION"],
   ["Rollover Letter", 14, [["GLOC BIR DEPARTMENT", 12], ["GLOC CS RSC - CHAGUANAS", 1], ["RECORDS MANAGEMENT DEPT", 1]], [["Proof of ID", 71], ["Policy Contract", 71]], "ROLLOVER"],
   ["NPW Letter", 13, [["CLIENT ACQUISITION DEPARTMENT", 7], ["RECORDS MANAGEMENT DEPT", 5], ["CGU - GLOC CORPORATE GROUP UNIT", 1]], [["Policy Contract", 46], ["Proof of ID", 31]], "^NPW"],
@@ -364,6 +386,7 @@ function lbRows_() {
       policy: String(g(r, 'Policy #')), recordType: String(g(r, 'Record Type')), plan: String(g(r, 'Plan')), portfolioId: String(g(r, 'Portfolio Id')),
       document: String(g(r, 'Document')), quantity: Number(g(r, 'Quantity')) || 1, itemNote: String(g(r, 'Item Note')),
       department: String(g(r, 'Department')), suggested: String(g(r, 'Suggested Department')), notes: String(g(r, 'Notes')),
+      handedTo: String(g(r, 'Handed To')), handedAt: lbDate_(g(r, 'Handed At')),
       receivedAt: lbDate_(g(r, 'Received At')), receivedBy: String(g(r, 'Received By')), signed: !!g(r, 'Receipt Signature'),
       routingChanged: String(g(r, 'Routing Changed')),
       transmittal: String(g(r, 'Transmittal')), sentAt: lbDate_(g(r, 'Sent At')), sentBy: String(g(r, 'Sent By')),
@@ -848,6 +871,41 @@ function lbStaffEmail_(name) {
   return a ? a.email : '';
 }
 
+/* The people papers can be handed to: everyone with the staff side of the Log
+   Book. The RR Operations Access tab (active, with the Log Book on their Apps
+   or Apps blank) and the fact find's staff rows, one entry per person. */
+function lbStaff_() {
+  var out = [], seen = {};
+  var add = function (name, role) {
+    name = String(name || '').trim();
+    var k = lbNameKey_(name);
+    if (!k || seen[k]) return;
+    seen[k] = 1; out.push({ name: name, role: String(role || 'Staff').trim() || 'Staff' });
+  };
+  var sh = dbSheet_(DB.TABS.ACCESS, DB_ACCESS_COLUMNS);
+  var hm = dbHeaderMap_(sh), last = sh.getLastRow();
+  if (last > 1) sh.getRange(2, 1, last - 1, hm.head.length).getValues().forEach(function (r) {
+    var active = String(r[hm.map['Active']] == null ? 'yes' : r[hm.map['Active']]).trim().toLowerCase();
+    if (active === 'no' || active === 'false') return;
+    var role = String(r[hm.map['Role']] || 'Staff');
+    if (/^(agent|unit manager)$/i.test(role.trim())) return;
+    var apps = 'Apps' in hm.map ? r[hm.map['Apps']] : '';
+    if (!opsAppsFor_(apps).some(function (x) { return x.id === 'logbook'; })) return;
+    add(r[hm.map['Name']], role);
+  });
+  lbAgents_().forEach(function (a) { if (a.active && lbIsStaffRole_(a.role)) add(a.name, a.role); });
+  return out.sort(function (a, b) { return a.name < b.name ? -1 : 1; });
+}
+
+/* The same person under two spellings: "Sasha Lalla-Jagassar" and "Sasha
+   Lalla Jagassar", or a full name against a first and last. */
+function lbSamePerson_(a, b) {
+  var x = lbNameKey_(a), y = lbNameKey_(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  var xs = x.split(' '), ys = y.split(' ');
+  return xs[0] === ys[0] && xs[xs.length - 1] === ys[ys.length - 1];
+}
 /* People with no agent number (21 October 2026: Pawan, the driver, "see pawan from the access link", the Access tab of
    the Branch Portfolio workbook, which the tracker and the Premium Due Desk sign in from). Sign-in takes a name or an
    e-mail in the number box: first a name only one person on the agent lists carries, then the Branch Portfolio's
@@ -992,6 +1050,9 @@ function lbLoginApps_(staff) { return staff ? 'logbook,delivery-book' : 'logbook
 function lbHandle_(b) {
   LB_READ_ = null; LB_AGENTS_READ_ = null; LB_PICK_READ_ = null; LB_HOURS_ = null;
   if (b.action === 'lb.login') return lbLogin_(b);
+  /* The Branch Intelligence wall's transmittal stop (28 October 2026). Counts and first names only, no sign-in:
+     the screen hangs in the branch and holds no client, no policy and no document's detail. */
+  if (b.action === 'lb.wall') return lbWall_(b);
   var who = lbSession_(b.token);
   if (!who) return { ok: false, error: 'signed-out' };
   /* The branch app's one sign-in (18 October 2026: "when they log in they should not have to log back into all the
@@ -1001,7 +1062,8 @@ function lbHandle_(b) {
   if (!who.isAgent && !opsCanUse_(who, 'logbook')) return { ok: false, error: 'The Log Book is not on your access. Ask the branch to add it.' };
   var staff = !who.isAgent;
   var STAFF_ONLY = { 'lb.queue': 1, 'lb.receive': 1, 'lb.return': 1, 'lb.transmittal': 1, 'lb.unsend': 1,
-                     'lb.transmittals': 1, 'lb.reason': 1, 'lb.delivered': 1, 'lb.stats': 1, 'lb.agents': 1, 'lb.bag': 1 };
+                     'lb.transmittals': 1, 'lb.reason': 1, 'lb.delivered': 1, 'lb.stats': 1, 'lb.agents': 1, 'lb.bag': 1,
+                     'lb.notwithme': 1 };
   if (STAFF_ONLY[b.action] && !staff) return { ok: false, error: 'That is for the branch staff.' };
   switch (b.action) {
     case 'lb.config':       return lbConfig_(who);
@@ -1010,6 +1072,8 @@ function lbHandle_(b) {
     case 'lb.submit':       return lbSubmit_(b, who);
     case 'lb.mine':         return lbMine_(b, who);
     case 'lb.cancel':       return lbCancel_(b, who);
+    case 'lb.handto':       return lbHandTo_(b, who);
+    case 'lb.notwithme':    return lbNotWithMe_(b, who);
     case 'lb.queue':        return lbQueue_(b, who);
     case 'lb.receive':      return lbReceive_(b, who);
     case 'lb.return':       return lbReturn_(b, who);
@@ -1040,7 +1104,8 @@ function lbConfig_(who) {
            team: who.isLead ? lbTeam_(who).map(function (t) { return { agentNo: t.agentNo, name: t.name, self: !!t.self }; }) : [],
            agentNo: who.agentNo || '', mode: dbMode_(), types: LB.TYPES, departments: depts, documents: docs,
            cutoff: lbCutoff_(), bag: lbBagInfo_(new Date()), oft: LB.OFT, declareDocs: LB.DECLARE_DOCS, declareContract: LB.DECLARE_CONTRACT,
-           salesforce: dbSfConfigured_() };
+           salesforce: dbSfConfigured_(), staff: lbStaff_().map(function (s) { return { name: s.name, role: s.role }; }),
+           later: LB.LATER, acceptHours: LB.ACCEPT_HOURS };
 }
 
 
@@ -1194,8 +1259,29 @@ function lbValidate_(b, who) {
       if (it.portfolioId && !mine.portfolios[it.portfolioId]) throw new Error('Policy ' + it.policy + ' is not one of yours.');
     });
   }
-  if (d.declared !== true) throw new Error('Tick the declaration.');
-  out.declaration = contract ? LB.DECLARE_CONTRACT : LB.DECLARE_DOCS;
+  /* Who the papers are handed to: a name from the staff list, or "not yet".
+     A contract goes the other way (the branch hands it to the agent). */
+  out.handedTo = '';
+  if (!contract) {
+    /* A page from before this change sends no handedTo at all: taken as "not
+       yet", so a phone still holding the old page can log. */
+    var h = d.handedTo == null ? LB.LATER : String(d.handedTo).trim();
+    if (!h) throw new Error('Choose who you are handing the papers to.');
+    if (h !== LB.LATER) {
+      var person = lbStaff_().filter(function (s) { return lbSamePerson_(s.name, h); })[0];
+      if (!person) throw new Error('Choose who you are handing the papers to from the list.');
+      out.handedTo = person.name;
+    }
+  }
+  /* Both declarations, every time (27 October 2026: "Declaration 1 and Declaration 2 these were there
+     before and agents not seeing this"). A page from before sends declared alone and is taken as before. */
+  if (d.declared !== true) throw new Error('Tick Declaration 1 and Declaration 2.');
+  if ('declared1' in d || 'declared2' in d) {
+    if (d.declared1 !== true || d.declared2 !== true) throw new Error('Tick Declaration 1 and Declaration 2.');
+    out.declaration = 'Declaration 1: ' + LB.DECLARE_DOCS + ' | Declaration 2: ' + LB.DECLARE_CONTRACT;
+  } else {
+    out.declaration = contract ? LB.DECLARE_CONTRACT : LB.DECLARE_DOCS;
+  }
   out.notes = dbClean_(d.notes, 500);
   return out;
 }
@@ -1245,6 +1331,7 @@ function lbSubmit_(b, who) {
         'Policy #': it.policy, 'Record Type': it.recordType, 'Plan': it.plan, 'Portfolio Id': it.portfolioId,
         'Document': it.document, 'Quantity': it.quantity, 'Item Note': it.note,
         'Department': it.department, 'Suggested Department': it.suggested, 'Notes': d.notes,
+        'Handed To': d.handedTo, 'Handed At': d.handedTo ? now : '',
         'Declaration': d.declaration, 'Flags': d.flags.join('; '), 'Source': 'App' + (dbMode_() === 'live' ? '' : ' (test)'),
       });
     });
@@ -1254,8 +1341,9 @@ function lbSubmit_(b, who) {
   CacheService.getScriptCache().remove('lb_routing');
 
   var mail = lbReceiptMail_(ref, d, who, now);
+  var handMail = d.handedTo && !lbSamePerson_(d.handedTo, who.name) ? lbHandedMail_(ref, d, who, now) : '';
   return { ok: true, ref: ref, lines: d.items.length, status: contract ? 'With agent' : 'Logged',
-           flags: d.flags, mail: mail, bag: contract ? null : lbBagInfo_(now),
+           flags: d.flags, mail: mail, handedTo: d.handedTo, handMail: handMail, bag: contract ? null : lbBagInfo_(now),
            due: contract ? Utilities.formatDate(new Date(now.getTime() + LB.CONTRACT_DAYS * 86400000), dbTz_(), 'EEEE d MMMM yyyy') : '' };
 }
 
@@ -1281,14 +1369,42 @@ function lbReceiptMail_(ref, d, who, now) {
     '<p>' + dbEsc_(contract
       ? 'You collected the contract below on ' + Utilities.formatDate(now, dbTz_(), 'EEEE d MMMM yyyy') +
         '. It is to reach the client within 20 days. Record the handover in the Delivery Book.'
-      : 'These are logged for ' + d.client + '. Hand the papers to the branch with this reference. ' + lbBagLine_(now)) + '</p>',
+      : d.handedTo
+        ? 'These are logged for ' + d.client + ' and handed to ' + d.handedTo + '. ' + lbFirst_(d.handedTo) +
+          ' signs for them on the phone, and you get an e-mail the moment that is done. ' + lbBagLine_(now)
+        : 'These are logged for ' + d.client + '. Hand the papers to the branch with this reference, and choose who you handed them to in My log. ' + lbBagLine_(now)) + '</p>',
     ['Document', 'Policy', contract ? 'Next' : 'Department'], rows,
     '<p style="color:#5b6b7f;font-size:13px">Reference <b>' + dbEsc_(ref) + '</b> · logged by ' + dbEsc_(who.name) + '</p>',
-    { tone: contract ? 'info' : 'ok', kicker: contract ? '20 days start today' : 'Logged · hand them in',
+    { tone: contract ? 'info' : 'ok', kicker: contract ? '20 days start today' : d.handedTo ? 'Logged · handed to ' + lbFirst_(d.handedTo) : 'Logged · hand them in',
       tiles: [['Reference', ref, 'info'], ['Documents', d.items.reduce(function (s, it) { return s + it.quantity; }, 0), 'ok'],
               contract ? ['Deliver by', Utilities.formatDate(new Date(now.getTime() + LB.CONTRACT_DAYS * 86400000), dbTz_(), 'd MMM'), 'warn']
+                       : d.handedTo ? ['Handed to', lbFirst_(d.handedTo), 'info']
                        : ['Departments', Object.keys(d.items.reduce(function (o, it) { o[it.department] = 1; return o; }, {})).length, 'info']] });
   return lbMail_({ to: [d.agent.email], subject: (contract ? 'Contract for delivery' : 'Log Book') + ': ' + d.client + ' (' + ref + ')', html: html });
+}
+
+function lbPageUrl_(tab) { return String(dbProp_('LB_PAGE_URL', LB.PAGE)).replace(/\/+$/, '') + '/' + (tab ? '#' + tab : ''); }
+
+/* The staff member the papers were handed to: sign for them on the phone. */
+function lbHandedMail_(ref, d, who, now) {
+  var to = lbStaffEmail_(d.handedTo);
+  var rows = d.items.map(function (it) {
+    return [it.document + (it.quantity > 1 ? ' × ' + it.quantity : '') + (it.note ? ' (' + it.note + ')' : ''), it.policy || '—', it.department];
+  });
+  var html = lbMailHtml_('Papers handed to you: sign for them',
+    '<p>' + dbEsc_(lbFirst_(d.handedTo)) + ', ' + dbEsc_(d.agent.name) + ' has handed you the papers below for <b>' + dbEsc_(d.client) +
+    '</b>. Check them against the lines and sign for them on your phone. Signing stamps the date collected, and they go to Guardian Life the same working day.</p>' +
+    '<div style="margin:18px 0 6px">' + lbBtn_(lbPageUrl_('queue'), 'Open the Log Book and sign &rarr;', '#15803d', '#ffffff') + '</div>' +
+    '<p style="color:#5b6b7f;font-size:13px">Not with you? Press <b>Not with me</b> on the Queue and the agent is told. ' +
+    'Not signed for in ' + LB.ACCEPT_HOURS + ' hours, you are asked again, with sales support and the agent copied.</p>',
+    ['Document', 'Policy', 'Department'], rows,
+    '<p style="color:#5b6b7f;font-size:13px">Reference <b>' + dbEsc_(ref) + '</b> · handed in ' + dbEsc_(Utilities.formatDate(now, dbTz_(), 'EEE d MMM, h:mm a')) +
+    '. Sales support is copied.</p>',
+    { tone: 'info', kicker: 'Handed to you · sign on your phone',
+      tiles: [['Reference', ref, 'info'], ['Documents', d.items.reduce(function (s, it) { return s + it.quantity; }, 0), 'ok'],
+              ['Handed in', Utilities.formatDate(now, dbTz_(), 'h:mm a'), 'info']] });
+  return lbMail_({ to: [to || lbSalesSupport_()], cc: [lbSalesSupport_()],
+                   subject: 'Sign for these: ' + d.agent.name + ' handed you ' + rows.length + ' document' + (rows.length === 1 ? '' : 's') + ' (' + ref + ')', html: html });
 }
 
 
@@ -1300,6 +1416,7 @@ function lbPublic_(r, now, staff) {
     loggedAt: r.loggedAt ? r.loggedAt.toISOString() : '', loggedBy: r.loggedBy,
     agentNo: r.agentNo, agent: r.agent, unit: r.unit, client: r.client, policy: r.policy, recordType: r.recordType,
     document: r.document, quantity: r.quantity, itemNote: r.itemNote, department: r.department, suggested: r.suggested,
+    handedTo: r.handedTo, handedAt: r.handedAt ? r.handedAt.toISOString() : '',
     receivedAt: r.receivedAt ? r.receivedAt.toISOString() : '', receivedBy: r.receivedBy,
     transmittal: r.transmittal, sentAt: r.sentAt ? r.sentAt.toISOString() : '', sentBy: r.sentBy, tracking: r.tracking,
     reason: r.reason, reasonAt: r.reasonAt ? r.reasonAt.toISOString() : '', reasonBy: r.reasonBy,
@@ -1309,6 +1426,7 @@ function lbPublic_(r, now, staff) {
   };
   if (r.status === 'Received') o.daysHeld = lbWorkDays_(r.receivedAt, now);
   if (r.status === 'Logged') o.daysWaiting = lbWorkDays_(r.loggedAt, now);
+  if (r.status === 'Logged' && r.handedTo && r.handedAt) o.hoursHanded = Math.floor((now - r.handedAt) / 3600000);
   if (r.type === LB.TYPES[1] && r.loggedAt) {
     o.contractDay = lbCalDays_(r.loggedAt, r.deliveredAt || now);
     o.contractDue = new Date(r.loggedAt.getTime() + LB.CONTRACT_DAYS * 86400000).toISOString();
@@ -1352,6 +1470,49 @@ function lbCancel_(b, who) {
   }
   lbSet_(rows, { 'Status': 'Cancelled', 'Flags': function (r) { return lbAddFlag_(r.flags, 'Withdrawn by ' + who.name); } });
   return { ok: true };
+}
+
+/** The agent names who they handed the papers to, after logging ahead ("not
+ *  yet"), or after the named person said they were not with them. Staff can
+ *  do it for a line they logged. That person is e-mailed to sign. */
+function lbHandTo_(b, who) {
+  var ref = dbClean_(b.ref, 30);
+  var rows = lbRows_().filter(function (r) { return r.ref === ref && r.status === 'Logged'; });
+  if (!rows.length) throw new Error('Nothing on that entry is waiting to be handed in.');
+  if (who.isAgent && lbAgentKey_(rows[0].agentNo) !== lbAgentKey_(who.agentNo)) throw new Error('That entry is not yours.');
+  if (!who.isAgent && rows[0].loggedBy !== who.name) throw new Error('Only the person who logged it can say who has it.');
+  var person = lbStaff_().filter(function (s) { return lbSamePerson_(s.name, b.handedTo); })[0];
+  if (!person) throw new Error('Choose who you handed the papers to from the list.');
+  var now = new Date();
+  lbSet_(rows, { 'Handed To': person.name, 'Handed At': now });
+  var a = lbFindAgent_(rows[0].agentNo) || {};
+  var d = { client: rows[0].client, handedTo: person.name, agent: { name: rows[0].agent, email: rows[0].agentEmail || a.email },
+            items: rows.map(function (r) { return { document: r.document, quantity: r.quantity, note: r.itemNote, policy: r.policy, department: r.department }; }) };
+  var mail = lbSamePerson_(person.name, who.name) ? '' : lbHandedMail_(ref, d, who, now);
+  return { ok: true, handedTo: person.name, lines: rows.length, mail: mail };
+}
+
+/** "Not with me": the named person does not have the papers. The name comes
+ *  off, the line says so, and the agent is told to hand them in again. */
+function lbNotWithMe_(b, who) {
+  var rows = lbPick_(b.ids, ['Logged']);
+  var now = new Date(), when = Utilities.formatDate(now, dbTz_(), 'd MMM h:mm a');
+  var was = rows[0].handedTo;
+  lbSet_(rows, { 'Handed To': '', 'Handed At': '',
+    'Flags': function (r) { return lbAddFlag_(r.flags, 'Not with ' + (r.handedTo || who.name) + ' (' + who.name + ', ' + when + ')'); } });
+  var byAgent = {};
+  rows.forEach(function (r) { var k = r.agentEmail || r.agent; (byAgent[k] = byAgent[k] || []).push(r); });
+  Object.keys(byAgent).forEach(function (k) {
+    var list = byAgent[k];
+    var html = lbMailHtml_('Not with ' + lbFirst_(was || who.name) + ': who has these papers?',
+      '<p>' + dbEsc_(who.name) + ' says the papers below are not with ' + (was && !lbSamePerson_(was, who.name) ? dbEsc_(was) : 'them') +
+      '. Until someone signs for them, nobody can show where they are.</p><p>Hand them to the branch and choose who you handed them to in <b>My log</b>.</p>' +
+      '<div style="margin:18px 0 6px">' + lbBtn_(lbPageUrl_('mine'), 'Open My log &rarr;', '#b45309', '#ffffff') + '</div>',
+      ['Client', 'Document', 'Logged'], list.map(function (r) { return [r.client, r.document, Utilities.formatDate(r.loggedAt, dbTz_(), 'EEE d MMM')]; }), '',
+      { tone: 'warn', kicker: 'Not signed for' });
+    lbMail_({ to: [list[0].agentEmail || lbSalesSupport_()], cc: [lbSalesSupport_()], subject: 'Log Book: not with ' + lbFirst_(was || who.name) + ' (' + list[0].client + ')', html: html });
+  });
+  return { ok: true, lines: rows.length };
 }
 
 function lbAddFlag_(flags, f) { return flags ? flags + '; ' + f : f; }
@@ -1412,10 +1573,39 @@ function lbReceive_(b, who) {
     'Routing Changed': function (r) {
       return changes[r.id] && changes[r.id] !== r.department ? r.department + ' → ' + changes[r.id] + ' by ' + who.name : r.routingChanged;
     },
-    'Flags': function (r) { return note ? lbAddFlag_(r.flags, 'At receipt: ' + note) : r.flags; },
+    'Flags': function (r) {
+      var f = note ? lbAddFlag_(r.flags, 'At receipt: ' + note) : r.flags;
+      return r.handedTo && !lbSamePerson_(r.handedTo, who.name) ? lbAddFlag_(f, 'Handed to ' + r.handedTo + ', signed for by ' + who.name) : f;
+    },
   });
   CacheService.getScriptCache().remove('lb_routing');
-  return { ok: true, received: rows.length, at: now.toISOString() };
+  var mails = lbSignedMail_(rows, who, now);
+  return { ok: true, received: rows.length, at: now.toISOString(), mail: mails };
+}
+
+/* The agent's proof: who signed for their papers, and when. One e-mail per
+   agent per signing. */
+function lbSignedMail_(rows, who, now) {
+  var byAgent = {};
+  rows.forEach(function (r) { var k = r.agentEmail || (lbFindAgent_(r.agentNo) || {}).email || ''; if (k) (byAgent[k] = byAgent[k] || []).push(r); });
+  var tz = dbTz_(), late = lbHour_(now) >= lbCutoff_();
+  return Object.keys(byAgent).map(function (k) {
+    var list = byAgent[k], clients = {};
+    list.forEach(function (r) { clients[r.client] = 1; });
+    var html = lbMailHtml_('Signed for: your papers are with the branch',
+      '<p>' + dbEsc_(who.name) + ' signed for the documents below at <b>' + dbEsc_(Utilities.formatDate(now, tz, 'h:mm a')) + '</b> on ' +
+      dbEsc_(Utilities.formatDate(now, tz, 'EEEE d MMMM')) + '. ' + (late
+        ? 'They were signed for after ' + lbCutoff_() + ':00. If they cannot go today, the reason is printed on the transmittal beside the date collected and the date sent.'
+        : 'They go to Guardian Life today, on a transmittal that prints the date collected and the date sent.') +
+      ' Three working days after it goes, the department is asked to confirm it arrived.</p>',
+      ['Document', 'Policy', 'Department'],
+      list.map(function (r) { return [r.document + (r.quantity > 1 ? ' × ' + r.quantity : ''), r.policy || '—', r.department]; }),
+      '<p style="color:#5b6b7f;font-size:13px">Reference ' + dbEsc_(Object.keys(list.reduce(function (o, r) { o[r.ref] = 1; return o; }, {})).join(', ')) + '</p>',
+      { tone: 'ok', kicker: 'Signed for · ' + Utilities.formatDate(now, tz, 'd MMM, h:mm a'),
+        tiles: [['Signed by', lbFirst_(who.name), 'ok'], ['Documents', list.reduce(function (s, r) { return s + r.quantity; }, 0), 'ok'],
+                ['Goes', late ? 'Next run' : 'Today', late ? 'warn' : 'info']] });
+    return lbMail_({ to: [k], subject: 'Signed for by ' + lbFirst_(who.name) + ': ' + Object.keys(clients).join(', ') + ' (' + list.length + ' document' + (list.length === 1 ? '' : 's') + ')', html: html });
+  }).join('; ');
 }
 
 /** The papers go back to the agent: incomplete, unsigned, the wrong form. */
@@ -1697,7 +1887,8 @@ function lbDigestSend_(now) {
   var same = sent.filter(function (r) { return lbDay_(r.receivedAt) === today; });
   var late = rows.filter(function (r) { return lbIsLate_(r, now); });
   var lateNo = late.filter(function (r) { return !lbReasonFresh_(r, now); });
-  var notIn = rows.filter(function (r) { return r.status === 'Logged' && lbWorkDays_(r.loggedAt, now) >= 1; });
+  var notIn = rows.filter(function (r) { return r.status === 'Logged' && !r.handedTo && lbWorkDays_(r.loggedAt, now) >= 1; });
+  var unsigned = rows.filter(function (r) { return r.status === 'Logged' && r.handedTo && r.handedAt && (now - r.handedAt) >= LB.ACCEPT_HOURS * 3600000; });
   var contracts = rows.filter(function (r) { return r.status === 'With agent' && r.loggedAt && lbCalDays_(r.loggedAt, now) >= LB.CONTRACT_WARN[0]; });
   var trans = lbTransRows_();
   var noAns = trans.filter(function (t) { return t.status === 'Sent' && t.askedAt && /^Awaiting/.test(t.answer) && lbWorkDays_(t.askedAt, now) >= 2; });
@@ -1710,13 +1901,16 @@ function lbDigestSend_(now) {
       (note ? '<div style="font-size:13px;color:#5b6b7f">' + note + '</div>' : '') + lbTable_(head, list.slice(0, 15)) +
       (list.length > 15 ? '<div style="font-size:12px;color:#5b6b7f">and ' + (list.length - 15) + ' more in the Log Book.</div>' : '');
   };
-  var calm = !lateNo.length && !noAns.length && !saidNo.length && !contracts.length && !notIn.length;
+  var calm = !lateNo.length && !noAns.length && !saidNo.length && !contracts.length && !notIn.length && !unsigned.length;
   var html = lbMailHtml_('The Log Book today',
     '<p>' + dbEsc_(Utilities.formatDate(now, tz, 'EEEE d MMMM')) + '. ' + (calm ? 'Nothing is waiting on anyone.' : 'What needs someone is below, most pressing first.') + '</p>',
     [], [],
     sec('Received and not sent, no reason given', ['Client', 'Document', 'Department', 'Received', 'By'],
         lateNo.map(function (r) { return [r.client, r.document, r.department, Utilities.formatDate(r.receivedAt, tz, 'EEE d MMM'), r.receivedBy]; }),
         'The person who received them has been asked.') +
+    sec('Handed to staff and not signed for', ['Client', 'Document', 'Handed to', 'Handed in', 'Agent'],
+        unsigned.map(function (r) { return [r.client, r.document, r.handedTo, Utilities.formatDate(r.handedAt, tz, 'EEE d MMM, h:mm a'), r.agent]; }),
+        'Each has been asked to sign or say the papers are not with them.') +
     sec('Departments that said No', ['Transmittal', 'Department', 'Answered', 'What they said', 'Follow-up'],
         saidNo.map(function (t) { return [t.no, t.department, Utilities.formatDate(t.answeredAt, tz, 'd MMM'), t.deptNote || '—', t.followUp || '—']; })) +
     sec('Departments that have not answered in 2 working days', ['Transmittal', 'Department', 'Sent', 'Asked'],
@@ -1753,6 +1947,7 @@ function lbHourly() {
   if (h < 8 || h > 19) return 'out of hours';
   LB_READ_ = null;
   var out = [];
+  out.push(lbChaseHanded_(now));
   if (h >= lbBagHour_()) out.push(lbChaseLate_(now));
   if (h >= LB.BAG.NUDGE && h < lbCutoff_()) out.push(lbNudgeAgents_(now));
   if (h >= lbCutoff_()) out.push(lbBagPrep_(now));
@@ -1806,6 +2001,42 @@ function lbChaseLate_(now) {
   return 'late: ' + due.length + ' lines, ' + sent + ' e-mails';
 }
 
+/* Handed to a staff member and not signed for after LB.ACCEPT_HOURS: that
+   person is asked to sign or say "not with me", sales support and the agent
+   copied, once a working day per line. */
+function lbChaseHanded_(now) {
+  var today = lbDay_(now);
+  var due = lbRows_().filter(function (r) {
+    return r.source !== 'Imported' && r.status === 'Logged' && r.handedTo && r.handedAt &&
+      (now - r.handedAt) >= LB.ACCEPT_HOURS * 3600000 && !lbAlerted_(r, 'accept ' + today);
+  });
+  if (!due.length) return 'handed: none';
+  var by = {};
+  due.forEach(function (r) { (by[lbNameKey_(r.handedTo)] = by[lbNameKey_(r.handedTo)] || []).push(r); });
+  var n = 0;
+  Object.keys(by).forEach(function (k) {
+    var list = by[k], staff = list[0].handedTo;
+    var agents = {};
+    list.forEach(function (r) { var em = r.agentEmail || (lbFindAgent_(r.agentNo) || {}).email; if (em) agents[em.toLowerCase()] = em; });
+    var hours = function (r) { return Math.floor((now - r.handedAt) / 3600000); };
+    var html = lbMailHtml_('Handed to you and not signed for',
+      '<p>' + dbEsc_(lbFirst_(staff)) + ', the agents below handed you these papers and they are not signed for. ' +
+      'Until they are, nobody can show where they are. Sign for them in the Log Book now, or press <b>Not with me</b> if you do not have them.</p>' +
+      '<div style="margin:18px 0 6px">' + lbBtn_(lbPageUrl_('queue'), 'Sign for them &rarr;', '#b45309', '#ffffff') + '</div>',
+      ['Client', 'Document', 'Agent', 'Handed in', 'Hours'],
+      list.map(function (r) { return [r.client, r.document + (r.quantity > 1 ? ' × ' + r.quantity : ''), r.agent,
+                                      Utilities.formatDate(r.handedAt, dbTz_(), 'EEE d MMM, h:mm a'), String(hours(r))]; }),
+      '<p style="color:#5b6b7f;font-size:13px">Sales support and the agents are copied. You are asked once a working day until they are signed for.</p>',
+      { tone: 'warn', kicker: 'Sign, or say not with me',
+        tiles: [['Documents', list.length, 'warn'], ['Longest, hours', list.reduce(function (m, r) { return Math.max(m, hours(r)); }, 0), 'bad']] });
+    var res = lbMail_({ to: [lbStaffEmail_(staff) || lbSalesSupport_()], cc: [lbSalesSupport_()].concat(Object.keys(agents).map(function (x) { return agents[x]; })),
+                        subject: 'Not signed for: ' + list.length + ' document' + (list.length === 1 ? '' : 's') + ' handed to you (' + list[0].client +
+                                 (list.some(function (r) { return r.client !== list[0].client; }) ? ' and others' : '') + ')', html: html });
+    if (/sent/i.test(res)) { lbMarkAlert_(list, 'accept ' + today); n++; }
+  });
+  return 'handed: ' + due.length + ' lines, ' + n + ' e-mails';
+}
+
 /* 12:00: the person on the bag gets what is going down today, by department,
    and what agents logged and have not handed in. Once a day. */
 function lbBagPrep_(now) {
@@ -1835,6 +2066,7 @@ function lbNudgeAgents_(now) {
   var today = lbDay_(now);
   var due = lbRows_().filter(function (r) {
     if (r.source === 'Imported' || r.status !== 'Logged' || !r.loggedAt || !r.agentEmail) return false;
+    if (r.handedTo) return false;   // with a named staff member: lbChaseHanded_ asks them
     var d = lbWorkDays_(r.loggedAt, now);
     return (d === 0 || LB.NUDGE_DAYS.indexOf(d) >= 0) && !lbAlerted_(r, 'nudged ' + today);
   });
@@ -2412,7 +2644,7 @@ function lbStats_(b, who) {
       if (r.status === 'Returned') o.returned++;
       if (r.routingChanged) o.changed++;
       if (!r.policy && LB.NO_POLICY.indexOf(r.document) < 0) o.noPolicy++;
-      if (r.status === 'Cancelled' || (r.status === 'Logged' && lbWorkDays_(r.loggedAt, now) >= LB.NEVER_IN_DAYS)) o.neverIn++;
+      if (r.status === 'Cancelled' || (r.status === 'Logged' && !r.handedTo && lbWorkDays_(r.loggedAt, now) >= LB.NEVER_IN_DAYS)) o.neverIn++;
     });
     return Object.keys(m).map(function (k) {
       var o = m[k]; o.sameDayPct = pct(o.sameDay, o.sent); o.within1Pct = pct(o.within1, o.sent); return o;
@@ -2539,6 +2771,142 @@ function lbStats_(b, who) {
     daily: Object.keys(daily).sort().map(function (k) { return daily[k]; }),
     reasons: Object.keys(reasons).map(function (k) { return { reason: k, n: reasons[k] }; })
       .sort(function (a, c) { return c.n - a.n; }).slice(0, 12),
+  };
+}
+
+
+/* ============================== the wall ============================== */
+
+/**
+ * The transmittal stop on the Branch Intelligence wall (intelligence/wall/transmittal.html), asked for on 28 October
+ * 2026: "can you build a wall with the transmittal on the branch intelligence wall". What the screen may show: counts,
+ * hours, department names, and people by first name. Never a client, a policy number, a note or a reason's words.
+ * Kept three minutes, so a wall that refreshes never reads the book twice in a run of screens.
+ */
+var LB_WALL = { CACHE_SEC: 180, DAYS: 30, SERIES: 15, OLD_SAME_DAY: 41, OLD_WITHIN1: 72 };
+function lbWall_(b) {
+  var cache = CacheService.getScriptCache(), key = 'lb_wall_v1';
+  if (!(b && b.fresh)) { var hit = cache.get(key); if (hit) { try { return JSON.parse(hit); } catch (e) {} } }
+  var out = lbWallBuild_(new Date());
+  try { var txt = JSON.stringify(out); if (txt.length < 95000) cache.put(key, txt, LB_WALL.CACHE_SEC); } catch (e) {}
+  return out;
+}
+function lbFirst_(n) {
+  var s = String(n || '').replace(/^\s*agent\s+/i, '').trim();
+  /* A sign-in by agent number writes the number ("SL002", "AG-003", "A10024 - Name"): read the person's name. */
+  var m = /^([a-z]{0,4}-?\d{2,6})\b\s*[-\u2013:]?\s*(.*)$/i.exec(s);
+  if (m) {
+    s = m[2];
+    if (!s) { try { var a = lbFindAgent_(m[1]); s = a && a.name ? a.name : ''; } catch (e) { s = ''; } }
+  }
+  s = s.replace(/^\s*A?\d+\s*-\s*/i, '').trim();
+  return s ? lbTitle_(s.split(/\s+/)[0]) : '';
+}
+function lbWallBuild_(now) {
+  var today = lbDay_(now), work = lbIsWorkDay_(today);
+  var rows = lbRows_().filter(function (r) { return r.source !== 'Imported' && r.status !== 'Cancelled'; });
+  var docs = rows.filter(function (r) { return r.type === LB.TYPES[0]; });
+  var pct = function (a, n) { return n ? Math.round(a * 100 / n) : null; };
+  var isToday = function (d) { return d && lbDay_(d) === today; };
+  var bump = function (m, k, f, n) { if (!k) return; var o = m[k] = m[k] || { name: k }; o[f] = (o[f] || 0) + (n == null ? 1 : n); };
+  var list = function (m, by) { return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, c) { return (c[by] || 0) - (a[by] || 0); }); };
+
+  /* today, hour by hour */
+  var hours = [];
+  for (var h = 7; h <= 17; h++) hours.push({ h: h, logged: 0, received: 0, sent: 0 });
+  var slot = function (d) { var x = Math.max(7, Math.min(17, lbHour_(d))); return hours[x - 7]; };
+  var t = { logged: 0, received: 0, sent: 0, docsSent: 0, onBag: 0, missed: 0, returned: 0 };
+  var staff = {}, agents = {}, depts = {};
+  docs.forEach(function (r) {
+    if (isToday(r.loggedAt)) { t.logged++; slot(r.loggedAt).logged++; bump(agents, lbFirst_(r.agent), 'today'); }
+    if (isToday(r.receivedAt)) { t.received++; slot(r.receivedAt).received++; bump(staff, lbFirst_(r.receivedBy), 'received'); }
+    if (r.status === 'Sent' && isToday(r.sentAt)) {
+      t.sent++; t.docsSent += r.quantity; slot(r.sentAt).sent++;
+      bump(staff, lbFirst_(r.sentBy), 'sent');
+      bump(depts, r.department, 'lines'); bump(depts, r.department, 'docs', r.quantity);
+      if (lbOnBag_(r)) t.onBag++; else t.missed++;
+    }
+    if (isToday(r.returnedAt)) t.returned++;
+  });
+  var transToday = lbTransRows_().filter(function (x) { return x.status !== 'Cancelled' && isToday(x.sentAt); });
+  transToday.forEach(function (x) { bump(depts, x.department, 'transmittals'); });
+
+  /* waiting now */
+  var logged = docs.filter(function (r) { return r.status === 'Logged'; });
+  var received = docs.filter(function (r) { return r.status === 'Received'; });
+  var late = received.filter(function (r) { return lbIsLate_(r, now); });
+  var waitAgents = {};
+  logged.forEach(function (r) { bump(waitAgents, lbFirst_(r.agent), 'n'); });
+  var ages = [{ k: 'Today', n: 0 }, { k: '1 day', n: 0 }, { k: '2–3 days', n: 0 }, { k: '4+ days', n: 0 }];
+  logged.concat(received).forEach(function (r) {
+    var d = lbWorkDays_(r.receivedAt || r.loggedAt, now) || 0;
+    ages[d <= 0 ? 0 : d === 1 ? 1 : d <= 3 ? 2 : 3].n++;
+  });
+  var nextBag = received.filter(function (r) { return !lbIsLate_(r, now); }).length;
+
+  /* the last 30 days, the digital book only */
+  var since = new Date(now.getTime() - LB_WALL.DAYS * 86400000);
+  var recent = docs.filter(function (r) { return r.loggedAt && r.loggedAt >= since; });
+  var sent30 = recent.filter(function (r) { return r.status === 'Sent' && r.receivedAt && r.sentAt; });
+  var wd = sent30.map(function (r) { return lbWorkDays_(r.receivedAt, r.sentAt); }).filter(function (x) { return x != null && x >= 0; });
+  var onBag30 = sent30.filter(function (r) { return lbOnBag_(r); }).length;
+  var stuck30 = recent.filter(function (r) { return r.status === 'Received' && r.receivedAt && lbIsLate_(r, now); });
+  var hrs = recent.filter(function (r) { return r.receivedAt && r.loggedAt; }).map(function (r) { return (r.receivedAt - r.loggedAt) / 3600000; })
+    .filter(function (x) { return x >= 0; }).sort(function (a, c) { return a - c; });
+  var med = hrs.length ? Math.round(hrs[Math.floor(hrs.length / 2)] * 10) / 10 : null;
+  recent.forEach(function (r) {
+    if (r.status === 'Sent' && r.sentBy) bump(staff, lbFirst_(r.sentBy), 'sent30');
+    if (r.receivedBy) bump(staff, lbFirst_(r.receivedBy), 'received30');
+    bump(agents, lbFirst_(r.agent), 'n30');
+  });
+
+  /* day by day: the last working days */
+  var series = [], d0 = today;
+  while (series.length < LB_WALL.SERIES) {
+    if (lbIsWorkDay_(d0)) series.unshift({ day: d0, logged: 0, sent: 0, onBag: 0 });
+    var x = new Date(d0 + 'T12:00:00Z'); x = new Date(x.getTime() - 86400000); d0 = Utilities.formatDate(x, 'UTC', 'yyyy-MM-dd');
+  }
+  var sIx = {}; series.forEach(function (s, i) { sIx[s.day] = i; });
+  docs.forEach(function (r) {
+    var a = r.loggedAt && sIx[lbDay_(r.loggedAt)]; if (a != null && r.loggedAt) series[a].logged++;
+    if (r.status === 'Sent' && r.sentAt) { var b2 = sIx[lbDay_(r.sentAt)]; if (b2 != null) { series[b2].sent++; if (lbOnBag_(r)) series[b2].onBag++; } }
+  });
+  series.forEach(function (s) { s.label = Utilities.formatDate(lbAt_(s.day, 12, 0), dbTz_(), 'EEE d'); });
+
+  /* the departments' answers */
+  var trans = lbTransRows_().filter(function (x) { return x.status === 'Sent' && x.sentAt && x.sentAt >= since; });
+  var conf = { transmittals: trans.length, asked: 0, yes: 0, no: 0, waiting: 0 };
+  trans.forEach(function (x) { if (x.askedAt) conf.asked++; if (x.answer === 'Yes') conf.yes++; else if (x.answer === 'No') conf.no++; else if (x.askedAt) conf.waiting++; });
+
+  /* contracts to deliver */
+  var withAgent = rows.filter(function (r) { return r.type === LB.TYPES[1] && r.status === 'With agent' && r.loggedAt; });
+  var contracts = {
+    open: withAgent.length,
+    due: withAgent.filter(function (r) { var c = lbCalDays_(r.loggedAt, now); return c >= 15 && c < 20; }).length,
+    past: withAgent.filter(function (r) { return lbCalDays_(r.loggedAt, now) >= 20; }).length,
+    delivered30: rows.filter(function (r) { return r.type === LB.TYPES[1] && r.status === 'Delivered' && r.deliveredAt && r.deliveredAt >= since; }).length,
+  };
+
+  var bag = lbBagInfo_(now);
+  return {
+    ok: true, now: now.toISOString(), today: today, workDay: work,
+    bag: { cutoff: bag.cutoff, at: bag.at, gone: bag.gone, open: bag.open, bagDayLabel: bag.bagDayLabel,
+           duty: bag.duty ? { name: lbFirst_(bag.duty.name), next: lbFirst_(bag.duty.next), week: bag.duty.week } : null,
+           inAt: bag.log && bag.log.inAt || '', outAt: bag.log && bag.log.outAt || '' },
+    today: t, hours: hours, transmittals: transToday.length,
+    waiting: { logged: logged.length, received: received.length, late: late.length,
+               lateNoReason: late.filter(function (r) { return !lbReasonFresh_(r, now); }).length,
+               nextBag: nextBag, ages: ages, agents: list(waitAgents, 'n').slice(0, 8) },
+    /* A paper signed for and still not sent once its bag has gone counts against every share, so the room never reads
+       100% beside papers that missed their bag. One still waiting past a working day counts against "within a day". */
+    days30: { lines: recent.length, sent: sent30.length, stuck: stuck30.length,
+              sameDayPct: pct(wd.filter(function (x) { return x === 0; }).length, wd.length + stuck30.length),
+              within1Pct: pct(wd.filter(function (x) { return x <= 1; }).length, wd.length + stuck30.filter(function (r) { return lbWorkDays_(r.receivedAt, now) > 1; }).length),
+              onBagPct: pct(onBag30, sent30.length + stuck30.length), medHours: med,
+              oldSameDay: LB_WALL.OLD_SAME_DAY, oldWithin1: LB_WALL.OLD_WITHIN1 },
+    series: series, depts: list(depts, 'lines').slice(0, 8), confirm: conf, contracts: contracts,
+    staff: list(staff, 'sent30').filter(function (s) { return s.name; }).slice(0, 6),
+    agents: list(agents, 'n30').filter(function (a) { return a.name; }).slice(0, 8),
   };
 }
 

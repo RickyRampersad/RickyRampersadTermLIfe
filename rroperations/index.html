@@ -202,7 +202,8 @@
     spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>',
     target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
     list: '<path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/>',
-    cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'
+    cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    renew: '<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/>'
   };
 
   /* Every tile, and who sees it. a = agent, l = unit manager, s = staff, m = branch manager.
@@ -213,6 +214,11 @@
      kpi = the tracker's; mtg = the meeting code; jf = a JotForm (no sign-in); open = no sign-in.
      tags: the words people use for it. until: hidden after that day. */
   var TILES = [
+    /* My day (26 Oct 2026: "make available as a view on the branch apps as my day"): check in, the progress bar and
+       what is next, signed in by this app (the tracker asks RR Operations who the sign-in is). Not for agents. */
+    { sec: 'Every day', id: 'myday', name: 'My day', ic: 'cal', to: 'alsm', href: '/myworkday/?app=1',
+      tags: 'my day my workday check in checkin register sign in progress plan bar achieved next project close off attendance',
+      blurb: { a: 'Project your day and close it off, with or without the e-mail', l: 'Check in, your progress bar and your unit', s: 'Check in, your progress bar and what is next', m: 'Check in, your day, every desk\'s bar and the register' } },
     { sec: 'Every day', id: 'logbook', name: 'Log Book', ic: 'book', to: 'alsm', href: '/rroperations/logbook/',
       tags: 'digital log log book documents papers bag mailbag hand in jotform log',
       blurb: { a: 'Log your documents and see where each one is', l: 'Your documents, and your team\'s', s: 'Receive, sign for and route the papers', m: 'Every line in the branch' } },
@@ -232,6 +238,9 @@
     { sec: 'Clients and queries', id: 'quote', name: 'Quote & apply', ic: 'shield', to: 'alsm', href: '/quote/',
       tags: 'quote quotation motor property critical illness key person oas enrolment xpress life apply application new business jotform',
       blurb: { a: 'Quote a client and the request files itself under your name', l: 'Your team\'s quote requests', s: 'Motor, property, critical illness, key person, OAS and Xpress Life', m: 'Every quote request, with its reference' } },
+    { sec: 'Clients and queries', id: 'motorquote', name: 'Motor quote', ic: 'shield', to: 'alsm', href: '/motor-quote/', si: 'code',
+      tags: 'motor quote car vehicle dealer invoice renewal producer jotform new platform',
+      blurb: { a: 'Place a motor quote for your client: you are the producer', l: 'Motor quotes for your clients and your team\'s', s: 'A motor quote; renewals go to the renewal portal', m: 'The new motor quote, with Salesforce filled in' } },
     { sec: 'Clients and queries', id: 'factfind', name: 'Fact Find', ic: 'form', to: 'alm', href: 'https://factfind360.com/ffproject', si: 'ff',
       tags: 'fact find factfind360 ff client needs',
       blurb: 'Complete a client fact find' },
@@ -244,6 +253,9 @@
     { sec: 'Every day', id: 'billing', name: 'Group billing', ic: 'cash', to: 'sm', href: '/groupclientmanagement/billing.html',
       tags: 'group billing billings bills invoice health life pension list bill statement send now approve 26th',
       blurb: { s: 'Upload the month’s group bills, check them and approve them for the 26th', m: 'Every group’s bills: upload, check, approve, send' } },
+    { sec: 'Every day', id: 'renewals', name: 'Renewal desk', ic: 'renew', to: 'sm', href: '/renewaldesk/',
+      tags: 'renewal renewals general insurance gi ggil guardian general motor home property liability pl workers compensation machinery bond marine notice crms risk to renew',
+      blurb: { s: 'Next month’s general insurance renewals: last year, the notice, the letter, the client’s yes', m: 'Every general insurance renewal by month, and the letters to approve' } },
     { sec: 'Clients and queries', id: 'groups', name: 'Group clients', ic: 'building', to: 'sm', href: '/groupclientmanagement/',
       tags: 'group groups employer billing monday letters',
       blurb: 'Your employer groups and the Monday letters' },
@@ -296,6 +308,9 @@
     { sec: 'Learn', id: 'lbfilm', name: 'Log Book film', ic: 'play', to: 'alsm', href: { a: '/logbookdemoagent/', l: '/logbookdemoagent/', s: '/logbookdemostaff/', m: '/rroperations/logbook/films.html' }, si: 'open',
       tags: 'film video log book',
       blurb: 'How it works, in two minutes' },
+    { sec: 'Learn', id: 'mqfilm', name: 'Motor quote film', ic: 'play', to: 'alsm', href: '/motorquotevideo/', si: 'open',
+      tags: 'film video motor quote launch jotform',
+      blurb: 'The new motor quote, in two minutes' },
     { sec: 'Learn', id: 'dbfilm', name: 'Delivery Book film', ic: 'play', to: 'sm', href: '/deliverybook-film/', si: 'open',
       tags: 'film video delivery book',
       blurb: 'Recording a cheque or contract, in under two minutes' },
@@ -357,12 +372,12 @@
       ['Check your team\'s clients', 'The clients board shows each of your agents\' clients and who has nothing logged.', 'board'],
       ['Your team against its goals', 'The Flight Plan and the fact find insights show each agent\'s year so far.', 'goals'] ] },
     s: { title: 'Your day', steps: [
-      ['Check in from your morning e-mail', 'It arrives half an hour before you start. Press Check in: that is the register, and your day is laid out on that page.', ''],
+      ['Check in on My day', 'Open My day here, or from your morning e-mail, and press Check in: that is the register. Your progress bar and what is next are on the same page.', 'myday'],
       ['Receive the papers and make the bag', 'Sign for each document in the Log Book; the Transmittal tab prints the bag for each department.', 'logbook'],
       ['Record every cheque and contract handed over', 'Each cheque, policy contract or certificate given to a client or an agent goes in the Delivery Book (not the Log Book), and the client is told.', 'delivery-book'],
       ['Before 10 am: the premium letters', 'Tick each letter you have checked on the Premium Due Desk. Group letters are approved during the week for Monday.', 'premium'] ] },
     m: { title: 'Your day', steps: [
-      ['Check in and start your day', 'Your 5:00 e-mail: Check in and start my day opens My branch, the same link every day.', ''],
+      ['Check in and start your day', 'My day: Check in, your progress and every desk\'s bar. Your 5:00 e-mail opens My branch.', 'myday'],
       ['Start with what is urgent', 'The clients board opens on Urgent: call-backs, pressing answers and the late ones.', 'board'],
       ['Check the Log Book', 'Late lines, departments that said No, contracts at day 15. The 5 pm digest has the same.', 'logbook'],
       ['Group letters for Monday', 'Approve or rehearse before the 10 am run.', 'groups'] ] }
@@ -396,7 +411,7 @@
 
   var next = (new URLSearchParams(location.search).get('next') || '').replace(/[^a-z-]/g, '');
 
-  var SI = { ff: 'Fact find sign-in', kpi: 'Tracker sign-in', mtg: 'Meeting code', open: 'No sign-in', jf: 'JotForm' };
+  var SI = { ff: 'Fact find sign-in', kpi: 'Tracker sign-in', mtg: 'Meeting code', open: 'No sign-in', jf: 'JotForm', code: 'E-mail code' };
   var LOCK = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   var TICK = '<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>';
   var SEC_ORDER = ['Every day', 'Clients and queries', 'Goals and reports', 'Walls', 'Meetings', 'Forms', 'Learn'];

@@ -18,6 +18,28 @@
 # rendered audio — scene boundaries just before each line, a beat of silence
 # after it, counters firing on the words that name them. Estimated timings
 # are how the last film shipped silent and looked fine.
+# ── RENDERING FROM INSIDE A CLAUDE SANDBOX ────────────────────────────────
+# edge-tts talks to the speech endpoint over a WebSocket, and behind the agent
+# proxy the plain CLI fails with SSLCertVerificationError — "self-signed
+# certificate in certificate chain". That is NOT the WebSocket being blocked,
+# which is what it looks like and what cost an afternoon. It is edge_tts
+# pinning its own SSL context:
+#
+#     edge_tts/communicate.py:  _SSL_CTX = ssl.create_default_context(cafile=certifi.where())
+#
+# It never reads SSL_CERT_FILE or REQUESTS_CA_BUNDLE, so appending the proxy CA
+# to certifi does nothing. Replace the context and pass the proxy explicitly and
+# it goes straight through:
+#
+#     import ssl, os, asyncio, edge_tts, edge_tts.communicate as C
+#     C._SSL_CTX = ssl.create_default_context(cafile="/root/.ccr/ca-bundle.crt")
+#     proxy = os.environ.get("HTTPS_PROXY")
+#     asyncio.run(edge_tts.Communicate(text, VOICE, rate=RATE, proxy=proxy).save(out))
+#
+# On a normal machine none of that is needed — the plain `edge-tts` calls below
+# work as written.
+# ──────────────────────────────────────────────────────────────────────────
+
 set -euo pipefail
 cd "$(dirname "$0")"
 

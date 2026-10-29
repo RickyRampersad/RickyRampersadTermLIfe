@@ -17,7 +17,8 @@
 <style>
   :root{
     --mid:#2C5FA8;--mid2:#2C5FA8;--blue:#3A7BD5;--blue2:#4C94E6;--cyan:#7CC8F5;--cyan2:#1FA8A0;--amber:#FFB020;--gold:#efc24b;--sky:#EAF3FD;
-    --ink:#1B2A44;--body:#3A4A66;--dim:#6F7F9C;--line:#DDE6F2;--card:#fff;--soft:#F3F7FC;--ok:#0F8A5F;--okbg:#E6F7EF;--bad:#C0392B;--badbg:#FDECEA;--warn:#7A4B00;--warnbg:#FFF4DB
+    --ink:#1B2A44;--body:#3A4A66;--dim:#6F7F9C;--line:#DDE6F2;--card:#fff;--soft:#F3F7FC;--ok:#0F8A5F;--okbg:#E6F7EF;
+    --rn:#0B6F69;--rn2:#138A82;--rnbg:#E5F5F3;--qt:#2C5FA8;--qt2:#3A7BD5;--qtbg:#EAF3FD;--ac:#4F44C2;--ac2:#7468E4;--acbg:#EFEDFD;--bad:#C0392B;--badbg:#FDECEA;--warn:#7A4B00;--warnbg:#FFF4DB
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
@@ -29,6 +30,8 @@
   .mark img{width:100%;height:100%;display:block}
   .brand{color:#fff;font-weight:800;font-size:16px;line-height:1.2;flex:1;letter-spacing:.01em}
   .brand i{display:block;font-style:normal;font-weight:600;font-size:11.5px;color:#EAF3FD;letter-spacing:.06em;text-transform:uppercase}
+  @media (max-width:430px){.brand .gg{display:none}}
+  @media (max-width:400px){header{padding:10px 12px;gap:9px}.mark{width:40px;height:40px;border-radius:11px}.brand{font-size:14.5px}.brand i{font-size:10.5px}.who b{max-width:96px}}
   .who{color:#EAF3FD;font-size:12.5px;text-align:right;line-height:1.3}
   .who b{display:block;color:#fff;font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .who button{font:inherit;font-size:12px;color:#fff;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
@@ -158,18 +161,396 @@
   .why div:nth-child(2){animation-delay:.1s}.why div:nth-child(3){animation-delay:.2s}
   .why div b{display:block;font-size:20px;margin:0 0 2px}
   @media (max-width:420px){.why{grid-template-columns:1fr 1fr 1fr;gap:6px}.why div{padding:8px 7px 6px;font-size:11.5px}}
+  /* the two doors to a quote */
+  .doors{display:grid;grid-template-columns:1fr;gap:12px;margin:4px 0 8px}
+  @media (min-width:600px){.doors{grid-template-columns:1.25fr 1fr}}
+  .door{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;font:inherit;color:var(--body);background:#fff;border:1.5px solid #CFDDF0;border-radius:18px;padding:16px 16px 15px;cursor:pointer;min-height:118px;overflow:hidden;transition:transform .14s,box-shadow .18s,border-color .18s;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .door:nth-child(2){animation-delay:.08s}
+  .door:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(58,123,213,.16);border-color:var(--blue2)}
+  .door:active{transform:scale(.98)}
+  .door .ic{font-size:28px;line-height:1;width:50px;height:50px;border-radius:14px;display:grid;place-items:center;background:var(--sky);margin:0 0 6px}
+  .door b{color:var(--ink);font-size:17px}
+  .door small{color:var(--dim);font-size:13.5px;line-height:1.4}
+  .door.primary{background:linear-gradient(135deg,#3A7BD5 0%,#4C94E6 70%,#62B0EE 120%);border-color:transparent;color:#fff;box-shadow:0 10px 26px rgba(58,123,213,.3)}
+  .door.primary b{color:#fff}.door.primary small{color:#EAF3FD}
+  .door.primary .ic{background:rgba(255,255,255,.2)}
+  .door.primary:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.28) 50%,transparent 70%);transform:translateX(-120%);animation:sheen 3.6s ease-in-out 1s infinite}
+  .door .tag{position:absolute;top:12px;right:12px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#fff;color:var(--blue);border-radius:999px;padding:4px 9px}
+  .door input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+  .linkbtn{font:inherit;font-size:14px;font-weight:700;color:var(--blue);background:none;border:0;padding:8px 2px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  /* the renewal, first on the home screen */
+  .rnw{border:1.5px solid #CFE0F5;border-radius:20px;padding:16px;margin:0 0 14px;background:linear-gradient(180deg,#F5F9FE 0%,#fff 60%);animation:rise .55s cubic-bezier(.2,.8,.2,1) both;position:relative;overflow:hidden}
+  .rnw:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--blue2),var(--cyan2))}
+  .rnw.lapsed:before{background:linear-gradient(180deg,#E0703A,var(--bad))}
+  .rnw-top{display:flex;gap:14px;align-items:center}
+  .ring{--p:50;--c:var(--blue);width:78px;height:78px;border-radius:50%;flex:none;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--p)*1%),#E3ECF7 0);position:relative;animation:pop .6s cubic-bezier(.2,1.4,.3,1) both}
+  .ring:before{content:"";position:absolute;inset:7px;border-radius:50%;background:#fff}
+  .ring span{position:relative;text-align:center;line-height:1}
+  .ring b{display:block;font-size:24px;color:var(--ink);font-weight:900}
+  .ring small{font-size:10.5px;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  .rnw.lapsed .ring{--c:var(--bad)}
+  .rnw h3{margin:2px 0 2px;color:var(--ink);font-size:18px;line-height:1.25}
+  .rnw .when{font-size:14px;color:var(--body)}
+  .rnw .when b{color:var(--ink)}
+  .facts{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none}
+  .facts li{background:#fff;border:1px solid #DCE7F5;border-radius:10px;padding:5px 11px;font-size:12.5px;color:var(--body);animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+  .facts li:nth-child(2){animation-delay:.06s}.facts li:nth-child(3){animation-delay:.12s}.facts li:nth-child(4){animation-delay:.18s}.facts li:nth-child(n+5){animation-delay:.24s}
+  .tl{list-style:none;margin:14px 0 0;padding:0 0 0 18px;border-left:2px solid #DCE7F5}
+  .tl li{position:relative;padding:0 0 10px 6px;font-size:13.5px;color:var(--body)}
+  .tl li:before{content:"";position:absolute;left:-25px;top:4px;width:10px;height:10px;border-radius:50%;background:#fff;border:2.5px solid var(--blue2)}
+  .tl li:first-child:before{background:var(--blue2);box-shadow:0 0 0 4px rgba(76,148,230,.18)}
+  .tl li b{color:var(--ink)}
+  .tl .k{display:block;font-size:12.5px;color:var(--dim)}
+  .rnw-act{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 0}
+  .rnw-port{margin:14px 0 0;display:flex;flex-direction:column;gap:6px}
+  .rnw-port .send{margin:0;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center}
+  .rnw-port small{color:var(--dim);font-size:13px;line-height:1.45}
+  .rnw-port.lone{border:1.5px dashed #BFE3DF;border-radius:16px;padding:14px;background:#F7FCFB;margin:14px 0 0}
+  .rnw-port.lone b{color:var(--ink);font-size:15px}
+  .rnw-port.find .rf-row{display:flex;gap:8px;margin:4px 0 0}
+  .rnw-port.find .rf-row .fld{flex:1;min-width:0;text-transform:uppercase;font-size:max(16px,1rem)}
+  .rnw-port.find .rf-row .send{flex:none;width:auto;padding:0 18px}
+  .rnw-port.find .msg{font-size:14px;line-height:1.5;color:var(--body);margin:8px 0}
+  .rnw-port.find .msg.bad{color:var(--bad)}
+  .brief{border:1px solid #CFE2F7;background:linear-gradient(180deg,#F5FAFF,#fff);border-radius:16px;padding:14px 15px;margin:12px 0 16px}
+  .brief .bh{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:14.5px}
+  .brief .bh svg.i{color:#7B5CD6;width:20px;height:20px}
+  .brief .bs{margin:8px 0 0;font-size:15px;line-height:1.55;color:var(--body)}
+  .brief .bq{margin:12px 0 0;display:flex;flex-direction:column;gap:8px}
+  .brief .bq>small{color:var(--dim);font-size:12.5px;font-weight:600}
+  .brief .bc{display:flex;gap:10px;align-items:center;justify-content:space-between;background:#fff;border:1px solid #E1EAF5;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.45;color:var(--body)}
+  .brief .bc button{flex:none;border:1.5px solid var(--ac,#3A7BD5);background:#fff;color:var(--ac,#2C5FA8);border-radius:999px;padding:7px 12px;font:600 13px/1.1 inherit;font-family:inherit;cursor:pointer;min-height:36px}
+  .brief .bc button.on{background:#E9F7EF;border-color:#2E9E62;color:#1E7A48}
+  .brief .bf{display:block;margin:10px 0 0;color:var(--dim);font-size:12px}
+  .brief .bwait{margin:8px 0 0;color:var(--dim);font-size:14px;display:flex;align-items:center;gap:6px}
+  .brief .bwait span{width:6px;height:6px;border-radius:50%;background:#9DB8DC;display:inline-block}
+  @media (prefers-reduced-motion:no-preference){.brief .bwait span{animation:bdot 1.1s infinite ease-in-out}.brief .bwait span:nth-child(2){animation-delay:.15s}.brief .bwait span:nth-child(3){animation-delay:.3s}
+    @keyframes bdot{0%,80%,100%{opacity:.3;transform:none}40%{opacity:1;transform:translateY(-3px)}}}
+  @media (max-width:480px){.brief .bc{flex-direction:column;align-items:stretch}.brief .bc button{align-self:flex-start}}
+  .rnw-act .send,.rnw-act .ghost{margin:0;min-height:50px;font-size:15px}
+  @media (max-width:380px){.rnw-act{grid-template-columns:1fr}}
+  /* read from the client's document */
+  .docnote{display:flex;gap:11px;align-items:flex-start;background:linear-gradient(135deg,#EAF3FD,#E9F8F6);border:1px solid #C9DDF5;border-radius:14px;padding:12px 13px;margin:0 0 14px;font-size:14px;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .docnote .ic{font-size:22px;line-height:1}
+  .docnote b{color:var(--ink)}
+  .fromdoc{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#0E6E68;background:#DDF4F1;border-radius:999px;padding:2px 7px;vertical-align:middle}
+  .fld.got{background:#F2FBFA;border-color:#9BD9D2;animation:glow 1.6s ease-out both}
+  .reading{position:fixed;inset:0;z-index:20;background:rgba(17,35,64,.55);backdrop-filter:blur(3px);display:grid;place-items:center;padding:20px}
+  .reading .box{background:#fff;border-radius:22px;padding:24px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.25);animation:pop .4s cubic-bezier(.2,1.4,.3,1) both}
+  .reading .doc{width:96px;height:120px;margin:0 auto 14px;border-radius:10px;background:#fff;border:2px solid #CFDDF0;position:relative;overflow:hidden;box-shadow:0 8px 18px rgba(58,123,213,.15)}
+  .reading .doc i{display:block;height:6px;border-radius:3px;background:#E3ECF7;margin:12px 12px 0}
+  .reading .doc i:nth-child(2){width:50%}.reading .doc i:nth-child(4){width:65%}
+  .reading .doc:after{content:"";position:absolute;left:0;right:0;height:26px;top:-26px;background:linear-gradient(180deg,transparent,rgba(31,168,160,.45),transparent);animation:scan 1.6s ease-in-out infinite}
+  .reading b{display:block;color:var(--ink);font-size:17px;margin:0 0 4px}
+  .reading small{color:var(--dim);font-size:13px}
+  .takedoor{display:flex;gap:12px;align-items:center;width:100%;text-align:left;font:inherit;color:var(--body);background:linear-gradient(135deg,#F4F2FE,#EEF5FD);border:1.5px solid #CFCAF6;border-radius:16px;padding:13px 14px;margin:4px 0 6px;cursor:pointer;transition:transform .12s,box-shadow .15s}
+  .takedoor:hover{box-shadow:0 8px 20px rgba(79,68,194,.16);transform:translateY(-1px)}
+  .takedoor .ic{font-size:24px;width:46px;height:46px;border-radius:12px;background:#fff;display:grid;place-items:center;flex:none}
+  .takedoor b{display:block;color:var(--ink);font-size:15.5px}.takedoor small{display:block;color:var(--dim);font-size:13px;line-height:1.4}
+  .takedoor .go{margin-left:auto;color:var(--ac2);font-weight:800;font-size:20px}
+  .kyp{border:1.5px solid var(--line);border-radius:16px;padding:13px 14px 4px;margin:0 0 12px;background:#fff}
+  .kyp p{font-size:14px;color:var(--body);margin:0 0 10px}
+  .kypinfo{background:var(--soft);border-radius:12px;padding:10px 12px;font-size:13.5px;margin:0 0 12px}
+  .decl{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:13.5px;max-height:320px;overflow:auto;margin:0 0 12px}
+  .decl p{margin:0 0 8px}
+  .sigbox{display:block;border:2px dashed #9DBBE4;border-radius:14px;background:#fff;overflow:hidden}
+  .sigbox{position:relative}
+  .sigbox canvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair;position:relative;z-index:1}
+  .sigline{position:absolute;left:18px;right:18px;bottom:26%;border-bottom:2px solid #C9D8EE;font-style:normal;color:#9DBBE4;font-weight:800;font-size:18px;line-height:1;padding:0 0 4px}
+  .sigfoot{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin:8px 0 0;font-size:13.5px;color:var(--body)}
+  .accrow{border-left:3px solid var(--line);padding-left:12px;margin:0 0 12px}
+  .accrow .rt{display:block;color:var(--ink);font-size:13.5px;margin:0 0 8px}.accrow .rt span{color:var(--dim);font-weight:500}
+  details.more{border:1.5px dashed #C9DDF5;border-radius:14px;padding:4px 14px;margin:6px 0 14px;background:#FAFCFE}
+  details.more[open]{padding-bottom:6px}
+  details.more summary{cursor:pointer;list-style:none;padding:10px 0;display:flex;flex-direction:column;gap:2px}
+  details.more summary::-webkit-details-marker{display:none}
+  details.more summary b{color:var(--c,var(--blue));font-size:15px}details.more summary b:after{content:" ›";display:inline-block;transition:transform .2s}
+  details.more[open] summary b:after{transform:rotate(90deg)}
+  details.more summary small{color:var(--dim);font-size:12.5px}
+  .formcard{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;border:1.5px solid #C9DDF5;background:var(--sky);border-radius:14px;padding:12px 14px;margin:14px 0 4px}
+  .formcard .ic{font-size:24px}.formcard>span:nth-child(2){flex:1;min-width:180px}
+  .formcard b{display:block;color:var(--ink);font-size:14.5px}.formcard small{color:var(--dim);font-size:12.5px}
+  .formcard .ghost{width:auto;margin:0;padding:9px 14px;min-height:42px}
+
+  /* three paths, never mixed: a renewal (teal), a new quote (blue), accepting a quote (violet) */
+  .t-renew{--c:var(--rn);--c2:var(--rn2);--bg:var(--rnbg)}
+  .t-quote{--c:var(--qt);--c2:var(--qt2);--bg:var(--qtbg)}
+  .t-take{--c:var(--ac);--c2:var(--ac2);--bg:var(--acbg)}
+  .paths{display:grid;grid-template-columns:1fr;gap:10px;margin:2px 0 6px}
+  @media (min-width:640px){.paths{grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:12px}}
+  .path{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--body);background:#fff;border:1.5px solid var(--line);border-left:6px solid var(--c2);border-radius:16px;padding:12px 14px;min-height:68px;cursor:pointer;position:relative;overflow:hidden;transition:transform .14s,box-shadow .18s,border-color .18s;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .path:nth-child(2){animation-delay:.07s}.path:nth-child(3){animation-delay:.14s}
+  .path:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(30,60,120,.12)}
+  .path:active{transform:scale(.98)}
+  .path:focus-visible{outline:3px solid var(--c2);outline-offset:2px}
+  @media (min-width:640px){.path{flex-direction:column;align-items:stretch;border-left-width:1.5px;border-top:6px solid var(--c2);padding:16px 16px 14px;min-height:168px;gap:8px}}
+  .path .pi{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,var(--c),var(--c2));color:#fff;display:grid;place-items:center;font-size:22px;flex:none;box-shadow:0 6px 14px rgba(20,40,90,.18)}
+  .path .pt{flex:1;min-width:0}
+  .path b{display:block;color:var(--ink);font-size:17px;line-height:1.25}
+  .path small{display:block;color:var(--dim);font-size:13.5px;line-height:1.35;margin-top:2px}
+  .path em{display:inline-block;font-style:normal;background:var(--bg);color:var(--c);font-weight:800;font-size:12px;border-radius:999px;padding:4px 10px;white-space:nowrap;margin-top:7px}
+  @media (min-width:640px){.path .pt{display:flex;flex-direction:column;height:100%}.path em{margin-top:auto;align-self:flex-start}}
+  .path .go{color:var(--c2);font-weight:900;font-size:20px;flex:none}
+  @media (min-width:640px){.path .go{display:none}}
+  div.path{cursor:default}div.path:hover{transform:none;box-shadow:none}
+  .track{margin:26px 0 0;scroll-margin-top:84px;border-radius:18px;transition:box-shadow .3s}
+  /* Due now: the first thing under the welcome (29 October 2026) */
+  .duetop{margin:16px 0 18px;padding:14px;border-radius:18px;background:linear-gradient(180deg,#EAF8F6,#fff 70%);border:1.5px solid #BFE3DF}
+  .duetop .dueh{display:flex;gap:12px;align-items:center;margin:0 0 4px}
+  .duetop .dueh .tn{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--rn),var(--rn2));color:#fff;display:grid;place-items:center;flex:none}
+  .duetop .dueh b{display:block;color:var(--ink);font-size:18px}.duetop .dueh small{color:var(--dim);font-size:13.5px}
+  .duetop .rnw{margin-top:12px}
+  .gdue{display:flex;gap:12px;align-items:center;background:#fff;border:1.5px solid #BFE3DF;border-radius:16px;padding:12px 14px;margin:12px 0 0}
+  .gdue .gi{width:44px;height:44px;border-radius:12px;background:var(--rnbg);color:var(--rn);display:grid;place-items:center;flex:none}
+  .gdue .gt{flex:1;min-width:0}.gdue b{display:block;color:var(--ink);font-size:15.5px}.gdue small{display:block;color:var(--dim);font-size:13px;line-height:1.4}
+  .gdue .send{width:auto;margin:0;padding:0 14px;min-height:44px;flex:none}
+  @media (max-width:480px){.gdue{flex-wrap:wrap}.gdue .send{width:100%}}
+  /* Everything they hold with us */
+  .t-hold{--c:#2C5FA8;--c2:#4C94E6;--bg:#EAF3FD}
+  .hold-g{margin:6px 0 0}.hold-g>h4{margin:14px 0 8px;font-size:14px;color:var(--ink);letter-spacing:.02em}
+  .hold-g>h4 small{font-weight:600;color:var(--dim);font-size:12.5px;margin-left:6px}
+  .months{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin:6px 0 12px}
+  .months span{text-align:center;font-size:10.5px;color:var(--dim);padding:5px 0 4px;border-radius:7px;background:#F3F6FA;position:relative}
+  .months span.on{background:var(--rnbg);color:var(--rn);font-weight:800}
+  .months span.now{outline:2px solid var(--c2);outline-offset:-2px}
+  .months span i{display:block;height:6px;width:6px;border-radius:50%;margin:3px auto 0;background:transparent}
+  .months span.on i{background:var(--rn2)}
+  .pol{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin:0 0 8px}
+  .pol .pk{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:#EEF4FC;color:#2C5FA8}
+  .pol .pk.gen{background:var(--rnbg);color:var(--rn)}
+  .pol .pb{flex:1;min-width:0}.pol b{display:block;color:var(--ink);font-size:15px;line-height:1.3}
+  .pol small{display:block;color:var(--dim);font-size:13px;line-height:1.45}
+  .pol .st{display:inline-block;margin-top:5px;font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px;background:#E9F7EF;color:#1E7A48}
+  .pol .st.app{background:#FFF4DE;color:#8A5A00}.pol .st.cur{background:#EEF4FC;color:#2C5FA8}
+  .pol .rm{flex:none;text-align:right;font-size:12px;color:var(--dim);line-height:1.35}.pol .rm b{display:block;font-size:14.5px;color:var(--rn)}.pol .rm small{display:block;font-size:12px;color:var(--dim)}
+  @media (max-width:480px){.pol{flex-wrap:wrap}.pol .pb{flex:1 1 calc(100% - 60px)}.pol .rm{flex-basis:100%;text-align:left;padding-left:56px;margin-top:-2px}.pol .rm b{display:inline}.pol .rm small{display:inline;margin-left:6px}}
+  .hold-more{font-size:13px;color:var(--dim);margin:4px 0 0}
+  /* Ideas for you */
+  .t-opp{--c:#6B4BC8;--c2:#8F6CF0;--bg:#F2EDFE}
+  .opp{display:flex;gap:12px;align-items:flex-start;border:1.5px solid #E2D8FB;background:linear-gradient(180deg,#FAF7FF,#fff);border-radius:16px;padding:13px 14px;margin:0 0 10px}
+  .opp .oi{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--c),var(--c2));color:#fff;display:grid;place-items:center;flex:none}
+  .opp .ob{flex:1;min-width:0}.opp b{display:block;color:var(--ink);font-size:15.5px}.opp p{margin:3px 0 9px;font-size:13.5px;line-height:1.5;color:var(--body)}
+  .opp .send{width:auto;display:inline-flex;align-items:center;margin:0;padding:0 16px;min-height:44px;font-size:15px;line-height:1.25;text-decoration:none;background:linear-gradient(135deg,var(--c),var(--c2))}
+  .opp-note{font-size:12px;color:var(--dim);margin:2px 0 0}
+  .track.flash{animation:flash 1.4s ease-out}
+  .th{display:flex;gap:12px;align-items:center;margin:0 0 12px;padding:0 0 10px;border-bottom:2px solid var(--bg)}
+  .th .tn{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--c),var(--c2));color:#fff;display:grid;place-items:center;font-size:20px;flex:none}
+  .th .tt{flex:1;min-width:0}
+  .th b{display:block;color:var(--ink);font-size:clamp(17px,1rem + .4vw,20px);line-height:1.2}
+  .th small{display:block;color:var(--dim);font-size:13px}
+  .th .lbl{flex:none;font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--c);background:var(--bg);border-radius:999px;padding:5px 10px}
+  @media (max-width:599px){.th .lbl{display:none}}
+  .journey{display:flex;align-items:flex-start;margin:0 0 14px;padding:13px 4px 11px;background:var(--bg);border-radius:14px;list-style:none;counter-reset:j}
+  .journey li{flex:1;min-width:0;text-align:center;font-size:12px;line-height:1.3;color:var(--ink);position:relative;padding:0 3px;font-weight:600;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .journey li:nth-child(2){animation-delay:.1s}.journey li:nth-child(3){animation-delay:.2s}.journey li:nth-child(4){animation-delay:.3s}
+  .journey li:before{counter-increment:j;content:counter(j);display:grid;place-items:center;width:28px;height:28px;margin:0 auto 6px;border-radius:50%;background:#fff;border:2.5px solid var(--c2);color:var(--c);font-weight:900;font-size:13px;position:relative;z-index:1}
+  .journey li:after{content:"";position:absolute;top:13px;left:calc(50% + 17px);right:calc(-50% + 17px);height:3px;background:repeating-linear-gradient(90deg,var(--c2) 0 6px,transparent 6px 11px);background-size:11px 3px;animation:march 1s linear infinite}
+  .journey li:last-child:after{display:none}
+  @media (min-width:600px){.journey li{font-size:13px}}
+  .t-renew .rnw:before{background:linear-gradient(180deg,var(--rn2),var(--rn))}
+  .t-renew .rnw{border-color:#BFE3DF;background:linear-gradient(180deg,#F1FAF9 0%,#fff 60%)}
+  .t-renew .ring{--c:var(--rn2)}
+  .t-renew .rnw .eyebrow{color:var(--rn)}
+  .t-renew .tl li:before{border-color:var(--rn2)}.t-renew .tl li:first-child:before{background:var(--rn2);box-shadow:0 0 0 4px rgba(21,154,146,.18)}
+  .send.tc{background:linear-gradient(135deg,var(--c2) 0%,var(--c) 100%);box-shadow:0 8px 20px rgba(20,40,90,.22)}
+  .ghost.tc{color:var(--c);border-color:var(--c2)}
+  /* a premium chart, a cover-year bar, a request tracker */
+  .pchart{margin:14px 0 0;background:#fff;border:1px solid #DCE7F5;border-radius:14px;padding:12px 12px 10px}
+  .pc-h{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 10px;font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--c,var(--blue));margin:0 0 6px}
+  .pc-h span{letter-spacing:0;text-transform:none;font-weight:700;color:var(--body)}
+  .pc-bars{display:flex;align-items:flex-end;justify-content:center;gap:16px;height:128px;border-bottom:1.5px solid var(--line);padding:0 4px}
+  .pc-col{flex:0 1 120px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0}
+  .pc-v{font-size:11.5px;font-weight:800;color:var(--ink);margin:0 0 4px;white-space:nowrap}
+  .pc-b{display:block;width:min(58px,100%);min-height:6px;border-radius:8px 8px 2px 2px;background:#C7E7E3;transform-origin:bottom;animation:grow .9s cubic-bezier(.2,.8,.2,1) both}
+  .pc-col.now .pc-b{background:linear-gradient(180deg,var(--rn2),var(--rn))}
+  .pc-ys{display:flex;justify-content:center;gap:16px;padding:5px 4px 0}
+  .pc-ys span{flex:0 1 120px;text-align:center;font-size:11.5px;color:var(--dim);font-weight:700;min-width:0}
+  @media (min-width:760px){.rnw-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}.rnw-grid .tl{margin-top:20px}}
+  .yr{display:block;height:8px;border-radius:99px;background:#E3ECF7;overflow:hidden;margin:8px 0 4px}
+  .yr i{display:block;height:100%;width:var(--w);border-radius:99px;background:linear-gradient(90deg,var(--rn2),var(--rn));transform-origin:left;animation:growx 1s cubic-bezier(.2,.8,.2,1) both}
+  .yr.end i{background:linear-gradient(90deg,#E0703A,var(--bad))}
+  .veh .vt{flex:1;min-width:0}
+  .veh .yrl{font-size:12.5px;color:var(--body)}
+  .veh .yrl b{display:inline;font-size:12.5px;color:var(--ink)}
+  .veh .act{display:inline-block!important;margin-top:8px;font-size:12.5px;font-weight:800;color:var(--c)!important;background:var(--bg);border-radius:999px;padding:5px 11px;white-space:nowrap}
+  .reqsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
+  .reqsum div{background:var(--soft);border-radius:12px;padding:10px;text-align:center;font-size:12px;color:var(--dim);font-weight:700;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .reqsum b{display:block;font-size:24px;color:var(--ink);font-weight:900;line-height:1.1}
+  .req{border:1.5px solid var(--line);border-left:6px solid var(--c2,var(--blue2));border-radius:14px;padding:13px 14px;margin:0 0 10px;font-size:14px;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .req .rh{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
+  .req .kind{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--c);background:var(--bg);border-radius:999px;padding:4px 9px}
+  .req .rm{color:var(--dim);font-size:12.5px}
+  .req .rv{color:var(--ink);font-weight:700;margin:6px 0 2px}
+  .trk{display:flex;list-style:none;margin:10px 0 2px;padding:0;position:relative}
+  .trk li{flex:1;min-width:0;text-align:center;font-size:11px;line-height:1.25;color:var(--dim);font-weight:700;position:relative;padding:0 2px}
+  .trk li:before{content:"";display:block;width:16px;height:16px;margin:0 auto 5px;border-radius:50%;background:#fff;border:3px solid var(--line);position:relative;z-index:1;box-sizing:border-box}
+  .trk li:after{content:"";position:absolute;top:6.5px;left:calc(50% + 8px);right:calc(-50% + 8px);height:3px;background:var(--line)}
+  .trk li:last-child:after{display:none}
+  .trk li.done{color:var(--ink)}
+  .trk li.done:before{background:var(--c2);border-color:var(--c2)}
+  .trk li.done:after{background:linear-gradient(90deg,var(--c2),var(--c2));transform-origin:left;animation:growx .8s cubic-bezier(.2,.8,.2,1) both}
+  .trk li.now{color:var(--c)}
+  .trk li.now:before{border-color:var(--c2);box-shadow:0 0 0 0 var(--c2);animation:beat 1.8s ease-out infinite}
+  .trk.big li{font-size:12.5px}
+  .trk.big li:before{width:24px;height:24px;margin-bottom:7px}
+  .trk.big li:after{top:10.5px;left:calc(50% + 12px);right:calc(-50% + 12px)}
+  .trk.big li.done:before{content:"✓";color:#fff;font-size:13px;font-weight:900;display:grid;place-items:center}
+  .flowtag{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:10px 12px;border-radius:14px;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.3}
+  .flowtag .pi{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--c),var(--c2));color:#fff;display:grid;place-items:center;font-size:18px;flex:none}
+  .flowtag b{display:block;color:var(--c);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase}
+  .flowtag span{display:block;min-width:0;overflow-wrap:anywhere}
+  #s-form > .card{border-top:6px solid var(--c2,var(--blue2))}
+  #s-form .stepper i.on:before{background:var(--c2,var(--blue));border-color:var(--c2,var(--blue))}
+  #s-form .stepper .fill{background:linear-gradient(90deg,var(--ok),var(--c2,var(--blue)))}
+  #s-form .eyebrow{color:var(--c,var(--blue2))}
+  #s-form .opts button{color:var(--c,var(--blue))}
+  #s-form .opts button:hover{border-color:var(--c2,var(--blue2))}
+  #s-form .opts button.on{color:#fff;background:linear-gradient(135deg,var(--c,var(--blue)),var(--c2,var(--blue2)))}
+  #s-form .nav .send{background:linear-gradient(135deg,var(--c2,var(--blue2)) 0%,var(--c,var(--blue)) 100%)}
+  .side h4{color:var(--c,var(--ink))}
+  #s-done .trk{margin:14px 0 6px}
+  .band .stats{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+  .band .stats span{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);border-radius:12px;padding:6px 11px;font-size:12.5px;font-weight:700;color:#fff;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .band .stats b{font-size:17px;font-weight:900;margin-right:4px}
+  @keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  @keyframes growx{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  @keyframes march{to{background-position:11px 0}}
+  @keyframes beat{0%{box-shadow:0 0 0 0 rgba(58,123,213,.45)}100%{box-shadow:0 0 0 9px rgba(58,123,213,0)}}
+  @keyframes flash{0%{box-shadow:0 0 0 0 rgba(58,123,213,0)}25%{box-shadow:0 0 0 6px rgba(58,123,213,.22)}100%{box-shadow:0 0 0 0 rgba(58,123,213,0)}}
+  @keyframes scan{from{top:-26px}to{top:120px}}
+  @keyframes sheen{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+  @keyframes glow{from{box-shadow:0 0 0 6px rgba(31,168,160,.28)}to{box-shadow:0 0 0 0 rgba(31,168,160,0)}}
   @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
   @keyframes ring{from{transform:scale(1);opacity:.7}to{transform:scale(2.2);opacity:0}}
   @keyframes float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 5px rgba(58,123,213,.18)}50%{box-shadow:0 0 0 9px rgba(58,123,213,.08)}}
+
+  /* who you are to us: the record we found, or the one question we ask */
+  .mecard{border:1.5px solid #CFDDF0;border-radius:18px;padding:15px 16px;margin:0 0 16px;background:linear-gradient(180deg,#F7FAFE,#fff);animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .mecard .mh{display:flex;gap:12px;align-items:center}
+  .mecard.agent{border-color:#B9D0F0;background:linear-gradient(180deg,#EEF5FF,#fff)}
+  .agpick{position:relative;margin:0 0 13px}
+  .agpick>b{display:block;color:var(--ink);font-size:14px;margin:0 0 6px}
+  .aglist{display:flex;flex-direction:column;gap:6px;margin:6px 0 0}
+  .aglist button{text-align:left;font:inherit;font-size:15px;padding:11px 13px;border-radius:12px;border:1.5px solid #CFDDF0;background:#fff;color:var(--ink);cursor:pointer;min-height:44px}
+  .aglist button:hover,.aglist button:focus-visible{border-color:var(--blue);background:var(--sky)}
+  .agsaid{display:block;font-size:13px;color:var(--dim);margin-top:6px}
+  .agsaid.ok{color:#1d7a4d;font-weight:600}
+  .mecard .mi{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;display:grid;place-items:center;font-size:21px;flex:none}
+  .mecard .mh b{display:block;color:var(--ink);font-size:16.5px;line-height:1.25}
+  .mecard .mh small{display:block;color:var(--dim);font-size:13.5px}
+  .mecard .ok{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:var(--ok);background:var(--okbg);border-radius:999px;padding:3px 10px;margin-left:auto;white-space:nowrap}
+  .mecard dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px;margin:12px 0 0}
+  .mecard dl div{background:#fff;border:1px solid #E1E9F4;border-radius:12px;padding:8px 11px;min-width:0}
+  .mecard dt{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+  .mecard dd{margin:2px 0 0;color:var(--ink);font-weight:700;font-size:14.5px;overflow-wrap:anywhere}
+  .pmt{margin:12px 0 0;border-radius:14px;padding:12px 13px;border:1px solid #DCE7F5;background:#fff}
+  .pmt .pt{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+  .pmt .pt b{color:var(--ink);font-size:15px;display:flex;gap:8px;align-items:center}
+  .pmt .pt b svg.i{color:var(--blue);width:1.3em;height:1.3em}
+  .pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:800;white-space:nowrap}
+  .pill.valid{background:var(--okbg);color:var(--ok)}.pill.soon{background:var(--warnbg);color:var(--warn)}.pill.expired{background:var(--badbg);color:var(--bad)}.pill.none{background:var(--soft);color:var(--dim)}
+  .pmt .pv{font-size:14px;color:var(--body);margin:6px 0 0}
+  .pmt form{margin:10px 0 0}
+  .pmt .msg{font-size:14px;margin:8px 0 0;font-weight:600;color:var(--ok)}
+  .pmt .msg.bad{color:var(--bad)}
+  .ask .two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 0}
+  .ask .two button{font:inherit;font-weight:800;font-size:14.5px;border-radius:14px;padding:12px 10px;min-height:48px;cursor:pointer;border:1.5px solid #CFDDF0;background:#fff;color:var(--blue)}
+  .ask .two button.on{background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;border-color:transparent}
+  .ask .said{font-size:14px;margin:10px 0 0}
+  .onfile{font-size:13px;color:var(--dim);margin:-6px 0 12px}
+  .onfile b{color:var(--ink)}
+  /* line icons, in the tile's white or the path's own colour */
+  svg.i{width:1.12em;height:1.12em;display:block;flex:none}
+  .door .ic,.veh .ic,.takedoor .ic,.file .ph{color:var(--blue)}
+  .door.primary .ic{color:#fff}
+  .takedoor .ic{color:var(--ac)}
+  .docnote .ic{color:var(--rn2)}
+  .formcard .ic{color:var(--blue)}
+  .req .kind svg.i,.flowtag b svg.i{display:inline-block;vertical-align:-.22em;width:1.3em;height:1.3em}
+  .sec .ic svg.i{width:1.15em;height:1.15em}
+  /* ── motion that pops ─────────────────────────────────────────────── */
+  @property --n{syntax:'<integer>';inherits:false;initial-value:0}
+  @property --p{syntax:'<number>';inherits:true;initial-value:0}
+  /* the band: a gradient that drifts, a road with a car on it */
+  .band{background-size:180% 180%;animation:bandmove 14s ease-in-out infinite alternate}
+  .band.has-scene{padding-bottom:70px}
+  .band>*:not(.waves){position:relative;z-index:1}
+  /* a soft light that drifts across the blue */
+  .band:before{content:"";position:absolute;left:-20%;top:-60%;width:70%;height:180%;background:radial-gradient(closest-side,rgba(255,255,255,.16),transparent);animation:glide 16s ease-in-out infinite alternate;pointer-events:none}
+  /* three waves at the foot, the front one the card's own white */
+  .waves{position:absolute;left:0;right:0;bottom:-1px;height:58px;overflow:hidden;pointer-events:none;z-index:0}
+  .waves svg{position:absolute;left:0;bottom:0;width:200%;height:100%;display:block;animation:wave 22s linear infinite}
+  .waves .w2{height:78%;animation-duration:15s;animation-direction:reverse}
+  .waves .w3{height:52%;animation-duration:30s}
+  .band .badge{width:58px;height:58px;border-radius:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.38);display:grid;place-items:center;margin:0 0 14px;box-shadow:0 10px 24px rgba(16,40,90,.18);animation:floaty 4s ease-in-out infinite}
+  .band .badge svg{width:30px;height:30px}
+  .band .badge path{stroke-dasharray:80;stroke-dashoffset:80;animation:draw 1.1s cubic-bezier(.65,0,.35,1) .3s forwards}
+  @media (min-width:900px){.band.has-scene{padding-bottom:78px}.waves{height:68px}}
+  /* numbers that count up, rings that fill */
+  .cu{--n:var(--to);counter-reset:n var(--n);animation:count 1.2s cubic-bezier(.2,.8,.2,1) .2s both}
+  .cu:after{content:counter(n);content:counter(n) / ""}
+  .vh,.ring span.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;margin:-1px;padding:0}
+  .ring{animation:pop .6s cubic-bezier(.2,1.4,.3,1) both,ringfill 1.3s cubic-bezier(.2,.8,.2,1) .2s both}
+  .ring:after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--c);opacity:0;animation:ring 2.4s ease-out 1.4s infinite}
+  /* a dot that travels along each path's steps */
+  .journey{position:relative;isolation:isolate}
+  .journey{--a:16.67%}.journey:has(li:nth-child(4)){--a:12.5%}
+  .journey:after{content:"";position:absolute;top:22px;left:var(--a);width:10px;height:10px;margin-left:-5px;border-radius:50%;background:var(--c2);box-shadow:0 0 0 4px rgba(255,255,255,.9),0 0 14px var(--c2);z-index:-1;animation:travel 3.4s cubic-bezier(.45,0,.25,1) .8s infinite}
+  .journey li:before{transition:transform .2s}
+  /* buttons: a ripple where you tap, a light that sweeps the main ones */
+  .send,.ghost,.opts button,.veh,.takedoor{position:relative;overflow:hidden}
+  .rip{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.28;transform:scale(0);animation:rip .65s ease-out forwards}
+  .send:not(:disabled):after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.32) 50%,transparent 65%);transform:translateX(-120%);animation:sheen 4.2s ease-in-out 1.4s infinite;pointer-events:none}
+  .send:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(58,123,213,.38)}
+  #s-form .opts button.on{animation:choose .38s cubic-bezier(.2,1.4,.3,1)}
+  /* icons pop in, and wiggle when you point at them */
+  .sec .ic,.th .tn,.path .pi,.door .ic,.takedoor .ic{animation:iconpop .65s cubic-bezier(.2,1.5,.3,1) .1s both}
+  .path:hover .pi,.door:hover .ic,.veh:hover .ic,.takedoor:hover .ic,.path:focus-visible .pi{animation:wiggle .6s ease}
+  .path.due .pi{animation:iconpop .65s cubic-bezier(.2,1.5,.3,1) .1s both,duebeat 2.2s ease-out 1.2s infinite}
+  .mark{position:relative}
+  .mark:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-130%);animation:sheen 6s ease-in-out 2s infinite}
+  /* the chart's figures land after the bars; the newest bar shines */
+  .pc-v{animation:rise .5s cubic-bezier(.2,.8,.2,1) .6s both}
+  .pc-col.now .pc-b{position:relative;overflow:hidden}
+  .pc-col.now .pc-b:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateY(100%);animation:shineup 2.8s ease-in-out 1.4s infinite}
+  /* sections rise in as you scroll to them, and play their charts then */
+  .sr{transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
+  .sr:not(.sr-in){opacity:0;transform:translateY(28px) scale(.985)}
+  .sr:not(.sr-in),.sr:not(.sr-in) *{animation-play-state:paused!important}
+  @media print{.sr{opacity:1!important;transform:none!important}}
+  /* done: the tick draws itself, the reference stamps in */
+  .tick{position:relative}
+  .tick svg{width:46px;height:46px}
+  .tick path{stroke-dasharray:48;stroke-dashoffset:48;animation:draw .55s cubic-bezier(.65,0,.35,1) .45s forwards}
+  .tick:before{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid #28C286;animation:ring 1.4s ease-out .6s both}
+  #s-done .ref{animation:stamp .55s cubic-bezier(.2,1.4,.3,1) .75s both}
+  #s-done h1{animation:rise .55s cubic-bezier(.2,.8,.2,1) .3s both}
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:60}
+  @keyframes bandmove{from{background-position:0% 40%}to{background-position:100% 60%}}
+  @keyframes wave{to{transform:translateX(-50%)}}
+  @keyframes glide{from{transform:translateX(0)}to{transform:translateX(130%)}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  @keyframes count{from{--n:0}}
+  @keyframes ringfill{from{--p:0}}
+  @keyframes travel{0%{left:var(--a);opacity:0;transform:scale(.4)}12%{opacity:1;transform:scale(1)}88%{opacity:1;transform:scale(1)}100%{left:calc(100% - var(--a));opacity:0;transform:scale(.4)}}
+  @keyframes rip{to{transform:scale(1);opacity:0}}
+  @keyframes choose{0%{transform:scale(.92)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+  @keyframes iconpop{0%{transform:scale(0) rotate(-25deg);opacity:0}100%{transform:none;opacity:1}}
+  @keyframes wiggle{0%,100%{transform:none}25%{transform:rotate(-10deg) scale(1.08)}50%{transform:rotate(8deg) scale(1.08)}75%{transform:rotate(-4deg)}}
+  @keyframes duebeat{0%{box-shadow:0 6px 14px rgba(20,40,90,.18),0 0 0 0 rgba(19,138,130,.5)}70%,100%{box-shadow:0 6px 14px rgba(20,40,90,.18),0 0 0 12px rgba(19,138,130,0)}}
+  @keyframes shineup{0%,55%{transform:translateY(100%)}100%{transform:translateY(-100%)}}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes stamp{0%{transform:scale(1.7) rotate(-5deg);opacity:0}100%{transform:none;opacity:1}}
   @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+  @media (prefers-reduced-motion:reduce){.band .badge path{stroke-dashoffset:0}.tick path{stroke-dashoffset:0}.sr{opacity:1!important;transform:none!important}}
 </style>
 </head>
 <body>
 <header>
   <div class="mark"><img src="/orphan-transition/board-mark.png" width="46" height="46" alt=""></div>
-  <div class="brand">Ricky Rampersad Branch<i>Motor quotes · Guardian General</i></div>
+  <div class="brand">Ricky Rampersad Branch<i>Motor quotes<span class="gg"> · Guardian General</span></i></div>
   <div class="who hide" id="who"><b id="whoName"></b><button type="button" onclick="signOut()">Sign out</button></div>
 </header>
 <main>
@@ -178,10 +559,10 @@
   <!-- 0 · sign in -->
   <section class="card hero" id="s-signin">
     <div class="band">
-      <div class="big">🚗</div>
+      <div class="badge" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3.5l10 3.6v7.6c0 6.4-4.3 11.6-10 13.8C10.3 26.3 6 21.1 6 14.7V7.1z"/><path d="M11.6 15.6l3.2 3.2 6-6.4"/></svg></div>
       <h1>Get your motor quote.</h1>
       <p>Sign in with your e-mail. Our clients see their details filled in. New to us? Welcome, it takes five minutes.</p>
-      <div class="chips"><span>No password</span><span>Guardian General</span><span>Answer in two working days</span></div>
+      <div class="chips"><span>No password</span><span>Your details filled in</span><span>About five minutes</span></div>
     </div>
     <div id="emailBox">
       <label class="f"><b>Your e-mail</b><input class="fld" id="email" type="email" autocomplete="email" inputmode="email" placeholder="name@example.com"></label>
@@ -195,10 +576,11 @@
       <button class="ghost" onclick="backToEmail()">Use a different e-mail</button>
     </div>
     <p class="err" id="signinErr"></p>
-    <div class="why">
-      <div><b>1</b>Tell us about your car</div>
-      <div><b>2</b>We price it</div>
-      <div><b>3</b>We call you</div>
+    <div class="sec" style="margin-top:22px"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></span><div><b>Three things you can do here</b><small>Each one is separate, so nothing gets mixed up</small></div></div>
+    <div class="paths">
+      <div class="path t-renew"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg></span><span class="pt"><b>Renew</b><small>A vehicle we already insure: next year's cover.</small></span></div>
+      <div class="path t-quote"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7"/><path d="M8.6 11h.01M12 11h.01M15.4 11h.01M8.6 14.5h.01M12 14.5h.01M15.4 14.5h.01M8.6 18h.01M12 18h.01M15.4 18h.01" stroke-width="2.6"/></svg></span><span class="pt"><b>New quote</b><small>A vehicle we don't insure yet: we price it for you.</small></span></div>
+      <div class="path t-take"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h7"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></svg></span><span class="pt"><b>Accept a quote</b><small>You have our quote: sign it online and get covered.</small></span></div>
     </div>
   </section>
 
@@ -208,15 +590,55 @@
       <div class="eyebrow" style="color:#BFE9FF">Welcome<span id="homeBack"></span></div>
       <h1 id="homeTitle">Good day.</h1>
       <p id="homeLead"></p>
+      <div class="stats" id="homeStats"></div>
     </div>
-    <div id="homeVeh"></div>
-    <button class="send cy" onclick="startNew()">Start a motor quote</button>
+    <section class="duetop t-renew hide" id="dueTop" aria-labelledby="dueH">
+      <div class="dueh"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2.5h6"/></svg></span><div><b id="dueH">Due now</b><small id="dueSub"></small></div></div>
+      <div id="renewals"></div><div id="genDue"></div>
+    </section>
+    <div id="meCard"></div>
+    <div class="paths" id="paths">
+      <button type="button" class="path t-renew" id="pathRenew" onclick="toTrack('trRenew')"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg></span><span class="pt"><b>Renew</b><small>A vehicle we already insure</small><em id="pathRenewN"></em></span><span class="go">›</span></button>
+      <button type="button" class="path t-quote" onclick="toTrack('trQuote')"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7"/><path d="M8.6 11h.01M12 11h.01M15.4 11h.01M8.6 14.5h.01M12 14.5h.01M15.4 14.5h.01M8.6 18h.01M12 18h.01M15.4 18h.01" stroke-width="2.6"/></svg></span><span class="pt"><b>New quote</b><small>A vehicle we don't insure yet</small><em>About 2 min</em></span><span class="go">›</span></button>
+      <button type="button" class="path t-take" id="pathTake" onclick="toTrack('trTake')"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h7"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></svg></span><span class="pt"><b>Accept a quote</b><small>You have our quote and want the cover</small><em>Sign online</em></span><span class="go">›</span></button>
+    </div>
+
+    <section class="track t-renew" id="trRenew">
+      <div class="th"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg></span><div class="tt"><b>Renew a vehicle we insure</b><small>Next year's cover for the same vehicle</small></div><span class="lbl">Renewal</span></div>
+      <ol class="journey"><li>Choose the vehicle</li><li>Renew as it is, or with changes</li><li>We confirm it by e‑mail</li></ol>
+      <div id="homeVeh"></div>
+      <div id="renewPortal"></div>
+    </section>
+
+    <section class="track t-quote" id="trQuote">
+      <div class="th" id="quoteHead"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7"/><path d="M8.6 11h.01M12 11h.01M15.4 11h.01M8.6 14.5h.01M12 14.5h.01M15.4 14.5h.01M8.6 18h.01M12 18h.01M15.4 18h.01" stroke-width="2.6"/></svg></span><div class="tt"><b>Get a new quote</b><small>For a vehicle we don't insure yet</small></div><span class="lbl">New quote</span></div>
+      <ol class="journey"><li>Tell us about the vehicle</li><li>We price it</li><li>Your quote by e‑mail</li></ol>
+      <div class="doors">
+        <label class="door primary" id="doorInv"><span class="tag">Fastest</span><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2.5V8h5.5"/><path d="M8.5 13h7M8.5 17h5"/></svg></span><b>I have the dealer's invoice</b>
+          <small>The car dealer's bill for the vehicle you are buying. A photo or a PDF: we read it and fill in the details for you.</small>
+          <input type="file" id="invFile" accept="image/*,application/pdf"></label>
+        <button type="button" class="door" id="doorQuick" onclick="startFlow('quick')"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2.5L4.5 13.5H12l-1 8 8.5-11H12z"/></svg></span><b>No invoice? Answer a few questions</b>
+          <small>About eight answers: the vehicle, its value and the cover you want.</small></button>
+      </div>
+      <button type="button" class="linkbtn" onclick="startFlow('full')">Prefer to give every detail now (permit, papers, driving record)? Start the full quote</button>
+    </section>
+
+    <section class="track t-take" id="trTake">
+      <div class="th"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h7"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></svg></span><div class="tt"><b>Accept a quote</b><small>You have the quote we e‑mailed you and want the cover</small></div><span class="lbl">Accept</span></div>
+      <ol class="journey"><li>Upload your quote and papers</li><li>Check the forms we fill in</li><li>Sign on screen</li><li>Covered once paid</li></ol>
+      <button type="button" class="takedoor" id="doorTake" onclick="startTake()"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h7"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></svg></span><span><b>Accept my quote</b>
+        <small>Upload the quote we sent you, your certified copy and your driver's permit. We fill in Guardian's proposal and Know Your Policy form; you check and sign.</small></span><span class="go">›</span></button>
+    </section>
+
+    <div id="hold"></div>
+    <div id="opps"></div>
     <div id="reqs"></div>
   </section>
 
   <!-- the steps -->
   <div class="grid two hide" id="s-form">
     <section class="card">
+      <div class="flowtag" id="flowTag"></div>
       <div class="stepper" id="steps"></div>
       <div id="step"></div>
       <p class="err" id="formErr"></p>
@@ -225,32 +647,31 @@
         <button class="send" id="btnNext" onclick="go(1)">Continue</button>
       </div>
     </section>
-    <aside class="side"><div class="card"><h4>Your request so far</h4><div id="sideSum"></div>
+    <aside class="side"><div class="card"><h4 id="sideH">Your request so far</h4><div id="sideSum"></div>
       <div class="help"><b>Need a hand?</b>Call the branch on <a href="tel:+18682266461">(868) 226-6461</a> and we finish it with you on the line.</div></div></aside>
   </div>
 
   <!-- done -->
   <section class="card hide" id="s-done" style="text-align:center">
-    <div class="tick">✓</div>
-    <h1>Your request has gone.</h1>
+    <div class="tick" role="img" aria-label="Sent"><svg viewBox="0 0 52 52" aria-hidden="true"><path d="M14 27l8 8 16-18" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <h1 id="doneTitle">Your request has gone.</h1>
     <p class="muted">Your reference</p>
     <p class="ref" id="doneRef"></p>
     <p id="doneMsg" style="text-align:left"></p>
-    <div class="why" style="text-align:left">
-      <div><b>1</b>We price it</div>
-      <div><b>2</b>The quote reaches your e-mail</div>
-      <div><b>3</b>We call you</div>
-    </div>
+    <div id="doneSteps"></div>
     <p class="muted" style="margin-top:12px;text-align:left">A receipt is on its way to your inbox. Sign in any time to see where it stands.</p>
-    <button class="ghost" onclick="showHome()">Back to my quotes</button>
+    <button class="ghost" onclick="showHome()">Back to home</button>
   </section>
 </main>
+<div class="reading hide" id="reading" role="status" aria-live="polite"><div class="box"><div class="doc"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <b id="readingT">Reading your document…</b><small id="readingMsg">This takes a few seconds.</small></div></div>
 <footer>Ricky Rampersad Branch · Guardian Group · Chaguanas · <a href="tel:+18682266461">(868) 226-6461</a><br>Your information is used only to prepare and look after your cover, and is never sold or disclosed without your express consent.</footer>
 
+<script src="/motor-quote/forms.js"></script>
 <script>
 const CONFIG = {
   /* The /exec address of apps-script/MotorQuote.gs. Leave "" until it is deployed: the page then says so. */
-  API_URL: "https://script.google.com/macros/s/AKfycbznYeK5EtUFzwT1iPodqd4Ug5623PNMd1KYEi7zvz8FOrMiCZM1zeJJ5MG4hxKoNNwVZA/exec",
+  API_URL: "https://script.google.com/macros/s/AKfycbwLr9ztrs3FdY9yKG9GCJ6FoFolL39CaD82P1NWapt9mrBnU7CD_BDFI5kqVDIU8nvAOQ/exec",
   /* Must equal MQ.SITE_KEY in MotorQuote.gs. Not a secret. */
   SITE_KEY: "rrb-motor-quote-1",
 };
@@ -286,7 +707,55 @@ async function api(action, body) {
 }
 function saveDraft() { try { localStorage.setItem(DKEY, JSON.stringify(draft)); } catch (e) {} }
 function clearSession() { session = null; me = null; try { localStorage.removeItem(SKEY); } catch (e) {} }
-function show(id) { ['s-signin', 's-home', 's-form', 's-done'].forEach(s => $(s).classList.toggle('hide', s !== id)); window.scrollTo(0, 0); }
+function show(id) { ['s-signin', 's-home', 's-form', 's-done'].forEach(s => $(s).classList.toggle('hide', s !== id)); window.scrollTo(0, 0); if (id === 's-done') confetti(); }
+
+/* ---- motion ---- */
+const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+/* A whole number that counts up on screen; the real figure stays in the text for readers and copy. */
+const cu = n => { const v = Math.max(0, Math.round(Number(n) || 0)); return '<b class="cu" style="--to:' + v + '"><span class="vh">' + v + '</span></b>'; };
+/* Soft waves along the foot of each blue band, drifting at three speeds; the front one is the card's white. */
+const SCENE = '<div class="waves" aria-hidden="true"><svg class="w1" viewBox="0 0 2880 120" preserveAspectRatio="none"><path d="M0 52 Q180 14 360 52 T720 52 T1080 52 T1440 52 T1800 52 T2160 52 T2520 52 T2880 52 V120 H0z" fill="rgba(255,255,255,.14)"/></svg><svg class="w2" viewBox="0 0 2880 120" preserveAspectRatio="none"><path d="M0 58 Q180 28 360 58 T720 58 T1080 58 T1440 58 T1800 58 T2160 58 T2520 58 T2880 58 V120 H0z" fill="rgba(255,255,255,.22)"/></svg><svg class="w3" viewBox="0 0 2880 120" preserveAspectRatio="none"><path d="M0 64 Q180 40 360 64 T720 64 T1080 64 T1440 64 T1800 64 T2160 64 T2520 64 T2880 64 V120 H0z" fill="#fff"/></svg></div>';
+document.querySelectorAll('.band').forEach(b => { b.classList.add('has-scene'); b.insertAdjacentHTML('beforeend', SCENE); });
+/* A ripple from where the finger lands. */
+document.addEventListener('pointerdown', ev => {
+  const el = ev.target.closest && ev.target.closest('.send,.ghost,.path,.door,.opts button,.veh,.takedoor');
+  if (!el || el.disabled || el.tagName === 'DIV' || calm()) return;
+  const r = el.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2, s = document.createElement('span');
+  s.className = 'rip'; s.style.cssText = 'width:' + d + 'px;height:' + d + 'px;left:' + (ev.clientX - r.left - d / 2) + 'px;top:' + (ev.clientY - r.top - d / 2) + 'px';
+  el.appendChild(s); setTimeout(() => s.remove(), 700);
+}, { passive: true });
+/* Below the first screen, each section waits and rises in as it is scrolled to, playing its charts then. */
+const RV = ('IntersectionObserver' in window) ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('sr-in'); RV.unobserve(e.target); } }), { rootMargin: '0px 0px -6% 0px' }) : null;
+function reveal(root) {
+  if (!RV || !root || calm()) return;
+  root.querySelectorAll('.track,.rnw,.pchart,.veh,.req,.doors,.takedoor,.journey,.reqsum').forEach(el => {
+    el.classList.remove('sr', 'sr-in');
+    if (el.getBoundingClientRect().top > window.innerHeight * 0.94) { el.classList.add('sr'); RV.observe(el); }
+  });
+}
+/* Confetti on a request sent, in the three paths' colours. */
+function confetti() {
+  if (calm()) return;
+  try {
+    const c = document.createElement('canvas'), x = c.getContext('2d'); if (!x) return;
+    const W = c.width = innerWidth * (devicePixelRatio || 1), H = c.height = innerHeight * (devicePixelRatio || 1), k = devicePixelRatio || 1;
+    c.className = 'confetti'; document.body.appendChild(c);
+    const t = document.querySelector('#s-done .tick'), tr = t ? t.getBoundingClientRect() : { left: innerWidth / 2, top: 120, width: 0, height: 0 };
+    const ox = (tr.left + tr.width / 2) * k, oy = (tr.top + tr.height / 2) * k;
+    const COL = ['#138A82', '#3A7BD5', '#7468E4', '#28C286', '#FFC94D', '#62B0EE'];
+    const P = Array.from({ length: 150 }, () => { const a = Math.random() * Math.PI * 2, v = (4 + Math.random() * 9) * k;
+      return { x: ox, y: oy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 6 * k, r: Math.random() * Math.PI, vr: (Math.random() - .5) * .4,
+        w: (5 + Math.random() * 6) * k, h: (8 + Math.random() * 8) * k, c: COL[Math.random() * COL.length | 0] }; });
+    const t0 = performance.now();
+    (function frame(now) {
+      const e = now - t0; x.clearRect(0, 0, W, H);
+      P.forEach(p => { p.vy += .32 * k; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        x.save(); x.globalAlpha = Math.max(0, 1 - e / 2600); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c;
+        x.fillRect(-p.w / 2, -p.h / 2 * Math.abs(Math.cos(p.r * 2)), p.w, p.h * Math.abs(Math.cos(p.r * 2)) + 1); x.restore(); });
+      if (e < 2600) requestAnimationFrame(frame); else c.remove();
+    })(t0);
+  } catch (e) {}
+}
 
 /* ---- sign in ---- */
 function showSignin() { show('s-signin'); $('who').classList.add('hide'); }
@@ -330,68 +799,464 @@ function modeNotice(mode) {
 }
 
 /* ---- home ---- */
+/* The renewal comes first: a vehicle whose cover ends within 60 days, or ended
+   in the last 45, with every term on file and what the record shows. */
+const vehName = v => [v.year, v.make, v.model].filter(Boolean).join(' ') || v.reg;
+const money = n => 'TT$ ' + Math.round(Number(n)).toLocaleString();
+const longDay = d => { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : ''; };
+const dueNow = v => v.renewState === 'due' || v.renewState === 'lapsed';
+/* Which path a request or a draft is on. The three never share a colour or a word. */
+const PATH = {
+  renew: { cls: 't-renew', ic: '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg>', name: 'Renewal', side: 'Your renewal so far' },
+  quick: { cls: 't-quote', ic: '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7"/><path d="M8.6 11h.01M12 11h.01M15.4 11h.01M8.6 14.5h.01M12 14.5h.01M15.4 14.5h.01M8.6 18h.01M12 18h.01M15.4 18h.01" stroke-width="2.6"/></svg>', name: 'New quote', side: 'Your new quote so far' },
+  full: { cls: 't-quote', ic: '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 6.5h7"/><path d="M8.6 11h.01M12 11h.01M15.4 11h.01M8.6 14.5h.01M12 14.5h.01M15.4 14.5h.01M8.6 18h.01M12 18h.01M15.4 18h.01" stroke-width="2.6"/></svg>', name: 'New quote', side: 'Your new quote so far' },
+  take: { cls: 't-take', ic: '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h7"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/><path d="M12.5 6.5l5 5"/></svg>', name: 'Accepting a quote', side: 'Accepting your quote' } };
+const FLOW_NAME = { quick: 'New quote (quick)', full: 'New quote (every detail)', renew: 'Renewal', take: 'Accepting a quote' };
+const termYear = t => { const a = String(t.from || '').slice(0, 4), b = String(t.to || '').slice(0, 4); return a && b && a !== b ? a + '–' + b.slice(2) : (b || a); };
+/* The premium on each term, as bars: the current term in full colour. */
+function premChart(terms) {
+  const t = (terms || []).filter(x => Number(x.premium) > 0).slice(0, 4).reverse();
+  if (t.length < 2) return '';
+  const max = Math.max.apply(null, t.map(x => +x.premium)), last = +t[t.length - 1].premium, prev = +t[t.length - 2].premium;
+  const ch = prev ? Math.round(1000 * (last - prev) / prev) / 10 : 0;
+  return '<div class="pchart" role="img" aria-label="' + esc('Premium by year: ' + t.map(x => termYear(x) + ' ' + money(x.premium)).join(', ')) + '">' +
+    '<div class="pc-h">Premium by year<span>' + (ch ? (ch > 0 ? '▲ ' : '▼ ') + Math.abs(ch) + '% on the year before' : 'Same as the year before') + '</span></div>' +
+    '<div class="pc-bars">' + t.map((x, i) => '<div class="pc-col' + (i === t.length - 1 ? ' now' : '') + '"><span class="pc-v">' + esc(money(x.premium)) + '</span>' +
+      '<span class="pc-b" style="height:' + Math.max(8, Math.round(92 * x.premium / max)) + 'px;animation-delay:' + (i * 0.12).toFixed(2) + 's"></span></div>').join('') + '</div>' +
+    '<div class="pc-ys">' + t.map(x => '<span>' + esc(termYear(x)) + '</span>').join('') + '</div></div>';
+}
+function renewalCard(v, i) {
+  const lapsed = v.renewState === 'lapsed', n = Math.abs(v.renewIn || 0);
+  const pct = lapsed ? 100 : Math.max(4, Math.min(100, Math.round(100 * (60 - n) / 60)));
+  const terms = (v.terms || []).slice(0, 4).map(t => '<li><b>' + esc(longDay(t.from) || 'Start not on file') + ' to ' + esc(longDay(t.to)) + '</b><span class="k">' +
+    esc([t.cover, t.sum ? money(t.sum) : '', t.premium ? 'premium ' + money(t.premium) : ''].filter(Boolean).join(' · ') || 'Details not on file') + '</span></li>').join('');
+  return '<div class="rnw' + (lapsed ? ' lapsed' : '') + '" data-reg="' + esc(v.reg) + '"><div class="rnw-top">' +
+    '<div class="ring" style="--p:' + pct + '"><span>' + cu(n) + '<small>' + (lapsed ? 'days ago' : n === 1 ? 'day' : 'days') + '</small></span></div>' +
+    '<div><div class="eyebrow">' + (lapsed ? 'Your cover has ended' : 'Due for renewal') + '</div><h3>' + esc(vehName(v)) + '</h3>' +
+    '<div class="when">' + esc(v.reg) + ' · ' + (lapsed ? 'ended ' : 'renews ') + '<b>' + esc(v.renewOnText || longDay(v.renewOn)) + '</b></div></div></div>' +
+    (v.facts && v.facts.length ? '<ul class="facts">' + v.facts.map(f => '<li>' + esc(f) + '</li>').join('') + '</ul>' : '') +
+    '<div class="rnw-grid">' + premChart(v.terms) +
+    (terms ? '<ol class="tl">' + terms + '</ol>' : '') + '</div>' +
+    '<div class="rnw-port"><button type="button" class="send tc" onclick="startRenew(' + i + ')">Renew this vehicle</button>' +
+    '<small>About a minute: tell us whether anything has changed, and our renewals team prepares it and e‑mails you.</small></div></div>';
+}
+/* A vehicle we insure that is not due yet: how far through its cover year it is, and renewing early. */
+function vehRow(v, ix) {
+  const ended = v.renewState === 'ended', n = Math.max(0, Number(v.renewIn) || 0);
+  const w = ended ? 100 : Math.max(3, Math.min(100, Math.round(100 - 100 * n / 365)));
+  const when = v.renewOn ? (ended ? 'Cover ended <b>' + esc(longDay(v.renewOn)) + '</b>' : 'Renews <b>' + esc(longDay(v.renewOn)) + '</b> · in ' + n + ' day' + (n === 1 ? '' : 's'))
+    : v.to ? 'Cover to <b>' + esc(longDay(v.to)) + '</b>' : '';
+  return '<button type="button" class="veh" onclick="' + (ended ? 'startFlow(\'quick\',' + ix + ')' : 'startRenew(' + ix + ')') + '"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="vt"><b>' + esc(vehName(v)) +
+    '</b><span>' + esc(v.reg) + (v.cover ? ' · ' + esc(v.cover) : '') + '</span>' +
+    (when ? '<span class="yr' + (ended ? ' end' : '') + '" aria-hidden="true"><i style="--w:' + w + '%"></i></span><span class="yrl">' + when + '</span>' : '') +
+    '<span class="act">' + (ended ? 'Get a new quote' : 'Renew early') + '</span></span><span class="go">›</span></button>';
+}
+/* Where a request stands, in the words of its own path. */
+const STAGES = { renew: ['Sent', 'Being prepared', 'Renewal ready', 'Renewed'], quote: ['Sent', 'Being priced', 'Quote ready', 'Accepted'] };
+function reqStage(r, kind) {
+  const s = String(r.status || '').toLowerCase();
+  if (kind === 'renew') return /renewed|bound|done|complete/.test(s) ? 4 : (r.quotedOn || /renewal sent|notice sent|quoted/.test(s)) ? 3 : /progress|working|prepar|review/.test(s) ? 2 : 1;
+  return /accepted|proposal|bound|taken|covered/.test(s) ? 4 : (r.quotedOn || /quote sent|quoted/.test(s)) ? 3 : /progress|pricing|working|review/.test(s) ? 2 : 1;
+}
+const tracker = (labels, at, big) => '<ol class="trk' + (big ? ' big' : '') + '">' + labels.map((l, i) => '<li class="' + (i < at ? 'done' : i === at ? 'now' : '') + '" style="animation-delay:' + (i * .15) + 's">' + esc(l) + '</li>').join('') + '</ol>';
+function reqCard(r) {
+  const kind = r.type === 'Renewal' ? 'renew' : 'quote', st = reqStage(r, kind), P = kind === 'renew' ? PATH.renew : PATH.quick;
+  return '<div class="req ' + P.cls + '"><div class="rh"><span class="kind">' + P.ic + ' ' + P.name + '</span><b>' + esc(r.ref) + '</b><span class="rm">' + esc(r.when) + (r.type && kind !== 'renew' ? ' · ' + esc(r.type) : '') + '</span></div>' +
+    (r.client ? '<div class="rv"><b>' + esc(r.client) + '</b></div>' : '') +
+    '<div class="rv">' + esc(r.vehicle || r.reg || 'Vehicle') + (r.reg && r.vehicle ? ' (' + esc(r.reg) + ')' : '') + (r.cover ? ' · ' + esc(r.cover) : '') + '</div>' +
+    tracker(STAGES[kind], st) +
+    '<div class="rm">' + esc(r.status || 'Received') + (r.quotedOn ? ' · ' + (kind === 'renew' ? 'renewal sent ' : 'quoted ') + esc(r.quotedOn) : '') + (r.premium ? ' · TT$ ' + esc(r.premium) : '') + '</div>' +
+    (kind === 'quote' && st < 4 && !isAgent() ? '<button type="button" class="linkbtn" style="padding:6px 0 0;color:var(--ac)" onclick="startTake(\'' + esc(r.ref) + '\')">Accept this quote ›</button>' : '') + '</div>';
+}
+function toTrack(id) {
+  const el = $(id); if (!el) return;
+  el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+}
+/* ---- who you are to us ---- */
+/* A client we found sees what we hold, the permit first; anyone else is asked once whether they are with us. */
+const longD = v => { const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? (+m[3]) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+m[2] - 1] + ' ' + m[1] : ''; };
+function permitPill(pf) {
+  if (!pf || pf.state === 'none' || !pf.expires) return '<span class="pill none">No expiry on file</span>';
+  if (pf.state === 'expired') return '<span class="pill expired">Expired ' + esc(longD(pf.expires)) + '</span>';
+  if (pf.state === 'soon') return '<span class="pill soon">Expires in ' + pf.days + ' day' + (pf.days === 1 ? '' : 's') + '</span>';
+  return '<span class="pill valid">Valid to ' + esc(longD(pf.expires)) + '</span>';
+}
+/* An active agent signed in: they ask for quotes for their clients, and are the producer on each. */
+const isAgent = () => !!(me && me.agent);
+function meCard() {
+  const el = $('meCard'); if (!el) return;
+  if (!me) { el.innerHTML = ''; return; }
+  if (isAgent()) {
+    el.innerHTML = '<div class="mecard agent"><div class="mh"><span class="mi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.6"/><path d="M2.8 20c.8-3.6 3.3-5.5 6.2-5.5s5.4 1.9 6.2 5.5"/><path d="M15.5 4.6a3.6 3.6 0 0 1 0 6.8"/><path d="M18 14.8c1.7.8 2.8 2.5 3.2 5.2"/></svg></span>' +
+      '<span><b>Signed in as agent ' + esc(me.agent.name) + '</b><small>Every quote you ask for here names you as the producer in Salesforce.</small></span></div>' +
+      '<p class="said">Give your client\'s e-mail on the form: the receipt and the quote go to them, copied to you. Your client takes the quote and signs from their own sign-in.</p></div>';
+    return;
+  }
+  if (me.found) {
+    const pf = me.permitOnFile || null, rows = [['Name', me.name], ['Mobile', me.mobile], ['Date of birth', longD(me.dob)], ['Occupation', me.occupation]].filter(r => r[1]);
+    el.innerHTML = '<div class="mecard"><div class="mh"><span class="mi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg></span><span><b>We found your record</b><small>What we hold for ' + esc(session.email || me.email || '') + '</small></span>' +
+      '<span class="ok"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg> On file</span></div>' +
+      (rows.length ? '<dl>' + rows.map(r => '<div><dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd></div>').join('') + '</dl>' : '') +
+      '<div class="pmt" id="pmt"><div class="pt"><b><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.6-1.6 1.7-2.4 3-2.4s2.4.8 3 2.4M14 10h4.5M14 13.5h3"/></svg> Your driver\'s permit</b>' + permitPill(pf) + '</div>' +
+      '<p class="pv">' + (pf && (pf.number || pf.issued || pf.expires)
+        ? [pf.number ? 'Number <b>' + esc(pf.number) + '</b>' : 'No number on file', pf.issued ? 'issued ' + esc(longD(pf.issued)) : '', pf.expires ? 'expires ' + esc(longD(pf.expires)) : ''].filter(Boolean).join(' · ')
+        : 'We have no permit details on file for you yet.') + '</p>' +
+      '<button type="button" class="linkbtn" id="pmtOpen" onclick="permitForm()">' + (pf && pf.number ? 'Renewed your permit, or something is wrong? Update it' : 'Add your permit details') + '</button>' +
+      '<div id="pmtForm"></div></div></div>';
+    return;
+  }
+  if (!me.salesforce) { el.innerHTML = ''; return; }
+  const st = draft.clientStatus || '';
+  el.innerHTML = '<div class="mecard ask"><div class="mh"><span class="mi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg></span><span><b>Are you already a Guardian client?</b>' +
+    '<small>We did not find ' + esc(session.email || me.email || 'this e-mail') + ' on our records.</small></span></div>' +
+    '<div class="two"><button type="button" class="' + (st === 'existing' ? 'on' : '') + '" onclick="clientSays(\'existing\')">Yes, I am</button>' +
+    '<button type="button" class="' + (st === 'new' ? 'on' : '') + '" onclick="clientSays(\'new\')">No, I am new</button></div>' +
+    (st === 'existing' ? '<label class="f" style="margin-top:12px"><b>Your policy or client number</b><input class="fld" id="clientRef" value="' + esc(draft.clientRef || '') + '" placeholder="Optional" autocomplete="off">' +
+      '<small>It helps us find your record. Nothing from it is shown on this page.</small></label>' : '') +
+    (st ? '<p class="said">' + (st === 'new' ? 'Welcome. We set up your record when you send your first request.' : 'Thank you. We link your request to your record on our side.') + '</p>' : '') + '</div>';
+  const r = $('clientRef'); if (r) r.addEventListener('input', () => { draft.clientRef = r.value.trim().slice(0, 30); saveDraft(); });
+}
+function clientSays(v) { draft.clientStatus = v; if (v === 'new') delete draft.clientRef; saveDraft(); meCard(); }
+function permitForm() {
+  const pf = (me && me.permitOnFile) || {};
+  $('pmtOpen').classList.add('hide');
+  $('pmtForm').innerHTML = '<form onsubmit="return savePermit(event)"><label class="f"><b>Permit number</b><input class="fld" id="pfNo" value="' + esc(pf.number || '') + '" autocomplete="off" maxlength="20"></label>' +
+    '<div class="row"><label class="f"><b>Date of issue</b><input class="fld" id="pfIss" type="date" value="' + esc(pf.issued || '') + '"></label>' +
+    '<label class="f"><b>Expiry date</b><input class="fld" id="pfExp" type="date" value="' + esc(pf.expires || '') + '"></label></div>' +
+    '<small class="muted" style="display:block;margin:0 0 4px">A renewed permit replaces the old dates. A different permit number is confirmed with you by our team first.</small>' +
+    '<button class="send" id="pfSave" type="submit">Save my permit</button><p class="msg" id="pfMsg"></p></form>';
+}
+async function savePermit(ev) {
+  ev.preventDefault();
+  const b = $('pfSave'), m = $('pfMsg'), body = { token: session.token, permit: $('pfNo').value.trim(), permitIssued: $('pfIss').value, permitExpires: $('pfExp').value };
+  b.disabled = true; b.textContent = 'Saving…'; m.className = 'msg'; m.textContent = '';
+  try {
+    const j = await api('permit', body);
+    /* What they typed goes with their next request too, whatever the record did with it. */
+    Object.assign(draft, { permit: body.permit, permitIssued: body.permitIssued, permitExpires: body.permitExpires }); saveDraft();
+    if (j.me) me = j.me;
+    meCard(); const mm = $('pmt'); if (mm) mm.insertAdjacentHTML('beforeend', '<p class="msg">' + esc(j.message) + '</p>');
+  } catch (e) { m.className = 'msg bad'; m.textContent = e.message; b.disabled = false; b.textContent = 'Save my permit'; }
+  return false;
+}
+/* A vehicle not in the list: the client types its registration or policy number. It is looked for in what we
+   already hold for them; if it is not there, the request still goes, marked for our team to match (nothing about
+   anyone else's vehicle is ever looked up or shown). */
+function renewFinder(n) {
+  return '<div class="rnw-port lone find" id="rfind"><b>' + (n ? 'Renewing a vehicle not listed here?' : 'Which vehicle are you renewing?') + '</b>' +
+    '<small>' + (n ? 'Type its registration or policy number.' : 'We did not find a vehicle under ' + esc((session && session.email) || 'this e‑mail') + '. Type its registration (e.g. PDJ 1234) or your policy number and we will take it from there.') + '</small>' +
+    '<form class="rf-row" onsubmit="return findRenew(event)"><input class="fld" id="rfQ" placeholder="e.g. PDJ 1234" autocomplete="off" autocapitalize="characters" maxlength="30" aria-label="Registration or policy number">' +
+    '<button class="send tc" type="submit">Find it</button></form><div id="rfMsg" role="status" aria-live="polite"></div></div>';
+}
+const keyOf = v => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+function findRenew(ev) {
+  if (ev) ev.preventDefault();
+  const q = $('rfQ').value.trim(), k = keyOf(q), m = $('rfMsg');
+  if (k.length < 3) { m.innerHTML = '<p class="msg bad">Please type the registration or policy number.</p>'; $('rfQ').focus(); return false; }
+  const vs = (me && me.vehicles) || [];
+  const ix = vs.findIndex(v => keyOf(v.reg) === k || keyOf(v.policy) === k || (v.terms || []).some(t => keyOf(t.policy) === k));
+  if (ix > -1) { startRenew(ix); return false; }
+  const gx = genAll().findIndex(g => keyOf(g.policy) === k);
+  if (gx > -1) { startRenewGen(gx); return false; }
+  m.innerHTML = '<p class="msg">We could not match <b>' + esc(q.toUpperCase()) + '</b> to ' + esc((session && session.email) || 'your e‑mail') + '. That happens when a policy was written to another e‑mail. You can still send it: our renewals team finds the policy and replies to you.</p>' +
+    '<button type="button" class="send tc" onclick="startRenewTyped(\'' + esc(q.toUpperCase().replace(/[^A-Z0-9 \-]/g, '')) + '\')">Send it to our renewals team</button>';
+  return false;
+}
+/* ---- everything else they hold with us (29 October 2026) ----
+   General insurance renews once a year, so it carries its renewal month; life, pension and health do not renew,
+   so they carry what they are and where they stand, never a month. */
+const IC = {
+  Home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+  Property: '<path d="M4 21V8l8-5 8 5v13"/><path d="M9 21v-5h6v5M9 10h.01M15 10h.01"/>',
+  Liability: '<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  "Workers' compensation": '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c.8-4 3.6-6.5 7-6.5s6.2 2.5 7 6.5"/>',
+  'Machinery and plant': '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+  Bond: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  Marine: '<path d="M3 17c2 2 4 2 6 0s4-2 6 0 4 2 6 0"/><path d="M5 14l1-5h12l1 5M12 4v5"/>',
+  Life: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  Pension: '<path d="M12 3v18M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3S9.5 10.5 12 11s4.5 1.3 4.5 3.2S14.5 17.5 12 17.5s-4.5-1.3-4.5-3"/>',
+  Health: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M12 8v8M8 12h8"/>',
+  'Personal accident': '<circle cx="12" cy="5" r="2"/><path d="M12 7v6l-3 7M12 13l3 7M7 10h10"/>',
+  Investment: '<path d="M4 19l5-6 4 3 7-9"/><path d="M15 7h5v5"/>',
+  Car: '<path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>' };
+const ico = k => '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (IC[k] || IC.Property) + '</svg>';
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const monthOf = d => { const m = String(d || '').match(/^\d{4}-(\d{2})/); return m ? MONTHS[+m[1] - 1] : ''; };
+const genAll = () => isAgent() ? [] : ((me && me.general) || []);
+const genDue = () => genAll().map((g, i) => [g, i]).filter(x => dueNow(x[0]));
+function genDueCard(g, i) {
+  const lapsed = g.renewState === 'lapsed', n = Math.abs(g.renewIn || 0);
+  return '<div class="gdue" data-pol="' + esc(g.policy) + '"><span class="gi">' + ico(g.line) + '</span><span class="gt"><b>' + esc(g.line) + ' insurance' + (g.location ? ' · ' + esc(g.location) : '') + '</b>' +
+    '<small>' + esc(g.policy) + ' · ' + (lapsed ? 'ended ' : 'renews ') + '<b>' + esc(g.renewOnText || longDay(g.renewOn)) + '</b> · ' + (lapsed ? n + ' day' + (n === 1 ? '' : 's') + ' ago' : 'in ' + n + ' day' + (n === 1 ? '' : 's')) + '</small>' +
+    (g.sumInsured || g.lastPremium ? '<small>' + esc([g.sumInsured ? 'insured for ' + money(g.sumInsured) : '', g.lastPremium ? 'premium ' + money(g.lastPremium) : ''].filter(Boolean).join(' · ')) + '</small>' : '') +
+    '</span><button type="button" class="send tc" onclick="startRenewGen(' + i + ')">Renew this</button></div>';
+}
+/* Twelve months in a row, the months something renews lit, this month ringed. */
+function monthStrip(items) {
+  const on = {}; items.forEach(x => { const m = String(x.renewOn || '').slice(5, 7); if (m) on[+m - 1] = (on[+m - 1] || []).concat(x.name); });
+  const now = new Date().getMonth();
+  return '<div class="months" role="img" aria-label="' + esc('Renewal months: ' + Object.keys(on).sort((a, b) => a - b).map(k => MONTHS[k] + ' (' + on[k].join(', ') + ')').join('; ')) + '">' +
+    MONTHS.map((m, k) => '<span class="' + (on[k] ? 'on' : '') + (k === now ? ' now' : '') + '" title="' + esc(on[k] ? m + ': ' + on[k].join(', ') : m) + '">' + m.slice(0, 1) + '<i></i></span>').join('') + '</div>';
+}
+const LIFE_ST = { inforce: ['In force', ''], current: ['Current', 'cur'], applied: ['Application in progress', 'app'] };
+function holdHtml() {
+  if (isAgent() || !me || !me.found) return '';
+  const vs = ((me.vehicles) || []).filter(v => v.renewState !== 'ended'), gen = genAll(), life = me.life || [];
+  if (!vs.length && !gen.length && !life.length) return '';
+  const g1 = vs.map(v => ({ name: v.reg, renewOn: v.renewOn })).concat(gen.map(g => ({ name: g.line, renewOn: g.renewOn })));
+  const pol = (k, cls, title, sub, right, st) => '<div class="pol"><span class="pk' + cls + '">' + ico(k) + '</span><span class="pb"><b>' + title + '</b><small>' + sub + '</small>' + (st || '') + '</span>' + (right ? '<span class="rm">' + right + '</span>' : '') + '</div>';
+  const rnm = d => d ? 'Renews every <b>' + esc(monthOf(d)) + '</b><small>next ' + esc(longDay(d)) + '</small>' : '';
+  const gi = (vs.length || gen.length) ? '<div class="hold-g"><h4>General insurance<small>renews every year</small></h4>' + monthStrip(g1) +
+    vs.map(v => pol('Car', ' gen', esc(vehName(v)), esc([v.reg, v.cover, v.policy].filter(Boolean).join(' · ')), rnm(v.renewOn))).join('') +
+    gen.map(g => pol(g.line, ' gen', esc(g.line + ' insurance') + (g.location ? ' · ' + esc(g.location) : ''),
+      esc([g.policy, g.cover || g.kind, g.since ? 'with us since ' + g.since : ''].filter(Boolean).join(' · ')), rnm(g.renewOn))).join('') + '</div>' : '';
+  const li = life.length ? '<div class="hold-g"><h4>Life, pension and health<small>these do not renew: they run on while premiums are paid</small></h4>' +
+    life.map(p => {
+      const s = LIFE_ST[p.state] || LIFE_ST.current;
+      const cov = [p.life ? 'life cover ' + money(p.life) : '', p.ci ? 'critical illness ' + money(p.ci) : '', p.health ? 'health ' + money(p.health) : ''].filter(Boolean).join(' · ');
+      return pol(p.type, '', esc(p.plan || p.type), esc([p.type, p.policy, p.since ? 'since ' + p.since : '', p.matures ? 'matures ' + longDay(p.matures) : ''].filter(Boolean).join(' · ')) + (cov ? '<br>' + esc(cov) : ''),
+        '', '<span class="st ' + s[1] + '">' + s[0] + '</span>');
+    }).join('') + '</div>' : '';
+  const ended = me.lifeEnded ? '<p class="hold-more">And ' + me.lifeEnded + ' earlier ' + (me.lifeEnded === 1 ? 'policy that has' : 'policies that have') + ' ended.</p>' : '';
+  const n = vs.length + gen.length + life.length;
+  return '<section class="track t-hold" id="trHold"><div class="th"><span class="tn">' + ico('Liability') + '</span><div class="tt"><b>Everything you hold with us</b><small>' +
+    n + ' polic' + (n === 1 ? 'y' : 'ies') + ' on your record' + (g1.length ? ', and the month each one renews' : '') + '</small></div></div>' + gi + li + ended + '</section>';
+}
+function oppsHtml() {
+  const o = (!isAgent() && me && me.opps) || [];
+  if (!o.length) return '';
+  return '<section class="track t-opp" id="trOpps"><div class="th"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2.2h5c.1-1 .5-1.7 1.1-2.2A6 6 0 0 0 12 3z"/></svg></span><div class="tt"><b>Ideas for you</b><small>From what is, and is not, on your record with us</small></div></div>' +
+    o.map((x, i) => '<div class="opp" data-opp="' + esc(x.key) + '"><span class="oi">' + ico({ home: 'Home', life: 'Life', ci: 'Health', windscreen: 'Car', pa: 'Personal accident' }[x.key] || 'Liability') + '</span><span class="ob"><b>' + esc(x.title) + '</b><p>' + esc(x.why) + '</p>' +
+      (x.href ? '<a class="send" href="' + esc(x.href) + '">' + esc(x.cta) + ' ›</a>' : '<button type="button" class="send" onclick="oppAct(' + i + ')">' + esc(x.cta) + ' ›</button>') + '</span></div>').join('') +
+    '<p class="opp-note">Only a suggestion: nothing is added to your cover unless you ask, and a licensed agent talks it through with you first.</p></section>';
+}
+function oppAct(i) {
+  const x = me && me.opps && me.opps[i]; if (!x) return;
+  if (x.action === 'windscreen') {
+    const ix = (me.vehicles || []).findIndex(v => keyOf(v.reg) === keyOf(x.reg)); if (ix < 0) return;
+    startRenew(ix, 'Renew with changes');
+    draft.renewChanges = (String(draft.renewChanges || '').trim() ? draft.renewChanges + '\n' : '') + 'Add windscreen cover'; saveDraft(); render();
+  }
+}
+/* Renewing a general policy: the same step as a vehicle, with the line in place of the car. */
+function startRenewGen(i) {
+  const g = genAll()[i]; if (!g) return;
+  startFlow('renew');
+  Object.assign(draft, { line: g.line, reg: g.policy, model: g.location || '', renewOn: g.renewOn || '', renewOnText: g.renewOnText || '', renewIn: g.renewIn, renewState: g.renewState || '',
+    existingPolicy: g.policy, lastCover: g.cover || g.kind || '', lastSum: g.sumInsured || '', lastPremium: g.lastPremium || '' });
+  saveDraft(); render();
+}
+function startRenewTyped(reg) { startFlow('renew'); draft.reg = reg; draft.unmatched = 'Yes'; saveDraft(); render(); }
 function showHome() {
-  show('s-home');
-  $('who').classList.remove('hide'); $('whoName').textContent = (me && me.name) || (session && session.email) || '';
-  const first = me && (me.first || (me.name || '').split(' ')[0]);
+  show('s-home'); requestAnimationFrame(() => reveal($('s-home')));
+  $('who').classList.remove('hide'); $('whoName').textContent = (isAgent() ? me.agent.name : me && me.name) || (session && session.email) || '';
+  const first = isAgent() ? me.agent.first : me && (me.first || (me.name || '').split(' ')[0]);
+  const vs = (me && me.vehicles) || [], all = vs.map((v, i) => [v, i]), due = all.filter(x => dueNow(x[0])), rest = all.filter(x => !dueNow(x[0]));
   $('homeTitle').textContent = first ? 'Good day, ' + first + '.' : 'Good day.';
   $('homeBack').textContent = me && me.found ? ' back' : '';
-  $('homeLead').textContent = me && me.found
-    ? 'Tap a vehicle to quote it again, or start a new one.'
-    : 'Tell us about your vehicle. The quote comes to ' + ((session && session.email) || 'your e-mail') + '.';
-  $('homeVeh').innerHTML = (me && me.vehicles && me.vehicles.length)
-    ? '<div class="sec"><span class="ic">🚘</span><div><b>Your vehicles with us</b><small>Tap one to quote it again</small></div></div>' + me.vehicles.map((v, i) =>
-      '<button type="button" class="veh" onclick="startNew(' + i + ')"><span class="ic">🚗</span><span><b>' + esc([v.year, v.make, v.model].filter(Boolean).join(' ') || v.reg) +
-      '</b><span>' + esc(v.reg) + (v.cover ? ' · ' + esc(v.cover) : '') + (v.to ? ' · cover to ' + esc(String(v.to).slice(0, 10)) : '') + '</span></span><span class="go">›</span></button>').join('')
+  const gd = genDue(), dueN = (isAgent() ? 0 : due.length) + gd.length;
+  const soon = due.filter(x => x[0].renewState === 'due').concat(gd.filter(x => x[0].renewState === 'due')).map(x => Math.abs(x[0].renewIn || 0)).sort((a, b) => a - b)[0];
+  $('homeLead').textContent = isAgent() ? 'Ask for a motor quote for your client. You are the producer on it.'
+    : dueN
+    ? (dueN === 1 ? 'One policy is due for renewal: it is at the top.' : dueN + ' policies are due for renewal: they are at the top.') + ' Then choose what you would like to do.'
+    : 'What would you like to do today? Choose one of the three below.';
+  /* An agent has the new quote alone: a renewal and taking a quote are the client's own. */
+  $('pathTake').classList.toggle('hide', isAgent()); $('trTake').classList.toggle('hide', isAgent());
+  /* The band's figures: what we hold, at a glance. */
+  const open = requests.filter(r => reqStage(r, r.type === 'Renewal' ? 'renew' : 'quote') < 4).length;
+  meCard();
+  $('homeStats').innerHTML = [vs.length ? '<span>' + cu(vs.length) + 'vehicle' + (vs.length === 1 ? '' : 's') + ' with us</span>' : '',
+    genAll().length || (me && me.life || []).length ? '<span>' + cu(genAll().length + ((me && me.life) || []).length) + 'other polic' + (genAll().length + ((me && me.life) || []).length === 1 ? 'y' : 'ies') + '</span>' : '',
+    dueN ? '<span>' + cu(dueN) + 'due for renewal</span>' : '', requests.length ? '<span>' + cu(open) + 'request' + (open === 1 ? '' : 's') + ' in progress</span>' : ''].join('');
+  /* No vehicle with us: no renewal path at all. */
+  /* Renewing happens in the Renewal Platform, so the path is offered to every client: with a vehicle found it shows the
+     renewal and opens the portal; without, it says where the renewal is. An agent has none. */
+  $('pathRenew').classList.toggle('hide', isAgent()); $('pathRenew').classList.toggle('due', dueN > 0); $('trRenew').classList.toggle('hide', isAgent());
+  $('paths').style.setProperty('--n', isAgent() ? 1 : 3);
+  $('pathRenewN').textContent = dueN ? (soon != null ? 'Due in ' + soon + ' day' + (soon === 1 ? '' : 's') : 'Due now') : vs.length ? vs.length + ' vehicle' + (vs.length === 1 ? '' : 's') : 'Type its number';
+  $('renewPortal').innerHTML = isAgent() ? '' : renewFinder(vs.length);
+  /* Due now: at the very top, under the welcome, motor and general together. */
+  $('renewals').innerHTML = isAgent() ? '' : due.map(x => renewalCard(x[0], x[1])).join('');
+  $('genDue').innerHTML = gd.map(x => genDueCard(x[0], x[1])).join('');
+  $('dueTop').classList.toggle('hide', !dueN);
+  $('dueSub').textContent = dueN ? (soon != null ? 'The soonest renews in ' + soon + ' day' + (soon === 1 ? '' : 's') + '. ' : '') + 'Renewing takes about a minute.' : '';
+  $('hold').innerHTML = holdHtml();
+  $('opps').innerHTML = oppsHtml();
+  $('homeVeh').innerHTML = rest.length
+    ? '<div class="sec" style="margin-top:' + (due.length ? 18 : 4) + 'px"><span class="ic" style="background:linear-gradient(135deg,var(--rn),var(--rn2))"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><div><b>' + (due.length ? 'Your other vehicles with us' : 'Your vehicles with us') +
+      '</b><small>The bar is how far through its year of cover each one is</small></div></div>' + rest.map(x => vehRow(x[0], x[1])).join('')
     : '';
-  $('reqs').innerHTML = requests.length ? '<div class="sec" style="margin-top:22px"><span class="ic">🧾</span><div><b>Your requests</b><small>Where each one stands</small></div></div>' + requests.map(r =>
-    '<div class="req"><b>' + esc(r.ref) + '</b> · ' + esc(r.when) + '<br>' + esc(r.vehicle || r.reg) + (r.reg && r.vehicle ? ' (' + esc(r.reg) + ')' : '') + ' · ' + esc(r.cover) +
-    '<br><span class="st' + (r.quotedOn || /quote sent|bound|done/i.test(r.status || '') ? ' ok' : '') + '">' + esc(r.status || 'Received') + (r.quotedOn ? ' · quoted ' + esc(r.quotedOn) : '') + (r.premium ? ' · TT$ ' + esc(r.premium) : '') + '</span></div>').join('') : '';
+  if (!requests.length) { $('reqs').innerHTML = ''; return; }
+  const quoted = requests.filter(r => reqStage(r, r.type === 'Renewal' ? 'renew' : 'quote') === 3).length, doneN = requests.length - open;
+  $('reqs').innerHTML = '<section class="track" id="trReqs"><div class="th" style="--c:var(--mid);--c2:var(--blue2);--bg:var(--soft)"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2.5"/><path d="M9 2.5h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg></span><div class="tt"><b>Your requests</b><small>Each one says which path it is on, and how far it has got</small></div></div>' +
+    '<div class="reqsum"><div>' + cu(requests.length) + 'sent</div><div>' + cu(quoted) + 'answered</div><div>' + cu(doneN) + 'completed</div></div>' +
+    requests.map(reqCard).join('') + '</section>';
 }
 
 /* ---- the steps ---- */
-const STEPS = [
-  { key: 'you', title: 'About you', short: 'You', render: stepYou, check: d => need(d, ['name', 'mobile']) || (d.ownerType === 'Company' && !d.company ? 'Please give the company name.' : '') },
+const FULL_STEPS = [
+  { key: 'you', title: 'About you', short: 'You', render: stepYou, check: d => agentCheck(d) || need(d, ['name', 'mobile']) || (d.ownerType === 'Company' && !d.company ? 'Please give the company name.' : '') },
   { key: 'vehicle', title: 'Your vehicle', short: 'Vehicle', render: stepVehicle, check: d => need(d, ['reg', 'make', 'model', 'year', 'value']) || (d.mortgaged === 'Yes' && !d.institution ? 'Please name the financial institution.' : '') },
   { key: 'cover', title: 'The cover', short: 'Cover', render: stepCover, check: d => need(d, ['cover', 'drivingYears']) },
-  { key: 'driver', title: 'The driver', short: 'Driver', render: stepDriver, check: d => need(d, ['permit']) || (d.accidents === 'Yes' && !d.accidentDetails ? 'Please say a little about the accident.' : '') },
+  { key: 'driver', title: 'The driver', short: 'Driver', render: stepDriver, check: d => need(d, ['permit', 'accidents', 'young']) || historyCheck(d) },
   { key: 'docs', title: 'Your documents', short: 'Papers', render: stepDocs, check: () => '' },
   { key: 'review', title: 'Check and send', short: 'Send', render: stepReview, check: () => '' },
 ];
-const LABELS = { name: 'your name', mobile: 'your mobile', company: 'the company name', reg: 'the vehicle number', make: 'the make', model: 'the model', year: 'the year', value: 'the vehicle value', cover: 'the cover you want', drivingYears: 'how long you have been driving', permit: "your driver's permit number" };
+/* Three doors, one page: the quick quote (with or without the invoice), the renewal, and every detail. */
+const FLOWS = {
+  full: FULL_STEPS,
+  quick: [{ key: 'quick', title: 'Your new quote', short: 'Details', render: stepQuick, check: checkQuick },
+          { key: 'review', title: 'Check and send', short: 'Send', render: stepReview, check: () => '' }],
+  renew: [{ key: 'renew', title: 'Your renewal', short: 'Renewal', render: stepRenew, check: checkRenew },
+          { key: 'review', title: 'Check and send', short: 'Send', render: stepReview, check: () => '' }],
+};
+FLOWS.take = [
+  { key: 'tdocs', title: 'Your quote and papers', short: 'Papers', render: stepTdocs, check: d => checkTake('tdocs', d) },
+  { key: 'tyou', title: 'About you', short: 'You', render: stepTyou, check: d => checkTake('tyou', d) },
+  { key: 'tveh', title: 'The vehicle', short: 'Vehicle', render: stepTveh, check: d => checkTake('tveh', d) },
+  { key: 'tdrv', title: 'Drivers and history', short: 'Drivers', render: stepTdrv, check: d => checkTake('tdrv', d) },
+  { key: 'tcov', title: 'Your cover', short: 'Cover', render: stepTcov, check: d => checkTake('tcov', d) },
+  { key: 'tkyp', title: 'Know your policy', short: 'Policy', render: stepTkyp, check: d => checkTake('tkyp', d) },
+  { key: 'tsign', title: 'Sign and send', short: 'Sign', render: stepTsign, check: () => '' }];
+const steps = () => FLOWS[draft.flow] || FULL_STEPS;
+/* An agent's request needs the client's own e-mail. */
+function agentCheck(d) {
+  if (!isAgent()) return '';
+  const e = String(d.clientEmail || '').trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(e)) return 'Please give your client\'s e-mail.';
+  if (session && e === String(session.email || '').toLowerCase()) return 'Please give your client\'s own e-mail, not yours.';
+  return '';
+}
+function checkQuick(d) {
+  return agentCheck(d) || need(d, ['name', 'mobile', 'make', 'model', 'year', 'value', 'cover', 'drivingYears']) ||
+    (!String(d.reg || '').trim() && d.newUnreg !== 'Yes' ? 'Still needed: the registration number, or tick "New vehicle, not registered yet".' : '') ||
+    (d.mortgaged === 'Yes' && !d.institution ? 'Please name the financial institution.' : '') ||
+    need(d, ['accidents', 'young']) || historyCheck(d);
+}
+/* Guardian's request form asks for the accidents and the young drivers; a Yes needs a word on each. */
+function historyCheck(d) {
+  return (d.accidents === 'Yes' && !String(d.accidentDetails || '').trim() && !d.qa0date ? 'Please say a little about the accident or claim.' : '') ||
+    (d.young === 'Yes' && !String(d.youngDetails || '').trim() && !d.yd0name ? 'Please say who the young or new driver is.' : '');
+}
+function checkRenew(d) {
+  return need(d, d.unmatched === 'Yes' ? ['reg', 'name', 'mobile', 'renewChoice'] : ['name', 'mobile', 'renewChoice']) || (/changes/.test(d.renewChoice || '') && !String(d.renewChanges || '').trim() ? 'Please say what you would like changed.' : '');
+}
+
+const LABELS = { renewChoice: 'whether to renew as it is or with changes', name: 'your name', mobile: 'your mobile', company: 'the company name', reg: 'the vehicle number', make: 'the make', model: 'the model', year: 'the year', value: 'the vehicle value', cover: 'the cover you want', drivingYears: 'how long you have been driving', permit: "your driver's permit number", accidents: 'whether you have had any accidents or claims', young: 'whether young or new drivers will use the vehicle' };
 function need(d, keys) { const m = keys.filter(k => !String(d[k] || '').trim()); return m.length ? 'Still needed: ' + m.map(k => LABELS[k] || k).join(', ') + '.' : ''; }
 
-function startNew(vehIx) {
-  draft = Object.assign({}, draft.sent ? {} : draft);
-  delete draft.sent;
-  if (me) {
+/* Starts a door. What we hold about the client is carried in; what belonged to
+   another request (a vehicle, an invoice) is not, unless keep says so. */
+function startFlow(flow, vehIx, keep) {
+  const carry = ['name', 'mobile', 'gender', 'dob', 'occupation', 'agent', 'ownerType', 'company', 'companyEmail', 'drivingYears', 'ncd', 'clientStatus', 'clientRef', 'permit', 'permitIssued', 'permitExpires'];
+  /* An agent's next request is for a client of its own: nothing is carried, and nothing of the agent's is filled in. */
+  const old = draft.sent || isAgent() ? {} : draft;
+  draft = {};
+  carry.forEach(k => { if (old[k]) draft[k] = old[k]; });
+  if (!keep) files = [];
+  draft.flow = flow;
+  if (me && !isAgent()) {
     if (!draft.name && me.name) draft.name = me.name;
     if (!draft.mobile && me.mobile) draft.mobile = me.mobile;
     if (!draft.occupation && me.occupation) draft.occupation = me.occupation;
     if (!draft.dob && me.dob) draft.dob = String(me.dob).slice(0, 10);
-    if (me.found && !draft.existingVehicles && me.vehicles && me.vehicles.length) draft.existingVehicles = me.vehicles.map(v => v.reg).join(', ');
-    if (me.found && !draft.existingPolicy && me.policies && me.policies.length) draft.existingPolicy = me.policies[0].policy;
+    if (!draft.permit && me.permit) draft.permit = me.permit;
+    if (!draft.permitIssued && me.permitIssued) draft.permitIssued = me.permitIssued;
+    if (!draft.permitExpires && me.permitExpires) draft.permitExpires = me.permitExpires;
+    if (me.found && me.vehicles && me.vehicles.length) draft.existingVehicles = me.vehicles.map(v => v.reg).join(', ');
+    if (me.found && me.policies && me.policies.length) draft.existingPolicy = me.policies[0].policy;
   }
   if (vehIx != null && me && me.vehicles[vehIx]) {
     const v = me.vehicles[vehIx];
-    Object.assign(draft, { reg: v.reg || '', make: v.make || '', model: v.model || '', year: v.year ? String(v.year) : '', sfVehicle: v.reg || '',
-      cover: v.cover ? ((COVERS.find(c => c[0].toLowerCase().indexOf(String(v.cover).toLowerCase().split(' ')[0]) === 0) || [draft.cover || ''])[0]) : (draft.cover || ''),
-      value: v.sumInsured ? String(Math.round(Number(v.sumInsured))) : (draft.value || ''), prevInsurer: v.carrier || draft.prevInsurer || '',
-      windscreen: v.windscreen ? 'Yes' : (draft.windscreen || '') });
+    Object.assign(draft, { reg: v.reg || '', make: v.make || '', model: v.model || '', year: v.year ? String(v.year) : '', sfVehicle: v.reg || '' });
+    if (flow === 'renew') Object.assign(draft, { renewOn: v.renewOn || '', renewOnText: v.renewOnText || '', renewIn: v.renewIn, renewState: v.renewState || '',
+      existingPolicy: v.policy || draft.existingPolicy || '', lastCover: v.cover || '', lastSum: v.sumInsured || '', lastPremium: v.lastPremium || '' });
+    else Object.assign(draft, {
+      cover: v.cover ? ((COVERS.find(c => c[0].toLowerCase().indexOf(String(v.cover).toLowerCase().split(' ')[0]) === 0) || [''])[0]) : '',
+      value: v.sumInsured ? String(Math.round(Number(v.sumInsured))) : '', prevInsurer: v.carrier || '', windscreen: v.windscreen ? 'Yes' : '' });
   }
   if (!draft.ownerType) draft.ownerType = 'Individual';
-  saveDraft(); stepIx = 0; files = []; show('s-form'); render();
+  if (!draft.firstGG && me && me.found && ((me.vehicles || []).length || (me.policies || []).length)) draft.firstGG = 'No';
+  saveDraft(); stepIx = 0; show('s-form'); render();
+  if (flow !== 'renew') pdfLib().catch(() => {});
+}
+function startNew(vehIx) { startFlow('full', vehIx); }
+function startRenew(vehIx, choice) { startFlow('renew', vehIx); if (choice) { draft.renewChoice = choice; saveDraft(); render(); } }
+
+/* ---- the invoice: read on the server, filled in here, checked by the client ---- */
+const ci = (list, v) => list.find(x => x.toLowerCase() === String(v || '').toLowerCase().trim());
+const titleCase = s => String(s || '').toLowerCase().replace(/(^|[\s\-'’])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+function applyInvoice(F) {
+  const got = [];
+  const set = (k, v) => { if (v != null && String(v).trim() !== '') { draft[k] = String(v).trim(); got.push(k); } };
+  set('make', ci(MAKES, F.make) || F.make);
+  set('model', F.model);
+  if (F.year) set('year', YEARS.indexOf(F.year) > -1 ? F.year : '');
+  set('value', F.value);
+  set('condition', /^new$/i.test(F.condition || '') ? 'New' : '');   // a used vehicle is foreign used or second hand: the client says which
+  set('body', ci(BODIES, F.bodyType));
+  set('cc', F.fuel === 'Electric' ? 'Electric' : ci(CCS, F.engineCc));
+  set('seating', ci(SEATS, F.seats));
+  if (F.reg) set('reg', F.reg);
+  else if (F.condition === 'New') { draft.reg = ''; set('newUnreg', 'Yes'); }
+  if (F.lender) { set('mortgaged', 'Yes'); set('institution', BANKS.find(b => b.toLowerCase().indexOf(F.lender.toLowerCase().split(' ')[0]) === 0) || F.lender); }
+  /* The buyer on the document fills only what is blank: the signed-in client's own details always stand. */
+  if (!draft.name && F.buyerName) set('name', titleCase(F.buyerName));
+  if (!draft.mobile && F.buyerPhone) set('mobile', F.buyerPhone);
+  draft.fromDoc = got;
+  draft.invoice = F;
+  draft.docLabel = [/invoice/i.test(F.docType || '') ? 'dealer\'s invoice' : 'dealer\'s document', F.dealer ? 'from ' + F.dealer : ''].filter(Boolean).join(' ');
+  delete draft.invoiceMsg;
+}
+async function onInvoice(file) {
+  if (!file) return;
+  $('formErr').textContent = ''; $('signinErr').textContent = '';
+  $('reading').classList.remove('hide'); $('readingT').textContent = 'Reading the dealer\'s invoice…'; $('readingMsg').textContent = 'This takes a few seconds.';
+  const t0 = Date.now(), tick = setInterval(() => { $('readingMsg').textContent = 'Reading… ' + Math.round((Date.now() - t0) / 1000) + ' s'; }, 1000);
+  try {
+    const f = await prepFile(file, 'invoice', 2000);
+    /* A backend older than the reader answers "Unknown action": the document is still attached and the client types. */
+    const j = await api('readInvoice', { token: session.token, file: { name: f.name, type: f.type, data: f.data } })
+      .catch(e => { if (/Unknown action/i.test(e.message)) return { ok: true, read: false }; throw e; });
+    if (draft.flow !== 'quick' || $('s-form').classList.contains('hide')) startFlow('quick', null, true);
+    files = files.filter(x => x.kind !== 'invoice'); files.push(f);
+    if (j.read && j.fields) applyInvoice(j.fields);
+    else { draft.fromDoc = []; delete draft.invoice; draft.docLabel = 'dealer\'s document (attached)'; draft.invoiceMsg = j.message || 'We attached your document. Please fill in the details below.'; }
+    saveDraft(); stepIx = 0; render();
+  } catch (e) {
+    if ($('s-form').classList.contains('hide')) { $('homeLead').textContent = e.message; } else { $('formErr').textContent = e.message; }
+  }
+  clearInterval(tick); $('reading').classList.add('hide');
+  const inv = $('invFile'); if (inv) inv.value = '';
+}
+function flowTag() {
+  const P = PATH[draft.flow] || PATH.full, veh = draft.line ? draft.line + ' insurance' + (draft.model ? ', ' + draft.model : '') : [draft.year, draft.make, draft.model].filter(Boolean).join(' ') || draft.reg || '';
+  const what = draft.flow === 'renew' ? [veh, draft.reg && veh !== draft.reg ? draft.reg : ''].filter(Boolean).join(' · ')
+    : draft.flow === 'take' ? (draft.quoteRef ? 'Your quote ' + draft.quoteRef : 'The quote we e-mailed you')
+    : draft.invoice ? 'From the dealer\'s invoice' + (veh ? ' · ' + veh : '') : (veh || 'A vehicle we don\'t insure yet');
+  ['t-renew', 't-quote', 't-take'].forEach(c => $('s-form').classList.toggle(c, c === P.cls));
+  $('flowTag').innerHTML = '<span class="pi">' + P.ic + '</span><span><b>' + esc(FLOW_NAME[draft.flow] || P.name) + '</b>' + esc(what) + '</span>';
+  $('sideH').textContent = P.side;
 }
 function render() {
+  flowTag();
+  const STEPS = steps();
   $('steps').innerHTML = '<span class="fill"></span>' + STEPS.map((s, i) => '<i data-n="' + (i + 1) + '" class="' + (i < stepIx ? 'done' : i === stepIx ? 'on' : '') + '"><span>' + s.short + '</span></i>').join('');
   requestAnimationFrame(() => { const f = $('steps').querySelector('.fill'); if (f) f.style.width = (84 * stepIx / (STEPS.length - 1)) + '%'; });
   const s = STEPS[stepIx];
   $('step').innerHTML = '<div class="eyebrow">Step ' + (stepIx + 1) + ' of ' + STEPS.length + (/\breq: 1\b/.test(String(s.render)) ? ' · <span style="font-weight:600;letter-spacing:0;text-transform:none;color:var(--dim)">starred answers are needed</span>' : '') + '</div><h2>' + s.title + '</h2>' + s.render(draft);
   $('formErr').textContent = '';
-  $('btnBack').textContent = stepIx === 0 ? 'My quotes' : 'Back';
-  $('btnNext').textContent = stepIx === STEPS.length - 1 ? 'Send my request' : 'Continue';
+  $('btnBack').textContent = stepIx === 0 ? 'Home' : 'Back';
+  $('btnNext').textContent = stepIx === STEPS.length - 1 ? (draft.flow === 'take' ? 'Sign and send' : 'Send my request') : 'Continue';
   $('btnNext').disabled = false;
   if (s.key === 'docs') wireFiles();
+  wireAgentPicker();
+  $('step').querySelectorAll('input.invIn').forEach(el => el.addEventListener('change', ev => onInvoice(ev.target.files[0])));
+  $('step').querySelectorAll('input.tdocIn').forEach(el => el.addEventListener('change', ev => onDoc(el.dataset.kind, ev.target.files[0])));
+  if (s.key === 'tsign') wireSig();
+  if (s.key === 'renew') loadBrief();
+  $('step').querySelectorAll('input[type=checkbox][data-k]').forEach(el => el.addEventListener('change', () => { collect(); side(); }));
   $('step').querySelectorAll('select.fld').forEach(el => { el.classList.toggle('empty', !el.value); el.addEventListener('change', () => { el.classList.toggle('empty', !el.value); otherBox(el); collect(); side(); }); otherBox(el); });
   $('step').querySelectorAll('input.fld, textarea.fld').forEach(el => el.addEventListener('input', () => { collect(); side(); }));
   side();
@@ -419,8 +1284,10 @@ function pick(k, v, el) {
   onPick(k); side();
 }
 function onPick(k) {
-  const dep = { ownerType: 'companyBox', mortgaged: 'instBox', accidents: 'accBox' }[k];
-  if (dep && $(dep)) $(dep).classList.toggle('hide', !(draft[k] === 'Company' || draft[k] === 'Yes'));
+  const dep = { ownerType: 'companyBox', mortgaged: 'instBox', accidents: 'accBox', renewChoice: 'chgBox' }[k];
+  if (dep && $(dep)) $(dep).classList.toggle('hide', !(draft[k] === 'Company' || draft[k] === 'Yes' || draft[k] === 'Renew with changes'));
+  /* Details a Yes (or a No) asks for: data-when="key=Value", keys or values joined by | */
+  $('step').querySelectorAll('[data-when]').forEach(el => el.classList.toggle('hide', !whenOn(el.dataset.when)));
 }
 function slide(dir) {
   try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; $('step').animate([{ opacity: 0, transform: 'translateX(' + (dir < 0 ? -22 : 22) + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.2,.8,.2,1)' }); } catch (e) {}
@@ -430,102 +1297,599 @@ function shake() {
 }
 async function go(dir) {
   collect();
+  const STEPS = steps();
   if (dir < 0) { if (stepIx === 0) { showHome(); return; } stepIx--; render(); slide(-1); return; }
   const err = STEPS[stepIx].check(draft);
   if (err) { $('formErr').textContent = err; shake(); return; }
   if (stepIx < STEPS.length - 1) { stepIx++; render(); slide(1); return; }
-  await submit();
+  await (draft.flow === 'take' ? submitTake() : submit());
 }
 /* The summary beside the form on a wide screen. */
 function side() {
   const d = draft, el = $('sideSum'); if (!el) return;
-  const rows = [['Name', d.name], ['Mobile', d.mobile], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Registration', d.reg],
+  const rows = [['Request', FLOW_NAME[d.flow] || ''], ['Renews', d.renewOnText], ['You ask', d.renewChoice], ['Read from', d.docLabel], ['Name', d.name], ['Mobile', d.mobile], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Registration', d.reg || (d.newUnreg === 'Yes' ? 'Not registered yet' : '')],
     ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Cover', d.cover], ['Windscreen', d.windscreen], ['Years driving', d.drivingYears],
-    ['No claim discount', d.ncd], ['Permit', d.permit], ['Documents', files.length ? files.map(f => f.kind).join(', ') : '']].filter(r => r[1]);
+    ['No claim discount', d.ncd], ['Permit', d.permit], ['Documents', files.length ? files.map(f => docLabel(f.kind)).join(', ') : '']].filter(r => r[1]);
   el.innerHTML = rows.length ? rows.map(r => '<div class="kv"><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('') : '<p class="empty">What you fill in appears here as you go.</p>';
 }
 
 /* ---- field helpers ---- */
 const req = '<em>*</em>';
-const inp = (k, label, o = {}) => '<label class="f"><b>' + label + (o.req ? ' ' + req : '') + '</b><input class="fld" data-k="' + k + '" type="' + (o.type || 'text') + '" value="' + esc(draft[k] || '') + '"' +
+const fromDoc = k => (draft.fromDoc || []).indexOf(k) > -1;
+const tag = k => fromDoc(k) ? '<span class="fromdoc">from your document</span>' : '';
+const inp = (k, label, o = {}) => '<label class="f"><b>' + label + (o.req ? ' ' + req : '') + tag(k) + '</b><input class="fld' + (fromDoc(k) ? ' got' : '') + '" data-k="' + k + '" type="' + (o.type || 'text') + '" value="' + esc(draft[k] || '') + '"' +
   (o.ph ? ' placeholder="' + esc(o.ph) + '"' : '') + (o.mode ? ' inputmode="' + o.mode + '"' : '') + (o.ac ? ' autocomplete="' + o.ac + '"' : '') + (o.max ? ' maxlength="' + o.max + '"' : '') + (o.list ? ' list="' + o.list + '"' : '') + '>' +
   (o.hint ? '<small>' + o.hint + '</small>' : '') + '</label>';
 /* A drop-down. A value already held that is not on the list is shown as its own option, so nothing from Salesforce is lost. */
 const sel = (k, label, list, o = {}) => {
   const v = draft[k] || '', known = list.indexOf(v) > -1, other = v && !known && list.indexOf('Other') > -1;
-  return '<label class="f"><b>' + label + (o.req ? ' ' + req : '') + '</b><select class="fld" data-k="' + k + '">' +
+  return '<label class="f"><b>' + label + (o.req ? ' ' + req : '') + tag(k) + '</b><select class="fld' + (fromDoc(k) ? ' got' : '') + '" data-k="' + k + '">' +
     '<option value="">' + esc(o.ph || 'Choose…') + '</option>' +
     (v && !known && !other ? '<option value="' + esc(v) + '" selected>' + esc(v) + '</option>' : '') +
     list.map(x => '<option value="' + esc(x) + '"' + ((x === v) || (other && x === 'Other') ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>' +
     (list.indexOf('Other') > -1 ? '<span class="other' + (other ? '' : ' hide') + '"><input class="fld" data-other="1" style="margin-top:8px" placeholder="Please type it" value="' + esc(other ? v : '') + '"></span>' : '') +
     (o.hint ? '<small>' + o.hint + '</small>' : '') + '</label>';
 };
-const opts = (k, label, list, hint, big) => '<div class="f" style="margin:0 0 13px"><b style="display:block;color:var(--ink);font-size:14px;margin:0 0 6px">' + label + '</b><div class="opts' + (big ? ' big' : '') + '">' +
+const opts = (k, label, list, hint, big) => '<div class="f" style="margin:0 0 13px"><b style="display:block;color:var(--ink);font-size:14px;margin:0 0 6px">' + label + tag(k) + '</b><div class="opts' + (big ? ' big' : '') + '">' +
   list.map(x => { const v = Array.isArray(x) ? x[0] : x, sub = Array.isArray(x) ? x[1] : '';
     return '<button type="button" class="' + (draft[k] === v ? 'on' : '') + '" onclick="pick(\'' + k + '\',\'' + v.replace(/'/g, "\\'") + '\',this)">' + esc(v) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</button>'; }).join('') + '</div>' +
   (hint ? '<small style="display:block;color:var(--dim);font-size:12.5px;margin:5px 0 0">' + hint + '</small>' : '') + '</div>';
 const sec = (ic, t, sub) => '<div class="sec"><span class="ic">' + ic + '</span><div><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div></div>';
 
+/* The quick quote: what the desk prices from, on one screen. */
+function stepQuick(d) {
+  const inv = files.find(f => f.kind === 'invoice');
+  const head = d.invoice
+    ? '<div class="docnote"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M19 15v5M16.5 17.5h5"/></svg></span><div><b>We read the ' + esc(d.docLabel) + '.</b> Check each field marked <span class="fromdoc">from your document</span> and change anything that is wrong. The document goes with your request.</div></div>'
+    : d.invoiceMsg ? '<div class="docnote"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5l-8.3 8.3a5 5 0 0 1-7.1-7.1l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg></span><div>' + esc(d.invoiceMsg) + '</div></div>'
+    : '<p class="muted">For a vehicle we don\'t insure yet: the minimum we need to price it. Have the dealer\'s invoice? <label class="linkbtn" style="padding:0">Upload it<input type="file" class="invIn" accept="image/*,application/pdf" style="display:none"></label> and we fill it in.</p>';
+  return head +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>', 'The vehicle') +
+    '<div class="row">' + sel('make', 'Make', MAKES, { req: 1 }) + inp('model', 'Model', { ph: 'e.g. Aqua', req: 1 }) + '</div>' +
+    '<div class="row">' + sel('year', 'Year', YEARS, { req: 1 }) + inp('value', 'Value (TT$)', { mode: 'numeric', ph: 'e.g. 95000', req: 1, hint: 'The price on the invoice, or what it would sell for today.' }) + '</div>' +
+    opts('condition', 'New or used', CONDITIONS) +
+    inp('reg', 'Registration number', { ph: 'e.g. PDX 1234', max: 20 }) +
+    '<label class="chk" style="margin:-6px 0 14px"><input type="checkbox" data-k="newUnreg"' + (d.newUnreg === 'Yes' ? ' checked' : '') + '> <span>New vehicle, not registered yet' + tag('newUnreg') + '</span></label>' +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.8l8 2.9v6.1c0 5.1-3.4 9.3-8 11-4.6-1.7-8-5.9-8-11V5.7z"/><path d="M8.6 12.2l2.4 2.4 4.6-4.8"/></svg>', 'The cover') +
+    opts('cover', 'The cover you want', COVERS, '', true) +
+    '<div class="row">' + sel('drivingYears', 'Years driving', DRIVING, { req: 1 }) + sel('ncd', 'No claim discount', NCDS) + '</div>' +
+    opts('mortgaged', 'On a loan or hire purchase?', ['Yes', 'No']) +
+    '<div id="instBox" class="' + (d.mortgaged === 'Yes' ? '' : 'hide') + '">' + sel('institution', 'Financial institution', BANKS) + '</div>' +
+    sel('use', 'Use of the vehicle', USES) +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2.5"/><path d="M9 2.5h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg>', 'Your history') + historyHtml(false) +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg>', isAgent() ? 'Your client' : 'You') +
+    (isAgent() ? clientFields() : '') +
+    '<div class="row">' + inp('name', isAgent() ? 'Your client\'s full name' : 'Your full name', { ac: isAgent() ? 'off' : 'name', req: 1 }) + inp('mobile', isAgent() ? 'Their mobile number' : 'Mobile number', { type: 'tel', mode: 'tel', ac: isAgent() ? 'off' : 'tel', ph: '868-', req: 1 }) + '</div>' +
+    (isAgent() ? '' : agentPicker(d)) +
+    '<details class="more"' + (['dob', 'marital', 'occupation', 'employer', 'address', 'chassis', 'antiTheft', 'firstGG'].some(k => d[k]) ? ' open' : '') + '><summary><b>Guardian\'s request form asks a little more</b><small>Optional. Every answer here makes the quote faster.</small></summary>' +
+      '<div class="row">' + inp('dob', 'Date of birth', { type: 'date' }) + sel('marital', 'Marital status', MARITAL) + '</div>' +
+      '<div class="row">' + inp('occupation', 'Occupation', { ph: 'e.g. Teacher' }) + inp('employer', "Employer's name") + '</div>' +
+      '<div class="row">' + inp('homePhone', 'Home number', { type: 'tel', mode: 'tel', ph: '868-' }) + inp('chassis', 'Chassis number', { ac: 'off' }) + '</div>' +
+      area('address', 'Home address', 'House number, street, town') +
+      inp('antiTheft', 'Anti-theft devices fitted', { ph: 'e.g. immobiliser, tracker; or none' }) +
+      opts('windscreen', 'Add windscreen cover?', ['Yes', 'No']) + when('windscreen=Yes', inp('windscreenLimit', 'Windscreen limit you want (TT$)', { mode: 'numeric' })) +
+      inp('ncdPct', 'No claim discount as a %, if you know it', { mode: 'numeric' }) + ggHtml() + '</details>' +
+    (inv ? sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2.5V8h5.5"/><path d="M8.5 13h7M8.5 17h5"/></svg>', 'Your document') + '<div class="files">' + fileRow('invoice') + '</div>' : '');
+}
+/* The renewal: the vehicle and its record, what it means in plain words, then what the client wants. */
+const SPARK = '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>';
+function stepRenew(d) {
+  const lapsed = d.renewState === 'lapsed', n = Math.abs(d.renewIn || 0), un = d.unmatched === 'Yes';
+  const head = un
+    ? '<div class="rnw" style="margin-top:6px"><div class="rnw-top"><div><div class="eyebrow">Not matched to your e‑mail yet</div><h3>' + esc(d.reg || 'Your vehicle') + '</h3>' +
+      '<div class="when">Our renewals team finds the policy for this vehicle and replies to you. Check the number below.</div></div></div></div>' +
+      inp('reg', 'Registration or policy number', { req: 1, ph: 'e.g. PDJ 1234' })
+    : '<div class="rnw' + (lapsed ? ' lapsed' : '') + '" style="margin-top:6px"><div class="rnw-top"><div class="ring" style="--p:' + (lapsed ? 100 : Math.max(4, Math.min(100, Math.round(100 * (60 - n) / 60)))) + '"><span>' + cu(n) + '<small>' + (lapsed ? 'days ago' : 'days') + '</small></span></div>' +
+      '<div>' + (d.line ? '<div class="eyebrow">' + esc(d.line) + ' insurance</div>' : '') + '<h3>' + esc(d.line ? (d.model || d.line + ' insurance') : [d.year, d.make, d.model].filter(Boolean).join(' ') || d.reg) + '</h3><div class="when">' + esc(d.reg) + (d.renewOnText ? ' · ' + (lapsed ? 'ended ' : 'renews ') + '<b>' + esc(d.renewOnText) + '</b>' : '') + '</div>' +
+      '<div class="when" style="font-size:13px;color:var(--dim)">' + esc([d.lastCover, d.lastSum ? 'insured for ' + money(d.lastSum) : '', d.lastPremium ? 'premium ' + money(d.lastPremium) : ''].filter(Boolean).join(' · ')) + '</div></div></div></div>' +
+      '<div class="brief" id="rbrief" aria-live="polite">' + briefHtml(d) + '</div>';
+  return head +
+    opts('renewChoice', 'What would you like to do?', d.line
+      ? [['Renew as it is', 'Nothing has changed: same cover, same sum insured'], ['Renew with changes', 'A new value, something added or taken off, or anything else'], ['Talk to us first', 'We call you before anything is renewed']]
+      : [['Renew as it is', 'Nothing has changed: same cover, same value, same drivers'], ['Renew with changes', 'A new driver, a new value, different cover or anything else'], ['Talk to us first', 'We call you before anything is renewed']], '', true) +
+    '<div id="chgBox" class="' + (d.renewChoice === 'Renew with changes' ? '' : 'hide') + '">' +
+    '<label class="f"><b>What would you like changed? ' + req + '</b><textarea class="fld" data-k="renewChanges" placeholder="' + (d.line ? 'e.g. raise the building to TT$ 1,200,000, add the contents' : 'e.g. add my son as a driver, lower the value to TT$ 80,000') + '">' + esc(d.renewChanges || '') + '</textarea></label>' +
+    '<div class="row">' + (d.line ? '' : sel('cover', 'Cover', COVERS.map(c => c[0]), { ph: 'Keep as it is' })) + inp('value', d.line ? 'New sum insured (TT$)' : 'New value (TT$)', { mode: 'numeric', ph: 'only if it changes' }) + '</div></div>' +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg>', 'How we reach you') +
+    '<div class="row">' + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) + '</div>';
+}
+/* "Your renewal in plain words": written by Claude from the record (or plainly, when Claude is not there),
+   with up to three things to confirm, each a tap that becomes a change. */
+function briefHtml(d) {
+  const b = d.brief && d.brief.reg === d.reg ? d.brief : null;
+  if (!b) return '<div class="bh">' + SPARK + '<b>Your renewal in plain words</b></div><p class="bwait"><span></span><span></span><span></span> Reading your record…</p>';
+  const asked = String(d.renewChanges || '');
+  return '<div class="bh">' + SPARK + '<b>Your renewal in plain words</b></div><p class="bs">' + esc(b.summary) + '</p>' +
+    (b.checks && b.checks.length ? '<div class="bq"><small>Before you choose, worth a moment:</small>' + b.checks.map((c, i) =>
+      '<div class="bc"><span>' + esc(c.question) + '</span>' + (c.change ? '<button type="button" class="' + (asked.indexOf(c.change) > -1 ? 'on' : '') + '" onclick="briefChange(' + i + ')">' +
+        (asked.indexOf(c.change) > -1 ? '✓ Added to my changes' : 'Yes, change this') + '</button>' : '') + '</div>').join('') + '</div>' : '') +
+    '<small class="bf">' + (b.ai ? 'Written by AI from your record, as a guide. ' : 'From your record. ') + 'Our renewals team checks everything with you.</small>';
+}
+async function loadBrief() {
+  const d = draft;
+  if (d.flow !== 'renew' || d.unmatched === 'Yes' || !d.reg || (d.brief && d.brief.reg === d.reg)) return;
+  const reg = d.reg;
+  try {
+    const j = await api('renewBrief', { token: session.token, reg: reg });
+    if (draft.reg !== reg) return;
+    draft.brief = j.brief ? Object.assign({ reg: reg }, j.brief) : { reg: reg, summary: 'We have your vehicle on file. Choose below what you would like, and our renewals team prepares it.', checks: [] };
+  } catch (e) { draft.brief = { reg: reg, summary: 'We have your vehicle on file. Choose below what you would like, and our renewals team prepares it.', checks: [] }; }
+  saveDraft();
+  const el = $('rbrief'); if (el) el.innerHTML = briefHtml(draft);
+}
+function briefChange(i) {
+  collect();
+  const c = draft.brief && draft.brief.checks[i]; if (!c) return;
+  const cur = String(draft.renewChanges || '').trim();
+  if (cur.indexOf(c.change) > -1) draft.renewChanges = cur.split('\n').filter(l => l.trim() !== c.change).join('\n');
+  else { draft.renewChanges = (cur ? cur + '\n' : '') + c.change; draft.renewChoice = 'Renew with changes'; }
+  if (!String(draft.renewChanges).trim() && draft.renewChoice === 'Renew with changes') draft.renewChoice = '';
+  saveDraft(); render();
+  const t = $('step').querySelector('[data-k="renewChanges"]'); if (t && draft.renewChoice === 'Renew with changes') t.focus();
+}
+/* ---- taking the quote: Guardian's proposal and Know Your Policy, filled and signed here ---- */
+/* Asked for on 21 October 2026: "once they agree on the quote … upload the certified copy … extract all the details on
+   the vehicles … fill out the proposal form very fast", then "it has to be exactly on the Guardian PDF and know your
+   [policy], ensuring that they can answer it". The documents fill what they hold; every declaration is the client's
+   own tap, never pre-ticked; the forms are Guardian's own PDFs (motor-quote/forms/), filled by forms.js. */
+const PDFLIB_URL = '/motor-quote/vendor/pdf-lib-1.17.1.min.js';   // MIT, kept here so the forms never depend on an outside script
+const FORM_PROPOSAL = '/motor-quote/forms/gg-private-motor-proposal.pdf', FORM_KYP = '/motor-quote/forms/gg-know-your-policy-private-motor.pdf';
+const TITLES = ['Mr', 'Mrs', 'Miss', 'Ms', 'Dr', 'Other'];
+const MARITAL = ['Single', 'Married', 'Common-law', 'Divorced', 'Separated', 'Widowed'];
+/* Guardian's Motor Quotation Request, filled here and attached to the request for the quotes desk (forms.js fillRequest). */
+const FORM_REQUEST = '/motor-quote/forms/gg-motor-quotation-request.pdf';
+const USES = ['Private use', 'Private use and to work', 'Business use', 'Other'];
+const CONDITIONS = ['New', 'Foreign used', 'Second hand'];
+const ACC_COLS = [['date', 'Date', 'date'], ['own', 'Paid for your vehicle (TT$)', 'numeric'], ['ins', 'Your insurer then'], ['tp', 'Paid to the other party (TT$)', 'numeric'], ['tpins', "The other party's insurer"], ['drv', 'Who was driving']];
+const YD_COLS = [['name', "Driver's name"], ['occ', 'Occupation'], ['dob', 'Date of birth', 'date'], ['dp', 'Permit (DP) number'], ['iss', 'Permit issued', 'date']];
+/* Up to three rows of a table on Guardian's form, as cards a phone can fill. */
+function rows3(pre, cols, title) {
+  return [0, 1, 2].map(i => '<div class="accrow"><b class="rt">' + title + ' ' + (i + 1) + (i ? ' <span>(if any)</span>' : '') + '</b><div class="row">' +
+    cols.map(c => inp(pre + i + c[0], c[1], c[2] === 'date' ? { type: 'date' } : c[2] ? { mode: c[2] } : {})).join('') + '</div></div>').join('');
+}
+const historyHtml = full => ynq('accidents', 'Have you ever had any accidents or claims?') +
+  when('accidents=Yes', area('accidentDetails', 'Tell us briefly what happened', 'When, what happened, what was paid') + (full ? rows3('qa', ACC_COLS, 'Accident or claim') : '')) +
+  ynq('young', 'Will any young or inexperienced drivers use the vehicle?') +
+  when('young=Yes', area('youngDetails', 'Who, and how long they have driven', 'e.g. my son, 19, driving one year') + (full ? rows3('yd', YD_COLS, 'Driver') : ''));
+const ggHtml = () => opts('firstGG', 'Is this your first policy with Guardian General?', ['Yes', 'No']) +
+  opts('otherGG', 'Any other business with Guardian General?', ['Yes', 'No'], 'Life, health, home, another vehicle…') +
+  when('otherGG=Yes', inp('otherGGType', 'What is it?', { ph: 'e.g. Home, Life' }));
+const LEVELS = ['Level 1 ($3,000)', 'Level 2 ($5,000)', 'Level 3 ($8,000)'], EV_LIMITS = ['$50,000', '$75,000', '$100,000', '$120,000'];
+const BODY_TYPES = ['Sedan', 'Hatchback', 'SUV', 'Crossover', 'Wagon', 'Pickup', 'Van', 'Coupe', 'Convertible', 'Motorcycle', 'Other'];
+function docLabel(k) { const t = KINDS[k] || TDOCS[k]; return t ? t[0] : k; }
+function doneSteps(list, flow) { const P = PATH[flow] || PATH.quick; $('doneSteps').className = P.cls; $('doneSteps').innerHTML = tracker(['Sent'].concat(list), 1, true); }
+const TDOCS = { quote: ['Your Guardian quote', 'The quote we e-mailed you (Guardian General\'s Quotation Schedule), the PDF or a photo.', 1],
+  certified: ['Certified copy, or the dealer\'s invoice for a new vehicle', 'We read the registration, chassis and engine numbers off it.', 0],
+  permit: ['Your driver\'s permit', 'A photo of the front. We read the number, the date of issue and the class.', 0] };
+/* The Know Your Policy points, in Guardian's own words (the form, Motor Guard, Private Motor - Individual). */
+const KYP_POINTS = [
+  ['Loss of use / courtesy car', 'Comprehensive cover includes loss of use up to 10 days (courtesy car) or the monetary amount stated in the schedule, provided you have this cover.', 'Do you understand that the loss of use payment OR courtesy car will apply ONLY for the length of time the adjuster advises it will take to repair your vehicle subject to the maximum number of days stated on the policy schedule and ONLY commences when the vehicle is sent to the garage and repairs have started?'],
+  ['Loss of use / courtesy car', '', 'Do you understand that the loss of use OR courtesy car cover is calculated on a reducing balance basis? Once any of the ten (10) days are used, you will only be entitled to the remaining balance for the rest of the policy period and the full ten (10) days of cover will be reinstated at policy renewal.'],
+  ['Excesses', 'An excess is the amount of each claim that you are responsible for when you are insured for either Comprehensive or Third-Party Fire and Theft coverage. For example, if you claim $2,000 and your excess is $500, once the claim is valid you will be paid $1,500. If you are not at fault, Guardian General will attempt to recover your excess from the other insurer, on your behalf.', 'Do you understand that the excess must be paid whether you are at fault or NOT?'],
+  ['Excesses', 'The excesses that apply to you are in the Excess Table on your Guardian quote. Answer No and we call you to go through them before your cover starts.', 'Did the representative explain the excesses that will apply to your policy?'],
+  ['Windscreen', 'Once part of the windscreen limit is claimed anytime during the period of insurance, we will reduce the limit of coverage available by the amount of the claim. If the entire windscreen limit is claimed anytime during the period of insurance, we will automatically restore the cover to a limit of $2,500.00 for the remainder of the policy period. However, you may repurchase the benefit and adjust to your preferred limit for the balance of your insurance period.', 'Do you understand the above?'],
+  ['Contribution / depreciation', 'When settling a claim for repairs to your vehicle, we will pay to replace your damaged parts with parts of similar age and use. When used parts or foreign used parts are not available, Guardian General will allow new parts, but you will be required to contribute towards the cost (i.e. difference in costs between new and used parts).', 'Do you understand the above?'],
+  ['Total loss', 'This question does not apply if you have purchased the Agreed Depreciation benefit. In the event of a total loss, the settlement will be based on market value or sum insured (insured value) whichever is LESS at the time of the loss. Market value is how much you can fetch on the open market if you sell your vehicle in its current condition (prior to the loss).', 'Do you understand the above?'],
+  ['Motor Assist', 'If you qualify for this benefit, it provides emergency roadside assistance. The weight of your vehicle (unloaded) must not be greater than three (3) tons. You must be onsite of the breakdown and ensure that your vehicle is ready for towing. Refer to our Motor Assist brochure for more details.', 'Do you understand the above?'],
+  ['No Claim Discount', 'Applicable to all cover types.', 'Do you understand that whether you are at fault or NOT, in an accident, your No Claim Discount (NCD) may be affected?'],
+  ['Your duties under the policy', 'You are required to: take reasonable steps to safeguard against accidents, injury, loss or damage; ensure that your vehicle is maintained in a road worthy condition complying with all applicable laws; provide accurate information at all times (proposal and claim stages) and not withhold any information; inform us of any material change to your vehicle at the point of inception or during the policy period (e.g. engine change, printed artwork, new colour, change in size of rims from standard, special audio equipment).', 'Do you understand the above?'],
+  ['If you have a potential loss or claim', 'You are required to: notify us in writing (by completing a claim form) as soon as possible but no later than 30 days of a potential loss/claim, by sending it to any of our offices, e-mailing ggilpcclaims@myguardiangroup.com or using our portal at myguardiangroup.com; not attempt to negotiate any settlement with third parties; provide estimates to repair damage; report the incident to the police and provide a copy of the report receipt and report; send us any summons, writ or legal process in connection with any third-party claim against you, immediately upon receipt; give all necessary information, documentation and assistance to process any claim under the policy, including access to view the vehicle at any time.', 'Do you understand the above?'],
+  ['Policy cancellation', 'If you cancel your policy, you may not always be entitled to a refund premium and cancellation can only take effect on the date on which you return the original certificate of insurance.', 'Do you understand the above?'],
+  ['Sale of vehicle', 'If you sell your vehicle or transfer its ownership, your insurance is NOT transferable to the new owner, and the motor certificate must be returned to Guardian General for the insurance to be cancelled. If you do not, and a claim occurs while in the possession of the new owner, it will not be honoured. In accordance with the law (Motor Vehicle & Road Traffic Act, Chapter 48:50, Section 19 (1)(b)(2), 3 and 4), a vehicle must be transferred within seven (7) days of it being sold.', 'Do you understand the above?'],
+  ['Claims appeal process', 'If you are unsatisfied with the outcome of your claim, you can appeal to the Office of the Financial Services Ombudsman (OFSO), an agency under the Central Bank of Trinidad and Tobago: Parliament Building, Level 2 Tower D, International Waterfront Centre, Wrightson Road, Port of Spain; 800-4FSO (4376), 621-2288 or 235-2288. You also have the options of mediation (to address an appeal), arbitration (if you are disputing the settlement amount) and legal redress (filed in the courts of Trinidad and Tobago).', 'Do you understand the above?'],
+  ['Complaints process', 'Should you have a complaint or observation/suggestion which you wish for us to address, contact CXAssurance@myguardiangroup.com or Guardian General\'s Client Engagement Centre: 877-myGG (6944).', 'Do you understand the above?'],
+  ['Optional benefits', '', 'Were you offered the choice to purchase any other optional benefits?'],
+  ['Sharing of data', 'I/We consent (a) to conduct business with Guardian General Insurance Limited online and electronically including but not limited to effecting and/or renewing insurance coverages, requesting and receiving quotations and/or updates, sending and receiving all documents, communications, notices, contracts and all other correspondence electronically; (b) that any document delivered in connection with this proposal may be electronically signed and the electronic signatures of the parties are intended to have the same force and effect as manual signatures; (c) the sharing of my/our information including personal information with other companies in Guardian Holdings Limited and parent company, NCB Financial Group Limited (NCB Group) and/or their subsidiaries and any other entity/ies that may become part of the NCB Group and with all duly authorized regulatory bodies and/or agencies and business partners; (d) the seeking of information from other insurers, finance companies, databases and/or other duly authorized bodies to verify the answers provided by me/us.', 'Do you agree?'],
+];
+const PEP_TEXT = 'A PEP is an Individual such as a Head of State or Government, senior politician, senior government, judicial or military official, senior executive of State-owned corporations and important political party official who is or has been entrusted with prominent functions by a foreign country or domestically in the territory; or a person who is or has been entrusted with a prominent function by an international organisation (members of senior management such as directors and members of the board or equivalent functions). This category also includes immediate family members and close personal and professional associates. If Yes is selected, this Proposal form must be accompanied by a PEP Memorandum.';
+const DECLARATION = '<p>I/We wish to effect insurance with <b>Guardian General Insurance Limited</b> on the terms, conditions and exclusions of the Policy to be issued by the Company.</p><p>I/We warrant that: (a) the statements and particulars given by me/us in this proposal are to the best of my/our knowledge and belief true and complete; (b) no material fact/s affecting the assessment of the risk has been misrepresented mis-stated suppressed or withheld; (c) the motor vehicle(s) is/are in good condition and repair.</p><p>I/We consent to: (a) conduct business with Guardian General Insurance Limited online and electronically including but not limited to effecting and/or renewing insurance coverages, requesting and receiving quotations and/or updates, sending and receiving all documents, communications, notices, contracts and all other correspondence electronically; (b) the sharing of my/our information including personal information with other companies in Guardian Holdings Limited and parent company, NCB Financial Group Limited (referred to herein as NCB Group) and/or their subsidiaries and any other entity/ies that may become part of the NCB Group and with all duly authorized regulatory bodies and/or Agencies and business partners; (c) the seeking of information from other insurers, finance companies, databases and/or other duly authorized bodies to verify the answers provided by me/us.</p><p>I/We agree that this Proposal and Declaration shall form the basis of the contract between me/us and <b>Guardian General Insurance Limited</b> and shall be deemed to be incorporated in the Policy to be issued.</p>';
+const BENEFITS = [['b19a', '(a) Special Perils: flood, hurricane, windstorm, tornado, earthquake, volcanic eruption or any other convulsion of nature (Comprehensive only)'],
+  ['b19b', '(b) Windscreen and ALL glass damage (Comprehensive and Fire & Theft only)'], ['b19c', '(c) Windscreen front and back glass damage only (Third Party only)'],
+  ['b19d', '(d) Personal Accident Benefit to un-named passengers, ages 17 to 65 ($5,000 per person or $35,000 aggregate)'], ['b19e', '(e) Courtesy car / loss of use, maximum 10 days (Comprehensive only)'],
+  ['b19f', '(f) Agreed Depreciation: pre-agreed depreciation for total losses (Comprehensive & Fire/Theft, subject to valuation)'],
+  ['b19g', '(g) Hospitalisation Benefits, max. $15,000 per 12 months (subject to a Health Questionnaire)'], ['b19h', '(h) Excess waiver'],
+  ['b19i', '(i) Mechanical Repair Benefit'], ['b19j', '(j) Survivors Benefit'], ['b19k', '(k) Electric Vehicle Battery Replacement or Repair (Electric vehicles, Comprehensive only)']];
+/* What each step must have, the same rules the script checks again. */
+const T_YN = { tyou: ['pep', 'otherGG'], tveh: ['q4', 'acc', 'q6', 'q7b', 'q7c', 'q7d', 'q7e', 'q8', 'q9'],
+  tdrv: ['q3a', 'q3b', 'q11', 'q12', 'q13', 'q14a', 'q14b', 'q14c', 'q15', 'q16a', 'q16b', 'q16c'], tcov: BENEFITS.map(b => b[0]),
+  tkyp: KYP_POINTS.map((p, i) => 'k' + (i + 1)) };
+const T_REQ = { tyou: { first: 'your first name', surname: 'your surname', dob: 'your date of birth', nationality: 'your nationality', residence: 'your country of residence',
+    marital: 'your marital status', address: 'your address', phone: 'your contact number', occupation: 'your occupation', permitNo: 'your permit number',
+    permitIssued: 'the permit\'s date of issue', permitClass: 'the permit class' },
+  tveh: { fuel: 'the fuel type', reg: 'the registration (or "Not registered yet")', makeModel: 'the make and model', chassis: 'the chassis number', engine: 'the engine number',
+    year: 'the year of make', cc: 'the C.C.', seating: 'the seating', body: 'the type of body', sumInsured: 'the sum insured', cond: 'new, secondhand or foreign used', q10: 'where it is kept at night' },
+  tcov: { cover: 'the type of cover', from: 'the start of the period', to: 'the end of the period' } };
+const T_IF = [['otherGG', 'Yes', 'otherGGd', 'your other insurance with Guardian Group'], ['q4', 'No', 'q4d', 'how long since you drove'],
+  ['q6', 'Yes', 'q6d', 'the modifications'], ['q7d', 'Yes', 'trailerReg', 'the trailer\'s registration'], ['q7e', 'Yes', 'financeName', 'the finance company'],
+  ['q9', 'Yes', 'q9d', 'the anti-theft device and when it was fitted'], ['q3a', 'Yes', 'd3name', 'the driver\'s name'], ['q3b', 'Yes', 'd3name', 'the driver\'s name'],
+  ['q11', 'Yes', 'q11d', 'the disability or infirmity'], ['q12', 'Yes', 'q12d', 'the conviction or violation'], ['q13', 'Yes', 'q13d', 'the vehicles and insurers'],
+  ['q16a', 'Yes', 'q16ad', 'the business use'], ['q16b', 'Yes', 'q16bd', 'the racing or hire use'], ['q16c', 'No', 'q16cd', 'how the vehicle is used'],
+  ['b19b', 'Yes', 'b19bLimit', 'the windscreen limit']];
+function checkTake(key, d) {
+  if (key === 'tdocs') return files.some(f => f.kind === 'quote') ? '' : 'Please upload your Guardian quote first: the quote we e-mailed you.';
+  const miss = [];
+  Object.entries(T_REQ[key] || {}).forEach(([k, l]) => { if (!String(d[k] || '').trim()) miss.push(l); });
+  (T_YN[key] || []).forEach(k => { if (!/^(Yes|No)$/.test(d[k] || '')) miss.push(key === 'tkyp' ? 'point ' + k.slice(1) : 'a Yes or No on every question'); });
+  T_IF.forEach(r => { if ((T_YN[key] || []).indexOf(r[0]) > -1 && d[r[0]] === r[1] && !String(d[r[2]] || '').trim()) miss.push(r[3]); });
+  if (key === 'tdrv' && d.q15 === 'Yes' && !(d.acc0date || d.acc0details)) miss.push('the accident or claim');
+  if (key === 'tveh' && d.acc === 'Yes' && !(d.accAudio || d.accPaint || d.accRims || d.accOther)) miss.push('the items and their values');
+  const uniq = miss.filter((m, i) => miss.indexOf(m) === i);
+  return uniq.length ? 'Still needed: ' + uniq.slice(0, 5).join(', ') + (uniq.length > 5 ? ' and ' + (uniq.length - 5) + ' more' : '') + '.' : '';
+}
+const ynq = (k, label, hint) => opts(k, label + ' ' + req, ['Yes', 'No'], hint || '');
+const whenOn = cond => { const [ks, vs] = cond.split('='); return ks.split('|').some(k => vs.split('|').indexOf(draft[k] || '') > -1); };
+const when = (cond, html) => '<div data-when="' + esc(cond) + '" class="' + (whenOn(cond) ? '' : 'hide') + '">' + html + '</div>';
+const area = (k, label, ph) => '<label class="f"><b>' + label + tag(k) + '</b><textarea class="fld" data-k="' + k + '" placeholder="' + esc(ph || '') + '">' + esc(draft[k] || '') + '</textarea></label>';
+
+function stepTdocs() {
+  return '<p class="muted">Upload what you have. We read each one and fill in Guardian\'s proposal for you. You check everything before you sign.</p><div class="files">' +
+    Object.keys(TDOCS).map(k => tdocRow(k)).join('') + '</div>';
+}
+function tdocRow(kind) {
+  const f = files.find(x => x.kind === kind), [label, hint, must] = TDOCS[kind], read = (draft.readDocs || {})[kind];
+  return '<div class="file' + (f ? ' has' : '') + '" data-kind="' + kind + '">' + (f ? (f.preview ? '<img src="' + f.preview + '" alt="">' : '<span class="ph"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2.5V8h5.5"/><path d="M8.5 13h7M8.5 17h5"/></svg></span>') : '<span class="ph">' + (kind === 'permit' ? '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.6-1.6 1.7-2.4 3-2.4s2.4.8 3 2.4M14 10h4.5M14 13.5h3"/></svg>' : kind === 'quote' ? '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2.5"/><path d="M9 2.5h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg>' : '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6.5V5a2.5 2.5 0 0 1 2.5-2.5H17L20.5 6v11a2.5 2.5 0 0 1-2.5 2.5h-1.5"/><rect x="3.5" y="6.5" width="12.5" height="15" rx="2.5"/><path d="M7 12h5.5M7 16h4"/></svg>') + '</span>') +
+    '<div class="nm">' + esc(label) + (must ? ' ' + req : '') + '<small>' + (f ? esc(f.name) + (read ? ' · ' + esc(read) : '') : esc(hint)) + '</small></div>' +
+    (f ? '<button type="button" onclick="dropFile(\'' + kind + '\')">Remove</button>' : '<label>Add<input type="file" class="tdocIn" accept="image/*,application/pdf" data-kind="' + kind + '"></label>') + '</div>';
+}
+function stepTyou(d) {
+  return '<div class="row">' + sel('title', 'Title', TITLES) + inp('first', 'First name', { req: 1, ac: 'given-name' }) + '</div>' +
+    inp('surname', 'Surname', { req: 1, ac: 'family-name' }) +
+    '<div class="row">' + inp('dob', 'Date of birth', { type: 'date', req: 1 }) + inp('pob', 'Place of birth') + '</div>' +
+    '<div class="row">' + inp('nationality', 'Nationality', { req: 1, ph: 'e.g. Trinidad and Tobago' }) + inp('residence', 'Country of residence', { req: 1, ph: 'e.g. Trinidad and Tobago' }) + '</div>' +
+    sel('marital', 'Marital status', MARITAL, { req: 1 }) +
+    area('address', 'Residential address ' + req, 'House number, street, town') + inp('mailing', 'Mailing address, if different') +
+    '<div class="row">' + inp('phone', 'Contact number', { type: 'tel', mode: 'tel', req: 1 }) + inp('occupation', 'Trade, occupation, profession', { req: 1 }) + '</div>' +
+    inp('employer', 'Employer, and its business', { ph: 'e.g. Ministry of Education, teaching' }) +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.6-1.6 1.7-2.4 3-2.4s2.4.8 3 2.4M14 10h4.5M14 13.5h3"/></svg>', 'Your driver\'s permit') +
+    '<div class="row">' + inp('permitNo', 'Permit number', { req: 1 }) + inp('permitIssued', 'Date of issue', { type: 'date', req: 1 }) + '</div>' + inp('permitClass', 'Class(es)', { req: 1, ph: 'e.g. 1, 2' }) +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.2a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.3-2.5 3.8"/><path d="M12 17.2h.01" stroke-width="2.6"/></svg>', 'Two questions') +
+    ynq('pep', 'Are you a Politically Exposed Person (PEP) or an immediate family member of a PEP?', PEP_TEXT) +
+    ynq('otherGG', 'Do you have any other insurance(s) with Guardian Group?') + when('otherGG=Yes', inp('otherGGd', 'Please give particulars'));
+}
+function stepTveh(d) {
+  return ynq('q4', 'Have you been driving a motor vehicle regularly during the past twelve months?') + when('q4=No', inp('q4d', 'How long has it been since you drove?')) +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>', 'Particulars of the vehicle') +
+    opts('fuel', 'Is your motor vehicle ' + req, ['Gas', 'Electric', 'Hybrid', 'CNG']) +
+    '<div class="row">' + inp('reg', 'Registration', { req: 1, ph: 'or "Not registered yet"' }) + inp('makeModel', 'Make and model', { req: 1 }) + '</div>' +
+    '<div class="row">' + inp('chassis', 'Chassis number', { req: 1 }) + inp('engine', 'Engine number', { req: 1 }) + '</div>' +
+    '<div class="row">' + inp('year', 'Year of make', { req: 1, mode: 'numeric', max: 4 }) + inp('cc', 'C.C.', { req: 1, mode: 'numeric' }) + '</div>' +
+    '<div class="row">' + inp('seating', 'Seating', { req: 1, mode: 'numeric' }) + sel('body', 'Type of body', BODY_TYPES, { req: 1 }) + '</div>' +
+    inp('sumInsured', 'Sum insured (TT$)', { req: 1, mode: 'numeric', hint: 'As on your Guardian quote.' }) +
+    ynq('acc', 'Do you wish to insure items installed in addition to, or replacing, the manufacturer\'s standard items?') +
+    when('acc=Yes', '<div class="row">' + inp('accAudio', 'Audio/visual equipment (TT$)', { mode: 'numeric' }) + inp('accPaint', 'Special paint, advertising, graphics (TT$)', { mode: 'numeric' }) + '</div>' +
+      '<div class="row">' + inp('accRims', 'Mag rims (TT$)', { mode: 'numeric' }) + inp('accOther', 'Any other major accessories (TT$)', { mode: 'numeric' }) + '</div>') +
+    ynq('q6', 'Has your vehicle been modified in any way, or fitted with oversized tyres or a high performance engine or equipment, or is it your intention to do so?') + when('q6=Yes', area('q6d', 'Please give details')) +
+    opts('cond', 'Is your motor vehicle ' + req, ['New', 'Secondhand', 'Foreign used']) +
+    ynq('q7b', 'Is it registered in your name?') + ynq('q7c', 'Is it left hand drive?') +
+    ynq('q7d', 'Is it used to draw any trailer?') + when('q7d=Yes', '<div class="row">' + inp('trailerReg', 'Trailer registration') + inp('trailerMake', 'Trailer make and model') + '</div>') +
+    ynq('q7e', 'Is it the subject of a hire purchase, lease or mortgage agreement?') + when('q7e=Yes', inp('financeName', 'Name of the finance company') + inp('financeAddr', 'Its address')) +
+    ynq('q8', 'Is your motor vehicle in good condition and repair, and will it be kept so?') +
+    ynq('q9', 'Is it fitted with an anti-theft device?') + when('q9=Yes', area('q9d', 'The name and type of the device, and the date installed')) +
+    area('q10', 'Where will it be kept during the night? ' + req, 'A locked garage, an open carport within a fenced and locked area, or otherwise');
+}
+function stepTdrv(d) {
+  const accRow = i => '<div class="accrow"><div class="row">' + inp('acc' + i + 'date', 'Date', { type: 'date' }) + inp('acc' + i + 'cost', 'Cost, paid or estimated (TT$)', { mode: 'numeric' }) + '</div>' +
+    inp('acc' + i + 'driver', 'Driver') + area('acc' + i + 'details', 'Brief details') + '</div>';
+  return sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.4 3.4-5.2 6.5-5.2s5.7 1.8 6.5 5.2"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.9c1.9.7 3.1 2.4 3.5 5.1"/></svg>', 'Who will drive it') +
+    ynq('q3a', 'Will anyone driving your vehicle be less than 25 years of age?') + ynq('q3b', 'Will anyone driving it have less than 2 years regular driving experience?') +
+    '<div data-when="q3a|q3b=Yes" class="' + (d.q3a === 'Yes' || d.q3b === 'Yes' ? '' : 'hide') + '">' +
+      '<div class="row">' + inp('d3name', 'Driver\'s name') + inp('d3dob', 'Date of birth', { type: 'date' }) + '</div>' +
+      '<div class="row">' + inp('d3permit', 'Driver\'s permit number') + inp('d3issued', 'Date of issue', { type: 'date' }) + '</div>' + inp('d3class', 'Class(es)') + '</div>' +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17.5" rx="2.5"/><path d="M9 2.5h6v3.5H9z"/><path d="M9 12.5l2 2 4-4"/></svg>', 'You and anyone who will drive it') +
+    ynq('q11', 'Have you, or anyone who will drive it, ever suffered from defective vision, hearing, epilepsy or any other physical disability or infirmity?') + when('q11=Yes', area('q11d', 'The nature of it, and any corrective action taken')) +
+    ynq('q12', 'Have you, or anyone who will drive it, ever been convicted of any offence or traffic violation, or have any prosecution pending?') + when('q12=Yes', area('q12d', 'The date and nature of it')) +
+    ynq('q13', 'Have you ever insured a motor vehicle in your name?') + when('q13=Yes', inp('q13d', 'The vehicle number(s) and the insurer(s)')) +
+    '<div class="f" style="margin:0 0 6px"><b style="display:block;color:var(--ink);font-size:14px">Has any insurer ever</b></div>' +
+    ynq('q14a', '(a) declined your proposal or cancelled your policy?') + ynq('q14b', '(b) increased your premium or imposed special conditions on your policy?') + ynq('q14c', '(c) refused to continue or renew your policy?') +
+    '<div data-when="q14a|q14b|q14c=Yes" class="' + (d.q14a === 'Yes' || d.q14b === 'Yes' || d.q14c === 'Yes' ? '' : 'hide') + '">' + area('q14d', 'Please give details') + '</div>' +
+    ynq('q15', 'Have you, or anyone who will drive it, had any accidents or losses (including total losses) or made any claims (including windscreen) during the past three years, with this or any other vehicle?') +
+    when('q15=Yes', '<p class="muted">Up to three. Each one in full.</p>' + [0, 1, 2].map(accRow).join('')) +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3L4 21M16 3l4 18"/><path d="M12 4v2.5M12 10.5v3M12 17.5V20"/></svg>', 'How it will be used') +
+    ynq('q16a', 'Will it be used for any purpose in connection with a business or trade?') + when('q16a=Yes', inp('q16ad', 'Please give details')) +
+    ynq('q16b', 'Will it be used for racing, pacemaking, speed testing, competitions, rallies or trials, or the carriage of passengers for hire or reward?') + when('q16b=Yes', inp('q16bd', 'Please give details')) +
+    ynq('q16c', 'Will it be used only for social, domestic and pleasure purposes and for travelling to and from your place of business?') + when('q16c=No', inp('q16cd', 'Please give details'));
+}
+function stepTcov(d) {
+  return (d.quoteRead ? '<div class="docnote"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2.5"/><path d="M9 2.5h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg></span><div>These are from <b>your Guardian quote</b>. Change one and the premium may change: we confirm it with you before cover starts.</div></div>' : '') +
+    opts('cover', 'Type of cover required ' + req, [['Comprehensive', ''], ['Third Party Fire and Theft', ''], ['Third Party', '']], '', true) +
+    '<div class="row">' + inp('from', 'Period of insurance from', { type: 'date', req: 1 }) + inp('to', 'To', { type: 'date', req: 1 }) + '</div>' +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 8v8M8 12h8"/></svg>', 'Optional extra benefits', 'Individual policyholders are entitled to one of (e) or (g) free.') +
+    BENEFITS.map(b => ynq(b[0], b[1]) +
+      (b[0] === 'b19b' ? when('b19b=Yes', inp('b19bLimit', 'Limit required (TT$)', { mode: 'numeric' })) : '') +
+      (b[0] === 'b19c' ? when('b19c=Yes', inp('b19cLimit', 'Limit required (TT$)', { mode: 'numeric' })) : '') +
+      (b[0] === 'b19i' ? when('b19i=Yes', opts('b19iLevel', 'Level', LEVELS)) : '') +
+      (b[0] === 'b19k' ? when('b19k=Yes', opts('b19kLimit', 'Limit', EV_LIMITS)) : '')).join('');
+}
+function stepTkyp(d) {
+  return '<div class="docnote"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 4.5a2 2 0 0 1 2-2h13v16h-13a2 2 0 0 0-2 2z"/><path d="M4.5 20.5a2 2 0 0 0 2 1h13v-3"/><path d="M9 7h6"/></svg></span><div><b>Know Your Policy.</b> Guardian\'s own summary of your Private Motor cover. Read each point and answer it. ' +
+    'A No is fine: we call you to go through it before your cover starts.</div></div>' +
+    '<div class="kypinfo"><b>Who is allowed to drive the vehicle.</b> The persons driving must be (a) at least 25 years old and driving for at least 2 years claims free, or (b) declared drivers who do not fall into (a). Please notify us if any persons not meeting this description will be driving the vehicle.</div>' +
+    KYP_POINTS.map((p, i) => '<div class="kyp"><div class="eyebrow">' + (i + 1) + ' · ' + esc(p[0]) + '</div>' + (p[1] ? '<p>' + esc(p[1]) + '</p>' : '') + opts('k' + (i + 1), esc(p[2]) + ' ' + req, ['Yes', 'No']) + '</div>').join('') +
+    '<div class="kypinfo"><b>Misrepresentation.</b> Non-disclosure or providing false information will result in denial of claims.</div>';
+}
+function stepTsign(d) {
+  return '<div class="decl"><div class="eyebrow">Declaration</div>' + DECLARATION + '</div>' +
+    '<div class="row"><button type="button" class="ghost" onclick="previewForm(\'proposal\')">Preview the proposal</button><button type="button" class="ghost" onclick="previewForm(\'kyp\')">Preview Know Your Policy</button></div>' +
+    /* A div, never a label: a click inside a label also clicks its first button, which here was Clear. */
+    '<div class="f" style="margin-top:14px"><b style="display:block;color:var(--ink);font-size:15px;margin:0 0 6px">Sign here ' + req + '</b>' +
+    '<span class="sigbox"><canvas id="sig" width="900" height="300" aria-label="Signature pad"></canvas><i class="sigline">✕</i></span>' +
+    '<span class="sigfoot"><span>Your signature goes on page 4 of the proposal and on the Know Your Policy form.</span>' +
+    '<button type="button" class="ghost" style="width:auto;margin:0;padding:8px 16px;min-height:40px" onclick="clearSig()">Clear and sign again</button></span></div>' +
+    '<label class="chk"><input type="checkbox" id="agree"> <span>I have read the declaration, the statements in this proposal are true and complete, and I sign the proposal and the Know Your Policy form.</span></label>';
+}
+
+/* The documents: read on the server, filled in here, every field marked for the client to check. */
+async function onDoc(kind, file) {
+  if (!file) return;
+  $('formErr').textContent = '';
+  $('reading').classList.remove('hide'); $('readingT').textContent = 'Reading your ' + ({ quote: 'Guardian quote', certified: 'certified copy', permit: 'driver\'s permit' }[kind] || 'document') + '…';
+  const t0 = Date.now(), tick = setInterval(() => { $('readingMsg').textContent = 'Reading… ' + Math.round((Date.now() - t0) / 1000) + ' s'; }, 1000);
+  try {
+    const f = await prepFile(file, kind, 2000);
+    files = files.filter(x => x.kind !== kind); files.push(f);
+    const j = await api('readDoc', { token: session.token, kind, file: { name: f.name, type: f.type, data: f.data } })
+      .catch(e => { if (/Unknown action/i.test(e.message)) return { ok: true, read: false }; throw e; });
+    draft.readDocs = draft.readDocs || {};
+    if (j.read && j.fields) { applyDoc(kind, j.fields); }
+    else draft.readDocs[kind] = 'attached; please fill in its details';
+    saveDraft(); render();
+  } catch (e) { $('formErr').textContent = e.message; }
+  clearInterval(tick); $('reading').classList.add('hide');
+}
+function applyDoc(kind, F) {
+  const got = draft.fromDoc || [], set = (k, v, force) => { if (v != null && String(v).trim() !== '' && (force || !String(draft[k] || '').trim())) { draft[k] = String(v).trim(); if (got.indexOf(k) < 0) got.push(k); } };
+  const split = n => { const p = String(n || '').trim().split(/\s+/); return p.length > 1 ? [titleCase(p.slice(0, -1).join(' ')), titleCase(p[p.length - 1])] : ['', titleCase(p[0] || '')]; };
+  if (kind === 'quote') {
+    set('policyNo', F.policyNo, true); set('cover', F.cover, true); set('from', F.periodFrom, true); set('to', F.periodTo, true); set('sumInsured', F.sumInsured, true);
+    set('year', F.year); set('makeModel', [F.make, F.model].filter(Boolean).join(' ')); set('body', ci(BODY_TYPES, (F.body || '').split(/[\/ ]/)[0]) || F.body);
+    set('seating', F.seating); set('cc', F.cc); set('reg', F.reg); set('chassis', F.chassis); set('engine', F.engine);
+    if (!draft.address && F.insuredAddress) set('address', titleCase(F.insuredAddress));
+    const B = { b19a: F.specialPerils, b19b: F.windscreenAll, b19c: F.windscreenFrontBack, b19d: F.paPassengers, b19e: F.courtesyCar, b19f: F.agreedDepreciation,
+      b19g: F.hospitalisation, b19h: F.excessWaiver, b19i: F.mechanical, b19j: F.survivors, b19k: F.evBattery };
+    Object.keys(B).forEach(k => set(k, B[k] === 'Yes' ? 'Yes' : 'No', true));
+    set('b19bLimit', F.windscreenLimit, true); set('b19cLimit', F.windscreenFrontBackLimit, true); set('b19iLevel', LEVELS[Number(F.mechanicalLevel) - 1], true); set('b19kLimit', EV_LIMITS.find(l => l.replace(/\D/g, '') === String(Math.round(Number(F.evBatteryLimit) || 0))), true);
+    if (F.antiTheft === 'Yes') set('q9', 'Yes');
+    draft.quoteTotal = F.total || ''; draft.quoteRead = true;
+    draft.readDocs.quote = [F.policyNo, F.cover, F.total ? 'TT$ ' + Number(F.total).toLocaleString() : ''].filter(Boolean).join(' · ') || 'read';
+  }
+  if (kind === 'certified') {
+    set('reg', F.reg, true); set('chassis', F.chassis, true); set('engine', F.engine, true); set('makeModel', [F.make, F.model].filter(Boolean).join(' '));
+    set('cc', F.cc); set('seating', F.seating); set('year', F.year); set('body', ci(BODY_TYPES, F.body) || F.body); set('fuel', F.fuel);
+    if (F.ownerName) {
+      const mine = [draft.first, draft.surname].filter(Boolean).join(' ') || (me && me.name) || '';
+      const norm = s => String(s || '').toUpperCase().replace(/[^A-Z ]/g, ' ').split(/\s+/).filter(w => w.length > 1);
+      const a = norm(F.ownerName), b = norm(mine);
+      if (a.length && b.length) set('q7b', b.every(w => a.indexOf(w) > -1) || a.every(w => b.indexOf(w) > -1) ? 'Yes' : 'No', true);
+    }
+    draft.readDocs.certified = [F.reg, F.chassis ? 'chassis ' + F.chassis : '', F.engine ? 'engine ' + F.engine : ''].filter(Boolean).join(' · ') || 'read';
+  }
+  if (kind === 'permit') {
+    set('permitNo', F.permitNo, true); set('permitIssued', F.issued, true); set('permitClass', F.classes, true); set('dob', F.dob);
+    if (F.name && !draft.first && !draft.surname) { const n = split(F.name); set('first', n[0]); set('surname', n[1]); }
+    draft.readDocs.permit = [F.permitNo, F.classes ? 'class ' + F.classes : ''].filter(Boolean).join(' · ') || 'read';
+  }
+  draft.fromDoc = got;
+}
+
+/* The signature pad. */
+let sigDirty = false;
+function wireSig() {
+  const c = $('sig'); if (!c) return;
+  const x = c.getContext('2d'); x.lineWidth = 6; x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = '#061758';
+  if (draft.sigData) { const im = new Image(); im.onload = () => x.drawImage(im, 0, 0); im.src = draft.sigData; sigDirty = true; }
+  let down = false, last = null;
+  const pt = e => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * c.width / r.width, (e.clientY - r.top) * c.height / r.height]; };
+  c.addEventListener('pointerdown', e => { down = true; last = pt(e); c.setPointerCapture(e.pointerId); e.preventDefault(); if (/sign in the box/.test($('formErr').textContent)) $('formErr').textContent = ''; });
+  c.addEventListener('pointermove', e => { if (!down) return; const p = pt(e); x.beginPath(); x.moveTo(last[0], last[1]); x.lineTo(p[0], p[1]); x.stroke(); last = p; sigDirty = true; e.preventDefault(); });
+  const up = () => { if (down) { down = false; draft.sigData = c.toDataURL('image/png'); saveDraft(); } };
+  c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up); c.addEventListener('pointerleave', up);
+}
+function clearSig() { const c = $('sig'); if (!c) return; c.getContext('2d').clearRect(0, 0, c.width, c.height); sigDirty = false; delete draft.sigData; saveDraft(); }
+
+/* pdf-lib, loaded only when a client takes a quote. */
+let pdfLibP = null;
+function pdfLib() {
+  if (window.PDFLib) return Promise.resolve(window.PDFLib);
+  if (!pdfLibP) pdfLibP = new Promise((ok, bad) => { const s = document.createElement('script'); s.src = PDFLIB_URL; s.onload = () => ok(window.PDFLib); s.onerror = () => { pdfLibP = null; bad(new Error('The form could not load. Check your connection and try again.')); }; document.head.appendChild(s); });
+  return pdfLibP;
+}
+const b64ToBytes = b => Uint8Array.from(atob(b), c => c.charCodeAt(0));
+const bytesToB64 = u => { let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+function takeAnswers() {
+  const d = draft, A = Object.assign({}, d);
+  ['readDocs', 'fromDoc', 'sigData', 'invoice', 'docLabel'].forEach(k => delete A[k]);
+  A.accidents = [0, 1, 2].map(i => ({ date: d['acc' + i + 'date'] || '', cost: d['acc' + i + 'cost'] || '', driver: d['acc' + i + 'driver'] || '', details: d['acc' + i + 'details'] || '' })).filter(r => r.date || r.details);
+  A.email = session && session.email; A.insuredName = [d.first, d.surname].filter(Boolean).join(' ');
+  A.signDate = new Date().toISOString().slice(0, 10);
+  A.b19iLevel = (String(d.b19iLevel || '').match(/Level (\d)/) || [])[1] || '';
+  A.b19kLimit = String(d.b19kLimit || '').replace(/\D/g, '');
+  return A;
+}
+/* The signature, cut to the ink, so it fills its line on the forms instead of shrinking with the empty pad around it. */
+function trimSig(dataUrl) {
+  return new Promise(ok => {
+    if (!dataUrl) return ok(null);
+    const im = new Image();
+    im.onload = () => {
+      const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+      const x = c.getContext('2d'); x.drawImage(im, 0, 0);
+      const px = x.getImageData(0, 0, c.width, c.height).data;
+      let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+      for (let y = 0; y < c.height; y++) for (let i = 0; i < c.width; i++) if (px[(y * c.width + i) * 4 + 3] > 10) { if (i < x0) x0 = i; if (i > x1) x1 = i; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 < 0) return ok(null);
+      const pad = 6, w = x1 - x0 + 1 + pad * 2, h = y1 - y0 + 1 + pad * 2, o = document.createElement('canvas'); o.width = w; o.height = h;
+      o.getContext('2d').drawImage(c, x0 - pad, y0 - pad, w, h, 0, 0, w, h);
+      ok(b64ToBytes(o.toDataURL('image/png').split(',')[1]));
+    };
+    im.onerror = () => ok(b64ToBytes(dataUrl.split(',')[1]));
+    im.src = dataUrl;
+  });
+}
+async function buildForms() {
+  const L = await pdfLib(), A = takeAnswers();
+  const sig = await trimSig(draft.sigData);
+  const [tp, tk] = await Promise.all([FORM_PROPOSAL, FORM_KYP].map(u => fetch(u).then(r => { if (!r.ok) throw new Error('The form could not load.'); return r.arrayBuffer(); })));
+  return { A, proposal: await MQForms.fillProposal(L, tp, A, sig), kyp: await MQForms.fillKyp(L, tk, A, sig) };
+}
+async function previewForm(which) {
+  const w = window.open('', '_blank');
+  try { collect(); const f = await buildForms(); const url = URL.createObjectURL(new Blob([f[which]], { type: 'application/pdf' })); if (w) w.location = url; else location.href = url; }
+  catch (e) { if (w) w.close(); $('formErr').textContent = e.message; }
+}
+async function submitTake() {
+  if (!draft.sigData || !sigDirty) { $('formErr').textContent = 'Please sign in the box.'; return; }
+  if (!$('agree') || !$('agree').checked) { $('formErr').textContent = 'Please tick the box to sign and send.'; return; }
+  $('btnNext').disabled = true; $('btnNext').textContent = 'Preparing your forms…';
+  try {
+    const f = await buildForms();
+    $('btnNext').textContent = 'Sending…';
+    const docs = files.filter(x => TDOCS[x.kind]).map(x => ({ kind: x.kind, name: x.name, type: x.type, data: x.data }));
+    docs.push({ kind: 'proposal', name: 'proposal.pdf', type: 'application/pdf', data: bytesToB64(f.proposal) });
+    docs.push({ kind: 'kyp', name: 'know-your-policy.pdf', type: 'application/pdf', data: bytesToB64(f.kyp) });
+    const j = await api('propose', { token: session.token, quoteRef: draft.quoteRef || '', answers: f.A, files: docs });
+    requests = j.requests || requests; draft = { sent: true }; files = []; saveDraft();
+    $('doneRef').textContent = j.ref;
+    $('doneTitle').textContent = 'Your proposal has gone.';
+    doneSteps(['The desk checks your forms', 'We call about the premium', 'Covered once paid'], 'take');
+    $('doneMsg').textContent = (j.mode === 'test' ? 'Test mode: it went to the branch test inbox, not to the desk. ' : 'It went to Guardian General\'s desk, with our branch copied. ') +
+      'Your signed proposal and Know Your Policy form are on their way to your inbox. We call you to arrange the premium: cover starts once it is paid.';
+    show('s-done');
+  } catch (e) { $('formErr').textContent = e.message; $('btnNext').disabled = false; $('btnNext').textContent = 'Sign and send'; }
+}
+function startTake(quoteRef) {
+  startFlow('take'); draft.quoteRef = quoteRef || '';
+  if (me) {
+    const p = String(me.name || '').trim().split(/\s+/);
+    if (!draft.first) draft.first = me.first || p.slice(0, -1).join(' '); if (!draft.surname) draft.surname = me.last || p[p.length - 1] || '';
+    if (!draft.title && me.salutation) draft.title = String(me.salutation).replace(/\.$/, '');
+    if (!draft.address && me.address) draft.address = me.address;
+    if (!draft.phone && me.mobile) draft.phone = me.mobile;
+    if (!draft.permitNo && me.permit) draft.permitNo = me.permit;
+  }
+  saveDraft(); render(); pdfLib().catch(() => {});
+}
+
+/* The client, when an agent asks for them: their e-mail, and whether they are with us. */
+function clientFields() {
+  return inp('clientEmail', 'Your client\'s e-mail', { type: 'email', mode: 'email', req: 1, hint: 'The receipt and the quote go here, copied to you.' }) +
+    opts('clientWith', 'Is your client already with Guardian?', ['Yes', 'No']) +
+    when('clientWith=Yes', inp('clientRef', 'Their policy or client number', { hint: 'Optional. It helps us find their record.' }));
+}
+/* The client's own agent, picked from the branch's active agents, so the quote names them. */
+function agentPicker(d) {
+  return '<div class="agpick"><b>Your Guardian agent, if you have one' + tag('agent') + '</b>' +
+    '<input class="fld" id="agentQ" value="' + esc(d.agent || '') + '" autocomplete="off" placeholder="Start typing their name" aria-describedby="agentSaid">' +
+    '<div class="aglist" id="agentList" role="listbox" aria-label="Our agents"></div>' +
+    '<small class="agsaid' + (d.agentId ? ' ok' : '') + '" id="agentSaid" aria-live="polite">' + (d.agentId ? '✓ ' + esc(d.agent) + ' is named on your quote.' : 'Optional. Pick them from the list so your quote reaches them.') + '</small></div>';
+}
+let agentTimer = 0, agentAsk = 0;
+function wireAgentPicker() {
+  const q = $('agentQ'); if (!q) return;
+  const list = $('agentList'), said = $('agentSaid');
+  q.addEventListener('input', () => {
+    draft.agent = q.value.trim().slice(0, 120); delete draft.agentId; saveDraft();
+    said.className = 'agsaid'; said.textContent = draft.agent ? 'Tap their name in the list.' : 'Optional. Pick them from the list so your quote reaches them.';
+    clearTimeout(agentTimer); list.innerHTML = '';
+    if (draft.agent.replace(/\s/g, '').length < 2) return;
+    const n = ++agentAsk;
+    agentTimer = setTimeout(async () => {
+      try {
+        const j = await api('agents', { token: session.token, q: draft.agent });
+        if (n !== agentAsk) return;
+        const A = j.agents || [];
+        list.innerHTML = A.map(a => '<button type="button" role="option" data-id="' + esc(a.id) + '" data-name="' + esc(a.name) + '">' + esc(a.name) + '</button>').join('');
+        if (!A.length) said.textContent = 'Not one of our agents by that name. We send your request to the branch, who will pass it on.';
+      } catch (e) { if (n === agentAsk) said.textContent = /Unknown action/i.test(e.message) ? 'We pass your agent\'s name to the branch.' : ''; }
+    }, 250);
+  });
+  list.addEventListener('click', ev => {
+    const b = ev.target.closest('button[data-id]'); if (!b) return;
+    draft.agent = b.dataset.name; draft.agentId = b.dataset.id; saveDraft();
+    q.value = draft.agent; list.innerHTML = '';
+    said.className = 'agsaid ok'; said.textContent = '✓ ' + draft.agent + ' is named on your quote.';
+  });
+}
 function stepYou(d) {
   const held = me && me.found ? '<p class="muted">Filled in from our records. Change anything that is different.</p>' : '';
-  return held + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) +
+  return held + (isAgent() ? clientFields() : '') + inp('name', isAgent() ? 'Your client\'s full name' : 'Your full name', { ac: isAgent() ? 'off' : 'name', req: 1 }) + inp('mobile', isAgent() ? 'Their mobile number' : 'Mobile number', { type: 'tel', mode: 'tel', ac: isAgent() ? 'off' : 'tel', ph: '868-', req: 1 }) +
     '<div class="row">' + opts('gender', 'Gender', ['Female', 'Male']) + inp('dob', 'Date of birth', { type: 'date' }) + '</div>' +
-    inp('occupation', 'Occupation', { ph: 'e.g. Teacher', list: 'jobs' }) +
+    sel('marital', 'Marital status', MARITAL) +
+    '<div class="row">' + inp('occupation', 'Occupation', { ph: 'e.g. Teacher', list: 'jobs' }) + inp('employer', "Employer's name", { ph: 'e.g. Ministry of Education' }) + '</div>' +
+    inp('homePhone', 'Home number', { type: 'tel', mode: 'tel', ph: '868-' }) +
+    area('address', 'Home address', 'House number, street, town') +
+    ggHtml() +
     '<datalist id="jobs">' + ['Teacher', 'Nurse', 'Police Officer', 'Soldier', 'Civil Servant', 'Clerk', 'Accountant', 'Engineer', 'Driver', 'Mechanic', 'Electrician', 'Business Owner', 'Sales', 'Manager', 'Doctor', 'Lawyer', 'Student', 'Retired', 'Self-employed'].map(x => '<option value="' + x + '">').join('') + '</datalist>' +
     opts('ownerType', 'The vehicle is owned by', ['Individual', 'Company']) +
     '<div id="companyBox" class="' + (d.ownerType === 'Company' ? '' : 'hide') + '">' + inp('company', 'Company name') + inp('companyEmail', 'Company e-mail', { type: 'email', mode: 'email' }) + '</div>' +
-    inp('agent', 'Your agent, if you have one', { hint: 'Optional.' });
+    (isAgent() ? '' : agentPicker(d));
 }
 function stepVehicle(d) {
   return inp('reg', 'Registration number', { ph: 'e.g. PDX 1234', max: 20, req: 1 }) +
+    inp('chassis', 'Chassis number', { ac: 'off', hint: 'On the certified copy.' }) +
     '<div class="row">' + sel('make', 'Make', MAKES, { req: 1 }) + inp('model', 'Model', { ph: 'e.g. Aqua', req: 1 }) + '</div>' +
     '<div class="row">' + sel('year', 'Year of manufacture', YEARS, { req: 1 }) + sel('cc', 'Engine size (cc)', CCS) + '</div>' +
     '<div class="row">' + sel('body', 'Body type', BODIES) + sel('seating', 'Seats, including the driver', SEATS) + '</div>' +
     inp('value', 'Value of the vehicle (TT$)', { mode: 'numeric', ph: 'e.g. 95000', req: 1 }) +
-    opts('condition', 'New or used', ['New', 'Used']) +
+    opts('condition', 'New or used', CONDITIONS) +
+    when('condition=Foreign used|Second hand', ynq('secondAcc', 'Has it ever been in an accident?') + when('secondAcc=Yes', area('secondAccDetails', 'What happened?'))) +
+    sel('use', 'Use of the vehicle', USES) +
+    inp('antiTheft', 'Anti-theft devices fitted', { ph: 'e.g. immobiliser, tracker; or none' }) +
     opts('mortgaged', 'On a loan or hire purchase?', ['Yes', 'No']) +
     '<div id="instBox" class="' + (d.mortgaged === 'Yes' ? '' : 'hide') + '">' + sel('institution', 'Financial institution', BANKS) + '</div>';
 }
 function stepCover(d) {
   return opts('cover', 'The cover you want', COVERS, '', true) +
     opts('windscreen', 'Add windscreen cover?', ['Yes', 'No']) +
-    sec('🪪', 'Your driving record') +
+    when('windscreen=Yes', inp('windscreenLimit', 'Windscreen limit you want (TT$)', { mode: 'numeric', ph: 'e.g. 10000' })) +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.6-1.6 1.7-2.4 3-2.4s2.4.8 3 2.4M14 10h4.5M14 13.5h3"/></svg>', 'Your driving record') +
     '<div class="row">' + sel('drivingYears', 'Years driving', DRIVING, { req: 1 }) + sel('ncd', 'No claim discount', NCDS) + '</div>' +
+    inp('ncdPct', 'No claim discount as a %, if you know it', { mode: 'numeric', ph: 'e.g. 30' }) +
     sel('prevInsurer', 'Current or last insurer', INSURERS) +
-    sec('📄', 'Already with Guardian General?') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2.5V8h5.5"/><path d="M8.5 13h7M8.5 17h5"/></svg>', 'Already with Guardian General?') +
     inp('existingPolicy', 'Existing motor policy number', { hint: 'Leave blank for a new policy.' }) +
     inp('existingVehicles', 'Other vehicles insured with Guardian General', { ph: 'registration numbers, if any' });
 }
+/* What the record holds for the permit, above the boxes: the client corrects it there. */
+function permitOnFileHtml() {
+  const pf = me && me.permitOnFile;
+  if (!pf || !(pf.number || pf.expires)) return '';
+  return '<p class="onfile">On our record: <b>' + esc(pf.number || 'no number') + '</b>' + (pf.expires ? ', expires <b>' + esc(longD(pf.expires)) + '</b>' : '') + ' ' + permitPill(pf) +
+    '<br>Change anything that has changed: a renewed permit updates your record.</p>';
+}
 function stepDriver(d) {
-  return inp('permit', "Driver's permit number", { ac: 'off', req: 1 }) +
+  return permitOnFileHtml() + inp('permit', "Driver's permit number", { ac: 'off', req: 1 }) +
     '<div class="row">' + inp('permitIssued', 'Permit first issued', { type: 'date' }) + inp('permitExpires', 'Permit expires', { type: 'date' }) + '</div>' +
-    opts('accidents', 'Any accidents or claims in the last three years?', ['Yes', 'No']) +
-    '<div id="accBox" class="' + (d.accidents === 'Yes' ? '' : 'hide') + '"><label class="f"><b>Tell us a little about it</b><textarea class="fld" data-k="accidentDetails">' + esc(d.accidentDetails || '') + '</textarea></label></div>' +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2.5"/><path d="M9 2.5h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg>', 'Your history', 'As Guardian\'s request form asks it') + historyHtml(true) +
     '<label class="f"><b>Anything else we should know?</b><textarea class="fld" data-k="notes" placeholder="Optional">' + esc(d.notes || '') + '</textarea></label>';
 }
-const KINDS = { 'permit': ["Your driver's permit", 'Front, in good light.'], 'certified': ['Certified copy of ownership', 'The vehicle\'s certified copy.'], 'other': ['Anything else', 'A valuation or a previous policy, if you have one.'] };
+const KINDS = { 'invoice': ['The dealer\'s invoice', 'A photo or a PDF of the car dealer\'s bill.'], 'permit': ["Your driver's permit", 'Front, in good light.'], 'certified': ['Certified copy of ownership', 'The vehicle\'s certified copy.'], 'other': ['Anything else', 'A valuation or a previous policy, if you have one.'] };
 function stepDocs() {
   return '<p class="muted">Photograph them with your phone. Optional, but the quote is firmer with them.</p><div class="files" id="files">' +
-    Object.keys(KINDS).map(k => fileRow(k)).join('') + '</div>';
+    Object.keys(KINDS).filter(k => k !== 'invoice').map(k => fileRow(k)).join('') + '</div>';
 }
 function fileRow(kind) {
   const f = files.find(x => x.kind === kind), [label, hint] = KINDS[kind];
-  return '<div class="file' + (f ? ' has' : '') + '" data-kind="' + kind + '">' + (f ? (f.preview ? '<img src="' + f.preview + '" alt="">' : '<span class="ph">📄</span>') : '<span class="ph">📷</span>') +
+  return '<div class="file' + (f ? ' has' : '') + '" data-kind="' + kind + '">' + (f ? (f.preview ? '<img src="' + f.preview + '" alt="">' : '<span class="ph"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2.5V8h5.5"/><path d="M8.5 13h7M8.5 17h5"/></svg></span>') : '<span class="ph"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5a2 2 0 0 1 2-2h2.2L9 4h6l1.8 2.5H19a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.8"/></svg></span>') +
     '<div class="nm">' + esc(label) + '<small>' + (f ? esc(f.name) + ' · ' + Math.round(f.bytes / 1024) + ' KB' : esc(hint)) + '</small></div>' +
-    (f ? '<button type="button" onclick="dropFile(\'' + kind + '\')">Remove</button>' : '<label>Add<input type="file" accept="image/*,application/pdf" capture="environment" data-kind="' + kind + '"></label>') + '</div>';
+    (f ? '<button type="button" onclick="dropFile(\'' + kind + '\')">Remove</button>' : '<label>Add<input type="file" accept="image/*,application/pdf"' + (kind === 'invoice' ? ' class="invIn"' : ' capture="environment" data-kind="' + kind + '"') + '></label>') + '</div>';
 }
 function wireFiles() {
   $('step').querySelectorAll('input[type=file]').forEach(el => el.addEventListener('change', async ev => {
     const file = ev.target.files[0]; if (!file) return;
     $('formErr').textContent = ''; $('btnNext').disabled = true;
-    try { files = files.filter(f => f.kind !== el.dataset.kind); files.push(await prepFile(file, el.dataset.kind)); $('files').innerHTML = Object.keys(KINDS).map(k => fileRow(k)).join(''); wireFiles(); side(); }
+    try { files = files.filter(f => f.kind !== el.dataset.kind); files.push(await prepFile(file, el.dataset.kind)); $('files').innerHTML = Object.keys(KINDS).filter(k => k !== 'invoice').map(k => fileRow(k)).join(''); wireFiles(); side(); }
     catch (e) { $('formErr').textContent = e.message; }
     $('btnNext').disabled = false;
   }));
 }
-function dropFile(kind) { files = files.filter(f => f.kind !== kind); render(); }
+function dropFile(kind) {
+  files = files.filter(f => f.kind !== kind);
+  if (kind === 'invoice') { delete draft.invoice; delete draft.invoiceMsg; delete draft.docLabel; draft.fromDoc = []; saveDraft(); }
+  if (TDOCS[kind] && draft.readDocs) { delete draft.readDocs[kind]; saveDraft(); }
+  render();
+}
 /* A phone photo is 3 to 8 MB; sent as a 1600 px JPEG it is about 300 KB and still readable. PDFs go as they are, under 6 MB. */
-function prepFile(file, kind) {
+function prepFile(file, kind, maxPx) {
   return new Promise((ok, bad) => {
     if (file.type === 'application/pdf') {
       if (file.size > 6 * 1024 * 1024) return bad(new Error('That PDF is over 6 MB. Please send a smaller one.'));
@@ -534,10 +1898,10 @@ function prepFile(file, kind) {
     if (!/^image\//.test(file.type)) return bad(new Error('Please add a photo or a PDF.'));
     const img = new Image(), url = URL.createObjectURL(file);
     img.onload = () => {
-      const max = 1600, sc = Math.min(1, max / Math.max(img.width, img.height));
+      const max = maxPx || 1600, sc = Math.min(1, max / Math.max(img.width, img.height));
       const c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      const dataUrl = c.toDataURL('image/jpeg', 0.82); URL.revokeObjectURL(url);
+      const dataUrl = c.toDataURL('image/jpeg', maxPx ? 0.86 : 0.82); URL.revokeObjectURL(url);
       const b64 = dataUrl.split(',')[1];
       ok({ kind, name: file.name.replace(/\.[^.]+$/, '') + '.jpg', type: 'image/jpeg', bytes: Math.round(b64.length * 0.75), data: b64, preview: dataUrl });
     };
@@ -546,23 +1910,48 @@ function prepFile(file, kind) {
   });
 }
 function stepReview(d) {
-  const G = [['The client', [['Name', d.name], ['E-mail', session && session.email], ['Mobile', d.mobile], ['Gender', d.gender], ['Date of birth', d.dob], ['Occupation', d.occupation], ['Owned by', d.ownerType + (d.company ? ': ' + d.company : '')], ['Agent', d.agent]]],
-    ['The vehicle', [['Registration', d.reg], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Body', d.body], ['Seats', d.seating], ['Engine', d.cc ? d.cc + (/\d$/.test(d.cc) ? ' cc' : '') : ''], ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Condition', d.condition], ['On a loan', d.mortgaged + (d.institution ? ': ' + d.institution : '')]]],
-    ['The cover', [['Cover', d.cover], ['Windscreen', d.windscreen], ['Years driving', d.drivingYears], ['No claim discount', d.ncd], ['Previous insurer', d.prevInsurer], ['Existing policy', d.existingPolicy], ['Other vehicles with GG', d.existingVehicles]]],
-    ['The driver', [['Permit', d.permit], ['Issued', d.permitIssued], ['Expires', d.permitExpires], ['Accidents', d.accidents + (d.accidentDetails ? ': ' + d.accidentDetails : '')], ['Notes', d.notes]]],
-    ['Documents', [['Attached', files.length ? files.map(f => f.kind).join(', ') : 'none']]]];
-  return '<p class="muted">Check it over. Tap Back to change anything. A receipt comes to ' + esc(session && session.email) + '.</p><div class="rev">' +
-    G.map(g => '<h3>' + g[0] + '</h3>' + g[1].filter(r => r[1] && String(r[1]).trim() && !/^(No|Individual)$/.test(String(r[1]).trim()) || r[0] === 'Cover').map(r => '<div><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('')).join('') + '</div>' +
-    '<label class="chk"><input type="checkbox" id="agree"> <span>This is true to the best of my knowledge. Please get me a quote.</span></label>';
+  const G = [['The request', [['Request', FLOW_NAME[d.flow] || ''], ['Renews on', d.renewOnText], ['You ask', d.renewChoice], ['Changes', d.renewChanges], ['Read from', d.invoice ? d.docLabel : '']]],
+    ['The client', [['Name', d.name], ['E-mail', isAgent() ? d.clientEmail : session && session.email], ['Mobile', d.mobile], ['Home number', d.homePhone], ['Gender', d.gender], ['Date of birth', d.dob], ['Marital status', d.marital], ['Occupation', d.occupation], ['Employer', d.employer], ['Home address', d.address], ['Owned by', d.ownerType ? d.ownerType + (d.company ? ': ' + d.company : '') : ''], ['Agent', isAgent() ? me.agent.name + ' (you, the producer)' : d.agent], ['First policy with GG', d.firstGG], ['Other business with GG', d.otherGG === 'Yes' ? 'Yes' + (d.otherGGType ? ': ' + d.otherGGType : '') : d.otherGG]]],
+    d.line ? ['The policy', [['Line', d.line + ' insurance'], ['Policy', d.reg], ['Where', d.model], ['New sum insured', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : '']]] :
+    ['The vehicle', [['Registration', d.reg || (d.newUnreg === 'Yes' ? 'Not registered yet' : '')], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Body', d.body], ['Seats', d.seating], ['Engine', d.cc ? d.cc + (/\d$/.test(d.cc) ? ' cc' : '') : ''], ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Condition', d.condition], ['Chassis', d.chassis], ['Use', d.use], ['Anti-theft', d.antiTheft], ['Ever in an accident', /used|second/i.test(d.condition || '') && d.secondAcc === 'Yes' ? 'Yes' + (d.secondAccDetails ? ': ' + d.secondAccDetails : '') : ''], ['On a loan', d.mortgaged ? d.mortgaged + (d.institution ? ': ' + d.institution : '') : '']]],
+    ['The cover', [['Cover', d.cover], ['Windscreen', d.windscreen === 'Yes' && d.windscreenLimit ? 'Yes, TT$ ' + Number(d.windscreenLimit).toLocaleString() : d.windscreen], ['Years driving', d.drivingYears], ['No claim discount', [d.ncd, d.ncdPct ? d.ncdPct + '%' : ''].filter(Boolean).join(', ')], ['Previous insurer', d.prevInsurer], ['Existing policy', d.existingPolicy], ['Other vehicles with GG', d.existingVehicles]]],
+    ['The driver', [['Permit', d.permit], ['Issued', d.permitIssued], ['Expires', d.permitExpires], ['Accidents or claims', d.accidents === 'Yes' ? 'Yes' + (d.accidentDetails ? ': ' + d.accidentDetails : '') : d.accidents === 'No' ? 'None' : ''], ['Young or new drivers', d.young === 'Yes' ? 'Yes' + (d.youngDetails ? ': ' + d.youngDetails : '') : d.young === 'No' ? 'None' : ''], ['Notes', d.notes]]],
+    ['Documents', [['Attached', files.length ? files.map(f => docLabel(f.kind)).join(', ') : (d.flow === 'full' ? 'none' : '')]]]];
+  return '<p class="muted">Check it over. Tap Back to change anything. ' + (isAgent() ? 'A receipt goes to your client at ' + esc(d.clientEmail) + ', copied to you.' : 'A receipt comes to ' + esc(session && session.email) + '.') + '</p><div class="rev">' +
+    G.map(g => [g[0], g[1].filter(r => r[1] && String(r[1]).trim() && !/^(No|Individual)$/.test(String(r[1]).trim()))]).filter(g => g[1].length).map(g => '<h3>' + g[0] + '</h3>' + g[1].map(r => '<div><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('')).join('') + '</div>' +
+    (d.flow !== 'renew' ? '<div class="formcard"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 3h-7A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V11"/><path d="M18 2.5l3.5 3.5-8 8H10v-3.5z"/></svg></span><span><b>Guardian\'s Motor Quotation Request, filled in for you</b><small>It goes to the quotes desk with your request. Check it if you wish.</small></span>' +
+      '<button type="button" class="ghost" onclick="previewRequest()">Preview the form</button></div>' : '') +
+    '<label class="chk"><input type="checkbox" id="agree"> <span>' + (isAgent() ? 'This is what my client told me, and they asked me to get them a quote.' : 'This is true to the best of my knowledge. Please ' + (d.flow === 'renew' ? (d.renewChoice === 'Talk to us first' ? 'call me about my renewal.' : 'renew my cover.') : 'get me a quote.')) + '</span></label>';
+}
+async function buildRequest() {
+  const L = await pdfLib(), t = await fetch(FORM_REQUEST).then(r => { if (!r.ok) throw new Error('The form could not load.'); return r.arrayBuffer(); });
+  return MQForms.fillRequest(L, t, Object.assign({}, draft, { email: isAgent() ? draft.clientEmail : session && session.email, agent: isAgent() ? me.agent.name : draft.agent }));
+}
+async function previewRequest() {
+  const w = window.open('', '_blank');
+  try { collect(); const b = await buildRequest(); const url = URL.createObjectURL(new Blob([b], { type: 'application/pdf' })); if (w) w.location = url; else location.href = url; }
+  catch (e) { if (w) w.close(); $('formErr').textContent = e.message; }
 }
 async function submit() {
   if (!$('agree') || !$('agree').checked) { $('formErr').textContent = 'Please tick the box to send.'; return; }
-  $('btnNext').disabled = true; $('btnNext').textContent = 'Sending…';
+  $('btnNext').disabled = true;
   try {
-    const j = await api('submit', { token: session.token, quote: draft, files: files.map(f => ({ kind: f.kind, name: f.name, type: f.type, data: f.data })) });
+    const out = files.map(f => ({ kind: f.kind, name: f.name, type: f.type, data: f.data }));
+    /* Guardian's own request form goes with every new quote. If it cannot be made, the request still goes: the desk has every answer in the e-mail. */
+    if (draft.flow !== 'renew') {
+      $('btnNext').textContent = 'Filling in Guardian\'s form…';
+      try { out.push({ kind: 'request', name: 'motor-quotation-request.pdf', type: 'application/pdf', data: bytesToB64(await buildRequest()) }); } catch (e) {}
+    }
+    $('btnNext').textContent = 'Sending…';
+    if (isAgent()) draft.clientStatus = draft.clientWith === 'Yes' ? 'existing' : draft.clientWith === 'No' ? 'new' : '';
+    const j = await api('submit', { token: session.token, quote: draft, files: out });
     requests = j.requests || requests; draft = { sent: true }; files = []; saveDraft();
     $('doneRef').textContent = j.ref;
-    $('doneMsg').textContent = j.mode === 'test' ? 'Test mode: this request went to the branch test inbox, not to the quotes desk.' : 'It went to Guardian General\'s quotes desk at ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ', with our branch copied.';
+    $('doneTitle').textContent = j.flow === 'renew' ? 'Your renewal request has gone.' : 'Your request has gone.';
+    doneSteps(j.flow === 'renew' ? ['We check your renewal', 'Your renewal by e‑mail', 'We call you'] : ['We price it', 'Your quote by e‑mail', 'We call you'], j.flow === 'renew' ? 'renew' : 'quick');
+    $('doneMsg').textContent = (j.mode === 'test' ? 'Test mode: this request went to the branch test inbox, not to the desk.' : 'It went to Guardian General\'s desk at ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ', with our branch copied.') +
+      (j.flow === 'quick' ? (isAgent() ? ' When your client takes the quote, they sign in with their own e-mail and upload their permit and certified copy.' : ' When you take the quote we will ask for your driver\'s permit and the certified copy.') : '') +
+      (j.producer ? ' ' + j.producer + ' is the producer on it.' : '');
     show('s-done');
   } catch (e) { $('formErr').textContent = e.message; $('btnNext').disabled = false; $('btnNext').textContent = 'Send my request'; }
 }
@@ -574,6 +1963,7 @@ if (qs.get('agent')) { draft.agent = qs.get('agent'); saveDraft(); }
 if (qs.get('email') && !session) $('email').value = qs.get('email');
 $('code').addEventListener('keydown', e => { if (e.key === 'Enter') verifyCode(); });
 $('email').addEventListener('keydown', e => { if (e.key === 'Enter') requestCode(); });
+$('invFile').addEventListener('change', ev => onInvoice(ev.target.files[0]));
 resume();
 </script>
 <!-- rrb-views -->

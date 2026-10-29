@@ -74,7 +74,13 @@
   #bar{position:fixed;bottom:0;left:0;z-index:20;height:3px;background:var(--grad);width:0%}
   #bar.run{transition:width linear}
 
-  .slide{position:fixed;inset:0;padding:96px 70px 74px;display:flex;flex-direction:column;justify-content:center;
+  /* "safe center" centres a slide that fits and falls back to top-alignment
+     for one that does not. Plain "center" overflows a tall slide in BOTH
+     directions at once — the renewals table pushed its own headline up under
+     the masthead and its last row down behind the footer, on the two slides
+     the branch actually reads. */
+  .slide{position:fixed;inset:0;padding:96px 70px 74px;display:flex;flex-direction:column;
+    justify-content:center;justify-content:safe center;overflow:hidden;
     opacity:0;visibility:hidden;transform:translateY(16px);transition:opacity .7s var(--ease),transform .7s var(--ease),visibility .7s}
   .slide.on{opacity:1;visibility:visible;transform:none}
   .slide .kick{font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:var(--blue);font-weight:700;margin-bottom:10px}
@@ -124,6 +130,15 @@
   td{padding:12px 14px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
   td:last-child,th:last-child{text-align:right}
   td b{font-weight:700}
+  .more{padding:14px 14px 2px;font-size:14px;color:var(--dim)}
+  /* Amber, not red: the board is still useful, it is just not live. */
+  .stale{margin:0 0 18px;padding:12px 16px;border-radius:10px;font-size:15px;line-height:1.5;
+    background:rgba(224,169,63,.12);border:1px solid rgba(224,169,63,.42);color:#f0cf8a}
+  .stale b{color:#ffe0a3}
+  #src.old{color:#e0a93f}
+  .empty{padding:34px 20px;font-size:19px;line-height:1.65;color:var(--dim)}
+  .empty b{color:#eaf4ff}
+  .empty span{display:block;margin-top:10px;font-size:16px}
   .chip{display:inline-block;font-size:12px;font-weight:650;padding:4px 12px;border-radius:20px;
     border:1px solid var(--line);background:rgba(0,0,0,.2);color:var(--dim);white-space:nowrap}
   .chip.good{color:var(--good);border-color:rgba(52,211,153,.35)}
@@ -192,12 +207,12 @@
 var WALL_DATA_URL = "";   // ← Apps Script /exec URL, or leave "" for snapshot
 
 var WALL_DATA = {
-  generatedAt: "2026-08-26T12:30:00Z",
+  generatedAt: "2026-09-08T13:15:00Z",
   ytd: {
     year: 2026,
-    risks: 208, premium: 1406025,
-    lastYearRisks: 192, lastYearPremium: 1160091,
-    renewals30: 23, openClaims: 32, claimsClosedYtd: 3,
+    risks: 215, premium: 1433890,
+    lastYearRisks: 222, lastYearPremium: 1314156,
+    renewals30: 24, openClaims: 32, claimsClosedYtd: 4,
     pipelineCount: 168, pipelineValue: 3471023, wonLast12mo: 1
   },
   monthly: [
@@ -208,16 +223,17 @@ var WALL_DATA = {
     {m:"May", n:15, prem:84296},
     {m:"Jun", n:22, prem:71871},
     {m:"Jul", n:24, prem:253757},
-    {m:"Aug", n:16, prem:137993}
+    {m:"Aug", n:17, prem:139267},
+    {m:"Sep", n:6,  prem:26591}
   ],
   classification: [
-    {k:"Renewal", n:93},
-    {k:"New business", n:32},
-    {k:"Not yet classified", n:83}
+    {k:"Renewal", n:98},
+    {k:"New business", n:33},
+    {k:"Not yet classified", n:84}
   ],
   carriers: [
-    {k:"Guardian General", n:300},
-    {k:"Not recorded", n:98},
+    {k:"Guardian General", n:301},
+    {k:"Not recorded", n:93},
     {k:"Beacon", n:19},
     {k:"Gulf", n:9}
   ],
@@ -225,31 +241,31 @@ var WALL_DATA = {
      repo. Client names (first name + last initial) appear only on the live
      feed, which is served from Apps Script and never committed here. */
   renewals: [
-    {who:"Motor", what:"Kia", when:"2026-08-28", prem:3637},
-    {who:"Motor", what:"Jeep", when:"2026-09-04", prem:0},
-    {who:"Motor", what:"Nissan", when:"2026-09-05", prem:9144},
     {who:"Commercial property", what:"—", when:"2026-09-08", prem:27030},
-    {who:"Motor", what:"3 vehicles", when:"2026-09-09", prem:4783},
+    {who:"Motor", what:"Mitsubishi", when:"2026-09-09", prem:1556},
+    {who:"Motor", what:"Nissan", when:"2026-09-09", prem:1556},
+    {who:"Motor", what:"Toyota", when:"2026-09-09", prem:1670},
     {who:"Homeowner", what:"—", when:"2026-09-11", prem:11130},
-    {who:"Motor", what:"Kia", when:"2026-09-12", prem:992},
     {who:"Liability", what:"—", when:"2026-09-12", prem:2650},
-    {who:"All risk property", what:"—", when:"2026-09-13", prem:25578},
-    {who:"Motor", what:"BMW", when:"2026-09-13", prem:1350}
+    {who:"Motor", what:"Kia", when:"2026-09-12", prem:992},
+    {who:"Motor", what:"Kia", when:"2026-09-13", prem:1350},
+    {who:"Motor", what:"Land Rover", when:"2026-09-13", prem:1443},
+    {who:"All risk property", what:"—", when:"2026-09-13", prem:25578}
   ],
   claimTypes: [
-    {k:"Health", n:28, avgDays:394},
-    {k:"Property", n:1, avgDays:716},
-    {k:"Life", n:1, avgDays:63},
-    {k:"Critical illness", n:1, avgDays:12},
-    {k:"Unclassified", n:1, avgDays:427}
+    {k:"Health", n:28, avgDays:414},
+    {k:"Property", n:1, avgDays:729},
+    {k:"Life", n:1, avgDays:76},
+    {k:"Critical Illness", n:1, avgDays:25},
+    {k:"Unclassified", n:1, avgDays:440}
   ],
   oldestClaims: [
-    {ref:"Claim …0028", type:"Health", days:1198},
-    {ref:"(no reference)", type:"Health", days:979},
-    {ref:"Best Doctors …503", type:"Health", days:800},
-    {ref:"Claim …0002", type:"Health", days:737},
-    {ref:"(reference TBA)", type:"Property", days:716},
-    {ref:"Pre-certification", type:"Health", days:700}
+    {ref:"Claim …0028", type:"Health", days:1211},
+    {ref:"(no reference)", type:"Health", days:992},
+    {ref:"Best Doctors …503", type:"Health", days:813},
+    {ref:"Claim …0002", type:"Health", days:750},
+    {ref:"(reference TBA)", type:"Property", days:729},
+    {ref:"Pre-certification", type:"Health", days:713}
   ],
   topOpps: [
     {name:"Life", stage:"Prospecting", amt:1000000},
@@ -258,7 +274,7 @@ var WALL_DATA = {
     {name:"US Flexi-Term to age 85", stage:"Value proposition", amt:152025},
     {name:"Life", stage:"Id. decision makers", amt:114000},
     {name:"Group health", stage:"Proposal / quote", amt:30000},
-    {name:"Investment", stage:"Negotiation / review", amt:25000}
+    {name:"Life", stage:"Value proposition", amt:30000}
   ],
   legacy: {
     cases: 5523, submittedApi: 94615031, settledApi: 94395745,
@@ -339,19 +355,79 @@ function sMix(D){
     +'<div class="panel"><h3>Carriers · risks placed, last 12 months</h3><div class="rows">'+crows+'</div></div>'
     +'</div></div>';
 }
+/* How old is what we are showing?
+   The snapshot in this file is a fallback for when the live feed is
+   unreachable, and a fallback nobody refreshes quietly becomes the board.
+   It ran six weeks out of date once, and nothing on screen said so: the
+   figures looked like today's. Every slide that could mislead now carries
+   its own age. STALE_DAYS is three — a Monday board still reading Friday's
+   numbers is fine; one reading last month's is not. */
+var STALE_DAYS = 3;
+function snapAge(D){
+  var t = new Date(D.generatedAt), now = new Date();
+  var days = Math.floor((now - t) / 864e5);
+  return {
+    days: days, stale: days >= STALE_DAYS, t: t,
+    on: t.toLocaleDateString("en-GB",{day:"numeric",month:"long"}),
+    phrase: days <= 0 ? "today" : days === 1 ? "yesterday" : days + " days ago"
+  };
+}
+function staleNote(D){
+  var a = snapAge(D);
+  if (!a.stale) return "";
+  return '<div class="stale">These are not live figures. This board is reading a snapshot taken <b>'
+    + a.on + '</b> — ' + a.phrase + '. Refresh it, or switch the live feed on (tools/wall-refresh.md).</div>';
+}
 function sRenewals(D){
-  var rows = D.renewals.slice(0,10).map(function(x){
+  // How many rows clear the footer depends on the screen, so it is measured
+  // rather than fixed. Ten rows fit the 1080p wall; on a 720p screen the last
+  // two sat behind the footer, and a renewal nobody can see is the one that
+  // gets missed. Verified at both sizes by tools/board-fit.js.
+  var h = window.innerHeight || 1080;
+  var SHOWN = h >= 1000 ? 10 : h >= 860 ? 8 : 6;
+  /* A renewal whose date has passed is not a call to make — it has already
+     renewed or already lapsed. The board showed three such rows for six
+     weeks because the snapshot was refreshed and then stood still, and a
+     screen that tells the room to chase a dead policy is worse than a
+     screen that admits it is out of date. Measured against TODAY, never
+     against the day the snapshot was taken. */
+  var live = D.renewals.filter(function(x){ return daysUntil(x.when) >= 0; });
+  var gone = D.renewals.length - live.length;
+  var rest = Math.max(0, (D.ytd.renewals30||0) - Math.min(SHOWN, live.length));
+  var rows = live.slice(0,SHOWN).map(function(x){
     var d = daysUntil(x.when), cls = d<=7?"bad":(d<=21?"warn":"good");
     return '<tr><td><b>'+esc(x.who)+'</b></td><td>'+esc(x.what)+'</td>'
-      +'<td>'+dstr(x.when)+'</td><td><span class="chip '+cls+'">'+(d<=0?"today":d+" days")+'</span></td>'
+      +'<td>'+dstr(x.when)+'</td><td><span class="chip '+cls+'">'
+      +(d<=0?"today":d===1?"tomorrow":d+" days")+'</span></td>'
       +'<td>'+(x.prem>0?money(x.prem):"—")+'</td></tr>';
   }).join("");
+  var age = snapAge(D);
+  var head = live.length
+    ? (age.stale
+        ? 'Renewals as at ' + age.on
+        : D.ytd.renewals30 + ' renewals in the next 30 days')
+    : 'No renewal on this board is still ahead of us';
+  var lede = live.length
+    ? 'Renewed on time, a policy is a phone call. Missed, it’s a client shopping around. These are the next ones due.'
+    : 'Every renewal in this snapshot has already come and gone. Refresh it before working from this screen.';
   return '<div class="kick">Renewals radar</div>'
-    +'<h2>'+D.ytd.renewals30+' renewals in the next 30 days</h2>'
-    +'<p class="lede">Renewed on time, a policy is a phone call. Missed, it’s a client shopping around. These are the next ones due.</p>'
-    +'<div class="body"><div class="panel"><table><thead><tr>'
-    +'<th>Renewal</th><th>Detail</th><th>Due</th><th>Countdown</th><th>Premium</th></tr></thead>'
-    +'<tbody>'+rows+'</tbody></table></div></div>';
+    +'<h2>'+head+'</h2>'
+    +'<p class="lede">'+lede+'</p>'
+    + staleNote(D)
+    +'<div class="body"><div class="panel">'
+    /* An empty table with its headings still up reads as a broken screen.
+       With nothing live there is no table — just what the snapshot held
+       and what to do about it. */
+    +(live.length
+       ? '<table><thead><tr>'
+         +'<th>Renewal</th><th>Detail</th><th>Due</th><th>Countdown</th><th>Premium</th></tr></thead>'
+         +'<tbody>'+rows+'</tbody></table>'
+         +(gone?'<div class="more">'+gone+' row'+(gone===1?'':'s')+' from this snapshot already past, and not shown</div>':'')
+         +(rest&&!age.stale?'<div class="more">and '+rest+' more due inside 30 days — the full list is on the renewal worklist</div>':'')
+       : '<div class="empty"><b>'+gone+' renewal'+(gone===1?'':'s')+'</b> were on this snapshot when it was taken on '
+         +age.on+'. Every one of them has since fallen due.<br><span>Switch the live feed on and this screen fills itself '
+         +'every fifteen minutes — tools/wall-refresh.md.</span></div>')
+    +'</div></div>';
 }
 function sClaims(D){
   var max = Math.max.apply(null,D.claimTypes.map(function(x){return x.n}));
@@ -415,10 +491,12 @@ function render(D){
     d.onclick=function(){go(i,true)};
     dots.appendChild(d);
   });
-  var t=new Date(D.generatedAt);
+  var a=snapAge(D), t=a.t;
   $("#src").textContent="Data: Salesforce · pulled "
     +t.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "
-    +t.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+    +t.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})
+    +(a.stale?"  ·  "+a.phrase+", not live":"");
+  $("#src").classList.toggle("old", a.stale);
   go(Math.min(cur,BUILDERS.length-1),false);
 }
 

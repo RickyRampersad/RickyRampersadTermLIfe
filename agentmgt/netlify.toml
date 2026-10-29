@@ -1,0 +1,34 @@
+# agentmgt.com — served by Netlify from this folder alone.
+# Link the Netlify site to the repository with base directory "agentmgt"
+# (publish directory "."), or drag this whole folder onto Netlify Drop.
+
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/apply"
+  to = "https://guardianlifeofthecaribbean.talentnest.com/en/posting/215291/location/287275"
+  status = 302
+
+[[redirects]]
+  from = "/quiz"
+  to = "/#quiz"
+  status = 302
+
+[[redirects]]
+  from = "/test"
+  to = "/#quiz"
+  status = 302
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

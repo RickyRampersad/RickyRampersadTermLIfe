@@ -1,8 +1,10 @@
 // The motor quote page in a real browser, on a phone, against a fake backend:
-// a client signs in, sees her vehicle, starts from it (what we hold is filled
-// in), walks the six steps, adds a photo, reads the review and sends; the done
-// screen shows the reference and the home screen lists the request. Nothing
-// runs wider than the phone, and the page throws no error.
+// a client signs in and sees her renewal first, with its terms and what the
+// record shows, and renews with changes; then uploads a dealer's quotation,
+// which is read and fills the quick quote (her own name standing), and sends
+// it with the document; a quick quote with no invoice asks for the minimum;
+// "every detail" is the original six steps. Nothing runs wider than the
+// phone, and the page throws no error.
 // Run: node tests/e2e-motor-quote.js   (needs playwright + a chromium on disk)
 const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
@@ -22,9 +24,44 @@ let fails = 0;
 const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (x ? '  ' + x : '')); if (!c) fails++; };
 const ME = { found: true, email: 'anika@example.com', contactId: '003000000000001AAA', name: 'Anika Pretend', first: 'Anika', last: 'Pretend',
   mobile: '868-555-0101', occupation: 'Teacher', dob: '1988-04-12', salesforce: true,
-  vehicles: [{ reg: 'PDX 1234', make: 'Toyota', model: 'Aqua', year: 2019, cover: 'Comprehensive', sumInsured: 95000, windscreen: 'Yes', carrier: 'Guardian General', to: '2027-01-31' }],
-  policies: [{ policy: 'TTMV00000001', product: 'Private Motor', expires: '2027-01-31' }] };
-const calls = []; let requests = [];
+  permit: 'DP-000000', permitIssued: '', permitExpires: '2025-05-01', permitOnFile: { number: 'DP-000000', issued: '', expires: '2025-05-01', state: 'expired', days: -543 },
+  vehicles: [
+    { reg: 'PDX 1234', make: 'Toyota', model: 'Aqua', year: 2019, cover: 'Comprehensive', sumInsured: 95000, windscreen: '', carrier: 'Guardian General', to: '2026-11-10', policy: 'TTMV00000001',
+      renewOn: '2026-11-11', renewOnText: '11 November 2026', renewIn: 21, renewState: 'due', lastPremium: 4321.5,
+      terms: [{ policy: 'TTMV00000001', from: '2025-11-11', to: '2026-11-10', cover: 'Comprehensive', sum: 95000, premium: 4321.5 },
+              { policy: 'TTMV00000001', from: '2024-11-11', to: '2025-11-10', cover: 'Comprehensive', sum: 95000, premium: 4100 },
+              { policy: 'TTMV00000001', from: '2023-11-11', to: '2024-11-10', cover: 'Third Party', sum: 0, premium: 0 }],
+      facts: ['With us since 2023: 3 terms on file.', 'A 2019 vehicle: 7 years old at renewal.', 'Insured for TT$ 95,000 on each of the last 2 terms.',
+              'The cover changed from Third Party to Comprehensive in 2024.', 'Premium on file for this term: TT$ 4,322.', 'No windscreen cover on file.'] },
+    { reg: 'TDA 77', make: 'Nissan', model: 'Note', year: 2016, cover: 'Third Party', sumInsured: 40000, windscreen: 'Yes', to: '2027-07-13', policy: 'TTMV00000002',
+      renewOn: '2027-07-14', renewOnText: '14 July 2027', renewIn: 266, renewState: 'later', terms: [], facts: [] }],
+  policies: [{ policy: 'TTMV00000001', product: 'Private Motor', expires: '2026-11-10' }],
+  /* Everything else she holds (29 October 2026): general insurance renews every year; life and pension do not. */
+  general: [
+    { policy: 'TTFHO0100009', line: 'Home', location: '12 Sample Street, Sampletown', kind: 'Private dwelling', cover: 'Fire and allied perils', renewOn: '2026-11-13', renewOnText: '13 November 2026',
+      renewIn: 15, renewMonth: 'November', renewState: 'due', sumInsured: 900000, lastPremium: 2400, since: '2024', termCount: 2, terms: [] },
+    { policy: 'TTPL0100004', line: 'Liability', location: 'Sample Shop', renewOn: '2027-03-01', renewOnText: '1 March 2027', renewIn: 123, renewMonth: 'March', renewState: 'later',
+      sumInsured: 500000, lastPremium: 0, since: '2026', termCount: 1, terms: [] }],
+  life: [{ policy: '0001234567', type: 'Life', plan: 'Sample Term 20', issued: '2015-03-01', since: '2015', paidTo: '2026-11-18', state: 'inforce', life: 500000, ci: 0, health: 0 },
+         { policy: '0001234568', type: 'Pension', plan: 'Sample Pension', issued: '2018-01-01', since: '2018', paidTo: '2026-09-29', state: 'current', life: 0, ci: 0, health: 0 }],
+  lifeEnded: 1,
+  opps: [{ key: 'ci', title: 'Critical illness cover', href: '/quote/critical-illness/', cta: 'Get a quote', why: 'Your life cover is with us, and no critical illness cover is on your record.' },
+         { key: 'windscreen', title: 'Windscreen cover at renewal', action: 'windscreen', reg: 'PDX 1234', cta: 'Add it when I renew', why: 'Your Toyota Aqua has no windscreen cover on file.' }] };
+/* What the backend's reader hands back, already cleaned. The buyer is not the client: her own name must stand. */
+const READ = { docType: 'dealer quotation', dealer: 'Sample Motors Ltd', documentNo: 'Q-1001', documentDate: '2026-10-15', make: 'MG', model: 'ZS HEV Lux', year: '2026',
+  bodyType: 'SUV', engineCc: '1498', fuel: 'Hybrid', condition: 'New', value: '212645', valueBasis: 'Sub-total before fees', reg: '', chassis: '', engineNo: '', seats: '5',
+  colour: '', buyerName: 'MADE UP BUYER', buyerPhone: '754-0000', buyerAddress: '', lender: '', notes: '' };
+/* What the backend's readers hand back for the documents a client takes a quote with (made up). */
+const DOCS = {
+  quote: { policyNo: 'TT APG 0000001', quoteNo: '', insuredName: 'Anika Pretend', insuredAddress: '#1 Pretend Street, Couva', periodFrom: '2026-10-16', periodTo: '2027-10-15',
+    cover: 'Comprehensive', year: '2026', make: 'MG', model: 'ZS LUX', body: 'Crossover', seating: '5', cc: '1600', reg: '', chassis: '', engine: '', sumInsured: '213387',
+    premium: '8270.51', tax: '496.23', total: '8766.74', ncd: '40', discounts: '', antiTheft: 'Yes', specialPerils: 'Yes', windscreenAll: 'Yes', windscreenLimit: '10000',
+    windscreenFrontBack: '', windscreenFrontBackLimit: '', paPassengers: 'Yes', courtesyCar: 'Yes', agreedDepreciation: '', hospitalisation: '', excessWaiver: 'Yes',
+    mechanical: '', mechanicalLevel: '', survivors: '', evBattery: '', evBatteryLimit: '', notes: '' },
+  certified: { reg: 'PDZ 9999', make: 'MG', model: 'ZS', description: '', colour: 'Black', chassis: 'LSJ0000000000TEST', engine: 'EN0000TEST', cc: '1600', seating: '5', year: '2026',
+    body: 'SUV', fuel: 'Gas', ownerName: 'ANIKA PRETEND', ownerAddress: '', notes: '' },
+  permit: { permitNo: 'DP000000', name: 'ANIKA PRETEND', dob: '1988-04-12', issued: '2010-05-01', expires: '2030-05-01', classes: '1, 2', notes: '' } };
+const calls = []; let requests = []; let NEWME = null;
 (async () => {
   await new Promise(r => server.listen(0, r));
   const base = 'http://127.0.0.1:' + server.address().port;
@@ -39,11 +76,19 @@ const calls = []; let requests = [];
     const reply = o => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(o) });
     if (b.siteKey !== 'rrb-motor-quote-1') return reply({ ok: false, error: 'out of date' });
     if (b.action === 'requestCode') return reply({ ok: true, sent: true, message: 'Your sign-in code is on its way to ' + b.email + '.' });
-    if (b.action === 'verifyCode') return b.code === '211110' ? reply({ ok: true, token: 'T'.repeat(40), me: ME, requests, mode: 'test' }) : reply({ ok: false, error: 'That code did not match.' });
+    if (b.action === 'verifyCode') return b.code === '211110' ? reply({ ok: true, token: 'T'.repeat(40), me: NEWME || ME, requests: NEWME ? [] : requests, mode: 'test' }) : reply({ ok: false, error: 'That code did not match.' });
     if (b.action === 'me') return reply({ ok: true, me: ME, requests, mode: 'test' });
-    if (b.action === 'submit') { requests = [{ ref: 'MQ-261021-001', when: '21 Oct 2026', vehicle: '2019 Toyota Aqua', reg: b.quote.reg, cover: b.quote.cover, status: 'Sent to quotes desk' }];
-      return reply({ ok: true, ref: 'MQ-261021-001', mode: 'test', requests, contact: 'Existing', mail: 'Sent' }); }
+    if (b.action === 'readInvoice') return setTimeout(() => reply({ ok: true, read: true, fields: READ }), 400);
+    if (b.action === 'readDoc') return setTimeout(() => reply({ ok: true, read: true, kind: b.kind, fields: DOCS[b.kind] }), 150);
+    if (b.action === 'propose') return reply({ ok: true, ref: 'MP-261021-001', mode: 'test', requests, flags: 1, kypNo: 1 });
+    if (b.action === 'submit') { const ref = 'MQ-261021-00' + (requests.length + 1);
+      requests = [{ ref, when: '21 Oct 2026', type: b.quote.flow === 'renew' ? 'Renewal' : 'Quick quote', vehicle: [b.quote.year, b.quote.make, b.quote.model].filter(Boolean).join(' '), reg: b.quote.reg, cover: b.quote.cover, status: 'Sent to quotes desk' }].concat(requests);
+      return reply({ ok: true, ref, flow: b.quote.flow, mode: 'test', requests, contact: 'Existing', mail: 'Sent', producer: b.quote.clientEmail ? 'Mala Madeup' : '' }); }
+    if (b.action === 'permit') return reply({ ok: true, message: 'Saved to your record. Thank you.', changed: true, me: Object.assign({}, ME, { permitExpires: b.permitExpires, permitOnFile: { number: b.permit, issued: b.permitIssued, expires: b.permitExpires, state: 'valid', days: 1200 } }) });
+    if (b.action === 'renewBrief') return setTimeout(() => reply({ ok: true, brief: { ai: true, summary: 'Your 2019 Toyota Aqua renews on 11 November 2026. It has been insured for TT$ 95,000 for the last 2 terms.',
+      checks: [{ question: 'Is TT$ 95,000 still what it is worth?', change: 'Update the insured value' }, { question: 'Will anyone new drive it?', change: 'A new driver' }] } }), 200);
     if (b.action === 'signOut') return reply({ ok: true });
+    if (b.action === 'agents') return reply({ ok: true, agents: /^ma/i.test(b.q || '') ? [{ id: '003000000000050AAA', name: 'Mala Madeup' }, { id: '003000000000051AAA', name: 'Mala Otherone' }] : [] });
     reply({ ok: false, error: 'Unknown action ' + b.action });
   });
   const wide = async () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
@@ -57,12 +102,194 @@ const calls = []; let requests = [];
   await page.fill('#code', '000000'); await page.click('#btnVerify'); await page.waitForFunction(() => document.getElementById('signinErr').textContent);
   ok('a wrong code is refused on the page', /did not match/.test(await txt('#signinErr')));
   await page.fill('#code', '211110'); await page.click('#btnVerify'); await page.waitForSelector('#s-home:not(.hide)');
-  ok('home greets her by first name and shows her vehicle', /Good day, Anika/.test(await txt('#homeTitle')) && /Toyota Aqua/.test(await txt('#homeVeh')) && /PDX 1234/.test(await txt('#homeVeh')));
+  ok('home greets her by first name and shows her vehicles', /Good day, Anika/.test(await txt('#homeTitle')) && /Toyota Aqua/.test(await txt('#renewals')) && /PDX 1234/.test(await txt('#renewals')));
   ok('the test-mode notice shows', await page.isVisible('#notice') && /Test mode/.test(await txt('#notice')));
   ok('her name is in the header with Sign out', /Anika Pretend/.test(await txt('#whoName')));
   ok('the session is kept on the device', await page.evaluate(() => !!localStorage.getItem('rrb-mq-session')));
+  /* ── the record we found, the permit first ── */
+  const mc = await txt('#meCard');
+  ok('a client we found sees "We found your record" with what we hold', /We found your record/.test(mc) && /Anika Pretend/.test(mc) && /868-555-0101/.test(mc) && /12 Apr 1988/.test(mc));
+  ok('the permit on file shows with where it stands: expired, in words', /DP-000000/.test(mc) && /Expired 1 May 2025/.test(mc) && await page.isVisible('#meCard .pill.expired'));
+  await page.click('#pmtOpen');
+  ok('the update form opens filled with what we hold', await page.inputValue('#pfNo') === 'DP-000000' && await page.inputValue('#pfExp') === '2025-05-01');
+  await page.fill('#pfIss', '2025-04-20'); await page.fill('#pfExp', '2030-04-30'); await page.click('#pfSave');
+  await page.waitForFunction(() => /Saved to your record/.test(document.getElementById('meCard').textContent));
+  const pc = calls.filter(c => c.action === 'permit').pop();
+  ok('saving sends the permit, signed in, and the card shows it valid', pc && pc.token && pc.permit === 'DP-000000' && pc.permitExpires === '2030-04-30' && pc.permitIssued === '2025-04-20' &&
+    /Valid to 30 Apr 2030/.test(await txt('#meCard')));
+  ok('a client we found is not asked whether they are a client', !/Are you already a Guardian client/.test(await txt('#meCard')));
 
-  await page.click('.veh'); await page.waitForSelector('#s-form:not(.hide)');
+  /* ── the renewal comes first ── */
+  ok('the renewal is the first thing on the home screen, before the quote doors', await page.evaluate(() => {
+    const r = document.querySelector('#renewals .rnw'), d = document.querySelector('.doors');
+    return !!r && !!(r.compareDocumentPosition(d) & Node.DOCUMENT_POSITION_FOLLOWING); }));
+  const rn = await txt('#renewals');
+  ok('it says when, in days, with the vehicle', /21/.test(await txt('#renewals .ring')) && /Toyota Aqua/.test(rn) && /11 November 2026/.test(rn));
+  ok('it shows every term on file and what the record shows', (await page.$$('#renewals .tl li')).length === 3 && (await page.$$('#renewals .facts li')).length === 6 && /changed from Third Party/.test(rn));
+  ok('the premium is a bar chart, a bar a term with its figure, the current term last', (await page.$$('#renewals .pc-col')).length === 2 && /4,100[\s\S]*4,322/.test(await txt('#renewals .pchart')) && /5\.4%/.test(await txt('#renewals .pchart')));
+  ok('three paths, each in its own words: Renew, New quote, Accept a quote', /Renew[\s\S]*New quote[\s\S]*Accept a quote/.test(await txt('#paths')) && /Due in 15 days/.test(await txt('#pathRenew')));
+  ok('each path has its own section, its own colour and its own steps', await page.evaluate(() => ['trRenew', 'trQuote', 'trTake'].every(id => document.getElementById(id).querySelectorAll('.journey li').length >= 3) &&
+    new Set(['trRenew', 'trQuote', 'trTake'].map(id => getComputedStyle(document.getElementById(id)).getPropertyValue('--c2').trim())).size === 3));
+  ok('the invoice is only on the new-quote path, and only as the dealer\'s', await page.evaluate(() => !!document.querySelector('#trQuote #doorInv') && !/invoice/i.test(document.getElementById('trRenew').textContent) && !/invoice/i.test(document.getElementById('trTake').textContent)) && /dealer's invoice/.test(await txt('#doorInv')));
+  ok('the vehicle not due shows how far through its cover year it is, and renews early', (await page.$$('#homeVeh .yr i')).length === 1 && /Renew early/.test(await txt('#homeVeh')));
+  ok('the band gives the figures: vehicles, other policies, due for renewal', /2\s*vehicles with us/.test(await txt('#homeStats')) && /4\s*other policies/.test(await txt('#homeStats')) && /2\s*due for renewal/.test(await txt('#homeStats')));
+  ok('the vehicle not due is under "Your vehicles with us", with its renewal date', /Nissan Note/.test(await txt('#homeVeh')) && /renews/i.test(await txt('#homeVeh')) && !/Toyota/.test(await txt('#homeVeh')));
+  ok('nothing runs wider than the phone on the home screen', await wide());
+  ok('both blue bands end in drifting waves, hidden from screen readers', await page.evaluate(() => document.querySelectorAll('.band .waves[aria-hidden=true] svg').length === 6));
+  ok('the figures count up on screen and keep their real number in the text', await page.evaluate(() => [...document.querySelectorAll('#homeStats .cu')].map(b => b.textContent).join(',') === '2,4,2'));
+  ok('scrolled to the foot, no section is left waiting to rise in', await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 500) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 120)); }
+    await new Promise(r => setTimeout(r, 300)); const left = document.querySelectorAll('.sr:not(.sr-in)').length; window.scrollTo(0, 0); return left === 0; }));
+  /* ── due now at the very top, everything she holds, and ideas (29 October 2026) ── */
+  ok('"Due now" is the first thing under the welcome, before the three paths', await page.evaluate(() => {
+    const d = document.getElementById('dueTop'), b = document.querySelector('#s-home .band'), p = document.getElementById('paths');
+    return !d.classList.contains('hide') && d.previousElementSibling === b && !!(d.compareDocumentPosition(p) & Node.DOCUMENT_POSITION_FOLLOWING); }));
+  ok('…holding the vehicle due and the home policy due, together', (await page.$$('#dueTop .rnw')).length === 1 && (await page.$$('#dueTop .gdue')).length === 1 &&
+    /Home insurance · 12 Sample Street/.test(await txt('#genDue')) && /13 November 2026/.test(await txt('#genDue')) && /in 15 days/.test(await txt('#genDue')) && /15 days/.test(await txt('#dueSub')));
+  ok('the lead says two policies are due, at the top', /2 policies are due for renewal/.test(await txt('#homeLead')));
+  const hold = await txt('#trHold');
+  ok('"Everything you hold with us" lists the vehicles and general policies with the month each renews', /Everything you hold with us/.test(hold) && /6 policies on your record/.test(hold) &&
+    await page.evaluate(() => document.querySelector('#trHold .hold-g').querySelectorAll('.pol').length) === 4 && /Renews every\s*November/.test(hold) && /Renews every\s*March/.test(hold) && /Renews every\s*July/.test(hold));
+  ok('…the twelve months, the renewal months lit, this month ringed', (await page.$$('#trHold .months span')).length === 12 &&
+    await page.evaluate(() => [...document.querySelectorAll('#trHold .months span.on')].map(s => [...s.parentNode.children].indexOf(s)).join(',')) === '2,6,10' &&
+    (await page.$$('#trHold .months span.now')).length === 1);
+  ok('life and pension carry what they are and where they stand, and no renewal month', await page.evaluate(() => {
+    const g = document.querySelectorAll('#trHold .hold-g')[1]; return !!g && /do not renew/.test(g.textContent) && !/Renews every/.test(g.textContent) &&
+      /Sample Term 20/.test(g.textContent) && /In force/.test(g.textContent) && /Sample Pension/.test(g.textContent) && /life cover TT\$ 500,000/.test(g.textContent); }));
+  ok('…and the earlier policies that ended are counted', /1 earlier policy that has ended/.test(hold));
+  ok('"Ideas for you": one a card, each from her own record, the critical illness one opening the branch\'s page', (await page.$$('#trOpps .opp')).length === 2 &&
+    await page.getAttribute('#trOpps .opp[data-opp=ci] a', 'href') === '/quote/critical-illness/' && /Only a suggestion/.test(await txt('#trOpps')));
+  ok('nothing runs wider than the phone with everything held', await wide());
+  if (process.env.SHOTS) { await page.waitForTimeout(1400); await page.screenshot({ path: path.join(process.env.SHOTS, 'home-due.png') });
+    await page.$eval('#trHold', el => el.scrollIntoView({ block: 'start' })); await page.waitForTimeout(1200); await page.screenshot({ path: path.join(process.env.SHOTS, 'home-hold.png') });
+    await page.$eval('#trOpps', el => el.scrollIntoView({ block: 'start' })); await page.waitForTimeout(1200); await page.screenshot({ path: path.join(process.env.SHOTS, 'home-ideas.png') }); }
+  await page.click('#trOpps .opp[data-opp=windscreen] button'); await page.waitForSelector('#s-form:not(.hide) #rbrief');
+  ok('the windscreen idea opens that vehicle\'s renewal with windscreen cover asked for', /Toyota Aqua/.test(await txt('#step')) && /Add windscreen cover/.test(await page.inputValue('[data-k=renewChanges]')) &&
+    (await page.$('.opts button.on:has-text("Renew with changes")')) !== null);
+  await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
+  await page.click('#genDue .gdue .send'); await page.waitForSelector('#s-form:not(.hide) #rbrief');
+  ok('a home policy renews on the same step, named as home insurance, with no motor cover box', /Home insurance/.test(await txt('#step')) && /12 Sample Street/.test(await txt('#step')) &&
+    /13 November 2026/.test(await txt('#step')) && !(await page.$('#step select[data-k=cover]')) && /Home insurance/.test(await txt('#flowTag')));
+  await page.waitForSelector('#rbrief .bs');
+  ok('…its plain-words brief is asked for by the policy number', calls.some(c => c.action === 'renewBrief' && c.reg === 'TTFHO0100009'));
+  await page.click('.opts button:has-text("Renew as it is")'); await page.click('#btnNext'); await page.waitForFunction(() => /Check and send/.test(document.getElementById('step').textContent));
+  ok('the review shows the policy, not a vehicle', /The policy/.test(await txt('.rev')) && /Home insurance/.test(await txt('.rev')) && !/The vehicle/.test(await txt('.rev')) && !/undefined/.test(await txt('.rev')));
+  await page.check('#agree'); await page.click('#btnNext'); await page.waitForSelector('#s-done:not(.hide)');
+  const gsub = calls.filter(c => c.action === 'submit').pop();
+  ok('it is sent as a Home renewal of that policy', gsub.quote.flow === 'renew' && gsub.quote.line === 'Home' && gsub.quote.reg === 'TTFHO0100009');
+  await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
+  await page.fill('#rfQ', 'ttpl-0100004'); await page.click('#rfind .send'); await page.waitForSelector('#s-form:not(.hide)');
+  ok('typing a general policy\'s number finds it too', /Liability insurance/.test(await txt('#step')) && /Sample Shop/.test(await txt('#step')));
+  await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
+
+  /* ── renewing here, vehicle first (29 October 2026): nothing opens another site ── */
+  ok('the renewal card renews on this page', /Renew this vehicle/.test(rn) && !/portal/i.test(await txt('#trRenew')));
+  ok('a box under the renewals asks for a vehicle not listed', /not listed here/.test(await txt('#renewPortal')) && await page.isVisible('#rfQ'));
+  ok('the steps say what happens: choose the vehicle, choose, we confirm', /Choose the vehicle/.test(await txt('#trRenew .journey')));
+  await page.click('#renewals .rnw-port .send'); await page.waitForSelector('#s-form:not(.hide) #rbrief');
+  ok('it opens the renewal on this page, with the vehicle and its date', /Toyota Aqua/.test(await txt('#step')) && /11 November 2026/.test(await txt('#step')) && ctx.pages().length === 1);
+  await page.waitForSelector('#rbrief .bs');
+  ok('"Your renewal in plain words" is written from her record, marked as AI', /insured for TT\$ 95,000/.test(await txt('#rbrief')) && /Written by AI/.test(await txt('#rbrief')) &&
+    calls.some(c => c.action === 'renewBrief' && c.reg === 'PDX 1234'));
+  ok('three choices: as it is, with changes, talk to us first', /Renew as it is[\s\S]*Renew with changes[\s\S]*Talk to us first/.test(await txt('#step .opts')));
+  if (process.env.SHOTS) { await page.waitForTimeout(1200); await page.screenshot({ path: path.join(process.env.SHOTS, 'renew-step.png'), fullPage: true }); }
+  await page.click('#rbrief .bc button >> nth=0');
+  ok('a tap on a check chooses "with changes" and writes the change in', await page.inputValue('[data-k=renewChanges]') === 'Update the insured value' &&
+    (await page.$('.opts button.on:has-text("Renew with changes")')) !== null && /Added to my changes/.test(await txt('#rbrief')));
+  await page.click('#rbrief .bc button >> nth=0');
+  ok('a second tap takes it out again', !(await page.inputValue('[data-k=renewChanges]')));
+  await page.click('#rbrief .bc button >> nth=1'); await page.fill('[data-k=value]', '88000');
+  ok('nothing runs wider than the phone on the renewal', await wide());
+  await page.click('#btnNext'); await page.waitForFunction(() => /Check and send/.test(document.getElementById('step').textContent));
+  ok('the review says Renewal, with changes, and never "undefined"', /Renewal/.test(await txt('.rev')) && /A new driver/.test(await txt('.rev')) && !/undefined/.test(await txt('.rev')));
+  await page.check('#agree'); await page.click('#btnNext'); await page.waitForSelector('#s-done:not(.hide)');
+  const rsub = calls.filter(c => c.action === 'submit').pop();
+  ok('it is sent as a renewal request for that vehicle, with the change', rsub.quote.flow === 'renew' && rsub.quote.reg === 'PDX 1234' && rsub.quote.renewChoice === 'Renew with changes' && /A new driver/.test(rsub.quote.renewChanges));
+  ok('the done screen says the renewal has gone', /renewal request has gone/.test(await txt('#doneTitle')));
+  await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
+  /* A vehicle not on her record: no dead end. */
+  await page.fill('#rfQ', 'pdx-1234'); await page.click('#rfind .send');
+  await page.waitForSelector('#s-form:not(.hide) #rbrief');
+  ok('a number typed any way finds her own vehicle', /Toyota Aqua/.test(await txt('#step')));
+  await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
+  await page.fill('#rfQ', 'TCX 404'); await page.click('#rfind .send');
+  await page.waitForFunction(() => /could not match/.test(document.getElementById('rfMsg').textContent));
+  if (process.env.SHOTS) { await page.$eval('#rfind', el => el.scrollIntoView({ block: 'center' })); await page.waitForTimeout(1200); await page.screenshot({ path: path.join(process.env.SHOTS, 'renew-find.png') }); }
+  ok('a number not on her record says so plainly and offers to send it anyway', /TCX 404/.test(await txt('#rfMsg')) && /renewals team/.test(await txt('#rfMsg')));
+  await page.click('#rfMsg .send'); await page.waitForSelector('#s-form:not(.hide)');
+  ok('…which opens the renewal for that number, marked to be matched, with no AI guess', /Not matched to your e‑mail yet/.test(await txt('#step')) && await page.inputValue('[data-k=reg]') === 'TCX 404' && !(await page.$('#rbrief')));
+  await page.click('.opts button:has-text("Talk to us first")'); await page.click('#btnNext'); await page.waitForFunction(() => /Check and send/.test(document.getElementById('step').textContent));
+  ok('"Talk to us first" asks to be called, not to renew', /call me about my renewal/.test(await txt('label.chk')));
+  await page.click('#btnBack'); await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
+  /* A renewal request made here before 26 October still shows in her list, with its own tracker. */
+  requests = [{ ref: 'MQ-261021-001', when: '21 Oct 2026', type: 'Renewal', vehicle: '2019 Toyota Aqua', reg: 'PDX 1234', cover: 'Comprehensive', status: 'Sent to quotes desk' }];
+
+  /* ── the invoice: upload, read, filled in, checked ── */
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEklEQVR4nGNgYGD4z8DAwMAAAA0IAgCp5mD/AAAAAElFTkSuQmCC', 'base64');
+  await page.setInputFiles('#invFile', { name: 'quotation.png', mimeType: 'image/png', buffer: png });
+  await page.waitForSelector('#reading:not(.hide)');
+  ok('a reading screen shows while the dealer\'s invoice is read', /Reading the dealer's invoice/.test(await txt('#reading')));
+  await page.waitForSelector('#s-form:not(.hide) .docnote'); await page.waitForSelector('#reading.hide', { state: 'attached' });
+  const rd = calls.find(c => c.action === 'readInvoice');
+  ok('the photo is sent to be read as a JPEG, signed in', rd && rd.token && rd.file.type === 'image/jpeg' && rd.file.data.length > 100);
+  ok('the quick quote opens with what was read: make, model, year, value', await page.inputValue('select[data-k=make]') === 'MG' && await page.inputValue('[data-k=model]') === 'ZS HEV Lux' &&
+    await page.inputValue('select[data-k=year]') === '2026' && await page.inputValue('[data-k=value]') === '212645');
+  ok('a new vehicle with no number is ticked "not registered yet", and New is chosen', await page.isChecked('[data-k=newUnreg]') && (await page.$('.opts button.on:has-text("New")')) !== null);
+  ok('each field read is marked "from your document", and the note names the dealer', (await page.$$('.fromdoc')).length >= 5 && /Sample Motors Ltd/.test(await txt('.docnote')));
+  ok('her own name stands: the buyer on the document never replaces it', await page.inputValue('[data-k=name]') === 'Anika Pretend' && await page.inputValue('[data-k=mobile]') === '868-555-0101');
+  ok('the document is listed to go with the request, as the dealer\'s invoice', /The dealer's invoice/.test(await txt('#step .files')) && /New quote/.test(await txt('#flowTag')) && /dealer's invoice/.test(await txt('#flowTag')));
+  ok('nothing runs wider than the phone on the quick quote', await wide());
+  await page.click('#btnNext'); await page.waitForFunction(() => document.getElementById('formErr').textContent);
+  ok('the quick quote still needs the cover and the years driving', /cover/.test(await txt('#formErr')) && /driving/.test(await txt('#formErr')));
+  await page.click('.opts button:has-text("Comprehensive")'); await page.selectOption('select[data-k=drivingYears]', '10');
+  const pk = async (k, v) => page.click(`#step button[onclick^="pick('${k}','${v}'"]`);
+  await page.click('#btnNext'); await page.waitForFunction(() => /accidents/.test(document.getElementById('formErr').textContent));
+  ok('a quick quote asks the two history questions Guardian\'s form needs', /accidents or claims/.test(await txt('#formErr')) && /young or new drivers/.test(await txt('#formErr')));
+  await pk('accidents', 'No'); await pk('young', 'No'); await page.selectOption('select[data-k=use]', 'Private use and to work');
+  ok('the rest of Guardian\'s form is in an optional fold, open because we already hold some of it', await page.evaluate(() => { const d = document.querySelector('#step details.more'); return !!d && d.open && /Optional/.test(d.textContent); }) &&
+    await page.inputValue('#step details.more [data-k=occupation]') === 'Teacher'); await page.selectOption('#step details.more select[data-k=marital]', 'Married'); await page.fill('#step details.more [data-k=employer]', 'Ministry of Education');
+  await page.fill('#step details.more [data-k=address]', '12A Sample Road, Chaguanas');
+  await page.click('#btnNext'); await page.waitForFunction(() => /Check and send/.test(document.getElementById('step').textContent));
+  const qrev = await txt('.rev');
+  ok('the review never prints "undefined" for a question not asked', !/undefined/.test(qrev), (qrev.match(/.{30}undefined/) || [''])[0]);
+  ok('the review offers Guardian\'s request form to preview', /Motor Quotation Request/.test(await txt('.formcard')) && await page.isVisible('.formcard button'));
+  const rpop = page.waitForEvent('popup'); await page.click('.formcard button'); const rp = await rpop;
+  await rp.waitForURL(/^blob:/, { timeout: 15000 }).catch(() => {});
+  ok('"Preview the form" opens the filled PDF', /^blob:/.test(rp.url())); await rp.close();
+  ok('the review says new quote (quick), read from the dealer\'s document, not registered yet', /New quote \(quick\)/.test(qrev) && /Sample Motors/.test(qrev) && /Not registered yet/.test(qrev) && /TT\$ 212,645/.test(qrev));
+  await page.check('#agree'); await page.click('#btnNext'); await page.waitForSelector('#s-done:not(.hide)');
+  const qsub = calls.filter(c => c.action === 'submit').pop();
+  ok('it is sent as a quick quote with what was read, the document and Guardian\'s form attached', qsub.quote.flow === 'quick' && qsub.quote.newUnreg === 'Yes' && qsub.quote.invoice && qsub.quote.invoice.dealer === 'Sample Motors Ltd' &&
+    qsub.files.length === 2 && qsub.files[0].kind === 'invoice' && qsub.files[1].kind === 'request' && qsub.files[1].type === 'application/pdf');
+  {
+    const LL = require(path.join(ROOT, 'motor-quote/vendor/pdf-lib-1.17.1.min.js'));
+    const rf = (await LL.PDFDocument.load(Buffer.from(qsub.files[1].data, 'base64'))).getForm();
+    const T = n => rf.getTextField(n).getText() || '';
+    ok('Guardian\'s form carries her answers in its own fields: name, e-mail, the vehicle, the value, the use', T('Name') === 'Anika Pretend' && T('Email') === 'anika@example.com' && T('Make') === 'MG' &&
+      T('Model') === 'ZS HEV Lux' && T('year of Manufacture') === '2026' && T('Market Value') === 'TT$ 212,645' && T('Use of the Vehicle') === 'Private use and to work' && T('Reg No') === 'Not registered yet');
+    ok('…and the boxes: married, new, comprehensive, no accidents, no young drivers', rf.getCheckBox('Married').isChecked() && rf.getCheckBox('New').isChecked() && rf.getCheckBox('Comprehensive').isChecked() &&
+      rf.getRadioGroup('Have you ever had any accidents\\claims').getSelected() === 'No' && rf.getRadioGroup('Will any young inexperience drive be using your vehicle').getSelected() === 'No_5');
+    ok('…and the address and employer from the optional fold', T('Home Address 1') === '12A Sample Road, Chaguanas' && T('Employers Name') === 'Ministry of Education');
+  }
+  ok('the done screen says the permit comes when the quote is taken', /permit/.test(await txt('#doneMsg')) || /Test mode/.test(await txt('#doneMsg')));
+  await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
+  ok('home lists both requests, newest first, with their type', /Quick quote[\s\S]*Renewal/.test(await txt('#reqs')));
+  ok('each request is labelled by its path and carries a four-stage tracker', /New quote/.test(await txt('#reqs .req.t-quote .kind')) && /Renewal/.test(await txt('#reqs .req.t-renew .kind')) &&
+    (await page.$$('#reqs .req.t-quote .trk li')).length === 4 && /Being priced/.test(await txt('#reqs .req.t-quote .trk')) && /Being prepared/.test(await txt('#reqs .req.t-renew .trk')));
+  ok('a renewal is never offered as a quote to accept', !(await page.$('#reqs .req.t-renew button')));
+
+  /* ── the quick quote with no invoice, and every detail ── */
+  await page.click('#doorQuick'); await page.waitForSelector('#s-form:not(.hide)');
+  ok('a quick quote with no invoice starts clean, offers the upload, and keeps her details', !(await page.$('.docnote')) && (await page.$('#step input.invIn')) !== null && await page.inputValue('[data-k=name]') === 'Anika Pretend' && !(await page.inputValue('[data-k=model]')));
+  await page.selectOption('select[data-k=make]', 'Honda'); await page.fill('[data-k=model]', 'Fit'); await page.selectOption('select[data-k=year]', '2018'); await page.fill('[data-k=value]', '70000');
+  await page.click('.opts button:has-text("Third Party Only")'); await page.selectOption('select[data-k=drivingYears]', '5');
+  await page.click('#btnNext'); await page.waitForFunction(() => document.getElementById('formErr').textContent);
+  ok('without a number or the tick it asks for one or the other', /registration number, or tick/.test(await txt('#formErr')));
+  await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
+  await page.click('.linkbtn:has-text("every detail")'); await page.waitForSelector('#s-form:not(.hide)');
+  ok('"every detail" is the full six steps', (await page.$$('#steps i')).length === 6 && /About you/.test(await txt('#step')));
+  await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
+  /* ── every detail: the original six steps, from a vehicle we hold ── */
+  await page.evaluate(() => startNew(0)); await page.waitForSelector('#s-form:not(.hide)');
   ok('step 1 opens, filled from what we hold', await page.inputValue('[data-k=name]') === 'Anika Pretend' && await page.inputValue('[data-k=mobile]') === '868-555-0101' &&
     await page.inputValue('[data-k=occupation]') === 'Teacher' && await page.inputValue('[data-k=dob]') === '1988-04-12');
   ok('gender is a tap, not typed', (await page.$$('.opts button')).length >= 4);
@@ -71,43 +298,203 @@ const calls = []; let requests = [];
   ok('step 2: the vehicle picked is filled in', await page.inputValue('[data-k=reg]') === 'PDX 1234' && await page.inputValue('[data-k=make]') === 'Toyota' && await page.inputValue('[data-k=year]') === '2019' && await page.inputValue('[data-k=value]') === '95000');
   ok('make, year, body, seats and engine are drop-downs', (await page.$$('select.fld')).length >= 5 && (await page.$$('select[data-k=make] option')).length > 20);
   await page.selectOption('select[data-k=body]', 'Hatchback'); await page.selectOption('select[data-k=seating]', '5'); await page.selectOption('select[data-k=cc]', '1500');
-  await page.click('.opts button:has-text("Used")'); await page.click('.opts button:has-text("Yes")');
+  const pk2 = async (k, v) => page.click(`#step button[onclick^="pick('${k}','${v}'"]`);
+  ok('new or used is the form\'s three: new, foreign used, second hand', /New[\s\S]*Foreign used[\s\S]*Second hand/.test(await txt('#step .opts')));
+  await pk2('condition', 'Second hand');
+  ok('second hand asks whether it was ever in an accident', await page.isVisible('#step button[onclick^="pick(\'secondAcc\',\'Yes\'"]'));
+  await pk2('secondAcc', 'No'); await page.fill('[data-k=chassis]', 'zze0000000test'); await page.selectOption('select[data-k=use]', 'Private use');
+  await pk2('mortgaged', 'Yes');
   await page.click('#btnNext'); await page.waitForFunction(() => document.getElementById('formErr').textContent);
   ok('on a loan needs the institution', /institution/.test(await txt('#formErr')) && await page.isVisible('#instBox'));
   await page.selectOption('select[data-k=institution]', 'Other'); await page.fill('#instBox .other input', 'Sample Credit Union');
   await page.click('#btnNext'); await page.waitForFunction(() => /The cover/.test(document.getElementById('step').textContent));
   ok('step 3: cover and windscreen come filled from the record, previous insurer too', (await page.$('.opts button.on:has-text("Comprehensive")')) !== null && await page.inputValue('select[data-k=prevInsurer]') === 'Guardian General' && await page.inputValue('[data-k=existingPolicy]') === 'TTMV00000001');
+  ok('years driving is carried from the quick quote she answered', await page.inputValue('select[data-k=drivingYears]') === '5');
+  await page.selectOption('select[data-k=drivingYears]', '');
   await page.click('#btnNext'); await page.waitForFunction(() => document.getElementById('formErr').textContent);
   ok('years driving is required', /driving/.test(await txt('#formErr')));
   await page.selectOption('select[data-k=drivingYears]', '10'); await page.selectOption('select[data-k=ncd]', '3 years');
   ok('"Other" on a drop-down took the typed institution', await page.evaluate(() => JSON.parse(localStorage.getItem('rrb-mq-draft')).institution === 'Sample Credit Union'));
   await page.click('#btnNext'); await page.waitForFunction(() => /The driver/.test(document.getElementById('step').textContent));
-  await page.fill('[data-k=permit]', 'DP-000000'); await page.click('.opts button:has-text("Yes")');
+  await page.fill('[data-k=permit]', 'DP-000000'); await pk2('accidents', 'Yes'); await pk2('young', 'Yes');
+  ok('a Yes opens the form\'s own table, three rows each', (await page.$$('[data-k^=qa][data-k$=date]')).length === 3 && (await page.$$('[data-k^=yd][data-k$=name]')).length === 3);
   await page.click('#btnNext'); await page.waitForFunction(() => document.getElementById('formErr').textContent);
   ok('an accident needs its details', /accident/.test(await txt('#formErr')));
   await page.fill('[data-k=accidentDetails]', 'A small bump in a car park, 2024, no claim made.');
+  await page.fill('[data-k=qa0date]', '2024-03-04'); await page.fill('[data-k=qa0own]', '2500'); await page.fill('[data-k=qa0drv]', 'Anika Pretend');
+  await page.click('#btnNext'); await page.waitForFunction(() => /young or new driver/.test(document.getElementById('formErr').textContent));
+  ok('a young driver needs a name', /young or new driver/.test(await txt('#formErr')));
+  await page.fill('[data-k=yd0name]', 'Sam Pretend'); await page.fill('[data-k=yd0dob]', '2007-01-09');
   await page.click('#btnNext'); await page.waitForFunction(() => /Your documents/.test(document.getElementById('step').textContent));
-  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEklEQVR4nGNgYGD4z8DAwMAAAA0IAgCp5mD/AAAAAElFTkSuQmCC', 'base64');
-  await page.setInputFiles('input[data-kind=permit]', { name: 'permit.png', mimeType: 'image/png', buffer: png });
+    await page.setInputFiles('input[data-kind=permit]', { name: 'permit.png', mimeType: 'image/png', buffer: png });
   await page.waitForFunction(() => /permit\.jpg/.test(document.getElementById('files').textContent));
   ok('a photo is taken in, resized to JPEG, with Remove', /permit\.jpg/.test(await txt('#files')) && (await page.$('.file button')) !== null);
   await page.click('#btnNext'); await page.waitForFunction(() => /Check and send/.test(document.getElementById('step').textContent));
   const rev = await txt('.rev');
+  ok('the full review never prints "undefined" either', !/undefined/.test(rev));
   ok('the review shows what she gave, grouped', /PDX 1234/.test(rev) && /Comprehensive/.test(rev) && /TT\$ 95,000/.test(rev) && /car park/.test(rev) && /permit/.test(rev));
+  const sentBefore = calls.filter(c => c.action === 'submit').length;
   await page.click('#btnNext'); await page.waitForFunction(() => document.getElementById('formErr').textContent);
-  ok('nothing goes without the tick', /tick/.test(await txt('#formErr')) && !calls.some(c => c.action === 'submit'));
+  ok('nothing goes without the tick', /tick/.test(await txt('#formErr')) && calls.filter(c => c.action === 'submit').length === sentBefore);
   await page.check('#agree'); await page.click('#btnNext'); await page.waitForSelector('#s-done:not(.hide)');
-  const sub = calls.find(c => c.action === 'submit');
-  ok('the request is sent with the facts and the photo, as text/plain JSON', sub && sub.quote.reg === 'PDX 1234' && sub.quote.accidents === 'Yes' && sub.quote.ncd === '3 years' && sub.files.length === 1 && sub.files[0].type === 'image/jpeg' && sub.files[0].data.length > 100);
-  ok('the done screen shows the reference and the test-mode line', (await txt('#doneRef')) === 'MQ-261021-001' && /Test mode/.test(await txt('#doneMsg')));
+  const sub = calls.filter(c => c.action === 'submit').pop();
+  ok('the request is sent with the facts and the photo, as text/plain JSON', sub && sub.quote.flow === 'full' && sub.quote.reg === 'PDX 1234' && sub.quote.accidents === 'Yes' && sub.quote.ncd === '3 years' && sub.files.length === 2 && sub.files[0].type === 'image/jpeg' && sub.files[0].data.length > 100 && sub.files[1].kind === 'request');
+  {
+    const LL = require(path.join(ROOT, 'motor-quote/vendor/pdf-lib-1.17.1.min.js'));
+    const rf = (await LL.PDFDocument.load(Buffer.from(sub.files[1].data, 'base64'))).getForm(), T = n => rf.getTextField(n).getText() || '';
+    ok('every detail fills the tables: the accident row and the young driver row, dates written out', T('Date1') === '4 Mar 2024' && T('Amt settled for own damage1') === '2,500' && T('Driver1') === 'Anika Pretend' &&
+      T('Drivers name1') === 'Sam Pretend' && T('Date of birth1') === '9 Jan 2007' && T('Date of Birth') === '12 Apr 1988');
+    ok('…second hand ticked, its accident No, the chassis in capitals, the permit as the DP, NCD third year', rf.getCheckBox('Second Hand').isChecked() &&
+      rf.getRadioGroup('If Second Hand have the vehicle ever been involved in an accident').getSelected() === 'No' && T('Chassis No') === 'ZZE0000000TEST' &&
+      T('If Yes Client DP') === 'DP-000000' && rf.getCheckBox('year_3').isChecked() && T('Mortgagee') === 'Sample Credit Union');
+    ok('…a client of ours is not a first-time Guardian General client', rf.getRadioGroup('FirstTime GG Client').getSelected() === 'No');
+  }
+  ok('the done screen shows the reference and the test-mode line', /^MQ-261021-00\d$/.test(await txt('#doneRef')) && /Test mode/.test(await txt('#doneMsg')));
   ok('the draft is cleared after sending', await page.evaluate(() => JSON.parse(localStorage.getItem('rrb-mq-draft') || '{}').sent === true));
   await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
-  ok('home lists the request with its status', /MQ-261021-001/.test(await txt('#reqs')) && /Sent to quotes desk/.test(await txt('#reqs')));
+  /* ── taking a quote: Guardian's proposal and Know Your Policy ── */
+  const yn = async (k, v) => page.click(`#step button[onclick^="pick('${k}','${v}'"]`);
+  const next = async () => { await page.click('#btnNext'); await page.waitForTimeout(150); };
+  ok('home offers "Accept my quote", and each quote request "Accept this quote"', await page.isVisible('#doorTake') && /Accept my quote/.test(await txt('#doorTake')) && (await page.$$('#reqs button:has-text("Accept this quote")')).length >= 1);
+  const qref = await page.evaluate(() => requests.find(r => r.type !== 'Renewal').ref);
+  await page.click('#reqs button:has-text("Accept this quote")'); await page.waitForSelector('#s-form:not(.hide)');
+  ok('taking a quote is seven steps, starting with the papers', (await page.$$('#steps i')).length === 7 && /Your quote and papers/.test(await txt('#step')));
+  ok('the form says Accepting a quote, with the quote\'s reference', /Accepting a quote/.test(await txt('#flowTag')) && /MQ-/.test(await txt('#flowTag')));
+  await next(); ok('the Guardian quote is needed first', /Guardian quote/.test(await txt('#formErr')));
+  const pdf = Buffer.from('%PDF-1.4\n% made-up quotation\n'), png2 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEklEQVR4nGNgYGD4z8DAwMAAAA0IAgCp5mD/AAAAAElFTkSuQmCC', 'base64');
+  for (const [kind, file] of [['quote', { name: 'quotation.pdf', mimeType: 'application/pdf', buffer: pdf }], ['certified', { name: 'cc.png', mimeType: 'image/png', buffer: png2 }], ['permit', { name: 'permit.png', mimeType: 'image/png', buffer: png2 }]]) {
+    await page.setInputFiles(`input.tdocIn[data-kind=${kind}]`, file);
+    await page.waitForFunction(k => !document.querySelector('input.tdocIn[data-kind=' + k + ']') && document.getElementById('reading').classList.contains('hide'), kind);
+  }
+  const papers = await txt('#step .files');
+  ok('each document is read and says what it gave', /TT APG 0000001/.test(papers) && /LSJ0000000000TEST/.test(papers) && /DP000000/.test(papers));
+  ok('the three were sent to be read, each as its kind', ['quote', 'certified', 'permit'].every(k => calls.some(c => c.action === 'readDoc' && c.kind === k && c.file.data.length > 10)));
+  await next(); await page.waitForFunction(() => /About you/.test(document.getElementById('step').textContent));
+  ok('About you: her name from our records, the permit read off the card, the address off the quotation', await page.inputValue('[data-k=first]') === 'Anika' && await page.inputValue('[data-k=surname]') === 'Pretend' &&
+    await page.inputValue('[data-k=permitNo]') === 'DP000000' && await page.inputValue('[data-k=permitIssued]') === '2010-05-01' && /Pretend Street/.test(await page.inputValue('[data-k=address]')));
+  ok('the PEP question carries Guardian\'s explanation, and nothing is pre-ticked', /PEP Memorandum/.test(await txt('#step')) && !(await page.$('#step button.on[onclick^="pick(\'pep\'"]')));
+  await next(); ok('About you will not go on without her own answers', /nationality/.test(await txt('#formErr')) && /Yes or No/.test(await txt('#formErr')));
+  await page.fill('[data-k=nationality]', 'Trinidad and Tobago'); await page.fill('[data-k=residence]', 'Trinidad and Tobago'); await page.selectOption('select[data-k=marital]', 'Married');
+  await page.fill('[data-k=phone]', '868-555-0101'); await yn('pep', 'No'); await yn('otherGG', 'Yes');
+  ok('a Yes opens the details it needs', await page.isVisible('[data-k=otherGGd]'));
+  await page.fill('[data-k=otherGGd]', 'Life policy'); await next(); await page.waitForFunction(() => /The vehicle/.test(document.getElementById('step').textContent));
+  ok('The vehicle: chassis and engine off the certified copy, the sum insured off the quotation, each marked', await page.inputValue('[data-k=chassis]') === 'LSJ0000000000TEST' &&
+    await page.inputValue('[data-k=engine]') === 'EN0000TEST' && await page.inputValue('[data-k=sumInsured]') === '213387' && (await page.$$('#step .fromdoc')).length >= 6);
+  ok('registered in her name is read off the certified copy\'s owner', (await page.$('#step button.on[onclick^="pick(\'q7b\',\'Yes\'"]')) !== null);
+  for (const [k, v] of [['q4', 'Yes'], ['acc', 'No'], ['q6', 'No'], ['q7c', 'No'], ['q7d', 'No'], ['q7e', 'No'], ['q8', 'Yes']]) await yn(k, v);
+  await page.click('#step button[onclick^="pick(\'cond\',\'New\'"]');
+  await next(); ok('the anti-theft Yes from the quotation still needs the device and date', /anti-theft/.test(await txt('#formErr')) && await page.isVisible('[data-k=q9d]'));
+  await page.fill('[data-k=q9d]', 'Factory immobiliser, October 2026'); await page.fill('[data-k=q10]', 'Locked garage at home');
+  await next(); await page.waitForFunction(() => /Drivers and history/.test(document.getElementById('step').textContent));
+  for (const [k, v] of [['q3a', 'No'], ['q3b', 'No'], ['q11', 'No'], ['q12', 'No'], ['q13', 'No'], ['q14a', 'No'], ['q14b', 'No'], ['q14c', 'No'], ['q15', 'Yes'], ['q16a', 'No'], ['q16b', 'No'], ['q16c', 'Yes']]) await yn(k, v);
+  await next(); ok('an accident Yes needs the accident', /accident/.test(await txt('#formErr')));
+  await page.fill('[data-k=acc0date]', '2024-06-01'); await page.fill('[data-k=acc0details]', 'A small bump in a car park.');
+  await next(); await page.waitForFunction(() => /Your cover/.test(document.getElementById('step').textContent));
+  ok('Your cover: the cover, the period and the benefits as on the quotation', (await page.$('#step button.on:has-text("Comprehensive")')) !== null && await page.inputValue('[data-k=from]') === '2026-10-16' &&
+    (await page.$('#step button.on[onclick^="pick(\'b19h\',\'Yes\'"]')) !== null && (await page.$('#step button.on[onclick^="pick(\'b19g\',\'No\'"]')) !== null && await page.inputValue('[data-k=b19bLimit]') === '10000');
+  await next(); await page.waitForFunction(() => /Know your policy/.test(document.getElementById('step').textContent));
+  ok('Know Your Policy: all seventeen points, in Guardian\'s words, none pre-ticked', (await page.$$('#step .kyp')).length === 17 && /reducing balance basis/.test(await txt('#step')) && !(await page.$('#step .kyp button.on')));
+  for (let i = 1; i <= 17; i++) if (i !== 9) await yn('k' + i, i === 4 ? 'No' : 'Yes');
+  await next(); ok('every point must be answered', /point 9/.test(await txt('#formErr')));
+  await yn('k9', 'Yes'); await next(); await page.waitForFunction(() => /Sign and send/.test(document.getElementById('step').textContent));
+  ok('the declaration is Guardian\'s own words', /no material fact\/s affecting the assessment of the risk/.test(await txt('.decl')));
+  ok('nothing runs wider than the phone, signature pad included', await wide());
+  await page.check('#agree'); await page.click('#btnNext'); await page.waitForFunction(() => document.getElementById('formErr').textContent);
+  ok('it will not send unsigned', /sign in the box/.test(await txt('#formErr')));
+  const box = await (await page.$('#sig')).boundingBox();
+  await page.mouse.move(box.x + 20, box.y + box.height / 2); await page.mouse.down();
+  for (let i = 1; i <= 12; i++) await page.mouse.move(box.x + 20 + i * 22, box.y + box.height / 2 + (i % 2 ? -18 : 18));
+  await page.mouse.up();
+  ok('signing clears the "please sign" warning', !/sign in the box/.test(await txt('#formErr')));
+  const [popup] = await Promise.all([page.waitForEvent('popup'), page.click('button:has-text("Preview the proposal")')]);
+  await popup.waitForURL(/^blob:/, { timeout: 15000 }).catch(() => {});
+  ok('"Preview the proposal" opens the filled PDF', /^blob:/.test(popup.url())); await popup.close();
+  await page.click('#btnNext'); await page.waitForSelector('#s-done:not(.hide)', { timeout: 20000 }).catch(async e => { console.log('SEND ERR:', await txt('#formErr'), '| btn:', await txt('#btnNext'), '| errors:', errors.join(' / ')); throw e; });
+  const pr = calls.filter(c => c.action === 'propose').pop();
+  ok('the proposal is sent with the quote it takes, all five documents, the two forms as PDFs', pr && pr.quoteRef === qref && pr.files.map(f => f.kind).join() === 'quote,certified,permit,proposal,kyp' &&
+    pr.files.slice(-2).every(f => f.type === 'application/pdf' && f.data.slice(0, 5) === 'JVBER'));
+  ok('the answers sent are hers: every declaration, the accident, the KYP No', pr.answers.pep === 'No' && pr.answers.q15 === 'Yes' && pr.answers.accidents.length === 1 && pr.answers.k4 === 'No' && pr.answers.chassis === 'LSJ0000000000TEST');
+  const L = require(path.join(ROOT, 'motor-quote/vendor/pdf-lib-1.17.1.min.js'));
+  const kd = await L.PDFDocument.load(Buffer.from(pr.files[4].data, 'base64')), kf = kd.getForm();
+  const pd = await L.PDFDocument.load(Buffer.from(pr.files[3].data, 'base64'));
+  ok('the Know Your Policy PDF is Guardian\'s form with her answers: point 4 ticked No, her name', kf.getCheckBox('ChkBox-5').isChecked() && !kf.getCheckBox('ChkBox-4').isChecked() && kf.getTextField('Text1').getText() === 'ANIKA PRETEND');
+  ok('the proposal PDF is Guardian\'s four pages, signed (an image on page 4)', pd.getPageCount() === 4 && pr.files[3].data.length > 200000);
+  ok('the done screen says the proposal has gone', /proposal has gone/.test(await txt('#doneTitle')) && /MP-261021-001/.test(await txt('#doneRef')));
+  ok('the proposal done screen gives the proposal\'s next steps, not the quote\'s', /premium/.test(await txt('#doneSteps')) && !/We price it/.test(await txt('#doneSteps')));
+  await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
   ok('nothing runs wider than the phone', await wide());
   await page.reload({ waitUntil: 'domcontentloaded' }); await page.waitForSelector('#s-home:not(.hide)');
   ok('a reload keeps her signed in (me is asked)', calls.some(c => c.action === 'me'));
   await page.click('#who button'); await page.waitForSelector('#s-signin:not(.hide)');
   ok('sign out returns to the sign-in and forgets the device', await page.evaluate(() => !localStorage.getItem('rrb-mq-session')));
+
+  /* ── someone we did not find is asked once whether they are with us ── */
+  NEWME = { found: false, email: 'new@example.com', contactId: '', name: '', first: '', last: '', mobile: '', occupation: '', dob: '', vehicles: [], policies: [], salesforce: true };
+  await page.evaluate(() => localStorage.removeItem('rrb-mq-draft'));
+  await page.fill('#email', 'new@example.com'); await page.click('#btnCode'); await page.waitForSelector('#codeBox:not(.hide)');
+  await page.fill('#code', '211110'); await page.click('#btnVerify'); await page.waitForSelector('#s-home:not(.hide)');
+  ok('someone not on file is asked "Are you already a Guardian client?"', /Are you already a Guardian client/.test(await txt('#meCard')) && /new@example.com/.test(await txt('#meCard')));
+  await page.click('#meCard button:has-text("Yes, I am")');
+  await page.fill('#clientRef', 'TTMV00000001');
+  ok('"Yes" asks for a policy or client number, optional, and promises nothing is shown', await page.isVisible('#clientRef') && /Nothing from it is shown/.test(await txt('#meCard')));
+  await page.click('#doorQuick'); await page.waitForSelector('#s-form:not(.hide)');
+  const sv = await page.evaluate(() => JSON.parse(localStorage.getItem('rrb-mq-draft') || '{}'));
+  ok('the answer travels with the request', sv.clientStatus === 'existing' && sv.clientRef === 'TTMV00000001');
+  await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
+  await page.click('#meCard button:has-text("No, I am new")');
+  ok('"No, I am new" says the record is set up with the first request, and drops the number', /set up your record/.test(await txt('#meCard')) &&
+    await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('rrb-mq-draft') || '{}'); return d.clientStatus === 'new' && !d.clientRef; }));
+  ok('nothing runs wider than the phone with the question', await wide());
+  /* ── a client names their agent from the branch's list ── */
+  await page.click('#doorQuick'); await page.waitForSelector('#s-form:not(.hide)');
+  ok('the quick quote asks for the client\'s agent, as a search', await page.isVisible('#agentQ') && /Your Guardian agent/.test(await txt('#step')));
+  await page.fill('#agentQ', 'ma'); await page.waitForSelector('#agentList button');
+  if (process.env.SHOTS) { await page.$eval('#agentQ', el => el.scrollIntoView({ block: 'center' })); await page.waitForTimeout(1500); await page.screenshot({ path: path.join(process.env.SHOTS, 'agent-pick.png') }); }
+  ok('typing lists our agents by name', (await page.$$('#agentList button')).length === 2 && calls.filter(c => c.action === 'agents').pop().q === 'ma');
+  await page.click('#agentList button:has-text("Mala Madeup")');
+  ok('picking one names them on the quote', /Mala Madeup is named on your quote/.test(await txt('#agentSaid')) && await page.inputValue('#agentQ') === 'Mala Madeup' &&
+    await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('rrb-mq-draft') || '{}'); return d.agentId === '003000000000050AAA' && d.agent === 'Mala Madeup'; }));
+  await page.fill('#agentQ', 'Mala Made');
+  ok('typing again unpicks them', await page.evaluate(() => !JSON.parse(localStorage.getItem('rrb-mq-draft') || '{}').agentId));
+  ok('nothing runs wider than the phone with the agent list', await wide());
+  await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
+  await page.click('#who button'); await page.waitForSelector('#s-signin:not(.hide)');
+
+  /* ── an agent signs in and asks for a quote for a client ── */
+  NEWME = { found: false, email: 'mala.madeup@example.com', contactId: '', name: '', first: '', last: '', mobile: '', occupation: '', dob: '', vehicles: [], policies: [], salesforce: true,
+    agent: { name: 'Mala Madeup', first: 'Mala' } };
+  await page.evaluate(() => localStorage.removeItem('rrb-mq-draft'));
+  await page.fill('#email', 'mala.madeup@example.com'); await page.click('#btnCode'); await page.waitForSelector('#codeBox:not(.hide)');
+  await page.fill('#code', '211110'); await page.click('#btnVerify'); await page.waitForSelector('#s-home:not(.hide)');
+  ok('an agent is greeted as an agent, the producer on every quote', /Good day, Mala/.test(await txt('#homeTitle')) && /Signed in as agent Mala Madeup/.test(await txt('#meCard')) &&
+    /producer/.test(await txt('#homeLead')) && /Mala Madeup/.test(await txt('#whoName')));
+  if (process.env.SHOTS) { await page.waitForTimeout(1500); await page.screenshot({ path: path.join(process.env.SHOTS, 'agent-home.png') }); }
+  ok('an agent sees none of the client sections: no "Due now", nothing held, no ideas', await page.evaluate(() => document.getElementById('dueTop').classList.contains('hide') && !document.getElementById('trHold') && !document.getElementById('trOpps')));
+  ok('an agent has the new quote alone: no renewal, no taking a quote', !(await page.isVisible('#pathRenew')) && !(await page.isVisible('#pathTake')) && !(await page.isVisible('#trTake')) && await page.isVisible('#trQuote'));
+  await page.click('#doorQuick'); await page.waitForSelector('#s-form:not(.hide)');
+  ok('the form asks for the client: their e-mail, whether they are with us, their name; no agent box', await page.isVisible('[data-k=clientEmail]') &&
+    /Is your client already with Guardian/.test(await txt('#step')) && /Your client's full name/.test(await txt('#step')) && !(await page.$('#agentQ')) &&
+    await page.inputValue('[data-k=name]') === '');
+  if (process.env.SHOTS) { await page.waitForTimeout(1500); await page.screenshot({ path: path.join(process.env.SHOTS, 'agent-form.png') }); }
+  const pk3 = async (k, v) => page.click(`#step button[onclick^="pick('${k}','${v}'"]`);
+  await page.fill('[data-k=name]', 'Dev Madeup'); await page.fill('[data-k=mobile]', '868-555-0199');
+  await page.selectOption('select[data-k=make]', 'Honda'); await page.fill('[data-k=model]', 'Fit'); await page.selectOption('select[data-k=year]', '2018'); await page.fill('[data-k=value]', '70000');
+  await page.fill('[data-k=reg]', 'PDQ 1'); await page.click('.opts button:has-text("Third Party Only")'); await page.selectOption('select[data-k=drivingYears]', '5');
+  await pk3('accidents', 'No'); await pk3('young', 'No');
+  await page.click('#btnNext'); await page.waitForFunction(() => /client's e-mail/.test(document.getElementById('formErr').textContent));
+  ok('without the client\'s e-mail it does not go on', /client's e-mail/.test(await txt('#formErr')));
+  await page.fill('[data-k=clientEmail]', 'Mala.Madeup@example.com'); await page.click('#btnNext');
+  await page.waitForFunction(() => /not yours/.test(document.getElementById('formErr').textContent));
+  ok('…nor with the agent\'s own', /not yours/.test(await txt('#formErr')));
+  await page.fill('[data-k=clientEmail]', 'dev.client@example.com'); await pk3('clientWith', 'No');
+  await page.click('#btnNext'); await page.waitForFunction(() => /Check it over/.test(document.getElementById('step').textContent));
+  ok('the review sends the receipt to the client, copied to the agent, and names the agent as producer', /receipt goes to your client at dev\.client@example\.com, copied to you/.test(await txt('#step')) &&
+    /Mala Madeup \(you, the producer\)/.test(await txt('#step')) && /what my client told me/.test(await txt('#step')));
+  await page.check('#agree'); await page.click('#btnNext'); await page.waitForSelector('#s-done:not(.hide)', { timeout: 20000 });
+  const asub = calls.filter(c => c.action === 'submit').pop();
+  ok('the request carries the client\'s e-mail and that they are new', asub.quote.clientEmail === 'dev.client@example.com' && asub.quote.clientStatus === 'new' && asub.quote.name === 'Dev Madeup');
+  ok('the done screen says the agent is the producer and how the client takes it', /Mala Madeup is the producer/.test(await txt('#doneMsg')) && /their own e-mail/.test(await txt('#doneMsg')));
+  ok('nothing runs wider than the phone for an agent', await wide());
   ok('no page errors', errors.length === 0, errors.join(' | '));
   await browser.close(); server.close();
   console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');

@@ -30,7 +30,7 @@ env.runlog_ = () => {};
 
 const K = env.unitSig_('ricky');
 const shell = env.doGet({ parameter: { rs: 'ricky', f: 'unit', k: K } }).getContent();
-ok('the link answers at once, with a light page that builds nothing', /Opening your day/.test(shell) && /openPage\(P\)/.test(shell) && built.length === 0);
+ok('the link answers at once, with a light page that builds nothing', /Opening your day/.test(shell) && /openPage\(q\)/.test(shell) && built.length === 0);
 ok('the full page still opens from the link with full=1 (a phone with no script support)', /My branch/.test(env.doGet({ parameter: { rs: 'ricky', f: 'unit', k: K, full: '1' } }).getContent()));
 built.length = 0;
 ok('the light page carries only the link\'s own fields, safely', /"rs":"ricky"/.test(shell) && /"f":"unit"/.test(shell) && !/<\/script><script>alert/.test(env.doGet({ parameter: { rs: 'ricky', f: 'unit', k: '</script><script>alert(1)' } }).getContent()));

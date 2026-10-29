@@ -183,6 +183,21 @@ ok('a vendor claim and a second-hand figure are marked as such', /A vendor, Atid
 ok('the Step-Back notes carry the LIMRA figures and say no source defines the approach', /about 14% industry-wide/.test(page) && /No published source defines/.test(page));
 ok('the objective is on the page and in the brief', /Our objective for the two days/.test(page) && /const OBJECTIVE = \[/.test(page) && /Our objective<\/h3>/.test(page));
 ok('the guide is sent the evidence and the sixty seconds', /Industry evidence \(' \+ SRC\[k\]\[0\]/.test(page) && /Draft in the room: /.test(page));
+ok('every 2025 block sits under a session that exists', (() => {
+  const keys = [...page.matchAll(/key: '([a-z0-9-]+)'/g)].map(m => m[1]);
+  const blk = page.slice(page.indexOf('const PRIOR'), page.indexOf('const OUTPUTS'));
+  const pk = [...blk.matchAll(/^  '([a-z0-9-]+)': \{ was:/gm)].map(m => m[1]);
+  return pk.length >= 12 && pk.every(k => keys.includes(k));
+})());
+ok('last year set out ten outputs, each pointing at a 2026 session or none', (() => {
+  const blk = page.slice(page.indexOf('const OUTPUTS'), page.indexOf('const PAIRS'));
+  const ids = [...blk.matchAll(/id: '(c25-[a-z0-9]+)'/g)].map(m => m[1]), nows = [...blk.matchAll(/now: '([a-z0-9-]*)'/g)].map(m => m[1]);
+  return ids.length === 10 && new Set(ids).size === 10 && nows.every(n => !n || page.indexOf("key: '" + n + "'") >= 0) && ids.every(i => /^[a-z0-9-]+$/.test(i));
+})());
+ok('the circles tab, the 2025 goals and the action-log ask are on the page', /data-tab="circ"/.test(page) && /\$250M/.test(page) && /450 full-time agents/.test(page) && /2027 retreat opens by reading it/.test(page));
+ok('a mark on a 2025 output is logged as a contribution and kept locally before the paste', /action: 'sm\.add', session: id, day: 0/.test(page) && /function markOut/.test(page) && page.indexOf('(yes|part|no|unk)') >= 0);
+ok('the objective asks to break the circle, and the look back and the log have their sixty seconds', /Break the circle/.test(page) && page.indexOf("'d1-journey': 'Last year") >= 0 && page.indexOf("'d2-consol': 'Last year") >= 0);
+ok('the guide is sent last year\'s agenda too', /On last year\\'s \(2025\) agenda: /.test(page));
 ok('the memo\'s logistics are on the page', /Hyatt Regency Trinidad, 1 Wrightson Road/.test(page) && /Business casual/.test(page) && /3:30 pm/.test(page));
 
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall passed\n');
