@@ -74,6 +74,12 @@
     out.amount = m ? num(m[1]) : 0;
     m = /Insured\s+(.+?)\s+Period of Insurance/.exec(t);
     out.insured = m ? m[1].trim() : '';
+    /* where the notice was addressed, less the insured's name: "TO: <insured> <address> Renewal Amount" */
+    m = /TO:\s*(.+?)\s+Renewal Amount/.exec(t);
+    if (m) { var to = m[1].trim(); out.address = out.insured && to.toLowerCase().indexOf(out.insured.toLowerCase()) === 0 ? to.slice(out.insured.length).trim() : to; }
+    /* the producer named on the notice: "Producer Ricky Rampersad Guardian Life of The Caribbean c/o …" */
+    m = /Producer\s+(.+?)\s+(?:Guardian Life|c\/o|Dear Policyholder|RISK DETAILS)/.exec(t);
+    out.producer = m && m[1].length < 60 ? m[1].trim() : '';
     m = /From:\s*([A-Za-z]+\s+\d{1,2},?\s+\d{4})\s+To:\s*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/.exec(t);
     out.from = m ? ymd(m[1]) : '';
     out.to = m ? ymd(m[2]) : '';
@@ -103,6 +109,11 @@
     if (m) out.reqs = splitReqs(m[1]);
     m = /renewal is invited subject to submission of the following requirements:\s*(.+?)(?=\s+(?:Please advise|If any of the above|Tran Id)\b|$)/i.exec(t);
     if (m) out.reqs = out.reqs.concat(m[1].split(/\s+-(?=[A-Z])/).map(function (s) { return s.replace(/^-/, '').trim(); }).filter(Boolean));
+    /* "Submission of the undermentioned required on/before 2026 renewal: (a) … (b) …" */
+    m = /Submission of the undermentioned required[^:]*:\s*(.+?)(?=\s+(?:Material facts|OCCUPANCY|ADEQUACY|Consent|Thank you|Head Office|Please advise|If any of the above|Tran Id)\b|$)/i.exec(t);
+    if (m) out.reqs = out.reqs.concat(splitReqs(m[1]));
+    /* "If you have not already provided all outstanding "Know Your Customer" documents, please do so at renewal." */
+    if (/Know Your Customer/i.test(t)) out.kyc = true;
     if (/ADEQUACY OF SUM INSURED/i.test(t)) out.adequacy = true;
     if (/declaration basis/i.test(t)) out.declaration = true;
 
@@ -137,8 +148,17 @@
   function locations(block) {
     return block.split(/Risk Location:\s*/i).slice(1).map(function (seg) {
       var sums = [], first = -1, m;
-      LABEL_RE.lastIndex = 0;
-      while ((m = LABEL_RE.exec(seg))) { if (first < 0) first = m.index; sums.push({ label: m[1].replace(/\s+/g, ' ').replace(/,(?=\S)/g, ', '), value: num(m[2]) }); }
+      /* the newer layout: "Sum Insured/Limit of Liability: Plant Machinery & Equipment: $ 26,974,639.00 Mobile Plant: $ .00 $ 364,157.62",
+         each sum as "Label: $ amount", cents included, and the premium last */
+      var si = /Sum Insured\s*\/\s*Limit of Liability:\s*/i.exec(seg);
+      if (si) {
+        first = si.index;
+        var rest = seg.slice(si.index + si[0].length), re2 = /([A-Za-z][A-Za-z,&/()' .\-]{1,60}?):\s*\$\s*([\d,]*\.?\d*)/g;
+        while ((m = re2.exec(rest))) { var v = num(m[2]); if (v > 0) sums.push({ label: m[1].replace(/\s+/g, ' ').trim(), value: v }); }
+      } else {
+        LABEL_RE.lastIndex = 0;
+        while ((m = LABEL_RE.exec(seg))) { if (first < 0) first = m.index; sums.push({ label: m[1].replace(/\s+/g, ' ').replace(/,(?=\S)/g, ', '), value: num(m[2]) }); }
+      }
       var prem = seg.match(/\$\s*([\d,]+\.\d{2})/g);
       return { kind: 'location', location: (first >= 0 ? seg.slice(0, first) : seg).replace(/\s+/g, ' ').trim().replace(/[,\s]+$/, ''), sums: sums,
         value: sums.reduce(function (s, x) { return s + x.value; }, 0), premium: prem ? num(prem[prem.length - 1]) : 0 };

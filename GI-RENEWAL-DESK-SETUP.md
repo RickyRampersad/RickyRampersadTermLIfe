@@ -38,6 +38,9 @@ Nothing on the pages holds client data. Everything comes from
      Pawan.
    - `GIR_GG_TO`: Guardian General's renewal desks as JSON, only if they change:
      `{"personal":["CRMSRenewals@…","CRMSSALSupport@…"],"commercial":["CRMSRenewals@…","CRMSCommercial@…"]}`.
+   - `GIR_REQ_POOL`: who on the sales support team follows up what Guardian
+     General's notice asks for (names as the Agent Skill Bank writes them,
+     comma-separated). Blank: Sasha Lalla-Jagassar, Azariah Griffith, Elizabeth Lee.
 
 3. **The support@ inbox is read** for Guardian General's notices and replies, with
    the same Entra app and Graph permission (**Mail.Read**) the transition inbox
@@ -114,6 +117,42 @@ with my e-mail" above its access-code box, so a client with a new letter and a
 client holding an old access code both get in. Nothing changes on that page while
 the desk is in test mode. After a full month live, retire the old portal and point
 the homepage at `/myrenewal/`.
+
+## What Guardian General asks for: a task for sales support
+
+When a notice lists documents ("Submission of the undermentioned required…",
+a Certificate of Incorporation, annual returns, directors' and signatories'
+IDs) or asks for outstanding **Know Your Customer** documents, the notice step
+shows them under **What Guardian General needs before it renews**, and one
+**Servicing** task opens in Salesforce for a person on the sales support team:
+
+- **Where:** on last year's billing record for the policy (else its cover term),
+  with the client's contact.
+- **Who:** the account owner when they are on the team, else whoever on the team
+  has the fewest open requirement tasks. The desk can choose someone else.
+- **Subject:** `Renewal Due <d/m/yyyy> - Renewal Requirements and KYC Documents -
+  <policy> - <client>`. It is due ten days before the renewal, never sooner than
+  two working days.
+- **Description:** every item as a box to tick.
+- **Who is told:** a Chatter post mentions the owner, and the owner and the sales
+  support inbox each get an e-mail.
+- **The form, for a company:** Guardian General's **Customer Due Diligence Check
+  List** (GGIL-CDD, Incorporated Entities) is filled from the account and the
+  notice and attached to the task. It is `renewaldesk/forms/GGIL-CDD-Company.pdf`;
+  a file of that name in the `GCM_FORMS_FOLDER` Drive folder wins, so a new
+  edition is a file swap.
+  - Filled: broker, policy, the company's name, place of business, telephone,
+    fax, e-mail, Company, the policy type, the annual premium, the value insured,
+    the renewal in Section H and the salesperson's name.
+  - Left blank: the date and place of incorporation, the registered office, the
+    company type, the documents, the signature and the date. The registered
+    salesperson signs it, never the client.
+
+**Live**, the task opens when the notice is saved. **In test mode**, it opens
+only from the notice step's **Open the task for sales support** with "This is
+real" ticked, or at Proceed when Salesforce is written. **Download the due
+diligence form, filled** works any time and opens nothing. One task a renewal,
+never a second.
 
 ## What runs by itself
 
