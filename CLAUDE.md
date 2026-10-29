@@ -5887,6 +5887,17 @@ silent faults nobody would have reported:
   filled one adds nothing to the count, Enter moving on rather than sending,
   the restored-draft notice and its count, Start again, and the index's own
   stage, headline and measured bar).
+## Xpress Life — one of the branch's products, at /xpresslife/
+
+Moved onto the branch site on 29 October 2026 (*"i want this as a link to one of our products not a seperate site"*). `xpresslife/index.html` is the whole application that used to be xpresslifett.com on Netlify: the rate, the five health questions, the Guardian forms (`guardian-*.pdf`, fetched relatively, so they live beside it), tracking, and the post to the Xpress Life Apps Script backend (`CONFIG.GAS_URL`, its own project, not `Service.gs`). It takes the homepage's palette and fonts (deep blue `#0a3350`, teal `#0e93b0`/`#00728d`, ground `#faf9f2`, Inter Tight and Inter) in place of the old coral, and the brand links home.
+
+- **xpresslifett.com is a shortcut only**: one `_redirects` line on Netlify, `/* https://rickyrampersadbranch.com/xpresslife/:splat 301!`. The ad's QR code and the spoken "Xpress Life TT dot com" still land here. Never rebuild a second Xpress Life site there.
+- **The Netlify Forms copy is gone** with the move (the hidden form and the `fetch('/')` post): GitHub Pages cannot take it. The Apps Script backend is the record.
+- **`/apply/xpress-life/` and `/xpress-life-application/` forward here.** The old branch form asked for a term in years and a smoking answer; Xpress Life has neither (a 20-pay plan covered to about age 100, priced on age, gender and cover). `forms.json` lists it as `elsewhere: /xpresslife/`, the motor pattern; `Quotes.gs` still knows `QX`, and nothing posts to it.
+- **What the product is, from the contract and Guardian's specification:** TT$100K–500K in steps of 100K, ages 18–69, five questions all answered No (one asks whether the person was **ever rated, postponed or declined**, so it is never a product for someone already refused cover), year 1 returns premiums, year 2 pays half, full cover from year 3, premiums for 20 years, surrender only in year 21 for premiums back without interest, covered anywhere in the world at the same premium (clause 11), no third-party policies, TT$500K across all Xpress Life. Never "term", "instant", "pre-approved" or "approved": Guardian reviews every application.
+- **It is one door of the branch, not the offer.** The ad and the page say: no time for a medical, Xpress Life; health issues or more cover, the branch finds another Guardian plan.
+- Guardian's written approval of the page and the ad (Market Conduct Guideline 5.5.3(a)) is still outstanding.
+
 ## The English B essay workshop — it asks, the student writes
 
 `englishb/index.html` (rickyrampersadbranch.com/englishb/) and `apps-script/EssayWorkshop.gs`, **its own Apps Script
