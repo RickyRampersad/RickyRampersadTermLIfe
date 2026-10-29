@@ -91,7 +91,7 @@ const agTasks = [{ id: '00TA1', subject: 'Pending: medical for a new application
 let agOut = null;
 try { agOut = env.agentMorningMail_(AG, DAY, { open: { 'a-darryl': agTasks }, ff: {}, f360: {}, goal: {}, q: {}, orphan: {} }, {}); } catch (e) { agOut = { error: String(e) }; }
 const agHtml = agOut && (agOut.htmlBody || agOut.html || agOut.body || (mails.length && mails[mails.length - 1].htmlBody) || JSON.stringify(agOut)) || '';
-ok('an agent\'s morning: comment links to his page, none to Salesforce', !/sf\.example\/00TA/.test(agHtml) && /f=ag[^"]*#i00TA1/.test(agHtml) && /comment &rarr;/.test(agHtml), String(agHtml).slice(0, 120));
+ok('an agent\'s morning: comment links to his My day (29 Oct 2026), none to Salesforce', !/sf\.example\/00TA/.test(agHtml) && /go=agitems&(amp;)?t=00TA1/.test(agHtml) && /comment &rarr;/.test(agHtml), String(agHtml).slice(0, 120));
 let agPage = '';
 try { agPage = env.agReplyPage_({ agent: AG }, DAY, 'ag').getContent(); } catch (e) { agPage = 'ERR ' + e; }
 ok('an agent\'s page: the history under each task, speak to comment, no Salesforce', /No notes on Chatter yet\.|The whole history|Please call the client today/.test(agPage) && /Type or speak your comment/.test(agPage) && !/sf\.example\/00TA/.test(agPage) && /id="i00TA1"/.test(agPage), agPage.slice(0, 100));
