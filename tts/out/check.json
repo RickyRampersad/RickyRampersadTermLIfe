@@ -1,7 +1,122 @@
 {
- "tts/out/walldriver2b/01.mp3": [
+ "tts/out/rise/01.mp3": [
+  "en",
+  0.993,
+  "This branch took a hit."
+ ],
+ "tts/out/rise/02.mp3": [
+  "en",
+  0.987,
+  "People left. The work didn't."
+ ],
+ "tts/out/rise/03.mp3": [
   "en",
   0.996,
-  "Follow each ribbon to see when it was answered, the same day, the next working day, later, or not yet, and who answered it?"
+  "Nothing here fell over."
+ ],
+ "tts/out/rise/04.mp3": [
+  "en",
+  0.994,
+  "The month that happened, we closed 204 requests. This month, 240."
+ ],
+ "tts/out/rise/05.mp3": [
+  "en",
+  0.998,
+  "So before Friday, look at who's still standing."
+ ],
+ "tts/out/rise/06.mp3": [
+  "en",
+  0.994,
+  "21 agents and managers. Five more behind them."
+ ],
+ "tts/out/rise/07.mp3": [
+  "en",
+  0.986,
+  "Between us, 221 years of this work."
+ ],
+ "tts/out/rise/08.mp3": [
+  "en",
+  0.994,
+  "Nine of us have been at it more than 10 years. Three joined in the last three."
+ ],
+ "tts/out/rise/09.mp3": [
+  "en",
+  0.991,
+  "Put us all on one line and it runs from 1993 to this year."
+ ],
+ "tts/out/rise/10.mp3": [
+  "en",
+  0.994,
+  "And while all of that was happening, we rebuilt how this branch runs."
+ ],
+ "tts/out/rise/11.mp3": [
+  "en",
+  0.992,
+  "18 of the things you use every day went live in the last 90 days."
+ ],
+ "tts/out/rise/12.mp3": [
+  "en",
+  0.987,
+  "One sign in now, 50 tools behind it."
+ ],
+ "tts/out/rise/13.mp3": [
+  "en",
+  0.994,
+  "The system sets your day before you're even up."
+ ],
+ "tts/out/rise/14.mp3": [
+  "en",
+  0.996,
+  "The wall shows the score and everybody sees the same numbers."
+ ],
+ "tts/out/rise/15.mp3": [
+  "en",
+  0.991,
+  "In the last 12 months, this team closed 2,495 requests."
+ ],
+ "tts/out/rise/16.mp3": [
+  "en",
+  0.992,
+  "3,600 papers went through the logbook. Nearly three quarters reached guardian inside, one working day."
+ ],
+ "tts/out/rise/17.mp3": [
+  "en",
+  0.999,
+  "And since the digital fact find went live, not one of those cases has lapsed."
+ ],
+ "tts/out/rise/18.mp3": [
+  "en",
+  0.989,
+  "FY27 is 30 days old, and every goal plan is in."
+ ],
+ "tts/out/rise/19.mp3": [
+  "en",
+  0.994,
+  "The cracks are still there. We didn't hide them. They're part of the shield now."
+ ],
+ "tts/out/rise/20.mp3": [
+  "en",
+  0.995,
+  "We're not going back to what this branch was. We're going somewhere better."
+ ],
+ "tts/out/rise/21.mp3": [
+  "en",
+  0.987,
+  "Friday, 12 noon, 90 minutes."
+ ],
+ "tts/out/rise/22.mp3": [
+  "en",
+  0.986,
+  "75 of those minutes belong to you, not to me."
+ ],
+ "tts/out/rise/23.mp3": [
+  "en",
+  0.993,
+  "Three questions are already waiting for you. Answer one tonight."
+ ],
+ "tts/out/rise/24.mp3": [
+  "en",
+  0.968,
+  "We rise together."
  ]
 }
