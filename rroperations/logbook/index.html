@@ -140,6 +140,8 @@
   .grp > .gh{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.04);flex-wrap:wrap}
   .grp > .gh b{font-size:14px}
   .grp > .gh .sp{flex:1}
+  .grp.tome{border-color:var(--warn,#f0a020);box-shadow:inset 4px 0 0 var(--warn,#f0a020)}
+  .grp .handin{padding-left:12px!important;padding-right:12px!important}
   .ln{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:start;padding:10px 12px;border-top:1px solid var(--line)}
   .ln input[type=checkbox]{width:20px;height:20px;accent-color:var(--gold);margin-top:2px}
   .ln .t{font-size:14px}
@@ -354,7 +356,12 @@
       </div>
 
       <div class="card dim" id="c4">
-        <h2><span class="step">4</span>Confirm</h2>
+        <h2><span class="step">4</span>Hand in and confirm</h2>
+        <div id="handBox">
+          <label for="handSel">Who are you handing the papers to?</label>
+          <select id="handSel"></select>
+          <div class="hint">They sign for them on their phone, and you get an e-mail the moment they do.</div>
+        </div>
         <label for="notes">Notes for the branch (optional)</label>
         <textarea id="notes" maxlength="500" placeholder="e.g. Client will drop the ID tomorrow"></textarea>
         <label class="chk"><input type="checkbox" id="declare"><span id="declareText"></span></label>
@@ -614,14 +621,27 @@
     $('agentPick').hidden = S.cfg.agent;
     $('deptFilter').innerHTML = '<option value="">Any department</option>' + DEPTS.map(function (d) {
       return '<option>' + esc(d.name) + '</option>'; }).join('');
+    $('handSel').innerHTML = handOptions(true);
     fillDocSel();
     resetForm();
+  }
+  /* The people papers can be handed to, and "not yet" when logging ahead. */
+  function handOptions(withLater) {
+    return '<option value="">Choose who…</option>' + (S.cfg.staff || []).map(function (s) {
+      return '<option value="' + esc(s.name) + '">' + esc(s.name) + (s.role && !/^staff$/i.test(s.role) ? ' · ' + esc(s.role) : '') + '</option>';
+    }).join('') + (withLater ? '<option value="' + esc(S.cfg.later) + '">Not yet: I will hand them in later</option>' : '');
+  }
+  function firstName(n) { return String(n || '').trim().split(/\s+/)[0]; }
+  function samePerson(a, b) {
+    var k = function (n) { return String(n || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/[^a-z]+/g, ' ').trim(); };
+    var x = k(a), y = k(b); if (!x || !y) return false; if (x === y) return true;
+    var xs = x.split(' '), ys = y.split(' '); return xs[0] === ys[0] && xs[xs.length - 1] === ys[ys.length - 1];
   }
   function setType(t) {
     S.type = t;
     $('typeSeg').querySelectorAll('[data-type]').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-type') === t ? 'true' : 'false'); });
     var contract = t === S.cfg.types[1];
-    $('docsBox').hidden = contract; $('contractBox').hidden = !contract;
+    $('docsBox').hidden = contract; $('contractBox').hidden = !contract; $('handBox').hidden = contract;
     $('c3Title').textContent = contract ? 'The contract' : 'The documents';
     $('typeHint').textContent = contract
       ? 'A contract you are collecting from the branch to deliver. The 20 days under s.155(6) start today; record the handover in the Delivery Book.'
@@ -808,6 +828,7 @@
       client: S.client ? S.client.name : $('tName').value.trim(), contactId: S.client ? S.client.id : '',
       clientEmail: S.client ? S.client.email : $('tEmail').value.trim(),
       items: items, notes: $('notes').value.trim(), declared: $('declare').checked,
+      handedTo: contract ? '' : $('handSel').value,
     };
   }
   $('logForm').addEventListener('submit', function (e) { e.preventDefault(); submit(false); });
@@ -815,6 +836,7 @@
     showErr($('subErr'), '');
     if (!$('declare').checked) return showErr($('subErr'), 'Tick the declaration first.');
     if (!S.cfg.agent && !$('agentSel').value) return showErr($('subErr'), 'Choose the agent these documents are from (step 1).');
+    if (S.type !== S.cfg.types[1] && !$('handSel').value) return showErr($('subErr'), 'Choose who you are handing the papers to.');
     busy($('submitBtn'), true, 'Logging…');
     api('lb.submit', { entry: entry(), confirmDuplicates: confirmDup, confirmMissing: confirmDup }).then(function (r) {
       if (r.needsConfirm) {
@@ -847,7 +869,10 @@
       '<div class="ref">' + esc(r.ref) + '</div>' +
       '<p class="hint" style="font-size:14px">' + (contract
         ? 'Deliver it to the client by <b>' + esc(r.due) + '</b> and record the handover in the Delivery Book.'
-        : plural(r.lines, 'document') + ' logged. Hand the papers to the branch with this reference.') + '</p>' +
+        : r.handedTo
+          ? plural(r.lines, 'document') + ' logged and handed to <b>' + esc(r.handedTo) + '</b>. ' + esc(firstName(r.handedTo)) +
+            ' signs for them on the phone, and you get an e-mail the moment that is done.'
+          : plural(r.lines, 'document') + ' logged. Hand the papers to the branch with this reference, then choose who you handed them to in My log.') + '</p>' +
       (r.bag ? (function () { S.bag = r.bag; renderBag(); var t = bagText(r.bag, Date.now());
         return '<div class="bagnote' + (t.cls ? ' warn' : '') + '" style="text-align:left"><b>' + esc(t.cls ? t.head : 'Catches today\'s ' + h12(r.bag.at) + ' bag if the papers are in by ' + h12(r.bag.cutoff)) + '</b><br>' +
           esc(t.cls ? t.sub : t.cd + ' left. After ' + h12(r.bag.cutoff) + ' they wait for the next working day\'s bag.') + '</div>'; })() : '') +
@@ -864,6 +889,8 @@
     S.items = []; S.client = null; S.typed = false; S.policies = [];
     $('q').value = ''; $('results').innerHTML = ''; $('picked').hidden = true; $('typed').hidden = true;
     $('tName').value = ''; $('tEmail').value = ''; $('notes').value = ''; $('declare').checked = false;
+    var self = !S.cfg.agent && (S.cfg.staff || []).filter(function (s) { return samePerson(s.name, S.cfg.name); })[0];
+    $('handSel').value = self ? self.name : '';
     $('deptFilter').value = ''; fillDocSel();
     setType(S.cfg.types[0]);
   }
@@ -872,6 +899,7 @@
   function statusTag(l) {
     if (l.status === 'Sent') return '<span class="tag ok">Sent</span>';
     if (l.status === 'Received') return '<span class="tag ' + (l.late ? 'bad' : 'info') + '">' + (l.late ? 'Received · not sent' : 'With the branch') + '</span>';
+    if (l.status === 'Logged' && l.handedTo) return '<span class="tag info">With ' + esc(firstName(l.handedTo)) + ' · to sign</span>';
     if (l.status === 'Logged') return '<span class="tag warn">Logged · hand it in</span>';
     if (l.status === 'Returned') return '<span class="tag bad">Returned</span>';
     if (l.status === 'With agent') return '<span class="tag ' + (l.contractDay >= 20 ? 'bad' : l.contractDay >= 15 ? 'warn' : 'info') + '">Day ' + l.contractDay + ' of 20</span>';
@@ -881,7 +909,8 @@
   function stampsOf(l) {
     var s = [];
     if (l.loggedAt) s.push('Logged <b>' + esc(fmt(l.loggedAt, true)) + '</b>');
-    if (l.receivedAt) s.push('Received <b>' + esc(fmt(l.receivedAt, true)) + '</b> by ' + esc(l.receivedBy));
+    if (l.handedAt && l.handedTo) s.push('Handed to ' + esc(l.handedTo) + ' <b>' + esc(fmt(l.handedAt, true)) + '</b>');
+    if (l.receivedAt) s.push('Signed for <b>' + esc(fmt(l.receivedAt, true)) + '</b> by ' + esc(l.receivedBy));
     if (l.sentAt) s.push('Sent <b>' + esc(fmt(l.sentAt, true)) + '</b> · ' + esc(l.transmittal));
     if (l.returnedAt) s.push('Returned <b>' + esc(fmt(l.returnedAt)) + '</b>: ' + esc(l.returnReason));
     if (l.deliveredAt) s.push('Delivered <b>' + esc(fmt(l.deliveredAt)) + '</b>');
@@ -904,15 +933,27 @@
         var canWithdraw = ls.every(function (l) { return l.status === 'Logged' || l.status === 'With agent'; });
         var other = S.cfg.lead && a.agentNo && a.agentNo !== me;
         if (other) canWithdraw = false;
+        var canHand = !other && ls.some(function (l) { return l.status === 'Logged' && !l.handedTo; });
         return '<div class="grp"><div class="gh"><b>' + esc(a.client) + '</b><span class="tag mute">' + esc(a.ref) + '</span>' +
           (other ? '<span class="tag">' + esc(a.agent || a.agentNo) + '</span>' : '') + '<span class="sp"></span>' +
           (canWithdraw ? '<button class="btn ghost sm" data-wd="' + esc(a.ref) + '">Withdraw</button>' : '') + '</div>' +
+          (canHand ? '<div class="handin" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0 4px">' +
+            '<select data-handsel="' + esc(a.ref) + '" style="flex:1;min-width:180px" aria-label="Who you handed them to">' + handOptions(false) + '</select>' +
+            '<button class="btn gold sm" data-hand="' + esc(a.ref) + '">Handed in</button></div>' : '') +
           ls.map(function (l) {
             return '<div class="ln" style="grid-template-columns:1fr auto"><div class="t">' + esc(l.document) + (l.quantity > 1 ? ' × ' + l.quantity : '') +
               '<small>' + esc(l.policy || 'no policy') + ' · ' + esc(l.type === S.cfg.types[1] ? 'to deliver to the client' : l.department) + '</small>' + stampsOf(l) + '</div>' +
               '<div style="text-align:right">' + statusTag(l) + (l.bag ? '<br>' + bagTag(l) : '') + '</div></div>';
           }).join('') + '</div>';
       }).join('') : '<div class="empty">Nothing logged in this period.</div>';
+      $('mine').querySelectorAll('[data-hand]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var ref = b.getAttribute('data-hand'), sel = $('mine').querySelector('[data-handsel="' + ref + '"]');
+          if (!sel || !sel.value) return alert('Choose who you handed the papers to.');
+          busy(b, true, 'Saving…');
+          api('lb.handto', { ref: ref, handedTo: sel.value }).then(loadMine).catch(function (e) { alert(e.message); busy(b, false); });
+        });
+      });
       $('mine').querySelectorAll('[data-wd]').forEach(function (b) {
         b.addEventListener('click', function () {
           if (!confirm('Withdraw ' + b.getAttribute('data-wd') + '?')) return;
@@ -948,8 +989,9 @@
     var sentToday = L.filter(function (l) { return l.status === 'Sent'; });
     if (q.bag) { S.bag = q.bag; renderBag(); }
     var forBag = recv.filter(function (l) { return l.bag && l.bag.state === 'for' && q.bag && l.bag.bagDay <= q.bag.today; });
+    var toMeN = logged.filter(function (l) { return l.handedTo && samePerson(l.handedTo, S.cfg.name); }).length;
     $('qTiles').innerHTML =
-      tile('To receive', logged.length, logged.length ? 'warn' : '', 'qRecv') +
+      (toMeN ? tile('Handed to you', toMeN, 'warn', 'qRecv') : tile('To receive', logged.length, logged.length ? 'warn' : '', 'qRecv')) +
       tile('For today\'s bag', forBag.length, forBag.length ? 'warn' : 'ok', 'qSend') +
       tile('Late, no reason', late.filter(function (l) { return !l.reasonFresh; }).length, late.length ? 'bad' : 'ok', 'qLate') +
       tile('Sent today', sentToday.length, 'ok', 'qToday');
@@ -995,13 +1037,17 @@
     });
 
     // to receive
-    var refs = groupByRef(logged);
+    var mine = function (ls) { return ls[0].handedTo && samePerson(ls[0].handedTo, S.cfg.name); };
+    var refs = groupByRef(logged).sort(function (x, y) { return (mine(y) ? 2 : y[0].handedTo ? 1 : 0) - (mine(x) ? 2 : x[0].handedTo ? 1 : 0); });
     $('qRecv').innerHTML = refs.length ? refs.map(function (ls) {
-      var a = ls[0];
-      return '<div class="grp" data-ref="' + esc(a.ref) + '"><div class="gh"><input type="checkbox" checked data-all aria-label="All"><b>' + esc(a.client) + '</b>' +
+      var a = ls[0], toMe = mine(ls);
+      return '<div class="grp' + (toMe ? ' tome' : '') + '" data-ref="' + esc(a.ref) + '"><div class="gh"><input type="checkbox" checked data-all aria-label="All"><b>' + esc(a.client) + '</b>' +
         '<span class="tag mute">' + esc(a.agent) + '</span><span class="tag mute">' + esc(a.ref) + '</span>' +
-        (a.daysWaiting > 0 ? '<span class="tag warn">logged ' + plural(a.daysWaiting, 'working day') + ' ago</span>' : '') +
-        '<span class="sp"></span><button class="btn ghost sm" data-ret>Return</button><button class="btn gold sm" data-recv>Receive &amp; sign</button></div>' +
+        (toMe ? '<span class="tag warn">Handed to you' + (a.hoursHanded ? ' · ' + plural(a.hoursHanded, 'hour') + ' ago' : '') + '</span>'
+              : a.handedTo ? '<span class="tag info">Handed to ' + esc(firstName(a.handedTo)) + '</span>' : '') +
+        (!a.handedTo && a.daysWaiting > 0 ? '<span class="tag warn">logged ' + plural(a.daysWaiting, 'working day') + ' ago</span>' : '') +
+        '<span class="sp"></span>' + (toMe ? '<button class="btn ghost sm" data-nwm>Not with me</button>' : '') +
+        '<button class="btn ghost sm" data-ret>Return</button><button class="btn gold sm" data-recv>' + (toMe ? 'Accept &amp; sign' : 'Receive &amp; sign') + '</button></div>' +
         ls.map(function (l) {
           return '<div class="ln"><input type="checkbox" checked data-id="' + esc(l.id) + '"><div class="t"><b>' + esc(l.document) + '</b>' +
             (l.quantity > 1 ? ' × ' + l.quantity : '') + (l.itemNote ? ' (' + esc(l.itemNote) + ')' : '') +
@@ -1025,6 +1071,12 @@
       g.querySelector('[data-ret]').addEventListener('click', function () {
         var ids = chosen(); if (!ids.length) return alert('Tick what is going back.');
         returnLines(ids);
+      });
+      var nwm = g.querySelector('[data-nwm]');
+      if (nwm) nwm.addEventListener('click', function () {
+        var ids = chosen(); if (!ids.length) return alert('Tick the lines that are not with you.');
+        if (!confirm('These papers are not with you? The agent is told and asked who has them.')) return;
+        api('lb.notwithme', { ids: ids }).then(loadQueue).catch(function (e) { alert(e.message); });
       });
     });
 
@@ -1056,8 +1108,8 @@
   /* receive: the signature */
   var pad = null;
   function receive(ids, deps) {
-    modal('<h3>Receive ' + plural(ids.length, 'document line') + '</h3>' +
-      '<p class="hint">You have the papers in hand and they match the lines. This stamps the date collected.</p>' +
+    modal('<h3>Sign for ' + plural(ids.length, 'document line') + '</h3>' +
+      '<p class="hint">You have the papers in hand and they match the lines. This stamps the date collected, and the agent is e-mailed that you signed.</p>' +
       (Object.keys(deps).length ? '<p class="hint">' + plural(Object.keys(deps).length, 'department') + ' corrected.</p>' : '') +
       '<label>Your signature</label><div class="sig"><canvas id="sigC"></canvas><button type="button" class="x" id="sigX">Clear</button><div class="ph" id="sigPh">Sign here</div></div>' +
       '<label for="rNote">Note (optional)</label><input id="rNote" type="text" maxlength="300">' +
