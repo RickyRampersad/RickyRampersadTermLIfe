@@ -1,7 +1,197 @@
 {
- "tts/out/riseff/01.mp3": [
+ "tts/out/rise/01.mp3": [
+  "en",
+  0.991,
+  "This branch took a hit."
+ ],
+ "tts/out/rise/02.mp3": [
+  "en",
+  0.992,
+  "People left. The work didn't."
+ ],
+ "tts/out/rise/03.mp3": [
+  "en",
+  0.995,
+  "Nothing here fell over."
+ ],
+ "tts/out/rise/04.mp3": [
+  "en",
+  0.996,
+  "The month that happened, we closed 204 requests. This month, 240."
+ ],
+ "tts/out/rise/05.mp3": [
   "en",
   0.998,
-  "144 fact finds this year. 63 have already been through a manager and one in five came back for more work. Nothing reaches a client until a manager has signed it off."
+  "So before Friday, look at who's still standing."
+ ],
+ "tts/out/rise/06.mp3": [
+  "en",
+  0.997,
+  "21 agents and managers. Five more behind them."
+ ],
+ "tts/out/rise/07.mp3": [
+  "en",
+  0.981,
+  "Between us, 221 years of this work."
+ ],
+ "tts/out/rise/08.mp3": [
+  "en",
+  0.989,
+  "Put us all on one line, and it runs from 1993 to this year."
+ ],
+ "tts/out/rise/09.mp3": [
+  "en",
+  0.998,
+  "And here's something most of you were never told, when this company launched its first digital application with a digital signature on it, this branch led the team that built it."
+ ],
+ "tts/out/rise/10.mp3": [
+  "en",
+  0.997,
+  "So we didn't go digital this year. Our first digital submission was filed in 2011. 15 years of running our own forms."
+ ],
+ "tts/out/rise/11.mp3": [
+  "en",
+  0.998,
+  "What changed this year is the tools. We don't do AI for the sake of it. We use it to make what we already had far more robust."
+ ],
+ "tts/out/rise/12.mp3": [
+  "en",
+  0.994,
+  "Start with the fact find. On the 1st of August we put live again. Rebuild from the ground up."
+ ],
+ "tts/out/rise/13.mp3": [
+  "en",
+  0.999,
+  "and we fix the order. You meet your client, you send the draft, your client approves it first, only then does it reach a manager."
+ ],
+ "tts/out/rise/14.mp3": [
+  "en",
+  0.994,
+  "144 fact finds this year. 63 have already been through a manager, and 1 in 5 came back for more work."
+ ],
+ "tts/out/rise/15.mp3": [
+  "en",
+  0.998,
+  "And since the digital fact find went live, not one of those cases has lapsed."
+ ],
+ "tts/out/rise/16.mp3": [
+  "en",
+  0.996,
+  "The training is still running every week. Agents who started this on paper are turning out full recommendations now."
+ ],
+ "tts/out/rise/17.mp3": [
+  "en",
+  0.999,
+  "And here's the part nobody talks about. All of this protects you. Market conduct, clause by clause, and our fact-find answers everyone."
+ ],
+ "tts/out/rise/18.mp3": [
+  "en",
+  0.999,
+  "Fraud is rising across this industry. A proper fact fine catches it early. And when people push back, the surveys told us exactly why."
+ ],
+ "tts/out/rise/19.mp3": [
+  "en",
+  0.995,
+  "We don't treat a client as a transaction. We build a journey onboarding the birthday, a premium do, a requirement, a review every six months."
+ ],
+ "tts/out/rise/20.mp3": [
+  "en",
+  0.997,
+  "and this branch took something on by itself that most of you never heard about. Nearly 3,000 letters in reminders. 349 files opened."
+ ],
+ "tts/out/rise/21.mp3": [
+  "en",
+  0.999,
+  "You are equipped. Querypal answers a client any hour of the day. Your client's sign in themselves. Every tool behind one sign in."
+ ],
+ "tts/out/rise/22.mp3": [
+  "en",
+  0.995,
+  "Every screen you're about to see is real. This is what the branch runs on today."
+ ],
+ "tts/out/rise/23.mp3": [
+  "en",
+  0.994,
+  "The system sets your day before you're even up."
+ ],
+ "tts/out/rise/24.mp3": [
+  "en",
+  0.997,
+  "The paper moved to. We scrapped the old form and built the transmittal ourselves. 3,600 papers and three quarters reached guardian inside a working day."
+ ],
+ "tts/out/rise/25.mp3": [
+  "en",
+  0.993,
+  "In the last 12 months, this team closed 2495 requests."
+ ],
+ "tts/out/rise/26.mp3": [
+  "en",
+  0.991,
+  "production, goals, pinnings, the transmittal, all of it runs live on the walls in this branch all day long."
+ ],
+ "tts/out/rise/27.mp3": [
+  "en",
+  0.997,
+  "And it's on the wall outside, where everybody walks past. What's done? What's late? And whose name is on it?"
+ ],
+ "tts/out/rise/28.mp3": [
+  "en",
+  0.997,
+  "We have the lowest lapse rate of any branch in this company, ours is 4.96%, the main branch is average 8.82."
+ ],
+ "tts/out/rise/29.mp3": [
+  "en",
+  0.995,
+  "67% of our agents are still here after year. The published average is between 55 and 60."
+ ],
+ "tts/out/rise/30.mp3": [
+  "en",
+  0.999,
+  "I've been in this business 35 years. The only way you guide people and still scale is to put what you know and is something that helps everybody. That's the commitment Akash and I'm made to you."
+ ],
+ "tts/out/rise/31.mp3": [
+  "en",
+  0.998,
+  "And there is a way up from here. Agent, executive agent, trainee manager, unit manager, this branch grows its own."
+ ],
+ "tts/out/rise/32.mp3": [
+  "en",
+  0.995,
+  "The three-year plan runs to September 2029. Rebuild the bench, grow the units, 40 agents."
+ ],
+ "tts/out/rise/33.mp3": [
+  "en",
+  0.995,
+  "The cracks are still there. We didn't hide them. They're part of the shield now."
+ ],
+ "tts/out/rise/34.mp3": [
+  "en",
+  0.993,
+  "We're not going back to what this branch was. We're going somewhere better."
+ ],
+ "tts/out/rise/35.mp3": [
+  "en",
+  0.994,
+  "Friday, 12 noon, 90 minutes."
+ ],
+ "tts/out/rise/36.mp3": [
+  "en",
+  0.987,
+  "75 of those minutes belong to you, not to me."
+ ],
+ "tts/out/rise/37.mp3": [
+  "en",
+  0.996,
+  "Three questions are already waiting for you. Answer one tonight."
+ ],
+ "tts/out/rise/38.mp3": [
+  "en",
+  0.999,
+  "Sign in on Friday with your agent number. Signing in is the register. Guest use the visitor code, 0, 0, 0, 0."
+ ],
+ "tts/out/rise/39.mp3": [
+  "en",
+  0.975,
+  "We rise together."
  ]
 }
