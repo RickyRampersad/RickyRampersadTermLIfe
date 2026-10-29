@@ -5423,6 +5423,22 @@ section links it.
     falls under the real length.
   - **The scene shooter** (`scenes.js` in the scratchpad) now clears every other scene: with a subset of scenes it had
     left the previous shot's scene behind the next, which looked like a layout fault and was not one.
+- **Our own fact find, by the numbers (29 October 2026, late).** "the fact find you need to calculate !!! this is big for us as
+  its built by us factfind360 … boast as bigger sales and collaboration etc and compliant, did ask to show the screens and
+  compact and maximum motion and charts for effectiveness". The figures are **factfind360's own**, never typed: the public
+  `action=pulse` feed (weekly counts and sums since 1 July 2026, no client) and the wall feed read on 29 October 2026:
+  141 fact finds, TT$183m of need found, TT$342m of cover recommended, TT$3.4m API recommended, 20/53/33/34 a month,
+  63 plans reviewed by the two managers (50 approved, 13 sent back, median 2.2 and 3 days), October 40 applications from 29
+  clients (18 critical illness, 7 whole life). `FFN` in `build-recruitfilm.py` holds them for **film scene 17** (`blk_ffnum`:
+  four counters, the months as bars, the review as a ring, October's products, the advisor → manager → client → branch
+  team rail to "one file", the Bigger sales and Compliant badges, three screens; scenes 17..32 became 18..33, the hit
+  list and the clock's tick scene moved with them), and the page's `#factfind` section carries the same charts, animated
+  on `.ffnw.in`, with the four figures and the months **refreshed from the pulse feed** when it answers (the true figures
+  ship in the markup, as every counter does). The review and October figures are dated on screen. Re-read the feed and
+  change `FFN` and the voice line together when the film is re-cut; the two must agree. The counters now keep a decimal
+  (`data-dec`) in the film, `render.js`, the scene shooter and the page. The hero band's stale "5 seats" became seven
+  places. The lapse line keeps Ricky's "since launch" with no month: the pulse says the branch went live on 1 July, his
+  word was August.
 - **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and
   rendered frame by frame: a wine band on every cut (the streak), a slow push-in on every scene for its whole
   length (`--kb`, written by `scene()`), the cards floating and catching a passing light (`.fl`: overflow hidden,

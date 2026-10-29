@@ -21,8 +21,9 @@ def entries(key, tfile, vox, out, hitlist, dark, shapes=('l', 'v'), ticks=()):
                     sfx=f'sfx-{k}.wav', ass=f'captions-{k}.ass', w=w, h=h, capsize=cs, capwrap=cw)
     print(f'films.json: {key} {t["dur"]} s · hits {hits}')
 entries('recruit', 'recruit-timing.json', 'vorecruit', 'recruit',
-        [(2, 'seven'), (2, 'Thirty'), (5, 'call'), (7, 'evidence'), (12, 'board'), (16, 'dollars'), (18, 'twenty'),
-         (11, 'hundred'), (11, 'pays'), (23, 'written'), (25, 'ten'), (25, 'Happy'), (14, 'GO', 1), (30, 'open'), (30, 'Twenty')], [3, 32], ticks=((21, 6, 0.5),))
+        [(2, 'seven'), (2, 'Thirty'), (5, 'call'), (7, 'evidence'), (12, 'board'), (16, 'dollars'), (19, 'twenty'),
+         (11, 'hundred'), (11, 'pays'), (17, 'forty'), (17, 'eighty'), (17, 'forty', 1), (17, 'applications'), (17, 'Bigger'), (17, 'Insurance'),
+         (24, 'written'), (26, 'ten'), (26, 'Happy'), (14, 'GO', 1), (31, 'open'), (31, 'Twenty')], [3, 33], ticks=((22, 6, 0.5),))
 if os.path.exists('recruit-trailer-timing.json'):
     entries('trailer', 'recruit-trailer-timing.json', 'votrailer', 'trailer',
             [(2, 'income'), (3, 'zero'), (4, 'coach'), (5, 'Seven'), (5, 'Thirty'), (5, 'Seven', 1), (6, 'open'), (6, 'Twenty')], [8], ticks=((4, 5, 0.5),))

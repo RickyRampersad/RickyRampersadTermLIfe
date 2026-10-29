@@ -53,7 +53,7 @@ const fs = require('fs'), path = require('path'), { execFileSync } = require('ch
       });
       sc.querySelectorAll('.cnt').forEach(el => {
         const at = +(el.dataset.at || 0), to = +el.dataset.to, k = Math.max(0, Math.min(1, (t - at) / 1000));
-        el.textContent = (el.dataset.pre || '') + Math.round(to * (1 - Math.pow(1 - k, 3))) + (el.dataset.suf || '');
+        el.textContent = (el.dataset.pre || '') + (to * (1 - Math.pow(1 - k, 3))).toFixed(+(el.dataset.dec || 0)) + (el.dataset.suf || '');
       });
     }, { n, t, T, D });
     await p.screenshot({ path: path.join(dir, String(f).padStart(6, '0') + '.jpg'), type: 'jpeg', quality: 93 });

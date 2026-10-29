@@ -812,6 +812,59 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 .cchip .ic{color:var(--aL)}.cchip b{font:700 var(--f-0)/1.25 var(--display);color:#fff}
 .csample{margin:0;font-size:var(--f--2);color:var(--dT3)}
 @media (max-width:48rem){.cstage{grid-template-columns:1fr;gap:var(--sp-l)}.cs-row{grid-template-columns:1fr}.clockcard .clk{width:min(13rem,60%)}}
+/* ═══ OUR OWN FACT FIND, BY THE NUMBERS (29 October 2026). Finished states are the defaults. ═══ */
+.ffnw{display:grid;gap:var(--sp-l)}
+.fnk{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:var(--sp-m)}
+.fk{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-m) var(--sp-l);box-shadow:var(--e1);display:grid;gap:.3rem;align-content:center;min-width:0}
+.fk b{font:800 var(--f-3)/1 var(--display);color:var(--ink);letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fk b em{font-style:italic;color:var(--aD)}
+.fk span{font-size:var(--f--1);color:var(--muted);line-height:1.35}
+.fng{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:var(--sp-m)}
+.fnc{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-m) var(--sp-l) var(--sp-l);box-shadow:var(--e1);display:grid;grid-template-rows:auto 1fr;gap:var(--sp-s);min-width:0}
+.fnc small{font:600 var(--f--2)/1.3 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aD)}
+.fnbars{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;align-items:end;height:11rem;padding-top:2.4rem}
+.fnb{position:relative;display:grid;grid-template-rows:1fr auto;height:100%;align-items:end;gap:.45rem;text-align:center}
+.fnb i{display:block;height:var(--h);border-radius:.5rem .5rem 0 0;background:linear-gradient(180deg,var(--a),var(--aD));transform-origin:50% 100%;align-self:end}
+.fnb em{position:absolute;left:0;right:0;bottom:calc(var(--h) + 1.9rem);font:800 var(--f-0)/1 var(--display);font-style:normal;color:var(--ink)}
+.fnb span{font:600 var(--f--2)/1 var(--text);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.fnr{position:relative;width:min(9.5rem,60%);aspect-ratio:1;justify-self:center}
+.fnr svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.fnr .bg{fill:none;stroke:var(--bg2);stroke-width:9}
+.fnr .fg{fill:none;stroke:var(--a);stroke-width:9;stroke-linecap:round;stroke-dasharray:var(--c);stroke-dashoffset:calc(var(--c) * (1 - var(--p) / 100))}
+.fnr-c{position:absolute;inset:0;display:grid;place-content:center;text-align:center;gap:.1rem}
+.fnr-c b{font:800 var(--f-2)/1 var(--display);color:var(--ink)}
+.fnr-c span{font:600 var(--f--2)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.fnl{list-style:none;margin:var(--sp-xs) 0 0;padding:0;display:grid;gap:.45rem}
+.fnl li{display:flex;align-items:center;gap:.55em;font-size:var(--f--1);color:var(--body)}
+.fnl li b{color:var(--ink)}
+.fnl i{flex:none;width:.7rem;height:.7rem;border-radius:50%;background:var(--a)}.fnl i.rt{background:var(--line-strong)}
+.fnl .days{color:var(--aD)}.fnl .days .ic{flex:none;width:1.2rem;height:1.2rem;color:var(--a)}
+.fno{display:grid;grid-template-columns:auto 1fr auto 1fr;align-items:baseline;gap:0 .5em;margin:.2rem 0 var(--sp-s)}
+.fno b{font:800 var(--f-3)/1 var(--display);color:var(--aD)}.fno b+span+b{margin-left:.4em}
+.fno span{font:600 var(--f--2)/1.1 var(--text);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.fnprods{display:grid;gap:.5rem}
+.fnp{display:grid;grid-template-columns:minmax(7.5rem,auto) 1fr auto;align-items:center;gap:.6em;font-size:var(--f--1);color:var(--body)}
+.fnp i{display:block;height:.6rem;width:var(--w);border-radius:999px;background:linear-gradient(90deg,var(--aD),var(--a));transform-origin:0 50%}
+.fnp b{color:var(--ink);font-variant-numeric:tabular-nums}
+.fnf{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:var(--sp-l);align-items:center}
+.fnrail{position:relative;list-style:none;margin:0;padding:.6rem 0 0;display:grid;grid-template-columns:repeat(4,1fr) auto;gap:.4rem;align-items:start}
+.fnrail::before{content:'';position:absolute;left:6%;right:24%;top:calc(.6rem + .65rem);height:2px;background:var(--line-strong)}
+.fnrail::after{content:'';position:absolute;left:6%;top:calc(.6rem + .65rem - .4rem);width:.8rem;height:.8rem;border-radius:50%;background:var(--a);box-shadow:0 0 0 .3rem rgba(0,114,141,.18);opacity:0}
+.fnrail li{display:grid;justify-items:center;gap:.5rem;text-align:center}
+.fnrail li i{position:relative;z-index:1;width:1.3rem;height:1.3rem;border-radius:50%;background:var(--a);border:2px solid var(--card);box-shadow:0 0 0 2px var(--a)}
+.fnrail li b{font:700 var(--f--2)/1.15 var(--text);letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.fnrail .one{align-self:center;padding-top:0}
+.fnrail .one b{font:800 var(--f-0)/1 var(--display);text-transform:none;letter-spacing:0;color:var(--aD);background:var(--card);border:1px solid var(--a);border-radius:999px;padding:.4em .8em}
+.fnbadges{display:grid;gap:var(--sp-s)}
+.fnbadge{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:.15rem .8rem;margin:0;padding:var(--sp-s) var(--sp-m);border-radius:var(--r-s);background:var(--card);border:1px solid var(--line);box-shadow:var(--e1)}
+.fnbadge b{font:800 var(--f-1)/1.1 var(--display);color:var(--ink)}
+.fnbadge span{grid-column:1/-1;font-size:var(--f--1);color:var(--muted);line-height:1.4}
+.fnbadge.big{background:linear-gradient(135deg,var(--a),var(--aD));border-color:transparent}.fnbadge.big b,.fnbadge.big span{color:#fff}.fnbadge.big span{opacity:.92}
+.fnbadge.law .ic{width:1.6rem;height:1.6rem;color:var(--a)}.fnbadge.law span{grid-column:2}
+.fnnote{margin:0;font-size:var(--f--2);color:var(--muted);max-width:70ch}
+.fnnote.live{color:var(--aD)}
+@media (max-width:48rem){.fnf{grid-template-columns:1fr}.fnbars{height:9rem}.fnrail li b{font-size:.68rem}}
+
 .ctlw{margin-bottom:var(--sp-xl)}
 .ctlw .ctl{width:100%;height:auto;display:block;overflow:visible}
 .ctlw .ctl-v{display:none}
@@ -827,6 +880,30 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 .ctl .rider{fill:var(--a);opacity:0;offset-distance:100%;offset-rotate:0deg}
 @media (max-width:48rem){.ctlw .ctl-l{display:none}.ctlw .ctl-v{display:block}.ctl .nm{font-size:17px}.ctl .dt{font-size:13px}.ctl .rd{font-size:22px}}
 @media (prefers-reduced-motion:no-preference){
+
+  /* our own fact find, by the numbers: the bars grow, the ring draws, the product bars run, the rail lights in turn */
+  .ffnw .fnb i{transform:scaleY(0)}.ffnw .fnb em{opacity:0}
+  .ffnw.in .fnb i{animation:fnb .9s var(--ease-out) both;animation-delay:calc(var(--i)*140ms + .2s)}
+  .ffnw.in .fnb em{animation:up .5s var(--ease-out) both;animation-delay:calc(var(--i)*140ms + .8s)}
+  @keyframes fnb{to{transform:scaleY(1)}}
+  .ffnw .fnr .fg{stroke-dashoffset:var(--c)}
+  .ffnw.in .fnr .fg{animation:fnr 1.4s var(--ease-out) .3s both}
+  @keyframes fnr{to{stroke-dashoffset:calc(var(--c) * (1 - var(--p) / 100))}}
+  .ffnw .fnp i{transform:scaleX(0)}.ffnw .fnp b{opacity:0}
+  .ffnw.in .fnp i{animation:fnp .8s var(--ease-out) both;animation-delay:calc(var(--i)*120ms + .4s)}
+  .ffnw.in .fnp b{animation:up .4s var(--ease-out) both;animation-delay:calc(var(--i)*120ms + .9s)}
+  @keyframes fnp{to{transform:scaleX(1)}}
+  .ffnw .fnrail li{opacity:.4}.ffnw .fnrail .one{opacity:0}
+  .ffnw.in .fnrail li{animation:fnlit .5s var(--ease-out) both;animation-delay:calc(var(--i)*.45s + .3s)}
+  .ffnw.in .fnrail .one{animation:fnpop .6s cubic-bezier(.2,1.3,.4,1) 2.2s both}
+  @keyframes fnpop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+  @keyframes fnlit{to{opacity:1}}
+  .ffnw.in .fnrail::after{animation:fnride 1.8s linear .3s both}
+  @keyframes fnride{from{opacity:1;left:6%}to{opacity:1;left:72%}}
+  .ffnw .fk,.ffnw .fnc,.ffnw .fnbadge{opacity:0;translate:0 1rem}
+  .ffnw.in .fk,.ffnw.in .fnc,.ffnw.in .fnbadge{animation:fnup .7s var(--ease-out) both;animation-delay:calc(var(--i,0)*110ms)}
+  @keyframes fnup{to{opacity:1;translate:0 0}}
+  .ffnw.in .fnbadge{animation-delay:calc(var(--i,0)*110ms + 1.2s)}
   /* the screens: the phone pans while a pane is live */
   .scp.live .dev.ph img{animation:scpan 9s linear forwards .8s}
   @keyframes scpan{to{object-position:50% 100%}}
@@ -1021,7 +1098,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   <div class="wrap band-grid">
     <div><b data-to="32">32</b><span>Years serving Trinidad</span></div>
     <div><b data-to="20" data-suffix="min">20min</b><span>The confidential conversation</span></div>
-    <div><b data-to="5">5</b><span>Seats this intake</span></div>
+    <div><b data-to="7">7</b><span>Places in FY27's first class</span></div>
     <div><b data-to="48" data-suffix="h">48h</b><span>Max wait for review</span></div>
   </div>
 </div>
@@ -1041,12 +1118,12 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       </video>
       <div class="vcover" style="background-image:url(trailer.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#0d3f5e" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch · 1:27</div></div>
     </div>
-    <p class="small film-note rv">The whole journey, 7 minutes 34 seconds, with a chapter for every stop.</p>
+    <p class="small film-note rv">The whole journey, 8 minutes 49 seconds, with a chapter for every stop.</p>
     <div class="vwrap rv">
-      <video playsinline preload="none" poster="recruit.jpg" data-scenes="8.9,21.3,6.0,10.9,22.8,17.6,17.8,15.1,20.2,12.1,18.2,12.9,10.2,12.0,13.6,18.3,15.0,16.3,12.5,29.1,14.4,15.8,21.7,19.5,31.6,17.3,12.6,12.3,6.2,15.3,10.2,4.3" data-chapters="A question|Seven places|Digital, human|The part nobody tells you|From the day you apply|Before you start|The science|The selection|Selected|Afraid you'd start from zero?|Two more things|Leads|The Lead Desk|FY27 Flight Plan|Every morning|factfind360|Query Pal|The wall, 24/7|Branch Intelligence|The screens|The human part|Every week|Wednesday · 9:00|Recognition|After the sale|Every month|The career path|The income|Already contracted somewhere else?|One conversation|Start here|The environment decides">
+      <video playsinline preload="none" poster="recruit.jpg" data-scenes="8.9,21.3,6.0,10.9,22.8,17.6,17.8,15.1,20.2,12.1,18.2,12.9,10.2,12.0,13.6,18.3,37.3,15.0,16.3,12.5,29.1,14.4,15.8,21.7,19.5,31.6,17.3,12.6,12.3,6.2,15.3,10.2,4.3" data-chapters="A question|Seven places|Digital, human|The part nobody tells you|From the day you apply|Before you start|The science|The selection|Selected|Afraid you'd start from zero?|Two more things|Leads|The Lead Desk|FY27 Flight Plan|Every morning|factfind360|By the numbers|Query Pal|The wall, 24/7|Branch Intelligence|The screens|The human part|Every week|Wednesday · 9:00|Recognition|After the sale|Every month|The career path|The income|Already contracted somewhere else?|One conversation|Start here|The environment decides">
         <source src="recruit.mp4" type="video/mp4">
       </video>
-      <div class="vcover" style="background-image:url(recruit.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#0d3f5e" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch the full film · 7:34</div></div>
+      <div class="vcover" style="background-image:url(recruit.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#0d3f5e" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch the full film · 8:49</div></div>
     </div>
   </div>
 </section>
@@ -1183,6 +1260,44 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
     <div class="scrg rv">
       <div class="scrl" role="tablist" aria-label="The screens"><button class="sct" type="button" role="tab" id="sct-ff" aria-controls="scp-ff" aria-selected="true" data-k="ff"><b>factfind360 · the client's draft</b><small>The arithmetic while you talk. The client gets a draft to approve, on their phone.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-sign" aria-controls="scp-sign" aria-selected="false" data-k="sign"><b>factfind360 · your manager's sign-off</b><small>Every plan is read by a manager before it goes anywhere.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-rate" aria-controls="scp-rate" aria-selected="false" data-k="rate"><b>The client approves, and rates you</b><small>Signed on their phone, with five stars for you. Not one case has lapsed since launch.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-ask" aria-controls="scp-ask" aria-selected="false" data-k="ask"><b>Fact Find Insights · the reminders</b><small>Started and never sent, or never closed: the system asks every morning until it is.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-log" aria-controls="scp-log" aria-selected="false" data-k="log"><b>The Log Book, in your hand</b><small>Your papers logged in a minute, routed to the right department, on the 12 noon bag.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-tx" aria-controls="scp-tx" aria-selected="false" data-k="tx"><b>The transmittal it builds</b><small>Built for the staff, printed, signed for by the department, confirmed three working days on.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-app" aria-controls="scp-app" aria-selected="false" data-k="app"><b>The branch app</b><small>Every tool behind one sign-in, and your day already set when you open it.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-wall" aria-controls="scp-wall" aria-selected="false" data-k="wall"><b>The production wall · 24/7</b><small>Your week, your month, your year, picked up for production: on the screen in the branch and on your phone.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-db" aria-controls="scp-db" aria-selected="false" data-k="db"><b>The Delivery Book</b><small>Delivered and signed for; the client e-mailed the same day, with five stars to rate the delivery.</small><i class="scbar"></i></button></div>
       <div class="scrs"><div class="scp" role="tabpanel" id="scp-ff" aria-labelledby="sct-ff" data-k="ff"><div class="dev ph"><img src="/wall/img/ff/01-client-draft.jpg" alt="factfind360 · the client's draft: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>factfind360 · the client's draft</b><span>The arithmetic while you talk. The client gets a draft to approve, on their phone.</span></p></div><div class="scp" role="tabpanel" id="scp-sign" aria-labelledby="sct-sign" data-k="sign" hidden><div class="dev ph"><img src="/wall/img/ff/02-manager-signoff.jpg" alt="factfind360 · your manager's sign-off: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>factfind360 · your manager's sign-off</b><span>Every plan is read by a manager before it goes anywhere.</span></p></div><div class="scp" role="tabpanel" id="scp-rate" aria-labelledby="sct-rate" data-k="rate" hidden><div class="dev ph"><img src="/wall/img/ff/05-client-sign-and-rate.jpg" alt="The client approves, and rates you: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The client approves, and rates you</b><span>Signed on their phone, with five stars for you. Not one case has lapsed since launch.</span></p></div><div class="scp" role="tabpanel" id="scp-ask" aria-labelledby="sct-ask" data-k="ask" hidden><div class="dev ph"><img src="/wall/img/ff/06-did-this-close.jpg" alt="Fact Find Insights · the reminders: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>Fact Find Insights · the reminders</b><span>Started and never sent, or never closed: the system asks every morning until it is.</span></p></div><div class="scp" role="tabpanel" id="scp-log" aria-labelledby="sct-log" data-k="log" hidden><div class="dev ph"><img src="/wall/img/lb/logged-ph.jpg" alt="The Log Book, in your hand: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The Log Book, in your hand</b><span>Your papers logged in a minute, routed to the right department, on the 12 noon bag.</span></p></div><div class="scp" role="tabpanel" id="scp-tx" aria-labelledby="sct-tx" data-k="tx" hidden><div class="dev lap"><img src="/wall/img/lb/transmittal-lap.jpg" alt="The transmittal it builds: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The transmittal it builds</b><span>Built for the staff, printed, signed for by the department, confirmed three working days on.</span></p></div><div class="scp" role="tabpanel" id="scp-app" aria-labelledby="sct-app" data-k="app" hidden><div class="dev ph"><img src="/wall/img/app/home-ph.jpg" alt="The branch app: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The branch app</b><span>Every tool behind one sign-in, and your day already set when you open it.</span></p></div><div class="scp" role="tabpanel" id="scp-wall" aria-labelledby="sct-wall" data-k="wall" hidden><div class="dev lap"><img src="/wall/img/wi/production-month.jpg" alt="The production wall · 24/7: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The production wall · 24/7</b><span>Your week, your month, your year, picked up for production: on the screen in the branch and on your phone.</span></p></div><div class="scp" role="tabpanel" id="scp-db" aria-labelledby="sct-db" data-k="db" hidden><div class="dev ph"><img src="/wall/img/db/recorded-ph.jpg" alt="The Delivery Book: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The Delivery Book</b><span>Delivered and signed for; the client e-mailed the same day, with five stars to rate the delivery.</span></p></div><span class="scrn">sample data on every screen</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ OUR OWN FACT FIND, BY THE NUMBERS, 29 October 2026 ═══ -->
+<section class="ffn" id="factfind" data-g="factfind" style="background:var(--bg2);border-block:1px solid var(--line)">
+  <div class="wrap">
+    <div class="lede rv">
+      <span class="eyebrow">Built in this branch</span>
+      <h2 data-words>Our own fact find. By the numbers.</h2>
+      <p>factfind360 is the branch's own digital fact find. The advisor drafts it at the table, a manager signs it, the client confirms it from their own inbox, and the branch team serves the file. These are its own counts: no client is in them.</p>
+    </div>
+    <div class="ffnw rv" id="ffnw" data-asat="2026-10-29">
+      <div class="fnk">
+        <div class="fk" style="--i:0"><b><em data-to="141" id="fn-ff">141</em></b><span>fact finds since <time id="fn-since">1 July 2026</time></span></div>
+        <div class="fk" style="--i:1"><b>TT$<em data-to="183" data-suffix="m" id="fn-need">183m</em></b><span>of need found, in dollars</span></div>
+        <div class="fk" style="--i:2"><b>TT$<em data-to="342" data-suffix="m" id="fn-cover">342m</em></b><span>of cover recommended</span></div>
+        <div class="fk" style="--i:3"><b>TT$<em data-to="3.4" data-suffix="m" data-dec="1" id="fn-api">3.4m</em></b><span>API recommended</span></div>
+      </div>
+      <div class="fng">
+        <div class="fnc" style="--i:0"><small>Fact finds a month</small><div class="fnbars" id="fn-bars"><div class="fnb" style="--h:38%;--i:0"><em>20</em><i></i><span>Jul</span></div><div class="fnb" style="--h:100%;--i:1"><em>53</em><i></i><span>Aug</span></div><div class="fnb" style="--h:62%;--i:2"><em>33</em><i></i><span>Sep</span></div><div class="fnb" style="--h:64%;--i:3"><em>34</em><i></i><span>Oct</span></div></div></div>
+        <div class="fnc" style="--i:1"><small>Every plan read by a manager</small>
+          <div class="fnr"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="bg" cx="50" cy="50" r="42"/><circle class="fg" cx="50" cy="50" r="42" style="--c:263.9;--p:79"/></svg><div class="fnr-c"><b data-to="63">63</b><span>reviewed</span></div></div>
+          <ul class="fnl"><li><i class="ok"></i><b>50</b> approved</li><li><i class="rt"></i><b>13</b> sent back for a better draft</li><li class="days"><svg class="ic" aria-hidden="true"><use href="#i-pulse"/></svg>most inside <b>2 to 3 days</b></li></ul>
+        </div>
+        <div class="fnc" style="--i:2"><small>October, so far</small>
+          <div class="fno"><b data-to="40">40</b><span>applications</span><b data-to="29">29</b><span>clients</span></div>
+          <div class="fnprods"><div class="fnp" style="--w:100%;--i:0"><span>Critical illness</span><i></i><b>18</b></div><div class="fnp" style="--w:39%;--i:1"><span>Whole life</span><i></i><b>7</b></div><div class="fnp" style="--w:22%;--i:2"><span>Savings &amp; pensions</span><i></i><b>4</b></div><div class="fnp" style="--w:11%;--i:3"><span>Universal life</span><i></i><b>2</b></div><div class="fnp" style="--w:50%;--i:4"><span>Other</span><i></i><b>9</b></div></div>
+        </div>
+      </div>
+      <div class="fnf">
+        <ol class="fnrail" aria-label="Who works on one file"><li style="--i:0"><i></i><b>Advisor</b></li><li style="--i:1"><i></i><b>Manager</b></li><li style="--i:2"><i></i><b>Client</b></li><li style="--i:3"><i></i><b>Branch team</b></li><li class="one"><b>one file</b></li></ol>
+        <div class="fnbadges">
+          <p class="fnbadge big"><b>Bigger sales.</b><span>The need is on paper before the pitch, so the application follows the fact find.</span></p>
+          <p class="fnbadge law"><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg><b>Compliant, every time.</b><span>Insurance Act 2018, Schedule 11 · the Central Bank's Market Conduct Guideline: taken, retained, produced on inspection.</span></p>
+        </div>
+      </div>
+      <p class="fnnote" id="fn-note">Real figures from factfind360's own pulse feed, counts only, read <span id="fn-asat">29 October 2026</span>. The manager review and October figures are as at 29 October 2026. Where the feed answers, the four figures and the months update themselves.</p>
     </div>
   </div>
 </section>
@@ -1488,8 +1603,8 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   if(nums.length && !noMotion.matches && 'IntersectionObserver' in window){
     var cio=new IntersectionObserver(function(es){es.forEach(function(e){
       if(!e.isIntersecting)return;cio.unobserve(e.target);
-      var el=e.target,to=parseFloat(el.getAttribute('data-to'))||0,suf=el.getAttribute('data-suffix')||'',t0=0,dur=1200;
-      function frame(t){if(!t0)t0=t;var k=Math.min(1,(t-t0)/dur);el.textContent=Math.round(to*(1-Math.pow(1-k,3)))+suf;if(k<1)requestAnimationFrame(frame)}
+      var el=e.target,to=parseFloat(el.getAttribute('data-to'))||0,suf=el.getAttribute('data-suffix')||'',dec=+(el.getAttribute('data-dec')||0),t0=0,dur=1200;
+      function frame(t){if(!t0)t0=t;var k=Math.min(1,(t-t0)/dur);el.textContent=(to*(1-Math.pow(1-k,3))).toFixed(dec)+suf;if(k<1)requestAnimationFrame(frame)}
       el.textContent='0'+suf;requestAnimationFrame(frame);
     })},{threshold:.4});
     nums.forEach(function(el){cio.observe(el)});
@@ -1617,10 +1732,31 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
     } else { arm(); }
     sec.addEventListener('pointerenter',function(){clearTimeout(timer)}); sec.addEventListener('pointerleave',function(){if(auto)arm()});
   })();
+
+  /* ── our own fact find: the four figures and the months refresh from factfind360's own pulse feed (counts and sums
+        only, no client). The true figures as at 29 October 2026 ship in the markup, so a feed that does not answer
+        changes nothing. ── */
+  (function(){
+    var w=d.getElementById('ffnw'); if(!w||!window.fetch) return;
+    var EP='https://script.google.com/macros/s/AKfycbx776ORwmwhm2u4vx2YGQPC6bRR9gTQ-Y-Yc1up0FNGkCKGaQdet-APT1PJsrAxxJ3dsQ/exec?action=pulse';
+    var ctl=('AbortController' in window)?new AbortController():null, t=ctl?setTimeout(function(){ctl.abort()},9000):0;
+    fetch(EP+'&_='+Date.now(),ctl?{signal:ctl.signal}:{}).then(function(r){return r.json()}).then(function(j){
+      clearTimeout(t); if(!j||!j.ok||!j.weeks||!j.weeks.length) return;
+      var tot={factFinds:0,need:0,cover:0,api:0}, bym={}, order=[];
+      j.weeks.forEach(function(x){ var m=String(x.w).slice(0,7); if(!(m in bym)){bym[m]=0;order.push(m)} bym[m]+=x.factFinds||0; for(var k in tot) tot[k]+=x[k]||0; });
+      if(tot.factFinds<100) return;                       /* a thin answer is not the record */
+      function set(id,v,dec,suf){ var el=d.getElementById(id); if(!el) return; el.setAttribute('data-to',dec?v.toFixed(dec):Math.round(v)); el.textContent=(dec?v.toFixed(dec):Math.round(v))+(suf||''); }
+      set('fn-ff',tot.factFinds,0,''); set('fn-need',tot.need/1e6,0,'m'); set('fn-cover',tot.cover/1e6,0,'m'); set('fn-api',tot.api/1e6,1,'m');
+      var last=order.slice(-4), mx=Math.max.apply(null,last.map(function(m){return bym[m]}))||1, bars=d.getElementById('fn-bars');
+      if(bars&&last.length===4){ var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; [].forEach.call(bars.children,function(b,i){ var m=last[i], c=bym[m]; b.style.setProperty('--h',Math.round(100*c/mx)+'%'); b.querySelector('em').textContent=c; b.querySelector('span').textContent=MN[+m.slice(5,7)-1]; }); }
+      if(j.since){ var s=new Date(j.since); if(!isNaN(s)) d.getElementById('fn-since').textContent=s.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); }
+      var a=new Date(j.asAt||Date.now()); d.getElementById('fn-asat').textContent='live, '+a.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}); d.getElementById('fn-note').classList.add('live');
+    }).catch(function(){});
+  })();
   /* ── the coach stage and the career timeline start their motion when they come into view (the page's .rv reveal is
         scroll-driven where view() is supported, so nothing else adds .in there) ── */
   (function(){
-    var els=[].slice.call(d.querySelectorAll('.cstage,.ctlw')); if(!els.length) return;
+    var els=[].slice.call(d.querySelectorAll('.cstage,.ctlw,.ffnw')); if(!els.length) return;
     if(noMotion.matches||!('IntersectionObserver' in window)){ els.forEach(function(e){e.classList.add('in')}); return; }
     var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -12% 0px'});
     els.forEach(function(e){io.observe(e)});
@@ -1670,7 +1806,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   })();
   var guide=d.getElementById('guide'),bub=d.getElementById('gbubble'),bubTimer=null,lastMsg='';
   function say(msg,ms){ms=ms||4200;if(msg===lastMsg&&bub.classList.contains('on'))return;lastMsg=msg;bub.innerHTML=msg;bub.classList.add('on');guide.classList.remove('hop');void guide.offsetWidth;guide.classList.add('hop');clearTimeout(bubTimer);bubTimer=setTimeout(function(){bub.classList.remove('on')},ms)}
-  var lines={screens:"Not a mock-up. <b>Tap a screen; they turn by themselves.</b>",coach:"A coach, not a clock. <b>Your week, before Friday.</b>",manager:"One seat for a sales manager. <b>The system does the unit's admin; you coach.</b>",people:"Real names. <b>You will know them by their first names within a week.</b>",why:"His words, not mine. <b>The room decides.</b>",talk:"Twenty minutes, your questions, his own figures. <b>He reads this himself.</b>",hero:"I’m <b>RAI</b> — the branch AI. Already contracted? Nobody will know you asked. New to this? You get the full build. Either way: <b>one 20-minute conversation.</b>",you:"Two kinds of people. Different fears. <b>Same five gates.</b>",env:"This is the room. <b>The room decides.</b>",path:"Two roads up — overrides, offices, management. All written.",quiz:"Answer honestly. Especially question five.",wins:"Don’t take our word. <b>Come meet the qualifiers.</b>",gates:"Five gates, LIMRA’s process. <b>Evidence, not vibes.</b> Tap a gate.",sys:"Thirty-nine things that run for you. <b>Nobody here works alone.</b>",faq:"Practising advisors: your enquiry stays confidential.",apply:"Seven places, and one for a sales manager. <b>One conversation, twenty minutes.</b> Tap, or scan to apply."};
+  var lines={screens:"Not a mock-up. <b>Tap a screen; they turn by themselves.</b>",factfind:"Our own fact find. <b>141 fact finds since July, every one read by a manager.</b>",coach:"A coach, not a clock. <b>Your week, before Friday.</b>",manager:"One seat for a sales manager. <b>The system does the unit's admin; you coach.</b>",people:"Real names. <b>You will know them by their first names within a week.</b>",why:"His words, not mine. <b>The room decides.</b>",talk:"Twenty minutes, your questions, his own figures. <b>He reads this himself.</b>",hero:"I’m <b>RAI</b> — the branch AI. Already contracted? Nobody will know you asked. New to this? You get the full build. Either way: <b>one 20-minute conversation.</b>",you:"Two kinds of people. Different fears. <b>Same five gates.</b>",env:"This is the room. <b>The room decides.</b>",path:"Two roads up — overrides, offices, management. All written.",quiz:"Answer honestly. Especially question five.",wins:"Don’t take our word. <b>Come meet the qualifiers.</b>",gates:"Five gates, LIMRA’s process. <b>Evidence, not vibes.</b> Tap a gate.",sys:"Thirty-nine things that run for you. <b>Nobody here works alone.</b>",faq:"Practising advisors: your enquiry stays confidential.",apply:"Seven places, and one for a sales manager. <b>One conversation, twenty minutes.</b> Tap, or scan to apply."};
   if('IntersectionObserver' in window){
     var secIO=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&lines[e.target.dataset.g])say(lines[e.target.dataset.g])})},{threshold:.3});
     d.querySelectorAll('[data-g]').forEach(function(s){secIO.observe(s)});
