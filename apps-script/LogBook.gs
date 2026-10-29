@@ -2630,6 +2630,7 @@ function lbWallBuild_(now) {
   var sent30 = recent.filter(function (r) { return r.status === 'Sent' && r.receivedAt && r.sentAt; });
   var wd = sent30.map(function (r) { return lbWorkDays_(r.receivedAt, r.sentAt); }).filter(function (x) { return x != null && x >= 0; });
   var onBag30 = sent30.filter(function (r) { return lbOnBag_(r); }).length;
+  var stuck30 = recent.filter(function (r) { return r.status === 'Received' && r.receivedAt && lbIsLate_(r, now); });
   var hrs = recent.filter(function (r) { return r.receivedAt && r.loggedAt; }).map(function (r) { return (r.receivedAt - r.loggedAt) / 3600000; })
     .filter(function (x) { return x >= 0; }).sort(function (a, c) { return a - c; });
   var med = hrs.length ? Math.round(hrs[Math.floor(hrs.length / 2)] * 10) / 10 : null;
@@ -2676,9 +2677,12 @@ function lbWallBuild_(now) {
     waiting: { logged: logged.length, received: received.length, late: late.length,
                lateNoReason: late.filter(function (r) { return !lbReasonFresh_(r, now); }).length,
                nextBag: nextBag, ages: ages, agents: list(waitAgents, 'n').slice(0, 8) },
-    days30: { lines: recent.length, sent: sent30.length, sameDayPct: pct(wd.filter(function (x) { return x === 0; }).length, wd.length),
-              within1Pct: pct(wd.filter(function (x) { return x <= 1; }).length, wd.length),
-              onBagPct: pct(onBag30, sent30.length), medHours: med,
+    /* A paper signed for and still not sent once its bag has gone counts against every share, so the room never reads
+       100% beside papers that missed their bag. One still waiting past a working day counts against "within a day". */
+    days30: { lines: recent.length, sent: sent30.length, stuck: stuck30.length,
+              sameDayPct: pct(wd.filter(function (x) { return x === 0; }).length, wd.length + stuck30.length),
+              within1Pct: pct(wd.filter(function (x) { return x <= 1; }).length, wd.length + stuck30.filter(function (r) { return lbWorkDays_(r.receivedAt, now) > 1; }).length),
+              onBagPct: pct(onBag30, sent30.length + stuck30.length), medHours: med,
               oldSameDay: LB_WALL.OLD_SAME_DAY, oldWithin1: LB_WALL.OLD_WITHIN1 },
     series: series, depts: list(depts, 'lines').slice(0, 8), confirm: conf, contracts: contracts,
     staff: list(staff, 'sent30').filter(function (s) { return s.name; }).slice(0, 6),
