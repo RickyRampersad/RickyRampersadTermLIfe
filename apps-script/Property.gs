@@ -75,6 +75,9 @@ function propSheet_() {
     'Last Client Update', 'Last Staff Nudge', 'Reminders Sent', 'Assigned To',
     'Insured Since', 'Years Insured', 'Values Last Reviewed', 'Premium History',
     'Rate Per Mille',
+    // From Salesforce's Agent__c on the risk — what lets an agent open the
+    // board and see their own clients, and only theirs.
+    'Agent', 'Agent Email',
   ]);
 }
 
@@ -90,6 +93,8 @@ function propRow_(r, map, rowIndex) {
     renewalDate: fmtDate_(c('renewal date')),
     days: daysUntil_(c('renewal date')),
     client: String(c('client') || ''),
+    agent: String(c('agent') || ''),
+    agentEmail: String(c('agent email') || '').trim().toLowerCase(),
     contact: String(c('contact') || ''),
     email: String(c('email') || '').trim(),
     mobile: String(c('mobile') || ''),
