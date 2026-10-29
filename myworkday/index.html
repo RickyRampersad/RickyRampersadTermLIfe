@@ -239,6 +239,42 @@
   .cl .seg input[value^="Not"]:checked+span{border-color:var(--bad);color:var(--bad)}
   .cl .done div{font-size:13.5px;color:var(--good);margin-top:2px}
   .cl .out{display:flex;gap:10px;align-items:center;font:800 14px var(--fd);margin-top:14px} .cl .out input{width:22px;height:22px}
+  /* The day's coach (29 Oct 2026): what the time of day asks of you, the day's stops, and what is new for you. */
+  .cline{display:flex;align-items:center;gap:9px;margin-top:8px;padding:8px 11px;border-radius:12px;background:var(--soft);font:800 13.5px/1.3 var(--fd);color:var(--navy);cursor:pointer;animation:rise .4s var(--ease)}
+  .cline[hidden]{display:none}
+  .cline .cd{flex:none;width:9px;height:9px;border-radius:50%;background:var(--good);animation:ping 2.2s infinite}
+  .cline span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cline.warn{background:rgba(227,154,59,.15);color:var(--warn)} .cline.warn .cd{background:var(--warn)}
+  .cline.bad{background:rgba(238,107,91,.15);color:var(--bad)} .cline.bad .cd{background:var(--bad)}
+  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(227,178,60,.6)}70%{box-shadow:0 0 0 9px rgba(227,178,60,0)}100%{box-shadow:0 0 0 0 rgba(227,178,60,0)}}
+  .coach{position:relative;overflow:hidden;border-left:4px solid var(--good)}
+  .coach.warn{border-left-color:var(--warn)} .coach.bad{border-left-color:var(--bad)}
+  .coach::after{content:"";position:absolute;right:-50px;top:-50px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(227,178,60,.18),transparent 70%);animation:glow 5s ease-in-out infinite alternate;pointer-events:none}
+  .coach .ck{font:800 11px/1 var(--fb);letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+  .coach .chh{font:800 19px/1.25 var(--fd);color:var(--navy)}
+  .coach.warn .chh{color:var(--warn)} .coach.bad .chh{color:var(--bad)}
+  .coach .chs{font-size:14px;line-height:1.5;margin-top:4px}
+  .coach ul{list-style:none;margin:10px 0 0;padding:0}
+  .coach li{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.4;padding:5px 0;opacity:0;transform:translateX(-6px);animation:slide .45s var(--ease) forwards}
+  .coach li i{flex:none;width:21px;height:21px;border-radius:7px;display:grid;place-items:center;font:800 11px/1 var(--fd);font-style:normal;background:var(--soft);color:var(--muted)}
+  .coach li.ok{color:var(--muted)} .coach li.ok i{color:var(--good)}
+  .rail{position:relative;margin:18px 0 0;height:66px}
+  .rail .rl,.rail .rf{position:absolute;top:11px;left:0;right:0;height:4px;border-radius:3px;background:var(--track)}
+  .rail .rf{right:auto;width:0;background:linear-gradient(90deg,var(--good),var(--gold));transition:width 1.6s var(--ease)}
+  .rail .rn{position:absolute;top:3px;width:20px;height:20px;margin-left:-10px;border-radius:50%;border:3px solid var(--gold);background:var(--card);left:0;transition:left 1.6s var(--ease);animation:ping 2.2s infinite;z-index:2}
+  .rail .st{position:absolute;top:0;width:58px;margin-left:-29px;text-align:center}
+  .rail .st b{display:grid;place-items:center;width:26px;height:26px;margin:0 auto;border-radius:50%;background:var(--card);border:2px solid var(--line);font:800 12px/1 var(--fd);color:var(--muted);position:relative;z-index:1;transition:background .4s,border-color .4s,transform .4s}
+  .rail .st.done b{background:var(--good);border-color:var(--good);color:#fff}
+  .rail .st.missed b{border-color:var(--bad);color:var(--bad);background:var(--card)}
+  .rail .st.owe b{border-color:var(--gold);color:var(--gold);transform:scale(1.15)}
+  .rail .st em{display:block;font:800 10.5px/1.2 var(--fb);font-style:normal;color:var(--ink);margin-top:5px;white-space:nowrap}
+  .rail .st small{display:block;font:600 10.5px/1.2 var(--fb);color:var(--muted);white-space:nowrap}
+  .rail .st.missed em{color:var(--bad)} .rail .st.owe em{color:var(--warn)}
+  @media (max-width:400px){ .rail .st{width:42px;margin-left:-21px} .rail .st em,.rail .st small{font-size:9.5px} }
+  .nwu{font:800 13px/1.3 var(--fb);color:var(--bad);background:rgba(238,107,91,.12);border-radius:10px;padding:7px 10px;margin:0 0 6px}
+  .tag.ok{color:var(--good)} .tag.wn{color:var(--warn)} .tag.nwn{color:var(--gold)}
+  #news li.dim .li{opacity:.62}
+  #news .li .s b{color:var(--navy)}
   .more[hidden]{display:none}
   .showmore{width:100%;margin-top:6px;background:transparent;color:var(--ink);border:1.5px solid var(--line)}
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation:none!important;transition:none!important} .card,ul.list li{opacity:1;transform:none} }
@@ -266,6 +302,7 @@
       <div class="now" id="nowm" title="Where the working day is now"></div>
     </div>
     <div class="pace" id="pace">&nbsp;</div>
+    <div class="cline" id="cline" role="button" tabindex="0" hidden><i class="cd" aria-hidden="true"></i><span id="clinet"></span></div>
     <div class="upline"><span id="upat">&nbsp;</span><a id="uprefresh" role="button" tabindex="0">Refresh</a></div>
     <div class="upd" id="upd" hidden><span id="updt"></span><button type="button" id="updgo">Refresh</button></div>
   </section>
@@ -482,6 +519,73 @@
     }).join("") + "</div>";
   }
 
+  /* THE DAY'S COACH (29 Oct 2026). Ricky, 6:45am: "letting them know the expectations when you set in ... Remember, 30 minutes, the
+     progress update before you leave to lunch ... built-in intelligence will tell you 30 minutes before you need to scrub". The tracker
+     lays the day out from your own hours (wdCoach_); the page picks the line for the time now and moves the marker along the day's
+     stops every half minute, without asking the tracker again. */
+  function coachNow(c) { return Number(c.now || 0) + Math.floor((Date.now() - ((M && M._t) || Date.now())) / 60000); }
+  function coachLine(c, now) { var ls = c.lines || []; for (var i = 0; i < ls.length; i++) if (now >= ls[i].from && now < ls[i].to) return ls[i]; return ls[ls.length - 1] || null; }
+  function stopState(x, now) {
+    if (x.doneAt != null) return now >= x.doneAt ? "done" : now >= x.at ? "owe" : "next";
+    return x.done ? "done" : x.miss != null && now >= x.miss ? "missed" : now >= x.at ? "owe" : "next";
+  }
+  function railPos(i, n) { return n < 2 ? 50 : 5 + 90 * i / (n - 1); }
+  function railNow(stops, now) {
+    var n = stops.length; if (!n) return 0;
+    if (now <= stops[0].at) return Math.max(0, railPos(0, n) - (stops[0].at - now) / 12);
+    for (var i = 0; i < n - 1; i++) if (now < stops[i + 1].at) return railPos(i, n) + (railPos(i + 1, n) - railPos(i, n)) * (now - stops[i].at) / Math.max(1, stops[i + 1].at - stops[i].at);
+    return railPos(n - 1, n);
+  }
+  function shortT(t) { return String(t || "").replace(/(am|pm)$/i, ""); }
+  function coachCard(m) {
+    var c = m.coach; if (!c || !c.lines || !c.lines.length) return "";
+    return '<div class="card coach" id="coach"><div class="ck" id="coachk"></div><div class="chh" id="coachh"></div><div class="chs" id="coachs"></div><ul id="coachi"></ul>' +
+      '<div class="rail" id="rail" aria-label="Your day\'s stops"><i class="rl"></i><i class="rf" id="railf"></i>' + c.stops.map(function (x, i) {
+        return '<div class="st" style="left:' + railPos(i, c.stops.length) + '%"><b></b><em>' + esc(x.l === "Close my day" ? "Close" : x.l === "Day ends" ? "Out" : x.l === "Check in" ? "In" : x.l === "Midday update" ? "Update" : x.l) + "</em><small>" + esc(shortT(x.t)) + "</small></div>";
+      }).join("") + '<span class="rn" id="railn" title="Now"></span></div></div>';
+  }
+  function coachTick() {
+    var c = M && M.coach, card = $("coach"), cl = $("cline");
+    if (!c || !card) { if (cl) cl.hidden = true; return; }
+    var now = coachNow(c), ln = coachLine(c, now) || { k: "", h: "", s: "", items: [], tone: "" }, key = ln.k + "|" + ln.h + "|" + ln.s;
+    if (card.getAttribute("data-k") !== key) {
+      card.setAttribute("data-k", key);
+      card.className = "card coach" + (ln.tone ? " " + ln.tone : "");
+      $("coachk").textContent = ln.k === "start" || ln.k === "before" ? "What today asks of you" : ln.k === "update" ? (/^Midday/.test(ln.h) ? "Midday" : "Before lunch") : "Your day, right now";
+      $("coachh").textContent = ln.h; $("coachs").textContent = ln.s;
+      $("coachi").innerHTML = (ln.items || []).map(function (x, i) {
+        var o = typeof x === "string" ? { s: x, n: i + 1 } : x;
+        return '<li class="' + (o.done ? "ok" : "") + '" style="animation-delay:' + i * 0.07 + 's"><i>' + (o.done ? "&#10003;" : o.n ? o.n : "&#9675;") + "</i><span>" + esc(o.s) + "</span></li>";
+      }).join("");
+    }
+    if (cl) { cl.hidden = false; cl.className = "cline" + (ln.tone ? " " + ln.tone : ""); $("clinet").textContent = ln.h; }
+    var els = card.querySelectorAll(".rail .st");
+    c.stops.forEach(function (x, i) {
+      var st = stopState(x, now), el = els[i]; if (!el) return;
+      el.className = "st " + st; el.querySelector("b").innerHTML = st === "done" ? "&#10003;" : st === "missed" ? "!" : st === "owe" ? "&#9679;" : "";
+      el.title = x.l + " · " + x.t + (st === "done" ? " · done" : st === "missed" ? " · not done" : st === "owe" ? " · now" : "");
+    });
+    var pos = railNow(c.stops, now);
+    requestAnimationFrame(function () { var f = $("railf"), n = $("railn"); if (f) f.style.width = pos + "%"; if (n) n.style.left = pos + "%"; });
+  }
+  setInterval(coachTick, 30000);
+  function toCoach() { var c = $("coach"); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  $("cline").addEventListener("click", toCoach);
+  $("cline").addEventListener("keydown", function (e) { if (e.key === "Enter") toCoach(); });
+  /* What is new for you today (29 Oct 2026): tasks routed to you and notes on your tasks by anyone else, the unanswered and the urgent
+     first. Each opens as a card, so the answer goes on the task's Chatter from here. */
+  function newsCard(m) {
+    var n = m.news; if (!n) return "";
+    if (!n.items || !n.items.length) return '<div class="card" id="news"><div class="ch"><h2>New for you today</h2></div><div class="empty">Nothing routed to you and no new notes on your tasks yet today.</div></div>';
+    return '<div class="card" id="news"><div class="ch"><h2>New for you today</h2><span class="n">' + (n.fresh ? n.fresh + " since you checked in" : n.total + " today") + "</span></div>" +
+      (n.urgent ? '<div class="nwu">' + n.urgent + " urgent: answer " + (n.urgent === 1 ? "it" : "them") + " first</div>" : "") +
+      '<ul class="list">' + n.items.map(function (x, i) {
+        var tag = x.k === "new" ? '<span class="tag nwn">new task</span>' : x.answered ? '<span class="tag ok">answered</span>' : x.u === 2 ? '<span class="tag bad">urgent</span>' : '<span class="tag wn">answer it</span>';
+        return '<li class="tk' + (x.answered ? " dim" : "") + '" data-id="' + esc(x.id) + '" data-url="' + esc(x.url || "") + '" style="animation-delay:' + i * 0.04 + 's"><span class="ic ' + (x.u === 2 && !x.answered ? "late" : x.k === "new" ? "k" : "due") + '">' + (x.k === "new" ? "+" : "&#8220;") + "</span>" +
+          '<div class="li"><div class="s" data-open role="button" tabindex="0">' + (x.k === "note" ? "<b>" + esc(x.by) + ":</b> " + esc(x.said) : esc(x.s)) + "</div>" +
+          "<small>" + esc(x.at) + (x.fresh ? " · since you checked in" : "") + " · " + (x.k === "new" ? esc(x.by) : "on " + esc(x.s)) + tag + "</small></div>" + '<div class="tc" hidden></div></li>';
+      }).join("") + "</ul>" + (n.more ? '<div class="tip">And ' + n.more + " more today.</div>" : "") + "</div>";
+  }
   // The agents' My day (27 Oct 2026): Project my day and Close off my day, the same pages the e-mails open.
   function agentCards(m) {
     if (!m.on) return '<div class="card"><div class="ch"><h2>Your day, from the branch</h2></div><div class="tip">Your daily e-mails and this page start when the branch adds you to the agents\' day. Until then, carry on as you are. <a href="' + esc(m.film) + '">See how it works &rarr;</a></div></div>';
@@ -552,7 +656,11 @@
     $("hours").textContent = m.lunch && m.lunch !== "Flexible" ? "lunch " + m.lunch : "";
     drawProgress(m);
     // One screen (29 Oct 2026): no "Open My day" foot; what the white page did is here.
-    $("main").innerHTML = checkinCard(m) + waitingCard(m) + attCard(m) + listCard(m) + scrubCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + closeCard(m);
+    // The coach on top (29 Oct 2026, Ricky: "we can put a note on top there"); before check-in, the check-in first.
+    var inYet = !!(m.checkin && m.checkin.at);
+    $("main").innerHTML = (inYet ? coachCard(m) + newsCard(m) + checkinCard(m) : checkinCard(m) + coachCard(m) + newsCard(m)) + waitingCard(m) + attCard(m) + listCard(m) + scrubCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + closeCard(m);
+    if (!m._t) m._t = Date.now();
+    coachTick();
     $("upd").hidden = true; pending = null;
     $("upat").textContent = (cached ? "As at " : "Updated ") + (m.at || "") + (cached ? " · updating…" : "");
     requestAnimationFrame(function () {
@@ -592,6 +700,7 @@
       if (n(gb.closed) > n(ga.closed)) out.push((n(gb.closed) - n(ga.closed)) + " more closed");
       if ((b.next || []).length > (a.next || []).length) out.push(((b.next || []).length - (a.next || []).length) + " new due");
       if ((b.list || []).length > (a.list || []).length) out.push(((b.list || []).length - (a.list || []).length) + " new on your list");
+      if (b.news && a.news && b.news.total > a.news.total) out.push((b.news.total - a.news.total) + " new for you" + (b.news.urgent > (a.news.urgent || 0) ? ", urgent" : ""));
     }
     var ta = (a.team || []).filter(function (x) { return x.at; }).length, tb = (b.team || []).filter(function (x) { return x.at; }).length;
     if (tb > ta) out.push((tb - ta) + " more of the team in");
@@ -609,7 +718,7 @@
     var ctl = window.AbortController ? new AbortController() : null, timer = setTimeout(function () { if (ctl) ctl.abort(); }, 90000);
     fetch(TRACKER + "?" + auth(new URLSearchParams()).toString() + "&t=" + Date.now(), { redirect: "follow", cache: "no-store", signal: ctl ? ctl.signal : undefined })
       .then(function (r) { return r.json(); })
-      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { if (!silent) fail((m && m.error) || "The tracker did not answer."); return; } load.tries = 0; notice(""); store.set("wd_day_" + WHO, { day: m.day, m: m });
+      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { if (!silent) fail((m && m.error) || "The tracker did not answer."); return; } load.tries = 0; notice(""); m._t = Date.now(); store.set("wd_day_" + WHO, { day: m.day, m: m });
         if (silent === true && dirty()) { pending = m; banner(m); return; } draw(m, false); })
       // Three more tries, further apart (2, 5 and 10 seconds), before it says so: a busy minute at the tracker passes (28 Oct 2026).
       .catch(function () { clearTimeout(timer); busy = false; if (silent === true) return; load.tries = (load.tries || 0) + 1;
@@ -671,7 +780,7 @@
       '<div class="notes">' + (notes || "No notes on Chatter yet.") + (c.more ? "<div>and " + c.more + " earlier</div>" : "") + "</div>" +
       '<div class="tpl">' + (c.tpl || []).map(function (t) { return '<button type="button" data-tpl data-a="' + esc(t.a) + '" data-n="' + esc(t.n) + '"><i class="' + (t.a === "close" ? "c" : t.a === "move" ? "m" : "") + '">' + (t.a === "close" ? "closes" : t.a === "move" ? "moves" : "note") + "</i>" + esc(t.n) + "</button>"; }).join("") + "</div>" +
       '<textarea data-note placeholder="What was done, who you spoke to, the outcome and the next step. It goes on the task\'s Chatter."></textarea>' +
-      '<button type="button" class="cai" data-cact="draft">&#10024; Draft with Claude</button>' +
+      (M && M.claude ? '<button type="button" class="cai" data-cact="draft">&#10024; Draft with Claude</button>' : "") +
       '<label class="dt">Or it cannot be done today: the new date<input type="date" data-to min="' + esc(c.min || "") + '"></label>' +
       '<div class="cbt"><button type="button" class="c" data-cact="close">Close now</button><button type="button" class="m" data-cact="move">Move now</button><button type="button" class="n" data-cact="note">Post note</button></div>' +
       '<div class="cst">Close now, Move now or Post note: it is done at once, with your note on Chatter.</div>' + (url ? '<a class="sf" href="' + esc(url) + '" target="_blank" rel="noopener">Open in Salesforce &#8599;</a>' : "");
