@@ -1,10 +1,10 @@
 {
- "voice": "en-US-AndrewNeural",
- "rate": "-12%",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
  "check": true,
  "films": {
-  "walldriver2b": [
-   "Follow each ribbon to see when it was answered, the same day, the next working day, later, or not yet, and who answered it."
+  "film20": [
+   "And none of this is a mock-up. These are the screens. The client's draft on fact find three sixty. Your manager's sign-off. The client's approval, from their own inbox. The Log Book in your hand, and the transmittal it builds for the staff. The branch app, every tool behind one sign-in. Your wall, live. Built here, in Chaguanas, for this branch."
   ]
  }
 }
