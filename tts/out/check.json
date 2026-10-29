@@ -1,32 +1,107 @@
 {
- "tts/out/walldriver/01.mp3": [
+ "tts/out/rise/01.mp3": [
   "en",
-  0.992,
-  "This is the branch manager's drive on the orphan campaign."
+  0.994,
+  "This branch took a hit."
  ],
- "tts/out/walldriver/02.mp3": [
+ "tts/out/rise/02.mp3": [
   "en",
-  0.993,
-  "Every prompt he puts on the tasks is counted in his own words and from the automation he set going."
+  0.988,
+  "People left. The work didn't."
  ],
- "tts/out/walldriver/03.mp3": [
-  "en",
-  0.992,
-  "His automation writes to clients, briefs the agents, and alerts the branch. Everyone is counted here."
- ],
- "tts/out/walldriver/04.mp3": [
+ "tts/out/rise/03.mp3": [
   "en",
   0.996,
-  "This ring shows when the team answers his prompts. The same day, the next working day, or later."
+  "Nothing here fell over."
  ],
- "tts/out/walldriver/05.mp3": [
+ "tts/out/rise/04.mp3": [
+  "en",
+  0.998,
+  "So before Friday, look at who's still standing."
+ ],
+ "tts/out/rise/05.mp3": [
+  "en",
+  0.998,
+  "23 agents and managers. Five more behind them."
+ ],
+ "tts/out/rise/06.mp3": [
+  "en",
+  0.978,
+  "Between us, 263 years of this work."
+ ],
+ "tts/out/rise/07.mp3": [
+  "en",
+  0.991,
+  "11 of us have been at it more than 10 years. 3 joined in the last 3."
+ ],
+ "tts/out/rise/08.mp3": [
+  "en",
+  0.994,
+  "And while all of that was happening, we rebuilt how this branch runs."
+ ],
+ "tts/out/rise/09.mp3": [
+  "en",
+  0.988,
+  "One sign in now. 50 tools behind it."
+ ],
+ "tts/out/rise/10.mp3": [
+  "en",
+  0.995,
+  "The system sets your day before you're even up."
+ ],
+ "tts/out/rise/11.mp3": [
+  "en",
+  0.996,
+  "The wall shows the score and everybody sees the same numbers."
+ ],
+ "tts/out/rise/12.mp3": [
+  "en",
+  0.991,
+  "In the last 12 months, this team closed 2,495 requests."
+ ],
+ "tts/out/rise/13.mp3": [
   "en",
   0.992,
-  "Day by day, his prompt stand beside the team's notes."
+  "3,600 papers went through the logbook, nearly three and four reached guardian inside, one working day."
  ],
- "tts/out/walldriver/06.mp3": [
+ "tts/out/rise/14.mp3": [
+  "en",
+  0.999,
+  "And since the digital fact find went live, not one of those cases has lapsed."
+ ],
+ "tts/out/rise/15.mp3": [
+  "en",
+  0.988,
+  "FY27 is 30 days old, and every goal plan is in."
+ ],
+ "tts/out/rise/16.mp3": [
   "en",
   0.997,
-  "And for each member of the team, how many notes came after a prompt and what those notes say?"
+  "The cracks are still there. We didn't hide them. We let them up."
+ ],
+ "tts/out/rise/17.mp3": [
+  "en",
+  0.994,
+  "We're not going back to what this branch was. We're going somewhere better."
+ ],
+ "tts/out/rise/18.mp3": [
+  "en",
+  0.987,
+  "Friday, 12 noon, 90 minutes."
+ ],
+ "tts/out/rise/19.mp3": [
+  "en",
+  0.982,
+  "75 of those minutes belong to you, not to me."
+ ],
+ "tts/out/rise/20.mp3": [
+  "en",
+  0.994,
+  "Three questions are already waiting for you. Answer one tonight."
+ ],
+ "tts/out/rise/21.mp3": [
+  "en",
+  0.977,
+  "We rise together."
  ]
 }
