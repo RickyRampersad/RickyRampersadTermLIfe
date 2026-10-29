@@ -6217,6 +6217,22 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
   client's secure link. A client with no vehicle under their e-mail is told their renewal is in the portal.
   `mqSubmit_` turns away a renewal sent by an older page, with the way there (`MQ.RENEW_PORTAL`). The renewal form
   code on the page is no longer reached.
+- **Renewing is back on this page, vehicle first** (29 October 2026: "without even asking for a vehicle number it's opening
+  the portal and cannot find … very confusing … apply best practices and enhance with AI"). The 26 October rule (every renew
+  button opens the Renewal Platform's Track your renewal) sent a signed-in client to a second page that asked for the e-mail
+  again and found only renewals already loaded on the platform's sheet, so most clients got "check your inbox" and nothing.
+  Now nothing opens another site:
+  - **Renew this vehicle** (the renewal card) and **Renew early** (a vehicle row) open the renewal step for that vehicle.
+  - **"Renewing a vehicle not listed here?"** takes a registration or policy number, matched letters and digits only against
+    the client's own vehicles (never looked up for anyone else). Not matched: it says so plainly and **Send it to our renewals
+    team** opens the step marked "Not matched to your e-mail yet"; `mqRenewFromRecord_` writes "not found on file" for the desk.
+  - **Your renewal in plain words** (`renewBrief`, `mqRenewBrief_`): Claude reads only that vehicle's record (`mqBriefFacts_`)
+    and writes two sentences and up to three things to confirm, each a "Yes, change this" tap that writes the change in.
+    `mqBriefOk_` throws the answer away for the plain one (`mqBriefPlain_`) if it carries a number not on the record or advice
+    (cancel, switch, cheaper, recommend); kept six hours, within the day's AI allowance. Never for an unmatched vehicle.
+  - Three choices: Renew as it is, Renew with changes, **Talk to us first** (a call before anything is renewed).
+  - `mqSubmit_` takes the renewal again (an agent still cannot) and sends it to `MQ_RENEW_TO`, else the quotes desk, read
+    again from the record. `MQ.RENEW_PORTAL` is no longer used by the page.
 - **Three paths, never mixed** (21 October 2026: "do not confuse invoice … a quote and a renewal … on a mobile … a proper
   layout, professional … motion and graphics and charts … infographic"). The home screen opens on three choices, each with
   its own colour, icon, section and numbered steps (`PATH`, `.t-renew` teal, `.t-quote` blue, `.t-take` violet):

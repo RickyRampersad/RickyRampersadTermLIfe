@@ -207,6 +207,26 @@
   .rnw-port small{color:var(--dim);font-size:13px;line-height:1.45}
   .rnw-port.lone{border:1.5px dashed #BFE3DF;border-radius:16px;padding:14px;background:#F7FCFB;margin:14px 0 0}
   .rnw-port.lone b{color:var(--ink);font-size:15px}
+  .rnw-port.find .rf-row{display:flex;gap:8px;margin:4px 0 0}
+  .rnw-port.find .rf-row .fld{flex:1;min-width:0;text-transform:uppercase;font-size:max(16px,1rem)}
+  .rnw-port.find .rf-row .send{flex:none;width:auto;padding:0 18px}
+  .rnw-port.find .msg{font-size:14px;line-height:1.5;color:var(--body);margin:8px 0}
+  .rnw-port.find .msg.bad{color:var(--bad)}
+  .brief{border:1px solid #CFE2F7;background:linear-gradient(180deg,#F5FAFF,#fff);border-radius:16px;padding:14px 15px;margin:12px 0 16px}
+  .brief .bh{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:14.5px}
+  .brief .bh svg.i{color:#7B5CD6;width:20px;height:20px}
+  .brief .bs{margin:8px 0 0;font-size:15px;line-height:1.55;color:var(--body)}
+  .brief .bq{margin:12px 0 0;display:flex;flex-direction:column;gap:8px}
+  .brief .bq>small{color:var(--dim);font-size:12.5px;font-weight:600}
+  .brief .bc{display:flex;gap:10px;align-items:center;justify-content:space-between;background:#fff;border:1px solid #E1EAF5;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.45;color:var(--body)}
+  .brief .bc button{flex:none;border:1.5px solid var(--ac,#3A7BD5);background:#fff;color:var(--ac,#2C5FA8);border-radius:999px;padding:7px 12px;font:600 13px/1.1 inherit;font-family:inherit;cursor:pointer;min-height:36px}
+  .brief .bc button.on{background:#E9F7EF;border-color:#2E9E62;color:#1E7A48}
+  .brief .bf{display:block;margin:10px 0 0;color:var(--dim);font-size:12px}
+  .brief .bwait{margin:8px 0 0;color:var(--dim);font-size:14px;display:flex;align-items:center;gap:6px}
+  .brief .bwait span{width:6px;height:6px;border-radius:50%;background:#9DB8DC;display:inline-block}
+  @media (prefers-reduced-motion:no-preference){.brief .bwait span{animation:bdot 1.1s infinite ease-in-out}.brief .bwait span:nth-child(2){animation-delay:.15s}.brief .bwait span:nth-child(3){animation-delay:.3s}
+    @keyframes bdot{0%,80%,100%{opacity:.3;transform:none}40%{opacity:1;transform:translateY(-3px)}}}
+  @media (max-width:480px){.brief .bc{flex-direction:column;align-items:stretch}.brief .bc button{align-self:flex-start}}
   .rnw-act .send,.rnw-act .ghost{margin:0;min-height:50px;font-size:15px}
   @media (max-width:380px){.rnw-act{grid-template-columns:1fr}}
   /* read from the client's document */
@@ -543,7 +563,7 @@
 
     <section class="track t-renew" id="trRenew">
       <div class="th"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg></span><div class="tt"><b>Renew a vehicle we insure</b><small>Next year's cover for the same vehicle</small></div><span class="lbl">Renewal</span></div>
-      <ol class="journey"><li>Open your renewal portal</li><li>Renew as it is, or with changes</li><li>Your renewal by e‑mail</li></ol>
+      <ol class="journey"><li>Choose the vehicle</li><li>Renew as it is, or with changes</li><li>We confirm it by e‑mail</li></ol>
       <div id="renewals"></div>
       <div id="homeVeh"></div>
       <div id="renewPortal"></div>
@@ -611,17 +631,7 @@ const CONFIG = {
   API_URL: "https://script.google.com/macros/s/AKfycbwLr9ztrs3FdY9yKG9GCJ6FoFolL39CaD82P1NWapt9mrBnU7CD_BDFI5kqVDIU8nvAOQ/exec",
   /* Must equal MQ.SITE_KEY in MotorQuote.gs. Not a secret. */
   SITE_KEY: "rrb-motor-quote-1",
-  /* Renewals are done in the branch's Renewal Platform (apps-script/Code.gs), never here (26 October 2026: one place
-     to renew). Its "Track your renewal" page e-mails the client their secure renewal link; e= fills in their e-mail. */
-  RENEW_PORTAL: "https://script.google.com/macros/s/AKfycbwYQlLt1txn4pCWEq3xO_FmmPUfRAUMzey-vzbUe-qDr9tX27BpM0ZbkP5G0WuYQuZJ8g/exec?find=1",
 };
-/* The client's own renewal portal, with their e-mail filled in. */
-function renewPortalUrl() {
-  const e = (session && session.email) || (me && me.email) || '';
-  return CONFIG.RENEW_PORTAL + (e ? '&e=' + encodeURIComponent(e) : '');
-}
-const PORTAL_BTN = (cls, label) => '<a class="' + cls + '" href="#" onclick="openRenewPortal(event)">' + label + '</a>';
-function openRenewPortal(ev) { if (ev) ev.preventDefault(); window.open(renewPortalUrl(), '_blank', 'noopener'); }
 const SKEY = 'rrb-mq-session', DKEY = 'rrb-mq-draft';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -784,8 +794,8 @@ function renewalCard(v, i) {
     (v.facts && v.facts.length ? '<ul class="facts">' + v.facts.map(f => '<li>' + esc(f) + '</li>').join('') + '</ul>' : '') +
     '<div class="rnw-grid">' + premChart(v.terms) +
     (terms ? '<ol class="tl">' + terms + '</ol>' : '') + '</div>' +
-    '<div class="rnw-port">' + PORTAL_BTN('send tc', 'Renew in your renewal portal') +
-    '<small>Renew as it is or with changes, update how you pay and follow it to your documents. We e‑mail your secure link to the address on your policy.</small></div></div>';
+    '<div class="rnw-port"><button type="button" class="send tc" onclick="startRenew(' + i + ')">Renew this vehicle</button>' +
+    '<small>About a minute: tell us whether anything has changed, and our renewals team prepares it and e‑mails you.</small></div></div>';
 }
 /* A vehicle we insure that is not due yet: how far through its cover year it is, and renewing early. */
 function vehRow(v, ix) {
@@ -793,7 +803,7 @@ function vehRow(v, ix) {
   const w = ended ? 100 : Math.max(3, Math.min(100, Math.round(100 - 100 * n / 365)));
   const when = v.renewOn ? (ended ? 'Cover ended <b>' + esc(longDay(v.renewOn)) + '</b>' : 'Renews <b>' + esc(longDay(v.renewOn)) + '</b> · in ' + n + ' day' + (n === 1 ? '' : 's'))
     : v.to ? 'Cover to <b>' + esc(longDay(v.to)) + '</b>' : '';
-  return '<button type="button" class="veh" onclick="' + (ended ? 'startFlow(\'quick\',' + ix + ')' : 'openRenewPortal(event)') + '"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="vt"><b>' + esc(vehName(v)) +
+  return '<button type="button" class="veh" onclick="' + (ended ? 'startFlow(\'quick\',' + ix + ')' : 'startRenew(' + ix + ')') + '"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="vt"><b>' + esc(vehName(v)) +
     '</b><span>' + esc(v.reg) + (v.cover ? ' · ' + esc(v.cover) : '') + '</span>' +
     (when ? '<span class="yr' + (ended ? ' end' : '') + '" aria-hidden="true"><i style="--w:' + w + '%"></i></span><span class="yrl">' + when + '</span>' : '') +
     '<span class="act">' + (ended ? 'Get a new quote' : 'Renew early') + '</span></span><span class="go">›</span></button>';
@@ -887,6 +897,28 @@ async function savePermit(ev) {
   } catch (e) { m.className = 'msg bad'; m.textContent = e.message; b.disabled = false; b.textContent = 'Save my permit'; }
   return false;
 }
+/* A vehicle not in the list: the client types its registration or policy number. It is looked for in what we
+   already hold for them; if it is not there, the request still goes, marked for our team to match (nothing about
+   anyone else's vehicle is ever looked up or shown). */
+function renewFinder(n) {
+  return '<div class="rnw-port lone find" id="rfind"><b>' + (n ? 'Renewing a vehicle not listed here?' : 'Which vehicle are you renewing?') + '</b>' +
+    '<small>' + (n ? 'Type its registration or policy number.' : 'We did not find a vehicle under ' + esc((session && session.email) || 'this e‑mail') + '. Type its registration (e.g. PDJ 1234) or your policy number and we will take it from there.') + '</small>' +
+    '<form class="rf-row" onsubmit="return findRenew(event)"><input class="fld" id="rfQ" placeholder="e.g. PDJ 1234" autocomplete="off" autocapitalize="characters" maxlength="30" aria-label="Registration or policy number">' +
+    '<button class="send tc" type="submit">Find it</button></form><div id="rfMsg" role="status" aria-live="polite"></div></div>';
+}
+const keyOf = v => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+function findRenew(ev) {
+  if (ev) ev.preventDefault();
+  const q = $('rfQ').value.trim(), k = keyOf(q), m = $('rfMsg');
+  if (k.length < 3) { m.innerHTML = '<p class="msg bad">Please type the registration or policy number.</p>'; $('rfQ').focus(); return false; }
+  const vs = (me && me.vehicles) || [];
+  const ix = vs.findIndex(v => keyOf(v.reg) === k || keyOf(v.policy) === k || (v.terms || []).some(t => keyOf(t.policy) === k));
+  if (ix > -1) { startRenew(ix); return false; }
+  m.innerHTML = '<p class="msg">We could not match <b>' + esc(q.toUpperCase()) + '</b> to ' + esc((session && session.email) || 'your e‑mail') + '. That happens when a policy was written to another e‑mail. You can still send it: our renewals team finds the policy and replies to you.</p>' +
+    '<button type="button" class="send tc" onclick="startRenewTyped(\'' + esc(q.toUpperCase().replace(/[^A-Z0-9 \-]/g, '')) + '\')">Send it to our renewals team</button>';
+  return false;
+}
+function startRenewTyped(reg) { startFlow('renew'); draft.reg = reg; draft.unmatched = 'Yes'; saveDraft(); render(); }
 function showHome() {
   show('s-home'); requestAnimationFrame(() => reveal($('s-home')));
   $('who').classList.remove('hide'); $('whoName').textContent = (isAgent() ? me.agent.name : me && me.name) || (session && session.email) || '';
@@ -911,10 +943,8 @@ function showHome() {
      renewal and opens the portal; without, it says where the renewal is. An agent has none. */
   $('pathRenew').classList.toggle('hide', isAgent()); $('pathRenew').classList.toggle('due', due.length > 0); $('trRenew').classList.toggle('hide', isAgent());
   $('paths').style.setProperty('--n', isAgent() ? 1 : 3);
-  $('pathRenewN').textContent = due.length ? (soon != null ? 'Due in ' + soon + ' day' + (soon === 1 ? '' : 's') : 'Due now') : vs.length ? vs.length + ' vehicle' + (vs.length === 1 ? '' : 's') : 'In your renewal portal';
-  $('renewPortal').innerHTML = isAgent() ? '' : '<div class="rnw-port lone">' + (vs.length ? '<b>Another vehicle renewing?</b>' : '<b>Your renewal is in your renewal portal.</b>') +
-    '<small>' + (vs.length ? 'Every policy you hold with us is in your portal, whichever e‑mail it was written to.' : 'We could not find a vehicle under this e‑mail, but your portal holds every policy you have with us. Ask for your secure link and it comes to the e‑mail on your policy.') + '</small>' +
-    PORTAL_BTN('send tc', 'Open my renewal portal') + '</div>';
+  $('pathRenewN').textContent = due.length ? (soon != null ? 'Due in ' + soon + ' day' + (soon === 1 ? '' : 's') : 'Due now') : vs.length ? vs.length + ' vehicle' + (vs.length === 1 ? '' : 's') : 'Type its number';
+  $('renewPortal').innerHTML = isAgent() ? '' : renewFinder(vs.length);
   $('renewals').innerHTML = due.map(x => renewalCard(x[0], x[1])).join('');
   $('homeVeh').innerHTML = rest.length
     ? '<div class="sec" style="margin-top:' + (due.length ? 18 : 4) + 'px"><span class="ic" style="background:linear-gradient(135deg,var(--rn),var(--rn2))"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><div><b>' + (due.length ? 'Your other vehicles with us' : 'Your vehicles with us') +
@@ -973,7 +1003,7 @@ function historyCheck(d) {
     (d.young === 'Yes' && !String(d.youngDetails || '').trim() && !d.yd0name ? 'Please say who the young or new driver is.' : '');
 }
 function checkRenew(d) {
-  return need(d, ['name', 'mobile', 'renewChoice']) || (/changes/.test(d.renewChoice || '') && !String(d.renewChanges || '').trim() ? 'Please say what you would like changed.' : '');
+  return need(d, d.unmatched === 'Yes' ? ['reg', 'name', 'mobile', 'renewChoice'] : ['name', 'mobile', 'renewChoice']) || (/changes/.test(d.renewChoice || '') && !String(d.renewChanges || '').trim() ? 'Please say what you would like changed.' : '');
 }
 
 const LABELS = { renewChoice: 'whether to renew as it is or with changes', name: 'your name', mobile: 'your mobile', company: 'the company name', reg: 'the vehicle number', make: 'the make', model: 'the model', year: 'the year', value: 'the vehicle value', cover: 'the cover you want', drivingYears: 'how long you have been driving', permit: "your driver's permit number", accidents: 'whether you have had any accidents or claims', young: 'whether young or new drivers will use the vehicle' };
@@ -1015,7 +1045,7 @@ function startFlow(flow, vehIx, keep) {
   if (flow !== 'renew') pdfLib().catch(() => {});
 }
 function startNew(vehIx) { startFlow('full', vehIx); }
-function startRenew(vehIx, choice) { startFlow('renew', vehIx); draft.renewChoice = choice; saveDraft(); render(); }
+function startRenew(vehIx, choice) { startFlow('renew', vehIx); if (choice) { draft.renewChoice = choice; saveDraft(); render(); } }
 
 /* ---- the invoice: read on the server, filled in here, checked by the client ---- */
 const ci = (list, v) => list.find(x => x.toLowerCase() === String(v || '').toLowerCase().trim());
@@ -1088,6 +1118,7 @@ function render() {
   $('step').querySelectorAll('input.invIn').forEach(el => el.addEventListener('change', ev => onInvoice(ev.target.files[0])));
   $('step').querySelectorAll('input.tdocIn').forEach(el => el.addEventListener('change', ev => onDoc(el.dataset.kind, ev.target.files[0])));
   if (s.key === 'tsign') wireSig();
+  if (s.key === 'renew') loadBrief();
   $('step').querySelectorAll('input[type=checkbox][data-k]').forEach(el => el.addEventListener('change', () => { collect(); side(); }));
   $('step').querySelectorAll('select.fld').forEach(el => { el.classList.toggle('empty', !el.value); el.addEventListener('change', () => { el.classList.toggle('empty', !el.value); otherBox(el); collect(); side(); }); otherBox(el); });
   $('step').querySelectorAll('input.fld, textarea.fld').forEach(el => el.addEventListener('input', () => { collect(); side(); }));
@@ -1203,18 +1234,59 @@ function stepQuick(d) {
       inp('ncdPct', 'No claim discount as a %, if you know it', { mode: 'numeric' }) + ggHtml() + '</details>' +
     (inv ? sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2.5V8h5.5"/><path d="M8.5 13h7M8.5 17h5"/></svg>', 'Your document') + '<div class="files">' + fileRow('invoice') + '</div>' : '');
 }
-/* The renewal: the vehicle and its record, then what the client wants. */
+/* The renewal: the vehicle and its record, what it means in plain words, then what the client wants. */
+const SPARK = '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>';
 function stepRenew(d) {
-  const lapsed = d.renewState === 'lapsed', n = Math.abs(d.renewIn || 0);
-  return '<div class="rnw' + (lapsed ? ' lapsed' : '') + '" style="margin-top:6px"><div class="rnw-top"><div class="ring" style="--p:' + (lapsed ? 100 : Math.max(4, Math.min(100, Math.round(100 * (60 - n) / 60)))) + '"><span>' + cu(n) + '<small>' + (lapsed ? 'days ago' : 'days') + '</small></span></div>' +
-    '<div><h3>' + esc([d.year, d.make, d.model].filter(Boolean).join(' ') || d.reg) + '</h3><div class="when">' + esc(d.reg) + ' · ' + (lapsed ? 'ended ' : 'renews ') + '<b>' + esc(d.renewOnText || '') + '</b></div>' +
-    '<div class="when" style="font-size:13px;color:var(--dim)">' + esc([d.lastCover, d.lastSum ? 'insured for ' + money(d.lastSum) : '', d.lastPremium ? 'premium ' + money(d.lastPremium) : ''].filter(Boolean).join(' · ')) + '</div></div></div></div>' +
-    opts('renewChoice', 'What would you like?', [['Renew as it is', 'The same cover and the same value'], ['Renew with changes', 'Change the cover, the value, a driver or anything else']], '', true) +
+  const lapsed = d.renewState === 'lapsed', n = Math.abs(d.renewIn || 0), un = d.unmatched === 'Yes';
+  const head = un
+    ? '<div class="rnw" style="margin-top:6px"><div class="rnw-top"><div><div class="eyebrow">Not matched to your e‑mail yet</div><h3>' + esc(d.reg || 'Your vehicle') + '</h3>' +
+      '<div class="when">Our renewals team finds the policy for this vehicle and replies to you. Check the number below.</div></div></div></div>' +
+      inp('reg', 'Registration or policy number', { req: 1, ph: 'e.g. PDJ 1234' })
+    : '<div class="rnw' + (lapsed ? ' lapsed' : '') + '" style="margin-top:6px"><div class="rnw-top"><div class="ring" style="--p:' + (lapsed ? 100 : Math.max(4, Math.min(100, Math.round(100 * (60 - n) / 60)))) + '"><span>' + cu(n) + '<small>' + (lapsed ? 'days ago' : 'days') + '</small></span></div>' +
+      '<div><h3>' + esc([d.year, d.make, d.model].filter(Boolean).join(' ') || d.reg) + '</h3><div class="when">' + esc(d.reg) + (d.renewOnText ? ' · ' + (lapsed ? 'ended ' : 'renews ') + '<b>' + esc(d.renewOnText) + '</b>' : '') + '</div>' +
+      '<div class="when" style="font-size:13px;color:var(--dim)">' + esc([d.lastCover, d.lastSum ? 'insured for ' + money(d.lastSum) : '', d.lastPremium ? 'premium ' + money(d.lastPremium) : ''].filter(Boolean).join(' · ')) + '</div></div></div></div>' +
+      '<div class="brief" id="rbrief" aria-live="polite">' + briefHtml(d) + '</div>';
+  return head +
+    opts('renewChoice', 'What would you like to do?', [['Renew as it is', 'Nothing has changed: same cover, same value, same drivers'], ['Renew with changes', 'A new driver, a new value, different cover or anything else'], ['Talk to us first', 'We call you before anything is renewed']], '', true) +
     '<div id="chgBox" class="' + (d.renewChoice === 'Renew with changes' ? '' : 'hide') + '">' +
     '<label class="f"><b>What would you like changed? ' + req + '</b><textarea class="fld" data-k="renewChanges" placeholder="e.g. add my son as a driver, lower the value to TT$ 80,000">' + esc(d.renewChanges || '') + '</textarea></label>' +
     '<div class="row">' + sel('cover', 'Cover', COVERS.map(c => c[0]), { ph: 'Keep as it is' }) + inp('value', 'New value (TT$)', { mode: 'numeric', ph: 'only if it changes' }) + '</div></div>' +
-    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg>', 'You') +
+    sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg>', 'How we reach you') +
     '<div class="row">' + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) + '</div>';
+}
+/* "Your renewal in plain words": written by Claude from the record (or plainly, when Claude is not there),
+   with up to three things to confirm, each a tap that becomes a change. */
+function briefHtml(d) {
+  const b = d.brief && d.brief.reg === d.reg ? d.brief : null;
+  if (!b) return '<div class="bh">' + SPARK + '<b>Your renewal in plain words</b></div><p class="bwait"><span></span><span></span><span></span> Reading your record…</p>';
+  const asked = String(d.renewChanges || '');
+  return '<div class="bh">' + SPARK + '<b>Your renewal in plain words</b></div><p class="bs">' + esc(b.summary) + '</p>' +
+    (b.checks && b.checks.length ? '<div class="bq"><small>Before you choose, worth a moment:</small>' + b.checks.map((c, i) =>
+      '<div class="bc"><span>' + esc(c.question) + '</span>' + (c.change ? '<button type="button" class="' + (asked.indexOf(c.change) > -1 ? 'on' : '') + '" onclick="briefChange(' + i + ')">' +
+        (asked.indexOf(c.change) > -1 ? '✓ Added to my changes' : 'Yes, change this') + '</button>' : '') + '</div>').join('') + '</div>' : '') +
+    '<small class="bf">' + (b.ai ? 'Written by AI from your record, as a guide. ' : 'From your record. ') + 'Our renewals team checks everything with you.</small>';
+}
+async function loadBrief() {
+  const d = draft;
+  if (d.flow !== 'renew' || d.unmatched === 'Yes' || !d.reg || (d.brief && d.brief.reg === d.reg)) return;
+  const reg = d.reg;
+  try {
+    const j = await api('renewBrief', { token: session.token, reg: reg });
+    if (draft.reg !== reg) return;
+    draft.brief = j.brief ? Object.assign({ reg: reg }, j.brief) : { reg: reg, summary: 'We have your vehicle on file. Choose below what you would like, and our renewals team prepares it.', checks: [] };
+  } catch (e) { draft.brief = { reg: reg, summary: 'We have your vehicle on file. Choose below what you would like, and our renewals team prepares it.', checks: [] }; }
+  saveDraft();
+  const el = $('rbrief'); if (el) el.innerHTML = briefHtml(draft);
+}
+function briefChange(i) {
+  collect();
+  const c = draft.brief && draft.brief.checks[i]; if (!c) return;
+  const cur = String(draft.renewChanges || '').trim();
+  if (cur.indexOf(c.change) > -1) draft.renewChanges = cur.split('\n').filter(l => l.trim() !== c.change).join('\n');
+  else { draft.renewChanges = (cur ? cur + '\n' : '') + c.change; draft.renewChoice = 'Renew with changes'; }
+  if (!String(draft.renewChanges).trim() && draft.renewChoice === 'Renew with changes') draft.renewChoice = '';
+  saveDraft(); render();
+  const t = $('step').querySelector('[data-k="renewChanges"]'); if (t && draft.renewChoice === 'Renew with changes') t.focus();
 }
 /* ---- taking the quote: Guardian's proposal and Know Your Policy, filled and signed here ---- */
 /* Asked for on 21 October 2026: "once they agree on the quote … upload the certified copy … extract all the details on
@@ -1709,7 +1781,7 @@ function stepReview(d) {
     G.map(g => [g[0], g[1].filter(r => r[1] && String(r[1]).trim() && !/^(No|Individual)$/.test(String(r[1]).trim()))]).filter(g => g[1].length).map(g => '<h3>' + g[0] + '</h3>' + g[1].map(r => '<div><span>' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>').join('')).join('') + '</div>' +
     (d.flow !== 'renew' ? '<div class="formcard"><span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 3h-7A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V11"/><path d="M18 2.5l3.5 3.5-8 8H10v-3.5z"/></svg></span><span><b>Guardian\'s Motor Quotation Request, filled in for you</b><small>It goes to the quotes desk with your request. Check it if you wish.</small></span>' +
       '<button type="button" class="ghost" onclick="previewRequest()">Preview the form</button></div>' : '') +
-    '<label class="chk"><input type="checkbox" id="agree"> <span>' + (isAgent() ? 'This is what my client told me, and they asked me to get them a quote.' : 'This is true to the best of my knowledge. Please ' + (d.flow === 'renew' ? 'renew my cover.' : 'get me a quote.')) + '</span></label>';
+    '<label class="chk"><input type="checkbox" id="agree"> <span>' + (isAgent() ? 'This is what my client told me, and they asked me to get them a quote.' : 'This is true to the best of my knowledge. Please ' + (d.flow === 'renew' ? (d.renewChoice === 'Talk to us first' ? 'call me about my renewal.' : 'renew my cover.') : 'get me a quote.')) + '</span></label>';
 }
 async function buildRequest() {
   const L = await pdfLib(), t = await fetch(FORM_REQUEST).then(r => { if (!r.ok) throw new Error('The form could not load.'); return r.arrayBuffer(); });
