@@ -6892,6 +6892,59 @@ class.
 built before it is unchanged: with it, a four-figure count reads 2,495 rather
 than 2495, on the markup and on every frame the renderer writes.
 
+### People, the sign-in, and motion everywhere — 29 October 2026
+
+Asked for in these words: *"ok so more motition and beter icons show ppeople
+not dots and at the emd where is the log in!!! to log in with agent number and
+guest a code 000 can you please ad a lot more motion , charts and graphics make
+thing move and a wow"*. 3:13 now, 29 scenes.
+
+**People, not dots.** Everywhere the film counted a person it drew a disc, and
+a disc is a data point rather than a colleague. `person()` draws a head and
+shoulders on a 24×27 canvas with the initial under it; the roster scene is
+twenty-one cyan figures and five periwinkle, and the timeline scene stands them
+on the 1993→2026 line under their names. The bands still carry their meaning in
+colour *and* in the legend, so identity is never colour alone.
+
+**The sign-in is a scene, because the film is what the branch will actually
+watch.** It comes second to last: two cards side by side — **YOU · Agent
+number**, a boxed `A•••••` with a caret blinking in it, "That is the whole
+sign-in. Signing in is the register"; and **A VISITOR**, a `0 0 0 0` keypad
+popping in, "Four zeros. Guests are never on the roll" — then
+`rickyrampersadbranch.com/meetings`. The narration spells the code out
+("zero, zero, zero, zero"): Whisper heard "four zeros" as "40s" on the first
+take, and a spoken code that comes out wrong is worse than no code.
+
+**The motion layer, all of it CSS so render.js can seek it.** A travelling
+sheen on every bar and every card, counters that pop as they land, an eyebrow
+rule that draws itself, and fourteen motes drifting behind every scene. The
+motes are **seeded from the scene's index, never random**: render.js draws each
+frame on its own, so a random field jitters between frames instead of drifting.
+
+**The player's rail knows the scenes now.** `chapters.py` gained
+`blastoff/film.html`, and a scene may name itself with **`data-ch`**, which
+wins over anything read off the picture. That is new and opt-in, so every film
+built before it is unchanged. It was needed here because several scenes carry
+no eyebrow at all — the opening three, the mended shield, the close — and the
+fallback handed the rail its own first words, which on a kinetic headline is a
+dump of fragments and on the roster scene is a row of bare initials.
+
+**The page's figures are guarded too, and the guard has to read the prose.**
+The builder now checks `blastoff/index.html` for the spoken headcount, the
+spoken total and the numeric total in the meta descriptions, after the film is
+written — so a stale page names what to change instead of blocking the rebuild.
+The first cut of that check searched the raw markup and passed on a lede still
+saying *twenty-eight of us and two hundred and sixty-three years*: the player's
+own `data-chapters` attribute carries "Twenty-six still here", which satisfied
+the substring. It strips tags and reads the text, and reads the meta
+descriptions from their own `content` attributes.
+
+**The page said the wrong thing about signing in, and that is the rule, not a
+typo.** It promised the branch access code and then an e-mail and a PIN. The
+shared door went on 28 October and the sign-in is the agent number alone —
+which is what the film now narrates, so the page had to say it too. A promise
+made in one place has to be kept in the other.
+
 ### Re-cutting it
 
 Edit `tools/film/rise-lines.json`, push a `tts/job.json` to `tts-run` (**check
@@ -6917,8 +6970,10 @@ inserting ten scenes left the old cues pointing at the wrong moments entirely.
 
 The music is the branch's own theme, so the page carries no licence credit.
 `capbg` in films.json is `070F26`, so the burned-in caption strip is the film's
-own navy and not donthaveanagent's. Voice: Andrew Expressive, all eighteen clips Whisper-checked
-English at 0.97 or better. The poster is cut from the finished MP4 at 86.4s.
+own navy and not donthaveanagent's. Voice: Andrew Expressive, all twenty-nine clips Whisper-checked
+English at 0.97 or better. The poster is cut from the finished MP4 at
+192.0s — the mended shield on the close, which is the one frame that says
+what the film is for.
 
 ## Web fonts — non-blocking, with a fallback that does not move the page
 
