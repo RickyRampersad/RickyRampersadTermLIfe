@@ -7200,6 +7200,48 @@ Two things worth keeping from the testing:
   error thrown — and **`domcontentloaded`**, never `networkidle`, because the
   page's Google fonts never settle behind the proxy.
 
+### The fourth fault: 0000 was stored as the number 0 — 29 October 2026
+
+The script was pasted and deployed, `pullRoster` was run, the ping read
+`onTheRoll: 19, canSignIn: 19, cannot: 0` — and `0000` was still refused, with
+*"Guest sign-in is not set up yet. Speak to the branch manager."*
+
+**`guestRow_` writes `'0000'`; Sheets parses it on the way in and stores the
+number 0, which reads back as `'0'`.** `guestFind_` compared that against the
+literal `'0000'`, so it never found the row it had itself just written: every
+executive looking in was turned away, and **every attempt appended one more
+Visitor row**. The same comparison was in `isStandingGuest_`.
+
+`isGuestNo_` recognises the guest by **all zeros**, which matches the text and
+the number both, so the rows the old build left behind still work. A **blank**
+Agent No is explicitly not the guest: `readPeople_` hands back `''` for an
+empty cell, and a blank number must never open the branch's meeting.
+
+The irony is that the comment above `guestRow_` had already worked out half of
+this — it says in as many words that `normNo_` turns `'0000'` into nothing, so
+`guestFind_` does its own exact compare. It guarded the *input* and never asked
+what the sheet does to the *stored* value.
+
+**This is the same family as the month read back as a month** (the group
+billing note above). The rule that falls out of both: **a value that looks like
+a number or a date is not what you wrote — write it as text, and never key a
+lookup on its spelling.**
+
+**And the fake sheet could not reproduce it**, for the reason recorded there
+too: it kept whatever it was given. `SHEETS_PARSE=1` now makes
+`tests/harness.js` parse like Sheets, and `setNumberFormat('@')` marks a cell
+text. Watch for a chainable stub of the same name further down the object
+literal — `setNumberFormat() { return this; }` was shadowing the real one, so
+the flag did nothing until it was removed. `tests/test-guest-signin.js` (24
+checks) fails on the build this replaced, pile-up included.
+
+Three faults became four on one gate in two days. Each was invisible from
+outside and each needed a different probe: the ping for the roll, the skill
+bank for the number's form, the page itself for the password box, and a live
+POST as `0000` for this one. **Probe the thing the branch will actually do**,
+and do it on the guest number, which touches no agent's row and no lockout
+counter.
+
 ## `/branchmeet/` — the FY27 rise, and what the film may not say
 
 Asked for on 28 October 2026, the evening before the branch group sees it:
