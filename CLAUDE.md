@@ -5593,6 +5593,32 @@ is separate and untouched.
   Renewal Log** tabs of the group sheet.
 - **The look** is the motor quote's: light, soft ocean blue, the blue shield (`orphan-transition/board-mark.png`), on both
   the desk and the client's page; the e-mails carry the gold `logo-mark.png`.
+- **One item, one term: Salesforce's double entries** (29 October 2026, found testing on the real November renewals before
+  any trainee saw them). Last year's premium came out at two or three times the bill on three renewals.
+  - **The patterns in the record:**
+    - the same term entered twice, one copy on last year's billing record;
+    - a mid-term change kept as a term of its own;
+    - a second full term for the year, dated a year late and on the year before's billing record;
+    - one vehicle with two different terms, both on this year's billing record;
+    - a machine added to a plant policy with no policy number, which read as a renewal of its own.
+  - **The fix** (`girDedupe_`, in the month's bundle and in the full history alike):
+    - Rows merge only when they share an identity (`girIdent_`): a registration, a chassis, a serial, or an address with
+      the same cover type and the same cover.
+    - Rows with none never merge. Four loaders that differ only by serial are four loaders. Four bare rows on a travel
+      policy are four, and their bill says four times the premium.
+    - **Exact copies:** one is kept, the one on its own year's billing record (`girTransOk_`: the record's Renewal Date
+      within 45 days of the term's start), else the first entered.
+    - **Two full terms for one vehicle, chassis or serial in one year:** the one on its own year's billing record wins.
+      When both are, the first entered is kept, and the desk's first insight says to check which is right before the
+      letter goes.
+    - **A shorter term inside a full one, ending with it:** added to that term's premium (`base` and `mid` on the item).
+    - **An item with no policy number:** joins the policy on its billing record, but only when that record carries one
+      policy.
+  - **Nothing in Salesforce is changed.** Each merge is an insight naming the record to correct or remove.
+  - **Measured on the real November rows:** of the 25 renewals that sit on their own year's billing record, last year's
+    premium agreed with the bill on 19 before and 22 after, and none got worse. The three still apart are bills shared by
+    two policies. `gir/real/real-check.js` runs it on the pull kept in the scratchpad (client data, never the repository).
+  - `gir/dup-test.js` (25 checks) covers it on made-up records of the same shapes.
 - Tests in the scratchpad (`gir/`): `flow-test.js` (114, the whole journey in Node on a made-up book, three years of
   billing, payments and an old renewal task with notes), `practice-test.js` (41, a training run from the letter to go live),
   `desk-test.js` (36, Playwright, the desk with a made-up notice PDF read by pdf.js, the year folds and the practice
