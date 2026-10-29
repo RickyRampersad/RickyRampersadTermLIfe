@@ -109,7 +109,7 @@ e.tSfQuery_ = q => {
   throw new Error('part 1 asked: ' + q);
 };
 e.tRoster_ = () => [{ name: 'Neil Ramnanan' }, { name: 'Javid Ali' }, { name: 'Aleema Mohammed-Ali' }, { name: 'Ricky Rampersad' }];
-const TA = '00TA00000000001AAA', TB = '00TB00000000001AAA', TC = '00TC00000000001AAA', TD = '00TD00000000001AAA', TE = '00TE00000000001AAA';
+const TA = '00TA00000000001AAA', TB = '00TB00000000001AAA', TC = '00TC00000000001AAA', TD = '00TD00000000001AAA', TE = '00TE00000000001AAA', TF = '00TF00000000001AAA';
 const BM = { Name: 'Ricky Rampersad' };
 e.tSfComposite_ = q => {
   if (/Date_SQ_submitted__c >= /.test(q) && /Was_Agent_Paid__c/.test(q)) return [
@@ -125,7 +125,8 @@ e.tSfComposite_ = q => {
     { Id: TB, CreatedDate: sfAt(-6, 7), WhatId: 'RB', What: { Type: 'CLIENT_PORTFOLIO__c' }, WhoId: null, Owner: { Name: 'Elizabeth Lee' }, IsClosed: true, CompletedDateTime: sfAt(-1, 15) },
     { Id: TC, CreatedDate: sfAt(-4, 7), WhatId: 'RC', What: { Type: 'CLIENT_PORTFOLIO__c' }, WhoId: null, Owner: { Name: 'Azariah Griffith' }, IsClosed: false },
     { Id: TD, CreatedDate: sfAt(-3, 7), WhatId: 'RD', What: { Type: 'CLIENT_PORTFOLIO__c' }, WhoId: null, Owner: { Name: 'Sasha Lalla-Jagassar' }, IsClosed: false },
-    { Id: TE, CreatedDate: sfAt(-3, 7), WhatId: 'RE', What: { Type: 'CLIENT_PORTFOLIO__c' }, WhoId: null, Owner: { Name: 'Azariah Griffith' }, IsClosed: false }];
+    { Id: TE, CreatedDate: sfAt(-3, 7), WhatId: 'RE', What: { Type: 'CLIENT_PORTFOLIO__c' }, WhoId: null, Owner: { Name: 'Azariah Griffith' }, IsClosed: false },
+    { Id: TF, CreatedDate: sfAt(-3, 7), WhatId: 'RF', What: { Type: 'CLIENT_PORTFOLIO__c' }, WhoId: null, Owner: { Name: 'Elizabeth Lee' }, IsClosed: false }];
   if (/WHERE Id IN/.test(q)) return [{ Id: 'RA', POLICY__c: '5000000100' }, { Id: 'RB', POLICY__c: '5000000200' }, { Id: 'RC', POLICY__c: '5000000300' }, { Id: 'RD', POLICY__c: '5000000400' }];
   if (/WHERE Contact__c IN/.test(q)) return [];
   if (/FROM TaskFeed/.test(q)) return [
@@ -150,6 +151,13 @@ e.tSfComposite_ = q => {
     { ParentId: TC, Body: 'Azariah, call today.', CreatedDate: sfAt(0, 7).replace(':00:00', ':01:10'), CreatedBy: BM },
     { ParentId: TD, Body: 'Azariah, please update this one.', CreatedDate: sfAt(0, 7).replace(':00:00', ':01:30'), CreatedBy: BM },
     { ParentId: TB, Body: 'Liz, update please.', CreatedDate: sfAt(0, 7).replace(':00:00', ':01:50'), CreatedBy: BM },
+    /* task F, the shapes read off the real posts: an instruction drafted for him, a hold notice, an agent's note through the
+       board, the tracker's close-off line under a staff header, and a staff note asking him who to assign */
+    { ParentId: TF, Body: 'UPDATE — the client wrote in this morning; please call today.', CreatedDate: sfAt(-1, 9), CreatedBy: BM },
+    { ParentId: TF, Body: 'HOLD — do not call until the agent is named.', CreatedDate: sfAt(-1, 10), CreatedBy: BM },
+    { ParentId: TF, Body: 'From the assignment board · Neil Ramnanan (Agent), 27 Oct 2026, 11:00: Met the client at home.', CreatedDate: sfAt(-1, 11), CreatedBy: BM },
+    { ParentId: TF, Body: 'Sales Support · Elizabeth Lee · Tue 27 Oct:\nNot done today: the client did not answer.\nNew date Wed 28 Oct.', CreatedDate: sfAt(-1, 17), CreatedBy: BM },
+    { ParentId: TF, Body: 'Staff · Sasha Lalla-Jagassar · Wed 28 Oct: Hi Mr Rampersad, please advise who to assign this to.', CreatedDate: sfAt(0, 9), CreatedBy: BM },
     /* a board note by the branch manager himself is his own words */
     { ParentId: TE, Body: 'From the assignment board · Ricky Rampersad (Branch Manager), 28 Oct 2026, 10:15: I called the client myself, Azariah to follow up.', CreatedDate: sfAt(0, 10), CreatedBy: BM }];
   if (/FROM FeedComment/.test(q)) return [{ ParentId: TE, CommentBody: 'Called, no answer. Will try again tomorrow.', CreatedDate: sfAt(0, 11), CreatedBy: { Name: 'Azariah Griffith' } }];
@@ -185,43 +193,66 @@ ok('the total is the sum', DR.mail.total === Object.values(MK).reduce((a, b) => 
 
 console.log('\nHis posts on the orphan tasks:');
 const PA = (DR.posts || {}).all || {};
-ok('his own words: the follow-up on A and his board note (the burst is not his hand)', PA.own === 2, JSON.stringify(PA));
+ok('his own words: the follow-up on A and his board note (the burst, and an agent\'s note through the board, are not his hand)', PA.own === 2, JSON.stringify(PA));
 ok('the morning chase in his voice: five in two minutes', PA.chase === 5, JSON.stringify(PA));
-ok('one daily list, one Branch Intelligence note, one follow-up, one task moved for cover', PA.list === 1 && PA.intel === 1 && PA.follow === 1 && PA.move === 1, JSON.stringify(PA));
-ok('a naming, and the tracker\'s "not touched" record, are not prompts', PA.name === 1 && PA.auto === 1, JSON.stringify(PA));
+ok('one daily list, one Branch Intelligence note, two instructions drafted for him (FOLLOW-UP, UPDATE), one task moved for cover', PA.list === 1 && PA.intel === 1 && PA.follow === 2 && PA.move === 1, JSON.stringify(PA));
+ok('a naming, a hold notice and the tracker\'s "not touched" record are counted, and are not prompts', PA.name === 1 && PA.hold === 1 && PA.auto === 1, JSON.stringify(PA));
 ok('a staff note headed with their name is not his', !(PA.own > 2));
 ok('today: the chase and his board note', DR.posts.today.chase === 5 && DR.posts.today.own === 1, JSON.stringify(DR.posts.today));
-ok('by hand and by automation', DR.posts.hand.all === 2 && DR.posts.auto.all === 9, JSON.stringify([DR.posts.hand, DR.posts.auto]));
+ok('by hand and by automation', DR.posts.hand.all === 2 && DR.posts.auto.all === 10, JSON.stringify([DR.posts.hand, DR.posts.auto]));
 
 console.log('\nWhen the team answers:');
 const AN = DR.answer || {};
-ok('eleven prompts', AN.prompts === 11, JSON.stringify(AN));
-ok('six answered: the list on A, Intelligence on B (by the close), the follow-up on C, the move on D (by Kamla), both on E', AN.answered === 6, JSON.stringify(AN));
-ok('the same day four times (A, D, and both on E); the rest within a working day or two', AN.same === 4 && AN.same + AN.next + AN.later === 6, JSON.stringify(AN));
+ok('twelve prompts', AN.prompts === 12, JSON.stringify(AN));
+ok('seven answered: the list on A, Intelligence on B (by the close), the follow-up on C, the move on D (by Kamla), both on E, the update on F (by Liz\'s close-off line)', AN.answered === 7, JSON.stringify(AN));
+ok('the same day five times (A, D, both on E, F); the rest within a working day or two', AN.same === 5 && AN.same + AN.next + AN.later === 7, JSON.stringify(AN));
 ok('his own follow-up on A, and four of this morning\'s chase, are still open', AN.open === 5, JSON.stringify(AN));
 ok('by hand: two prompts, one answered (Azariah on E)', AN.hand.prompts === 2 && AN.hand.answered === 1, JSON.stringify(AN.hand));
 const TM = Object.fromEntries((DR.team || []).map(p => [p.name, p]));
-ok('Sasha: one note, after the list', TM.Sasha && TM.Sasha.notes === 1 && TM.Sasha.after === 1 && TM.Sasha.own === 0, JSON.stringify(TM.Sasha));
-ok('Liz: her first note on her own, then a close that answers Branch Intelligence', TM.Liz && TM.Liz.notes === 1 && TM.Liz.own === 1 && TM.Liz.closes === 1 && TM.Liz.answered >= 1, JSON.stringify(TM.Liz));
+ok('Sasha: a note after the list, and a question to him on her own (a "Staff ·" line is hers)', TM.Sasha && TM.Sasha.notes === 2 && TM.Sasha.after === 1 && TM.Sasha.own === 1, JSON.stringify(TM.Sasha));
+ok('Liz: her first note on her own, a close that answers Branch Intelligence, and a close-off line after the update', TM.Liz && TM.Liz.notes === 2 && TM.Liz.own === 1 && TM.Liz.after === 1 && TM.Liz.closes === 1 && TM.Liz.answered >= 2, JSON.stringify(TM.Liz));
 ok('Azariah: two notes after a prompt (the tracker\'s under her name, and a comment)', TM.Azariah && TM.Azariah.notes === 2 && TM.Azariah.after === 2, JSON.stringify(TM.Azariah));
 ok('Kamla: a note after the move', TM.Kamla && TM.Kamla.notes === 1 && TM.Kamla.after === 1, JSON.stringify(TM.Kamla));
 ok('prompts left open on a task count against who holds it', TM.Sasha.waiting >= 2, JSON.stringify(TM.Sasha));
-ok('the team\'s notes, and the share after a prompt', DR.notes === 5 && DR.after === 4, DR.notes + ' ' + DR.after);
+ok('the team\'s notes, and the share after a prompt', DR.notes === 7 && DR.after === 5, DR.notes + ' ' + DR.after);
 
 console.log('\nWhat the notes say:');
 ok('Sasha: reached, details, the questionnaire and a next step: a drive', TM.Sasha.themes.r === 1 && TM.Sasha.themes.d === 1 && TM.Sasha.themes.q === 1 && TM.Sasha.read.drive === 1, JSON.stringify(TM.Sasha));
+ok('Sasha: "please advise who to assign" leaves it with him', TM.Sasha.themes.p === 1 && TM.Sasha.themes.k === 1 && TM.Sasha.read.park === 1, JSON.stringify(TM.Sasha));
+ok('Liz: the close-off line is a date moved, no outcome', TM.Liz.themes.x === 1 && TM.Liz.read.status === 1, JSON.stringify(TM.Liz));
 ok('Azariah: one parked with the branch manager, one a try with a next step', TM.Azariah.themes.p === 1 && TM.Azariah.read.park === 1 && TM.Azariah.themes.t === 1, JSON.stringify(TM.Azariah));
 ok('Liz: a try, recorded', TM.Liz.themes.t === 1 && TM.Liz.read.record === 1, JSON.stringify(TM.Liz));
+ok('the headers come off before a note is read', e.tOwallStrip_('Sales Support · Elizabeth Lee · Tue 27 Oct 4:10 pm:\nNot done today: x.\nNew date Wed 28 Oct.').indexOf('Not done today') === 0
+  && e.tOwallStrip_('From the assignment board · Sasha Lalla-Jagassar (Client Support), 27 Oct 2026, 10:15: Left a message.') === 'Left a message.');
 ok('Kamla: "Pending" is a status with no outcome', TM.Kamla.themes.v === 1 && TM.Kamla.read.status === 1, JSON.stringify(TM.Kamla));
 
 console.log('\nThe last ten working days:');
 ok('ten working days, today last', (DR.days || []).length === 10 && DR.days[9].d === TODAY || e.Utilities.formatDate(new Date(), TZ, 'u') > 5, JSON.stringify((DR.days || []).map(x => x.d)));
 const dd = Object.fromEntries((DR.days || []).map(x => [x.d, x]));
-if (dd[TODAY]) ok('today: one prompt by hand, five by automation, one note after a prompt', dd[TODAY].hand === 1 && dd[TODAY].auto === 5 && dd[TODAY].notes === 1 && dd[TODAY].after === 1, JSON.stringify(dd[TODAY]));
+if (dd[TODAY]) ok('today: one prompt by hand, five by automation, two notes, one after a prompt', dd[TODAY].hand === 1 && dd[TODAY].auto === 5 && dd[TODAY].notes === 2 && dd[TODAY].after === 1, JSON.stringify(dd[TODAY]));
 ok('named on the board by him: none in this sample; the namers are read', DR.named && typeof DR.named.board === 'number');
 
+console.log('\nThe flow, the hours, the speed, the weeks:');
+const FL = DR.flow || {};
+const sumObj = o => Object.values(o || {}).reduce((a, b) => a + b, 0);
+ok('every prompt is in the flow once, by kind', Object.values(FL.kinds || {}).reduce((a, k) => a + sumObj(k), 0) === AN.prompts, JSON.stringify(FL.kinds));
+ok('and once by who answered it, or whose task it waits on', ['same', 'next', 'later', 'open'].reduce((a, w) => a + sumObj((FL.who || {})[w]), 0) === AN.prompts, JSON.stringify(FL.who));
+ok('the kinds: his own words, the chase, the instructions, the moves, the lists', FL.kinds.hand && FL.kinds.chase && FL.kinds.instr && FL.kinds.move && FL.kinds.list
+  && sumObj(FL.kinds.hand) === 2 && sumObj(FL.kinds.chase) === 5 && sumObj(FL.kinds.instr) === 2 && sumObj(FL.kinds.list) === 2, JSON.stringify(FL.kinds));
+ok('prompts left open wait on whoever holds the task', (FL.who.open.sasha || 0) >= 1 && (FL.who.open.liz || 0) >= 1, JSON.stringify(FL.who.open));
+const HR = DR.hours || {};
+ok('the hours, 5:00 to 19:00, every prompt and every note counted once', HR.from === 5 && HR.prompts.length === 15 && HR.prompts.reduce((a, b) => a + b, 0) === AN.prompts
+  && HR.notes.reduce((a, b) => a + b, 0) === DR.notes && HR.peakPrompts >= 5 && HR.peakPrompts <= 19, JSON.stringify(HR));
+const WV = DR.wave || {};
+ok('the speed: every answer in one bucket, and the median', WV.counts.reduce((a, b) => a + b, 0) === AN.answered && WV.answered === AN.answered && typeof WV.median === 'number' && WV.within4 <= WV.within24, JSON.stringify(WV));
+ok('each person\'s median hours to answer', DR.team.every(p => p.hours === null || typeof p.hours === 'number') && typeof TM.Azariah.hours === 'number', JSON.stringify(DR.team.map(p => [p.name, p.hours])));
+ok('the weeks: prompts and notes, oldest first', (DR.weeks || []).length >= 1 && DR.weeks.reduce((a, w) => a + w.prompts, 0) === AN.prompts && DR.weeks.reduce((a, w) => a + w.notes, 0) === DR.notes, JSON.stringify(DR.weeks));
+ok('the lift: the team\'s notes on his busiest days against his quietest', DR.lift === null || (typeof DR.lift.busy === 'number' && typeof DR.lift.quiet === 'number' && DR.lift.busyPrompts >= DR.lift.quietPrompts), JSON.stringify(DR.lift));
+ok('the stream: up to twenty working days, today last', (DR.stream || []).length >= 1 && DR.stream.length <= 20 && (DR.stream[DR.stream.length - 1].d === TODAY || e.Utilities.formatDate(new Date(), TZ, 'u') > 5), JSON.stringify((DR.stream || []).map(x => x.d)));
+ok('parked: two notes left a client with him; one still waits on him now', DR.parked && DR.parked.notes === 2 && DR.parked.tasks === 2 && DR.parked.now === 1, JSON.stringify(DR.parked));
+
 console.log('\nNothing about a client:');
-['tokA', 'tokB', 'Alice', 'Abel', 'Brian', 'Carla', 'Dara', '5000000', '5009990', TA.slice(0, 15), 'voicemail', 'where are we', 'Pending'].forEach(s => ok('no "' + s + '"', body.indexOf(s) < 0));
+['tokA', 'tokB', 'Alice', 'Abel', 'Brian', 'Carla', 'Dara', '5000000', '5009990', TA.slice(0, 15), 'voicemail', 'where are we', 'Pending', 'Met the client', 'wrote in this morning'].forEach(s => ok('no "' + s + '"', body.indexOf(s) < 0));
 ok('no staff surname', !/Lalla|Jagassar|Griffith|Dookran|Ramnanan\b/.test(body), (body.match(/.{30}(Lalla|Jagassar|Griffith|Dookran|Ramnanan\b).{30}/) || [])[0]);
 
 console.log('\nWithout Salesforce:');
