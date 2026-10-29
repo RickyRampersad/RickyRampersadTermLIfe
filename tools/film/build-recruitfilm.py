@@ -385,8 +385,8 @@ def career_svg(orient, A, n):
     na = ''.join(f'<circle class="node a" cx="{x}" cy="{y}" r="9" style="--t0:{ta + 500 + i*420}ms"/>' + label(x, y, nm, dt, ly, anc, ta + 550 + i*420, 'a') for i, (x, y, nm, dt, ly, anc) in enumerate(ra))
     nb = ''.join(f'<circle class="node b" cx="{x}" cy="{y}" r="9" style="--t0:{tb + 500 + i*420}ms"/>' + label(x, y, nm, dt, ly, anc, tb + 550 + i*420, 'b') for i, (x, y, nm, dt, ly, anc) in enumerate(rb))
     return f'''<svg class="ctl ctl-{orient}" viewBox="0 0 {W} {H}" aria-hidden="true">
-  <path class="rail main" d="{main}" style="--t0:{t0}ms"/>
-  <path class="rail a" d="{pa}" style="--t0:{ta}ms"/><path class="rail b" d="{pb}" style="--t0:{tb}ms"/>
+  <path class="rail main" pathLength="100" d="{main}" style="--t0:{t0}ms"/>
+  <path class="rail a" pathLength="100" d="{pa}" style="--t0:{ta}ms"/><path class="rail b" pathLength="100" d="{pb}" style="--t0:{tb}ms"/>
   {nodes}{na}{nb}
   <circle class="rider m" r="9" style="--t0:{t0}ms;--d:{max(800, ta - t0)}ms;offset-path:path('{main}')"/>
   <circle class="rider a" r="9" style="--t0:{ta}ms;--d:1600ms;offset-path:path('{pa}')"/>
@@ -2266,7 +2266,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 .s27-r{display:grid;gap:calc(var(--u)*1.4);justify-items:start}
 .ctl{width:100%;height:auto;overflow:visible;display:block}.ctl-l{width:min(100%,calc(var(--u)*134));justify-self:center}
 .ctl-v{display:none}
-.ctl .rail{fill:none;stroke:rgba(255,255,255,.22);stroke-width:4;stroke-linecap:round;stroke-dasharray:1400;stroke-dashoffset:1400}
+.ctl .rail{fill:none;stroke:rgba(255,255,255,.22);stroke-width:4;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
 .ctl .rail.a{stroke:rgba(0,207,234,.55)}.ctl .rail.b{stroke:rgba(0,207,234,.55)}
 .scene.act .ctl .rail{animation:trdraw 1.6s var(--out) forwards;animation-delay:var(--t0)}
 .ctl .node{fill:var(--bg3);stroke:#fff;stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:center}
