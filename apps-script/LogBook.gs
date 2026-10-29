@@ -2572,7 +2572,14 @@ function lbWall_(b) {
   return out;
 }
 function lbFirst_(n) {
-  var s = String(n || '').replace(/^\s*A?\d+\s*-\s*/i, '').trim();
+  var s = String(n || '').replace(/^\s*agent\s+/i, '').trim();
+  /* A sign-in by agent number writes the number ("SL002", "AG-003", "A10024 - Name"): read the person's name. */
+  var m = /^([a-z]{0,4}-?\d{2,6})\b\s*[-\u2013:]?\s*(.*)$/i.exec(s);
+  if (m) {
+    s = m[2];
+    if (!s) { try { var a = lbFindAgent_(m[1]); s = a && a.name ? a.name : ''; } catch (e) { s = ''; } }
+  }
+  s = s.replace(/^\s*A?\d+\s*-\s*/i, '').trim();
   return s ? lbTitle_(s.split(/\s+/)[0]) : '';
 }
 function lbWallBuild_(now) {
