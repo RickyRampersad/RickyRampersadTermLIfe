@@ -62,17 +62,26 @@ RIGHT = 'M44 9L73 21.5V41C73 60.5 60.5 72 44 78.5Z'
 # in this film is derived from this list for exactly that reason, and none is
 # typed into a line by hand.  Nothing in the film says anyone left, here or
 # anywhere: the house rule is that nobody who goes is characterised or counted.
+#
+# The fourth field is sex, and it is READ OFF THE RECORD, never guessed from a
+# first name: each person's own Salesforce Contact — Salutation, and Gender__c
+# where it is filled — pulled on 29 October 2026.  A guess here misgenders a
+# colleague on a film the whole branch sits down and watches, and a first name
+# is not evidence.  Steven carries no hire date, so he is the +1 in HEADCOUNT
+# and the one person not on the tenure chart; he is counted in MEN.
 ROSTER = [
-    ("Ricky", 1993, 12), ("Narissa", 1999, 7), ("Richard", 2003, 8),
-    ("Premchand", 2004, 12),
-    ("Akaash", 2011, 7), ("Joy", 2012, 9), ("Faizal", 2012, 10),
-    ("Meera", 2014, 10), ("Petra", 2016, 4), ("Randolph", 2016, 11),
-    ("Neil", 2018, 7), ("Varun", 2019, 6), ("Darryl", 2021, 4),
-    ("Malcolm", 2022, 4), ("Fawwaz", 2023, 3), ("Stephanie", 2023, 3),
-    ("Jamil", 2023, 8), ("Daniel", 2025, 7), ("Felicia", 2025, 8),
-    ("Rajiv", 2026, 7),
+    ("Ricky", 1993, 12, 'm'), ("Narissa", 1999, 7, 'f'), ("Richard", 2003, 8, 'm'),
+    ("Premchand", 2004, 12, 'm'),
+    ("Akaash", 2011, 7, 'm'), ("Joy", 2012, 9, 'f'), ("Faizal", 2012, 10, 'm'),
+    ("Meera", 2014, 10, 'f'), ("Petra", 2016, 4, 'f'), ("Randolph", 2016, 11, 'm'),
+    ("Neil", 2018, 7, 'm'), ("Varun", 2019, 6, 'm'), ("Darryl", 2021, 4, 'm'),
+    ("Malcolm", 2022, 4, 'm'), ("Fawwaz", 2023, 3, 'm'), ("Stephanie", 2023, 3, 'f'),
+    ("Jamil", 2023, 8, 'm'), ("Daniel", 2025, 7, 'm'), ("Felicia", 2025, 8, 'f'),
+    ("Rajiv", 2026, 7, 'm'),
 ]
-SUPPORT = ["Kamla", "Sasha", "Elizabeth", "Azariah", "Pawan"]
+NO_DATE_SEX = 'm'                    # Steven, Mr. on his Contact, no hire date
+SUPPORT = [("Kamla", 'f'), ("Sasha", 'f'), ("Elizabeth", 'f'),
+           ("Azariah", 'f'), ("Pawan", 'm')]
 
 # ── the branch's own history ─────────────────────────────────────────────────
 #  Every date here is one this repository can show: the day the thing went
@@ -212,12 +221,13 @@ FFSTEPS = [
 ]
 
 PEOPLE = []
-for nm, y, m in ROSTER:
+for nm, y, m, sx in ROSTER:
     yrs = (TODAY - date(y, m, 1)).days / 365.25
     PEOPLE.append({
         'n': nm,
         'y': yrs,
         'full': int(yrs),                      # full years served
+        'sx': sx,
         'band': 'g' if yrs >= 10 else ('t' if yrs < 3 else 's'),
     })
 PEOPLE.sort(key=lambda p: -p['y'])
@@ -226,6 +236,11 @@ LONG = sum(1 for p in PEOPLE if p['band'] == 'g')      # ten years or more
 NEW = sum(1 for p in PEOPLE if p['band'] == 't')       # joined in the last three
 MID = len(PEOPLE) - LONG - NEW                         # the band between
 HEADCOUNT = len(ROSTER) + 1                            # +1, the one with no hire date on file
+#  Men and women across the whole branch, derived like every other figure here
+#  so it can never drift from the roster above.
+SEXES = [p['sx'] for p in PEOPLE] + [NO_DATE_SEX] + [x for _, x in SUPPORT]
+MEN = sum(1 for x in SEXES if x == 'm')
+WOMEN = sum(1 for x in SEXES if x == 'f')
 MAXY = max(p['y'] for p in PEOPLE)
 
 # data-d is milliseconds. importvox.py writes rise-timing.json in SECONDS and
@@ -293,20 +308,41 @@ def mesh(mode, n=9):
     return f'<svg class="mx mx-{mode}" viewBox="0 0 88 88" aria-hidden="true">{eh}{nh}</svg>'
 
 
-def person(cls='', style='', label=''):
+def person(cls='', style='', label='', sex='m'):
     """A head and shoulders, not a dot.
 
-       Asked for on 29 October 2026: "better icons show ppeople not dots". A
-       chart about who stayed should look like people, and twenty-six dots is
-       the one drawing that cannot say that. One silhouette, drawn once here
-       and sized by its container everywhere it is used.
+       Asked for on 29 October 2026: "better icons show ppeople not dots", then
+       "figurines of men and women". A chart about who stayed should look like
+       people, and twenty-six dots is the one drawing that cannot say that.
+
+       Two silhouettes on the same 24x27 canvas, so a mixed row still lines up.
+       The woman is hair framing the head and falling either side, and slightly
+       narrower shoulders — NOT the toilet-door dress, which reads as dated and
+       is unrecognisable at the size these actually render. Hair is the only
+       difference that survives at twenty pixels, which is why it carries it.
+
+       sex comes from the person's own record (see ROSTER) and is never guessed
+       from a first name.
     """
     cap = f'<i>{label}</i>' if label else ''
-    return (f'<span class="rsppl {cls}" style="{style}">'
-            f'<svg viewBox="0 0 24 27" aria-hidden="true">'
-            f'<circle cx="12" cy="6.6" r="5"/>'
-            f'<path d="M2.8 26.5c0-5.1 4.1-8.8 9.2-8.8s9.2 3.7 9.2 8.8z"/>'
-            f'</svg>{cap}</span>')
+    if sex == 'f':
+        body = ('<path d="M4.4 13.9c-.9-2.6-1-5 .2-7.3C6.1 3.5 8.8 1.7 12 1.7'
+                's5.9 1.8 7.4 4.9c1.2 2.3 1.1 4.7.2 7.3l-2.3-.9c.6-1.8.7-3.4.1-4.8'
+                'C16.6 6.3 14.6 5.1 12 5.1S7.4 6.3 6.6 8.2c-.6 1.4-.5 3 .1 4.8z"/>'
+                '<circle cx="12" cy="7.3" r="4.6"/>'
+                '<path d="M4.1 26.5c0-5 3.6-8.8 7.9-8.8s7.9 3.8 7.9 8.8z"/>')
+    else:
+        body = ('<circle cx="12" cy="6.6" r="5"/>'
+                '<path d="M2.8 26.5c0-5.1 4.1-8.8 9.2-8.8s9.2 3.7 9.2 8.8z"/>')
+    return (f'<span class="rsppl p-{sex} {cls}" style="{style}">'
+            f'<svg viewBox="0 0 24 27" aria-hidden="true">{body}</svg>{cap}</span>')
+
+
+#  An anonymous crowd, mixed in the branch's own ratio so it is a picture of
+#  this branch rather than a stock mix. Nobody in it is named, so nobody in it
+#  can be misgendered.
+def crowd_sex(i):
+    return 'f' if (i * WOMEN) % (MEN + WOMEN) < WOMEN else 'm' 
 
 
 #  Every screen in this film is one of the branch's own, captured with sample
@@ -454,8 +490,38 @@ def V(name, s):
 
     # 2 · people left. Points detach from the lattice and drift out, and the
     #     chords to them fade. No number, no name, no direction.
+    #     Asked for on 29 October 2026: "drop off a couple". A scattered field
+    #     of figures, cold; three sink out of it and the rest stand.
+    #
+    #     THE FIELD IS NOT A COUNT, AND MUST NEVER BECOME ONE. Nobody who
+    #     leaves this branch is characterised OR COUNTED anywhere at a public
+    #     address, and this file sits at one. So the figures are scattered
+    #     rather than ranked or rowed (a scatter is not countable at a glance),
+    #     there is no caption, no number on screen and no number in the line,
+    #     and the three that go are a visual device in his own words, not the
+    #     branch's arithmetic. Do not make it twelve.
     if name == 'left':
-        return (f'<div class="rsstage">{shield("cold")}{mesh("shed")}{crack("held")}</div>')
+        import random as _r
+        rnd = _r.Random(23)                     # seeded: render.js draws each
+        gone = {20, 31, 40}                     # frame on its own, so an
+        figs = ''                               # unseeded field would jitter
+        for i in range(45):                     # from frame to frame
+            col, row = i % 9, i // 9
+            #  Jitter wider than the pitch, and the rows staggered, so no eye
+            #  can resolve a count out of it: the lattice has to be broken,
+            #  not merely softened. The first cut jittered by a seventh of the
+            #  pitch and read as a tidy grid of 34 — i.e. as a number.
+            x = col * 11.4 + (5.7 if row % 2 else 0) - 2.0 + rnd.uniform(-4.4, 4.4)
+            y = row * 20.4 + 1.0 + rnd.uniform(-5.6, 5.6)
+            sc = 0.62 + row * 0.13 + rnd.uniform(-.09, .09)   # nearer = larger
+            figs += person('rscp' + (' rsgone' if i in gone else ''),
+                           f'--x:{x:.1f};--y:{y:.1f};--s:{sc:.2f};--i:{i};'
+                           f'--o:{.3 + row * .17:.2f};'
+                           f'--w:{rnd.uniform(3.0, 5.4):.1f}',
+                           '', crowd_sex(i * 7))
+        return (f'<div class="rscrowd">{figs}</div>'
+                f'<div class="rsstage rssm">{shield("cold")}{mesh("shed")}'
+                f'{crack("held")}</div>')
 
     # 3 · it held. The tear stops where it stopped.
     if name == 'held':
@@ -482,24 +548,50 @@ def V(name, s):
                 f'<div class="rsfoot">requests closed &middot; October still has two days to run</div>'
                 f'</div>')
 
-    # 4 · so look at who is still standing.
+    # 4 · so look at who is still standing — and this is where they rise.
+    #     Asked for the same day: "rise to the top with those who's standing".
+    #     The whole branch comes up off the floor in a wave, warming from the
+    #     cold of the three scenes before it to cyan as it arrives, and lands
+    #     in ordered rows under the line. Men and women, each from the record.
     if name == 'stayed':
-        return f'<div class="rscap big">{words(s["say"])}</div>'
+        rows, figs = (9, 9, 8), ''
+        k = 0
+        for r, wide in enumerate(rows):
+            for c in range(wide):
+                figs += person('rsup', f'--i:{k};--c:{c - (wide - 1) / 2:.1f};'
+                                       f'--r:{r}', '', SEXES[k])
+                k += 1
+        return (f'<div class="rscap big">{words(s["say"])}'
+                f'<div class="rswave">{figs}</div></div>')
 
     # 5 · the count. Twenty-three chips light one by one, then five more
     #     behind them in teal — the support team is in this branch's story and
     #     leaving them out of "who stayed" would be a lie by omission.
-    chips = ''
+    #     Asked for on 29 October 2026: "a more impactful number with figurines
+    #     of men and women". So the figure carries the room and the people
+    #     stand beside it, each one drawn as the man or woman their own record
+    #     says they are, and the split is stated because it is true and worth
+    #     saying out loud. The support team is in it: leaving them out of "who
+    #     stayed" would be a lie by omission.
     if name == 'count':
-        for i, p in enumerate(PEOPLE):
-            chips += person('', f'--i:{i}', p['n'][0])
-        chips += person('', '--i:20', 'S')
-        sup = ''.join(person('sup', f'--i:{21 + i}', n[0])
-                      for i, n in enumerate(SUPPORT))
-        return (f'<div class="rscap"><div class="rschips">{chips}</div>'
-                f'<div class="rschips sup">{sup}</div>'
-                f'<div class="rsbig">{cnt(HEADCOUNT + len(SUPPORT), 900)}'
-                f'<span class="rsbigl">still here</span></div></div>')
+        chips = ''.join(person('', f'--i:{i}', p['n'][0], p['sx'])
+                        for i, p in enumerate(PEOPLE))
+        chips += person('', '--i:20', 'S', NO_DATE_SEX)
+        sup = ''.join(person('sup', f'--i:{21 + i}', n[0], x)
+                      for i, (n, x) in enumerate(SUPPORT))
+        return (f'<div class="rscap wide"><div class="rsnum">'
+                f'<div class="rsnumn">{cnt(HEADCOUNT + len(SUPPORT), 260)}'
+                f'<span class="rsnuml">still here</span>'
+                f'<span class="rsmw">{person("mw", "", "", "m")}{MEN} men'
+                f'<em></em>{person("mw", "", "", "f")}{WOMEN} women</span></div>'
+                f'<div class="rsnumg">'
+                f'<div class="rsgrp"><span class="rsgrpl">'
+                f'{HEADCOUNT} agents and managers</span>'
+                f'<div class="rschips">{chips}</div></div>'
+                f'<div class="rsgrp"><span class="rsgrpl">'
+                f'{len(SUPPORT)} behind them</span>'
+                f'<div class="rschips sup">{sup}</div></div>'
+                f'</div></div></div>')
 
     # 6 · the chart, one hue: the total is the point, and a single series needs
     #     no palette.
@@ -520,6 +612,36 @@ def V(name, s):
                 f'<div class="rsdonut">{donut(LONG, len(PEOPLE), f"of {len(PEOPLE)} at ten years or more")}</div>'
                 f'</div>')
 
+    # 7b · thirty-two years of outcomes, and the point he wanted made.
+    #      Asked for on 29 October 2026: "some retired, some resigned, 2 was
+    #      terminated and some vested, so highlight in branch as ours we only
+    #      had 3 terminations".
+    #
+    #      THE TWO NAMES HE GAVE ARE NOT HERE AND MUST NOT BE ADDED. This film
+    #      sits at a public, forwardable URL, and naming a person as terminated
+    #      is the single most exposing line that could go on one — which is the
+    #      whole reason the house rule says nobody who leaves is characterised.
+    #      The count makes his point and names nobody.
+    #
+    #      THE FIGURE IS THE BRANCH'S OWN, on his word, asked and answered the
+    #      same day. Salesforce's Employment Status gives FOUR under the two
+    #      current units (2012, 2015, 2018, 2019) and does not carry the
+    #      September 2026 case at all; and unit membership today is not
+    #      thirty-two years of branch history, since the old units are gone. So
+    #      the system cannot settle it, and the screen says whose record it is
+    #      rather than passing it off as Salesforce's.
+    if name == 'outcome':
+        soft = ''.join(
+            f'<div class="rsoc" style="--i:{i}"><span class="rsoct">{w}</span></div>'
+            for i, w in enumerate(('Retired', 'Vested', 'Resigned')))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsocs">{soft}'
+                f'<div class="rsoc lit" style="--i:3">'
+                f'<span class="rsoct">Terminations</span>'
+                f'<div class="rsocn">{cnt(3, 700)}</div></div></div>'
+                f'<div class="rsfoot">the branch&rsquo;s own record '
+                f'&middot; thirty-two years</div></div>')
+
     # 7a · the branch on one line. A dot for every person at the year they
     #      joined, stacked where a year repeats, so the eye reads a branch
     #      that has been keeping people for three decades rather than a list.
@@ -528,12 +650,12 @@ def V(name, s):
         span = y1 - y0
         seen = {}
         dots = ''
-        for i, (nm, yy, mm) in enumerate(sorted(ROSTER, key=lambda r: (r[1], r[2]))):
+        for i, (nm, yy, mm, sx) in enumerate(sorted(ROSTER, key=lambda r: (r[1], r[2]))):
             at = (yy + (mm - 1) / 12 - y0) / span * 100
             k = round(at / 3)
             seen[k] = seen.get(k, 0) + 1
             dots += person('rsdot', f'--x:{at:.2f};--s:{seen[k] - 1};'
-                           f'--l:{i % 3};--i:{i}', nm)
+                           f'--l:{i % 3};--i:{i}', nm, sx)
         ticks = ''.join(
             f'<span class="rstk" style="--x:{(d - y0) / span * 100:.2f}">{d}</span>'
             for d in range(2000, y1 + 1, 5))
@@ -986,8 +1108,9 @@ def V(name, s):
     if name == 'outside':
         return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
                 f'<div class="rsout">{shot("wday", cls="rsoutw")}'
-                f'<div class="rsoutp">{person("", "--i:0")}{person("", "--i:1")}'
-                f'{person("", "--i:2")}</div></div>'
+                f'<div class="rsoutp">{person("", "--i:0", "", "m")}'
+                f'{person("", "--i:1", "", "f")}{person("", "--i:2", "", "m")}'
+                f'</div></div>'
                 f'<div class="rsfoot">what&rsquo;s done, what&rsquo;s late, '
                 f'and whose name is on it</div></div>')
 
@@ -1021,7 +1144,7 @@ CHAPTER = {
     'hit': 'The hit', 'left': 'People left', 'held': 'It held',
     'rose': 'And it went up', 'stayed': 'Who stayed',
     'count': 'Twenty-six still here', 'years': '221 years between us',
-    'mix': 'Ten years, and new', 'story': 'The branch, on one line',
+    'mix': 'Ten years, and new', 'story': 'The branch, on one line', 'outcome': 'Thirty-two years',
     'rebuild': 'We rebuilt it', 'built': 'Eighteen things, since August',
     'one': 'One sign-in', 'day': 'Your day, set', 'wall': 'One score',
     'served': 'What we closed', 'papers': 'The papers', 'ff': 'Not one lapse',
@@ -1260,6 +1383,127 @@ CSS = r"""
   background:radial-gradient(circle,rgba(0,229,255,.28),transparent 70%);opacity:0;
   animation:pplPop .7s both;animation-delay:calc(.35s + var(--i)*.055s)}
 @keyframes pplPop{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(1.5)}}
+
+/* ── the crowd, the rise, and the number ──────────────────────────────────── */
+/*  Every modifier below writes its OWN end transform. The base .rsppl sits at
+    opacity 0 / translateY(.8vh) scale(.6) and pplIn ends on transform:none, so
+    a placed figure that inherits that animation is thrown back to the origin —
+    the same trap the journey ring hit. Placement that must survive goes in the
+    modifier's own keyframes, never left to transform:none.                   */
+.rs .rscrowd{position:absolute;inset:0 0 104px 0;overflow:hidden;z-index:1}
+.rs .rsppl.rscp{position:absolute;left:calc(var(--x)*1%);top:calc(var(--y)*1%);
+  width:calc(2.6vw*var(--s));opacity:0;
+  animation:rsCin .5s both,rsSway 4.8s linear infinite;
+  animation-delay:calc(var(--i)*.021s),calc(var(--i)*-.14s)}
+.rs .rsppl.rscp svg{fill:var(--cold);opacity:var(--o,.6);
+  filter:blur(calc((1 - var(--o))*2.4px))}
+.rs .rsppl.rscp::after{display:none}
+@keyframes rsCin{to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes rsSway{0%,100%{translate:0 0}50%{translate:0 calc(var(--w)*-.09vh)}}
+/*  Three go. A scatter is not countable at a glance and nothing here is
+    labelled, which is the point: nobody who leaves is counted at a public
+    address. Do not turn this into the branch's arithmetic.                   */
+.rs .rsppl.rscp.rsgone{animation:rsCin .5s both,rsSink 1.5s both;
+  animation-delay:calc(var(--i)*.021s),1.15s}
+@keyframes rsSink{0%{opacity:1}55%{opacity:.35}
+  100%{opacity:0;translate:0 11vh;filter:blur(4px)}}
+.rs .rsstage.rssm{width:min(34vh,24vw);opacity:.4;z-index:2}
+
+/*  "rise to the top with those who's standing" — the whole branch comes up
+    off the floor in a wave and warms from cold to cyan as it arrives.        */
+.rs .rswave{position:relative;width:100%;height:30vh;margin-top:1.2vh}
+.rs .rsppl.rsup{position:absolute;left:50%;top:calc(1vh + var(--r)*9.4vh);
+  width:4.4vw;opacity:0;
+  animation:rsWave .85s cubic-bezier(.16,1.08,.3,1) both;
+  animation-delay:calc(.45s + var(--i)*.032s)}
+@keyframes rsWave{
+  0%{opacity:0;transform:translate(calc(var(--c)*5.3vw - 50%),19vh) scale(.42)}
+  55%{opacity:1}
+  100%{opacity:1;transform:translate(calc(var(--c)*5.3vw - 50%),0) scale(1)}}
+.rs .rsppl.rsup svg{fill:var(--cold);filter:none;
+  animation:rsWarm .7s both;animation-delay:calc(.75s + var(--i)*.032s)}
+@keyframes rsWarm{to{fill:var(--cy);filter:drop-shadow(0 0 .5rem rgba(0,229,255,.4))}}
+.rs .rsppl.rsup::after{animation-delay:calc(1s + var(--i)*.032s)}
+/*  They arrive and then keep breathing, so the scene has a pulse at rest —
+    the house rule everywhere else on this site. translate is its own property
+    and composes with rsWave's transform instead of overwriting it.          */
+.rs .rsppl.rsup svg{
+  animation:rsWarm .7s both,rsBreath 3.4s ease-in-out infinite,
+            rsPulse 2.9s linear infinite;
+  animation-delay:calc(.75s + var(--i)*.032s),calc(1.4s + var(--c)*.09s),
+                  calc(1.5s + (var(--c) + 4.5)*.075s)}
+@keyframes rsBreath{0%,100%{translate:0 0}50%{translate:0 -.7vh}}
+/*  A light running along the rows. It has to be a pulse ON THE FIGURES, not a
+    band drawn over the scene: a gradient box with inset:0 paints a slab of
+    ground beside the people and reads as a rendering fault.                 */
+@keyframes rsPulse{0%,64%,100%{filter:drop-shadow(0 0 .5rem rgba(0,229,255,.4))}
+  10%{filter:drop-shadow(0 0 1.4rem rgba(0,229,255,.95)) brightness(1.3)}}
+/*  fIn ENDS ON transform:none, so it wipes the translateX(-50%) that places
+    this and the glow slides out to the right as a grey smear. Anything placed
+    by a transform gets a keyframe that moves opacity ALONE — the same trap the
+    journey ring and the AI badge hit, and the third time it has cost a shot. */
+.rs .rswave::before{content:"";position:absolute;left:50%;bottom:-1vh;
+  width:46vw;height:8vh;transform:translateX(-50%);pointer-events:none;
+  background:radial-gradient(ellipse at 50% 100%,rgba(0,229,255,.26),transparent 72%);
+  opacity:0;animation:rsFade 1.2s 1.1s both}
+@keyframes rsFade{to{opacity:1}}
+
+/*  Thirty-two years of outcomes: three quiet categories and one lit figure.
+    No figures on the lit tile — three silhouettes would invite the eye to read
+    a sex or a face onto three real people, and nothing on record supports it. */
+.rs .rsocs{display:grid;grid-template-columns:repeat(3,auto) 1fr;gap:1.5vw;
+  align-items:stretch;width:100%;max-width:1080px;margin-top:1vh}
+.rs .rsoc{display:grid;align-content:center;justify-items:center;gap:.9vh;
+  padding:2.8vh 1.7vw;border-radius:14px;border:1px solid var(--line);
+  background:#0D1733;opacity:0;transform:translateY(1.4vh);
+  animation:fUp .55s both;animation-delay:calc(.35s + var(--i)*.15s)}
+.rs .rsoct{font-size:1.2vw;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--mut);white-space:nowrap}
+.rs .rsoc.lit{border-color:var(--cy);
+  background:linear-gradient(180deg,rgba(0,229,255,.11),rgba(0,229,255,.02));
+  box-shadow:0 0 0 1px rgba(0,229,255,.22),0 0 3rem rgba(0,229,255,.14)}
+.rs .rsoc.lit .rsoct{color:var(--cy)}
+.rs .rsocn .rscnt{font-size:7.6vw;line-height:.88;letter-spacing:-.04em;
+  filter:drop-shadow(0 0 1.7rem rgba(0,229,255,.36))}
+
+/*  The number carries the room; the people stand beside it.                  */
+.rs .rsnum{display:grid;grid-template-columns:auto 1fr;gap:3.4vw;align-items:center;
+  width:100%;max-width:1180px;text-align:left}
+.rs .rsnumn{position:relative;display:grid;justify-items:center;gap:.2vh}
+.rs .rsnumn::before{content:"";position:absolute;left:50%;top:38%;
+  width:26vw;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,rgba(0,229,255,.3),transparent 66%);
+  opacity:0;animation:rsBurst 1.5s .3s both;pointer-events:none}
+@keyframes rsBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}
+  38%{opacity:1}100%{opacity:.42;transform:translate(-50%,-50%) scale(1)}}
+.rs .rsnumn::after{content:"";position:absolute;left:50%;top:38%;
+  width:19vw;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  border:2px solid rgba(0,229,255,.5);opacity:0;
+  animation:rsRing 1.5s .45s ease-out both;pointer-events:none}
+@keyframes rsRing{0%{opacity:.9;transform:translate(-50%,-50%) scale(.3)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}}
+.rs .rsnumn>*{position:relative;z-index:1}
+.rs .rsnumn .rscnt{font-size:16vw;line-height:.84;letter-spacing:-.05em;
+  filter:drop-shadow(0 0 2.6rem rgba(0,229,255,.32))}
+.rs .rsnuml{font-size:1.7vw;font-weight:700;letter-spacing:.2em;color:var(--mut);
+  text-transform:uppercase;opacity:0;animation:fUp .6s .75s both}
+.rs .rsmw{display:flex;align-items:center;gap:.5vw;margin-top:1.3vh;
+  font-size:1.26vw;font-weight:700;color:var(--ink);white-space:nowrap;
+  opacity:0;animation:fUp .6s 1.15s both}
+.rs .rsmw em{width:1px;height:1.5vh;background:var(--line);margin:0 .5vw}
+.rs .rsppl.mw{width:1.25vw;animation:none;opacity:1;transform:none}
+.rs .rsppl.mw svg{filter:none}
+.rs .rsppl.mw svg{fill:var(--mut)}
+.rs .rsppl.mw::after{display:none}
+.rs .rsnumg{display:grid;gap:1.8vh;justify-items:start}
+.rs .rsgrp{display:grid;gap:.7vh;justify-items:start}
+.rs .rsgrpl{font-size:1.1vw;font-weight:700;letter-spacing:.14em;color:var(--mut);
+  text-transform:uppercase;opacity:0;animation:fRt .5s both;
+  animation-delay:calc(.3s + var(--i, 0)*.1s)}
+.rs .rsgrp:last-child .rsgrpl{animation-delay:1.25s}
+.rs .rsnumg .rschips{justify-content:flex-start;max-width:37.2vw;gap:.6vw}
+.rs .rsnumg .rsppl{width:2.7vw}
+.rs .rsnumg .rsppl.sup{width:3.1vw}
 .rs .rstwo{display:grid;grid-template-columns:1fr 1fr;gap:3vw;width:74%;max-width:980px;
   margin-top:.6vh}
 .rs .rscard{position:relative;display:grid;gap:1.1vh;justify-items:center;
@@ -1909,10 +2153,18 @@ if not os.environ.get('RISE_VARIANT'):
         body = re.sub(r'&mdash;|&middot;|&nbsp;', ' ', body)
         body = re.sub(r'\s+', ' ', body).lower()
         everyone = len(ROSTER) + 1 + len(SUPPORT)
+        #  The page states the film's length twice (the hero eyebrow and the
+        #  play button) and it goes stale every time a scene is added — which
+        #  is the same class of fault as a stale headcount, so it is checked
+        #  the same way rather than remembered.
+        _s = round(sum(SECS))
+        run = f'{int(_s // 60)}:{_s % 60:02d}'
         want = [(spoken(everyone), body, 'the headcount, in the lede'),
                 (spoken(TOTAL), body, 'the years, in the lede'),
-                (str(TOTAL), meta, 'the years, in the meta descriptions')]
+                (str(TOTAL), meta, 'the years, in the meta descriptions'),
+                (run, body, f'the running time ({run})')]
         gone = [f'{w!r} ({why})' for w, where, why in want if w not in where]
         assert not gone, ('branchmeet/index.html no longer carries ' +
                           ', '.join(gone) + '. The roster gives '
-                          f'{everyone} people and {TOTAL} years: put those in the page.')
+                          f'{everyone} people and {TOTAL} years, and the cut '
+                          f'runs {run}: put those in the page.')
