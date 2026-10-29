@@ -7668,6 +7668,167 @@ added. That is the same class of fault as a stale headcount, so the builder
 checks it the same way rather than leaving it to memory: the stated `m:ss` has
 to match `sum(SECS)`, and a mismatch names the right value.
 
+### Nineteen agents, and eighty-seven over sixteen years — 29 October 2026
+
+Asked for in these words: *"ok so its 19agents we have as a count and all our
+staff none of our admins left us 3 support and a Bma, also you need to condense
+and deep dive as we have alot going for us and mush more motion and graphics
+that apeals"*, then *"can you get the number resigned, vested, and retired this
+will make an impact. research"*, then *"pull up the names and i will tell you so
+we can update"*.
+
+**33 scenes, 4:58** — seven scenes out of the cut and eleven seconds shorter,
+with a whole new deep-dive scene in it.
+
+#### The count was wrong, and the fix is a labelling one
+
+Twenty-one active agent Contacts sit under the two current units once Javid and
+Aleema come off (*"javid and aleema will come off the agent count in the next 3
+years so they are not in the branch and other under a different arrangement"*).
+**Two of the twenty-one are the Branch Manager and the Unit Manager**, so the
+film's old "twenty-one agents and managers" was counting the managers as
+agents. It now reads **19 agents · 2 managers · 5 behind them**, and the five
+are named for what they are: **3 support, the BMA, and the branch driver**.
+`MANAGERS`, `AGENTS` and `ADMIN` are derived, so none of it can drift.
+
+**Pawan is the driver, not an admin, and he is not dropped.** His own word was
+"3 support and a BMA", which is the admin team; the driver is branch staff all
+the same, and leaving a colleague out of a film about who stayed is the lie by
+omission that put the support team on this film in the first place.
+
+#### Salesforce cannot say who retired, so the branch said it
+
+The ask was for the number resigned, vested and retired. **Salesforce holds
+none of it.** Its `Employment_Status__c` picklist carries four values — Active,
+Resigned, Terminated, Not Active — and `Agent_Work_Status__c` is **empty on all
+87 agent records**. So "Not Active" (26 people) was carrying the retirements,
+the vestings and the transfers with nothing to tell them apart.
+
+The 31 Not Active and Terminated names went to the branch manager with each
+one's hire date, leaving date, years served and age at exit, and he went through
+them one by one. **That markup is the only record of the distinction** and it
+lives in `OUTCOMES` in `build-risefilm.py`:
+
+| | | |
+|---|---|---|
+| Still here | **23** | 19 agents, 2 managers, and Javid and Aleema |
+| Resigned | **51** | |
+| Retired | **4** | all four left at 57 or over, with 7–18 years in |
+| Vested | **3** | |
+| Transferred | **2** | moved on inside Guardian |
+| Terminated | **2** | |
+| Unrecorded | **2** | no status on the Contact at all |
+| | **87** | every agent record the four units hold |
+
+**His markup moved four of Salesforce's five "Terminated" to resigned**, and
+moved one of its "Not Active" — the September 2026 case, which Salesforce has
+simply wrong — to terminated. So **two terminations**, not the five on the
+picklist and not the three he first recalled from memory. A name-by-name count
+beats a recollection, and two is the stronger number anyway.
+
+**Salesforce's agent history starts in 2010**: its oldest exit on file is
+September 2010. So the film says **sixteen years**, not the branch's full
+thirty-two, and the scene's foot says whose record it is.
+
+**The names are not in the film and must never be.** This page sits at a
+public, forwardable URL and the standing rule that nothing characterises anyone
+who left is at its strongest here. He had earlier asked for two people to be
+named as terminated; the count makes the point and names nobody, and no count
+here can be worked back to a person.
+
+#### The scene: eighty-seven figures, and the eye finds the two
+
+`outcome` is now the whole sixteen years on one screen — one figure per agent
+record, grouped by what happened, the two terminated in white with a ring
+leaving them. The point is a thing the room **finds** rather than a number it is
+told. Three things about it worth keeping:
+
+- **One neutral silhouette for all 87.** The figurines elsewhere carry each
+  person's sex off their own Salesforce record; for the sixty-two who left that
+  is not on file and would have to be guessed, so this grid claims nothing
+  about anybody.
+- **Eighteen across, not fifteen.** Six rows crowded the legend and the foot.
+- **The `.rsppl::after` halo is off here.** Eighty-seven radial-gradient halos
+  is a frame cost for nothing; the two lit figures reuse it as a ring.
+
+#### Three live rendering bugs, found by a guard that should have existed
+
+`_guard()` has always refused a scene class the **shell** already styles. It
+said nothing about a class **this film's own sheet** already uses, and that had
+silently broken three scenes in the cut that shipped:
+
+- **`.rstick`** — `day`'s seven tick marks along the 5am–6pm bar were being
+  drawn by `digital`'s rule (`left:50%;width:1px`), so all seven collapsed onto
+  one invisible line at the centre.
+- **`.rslab`** — `signin`'s "Agent number" caption was being absolutely
+  positioned by `digital`'s timeline rule and floating away from its box.
+- **`.rsurl`** — `ask`'s big periwinkle URL was being drawn small and cyan by
+  `signin`'s rule.
+
+All three were `digital`'s unprefixed timeline classes winning on source order.
+They are `.rsdtk` and `.rsdlb` now, and `signin`'s is `.rssurl`.
+
+**`_guard_own()`** now refuses the shape that causes it: **two base rules
+setting the same property to different values**. A broad "this class has more
+than one rule" check names nineteen classes here, because a base rule plus a
+later additive one is the ordinary pattern (`.rsfoot` picks up
+`position:relative` three hundred lines on, deliberately) — and a warning
+nobody reads is worse than none. The narrow check has no false positives, and
+it caught a duplicated `display` inside a single rule of mine within the hour.
+
+It is **not** a complete guard: the `.rslab` case had no overlapping property
+and would still slip through. So the rule stands — **grep the film's own CSS
+before naming a class, and never fix a collision with a blanket `sed`**, which
+renames the older one too.
+
+#### A number followed straight by a verb is what this voice slurs
+
+The strict word check earned its keep three more times:
+
+- **"Four retired out of it" came back as "for a tired out of it"** — on the
+  retirements line, the thing he had asked for by name. The fix is not to
+  re-word around it but to change the shape: **"There were four retirements"**,
+  a noun phrase, which this voice has never got wrong. Same family as "No
+  ceiling" → "No seating" and "into something" → "and is something".
+- **"So we didn't go digital this year" → "So it didn't"**, the two-word
+  opening clause again. The "So" went, rather than being worked around.
+- **One clip came back 0.72 seconds long**, cut off after six of its
+  thirty-seven words. That is a **retry, not a rewrite** — the same words came
+  back clean and complete on the second run. Always compare the word count in
+  `words.json` against the line before concluding the voice cannot say it.
+
+Accepted as transcription artifacts rather than read faults, because the voice
+says them correctly: `pendings`→"pinnings", `every one`→"everyone", and every
+numeral Whisper writes as digits.
+
+#### The condense, and what it actually bought
+
+Seven scenes left the cut. Five were merges where one of the two visuals was
+clearly the stronger and the other's line folded into it — `first` into
+`digital` (the fifteen-year rail beats the document), `ffagents` into `ffdata`
+(numbers beat the paper graphic), `fraud` into `conduct` (seven clauses beat
+three flags), `outside` into `prod` (three wall screens beat one), `friday`
+into `yours` (the 75-of-90 split carries the point, so it took the date into
+its eyebrow). Two were dropped outright: **`replica`**, ten real screens behind
+a line that only said "these are real", every one of which is already on screen
+in another scene; and **`plan`**, whose three-year horizon folded into `path`'s
+career ladder, since five closing scenes already looked forward.
+
+**Words went up, not down**, and that is the trade he asked for: the deep dive
+added thirty-seven words of new content and the merges removed fifty-one of
+framing. "Condense and deep dive **as we have a lot going for us**" means fit
+more in without it getting longer, not say less.
+
+#### `ffdata` gained the shape of the fact-find year
+
+Four bars — July 20, August 53, September 33, October 34 — read off
+FactFind360's own pulse feed on 29 October, with October marked as still
+running. **They do not sum to the 144 year-to-date** because the feed counts
+from 1 July, so the strip is labelled by month and never as a total. The figure
+sits **on** its bar rather than in a grid row of its own: with the number on a
+fixed row, July's 20 floated a long way above its short bar and read as
+unattached.
+
 ### Re-cutting it
 
 Edit `tools/film/rise-lines.json`, push a `tts/job.json` to `tts-run` (**check
@@ -7695,22 +7856,28 @@ one pass, which is how the 29 October cues were made.
 
 The music is the branch's own theme, so the page carries no licence credit.
 `capbg` in films.json is `070F26`, so the burned-in caption strip is the film's
-own navy and not donthaveanagent's. Voice: Andrew Expressive, all forty
-clips checked for their language **and their words** (`wordcheck.py` in the
+own navy and not donthaveanagent's. Voice: Andrew Expressive, every one of
+the thirty-three clips checked for their language **and their words** (`wordcheck.py` in the
 session scratchpad; see the strict word check above). **Re-voice only the lines
 that changed**, under a key of their own (`risefix`, `risefix2`), and copy each
 clip onto its real index before `importvox.py` runs: the runner numbers a job's
 lines from 01, so a six-line fix lands as 01–06 and has to be mapped back.
 
-**Inserting a scene means renumbering the vox**, because `importvox.py` reads a
-whole runner directory and numbers the timing from it. Stage a copy of the last
-full run (`vox39` etc. in the session scratchpad), shift every clip at or after
-the insertion point up by one **newest first** so nothing is overwritten on the
-way past, drop the new clip in at its real index, and run `importvox.py` on the
-staged directory. `tools/film/vorise` itself has to be shifted the same way, or
+**Inserting or dropping a scene means renumbering the vox**, because
+`importvox.py` reads a whole runner directory and numbers the timing from it.
+For an insertion, stage a copy of the last full run (`vox39` etc. in the session
+scratchpad) and shift every clip at or after the insertion point up by one
+**newest first**, so nothing is overwritten on the way past. For a cut that both
+drops scenes and merges others, do not shift at all — **build the staging
+directory from scratch** by walking the new scene list and copying each
+unchanged clip from its old index, which is what `vox33` is; a shift cannot
+express a reorder and will quietly put the wrong voice under half the film.
+Then run `importvox.py` on the staged directory. `tools/film/vorise` itself has to be shifted the same way, or
 the mixer re-encodes the old voice under the new timing and the caption gives it
 away. Check the printed durations against the previous list: every unchanged
 scene should come back identical, which is how you know the mapping was right.
+**Delete the clips past the new scene count** (`vorise/34..40` after a cut down
+to 33), or a stale WAV waits in the directory for the next cut that grows.
 The poster is cut from the finished MP4 at 2.5 seconds before the end —
 the mended shield on the close, which is the one frame that says what the film
 is for.

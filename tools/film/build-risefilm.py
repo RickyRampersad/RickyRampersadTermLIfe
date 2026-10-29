@@ -80,8 +80,65 @@ ROSTER = [
     ("Rajiv", 2026, 7, 'm'),
 ]
 NO_DATE_SEX = 'm'                    # Steven, Mr. on his Contact, no hire date
-SUPPORT = [("Kamla", 'f'), ("Sasha", 'f'), ("Elizabeth", 'f'),
-           ("Azariah", 'f'), ("Pawan", 'm')]
+
+#  "it's 19 agents we have as a count ... 3 support and a Bma", his own words
+#  on 29 October 2026, correcting a cut that had said "21 agents and managers".
+#  Nineteen is right: Salesforce holds 21 active agent Contacts for the two
+#  current units once Javid and Aleema come off, and two of the 21 are the
+#  Branch Manager and the Unit Manager, who are named as managers rather than
+#  counted as agents.
+#
+#  Pawan is the branch driver, not an admin, so he is named as the driver
+#  rather than folded into "support" — and never dropped.  Leaving a colleague
+#  out of a film about who stayed is the lie by omission, which is also why
+#  the support team is on this film at all.  The third field is the role.
+SUPPORT = [("Kamla", 'f', 'bma'), ("Sasha", 'f', 'sup'),
+           ("Elizabeth", 'f', 'sup'), ("Azariah", 'f', 'sup'),
+           ("Pawan", 'm', 'drv')]
+MANAGERS = 2                         # the Branch Manager and the Unit Manager
+ROLE_WORD = {'bma': 'BMA', 'sup': 'support', 'drv': 'driver'}
+
+# ── what happened to everyone who ever left ──────────────────────────────────
+#  Asked for on 29 October 2026 in these words: "can you get the number
+#  resigned, vested, and retired this will make an impact. research".
+#
+#  SALESFORCE CANNOT ANSWER IT, and that is the whole reason this table is
+#  here.  Its Employment Status picklist holds only Active / Resigned /
+#  Terminated / Not Active, and Agent Work Status is empty on all 87 agent
+#  records — so "Not Active" (26 people) was carrying the retirements, the
+#  vestings and the transfers with nothing to tell them apart.  Ricky went
+#  through all 31 of the Not Active and Terminated names that afternoon and
+#  said what each one actually was.  This markup is therefore the only record
+#  of the distinction, and it is the branch's own.
+#
+#  His verdict moved four of Salesforce's five "Terminated" to resigned and
+#  one of its "Not Active" (the September 2026 case, which Salesforce has
+#  simply wrong) to terminated.  So: two terminations in sixteen years, not
+#  the five on the picklist and not the three he first recalled.
+#
+#  NAMES STAY OUT, and must stay out.  This film sits at a public,
+#  forwardable URL; the standing rule that nothing characterises anyone who
+#  left is at its strongest here.  The counts name nobody and cannot be
+#  worked back to a person.
+#
+#  Salesforce's agent history starts in 2010 — its oldest exit on file is
+#  September 2010 — so this is sixteen years of the branch's thirty-two, and
+#  the film says sixteen rather than claiming the lot.
+OUTCOMES = [                 # label, count, tone: 'in', 'good', 'out', 'hit'
+    ('Still here',    23, 'in'),
+    ('Retired',        4, 'good'),
+    ('Vested',         3, 'good'),
+    ('Transferred',    2, 'good'),
+    ('Resigned',      51, 'out'),
+    ('Terminated',     2, 'hit'),
+    ('Unrecorded',     2, 'none'),
+]
+AGENT_RECORDS = sum(n for _, n, _ in OUTCOMES)      # 87, and it must total 87
+SF_FROM = 2010                                      # the record's own start
+GOOD = sum(n for _, n, t in OUTCOMES if t == 'good')   # retired+vested+moved
+HIT  = sum(n for _, n, t in OUTCOMES if t == 'hit')    # two, in sixteen years
+ENDED = sum(n for _, n, t in OUTCOMES if t != 'in')    # everyone who left
+OUT_N = dict((l, n) for l, n, _ in OUTCOMES)
 
 # ── the branch's own history ─────────────────────────────────────────────────
 #  Every date here is one this repository can show: the day the thing went
@@ -153,6 +210,7 @@ FORMS = [
 #  COUNTS, DAYS AND SHARES ONLY. The feed carries API and premium figures and
 #  they stay out: this film sits at a public URL, and what the branch writes is
 #  nobody else's business.
+FFMONTHS = [('Jul', 20, 0), ('Aug', 53, 0), ('Sep', 33, 0), ('Oct', 34, 1)]
 FFDATA = [
     ('<b class="rscnt cnt" data-to="144" data-at="300">144</b>',
      'fact finds', 'this year'),
@@ -236,9 +294,13 @@ LONG = sum(1 for p in PEOPLE if p['band'] == 'g')      # ten years or more
 NEW = sum(1 for p in PEOPLE if p['band'] == 't')       # joined in the last three
 MID = len(PEOPLE) - LONG - NEW                         # the band between
 HEADCOUNT = len(ROSTER) + 1                            # +1, the one with no hire date on file
+AGENTS = HEADCOUNT - MANAGERS                          # 19, his own count
+ADMIN = sum(1 for _, _, r in SUPPORT if r != 'drv')    # 4: 3 support and the BMA
+EVERYONE = HEADCOUNT + len(SUPPORT)                    # 26 still here
+SF_YEARS = TODAY.year - SF_FROM                        # 16, not the full 32
 #  Men and women across the whole branch, derived like every other figure here
 #  so it can never drift from the roster above.
-SEXES = [p['sx'] for p in PEOPLE] + [NO_DATE_SEX] + [x for _, x in SUPPORT]
+SEXES = [p['sx'] for p in PEOPLE] + [NO_DATE_SEX] + [x for _, x, _ in SUPPORT]
 MEN = sum(1 for x in SEXES if x == 'm')
 WOMEN = sum(1 for x in SEXES if x == 'f')
 MAXY = max(p['y'] for p in PEOPLE)
@@ -465,8 +527,12 @@ def _say(key):
 #  derived figure is spelled out in words here and checked against the roster.
 #  This is what caught three stale lines when two names came off the roster.
 _skipped = []
-for key, want in (('count', HEADCOUNT), ('years', TOTAL), ('mix', LONG),
-                  ('mix', NEW), ('built', len(BUILT))):
+for key, want in (('count', AGENTS), ('count', len(SUPPORT)),
+                  ('years', TOTAL), ('mix', LONG), ('mix', NEW),
+                  ('built', len(BUILT)),
+                  ('outcome', AGENT_RECORDS), ('outcome', SF_YEARS),
+                  ('outcome', OUT_N['Resigned']), ('outcome', OUT_N['Retired']),
+                  ('outcome', OUT_N['Vested'])):
     said = _say(key)
     if said is None:
         _skipped.append(key); continue
@@ -554,7 +620,14 @@ def V(name, s):
     #     cold of the three scenes before it to cyan as it arrives, and lands
     #     in ordered rows under the line. Men and women, each from the record.
     if name == 'stayed':
+        #  The row widths are hand-set because three rows of nine, nine and
+        #  eight is a better shape than anything a formula gives — but they
+        #  have to add up to the branch, or somebody is quietly left off the
+        #  one scene in this film about who stayed.
         rows, figs = (9, 9, 8), ''
+        assert sum(rows) == EVERYONE == len(SEXES), (
+            f'the rise scene lays out {sum(rows)} people and the branch is '
+            f'{EVERYONE}. Re-split the rows in this scene.')
         k = 0
         for r, wide in enumerate(rows):
             for c in range(wide):
@@ -574,23 +647,42 @@ def V(name, s):
     #     saying out loud. The support team is in it: leaving them out of "who
     #     stayed" would be a lie by omission.
     if name == 'count':
-        chips = ''.join(person('', f'--i:{i}', p['n'][0], p['sx'])
-                        for i, p in enumerate(PEOPLE))
-        chips += person('', '--i:20', 'S', NO_DATE_SEX)
-        sup = ''.join(person('sup', f'--i:{21 + i}', n[0], x)
-                      for i, (n, x) in enumerate(SUPPORT))
+        #  Three groups, not two: 19 agents, the two managers, and the five
+        #  behind them.  He corrected "21 agents and managers" by name on
+        #  29 October, and the managers are shown as managers rather than
+        #  swelling the agent count.  PEOPLE is sorted by tenure, so the two
+        #  managers are picked out by name rather than by position.
+        mgr = {'Ricky', 'Akaash'}
+        ags = [p for p in PEOPLE if p['n'] not in mgr]
+        mgs = [p for p in PEOPLE if p['n'] in mgr]
+        k = 0
+        def chip(label, sx, cls=''):
+            nonlocal k
+            out = person(cls, f'--i:{k}', label, sx); k += 1
+            return out
+        a = ''.join(chip(p['n'][0], p['sx']) for p in ags) \
+            + chip('S', NO_DATE_SEX)                       # the one with no date
+        m = ''.join(chip(p['n'][0], p['sx'], 'mgr') for p in mgs)
+        s = ''.join(chip(n[0], x, 'sup') for n, x, _ in SUPPORT)
+        roles = ' &middot; '.join(
+            f'{c} {ROLE_WORD[r]}'
+            for r, c in (('sup', sum(1 for _, _, q in SUPPORT if q == 'sup')),
+                         ('bma', 1), ('drv', 1)))
         return (f'<div class="rscap wide"><div class="rsnum">'
-                f'<div class="rsnumn">{cnt(HEADCOUNT + len(SUPPORT), 260)}'
+                f'<div class="rsnumn">{cnt(EVERYONE, 260)}'
                 f'<span class="rsnuml">still here</span>'
                 f'<span class="rsmw">{person("mw", "", "", "m")}{MEN} men'
                 f'<em></em>{person("mw", "", "", "f")}{WOMEN} women</span></div>'
                 f'<div class="rsnumg">'
-                f'<div class="rsgrp"><span class="rsgrpl">'
-                f'{HEADCOUNT} agents and managers</span>'
-                f'<div class="rschips">{chips}</div></div>'
-                f'<div class="rsgrp"><span class="rsgrpl">'
-                f'{len(SUPPORT)} behind them</span>'
-                f'<div class="rschips sup">{sup}</div></div>'
+                f'<div class="rsgrp" style="--i:0"><span class="rsgrpl">'
+                f'{AGENTS} agents</span>'
+                f'<div class="rschips">{a}</div></div>'
+                f'<div class="rsgrp" style="--i:7"><span class="rsgrpl">'
+                f'{MANAGERS} managers</span>'
+                f'<div class="rschips mgr">{m}</div></div>'
+                f'<div class="rsgrp" style="--i:10"><span class="rsgrpl">'
+                f'{len(SUPPORT)} behind them<i>{roles}</i></span>'
+                f'<div class="rschips sup">{s}</div></div>'
                 f'</div></div></div>')
 
     # 6 · the chart, one hue: the total is the point, and a single series needs
@@ -631,16 +723,40 @@ def V(name, s):
     #      the system cannot settle it, and the screen says whose record it is
     #      rather than passing it off as Salesforce's.
     if name == 'outcome':
-        soft = ''.join(
-            f'<div class="rsoc" style="--i:{i}"><span class="rsoct">{w}</span></div>'
-            for i, w in enumerate(('Retired', 'Vested', 'Resigned')))
+        #  Every agent record the branch has, one figure each, coloured by what
+        #  actually happened to the person — so the two terminations are a
+        #  thing the eye FINDS at the end of the grid rather than a number it
+        #  is told.  That is the whole design of the scene, and it is why the
+        #  figures are grouped in OUTCOMES order with the two lit and last but
+        #  for the pair nobody recorded.
+        #
+        #  ONE SILHOUETTE FOR ALL 87, deliberately.  The figurines elsewhere
+        #  carry each person's sex off their own Salesforce record; for the 62
+        #  who have left, that is not on file and would have to be guessed, so
+        #  this grid uses the neutral head-and-shoulders glyph throughout and
+        #  claims nothing about anybody.  Nobody is named, and no count here
+        #  can be worked back to a person.
+        PER = 15
+        figs, i = '', 0
+        for _lab, n, tone in OUTCOMES:
+            for _ in range(n):
+                figs += person(f'rsof o-{tone}',
+                               f'--i:{i};--c:{i % PER}', '', 'm')
+                i += 1
+        key = ''.join(f'<span class="rsok o-{t}" style="--i:{j}">'
+                      f'<i></i>{l}<b>{n}</b></span>'
+                      for j, (l, n, t) in enumerate(OUTCOMES))
         return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
-                f'<div class="rsocs">{soft}'
-                f'<div class="rsoc lit" style="--i:3">'
-                f'<span class="rsoct">Terminations</span>'
-                f'<div class="rsocn">{cnt(3, 700)}</div></div></div>'
-                f'<div class="rsfoot">the branch&rsquo;s own record '
-                f'&middot; thirty-two years</div></div>')
+                f'<div class="rsend">'
+                f'<div class="rsendn">{cnt(AGENT_RECORDS, 240)}'
+                f'<span class="rsnuml">agents, {spoken(SF_YEARS)} years</span>'
+                f'<span class="rsends">{GOOD} retired, vested or moved on'
+                f'<em></em>{HIT} ever terminated</span></div>'
+                f'<div class="rsendg"><div class="rsofs">{figs}</div>'
+                f'<div class="rsoks">{key}</div></div></div>'
+                f'<div class="rsfoot">the branch&rsquo;s own record, gone '
+                f'through name by name &middot; Guardian&rsquo;s system keeps '
+                f'no &ldquo;retired&rdquo; and no &ldquo;vested&rdquo;</div></div>')
 
     # 7a · the branch on one line. A dot for every person at the year they
     #      joined, stacked where a year repeats, so the eye reads a branch
@@ -890,7 +1006,7 @@ def V(name, s):
                 f'<div class="rspad">{pad}</div>'
                 f'<span class="rsnote">Four zeros.<br>Guests are never on the roll.</span>'
                 f'</div></div>'
-                f'<div class="rsurl">rickyrampersadbranch.com/meetings</div></div>')
+                f'<div class="rssurl">rickyrampersadbranch.com/meetings</div></div>')
 
     # 18 · the close. Whole, with the seams showing, and the check drawn on.
 
@@ -905,8 +1021,8 @@ def V(name, s):
         #  that wide, so on one lane they land on top of each other.
         rail = ''.join(
             f'<div class="rsmile" style="--i:{i};--p:{p};--lane:{i % 2}">'
-            f'<span class="rsmd"></span><span class="rstick"></span>'
-            f'<span class="rslab"><b>{y}</b><i>{what}</i></span></div>'
+            f'<span class="rsmd"></span><span class="rsdtk"></span>'
+            f'<span class="rsdlb"><b>{y}</b><i>{what}</i></span></div>'
             for i, (y, p, what) in enumerate(DIGITAL))
         return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
                 f'<div class="rshead">{cnt(15, 260)}'
@@ -939,7 +1055,7 @@ def V(name, s):
         wall = ''.join(
             f'<div class="rsrc" style="--i:{i};--r:{(i * 37) % 7 - 3}deg">'
             f'{shot(k)}</div>' for i, k in enumerate(keys))
-        return (f'<div class="rswall">{wall}</div>'
+        return (f'<div class="rsrwall">{wall}</div>'
                 f'<div class="rscap over"><div class="rseyeb">WHAT WE RUN ON</div>'
                 f'<div class="rshead sm">Every screen here is real</div></div>')
 
@@ -964,8 +1080,16 @@ def V(name, s):
             f'<div class="rstile sm" style="--i:{i}">{v}'
             f'<span class="rstily">{lab}</span><em>{sub}</em></div>'
             for i, (v, lab, sub) in enumerate(FFDATA))
+        top = max(n for _, n, _ in FFMONTHS)
+        mon = ''.join(
+            f'<div class="rsmo{" now" if now else ""}" style="--i:{i};--h:{n/top:.3f}">'
+            f'<span class="rsmob"><b>{n}</b><i></i></span><em>{m}</em></div>'
+            for i, (m, n, now) in enumerate(FFMONTHS))
         return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
                 f'<div class="rstiles four">{tiles}</div>'
+                f'<div class="rsmos">{mon}'
+                f'<span class="rsmol">fact finds a month, since 1 July'
+                f'<i>October still running</i></span></div>'
                 f'<div class="rsfoot">FactFind360, this year to 29 October</div></div>')
 
     # 16c · the walls. Four of the branch's own, as the room sees them.
@@ -1448,23 +1572,58 @@ CSS = r"""
   opacity:0;animation:rsFade 1.2s 1.1s both}
 @keyframes rsFade{to{opacity:1}}
 
-/*  Thirty-two years of outcomes: three quiet categories and one lit figure.
-    No figures on the lit tile — three silhouettes would invite the eye to read
-    a sex or a face onto three real people, and nothing on record supports it. */
-.rs .rsocs{display:grid;grid-template-columns:repeat(3,auto) 1fr;gap:1.5vw;
-  align-items:stretch;width:100%;max-width:1080px;margin-top:1vh}
-.rs .rsoc{display:grid;align-content:center;justify-items:center;gap:.9vh;
-  padding:2.8vh 1.7vw;border-radius:14px;border:1px solid var(--line);
-  background:#0D1733;opacity:0;transform:translateY(1.4vh);
-  animation:fUp .55s both;animation-delay:calc(.35s + var(--i)*.15s)}
-.rs .rsoct{font-size:1.2vw;font-weight:700;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--mut);white-space:nowrap}
-.rs .rsoc.lit{border-color:var(--cy);
-  background:linear-gradient(180deg,rgba(0,229,255,.11),rgba(0,229,255,.02));
-  box-shadow:0 0 0 1px rgba(0,229,255,.22),0 0 3rem rgba(0,229,255,.14)}
-.rs .rsoc.lit .rsoct{color:var(--cy)}
-.rs .rsocn .rscnt{font-size:7.6vw;line-height:.88;letter-spacing:-.04em;
-  filter:drop-shadow(0 0 1.7rem rgba(0,229,255,.36))}
+/*  Every agent record the branch has, one figure each, grouped by what
+    happened to the person and lit on the two that were ever terminated — so
+    the point is a thing the eye FINDS at the end of the grid rather than a
+    number it is told.  One neutral silhouette throughout: the scene's own
+    note says why no sex is claimed for the sixty-two who left.
+    The base .rsppl::after halo is turned OFF here and repurposed as a ring on
+    the two: eighty-seven radial-gradient halos is a frame cost for nothing. */
+.rs .rsend{display:grid;grid-template-columns:auto 1fr;gap:3.1vw;
+  align-items:center;width:100%;max-width:1190px;text-align:left;margin-top:.3vh}
+.rs .rsendn{position:relative;display:grid;justify-items:center;gap:.2vh}
+.rs .rsendn::before{content:"";position:absolute;left:50%;top:40%;
+  translate:-50% -50%;width:17vw;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,229,255,.17),transparent 68%);
+  opacity:0;animation:rsFade 1.4s .35s both}
+.rs .rsendn .rscnt{font-size:8.2vw;line-height:.86;letter-spacing:-.045em;
+  filter:drop-shadow(0 0 1.8rem rgba(0,229,255,.34))}
+.rs .rsends{display:flex;align-items:center;gap:.65vw;margin-top:1.3vh;
+  font-size:.92vw;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--mut);opacity:0;animation:fUp .6s 1.65s both;white-space:nowrap}
+.rs .rsends em{width:1px;height:1.6vh;background:var(--line)}
+.rs .rsendg{display:grid;gap:3.6vh;justify-items:start;width:100%}
+.rs .rsofs{display:grid;grid-template-columns:repeat(18,1fr);
+  gap:.78vw .34vw;width:100%}
+.rs .rsppl.rsof{width:100%;animation-delay:calc(.3s + var(--i)*.013s)}
+.rs .rsppl.rsof::after{display:none}
+.rs .rsppl.rsof svg{filter:none}
+.rs .rsof.o-in    svg{fill:var(--cy)}
+.rs .rsof.o-good  svg{fill:var(--peri)}
+.rs .rsof.o-out   svg{fill:var(--slate)}
+.rs .rsof.o-none  svg{fill:#36425E}
+.rs .rsof.o-hit   svg{fill:var(--ink);
+  filter:drop-shadow(0 0 .85rem rgba(234,240,255,.8))}
+.rs .rsppl.rsof.o-hit::after{display:block;inset:-34%;border-radius:50%;
+  background:none;border:1px solid rgba(0,229,255,.75);
+  animation:rsRing 2.4s 1.9s infinite}
+.rs .rsoks{display:flex;flex-wrap:nowrap;gap:.88vw;align-items:center;
+  justify-content:space-between;width:100%}
+.rs .rsok{display:inline-flex;align-items:center;gap:.36vw;font-size:.72vw;
+  font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--dim);opacity:0;animation:fUp .5s both;white-space:nowrap;
+  animation-delay:calc(1.55s + var(--i)*.07s)}
+.rs .rsok i{width:.6vw;height:.6vw;border-radius:2px;background:var(--slate)}
+.rs .rsok b{font-size:1.06vw;letter-spacing:-.02em;color:var(--mut)}
+.rs .rsok.o-in i{background:var(--cy)}
+.rs .rsok.o-in b{color:var(--cy)}
+.rs .rsok.o-good i{background:var(--peri)}
+.rs .rsok.o-good b{color:var(--peri)}
+.rs .rsok.o-none i{background:#36425E}
+.rs .rsok.o-hit{color:var(--ink)}
+.rs .rsok.o-hit i{background:var(--ink);box-shadow:0 0 .7rem rgba(234,240,255,.85)}
+.rs .rsok.o-hit b{font-size:1.32vw;color:var(--ink);
+  filter:drop-shadow(0 0 1rem rgba(0,229,255,.55))}
 
 /*  The number carries the room; the people stand beside it.                  */
 .rs .rsnum{display:grid;grid-template-columns:auto 1fr;gap:3.4vw;align-items:center;
@@ -1501,9 +1660,14 @@ CSS = r"""
   text-transform:uppercase;opacity:0;animation:fRt .5s both;
   animation-delay:calc(.3s + var(--i, 0)*.1s)}
 .rs .rsgrp:last-child .rsgrpl{animation-delay:1.25s}
-.rs .rsnumg .rschips{justify-content:flex-start;max-width:37.2vw;gap:.6vw}
-.rs .rsnumg .rsppl{width:2.7vw}
+.rs .rsnumg .rschips{justify-content:flex-start;max-width:62vw;gap:.62vw .66vw}
+.rs .rsnumg .rsppl{width:2.5vw}
 .rs .rsnumg .rsppl.sup{width:3.1vw}
+.rs .rsnumg .rsppl.mgr{width:3.4vw}
+.rs .rsnumg .rsppl.mgr svg{fill:var(--ink);
+  filter:drop-shadow(0 0 .7rem rgba(0,229,255,.45))}
+.rs .rsgrpl i{display:block;font-style:normal;font-size:.78vw;font-weight:600;
+  letter-spacing:.07em;color:var(--dim);margin-top:.25vh;text-transform:none}
 .rs .rstwo{display:grid;grid-template-columns:1fr 1fr;gap:3vw;width:74%;max-width:980px;
   margin-top:.6vh}
 .rs .rscard{position:relative;display:grid;gap:1.1vh;justify-items:center;
@@ -1534,7 +1698,7 @@ CSS = r"""
   animation-delay:calc(1.5s + var(--i)*.24s)}
 @keyframes padIn{to{opacity:1;transform:none}}
 .rs .rsnote{font-size:1.02vw;line-height:1.5;color:var(--mut);text-align:center}
-.rs .rsurl{margin-top:1.4vh;font-size:1.25vw;font-weight:700;color:var(--cy);
+.rs .rssurl{margin-top:1.4vh;font-size:1.25vw;font-weight:700;color:var(--cy);
   letter-spacing:.03em;opacity:0;animation:fIn .7s 2.5s both}
 /*  29 October 2026: "ad a lot more motion , charts and graphics make thing
  *  move and a wow". Every one of these rides an element already on the page,
@@ -1750,16 +1914,43 @@ CSS = r"""
   background:var(--cy);translate:-50% -50%;
   box-shadow:0 0 0 .35vw rgba(0,229,255,.16),0 0 1.4vh rgba(0,229,255,.7);
   animation:rsPing 2.6s calc(1s + var(--i)*.3s) infinite}
-.rs .rstick{position:absolute;left:50%;top:3.8vh;width:1px;background:#2B4572;
+.rs .rsdtk{position:absolute;left:50%;top:3.8vh;width:1px;background:#2B4572;
   height:calc(1.3vh + var(--lane)*5.2vh)}
-.rs .rslab{position:absolute;left:50%;translate:-50% 0;width:13vw;text-align:center;
+.rs .rsdlb{position:absolute;left:50%;translate:-50% 0;width:13vw;text-align:center;
   top:calc(5.3vh + var(--lane)*5.2vh)}
-.rs .rslab b{display:block;font-size:1.9vw;font-weight:800;color:var(--ink);line-height:1}
-.rs .rslab i{display:block;margin-top:.5vh;font-size:1.05vw;font-style:normal;
+.rs .rsdlb b{display:block;font-size:1.9vw;font-weight:800;color:var(--ink);line-height:1}
+.rs .rsdlb i{display:block;margin-top:.5vh;font-size:1.05vw;font-style:normal;
   color:var(--mut);line-height:1.3}
 @keyframes rsPin{from{opacity:0;translate:0 1.2vh}to{opacity:1;translate:0 0}}
 @keyframes rsPing{0%,70%,100%{box-shadow:0 0 0 .35vw rgba(0,229,255,.16),0 0 1.4vh rgba(0,229,255,.7)}
   35%{box-shadow:0 0 0 .95vw rgba(0,229,255,0),0 0 2.2vh rgba(0,229,255,.95)}}
+
+/*  the month shape under the tiles: four bars that grow on their own clock,
+    the running month marked rather than left to look short by accident.     */
+.rs .rsmos{display:flex;align-items:flex-end;justify-content:center;
+  gap:1.45vw;margin-top:2.2vh;width:100%}
+.rs .rsmo{display:grid;justify-items:center;gap:.55vh;width:4.8vw}
+.rs .rsmo b{font-size:1.5vw;font-weight:800;color:var(--mut);line-height:1;
+  opacity:0;animation:fUp .5s both;animation-delay:calc(1.5s + var(--i)*.14s)}
+.rs .rsmo.now b{color:var(--cy)}
+.rs .rsmob{display:flex;flex-direction:column;justify-content:flex-end;
+  align-items:center;gap:.5vh;width:100%;height:12vh}
+.rs .rsmob i{display:block;width:100%;height:calc(var(--h)*100%);border-radius:4px 4px 0 0;
+  background:linear-gradient(180deg,var(--peri),rgba(124,140,248,.25));
+  transform-origin:50% 100%;transform:scaleY(0);
+  animation:growY .7s cubic-bezier(.2,.9,.3,1) both;
+  animation-delay:calc(1.4s + var(--i)*.14s)}
+.rs .rsmo.now .rsmob i{background:linear-gradient(180deg,var(--cy),rgba(0,229,255,.22));
+  box-shadow:0 0 1.6vh rgba(0,229,255,.35)}
+.rs .rsmo em{font-style:normal;font-size:.92vw;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--dim)}
+.rs .rsmo.now em{color:var(--cy)}
+.rs .rsmol{align-self:flex-end;margin-bottom:2.6vh;margin-left:.8vw;font-size:.88vw;
+  font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);
+  max-width:11vw;text-align:left;line-height:1.45;
+  opacity:0;animation:fUp .5s 2.1s both}
+.rs .rsmol i{display:block;font-style:normal;margin-top:.4vh;color:var(--cy);
+  letter-spacing:.06em;text-transform:none;font-weight:600}
 
 /* ── counter tiles, flipping up in turn ──────────────────────────────────── */
 .rs .rstiles{display:flex;gap:2.2vw;justify-content:center;align-items:center;flex-wrap:nowrap}
@@ -1779,7 +1970,7 @@ CSS = r"""
   to{opacity:1;transform:none}}
 
 /* ── the replica wall: twelve real screens, never still ──────────────────── */
-.rs .rswall{grid-area:1/1;width:100%;height:100%;display:flex;flex-wrap:wrap;
+.rs .rsrwall{grid-area:1/1;width:100%;height:100%;display:flex;flex-wrap:wrap;
   align-content:center;justify-content:center;gap:1.1vw 1vw;padding:0 3vw}
 .rs .rsrc{opacity:0;animation:rsFly .8s calc(.25s + var(--i)*.13s) both}
 .rs .rsrc .rsshot{transform:rotate(var(--r));animation:rsFloat 7s calc(var(--i)*.4s) infinite}
@@ -1997,7 +2188,47 @@ def _guard(html):
                          'overridden silently: ' + ', '.join('.' + c for c in bad))
 
 
+def _guard_own(css):
+    #  The guard above only covers the SHELL's classes.  It says nothing about
+    #  a class this film's own sheet already uses, and twice now that has cost
+    #  a shot: .rstl was a scene's rail and then a label inside a tile, and
+    #  .rsout was the outside-wall scene before it was also the outcome grid —
+    #  in both cases two legitimate-looking rules, the later one winning, and
+    #  the scene silently drawn wrong.
+    #
+    #  A broad check for "this class has more than one rule" names nineteen
+    #  classes here, and a second base rule that only ADDS a property is both
+    #  ordinary and harmless (.rsfoot picks up position:relative 300 lines
+    #  later on purpose).  A warning nobody reads is worse than none, so this
+    #  flags the one shape that is always a mistake: two base rules setting the
+    #  SAME property to DIFFERENT values, which is exactly how .rsout lost its
+    #  two-column grid to the outside-wall scene's margin.
+    rules = re.findall(r'^\.rs \.([a-zA-Z][\w-]*)\{(.*?)\}', css, re.M | re.S)
+    seen, clash = {}, {}
+    for cls, body in rules:
+        for decl in body.split(';'):
+            if ':' not in decl:
+                continue
+            prop, _, val = decl.partition(':')
+            prop, val = prop.strip(), val.strip()
+            if not prop or prop.startswith('--'):
+                continue
+            was = seen.setdefault(cls, {}).setdefault(prop, val)
+            if was != val:
+                clash.setdefault(cls, set()).add(prop)
+    if clash:
+        raise SystemExit(
+            "This film's own stylesheet sets the same property twice, with "
+            "different values, on a class two scenes share — so the later rule "
+            "silently wins and one of the two is drawn wrong. Rename the newer "
+            "class by hand (never with a blanket sed: that renames the older "
+            "one too).\n  " + '\n  '.join(
+                f'.rs .{c}  ->  {", ".join(sorted(p))}'
+                for c, p in sorted(clash.items())))
+
+
 _guard(SCENES)
+_guard_own(CSS)
 
 shell = SHELL.read_text()
 chrome_end = shell.index('</div>', shell.index('<div id="chrome">')) + len('</div>')
