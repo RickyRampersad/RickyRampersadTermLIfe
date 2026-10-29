@@ -61,8 +61,9 @@ const page = env.sdPage_(person, DAY).getContent();
 const card = id => { const a = page.indexOf('id="w' + id + '"'); const b = page.indexOf('</details>', a); return page.slice(a, b); };
 
 console.log('\nThe cards on the page:\n');
-ok('every task has its templates, Claude, and the three buttons', LIST.every(t => { const c = card(t.id);
-  return (c.match(/onclick="cardTpl\(/g) || []).length >= 3 && /cardGo\('[^']+','draft'\)/.test(c) && /Close now/.test(c) && /Move now/.test(c) && /Post note/.test(c); }));
+// 29 Oct 2026: Claude writes for the managers and the BMA only; a desk's card has the templates and her own words.
+ok('every task has its templates and the three buttons; a desk\'s card has no Claude', LIST.every(t => { const c = card(t.id);
+  return (c.match(/onclick="cardTpl\(/g) || []).length >= 3 && !/cardGo\('[^']+','draft'\)/.test(c) && /in your own words/.test(c) && /Close now/.test(c) && /Move now/.test(c) && /Post note/.test(c); }));
 ok('a premium due gets the premium reminders', /reminded them the premium is due/.test(card(T.prem.id)) && /Reminder e-mailed to the agent/.test(card(T.prem.id)));
 ok('underwriting gets the underwriting chases', /E-mailed underwriting for where it stands/.test(card(T.uw.id)));
 ok('a claim gets the Claims notes', /Complete file sent to Claims/.test(card(T.claim.id)));
@@ -123,7 +124,10 @@ ok('the same note already posted from its card is not posted again', posts.filte
 ok('everything else saves as before', orphPosts.length === 1 && patches.some(x => x[0] === T.orph.id && x[1].Status === 'Completed'));
 ok('and the page says so', /closed earlier from its card/.test(saved) && /already saved from its card/.test(saved));
 
-console.log('\nClaude:\n');
+console.log('\nClaude: not for a desk; for the BMA and the managers (claudeFor_):\n');
+const nd = act({ id: T.uw.id, act: 'draft', note: 'called ravi' });
+ok('Sasha asking Claude: refused, nobody called', !nd.ok && /own words/.test(nd.error) && asked.length === 0, JSON.stringify(nd));
+env.claudeFor_ = () => true;   // the drafting itself, as Kamla has it
 reply = JSON.stringify({ note: 'Called Mr Ravi: the ECG is booked at the clinic for [date]; I will send the results to underwriting after.', action: 'move', warn: '' });
 const d1 = act({ id: T.uw.id, act: 'draft', note: 'called ravi ecg booked thursday will send to uw' });
 ok('Draft with Claude: the note comes back, nothing posted', d1.ok && /ECG is booked/.test(d1.note) && d1.action === 'move' && posts.length === 5);

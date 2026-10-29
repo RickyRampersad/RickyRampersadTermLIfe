@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-29a';
+var SCRIPT_VERSION = '2026-10-29b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -7013,15 +7013,15 @@ function tcardModel_() {
 }
 
 /** The card's own pieces: the templates, the note box, Claude, and the three buttons. */
-function tcardHtml_(t, pb, day) {
-  var id = esc_(t.id);
+function tcardHtml_(t, pb, day, sid) {
+  var id = esc_(t.id), ai = sid == null || claudeFor_(sid);
   var chips = tcardTemplates_(t, pb).map(function (x) {
     var tag = x[1] === 'c' ? '<i class="c">closes</i>' : x[1] === 'm' ? '<i class="m">moves</i>' : '<i>note</i>';
     return '<button type="button" data-a="' + (x[1] === 'c' ? 'close' : x[1] === 'm' ? 'move' : 'note') + '" data-n="' + esc_(x[0]) + '" onclick="cardTpl(\'' + id + '\',this)">' + tag + esc_(x[0]) + '</button>';
   }).join('');
-  return '<div class="bf" style="margin:10px 0 2px">Tap a template, or type or speak a few words and let Claude write it:</div><div class="tpl">' + chips + '</div>' +
+  return '<div class="bf" style="margin:10px 0 2px">' + (ai ? 'Tap a template, or type or speak a few words and let Claude write it:' : 'Tap a template, or write it in your own words:') + '</div><div class="tpl">' + chips + '</div>' +
     '<textarea name="n_' + id + '" rows="3" placeholder="What was done, who you spoke to, the outcome and the next step. It goes on the task\'s Chatter." style="margin:4px 0 6px"></textarea>' +
-    '<button type="button" class="cai" onclick="cardGo(\'' + id + '\',\'draft\')">&#10024; Draft with Claude</button>' +
+    (ai ? '<button type="button" class="cai" onclick="cardGo(\'' + id + '\',\'draft\')">&#10024; Draft with Claude</button>' : '') +
     '<label style="display:flex;gap:8px;align-items:center;font-weight:800;font-size:14px;margin:4px 0 6px"><input type="checkbox" name="x_' + id + '" value="1" style="width:22px;height:22px;margin:0;flex:none"> Done: close it</label>' +
     '<label style="display:block;font-size:13px;color:#6A7180;margin:0 0 6px">Or it cannot be done today: the new date' +
       '<input type="date" name="m_' + id + '" min="' + esc_(shiftDays_(day, 1)) + '" style="display:block;width:100%;box-sizing:border-box;margin:4px 0 0"></label>' +
@@ -7082,6 +7082,8 @@ function cardAct_(o) {
   var list = []; try { list = bigGet_('sd_list_' + sid + '_' + day, []) || []; } catch (e) {}
   var t = list.filter(function (x) { return x && x.id === id && !x.next; })[0];
   if (!t) return { ok: false, error: 'That task is not on your day. Open your day again from the e-mail.' };
+  // Claude writes for the managers and the BMA only (29 Oct 2026): a desk writes its own note.
+  if (act === 'draft' && !claudeFor_(sid)) return { ok: false, error: 'Write the note in your own words: what was done, who you spoke to, the outcome and the next step.' };
   var notes = []; try { notes = (cmdChatter_([id]) || {})[id] || []; } catch (e) {}
   if (act === 'draft') return tcardDraft_(sid, t, String(o.note || ''), notes, day);
   var txt = String(o.note || '').replace(/\r/g, '').trim(), name = nameFor_(sid), at = hhmm_(new Date()), to = String(o.to || '').trim();
@@ -7177,8 +7179,8 @@ function sdPage_(person, day, error, notice) {
       (pb.next ? '<div class="br2" style="margin-top:3px;color:#B4322B"><b>' + esc_(pb.next) + '</b></div>' : '') +
       '<div class="br2" style="margin-top:3px">' + esc_(pb.close) + (pb.client ? ' · Client: ' + esc_(pb.client) : '') + (pb.policy ? ' · Policy ' + esc_(pb.policy) : '') + (t.ty ? ' · ' + esc_(t.ty) : '') + '</div>' +
       (mv ? '<div class="br2" style="margin-top:2px">' + esc_(dueMovesLine_(mv)) + '</div>' : '') +
-      chatterNotes_(chat, t.id) + umAiButton_(t.id, intel ? 'reply' : 'brief') +
-      tcardHtml_(t, pb, day) + '</details>';
+      chatterNotes_(chat, t.id) + (claudeFor_(sid) ? umAiButton_(t.id, intel ? 'reply' : 'brief') : '') +
+      tcardHtml_(t, pb, day, sid) + '</details>';
   };
   // The next three, and the rest folded away (20 Oct 2026: a list of twelve open at once reads as a mountain).
   var nx = GAME.NEXT, openRows = open.length <= nx + 1 ? open.map(row).join('')
@@ -7217,7 +7219,7 @@ function sdPage_(person, day, error, notice) {
   var gCard = ''; try { gCard = gameCard_(sid, day, list); } catch (e) {}
   var gThanks = '', gIdea = ''; try { gThanks = gameThanksForm_(sid, day); } catch (e) {} try { gIdea = gameIdeaForm_(sid, day); } catch (e) {}
   var inner = (notice ? '<div class="card ok"><b style="color:#2C7A57">' + notice + '</b></div>' : '') + (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + inCard + gCard +
-    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'plan') + gThanks + yCard + umAiIntro_(open, 'card', intel ? 'reply' : 'brief') + work + qCard + scrub + nextCard + gIdea +
+    '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(sid, day, 'plan') + gThanks + yCard + (claudeFor_(sid) ? umAiIntro_(open, 'card', intel ? 'reply' : 'brief') : '') + work + qCard + scrub + nextCard + gIdea +
     '<div class="card"><div class="bh">Comment for Mr Rampersad</div><textarea name="comment" rows="2" placeholder="Anything he should know about today"></textarea></div>' +
     '<button type="submit">Save</button></form>' + sbJs_() + TCARD_CSS + tcardScript_(sid, day) + umAiScript_(sid, day, 'card', intel ? 'reply' : 'brief');
   return replyPage_('Your day · ' + prettyDate_(day), esc_(first) + ', your day is set for you: check in, then work down the list. Every task says what to do. Your progress is read from Salesforce at ' +
@@ -7278,7 +7280,7 @@ function sdSave_(person, day, p, all) {
   }
   var scrubType = SF_TYPES[String(p.scrub_type || '')] ? String(p.scrub_type) : 'Servicing';
   String(p.scrub || '').split(/\r?\n/).map(function (l) { return l.replace(/\s+/g, ' ').trim(); }).filter(function (l) { return l.length >= 4; }).slice(0, 10).forEach(function (l) {
-    try { var ct = createTask_({ staffId: sid, subject: l, type: scrubType, due: day, date: day, block: 'KPI1' }, { staffId: sid, name: person.name });
+    try { var ct = createTask_({ staffId: sid, subject: l, type: scrubType, due: day, date: day, block: 'KPI1', scrub: 1 }, { staffId: sid, name: person.name });
       out.push({ s: l, res: ct && ct.ok ? 'a task in your day' : 'NOT CREATED: ' + (ct && ct.error || 'add it in Salesforce') }); }
     catch (e) { out.push({ s: l, res: 'NOT CREATED: add it in Salesforce' }); }
   });
@@ -9195,7 +9197,7 @@ function umItemsKey_(sid, day) { return 'um_items_' + sid + '_' + day; }
 var STORE = {
   LIMIT_KB: 500, RELIEF_KB: 380, WARN_KB: 430, SHORT_DAYS: 3, LONG_DAYS: 21, WATCH_AFTER: 10,
   SAME_DAY: /^(?:bm_deep_|ix_deep_)/,
-  SHORT: /^(?:ag_items_|unit_(?:ids|qids|ags|mine|rtasks|inbox|drafts)_|intel_model_|sd_(?:list|qids)_|um_items_|lead_|game_ideas_|co_(?:ask|un)_)/
+  SHORT: /^(?:ag_items_|unit_(?:ids|qids|ags|mine|rtasks|inbox|drafts)_|intel_model_|sd_(?:list|qids)_|um_items_|lead_|game_ideas_|co_(?:ask|un)_|wdday_)/
 };
 /** Script Properties in use, in KB (keys and values). */
 function storeKb_() {
@@ -9440,6 +9442,7 @@ function umDraft_(o) {
   if (!sid || !day || !o.k || String(o.k) !== replySig_(sid, day, via)) return { ok: false, error: 'This page has expired. Open it again from the e-mail.' };
   var it = null;
   if (via === 'card') {   // a day page: the task must be on that person's list for the day. Staff get the brief, managers the reply.
+    if (!claudeFor_(sid)) return { ok: false, error: 'Branch Intelligence is for the managers and the BMA. Write your note in your own words.' };   // 29 Oct 2026
     if (!intelReplyDesk_(sid)) mode = 'brief';
     var list = []; try { list = bigGet_('sd_list_' + sid + '_' + day, []) || []; } catch (e) {}
     var t = list.filter(function (x) { return x && String(x.id) === id && !x.next; })[0];
@@ -15907,7 +15910,7 @@ function workdayProgress_(sid, day, now) {
   var pct = target ? Math.round(100 * closed / target) : (closed ? 100 : 0), dayPct = whole ? Math.round(100 * done / whole) : 0;
   return { sf: sfOk && !!day1, closed: closed, target: target, pct: pct, dayPct: dayPct, proj: done ? Math.round(closed * whole / done) : 0,
     behind: target > 0 && pct < dayPct, noted: closed - unnoted, unnoted: unnoted, overdue: overdue, dueToday: dueOpen,
-    lastAt: day1 && day1.lastAt != null ? twelve_(mmText_(day1.lastAt)) : '', notes: day1 ? day1.notes : 0,
+    lastAt: day1 && day1.lastAt != null ? twelve_(mmText_(day1.lastAt)) : '', _lastM: day1 && day1.lastAt != null ? day1.lastAt : null, notes: day1 ? day1.notes : 0,
     plan: plan.length, planDone: plan.filter(function (id) { return shut[id]; }).length, _closed: day1 ? day1.closed : [], _all: all };
 }
 /** Closes per working day, the last WORKDAY.BARS of them, oldest first (today last). */
@@ -16664,7 +16667,7 @@ function wdCard_(sid, day, p) {
 function wdScrub_(person, sid, day, p) {
   var type = SF_TYPES[String(p.type || '')] ? String(p.type) : 'Servicing', out = [];
   String(p.lines || '').split(/\r?\n/).map(function (l) { return l.replace(/\s+/g, ' ').trim(); }).filter(function (l) { return l.length >= 4; }).slice(0, WD_ONE.SCRUB).forEach(function (l) {
-    try { var ct = createTask_({ staffId: sid, subject: l, type: type, due: day, date: day, block: 'KPI1' }, { staffId: sid, name: person.name });
+    try { var ct = createTask_({ staffId: sid, subject: l, type: type, due: day, date: day, block: 'KPI1', scrub: 1 }, { staffId: sid, name: person.name });
       out.push({ s: l, ok: !!(ct && ct.ok), res: ct && ct.ok ? 'a task in your day' : 'NOT CREATED: ' + ((ct && ct.error) || 'add it in Salesforce') }); }
     catch (e) { out.push({ s: l, ok: false, res: 'NOT CREATED: add it in Salesforce' }); }
   });
@@ -16689,6 +16692,152 @@ function wdCloseForm_(person, sid, day) {
     mailbag: mb, inno: inno, innoSaid: innoSaid } };
 }
 
+/* ── The day's coach, and what is new for you (29 October 2026, 2026-10-29b) ──
+ *  Ricky, 6:45am: "remind them about the lunchtime, and we can put a note on top there. Remember, 30 minutes, the progress
+ *  update before you leave to lunch ... Before you go to lunch, built-in intelligence will tell you 30 minutes before you need to
+ *  scrub. So you have to find some way as the day goes by, letting them know the expectations when you set in", and "what things
+ *  came in during the morning and routed, and new task open, sensing the urgency with the chatter tasks".
+ *    wdCoach_  the desk's day laid out from its own hours: check in, scrub, the update half an hour before lunch, lunch, the scrub
+ *              after it, close my day, the finish. Each stop is done, missed or still to come; each stretch of the day has its
+ *              line, with the numbers (closed, what lunch needs, what is left). The page picks the line for the time on the clock.
+ *    wdNews_   what came to the desk today: tasks routed to them (never their own scrub) and notes on their open tasks by anyone
+ *              else (Mr Rampersad, Kamla, Akaash, an agent), the unanswered and the urgent first. One read of the day serves
+ *              every desk for WD_COACH.NEWS_TTL seconds.
+ *  Claude writes for the Branch Manager, the unit managers and the BMA only (Ricky: "Claude AI, it's only for the branch manager and
+ *  the unit manager ... and the BMA so far, right? Not the staff"): claudeFor_. */
+var WD_COACH = { SCRUB_AFTER: 15, START_FOR: 30, UPDATE_LEAD: 30, BACK_FOR: 30, MIDDAY: 12 * 60, MISS_AFTER: 30, NEWS: 12, KEEP: 60, NEWS_TTL: 180 };
+var WD_URGENT = /\b(urgent\w*|asap|immediately|right away|complain\w*|escalat\w*|still waiting|deadline|lapsed|lapsing|cancel\w*|unhappy|angry|upset|by today|end of day)\b|!{2,}/i;
+function claudeFor_(sid) { return sid === 'ricky' || sid === 'kamla' || UM_DESKS.indexOf(String(sid)) > -1; }
+/** What the tracker did for a desk today: the tasks it made for them (own) and the times they scrubbed (scrub). */
+function wdDayGet_(sid, day) {
+  var o = null; try { o = JSON.parse(PropertiesService.getScriptProperties().getProperty('wdday_' + sid + '_' + day) || 'null'); } catch (e) {}
+  return o && typeof o === 'object' ? { own: o.own || [], scrub: o.scrub || [] } : { own: [], scrub: [] };
+}
+function wdDayMark_(sid, day, kind, val) {
+  try { var o = wdDayGet_(sid, day); o[kind] = (o[kind] || []).concat([val]).slice(-80); propSet_(PropertiesService.getScriptProperties(), 'wdday_' + sid + '_' + day, JSON.stringify(o)); } catch (e) {}
+}
+/** The coach for one desk at nowM. s: { inM, outM, absent, late, closed, target, unnoted, overdue, dueToday, lastM, proj, sf, scrubs[] }. */
+function wdCoach_(sid, day, nowM, s) {
+  var sc = scheduleFor_(sid, day), hrs = parseSpan_(sc.hours || '') || { start: 480, end: 960 }, lu = parseSpan_(sc.lunch || '');
+  var T = function (x) { return twelve_(mmText_(x)); }, C = WD_COACH;
+  var start = hrs.start, end = hrs.end, closeAt = Math.max(start + 60, Math.min(end - 15, closeoutAt_(sid)));
+  var upd = (lu ? lu.start : C.MIDDAY) - C.UPDATE_LEAD, back = lu ? lu.end : C.MIDDAY + 60, midS = lu ? lu.start : C.MIDDAY;
+  var scr = (s.scrubs || []).filter(function (x) { return x != null; });
+  var scrubbed = function (a, b) { return scr.some(function (x) { return x >= a && x < b; }); };
+  var inM = s.inM == null ? null : Number(s.inM), out = s.outM != null;
+  var T0 = Math.max(0, Number(s.target || 0)), N = Math.max(0, Number(s.closed || 0)), U = Number(s.unnoted || 0), O = Number(s.overdue || 0), D = Number(s.dueToday || 0);
+  var whole = workedMins_(sid, end), byW = workedMins_(sid, midS);
+  var byLunch = T0 && whole ? Math.min(T0, Math.ceil(T0 * byW / whole)) : 0, toLunch = Math.max(0, byLunch - N), left = Math.max(0, T0 - N);
+  var am = scrubbed(inM == null ? 0 : inM - 60, midS), pm = scrubbed(midS, 24 * 60), updated = s.lastM != null && s.lastM >= upd;
+  var stops = [
+    { k: 'in', at: start, l: 'Check in', done: inM != null, late: inM != null && Number(s.late || 0) > 0, miss: start + ABSENT_AFTER_MIN },
+    { k: 'scrub', at: start + C.SCRUB_AFTER, l: 'Scrub', done: am, miss: midS },
+    { k: 'update', at: upd, l: lu ? 'Update' : 'Midday update', done: updated, miss: midS },
+    lu ? { k: 'lunch', at: lu.start, l: 'Lunch', done: false, doneAt: lu.end, miss: null } : null,
+    { k: 'scrub2', at: back, l: 'Scrub', done: pm, miss: back + C.MISS_AFTER },
+    { k: 'close', at: closeAt, l: 'Close my day', done: out, miss: end },
+    { k: 'end', at: end, l: 'Day ends', done: out, miss: end + NOCLOSE.GRACE }
+  ].filter(Boolean).map(function (x) { x.t = T(x.at); return x; });
+  var exp = [
+    T0 ? 'Close ' + T0 + ' today: overdue first' + (O ? ' (' + O + ')' : '') + ', then what is due today' + (D ? ' (' + D + ')' : '') : 'Overdue first, then what is due today',
+    'Every close carries your note: what was done, who you spoke to, the outcome, the next step',
+    'Scrub when you start, before lunch and after it: everything that came in goes into Add to my day',
+    (lu ? 'Update by ' + T(upd) + ', before lunch at ' + T(lu.start) : 'A midday update by ' + T(upd)),
+    'Close your day by ' + T(end) + ': tap Close my day, on this page'];
+  var lines = [], add = function (from, to, k, tone, h, say, items) {
+    var f = lines.length ? Math.max(from, lines[lines.length - 1].to) : from;
+    if (to > f) lines.push({ from: f, to: to, k: k, tone: tone || '', h: h, s: say || '', items: items || [] });
+  };
+  var noteBit = U ? ' ' + U + ' closed with no note: add it.' : '';
+  if (s.absent && inM == null) add(0, 1440, 'absent', 'bad', 'Marked absent today', 'If you are here, check in now: it brings back the work nobody has touched.');
+  else if (inM == null) {
+    add(0, start, 'before', '', 'Your day starts at ' + T(start), 'Check in when you arrive: it is the register, and your day is set for you.', exp);
+    add(start, 1440, 'notin', 'bad', 'You have not checked in', 'Your day started at ' + T(start) + '. Check in now: it is the register, and your work waits on it.');
+  } else if (out) add(0, 1440, 'closed', 'good', 'Day closed at ' + T(s.outM), N + ' closed today' + (T0 ? ' of ' + T0 : '') + '. Thank you.');
+  else {
+    add(0, Math.min(upd, Math.max(inM, start) + C.START_FOR), 'start', '', T0 ? 'Today: close ' + T0 : 'Today: overdue first',
+      (am ? 'Scrubbed. ' : 'Scrub first: anything from your inbox, WhatsApp or calls goes into Add to my day. ') + 'Then overdue first, each close with your note.', exp);
+    add(0, upd, 'morning', '', T0 ? (toLunch ? N + ' of ' + T0 + ' closed · ' + toLunch + ' more by lunch' : 'On pace for lunch: ' + N + ' of ' + T0 + ' closed') : N + ' closed so far',
+      (am ? '' : 'You have not scrubbed yet: add what came in to Add to my day. ') + (O ? 'Overdue first: ' + O + ' left.' : 'Nothing overdue: what is due today next.') + noteBit);
+    add(0, midS, 'update', 'warn', lu ? 'Lunch at ' + T(lu.start) + ': update now' : 'Midday: update now',
+      '30 minutes. ' + (toLunch ? 'Close ' + toLunch + ' more to be on pace (' + N + ' of ' + byLunch + ' by ' + (lu ? 'lunch' : 'midday') + ')' : 'You are on pace (' + N + ' closed)') +
+        (U ? ', put your note on the ' + U + ' closed with none' : '') + ', and scrub what came in this morning.',
+      [{ s: toLunch ? 'Close ' + toLunch + ' more' : 'On pace: ' + N + ' closed', done: !toLunch }, { s: 'A note on every close', done: !U },
+       { s: 'Scrub what came in this morning', done: scrubbed(upd - C.UPDATE_LEAD, midS) },
+       { s: 'Where each open one stands, in Salesforce', done: updated }]);
+    if (lu) add(0, lu.end, 'lunch', '', 'Lunch until ' + T(lu.end), 'When you are back: scrub what came in over lunch, then ' + (left ? left + ' to go.' : 'keep going.'));
+    else add(0, back, 'afternoon', '', left ? left + ' to go to reach ' + T0 : 'Today\'s number reached: keep going', (O ? 'Overdue first: ' + O + '.' : 'Nothing overdue.') + noteBit);
+    add(0, back + C.BACK_FOR, 'back', pm ? '' : 'warn', pm ? 'Scrubbed: the afternoon' : (lu ? 'Welcome back: scrub first' : 'The afternoon: scrub first'),
+      (pm ? '' : 'Add what came in over lunch. ') + 'Then ' + (left ? left + ' to go' : 'keep going') + (O ? ', ' + O + ' overdue' : '') + '.');
+    add(0, closeAt, 'afternoon', '', left ? left + ' to go to reach ' + T0 : 'Today\'s number reached: keep going',
+      (s.proj ? 'On pace for ' + s.proj + '. ' : '') + (O ? 'Overdue first: ' + O + '.' : 'Nothing overdue.') + noteBit);
+    add(0, end, 'close', 'warn', 'Close your day by ' + T(end), 'What is done, a reason and a new date for anything not done, the three checks: tap Close my day.');
+    add(0, 1440, 'late', 'bad', 'Your day ended at ' + T(end) + ': close it now', 'Tap Close my day now. Not closed by ' + T(end + NOCLOSE.GRACE) + ', the register reads "' + NOCLOSE.LABEL + '".');
+  }
+  return { now: nowM, start: start, end: end, stops: stops, lines: lines, exp: exp, byLunch: byLunch, left: left };
+}
+
+/** Today's new tasks and notes for every desk at once, each desk's slice kept WD_COACH.NEWS_TTL seconds. */
+function wdNewsBuild_(day) {
+  var users = sfkUsers_() || {}, me = bmSfId_(), bySf = {}, names = {}, desks = DAY_MAIL_DESKS.concat(UM_DESKS);
+  Object.keys(users).forEach(function (s) { if (users[s] && users[s].id) { names[users[s].id] = nameFor_(s); if (desks.indexOf(s) > -1) bySf[users[s].id] = s; } });
+  var from = sfkUtcAt_(day, 0), tasks = {}, posts = [], put = function (t) { tasks[t.Id] = t; };
+  var TQ = 'SELECT Id, Subject, OwnerId, CreatedById, CreatedDate, Task_Type__c, ActivityDate, IsClosed FROM Task WHERE ';
+  sfkQuery_(TQ + 'CreatedDate >= ' + from + ' ORDER BY CreatedDate DESC LIMIT 500').forEach(put);
+  try { sfkQuery_("SELECT Id, ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND CreatedDate >= " + from + ' ORDER BY CreatedDate DESC LIMIT 1500')
+    .forEach(function (p) { if (String(p.ParentId).slice(0, 3) === '00T') posts.push(p); }); } catch (e) {}
+  try { sfkQuery_('SELECT Id, ParentId, CreatedById, CreatedDate, CommentBody FROM FeedComment WHERE CreatedDate >= ' + from + ' ORDER BY CreatedDate DESC LIMIT 800')
+    .forEach(function (c) { if (String(c.ParentId).slice(0, 3) === '00T') posts.push({ Id: c.Id, ParentId: c.ParentId, CreatedById: c.CreatedById, CreatedDate: c.CreatedDate, Body: c.CommentBody, reply: true }); }); } catch (e) {}
+  var need = []; posts.forEach(function (p) { if (!tasks[p.ParentId] && need.indexOf(p.ParentId) < 0) need.push(p.ParentId); });
+  for (var i = 0; i < need.length && i < 900; i += 150) { try { sfkQuery_(TQ + 'Id IN (' + need.slice(i, i + 150).map(soqlStr_).join(',') + ')').forEach(put); } catch (e) {} }
+  var unk = {}; posts.forEach(function (p) { if (p.CreatedById && !names[p.CreatedById]) unk[p.CreatedById] = 1; });
+  Object.keys(tasks).forEach(function (k) { var c = tasks[k].CreatedById; if (c && !names[c]) unk[c] = 1; });
+  if (Object.keys(unk).length) { try { sfkQuery_('SELECT Id, Name FROM User WHERE Id IN (' + Object.keys(unk).slice(0, 150).map(soqlStr_).join(',') + ')').forEach(function (u) { names[u.Id] = u.Name; }); } catch (e) {} }
+  postWhoAll_(posts, me, bySf);
+  var byTask = {}; posts.forEach(function (p) { (byTask[p.ParentId] = byTask[p.ParentId] || []).push(p); });
+  var first = function (n) { return String(n || '').trim().split(/\s+/)[0] || 'Someone'; };
+  var out = {}; desks.forEach(function (s) { out[s] = { items: [], chase: 0 }; });
+  var own = {}; desks.forEach(function (s) { own[s] = {}; wdDayGet_(s, day).own.forEach(function (id) { own[s][id] = 1; }); });
+  Object.keys(tasks).forEach(function (id) {
+    var t = tasks[id], sid = bySf[t.OwnerId]; if (!sid || t.IsClosed) return;
+    var o = out[sid], made = sfLocal_(t.CreatedDate), mine = (users[sid] || {}).id;
+    if (made && made.day === day && t.CreatedById !== mine && !own[sid][id]) {
+      var by = t.CreatedById === me ? (/^Inbox · /.test(String(t.Subject)) ? 'Routed from the inbox' : 'Mr Rampersad') : bySf[t.CreatedById] ? first(nameFor_(bySf[t.CreatedById])) : first(names[t.CreatedById]);
+      o.items.push({ k: 'new', id: id, s: shorten_(String(t.Subject || ''), 160), ty: String(t.Task_Type__c || ''), by: by, m: made.min, u: WD_URGENT.test(String(t.Subject || '')) ? 2 : 1 });
+    }
+    var ps = (byTask[id] || []).slice().sort(function (a, b) { return String(a.CreatedDate).localeCompare(String(b.CreatedDate)); });
+    ps.forEach(function (p, j) {
+      if (p.who === sid) return;
+      if (p.who === 'chase') { o.chase++; return; }
+      var txt = postPlain_(p.Body).replace(/\s+/g, ' ').trim();
+      if (!txt || (p.who === 'system' && !/^(ACTION REQUIRED|MOVED|Moved from)/.test(txt))) return;
+      var np = noteParts_(txt), body = np.ours ? np.body : txt, l = sfLocal_(p.CreatedDate);
+      if (!l || l.day !== day) return;
+      var role = p.who === 'ricky' ? 'bm' : p.who === 'system' ? 'sys' : p.who === 'agent' ? 'agent' : UM_DESKS.indexOf(p.who) > -1 ? 'um' : p.who === 'kamla' ? 'bma' : desks.indexOf(p.who) > -1 ? 'desk' : 'other';
+      var who = role === 'bm' ? 'Mr Rampersad' : role === 'sys' ? 'Branch Intelligence' : role === 'agent' ? first((String(np.who).split(' · ')[1] || 'An agent')) : desks.indexOf(p.who) > -1 ? first(nameFor_(p.who)) : first(names[p.CreatedById]);
+      o.items.push({ k: 'note', id: id, s: shorten_(String(t.Subject || ''), 160), ty: String(t.Task_Type__c || ''), said: shorten_(body, 220), by: who, role: role, m: l.min, reply: !!p.reply,
+        answered: ps.slice(j + 1).some(function (q) { return q.who === sid; }), u: role === 'bm' || /^ACTION REQUIRED/.test(txt) || WD_URGENT.test(body) ? 2 : role === 'sys' ? 0 : 1 });
+    });
+  });
+  // A busy desk can have scores of notes in a day (623 posts branch-wide on 28 Oct): the most pressing WD_COACH.KEEP are kept.
+  var cache = CacheService.getScriptCache(), rank = function (x) { return (x.k === 'note' && x.answered ? 0 : 100) + x.u * 10; };
+  desks.forEach(function (s) { var o = out[s]; o.n = o.items.length; o.items = o.items.sort(function (a, b) { return rank(b) - rank(a) || b.m - a.m; }).slice(0, WD_COACH.KEEP);
+    try { cache.put('wd_news_' + s + '_' + day, JSON.stringify(o), WD_COACH.NEWS_TTL); } catch (e) {} });
+  return out;
+}
+/** One desk's news, newest read: the unanswered and urgent first; fresh = since they checked in. */
+function wdNews_(sid, day, inM) {
+  var hit = null; try { hit = JSON.parse(CacheService.getScriptCache().get('wd_news_' + sid + '_' + day) || 'null'); } catch (e) {}
+  if (!hit) hit = (wdNewsBuild_(day) || {})[sid];
+  if (!hit) return null;
+  var items = (hit.items || []).map(function (x) { x.fresh = inM != null && x.m >= inM; x.at = twelve_(mmText_(x.m)); return x; });
+  var score = function (x) { return (x.k === 'note' && x.answered ? 0 : 100) + x.u * 10 + (x.fresh ? 1 : 0); };
+  items.sort(function (a, b) { return score(b) - score(a) || b.m - a.m; });
+  return { items: items.slice(0, WD_COACH.NEWS), more: Math.max(0, (hit.n || items.length) - WD_COACH.NEWS), total: hit.n || items.length,
+    fresh: items.filter(function (x) { return x.fresh; }).length, urgent: items.filter(function (x) { return x.u === 2 && !x.answered; }).length,
+    open: items.filter(function (x) { return x.k === 'new' || !x.answered; }).length, chase: hit.chase || 0 };
+}
+
 /** Everything the page shows, as JSON. */
 function workdayModel_(sid, day) {
   var person = workdayPerson_(sid);
@@ -16698,9 +16847,10 @@ function workdayModel_(sid, day) {
     hours: sched.hours || '', lunch: sched.lunch || '', start: twelve_(mmText_(startFor_(sid, day))), full: workdayFullUrl_(sid, day),
     fullLabel: sid === 'ricky' ? 'Open My day' : UM_DESKS.indexOf(sid) > -1 ? 'Open My unit' : 'Open my day page' };
   m.checkin = { at: '', late: 0, status: '', out: '', why: '' };
+  var ciIn = null, ciOut = null;
   try {
     var a = attRow_(hrRows_(ATT, true) || [], day, sid);
-    if (a) { var t = timeStr_(a.row.FirstSignIn), o = timeStr_(a.row.SignedOut);
+    if (a) { var t = timeStr_(a.row.FirstSignIn), o = timeStr_(a.row.SignedOut); ciIn = t ? minutesOf_(t) : null; ciOut = o ? minutesOf_(o) : null;
       m.checkin = { at: t ? twelve_(t) : '', late: t ? lateBy_(sid, t, day) : 0, status: String(a.row.Status || (t ? 'in' : '')).toLowerCase(), out: o ? twelve_(o) : '', why: String(a.row.Reason || '') }; }
   } catch (e) {}
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
@@ -16740,7 +16890,15 @@ function workdayModel_(sid, day) {
       .concat((pr._all || []).filter(function (x) { return x.t && onNext[x.t.id]; }).map(function (x) { return { id: x.t.id, s: x.t.subject || x.t.s, ty: x.ty, due: x.t.due }; }))); } catch (e) {}
     m.types = sfTypeList_().map(function (t) { return { k: t, l: SF_TYPES[t] }; });
     m.closeInline = sid !== 'pawan';
+    // The day's coach and what is new for you (29 Oct 2026, 2026-10-29b); a task in the news opens as a card like the rest.
+    try { m.coach = wdCoach_(sid, day, minutesOf_(hhmm_(now)), { inM: ciIn, outM: ciOut, absent: m.checkin.status === 'absent', late: m.checkin.late,
+      closed: pr.closed, target: pr.target, unnoted: pr.unnoted, overdue: pr.overdue, dueToday: pr.dueToday, lastM: pr._lastM, proj: pr.proj, sf: pr.sf,
+      scrubs: wdDayGet_(sid, day).scrub.map(minutesOf_) }); } catch (e) {}
+    try { m.news = wdNews_(sid, day, ciIn);
+      if (m.news && m.news.items.length) { m.news.items.forEach(function (x) { x.url = base && x.id ? base + x.id : ''; });
+        wdCardList_(sid, day, m.news.items.map(function (x) { return { id: x.id, s: x.s, ty: x.ty || '' }; })); } } catch (e) { m.news = null; }
   }
+  m.claude = claudeFor_(sid);
   m.bars = workdayBars_(sid, day);
   m.team = sid === 'ricky' || sid === 'kamla' ? workdayTeam_(day) : [];
   return m;
@@ -17515,7 +17673,7 @@ function planReplySave_(person, day, p, all) {
   String(p.scrub || '').split(/\r?\n/).map(function (l) { return l.replace(/\s+/g, ' ').trim(); })
     .filter(function (l) { return l.length >= 4; }).slice(0, 10).forEach(function (l) {
       try {
-        var ct = createTask_({ staffId: sid, subject: l, type: scrubType, due: day, date: day, block: scrubBlock }, { staffId: sid, name: person.name });
+        var ct = createTask_({ staffId: sid, subject: l, type: scrubType, due: day, date: day, block: scrubBlock, scrub: 1 }, { staffId: sid, name: person.name });
         if (ct && ct.ok) made.push(l); else failed.push(l + (ct && ct.error ? ' (' + ct.error + ')' : ''));
       } catch (e) { failed.push(l); }
     });
@@ -21201,6 +21359,8 @@ function createTask_(data, profile) {
   }
   if (typeof audit_ === 'function')
     audit_(profile, id, 'create', '', subject + ' \u00b7 ' + type + ' \u00b7 due ' + due, 'OK');
+  // Theirs, not routed to them; and a scrub's time, for the day's coach (29 Oct 2026).
+  try { wdDayMark_(staffId, todayISO_(), 'own', id); if (data.scrub) wdDayMark_(staffId, todayISO_(), 'scrub', hhmm_(new Date())); } catch (e) {}
   sfkForgetDay_(todayISO_());
   if (due !== todayISO_()) sfkForgetDay_(due);
 
