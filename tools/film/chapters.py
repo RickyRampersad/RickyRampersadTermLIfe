@@ -20,7 +20,8 @@ BRANCH = ROOT / 'orphan-video'           # rickyrampersadbranch.com/orphan-video
 VID = ROOT / 'vid'                       # rickyrampersadbranch.com/vid — the film alone
 TEAM = ROOT / 'orphan-transition'        # the branch's own pages that embed it
 TPL = ROOT / 'templates'                 # the team's one page: film, letter, openings, verdict
-SITES = [DHAA, BRANCH, VID, TEAM, TPL]
+BLAST = ROOT / 'blastoff'                # rickyrampersadbranch.com/blastoff — the FY27 rise film
+SITES = [DHAA, BRANCH, VID, TEAM, TPL, BLAST]
 films = json.load(open(HERE / 'films.json'))
 
 # which page each MP4 was rendered from, and which site it belongs to
@@ -33,14 +34,22 @@ PAGE = {'client': (DHAA, 'client-film.html'), 'process': (DHAA, 'process-film.ht
         'boardmgr': (TEAM, 'board-management.html'), 'boardstaff': (TEAM, 'board-client-support.html'),
         'boardagent': (TEAM, 'board-agents.html'),
         # the workflow for everyone, start to finish (16 October 2026): board-films.html and the training page
-        'boardflow': (TEAM, 'board-workflow.html')}
+        'boardflow': (TEAM, 'board-workflow.html'),
+        # the FY27 rise, for the meeting of 30 October 2026
+        'rise': (BLAST, 'film.html')}
 
 def names_of(site, page):
     s = (site / page).read_text(encoding='utf-8')
     out = []
-    for sec in re.findall(r'<section class="scene[^"]*"[^>]*>(.*?)</section>', s, re.S):
+    for attrs, sec in re.findall(r'<section class="scene[^"]*"([^>]*)>(.*?)</section>', s, re.S):
+        # a scene may name itself, and that wins over anything read off the
+        # picture: a scene with no eyebrow would otherwise hand the rail its
+        # own first words, which on a kinetic headline is a dump of fragments
+        own = re.search(r'\sdata-ch="([^"]*)"', attrs)
+        if own and own.group(1).strip():
+            out.append(H.unescape(own.group(1)).strip()[:44]); continue
         # the eyebrow names the chapter; a quotation card names it by its source line
-        m = re.search(r'class="(?:eyebrow|src)[^"]*"[^>]*>(.*?)</div>', sec, re.S)
+        m = re.search(r'class="(?:eyebrow|src|rseyeb)[^"]*"[^>]*>(.*?)</div>', sec, re.S)
         # the board films (14 October 2026, the corporate cut) name it "eb" beside the board, "ebw" on blue
         m = m or re.search(r'class="(?:[^"]*\s)?(?:eb|ebw)(?:\s[^"]*)?"[^>]*>(.*?)</div>', sec, re.S)
         t = m.group(1) if m else (re.search(r'<h[12][^>]*>(.*?)</h[12]>', sec, re.S) or [None, ''])[1]

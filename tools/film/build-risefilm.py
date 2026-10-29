@@ -31,7 +31,7 @@ honest: Randolph is 9.94 years in and belongs under the ten-year line, and
 rounding put a "10" on a bar that the ten-year colour does not claim.
 """
 
-import json, math, os, re, pathlib
+import html, json, math, os, re, pathlib
 from datetime import date
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -182,6 +182,22 @@ def mesh(mode, n=9):
     return f'<svg class="mx mx-{mode}" viewBox="0 0 88 88" aria-hidden="true">{eh}{nh}</svg>'
 
 
+def person(cls='', style='', label=''):
+    """A head and shoulders, not a dot.
+
+       Asked for on 29 October 2026: "better icons show ppeople not dots". A
+       chart about who stayed should look like people, and twenty-six dots is
+       the one drawing that cannot say that. One silhouette, drawn once here
+       and sized by its container everywhere it is used.
+    """
+    cap = f'<i>{label}</i>' if label else ''
+    return (f'<span class="rsppl {cls}" style="{style}">'
+            f'<svg viewBox="0 0 24 27" aria-hidden="true">'
+            f'<circle cx="12" cy="6.6" r="5"/>'
+            f'<path d="M2.8 26.5c0-5.1 4.1-8.8 9.2-8.8s9.2 3.7 9.2 8.8z"/>'
+            f'</svg>{cap}</span>')
+
+
 def tenure_chart(coloured):
     """Twenty-two horizontal bars, longest first, in two columns of eleven.
 
@@ -315,9 +331,9 @@ def V(name, s):
     chips = ''
     if name == 'count':
         for i, p in enumerate(PEOPLE):
-            chips += f'<span class="rschip" style="--i:{i}">{p["n"][0]}</span>'
-        chips += f'<span class="rschip" style="--i:22">S</span>'
-        sup = ''.join(f'<span class="rschip sup" style="--i:{23+i}">{n[0]}</span>'
+            chips += person('', f'--i:{i}', p['n'][0])
+        chips += person('', '--i:20', 'S')
+        sup = ''.join(person('sup', f'--i:{21 + i}', n[0])
                       for i, n in enumerate(SUPPORT))
         return (f'<div class="rscap"><div class="rschips">{chips}</div>'
                 f'<div class="rschips sup">{sup}</div>'
@@ -355,8 +371,8 @@ def V(name, s):
             at = (yy + (mm - 1) / 12 - y0) / span * 100
             k = round(at / 3)
             seen[k] = seen.get(k, 0) + 1
-            dots += (f'<span class="rsdot" style="--x:{at:.2f};--s:{seen[k] - 1};'
-                     f'--l:{i % 3};--i:{i}"><i>{nm}</i></span>')
+            dots += person('rsdot', f'--x:{at:.2f};--s:{seen[k] - 1};'
+                           f'--l:{i % 3};--i:{i}', nm)
         ticks = ''.join(
             f'<span class="rstk" style="--x:{(d - y0) / span * 100:.2f}">{d}</span>'
             for d in range(2000, y1 + 1, 5))
@@ -364,7 +380,7 @@ def V(name, s):
                 f'<div class="rstl"><span class="rstlr"></span>{dots}'
                 f'<span class="rstla">{y0}</span>'
                 f'<span class="rstlz">{y1}</span>{ticks}</div>'
-                f'<div class="rsfoot">one dot a person, at the year they joined</div>'
+                f'<div class="rsfoot">one of us at the year they joined</div>'
                 f'</div>')
 
     # 9a · and nearly all of it was built since August. The same idea turned on
@@ -568,6 +584,29 @@ def V(name, s):
                 f'<div class="rsqs">{q}</div>'
                 f'<div class="rseyeb">{on}</div></div>')
 
+    # 23a · how to get in on Friday. Asked for on 29 October 2026 ("at the end
+    #       where is the log in!!! to log in with agent number and guest a code
+    #       000"): the film ends on a rally and never said the one practical
+    #       thing. The shared branch code is gone (see the sign-in note), so the
+    #       agent number IS the sign-in and IS the register, and 0000 is the
+    #       standing visitor. Four zeros are spoken as "four zeros", never
+    #       "oh oh oh oh", which the voice reads as a word.
+    if name == 'signin':
+        pad = ''.join(f'<b style="--i:{i}">{d}</b>' for i, d in enumerate('0000'))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rstwo">'
+                f'<div class="rscard lit"><span class="rsct">You</span>'
+                f'<div class="rsfield"><span class="rslab">Agent number</span>'
+                f'<span class="rsbox"><b class="rstype">A&#8226;&#8226;&#8226;&#8226;&#8226;</b>'
+                f'<i class="rscar"></i></span></div>'
+                f'<span class="rsnote">That is the whole sign-in.<br>Signing in is the register.</span>'
+                f'</div>'
+                f'<div class="rscard"><span class="rsct">A visitor</span>'
+                f'<div class="rspad">{pad}</div>'
+                f'<span class="rsnote">Four zeros.<br>Guests are never on the roll.</span>'
+                f'</div></div>'
+                f'<div class="rsurl">rickyrampersadbranch.com/meetings</div></div>')
+
     # 18 · the close. Whole, with the seams showing, and the check drawn on.
     if name == 'rise':
         ck = (f'<path class="ckc" d="{CHECK}"/>'
@@ -580,6 +619,29 @@ def V(name, s):
     return f'<div class="rscap">{words(s["say"])}</div>'
 
 
+# The name of each scene on the player's rail. chapters.py takes it off
+# data-ch rather than off the picture, because several scenes here carry no
+# eyebrow at all (the opening three, the mended shield, the close) and the
+# ones that do would otherwise hand the rail a dump of initials.
+CHAPTER = {
+    'hit': 'The hit', 'left': 'People left', 'held': 'It held',
+    'rose': 'And it went up', 'stayed': 'Who stayed',
+    'count': 'Twenty-six still here', 'years': '221 years between us',
+    'mix': 'Ten years, and new', 'story': 'The branch, on one line',
+    'rebuild': 'We rebuilt it', 'built': 'Eighteen things, since August',
+    'one': 'One sign-in', 'day': 'Your day, set', 'wall': 'One score',
+    'served': 'What we closed', 'papers': 'The papers', 'ff': 'Not one lapse',
+    'keep': 'The business stays', 'stay': 'And so do the people',
+    'fy27': 'Day 30 of FY27', 'path': 'There is a way up',
+    'plan': 'The three-year plan', 'gold': 'The cracks are part of it',
+    'better': 'Not going back', 'friday': 'Friday 30 October',
+    'yours': '75 of the 90 minutes', 'ask': 'Answer one question',
+    'signin': 'How you get in', 'rise': 'We rise together'}
+# A scene with no name would hand the rail a dump of its own first words, so
+# say so at build time rather than find out on the page.
+_missing = [q['v'] for q in LINES['scenes'] if q['v'] not in CHAPTER]
+assert not _missing, 'no chapter name for: ' + ', '.join(_missing)
+
 sections = []
 for i, s in enumerate(LINES['scenes']):
     d = durs[i] if i < len(durs) else 5000
@@ -588,8 +650,17 @@ for i, s in enumerate(LINES['scenes']):
     # shield coming back whole, so the id is given and the confetti hidden —
     # a burst of paper would cheapen it.
     fin = ' id="finale"' if i == len(LINES['scenes']) - 1 else ''
-    sections.append(f'<section class="scene rs v-{s["v"]}" data-d="{int(d)}"{fin}>'
-                    f'<div class="inner">{V(s["v"], s)}</div></section>')
+    #  A drifting field behind every scene, so nothing is ever wholly still.
+    #  Seeded per scene from its index, never random: the renderer draws each
+    #  frame on its own, and a random field would jitter between frames.
+    motes = ''.join(
+        f'<i style="--x:{(i * 37 + k * 61) % 100};--i:{k};'
+        f'--d:{9 + (k * 7 + i * 3) % 11}s"></i>' for k in range(14))
+    ch = CHAPTER.get(s['v'], '')
+    sections.append(f'<section class="scene rs v-{s["v"]}" data-d="{int(d)}"'
+                    f' data-ch="{html.escape(ch, quote=True)}"{fin}>'
+                    f'<div class="inner"><div class="rsmotes">{motes}</div>'
+                    f'{V(s["v"], s)}</div></section>')
 SCENES = '\n'.join(sections)
 
 CSS = r"""
@@ -772,16 +843,85 @@ CSS = r"""
   opacity:0;animation:fUp .55s both;animation-delay:calc(.7s + var(--i)*.35s)}
 .rs .rsyr3 b{font-size:2.6vw;font-weight:800;color:var(--cy);line-height:1}
 .rs .rsyr3 span{font-size:1.15vw;color:var(--mut)}
+.rs .rsppl{position:relative;display:inline-grid;place-items:center;
+  width:3.1vw;opacity:0;transform:translateY(.8vh) scale(.6);
+  animation:pplIn .52s cubic-bezier(.2,1.5,.4,1) both;
+  animation-delay:calc(.35s + var(--i)*.055s)}
+.rs .rsppl svg{width:100%;height:auto;fill:var(--cy);
+  filter:drop-shadow(0 0 .5rem rgba(0,229,255,.35))}
+.rs .rsppl.sup svg{fill:var(--peri);filter:drop-shadow(0 0 .5rem rgba(0,229,255,.22))}
+.rs .rsppl i{font-style:normal;font-size:.82vw;font-weight:700;color:var(--mut);
+  margin-top:.25vh;letter-spacing:.04em}
+@keyframes pplIn{to{opacity:1;transform:none}}
+.rs .rsppl::after{content:"";position:absolute;inset:-18% -10% 10%;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,229,255,.28),transparent 70%);opacity:0;
+  animation:pplPop .7s both;animation-delay:calc(.35s + var(--i)*.055s)}
+@keyframes pplPop{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(1.5)}}
+.rs .rstwo{display:grid;grid-template-columns:1fr 1fr;gap:3vw;width:74%;max-width:980px;
+  margin-top:.6vh}
+.rs .rscard{position:relative;display:grid;gap:1.1vh;justify-items:center;
+  padding:2.4vh 2vw;border-radius:14px;background:var(--trk, #122043);
+  border:1px solid var(--line);overflow:hidden;
+  opacity:0;transform:translateY(1.4vh);animation:fUp .6s both;
+  animation-delay:calc(.45s + var(--i, 0)*.3s)}
+.rs .rscard.lit{border-color:var(--cy);animation-delay:.45s}
+.rs .rscard:not(.lit){animation-delay:.95s}
+.rs .rscard::after{content:"";position:absolute;top:0;left:-60%;width:45%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.1),transparent);
+  animation:sheen 3.2s 1.4s infinite}
+@keyframes sheen{to{left:130%}}
+.rs .rsct{font-size:1.05vw;font-weight:800;letter-spacing:.2em;color:var(--mut);
+  text-transform:uppercase}
+.rs .rsfield{display:grid;gap:.5vh;justify-items:center}
+.rs .rslab{font-size:.95vw;color:var(--dim)}
+.rs .rsbox{display:flex;align-items:center;gap:.35vw;padding:.9vh 1.6vw;border-radius:9px;
+  background:var(--bg);border:2px solid var(--cy);min-width:11vw;justify-content:center}
+.rs .rstype{font-size:2.1vw;font-weight:800;color:var(--ink);letter-spacing:.14em}
+.rs .rscar{width:2px;height:2.2vw;background:var(--cy);animation:caret 1s step-end infinite}
+@keyframes caret{50%{opacity:0}}
+.rs .rspad{display:flex;gap:.7vw}
+.rs .rspad b{display:grid;place-items:center;width:3.4vw;height:3.4vw;border-radius:10px;
+  background:var(--bg);border:2px solid var(--peri);font-size:2vw;font-weight:800;
+  color:var(--peri);opacity:0;transform:scale(.5);
+  animation:padIn .4s cubic-bezier(.2,1.6,.4,1) both;
+  animation-delay:calc(1.5s + var(--i)*.24s)}
+@keyframes padIn{to{opacity:1;transform:none}}
+.rs .rsnote{font-size:1.02vw;line-height:1.5;color:var(--mut);text-align:center}
+.rs .rsurl{margin-top:1.4vh;font-size:1.25vw;font-weight:700;color:var(--cy);
+  letter-spacing:.03em;opacity:0;animation:fIn .7s 2.5s both}
+/*  29 October 2026: "ad a lot more motion , charts and graphics make thing
+ *  move and a wow". Every one of these rides an element already on the page,
+ *  so a scene gains movement without gaining anything to read.  */
+.rs .rstrk i::after,.rs .rsvb i.ours::after,.rs .rspb i::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.35) 50%,transparent 80%);
+  background-size:220% 100%;animation:swipe 2.6s linear infinite}
+@keyframes swipe{from{background-position:140% 0}to{background-position:-60% 0}}
+.rs .rstrk i,.rs .rsvb i.ours,.rs .rspb i{position:relative;overflow:hidden}
+.rs .rscnt{display:inline-block;animation:numPop .5s both;
+  animation-delay:calc(var(--at, 400ms) + .85s)}
+@keyframes numPop{0%{transform:scale(1)}45%{transform:scale(1.07)}100%{transform:scale(1)}}
+.rs .rseyeb{position:relative}
+.rs .rseyeb::after{content:"";position:absolute;left:50%;bottom:-1.5vh;width:0;height:2px;
+  transform:translateX(-50%);background:linear-gradient(90deg,transparent,var(--cy),transparent);
+  animation:eyeRule .9s .35s both}
+@keyframes eyeRule{to{width:7.5vw}}
+.rs .rsmotes{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.rs .rsmotes i{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--cy);
+  opacity:0;left:calc(var(--x)*1%);top:110%;
+  animation:mote var(--d) linear infinite;animation-delay:calc(var(--i)*-1.7s)}
+@keyframes mote{0%{opacity:0;top:108%}12%{opacity:.5}88%{opacity:.35}100%{opacity:0;top:-8%}}
+.rs .rsfoot{position:relative}
 .rs .rstl{position:relative;width:88%;max-width:1060px;height:24vh;margin-top:1.4vh}
 .rs .rstlr{position:absolute;left:0;right:0;bottom:4.2vh;height:2px;background:var(--line);
   transform-origin:left;transform:scaleX(0);animation:growX 1.2s .3s both}
-.rs .rsdot{position:absolute;left:calc(var(--x)*1%);bottom:calc(4.2vh + var(--s)*1.5vw);
-  width:1.05vw;height:1.05vw;margin-left:-.52vw;border-radius:50%;background:var(--cy);
-  opacity:0;transform:scale(.3);animation:dotIn .5s both;animation-delay:calc(.5s + var(--i)*.07s);
-  box-shadow:0 0 .7rem rgba(0,229,255,.55)}
-.rs .rsdot i{position:absolute;left:50%;bottom:calc(1.5vw + var(--l)*2.6vw);transform:translateX(-50%) rotate(-52deg);
-  transform-origin:left bottom;font-size:.82vw;font-style:normal;color:var(--mut);
-  white-space:nowrap;letter-spacing:.02em}
+.rs .rsppl.rsdot{position:absolute;left:calc(var(--x)*1%);
+  bottom:calc(4.2vh + var(--s)*1.7vw);width:1.85vw;margin-left:-.92vw;
+  animation-delay:calc(.5s + var(--i)*.07s)}
+.rs .rsppl.rsdot::after{inset:-25% -15% 5%}
+.rs .rsppl.rsdot i{position:absolute;left:50%;bottom:calc(2.1vw + var(--l)*2.6vw);
+  transform:translateX(-50%) rotate(-52deg);transform-origin:left bottom;
+  font-size:.82vw;color:var(--mut);white-space:nowrap;letter-spacing:.02em;margin:0}
 @keyframes dotIn{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
 .rs .rstla,.rs .rstlz{position:absolute;bottom:.9vh;font-size:1.5vw;font-weight:800;
   color:var(--ink);opacity:0;animation:fIn .7s .6s both}
@@ -1084,3 +1224,31 @@ OUT.write_text(out)
 tot = sum(durs) / 1000
 print(f'{OUT.relative_to(ROOT)} — {len(LINES["scenes"])} scenes, {tot:.1f}s, '
       f'{len(PEOPLE)} in the chart, {TOTAL} years, bands {LONG}/{MID}/{NEW}')
+
+# The page around the film carries the same figures in prose, and nothing else
+# checks it: the first cut of this guard caught a lede still saying
+# twenty-eight of us and two hundred and sixty-three years, three days after
+# two names came off the roster. The film is written by the time this runs, so
+# a stale page says exactly what to change rather than blocking the rebuild.
+#
+# It reads the prose and the meta descriptions, never the raw markup: the
+# player's own data-chapters attribute carries "Twenty-six still here", which
+# satisfied a naive substring search on a page whose lede still said
+# twenty-eight.
+if not os.environ.get('RISE_VARIANT'):
+    PAGE_OUT = ROOT / 'blastoff' / 'index.html'
+    if PAGE_OUT.exists():
+        raw = PAGE_OUT.read_text(encoding='utf-8')
+        meta = ' '.join(re.findall(r'<meta[^>]+content="([^"]*)"', raw)).lower()
+        body = re.sub(r'<(script|style)\b.*?</\1>', ' ', raw, flags=re.S | re.I)
+        body = re.sub(r'<[^>]+>', ' ', body)
+        body = re.sub(r'&mdash;|&middot;|&nbsp;', ' ', body)
+        body = re.sub(r'\s+', ' ', body).lower()
+        everyone = len(ROSTER) + 1 + len(SUPPORT)
+        want = [(spoken(everyone), body, 'the headcount, in the lede'),
+                (spoken(TOTAL), body, 'the years, in the lede'),
+                (str(TOTAL), meta, 'the years, in the meta descriptions')]
+        gone = [f'{w!r} ({why})' for w, where, why in want if w not in where]
+        assert not gone, ('blastoff/index.html no longer carries ' +
+                          ', '.join(gone) + '. The roster gives '
+                          f'{everyone} people and {TOTAL} years: put those in the page.')
