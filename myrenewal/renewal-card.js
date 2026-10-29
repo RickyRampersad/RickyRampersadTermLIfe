@@ -68,8 +68,37 @@
     '.rc-ans.chg{background:#FFF4DB;color:#5A3A00}' +
     '.rc-cm{font-size:.9rem;border-left:3px solid #DDE6F2;padding:2px 0 2px 10px;margin:6px 0}' +
     '.rc-pay{font-size:.9rem;color:#5E6E8A;margin-top:16px}' +
+    '.rc-sum{margin:0 0 10px;font-size:.95rem}.rc-yh{font-weight:800;color:#1B2A44;margin:16px 0 6px}' +
+    '.rc-yr{border:1px solid #DDE6F2;border-radius:12px;margin:8px 0;background:#fff}' +
+    '.rc-yr>summary{list-style:none;cursor:pointer;padding:10px 34px 10px 12px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;position:relative;min-height:44px}' +
+    '.rc-yr>summary::-webkit-details-marker{display:none}' +
+    '.rc-yr>summary::after{content:"";position:absolute;right:14px;top:17px;width:8px;height:8px;border-right:2px solid #5E6E8A;border-bottom:2px solid #5E6E8A;transform:rotate(-45deg);transition:transform .15s}' +
+    '.rc-yr[open]>summary::after{transform:rotate(45deg)}.rc-yr>summary:focus-visible{outline:3px solid #9CC2F2;outline-offset:2px}' +
+    '.rc-yr>summary>b{font-size:1.05rem;color:#1B2A44;min-width:2.8rem}.rc-yr .rc-sm{flex:1 1 11rem}' +
+    '.rc-yp{font-weight:800;color:#1B2A44;font-variant-numeric:tabular-nums}.rc-yp .rc-sm{font-weight:600}' +
+    '.rc-chips{display:flex;flex-wrap:wrap;gap:4px;flex:1 1 100%}' +
+    '.rc-chip{display:inline-block;border-radius:99px;padding:2px 9px;font-size:.78rem;font-weight:700;background:#EEF1F6;color:#5E6E8A}' +
+    '.rc-chip.c-ok{background:#E6F7EF;color:#0F7A54}.rc-chip.c-bad{background:#FDECEA;color:#B3261E}.rc-chip.c-warn{background:#FFF4DB;color:#7A4B00}' +
+    '.rc-yb{padding:2px 12px 12px;border-top:1px solid #DDE6F2}.rc-yt{font-weight:700;color:#1B2A44;margin:10px 0 4px;font-size:.9rem}' +
+    '.rc-yr-it{display:flex;justify-content:space-between;gap:10px;font-size:.92rem;padding:3px 0}.rc-yr-it b{font-variant-numeric:tabular-nums;white-space:nowrap}' +
+    '.rc-sm{font-size:.85rem;color:#5E6E8A}' +
     '@media (min-width:700px){.rc-band{padding:24px 26px 22px}.rc-body{padding:22px 26px 24px}}';
   function style() { if (typeof document === 'undefined' || document.getElementById('rc-css')) return; var s = document.createElement('style'); s.id = 'rc-css'; s.textContent = CSS; document.head.appendChild(s); }
+  function summaryLine(v) {
+    var S = v.summary; if (!S || !S.terms) return '';
+    return '<p class="rc-sum">' + S.terms + ' year' + (S.terms === 1 ? '' : 's') + ' with us' + (S.claims ? ', ' + S.claims + ' claim' + (S.claims === 1 ? '' : 's') + ' in that time, ' + S.clean + ' year' + (S.clean === 1 ? '' : 's') + ' without one.' : ', and not one claim in that time.') + '</p>';
+  }
+  /* one year of the client's own history: the term, what it covered, what was billed and paid, and any claim. Never a task or a note. */
+  function yearFold(y, i) {
+    var chips = [];
+    if (y.hasBill) chips.push(y.owed > 1 ? '<span class="rc-chip c-bad">' + money(y.owed) + ' still owed</span>' : y.paid ? '<span class="rc-chip c-ok">Paid' + (y.paidOn ? ' ' + esc(dmy(y.paidOn)) : '') + '</span>' : '<span class="rc-chip">No payment on our records</span>');
+    chips.push((y.claims || []).length ? '<span class="rc-chip c-warn">' + y.claims.length + ' claim' + (y.claims.length === 1 ? '' : 's') + '</span>' : '<span class="rc-chip">No claims</span>');
+    var body = ((y.risks || []).length ? '<p class="rc-yt">What it covered</p>' + y.risks.map(function (k) { return '<div class="rc-yr-it"><span>' + esc(k.label) + '</span><b>' + (k.value ? whole(k.value) : '') + '</b></div>'; }).join('') + (y.more ? '<p class="rc-sm">and ' + y.more + ' more</p>' : '') : '') +
+      (y.hasBill ? '<p class="rc-yt">Billed and paid</p><div class="rc-yr-it"><span>Billed</span><b>' + money(y.billed) + '</b></div><div class="rc-yr-it"><span>Paid' + (y.paidOn ? ', first on ' + esc(dmy(y.paidOn)) : '') + '</span><b>' + money(y.paid) + '</b></div>' + (y.owed > 1 ? '<div class="rc-yr-it"><span>Still owed</span><b>' + money(y.owed) + '</b></div>' : '') : '') +
+      ((y.claims || []).length ? '<p class="rc-yt">Claims</p><ul style="margin:0;padding-left:20px">' + y.claims.map(function (c) { return '<li>' + esc(dmy(c.on)) + ' · ' + esc(c.type) + (c.status ? ' · ' + esc(c.status) : '') + '</li>'; }).join('') + '</ul>' : '');
+    return '<details class="rc-yr"' + (i === 0 ? ' open' : '') + '><summary><b>' + esc(y.year) + '</b><span class="rc-sm">' + esc(dmy(y.from)) + ' to ' + esc(dmy(y.to)) + ((y.policies || []).length ? ' · policy ' + esc(y.policies.join(', ')) : '') + '</span>' +
+      '<span class="rc-yp">' + money(y.premium) + (y.change !== null && y.change !== undefined ? ' <span class="rc-sm">' + (y.change > 0 ? '+' : '') + y.change + '%</span>' : '') + '</span><span class="rc-chips">' + chips.join(' ') + '</span></summary><div class="rc-yb">' + body + '</div></details>';
+  }
   function html(v, o) {
     o = o || {};
     style();
@@ -92,10 +121,11 @@
           '<div class="v">' + (x.value ? whole(nv || x.value) : '') + '</div>' +
           (open && x.value ? '<label>' + (x.kind === 'vehicle' ? 'If the vehicle\'s value is different, type it' : 'If the sum insured should change, type it') + ' <input inputmode="decimal" data-rcv="' + esc(x.id) + '" placeholder="' + esc(String(Math.round(x.value))) + '" value="' + (nv ? Math.round(nv) : '') + '" aria-label="New value for ' + esc(x.label) + '"></label>' : '') + '</div>';
       }).join('') + '</div>' +
-      (years.length ? '<div class="rc-sec"><h4>' + ICON.shield + 'Your premium since ' + esc((years[0].year || '').slice(0, 4)) + '</h4><div class="rc-hist">' + years.map(function (y) {
+      (years.length ? '<div class="rc-sec"><h4>' + ICON.shield + 'Your history with us since ' + esc((v.since || years[0].year || '').slice(0, 4)) + '</h4>' + summaryLine(v) + '<div class="rc-hist">' + years.map(function (y) {
         return '<div class="rc-hb' + (y.now ? ' now' : '') + '"><b>' + esc(String(y.year).slice(0, 4)) + '</b><div class="tr"><i style="width:' + Math.max(3, Math.round((y.premium || 0) / max * 100)) + '%"></i></div><div class="v">' + money(y.premium) + '</div></div>'; }).join('') + '</div>' +
-        (v.since ? '<p style="margin:8px 0 0;font-size:.9rem">With us since ' + esc(dmy(v.since)) + '. Thank you.</p>' : '') + '</div>' : '') +
-      '<div class="rc-sec"><h4>' + ICON.check + 'Claims in the last three years</h4>' + ((v.claims || []).length ? '<ul style="margin:0;padding-left:20px">' + v.claims.map(function (c) { return '<li>' + esc(dmy(c.on)) + ' · ' + esc(c.type) + (c.status ? ' · ' + esc(c.status) : '') + '</li>'; }).join('') + '</ul>' : '<p style="margin:0">None on our records.</p>') + '</div>' +
+        ((v.years || []).some(function (y) { return y.risks; }) ? '<p class="rc-yh">Every year in full</p>' + v.years.slice().reverse().map(yearFold).join('') : '') +
+        (v.since ? '<p style="margin:10px 0 0;font-size:.9rem">With us since ' + esc(dmy(v.since)) + '. Thank you.</p>' : '') + '</div>' : '') +
+      '<div class="rc-sec"><h4>' + ICON.check + 'Every claim on our records</h4>' + ((v.claims || []).length ? '<ul style="margin:0;padding-left:20px">' + v.claims.map(function (c) { return '<li>' + esc(dmy(c.on)) + ' · ' + esc(c.type) + (c.status ? ' · ' + esc(c.status) : '') + '</li>'; }).join('') + '</ul>' : '<p style="margin:0">None on our records.</p>') + '</div>' +
       ((v.points || []).length ? '<div class="rc-sec"><h4>' + ICON.doc + 'Worth a look before you approve</h4>' + v.points.map(function (p) { return '<div class="rc-pt"><b>' + esc(p.title) + '</b>' + esc(p.text) + '</div>'; }).join('') + '</div>' : '') +
       ((v.reqs || []).length ? '<div class="rc-sec"><h4>' + ICON.doc + 'Guardian General needs these with your renewal</h4><ul style="margin:0;padding-left:20px">' + v.reqs.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ul></div>' : '') +
       (a && a.decision ? '<div class="rc-ans' + (a.decision === 'changes' ? ' chg' : '') + '">' + ICON.check + '<div><b>' + (a.decision === 'approve' ? 'You approved your renewal' : 'You asked for changes') + '</b> · ' + esc(a.at) + (a.name ? ' · ' + esc(a.name) : '') + '<br>' + esc(v.stageLabel || '') + '</div></div>' : '') +

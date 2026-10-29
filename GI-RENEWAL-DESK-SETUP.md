@@ -11,7 +11,7 @@ books the delivery.
 | Page | Who | Signs in with |
 |---|---|---|
 | `/renewaldesk/` | staff, the Branch Manager's Assistant and the branch manager | agent number and password from the Agent Skill Bank (the group client management sign-in), or from the branch app |
-| `/myrenewal/` | a client the letter went to | a six-digit code sent to that e-mail |
+| `/myrenewal/` | a client the letter went to: their renewal and every year since the policy began | a six-digit code sent to that e-mail |
 | `/groupclientmanagement/client.html`, tab **Your renewals** | an employer group | its list bill and access code |
 
 Nothing on the pages holds client data. Everything comes from
@@ -60,6 +60,13 @@ Until **`girGoLive`** is run from the editor:
 - a group never sees a letter sent in test mode.
 
 `girTestMode` puts it back. `girTickNow` runs the hourly follow-ups at once.
+
+**The day you run `girGoLive`, clients get one door.** The homepage's "Renew my
+policy" opens the old renewal page, which then shows "Renewing this month? Sign in
+with my e-mail" above its access-code box, so a client with a new letter and a
+client holding an old access code both get in. Nothing changes on that page while
+the desk is in test mode. After a full month live, retire the old portal and point
+the homepage at `/myrenewal/`.
 
 ## What runs by itself
 

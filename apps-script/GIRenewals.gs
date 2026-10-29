@@ -389,7 +389,7 @@ function girOne_(p) {
   var r = girFind_(p.key);
   if (!r) return { ok: false, error: 'That renewal is not in Salesforce for that month any more. Refresh the list.' };
   var s = girState_()[r.key] || null, today = gcmToday_();
-  var hist = girHistory_(r), claims = girClaims_(r), bills = girBills_(r), tasks = girTasks_(r);
+  var claims = girClaims_(r), hist = girHistory_(r, { staff: true, claims: claims }), bills = girBills_(r), tasks = girTasks_(r);
   var notice = s ? girJ_(s.Notice, null) : null, letter = s ? girJ_(s.Letter, null) : null, answer = s ? girJ_(s['Client answer'], null) : null;
   var stage = girStageOf_(r, s), insights = girInsights_(r, hist, claims, bills, notice, today);
   var log = girRows_(GIR.LOG).filter(function (x) { return gcmText_(x.Key) === r.key; }).map(function (x) { return { at: gcmWhen_(x.When), step: gcmText_(x.Step), by: gcmText_(x.By), detail: gcmText_(x.Detail) }; }).reverse();
@@ -418,37 +418,140 @@ function girPublic_(r) {
 }
 
 /* ── last year, and every year before it ───────────────────────────────────────────────── */
-/** The policy's history since inception: every term on its policy records (and every term of its vehicles), year by year,
- *  with each vehicle's value and each location's sums over the years. */
-function girHistory_(r) {
+/** The policy's whole history since inception, one entry a term, oldest first: the term's dates and policy number, what
+ *  was insured and at what value, the premium and its change, what was billed and paid and when, the claims in the term,
+ *  the desk's own renewal of that year, and, for staff only (opt.staff), that year's tasks with their last notes.
+ *  opt.claims: the claims already read (girClaims_), so they are not read twice. A part Salesforce refuses is left out
+ *  and named in `gaps`; the rest still comes. */
+var GIR_HIST = { TASKS: 200, NOTES: 400, NOTE_LEN: 320, BILL_SLACK: 45 };
+function girHistory_(r, opt) {
+  opt = opt || {};
   var vehicles = r.items.map(function (x) { return x.vehicle; }).filter(String), where = [];
   if (r.shells.length) where.push('Client_Portfolio_Look_Up__c IN (' + gcmIn_(r.shells) + ')');
   if (vehicles.length) where.push('Vehicle__c IN (' + gcmIn_(vehicles) + ')');
-  if (!where.length) return { years: [], vehicles: [], since: '' };
+  var empty = { years: [], vehicles: [], since: '', summary: null, gaps: [] };
+  if (!where.length) return empty;
   var rows = [];
   try { rows = gcmQuery_('SELECT Id, Policy__c, Vehicle__c, Vehicle_Make__c, Model__c, Cover1__c, Total_Cover__c, Premium_01_Cover_01__c, Total_Premiums_Gov_t_Inclusive__c, ' +
-    'From__c, To__c, Risk_Location__c, Client_Portfolio_Look_Up__c FROM Risk_Details__c WHERE ' + where.join(' OR ') + ' ORDER BY From__c ASC'); } catch (e) { return { years: [], vehicles: [], since: '', error: String(e.message || e).slice(0, 200) }; }
+    'From__c, To__c, Risk_Location__c, TRANSACTIONS__c, Client_Portfolio_Look_Up__c FROM Risk_Details__c WHERE ' + where.join(' OR ') + ' ORDER BY From__c ASC'); } catch (e) { empty.error = String(e.message || e).slice(0, 200); return empty; }
   var mineV = {}; vehicles.forEach(function (v) { mineV[v] = 1; });
   rows = rows.filter(function (x) { return girPolKey_(x.Policy__c) === r.pk || (x.Vehicle__c && mineV[String(x.Vehicle__c).trim()]); });
-  var years = {}, veh = {}, since = '';
+  var years = {}, veh = {}, since = '', gaps = [], fullT = {};
   rows.forEach(function (x) {
     var from = gcmYmd_(x.From__c) || (x.To__c ? girAddYears_(gcmYmd_(x.To__c), -1) : '');
     if (!from) return;
     if (!since || from < since) since = from;
-    var y = from.slice(0, 4), t = years[y] || (years[y] = { year: y, from: from, premium: 0, cover: 0, items: 0, policies: [] });
-    t.premium = girR_(t.premium + girNum_(x.Total_Premiums_Gov_t_Inclusive__c));
+    var y = from.slice(0, 4), t = years[y] || (years[y] = { year: y, from: from, to: '', premium: 0, cover: 0, items: 0, policies: [], risks: [], trans: [], bills: [], claims: [], tasks: [] });
+    if (from < t.from) t.from = from;
+    var to = gcmYmd_(x.To__c); if (to && to > t.to) t.to = to;
+    var prem = girNum_(x.Total_Premiums_Gov_t_Inclusive__c), val = girNum_(x.Cover1__c) || girNum_(x.Total_Cover__c);
+    t.premium = girR_(t.premium + prem);
     t.cover += girNum_(x.Total_Cover__c) || girNum_(x.Cover1__c);
     t.items++;
     var pol = girPolShow_(x.Policy__c); if (pol && t.policies.indexOf(pol) < 0) t.policies.push(pol);
     var v = String(x.Vehicle__c || '').trim();
+    t.risks.push({ kind: v ? 'vehicle' : x.Risk_Location__c ? 'location' : 'cover', label: v ? [x.Vehicle_Make__c, x.Model__c].filter(Boolean).join(' ') + ' (' + v + ')' : (x.Risk_Location__c || 'Cover'),
+      value: val, premium: prem });
+    if (x.TRANSACTIONS__c && t.trans.indexOf(gcmId15_(x.TRANSACTIONS__c)) < 0) { t.trans.push(gcmId15_(x.TRANSACTIONS__c)); fullT[gcmId15_(x.TRANSACTIONS__c)] = String(x.TRANSACTIONS__c); }
     if (v && mineV[v]) {
       var vv = veh[v] || (veh[v] = { reg: v, desc: [x.Vehicle_Make__c, x.Model__c].filter(Boolean).join(' '), years: [] });
-      vv.years.push({ year: y, value: girNum_(x.Cover1__c), premium: girNum_(x.Total_Premiums_Gov_t_Inclusive__c) });
+      vv.years.push({ year: y, value: girNum_(x.Cover1__c), premium: prem });
     }
   });
   var list = Object.keys(years).sort().map(function (k) { return years[k]; });
-  list.forEach(function (t, i) { var prev = list[i - 1]; t.change = prev && prev.premium ? Math.round((t.premium - prev.premium) / prev.premium * 1000) / 10 : null; });
-  return { years: list, vehicles: Object.keys(veh).map(function (k) { return veh[k]; }), since: since };
+  list.forEach(function (t, i) {
+    var prev = list[i - 1];
+    t.change = prev && prev.premium ? Math.round((t.premium - prev.premium) / prev.premium * 1000) / 10 : null;
+    if (!t.to) t.to = gcmAddDays_(girAddYears_(t.from, 1), -1);
+  });
+  var yearOf = function (ymd) { if (!ymd) return null; for (var i = list.length - 1; i >= 0; i--) if (ymd >= list[i].from && ymd <= list[i].to) return list[i]; return null; };
+
+  /* billing and payments, every year: the records the terms point to, and any billing record on the policy record */
+  var tids = [], bills = {};
+  list.forEach(function (t) { t.trans.forEach(function (id) { if (tids.indexOf(fullT[id]) < 0) tids.push(fullT[id]); }); });
+  if (tids.length || r.shells.length) {
+    var tw = []; if (tids.length) tw.push('Id IN (' + gcmIn_(tids) + ')'); if (r.shells.length) tw.push('INSURANCE_PORTFOLIO__c IN (' + gcmIn_(r.shells) + ')');
+    var tsel = 'SELECT Id, Name, Renewal_Date__c, Billing_Premiums__c, Payments_Made__c, Premium_Owed__c, Policy_Renewed__c FROM TRANSACTIONS__c WHERE ';
+    var trows = null;
+    try { trows = gcmQuery_(tsel + tw.join(' OR ')); } catch (e) { try { trows = tids.length ? gcmQuery_(tsel + 'Id IN (' + gcmIn_(tids) + ')') : []; } catch (e2) { trows = null; } }
+    if (trows === null) gaps.push('billing');
+    (trows || []).forEach(function (b) {
+      bills[gcmId15_(b.Id)] = { id: b.Id, name: b.Name || '', ren: gcmYmd_(b.Renewal_Date__c), billed: girNum_(b.Billing_Premiums__c), paid: girNum_(b.Payments_Made__c),
+        owed: girNum_(b.Premium_Owed__c), renewed: b.Policy_Renewed__c || '', pays: [], firstPaid: '', lateDays: null };
+    });
+    var bids = Object.keys(bills);
+    if (bids.length) {
+      try {
+        gcmQuery_('SELECT PMTS__c, Payment_Made__c, Date_Paid__c, Payment_Type__c FROM Payments__c WHERE PMTS__c IN (' + gcmIn_(bids.map(function (k) { return bills[k].id; })) + ')').forEach(function (x) {
+          var b = bills[gcmId15_(x.PMTS__c)]; if (b) b.pays.push({ amount: girNum_(x.Payment_Made__c), on: gcmYmd_(x.Date_Paid__c), how: x.Payment_Type__c || '' });
+        });
+      } catch (e) { gaps.push('payments'); }
+    }
+    bids.forEach(function (id) {
+      var b = bills[id];
+      b.pays.sort(function (a, c) { return String(a.on).localeCompare(String(c.on)); });
+      b.firstPaid = b.pays.length ? b.pays[0].on : '';
+      b.lateDays = b.firstPaid && b.ren ? gcmDays_(b.ren, b.firstPaid) : null;
+      var t = list.filter(function (y) { return y.trans.indexOf(id) >= 0; })[0];
+      if (!t && b.ren) t = list.filter(function (y) { return Math.abs(gcmDays_(y.from, b.ren)) <= GIR_HIST.BILL_SLACK; })[0] || yearOf(b.ren);
+      if (t) { if (!t.bills.some(function (z) { return gcmId15_(z.id) === id; })) t.bills.push(b); }
+    });
+  }
+
+  /* claims, by the term they fell in */
+  var claims = opt.claims || girClaims_(r), before = 0;
+  claims.forEach(function (c) { var t = yearOf(c.on); if (t) t.claims.push({ on: c.on, type: c.type, status: c.status, paid: c.paid, vehicle: c.vehicle }); else before++; });
+
+  /* the desk's own renewals of earlier years */
+  var desk = {};
+  try {
+    girRows_(GIR.TAB).forEach(function (st) {
+      var k = gcmText_(st.Key); if (k.indexOf(r.pk + '|') !== 0 || k === r.key) return;
+      var a = girJ_(st['Client answer'], null);
+      desk[k.split('|')[1]] = { month: k.split('|')[1], stage: gcmText_(st.Stage), sentAt: st['Sent at'] ? gcmWhen_(st['Sent at']) : '', answer: a ? a.decision : '',
+        outcome: gcmText_(st.Outcome), proceedAt: st['Proceed at'] ? gcmWhen_(st['Proceed at']) : '', test: gcmText_(st.Test) === 'Y' };
+    });
+  } catch (e) {}
+  list.forEach(function (t) { t.desk = desk[t.from.slice(0, 7)] || null; });
+
+  /* staff: each year's tasks on its billing records, with their last notes */
+  if (opt.staff) {
+    var allB = Object.keys(bills);
+    if (allB.length) {
+      var tasks = [];
+      try { tasks = gcmQuery_('SELECT Id, Subject, Status, IsClosed, CreatedDate, LastModifiedDate, ActivityDate, Owner.Name, WhatId FROM Task WHERE WhatId IN (' + gcmIn_(allB.map(function (k) { return bills[k].id; })) +
+        ') ORDER BY CreatedDate ASC LIMIT ' + GIR_HIST.TASKS); } catch (e) { gaps.push('tasks'); }
+      var notes = {};
+      if (tasks.length) {
+        try {
+          gcmQuery_('SELECT ParentId, Body, CreatedDate, CreatedBy.Name FROM FeedItem WHERE ParentId IN (' + gcmIn_(tasks.map(function (t) { return t.Id; })) + ') ORDER BY CreatedDate DESC LIMIT ' + GIR_HIST.NOTES)
+            .forEach(function (f) {
+              var text = String(f.Body || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+              if (!text) return;
+              var k2 = gcmId15_(f.ParentId), n2 = notes[k2] || (notes[k2] = []);
+              n2.push({ on: gcmYmd_(f.CreatedDate), by: f.CreatedBy ? f.CreatedBy.Name || '' : '', text: text.slice(0, GIR_HIST.NOTE_LEN) });
+            });
+        } catch (e) { gaps.push('notes'); }
+      }
+      tasks.forEach(function (x) {
+        var b = bills[gcmId15_(x.WhatId)]; if (!b) return;
+        var t = list.filter(function (y) { return y.bills.indexOf(b) >= 0; })[0]; if (!t) return;
+        var n3 = notes[gcmId15_(x.Id)] || [];
+        t.tasks.push({ id: x.Id, subject: x.Subject || '', status: x.Status || '', closed: !!x.IsClosed, opened: gcmYmd_(x.CreatedDate), closedOn: x.IsClosed ? gcmYmd_(x.LastModifiedDate) : '',
+          due: gcmYmd_(x.ActivityDate), owner: x.Owner ? x.Owner.Name || '' : '', renewal: /risk to renew|renew/i.test(String(x.Subject || '')), notes: n3.length, last: n3.slice(0, 3) });
+      });
+    }
+  }
+  list.forEach(function (t) { if (!opt.staff) delete t.tasks; delete t.trans; });
+
+  /* the whole history in a line or two */
+  var billed = 0, paid = 0, owed = 0, late = [], cp = 0, nClaims = 0;
+  list.forEach(function (t) { t.bills.forEach(function (b) { billed += b.billed; paid += b.paid; owed += b.owed; if (b.lateDays !== null) late.push(b.lateDays); }); t.claims.forEach(function (c) { nClaims++; cp += c.paid || 0; }); });
+  late.sort(function (a, b) { return a - b; });
+  var summary = list.length ? { terms: list.length, since: since, first: list[0].premium, last: list[list.length - 1].premium, billed: girR_(billed), paid: girR_(paid), owed: girR_(owed),
+    claims: nClaims, claimsPaid: girR_(cp), claimsBefore: before, clean: list.filter(function (t) { return !t.claims.length; }).length,
+    payDays: late.length ? late[Math.floor((late.length - 1) / 2)] : null, paidLate: late.filter(function (d) { return d > GIR_INS.LATE_PAY; }).length } : null;
+  return { years: list, vehicles: Object.keys(veh).map(function (k) { return veh[k]; }), since: since, summary: summary, gaps: gaps };
 }
 /** Claims on the policy's records or its vehicles (Claims Revised, the branch's claims object). */
 function girClaims_(r) {
@@ -698,10 +801,16 @@ function girLetterHtml_(r, st, o) {
     return '<tr><td style="' + td + '">' + girEsc_(girItemLabel_(x)) + '</td><td style="' + td + ';text-align:right">' + (val ? girWhole_(val) : '') + '</td></tr>';
   }).join('');
   var change = notice.total && r.lastPremium ? Math.round((notice.total - r.lastPremium) / r.lastPremium * 1000) / 10 : null;
-  var histRows = (hist.years || []).slice(-6).map(function (y) {
-    var w = Math.max(4, Math.round(y.premium / Math.max.apply(null, hist.years.map(function (z) { return z.premium || 1; })) * 160));
-    return '<tr><td style="' + td + '">' + y.year + '</td><td style="' + td + '"><span style="display:inline-block;height:10px;width:' + w + 'px;background:#c9942c;border-radius:3px"></span></td><td style="' + td + ';text-align:right">' + girMoney_(y.premium) + '</td></tr>';
+  /* every year since the policy began, oldest first; a year with a claim says so */
+  var hy = hist.years || [], hmax = Math.max.apply(null, hy.map(function (z) { return z.premium || 1; }).concat([1]));
+  var histRows = hy.map(function (y) {
+    var w = Math.max(4, Math.round((y.premium || 0) / hmax * 150)), nc = (y.claims || []).length;
+    return '<tr><td style="' + td + ';white-space:nowrap">' + y.year + (nc ? '<br><span style="font-size:12px;color:#8a5a00">' + nc + ' claim' + (nc === 1 ? '' : 's') + '</span>' : '') + '</td>' +
+      '<td style="' + td + '"><span style="display:inline-block;height:10px;width:' + w + 'px;background:#2D5BB9;border-radius:3px"></span></td>' +
+      '<td style="' + td + ';text-align:right;white-space:nowrap">' + girMoney_(y.premium) + (y.change !== null && y.change !== undefined ? '<br><span style="font-size:12px;color:#5b6670">' + (y.change > 0 ? '+' : '') + y.change + '%</span>' : '') + '</td></tr>';
   }).join('');
+  var hs = hist.summary, histLine = hs ? 'With us since ' + tDmy_(hs.since) + ': ' + hs.terms + ' term' + (hs.terms === 1 ? '' : 's') +
+    (hs.claims ? ', ' + hs.claims + ' claim' + (hs.claims === 1 ? '' : 's') + ' in that time' : ', and no claims in that time') + '. Your page shows every year in full.' : '';
   var points = (L.points || []).map(function (x) { return '<tr><td style="padding:10px 0;border-bottom:1px solid #eee;font:14px/1.5 Arial,sans-serif;color:#1d2b3a"><b>' + girEsc_(x.title) + '</b><br>' + girEsc_(x.text) + '</td></tr>'; }).join('');
   var reqs = (notice.reqs || []).map(function (q) { return '<li style="margin:3px 0">' + girEsc_(q) + '</li>'; }).join('');
   var btn = '<a href="' + link + '" style="display:inline-block;background:#0d1f33;color:#fff;text-decoration:none;font:700 15px Arial,sans-serif;padding:13px 22px;border-radius:9px">Review and approve your renewal</a>';
@@ -714,7 +823,8 @@ function girLetterHtml_(r, st, o) {
     (notice.total ? '<table style="width:100%;border-collapse:collapse;margin-top:14px"><tr><td style="' + th + '">Premium, tax included</td><td style="' + th + ';text-align:right">Amount</td></tr>' +
       '<tr><td style="' + td + '">Last year</td><td style="' + td + ';text-align:right">' + girMoney_(r.lastPremium) + '</td></tr>' +
       '<tr><td style="' + td + '"><b>This year</b>, ' + girEsc_(tDmy_(notice.from)) + ' to ' + girEsc_(tDmy_(notice.to)) + '</td><td style="' + td + ';text-align:right"><b>' + girMoney_(notice.total) + '</b>' + (change !== null ? '<br><span style="color:#5b6670;font-size:12px">' + (change > 0 ? '+' : '') + change + '%</span>' : '') + '</td></tr></table>' : '') +
-    (histRows ? '<p style="margin:18px 0 6px;font-weight:700">Your premium since ' + girEsc_(hist.years[0].year) + '</p><table style="width:100%;border-collapse:collapse">' + histRows + '</table>' : '') +
+    (histRows ? '<p style="margin:18px 0 6px;font-weight:700">Every year since ' + girEsc_(hy[0].year) + '</p><table style="width:100%;border-collapse:collapse">' + histRows + '</table>' +
+      (histLine ? '<p style="margin:6px 0 0;font-size:13px;color:#5b6670">' + girEsc_(histLine) + '</p>' : '') : '') +
     (points ? '<p style="margin:18px 0 6px;font-weight:700">Worth a look before you approve</p><table style="width:100%;border-collapse:collapse">' + points + '</table>' : '') +
     (reqs ? '<p style="margin:18px 0 6px;font-weight:700">Guardian General needs these with your renewal</p><ul style="margin:0;padding-left:20px">' + reqs + '</ul>' : '') +
     '<p style="margin-top:18px">' + girEsc_(L.closing || '') + '</p><p style="margin:16px 0">' + btn + '</p>' +
@@ -726,14 +836,25 @@ function girLetterHtml_(r, st, o) {
 }
 /** What the client's page shows, kept on the row when the letter goes, so the page never waits on Salesforce. */
 function girClientView_(r, notice, letter, hist, claims, values) {
-  var three = girAddYears_(gcmToday_(), -3);
+  var RISKS = 12;
   return { key: r.key, policy: r.policy, line: r.lineLabel, client: r.client, ren: r.ren, lastPremium: r.lastPremium,
     premium: notice ? notice.premium : 0, tax: notice ? notice.tax : 0, total: notice ? notice.total : 0, from: notice ? notice.from : '', to: notice ? notice.to : '',
     items: r.items.map(function (x) { var nn = (notice && notice.items || []).filter(function (n) { return n.reg && x.vehicle && n.reg.replace(/\W/g, '') === x.vehicle.replace(/\W/g, ''); })[0];
       return { id: x.id, label: girItemLabel_(x), vehicle: x.vehicle, value: (values && values[x.id] && values[x.id].value) || (nn && nn.value) || x.value || x.cover || 0, lastValue: x.value || x.cover || 0,
         kind: x.vehicle ? 'vehicle' : x.location ? 'location' : 'item', bank: x.assignee || '' }; }),
-    years: (hist && hist.years || []).map(function (y) { return { year: y.year, premium: y.premium, cover: y.cover }; }), since: hist ? hist.since : '',
-    claims: (claims || []).filter(function (c) { return c.on >= three; }).map(function (c) { return { on: c.on, type: c.type, status: c.status }; }),
+    /* the client's own history: every term since the policy began, what it covered, what was billed and paid, and the claims.
+       Never a task, a note or anything internal. */
+    years: (hist && hist.years || []).map(function (y) {
+      var billed = 0, paid = 0, owed = 0, paidOn = '';
+      (y.bills || []).forEach(function (b) { billed += b.billed; paid += b.paid; owed += b.owed; if (b.firstPaid && (!paidOn || b.firstPaid < paidOn)) paidOn = b.firstPaid; });
+      return { year: y.year, from: y.from, to: y.to, policies: y.policies || [], premium: y.premium, change: y.change === undefined ? null : y.change, cover: y.cover,
+        risks: (y.risks || []).slice(0, RISKS).map(function (k) { return { label: k.label, value: k.value }; }), more: Math.max(0, (y.risks || []).length - RISKS),
+        billed: girR_(billed), paid: girR_(paid), owed: girR_(owed), paidOn: paidOn, hasBill: !!(y.bills || []).length,
+        claims: (y.claims || []).map(function (c) { return { on: c.on, type: c.type, status: c.status }; }) };
+    }),
+    since: hist ? hist.since : '',
+    summary: hist && hist.summary ? { terms: hist.summary.terms, since: hist.summary.since, claims: hist.summary.claims, clean: hist.summary.clean } : null,
+    claims: (claims || []).map(function (c) { return { on: c.on, type: c.type, status: c.status }; }),
     points: letter ? letter.points || [] : [], opening: letter ? letter.opening : '', reqs: notice ? notice.reqs || [] : [] };
 }
 
@@ -853,7 +974,7 @@ function girAct_(b) {
       }
       case 'draft': {
         var notice = girJ_(st && st.Notice, null);
-        var hist = girHistory_(r), claims = girClaims_(r), bills = girBills_(r), ins = girInsights_(r, hist, claims, bills, notice, gcmToday_());
+        var claims = girClaims_(r), hist = girHistory_(r, { claims: claims }), bills = girBills_(r), ins = girInsights_(r, hist, claims, bills, notice, gcmToday_());
         var L = gcmYes_(b.ai) ? girDraftAi_(r, girFacts_(r, hist, claims, bills, notice, ins, girJ_(st && st.Values, {}))) : null;
         if (gcmYes_(b.ai) && !L) return { ok: false, error: gcmAiKey_() ? 'The AI did not give a draft this time. Start from the plain letter and write it yourself.' : 'AI drafts are not set up (ANTHROPIC_API_KEY).' };
         L = L || girTemplate_(r, notice);
@@ -962,7 +1083,7 @@ function girApproveSend_(who, r, st, b, save) {
   if (!letter) return { ok: false, error: 'There is no letter to approve.' };
   var email = gcmText_(st && st['E-mail']) || r.contact.email;
   if (!gcmEmailOk_(email)) return { ok: false, error: 'There is no e-mail for the client. Add one first.' };
-  var live = girLive_(), hist = girHistory_(r), claims = girClaims_(r), values = girJ_(st && st.Values, {});
+  var live = girLive_(), claims = girClaims_(r), hist = girHistory_(r, { claims: claims }), values = girJ_(st && st.Values, {});
   var holder = gcmText_(st && st.Holder) || who.name;
   var test = !live, to = test ? girTestTo_(who) : [email];
   var m = girLetterHtml_(r, { notice: notice, letter: letter, values: values, hist: hist, email: test ? to[0] : email, holder: girTitle_(holder) },

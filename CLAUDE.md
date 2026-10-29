@@ -5410,6 +5410,34 @@ is separate and untouched.
   terms (with the 6–12% a year guide), sums insured unchanged (what average would pay on a TT$100,000 loss), Guardian
   General's own value, a bank on the policy, money still owed, paid late last year, open claims, a missing end date, an
   owner who has left, a company filed as a household.
+- **The full history, every year since the policy began** (29 October 2026: "need to see the full history as well").
+  `girHistory_(r, {staff, claims})` gives one entry a term, oldest first:
+  - the term's dates and the policy number it was written under (a changed number is followed through the vehicle);
+  - what was insured, at what value and premium, and the change on the year before;
+  - what was billed and paid, each payment with its date and how, and the days from the renewal to the first payment:
+    every billing record a term points to, plus any on the policy record (`INSURANCE_PORTFOLIO__c`), so a year whose
+    cover term was never linked is still found;
+  - the claims that fell in the term;
+  - the desk's own renewal of that year (letter sent, the client's answer, instructed, not renewed);
+  - for staff only, that year's tasks on its billing records with their last three notes (HTML stripped).
+
+  A `summary` gives the terms, paid since, claims and clean years, the usual days to pay and how often late; `gaps` names
+  any part Salesforce refused. Billing, payments and tasks are queried by the full ids and matched on 15 characters.
+  - **The desk** (Last year step): tiles, the premium year by year, each vehicle's value, then every year as a fold,
+    newest open, with chips (paid on / owed / no billing record, claims, renewal task open or closed, the desk).
+  - **The client** (`girClientView_`, kept on the row when the letter goes): every year with what it covered, billed,
+    paid and when, owed, and its claims; every claim on record (no longer three years); the history in one line. Never a
+    task, a note, a billing record's name or a Salesforce id. The card's chip classes are `c-ok`, `c-bad`, `c-warn`:
+    a bare `ok` matched the page's own thank-you box.
+  - **The letter**: every year (no longer the last six), a claim marked under its year, the bars in the action blue
+    `#2D5BB9` (gold is gone), and "With us since …: N terms, …".
+- **One door for clients, switched by the go-live** (29 October 2026; the branch manager left the call to me: "will
+  depend on you for guidance"). The homepage's "Renew my policy" still opens the old `/renewal/` portal, because its
+  clients hold access codes from earlier letters and `/myrenewal/` signs in only a client whose new letter has gone.
+  The old page asks `gcm.ping` (six seconds at most, never on a personal `?t=` link) and, once `renewals.live` is true
+  (`girGoLive`), shows **"Renewing this month? Sign in with my e-mail"** above its access-code box; in test mode, or
+  with no answer, it is unchanged. `/myrenewal/` links back for an old access code. Retire the old portal (and its
+  sends from `Code.gs`) only after the new desk has run one full month live; then point the homepage at `/myrenewal/`.
 - **The notice** is read in the browser: the desk finds the IFORM PDF in support@ by the policy number (`girSearchPol_`
   searches "TTCPL0100001", "0100001" and "100001", because Outlook matches whole words), fetches it, and
   `renewaldesk/girread.js` (pdf.js) parses it: policy, replaces, period, premium, tax, total, Tran Id, each vehicle or
@@ -5447,9 +5475,10 @@ is separate and untouched.
   Renewal Log** tabs of the group sheet.
 - **The look** is the motor quote's: light, soft ocean blue, the blue shield (`orphan-transition/board-mark.png`), on both
   the desk and the client's page; the e-mails carry the gold `logo-mark.png`.
-- Tests in the scratchpad (`gir/`): `flow-test.js` (102, the whole journey in Node on a made-up book), `desk-test.js` (25,
-  Playwright, the desk with a made-up notice PDF read by pdf.js) and `client-test.js` (32, the client's page on a phone and
-  a desk, and a group's tab). `read-test.js` checks the notice reader on real notice texts kept in the scratchpad only.
+- Tests in the scratchpad (`gir/`): `flow-test.js` (114, the whole journey in Node on a made-up book, three years of
+  billing, payments and an old renewal task with notes), `desk-test.js` (32, Playwright, the desk with a made-up notice PDF
+  read by pdf.js, and the year folds), `client-test.js` (38, the client's page on a phone and a desk, the years in full, and
+  a group's tab) and `door-test.js` (12, the old page in test mode, live, and with no backend). `read-test.js` checks the notice reader on real notice texts kept in the scratchpad only.
 
 ## The branch's own forms — no client link opens a JotForm
 

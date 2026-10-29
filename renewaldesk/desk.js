@@ -185,11 +185,7 @@ function panel(i) {
       '<div class="tw"><table class="t"><thead><tr><th>What renews</th><th>Cover</th><th class="n">Value or sum</th><th class="n">Premium</th></tr></thead><tbody>' +
       r.items.map(x => '<tr><td><b>' + esc(itemLabel(x)) + '</b>' + (x.assignee ? '<br><span class="muted small">Bank: ' + esc(x.assignee) + '</span>' : '') + (x.noEnd ? '<br><span class="pill warn">No end date</span>' : '') + '</td><td>' + esc(x.coverage || '') + (x.ncd ? '<br><span class="muted small">NCD ' + esc(x.ncd) + '</span>' : '') + '</td><td class="n">' + (x.value || x.cover ? whole(x.value || x.cover) : '') + '</td><td class="n">' + money(x.total) + '<br><span class="muted small">' + esc(dmy(x.from)) + ' to ' + esc(dmy(x.to)) + '</span></td></tr>').join('') +
       '</tbody></table></div>' +
-      '<h3 style="margin:16px 0 4px;font-size:1rem">The premium since ' + esc((d.history.years[0] || {}).year || '') + '</h3>' +
-      (d.history.years.length ? '<div class="hist">' + d.history.years.map(y => '<div class="hb"><b>' + y.year + '</b><div class="tr"><i style="width:' + Math.max(3, Math.round((y.premium || 0) / max * 100)) + '%"></i></div><div class="v">' + money(y.premium) + '<span class="ch">' + (y.change === null ? 'first year' : (y.change > 0 ? '+' : '') + y.change + '%') + '</span></div></div>').join('') + '</div>' : '<p class="muted">No earlier terms in Salesforce.</p>') +
-      (d.history.vehicles.length ? '<h3 style="margin:14px 0 4px;font-size:1rem">Each vehicle\'s value over the years</h3><div class="tw"><table class="t"><thead><tr><th>Vehicle</th>' + yearsHead() + '</tr></thead><tbody>' + d.history.vehicles.map(v => '<tr><td><b>' + esc(v.reg) + '</b> <span class="muted">' + esc(v.desc) + '</span></td>' + yearsCells(v) + '</tr>').join('') + '</tbody></table></div>' : '') +
-      '<h3 style="margin:16px 0 4px;font-size:1rem">Claims</h3>' + (d.claims.length ? '<ul class="small" style="padding-left:18px">' + d.claims.map(c => '<li>' + esc(dmy(c.on)) + ' · ' + esc(c.type) + (c.vehicle ? ' · ' + esc(c.vehicle) : '') + ' · ' + esc(c.status) + (c.paid ? ' · paid ' + money(c.paid) : '') + '</li>').join('') + '</ul>' : '<p class="muted">None on record.</p>') +
-      '<h3 style="margin:16px 0 4px;font-size:1rem">Last year\'s billing</h3>' + (d.bills.length ? '<div class="tw"><table class="t"><thead><tr><th>Record</th><th class="n">Billed</th><th class="n">Paid</th><th class="n">Owed</th><th>First paid</th></tr></thead><tbody>' + d.bills.map(b => '<tr><td>' + esc(b.name) + '</td><td class="n">' + money(b.billed) + '</td><td class="n">' + money(b.paid) + '</td><td class="n">' + (b.owed > 1 ? '<b style="color:var(--bad)">' + money(b.owed) + '</b>' : money(0)) + '</td><td>' + esc(dmy(b.firstPaid)) + (b.lateDays !== null ? '<br><span class="muted small">' + b.lateDays + ' days after the renewal</span>' : '') + '</td></tr>').join('') + '</tbody></table></div>' : '<p class="muted">No billing record linked.</p>') +
+      historyHtml(d, max) +
       '<div class="acts"><button class="btn" type="button" onclick="STEP=1;drawOne()">Next: Guardian General\'s notice</button></div>';
   }
   if (i === 1) {
@@ -270,6 +266,55 @@ const tick = b => b ? '<span class="pill ok">Done</span>' : '<span class="pill b
 function sfDone(p) {
   const base = ONE.sfUrl, link = (id, l) => id ? (base ? '<a target="_blank" rel="noopener" href="' + esc(base + id) + '">' + l + '</a>' : l) : '';
   return p.trans ? '<p>In Salesforce: ' + [link(p.trans, 'the new billing record'), (p.risks || []).filter(String).length + ' cover term(s)', link(p.follow, 'the follow-up task'), link(p.event, 'the delivery')].filter(String).join(' · ') + '</p>' : '<p class="muted">Salesforce was not written (test mode).</p>';
+}
+/* ── the whole history: every year since the policy began, newest first, each a fold ── */
+function historyHtml(d, max) {
+  const H = d.history, ys = H.years || [], S = H.summary;
+  if (!ys.length) return '<h3 style="margin:16px 0 4px;font-size:1rem">Since the policy began</h3><p class="muted">No earlier terms in Salesforce.</p>' + claimsAll(d);
+  const tiles = S ? '<div class="tiles" style="margin-top:14px">' +
+    tileH(dmy(S.since).replace(/^\d+ /, ''), 'with us since') + tileH(S.terms, S.terms === 1 ? 'term' : 'terms') +
+    tileH(whole(S.paid), 'paid since ' + (S.since || '').slice(0, 4)) +
+    tileH(S.claims, (S.claims === 1 ? 'claim' : 'claims') + ' · ' + S.clean + ' of ' + S.terms + ' years with none') +
+    (S.payDays !== null ? tileH(S.payDays + ' days', 'usual time to pay after the renewal' + (S.paidLate ? ' · late ' + S.paidLate + ' time' + (S.paidLate === 1 ? '' : 's') : '')) : '') +
+    (S.owed > 1 ? tileH(whole(S.owed), 'still owed on the record', 'bad') : '') + '</div>' : '';
+  const gaps = (H.gaps || []).length ? '<p class="muted small">Salesforce did not give the ' + esc(H.gaps.join(', ')) + ' this time; the rest is complete.</p>' : '';
+  return '<h3 style="margin:16px 0 4px;font-size:1rem">Since the policy began</h3>' + tiles +
+    '<h4 class="sub">The premium, year by year</h4><div class="hist">' + ys.map(y => '<div class="hb"><b>' + y.year + '</b><div class="tr"><i style="width:' + Math.max(3, Math.round((y.premium || 0) / max * 100)) + '%"></i></div><div class="v">' + money(y.premium) + '<span class="ch">' + (y.change === null ? 'first year' : (y.change > 0 ? '+' : '') + y.change + '%') + '</span></div></div>').join('') + '</div>' +
+    (H.vehicles.length ? '<h4 class="sub">Each vehicle\'s value over the years</h4><div class="tw"><table class="t"><thead><tr><th>Vehicle</th>' + yearsHead() + '</tr></thead><tbody>' + H.vehicles.map(v => '<tr><td><b>' + esc(v.reg) + '</b> <span class="muted">' + esc(v.desc) + '</span></td>' + yearsCells(v) + '</tr>').join('') + '</tbody></table></div>' : '') +
+    '<h4 class="sub">Every year, newest first</h4>' + ys.slice().reverse().map((y, i) => yearFold(d, y, i === 0)).join('') + gaps + claimsAll(d);
+}
+function tileH(v, label, tone) { return '<div class="tile' + (tone ? ' ' + tone : '') + '" style="cursor:default"><b>' + esc(String(v)) + '</b><span>' + esc(label) + '</span></div>'; }
+function yearFold(d, y, open) {
+  const billed = sum(y.bills, 'billed'), paid = sum(y.bills, 'paid'), owed = sum(y.bills, 'owed'), first = y.bills.map(b => b.firstPaid).filter(Boolean).sort()[0];
+  const chips = [];
+  if (!y.bills.length) chips.push('<span class="pill dim">No billing record</span>');
+  else if (owed > 1) chips.push('<span class="pill bad">Owed ' + money(owed) + '</span>');
+  else if (paid) chips.push('<span class="pill ok">Paid' + (first ? ' ' + esc(dmy(first)) : '') + '</span>');
+  else chips.push('<span class="pill warn">No payment recorded</span>');
+  chips.push(y.claims.length ? '<span class="pill warn">' + y.claims.length + ' claim' + (y.claims.length === 1 ? '' : 's') + '</span>' : '<span class="pill dim">No claims</span>');
+  const rt = (y.tasks || []).filter(t => t.renewal);
+  if (rt.length) chips.push(rt.some(t => !t.closed) ? '<span class="pill vio">Renewal task open</span>' : '<span class="pill">Renewal task closed</span>');
+  if (y.desk) chips.push('<span class="pill">Renewal desk: ' + esc(deskWord(y.desk)) + '</span>');
+  const sf = id => d.sfUrl ? '<a target="_blank" rel="noopener" href="' + esc(d.sfUrl + id) + '">' : '', sfe = () => d.sfUrl ? '</a>' : '';
+  const body =
+    '<div><h4>What was insured</h4><div class="tw"><table class="t"><thead><tr><th>Item</th><th class="n">Value or sum</th><th class="n">Premium</th></tr></thead><tbody>' +
+      y.risks.map(k => '<tr><td>' + esc(k.label) + '</td><td class="n">' + (k.value ? whole(k.value) : '–') + '</td><td class="n">' + money(k.premium) + '</td></tr>').join('') + '</tbody></table></div></div>' +
+    '<div><h4>Billed and paid</h4>' + (y.bills.length ? y.bills.map(b => '<p class="small" style="margin:2px 0">' + sf(b.id) + esc(b.name || 'Billing record') + sfe() + (b.ren ? ' · renewal ' + esc(dmy(b.ren)) : '') + ' · billed <b>' + money(b.billed) + '</b> · paid <b>' + money(b.paid) + '</b>' + (b.owed > 1 ? ' · <b style="color:var(--bad)">owed ' + money(b.owed) + '</b>' : '') + '</p>' +
+      (b.pays.length ? '<ul class="small" style="margin:2px 0 6px;padding-left:18px">' + b.pays.map(p => '<li>' + esc(dmy(p.on)) + ' · ' + money(p.amount) + (p.how ? ' · ' + esc(p.how) : '') + '</li>').join('') + '</ul>' + (b.lateDays !== null ? '<p class="muted small" style="margin:0 0 6px">First payment ' + b.lateDays + ' days ' + (b.lateDays < 0 ? 'before' : 'after') + ' the renewal.</p>' : '') : '<p class="muted small" style="margin:0 0 6px">No payment recorded on it.</p>')).join('') : '<p class="muted small">No billing record linked to this term.</p>') + '</div>' +
+    '<div><h4>Claims in this term</h4>' + (y.claims.length ? '<ul class="small" style="margin:0;padding-left:18px">' + y.claims.map(c => '<li>' + esc(dmy(c.on)) + ' · ' + esc(c.type) + (c.vehicle ? ' · ' + esc(c.vehicle) : '') + ' · ' + esc(c.status) + (c.paid ? ' · paid ' + money(c.paid) : '') + '</li>').join('') + '</ul>' : '<p class="muted small">None.</p>') + '</div>' +
+    ((y.tasks || []).length ? '<div><h4>Tasks on this year\'s billing</h4>' + y.tasks.map(t => '<div class="tk"><p class="small" style="margin:0"><b>' + sf(t.id) + esc(t.subject) + sfe() + '</b><br><span class="muted">' + esc(t.owner) + ' · opened ' + esc(dmy(t.opened)) + (t.closed ? ' · closed ' + esc(dmy(t.closedOn)) : ' · ' + esc(t.status) + (t.due ? ', due ' + esc(dmy(t.due)) : '')) + ' · ' + t.notes + ' note' + (t.notes === 1 ? '' : 's') + '</span></p>' +
+      t.last.map(n => '<div class="nt"><i>' + esc(n.by) + ', ' + esc(dmy(n.on)) + '</i>' + esc(n.text) + '</div>').join('') + '</div>').join('') + '</div>' : '') +
+    (y.desk ? '<div><h4>On the renewal desk</h4><p class="small" style="margin:0">' + esc(deskLine(y.desk)) + '</p></div>' : '');
+  return '<details class="yr"' + (open ? ' open' : '') + '><summary><span class="y">' + y.year + '</span><span class="d">' + esc(dmy(y.from)) + ' to ' + esc(dmy(y.to)) + (y.policies.length ? ' · ' + esc(y.policies.join(', ')) : '') + '</span>' +
+    '<span class="p">' + money(y.premium) + (y.change !== null ? ' <span class="muted small">' + (y.change > 0 ? '+' : '') + y.change + '%</span>' : '') + '</span><span class="c">' + chips.join(' ') + '</span></summary><div class="yb">' + body + '</div></details>';
+}
+function sum(a, k) { return (a || []).reduce((x, y) => x + (Number(y[k]) || 0), 0); }
+function deskWord(x) { return x.outcome === 'lost' ? 'not renewed' : x.proceedAt ? 'instructed' : x.answer === 'approve' ? 'client said yes' : x.sentAt ? 'letter sent' : 'started'; }
+function deskLine(x) { return [x.sentAt ? 'Letter sent ' + x.sentAt + (x.test ? ' (test)' : '') : 'No letter sent', x.answer ? 'client: ' + ({ approve: 'approved', changes: 'asked for changes', question: 'asked a question' }[x.answer] || x.answer) : '', x.proceedAt ? 'instructed ' + x.proceedAt : '', x.outcome === 'lost' ? 'not renewed' : ''].filter(Boolean).join(' · ') + '.'; }
+function claimsAll(d) {
+  const extra = d.history.summary ? d.history.summary.claimsBefore : d.claims.length;
+  if (!d.claims.length) return '<p class="muted small">No claims on record for this policy or its vehicles.</p>';
+  return '<details class="small" style="margin-top:8px"><summary>Every claim on record (' + d.claims.length + ')' + (extra ? ', ' + extra + ' before these terms' : '') + '</summary><ul style="padding-left:18px">' + d.claims.map(c => '<li>' + esc(dmy(c.on)) + ' · ' + esc(c.type) + (c.vehicle ? ' · ' + esc(c.vehicle) : '') + ' · ' + esc(c.status) + (c.paid ? ' · paid ' + money(c.paid) : '') + '</li>').join('') + '</ul></details>';
 }
 function yearsHead() { const ys = [...new Set(ONE.history.vehicles.flatMap(v => v.years.map(y => y.year)))].sort(); return ys.map(y => '<th class="n">' + y + '</th>').join(''); }
 function yearsCells(v) { const ys = [...new Set(ONE.history.vehicles.flatMap(w => w.years.map(y => y.year)))].sort(); return ys.map(y => { const h = v.years.find(z => z.year === y); return '<td class="n">' + (h && h.value ? whole(h.value) : '–') + '</td>'; }).join(''); }
