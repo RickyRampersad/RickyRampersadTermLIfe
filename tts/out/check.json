@@ -1,7 +1,67 @@
 {
- "tts/out/wallw5/01.mp3": [
+ "tts/out/mqlaunch/01.mp3": [
+  "en",
+  0.998,
+  "Motor quotes have moved home. No more job form. This is the branch's own motor quote built for you and your clients."
+ ],
+ "tts/out/mqlaunch/02.mp3": [
+  "en",
+  0.994,
+  "The old form had 41 questions, and all its time it was filled in twice. No reference, no record, and nobody followed up."
+ ],
+ "tts/out/mqlaunch/03.mp3": [
   "en",
   0.999,
-  "This is Branch Intelligence. It reads a task's whole history, tells you where it stands, and drafts the reply. The managers and the BMA check it and post it, and sales support get the days"
+  "Now your client signs in with their email. We send them a six-digit code. There's no password to forget."
+ ],
+ "tts/out/mqlaunch/04.mp3": [
+  "en",
+  0.995,
+  "If they're already with Guardian, their record fills itself in. Their details, their driver's permit, and every vehicle we ensure with a premium year by year."
+ ],
+ "tts/out/mqlaunch/05.mp3": [
+  "en",
+  0.979,
+  "Then three clear choices. Renew a vehicle we ensure, get a quote for a new one, or accept the quote we've sent."
+ ],
+ "tts/out/mqlaunch/06.mp3": [
+  "en",
+  0.993,
+  "Buy a new car? Just snap the dealers' invoice. The make, model, year, chassis, and price fill themselves in."
+ ],
+ "tts/out/mqlaunch/07.mp3": [
+  "en",
+  0.999,
+  "and you can place the quote for your client, sign in with your work email, type in your client's email and you're the producer on it."
+ ],
+ "tts/out/mqlaunch/08.mp3": [
+  "en",
+  0.998,
+  "When it's sent, Guardian's own quotation request form is filled in and goes to the Quotes desk with every document attached. Your client gets a receipt with a reference in your copied."
+ ],
+ "tts/out/mqlaunch/09.mp3": [
+  "en",
+  0.997,
+  "In Salesforce, a new client's contact, the opportunity and the task are made for you. Nothing is keyed in twice."
+ ],
+ "tts/out/mqlaunch/10.mp3": [
+  "en",
+  0.998,
+  "When your client accepts, they sign Guardian's proposal and then know your policy form right there on their phone."
+ ],
+ "tts/out/mqlaunch/11.mp3": [
+  "en",
+  0.998,
+  "and renewals, they go straight to the renewal portal, so every renewal lives in one place."
+ ],
+ "tts/out/mqlaunch/12.mp3": [
+  "en",
+  0.999,
+  "Right now it's in test mode. Sign in with your work email and your code comes straight to you. Place a quote for a client. Nothing reaches guardian and your client isn't emailed."
+ ],
+ "tts/out/mqlaunch/13.mp3": [
+  "en",
+  0.67,
+  "So, this week, try it with one client and tell us what you think."
  ]
 }
