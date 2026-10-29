@@ -152,6 +152,12 @@
       "screen": "ANSWER ONE"
     },
     {
+      "v": "signin",
+      "screen": "HOW YOU GET IN",
+      "extra": 2.4,
+      "say": "Sign in on Friday with your agent number. Signing in is the register. Guests use the visitor code: zero, zero, zero, zero."
+    },
+    {
       "v": "rise",
       "say": "We rise together.",
       "screen": "",
