@@ -158,6 +158,37 @@
   .tc .rb i{display:block;height:100%;width:0;transition:width 1.6s var(--ease)}
   .s-drive{background:#78D198} .s-record{background:#4FC1B0} .s-park{background:#EF9A4B} .s-status{background:#6B6F78}
 
+  /* motion: drifting light, a sheen over each card, shine on the bar, glowing figures, halos, the insight's timer */
+  .motes{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .motes i{position:absolute;bottom:-2rem;width:.32rem;height:.32rem;border-radius:50%;background:rgba(227,184,90,.6);box-shadow:0 0 .9rem rgba(227,184,90,.7);animation:mote linear infinite;will-change:transform,opacity}
+  .motes i.t{background:rgba(79,193,176,.6);box-shadow:0 0 .9rem rgba(79,193,176,.7)}
+  @keyframes mote{0%{transform:translate(0,0);opacity:0}12%{opacity:.85}88%{opacity:.6}100%{transform:translate(4rem,-74rem);opacity:0}}
+  /* one light crosses the cards in turn, so only one card is ever being swept */
+  .card::after{content:"";position:absolute;top:-10%;bottom:-10%;left:0;width:28%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.09),transparent);
+               transform:translateX(-160%) skewX(-18deg);opacity:0;pointer-events:none}
+  .card.shine::after{animation:sheen 1.5s ease-in-out}
+  @keyframes sheen{0%{transform:translateX(-160%) skewX(-18deg);opacity:1}100%{transform:translateX(460%) skewX(-18deg);opacity:1}}
+  .kbar{position:relative}
+  .kbar::after{content:"";position:absolute;top:0;bottom:0;left:0;width:18%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);animation:kshine 3.8s ease-in-out infinite;will-change:transform}
+  @keyframes kshine{0%{transform:translateX(-120%)}100%{transform:translateX(620%)}}
+  /* a figure pops as the light crosses its card */
+  .kpi .v b,.bm .num span{display:inline-block;transform-origin:left center}
+  .bm .num span{transform-origin:right center}
+  .card.shine .v b,.card.shine .num span{animation:pop 1.2s ease-in-out}
+  @keyframes pop{0%,100%{transform:none}40%{transform:scale(1.08)}}
+  .up{display:inline-block;font-size:1.5rem;margin-right:.2rem;color:var(--gold);animation:bob 1.6s ease-in-out infinite;will-change:transform}
+  @keyframes bob{50%{transform:translateY(-.4rem)}}
+  .halo{fill:none;stroke-width:1.2;stroke-dasharray:2 5;transform-box:fill-box;transform-origin:center;animation:spin 9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .tc .st .hot b{display:inline-block;animation:beat 2.2s ease-in-out infinite}
+  @keyframes beat{0%,100%{transform:none}15%{transform:scale(1.22)}30%{transform:none}}
+  .insight .timer{position:absolute;left:0;bottom:0;height:.2rem;background:linear-gradient(90deg,var(--gold),var(--teal))}
+  .insight .timer{width:100%;transform:scaleX(0);transform-origin:left center;will-change:transform}
+  .insight .timer.go{animation:fill 6.5s linear forwards}
+  @keyframes fill{to{transform:scaleX(1)}}
+  .insight .tag{animation:tagpulse 3.2s ease-in-out infinite;will-change:transform}
+  @keyframes tagpulse{50%{transform:scale(1.08)}}
+
   @media (max-width:900px){
     html{font-size:11px} html,body{height:auto;overflow:auto}
     header{flex-wrap:wrap;padding:1.2rem 1.4rem .6rem} .right{margin-left:0;width:100%;justify-content:space-between}
@@ -170,17 +201,18 @@
     .lbl{font-size:.9rem} .lbl.s{font-size:.82rem}
     .insight .tag,.klg,.keys,.tc .st,.tc .nm small,.top small{font-size:.85rem}
   }
-  @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} .card,.tc{opacity:1;transform:none} .reveal{clip-path:none} .node{transform:none} .band{opacity:.62} }
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} .card,.tc{opacity:1;transform:none} .reveal{clip-path:none} .node{transform:none} .band{opacity:.62} .motes,.card::after,.kbar::after{display:none} }
 </style>
 </head>
 <body>
 <i class="glow g1"></i><i class="glow g2"></i><i class="glow g3"></i>
+<div class="motes" id="motes"></div>
 <header>
   <div class="mark"><img src="../../logo-mark.png" alt=""></div>
   <div><h1>Driving the campaign</h1><div class="sub" id="sub">The Branch Manager's prompts, flowing to the team's answers &middot; first names only, no client</div></div>
   <div class="right"><button class="btn" id="sound" onclick="toggleSound()">▶ Narrate</button><div class="live" id="live"><i></i><span id="liveTxt">connecting</span></div><div class="clock" id="clock">--:--</div></div>
 </header>
-<div class="insight" id="insight"><span class="tag">Insight</span><div class="say" id="say"><span class="on">Reading the campaign&hellip;</span></div><div class="dots" id="sayDots"></div></div>
+<div class="insight" id="insight"><span class="tag">Insight</span><div class="say" id="say"><span class="on">Reading the campaign&hellip;</span></div><div class="dots" id="sayDots"></div><i class="timer" id="sayTimer"></i></div>
 <main>
   <section class="row rA">
     <div class="card hero" style="--d:0s">
@@ -189,8 +221,8 @@
       <div class="kbar" id="kbar"></div>
       <div class="klg" id="klg"></div>
     </div>
-    <div class="card kpi k1" style="--d:.06s"><div class="kick t">Answered</div><div class="v"><div class="mring"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" stroke="rgba(255,255,255,.08)"></circle><circle class="arc" id="aArc" cx="18" cy="18" r="15" stroke="#78D198"></circle></svg></div><b id="aPct">&ndash;</b></div><p id="aP">of his prompts drew a word from the team.</p></div>
-    <div class="card kpi k2" style="--d:.1s"><div class="kick">When he drives</div><div class="v"><b id="lPct">&ndash;</b></div><p id="lP">more notes from the team on his busiest days.</p></div>
+    <div class="card kpi k1" style="--d:.06s"><div class="kick t">Answered</div><div class="v"><div class="mring"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" stroke="rgba(255,255,255,.08)"></circle><circle class="arc" id="aArc" cx="18" cy="18" r="15" stroke="#78D198"></circle><circle class="halo" cx="18" cy="18" r="17.4" stroke="rgba(120,209,152,.55)"></circle></svg></div><b id="aPct">&ndash;</b></div><p id="aP">of his prompts drew a word from the team.</p></div>
+    <div class="card kpi k2" style="--d:.1s"><div class="kick">When he drives</div><div class="v"><span class="up" aria-hidden="true">&#9650;</span><b id="lPct">&ndash;</b></div><p id="lP">more notes from the team on his busiest days.</p></div>
     <div class="card kpi k3" style="--d:.14s"><div class="kick t">After a prompt</div><div class="v"><b id="fPct">&ndash;</b></div><p id="fP">of the team's notes came after one of his prompts.</p></div>
     <div class="card kpi k4" style="--d:.18s"><div class="kick" style="color:var(--violet)">His automation</div><div class="v"><b id="mTot" data-v="0">&ndash;</b></div><p id="mP">e-mails, alerts and replies handled.</p></div>
   </section>
@@ -223,8 +255,30 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){retu
 function fmt(n){ return Math.round(Number(n)||0).toLocaleString("en-US"); }
 function clock(){ var t=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Port_of_Spain"})); $("#clock").textContent=("0"+t.getHours()).slice(-2)+":"+("0"+t.getMinutes()).slice(-2); }
 clock(); setInterval(clock, 15000);
-function count(el, to, suf){ if(!el) return; to=Math.max(0,Math.round(Number(to)||0)); var from=Number(el.getAttribute("data-v")||0), t0=performance.now(), dur=1500; el.setAttribute("data-v",to);
-  (function step(t){ var k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3); el.innerHTML=Math.round(from+(to-from)*e).toLocaleString("en-US")+(suf||""); if(k<1) requestAnimationFrame(step); })(t0); }
+function count(el, to, suf, pre){ if(!el) return; to=Math.max(0,Math.round(Number(to)||0)); var from=Number(el.getAttribute("data-v")||0), t0=performance.now(), dur=1600; el.setAttribute("data-v",to);
+  (function step(t){ var k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3); el.innerHTML=(pre||"")+Math.round(from+(to-from)*e).toLocaleString("en-US")+(suf||""); if(k<1) requestAnimationFrame(step); })(t0); }
+var RM = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* a dot that travels a path for ever: the motion is SVG's own, so it costs the page nothing to keep running */
+var pathN = 0;
+function rider(svg, path, r, fill, dur, begin){
+  if(RM) return;
+  if(!path.id) path.id = "pth" + (++pathN);
+  var c = el("circle",{r:r,fill:fill,opacity:0},svg);
+  var a = el("animateMotion",{dur:dur+"s",repeatCount:"indefinite",begin:begin+"s",rotate:"auto"},c);
+  var m = el("mpath",{},a); m.setAttribute("href","#"+path.id); m.setAttributeNS("http://www.w3.org/1999/xlink","xlink:href","#"+path.id);
+  el("animate",{attributeName:"opacity",values:"0;1;1;0",keyTimes:"0;.1;.85;1",dur:dur+"s",repeatCount:"indefinite",begin:begin+"s"},c);
+  return c; }
+/* a scanner that sweeps a chart, left to right, again and again */
+function scanner(svg, x0, x1, y0, y1, col, dur){
+  if(RM) return;
+  var g = el("g",{},svg), w = 26;
+  var gr = el("linearGradient",{id:"scg"+(++pathN),x1:0,x2:1,y1:0,y2:0},svg);
+  el("stop",{offset:"0%","stop-color":col,"stop-opacity":0},gr); el("stop",{offset:"85%","stop-color":col,"stop-opacity":.22},gr); el("stop",{offset:"100%","stop-color":col,"stop-opacity":.6},gr);
+  var r = el("rect",{x:x0-w,y:y0,width:w,height:Math.max(0,y1-y0),fill:"url(#"+gr.id+")"},g);
+  el("animate",{attributeName:"x",from:x0-w,to:x1,dur:dur+"s",repeatCount:"indefinite"},r);
+  var l = el("line",{x1:x0,x2:x0,y1:y0,y2:y1,stroke:col,"stroke-width":1.4,opacity:.8},g);
+  el("animate",{attributeName:"x1",from:x0,to:x1+w,dur:dur+"s",repeatCount:"indefinite"},l); el("animate",{attributeName:"x2",from:x0,to:x1+w,dur:dur+"s",repeatCount:"indefinite"},l);
+  return g; }
 function later(f, ms){ requestAnimationFrame(function(){ setTimeout(f, ms==null?220:ms); }); }
 function plural(n, one, many){ return fmt(n)+" "+(Math.round(n)===1 ? one : (many || one+"s")); }
 function pct(a, b){ return b ? Math.round(100*a/b) : 0; }
@@ -267,13 +321,17 @@ function drawFlow(V){
   place(L); place(M); place(Rn);
   var byKey = function(list){ var o={}; list.forEach(function(n){ o[n.key]=n; }); return o; };
   var Lk = byKey(L), Mk = byKey(M), Rk = byKey(Rn);
-  var bands = el("g",{},s), flows = el("g",{},s), nodes = el("g",{},s), labels = el("g",{},s);
+  var pk = el("radialGradient",{id:"pkt"},defs); el("stop",{offset:"0%","stop-color":"#FFFFFF","stop-opacity":1},pk); el("stop",{offset:"45%","stop-color":"#FFF4D6","stop-opacity":.85},pk); el("stop",{offset:"100%","stop-color":"#FFF4D6","stop-opacity":0},pk);
+  var bands = el("g",{},s), flows = el("g",{},s), packets = el("g",{},s), nodes = el("g",{},s), labels = el("g",{},s);
   var band = function(x1, y1, x2, y2, h, c1, c2, i){
     var xm = (x1+x2)/2, id = "fg"+i;
     var p = "M"+x1+" "+y1+" C"+xm+" "+y1+" "+xm+" "+y2+" "+x2+" "+y2+" L"+x2+" "+(y2+h)+" C"+xm+" "+(y2+h)+" "+xm+" "+(y1+h)+" "+x1+" "+(y1+h)+" Z";
     var b = el("path",{d:p,fill:grad(defs,id,c1,c2),"class":"band"},bands);
     if(h >= 2){ var cy1 = y1+h/2, cy2 = y2+h/2;
-      el("path",{d:"M"+x1+" "+cy1+" C"+xm+" "+cy1+" "+xm+" "+cy2+" "+x2+" "+cy2,"class":"flowl","stroke-width":Math.max(1.2,Math.min(h*.35,7)),style:"animation-duration:"+(2+(i%5)*.35)+"s"},flows); }
+      var fp = el("path",{d:"M"+x1+" "+cy1+" C"+xm+" "+cy1+" "+xm+" "+cy2+" "+x2+" "+cy2,"class":"flowl","stroke-width":Math.max(1.2,Math.min(h*.35,7)),style:"animation-duration:"+(2+(i%5)*.35)+"s"},flows);
+      /* packets travelling the ribbon, more on a wide one, each a soft light */
+      var k = h >= 14 ? 3 : h >= 6 ? 2 : 1, dur = 3.4 + (i%6)*.45, r = Math.max(1.8, Math.min(h*.2, 5.5));
+      for(var q=0;q<k;q++) rider(packets, fp, r, "url(#pkt)", dur, .9 + q*dur/k + (i%7)*.17); }
     return b; };
   var bi = 0;
   /* kind → when */
@@ -310,7 +368,9 @@ function drawHours(V){
   var g = el("g",{"class":"reveal"},s);
   el("path",{d:smooth(up)+" L"+x(n-1)+" "+mid+" L"+x(0)+" "+mid+" Z",fill:grad(defs,"hu","rgba(227,184,90,.85)","rgba(227,184,90,.08)",true)},g);
   el("path",{d:smooth(dn)+" L"+x(n-1)+" "+mid+" L"+x(0)+" "+mid+" Z",fill:grad(defs,"hd","rgba(79,193,176,.08)","rgba(79,193,176,.85)",true)},g);
-  el("path",{d:smooth(up),fill:"none",stroke:"#F2CC74","stroke-width":2},g); el("path",{d:smooth(dn),fill:"none",stroke:"#7BE0D0","stroke-width":2},g);
+  var hu = el("path",{d:smooth(up),fill:"none",stroke:"#F2CC74","stroke-width":2},g), hd = el("path",{d:smooth(dn),fill:"none",stroke:"#7BE0D0","stroke-width":2},g);
+  scanner(s, padL, W-padR, .3*R, H-1.3*R, "#E3B85A", 7);
+  rider(s, hu, 4.2, "#FFE9A8", 6.5, 1.2); rider(s, hd, 4.2, "#B8F3E8", 6.5, 2.4);
   el("line",{x1:padL,x2:W-padR,y1:mid,y2:mid,stroke:"rgba(255,255,255,.25)","stroke-width":1},s);
   for(var i=0;i<n;i+=2) txt(s, x(i), H-.35*R, ap(Hh.from+i), "lbl s", i===0?"start":i>=n-1?"end":"middle");
   var ip = Hh.peakPrompts - Hh.from, inn = Hh.peakNotes - Hh.from;
@@ -330,7 +390,7 @@ function drawWave(V){
   var g = el("g",{},s), cum = 0, pts = [];
   Wv.counts.forEach(function(v, i){
     var h = (bot-top)*v/mx, x0 = .5*R + i*bw + bw*.14, w = bw*.72;
-    var r = el("rect",{x:x0,y:bot,width:w,height:0,rx:4,fill:grad(defs,"wb"+i,i<4?"#7BE0D0":i<6?"#4FC1B0":"#EF8A6B",i<4?"#3E9C8F":i<6?"#2C6F66":"#9A4F3A",true)},g);
+    var r = el("rect",{"class":"bar",x:x0,y:bot,width:w,height:0,rx:4,fill:grad(defs,"wb"+i,i<4?"#7BE0D0":i<6?"#4FC1B0":"#EF8A6B",i<4?"#3E9C8F":i<6?"#2C6F66":"#9A4F3A",true)},g);
     (function(r,h,i){ later(function(){ r.style.transition="all 1.2s cubic-bezier(.16,1,.3,1)"; r.setAttribute("y",bot-h); r.setAttribute("height",h); }, 250+70*i); })(r,h,i);
     txt(s, x0+w/2, bot+.7*R, labs[i]||"", "lbl s", "middle");
     txt(s, x0+w/2, bot-h-9, fmt(v), "lbl d", "middle");
@@ -338,6 +398,8 @@ function drawWave(V){
   });
   var line = el("path",{d:smooth(pts),fill:"none",stroke:"#E3B85A","stroke-width":2.4,"stroke-dasharray":"2000","stroke-dashoffset":"2000"},s);
   later(function(){ line.style.transition="stroke-dashoffset 2.4s cubic-bezier(.16,1,.3,1)"; line.setAttribute("stroke-dashoffset","0"); }, 700);
+  scanner(s, .5*R, W-.5*R, top-.6*R, bot, "#4FC1B0", 6);
+  rider(s, line, 4.6, "#FFE9A8", 4.2, 3.2);
   $("#wvCap").innerHTML = "<b>"+fmt(Wv.within4)+"</b> inside 4 hours &middot; half within <b>"+hrsTxt(Wv.median)+"</b>";
 }
 
@@ -354,8 +416,10 @@ function drawStream(V){
   el("path",{d:area(P),fill:grad(defs,"sp","rgba(227,184,90,.55)","rgba(227,184,90,.03)",true)},g);
   el("path",{d:area(N),fill:grad(defs,"sn","rgba(79,193,176,.55)","rgba(79,193,176,.04)",true)},g);
   el("path",{d:area(A),fill:"rgba(44,111,102,.75)"},g);
-  el("path",{d:smooth(P),fill:"none",stroke:"#F2CC74","stroke-width":2.4},g);
-  el("path",{d:smooth(N),fill:"none",stroke:"#7BE0D0","stroke-width":2.4},g);
+  var lp = el("path",{d:smooth(P),fill:"none",stroke:"#F2CC74","stroke-width":2.4},g);
+  var ln = el("path",{d:smooth(N),fill:"none",stroke:"#7BE0D0","stroke-width":2.4},g);
+  scanner(s, padL, W-padR, top-.8*R, bot, "#E3B85A", 9);
+  rider(s, lp, 4.6, "#FFE9A8", 9, 2.6); rider(s, ln, 4.6, "#B8F3E8", 9, 3.4); rider(s, lp, 3.2, "#FFE9A8", 9, 7.1); rider(s, ln, 3.2, "#B8F3E8", 9, 7.9);
   S.forEach(function(d,i){ if((n-1-i)%2) return; txt(s, x(i), bot+.65*R, esc(d.label||""), i===n-1?"lbl":"lbl s", i===0?"start":i===n-1?"end":"middle"); });
   /* the biggest day of each, marked */
   var bi = 0, bn = 0; S.forEach(function(d,i){ if(d.hand+d.auto > S[bi].hand+S[bi].auto) bi=i; if(d.notes > S[bn].notes) bn=i; });
@@ -373,7 +437,7 @@ function drawTeam(V){
   $("#team").innerHTML = T.length ? T.map(function(p, i){
     var n = p.notes||0, r = p.read||{}, w = function(v){ return n ? (100*v/n).toFixed(1) : 0; }, a = pct(p.after, n);
     return '<div class="tc" style="--d:'+(0.07*i).toFixed(2)+'s"><div class="rg"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" stroke="rgba(255,255,255,.08)"></circle>'
-      + '<circle class="arc" cx="18" cy="18" r="15" stroke="#4FC1B0" data-dash="'+(C*a/100).toFixed(1)+' 200"></circle></svg><b>'+a+'%</b></div>'
+      + '<circle class="arc" cx="18" cy="18" r="15" stroke="#4FC1B0" data-dash="'+(C*a/100).toFixed(1)+' 200"></circle><circle class="halo" cx="18" cy="18" r="17.4" stroke="rgba(79,193,176,.5)" style="animation-duration:'+(7+i*1.3)+'s"></circle></svg><b data-cp="'+a+'">0%</b></div>'
       + '<div class="nm">'+esc(p.name)+'<small>'+plural(n,"note")+'</small></div>'
       + '<div class="st"><span>answers in <b>'+(p.hours==null?"–":hrsTxt(p.hours))+'</b></span><span class="'+(p.waiting?'hot':'')+'"><b>'+fmt(p.waiting)+'</b> waiting</span></div>'
       + '<div class="rb"><i class="s-drive" data-w="'+w(r.drive||0)+'"></i><i class="s-record" data-w="'+w(r.record||0)+'"></i><i class="s-park" data-w="'+w(r.park||0)+'"></i><i class="s-status" data-w="'+w(r.status||0)+'"></i></div></div>'; }).join("")
@@ -399,9 +463,12 @@ function startSay(list){
   clearInterval(sayT); sayAt = 0;
   $("#say").innerHTML = list.map(function(t,i){ return '<span class="'+(i?'':'on')+'">'+t+'</span>'; }).join("") || '<span class="on">No insight yet.</span>';
   $("#sayDots").innerHTML = list.length > 1 ? list.map(function(_,i){ return '<i class="'+(i?'':'on')+'"></i>'; }).join("") : "";
+  var tm = $("#sayTimer"), restart = function(){ if(!tm) return; tm.classList.remove("go"); void tm.offsetWidth; if(list.length > 1) tm.classList.add("go"); };
+  restart();
   if(list.length > 1) sayT = setInterval(function(){
     var sp = $("#say").querySelectorAll("span"), dt = $("#sayDots").querySelectorAll("i");
     sp[sayAt].classList.remove("on"); dt[sayAt].classList.remove("on"); sayAt = (sayAt+1) % sp.length; sp[sayAt].classList.add("on"); dt[sayAt].classList.add("on");
+    restart();
   }, 6500);
 }
 
@@ -429,15 +496,16 @@ function paint(){
     $("#kbar").innerHTML = KINDS.map(function(k){ return '<i style="background:'+k[2]+'" data-w="'+(tot ? (100*kinds[k[0]]/tot).toFixed(1) : 0)+'"></i>'; }).join("");
     $("#klg").innerHTML = KINDS.map(function(k){ return '<span><i style="background:'+k[2]+'"></i>'+esc(k[1].replace("Daily lists and Branch Intelligence","Lists and Intelligence"))+' <b>'+fmt(kinds[k[0]])+'</b></span>'; }).join("")
       + (P.all.hold ? '<span>Hold notices <b>'+fmt(P.all.hold)+'</b></span>' : '');
-    var ap = pct(A.answered, A.prompts); $("#aPct").textContent = A.prompts ? ap+"%" : "–";
+    var ap = pct(A.answered, A.prompts); if(A.prompts) count($("#aPct"), ap, "%"); else $("#aPct").textContent = "–";
     $("#aArc").setAttribute("data-dash", (2*Math.PI*15*ap/100).toFixed(1)+" 200");
     $("#aP").innerHTML = "<b>"+fmt(A.same)+"</b> the same day, <b>"+fmt(A.next)+"</b> the next working day, "+fmt(A.later)+" later.";
     var L = V.lift;
-    if(L && L.quiet){ $("#lPct").innerHTML = "+"+pct(L.busy-L.quiet, L.quiet)+"<small>%</small>"; $("#lP").innerHTML = "more notes from the team on his busiest days: <b>"+L.busy+"</b> a day against "+L.quiet+"."; }
+    if(L && L.quiet){ count($("#lPct"), pct(L.busy-L.quiet, L.quiet), "<small>%</small>", "+"); $("#lP").innerHTML = "more notes from the team on his busiest days: <b>"+L.busy+"</b> a day against "+L.quiet+"."; }
     else { $("#lPct").textContent = fmt(A.same); $("#lP").innerHTML = "prompts answered the same day."; }
-    $("#fPct").innerHTML = V.notes ? pct(V.after, V.notes)+"<small>%</small>" : "–";
+    if(V.notes) count($("#fPct"), pct(V.after, V.notes), "<small>%</small>"); else $("#fPct").textContent = "–";
     $("#fP").innerHTML = V.notes ? "of the team's <b>"+fmt(V.notes)+"</b> notes came after one of his prompts." : "No note by the team yet.";
     drawFlow(V); drawHours(V); drawWave(V); drawStream(V); drawTeam(V);
+    later(function(){ Array.prototype.forEach.call(document.querySelectorAll("[data-cp]"), function(b){ count(b, b.getAttribute("data-cp"), "%"); }); }, 500);
     var ins = insights(V); startSay(ins);
     bits = bits.concat(["The Branch Manager: <b>"+fmt(tot)+"</b> prompts on the orphan tasks since "+esc(fmtDay(V.since||"2026-09-25"))]).concat(ins);
   }
@@ -475,6 +543,15 @@ function load(){
 (function(){
   try{ var s = JSON.parse(localStorage.getItem(SNAP)||"null");
     if(s && good(s.d) && Date.now() - s.t < 12*3600*1000){ D = s.d; paint(); $("#liveTxt").textContent = "snapshot"; } }catch(e){}
+})();
+(function(){
+  if(RM) return;
+  var cards = document.querySelectorAll(".card"), at = 0;
+  setInterval(function(){ var c = cards[at % cards.length]; c.classList.remove("shine"); void c.offsetWidth; c.classList.add("shine");
+    setTimeout(function(){ c.classList.remove("shine"); }, 1600); at++; }, 1700);
+  var m = $("#motes"), h = "";
+  for(var i=0;i<12;i++) h += '<i class="'+(i%3?'':'t')+'" style="left:'+(3+Math.random()*94).toFixed(1)+'%;animation-duration:'+(16+Math.random()*16).toFixed(1)+'s;animation-delay:-'+(Math.random()*30).toFixed(1)+'s;transform:scale('+(.6+Math.random()*.9).toFixed(2)+')"></i>';
+  m.innerHTML = h;
 })();
 load(); setInterval(load, 5*60*1000);
 </script>
