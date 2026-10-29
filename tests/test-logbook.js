@@ -50,6 +50,11 @@ function sfRoute(url, opts) {
   const p = url.match(/\/services\/data\/v[\d.]+(\/.*)$/)[1];
   if (p.startsWith('/query?q=')) {
     const q = decodeURIComponent(p.slice(9)); SF.queries.push(q);
+    if (/SELECT AgentName__c FROM CLIENT_PORTFOLIO__c WHERE AgentName__c LIKE/.test(q)) {
+      const nm = (q.match(/LIKE '% - ([^']+)'/) || [])[1];
+      const no = { 'Javid Ali': 'A04020', 'Aleema Mohammed-Ali': 'A04028', 'Ana Agent': 'A10001', 'Gone Agent': 'A10002' }[nm];
+      return res(200, { records: no ? [{ AgentName__c: no + ' - ' + nm }] : [] });
+    }
     if (/AgentName__c LIKE/.test(q)) {
       const a = (q.match(/LIKE '([^%']+)%'/) || [])[1]; const w = ids(q.split('AgentName__c')[0]);
       return res(200, { records: SF.portfolios.filter(r => w.includes(r.Contact__c) && r.AgentName__c.indexOf(a) === 0) });
@@ -58,6 +63,9 @@ function sfRoute(url, opts) {
     if (/FROM CLIENT_PORTFOLIO__c WHERE Contact__c IN/.test(q)) { const w = ids(q.split('WHERE')[1].split(') OR')[0]); return res(200, { records: SF.portfolios.filter(r => w.includes(r.Contact__c)) }); }
     if (/FROM Contact WHERE Email =/.test(q)) { const w = ids(q); return res(200, { records: SF.contacts.filter(c => w.includes(c.Email)) }); }
     if (/FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN/.test(q)) { const w = ids(q.split(' IN ')[1]); return res(200, { records: SF.portfolios.filter(r => w.includes(r.POLICY__c)) }); }
+    if (/Employment_Status__c = 'Active'/.test(q)) return res(200, { records: [
+      { Name: 'Javid Ali', Email: 'javid@example.com' }, { Name: 'Aleema Mohammed-Ali', Email: 'aleema@example.com' },
+      { Name: 'Ana Agent', Email: 'ana@example.com' }, { Name: 'Gone Agent', Email: 'gone@example.com' }] });
     if (/FROM Contact WHERE Id/.test(q)) { const w = ids(q); return res(200, { records: SF.contacts.filter(c => w.includes(c.Id)) }); }
     return res(200, { records: [] });
   }
@@ -144,7 +152,21 @@ let env = world();
   ok('an agent is refused the transmittals', ['lb.transmittals', 'lb.transmittal', 'lb.receive', 'lb.stats', 'lb.queue']
     .every(a => /staff/.test(env.lbHandle_({ action: a, token: ag.token }).error || '')));
   ok('"Not Active" is refused', throws(() => env.lbLogin_({ agentNo: 'A00003', code: 'pw3' })));
-  ok('staff are not in the agent list', !env.lbHandle_({ action: 'lb.agents', token: bo.token }).agents.some(a => a.name === 'Bo Branch'));
+  const pick = env.lbHandle_({ action: 'lb.agents', token: bo.token }).agents;
+  ok('the branch manager is in the agent list (he writes business)', pick.some(a => a.name === 'Bo Branch'));
+  ok('staff are in the list by name, marked as staff', pick.some(a => a.name === 'Sam Support' && a.agentNo === 'Sam Support' && a.staff));
+  ok('Mala Balkaran is in the list by name', pick.some(a => a.name === 'Mala Balkaran' && a.staff));
+  ok('staff can log for a staff member by name', env.lbValidate_({ entry: entry({ agentNo: 'Mala Balkaran' }) }, env.lbSession_(bo.token)).agent.name === 'Mala Balkaran');
+  ok('no one twice', new Set(pick.map(a => a.name)).size === pick.length);
+  ok('one person written two ways is listed once',
+     env.lbPickHas_([{ name: 'SASHA LALLA' }], 'Sasha Lalla-Jagassar') && env.lbPickHas_([{ name: 'A00427 - Kamla Persad' }], 'Kamla Persad') &&
+     env.lbPickHas_([{ name: 'Elizabeth Lee' }], 'Liz Lee') && !env.lbPickHas_([{ name: 'Sasha Lalla' }], 'Sasha') &&
+     !env.lbPickHas_([{ name: 'Sasha Lalla' }], 'Sasha Ramdial'));
+  ok('agents Salesforce shows as active are in the list, with their numbers', pick.some(a => a.name === 'Javid Ali' && a.agentNo === 'A04020')
+     && pick.some(a => a.name === 'Aleema Mohammed-Ali' && a.agentNo === 'A04028'));
+  ok('each agent once', pick.filter(a => a.agentNo === 'A04020').length === 1 && pick.filter(a => a.agentNo === 'A10001').length === 1);
+  ok('a former agent is never added back from Salesforce', !pick.some(a => a.name === 'Gone Agent' || a.agentNo === 'A00003'));
+  ok('staff can log for an agent who is only in Salesforce', env.lbValidate_({ entry: entry({ agentNo: 'A04020' }) }, env.lbSession_(bo.token)).agent.name === 'Javid Ali');
 }
 
 /* ── the seam ──────────────────────────────────────────────────────── */
@@ -162,6 +184,32 @@ const post = (env, body) => JSON.parse(env.doPost({ postData: { contents: JSON.s
   ok('signed out', post(env, { action: 'lb.config', token: 'nope' }).error === 'signed-out');
   const ping = JSON.parse(env.doGet({ parameter: { action: 'ping' } }).getContent());
   ok('the ping says the Log Book is in the project', ping.logbook === true);
+}
+
+/* ── no agent number: the Branch Portfolio's access tab (21 Oct 2026, Pawan) ── */
+console.log('no agent number');
+{
+  env.__mkSheet('Users', 1, ['Name', 'Email', 'Role', 'Access Code', 'Active'], [
+    ['Dex Driver', 'dex@example.com', 'Driver', 'DRV9', 'Yes'],
+    ['Sal Support', 'sal@example.com', 'Staff', 'SAL5', 'Yes'],
+    ['Old Hand', 'old@example.com', 'Staff', 'OLD1', 'No'],
+  ]);
+  const d = post(env, { action: 'lb.login', agentNo: 'Dex', code: 'drv9' });
+  ok('a first name and the access tab code sign in', d.ok && d.name === 'Dex Driver', JSON.stringify(d).slice(0, 160));
+  ok('a driver gets the Delivery Book alone', d.role === 'Driver' && d.apps.map(a => a.id).join() === 'delivery-book');
+  ok('a driver is refused the Log Book', /not on your access/.test(post(env, { action: 'lb.config', token: d.token }).error || ''));
+  ok('the full name works too', post(env, { action: 'lb.login', agentNo: 'dex driver', code: 'DRV9' }).ok);
+  ok('the e-mail works too', post(env, { action: 'lb.login', agentNo: 'dex@example.com', code: 'DRV9' }).ok);
+  ok('a wrong code is refused', !post(env, { action: 'lb.login', agentNo: 'Dex', code: 'nope' }).ok);
+  const s2 = post(env, { action: 'lb.login', agentNo: 'Sal Support', code: 'SAL5' });
+  ok('staff on that tab get the staff side', s2.ok && s2.apps.some(a => a.id === 'delivery-book') && s2.apps.some(a => a.id === 'logbook'));
+  ok('Active No is refused', !post(env, { action: 'lb.login', agentNo: 'Old Hand', code: 'OLD1' }).ok);
+  env.__mkSheet('Portfolio Users', 1, ['Name', 'Role', 'Agent Number', 'Access Number', 'Active'], [
+    ['Pat Porter', 'Driver', 'PP009', 9, 'Yes'],
+  ]);
+  ok('an "Access Number" column with no e-mail works, by name', post(env, { action: 'lb.login', agentNo: 'Pat', code: '9' }).ok);
+  ok('and by its own number', post(env, { action: 'lb.login', agentNo: 'PP009', code: '9' }).ok);
+  ok('the editor check finds the row and prints no code', (r => /1 row/.test(r) && !/\b9\b/.test(r.replace(/PP009/g, '')))(env.lbCheckSignIn('Pat')));
 }
 
 /* ── where things go ───────────────────────────────────────────────── */
@@ -191,7 +239,8 @@ let agent, staff, mgr;
   mgr = env.lbSession_(env.dbLogin_({ code: 'MGR9' }).token);
   ok('no policy is refused', throws(() => env.lbSubmit_({ entry: entry({ items: [{ document: 'Proof of ID', department: 'GLOC CS RSC - CHAGUANAS' }] }) }, agent), /policy number/));
   ok('"Other" needs a note', throws(() => env.lbSubmit_({ entry: entry({ items: [{ document: 'Other', department: 'MAIL TEAM QUERY' }] }) }, agent), /Other/));
-  ok('no declaration is refused', throws(() => env.lbSubmit_({ entry: entry({ declared: false }) }, agent), /declaration/));
+  ok('no declaration is refused', throws(() => env.lbSubmit_({ entry: entry({ declared: false }) }, agent), /Declaration/));
+  ok('both declarations are needed', throws(() => env.lbSubmit_({ entry: entry({ declared: true, declared1: true, declared2: false }) }, agent), /Declaration 1 and Declaration 2/));
   ok('a department not on the list is refused', throws(() => env.lbSubmit_({ entry: entry({ items: [{ document: 'PMAR', department: 'Nowhere', policy: '1' }] }) }, agent), /department/));
   ok('staff must say whose documents', throws(() => env.lbSubmit_({ entry: entry() }, staff), /agent/));
   const before = env.__mail.length;
@@ -299,7 +348,7 @@ console.log('the chase');
   env.LB_READ_ = null;
   const n0 = env.__mail.length;
   env.lbNudgeAgents_(NOW);
-  ok('an agent is reminded of papers logged and not handed in', env.__mail.length === n0 + 1 && /not yet with the branch/.test(env.__mail[n0].htmlBody));
+  ok('an agent is reminded of papers logged and not handed in', env.__mail.length === n0 + 1 && /One hour to catch today/.test(env.__mail[n0].htmlBody));
 }
 
 /* ── contracts ─────────────────────────────────────────────────────── */
@@ -433,7 +482,7 @@ console.log('three working days on');
   env.lbConfirmRun_(NOW);
   ok('not asked before three working days', env.__mail.length === n0 || new Date(row[tc('Sent At')]) > NOW);
   row[tc('Sent At')] = new Date(NOW.getTime() - 5 * 86400000);   // the Saturday before: 3 working days by Thursday
-  env.LB_READ_ = null; env.LB_AGENTS_READ_ = null;
+  env.LB_READ_ = null; env.LB_AGENTS_READ_ = null; env.LB_PICK_READ_ = null;
   env.lbConfirmRun_(NOW);
   const m = env.__mail[env.__mail.length - 1];
   ok('asked after three working days, to the department', m && m.to === 'rsc@example.com' && /Please confirm receipt/.test(m.subject));
@@ -563,6 +612,73 @@ console.log('handed to');
   ok('named later from My log, and that person is asked to sign', h.ok && h.handedTo === 'Sam Support' && /sent/i.test(h.mail));
   ok('a contract needs no hand-in', env.lbSubmit_({ entry: entry({ type: 'Contract for delivery', handedTo: '', items: [{ policy: '9000000001', portfolioId: 'a02000000000002AAA' }] }) }, agent).ok);
   ok('the agent\'s list shows who has it', env.lbMine_({}, agent).lines.some(l => l.handedTo === 'Sam Support'));
+}
+/* ── the bag ───────────────────────────────────────────────────────── */
+console.log('the bag');
+{
+  env = world();
+  const L = (d, h, m) => new Date(2026, 9, d, h, m || 0);     // local clock = the branch's in the harness
+  ok('11:59 on a Friday catches that day\'s bag', env.lbBagDay_(L(16, 11, 59)) === '2026-10-16');
+  ok('12:00 on a Friday waits for Monday\'s bag', env.lbBagDay_(L(16, 12, 0)) === '2026-10-19');
+  ok('a Saturday goes on Monday\'s bag', env.lbBagDay_(L(17, 9)) === '2026-10-19');
+  ok('3 pm Tuesday goes on Wednesday\'s bag', env.lbBagDay_(L(20, 15)) === '2026-10-21');
+  {
+    const e = world();
+    const r = [e.lbDuty_('2026-10-19'), e.lbDuty_('2026-10-26'), e.lbDuty_('2026-11-02'), e.lbDuty_('2026-11-09'), e.lbDuty_('2026-10-12')];
+    ok('with no tab: Azariah, Elizabeth, Sasha, from 19 Oct', /^Azariah/.test(r[0].name) && /^Elizabeth/.test(r[1].name) && /^Sasha/.test(r[2].name) && /^Azariah/.test(r[3].name) && /^Sasha/.test(r[4].name), r.map(d => d.name));
+    ok('and when each goes home', r[0].leaves === '4:00 pm' && r[1].leaves === '4:00 pm' && r[2].leaves === '2:00 pm');
+    ok('Kamla is never on the bag', ![0,1,2,3,4,5,6].some(k => /kamla/i.test(e.lbDuty_(new Date(Date.UTC(2026, 9, 19 + 7 * k)).toISOString().slice(0, 10)).name)));
+  }
+  env.__mkSheet('Bag Rota', 1, ['Staff', 'Order', 'Leaves At', 'Active'], [
+    ['Sasha Lalla', 1, '2 pm', 'Yes'], ['Kamla Dookran', 2, '3 pm', 'Yes'], ['Azariah Griffith', 3, '4 pm', 'Yes'], ['Elizabeth Lee', 4, '', 'No']]);
+  const d1 = env.lbDuty_('2026-10-19'), d2 = env.lbDuty_('2026-10-26'), d3 = env.lbDuty_('2026-11-02'), d4 = env.lbDuty_('2026-11-09');
+  ok('the bag rotates weekly through the rota in order', d1.name === 'Sasha Lalla' && d2.name === 'Kamla Dookran' && d3.name === 'Azariah Griffith' && d4.name === 'Sasha Lalla', [d1.name, d2.name, d3.name, d4.name]);
+  ok('a person marked No is off the rota', ![d1, d2, d3, d4].some(d => /Elizabeth/.test(d.name)));
+  ok('every day of a week has the same person', env.lbDuty_('2026-10-23').name === d1.name);
+  agent = env.lbSession_(env.lbLogin_({ agentNo: 'A10001', code: '4821' }).token);
+  staff = env.lbSession_(env.dbLogin_({ code: 'SAM1' }).token);
+  const r = env.lbSubmit_({ entry: entry() }, agent);
+  ok('logging returns where the bag stands', r.bag && typeof r.bag.open === 'boolean' && r.bag.cutoff === 12 && r.bag.at === 13);
+  const ids = env.lbQueue_({}, staff).lines.map(l => l.id);
+  env.lbReceive_({ ids, signature: SIG }, staff);
+  ids.forEach(id => setCell(env, id, 'Received At', L(15, 10, 30)));
+  env.LB_READ_ = null;
+  const rows = env.lbRows_();
+  ok('received 10:30, not late at 12:50', !env.lbIsLate_(rows[0], L(15, 12, 50)));
+  ok('missed the bag at 1:00 pm', env.lbIsLate_(rows[0], L(15, 13, 0)));
+  ok('the line says which bag', env.lbBagOf_(rows[0], L(15, 12, 50)).label === 'For the ' + env.Utilities.formatDate(new Date(2026, 9, 15, 12), '', 'EEE d MMM') + ' bag');
+  ids.forEach(id => setCell(env, id, 'Received At', L(15, 12, 20)));
+  env.LB_READ_ = null;
+  ok('received 12:20 is for the next bag, not late that afternoon', !env.lbIsLate_(env.lbRows_()[0], L(15, 16, 0)));
+  // prep at noon
+  env.LB_READ_ = null; env.LB_HOURS_ = null;
+  ids.forEach(id => setCell(env, id, 'Received At', L(15, 9)));
+  env.LB_READ_ = null;
+  const n0 = env.__mail.length;
+  const res = env.lbBagPrep_(L(15, 12, 5));
+  const pm = env.__mail[n0];
+  ok('at noon the person on the bag gets what to prepare', pm && /Today's bag/.test(pm.subject) && /RECORDS MANAGEMENT DEPT/.test(pm.htmlBody), res);
+  env.lbBagPrep_(L(15, 12, 50));
+  ok('once a day', env.__mail.length === n0 + 1);
+  // bag in, bag out
+  const bi = env.lbBag_({ step: 'in' }, staff);
+  ok('bag in is logged', bi.ok && tab(env, 'Bag Log').length === 2 && /Sam/.test(tab(env, 'Bag Log')[1][col(env, 'Bag Log', 'In By')]));
+  const bo = env.lbBag_({ step: 'out', note: 'Sealed' }, staff);
+  ok('bag out is logged on the same day\'s row with what missed it', bo.ok && tab(env, 'Bag Log').length === 2 && tab(env, 'Bag Log')[1][col(env, 'Bag Log', 'Out By')] && /Sealed/.test(tab(env, 'Bag Log')[1][col(env, 'Bag Log', 'Note')]));
+  ok('an agent cannot log the bag', env.lbHandle_({ action: 'lb.bag', step: 'in', token: env.lbLogin_({ agentNo: 'A10001', code: '4821' }).token }).ok === false);
+  // on its bag
+  const sent = { receivedAt: L(15, 9), sentAt: L(15, 12, 40) }, nextDay = { receivedAt: L(15, 9), sentAt: L(16, 12, 30) }, imported = { receivedAt: L(15, 11), sentAt: new Date(2026, 9, 15) };
+  ok('sent 12:40 made its bag; sent next day is one bag late; an old date-only line on the day counts',
+     env.lbOnBag_(sent) === true && env.lbBagsLate_(nextDay) === 1 && env.lbOnBag_(imported) === true);
+  const st = env.lbStats_({ days: 30 }, staff);
+  ok('the insights carry the bag', st.bag && Array.isArray(st.bag.byHour) && 'onBagPct' in st.bag);
+  // the Branch Intelligence wall's transmittal stop: no sign-in, counts and first names only
+  env.LB_READ_ = null;
+  const w = env.lbHandle_({ action: 'lb.wall', fresh: true });
+  const wt = JSON.stringify(w);
+  ok('the wall answers without a sign-in', w.ok && Array.isArray(w.hours) && w.hours.length === 11 && w.series.length === 15 && w.waiting && w.days30 && w.bag);
+  ok('the wall carries no client, policy or note', !/Pretend|9000000001|anika@|Sealed/.test(wt), wt.slice(0, 200));
+  ok('people by first name only', (w.staff || []).concat(w.agents || [], w.waiting.agents || []).every(x => !/\s/.test(x.name)));
 }
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');

@@ -1,9 +1,23 @@
 <title>Your Prospect Board</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
 
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback';font-weight:100 500;src:local('Times New Roman'), local('Times'), local('Liberation Serif'), local('Tinos');size-adjust:105.04%;ascent-override:69.97%;descent-override:25.23%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback';font-weight:600 900;src:local('Times New Roman'), local('Times'), local('Liberation Serif'), local('Tinos');size-adjust:106.03%;ascent-override:69.32%;descent-override:24.99%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback R';font-weight:100 500;src:local('Noto Serif'), local('Droid Serif');size-adjust:88.96%;ascent-override:82.62%;descent-override:29.79%;line-gap-override:0.00%}
+@font-face{font-family:'Newsreader Fallback R';font-weight:600 900;src:local('Noto Serif'), local('Droid Serif');size-adjust:89.99%;ascent-override:81.68%;descent-override:29.45%;line-gap-override:0.00%}
+
+
+
+
   :root{
     --navy:#0B1836; --teal:#0D9488; --teal-lt:#2DD4BF; --gold:#F5B324; --wa:#25D366;
     --paper:#FFFFFF; --ground:#F4F6FA; --sunk:#EEF2F8;
@@ -23,10 +37,10 @@
 
   *{box-sizing:border-box}
   body{margin:0;background:var(--ground);color:var(--ink);
-    font:16px/1.6 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    font:16px/1.6 Inter, 'Inter Fallback', 'Inter Fallback R',-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
     -webkit-font-smoothing:antialiased}
   .wrap{max-width:720px;margin:0 auto;padding:0 16px 60px}
-  h2{font-family:Newsreader,Georgia,serif;font-size:26px;font-weight:600;letter-spacing:-.015em;
+  h2{font-family:Newsreader, 'Newsreader Fallback', 'Newsreader Fallback R',Georgia,serif;font-size:26px;font-weight:600;letter-spacing:-.015em;
     margin:0 0 4px;line-height:1.22}
   .eyebrow{font-size:11px;font-weight:800;letter-spacing:.17em;text-transform:uppercase;
     color:var(--teal);margin:0 0 8px}
@@ -46,7 +60,7 @@
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:18px}
   .kpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);
     border-radius:11px;padding:11px 8px;text-align:center}
-  .kpi .v{font-family:Newsreader,Georgia,serif;font-size:25px;font-weight:600;line-height:1}
+  .kpi .v{font-family:Newsreader, 'Newsreader Fallback', 'Newsreader Fallback R',Georgia,serif;font-size:25px;font-weight:600;line-height:1}
   .kpi .k{font-size:10.5px;font-weight:700;letter-spacing:.04em;
     color:rgba(255,255,255,.6);margin-top:5px}
   .kpi.hot .v{color:var(--gold)}
@@ -60,7 +74,7 @@
   .fld{margin-bottom:13px}
   .fld label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-2);margin-bottom:5px}
   .fld input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:12px 13px;
-    font:16px/1.5 Inter,sans-serif;background:var(--sunk);color:var(--ink)}
+    font:16px/1.5 Inter, 'Inter Fallback', 'Inter Fallback R',sans-serif;background:var(--sunk);color:var(--ink)}
   .fld input:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal);
     background:var(--paper)}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:11px}
@@ -224,6 +238,16 @@
         </div>
       </div>
     </div>
+
+    <!-- A third film, and deliberately not in the grid above. Those two are
+         about the fact find and one of them goes to clients. This one is about
+         how prospecting itself works now, it is for the branch, and putting it
+         beside them invites somebody to send the wrong one. -->
+    <p class="lede" style="margin-top:22px">
+      New to this? <a href="film.html" style="color:var(--teal);font-weight:600">Watch the
+      70-second briefing</a> &mdash; your link, the board, and the one prospect worth
+      ringing. For the branch, not for clients.
+    </p>
   </section>
 
   <section>
@@ -252,7 +276,7 @@
         </label>
         <textarea id="waMsg" rows="9"
           style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:12px 13px;
-                 font:15px/1.55 Inter,sans-serif;background:var(--sunk);color:var(--ink);
+                 font:15px/1.55 Inter, 'Inter Fallback', 'Inter Fallback R',sans-serif;background:var(--sunk);color:var(--ink);
                  resize:vertical"></textarea>
         <p style="font-size:12.5px;color:var(--muted);margin:6px 2px 0;line-height:1.5">
           Edit it if you want. The link is added at the end when you send.</p>
@@ -360,6 +384,14 @@
         'Open my board</button>' +
         '<p style="color:#697489;font-size:13.5px;margin-top:16px">Bookmark the page once ' +
         'it opens &mdash; the link carries your code, so it works from any device.</p>' +
+        /* The briefing belongs here too. Somebody who lands without a code is
+           exactly the person who has not been shown any of this yet, and the
+           link to it further down the board is on the half of the page they
+           cannot see. */
+        '<p style="color:#697489;font-size:13.5px;margin-top:14px;padding-top:14px;' +
+        'border-top:1px solid #E4E9F0">New to this? ' +
+        '<a href="film.html" style="color:#0D9488;font-weight:600">Watch the ' +
+        '70-second briefing</a> first &mdash; it explains what the board is for.</p>' +
         '</div>';
       document.getElementById('pbGo').onclick = function () {
         var c = (document.getElementById('pbCode').value || '').trim().toUpperCase();

@@ -27,6 +27,10 @@ const row = (date, sid, name, am, pm, actioned) => {
 };
 
 const env = makeEnv();
+// These cases were written on Sasha's old eight o'clock start (her hours are
+// 7am from 17 October 2026); the fixture keeps it so the arithmetic still reads.
+env.SCHEDULE.sasha = Object.assign({}, env.SCHEDULE.sasha, { hours: '8am – 4pm' });
+
 let NOW = new Date('2026-08-19T08:25:00');
 const realDate = env.Date;
 env.Date = new Proxy(realDate, { construct(t, a) { return a.length ? new realDate(...a) : new realDate(NOW.getTime()); },

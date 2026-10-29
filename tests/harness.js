@@ -6,7 +6,9 @@ function makeEnv(opts = {}) {
   const cacheStub = { get: k => (k in cacheMap ? cacheMap[k] : null),
                       put: (k, v) => { cacheMap[k] = String(v); },
                       remove: k => { delete cacheMap[k]; },
-                      removeAll: ks => ks.forEach(k => delete cacheMap[k]) };
+                      removeAll: ks => ks.forEach(k => delete cacheMap[k]),
+                      putAll: o => Object.keys(o).forEach(k => { cacheMap[k] = String(o[k]); }),
+                      getAll: ks => { const r = {}; ks.forEach(k => { if (k in cacheMap) r[k] = cacheMap[k]; }); return r; } };
   const calls = { getValues: 0, getValue: 0, setValue: 0, setValues: 0, getLastRow: 0,
                   getLastColumn: 0, appendRow: 0, deleteRow: 0, mail: 0 };
   const sheets = {};
@@ -25,7 +27,10 @@ function makeEnv(opts = {}) {
       getLastRow: () => { calls.getLastRow++; return grid.length; },
       getLastColumn: () => { calls.getLastColumn++;
         return grid.length ? Math.max(...grid.map(r => r.length)) : 0; },
-      setFrozenRows: () => sh,
+      setFrozenRows: () => sh, setColumnWidth: () => sh, setColumnWidths: () => sh,
+      autoResizeColumn: () => sh, autoResizeColumns: () => sh, hideColumns: () => sh,
+      setTabColor: () => sh, clearFormats: () => sh, getMaxColumns: () => 60,
+      getMaxRows: () => Math.max(grid.length, 1000), insertColumns: () => sh,
       appendRow: r => { calls.appendRow++; grid.push(r.slice()); return sh; },
       deleteRow: n => { calls.deleteRow++; grid.splice(n - 1, 1); return sh; },
       getRange: (r, c, nr = 1, nc = 1) => ({
@@ -57,7 +62,16 @@ function makeEnv(opts = {}) {
             for (let j = 0; j < vals[i].length; j++) grid[r - 1 + i][c - 1 + j] = vals[i][j];
           }
         },
-        setNumberFormat: () => {}, setFontWeight: () => {}, setBackground: () => {}
+        /* Chainable, because real formatting calls are written as one
+           chain (setFontWeight(..).setBackground(..).setFontColor(..))
+           and a stub returning undefined breaks on the second link. */
+        setNumberFormat() { return this; }, setFontWeight() { return this; },
+        setBackground() { return this; }, setFontColor() { return this; },
+        setFontSize() { return this; }, setWrap() { return this; },
+        setHorizontalAlignment() { return this; }, setVerticalAlignment() { return this; },
+        setBorder() { return this; }, setFontStyle() { return this; },
+        setDataValidation() { return this; }, clearDataValidations() { return this; },
+        setNote() { return this; }, merge() { return this; }
       })
     };
     sheets[name] = sh;
@@ -99,13 +113,17 @@ function makeEnv(opts = {}) {
                     deleteProperty: k => { delete store[k]; return api; },
                     getProperties: () => Object.assign({}, store) };
       return { getScriptProperties: () => api }; })(),
-    Session: { getEffectiveUser: () => ({ getEmail: () => 'ricky@example.com' }) },
+    Session: { getEffectiveUser: () => ({ getEmail: () => 'ricky@example.com' }),
+               getScriptTimeZone: () => 'America/Port_of_Spain' },
     MailApp: { sendEmail: () => { calls.mail++; if (opts.mailThrows) throw new Error('Service invoked too many times'); } },
     Utilities: {
       formatDate: (d, tz, f) => {
         const p = n => String(n).padStart(2, '0');
         if (f === 'HH:mm') return p(d.getHours()) + ':' + p(d.getMinutes());
+        if (f === 'h a') { const h = d.getHours(); return ((h % 12) || 12) + ' ' + (h < 12 ? 'AM' : 'PM'); }
         if (f === 'yyyy-MM-dd') return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+        // The day of the week, 1 Monday .. 7 Sunday, as housekeepingTick_ reads it.
+        if (f === 'u') return String(d.getDay() || 7);
         // Every date a person reads is built in UTC by prettyDate_/shortDate_,
         // so an e-mail's own subject line stayed an ISO timestamp in tests and
         // nothing could assert on it.
@@ -115,6 +133,7 @@ function makeEnv(opts = {}) {
         if (f === 'EEEE d MMMM yyyy') return DAY[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
         return d.toISOString();
       },
+      parseDate: (s, tz, f) => new Date(String(s).replace(' ', 'T') + (String(s).length <= 16 ? ':00' : '')),
       getUuid: () => 'uuid-' + Math.random().toString(36).slice(2),
       base64Encode: s => Buffer.from(String(s)).toString('base64'),
       base64EncodeWebSafe: b => Buffer.from(Array.isArray(b) ? b : String(b))

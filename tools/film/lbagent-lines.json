@@ -1,22 +1,28 @@
 {
- "note": "The Log Book, for agents (17 October 2026). Every name and number on screen is made up.",
+ "note": "The Log Book, for agents (re-cut 17 October 2026: the 1 pm bag, the real agents and staff by name, clients made up).",
  "role": "agent",
  "voice": "en-US-AndrewNeural",
- "rate": "-12%",
+ "rate": "-4%",
  "scenes": [
   {
    "visual": "title",
    "eyebrow": "For agents",
    "headline": "The Log Book, <em>for agents</em>",
-   "sub": "Log it, hand it in, watch it go",
+   "sub": "Log it, in by noon, catch the bag",
    "extra": 0.6,
-   "line": "This is the new Log Book, as an agent sees it. Log your documents, hand them in, and watch them go."
+   "line": "This is the new Log Book, as an agent sees it. Log your documents, hand them in by noon, and catch the bag."
   },
   {
    "visual": "lbsignin",
    "eyebrow": "Signing in",
    "headline": "Your number, <em>your password</em>",
    "line": "Open Ricky Rampersad branch dot com, slash log book. Sign in with your agent number, and the password you use for the fact find."
+  },
+  {
+   "visual": "lbbag",
+   "eyebrow": "The bag",
+   "headline": "In by <em>twelve noon</em>, down at <em>one</em>",
+   "line": "There is one bag a day. It goes down at the one o'clock bag exchange. Papers in the branch's hands by twelve noon go on it. After twelve, they wait for the next day's bag."
   },
   {
    "visual": "lbdoc",
@@ -39,28 +45,40 @@
   {
    "visual": "lbconfirm",
    "eyebrow": "Log it",
-   "headline": "A reference, <em>at once</em>",
-   "line": "Confirm the papers are complete and signed, and press Log it. You get a reference. Hand the papers to the branch the same day."
+   "headline": "It tells you <em>if it catches the bag</em>",
+   "line": "Confirm the papers are complete and signed, and press Log it. You get a reference, and the Log Book tells you if it will catch today's bag."
+  },
+  {
+   "visual": "lbhistory",
+   "eyebrow": "Why it matters",
+   "headline": "The rush comes <em>just too late</em>",
+   "line": "Here is why it matters. In the old book, fifty seven in every hundred papers came in after twelve, and waited a day. More came in between twelve and one than in any hour of the morning, just after the bag closes."
+  },
+  {
+   "visual": "lbnudge",
+   "eyebrow": "Eleven o'clock",
+   "headline": "One hour <em>to catch it</em>",
+   "line": "At eleven, if you logged papers and have not handed them in, the Log Book e-mails you. One hour to catch today's bag."
   },
   {
    "visual": "lbmine",
    "eyebrow": "My log",
    "headline": "Every step, <em>on your phone</em>",
-   "line": "My log shows every step. Logged. Received by the branch. Sent on a transmittal. And confirmed by the department."
+   "line": "My log shows every step. Logged. Received by the branch. On the bag. And confirmed by the department."
   },
   {
    "visual": "counts",
    "eyebrow": "The rule",
-   "headline": "The <em>same day</em>",
+   "headline": "In by <em>twelve</em>",
    "rows": [
     {
-     "at": "four",
-     "b": "In by four, out the same day",
+     "at": "twelve",
+     "b": "In by 12 noon, on the 1 pm bag",
      "i": "Stamped when you log, when the branch receives, when it goes"
     },
     {
      "at": "why",
-     "b": "Late? The branch is asked why",
+     "b": "Missed the bag? The branch is asked why",
      "i": "And you are copied on the e-mail"
     },
     {
@@ -69,24 +87,24 @@
      "i": "Chased at day fifteen and day eighteen"
     }
    ],
-   "line": "The aim is the same day. Papers in by four o'clock go out the same day. If not, the branch is asked why, and you are copied. A contract you collect to deliver has twenty days."
+   "line": "The rule is simple. In by twelve, on the one o'clock bag. If it misses the bag, the branch is asked why, and you are copied. A contract you collect to deliver has twenty days."
   },
   {
    "visual": "lbteam",
    "eyebrow": "Unit managers",
    "headline": "Your <em>whole team</em>",
-   "line": "Unit managers see their whole team, under My team. Every agent's papers, or one agent at a time. Nobody sees another unit."
+   "line": "Unit managers, like Akaash, see their whole team under My team. Every agent's papers, or one agent at a time. Nobody sees another unit."
   },
   {
    "visual": "close",
    "eyebrow": "The Log Book",
    "words3": [
     "Log it.",
-    "Hand it in.",
-    "Watch it go."
+    "In by noon.",
+    "Catch the bag."
    ],
    "url": "rickyrampersadbranch.com/logbook",
-   "line": "Log it. Hand it in. Watch it go.",
+   "line": "Log it. In by noon. Catch the bag.",
    "extra": 1.8
   }
  ]

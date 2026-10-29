@@ -12,12 +12,24 @@
 <meta property="og:description" content="A free CSEC study hub for branch families. Daily practice, timed tests and progress you can actually see, Form 1 to Form 5."/>
 <meta property="og:url" content="https://rickyrampersadbranch.com/csec/start.html"/>
 <meta property="og:image" content="https://rickyrampersadbranch.com/og-image.png"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="assets/csec.css"/>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+
+
+
+
   .tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px}
   .tabs button{padding:10px 18px;border-radius:11px;border:1px solid var(--line);
-    background:rgba(0,0,0,.22);color:var(--muted);font-family:'Montserrat',sans-serif;
+    background:rgba(0,0,0,.22);color:var(--muted);font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;
     font-weight:700;font-size:.87rem;cursor:pointer;transition:all .15s ease}
   .tabs button:hover{color:var(--text);border-color:var(--teal)}
   .tabs button.on{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f;border-color:transparent}
@@ -25,12 +37,12 @@
   .stepbig:last-child{border-bottom:none}
   .stepbig .n{flex:none;width:36px;height:36px;border-radius:11px;display:grid;place-items:center;
     background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f;
-    font-family:'Montserrat',sans-serif;font-weight:800;font-size:.95rem}
-  .stepbig h4{font-family:'Montserrat',sans-serif;font-size:1rem;margin-bottom:4px}
+    font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:.95rem}
+  .stepbig h4{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:1rem;margin-bottom:4px}
   .stepbig p{font-size:.88rem;color:var(--muted);line-height:1.65}
   details.faq{border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.18);
     padding:15px 17px;margin-bottom:9px}
-  details.faq summary{cursor:pointer;list-style:none;font-family:'Montserrat',sans-serif;
+  details.faq summary{cursor:pointer;list-style:none;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;
     font-weight:700;font-size:.93rem;display:flex;justify-content:space-between;gap:12px}
   details.faq summary::-webkit-details-marker{display:none}
   details.faq p{font-size:.88rem;color:var(--muted);line-height:1.72;margin-top:11px}

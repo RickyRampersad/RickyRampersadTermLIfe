@@ -131,6 +131,27 @@ function sfTest() {
 
 /* ============================ helpers ============================ */
 
+/**
+ * An agent's name as the branch says it.
+ *
+ * Salesforce writes the agent several ways on these records — "A00427 - Neil
+ * Ramnanan", "NEIL RAMNANAN", "Narissa (Agent) Mohammed" — and a board that
+ * groups by the raw string shows one agent three times. The number in front,
+ * a bracketed label and the capitals all come off; the name itself is never
+ * altered, because matching an agent to their sign-in is done on the name.
+ */
+function sfAgentName_(v) {
+  var s = String(v || '').trim();
+  if (!s) return '';
+  s = s.replace(/^[A-Z]?0*\d{3,}\s*[-–]\s*/i, '');   // "A00427 - " / "10024 — "
+  s = s.replace(/\s*\([^)]*\)\s*/g, ' ');            // "(Agent)"
+  s = s.replace(/\s+/g, ' ').trim();
+  if (!/[a-z]/.test(s)) {                            // all capitals → title case
+    s = s.toLowerCase().replace(/\b[a-z]/g, function (c) { return c.toUpperCase(); });
+  }
+  return s;
+}
+
 function sfDate_(v) {
   if (!v) return '';
   var d = new Date(v);
@@ -175,7 +196,8 @@ function syncPropertyFromSalesforce() {
     recs = sfQuery_(
       "SELECT Account__c, Contact__c, Email__c, Policy__c, Carrier__c, Risk_Location__c, Occupancy__c, " +
       "Cover1__c, Stock__c, General_Contents__c, Plant_Equipment_Machinery__c, Electronic_Equipment__c, " +
-      "Total_Value__c, Total_Premiums_Gov_t_Inclusive__c, Renewal_Date__c, From__c, To__c " +
+      "Total_Value__c, Total_Premiums_Gov_t_Inclusive__c, Renewal_Date__c, From__c, To__c, " +
+      "Agent__c, Agent_Email__c " +
       "FROM Risk_Details__c WHERE Policy__c != null AND Renewal_Date__c >= LAST_N_YEARS:6 " +
       "ORDER BY Renewal_Date__c ASC");
   } catch (err) { ui.alert('❌ ' + err.message); return; }
@@ -229,6 +251,8 @@ function syncPropertyFromSalesforce() {
     put(target, 'occupancy', r.Occupancy__c || '');
     put(target, 'policy #', r.Policy__c || '');
     put(target, 'carrier', r.Carrier__c || 'Guardian General');
+    put(target, 'agent', sfAgentName_(r.Agent__c));
+    put(target, 'agent email', String(r.Agent_Email__c || '').trim().toLowerCase());
     put(target, 'building cover', r.Cover1__c || '');
     put(target, 'stock', r.Stock__c || '');
     put(target, 'general contents', r.General_Contents__c || '');
@@ -288,6 +312,10 @@ function syncRiskDetailsFromSalesforce() {
       "SELECT Account__c, Email__c, Vehicle__c, Vehicle_Make__c, Model__c, Year_of_Manufacture__c, " +
       "Chassis__c, Engine__c, Motor_Vehicle_Coverage_Type__c, Cover_Type__c, Cover1__c, NCD__c, " +
       "Windscreen__c, Depreciation__c, Policy__c, Carrier__c, From__c, To__c, Vehicle_Status__c, " +
+      // Who looks after this risk. Without it there is no agent's view of the
+      // renewals at all — an agent cannot be shown "your clients" when nothing
+      // on the row says whose client it is.
+      "Agent__c, Agent_Email__c, " +
       "Total_Premiums_Gov_t_Inclusive__c, Address__c " +
       "FROM Risk_Details__c WHERE Vehicle__c != null AND From__c >= LAST_N_YEARS:8 ORDER BY From__c ASC");
   } catch (err) { ui.alert('❌ ' + err.message); return; }
@@ -352,6 +380,8 @@ function syncRiskDetailsFromSalesforce() {
       'from': sfDate_(r.From__c),
       'to': sfDate_(r.To__c),
       'vehicle status': String(r.Vehicle_Status__c || ''),
+      'agent': sfAgentName_(r.Agent__c),
+      'agent email': String(r.Agent_Email__c || '').trim().toLowerCase(),
       'premium (tt$)': r.Total_Premiums_Gov_t_Inclusive__c || '',
       'vehicle first insured': sfDate_(first[reg]),
       'years insured': yrs,

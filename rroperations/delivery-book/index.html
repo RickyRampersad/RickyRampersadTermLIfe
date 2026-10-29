@@ -6,9 +6,25 @@
 <title>Delivery Book | Ricky Rampersad Branch</title>
 <meta name="robots" content="noindex"/>
 <link rel="icon" type="image/png" href="/orphan-transition/board-mark.png"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'DM Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.31%;ascent-override:95.10%;descent-override:29.72%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:102.04%;ascent-override:97.22%;descent-override:30.38%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.79%;ascent-override:94.67%;descent-override:29.58%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.76%;ascent-override:91.21%;descent-override:28.50%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+
+
+
+
   :root{
     --bg:#070F26; --bg2:#0d2137; --card:#163553; --card2:#1b3d61; --field:rgba(0,0,0,.28);
     --gold:#6FA8FF; --gold2:#1D5BC4; --text:#edf4fb; --muted:#a9bbcf;
@@ -16,11 +32,11 @@
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-text-size-adjust:100%}
-  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+  body{font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
     background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(111,168,255,.07),transparent);font-size:15px;line-height:1.45}
   button,input,select,textarea{font:inherit;color:inherit}
   .wrap{max-width:760px;margin:0 auto;padding:0 16px 96px}
-  h1,h2,h3{font-family:'Montserrat',sans-serif}
+  h1,h2,h3{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif}
   .mark{width:38px;height:38px;border-radius:10px;overflow:hidden;background:#13408F;display:grid;place-items:center;flex:none}
   .mark img{width:100%;height:100%;display:block}
 
@@ -32,13 +48,13 @@
   .lock-card h1{font-weight:800;font-size:20px;color:var(--gold);margin-bottom:6px}
   .lock-card p{font-size:13px;color:var(--muted);margin-bottom:18px}
   .lock-card input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--field);
-    text-align:center;letter-spacing:3px;font-family:'Montserrat';font-weight:700;font-size:16px;text-transform:uppercase;margin-bottom:12px}
+    text-align:center;letter-spacing:3px;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';font-weight:700;font-size:16px;text-transform:uppercase;margin-bottom:12px}
 
   /* top */
   header{position:sticky;top:0;z-index:20;background:rgba(7,19,31,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
   .top{max-width:760px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
   .top h1{font-size:16px;font-weight:800;color:var(--gold);line-height:1.1}
-  .top small{display:block;color:var(--muted);font-size:12px;font-family:'DM Sans'}
+  .top small{display:block;color:var(--muted);font-size:12px;font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R'}
   .top .sp{flex:1}
   .pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;letter-spacing:.4px}
   .pill.test{background:rgba(251,191,36,.15);color:var(--warn);border:1px solid rgba(251,191,36,.4)}
@@ -64,7 +80,7 @@
   .row3{display:grid;grid-template-columns:2fr 1fr;gap:10px}
   @media (max-width:420px){.row{grid-template-columns:1fr}}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 18px;border-radius:12px;border:0;
-    cursor:pointer;font-family:'Montserrat';font-weight:800;font-size:14px;min-height:46px}
+    cursor:pointer;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';font-weight:800;font-size:14px;min-height:46px}
   .btn.gold{background:linear-gradient(135deg,#2A6DE0,#13408F);color:#fff}
   .btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text)}
   .btn.block{width:100%}
@@ -93,7 +109,7 @@
   .pol.on{border-color:rgba(111,168,255,.6);background:rgba(111,168,255,.07)}
   .pol .head{display:flex;align-items:center;gap:12px;cursor:pointer}
   .pol input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);flex:none}
-  .pol .num{font-family:'Montserrat';font-weight:700;font-size:14px}
+  .pol .num{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';font-weight:700;font-size:14px}
   .pol .sub{font-size:12px;color:var(--muted)}
   .pol .more{display:none;margin-top:10px}
   .pol.on .more{display:grid}
@@ -116,7 +132,7 @@
 
   /* result */
   .done{text-align:center}
-  .done .ref{font-family:'Montserrat';font-size:24px;font-weight:800;color:var(--gold);margin:6px 0 12px;letter-spacing:1px}
+  .done .ref{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R';font-size:24px;font-weight:800;color:var(--gold);margin:6px 0 12px;letter-spacing:1px}
   .facts{text-align:left;font-size:14px;margin:12px 0}
   .facts div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
   .facts div span:first-child{color:var(--muted)}
@@ -136,7 +152,7 @@
   .entry a{color:var(--teal);font-size:12px;font-weight:700;text-decoration:none}
   .entry .cmt{font-size:13px;font-style:italic;color:var(--muted);margin-top:4px}
   #map{height:min(70vh,560px);border-radius:16px;margin-top:14px;border:1px solid var(--line)}
-  .leaflet-popup-content{font-family:'DM Sans';font-size:13px;color:#13202e}
+  .leaflet-popup-content{font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R';font-size:13px;color:#13202e}
   .empty{color:var(--muted);text-align:center;padding:24px 8px;font-size:14px}
   [hidden]{display:none!important}
 </style>
@@ -146,7 +162,12 @@
 <!-- Signing in happens once, on the RR Operations launcher; this page uses that sign-in. -->
 <div id="lock"><div class="lock-card"><div class="mark"><img src="/orphan-transition/board-mark.png" alt=""></div>
   <h1>Delivery Book</h1><p id="lockMsg">Opening…</p>
-  <a class="btn gold block" href="/rroperations/?next=delivery-book" style="text-decoration:none">Sign in</a></div></div>
+  <form id="codeForm" hidden autocomplete="off" style="margin-bottom:12px">
+    <input id="code" type="password" placeholder="STAFF ACCESS CODE" aria-label="Staff access code" required>
+    <button class="btn gold block" type="submit" id="codeBtn" style="margin-top:10px">Open the Delivery Book</button>
+    <p id="codeErr" role="alert" style="color:#ff8a80;margin:8px 0 0"></p>
+  </form>
+  <a class="btn gold block" id="lockGo" href="/rroperations/?next=delivery-book" style="text-decoration:none">Sign in</a></div></div>
 
 <header>
   <div class="top">
@@ -154,6 +175,7 @@
     <div><h1>Delivery Book</h1><small id="me">—</small></div>
     <div class="sp"></div>
     <span class="pill test" id="modePill" hidden>TEST</span>
+    <a class="btn ghost" href="/deliverybook-film/" style="padding:8px 12px;min-height:36px;font-size:12px;text-decoration:none">&#9654; Film</a>
     <a class="btn ghost" href="/rroperations/" style="padding:8px 12px;min-height:36px;font-size:12px;text-decoration:none">All apps</a>
   </div>
   <nav class="tabs" role="tablist">
@@ -273,7 +295,22 @@
   </section>
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" async></script>
+<script>
+/* 20 October 2026: "unable to open the delivery book" (the page stayed on "Opening…"). Whatever stops the page from
+   starting is shown on the card, with the ways in, instead of a page that never moves. */
+(function () {
+  function stuck(why) {
+    var m = document.getElementById('lockMsg'), lk = document.getElementById('lock');
+    if (!m || !lk || lk.hidden || !/Opening/.test(m.textContent)) return;
+    m.innerHTML = 'The Delivery Book could not start' + (why ? ' (' + String(why).replace(/[<>&]/g, '') + ')' : '') +
+      '. <a href="/rroperations/?next=delivery-book" style="color:#6FA8FF">Sign in again</a> or ' +
+      '<a href="javascript:location.reload()" style="color:#6FA8FF">reload</a>.';
+  }
+  window.addEventListener('error', function (e) { stuck(e && e.message); });
+  setTimeout(function () { stuck('it took too long'); }, 8000);
+})();
+</script>
 <script src="/rroperations/ops-config.js"></script>
 <script>
 (function () {
@@ -318,6 +355,20 @@
     fillSelect($('rel'), S.rels, '', 'Choose…');
     $('lock').hidden = true;
     resetLog();
+    /* A sign-in by agent number (the branch app) carries no lists, so the document list (Cheque, Policy Contract …)
+       came up empty for staff (20 October 2026). The backend's public ping has them: fill from it. */
+    if (!S.docTypes.length || !S.rels.length || !S.methods.length) {
+      fetch(API_URL + (API_URL.indexOf('?') < 0 ? '?' : '&') + 'action=ping').then(function (r) { return r.json(); }).then(function (j) {
+        if (!j || !j.ok) return;
+        S.docTypes = S.docTypes.length ? S.docTypes : (j.docTypes || []);
+        S.rels = S.rels.length ? S.rels : (j.relationships || []);
+        S.methods = S.methods.length ? S.methods : (j.methods || []);
+        s.docTypes = S.docTypes; s.relationships = S.rels; s.methods = S.methods;
+        store.set(SESSION_KEY, JSON.stringify(s));
+        fillSelect($('method'), S.methods, 'In person');
+        fillSelect($('rel'), S.rels, '', 'Choose…');
+      }).catch(function () {});
+    }
   }
   function fillSelect(sel, list, def, blank) {
     sel.innerHTML = (blank ? '<option value="">' + esc(blank) + '</option>' : '') +
@@ -716,7 +767,21 @@
   try { saved = JSON.parse(store.get(SESSION_KEY) || 'null'); } catch (e) {}
   var allowed = saved && (saved.apps || []).some(function (a) { return a.id === 'delivery-book' && a.status === 'live'; });
   if (saved && saved.token && allowed) applySession(saved);
-  else if (saved && saved.token) $('lockMsg').textContent = 'The Delivery Book is not on your access. Ask the branch to add it.';
+  else if (saved && saved.token) {
+    /* Staff signed in by agent number before LogBook.gs carries the Delivery Book (20 October 2026): their access
+       code opens it here, without leaving the page. */
+    $('lockMsg').textContent = 'Your agent-number sign-in does not open the Delivery Book yet. Enter your staff access code to record a cheque or contract.';
+    $('codeForm').hidden = false; $('lockGo').textContent = 'Back to the branch app'; $('lockGo').href = '/rroperations/';
+    $('codeForm').addEventListener('submit', function (e) {
+      e.preventDefault(); $('codeErr').textContent = ''; $('codeBtn').disabled = true;
+      api('login', { code: $('code').value.trim() }).then(function (s2) {
+        var ok = (s2.apps || []).some(function (a) { return a.id === 'delivery-book' && a.status === 'live'; });
+        if (!ok) throw new Error('That code does not include the Delivery Book. Ask the branch to add it.');
+        store.set(SESSION_KEY, JSON.stringify(s2)); $('code').value = ''; applySession(s2);
+      }).catch(function (err) { $('codeErr').textContent = err.message; })
+        .then(function () { $('codeBtn').disabled = false; });
+    });
+  }
   else location.replace('/rroperations/?next=delivery-book');
 })();
 </script>

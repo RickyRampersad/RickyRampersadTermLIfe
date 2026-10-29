@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Your call | Ricky Rampersad Branch</title>
+<!-- "When should your agent call you?": the page every tap in the introduction opens (16 October 2026: "the client checks
+     when can the agent call and the preferred method in the morning, afternoon, and set a time … it directly goes to the
+     agent and copy the branch manager and the sales support team, as well as the agent's manager"). The tap arrives with
+     its choice made (w= the part of the day, h= the way to talk, x= the day and time); the client confirms it here with
+     one press, because a mail scanner that opens every link must never choose for them, and a scripted browser sends
+     nothing at all. The choice is one Client Responses row (Response informed, Page /your-policy/agent?q=when_…&h=…,
+     Referrer "intro <agent>: <the day and time>"), which Transition.gs sends to the agent within five minutes, copied to
+     the branch, and shows on the board. No automatic receipt goes for it: the agent's call is the answer. -->
+<style>
+  :root{--blue:#13408F;--blue2:#2D5BB9;--blue3:#5B8DEF;--sky:#BFD3F7;--ink:#14284B;--body:#3E4C66;--dim:#6E7A91;--line:#DCE5F3;--paper:#F4F6FA;--card:#fff;--okbg:#eaf6ef;--ok:#1E7A4A;--pick:#EEF3FC;--tint:#F6F9FE;--head:#F2F6FD}
+  /* the board's blues and its blue shield (16 October 2026: "i do not like the yello inside the logo nor the black") */
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--body);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  header{background:var(--head);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px}
+  .mark{width:34px;height:34px;border-radius:9px;overflow:hidden;background:#13408F;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  .brand{color:var(--ink);font-weight:800;font-size:14.5px;line-height:1.25}
+  .brand i{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:var(--dim)}
+  main{width:min(560px,100% - 32px);margin:18px auto 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;margin:0 0 14px}
+  .ask{border-top:4px solid var(--blue3)}
+  h1{margin:0 0 6px;color:var(--ink);font-size:21px;line-height:1.3}
+  h2{margin:16px 0 8px;color:var(--ink);font-size:15.5px}
+  h2 small{font-weight:500;color:var(--dim);font-size:13px}
+  p{margin:0 0 10px}
+  .grid{display:grid;gap:8px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .opt{font:inherit;border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:10px 6px;text-align:center;cursor:pointer;color:var(--ink);font-weight:800;font-size:15px;min-height:52px;line-height:1.25}
+  .opt small{display:block;font-weight:600;font-size:12px;color:var(--dim)}
+  .opt[aria-pressed="true"]{border-color:var(--blue2);background:var(--pick);box-shadow:inset 0 0 0 1px var(--blue2);color:var(--blue)}
+  .opt:focus-visible{outline:2px solid var(--blue3);outline-offset:2px}
+  .days{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
+  .days .opt{flex:none;min-width:74px;font-size:14px}
+  .time{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  input[type=time]{font:inherit;font-size:16px;color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;min-height:46px;background:#fff}
+  input[type=time]:focus{outline:2px solid var(--blue3);outline-offset:1px}
+  .clear{font:inherit;font-size:14px;color:var(--blue2);background:none;border:0;cursor:pointer;font-weight:700;padding:8px 4px}
+  .sum{background:var(--tint);border-radius:11px;padding:12px 14px;margin:16px 0 0;font-size:15px;color:var(--ink)}
+  .sum b{color:var(--ink)}
+  .send{display:block;width:100%;margin:12px 0 4px;font:inherit;font-size:16.5px;font-weight:800;color:#ffffff;background:var(--blue2);border:0;border-radius:12px;padding:14px 16px;cursor:pointer;min-height:52px}
+  .send:disabled{opacity:.7;cursor:default}
+  .out{margin:8px 0 0;font-size:14.5px;font-weight:700;color:#8a3324;min-height:0}
+  .small{margin:10px 0 0;font-size:13px;color:var(--dim)}
+  .tick{width:46px;height:46px;border-radius:50%;background:var(--okbg);color:var(--ok);display:grid;place-items:center;font-size:26px;font-weight:800;margin:0 0 8px}
+  .done{border-top:4px solid var(--blue3)}
+  .cal{display:inline-block;font:inherit;font-size:15px;font-weight:800;color:var(--blue2);background:#fff;border:1.5px solid var(--sky);border-radius:11px;padding:10px 14px;cursor:pointer;text-decoration:none;min-height:46px;margin:4px 0 0}
+  .help{background:var(--tint);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .help b{color:var(--blue)}
+  .help a.btn{display:inline-block;background:var(--blue2);color:#fff;border-radius:9px;padding:10px 16px;font-weight:700;text-decoration:none;margin:6px 0 4px}
+  .links{margin:4px 2px 0;font-size:15px;line-height:1.9}
+  .links a{color:var(--blue2);font-weight:700;text-decoration:none}
+  .note{background:var(--pick);border-left:4px solid var(--blue2);padding:8px 12px;border-radius:6px;font-size:14px}
+  footer{text-align:center;color:var(--dim);font-size:12px;padding:0 16px 24px}
+  [hidden]{display:none!important}
+  @media (max-width:380px){.g3{grid-template-columns:1fr 1fr 1fr}.opt{font-size:14px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="mark"><img src="/orphan-transition/board-mark.png" width="34" height="34" alt=""></div>
+  <div class="brand">Ricky Rampersad Branch<i>Guardian Life of the Caribbean</i></div>
+</header>
+<main>
+  <div class="card ask" id="reply" hidden>
+    <h1 id="replyH">Tell your agent</h1>
+    <p id="replyP"></p>
+    <p class="note" id="replyPrev" hidden>This is a preview: nothing is sent.</p>
+    <button id="replySend" class="send" type="button">Send</button>
+    <p class="out" id="replyOut"></p>
+  </div>
+  <div class="card done" id="replyDone" hidden>
+    <div class="tick" aria-hidden="true">&#10003;</div>
+    <h1 id="replyDoneH">Thank you.</h1>
+    <p id="replyDoneP"></p>
+  </div>
+  <div class="card ask" id="ask">
+    <h1 id="title">When should your agent call you?</h1>
+    <p id="lead">Choose what suits you and press send. Your agent sees it at once, and so does our branch team.</p>
+    <p class="note" id="preview" hidden>This is a preview: nothing you choose here is sent.</p>
+
+    <h2>What part of the day?</h2>
+    <div class="grid g3" id="slots" role="group" aria-label="Part of the day">
+      <button class="opt" type="button" data-v="morning" aria-pressed="false">Morning<small>8 to 12</small></button>
+      <button class="opt" type="button" data-v="afternoon" aria-pressed="false">Afternoon<small>12 to 4</small></button>
+      <button class="opt" type="button" data-v="evening" aria-pressed="false">Evening<small>4 to 7</small></button>
+    </div>
+
+    <h2>Which day? <small>optional</small></h2>
+    <div class="days" id="days" role="group" aria-label="Day"></div>
+
+    <h2>A set time? <small>optional</small></h2>
+    <div class="time"><label for="at" class="small" style="margin:0">At</label><input type="time" id="at" step="900"><button class="clear" type="button" id="atClear" hidden>Clear</button></div>
+
+    <h2>How would you like to talk?</h2>
+    <div class="grid g2" id="hows" role="group" aria-label="How to talk">
+      <button class="opt" type="button" data-v="phone" aria-pressed="false">Phone call</button>
+      <button class="opt" type="button" data-v="whatsapp" aria-pressed="false">WhatsApp</button>
+      <button class="opt" type="button" data-v="video" aria-pressed="false">Video call</button>
+      <button class="opt" type="button" data-v="person" aria-pressed="false">Meet in person</button>
+    </div>
+
+    <div class="sum" id="sum" aria-live="polite"></div>
+    <button id="send" class="send" type="button">Send</button>
+    <p class="out" id="out"></p>
+    <p class="small">Only your agent and our branch team see this. It is kept with your policy file, and nothing about your policy changes.</p>
+  </div>
+
+  <div class="card done" id="thanks" hidden>
+    <div class="tick" aria-hidden="true">&#10003;</div>
+    <h1 id="thanksH">Done. Your agent has your choice.</h1>
+    <p id="thanksP"></p>
+    <a class="cal" id="cal" href="#" download="call.ics" hidden>Add it to my calendar</a>
+    <p class="small" id="changeP">Changed your mind? <a href="#" id="again" style="color:var(--blue2);font-weight:700">Choose again</a>: the newest choice is the one your agent works to.</p>
+  </div>
+
+  <div class="help">
+    <b>Help at any hour, day or night</b>
+    <p style="margin:4px 0 0;font-size:14.5px">Can't wait for the call? Query Pal, our 24-hour query service, takes your question at any time and routes it straight to the right department.</p>
+    <a class="btn" href="https://www.querymypolicy.com">Send us a question, 24/7</a>
+    <p class="links" style="font-size:14px">Branch: <a href="tel:+18682266461">(868) 226-6461</a>, <a href="tel:+18682266464">226-6464</a>, <a href="tel:+18682266465">226-6465</a> &middot; Guardian Direct: <a href="tel:+18682266944">(868) 226-MYGG</a></p>
+  </div>
+</main>
+<footer>Ricky Rampersad Branch &middot; Guardian Life of the Caribbean.</footer>
+<noscript><p style="text-align:center">Reply to our e-mail with the time that suits you, and your agent will call.</p></noscript>
+
+<script>
+var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+var P = new URLSearchParams(location.search);
+var T = (P.get('t') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);           /* opaque, from the e-mail: never a policy number */
+var S = (P.get('s') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 2);
+var A = (P.get('a') || '').toLowerCase().replace(/[^a-z]/g, '').slice(0, 60);     /* the agent, as the backend keys a name */
+var N = (P.get('n') || '').replace(/[^A-Za-z' -]/g, '').trim().slice(0, 30) || 'your agent';
+/* Mail security (Avanan at Guardian, and others) opens links in a headless browser to check them. It must never choose for
+   the client, so nothing is sent without the client's own press, and a scripted browser sends nothing at all. */
+var HUMAN = !navigator.webdriver;
+var PREVIEW = !T || T === 'PREVIEW' || T === 'TEST';
+var SLOTS = { morning: ['Morning', '8 to 12'], afternoon: ['Afternoon', '12 to 4'], evening: ['Evening', '4 to 7'] };
+var HOWS = { phone: 'a phone call', whatsapp: 'WhatsApp', video: 'a video call', person: 'meeting in person' };
+var $ = function (id) { return document.getElementById(id); };
+var pick = { w: SLOTS[P.get('w')] ? P.get('w') : '', h: HOWS[P.get('h')] ? P.get('h') : 'phone', d: '', at: '' };
+var sent = false;
+/* a reply to one of our answers in the introduction (16 October 2026): k= the answer, v= ok ("That helps") or call ("Talk to me
+   about this"). One press sends it, as with the time; "call" keeps the time picker underneath so they can say when. */
+var K = (P.get('k') || '').replace(/[^a-z0-9_]/gi, '').slice(0, 40), V = /^(ok|call)$/.test(P.get('v') || '') ? P.get('v') : '';
+if (K && V) {
+  $('reply').hidden = false;
+  if (V === 'ok') { $('ask').hidden = true; $('replyH').textContent = 'Tell ' + N + ' that helped'; $('replyP').textContent = 'Press send and ' + N + ' knows that answer covered it. Our branch team sees it too.'; }
+  else { $('replyH').textContent = 'Ask ' + N + ' to call you about this'; $('replyP').textContent = 'Press send and ' + N + ' will take it up with you. Below, you can say when suits you.'; }
+  $('replySend').textContent = 'Send to ' + N;
+  if (PREVIEW) $('replyPrev').hidden = false;
+  var rsent = false;
+  $('replySend').addEventListener('click', function () {
+    if (rsent) return;
+    if (PREVIEW) { $('replyOut').textContent = 'This is a preview, so nothing was sent.'; return; }
+    if (!HUMAN) return;
+    rsent = true; $('replySend').disabled = true; $('replySend').textContent = 'Sending…';
+    var body = { action: 'resp', r: 'informed', t: T, s: S, p: '/your-policy/agent?q=reply_' + V + '_' + K, ref: ('intro ' + A + ': reply ' + V).slice(0, 120) };
+    var ok = function () {
+      $('reply').hidden = true; $('replyDone').hidden = false;
+      $('replyDoneH').textContent = 'Thank you. ' + N + ' has your reply.';
+      $('replyDoneP').textContent = V === 'ok' ? 'If anything else comes up, reply to our e-mail or use Query Pal below, at any hour.' : N + ' will call you about it. Choose below when suits you best.';
+    };
+    fetch(SVC, { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok) return ok(); throw new Error('not filed'); })
+      .catch(function () {
+        var q = Object.keys(body).map(function (k) { return k + '=' + encodeURIComponent(body[k]); }).join('&');
+        fetch(SVC + '?' + q + '&z=' + Date.now(), { credentials: 'omit' }).then(function (r) { return r.json(); })
+          .then(function (j) { if (j && j.ok) ok(); else throw new Error('not filed'); })
+          .catch(function () { rsent = false; $('replySend').disabled = false; $('replySend').textContent = 'Send to ' + N; $('replyOut').textContent = 'That did not reach us. Try again, or call the branch on (868) 226-6461.'; });
+      });
+  });
+}
+
+$('title').textContent = 'When should ' + N + ' call you?';
+$('lead').textContent = 'Choose what suits you and press send. ' + N + ' sees it at once, and so does our branch team.';
+$('send').textContent = 'Send to ' + N;
+if (PREVIEW) $('preview').hidden = false;
+
+/* the next eight days, Sundays left out: "Any day" first */
+(function () {
+  var box = $('days'), mk = function (v, top, sub) {
+    var b = document.createElement('button');
+    b.className = 'opt'; b.type = 'button'; b.dataset.v = v; b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = top + (sub ? '<small>' + sub + '</small>' : '');
+    box.appendChild(b);
+  };
+  mk('', 'Any day', 'soonest');
+  var d = new Date(), n = 0, days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], mons = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  while (n < 8) {
+    if (d.getDay() !== 0) {
+      var iso = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+      mk(iso, n === 0 && d.toDateString() === new Date().toDateString() ? 'Today' : days[d.getDay()], d.getDate() + ' ' + mons[d.getMonth()]);
+      n++;
+    }
+    d.setDate(d.getDate() + 1);
+  }
+})();
+
+function press(group, v) {
+  Array.prototype.forEach.call($(group).querySelectorAll('.opt'), function (b) { b.setAttribute('aria-pressed', b.dataset.v === v ? 'true' : 'false'); });
+}
+function dayWords(iso) {
+  if (!iso) return '';
+  var p = iso.split('-'), d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+function timeWords(t) {
+  if (!t) return '';
+  var h = Number(t.split(':')[0]), m = t.split(':')[1];
+  return (h % 12 || 12) + (m === '00' ? '' : ':' + m) + ' ' + (h < 12 ? 'am' : 'pm');
+}
+/* the part of the day a set time falls in, so the two never disagree */
+function slotOf(t) { var h = Number(String(t).split(':')[0]); return h < 12 ? 'morning' : h < 16 ? 'afternoon' : 'evening'; }
+function summary() {
+  var parts = [];
+  var when = pick.at ? timeWords(pick.at) : pick.w ? 'in the ' + SLOTS[pick.w][0].toLowerCase() + ' (' + SLOTS[pick.w][1] + ')' : '';
+  var day = pick.d ? dayWords(pick.d) : '';
+  if (day) parts.push(day);
+  if (when) parts.push(when);
+  return (parts.length ? parts.join(', ') : 'at a time to suit you') + ', by ' + HOWS[pick.h];
+}
+function draw() {
+  press('slots', pick.w); press('hows', pick.h); press('days', pick.d);
+  $('at').value = pick.at; $('atClear').hidden = !pick.at;
+  $('sum').innerHTML = '<b>' + N + ' will call you</b> ' + summary().replace(/</g, '&lt;') + '.';
+  $('out').textContent = '';
+}
+$('slots').addEventListener('click', function (e) { var b = e.target.closest('.opt'); if (!b) return; pick.w = b.dataset.v; if (pick.at && slotOf(pick.at) !== pick.w) pick.at = ''; draw(); });
+$('hows').addEventListener('click', function (e) { var b = e.target.closest('.opt'); if (!b) return; pick.h = b.dataset.v; draw(); });
+$('days').addEventListener('click', function (e) { var b = e.target.closest('.opt'); if (!b) return; pick.d = b.dataset.v; draw(); });
+$('at').addEventListener('change', function () { pick.at = this.value; if (pick.at) pick.w = slotOf(pick.at); draw(); });
+$('atClear').addEventListener('click', function () { pick.at = ''; draw(); });
+if (P.get('x') === '1') setTimeout(function () { try { $('days').scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} }, 300);
+draw();
+
+/* a calendar entry for the call, when there is a day: the set time, else the start of the part of the day */
+function ics() {
+  if (!pick.d) return '';
+  var start = pick.at || { morning: '09:00', afternoon: '13:00', evening: '16:00' }[pick.w || 'morning'];
+  var dt = pick.d.replace(/-/g, '') + 'T' + start.replace(':', '') + '00';
+  var endH = ('0' + (Number(start.split(':')[0]) + (pick.at ? 0 : 3))).slice(-2) + ':' + (pick.at ? ('0' + (Number(start.split(':')[1]) + 30)).slice(-2).replace('60', '59') : start.split(':')[1]);
+  var de = pick.d.replace(/-/g, '') + 'T' + endH.replace(':', '') + '00';
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Ricky Rampersad Branch//Your call//EN', 'BEGIN:VEVENT',
+    'UID:' + (T || 'call') + '-' + Date.now() + '@rickyrampersadbranch.com', 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, ''),
+    'DTSTART:' + dt, 'DTEND:' + de, 'SUMMARY:Call from ' + N + ', Ricky Rampersad Branch',
+    'DESCRIPTION:' + N + ' calls you ' + summary() + '. Branch: (868) 226-6461. 24/7: www.querymypolicy.com', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+}
+function done() {
+  $('ask').hidden = true; $('thanks').hidden = false;
+  $('thanksH').textContent = 'Done. ' + N + ' has your choice.';
+  $('thanksP').textContent = 'Expect ' + N + "'s call " + summary() + '. Our branch team has it too, so if anything changes, we know.';
+  var c = ics();
+  if (c) { var a = $('cal'); a.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(c); a.hidden = false; }
+  window.scrollTo(0, 0);
+}
+$('again').addEventListener('click', function (e) { e.preventDefault(); sent = false; $('send').disabled = false; $('send').textContent = 'Send to ' + N; $('thanks').hidden = true; $('ask').hidden = false; });
+
+$('send').addEventListener('click', function () {
+  if (sent) return;
+  if (!pick.w && !pick.at) { $('out').textContent = 'Choose the part of the day first.'; return; }
+  if (PREVIEW) { $('out').textContent = 'This is a preview, so nothing was sent.'; return; }
+  if (!HUMAN) return;
+  sent = true; $('send').disabled = true; $('send').textContent = 'Sending…';
+  var w = pick.w || slotOf(pick.at);
+  var words = [dayWords(pick.d), timeWords(pick.at)].filter(Boolean).join(', ') || 'any day';
+  var body = { action: 'resp', r: 'informed', t: T, s: S, p: '/your-policy/agent?q=when_' + w + '&h=' + pick.h, ref: ('intro ' + A + ': ' + words).slice(0, 120) };
+  /* text/plain, so Apps Script never gets a CORS preflight it cannot answer; a GET of the same answer if the POST fails */
+  fetch(SVC, { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+    .then(function (r) { return r.json(); })
+    .then(function (j) { if (j && j.ok) return done(); throw new Error('not filed'); })
+    .catch(function () {
+      var q = Object.keys(body).map(function (k) { return k + '=' + encodeURIComponent(body[k]); }).join('&');
+      fetch(SVC + '?' + q + '&z=' + Date.now(), { credentials: 'omit' }).then(function (r) { return r.json(); })
+        .then(function (j) { if (j && j.ok) done(); else throw new Error('not filed'); })
+        .catch(function () {
+          sent = false; $('send').disabled = false; $('send').textContent = 'Send to ' + N;
+          $('out').textContent = 'That did not reach us. Try again, or call the branch on (868) 226-6461.';
+        });
+    });
+});
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

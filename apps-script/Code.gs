@@ -255,7 +255,10 @@ function col_(map, name) {
 function ensureRenewalCols_() {
   var sh = renewalsSheet_();
   var map = headerMap_(sh);
-  ['Reminders Sent', 'Renewed Date', 'Assigned To'].forEach(function (h) {
+  // 'Agent' and 'Agent Email' come from Salesforce's own Agent__c on the risk
+  // (SalesforceSync). They are what lets an agent be shown their own clients
+  // and nobody else's; a blank one falls to the branch, never to everybody.
+  ['Reminders Sent', 'Renewed Date', 'Assigned To', 'Agent', 'Agent Email'].forEach(function (h) {
     if (col_(map, h) < 0) {
       sh.getRange(1, sh.getLastColumn() + 1).setValue(h);
       map = headerMap_(sh);
@@ -321,8 +324,20 @@ function rowObj_(r, map, rowIndex) {
     remindersSent: String(r[col_(map, 'reminders sent')] || ''),
     renewedDate: fmtDate_(r[col_(map, 'renewed date')]),
     assignedTo: String(r[col_(map, 'assigned to')] || ''),
+    agent:      String(r[col_(map, 'agent')] || ''),
+    agentEmail: String(r[col_(map, 'agent email')] || '').trim().toLowerCase(),
     token: String(r[col_(map, 'token')] || ''),
   };
+}
+
+/** Write one cell on a motor renewal row by header name.
+ *  Property.gs has had setPropCell_ since it was written; the motor side set
+ *  cells inline in four places, each re-reading the header map. */
+function setRenewalCell_(rowIndex, header, value) {
+  var sh = renewalsSheet_();
+  var c = col_(ensureRenewalCols_(), String(header).toLowerCase());
+  if (c < 0) throw new Error('No "' + header + '" column on the renewals sheet.');
+  sh.getRange(Number(rowIndex), c + 1).setValue(value);
 }
 
 function allRenewals_() {
@@ -499,53 +514,71 @@ function logActivity_(token, client, type, by, details) {
 
 function doGet(e) {
   var p = (e && e.parameter) || {};
+  if (p.board && typeof boardPage_ === 'function') return boardPage_(p);     // the renewal board (?board=KEY)
   if (p.staff) return staffPage_(p);
   if (p.p && typeof propertyPage_ === 'function') return propertyPage_(p);   // property links (?p=TOKEN)
-  if (p.find) return findPage_();                                            // client sign-in (?find=1)
+  if (p.find) return findPage_(p);                                           // client sign-in (?find=1[&e=EMAIL])
   return clientPage_(p);
 }
 
 /** Client sign-in: enter the email on file → their personal link(s) are
  *  emailed over. Links are never shown on screen, and the reply is the same
  *  whether the email matches or not — nothing about who is a client leaks. */
-function findPage_() {
+function findPage_(p) {
+  // ?e= prefills the box (the motor quote sends signed-in clients here); it is
+  // only ever written back as the input's value, escaped, never anywhere else.
+  var pre = String((p && p.e) || '').trim();
+  if (!/^[^\s@<>"]+@[^\s@<>"']+\.[^\s@<>"']+$/.test(pre) || pre.length > 200) pre = '';
+  var mark = 'https://rickyrampersadbranch.com/orphan-transition/board-mark.png';
+  var ic = function (d) { return '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
+  var I_MAIL = '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/>';
+  var I_LOCK = '<rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>';
+  var I_SEND = '<path d="M21 3.5L10.5 14M21 3.5l-6.5 17-4-6.5-6.5-4z"/>';
+  var I_SHIELD = '<path d="M12 3l8 3.2v5.6c0 4.6-3.4 8.2-8 9.2-4.6-1-8-4.6-8-9.2V6.2z"/><path d="M8.6 12.2l2.4 2.4 4.6-5"/>';
+  var I_RENEW = '<path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/>';
+  var I_DOC = '<path d="M14 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 2.5V8h5.5"/><path d="M8.5 13h7M8.5 17h5"/>';
+  var I_CHECK = '<circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.8 2.8L16.2 9.5"/>';
+  var I_PHONE = '<path d="M5 3.5h3.2l1.6 4.2-2.1 1.4a11 11 0 0 0 5.2 5.2l1.4-2.1 4.2 1.6V17a2.5 2.5 0 0 1-2.7 2.5A16 16 0 0 1 2.5 6.2 2.5 2.5 0 0 1 5 3.5z"/>';
+  var row = function (i, b, s) { return '<div class="rr-item"><span class="ic">' + ic(i) + '</span><span class="tx"><b>' + b + '</b><span>' + s + '</span></span></div>'; };
   var html =
-    '<!DOCTYPE html><html><head><meta charset="utf-8"><base target="_top">' +
+    '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><base target="_top">' +
     '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-    '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">' +
-    '<style>*{box-sizing:border-box;margin:0;padding:0}' +
-    'body{font:15px/1.6 \'DM Sans\',sans-serif;color:#edf4fb;background:linear-gradient(180deg,#07131f,#0d2137 60%,#07131f);min-height:100vh;display:grid;place-items:center;padding:20px}' +
-    '.card{background:#163553;border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:30px 28px;max-width:430px;width:100%}' +
-    '.brand{display:flex;gap:12px;align-items:center;margin-bottom:18px}' +
-    '.brand b{font:800 15px/1.2 \'Montserrat\';color:#efc24b}' +
-    '.brand span{display:block;font-size:11.5px;color:#a9bbcf;font-weight:400}' +
-    'h1{font:800 20px \'Montserrat\';margin-bottom:8px}' +
-    'p{font-size:13.5px;color:#a9bbcf;margin-bottom:14px}' +
-    'input{width:100%;background:#07131f;border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:12px 14px;font:14px \'DM Sans\';color:#edf4fb;outline:none;margin-bottom:10px}' +
-    'input:focus{border-color:#00CFEA}' +
-    'button{width:100%;background:linear-gradient(135deg,#00CFEA,#00A8C5);color:#04202b;font:800 14.5px \'Montserrat\';border:none;border-radius:12px;padding:14px;cursor:pointer}' +
-    'button:disabled{opacity:.5}' +
-    '.ok{display:none;background:rgba(53,208,127,.12);border:1px solid rgba(53,208,127,.4);color:#35d07f;border-radius:12px;padding:13px;margin-top:12px;font-weight:600;font-size:13.5px}' +
-    '.err{display:none;background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.4);color:#ff7a7a;border-radius:12px;padding:13px;margin-top:12px;font-size:13.5px}' +
-    '.note{font-size:11.5px;color:#7a90a8;margin-top:14px;line-height:1.6}</style></head><body><div class="card">' +
-    '<div class="brand"><svg width="42" height="42" viewBox="0 0 88 88"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/></linearGradient></defs><path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#g)"/><path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-    '<div><b>Ricky Rampersad Branch</b><span>Client renewal access &middot; Guardian Group</span></div></div>' +
-    '<h1>Track your renewal</h1>' +
-    '<p>Enter the email address on your policy and we’ll send your <b style="color:#edf4fb">personal secure link</b> — review your cover, send instructions, and follow every step from instruction to documents in hand.</p>' +
-    '<input type="email" id="em" placeholder="you@email.com" autocomplete="email">' +
-    '<button id="go">Email me my secure link</button>' +
-    '<div class="ok" id="ok">✓ If that email is on a policy with us, your personal link is on its way — check your inbox (and spam, the first time).</div>' +
-    '<div class="err" id="err"></div>' +
-    '<div class="note">We never show policy details on this page — your link travels only to the email on file. Need help? Call (868) 678-5921.</div>' +
-    '</div><script>' +
-    'var go=document.getElementById("go"),em=document.getElementById("em");' +
+    '<link rel="icon" href="' + mark + '">' + rrTheme_() +
+    '<style>.rr-main{max-width:560px}.fp-steps{margin:4px 0 18px}.okbox{display:none;text-align:center;padding:16px 6px 4px}' +
+    '.okbox b{display:block;color:var(--ink);font-size:1.08rem;margin:0 0 4px}.okbox p{font-size:.92rem;color:var(--body)}' +
+    '.errbox{display:none}.fp-note{display:flex;gap:9px;align-items:flex-start;font-size:.84rem;color:var(--dim);margin:16px 0 0}' +
+    '.fp-note svg.i{color:var(--blue);margin-top:2px}.fp-note a{font-weight:700}' +
+    '@media (min-width:700px){.rr-main{margin-top:40px}}</style></head><body class="rr">' +
+    '<header class="rr-top"><span class="mark"><img src="' + mark + '" alt=""></span>' +
+    '<span class="brand">Ricky Rampersad Branch<i>Client renewal access · Guardian Group</i></span></header>' +
+    '<main class="rr-main"><section class="rr-card">' +
+    '<div class="rr-band"><div class="eyebrow">Your renewal, any time</div><h1>Track your renewal</h1>' +
+    '<p>Enter the e-mail address on your policy and we’ll send your <b>personal secure link</b>: review your cover, send instructions, and follow every step from instruction to documents in hand.</p>' +
+    '<div class="stats"><span><b>1</b>e-mail address</span><span><b>No</b>password needed</span></div></div>' +
+    '<ol class="rr-steps fp-steps" aria-label="How it works"><span class="fill" style="--w:0%"></span>' +
+    '<li class="on" data-n="1" aria-current="step"><span>Your e-mail</span></li><li data-n="2"><span>Your link arrives</span></li><li data-n="3"><span>Review and instruct</span></li><li data-n="4"><span>Track to documents</span></li></ol>' +
+    '<div id="form"><label class="rr-f"><b>Your e-mail</b>' +
+    '<input class="rr-in" type="email" id="em" placeholder="you@email.com" autocomplete="email" inputmode="email"' + (pre ? ' value="' + esc_(pre) + '"' : '') + '></label>' +
+    '<button type="button" class="rr-btn main wide" id="go">' + ic(I_SEND) + ' <span id="goT">Email me my secure link</span></button></div>' +
+    '<div class="okbox" id="ok" role="status"><div class="rr-done"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>' +
+    '<b>Check your inbox</b><p>If that email is on a policy with us, your personal link is on its way — check your inbox (and spam, the first time).</p></div>' +
+    '<div class="rr-err errbox" id="err" role="alert"></div>' +
+    '<div class="rr-sec" style="margin-top:22px"><span class="ic">' + ic(I_SHIELD) + '</span><div><b>On your page</b><small>One link for each policy, sent only to the e-mail on file</small></div></div>' +
+    row(I_DOC, 'Review your cover', 'Your benefits, your renewal date and your vehicle on record') +
+    row(I_RENEW, 'Send your instruction', 'Renew as it is, with changes, or ask us to call you') +
+    row(I_CHECK, 'Follow every step', 'From your instruction to your documents in hand') +
+    '<p class="fp-note">' + ic(I_LOCK) + '<span>We never show policy details on this page: your link travels only to the email on file. Need help? Call <a href="tel:8686785921">(868) 678-5921</a>.</span></p>' +
+    '</section></main><script>' +
+    'var go=document.getElementById("go"),goT=document.getElementById("goT"),em=document.getElementById("em"),st=document.querySelectorAll(".fp-steps li"),fl=document.querySelector(".fp-steps .fill");' +
+    'function at(n){for(var k=0;k<st.length;k++){st[k].className=k<n?"done":k===n?"on":"";if(k===n)st[k].setAttribute("aria-current","step");else st[k].removeAttribute("aria-current");}fl.style.setProperty("--w",Math.round(n/(st.length-1)*82)+"%");}' +
     'function send(){var v=em.value.trim();var err=document.getElementById("err");err.style.display="none";' +
-    'if(v.indexOf("@")<1){err.textContent="Please enter your email address.";err.style.display="block";return;}' +
-    'go.disabled=true;go.textContent="Sending…";' +
-    'google.script.run.withSuccessHandler(function(){go.style.display="none";document.getElementById("ok").style.display="block";})' +
-    '.withFailureHandler(function(e){go.disabled=false;go.textContent="Email me my secure link";err.textContent="Something went wrong — please try again.";err.style.display="block";})' +
+    'if(v.indexOf("@")<1){err.textContent="Please enter your email address.";err.style.display="block";em.focus();return;}' +
+    'go.disabled=true;goT.textContent="Sending…";' +
+    'google.script.run.withSuccessHandler(function(){document.getElementById("form").style.display="none";document.getElementById("ok").style.display="block";at(1);})' +
+    '.withFailureHandler(function(e){go.disabled=false;goT.textContent="Email me my secure link";err.textContent="Something went wrong — please try again.";err.style.display="block";})' +
     '.sendMyLink(v);}' +
     'go.onclick=send;em.addEventListener("keydown",function(e){if(e.key==="Enter")send();});' +
+    'if(em.value)go.focus();' +
     '</script></body></html>';
   return HtmlService.createHtmlOutput(html).setTitle('Track your renewal — Ricky Rampersad Branch')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
@@ -585,6 +618,14 @@ function sendMyLink(email) {
     logActivity_('', email, 'link-request', 'client', 'no match — nothing sent');
   }
   return { ok: true };
+}
+
+/** The renewal experience's one theme (the motor quote's ocean blue, 26 October
+ *  2026), folded into each page by <?!= rrTheme_() ?>. RenewalTheme.html is built
+ *  from renewal/theme.css and renewal/theme.js by tools/renewal/build-theme.py. */
+function rrTheme_() {
+  try { return HtmlService.createHtmlOutputFromFile('RenewalTheme').getContent(); }
+  catch (e) { return '<!-- RenewalTheme.html is not in this project: paste it from the repository -->'; }
 }
 
 function clientPage_(p) {

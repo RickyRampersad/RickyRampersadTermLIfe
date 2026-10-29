@@ -32,6 +32,10 @@ property and never in the code, since the `.gs` files are public.
      in `doGet` and one in `doPost`, that hand every `gcm.*` request to
      `GroupClients.gs`. **Put the branch code back into `TEAM_CODE`**: the
      repository copy ships it empty.
+   Since 24 October 2026 the project has a fifth file, **`GroupBilling.gs`** (Billings Management): paste it
+   beside `GroupClients.gs`. Without it the billing routes answer "GroupBilling.gs is not in the project yet" and
+   everything else works as before.
+
 2. **Check the Script properties** (Project Settings → Script properties):
    - `SF_KEY`, `SF_SECRET`, `SF_LOGIN_URL`: the Salesforce sign-in, copied
      from the RRB KPI Tracker's own Script properties. The org has retired the
@@ -193,6 +197,109 @@ nobody sends a group a letter before they have read how and passed.
   the result, each competency, the critical questions missed, strengths, what to work on, the manual read, the
   minutes, every answer as marked, and the manager's marks and note. The result is e-mailed to the person and
   the branch manager, never to a shared inbox. Staff may retake it; every attempt is kept.
+
+## Billings Management (24 October 2026)
+
+The monthly bills, checked against Salesforce before they reach a group: `GroupBilling.gs` in the project,
+`billread.js` and `billing-ui.js` beside the staff page. Nothing to import: the four tabs (`Group Bills`,
+`Group Bill Lines`, `Group Changes`, `Group Claims`) are made in the Group Client Management sheet the first time
+something is written.
+
+- **Where it is.** On the staff page, every account row has a **Billing** button and a chip (lines uploaded, to fix,
+  reconciled, sent); a group's page has **Billing review** at the top. The Team dashboard's "Billing to do" filter
+  shows the groups with nothing uploaded this month, a fix open, or a line not yet sent.
+- **The review, line by line** (health, then life, then the pension and life list bill): *Upload → Verify → Fix →
+  Reconcile → Send*. The PDF is read on the staff member's own device (pdf.js from cdnjs) and only the figures and
+  member lines go to the backend. The list bill is a spreadsheet, or is built from the policies carrying the group's
+  list bill in Salesforce.
+- **What is checked**: the month's billing record and its amount (one press sets Salesforce to the bill); the
+  arrears the bill shows against the payments keyed; every member on the bill against the group's member policies
+  (on the bill and not in Salesforce; live in Salesforce and not on the bill; a premium that differs); what changed
+  since last month's bill; the back-charges and life statement adjustments against the tasks on file; the life rates
+  and the 31-day rule; the list bill against the policies tagged with it; payments keyed long after they were made.
+  Each finding says whose it is: Salesforce, Head Office, the group, or us.
+- **Reconciled** is a person's tick: the Salesforce record is marked Reconciled and the billing task gets the note.
+  A finding marked *fix* must be fixed or resolved with a note first (the branch manager may override).
+- **Send** goes from support@ with the PDFs attached and a cover note (amounts, due date, what changed, their page).
+  **Test mode until `gblGoLive`** is run from the editor: a send goes to the staff member and the branch, marked
+  TEST. `gblStop` goes back to test mode. Logged on Group Sends as `bill sent` / `bill test`, never as the weekly
+  letter.
+- **The claims experience**: upload the claims summary spreadsheet on the health line. It is aggregated by month and
+  division in the browser (no patient's name reaches the sheet) and read against the premiums in Salesforce by plan
+  year, a plan year starting where the monthly premium steps up. Staff see loss ratios; the group's page shows what
+  the plan paid for its people by year, never a ratio.
+- **The group's page** gains a Billing section with one tab a line: the latest bill we sent (figures and counts, no
+  member's name), twelve months of billed and received from Salesforce, and a form to tell us about a payment, a
+  joiner, a leaver, a dependent or a question. Each goes on Group Changes, onto the billing task's Chatter and to the
+  account owner by e-mail; a joiner or leaver opens a Salesforce task for the owner.
+- **The billing day: the 26th at 10:00**, or the next working day when the 26th is a Saturday, a Sunday or a public
+  holiday (Monday 26 October, Thursday 26 November, Monday 28 December 2026; the `GCM_BILL_DAY` Script property moves the
+  26th). Trinidad and Tobago's holidays are in `GBL_DAY.HOLIDAYS` for 2026 and 2027: **add the next year's moveable ones
+  each January**, and put any other day the branch is closed in the `GCM_BILL_HOLIDAYS` Script property (yyyy-MM-dd,
+  comma separated). On the 25th a staff member uploads each line, verifies it, reconciles it and presses **Approve** with
+  the PDF attached; the PDF waits in the Drive folder (`GCM_FORMS_FOLDER`, subfolder "Bills to send"), so **set that
+  property before the first approval**: without it the button is disabled. At 13:00 on the 25th
+  (the last working day before it when the 25th is not one) the branch manager gets the report of who has worked each
+  billed group, line by line, and what is left, the staff copied (`gblBillReportTest` sends him a TEST copy now). At 10:00
+  on the billing day every approved bill goes from support@ with its PDF, copied to sales support, and the PDF moves to
+  "Sent bills". A bill approved after that goes at 10:00 the next working day. **Send now** works only on an approved
+  bill; after the 10:00 cut-off, Approve and Send now each ask why it was not done by then. The reason goes on the bill
+  and its Chatter, closes that day's GROUP BILL NOT SENT task once the bill reaches the group, and comes to the branch
+  manager by e-mail. At 10:30 on the billing day the group day
+  asks each staff member whose billed group (a group with a Salesforce billing record for the month) had no bill why,
+  opens a `GROUP BILL NOT SENT` task (Lic/Staffing/SA/HR) in their name, and the branch manager's summary carries "Group
+  bills: <day>". In test mode (before `gblGoLive`) the run sends each approved bill to its approver and the branch marked
+  TEST and marks the row `tested`, and nobody is asked why; approve again once live. Editor: `gblDayRehearse` (every
+  approved bill as a TEST to its approver, nothing marked), `gblDayNow` (send what is due now), `gblDayTest` (the whole
+  billing day rehearsed to the branch manager).
+  After a paste, open `<exec address>?action=gcm.ping`: `bills.next` should read the 26th (or the working day after it)
+  and `bills.report` the 25th at 13:00. No `report` means the GroupBilling.gs pasted is an older one.
+- **Guardian's own forms, filled exactly.** Three forms, on the group's page ("Enrol, terminate or change a member")
+  and on the staff billing review (Record a change, or Form on a register row): **EB0010** (2024/3, the Group and
+  Individual Policy Change Form: terminations, dependents, beneficiaries, address, plan, claim account), **GIO001**
+  (the Group Health and Life Application Form, an enrolment) and **EASI Collect** (the account health claims are paid
+  to). The member is searched by name and Section A fills from Salesforce (what is not on record is listed, never
+  guessed); an enrolment is typed section by section. The form shown and sent is Guardian's PDF itself with the values
+  in its boxes. It goes from support@ to EBCustomercare@myguardiangroup.com, copied to sales support and support@, and
+  is logged on Group Changes; a task is opened for the account owner. **Test mode is the bills' own**: until
+  `gblGoLive`, a form goes to the staff member (or the account owner) and the branch, marked TEST.
+- **The blank forms.** EB0010 and GIO001 are on the site under `groupclientmanagement/forms/`. For a new edition from
+  Guardian, or for the EASI form (no blank yet: `EASI-Collect.pdf`), make a Drive folder, put the PDF in it under the
+  same file name, and set its ID in the **`GCM_FORMS_FOLDER`** Script property: a file there wins over the site's copy,
+  and every sent form is kept in a "Sent forms" subfolder with its link on the register. The first run after the
+  property is set asks the script owner to authorise Drive (re-run the function from the editor once).
+- **The owner's task is chased on Chatter every three working days** inside the 10:30 group day, until EB Customer
+  Care replies at support@ naming the member or the task is closed; the fifth follow-up goes to the branch manager.
+  `gblFormChasePreview` (editor) shows what would be posted; `gblFormChaseNow` runs it.
+- **The Billings door (25 October 2026).** The billing is its own page, `groupclientmanagement/billing.html`: the
+  staff page's **Billing** buttons open it, with the same sign-in, and the weekly letters stay where they were. One
+  group and one month at a time, in eight steps with a count on each: upload the bills (and the claims experience);
+  what the checks found, with the AI's read of the month first; **answer the questions** (each open finding as a
+  question with taps, plus the AI's own; an answer goes onto the billing task's Chatter in the staff member's name and
+  settles the finding or opens what comes next: a task, a payment, the termination form); **last month's tasks** (every
+  open billing task read against this month's bills, with an update written for you to post, the owner told, and the
+  task closed when it is settled); terminations and changes (Record a change, the forms); **the people** (everyone on
+  the bills matched to Salesforce: turning 65 to convert, dependants reaching the dependant age (`GCM_DEP_AGE`),
+  retirements, tiers and records to put right, with a letter to the member or a task); **the statement of account**
+  (this month, the earlier invoices Salesforce still shows unpaid, the total to bring the account up to date; it goes
+  inline in the bill e-mail and as a PDF beside the bills); approve and send. The group's page is in three tabs, *Your
+  service items*, *Your billing* and *Your people*, the statement first under the billing; a link with `?tab=billing`
+  or `?tab=people` opens on that tab.
+- **Your people** (25 October 2026): the group picks *Pending applications*, *Active members*, *Came off this year* or
+  *Everyone*, from Salesforce and the latest bills uploaded. Each person shows what is open on them with us, who has
+  it and where it stands, and a box: a message goes onto that item's task in Salesforce with its owner mentioned and
+  e-mailed (sales support copied); with nothing open, it opens a task for the account owner. Staff answer on the
+  task's Chatter and share a note for the group, which then shows on the group's page. Nothing new to set.
+  Nothing new to set: the member letters follow the bills' test mode (`gblGoLive`), and the AI steps use
+  `ANTHROPIC_API_KEY`.
+- **Paste both files**: `GroupBilling.gs` and `GroupClients.gs` (the two Your people routes, `gcm.clientPeople` and `gcm.clientPost`, the door's four routes, `gcm.billAsk`, `gcm.billTaskUpdates`, `gcm.billPeople` and `gcm.billStatement`, the two form routes, `gcm.clientForm` and
+  `gcm.clientFormSend`, and the chase in the group day are in GroupClients.gs), then a New version.
+- **The upload writes Salesforce** (27 October 2026): a health or life bill brings the month's billing record into line
+  (or makes it from last month's) and opens a task per termination, per tier change and one to query the adjustments,
+  for the account owner. Nothing to set. To stop it, set the Script property **`GCM_BILL_SF`** to `off`; the page's
+  "Bring Salesforce in line with the bill" still works by hand.
+- **Script properties**: none new. `GCM_BILL_LIVE` is set by `gblGoLive`. The AI read uses `ANTHROPIC_API_KEY` as
+  the rest of the page does. While the bills are in test mode (before `gblGoLive`) the 10:30 asks nobody and opens no task; the branch manager's summary says what it would have asked.
 
 ## Tests
 

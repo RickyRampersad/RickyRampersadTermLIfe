@@ -1,0 +1,82 @@
+{
+ "note": "The Delivery Book, for staff (20 October 2026: \"a small video on the revised delivery process as it also looks up the client etc and the client gets an email confirming delivery\"). Real staff by name, clients and figures made up.",
+ "role": "staff",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-4%",
+ "scenes": [
+  {
+   "visual": "title",
+   "eyebrow": "For Client Support",
+   "headline": "The Delivery Book",
+   "sub": "Cheques, contracts and certificates, handed over and recorded",
+   "extra": 0.6,
+   "line": "This is the Delivery Book. Every cheque, policy contract and certificate the branch hands over is recorded here, the same day."
+  },
+  {
+   "visual": "dbopen",
+   "eyebrow": "Where it lives",
+   "headline": "The Delivery Book, <em>not the Log Book</em>",
+   "line": "Open the branch app, and tap Delivery Book. If it asks, enter your staff access code. The Log Book is for papers going to head office. Anything you hand over goes here."
+  },
+  {
+   "visual": "dbfind",
+   "eyebrow": "Step one",
+   "headline": "Find the <em>client</em>",
+   "line": "Step one. Find the client. Type a policy number or the client's name, and press Find. The Delivery Book looks the client up in Salesforce for you."
+  },
+  {
+   "visual": "dbpolicies",
+   "eyebrow": "Step two",
+   "headline": "What was <em>delivered</em>",
+   "line": "Every policy they hold comes up, grouped by type. Tick the policy, and choose what you are handing over. A cheque, a policy contract, or a certificate."
+  },
+  {
+   "visual": "dbemail",
+   "eyebrow": "The confirmation",
+   "headline": "Their e-mail, <em>from the record</em>",
+   "line": "Their e-mail on file is filled in for you. That is where the confirmation goes. If there is none, ask for it, and type it in."
+  },
+  {
+   "visual": "dbhandover",
+   "eyebrow": "Step three",
+   "headline": "The <em>handover</em>",
+   "line": "Step three. The handover. Who collected it, and their name. Then their signature, with a finger on the screen. A cheque also needs a photo."
+  },
+  {
+   "visual": "dbgps",
+   "eyebrow": "Where",
+   "headline": "Stamped <em>where it happened</em>",
+   "line": "Your location is stamped when you save. It stays with the branch, and never goes to the client."
+  },
+  {
+   "visual": "dbsave",
+   "eyebrow": "Record it",
+   "headline": "One press, <em>on the record</em>",
+   "line": "Press Record the delivery. You get a reference at once, and the delivery goes on the client's record in Salesforce."
+  },
+  {
+   "visual": "dbmail",
+   "eyebrow": "The client",
+   "headline": "Told <em>the same minute</em>",
+   "line": "The client gets an e-mail the same minute. What was delivered, on which policy, who collected it, and who delivered it. And five stars, to rate us."
+  },
+  {
+   "visual": "dbbook",
+   "eyebrow": "The history",
+   "headline": "Every delivery, <em>in one book</em>",
+   "line": "The Book tab holds every delivery, the old Jotform ones included. Search a client, a policy or a collector. The ratings from clients are there too."
+  },
+  {
+   "visual": "close",
+   "eyebrow": "Every handover",
+   "headline": "Recorded. <em>Confirmed.</em>",
+   "line": "Cheques and contracts, in the Delivery Book. The client told, the same day.",
+   "words3": [
+    "Cheques and contracts",
+    "Delivery Book",
+    "same day"
+   ],
+   "url": "rickyrampersadbranch.com/app"
+  }
+ ]
+}

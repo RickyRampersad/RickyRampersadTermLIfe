@@ -1,14 +1,28 @@
 <title>One Portal, Three States</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Fraunces Fallback';font-weight:100 500;src:local('Times New Roman'), local('Times'), local('Liberation Serif'), local('Tinos');size-adjust:114.82%;ascent-override:85.18%;descent-override:22.21%;line-gap-override:0.00%}
+@font-face{font-family:'Fraunces Fallback';font-weight:600 900;src:local('Times New Roman'), local('Times'), local('Liberation Serif'), local('Tinos');size-adjust:114.79%;ascent-override:85.20%;descent-override:22.21%;line-gap-override:0.00%}
+@font-face{font-family:'Fraunces Fallback R';font-weight:100 500;src:local('Noto Serif'), local('Droid Serif');size-adjust:97.24%;ascent-override:100.58%;descent-override:26.22%;line-gap-override:0.00%}
+@font-face{font-family:'Fraunces Fallback R';font-weight:600 900;src:local('Noto Serif'), local('Droid Serif');size-adjust:97.42%;ascent-override:100.39%;descent-override:26.17%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+
+
+
+
   :root{
     --ink:#12222E; --body:#3B4E5C; --faint:#7C8E9B;
     --paper:#FBFAF7; --card:#FFFFFF; --line:#E4E0D8; --rule:#D8D3C8;
     --navy:#08333D; --teal:#0E8FA3; --gold:#C8791A; --mute:#F3F0E9;
     --good:#1F7A55; --warn:#A9701F; --stop:#A93B2B;
-    --d:'Fraunces',Georgia,serif; --b:'Inter',system-ui,-apple-system,sans-serif;
+    --d:'Fraunces', 'Fraunces Fallback', 'Fraunces Fallback R',Georgia,serif; --b:'Inter', 'Inter Fallback', 'Inter Fallback R',system-ui,-apple-system,sans-serif;
   }
   @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
     --ink:#EDE7DC; --body:#B9C6CF; --faint:#8298A6;
