@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Renewal desk | Ricky Rampersad Branch</title>
+<link rel="icon" type="image/png" href="/orphan-transition/board-mark.png">
+<link rel="apple-touch-icon" href="/orphan-transition/board-mark.png">
+<script src="/rroperations/sso.js"></script>
+<style>
+/* The renewal desk (29 October 2026): general insurance renewals, month by month, from last year to delivery.
+   The look is the motor quote's: light, soft ocean blue, the blue shield. */
+:root{
+  --deep:#2C5FA8;--blue:#3A7BD5;--blue2:#4C94E6;--sky:#EAF3FD;--teal:#1FA8A0;--tealbg:#E5F5F3;
+  --ink:#1B2A44;--body:#3A4A66;--dim:#5E6E8A;--line:#DDE6F2;--line2:#8A99B3;--card:#fff;--soft:#F3F7FC;
+  --ok:#0F7A54;--okbg:#E6F7EF;--bad:#B3261E;--badbg:#FDECEA;--warn:#7A4B00;--warnbg:#FFF4DB;--vio:#4F44C2;--viobg:#EFEDFD;
+  --sh:0 10px 30px rgba(58,123,213,.09)
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;font-size:clamp(15px,0.9rem + 0.3vw,17px)}
+body{margin:0;min-height:100vh;color:var(--body);font:1rem/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  background:radial-gradient(900px 420px at 0% -10%,#E3EEFB 0%,transparent 60%),radial-gradient(700px 400px at 100% 0%,#E6F6F5 0%,transparent 55%),linear-gradient(180deg,#F7FAFD 0%,#F1F5FA 100%);overflow-x:clip}
+h1,h2,h3,h4{color:var(--ink);line-height:1.2;margin:0}
+a{color:var(--deep)}
+button{font:inherit}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(90deg,#3A7BD5,#4C94E6);box-shadow:0 4px 18px rgba(58,123,213,.22);padding:10px 16px;display:flex;align-items:center;gap:11px}
+.mark{width:44px;height:44px;border-radius:12px;overflow:hidden;background:#13408F;display:grid;place-items:center;flex:none;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.mark img{width:100%;height:100%;display:block}
+.brand{color:#fff;font-weight:800;font-size:16px;line-height:1.2;flex:1;min-width:0}
+.brand .gg{white-space:nowrap}@media (max-width:520px){.brand .gg{display:none}}
+.brand i{display:block;font-style:normal;font-weight:600;font-size:11.5px;color:#EAF3FD;letter-spacing:.06em;text-transform:uppercase}
+.who{color:#EAF3FD;font-size:12.5px;text-align:right;line-height:1.35}
+.who b{display:block;color:#fff;font-weight:700;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who button{color:#fff;background:none;border:0;padding:6px 0;cursor:pointer;text-decoration:underline;font-size:12.5px;min-height:32px}
+main{width:min(1120px,100% - 28px);margin:18px auto 90px}
+@media (min-width:700px){main{width:min(1120px,100% - 48px)}}
+.card{background:var(--card);border:1px solid #E3EAF5;border-radius:18px;padding:18px;box-shadow:var(--sh);margin:0 0 14px}
+@media (min-width:700px){.card{padding:22px 24px}}
+.muted{color:var(--dim)}
+.small{font-size:.86rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:9px 16px;border-radius:11px;border:0;background:var(--blue);color:#fff;font-weight:700;cursor:pointer;text-decoration:none;transition:transform .12s,background-color .15s}
+.btn:hover{background:var(--deep)}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--deep);border:1.5px solid #B9CCE8}
+.btn.ghost:hover{background:var(--sky)}
+.btn.teal{background:var(--teal)}.btn.teal:hover{background:#178A83}
+.btn.vio{background:var(--vio)}.btn.vio:hover{background:#3D33A8}
+.btn.warn{background:#fff;color:var(--bad);border:1.5px solid #E7B7B2}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:.9rem;border-radius:9px}
+.field,select.field,textarea.field{width:100%;font:inherit;font-size:max(16px,1rem);color:var(--ink);background:#fff;border:1.5px solid var(--line2);border-radius:10px;padding:10px 12px;min-height:44px}
+.field:focus,.btn:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #9CC2F2;outline-offset:2px}
+textarea.field{min-height:96px;resize:vertical;line-height:1.5}
+label.l{display:block;font-weight:700;color:var(--ink);font-size:.92rem;margin:12px 0 5px}
+.err{color:var(--bad);font-weight:600;min-height:1.2em;margin:8px 0}
+.gate{max-width:440px;margin:40px auto}
+.gate h1{font-size:1.6rem;margin:0 0 6px}
+.banner{border-radius:14px;padding:12px 16px;margin:0 0 14px;font-size:.95rem;border:1px solid}
+.banner.test{background:var(--warnbg);border-color:#E9C46A;color:#4A3200}
+.banner.info{background:var(--sky);border-color:#B9CCE8;color:var(--ink)}
+/* the month */
+.mbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:4px 0 14px}
+.mbar h1{font-size:clamp(1.4rem,1.1rem + 1vw,2rem);letter-spacing:-.015em}
+.mnav{display:flex;gap:6px;align-items:center}
+.mnav select{width:auto;min-width:170px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,7.4rem),1fr));gap:10px;margin:0 0 14px}
+.tile{display:flex;flex-direction:column;justify-content:flex-start;gap:2px;background:#fff;border:1.5px solid #E3EAF5;border-radius:14px;padding:10px 12px;text-align:left;cursor:pointer;box-shadow:var(--sh);transition:translate .15s,border-color .15s;color:var(--body)}
+.tile:hover{translate:0 -2px;border-color:#B9CCE8}
+.tile b{display:block;font-size:1.7rem;color:var(--ink);line-height:1.1;font-variant-numeric:tabular-nums}
+.tile span{font-size:.82rem}
+.tile.on{border-color:var(--blue);background:var(--sky)}
+.tile.alert b{color:var(--bad)}.tile.good b{color:var(--ok)}.tile.vio b{color:var(--vio)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.chip{border:1.5px solid #B9CCE8;background:#fff;color:var(--deep);border-radius:99px;padding:7px 14px;font-weight:700;font-size:.9rem;cursor:pointer;min-height:40px}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.chip .n{font-weight:600;opacity:.8;margin-left:4px}
+.search{max-width:360px;margin:0 0 12px}
+.rows{display:grid;gap:10px}
+.row{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:14px;align-items:center;background:#fff;border:1px solid #E3EAF5;border-radius:16px;padding:12px 14px;box-shadow:var(--sh);cursor:pointer;text-align:left;width:100%;color:inherit;transition:translate .15s,border-color .15s}
+.row:hover{translate:0 -2px;border-color:#B9CCE8}
+.day{border-radius:12px;background:var(--sky);text-align:center;padding:6px 4px;color:var(--deep)}
+.day b{display:block;font-size:1.5rem;line-height:1}
+.day span{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.day.late{background:var(--badbg);color:var(--bad)}
+.rt h3{font-size:1.02rem;margin:0 0 2px;overflow-wrap:anywhere}
+.rt .sub{font-size:.88rem;color:var(--dim);overflow-wrap:anywhere}
+.rt .bar{height:6px;border-radius:99px;background:#E6EDF7;margin-top:8px;overflow:hidden;max-width:360px}
+.rt .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--teal));border-radius:99px}
+.rr{text-align:right;font-size:.88rem}
+.rr .p{font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+.pill{display:inline-block;border-radius:99px;padding:3px 10px;font-size:.78rem;font-weight:700;background:var(--sky);color:var(--deep);white-space:nowrap}
+.pill.ok{background:var(--okbg);color:var(--ok)}.pill.bad{background:var(--badbg);color:var(--bad)}.pill.warn{background:var(--warnbg);color:var(--warn)}.pill.vio{background:var(--viobg);color:var(--vio)}.pill.dim{background:#EEF1F6;color:var(--dim)}
+.flags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+@media (max-width:640px){.row{grid-template-columns:58px minmax(0,1fr)}.rr{grid-column:2;text-align:left}.day b{font-size:1.25rem}}
+.empty{text-align:center;padding:40px 16px;color:var(--dim)}
+/* one renewal */
+.dtop{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between;margin:0 0 12px}
+.dtop h1{font-size:clamp(1.35rem,1.1rem + .9vw,1.9rem);letter-spacing:-.015em;overflow-wrap:anywhere}
+.dtop .sub{color:var(--dim);margin-top:4px}
+.steps{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px;list-style:none;padding:0;margin:0 0 14px}
+.step{width:100%;height:100%;border:1.5px solid #E3EAF5;border-radius:12px;background:#fff;padding:8px 8px 7px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:5px;color:var(--ink);min-height:64px}
+.step .n{width:24px;height:24px;border-radius:50%;background:#EEF1F6;color:var(--dim);display:grid;place-items:center;font-size:.8rem;font-weight:700}
+.step .t{font-size:.78rem;font-weight:700;line-height:1.2}
+.step.done{border-color:#BFE3CB;background:#F3FAF5}.step.done .n{background:var(--ok);color:#fff}
+.step[aria-current="step"]{border-color:var(--blue);background:var(--sky);box-shadow:0 0 0 3px #CFE0F7}.step[aria-current="step"] .n{background:var(--blue);color:#fff}
+@media (prefers-reduced-motion:no-preference){.step[aria-current="step"] .n{animation:pulse 2.4s ease-in-out infinite}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(58,123,213,.35)}50%{box-shadow:0 0 0 7px rgba(58,123,213,0)}}
+@media (max-width:980px){.steps{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media (max-width:520px){.steps{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,340px);gap:14px;align-items:start}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+.ins{display:grid;gap:8px}
+.in{border-radius:12px;padding:10px 12px;border-left:4px solid var(--line2);background:var(--soft);font-size:.92rem}
+.in b{display:block;color:var(--ink)}
+.in.act{border-left-color:var(--bad);background:#FFF7F6}.in.check{border-left-color:#D99A00;background:#FFFBEF}.in.good{border-left-color:var(--ok);background:#F3FAF5}
+.in .lv{font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+table.t{width:100%;border-collapse:collapse;font-size:.92rem}
+table.t th,table.t td{padding:8px 8px;border-bottom:1px solid #EDF1F7;text-align:left;vertical-align:top}
+table.t th{font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--dim);font-weight:700}
+table.t td.n,table.t th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto}
+.hist{display:grid;gap:8px;margin:8px 0}
+.hb{display:grid;grid-template-columns:3.2rem minmax(0,1fr) 6.5rem;gap:10px;align-items:center;font-size:.9rem}
+.hb .tr{height:14px;border-radius:7px;background:#E6EDF7;overflow:hidden}
+.hb .tr i{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,var(--blue),var(--blue2));transform-origin:left}
+@media (prefers-reduced-motion:no-preference){.hb .tr i{animation:grow .8s cubic-bezier(.2,.8,.2,1) both}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.hb .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
+.hb .ch{display:block;font-size:.75rem;font-weight:600;color:var(--dim)}
+.panel h2{font-size:1.25rem;margin:0 0 4px}
+.panel .lead{color:var(--dim);margin:0 0 12px;max-width:72ch}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.found{display:grid;gap:8px;margin:10px 0}
+.fd{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:12px;padding:10px 12px;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr));gap:4px 12px}
+.pt{border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;background:var(--soft)}
+.tickrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-size:.95rem}
+.tickrow input{width:22px;height:22px;flex:none;margin-top:2px}
+.sframe{width:100%;height:760px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.log{font-size:.88rem}
+.log li{margin:4px 0}
+.ans{border-radius:12px;padding:12px;background:var(--soft);margin:8px 0}
+.toast{position:fixed;left:50%;bottom:20px;translate:-50% 0;background:#1B2A44;color:#fff;border-radius:12px;padding:12px 16px;max-width:min(92vw,560px);box-shadow:0 10px 30px rgba(16,24,40,.3);opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+.toast.on{opacity:1}.toast.bad{background:#8F1F18}
+dialog.help{border:0;border-radius:18px;padding:0;max-width:min(720px,94vw);box-shadow:0 20px 50px rgba(16,24,40,.35)}
+dialog.help::backdrop{background:rgba(27,42,68,.45)}
+dialog.help .hd{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--sky)}
+dialog.help .bd{padding:6px 20px 18px;max-height:72vh;overflow:auto}
+dialog.help ol li{margin:6px 0}
+@media (prefers-reduced-motion:no-preference){.card,.row{animation:rise .45s cubic-bezier(.2,.8,.2,1) both}}
+@keyframes rise{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
+@media print{header,.steps,.acts,.chips,.tiles,.mnav{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="mark"><img src="/orphan-transition/board-mark.png" width="44" height="44" alt=""></div>
+  <div class="brand">Renewal desk<i>General insurance<span class="gg"> · Ricky Rampersad Branch</span></i></div>
+  <div class="who" id="who"></div>
+</header>
+<main id="main">
+  <form class="gate card" id="gate" autocomplete="off">
+    <h1>Renewal desk</h1>
+    <p class="muted">Sign in with your agent number and password from the Agent Skill Bank, the same as group client management. From the branch app you are signed in already.</p>
+    <label class="l" for="gWho">Agent number or name</label>
+    <input class="field" id="gWho" autocapitalize="characters" spellcheck="false" placeholder="PB001">
+    <label class="l" for="gCode">Password, or the branch code</label>
+    <input class="field" id="gCode" type="password" required>
+    <div class="err" id="gErr" role="alert"></div>
+    <button class="btn" type="submit" id="gGo" style="width:100%">Sign in</button>
+  </form>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<dialog class="help" id="help" aria-labelledby="helpT">
+  <div class="hd"><h3 id="helpT">How a renewal goes</h3><button class="btn ghost sm" type="button" onclick="document.getElementById('help').close()">Close</button></div>
+  <div class="bd">
+    <ol>
+      <li><b>Pick the month.</b> Every Guardian General policy renewing that month is listed from Salesforce, by line. Open one and press <i>Take it</i>.</li>
+      <li><b>Last year.</b> What renews, the premium since the policy began, claims, last year's payment, and what the record says. Anyone can help: it is all on one page.</li>
+      <li><b>Guardian General's notice.</b> Press <i>Find it in support@</i>: the desk reads the PDF for you. Check the figures, then save. No notice yet? Ask CRMS Renewals for it.</li>
+      <li><b>Values.</b> From 45 days before: the client confirms each vehicle's value or the sums insured. Type what they say.</li>
+      <li><b>The letter.</b> <i>Draft with AI</i> writes it from the record; read every word and change what you need. Send it for approval.</li>
+      <li><b>Approval.</b> The branch manager or the Branch Manager's Assistant approves, and it goes from support@ to the client at least 21 days before the renewal. The renewal task opens on last year's record.</li>
+      <li><b>The client's answer.</b> They sign in with a code to their e-mail, see the history since the policy began, and approve, ask for changes, or write a comment. It comes onto the task's Chatter. Reminders go at 14 and 10 days; at 7 days with no answer, call them, and the branch manager decides. Nothing renews without their yes.</li>
+      <li><b>Proceed to renew.</b> One press: the new year's billing record and cover terms in Salesforce with the confirmed values, a follow-up task, the instruction to Guardian General's renewals team (support@ and sales support copied), and the delivery in Pawan's calendar.</li>
+      <li><b>Guardian General.</b> No reply in two working days: the desk follows up with the trail and posts it on Chatter, every two working days. Their "ready" moves the delivery to the next working day.</li>
+      <li><b>Delivered and paid.</b> Mark both; the renewal is done.</li>
+    </ol>
+    <p class="muted small">Until the branch manager runs <code>girGoLive</code>, the desk is in test mode: letters and instructions go to you and the test inbox, marked TEST, and Salesforce is written only when you tick it.</p>
+  </div>
+</dialog>
+<script src="girread.js?v=2026-10-29"></script>
+<script src="desk.js?v=2026-10-29"></script>
+<!-- rrb-views -->
+<script>
+(function(){var u='https://script.google.com/macros/s/AKfycbzb9gzh3TldhLCQA7MCz3vdyWLAWTHpR9X7M3uvPNtqJbnnYRMcDSkm0D1C8SgENvn44g/exec';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

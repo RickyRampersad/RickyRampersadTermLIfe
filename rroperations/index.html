@@ -202,7 +202,8 @@
     spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>',
     target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
     list: '<path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/>',
-    cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'
+    cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    renew: '<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/>'
   };
 
   /* Every tile, and who sees it. a = agent, l = unit manager, s = staff, m = branch manager.
@@ -249,6 +250,9 @@
     { sec: 'Every day', id: 'billing', name: 'Group billing', ic: 'cash', to: 'sm', href: '/groupclientmanagement/billing.html',
       tags: 'group billing billings bills invoice health life pension list bill statement send now approve 26th',
       blurb: { s: 'Upload the month’s group bills, check them and approve them for the 26th', m: 'Every group’s bills: upload, check, approve, send' } },
+    { sec: 'Every day', id: 'renewals', name: 'Renewal desk', ic: 'renew', to: 'sm', href: '/renewaldesk/',
+      tags: 'renewal renewals general insurance gi ggil guardian general motor home property liability pl workers compensation machinery bond marine notice crms risk to renew',
+      blurb: { s: 'Next month’s general insurance renewals: last year, the notice, the letter, the client’s yes', m: 'Every general insurance renewal by month, and the letters to approve' } },
     { sec: 'Clients and queries', id: 'groups', name: 'Group clients', ic: 'building', to: 'sm', href: '/groupclientmanagement/',
       tags: 'group groups employer billing monday letters',
       blurb: 'Your employer groups and the Monday letters' },
