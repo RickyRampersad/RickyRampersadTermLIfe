@@ -1,7 +1,17 @@
 {
- "tts/out/recruitff/01.mp3": [
+ "tts/out/risefix/01.mp3": [
   "en",
-  0.999,
-  "and we built it ourselves. FactFind 360 is this branch's own. Since it went live in July, 141 fact finds, 183 million dollars of need found, and 342 million of cover recommended. Every plan read by a manager, most inside three days. In October alone, 40 applications from 29 clients. The advisor, the manager, the client, and the branch team on one file. Bigger sales because the need is on paper before the pitch, and compliant with the Insurance Act every time."
+  0.993,
+  "On the 1st of August this year, we put the fact find live again, rebuild from the ground up, and far more robust."
+ ],
+ "tts/out/risefix/02.mp3": [
+  "en",
+  0.997,
+  "We have the lowest lapse rate of any branch in this company, ours is 4.96%, the main branch is average 8.82."
+ ],
+ "tts/out/risefix/03.mp3": [
+  "en",
+  0.996,
+  "And there's a way up from here. Agent, executive agent, training manager, unit manager, this branch grows its own."
  ]
 }
