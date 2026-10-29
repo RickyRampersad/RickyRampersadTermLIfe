@@ -7,6 +7,8 @@
 //     the team's notes after a prompt, what his automation sent; one insight at a time, and all of them on the ticker;
 //   - the flow (kind → when → who), every ribbon drawn and flowing; the hour of day; how fast the answer comes; the stream
 //     of the last twenty working days; the team, each with a ring; nothing invisible with motion off;
+//   - plenty of motion (29 October: "Plenty motion"): packets riding the ribbons and the lines, scanners, drifting light,
+//     turning halos, counted figures, the insight's timer; none of it with motion off;
 //   - Javid and Aleema nowhere on the page;
 //   - a script older than the drive says what to paste; a dead feed after a good one paints the last good answer;
 //   - the shield, the narration (six lines), the views beacon, and the stop on the wall after the cup.
@@ -83,7 +85,7 @@ const fit = page => page.evaluate(() => {
       bands: document.querySelectorAll('#flow .band').length, bandsOn: document.querySelectorAll('#flow .band.on').length, flows: document.querySelectorAll('#flow .flowl').length,
       nodes: document.querySelectorAll('#flow .node').length, flowTxt: [...document.querySelectorAll('#flow text')].map(t => t.textContent).join(' | '),
       hrs: document.querySelectorAll('#hours path').length, hrCap: document.querySelector('#hrCap').textContent,
-      bars: [...document.querySelectorAll('#wave rect')].map(r => +r.getAttribute('height')), wvCap: document.querySelector('#wvCap').textContent,
+      bars: [...document.querySelectorAll('#wave rect.bar')].map(r => +r.getAttribute('height')), wvCap: document.querySelector('#wvCap').textContent,
       st: document.querySelectorAll('#stream path').length, stTxt: [...document.querySelectorAll('#stream text')].map(t => t.textContent),
       team: [...document.querySelectorAll('.tc .nm')].map(x => x.firstChild.textContent), rings: [...document.querySelectorAll('.tc .rg b')].map(x => x.textContent),
       say: [...document.querySelectorAll('#say span')].map(s => s.textContent), sayOn: document.querySelectorAll('#say span.on').length, dots: document.querySelectorAll('#sayDots i').length,
@@ -103,6 +105,11 @@ const fit = page => page.evaluate(() => {
     ok('the insights, one at a time', m.say.length >= 6 && m.sayOn === 1 && m.dots === m.say.length && m.say.some(s => /61% more notes/.test(s)) && m.say.some(s => /Sasha answers fastest/.test(s)), m.say.join(' || '));
     ok('the ticker carries the insights', /1,395/.test(m.tk) && /61% more notes/.test(m.tk), m.tk.slice(0, 200));
     ok('no Javid, no Aleema', !/Javid|Aleema/.test(m.body));
+    const mv = await page.evaluate(() => ({ riders: document.querySelectorAll('animateMotion').length, scans: document.querySelectorAll('svg animate[attributeName="x"]').length,
+      motes: document.querySelectorAll('#motes i').length, shine: document.querySelectorAll('.card.shine').length, timer: document.querySelector('#sayTimer').classList.contains('go'),
+      halos: document.querySelectorAll('.halo').length, moving: document.getAnimations().length }));
+    ok('plenty of motion: packets ride the ribbons and the lines, scanners sweep, light drifts, halos turn, the insight runs a timer',
+      mv.riders >= 40 && mv.scans === 3 && mv.shine <= 1 && mv.motes === 12 && mv.timer && mv.halos === 5 && mv.moving >= 30, JSON.stringify(mv));
     ok('no script error', !errs.length, errs.join(' | '));
     await shot(page, 'driver-' + vp.width + 'x' + vp.height);
     await ctx.close();
@@ -166,8 +173,10 @@ const fit = page => page.evaluate(() => {
     await page.route('https://fonts.googleapis.com/**', r => r.abort());
     await page.goto(BASE + 'orphans-driver.html'); await page.waitForTimeout(1200);
     const m = await page.evaluate(() => ({ cards: [...document.querySelectorAll('.card')].every(c => getComputedStyle(c).opacity === '1'),
-      clip: getComputedStyle(document.querySelector('#stream .reveal')).clipPath }));
+      clip: getComputedStyle(document.querySelector('#stream .reveal')).clipPath, riders: document.querySelectorAll('animateMotion').length,
+      motes: document.querySelectorAll('#motes i').length, scans: document.querySelectorAll('svg animate[attributeName="x"]').length }));
     ok('with motion off, every card and chart shows at once', m.cards && (m.clip === 'none' || m.clip === '' || /^inset\(0(px)?\)$/.test(m.clip)), JSON.stringify(m));
+    ok('and nothing travels, sweeps or drifts', m.riders === 0 && m.motes === 0 && m.scans === 0, JSON.stringify(m));
     await ctx.close();
   }
 
