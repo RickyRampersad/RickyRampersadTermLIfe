@@ -6190,6 +6190,24 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     e-mail on record is the one copied on the desk e-mail.
   - The Opportunity's `Producer__c` is that agent; its description says who placed it. The owner stays `MQ_SF_OWNER`.
   - Tests: `tests/test-motor-quote.js` (199 checks) and `tests/e2e-motor-quote.js` (134).
+- **Agents can try it in test mode** (29 October 2026, for the launch: "test with the agent as we have moved from
+  Jotform"). In test mode every e-mail went to the test inbox, the sign-in code included, so an agent could never sign
+  in. `mqTester_` now lets a tester's own e-mail through, marked [TEST], with the test inbox copied: an active agent of
+  the branch's units (`mqAgentByEmail_`), anyone on the `MQ_TESTERS` Script property (comma-separated, for staff), and
+  the test inbox. A client's e-mail and the quotes desk still go only to the test inbox, and Salesforce is still not
+  written, until `mqGoLive()`. The same day the client's "Check and send" summary stopped printing "On a loan:
+  undefined" on a quick quote (and "Owned by", the same pattern); the page test now fails on the word.
+- **The launch film** (29 October 2026). `/motorquotevideo/` plays `motor-quote/film/launch.mp4` (2:12, poster
+  `launch.jpg`, WhatsApp card `launch-card.jpg`): thirteen scenes for agents, from "Motor quotes have a new home. No
+  more JotForm" to "try it this week with one client". It is in the branch app (Learn, beside a new Motor quote tile
+  under Clients and queries, sign-in "E-mail code"). Built like the board films: `tools/film/mqlaunch-lines.json`
+  (the words, voiced on the `tts-run` runner as Andrew Expressive with the English check, key `mqlaunch`),
+  `mqlaunch-timing.json` (each clip's length and word starts), `build-mqfilm.py` (the page, in the motor quote's
+  light blue, every reveal on the word that names it), `render.js` (frame by frame), and an ffmpeg mix of the branch
+  theme ducked under the voice to -14 LUFS. The phone screens are the real page driven against the page test's fake
+  backend (made-up client "Anika Pretend", made-up agent "Mala Madeup"): the capture script is the page test with
+  screenshots added, kept in the session scratchpad. Re-cut it when the page changes. The old form's "41 questions,
+  filled in twice" is the JotForm's own record (see the first bullet of this section).
 - **One place to renew: the Renewal Platform** (26 October 2026). The motor quote page had its own renewal path
   beside the branch's Renewal Platform (`apps-script/Code.gs`, the client portal from the renewal e-mail), so a client
   could renew in two places with two sets of records. A renew-by-registration door built for this page that morning

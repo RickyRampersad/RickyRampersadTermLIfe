@@ -238,6 +238,9 @@
     { sec: 'Clients and queries', id: 'quote', name: 'Quote & apply', ic: 'shield', to: 'alsm', href: '/quote/',
       tags: 'quote quotation motor property critical illness key person oas enrolment xpress life apply application new business jotform',
       blurb: { a: 'Quote a client and the request files itself under your name', l: 'Your team\'s quote requests', s: 'Motor, property, critical illness, key person, OAS and Xpress Life', m: 'Every quote request, with its reference' } },
+    { sec: 'Clients and queries', id: 'motorquote', name: 'Motor quote', ic: 'shield', to: 'alsm', href: '/motor-quote/', si: 'code',
+      tags: 'motor quote car vehicle dealer invoice renewal producer jotform new platform',
+      blurb: { a: 'Place a motor quote for your client: you are the producer', l: 'Motor quotes for your clients and your team\'s', s: 'A motor quote; renewals go to the renewal portal', m: 'The new motor quote, with Salesforce filled in' } },
     { sec: 'Clients and queries', id: 'factfind', name: 'Fact Find', ic: 'form', to: 'alm', href: 'https://factfind360.com/ffproject', si: 'ff',
       tags: 'fact find factfind360 ff client needs',
       blurb: 'Complete a client fact find' },
@@ -305,6 +308,9 @@
     { sec: 'Learn', id: 'lbfilm', name: 'Log Book film', ic: 'play', to: 'alsm', href: { a: '/logbookdemoagent/', l: '/logbookdemoagent/', s: '/logbookdemostaff/', m: '/rroperations/logbook/films.html' }, si: 'open',
       tags: 'film video log book',
       blurb: 'How it works, in two minutes' },
+    { sec: 'Learn', id: 'mqfilm', name: 'Motor quote film', ic: 'play', to: 'alsm', href: '/motorquotevideo/', si: 'open',
+      tags: 'film video motor quote launch jotform',
+      blurb: 'The new motor quote, in two minutes' },
     { sec: 'Learn', id: 'dbfilm', name: 'Delivery Book film', ic: 'play', to: 'sm', href: '/deliverybook-film/', si: 'open',
       tags: 'film video delivery book',
       blurb: 'Recording a cheque or contract, in under two minutes' },
@@ -405,7 +411,7 @@
 
   var next = (new URLSearchParams(location.search).get('next') || '').replace(/[^a-z-]/g, '');
 
-  var SI = { ff: 'Fact find sign-in', kpi: 'Tracker sign-in', mtg: 'Meeting code', open: 'No sign-in', jf: 'JotForm' };
+  var SI = { ff: 'Fact find sign-in', kpi: 'Tracker sign-in', mtg: 'Meeting code', open: 'No sign-in', jf: 'JotForm', code: 'E-mail code' };
   var LOCK = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   var TICK = '<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>';
   var SEC_ORDER = ['Every day', 'Clients and queries', 'Goals and reports', 'Walls', 'Meetings', 'Forms', 'Learn'];
