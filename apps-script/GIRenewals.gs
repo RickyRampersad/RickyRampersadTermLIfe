@@ -99,7 +99,7 @@ var GIR_RISK_FIELDS = ['Id', 'Name', 'RecordTypeId', 'RecordType.Name', 'Policy_
   'Category_1__c', 'Category_2__c', 'Category_3__c', 'Category_4__c', 'Category_1_Value__c', 'Category_2_Value__c', 'Category_3_Value__c', 'Category_4_Value__c',
   'Make_Model_Category_1__c', 'Make_Model_Category_2__c', 'Make_Model_Category_3__c', 'Make_Model_Category_4__c', 'Serial_1__c', 'Serial_2__c', 'Serial_3__c', 'Serial_4__c',
   'Premium_01_Cover_01__c', 'Total_Premiums_Gov_t_Inclusive__c', 'Carrier__c', 'From__c', 'To__c', 'Next_Renewal_Date__c', 'Risk_Classification__c',
-  'TRANSACTIONS__c', 'Client_Portfolio_Look_Up__c', 'Insured__c', 'Insured__r.Name', 'Insured__r.FirstName', 'Insured__r.Email', 'Insured__r.MobilePhone',
+  'TRANSACTIONS__c', 'TRANSACTIONS__r.Name', 'TRANSACTIONS__r.Renewal_Date__c', 'CreatedDate', 'Client_Portfolio_Look_Up__c', 'Insured__c', 'Insured__r.Name', 'Insured__r.FirstName', 'Insured__r.Email', 'Insured__r.MobilePhone',
   'Client_Portfolio_Look_Up__r.Account__c', 'Client_Portfolio_Look_Up__r.Account__r.Name', 'Client_Portfolio_Look_Up__r.Account__r.RecordType.Name',
   'Client_Portfolio_Look_Up__r.Account__r.OwnerId', 'Client_Portfolio_Look_Up__r.Account__r.Owner.Name', 'Client_Portfolio_Look_Up__r.Account__r.Owner.Email',
   'Client_Portfolio_Look_Up__r.Account__r.Owner.IsActive', 'Client_Portfolio_Look_Up__r.Contact__c', 'Client_Portfolio_Look_Up__r.Contact__r.Name',
@@ -249,7 +249,8 @@ function girItem_(r) {
     coverage: g('Motor_Vehicle_Coverage_Type__c') || g('Property_Coverage_Type__c'), propType: g('Property_Type__c'), location: String(g('Risk_Location__c')).trim(), occupancy: g('Occupancy__c'),
     sums: sums, cats: cats, premium: girNum_(g('Premium_01_Cover_01__c')), total: girNum_(g('Total_Premiums_Gov_t_Inclusive__c')),
     carrier: g('Carrier__c'), from: gcmYmd_(g('From__c')), to: gcmYmd_(g('To__c')), ren: girRenOf_(r), noEnd: !g('To__c'), cls: g('Risk_Classification__c'),
-    trans: g('TRANSACTIONS__c'), shell: g('Client_Portfolio_Look_Up__c'),
+    trans: g('TRANSACTIONS__c'), transName: g('TRANSACTIONS__r.Name'), transRen: gcmYmd_(g('TRANSACTIONS__r.Renewal_Date__c')), created: String(g('CreatedDate')),
+    shell: g('Client_Portfolio_Look_Up__c'),
     account: g('Client_Portfolio_Look_Up__r.Account__c'), client: girClientName_(g('Client_Portfolio_Look_Up__r.Account__r.Name'), g('Client_Portfolio_Look_Up__r.Account__r.RecordType.Name'), g('Client_Portfolio_Look_Up__r.Contact__r.Name') || g('Insured__r.Name')), acctRt: g('Client_Portfolio_Look_Up__r.Account__r.RecordType.Name'),
     owner: { id: g('Client_Portfolio_Look_Up__r.Account__r.OwnerId'), name: g('Client_Portfolio_Look_Up__r.Account__r.Owner.Name'), email: String(g('Client_Portfolio_Look_Up__r.Account__r.Owner.Email')).toLowerCase(),
              active: g('Client_Portfolio_Look_Up__r.Account__r.Owner.IsActive') !== false },
@@ -269,25 +270,123 @@ function girMonthRisks_(ym) {
 }
 /** One renewal a policy and month: its items, last year's premium and cover, who the client is. */
 function girBundle_(items, ym) {
-  var by = {};
-  items.forEach(function (x) {
-    var line = girLineOf_(x.rt, x.policy, x.propType, x.acctRt);
+  var by = {}, transKey = {};
+  /* an item with no policy number joins the policy whose billing record it is on (a machine added to a plant policy and
+     filed without the number), rather than reading as a renewal of its own; a billing record shared by two policies joins
+     it to neither */
+  items.slice().sort(function (a, b) { return (girPolKey_(a.policy) ? 0 : 1) - (girPolKey_(b.policy) ? 0 : 1); }).forEach(function (x) {
+    var line = girLineOf_(x.rt, x.policy, x.propType, x.acctRt), joined = false;
     if (!line) return;
-    var pk = girPolKey_(x.policy) || ('NOPOL-' + (x.shell || x.id)), key = pk + '|' + ym;
+    var pk = girPolKey_(x.policy);
+    var tk = x.trans ? transKey[gcmId15_(x.trans)] : null;
+    if (!pk && tk && tk.length === 1) { pk = tk[0]; joined = true; }
+    pk = pk || ('NOPOL-' + (x.shell || x.id));
+    var key = pk + '|' + ym;
     var r = by[key] || (by[key] = { key: key, pk: pk, month: ym, policy: x.policy, line: line, lineLabel: GIR_LINES[line].label, items: [], trans: [], shells: [], ren: x.ren,
       client: x.client, account: x.account, acctRt: x.acctRt, owner: x.owner, contact: x.contact, noEnd: false, lastPremium: 0, lastCover: 0, assignees: [] });
+    if (joined) { (r.noPol = r.noPol || []).push({ label: girIdent_(x) ? girIdent_(x).label : ([x.cats[0] && x.cats[0].model, x.make, x.model].filter(Boolean).join(' ') || 'An item'), trans: x.transName || '' }); }
+    if (girPolKey_(x.policy) && x.trans) { var t15 = gcmId15_(x.trans); transKey[t15] = transKey[t15] || []; if (transKey[t15].indexOf(pk) < 0) transKey[t15].push(pk); }
     if (!r.policy && x.policy) r.policy = x.policy;
     if (x.ren < r.ren) r.ren = x.ren;
     if (!r.contact.email && x.contact.email) r.contact = x.contact;
     r.items.push(x);
-    if (x.trans && r.trans.indexOf(x.trans) < 0) r.trans.push(x.trans);
     if (x.shell && r.shells.indexOf(x.shell) < 0) r.shells.push(x.shell);
-    if (x.noEnd) r.noEnd = true;
     if (x.assignee && r.assignees.indexOf(x.assignee) < 0) r.assignees.push(x.assignee);
-    r.lastPremium = girR_(r.lastPremium + x.total);
-    r.lastCover += x.cover || x.value || 0;
   });
-  return Object.keys(by).map(function (k) { return by[k]; });
+  return Object.keys(by).map(function (k) {
+    var r = by[k], d = girDedupe_(r.items);
+    r.allIds = r.items.map(function (x) { return x.id; });
+    r.items = d.keep;
+    r.fixes = d.notes;
+    r.items.forEach(function (x) {
+      if (x.trans && r.trans.indexOf(x.trans) < 0) r.trans.push(x.trans);
+      if (x.noEnd) r.noEnd = true;
+      r.lastPremium = girR_(r.lastPremium + x.total);
+      r.lastCover += x.cover || x.value || 0;
+    });
+    return r;
+  });
+}
+
+/* ── one item, one term: Salesforce's double entries ───────────────────────────────────────
+   Read on the real November 2026 renewals: the same vehicle entered twice for one term (one copy on last year's billing
+   record), a mid-term change kept as a term of its own, and two different terms for one vehicle in one year. Each was
+   counted, so last year's premium came out at twice or three times what was billed. Rows are merged only when they share
+   an identity: a registration, a chassis, a serial, or an address with the same cover. Rows with none are never merged:
+   four loaders that differ only by serial are four loaders, and four rows with nothing to tell them apart may be four
+   people on a travel policy (the billing record then says four times the premium). Nothing in Salesforce is changed:
+   each merge is named in the insights, so staff correct the record. */
+var GIR_DUP = { MATCH_DAYS: 45, MID_MIN: 30, MID_END: 5, FULL: 300, OVERLAP: 180 };
+function girIdent_(x) {
+  var n = function (s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+  if (n(x.vehicle)) return { k: 'v:' + n(x.vehicle), strong: true, label: String(x.vehicle).trim() };
+  if (n(x.chassis)) return { k: 'c:' + n(x.chassis), strong: true, label: 'Chassis ' + String(x.chassis).trim() };
+  var ser = (x.cats || []).map(function (c) { return n(c.serial); }).filter(String);
+  if (ser.length) return { k: 's:' + ser.join('|'), strong: true, label: ((x.cats[0].model || x.cats[0].cat || 'Item') + ' (serial ' + x.cats[0].serial + ')').trim() };
+  if (n(x.location)) return { k: 'l:' + n(x.location) + '|' + n(x.coverage) + '|' + n(x.propType) + '|' + Math.round(x.cover || x.value || 0), strong: false, label: String(x.location).trim().slice(0, 60) };
+  return null;
+}
+/** Whether a term sits on the billing record of its own year (the record's renewal date within MATCH_DAYS of the term's start). */
+function girTransOk_(x) { var d = x.from && x.transRen ? gcmDays_(x.from, x.transRen) : null; return d !== null && Math.abs(d) <= GIR_DUP.MATCH_DAYS; }
+function girSpan_(x) { return x.from && x.to ? gcmDays_(x.from, x.to) : null; }
+/** One row an item and term. Returns { keep, notes }: keep in the order given; notes say what was merged and why. */
+function girDedupe_(items) {
+  var groups = {}, notes = [], drop = {};
+  items.forEach(function (x) { var id = girIdent_(x); if (!id) return; x._ident = id; (groups[id.k] = groups[id.k] || []).push(x); });
+  var better = function (a, b) { return (girTransOk_(b) ? 1 : 0) - (girTransOk_(a) ? 1 : 0) || String(a.created || '').localeCompare(String(b.created || '')); };
+  Object.keys(groups).forEach(function (k) {
+    var g = groups[k], label = g[0]._ident.label;
+    /* 1. the same term entered more than once */
+    var same = {};
+    g.forEach(function (x) { var b = (x.from || '') + '|' + (x.to || '') + '|' + Math.round(girNum_(x.total) * 100); (same[b] = same[b] || []).push(x); });
+    Object.keys(same).forEach(function (b) {
+      var s = same[b]; if (s.length < 2) return;
+      s.sort(better);
+      s.slice(1).forEach(function (x) { drop[x.id] = 1; });
+      notes.push({ kind: 'dup', label: label, n: s.length, total: s[0].total, from: s[0].from, to: s[0].to, kept: s[0].transName || '',
+        extra: s.slice(1).map(function (x) { return x.transName || ''; }).filter(function (v, i, a) { return v && v !== s[0].transName && a.indexOf(v) === i; }) });
+    });
+    var live = g.filter(function (x) { return !drop[x.id]; });
+    /* 2. two different full terms for one vehicle in one year: the one on its own year's billing record wins */
+    if (g[0]._ident.strong) {
+      var full = live.filter(function (x) { var sp = girSpan_(x); return sp !== null && sp >= GIR_DUP.FULL; }).sort(function (a, b) { return String(a.from).localeCompare(String(b.from)); });
+      var used = {};
+      full.forEach(function (a, i) {
+        if (used[a.id]) return;
+        var cl = [a];
+        full.slice(i + 1).forEach(function (b) {
+          if (used[b.id]) return;
+          var lo = a.from > b.from ? a.from : b.from, hi = a.to < b.to ? a.to : b.to, ov = gcmDays_(lo, hi);
+          if (ov !== null && ov >= GIR_DUP.OVERLAP) cl.push(b);
+        });
+        if (cl.length < 2) return;
+        cl.forEach(function (x) { used[x.id] = 1; });
+        var ok = cl.filter(girTransOk_), pool = (ok.length ? ok : cl).slice().sort(better), win = pool[0];
+        cl.forEach(function (x) { if (x !== win) drop[x.id] = 1; });
+        notes.push({ kind: ok.length === 1 ? 'wrong' : 'conflict', label: label, kept: { total: win.total, from: win.from, to: win.to, trans: win.transName || '' },
+          others: cl.filter(function (x) { return x !== win; }).map(function (x) { return { total: x.total, from: x.from, to: x.to, trans: x.transName || '', transYear: (x.transRen || '').slice(0, 4) }; }) });
+      });
+      live = g.filter(function (x) { return !drop[x.id]; });
+    }
+    /* 3. a mid-term change kept as a term of its own: folded into the term it changed */
+    var mains = live.filter(function (x) { var sp = girSpan_(x); return sp !== null && sp >= GIR_DUP.FULL; });
+    live.forEach(function (t) {
+      var sp = girSpan_(t); if (sp === null || sp >= GIR_DUP.FULL) return;
+      var m = mains.filter(function (x) {
+        if (x === t || !t.from || !x.from) return false;
+        var into = gcmDays_(x.from, t.from), end = gcmDays_(x.to, t.to);
+        return into !== null && into >= GIR_DUP.MID_MIN && t.from < x.to && end !== null && Math.abs(end) <= GIR_DUP.MID_END;
+      }).sort(function (a, b) { return (b.trans === t.trans ? 1 : 0) - (a.trans === t.trans ? 1 : 0); })[0];
+      if (!m) return;
+      drop[t.id] = 1;
+      if (m.base === undefined) m.base = m.total;
+      (m.mid = m.mid || []).push({ from: t.from, to: t.to, total: t.total });
+      m.total = girR_(m.total + girNum_(t.total));
+      notes.push({ kind: 'mid', label: label, base: m.base, add: t.total, from: t.from, total: m.total });
+    });
+  });
+  items.forEach(function (x) { delete x._ident; });
+  return { keep: items.filter(function (x) { return !drop[x.id]; }), notes: notes };
 }
 /** Whether a newer term is already in Salesforce for each renewal (same policy, or the same vehicle, from about the renewal). */
 function girMarkRenewed_(list) {
@@ -303,7 +402,7 @@ function girMarkRenewed_(list) {
     }
   } catch (e) { return list; }
   list.forEach(function (r) {
-    var mine = r.items.map(function (x) { return x.id; });
+    var mine = r.allIds || r.items.map(function (x) { return x.id; });
     var hit = newer.filter(function (n) {
       if (mine.indexOf(n.Id) >= 0 || !n.From__c) return false;
       var d = gcmDays_(r.ren, gcmYmd_(n.From__c));
@@ -415,7 +514,7 @@ function girPublic_(r) {
     items: r.items.map(function (x) {
       return { id: x.id, name: x.name, vehicle: x.vehicle, make: x.make, model: x.model, year: x.year, value: x.value, cover: x.cover, windscreen: x.windscreen,
         ncd: x.ncd, assignee: x.assignee, coverage: x.coverage, location: x.location, occupancy: x.occupancy, sums: x.sums, cats: x.cats,
-        premium: x.premium, total: x.total, from: x.from, to: x.to, noEnd: x.noEnd, policy: x.policy, trans: x.trans };
+        premium: x.premium, total: x.total, base: x.base === undefined ? null : x.base, mid: x.mid || null, from: x.from, to: x.to, noEnd: x.noEnd, policy: x.policy, trans: x.trans };
     }) };
 }
 
@@ -434,19 +533,30 @@ function girHistory_(r, opt) {
   var empty = { years: [], vehicles: [], since: '', summary: null, gaps: [] };
   if (!where.length) return empty;
   var rows = [];
-  try { rows = gcmQuery_('SELECT Id, Policy__c, Vehicle__c, Vehicle_Make__c, Model__c, Cover1__c, Total_Cover__c, Premium_01_Cover_01__c, Total_Premiums_Gov_t_Inclusive__c, ' +
-    'From__c, To__c, Risk_Location__c, TRANSACTIONS__c, Client_Portfolio_Look_Up__c FROM Risk_Details__c WHERE ' + where.join(' OR ') + ' ORDER BY From__c ASC'); } catch (e) { empty.error = String(e.message || e).slice(0, 200); return empty; }
+  try { rows = gcmQuery_('SELECT Id, Policy__c, Vehicle__c, Vehicle_Make__c, Model__c, Chassis__c, Serial_1__c, Serial_2__c, Serial_3__c, Serial_4__c, Make_Model_Category_1__c, ' +
+    'Cover1__c, Total_Cover__c, Premium_01_Cover_01__c, Total_Premiums_Gov_t_Inclusive__c, Motor_Vehicle_Coverage_Type__c, Property_Coverage_Type__c, Property_Type__c, ' +
+    'From__c, To__c, Risk_Location__c, TRANSACTIONS__c, TRANSACTIONS__r.Name, TRANSACTIONS__r.Renewal_Date__c, CreatedDate, Client_Portfolio_Look_Up__c FROM Risk_Details__c WHERE ' + where.join(' OR ') + ' ORDER BY From__c ASC'); } catch (e) { empty.error = String(e.message || e).slice(0, 200); return empty; }
   var mineV = {}; vehicles.forEach(function (v) { mineV[v] = 1; });
   rows = rows.filter(function (x) { return girPolKey_(x.Policy__c) === r.pk || (x.Vehicle__c && mineV[String(x.Vehicle__c).trim()]); });
+  /* one row an item and term, as the month reads them (girDedupe_): a double entry is counted once, a mid-term change is
+     added to the term it changed */
+  rows = girDedupe_(rows.map(function (x) {
+    var tr = x.TRANSACTIONS__r || {}, to = gcmYmd_(x.To__c);
+    return { id: String(x.Id), raw: x, vehicle: String(x.Vehicle__c || '').trim(), chassis: String(x.Chassis__c || '').trim(), location: String(x.Risk_Location__c || '').trim(),
+      cats: [1, 2, 3, 4].map(function (i) { return { serial: x['Serial_' + i + '__c'] || '', model: i === 1 ? x.Make_Model_Category_1__c || '' : '' }; }).filter(function (c) { return c.serial; }),
+      coverage: x.Motor_Vehicle_Coverage_Type__c || x.Property_Coverage_Type__c || '', propType: x.Property_Type__c || '', cover: girNum_(x.Total_Cover__c), value: girNum_(x.Cover1__c),
+      from: gcmYmd_(x.From__c) || (to ? girAddYears_(to, -1) : ''), to: to, total: girNum_(x.Total_Premiums_Gov_t_Inclusive__c),
+      trans: x.TRANSACTIONS__c || '', transName: tr.Name || '', transRen: gcmYmd_(tr.Renewal_Date__c), created: String(x.CreatedDate || '') };
+  })).keep;
   var years = {}, veh = {}, since = '', gaps = [], fullT = {};
-  rows.forEach(function (x) {
-    var from = gcmYmd_(x.From__c) || (x.To__c ? girAddYears_(gcmYmd_(x.To__c), -1) : '');
+  rows.forEach(function (row) {
+    var x = row.raw, from = row.from;
     if (!from) return;
     if (!since || from < since) since = from;
     var y = from.slice(0, 4), t = years[y] || (years[y] = { year: y, from: from, to: '', premium: 0, cover: 0, items: 0, policies: [], risks: [], trans: [], bills: [], claims: [], tasks: [] });
     if (from < t.from) t.from = from;
     var to = gcmYmd_(x.To__c); if (to && to > t.to) t.to = to;
-    var prem = girNum_(x.Total_Premiums_Gov_t_Inclusive__c), val = girNum_(x.Cover1__c) || girNum_(x.Total_Cover__c);
+    var prem = girR_(row.total), val = girNum_(x.Cover1__c) || girNum_(x.Total_Cover__c);
     t.premium = girR_(t.premium + prem);
     t.cover += girNum_(x.Total_Cover__c) || girNum_(x.Cover1__c);
     t.items++;
@@ -609,6 +719,20 @@ var GIR_INS = { DEP_LOW: 0.06, DEP_HIGH: 0.12, DRIFT: 0.05, STALE_YEARS: 2, LATE
 function girInsights_(r, hist, claims, bills, notice, today) {
   var out = [], add = function (level, title, text) { out.push({ level: level, title: title, text: text }); };
   var days = gcmDays_(today, r.ren), comp = r.items.some(function (x) { return /comprehensive|fire and theft|tpft/i.test(String(x.coverage || '')); });
+  (r.noPol || []).forEach(function (f) {
+    add('check', f.label + ' has no policy number in Salesforce', 'It is on the same billing record' + (f.trans ? ' (' + f.trans + ')' : '') + ' as ' + r.policy + ', so the desk counts it with this renewal. Add the policy number to its record.');
+  });
+  (r.fixes || []).forEach(function (f) {
+    var term = function (t) { return tDmy_(t.from) + ' to ' + tDmy_(t.to); };
+    if (f.kind === 'conflict') add('act', f.label + ': two different terms for one year', 'Salesforce has ' + [f.kept].concat(f.others).map(function (t) { return girMoney_(t.total) + ' (' + term(t) + ')'; }).join(' and ') +
+      ' for the same ' + (/^Chassis|serial/.test(f.label) ? 'item' : 'vehicle') + '. The desk counts ' + girMoney_(f.kept.total) + ', the first entered. Check which is right before the letter goes, and correct the other in Salesforce.');
+    if (f.kind === 'wrong') add('check', f.label + ': a second term in Salesforce for this year', f.others.map(function (t) { return girMoney_(t.total) + ' (' + term(t) + ')' + (t.trans ? ' on ' + t.trans : '') + (t.transYear ? ', a billing record for ' + t.transYear : ''); }).join('; ') +
+      '. The desk counts ' + girMoney_(f.kept.total) + ', the term on this year\'s billing record' + (f.kept.trans ? ' (' + f.kept.trans + ')' : '') + '. Correct or remove the other in Salesforce.');
+    if (f.kind === 'dup') add('check', f.label + ' is in Salesforce ' + f.n + ' times for one term', 'The same term (' + term(f) + ', ' + girMoney_(f.total) + ') is entered ' + f.n + ' times. The desk counts it once' +
+      (f.extra.length ? '; the extra is on ' + f.extra.join(', ') + (f.kept ? ', not ' + f.kept : '') : '') + '. Remove the extra in Salesforce so reports count it once too.');
+    if (f.kind === 'mid') add('note', f.label + ': a mid-term change is in last year\'s premium', girMoney_(f.add) + ' from ' + tDmy_(f.from) + ', kept in Salesforce as a term of its own, is added to the term: ' +
+      girMoney_(f.base) + ' + ' + girMoney_(f.add) + ' = ' + girMoney_(f.total) + '.');
+  });
   if (!r.contact.email) add('act', 'No e-mail for the client', 'Salesforce has no e-mail for ' + (r.contact.name || 'the client') + '. Add it (or type it on the letter step) before the letter can go.');
   if (!notice && days !== null && days <= 35) add('act', 'Guardian General’s notice is not read yet', 'The renewal is in ' + days + ' days. Find the notice in support@ (step 2), or ask CRMS Renewals for it.');
   if (days !== null && days < GIR.LETTER_BY && days >= 0) add('act', 'The letter is due now', 'The letter should go at least ' + GIR.LETTER_BY + ' days before the renewal; there are ' + days + '.');
