@@ -732,8 +732,21 @@ function findPersonByEmail_(email) {
 
 /** Agent numbers are typed on a phone, so they are matched with the
  *  punctuation and leading zeros taken off: 0745444, 745444 and
- *  745-444 are all the same agent. */
-function normNo_(v) { return str_(v).toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^0+/, ''); }
+ *  745-444 are all the same agent.
+ *
+ *  AND WITH A LETTER PREFIX TAKEN OFF TOO. The Agent Skill Bank writes a
+ *  number as A10024 and the card the agent is reading says 10024, so a
+ *  comparison that keeps the A refuses the person it is looking at. Worse,
+ *  a phone's number pad cannot type an A at all, so that agent has no way
+ *  in. tWho_ in the branch app has always read the two as one agent; this
+ *  does the same, and only when what is left is all digits — so a row that
+ *  really is letters ('SASHA') is still compared whole. */
+function normNo_(v) {
+  var s = str_(v).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  var d = s.replace(/^[A-Z]+/, '');
+  if (d && /^[0-9]+$/.test(d)) s = d;
+  return s.replace(/^0+/, '');
+}
 
 function findPersonByAgentNo_(no) {
   no = normNo_(no);
