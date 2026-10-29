@@ -136,13 +136,15 @@ function girClientName_(acct, rt, contactName) {
 function girFirst_(s) { return String(s || '').trim().split(/\s+/)[0] || ''; }
 function girStage_(k) { return GIR_STAGES[k] || GIR_STAGES.due; }
 function girLive_() { try { return String(PropertiesService.getScriptProperties().getProperty(GIR.LIVE_PROP) || '') === 'on'; } catch (e) { return false; } }
-function girTestTo_(who) {
+function girTestTo_(who, more) {
   var extra = [];
   try { extra = String(PropertiesService.getScriptProperties().getProperty(GIR.TEST_TO_PROP) || '').split(/[,;\s]+/).filter(String); } catch (e) {}
-  var list = [String(who && who.email || '')].concat(extra.length ? extra : GIR.TEST_TO), seen = {}, out = [];
+  var list = [String(who && who.email || '')].concat(more || [], extra.length ? extra : GIR.TEST_TO), seen = {}, out = [];
   list.forEach(function (a) { a = String(a || '').trim(); var k = a.toLowerCase(); if (a && !seen[k] && /@/.test(a)) { seen[k] = 1; out.push(a); } });
   return out;
 }
+/** Every address a letter went to: one in live mode, the list a test letter went to in test mode. */
+function girSentTo_(st) { return gcmText_(st && st['Sent to']).split(/[,;\s]+/).filter(function (a) { return /@/.test(a); }); }
 function girWorking_(ymd) { return typeof gblWorkingDay_ === 'function' ? gblWorkingDay_(ymd) : gcmDow_(ymd) <= 5; }
 function girNextWorking_(ymd) { var d = gcmAddDays_(ymd, 1); while (!girWorking_(d)) d = gcmAddDays_(d, 1); return d; }
 function girPrevWorking_(ymd) { var d = gcmAddDays_(ymd, -1); while (!girWorking_(d)) d = gcmAddDays_(d, -1); return d; }
@@ -403,7 +405,7 @@ function girOne_(p) {
     proceed: s && s['Proceed at'] ? { by: gcmText_(s['Proceed by']), at: gcmWhen_(s['Proceed at']), to: gcmText_(s['GG to']), subject: gcmText_(s['GG subject']),
       trans: gcmText_(s['New trans']), risks: girJ_(s['New risks'], []), follow: gcmText_(s['Follow task']), event: gcmText_(s.Event) } : null,
     chases: s ? girJ_(s.Chases, []) : [], ggReply: s ? girJ_(s['GG reply'], null) : null, delivered: s ? gcmText_(s.Delivered) : '', paid: s ? gcmText_(s.Paid) : '',
-    outcome: s ? gcmText_(s.Outcome) : '', log: log, sfUrl: girSfBase_() };
+    outcome: s ? gcmText_(s.Outcome) : '', log: log, sfUrl: girSfBase_(), practice: girPracticeFor_(who, s) };
 }
 function girSfBase_() { try { return svcSfToken_().instance_url + '/'; } catch (e) { return ''; } }
 /** The renewal without Salesforce's raw shape: what the pages and the letter need. */
@@ -903,6 +905,7 @@ function girMail_(to, subject, html, o) {
   tMsSend_(to, subject, html, Object.assign({ replyTo: TRANSITION.MS_FROM }, o || {}));
 }
 function girInternal_(to, subject, html) {
+  if (!girLive_() && !/^\[TEST\]/.test(subject)) subject = '[TEST] ' + subject;
   if (typeof gblInternalMail_ === 'function') return gblInternalMail_(to, subject, html + '<p style="color:#777;font-size:12px">' + tEsc_(tInternal_(null)) + '</p>');
   try { MailApp.sendEmail({ to: to, subject: subject, htmlBody: html, name: 'Ricky Rampersad Branch' }); return true; } catch (e) { return false; }
 }
@@ -948,6 +951,7 @@ function girAct_(b) {
       case 'email': {
         var em = String(b.email || '').trim();
         if (!gcmEmailOk_(em)) return { ok: false, error: 'That does not look like an e-mail address.' };
+        if (girOurAddress_(em)) return { ok: false, error: 'That is one of our own addresses: the letter is for the client.' + (girLive_() ? '' : ' In test mode it already goes to you, the person who has the renewal and the test inbox.') };
         save({ 'E-mail': em });
         girLog_(key, r, 'e-mail set', who.name, em);
         return { ok: true, said: 'The letter will go to ' + em + '. Put it in Salesforce too, on the client\'s contact.' };
@@ -1028,6 +1032,10 @@ function girAct_(b) {
       case 'comment': {
         var tx = String(b.text || '').trim();
         if (tx.length < 3) return { ok: false, error: 'Write the comment first.' };
+        if (!girLive_() && !gcmText_(st && st.Task)) {
+          girLog_(key, r, 'comment (test)', who.name, tx);
+          return { ok: true, said: 'Test mode: kept on the desk\'s log. Live, it goes on the renewal task\'s Chatter.' };
+        }
         var tid = gcmText_(st && st.Task) || (girTasks_(r).filter(function (t) { return t.renewal; })[0] || {}).id || '';
         if (!tid) return { ok: false, error: 'There is no renewal task yet: it opens when the letter goes.' };
         var fid = girFeed_(tid, 'Renewal desk · ' + who.name + ': ' + tx);
@@ -1035,6 +1043,14 @@ function girAct_(b) {
         return { ok: !!fid, said: fid ? 'Posted on the renewal task\'s Chatter.' : 'Salesforce did not take the post.' };
       }
       case 'proceed': return girProceed_(who, r, st, b, save);
+      case 'reset': {
+        var pr = girPracticeFor_(who, st);
+        if (!pr.can) return { ok: false, error: pr.why };
+        var from = b.from === 'start' ? 'start' : 'letter';
+        save(girPracticePatch_(st, from));
+        girLog_(key, r, 'practice: started again ' + (from === 'start' ? 'from the beginning' : 'from the letter'), who.name, from === 'start' ? 'everything cleared' : 'the notice, values and letter kept; the letter needs approving again');
+        return { ok: true, said: from === 'start' ? 'Started again from the beginning: take it, read the notice and draft the letter.' : 'Started again from the letter: send it for approval when it reads right.' };
+      }
       case 'ggReply': {
         var gr = { at: gcmWhen_(new Date()), subject: String(b.text || 'marked by ' + who.name).slice(0, 200), by: who.name, ready: gcmYes_(b.ready) };
         save({ 'GG reply': gr, Stage: gr.ready ? 'confirmed' : stage });
@@ -1085,17 +1101,17 @@ function girApproveSend_(who, r, st, b, save) {
   if (!gcmEmailOk_(email)) return { ok: false, error: 'There is no e-mail for the client. Add one first.' };
   var live = girLive_(), claims = girClaims_(r), hist = girHistory_(r, { claims: claims }), values = girJ_(st && st.Values, {});
   var holder = gcmText_(st && st.Holder) || who.name;
-  var test = !live, to = test ? girTestTo_(who) : [email];
+  var test = !live, to = test ? girTestTo_(who, [gcmText_(st && st['Holder e-mail'])]) : [email];
   var m = girLetterHtml_(r, { notice: notice, letter: letter, values: values, hist: hist, email: test ? to[0] : email, holder: girTitle_(holder) },
     { banner: test ? '<b>TEST</b> · the renewal desk is in test mode. Live, this goes to <b>' + tEsc_(email) + '</b> with sales support copied.' : '' });
   girMail_(to[0], (test ? '[TEST] ' : '') + m.subject, m.html, { cc: test ? to.slice(1) : GCM.COPY });
   var task = '', wrote = test ? gcmYes_(b.writeSf) : true;
   if (wrote && tSfOn_()) { try { task = girRenewalTask_(r, st, who); } catch (e) { task = ''; } }
   if (task) girFeed_(task, 'Renewal desk · renewal letter ' + (test ? '(TEST) ' : '') + 'sent to ' + (test ? to[0] : email) + ', approved by ' + who.name + '. New premium ' + girMoney_(notice.total) + ' (last year ' + girMoney_(r.lastPremium) + '). The client approves on their renewal page; their answer comes here.');
-  save({ Stage: 'sent', 'Approved by': who.name, 'Approved at': new Date(), 'Sent at': new Date(), 'Sent to': test ? to[0] : email, Test: test ? 'Y' : '', Task: task || gcmText_(st && st.Task),
+  save({ Stage: 'sent', 'Approved by': who.name, 'Approved at': new Date(), 'Sent at': new Date(), 'Sent to': test ? to.join(', ') : email, Test: test ? 'Y' : '', Task: task || gcmText_(st && st.Task),
     'Client view': girClientView_(r, notice, letter, hist, claims, values) });
   girLog_(r.key, r, test ? 'letter sent (TEST)' : 'letter sent', who.name, (test ? to.join(', ') : email) + (task ? '; renewal task ' + task : ''));
-  return { ok: true, said: test ? 'Approved. TEST: the letter went to ' + to.join(', ') + ' (not the client).' + (task ? ' The renewal task is open.' : '') : 'Approved and sent to ' + email + '. The renewal task is open on last year\'s record.' };
+  return { ok: true, said: test ? 'Approved. TEST: the letter went to ' + to.join(', ') + ' (not the client). Any of you can sign in at ' + GIR.SITE + ' with your own e-mail and answer it as the client.' + (task ? ' The renewal task is open.' : '') : 'Approved and sent to ' + email + '. The renewal task is open on last year\'s record.' };
 }
 
 /* ── proceed to renew ──────────────────────────────────────────────────────────────────── */
@@ -1258,7 +1274,9 @@ function girTick_(o) {
     var r = { key: key, policy: gcmText_(st.Policy), client: gcmText_(st.Client), ren: gcmYmd_(st.Renewal), lineLabel: gcmText_(st.Line), trans: gcmText_(st['Last trans']).split(/\s+/).filter(String) };
     try {
       if (stage === 'instructed') {
-        var rep = girGgReplied_(r, st);
+        /* a practice instruction (test mode, Salesforce not written) never went to Guardian General: their mail about the
+           real policy is not its reply */
+        var rep = gcmText_(st.Test) === 'Y' && !gcmText_(st['New trans']) ? null : girGgReplied_(r, st);
         if (rep) {
           girSave_(key, { 'GG reply': rep, Stage: rep.ready ? 'confirmed' : stage });
           if (gcmText_(st['Follow task'])) girFeed_(gcmText_(st['Follow task']), 'Renewal desk · Guardian General replied ' + rep.at + ' (' + rep.from + '): "' + rep.subject + '"' + (rep.ready ? '. The documents look ready: the delivery is moved to the next working day.' : '.'));
@@ -1270,7 +1288,7 @@ function girTick_(o) {
           if (c.ok && !c.skipped) done.chases++;
         }
       } else if (stage === 'sent' || stage === 'changes') {
-        var days = gcmDays_(today, r.ren), rem = girJ_(st.Reminders, {}), email = gcmText_(st['Sent to']);
+        var days = gcmDays_(today, r.ren), rem = girJ_(st.Reminders, {}), sentTo = girSentTo_(st), email = sentTo[0] || '';
         var step = days <= GIR.CALL_AT ? 'call' : days <= GIR.REMIND[1] ? 'r' + GIR.REMIND[1] : days <= GIR.REMIND[0] ? 'r' + GIR.REMIND[0] : '';
         if (!step || rem[step]) return;
         /* a letter that went late gets two working days before the first reminder follows it */
@@ -1299,7 +1317,7 @@ function girTick_(o) {
           var html = '<div style="max-width:600px;font:15px/1.6 Arial,sans-serif;color:#1d2b3a"><p>Hello,</p><p>A reminder that your ' + tEsc_(String(r.lineLabel).toLowerCase()) + ' policy <b>' + tEsc_(r.policy) + '</b> renews on <b>' + tEsc_(tDmy_(r.ren)) +
             '</b>, in ' + days + ' days' + (view.total ? ', at ' + tEsc_(girMoney_(view.total)) + ' tax included' : '') + '. We renew only once you say yes.</p><p><a href="' + link + '" style="display:inline-block;background:#0d1f33;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:9px">Review and approve your renewal</a></p>' +
             '<p>Or simply reply to this e-mail, or call the branch on ' + GIR.BRANCH_TELS + '.</p><p>Warm regards,<br>Ricky Rampersad Branch · Guardian Life of the Caribbean</p><div style="font-size:11px;color:#6b7785">' + tLegal_(null) + '</div></div>';
-          girMail_(email, (test ? '[TEST] ' : '') + 'Reminder: your renewal on ' + tDmy_(r.ren) + ' · policy ' + r.policy, html, { cc: test ? [] : GCM.COPY });
+          girMail_(email, (test ? '[TEST] ' : '') + 'Reminder: your renewal on ' + tDmy_(r.ren) + ' · policy ' + r.policy, html, { cc: test ? sentTo.slice(1) : GCM.COPY });
           rem[step] = { at: gcmWhen_(now) };
           done.reminders++;
         }
@@ -1322,7 +1340,8 @@ function girRowsFor_(email) {
   if (!email) return [];
   return girRows_(GIR.TAB).filter(function (st) {
     if (!st['Sent at'] || gcmText_(st.Stage) === 'lost') return false;
-    return gcmText_(st['Sent to']).toLowerCase() === email || (gcmText_(st.Test) !== 'Y' && gcmText_(st['E-mail']).toLowerCase() === email);
+    if (gcmText_(st.Test) === 'Y') return girSentTo_(st).some(function (a) { return a.toLowerCase() === email; });
+    return gcmText_(st['Sent to']).toLowerCase() === email || gcmText_(st['E-mail']).toLowerCase() === email;
   });
 }
 /** gcm.renCode: a six-digit code to the address, when we have a renewal for it. The answer is the same either way. */
@@ -1363,7 +1382,7 @@ function girView_(st) {
     steps: steps.map(function (s) { return { k: s[0], label: s[1], done: at >= GIR_STAGES[s[0]].n && !(s[0] === 'approved' && stage === 'changes') }; }),
     answer: a ? { decision: a.decision, at: a.at, comment: a.comment, values: a.values || {}, name: a.name } : null,
     comments: (a && a.history || []).concat(a && a.comment ? [{ at: a.at, text: a.comment, name: a.name }] : []).slice(-8),
-    open: ['sent', 'changes', 'approved'].indexOf(stage) >= 0, holder: girTitle_(gcmText_(st.Holder)) || 'our renewals team' });
+    open: ['sent', 'changes', 'approved'].indexOf(stage) >= 0, holder: girTitle_(gcmText_(st.Holder)) || 'our renewals team', practice: gcmText_(st.Test) === 'Y' });
 }
 /** gcm.renMine: the client's renewals. */
 function girMine_(p) {
@@ -1395,7 +1414,8 @@ function girTakeAnswer_(st, b, name, via) {
   girLog_(key, r, 'client ' + (decision === 'approve' ? 'approved' : decision === 'changes' ? 'asked for changes' : 'asked a question'), name || 'the client', comment);
   var task = gcmText_(st.Task), owner = '';
   /* no task recorded (a letter sent in test mode): the renewal task already open on last year's record, if there is one */
-  if (!task && tSfOn_()) {
+  var test = gcmText_(st.Test) === 'Y';
+  if (!task && !test && tSfOn_()) {
     try {
       var rr = girFind_(key), dg = girDigits_(r.policy);
       var ot = rr ? girTasks_(rr).filter(function (t) { return /risk to renew/i.test(t.subject) && dg && t.subject.replace(/\s+/g, '').indexOf(dg) >= 0; })[0] : null;
@@ -1405,7 +1425,7 @@ function girTakeAnswer_(st, b, name, via) {
   if (task && !owner && tSfOn_()) { try { var t = gcmQuery_("SELECT OwnerId FROM Task WHERE Id = '" + svcSoqlLit_(task) + "' LIMIT 1")[0]; owner = t ? String(t.OwnerId || '') : ''; } catch (e) {} }
   if (task) girFeed_(task, 'From the client on their renewal page' + (name ? ' (' + name + ')' : '') + ' · ' + via + ': ' + said + (comment ? '\n"' + comment + '"' : '') + '\n', owner);
   var tell = [gcmText_(st['Holder e-mail'])].concat(girApprovers_().map(function (a) { return a.email; })).filter(function (e, i, arr) { return e && arr.indexOf(e) === i; });
-  tell.forEach(function (e) { girInternal_(e, (decision === 'approve' ? 'Approved' : decision === 'changes' ? 'Changes asked' : 'Question') + ' · renewal · ' + r.client + ' · ' + r.policy,
+  tell.forEach(function (e) { girInternal_(e, (test ? '[TEST] ' : '') + (decision === 'approve' ? 'Approved' : decision === 'changes' ? 'Changes asked' : 'Question') + ' · renewal · ' + r.client + ' · ' + r.policy,
     '<p><b>' + tEsc_(r.client) + '</b> ' + tEsc_(said) + ' on their renewal page' + (name ? ' (' + tEsc_(name) + ')' : '') + '.</p>' + (comment ? '<blockquote>' + tEsc_(comment) + '</blockquote>' : '') +
     '<p>' + (decision === 'approve' ? 'Next: proceed to renew on the desk.' : 'Next: answer them, and adjust before proceeding.') + ' <a href="' + GIR.DESK + '#' + encodeURIComponent(key) + '">Open it on the renewal desk</a></p>'); });
   return { ok: true, said: decision === 'approve' ? 'Thank you. We will instruct Guardian General and let you know when your documents are ready.' : decision === 'changes' ? 'Thank you. We will look at the changes and come back to you before anything is renewed.' : 'Thank you. We will answer you shortly.' };
@@ -1441,6 +1461,53 @@ function girGroupAnswer_(b) {
   try { return girTakeAnswer_(st, b, name + (b.role ? ', ' + String(b.role).slice(0, 60) : ''), 'on ' + a.g.name + '\'s service page'); } finally { try { lock.releaseLock(); } catch (e) {} }
 }
 
+/* ── practice runs ─────────────────────────────────────────────────────────────────────── */
+/* In test mode staff practise on the month's real renewals: Salesforce is read, nothing is written unless ticked, and every
+   e-mail goes to the team. A renewal practised that way is a Test row from its letter on; it can be started again on the
+   desk, and girGoLive puts every one back to its letter, so nothing practised reads as sent once the desk is live. */
+var GIR_PRACTICE_CLEAR = ['Submitted by', 'Approved by', 'Approved at', 'Sent at', 'Sent to', 'Test', 'Client view', 'Client answer', 'Reminders',
+  'Proceed by', 'Proceed at', 'GG to', 'GG subject', 'GG sent at', 'GG mail', 'New risks', 'Follow task', 'Event', 'Chases', 'GG reply', 'Delivered', 'Paid', 'Outcome'];
+var GIR_PRACTICE_WORK = ['Notice', 'Values', 'Letter', 'Holder', 'Holder e-mail'];
+/** One of ours: support@, the branch's own mailboxes, anyone on the Agent Skill Bank. */
+function girOurAddress_(em) {
+  em = String(em || '').trim().toLowerCase();
+  if (!em) return false;
+  if (GIR_OURS.test(em) || GIR.TEST_TO.some(function (a) { return a.toLowerCase() === em; })) return true;
+  try { return tTeam_().people.some(function (p) { return String(p.email || '').toLowerCase() === em; }); } catch (e) { return false; }
+}
+/** Whether this person can start this renewal again: { can, why }. */
+function girPracticeFor_(who, st) {
+  if (!st) return { can: false, why: 'Nothing has been done on this renewal yet.' };
+  if (gcmText_(st['New trans'])) return { can: false, why: 'Salesforce was written for this renewal (a new billing record), so it really went ahead and cannot be started again.' };
+  if (girLive_() && gcmText_(st.Test) !== 'Y') return { can: false, why: 'The desk is live: only a renewal practised in test mode can be started again.' };
+  var holder = gcmText_(st.Holder).toLowerCase();
+  if (!who.approver && (!holder || holder !== String(who.name || '').toLowerCase())) return { can: false, why: 'Only the person who has this renewal, the branch manager or the Branch Manager\'s Assistant can start it again.' };
+  return { can: true, why: '' };
+}
+/** The fields that put a renewal back: to its letter (the notice, values and letter kept), or to the start. */
+function girPracticePatch_(st, from) {
+  var p = {};
+  GIR_PRACTICE_CLEAR.forEach(function (h) { p[h] = ''; });
+  if (from === 'start') { GIR_PRACTICE_WORK.forEach(function (h) { p[h] = ''; }); p.Stage = ''; }
+  else p.Stage = girJ_(st && st.Letter, null) ? 'drafted' : girJ_(st && st.Notice, null) ? 'notice' : '';
+  if (girOurAddress_(gcmText_(st && st['E-mail']))) p['E-mail'] = '';
+  return p;
+}
+/** Every renewal practised in test mode, back to its letter. A renewal Salesforce was written for is left and named. */
+function girClearPractice_() {
+  var out = { cleared: [], kept: [], emails: [] };
+  girRows_(GIR.TAB).forEach(function (st) {
+    var key = gcmText_(st.Key), r = { policy: gcmText_(st.Policy), client: gcmText_(st.Client) }, name = r.client + ' · ' + r.policy;
+    if (girOurAddress_(gcmText_(st['E-mail'])) && !gcmText_(st['New trans'])) { girSave_(key, { 'E-mail': '' }); out.emails.push(name); }
+    if (gcmText_(st.Test) !== 'Y') return;
+    if (gcmText_(st['New trans'])) { out.kept.push(name); return; }
+    girSave_(key, girPracticePatch_(st, 'letter'));
+    girLog_(key, r, 'practice cleared', 'the desk', 'the test letter and everything after it; the notice, values and letter are kept and need approving again');
+    out.cleared.push(name);
+  });
+  return out;
+}
+
 /* ── the letter, before it goes; the ping; go live ─────────────────────────────────────── */
 /** gcm.renPreview: the letter as the client would read it, for the desk. */
 function girPreview_(p) {
@@ -1458,6 +1525,17 @@ function girPing_() {
   return { live: girLive_(), rows: n, mail: !!tMsCreds_(), ai: !!gcmAiKey_(), salesforce: tSfOn_() };
 }
 /** The editor's Run button: the letters, reminders and instructions go to clients and Guardian General from now on. */
-function girGoLive() { PropertiesService.getScriptProperties().setProperty(GIR.LIVE_PROP, 'on'); return tSay_('The renewal desk is live: letters, reminders and instructions now go to clients and to Guardian General.'); }
+function girGoLive() {
+  var o = girClearPractice_();
+  PropertiesService.getScriptProperties().setProperty(GIR.LIVE_PROP, 'on');
+  return tSay_('The renewal desk is live: letters, reminders and instructions now go to clients and to Guardian General.' + girPracticeSaid_(o));
+}
+/** The editor's Run button: put every practice renewal back to its letter (between training sessions, or before go live). */
+function girClearPractice() { return tSay_('Practice cleared.' + girPracticeSaid_(girClearPractice_())); }
+function girPracticeSaid_(o) {
+  return (o.cleared.length ? ' ' + o.cleared.length + ' practice renewal(s) went back to their letter, which needs approving again before it goes: ' + o.cleared.join('; ') + '.' : ' No practice renewals to clear.') +
+    (o.emails.length ? ' A staff address was taken off as the client\'s e-mail on: ' + o.emails.join('; ') + '.' : '') +
+    (o.kept.length ? ' Left as they are, because Salesforce was written for them: ' + o.kept.join('; ') + '.' : '');
+}
 function girTestMode() { PropertiesService.getScriptProperties().deleteProperty(GIR.LIVE_PROP); return tSay_('The renewal desk is in test mode: client and Guardian General mail goes to the person who pressed and to ' + GIR.TEST_TO.join(', ') + ', marked TEST.'); }
 function girTickNow() { var r = girTick_({ force: true }); return tSay_(JSON.stringify(r.done || r)); }

@@ -34,6 +34,7 @@
     '.rc-fig span{display:block;font-size:.82rem;color:#EAF3FD}' +
     '.rc-chg{background:rgba(255,255,255,.18);border-radius:99px;padding:4px 12px;font-weight:700;font-size:.88rem}' +
     '.rc-body{padding:18px 20px 20px}' +
+    '.rc-prac{background:#FFF7E0;border:1px solid #E8C96A;color:#5A4410;border-radius:12px;padding:10px 12px;margin:0 0 14px;font-size:.92rem}.rc-prac b{color:#3F2F05}' +
     '.rc-track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:0 0 16px;list-style:none;padding:0}' +
     '.rc-track li{font-size:.72rem;font-weight:700;color:#6F7F9C;text-align:center;line-height:1.2}' +
     '.rc-track li i{display:block;height:6px;border-radius:99px;background:#E6EDF7;margin-bottom:6px}' +
@@ -113,7 +114,7 @@
       '<div class="rc-band"><div class="k">' + icon + esc(v.line) + ' · policy ' + esc(v.policy) + '</div><h3>Your renewal on ' + esc(dmy(v.ren)) + '</h3>' +
       '<div class="when">' + (d === null ? '' : d > 0 ? 'In ' + d + ' day' + (d === 1 ? '' : 's') : d === 0 ? 'Today' : Math.abs(d) + ' days ago') + (v.from ? ' · cover ' + esc(dmy(v.from)) + ' to ' + esc(dmy(v.to)) : '') + '</div>' +
       (v.total ? '<div class="rc-fig"><div><b>' + money(v.total) + '</b><span>this year, tax included</span></div>' + (v.lastPremium ? '<div><span>last year ' + money(v.lastPremium) + '</span>' + (change !== null ? '<span class="rc-chg">' + (change > 0 ? 'up ' : change < 0 ? 'down ' : '') + Math.abs(change) + '%</span>' : '') + '</div>' : '') + '</div>' : '') + '</div>' +
-      '<div class="rc-body"><ol class="rc-track" aria-label="Where your renewal stands">' + (v.steps || []).map(function (s) { return '<li class="' + (s.done ? 'on' : '') + '"><i></i>' + esc(s.label) + '</li>'; }).join('') + '</ol>' +
+      '<div class="rc-body">' + (v.practice ? '<p class="rc-prac"><b>Practice letter.</b> Sent while the renewal desk is in test mode, to the team only. Your answer stays on the desk: nothing goes to Guardian General or Salesforce.</p>' : '') + '<ol class="rc-track" aria-label="Where your renewal stands">' + (v.steps || []).map(function (s) { return '<li class="' + (s.done ? 'on' : '') + '"><i></i>' + esc(s.label) + '</li>'; }).join('') + '</ol>' +
       (v.opening ? '<p style="margin:0">' + esc(v.opening) + '</p>' : '') +
       '<div class="rc-sec"><h4>' + ICON.doc + 'What renews</h4>' + (v.items || []).map(function (x) {
         var nv = a && a.values && a.values[x.id];

@@ -63,7 +63,7 @@ function head() {
     '<br><button type="button" onclick="document.getElementById(\'help\').showModal()">How it works</button> · <button type="button" onclick="signOut()">Sign out</button>';
 }
 function testBanner(d) {
-  return d.live ? '' : '<div class="banner test"><b>Test mode.</b> Letters, reminders and instructions go to you and the test inbox, marked TEST. Salesforce is written only when you tick it on a step. The branch manager switches it live.</div>';
+  return d.live ? '' : '<div class="banner test"><b>Test mode: practise freely.</b> These are this month\'s real renewals, read from Salesforce. A letter goes to whoever approves it, the person who has the renewal and the test inbox, marked TEST, never to the client; answer it as the client at <a href="/myrenewal/" target="_blank" rel="noopener">rickyrampersadbranch.com/myrenewal</a> with your own e-mail. Instructions go to you, not Guardian General. Salesforce is written only when you tick it on a step, and comments stay on the desk\'s log. The branch manager switches it live.</div>';
 }
 
 /* ── the month ── */
@@ -163,7 +163,8 @@ function drawOne() {
     '<ol class="steps">' + STEPS.map((s, i) => '<li><button type="button" class="step' + (stepDone(d, i) ? ' done' : '') + '"' + (STEP === i ? ' aria-current="step"' : '') + ' onclick="STEP=' + i + ';drawOne()"><span class="n">' + (stepDone(d, i) && STEP !== i ? '✓' : i + 1) + '</span><span class="t">' + s + '</span></button></li>').join('') + '</ol>' +
     '<div class="two"><div class="card panel" id="panel">' + panel(STEP) + '</div><div>' + sideHtml() + '</div></div>' +
     '<div class="card"><h2 style="font-size:1.1rem;margin-bottom:6px">Every step so far</h2>' + (d.log.length ? '<ul class="log">' + d.log.map(l => '<li><b>' + esc(l.at) + '</b> · ' + esc(l.step) + ' · ' + esc(l.by) + (l.detail ? ' · <span class="muted">' + esc(l.detail) + '</span>' : '') + '</li>').join('') + '</ul>' : '<p class="muted">Nothing yet.</p>') +
-    '<div class="acts">' + (d.stage !== 'lost' && d.stage !== 'done' ? '<button class="btn warn sm" type="button" onclick="lost()">The client is not renewing</button>' : '') + '</div></div>';
+    '<div class="acts">' + (d.stage !== 'lost' && d.stage !== 'done' ? '<button class="btn warn sm" type="button" onclick="lost()">The client is not renewing</button>' : '') +
+      (d.practice && d.practice.can && (!d.live || d.test) ? ' <button class="btn ghost sm" type="button" onclick="practice(\'letter\')">Practice: back to the letter</button> <button class="btn ghost sm" type="button" onclick="practice(\'start\')">Practice: start from the beginning</button>' : '') + '</div></div>';
   wire(STEP);
 }
 function sideHtml() {
@@ -335,6 +336,13 @@ async function doAct(a, extra, msgOk) {
   return r;
 }
 async function setEmail() { await doAct('email', { email: $('em').value.trim() }); }
+async function practice(from) {
+  const q = from === 'start' ? 'Start this renewal again from the beginning? The notice, values, letter and everything after them are cleared, so the next person can practise the whole renewal.'
+    : 'Put this renewal back to its letter? The test letter and everything after it are cleared; the notice, values and letter stay and need approving again.';
+  if (!confirm(q)) return;
+  STEP = from === 'start' ? 0 : 3;
+  await doAct('reset', { from });
+}
 async function lost() {
   const why = prompt('Why is the client not renewing? In their words if you have them.');
   if (why === null) return;
