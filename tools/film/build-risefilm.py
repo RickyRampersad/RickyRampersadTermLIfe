@@ -31,7 +31,7 @@ honest: Randolph is 9.94 years in and belongs under the ten-year line, and
 rounding put a "10" on a bar that the ten-year colour does not claim.
 """
 
-import json, math, re, pathlib
+import json, math, os, re, pathlib
 from datetime import date
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -54,10 +54,17 @@ RIGHT = 'M44 9L73 21.5V41C73 60.5 60.5 72 44 78.5Z'
 # Active AGENT contacts, units Ricky_Rampersad and Akaash_Kalladeen, read from
 # Salesforce on 28 October 2026.  First names only: a surname on a public film
 # earns nothing.  Steven Blanc is active with no hire date on file, so he is in
-# the twenty-three and not in the chart; the chart says twenty-two.
+# the headcount and not in the chart; the chart says one fewer.
+#
+# Two were taken out on the branch manager's word, 29 October 2026 ("take out
+# javid, aleema"), before the film was cut.  Both carried twenty years, so the
+# total, the headcount and the ten-year band all move with them — every figure
+# in this film is derived from this list for exactly that reason, and none is
+# typed into a line by hand.  Nothing in the film says anyone left, here or
+# anywhere: the house rule is that nobody who goes is characterised or counted.
 ROSTER = [
     ("Ricky", 1993, 12), ("Narissa", 1999, 7), ("Richard", 2003, 8),
-    ("Premchand", 2004, 12), ("Javid", 2005, 11), ("Aleema", 2005, 11),
+    ("Premchand", 2004, 12),
     ("Akaash", 2011, 7), ("Joy", 2012, 9), ("Faizal", 2012, 10),
     ("Meera", 2014, 10), ("Petra", 2016, 4), ("Randolph", 2016, 11),
     ("Neil", 2018, 7), ("Varun", 2019, 6), ("Darryl", 2021, 4),
@@ -66,6 +73,32 @@ ROSTER = [
     ("Rajiv", 2026, 7),
 ]
 SUPPORT = ["Kamla", "Sasha", "Elizabeth", "Azariah", "Pawan"]
+
+# ── the branch's own history ─────────────────────────────────────────────────
+#  Every date here is one this repository can show: the day the thing went
+#  live, out of the house notes. Nothing is rounded up and nothing is claimed
+#  that is not in the tree. The spoken count is len(BUILT), so adding one here
+#  and forgetting the line is caught by the assertion under it.
+BUILT = [
+    ('Aug',  'The digital fact find'),
+    ('Sep',  'The transition letters'),
+    ('Sep',  'The assignment board'),
+    ('Oct',  'Group client management'),
+    ('Oct',  'The Premium Due Desk'),
+    ('Oct',  'Match'),
+    ('Oct',  'The stream'),
+    ('Oct',  'The dashboard'),
+    ('Oct',  'The agents view'),
+    ('Oct',  'The training and the test'),
+    ('Oct',  'The Log Book'),
+    ('Oct',  'The Delivery Book'),
+    ('Oct',  'The branch app'),
+    ('Oct',  'Wall Intelligence'),
+    ('Oct',  'Service ratings'),
+    ('Oct',  'The motor quote'),
+    ('Oct',  'Our own quote forms'),
+    ('Oct',  'The meeting builder'),
+]
 
 PEOPLE = []
 for nm, y, m in ROSTER:
@@ -77,11 +110,11 @@ for nm, y, m in ROSTER:
         'band': 'g' if yrs >= 10 else ('t' if yrs < 3 else 's'),
     })
 PEOPLE.sort(key=lambda p: -p['y'])
-TOTAL = int(round(sum(p['y'] for p in PEOPLE)))        # 263
-LONG = sum(1 for p in PEOPLE if p['band'] == 'g')      # 11
-NEW = sum(1 for p in PEOPLE if p['band'] == 't')       # 3
-MID = len(PEOPLE) - LONG - NEW                         # 8
-HEADCOUNT = len(ROSTER) + 1                            # +1, the one with no date
+TOTAL = int(round(sum(p['y'] for p in PEOPLE)))        # derived; do not hand-type it into a line
+LONG = sum(1 for p in PEOPLE if p['band'] == 'g')      # ten years or more
+NEW = sum(1 for p in PEOPLE if p['band'] == 't')       # joined in the last three
+MID = len(PEOPLE) - LONG - NEW                         # the band between
+HEADCOUNT = len(ROSTER) + 1                            # +1, the one with no hire date on file
 MAXY = max(p['y'] for p in PEOPLE)
 
 # data-d is milliseconds. importvox.py writes rise-timing.json in SECONDS and
@@ -108,12 +141,17 @@ def words(text, cls='rsw'):
     return f'<div class="rsline">{sp}</div>'
 
 
-def cnt(to, at=400, pre='', suf=''):
+def cnt(to, at=400, pre='', suf='', sep=False):
     """render.js animates .cnt from its data-to; the true figure is in the
-       markup, so a frame rendered before it runs still shows the right one."""
+       markup, so a frame rendered before it runs still shows the right one.
+
+       sep puts the thousands separator in, on the markup and on every frame
+       render.js writes."""
+    shown = f'{to:,}' if sep else str(to)
     return (f'<b class="rscnt cnt" data-to="{to}" data-at="{at}"'
+            f'{f" data-sep={chr(34)}1{chr(34)}" if sep else ""}'
             f'{f" data-pre={chr(34)}{pre}{chr(34)}" if pre else ""}'
-            f'{f" data-suf={chr(34)}{suf}{chr(34)}" if suf else ""}>{pre}{to}{suf}</b>')
+            f'{f" data-suf={chr(34)}{suf}{chr(34)}" if suf else ""}>{pre}{shown}{suf}</b>')
 
 
 def crack(cls=''):
@@ -169,7 +207,7 @@ def tenure_chart(coloured):
     return f'<div class="rschart{" lit" if coloured else ""}">{cols}</div>'
 
 
-def donut(part, whole, label):
+def donut(part, whole, label, mid=None):
     """Part to whole, one accent against the recessive slate, labelled in the
        middle — never a pie, never a slice nobody can compare."""
     r, c = 15.9155, 2 * math.pi * 15.9155
@@ -178,7 +216,7 @@ def donut(part, whole, label):
             f'<circle class="do-bg" cx="21" cy="21" r="{r}"/>'
             f'<circle class="do-fg" cx="21" cy="21" r="{r}" '
             f'style="--dash:{c*frac:.2f};--gap:{c*(1-frac):.2f};--c:{c:.2f}"/>'
-            f'</svg><div class="rsdol"><b>{part}</b></div></div>'
+            f'</svg><div class="rsdol"><b>{mid if mid is not None else part}</b></div></div>'
             f'<div class="rsdocap">{label}</div>')
 
 
@@ -192,6 +230,39 @@ def arc(part, whole, mid, sub):
             f'style="--dash:{c*frac:.2f};--gap:{c*(1-frac):.2f};--c:{c:.2f}"/></svg>'
             f'<div class="rsarcl"><b>{mid}</b><span>{sub}</span></div></div>')
 
+
+# ── the spoken figures must be the derived ones ──────────────────────────────
+#  Two people came off the roster on 29 October and three narrated figures
+#  moved with them. A line is recorded once and then lives in an MP4 that
+#  nobody re-reads, so the film asserts its own arithmetic rather than trusting
+#  whoever edited the roster to remember the script.
+_ONES = ('zero one two three four five six seven eight nine ten eleven twelve '
+         'thirteen fourteen fifteen sixteen seventeen eighteen nineteen').split()
+_TENS = ('  twenty thirty forty fifty sixty seventy eighty ninety').split()
+
+
+def spoken(n):
+    if n < 20:
+        return _ONES[n]
+    if n < 100:
+        t, r = divmod(n, 10)
+        return _TENS[t - 2] + ('-' + _ONES[r] if r else '')
+    h, r = divmod(n, 100)
+    return _ONES[h] + ' hundred' + (' and ' + spoken(r) if r else '')
+
+
+def _say(key):
+    return next(x['say'] for x in LINES['scenes'] if x['v'] == key).lower()
+
+
+for key, want in (('count', HEADCOUNT), ('years', TOTAL), ('mix', LONG)):
+    said = _say(key)
+    assert spoken(want) in said, (
+        f'scene {key!r} says {said!r} but the roster now gives {want} '
+        f'({spoken(want)}). Edit rise-lines.json and re-voice that line.')
+assert spoken(NEW) in _say('mix'), 'the mix line has the wrong new-joiner count'
+assert str(len(BUILT)) in _say('built') or spoken(len(BUILT)) in _say('built'), \
+    'the built line and BUILT disagree on how many things went live'
 
 # ── the scenes ───────────────────────────────────────────────────────────────
 
@@ -213,6 +284,26 @@ def V(name, s):
     if name == 'held':
         return (f'<div class="rsstage">{shield("cold steady")}{mesh("thin")}{crack("held")}'
                 f'</div><div class="rscap"><div class="rseyeb">{on}</div></div>')
+
+    # 3a · the proof that it held, and the best number in the film. Requests
+    #      closed by the five desks, read off Salesforce on 29 October 2026,
+    #      logged e-mails and the birthday flow left out as everywhere else.
+    #      September is the month it happened; October is still running, which
+    #      the foot says, because a figure that is going to grow is stronger
+    #      stated short than rounded up.
+    if name == 'rose':
+        a, b = 204, 240
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rspair">'
+                f'<div class="rspb" style="--h:{a / b * 100:.0f}">'
+                f'<span class="rspn">{cnt(a, 300)}</span><i></i>'
+                f'<span class="rspl">September</span></div>'
+                f'<div class="rspb lit" style="--h:100">'
+                f'<span class="rspn">{cnt(b, 600)}</span><i></i>'
+                f'<span class="rspl">October</span></div>'
+                f'<div class="rspd">+{round((b - a) / a * 100)}%</div></div>'
+                f'<div class="rsfoot">requests closed &middot; October still has two days to run</div>'
+                f'</div>')
 
     # 4 · so look at who is still standing.
     if name == 'stayed':
@@ -252,6 +343,42 @@ def V(name, s):
                 f'<div class="rsdonut">{donut(LONG, len(PEOPLE), f"of {len(PEOPLE)} at ten years or more")}</div>'
                 f'</div>')
 
+    # 7a · the branch on one line. A dot for every person at the year they
+    #      joined, stacked where a year repeats, so the eye reads a branch
+    #      that has been keeping people for three decades rather than a list.
+    if name == 'story':
+        y0, y1 = 1993, TODAY.year
+        span = y1 - y0
+        seen = {}
+        dots = ''
+        for i, (nm, yy, mm) in enumerate(sorted(ROSTER, key=lambda r: (r[1], r[2]))):
+            at = (yy + (mm - 1) / 12 - y0) / span * 100
+            k = round(at / 3)
+            seen[k] = seen.get(k, 0) + 1
+            dots += (f'<span class="rsdot" style="--x:{at:.2f};--s:{seen[k] - 1};'
+                     f'--l:{i % 3};--i:{i}"><i>{nm}</i></span>')
+        ticks = ''.join(
+            f'<span class="rstk" style="--x:{(d - y0) / span * 100:.2f}">{d}</span>'
+            for d in range(2000, y1 + 1, 5))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rstl"><span class="rstlr"></span>{dots}'
+                f'<span class="rstla">{y0}</span>'
+                f'<span class="rstlz">{y1}</span>{ticks}</div>'
+                f'<div class="rsfoot">one dot a person, at the year they joined</div>'
+                f'</div>')
+
+    # 9a · and nearly all of it was built since August. The same idea turned on
+    #      its side: eighteen things, ninety days, each landing on the beat.
+    if name == 'built':
+        items = ''.join(
+            f'<div class="rsbi" style="--i:{i}"><span class="rsbm">{m}</span>'
+            f'<span class="rsbd"></span><span class="rsbt">{t}</span></div>'
+            for i, (m, t) in enumerate(BUILT))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rshead">{cnt(len(BUILT), 300)}'
+                f'<span class="rsbigl">of these went live in ninety days</span></div>'
+                f'<div class="rsbuilt">{items}</div></div>')
+
     # 8 · and while that was going on, we rebuilt how the branch runs.
     if name == 'rebuild':
         return (f'<div class="rsstage">{shield("warm")}{mesh("relink")}{crack("held")}</div>'
@@ -282,6 +409,125 @@ def V(name, s):
         return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
                 f'<div class="rswall"><div class="rswbars">{bars}</div></div>'
                 f'<div class="rsfoot">one score, in front of everybody</div></div>')
+
+    # 12a · the work itself. This counts REQUESTS CLOSED, never clients: a
+    #       client count may not go in an MP4 at a public URL, and what the
+    #       branch wants credit for here is its own work anyway. Read off
+    #       Salesforce on 28 October 2026 over the five desks, twelve months,
+    #       with logged e-mails and the birthday flow left out — they are not
+    #       work, and counted they would flatter the record by five to one.
+    if name == 'served':
+        kinds = [('Pendings', 889), ('Renewals and billing', 687),
+                 ('Servicing', 560), ('Scripts and call-backs', 151),
+                 ('Everything else', 208)]
+        top = max(n for _, n in kinds)
+        rows = ''.join(
+            f'<div class="rsrow" style="--i:{i};--p:{n / top * 100:.1f}">'
+            f'<span class="rsnm">{k}</span>'
+            f'<span class="rstrk"><i class="b-n"></i></span>'
+            f'<span class="rsyr">{n}</span></div>'
+            for i, (k, n) in enumerate(kinds))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rshead">{cnt(2495, 300, sep=True)}'
+                f'<span class="rsbigl">requests closed, in twelve months</span></div>'
+                f'<div class="rschart one"><div class="rscol">{rows}</div></div>'
+                f'<div class="rsfoot">the five desks, over the last twelve months</div></div>')
+
+    # 12b · the papers. The Log Book's own year, measured off the old book
+    #       rather than claimed: 3,634 lines, and 72% on to Guardian inside
+    #       one working day.
+    if name == 'papers':
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rsbig">{cnt(3634, 400, sep=True)}'
+                f'<span class="rsbigl">papers through the Log Book</span></div>'
+                f'<div class="rsdonut mid">'
+                f'{donut(72, 100, "on to Guardian inside one working day", mid="72%")}'
+                f'</div></div>')
+
+    # 12c · the fact find. His own line from the FY27 wall, and the one number
+    #       in this film that is a nought on purpose.
+    if name == 'ff':
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rsbig"><span class="rszero">0</span>'
+                f'<span class="rsbigl">of those cases has lapsed</span></div>'
+                f'<div class="rsfoot">since the digital fact find went live</div></div>')
+
+    # 16a · the business stays. Branch 26000 Production and Manpower Record,
+    #       2014-2026: the lowest lapse rate of every branch in the Board Paper
+    #       for 2025, and again for FY2026 to 31 August. The comparison is
+    #       against the main branches, which is how the record states it.
+    #
+    #       NOTHING FROM THESE PAPERS THAT NAMES ANYONE, NAMES A COMPETITOR,
+    #       OR CARRIES A DOLLAR FIGURE IS IN THIS FILM. It sits at a public URL
+    #       anybody can forward, and the four documents behind this scene are a
+    #       three-year plan, a note of a meeting with the Vice President, a unit
+    #       plan that sets out individual agents' quota and persistency, and a
+    #       manpower record that names people who left and people terminated.
+    #       What is here is the branch's own quality record and nothing else.
+    if name == 'keep':
+        #  A lapse rate is 4.96%, not 496. The counter only does whole numbers,
+        #  so these two are plain text: a wrong unit on a headline figure costs
+        #  more than the count-up is worth. Shorter is better here, and the
+        #  foot says so, because a short bar reads as "worse" by default.
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rspair tight">'
+                f'<div class="rspb lit" style="--h:56">'
+                f'<span class="rspn">4.96%</span><i></i>'
+                f'<span class="rspl">this branch</span></div>'
+                f'<div class="rspb" style="--h:100">'
+                f'<span class="rspn">8.82%</span><i></i>'
+                f'<span class="rspl">the main branches</span></div></div>'
+                f'<div class="rsfoot">lapse rate, FY2026 to 31 August &middot; '
+                f'lower is better &middot; the lowest of every branch</div></div>')
+
+    # 16b · and the people stay. The same record, and the note of 12 October:
+    #       ours against the published career-agency figures.
+    if name == 'stay':
+        rows = [('Still here after one year', 67, 58, 'published 55&ndash;60%'),
+                ('Still here after four years', 31, 16, 'published about 16%'),
+                ('The 2023 intake, kept to August', 67, 48, 'network 48%')]
+        out = ''
+        for i, (lab, us, them, note) in enumerate(rows):
+            out += (f'<div class="rsvs" style="--i:{i}">'
+                    f'<span class="rsvl">{lab}</span>'
+                    f'<span class="rsvb"><i class="ours" style="--p:{us}"></i>'
+                    f'<b class="rsmk" style="--p:{them}"><span>{note}</span></b></span>'
+                    f'<span class="rsvn">{us}%</span></div>')
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsvsw">{out}</div>'
+                f'<div class="rsfoot">Branch 26000 Production and Manpower Record</div></div>')
+
+    # 17a · the career path. The ladder itself, not who has climbed it: two of
+    #       the three managers this branch grew are no longer here, and the
+    #       house rule is that nobody who goes is named or counted.
+    if name == 'path':
+        #  Reversed, so the ladder is read from the bottom rung up: the first
+        #  cut listed Agent at the top and Branch Manager at the foot, which is
+        #  a way down.
+        rungs = ['Branch Manager', 'Assistant Branch Manager', 'Unit Manager',
+                 'Trainee Manager', 'Executive Agent', 'Agent']
+        out = ''.join(
+            f'<div class="rsrung" style="--i:{i};--n:{len(rungs)}">'
+            f'<span class="rsrd"></span><span class="rsrt">{r}</span></div>'
+            for i, r in enumerate(rungs))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsladder">{out}</div>'
+                f'<div class="rsfoot">this branch grows its own managers, and always has</div>'
+                f'</div>')
+
+    # 17b · the three-year plan, 1 October 2026 to 30 September 2029. The
+    #       horizon and the direction only: the plan's quotas, scenarios and
+    #       attainment ranking stay in the paper.
+    if name == 'plan':
+        yrs = [('FY27', 'rebuild the bench'), ('FY28', 'grow the units'),
+               ('FY29', 'forty agents')]
+        out = ''.join(
+            f'<div class="rsyr3" style="--i:{i}"><b>{y}</b><span>{t}</span></div>'
+            for i, (y, t) in enumerate(yrs))
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rsrun"><span class="rsrunr"></span>{out}</div>'
+                f'<div class="rsfoot">the three-year plan &middot; '
+                f'1 October 2026 to 30 September 2029</div></div>')
 
     # 12 · FY27 is thirty days old and every goal plan is in.
     if name == 'fy27':
@@ -477,6 +723,90 @@ CSS = r"""
 
 /* ── the tenure chart ────────────────────────────────────────────────────── */
 .rs .rschart{display:grid;grid-template-columns:1fr 1fr;gap:0 3.2vw;width:92%;max-width:1120px}
+.rs .rspair{position:relative;display:flex;align-items:flex-end;gap:5vw;margin-top:1vh}
+.rs .rspb{display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.rs .rspn{font-size:3.4vw;font-weight:800;color:var(--slate);line-height:1;margin-bottom:.8vh;
+  opacity:0;animation:fIn .7s .5s both}
+.rs .rspb.lit .rspn{color:var(--cy)}
+.rs .rspb i{display:block;flex:none;width:8.5vw;height:calc(var(--h)*.2vh);background:var(--slate);
+  border-radius:6px 6px 0 0;transform-origin:bottom;transform:scaleY(0);
+  animation:growY 1.1s .5s both}
+.rs .rspb.lit i{background:linear-gradient(180deg,var(--cy),#1D5BC4);
+  box-shadow:0 0 1.6rem rgba(0,229,255,.35);animation-delay:.8s}
+.rs .rspl{font-size:1.25vw;color:var(--mut);margin-top:1.2vh;opacity:0;animation:fIn .7s .9s both}
+.rs .rspd{position:absolute;right:-6.5vw;top:8%;font-size:2.4vw;font-weight:800;color:var(--cy);
+  opacity:0;transform:translateY(1vh);animation:fUp .6s 1.7s both}
+.rs .rspair.tight{gap:3.4vw}
+.rs .rsvsw{display:grid;gap:2.6vh;width:78%;max-width:980px;margin-top:.6vh}
+.rs .rsvs{display:grid;grid-template-columns:17vw 1fr 4vw;align-items:center;
+  column-gap:1.2vw;row-gap:1.5vh;opacity:0;animation:fUp .5s both;
+  animation-delay:calc(.5s + var(--i)*.28s)}
+.rs .rsvl{font-size:1.2vw;color:var(--mut);text-align:right}
+.rs .rsvb{position:relative;height:2.3vh;background:var(--trk, #122043);border-radius:4px}
+.rs .rsvb i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;width:0;
+  animation:grow .9s both;animation-delay:calc(.7s + var(--i)*.28s)}
+.rs .rsvb i.ours{background:linear-gradient(90deg,#1D5BC4,var(--cy));z-index:1}
+.rs .rsvb b.rsmk{position:absolute;top:-.35vh;bottom:-.35vh;width:2px;
+  background:var(--mut);left:calc(var(--p)*1%);opacity:0;animation:fIn .5s both;
+  animation-delay:calc(1.3s + var(--i)*.28s)}
+.rs .rsvb b.rsmk span{position:absolute;left:50%;top:calc(100% + .25vh);
+  transform:translateX(-50%);font-size:.88vw;font-weight:400;color:var(--dim);
+  white-space:nowrap}
+.rs .rsvn{font-size:1.4vw;font-weight:800;color:var(--cy)}
+.rs .rsvt{grid-column:2;font-size:.95vw;color:var(--dim);margin-top:-.2vh}
+.rs .rsladder{display:grid;gap:.85vh;width:66%;max-width:880px;margin-top:.4vh}
+.rs .rsrung{display:grid;grid-template-columns:1.1vw 1fr;align-items:center;gap:1.1vw;
+  padding:.75vh 1.3vw;border-radius:8px;background:var(--trk, #122043);
+  margin-left:calc(var(--i)*2.4vw);margin-right:calc((var(--n) - 1 - var(--i))*2.4vw);
+  opacity:0;transform:translateX(-1vw);animation:fRt .5s both;
+  animation-delay:calc(.4s + (var(--n) - 1 - var(--i))*.22s)}
+@keyframes fRt{to{opacity:1;transform:none}}
+.rs .rsrd{width:1.1vw;height:1.1vw;border-radius:50%;background:var(--cy);
+  box-shadow:0 0 .7rem rgba(0,229,255,.55)}
+.rs .rsrt{font-size:1.25vw;color:var(--ink);font-weight:600;text-align:left}
+.rs .rsrun{position:relative;display:flex;justify-content:space-between;
+  width:72%;max-width:920px;margin-top:2vh;padding-top:3vh}
+.rs .rsrunr{position:absolute;left:0;right:0;top:0;height:2px;background:var(--line);
+  transform-origin:left;transform:scaleX(0);animation:growX 1.3s .3s both}
+.rs .rsyr3{display:flex;flex-direction:column;align-items:center;gap:.5vh;
+  opacity:0;animation:fUp .55s both;animation-delay:calc(.7s + var(--i)*.35s)}
+.rs .rsyr3 b{font-size:2.6vw;font-weight:800;color:var(--cy);line-height:1}
+.rs .rsyr3 span{font-size:1.15vw;color:var(--mut)}
+.rs .rstl{position:relative;width:88%;max-width:1060px;height:24vh;margin-top:1.4vh}
+.rs .rstlr{position:absolute;left:0;right:0;bottom:4.2vh;height:2px;background:var(--line);
+  transform-origin:left;transform:scaleX(0);animation:growX 1.2s .3s both}
+.rs .rsdot{position:absolute;left:calc(var(--x)*1%);bottom:calc(4.2vh + var(--s)*1.5vw);
+  width:1.05vw;height:1.05vw;margin-left:-.52vw;border-radius:50%;background:var(--cy);
+  opacity:0;transform:scale(.3);animation:dotIn .5s both;animation-delay:calc(.5s + var(--i)*.07s);
+  box-shadow:0 0 .7rem rgba(0,229,255,.55)}
+.rs .rsdot i{position:absolute;left:50%;bottom:calc(1.5vw + var(--l)*2.6vw);transform:translateX(-50%) rotate(-52deg);
+  transform-origin:left bottom;font-size:.82vw;font-style:normal;color:var(--mut);
+  white-space:nowrap;letter-spacing:.02em}
+@keyframes dotIn{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
+.rs .rstla,.rs .rstlz{position:absolute;bottom:.9vh;font-size:1.5vw;font-weight:800;
+  color:var(--ink);opacity:0;animation:fIn .7s .6s both}
+.rs .rstla{left:0}.rs .rstlz{right:0}
+.rs .rstk{position:absolute;left:calc(var(--x)*1%);bottom:1.4vh;transform:translateX(-50%);
+  font-size:.88vw;color:var(--dim);opacity:0;animation:fIn .7s 1s both}
+.rs .rsbuilt{display:grid;grid-template-columns:repeat(3,1fr);gap:.75vh 2.4vw;
+  width:88%;max-width:1080px;margin-top:.6vh}
+.rs .rsbi{display:grid;grid-template-columns:2.6vw .7vw 1fr;align-items:center;gap:.7vw;
+  opacity:0;transform:translateY(.6vh);animation:fUp .45s both;
+  animation-delay:calc(.45s + var(--i)*.11s)}
+@keyframes fUp{to{opacity:1;transform:none}}
+.rs .rsbm{font-size:.92vw;font-weight:800;letter-spacing:.12em;color:var(--dim);text-align:right}
+.rs .rsbd{width:.7vw;height:.7vw;border-radius:50%;background:var(--cy);
+  box-shadow:0 0 .55rem rgba(0,229,255,.6)}
+.rs .rsbt{font-size:1.12vw;color:var(--ink);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.rs .rschart.one{grid-template-columns:1fr;width:68%;max-width:860px;gap:.9vh 0}
+.rs .rschart.one .rsrow{grid-template-columns:15vw 1fr 3.4vw;gap:1.1vw}
+.rs .rschart.one .rstrk{height:2.1vh}
+.rs .rsdonut.mid{position:static;width:auto;align-items:center;gap:.8vh}
+.rs .rsdonut.mid .rsring{width:11vw;height:11vw}
+.rs .rsdonut.mid .rsdol b{font-size:2.4vw}
+.rs .rszero{font-size:9vw;font-weight:800;line-height:.9;color:var(--cy);
+  letter-spacing:-.03em;filter:drop-shadow(0 0 2.2rem rgba(0,229,255,.45))}
 .rs .rscol{display:grid;gap:.42vh}
 .rs .rsrow{display:grid;grid-template-columns:7.2vw 1fr 2.2vw;align-items:center;gap:.8vw}
 .rs .rsnm{font-size:1.32vw;color:var(--mut);text-align:right;white-space:nowrap;
@@ -558,6 +888,10 @@ CSS = r"""
 .rs .rsdayb{position:absolute;inset:0;width:0;border-radius:999px;
   background:linear-gradient(90deg,#1D5BC4,var(--cy));animation:grow2 2.4s .5s both}
 @keyframes grow2{to{width:100%}}
+@keyframes growY{to{transform:none}}
+@keyframes growX{to{transform:none}}
+@keyframes growY{to{transform:none}}
+@keyframes growX{to{transform:none}}
 .rs .rstick{position:absolute;width:1.1vw;height:1.1vw;border-radius:50%;background:#070F26;
   border:.18vw solid var(--cy);top:50%;left:calc(6% + var(--i)*14.5%);
   transform:translate(-50%,-50%) scale(0);animation:tickIn .35s calc(.7s + var(--i)*.26s) both}
@@ -662,6 +996,88 @@ out += ('\n<style>'
         'body.rsoff #bars i.done{background:#00E5FF}'
         'body.rsoff #bars i.run::after{background:#00E5FF}'
         '</style>\n')
+
+# ── the palette, by name ─────────────────────────────────────────────────────
+#  28 October 2026: "More color options". Gold was turned down the evening
+#  before, so rather than pick a second time, the five below are built on the
+#  same frames and shown to him to choose from. Each is a repaint of one
+#  baseline (the midnight blue of the board films) by exact hex, in a single
+#  pass, so nothing can cascade: a value a palette maps TO is never read back
+#  as a value to map FROM.
+#
+#  Every one clears the three checks that decide whether a reader can tell the
+#  bands apart (CVD separation, normal-vision floor, 3:1 on the ground). The
+#  validator also flags the lightness band and the chroma floor on all five,
+#  and that is the design, not a fault: the slate is MEANT to recede, because
+#  it carries the eight people between the two bands the narration names, and
+#  an equal-weight palette would have the chart shouting all three at once.
+#
+#  Rejected on the measurements: emerald with a sky-blue second accent (tritan
+#  dE 5.5 — the two bands collapse for a tritan viewer), and an ice/steel pair
+#  on the ink ground (dE 13.8 normal vision, under the 15 floor).
+BASE = ['bg','ink','mut','dim','line','a1','a2','slate','cold','trk','ring',
+        'shoff','g1','g2','sh1','sh3','tear1','tear2','tear3','a1rgb']
+NAVY = dict(zip(BASE, [
+    '#070F26','#EAF0FF','#9FB0D0','#6B7A99','#1A2744','#00E5FF','#7C8CF8',
+    '#5E6B85','#8295B5','#122043','#16254A','#24365E','#1D5BC4','#3E46A8',
+    '#2A6DE0','#13408F','#CFE2FF','#7E8FB0','#55658A','0,229,255']))
+
+PALETTES = {
+    # dE normal / deutan / tritan on the worst adjacent pair of the three bands
+    'blue':    dict(zip(BASE, [   # 19.0 / 18.3 / 15.4 — the board films' own
+        '#070F26','#EAF0FF','#9FB0D0','#6B7A99','#1A2744','#00E5FF','#7C8CF8',
+        '#5E6B85','#8295B5','#122043','#16254A','#24365E','#1D5BC4','#3E46A8',
+        '#2A6DE0','#13408F','#CFE2FF','#7E8FB0','#55658A','0,229,255'])),
+    'ink':     dict(zip(BASE, [   # 17.2 / 16.4 / 16.6 — the most restrained
+        '#101217','#EDF1F6','#A3ADBC','#6E7786','#22262E','#CFE0F5','#4E8FD6',
+        '#5A6472','#7D8899','#1A1E26','#20252E','#333945','#2C5E96','#2B4E7E',
+        '#6FA8DC','#2C5E96','#E6EDF5','#8C96A6','#5E6774','207,224,245'])),
+    'emerald': dict(zip(BASE, [   # 26.7 / 14.1 / 15.9 — growth, and ours alone
+        '#07140F','#E8F5EE','#9DBAAB','#6A8277','#16281F','#2FD39A','#C9A4FF',
+        '#5D6B66','#7E9A90','#112A20','#163024','#26453A','#137A57','#6A4BA8',
+        '#3FE0A8','#137A57','#DFF3EA','#7E9A90','#4E6760','47,211,154'])),
+    'violet':  dict(zip(BASE, [   # 23.5 / 14.8 / 17.6 — the purple he liked
+        '#0E0B22','#EEEAFF','#ADA3CE','#766D95','#231E42','#B69CFF','#5EE7D7',
+        '#6B6485','#8E86AE','#1C1740','#221C49','#3A3268','#6A4BC8','#2A8F86',
+        '#C9B4FF','#5B3FB0','#E8E2FF','#8E86AE','#625B82','182,156,255'])),
+    'crimson': dict(zip(BASE, [   # 30.6 / 19.9 / 31.4 — the clearest, and the
+        '#14121A','#F4F0F2','#B2A9B2','#7D7480','#28242F','#FF5D6C','#74C8FF',
+        '#6B6472','#8C94A6','#231F2C','#282433','#413B4C','#A32B3C','#2B6E9E',
+        '#FF8793','#A32B3C','#EFE9EE','#8C8494','#635B6B','255,93,108'])),
+'white':   dict(zip(BASE, [   # 21.2 / 20.9 / 18.3 — the most premium
+        '#0B0E14','#F2F5FA','#A7B0C2','#717B8E','#1C2130','#F0F4FF','#4D8BFF',
+        '#5C6578','#828DA3','#151A26','#1A2030','#2E3647','#6E86B8','#2B5BB5',
+        '#8FA8E8','#2B5BB5','#F2F5FA','#8A94A8','#5F6878','240,244,255'])),
+    'rose':    dict(zip(BASE, [   # 21.9 / 12.5 / 27.3 — warm, and nothing
+        '#1A0F16','#F8EEF1','#BBA6AE','#86707A','#2E1C26','#FF8FA3','#8FD4FF',  # else at the branch is
+        '#70646A','#9A838C','#2A1822','#2F1C27','#4A3340','#A33A52','#2F6E9E',
+        '#FFB0BF','#A33A52','#F6E8EC','#9A838C','#6E5A62','255,143,163'])),
+    'teal':    dict(zip(BASE, [   # 27.1 / 9.1 / 29.1 — the branch's own teal;
+        '#0A1A1F','#E6F4F6','#9AB6BB','#688085','#152C33','#2DD4BF','#FF8A7E',  # the 9.1 is legal
+        '#5A6E70','#7E989D','#12282F','#163036','#27454C','#11796E','#B0493F',  # only because the
+        '#3FE3CE','#11796E','#DFF1F3','#7E989D','#4F6468','45,212,191'])),      # legend names each band
+}
+
+def _paint(html, pal):
+    """Repaint the baseline in one pass.
+
+    Case-sensitive and longest-first, so a value a palette maps TO can never be
+    read back as a value to map FROM: map bg #070F26 -> #14121A while sh3 maps
+    #13408F -> #A32B3C, and a cascading two-pass replace would turn the new
+    ground into something else again.
+    """
+    pairs = {NAVY[k]: pal[k] for k in BASE if NAVY[k] != pal[k]}
+    if not pairs:
+        return html
+    pat = re.compile('|'.join(re.escape(k) for k in sorted(pairs, key=len, reverse=True)))
+    return pat.sub(lambda m: pairs[m.group(0)], html)
+
+
+PAL = os.environ.get('RISE_PAL', 'blue')
+assert PAL in PALETTES, 'unknown palette: ' + PAL
+out = _paint(out, PALETTES[PAL])
+if os.environ.get('RISE_VARIANT'):
+    OUT = ROOT / 'blastoff' / ('film-%s.html' % PAL)
 
 OUT.parent.mkdir(parents=True, exist_ok=True)
 OUT.write_text(out)

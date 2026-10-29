@@ -53,7 +53,12 @@ const fs = require('fs'), path = require('path'), { execFileSync } = require('ch
       });
       sc.querySelectorAll('.cnt').forEach(el => {
         const at = +(el.dataset.at || 0), to = +el.dataset.to, k = Math.max(0, Math.min(1, (t - at) / 1000));
-        el.textContent = (el.dataset.pre || '') + Math.round(to * (1 - Math.pow(1 - k, 3))) + (el.dataset.suf || '');
+        const n = Math.round(to * (1 - Math.pow(1 - k, 3)));
+        // data-sep is opt-in, so every film built before it is unchanged: a
+        // four-figure count reads 2,495 rather than 2495, which is the kind of
+        // thing a room notices and a reader does not forgive.
+        const shown = el.dataset.sep ? n.toLocaleString('en-GB') : String(n);
+        el.textContent = (el.dataset.pre || '') + shown + (el.dataset.suf || '');
       });
     }, { n, t, T, D });
     await p.screenshot({ path: path.join(dir, String(f).padStart(6, '0') + '.jpg'), type: 'jpeg', quality: 93 });
