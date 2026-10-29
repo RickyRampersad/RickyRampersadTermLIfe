@@ -1,6 +1,20 @@
 // A fake Sheets that counts round trips, so "faster" is a number.
 const fs = require('fs'), vm = require('vm');
 
+// Sheets PARSES a value on the way in: the string '0000' is stored as the
+// number 0 and reads back as 0, and '2026-10' becomes a date. The fake kept
+// whatever it was given, so a whole family of live bugs could never be
+// reproduced here (the guest number read back as 0 and no guest could sign
+// in; see CLAUDE.md on the month read back as a month). SHEETS_PARSE=1 makes
+// the fake behave, so a test can pin one. A cell set to the text format with
+// setNumberFormat('@') keeps its string, as in Sheets.
+const PARSE = process.env.SHEETS_PARSE === '1';
+function asSheets(v, isText) {
+  if (!PARSE || isText) return v;
+  if (typeof v !== 'string' || v.trim() === '') return v;
+  return /^-?\d+(\.\d+)?$/.test(v.trim()) ? Number(v.trim()) : v;
+}
+
 function makeEnv(opts = {}) {
   const cacheMap = {};
   const cacheStub = { get: k => (k in cacheMap ? cacheMap[k] : null),
@@ -20,8 +34,10 @@ function makeEnv(opts = {}) {
     // caught because the tests pre-made their tabs.
     const grid = headers.length ? [headers.slice(), ...rows.map(r => r.slice())]
                                 : rows.map(r => r.slice());
+    const textCells = {};              // 'r,c' -> true, set by setNumberFormat('@')
     const sh = {
       _grid: grid,
+      _textCells: textCells,
       getName: () => name,
       getSheetId: () => id,
       getLastRow: () => { calls.getLastRow++; return grid.length; },
@@ -31,7 +47,7 @@ function makeEnv(opts = {}) {
       autoResizeColumn: () => sh, autoResizeColumns: () => sh, hideColumns: () => sh,
       setTabColor: () => sh, clearFormats: () => sh, getMaxColumns: () => 60,
       getMaxRows: () => Math.max(grid.length, 1000), insertColumns: () => sh,
-      appendRow: r => { calls.appendRow++; grid.push(r.slice()); return sh; },
+      appendRow: r => { calls.appendRow++; grid.push(r.map(v => asSheets(v, false))); return sh; },
       deleteRow: n => { calls.deleteRow++; grid.splice(n - 1, 1); return sh; },
       getRange: (r, c, nr = 1, nc = 1) => ({
         getValues() {
@@ -53,19 +69,31 @@ function makeEnv(opts = {}) {
         setValue(v) {
           calls.setValue++;
           while (grid.length < r) grid.push([]);
-          grid[r - 1][c - 1] = v;
+          grid[r - 1][c - 1] = asSheets(v, textCells[r + ',' + c]);
+        },
+        setNumberFormat(fmt) {
+          for (let i = 0; i < nr; i++) {
+            for (let j = 0; j < nc; j++) {
+              if (String(fmt) === '@') textCells[(r + i) + ',' + (c + j)] = true;
+              else delete textCells[(r + i) + ',' + (c + j)];
+            }
+          }
+          return this;
         },
         setValues(vals) {
           calls.setValues++;
           for (let i = 0; i < vals.length; i++) {
             while (grid.length < r + i) grid.push([]);
-            for (let j = 0; j < vals[i].length; j++) grid[r - 1 + i][c - 1 + j] = vals[i][j];
+            for (let j = 0; j < vals[i].length; j++) {
+              grid[r - 1 + i][c - 1 + j] =
+                asSheets(vals[i][j], textCells[(r + i) + ',' + (c + j)]);
+            }
           }
         },
         /* Chainable, because real formatting calls are written as one
            chain (setFontWeight(..).setBackground(..).setFontColor(..))
            and a stub returning undefined breaks on the second link. */
-        setNumberFormat() { return this; }, setFontWeight() { return this; },
+        setFontWeight() { return this; },
         setBackground() { return this; }, setFontColor() { return this; },
         setFontSize() { return this; }, setWrap() { return this; },
         setHorizontalAlignment() { return this; }, setVerticalAlignment() { return this; },

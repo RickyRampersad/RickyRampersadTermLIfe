@@ -1036,19 +1036,55 @@ function guestRow_() {
     'Role': 'guest', 'Unit': '', 'Active': 'Yes', 'Added': new Date(),
     'Added By': 'the standing guest number'
   });
-  return guestFind_();
+  var made = guestFind_();
+  //  Sheets stored that '0000' as the number 0. isGuestNo_ reads it either
+  //  way, so nothing depends on this, but the branch manager reads the People
+  //  tab: show the number the agents are told to type.
+  if (made) {
+    try { guestShowAsText_(made._row); } catch (e) {}
+  }
+  return made;
+}
+
+/** Is this the standing guest number?
+ *
+ *  NOT a comparison against the literal '0000'. Sheets PARSES a value on the
+ *  way in, so the '0000' guestRow_ writes is stored as the number 0 and reads
+ *  back as '0' — which never equalled '0000'. So guestFind_ never found the
+ *  row it had just written: every guest was told guest sign-in was not set up,
+ *  and every attempt appended one more Visitor row. Recognising "all zeros"
+ *  matches the text and the number both, so a row written before this fix,
+ *  or typed in by hand, still works.
+ *
+ *  Empty is NOT the guest: readPeople_ hands back '' for a blank cell, and a
+ *  blank Agent No must never open the branch's meeting. */
+/** Format the guest's Agent No cell as text and put '0000' back in it, so
+ *  the People tab reads 0000 rather than 0. Cosmetic: isGuestNo_ does not
+ *  depend on it, and a failure here must never stop a guest signing in. */
+function guestShowAsText_(row) {
+  var sh = tab_(MEET.TAB_PEOPLE);
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]
+    .map(function (h) { return String(h).trim(); });
+  var col = head.indexOf('Agent No') + 1;
+  if (!col) return;
+  var cell = sh.getRange(row, col);
+  cell.setNumberFormat('@');
+  cell.setValue(MEET.GUEST_NO);
+}
+
+function isGuestNo_(v) {
+  var s = str_(v).replace(/\s+/g, '');
+  return s !== '' && /^0+$/.test(s);
 }
 
 function guestFind_() {
-  var want = MEET.GUEST_NO;
   return readPeople_().filter(function (p) {
-    return str_(p.agentNo).replace(/\s+/g, '') === want;
+    return isGuestNo_(p.agentNo);
   })[0] || null;
 }
 
 function isStandingGuest_(person) {
-  return !!person && person.role === 'guest' &&
-         str_(person.agentNo).replace(/\s+/g, '') === MEET.GUEST_NO;
+  return !!person && person.role === 'guest' && isGuestNo_(person.agentNo);
 }
 
 function apiLogin_(body) {
@@ -1058,7 +1094,7 @@ function apiLogin_(body) {
   var pin = str_(body.password || body.code || body.pin);
 
   // 0000 is the standing guest number, and it is published on purpose.
-  if (str_(who).replace(/\s+/g, '') === MEET.GUEST_NO) {
+  if (isGuestNo_(who)) {
     var g = guestRow_();
     if (!g) return { ok: false, error: 'Guest sign-in is not set up yet. Speak to the branch manager.' };
     var gt = g.token || makeToken_();
