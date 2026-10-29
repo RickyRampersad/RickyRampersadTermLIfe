@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-29c';
+var SCRIPT_VERSION = '2026-10-29d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4466,7 +4466,7 @@ function coverMail_(day, plan, done, asked, opts) {
         '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + esc_(first) + ', ' + esc_(plan.name) + ' is absent today. ' +
           'These were due or overdue with nothing written on them, so the client is waiting. They are in your name in Salesforce now, each with a note. ' +
           'Work them today, high-payoff first, and note every call in the client\'s words before you close it.</div>' +
-        moveLines_(by[sid], day) + (systemDayOn_() ? replyButton_(replyUrl_(sid, day, 'plan'), 'Open my day', 'They are at the top of your day, marked Moved to you; your own lowest-priority tasks moved to "when your list is done".')
+        moveLines_(by[sid], day) + (systemDayOn_() ? replyButton_(wdGoUrl_(sid, day, 'news', 'plan'), 'Open my day', 'They are at the top of your day, marked Moved to you; your own lowest-priority tasks moved to "when your list is done".')
           : replyButton_(replyUrl_(sid, day, 'plan'), 'Add them to my plan', 'They are at the top of your plan page, under "Not in today\'s plan".')) + sign) });
   });
   var absentTo = noticed ? '' : emailFor_(plan.sid);
@@ -4878,7 +4878,7 @@ function sendBranchManagerDay_(day) {
   try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var open = function (id) { return base ? ' <a href="' + esc_(base + id) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &rarr;</a>' : ''; };
   var answer = (w.ask.length || w.mine.length || w.ignored.length)
-    ? replyButton_(replyUrl_('ricky', day, 'bm'), 'Respond to these', 'One page: type under any item and send. Each reply goes on that task\'s Chatter; a tick closes one of your own.')
+    ? replyButton_(workGoUrl_('ricky', 'waiting'), 'Respond on My workday', 'Claude\'s reply is under each: change anything, then Post. Each goes on that task\'s Chatter as yours.') + wdOldLine_('ricky', replyUrl_('ricky', day, 'bm'))
     : '';
   var row = function (inner) { return '<div style="font-size:12.5px;line-height:1.45;padding:5px 0;border-top:1px solid ' + MAIL.line + '">' + inner + '</div>'; };
   var mineLate = w.mine.filter(function (t) { return t.late; }).length;
@@ -10110,7 +10110,7 @@ function sendBranchManagerProgress_(day, which) {
     (w.ask.length ? sectionLabel_('Still waiting on your Chatter (' + w.ask.length + ')') +
       '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.red + ';border-radius:10px;padding:8px 15px">' +
       w.ask.slice(0, 8).map(function (a) { return '<div style="font-size:12.5px;padding:5px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(a.by) + '</b> on ' + esc_(a.subject) + '<div style="color:' + MAIL.muted + '">"' + esc_(a.said) + '"</div>' + draftMail_(drafts[a.id]) + '</div>'; }).join('') + '</div>' +
-      (which === 'eve' ? replyButton_(replyUrl_('ricky', day, 'bm'), 'Reply with Claude\'s drafts', 'One page: each reply is written; tap "Use Claude\'s reply", change anything, send. At 3:45 whatever is still waiting comes back to you.') : '') : '') +
+      (which === 'eve' ? replyButton_(workGoUrl_('ricky', 'waiting'), 'Reply with Claude\'s drafts', 'On My workday: each reply is written; change anything, then Post. At 3:45 whatever is still waiting comes back to you.') + wdOldLine_('ricky', replyUrl_('ricky', day, 'bm')) : '') : '') +
     (me.list.length ? sectionLabel_('What you closed today') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.green + ';border-radius:10px;padding:8px 15px;font-size:12.5px">' +
       me.list.slice(0, 10).map(function (s) { return '<div style="padding:3px 0">&#10003; ' + esc_(s) + '</div>'; }).join('') + '</div>' : '') +
     answer;
@@ -10872,7 +10872,7 @@ function notClosedReminder_(person, day) {
   var sid = String(person.staffId), to = emailFor_(sid);
   if (!to || signedOutAt_(sid, day)) return false;
   var first = String(nameFor_(sid)).split(' ')[0], btn = sid === 'pawan' ? replyButton_(replyUrl_(sid, day, 'errand') + '&c=leave', 'Close my day', 'Answer each errand and sign out.')
-    : replyButton_(replyUrl_(sid, day, 'hk'), 'Close my day and sign out', 'A reason and a new date for anything not done, the checks, and sign out. Two minutes.');
+    : replyButton_(workGoUrl_(sid, 'close'), 'Close my day and sign out', 'On My workday: a reason and a new date for anything not done, the checks, and sign out. Two minutes.') + wdOldLine_(sid, replyUrl_(sid, day, 'hk'));
   mailSend_({ to: to, subject: 'Your day is not closed · ' + shortDate_(day),
     htmlBody: shell_('Your day is not closed', prettyDate_(day), '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + esc_(first) + ', you are still signed in. Close your day now: in half an hour the register reads "' + NOCLOSE.LABEL + '" and Mr Rampersad is told.</div>' + btn) });
   return true;
@@ -11003,7 +11003,7 @@ function closeoutCheck_(person, day, why) {
     ? esc_(first) + ', you signed off at <b>' + esc_(twelve_(out)) + '</b> with <b>' + left.total + ' of ' + left.of + '</b> items from your <b>' + esc_(at) + '</b> close-out notice unanswered.'
     : esc_(first) + ', your day ends at <b>' + esc_(twelve_(mmText_(endFor_(sid)))) + '</b> and <b>' + left.total + ' of ' + left.of + '</b> items from your <b>' + esc_(at) + '</b> close-out notice are unanswered. You are still signed in.';
   var body = '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + head + ' Answer each one now: it takes two minutes, and it is how the branch knows what happens to each client tomorrow.</div>' +
-    replyButton_(replyUrl_(sid, day, 'hk'), 'Answer them now', 'The same close-out page: a reason and a new date for each task, Done or Not done for each check.') +
+    replyButton_(wdGoUrl_(sid, day, 'close', 'hk'), 'Answer them now', 'Close my day on My workday: a reason and a new date for each task, Done or Not done for each check.') + wdOldLine_(sid, replyUrl_(sid, day, 'hk')) +
     (left.tasks.length ? sectionLabel_('Tasks set for today, still open, no reason given (' + left.tasks.length + ')') +
       left.tasks.map(function (t) { return row(t.s, 'Needs: a reason and a new date, or close it with a note.', runs[t.id] || 1); }).join('') : '') +
     (left.checks.length ? sectionLabel_('End-of-day checks not answered (' + left.checks.length + ')') +
@@ -11012,7 +11012,7 @@ function closeoutCheck_(person, day, why) {
       '<b>If they are not answered:</b> tomorrow they come first on your day, and your day does not save until each has a reason and a new date. ' +
       'A task left at a second close-out running goes to ' + esc_(sid === CLOSEOUT.BMA ? 'Mr Rampersad' : 'Kamla') + '; at a third, it is in Mr Rampersad\'s 5am report by name.' +
       (wk ? ' <b style="color:' + MAIL.red + '">This is the ' + closeoutOrdinal_(wk + 1) + ' close-out this week left with items unanswered.</b>' : '') + '</div>' +
-    replyButton_(replyUrl_(sid, day, 'hk'), 'Answer them now', '');
+    replyButton_(wdGoUrl_(sid, day, 'close', 'hk'), 'Answer them now', '');
   var cc = dayStartCc_(to, sid);
   if (maxRun >= CLOSEOUT.KAMLA_AT_RUN && sid !== CLOSEOUT.BMA) { var bma = emailFor_(CLOSEOUT.BMA); if (bma && cc.map(normEmail_).indexOf(normEmail_(bma)) < 0) cc.push(bma); }
   mailSend_({ to: to, cc: cc.join(',') || undefined,
@@ -11209,12 +11209,12 @@ function bmCloseoutCheck_(day) {
   var drafts = bmDraftsFor_(day, items);
   var body = '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Mr Rampersad, <b>' + still.length + ' of ' + ask.asks.length + '</b> notes asking you at your <b>' + esc_(twelve_(ask.at)) +
       '</b> close-out are still waiting on your Chatter. Claude has written a reply to each from the task and its notes: open the page, tap "Use Claude\'s reply", change anything, and send.</div>' +
-    replyButton_(replyUrl_('ricky', day, 'bm'), 'Reply to them now', 'Each reply goes on that task\'s Chatter as yours. Nothing is posted until you send.') +
+    replyButton_(workGoUrl_('ricky', 'waiting'), 'Reply to them now', 'On My workday, with Claude\'s reply under each. Each goes on that task\'s Chatter as yours. Nothing is posted until you press Post.') + wdOldLine_('ricky', replyUrl_('ricky', day, 'bm')) +
     sectionLabel_('Still waiting on you (' + still.length + ')') +
     '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.red + ';border-radius:10px;padding:8px 15px">' +
       still.slice(0, 10).map(function (a) { return '<div style="font-size:12.5px;padding:7px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(a.by) + '</b> on ' + esc_(a.subject) +
         '<div style="color:' + MAIL.muted + '">"' + esc_(shorten_(a.said, 200)) + '"</div>' + draftMail_(drafts[a.id]) + '</div>'; }).join('') + '</div>' +
-    replyButton_(replyUrl_('ricky', day, 'bm'), 'Reply to them now', '');
+    replyButton_(workGoUrl_('ricky', 'waiting'), 'Reply to them now', '');
   mailSend_(ownMail_('ricky', { to: mgr.join(','), subject: 'From your ' + twelve_(ask.at) + ' close-out · ' + still.length + ' still waiting on your Chatter · Claude has drafted each · ' + shortDate_(day),
     htmlBody: shell_('Still waiting on you', 'Branch Manager · ' + prettyDate_(day) + ' · from your ' + twelve_(ask.at) + ' close-out', body) }));
   return true;
@@ -14952,7 +14952,7 @@ function sendHousekeeping_(person, day, signIn) {
       { value: sfOk ? overdue : '—', label: 'overdue', color: overdue ? MAIL.red : MAIL.navy }
     ]) +
     intelBox_(today.concat(trend), 'Today, and what the record shows') + periodTable_(intel) +
-    replyButton_(replyUrl_(sid, day, 'hk'), 'Close my day and sign out', 'What you set out to do and what is done; a reason and a new date for anything not done; the checks; sign out. No password.') +
+    replyButton_(wdGoUrl_(sid, day, 'close', 'hk'), 'Close my day and sign out', 'On My workday: what you set out to do and what is done; a reason and a new date for anything not done; the checks; sign out.') + wdOldLine_(sid, replyUrl_(sid, day, 'hk')) +
     (function () { try { var la = lastSfAction_(sid, day); return la ? sectionLabel_('Your last Salesforce action today') +
       '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + (la.none ? MAIL.red : MAIL.navy) + ';border-radius:10px;padding:10px 15px;font-size:13px">' +
       (la.none ? '<b style="color:' + MAIL.red + '">Nothing in Salesforce today.</b> Every task you worked needs its note before you go.' :
@@ -14969,7 +14969,7 @@ function sendHousekeeping_(person, day, signIn) {
     check(2, 'Inbox and WhatsApp scrubbed', c2, false) +
     check(3, 'Open tasks understood', c3, sfOk && day1 && day1.created > 0) +
     (function () { try { var m = mailbagCard_(sid, day); return check(4, m.isRouter ? 'The mailbag · you route it this week' : 'The mailbag · handed over', m.html, m.ok); } catch (e) { return ''; } })() +
-    replyButton_(replyUrl_(sid, day, 'hk'), 'Close my day and sign out', '') +
+    replyButton_(wdGoUrl_(sid, day, 'close', 'hk'), 'Close my day and sign out', '') +
     (sfOk ? '' : '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:12px">Salesforce did not answer, so the task lists are not shown. The tracker has them.</div>') +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">' +
       'Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
@@ -15616,7 +15616,8 @@ function sendMidday_(person, day, signIn, nowOpt) {
       { value: sfOk ? overdue : '—', label: 'overdue', color: overdue ? MAIL.red : MAIL.navy }
     ]) +
     intelBox_(lines, 'Where the day stands') +
-    replyButton_(replyUrl_(sid, day, 'prog'), 'Answer: where each task stands', 'Working on it, later today, or not today with a reason. Takes a minute; no sign-in.') +
+    replyButton_(wdGoUrl_(sid, day, 'update', 'prog'), 'Update on My workday', 'Your progress, what lunch needs, and each task: a note, Move or Close, from the screen.') +
+      (sid === 'pawan' || UM_DESKS.indexOf(sid) > -1 ? '' : '<div style="margin-top:6px;font-size:12px;line-height:1.5;color:' + MAIL.muted + '">Or say where each task stands (working on it, later today, not today) on <a href="' + esc_(replyUrl_(sid, day, 'prog')) + '" style="color:' + MAIL.navy + ';font-weight:700">the progress page</a>.</div>') +
     (later.length ? sectionLabel_('The rest of the day · ' + left + ' to close') + cards : '') +
     '<div style="margin-top:6px"><a href="' + PLANNER_URL + '" style="font-size:12.5px;color:' + MAIL.navy + ';font-weight:700">or update your plan in the planner</a></div>' +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">' +
@@ -15979,6 +15980,18 @@ var WORKDAY = { SITE: 'https://rickyrampersadbranch.com/myworkday/', BARS: 5, AC
   OPS_URL: 'https://script.google.com/macros/s/AKfycbyRPFW_RdQItCeSMHvP2HYEN69Zv2HQMrLxw9IUWUlnUlkzjqaVFPdvjFcg_-b-zX78/exec', OPS_TTL: 600 };
 function workSig_(sid) { return replySig_(sid, 'always', 'work'); }
 function workUrl_(sid) { return WORKDAY.SITE + '?p=' + encodeURIComponent(sid) + '&k=' + encodeURIComponent(workSig_(sid)); }
+/* ── Every e-mail button opens My workday (29 October 2026, 2026-10-29d) ──
+ *  Ricky, 9:21am, on a white page opened from a reminder: "on all the reminder emails, should this not open up the same way as the
+ *  morning to show the progress and back on track with all the AI built into it?" Each button opens the one screen at its place:
+ *  go = update (the coach and its update list), close (Close my day, opened), news (New for you today), waiting (what waits on
+ *  him), list; t = a task's card. wdGoUrl_ keeps the old page where the screen does not do the job yet: Pawan's errands close-out,
+ *  the unit managers' pages. Under each button, wdOldLine_ keeps the old page a tap away, for a phone the screen will not open on. */
+function workGoUrl_(sid, go, t) { return workUrl_(sid) + (go ? '&go=' + encodeURIComponent(go) : '') + (t ? '&t=' + encodeURIComponent(t) : ''); }
+function wdGoUrl_(sid, day, go, oldF) { return sid === 'pawan' || UM_DESKS.indexOf(sid) > -1 ? replyUrl_(sid, day, oldF) : workGoUrl_(sid, go); }
+function wdOldLine_(sid, url) {
+  if (sid === 'pawan' || UM_DESKS.indexOf(sid) > -1) return '';
+  return '<div style="margin-top:6px;font-size:12px;line-height:1.5;color:' + MAIL.muted + '">If My workday will not open on this phone: <a href="' + esc_(url) + '" style="color:' + MAIL.navy + ';font-weight:700">the same on the full page</a>.</div>';
+}
 function workdayPerson_(sid) { return rosterPerson_(sid) || (sid === 'ricky' || UM_DESKS.indexOf(sid) > -1 ? { staffId: sid, name: nameFor_(sid) } : null); }
 /** The full page behind the fast one: My day or My unit, else the staff day page. */
 function workdayFullUrl_(sid, day) { return sid === 'ricky' || UM_DESKS.indexOf(sid) > -1 ? unitUrl_(sid) : replyUrl_(sid, day, 'plan'); }
@@ -18258,7 +18271,7 @@ function rebalanceMail_(day, plan, done) {
       htmlBody: shell_('Moved to you this morning', nameFor_(sid) + ' · ' + prettyDate_(day),
         '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + esc_(first) + ', you have room today, so these have come to you from colleagues who are further behind. ' +
           'They are in your name in Salesforce now, each with a note saying why. Put them into your plan; high-payoff first.</div>' +
-        moveLines_(toMe[sid], day) + replyButton_(replyUrl_(sid, day, 'plan'), 'Add them to my plan', 'They are at the top of your plan page, under "Not in today\'s plan".') + sign) });
+        moveLines_(toMe[sid], day) + replyButton_(wdGoUrl_(sid, day, 'news', 'plan'), 'Open my day', 'On My workday: each is under New for you today, and opens as its card.') + sign) });
   });
   Object.keys(fromMe).forEach(function (sid) {
     var to = emailFor_(sid);
@@ -18702,7 +18715,7 @@ function nudgeReplySave_(person, day, p, all) {
         '<div style="font-size:14px;line-height:1.55;margin-bottom:8px">' + esc_(first) + ', your day has started and your plan is not in. ' +
           'It is ready for you: one tap, untick what you will not do, save.</div>' +
         (line ? '<div style="font-size:14px;line-height:1.55;margin:8px 0;padding:10px 13px;background:' + MAIL.paper + ';border-radius:9px">' + esc_(line) + '<br><span style="color:' + MAIL.muted + ';font-size:12.5px">' + esc_(person.name || 'Kamla') + '</span></div>' : '') +
-        replyButton_(replyUrl_(sid, day, 'plan'), 'Open my plan', 'No sign-in.')) });
+        replyButton_(wdGoUrl_(sid, day, '', 'plan'), 'Check in and start my day', 'One tap on My workday: checking in is the register, and your day is set for you.')) });
     sent.push(nameFor_(sid));
   });
   return replyPage_('Nudged: ' + sent.length, '', '<div class="card ok">' + sent.map(function (n) { return '<div class="ln">&#10003; ' + esc_(n) + '</div>'; }).join('') + '</div>');

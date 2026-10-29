@@ -346,6 +346,8 @@
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   var M = null, busy = false, pending = null;
+  // Where an e-mail's button sends you (29 Oct 2026): go = update, close, news, waiting, list; t = a task's card.
+  var GO = String(Q.get("go") || "").replace(/[^a-z]/g, ""), GOT = String(Q.get("t") || "").replace(/[^A-Za-z0-9]/g, "");
 
   function tick() {
     var d = new Date();
@@ -719,6 +721,18 @@
     $("updt").textContent = "Updated " + (m.at || "") + (ch.length ? ": " + ch.join(" · ") : "") + ". Refresh when you are ready" + (dirty() ? " (what you have typed stays until then)" : "") + ".";
     $("upd").hidden = false;
   }
+  function goTo() {
+    if (!GO && !GOT) return;
+    var g = GO, t = GOT; GO = ""; GOT = "";
+    try { var u = new URL(location.href); u.searchParams.delete("go"); u.searchParams.delete("t"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {}
+    setTimeout(function () {
+      var li = t ? document.querySelector('li.tk[data-id="' + t + '"]') : null;
+      if (li) { li.scrollIntoView({ behavior: "smooth", block: "center" }); openCard(li); return; }
+      if (g === "close" && $("closecard")) { closeOpen(); return; }
+      var el = $({ update: "coach", news: "news", waiting: "waiting", list: "list", close: "closecard" }[g] || "");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 400);
+  }
   function load(silent) {
     if (!OPS && (!P || !K)) { notice('Open <b>My day</b> in the <a href="/rroperations/">branch app</a>, or the <b>My workday</b> link in your morning e-mail. After that it opens from your home screen.', false); $("of").textContent = ""; $("main").innerHTML = ""; return; }
     if (busy) return; busy = true;
@@ -727,7 +741,7 @@
     fetch(TRACKER + "?" + auth(new URLSearchParams()).toString() + "&t=" + Date.now(), { redirect: "follow", cache: "no-store", signal: ctl ? ctl.signal : undefined })
       .then(function (r) { return r.json(); })
       .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { if (!silent) fail((m && m.error) || "The tracker did not answer."); return; } load.tries = 0; notice(""); m._t = Date.now(); store.set("wd_day_" + WHO, { day: m.day, m: m });
-        if (silent === true && dirty()) { pending = m; banner(m); return; } draw(m, false); })
+        if (silent === true && dirty()) { pending = m; banner(m); return; } draw(m, false); if (silent !== true) goTo(); })
       // Three more tries, further apart (2, 5 and 10 seconds), before it says so: a busy minute at the tracker passes (28 Oct 2026).
       .catch(function () { clearTimeout(timer); busy = false; if (silent === true) return; load.tries = (load.tries || 0) + 1;
         if (load.tries <= 3) { if (!M) $("of").textContent = "Still opening your day… (try " + (load.tries + 1) + " of 4)"; setTimeout(load, [0, 2000, 5000, 10000][load.tries]); return; }
