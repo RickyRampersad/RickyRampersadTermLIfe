@@ -1,30 +1,15 @@
 {
- "voice": "en-US-AndrewMultilingualNeural",
- "rate": "+0%",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
  "check": true,
  "films": {
-  "rise": [
-   "This branch took a hit.",
-   "People left. The work didn't.",
-   "Nothing here fell over.",
-   "So before Friday, look at who's still standing.",
-   "Twenty-three agents and managers. Five more behind them.",
-   "Between us, two hundred and sixty-three years of this work.",
-   "Eleven of us have been at it more than ten years. Three joined in the last three.",
-   "And while all of that was happening, we rebuilt how this branch runs.",
-   "One sign-in now. Fifty tools behind it.",
-   "The system sets your day before you're even up.",
-   "The wall shows the score, and everybody sees the same numbers.",
-   "In the last twelve months, this team closed two thousand four hundred and ninety-five requests.",
-   "Three thousand six hundred papers went through the Log Book. Nearly three quarters reached Guardian inside one working day.",
-   "And since the digital fact find went live, not one of those cases has lapsed.",
-   "FY27 is thirty days old, and every goal plan is in.",
-   "The cracks are still there. We didn't hide them. They're part of the shield now.",
-   "We're not going back to what this branch was. We're going somewhere better.",
-   "Friday. Twelve noon. Ninety minutes.",
-   "Seventy-five of those minutes belong to you, not to me.",
-   "Three questions are already waiting for you. Answer one tonight.",
-   "We rise together."
+  "walldriver2": [
+   "This is the Branch Manager's drive on the orphan campaign.",
+   "Every prompt he puts on the tasks flows from left to right, from his own words and his automation to the team's answer.",
+   "Follow each ribbon: answered the same day, the next working day, later, or not yet, and by whom.",
+   "Hour by hour, see when he prompts, and when the team writes.",
+   "Day by day, his prompts and the team's notes flow side by side.",
+   "And for each of the team: how fast they answer, and how many prompts still wait on them."
   ]
  }
 }
