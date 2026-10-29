@@ -6697,21 +6697,92 @@ MP4. So the orphan campaign's own figures — which are client counts — are no
 in it, however good they would look. Every number on screen is about our own
 people, our own year, and Friday's own agenda.
 
+**Four branch papers went in on 29 October, and most of what is in them may
+not be.** The branch manager sent the Three-Year Plan executive summary, the
+Note for the Record of the Branch Progression meeting of 12 October, the
+Production and Manpower Record 2014–2026, and a unit's own three-year plan,
+asking for "the career path and our revised strategic plan". **They are
+confidential and the film is not.** What stayed out, and must stay out of
+anything at a public address:
+
+- the competitor by name, and the person who runs it;
+- the mediation, what was refused there, and the assurances given about
+  re-contracting;
+- anyone who left, by name, rank or number — including the two managers this
+  branch grew who are now gone, which is why the career-path scene shows the
+  **ladder** and not who climbed it;
+- any agent's own quota miss, persistency or stated intent to leave, all of
+  which the unit plan sets out by first name;
+- every dollar figure: the quotas, settled API, production per agent;
+- the quota-attainment ranking (#13 of 14), which is also the one number in
+  those papers that would flatten a room.
+
+What came out of them and **is** in the film is the branch's own quality
+record, which is the part worth saying out loud: the lowest lapse rate of
+every branch, 4.96% against 8.82% for the main branches to 31 August; 67% of
+agents still here after a year against a published 55–60%; 31% at four years
+against about 16%; 67% of the 2023 intake kept to August against 48% across
+the network; the career ladder; and the plan's horizon, 1 October 2026 to
+30 September 2029. If he ever wants the money or the ranking in, the film has
+to move behind the meeting sign-in first — it cannot be done at `/blastoff/`.
+
+**One figure was left alone on purpose.** The Note for the Record says the
+branch manager has 35 years in the business; Salesforce gives his hire date as
+December 1993, which is what the chart draws and what the total is built from.
+Both can be true — the business is not the same as this company — but the film
+states neither, because a spoken 35 beside a drawn 32 is the kind of
+contradiction a room catches in a second.
+
+**No client anything, still.** Never a client name and never a client count in
+an MP4. The orphan campaign opened 347 follow-up tasks in October, which is a
+fine number and reads as a client count, so it is not in the film either.
+
 **What is left is the stronger answer anyway: count who stayed.** The spine of
 the film is the branch's own roster, read out of Salesforce on 28 October 2026
 — the active AGENT contacts of the two units, Ricky_Rampersad and
-Akaash_Kalladeen. Twenty-two carry a hire date, **263.0 years between them**,
-eleven at ten years or more, three joined in the last three. Twenty-three are
-active (one has no hire date on file), and the five of the support team are on
-screen beside them, because leaving them out of "who stayed" would be a lie by
-omission.
+Akaash_Kalladeen. **Two came off on 29 October on his word** ("take out javid,
+aleema"), both carrying twenty years, so the headcount, the total and the
+ten-year band all moved with them: **twenty on the chart, 221 years between
+them**, nine at ten years or more, three joined in the last three. Twenty-one
+are active (one has no hire date on file), and the five of the support team
+are on screen beside them, because leaving them out of "who stayed" would be a
+lie by omission: twenty-six still here.
 
-**The bars show FULL years, and say so.** They sum to 252 and the headline says
-263; the difference is the part years, and the chart carries the line *"full
-years each · 263 in all"* so anybody who adds them up can reconcile the two.
+**Every narrated figure is asserted against the roster.** A line is recorded
+once and then lives in an MP4 nobody re-reads, so `build-risefilm.py` spells
+the derived numbers out in words and refuses to write the page if the script
+disagrees with them — which is exactly what caught the three stale lines when
+those two names came out. Change the roster, and the build tells you which
+line to re-voice.
+
+**The bars show FULL years, and say so.** The chart carries the line *"full
+years each · 221 in all"* so anybody who adds them up can reconcile the two.
 Flooring rather than rounding also keeps the bands honest — Randolph is 9.94
 years in, and rounding put a "10" on a bar that the ten-year colour does not
 claim. Anyone under a year reads `<1`, never `0`.
+
+### What the branch's own systems put in it
+
+Six scenes are measurements rather than claims, and each names where it came
+from on screen or in the builder's comment:
+
+- **the rise**: 204 requests closed in September, 240 in October, read off
+  Salesforce over the five support desks with logged e-mails and the birthday
+  flow left out — counted, those are five times the volume and would flatter
+  the record into meaninglessness. October still had two days to run when the
+  film was cut, and the foot says so, because a figure that is going to grow
+  is stronger stated short than rounded up;
+- **the work**: 2,495 requests closed in twelve months, by kind;
+- **the papers**: 3,634 lines through the Log Book and 72% on to Guardian
+  inside one working day, measured off the old book rather than claimed;
+- **since August**: eighteen things live in ninety days, the list being
+  `BUILT` in the builder, and the spoken count is `len(BUILT)` so adding one
+  and forgetting the line fails the build;
+- **the branch on one line**: a dot per person at the year they joined, 1993
+  to now;
+- **the fact find**: not one of those cases lapsed, which is his own line from
+  the FY27 wall.
+
 
 ### The palette is doing a job, not decorating — and it is not gold
 
@@ -6727,6 +6798,25 @@ October**, which also puts it in one family with the board pages, RR Operations
 and the Log Book films instead of standing alone. The page at `/blastoff/`
 moved with it and carries `orphan-transition/board-mark.svg`, the blue shield,
 not the gold one.
+
+**Then he asked twice for "more color options", so he picks, not me.** There
+are eight, as `PALETTES` in `build-risefilm.py`: *blue* (the board films'),
+*ink* (platinum on near-black, the most restrained), *emerald*, *violet* (the
+purple he liked once), *crimson*, *white* (near-white on midnight, the most
+premium), *rose* and *teal*. `RISE_PAL=<name> python3 build-risefilm.py`
+repaints the whole film; add `RISE_VARIANT=1` to write `film-<name>.html`
+beside it instead of over the real page, which is how the comparison sheet is
+shot — the same three frames in every palette, because a palette judged on
+different pictures is not judged at all. **Those variant files are never
+committed**: they are 516 KB each, they would be served at
+`/blastoff/film-crimson.html`, and one command regenerates any of them.
+
+Each is a repaint of one baseline by exact hex in a single pass, longest
+literal first, so a value a palette maps *to* can never be read back as a value
+to map *from*. Two were rejected on the measurements rather than on taste:
+emerald with a sky-blue second accent collapses for a tritan viewer (ΔE 5.5),
+and an ice-and-steel pair on the ink ground measures ΔE 13.8 in full colour
+vision, under the floor of 15.
 
 "More colours" is still answered with **two accents and a recessive neutral**,
 each carrying a band the narration names, never a hue per person:
@@ -6779,6 +6869,29 @@ light running through the crack rather than molten gold.
   refuses to write one); and **the mixer crops the bottom 104px away**, so the
   scene box ends at 616.
 
+### Two traps in the film shell, both of which draw nothing at all
+
+- **`grow` and `grow2` animate `width`.** A rule that starts at
+  `transform: scale(0)` and names one of them is filled `both` against a
+  transform nothing ever changes, so it renders at zero for the whole scene.
+  Three elements were invisible this way — the comparison bars, the timeline
+  rail — and each read as a missing element rather than a broken animation,
+  which is the hard kind of bug to see. `growY` and `growX` animate the
+  transform; use those for anything that grows from a scale.
+- **A flex item shrinks by default.** The comparison column holds a number, a
+  bar and a label, so it overflows on purpose; the bar was the thing that gave
+  way and rendered at zero height. `flex: none`, and size the bar off a length
+  rather than a percentage of a box it is overflowing.
+
+The class-collision guard earned its keep twice more: `.us` and `.mark` are
+both styled by the shell, so a comparison bar and a benchmark marker were
+silently taking the shell's rules. It refuses to write the page and names the
+class.
+
+**`data-sep` on a counter** is new in `render.js` and opt-in, so every film
+built before it is unchanged: with it, a four-figure count reads 2,495 rather
+than 2495, on the markup and on every frame the renderer writes.
+
 ### Re-cutting it
 
 Edit `tools/film/rise-lines.json`, push a `tts/job.json` to `tts-run` (**check
@@ -6794,6 +6907,13 @@ python3.13 usetrack.py ../../rr-branch-theme.mp3 rise
 node render.js ../../blastoff/film.html cap-rise 30
 python3.13 mixany.py "$(…films.json rise…)" ../../blastoff/blastoff.mp4
 ```
+
+**`importvox.py` does not write `films.json`.** It prints the durations and
+writes the timing file; `durs`, `dur`, and the two cue lists have to be put in
+by hand, and the cue lists are the easy thing to miss — `dark` is scene
+*indices* and `hits` is *seconds*, so both move whenever a scene is inserted.
+Derive them from the timing file's own scene starts rather than guessing:
+inserting ten scenes left the old cues pointing at the wrong moments entirely.
 
 The music is the branch's own theme, so the page carries no licence credit.
 `capbg` in films.json is `070F26`, so the burned-in caption strip is the film's
