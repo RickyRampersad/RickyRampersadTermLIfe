@@ -964,6 +964,40 @@ body.paused #bars i.run::after{animation-play-state:paused}
 .who.mgr b{font-size:calc(var(--u)*3.4)}.who.mgr span{font-size:calc(var(--u)*2.5);margin-top:.3em;max-width:70ch}.who.mgr .lock-s{grid-column:2;grid-row:1/3;margin:0;white-space:nowrap}
 .gate-row .who.mgr b{font-size:calc(var(--u)*3.4)}.gate-row .who.mgr span{font-size:calc(var(--u)*2.5)}
 @media (orientation:portrait){.who.mgr{grid-template-columns:1fr}.who.mgr .lock-s{grid-column:1;grid-row:auto;margin-top:calc(var(--u)*1.2)}.tr-mgr{grid-column:1/-1}}
+
+/* caption-safe, 29 October 2026: the bottom fifth of every frame is the burned captions' band, and the seats, door, booking
+   and close scenes ran into it in one frame or both (measured by the scratchpad's measure.js). Scene-scoped sizes, after
+   every other rule so they win. */
+.s-seats .full{gap:calc(var(--u)*1.4)}
+.s-seats .tr-seat{min-height:calc(var(--u)*21);padding:calc(var(--u)*2.2) calc(var(--u)*1.6) calc(var(--u)*1.8)}
+.s-seats .tr-seats{margin:calc(var(--u)*.6) auto}
+.s-seats .fig b{font-size:calc(var(--u)*7)}
+.s-seats .figs.row{margin-top:calc(var(--u)*.4);align-items:center}
+.s-seats .tr-mgr{padding:calc(var(--u)*1.4) calc(var(--u)*2.4)}
+.s-door .full{gap:calc(var(--u)*1.4)}
+.s-door .h.xl{font-size:calc(var(--u)*8.2)}
+.s-door .gate-row .stage{width:calc(var(--u)*36)}
+.s-door .gate-row .who{padding:calc(var(--u)*2.4) calc(var(--u)*3)}
+.s-door .who.mgr{display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*3);padding:calc(var(--u)*1.4) calc(var(--u)*3)}
+.s-door .who.mgr b{font-size:calc(var(--u)*2.9);white-space:nowrap}
+.s-door .who.mgr span{margin:0;max-width:none;font-size:calc(var(--u)*2.3)}
+.s-door .who.mgr .lock-s{margin:0}
+.s-cta .tr-book{zoom:.87}
+@media (orientation:portrait){
+  .s-door{padding-top:calc(var(--u)*8)}
+  .s-door .h.xl{font-size:calc(var(--u)*10)}
+  .s-door .gate-row .stage{width:calc(var(--u)*50)}
+  .s-door .gate-row .who{padding:calc(var(--u)*2.2) calc(var(--u)*2.6)}
+  .s-door .gate-row .who b{font-size:calc(var(--u)*3.8)}
+  .s-door .who.mgr{display:grid;grid-template-columns:1fr auto;gap:calc(var(--u)*.6) calc(var(--u)*3);justify-content:stretch;text-align:left;padding:calc(var(--u)*2) calc(var(--u)*2.8)}
+  .s-door .who.mgr b{white-space:normal;font-size:calc(var(--u)*3.4)}
+  .s-door .who.mgr span{font-size:calc(var(--u)*2.4)}
+  .s-door .who.mgr .lock-s{grid-column:2;grid-row:1/3;white-space:nowrap}
+  .s-door .tr-line{font-size:calc(var(--u)*2.5)}.s-door .tr-line em{font-size:calc(var(--u)*4.2)}
+  .s-cta .tr-book{zoom:1}
+  .s-cta .qr{zoom:.84}
+  .s-close .stage.closeS{width:calc(var(--u)*40)}
+}
 </style>
 </head>
 <body>
