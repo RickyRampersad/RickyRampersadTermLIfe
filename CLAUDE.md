@@ -6624,6 +6624,19 @@ guide you. In your session review notes on the step back in place from all memor
   is the branch's own five-line objective for the two days, a draft the branch manager edits by logging a position
   against the session key `objective`. The brief prints all three and ends with the sources. The guide is sent the
   evidence and the sixty seconds with the notes.
+- **Last year, this year: the circles** (asked for the same day, with the 2025 agenda: "Please see last years retreat and
+  find that we continued to make circles"). The 2025 Joint Sales Managers Strategic Meeting ran three days; its agenda
+  is in the page as data, in its own words. `PRIOR` sets each 2026 session beside the 2025 sessions that covered the
+  same ground, with what to ask of it ("Last year, 2025" in the session, a "2025 too" label on its header, in the brief
+  and in what the guide is sent). Eight of the ten working sessions return to 2025 ground; Agent & Unit Transfers is the
+  one new subject. The **Last year: the circles** tab carries the same question a year later (`PAIRS`), the ten things
+  the 2025 workshops and plenaries set out to produce (`OUTPUTS`, each with the 2026 session it resurfaces in and what
+  the branch built meanwhile), the 2025 goals ($250M risk-based API, $50M annuity premium, 450 full-time agents, which no
+  2026 session reports against) and the branch's ask of the action log. Whether each output was issued is on neither
+  agenda: the branch manager or a unit manager marks it (Issued, In part, Not issued, Not sure), logged as a `fact`
+  contribution under the session key `c25-<id>` with `[yes|part|no|unk]` in the point, so the backend needs nothing new.
+  The objective's fifth line is "Break the circle"; Our Strategic Journey and Consolidation of Recommendations carry their
+  sixty seconds. Every quotation was checked against the 2025 agenda's text; keep it so.
 - **The Step-Back notes say plainly what the record does not hold.** Nothing on the branch's record defines the
   Step-Back Approach as a recruitment or career-path method; the only "step back" on file is the motor No Claim
   Discount rule. The tab gives what bears on the agenda's question (how the tracker counts recruitment, the licence
@@ -6633,8 +6646,8 @@ guide you. In your session review notes on the step back in place from all memor
 - **Until the paste** (Service.gs and StrategicMeeting.gs, then a New version), the backend answers "Unknown action":
   a sign-in opens on the device (the code cannot be checked yet) with a notice saying so, contributions are kept on the
   device (`rrb-sm-local`) and offered to the sheet once the backend is linked.
-- Tests: `tests/test-strategic-meeting.js` (65 checks, the script under the fake Sheets with the sign-in, the stream
-  and Claude stubbed, then the page and Service.gs against it) and `tests/e2e-strategic-meeting.js` (28, Playwright,
+- Tests: `tests/test-strategic-meeting.js` (71 checks, the script under the fake Sheets with the sign-in, the stream
+  and Claude stubbed, then the page and Service.gs against it) and `tests/e2e-strategic-meeting.js` (34, Playwright,
   a laptop as the branch, a phone as the unit manager, and the unlinked backend).
 
 ## Standing rules
