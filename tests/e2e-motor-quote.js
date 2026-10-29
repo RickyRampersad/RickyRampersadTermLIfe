@@ -35,7 +35,18 @@ const ME = { found: true, email: 'anika@example.com', contactId: '00300000000000
               'The cover changed from Third Party to Comprehensive in 2024.', 'Premium on file for this term: TT$ 4,322.', 'No windscreen cover on file.'] },
     { reg: 'TDA 77', make: 'Nissan', model: 'Note', year: 2016, cover: 'Third Party', sumInsured: 40000, windscreen: 'Yes', to: '2027-07-13', policy: 'TTMV00000002',
       renewOn: '2027-07-14', renewOnText: '14 July 2027', renewIn: 266, renewState: 'later', terms: [], facts: [] }],
-  policies: [{ policy: 'TTMV00000001', product: 'Private Motor', expires: '2026-11-10' }] };
+  policies: [{ policy: 'TTMV00000001', product: 'Private Motor', expires: '2026-11-10' }],
+  /* Everything else she holds (29 October 2026): general insurance renews every year; life and pension do not. */
+  general: [
+    { policy: 'TTFHO0100009', line: 'Home', location: '12 Sample Street, Sampletown', kind: 'Private dwelling', cover: 'Fire and allied perils', renewOn: '2026-11-13', renewOnText: '13 November 2026',
+      renewIn: 15, renewMonth: 'November', renewState: 'due', sumInsured: 900000, lastPremium: 2400, since: '2024', termCount: 2, terms: [] },
+    { policy: 'TTPL0100004', line: 'Liability', location: 'Sample Shop', renewOn: '2027-03-01', renewOnText: '1 March 2027', renewIn: 123, renewMonth: 'March', renewState: 'later',
+      sumInsured: 500000, lastPremium: 0, since: '2026', termCount: 1, terms: [] }],
+  life: [{ policy: '0001234567', type: 'Life', plan: 'Sample Term 20', issued: '2015-03-01', since: '2015', paidTo: '2026-11-18', state: 'inforce', life: 500000, ci: 0, health: 0 },
+         { policy: '0001234568', type: 'Pension', plan: 'Sample Pension', issued: '2018-01-01', since: '2018', paidTo: '2026-09-29', state: 'current', life: 0, ci: 0, health: 0 }],
+  lifeEnded: 1,
+  opps: [{ key: 'ci', title: 'Critical illness cover', href: '/quote/critical-illness/', cta: 'Get a quote', why: 'Your life cover is with us, and no critical illness cover is on your record.' },
+         { key: 'windscreen', title: 'Windscreen cover at renewal', action: 'windscreen', reg: 'PDX 1234', cta: 'Add it when I renew', why: 'Your Toyota Aqua has no windscreen cover on file.' }] };
 /* What the backend's reader hands back, already cleaned. The buyer is not the client: her own name must stand. */
 const READ = { docType: 'dealer quotation', dealer: 'Sample Motors Ltd', documentNo: 'Q-1001', documentDate: '2026-10-15', make: 'MG', model: 'ZS HEV Lux', year: '2026',
   bodyType: 'SUV', engineCc: '1498', fuel: 'Hybrid', condition: 'New', value: '212645', valueBasis: 'Sub-total before fees', reg: '', chassis: '', engineNo: '', seats: '5',
@@ -116,18 +127,60 @@ const calls = []; let requests = []; let NEWME = null;
   ok('it says when, in days, with the vehicle', /21/.test(await txt('#renewals .ring')) && /Toyota Aqua/.test(rn) && /11 November 2026/.test(rn));
   ok('it shows every term on file and what the record shows', (await page.$$('#renewals .tl li')).length === 3 && (await page.$$('#renewals .facts li')).length === 6 && /changed from Third Party/.test(rn));
   ok('the premium is a bar chart, a bar a term with its figure, the current term last', (await page.$$('#renewals .pc-col')).length === 2 && /4,100[\s\S]*4,322/.test(await txt('#renewals .pchart')) && /5\.4%/.test(await txt('#renewals .pchart')));
-  ok('three paths, each in its own words: Renew, New quote, Accept a quote', /Renew[\s\S]*New quote[\s\S]*Accept a quote/.test(await txt('#paths')) && /Due in 21 days/.test(await txt('#pathRenew')));
+  ok('three paths, each in its own words: Renew, New quote, Accept a quote', /Renew[\s\S]*New quote[\s\S]*Accept a quote/.test(await txt('#paths')) && /Due in 15 days/.test(await txt('#pathRenew')));
   ok('each path has its own section, its own colour and its own steps', await page.evaluate(() => ['trRenew', 'trQuote', 'trTake'].every(id => document.getElementById(id).querySelectorAll('.journey li').length >= 3) &&
     new Set(['trRenew', 'trQuote', 'trTake'].map(id => getComputedStyle(document.getElementById(id)).getPropertyValue('--c2').trim())).size === 3));
   ok('the invoice is only on the new-quote path, and only as the dealer\'s', await page.evaluate(() => !!document.querySelector('#trQuote #doorInv') && !/invoice/i.test(document.getElementById('trRenew').textContent) && !/invoice/i.test(document.getElementById('trTake').textContent)) && /dealer's invoice/.test(await txt('#doorInv')));
   ok('the vehicle not due shows how far through its cover year it is, and renews early', (await page.$$('#homeVeh .yr i')).length === 1 && /Renew early/.test(await txt('#homeVeh')));
-  ok('the band gives the figures: vehicles with us, due for renewal', /2\s*vehicles with us/.test(await txt('#homeStats')) && /1\s*due for renewal/.test(await txt('#homeStats')));
+  ok('the band gives the figures: vehicles, other policies, due for renewal', /2\s*vehicles with us/.test(await txt('#homeStats')) && /4\s*other policies/.test(await txt('#homeStats')) && /2\s*due for renewal/.test(await txt('#homeStats')));
   ok('the vehicle not due is under "Your vehicles with us", with its renewal date', /Nissan Note/.test(await txt('#homeVeh')) && /renews/i.test(await txt('#homeVeh')) && !/Toyota/.test(await txt('#homeVeh')));
   ok('nothing runs wider than the phone on the home screen', await wide());
   ok('both blue bands end in drifting waves, hidden from screen readers', await page.evaluate(() => document.querySelectorAll('.band .waves[aria-hidden=true] svg').length === 6));
-  ok('the figures count up on screen and keep their real number in the text', await page.evaluate(() => [...document.querySelectorAll('#homeStats .cu')].map(b => b.textContent).join(',') === '2,1'));
+  ok('the figures count up on screen and keep their real number in the text', await page.evaluate(() => [...document.querySelectorAll('#homeStats .cu')].map(b => b.textContent).join(',') === '2,4,2'));
   ok('scrolled to the foot, no section is left waiting to rise in', await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 500) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 120)); }
     await new Promise(r => setTimeout(r, 300)); const left = document.querySelectorAll('.sr:not(.sr-in)').length; window.scrollTo(0, 0); return left === 0; }));
+  /* ── due now at the very top, everything she holds, and ideas (29 October 2026) ── */
+  ok('"Due now" is the first thing under the welcome, before the three paths', await page.evaluate(() => {
+    const d = document.getElementById('dueTop'), b = document.querySelector('#s-home .band'), p = document.getElementById('paths');
+    return !d.classList.contains('hide') && d.previousElementSibling === b && !!(d.compareDocumentPosition(p) & Node.DOCUMENT_POSITION_FOLLOWING); }));
+  ok('…holding the vehicle due and the home policy due, together', (await page.$$('#dueTop .rnw')).length === 1 && (await page.$$('#dueTop .gdue')).length === 1 &&
+    /Home insurance · 12 Sample Street/.test(await txt('#genDue')) && /13 November 2026/.test(await txt('#genDue')) && /in 15 days/.test(await txt('#genDue')) && /15 days/.test(await txt('#dueSub')));
+  ok('the lead says two policies are due, at the top', /2 policies are due for renewal/.test(await txt('#homeLead')));
+  const hold = await txt('#trHold');
+  ok('"Everything you hold with us" lists the vehicles and general policies with the month each renews', /Everything you hold with us/.test(hold) && /6 policies on your record/.test(hold) &&
+    await page.evaluate(() => document.querySelector('#trHold .hold-g').querySelectorAll('.pol').length) === 4 && /Renews every\s*November/.test(hold) && /Renews every\s*March/.test(hold) && /Renews every\s*July/.test(hold));
+  ok('…the twelve months, the renewal months lit, this month ringed', (await page.$$('#trHold .months span')).length === 12 &&
+    await page.evaluate(() => [...document.querySelectorAll('#trHold .months span.on')].map(s => [...s.parentNode.children].indexOf(s)).join(',')) === '2,6,10' &&
+    (await page.$$('#trHold .months span.now')).length === 1);
+  ok('life and pension carry what they are and where they stand, and no renewal month', await page.evaluate(() => {
+    const g = document.querySelectorAll('#trHold .hold-g')[1]; return !!g && /do not renew/.test(g.textContent) && !/Renews every/.test(g.textContent) &&
+      /Sample Term 20/.test(g.textContent) && /In force/.test(g.textContent) && /Sample Pension/.test(g.textContent) && /life cover TT\$ 500,000/.test(g.textContent); }));
+  ok('…and the earlier policies that ended are counted', /1 earlier policy that has ended/.test(hold));
+  ok('"Ideas for you": one a card, each from her own record, the critical illness one opening the branch\'s page', (await page.$$('#trOpps .opp')).length === 2 &&
+    await page.getAttribute('#trOpps .opp[data-opp=ci] a', 'href') === '/quote/critical-illness/' && /Only a suggestion/.test(await txt('#trOpps')));
+  ok('nothing runs wider than the phone with everything held', await wide());
+  if (process.env.SHOTS) { await page.waitForTimeout(1400); await page.screenshot({ path: path.join(process.env.SHOTS, 'home-due.png') });
+    await page.$eval('#trHold', el => el.scrollIntoView({ block: 'start' })); await page.waitForTimeout(1200); await page.screenshot({ path: path.join(process.env.SHOTS, 'home-hold.png') });
+    await page.$eval('#trOpps', el => el.scrollIntoView({ block: 'start' })); await page.waitForTimeout(1200); await page.screenshot({ path: path.join(process.env.SHOTS, 'home-ideas.png') }); }
+  await page.click('#trOpps .opp[data-opp=windscreen] button'); await page.waitForSelector('#s-form:not(.hide) #rbrief');
+  ok('the windscreen idea opens that vehicle\'s renewal with windscreen cover asked for', /Toyota Aqua/.test(await txt('#step')) && /Add windscreen cover/.test(await page.inputValue('[data-k=renewChanges]')) &&
+    (await page.$('.opts button.on:has-text("Renew with changes")')) !== null);
+  await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
+  await page.click('#genDue .gdue .send'); await page.waitForSelector('#s-form:not(.hide) #rbrief');
+  ok('a home policy renews on the same step, named as home insurance, with no motor cover box', /Home insurance/.test(await txt('#step')) && /12 Sample Street/.test(await txt('#step')) &&
+    /13 November 2026/.test(await txt('#step')) && !(await page.$('#step select[data-k=cover]')) && /Home insurance/.test(await txt('#flowTag')));
+  await page.waitForSelector('#rbrief .bs');
+  ok('…its plain-words brief is asked for by the policy number', calls.some(c => c.action === 'renewBrief' && c.reg === 'TTFHO0100009'));
+  await page.click('.opts button:has-text("Renew as it is")'); await page.click('#btnNext'); await page.waitForFunction(() => /Check and send/.test(document.getElementById('step').textContent));
+  ok('the review shows the policy, not a vehicle', /The policy/.test(await txt('.rev')) && /Home insurance/.test(await txt('.rev')) && !/The vehicle/.test(await txt('.rev')) && !/undefined/.test(await txt('.rev')));
+  await page.check('#agree'); await page.click('#btnNext'); await page.waitForSelector('#s-done:not(.hide)');
+  const gsub = calls.filter(c => c.action === 'submit').pop();
+  ok('it is sent as a Home renewal of that policy', gsub.quote.flow === 'renew' && gsub.quote.line === 'Home' && gsub.quote.reg === 'TTFHO0100009');
+  await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
+  await page.fill('#rfQ', 'ttpl-0100004'); await page.click('#rfind .send'); await page.waitForSelector('#s-form:not(.hide)');
+  ok('typing a general policy\'s number finds it too', /Liability insurance/.test(await txt('#step')) && /Sample Shop/.test(await txt('#step')));
+  await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
+
   /* ── renewing here, vehicle first (29 October 2026): nothing opens another site ── */
   ok('the renewal card renews on this page', /Renew this vehicle/.test(rn) && !/portal/i.test(await txt('#trRenew')));
   ok('a box under the renewals asks for a vehicle not listed', /not listed here/.test(await txt('#renewPortal')) && await page.isVisible('#rfQ'));
@@ -416,6 +469,7 @@ const calls = []; let requests = []; let NEWME = null;
   ok('an agent is greeted as an agent, the producer on every quote', /Good day, Mala/.test(await txt('#homeTitle')) && /Signed in as agent Mala Madeup/.test(await txt('#meCard')) &&
     /producer/.test(await txt('#homeLead')) && /Mala Madeup/.test(await txt('#whoName')));
   if (process.env.SHOTS) { await page.waitForTimeout(1500); await page.screenshot({ path: path.join(process.env.SHOTS, 'agent-home.png') }); }
+  ok('an agent sees none of the client sections: no "Due now", nothing held, no ideas', await page.evaluate(() => document.getElementById('dueTop').classList.contains('hide') && !document.getElementById('trHold') && !document.getElementById('trOpps')));
   ok('an agent has the new quote alone: no renewal, no taking a quote', !(await page.isVisible('#pathRenew')) && !(await page.isVisible('#pathTake')) && !(await page.isVisible('#trTake')) && await page.isVisible('#trQuote'));
   await page.click('#doorQuick'); await page.waitForSelector('#s-form:not(.hide)');
   ok('the form asks for the client: their e-mail, whether they are with us, their name; no agent box', await page.isVisible('[data-k=clientEmail]') &&

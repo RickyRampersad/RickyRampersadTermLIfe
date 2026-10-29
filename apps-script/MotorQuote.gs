@@ -65,7 +65,7 @@
  */
 
 var MQ = {
-  VERSION: '2026-10-29b',
+  VERSION: '2026-10-29c',
   BRAND: 'Ricky Rampersad Branch',
   LOGO: 'https://rickyrampersadbranch.com/orphan-transition/board-mark.png',   // the blue shield (the manager's choice, 21 Oct 2026); hosted PNG: Gmail strips SVG and data URIs
   SITE: 'https://rickyrampersadbranch.com/motor-quote/',
@@ -140,7 +140,7 @@ var MQ_COLS = ['Ref', 'Received', 'Status', 'Client', 'Email', 'Mobile', 'Contac
    key is a field the page sends; the label is what the desk reads. */
 var MQ_FIELDS = [
   ['section', 'The request'],
-  ['flowLabel', 'Request'], ['renewDate', 'Renews on'], ['renewChoice', 'The client asks'], ['renewChanges', 'Changes asked for'],
+  ['flowLabel', 'Request'], ['line', 'Line of insurance'], ['renewDate', 'Renews on'], ['renewChoice', 'The client asks'], ['renewChanges', 'Changes asked for'],
   ['lastPremium', 'Premium on file for this term'], ['renewHistory', 'Terms on file'], ['invoiceFacts', 'Read from the document'],
   ['section', 'The client'],
   ['name', 'Client name'], ['email', 'E-mail'], ['mobile', 'Mobile'], ['gender', 'Gender'], ['dob', 'Date of birth'],
@@ -556,7 +556,117 @@ function mqLookup_(email) {
     var rank = { due: 0, lapsed: 1, later: 2, ended: 3, '': 4 };
     me.vehicles.sort(function (a, b) { return (rank[a.renewState || ''] - rank[b.renewState || '']) || ((a.renewIn || 0) - (b.renewIn || 0)); });
   } catch (e) { mqLog_('(lookup)', 'vehicles-failed', String(e)); }
+  /* Everything else they hold with us (29 October 2026: "what is currently due at the very top and a history of the
+     other policies with us and the renewal month for only general, and look for cross selling opportunities"). Each
+     read stands alone, so a field the org refuses never costs the vehicles. */
+  try { me.general = mqGeneral_(email, inIds); } catch (e) { me.general = []; mqLog_('(lookup)', 'general-failed', String(e)); }
+  try { var lf = mqLife_(email, inIds); me.life = lf.list; me.lifeEnded = lf.ended; } catch (e) { me.life = []; me.lifeEnded = 0; mqLog_('(lookup)', 'life-failed', String(e)); }
+  me.opps = mqOpps_(me);
   return me;
+}
+
+/* ---- general insurance other than motor: one entry a policy, renewing every year in the same month ---- */
+var MQ_GEN_TYPES = ['Property', 'Public Liability', 'Workers Compensation', 'Machinery', 'Bond', 'MARINE'];
+function mqGenLine_(policy, rt) {
+  var pre = (String(policy || '').toUpperCase().replace(/[^A-Z0-9]/g, '').match(/^TT([A-Z]{3})/) || [])[1] || '';
+  if (/^(FHO|FHC)$/.test(pre)) return 'Home';
+  return { 'Property': 'Property', 'Public Liability': 'Liability', 'Workers Compensation': 'Workers\' compensation',
+           'Machinery': 'Machinery and plant', 'Bond': 'Bond', 'MARINE': 'Marine' }[rt] || rt || 'General insurance';
+}
+function mqGeneral_(email, inIds) {
+  var base = 'Policy__c, RecordType.Name, Risk_Location__c, Property_Type__c, Property_Coverage_Type__c, Cover1__c, Total_Cover__c, Carrier__c, From__c, To__c';
+  var where = ' FROM Risk_Details__c WHERE RecordType.Name IN (' + MQ_GEN_TYPES.map(mqQ_).join(',') + ') AND (Email__c = ' + mqQ_(email) +
+    (inIds ? ' OR Insured__c IN (' + inIds + ')' : '') + ') ORDER BY To__c DESC NULLS LAST LIMIT 100';
+  var rows;
+  try { rows = mqSoql_('SELECT ' + base + ', Next_Renewal_Date__c, Premium_Due__c' + where); }
+  catch (e) { rows = mqSoql_('SELECT ' + base + where); }
+  var by = {}, order = [], today = mqDate_(new Date(), 'yyyy-MM-dd');
+  rows.forEach(function (r) {
+    var key = mqRegKey_(r.Policy__c) || ('X' + mqRegKey_(r.Risk_Location__c));
+    if (key === 'X') return;
+    if (!by[key]) { by[key] = { policy: r.Policy__c || '', line: mqGenLine_(r.Policy__c, r.RecordType && r.RecordType.Name), terms: [], seen: {} }; order.push(key); }
+    var g = by[key];
+    var take = function (f, from) { if (!g[f] && r[from] != null && String(r[from]).trim() !== '') g[f] = r[from]; };
+    take('location', 'Risk_Location__c'); take('kind', 'Property_Type__c'); take('cover', 'Property_Coverage_Type__c'); take('carrier', 'Carrier__c');
+    var tk = String(r.To__c || '');
+    if (r.To__c && !g.seen[tk]) {
+      g.seen[tk] = 1;
+      g.terms.push({ policy: r.Policy__c || '', from: mqDay_(r.From__c), to: mqDay_(r.To__c), renew: mqDay_(r.Next_Renewal_Date__c),
+        cover: r.Property_Coverage_Type__c || '', sum: mqNum_(r.Total_Cover__c) || mqNum_(r.Cover1__c), premium: mqNum_(r.Premium_Due__c) });
+    } else if (r.To__c) {
+      var t = g.terms.filter(function (x) { return x.to === mqDay_(r.To__c); })[0];
+      if (t) { if (!t.premium && r.Premium_Due__c) t.premium = mqNum_(r.Premium_Due__c); t.sum = t.sum || mqNum_(r.Total_Cover__c) || mqNum_(r.Cover1__c); }
+    }
+  });
+  return order.map(function (k) {
+    var g = by[k], last = g.terms[0]; delete g.seen;
+    g.location = String(g.location || '').replace(/\s*\n\s*/g, ', ').slice(0, 120);
+    if (last && last.to) {
+      var on = last.renew && Math.abs(mqDays_(last.to, last.renew)) <= 3 ? last.renew : mqAddDays_(last.to, 1);
+      var n = mqDays_(today, on);
+      g.renewOn = on; g.renewOnText = mqLong_(on); g.renewIn = n; g.renewMonth = MQ_MON[+on.slice(5, 7) - 1];
+      g.renewState = n >= 0 && n <= MQ.RENEW_AHEAD ? 'due' : n < 0 && n >= -MQ.RENEW_BACK ? 'lapsed' : n > MQ.RENEW_AHEAD ? 'later' : 'ended';
+      g.sumInsured = last.sum || 0; g.lastPremium = last.premium || 0;
+    }
+    var first = g.terms.map(function (x) { return x.from; }).filter(Boolean).sort()[0];
+    g.since = first ? first.slice(0, 4) : '';
+    g.termCount = g.terms.length;
+    g.terms = g.terms.slice(0, MQ.TERMS_SHOWN);
+    return g;
+  }).filter(function (g) { return g.renewState !== 'ended'; })
+    .sort(function (a, b) { return (a.renewIn == null ? 9999 : a.renewIn < 0 ? a.renewIn + 400 : a.renewIn) - (b.renewIn == null ? 9999 : b.renewIn < 0 ? b.renewIn + 400 : b.renewIn); });
+}
+
+/* ---- life, pension, health and personal accident: what they hold, with no renewal month (they do not renew) ---- */
+var MQ_LIFE_TYPES = { 'LIFE': 'Life', 'PENSION': 'Pension', 'HEALTH': 'Health', 'PERSONAL ACCIDENT': 'Personal accident', 'INVESTMENTS': 'Investment' };
+var MQ_ENDED = /surrender|matur|death|expired|lapse|not taken|not proceeded|declin|reject|file closed|postpon|cancel|^(rnp|rfc|rpp|rde|rdc|anp|ant|elv|d|x|f|e|w)$/i;
+function mqLifeState_(st, paidTo, today) {
+  st = String(st || '').trim();
+  if (/premium paying|paid up|waiver|vested|converted/i.test(st)) return 'inforce';
+  if (/pending|underwriting/i.test(st)) return 'applied';
+  if (MQ_ENDED.test(st)) return 'ended';
+  /* A status the record writes as a code: the policy counts as current only while it is paid to within the year. */
+  return paidTo && mqDays_(paidTo, today) <= 400 ? 'current' : 'ended';
+}
+function mqLife_(email, inIds) {
+  var today = mqDate_(new Date(), 'yyyy-MM-dd');
+  var q = 'SELECT POLICY__c, RecordType.Name, Product_Name__c, PLAN_NAME__c, Pension_Plan_Name__c, ISSUE_DATE__c, Paid_To_Date__c, Maturity_Date__c, ' +
+    'Policy_Status_Description_R__c, Life_Coverage__c, Critical_Illness_Coverage__c, Health_Cover__c FROM CLIENT_PORTFOLIO__c WHERE RecordType.Name IN (' +
+    Object.keys(MQ_LIFE_TYPES).map(mqQ_).join(',') + ') AND (Email__c = ' + mqQ_(email) + (inIds ? ' OR Contact__c IN (' + inIds + ')' : '') + ') ORDER BY ISSUE_DATE__c DESC NULLS LAST LIMIT 60';
+  var seen = {}, list = [], ended = 0;
+  mqSoql_(q).forEach(function (r) {
+    var key = mqRegKey_(r.POLICY__c); if (!key || seen[key]) return; seen[key] = 1;
+    var paid = mqDay_(r.Paid_To_Date__c), state = mqLifeState_(r.Policy_Status_Description_R__c, paid, today);
+    if (state === 'ended') { ended++; return; }
+    var type = MQ_LIFE_TYPES[(r.RecordType && r.RecordType.Name) || ''] || 'Life';
+    list.push({ policy: r.POLICY__c, type: type,
+      plan: mqNiceTitle_(r.Product_Name__c || r.PLAN_NAME__c || r.Pension_Plan_Name__c || '') || type,
+      issued: mqDay_(r.ISSUE_DATE__c), since: String(r.ISSUE_DATE__c || '').slice(0, 4), paidTo: paid, matures: mqDay_(r.Maturity_Date__c), state: state,
+      life: mqNum_(r.Life_Coverage__c), ci: mqNum_(r.Critical_Illness_Coverage__c), health: mqNum_(r.Health_Cover__c) });
+  });
+  return { list: list.slice(0, 20), ended: ended };
+}
+
+/* ---- what the record says they could add: offers from facts, never advice, each with a page that takes it ---- */
+function mqOpps_(me) {
+  if (!me.found) return [];
+  var vs = me.vehicles || [], gen = me.general || [], life = me.life || [], out = [];
+  var hasLife = life.some(function (p) { return p.type === 'Life' && p.state !== 'applied'; });
+  var hasCi = life.some(function (p) { return p.ci > 0; });
+  var hasHome = gen.some(function (g) { return g.line === 'Home'; });
+  var hasPa = life.some(function (p) { return p.type === 'Personal accident'; });
+  if ((vs.length || hasLife) && !hasHome) out.push({ key: 'home', title: 'Insure your home with us', href: '/quote/property/', cta: 'Get a home quote',
+    why: 'We look after your ' + (vs.length ? (vs.length === 1 ? 'vehicle' : 'vehicles') : 'life cover') + ', but there is no home insurance with us on your record.' });
+  if (!hasLife) out.push({ key: 'life', title: 'Life cover in minutes', href: '/apply/xpress-life/', cta: 'Start Xpress Life',
+    why: 'There is no life policy with us on your record. Xpress Life is applied for online, with no medical for most people.' });
+  else if (!hasCi) out.push({ key: 'ci', title: 'Critical illness cover', href: '/quote/critical-illness/', cta: 'Get a quote',
+    why: 'Your life cover is with us, and no critical illness cover is on your record. It pays a lump sum on diagnosis of a covered illness.' });
+  var noWs = vs.filter(function (v) { return v.renewState !== 'ended' && (v.facts || []).some(function (f) { return /No windscreen cover/.test(f); }); });
+  if (noWs.length) out.push({ key: 'windscreen', title: 'Windscreen cover at renewal', action: 'windscreen', reg: noWs[0].reg, cta: 'Add it when I renew',
+    why: 'Your ' + ([noWs[0].make, noWs[0].model].filter(Boolean).join(' ') || noWs[0].reg) + ' has no windscreen cover on file.' });
+  if (!hasPa && (vs.length || gen.length) && out.length < 3) out.push({ key: 'pa', title: 'Personal accident cover', href: '/#contact', cta: 'Ask us about it',
+    why: 'Your insurance with us covers your ' + (vs.length ? 'vehicle' : 'property') + '; no personal accident cover is on your record.' });
+  return out.slice(0, 3);
 }
 
 function mqRegKey_(r) { return String(r || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
@@ -950,7 +1060,7 @@ function mqTask_(d, ref, contactId, whatId) {
     var due = new Date(); var n = 0;
     while (n < MQ.TASK_DUE_DAYS) { due.setDate(due.getDate() + 1); if (due.getDay() !== 0 && due.getDay() !== 6) n++; }
     var body = {
-      Subject: (d.flow === 'renew' ? 'Motor renewal ' : d.flow === 'proposal' ? 'Motor proposal ' : 'Motor quote ') + ref + ': ' + [d.year, d.make, d.model].filter(Boolean).join(' ') +
+      Subject: (d.flow === 'renew' ? (d.line ? d.line + ' renewal ' : 'Motor renewal ') : d.flow === 'proposal' ? 'Motor proposal ' : 'Motor quote ') + ref + ': ' + [d.year, d.make, d.model].filter(Boolean).join(' ') +
         ' (' + d.reg + ') · ' + (d.flow === 'renew' ? d.renewChoice + (d.renewDate ? ', renews ' + d.renewDate : '') : d.cover),
       Status: 'In Progress', Priority: 'Normal',
       ActivityDate: Utilities.formatDate(due, mqTz_(), 'yyyy-MM-dd'),
@@ -1039,7 +1149,7 @@ function mqSubmit_(b) {
     to: [deskTo], cc: mqCc_().concat(d.agentEmail && mqEmailOk_(d.agentEmail) ? [d.agentEmail] : []),
     replyTo: MQ.SUPPORT_FROM,
     subject: renew
-      ? 'Motor renewal request ' + ref + ': ' + (veh ? veh + ' ' : '') + '(' + d.reg + ')' + (d.renewDate ? ' · renews ' + d.renewDate : '') + ' · ' + d.renewChoice + ' · ' + d.name
+      ? (d.line ? d.line : 'Motor') + ' renewal request ' + ref + ': ' + (veh ? veh + ' ' : '') + '(' + d.reg + ')' + (d.renewDate ? ' · renews ' + d.renewDate : '') + ' · ' + d.renewChoice + ' · ' + d.name
       : 'Motor quote request ' + ref + ': ' + veh + ' (' + d.reg + ') · ' + d.cover + (d.flow === 'quick' ? ' · quick quote' : '') + ' · ' + d.name,
     html: mqDeskMail_(ref, d, contact, folder),
     attachments: files.map(function (f) { return f.blob; }),
@@ -1097,13 +1207,14 @@ function mqRead_(q, s, placer) {
     newUnreg: yn('newUnreg'),
     renewChoice: /change/i.test(g('renewChoice', 40)) ? 'Renew with changes' : /as it is|as is/i.test(g('renewChoice', 40)) ? 'Renew as it is' : /talk|call/i.test(g('renewChoice', 40)) ? 'Talk to us first' : '',
     renewChanges: g('renewChanges', 1000), renewDate: '', lastPremium: '', renewHistory: '',
+    line: /^(Home|Property|Liability|Workers' compensation|Machinery and plant|Bond|Marine)$/.test(g('line', 40)) ? g('line', 40) : '',
     invoiceFacts: mqInvoiceFacts_(q.invoice),
   };
   d.flow = /^(quick|renew|full)$/.test(g('flow', 10)) ? g('flow', 10) : 'full';
   /* A new vehicle from a dealer has no number yet; the quick and full doors
      accept that, said in words. */
   if (!d.reg && d.newUnreg === 'Yes' && d.flow !== 'renew') d.reg = 'Not registered yet';
-  if (d.flow !== 'renew') { d.renewChoice = ''; d.renewChanges = ''; }
+  if (d.flow !== 'renew') { d.renewChoice = ''; d.renewChanges = ''; d.line = ''; }
   d.flowLabel = MQ_FLOW_LABEL[d.flow] + (d.invoiceFacts ? ', from the client\'s document' : '');
   if (d.ownerType !== 'Company') { d.company = ''; d.companyEmail = ''; }
   if (d.mortgaged !== 'Yes') d.institution = '';
@@ -1241,6 +1352,17 @@ function mqRenewFromRecord_(d, s) {
   if (!key) return;
   if (!mqSfReady_()) { d.renewHistory = 'Not checked against Salesforce (not linked).'; return; }
   var me = mqLookup_(s.email);
+  if (d.line) {
+    var g = (me.general || []).filter(function (x) { return mqRegKey_(x.policy) === key; })[0];
+    if (!g) { d.renewHistory = 'This ' + d.line.toLowerCase() + ' policy was not found on file for ' + d.email + '. Please check the client before renewing.'; return; }
+    d.reg = String(g.policy); d.line = g.line; d.make = ''; d.model = g.location || g.kind || ''; d.year = '';
+    if (!d.value && g.sumInsured) d.value = String(Math.round(g.sumInsured));
+    d.existingPolicy = String(g.policy); d.renewDate = g.renewOnText || ''; d.lastPremium = g.lastPremium ? mqMoney_(g.lastPremium) : '';
+    d.renewHistory = (g.terms || []).map(function (t) {
+      return (mqLong_(t.from) || 'start not on file') + ' to ' + mqLong_(t.to) + ': ' + [t.cover, t.sum ? mqMoney_(t.sum) : '', t.premium ? 'premium ' + mqMoney_(t.premium) : ''].filter(Boolean).join(' · ');
+    }).join('\n') + (g.since ? '\n\nWith us since ' + g.since + ', renewing every ' + g.renewMonth + '.' : '');
+    return;
+  }
   var v = (me.vehicles || []).filter(function (x) { return mqRegKey_(x.reg) === key; })[0];
   if (!v) { d.renewHistory = 'This vehicle was not found on file for ' + d.email + '. Please check the client before renewing.'; return; }
   d.reg = String(v.reg);
@@ -1280,6 +1402,12 @@ function mqRenewBrief_(b) {
   if (!key) return { ok: true, brief: null };
   var me = mqLookup_(s.email);
   var v = (me.vehicles || []).filter(function (x) { return mqRegKey_(x.reg) === key; })[0];
+  if (!v) {
+    /* A general policy (a home, a liability policy …): the same, with the policy in place of the vehicle. */
+    var g = (me.general || []).filter(function (x) { return mqRegKey_(x.policy) === key; })[0];
+    if (g) v = { general: true, make: g.line + ' insurance', model: g.location || g.kind || '', reg: g.policy, renewOn: g.renewOn, renewIn: g.renewIn,
+      renewState: g.renewState, cover: g.cover, terms: g.terms, facts: g.since ? ['With us since ' + g.since + ': ' + g.termCount + (g.termCount === 1 ? ' term' : ' terms') + ' on file, renewing every ' + g.renewMonth + '.'] : [] };
+  }
   if (!v) return { ok: true, brief: null };
   var plain = mqBriefPlain_(v);
   if (!mqAiReady_()) return { ok: true, brief: plain };
@@ -1316,7 +1444,7 @@ function mqRenewBrief_(b) {
 /* What Claude is given: the vehicle and its terms off the record, nothing about anyone else. */
 function mqBriefFacts_(v) {
   var name = [v.year, v.make, v.model].filter(Boolean).join(' ') || 'The vehicle';
-  var lines = ['Vehicle: ' + name + ', registration ' + v.reg + '.'];
+  var lines = [v.general ? 'Policy: ' + name + ', policy number ' + v.reg + '.' : 'Vehicle: ' + name + ', registration ' + v.reg + '.'];
   if (v.renewOn) lines.push((v.renewState === 'lapsed' || v.renewState === 'ended' ? 'Cover ended; it renewed on ' : 'Renews on ') + mqLong_(v.renewOn) + ' (' +
     (v.renewIn >= 0 ? v.renewIn + ' days from today' : Math.abs(v.renewIn) + ' days ago') + ').');
   if (v.cover) lines.push('Cover: ' + v.cover + '.');
@@ -1350,11 +1478,16 @@ function mqBriefPlain_(v) {
     ? ' Its cover ended and it was due to renew on ' + mqLong_(v.renewOn) + '.'
     : ' It renews on ' + mqLong_(v.renewOn) + ', in ' + v.renewIn + (v.renewIn === 1 ? ' day.' : ' days.');
   var t = v.terms || [], last = t[0] || {};
-  var summary = 'Your ' + name + ' (' + v.reg + ') is insured with us' + (v.cover ? ' on ' + v.cover + ' cover' : '') + '.' + when;
+  var summary = v.general ? 'Your ' + String(v.make).toLowerCase() + (v.model ? ' for ' + v.model : '') + ' (policy ' + v.reg + ') is with us.' + when
+    : 'Your ' + name + ' (' + v.reg + ') is insured with us' + (v.cover ? ' on ' + v.cover + ' cover' : '') + '.' + when;
   var checks = [];
   if (last.sum) {
     var same = 1; while (same < t.length && t[same].sum === last.sum) same++;
     checks.push({ question: 'It is insured for ' + mqMoney_(last.sum) + (same >= 2 ? ', the same as the last ' + same + ' terms' : '') + '. Is that still what it is worth?', change: 'Update the insured value' });
+  }
+  if (v.general) {
+    checks.push({ question: 'Has anything changed at the property or in what it holds: building work, new contents, a change in use?', change: 'A change at the property' });
+    return { summary: summary, checks: checks.slice(0, 3), ai: false };
   }
   checks.push({ question: 'Will anyone new drive it, or has the way it is used changed?', change: 'A new driver or a change in use' });
   var w = last.windscreen || v.windscreen;
@@ -1795,7 +1928,7 @@ function mqDeskMail_(ref, d, contact, folder) {
 }
 
 function mqReceipt_(ref, d) {
-  var veh = [d.year, d.make, d.model].filter(Boolean).join(' ') + ' (' + d.reg + ')';
+  var veh = d.line ? d.line + ' insurance' + (d.model ? ', ' + d.model : '') + ' (' + d.reg + ')' : [d.year, d.make, d.model].filter(Boolean).join(' ') + ' (' + d.reg + ')';
   if (d.flow === 'renew') {
     return mqWrap_('We have your renewal request, ' + mqEsc_(d.first || d.name) + '.',
       '<p>Thank you. Your request to renew <b>' + mqEsc_(veh) + '</b>' + (d.renewDate ? ', which renews on <b>' + mqEsc_(d.renewDate) + '</b>,' : '') +
