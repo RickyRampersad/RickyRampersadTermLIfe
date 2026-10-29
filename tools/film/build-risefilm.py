@@ -100,6 +100,59 @@ BUILT = [
     ('Oct',  'The meeting builder'),
 ]
 
+#  THE LONG DIGITAL RECORD. He asked for this on 29 October 2026: "you can see
+#  from mcp how long we were digital and continue to revise with even better
+#  tools". Every line is the EARLIEST record Salesforce holds for that kind of
+#  work, read that evening; the counts in FORMS are each object's whole
+#  history. No client, no money, nothing that names anybody.
+#
+#    Submission__c            5,523   28 Mar 2011 → 23 May 2017
+#    Attendance_Register__c   7,355   25 Aug 2013 → 10 May 2024
+#    Market_Survey__c           680    3 Apr 2014 → 29 Oct 2024
+#    POP7__c                     39   27 Apr 2014 → 27 Apr 2026
+#    Policy_Queries__c          229    8 Apr 2019 → 25 Jun 2019
+#    jotform__JotformUser__c      –   18 Nov 2023 (the forms wired in)
+#
+#  The JotForm MCP itself needs authorising before it will answer, so the dates
+#  here come from Salesforce's own copy of that work rather than from JotForm.
+DIGITAL = [
+    (2011, 0,   'the first digital submission'),
+    (2013, 13,  'the register goes digital'),
+    (2014, 20,  'the market survey, and POP7'),
+    (2019, 53,  'queries logged on screen'),
+    (2023, 80,  'the forms wired into Salesforce'),
+    (2026, 100, 'the fact find, rebuilt'),
+]
+FORMS = [
+    (5523, 'submissions',      '2011 – 2017'),
+    (7355, 'register entries', '2013 – 2024'),
+    (680,  'market surveys',   '2014 – 2024'),
+]
+
+#  FactFind360's own wall feed, read 29 October 2026. year.submitted 144.
+#  managerPerf, the two managers together: reviewed 38 + 25 = 63, approved
+#  27 + 23 = 50, returned 11 + 2 = 13, medians 2.2 and 3.0 days.
+#
+#  THE FIRST CUT OF THIS SCENE SAID "100% read by a manager, 2.2 days, 29%
+#  sent back" AND ALL THREE WERE WRONG. 63 of 144 have been reviewed, not all
+#  of them; 2.2 days and 29% are the Branch Manager's own figures, not the
+#  branch's (the other manager runs 3.0 days and 8%). What is true is that
+#  nothing reaches a client until a manager signs it off — a statement about
+#  the process, which is what the scene says now. Read the feed's shape before
+#  turning one person's row into the branch's headline.
+#
+#  COUNTS, DAYS AND SHARES ONLY. The feed carries API and premium figures and
+#  they stay out: this film sits at a public URL, and what the branch writes is
+#  nobody else's business.
+FFDATA = [
+    ('<b class="rscnt cnt" data-to="144" data-at="300">144</b>',
+     'fact finds', 'this year'),
+    ('<b class="rscnt cnt" data-to="63" data-at="560">63</b>',
+     'through a manager', '50 signed off, 13 sent back'),
+    ('<b class="rscnt">1 in 5</b>', 'came back for more', 'the answer is not always yes'),
+    ('<b class="rscnt">2&ndash;3</b>', 'days to an answer', 'median, each manager'),
+]
+
 PEOPLE = []
 for nm, y, m in ROSTER:
     yrs = (TODAY - date(y, m, 1)).days / 365.25
@@ -196,6 +249,47 @@ def person(cls='', style='', label=''):
             f'<circle cx="12" cy="6.6" r="5"/>'
             f'<path d="M2.8 26.5c0-5.1 4.1-8.8 9.2-8.8s9.2 3.7 9.2 8.8z"/>'
             f'</svg>{cap}</span>')
+
+
+#  Every screen in this film is one of the branch's own, captured with sample
+#  data and already public on /wall/. They are what he means by "the replica":
+#  not a drawing of the tool, the tool. wall/img/* were shot for the FY27 wall;
+#  blastoff/img/* were shot from /wall/?demo=1 for this film.
+SHOTS = {
+    'ffdraft': ('../wall/img/ff/01-client-draft.jpg', 'tall'),
+    'ffsign': ('../wall/img/ff/02-manager-signoff.jpg', 'tall'),
+    'ffcopy': ('../wall/img/ff/03-agent-your-copy.jpg', 'tall'),
+    'ffok': ('../wall/img/ff/04-client-approval-page.jpg', 'tall'),
+    'ffrate': ('../wall/img/ff/05-client-sign-and-rate.jpg', 'tall'),
+    'ffclose': ('../wall/img/ff/06-did-this-close.jpg', 'tall'),
+    'ffins': ('../wall/img/ff/08-manager-insights.jpg', 'tall'),
+    'lblog': ('../wall/img/lb/logged-ph.jpg', 'rsph'),
+    'lbget': ('../wall/img/lb/received-ph.jpg', 'rsph'),
+    'lbsent': ('../wall/img/lb/sent-ph.jpg', 'rsph'),
+    'lbfind': ('../wall/img/lb/find-ph.jpg', 'rsph'),
+    'mtag': ('../wall/img/meet/agenda-lap.jpg', 'lap'),
+    'mtact': ('../wall/img/meet/actions-lap.jpg', 'lap'),
+    'mtreg': ('../wall/img/meet/register-lap.jpg', 'lap'),
+    'jrff': ('../wall/img/jr/1-factfind.jpg', 'wide'),
+    'jrplan': ('../wall/img/jr/2-plan.jpg', 'wide'),
+    'wprod': ('img/production.jpg', 'lap'),
+    #  Cropped above the per-agent rings: those put a sample percentage
+    #  beside a real first name, which is fine on a wall behind a code and
+    #  not fine in a film anybody can forward.
+    'wgoal': ('img/goals.jpg', 'band'),
+    'wtrans': ('img/transmittal.jpg', 'lap'),
+    'wday': ('img/day.jpg', 'lap'),
+}
+
+
+def shot(key, cls='', style='', cap=''):
+    """One real screen, in a card. The caption is ours, never read off the
+       picture, so a re-shoot can never silently change what the film says."""
+    src, kind = SHOTS[key]
+    label = f'<i>{cap}</i>' if cap else ''
+    return (f'<figure class="rsshot {kind} {cls}" style="{style}">'
+            f'<img src="{src}" alt="" loading="eager"><span class="rsgl"></span>'
+            f'</figure>{label}')
 
 
 def tenure_chart(coloured):
@@ -608,6 +702,89 @@ def V(name, s):
                 f'<div class="rsurl">rickyrampersadbranch.com/meetings</div></div>')
 
     # 18 · the close. Whole, with the seams showing, and the check drawn on.
+
+    # ── the long digital record ─────────────────────────────────────────────
+    # 9b · we did not go digital this year. Every date here is the earliest
+    #      record Salesforce holds for that kind of work, read on 29 October
+    #      2026; the counts are that object's whole history. Nothing is a
+    #      client, and nothing is money.
+    if name == 'digital':
+        #  Two lanes, alternating. 2013 and 2014 are a year apart on a
+        #  fifteen-year rail — about eighty pixels — and the label is twice
+        #  that wide, so on one lane they land on top of each other.
+        rail = ''.join(
+            f'<div class="rsmile" style="--i:{i};--p:{p};--lane:{i % 2}">'
+            f'<span class="rsmd"></span><span class="rstick"></span>'
+            f'<span class="rslab"><b>{y}</b><i>{what}</i></span></div>'
+            for i, (y, p, what) in enumerate(DIGITAL))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rshead">{cnt(15, 260)}'
+                f'<span class="rsbigl">years of running on our own screens</span></div>'
+                f'<div class="rsrail"><span class="rsrl"></span>{rail}</div>'
+                f'<div class="rsfoot">earliest record on file for each, read from Salesforce</div></div>')
+
+    # 9c · the volume behind it, three counters that flip up in turn.
+    if name == 'forms':
+        cards = ''.join(
+            f'<div class="rstile" style="--i:{i}">{cnt(n, 300 + i * 260, sep=True)}'
+            f'<span class="rstily">{lab}</span><em>{span}</em></div>'
+            for i, (n, lab, span) in enumerate(FORMS))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rstiles">{cards}</div>'
+                f'<div class="rsfoot">every one of them filed on a screen, not on paper</div></div>')
+
+    # 11b · the replica wall. Real screens, flying in, never still. This is the
+    #       answer to "lots of cards with the replica": the tools themselves.
+    if name == 'replica':
+        #  Ten. Twelve wrapped to a third row and the last card was cut in
+        #  half by the caption strip the mixer pads back on.
+        keys = ['ffdraft', 'lblog', 'mtag', 'wprod', 'ffok',
+                'lbget', 'wtrans', 'jrff', 'mtact', 'wday']
+        wall = ''.join(
+            f'<div class="rsrc" style="--i:{i};--r:{(i * 37) % 7 - 3}deg">'
+            f'{shot(k)}</div>' for i, k in enumerate(keys))
+        return (f'<div class="rswall">{wall}</div>'
+                f'<div class="rscap over"><div class="rseyeb">WHAT WE RUN ON</div>'
+                f'<div class="rshead sm">Every screen here is real</div></div>')
+
+    # ── the fact find, live again on 1 August 2026 ──────────────────────────
+    # 12d · the date, and the thing itself. The five screens are the client's
+    #       own journey through it, in order.
+    if name == 'ffnew':
+        order = [('ffdraft', 'the draft, to the client'),
+                 ('ffsign', "the manager's sign-off"),
+                 ('ffok', 'the client confirms'),
+                 ('ffrate', 'signed, and rated'),
+                 ('ffins', 'what the branch sees')]
+        strip = ''.join(
+            f'<div class="rsstep" style="--i:{i}">{shot(k, cap=c)}</div>'
+            for i, (k, c) in enumerate(order))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rshead sm">1 August 2026 &middot; rebuilt</div>'
+                f'<div class="rssteps">{strip}</div></div>')
+
+    # 12e · and what it has done since. FactFind360's own wall feed, read on
+    #       29 October 2026. Counts, days and shares: no money at a public URL.
+    if name == 'ffdata':
+        tiles = ''.join(
+            f'<div class="rstile sm" style="--i:{i}">{v}'
+            f'<span class="rstily">{lab}</span><em>{sub}</em></div>'
+            for i, (v, lab, sub) in enumerate(FFDATA))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rstiles four">{tiles}</div>'
+                f'<div class="rsfoot">FactFind360, this year to 29 October</div></div>')
+
+    # 16c · the walls. Four of the branch's own, as the room sees them.
+    if name == 'prod':
+        keys = [('wprod', 'production'), ('wtrans', 'the transmittal'),
+                ('wgoal', 'the goals')]
+        cards = ''.join(
+            f'<div class="rsquad" style="--i:{i}">{shot(k, cap=c)}</div>'
+            for i, (k, c) in enumerate(keys))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsquads three">{cards}</div>'
+                f'<div class="rsfoot">live on the walls, all day, sample figures on screen</div></div>')
+
     if name == 'rise':
         ck = (f'<path class="ckc" d="{CHECK}"/>'
               f'<path class="ck" d="{CHECK}"/>')
@@ -636,7 +813,10 @@ CHAPTER = {
     'plan': 'The three-year plan', 'gold': 'The cracks are part of it',
     'better': 'Not going back', 'friday': 'Friday 30 October',
     'yours': '75 of the 90 minutes', 'ask': 'Answer one question',
-    'signin': 'How you get in', 'rise': 'We rise together'}
+    'signin': 'How you get in', 'rise': 'We rise together',
+    'digital': 'Fifteen years digital', 'forms': 'The volume behind it',
+    'replica': 'What we run on', 'ffnew': 'The fact find, rebuilt',
+    'ffdata': 'What it has done since', 'prod': 'The walls'}
 # A scene with no name would hand the rail a dump of its own first words, so
 # say so at build time rather than find out on the page.
 _missing = [q['v'] for q in LINES['scenes'] if q['v'] not in CHAPTER]
@@ -1068,6 +1248,97 @@ CSS = r"""
   animation:qIn .5s calc(.6s + var(--i)*.22s) both}
 @keyframes qIn{from{opacity:0;transform:scale(.2)}60%{opacity:1;transform:scale(1.35)}
   to{opacity:.95;transform:scale(1)}}
+
+/* ══ the replica card ═══════════════════════════════════════════════════════
+   One of the branch's own screens, in glass. Nothing here is drawn: these are
+   the tools, shot with sample data. The glare runs on a loop so a card is
+   never a still photograph pinned to the frame. */
+.rs .rsshot{position:relative;margin:0;border-radius:.9vw;overflow:hidden;
+  background:#0C1733;border:1px solid #27406E;
+  box-shadow:0 1.6vh 4vh rgba(2,8,22,.62),0 0 0 1px rgba(124,140,248,.12) inset}
+.rs .rsshot img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 0}
+.rs .rsshot.tall{width:11vw;aspect-ratio:.56}
+.rs .rsshot.rsph{width:8.4vw;aspect-ratio:.47;border-radius:1.4vw}
+.rs .rsshot.lap{width:19vw;aspect-ratio:1.62}
+.rs .rsquad .rsshot.lap{width:26vw}
+.rs .rsshot.wide{width:17vw;aspect-ratio:1.9}
+.rs .rsshot.band{width:28vw;aspect-ratio:3.4}
+.rs .rsgl{position:absolute;top:0;bottom:0;left:-45%;width:38%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(190,220,255,.3),transparent);
+  animation:rsglide 5.4s calc(var(--i,0)*.5s) infinite}
+@keyframes rsglide{0%{left:-45%}55%,100%{left:130%}}
+
+/* ── fifteen years digital: the rail and its milestones ──────────────────── */
+.rs .rsrail{position:relative;width:78vw;height:19vh;margin-top:.6vh}
+.rs .rsrl{position:absolute;left:0;right:0;top:3.1vh;height:2px;transform-origin:0 50%;
+  background:linear-gradient(90deg,var(--cold),var(--cy));animation:growX 1.5s .25s both}
+/*  Each milestone is placed, not flowed. 2013 and 2014 are a year apart on a
+    fifteen-year rail — about eighty pixels — and a label is twice that wide, so
+    they have to sit on two different lanes. Stacking them in a grid and letting
+    a taller spacer push the label down did not do it: the lane never moved and
+    the spacer ended up off to one side. Absolute positions cannot drift. */
+.rs .rsmile{position:absolute;top:0;left:calc(var(--p)*1%);width:0;height:100%;opacity:0;
+  animation:rsPin .55s calc(.75s + var(--i)*.3s) both}
+.rs .rsmd{position:absolute;left:50%;top:3.1vh;width:1.1vw;height:1.1vw;border-radius:50%;
+  background:var(--cy);translate:-50% -50%;
+  box-shadow:0 0 0 .35vw rgba(0,229,255,.16),0 0 1.4vh rgba(0,229,255,.7);
+  animation:rsPing 2.6s calc(1s + var(--i)*.3s) infinite}
+.rs .rstick{position:absolute;left:50%;top:3.8vh;width:1px;background:#2B4572;
+  height:calc(1.3vh + var(--lane)*5.2vh)}
+.rs .rslab{position:absolute;left:50%;translate:-50% 0;width:13vw;text-align:center;
+  top:calc(5.3vh + var(--lane)*5.2vh)}
+.rs .rslab b{display:block;font-size:1.9vw;font-weight:800;color:var(--ink);line-height:1}
+.rs .rslab i{display:block;margin-top:.5vh;font-size:1.05vw;font-style:normal;
+  color:var(--mut);line-height:1.3}
+@keyframes rsPin{from{opacity:0;translate:0 1.2vh}to{opacity:1;translate:0 0}}
+@keyframes rsPing{0%,70%,100%{box-shadow:0 0 0 .35vw rgba(0,229,255,.16),0 0 1.4vh rgba(0,229,255,.7)}
+  35%{box-shadow:0 0 0 .95vw rgba(0,229,255,0),0 0 2.2vh rgba(0,229,255,.95)}}
+
+/* ── counter tiles, flipping up in turn ──────────────────────────────────── */
+.rs .rstiles{display:flex;gap:2.2vw;justify-content:center;align-items:center;flex-wrap:nowrap}
+.rs .rstiles.four{gap:1.5vw}
+.rs .rstile{position:relative;display:grid;justify-items:center;gap:.5vh;
+  padding:2.4vh 2.2vw;border-radius:.9vw;background:#0C1733;border:1px solid #23375F;
+  opacity:0;transform-origin:50% 100%;
+  animation:rsTile .7s calc(.5s + var(--i)*.28s) both}
+.rs .rstile .rscnt{font-size:3.6vw}
+.rs .rstile.sm .rscnt{font-size:3vw}
+.rs .rstile .rstily{font-size:1.25vw;font-weight:700;color:var(--ink);white-space:nowrap}
+.rs .rstile em{font-size:1vw;font-style:normal;color:var(--dim)}
+.rs .rstile::after{content:"";position:absolute;inset:0;border-radius:.9vw;pointer-events:none;
+  background:linear-gradient(100deg,transparent 40%,rgba(0,229,255,.1) 50%,transparent 60%);
+  background-size:260% 100%;animation:swipe 4.6s calc(var(--i)*.6s) infinite}
+@keyframes rsTile{from{opacity:0;transform:perspective(60vw) rotateX(42deg) translateY(2.4vh)}
+  to{opacity:1;transform:none}}
+
+/* ── the replica wall: twelve real screens, never still ──────────────────── */
+.rs .rswall{grid-area:1/1;width:100%;height:100%;display:flex;flex-wrap:wrap;
+  align-content:center;justify-content:center;gap:1.1vw 1vw;padding:0 3vw}
+.rs .rsrc{opacity:0;animation:rsFly .8s calc(.25s + var(--i)*.13s) both}
+.rs .rsrc .rsshot{transform:rotate(var(--r));animation:rsFloat 7s calc(var(--i)*.4s) infinite}
+@keyframes rsFly{from{opacity:0;transform:translateY(4vh) scale(.84)}
+  to{opacity:1;transform:none}}
+@keyframes rsFloat{0%,100%{translate:0 0}50%{translate:0 -1.1vh}}
+.rs .rscap.over{grid-area:1/1;z-index:3;align-content:center;
+  background:radial-gradient(60% 46% at 50% 50%,rgba(7,15,38,.93),rgba(7,15,38,.42) 70%,transparent)}
+.rs .rshead.sm{font-size:3.2vw;font-weight:800;letter-spacing:-.01em}
+
+/* ── the fact find, five screens in order ────────────────────────────────── */
+.rs .rssteps{display:flex;gap:1.5vw;justify-content:center;align-items:flex-start}
+.rs .rsstep{display:grid;justify-items:center;gap:.9vh;opacity:0;
+  animation:rsStep .7s calc(.55s + var(--i)*.34s) both}
+.rs .rsstep i{font-size:.95vw;font-style:normal;color:var(--mut);max-width:11vw;line-height:1.35}
+@keyframes rsStep{from{opacity:0;transform:translateX(3vw) rotate(3deg)}
+  to{opacity:1;transform:none}}
+
+/* ── the walls, four up ──────────────────────────────────────────────────── */
+.rs .rsquads{display:grid;grid-template-columns:repeat(2,auto);gap:1.1vh 1.8vw;justify-content:center}
+.rs .rsquads.three{grid-template-columns:repeat(2,auto)}
+.rs .rsquads.three>:nth-child(3){grid-column:1/-1;justify-self:center}
+.rs .rsquad{display:grid;justify-items:center;gap:.7vh;opacity:0;
+  animation:rsQuad .75s calc(.5s + var(--i)*.26s) both}
+.rs .rsquad i{font-size:1.05vw;font-style:normal;color:var(--mut)}
+@keyframes rsQuad{from{opacity:0;transform:scale(.88) translateY(2vh)}to{opacity:1;transform:none}}
 """
 
 

@@ -6945,6 +6945,145 @@ shared door went on 28 October and the sign-in is the agent number alone —
 which is what the film now narrates, so the page had to say it too. A promise
 made in one place has to be kept in the other.
 
+### Fifteen years digital, and the tools themselves — 29 October 2026
+
+Asked for in these words: *"i am not seeing anything new in the video!!! i did
+ask for a lot of a difference!!! the link the tools we used re jotforms you can
+see from mcp how long we were digital and continue to revise with even better
+tools, the fact find went live revised and more robust 1 august 2026 and draw
+the insights as this is big so to our transmittal, goals and production walls
+etc etc etc so so much and your presentation is boring as i want maximum motion
+and lots of cards with the replica"*. 4:16 now, thirty-five scenes.
+
+He was right, and the fault is nameable: the scenes added the day before were
+**charts about the work** rather than **the work**. "Lots of cards with the
+replica" is the instruction — show the actual screens.
+
+**Every screen in the film is one of the branch's own.** `SHOTS` in
+`build-risefilm.py` maps a key to a file and a shape; `shot()` puts it in a
+glass card with a glare that runs on a loop, so a card is never a still
+photograph pinned to the frame. Two sources, both already public and both
+carrying their own "sample data" banner:
+
+- `wall/img/ff|lb|meet|jr/*` — twenty-nine screens shot for the FY27 wall;
+- `blastoff/img/*` — six more, shot for this film from **`/wall/?demo=1`**
+  (the wall's own marked sample). Shoot them past the start dialog: the first
+  run caught every scene dimmed behind "Start with sound", which is the kind of
+  thing that looks like a rendering fault rather than a missed click.
+
+**The caption under a replica is ours, never read off the picture**, so a
+re-shoot can never silently change what the film claims.
+
+**The long digital record, and why it is not from JotForm.** He pointed at the
+JotForm MCP; it needs authorising before it will answer, and Claude cannot
+start that flow. The dates came instead from Salesforce's own copy of the same
+work, read on 29 October 2026 — the earliest record each object holds:
+
+| | | |
+|---|---|---|
+| `Submission__c` | 5,523 | 28 Mar 2011 → 23 May 2017 |
+| `Attendance_Register__c` | 7,355 | 25 Aug 2013 → 10 May 2024 |
+| `Market_Survey__c` | 680 | 3 Apr 2014 → 29 Oct 2024 |
+| `POP7__c` | 39 | 27 Apr 2014 → 27 Apr 2026 |
+| `Policy_Queries__c` | 229 | 8 Apr 2019 → 25 Jun 2019 |
+| `jotform__JotformUser__c` | — | 18 Nov 2023, the forms wired in |
+
+So **2011**, and fifteen years. The JotForm form ids in the branch app start
+`22…`, `24…`, `26…`, which looks like a year and is not: no source confirms
+that those digits encode a date, so nothing in the film rests on it.
+
+**The fact find, and the money rule.** FactFind360's own wall feed answers at
+the `/exec` in `FF360` in `KPI.gs` with the key printed in `wall.html`, so it
+can be read without a sheet. It carries API, premium, cover and the protection
+gap, **and those stay out**: this file sits at a public URL anybody can
+forward, and what the branch writes is nobody else's business. **Counts, days
+and shares only.** The same rule put the dollar figures of the three-year-plan
+papers out of the earlier cut.
+
+**And read the feed's shape before turning one row into the branch's
+headline.** The first cut of that scene said *100% read by a manager · 2.2 days
+· 29% sent back*, and all three were wrong. `year.submitted` is 144;
+`managerPerf` is a row **per manager**, and the two together have reviewed
+38 + 25 = **63** of them, approved 50, returned 13, at medians of 2.2 and 3.0
+days. So 2.2 and 29% were the Branch Manager's own figures printed as the
+branch's, and 100% was never measured at all. It says 144 · 63 · 1 in 5 · 2–3
+days now, and the thing that *is* true of all 144 is said as the process it is:
+nothing reaches a client until a manager signs it off. Shipping a 100% that is
+really 44% would have cost every other figure in the film its credibility.
+
+**The strict word check is new, and it earns its keep.** Until now a clip was
+checked for its language only ("all twenty-nine Whisper-checked English at 0.97
+or better"), which cannot catch a clip that is confidently English and wrong.
+The check now compares the words Whisper heard against the words written, with
+punctuation and case dropped. Most of what it flags is Whisper writing numerals
+— "two hundred and four" heard as "204" is not a fault. Three were:
+
+- **"Four point nine six" came back as "for point nine six."** A listener would
+  hear it the same way, and it is the lapse-rate line the whole quality claim
+  rests on. Re-worded to "Ours is four point nine six per cent", which lands.
+- **"our fact find" came back as "our fact fine."** Re-worded so the phrase
+  ends a clause rather than being rushed through the middle of one.
+- **"Trainee Manager" comes back as "Training Manager", on both takes.** Two
+  takes with different punctuation, same word: the voice is deterministic and
+  this is its read, the same way it hears "No ceiling" as "No seating". The
+  ladder on screen carries the right word, so it was kept — but a rung name is
+  the kind of thing a room checks, so it is written down here.
+
+**Another session took the voice job again.** The job was pushed at 02:10 and
+another session's push replaced `tts/job.json` at 02:14. Mine had already run,
+so the audio was safe — but the second run **overwrote `tts/out/check.json`**,
+which is the only place the transcriptions live. Recover them from the run's
+own commit (`git show <sha>:tts/out/check.json`), which the workflow log names;
+do not assume a missing check.json means the clips were never checked.
+
+**Two lanes on the timeline, placed rather than flowed.** 2013 and 2014 are a
+year apart on a fifteen-year rail — about eighty pixels — and a label is twice
+that wide, so on one lane they land on top of each other. Stacking the dot, a
+spacer and the label in a grid and letting a taller spacer push alternate
+labels down **did not work**: measured in the browser, the lane never moved and
+the spacer sat off to one side, in a rule that plainly read
+`display:grid;justify-items:center`. Each milestone is absolutely positioned
+now, with the label at `top:calc(5.3vh + var(--lane)*5.2vh)`. When a layout
+will not do what the rule says, measure it in the page rather than reasoning
+about the cascade — the measurement took one minute and the reasoning had
+already taken ten.
+
+**Ten cards on the replica wall, not twelve.** Twelve wrapped to a third row
+and the last card was cut in half by the caption strip the mixer pads back on.
+
+**A sample figure beside a real first name is fine on a wall and not fine in a
+film.** The wall's own demo marks itself SAMPLE FIGURES in the masthead, and
+that badge is legible on a television three feet away. Shrunk into a card in a
+film anybody can forward, it is four pixels tall. So `blastoff/img/goals.jpg`
+is **cropped above the per-agent rings** — "Daniel 58% of API pace" reads as a
+verdict on a named person however it is labelled — and the shots that carry a
+per-agent league table (the fact-find funnel) are not in the film and are not
+in the repository. The production wall stayed: its name list is small, ordinal
+and all positive, and the same frame is already public in `/howweworkvid/`.
+When in doubt, crop the panel rather than trust the badge.
+
+**Two class collisions in one hour, the second worse than the first, and the
+guard does not cover either.** `build-risefilm.py` refuses a class the *shell*
+already styles. It says nothing about a class this film's own sheet already
+uses, and both faults were that:
+
+- `.rstl` was the `story` scene's rail, `height:24vh`. Reused a day later as
+  the label inside a counter tile, it dragged every tile to 280px. Nothing
+  complained, because both rules were legitimate on their own.
+- Fixing it with `sed s/class="rstl"/class="rstlab"/g` **renamed the rail as
+  well**, which dropped the whole branch timeline off the bottom of the frame
+  — a worse bug than the one being fixed, and invisible unless that scene is
+  looked at again.
+
+A build-time warning for this was written and then thrown away: narrowed as far
+as it could usefully go it still named nineteen classes, because a base rule
+plus a modifier rule on one class is the ordinary pattern. A warning nobody
+reads is worse than none, since it trains you to skip the build line. What
+protects this instead: **grep the film's own CSS before naming a new class**,
+and **never fix a collision with a blanket rename** — rename the new thing by
+hand, at its own call sites. And shoot the scene you changed *and* any scene
+that shares a word with the class you touched.
+
 ### Re-cutting it
 
 Edit `tools/film/rise-lines.json`, push a `tts/job.json` to `tts-run` (**check
@@ -6970,10 +7109,11 @@ inserting ten scenes left the old cues pointing at the wrong moments entirely.
 
 The music is the branch's own theme, so the page carries no licence credit.
 `capbg` in films.json is `070F26`, so the burned-in caption strip is the film's
-own navy and not donthaveanagent's. Voice: Andrew Expressive, all twenty-nine clips Whisper-checked
-English at 0.97 or better. The poster is cut from the finished MP4 at
-192.0s — the mended shield on the close, which is the one frame that says
-what the film is for.
+own navy and not donthaveanagent's. Voice: Andrew Expressive, all thirty-five
+clips checked for their language **and their words** (see the strict word check
+above). The poster is cut from the finished MP4 at 2.5 seconds before the end —
+the mended shield on the close, which is the one frame that says what the film
+is for.
 
 ## Web fonts — non-blocking, with a fallback that does not move the page
 
