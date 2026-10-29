@@ -37,8 +37,8 @@
 @font-face{font-family:'IBM Plex Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:104.62%;ascent-override:97.98%;descent-override:26.29%;line-gap-override:0.00%}
 
 /* The wall's own values: this plays beside /howweworkvid/, which is recorded off it. */
-:root{--bg:#121317;--bg2:#17191E;--panel:#1C1F26;--line:#2E323C;--ink:#F4F1EA;--mut:#A9AEBA;
-  --gold:#E3B85A;--teal:#4FC1B0;
+:root{--bg:#070F26;--bg2:#0B1430;--panel:#0E1B38;--line:#1A2744;--ink:#EAF0FF;--mut:#9FB0D0;
+  --gold:#00E5FF;--teal:#7C8CF8;
   --f:'IBM Plex Sans','IBM Plex Sans Fallback','IBM Plex Sans Fallback R',system-ui,sans-serif}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--f)}
@@ -60,29 +60,29 @@ h1{font-weight:800;font-size:clamp(30px,6.4vw,50px);line-height:1.05;margin:8px 
   place-items:center;cursor:pointer;z-index:4}
 .vcover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.5))}
 .vcover .pl{position:relative;z-index:2;display:flex;align-items:center;gap:11px;background:var(--gold);
-  color:#16171B;border-radius:12px;padding:13px 21px;font-weight:800;font-size:16px;
+  color:#070F26;border-radius:12px;padding:13px 21px;font-weight:800;font-size:16px;
   box-shadow:0 16px 40px rgba(227,184,90,.3)}
 .vcover .pl svg{width:17px;height:17px}
 .ask{margin:26px 0 0;padding:20px;border:1px solid var(--line);border-radius:12px;background:var(--bg2)}
 .ask h2{margin:0 0 8px;font-size:19px;font-weight:800;letter-spacing:-.01em}
 .ask p{margin:0 0 14px;color:var(--mut)}
 .cta{display:flex;flex-wrap:wrap;gap:10px}
-.btn{display:inline-block;background:var(--gold);color:#16171B;text-decoration:none;font-weight:800;
+.btn{display:inline-block;background:var(--gold);color:#070F26;text-decoration:none;font-weight:800;
   padding:12px 20px;border-radius:10px}
 .ghost{display:inline-block;color:var(--teal);border:1px solid var(--teal);text-decoration:none;
   font-weight:700;padding:11px 18px;border-radius:10px}
 .run{display:flex;flex-wrap:wrap;gap:6px 16px;margin:18px 0 0;padding:0;list-style:none;
   font-size:14.5px;color:var(--mut)}
 .run li::before{content:'→ ';color:var(--gold);font-weight:800}
-footer{padding:28px 0 40px;color:#737886;font-size:13.5px;border-top:1px solid var(--line);margin-top:28px}
+footer{padding:28px 0 40px;color:#6B7A99;font-size:13.5px;border-top:1px solid var(--line);margin-top:28px}
 footer a{color:var(--teal)}
 @media (max-width:520px){.vcover .pl{font-size:15px;padding:11px 17px}}
-.ask .note{font-size:.94rem;color:#9aa0ab;margin-top:.9rem}
+.ask .note{font-size:.94rem;color:#8FA2C4;margin-top:.9rem}
 </style>
 </head>
 <body>
 <header><div class="wrap brand">
-  <div class="mark"><img src="/logo-mark.svg" alt=""></div>
+  <div class="mark"><img src="/orphan-transition/board-mark.svg" alt=""></div>
   <div><b>Ricky Rampersad Branch</b><span>FY27</span></div>
 </div></header>
 
@@ -100,7 +100,7 @@ footer a{color:var(--teal)}
     <source src="/blastoff/blastoff.mp4" type="video/mp4">
   </video>
   <div class="vcover" style="background-image:url(/blastoff/poster.jpg)">
-    <div class="pl"><svg viewBox="0 0 24 24" fill="#16171B" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch &middot; 1:28</div>
+    <div class="pl"><svg viewBox="0 0 24 24" fill="#070F26" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch &middot; 1:28</div>
   </div>
 </div>
 
