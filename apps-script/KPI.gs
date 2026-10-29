@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-28d';
+var SCRIPT_VERSION = '2026-10-29a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -16617,6 +16617,78 @@ function wallDayHours_(day) {
   return out;
 }
 
+/* ── My workday is the one screen (29 October 2026, 2026-10-29a) ──
+ *  Ricky, 6:15am, with the dark My workday and the white "Opening your day…" page side by side: "I believe there's a duplicate
+ *  ... shouldn't you just get the first dark screen, and persons can actually do it in the dark screen ... at the top ... if they
+ *  see the update on it, so they can leave that screen and refresh, and at the end they could put a checkout or close their day
+ *  under that". So the dark page does what the white day page did, through workdayPost_:
+ *    card       a task opens with what to do, its last notes and the templates (sub=open), and closes, moves, posts a note or is
+ *               drafted by Claude (cardAct_, the day page's own cards, so every rule there holds: a note to close on, no blanks,
+ *               an agent named when the client wants one, a new date tomorrow or later). Any task on the page's list or its
+ *               overdue-and-due list: workdayModel_ joins their ids to the day's card list (wdCardList_).
+ *    scrub      what came up, one a line, each a Salesforce task in their day (as the day page's scrub).
+ *    closeform  the close-out as data: what is done, what is not (a reason and a new date), the checks, the mailbag, the
+ *               innovation hour; close: hkCloseCore_, the close-out page's own save, with the sign-out.
+ *    signout    the Branch Manager and the unit managers: the register's sign-out.
+ *  Nothing posts without a tap. */
+var WD_ONE = { NOTES: 3, SCRUB: 10 };
+function wdCardList_(sid, day, add) {
+  var key = 'sd_list_' + sid + '_' + day, list = []; try { list = bigGet_(key, []) || []; } catch (e) {}
+  var have = {}; list.forEach(function (t) { if (t && t.id && !t.next) have[t.id] = 1; });
+  var more = (add || []).filter(function (t) { return t && t.id && !have[t.id]; }), seen = {};
+  more = more.filter(function (t) { if (seen[t.id]) return false; seen[t.id] = 1; return true; });
+  if (more.length) {
+    list = list.filter(function (t) { return !(t && t.next && seen[t.id]); })
+      .concat(more.map(function (t) { return { id: t.id, s: String(t.s || ''), ty: String(t.ty || ''), due: String(t.due || '') }; }));
+    try { bigPut_(key, list); } catch (e) {}
+  }
+  return list;
+}
+function wdCard_(sid, day, p) {
+  var sub = String(p.sub || ''), id = String(p.id || '').trim();
+  var t = wdCardList_(sid, day, []).filter(function (x) { return x && x.id === id && !x.next; })[0];
+  if (!t) return { ok: false, error: 'That task is not on your day yet. Refresh, then try again.' };
+  if (sub === 'open') {
+    var chat = {}; try { chat = cmdChatter_([id]) || {}; } catch (e) {}
+    var notes = chat[id] || [], pb = playbookFor_({ subject: t.s, ty: t.ty, created: '' }, notes, day);
+    return { ok: true, id: id, todo: pb.todo || '', next: pb.next || '', close: pb.close || '', label: pb.label || '', must: !!pb.must, client: pb.client || '', policy: pb.policy || '',
+      notes: notes.slice(0, WD_ONE.NOTES).map(function (n) { var np = noteParts_(n.text); return { who: np.ours ? np.who : n.by, day: n.day ? shortDate_(n.day) : '', s: shorten_(np.body, 260), reply: !!n.reply }; }),
+      more: Math.max(0, notes.length - WD_ONE.NOTES), min: shiftDays_(day, 1),
+      tpl: tcardTemplates_(t, pb).map(function (x) { return { n: x[0], a: x[1] === 'c' ? 'close' : x[1] === 'm' ? 'move' : 'note' }; }) };
+  }
+  if (['close', 'move', 'note', 'draft'].indexOf(sub) < 0) return { ok: false, error: 'Nothing to do.' };
+  var r = cardAct_({ rs: sid, d: day, k: replySig_(sid, day, 'card'), id: id, act: sub, note: String(p.note || ''), to: String(p.to || '') });
+  if (r && r.ok && (r.act === 'close' || r.act === 'move')) { try { CacheService.getScriptCache().remove('wd_team_' + day); } catch (e) {} }
+  return r;
+}
+function wdScrub_(person, sid, day, p) {
+  var type = SF_TYPES[String(p.type || '')] ? String(p.type) : 'Servicing', out = [];
+  String(p.lines || '').split(/\r?\n/).map(function (l) { return l.replace(/\s+/g, ' ').trim(); }).filter(function (l) { return l.length >= 4; }).slice(0, WD_ONE.SCRUB).forEach(function (l) {
+    try { var ct = createTask_({ staffId: sid, subject: l, type: type, due: day, date: day, block: 'KPI1' }, { staffId: sid, name: person.name });
+      out.push({ s: l, ok: !!(ct && ct.ok), res: ct && ct.ok ? 'a task in your day' : 'NOT CREATED: ' + ((ct && ct.error) || 'add it in Salesforce') }); }
+    catch (e) { out.push({ s: l, ok: false, res: 'NOT CREATED: add it in Salesforce' }); }
+  });
+  if (!out.length) return { ok: false, error: 'Write what came up first: one a line, a few words each.' };
+  try { CacheService.getScriptCache().remove('wd_team_' + day); } catch (e) {}
+  try { runlog_('scrub ' + sid + ' workday ' + out.length); } catch (e) {}
+  return { ok: true, out: out };
+}
+/** The close-out as data, for My workday: the same questions as the close-out page (hkReplyPage_). */
+function wdCloseForm_(person, sid, day) {
+  var tasks = hkTasks_(sid, day), open = tasks.filter(function (t) { return !t.closed; }), done = tasks.filter(function (t) { return t.closed; });
+  var had = {}; try { had = progAnswers_(sid, day, 'leave') || {}; } catch (e) {}
+  var state = closeoutFor_(person, day), nd = workDays_(shiftDays_(day, 7), 6).filter(function (d) { return d > day; })[0] || shiftDays_(day, 1);
+  var mb = null; try { var c = mailbagCard_(sid, day);
+    if (c) mb = { router: !!c.isRouter, routerName: String(nameFor_(c.router)).split(' ')[0], n: c.isRouter ? c.data.todayN : c.mine, backlog: c.isRouter ? c.data.backlogN : 0,
+      leaves: mailbagLeavesText_(), by: mailbagByText_(), reasons: MAILBAG.REASONS }; } catch (e) { mb = null; }
+  var inno = !!innovationBlock_(sid, day), innoSaid = ''; try { innoSaid = String(((progAnswers_(sid, day, 'innovation') || {})._inno || {}).r || ''); } catch (e) {}
+  return { ok: true, form: { planned: tasks.some(function (t) { return t.planned; }), done: done.map(function (t) { return shorten_(t.s, 110); }),
+    open: open.map(function (t) { var h = had[t.id] || {}; return { id: t.id, s: shorten_(t.s, 110), r: String(h.r || '').replace(/ · new date .*$/, ''), d: nd }; }),
+    min: shiftDays_(day, 1), end: twelve_(mmText_(endFor_(sid))),
+    checks: state.items.filter(function (r) { return /^hk_/.test(r.id); }).map(function (r) { return { id: r.id, s: r.item, done: !!r.done, r: String(r.reason || '') }; }),
+    mailbag: mb, inno: inno, innoSaid: innoSaid } };
+}
+
 /** Everything the page shows, as JSON. */
 function workdayModel_(sid, day) {
   var person = workdayPerson_(sid);
@@ -16662,6 +16734,12 @@ function workdayModel_(sid, day) {
     if (!items.length) { try { items = (sdList_(sid, day) || []).map(function (t) { return { k: 'sf', id: t.id, subject: t.s, type: t.ty }; }); } catch (e) { items = []; } }
     m.list = items.slice(0, WORKDAY.LIST).map(function (it) {
       return { id: it.id, s: shorten_(String(it.subject || it.s || ''), 110), ty: String(it.type || it.ty || ''), done: !!shut[it.id], url: base && it.id ? base + it.id : '' }; });
+    // The one screen (29 Oct 2026): every task the page shows can be worked from its card.
+    var onNext = {}; (m.next || []).forEach(function (x) { if (x.id) onNext[x.id] = 1; });
+    try { wdCardList_(sid, day, items.slice(0, WORKDAY.LIST).map(function (it) { return { id: it.id, s: it.subject || it.s, ty: it.type || it.ty }; })
+      .concat((pr._all || []).filter(function (x) { return x.t && onNext[x.t.id]; }).map(function (x) { return { id: x.t.id, s: x.t.subject || x.t.s, ty: x.ty, due: x.t.due }; }))); } catch (e) {}
+    m.types = sfTypeList_().map(function (t) { return { k: t, l: SF_TYPES[t] }; });
+    m.closeInline = sid !== 'pawan';
   }
   m.bars = workdayBars_(sid, day);
   m.team = sid === 'ricky' || sid === 'kamla' ? workdayTeam_(day) : [];
@@ -16849,6 +16927,25 @@ function workdayPost_(p) {
   var sid = a.sid;
   var person = workdayPerson_(sid); if (!person) return { ok: false, error: 'That desk is no longer on the register.' };
   if (String(p.act || '') === 'post') { if (sid !== 'ricky') return { ok: false, error: 'Nothing to do.' }; return workdayPostNote_(p, day); }
+  // My workday is the one screen (29 Oct 2026): the task cards, what came up, the close-out and the sign-out, here.
+  var act = String(p.act || '');
+  if (act === 'card' || act === 'scrub' || act === 'closeform' || act === 'close') {
+    if (sid === 'ricky' || UM_DESKS.indexOf(sid) > -1) return { ok: false, error: 'Nothing to do.' };
+    try {
+      if (act === 'card') return wdCard_(sid, day, p);
+      if (act === 'scrub') return wdScrub_(person, sid, day, p);
+      if (act === 'closeform') return wdCloseForm_(person, sid, day);
+      var cr = hkCloseCore_(person, day, p); if (!cr.ok) return cr;
+      try { CacheService.getScriptCache().remove('wd_team_' + day); } catch (e) {}
+      var mc = workdayModel_(sid, day); mc.closed = { checks: cr.checks.length, moved: cr.moved, out: cr.out ? twelve_(cr.out) : '' }; return mc;
+    } catch (e) { return { ok: false, error: 'That did not save: ' + String(e && e.message || e).slice(0, 140) }; }
+  }
+  if (act === 'signout') {
+    var so = null; try { so = signOutDay_({}, person); } catch (e) { return { ok: false, error: 'That did not sign you out: ' + String(e && e.message || e).slice(0, 120) }; }
+    if (!so || !so.ok) return { ok: false, error: (so && so.error) || 'That did not sign you out.' };
+    try { CacheService.getScriptCache().remove('wd_team_' + day); } catch (e) {}
+    var ms = workdayModel_(sid, day); ms.signedOut = so.out ? twelve_(so.out) : ''; return ms;
+  }
   if (String(p.act || '') === 'absent') {
     if (sid !== 'ricky' && sid !== 'kamla') return { ok: false, error: 'Nothing to do.' };
     var err = workdayMarkAbsent_(sid, p, day); if (err) return err;
@@ -16879,7 +16976,7 @@ function workdayPost_(p) {
  *  My workday lists what still waits on him with Claude's words (the deep draft for a question, the inbox review's note for a mail), each
  *  posted with one tap (workdayPost_, act=post): a question's answer goes on its task's Chatter, headed as from his page, so the desk is
  *  mentioned and e-mailed; a mail's note goes where the inbox review says (ixPostOne_). Nothing posts without his tap. */
-var LEAD = { OVERDUE_SHARE: 5, WAITING: 15, TTL: 120 };
+var LEAD = { OVERDUE_SHARE: 5, WAITING: 40, TTL: 120 };   // 40 since 29 Oct 2026: My workday lists them all, ten at a time
 function leadKey_(day) { return 'lead_' + day; }
 /** What waits on him now, and everything that waited today. */
 function leadItems_(day) {
@@ -17621,7 +17718,10 @@ function hkReplyPage_(person, day, error) {
     'Answer here; it goes straight into the close-out. Nothing to open in the tracker.', inner);
 }
 
-function hkReplySave_(person, day, p, all) {
+/** Closing the day: the reasons and new dates, the checks, the mailbag, the innovation hour, the comment, and the sign-out.
+ *  Returns { ok, error } or { ok, checks, moved, out } (29 Oct 2026: shared by the page and My workday). */
+function hkCloseCore_(person, day, p) {
+  var err = function (m) { return { ok: false, error: m }; };
   var sid = String(person.staffId), tasks = hkTasks_(sid, day).filter(function (t) { return !t.closed; });
   var state = closeoutFor_(person, day), hk = state.items.filter(function (r) { return /^hk_/.test(r.id); });
   var commit = commitTasks_(person, day, tasks, p, ''), rows = commit.rows.slice(), missing = commit.missing, checks = [];
@@ -17631,23 +17731,23 @@ function hkReplySave_(person, day, p, all) {
     if (v === 'Not done' && !r) { missing++; return; }
     checks.push({ id: it.id, s: it.item, a: v, r: r });
   });
-  if (missing) return hkReplyPage_(person, day, missing + ' answer' + (missing === 1 ? ' is' : 's are') + ' missing. Every planned task not done needs a reason and a new date, and every check an answer.');
+  if (missing) return err(missing + ' answer' + (missing === 1 ? ' is' : 's are') + ' missing. Every planned task not done needs a reason and a new date, and every check an answer.');
   var lock = takeLock_();
-  if (!lock) return hkReplyPage_(person, day, 'Another save was going in just then. Press Close my day again.');
+  if (!lock) return err('Another save was going in just then. Press Close my day again.');
   var hkComment = String(p.comment || '').trim().slice(0, REASON_MAX);
   if (hkComment) rows.push({ id: '_comment', s: 'Comment', a: 'note', r: hkComment });
   var mbA = String(p.mb || '').trim(), mbR = String(p.mbr || '').trim(), mbN = String(p.mbn || '').trim().slice(0, REASON_MAX), mbCard = null;
   try { mbCard = mailbagCard_(sid, day); } catch (e) {}
   if (mbCard) {
-    if (!mbA) return hkReplyPage_(person, day, 'Answer the mailbag question.');
-    if (/Not/.test(mbA) && !mbR) return hkReplyPage_(person, day, 'Pick the reason the mailbag ' + (mbCard.isRouter ? 'was not sent' : 'was not handed over') + '.');
+    if (!mbA) return err('Answer the mailbag question.');
+    if (/Not/.test(mbA) && !mbR) return err('Pick the reason the mailbag ' + (mbCard.isRouter ? 'was not sent' : 'was not handed over') + '.');
     rows.push({ id: '_mailbag', s: mbCard.isRouter ? 'Mailbag routed' : 'Mailbag handed over', a: mbA, r: (mbR ? mbR + (mbN ? ': ' + mbN : '') : mbN) });
     mailbagLog_({ Date: day, Router: nameFor_(mbCard.router), By: nameFor_(sid), CollectedToday: mbCard.isRouter ? mbCard.data.todayN : mbCard.mine, Backlog: mbCard.data.backlogN,
       Sent: mbA, Reason: mbR, Note: mbN, At: hhmm_(new Date()), Source: 'email' });
   }
   var innoSaid = String(p.inno || '').trim().slice(0, REASON_MAX);
   if (innovationBlock_(sid, day)) {
-    if (!innoSaid) return hkReplyPage_(person, day, 'Say what your innovation hour moved. One line is enough.');
+    if (!innoSaid) return err('Say what your innovation hour moved. One line is enough.');
     rows.push({ id: '_inno', s: 'Innovation hour', a: 'note', r: innoSaid });
   }
   try {
@@ -17660,11 +17760,18 @@ function hkReplySave_(person, day, p, all) {
   var out = '';
   if (p.out) { try { var so = signOutDay_({}, person); if (so && so.ok) out = so.out; } catch (e) {} }
   try { replyCopy_(person, day, 'Close-out', checks.concat(rows), { Done: 'Done', 'Not done': 'Not done', note: 'Comment', Sent: 'Mailbag sent', 'Not sent': 'Mailbag NOT sent', 'Handed over': 'Mailbag handed over', 'Not handed over': 'Mailbag NOT handed over' }); } catch (e) {}
+  return { ok: true, checks: checks, moved: commit.rows.length, out: out };
+}
+
+/** The close-out from its page (the e-mail's link). The work is hkCloseCore_, which My workday calls too (29 Oct 2026). */
+function hkReplySave_(person, day, p, all) {
+  var r = hkCloseCore_(person, day, p);
+  if (!r.ok) return hkReplyPage_(person, day, r.error);
   return replyPage_('Your day is closed. Thank you.',
-    'Copied to Mr Rampersad and sales support.' + (out ? ' Signed out at ' + esc_(twelve_(out)) + '.' : ''),
-    '<div class="card ok">' + checks.map(function (c) { return '<div class="ln">' + (c.a === 'Done' ? '&#10003;' : '&#9679;') + ' ' + esc_(c.s) + (c.r ? ' · ' + esc_(c.r) : '') + '</div>'; }).join('') +
-    (commit.rows.length ? '<div class="ln"><b>' + commit.rows.length + '</b> planned task' + (commit.rows.length === 1 ? '' : 's') + ' moved, each with your reason and its new date on Salesforce.</div>' : '') +
-    (out ? '' : '<div class="ln" style="color:#B4322B">You are still signed in. Sign out from the tracker before you leave, or the register reads "' + NOCLOSE.LABEL + '".</div>') + '</div>');
+    'Copied to Mr Rampersad and sales support.' + (r.out ? ' Signed out at ' + esc_(twelve_(r.out)) + '.' : ''),
+    '<div class="card ok">' + r.checks.map(function (c) { return '<div class="ln">' + (c.a === 'Done' ? '&#10003;' : '&#9679;') + ' ' + esc_(c.s) + (c.r ? ' · ' + esc_(c.r) : '') + '</div>'; }).join('') +
+    (r.moved ? '<div class="ln"><b>' + r.moved + '</b> planned task' + (r.moved === 1 ? '' : 's') + ' moved, each with your reason and its new date on Salesforce.</div>' : '') +
+    (r.out ? '' : '<div class="ln" style="color:#B4322B">You are still signed in. Sign out from the tracker before you leave, or the register reads "' + NOCLOSE.LABEL + '".</div>') + '</div>');
 }
 
 // ---------------------------------------------------------------------------
