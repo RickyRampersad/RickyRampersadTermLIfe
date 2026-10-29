@@ -302,6 +302,56 @@ const flat = JSON.stringify(png);
   .forEach(secret => ok('ping never leaks ' + JSON.stringify(secret),
     flat.indexOf(secret) === -1, flat.slice(0, 300)));
 
+/* ── the sign-in, 28 October 2026 ──────────────────────────────────────────
+   The branch manager published the way in: the agent number alone, and 0000
+   for a visitor, because a room that cannot get through the door at 11:30 is
+   a register full of absences. These hold it to that, and to the one thing it
+   must still not do — let a guest into the roll, which would mark executives
+   looking in as absent branch members and drop the month's attendance. */
+console.log('\nTHE SIGN-IN');
+
+const liA = env.apiLogin_({ who: 'A00003' });
+ok('the agent number alone signs you in', liA.ok === true && !!liA.token, JSON.stringify(liA));
+ok('and it is that agent', liA.ok && liA.user && liA.user.name === 'Agent One',
+  liA.user && liA.user.name);
+
+const liPw = env.apiLogin_({ who: 'A00003', password: '33333333' });
+ok('a password still works for anyone who types one', liPw.ok === true, JSON.stringify(liPw));
+
+const liBad = env.apiLogin_({ who: 'A00003', password: 'nope' });
+ok('but a wrong password is still refused', liBad.ok === false, JSON.stringify(liBad));
+
+const liUnknown = env.apiLogin_({ who: 'A99999' });
+ok('a number not on the roll is refused', liUnknown.ok === false);
+ok('and is pointed at the guest number', /0000/.test(String(liUnknown.error)), liUnknown.error);
+
+const liOff = (() => {
+  env.appendRow_(env.MEET.TAB_PEOPLE, { 'Agent No': 'A00009', 'Name': 'Gone',
+    'Role': 'agent', 'Active': 'No' });
+  return env.apiLogin_({ who: 'A00009' });
+})();
+ok('an agent whose access is off still cannot sign in', liOff.ok === false, JSON.stringify(liOff));
+
+const g1 = env.apiLogin_({ who: '0000' });
+ok('0000 lets a visitor look in', g1.ok === true && !!g1.token, JSON.stringify(g1));
+ok('and they come in as a guest', g1.ok && g1.user && g1.user.role === 'guest',
+  g1.user && g1.user.role);
+
+const g2 = env.apiLogin_({ who: ' 0000 ' });
+ok('twice over, on the one row', g2.ok === true &&
+  rows('TAB_PEOPLE').filter(r => env.str_(r['Agent No']) === '0000').length === 1);
+
+ok('a guest is never on the roll', env.roster_().every(r =>
+  env.str_(r['Agent No']) !== '0000' && env.low_(r['Role']) !== 'guest'));
+
+/* The one that matters on the day: a visitor can open the live meeting, and
+   cannot open a draft — which the check above them already refuses. */
+const vis = env.readPeople_().filter(p => env.str_(p.agentNo) === '0000')[0];
+const live = rows('TAB_MEETINGS').filter(m => env.str_(m['Ref']) === 'MD-2026-10-30')[0];
+ok('a visitor can open the meeting that is published', env.canOpenMeeting_(vis, live) === true);
+ok('and a draft is still shut to them',
+  env.canOpenMeeting_(vis, Object.assign({}, live, { Status: 'Draft' })) === false);
+
 /* A backend with Meetings.gs and nothing else must still answer. */
 const seed = env.seedFridayMeeting, FRI = env.FRIDAY;
 env.seedFridayMeeting = undefined; env.FRIDAY = undefined;

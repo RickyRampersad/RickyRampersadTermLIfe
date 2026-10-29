@@ -6626,6 +6626,48 @@ guide you. In your session review notes on the step back in place from all memor
 - **The wall knows the kinds in each hour, and who has the bag (21 Oct 2026, 2026-10-21f).** Ricky: "hour by hour what's being actioned, the task type should be in a colour inside the green, as well who does the bag as well built in". `wallStaff_` now sends each person's `hourKinds` (per hour, the closes with a note by `wallKind_`: new, orphan, retention, claims, other) and `bag` ({who, at, h, cutoff, covering}) from `mailbagRouter_` (the weekly rota, the next one in when the router is out) and `mailbagLeaves_` (12 noon unless `MAILBAG_AT`), papers in a quarter of an hour before. The wall colours each green hour by kind and rings the bag's hour in gold. Tests: `tests/test-wall2.js`.
 - **Sample ratings for the Branch Manager (21 Oct 2026, 2026-10-21g).** Ricky, 1:55pm: "send some samples to see the revised and let me click". `rateSamples(n)` in the editor, or **Send me sample ratings** on his Ratings page (a signed POST `rs=ricky&f=rate&k=…&act=samples` through `replyPost_`, him alone, not `RATE_PAGE_ALSO`; a second press within `RATE.SAMPLE_GAP_MIN` = 2 minutes sends nothing), sends up to `RATE.SAMPLES` = 3 agent rating e-mails in the real format (`rateAgentMail_`, subject `[Sample] …`) to `managerEmails_()` only, each from one of the latest real agent rows (its subject from the timeline's open step, kind, days, closer, the closing note as what was done, and the record's columns), or from `RATE_SAMPLE_MADE` (no client) when there are none; then one e-mail with every sample's five stars, its card and his page. Each sample is a row of its own (Kind and Status `sample`, Email his), so the stars, the thank-you page, a comment and the 1–2 star alert (`[Sample] Low rating …`, with See the whole task) all work. `rateIsSample_`: no Chatter post from `rateClick_` or `ratePost_`, `&out=1` changes nothing, and `rateStats_` (the week, the game's cards and board, the Service Star, his day page, the wall's `svc` and ticker) and `rateRun_`'s cap, cool-down and opt-outs skip it. His page marks sample cards (dashed, Sample), has Hide samples, and never counts them in the week. Agent e-mails only: client mail stays held. Test: `tests/test-rate-samples.js`.
 
+## The meeting sign-in — the agent number is the whole of it
+
+Decided 28 October 2026, in these words: *"only the agent number[,] guest can
+come in and you can put the guest as 0000[,] this can be displayed as
+executives are looking in the what app group."*
+
+**The shared branch code is gone.** `/meetings/` used to ask for `STAFF2026` or
+`AGENT2026` before the personal sign-in. Those codes were sitting in the page's
+own source, so the door protected nothing, and it stood in front of the one
+gate that does identify a person. It is what locked the branch manager out of
+his own meeting the night before, and on a Friday at 11:30 it is thirty people
+meeting an unexplained box while the register marks them absent.
+
+**The number on the card signs you in, and that is the register.** A password
+is still accepted from anybody who types one, so a page left open somewhere
+keeps working, but nothing asks for one and nobody is sent to enrol. Being on
+the roll is what lets you in, and `pullRoster` is what puts you on it.
+
+**`0000` looks in**, as a `guest`. A guest is never on the roll — `roster_()`
+is the denominator the register is measured against, and three executives
+looking in must not be counted as absent branch members and drop the month's
+attendance. The standing visitor opens whatever meeting is published, and a
+guest named against one meeting still gets that one only.
+
+**What this costs, and he took it knowingly:** a number is not a secret, so the
+register says who *said* they were here, not who was. He asked for the number
+to go in the WhatsApp group.
+
+Two traps, both of which make the guest fail silently:
+
+- **`normNo_` strips leading zeros**, so it turns `0000` into nothing and
+  `findPersonByAgentNo_` gives up before it looks. Left that way, every guest
+  sign-in appends another Visitor row and every one of them is still told guest
+  sign-in is not set up. `guestFind_` compares the number exactly.
+- **`readPeople_` drops any row with no e-mail**, so the Visitor row is written
+  and then never found again. It carries `0000@guest.invalid` — the TLD
+  reserved for exactly this, which cannot resolve or be delivered to, so the
+  row can never quietly become a mailbox somebody writes to.
+
+`tests/test-friday.js` covers it (100 checks), and the page is driven in a real
+browser against a mocked backend in the session scratchpad.
+
 ## `/blastoff/` — the FY27 rise, and what the film may not say
 
 Asked for on 28 October 2026, the evening before the branch group sees it:
@@ -6671,24 +6713,43 @@ Flooring rather than rounding also keeps the bands honest — Randolph is 9.94
 years in, and rounding put a "10" on a bar that the ten-year colour does not
 claim. Anyone under a year reads `<1`, never `0`.
 
-### The palette is doing a job, not decorating
+### The palette is doing a job, not decorating — and it is not gold
 
-"More colours" was answered with **two accents and a recessive neutral**, each
-carrying a band the narration names, not a hue per person:
+Gold is out, same evening, in these words: *"Change the entire color to much
+more polished and professional. Hate the gold!!!"* That is the fifth time the
+gold has been turned down (the board films, the group letters, the agent
+introduction, the homepage, this). **Do not reach for it again on anything new
+without being asked for it by name.** `logo-mark.png` stays gold and untouched,
+because the client letters already sent load it.
+
+The film moved to the **midnight blue he chose for the three board films on 15
+October**, which also puts it in one family with the board pages, RR Operations
+and the Log Book films instead of standing alone. The page at `/blastoff/`
+moved with it and carries `orphan-transition/board-mark.svg`, the blue shield,
+not the gold one.
+
+"More colours" is still answered with **two accents and a recessive neutral**,
+each carrying a band the narration names, never a hue per person:
 
 | | |
 |---|---|
-| gold `#E3B85A` | ten years or more (11) |
-| teal `#4FC1B0` | joined in the last three (3) |
-| slate `#5B6472` | the eight between, recessive |
-| cold `#7FB2D9` | the hit, scenes 1–3 only |
+| ground `#070F26` | near-black navy, the board films' own |
+| cyan `#00E5FF` | ten years or more (11) |
+| periwinkle `#7C8CF8` | joined in the last three (3) |
+| slate `#5E6B85` | the eight between, recessive |
+| blue `#1D5BC4` → `#2A6DE0` | structure: the shield, the bar gradients |
+| cold `#8295B5` | the hit, scenes 1–3 only |
 
-Run through the dataviz validator against the ground `#121317`: worst adjacent
-pair **ΔE 18.2 normal vision, 11.4 protan**, every slot over 3:1. The legend
-names all three, so identity is never colour alone. **A sequential ramp was
-tried first and rejected on meaning, not on colour**: it dimmed the newest
-people in a film about who stayed. The colour journey cold → warm across the
-film is the emotional arc, and it is the only reason there is a fourth hue.
+Run through the dataviz validator against the ground: worst adjacent pair
+**ΔE 19.0 normal vision, 18.3 deutan**, every slot over 3:1. The legend names
+all three, so identity is never colour alone. Two palettes were rejected by the
+validator first — cyan with the corporate blue `#2A6DE0` fails against the
+slate at ΔE 13.9, below the floor where full-colour vision can separate them.
+
+**A sequential ramp was tried before any of this and rejected on meaning, not
+on colour**: it dimmed the newest people in a film about who stayed. The colour
+journey cold → cyan across the film is the emotional arc, and the mend is cyan
+light running through the crack rather than molten gold.
 
 ### What the pipeline taught, this time
 
@@ -6734,9 +6795,9 @@ node render.js ../../blastoff/film.html cap-rise 30
 python3.13 mixany.py "$(…films.json rise…)" ../../blastoff/blastoff.mp4
 ```
 
-The music is the branch's own theme, so the page carries no licence credit, and
-the look is Wall Intelligence's own values because this plays beside
-`/howweworkvid/`. Voice: Andrew Expressive, all eighteen clips Whisper-checked
+The music is the branch's own theme, so the page carries no licence credit.
+`capbg` in films.json is `070F26`, so the burned-in caption strip is the film's
+own navy and not donthaveanagent's. Voice: Andrew Expressive, all eighteen clips Whisper-checked
 English at 0.97 or better. The poster is cut from the finished MP4 at 86.4s.
 
 ## Web fonts — non-blocking, with a fallback that does not move the page

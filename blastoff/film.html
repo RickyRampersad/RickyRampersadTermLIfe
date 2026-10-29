@@ -561,9 +561,9 @@ body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
    Every motion is a CSS animation, because render.js pauses the page and sets
    each animation to the frame's own moment; a JS timer would drift from the
    voice and could not be scrubbed at all. */
-.rs{--bg:#121317;--ink:#F4F1EA;--mut:#A9AEBA;--dim:#737886;
-    --gold:#E3B85A;--teal:#4FC1B0;--slate:#5B6472;--cold:#7FB2D9;--line:#2E323C}
-.rs,.rs .inner{background:#121317;color:#F4F1EA}
+.rs{--bg:#070F26;--ink:#EAF0FF;--mut:#9FB0D0;--dim:#6B7A99;
+    --cy:#00E5FF;--peri:#7C8CF8;--slate:#5E6B85;--cold:#8295B5;--line:#1A2744}
+.rs,.rs .inner{background:#070F26;color:#EAF0FF}
 .rs .inner{position:absolute;inset:0 0 104px 0;display:grid;place-items:center;
   gap:0;padding:0;max-width:none;overflow:hidden}
 .rs *{font-family:'IBM Plex Sans',system-ui,sans-serif}
@@ -571,42 +571,42 @@ body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
 /* ── the shield, and the tear through it ─────────────────────────────────── */
 .rs .rsstage{position:relative;width:min(62vh,44vw);aspect-ratio:1;display:grid;place-items:center}
 .rs .rssh{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.rs .rssh path.shL,.rs .rssh path.shR{fill:none;stroke:#39404D;stroke-width:2.2}
-.rs .rssh.whole path{stroke:var(--gold);filter:drop-shadow(0 0 .6rem rgba(227,184,90,.45))}
+.rs .rssh path.shL,.rs .rssh path.shR{fill:none;stroke:#24365E;stroke-width:2.2}
+.rs .rssh.whole path{stroke:var(--cy);filter:drop-shadow(0 0 .6rem rgba(0,229,255,.45))}
 .rs .rssh.cold path{stroke:var(--cold);opacity:.55;animation:coldIn 1.1s both}
 .rs .rssh.cold.steady path{animation:coldHold 1.2s both}
-.rs .rssh.warm path{stroke:var(--gold);opacity:.8;animation:warmUp 1.6s both}
-.rs .rssh.gold path{stroke:var(--gold);stroke-width:2.6;
-  filter:drop-shadow(0 0 1rem rgba(227,184,90,.6));animation:goldIn 1.4s both}
-@keyframes coldIn{from{stroke:var(--gold);opacity:1}to{stroke:var(--cold);opacity:.55}}
+.rs .rssh.warm path{stroke:var(--cy);opacity:.8;animation:warmUp 1.6s both}
+.rs .rssh.gold path{stroke:var(--cy);stroke-width:2.6;
+  filter:drop-shadow(0 0 1rem rgba(0,229,255,.6));animation:goldIn 1.4s both}
+@keyframes coldIn{from{stroke:var(--cy);opacity:1}to{stroke:var(--cold);opacity:.55}}
 @keyframes coldHold{from{opacity:.4}to{opacity:.7}}
-@keyframes warmUp{from{stroke:var(--cold);opacity:.5}to{stroke:var(--gold);opacity:.8}}
+@keyframes warmUp{from{stroke:var(--cold);opacity:.5}to{stroke:var(--cy);opacity:.8}}
 @keyframes goldIn{from{opacity:.6;stroke-width:2.2}to{opacity:1;stroke-width:2.6}}
 .rs .rssh.fly{animation:flyOpen 2.6s .6s both}
 @keyframes flyOpen{from{transform:scale(.96)}to{transform:scale(1.04)}}
-.rs .rssh path.ckc,.rs .rssh.gold path.ckc{fill:none;stroke:#121317;stroke-width:8.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:46;stroke-dashoffset:46;animation:ckDraw 1.1s 1.1s both}
+.rs .rssh path.ckc,.rs .rssh.gold path.ckc{fill:none;stroke:#070F26;stroke-width:8.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:46;stroke-dashoffset:46;animation:ckDraw 1.1s 1.1s both}
 .rs .rssh path.ck,.rs .rssh.gold path.ck,.rs .rssh.fly path.ck{fill:none;stroke:#fff;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;
   stroke-dasharray:46;stroke-dashoffset:46;animation:ckDraw 1.1s 1.1s both}
 @keyframes ckDraw{to{stroke-dashoffset:0}}
 
 .rs .rscr{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .rs .rscr path{fill:none;stroke-linecap:round;stroke-linejoin:round}
-.rs .rscr .crk{stroke:#E9F2FA;stroke-width:1.5;stroke-dasharray:120;stroke-dashoffset:120;opacity:0}
-.rs .rscr .crkg{stroke:var(--gold);stroke-width:2.6;stroke-dasharray:120;stroke-dashoffset:120;opacity:0}
+.rs .rscr .crk{stroke:#CFE2FF;stroke-width:1.5;stroke-dasharray:120;stroke-dashoffset:120;opacity:0}
+.rs .rscr .crkg{stroke:var(--cy);stroke-width:2.6;stroke-dasharray:120;stroke-dashoffset:120;opacity:0}
 /* it tears across */
 .rs .rscr.cut .crk{opacity:1;animation:crkRun .55s .45s both}
-@keyframes crkRun{from{stroke-dashoffset:120;filter:drop-shadow(0 0 1.2rem #E9F2FA)}
+@keyframes crkRun{from{stroke-dashoffset:120;filter:drop-shadow(0 0 1.2rem #CFE2FF)}
   to{stroke-dashoffset:0;filter:drop-shadow(0 0 .2rem rgba(233,242,250,.4))}}
 /* it stops, and stays */
-.rs .rscr.held .crk{opacity:.45;stroke-dashoffset:0;stroke:#9FB4C6}
+.rs .rscr.held .crk{opacity:.45;stroke-dashoffset:0;stroke:#7E8FB0}
 /* it fills with gold — the same geometry, which is what makes it read as a mend */
-.rs .rscr.fill .crk{opacity:.2;stroke-dashoffset:0;stroke:#6E7C8A}
+.rs .rscr.fill .crk{opacity:.2;stroke-dashoffset:0;stroke:#55658A}
 .rs .rscr.fill .crkg{opacity:1;animation:crkGold 2.2s .35s both}
-@keyframes crkGold{from{stroke-dashoffset:120;filter:drop-shadow(0 0 0 rgba(227,184,90,0))}
-  to{stroke-dashoffset:0;filter:drop-shadow(0 0 1.1rem rgba(227,184,90,.85))}}
+@keyframes crkGold{from{stroke-dashoffset:120;filter:drop-shadow(0 0 0 rgba(0,229,255,0))}
+  to{stroke-dashoffset:0;filter:drop-shadow(0 0 1.1rem rgba(0,229,255,.85))}}
 .rs .rscr.mended .crkg{opacity:1;stroke-dashoffset:0;animation:crkBr 3.2s infinite}
-@keyframes crkBr{0%,100%{filter:drop-shadow(0 0 .7rem rgba(227,184,90,.5))}
-  50%{filter:drop-shadow(0 0 1.6rem rgba(227,184,90,.9))}}
+@keyframes crkBr{0%,100%{filter:drop-shadow(0 0 .7rem rgba(0,229,255,.5))}
+  50%{filter:drop-shadow(0 0 1.6rem rgba(0,229,255,.9))}}
 
 .rs .rsstage.shake{animation:shk .5s .45s both}
 @keyframes shk{0%{transform:translate(0,0)}15%{transform:translate(-1.1%,.7%)}
@@ -614,17 +614,17 @@ body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
   60%{transform:translate(.4%,-.3%)}100%{transform:translate(0,0)}}
 .rs .rsstage.rise{animation:rsUp 3s both}
 @keyframes rsUp{from{transform:translateY(2.5%) scale(.97)}to{transform:translateY(-1%) scale(1.02)}}
-.rs .rsflash{position:absolute;inset:-40%;background:radial-gradient(circle,#E9F2FA 0%,transparent 60%);
+.rs .rsflash{position:absolute;inset:-40%;background:radial-gradient(circle,#CFE2FF 0%,transparent 60%);
   opacity:0;animation:flash .5s .45s both}
 @keyframes flash{0%{opacity:0}18%{opacity:.5}100%{opacity:0}}
-.rs .rsglow{position:absolute;inset:-30%;background:radial-gradient(circle,rgba(227,184,90,.35) 0%,transparent 62%);
+.rs .rsglow{position:absolute;inset:-30%;background:radial-gradient(circle,rgba(0,229,255,.35) 0%,transparent 62%);
   opacity:0;animation:glowUp 2.6s .4s both}
 @keyframes glowUp{0%{opacity:0}60%{opacity:1}100%{opacity:.75}}
 
 /* ── the lattice, carried over from the first cut ────────────────────────── */
 .rs .mx{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.rs .mx-e{stroke:var(--teal);stroke-width:.38;opacity:0;stroke-dasharray:62;stroke-dashoffset:62}
-.rs .mx-n{fill:var(--teal);opacity:0;transform-box:fill-box;transform-origin:50% 50%}
+.rs .mx-e{stroke:var(--peri);stroke-width:.38;opacity:0;stroke-dasharray:62;stroke-dashoffset:62}
+.rs .mx-n{fill:var(--peri);opacity:0;transform-box:fill-box;transform-origin:50% 50%}
 .rs .mx-pulse .mx-n{animation:nPul 2.6s calc(var(--i)*.07s) infinite}
 .rs .mx-pulse .mx-e{opacity:.42;stroke-dashoffset:0}
 @keyframes nPul{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.22)}}
@@ -639,19 +639,19 @@ body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
 @keyframes nSteady{from{opacity:.3}to{opacity:.62}}
 .rs .mx-thin .mx-e{opacity:.14;stroke-dashoffset:0}
 /* relink · the chords draw themselves again, in gold */
-.rs .mx-relink .mx-n{fill:var(--gold);opacity:.9;animation:nWarm .6s calc(var(--i)*.08s) both}
+.rs .mx-relink .mx-n{fill:var(--cy);opacity:.9;animation:nWarm .6s calc(var(--i)*.08s) both}
 @keyframes nWarm{from{opacity:.4;transform:scale(.7)}to{opacity:.92;transform:scale(1)}}
-.rs .mx-relink .mx-e{stroke:var(--gold);animation:eDraw .5s calc(.25s + var(--i)*26ms) both}
+.rs .mx-relink .mx-e{stroke:var(--cy);animation:eDraw .5s calc(.25s + var(--i)*26ms) both}
 @keyframes eDraw{from{opacity:0;stroke-dashoffset:62}to{opacity:.5;stroke-dashoffset:0}}
 /* field · faint and wide, so the middle of the film is still one thing */
 .rs .mx-field{inset:-22%;width:144%;height:144%;opacity:.17}
 .rs .mx-field .mx-n{opacity:.5}
 .rs .mx-field .mx-e{opacity:.3;stroke-dashoffset:0}
 /* home · back in, and settled */
-.rs .mx-home .mx-n{fill:var(--gold);animation:nHome 1.5s calc(var(--i)*.05s) both}
+.rs .mx-home .mx-n{fill:var(--cy);animation:nHome 1.5s calc(var(--i)*.05s) both}
 @keyframes nHome{from{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px)) scale(.4)}
   to{opacity:.95;transform:translate(0,0) scale(1)}}
-.rs .mx-home .mx-e{stroke:var(--gold);animation:eDraw .6s calc(.8s + var(--i)*22ms) both}
+.rs .mx-home .mx-e{stroke:var(--cy);animation:eDraw .6s calc(.8s + var(--i)*22ms) both}
 
 /* ── type ────────────────────────────────────────────────────────────────── */
 .rs .rscap{display:grid;place-items:center;gap:1.6vh;text-align:center;padding:0 5vw;width:100%}
@@ -662,22 +662,22 @@ body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
   font-size:clamp(1.3rem,3.2vw,2.8rem);opacity:0;animation:wIn .5s calc(.2s + var(--i)*.1s) both}
 @keyframes wIn{from{opacity:0;transform:translateY(.5em) rotate(1.5deg)}
   to{opacity:1;transform:none}}
-.rs .rseyeb{font-size:1.5vw;font-weight:800;letter-spacing:.22em;color:var(--gold);
+.rs .rseyeb{font-size:1.5vw;font-weight:800;letter-spacing:.22em;color:var(--cy);
   text-transform:uppercase;opacity:0;animation:fIn .7s .25s both}
 .rs .rseyeb.rslo{color:var(--dim);letter-spacing:.16em;font-size:1.15vw}
 @keyframes fIn{from{opacity:0;transform:translateY(.6rem)}to{opacity:1;transform:none}}
 .rs .rsfoot{font-size:1.35vw;color:var(--mut);opacity:0;animation:fIn .8s .9s both}
 .rs .rsbig{display:flex;align-items:baseline;gap:1.4vw;opacity:0;animation:fIn .8s .7s both}
 .rs .rsbigl{font-size:1.6vw;color:var(--mut);font-weight:600}
-.rs .rscnt{font-size:7.6vw;font-weight:800;color:var(--gold);line-height:1;
+.rs .rscnt{font-size:7.6vw;font-weight:800;color:var(--cy);line-height:1;
   font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .rs .rshead{display:flex;align-items:baseline;gap:1.4vw;margin-bottom:.4vh;
   opacity:0;animation:fIn .7s .2s both}
 .rs .rsrise{font-size:4.6vw;font-weight:800;letter-spacing:-.01em;
   opacity:0;animation:wIn .9s .5s both}
-.rs .rsnoon{font-size:8vw;font-weight:800;color:var(--gold);line-height:1;
+.rs .rsnoon{font-size:8vw;font-weight:800;color:var(--cy);line-height:1;
   opacity:0;animation:fIn .8s .5s both}
-.rs .rsurl{font-size:2vw;font-weight:700;color:var(--teal);opacity:0;animation:fIn .8s .3s both}
+.rs .rsurl{font-size:2vw;font-weight:700;color:var(--peri);opacity:0;animation:fIn .8s .3s both}
 
 /* ── the tenure chart ────────────────────────────────────────────────────── */
 .rs .rschart{display:grid;grid-template-columns:1fr 1fr;gap:0 3.2vw;width:92%;max-width:1120px}
@@ -685,28 +685,28 @@ body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
 .rs .rsrow{display:grid;grid-template-columns:7.2vw 1fr 2.2vw;align-items:center;gap:.8vw}
 .rs .rsnm{font-size:1.32vw;color:var(--mut);text-align:right;white-space:nowrap;
   opacity:0;animation:fIn .4s calc(.25s + var(--i)*.045s) both}
-.rs .rstrk{position:relative;height:1.5vh;background:#1B1E25;border-radius:3px;overflow:hidden}
+.rs .rstrk{position:relative;height:1.5vh;background:#122043;border-radius:3px;overflow:hidden}
 .rs .rstrk i{position:absolute;inset:0 auto 0 0;width:0;border-radius:0 4px 4px 0;
   animation:grow .75s calc(.3s + var(--i)*.05s) both}
 @keyframes grow{to{width:calc(var(--p)*1%)}}
 /* before the bands land every bar is one hue — a single series needs no palette */
-.rs .rstrk i.b-n{background:linear-gradient(90deg,#8A6A22,var(--gold))}
+.rs .rstrk i.b-n{background:linear-gradient(90deg,#1D5BC4,var(--cy))}
 /* and after it, hue carries the band the line names. gold/teal worst adjacent
    pair is dE 18.2 normal vision and 11.4 protan on this ground; the slate is
    recessive on purpose, and the legend names all three so identity is never
    colour alone. */
-.rs .rschart.lit .rstrk i.b-g{background:linear-gradient(90deg,#8A6A22,var(--gold))}
+.rs .rschart.lit .rstrk i.b-g{background:linear-gradient(90deg,#1D5BC4,var(--cy))}
 .rs .rschart.lit .rstrk i.b-s{background:var(--slate)}
-.rs .rschart.lit .rstrk i.b-t{background:linear-gradient(90deg,#2B7F73,var(--teal))}
+.rs .rschart.lit .rstrk i.b-t{background:linear-gradient(90deg,#3E46A8,var(--peri))}
 .rs .rsyr{font-size:1.28vw;font-weight:700;color:var(--mut);text-align:right;
   font-variant-numeric:tabular-nums;opacity:0;animation:fIn .4s calc(.75s + var(--i)*.045s) both}
 .rs .rsleg{display:flex;gap:2.2vw;justify-content:center;margin-bottom:1vh;
   font-size:1.25vw;color:var(--mut);opacity:0;animation:fIn .6s .15s both}
 .rs .rsleg span{display:flex;align-items:center;gap:.5vw}
 .rs .rsleg i{width:1.1vw;height:1.1vw;border-radius:3px;display:inline-block}
-.rs .rsleg i.b-g{background:var(--gold)}
+.rs .rsleg i.b-g{background:var(--cy)}
 .rs .rsleg i.b-s{background:var(--slate)}
-.rs .rsleg i.b-t{background:var(--teal)}
+.rs .rsleg i.b-t{background:var(--peri)}
 
 /* ── the donut ───────────────────────────────────────────────────────────── */
 .rs .rsdonut{position:absolute;right:2.6vw;bottom:1vh;width:13vw;
@@ -714,12 +714,12 @@ body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
 .rs .rsdonut .rsring{position:relative;width:9vw;height:9vw;display:grid;place-items:center}
 .rs .rsdo{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
 .rs .rsdo circle{fill:none;stroke-width:4.2}
-.rs .rsdo .do-bg{stroke:#23262E}
-.rs .rsdo .do-fg{stroke:var(--gold);stroke-linecap:round;
+.rs .rsdo .do-bg{stroke:#16254A}
+.rs .rsdo .do-fg{stroke:var(--cy);stroke-linecap:round;
   stroke-dasharray:0 var(--c);animation:doGo 1.2s 1.7s both}
 @keyframes doGo{to{stroke-dasharray:var(--dash) var(--gap)}}
 .rs .rsdol{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
-.rs .rsdol b{display:block;font-size:3vw;font-weight:800;color:var(--gold)}
+.rs .rsdol b{display:block;font-size:3vw;font-weight:800;color:var(--cy)}
 .rs .rsdol span{display:none}
 .rs .rsdocap{font-size:.95vw;color:var(--mut);text-align:center;white-space:nowrap}
 
@@ -728,8 +728,8 @@ body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
   opacity:0;animation:fIn .7s .4s both}
 .rs .rsarc svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
 .rs .rsarc circle{fill:none;stroke-width:3.4}
-.rs .rsarc .ar-bg{stroke:#23262E}
-.rs .rsarc .ar-fg{stroke:var(--gold);stroke-linecap:round;
+.rs .rsarc .ar-bg{stroke:#16254A}
+.rs .rsarc .ar-fg{stroke:var(--cy);stroke-linecap:round;
   stroke-dasharray:0 var(--c);animation:doGo 1.4s .7s both}
 .rs .rsarcl{position:relative;text-align:center}
 .rs .rsarcl b{display:block;font-size:5vw;font-weight:800;color:var(--ink);line-height:1}
@@ -739,17 +739,17 @@ body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
 .rs .rschips{display:flex;flex-wrap:wrap;gap:.7vw;justify-content:center;max-width:62vw}
 .rs .rschips.sup{margin-top:.6vh}
 .rs .rschip{width:3.4vw;height:3.4vw;border-radius:50%;display:grid;place-items:center;
-  font-size:1.5vw;font-weight:800;color:#121317;background:var(--gold);
+  font-size:1.5vw;font-weight:800;color:#070F26;background:var(--cy);
   opacity:0;animation:chipIn .4s calc(.25s + var(--i)*.055s) both}
-.rs .rschip.sup{background:var(--teal);width:2.9vw;height:2.9vw;font-size:1.3vw}
+.rs .rschip.sup{background:var(--peri);width:2.9vw;height:2.9vw;font-size:1.3vw}
 @keyframes chipIn{from{opacity:0;transform:scale(.3)}60%{opacity:1;transform:scale(1.18)}
   to{opacity:1;transform:scale(1)}}
 
 /* ── one sign-in, and the tools behind it ────────────────────────────────── */
-.rs .rsdoor{position:relative;width:7vw;height:9vw;border:.22vw solid var(--gold);
+.rs .rsdoor{position:relative;width:7vw;height:9vw;border:.22vw solid var(--cy);
   border-radius:.6vw;display:grid;place-items:center;opacity:0;animation:fIn .6s .4s both}
-.rs .rskey{width:1.3vw;height:1.3vw;border-radius:50%;background:var(--gold);
-  box-shadow:0 0 1.4rem rgba(227,184,90,.8);animation:keyPul 2.2s .9s infinite}
+.rs .rskey{width:1.3vw;height:1.3vw;border-radius:50%;background:var(--cy);
+  box-shadow:0 0 1.4rem rgba(0,229,255,.8);animation:keyPul 2.2s .9s infinite}
 @keyframes keyPul{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.3);opacity:1}}
 .rs .rstools{display:flex;flex-wrap:wrap;gap:.7vw;justify-content:center;max-width:64vw}
 .rs .rstool{font-size:1.2vw;color:var(--mut);border:1px solid var(--line);border-radius:999px;
@@ -757,13 +757,13 @@ body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
 @keyframes toolIn{from{opacity:0;transform:translateY(.8rem) scale(.9)}to{opacity:1;transform:none}}
 
 /* ── the day ─────────────────────────────────────────────────────────────── */
-.rs .rsday{position:relative;width:62vw;height:2.4vh;background:#1B1E25;border-radius:999px;
+.rs .rsday{position:relative;width:62vw;height:2.4vh;background:#122043;border-radius:999px;
   display:flex;align-items:center;opacity:0;animation:fIn .6s .3s both}
 .rs .rsdayb{position:absolute;inset:0;width:0;border-radius:999px;
-  background:linear-gradient(90deg,#8A6A22,var(--gold));animation:grow2 2.4s .5s both}
+  background:linear-gradient(90deg,#1D5BC4,var(--cy));animation:grow2 2.4s .5s both}
 @keyframes grow2{to{width:100%}}
-.rs .rstick{position:absolute;width:1.1vw;height:1.1vw;border-radius:50%;background:#121317;
-  border:.18vw solid var(--gold);top:50%;left:calc(6% + var(--i)*14.5%);
+.rs .rstick{position:absolute;width:1.1vw;height:1.1vw;border-radius:50%;background:#070F26;
+  border:.18vw solid var(--cy);top:50%;left:calc(6% + var(--i)*14.5%);
   transform:translate(-50%,-50%) scale(0);animation:tickIn .35s calc(.7s + var(--i)*.26s) both}
 @keyframes tickIn{from{transform:translate(-50%,-50%) scale(0)}
   60%{transform:translate(-50%,-50%) scale(1.3)}to{transform:translate(-50%,-50%) scale(1)}}
@@ -775,26 +775,26 @@ body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
   padding:2vh 2vw;display:grid;align-items:end;opacity:0;animation:fIn .6s .3s both}
 .rs .rswbars{display:flex;gap:1.4vw;align-items:flex-end;height:100%}
 .rs .rswbars i{flex:1;border-radius:4px 4px 0 0;height:0;
-  background:linear-gradient(180deg,var(--gold),#8A6A22);
+  background:linear-gradient(180deg,var(--cy),#1D5BC4);
   animation:wUp .7s calc(.55s + var(--i)*.09s) both}
 @keyframes wUp{to{height:calc(var(--h)*1%)}}
 
 /* ── the ninety minutes ──────────────────────────────────────────────────── */
 .rs .rssplit{display:flex;width:64vw;height:3.4vh;border-radius:999px;overflow:hidden;
-  background:#1B1E25;opacity:0;animation:fIn .6s .3s both}
+  background:#122043;opacity:0;animation:fIn .6s .3s both}
 .rs .rssplit i{height:100%;width:0}
-.rs .rssplit i.y{background:linear-gradient(90deg,#8A6A22,var(--gold));animation:sp 1.1s .6s both}
+.rs .rssplit i.y{background:linear-gradient(90deg,#1D5BC4,var(--cy));animation:sp 1.1s .6s both}
 .rs .rssplit i.m{background:var(--slate);animation:sp2 1.1s .6s both}
 @keyframes sp{to{width:83.33%}}
 @keyframes sp2{to{width:16.67%}}
 .rs .rssplitl{display:flex;justify-content:space-between;width:64vw;font-size:1.3vw;
   opacity:0;animation:fIn .6s 1.3s both}
-.rs .rssplitl .y{color:var(--gold);font-weight:700}
+.rs .rssplitl .y{color:var(--cy);font-weight:700}
 .rs .rssplitl .m{color:var(--mut)}
 
 /* ── the three questions ─────────────────────────────────────────────────── */
 .rs .rsqs{display:flex;gap:1.6vw;justify-content:center}
-.rs .rsq{width:1.5vw;height:1.5vw;border-radius:50%;background:var(--gold);opacity:0;
+.rs .rsq{width:1.5vw;height:1.5vw;border-radius:50%;background:var(--cy);opacity:0;
   animation:qIn .5s calc(.6s + var(--i)*.22s) both}
 @keyframes qIn{from{opacity:0;transform:scale(.2)}60%{opacity:1;transform:scale(1.35)}
   to{opacity:.95;transform:scale(1)}}
@@ -821,7 +821,7 @@ body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
 
 <div id="bars"></div>
 <div id="chrome">
-  <svg class="mark" viewBox="0 0 88 88" aria-hidden="true"><defs><linearGradient id="rsg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/></linearGradient></defs><path d="M44 9L73 21.5V41C73 60.5 60.5 72 44 78.5C27.5 72 15 60.5 15 41V21.5Z" fill="url(#rsg1)"/><path d="M30 44L39.5 53.5L58 32.5" stroke="#0d1f33" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 44L39.5 53.5L58 32.5" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <svg class="mark" viewBox="0 0 88 88" aria-hidden="true"><defs><linearGradient id="rsg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2A6DE0"/><stop offset="60%" stop-color="#1D5BC4"/><stop offset="100%" stop-color="#13408F"/></linearGradient></defs><path d="M44 9L73 21.5V41C73 60.5 60.5 72 44 78.5C27.5 72 15 60.5 15 41V21.5Z" fill="url(#rsg1)"/><path d="M30 44L39.5 53.5L58 32.5" stroke="#070F26" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 44L39.5 53.5L58 32.5" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
   <span class="who">Ricky Rampersad Branch<i>FY27</i></span>
   
 </div>
@@ -1078,4 +1078,4 @@ document.getElementById("playBtn").addEventListener("click", () => {
 </body>
 </html>
 
-<style>body.rsoff{background:#121317}body.rsoff .orb{display:none}body.rsoff .conf,body.rsoff #confetti{display:none}body.rsoff #chrome .who{color:#A9AEBA}body.rsoff #chrome .who i{color:#737886}body.rsoff #bars i{background:#23262E}body.rsoff #bars i::after{background:#E3B85A}body.rsoff #bars i.done{background:#E3B85A}body.rsoff #bars i.run::after{background:#E3B85A}</style>
+<style>body.rsoff{background:#070F26}body.rsoff .orb{display:none}body.rsoff .conf,body.rsoff #confetti{display:none}body.rsoff #chrome .who{color:#9FB0D0}body.rsoff #chrome .who i{color:#6B7A99}body.rsoff #bars i{background:#16254A}body.rsoff #bars i::after{background:#00E5FF}body.rsoff #bars i.done{background:#00E5FF}body.rsoff #bars i.run::after{background:#00E5FF}</style>
