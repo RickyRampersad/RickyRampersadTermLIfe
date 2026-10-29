@@ -3,19 +3,10 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "mtsign": [
-   "Tomorrow we meet at twelve. Here's how you get in, and what we expect of you.",
-   "Open Ricky Rampersad branch dot com, slash meetings.",
-   "Type your agent number. The one on your card. No password, nothing else to remember.",
-   "That gets you into the room. It does not mark you present.",
-   "The meeting card asks, are you here. Press it.",
-   "That tap is the register. It time-stamps you, and there is nothing else to sign.",
-   "Sign in and never press it, and the register has you absent. So press it.",
-   "Check-in opens at half past eleven. We start at twelve.",
-   "Ninety minutes. Ten to read. Fifty to discuss. Twenty to decide.",
-   "Nothing leaves that room without a name and a date on it.",
-   "Looking in rather than attending? Sign in as zero, zero, zero, zero, then give us your name and your role.",
-   "Try the sign-in tonight. If you can't get in, say so tonight, not at half past eleven."
+  "mtfix": [
+   "That gets you into the room. You are not marked present yet.",
+   "The button opens at half past eleven. We start at twelve.",
+   "Try it tonight. If you can't get in, say so tonight, not at half past eleven."
   ]
  }
 }
