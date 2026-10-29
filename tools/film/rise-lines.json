@@ -1,209 +1,214 @@
 {
-  "key": "rise",
-  "scenes": [
-    {
-      "v": "hit",
-      "say": "This branch took a hit.",
-      "screen": "",
-      "extra": 0.6
-    },
-    {
-      "v": "left",
-      "say": "People left. The work didn't.",
-      "screen": ""
-    },
-    {
-      "v": "held",
-      "say": "Nothing here fell over.",
-      "screen": "IT HELD"
-    },
-    {
-      "v": "rose",
-      "say": "The month it happened, we closed two hundred and four requests. This month, two hundred and forty.",
-      "screen": "AND IT WENT UP"
-    },
-    {
-      "v": "stayed",
-      "say": "So before Friday, look at who's still standing.",
-      "screen": ""
-    },
-    {
-      "v": "count",
-      "say": "Twenty-one agents and managers. Five more behind them.",
-      "screen": "26"
-    },
-    {
-      "v": "years",
-      "say": "Between us, two hundred and twenty-one years of this work.",
-      "screen": "221 YEARS"
-    },
-    {
-      "v": "story",
-      "say": "Put us all on one line and it runs from nineteen ninety-three to this year.",
-      "screen": "THE BRANCH, ON ONE LINE"
-    },
-    {
-      "v": "first",
-      "say": "And here's something most of you were never told. When this company launched its first digital application, with a digital signature on it, this branch led the team that built it.",
-      "screen": "WE LED THE FIRST ONE",
-      "extra": 0.5
-    },
-    {
-      "v": "digital",
-      "say": "So we didn't go digital this year. Our first digital submission was filed in two thousand and eleven. Fifteen years of running our own forms.",
-      "screen": "FIFTEEN YEARS DIGITAL"
-    },
-    {
-      "v": "ai",
-      "say": "What changed this year is the tools. We don't do AI for the sake of it. We use it to make what we already had far more robust.",
-      "screen": "WHAT CHANGED THIS YEAR",
-      "extra": 0.4
-    },
-    {
-      "v": "ffnew",
-      "say": "Start with the fact find. On the first of August, it went live again. Rebuilt from the ground up.",
-      "screen": "THE FACT FIND, REBUILT"
-    },
-    {
-      "v": "ffflow",
-      "say": "And we put the order right. You meet your client. You send the draft. Your client approves it. Only then does it reach a manager.",
-      "screen": "AND WE FIXED THE ORDER",
-      "extra": 0.5
-    },
-    {
-      "v": "ffdata",
-      "say": "A hundred and forty-four fact finds this year. Sixty-three have already been through a manager, and one in five came back for more work.",
-      "screen": "AND SINCE THEN"
-    },
-    {
-      "v": "ff",
-      "say": "And since the digital fact find went live, not one of those cases has lapsed.",
-      "screen": "NOT ONE",
-      "extra": 0.5
-    },
-    {
-      "v": "ffagents",
-      "say": "The training is still running, every week. Agents who started this on paper are turning out full recommendations now.",
-      "screen": "STILL TRAINING"
-    },
-    {
-      "v": "conduct",
-      "say": "And here's the part nobody talks about. All of this protects you. Market conduct, clause by clause, and our fact find answers every one.",
-      "screen": "THIS PROTECTS YOU"
-    },
-    {
-      "v": "fraud",
-      "say": "Fraud is rising across this industry. Early detection is the job of a proper fact find. And when people pushed back, the surveys told us exactly why.",
-      "screen": "CAUGHT EARLY"
-    },
-    {
-      "v": "journey",
-      "say": "We don't treat a client as a transaction. We build a journey. Onboarding. The birthday. A premium due. A requirement. A review every six months.",
-      "screen": "A JOURNEY, NOT A SALE"
-    },
-    {
-      "v": "orphan",
-      "say": "And this branch took something on by itself that most of you never heard about. Nearly three thousand letters and reminders. Three hundred and forty-nine files opened.",
-      "screen": "WHAT WE TOOK ON",
-      "extra": 0.5
-    },
-    {
-      "v": "equipped",
-      "say": "You are equipped. Query Pal answers a client any hour of the day. Your clients sign in themselves. Every tool behind one sign-in.",
-      "screen": "YOU ARE EQUIPPED"
-    },
-    {
-      "v": "replica",
-      "say": "Every screen you're about to see is real. This is what the branch runs on today.",
-      "screen": ""
-    },
-    {
-      "v": "day",
-      "say": "The system sets your day before you're even up.",
-      "screen": "YOUR DAY, SET"
-    },
-    {
-      "v": "papers",
-      "say": "The paper moved too. We scrapped the old form and built the transmittal ourselves. Three thousand six hundred papers, and three quarters reached Guardian inside a working day.",
-      "screen": "THE PAPERS"
-    },
-    {
-      "v": "served",
-      "say": "In the last twelve months, this team closed two thousand four hundred and ninety-five requests.",
-      "screen": "WHAT WE CLOSED"
-    },
-    {
-      "v": "prod",
-      "say": "Production, goals, pendings, the transmittal. All of it runs live on the walls in this branch, all day long.",
-      "screen": "THE WALLS, LIVE IN THE BRANCH"
-    },
-    {
-      "v": "outside",
-      "say": "And it's on the wall outside, where everybody walks past. What's done, what's late, and whose name is on it.",
-      "screen": "AND ON THE WALL OUTSIDE"
-    },
-    {
-      "v": "keep",
-      "say": "We have the lowest lapse rate of any branch in this company. Ours is four point nine six per cent. The average across the main branches is eight point eight two.",
-      "screen": "THE BUSINESS STAYS"
-    },
-    {
-      "v": "stay",
-      "say": "Sixty-seven per cent of our agents are still here a year later. The published average is between fifty-five and sixty.",
-      "screen": "AND SO DO THE PEOPLE"
-    },
-    {
-      "v": "commit",
-      "say": "I've been in this business thirty-five years. The only way you guide people and still scale is to put everything you know where everybody can reach it. That is the promise Akaash and I have made to you.",
-      "screen": "",
-      "extra": 0.6
-    },
-    {
-      "v": "path",
-      "say": "And there is a way up from here. Agent. Executive Agent. Trainee Manager. Unit Manager. This branch grows its own.",
-      "screen": "THERE IS A WAY UP"
-    },
-    {
-      "v": "plan",
-      "say": "The three-year plan runs to September twenty twenty-nine. Rebuild the bench, grow the units, forty agents.",
-      "screen": "THE THREE-YEAR PLAN"
-    },
-    {
-      "v": "gold",
-      "say": "The cracks are still there. We didn't hide them. They're part of the shield now.",
-      "screen": "",
-      "extra": 0.5
-    },
-    {
-      "v": "better",
-      "say": "We're not going back to what this branch was. We're going somewhere better.",
-      "screen": ""
-    },
-    {
-      "v": "friday",
-      "say": "Friday. Twelve noon. Ninety minutes.",
-      "screen": "FRI 30 OCT"
-    },
-    {
-      "v": "yours",
-      "say": "Seventy-five of those minutes belong to you, not to me.",
-      "screen": "75 OF 90"
-    },
-    {
-      "v": "ask",
-      "say": "Three questions are already waiting for you. Answer one tonight.",
-      "screen": "ANSWER ONE"
-    },
-    {
-      "v": "signin",
-      "say": "Sign in on Friday with your agent number. Signing in is the register. Guests use the visitor code: zero, zero, zero, zero.",
-      "screen": "HOW YOU GET IN"
-    },
-    {
-      "v": "rise",
-      "say": "We rise together.",
-      "screen": "",
-      "extra": 0.8
-    }
-  ]
+ "key": "rise",
+ "scenes": [
+  {
+   "v": "hit",
+   "say": "This branch took a hit.",
+   "screen": "",
+   "extra": 0.6
+  },
+  {
+   "v": "left",
+   "say": "People left. The work didn't.",
+   "screen": ""
+  },
+  {
+   "v": "held",
+   "say": "Nothing here fell over.",
+   "screen": "IT HELD"
+  },
+  {
+   "v": "rose",
+   "say": "The month it happened, we closed two hundred and four requests. This month, two hundred and forty.",
+   "screen": "AND IT WENT UP"
+  },
+  {
+   "v": "stayed",
+   "say": "So before Friday, look at who's still standing.",
+   "screen": ""
+  },
+  {
+   "v": "count",
+   "say": "Twenty-one agents and managers. Five more behind them.",
+   "screen": "26"
+  },
+  {
+   "v": "years",
+   "say": "Between us, two hundred and twenty-one years of this work.",
+   "screen": "221 YEARS"
+  },
+  {
+   "v": "story",
+   "say": "Put us all on one line and it runs from nineteen ninety-three to this year.",
+   "screen": "THE BRANCH, ON ONE LINE"
+  },
+  {
+   "v": "outcome",
+   "screen": "THIRTY-TWO YEARS",
+   "say": "People retire. People vest. Some resign. In thirty-two years, this branch has had three terminations."
+  },
+  {
+   "v": "first",
+   "say": "And here's something most of you were never told. When this company launched its first digital application, with a digital signature on it, this branch led the team that built it.",
+   "screen": "WE LED THE FIRST ONE",
+   "extra": 0.5
+  },
+  {
+   "v": "digital",
+   "say": "So we didn't go digital this year. Our first digital submission was filed in two thousand and eleven. Fifteen years of running our own forms.",
+   "screen": "FIFTEEN YEARS DIGITAL"
+  },
+  {
+   "v": "ai",
+   "say": "What changed this year is the tools. We don't do AI for the sake of it. We use it to make what we already had far more robust.",
+   "screen": "WHAT CHANGED THIS YEAR",
+   "extra": 0.4
+  },
+  {
+   "v": "ffnew",
+   "say": "Start with the fact find. On the first of August, it went live again. Rebuilt from the ground up.",
+   "screen": "THE FACT FIND, REBUILT"
+  },
+  {
+   "v": "ffflow",
+   "say": "And we put the order right. You meet your client. You send the draft. Your client approves it. Only then does it reach a manager.",
+   "screen": "AND WE FIXED THE ORDER",
+   "extra": 0.5
+  },
+  {
+   "v": "ffdata",
+   "say": "A hundred and forty-four fact finds this year. Sixty-three have already been through a manager, and one in five came back for more work.",
+   "screen": "AND SINCE THEN"
+  },
+  {
+   "v": "ff",
+   "say": "And since the digital fact find went live, not one of those cases has lapsed.",
+   "screen": "NOT ONE",
+   "extra": 0.5
+  },
+  {
+   "v": "ffagents",
+   "say": "The training is still running, every week. Agents who started this on paper are turning out full recommendations now.",
+   "screen": "STILL TRAINING"
+  },
+  {
+   "v": "conduct",
+   "say": "And here's the part nobody talks about. All of this protects you. Market conduct, clause by clause, and our fact find answers every one.",
+   "screen": "THIS PROTECTS YOU"
+  },
+  {
+   "v": "fraud",
+   "say": "Fraud is rising across this industry. Early detection is the job of a proper fact find. And when people pushed back, the surveys told us exactly why.",
+   "screen": "CAUGHT EARLY"
+  },
+  {
+   "v": "journey",
+   "say": "We don't treat a client as a transaction. We build a journey. Onboarding. The birthday. A premium due. A requirement. A review every six months.",
+   "screen": "A JOURNEY, NOT A SALE"
+  },
+  {
+   "v": "orphan",
+   "say": "And this branch took something on by itself that most of you never heard about. Nearly three thousand letters and reminders. Three hundred and forty-nine files opened.",
+   "screen": "WHAT WE TOOK ON",
+   "extra": 0.5
+  },
+  {
+   "v": "equipped",
+   "say": "You are equipped. Query Pal answers a client any hour of the day. Your clients sign in themselves. Every tool behind one sign-in.",
+   "screen": "YOU ARE EQUIPPED"
+  },
+  {
+   "v": "replica",
+   "say": "Every screen you're about to see is real. This is what the branch runs on today.",
+   "screen": ""
+  },
+  {
+   "v": "day",
+   "say": "The system sets your day before you're even up.",
+   "screen": "YOUR DAY, SET"
+  },
+  {
+   "v": "papers",
+   "say": "The paper moved too. We scrapped the old form and built the transmittal ourselves. Three thousand six hundred papers, and three quarters reached Guardian inside a working day.",
+   "screen": "THE PAPERS"
+  },
+  {
+   "v": "served",
+   "say": "In the last twelve months, this team closed two thousand four hundred and ninety-five requests.",
+   "screen": "WHAT WE CLOSED"
+  },
+  {
+   "v": "prod",
+   "say": "Production, goals, pendings, the transmittal. All of it runs live on the walls in this branch, all day long.",
+   "screen": "THE WALLS, LIVE IN THE BRANCH"
+  },
+  {
+   "v": "outside",
+   "say": "And it's on the wall outside, where everybody walks past. What's done, what's late, and whose name is on it.",
+   "screen": "AND ON THE WALL OUTSIDE"
+  },
+  {
+   "v": "keep",
+   "say": "We have the lowest lapse rate of any branch in this company. Ours is four point nine six per cent. The average across the main branches is eight point eight two.",
+   "screen": "THE BUSINESS STAYS"
+  },
+  {
+   "v": "stay",
+   "say": "Sixty-seven per cent of our agents are still here a year later. The published average is between fifty-five and sixty.",
+   "screen": "AND SO DO THE PEOPLE"
+  },
+  {
+   "v": "commit",
+   "say": "I've been in this business thirty-five years. The only way you guide people and still scale is to put everything you know where everybody can reach it. That is the promise Akaash and I have made to you.",
+   "screen": "",
+   "extra": 0.6
+  },
+  {
+   "v": "path",
+   "say": "And there is a way up from here. Agent. Executive Agent. Trainee Manager. Unit Manager. This branch grows its own.",
+   "screen": "THERE IS A WAY UP"
+  },
+  {
+   "v": "plan",
+   "say": "The three-year plan runs to September twenty twenty-nine. Rebuild the bench, grow the units, forty agents.",
+   "screen": "THE THREE-YEAR PLAN"
+  },
+  {
+   "v": "gold",
+   "say": "The cracks are still there. We didn't hide them. They're part of the shield now.",
+   "screen": "",
+   "extra": 0.5
+  },
+  {
+   "v": "better",
+   "say": "We're not going back to what this branch was. We're going somewhere better.",
+   "screen": ""
+  },
+  {
+   "v": "friday",
+   "say": "Friday. Twelve noon. Ninety minutes.",
+   "screen": "FRI 30 OCT"
+  },
+  {
+   "v": "yours",
+   "say": "Seventy-five of those minutes belong to you, not to me.",
+   "screen": "75 OF 90"
+  },
+  {
+   "v": "ask",
+   "say": "Three questions are already waiting for you. Answer one tonight.",
+   "screen": "ANSWER ONE"
+  },
+  {
+   "v": "signin",
+   "say": "Sign in on Friday with your agent number. Signing in is the register. Guests use the visitor code: zero, zero, zero, zero.",
+   "screen": "HOW YOU GET IN"
+  },
+  {
+   "v": "rise",
+   "say": "We rise together.",
+   "screen": "",
+   "extra": 0.8
+  }
+ ]
 }
