@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Timed Test | SEA &amp; CSEC Study Hub</title>
+<title>Timed Test | SEA Study Hub</title>
+<meta name="description" content="Sit a timed multiple-choice test on the SEA subjects: a clock that does not stop, no answers until you submit, and a full review at the end."/>
+<meta property="og:description" content="Sit a timed multiple-choice test on the SEA subjects: a clock that does not stop, no answers until you submit, and a full review at the end."/>
 <meta name="robots" content="noindex"/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -88,9 +90,11 @@
       </div>
 
       <div class="note gold" style="margin-top:18px">
-        <b>CSEC Paper 01 gives you about 90 seconds a question.</b> These tests use the same pace.
-        Answer everything — there is no penalty for a wrong answer, so a guess on a question you
-        cannot do is worth more than a blank. Flag anything you want to come back to.
+        <b>SEA gives about 1 minute 50 seconds a Mathematics item and about 2 minutes an English
+        Language Arts item.</b> These tests give 90 seconds a question, a little quicker than the
+        paper, so the real thing should feel unhurried. Answer everything — a blank scores nothing
+        here, so an answer you are unsure of is worth more than no answer. Flag anything you want to
+        come back to.
       </div>
     </section>
 
@@ -211,7 +215,7 @@
     picks=deck.map(function(){return null;});
     flags=deck.map(function(){return false;});
     idx=0;
-    /* keep the CSEC pace even when the bank is short of the asked-for length */
+    /* keep the 90-second pace even when the bank is short of the asked-for length */
     limit=Math.round(mins*60*deck.length/want);
     left=limit; started=Date.now();
 
@@ -276,7 +280,7 @@
   $('e-flag').addEventListener('click',function(){ flags[idx]=!flags[idx]; render(); });
   $('e-submit').addEventListener('click',function(){
     var blank=picks.filter(function(p){return p===null;}).length;
-    var msg = blank ? blank+' question'+(blank===1?' is':'s are')+' still blank. There is no penalty for a wrong answer, so a guess beats a blank. Submit anyway?'
+    var msg = blank ? blank+' question'+(blank===1?' is':'s are')+' still blank. A blank scores nothing, so an answer beats a blank. Submit anyway?'
                     : 'Submit your test?';
     if(confirm(msg)) submit(false);
   });
@@ -308,8 +312,8 @@
     $('result').classList.remove('hidden');
 
     $('r-eyebrow').textContent = ranOut ? 'Time expired' : 'Test complete';
-    $('r-title').textContent = pct>=80?'Grade I standard.' : pct>=65?'A strong pass.' :
-                               pct>=50?'A pass, with work to do.' : 'Below pass — now you know.';
+    $('r-title').textContent = pct>=80?'Excellent work.' : pct>=65?'A strong score.' :
+                               pct>=50?'A fair score, with work to do.' : 'Under half — now you know where to work.';
     var used = secs<60 ? secs+' seconds' : Math.round(secs/60)+' minutes';
     $('r-sub').textContent=subjName+' · '+correct+' of '+deck.length+' correct in '+
       used+' of the '+Math.round(limit/60)+' allowed.';
@@ -324,7 +328,7 @@
     if(ranOut) v.push('<b>You ran out of time.</b> Pace is a skill of its own — in the real paper an unanswered question scores zero however well you know it. Practise finishing, even if that means guessing the last few.');
     else if(secs<limit*0.5) v.push('<b>You finished in under half the time.</b> That usually means the questions were too easy or you rushed. Check the review below: if you dropped marks, slow down.');
     else v.push('<b>Pace was reasonable</b> — '+used+' of the '+Math.round(limit/60)+' allowed.');
-    if(blank) v.push('You left '+blank+' blank. CSEC does not deduct for wrong answers, so always guess.');
+    if(blank) v.push('You left '+blank+' blank. A blank scores nothing, so always put an answer down.');
     var worst=Object.keys(byStrand).sort(function(a,b){ return (byStrand[a].c/byStrand[a].n)-(byStrand[b].c/byStrand[b].n); })[0];
     if(worst && byStrand[worst].c<byStrand[worst].n){
       v.push('Weakest topic here: <b>'+esc(strandName(worst))+'</b> ('+byStrand[worst].c+' of '+byStrand[worst].n+
@@ -366,12 +370,13 @@
 </script>
 
 <script>
-/* SEA papers belong to the primary ladder. A Form 1-5 student should not see
-   the link at all; parents and teachers keep it, since they may have a child
-   in Standard 1-5. */
+/* The SEA papers link is for a student on the ladder (Standard 1 to Standard 5,
+   read from CSEC.levels). A student recorded above the last rung does not see
+   it; parents and teachers keep it, since they may have a child on the ladder. */
 (function(){try{
   var me=CSEC.current&&CSEC.current(), a=document.querySelector('.topnav a[href="sea.html"]');
-  if(a&&me&&me.role==='student'&&me.level>5) a.parentNode.removeChild(a);
+  var L=CSEC.levels||[], top=L.length?L[L.length-1].n:5;
+  if(a&&me&&me.role==='student'&&me.level>top) a.parentNode.removeChild(a);
 }catch(e){}})();
 </script>
 

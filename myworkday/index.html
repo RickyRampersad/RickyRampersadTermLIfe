@@ -277,6 +277,27 @@
   .tag.ok{color:var(--good)} .tag.wn{color:var(--warn)} .tag.nwn{color:var(--gold)}
   #news li.dim .li{opacity:.62}
   #news .li .s b{color:var(--navy)}
+  /* The agent's day on this screen (29 Oct 2026): the tiles, the projection, the close-off with its balance, the tasks. */
+  .agt{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 14px}
+  .agt div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center;box-shadow:var(--shadow);opacity:0;transform:translateY(8px);animation:rise .5s var(--ease) forwards}
+  .agt div:nth-child(2){animation-delay:.05s}.agt div:nth-child(3){animation-delay:.1s}.agt div:nth-child(4){animation-delay:.15s}
+  .agt b{display:block;font:800 22px/1 var(--fd);color:var(--navy)} .agt small{display:block;font:600 10.5px/1.25 var(--fb);color:var(--muted);margin-top:5px}
+  .agt .r b{color:var(--bad)} .agt .g b{color:var(--good)} .agt .a b{color:var(--warn)}
+  .agm{padding:9px 0;border-top:1px solid var(--line)} .agm:first-of-type{border-top:0}
+  .agm .q{font:600 14px/1.35 var(--fb);margin-bottom:5px} .agm .q small{color:var(--muted);font-weight:500}
+  .agm .row{display:flex;gap:8px;align-items:center}
+  .agm input[type=number]{flex:none;width:76px;min-height:44px;border:1.5px solid var(--line);border-radius:10px;padding:0 10px;font:700 16px var(--fd);background:var(--card);color:var(--ink)}
+  .agm input[type=text]{flex:1;min-width:0;min-height:44px;border:1.5px solid var(--line);border-radius:10px;padding:0 10px;font:500 14px var(--fb);background:var(--card);color:var(--ink)}
+  .agm input:focus,.agc textarea:focus{outline:none;border-color:var(--good)}
+  .agm .bal{flex:none;min-width:48px;text-align:center;font:800 13px/1 var(--fd);padding:7px 6px;border-radius:8px;background:var(--soft);color:var(--muted)}
+  .agm .bal.up{color:var(--good)} .agm .bal.dn{color:var(--bad)} .agm .bal:empty{background:transparent}
+  .agc textarea{width:100%;min-height:72px;margin-top:8px;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:15px/1.45 var(--fb);color:var(--ink);background:var(--card);resize:vertical}
+  .agc .done{display:inline-block;font:800 11px/1 var(--fb);letter-spacing:.04em;padding:4px 7px;border-radius:6px;background:var(--soft);color:var(--good);margin-left:6px;vertical-align:2px}
+  .agc .wait{font-size:13.5px;color:var(--muted)}
+  .agbal{display:flex;gap:10px;align-items:center;margin:4px 0 10px;padding:10px 12px;border-radius:12px;background:var(--soft);font:700 14px/1.3 var(--fb)}
+  .agbal b{font:800 20px/1 var(--fd)} .agbal b.dn{color:var(--bad)} .agbal b.up{color:var(--good)}
+  #agitems .tc textarea{min-height:70px}
+  .agpv{background:rgba(227,178,60,.14);border:1.5px solid var(--gold);border-radius:12px;padding:9px 12px;font:700 13px/1.4 var(--fb);margin:0 0 12px}
   .more[hidden]{display:none}
   .showmore{width:100%;margin-top:6px;background:transparent;color:var(--ink);border:1.5px solid var(--line)}
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation:none!important;transition:none!important} .card,ul.list li{opacity:1;transform:none} }
@@ -590,6 +611,103 @@
           "<small>" + esc(x.at) + (x.fresh ? " · since you checked in" : "") + " · " + (x.k === "new" ? esc(x.by) : "on " + esc(x.s)) + tag + "</small></div>" + '<div class="tc" hidden></div></li>';
       }).join("") + "</ul>" + (n.more ? '<div class="tip">And ' + n.more + " more today.</div>" : "") + "</div>";
   }
+  /* THE AGENT'S DAY, HERE (29 Oct 2026). Ricky, 12:41pm, with the agents' midday e-mail opening the white projection page: the
+     agents' day is on this screen too. The projection (a number and a note a line), the close-off from midday with the balance
+     against the projection as they type, and the tasks being worked for their clients, each with its last notes and an update box
+     that posts on its Chatter. */
+  function agTiles(m) {
+    var t = m.tiles || {}, b = m.balance;
+    var cell = function (v, l, c) { return '<div class="' + (c || "") + '"><b>' + esc(v) + "</b><small>" + esc(l) + "</small></div>"; };
+    return '<div class="agt">' + cell(t.worked || 0, "being worked for you", "") + cell(t.closed || 0, "closed for you today", (t.closed ? "g" : "")) +
+      cell(t.late || 0, "of them overdue", t.late ? "r" : "") +
+      (b ? cell(b.text, "your day, balanced", b.bal < 0 ? "r" : "g") : cell(m.project && m.project.done ? "Yes" : "No", "projection set today", m.project && m.project.done ? "g" : "r")) + "</div>";
+  }
+  function agMetricRows(m, eve) {
+    return (m.metrics || []).map(function (x) {
+      var v = eve ? x.done : x.planned, n = eve ? x.dnote : x.pnote, hasP = x.planned !== "";
+      var bal = eve && hasP ? '<span class="bal" data-bal>' + (x.done !== "" ? balText(Number(x.done) - Number(x.planned)) : "") + "</span>" : "";
+      return '<div class="agm"><div class="q">' + esc(eve ? x.d : x.p) + (eve && hasP ? " <small>· you projected " + esc(x.planned) + "</small>" : "") + '</div><div class="row">' +
+        '<input type="number" inputmode="numeric" min="0" data-m="' + esc(x.id) + '" value="' + esc(v) + '" placeholder="0"' + (eve && hasP ? ' data-proj="' + esc(x.planned) + '"' : "") + ">" + bal +
+        '<input type="text" data-n="' + esc(x.id) + '" value="' + esc(n) + '" placeholder="Who, or a note"></div></div>';
+    }).join("");
+  }
+  function balText(d) { return d > 0 ? "+" + d : d < 0 ? "−" + (-d) : "even"; }
+  function agPlanCard(m) {
+    var done = m.project && m.project.done;
+    return '<div class="card agc" id="agplan"><div class="ch"><h2>Your projection for today' + (done ? '<span class="done">SET</span>' : "") + '</h2><span class="n">' + (done ? "change it any time" : "by " + esc(m.absentAt || "10:30am")) + "</span></div>" +
+      '<div class="tip">' + (m.lateForPlan ? '<b style="color:var(--bad)">No projection yet, and it is past ' + esc(m.absentAt) + ": until it is in, today reads as not working.</b> " : "") +
+        "What you expect to do today, in numbers. At 5:30 you give what was done, and the day balances against this.</div>" +
+      agMetricRows(m, false) + '<textarea data-sum placeholder="Your projection in words: who you are seeing, what you are closing">' + esc(m.summary ? m.summary.plan : "") + "</textarea>" +
+      '<button type="button" class="go" data-agsave="plan">' + (done ? "Update my projection" : "Save my projection") + '</button><div class="cst" data-st></div></div>';
+  }
+  function agCloseCard(m) {
+    var c = m.close || {}, b = m.balance;
+    if (!c.open && !c.done) return '<div class="card agc" id="agclose"><div class="ch"><h2>Close off my day</h2><span class="n">opens at 12 noon</span></div><div class="wait">From midday: what you did, in numbers, against what you projected. Due by ' + esc(c.at || "5:30pm") + ".</div></div>";
+    return '<div class="card agc" id="agclose"><div class="ch"><h2>Close off my day' + (c.done ? '<span class="done">DONE</span>' : "") + '</h2><span class="n">by ' + esc(c.at || "5:30pm") + "</span></div>" +
+      (b ? '<div class="agbal">Projected <b>' + b.proj + "</b> · done <b>" + b.done + '</b> · balance <b class="' + (b.bal < 0 ? "dn" : "up") + '">' + esc(b.text) + "</b>" + (b.pct != null ? " · " + b.pct + "% met" : "") + "</div>" : "") +
+      '<div class="tip">What was done, 0 where nothing was. The balance against this morning shows as you type. It goes to your manager and sales support.</div>' +
+      agMetricRows(m, true) + '<textarea data-sum placeholder="The day in a line or two">' + esc(m.summary ? m.summary.close : "") + "</textarea>" +
+      '<button type="button" class="go" data-agsave="close">' + (c.done ? "Update my close-off" : "Close off my day") + '</button><div class="cst" data-st></div></div>';
+  }
+  function agItemsCard(m) {
+    var it = m.items || [];
+    if (!it.length) return '<div class="card" id="agitems"><div class="ch"><h2>Being worked for your clients</h2></div><div class="empty">Nothing due for your clients today.</div></div>';
+    return '<div class="card" id="agitems"><div class="ch"><h2>Being worked for your clients</h2><span class="n">' + it.length + '</span></div><div class="tip" style="margin-bottom:4px">Tap one: its last notes, and an update that goes straight on the task for the person working it.</div><ul class="list">' + it.map(function (x, i) {
+      var notes = (x.notes || []).map(function (n) { return "<div>" + (n.reply ? "&#8627; " : "") + "<b>" + esc(n.who) + "</b>" + (n.day ? " · " + esc(n.day) : "") + ": " + esc(n.s) + "</div>"; }).join("");
+      return '<li class="tk" data-ag="' + esc(x.id) + '" style="animation-delay:' + Math.min(i, 12) * 0.04 + 's"><span class="ic ' + (x.done ? "" : x.late ? "late" : "due") + '">' + (x.done ? "&#10003;" : x.late ? "!" : "&#8226;") + "</span>" +
+        '<div class="li"><div class="s' + (x.done ? " done" : "") + '" data-agopen role="button" tabindex="0">' + esc(x.s) + "</div><small>with " + esc(x.o) + (x.done ? " · closed today" : x.due ? " · " + (x.late ? "overdue since " : "due ") + esc(x.due) : "") + "</small></div>" +
+        '<div class="tc" hidden><div class="notes">' + (notes || "No notes on Chatter yet.") + (x.more ? "<div>and " + x.more + " earlier</div>" : "") + "</div>" +
+        '<textarea data-agtext placeholder="Your update: what you did or know, in the client\'s words. It goes on the task."></textarea>' +
+        '<div class="cbt" style="grid-template-columns:1fr"><button type="button" class="c" data-agnote>Post my update</button></div><div class="cst"></div></div></li>';
+    }).join("") + "</ul></div>";
+  }
+  function agDoneCard(m) {
+    var c = m.closedToday || []; if (!c.length) return "";
+    return '<div class="card"><div class="ch"><h2>Done for your clients today</h2><span class="n">' + c.length + '</span></div><ul class="list">' + c.map(function (x, i) {
+      return '<li style="animation-delay:' + i * 0.04 + 's"><span class="ic">&#10003;</span><div class="li"><div class="s">' + esc(x.s) + "</div><small>by " + esc(x.o) + "</small></div></li>"; }).join("") + "</ul></div>";
+  }
+  function agentNative(m) {
+    return (m.preview ? '<div class="agpv">Preview: this is ' + esc(m.first) + "'s day as " + esc(m.first) + " will see it. Anything saved here is saved for " + esc(m.first) + ".</div>" : "") +
+      agTiles(m) + agPlanCard(m) + agItemsCard(m) + agCloseCard(m) + agDoneCard(m) +
+      '<div class="card"><div class="tip">If this screen will not open on your phone, the same pages: <a href="' + esc(m.project.url) + '" target="_blank" rel="noopener">projection</a> · <a href="' + esc(m.close.url) + '" target="_blank" rel="noopener">close-off</a>. <a href="' + esc(m.film) + '">Watch the 2-minute film &rarr;</a></div></div>';
+  }
+  function agSave(btn) {
+    var card = btn.closest(".card"), st = card.querySelector("[data-st]"), kind = btn.getAttribute("data-agsave"), q = { act: kind === "close" ? "agclose" : "agplan" }, blank = 0;
+    Array.prototype.forEach.call(card.querySelectorAll("[data-m]"), function (i) { var v = (i.value || "").trim(); if (v === "") blank++; q["m_" + i.getAttribute("data-m")] = v; });
+    Array.prototype.forEach.call(card.querySelectorAll("[data-n]"), function (i) { q["n_" + i.getAttribute("data-n")] = (i.value || "").trim(); });
+    q.summary = ((card.querySelector("[data-sum]") || {}).value || "").trim();
+    if (blank) { st.className = "cst bad"; st.textContent = "Put a number against every line, 0 where there is none: " + blank + " left blank."; return; }
+    btn.disabled = true; var was = btn.textContent; btn.textContent = "Saving…"; st.className = "cst"; st.textContent = "";
+    api(q).then(function (m) {
+      if (!m || !m.ok) { btn.disabled = false; btn.textContent = was; st.className = "cst bad"; st.textContent = (m && m.error) || "That did not save. Try again."; return; }
+      m._t = Date.now(); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false);
+      toast(kind === "close" ? "Your day is closed off" + (m.balance ? ": " + m.balance.text + "." : ".") + " Your manager has a copy." : "Your projection is in. Your manager has a copy.");
+    }).catch(function () { btn.disabled = false; btn.textContent = was; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function agNote(btn) {
+    var li = btn.closest("li"), ta = li.querySelector("[data-agtext]"), st = li.querySelector(".tc .cst"), text = (ta.value || "").trim();
+    if (!text) { st.className = "cst bad"; st.textContent = "Write your update first."; ta.focus(); return; }
+    btn.disabled = true; btn.textContent = "Posting…";
+    api({ act: "agnote", id: li.getAttribute("data-ag"), text: text }).then(function (m) {
+      btn.disabled = false; btn.textContent = "Post my update";
+      if (!m || !m.ok || (m.saved && m.saved.failed)) { st.className = "cst bad"; st.textContent = (m && m.error) || "That did not post. Try again."; return; }
+      ta.value = ""; ta.defaultValue = ""; st.className = "cst ok"; st.textContent = "✓ Posted on the task.";
+      toast("Your update is on the task."); setTimeout(function () { m._t = Date.now(); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); }, 1200);
+    }).catch(function () { btn.disabled = false; btn.textContent = "Post my update"; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function agOpen(li) { var tc = li.querySelector(".tc"); if (!tc) return; tc.hidden = !tc.hidden; li.classList.toggle("open", !tc.hidden); if (!tc.hidden) { var ta = tc.querySelector("textarea"); if (ta) setTimeout(function () { try { ta.focus({ preventScroll: true }); } catch (e) {} }, 50); } }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest ? e.target : null; if (!t) return; var b;
+    if ((b = t.closest("[data-agsave]"))) { agSave(b); return; }
+    if ((b = t.closest("[data-agnote]"))) { agNote(b); return; }
+    if ((b = t.closest("[data-agopen]"))) { agOpen(b.closest("li")); return; }
+  });
+  document.addEventListener("input", function (e) {
+    var i = e.target; if (!i || !i.hasAttribute || !i.hasAttribute("data-proj")) return;
+    var b = i.parentNode.querySelector("[data-bal]"); if (!b) return;
+    if (i.value === "") { b.textContent = ""; b.className = "bal"; return; }
+    var d = Number(i.value) - Number(i.getAttribute("data-proj")); b.textContent = balText(d); b.className = "bal " + (d < 0 ? "dn" : "up");
+  });
   // The agents' My day (27 Oct 2026): Project my day and Close off my day, the same pages the e-mails open.
   function agentCards(m) {
     if (!m.on) return '<div class="card"><div class="ch"><h2>Your day, from the branch</h2></div><div class="tip">Your daily e-mails and this page start when the branch adds you to the agents\' day. Until then, carry on as you are. <a href="' + esc(m.film) + '">See how it works &rarr;</a></div></div>';
@@ -654,8 +772,9 @@
     $("when").textContent = (m.date || "") + " · agent";
     $("hours").textContent = "";
     $("prog").style.display = "none";
-    $("main").innerHTML = agentCards(m);
+    $("main").innerHTML = m.on && m.native ? agentNative(m) : agentCards(m);
     $("asat").textContent = (cached ? "As at " : "Updated ") + (m.at || "") + (cached ? " · updating…" : "");
+    var cl = $("cline"); if (cl) cl.hidden = true;
   }
   function draw(m, cached) {
     if (m && m.agent) return drawAgent(m, cached);
@@ -699,7 +818,7 @@
   function dirty() {
     var main = $("main"); if (!main || !M) return false;
     if (main.querySelector(".tc:not([hidden])") || $("closeform")) return true;
-    var els = main.querySelectorAll("textarea, input[type=text]");
+    var els = main.querySelectorAll("textarea, input[type=text], input[type=number]");
     for (var i = 0; i < els.length; i++) if (els[i].value && els[i].value !== els[i].defaultValue) return true;
     var a = document.activeElement; return !!(a && main.contains(a) && /^(TEXTAREA|INPUT|SELECT)$/.test(a.tagName));
   }
@@ -728,8 +847,10 @@
     setTimeout(function () {
       var li = t ? document.querySelector('li.tk[data-id="' + t + '"]') : null;
       if (li) { li.scrollIntoView({ behavior: "smooth", block: "center" }); openCard(li); return; }
+      var al = t ? document.querySelector('li[data-ag="' + t + '"]') : null;
+      if (al) { al.scrollIntoView({ behavior: "smooth", block: "center" }); agOpen(al); return; }
       if (g === "close" && $("closecard")) { closeOpen(); return; }
-      var el = $({ update: "coach", news: "news", waiting: "waiting", list: "list", close: "closecard" }[g] || "");
+      var el = $({ update: "coach", news: "news", waiting: "waiting", list: "list", close: "closecard", agplan: "agplan", agclose: "agclose", agitems: "agitems" }[g] || "");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 400);
   }

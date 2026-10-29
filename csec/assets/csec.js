@@ -1,4 +1,4 @@
-/* SEA & CSEC Study Hub — core engine
+/* SEA Study Hub — core engine
  *
  * Profiles, storage, the mastery model, spaced repetition and the daily plan.
  * Everything lives in this browser. There is no server behind this site, so a
@@ -37,8 +37,13 @@
   function profiles() {
     var list = read('profiles', []);
     var changed = false;
+    /* Under the SEA scope the ladder stops at Standard 5. A profile made while the
+       ladder ran to Form 5 is brought onto the top rung rather than left pointing
+       at a year that no longer exists on this product. */
+    var top = (C.levels && C.levels.length) ? C.levels[C.levels.length - 1].n : 10;
     list.forEach(function (p) {
       if (p && p.level == null && p.form != null) { migrateLevel(p); changed = true; }
+      if (p && p.level > top) { p.level = top; changed = true; }
     });
     if (changed) write('profiles', list);
     return list;
@@ -72,7 +77,7 @@
       id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       name: (o.name || '').trim() || 'Unnamed',
       role: o.role || 'student',
-      level: o.level || 8,
+      level: o.level || ((C.levels && C.levels.length) ? C.levels[C.levels.length - 1].n : 8),
       school: o.school || '',
       /* For a child this is the parent's address. The sign-in code goes there,
          which is how a parent hears about every sign-in without being asked. */

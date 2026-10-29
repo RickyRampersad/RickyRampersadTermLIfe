@@ -635,6 +635,10 @@ function clientPage_(p) {
   t.payload = JSON.stringify({
     ok: rows.length > 0,
     survey: String(p.survey || '') === '1',
+    // A one-tap option from the renewal e-mail, which arrives with the
+    // instruction already chosen. It selects, it never submits — see
+    // stageTaps_ for why a mail scanner must not be able to renew a policy.
+    opt: String(p.opt || ''),
     token: token,
     firstName: rows.length ? (rows[0].contact || rows[0].client).split(' ')[0] : '',
     client: rows.length ? rows[0].client : '',
@@ -1160,6 +1164,51 @@ function portalLink_(token) {
   return CONFIG.WEBAPP_URL + (CONFIG.WEBAPP_URL.indexOf('?') > -1 ? '&' : '?') + 't=' + encodeURIComponent(token);
 }
 
+/**
+ * "Lost the link?" — the way back in when the renewal e-mail is gone.
+ *
+ * The token in the link IS the sign-in: a client who taps it is already on
+ * their own page with no password, which is the whole reason renewal takes two
+ * minutes instead of a support call. But an e-mail gets deleted, and the token
+ * is the only way in, so every template carries the way to be sent a new one.
+ * findPage_ answers the same whether the address is on a policy or not, so
+ * this can never be used to ask us who banks with us.
+ */
+function findLink_() {
+  return CONFIG.WEBAPP_URL + (CONFIG.WEBAPP_URL.indexOf('?') > -1 ? '&' : '?') + 'find=1';
+}
+function lostLink_() {
+  return '<p style="text-align:center;font-size:12px;color:#8a97a8;margin:14px 0 0">' +
+    'Lost this e-mail later? <a href="' + findLink_() + '" style="color:#5a6b80">Get your link sent again</a> ' +
+    '— it goes only to the address on your policy.</p>';
+}
+
+/**
+ * The one-tap row under the button, worded for this policy's own line.
+ *
+ * The property invitation has had these from the start and the motor one never
+ * did, so the two lines behaved differently for no reason anybody chose. A tap
+ * opens the client's own page with that instruction already selected — it does
+ * not send the instruction. Nothing is filed until they press send on their
+ * own page, because a mail scanner opens every link in an e-mail and must
+ * never renew a policy on a client's behalf.
+ *
+ * The middle tap is the one that differs by line, and it is the question that
+ * line actually has to answer: a comprehensive vehicle has a value that has
+ * moved since last year, a third party has nothing to value.
+ */
+function stageTaps_(row, comp) {
+  if (typeof optBtn_ !== 'function') return '';     // Property.gs not installed
+  var link = portalLink_(row.token);
+  return '<p style="text-align:center;font-size:13px;color:#5a6b80;margin:2px 0 8px">' +
+      'Know what you want already? Jump straight in:</p>' +
+    '<p style="text-align:center;margin:0 0 10px">' +
+      optBtn_(link + '&opt=renew', comp ? '✅ Renew — my value is right' : '✅ Renew as it is') +
+      optBtn_(link + '&opt=changes', comp ? '✏️ My vehicle’s value has changed' : '✏️ Something has changed') +
+      optBtn_(link + '&opt=call', '📞 Call me first') +
+    '</p>';
+}
+
 var STAGES = {
   '30d':   { subject: function (r) { return 'Your motor policy renews on ' + r.nextDue + ' — review & renew online'; },
              intro: function (r) { return 'Your <b>' + esc_(r.coverage) + '</b> motor policy' + polRef_(r) + ' renews on <b>' + r.nextDue + '</b>. Renewal takes two minutes in our secure portal — review your cover, tell us about changes, and send your instruction.'; } },
@@ -1200,8 +1249,8 @@ function sendStageEmail_(row, stage) {
     htmlBody: brandWrap_(
       '<p>Dear ' + esc_((row.contact || row.client).split(' ')[0] || 'Valued Client') + ',</p>' +
       '<p>' + st.intro(row) + '</p>' +
-      ctaBtn_(link, 'Review & renew my policy') + edu + bal +
-      '<p>Prefer to talk it through? Just reply to this email' + (CONFIG.AGENT_PHONE ? ' or call ' + esc_(CONFIG.AGENT_PHONE) : '') + '.</p>' + sig_(),
+      ctaBtn_(link, 'Review & renew my policy') + stageTaps_(row, comp) + edu + bal +
+      '<p>Prefer to talk it through? Just reply to this email' + (CONFIG.AGENT_PHONE ? ' or call ' + esc_(CONFIG.AGENT_PHONE) : '') + '.</p>' + sig_() + lostLink_(),
       'Policy renewal'),
   });
 }
@@ -1341,6 +1390,10 @@ function onOpen() {
   try { if (typeof salesforceMenu_ === 'function') salesforceMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
   // Production menu appears when Production.gs is installed
   try { if (typeof productionMenu_ === 'function') productionMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
+  // Renewal board menu appears when RenewalBoard.gs is installed
+  try { if (typeof renewalBoardMenu_ === 'function') renewalBoardMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
+  // Sign-in menu appears when RenewalTeam.gs is installed
+  try { if (typeof renewalTeamMenu_ === 'function') renewalTeamMenu_(SpreadsheetApp.getUi()).addToUi(); } catch (err) { Logger.log(err); }
 }
 
 function toggleTestMode() {

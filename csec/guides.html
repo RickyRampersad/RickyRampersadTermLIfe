@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Guided Methods | SEA &amp; CSEC Study Hub</title>
-<meta name="description" content="Step-by-step worked methods for the CSEC question types that carry the most marks — with a full worked example and the mistakes that lose marks."/>
+<title>Guided Methods | SEA Study Hub</title>
+<meta name="description" content="Step-by-step methods for the SEA question types that carry the most marks, in Mathematics, English Language Arts and the Writing paper. Each has one fully worked example and the mistakes that lose marks."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -62,7 +62,8 @@
       <h1>How to actually do it</h1>
       <p>Knowing a topic and knowing how to attack its questions are different things. Each method
          below is the order to work in, one fully worked example with every line explained, and the
-         mistakes that lose marks in the examination.</p>
+         mistakes that lose marks in the SEA. The methods for the Writing paper are the ones most
+         children have never been shown.</p>
     </div>
 
     <div class="card" style="margin-bottom:18px">
@@ -91,13 +92,15 @@
   var G=window.CSEC_GUIDES||[];
   var me=CSEC.current();
 
-  /* A guide is a method for one examination. A Standard 5 has no use for the
-     CSEC argumentative essay, and listing it buries the SEA writing methods
-     they actually sit in March. So a student is shown the methods for the
-     paper they sit next and nothing from beyond it. Parents and teachers keep
-     the whole list, because they work across the ladder. */
+  /* A guide is a method for one examination. A student is shown the methods
+     for the paper they sit next and nothing from beyond it, so nothing can
+     bury the SEA methods they sit in March of Standard 5. The ceiling is the
+     exam's own level, else the top of the ladder as the data gives it; never a
+     number typed here. Parents and teachers keep the whole list, because they
+     work across the ladder. */
+  var L=CSEC.levels||[], top=L.length?L[L.length-1].n:5;
   if(me && me.role==='student'){
-    var stg=CSEC.nextExam(me.level), ceil=(stg&&stg.examLevel)||10;
+    var stg=CSEC.nextExam(me.level), ceil=(stg&&stg.examLevel)||top;
     G=G.filter(function(g){ return g.level<=ceil; });
   }
   var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
@@ -106,8 +109,8 @@
     ? '<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
       '<a href="journey.html">Journey</a>'+
       (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
-      /* SEA papers are for the primary ladder only; a Form 3 has no use for them. */
-      ((me.role!=='student'||me.level<=5)?'<a href="sea.html">SEA Papers</a>':'')+
+      /* Every rung of the ladder leads to the SEA, so everyone gets the papers. */
+      '<a href="sea.html">SEA Papers</a>'+
       '<a href="guides.html" class="on">Guides</a><a href="kpi.html">KPIs</a>'+
       '<a href="planner.html">Syllabus</a><a href="papers.html">Resources</a>'
     : '<a href="start.html">Start here</a><a href="index.html">Sign in</a><a href="journey.html">Journey</a><a href="guides.html" class="on">Guides</a>'+
