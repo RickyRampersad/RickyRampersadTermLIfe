@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-29b';
+var SCRIPT_VERSION = '2026-10-29c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4333,34 +4333,43 @@ function coverTick_(day, mins, present, absent) {
     if (!first && !second) return;
     props.setProperty(first ? key : key2, hhmm_(new Date()));
     try {
-      var plan = coverPlan_(day, sid, present, absent);
-      if (!plan) return;
-      var done = plan.moves.length ? rebalanceApply_(day, plan.moves) : [];
-      var okMoves = done.filter(function (m) { return m.ok; });
-      // What each person has taken today, across every absence, so nobody is given more than their own pace.
-      try { var got = JSON.parse(props.getProperty('cover_got_' + day) || '{}') || {};
-        okMoves.forEach(function (m) { got[m.to] = Number(got[m.to] || 0) + 1; }); props.setProperty('cover_got_' + day, JSON.stringify(got)); } catch (e) {}
-      // Each receiver's day readjusts: what moved goes to the top, their own lowest-priority work drops to "next".
-      try { coverAbsorb_(day, okMoves); } catch (e) {}
-      var asked = [];
-      if (first) plan.ask.forEach(function (t) {
-        try {
-          sfkInsert_('FeedItem', { ParentId: t.id, Body: 'ACTION REQUIRED · ' + plan.name + '. Posted ' + shortDate_(day) + '.\n\n' +
-            'This task is due ' + prettyDate_(t.due) + ' and carries no written note from you. A status alone does not tell the branch what was done.\n\n' +
-            'Before 10am on your return, post where it stands: who, when, how and what, in the client\'s words. Then close it or set the next step.' });
-          asked.push(t);
-        } catch (e) {}
-      });
-      var back = {}; try { back = JSON.parse(props.getProperty('cover_back_' + sid) || '{}') || {}; } catch (e) {}
-      if (back.day !== day) back = { day: day, moved: 0, owe: [] };
-      back.moved = Number(back.moved || 0) + okMoves.length;
-      back.owe = (back.owe || []).concat(asked.map(function (t) { return { id: t.id, s: shorten_(t.subject, 90), due: t.due }; })).slice(0, 25);
-      props.setProperty('cover_back_' + sid, JSON.stringify(back).slice(0, 8900));
-      if (first || okMoves.length) { try { coverMail_(day, plan, done, asked); } catch (e) {} }
-      out.push(plan.first + ' covered' + (second ? ' (second pass)' : '') + ' (' + okMoves.length + ' moved' + (plan.kept.length ? ', ' + plan.kept.length + ' waiting for someone to take them' : '') + ')');
+      var cv = coverRun_(day, sid, present, absent, first, {});
+      if (!cv) return;
+      out.push(cv.plan.first + ' covered' + (second ? ' (second pass)' : '') + ' (' + cv.ok.length + ' moved' + (cv.plan.kept.length ? ', ' + cv.plan.kept.length + ' waiting for someone to take them' : '') + ')');
     } catch (e) { out.push(sid + ' cover FAILED: ' + (e && e.message)); }
   });
   return out;
+}
+/** One pass of the cover for an absent desk: the plan, the moves, the receivers' days, on the first pass the notes asked for
+ *  on what is due on the return, and the e-mails. opts.notice: a manager's mark, whose notice (absenceNotice_) tells the
+ *  person and the team, so coverMail_ sends only the Branch Manager's summary. Returns { plan, done, ok, asked } or null. */
+function coverRun_(day, sid, present, absent, first, opts) {
+  var props = PropertiesService.getScriptProperties();
+  var plan = coverPlan_(day, sid, present, absent);
+  if (!plan) return null;
+  var done = plan.moves.length ? rebalanceApply_(day, plan.moves) : [];
+  var okMoves = done.filter(function (m) { return m.ok; });
+  // What each person has taken today, across every absence, so nobody is given more than their own pace.
+  try { var got = JSON.parse(props.getProperty('cover_got_' + day) || '{}') || {};
+    okMoves.forEach(function (m) { got[m.to] = Number(got[m.to] || 0) + 1; }); props.setProperty('cover_got_' + day, JSON.stringify(got)); } catch (e) {}
+  // Each receiver's day readjusts: what moved goes to the top, their own lowest-priority work drops to "next".
+  try { coverAbsorb_(day, okMoves); } catch (e) {}
+  var asked = [];
+  if (first) plan.ask.forEach(function (t) {
+    try {
+      sfkInsert_('FeedItem', { ParentId: t.id, Body: 'ACTION REQUIRED · ' + plan.name + '. Posted ' + shortDate_(day) + '.\n\n' +
+        'This task is due ' + prettyDate_(t.due) + ' and carries no written note from you. A status alone does not tell the branch what was done.\n\n' +
+        'Before 10am on your return, post where it stands: who, when, how and what, in the client\'s words. Then close it or set the next step.' });
+      asked.push(t);
+    } catch (e) {}
+  });
+  var back = {}; try { back = JSON.parse(props.getProperty('cover_back_' + sid) || '{}') || {}; } catch (e) {}
+  if (back.day !== day) back = { day: day, moved: 0, owe: [] };
+  back.moved = Number(back.moved || 0) + okMoves.length;
+  back.owe = (back.owe || []).concat(asked.map(function (t) { return { id: t.id, s: shorten_(t.subject, 90), due: t.due }; })).slice(0, 25);
+  props.setProperty('cover_back_' + sid, JSON.stringify(back).slice(0, 8900));
+  if (first || okMoves.length) { try { coverMail_(day, plan, done, asked, opts || {}); } catch (e) {} }
+  return { plan: plan, done: done, ok: okMoves, asked: asked };
 }
 
 /** A receiver's day, readjusted after work moved to them: what moved goes to the top of the plan, and as many of
@@ -4439,13 +4448,15 @@ function coverReturn_(person, day) {
   return done;
 }
 
-function coverMail_(day, plan, done, asked) {
+function coverMail_(day, plan, done, asked, opts) {
   var ok = done.filter(function (m) { return m.ok; });
+  // A manager's mark sends one notice to the person and the team (absenceNotice_): only the summary below goes from here.
+  var noticed = !!(opts && opts.notice) || !!PropertiesService.getScriptProperties().getProperty('absnote_' + plan.sid + '_' + day);
   var sign = '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">' +
     'Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
   var by = {};
   ok.forEach(function (m) { (by[m.to] = by[m.to] || []).push(m); });
-  Object.keys(by).forEach(function (sid) {
+  if (!(opts && opts.notice)) Object.keys(by).forEach(function (sid) {
     var to = emailFor_(sid);
     if (!to) return;
     var first = String(nameFor_(sid)).split(' ')[0];
@@ -4458,7 +4469,7 @@ function coverMail_(day, plan, done, asked) {
         moveLines_(by[sid], day) + (systemDayOn_() ? replyButton_(replyUrl_(sid, day, 'plan'), 'Open my day', 'They are at the top of your day, marked Moved to you; your own lowest-priority tasks moved to "when your list is done".')
           : replyButton_(replyUrl_(sid, day, 'plan'), 'Add them to my plan', 'They are at the top of your plan page, under "Not in today\'s plan".')) + sign) });
   });
-  var absentTo = emailFor_(plan.sid);
+  var absentTo = noticed ? '' : emailFor_(plan.sid);
   if (absentTo) {
     mailSend_({ to: absentTo, cc: dayStartCc_(absentTo, plan.sid).join(',') || undefined,
       subject: 'While you are out · ' + ok.length + ' covered, ' + asked.length + ' need your note · ' + shortDate_(day),
@@ -4490,6 +4501,111 @@ function coverMail_(day, plan, done, asked) {
         ' went to whoever is in, money and claims to the BMA first. Work she has written on stays with her. Every move has a Chatter note.</div>' +
       moveLines_(done, day) +
       replyButton_(replyUrl_('ricky', day, 'undo'), 'Undo any of these', 'Tick what should go back. Script Property AUTO_ABSENT = off stops the automatic absence and cover.')) });
+}
+
+/* ── Marked absent by a manager, before the day starts or during it (29 October 2026, 2026-10-29c) ──
+ *  Ricky, 7:39am: "if a staff is not out or whats app and a staff is saying they are not well and will not be out the BMA or
+ *  Branch Manger should have the ability to mark Absent and triggers follow and auto reassignments before the day starts, also a
+ *  trigger to the employee noting the non attendance for the record copying the staff as to the outstanding workload and the
+ *  redistribution to all as well the BMA on urgent matter also wishing the person well ... azariah said she will not be out today".
+ *  My day (his and Kamla's) marks today from first thing. The mark covers the work there and then (absenceCoverNow_): the same
+ *  plan as the clock's (coverPlan_: due and overdue with no note from them, money and claims to the BMA first, each receiver no
+ *  more than their own pace), with everyone due in today a receiver, since before the start nobody is in yet; the notes asked
+ *  for on what is due on the return. Then one notice (absenceNotice_), once a day: to the person, for the record, with good
+ *  wishes; copied to the staff at work today, the BMA, the Branch Manager and the sales support inbox: what was outstanding, who
+ *  now has what, and what is urgent for the BMA (for him, when the BMA is the one away). Marked again later, or after the clock
+ *  had already covered, the notice says what moved. The 8:15 second pass and the return before noon run as before. */
+var ABSENCE = { WELL: /\b(sick|ill|unwell|not well|doctor|medical|clinic|hospital|fever|flu|migraine)\b/i, LEAVE: /\b(leave|vacation|holiday)\b/i, LIST: 40 };
+/** Who is there to take work: signed in, or due in today and not yet late (before the start nobody is in). */
+function absencePresence_(day, sid) {
+  var present = {}, absent = {}, nowM = minutesOf_(hhmm_(new Date()));
+  (hrRows_(ATT, true) || []).forEach(function (r) {
+    if (isoDay_(r.Date) !== day) return;
+    var s = String(r.StaffId);
+    if (String(r.Status || 'in').toLowerCase() === 'absent') absent[s] = 1; else if (timeStr_(r.FirstSignIn)) present[s] = timeStr_(r.FirstSignIn);
+  });
+  absent[sid] = 1; delete present[sid];
+  COVER.RECEIVERS.forEach(function (r) {
+    if (present[r] || absent[r]) return;
+    var sp = parseSpan_(scheduleFor_(r, day).hours || '');
+    if (sp && nowM != null && nowM < sp.start + ABSENT_AFTER_MIN) present[r] = 'due';
+  });
+  return { present: present, absent: absent };
+}
+/** The cover for a desk a manager has just marked absent today. Already covered today (the clock got there first): what moved. */
+function absenceCoverNow_(sid, day) {
+  var props = PropertiesService.getScriptProperties(), key = 'cover_' + sid + '_' + day;
+  if (COVER.POOL.indexOf(sid) < 0) return { none: true, ok: [] };   // Pawan's errands are not covered by moving tasks
+  if (props.getProperty(key)) return { already: props.getProperty(key), ok: absenceMovesToday_(sid, day) };
+  if (!autoAbsentOn_(day) || !sfkConfigured_()) return { off: true, ok: [] };
+  props.setProperty(key, hhmm_(new Date()));
+  var pa = absencePresence_(day, sid);
+  return coverRun_(day, sid, pa.present, pa.absent, true, { notice: true }) || { ok: [] };
+}
+/** Today's moves away from this desk, from the Workload Moves log: still moved (not undone). */
+function absenceMovesToday_(sid, day) {
+  var out = [];
+  try { (hrRows_(MOVES, false) || []).forEach(function (r) {
+    if (isoDay_(r.Date) !== day || String(r.From) !== sid || !/^OK/.test(String(r.Result || '')) || String(r.UndoneAt || '').trim()) return;
+    out.push({ ok: true, t: { id: String(r.TaskId), subject: String(r.Subject || ''), ty: String(r.Type || '') }, from: sid, to: String(r.To), toName: nameFor_(String(r.To)), fromName: nameFor_(sid) });
+  }); } catch (e) {}
+  return out;
+}
+/** The notice: to the person, copied to the team. Once a day; returns { sent, to, cc } or { sent: false, why }. */
+function absenceNotice_(sid, day, why, by, cv) {
+  var props = PropertiesService.getScriptProperties(), key = 'absnote_' + sid + '_' + day;
+  if (props.getProperty(key)) return { sent: false, why: 'already sent at ' + twelve_(props.getProperty(key)) };
+  var to = emailFor_(sid); if (!to) return { sent: false, why: 'no e-mail on file' };
+  cv = cv || { ok: [] };
+  var name = nameFor_(sid), first = String(name).split(' ')[0], at = hhmm_(new Date());
+  var byName = by === 'ricky' ? 'Mr Rampersad' : by === 'kamla' ? 'Mrs Dookran' : nameFor_(by);
+  var bma = sid === 'kamla' ? 'Mr Rampersad' : 'Mrs Dookran', bmaFirst = sid === 'kamla' ? 'Mr Rampersad' : 'Kamla';
+  var pa = { absent: {} }; try { pa = absencePresence_(day, sid); } catch (e) {}
+  // Copied: the staff at work today, the BMA, the managers and the inbox they copy (dayStartCc_).
+  var cc = [], seen = {}; seen[normEmail_(to)] = 1;
+  DAY_MAIL_DESKS.filter(function (s) { return s !== sid && !pa.absent[s]; }).map(function (s) { return emailFor_(s); }).concat(dayStartCc_(to, sid))
+    .forEach(function (e) { e = String(e || '').trim(); var k = normEmail_(e); if (e && !seen[k]) { seen[k] = 1; cc.push(e); } });
+  var ok = cv.ok || [], plan = cv.plan || null, asked = cv.asked || [];
+  var kept = plan ? plan.kept : [], own = plan ? (plan.own || []) : [], noted = plan ? plan.noted : 0;
+  var money = function (t) { return COVER.MONEY.indexOf(t.ty) > -1; };
+  var urgent = ok.filter(function (m) { return money(m.t); }).map(function (m) { return { t: m.t, to: m.toName }; })
+    .concat(kept.map(function (t) { return { t: t, to: '' }; }));
+  var wish = ABSENCE.WELL.test(why) ? 'We are sorry to hear you are not well. Rest and take care of yourself: your work is covered, so nothing needs you today. We wish you a quick recovery.'
+    : ABSENCE.LEAVE.test(why) ? 'Your work is covered while you are away. Enjoy the time.' : 'We hope all is well. Your work is covered for today.';
+  var line = function (t, extra, i) {
+    return '<div style="font-size:13px;line-height:1.45;padding:6px 0;' + (i ? 'border-top:1px solid ' + MAIL.line : '') + '">' + payoffTag_(t).replace(/^ /, '') + ' ' + esc_(shorten_(t.subject || '', 120)) +
+      (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>' : t.due === day ? ' <span style="color:' + MAIL.amber + ';font-weight:700">· due today</span>' : '') +
+      (extra ? '<div style="font-size:12px;color:' + MAIL.muted + '">' + esc_(extra) + '</div>' : '') + '</div>';
+  };
+  var box = function (border, inner) { return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + border + ';border-radius:10px;padding:4px 15px 8px">' + inner + '</div>'; };
+  var byTo = {}; ok.forEach(function (m) { (byTo[m.to] = byTo[m.to] || []).push(m); });
+  var outstanding = ok.length + kept.length + noted + own.length;
+  var rec = [['Date', prettyDate_(day)], ['Attendance', 'Absent'], ['Reason', why], ['Marked by', byName + ', ' + twelve_(at)]];
+  var body =
+    '<div style="font-size:14px;line-height:1.6;margin-bottom:14px">' + esc_(first) + ', ' + esc_(byName) + ' has marked you absent today. ' + esc_(wish) + '</div>' +
+    sectionLabel_('For the record') +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:13px;line-height:1.5;margin-bottom:6px">' + rec.map(function (r) {
+      return '<tr><td style="color:' + MAIL.muted + ';padding:2px 14px 2px 0;white-space:nowrap">' + esc_(r[0]) + '</td><td style="font-weight:700">' + esc_(r[1]) + '</td></tr>'; }).join('') + '</table>' +
+    sectionLabel_(first + '\'s work today') +
+    statTiles_([{ value: outstanding, label: 'due or overdue', color: MAIL.navy }, { value: ok.length, label: 'moved to colleagues', color: MAIL.green },
+      { value: noted + own.length, label: 'stay with ' + first, color: MAIL.navy }, { value: kept.length, label: 'nobody free yet', color: kept.length ? MAIL.red : MAIL.navy },
+      { value: asked.length, label: 'due on the return: note asked', color: asked.length ? MAIL.amber : MAIL.navy }]) +
+    (cv.none ? '<div style="font-size:13.5px;line-height:1.55;margin-bottom:8px">' + esc_(bma) + ' will arrange what cannot wait.</div>' : '') +
+    (cv.off ? '<div style="font-size:13.5px;line-height:1.55;margin-bottom:8px">The automatic cover is switched off today: ' + esc_(bma) + ' will share out what is due.</div>' : '');
+  Object.keys(byTo).sort().forEach(function (r) {
+    body += sectionLabel_('Now with ' + String(nameFor_(r)).split(' ')[0] + ' (' + byTo[r].length + ')') + box(MAIL.green, byTo[r].slice(0, ABSENCE.LIST).map(function (m, i) { return line(m.t, '', i); }).join(''));
+  });
+  if (urgent.length) body += sectionLabel_('Urgent, for ' + bma) + '<div style="font-size:13px;color:' + MAIL.muted + ';margin-bottom:6px">Money and claims, and anything nobody was free to take. ' + esc_(bmaFirst) + ', please see these are done today.</div>' +
+    box(MAIL.red, urgent.slice(0, ABSENCE.LIST).map(function (u, i) { return line(u.t, u.to ? 'Now with ' + String(u.to).split(' ')[0] : 'Not yet taken: please give it to someone', i); }).join(''));
+  if (asked.length) body += sectionLabel_('Due on ' + first + '\'s return') + box(MAIL.amber, asked.slice(0, ABSENCE.LIST).map(function (t, i) { return line(t, 'Has an ACTION REQUIRED note: post where it stands before 10am that day', i); }).join(''));
+  body += '<div style="font-size:13.5px;line-height:1.6;margin-top:16px">' + (ok.length ? 'Everyone copied: what is now yours is in your name in Salesforce with a MOVED note on it, and at the top of your day. Note every call in the client\'s words before you close it. ' : '') +
+    'Work ' + esc_(first) + ' has written on stays with ' + esc_(first) + '. If ' + esc_(first) + ' is in after all, checking in before noon brings back whatever nobody has touched.</div>' +
+    '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
+  mailSend_({ to: to, cc: cc.join(',') || undefined, subject: first + ' is absent today · ' + ok.length + ' task' + (ok.length === 1 ? '' : 's') + ' moved to cover · ' + shortDate_(day),
+    htmlBody: shell_(name + ' · absent today', prettyDate_(day), body) });
+  props.setProperty(key, at);
+  try { runlog_('absence notice ' + sid + ' ' + day + ' by ' + by + ': ' + ok.length + ' moved, cc ' + cc.length); } catch (e) {}
+  return { sent: true, to: to, cc: cc, moved: ok.length, kept: kept.length, asked: asked.length };
 }
 
 /** The morning a desk is back: what was covered, and what she owes. Once. */
@@ -17041,7 +17157,15 @@ function workdayMarkAbsent_(sid, p, day) {
   var r = markAbsent_({ staffId: who, date: d, reason: why }, { staffId: sid, manager: sid === 'ricky' });
   if (!r.ok) return r;
   try { runlog_('absent ' + who + ' ' + d + ' (' + why + ') by ' + sid + ' on My day'); } catch (e) {}
-  return null;
+  // Today (29 Oct 2026): the work moves now and the notice goes, before the day starts if that is when it is marked.
+  var out = { ok: true, who: who, date: d, why: why };
+  if (d === day) {
+    var cv = null; try { cv = absenceCoverNow_(who, day); } catch (e) { cv = { ok: [], failed: String(e && e.message || e).slice(0, 120) }; }
+    var nt = null; try { nt = absenceNotice_(who, day, why, sid, cv); } catch (e) { nt = { sent: false, why: String(e && e.message || e).slice(0, 120) }; }
+    out.moved = (cv && cv.ok || []).length; out.kept = cv && cv.plan ? cv.plan.kept.length : 0; out.asked = (cv && cv.asked || []).length;
+    out.already = !!(cv && cv.already); out.mailed = !!(nt && nt.sent); out.mailWhy = nt && !nt.sent ? nt.why || '' : ''; out.cc = nt && nt.cc ? nt.cc.length : 0;
+  }
+  return out;
 }
 
 /* ── The agents' My day (27 October 2026) ──
@@ -17106,8 +17230,8 @@ function workdayPost_(p) {
   }
   if (String(p.act || '') === 'absent') {
     if (sid !== 'ricky' && sid !== 'kamla') return { ok: false, error: 'Nothing to do.' };
-    var err = workdayMarkAbsent_(sid, p, day); if (err) return err;
-    var mm = workdayModel_(sid, day); mm.marked = { who: String(p.who), date: String(p.date), why: String(p.why || '') }; return mm;
+    var mk = workdayMarkAbsent_(sid, p, day); if (!mk.ok) return mk;
+    var mm = workdayModel_(sid, day); mm.marked = mk; return mm;
   }
   if (String(p.act || '') !== 'checkin') return { ok: false, error: 'Nothing to do.' };
   var at = '', first = false;

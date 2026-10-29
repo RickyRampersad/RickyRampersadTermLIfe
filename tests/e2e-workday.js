@@ -208,7 +208,8 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     let posted = [];
     await page.route(/script\.google\.com\/macros/, async route => {
       const req = route.request();
-      if (req.method() === 'POST') { posted.push(req.postData() || ''); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(model({ att: att(C('absent', { why: 'Sick', by: 'Ricky' })) })) }); }
+      if (req.method() === 'POST') { posted.push(req.postData() || ''); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(Object.assign(model({ att: att(C('absent', { why: 'Sick', by: 'Ricky' })) }),
+        /date=\d{4}-\d{2}-\d{2}/.test(posted[posted.length - 1]) && posted[posted.length - 1].indexOf('date=' + day) > -1 ? { marked: { ok: true, moved: 5, kept: 0, asked: 1, mailed: true, cc: 6 } } : {})) }); }
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(model({ att: att(C('none')) })) });
     });
     await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
@@ -223,6 +224,14 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     ok('tapping it asks why', /Elizabeth, Mon 26: not in\. Why\?/.test(await page.textContent('#markbox')));
     await page.click('#markbox [data-why="Sick"]'); await page.waitForTimeout(900);
     ok('Sick posts who, the day and the reason, and redraws', posted.length === 1 && /act=absent/.test(posted[0]) && /who=elizabeth/.test(posted[0]) && /date=2026-10-26/.test(posted[0]) && /why=Sick/.test(posted[0]) && /Sick · Ricky/.test(await page.textContent('#attcard')), posted[0]);
+    // Before the day starts (29 Oct 2026): "a staff is saying they are not well and will not be out".
+    ok('today, before the day starts: Not yet, and each is there to mark', (await page.$$('#attcard td.wait[data-mark]')).length === 3 && /Not yettap to mark/.test(await page.textContent('#attcard')));
+    await page.click('#attcard td.wait[data-mark*="sasha"]'); await page.waitForTimeout(300);
+    const mb = await page.textContent('#markbox');
+    ok('it asks if she is not coming, and says what the mark will do', /Sasha, Tue 27: not coming in today\? Why\?/.test(mb) && /moves Sasha's due work to whoever is in today/.test(mb) && /e-mails Sasha for the record, copying the team/.test(mb), mb);
+    if (OUT) await page.screenshot({ path: path.join(OUT, 'myday-mark-ahead.png') });
+    await page.click('#markbox [data-why="Sick"]'); await page.waitForTimeout(900);
+    ok('Sick for today posts today, and says what moved and who was told', posted.length === 2 && posted[1].indexOf('date=' + day) > -1 && /who=sasha/.test(posted[1]) && /5 tasks moved; Sasha and the team told/.test(await page.textContent('#toast')), await page.textContent('#toast'));
     const wide = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     ok('nothing off the side on a phone', wide <= 0, String(wide));
     if (OUT) await page.screenshot({ path: path.join(OUT, 'myday-attendance.png'), fullPage: true });
