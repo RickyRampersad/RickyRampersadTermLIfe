@@ -74,6 +74,8 @@ const calls = []; let requests = []; let NEWME = null;
       requests = [{ ref, when: '21 Oct 2026', type: b.quote.flow === 'renew' ? 'Renewal' : 'Quick quote', vehicle: [b.quote.year, b.quote.make, b.quote.model].filter(Boolean).join(' '), reg: b.quote.reg, cover: b.quote.cover, status: 'Sent to quotes desk' }].concat(requests);
       return reply({ ok: true, ref, flow: b.quote.flow, mode: 'test', requests, contact: 'Existing', mail: 'Sent', producer: b.quote.clientEmail ? 'Mala Madeup' : '' }); }
     if (b.action === 'permit') return reply({ ok: true, message: 'Saved to your record. Thank you.', changed: true, me: Object.assign({}, ME, { permitExpires: b.permitExpires, permitOnFile: { number: b.permit, issued: b.permitIssued, expires: b.permitExpires, state: 'valid', days: 1200 } }) });
+    if (b.action === 'renewBrief') return setTimeout(() => reply({ ok: true, brief: { ai: true, summary: 'Your 2019 Toyota Aqua renews on 11 November 2026. It has been insured for TT$ 95,000 for the last 2 terms.',
+      checks: [{ question: 'Is TT$ 95,000 still what it is worth?', change: 'Update the insured value' }, { question: 'Will anyone new drive it?', change: 'A new driver' }] } }), 200);
     if (b.action === 'signOut') return reply({ ok: true });
     if (b.action === 'agents') return reply({ ok: true, agents: /^ma/i.test(b.q || '') ? [{ id: '003000000000050AAA', name: 'Mala Madeup' }, { id: '003000000000051AAA', name: 'Mala Otherone' }] : [] });
     reply({ ok: false, error: 'Unknown action ' + b.action });
@@ -126,13 +128,45 @@ const calls = []; let requests = []; let NEWME = null;
   ok('the figures count up on screen and keep their real number in the text', await page.evaluate(() => [...document.querySelectorAll('#homeStats .cu')].map(b => b.textContent).join(',') === '2,1'));
   ok('scrolled to the foot, no section is left waiting to rise in', await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 500) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 120)); }
     await new Promise(r => setTimeout(r, 300)); const left = document.querySelectorAll('.sr:not(.sr-in)').length; window.scrollTo(0, 0); return left === 0; }));
-  /* ── renewing happens in the Renewal Platform (26 October 2026): one place to renew ── */
-  ok('the renewal card renews in the renewal portal, not on this page', /Renew in your renewal portal/.test(rn) && !(await page.$('#renewals .rnw .ghost')) && /secure link/.test(rn));
-  ok('a line under the renewals says every policy is in the portal', /Another vehicle renewing\?/.test(await txt('#renewPortal')) && /Open my renewal portal/.test(await txt('#renewPortal')));
-  const [pop] = await Promise.all([ctx.waitForEvent('page'), page.click('#renewals .rnw-port .send')]);
-  const popUrl = pop.url(); await pop.close().catch(() => {});
-  ok('it opens Track your renewal with her e-mail filled in', /find=1/.test(popUrl) && /e=anika%40example\.com/.test(popUrl), popUrl);
-  ok('nothing is submitted from this page for a renewal', !calls.some(c => c.action === 'submit' && c.quote && c.quote.flow === 'renew'));
+  /* ── renewing here, vehicle first (29 October 2026): nothing opens another site ── */
+  ok('the renewal card renews on this page', /Renew this vehicle/.test(rn) && !/portal/i.test(await txt('#trRenew')));
+  ok('a box under the renewals asks for a vehicle not listed', /not listed here/.test(await txt('#renewPortal')) && await page.isVisible('#rfQ'));
+  ok('the steps say what happens: choose the vehicle, choose, we confirm', /Choose the vehicle/.test(await txt('#trRenew .journey')));
+  await page.click('#renewals .rnw-port .send'); await page.waitForSelector('#s-form:not(.hide) #rbrief');
+  ok('it opens the renewal on this page, with the vehicle and its date', /Toyota Aqua/.test(await txt('#step')) && /11 November 2026/.test(await txt('#step')) && ctx.pages().length === 1);
+  await page.waitForSelector('#rbrief .bs');
+  ok('"Your renewal in plain words" is written from her record, marked as AI', /insured for TT\$ 95,000/.test(await txt('#rbrief')) && /Written by AI/.test(await txt('#rbrief')) &&
+    calls.some(c => c.action === 'renewBrief' && c.reg === 'PDX 1234'));
+  ok('three choices: as it is, with changes, talk to us first', /Renew as it is[\s\S]*Renew with changes[\s\S]*Talk to us first/.test(await txt('#step .opts')));
+  if (process.env.SHOTS) { await page.waitForTimeout(1200); await page.screenshot({ path: path.join(process.env.SHOTS, 'renew-step.png'), fullPage: true }); }
+  await page.click('#rbrief .bc button >> nth=0');
+  ok('a tap on a check chooses "with changes" and writes the change in', await page.inputValue('[data-k=renewChanges]') === 'Update the insured value' &&
+    (await page.$('.opts button.on:has-text("Renew with changes")')) !== null && /Added to my changes/.test(await txt('#rbrief')));
+  await page.click('#rbrief .bc button >> nth=0');
+  ok('a second tap takes it out again', !(await page.inputValue('[data-k=renewChanges]')));
+  await page.click('#rbrief .bc button >> nth=1'); await page.fill('[data-k=value]', '88000');
+  ok('nothing runs wider than the phone on the renewal', await wide());
+  await page.click('#btnNext'); await page.waitForFunction(() => /Check and send/.test(document.getElementById('step').textContent));
+  ok('the review says Renewal, with changes, and never "undefined"', /Renewal/.test(await txt('.rev')) && /A new driver/.test(await txt('.rev')) && !/undefined/.test(await txt('.rev')));
+  await page.check('#agree'); await page.click('#btnNext'); await page.waitForSelector('#s-done:not(.hide)');
+  const rsub = calls.filter(c => c.action === 'submit').pop();
+  ok('it is sent as a renewal request for that vehicle, with the change', rsub.quote.flow === 'renew' && rsub.quote.reg === 'PDX 1234' && rsub.quote.renewChoice === 'Renew with changes' && /A new driver/.test(rsub.quote.renewChanges));
+  ok('the done screen says the renewal has gone', /renewal request has gone/.test(await txt('#doneTitle')));
+  await page.click('#s-done .ghost'); await page.waitForSelector('#s-home:not(.hide)');
+  /* A vehicle not on her record: no dead end. */
+  await page.fill('#rfQ', 'pdx-1234'); await page.click('#rfind .send');
+  await page.waitForSelector('#s-form:not(.hide) #rbrief');
+  ok('a number typed any way finds her own vehicle', /Toyota Aqua/.test(await txt('#step')));
+  await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
+  await page.fill('#rfQ', 'TCX 404'); await page.click('#rfind .send');
+  await page.waitForFunction(() => /could not match/.test(document.getElementById('rfMsg').textContent));
+  if (process.env.SHOTS) { await page.$eval('#rfind', el => el.scrollIntoView({ block: 'center' })); await page.waitForTimeout(1200); await page.screenshot({ path: path.join(process.env.SHOTS, 'renew-find.png') }); }
+  ok('a number not on her record says so plainly and offers to send it anyway', /TCX 404/.test(await txt('#rfMsg')) && /renewals team/.test(await txt('#rfMsg')));
+  await page.click('#rfMsg .send'); await page.waitForSelector('#s-form:not(.hide)');
+  ok('…which opens the renewal for that number, marked to be matched, with no AI guess', /Not matched to your e‑mail yet/.test(await txt('#step')) && await page.inputValue('[data-k=reg]') === 'TCX 404' && !(await page.$('#rbrief')));
+  await page.click('.opts button:has-text("Talk to us first")'); await page.click('#btnNext'); await page.waitForFunction(() => /Check and send/.test(document.getElementById('step').textContent));
+  ok('"Talk to us first" asks to be called, not to renew', /call me about my renewal/.test(await txt('label.chk')));
+  await page.click('#btnBack'); await page.click('#btnBack'); await page.waitForSelector('#s-home:not(.hide)');
   /* A renewal request made here before 26 October still shows in her list, with its own tracker. */
   requests = [{ ref: 'MQ-261021-001', when: '21 Oct 2026', type: 'Renewal', vehicle: '2019 Toyota Aqua', reg: 'PDX 1234', cover: 'Comprehensive', status: 'Sent to quotes desk' }];
 
