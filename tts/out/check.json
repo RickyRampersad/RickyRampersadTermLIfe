@@ -1,32 +1,7 @@
 {
- "tts/out/walldriver2/01.mp3": [
-  "en",
-  0.992,
-  "This is the branch manager's drive on the orphan campaign."
- ],
- "tts/out/walldriver2/02.mp3": [
-  "en",
-  0.987,
-  "Every prompt he puts on the task flows from left to right, from his own words and his automation to the team's answer."
- ],
- "tts/out/walldriver2/03.mp3": [
+ "tts/out/walldriver2b/01.mp3": [
   "en",
   0.996,
-  "Follow each ribbon, answer the same day, the next working day, later, or not yet, and buy home."
- ],
- "tts/out/walldriver2/04.mp3": [
-  "en",
-  0.996,
-  "hour by hour, see when he prompts and when the team writes."
- ],
- "tts/out/walldriver2/05.mp3": [
-  "en",
-  0.985,
-  "Day by day, his prompts and the team's notes flow side by side."
- ],
- "tts/out/walldriver2/06.mp3": [
-  "en",
-  0.998,
-  "And for each of the team, how fast they answer and how many prompts still wait on them?"
+  "Follow each ribbon to see when it was answered, the same day, the next working day, later, or not yet, and who answered it?"
  ]
 }
