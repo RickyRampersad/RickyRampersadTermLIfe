@@ -20,7 +20,7 @@ BRANCH = ROOT / 'orphan-video'           # rickyrampersadbranch.com/orphan-video
 VID = ROOT / 'vid'                       # rickyrampersadbranch.com/vid — the film alone
 TEAM = ROOT / 'orphan-transition'        # the branch's own pages that embed it
 TPL = ROOT / 'templates'                 # the team's one page: film, letter, openings, verdict
-BLAST = ROOT / 'blastoff'                # rickyrampersadbranch.com/blastoff — the FY27 rise film
+BLAST = ROOT / 'branchmeet'              # rickyrampersadbranch.com/branchmeet — the FY27 rise film
 SITES = [DHAA, BRANCH, VID, TEAM, TPL, BLAST]
 films = json.load(open(HERE / 'films.json'))
 

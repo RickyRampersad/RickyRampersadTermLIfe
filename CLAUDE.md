@@ -6996,7 +6996,7 @@ Two traps, both of which make the guest fail silently:
 `tests/test-friday.js` covers it (100 checks), and the page is driven in a real
 browser against a mocked backend in the session scratchpad.
 
-## `/blastoff/` — the FY27 rise, and what the film may not say
+## `/branchmeet/` — the FY27 rise, and what the film may not say
 
 Asked for on 28 October 2026, the evening before the branch group sees it:
 *"we had about 12 agents who left us... it's our first meeting coming together
@@ -7004,11 +7004,20 @@ after they have left. We want to rise strong and something that signifies the
 uprise. So even more powerful, more graphs, more charts, more colors, more
 graphics, more motion."*
 
+**The address is `/branchmeet/`, renamed 29 October 2026** — asked for in those
+words, "relabel instead of blast off branchmeet". The film, its poster and the
+MP4 (`branchmeet.mp4`) moved with the folder. **`/blastoff/` is a redirect stub**
+and stays one: the old address was in the branch group before the rename, and a
+dead link in a WhatsApp group is a link nobody taps twice. It carries no view
+beacon, like every other stub. `build-risefilm.py`, `chapters.py` and
+`films.json` all point at the new folder; the deleted first builder keeps its
+own old name below, which is history rather than a path.
+
 **One address, one film.** The first cut (the cocoon, 1:06, 28 October) was
 replaced at the same URL the same evening rather than published beside it: the
 link was already out, and two blast-offs is one too many to send a branch.
 `build-blastoff.py` and its lines and timing were deleted with it — two
-builders writing one `blastoff.mp4` is how the wrong cut ships. Git has the
+builders writing one `branchmeet.mp4` is how the wrong cut ships. Git has the
 first cut if it is ever wanted.
 
 ### What it may not say, which decided the whole script
@@ -7052,7 +7061,7 @@ agents still here after a year against a published 55–60%; 31% at four years
 against about 16%; 67% of the 2023 intake kept to August against 48% across
 the network; the career ladder; and the plan's horizon, 1 October 2026 to
 30 September 2029. If he ever wants the money or the ranking in, the film has
-to move behind the meeting sign-in first — it cannot be done at `/blastoff/`.
+to move behind the meeting sign-in first — it cannot be done at `/branchmeet/`.
 
 **One figure was left alone on purpose.** The Note for the Record says the
 branch manager has 35 years in the business; Salesforce gives his hire date as
@@ -7123,7 +7132,7 @@ because the client letters already sent load it.
 
 The film moved to the **midnight blue he chose for the three board films on 15
 October**, which also puts it in one family with the board pages, RR Operations
-and the Log Book films instead of standing alone. The page at `/blastoff/`
+and the Log Book films instead of standing alone. The page at `/branchmeet/`
 moved with it and carries `orphan-transition/board-mark.svg`, the blue shield,
 not the gold one.
 
@@ -7137,7 +7146,7 @@ beside it instead of over the real page, which is how the comparison sheet is
 shot — the same three frames in every palette, because a palette judged on
 different pictures is not judged at all. **Those variant files are never
 committed**: they are 516 KB each, they would be served at
-`/blastoff/film-crimson.html`, and one command regenerates any of them.
+`/branchmeet/film-crimson.html`, and one command regenerates any of them.
 
 Each is a repaint of one baseline by exact hex in a single pass, longest
 literal first, so a value a palette maps *to* can never be read back as a value
@@ -7250,7 +7259,7 @@ motes are **seeded from the scene's index, never random**: render.js draws each
 frame on its own, so a random field jitters between frames instead of drifting.
 
 **The player's rail knows the scenes now.** `chapters.py` gained
-`blastoff/film.html`, and a scene may name itself with **`data-ch`**, which
+`branchmeet/film.html`, and a scene may name itself with **`data-ch`**, which
 wins over anything read off the picture. That is new and opt-in, so every film
 built before it is unchanged. It was needed here because several scenes carry
 no eyebrow at all — the opening three, the mended shield, the close — and the
@@ -7258,7 +7267,7 @@ fallback handed the rail its own first words, which on a kinetic headline is a
 dump of fragments and on the roster scene is a row of bare initials.
 
 **The page's figures are guarded too, and the guard has to read the prose.**
-The builder now checks `blastoff/index.html` for the spoken headcount, the
+The builder now checks `branchmeet/index.html` for the spoken headcount, the
 spoken total and the numeric total in the meta descriptions, after the film is
 written — so a stale page names what to change instead of blocking the rebuild.
 The first cut of that check searched the raw markup and passed on a lede still
@@ -7294,7 +7303,7 @@ photograph pinned to the frame. Two sources, both already public and both
 carrying their own "sample data" banner:
 
 - `wall/img/ff|lb|meet|jr/*` — twenty-nine screens shot for the FY27 wall;
-- `blastoff/img/*` — six more, shot for this film from **`/wall/?demo=1`**
+- `branchmeet/img/*` — six more, shot for this film from **`/wall/?demo=1`**
   (the wall's own marked sample). Shoot them past the start dialog: the first
   run caught every scene dimmed behind "Start with sound", which is the kind of
   thing that looks like a rendering fault rather than a missed click.
@@ -7382,7 +7391,7 @@ and the last card was cut in half by the caption strip the mixer pads back on.
 **A sample figure beside a real first name is fine on a wall and not fine in a
 film.** The wall's own demo marks itself SAMPLE FIGURES in the masthead, and
 that badge is legible on a television three feet away. Shrunk into a card in a
-film anybody can forward, it is four pixels tall. So `blastoff/img/goals.jpg`
+film anybody can forward, it is four pixels tall. So `branchmeet/img/goals.jpg`
 is **cropped above the per-agent rings** — "Daniel 58% of API pace" reads as a
 verdict on a named person however it is labelled — and the shots that carry a
 per-agent league table (the fact-find funnel) are not in the film and are not
@@ -7567,8 +7576,8 @@ python3 importvox.py <tts/out/rise> vorise 1.15 --timing rise-timing.json --line
 python3 build-risefilm.py
 python3.13 sfx.py "$(…films.json rise…)" sfx-rise.wav
 python3.13 usetrack.py ../../rr-branch-theme.mp3 rise
-node render.js ../../blastoff/film.html cap-rise 30
-python3.13 mixany.py "$(…films.json rise…)" ../../blastoff/blastoff.mp4
+node render.js ../../branchmeet/film.html cap-rise 30
+python3.13 mixany.py "$(…films.json rise…)" ../../branchmeet/branchmeet.mp4
 ```
 
 **`importvox.py` does not write `films.json`.** It prints the durations and

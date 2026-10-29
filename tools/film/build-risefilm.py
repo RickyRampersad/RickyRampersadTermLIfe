@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The FY27 rise — /blastoff/, second cut.
+"""The FY27 rise — /branchmeet/, second cut.
 
 Asked for on 28 October 2026, the evening before the branch group sees it:
 "we had about 12 agents who left us... it's our first meeting coming together
@@ -39,7 +39,7 @@ ROOT = HERE.parent.parent
 SHELL = ROOT / 'donthaveanagent' / 'client-film.html'
 LINES = json.loads((HERE / 'rise-lines.json').read_text())
 TIMING = HERE / 'rise-timing.json'
-OUT = ROOT / 'blastoff' / 'film.html'
+OUT = ROOT / 'branchmeet' / 'film.html'
 
 TODAY = date(2026, 10, 30)                 # Friday, the meeting
 
@@ -312,7 +312,7 @@ def person(cls='', style='', label=''):
 #  Every screen in this film is one of the branch's own, captured with sample
 #  data and already public on /wall/. They are what he means by "the replica":
 #  not a drawing of the tool, the tool. wall/img/* were shot for the FY27 wall;
-#  blastoff/img/* were shot from /wall/?demo=1 for this film.
+#  branchmeet/img/* were shot from /wall/?demo=1 for this film.
 SHOTS = {
     'ffdraft': ('../wall/img/ff/01-client-draft.jpg', 'tall'),
     'ffsign': ('../wall/img/ff/02-manager-signoff.jpg', 'tall'),
@@ -1881,7 +1881,7 @@ PAL = os.environ.get('RISE_PAL', 'blue')
 assert PAL in PALETTES, 'unknown palette: ' + PAL
 out = _paint(out, PALETTES[PAL])
 if os.environ.get('RISE_VARIANT'):
-    OUT = ROOT / 'blastoff' / ('film-%s.html' % PAL)
+    OUT = ROOT / 'branchmeet' / ('film-%s.html' % PAL)
 
 OUT.parent.mkdir(parents=True, exist_ok=True)
 OUT.write_text(out)
@@ -1900,7 +1900,7 @@ print(f'{OUT.relative_to(ROOT)} — {len(LINES["scenes"])} scenes, {tot:.1f}s, '
 # satisfied a naive substring search on a page whose lede still said
 # twenty-eight.
 if not os.environ.get('RISE_VARIANT'):
-    PAGE_OUT = ROOT / 'blastoff' / 'index.html'
+    PAGE_OUT = ROOT / 'branchmeet' / 'index.html'
     if PAGE_OUT.exists():
         raw = PAGE_OUT.read_text(encoding='utf-8')
         meta = ' '.join(re.findall(r'<meta[^>]+content="([^"]*)"', raw)).lower()
@@ -1913,6 +1913,6 @@ if not os.environ.get('RISE_VARIANT'):
                 (spoken(TOTAL), body, 'the years, in the lede'),
                 (str(TOTAL), meta, 'the years, in the meta descriptions')]
         gone = [f'{w!r} ({why})' for w, where, why in want if w not in where]
-        assert not gone, ('blastoff/index.html no longer carries ' +
+        assert not gone, ('branchmeet/index.html no longer carries ' +
                           ', '.join(gone) + '. The roster gives '
                           f'{everyone} people and {TOTAL} years: put those in the page.')
