@@ -7358,6 +7358,149 @@ and **never fix a collision with a blanket rename** — rename the new thing by
 hand, at its own call sites. And shoot the scene you changed *and* any scene
 that shares a word with the class you touched.
 
+### The order put right, and what the film may still not say — 29 October 2026
+
+Asked for in a long brief the evening before the branch sees it. The parts
+that changed the film: the fact find's approval order is wrong in the cut that
+shipped that morning; the branch led the team that built the company's **first
+digital application with a digital signature**, at the then chief executive's
+request, and *"do not call names"*; *"it's not in the 90 days — we have been
+using jot forms right through"*; market conduct and *"how do we protect our
+agents?"*; fraud rising and caught early, with the surveys explaining why people
+had pushed back; *"we don't look at relationships as transactions, we have built
+journeys with every client"*; the orphan campaign and *"how much emails went
+out"*; Query Pal, the branch site and clients signing in themselves; the
+transmittal, the JotForm scrapped, and *"flash the wall… what agents see in the
+outside area, to hold persons more accountable"*; *"35 years in the business…
+the only way you can guide and scale is to leverage your skill sets in a form
+that it can help everybody"*; and the form: condensed, maximum motion, a wow.
+
+**39 scenes, 4:59.** Eleven new (`first`, `ai`, `ffflow`, `ffagents`,
+`conduct`, `fraud`, `journey`, `orphan`, `equipped`, `outside`, `commit`), five
+cut (`forms` folded into `digital`, `one` into `equipped`, `wall` into
+`outside`, `rebuild`, `built`, `mix`, `fy27`). It is 43 seconds longer than the
+cut it replaced and carries about fifteen more subjects, which is the trade he
+asked for; if a shorter cut is ever wanted, `plan`, `ask` and `story` are the
+three that go first.
+
+#### The fact find order, which is a correctness fix and not a style one
+
+*"The client gets the draft who approves. Only when the client approves, it
+goes to the manager. We had this process done wrong because prior to then, the
+manager approved and went with the approval for the client to sign."*
+
+So the order is **you → the draft → your client approves → a manager reviews and
+signs → on file**, and `FFSTEPS` in `build-risefilm.py` is that order. Do not
+reorder it without being told to.
+
+**The five captured screens in `wall/img/ff/` are of the OLD order**, so the
+`ffnew` strip no longer walks through them: its first screen used to be the
+draft e-mail and its second the manager's sign-off. A room reads screens, and a
+screen that contradicts the narration is worse than no screen. The corrected
+order is **drawn** (`ffflow`), and `ffnew` keeps only the three screens that
+assert no order at all — the client approving, the signature and rating, and
+what the branch sees.
+
+**One paragraph of the live product still carries the old order**, and it is
+worth fixing before Friday: the draft e-mail
+(`wall/img/ff/01-client-draft.jpg`, built in **fact-find-analyzer**, a different
+repository on a different hosting chain) ends *"your fact find is now being
+reviewed by Akaash to make sure the recommendation is right for you. **No action
+is needed from you yet** — I'll be in touch as soon as the review is complete."*
+Its own button already says *"Read it, confirm it, rate the advice and sign
+online. Nothing goes ahead until it is right"*, so the client-approval step
+exists; it is that one "being reviewed / no action needed yet" paragraph that is
+left over from the old order. The film teaches the corrected order, so the two
+disagree until it is changed.
+
+#### What was asked for and is still not in it
+
+He asked for three things about the people who left, and none of them can go at
+a public, forwardable URL:
+
+- that **none of them did the digital fact find**, with their ranks counted;
+- that the **terminated agent went for a compliance issue**, by name;
+- that **his manager supported him**.
+
+The standing rule is that nothing characterises anyone who left — Guardian's
+notice and nothing else, no reason, no adjective, no number — and a stated
+termination reason with a named manager's complicity is the single most exposing
+sentence that could be put on this page. The same point is made by our own
+record instead, which is the stronger version anyway: every fact find reviewed,
+market conduct clause by clause, fraud caught early.
+
+**The then chief executive is not named**, asked for in those words. Nor is a
+date invented for the digital-signature launch: the branch has the story, the
+repository has no record of when it shipped, so the scene says what happened and
+when it did not.
+
+#### The counts that did go in, and the line they sit on
+
+**The orphan campaign is our own output, not a client count.** `ORPHAN` carries
+nearly three thousand letters and reminders, **349** files opened since 25
+September and **158** already closed — the tasks read off Salesforce on 29
+October (`Subject LIKE 'Orphan%'`, `CreatedDate >= 2026-09-25`). What is **not**
+there, and may not be: how many clients, how many households, the size of the
+book. Those are client counts by another name, and an MP4 at a public URL may
+not carry one. The letters figure is an aggregate of our sends and gives no book
+size.
+
+**Market conduct** is the same seven clauses the FY27 wall carries on `w23`
+(`CONDUCT`), so the wall and the film cannot drift apart. **Fraud invents no
+statistic**: the claim is that a proper fact find surfaces it early and that the
+surveys explained the resistance, which is what he said.
+
+#### Three voice faults, two of which changed the meaning
+
+The strict word check (Whisper's words against what was written, not just the
+language) earned its keep three times over. `wordcheck.py` lives in the session
+scratchpad; it normalises numerals both ways so only real differences show.
+
+- **"The main branches average eight point eight two"** came back as *"the main
+  branch **is average** 8.82"* — which inverts the one claim the quality record
+  rests on. Re-worded to "The average across the main branches is…".
+- **"put what you know into something that helps everybody"** came back as
+  *"what you know **and is** something"*, in the film's heart line. Re-worded to
+  "build what you know into something" and it came back **identically wrong**:
+  the voice swallows `into` after `know`, deterministically. Take three dropped
+  the word — "put everything you know where everybody can reach it" — and it
+  reads clean. **When a re-word comes back with the same fault, stop re-wording
+  around it and remove the word.**
+- **"A proper fact find catches it early"** → *"a proper fact **fine**"*, the
+  same fault as the 28 October cut. The fix that works is to end the clause on
+  the word: "Early detection is the job of a proper fact find."
+
+Accepted as transcription artifacts rather than read faults, because the voice
+says them correctly and a listener has the context: `pendings`→"pinnings",
+`Trainee Manager`→"Training Manager", `Rebuilt`→"Rebuild", `pushed`→"push", and
+**`Akaash`→"of cash"**. For that last one the name is now also **on screen** in
+the same scene, so the room reads it while it hears it.
+
+#### Four build faults, each invisible in a different way
+
+- **`numPop` never touches opacity.** It is `scale(1)` → `1.07` → `scale(1)`, so
+  anything set `opacity:0` and animated with it stays invisible for ever — which
+  is what happened to the AI badge. An element that starts at `scale(0)` is fine,
+  because numPop's own 0% frame puts it back. Use `fUp`/`fIn` when opacity has to
+  move.
+- **The journey ring piled all six events on the centre.** Rotating a zero-size
+  node and counter-rotating each child separately does not work. It is the
+  classic place-on-a-circle one-liner:
+  `translate(-50%,-50%) rotate(var(--a)) translateY(-r) rotate(calc(-1*var(--a)))`.
+  And **`fIn` ends on `transform:none`**, which throws a placed element back to
+  the middle, so the ring has its own entrance that only moves opacity.
+- **The container's half-height must be the event radius.** At first the events
+  sat at a bigger radius than the box holding them and the top one climbed out
+  onto the eyebrow; the dashed ring is inset instead.
+- **Rewriting `rise-lines.json` wholesale lost every `screen` value**, so thirty
+  scenes rendered with an empty eyebrow — and the two that were restored from
+  git were themselves stale (`28`, `263 YEARS`, from before two names came off
+  the roster). Never rewrite that file whole; patch the scenes you are changing.
+
+The figures guard now **tolerates a cut scene** instead of crashing on it, and
+prints which ones it did not check, so cutting a line is visible rather than
+silent. It still fails on a line that is in the cut and carries a stale number.
+
 ### Re-cutting it
 
 Edit `tools/film/rise-lines.json`, push a `tts/job.json` to `tts-run` (**check
@@ -7380,12 +7523,17 @@ by hand, and the cue lists are the easy thing to miss — `dark` is scene
 *indices* and `hits` is *seconds*, so both move whenever a scene is inserted.
 Derive them from the timing file's own scene starts rather than guessing:
 inserting ten scenes left the old cues pointing at the wrong moments entirely.
+Reading the built page for `data-at` and walking the scene starts does both in
+one pass, which is how the 29 October cues were made.
 
 The music is the branch's own theme, so the page carries no licence credit.
 `capbg` in films.json is `070F26`, so the burned-in caption strip is the film's
-own navy and not donthaveanagent's. Voice: Andrew Expressive, all thirty-five
-clips checked for their language **and their words** (see the strict word check
-above). The poster is cut from the finished MP4 at 2.5 seconds before the end —
+own navy and not donthaveanagent's. Voice: Andrew Expressive, all thirty-nine
+clips checked for their language **and their words** (`wordcheck.py` in the
+session scratchpad; see the strict word check above). **Re-voice only the lines
+that changed**, under a key of their own (`risefix`, `risefix2`), and copy each
+clip onto its real index before `importvox.py` runs: the runner numbers a job's
+lines from 01, so a six-line fix lands as 01–06 and has to be mapped back. The poster is cut from the finished MP4 at 2.5 seconds before the end —
 the mended shield on the close, which is the one frame that says what the film
 is for.
 
