@@ -872,8 +872,8 @@ body.paused #bars i.run::after{animation-play-state:paused}
 .tr-av b{display:block;font:700 calc(var(--u)*2.8)/1.1 var(--display);color:#fff}
 .tr-av span{display:block;margin-top:.3em;font:500 calc(var(--u)*2)/1.2 var(--text);color:var(--mute)}
 .tr-av em{font:700 calc(var(--u)*1.8)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aT);border:1px solid rgba(0,207,234,.5);border-radius:99px;padding:.6em 1em;font-style:normal}
-.s-coach2.tr .note p{font-size:calc(var(--u)*2.8)}
-.s-coach2.tr .week span{font-size:calc(var(--u)*2.5);padding:calc(var(--u)*1.8) 0}
+.s-coach2.tr .note p{font-size:calc(var(--u)*2.5)}
+.s-coach2.tr .week span{font-size:calc(var(--u)*2.3);padding:calc(var(--u)*1.3) 0}
 .tr-rail{position:relative;width:100%;max-width:calc(var(--u)*150);height:calc(var(--u)*.5);margin:calc(var(--u)*1) auto calc(var(--u)*-1);border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
 .tr-rail::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--aD),var(--aL));transform:scaleX(0);transform-origin:0 50%}
 .scene.act .tr-rail::after{animation:growx linear both;animation-duration:var(--d);animation-delay:var(--t0)}
@@ -998,6 +998,145 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .s-cta .qr{zoom:.84}
   .s-close .stage.closeS{width:calc(var(--u)*40)}
 }
+
+/* ── 29 October 2026: the coach and the clock, the slides, the wall 24/7, the servicing rail, the career timeline ── */
+.cstage{position:relative;display:grid;width:100%}
+.clockc,.coachc{grid-area:1/1}
+.clockc{justify-self:center;display:grid;justify-items:center;gap:calc(var(--u)*1.6);opacity:0;position:relative;transform-origin:50% 50%}
+.scene.act .clockc{animation:up .8s var(--out) both,clkaway 1s var(--out) forwards;animation-delay:var(--t0),var(--t1)}
+@keyframes clkaway{to{transform:translate(-56%,-30%) scale(.36);opacity:.25;filter:grayscale(1)}}
+.clockc{align-self:start}
+.clk{width:calc(var(--u)*36);height:calc(var(--u)*36);filter:drop-shadow(0 calc(var(--u)*2) calc(var(--u)*6) rgba(4,14,26,.55))}
+.clk-f{fill:var(--bg3);stroke:rgba(255,255,255,.28);stroke-width:3}
+.clk-t{stroke:rgba(255,255,255,.45);stroke-width:2.5;stroke-linecap:round}.clk-t.q{stroke:#fff;stroke-width:4}
+.clk-h,.clk-m{stroke:#fff;stroke-width:6;stroke-linecap:round}.clk-m{stroke-width:4.5}
+.clk-s{stroke:var(--aL);stroke-width:2.5;stroke-linecap:round;transform-origin:100px 100px;animation:tickhand 60s steps(60,end) infinite}
+@keyframes tickhand{to{transform:rotate(360deg)}}
+.clk-c{fill:var(--aL)}
+.clk-sees{display:flex;gap:calc(var(--u)*1);align-items:center;flex-wrap:wrap;justify-content:center;max-width:calc(var(--u)*50)}
+.clk-sees small{width:100%;text-align:center;font:600 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--mute2)}
+.clk-sees span{font:600 calc(var(--u)*2.2)/1 var(--text);color:var(--mute);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:.5em .9em}
+.clockc .slash{position:absolute;left:-4%;top:-4%;width:108%;height:108%;pointer-events:none;overflow:visible}
+.slash line{stroke:var(--aL);stroke-width:5;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-dasharray:100;stroke-dashoffset:100;opacity:0}
+.scene.act .slash line{animation:slashdraw .45s ease-out forwards;animation-delay:var(--t1)}
+@keyframes slashdraw{from{opacity:1;stroke-dashoffset:100}to{opacity:1;stroke-dashoffset:0}}
+.coachc{display:grid;gap:calc(var(--u)*1.2);opacity:0;width:100%;align-content:start}
+.scene.act .coachc{animation:up .8s var(--out) both;animation-delay:var(--t0)}
+.cill{width:100%;max-width:calc(var(--u)*44);justify-self:center;height:auto;overflow:visible}
+.cill .fig{fill:none;stroke:var(--aL);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.cill .fig circle{fill:var(--bg3)}
+.scene.act .cill .fl-l{animation:figl .8s var(--out) forwards;animation-delay:calc(var(--t0) + .2s)}
+.scene.act .cill .fl-r{animation:figr .8s var(--out) forwards;animation-delay:calc(var(--t0) + .35s)}
+@keyframes figl{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:none}}
+@keyframes figr{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+.cill .tbl{fill:rgba(255,255,255,.18)}
+.cill .tab{fill:var(--a);opacity:0}
+.scene.act .cill .tab{animation:fade .5s both;animation-delay:calc(var(--t0) + .7s)}
+.cill .ring{fill:none;stroke:var(--aL);stroke-width:2;opacity:0;transform-origin:170px 118px}
+.scene.act .cill .ring{animation:ringout 2.2s ease-out infinite;animation-delay:calc(var(--t0) + .9s)}
+@keyframes ringout{0%{opacity:.7;transform:scale(.3)}100%{opacity:0;transform:scale(1.7)}}
+.cill .lbl{font:600 12px var(--text);fill:var(--mute);text-anchor:middle;letter-spacing:.12em;text-transform:uppercase}
+.cs-row{display:grid;grid-template-columns:1fr 1.1fr;gap:calc(var(--u)*2.4);align-items:start}
+.cs-row>div{display:grid;gap:calc(var(--u)*.8)}
+.cs-meters{display:grid;gap:calc(var(--u)*.6)}
+.cs-sees{font:600 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aT)}
+.cs-week span{padding:calc(var(--u)*1.4) 0}
+.cst .note p{font-size:calc(var(--u)*2.4)}
+.slides{position:relative;width:100%;height:calc(var(--u)*42);margin-top:calc(var(--u)*.6)}
+.slide{position:absolute;inset:0;margin:0;display:grid;grid-template-rows:minmax(0,1fr) auto;justify-items:center;align-items:center;gap:calc(var(--u)*1.4);opacity:0}
+.scene.act .slide{animation:slin .7s var(--out) forwards,slout .55s ease-in forwards;animation-delay:var(--t0),var(--t1)}
+@keyframes slin{from{opacity:0;transform:translateX(12%) scale(.94)}to{opacity:1;transform:none}}
+@keyframes slout{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-10%) scale(.94)}}
+.dev{position:relative;overflow:hidden;background:#fff;border:calc(var(--u)*.55) solid #22527f;box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,14,26,.55);min-height:0}
+.dev.ph{height:100%;aspect-ratio:9/17.5;border-radius:calc(var(--u)*3)}
+.dev.lap{aspect-ratio:16/10;border-radius:calc(var(--u)*1.6);width:min(100%,calc(var(--u)*82))}
+.dev.card{aspect-ratio:1/1;border-radius:calc(var(--u)*1.4);width:min(100%,calc(var(--u)*22))}
+.dev img{width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block}
+.scene.act .slide .dev.ph img{animation:pan 9s linear forwards;animation-delay:calc(var(--t0) + .8s)}
+.slide figcaption{font:600 calc(var(--u)*2.3)/1.25 var(--text);color:#fff;text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:.5em 1.2em}
+.sdots{position:absolute;left:50%;bottom:calc(var(--u)*-2.6);transform:translateX(-50%);display:flex;gap:calc(var(--u)*.9)}
+.sdots i{width:calc(var(--u)*1.1);height:calc(var(--u)*1.1);border-radius:50%;background:rgba(255,255,255,.22)}
+.scene.act .sdots i{animation:dotfill .3s forwards;animation-delay:var(--t0)}
+@keyframes dotfill{to{background:var(--aL);transform:scale(1.35)}}
+.s20 .built{margin-top:calc(var(--u)*2.4)}.s20 .gal-s{margin-top:calc(var(--u)*-.6)}
+.wdev{width:100%}
+.live24{position:absolute;top:4%;right:3%;display:inline-flex;align-items:center;gap:.5em;font:700 calc(var(--u)*1.9)/1 var(--text);color:#fff;background:rgba(13,31,51,.86);border:1px solid rgba(0,207,234,.5);border-radius:99px;padding:.45em .9em;opacity:0;letter-spacing:.06em}
+.scene.act .live24{animation:up .5s both;animation-delay:var(--t0)}
+.live24 i{width:calc(var(--u)*.9);height:calc(var(--u)*.9);border-radius:50%;background:var(--aL);animation:blink 1.2s infinite}
+.wchips{display:flex;gap:calc(var(--u)*1);margin-top:calc(var(--u)*1.4);justify-content:center}
+.wchip{opacity:0;font:600 calc(var(--u)*2.1)/1 var(--text);color:var(--mute);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:.5em 1em}
+.scene.act .wchip{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.s-wall .phone.small{bottom:4%}
+.proc{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:calc(var(--u)*1.6);width:100%;margin-top:calc(var(--u)*2);padding-top:calc(var(--u)*5)}
+.prail{position:absolute;left:8%;right:8%;top:calc(var(--u)*2.2);height:calc(var(--u)*.4);background:rgba(255,255,255,.16);border-radius:99px;transform:scaleX(0);transform-origin:0 50%}
+.scene.act .prail{animation:grow 1.2s var(--out) forwards;animation-delay:var(--t0)}
+.prider{position:absolute;left:8%;top:calc(var(--u)*2.2);width:calc(var(--u)*1.8);height:calc(var(--u)*1.8);margin:calc(var(--u)*-.7) 0 0 calc(var(--u)*-.9);border-radius:50%;background:var(--aL);box-shadow:0 0 0 calc(var(--u)*.6) rgba(0,207,234,.3);opacity:0}
+.scene.act .prider{animation:ride var(--dur) linear forwards,fade .3s forwards;animation-delay:var(--t0),var(--t0)}
+@keyframes ride{to{left:92%}}
+.pstop{position:relative;display:grid;gap:calc(var(--u)*1);justify-items:center;opacity:0}
+.scene.act .pstop{animation:up .7s var(--out) both;animation-delay:var(--t0)}
+.pn{position:absolute;top:calc(var(--u)*-5 + var(--u)*2.2);left:50%;width:calc(var(--u)*1.6);height:calc(var(--u)*1.6);margin:calc(var(--u)*-.6) 0 0 calc(var(--u)*-.8);border-radius:50%;background:var(--bg);border:calc(var(--u)*.35) solid var(--aL)}
+.pcard{width:100%;min-height:calc(var(--u)*28);display:grid;align-content:center;justify-items:center;gap:calc(var(--u)*1);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*1.8);padding:calc(var(--u)*1.4)}
+.pcard .dev.ph{height:calc(var(--u)*19)}
+.pcard .dev.lap{width:100%}
+.pcard .dev.card{width:calc(var(--u)*14)}
+.plbl{font:700 calc(var(--u)*2.1)/1.2 var(--display);color:#fff;text-align:center;text-wrap:balance}
+.pline{font:500 calc(var(--u)*1.7)/1.3 var(--text);color:var(--mute);text-align:center}
+.pdays{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*.8)}
+.pdays b{opacity:0;font:800 calc(var(--u)*3.4)/1 var(--display);color:#fff;background:linear-gradient(135deg,var(--a),var(--aD));border-radius:calc(var(--u)*1);padding:.35em .2em;text-align:center;font-variant-numeric:tabular-nums}
+.scene.act .pdays b{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.prev{display:grid;gap:calc(var(--u)*.8)}
+.pchip{opacity:0;font:600 calc(var(--u)*2)/1.2 var(--text);color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(0,207,234,.45);border-radius:99px;padding:.6em 1em;text-align:center}
+.scene.act .pchip{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.pstars{display:flex;gap:calc(var(--u)*.4)}
+.pstars svg{width:calc(var(--u)*3);height:calc(var(--u)*3);fill:#efc24b;opacity:0;transform:scale(.4)}
+.pstars.big svg{width:calc(var(--u)*4.4);height:calc(var(--u)*4.4)}
+.scene.act .pstars svg{animation:pop .45s var(--pop) forwards;animation-delay:var(--t0)}
+.s25 .sample{position:static;margin-top:calc(var(--u)*1)}
+.s27{gap:calc(var(--u)*1)}
+.s27-h{display:grid;grid-template-columns:1.2fr .8fr;gap:calc(var(--u)*4);align-items:end}
+.s27-r{display:grid;gap:calc(var(--u)*1.4);justify-items:start}
+.ctl{width:100%;height:auto;overflow:visible;display:block}.ctl-l{width:min(100%,calc(var(--u)*134));justify-self:center}
+.ctl-v{display:none}
+.ctl .rail{fill:none;stroke:rgba(255,255,255,.22);stroke-width:4;stroke-linecap:round;stroke-dasharray:1400;stroke-dashoffset:1400}
+.ctl .rail.a{stroke:rgba(0,207,234,.55)}.ctl .rail.b{stroke:rgba(0,207,234,.55)}
+.scene.act .ctl .rail{animation:trdraw 1.6s var(--out) forwards;animation-delay:var(--t0)}
+.ctl .node{fill:var(--bg3);stroke:#fff;stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:center}
+.ctl .node.fork{fill:var(--a);stroke:var(--aL);stroke-width:4}
+.ctl .node.a,.ctl .node.b{fill:var(--a);stroke:#fff}
+.scene.act .ctl .node{animation:pop .5s var(--pop) forwards;animation-delay:var(--t0)}
+.ctl .lbl{opacity:0}
+.scene.act .ctl .lbl{animation:fade .5s forwards;animation-delay:var(--t0)}
+.ctl text{font-family:var(--text)}
+.ctl .nm{font-weight:700;font-size:15px;fill:#fff}
+.ctl .dt{font-weight:500;font-size:11.5px;fill:var(--mute)}
+.ctl .rd{font:800 20px var(--display);fill:var(--aL);opacity:0;letter-spacing:-.01em}
+.scene.act .ctl .rd{animation:fade .5s forwards;animation-delay:var(--t0)}
+.ctl .rider{fill:var(--aL);opacity:0;offset-distance:0%;offset-rotate:0deg;filter:drop-shadow(0 0 6px rgba(0,207,234,.8))}
+.scene.act .ctl .rider{animation:riderun var(--d) linear forwards;animation-delay:var(--t0)}
+@keyframes riderun{0%{opacity:1;offset-distance:0%}90%{opacity:1}100%{opacity:0;offset-distance:100%}}
+@media (orientation:portrait){
+  .cs-row{grid-template-columns:1fr 1fr}
+  .clk{width:calc(var(--u)*40);height:calc(var(--u)*40)}
+  .cill{max-width:calc(var(--u)*42)}
+  .coachc{gap:calc(var(--u)*1.2)}
+  .cst .chip{padding:calc(var(--u)*1.6) calc(var(--u)*2.2)}
+  .cst .note p{font-size:calc(var(--u)*2.7)}
+  .cs-week span{padding:calc(var(--u)*1.6) 0;font-size:calc(var(--u)*2.3)}
+  @keyframes clkaway{to{transform:translate(58%,-22%) scale(.34);opacity:.22;filter:grayscale(1)}}
+  .slides{height:calc(var(--u)*88)}
+  .dev.lap{width:100%}
+  .proc{grid-template-columns:1fr 1fr 1fr;gap:calc(var(--u)*2);padding-top:0}
+  .prail,.prider,.pn{display:none}
+  .pcard{min-height:calc(var(--u)*30);padding:calc(var(--u)*1.2)}
+  .pcard .dev.ph{height:calc(var(--u)*21)}
+  .pcard .dev.card{width:calc(var(--u)*17)}
+  .plbl{font-size:calc(var(--u)*2.5)}.pline{font-size:calc(var(--u)*2)}.pchip{font-size:calc(var(--u)*2.2);padding:.5em .7em}.pdays b{font-size:calc(var(--u)*3.8)}
+  .s27-h{grid-template-columns:1fr}
+  .ctl-l{display:none}.ctl-v{display:block}
+  .ctl .nm{font-size:17px}.ctl .dt{font-size:13px}.ctl .rd{font-size:22px}
+  .s-wall .phone.small{width:30%;right:0;bottom:16%}
+}
 </style>
 </head>
 <body>
@@ -1102,21 +1241,45 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </section>
 <section class="scene s-coach2 tr" data-d="14500" data-n="4" style="--kb:14500ms" >
 
-<div class="split">
+<div class="split cst">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Your manager</p>
     <h2 class="h xl"><span aria-label="A coach,"><span class="w"><i style="--i:0;--t0:1063ms">A</i></span> <span class="w"><i style="--i:1;--t0:1063ms">coach,</i></span></span> <em class="wine"><span aria-label="not a clock."><span class="w"><i style="--i:0;--t0:2200ms">not</i></span> <span class="w"><i style="--i:1;--t0:2200ms">a</i></span> <span class="w"><i style="--i:2;--t0:2200ms">clock.</i></span></span></em></h2>
-    <p class="sub in" style="--t0:4063ms">The system does the admin. He does the sitting with you.</p>
-    <p class="sub in" style="--t0:12988ms"><em>Nobody here is left to figure it out alone.</em></p>
+    <p class="sub in" style="--t0:4063ms">The system does the admin. He does the sitting with you.</p><p class="sub in" style="--t0:12988ms"><em>Nobody here is left to figure it out alone.</em></p>
   </div>
   <div class="col">
-    <div class="tr-av in fl" style="--t0:1263ms"><i>RR</i><div><b>Ricky Rampersad</b><span>Branch Manager · interviews every candidate himself</span></div><em>coach</em></div>
-    <div class="week in" style="--t0:6650ms"><span class="" style="--t0:0ms">Mon</span><span class="" style="--t0:0ms">Tue</span><span class="" style="--t0:0ms">Wed</span><span class="" style="--t0:0ms">Thu</span><span class="fri" style="--t0:7637ms">Fri</span></div>
-    <div class="note in" style="--t0:9100ms">
-      <small>From your manager · in your morning e-mail</small>
-      <p><span class="ty" aria-label="Two fact finds this week, Priya. Let's book your Thursday calls together at eight."><span class="tw"><i style="--t:9400ms">T</i><i style="--t:9424ms">w</i><i style="--t:9448ms">o</i></span> <span class="tw"><i style="--t:9496ms">f</i><i style="--t:9520ms">a</i><i style="--t:9544ms">c</i><i style="--t:9568ms">t</i></span> <span class="tw"><i style="--t:9616ms">f</i><i style="--t:9640ms">i</i><i style="--t:9664ms">n</i><i style="--t:9688ms">d</i><i style="--t:9712ms">s</i></span> <span class="tw"><i style="--t:9760ms">t</i><i style="--t:9784ms">h</i><i style="--t:9808ms">i</i><i style="--t:9832ms">s</i></span> <span class="tw"><i style="--t:9880ms">w</i><i style="--t:9904ms">e</i><i style="--t:9928ms">e</i><i style="--t:9952ms">k</i><i style="--t:9976ms">,</i></span> <span class="tw"><i style="--t:10024ms">P</i><i style="--t:10048ms">r</i><i style="--t:10072ms">i</i><i style="--t:10096ms">y</i><i style="--t:10120ms">a</i><i style="--t:10144ms">.</i></span> <span class="tw"><i style="--t:10192ms">L</i><i style="--t:10216ms">e</i><i style="--t:10240ms">t</i><i style="--t:10264ms">'</i><i style="--t:10288ms">s</i></span> <span class="tw"><i style="--t:10336ms">b</i><i style="--t:10360ms">o</i><i style="--t:10384ms">o</i><i style="--t:10408ms">k</i></span> <span class="tw"><i style="--t:10456ms">y</i><i style="--t:10480ms">o</i><i style="--t:10504ms">u</i><i style="--t:10528ms">r</i></span> <span class="tw"><i style="--t:10576ms">T</i><i style="--t:10600ms">h</i><i style="--t:10624ms">u</i><i style="--t:10648ms">r</i><i style="--t:10672ms">s</i><i style="--t:10696ms">d</i><i style="--t:10720ms">a</i><i style="--t:10744ms">y</i></span> <span class="tw"><i style="--t:10792ms">c</i><i style="--t:10816ms">a</i><i style="--t:10840ms">l</i><i style="--t:10864ms">l</i><i style="--t:10888ms">s</i></span> <span class="tw"><i style="--t:10936ms">t</i><i style="--t:10960ms">o</i><i style="--t:10984ms">g</i><i style="--t:11008ms">e</i><i style="--t:11032ms">t</i><i style="--t:11056ms">h</i><i style="--t:11080ms">e</i><i style="--t:11104ms">r</i></span> <span class="tw"><i style="--t:11152ms">a</i><i style="--t:11176ms">t</i></span> <span class="tw"><i style="--t:11224ms">e</i><i style="--t:11248ms">i</i><i style="--t:11272ms">g</i><i style="--t:11296ms">h</i><i style="--t:11320ms">t</i><i style="--t:11344ms">.</i></span></span></p>
+    <div class="cstage">
+      <div class="clockc" style="--t0:150ms;--t1:2350ms">
+        <svg class="clk" viewBox="0 0 200 200" aria-hidden="true">
+          <circle class="clk-f" cx="100" cy="100" r="92"/><line class="clk-t q" x1="100" y1="14" x2="100" y2="23" transform="rotate(0 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(30 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(60 100 100)"/><line class="clk-t q" x1="100" y1="14" x2="100" y2="23" transform="rotate(90 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(120 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(150 100 100)"/><line class="clk-t q" x1="100" y1="14" x2="100" y2="23" transform="rotate(180 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(210 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(240 100 100)"/><line class="clk-t q" x1="100" y1="14" x2="100" y2="23" transform="rotate(270 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(300 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(330 100 100)"/>
+          <line class="clk-h" x1="100" y1="100" x2="100" y2="54" transform="rotate(300 100 100)"/>
+          <line class="clk-m" x1="100" y1="100" x2="100" y2="36" transform="rotate(60 100 100)"/>
+          <line class="clk-s" x1="100" y1="112" x2="100" y2="28"/>
+          <circle class="clk-c" cx="100" cy="100" r="4.5"/>
+        </svg>
+        <div class="clk-sees"><small>what a clock sees</small><span>in 8:02</span><span>out 4:31</span><span>8 h 29 m</span></div>
+        <svg class="slash" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line x1="8" y1="6" x2="92" y2="94" pathLength="100"/></svg>
+      </div>
+      <div class="coachc" style="--t0:5187ms">
+        <svg class="cill" viewBox="0 0 340 168" aria-hidden="true">
+          <circle class="ring" cx="170" cy="118" r="26"/>
+          <g class="fig fl-l"><circle cx="92" cy="50" r="18"/><path d="M50 118c0-27 19-46 42-46s42 19 42 46"/><path d="M122 92l32 12"/></g>
+          <g class="fig fl-r"><circle cx="248" cy="50" r="18"/><path d="M206 118c0-27 19-46 42-46s42 19 42 46"/><path d="M218 92l-32 12"/></g>
+          <rect class="tbl" x="40" y="118" width="260" height="10" rx="5"/>
+          <rect class="tab" x="150" y="101" width="40" height="17" rx="3"/>
+          <text x="92" y="152" class="lbl">coach</text><text x="248" y="152" class="lbl">you</text>
+        </svg>
+        <div class="note in" style="--t0:9100ms">
+          <small>From your manager · in your morning e-mail</small>
+          <p><span class="ty" aria-label="Two fact finds this week, Priya. Let's book your Thursday calls together at eight."><span class="tw"><i style="--t:9400ms">T</i><i style="--t:9424ms">w</i><i style="--t:9448ms">o</i></span> <span class="tw"><i style="--t:9496ms">f</i><i style="--t:9520ms">a</i><i style="--t:9544ms">c</i><i style="--t:9568ms">t</i></span> <span class="tw"><i style="--t:9616ms">f</i><i style="--t:9640ms">i</i><i style="--t:9664ms">n</i><i style="--t:9688ms">d</i><i style="--t:9712ms">s</i></span> <span class="tw"><i style="--t:9760ms">t</i><i style="--t:9784ms">h</i><i style="--t:9808ms">i</i><i style="--t:9832ms">s</i></span> <span class="tw"><i style="--t:9880ms">w</i><i style="--t:9904ms">e</i><i style="--t:9928ms">e</i><i style="--t:9952ms">k</i><i style="--t:9976ms">,</i></span> <span class="tw"><i style="--t:10024ms">P</i><i style="--t:10048ms">r</i><i style="--t:10072ms">i</i><i style="--t:10096ms">y</i><i style="--t:10120ms">a</i><i style="--t:10144ms">.</i></span> <span class="tw"><i style="--t:10192ms">L</i><i style="--t:10216ms">e</i><i style="--t:10240ms">t</i><i style="--t:10264ms">'</i><i style="--t:10288ms">s</i></span> <span class="tw"><i style="--t:10336ms">b</i><i style="--t:10360ms">o</i><i style="--t:10384ms">o</i><i style="--t:10408ms">k</i></span> <span class="tw"><i style="--t:10456ms">y</i><i style="--t:10480ms">o</i><i style="--t:10504ms">u</i><i style="--t:10528ms">r</i></span> <span class="tw"><i style="--t:10576ms">T</i><i style="--t:10600ms">h</i><i style="--t:10624ms">u</i><i style="--t:10648ms">r</i><i style="--t:10672ms">s</i><i style="--t:10696ms">d</i><i style="--t:10720ms">a</i><i style="--t:10744ms">y</i></span> <span class="tw"><i style="--t:10792ms">c</i><i style="--t:10816ms">a</i><i style="--t:10840ms">l</i><i style="--t:10864ms">l</i><i style="--t:10888ms">s</i></span> <span class="tw"><i style="--t:10936ms">t</i><i style="--t:10960ms">o</i><i style="--t:10984ms">g</i><i style="--t:11008ms">e</i><i style="--t:11032ms">t</i><i style="--t:11056ms">h</i><i style="--t:11080ms">e</i><i style="--t:11104ms">r</i></span> <span class="tw"><i style="--t:11152ms">a</i><i style="--t:11176ms">t</i></span> <span class="tw"><i style="--t:11224ms">e</i><i style="--t:11248ms">i</i><i style="--t:11272ms">g</i><i style="--t:11296ms">h</i><i style="--t:11320ms">t</i><i style="--t:11344ms">.</i></span></span></p>
+        </div>
+        <div class="cs-row">
+          <div><small class="cs-sees in" style="--t0:6650ms">your week, before Friday</small><div class="week cs-week" style="--t0:6650ms"><span class="" style="--t0:0ms">Mon</span><span class="" style="--t0:0ms">Tue</span><span class="" style="--t0:0ms">Wed</span><span class="" style="--t0:0ms">Thu</span><span class="fri" style="--t0:7637ms">Fri</span></div></div>
+          <div><small class="cs-sees in" style="--t0:6950ms">what a coach sees</small><div class="cs-meters"><div class="meter" style="--t0:6950ms;--v:62%"><span>Leads</span><i><b></b></i><em>coached Tuesday</em></div><div class="meter" style="--t0:7170ms;--v:48%"><span>Fact finds</span><i><b></b></i><em>role-played Wednesday</em></div><div class="meter" style="--t0:7390ms;--v:71%"><span>Closing</span><i><b></b></i><em>booked together</em></div></div></div>
+        </div>
+        <div class="chip in fl cs-chip" style="--t0:9988ms"><svg class="ic"><use href="#i-chat"/></svg><b>And in person. He sits with you on it.</b></div>
+      </div>
     </div>
-    <div class="chips3"><div class="chip in fl" style="--t0:9988ms"><svg class="ic"><use href="#i-chat"/></svg><b>And in person. He sits with you on it.</b></div></div>
   </div>
 </div>
 <div class="streak"></div>

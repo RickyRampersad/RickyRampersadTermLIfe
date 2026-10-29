@@ -746,6 +746,125 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 }
 
 @media print{.topbar,.sticky,.guide,.gbubble,.strip{display:none}.hero,.final,.statement,footer{background:#fff;color:#000}.hero h1,.final h2{color:#000}}
+
+/* ═══ THE SCREENS, THE COACH AND THE CAREER TIMELINE (29 October 2026). Finished states are the defaults; the motion
+   lives inside the no-preference query below. ═══ */
+.scr{background:var(--bg)}
+.scrg{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:var(--sp-l);align-items:start}
+.scrl{display:grid;gap:.45rem}
+.sct{position:relative;display:grid;gap:.15rem;text-align:left;width:100%;padding:.8rem 1rem .9rem;border-radius:var(--r-s);border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;font:inherit;overflow:hidden}
+.sct b{font:700 var(--f-0)/1.25 var(--display);color:var(--ink)}.sct small{font-size:var(--f--1);color:var(--muted);line-height:1.4}
+.sct[aria-selected="true"]{border-color:var(--a);box-shadow:var(--e2)}
+.scbar{position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,var(--a),var(--aD));transform-origin:0 50%;scale:0 1}
+.sct[aria-selected="true"] .scbar{scale:1 1}
+.scrs{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-l) var(--sp-l) var(--sp-xl);box-shadow:var(--e1);display:grid;justify-items:center;min-height:30rem;position:sticky;top:calc(var(--bar,4rem) + 1rem)}
+.scp{display:grid;gap:var(--sp-m);justify-items:center;width:100%}.scp[hidden]{display:none}
+.scrn{position:absolute;right:1rem;bottom:.7rem;font:600 var(--f--2)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.dev{position:relative;overflow:hidden;background:#fff;border:.32rem solid var(--d3);box-shadow:0 1rem 2.4rem hsl(var(--sh)/.22);min-height:0;max-width:100%}
+.dev.ph{height:min(26rem,64vh);aspect-ratio:9/17.5;border-radius:1.6rem}
+.dev.lap{width:100%;aspect-ratio:16/10;border-radius:.9rem}
+.dev img{width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block}
+.scrc{text-align:center;max-width:36ch;display:grid;gap:.25rem}.scrc b{font:700 var(--f-1)/1.25 var(--display);color:var(--ink)}.scrc span{color:var(--muted);font-size:var(--f--1)}
+@media (max-width:48rem){
+  .scrg{grid-template-columns:1fr}
+  .scrl{grid-auto-flow:column;grid-auto-columns:minmax(13rem,1fr);overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:.4rem;scrollbar-width:thin}
+  .sct{scroll-snap-align:start}
+  .scrs{position:static;min-height:0}
+  .dev.ph{height:min(24rem,58vh)}
+}
+.coach{background:radial-gradient(60% 70% at 85% 20%,rgba(0,114,141,.28),transparent 60%),linear-gradient(160deg,var(--d1),var(--d0) 70%);color:var(--dT2)}
+.coach .eyebrow{color:var(--aT)}.coach h2{color:#fff}.coach .lede p{color:var(--dT2)}
+.cstage{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:var(--sp-xl);align-items:start}
+.clockcard{position:relative;display:grid;justify-items:center;gap:1rem;justify-self:center;opacity:.8;filter:grayscale(1)}
+.clockcard .clk{width:min(16rem,70%);height:auto;aspect-ratio:1;filter:drop-shadow(0 .6rem 1.4rem rgba(4,14,26,.5))}
+.clk-f{fill:var(--d3);stroke:rgba(255,255,255,.28);stroke-width:3}
+.clk-t{stroke:rgba(255,255,255,.45);stroke-width:2.5;stroke-linecap:round}.clk-t.q{stroke:#fff;stroke-width:4}
+.clk-h,.clk-m{stroke:#fff;stroke-width:6;stroke-linecap:round}.clk-m{stroke-width:4.5}
+.clk-s{stroke:var(--aL);stroke-width:2.5;stroke-linecap:round;transform-origin:100px 100px}
+.clk-c{fill:var(--aL)}
+.clk-sees{display:flex;gap:.45rem;flex-wrap:wrap;justify-content:center;max-width:20rem}
+.clk-sees small{width:100%;text-align:center;font:600 var(--f--2)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--dT3)}
+.clk-sees span{font:600 var(--f--1)/1 var(--text);color:#fff;background:var(--d2);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:.5em .9em}
+.clockcard .slash{position:absolute;left:-4%;top:-4%;width:108%;height:108%;pointer-events:none;overflow:visible}
+.slash line{stroke:var(--aL);stroke-width:5;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-dasharray:100;stroke-dashoffset:0}
+.coachcard{display:grid;gap:var(--sp-m);min-width:0}
+.coachcard .cill{width:min(100%,22rem);height:auto;justify-self:center;overflow:visible}
+.cill .fig{fill:none;stroke:var(--aL);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.cill .fig circle{fill:var(--d3)}
+.cill .tbl{fill:rgba(255,255,255,.18)}.cill .tab{fill:var(--a)}
+.cill .ring{fill:none;stroke:var(--aL);stroke-width:2;opacity:0;transform-origin:170px 118px}
+.cill .lbl{font:600 12px var(--text);fill:var(--dT3);text-anchor:middle;letter-spacing:.12em;text-transform:uppercase}
+.cnote{background:#fff;color:var(--ink);border-radius:var(--r-s);padding:.9rem 1.1rem;border-left:.4rem solid var(--a);box-shadow:var(--e2)}
+.cnote small{display:block;font:600 var(--f--2)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--aD);margin-bottom:.35rem}
+.cnote p{font:500 var(--f-0)/1.4 var(--text);margin:0}
+.cs-row{display:grid;grid-template-columns:1fr 1.15fr;gap:var(--sp-m);align-items:start}
+.cs-row>div{display:grid;gap:.5rem;min-width:0}
+.cs-sees{font:600 var(--f--2)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aT)}
+.cweek{display:grid;grid-template-columns:repeat(5,1fr);gap:.3rem}
+.cweek span{text-align:center;font:600 var(--f--2)/1 var(--text);letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--d2);border:1px solid rgba(255,255,255,.12);border-radius:.5rem;padding:.7rem 0}
+.cweek .fri{background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;border-color:transparent}
+.cs-meters{display:grid;gap:.45rem}
+.meter{display:grid;grid-template-columns:auto 1fr;gap:.2rem .7rem;align-items:center;font:500 var(--f--1)/1.3 var(--text);color:var(--dT2)}
+.meter i{display:block;height:.55rem;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden}
+.meter i b{display:block;height:100%;width:var(--v);background:linear-gradient(90deg,var(--aD),var(--aL))}
+.meter em{grid-column:2;font-style:normal;font-size:var(--f--2);color:var(--aT)}
+.cchip{display:flex;align-items:center;gap:.7rem;margin:0;padding:.8rem 1rem;border-radius:var(--r-s);background:var(--d2);border:1px solid rgba(255,255,255,.14);color:#fff}
+.cchip .ic{color:var(--aL)}.cchip b{font:700 var(--f-0)/1.25 var(--display);color:#fff}
+.csample{margin:0;font-size:var(--f--2);color:var(--dT3)}
+@media (max-width:48rem){.cstage{grid-template-columns:1fr;gap:var(--sp-l)}.cs-row{grid-template-columns:1fr}.clockcard .clk{width:min(13rem,60%)}}
+.ctlw{margin-bottom:var(--sp-xl)}
+.ctlw .ctl{width:100%;height:auto;display:block;overflow:visible}
+.ctlw .ctl-v{display:none}
+.ctl .rail{fill:none;stroke:var(--line-strong);stroke-width:4;stroke-linecap:round}
+.ctl .rail.a,.ctl .rail.b{stroke:var(--a)}
+.ctl .node{fill:var(--card);stroke:var(--a);stroke-width:3;transform-box:fill-box;transform-origin:center}
+.ctl .node.fork{fill:var(--a);stroke:var(--aD);stroke-width:4}
+.ctl .node.a,.ctl .node.b{fill:var(--a);stroke:#fff}
+.ctl text{font-family:var(--text)}
+.ctl .nm{font-weight:700;font-size:15px;fill:var(--ink)}
+.ctl .dt{font-weight:500;font-size:11.5px;fill:var(--muted)}
+.ctl .rd{font:800 20px var(--display);fill:var(--aD);letter-spacing:-.01em}
+.ctl .rider{fill:var(--a);opacity:0;offset-distance:100%;offset-rotate:0deg}
+@media (max-width:48rem){.ctlw .ctl-l{display:none}.ctlw .ctl-v{display:block}.ctl .nm{font-size:17px}.ctl .dt{font-size:13px}.ctl .rd{font-size:22px}}
+@media (prefers-reduced-motion:no-preference){
+  /* the screens: the phone pans while a pane is live */
+  .scp.live .dev.ph img{animation:scpan 9s linear forwards .8s}
+  @keyframes scpan{to{object-position:50% 100%}}
+  .scp.live{animation:up .5s var(--ease-out) both}
+  /* the clock ticks, is struck, and parks; then the coaching arrives */
+  .cstage.in .clockcard{opacity:1;filter:none;animation:clkaway 1s var(--ease-out) 1.6s forwards}
+  @keyframes clkaway{to{opacity:.8;filter:grayscale(1);transform:scale(.86)}}
+  .cstage.in .clk-s{animation:tickhand 60s steps(60,end) infinite}
+  @keyframes tickhand{to{transform:rotate(360deg)}}
+  .cstage.in .slash line{stroke-dashoffset:100;animation:slashdraw .45s ease-out 1.5s forwards}
+  @keyframes slashdraw{to{stroke-dashoffset:0}}
+  .cstage.in .coachcard>*{animation:up .7s var(--ease-out) both;animation-delay:calc(1.9s + var(--k,0)*.22s)}
+  .cstage.in .coachcard>:nth-child(2){--k:1}.cstage.in .coachcard>:nth-child(3){--k:2}.cstage.in .coachcard>:nth-child(4){--k:3}.cstage.in .coachcard>:nth-child(5){--k:4}
+  .cstage.in .cill .fl-l{animation:figl .8s var(--ease-out) 2.1s both}.cstage.in .cill .fl-r{animation:figr .8s var(--ease-out) 2.25s both}
+  @keyframes figl{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:none}}
+  @keyframes figr{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+  .cstage.in .cill .ring{animation:ringout 2.2s ease-out 2.9s infinite}
+  @keyframes ringout{0%{opacity:.7;transform:scale(.3)}100%{opacity:0;transform:scale(1.7)}}
+  .cstage.in .ctype{display:inline-block;clip-path:inset(0 100% 0 0);animation:ctype 1.8s steps(40,end) 2.5s forwards}
+  @keyframes ctype{to{clip-path:inset(0 0 0 0)}}
+  .cstage.in .meter i b{transform:scaleX(0);transform-origin:0 50%;animation:grow .9s var(--ease-out) both;animation-delay:calc(2.9s + var(--i,0)*.2s)}
+  @keyframes grow{to{transform:none}}
+  .cstage.in .cweek .fri{animation:friday .5s var(--ease-out) 2.8s both}
+  @keyframes friday{from{background:var(--d2)}}
+  .coach.rest .clockcard,.coach.rest .cill .ring{animation-play-state:paused}
+  /* the career timeline draws itself, and a rider travels it, when it comes into view */
+  .ctlw.in .rail.main{stroke-dasharray:100;stroke-dashoffset:100;animation:rdraw 1.6s var(--ease-out) forwards}
+  .ctlw.in .rail.a,.ctlw.in .rail.b{stroke-dasharray:100;stroke-dashoffset:100;animation:rdraw 1.4s var(--ease-out) 1.6s forwards}
+  @keyframes rdraw{to{stroke-dashoffset:0}}
+  .ctlw.in .node,.ctlw.in .lbl{opacity:0;animation:nodein .5s var(--ease-out) forwards;animation-delay:calc(.25s + var(--i,0)*.22s)}
+  @keyframes nodein{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+  .ctlw.in .lbl{animation-name:fadein}
+  @keyframes fadein{to{opacity:1}}
+  .ctlw.in .rd{opacity:0;animation:fadein .5s 1.8s forwards}
+  .ctlw.in .rider.m{animation:riderun 1.7s linear forwards}
+  .ctlw.in .rider.a,.ctlw.in .rider.b{animation:riderun 1.5s linear 1.7s forwards}
+  @keyframes riderun{0%{opacity:1;offset-distance:0%}90%{opacity:1}100%{opacity:0;offset-distance:100%}}
+}
 </style>
 </head>
 <body>
@@ -924,7 +1043,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
     </div>
     <p class="small film-note rv">The whole journey, 7 minutes 34 seconds, with a chapter for every stop.</p>
     <div class="vwrap rv">
-      <video playsinline preload="none" poster="recruit.jpg" data-scenes="8.9,21.3,6.0,10.9,22.8,17.6,17.8,15.1,20.2,12.1,18.2,12.9,10.2,12.0,13.6,18.3,15.0,13.0,12.5,15.5,14.4,15.8,21.7,19.5,19.5,17.3,12.6,12.3,6.2,15.3,10.2,4.3" data-chapters="A question|Seven places|Digital, human|The part nobody tells you|From the day you apply|Before you start|The science|The selection|Selected|Afraid you'd start from zero?|Two more things|Leads|The Lead Desk|FY27 Flight Plan|Every morning|factfind360|Query Pal|Dashboards everywhere|Branch Intelligence|Not a mock-up|The human part|Every week|Wednesday · 9:00|Recognition|Your book, protected|Every month|The career path|The income|Already contracted somewhere else?|One conversation|Start here|The environment decides">
+      <video playsinline preload="none" poster="recruit.jpg" data-scenes="8.9,21.3,6.0,10.9,22.8,17.6,17.8,15.1,20.2,12.1,18.2,12.9,10.2,12.0,13.6,18.3,15.0,16.3,12.5,29.1,14.4,15.8,21.7,19.5,31.6,17.3,12.6,12.3,6.2,15.3,10.2,4.3" data-chapters="A question|Seven places|Digital, human|The part nobody tells you|From the day you apply|Before you start|The science|The selection|Selected|Afraid you'd start from zero?|Two more things|Leads|The Lead Desk|FY27 Flight Plan|Every morning|factfind360|Query Pal|The wall, 24/7|Branch Intelligence|The screens|The human part|Every week|Wednesday · 9:00|Recognition|After the sale|Every month|The career path|The income|Already contracted somewhere else?|One conversation|Start here|The environment decides">
         <source src="recruit.mp4" type="video/mp4">
       </video>
       <div class="vcover" style="background-image:url(recruit.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#0d3f5e" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch the full film · 7:34</div></div>
@@ -1053,6 +1172,21 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   </div>
 </section>
 
+<!-- ═══ THE SCREENS, 29 October 2026 ═══ -->
+<section class="scr" id="screens" data-g="screens">
+  <div class="wrap">
+    <div class="lede rv">
+      <span class="eyebrow">Not a mock-up</span>
+      <h2 data-words>These are the screens. Built here, for this branch.</h2>
+      <p>Every tool in the film runs today, in Chaguanas; the names and figures on these screens are made up. Tap one, or let them turn.</p>
+    </div>
+    <div class="scrg rv">
+      <div class="scrl" role="tablist" aria-label="The screens"><button class="sct" type="button" role="tab" id="sct-ff" aria-controls="scp-ff" aria-selected="true" data-k="ff"><b>factfind360 · the client's draft</b><small>The arithmetic while you talk. The client gets a draft to approve, on their phone.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-sign" aria-controls="scp-sign" aria-selected="false" data-k="sign"><b>factfind360 · your manager's sign-off</b><small>Every plan is read by a manager before it goes anywhere.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-rate" aria-controls="scp-rate" aria-selected="false" data-k="rate"><b>The client approves, and rates you</b><small>Signed on their phone, with five stars for you. Not one case has lapsed since launch.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-ask" aria-controls="scp-ask" aria-selected="false" data-k="ask"><b>Fact Find Insights · the reminders</b><small>Started and never sent, or never closed: the system asks every morning until it is.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-log" aria-controls="scp-log" aria-selected="false" data-k="log"><b>The Log Book, in your hand</b><small>Your papers logged in a minute, routed to the right department, on the 12 noon bag.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-tx" aria-controls="scp-tx" aria-selected="false" data-k="tx"><b>The transmittal it builds</b><small>Built for the staff, printed, signed for by the department, confirmed three working days on.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-app" aria-controls="scp-app" aria-selected="false" data-k="app"><b>The branch app</b><small>Every tool behind one sign-in, and your day already set when you open it.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-wall" aria-controls="scp-wall" aria-selected="false" data-k="wall"><b>The production wall · 24/7</b><small>Your week, your month, your year, picked up for production: on the screen in the branch and on your phone.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-db" aria-controls="scp-db" aria-selected="false" data-k="db"><b>The Delivery Book</b><small>Delivered and signed for; the client e-mailed the same day, with five stars to rate the delivery.</small><i class="scbar"></i></button></div>
+      <div class="scrs"><div class="scp" role="tabpanel" id="scp-ff" aria-labelledby="sct-ff" data-k="ff"><div class="dev ph"><img src="/wall/img/ff/01-client-draft.jpg" alt="factfind360 · the client's draft: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>factfind360 · the client's draft</b><span>The arithmetic while you talk. The client gets a draft to approve, on their phone.</span></p></div><div class="scp" role="tabpanel" id="scp-sign" aria-labelledby="sct-sign" data-k="sign" hidden><div class="dev ph"><img src="/wall/img/ff/02-manager-signoff.jpg" alt="factfind360 · your manager's sign-off: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>factfind360 · your manager's sign-off</b><span>Every plan is read by a manager before it goes anywhere.</span></p></div><div class="scp" role="tabpanel" id="scp-rate" aria-labelledby="sct-rate" data-k="rate" hidden><div class="dev ph"><img src="/wall/img/ff/05-client-sign-and-rate.jpg" alt="The client approves, and rates you: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The client approves, and rates you</b><span>Signed on their phone, with five stars for you. Not one case has lapsed since launch.</span></p></div><div class="scp" role="tabpanel" id="scp-ask" aria-labelledby="sct-ask" data-k="ask" hidden><div class="dev ph"><img src="/wall/img/ff/06-did-this-close.jpg" alt="Fact Find Insights · the reminders: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>Fact Find Insights · the reminders</b><span>Started and never sent, or never closed: the system asks every morning until it is.</span></p></div><div class="scp" role="tabpanel" id="scp-log" aria-labelledby="sct-log" data-k="log" hidden><div class="dev ph"><img src="/wall/img/lb/logged-ph.jpg" alt="The Log Book, in your hand: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The Log Book, in your hand</b><span>Your papers logged in a minute, routed to the right department, on the 12 noon bag.</span></p></div><div class="scp" role="tabpanel" id="scp-tx" aria-labelledby="sct-tx" data-k="tx" hidden><div class="dev lap"><img src="/wall/img/lb/transmittal-lap.jpg" alt="The transmittal it builds: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The transmittal it builds</b><span>Built for the staff, printed, signed for by the department, confirmed three working days on.</span></p></div><div class="scp" role="tabpanel" id="scp-app" aria-labelledby="sct-app" data-k="app" hidden><div class="dev ph"><img src="/wall/img/app/home-ph.jpg" alt="The branch app: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The branch app</b><span>Every tool behind one sign-in, and your day already set when you open it.</span></p></div><div class="scp" role="tabpanel" id="scp-wall" aria-labelledby="sct-wall" data-k="wall" hidden><div class="dev lap"><img src="/wall/img/wi/production-month.jpg" alt="The production wall · 24/7: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The production wall · 24/7</b><span>Your week, your month, your year, picked up for production: on the screen in the branch and on your phone.</span></p></div><div class="scp" role="tabpanel" id="scp-db" aria-labelledby="sct-db" data-k="db" hidden><div class="dev ph"><img src="/wall/img/db/recorded-ph.jpg" alt="The Delivery Book: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The Delivery Book</b><span>Delivered and signed for; the client e-mailed the same day, with five stars to rate the delivery.</span></p></div><span class="scrn">sample data on every screen</span></div>
+    </div>
+  </div>
+</section>
+
 <!-- ═══ THE ENVIRONMENT ═══ -->
 <section class="env" id="environment" data-g="env">
   <div class="wrap">
@@ -1071,13 +1205,43 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 </section>
 
 <!-- ═══ THE CAREER PATH ═══ -->
+
+<!-- ═══ A COACH, NOT A CLOCK, 29 October 2026 ═══ -->
+<section class="coach" id="coach" data-g="coach">
+  <div class="wrap">
+    <div class="lede rv">
+      <span class="eyebrow">Your manager</span>
+      <h2 data-words>A coach, not a clock.</h2>
+      <p>The system does the admin. Your manager does the sitting with you: your week, before Friday, in your morning e-mail and in person. Nobody here is left to figure it out alone.</p>
+    </div>
+    <div class="cstage rv" aria-label="A clock, struck out, and the coaching that replaces it">
+      <div class="clockcard" aria-hidden="true">
+        <svg class="clk" viewBox="0 0 200 200"><circle class="clk-f" cx="100" cy="100" r="92"/><line class="clk-t q" x1="100" y1="14" x2="100" y2="23" transform="rotate(0 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(30 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(60 100 100)"/><line class="clk-t q" x1="100" y1="14" x2="100" y2="23" transform="rotate(90 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(120 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(150 100 100)"/><line class="clk-t q" x1="100" y1="14" x2="100" y2="23" transform="rotate(180 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(210 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(240 100 100)"/><line class="clk-t q" x1="100" y1="14" x2="100" y2="23" transform="rotate(270 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(300 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(330 100 100)"/><line class="clk-h" x1="100" y1="100" x2="100" y2="54" transform="rotate(300 100 100)"/><line class="clk-m" x1="100" y1="100" x2="100" y2="36" transform="rotate(60 100 100)"/><line class="clk-s" x1="100" y1="112" x2="100" y2="28"/><circle class="clk-c" cx="100" cy="100" r="4.5"/></svg>
+        <div class="clk-sees"><small>what a clock sees</small><span>in 8:02</span><span>out 4:31</span><span>8 h 29 m</span></div>
+        <svg class="slash" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="8" y1="6" x2="92" y2="94" pathLength="100"/></svg>
+      </div>
+      <div class="coachcard">
+        <svg class="cill" viewBox="0 0 340 168" aria-hidden="true"><circle class="ring" cx="170" cy="118" r="26"/><g class="fig fl-l"><circle cx="92" cy="50" r="18"/><path d="M50 118c0-27 19-46 42-46s42 19 42 46"/><path d="M122 92l32 12"/></g><g class="fig fl-r"><circle cx="248" cy="50" r="18"/><path d="M206 118c0-27 19-46 42-46s42 19 42 46"/><path d="M218 92l-32 12"/></g><rect class="tbl" x="40" y="118" width="260" height="10" rx="5"/><rect class="tab" x="150" y="101" width="40" height="17" rx="3"/><text x="92" y="152" class="lbl">coach</text><text x="248" y="152" class="lbl">you</text></svg>
+        <div class="cnote"><small>From your manager · in your morning e-mail</small><p><span class="ctype">Two fact finds this week, Priya. Let's book your Thursday calls together at eight.</span></p></div>
+        <div class="cs-row">
+          <div><small class="cs-sees">your week, before Friday</small><div class="cweek"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span class="fri">Fri</span></div></div>
+          <div><small class="cs-sees">what a coach sees</small><div class="cs-meters"><div class="meter" style="--i:0;--v:62%"><span>Leads</span><i><b></b></i><em>coached Tuesday</em></div><div class="meter" style="--i:1;--v:48%"><span>Fact finds</span><i><b></b></i><em>role-played Wednesday</em></div><div class="meter" style="--i:2;--v:71%"><span>Closing interviews</span><i><b></b></i><em>booked together</em></div></div></div>
+        </div>
+        <p class="cchip"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><b>And in person. He sits with you on it.</b></p>
+        <p class="csample">Priya and her week are made up. The Weekly Manager Pulse and the morning note are real.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="path" data-g="path" style="background:var(--bg2);border-block:1px solid var(--line)">
   <div class="wrap">
     <div class="lede rv">
       <span class="eyebrow">The Career Path</span>
-      <h2 data-words>Two roads up. Both mapped.</h2>
+      <h2 data-words>One road in. Two roads up. All mapped.</h2>
       <p>This is Guardian Life’s official Sales Career Path — not a poster on a wall. Every rung has written criteria, real benefits, and people in this branch who’ve climbed it.</p>
     </div>
+    <div class="ctlw rv" role="img" aria-label="The career path as a timeline: apply, a call within 48 hours, the Discovery, selected, the build, the first 90 days, Career Sales Representative; then two roads: Executive Agent to Senior Sales Consultant, or Emerging Leaders to Unit Manager to Branch Manager"><svg class="ctl ctl-l" viewBox="0 0 1000 362" aria-hidden="true"><path class="rail main" pathLength="100" d="M40.0 190 L560.2 190"/><path class="rail a" pathLength="100" d="M560.2 190 C640 190 660 92 740 92 L980 92"/><path class="rail b" pathLength="100" d="M560.2 190 C640 190 660 290 740 290 L980 290"/><circle class="node" cx="40.0" cy="190" r="8" style="--i:0"/><g class="lbl " style="--i:0"><text class="nm" x="40.0" y="160" text-anchor="middle">Apply</text><text class="dt" x="40.0" y="177" text-anchor="middle">two minutes</text></g><circle class="node" cx="126.7" cy="190" r="8" style="--i:1"/><g class="lbl " style="--i:1"><text class="nm" x="126.7" y="234" text-anchor="middle">A call</text><text class="dt" x="126.7" y="251" text-anchor="middle">within 48 h</text></g><circle class="node" cx="213.4" cy="190" r="8" style="--i:2"/><g class="lbl " style="--i:2"><text class="nm" x="213.4" y="160" text-anchor="middle">Discovery</text><text class="dt" x="213.4" y="177" text-anchor="middle">with the people doing it</text></g><circle class="node" cx="300.1" cy="190" r="8" style="--i:3"/><g class="lbl " style="--i:3"><text class="nm" x="300.1" y="234" text-anchor="middle">Selected</text><text class="dt" x="300.1" y="251" text-anchor="middle">five gates</text></g><circle class="node" cx="386.8" cy="190" r="8" style="--i:4"/><g class="lbl " style="--i:4"><text class="nm" x="386.8" y="160" text-anchor="middle">The build</text><text class="dt" x="386.8" y="177" text-anchor="middle">training · licence · boot camp</text></g><circle class="node" cx="473.5" cy="190" r="8" style="--i:5"/><g class="lbl " style="--i:5"><text class="nm" x="473.5" y="234" text-anchor="middle">First 90 days</text><text class="dt" x="473.5" y="251" text-anchor="middle">matched households · leads</text></g><circle class="node fork" cx="560.2" cy="190" r="11" style="--i:6"/><g class="lbl " style="--i:6"><text class="nm" x="560.2" y="160" text-anchor="middle">Career Sales Rep</text><text class="dt" x="560.2" y="177" text-anchor="middle">contracted, in the field</text></g><circle class="node a" cx="740" cy="92" r="9" style="--i:8"/><g class="lbl a" style="--i:8"><text class="nm" x="740" y="62" text-anchor="middle">Executive Agent</text><text class="dt" x="740" y="79" text-anchor="middle">overrides · a private office</text></g><circle class="node a" cx="960" cy="92" r="9" style="--i:9"/><g class="lbl a" style="--i:9"><text class="nm" x="960" y="122" text-anchor="end">Senior Sales Consultant</text><text class="dt" x="960" y="139" text-anchor="end">the top of the road</text></g><circle class="node b" cx="700" cy="290" r="9" style="--i:8"/><g class="lbl b" style="--i:8"><text class="nm" x="700" y="320" text-anchor="middle">Emerging Leaders</text><text class="dt" x="700" y="337" text-anchor="middle">by recommendation</text></g><circle class="node b" cx="830" cy="290" r="9" style="--i:9"/><g class="lbl b" style="--i:9"><text class="nm" x="830" y="258" text-anchor="middle">Unit Manager</text><text class="dt" x="830" y="275" text-anchor="middle">a unit of your own</text></g><circle class="node b" cx="960" cy="290" r="9" style="--i:10"/><g class="lbl b" style="--i:10"><text class="nm" x="960" y="320" text-anchor="end">Branch Manager</text><text class="dt" x="960" y="337" text-anchor="end">a branch of your own</text></g><circle class="rider m" r="9" style="offset-path:path('M40.0 190 L560.2 190')"/><circle class="rider a" r="9" style="offset-path:path('M560.2 190 C640 190 660 92 740 92 L980 92')"/><circle class="rider b" r="9" style="offset-path:path('M560.2 190 C640 190 660 290 740 290 L980 290')"/><text class="rd a" x="980" y="36" text-anchor="end">Build a book</text><text class="rd b" x="980" y="354" text-anchor="end">Or lead</text></svg><svg class="ctl ctl-v" viewBox="0 0 800 620" aria-hidden="true"><path class="rail main" pathLength="100" d="M60 40 L60 556"/><path class="rail a" pathLength="100" d="M60 556 C60 604 280 604 280 556 L280 170"/><path class="rail b" pathLength="100" d="M60 556 C60 612 520 612 520 556 L520 120"/><circle class="node" cx="60" cy="40" r="8" style="--i:0"/><g class="lbl " style="--i:0"><text class="nm" x="86" y="38" text-anchor="start">Apply</text><text class="dt" x="86" y="55" text-anchor="start">two minutes</text></g><circle class="node" cx="60" cy="126" r="8" style="--i:1"/><g class="lbl " style="--i:1"><text class="nm" x="86" y="124" text-anchor="start">A call</text><text class="dt" x="86" y="141" text-anchor="start">within 48 h</text></g><circle class="node" cx="60" cy="212" r="8" style="--i:2"/><g class="lbl " style="--i:2"><text class="nm" x="86" y="210" text-anchor="start">Discovery</text><text class="dt" x="86" y="227" text-anchor="start">with the people doing it</text></g><circle class="node" cx="60" cy="298" r="8" style="--i:3"/><g class="lbl " style="--i:3"><text class="nm" x="86" y="296" text-anchor="start">Selected</text><text class="dt" x="86" y="313" text-anchor="start">five gates</text></g><circle class="node" cx="60" cy="384" r="8" style="--i:4"/><g class="lbl " style="--i:4"><text class="nm" x="86" y="382" text-anchor="start">The build</text><text class="dt" x="86" y="399" text-anchor="start">training · licence · boot camp</text></g><circle class="node" cx="60" cy="470" r="8" style="--i:5"/><g class="lbl " style="--i:5"><text class="nm" x="86" y="468" text-anchor="start">First 90 days</text><text class="dt" x="86" y="485" text-anchor="start">matched households · leads</text></g><circle class="node fork" cx="60" cy="556" r="11" style="--i:6"/><g class="lbl " style="--i:6"><text class="nm" x="86" y="554" text-anchor="start">Career Sales Rep</text><text class="dt" x="86" y="571" text-anchor="start">contracted, in the field</text></g><circle class="node a" cx="280" cy="420" r="9" style="--i:8"/><g class="lbl a" style="--i:8"><text class="nm" x="306" y="418" text-anchor="start">Executive Agent</text><text class="dt" x="306" y="435" text-anchor="start">overrides · a private office</text></g><circle class="node a" cx="280" cy="240" r="9" style="--i:9"/><g class="lbl a" style="--i:9"><text class="nm" x="306" y="238" text-anchor="start">Senior Sales Consultant</text><text class="dt" x="306" y="255" text-anchor="start">the top of the road</text></g><circle class="node b" cx="520" cy="450" r="9" style="--i:8"/><g class="lbl b" style="--i:8"><text class="nm" x="546" y="448" text-anchor="start">Emerging Leaders</text><text class="dt" x="546" y="465" text-anchor="start">by recommendation</text></g><circle class="node b" cx="520" cy="310" r="9" style="--i:9"/><g class="lbl b" style="--i:9"><text class="nm" x="546" y="308" text-anchor="start">Unit Manager</text><text class="dt" x="546" y="325" text-anchor="start">a unit of your own</text></g><circle class="node b" cx="520" cy="170" r="9" style="--i:10"/><g class="lbl b" style="--i:10"><text class="nm" x="546" y="168" text-anchor="start">Branch Manager</text><text class="dt" x="546" y="185" text-anchor="start">a branch of your own</text></g><circle class="rider m" r="9" style="offset-path:path('M60 40 L60 556')"/><circle class="rider a" r="9" style="offset-path:path('M60 556 C60 604 280 604 280 556 L280 170')"/><circle class="rider b" r="9" style="offset-path:path('M60 556 C60 612 520 612 520 556 L520 120')"/><text class="rd a" x="306" y="150" text-anchor="start">Build a book</text><text class="rd b" x="546" y="100" text-anchor="start">Or lead</text></svg></div>
     <div class="roads">
       <article class="road rv">
         <div class="road-h"><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg></span><h3><small>Professional</small>Master the craft</h3></div>
@@ -1434,6 +1598,38 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   })();
   /* ── RAI, the guide: one line per section as it arrives ── */
 
+
+  /* ── the screens: nine real screens as tabs; they turn by themselves until somebody touches them (29 October 2026) ── */
+  (function(){
+    var sec=d.getElementById('screens'); if(!sec) return;
+    var tabs=[].slice.call(sec.querySelectorAll('.sct')), panes=[].slice.call(sec.querySelectorAll('.scp')), cur=-1, auto=!noMotion.matches, timer=null, seen=false;
+    function show(i){ if(i===cur) return; cur=i;
+      tabs.forEach(function(t,k){var on=k===i; t.setAttribute('aria-selected',on?'true':'false'); t.tabIndex=on?0:-1});
+      panes.forEach(function(p,k){var on=k===i; p.hidden=!on; p.classList.toggle('live',on)}); }
+    function arm(){clearTimeout(timer); if(!auto) return; timer=setTimeout(function(){show((cur+1)%tabs.length); arm()},4600)}
+    tabs.forEach(function(t,k){
+      t.addEventListener('click',function(){auto=false;clearTimeout(timer);show(k); if(t.scrollIntoView&&innerWidth<768) t.scrollIntoView({block:'nearest',inline:'center',behavior:noMotion.matches?'auto':'smooth'})});
+      t.addEventListener('keydown',function(e){var n=e.key==='ArrowRight'||e.key==='ArrowDown'?1:e.key==='ArrowLeft'||e.key==='ArrowUp'?-1:0; if(!n) return; e.preventDefault(); auto=false; clearTimeout(timer); var j=(k+n+tabs.length)%tabs.length; show(j); tabs[j].focus()});
+    });
+    show(0);
+    if('IntersectionObserver' in window){
+      new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&!seen){seen=true;arm()} else if(!e.isIntersecting){clearTimeout(timer)} else if(seen&&auto){arm()}})},{threshold:.25}).observe(sec);
+    } else { arm(); }
+    sec.addEventListener('pointerenter',function(){clearTimeout(timer)}); sec.addEventListener('pointerleave',function(){if(auto)arm()});
+  })();
+  /* ── the coach stage and the career timeline start their motion when they come into view (the page's .rv reveal is
+        scroll-driven where view() is supported, so nothing else adds .in there) ── */
+  (function(){
+    var els=[].slice.call(d.querySelectorAll('.cstage,.ctlw')); if(!els.length) return;
+    if(noMotion.matches||!('IntersectionObserver' in window)){ els.forEach(function(e){e.classList.add('in')}); return; }
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -12% 0px'});
+    els.forEach(function(e){io.observe(e)});
+  })();
+  /* ── the coach band's loops park when it leaves the screen ── */
+  (function(){
+    var c=d.getElementById('coach'); if(!c||!('IntersectionObserver' in window)) return;
+    new IntersectionObserver(function(es){es.forEach(function(e){c.classList.toggle('rest',!e.isIntersecting)})},{threshold:0}).observe(c);
+  })();
   /* ── the selection: five gates as tabs; they turn by themselves until somebody touches them ── */
   (function(){
     var sel=d.getElementById('gates'); if(!sel) return;
@@ -1474,7 +1670,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   })();
   var guide=d.getElementById('guide'),bub=d.getElementById('gbubble'),bubTimer=null,lastMsg='';
   function say(msg,ms){ms=ms||4200;if(msg===lastMsg&&bub.classList.contains('on'))return;lastMsg=msg;bub.innerHTML=msg;bub.classList.add('on');guide.classList.remove('hop');void guide.offsetWidth;guide.classList.add('hop');clearTimeout(bubTimer);bubTimer=setTimeout(function(){bub.classList.remove('on')},ms)}
-  var lines={manager:"One seat for a sales manager. <b>The system does the unit's admin; you coach.</b>",people:"Real names. <b>You will know them by their first names within a week.</b>",why:"His words, not mine. <b>The room decides.</b>",talk:"Twenty minutes, your questions, his own figures. <b>He reads this himself.</b>",hero:"I’m <b>RAI</b> — the branch AI. Already contracted? Nobody will know you asked. New to this? You get the full build. Either way: <b>one 20-minute conversation.</b>",you:"Two kinds of people. Different fears. <b>Same five gates.</b>",env:"This is the room. <b>The room decides.</b>",path:"Two roads up — overrides, offices, management. All written.",quiz:"Answer honestly. Especially question five.",wins:"Don’t take our word. <b>Come meet the qualifiers.</b>",gates:"Five gates, LIMRA’s process. <b>Evidence, not vibes.</b> Tap a gate.",sys:"Thirty-nine things that run for you. <b>Nobody here works alone.</b>",faq:"Practising advisors: your enquiry stays confidential.",apply:"Seven places, and one for a sales manager. <b>One conversation, twenty minutes.</b> Tap, or scan to apply."};
+  var lines={screens:"Not a mock-up. <b>Tap a screen; they turn by themselves.</b>",coach:"A coach, not a clock. <b>Your week, before Friday.</b>",manager:"One seat for a sales manager. <b>The system does the unit's admin; you coach.</b>",people:"Real names. <b>You will know them by their first names within a week.</b>",why:"His words, not mine. <b>The room decides.</b>",talk:"Twenty minutes, your questions, his own figures. <b>He reads this himself.</b>",hero:"I’m <b>RAI</b> — the branch AI. Already contracted? Nobody will know you asked. New to this? You get the full build. Either way: <b>one 20-minute conversation.</b>",you:"Two kinds of people. Different fears. <b>Same five gates.</b>",env:"This is the room. <b>The room decides.</b>",path:"Two roads up — overrides, offices, management. All written.",quiz:"Answer honestly. Especially question five.",wins:"Don’t take our word. <b>Come meet the qualifiers.</b>",gates:"Five gates, LIMRA’s process. <b>Evidence, not vibes.</b> Tap a gate.",sys:"Thirty-nine things that run for you. <b>Nobody here works alone.</b>",faq:"Practising advisors: your enquiry stays confidential.",apply:"Seven places, and one for a sales manager. <b>One conversation, twenty minutes.</b> Tap, or scan to apply."};
   if('IntersectionObserver' in window){
     var secIO=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&lines[e.target.dataset.g])say(lines[e.target.dataset.g])})},{threshold:.3});
     d.querySelectorAll('[data-g]').forEach(function(s){secIO.observe(s)});
