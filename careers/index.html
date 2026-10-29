@@ -777,7 +777,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 .coach{background:radial-gradient(60% 70% at 85% 20%,rgba(0,114,141,.28),transparent 60%),linear-gradient(160deg,var(--d1),var(--d0) 70%);color:var(--dT2)}
 .coach .eyebrow{color:var(--aT)}.coach h2{color:#fff}.coach .lede p{color:var(--dT2)}
 .cstage{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:var(--sp-xl);align-items:start}
-.clockcard{position:relative;display:grid;justify-items:center;gap:1rem;justify-self:center;opacity:.32;filter:grayscale(1)}
+.clockcard{position:relative;display:grid;justify-items:center;gap:1rem;justify-self:center;opacity:.8;filter:grayscale(1)}
 .clockcard .clk{width:min(16rem,70%);height:auto;aspect-ratio:1;filter:drop-shadow(0 .6rem 1.4rem rgba(4,14,26,.5))}
 .clk-f{fill:var(--d3);stroke:rgba(255,255,255,.28);stroke-width:3}
 .clk-t{stroke:rgba(255,255,255,.45);stroke-width:2.5;stroke-linecap:round}.clk-t.q{stroke:#fff;stroke-width:4}
@@ -786,7 +786,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 .clk-c{fill:var(--aL)}
 .clk-sees{display:flex;gap:.45rem;flex-wrap:wrap;justify-content:center;max-width:20rem}
 .clk-sees small{width:100%;text-align:center;font:600 var(--f--2)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--dT3)}
-.clk-sees span{font:600 var(--f--1)/1 var(--text);color:var(--dT2);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:.5em .9em}
+.clk-sees span{font:600 var(--f--1)/1 var(--text);color:#fff;background:var(--d2);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:.5em .9em}
 .clockcard .slash{position:absolute;left:-4%;top:-4%;width:108%;height:108%;pointer-events:none;overflow:visible}
 .slash line{stroke:var(--aL);stroke-width:5;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-dasharray:100;stroke-dashoffset:0}
 .coachcard{display:grid;gap:var(--sp-m);min-width:0}
@@ -810,7 +810,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 .meter i{display:block;height:.55rem;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden}
 .meter i b{display:block;height:100%;width:var(--v);background:linear-gradient(90deg,var(--aD),var(--aL))}
 .meter em{grid-column:2;font-style:normal;font-size:var(--f--2);color:var(--aT)}
-.cchip{display:flex;align-items:center;gap:.7rem;margin:0;padding:.8rem 1rem;border-radius:var(--r-s);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fff}
+.cchip{display:flex;align-items:center;gap:.7rem;margin:0;padding:.8rem 1rem;border-radius:var(--r-s);background:var(--d2);border:1px solid rgba(255,255,255,.14);color:#fff}
 .cchip .ic{color:var(--aL)}.cchip b{font:700 var(--f-0)/1.25 var(--display);color:#fff}
 .csample{margin:0;font-size:var(--f--2);color:var(--dT3)}
 @media (max-width:48rem){.cstage{grid-template-columns:1fr;gap:var(--sp-l)}.cs-row{grid-template-columns:1fr}.clockcard .clk{width:min(13rem,60%)}}
@@ -835,7 +835,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   .scp.live{animation:up .5s var(--ease-out) both}
   /* the clock ticks, is struck, and parks; then the coaching arrives */
   .cstage.in .clockcard{opacity:1;filter:none;animation:clkaway 1s var(--ease-out) 1.6s forwards}
-  @keyframes clkaway{to{opacity:.32;filter:grayscale(1);transform:scale(.86)}}
+  @keyframes clkaway{to{opacity:.8;filter:grayscale(1);transform:scale(.86)}}
   .cstage.in .clk-s{animation:tickhand 60s steps(60,end) infinite}
   @keyframes tickhand{to{transform:rotate(360deg)}}
   .cstage.in .slash line{stroke-dashoffset:100;animation:slashdraw .45s ease-out 1.5s forwards}

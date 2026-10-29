@@ -5394,6 +5394,35 @@ section links it.
   preselects "Leading a team already" on the booking form through `data-who`), the form's fourth option, the guide's lines;
   the homepage careers section, `/careersvideo/`, the two posts, and the pages' chapter marks. Never "unlimited", never a
   bigger number without a reason, and when the class is full the number comes off, not up.
+- **The coach and the clock, the real screens, the wall 24/7, the servicing timeline, the career timeline (29 October
+  2026).** Four asks in a row: "show our own branch factfind360 and our digital transmittal etc, you do have access
+  to all, slides and motion, a nice timeline on the career path"; "manager is a coach not a clock: where is the clock
+  ticking and coaching motions and images, be impactful"; "digital production wall 24/7, digital outreach to our fact
+  find as it's live and the success rates, what reminders go out, built internal, happy clients rating agents, a
+  timeline on a process showing the cards and delivery and servicing afterwards". What stands:
+  - **Five shared blocks** in `build-recruitfilm.py`, used by the trailer (scene 4) and the film (18, 20, 21, 25, 27):
+    `blk_coach` (a clock whose second hand steps once a second, `ticks` in films.json so `sfx.py` plays them, struck on
+    the word and parked aside with `clkaway`; then two line figures at a table, the morning note typing, the week with
+    Friday lit, the coaching meters, "in person"), `blk_slides` (eight real screens, one at a time on its word, phone
+    or laptop frame, the last stays), `blk_wall24` (the production wall's own month-by-month slide, already public on
+    `/wall/production.html` and carrying no names, with a 24/7 badge; never the held-back-API slide, which names
+    advisors), `blk_service` (six stops on a rail: fact find, delivered and signed for with five stars, 45/60/75/90,
+    the six-month and birthday reviews, a question inside the turnaround, rated by happy clients; a rider travels it)
+    and `blk_career` (one SVG timeline, Apply to Career Sales Rep then the fork into the two roads, `offset-path`
+    riders; a different geometry for the tall frame, the roads rising beside the rail). Lines 18, 20 and 25 re-voiced.
+  - **The screens are captured, never drawn**: `wall/img/lb/transmittal-lap.jpg` and `queue-lap.jpg` from
+    `tests/e2e-logbook.js` with `SHOTS=`, `wall/img/db/*` from `e2e-deliverybook.js`, `wall/img/app/*` from the branch
+    app's `?demo=a`, `wall/img/wi/production-*.jpg` from the production wall; every name and figure on them is the
+    harness's sample. The Wall Intelligence sample was shot and not used: it names staff out sick.
+  - **The page** (`#screens`, `#coach`, the timeline above the roads in `#path`): the finished state is the default,
+    the motion sits in the no-preference query, and a small observer adds `.in` to `.cstage` and `.ctlw`, because the
+    page's `.rv` reveal is scroll-driven where `view()` is supported and never adds a class. Three traps, all
+    specificity: `svg:not([width])` collapsed the clock, the figures and the timeline until the rules carried a parent
+    class; `strong,b{color:var(--ink)}` painted the chip's words navy on navy; `.scp{display:grid}` beat `[hidden]`.
+    A rail that should draw at once needs `pathLength="100"` with a dash of 100, or it is invisible until the offset
+    falls under the real length.
+  - **The scene shooter** (`scenes.js` in the scratchpad) now clears every other scene: with a subset of scenes it had
+    left the previous shot's scene behind the next, which looked like a layout fault and was not one.
 - **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and
   rendered frame by frame: a wine band on every cut (the streak), a slow push-in on every scene for its whole
   length (`--kb`, written by `scene()`), the cards floating and catching a passing light (`.fl`: overflow hidden,
