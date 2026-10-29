@@ -1,11 +1,12 @@
 {
- "voice": "en-US-AndrewMultilingualNeural",
- "rate": "+0%",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
  "check": true,
+ "voices": { "wallw5": "en-US-AndrewMultilingualNeural" },
+ "rates": { "wallw5": "+0%" },
  "films": {
-  "risefix2": [
-   "And we put the order right. You meet your client. You send the draft. Your client approves it. Only then does it reach a manager.",
-   "I've been in this business thirty-five years. The only way you guide people and still scale is to put everything you know where everybody can reach it. That is the promise Akaash and I have made to you."
+  "wallw5": [
+   "This is Branch Intelligence. It reads a task's whole history, tells you where it stands, and drafts the reply. The managers and the BMA check it and post it, and Sales Support get the day's coach."
   ]
  }
 }
