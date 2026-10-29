@@ -340,8 +340,10 @@ ok('a number that is on nobody is still refused',
   env.apiLogin_({ who: '99999' }).ok === false);
 ok('and letters are still compared whole, so a name is not read as a number',
   env.normNo_('SASHA') === 'SASHA');
-ok('0000 still normalises away, so the guest row is found by its own compare',
-  env.normNo_('0000') === '' && env.apiLogin_({ who: '0000' }).ok === true);
+ok('0000 still normalises away, so it can never collide with a real number',
+  env.normNo_('0000') === '');
+ok('and 0000 is recognised as the guest door',
+  env.apiLogin_({ who: '0000' }).needGuest === true);
 
 const liOff = (() => {
   env.appendRow_(env.MEET.TAB_PEOPLE, { 'Agent No': 'A00009', 'Name': 'Gone',
@@ -350,21 +352,33 @@ const liOff = (() => {
 })();
 ok('an agent whose access is off still cannot sign in', liOff.ok === false, JSON.stringify(liOff));
 
-const g1 = env.apiLogin_({ who: '0000' });
-ok('0000 lets a visitor look in', g1.ok === true && !!g1.token, JSON.stringify(g1));
+/*  0000 is the door, not the identity (29 October 2026). It asks who is at
+    it, and the name and role are what the branch gets to keep. The detail,
+    including that a visitor never reaches the register, is pinned in
+    tests/test-guest-signin.js. */
+const g0 = env.apiLogin_({ who: '0000' });
+ok('0000 alone does not let anyone in', g0.ok === false, JSON.stringify(g0));
+ok('it asks who is at the door instead', g0.needGuest === true);
+
+const g1 = env.apiLogin_({ who: '0000', firstName: 'Gregg', lastName: 'Mannette',
+                           jobTitle: 'Head of Agency' });
+ok('a named visitor looks in', g1.ok === true && !!g1.token, JSON.stringify(g1));
 ok('and they come in as a guest', g1.ok && g1.user && g1.user.role === 'guest',
   g1.user && g1.user.role);
+ok('under their own name, so the branch knows who visited',
+  g1.ok && g1.user.name === 'Gregg Mannette', g1.user && g1.user.name);
 
-const g2 = env.apiLogin_({ who: ' 0000 ' });
+const g2 = env.apiLogin_({ who: ' 0000 ', firstName: 'Gregg', lastName: 'Mannette',
+                           jobTitle: 'Head of Agency' });
 ok('twice over, on the one row', g2.ok === true &&
-  rows('TAB_PEOPLE').filter(r => env.str_(r['Agent No']) === '0000').length === 1);
+  env.readPeople_().filter(r => env.low_(r.name) === 'gregg mannette').length === 1);
 
 ok('a guest is never on the roll', env.roster_().every(r =>
   env.str_(r['Agent No']) !== '0000' && env.low_(r['Role']) !== 'guest'));
 
 /* The one that matters on the day: a visitor can open the live meeting, and
    cannot open a draft — which the check above them already refuses. */
-const vis = env.readPeople_().filter(p => env.str_(p.agentNo) === '0000')[0];
+const vis = env.readPeople_().filter(p => p.role === 'guest' && p.name)[0];
 const live = rows('TAB_MEETINGS').filter(m => env.str_(m['Ref']) === 'MD-2026-10-30')[0];
 ok('a visitor can open the meeting that is published', env.canOpenMeeting_(vis, live) === true);
 ok('and a draft is still shut to them',

@@ -170,6 +170,99 @@ const NOT_ON_ROLL = { ok: false,
     await pg.close();
   }
 
+  /* ── 0000 ASKS WHO IS AT THE DOOR ──
+     The code is published in the branch WhatsApp group, so this is the first
+     thing a visitor meets. It must read as a welcome, not a refusal, and it
+     must end with the branch knowing who looked in. */
+  {
+    console.log('\n0000 ASKS WHO IS LOOKING IN');
+    const { pg, sent } = await open({ onTheRoll: 19, canSignIn: 19, cannot: 0 }, body => {
+      if (String(body.who).replace(/\s+/g, '') !== '0000') return NOT_ON_ROLL;
+      const name = [body.firstName, body.lastName].filter(Boolean).join(' ').trim();
+      if (!name) return { ok: false, needGuest: true,
+        error: 'Welcome. Tell us your name and your role, so the branch knows who looked in.' };
+      if (!body.jobTitle) return { ok: false, needGuest: true, haveName: name,
+        error: 'And your role, so we know who we had with us.' };
+      return { ok: true, token: 'tok-guest',
+               user: { email: 'gregg.mannette@guest.invalid', name: name,
+                       role: 'guest', unit: '', staff: false } };
+    });
+    const errs = [];
+    pg.on('pageerror', e => errs.push(String(e)));
+
+    const vis = () => pg.$eval('#li-guest', e => getComputedStyle(e).display);
+    ok('the name boxes are hidden until 0000 is typed', (await vis()) === 'none');
+
+    await pg.fill('#li-email', '0000');
+    await pg.click('#li-go');
+    await pg.waitForFunction(
+      () => getComputedStyle(document.getElementById('li-guest')).display !== 'none',
+      null, { timeout: 5000 }).catch(() => {});
+
+    ok('typing 0000 brings up the boxes', (await vis()) !== 'none');
+    const msg = (await pg.textContent('#li-msg')).trim();
+    ok('it welcomes rather than refusing', /welcome/i.test(msg), msg);
+    ok('it does not read as a failure', !/not match|did not work|wrong/i.test(msg), msg);
+    ok('the button says what it does now',
+      /look in/i.test((await pg.textContent('#li-go')).trim()),
+      (await pg.textContent('#li-go')).trim());
+    ok('there are three boxes: first, last and role',
+      (await pg.$$('#li-guest input')).length === 3);
+    ok('and no password box appeared',
+      (await pg.$$('#gate-login input[type=password]')).length === 0);
+
+    await pg.fill('#gu-first', 'Gregg');
+    await pg.fill('#gu-last', 'Mannette');
+    await pg.click('#li-go');
+    await pg.waitForTimeout(500);
+    ok('a name with no role is asked for the role',
+      /role/i.test((await pg.textContent('#li-msg')).trim()),
+      (await pg.textContent('#li-msg')).trim());
+    ok('and the boxes are still up', (await vis()) !== 'none');
+
+    await pg.fill('#gu-job', 'Head of Agency');
+    await pg.click('#li-go');
+    await pg.waitForFunction(
+      () => getComputedStyle(document.getElementById('gate')).display === 'none',
+      null, { timeout: 8000 }).catch(() => {});
+    ok('name and role let them in',
+      (await pg.$eval('#gate', e => getComputedStyle(e).display)) === 'none');
+
+    const last = sent[sent.length - 1];
+    ok('the name was sent', last.firstName === 'Gregg' && last.lastName === 'Mannette',
+      JSON.stringify(last));
+    ok('the role was sent', last.jobTitle === 'Head of Agency', JSON.stringify(last));
+    ok('and never a password', !last.password && !last.pin && !last.code,
+      JSON.stringify(last));
+    ok('no script errors on the visitor path', errs.length === 0, errs.join(' | '));
+    await pg.close();
+  }
+
+  /* ── and the boxes come back down for the next person ── */
+  {
+    console.log('\nTHE GATE COMES BACK CLEAN');
+    const { pg } = await open({ onTheRoll: 19, canSignIn: 19, cannot: 0 }, body =>
+      String(body.who).replace(/\s+/g, '') === '0000'
+        ? { ok: false, needGuest: true, error: 'Welcome. Tell us your name and your role.' }
+        : NOT_ON_ROLL);
+    await pg.fill('#li-email', '0000');
+    await pg.click('#li-go');
+    await pg.waitForTimeout(600);
+    ok('the boxes are up',
+      (await pg.$eval('#li-guest', e => getComputedStyle(e).display)) !== 'none');
+    await pg.fill('#gu-first', 'Somebody');
+    //  A phone in the branch is handed round, and showGate is what every
+    //  route back to the door goes through.
+    await pg.evaluate(() => showGate('login'));
+    ok('they come back down for the next person',
+      (await pg.$eval('#li-guest', e => getComputedStyle(e).display)) === 'none');
+    ok('and the half-typed name is gone',
+      (await pg.$eval('#gu-first', e => e.value)) === '');
+    ok('and the button says Sign in again',
+      /sign in/i.test((await pg.textContent('#li-go')).trim()));
+    await pg.close();
+  }
+
   await b.close();
   server.close();
   console.log(fails ? `\n${fails} FAILED` : '\nall passing');
