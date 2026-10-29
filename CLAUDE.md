@@ -7719,7 +7719,13 @@ of men and women and drop off a couple and rise to the top with those who's
 standing? Make much more, add a lot more motion and graphics to make an
 impact."* Then, the same afternoon: *"in the timeline some retired, some
 resigned, 2 was terminated and some vested, so highlight in branch as ours we
-only had 3 terminations, Anasha and Aiden, this will make an impact."*
+only had 3 terminations, [two names], this will make an impact."*
+
+**The two names he gave there are elided**, as of 30 October 2026. They were
+written out here when this section was first added, and that was wrong: this
+file is published at the repository root, and naming a person as terminated on
+a public page is the exact thing the standing rule exists to prevent. Nothing
+downstream reads them — the counts in `build-risefilm.py` carry the record.
 
 **40 scenes, 5:09.** The opening is now one story told across four beats: a cold
 scattered crowd, three of them sink away, the rest rise and warm into ordered
@@ -7976,6 +7982,180 @@ from 1 July, so the strip is labelled by month and never as a total. The figure
 sits **on** its bar rather than in a grid row of its own: with the number on a
 fixed row, July's 20 floated a long way above its short bar and read as
 unattached.
+
+### The ethics block, the two waves, and ninety-eight agents — 30 October 2026
+
+Asked for across a morning, in these words: *"we had a migration … we did rise
+back up … deep dive to show how we are resilient. We have been through it.
+It's normal. It's natural"*; *"deep dive in terms of international, what goes
+on"*; *"people when they look at the branch speak about us not hitting quotas,
+you never hear about the ethics and values we stand for … do you allow fraud
+etc, with the systems the branch built it's detected early and decisions made
+… no one can point a finger at us!!! so build this into the message deep so
+all will know our culture and what we stand for"*; *"central bank market
+conduct, all ads, processes etc is being built with market conduct in mind
+from all our communication"*; *"allowed both [unit managers] to recruit but
+was concerned about the quality of recruiting as we cannot be about a number,
+they did not like, so frame this properly"*; and *"i want this to be very
+impressive"*, with *"i will be sharing this with our executives"*.
+
+**The quotations above are elided where he named somebody or named the
+competitor**, for the reason the next section gives: this file is published.
+
+**Nine new scenes, 42 in all.** `stand`, `bycode`, `examiner`, `caught`,
+`cost`, `quality`, `waves`, `world`, `rebuild`, in that order, straight after
+`outcome` — so the arc is: here is the sixteen-year record → here is what we
+stand for → here is that it is designed in → here is what an examiner would
+find → here is what we did when we found something → here is what the standard
+costs → and at the door too → we have taken a wave before → it happens
+everywhere → so here is how we rebuild.
+
+#### What may not go in it, which decided the whole block
+
+He described five departures by name and by the conduct behind each, and asked
+for it to be built into the message. **None of it is in the film and none of it
+is in this file**, which is published at the repository root like every other
+page. The rule that nothing characterises anyone who left is at its strongest
+here, and three things make this the clearest case of it yet:
+
+- an unproven allegation about a named, identifiable person, **published**, is
+  the one thing that would destroy the argument these scenes make — a branch
+  cannot claim it is compliant on a page that libels somebody;
+- two of the people described are **serving agents**, which makes that one a
+  live matter for Compliance, not film content;
+- the April 2026 brief that most of the hard numbers come from is marked
+  CONFIDENTIAL and carries **client names and a policy number**, which may
+  never enter this repository or an MP4 at a public URL.
+
+So the argument is made with **counts and controls**, which name nobody and
+cannot be worked back to a person — and it is stronger that way, because every
+line of it is a record the branch can actually hand over. Where he wanted a
+person characterised, the film says what the branch did instead: *"We found it.
+We investigated it. We called the client ourselves. We recovered the money. And
+we put the whole record on file."*
+
+Neither unit manager is named in `quality` either. The decision to recruit to a
+standard was the branch's; who disliked it is not film content.
+
+**No money figure.** He asked for profitability. Every dollar figure stays off
+this film, as it did for the three-year-plan papers, and the cash-collection
+control's own value and the renewals report's tracked sum came out with them —
+the **count** makes the compliance point and the money does not. The branch's
+persistency, 4.96% lapse against 8.82%, is the profitability argument an
+insurer actually makes, and the `keep` scene already carries it.
+
+#### The record type is a trap: 87 agents was wrong, and 98 is right
+
+The earlier cut said 87, counting Contact records of record type **AGENT**.
+Twelve more licensed agents of this branch sit under **BUSINESS CONTACT**,
+**ORPHAN** and **RECRUIT** instead — one of them wrote 360 policies — because
+when an agent leaves and their book is orphaned, somebody switches the record
+type.
+
+**So the test for "an agent came through this branch" is a LIFE LICENCE DATE
+(or a contracted date), never the record type.** On that test it is 98 records
+on the branch's four units, and three of the twelve hidden ones are marked
+Terminated — which is exactly why the terminations were undercounted too. Fix
+both together or neither.
+
+Salesforce's `Employment_Status__c` does carry a **Transferred** value, used
+once; the earlier note that it had none was wrong. `Agent_Work_Status__c` is
+still empty on every record.
+
+#### Four terminations, and two the branch has not ruled on
+
+His markup of 29 October gave two. The third he had recalled himself the day
+before, and Salesforce marks that record Terminated too — so his memory of
+three was right all along, and the reason the count came back as two is that
+it was read off the AGENT record type alone. The fourth he named on 30 October, and
+**Salesforce carries no termination date for that one at all**: the licence
+simply lapsed in June 2022 and was never renewed, and the production tails off
+through early 2023. That is a data gap on a termination and worth putting right.
+
+Salesforce's own Terminated flag is unreliable — he read four of the six he
+reviewed as resignations — so **a verdict of his always beats the flag**, and a
+flag he has not ruled on is counted apart as *Unrecorded* rather than asserted
+either way. Two sit there, from 2013 and 2019, both under the ORPHAN record
+type he never saw. Say the word and it is a one-line change to six.
+
+The table, which must total 98: still here 22, retired 4, vested 3,
+transferred 3, resigned 60, terminated 4, unrecorded 2.
+
+#### The two waves, measured
+
+`WAVES` is the headcount of licensed agents on the branch's units at each 30
+September, off the same 98 records. It is the whole argument of that scene and
+it is measured, not recalled:
+
+| | |
+|---|---|
+| best year | **41**, in 2018 |
+| the wave | 40 → **27** in 2020, thirteen in one year |
+| back | **39** by 2024, four years |
+| now | 22 |
+
+**Where people went is not in Salesforce.** It has no field for it. That a
+group of the 2020 leavers went to one competitor, and the 2026 wave to another,
+is his own knowledge, not the record's — so the scene says *a competitor* and
+names none, which is the standing rule anyway.
+
+**Why the last bar is 22 and the roster scene says 21, which is not a
+contradiction and must not be "fixed":** the series counts licensed agent
+records on the units at a 30 September, including the two who come off over the
+next three years under a different arrangement, because they are active in
+Salesforce today. The roster scene counts who is in the branch now, 19 agents
+and 2 managers, with those two left out. Different populations, a month apart,
+both true. The builder comment says so, so nobody edits one to match the other.
+
+#### What the outside says, with each figure labelled
+
+Checked 30 October 2026. They measure different things and must not be averaged
+into one number, so each is labelled on screen with whose it is:
+
+- **Gurun, Stoffman & Yonker, *Journal of Financial Economics*, 2021** — about
+  **40%** of client assets follow an adviser who changes firms, estimated from
+  registration filings across whole firms. The one peer-reviewed estimate, so
+  it leads, and 60% staying is what the split bar draws.
+- **Cerulli Associates, 2025** — about **22%** of assets lost moving between
+  broker-dealers, about 11% between independent firms. No published sample size,
+  so it is marked as a consultancy's.
+- **Broadridge, 2019** — **47%** of Gen X clients would stay with the firm even
+  if their adviser left.
+- **LIMRA** — about **15%** of full-time financial professionals were still
+  with their hiring company after four years (2020), about 14% recently. That
+  one carries the `quality` scene against the branch's own 31%, and the
+  one-year pair (67% against a published 55–60%) is already in `stay`.
+
+Advisers' own reported retention (80–86%, Fidelity 2023 and Schwab 2024) is
+left out: it measures the clients they *wanted* to bring, which is a different
+thing, and the source says so itself. None of it is Trinidad life insurance,
+and the scene's foot says so.
+
+#### Three traps, and two new guards
+
+- **A second `if name == 'x'` branch in `V()` wins silently.** A `rebuild`
+  branch left over from the 29 October cut was still in the file; my new one
+  shadowed it, and deleting mine would have handed the scene back to a stale
+  one. **`_guard_dup()`** now refuses the build and names the duplicate. That
+  is the fourth guard this film has earned, after the shell-class guard, the
+  own-stylesheet guard and the figures guard.
+- **`spoken()` only went to 999.** The cash-collection control is 2,191, and
+  `divmod(n, 100)` then indexed `_ONES[21]` and threw. It handles thousands
+  now, with "and" before a tens or units remainder the way it is actually said.
+- **A rename that catches the CSS and not the markup is invisible.** The split
+  bar's right-hand label kept `class="g"` after its rule became `.rswgl`, so it
+  fell back to the base rule, lost its `right:` and stacked on top of the other
+  label. Grep the generated `film.html` for the class, not just the builder.
+- A line through the "what most cannot produce" column read as *cancelled*.
+  That column is not cancelled — it is what is **missing** somewhere else — so
+  it is dim with an open marker, and the header carries the meaning.
+
+#### Re-cutting
+
+Nine lines were voiced under their own key and mapped back onto 9–17 and 15;
+the staging directory is built **from scratch** by walking the new scene list,
+never by shifting, because this cut both inserts and revoices and a shift
+cannot express that. Everything else in `### Re-cutting it` below still holds.
 
 ### Re-cutting it
 

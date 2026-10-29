@@ -103,42 +103,274 @@ ROLE_WORD = {'bma': 'BMA', 'sup': 'support', 'drv': 'driver'}
 #  resigned, vested, and retired this will make an impact. research".
 #
 #  SALESFORCE CANNOT ANSWER IT, and that is the whole reason this table is
-#  here.  Its Employment Status picklist holds only Active / Resigned /
-#  Terminated / Not Active, and Agent Work Status is empty on all 87 agent
-#  records — so "Not Active" (26 people) was carrying the retirements, the
-#  vestings and the transfers with nothing to tell them apart.  Ricky went
-#  through all 31 of the Not Active and Terminated names that afternoon and
-#  said what each one actually was.  This markup is therefore the only record
-#  of the distinction, and it is the branch's own.
+#  here.  Its Employment Status picklist carries Active / Resigned /
+#  Terminated / Not Active / Transferred, and Agent Work Status is empty on
+#  every record — so "Not Active" was carrying the retirements, the vestings
+#  and most of the transfers with nothing to tell them apart.  Ricky went
+#  through the Not Active and Terminated names on 29 October and said what
+#  each one actually was.  This markup is therefore the only record of the
+#  distinction, and it is the branch's own.
 #
-#  His verdict moved four of Salesforce's five "Terminated" to resigned and
-#  one of its "Not Active" (the September 2026 case, which Salesforce has
-#  simply wrong) to terminated.  So: two terminations in sixteen years, not
-#  the five on the picklist and not the three he first recalled.
+#  THE RECORD TYPE IS A TRAP, found on 30 October 2026.  An earlier cut of
+#  this film said 87 agents, counting Contact records of record type AGENT.
+#  Twelve more licensed agents of this branch sit under BUSINESS CONTACT,
+#  ORPHAN and RECRUIT instead — one of them wrote 360 policies — because when
+#  an agent leaves and their book is orphaned, someone switches the record
+#  type.  So the test for "an agent came through this branch" is a LIFE
+#  LICENCE DATE (or a contracted date), never the record type.  On that test
+#  it is 98 records, not 87, and three of the twelve are marked Terminated.
+#
+#  Salesforce's own Terminated flag is unreliable: he read four of the six he
+#  reviewed as resignations.  So a verdict of his always beats the flag, and
+#  a flag he has not ruled on is counted apart as Unrecorded rather than
+#  asserted either way.  Four terminations are his own: two from his markup,
+#  a third he recalled himself and whose record Salesforce marks Terminated
+#  too, and a fourth he named on 30 October for whom SALESFORCE CARRIES NO
+#  TERMINATION DATE AT ALL — that licence simply lapsed in June 2022 and was
+#  never renewed, which is a data gap on a termination and worth putting
+#  right.  No name here: this file is published with the rest of the tree.
 #
 #  NAMES STAY OUT, and must stay out.  This film sits at a public,
 #  forwardable URL; the standing rule that nothing characterises anyone who
 #  left is at its strongest here.  The counts name nobody and cannot be
 #  worked back to a person.
 #
-#  Salesforce's agent history starts in 2010 — its oldest exit on file is
-#  September 2010 — so this is sixteen years of the branch's thirty-two, and
-#  the film says sixteen rather than claiming the lot.
+#  The record's oldest exit on file is 1 September 2010, so this is sixteen
+#  years of the branch's thirty-two, and the film says sixteen rather than
+#  claiming the lot.
 OUTCOMES = [                 # label, count, tone: 'in', 'good', 'out', 'hit'
-    ('Still here',    23, 'in'),
+    ('Still here',    22, 'in'),
     ('Retired',        4, 'good'),
     ('Vested',         3, 'good'),
-    ('Transferred',    2, 'good'),
-    ('Resigned',      51, 'out'),
-    ('Terminated',     2, 'hit'),
+    ('Transferred',    3, 'good'),
+    ('Resigned',      60, 'out'),
+    ('Terminated',     4, 'hit'),
     ('Unrecorded',     2, 'none'),
 ]
-AGENT_RECORDS = sum(n for _, n, _ in OUTCOMES)      # 87, and it must total 87
+AGENT_RECORDS = sum(n for _, n, _ in OUTCOMES)      # 98, and it must total 98
 SF_FROM = 2010                                      # the record's own start
 GOOD = sum(n for _, n, t in OUTCOMES if t == 'good')   # retired+vested+moved
-HIT  = sum(n for _, n, t in OUTCOMES if t == 'hit')    # two, in sixteen years
+HIT  = sum(n for _, n, t in OUTCOMES if t == 'hit')    # four, in sixteen years
 ENDED = sum(n for _, n, t in OUTCOMES if t != 'in')    # everyone who left
 OUT_N = dict((l, n) for l, n, _ in OUTCOMES)
+
+# ── what the branch stands for, and what it costs ──────────────────────────
+#  Asked for on 30 October 2026 in these words: "people when they look at the
+#  branch speak about us not hitting quotas, you never hear about the ethics
+#  and values we stand for ... agents cannot do as they want to and when they
+#  dont get their way wants to leave ... do you allow fraud etc, with the
+#  systems the branch built it's detected early and decisions made ... no one
+#  can point a finger at us!!! so build this into the message deep so all will
+#  know our culture and what we stand for".
+#
+#  THE FIVE CASES HE DESCRIBED ARE NOT HERE AND MUST NEVER BE.  He named
+#  people and the conduct behind each departure.  This film sits at a PUBLIC,
+#  forwardable URL, and so does this file — the repository root is published,
+#  CLAUDE.md included.  An unproven allegation about a named, identifiable
+#  person, published, is the one thing that would destroy the very argument
+#  these scenes make: a branch cannot claim it is compliant on a page that
+#  libels somebody.  Two of the people he described are SERVING AGENTS, which
+#  makes it a live compliance matter for Compliance, not film content.
+#
+#  So the argument is made with COUNTS and CONTROLS, which name nobody and
+#  cannot be worked back to a person — and it is stronger that way, because
+#  every line of it is a thing the branch can show.  Nothing here
+#  characterises anyone who left, in keeping with the standing rule.
+#
+#  No money figure.  He asked for profitability; every dollar figure stays off
+#  this film (the three-year-plan papers), and the branch's persistency —
+#  4.96% lapse against 8.82% — is the profitability argument an insurer
+#  actually makes, so the `keep` scene carries it already.
+VALUES = [                   # the value, and the control that proves it
+    ('The client decides',
+     'Your client reads the plan and approves it before a manager signs it'),
+    ('Nothing is hidden',
+     'Every paper logged, every call logged, every note on the record'),
+    ('We report it',
+     'Market conduct, clause by clause, and the regulator told when it must be'),
+    ('Nobody is above it',
+     'The same standard for the top producer as for the newest agent'),
+]
+
+#  Four in sixteen years, out of everyone who left.  A RATE, never a list.
+HIT_SHARE = round(HIT / ENDED * 100)
+
+#  WHAT AN EXAMINER WOULD FIND.  Every row of this is lifted from the Branch
+#  Manager's own brief to the VP Sales of 1 April 2026 — a CONFIDENTIAL
+#  document in his Drive, written for an executive, so the facts in it are
+#  ones he has already put his name to at that level.
+#
+#  WHAT CAME OUT OF THAT DOCUMENT AND MUST STAY OUT: every name in it (the
+#  ABM, the agent whose breach was corrected, a former staff member, three
+#  unit agents, the VP), every CLIENT name and policy number in it — client
+#  data may not go in this repository or in an MP4 at a public URL, full
+#  stop — and every dollar figure.  The cash-collection control carries
+#  millions over three years and the renewals report tracks a sum daily; the
+#  COUNT makes the compliance point and the money does not, so only the
+#  count is here.  An internal dispute with a named manager is not film
+#  content either.
+#
+#  What is left is the part that is actually impressive, and it is all
+#  process: a branch that can hand an examiner a timestamped record of
+#  everything it does.  The right-hand column is what most branches cannot
+#  produce — the brief's own words — and it names no branch.
+EXAMINER = [
+    ('Fact finds', 'Timestamped, signed by the client, signed off by a manager',
+     'On paper, with no audit trail and no date anyone can verify'),
+    ('Cash collection', '2,191 approvals on record, with agent, client and amount',
+     'No formal control at all'),
+    ('Renewals', 'Tracked automatically, every morning, before anyone asks',
+     'A spreadsheet, or nothing'),
+    ('Agent queries', 'Routed, timestamped and answered on the record',
+     'Handled informally, with nobody accountable'),
+    ('Minutes', 'Documented within thirty minutes of the meeting',
+     'Days later, or never'),
+    ('The processes', 'Fifty and more, every one auditable',
+     'Manual, untrackable, unverifiable'),
+]
+CASH_N, CASH_YEARS = 2191, 3
+
+#  THE CHOICE AT THE DOOR.  Added 30 October 2026 at his word: "allowed both
+#  Kerwyn and Gary to recruit but was concerned about the quality of
+#  recruiting as we cannot be about a number, they did not like, so frame
+#  this properly."
+#
+#  Framed properly means two things said plainly.  Recruiting was NEVER
+#  closed — both unit managers were free to bring people in, and did.  What
+#  was not on offer was lowering the bar to make a headcount look better.
+#  That is the answer to the quota criticism and it is the honest reason the
+#  roll is the size it is.  Neither manager is named: the decision was the
+#  branch's, and who disliked it is not film content.
+#
+#  The four-year figures, which are NOT anywhere else in this film (the
+#  `stay` scene carries the one-year pair, 67% against a published 55-60%):
+#    LIMRA — about 15% of full-time financial professionals were still with
+#      their hiring company after four years (2020); about 14% recently.
+#      Checked again on 30 October 2026; it is LIMRA's most consistently
+#      reported retention metric.
+#    The branch — 31% at four years, from its own Production and Manpower
+#      Record, the papers he sent on 29 October.
+RECRUIT = [
+    ('Recruit to a number', 15, 'Fill the seat this month', 'them'),
+    ('Recruit to a standard', 31, 'Five gates, and the full build', 'us'),
+]
+R_YEARS = 4
+
+#  The five steps the branch actually took on the one cash breach it found,
+#  in the brief's own order: "identified the breach, investigated it,
+#  contacted the client directly, recovered the funds, and produced a full
+#  documentary record".  No name, no amount, no date — the SEQUENCE is the
+#  claim, and it is the answer to "do you allow it?".
+CAUGHT_STEPS = ['We found it', 'We investigated it', 'We called the client ourselves',
+                'We recovered the money', 'We put the whole record on file']
+
+#  BUILT TO THE CODE.  Added on 30 October 2026 at his word: "central bank
+#  market conduct, all ads, processes etc is being built with market conduct
+#  in mind from all our communication".  That is a stronger claim than
+#  checking afterwards, and every line below is a rule this repository keeps
+#  and can show — the house notes record each one and the reason for it.
+#  The pairing is deliberate: what the branch WILL NOT do, beside the thing
+#  the code is protecting.  Nothing here is an allegation about anybody.
+BY_CODE = [
+    ('Never a section number we cannot stand behind',
+     'Every Insurance Act quotation checked word for word against the Act itself'),
+    ('Never "verify your details"',
+     'A client letter may not read like a phishing e-mail, so it never does'),
+    ('Never an income figure we invented',
+     'A recruiting advertisement prints what the record shows, or nothing'),
+    ('Never a replacement without the trade-offs',
+     'No policy is changed before the advantages and the disadvantages are put '
+     'to the client, and every letter we send says so'),
+    ('Never an ID, a permit or a bank detail on a web form',
+     'Those are taken by a person, on a signed form, never on a page'),
+]
+
+
+# ── the two waves, and the rise back ────────────────────────────────────────
+#  Asked for on 30 October 2026: "we had a migration ... we did rise back up
+#  ... deep dive to show how we are resilient. We have been through it. It's
+#  normal. It's natural."  (He named the competitor; it is elided here, for
+#  the same reason the scene does not name one.)
+#
+#  This is the headcount of licensed agents on the branch's units at each 30
+#  September, the branch's own financial year end, counted off the same 98
+#  records as OUTCOMES: licensed on or before the date, and not yet gone by
+#  it.  It is measured, not recalled, and it is the whole argument of the
+#  scene — the branch has taken a wave before and come back from it.
+#
+#  WHY THE LAST BAR IS 22 AND THE ROSTER SCENE SAYS 21, which is not a
+#  contradiction and must not be "fixed": this series counts licensed agent
+#  records on the units at a 30 September, Javid and Aleema included, because
+#  they are active in Salesforce today.  The roster scene counts who is in
+#  the branch now — 19 agents and 2 managers — with those two left out,
+#  since they come off over the next three years under a different
+#  arrangement.  Different populations, a month apart, both true.
+#
+#  WHERE PEOPLE WENT IS NOT IN SALESFORCE.  It has no field for it.  That ten
+#  of the 2020 leavers went to one competitor, and that the 2026 wave went to
+#  another, is the branch manager's own knowledge, not the record's — so the
+#  scene says a competitor and never names one, which is also the standing
+#  rule for this film.
+WAVES = [
+    (2010, 16), (2011, 20), (2012, 20), (2013, 25), (2014, 30), (2015, 27),
+    (2016, 31), (2017, 37), (2018, 41), (2019, 40), (2020, 27), (2021, 27),
+    (2022, 29), (2023, 36), (2024, 39), (2025, 34), (2026, 22),
+]
+W_AT = dict(WAVES)
+PEAK_Y = max(WAVES, key=lambda x: x[1])[0]          # 2018, at 41
+PEAK_N = W_AT[PEAK_Y]
+FALL_Y, BACK_Y = 2020, 2024                         # the wave, and the year back
+FALL_N, BACK_N = W_AT[FALL_Y], W_AT[BACK_Y]
+FELL = W_AT[FALL_Y - 1] - FALL_N                    # 13 in one year
+TOOK = BACK_Y - FALL_Y                              # four years to come back
+NOW_Y = max(y for y, _ in WAVES)
+NOW_N = W_AT[NOW_Y]
+
+# ── what happens everywhere else ────────────────────────────────────────────
+#  "deep dive in terms of international, what goes on", 30 October 2026.
+#
+#  Every figure here was read and checked on 30 October 2026, and each is
+#  labelled on screen with whose it is, because they measure different things
+#  and must not be averaged into one number.  The one peer-reviewed estimate
+#  leads; the consultancy's figure is marked as a consultancy's.
+#
+#    Gurun, Stoffman & Yonker, Journal of Financial Economics, 2021 — about
+#      40% of client assets follow an adviser who changes firms, estimated
+#      from registration filings across whole firms.  So about 60% stays.
+#    Cerulli Associates, 2025 transition research — advisers lose about 22%
+#      of assets moving between broker-dealers, about 11% moving between
+#      independent firms.  No published sample size.
+#    Broadridge, 2019 client survey — 47% of Gen X clients said they would
+#      stay with their current firm even if their adviser left, and 47% said
+#      the firm's reputation weighed more than the adviser.
+#    LIMRA — about 15% of full-time financial professionals were still with
+#      their hiring company after four years (2020), about 14% recently.
+#      That one is already on screen in the `better` scene, against the
+#      branch's own 31%, so it is not repeated here.
+#
+#  What is NOT claimed: that any of this is Trinidad and Tobago life
+#  insurance.  It is US advice and wealth management, and the scene says so.
+#  Advisers' own reported retention (80-86%, Fidelity 2023 and Schwab 2024)
+#  is left out: it measures the clients they WANTED to bring, which is a
+#  different thing, and the source page says so itself.
+WORLD = [
+    ('40%', 'of client assets follow the adviser', 'Journal of Financial Economics, 2021'),
+    ('22%', 'of assets lost in a move between firms', 'Cerulli Associates, 2025'),
+    ('47%', 'of clients would stay with the firm anyway', 'Broadridge, 2019'),
+]
+WORLD_LEFT = 100 - 40        # what stays, on the peer-reviewed estimate
+
+# ── how the branch rebuilds ─────────────────────────────────────────────────
+#  "how our focus, how we rebuilding. One of the strategies", 30 October
+#  2026.  Four moves, each one a thing this repository can show, in the order
+#  the branch does them.  No figure here that is not already on screen in a
+#  scene of its own.
+REBUILD = [
+    ('Hold the book', 'Every household written to, called, and matched to an agent'),
+    ('Serve it faster', 'The desks on one system, the papers tracked, the day set'),
+    ('Watch the renewals', 'Every premium chased at 45, 60, 75 and 90 days'),
+    ('Select, do not fill', 'Five gates, seven places, and the full build for each'),
+]
 
 # ── the branch's own history ─────────────────────────────────────────────────
 #  Every date here is one this repository can show: the day the thing went
@@ -508,13 +740,23 @@ _TENS = ('  twenty thirty forty fifty sixty seventy eighty ninety').split()
 
 
 def spoken(n):
+    #  Thousands matter now: the cash-collection control is 2,191, and the
+    #  old version did divmod(n, 100) and indexed _ONES[21], which simply
+    #  threw. "and" goes in before a tens or units remainder, the way it is
+    #  actually said here — two thousand one hundred and ninety-one.
     if n < 20:
         return _ONES[n]
     if n < 100:
         t, r = divmod(n, 10)
         return _TENS[t - 2] + ('-' + _ONES[r] if r else '')
-    h, r = divmod(n, 100)
-    return _ONES[h] + ' hundred' + (' and ' + spoken(r) if r else '')
+    if n < 1000:
+        h, r = divmod(n, 100)
+        return _ONES[h] + ' hundred' + (' and ' + spoken(r) if r else '')
+    k, r = divmod(n, 1000)
+    out = spoken(k) + ' thousand'
+    if not r:
+        return out
+    return out + (' ' if r >= 100 else ' and ') + spoken(r)
 
 
 def _say(key):
@@ -531,6 +773,14 @@ for key, want in (('count', AGENTS), ('count', len(SUPPORT)),
                   ('years', TOTAL), ('mix', LONG), ('mix', NEW),
                   ('built', len(BUILT)),
                   ('outcome', AGENT_RECORDS), ('outcome', SF_YEARS),
+                  ('outcome', OUT_N['Terminated']),
+                  ('waves', FELL), ('waves', FALL_N), ('waves', BACK_N),
+                  ('waves', TOOK),
+                  ('world', 100 - WORLD_LEFT),
+                  ('caught', CASH_N), ('examiner', CASH_N),
+                  ('cost', ENDED), ('cost', SF_YEARS),
+                  ('quality', RECRUIT[0][1]), ('quality', RECRUIT[1][1]),
+                  ('quality', R_YEARS),
                   ('outcome', OUT_N['Resigned']), ('outcome', OUT_N['Retired']),
                   ('outcome', OUT_N['Vested'])):
     said = _say(key)
@@ -730,13 +980,13 @@ def V(name, s):
         #  figures are grouped in OUTCOMES order with the two lit and last but
         #  for the pair nobody recorded.
         #
-        #  ONE SILHOUETTE FOR ALL 87, deliberately.  The figurines elsewhere
-        #  carry each person's sex off their own Salesforce record; for the 62
+        #  ONE SILHOUETTE FOR ALL 98, deliberately.  The figurines elsewhere
+        #  carry each person's sex off their own Salesforce record; for the 76
         #  who have left, that is not on file and would have to be guessed, so
         #  this grid uses the neutral head-and-shoulders glyph throughout and
         #  claims nothing about anybody.  Nobody is named, and no count here
         #  can be worked back to a person.
-        PER = 15
+        PER = 18
         figs, i = '', 0
         for _lab, n, tone in OUTCOMES:
             for _ in range(n):
@@ -757,6 +1007,178 @@ def V(name, s):
                 f'<div class="rsfoot">the branch&rsquo;s own record, gone '
                 f'through name by name &middot; Guardian&rsquo;s system keeps '
                 f'no &ldquo;retired&rdquo; and no &ldquo;vested&rdquo;</div></div>')
+
+    # 5a · what we stand for. Four values, each beside the control that
+    #      proves it, because a value with nothing behind it is a poster.
+    #      Asked for on 30 October 2026: "you never hear about the ethics and
+    #      values we stand for ... build this into the message deep".
+    if name == 'stand':
+        rows = ''.join(
+            f'<div class="rsstdc" style="--i:{j}"><b>{v}</b><em>{c}</em></div>'
+            for j, (v, c) in enumerate(VALUES))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsstd">{rows}</div>'
+                f'<div class="rsfoot">a value with no control behind it is a '
+                f'poster &middot; each of these is a thing we can show you</div></div>')
+
+    # 5b · built to the code. What the branch will not do, beside what the
+    #      Central Bank's market conduct guideline is protecting. Every line is
+    #      a rule the repository keeps.
+    if name == 'bycode':
+        rows = ''.join(
+            f'<div class="rsbycr" style="--i:{j}">'
+            f'<b class="rsbycn">{n}</b><em class="rsbycl">{w}</em></div>'
+            for j, (n, w) in enumerate(BY_CODE))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsbyc">{rows}</div>'
+                f'<div class="rsfoot">market conduct is designed in, not '
+                f'checked afterwards &middot; every letter, every form, every '
+                f'advertisement</div></div>')
+
+    # 5b2 · what an examiner would find. The brief's own comparison, six rows,
+    #       ours beside what most branches cannot produce. The single most
+    #       impressive thing the branch can put in front of an executive,
+    #       because every row is a record it can actually hand over.
+    if name == 'examiner':
+        rows = ''.join(
+            f'<div class="rsexr" style="--i:{j}"><b>{k}</b>'
+            f'<span class="rsexo"><i></i>{ours}</span>'
+            f'<span class="rsexn">{most}</span></div>'
+            for j, (k, ours, most) in enumerate(EXAMINER))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsex"><div class="rsexh">'
+                f'<b></b><span class="rsexo">What this branch hands over</span>'
+                f'<span class="rsexn">What most cannot produce</span></div>'
+                f'{rows}</div>'
+                f'<div class="rsfoot">the Central Bank is tightening, not '
+                f'loosening &middot; we are already on the other side of it'
+                f'</div></div>')
+
+    # 5c · found, and acted on. The five steps the branch took, in the order
+    #      it took them — which is the answer to "do you allow it?". The
+    #      count beside it is the cash-collection control: 2,191 approvals on
+    #      record, which is what makes a breach visible in the first place.
+    #
+    #      WHAT IS NOT CLAIMED: that nothing ever goes wrong here, or that
+    #      every case was found internally — one was reported by a client.
+    #      The claim is the true one and the stronger one: somebody looks,
+    #      and what is found is acted on. No name, no amount, no date.
+    if name == 'caught':
+        steps = ''.join(
+            f'<div class="rscg" style="--i:{j}"><span class="rscgn">{j + 1}</span>'
+            f'<b>{t}</b></div>' for j, t in enumerate(CAUGHT_STEPS))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rscgh">{cnt(CASH_N, 300, sep=True)}'
+                f'<span class="rsratn">cash approvals on record'
+                f'<em>in {spoken(CASH_YEARS)} years &middot; every agent, '
+                f'every client, every amount</em></span></div>'
+                f'<div class="rscgs"><i class="rscgt"></i>{steps}</div>'
+                f'<div class="rsfoot">things go wrong in every branch '
+                f'&middot; what matters is whether anybody looks, and what '
+                f'happens when they find it</div></div>')
+
+    # 5d · what the standard costs. His own argument, and the one scene that
+    #      reframes every departure in this film without characterising a
+    #      single person: "agents cannot do as they want to and when they
+    #      dont get their way wants to leave".
+    if name == 'cost':
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rscst"><span class="rscstn">{cnt(ENDED, 320)}'
+                f'<em>left over {spoken(SF_YEARS)} years</em></span>'
+                f'<i></i><span class="rscstl">A standard costs you people.<br>'
+                f'We have paid it, and we would pay it again.</span></div>'
+                f'<div class="rsfoot">nobody here is asked to stay by being '
+                f'allowed to do as they please</div></div>')
+
+    # 5e · the choice at the door. Two ways to recruit, and what is left of
+    #      each after four years. The bars are people out of a hundred, so
+    #      the eye reads survival rather than a percentage sign.
+    if name == 'quality':
+        cols = ''
+        for j, (lab, pct, sub, who) in enumerate(RECRUIT):
+            dots = ''.join(
+                f'<i class="{"on" if k < pct else ""}" style="--i:{k}"></i>'
+                for k in range(100))
+            cols += (f'<div class="rsqc q-{who}" style="--i:{j}"><b>{lab}</b>'
+                     f'<em>{sub}</em><div class="rsqd">{dots}</div>'
+                     f'<span class="rsqn">{cnt(pct, 900 + j * 400, suf="%")}'
+                     f'<i>still here after {spoken(R_YEARS)} years</i></span></div>')
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsqq">{cols}</div>'
+                f'<div class="rsfoot">recruiting was never closed here '
+                f'&middot; what was never on offer was dropping the bar to '
+                f'make a number look better</div></div>')
+
+    # 6a · the two waves, and the rise back between them. THE argument of the
+    #      film: this branch has taken a wave before and come back from it.
+    #      Measured off WAVES, which is the same 98 records as the grid above.
+    #
+    #      The bars are drawn by their own height, the line is drawn over
+    #      their tops, and the three callouts (the peak, the fall, the year
+    #      back) are the only figures on screen — every bar is NOT labelled,
+    #      because seventeen numbers across a frame reads as a spreadsheet.
+    if name == 'waves':
+        top = max(n for _, n in WAVES)
+        bars = ''
+        for j, (y, n) in enumerate(WAVES):
+            tone = ('fall' if y in (FALL_Y, NOW_Y) else
+                    'back' if y == BACK_Y else
+                    'peak' if y == PEAK_Y else '')
+            lab = str(y)[2:] if y % 2 == 0 else ''
+            bars += (f'<div class="rswb {tone}" style="--i:{j};--h:{n/top:.4f}">'
+                     f'<i></i><em>{lab}</em></div>')
+        #  The line over the tops, in the bars' own coordinate space: x is the
+        #  centre of each bar as a percentage, y is 100 minus its height.
+        pts = ' '.join(f'{(j + .5) / len(WAVES) * 100:.2f},'
+                       f'{100 - n / top * 100:.2f}' for j, (y, n) in enumerate(WAVES))
+        kk = ''.join(
+            f'<span class="rswk k-{t}" style="--i:{j}">{cnt(v, 300 + j * 140)}'
+            f'<b>{lab}</b></span>'
+            for j, (t, v, lab) in enumerate((
+                ('peak', PEAK_N, f'our best year, {PEAK_Y}'),
+                ('fall', FELL,   f'left in {FALL_Y} alone'),
+                ('back', BACK_N, f'back to this by {BACK_Y}'))))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rswv">'
+                f'<svg class="rswl" viewBox="0 0 100 100" preserveAspectRatio="none" '
+                f'aria-hidden="true"><polyline points="{pts}" pathLength="100"/></svg>'
+                f'<div class="rswbs">{bars}</div></div>'
+                f'<div class="rswks">{kk}</div>'
+                f'<div class="rsfoot">licensed agents on our units, at 30 September '
+                f'each year &middot; {TOOK} years to come back from the last one</div>'
+                f'</div>')
+
+    # 6b · what happens everywhere else. Three figures, each labelled with
+    #      whose it is, and the one point they agree on: most of the book
+    #      stays with the firm. The split bar is the peer-reviewed estimate.
+    if name == 'world':
+        rows = ''.join(
+            f'<span class="rsgwn" style="--i:{j}">{cnt(int(v.rstrip("%")), 320 + j * 180, suf="%")}'
+            f'<b>{what}</b><em>{src}</em></span>'
+            for j, (v, what, src) in enumerate(WORLD))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsgw">'
+                f'<div class="rsgwb"><i class="rswstay" style="--w:{WORLD_LEFT}"></i>'
+                f'<i class="rswgo" style="--w:{100 - WORLD_LEFT}"></i>'
+                f'<b class="rswsl">{WORLD_LEFT}% stays with the firm</b>'
+                f'<b class="rswgl">{100 - WORLD_LEFT}% follows</b></div>'
+                f'<div class="rsgws">{rows}</div></div>'
+                f'<div class="rsfoot">United States advice and wealth management, '
+                f'not Trinidad life &middot; what decides the rest is whether '
+                f'anybody calls the client</div></div>')
+
+    # 6c · how we rebuild. Four moves, in the order the branch does them, each
+    #      one a thing this repository can show. No figure that is not already
+    #      on screen in a scene of its own.
+    if name == 'rebuild':
+        cards = ''.join(
+            f'<div class="rsrbc" style="--i:{j}"><span class="rsrbn">{j + 1}</span>'
+            f'<b>{t}</b><em>{d}</em></div>'
+            for j, (t, d) in enumerate(REBUILD))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsrb"><i class="rsrbt"></i>{cards}</div>'
+                f'<div class="rsfoot">the book is held by being served, '
+                f'not by being asked to stay</div></div>')
 
     # 7a · the branch on one line. A dot for every person at the year they
     #      joined, stacked where a year repeats, so the eye reads a branch
@@ -793,11 +1215,6 @@ def V(name, s):
                 f'<div class="rshead">{cnt(len(BUILT), 300)}'
                 f'<span class="rsbigl">of these went live in ninety days</span></div>'
                 f'<div class="rsbuilt">{items}</div></div>')
-
-    # 8 · and while that was going on, we rebuilt how the branch runs.
-    if name == 'rebuild':
-        return (f'<div class="rsstage">{shield("warm")}{mesh("relink")}{crack("held")}</div>'
-                f'<div class="rscap"><div class="rseyeb">WE REBUILT IT</div></div>')
 
     # 9 · one sign-in, every tool behind it.
     if name == 'one':
@@ -1269,7 +1686,13 @@ CHAPTER = {
     'rose': 'And it went up', 'stayed': 'Who stayed',
     'count': 'Twenty-six still here', 'years': '221 years between us',
     'mix': 'Ten years, and new', 'story': 'The branch, on one line', 'outcome': 'Every agent, sixteen years',
-    'rebuild': 'We rebuilt it', 'built': 'Eighteen things, since August',
+    'stand': 'What we stand for', 'bycode': 'Built to the code',
+    'examiner': 'What an examiner would find',
+    'caught': 'Found, and acted on', 'cost': 'What a standard costs',
+    'quality': 'The choice at the door',
+    'waves': 'We have been here before', 'world': 'It happens everywhere',
+    'rebuild': 'So this is how we rebuild',
+    'built': 'Eighteen things, since August',
     'one': 'One sign-in', 'day': 'Your day, set', 'wall': 'One score',
     'served': 'What we closed', 'papers': 'The papers', 'ff': 'Not one lapse',
     'keep': 'The business stays', 'stay': 'And so do the people',
@@ -1841,8 +2264,6 @@ CSS = r"""
 @keyframes grow2{to{width:100%}}
 @keyframes growY{to{transform:none}}
 @keyframes growX{to{transform:none}}
-@keyframes growY{to{transform:none}}
-@keyframes growX{to{transform:none}}
 .rs .rstick{position:absolute;width:1.1vw;height:1.1vw;border-radius:50%;background:#070F26;
   border:.18vw solid var(--cy);top:50%;left:calc(6% + var(--i)*14.5%);
   transform:translate(-50%,-50%) scale(0);animation:tickIn .35s calc(.7s + var(--i)*.26s) both}
@@ -2164,6 +2585,188 @@ CSS = r"""
 .rs .rscoml b{color:var(--cy);font-weight:800}
 .rs .rscom .rsfoot b{color:var(--ink);font-weight:800}
 
+/* 5a · what we stand for */
+.rs .rsstd{display:grid;grid-template-columns:repeat(2,1fr);gap:1.4vh 2vw;
+  width:74vw;margin-top:2vh}
+.rs .rsstdc{display:grid;gap:.3vh;padding:1.9vh 1.5vw;border-radius:.7vh;
+  background:#0E1930;border:1px solid var(--line);border-left:3px solid var(--cy);
+  opacity:0;animation:fRt .55s calc(.45s + var(--i)*.22s) both}
+.rs .rsstdc b{font-size:1.62vw;font-weight:800}
+.rs .rsstdc em{font-style:normal;font-size:1.08vw;color:var(--mut);line-height:1.35}
+
+/* 5b · built to the code */
+.rs .rsbyc{display:grid;gap:.78vh;width:78vw;margin-top:1.6vh}
+.rs .rsbycr{display:grid;grid-template-columns:30vw 1fr;align-items:baseline;
+  gap:1.6vw;padding:.82vh 1.2vw;border-radius:.5vh;background:#0C1527;
+  opacity:0;animation:fRt .5s calc(.4s + var(--i)*.16s) both}
+.rs .rsbycn{font-size:1.24vw;font-weight:800;color:var(--cy)}
+.rs .rsbycl{font-style:normal;font-size:1.14vw;color:var(--mut);line-height:1.3}
+
+/* 5b2 · what an examiner would find. Three columns, and the middle one — ours
+   — is the lit one. The right-hand column is deliberately grey: it is what
+   is MISSING elsewhere, so it must not compete for the eye. */
+.rs .rsex{display:grid;gap:.52vh;width:80vw;margin-top:1.4vh}
+.rs .rsexh,.rs .rsexr{display:grid;grid-template-columns:11vw 1fr 1fr;
+  align-items:center;gap:1.4vw}
+.rs .rsexh{padding:0 1.1vw .4vh;opacity:0;animation:fUp .5s .35s both}
+.rs .rsexh span{font-size:.95vw;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase}
+.rs .rsexh .rsexo{color:var(--cy)}
+.rs .rsexh .rsexn{color:var(--dim)}
+.rs .rsexr{padding:.72vh 1.1vw;border-radius:.5vh;background:#0C1527;opacity:0;
+  animation:fRt .5s calc(.6s + var(--i)*.15s) both}
+.rs .rsexr b{font-size:1.14vw;font-weight:800;color:var(--ink)}
+.rs .rsexr .rsexo{display:flex;align-items:baseline;gap:.5vw;
+  font-size:1.1vw;font-weight:600;line-height:1.3}
+.rs .rsexr .rsexo i{flex:none;width:.95vw;height:.95vw;border-radius:50%;
+  background:var(--cy);box-shadow:0 0 1.1vh rgba(0,229,255,.55)}
+/* NOT struck through. A line through it reads as "cancelled", and this
+   column is not cancelled — it is what is MISSING somewhere else. Dim is
+   the whole treatment it needs, and the header says what it is. */
+.rs .rsexr .rsexn{display:flex;align-items:baseline;gap:.5vw;
+  font-size:1.04vw;color:var(--dim);line-height:1.3}
+.rs .rsexr .rsexn::before{content:"";flex:none;width:.95vw;height:.95vw;
+  border-radius:50%;border:1.5px solid #2A3550}
+
+/* 5c · found, and acted on */
+.rs .rscgh{display:flex;align-items:center;justify-content:center;gap:1.5vw;
+  margin-top:1.2vh}
+.rs .rscgh .rscnt{font-size:7.6vw;line-height:.84;font-weight:800;
+  letter-spacing:-.045em;color:var(--cy)}
+.rs .rsratn{display:grid;gap:.2vh;text-align:left;font-size:1.85vw;
+  font-weight:800}
+.rs .rsratn em{font-style:normal;font-size:1.12vw;color:var(--mut);font-weight:600}
+.rs .rscgs{position:relative;display:grid;grid-template-columns:repeat(5,1fr);
+  gap:1.1vw;width:80vw;margin-top:3vh}
+.rs .rscgt{position:absolute;left:4%;right:4%;top:2.6vh;height:2px;
+  background:linear-gradient(90deg,#223150,var(--cy));
+  transform:scaleX(0);transform-origin:left;animation:growX 1.6s .5s both}
+.rs .rscg{position:relative;display:grid;justify-items:center;gap:.7vh;
+  text-align:center;opacity:0;
+  animation:fUp .55s calc(.8s + var(--i)*.28s) both}
+.rs .rscgn{display:grid;place-items:center;width:5.2vh;height:5.2vh;
+  border-radius:50%;background:#0E1930;border:2px solid var(--cy);
+  font-size:1.45vw;font-weight:800;color:var(--cy);
+  box-shadow:0 0 0 .6vh rgba(7,15,38,1)}
+.rs .rscg b{font-size:1.2vw;font-weight:700;line-height:1.3}
+
+/* 5d · what the standard costs */
+.rs .rscst{display:flex;align-items:center;justify-content:center;gap:2.6vw;
+  margin-top:2vh}
+.rs .rscst > i{width:1px;height:11vh;background:var(--line)}
+.rs .rscstn{display:grid;justify-items:center;gap:.2vh}
+.rs .rscstn .rscnt{font-size:7.4vw;line-height:.86;font-weight:800;
+  letter-spacing:-.045em;color:var(--cold)}
+.rs .rscstn em{font-style:normal;font-size:1.15vw;color:var(--mut)}
+.rs .rscstl{font-size:2.05vw;line-height:1.34;font-weight:700;max-width:34vw;
+  opacity:0;animation:fUp .7s 1.1s both}
+
+/* 5e · the choice at the door. A hundred dots a column, lit to the survival
+   rate, so the comparison is read as PEOPLE rather than as a percentage. */
+.rs .rsqq{display:grid;grid-template-columns:repeat(2,1fr);gap:3vw;
+  width:68vw;margin-top:2vh}
+.rs .rsqc{display:grid;justify-items:center;gap:.4vh;padding:2.4vh 1.6vw;
+  border-radius:.8vh;background:#0C1527;border:1px solid var(--line);
+  opacity:0;animation:rsTile .6s calc(.4s + var(--i)*.3s) both}
+.rs .rsqc.q-us{border-color:rgba(0,229,255,.45);
+  box-shadow:0 0 3.4vh rgba(0,229,255,.12)}
+.rs .rsqc b{font-size:1.68vw;font-weight:800}
+.rs .rsqc.q-us b{color:var(--cy)}
+.rs .rsqc em{font-style:normal;font-size:1.05vw;color:var(--mut)}
+.rs .rsqd{display:grid;grid-template-columns:repeat(10,1fr);gap:.42vw;
+  margin:1.6vh 0 .9vh}
+.rs .rsqd i{width:.82vw;height:.82vw;border-radius:50%;background:#1B2744;
+  opacity:0;animation:fUp .3s calc(.9s + var(--i)*.012s) both}
+.rs .rsqc.q-them .rsqd i.on{background:var(--cold)}
+.rs .rsqc.q-us .rsqd i.on{background:var(--cy);
+  box-shadow:0 0 .9vh rgba(0,229,255,.5)}
+.rs .rsqn{display:grid;justify-items:center;gap:.1vh;margin-top:.5vh}
+.rs .rsqn .rscnt{font-size:3.2vw;line-height:.9;font-weight:800;
+  letter-spacing:-.03em;color:var(--cold)}
+.rs .rsqc.q-us .rsqn .rscnt{color:var(--cy)}
+.rs .rsqn i{font-style:normal;font-size:1.02vw;color:var(--dim)}
+
+/* 6a · the two waves, and the rise back ───────────────────────────────────
+   The bars grow from their own base and the line is drawn over their tops.
+   A bar GROWS WITH growY, never with `grow`/`grow2`, which animate width:
+   a rule that starts at scale(0) and names one of those renders at zero for
+   the whole scene, which has cost this film three shots already.
+
+   THE LINE NEEDS pathLength="100". Without it the dash of 100 is shorter
+   than the real path and the line is simply invisible until the offset
+   falls under its true length. And the rule has to be `.rs .rswl` (0,2,0),
+   never a bare `.rswl`, so a `svg:not([width])` rule in the shell — which
+   is (0,1,1) — cannot outrank it and pin the chart to 20px. */
+.rs .rswv{position:relative;width:74vw;height:30vh;margin-top:1.8vh}
+.rs .rswbs{position:absolute;inset:0;display:grid;
+  grid-template-columns:repeat(17,1fr);align-items:end;gap:.42vw}
+.rs .rswb{position:relative;height:100%;display:flex;flex-direction:column;
+  justify-content:flex-end;align-items:center;gap:.5vh}
+.rs .rswb i{display:block;width:100%;height:calc(var(--h)*100%);
+  border-radius:.3vh .3vh 0 0;background:#223150;
+  transform:scaleY(0);transform-origin:bottom;
+  animation:growY .5s calc(.3s + var(--i)*.055s) both}
+.rs .rswb em{font-style:normal;font-size:.92vw;color:var(--dim);
+  position:absolute;bottom:-2.3vh;letter-spacing:.02em}
+.rs .rswb.peak i{background:linear-gradient(180deg,var(--peri),#3A4792)}
+.rs .rswb.fall i{background:linear-gradient(180deg,var(--cold),#2E3C58)}
+.rs .rswb.back i{background:linear-gradient(180deg,var(--cy),#0C6E86);
+  box-shadow:0 0 2vh rgba(0,229,255,.34)}
+.rs .rswl{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.rs .rswl polyline{fill:none;stroke:var(--cy);stroke-width:.55;
+  stroke-linejoin:round;vector-effect:non-scaling-stroke;
+  stroke-dasharray:100;stroke-dashoffset:100;
+  animation:rsWdraw 1.9s 1s both}
+@keyframes rsWdraw{to{stroke-dashoffset:0}}
+.rs .rswks{display:flex;gap:3.2vw;align-items:flex-start;margin-top:3.4vh}
+.rs .rswk{display:grid;justify-items:center;gap:.1vh;opacity:0;
+  animation:fUp .6s calc(2.5s + var(--i)*.3s) both}
+.rs .rswk .rscnt{font-size:3.4vw;line-height:.9;font-weight:800;
+  letter-spacing:-.03em}
+.rs .rswk b{font-size:1.1vw;font-weight:600;color:var(--mut);white-space:nowrap}
+.rs .rswk.k-peak .rscnt{color:var(--peri)}
+.rs .rswk.k-fall .rscnt{color:var(--cold)}
+.rs .rswk.k-back .rscnt{color:var(--cy)}
+
+/* 6b · what happens everywhere else */
+.rs .rsgw{display:grid;gap:3vh;justify-items:center;width:72vw;margin-top:2vh}
+.rs .rsgwb{position:relative;display:flex;width:100%;height:5.6vh;
+  border-radius:.6vh;overflow:hidden;background:#0C1527}
+.rs .rsgwb i{display:block;height:100%;width:calc(var(--w)*1%);
+  transform:scaleX(0);transform-origin:left;
+  animation:growX .9s .5s both}
+.rs .rsgwb i.rswstay{background:linear-gradient(90deg,#0C6E86,var(--cy))}
+.rs .rsgwb i.rswgo{background:#2A3550;animation-delay:1.1s}
+.rs .rsgwb b{position:absolute;top:50%;transform:translateY(-50%);
+  font-size:1.18vw;font-weight:800;opacity:0;animation:fUp .5s 1.5s both}
+.rs .rsgwb b.rswsl{left:1.2vw;color:#031E25}
+.rs .rsgwb b.rswgl{right:1.2vw;color:var(--mut);animation-delay:1.8s}
+.rs .rsgws{display:grid;grid-template-columns:repeat(3,1fr);gap:1.8vw;width:100%}
+.rs .rsgwn{display:grid;justify-items:center;gap:.25vh;padding:2vh 1vw;
+  border-radius:.7vh;background:#0E1930;border:1px solid var(--line);
+  border-top:3px solid var(--peri);text-align:center;opacity:0;
+  animation:rsTile .6s calc(2s + var(--i)*.24s) both}
+.rs .rsgwn .rscnt{font-size:3vw;line-height:.9;font-weight:800;color:var(--peri);
+  letter-spacing:-.03em}
+.rs .rsgwn b{font-size:1.1vw;font-weight:600;line-height:1.3}
+.rs .rsgwn em{font-style:normal;font-size:.92vw;color:var(--dim);margin-top:.5vh}
+
+/* 6c · how we rebuild */
+.rs .rsrb{position:relative;display:grid;grid-template-columns:repeat(4,1fr);
+  gap:1.5vw;width:78vw;margin-top:2.4vh}
+.rs .rsrbt{position:absolute;left:3%;right:3%;top:3.1vh;height:2px;
+  background:linear-gradient(90deg,#223150,var(--cy));
+  transform:scaleX(0);transform-origin:left;animation:growX 1.4s .4s both}
+.rs .rsrbc{position:relative;display:grid;justify-items:center;gap:.8vh;
+  text-align:center;opacity:0;
+  animation:fUp .6s calc(.7s + var(--i)*.26s) both}
+.rs .rsrbn{display:grid;place-items:center;width:6.2vh;height:6.2vh;
+  border-radius:50%;background:#0E1930;border:2px solid var(--cy);
+  font-size:1.7vw;font-weight:800;color:var(--cy);
+  box-shadow:0 0 0 .7vh rgba(7,15,38,1)}
+.rs .rsrbc b{font-size:1.5vw;font-weight:800;margin-top:.6vh}
+.rs .rsrbc em{font-style:normal;font-size:1.05vw;color:var(--mut);line-height:1.35}
+
 /* small shared bits */
 .rs .rstiles.sm3{margin-top:1.6vh;gap:1.2vw}
 .rs .rssteps.three{grid-template-columns:repeat(3,auto)}
@@ -2175,6 +2778,19 @@ CSS = r"""
 # collapsed the stage from 461px to 146, so the shield rendered at a sixth of
 # its size with nothing in the console. Every class here is rs-prefixed, and
 # this refuses to write a page where one has slipped through anyway.
+def _guard_dup(src):
+    #  Two `if name == 'x'` branches in V() is the shape that just cost a
+    #  scene: the first wins silently, and deleting it hands the scene to a
+    #  stale one left behind by an earlier cut.  Caught at build time instead.
+    names = re.findall(r"if name == '([a-z0-9]+)'", src)
+    dup = sorted({n for n in names if names.count(n) > 1})
+    if dup:
+        raise SystemExit(
+            "V() has two branches for " + ', '.join(repr(d) for d in dup) +
+            ". The first one wins and the other is dead code from an earlier "
+            "cut — delete the stale branch, do not leave both.")
+
+
 def _guard(html):
     css = '\n'.join(re.findall(r'<style>(.*?)</style>', SHELL.read_text(), re.S))
     theirs = set(re.findall(r'\.([a-zA-Z][\w-]*)', css))
@@ -2229,6 +2845,7 @@ def _guard_own(css):
 
 _guard(SCENES)
 _guard_own(CSS)
+_guard_dup(open(__file__).read())
 
 shell = SHELL.read_text()
 chrome_end = shell.index('</div>', shell.index('<div id="chrome">')) + len('</div>')
