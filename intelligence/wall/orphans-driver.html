@@ -95,7 +95,7 @@
   .kr .b i{display:block;height:100%;width:0;border-radius:.5rem;background:linear-gradient(90deg,#B88A2E,#F6D98A);transition:width 1.6s var(--ease)}
   .kr .b i.a{background:linear-gradient(90deg,#7B6430,#C9A55A)}
   .kr span{font:800 1.08rem var(--fd);color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
-  .named{margin-top:auto;padding-top:.5rem;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-top:1px solid var(--line);font:600 .95rem var(--fb);color:var(--dim)}
+  .named{margin-top:auto;padding-top:.5rem;font-size:.9rem;line-height:1.4;border-top:1px solid var(--line);font:600 .95rem var(--fb);color:var(--dim)}
   .named b{color:var(--gold);font:800 1.1rem var(--fd)}
 
   /* what his automation sent */
@@ -243,7 +243,7 @@ function plural(n, one, many){ return fmt(n)+" "+(Math.round(n)===1 ? one : (man
 function pct(a, b){ return b ? Math.round(100*a/b) : 0; }
 
 var KINDS = [["own","In his <b>own words</b>",0],["chase","The <b>morning chase</b>, sent in his voice",1],["list","The <b>daily list</b>, one post a task",1],
-  ["intel","<b>Branch Intelligence</b> follow-ups on quiet tasks",1],["follow","<b>Follow-ups</b> on clients waiting",1],["move","Tasks <b>moved</b> to cover an absence",1]];
+  ["intel","<b>Branch Intelligence</b> follow-ups on quiet tasks",1],["follow","<b>Instructions</b> and follow-ups drafted for him",1],["move","Tasks <b>moved</b> to cover an absence",1]];
 var GROUPS = [["To clients","c",["letters","reminders","again","receipts","still","notes","intros"]],["To agents","a",["briefs","clock"]],
   ["To the branch and staff","s",["late","chasing","notecheck","replies"]]];
 
@@ -285,8 +285,9 @@ function paint(){
       var n = P.all[k[0]]||0;
       return '<div class="kr"><div class="l">'+k[1]+'</div><div class="b"><i class="'+(k[2]?'a':'')+'" data-w="'+(100*n/top).toFixed(1)+'"></i></div><span data-c="'+n+'">0</span></div>'; }).join("");
     var NM = V.named || {};
-    $("#named").innerHTML = (NM.board||NM.salesforce) ? "Clients named: <b>"+fmt(NM.board||0)+"</b> by him on the board"+(NM.salesforce ? ", <b>"+fmt(NM.salesforce)+"</b> in Salesforce" : "")
-      : "Every naming, list and follow-up is counted from the tasks themselves.";
+    var hold = P.all.hold || 0;
+    $("#named").innerHTML = (NM.board||NM.salesforce) ? "Clients named: <b>"+fmt(NM.board||0)+"</b> by him on the board"+(NM.salesforce ? ", <b>"+fmt(NM.salesforce)+"</b> in Salesforce" : "")+(hold ? " &middot; <b>"+fmt(hold)+"</b> hold notices" : "")
+      : (hold ? "Also <b>"+fmt(hold)+"</b> hold and carry-on notices. " : "") + "Every list and follow-up is counted from the tasks themselves.";
     bits.push("The Branch Manager: <b>"+fmt(pr(all))+"</b> prompts on the orphan tasks since "+esc(fmtDay(V.since||"2026-09-25"))+", <b>"+fmt(P.hand.all)+"</b> in his own words");
     /* the ring */
     var A = V.answer || {}, tot = A.prompts || 0, C = 2*Math.PI*50, off = 0;

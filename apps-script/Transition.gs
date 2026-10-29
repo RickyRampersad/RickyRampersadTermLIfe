@@ -12697,7 +12697,7 @@ var T_OWALL = { KEY: 'transition:owall:z', BUSY: 'transition:owall:busy', FRESH_
   STAFF: ['Sasha Lalla-Jagassar', 'Elizabeth Lee', 'Azariah Griffith', 'Kamla Dookran', 'Pawan Probhu'],
   NICK: { 'elizabeth': 'Liz' },
   LIST: /^\s*ON YOUR LIST TODAY\s*[—–-]+\s*([^,]+?)\s*,\s*#(\d+)\s+of\s+(\d+)/i,
-  HEAD: /^\s*(Sales Support|BMA|Branch Manager Assistant|Unit Manager|Agent|Client Support)\s*·\s*([^·\n]+?)\s*·/i,
+  HEAD: /^\s*(Sales Support|BMA|Branch Manager Assistant|Unit Manager|Agent|Client Support|Staff)\s*·\s*([^·\n]+?)\s*·/i,
   REACHED: /\b(spoke|spoken|speaking|contacted|client (advised|confirmed|said|agreed|ok|wants|requested)|appointment|met with|meeting set|reached|conversation|answered the call)\b/i,
   TRIED: /\b(no answer|not answering|did ?n[o']t answer|voice ?mail|not reachable|unreachable|unable to (reach|contact)|could ?n[o']t (reach|contact)|trying to reach|tried|try again|will try|call(ed)? back|phone (off|busy)|busy|not in service|wrong number|left (a )?(message|msg|vm)|sent (a |an )?(whats ?app|message|msg|text|sms|e-?mail))\b/i,
   MOVED: /\b(re-?assign(ing|ed)?|moved to|handing (it )?over)\b/i,
@@ -13207,15 +13207,21 @@ function tOwallSaid_(s) {
    Counts and first names only: no client, no task, no words. */
 var T_DRIVE = {
   TEAM: [{ key: 'liz', name: 'Liz' }, { key: 'sasha', name: 'Sasha' }, { key: 'azariah', name: 'Azariah' }, { key: 'kamla', name: 'Kamla' }],
-  PROMPT: { own: 'hand', chase: 'auto', list: 'auto', intel: 'auto', follow: 'auto', move: 'auto' },
+  PROMPT: { own: 'hand', chase: 'auto', list: 'auto', intel: 'auto', follow: 'auto', move: 'auto' },   // a hold notice, a naming and a record are not prompts
   DAYS: 10,
   /* what a note by the team says. A note can say several things; its reading is the first that fits, in this order */
-  PARK: /\b(please advise|kindly advise|advise (who|on (the )?(agent|assign))|who (to|should|will) (be )?assign|who (is|will be) (the|their|her|his) (new )?agent|await(ing)? (the )?(new |an |the )?agent|new agent (to be|will be|is to be) (assigned|named)|agent (to be|yet to be|not yet) (assigned|named)|to be assigned|pending (assignment|agent)|await(ing)? (your|the branch manager'?s?|mr\.? rampersad'?s?|ricky'?s?|bm'?s?) (advice|instruction|go|decision|approval|feedback)|for (your|bm|the branch manager'?s?) (advice|attention|approval|decision)|assign (an |a new |the )?agent|reassign)\b/i,
-  SQ: /\b(sq|s\.q\.?|service questionnaire|questionnaire|survey|review (form|link))\b/i,
+  PARK: /who (?:to|i can|should|this should be) (?:have (?:this|it) )?(?:assign|be assigned)|advise (?:on )?who|confirm who|\bRR to assign|agent to be assigned|(?:awa\w*ting|waiting (?:on|for)) (?:call )?(?:new |an? |the )?agent|new agent to be assigned|awaiting (?:agent )?assignment|(?:awa\w*ting|waiting)(?: for| on)? (?:the )?assignment of (?:an? |new )?agent|needs? an agent assigned/i,
+  ASK: /(?:@Ricky Rampersad|Mr\.? Rampersad|\bRR\b)[\s\S]*?(?:\?|advise|guidance|confirm|please|kindly|reminder)/i,
+  CLOSEOFF: /^Not done (?:today|on [A-Z][a-z]{2} \d{1,2} [A-Z][a-z]{2})\s*:[\s\S]*New date/i,
+  REACHED: /spoke (?:to|with)|spoken to|(?:client|she|he|they|mr\.?|ms\.?|mrs\.?) (?:\w+ )?(?:indicated|confirmed|advised|said|stated|explained|expressed|requested|queried|asked|agreed|is aware|has no|wants|would like|wishes|prefers|is satisfied|declined)|client (?:called|contacted)|called back|connected with|no (?:questions|concerns)|chatted with/i,
+  TRIED: /no answer|voice ?mail|did not (?:get an )?answer|unanswered|bounc|invalid|wrong n(?:o|umber)\b|no response|unreachable|out of service|calls? (?:went|go(?:es)?|going)|straight to|unable to (?:reach|contact|connect|get on)|tried (?:calling|to call|reaching)|attempted (?:calling|to call)|no reply|whats ?app|e-?mail(?:ed)?\s+(?:was\s+)?(?:sent|to (?:the )?client)|(?:follow[ -]?up|second|reminder) e-?mail|sent (?:an? |the )?(?:e-?mail|message|text|sms)|facebook message/i,
+  DECLINE: /(?:does not|doesn.t|do not|don.t|would not|not) (?:want|wish|like|require|need)\w* (?:to have )?(?:an?y? |another |a new |a direct )?(?:assigned )?(?:agent|representative)|won.t require|rather manage|keep (?:my|her|his|the) polic(?:y|ies) (?:as is|under)/i,
+  TOAGENT: /^(?:Hi|Dear|Good (?:day|morning|afternoon))\s+(?:Neil|Premchand|Prem|Fawwaz|Fawaz|Rajiv|Joy|Felicia|Malcolm|Randolph|Narissa|Meera|Daniel|Darryl|Varun)\b|kindly provide feedback|was the client contacted/i,
+  SQ: /\bSQs?\b|service questionnaire|questionnaire/i,
   MONEY: /\b(premium|payment|paid|pay|arrears|lapse[ds]?|reinstat\w*|overdue|outstanding|debit|salary deduction)\b/i,
   DETAILS: /\b(updated?|confirmed|verified|corrected|new) (the |her |his |their |client'?s? )?(e-?mail|email address|number|phone|contact|address|details|mobile)\b|\b(e-?mail|number|address|details|contact) (updated|confirmed|verified|corrected|changed)\b/i,
   NEXT: /\b(will (call|follow|send|revert|contact|update|visit|meet)|appointment|meeting (set|booked|scheduled)|set (up )?(a |an )?(meeting|appointment)|call back (on|at|tomorrow|monday|tuesday|wednesday|thursday|friday)|by (monday|tuesday|wednesday|thursday|friday|tomorrow|\d{1,2}(st|nd|rd|th)?\b)|agent (will|to) (call|visit|contact|meet)|introduc\w+ (to|the) agent)\b/i,
-  VAGUE: /^(follow(ed|ing)? up|pending|awaiting (feedback|response|reply)|noted|ok(ay)?|done|in progress|n\/?a|see above|as above|no update|update pending)[\s.!]*$/i
+  VAGUE: /^(?:awaiting|pending|follow(?:ed|ing)?[ -]?up|in progress|information being gathered|noted|done|completed|actioned|updated|to (?:call|follow up|reply)|processing|up to date|ok(?:ay)?|n\/?a|no feedback)\b[^\n]{0,70}$/i
 };
 /** Whose entry this is: 'liz', 'sasha', 'azariah' (the cup's players), 'kamla', 'bm' for the branch manager's user, or ''.
  *  A post under his user headed with a staff member's name (the board, the tracker's close-out) is theirs. */
@@ -13232,42 +13238,59 @@ function tOwallStaffOf_(by, text) {
     var q = tCupPlayer_(nm, '');
     if (q) return q;
     if (String(nm).trim().toLowerCase().split(/\s+/)[0] === String(T_OWALL2.BMA).toLowerCase().split(/\s+/)[0]) return 'kamla';
+    /* an agent's note through the board, or the board's own naming line, is not his hand */
+    if (tNameKey_(nm) !== tNameKey_(TRANSITION.MANAGER.name)) return hb && /^Named to\b/i.test(nm) ? 'bm' : '';
   }
   return 'bm';
+}
+/** A note without the header the board or the tracker puts on it: "From the assignment board · Name (Role), 27 Oct 2026, 11:00:"
+ *  or "Sales Support · Name · Tue 27 Oct:" (with or without a time). */
+function tOwallStrip_(text) {
+  return String(text || '').trim().replace(/^From the assignment board · [\s\S]*?\d{1,2}:\d{2}:\s*/, '')
+    .replace(/^(?:Sales Support|Client Support|BMA|Branch Manager Assistant|Staff|Unit Manager|Agent)\s*·[^·\n]+·\s*(?:[A-Z][a-z]{2}\s+\d{1,2}\s+[A-Z][a-z]{2}(?:\s+\d{1,2}:\d{2}\s*[ap]m)?)?\s*[:\n]?\s*/i, '').trim();
 }
 /** What an entry under the branch manager's user is: own (his hand), list, intel, follow, move, name, or auto (a record). */
 function tOwallBmKind_(text) {
   var x = String(text || '').trim();
   if (T_OWALL.LIST.test(x)) return 'list';
   if (/^Branch Intelligence\b/i.test(x)) return 'intel';
-  if (/^FOLLOW-?UP\b/.test(x)) return 'follow';
-  if (/^(MOVED\b|Moved from\b|ACTION REQUIRED\b|BACK\b|[A-Z][a-z]+, this one is yours\b)/.test(x)) return 'move';
-  if (/^(AGENT NAMED\b|Named to\b|Orphan transition\b)/i.test(x)) return 'name';
-  if (/^(SERVICE RATING\b|NOTE\s*[—–-])/.test(x) || (T_OWALL.HEAD.test(x) && /not touched/i.test(x))) return 'auto';
+  if (/^(AGENT NAMED\b|NAMED\s*[—–-]|Orphan transition\b)|^From the assignment board · Named to\b/i.test(x)) return 'name';
+  if (/^(MOVED\b|Moved from\b|BACK\s*[—–-]|RETURNED to\b|REASSIGNED TO\b|Reason for reassignment|REOPENED\b|Reopened by\b|[A-Z][a-z]+, this one is yours\b)/.test(x)) return 'move';
+  /* the instructions the tracker and the routine draft for him: a prompt, by his automation */
+  if (/^(ACTION REQUIRED|FOLLOW-?UP|UPDATE\s*[—–,-]|NOTE\s*[—–-]|NEW FROM THE CLIENT|CORRECTION|EMAIL TRAIL|Inbox scrub|New e-mail in)/.test(x)) return 'follow';
+  if (/^(HOLD|CARRY ON)\s*[—–-]/.test(x)) return 'hold';
+  if (/^SERVICE RATING\b/.test(x) || (T_OWALL.HEAD.test(x) && /not touched/i.test(x))) return 'auto';
   return 'own';
 }
-/** What a note by the team says, as letters: r reached the client, t tried, p waiting on the branch manager to name an agent,
- *  q the service questionnaire, m premium or payment, d details confirmed or updated, n a next step with a time, v a status
- *  with no outcome. */
+/** What a note by the team says, as letters: r reached the client, t tried or sent a message, p waiting on the branch manager
+ *  to name an agent, k a question for him, z the client declines an agent, a chasing the agent named, q the service
+ *  questionnaire, m premium or payment, d details confirmed or updated, n a next step with a time, v a status with no
+ *  outcome, x the tracker's close-off line (a new date and a reason). The patterns were read off the 1,017 staff notes on the
+ *  orphan tasks from 25 September to 28 October 2026. */
 function tOwallTheme_(text) {
-  var x = String(text || '').replace(/\s+/g, ' ').trim(), out = '', kind = tCupKind_(x);
-  if (kind === 'reached') out += 'r';
-  if (kind === 'tried') out += 't';
+  var raw = String(text || '').trim(), x = raw.replace(/\s+/g, ' '), out = '';
+  if (T_DRIVE.CLOSEOFF.test(raw)) return 'x';            // the tracker's close-off line: a date moved, nothing more
+  var tried = T_DRIVE.TRIED.test(x), reached = T_DRIVE.REACHED.test(x) || (tCupKind_(x) === 'reached' && !tried);
+  if (reached) out += 'r';
+  if (tried) out += 't';
   if (T_DRIVE.PARK.test(x)) out += 'p';
+  if (T_DRIVE.ASK.test(x)) out += 'k';
+  if (T_DRIVE.DECLINE.test(x)) out += 'z';
+  if (T_DRIVE.TOAGENT.test(raw)) out += 'a';
   if (T_DRIVE.SQ.test(x)) out += 'q';
   if (T_DRIVE.MONEY.test(x)) out += 'm';
   if (T_DRIVE.DETAILS.test(x)) out += 'd';
   if (T_DRIVE.NEXT.test(x)) out += 'n';
-  if (!out && (x.length < 40 || T_DRIVE.VAGUE.test(x))) out = 'v';
+  if (!/[rtzaqmdn]/.test(out) && (x.split(' ').length <= 6 || T_DRIVE.VAGUE.test(x))) out += 'v';
   return out || 'o';
 }
 /** A note's reading: drive (a next step or the questionnaire), park (left with the branch manager), record (an outcome), or
  *  status (nothing happened that a reader could act on). */
 function tOwallReading_(th) {
   th = String(th || '');
-  if (/q|n/.test(th)) return 'drive';
-  if (/p/.test(th)) return 'park';
-  if (/[rtmd]/.test(th)) return 'record';
+  if (/[qna]/.test(th)) return 'drive';
+  if (/p/.test(th) || (/k/.test(th) && !/[rtz]/.test(th))) return 'park';
+  if (/[rtzmd]/.test(th)) return 'record';
   return 'status';
 }
 /** What his automation sent, from the stream's own counts and the tabs that record each send. No Salesforce needed. */
@@ -13310,7 +13333,7 @@ function tOwallDriver_(today, tz) {
   }
   var DAY = {};
   days.forEach(function (x) { DAY[x] = { d: x, hand: 0, auto: 0, notes: 0, after: 0 }; });
-  var KINDS = ['own', 'chase', 'list', 'intel', 'follow', 'move', 'name', 'auto'];
+  var KINDS = ['own', 'chase', 'list', 'intel', 'follow', 'move', 'hold', 'name', 'auto'];
   var blankK = function () { var o = {}; KINDS.forEach(function (k) { o[k] = 0; }); return o; };
   var posts = { all: blankK(), week: blankK(), today: blankK() };
   var inP = function (x, w) { return x && x >= w.from && x <= w.to; };
@@ -13360,7 +13383,7 @@ function tOwallDriver_(today, tz) {
   var sumK = function (o, ks) { return ks.reduce(function (a, k) { return a + (o[k] || 0); }, 0); };
   var team = T_DRIVE.TEAM.map(function (p) {
     var s = S[p.key], th = {};
-    ['r', 't', 'p', 'q', 'm', 'd', 'n', 'v'].forEach(function (c) { th[c] = s.th[c] || 0; });
+    ['r', 't', 'p', 'k', 'z', 'a', 'q', 'm', 'd', 'n', 'v', 'x'].forEach(function (c) { th[c] = s.th[c] || 0; });
     return { name: s.name, notes: s.notes, after: s.after, own: s.own, answered: s.answered, same: s.same, waiting: s.waiting, closes: s.closes,
       themes: th, read: s.read, week: s.week };
   }).filter(function (p) { return p.notes || p.answered || p.waiting; });
@@ -13432,7 +13455,7 @@ function tCupData_(fresh) {
     if (TK[id]) {
       var w = tOwallStaffOf_(by, text), at0 = ms(at);
       if (w === 'bm') { var kd = tOwallBmKind_(text); var ev0 = { w: 'bm', t: at0, k: kd }; TK[id].e.push(ev0); if (kd === 'own') mine.push(ev0); }
-      else if (w) TK[id].e.push({ w: w, t: at0, k: 'n', th: tOwallTheme_(text.replace(/^From the assignment board · [\s\S]*?\d{1,2}:\d{2}:\s*/, '').replace(T_OWALL.HEAD, '')) });
+      else if (w) TK[id].e.push({ w: w, t: at0, k: 'n', th: tOwallTheme_(tOwallStrip_(text)) });
     }
     if (!tk) return;
     var who = tCupPlayer_(by, text);

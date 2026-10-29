@@ -43,7 +43,7 @@ const FEED = {
       { key: 'clock', label: 'Reminders on clients waiting', n: 14, to: 'agents' }, { key: 'late', label: 'Late alerts to the branch', n: 653, to: 'branch' },
       { key: 'chasing', label: 'Alerts when a client chases', n: 6, to: 'branch' }, { key: 'replies', label: 'Client replies read and filed', n: 447, to: 'branch' }] },
     since: '2026-09-25', periods: { week: '2026-10-28' },
-    posts: { all: { own: 214, chase: 160, list: 612, intel: 88, follow: 41, move: 63, name: 72, auto: 30 },
+    posts: { all: { own: 214, chase: 160, list: 612, intel: 88, follow: 41, move: 63, hold: 105, name: 72, auto: 30 },
       week: { own: 12, chase: 10, list: 45, intel: 6, follow: 3, move: 0, name: 2, auto: 1 }, today: { own: 12, chase: 10, list: 45, intel: 6, follow: 3, move: 0, name: 2, auto: 1 },
       hand: { all: 214, week: 12, today: 12 }, auto: { all: 964, week: 64, today: 64 }, tasks: 388 },
     answer: { prompts: 1178, answered: 846, same: 512, next: 201, later: 133, open: 332, hand: { prompts: 214, answered: 170, same: 120 } },
@@ -106,7 +106,7 @@ const fit = page => page.evaluate(() => {
     ok('his prompts since 25 September: by hand and by automation', m.all === '1,178', m.all);
     ok('this week, today, and the tasks he touched', /This week 76/.test(m.mini) && /Today 76/.test(m.mini) && /388/.test(m.mini), m.mini);
     ok('six kinds of prompt, each with its count', m.kinds.length === 6 && m.kinds[0] === 'In his own words=214' && m.kinds.some(k => /daily list/.test(k) && /612/.test(k)), m.kinds.join(' | '));
-    ok('the clients he named', /7/.test(m.named) && /17/.test(m.named), m.named);
+    ok('the clients he named, and the hold notices', /7/.test(m.named) && /17/.test(m.named) && /105 hold notices/.test(m.named), m.named);
     ok('what his automation sent: the total, grouped by who it went to', m.mtot === '4,321' && m.grp.join(',') === 'To clients,To agents,To the branch and staff' && m.mr === 12, m.mtot + ' ' + m.grp.join(','));
     ok('the ring: 72% answered, four segments drawn', m.pct === '72%' && m.segs.length === 4 && m.segs.every(s => /^\d/.test(s)), m.pct + ' ' + m.segs.join(','));
     ok('the legend: the same day, the next working day, later, not yet', /The same day512/.test(m.leg) && /Later133/.test(m.leg) && /Not yet332/.test(m.leg), m.leg);
