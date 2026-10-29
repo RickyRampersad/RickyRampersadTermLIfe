@@ -47,6 +47,8 @@ function world(props, opts) {
     created: [], queries: [],
   };
   if (opts.risks) SF.risks = opts.risks;
+  if (opts.general) SF.general = opts.general;
+  if (opts.life) SF.life = opts.life;
   const AI = { calls: [], answer: opts.ai || null, code: opts.aiCode || 200 };
   const MS = { sent: [] };
   const res = (code, body) => ({ getResponseCode: () => code, getContentText: () => typeof body === 'string' ? body : JSON.stringify(body) });
@@ -70,11 +72,16 @@ function world(props, opts) {
       if (/FROM RecordType/.test(q)) return res(200, { records: [{ Id: '012000000000001AAA' }] });
       if (/FROM CLIENT_PORTFOLIO__c/.test(q) && /POLICY__c = '/.test(q)) { const pols = (q.match(/POLICY__c = '([^']+)'/g) || []).map(x => x.slice(13, -1));
         return res(200, { records: SF.portfolios.filter(r => pols.indexOf(r.POLICY__c) > -1).map(r => ({ Contact__c: r.Contact__c, Contact__r: { LastName: (SF.contacts.find(c => c.Id === r.Contact__c) || {}).LastName } })) }); }
+      /* A query naming record types gets only rows of those types, as Salesforce would. */
+      const rts = ((q.match(/RecordType\.Name IN \(([^)]*)\)/) || [, ''])[1].match(/'[^']+'/g) || []).map(u => u.slice(1, -1));
+      const ofType = r => !rts.length || rts.indexOf(r.RecordType && r.RecordType.Name) > -1;
       if (/FROM CLIENT_PORTFOLIO__c/.test(q)) { const ids = (q.match(/Contact__c IN \(([^)]*)\)/) || [, ''])[1];
-        return res(200, { records: SF.portfolios.filter(r => ids.indexOf(r.Contact__c) > -1) }); }
+        const em = (q.match(/Email__c = '([^']+)'/) || [])[1];
+        return res(200, { records: SF.portfolios.concat(SF.life || []).filter(r => ofType(r) && (/LIKE '%MOTOR%'/.test(q) ? /MOTOR/.test((r.RecordType || {}).Name) : true) && (ids.indexOf(r.Contact__c) > -1 || (em && r.Email__c === em))) }); }
       if (/FROM Risk_Details__c/.test(q) && opts.noRenewFields && /Next_Renewal_Date__c/.test(q)) return res(400, [{ message: "No such column 'Next_Renewal_Date__c'" }]);
       if (/FROM Risk_Details__c/.test(q)) { const ids = (q.match(/Insured__c IN \(([^)]*)\)/) || [, ''])[1];
-        return res(200, { records: ids ? SF.risks : [] }); }
+        if (rts.length) return res(200, { records: ids ? (SF.general || []).filter(ofType) : [] });
+        return res(200, { records: ids ? SF.risks.filter(r => r.Vehicle__c) : [] }); }
       return res(400, [{ message: 'unexpected query ' + q }]);
     }
     if (p === '/sobjects/Contact' && o.method === 'post') { const b = JSON.parse(o.payload); SF.created.push({ obj: 'Contact', body: b }); return res(201, { id: '003000000000009AAA' }); }
@@ -413,6 +420,56 @@ const RISKS = [
   const v = post(env, { action: 'verifyCode', email: 'anika@example.com', code: (post(env, { action: 'requestCode', email: 'anika@example.com' }), '211110') });
   ok('an org without the renewal fields still gives the vehicles, renewing the day after the cover ends', v.me.vehicles.length === 2 && v.me.vehicles[0].renewOn === day(21) &&
     env.__sheets['Quote Log']._grid.some(x => x[2] === 'renewal-fields-failed'));
+}
+
+/* ── everything else she holds: general insurance with its renewal month, life with none, and ideas ── */
+const GEN = [
+  { Policy__c: 'TTFHO0100009', RecordType: { Name: 'Property' }, Risk_Location__c: '12 Sample Street\nSampletown', Property_Type__c: 'Private dwelling',
+    Property_Coverage_Type__c: 'Fire and allied perils', Total_Cover__c: 900000, From__c: day(-355), To__c: day(10), Premium_Due__c: 2400 },
+  { Policy__c: 'TTFHO0100009', RecordType: { Name: 'Property' }, Risk_Location__c: '12 Sample Street', Total_Cover__c: 850000, From__c: day(-720), To__c: day(-356), Premium_Due__c: 2300 },
+  { Policy__c: 'TTPL0100004', RecordType: { Name: 'Public Liability' }, Risk_Location__c: 'Sample Shop', Total_Cover__c: 500000, From__c: day(-60), To__c: day(305) },
+  { Policy__c: 'TTPL0100005', RecordType: { Name: 'Public Liability' }, Risk_Location__c: 'Old Shop', From__c: day(-1200), To__c: day(-835) },   // long ended
+];
+const LIFE = [
+  { POLICY__c: '0001234567', RecordType: { Name: 'LIFE' }, PLAN_NAME__c: 'Sample Term 20', ISSUE_DATE__c: '2015-03-01', Paid_To_Date__c: day(20),
+    Policy_Status_Description_R__c: 'Premium Paying', Life_Coverage__c: 500000, Critical_Illness_Coverage__c: 0, Contact__c: '003000000000001AAA' },
+  { POLICY__c: '0001234568', RecordType: { Name: 'PENSION' }, Pension_Plan_Name__c: 'Sample Pension', ISSUE_DATE__c: '2018-01-01', Paid_To_Date__c: day(-30),
+    Policy_Status_Description_R__c: 'B', Contact__c: '003000000000001AAA' },
+  { POLICY__c: '0001234569', RecordType: { Name: 'LIFE' }, PLAN_NAME__c: 'Old Plan', ISSUE_DATE__c: '2001-01-01', Paid_To_Date__c: '2010-01-01',
+    Policy_Status_Description_R__c: 'Surrendered', Contact__c: '003000000000001AAA' },
+];
+{
+  const { env, mails } = world(SFPROPS, { risks: RISKS, general: GEN, life: LIFE });
+  const v = post(env, { action: 'verifyCode', email: 'anika@example.com', code: (post(env, { action: 'requestCode', email: 'anika@example.com' }), '211110') });
+  const g = v.me.general || [], h = g[0];
+  ok('general insurance comes back, one entry a policy, the one due first, the long-ended one left out', g.length === 2 && h.policy === 'TTFHO0100009' && g[1].policy === 'TTPL0100004');
+  ok('…a home policy reads as Home, with its location on one line', h.line === 'Home' && h.location === '12 Sample Street, Sampletown' && g[1].line === 'Liability');
+  ok('…with the renewal date, month and state', h.renewOn === day(11) && h.renewState === 'due' && h.renewMonth && h.renewIn === 11 && g[1].renewState === 'later');
+  ok('…the sum insured, the premium and since when', h.sumInsured === 900000 && h.lastPremium === 2400 && h.termCount === 2 && /^\d{4}$/.test(h.since));
+  const L = v.me.life || [];
+  ok('life and pension come back with no renewal month; the surrendered one is counted, not listed', L.length === 2 && L.every(p => !p.renewOn && !p.renewMonth) && v.me.lifeEnded === 1);
+  ok('…a premium-paying policy is in force; a coded status paid to within the year is current', L.find(p => p.policy === '0001234567').state === 'inforce' && L.find(p => p.policy === '0001234568').state === 'current' &&
+    L.find(p => p.policy === '0001234567').type === 'Life' && L.find(p => p.policy === '0001234568').type === 'Pension');
+  const O = (v.me.opps || []).map(o => o.key);
+  ok('ideas: she has life cover with no critical illness, and a vehicle with no windscreen cover; she has home cover, so no home idea', O.indexOf('ci') > -1 && O.indexOf('windscreen') > -1 && O.indexOf('home') < 0 && O.indexOf('life') < 0 && O.length <= 3);
+  ok('every idea is a fact about her record, never advice', (v.me.opps || []).every(o => !/should|recommend|advise|must/i.test(o.why)));
+  /* A general policy is renewed the same way, read again from the record. */
+  const r = post(env, { action: 'submit', token: v.token, quote: { flow: 'renew', line: 'Home', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'TTFHO0100009', renewChoice: 'Renew with changes', renewChanges: 'Add the contents' } });
+  const desk = mails.filter(m => /renewal request MQ-/.test(m.subject)).pop();
+  ok('a home renewal goes, named as a Home renewal, read again from the record', r.ok && desk && /\bHome renewal request/.test(desk.subject) && /12 Sample Street/.test(desk.htmlBody) && /TT\$ 2,400/.test(desk.htmlBody));
+  ok('…the receipt names the home insurance', mails.some(m => /We have your renewal request/.test(m.subject) && /Home insurance/.test(m.htmlBody)));
+  const bad = post(env, { action: 'submit', token: v.token, quote: { flow: 'renew', line: 'Spaceship', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'PDX 1234', renewChoice: 'Renew as it is' } });
+  ok('a line the page cannot send is ignored: it is a motor renewal', bad.ok && /\bMotor renewal request/.test(mails.filter(m => /renewal request MQ-/.test(m.subject)).pop().subject));
+  const pb = post(env, { action: 'renewBrief', token: v.token, reg: 'TTFHO-0100009' });
+  ok('the plain brief knows a home policy', pb.ok && pb.brief && /home insurance/i.test(pb.brief.summary) && pb.brief.checks.some(c => /property/i.test(c.question)));
+}
+{
+  /* Nothing but a vehicle: the ideas are a home, life cover and (when room) personal accident. */
+  const { env } = world(SFPROPS, { risks: RISKS });
+  const v = post(env, { action: 'verifyCode', email: 'anika@example.com', code: (post(env, { action: 'requestCode', email: 'anika@example.com' }), '211110') });
+  const O = (v.me.opps || []).map(o => o.key);
+  ok('a client with only a vehicle is offered home cover and life cover first, three ideas at most', O[0] === 'home' && O[1] === 'life' && O.length === 3 && (v.me.general || []).length === 0 && (v.me.life || []).length === 0);
+  ok('…each idea opens the branch\'s own page, never a JotForm', (v.me.opps || []).every(o => o.action || /^\/(quote|apply)\/|^\/#/.test(o.href)));
 }
 
 /* ── a tab made by the first version gains the new columns on the end ─ */

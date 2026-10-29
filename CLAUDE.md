@@ -6233,6 +6233,42 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
   - Three choices: Renew as it is, Renew with changes, **Talk to us first** (a call before anything is renewed).
   - `mqSubmit_` takes the renewal again (an agent still cannot) and sends it to `MQ_RENEW_TO`, else the quotes desk, read
     again from the record. `MQ.RENEW_PORTAL` is no longer used by the page.
+- **What is due comes first, then everything they hold, then ideas** (29 October 2026: "it should have what is currently
+  due at the very top and a history of the other policies with us and the renewal month for only general and look for
+  cross selling opportunities").
+  - **Due now** (`#dueTop`, a `.t-renew` section directly under the welcome band, before the three paths): the motor
+    renewal cards due or lapsed, and each general policy due (`genDueCard`, Renew this). The lead and the Renew path
+    count both.
+  - **Everything you hold with us** (`holdHtml`, `#trHold`):
+    - *General insurance* (vehicles, home, property, liability, workers' compensation, machinery, bond, marine), each with
+      "Renews every <Month>" and the next date, and a twelve-month strip with the renewal months lit and this month ringed.
+    - *Life, pension and health* (`me.life`), with plan, type, since, in force / current / application, and the cover.
+      They have no renewal month, because they do not renew.
+    - The ended ones are a count (`me.lifeEnded`), never listed.
+  - **Where it comes from** (`mqLookup_`, each read in its own try):
+    - `mqGeneral_` reads `Risk_Details__c` of the general record types (`MQ_GEN_TYPES`), one entry a policy, renewal
+      the day after the cover ends (or `Next_Renewal_Date__c` within three days of it). A policy number starting
+      FHO or FHC is Home (`mqGenLine_`). Ended ones are dropped.
+    - `mqLife_` reads `CLIENT_PORTFOLIO__c` (`MQ_LIFE_TYPES`). `mqLifeState_` reads the status: the status field
+      is often a code or blank, so a coded status counts as current only while the policy is paid to within 400 days.
+  - **Ideas for you** (`mqOpps_`, three at most, facts off the record, never advice):
+    - home cover where there is none;
+    - life cover where there is none, else critical illness where the life cover has none;
+    - windscreen cover for a vehicle with none, which opens that vehicle's renewal with "Add windscreen cover"
+      written in;
+    - personal accident.
+
+    Each opens the branch's own page (`/quote/property/`, `/apply/xpress-life/`, `/quote/critical-illness/`), never a
+    JotForm. The page says nothing is added unless the client asks.
+  - **A general policy renews on the same step** (`startRenewGen`; typing its number in the finder works too).
+    - The page sends `line`, which `mqRead_` keeps only from its own list.
+    - `mqRenewFromRecord_` reads it again from `me.general`.
+    - The desk e-mail and the task are "<Line> renewal request", and the receipt names the line.
+    - The brief is asked for by the policy number.
+    - The step shows no motor cover box and asks for a new sum insured, and the review shows "The policy".
+  - An agent sees none of it.
+  - Paste MotorQuote.gs (2026-10-29c) and publish a New version: the old live script sends none of these blocks, and
+    the page then shows only the vehicles, as before.
 - **Three paths, never mixed** (21 October 2026: "do not confuse invoice … a quote and a renewal … on a mobile … a proper
   layout, professional … motion and graphics and charts … infographic"). The home screen opens on three choices, each with
   its own colour, icon, section and numbered steps (`PATH`, `.t-renew` teal, `.t-quote` blue, `.t-take` violet):

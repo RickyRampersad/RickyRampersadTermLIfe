@@ -294,6 +294,44 @@
   @media (min-width:640px){.path .go{display:none}}
   div.path{cursor:default}div.path:hover{transform:none;box-shadow:none}
   .track{margin:26px 0 0;scroll-margin-top:84px;border-radius:18px;transition:box-shadow .3s}
+  /* Due now: the first thing under the welcome (29 October 2026) */
+  .duetop{margin:16px 0 18px;padding:14px;border-radius:18px;background:linear-gradient(180deg,#EAF8F6,#fff 70%);border:1.5px solid #BFE3DF}
+  .duetop .dueh{display:flex;gap:12px;align-items:center;margin:0 0 4px}
+  .duetop .dueh .tn{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--rn),var(--rn2));color:#fff;display:grid;place-items:center;flex:none}
+  .duetop .dueh b{display:block;color:var(--ink);font-size:18px}.duetop .dueh small{color:var(--dim);font-size:13.5px}
+  .duetop .rnw{margin-top:12px}
+  .gdue{display:flex;gap:12px;align-items:center;background:#fff;border:1.5px solid #BFE3DF;border-radius:16px;padding:12px 14px;margin:12px 0 0}
+  .gdue .gi{width:44px;height:44px;border-radius:12px;background:var(--rnbg);color:var(--rn);display:grid;place-items:center;flex:none}
+  .gdue .gt{flex:1;min-width:0}.gdue b{display:block;color:var(--ink);font-size:15.5px}.gdue small{display:block;color:var(--dim);font-size:13px;line-height:1.4}
+  .gdue .send{width:auto;margin:0;padding:0 14px;min-height:44px;flex:none}
+  @media (max-width:480px){.gdue{flex-wrap:wrap}.gdue .send{width:100%}}
+  /* Everything they hold with us */
+  .t-hold{--c:#2C5FA8;--c2:#4C94E6;--bg:#EAF3FD}
+  .hold-g{margin:6px 0 0}.hold-g>h4{margin:14px 0 8px;font-size:14px;color:var(--ink);letter-spacing:.02em}
+  .hold-g>h4 small{font-weight:600;color:var(--dim);font-size:12.5px;margin-left:6px}
+  .months{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin:6px 0 12px}
+  .months span{text-align:center;font-size:10.5px;color:var(--dim);padding:5px 0 4px;border-radius:7px;background:#F3F6FA;position:relative}
+  .months span.on{background:var(--rnbg);color:var(--rn);font-weight:800}
+  .months span.now{outline:2px solid var(--c2);outline-offset:-2px}
+  .months span i{display:block;height:6px;width:6px;border-radius:50%;margin:3px auto 0;background:transparent}
+  .months span.on i{background:var(--rn2)}
+  .pol{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin:0 0 8px}
+  .pol .pk{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:#EEF4FC;color:#2C5FA8}
+  .pol .pk.gen{background:var(--rnbg);color:var(--rn)}
+  .pol .pb{flex:1;min-width:0}.pol b{display:block;color:var(--ink);font-size:15px;line-height:1.3}
+  .pol small{display:block;color:var(--dim);font-size:13px;line-height:1.45}
+  .pol .st{display:inline-block;margin-top:5px;font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px;background:#E9F7EF;color:#1E7A48}
+  .pol .st.app{background:#FFF4DE;color:#8A5A00}.pol .st.cur{background:#EEF4FC;color:#2C5FA8}
+  .pol .rm{flex:none;text-align:right;font-size:12px;color:var(--dim);line-height:1.35}.pol .rm b{display:block;font-size:14.5px;color:var(--rn)}.pol .rm small{display:block;font-size:12px;color:var(--dim)}
+  @media (max-width:480px){.pol{flex-wrap:wrap}.pol .pb{flex:1 1 calc(100% - 60px)}.pol .rm{flex-basis:100%;text-align:left;padding-left:56px;margin-top:-2px}.pol .rm b{display:inline}.pol .rm small{display:inline;margin-left:6px}}
+  .hold-more{font-size:13px;color:var(--dim);margin:4px 0 0}
+  /* Ideas for you */
+  .t-opp{--c:#6B4BC8;--c2:#8F6CF0;--bg:#F2EDFE}
+  .opp{display:flex;gap:12px;align-items:flex-start;border:1.5px solid #E2D8FB;background:linear-gradient(180deg,#FAF7FF,#fff);border-radius:16px;padding:13px 14px;margin:0 0 10px}
+  .opp .oi{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--c),var(--c2));color:#fff;display:grid;place-items:center;flex:none}
+  .opp .ob{flex:1;min-width:0}.opp b{display:block;color:var(--ink);font-size:15.5px}.opp p{margin:3px 0 9px;font-size:13.5px;line-height:1.5;color:var(--body)}
+  .opp .send{width:auto;display:inline-flex;align-items:center;margin:0;padding:0 16px;min-height:44px;font-size:15px;line-height:1.25;text-decoration:none;background:linear-gradient(135deg,var(--c),var(--c2))}
+  .opp-note{font-size:12px;color:var(--dim);margin:2px 0 0}
   .track.flash{animation:flash 1.4s ease-out}
   .th{display:flex;gap:12px;align-items:center;margin:0 0 12px;padding:0 0 10px;border-bottom:2px solid var(--bg)}
   .th .tn{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--c),var(--c2));color:#fff;display:grid;place-items:center;font-size:20px;flex:none}
@@ -554,6 +592,10 @@
       <p id="homeLead"></p>
       <div class="stats" id="homeStats"></div>
     </div>
+    <section class="duetop t-renew hide" id="dueTop" aria-labelledby="dueH">
+      <div class="dueh"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2.5h6"/></svg></span><div><b id="dueH">Due now</b><small id="dueSub"></small></div></div>
+      <div id="renewals"></div><div id="genDue"></div>
+    </section>
     <div id="meCard"></div>
     <div class="paths" id="paths">
       <button type="button" class="path t-renew" id="pathRenew" onclick="toTrack('trRenew')"><span class="pi"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg></span><span class="pt"><b>Renew</b><small>A vehicle we already insure</small><em id="pathRenewN"></em></span><span class="go">›</span></button>
@@ -564,7 +606,6 @@
     <section class="track t-renew" id="trRenew">
       <div class="th"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.4-4.6L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.4 4.6L20 16"/><path d="M20 21v-5h-5"/></svg></span><div class="tt"><b>Renew a vehicle we insure</b><small>Next year's cover for the same vehicle</small></div><span class="lbl">Renewal</span></div>
       <ol class="journey"><li>Choose the vehicle</li><li>Renew as it is, or with changes</li><li>We confirm it by e‑mail</li></ol>
-      <div id="renewals"></div>
       <div id="homeVeh"></div>
       <div id="renewPortal"></div>
     </section>
@@ -589,6 +630,8 @@
         <small>Upload the quote we sent you, your certified copy and your driver's permit. We fill in Guardian's proposal and Know Your Policy form; you check and sign.</small></span><span class="go">›</span></button>
     </section>
 
+    <div id="hold"></div>
+    <div id="opps"></div>
     <div id="reqs"></div>
   </section>
 
@@ -914,9 +957,95 @@ function findRenew(ev) {
   const vs = (me && me.vehicles) || [];
   const ix = vs.findIndex(v => keyOf(v.reg) === k || keyOf(v.policy) === k || (v.terms || []).some(t => keyOf(t.policy) === k));
   if (ix > -1) { startRenew(ix); return false; }
+  const gx = genAll().findIndex(g => keyOf(g.policy) === k);
+  if (gx > -1) { startRenewGen(gx); return false; }
   m.innerHTML = '<p class="msg">We could not match <b>' + esc(q.toUpperCase()) + '</b> to ' + esc((session && session.email) || 'your e‑mail') + '. That happens when a policy was written to another e‑mail. You can still send it: our renewals team finds the policy and replies to you.</p>' +
     '<button type="button" class="send tc" onclick="startRenewTyped(\'' + esc(q.toUpperCase().replace(/[^A-Z0-9 \-]/g, '')) + '\')">Send it to our renewals team</button>';
   return false;
+}
+/* ---- everything else they hold with us (29 October 2026) ----
+   General insurance renews once a year, so it carries its renewal month; life, pension and health do not renew,
+   so they carry what they are and where they stand, never a month. */
+const IC = {
+  Home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+  Property: '<path d="M4 21V8l8-5 8 5v13"/><path d="M9 21v-5h6v5M9 10h.01M15 10h.01"/>',
+  Liability: '<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  "Workers' compensation": '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c.8-4 3.6-6.5 7-6.5s6.2 2.5 7 6.5"/>',
+  'Machinery and plant': '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+  Bond: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  Marine: '<path d="M3 17c2 2 4 2 6 0s4-2 6 0 4 2 6 0"/><path d="M5 14l1-5h12l1 5M12 4v5"/>',
+  Life: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  Pension: '<path d="M12 3v18M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3S9.5 10.5 12 11s4.5 1.3 4.5 3.2S14.5 17.5 12 17.5s-4.5-1.3-4.5-3"/>',
+  Health: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M12 8v8M8 12h8"/>',
+  'Personal accident': '<circle cx="12" cy="5" r="2"/><path d="M12 7v6l-3 7M12 13l3 7M7 10h10"/>',
+  Investment: '<path d="M4 19l5-6 4 3 7-9"/><path d="M15 7h5v5"/>',
+  Car: '<path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>' };
+const ico = k => '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (IC[k] || IC.Property) + '</svg>';
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const monthOf = d => { const m = String(d || '').match(/^\d{4}-(\d{2})/); return m ? MONTHS[+m[1] - 1] : ''; };
+const genAll = () => isAgent() ? [] : ((me && me.general) || []);
+const genDue = () => genAll().map((g, i) => [g, i]).filter(x => dueNow(x[0]));
+function genDueCard(g, i) {
+  const lapsed = g.renewState === 'lapsed', n = Math.abs(g.renewIn || 0);
+  return '<div class="gdue" data-pol="' + esc(g.policy) + '"><span class="gi">' + ico(g.line) + '</span><span class="gt"><b>' + esc(g.line) + ' insurance' + (g.location ? ' · ' + esc(g.location) : '') + '</b>' +
+    '<small>' + esc(g.policy) + ' · ' + (lapsed ? 'ended ' : 'renews ') + '<b>' + esc(g.renewOnText || longDay(g.renewOn)) + '</b> · ' + (lapsed ? n + ' day' + (n === 1 ? '' : 's') + ' ago' : 'in ' + n + ' day' + (n === 1 ? '' : 's')) + '</small>' +
+    (g.sumInsured || g.lastPremium ? '<small>' + esc([g.sumInsured ? 'insured for ' + money(g.sumInsured) : '', g.lastPremium ? 'premium ' + money(g.lastPremium) : ''].filter(Boolean).join(' · ')) + '</small>' : '') +
+    '</span><button type="button" class="send tc" onclick="startRenewGen(' + i + ')">Renew this</button></div>';
+}
+/* Twelve months in a row, the months something renews lit, this month ringed. */
+function monthStrip(items) {
+  const on = {}; items.forEach(x => { const m = String(x.renewOn || '').slice(5, 7); if (m) on[+m - 1] = (on[+m - 1] || []).concat(x.name); });
+  const now = new Date().getMonth();
+  return '<div class="months" role="img" aria-label="' + esc('Renewal months: ' + Object.keys(on).sort((a, b) => a - b).map(k => MONTHS[k] + ' (' + on[k].join(', ') + ')').join('; ')) + '">' +
+    MONTHS.map((m, k) => '<span class="' + (on[k] ? 'on' : '') + (k === now ? ' now' : '') + '" title="' + esc(on[k] ? m + ': ' + on[k].join(', ') : m) + '">' + m.slice(0, 1) + '<i></i></span>').join('') + '</div>';
+}
+const LIFE_ST = { inforce: ['In force', ''], current: ['Current', 'cur'], applied: ['Application in progress', 'app'] };
+function holdHtml() {
+  if (isAgent() || !me || !me.found) return '';
+  const vs = ((me.vehicles) || []).filter(v => v.renewState !== 'ended'), gen = genAll(), life = me.life || [];
+  if (!vs.length && !gen.length && !life.length) return '';
+  const g1 = vs.map(v => ({ name: v.reg, renewOn: v.renewOn })).concat(gen.map(g => ({ name: g.line, renewOn: g.renewOn })));
+  const pol = (k, cls, title, sub, right, st) => '<div class="pol"><span class="pk' + cls + '">' + ico(k) + '</span><span class="pb"><b>' + title + '</b><small>' + sub + '</small>' + (st || '') + '</span>' + (right ? '<span class="rm">' + right + '</span>' : '') + '</div>';
+  const rnm = d => d ? 'Renews every <b>' + esc(monthOf(d)) + '</b><small>next ' + esc(longDay(d)) + '</small>' : '';
+  const gi = (vs.length || gen.length) ? '<div class="hold-g"><h4>General insurance<small>renews every year</small></h4>' + monthStrip(g1) +
+    vs.map(v => pol('Car', ' gen', esc(vehName(v)), esc([v.reg, v.cover, v.policy].filter(Boolean).join(' · ')), rnm(v.renewOn))).join('') +
+    gen.map(g => pol(g.line, ' gen', esc(g.line + ' insurance') + (g.location ? ' · ' + esc(g.location) : ''),
+      esc([g.policy, g.cover || g.kind, g.since ? 'with us since ' + g.since : ''].filter(Boolean).join(' · ')), rnm(g.renewOn))).join('') + '</div>' : '';
+  const li = life.length ? '<div class="hold-g"><h4>Life, pension and health<small>these do not renew: they run on while premiums are paid</small></h4>' +
+    life.map(p => {
+      const s = LIFE_ST[p.state] || LIFE_ST.current;
+      const cov = [p.life ? 'life cover ' + money(p.life) : '', p.ci ? 'critical illness ' + money(p.ci) : '', p.health ? 'health ' + money(p.health) : ''].filter(Boolean).join(' · ');
+      return pol(p.type, '', esc(p.plan || p.type), esc([p.type, p.policy, p.since ? 'since ' + p.since : '', p.matures ? 'matures ' + longDay(p.matures) : ''].filter(Boolean).join(' · ')) + (cov ? '<br>' + esc(cov) : ''),
+        '', '<span class="st ' + s[1] + '">' + s[0] + '</span>');
+    }).join('') + '</div>' : '';
+  const ended = me.lifeEnded ? '<p class="hold-more">And ' + me.lifeEnded + ' earlier ' + (me.lifeEnded === 1 ? 'policy that has' : 'policies that have') + ' ended.</p>' : '';
+  const n = vs.length + gen.length + life.length;
+  return '<section class="track t-hold" id="trHold"><div class="th"><span class="tn">' + ico('Liability') + '</span><div class="tt"><b>Everything you hold with us</b><small>' +
+    n + ' polic' + (n === 1 ? 'y' : 'ies') + ' on your record' + (g1.length ? ', and the month each one renews' : '') + '</small></div></div>' + gi + li + ended + '</section>';
+}
+function oppsHtml() {
+  const o = (!isAgent() && me && me.opps) || [];
+  if (!o.length) return '';
+  return '<section class="track t-opp" id="trOpps"><div class="th"><span class="tn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2.2h5c.1-1 .5-1.7 1.1-2.2A6 6 0 0 0 12 3z"/></svg></span><div class="tt"><b>Ideas for you</b><small>From what is, and is not, on your record with us</small></div></div>' +
+    o.map((x, i) => '<div class="opp" data-opp="' + esc(x.key) + '"><span class="oi">' + ico({ home: 'Home', life: 'Life', ci: 'Health', windscreen: 'Car', pa: 'Personal accident' }[x.key] || 'Liability') + '</span><span class="ob"><b>' + esc(x.title) + '</b><p>' + esc(x.why) + '</p>' +
+      (x.href ? '<a class="send" href="' + esc(x.href) + '">' + esc(x.cta) + ' ›</a>' : '<button type="button" class="send" onclick="oppAct(' + i + ')">' + esc(x.cta) + ' ›</button>') + '</span></div>').join('') +
+    '<p class="opp-note">Only a suggestion: nothing is added to your cover unless you ask, and a licensed agent talks it through with you first.</p></section>';
+}
+function oppAct(i) {
+  const x = me && me.opps && me.opps[i]; if (!x) return;
+  if (x.action === 'windscreen') {
+    const ix = (me.vehicles || []).findIndex(v => keyOf(v.reg) === keyOf(x.reg)); if (ix < 0) return;
+    startRenew(ix, 'Renew with changes');
+    draft.renewChanges = (String(draft.renewChanges || '').trim() ? draft.renewChanges + '\n' : '') + 'Add windscreen cover'; saveDraft(); render();
+  }
+}
+/* Renewing a general policy: the same step as a vehicle, with the line in place of the car. */
+function startRenewGen(i) {
+  const g = genAll()[i]; if (!g) return;
+  startFlow('renew');
+  Object.assign(draft, { line: g.line, reg: g.policy, model: g.location || '', renewOn: g.renewOn || '', renewOnText: g.renewOnText || '', renewIn: g.renewIn, renewState: g.renewState || '',
+    existingPolicy: g.policy, lastCover: g.cover || g.kind || '', lastSum: g.sumInsured || '', lastPremium: g.lastPremium || '' });
+  saveDraft(); render();
 }
 function startRenewTyped(reg) { startFlow('renew'); draft.reg = reg; draft.unmatched = 'Yes'; saveDraft(); render(); }
 function showHome() {
@@ -926,10 +1055,11 @@ function showHome() {
   const vs = (me && me.vehicles) || [], all = vs.map((v, i) => [v, i]), due = all.filter(x => dueNow(x[0])), rest = all.filter(x => !dueNow(x[0]));
   $('homeTitle').textContent = first ? 'Good day, ' + first + '.' : 'Good day.';
   $('homeBack').textContent = me && me.found ? ' back' : '';
-  const soon = due.filter(x => x[0].renewState === 'due').map(x => Math.abs(x[0].renewIn || 0)).sort((a, b) => a - b)[0];
+  const gd = genDue(), dueN = (isAgent() ? 0 : due.length) + gd.length;
+  const soon = due.filter(x => x[0].renewState === 'due').concat(gd.filter(x => x[0].renewState === 'due')).map(x => Math.abs(x[0].renewIn || 0)).sort((a, b) => a - b)[0];
   $('homeLead').textContent = isAgent() ? 'Ask for a motor quote for your client. You are the producer on it.'
-    : due.length
-    ? (due.length === 1 ? 'One vehicle is due for renewal.' : due.length + ' vehicles are due for renewal.') + ' Choose what you would like to do.'
+    : dueN
+    ? (dueN === 1 ? 'One policy is due for renewal: it is at the top.' : dueN + ' policies are due for renewal: they are at the top.') + ' Then choose what you would like to do.'
     : 'What would you like to do today? Choose one of the three below.';
   /* An agent has the new quote alone: a renewal and taking a quote are the client's own. */
   $('pathTake').classList.toggle('hide', isAgent()); $('trTake').classList.toggle('hide', isAgent());
@@ -937,15 +1067,22 @@ function showHome() {
   const open = requests.filter(r => reqStage(r, r.type === 'Renewal' ? 'renew' : 'quote') < 4).length;
   meCard();
   $('homeStats').innerHTML = [vs.length ? '<span>' + cu(vs.length) + 'vehicle' + (vs.length === 1 ? '' : 's') + ' with us</span>' : '',
-    due.length ? '<span>' + cu(due.length) + 'due for renewal</span>' : '', requests.length ? '<span>' + cu(open) + 'request' + (open === 1 ? '' : 's') + ' in progress</span>' : ''].join('');
+    genAll().length || (me && me.life || []).length ? '<span>' + cu(genAll().length + ((me && me.life) || []).length) + 'other polic' + (genAll().length + ((me && me.life) || []).length === 1 ? 'y' : 'ies') + '</span>' : '',
+    dueN ? '<span>' + cu(dueN) + 'due for renewal</span>' : '', requests.length ? '<span>' + cu(open) + 'request' + (open === 1 ? '' : 's') + ' in progress</span>' : ''].join('');
   /* No vehicle with us: no renewal path at all. */
   /* Renewing happens in the Renewal Platform, so the path is offered to every client: with a vehicle found it shows the
      renewal and opens the portal; without, it says where the renewal is. An agent has none. */
-  $('pathRenew').classList.toggle('hide', isAgent()); $('pathRenew').classList.toggle('due', due.length > 0); $('trRenew').classList.toggle('hide', isAgent());
+  $('pathRenew').classList.toggle('hide', isAgent()); $('pathRenew').classList.toggle('due', dueN > 0); $('trRenew').classList.toggle('hide', isAgent());
   $('paths').style.setProperty('--n', isAgent() ? 1 : 3);
-  $('pathRenewN').textContent = due.length ? (soon != null ? 'Due in ' + soon + ' day' + (soon === 1 ? '' : 's') : 'Due now') : vs.length ? vs.length + ' vehicle' + (vs.length === 1 ? '' : 's') : 'Type its number';
+  $('pathRenewN').textContent = dueN ? (soon != null ? 'Due in ' + soon + ' day' + (soon === 1 ? '' : 's') : 'Due now') : vs.length ? vs.length + ' vehicle' + (vs.length === 1 ? '' : 's') : 'Type its number';
   $('renewPortal').innerHTML = isAgent() ? '' : renewFinder(vs.length);
-  $('renewals').innerHTML = due.map(x => renewalCard(x[0], x[1])).join('');
+  /* Due now: at the very top, under the welcome, motor and general together. */
+  $('renewals').innerHTML = isAgent() ? '' : due.map(x => renewalCard(x[0], x[1])).join('');
+  $('genDue').innerHTML = gd.map(x => genDueCard(x[0], x[1])).join('');
+  $('dueTop').classList.toggle('hide', !dueN);
+  $('dueSub').textContent = dueN ? (soon != null ? 'The soonest renews in ' + soon + ' day' + (soon === 1 ? '' : 's') + '. ' : '') + 'Renewing takes about a minute.' : '';
+  $('hold').innerHTML = holdHtml();
+  $('opps').innerHTML = oppsHtml();
   $('homeVeh').innerHTML = rest.length
     ? '<div class="sec" style="margin-top:' + (due.length ? 18 : 4) + 'px"><span class="ic" style="background:linear-gradient(135deg,var(--rn),var(--rn2))"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-5.4A2.2 2.2 0 0 1 7 6h10a2.2 2.2 0 0 1 2 1.6L21 13v4.2a.8.8 0 0 1-.8.8H19M3 13v4.2c0 .4.4.8.8.8H5M3 13h18M9 18h6"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><div><b>' + (due.length ? 'Your other vehicles with us' : 'Your vehicles with us') +
       '</b><small>The bar is how far through its year of cover each one is</small></div></div>' + rest.map(x => vehRow(x[0], x[1])).join('')
@@ -1094,7 +1231,7 @@ async function onInvoice(file) {
   const inv = $('invFile'); if (inv) inv.value = '';
 }
 function flowTag() {
-  const P = PATH[draft.flow] || PATH.full, veh = [draft.year, draft.make, draft.model].filter(Boolean).join(' ') || draft.reg || '';
+  const P = PATH[draft.flow] || PATH.full, veh = draft.line ? draft.line + ' insurance' + (draft.model ? ', ' + draft.model : '') : [draft.year, draft.make, draft.model].filter(Boolean).join(' ') || draft.reg || '';
   const what = draft.flow === 'renew' ? [veh, draft.reg && veh !== draft.reg ? draft.reg : ''].filter(Boolean).join(' · ')
     : draft.flow === 'take' ? (draft.quoteRef ? 'Your quote ' + draft.quoteRef : 'The quote we e-mailed you')
     : draft.invoice ? 'From the dealer\'s invoice' + (veh ? ' · ' + veh : '') : (veh || 'A vehicle we don\'t insure yet');
@@ -1243,14 +1380,16 @@ function stepRenew(d) {
       '<div class="when">Our renewals team finds the policy for this vehicle and replies to you. Check the number below.</div></div></div></div>' +
       inp('reg', 'Registration or policy number', { req: 1, ph: 'e.g. PDJ 1234' })
     : '<div class="rnw' + (lapsed ? ' lapsed' : '') + '" style="margin-top:6px"><div class="rnw-top"><div class="ring" style="--p:' + (lapsed ? 100 : Math.max(4, Math.min(100, Math.round(100 * (60 - n) / 60)))) + '"><span>' + cu(n) + '<small>' + (lapsed ? 'days ago' : 'days') + '</small></span></div>' +
-      '<div><h3>' + esc([d.year, d.make, d.model].filter(Boolean).join(' ') || d.reg) + '</h3><div class="when">' + esc(d.reg) + (d.renewOnText ? ' · ' + (lapsed ? 'ended ' : 'renews ') + '<b>' + esc(d.renewOnText) + '</b>' : '') + '</div>' +
+      '<div>' + (d.line ? '<div class="eyebrow">' + esc(d.line) + ' insurance</div>' : '') + '<h3>' + esc(d.line ? (d.model || d.line + ' insurance') : [d.year, d.make, d.model].filter(Boolean).join(' ') || d.reg) + '</h3><div class="when">' + esc(d.reg) + (d.renewOnText ? ' · ' + (lapsed ? 'ended ' : 'renews ') + '<b>' + esc(d.renewOnText) + '</b>' : '') + '</div>' +
       '<div class="when" style="font-size:13px;color:var(--dim)">' + esc([d.lastCover, d.lastSum ? 'insured for ' + money(d.lastSum) : '', d.lastPremium ? 'premium ' + money(d.lastPremium) : ''].filter(Boolean).join(' · ')) + '</div></div></div></div>' +
       '<div class="brief" id="rbrief" aria-live="polite">' + briefHtml(d) + '</div>';
   return head +
-    opts('renewChoice', 'What would you like to do?', [['Renew as it is', 'Nothing has changed: same cover, same value, same drivers'], ['Renew with changes', 'A new driver, a new value, different cover or anything else'], ['Talk to us first', 'We call you before anything is renewed']], '', true) +
+    opts('renewChoice', 'What would you like to do?', d.line
+      ? [['Renew as it is', 'Nothing has changed: same cover, same sum insured'], ['Renew with changes', 'A new value, something added or taken off, or anything else'], ['Talk to us first', 'We call you before anything is renewed']]
+      : [['Renew as it is', 'Nothing has changed: same cover, same value, same drivers'], ['Renew with changes', 'A new driver, a new value, different cover or anything else'], ['Talk to us first', 'We call you before anything is renewed']], '', true) +
     '<div id="chgBox" class="' + (d.renewChoice === 'Renew with changes' ? '' : 'hide') + '">' +
-    '<label class="f"><b>What would you like changed? ' + req + '</b><textarea class="fld" data-k="renewChanges" placeholder="e.g. add my son as a driver, lower the value to TT$ 80,000">' + esc(d.renewChanges || '') + '</textarea></label>' +
-    '<div class="row">' + sel('cover', 'Cover', COVERS.map(c => c[0]), { ph: 'Keep as it is' }) + inp('value', 'New value (TT$)', { mode: 'numeric', ph: 'only if it changes' }) + '</div></div>' +
+    '<label class="f"><b>What would you like changed? ' + req + '</b><textarea class="fld" data-k="renewChanges" placeholder="' + (d.line ? 'e.g. raise the building to TT$ 1,200,000, add the contents' : 'e.g. add my son as a driver, lower the value to TT$ 80,000') + '">' + esc(d.renewChanges || '') + '</textarea></label>' +
+    '<div class="row">' + (d.line ? '' : sel('cover', 'Cover', COVERS.map(c => c[0]), { ph: 'Keep as it is' })) + inp('value', d.line ? 'New sum insured (TT$)' : 'New value (TT$)', { mode: 'numeric', ph: 'only if it changes' }) + '</div></div>' +
     sec('<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6"/></svg>', 'How we reach you') +
     '<div class="row">' + inp('name', 'Your full name', { ac: 'name', req: 1 }) + inp('mobile', 'Mobile number', { type: 'tel', mode: 'tel', ac: 'tel', ph: '868-', req: 1 }) + '</div>';
 }
@@ -1773,6 +1912,7 @@ function prepFile(file, kind, maxPx) {
 function stepReview(d) {
   const G = [['The request', [['Request', FLOW_NAME[d.flow] || ''], ['Renews on', d.renewOnText], ['You ask', d.renewChoice], ['Changes', d.renewChanges], ['Read from', d.invoice ? d.docLabel : '']]],
     ['The client', [['Name', d.name], ['E-mail', isAgent() ? d.clientEmail : session && session.email], ['Mobile', d.mobile], ['Home number', d.homePhone], ['Gender', d.gender], ['Date of birth', d.dob], ['Marital status', d.marital], ['Occupation', d.occupation], ['Employer', d.employer], ['Home address', d.address], ['Owned by', d.ownerType ? d.ownerType + (d.company ? ': ' + d.company : '') : ''], ['Agent', isAgent() ? me.agent.name + ' (you, the producer)' : d.agent], ['First policy with GG', d.firstGG], ['Other business with GG', d.otherGG === 'Yes' ? 'Yes' + (d.otherGGType ? ': ' + d.otherGGType : '') : d.otherGG]]],
+    d.line ? ['The policy', [['Line', d.line + ' insurance'], ['Policy', d.reg], ['Where', d.model], ['New sum insured', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : '']]] :
     ['The vehicle', [['Registration', d.reg || (d.newUnreg === 'Yes' ? 'Not registered yet' : '')], ['Vehicle', [d.year, d.make, d.model].filter(Boolean).join(' ')], ['Body', d.body], ['Seats', d.seating], ['Engine', d.cc ? d.cc + (/\d$/.test(d.cc) ? ' cc' : '') : ''], ['Value', d.value ? 'TT$ ' + Number(d.value).toLocaleString() : ''], ['Condition', d.condition], ['Chassis', d.chassis], ['Use', d.use], ['Anti-theft', d.antiTheft], ['Ever in an accident', /used|second/i.test(d.condition || '') && d.secondAcc === 'Yes' ? 'Yes' + (d.secondAccDetails ? ': ' + d.secondAccDetails : '') : ''], ['On a loan', d.mortgaged ? d.mortgaged + (d.institution ? ': ' + d.institution : '') : '']]],
     ['The cover', [['Cover', d.cover], ['Windscreen', d.windscreen === 'Yes' && d.windscreenLimit ? 'Yes, TT$ ' + Number(d.windscreenLimit).toLocaleString() : d.windscreen], ['Years driving', d.drivingYears], ['No claim discount', [d.ncd, d.ncdPct ? d.ncdPct + '%' : ''].filter(Boolean).join(', ')], ['Previous insurer', d.prevInsurer], ['Existing policy', d.existingPolicy], ['Other vehicles with GG', d.existingVehicles]]],
     ['The driver', [['Permit', d.permit], ['Issued', d.permitIssued], ['Expires', d.permitExpires], ['Accidents or claims', d.accidents === 'Yes' ? 'Yes' + (d.accidentDetails ? ': ' + d.accidentDetails : '') : d.accidents === 'No' ? 'None' : ''], ['Young or new drivers', d.young === 'Yes' ? 'Yes' + (d.youngDetails ? ': ' + d.youngDetails : '') : d.young === 'No' ? 'None' : ''], ['Notes', d.notes]]],
