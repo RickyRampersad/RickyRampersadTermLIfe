@@ -818,6 +818,325 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .s-match .h.l{font-size:calc(var(--u)*6.2)}.s-match .list{zoom:.76}.s-match .ypill{font-size:calc(var(--u)*2.2)}
   .cta{grid-template-columns:1.25fr .75fr;gap:calc(var(--u)*3)}.s-cta .qr svg{width:calc(var(--u)*21);height:calc(var(--u)*21)}.s-cta .mark.top{width:calc(var(--u)*6.5)}
 }
+
+/* ── the trailer's blocks, 28 October 2026: drawn larger, each with its own graphic ── */
+.tr-hook{grid-template-columns:1.08fr .92fr}
+.tr-chart{position:relative;height:calc(var(--u)*46);display:flex;align-items:flex-end;gap:calc(var(--u)*1.8);padding:0 calc(var(--u)*2);border-bottom:2px solid rgba(255,255,255,.2)}
+.tr-chart>i{flex:1;height:var(--h);border-radius:calc(var(--u)*1) calc(var(--u)*1) 0 0;background:linear-gradient(180deg,#5aa9bd,var(--aD) 70%,#0a3350);transform:scaleY(0);transform-origin:50% 100%;opacity:.85}
+.scene.act .tr-chart>i{animation:grow 1s var(--out) both;animation-delay:var(--t0)}
+.tr-chart>i.thru{background:linear-gradient(180deg,#fff,var(--aL) 26%,var(--a) 70%,#0a3350);opacity:1;box-shadow:0 0 calc(var(--u)*5) rgba(0,207,234,.65);z-index:2}
+.tr-ceil{position:absolute;left:0;right:0;top:40%;border-top:calc(var(--u)*.45) dashed var(--aT);z-index:3;transform:scaleX(0);transform-origin:0 50%}
+.scene.act .tr-ceil{animation:growx 1s var(--out) both;animation-delay:var(--t0)}
+.tr-ceil span{position:absolute;left:0;top:calc(var(--u)*-3.4);font:600 calc(var(--u)*2)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aT)}
+.tr-lab{position:absolute;right:calc(var(--u)*12);top:calc(var(--u)*-1);font:800 calc(var(--u)*3.6)/1 var(--display);color:var(--aL);opacity:0;font-style:normal;z-index:4}
+.scene.act .tr-lab{animation:pop .6s var(--pop) both;animation-delay:var(--t0)}
+.tr-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*3.2);width:100%;max-width:calc(var(--u)*172);margin:calc(var(--u)*2) auto 0}
+.tr-card{position:relative;background:#fff;color:#0d3f5e;border-radius:calc(var(--u)*2.4);padding:calc(var(--u)*3.2) calc(var(--u)*3.4);display:grid;gap:calc(var(--u)*1.5);text-align:left;box-shadow:0 calc(var(--u)*3) calc(var(--u)*9) rgba(4,6,10,.5);align-content:start}
+.tr-card small{font:600 calc(var(--u)*1.9)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--aD)}
+.tr-card>b{font:700 calc(var(--u)*4)/1.1 var(--display);letter-spacing:-.01em}
+.tr-g{width:100%;height:calc(var(--u)*21);overflow:visible}
+.tr-band{stroke:#c9c3b3;stroke-width:2;stroke-dasharray:6 6}
+.tr-bandt{font:600 9px var(--text);fill:#8a8f96;letter-spacing:.08em;text-transform:uppercase}
+.tr-line{fill:none;stroke:var(--a);stroke-width:4.5;stroke-linecap:round;stroke-dasharray:260;stroke-dashoffset:260}
+.scene.act .tr-line{animation:trdraw 1.7s var(--out) both;animation-delay:var(--t0)}
+@keyframes trdraw{to{stroke-dashoffset:0}}
+.tr-area{fill:url(#tga);opacity:0}
+.scene.act .tr-area{animation:fade .9s var(--out) both;animation-delay:var(--t0)}
+.tr-dot{fill:#fff;stroke:var(--a);stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:center}
+.scene.act .tr-dot{animation:pop .5s var(--pop) both,dotpulse 2.4s ease-out infinite;animation-delay:var(--t0),calc(var(--t0) + .5s)}
+@keyframes dotpulse{0%{filter:drop-shadow(0 0 0 rgba(0,114,141,.8))}70%{filter:drop-shadow(0 0 7px rgba(0,114,141,0))}100%{filter:drop-shadow(0 0 0 rgba(0,114,141,0))}}
+.tr-card .strk{font-size:calc(var(--u)*2.4)}
+.tr-cap{font:600 calc(var(--u)*2.4)/1.2 var(--text);color:#5b6670;font-style:normal;opacity:0}
+.scene.act .tr-cap{animation:up .5s var(--out) both;animation-delay:var(--t0)}
+.tr-wk{display:grid;grid-template-columns:repeat(5,1fr);gap:calc(var(--u)*1);height:calc(var(--u)*21)}
+.tr-wk>div{display:grid;grid-template-rows:1fr 1fr 1fr auto;gap:calc(var(--u)*.6)}
+.tr-wk i{display:block;background:#EEF2F8;border-radius:calc(var(--u)*.5);transform-origin:50% 100%}
+.tr-wk .you i{background:linear-gradient(180deg,var(--aL),var(--a));transform:scaleY(0)}
+.scene.act .tr-wk .you i{animation:grow .45s var(--out) both;animation-delay:var(--t0)}
+.scene.act .tr-wk .you i:nth-child(2){animation-delay:calc(var(--t0) + .12s)}
+.scene.act .tr-wk .you i:nth-child(1){animation-delay:calc(var(--t0) + .24s)}
+.tr-wk span{text-align:center;font:600 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.1em;text-transform:uppercase;color:#5b6670}
+.tr-wk .you span{color:var(--aD)}
+.tr-fam{position:relative;height:calc(var(--u)*21);display:grid;place-items:end center}
+.tr-fam svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.tr-umb{fill:none;stroke:var(--a);stroke-width:5;stroke-linecap:round;stroke-dasharray:290;stroke-dashoffset:290}
+.scene.act .tr-umb{animation:trdraw 1.4s var(--out) both;animation-delay:var(--t0)}
+.tr-ppl{display:flex;align-items:flex-end;gap:calc(var(--u)*1.4);padding-bottom:calc(var(--u)*.4)}
+.tr-ppl i{position:relative;display:block;width:calc(var(--u)*6.5*var(--s));height:calc(var(--u)*12*var(--s));opacity:0;transform:scale(.6);transform-origin:50% 100%}
+.tr-ppl i::before{content:'';position:absolute;left:50%;top:0;width:52%;aspect-ratio:1;translate:-50% 0;border-radius:50%;background:linear-gradient(145deg,var(--a),var(--aD))}
+.tr-ppl i::after{content:'';position:absolute;left:0;right:0;bottom:0;height:52%;border-radius:45% 45% 12% 12%;background:linear-gradient(180deg,var(--a),var(--aD))}
+.scene.act .tr-ppl i{animation:pop .55s var(--pop) both;animation-delay:var(--t0)}
+.s-match.tr .list{zoom:1.12}
+.tr-av{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:calc(var(--u)*2);background:var(--bg3);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*1.8);padding:calc(var(--u)*1.8) calc(var(--u)*2.4);position:relative;box-shadow:0 calc(var(--u)*2) calc(var(--u)*6) rgba(4,6,10,.45)}
+.tr-av i{width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,var(--a),var(--aD));color:#fff;font:800 calc(var(--u)*2.6)/1 var(--display);font-style:normal;box-shadow:0 0 0 calc(var(--u)*.5) rgba(0,207,234,.3)}
+.tr-av b{display:block;font:700 calc(var(--u)*2.8)/1.1 var(--display);color:#fff}
+.tr-av span{display:block;margin-top:.3em;font:500 calc(var(--u)*2)/1.2 var(--text);color:var(--mute)}
+.tr-av em{font:700 calc(var(--u)*1.8)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aT);border:1px solid rgba(0,207,234,.5);border-radius:99px;padding:.6em 1em;font-style:normal}
+.s-coach2.tr .note p{font-size:calc(var(--u)*2.5)}
+.s-coach2.tr .week span{font-size:calc(var(--u)*2.3);padding:calc(var(--u)*1.3) 0}
+.tr-rail{position:relative;width:100%;max-width:calc(var(--u)*150);height:calc(var(--u)*.5);margin:calc(var(--u)*1) auto calc(var(--u)*-1);border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
+.tr-rail::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--aD),var(--aL));transform:scaleX(0);transform-origin:0 50%}
+.scene.act .tr-rail::after{animation:growx linear both;animation-duration:var(--d);animation-delay:var(--t0)}
+.tr-seats{display:grid;grid-template-columns:repeat(5,1fr);gap:calc(var(--u)*2.2);width:100%;max-width:calc(var(--u)*150);margin:calc(var(--u)*1) auto}
+.tr-seat{position:relative;min-height:calc(var(--u)*25);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);border-radius:calc(var(--u)*2);padding:calc(var(--u)*3) calc(var(--u)*1.6) calc(var(--u)*2.4);display:grid;justify-items:center;align-content:start;gap:calc(var(--u)*1.6);opacity:0;transform:translateY(calc(var(--u)*3)) scale(.9)}
+.scene.act .tr-seat{animation:seatin .7s var(--out) both;animation-delay:var(--t0)}
+@keyframes seatin{to{opacity:1;transform:none}}
+.tr-seat::after{content:'';position:absolute;inset:-1px;border-radius:inherit;border:2px solid var(--aL);opacity:0;pointer-events:none;box-shadow:0 0 calc(var(--u)*4) rgba(0,207,234,.45),inset 0 0 calc(var(--u)*4) rgba(0,207,234,.12)}
+.scene.act .tr-seat::after{animation:fade .5s both;animation-delay:var(--t1)}
+.tr-seat .sc{width:calc(var(--u)*8);height:calc(var(--u)*8);border-radius:calc(var(--u)*1.8);display:grid;place-items:center;background:linear-gradient(145deg,var(--a),var(--aD));color:#fff;font-size:calc(var(--u)*3.6);box-shadow:0 calc(var(--u)*1.6) calc(var(--u)*4) rgba(0,90,112,.45)}
+.tr-seat .nm{text-align:center;opacity:0}
+.scene.act .tr-seat .nm{animation:up .6s var(--out) both;animation-delay:var(--t1)}
+.tr-seat .nm b{display:block;font:700 calc(var(--u)*2.4)/1.15 var(--text);color:#fff}
+.tr-seat .nm small{display:block;margin-top:.5em;font:600 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.08em;text-transform:uppercase;color:var(--aT)}
+.tr-seat .st{position:absolute;top:calc(var(--u)*-1.6);right:calc(var(--u)*-1.2);width:calc(var(--u)*4.4);height:calc(var(--u)*4.4);border-radius:50%;display:grid;place-items:center;background:#fff;color:var(--aD);font-size:calc(var(--u)*2.2);opacity:0;box-shadow:0 calc(var(--u)*1) calc(var(--u)*3) rgba(4,6,10,.5)}
+.scene.act .tr-seat .st{animation:pop .5s var(--pop) both;animation-delay:var(--t1)}
+.gate-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:calc(var(--u)*4);width:100%;max-width:calc(var(--u)*168);margin:0 auto}
+.gate-row .stage{width:calc(var(--u)*46)}
+.gate-row .who b{font-size:calc(var(--u)*4.3)}.gate-row .who span{font-size:calc(var(--u)*2.9)}.gate-row .who{padding:calc(var(--u)*3.2) calc(var(--u)*3.6)}
+.gate-row .ring{--chip:11.5cqw}
+.gate-row .spin{font-size:4.4cqw}
+.iris-wrap{grid-area:1/1;position:relative;width:100%;aspect-ratio:1;transform:scale(.08);opacity:0}
+.scene.act .iris-wrap{animation:iris 1.6s var(--out) both;animation-delay:var(--t0)}
+@keyframes iris{0%{transform:scale(.08);opacity:0}55%{opacity:1}100%{transform:scale(1);opacity:1}}
+.stage.iris .mark{opacity:0;transform:scale(.4)}
+.scene.act .stage.iris .mark{animation:markin .9s var(--out) both,float 7.5s ease-in-out infinite;animation-delay:var(--t0),calc(var(--t0) + .9s)}
+@keyframes markin{0%{opacity:0;transform:scale(.4)}70%{transform:scale(1.1)}100%{opacity:1;transform:none}}
+.stage.iris .ping{animation-delay:calc(var(--t0) + .6s)}.stage.iris .ping.p2{animation-delay:calc(var(--t0) + 2.4s)}.stage.iris .ping.p3{animation-delay:calc(var(--t0) + 4.2s)}
+.stage.iris .halo{opacity:0}
+.scene.act .stage.iris .halo{animation:fade 1s both,halo 6s ease-in-out infinite;animation-delay:var(--t0),calc(var(--t0) + 1s)}
+.flash{position:absolute;inset:0;margin:auto;width:40%;height:40%;border-radius:50%;background:radial-gradient(closest-side,#fff,rgba(0,207,234,.75) 40%,transparent 70%);opacity:0;pointer-events:none;z-index:2}
+.scene.act .flash{animation:flash 1.3s ease-out both;animation-delay:calc(var(--t0) + .45s)}
+@keyframes flash{0%{opacity:0;scale:.3}22%{opacity:.95}100%{opacity:0;scale:3.4}}
+.scene.act .stage.iris .ring li{animation:fade .6s var(--out) both;animation-delay:calc(var(--t0) + .55s + var(--i) * 70ms)}
+.tr-line{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:calc(var(--u)*3);font:600 calc(var(--u)*3)/1 var(--text);color:var(--mute)}
+.tr-line b{font-weight:600;color:#fff;display:inline-flex;align-items:baseline;gap:.35em}
+.tr-line em{font:800 calc(var(--u)*5)/1 var(--display);color:var(--aL);font-style:normal;font-variant-numeric:tabular-nums}
+.tr-line i{width:calc(var(--u)*.7);height:calc(var(--u)*.7);border-radius:50%;background:var(--aT)}
+.s-close .stage.closeS{width:calc(var(--u)*34)}
+.s-close .stage.closeS .ring{--chip:11.5cqw}.s-close .stage.closeS .spin{font-size:4.4cqw}
+.tr-cta{grid-template-columns:1.25fr .75fr}
+.tr-book{position:relative;background:#fff;color:#0d3f5e;border-radius:calc(var(--u)*2);padding:calc(var(--u)*2.2) calc(var(--u)*2.6) calc(var(--u)*3);display:grid;gap:calc(var(--u)*1.2);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,6,10,.5);max-width:calc(var(--u)*86)}
+.tr-book small{font:600 calc(var(--u)*1.8)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--aD)}
+.tr-f{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:calc(var(--u)*1.6);border:1.5px solid #e4e0d4;border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.1) calc(var(--u)*1.6);min-height:calc(var(--u)*5)}
+.tr-f span{font:600 calc(var(--u)*1.7)/1 var(--text);color:#5b6670;letter-spacing:.04em}
+.tr-f b{font:600 calc(var(--u)*2.2)/1.1 var(--text);color:#0d3f5e;justify-self:start}
+.tr-pill{background:linear-gradient(135deg,var(--a),var(--aD));color:#fff!important;border-radius:99px;padding:.45em 1em;opacity:0}
+.scene.act .tr-pill{animation:pop .45s var(--pop) both;animation-delay:var(--t0)}
+.tr-go{justify-self:start;background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;border-radius:99px;padding:calc(var(--u)*1.3) calc(var(--u)*3);font:600 calc(var(--u)*2.3)/1 var(--text);opacity:0;box-shadow:0 calc(var(--u)*1.4) calc(var(--u)*3.5) rgba(0,90,112,.4)}
+.scene.act .tr-go{animation:up .5s var(--out) both,press .5s ease-out both;animation-delay:var(--t0),calc(var(--t0) + .55s)}
+@keyframes press{0%,100%{transform:none}40%{transform:scale(.93)}}
+.tr-ok{display:flex;align-items:center;gap:.6em;font:600 calc(var(--u)*2.1)/1.2 var(--text);color:#1e7a4c;opacity:0}
+.tr-ok .ic{width:calc(var(--u)*2.8);height:calc(var(--u)*2.8);stroke:#1e7a4c;stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.scene.act .tr-ok{animation:up .5s var(--out) both;animation-delay:var(--t0)}
+@media (orientation:portrait){
+  .tr-hook{grid-template-columns:1fr}
+  .tr-chart{height:calc(var(--u)*42)}
+  .tr-cards{grid-template-columns:1fr;gap:calc(var(--u)*2.6)}
+  .tr-card{grid-template-columns:1fr 1fr;grid-template-areas:"a g" "b g" "c g";gap:calc(var(--u)*1) calc(var(--u)*3);align-items:center}
+  .tr-card small{grid-area:a;align-self:end}.tr-card>b{grid-area:b;align-self:start}.tr-card .tr-g,.tr-card .tr-wk,.tr-card .tr-fam{grid-area:g;height:calc(var(--u)*18)}.tr-card .strk,.tr-card .tr-cap{grid-area:c}
+  .tr-seats{gap:calc(var(--u)*1.2)}
+  .tr-seat{min-height:calc(var(--u)*23);padding:calc(var(--u)*2.4) calc(var(--u)*.8) calc(var(--u)*2)}
+  .tr-seat .nm b{font-size:calc(var(--u)*1.95)}.tr-seat .nm small{font-size:calc(var(--u)*1.45)}
+  .tr-seat .sc{width:calc(var(--u)*7);height:calc(var(--u)*7)}
+  .gate-row{grid-template-columns:1fr 1fr;gap:calc(var(--u)*3)}
+  .gate-row .stage{grid-column:1/-1;order:-1;width:calc(var(--u)*68);justify-self:center}
+  .tr-line{font-size:calc(var(--u)*2.8);gap:calc(var(--u)*2)}
+  .s-close .stage.closeS{width:calc(var(--u)*50)}
+  .tr-cta{grid-template-columns:1fr}
+  .tr-book{max-width:none}
+}
+@media (aspect-ratio:1/1){
+  .tr-cards{grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2)}
+  .tr-card{grid-template-columns:1fr;grid-template-areas:none;display:grid}
+  .tr-card small,.tr-card>b,.tr-card .tr-g,.tr-card .tr-wk,.tr-card .tr-fam,.tr-card .strk,.tr-card .tr-cap{grid-area:auto}
+  .tr-card .tr-g,.tr-card .tr-wk,.tr-card .tr-fam{height:calc(var(--u)*11)}
+  .gate-row .stage{width:calc(var(--u)*44)}
+  .tr-seat{min-height:calc(var(--u)*19)}
+  .tr-chart{height:calc(var(--u)*34)}
+}
+
+.tr-mgr{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:calc(var(--u)*2);background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;border-radius:calc(var(--u)*2);padding:calc(var(--u)*1.8) calc(var(--u)*2.6);text-align:left;box-shadow:0 calc(var(--u)*2) calc(var(--u)*6) rgba(0,90,112,.45)}
+.tr-mgr i{font:800 calc(var(--u)*5)/1 var(--display);font-style:normal;letter-spacing:-.03em}
+.tr-mgr b{display:block;font:700 calc(var(--u)*2.8)/1.1 var(--display)}
+.tr-mgr span{display:block;margin-top:.3em;font:500 calc(var(--u)*2)/1.2 var(--text);opacity:.92}
+.tr-mgr .ic{font-size:calc(var(--u)*3.6)}
+.who.mgr{display:grid;grid-template-columns:1fr auto;align-items:center;gap:calc(var(--u)*1) calc(var(--u)*4);width:100%;max-width:calc(var(--u)*150);margin:0 auto;padding:calc(var(--u)*2.2) calc(var(--u)*3.2);background:linear-gradient(135deg,rgba(0,114,141,.35),rgba(0,114,141,.12));border-color:rgba(0,207,234,.4)}
+.who.mgr b{font-size:calc(var(--u)*3.4)}.who.mgr span{font-size:calc(var(--u)*2.5);margin-top:.3em;max-width:70ch}.who.mgr .lock-s{grid-column:2;grid-row:1/3;margin:0;white-space:nowrap}
+.gate-row .who.mgr b{font-size:calc(var(--u)*3.4)}.gate-row .who.mgr span{font-size:calc(var(--u)*2.5)}
+@media (orientation:portrait){.who.mgr{grid-template-columns:1fr}.who.mgr .lock-s{grid-column:1;grid-row:auto;margin-top:calc(var(--u)*1.2)}.tr-mgr{grid-column:1/-1}}
+
+/* caption-safe, 29 October 2026: the bottom fifth of every frame is the burned captions' band, and the seats, door, booking
+   and close scenes ran into it in one frame or both (measured by the scratchpad's measure.js). Scene-scoped sizes, after
+   every other rule so they win. */
+.s-seats .full{gap:calc(var(--u)*1.4)}
+.s-seats .tr-seat{min-height:calc(var(--u)*21);padding:calc(var(--u)*2.2) calc(var(--u)*1.6) calc(var(--u)*1.8)}
+.s-seats .tr-seats{margin:calc(var(--u)*.6) auto}
+.s-seats .fig b{font-size:calc(var(--u)*7)}
+.s-seats .figs.row{margin-top:calc(var(--u)*.4);align-items:center}
+.s-seats .tr-mgr{padding:calc(var(--u)*1.4) calc(var(--u)*2.4)}
+.s-door .full{gap:calc(var(--u)*1.4)}
+.s-door .h.xl{font-size:calc(var(--u)*8.2)}
+.s-door .gate-row .stage{width:calc(var(--u)*36)}
+.s-door .gate-row .who{padding:calc(var(--u)*2.4) calc(var(--u)*3)}
+.s-door .who.mgr{display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*3);padding:calc(var(--u)*1.4) calc(var(--u)*3)}
+.s-door .who.mgr b{font-size:calc(var(--u)*2.9);white-space:nowrap}
+.s-door .who.mgr span{margin:0;max-width:none;font-size:calc(var(--u)*2.3)}
+.s-door .who.mgr .lock-s{margin:0}
+.s-cta .tr-book{zoom:.87}
+@media (orientation:portrait){
+  .s-door{padding-top:calc(var(--u)*8)}
+  .s-door .h.xl{font-size:calc(var(--u)*10)}
+  .s-door .gate-row .stage{width:calc(var(--u)*50)}
+  .s-door .gate-row .who{padding:calc(var(--u)*2.2) calc(var(--u)*2.6)}
+  .s-door .gate-row .who b{font-size:calc(var(--u)*3.8)}
+  .s-door .who.mgr{display:grid;grid-template-columns:1fr auto;gap:calc(var(--u)*.6) calc(var(--u)*3);justify-content:stretch;text-align:left;padding:calc(var(--u)*2) calc(var(--u)*2.8)}
+  .s-door .who.mgr b{white-space:normal;font-size:calc(var(--u)*3.4)}
+  .s-door .who.mgr span{font-size:calc(var(--u)*2.4)}
+  .s-door .who.mgr .lock-s{grid-column:2;grid-row:1/3;white-space:nowrap}
+  .s-door .tr-line{font-size:calc(var(--u)*2.5)}.s-door .tr-line em{font-size:calc(var(--u)*4.2)}
+  .s-cta .tr-book{zoom:1}
+  .s-cta .qr{zoom:.84}
+  .s-close .stage.closeS{width:calc(var(--u)*40)}
+}
+
+/* ── 29 October 2026: the coach and the clock, the slides, the wall 24/7, the servicing rail, the career timeline ── */
+.cstage{position:relative;display:grid;width:100%}
+.clockc,.coachc{grid-area:1/1}
+.clockc{justify-self:center;display:grid;justify-items:center;gap:calc(var(--u)*1.6);opacity:0;position:relative;transform-origin:50% 50%}
+.scene.act .clockc{animation:up .8s var(--out) both,clkaway 1s var(--out) forwards;animation-delay:var(--t0),var(--t1)}
+@keyframes clkaway{to{transform:translate(-56%,-30%) scale(.36);opacity:.25;filter:grayscale(1)}}
+.clockc{align-self:start}
+.clk{width:calc(var(--u)*36);height:calc(var(--u)*36);filter:drop-shadow(0 calc(var(--u)*2) calc(var(--u)*6) rgba(4,14,26,.55))}
+.clk-f{fill:var(--bg3);stroke:rgba(255,255,255,.28);stroke-width:3}
+.clk-t{stroke:rgba(255,255,255,.45);stroke-width:2.5;stroke-linecap:round}.clk-t.q{stroke:#fff;stroke-width:4}
+.clk-h,.clk-m{stroke:#fff;stroke-width:6;stroke-linecap:round}.clk-m{stroke-width:4.5}
+.clk-s{stroke:var(--aL);stroke-width:2.5;stroke-linecap:round;transform-origin:100px 100px;animation:tickhand 60s steps(60,end) infinite}
+@keyframes tickhand{to{transform:rotate(360deg)}}
+.clk-c{fill:var(--aL)}
+.clk-sees{display:flex;gap:calc(var(--u)*1);align-items:center;flex-wrap:wrap;justify-content:center;max-width:calc(var(--u)*50)}
+.clk-sees small{width:100%;text-align:center;font:600 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--mute2)}
+.clk-sees span{font:600 calc(var(--u)*2.2)/1 var(--text);color:var(--mute);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:.5em .9em}
+.clockc .slash{position:absolute;left:-4%;top:-4%;width:108%;height:108%;pointer-events:none;overflow:visible}
+.slash line{stroke:var(--aL);stroke-width:5;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-dasharray:100;stroke-dashoffset:100;opacity:0}
+.scene.act .slash line{animation:slashdraw .45s ease-out forwards;animation-delay:var(--t1)}
+@keyframes slashdraw{from{opacity:1;stroke-dashoffset:100}to{opacity:1;stroke-dashoffset:0}}
+.coachc{display:grid;gap:calc(var(--u)*1.2);opacity:0;width:100%;align-content:start}
+.scene.act .coachc{animation:up .8s var(--out) both;animation-delay:var(--t0)}
+.cill{width:100%;max-width:calc(var(--u)*44);justify-self:center;height:auto;overflow:visible}
+.cill .fig{fill:none;stroke:var(--aL);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.cill .fig circle{fill:var(--bg3)}
+.scene.act .cill .fl-l{animation:figl .8s var(--out) forwards;animation-delay:calc(var(--t0) + .2s)}
+.scene.act .cill .fl-r{animation:figr .8s var(--out) forwards;animation-delay:calc(var(--t0) + .35s)}
+@keyframes figl{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:none}}
+@keyframes figr{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+.cill .tbl{fill:rgba(255,255,255,.18)}
+.cill .tab{fill:var(--a);opacity:0}
+.scene.act .cill .tab{animation:fade .5s both;animation-delay:calc(var(--t0) + .7s)}
+.cill .ring{fill:none;stroke:var(--aL);stroke-width:2;opacity:0;transform-origin:170px 118px}
+.scene.act .cill .ring{animation:ringout 2.2s ease-out infinite;animation-delay:calc(var(--t0) + .9s)}
+@keyframes ringout{0%{opacity:.7;transform:scale(.3)}100%{opacity:0;transform:scale(1.7)}}
+.cill .lbl{font:600 12px var(--text);fill:var(--mute);text-anchor:middle;letter-spacing:.12em;text-transform:uppercase}
+.cs-row{display:grid;grid-template-columns:1fr 1.1fr;gap:calc(var(--u)*2.4);align-items:start}
+.cs-row>div{display:grid;gap:calc(var(--u)*.8)}
+.cs-meters{display:grid;gap:calc(var(--u)*.6)}
+.cs-sees{font:600 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aT)}
+.cs-week span{padding:calc(var(--u)*1.4) 0}
+.cst .note p{font-size:calc(var(--u)*2.4)}
+.slides{position:relative;width:100%;height:calc(var(--u)*42);margin-top:calc(var(--u)*.6)}
+.slide{position:absolute;inset:0;margin:0;display:grid;grid-template-rows:minmax(0,1fr) auto;justify-items:center;align-items:center;gap:calc(var(--u)*1.4);opacity:0}
+.scene.act .slide{animation:slin .7s var(--out) forwards,slout .55s ease-in forwards;animation-delay:var(--t0),var(--t1)}
+@keyframes slin{from{opacity:0;transform:translateX(12%) scale(.94)}to{opacity:1;transform:none}}
+@keyframes slout{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-10%) scale(.94)}}
+.dev{position:relative;overflow:hidden;background:#fff;border:calc(var(--u)*.55) solid #22527f;box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,14,26,.55);min-height:0}
+.dev.ph{height:100%;aspect-ratio:9/17.5;border-radius:calc(var(--u)*3)}
+.dev.lap{aspect-ratio:16/10;border-radius:calc(var(--u)*1.6);width:min(100%,calc(var(--u)*82))}
+.dev.card{aspect-ratio:1/1;border-radius:calc(var(--u)*1.4);width:min(100%,calc(var(--u)*22))}
+.dev img{width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block}
+.scene.act .slide .dev.ph img{animation:pan 9s linear forwards;animation-delay:calc(var(--t0) + .8s)}
+.slide figcaption{font:600 calc(var(--u)*2.3)/1.25 var(--text);color:#fff;text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:.5em 1.2em}
+.sdots{position:absolute;left:50%;bottom:calc(var(--u)*-2.6);transform:translateX(-50%);display:flex;gap:calc(var(--u)*.9)}
+.sdots i{width:calc(var(--u)*1.1);height:calc(var(--u)*1.1);border-radius:50%;background:rgba(255,255,255,.22)}
+.scene.act .sdots i{animation:dotfill .3s forwards;animation-delay:var(--t0)}
+@keyframes dotfill{to{background:var(--aL);transform:scale(1.35)}}
+.s20 .built{margin-top:calc(var(--u)*2.4)}.s20 .gal-s{margin-top:calc(var(--u)*-.6)}
+.wdev{width:100%}
+.live24{position:absolute;top:4%;right:3%;display:inline-flex;align-items:center;gap:.5em;font:700 calc(var(--u)*1.9)/1 var(--text);color:#fff;background:rgba(13,31,51,.86);border:1px solid rgba(0,207,234,.5);border-radius:99px;padding:.45em .9em;opacity:0;letter-spacing:.06em}
+.scene.act .live24{animation:up .5s both;animation-delay:var(--t0)}
+.live24 i{width:calc(var(--u)*.9);height:calc(var(--u)*.9);border-radius:50%;background:var(--aL);animation:blink 1.2s infinite}
+.wchips{display:flex;gap:calc(var(--u)*1);margin-top:calc(var(--u)*1.4);justify-content:center}
+.wchip{opacity:0;font:600 calc(var(--u)*2.1)/1 var(--text);color:var(--mute);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:.5em 1em}
+.scene.act .wchip{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.s-wall .phone.small{bottom:4%}
+.proc{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:calc(var(--u)*1.6);width:100%;margin-top:calc(var(--u)*2);padding-top:calc(var(--u)*5)}
+.prail{position:absolute;left:8%;right:8%;top:calc(var(--u)*2.2);height:calc(var(--u)*.4);background:rgba(255,255,255,.16);border-radius:99px;transform:scaleX(0);transform-origin:0 50%}
+.scene.act .prail{animation:grow 1.2s var(--out) forwards;animation-delay:var(--t0)}
+.prider{position:absolute;left:8%;top:calc(var(--u)*2.2);width:calc(var(--u)*1.8);height:calc(var(--u)*1.8);margin:calc(var(--u)*-.7) 0 0 calc(var(--u)*-.9);border-radius:50%;background:var(--aL);box-shadow:0 0 0 calc(var(--u)*.6) rgba(0,207,234,.3);opacity:0}
+.scene.act .prider{animation:ride var(--dur) linear forwards,fade .3s forwards;animation-delay:var(--t0),var(--t0)}
+@keyframes ride{to{left:92%}}
+.pstop{position:relative;display:grid;gap:calc(var(--u)*1);justify-items:center;opacity:0}
+.scene.act .pstop{animation:up .7s var(--out) both;animation-delay:var(--t0)}
+.pn{position:absolute;top:calc(var(--u)*-5 + var(--u)*2.2);left:50%;width:calc(var(--u)*1.6);height:calc(var(--u)*1.6);margin:calc(var(--u)*-.6) 0 0 calc(var(--u)*-.8);border-radius:50%;background:var(--bg);border:calc(var(--u)*.35) solid var(--aL)}
+.pcard{width:100%;min-height:calc(var(--u)*28);display:grid;align-content:center;justify-items:center;gap:calc(var(--u)*1);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*1.8);padding:calc(var(--u)*1.4)}
+.pcard .dev.ph{height:calc(var(--u)*19)}
+.pcard .dev.lap{width:100%}
+.pcard .dev.card{width:calc(var(--u)*14)}
+.plbl{font:700 calc(var(--u)*2.1)/1.2 var(--display);color:#fff;text-align:center;text-wrap:balance}
+.pline{font:500 calc(var(--u)*1.7)/1.3 var(--text);color:var(--mute);text-align:center}
+.pdays{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*.8)}
+.pdays b{opacity:0;font:800 calc(var(--u)*3.4)/1 var(--display);color:#fff;background:linear-gradient(135deg,var(--a),var(--aD));border-radius:calc(var(--u)*1);padding:.35em .2em;text-align:center;font-variant-numeric:tabular-nums}
+.scene.act .pdays b{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.prev{display:grid;gap:calc(var(--u)*.8)}
+.pchip{opacity:0;font:600 calc(var(--u)*2)/1.2 var(--text);color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(0,207,234,.45);border-radius:99px;padding:.6em 1em;text-align:center}
+.scene.act .pchip{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.pstars{display:flex;gap:calc(var(--u)*.4)}
+.pstars svg{width:calc(var(--u)*3);height:calc(var(--u)*3);fill:#efc24b;opacity:0;transform:scale(.4)}
+.pstars.big svg{width:calc(var(--u)*4.4);height:calc(var(--u)*4.4)}
+.scene.act .pstars svg{animation:pop .45s var(--pop) forwards;animation-delay:var(--t0)}
+.s25 .sample{position:static;margin-top:calc(var(--u)*1)}
+.s27{gap:calc(var(--u)*1)}
+.s27-h{display:grid;grid-template-columns:1.2fr .8fr;gap:calc(var(--u)*4);align-items:end}
+.s27-r{display:grid;gap:calc(var(--u)*1.4);justify-items:start}
+.ctl{width:100%;height:auto;overflow:visible;display:block}.ctl-l{width:min(100%,calc(var(--u)*134));justify-self:center}
+.ctl-v{display:none}
+.ctl .rail{fill:none;stroke:rgba(255,255,255,.22);stroke-width:4;stroke-linecap:round;stroke-dasharray:1400;stroke-dashoffset:1400}
+.ctl .rail.a{stroke:rgba(0,207,234,.55)}.ctl .rail.b{stroke:rgba(0,207,234,.55)}
+.scene.act .ctl .rail{animation:trdraw 1.6s var(--out) forwards;animation-delay:var(--t0)}
+.ctl .node{fill:var(--bg3);stroke:#fff;stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:center}
+.ctl .node.fork{fill:var(--a);stroke:var(--aL);stroke-width:4}
+.ctl .node.a,.ctl .node.b{fill:var(--a);stroke:#fff}
+.scene.act .ctl .node{animation:pop .5s var(--pop) forwards;animation-delay:var(--t0)}
+.ctl .lbl{opacity:0}
+.scene.act .ctl .lbl{animation:fade .5s forwards;animation-delay:var(--t0)}
+.ctl text{font-family:var(--text)}
+.ctl .nm{font-weight:700;font-size:15px;fill:#fff}
+.ctl .dt{font-weight:500;font-size:11.5px;fill:var(--mute)}
+.ctl .rd{font:800 20px var(--display);fill:var(--aL);opacity:0;letter-spacing:-.01em}
+.scene.act .ctl .rd{animation:fade .5s forwards;animation-delay:var(--t0)}
+.ctl .rider{fill:var(--aL);opacity:0;offset-distance:0%;offset-rotate:0deg;filter:drop-shadow(0 0 6px rgba(0,207,234,.8))}
+.scene.act .ctl .rider{animation:riderun var(--d) linear forwards;animation-delay:var(--t0)}
+@keyframes riderun{0%{opacity:1;offset-distance:0%}90%{opacity:1}100%{opacity:0;offset-distance:100%}}
+@media (orientation:portrait){
+  .cs-row{grid-template-columns:1fr 1fr}
+  .clk{width:calc(var(--u)*40);height:calc(var(--u)*40)}
+  .cill{max-width:calc(var(--u)*42)}
+  .coachc{gap:calc(var(--u)*1.2)}
+  .cst .chip{padding:calc(var(--u)*1.6) calc(var(--u)*2.2)}
+  .cst .note p{font-size:calc(var(--u)*2.7)}
+  .cs-week span{padding:calc(var(--u)*1.6) 0;font-size:calc(var(--u)*2.3)}
+  @keyframes clkaway{to{transform:translate(58%,-22%) scale(.34);opacity:.22;filter:grayscale(1)}}
+  .slides{height:calc(var(--u)*88)}
+  .dev.lap{width:100%}
+  .proc{grid-template-columns:1fr 1fr 1fr;gap:calc(var(--u)*2);padding-top:0}
+  .prail,.prider,.pn{display:none}
+  .pcard{min-height:calc(var(--u)*30);padding:calc(var(--u)*1.2)}
+  .pcard .dev.ph{height:calc(var(--u)*21)}
+  .pcard .dev.card{width:calc(var(--u)*17)}
+  .plbl{font-size:calc(var(--u)*2.5)}.pline{font-size:calc(var(--u)*2)}.pchip{font-size:calc(var(--u)*2.2);padding:.5em .7em}.pdays b{font-size:calc(var(--u)*3.8)}
+  .s27-h{grid-template-columns:1fr}
+  .ctl-l{display:none}.ctl-v{display:block}
+  .ctl .nm{font-size:17px}.ctl .dt{font-size:13px}.ctl .rd{font-size:22px}
+  .s-wall .phone.small{width:30%;right:0;bottom:16%}
+}
 </style>
 </head>
 <body>
@@ -847,32 +1166,56 @@ body.paused #bars i.run::after{animation-play-state:paused}
 <div id="film">
   <div class="aura a1"></div><div class="aura a2"></div>
   <div class="motes"><i style="--x:11%;--d:14s;--dl:0.0s"></i><i style="--x:48%;--d:21s;--dl:12.1s"></i><i style="--x:85%;--d:19s;--dl:10.2s"></i><i style="--x:25%;--d:17s;--dl:8.3s"></i><i style="--x:62%;--d:15s;--dl:6.4s"></i><i style="--x:2%;--d:22s;--dl:4.5s"></i><i style="--x:39%;--d:20s;--dl:2.6s"></i><i style="--x:76%;--d:18s;--dl:0.7s"></i><i style="--x:16%;--d:16s;--dl:12.8s"></i><i style="--x:53%;--d:14s;--dl:10.9s"></i><i style="--x:90%;--d:21s;--dl:9.0s"></i><i style="--x:30%;--d:19s;--dl:7.1s"></i><i style="--x:67%;--d:17s;--dl:5.2s"></i><i style="--x:7%;--d:15s;--dl:3.3s"></i><i style="--x:44%;--d:22s;--dl:1.4s"></i><i style="--x:81%;--d:20s;--dl:13.5s"></i><i style="--x:21%;--d:18s;--dl:11.6s"></i><i style="--x:58%;--d:16s;--dl:9.7s"></i></div>
-<section class="scene s-hook" data-d="8900" data-n="1" style="--kb:8900ms" >
+<section class="scene s-hook tr" data-d="8900" data-n="1" style="--kb:8900ms" >
 
-<div class="full center">
-  <span class="ghost" aria-hidden="true">?</span>
-  <span class="spot" style="--t0:2813ms"></span>
-  <p class="eye in" style="--t0:300ms">A question</p>
-  <h1 class="h xl"><span aria-label="Good at what you do?"><span class="w"><i style="--i:0;--t0:500ms">Good</i></span> <span class="w"><i style="--i:1;--t0:500ms">at</i></span> <span class="w"><i style="--i:2;--t0:500ms">what</i></span> <span class="w"><i style="--i:3;--t0:500ms">you</i></span> <span class="w"><i style="--i:4;--t0:500ms">do?</i></span></span><br><em class="wine"><span aria-label="Stuck where you are?"><span class="w"><i style="--i:0;--t0:2613ms">Stuck</i></span> <span class="w"><i style="--i:1;--t0:2613ms">where</i></span> <span class="w"><i style="--i:2;--t0:2613ms">you</i></span> <span class="w"><i style="--i:3;--t0:2613ms">are?</i></span></span></em></h1>
-  <div class="ceil-line" style="--t0:2813ms"></div>
-  <p class="sub2 in" style="--t0:4012ms">Or wanting a career with no ceiling, <em class="wine">and afraid of the first year?</em></p>
+<div class="split tr-hook">
+  <div class="col">
+    <span class="spot" style="--t0:2813ms"></span>
+    <p class="eye in" style="--t0:300ms">A question</p>
+    <h1 class="h xl"><span aria-label="Good at what you do?"><span class="w"><i style="--i:0;--t0:500ms">Good</i></span> <span class="w"><i style="--i:1;--t0:500ms">at</i></span> <span class="w"><i style="--i:2;--t0:500ms">what</i></span> <span class="w"><i style="--i:3;--t0:500ms">you</i></span> <span class="w"><i style="--i:4;--t0:500ms">do?</i></span></span><br><em class="wine"><span aria-label="Stuck where you are?"><span class="w"><i style="--i:0;--t0:2613ms">Stuck</i></span> <span class="w"><i style="--i:1;--t0:2613ms">where</i></span> <span class="w"><i style="--i:2;--t0:2613ms">you</i></span> <span class="w"><i style="--i:3;--t0:2613ms">are?</i></span></span></em></h1>
+    <p class="sub2 in" style="--t0:4012ms">Or wanting a career with no ceiling, <em class="wine">and afraid of the first year?</em></p>
+  </div>
+  <div class="col"><div class="tr-chart in" style="--t0:400ms">
+      <div class="tr-ceil" style="--t0:2813ms"><span>the ceiling</span></div>
+      <i style="--h:30%;--t0:700ms"></i><i style="--h:38%;--t0:810ms"></i><i style="--h:45%;--t0:920ms"></i><i style="--h:50%;--t0:1030ms"></i><i style="--h:54%;--t0:1140ms"></i><i style="--h:56%;--t0:1250ms"></i><i style="--h:56%;--t0:1360ms"></i>
+      <i class="thru" style="--h:100%;--t0:5437ms"></i><span class="spk" style="--x:84%;--dx:-9;--c:#fff;--t0:5857ms"></span><span class="spk" style="--x:88%;--dx:-4;--c:#00CFEA;--t0:5917ms"></span><span class="spk" style="--x:91%;--dx:2;--c:#fff;--t0:5977ms"></span><span class="spk" style="--x:94%;--dx:7;--c:#7fe3f2;--t0:6037ms"></span><span class="spk" style="--x:86%;--dx:-14;--c:#00CFEA;--t0:6097ms"></span><span class="spk" style="--x:96%;--dx:12;--c:#fff;--t0:6157ms"></span>
+      <em class="tr-lab" style="--t0:5787ms">no ceiling</em>
+    </div></div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-gives" data-d="13300" data-n="2" style="--kb:13300ms" >
+<section class="scene s-gives tr" data-d="13300" data-n="2" style="--kb:13300ms" >
 
 <div class="full center">
   <p class="eye in" style="--t0:200ms">What this career gives</p>
   <h2 class="h l"><span aria-label="What your job can't."><span class="w"><i style="--i:0;--t0:1962ms">What</i></span> <span class="w"><i style="--i:1;--t0:1962ms">your</i></span> <span class="w"><i style="--i:2;--t0:1962ms">job</i></span> <span class="w"><i style="--i:3;--t0:1962ms">can't.</i></span></span></h2>
-  <div class="rh three">
-    <div class="rc in fl" style="--t0:3075ms"><small>Your income</small><b>Decided by your work</b><i class="hbar"><b style="--v:100%;--t0:3375ms"></b></i><em class="strk" style="--t0:5500ms">salary band</em></div>
-    <div class="rc in fl" style="--t0:6800ms"><small>Your week</small><b>Shaped by you</b><div class="week"><span class="" style="--t0:6950ms">Mon</span><span class="fri" style="--t0:7070ms">Tue</span><span class="" style="--t0:7190ms">Wed</span><span class="fri" style="--t0:7310ms">Thu</span><span class="" style="--t0:7430ms">Fri</span></div></div>
-    <div class="rc in fl" style="--t0:8763ms"><small>Your work</small><b>A family covered</b><div class="fam" style="--t0:9838ms"><svg class="ic"><use href="#i-users"/></svg><span>before the worst day comes</span></div></div>
+  <div class="tr-cards">
+    <div class="tr-card in fl" style="--t0:3075ms"><small>Your income</small><b>Decided by your work</b>
+      <svg class="tr-g" viewBox="0 0 200 80" aria-hidden="true">
+        <defs><linearGradient id="tga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e93b0" stop-opacity=".5"/><stop offset="1" stop-color="#0e93b0" stop-opacity="0"/></linearGradient></defs>
+        <line class="tr-band" x1="0" y1="36" x2="200" y2="36"/><text class="tr-bandt" x="3" y="31">salary band</text>
+        <path class="tr-area" d="M0 72C40 70 70 62 100 48S160 22 200 8V80H0Z" style="--t0:3975ms"/>
+        <path class="tr-line" d="M0 72C40 70 70 62 100 48S160 22 200 8" style="--t0:3375ms"/>
+        <circle class="tr-dot" cx="200" cy="8" r="4.5" style="--t0:4775ms"/>
+      </svg>
+      <em class="strk" style="--t0:5500ms">salary band</em>
+    </div>
+    <div class="tr-card in fl" style="--t0:6800ms"><small>Your week</small><b>Shaped by you</b>
+      <div class="tr-wk"><div class="" style="--t0:6950ms"><i></i><i></i><i></i><span>Mon</span></div><div class="you" style="--t0:7090ms"><i></i><i></i><i></i><span>Tue</span></div><div class="" style="--t0:7230ms"><i></i><i></i><i></i><span>Wed</span></div><div class="you" style="--t0:7370ms"><i></i><i></i><i></i><span>Thu</span></div><div class="" style="--t0:7510ms"><i></i><i></i><i></i><span>Fri</span></div></div>
+      <em class="tr-cap" style="--t0:7650ms">your calls, your hours</em>
+    </div>
+    <div class="tr-card in fl" style="--t0:8763ms"><small>Your work</small><b>A family covered</b>
+      <div class="tr-fam">
+        <svg viewBox="0 0 200 92" aria-hidden="true"><path class="tr-umb" d="M12 84A88 88 0 0 1 188 84" style="--t0:9838ms"/></svg>
+        <div class="tr-ppl"><i style="--t0:10088ms;--s:1"></i><i style="--t0:10288ms;--s:.86"></i><i style="--t0:10488ms;--s:.6"></i></div>
+      </div>
+      <em class="tr-cap" style="--t0:11187ms">before the worst day comes</em>
+    </div>
   </div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-match" data-d="21000" data-n="3" style="--kb:21000ms" >
+<section class="scene s-match tr" data-d="21000" data-n="3" style="--kb:21000ms" >
 
 <div class="split">
   <div class="col">
@@ -896,74 +1239,130 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-coach2" data-d="14500" data-n="4" style="--kb:14500ms" >
+<section class="scene s-coach2 tr" data-d="14500" data-n="4" style="--kb:14500ms" >
 
-<div class="split">
+<div class="split cst">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Your manager</p>
     <h2 class="h xl"><span aria-label="A coach,"><span class="w"><i style="--i:0;--t0:1063ms">A</i></span> <span class="w"><i style="--i:1;--t0:1063ms">coach,</i></span></span> <em class="wine"><span aria-label="not a clock."><span class="w"><i style="--i:0;--t0:2200ms">not</i></span> <span class="w"><i style="--i:1;--t0:2200ms">a</i></span> <span class="w"><i style="--i:2;--t0:2200ms">clock.</i></span></span></em></h2>
-    <p class="sub in" style="--t0:4063ms">The system does the admin. He does the sitting with you.</p>
-    <p class="sub in" style="--t0:12988ms"><em>Nobody here is left to figure it out alone.</em></p>
+    <p class="sub in" style="--t0:4063ms">The system does the admin. He does the sitting with you.</p><p class="sub in" style="--t0:12988ms"><em>Nobody here is left to figure it out alone.</em></p>
   </div>
   <div class="col">
-    <div class="week in" style="--t0:6650ms"><span class="" style="--t0:0ms">Mon</span><span class="" style="--t0:0ms">Tue</span><span class="" style="--t0:0ms">Wed</span><span class="" style="--t0:0ms">Thu</span><span class="fri" style="--t0:7637ms">Fri</span></div>
-    <div class="note in" style="--t0:9100ms">
-      <small>From your manager · in your morning e-mail</small>
-      <p><span class="ty" aria-label="Two fact finds this week, Priya. Let's book your Thursday calls together at eight."><span class="tw"><i style="--t:9400ms">T</i><i style="--t:9424ms">w</i><i style="--t:9448ms">o</i></span> <span class="tw"><i style="--t:9496ms">f</i><i style="--t:9520ms">a</i><i style="--t:9544ms">c</i><i style="--t:9568ms">t</i></span> <span class="tw"><i style="--t:9616ms">f</i><i style="--t:9640ms">i</i><i style="--t:9664ms">n</i><i style="--t:9688ms">d</i><i style="--t:9712ms">s</i></span> <span class="tw"><i style="--t:9760ms">t</i><i style="--t:9784ms">h</i><i style="--t:9808ms">i</i><i style="--t:9832ms">s</i></span> <span class="tw"><i style="--t:9880ms">w</i><i style="--t:9904ms">e</i><i style="--t:9928ms">e</i><i style="--t:9952ms">k</i><i style="--t:9976ms">,</i></span> <span class="tw"><i style="--t:10024ms">P</i><i style="--t:10048ms">r</i><i style="--t:10072ms">i</i><i style="--t:10096ms">y</i><i style="--t:10120ms">a</i><i style="--t:10144ms">.</i></span> <span class="tw"><i style="--t:10192ms">L</i><i style="--t:10216ms">e</i><i style="--t:10240ms">t</i><i style="--t:10264ms">'</i><i style="--t:10288ms">s</i></span> <span class="tw"><i style="--t:10336ms">b</i><i style="--t:10360ms">o</i><i style="--t:10384ms">o</i><i style="--t:10408ms">k</i></span> <span class="tw"><i style="--t:10456ms">y</i><i style="--t:10480ms">o</i><i style="--t:10504ms">u</i><i style="--t:10528ms">r</i></span> <span class="tw"><i style="--t:10576ms">T</i><i style="--t:10600ms">h</i><i style="--t:10624ms">u</i><i style="--t:10648ms">r</i><i style="--t:10672ms">s</i><i style="--t:10696ms">d</i><i style="--t:10720ms">a</i><i style="--t:10744ms">y</i></span> <span class="tw"><i style="--t:10792ms">c</i><i style="--t:10816ms">a</i><i style="--t:10840ms">l</i><i style="--t:10864ms">l</i><i style="--t:10888ms">s</i></span> <span class="tw"><i style="--t:10936ms">t</i><i style="--t:10960ms">o</i><i style="--t:10984ms">g</i><i style="--t:11008ms">e</i><i style="--t:11032ms">t</i><i style="--t:11056ms">h</i><i style="--t:11080ms">e</i><i style="--t:11104ms">r</i></span> <span class="tw"><i style="--t:11152ms">a</i><i style="--t:11176ms">t</i></span> <span class="tw"><i style="--t:11224ms">e</i><i style="--t:11248ms">i</i><i style="--t:11272ms">g</i><i style="--t:11296ms">h</i><i style="--t:11320ms">t</i><i style="--t:11344ms">.</i></span></span></p>
+    <div class="cstage">
+      <div class="clockc" style="--t0:150ms;--t1:2350ms">
+        <svg class="clk" viewBox="0 0 200 200" aria-hidden="true">
+          <circle class="clk-f" cx="100" cy="100" r="92"/><line class="clk-t q" x1="100" y1="14" x2="100" y2="23" transform="rotate(0 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(30 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(60 100 100)"/><line class="clk-t q" x1="100" y1="14" x2="100" y2="23" transform="rotate(90 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(120 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(150 100 100)"/><line class="clk-t q" x1="100" y1="14" x2="100" y2="23" transform="rotate(180 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(210 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(240 100 100)"/><line class="clk-t q" x1="100" y1="14" x2="100" y2="23" transform="rotate(270 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(300 100 100)"/><line class="clk-t" x1="100" y1="14" x2="100" y2="19" transform="rotate(330 100 100)"/>
+          <line class="clk-h" x1="100" y1="100" x2="100" y2="54" transform="rotate(300 100 100)"/>
+          <line class="clk-m" x1="100" y1="100" x2="100" y2="36" transform="rotate(60 100 100)"/>
+          <line class="clk-s" x1="100" y1="112" x2="100" y2="28"/>
+          <circle class="clk-c" cx="100" cy="100" r="4.5"/>
+        </svg>
+        <div class="clk-sees"><small>what a clock sees</small><span>in 8:02</span><span>out 4:31</span><span>8 h 29 m</span></div>
+        <svg class="slash" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line x1="8" y1="6" x2="92" y2="94" pathLength="100"/></svg>
+      </div>
+      <div class="coachc" style="--t0:5187ms">
+        <svg class="cill" viewBox="0 0 340 168" aria-hidden="true">
+          <circle class="ring" cx="170" cy="118" r="26"/>
+          <g class="fig fl-l"><circle cx="92" cy="50" r="18"/><path d="M50 118c0-27 19-46 42-46s42 19 42 46"/><path d="M122 92l32 12"/></g>
+          <g class="fig fl-r"><circle cx="248" cy="50" r="18"/><path d="M206 118c0-27 19-46 42-46s42 19 42 46"/><path d="M218 92l-32 12"/></g>
+          <rect class="tbl" x="40" y="118" width="260" height="10" rx="5"/>
+          <rect class="tab" x="150" y="101" width="40" height="17" rx="3"/>
+          <text x="92" y="152" class="lbl">coach</text><text x="248" y="152" class="lbl">you</text>
+        </svg>
+        <div class="note in" style="--t0:9100ms">
+          <small>From your manager · in your morning e-mail</small>
+          <p><span class="ty" aria-label="Two fact finds this week, Priya. Let's book your Thursday calls together at eight."><span class="tw"><i style="--t:9400ms">T</i><i style="--t:9424ms">w</i><i style="--t:9448ms">o</i></span> <span class="tw"><i style="--t:9496ms">f</i><i style="--t:9520ms">a</i><i style="--t:9544ms">c</i><i style="--t:9568ms">t</i></span> <span class="tw"><i style="--t:9616ms">f</i><i style="--t:9640ms">i</i><i style="--t:9664ms">n</i><i style="--t:9688ms">d</i><i style="--t:9712ms">s</i></span> <span class="tw"><i style="--t:9760ms">t</i><i style="--t:9784ms">h</i><i style="--t:9808ms">i</i><i style="--t:9832ms">s</i></span> <span class="tw"><i style="--t:9880ms">w</i><i style="--t:9904ms">e</i><i style="--t:9928ms">e</i><i style="--t:9952ms">k</i><i style="--t:9976ms">,</i></span> <span class="tw"><i style="--t:10024ms">P</i><i style="--t:10048ms">r</i><i style="--t:10072ms">i</i><i style="--t:10096ms">y</i><i style="--t:10120ms">a</i><i style="--t:10144ms">.</i></span> <span class="tw"><i style="--t:10192ms">L</i><i style="--t:10216ms">e</i><i style="--t:10240ms">t</i><i style="--t:10264ms">'</i><i style="--t:10288ms">s</i></span> <span class="tw"><i style="--t:10336ms">b</i><i style="--t:10360ms">o</i><i style="--t:10384ms">o</i><i style="--t:10408ms">k</i></span> <span class="tw"><i style="--t:10456ms">y</i><i style="--t:10480ms">o</i><i style="--t:10504ms">u</i><i style="--t:10528ms">r</i></span> <span class="tw"><i style="--t:10576ms">T</i><i style="--t:10600ms">h</i><i style="--t:10624ms">u</i><i style="--t:10648ms">r</i><i style="--t:10672ms">s</i><i style="--t:10696ms">d</i><i style="--t:10720ms">a</i><i style="--t:10744ms">y</i></span> <span class="tw"><i style="--t:10792ms">c</i><i style="--t:10816ms">a</i><i style="--t:10840ms">l</i><i style="--t:10864ms">l</i><i style="--t:10888ms">s</i></span> <span class="tw"><i style="--t:10936ms">t</i><i style="--t:10960ms">o</i><i style="--t:10984ms">g</i><i style="--t:11008ms">e</i><i style="--t:11032ms">t</i><i style="--t:11056ms">h</i><i style="--t:11080ms">e</i><i style="--t:11104ms">r</i></span> <span class="tw"><i style="--t:11152ms">a</i><i style="--t:11176ms">t</i></span> <span class="tw"><i style="--t:11224ms">e</i><i style="--t:11248ms">i</i><i style="--t:11272ms">g</i><i style="--t:11296ms">h</i><i style="--t:11320ms">t</i><i style="--t:11344ms">.</i></span></span></p>
+        </div>
+        <div class="cs-row">
+          <div><small class="cs-sees in" style="--t0:6650ms">your week, before Friday</small><div class="week cs-week" style="--t0:6650ms"><span class="" style="--t0:0ms">Mon</span><span class="" style="--t0:0ms">Tue</span><span class="" style="--t0:0ms">Wed</span><span class="" style="--t0:0ms">Thu</span><span class="fri" style="--t0:7637ms">Fri</span></div></div>
+          <div><small class="cs-sees in" style="--t0:6950ms">what a coach sees</small><div class="cs-meters"><div class="meter" style="--t0:6950ms;--v:62%"><span>Leads</span><i><b></b></i><em>coached Tuesday</em></div><div class="meter" style="--t0:7170ms;--v:48%"><span>Fact finds</span><i><b></b></i><em>role-played Wednesday</em></div><div class="meter" style="--t0:7390ms;--v:71%"><span>Closing</span><i><b></b></i><em>booked together</em></div></div></div>
+        </div>
+        <div class="chip in fl cs-chip" style="--t0:9988ms"><svg class="ic"><use href="#i-chat"/></svg><b>And in person. He sits with you on it.</b></div>
+      </div>
     </div>
-    <div class="chips3"><div class="chip in fl" style="--t0:9988ms"><svg class="ic"><use href="#i-chat"/></svg><b>And in person. He sits with you on it.</b></div></div>
   </div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-seats" data-d="19100" data-n="5" style="--kb:19100ms" >
+<section class="scene s-seats tr" data-d="30300" data-n="5" style="--kb:30300ms" >
 
 <div class="full center">
-  <p class="eye in" style="--t0:200ms">This year</p>
-  <h2 class="h xl"><span class="cnt" data-to="5" data-at="563" style="--at:563ms">5</span> <span aria-label="seats."><span class="w"><i style="--i:0;--t0:563ms">seats.</i></span></span></h2>
-  <div class="seatrow"><i style="--t0:763ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:903ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:1043ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:1183ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:1323ms"><svg class="ic"><use href="#i-users"/></svg></i></div>
-  <p class="sub in" style="--t0:2313ms">Not because we can't take more. Because every one gets <em>the full build</em>.</p>
-  <div class="jr five">
-    <i class="jline"></i>
-    <div class="jn" style="--t0:6350ms;--i:0"><span class="jic"><svg class="ic"><use href="#i-phone"/></svg></span><b>A call</b><small>48 h</small></div><div class="jn" style="--t0:8312ms;--i:1"><span class="jic"><svg class="ic"><use href="#i-users"/></svg></span><b>The Branch Manager</b><small>himself</small></div><div class="jn" style="--t0:10162ms;--i:2"><span class="jic"><svg class="ic"><use href="#i-chat"/></svg></span><b>Orientation</b><small>no gloss</small></div><div class="jn" style="--t0:11212ms;--i:3"><span class="jic"><svg class="ic"><use href="#i-target"/></svg></span><b>A profile</b><small>POP7</small></div><div class="jn" style="--t0:12513ms;--i:4"><span class="jic"><svg class="ic"><use href="#i-spark"/></svg></span><b>Discovery</b><small>the people doing it</small></div>
-  </div>
+  <p class="eye in" style="--t0:200ms">FY27 · the first class, selected now</p>
+  <h2 class="h xl"><span class="cnt" data-to="7" data-at="5975" style="--at:5975ms">7</span> <span aria-label="places."><span class="w"><i style="--i:0;--t0:5975ms">places.</i></span></span></h2>
+  <p class="sub in" style="--t0:7850ms">Not because we can't take more. Because every one gets <em>the full build</em>.</p>
+  <div class="tr-rail" style="--t0:11950ms;--d:6075ms"></div>
+  <div class="tr-seats"><div class="tr-seat" style="--t0:6175ms;--t1:11950ms">
+      <i class="sc"><svg class="ic"><use href="#i-users"/></svg></i>
+      <span class="nm"><b>A call</b><small>48 h</small></span>
+      <em class="st"><svg class="ic"><use href="#i-phone"/></svg></em>
+    </div><div class="tr-seat" style="--t0:6315ms;--t1:14025ms">
+      <i class="sc"><svg class="ic"><use href="#i-users"/></svg></i>
+      <span class="nm"><b>The Branch Manager</b><small>himself</small></span>
+      <em class="st"><svg class="ic"><use href="#i-users"/></svg></em>
+    </div><div class="tr-seat" style="--t0:6455ms;--t1:15787ms">
+      <i class="sc"><svg class="ic"><use href="#i-users"/></svg></i>
+      <span class="nm"><b>Orientation</b><small>no gloss</small></span>
+      <em class="st"><svg class="ic"><use href="#i-chat"/></svg></em>
+    </div><div class="tr-seat" style="--t0:6595ms;--t1:16875ms">
+      <i class="sc"><svg class="ic"><use href="#i-users"/></svg></i>
+      <span class="nm"><b>A profile</b><small>POP7</small></span>
+      <em class="st"><svg class="ic"><use href="#i-target"/></svg></em>
+    </div><div class="tr-seat" style="--t0:6735ms;--t1:18025ms">
+      <i class="sc"><svg class="ic"><use href="#i-users"/></svg></i>
+      <span class="nm"><b>Discovery</b><small>the people doing it</small></span>
+      <em class="st"><svg class="ic"><use href="#i-spark"/></svg></em>
+    </div></div>
   <div class="figs row">
-    <div class="fig in" style="--t0:14962ms"><b class="cnt" data-to="32" data-at="14962" style="--at:14962ms">32</b><span>years in Trinidad</span></div>
-    <div class="fig in" style="--t0:17175ms"><b class="cnt" data-to="5" data-at="17175" style="--at:17175ms">5</b><span>seats</span></div>
+    <div class="tr-mgr in fl" style="--t0:22125ms"><i>+1</i><div><b>A sales manager</b><span>to build a unit here</span></div><svg class="ic"><use href="#i-users"/></svg></div>
+    <div class="fig in" style="--t0:24650ms"><b class="cnt" data-to="32" data-at="24650" style="--at:24650ms">32</b><span>years in Trinidad</span></div>
+    <div class="fig in" style="--t0:28200ms"><b class="cnt" data-to="7" data-at="28200" style="--at:28200ms">7</b><span>places · one class</span></div>
   </div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-door" data-d="12600" data-n="6" style="--kb:12600ms" >
+<section class="scene s-door tr" data-d="15300" data-n="6" style="--kb:15300ms" >
 
-<div class="full center">
+<div class="full center tr-gate">
   <p class="eye in" style="--t0:200ms">One conversation</p>
   <h2 class="h xl"><span aria-label="The door is open."><span class="w"><i style="--i:0;--t0:400ms">The</i></span> <span class="w"><i style="--i:1;--t0:400ms">door</i></span> <span class="w"><i style="--i:2;--t0:400ms">is</i></span> <span class="w"><i style="--i:3;--t0:400ms">open.</i></span></span></h2>
-  <div class="door-row">
-    <div class="who in fl" style="--t0:2350ms"><b>Already contracted?</b><span>Nobody will know you asked.</span><i class="lock-s"><svg class="ic"><use href="#i-lock"/></svg> Confidential</i></div>
-    <div class="door" style="--t0:1287ms">
-      <div class="d-glow"></div>
-      <div class="d-frame"><div class="d-light"></div><div class="d-leaf l"></div><div class="d-leaf r"></div></div>
-      <span class="d-ray" style="--a:-28deg"></span><span class="d-ray" style="--a:-14deg"></span><span class="d-ray" style="--a:0deg"></span><span class="d-ray" style="--a:14deg"></span><span class="d-ray" style="--a:28deg"></span>
+  <div class="gate-row">
+    <div class="who in fl" style="--t0:2025ms"><b>Already contracted?</b><span>Nobody will know you asked.</span><i class="lock-s"><svg class="ic"><use href="#i-lock"/></svg> Confidential</i></div>
+    <div class="stage iris" style="--t0:975ms">
+      <div class="halo"></div>
+      <div class="iris-wrap">
+        <svg class="orbit" viewBox="0 0 400 400" aria-hidden="true"><circle class="o-ring" cx="200" cy="200" r="92"/><circle class="o-ring o-dash" cx="200" cy="200" r="130"/><circle class="o-ring" cx="200" cy="200" r="162"/><circle class="o-arc" cx="200" cy="200" r="90"/><circle class="o-arc o-arc2" cx="200" cy="200" r="158"/></svg>
+        <ul class="ring ring-in"><li style="--a:270deg;--i:0"><span class="spin"><b>1</b></span></li><li style="--a:342deg;--i:1"><span class="spin"><b>2</b></span></li><li style="--a:54deg;--i:2"><span class="spin"><b>3</b></span></li><li style="--a:126deg;--i:3"><span class="spin"><b>4</b></span></li><li style="--a:198deg;--i:4"><span class="spin"><b>5</b></span></li></ul>
+        <ul class="ring ring-out"><li style="--a:306deg;--i:5"><span class="spin"><svg class="ic"><use href="#i-spark"/></svg></span></li><li style="--a:18deg;--i:6"><span class="spin"><svg class="ic"><use href="#i-doc"/></svg></span></li><li style="--a:90deg;--i:7"><span class="spin"><svg class="ic"><use href="#i-chart"/></svg></span></li><li style="--a:162deg;--i:8"><span class="spin"><svg class="ic"><use href="#i-bolt"/></svg></span></li><li style="--a:234deg;--i:9"><span class="spin"><svg class="ic"><use href="#i-users"/></svg></span></li></ul>
+      </div>
+      <span class="ping"></span><span class="ping p2"></span><span class="ping p3"></span>
+      <span class="flash"></span>
+      <div class="mark"><svg viewBox="6 3 76 82" class="mk" aria-hidden="true"><use href="#shield"/></svg></div>
     </div>
-    <div class="who in fl" style="--t0:5350ms"><b>New to this?</b><span>You get the full build.</span><i class="lock-s"><svg class="ic"><use href="#i-spark"/></svg> Training · boot camp · coaching</i></div>
+    <div class="who in fl" style="--t0:5025ms"><b>New to this?</b><span>You get the full build.</span><i class="lock-s"><svg class="ic"><use href="#i-spark"/></svg> Training · boot camp · coaching</i></div>
   </div>
-  <div class="figs row">
-    <div class="fig in" style="--t0:7937ms"><b><em class="cnt" data-to="1" data-at="7937" style="--at:7937ms">1</em></b><span>confidential conversation</span></div>
-    <div class="fig in" style="--t0:9975ms"><b><em class="cnt" data-to="20" data-at="9975" style="--at:9975ms">20</em> min</b><span>this week</span></div>
-  </div>
+  <div class="who mgr in fl" style="--t0:7562ms"><b>Leading a team already?</b><span>Come and build a unit here: one seat for a sales manager, with the system doing the admin and the branch behind you.</span><i class="lock-s"><svg class="ic"><use href="#i-users"/></svg> Sales manager · one seat</i></div>
+  <div class="tr-line in" style="--t0:10937ms"><b><em class="cnt" data-to="1" data-at="10937" style="--at:10937ms">1</em> confidential conversation</b><i></i><b><em class="cnt" data-to="20" data-at="12912" style="--at:12912ms">20</em> minutes</b><i></i><b>this week</b></div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-cta" data-d="10200" data-n="7" style="--kb:10200ms" >
+<section class="scene s-cta tr" data-d="10200" data-n="7" style="--kb:10200ms" >
 
-<div class="split cta">
+<div class="split cta tr-cta">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Start here</p>
     <h2 class="h url"><span aria-label="agentmgt.com"><span class="w"><i style="--i:0;--t0:400ms">agentmgt.com</i></span></span></h2>
     <div class="btns">
       <span class="btn b1 in" style="--t0:3300ms">Book a confidential conversation →</span>
       <span class="btn b2 in" style="--t0:5588ms">Take the 60-second test first</span>
+    </div>
+    <div class="tr-book in fl" style="--t0:3500ms">
+      <small>Twenty minutes with the Branch Manager</small>
+      <div class="tr-f"><span>Your name</span><b><span class="ty" aria-label="Priya R."><span class="tw"><i style="--t:3800ms">P</i><i style="--t:3870ms">r</i><i style="--t:3940ms">i</i><i style="--t:4010ms">y</i><i style="--t:4080ms">a</i></span> <span class="tw"><i style="--t:4220ms">R</i><i style="--t:4290ms">.</i></span></span></b></div>
+      <div class="tr-f"><span>Where are you now?</span><b class="tr-pill" style="--t0:4600ms">Already contracted elsewhere</b></div>
+      <div class="tr-f"><span>Best time for his call</span><b class="tr-pill" style="--t0:5100ms">Morning</b></div>
+      <div class="tr-go" style="--t0:5700ms">Book my conversation →</div>
+      <div class="tr-ok" style="--t0:6400ms"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Booked · he reads it himself. Nobody else does.</div>
+      <span class="sample">sample figures</span>
     </div>
   </div>
   <div class="col">
@@ -972,10 +1371,17 @@ body.paused #bars i.run::after{animation-play-state:paused}
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-close dark" data-d="4300" data-n="8" style="--kb:4300ms" >
+<section class="scene s-close dark tr" data-d="4300" data-n="8" style="--kb:4300ms" >
 
 <div class="full center">
-  <div class="mark big in" style="--t0:200ms"><span class="ping"></span><span class="ping p2"></span><span class="ping p3"></span><svg viewBox="6 3 76 82" class="mk" aria-hidden="true"><use href="#shield"/></svg></div>
+  <div class="stage closeS in" style="--t0:200ms">
+      <div class="halo"></div>
+      <svg class="orbit" viewBox="0 0 400 400" aria-hidden="true"><circle class="o-ring" cx="200" cy="200" r="92"/><circle class="o-ring o-dash" cx="200" cy="200" r="130"/><circle class="o-ring" cx="200" cy="200" r="162"/><circle class="o-arc" cx="200" cy="200" r="90"/><circle class="o-arc o-arc2" cx="200" cy="200" r="158"/></svg>
+      <span class="ping"></span><span class="ping p2"></span><span class="ping p3"></span>
+      <div class="mark"><svg viewBox="6 3 76 82" class="mk" aria-hidden="true"><use href="#shield"/></svg></div>
+      <ul class="ring ring-in"><li style="--a:270deg;--i:0"><span class="spin"><b>1</b></span></li><li style="--a:342deg;--i:1"><span class="spin"><b>2</b></span></li><li style="--a:54deg;--i:2"><span class="spin"><b>3</b></span></li><li style="--a:126deg;--i:3"><span class="spin"><b>4</b></span></li><li style="--a:198deg;--i:4"><span class="spin"><b>5</b></span></li></ul>
+      <ul class="ring ring-out"><li style="--a:306deg;--i:5"><span class="spin"><svg class="ic"><use href="#i-spark"/></svg></span></li><li style="--a:18deg;--i:6"><span class="spin"><svg class="ic"><use href="#i-doc"/></svg></span></li><li style="--a:90deg;--i:7"><span class="spin"><svg class="ic"><use href="#i-chart"/></svg></span></li><li style="--a:162deg;--i:8"><span class="spin"><svg class="ic"><use href="#i-bolt"/></svg></span></li><li style="--a:234deg;--i:9"><span class="spin"><svg class="ic"><use href="#i-users"/></svg></span></li></ul>
+    </div>
   <h1 class="h xl"><span aria-label="The environment decides."><span class="w"><i style="--i:0;--t0:500ms">The</i></span> <span class="w"><i style="--i:1;--t0:500ms">environment</i></span> <span class="w"><i style="--i:2;--t0:500ms">decides.</i></span></span><br><em class="wine"><span aria-label="We select the driven."><span class="w"><i style="--i:0;--t0:2075ms">We</i></span> <span class="w"><i style="--i:1;--t0:2075ms">select</i></span> <span class="w"><i style="--i:2;--t0:2075ms">the</i></span> <span class="w"><i style="--i:3;--t0:2075ms">driven.</i></span></span></em></h1>
   <p class="foot in" style="--t0:2737ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>agentmgt.com</b></p>
 </div>
