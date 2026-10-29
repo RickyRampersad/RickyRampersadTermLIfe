@@ -5478,6 +5478,127 @@ section links it.
 - `scenes.js` in the session scratchpad shoots every scene at a fraction of its length in either frame (the same
   seek render.js uses) and tiles them, which is how the layouts were checked before the voice came back.
 
+## The renewal desk — general insurance, from last year to delivery
+
+`renewaldesk/` (staff), `myrenewal/` (the client) and `apps-script/GIRenewals.gs`, a sixth file in the Service
+Questionnaire project, routed by `GroupClients.gs` as `gcm.ren*` (so Service.gs needs no paste). Asked for on 29 October
+2026: "when Pawan logs in and selects the month and year, he can select the risks, motor, home, pl etc … so any person
+can help him, then it pulls up last year and guides the renewal process … the task is always opened on the last year
+renewal … client … approves the cover seeing also the history since inception … comments … channelled through the
+chatter … once proceed to renew, a new transaction is created … the risk created with the confirmed values and an open
+task on the transaction … the email is sent to ggrenewals team and copy support and the salessupport team … 2 days
+turnaround … follow up with the trail and update the chatter … a future event … for a document delivery to pawan".
+`GI-RENEWAL-DESK-SETUP.md` has the steps. The older `/renewal/` portal (Code.gs, Property.gs, sheet-based, token links)
+is separate and untouched.
+
+- **The branch manager's four decisions, the same day:** never renew without the client's yes (reminders at 14 and 10
+  days, a call at 7, then he decides); he or the Branch Manager's Assistant approves every letter, because its points are
+  advice; the letter goes once Guardian General's notice gives the premium, at least 21 days before; the client signs in
+  with a code to their e-mail, and a group also sees its renewals on its own page.
+- **The month comes from Salesforce** (`girMonthRisks_`): every `Risk_Details__c` of the lines' record types (Motor,
+  Property, Public Liability, Workers Compensation, Machinery, Bond, MARINE) renewing that month, Guardian General's only,
+  not sold or cancelled. A term renews the day after `To__c` (or `Next_Renewal_Date__c` within three days of it, as the
+  tracker reads it), or a year after `From__c` when the end date was never entered (flagged). One renewal a policy and
+  month (`key` = policy key + `|yyyy-MM`); the line is the policy number's letters first (`GIR_LINES.pre`), else the
+  record type; Property splits into home (private dwelling or household account) and commercial. A newer term already in
+  Salesforce reads as renewed. A household account "SURNAME, FIRST HH" reads as "First Surname" (`girClientName_`).
+- **One renewal, opened** (`girOne_`): the items; the history since inception (every term on its policy records and every
+  term of its vehicles, across a changed policy number); claims (`Claims_Revised__c`, never health or life); last year's
+  billing and when it was paid (`Payments__c`); open tasks; and **what the record says** (`girInsights_`, facts, never
+  advice): the notice not read, the letter due, the premium change, a vehicle carried at the same value for two or more
+  terms (with the 6–12% a year guide), sums insured unchanged (what average would pay on a TT$100,000 loss), Guardian
+  General's own value, a bank on the policy, money still owed, paid late last year, open claims, a missing end date, an
+  owner who has left, a company filed as a household.
+- **The full history, every year since the policy began** (29 October 2026: "need to see the full history as well").
+  `girHistory_(r, {staff, claims})` gives one entry a term, oldest first:
+  - the term's dates and the policy number it was written under (a changed number is followed through the vehicle);
+  - what was insured, at what value and premium, and the change on the year before;
+  - what was billed and paid, each payment with its date and how, and the days from the renewal to the first payment:
+    every billing record a term points to, plus any on the policy record (`INSURANCE_PORTFOLIO__c`), so a year whose
+    cover term was never linked is still found;
+  - the claims that fell in the term;
+  - the desk's own renewal of that year (letter sent, the client's answer, instructed, not renewed);
+  - for staff only, that year's tasks on its billing records with their last three notes (HTML stripped).
+
+  A `summary` gives the terms, paid since, claims and clean years, the usual days to pay and how often late; `gaps` names
+  any part Salesforce refused. Billing, payments and tasks are queried by the full ids and matched on 15 characters.
+  - **The desk** (Last year step): tiles, the premium year by year, each vehicle's value, then every year as a fold,
+    newest open, with chips (paid on / owed / no billing record, claims, renewal task open or closed, the desk).
+  - **The client** (`girClientView_`, kept on the row when the letter goes): every year with what it covered, billed,
+    paid and when, owed, and its claims; every claim on record (no longer three years); the history in one line. Never a
+    task, a note, a billing record's name or a Salesforce id. The card's chip classes are `c-ok`, `c-bad`, `c-warn`:
+    a bare `ok` matched the page's own thank-you box.
+  - **The letter**: every year (no longer the last six), a claim marked under its year, the bars in the action blue
+    `#2D5BB9` (gold is gone), and "With us since …: N terms, …".
+- **One door for clients, switched by the go-live** (29 October 2026; the branch manager left the call to me: "will
+  depend on you for guidance"). The homepage's "Renew my policy" still opens the old `/renewal/` portal, because its
+  clients hold access codes from earlier letters and `/myrenewal/` signs in only a client whose new letter has gone.
+  The old page asks `gcm.ping` (six seconds at most, never on a personal `?t=` link) and, once `renewals.live` is true
+  (`girGoLive`), shows **"Renewing this month? Sign in with my e-mail"** above its access-code box; in test mode, or
+  with no answer, it is unchanged. `/myrenewal/` links back for an old access code. Retire the old portal (and its
+  sends from `Code.gs`) only after the new desk has run one full month live; then point the homepage at `/myrenewal/`.
+- **The notice** is read in the browser: the desk finds the IFORM PDF in support@ by the policy number (`girSearchPol_`
+  searches "TTCPL0100001", "0100001" and "100001", because Outlook matches whole words), fetches it, and
+  `renewaldesk/girread.js` (pdf.js) parses it: policy, replaces, period, premium, tax, total, Tran Id, each vehicle or
+  location, the requirements. A person checks every figure and saves; a notice for another number needs a tick that it
+  replaces this one.
+- **The letter** (`girLetterHtml_`): the items with the confirmed values, last year against this year, the history, the
+  points worth a look, the documents Guardian General needs, one button to the client's page, ways to pay, the
+  confidentiality footer, the hosted gold `logo-mark.png`. Staff write the opening, up to six points and the closing;
+  *Draft with AI* (`GIR_DRAFT_SYSTEM`, facts only, no pressure, no advice to cancel or replace) gives a first draft. A
+  [blank] left in stops the save. Approval (`girApproveSend_`) is the branch manager's or the BMA's; it sends from
+  support@, sales support copied, and opens the renewal task on last year's billing record in the branch's pattern
+  ("Risk to Renew for -CLIENT Line Renewal Date m/d/yyyy Policy # …", Renewa/PDl/Bill), or finds the one already open.
+- **The client's answer** (`girTakeAnswer_`): approve (with their own values), something has changed, or a question; it
+  goes onto the renewal task's Chatter with the task's owner mentioned, and the person working it and the approvers are
+  e-mailed. A yes taken on the phone is recorded on the desk with who, how and when. The client's page
+  (`/myrenewal/`, `gcm.renCode` and `gcm.renIn`: a six-digit code, five tries, fifteen minutes, a six-hour sign-in; an
+  unknown address gets the same answer and no code) and a group's **Your renewals** tab (`gcm.renGroup`, its list bill and
+  code, a name required) draw the same card, `myrenewal/renewal-card.js`. A group never sees a letter sent in test mode.
+- **Proceed to renew** (`girProceed_`, only on the client's yes and a read notice): a new `TRANSACTIONS__c` (the line's
+  record type, the shell, account, contact, the renewal date, the holder as Owner), a `Risk_Details__c` per item copying
+  last year's details (`GIR_COPY`) with the notice's dates and premium and the confirmed value in `Cover1__c`, a follow-up
+  task on the new record, and an Event for the deliverer (Pawan, or `GIR_DELIVERY`) the working day before the renewal at
+  10:00. A field Salesforce refuses is left out and said (`gblSfwSave_`). The instruction goes from support@ to CRMS
+  Renewals with CRMS SAL Support (personal motor and home) or CRMS Commercial, support@ and sales support copied; motor in
+  Pawan's subject pattern ("Renewal Due -m/d/yyyy Policy #… - Vehicle # - … - Insured - …").
+- **The hourly run** (`girTick_`, from `gcmRefreshTick`, working days 8 to 17, once an hour): Guardian General's reply read
+  from support@ (a Guardian address not ours, after the instruction); "ready for collection" moves the delivery to the
+  next working day; no reply in 2 working days, a follow-up with the trail, every 2 working days, on the follow-up task's
+  Chatter, the approvers told at the fourth; the client's reminders at 14 and 10 days (never within two working days of
+  the letter); at 7 days a call task and the approvers asked to decide.
+- **Test mode until `girGoLive`** (`GIR_LIVE`): client and Guardian General mail to the person who pressed and the test
+  inbox, marked TEST; Salesforce written only on a ticked "really going ahead". `girTestMode`, `girTickNow`.
+- **Practice runs for training** (29 October 2026: "want to test this as I want to do the training with staff"). Staff
+  practise on the month's real renewals in test mode, so nothing practised may leak into Salesforce or to a client:
+  - **The test letter** goes to the approver, the person who has the renewal (`Holder e-mail`) and `GIR_TEST_TO`; `Sent to`
+    keeps every address, and any of them signs in at `/myrenewal/` to answer it as the client (`girSentTo_`). The
+    reminders go to the same list. The client's card says "Practice letter" (`practice` in `girView_`).
+  - **Nothing reaches a real task**: a comment in test mode with no task of the desk's own stays on the desk's log
+    (`comment (test)`); a client's answer on a Test row never looks for last year's open renewal task. A Test row's task
+    exists only when the approver ticked "really going ahead".
+  - **A practice instruction never takes Guardian General's real mail** about the policy as its reply (hourly run).
+  - **Every internal e-mail in test mode** is marked `[TEST]` (`girInternal_`).
+  - **A staff address is never the client's e-mail** (`girOurAddress_`: support@, the branch's mailboxes, anyone on the
+    Agent Skill Bank, `GIR.TEST_TO`).
+  - **Start again** (`reset` act, `girPracticeFor_`, `girPracticePatch_`): the approver, or the person who has the renewal,
+    puts it back to its letter (notice, values and letter kept; needs approving again) or to the beginning (everything
+    cleared), from two buttons under "Every step so far". Never once Salesforce was written for it (`New trans`); live,
+    only a Test row.
+  - **`girGoLive` clears the practice first** (`girClearPractice_`; `girClearPractice` on the editor's Run button between
+    sessions): every Test row back to its letter, a staff address taken off any row, a row Salesforce was written for left
+    and named.
+- **Who signs in**: the group client management sign-in (`gcmWho_`; the branch app's `sso.js` fills it). Pawan must be on
+  the Agent Skill Bank as staff with a Password; a Driver role is refused here. The record is the **GI Renewals** and **GI
+  Renewal Log** tabs of the group sheet.
+- **The look** is the motor quote's: light, soft ocean blue, the blue shield (`orphan-transition/board-mark.png`), on both
+  the desk and the client's page; the e-mails carry the gold `logo-mark.png`.
+- Tests in the scratchpad (`gir/`): `flow-test.js` (114, the whole journey in Node on a made-up book, three years of
+  billing, payments and an old renewal task with notes), `practice-test.js` (41, a training run from the letter to go live),
+  `desk-test.js` (36, Playwright, the desk with a made-up notice PDF read by pdf.js, the year folds and the practice
+  buttons), `client-test.js` (40, the client's page on a phone and a desk, the years in full, and
+  a group's tab) and `door-test.js` (12, the old page in test mode, live, and with no backend). `read-test.js` checks the notice reader on real notice texts kept in the scratchpad only.
+
 ## The branch's own forms — no client link opens a JotForm
 
 `quote/`, `enrol/oas/`, `apply/xpress-life/`, the shared `forms/form.css`
