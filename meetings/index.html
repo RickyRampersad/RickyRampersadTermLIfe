@@ -357,13 +357,20 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
       <p class="sub">Ricky Rampersad Branch<br>Signing in is the attendance register. If you do not sign in, you are marked absent.</p>
       <div class="field">
         <label for="li-email">Agent number</label>
-        <input id="li-email" type="text" inputmode="numeric" autocomplete="username" placeholder="Your agent number"/>
+        <!-- NOT inputmode="numeric": the skill bank writes some numbers as
+             A10024, and an iPhone's number pad has no letters on it, so that
+             agent could not type their own number. The backend reads A10024
+             and 10024 as one agent either way. -->
+        <input id="li-email" type="text" autocomplete="username"
+               autocapitalize="characters" autocorrect="off" spellcheck="false"
+               placeholder="Your agent number"/>
       </div>
       <button class="btn" id="li-go">Sign in</button>
       <div class="msg" id="li-msg"></div>
       <div class="switch">Your agent number is your sign-in &mdash; the one on your card.<br>
         No agent number? Use your work e-mail in the box instead.<br>
         Looking in rather than attending? Sign in as <b>0000</b>.</div>
+      <div class="msg" id="li-roll"></div>
       <input id="li-pin" type="hidden" value=""/>
     </div>
 
@@ -597,6 +604,32 @@ function showGate(which) {
   $("app").style.display = "none";
   $("gate-login").style.display = which === "enrol" ? "none" : "block";
   $("gate-enrol").style.display = which === "enrol" ? "block" : "none";
+  if (which !== "enrol") checkRoll();
+}
+
+/*  THE ONE THAT ACTUALLY GOES WRONG, AND NOW IT SAYS SO.
+ *
+ *  pullRoster is what puts the branch on the People tab; until it is run
+ *  that tab holds only the manager setupMeetings() seeded, and every agent
+ *  who types their number is correctly told they are not on the roll. The
+ *  ping has reported this from the start (roster.onTheRoll) and nobody had
+ *  reason to look at it — so on the day before a meeting the branch read it
+ *  as thirty separate sign-in faults instead of one unrun step.
+ *
+ *  It is on the gate now, where it cannot be missed: the agent learns it is
+ *  not them, and the branch manager learns what to run. Counts only — the
+ *  ping carries no name. */
+function checkRoll() {
+  if (checkRoll.done) return;
+  checkRoll.done = true;
+  apiGet("ping").then(function (res) {
+    var r = res && res.roster;
+    if (!r || typeof r.onTheRoll !== "number") return;
+    if (r.onTheRoll > 1) return;
+    say("li-roll", "The branch list has not been pulled across yet, so almost nobody "
+      + "can sign in. This is not your number. Sign in as 0000 to read the agenda, and "
+      + "tell the branch. Branch manager: run pullRoster in the meeting script.", "err");
+  }).catch(function () { /* the gate still works without this */ });
 }
 
 function signOutLocal() {
@@ -625,10 +658,9 @@ function doLogin() {
   if (!email) return say("li-msg", "Enter your agent number, or 0000 to look in as a guest.");
   $("li-go").disabled = true;
   say("li-msg", "");
-  // 'who' takes the agent number, 0000, or an e-mail. The password keys go
-  // with it only when there is one, so a backend pasted before 28 October
-  // still answers for anyone who has a password, and nobody is locked out on
-  // the morning of a meeting.
+  // 'who' takes the agent number, 0000, or an e-mail. Nothing here sends a
+  // password any more: li-pin is hidden and stays empty, so the backend
+  // takes the number-alone path and its lockout counter is never touched.
   apiPost(pin
     ? { action: "login", who: email, password: pin, email: email, code: pin, pin: pin }
     : { action: "login", who: email, email: email })
@@ -640,28 +672,27 @@ function doLogin() {
         return say("en-msg", "There is no password on your record yet — set a PIN here, or ask the branch manager to pull the roster from the Agent Skill Bank.", "info");
       }
       if (!res.ok) {
-        //  A BACKEND PASTED BEFORE 28 OCTOBER STILL WANTS A PASSWORD, and
-        //  this page no longer sends one, so every sign-in would be refused
-        //  between publishing the page and publishing the script. Rather
-        //  than lock the branch out in that window, the password box comes
-        //  back the first time a number alone is turned away, and the next
-        //  try sends it. It disappears again the moment the script is
-        //  published, because the number alone starts working.
-        if (!pin) {
-          $("li-pin").type = "password";
-          $("li-pin").placeholder = "Your portal password";
-          var lab = document.createElement("div");
-          lab.className = "field";
-          lab.id = "li-pin-wrap";
-          if (!$("li-pin-wrap")) {
-            $("li-pin").parentNode.insertBefore(lab, $("li-pin"));
-            lab.appendChild($("li-pin"));
-          }
-          $("li-pin").focus();
-          return say("li-msg", "The branch system has not been updated yet, so it still wants a password. "
-            + "Use the same one as the agent and staff portals.");
+        //  NO PASSWORD BOX HERE, EVER AGAIN. One used to appear the first
+        //  time a number alone was turned away — a bridge for the window
+        //  between publishing this page and publishing the script. The
+        //  script was published, the window closed, and on 29 October the
+        //  bridge was what agents hit instead: the box appeared, the phone
+        //  autofilled a saved portal password into it, the next tap sent
+        //  that stale password, and a plain "you are not on the roll"
+        //  came back as "that agent number and password do not match" —
+        //  which reads as the agent's fault and is not. Worse, a password
+        //  in the request turns on the backend's lockout counter, so five
+        //  taps lock a real agent out for fifteen minutes.
+        //
+        //  The number alone is the sign-in. If it is refused, say why in
+        //  the backend's own words and give them a way into the room.
+        var msg = res.error || "That did not work.";
+        if (/not on the roll/i.test(msg)) {
+          msg += " If it is the number on your card, tell the branch — your row has "
+               + "not been pulled across yet, and that is ours to fix, not yours. "
+               + "Sign in as 0000 meanwhile and you can read the agenda.";
         }
-        return say("li-msg", res.error || "That did not work.");
+        return say("li-msg", msg);
       }
       onSignedIn(res);
     })

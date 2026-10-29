@@ -7145,6 +7145,61 @@ Two traps, both of which make the guest fail silently:
 `tests/test-friday.js` covers it (100 checks), and the page is driven in a real
 browser against a mocked backend in the session scratchpad.
 
+### Nobody could sign in, and it was three faults — 29 October 2026
+
+The afternoon before the meeting, agents typing their number were refused.
+What the branch saw was "That agent number and password do not match" on a
+page that says the number is the whole sign-in. Three separate faults behind
+one screen, and only the first was the real cause.
+
+**1. `pullRoster` had never been run.** The ping said it in one line —
+`roster: { onTheRoll: 1 }` — which is the state `pullRoster`'s own comment
+warns about: *"until it is run, the People tab holds only the manager that
+setupMeetings() seeded, and a meeting opened in that state marks the whole
+branch absent."* So every agent was correctly told they were not on the roll,
+and nothing anywhere said that one unrun step was why. **Check the ping before
+reading anything else**: `?action=ping` needs no sign-in and `onTheRoll`
+against the branch's real headcount settles it in seconds. `roster.onTheRoll`
+of 1 is never right.
+
+The gate now says so itself (`checkRoll`, `#li-roll`): with the roll at 1 or
+less it tells the agent it is not their number, points them at `0000` so they
+can still read the agenda, and names `pullRoster` for the branch manager. It
+costs one ping on the gate and it is the only place anybody would have looked.
+
+**2. The number on the card is not the number on the skill bank.** The bank
+writes `A10024` and the card says `10024`, and `normNo_` only ever stripped
+punctuation and leading zeros — so the two never matched. Worse, the box was
+`inputmode="numeric"`, and an iPhone's number pad has no A on it, so that
+agent could not type the bank's form either. `normNo_` now drops a leading
+letter prefix when what is left is all digits, which is what `tWho_` in the
+branch app has always done; a row that really is letters (`SASHA`) is still
+compared whole, and `0000` still normalises away so `guestFind_`'s exact
+compare is untouched. The input lost its number pad.
+
+**3. The page answered the refusal with a password box, and the phone filled
+it in.** The box was a bridge for the window between publishing the page and
+publishing the script. The script went out, the window closed, and the bridge
+was what agents hit instead: the box appeared, the phone autofilled a saved
+portal password, the next tap sent it, and a plain "you are not on the roll"
+came back as a password failure — which reads as the agent's fault and is not.
+Worse, a password in the request turns on the backend's lockout counter
+(`MAX_ATTEMPTS` 5, `LOCKOUT_MINUTES` 15), so a few taps lock a real person
+out. **No password box on this page, ever again.** A refusal shows the
+backend's own words.
+
+Two things worth keeping from the testing:
+
+- **A fallback whose premise has expired is worse than no fallback.** It fires
+  exactly when something else is already wrong, and it fires into a browser
+  that will helpfully fill it in.
+- `tests/e2e-meetings-gate.js` drives the gate itself (21 checks), which
+  `e2e-friday.js` never could: that one plants a token and skips the door. Use
+  **`localhost`**, never `127.0.0.1` — the session proxy bypasses the one and
+  not the other, and the page loads as `chrome-error://chromewebdata` with no
+  error thrown — and **`domcontentloaded`**, never `networkidle`, because the
+  page's Google fonts never settle behind the proxy.
+
 ## `/branchmeet/` — the FY27 rise, and what the film may not say
 
 Asked for on 28 October 2026, the evening before the branch group sees it:

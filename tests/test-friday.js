@@ -325,6 +325,24 @@ const liUnknown = env.apiLogin_({ who: 'A99999' });
 ok('a number not on the roll is refused', liUnknown.ok === false);
 ok('and is pointed at the guest number', /0000/.test(String(liUnknown.error)), liUnknown.error);
 
+/*  THE NUMBER ON THE CARD IS THE NUMBER ON THE SKILL BANK.
+ *  The bank writes A00003 and the agent reads 00003 off their card — and on
+ *  a phone the number pad has no A on it, so typing the bank's form is not
+ *  even open to them. Until 29 October the two were compared whole and that
+ *  agent was told they were not on the roll. */
+ok('the digits alone find an agent the bank writes with a letter',
+  env.apiLogin_({ who: '00003' }).ok === true);
+ok('and so does the bare number with no padding',
+  env.apiLogin_({ who: '3' }).ok === true);
+ok('and it is still the right agent, not a near miss',
+  (env.apiLogin_({ who: '00003' }).user || {}).name === 'Agent One');
+ok('a number that is on nobody is still refused',
+  env.apiLogin_({ who: '99999' }).ok === false);
+ok('and letters are still compared whole, so a name is not read as a number',
+  env.normNo_('SASHA') === 'SASHA');
+ok('0000 still normalises away, so the guest row is found by its own compare',
+  env.normNo_('0000') === '' && env.apiLogin_({ who: '0000' }).ok === true);
+
 const liOff = (() => {
   env.appendRow_(env.MEET.TAB_PEOPLE, { 'Agent No': 'A00009', 'Name': 'Gone',
     'Role': 'agent', 'Active': 'No' });
