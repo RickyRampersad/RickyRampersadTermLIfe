@@ -8,32 +8,48 @@
 <meta property="og:description" content="SEA practice papers and timed mocks in Mathematics, English Language Arts and Writing, built to the Ministry’s Assessment Framework."/>
 <meta name="robots" content="noindex"/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="assets/csec.css"/>
 <style>
-  .timer{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.4rem;color:var(--gold);
+/* rrb-font-fallbacks */
+@font-face{font-family:'DM Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.31%;ascent-override:95.10%;descent-override:29.72%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:102.04%;ascent-override:97.22%;descent-override:30.38%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.79%;ascent-override:94.67%;descent-override:29.58%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.76%;ascent-override:91.21%;descent-override:28.50%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+
+
+
+
+  .timer{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:1.4rem;color:var(--gold);
          padding:6px 14px;border-radius:10px;background:rgba(0,0,0,.28);border:1px solid var(--line)}
   .timer.warn{color:#f87171;border-color:rgba(248,113,113,.45);animation:pulse 1s infinite}
   @keyframes pulse{50%{opacity:.55}}
   .ptabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
-  .ptabs button{font-family:'Montserrat',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;
+  .ptabs button{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;
     padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.22);color:var(--muted)}
   .ptabs button.on{background:var(--gold);border-color:var(--gold);color:#07131f}
   .papers{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
   .pp{text-align:left;cursor:pointer;padding:13px;border-radius:12px;border:1px solid var(--line);
       background:rgba(0,0,0,.22);color:var(--ink);display:block;width:100%}
   .pp:hover{border-color:var(--teal)}
-  .pp b{display:block;font-family:'Montserrat',sans-serif;font-size:.95rem;margin-bottom:3px}
+  .pp b{display:block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.95rem;margin-bottom:3px}
   .pp span{display:block;color:var(--muted);font-size:.76rem;line-height:1.45}
   .pp.mock{border-color:rgba(239,194,75,.5);background:rgba(239,194,75,.09)}
   .pp.mock b{color:var(--gold)}
   .pp .done{color:var(--teal);font-size:.74rem;font-weight:600;margin-top:5px;display:block}
-  .seclab{font-family:'Montserrat',sans-serif;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  .seclab{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
     font-size:.72rem;color:var(--gold);margin:26px 0 4px}
   .secnote{color:var(--muted);font-size:.83rem;margin-bottom:14px;line-height:1.55}
   .navgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:7px}
   .nb{aspect-ratio:1;border-radius:8px;border:1px solid var(--line);background:rgba(0,0,0,.22);
-      color:var(--muted);font-family:'Montserrat',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer}
+      color:var(--muted);font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer}
   .nb.done{background:rgba(0,207,234,.2);border-color:rgba(0,207,234,.45);color:var(--teal)}
   .nb.here{outline:2px solid var(--gold);outline-offset:1px}
   .opt.picked{border-color:var(--teal);background:rgba(0,207,234,.13)}
@@ -44,23 +60,23 @@
     background:rgba(0,0,0,.2);line-height:1.6}
   .prompt:hover{border-color:var(--teal)}
   .prompt.picked{border-color:var(--gold);background:rgba(239,194,75,.1)}
-  .prompt .n{font-family:'Montserrat',sans-serif;font-weight:800;color:var(--gold);font-size:.75rem;
+  .prompt .n{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;color:var(--gold);font-size:.75rem;
     letter-spacing:.06em;display:block;margin-bottom:5px}
   #w-text{width:100%;min-height:340px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.28);
-    color:var(--ink);padding:15px;font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.75;resize:vertical}
+    color:var(--ink);padding:15px;font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',sans-serif;font-size:1rem;line-height:1.75;resize:vertical}
   .crit{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
-  .crit b{font-family:'Montserrat',sans-serif;font-size:.9rem}
+  .crit b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.9rem}
   .crit p{color:var(--muted);font-size:.83rem;margin:4px 0 10px;line-height:1.55}
   .crit .bands{display:flex;gap:7px;flex-wrap:wrap}
   .crit .bands button{cursor:pointer;padding:7px 13px;border-radius:9px;border:1px solid var(--line);
-    background:rgba(0,0,0,.24);color:var(--muted);font-size:.8rem;font-family:'Montserrat',sans-serif;font-weight:600}
+    background:rgba(0,0,0,.24);color:var(--muted);font-size:.8rem;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:600}
   .crit .bands button.on{background:var(--teal);border-color:var(--teal);color:#07131f}
   .dec{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
   .dec:first-of-type{border-top:0;padding-top:0;margin-top:0}
-  .dec>b{display:block;font-family:'Montserrat',sans-serif;font-size:.92rem;margin-bottom:9px}
+  .dec>b{display:block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.92rem;margin-bottom:9px}
   .dec .bands{display:flex;gap:8px;flex-wrap:wrap}
   .dec .bands button{cursor:pointer;padding:9px 16px;border-radius:10px;border:1px solid var(--line);
-    background:rgba(0,0,0,.24);color:var(--muted);font-family:'Montserrat',sans-serif;font-weight:700;font-size:.85rem}
+    background:rgba(0,0,0,.24);color:var(--muted);font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:700;font-size:.85rem}
   .dec .bands button.on{background:var(--teal);border-color:var(--teal);color:#07131f}
   .dec .bands button.wrong{background:rgba(248,113,113,.18);border-color:rgba(248,113,113,.5);color:#f87171}
   .must{display:block;width:100%;text-align:left;cursor:pointer;padding:11px 13px;border-radius:10px;

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>The branch wall has moved &mdash; opening it now</title>
+
+<!-- THERE ARE TWO WALLS, AND THAT IS WHY THIS PAGE EXISTS.
+
+     1. The branch wall  - the fact-find board with the screen code, the
+        queue and the day panel. Built from fact-find-analyzer, served by
+        Netlify at factfind360.com/wall.html. NOT on this site.
+
+     2. The employee benefits wall - groups, lives, premium under
+        management. That one IS on this site, at /benefits/wall.html.
+
+     Reaching for the first one at this host is the natural mistake: the
+     host of one, the path of the other. It returned a correct 404, which
+     is a correct answer to a question somebody keeps asking - and it costs
+     an evening every time. So this page answers it instead.
+
+     Only the address changes. The screen code, the sign-in and the board
+     itself are untouched by this file. -->
+
+<script>
+  (function () {
+    location.replace('https://factfind360.com/wall.html' + location.search + location.hash);
+  })();
+</script>
+<meta http-equiv="refresh" content="0; url=https://factfind360.com/wall.html">
+<style>
+  body { font: 16px/1.6 -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+         padding: 48px 22px; text-align: center; color: #0F172A; }
+  a    { color: #1D4ED8; }
+  .sub { color: #475569; font-size: 14px; margin-top: 22px; }
+</style>
+</head>
+<body>
+<p>Opening the branch wall&hellip;
+   <a href="https://factfind360.com/wall.html">tap here if nothing happens</a>.</p>
+<p class="sub">The branch wall lives at <strong>factfind360.com/wall.html</strong> &mdash;
+   that is the address the screen code belongs to, and the one worth saving.<br><br>
+   Looking for the <a href="/benefits/wall.html">employee benefits wall</a> instead?
+   That one is on this site.</p>
+</body>
+</html>

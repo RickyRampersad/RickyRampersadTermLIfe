@@ -233,6 +233,7 @@ button.aibtn:disabled{opacity:.55;cursor:default}
   .prev{padding:12px}
 }
 </style>
+<script src="/rroperations/sso.js"></script>
 </head>
 <body>
 
@@ -1005,6 +1006,15 @@ function paintFoot(r) {
 /* A reload inside the same tab keeps you signed in; closing it does not. */
 (function () {
   var t = readTok();
+  /* Signed in to the branch app: open as that person, no code asked (18 October 2026). */
+  var ops = window.RRB_OPS_SESSION;
+  if (!t && ops && ops.token) {
+    call({ action: 'intel.ssoin', ops: ops.token }).then(function (r) {
+      if (r && r.ok) { TOKEN = r.token; saveTok(TOKEN); enter(r); }
+      else if (r && r.error) $('gateErr').textContent = r.error;
+    }).catch(function () {});
+    return;
+  }
   if (!t) return;
   TOKEN = t;
   call({ action: 'intel.session', token: t }).then(function (r) {

@@ -15,8 +15,24 @@
 <title>Branch Trading League | Ricky Rampersad Branch</title>
 <meta name="robots" content="noindex"/>
 <meta name="description" content="A play-money investing game for the branch team, priced off the real Dow Jones and Nasdaq."/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'DM Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.31%;ascent-override:95.10%;descent-override:29.72%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:102.04%;ascent-override:97.22%;descent-override:30.38%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.79%;ascent-override:94.67%;descent-override:29.58%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.76%;ascent-override:91.21%;descent-override:28.50%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+
+
+
+
   :root {
     --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
     --gold:#efc24b; --gold2:#dca530; --text:#edf4fb; --muted:#a9bbcf;
@@ -25,7 +41,7 @@
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{
-    font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+    font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
     background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(239,194,75,.07),transparent),
       linear-gradient(180deg,var(--bg) 0%,var(--bg2) 50%,var(--bg) 100%);
   }
@@ -41,19 +57,19 @@
     background:linear-gradient(160deg,var(--card),var(--card2));
     border:1px solid var(--line);border-radius:22px;padding:34px 28px}
   .join-card svg{width:60px;height:60px;margin:0 auto 14px;display:block}
-  .join-card h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:21px;margin-bottom:6px;color:var(--gold)}
-  .join-card .initiative{font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:700;
+  .join-card h1{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:900;font-size:21px;margin-bottom:6px;color:var(--gold)}
+  .join-card .initiative{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:9.5px;font-weight:700;
     letter-spacing:2.2px;text-transform:uppercase;color:var(--gold2);margin-bottom:12px}
   .join-card .sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
   .join-card input{width:100%;padding:13px 16px;border-radius:12px;border:1px solid var(--line);
     background:rgba(0,0,0,.3);color:var(--text);font-size:15px;outline:none;margin-bottom:10px;
-    font-family:'Montserrat',sans-serif;font-weight:600}
+    font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:600}
   .join-card input:focus{border-color:rgba(239,194,75,.5)}
   .join-card input::placeholder{font-weight:400;color:#6e839b}
   .join-err{color:var(--down);font-size:12px;margin-top:10px;min-height:16px;font-weight:600}
   .join-switch{margin-top:14px;font-size:12.5px;color:var(--muted)}
   .join-switch button{background:none;border:none;cursor:pointer;padding:0 0 0 5px;
-    color:var(--teal);font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:700;text-decoration:underline}
+    color:var(--teal);font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:12.5px;font-weight:700;text-decoration:underline}
   .join-switch button:hover{color:var(--gold)}
   .join-note{font-size:11.5px;color:var(--muted);margin-top:18px;line-height:1.6;border-top:1px solid var(--line);padding-top:14px}
   .join-back{display:inline-block;margin-top:14px;font-size:12px;color:var(--muted);text-decoration:none}
@@ -61,7 +77,7 @@
 
   .btn{width:100%;padding:14px;border-radius:12px;border:none;cursor:pointer;
     background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1d1503;
-    font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800;letter-spacing:.4px}
+    font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:14px;font-weight:800;letter-spacing:.4px}
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
   .btn-ghost:hover{color:var(--text);border-color:rgba(239,194,75,.4)}
@@ -72,10 +88,10 @@
   .nav-inner{max-width:1040px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:12px;height:62px}
   .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto}
   .nav-brand svg{width:32px;height:32px;flex-shrink:0}
-  .nav-brand span{font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;color:var(--gold);line-height:1.15}
-  .nav .who{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;color:var(--text);
+  .nav-brand span{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:14px;color:var(--gold);line-height:1.15}
+  .nav .who{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:12px;font-weight:700;color:var(--text);
     background:rgba(255,255,255,.06);padding:7px 12px;border-radius:10px;white-space:nowrap}
-  .nav .link{text-decoration:none;color:var(--muted);font-family:'Montserrat',sans-serif;
+  .nav .link{text-decoration:none;color:var(--muted);font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;
     font-size:12.5px;font-weight:600;padding:8px 10px;border-radius:10px;cursor:pointer;border:none;background:none}
   .nav .link:hover{color:var(--text);background:rgba(255,255,255,.06)}
   @media(max-width:560px){.nav-brand span{display:none}}
@@ -85,18 +101,18 @@
   .ticker-inner{max-width:1040px;margin:0 auto;padding:11px 16px;display:flex;gap:26px;overflow-x:auto;scrollbar-width:none}
   .ticker-inner::-webkit-scrollbar{display:none}
   .tick{display:flex;align-items:baseline;gap:8px;white-space:nowrap;flex-shrink:0}
-  .tick b{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:800;letter-spacing:1.2px;color:var(--muted)}
-  .tick .lvl{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700}
+  .tick b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:11px;font-weight:800;letter-spacing:1.2px;color:var(--muted)}
+  .tick .lvl{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:14px;font-weight:700}
   .tick .chg{font-size:12px;font-weight:600}
 
   /* ---------- headings ---------- */
   .page-head{padding:34px 0 4px}
-  .page-head .kicker{font-family:'Montserrat',sans-serif;font-size:11px;letter-spacing:3px;
+  .page-head .kicker{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:11px;letter-spacing:3px;
     text-transform:uppercase;color:var(--gold2);font-weight:600;margin-bottom:8px}
-  .page-head h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(23px,5vw,32px);margin-bottom:8px}
+  .page-head h1{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:900;font-size:clamp(23px,5vw,32px);margin-bottom:8px}
   .page-head p{color:var(--muted);font-size:14px;max-width:600px;line-height:1.65}
   section{padding:30px 0 4px}
-  .section-label{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:2.5px;
+  .section-label{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:10px;font-weight:700;letter-spacing:2.5px;
     text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:10px}
   .section-label::after{content:'';flex:1;height:1px;background:rgba(239,194,75,.2)}
 
@@ -107,9 +123,9 @@
   @media(max-width:720px){.stats{grid-template-columns:1fr 1fr}}
   .stat{padding:16px 16px 14px;background:linear-gradient(160deg,var(--card),var(--card2));
     border:1px solid var(--line);border-radius:14px}
-  .stat .k{font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:1.6px;
+  .stat .k{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:1.6px;
     text-transform:uppercase;color:var(--muted);margin-bottom:7px}
-  .stat .v{font-family:'Montserrat',sans-serif;font-size:20px;font-weight:800;line-height:1.15}
+  .stat .v{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:20px;font-weight:800;line-height:1.15}
   .stat .s{font-size:11.5px;color:var(--muted);margin-top:4px}
   .stat.hero{border-color:rgba(239,194,75,.35);background:linear-gradient(160deg,rgba(239,194,75,.11),var(--card2))}
   .stat.hero .v{color:var(--gold)}
@@ -121,58 +137,58 @@
     .trade .field-sym,.trade .actions{grid-column:1/-1}
     .trade .actions .btn{width:100%}
   }
-  .field label{display:block;font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:700;
+  .field label{display:block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:9.5px;font-weight:700;
     letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
   .field select,.field input{width:100%;padding:12px 13px;border-radius:11px;border:1px solid var(--line);
     background:rgba(0,0,0,.32);color:var(--text);font-size:14px;outline:none;
-    font-family:'Montserrat',sans-serif;font-weight:600}
+    font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:600}
   .field select:focus,.field input:focus{border-color:rgba(239,194,75,.5)}
   .field select option{background:#0d2137;color:var(--text)}
   .field select optgroup{background:#07131f;color:var(--gold);font-style:normal}
   .seg{display:flex;background:rgba(0,0,0,.32);border:1px solid var(--line);border-radius:11px;padding:3px;gap:3px}
   .seg button{flex:1;padding:9px 4px;border:none;background:none;border-radius:8px;cursor:pointer;
-    color:var(--muted);font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:800;letter-spacing:.5px}
+    color:var(--muted);font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:12.5px;font-weight:800;letter-spacing:.5px}
   .seg button.on[data-side="buy"]{background:rgba(74,222,128,.16);color:var(--up)}
   .seg button.on[data-side="sell"]{background:rgba(248,113,113,.16);color:var(--down)}
   .actions .btn{padding:12px 22px;width:auto;white-space:nowrap}
   .trade-foot{padding:0 18px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;
     font-size:12.5px;color:var(--muted);min-height:20px}
-  .trade-foot .est{font-family:'Montserrat',sans-serif;font-weight:700;color:var(--text)}
+  .trade-foot .est{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:700;color:var(--text)}
   .trade-msg{font-weight:600}
 
   /* ---------- tables ---------- */
   .tbl{width:100%;border-collapse:collapse;font-size:13.5px}
-  .tbl th{font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:1.4px;
+  .tbl th{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:1.4px;
     text-transform:uppercase;color:var(--muted);text-align:right;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
   .tbl th:first-child{text-align:left}
   .tbl td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.045);text-align:right;white-space:nowrap}
   .tbl td:first-child{text-align:left;white-space:normal}
   .tbl tr:last-child td{border-bottom:none}
   .tbl tbody tr:hover{background:rgba(255,255,255,.03)}
-  .sym{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13px}
-  .sym-name{display:block;font-family:'DM Sans',sans-serif;font-weight:400;font-size:11.5px;color:var(--muted);margin-top:2px}
+  .sym{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:13px}
+  .sym-name{display:block;font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',sans-serif;font-weight:400;font-size:11.5px;color:var(--muted);margin-top:2px}
   .scroll{overflow-x:auto}
   .rank{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;
-    background:rgba(255,255,255,.07);font-family:'Montserrat',sans-serif;font-weight:800;font-size:11.5px;margin-right:10px}
+    background:rgba(255,255,255,.07);font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:11.5px;margin-right:10px}
   .rank.r1{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1d1503}
   .rank.r2{background:rgba(203,213,225,.85);color:#0b1a2a}
   .rank.r3{background:rgba(180,120,60,.85);color:#150d03}
   .me-row{background:rgba(239,194,75,.07)}
-  .me-tag{font-family:'Montserrat',sans-serif;font-size:9px;font-weight:800;letter-spacing:1px;
+  .me-tag{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:9px;font-weight:800;letter-spacing:1px;
     color:var(--gold);border:1px solid rgba(239,194,75,.35);border-radius:5px;padding:2px 5px;margin-left:8px}
   .empty{padding:26px 16px;text-align:center;color:var(--muted);font-size:13px}
-  .pill{display:inline-block;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;
+  .pill{display:inline-block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:10px;font-weight:800;
     letter-spacing:.8px;padding:3px 8px;border-radius:6px}
   .pill.buy{background:rgba(74,222,128,.14);color:var(--up)}
   .pill.sell{background:rgba(248,113,113,.14);color:var(--down)}
   .btn-sm{padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.05);
-    color:var(--muted);cursor:pointer;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700}
+    color:var(--muted);cursor:pointer;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:11px;font-weight:700}
   .btn-sm:hover{color:var(--gold);border-color:rgba(239,194,75,.4)}
 
   /* ---------- banners ---------- */
   .banner{border-radius:12px;padding:13px 16px;font-size:12.5px;line-height:1.6;margin-bottom:16px;
     border:1px solid rgba(239,194,75,.28);background:rgba(239,194,75,.08);color:#f3e3bd}
-  .banner b{font-family:'Montserrat',sans-serif;font-weight:800;color:var(--gold)}
+  .banner b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;color:var(--gold)}
   .banner code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;
     background:rgba(0,0,0,.32);padding:1px 5px;border-radius:4px}
 

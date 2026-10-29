@@ -1,0 +1,94 @@
+{
+ "note": "The Log Book, for staff (re-cut 17 October 2026: the 1 pm bag and the weekly rota, the real staff and agents by name, clients made up).",
+ "role": "staff",
+ "voice": "en-US-AndrewNeural",
+ "rate": "-4%",
+ "scenes": [
+  {
+   "visual": "title",
+   "eyebrow": "For Client Support",
+   "headline": "The Log Book, <em>for staff</em>",
+   "sub": "Received by noon, out on the 1 pm bag",
+   "extra": 0.6,
+   "line": "This is the Log Book, as Client Support and the branch see it. Receive the papers by noon, and send them on the one o'clock bag."
+  },
+  {
+   "visual": "lbbagday",
+   "eyebrow": "The bag day",
+   "headline": "Everything runs <em>to the bag</em>",
+   "line": "Every day runs to the bag. Papers come in until twelve noon. Then they are checked, and put on their transmittals. At one o'clock the bag comes in, is cleared, and the mail given out. And it goes back down with the day's transmittals."
+  },
+  {
+   "visual": "lbrota",
+   "eyebrow": "Whose bag",
+   "headline": "One of you, <em>each week</em>",
+   "line": "The three of you who do transmittals take the bag in turn, a week each. This week Sasha. Next week Azariah, then Liz. The bag is done by one o'clock, while the team is still in. Sasha leaves at two, Liz at three, and Azariah at four."
+  },
+  {
+   "visual": "lbqueue",
+   "eyebrow": "Your queue",
+   "headline": "What is <em>waiting</em>",
+   "line": "The Queue opens on today's bag. Papers logged, and not yet handed in. Papers received, and not yet sent, grouped by department."
+  },
+  {
+   "visual": "lbreceive",
+   "eyebrow": "Receiving",
+   "headline": "Tick, and <em>sign</em>",
+   "line": "When an agent hands papers in, tick them, and sign with your finger. If a department is wrong, change it. The Log Book learns from the change."
+  },
+  {
+   "visual": "lbprep",
+   "eyebrow": "Twelve noon",
+   "headline": "What goes <em>today</em>",
+   "line": "At twelve, whoever has the bag gets one e-mail. Everything to prepare for today's bag, by department, and what agents have not handed in."
+  },
+  {
+   "visual": "lbtrans",
+   "eyebrow": "The transmittal",
+   "headline": "One press, <em>ready to print</em>",
+   "line": "Build the transmittal. One department, one press. It is numbered, with the date collected and the date sent on every line, ready to print and go in the bag."
+  },
+  {
+   "visual": "lblate",
+   "eyebrow": "One o'clock",
+   "headline": "Missed the bag? <em>A reason</em>",
+   "line": "If something received before twelve misses the bag, the Log Book asks why at one o'clock, while everyone is still in. The reason prints beside the two dates."
+  },
+  {
+   "visual": "lbbaglog",
+   "eyebrow": "Bag in, bag out",
+   "headline": "The bag, <em>on record</em>",
+   "line": "Press Bag in when the bag is cleared, and Bag out when it goes. Every day's bag is on record. Who had it, what went, and what missed it."
+  },
+  {
+   "visual": "lbdept",
+   "eyebrow": "Three working days on",
+   "headline": "Did they <em>get it?</em>",
+   "line": "Three working days later, the department gets one e-mail with a Yes and a No. A Yes is recorded. A No goes to sales support, and a Salesforce task opens for whoever collected."
+  },
+  {
+   "visual": "lbinsights",
+   "eyebrow": "Insights",
+   "headline": "How the branch <em>is doing</em>",
+   "line": "Insights shows how the branch is doing. The share that made its bag, hour by hour. Each department's answers. And a quality score for every agent."
+  },
+  {
+   "visual": "lbdigest",
+   "eyebrow": "Five o'clock",
+   "headline": "The day, <em>in one e-mail</em>",
+   "line": "At five o'clock, the branch manager gets the day in one e-mail. What is late, what a department said it never got, and what was never handed in."
+  },
+  {
+   "visual": "close",
+   "eyebrow": "The Log Book",
+   "words3": [
+    "Receive by noon.",
+    "Prepare it.",
+    "On the 1 pm bag."
+   ],
+   "url": "rickyrampersadbranch.com/logbook",
+   "line": "Receive by noon. Prepare it. On the one o'clock bag.",
+   "extra": 1.8
+  }
+ ]
+}

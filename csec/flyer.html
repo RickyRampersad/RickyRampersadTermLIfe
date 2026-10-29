@@ -7,14 +7,30 @@
 <meta name="robots" content="noindex"/>
 <meta name="description" content="A one-page flyer for the SEA Study Hub: free practice, mock papers and guided methods for Standard 1 to Standard 5, built in Trinidad for branch families."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'DM Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.31%;ascent-override:95.10%;descent-override:29.72%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:102.04%;ascent-override:97.22%;descent-override:30.38%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.79%;ascent-override:94.67%;descent-override:29.58%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.76%;ascent-override:91.21%;descent-override:28.50%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+
+
+
+
 /* A print piece, so it is light by default — navy ink on white costs a
    fraction of a full-bleed navy page and reads better photocopied. The branch
    palette is kept in the mark, the rules and the headings. */
 :root{ --navy:#07131f; --gold:#c9942c; --gold2:#efc24b; --teal:#00849c; --ink:#1d2b3a; --mute:#5a6b7d; }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#8a9099;font-family:'DM Sans',system-ui,sans-serif;color:var(--ink);padding:24px}
+body{background:#8a9099;font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',system-ui,sans-serif;color:var(--ink);padding:24px}
 .sheet{
   width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:16mm 15mm;
   box-shadow:0 10px 40px rgba(0,0,0,.35);display:flex;flex-direction:column;
@@ -24,30 +40,30 @@ body{background:#8a9099;font-family:'DM Sans',system-ui,sans-serif;color:var(--i
       display:grid;place-items:center;flex:none}
 .mark img{width:100%;height:100%;display:block}
 .head .who{line-height:1.2}
-.head .who b{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1rem;color:var(--navy);display:block}
+.head .who b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:1rem;color:var(--navy);display:block}
 .head .who span{font-size:.7rem;letter-spacing:1.3px;text-transform:uppercase;color:var(--mute)}
-.head .free{margin-left:auto;background:var(--navy);color:#fff;font-family:'Montserrat',sans-serif;
+.head .free{margin-left:auto;background:var(--navy);color:#fff;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;
   font-weight:800;font-size:.72rem;letter-spacing:1.2px;padding:7px 13px;border-radius:99px}
 
-h1{font-family:'Montserrat',sans-serif;font-size:2.25rem;font-weight:900;color:var(--navy);
+h1{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:2.25rem;font-weight:900;color:var(--navy);
    line-height:1.08;margin:20px 0 9px;letter-spacing:-.5px}
 h1 em{font-style:normal;color:var(--gold)}
 .lead{font-size:1rem;line-height:1.6;color:var(--ink);max-width:60ch}
 
 .stats{display:flex;gap:9px;margin:18px 0}
 .stat{flex:1;border:1.5px solid #e2e7ec;border-radius:10px;padding:11px 8px;text-align:center}
-.stat b{display:block;font-family:'Montserrat',sans-serif;font-size:1.5rem;font-weight:900;color:var(--gold)}
+.stat b{display:block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:1.5rem;font-weight:900;color:var(--gold)}
 .stat span{font-size:.66rem;text-transform:uppercase;letter-spacing:.7px;color:var(--mute);line-height:1.3;display:block;margin-top:2px}
 
-h2{font-family:'Montserrat',sans-serif;font-size:.76rem;letter-spacing:1.6px;text-transform:uppercase;
+h2{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.76rem;letter-spacing:1.6px;text-transform:uppercase;
    color:var(--mute);margin:16px 0 9px;font-weight:800}
 
 .cols{display:flex;gap:16px}
 .col{flex:1}
 .pt{display:flex;gap:9px;margin-bottom:9px}
 .pt .ico{flex:none;width:22px;height:22px;border-radius:6px;background:var(--navy);color:#fff;
-  display:grid;place-items:center;font-family:'Montserrat',sans-serif;font-weight:800;font-size:.72rem}
-.pt b{font-family:'Montserrat',sans-serif;font-size:.85rem;color:var(--navy);display:block;margin-bottom:1px}
+  display:grid;place-items:center;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:.72rem}
+.pt b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.85rem;color:var(--navy);display:block;margin-bottom:1px}
 .pt span{font-size:.78rem;line-height:1.5;color:var(--mute)}
 
 .getit{display:flex;gap:16px;align-items:center;margin-top:auto;padding-top:16px;
@@ -55,8 +71,8 @@ h2{font-family:'Montserrat',sans-serif;font-size:.76rem;letter-spacing:1.6px;tex
 .qrbox{flex:none;width:112px;height:112px;padding:5px;border:1.5px solid #e2e7ec;border-radius:10px}
 .qr{width:100%;height:100%;display:block;shape-rendering:crispEdges}
 .getit .txt{flex:1}
-.getit .txt b{font-family:'Montserrat',sans-serif;font-size:1.02rem;color:var(--navy);display:block;margin-bottom:3px}
-.url{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.02rem;color:var(--gold);
+.getit .txt b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:1.02rem;color:var(--navy);display:block;margin-bottom:3px}
+.url{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:1.02rem;color:var(--gold);
      word-break:break-all;line-height:1.3}
 .getit .txt p{font-size:.79rem;color:var(--mute);line-height:1.5;margin-top:6px}
 
@@ -65,7 +81,7 @@ h2{font-family:'Montserrat',sans-serif;font-size:.76rem;letter-spacing:1.6px;tex
 .small b{color:var(--ink)}
 
 .noprint{max-width:210mm;margin:0 auto 14px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-.noprint button,.noprint a{font-family:'Montserrat',sans-serif;font-weight:700;font-size:.82rem;
+.noprint button,.noprint a{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:700;font-size:.82rem;
   padding:9px 16px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;
   background:var(--gold2);color:var(--navy)}
 .noprint span{color:#fff;font-size:.8rem}

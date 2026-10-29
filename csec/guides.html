@@ -6,14 +6,26 @@
 <title>Guided Methods | SEA Study Hub</title>
 <meta name="description" content="Step-by-step methods for the SEA question types that carry the most marks, in Mathematics, English Language Arts and the Writing paper. Each has one fully worked example and the mistakes that lose marks."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="assets/csec.css"/>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+
+
+
+
   .step{display:flex;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)}
   .step:last-child{border-bottom:none}
   .step .n{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
            background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f;
-           font-family:'Montserrat',sans-serif;font-weight:800;font-size:.78rem}
+           font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:.78rem}
   .step b{display:block;font-size:.93rem;margin-bottom:3px}
   .step span{font-size:.83rem;color:var(--muted);line-height:1.6}
   .wline{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid var(--line);align-items:flex-start}
@@ -23,7 +35,7 @@
      and it has to be able to shrink: flex:none sizes to max-content, which sent
      a long worked line straight off the right of a laptop screen. */
   .wline .w{flex:1 1 210px;min-width:0;max-width:52%;white-space:pre-line;overflow-wrap:anywhere;
-            font-family:'Montserrat',sans-serif;font-size:.9rem;font-weight:600;color:var(--text);line-height:1.55}
+            font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.9rem;font-weight:600;color:var(--text);line-height:1.55}
   .wline .c{flex:1 1 auto;min-width:0;font-size:.83rem;color:var(--muted);line-height:1.6;overflow-wrap:anywhere}
   /* A topic can arrive with bulleted instructions under it; keep its shape. */
   .wprob{font-weight:600;margin-bottom:14px;font-size:.95rem;white-space:pre-line}

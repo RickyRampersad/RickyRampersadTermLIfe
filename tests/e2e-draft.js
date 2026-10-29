@@ -98,7 +98,7 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
   // Her words are the real ones, and they read thin, so the tracker asks once
   // before it sends. That is a separate behaviour with its own test; here it
   // is simply the first press on the way to the failure being tested.
-  await page.click('button:has-text("Submit block")');
+  await page.click('button:has-text("Submit my day")');
   await page.waitForTimeout(700);
   const askFirst = await page.locator('button:has-text("Send it anyway")').count();
   ok('it asks once, because the entry reads thin', askFirst > 0);
@@ -122,7 +122,7 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
 
   console.log('\nThe sheet recovers:\n');
   failSaves = false;
-  await page.click('button:has-text("Submit block")');
+  await page.click('button:has-text("Submit my day")');
   await page.waitForTimeout(700);
   if (await page.locator('button:has-text("Send it anyway")').count())
     await page.click('button:has-text("Send it anyway")');

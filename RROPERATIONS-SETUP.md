@@ -200,12 +200,39 @@ reason. It replaces the Log Book Digital Jotform.
 7. Optional: set `LB_HISTORY_ID` to the Log Book Digital workbook's ID and run
    **Log Book: import the old book** once, so the insights start with the
    3,600 lines already logged.
+8. **The bag rota.** Nothing to add: the script already rotates the bag
+   between the three who do transmittals, Azariah, then Elizabeth, then Sasha,
+   one week each from Monday 19 October 2026 (Sasha goes home at 2 pm, Liz at
+   3 pm, Azariah at 4 pm). Kamla does not do transmittals and is not on it. To
+   change the order later, add a tab named **Bag Rota** with the columns
+   `Staff | Order | Leaves At | Active`; while it has rows it replaces the
+   built-in rota. The **Bag Log** tab makes itself the first time someone
+   presses Bag in.
+
+9. **The training** (`/logbook/training`). The questions are in the private Google Sheet
+   **Log Book Questions (private)** in the branch manager's Drive; `LogBook.gs` already knows it
+   (`LB_TRAIN.SHEET`), so there is nothing to import. Paste the new `LogBook.gs` and publish a New
+   version. The script must run as the account that owns that sheet. Each attempt lands on a
+   **Log Book Training** tab here, made the first time. To change a question, edit that sheet: the next
+   test uses it. Keep the right answer off the longest option.
+
+10. **Every e-mail from support@rickyrampersadbranch.com.** Copy the three Microsoft 365 properties
+    from the Service Questionnaire project into this one (Project Settings → Script properties):
+    `MS_TENANT`, `MS_CLIENT`, `MS_SECRET`. From then on every Log Book and Delivery Book e-mail
+    (training results, the 11:00 and 12:00 e-mails, the reason requests, the department check,
+    the 5 pm digest, the client's delivery confirmation) goes from support@ and sits in its Sent
+    Items. Without them, or if Microsoft refuses one, it still goes, from this script's account.
+    **Or through Gmail, with no Microsoft 365 at all:** either own the RR Operations script from the
+    support@rickyrampersadbranch.com Google account, or, in the owning Gmail, add support@ under
+    Settings → Accounts and Import → Send mail as, and confirm the code Google sends to it. The script
+    finds that address by itself and sends from it. Publishing the new version asks once to allow Gmail.
 
 ### Settings
 
 | Property | Default | What it does |
 |---|---|---|
-| `LB_CUTOFF_HOUR` | 16 | After this hour, a document received today and not sent is late |
+| `LB_BAG_CUTOFF` | 12 | Papers in before this hour go on that day's bag |
+| `LB_BAG_HOUR` | 13 | The bag exchange; a received line still here after it missed its bag |
 | `LB_SALES_SUPPORT` | sales support | Copied on every chase and every return |
 | `LB_MANAGER` | the branch manager | Told when a contract passes 20 days with the agent |
 | `LB_AGENTS_SHEET_ID` | the fact find workbook | Other workbooks to sign in from, comma-separated |

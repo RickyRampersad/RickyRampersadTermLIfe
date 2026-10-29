@@ -1,0 +1,2401 @@
+#!/usr/bin/env python3
+"""The FY27 rise — /branchmeet/, second cut.
+
+Asked for on 28 October 2026, the evening before the branch group sees it:
+"we had about 12 agents who left us... it's our first meeting coming together
+after they have left. We want to rise strong and something that signifies the
+uprise. So even more powerful, more graphs, more charts, more colors, more
+graphics, more motion."
+
+Two rules decided how that was answered.
+
+NOBODY WHO LEFT IS CHARACTERISED, AND NOBODY IS COUNTED.  The house rule on
+the transition letters is that Guardian Life's notice is stated and nothing
+else: no reason, no adjective, no number.  This file sits at a public URL, so
+it holds to that harder, not more loosely.  One line says the branch took a
+hit; the crack in the shield says the rest.  What the film actually counts is
+who stayed — which is the stronger answer anyway, and it is true.
+
+NO CLIENT ANYTHING.  Never a client name and never a client count in an MP4
+(the files are public even when the pages are noindex).  So the campaign's own
+numbers, which are client counts, are not here.  Every figure on screen is
+about our own people, our own year, and Friday's own agenda.
+
+The spine is the branch's own roster, read out of Salesforce on 28 October
+2026: the active AGENT contacts of the two units.  Twenty-two of them carry a
+hire date and 263.0 years between them.  The bars show FULL years each, which
+is why they sum to 252 and the headline says 263 — the difference is the part
+years, and the chart says "full years" on it so the two can be reconciled by
+anyone who adds them up.  Flooring rather than rounding also keeps the bands
+honest: Randolph is 9.94 years in and belongs under the ten-year line, and
+rounding put a "10" on a bar that the ten-year colour does not claim.
+"""
+
+import html, json, math, os, re, pathlib
+from datetime import date
+
+HERE = pathlib.Path(__file__).resolve().parent
+ROOT = HERE.parent.parent
+SHELL = ROOT / 'donthaveanagent' / 'client-film.html'
+LINES = json.loads((HERE / 'rise-lines.json').read_text())
+TIMING = HERE / 'rise-timing.json'
+OUT = ROOT / 'branchmeet' / 'film.html'
+
+TODAY = date(2026, 10, 30)                 # Friday, the meeting
+
+# the shield, straight out of logo-mark.svg — nothing here is redrawn
+SHIELD = 'M44 9L73 21.5V41C73 60.5 60.5 72 44 78.5C27.5 72 15 60.5 15 41V21.5Z'
+CHECK = 'M30 44L39.5 53.5L58 32.5'
+# the same silhouette cut down the centre, so a crack can run through it
+LEFT = 'M44 9L15 21.5V41C15 60.5 27.5 72 44 78.5Z'
+RIGHT = 'M44 9L73 21.5V41C73 60.5 60.5 72 44 78.5Z'
+
+# ── the roster ───────────────────────────────────────────────────────────────
+# Active AGENT contacts, units Ricky_Rampersad and Akaash_Kalladeen, read from
+# Salesforce on 28 October 2026.  First names only: a surname on a public film
+# earns nothing.  Steven Blanc is active with no hire date on file, so he is in
+# the headcount and not in the chart; the chart says one fewer.
+#
+# Two were taken out on the branch manager's word, 29 October 2026 ("take out
+# javid, aleema"), before the film was cut.  Both carried twenty years, so the
+# total, the headcount and the ten-year band all move with them — every figure
+# in this film is derived from this list for exactly that reason, and none is
+# typed into a line by hand.  Nothing in the film says anyone left, here or
+# anywhere: the house rule is that nobody who goes is characterised or counted.
+#
+# The fourth field is sex, and it is READ OFF THE RECORD, never guessed from a
+# first name: each person's own Salesforce Contact — Salutation, and Gender__c
+# where it is filled — pulled on 29 October 2026.  A guess here misgenders a
+# colleague on a film the whole branch sits down and watches, and a first name
+# is not evidence.  Steven carries no hire date, so he is the +1 in HEADCOUNT
+# and the one person not on the tenure chart; he is counted in MEN.
+ROSTER = [
+    ("Ricky", 1993, 12, 'm'), ("Narissa", 1999, 7, 'f'), ("Richard", 2003, 8, 'm'),
+    ("Premchand", 2004, 12, 'm'),
+    ("Akaash", 2011, 7, 'm'), ("Joy", 2012, 9, 'f'), ("Faizal", 2012, 10, 'm'),
+    ("Meera", 2014, 10, 'f'), ("Petra", 2016, 4, 'f'), ("Randolph", 2016, 11, 'm'),
+    ("Neil", 2018, 7, 'm'), ("Varun", 2019, 6, 'm'), ("Darryl", 2021, 4, 'm'),
+    ("Malcolm", 2022, 4, 'm'), ("Fawwaz", 2023, 3, 'm'), ("Stephanie", 2023, 3, 'f'),
+    ("Jamil", 2023, 8, 'm'), ("Daniel", 2025, 7, 'm'), ("Felicia", 2025, 8, 'f'),
+    ("Rajiv", 2026, 7, 'm'),
+]
+NO_DATE_SEX = 'm'                    # Steven, Mr. on his Contact, no hire date
+
+#  "it's 19 agents we have as a count ... 3 support and a Bma", his own words
+#  on 29 October 2026, correcting a cut that had said "21 agents and managers".
+#  Nineteen is right: Salesforce holds 21 active agent Contacts for the two
+#  current units once Javid and Aleema come off, and two of the 21 are the
+#  Branch Manager and the Unit Manager, who are named as managers rather than
+#  counted as agents.
+#
+#  Pawan is the branch driver, not an admin, so he is named as the driver
+#  rather than folded into "support" — and never dropped.  Leaving a colleague
+#  out of a film about who stayed is the lie by omission, which is also why
+#  the support team is on this film at all.  The third field is the role.
+SUPPORT = [("Kamla", 'f', 'bma'), ("Sasha", 'f', 'sup'),
+           ("Elizabeth", 'f', 'sup'), ("Azariah", 'f', 'sup'),
+           ("Pawan", 'm', 'drv')]
+MANAGERS = 2                         # the Branch Manager and the Unit Manager
+ROLE_WORD = {'bma': 'BMA', 'sup': 'support', 'drv': 'driver'}
+
+# ── what happened to everyone who ever left ──────────────────────────────────
+#  Asked for on 29 October 2026 in these words: "can you get the number
+#  resigned, vested, and retired this will make an impact. research".
+#
+#  SALESFORCE CANNOT ANSWER IT, and that is the whole reason this table is
+#  here.  Its Employment Status picklist holds only Active / Resigned /
+#  Terminated / Not Active, and Agent Work Status is empty on all 87 agent
+#  records — so "Not Active" (26 people) was carrying the retirements, the
+#  vestings and the transfers with nothing to tell them apart.  Ricky went
+#  through all 31 of the Not Active and Terminated names that afternoon and
+#  said what each one actually was.  This markup is therefore the only record
+#  of the distinction, and it is the branch's own.
+#
+#  His verdict moved four of Salesforce's five "Terminated" to resigned and
+#  one of its "Not Active" (the September 2026 case, which Salesforce has
+#  simply wrong) to terminated.  So: two terminations in sixteen years, not
+#  the five on the picklist and not the three he first recalled.
+#
+#  NAMES STAY OUT, and must stay out.  This film sits at a public,
+#  forwardable URL; the standing rule that nothing characterises anyone who
+#  left is at its strongest here.  The counts name nobody and cannot be
+#  worked back to a person.
+#
+#  Salesforce's agent history starts in 2010 — its oldest exit on file is
+#  September 2010 — so this is sixteen years of the branch's thirty-two, and
+#  the film says sixteen rather than claiming the lot.
+OUTCOMES = [                 # label, count, tone: 'in', 'good', 'out', 'hit'
+    ('Still here',    23, 'in'),
+    ('Retired',        4, 'good'),
+    ('Vested',         3, 'good'),
+    ('Transferred',    2, 'good'),
+    ('Resigned',      51, 'out'),
+    ('Terminated',     2, 'hit'),
+    ('Unrecorded',     2, 'none'),
+]
+AGENT_RECORDS = sum(n for _, n, _ in OUTCOMES)      # 87, and it must total 87
+SF_FROM = 2010                                      # the record's own start
+GOOD = sum(n for _, n, t in OUTCOMES if t == 'good')   # retired+vested+moved
+HIT  = sum(n for _, n, t in OUTCOMES if t == 'hit')    # two, in sixteen years
+ENDED = sum(n for _, n, t in OUTCOMES if t != 'in')    # everyone who left
+OUT_N = dict((l, n) for l, n, _ in OUTCOMES)
+
+# ── the branch's own history ─────────────────────────────────────────────────
+#  Every date here is one this repository can show: the day the thing went
+#  live, out of the house notes. Nothing is rounded up and nothing is claimed
+#  that is not in the tree. The spoken count is len(BUILT), so adding one here
+#  and forgetting the line is caught by the assertion under it.
+BUILT = [
+    ('Aug',  'The digital fact find'),
+    ('Sep',  'The transition letters'),
+    ('Sep',  'The assignment board'),
+    ('Oct',  'Group client management'),
+    ('Oct',  'The Premium Due Desk'),
+    ('Oct',  'Match'),
+    ('Oct',  'The stream'),
+    ('Oct',  'The dashboard'),
+    ('Oct',  'The agents view'),
+    ('Oct',  'The training and the test'),
+    ('Oct',  'The Log Book'),
+    ('Oct',  'The Delivery Book'),
+    ('Oct',  'The branch app'),
+    ('Oct',  'Wall Intelligence'),
+    ('Oct',  'Service ratings'),
+    ('Oct',  'The motor quote'),
+    ('Oct',  'Our own quote forms'),
+    ('Oct',  'The meeting builder'),
+]
+
+#  THE LONG DIGITAL RECORD. He asked for this on 29 October 2026: "you can see
+#  from mcp how long we were digital and continue to revise with even better
+#  tools". Every line is the EARLIEST record Salesforce holds for that kind of
+#  work, read that evening; the counts in FORMS are each object's whole
+#  history. No client, no money, nothing that names anybody.
+#
+#    Submission__c            5,523   28 Mar 2011 → 23 May 2017
+#    Attendance_Register__c   7,355   25 Aug 2013 → 10 May 2024
+#    Market_Survey__c           680    3 Apr 2014 → 29 Oct 2024
+#    POP7__c                     39   27 Apr 2014 → 27 Apr 2026
+#    Policy_Queries__c          229    8 Apr 2019 → 25 Jun 2019
+#    jotform__JotformUser__c      –   18 Nov 2023 (the forms wired in)
+#
+#  The JotForm MCP itself needs authorising before it will answer, so the dates
+#  here come from Salesforce's own copy of that work rather than from JotForm.
+DIGITAL = [
+    (2011, 0,   'the first digital submission'),
+    (2013, 13,  'the register goes digital'),
+    (2014, 20,  'the market survey, and POP7'),
+    (2019, 53,  'queries logged on screen'),
+    (2023, 80,  'the forms wired into Salesforce'),
+    (2026, 100, 'the fact find, rebuilt'),
+]
+FORMS = [
+    (5523, 'submissions',      '2011 – 2017'),
+    (7355, 'register entries', '2013 – 2024'),
+    (680,  'market surveys',   '2014 – 2024'),
+]
+
+#  FactFind360's own wall feed, read 29 October 2026. year.submitted 144.
+#  managerPerf, the two managers together: reviewed 38 + 25 = 63, approved
+#  27 + 23 = 50, returned 11 + 2 = 13, medians 2.2 and 3.0 days.
+#
+#  THE FIRST CUT OF THIS SCENE SAID "100% read by a manager, 2.2 days, 29%
+#  sent back" AND ALL THREE WERE WRONG. 63 of 144 have been reviewed, not all
+#  of them; 2.2 days and 29% are the Branch Manager's own figures, not the
+#  branch's (the other manager runs 3.0 days and 8%). What is true is that
+#  nothing reaches a client until a manager signs it off — a statement about
+#  the process, which is what the scene says now. Read the feed's shape before
+#  turning one person's row into the branch's headline.
+#
+#  COUNTS, DAYS AND SHARES ONLY. The feed carries API and premium figures and
+#  they stay out: this film sits at a public URL, and what the branch writes is
+#  nobody else's business.
+FFMONTHS = [('Jul', 20, 0), ('Aug', 53, 0), ('Sep', 33, 0), ('Oct', 34, 1)]
+FFDATA = [
+    ('<b class="rscnt cnt" data-to="144" data-at="300">144</b>',
+     'fact finds', 'this year'),
+    ('<b class="rscnt cnt" data-to="63" data-at="560">63</b>',
+     'through a manager', '50 signed off, 13 sent back'),
+    ('<b class="rscnt">1 in 5</b>', 'came back for more', 'the answer is not always yes'),
+    ('<b class="rscnt">2&ndash;3</b>', 'days to an answer', 'median, each manager'),
+]
+
+#  The CBTT Market Conduct Guideline (July 2023, under the Insurance Act 2018),
+#  clause by clause, against what the branch actually does. The same seven the
+#  FY27 wall carries on w23, so the wall and this film cannot drift apart.
+#  Framed here as what it does for the AGENT, which is the question he asked:
+#  how do we protect our agents.
+CONDUCT = [
+    ('5.2',   'Needs before a recommendation', 'the fact find, every time'),
+    ('5.2.2', 'Advice in writing, plain words', 'the client gets it, and keeps it'),
+    ('5.3.1', 'Intermediaries monitored',      'checked, signed off, followed up'),
+    ('5.4.2', 'Delivered in 20 business days', 'tracked to the signature'),
+    ('5.4.3', 'Kept informed after the sale',  'premium dues, handovers, reviews'),
+    ('5.6',   'Their information kept private','you see your clients, nobody else'),
+    ('5.7',   'Complaints answered promptly',  'logged, owned, answered on time'),
+]
+
+#  The journey, not the transaction. Every one of these fires on its own, out
+#  of the branch's own systems — no client is named and no count is given.
+JOURNEY = [
+    ('onboarded',     'the welcome, and who looks after you'),
+    ('the birthday',  'a note in their birthday month'),
+    ('a premium due', '45, 60, 75 and 90 days'),
+    ('a requirement', 'chased until it clears'),
+    ('the contract',  'tracked to the signature'),
+    ('six months',    'and a review, for life'),
+]
+
+#  The orphan campaign, this branch's own. Letters and reminders are OUR
+#  output; the files are OUR files. Read off Salesforce on 29 October 2026:
+#  349 tasks opened since 25 September, 158 of them already Completed.
+#  NO CLIENT COUNT, no household count, no book size — that is a client count
+#  by another name and it may not go in an MP4 at a public URL.
+ORPHAN = [
+    ('<b class="rscnt">3,000</b>', 'letters and reminders', 'nearly'),
+    ('<b class="rscnt cnt" data-to="349" data-at="420" data-sep="1">349</b>',
+     'files opened', 'since 25 September'),
+    ('<b class="rscnt cnt" data-to="158" data-at="700" data-sep="1">158</b>',
+     'already closed', 'and the rest are live'),
+]
+
+#  What an agent has behind them. Named services only, no figures.
+EQUIP = [
+    ('Query Pal',   'a client question answered, any hour'),
+    ('Your clients','they sign in themselves, on our site'),
+    ('One sign-in', 'and every tool sits behind it'),
+]
+
+#  The fact find, in the order it actually runs since the rebuild. THE CLIENT
+#  APPROVES BEFORE THE MANAGER SEES IT. Before the rebuild a manager approved
+#  it and the client signed afterwards; that is the thing this scene exists to
+#  correct, so do not reorder these without being told to.
+FFSTEPS = [
+    ('You',        'meet your client'),
+    ('The draft',  'goes to them, in plain words'),
+    ('Your client','approves it first'),
+    ('A manager',  'reviews it, and signs'),
+    ('On file',    'and the clock starts'),
+]
+
+PEOPLE = []
+for nm, y, m, sx in ROSTER:
+    yrs = (TODAY - date(y, m, 1)).days / 365.25
+    PEOPLE.append({
+        'n': nm,
+        'y': yrs,
+        'full': int(yrs),                      # full years served
+        'sx': sx,
+        'band': 'g' if yrs >= 10 else ('t' if yrs < 3 else 's'),
+    })
+PEOPLE.sort(key=lambda p: -p['y'])
+TOTAL = int(round(sum(p['y'] for p in PEOPLE)))        # derived; do not hand-type it into a line
+LONG = sum(1 for p in PEOPLE if p['band'] == 'g')      # ten years or more
+NEW = sum(1 for p in PEOPLE if p['band'] == 't')       # joined in the last three
+MID = len(PEOPLE) - LONG - NEW                         # the band between
+HEADCOUNT = len(ROSTER) + 1                            # +1, the one with no hire date on file
+AGENTS = HEADCOUNT - MANAGERS                          # 19, his own count
+ADMIN = sum(1 for _, _, r in SUPPORT if r != 'drv')    # 4: 3 support and the BMA
+EVERYONE = HEADCOUNT + len(SUPPORT)                    # 26 still here
+SF_YEARS = TODAY.year - SF_FROM                        # 16, not the full 32
+#  Men and women across the whole branch, derived like every other figure here
+#  so it can never drift from the roster above.
+SEXES = [p['sx'] for p in PEOPLE] + [NO_DATE_SEX] + [x for _, x, _ in SUPPORT]
+MEN = sum(1 for x in SEXES if x == 'm')
+WOMEN = sum(1 for x in SEXES if x == 'f')
+MAXY = max(p['y'] for p in PEOPLE)
+
+# data-d is milliseconds. importvox.py writes rise-timing.json in SECONDS and
+# the older hand-built timing files are in milliseconds, which is a quiet way
+# to build an 18-scene film 0.1s long — so the unit is decided here, out loud,
+# rather than assumed.
+_t = json.loads(TIMING.read_text())['durs'] if TIMING.exists() else [5.0] * len(LINES['scenes'])
+durs = [d * 1000 if d < 1000 else d for d in _t]          # seconds -> milliseconds
+SECS = [round(d / 1000, 2) for d in durs]                 # what films.json wants
+
+
+# ── small helpers ────────────────────────────────────────────────────────────
+
+def shield(cls='', extra=''):
+    return (f'<svg class="rssh {cls}" viewBox="0 0 88 88" aria-hidden="true">'
+            f'<path class="shL" d="{LEFT}"/><path class="shR" d="{RIGHT}"/>{extra}</svg>')
+
+
+def words(text, cls='rsw'):
+    """Word by word, never letter by letter — the dated form, and it reads as a
+       pile of spans to anything assistive."""
+    sp = ''.join(f'<span class="{cls}" style="--i:{i}">{w}&nbsp;</span>'
+                 for i, w in enumerate(text.split(' ')))
+    return f'<div class="rsline">{sp}</div>'
+
+
+def cnt(to, at=400, pre='', suf='', sep=False):
+    """render.js animates .cnt from its data-to; the true figure is in the
+       markup, so a frame rendered before it runs still shows the right one.
+
+       sep puts the thousands separator in, on the markup and on every frame
+       render.js writes."""
+    shown = f'{to:,}' if sep else str(to)
+    return (f'<b class="rscnt cnt" data-to="{to}" data-at="{at}"'
+            f'{f" data-sep={chr(34)}1{chr(34)}" if sep else ""}'
+            f'{f" data-pre={chr(34)}{pre}{chr(34)}" if pre else ""}'
+            f'{f" data-suf={chr(34)}{suf}{chr(34)}" if suf else ""}>{pre}{shown}{suf}</b>')
+
+
+def crack(cls=''):
+    """The tear across the shield. One path, drawn with a dash offset so it can
+       run across in scene one and fill with gold in scene thirteen — the same
+       geometry both times, which is what makes the mend read as a mend."""
+    d = 'M17 30 L31 39 L25 47 L40 54 L34 62 L49 60 L58 70'
+    return (f'<svg class="rscr {cls}" viewBox="0 0 88 88" aria-hidden="true">'
+            f'<path class="crk" d="{d}"/><path class="crkg" d="{d}"/></svg>')
+
+
+def mesh(mode, n=9):
+    """The lattice: eight points on a ring and one at the centre, every chord
+       between them. Carried over from the first cut, where it is the branch's
+       connected work made visible, so the two films are one family."""
+    R = 21.0
+    pts = [(44 + R * math.cos(math.radians(a)), 44 + R * math.sin(math.radians(a)))
+           for a in range(-90, 270, 45)]
+    pts.append((44.0, 44.0))
+    eh = ''.join(
+        f'<line class="mx-e" style="--i:{k}" x1="{pts[i][0]:.1f}" y1="{pts[i][1]:.1f}" '
+        f'x2="{pts[j][0]:.1f}" y2="{pts[j][1]:.1f}"/>'
+        for k, (i, j) in enumerate([(i, j) for i in range(len(pts)) for j in range(i + 1, len(pts))]))
+    nh = ''.join(
+        f'<circle class="mx-n" style="--i:{k};--dx:{(x-44)*3.4:.1f};--dy:{(y-44)*3.4:.1f}" '
+        f'cx="{x:.1f}" cy="{y:.1f}" r="{2.6 if k == len(pts)-1 else 1.9}"/>'
+        for k, (x, y) in enumerate(pts))
+    return f'<svg class="mx mx-{mode}" viewBox="0 0 88 88" aria-hidden="true">{eh}{nh}</svg>'
+
+
+def person(cls='', style='', label='', sex='m'):
+    """A head and shoulders, not a dot.
+
+       Asked for on 29 October 2026: "better icons show ppeople not dots", then
+       "figurines of men and women". A chart about who stayed should look like
+       people, and twenty-six dots is the one drawing that cannot say that.
+
+       Two silhouettes on the same 24x27 canvas, so a mixed row still lines up.
+       The woman is hair framing the head and falling either side, and slightly
+       narrower shoulders — NOT the toilet-door dress, which reads as dated and
+       is unrecognisable at the size these actually render. Hair is the only
+       difference that survives at twenty pixels, which is why it carries it.
+
+       sex comes from the person's own record (see ROSTER) and is never guessed
+       from a first name.
+    """
+    cap = f'<i>{label}</i>' if label else ''
+    if sex == 'f':
+        body = ('<path d="M4.4 13.9c-.9-2.6-1-5 .2-7.3C6.1 3.5 8.8 1.7 12 1.7'
+                's5.9 1.8 7.4 4.9c1.2 2.3 1.1 4.7.2 7.3l-2.3-.9c.6-1.8.7-3.4.1-4.8'
+                'C16.6 6.3 14.6 5.1 12 5.1S7.4 6.3 6.6 8.2c-.6 1.4-.5 3 .1 4.8z"/>'
+                '<circle cx="12" cy="7.3" r="4.6"/>'
+                '<path d="M4.1 26.5c0-5 3.6-8.8 7.9-8.8s7.9 3.8 7.9 8.8z"/>')
+    else:
+        body = ('<circle cx="12" cy="6.6" r="5"/>'
+                '<path d="M2.8 26.5c0-5.1 4.1-8.8 9.2-8.8s9.2 3.7 9.2 8.8z"/>')
+    return (f'<span class="rsppl p-{sex} {cls}" style="{style}">'
+            f'<svg viewBox="0 0 24 27" aria-hidden="true">{body}</svg>{cap}</span>')
+
+
+#  An anonymous crowd, mixed in the branch's own ratio so it is a picture of
+#  this branch rather than a stock mix. Nobody in it is named, so nobody in it
+#  can be misgendered.
+def crowd_sex(i):
+    return 'f' if (i * WOMEN) % (MEN + WOMEN) < WOMEN else 'm' 
+
+
+#  Every screen in this film is one of the branch's own, captured with sample
+#  data and already public on /wall/. They are what he means by "the replica":
+#  not a drawing of the tool, the tool. wall/img/* were shot for the FY27 wall;
+#  branchmeet/img/* were shot from /wall/?demo=1 for this film.
+SHOTS = {
+    'ffdraft': ('../wall/img/ff/01-client-draft.jpg', 'tall'),
+    'ffsign': ('../wall/img/ff/02-manager-signoff.jpg', 'tall'),
+    'ffcopy': ('../wall/img/ff/03-agent-your-copy.jpg', 'tall'),
+    'ffok': ('../wall/img/ff/04-client-approval-page.jpg', 'tall'),
+    'ffrate': ('../wall/img/ff/05-client-sign-and-rate.jpg', 'tall'),
+    'ffclose': ('../wall/img/ff/06-did-this-close.jpg', 'tall'),
+    'ffins': ('../wall/img/ff/08-manager-insights.jpg', 'tall'),
+    'lblog': ('../wall/img/lb/logged-ph.jpg', 'rsph'),
+    'lbget': ('../wall/img/lb/received-ph.jpg', 'rsph'),
+    'lbsent': ('../wall/img/lb/sent-ph.jpg', 'rsph'),
+    'lbfind': ('../wall/img/lb/find-ph.jpg', 'rsph'),
+    'mtag': ('../wall/img/meet/agenda-lap.jpg', 'lap'),
+    'mtact': ('../wall/img/meet/actions-lap.jpg', 'lap'),
+    'mtreg': ('../wall/img/meet/register-lap.jpg', 'lap'),
+    'jrff': ('../wall/img/jr/1-factfind.jpg', 'wide'),
+    'jrplan': ('../wall/img/jr/2-plan.jpg', 'wide'),
+    'wprod': ('img/production.jpg', 'lap'),
+    #  Cropped above the per-agent rings: those put a sample percentage
+    #  beside a real first name, which is fine on a wall behind a code and
+    #  not fine in a film anybody can forward.
+    'wgoal': ('img/goals.jpg', 'band'),
+    'wtrans': ('img/transmittal.jpg', 'lap'),
+    'wday': ('img/day.jpg', 'lap'),
+}
+
+
+def shot(key, cls='', style='', cap=''):
+    """One real screen, in a card. The caption is ours, never read off the
+       picture, so a re-shoot can never silently change what the film says."""
+    src, kind = SHOTS[key]
+    label = f'<i>{cap}</i>' if cap else ''
+    return (f'<figure class="rsshot {kind} {cls}" style="{style}">'
+            f'<img src="{src}" alt="" loading="eager"><span class="rsgl"></span>'
+            f'</figure>{label}')
+
+
+def tenure_chart(coloured):
+    """Twenty-two horizontal bars, longest first, in two columns of eleven.
+
+       Length carries the magnitude. Hue carries the band the narration names —
+       ten years and up, and joined in the last three — so colour is doing a job
+       and not decorating. Validated against the ground: gold/teal worst pair
+       is dE 18.2 normal vision, 11.4 protan, and every slot clears 3:1.
+
+       Before the bands land (scene six) every bar is one hue: a single series
+       needs no palette, and the chart's first job is the total."""
+    cols = ''
+    for c in (PEOPLE[:11], PEOPLE[11:]):
+        rows = ''
+        for i, p in enumerate(c):
+            pct = max(2.0, p['y'] / MAXY * 100)
+            band = p['band'] if coloured else 'n'
+            shown = '&lt;1' if p['full'] == 0 else str(p['full'])
+            rows += (f'<div class="rsrow" style="--i:{i};--p:{pct:.1f}">'
+                     f'<span class="rsnm">{p["n"]}</span>'
+                     f'<span class="rstrk"><i class="b-{band}"></i></span>'
+                     f'<span class="rsyr">{shown}</span></div>')
+        cols += f'<div class="rscol">{rows}</div>'
+    return f'<div class="rschart{" lit" if coloured else ""}">{cols}</div>'
+
+
+def donut(part, whole, label, mid=None):
+    """Part to whole, one accent against the recessive slate, labelled in the
+       middle — never a pie, never a slice nobody can compare."""
+    r, c = 15.9155, 2 * math.pi * 15.9155
+    frac = part / whole
+    return (f'<div class="rsring"><svg class="rsdo" viewBox="0 0 42 42" aria-hidden="true">'
+            f'<circle class="do-bg" cx="21" cy="21" r="{r}"/>'
+            f'<circle class="do-fg" cx="21" cy="21" r="{r}" '
+            f'style="--dash:{c*frac:.2f};--gap:{c*(1-frac):.2f};--c:{c:.2f}"/>'
+            f'</svg><div class="rsdol"><b>{mid if mid is not None else part}</b></div></div>'
+            f'<div class="rsdocap">{label}</div>')
+
+
+def arc(part, whole, mid, sub):
+    """FY27 as a ring: how much of the year has gone."""
+    r, c = 15.9155, 2 * math.pi * 15.9155
+    frac = part / whole
+    return (f'<div class="rsarc"><svg viewBox="0 0 42 42" aria-hidden="true">'
+            f'<circle class="ar-bg" cx="21" cy="21" r="{r}"/>'
+            f'<circle class="ar-fg" cx="21" cy="21" r="{r}" '
+            f'style="--dash:{c*frac:.2f};--gap:{c*(1-frac):.2f};--c:{c:.2f}"/></svg>'
+            f'<div class="rsarcl"><b>{mid}</b><span>{sub}</span></div></div>')
+
+
+# ── the spoken figures must be the derived ones ──────────────────────────────
+#  Two people came off the roster on 29 October and three narrated figures
+#  moved with them. A line is recorded once and then lives in an MP4 that
+#  nobody re-reads, so the film asserts its own arithmetic rather than trusting
+#  whoever edited the roster to remember the script.
+_ONES = ('zero one two three four five six seven eight nine ten eleven twelve '
+         'thirteen fourteen fifteen sixteen seventeen eighteen nineteen').split()
+_TENS = ('  twenty thirty forty fifty sixty seventy eighty ninety').split()
+
+
+def spoken(n):
+    if n < 20:
+        return _ONES[n]
+    if n < 100:
+        t, r = divmod(n, 10)
+        return _TENS[t - 2] + ('-' + _ONES[r] if r else '')
+    h, r = divmod(n, 100)
+    return _ONES[h] + ' hundred' + (' and ' + spoken(r) if r else '')
+
+
+def _say(key):
+    #  None when this cut does not carry the scene, so a line that was CUT does
+    #  not crash the build — but a line that is still in it is still asserted.
+    return next((x['say'].lower() for x in LINES['scenes'] if x['v'] == key), None)
+
+
+#  A line is recorded once and then lives in an MP4 nobody re-reads, so every
+#  derived figure is spelled out in words here and checked against the roster.
+#  This is what caught three stale lines when two names came off the roster.
+_skipped = []
+for key, want in (('count', AGENTS), ('count', len(SUPPORT)),
+                  ('years', TOTAL), ('mix', LONG), ('mix', NEW),
+                  ('built', len(BUILT)),
+                  ('outcome', AGENT_RECORDS), ('outcome', SF_YEARS),
+                  ('outcome', OUT_N['Resigned']), ('outcome', OUT_N['Retired']),
+                  ('outcome', OUT_N['Vested'])):
+    said = _say(key)
+    if said is None:
+        _skipped.append(key); continue
+    assert spoken(want) in said or str(want) in said, (
+        f'scene {key!r} says {said!r} but the record now gives {want} '
+        f'({spoken(want)}). Edit rise-lines.json and re-voice that line.')
+if _skipped:
+    print('  (not in this cut, so not checked: '
+          + ', '.join(sorted(set(_skipped))) + ')')
+
+# ── the scenes ───────────────────────────────────────────────────────────────
+
+def V(name, s):
+    on = s.get('screen', '')
+
+    # 1 · the hit. The shield whole, then a tear runs across it and the light
+    #     goes cold. Nothing is said about anyone; the crack says it.
+    if name == 'hit':
+        return (f'<div class="rsstage shake">{shield("whole")}{mesh("pulse")}'
+                f'{crack("cut")}<div class="rsflash"></div></div>')
+
+    # 2 · people left. Points detach from the lattice and drift out, and the
+    #     chords to them fade. No number, no name, no direction.
+    #     Asked for on 29 October 2026: "drop off a couple". A scattered field
+    #     of figures, cold; three sink out of it and the rest stand.
+    #
+    #     THE FIELD IS NOT A COUNT, AND MUST NEVER BECOME ONE. Nobody who
+    #     leaves this branch is characterised OR COUNTED anywhere at a public
+    #     address, and this file sits at one. So the figures are scattered
+    #     rather than ranked or rowed (a scatter is not countable at a glance),
+    #     there is no caption, no number on screen and no number in the line,
+    #     and the three that go are a visual device in his own words, not the
+    #     branch's arithmetic. Do not make it twelve.
+    if name == 'left':
+        import random as _r
+        rnd = _r.Random(23)                     # seeded: render.js draws each
+        gone = {20, 31, 40}                     # frame on its own, so an
+        figs = ''                               # unseeded field would jitter
+        for i in range(45):                     # from frame to frame
+            col, row = i % 9, i // 9
+            #  Jitter wider than the pitch, and the rows staggered, so no eye
+            #  can resolve a count out of it: the lattice has to be broken,
+            #  not merely softened. The first cut jittered by a seventh of the
+            #  pitch and read as a tidy grid of 34 — i.e. as a number.
+            x = col * 11.4 + (5.7 if row % 2 else 0) - 2.0 + rnd.uniform(-4.4, 4.4)
+            y = row * 20.4 + 1.0 + rnd.uniform(-5.6, 5.6)
+            sc = 0.62 + row * 0.13 + rnd.uniform(-.09, .09)   # nearer = larger
+            figs += person('rscp' + (' rsgone' if i in gone else ''),
+                           f'--x:{x:.1f};--y:{y:.1f};--s:{sc:.2f};--i:{i};'
+                           f'--o:{.3 + row * .17:.2f};'
+                           f'--w:{rnd.uniform(3.0, 5.4):.1f}',
+                           '', crowd_sex(i * 7))
+        return (f'<div class="rscrowd">{figs}</div>'
+                f'<div class="rsstage rssm">{shield("cold")}{mesh("shed")}'
+                f'{crack("held")}</div>')
+
+    # 3 · it held. The tear stops where it stopped.
+    if name == 'held':
+        return (f'<div class="rsstage">{shield("cold steady")}{mesh("thin")}{crack("held")}'
+                f'</div><div class="rscap"><div class="rseyeb">{on}</div></div>')
+
+    # 3a · the proof that it held, and the best number in the film. Requests
+    #      closed by the five desks, read off Salesforce on 29 October 2026,
+    #      logged e-mails and the birthday flow left out as everywhere else.
+    #      September is the month it happened; October is still running, which
+    #      the foot says, because a figure that is going to grow is stronger
+    #      stated short than rounded up.
+    if name == 'rose':
+        a, b = 204, 240
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rspair">'
+                f'<div class="rspb" style="--h:{a / b * 100:.0f}">'
+                f'<span class="rspn">{cnt(a, 300)}</span><i></i>'
+                f'<span class="rspl">September</span></div>'
+                f'<div class="rspb lit" style="--h:100">'
+                f'<span class="rspn">{cnt(b, 600)}</span><i></i>'
+                f'<span class="rspl">October</span></div>'
+                f'<div class="rspd">+{round((b - a) / a * 100)}%</div></div>'
+                f'<div class="rsfoot">requests closed &middot; October still has two days to run</div>'
+                f'</div>')
+
+    # 4 · so look at who is still standing — and this is where they rise.
+    #     Asked for the same day: "rise to the top with those who's standing".
+    #     The whole branch comes up off the floor in a wave, warming from the
+    #     cold of the three scenes before it to cyan as it arrives, and lands
+    #     in ordered rows under the line. Men and women, each from the record.
+    if name == 'stayed':
+        #  The row widths are hand-set because three rows of nine, nine and
+        #  eight is a better shape than anything a formula gives — but they
+        #  have to add up to the branch, or somebody is quietly left off the
+        #  one scene in this film about who stayed.
+        rows, figs = (9, 9, 8), ''
+        assert sum(rows) == EVERYONE == len(SEXES), (
+            f'the rise scene lays out {sum(rows)} people and the branch is '
+            f'{EVERYONE}. Re-split the rows in this scene.')
+        k = 0
+        for r, wide in enumerate(rows):
+            for c in range(wide):
+                figs += person('rsup', f'--i:{k};--c:{c - (wide - 1) / 2:.1f};'
+                                       f'--r:{r}', '', SEXES[k])
+                k += 1
+        return (f'<div class="rscap big">{words(s["say"])}'
+                f'<div class="rswave">{figs}</div></div>')
+
+    # 5 · the count. Twenty-three chips light one by one, then five more
+    #     behind them in teal — the support team is in this branch's story and
+    #     leaving them out of "who stayed" would be a lie by omission.
+    #     Asked for on 29 October 2026: "a more impactful number with figurines
+    #     of men and women". So the figure carries the room and the people
+    #     stand beside it, each one drawn as the man or woman their own record
+    #     says they are, and the split is stated because it is true and worth
+    #     saying out loud. The support team is in it: leaving them out of "who
+    #     stayed" would be a lie by omission.
+    if name == 'count':
+        #  Three groups, not two: 19 agents, the two managers, and the five
+        #  behind them.  He corrected "21 agents and managers" by name on
+        #  29 October, and the managers are shown as managers rather than
+        #  swelling the agent count.  PEOPLE is sorted by tenure, so the two
+        #  managers are picked out by name rather than by position.
+        mgr = {'Ricky', 'Akaash'}
+        ags = [p for p in PEOPLE if p['n'] not in mgr]
+        mgs = [p for p in PEOPLE if p['n'] in mgr]
+        k = 0
+        def chip(label, sx, cls=''):
+            nonlocal k
+            out = person(cls, f'--i:{k}', label, sx); k += 1
+            return out
+        a = ''.join(chip(p['n'][0], p['sx']) for p in ags) \
+            + chip('S', NO_DATE_SEX)                       # the one with no date
+        m = ''.join(chip(p['n'][0], p['sx'], 'mgr') for p in mgs)
+        s = ''.join(chip(n[0], x, 'sup') for n, x, _ in SUPPORT)
+        roles = ' &middot; '.join(
+            f'{c} {ROLE_WORD[r]}'
+            for r, c in (('sup', sum(1 for _, _, q in SUPPORT if q == 'sup')),
+                         ('bma', 1), ('drv', 1)))
+        return (f'<div class="rscap wide"><div class="rsnum">'
+                f'<div class="rsnumn">{cnt(EVERYONE, 260)}'
+                f'<span class="rsnuml">still here</span>'
+                f'<span class="rsmw">{person("mw", "", "", "m")}{MEN} men'
+                f'<em></em>{person("mw", "", "", "f")}{WOMEN} women</span></div>'
+                f'<div class="rsnumg">'
+                f'<div class="rsgrp" style="--i:0"><span class="rsgrpl">'
+                f'{AGENTS} agents</span>'
+                f'<div class="rschips">{a}</div></div>'
+                f'<div class="rsgrp" style="--i:7"><span class="rsgrpl">'
+                f'{MANAGERS} managers</span>'
+                f'<div class="rschips mgr">{m}</div></div>'
+                f'<div class="rsgrp" style="--i:10"><span class="rsgrpl">'
+                f'{len(SUPPORT)} behind them<i>{roles}</i></span>'
+                f'<div class="rschips sup">{s}</div></div>'
+                f'</div></div></div>')
+
+    # 6 · the chart, one hue: the total is the point, and a single series needs
+    #     no palette.
+    if name == 'years':
+        return (f'<div class="rscap wide"><div class="rshead">'
+                f'{cnt(TOTAL, 300)}<span class="rsbigl">years of this work, between us</span>'
+                f'</div>{tenure_chart(False)}'
+                f'<div class="rsfoot">full years each &middot; {TOTAL} in all</div></div>')
+
+    # 7 · the same chart, now carrying the two bands the line names, with the
+    #     legend beside it so identity is never colour alone.
+    if name == 'mix':
+        leg = ('<div class="rsleg">'
+               f'<span><i class="b-g"></i>{LONG} at ten years or more</span>'
+               f'<span><i class="b-s"></i>{MID} between</span>'
+               f'<span><i class="b-t"></i>{NEW} joined in the last three</span></div>')
+        return (f'<div class="rscap wide">{leg}{tenure_chart(True)}'
+                f'<div class="rsdonut">{donut(LONG, len(PEOPLE), f"of {len(PEOPLE)} at ten years or more")}</div>'
+                f'</div>')
+
+    # 7b · thirty-two years of outcomes, and the point he wanted made.
+    #      Asked for on 29 October 2026: "some retired, some resigned, 2 was
+    #      terminated and some vested, so highlight in branch as ours we only
+    #      had 3 terminations".
+    #
+    #      THE TWO NAMES HE GAVE ARE NOT HERE AND MUST NOT BE ADDED. This film
+    #      sits at a public, forwardable URL, and naming a person as terminated
+    #      is the single most exposing line that could go on one — which is the
+    #      whole reason the house rule says nobody who leaves is characterised.
+    #      The count makes his point and names nobody.
+    #
+    #      THE FIGURE IS THE BRANCH'S OWN, on his word, asked and answered the
+    #      same day. Salesforce's Employment Status gives FOUR under the two
+    #      current units (2012, 2015, 2018, 2019) and does not carry the
+    #      September 2026 case at all; and unit membership today is not
+    #      thirty-two years of branch history, since the old units are gone. So
+    #      the system cannot settle it, and the screen says whose record it is
+    #      rather than passing it off as Salesforce's.
+    if name == 'outcome':
+        #  Every agent record the branch has, one figure each, coloured by what
+        #  actually happened to the person — so the two terminations are a
+        #  thing the eye FINDS at the end of the grid rather than a number it
+        #  is told.  That is the whole design of the scene, and it is why the
+        #  figures are grouped in OUTCOMES order with the two lit and last but
+        #  for the pair nobody recorded.
+        #
+        #  ONE SILHOUETTE FOR ALL 87, deliberately.  The figurines elsewhere
+        #  carry each person's sex off their own Salesforce record; for the 62
+        #  who have left, that is not on file and would have to be guessed, so
+        #  this grid uses the neutral head-and-shoulders glyph throughout and
+        #  claims nothing about anybody.  Nobody is named, and no count here
+        #  can be worked back to a person.
+        PER = 15
+        figs, i = '', 0
+        for _lab, n, tone in OUTCOMES:
+            for _ in range(n):
+                figs += person(f'rsof o-{tone}',
+                               f'--i:{i};--c:{i % PER}', '', 'm')
+                i += 1
+        key = ''.join(f'<span class="rsok o-{t}" style="--i:{j}">'
+                      f'<i></i>{l}<b>{n}</b></span>'
+                      for j, (l, n, t) in enumerate(OUTCOMES))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsend">'
+                f'<div class="rsendn">{cnt(AGENT_RECORDS, 240)}'
+                f'<span class="rsnuml">agents, {spoken(SF_YEARS)} years</span>'
+                f'<span class="rsends">{GOOD} retired, vested or moved on'
+                f'<em></em>{HIT} ever terminated</span></div>'
+                f'<div class="rsendg"><div class="rsofs">{figs}</div>'
+                f'<div class="rsoks">{key}</div></div></div>'
+                f'<div class="rsfoot">the branch&rsquo;s own record, gone '
+                f'through name by name &middot; Guardian&rsquo;s system keeps '
+                f'no &ldquo;retired&rdquo; and no &ldquo;vested&rdquo;</div></div>')
+
+    # 7a · the branch on one line. A dot for every person at the year they
+    #      joined, stacked where a year repeats, so the eye reads a branch
+    #      that has been keeping people for three decades rather than a list.
+    if name == 'story':
+        y0, y1 = 1993, TODAY.year
+        span = y1 - y0
+        seen = {}
+        dots = ''
+        for i, (nm, yy, mm, sx) in enumerate(sorted(ROSTER, key=lambda r: (r[1], r[2]))):
+            at = (yy + (mm - 1) / 12 - y0) / span * 100
+            k = round(at / 3)
+            seen[k] = seen.get(k, 0) + 1
+            dots += person('rsdot', f'--x:{at:.2f};--s:{seen[k] - 1};'
+                           f'--l:{i % 3};--i:{i}', nm, sx)
+        ticks = ''.join(
+            f'<span class="rstk" style="--x:{(d - y0) / span * 100:.2f}">{d}</span>'
+            for d in range(2000, y1 + 1, 5))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rstl"><span class="rstlr"></span>{dots}'
+                f'<span class="rstla">{y0}</span>'
+                f'<span class="rstlz">{y1}</span>{ticks}</div>'
+                f'<div class="rsfoot">one of us at the year they joined</div>'
+                f'</div>')
+
+    # 9a · and nearly all of it was built since August. The same idea turned on
+    #      its side: eighteen things, ninety days, each landing on the beat.
+    if name == 'built':
+        items = ''.join(
+            f'<div class="rsbi" style="--i:{i}"><span class="rsbm">{m}</span>'
+            f'<span class="rsbd"></span><span class="rsbt">{t}</span></div>'
+            for i, (m, t) in enumerate(BUILT))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rshead">{cnt(len(BUILT), 300)}'
+                f'<span class="rsbigl">of these went live in ninety days</span></div>'
+                f'<div class="rsbuilt">{items}</div></div>')
+
+    # 8 · and while that was going on, we rebuilt how the branch runs.
+    if name == 'rebuild':
+        return (f'<div class="rsstage">{shield("warm")}{mesh("relink")}{crack("held")}</div>'
+                f'<div class="rscap"><div class="rseyeb">WE REBUILT IT</div></div>')
+
+    # 9 · one sign-in, every tool behind it.
+    if name == 'one':
+        tools = ['Log Book', 'Delivery Book', 'Clients board', 'Premium Due Desk',
+                 'Group clients', 'Fact Find', 'Query Pal', 'The wall']
+        fan = ''.join(f'<span class="rstool" style="--i:{i}">{t}</span>'
+                      for i, t in enumerate(tools))
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rsdoor"><span class="rskey"></span></div>'
+                f'<div class="rstools">{fan}</div></div>')
+
+    # 10 · the system sets your day before you are up.
+    if name == 'day':
+        ticks = ''.join(f'<span class="rstick" style="--i:{i}"></span>' for i in range(7))
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rsday"><div class="rsdayb"></div>{ticks}</div>'
+                f'<div class="rsdayl"><span>5am</span><span>set before you wake</span>'
+                f'<span>6pm</span></div></div>')
+
+    # 11 · the wall shows the score, and everybody sees the same numbers.
+    if name == 'wall':
+        bars = ''.join(f'<i style="--i:{i};--h:{h}"></i>'
+                       for i, h in enumerate([44, 68, 52, 81, 60, 73, 38, 90, 57]))
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rswall"><div class="rswbars">{bars}</div></div>'
+                f'<div class="rsfoot">one score, in front of everybody</div></div>')
+
+    # 12a · the work itself. This counts REQUESTS CLOSED, never clients: a
+    #       client count may not go in an MP4 at a public URL, and what the
+    #       branch wants credit for here is its own work anyway. Read off
+    #       Salesforce on 28 October 2026 over the five desks, twelve months,
+    #       with logged e-mails and the birthday flow left out — they are not
+    #       work, and counted they would flatter the record by five to one.
+    if name == 'served':
+        kinds = [('Pendings', 889), ('Renewals and billing', 687),
+                 ('Servicing', 560), ('Scripts and call-backs', 151),
+                 ('Everything else', 208)]
+        top = max(n for _, n in kinds)
+        rows = ''.join(
+            f'<div class="rsrow" style="--i:{i};--p:{n / top * 100:.1f}">'
+            f'<span class="rsnm">{k}</span>'
+            f'<span class="rstrk"><i class="b-n"></i></span>'
+            f'<span class="rsyr">{n}</span></div>'
+            for i, (k, n) in enumerate(kinds))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rshead">{cnt(2495, 300, sep=True)}'
+                f'<span class="rsbigl">requests closed, in twelve months</span></div>'
+                f'<div class="rschart one"><div class="rscol">{rows}</div></div>'
+                f'<div class="rsfoot">the five desks, over the last twelve months</div></div>')
+
+    # 12b · the papers. The Log Book's own year, measured off the old book
+    #       rather than claimed: 3,634 lines, and 72% on to Guardian inside
+    #       one working day.
+    if name == 'papers':
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rsbig">{cnt(3634, 400, sep=True)}'
+                f'<span class="rsbigl">papers through the Log Book</span></div>'
+                f'<div class="rsdonut mid">'
+                f'{donut(72, 100, "on to Guardian inside one working day", mid="72%")}'
+                f'</div>'
+                f'<div class="rsfoot">the old form scrapped &middot; '
+                f'the transmittal is ours now</div></div>')
+
+    # 12c · the fact find. His own line from the FY27 wall, and the one number
+    #       in this film that is a nought on purpose.
+    if name == 'ff':
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rsbig"><span class="rszero">0</span>'
+                f'<span class="rsbigl">of those cases has lapsed</span></div>'
+                f'<div class="rsfoot">since the digital fact find went live</div></div>')
+
+    # 16a · the business stays. Branch 26000 Production and Manpower Record,
+    #       2014-2026: the lowest lapse rate of every branch in the Board Paper
+    #       for 2025, and again for FY2026 to 31 August. The comparison is
+    #       against the main branches, which is how the record states it.
+    #
+    #       NOTHING FROM THESE PAPERS THAT NAMES ANYONE, NAMES A COMPETITOR,
+    #       OR CARRIES A DOLLAR FIGURE IS IN THIS FILM. It sits at a public URL
+    #       anybody can forward, and the four documents behind this scene are a
+    #       three-year plan, a note of a meeting with the Vice President, a unit
+    #       plan that sets out individual agents' quota and persistency, and a
+    #       manpower record that names people who left and people terminated.
+    #       What is here is the branch's own quality record and nothing else.
+    if name == 'keep':
+        #  A lapse rate is 4.96%, not 496. The counter only does whole numbers,
+        #  so these two are plain text: a wrong unit on a headline figure costs
+        #  more than the count-up is worth. Shorter is better here, and the
+        #  foot says so, because a short bar reads as "worse" by default.
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rspair tight">'
+                f'<div class="rspb lit" style="--h:56">'
+                f'<span class="rspn">4.96%</span><i></i>'
+                f'<span class="rspl">this branch</span></div>'
+                f'<div class="rspb" style="--h:100">'
+                f'<span class="rspn">8.82%</span><i></i>'
+                f'<span class="rspl">the main branches</span></div></div>'
+                f'<div class="rsfoot">lapse rate, FY2026 to 31 August &middot; '
+                f'lower is better &middot; the lowest of every branch</div></div>')
+
+    # 16b · and the people stay. The same record, and the note of 12 October:
+    #       ours against the published career-agency figures.
+    if name == 'stay':
+        rows = [('Still here after one year', 67, 58, 'published 55&ndash;60%'),
+                ('Still here after four years', 31, 16, 'published about 16%'),
+                ('The 2023 intake, kept to August', 67, 48, 'network 48%')]
+        out = ''
+        for i, (lab, us, them, note) in enumerate(rows):
+            out += (f'<div class="rsvs" style="--i:{i}">'
+                    f'<span class="rsvl">{lab}</span>'
+                    f'<span class="rsvb"><i class="ours" style="--p:{us}"></i>'
+                    f'<b class="rsmk" style="--p:{them}"><span>{note}</span></b></span>'
+                    f'<span class="rsvn">{us}%</span></div>')
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsvsw">{out}</div>'
+                f'<div class="rsfoot">Branch 26000 Production and Manpower Record</div></div>')
+
+    # 17a · the career path. The ladder itself, not who has climbed it: two of
+    #       the three managers this branch grew are no longer here, and the
+    #       house rule is that nobody who goes is named or counted.
+    if name == 'path':
+        #  Reversed, so the ladder is read from the bottom rung up: the first
+        #  cut listed Agent at the top and Branch Manager at the foot, which is
+        #  a way down.
+        rungs = ['Branch Manager', 'Assistant Branch Manager', 'Unit Manager',
+                 'Trainee Manager', 'Executive Agent', 'Agent']
+        out = ''.join(
+            f'<div class="rsrung" style="--i:{i};--n:{len(rungs)}">'
+            f'<span class="rsrd"></span><span class="rsrt">{r}</span></div>'
+            for i, r in enumerate(rungs))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsladder">{out}</div>'
+                f'<div class="rsfoot">this branch grows its own managers, and always has</div>'
+                f'</div>')
+
+    # 17b · the three-year plan, 1 October 2026 to 30 September 2029. The
+    #       horizon and the direction only: the plan's quotas, scenarios and
+    #       attainment ranking stay in the paper.
+    if name == 'plan':
+        yrs = [('FY27', 'rebuild the bench'), ('FY28', 'grow the units'),
+               ('FY29', 'forty agents')]
+        out = ''.join(
+            f'<div class="rsyr3" style="--i:{i}"><b>{y}</b><span>{t}</span></div>'
+            for i, (y, t) in enumerate(yrs))
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rsrun"><span class="rsrunr"></span>{out}</div>'
+                f'<div class="rsfoot">the three-year plan &middot; '
+                f'1 October 2026 to 30 September 2029</div></div>')
+
+    # 12 · FY27 is thirty days old and every goal plan is in.
+    if name == 'fy27':
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'{arc(30, 365, "30", "days into FY27")}'
+                f'<div class="rsfoot">every goal plan is in</div></div>')
+
+    # 13 · the mend. The crack from scene one, filled with gold — the branch's
+    #      own colour doing the one job it is best at.
+    if name == 'gold':
+        return (f'<div class="rsstage">{shield("warm")}{mesh("field")}{crack("fill")}'
+                f'<div class="rsglow"></div></div>')
+
+    # 14 · not going back; going somewhere better.
+    if name == 'better':
+        return (f'<div class="rsstage rise">{shield("gold")}{mesh("home")}{crack("mended")}</div>'
+                f'<div class="rscap">{words(s["say"])}</div>')
+
+    # 15 · Friday.
+    if name == 'friday':
+        return (f'<div class="rscap big"><div class="rseyeb">{on}</div>'
+                f'<div class="rsnoon">12 noon</div>'
+                f'<div class="rsfoot">ninety minutes</div></div>')
+
+    # 16 · seventy-five of those minutes are yours. One bar, two parts, both
+    #      labelled — the agenda's own split, not an illustration of one.
+    if name == 'yours':
+        return (f'<div class="rscap"><div class="rseyeb">{on}</div>'
+                f'<div class="rssplit"><i class="y"></i><i class="m"></i></div>'
+                f'<div class="rssplitl"><span class="y">75 minutes &mdash; the room</span>'
+                f'<span class="m">15 &mdash; the chair</span></div></div>')
+
+    # 17 · three questions are waiting. Answer one tonight.
+    if name == 'ask':
+        q = ''.join(f'<span class="rsq" style="--i:{i}"></span>' for i in range(3))
+        return (f'{mesh("field")}<div class="rscap big">'
+                f'<div class="rsurl">rickyrampersadbranch.com/meetings</div>'
+                f'<div class="rsqs">{q}</div>'
+                f'<div class="rseyeb">{on}</div></div>')
+
+    # 23a · how to get in on Friday. Asked for on 29 October 2026 ("at the end
+    #       where is the log in!!! to log in with agent number and guest a code
+    #       000"): the film ends on a rally and never said the one practical
+    #       thing. The shared branch code is gone (see the sign-in note), so the
+    #       agent number IS the sign-in and IS the register, and 0000 is the
+    #       standing visitor. Four zeros are spoken as "four zeros", never
+    #       "oh oh oh oh", which the voice reads as a word.
+    if name == 'signin':
+        pad = ''.join(f'<b style="--i:{i}">{d}</b>' for i, d in enumerate('0000'))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rstwo">'
+                f'<div class="rscard lit"><span class="rsct">You</span>'
+                f'<div class="rsfield"><span class="rslab">Agent number</span>'
+                f'<span class="rsbox"><b class="rstype">A&#8226;&#8226;&#8226;&#8226;&#8226;</b>'
+                f'<i class="rscar"></i></span></div>'
+                f'<span class="rsnote">That is the whole sign-in.<br>Signing in is the register.</span>'
+                f'</div>'
+                f'<div class="rscard"><span class="rsct">A visitor</span>'
+                f'<div class="rspad">{pad}</div>'
+                f'<span class="rsnote">Four zeros.<br>Guests are never on the roll.</span>'
+                f'</div></div>'
+                f'<div class="rssurl">rickyrampersadbranch.com/meetings</div></div>')
+
+    # 18 · the close. Whole, with the seams showing, and the check drawn on.
+
+    # ── the long digital record ─────────────────────────────────────────────
+    # 9b · we did not go digital this year. Every date here is the earliest
+    #      record Salesforce holds for that kind of work, read on 29 October
+    #      2026; the counts are that object's whole history. Nothing is a
+    #      client, and nothing is money.
+    if name == 'digital':
+        #  Two lanes, alternating. 2013 and 2014 are a year apart on a
+        #  fifteen-year rail — about eighty pixels — and the label is twice
+        #  that wide, so on one lane they land on top of each other.
+        rail = ''.join(
+            f'<div class="rsmile" style="--i:{i};--p:{p};--lane:{i % 2}">'
+            f'<span class="rsmd"></span><span class="rsdtk"></span>'
+            f'<span class="rsdlb"><b>{y}</b><i>{what}</i></span></div>'
+            for i, (y, p, what) in enumerate(DIGITAL))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rshead">{cnt(15, 260)}'
+                f'<span class="rsbigl">years of running on our own screens</span></div>'
+                f'<div class="rsrail"><span class="rsrl"></span>{rail}</div>'
+                f'<div class="rstiles sm3">' + ''.join(
+                    f'<div class="rstile sm" style="--i:{i}">'
+                    f'{cnt(n, 900 + i * 200, sep=True)}'
+                    f'<span class="rstily">{lab}</span><em>{span}</em></div>'
+                    for i, (n, lab, span) in enumerate(FORMS)) + '</div>'
+                f'<div class="rsfoot">earliest record on file for each, read from Salesforce</div></div>')
+
+    # 9c · the volume behind it, three counters that flip up in turn.
+    if name == 'forms':
+        cards = ''.join(
+            f'<div class="rstile" style="--i:{i}">{cnt(n, 300 + i * 260, sep=True)}'
+            f'<span class="rstily">{lab}</span><em>{span}</em></div>'
+            for i, (n, lab, span) in enumerate(FORMS))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rstiles">{cards}</div>'
+                f'<div class="rsfoot">every one of them filed on a screen, not on paper</div></div>')
+
+    # 11b · the replica wall. Real screens, flying in, never still. This is the
+    #       answer to "lots of cards with the replica": the tools themselves.
+    if name == 'replica':
+        #  Ten. Twelve wrapped to a third row and the last card was cut in
+        #  half by the caption strip the mixer pads back on.
+        keys = ['ffdraft', 'lblog', 'mtag', 'wprod', 'ffok',
+                'lbget', 'wtrans', 'jrff', 'mtact', 'wday']
+        wall = ''.join(
+            f'<div class="rsrc" style="--i:{i};--r:{(i * 37) % 7 - 3}deg">'
+            f'{shot(k)}</div>' for i, k in enumerate(keys))
+        return (f'<div class="rsrwall">{wall}</div>'
+                f'<div class="rscap over"><div class="rseyeb">WHAT WE RUN ON</div>'
+                f'<div class="rshead sm">Every screen here is real</div></div>')
+
+    # ── the fact find, live again on 1 August 2026 ──────────────────────────
+    # 12d · the date, and the thing itself. The five screens are the client's
+    #       own journey through it, in order.
+    if name == 'ffnew':
+        order = [('ffok', 'your client approves'),
+                 ('ffrate', 'signed, and rated'),
+                 ('ffins', 'what the branch sees')]
+        strip = ''.join(
+            f'<div class="rsstep" style="--i:{i}">{shot(k, cap=c)}</div>'
+            for i, (k, c) in enumerate(order))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rshead sm">1 August 2026 &middot; rebuilt</div>'
+                f'<div class="rssteps three">{strip}</div></div>')
+
+    # 12e · and what it has done since. FactFind360's own wall feed, read on
+    #       29 October 2026. Counts, days and shares: no money at a public URL.
+    if name == 'ffdata':
+        tiles = ''.join(
+            f'<div class="rstile sm" style="--i:{i}">{v}'
+            f'<span class="rstily">{lab}</span><em>{sub}</em></div>'
+            for i, (v, lab, sub) in enumerate(FFDATA))
+        top = max(n for _, n, _ in FFMONTHS)
+        mon = ''.join(
+            f'<div class="rsmo{" now" if now else ""}" style="--i:{i};--h:{n/top:.3f}">'
+            f'<span class="rsmob"><b>{n}</b><i></i></span><em>{m}</em></div>'
+            for i, (m, n, now) in enumerate(FFMONTHS))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rstiles four">{tiles}</div>'
+                f'<div class="rsmos">{mon}'
+                f'<span class="rsmol">fact finds a month, since 1 July'
+                f'<i>October still running</i></span></div>'
+                f'<div class="rsfoot">FactFind360, this year to 29 October</div></div>')
+
+    # 16c · the walls. Four of the branch's own, as the room sees them.
+    if name == 'prod':
+        keys = [('wprod', 'production'), ('wtrans', 'the transmittal'),
+                ('wgoal', 'the goals')]
+        cards = ''.join(
+            f'<div class="rsquad" style="--i:{i}">{shot(k, cap=c)}</div>'
+            for i, (k, c) in enumerate(keys))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsquads three">{cards}</div>'
+                f'<div class="rsfoot">live on the walls, all day, sample figures on screen</div></div>')
+
+
+    # ── where we were, and why "ninety days" undersells it ─────────────────
+    # 8a · the pioneer beat. This branch led the team that built the company's
+    #      first digital application with a digital signature on it, at the
+    #      then chief executive's request. HE ASKED FOR NO NAMES, so the page
+    #      names nobody and no date is invented: the branch has the story, the
+    #      repository has no record of when it shipped.
+    if name == 'first':
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsfirst">'
+                f'<div class="rsdoc2"><span class="rsdl"></span><span class="rsdl"></span>'
+                f'<span class="rsdl sh"></span>'
+                f'<svg class="rssig" viewBox="0 0 220 60" fill="none">'
+                f'<path d="M8 44c18-30 26-28 30-10s10 22 20 2 16-26 22-6 12 20 22 2 18-18 30-6 22 10 38 2" '
+                f'stroke="var(--cy)" stroke-width="3.4" stroke-linecap="round"/></svg>'
+                f'<span class="rsstamp">FIRST</span></div>'
+                f'<div class="rsfl"><b>We led the team that built it.</b>'
+                f'<i>this company&rsquo;s first digital application, signed on screen</i></div>'
+                f'</div></div>')
+
+    # 8b · and what that makes the AI year: not a start, a sharpening. He was
+    #      explicit that the ninety-day framing undersells the record.
+    if name == 'ai':
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsai">'
+                f'<div class="rsaib"><span>what we already had</span><i></i></div>'
+                f'<div class="rsaip"><span class="rsaid"></span>'
+                f'<span class="rsail">AI</span></div>'
+                f'<div class="rsaib lit"><span>far more robust</span><i></i></div>'
+                f'</div>'
+                f'<div class="rsfoot">not a new system &middot; the same work, sharpened</div></div>')
+
+    # ── the fact find, in the order it actually runs ────────────────────────
+    # 12d2 · THE CORRECTION. The client approves BEFORE a manager sees it.
+    #        Drawn, not shot: the captured screens are of the old order and a
+    #        room reads screens. The struck line underneath says what changed.
+    if name == 'ffflow':
+        steps = ''.join(
+            f'<div class="rsfstep{" lit" if i == 2 else ""}" style="--i:{i}">'
+            f'<span class="rsfnum">{i + 1}</span>'
+            f'<b>{a}</b><i>{b}</i></div>'
+            for i, (a, b) in enumerate(FFSTEPS))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsflow"><span class="rsfarr"></span>{steps}</div>'
+                f'<div class="rsfwas"><s>a manager approved it, then the client '
+                f'signed</s><em>not any more</em></div></div>')
+
+    # 12f · and the training behind it. Paper on the left, a full recommendation
+    #       on the right. No agent is named: a named before-and-after is a
+    #       judgement on a person at a public URL.
+    if name == 'ffagents':
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rspaper">'
+                f'<div class="rspap old"><span></span><span></span><span></span>'
+                f'<span></span><em>on paper</em></div>'
+                f'<span class="rsfarr2"></span>'
+                f'{shot("ffdraft", cls="rspapn")}'
+                f'</div><div class="rsfoot">training runs every week &middot; '
+                f'sample data on screen</div></div>')
+
+    # ── what it protects ───────────────────────────────────────────────────
+    # 12g · market conduct, clause by clause. The same seven the FY27 wall
+    #       carries. Framed as what it does for the agent.
+    if name == 'conduct':
+        rows = ''.join(
+            f'<div class="rsclz" style="--i:{i}"><b>{c}</b>'
+            f'<span>{what}</span><i>{us}</i></div>'
+            for i, (c, what, us) in enumerate(CONDUCT))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsclx">{rows}</div>'
+                f'<div class="rsfoot">Market Conduct Guideline &middot; '
+                f'under the Insurance Act</div></div>')
+
+    # 12h · fraud. No statistic is invented here: the claim is that a proper
+    #       fact find surfaces it early, and that the surveys explained the
+    #       resistance. A file is scanned and three flags come up.
+    if name == 'fraud':
+        flags = ''.join(f'<span class="rsflg" style="--i:{i}"></span>'
+                        for i in range(3))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsfr"><div class="rsfrd">'
+                f'<span class="rsdl"></span><span class="rsdl"></span>'
+                f'<span class="rsdl sh"></span><span class="rsdl"></span>'
+                f'<span class="rsscan"></span>{flags}</div>'
+                f'<div class="rsfrl"><b>Caught at the fact find</b>'
+                f'<i>before it is written, not after</i></div></div>'
+                f'<div class="rsfoot">and the surveys told us why people were '
+                f'pushing back</div></div>')
+
+    # ── the journey ────────────────────────────────────────────────────────
+    # 12i · a ring of six events with a dot running it. Every one fires on its
+    #       own out of the branch's systems. No client, no count.
+    if name == 'journey':
+        n = len(JOURNEY)
+        ev = ''.join(
+            f'<div class="rsjev" style="--a:{i * 360 / n:.1f}deg;--i:{i}">'
+            f'<span class="rsjd"></span><b>{a}</b><i>{b}</i></div>'
+            for i, (a, b) in enumerate(JOURNEY))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsjour"><span class="rsjr"></span>'
+                f'<span class="rsjrun"></span>{ev}'
+                f'<div class="rsjc"><b>one client</b><i>for life</i></div></div></div>')
+
+    # 12j · the orphan campaign. OUR letters, OUR files. See ORPHAN.
+    if name == 'orphan':
+        tiles = ''.join(
+            f'<div class="rstile" style="--i:{i}">{v}'
+            f'<span class="rstily">{lab}</span><em>{sub}</em></div>'
+            for i, (v, lab, sub) in enumerate(ORPHAN))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rstiles">{tiles}</div>'
+                f'<div class="rsfoot">this branch, on its own book, '
+                f'since 25 September</div></div>')
+
+    # 12k · equipped. Three services, named, no figures.
+    if name == 'equipped':
+        cards = ''.join(
+            f'<div class="rseq" style="--i:{i}"><b>{a}</b><i>{b}</i></div>'
+            for i, (a, b) in enumerate(EQUIP))
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsequip">{cards}</div>'
+                f'<div class="rsfoot">querymypolicy.com &middot; '
+                f'rickyrampersadbranch.com</div></div>')
+
+    # 16c2 · the wall outside, where everybody walks past. The accountability
+    #        beat he asked for, said as the branch says it.
+    if name == 'outside':
+        return (f'<div class="rscap wide"><div class="rseyeb">{on}</div>'
+                f'<div class="rsout">{shot("wday", cls="rsoutw")}'
+                f'<div class="rsoutp">{person("", "--i:0", "", "m")}'
+                f'{person("", "--i:1", "", "f")}{person("", "--i:2", "", "m")}'
+                f'</div></div>'
+                f'<div class="rsfoot">what&rsquo;s done, what&rsquo;s late, '
+                f'and whose name is on it</div></div>')
+
+    # 17a · the commitment. His own words, and the heart of the film.
+    if name == 'commit':
+        return (f'<div class="rscap wide"><div class="rscom">'
+                f'<div class="rshead">{cnt(35, 300)}'
+                f'<span class="rsbigl">years in this business</span></div>'
+                f'<div class="rscoml">The only way you guide people and still '
+                f'scale is to put everything you know where '
+                f'<b>everybody</b> can reach it.</div>'
+                f'<div class="rsfoot">the promise <b>Akaash</b> and I have made to you'
+                f'</div></div></div>')
+
+    if name == 'rise':
+        ck = (f'<path class="ckc" d="{CHECK}"/>'
+              f'<path class="ck" d="{CHECK}"/>')
+        return (f'<div class="rsstage rise">{shield("gold fly", ck)}{mesh("home")}'
+                f'{crack("mended")}</div>'
+                f'<div class="rscap"><div class="rsrise">We rise together</div>'
+                f'<div class="rseyeb rslo">Ricky Rampersad Branch</div></div>')
+
+    return f'<div class="rscap">{words(s["say"])}</div>'
+
+
+# The name of each scene on the player's rail. chapters.py takes it off
+# data-ch rather than off the picture, because several scenes here carry no
+# eyebrow at all (the opening three, the mended shield, the close) and the
+# ones that do would otherwise hand the rail a dump of initials.
+CHAPTER = {
+    'hit': 'The hit', 'left': 'People left', 'held': 'It held',
+    'rose': 'And it went up', 'stayed': 'Who stayed',
+    'count': 'Twenty-six still here', 'years': '221 years between us',
+    'mix': 'Ten years, and new', 'story': 'The branch, on one line', 'outcome': 'Every agent, sixteen years',
+    'rebuild': 'We rebuilt it', 'built': 'Eighteen things, since August',
+    'one': 'One sign-in', 'day': 'Your day, set', 'wall': 'One score',
+    'served': 'What we closed', 'papers': 'The papers', 'ff': 'Not one lapse',
+    'keep': 'The business stays', 'stay': 'And so do the people',
+    'fy27': 'Day 30 of FY27', 'path': 'There is a way up',
+    'plan': 'The three-year plan', 'gold': 'The cracks are part of it',
+    'better': 'Not going back', 'friday': 'Friday 30 October',
+    'yours': 'Friday, 75 of the 90', 'ask': 'Answer one question',
+    'signin': 'How you get in', 'rise': 'We rise together',
+    'digital': 'Fifteen years digital', 'forms': 'The volume behind it',
+    'replica': 'What we run on', 'ffnew': 'The fact find, rebuilt',
+    'ffdata': 'What it has done since', 'prod': 'The walls',
+    'first': 'We led the first one', 'ai': 'What changed this year',
+    'ffflow': 'The order, corrected', 'ffagents': 'Training is still running',
+    'conduct': 'This protects you', 'fraud': 'Caught early',
+    'journey': 'A journey, not a sale', 'orphan': 'What we took on',
+    'equipped': 'You are equipped', 'outside': 'On the wall outside',
+    'commit': 'Thirty-five years'}
+# A scene with no name would hand the rail a dump of its own first words, so
+# say so at build time rather than find out on the page.
+_missing = [q['v'] for q in LINES['scenes'] if q['v'] not in CHAPTER]
+assert not _missing, 'no chapter name for: ' + ', '.join(_missing)
+
+sections = []
+for i, s in enumerate(LINES['scenes']):
+    d = durs[i] if i < len(durs) else 5000
+    # The shell's go() fires confetti() on the last scene and looks for #finale;
+    # without it the page throws and render.js stops. The close here is the
+    # shield coming back whole, so the id is given and the confetti hidden —
+    # a burst of paper would cheapen it.
+    fin = ' id="finale"' if i == len(LINES['scenes']) - 1 else ''
+    #  A drifting field behind every scene, so nothing is ever wholly still.
+    #  Seeded per scene from its index, never random: the renderer draws each
+    #  frame on its own, and a random field would jitter between frames.
+    motes = ''.join(
+        f'<i style="--x:{(i * 37 + k * 61) % 100};--i:{k};'
+        f'--d:{9 + (k * 7 + i * 3) % 11}s"></i>' for k in range(14))
+    ch = CHAPTER.get(s['v'], '')
+    sections.append(f'<section class="scene rs v-{s["v"]}" data-d="{int(d)}"'
+                    f' data-ch="{html.escape(ch, quote=True)}"{fin}>'
+                    f'<div class="inner"><div class="rsmotes">{motes}</div>'
+                    f'{V(s["v"], s)}</div></section>')
+SCENES = '\n'.join(sections)
+
+CSS = r"""
+/* ══ the FY27 rise (build-risefilm.py) ════════════════════════════════════
+   The frame is 1280x720 and THE MIXER CROPS THE BOTTOM 104px AWAY — mixany.py
+   takes 1280x616 and pads the caption strip back underneath, so anything laid
+   against the bottom of a 720px page is cut in half in the MP4 while looking
+   perfect in the browser. The scene box therefore ends at 616 and every
+   percentage inside it is a percentage of what survives.
+
+   Every motion is a CSS animation, because render.js pauses the page and sets
+   each animation to the frame's own moment; a JS timer would drift from the
+   voice and could not be scrubbed at all. */
+.rs{--bg:#070F26;--ink:#EAF0FF;--mut:#9FB0D0;--dim:#6B7A99;
+    --cy:#00E5FF;--peri:#7C8CF8;--slate:#5E6B85;--cold:#8295B5;--line:#1A2744}
+.rs,.rs .inner{background:#070F26;color:#EAF0FF}
+.rs .inner{position:absolute;inset:0 0 104px 0;display:grid;place-items:center;
+  gap:0;padding:0;max-width:none;overflow:hidden}
+.rs *{font-family:'IBM Plex Sans',system-ui,sans-serif}
+
+/* ── the shield, and the tear through it ─────────────────────────────────── */
+.rs .rsstage{position:relative;width:min(62vh,44vw);aspect-ratio:1;display:grid;place-items:center}
+.rs .rssh{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.rs .rssh path.shL,.rs .rssh path.shR{fill:none;stroke:#24365E;stroke-width:2.2}
+.rs .rssh.whole path{stroke:var(--cy);filter:drop-shadow(0 0 .6rem rgba(0,229,255,.45))}
+.rs .rssh.cold path{stroke:var(--cold);opacity:.55;animation:coldIn 1.1s both}
+.rs .rssh.cold.steady path{animation:coldHold 1.2s both}
+.rs .rssh.warm path{stroke:var(--cy);opacity:.8;animation:warmUp 1.6s both}
+.rs .rssh.gold path{stroke:var(--cy);stroke-width:2.6;
+  filter:drop-shadow(0 0 1rem rgba(0,229,255,.6));animation:goldIn 1.4s both}
+@keyframes coldIn{from{stroke:var(--cy);opacity:1}to{stroke:var(--cold);opacity:.55}}
+@keyframes coldHold{from{opacity:.4}to{opacity:.7}}
+@keyframes warmUp{from{stroke:var(--cold);opacity:.5}to{stroke:var(--cy);opacity:.8}}
+@keyframes goldIn{from{opacity:.6;stroke-width:2.2}to{opacity:1;stroke-width:2.6}}
+.rs .rssh.fly{animation:flyOpen 2.6s .6s both}
+@keyframes flyOpen{from{transform:scale(.96)}to{transform:scale(1.04)}}
+.rs .rssh path.ckc,.rs .rssh.gold path.ckc{fill:none;stroke:#070F26;stroke-width:8.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:46;stroke-dashoffset:46;animation:ckDraw 1.1s 1.1s both}
+.rs .rssh path.ck,.rs .rssh.gold path.ck,.rs .rssh.fly path.ck{fill:none;stroke:#fff;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:46;stroke-dashoffset:46;animation:ckDraw 1.1s 1.1s both}
+@keyframes ckDraw{to{stroke-dashoffset:0}}
+
+.rs .rscr{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.rs .rscr path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.rs .rscr .crk{stroke:#CFE2FF;stroke-width:1.5;stroke-dasharray:120;stroke-dashoffset:120;opacity:0}
+.rs .rscr .crkg{stroke:var(--cy);stroke-width:2.6;stroke-dasharray:120;stroke-dashoffset:120;opacity:0}
+/* it tears across */
+.rs .rscr.cut .crk{opacity:1;animation:crkRun .55s .45s both}
+@keyframes crkRun{from{stroke-dashoffset:120;filter:drop-shadow(0 0 1.2rem #CFE2FF)}
+  to{stroke-dashoffset:0;filter:drop-shadow(0 0 .2rem rgba(233,242,250,.4))}}
+/* it stops, and stays */
+.rs .rscr.held .crk{opacity:.45;stroke-dashoffset:0;stroke:#7E8FB0}
+/* it fills with gold — the same geometry, which is what makes it read as a mend */
+.rs .rscr.fill .crk{opacity:.2;stroke-dashoffset:0;stroke:#55658A}
+.rs .rscr.fill .crkg{opacity:1;animation:crkGold 2.2s .35s both}
+@keyframes crkGold{from{stroke-dashoffset:120;filter:drop-shadow(0 0 0 rgba(0,229,255,0))}
+  to{stroke-dashoffset:0;filter:drop-shadow(0 0 1.1rem rgba(0,229,255,.85))}}
+.rs .rscr.mended .crkg{opacity:1;stroke-dashoffset:0;animation:crkBr 3.2s infinite}
+@keyframes crkBr{0%,100%{filter:drop-shadow(0 0 .7rem rgba(0,229,255,.5))}
+  50%{filter:drop-shadow(0 0 1.6rem rgba(0,229,255,.9))}}
+
+.rs .rsstage.shake{animation:shk .5s .45s both}
+@keyframes shk{0%{transform:translate(0,0)}15%{transform:translate(-1.1%,.7%)}
+  30%{transform:translate(.9%,-.6%)}45%{transform:translate(-.6%,.4%)}
+  60%{transform:translate(.4%,-.3%)}100%{transform:translate(0,0)}}
+.rs .rsstage.rise{animation:rsUp 3s both}
+@keyframes rsUp{from{transform:translateY(2.5%) scale(.97)}to{transform:translateY(-1%) scale(1.02)}}
+.rs .rsflash{position:absolute;inset:-40%;background:radial-gradient(circle,#CFE2FF 0%,transparent 60%);
+  opacity:0;animation:flash .5s .45s both}
+@keyframes flash{0%{opacity:0}18%{opacity:.5}100%{opacity:0}}
+.rs .rsglow{position:absolute;inset:-30%;background:radial-gradient(circle,rgba(0,229,255,.35) 0%,transparent 62%);
+  opacity:0;animation:glowUp 2.6s .4s both}
+@keyframes glowUp{0%{opacity:0}60%{opacity:1}100%{opacity:.75}}
+
+/* ── the lattice, carried over from the first cut ────────────────────────── */
+.rs .mx{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.rs .mx-e{stroke:var(--peri);stroke-width:.38;opacity:0;stroke-dasharray:62;stroke-dashoffset:62}
+.rs .mx-n{fill:var(--peri);opacity:0;transform-box:fill-box;transform-origin:50% 50%}
+.rs .mx-pulse .mx-n{animation:nPul 2.6s calc(var(--i)*.07s) infinite}
+.rs .mx-pulse .mx-e{opacity:.42;stroke-dashoffset:0}
+@keyframes nPul{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.22)}}
+/* shed · points detach and drift out, and their chords go with them */
+.rs .mx-shed .mx-n{opacity:.8;animation:nShed 1.9s calc(var(--i)*.1s) both}
+@keyframes nShed{0%{opacity:.8;transform:translate(0,0) scale(1)}
+  100%{opacity:0;transform:translate(calc(var(--dx)*.4px),calc(var(--dy)*.4px)) scale(.4)}}
+.rs .mx-shed .mx-e{opacity:.3;animation:eFade 1.3s both}
+@keyframes eFade{to{opacity:0}}
+/* thin · what is left, steady */
+.rs .mx-thin .mx-n{opacity:.55;animation:nSteady 1.2s both}
+@keyframes nSteady{from{opacity:.3}to{opacity:.62}}
+.rs .mx-thin .mx-e{opacity:.14;stroke-dashoffset:0}
+/* relink · the chords draw themselves again, in gold */
+.rs .mx-relink .mx-n{fill:var(--cy);opacity:.9;animation:nWarm .6s calc(var(--i)*.08s) both}
+@keyframes nWarm{from{opacity:.4;transform:scale(.7)}to{opacity:.92;transform:scale(1)}}
+.rs .mx-relink .mx-e{stroke:var(--cy);animation:eDraw .5s calc(.25s + var(--i)*26ms) both}
+@keyframes eDraw{from{opacity:0;stroke-dashoffset:62}to{opacity:.5;stroke-dashoffset:0}}
+/* field · faint and wide, so the middle of the film is still one thing */
+.rs .mx-field{inset:-22%;width:144%;height:144%;opacity:.17}
+.rs .mx-field .mx-n{opacity:.5}
+.rs .mx-field .mx-e{opacity:.3;stroke-dashoffset:0}
+/* home · back in, and settled */
+.rs .mx-home .mx-n{fill:var(--cy);animation:nHome 1.5s calc(var(--i)*.05s) both}
+@keyframes nHome{from{opacity:0;transform:translate(calc(var(--dx)*1px),calc(var(--dy)*1px)) scale(.4)}
+  to{opacity:.95;transform:translate(0,0) scale(1)}}
+.rs .mx-home .mx-e{stroke:var(--cy);animation:eDraw .6s calc(.8s + var(--i)*22ms) both}
+
+/* ── type ────────────────────────────────────────────────────────────────── */
+.rs .rscap{display:grid;place-items:center;gap:1.6vh;text-align:center;padding:0 5vw;width:100%}
+.rs .rscap.wide{padding:0 3vw}
+.rs .rsline{max-width:min(1060px,86%);line-height:1.08}
+.rs .rscap.big .rsw{font-size:clamp(1.4rem,3.6vw,3.1rem)}
+.rs .rsw{display:inline-block;font-weight:800;letter-spacing:-.01em;
+  font-size:clamp(1.3rem,3.2vw,2.8rem);opacity:0;animation:wIn .5s calc(.2s + var(--i)*.1s) both}
+@keyframes wIn{from{opacity:0;transform:translateY(.5em) rotate(1.5deg)}
+  to{opacity:1;transform:none}}
+.rs .rseyeb{font-size:1.5vw;font-weight:800;letter-spacing:.22em;color:var(--cy);
+  text-transform:uppercase;opacity:0;animation:fIn .7s .25s both}
+.rs .rseyeb.rslo{color:var(--dim);letter-spacing:.16em;font-size:1.15vw}
+@keyframes fIn{from{opacity:0;transform:translateY(.6rem)}to{opacity:1;transform:none}}
+.rs .rsfoot{font-size:1.35vw;color:var(--mut);opacity:0;animation:fIn .8s .9s both}
+.rs .rsbig{display:flex;align-items:baseline;gap:1.4vw;opacity:0;animation:fIn .8s .7s both}
+.rs .rsbigl{font-size:1.6vw;color:var(--mut);font-weight:600}
+.rs .rscnt{font-size:7.6vw;font-weight:800;color:var(--cy);line-height:1;
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.rs .rshead{display:flex;align-items:baseline;gap:1.4vw;margin-bottom:.4vh;
+  opacity:0;animation:fIn .7s .2s both}
+.rs .rsrise{font-size:4.6vw;font-weight:800;letter-spacing:-.01em;
+  opacity:0;animation:wIn .9s .5s both}
+.rs .rsnoon{font-size:8vw;font-weight:800;color:var(--cy);line-height:1;
+  opacity:0;animation:fIn .8s .5s both}
+.rs .rsurl{font-size:2vw;font-weight:700;color:var(--peri);opacity:0;animation:fIn .8s .3s both}
+
+/* ── the tenure chart ────────────────────────────────────────────────────── */
+.rs .rschart{display:grid;grid-template-columns:1fr 1fr;gap:0 3.2vw;width:92%;max-width:1120px}
+.rs .rspair{position:relative;display:flex;align-items:flex-end;gap:5vw;margin-top:1vh}
+.rs .rspb{display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.rs .rspn{font-size:3.4vw;font-weight:800;color:var(--slate);line-height:1;margin-bottom:.8vh;
+  opacity:0;animation:fIn .7s .5s both}
+.rs .rspb.lit .rspn{color:var(--cy)}
+.rs .rspb i{display:block;flex:none;width:8.5vw;height:calc(var(--h)*.2vh);background:var(--slate);
+  border-radius:6px 6px 0 0;transform-origin:bottom;transform:scaleY(0);
+  animation:growY 1.1s .5s both}
+.rs .rspb.lit i{background:linear-gradient(180deg,var(--cy),#1D5BC4);
+  box-shadow:0 0 1.6rem rgba(0,229,255,.35);animation-delay:.8s}
+.rs .rspl{font-size:1.25vw;color:var(--mut);margin-top:1.2vh;opacity:0;animation:fIn .7s .9s both}
+.rs .rspd{position:absolute;right:-6.5vw;top:8%;font-size:2.4vw;font-weight:800;color:var(--cy);
+  opacity:0;transform:translateY(1vh);animation:fUp .6s 1.7s both}
+.rs .rspair.tight{gap:3.4vw}
+.rs .rsvsw{display:grid;gap:2.6vh;width:78%;max-width:980px;margin-top:.6vh}
+.rs .rsvs{display:grid;grid-template-columns:17vw 1fr 4vw;align-items:center;
+  column-gap:1.2vw;row-gap:1.5vh;opacity:0;animation:fUp .5s both;
+  animation-delay:calc(.5s + var(--i)*.28s)}
+.rs .rsvl{font-size:1.2vw;color:var(--mut);text-align:right}
+.rs .rsvb{position:relative;height:2.3vh;background:var(--trk, #122043);border-radius:4px}
+.rs .rsvb i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;width:0;
+  animation:grow .9s both;animation-delay:calc(.7s + var(--i)*.28s)}
+.rs .rsvb i.ours{background:linear-gradient(90deg,#1D5BC4,var(--cy));z-index:1}
+.rs .rsvb b.rsmk{position:absolute;top:-.35vh;bottom:-.35vh;width:2px;
+  background:var(--mut);left:calc(var(--p)*1%);opacity:0;animation:fIn .5s both;
+  animation-delay:calc(1.3s + var(--i)*.28s)}
+.rs .rsvb b.rsmk span{position:absolute;left:50%;top:calc(100% + .25vh);
+  transform:translateX(-50%);font-size:.88vw;font-weight:400;color:var(--dim);
+  white-space:nowrap}
+.rs .rsvn{font-size:1.4vw;font-weight:800;color:var(--cy)}
+.rs .rsvt{grid-column:2;font-size:.95vw;color:var(--dim);margin-top:-.2vh}
+.rs .rsladder{display:grid;gap:.85vh;width:66%;max-width:880px;margin-top:.4vh}
+.rs .rsrung{display:grid;grid-template-columns:1.1vw 1fr;align-items:center;gap:1.1vw;
+  padding:.75vh 1.3vw;border-radius:8px;background:var(--trk, #122043);
+  margin-left:calc(var(--i)*2.4vw);margin-right:calc((var(--n) - 1 - var(--i))*2.4vw);
+  opacity:0;transform:translateX(-1vw);animation:fRt .5s both;
+  animation-delay:calc(.4s + (var(--n) - 1 - var(--i))*.22s)}
+@keyframes fRt{to{opacity:1;transform:none}}
+.rs .rsrd{width:1.1vw;height:1.1vw;border-radius:50%;background:var(--cy);
+  box-shadow:0 0 .7rem rgba(0,229,255,.55)}
+.rs .rsrt{font-size:1.25vw;color:var(--ink);font-weight:600;text-align:left}
+.rs .rsrun{position:relative;display:flex;justify-content:space-between;
+  width:72%;max-width:920px;margin-top:2vh;padding-top:3vh}
+.rs .rsrunr{position:absolute;left:0;right:0;top:0;height:2px;background:var(--line);
+  transform-origin:left;transform:scaleX(0);animation:growX 1.3s .3s both}
+.rs .rsyr3{display:flex;flex-direction:column;align-items:center;gap:.5vh;
+  opacity:0;animation:fUp .55s both;animation-delay:calc(.7s + var(--i)*.35s)}
+.rs .rsyr3 b{font-size:2.6vw;font-weight:800;color:var(--cy);line-height:1}
+.rs .rsyr3 span{font-size:1.15vw;color:var(--mut)}
+.rs .rsppl{position:relative;display:inline-grid;place-items:center;
+  width:3.1vw;opacity:0;transform:translateY(.8vh) scale(.6);
+  animation:pplIn .52s cubic-bezier(.2,1.5,.4,1) both;
+  animation-delay:calc(.35s + var(--i)*.055s)}
+.rs .rsppl svg{width:100%;height:auto;fill:var(--cy);
+  filter:drop-shadow(0 0 .5rem rgba(0,229,255,.35))}
+.rs .rsppl.sup svg{fill:var(--peri);filter:drop-shadow(0 0 .5rem rgba(0,229,255,.22))}
+.rs .rsppl i{font-style:normal;font-size:.82vw;font-weight:700;color:var(--mut);
+  margin-top:.25vh;letter-spacing:.04em}
+@keyframes pplIn{to{opacity:1;transform:none}}
+.rs .rsppl::after{content:"";position:absolute;inset:-18% -10% 10%;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,229,255,.28),transparent 70%);opacity:0;
+  animation:pplPop .7s both;animation-delay:calc(.35s + var(--i)*.055s)}
+@keyframes pplPop{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(1.5)}}
+
+/* ── the crowd, the rise, and the number ──────────────────────────────────── */
+/*  Every modifier below writes its OWN end transform. The base .rsppl sits at
+    opacity 0 / translateY(.8vh) scale(.6) and pplIn ends on transform:none, so
+    a placed figure that inherits that animation is thrown back to the origin —
+    the same trap the journey ring hit. Placement that must survive goes in the
+    modifier's own keyframes, never left to transform:none.                   */
+.rs .rscrowd{position:absolute;inset:0 0 104px 0;overflow:hidden;z-index:1}
+.rs .rsppl.rscp{position:absolute;left:calc(var(--x)*1%);top:calc(var(--y)*1%);
+  width:calc(2.6vw*var(--s));opacity:0;
+  animation:rsCin .5s both,rsSway 4.8s linear infinite;
+  animation-delay:calc(var(--i)*.021s),calc(var(--i)*-.14s)}
+.rs .rsppl.rscp svg{fill:var(--cold);opacity:var(--o,.6);
+  filter:blur(calc((1 - var(--o))*2.4px))}
+.rs .rsppl.rscp::after{display:none}
+@keyframes rsCin{to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes rsSway{0%,100%{translate:0 0}50%{translate:0 calc(var(--w)*-.09vh)}}
+/*  Three go. A scatter is not countable at a glance and nothing here is
+    labelled, which is the point: nobody who leaves is counted at a public
+    address. Do not turn this into the branch's arithmetic.                   */
+.rs .rsppl.rscp.rsgone{animation:rsCin .5s both,rsSink 1.5s both;
+  animation-delay:calc(var(--i)*.021s),1.15s}
+@keyframes rsSink{0%{opacity:1}55%{opacity:.35}
+  100%{opacity:0;translate:0 11vh;filter:blur(4px)}}
+.rs .rsstage.rssm{width:min(34vh,24vw);opacity:.4;z-index:2}
+
+/*  "rise to the top with those who's standing" — the whole branch comes up
+    off the floor in a wave and warms from cold to cyan as it arrives.        */
+.rs .rswave{position:relative;width:100%;height:30vh;margin-top:1.2vh}
+.rs .rsppl.rsup{position:absolute;left:50%;top:calc(1vh + var(--r)*9.4vh);
+  width:4.4vw;opacity:0;
+  animation:rsWave .85s cubic-bezier(.16,1.08,.3,1) both;
+  animation-delay:calc(.45s + var(--i)*.032s)}
+@keyframes rsWave{
+  0%{opacity:0;transform:translate(calc(var(--c)*5.3vw - 50%),19vh) scale(.42)}
+  55%{opacity:1}
+  100%{opacity:1;transform:translate(calc(var(--c)*5.3vw - 50%),0) scale(1)}}
+.rs .rsppl.rsup svg{fill:var(--cold);filter:none;
+  animation:rsWarm .7s both;animation-delay:calc(.75s + var(--i)*.032s)}
+@keyframes rsWarm{to{fill:var(--cy);filter:drop-shadow(0 0 .5rem rgba(0,229,255,.4))}}
+.rs .rsppl.rsup::after{animation-delay:calc(1s + var(--i)*.032s)}
+/*  They arrive and then keep breathing, so the scene has a pulse at rest —
+    the house rule everywhere else on this site. translate is its own property
+    and composes with rsWave's transform instead of overwriting it.          */
+.rs .rsppl.rsup svg{
+  animation:rsWarm .7s both,rsBreath 3.4s ease-in-out infinite,
+            rsPulse 2.9s linear infinite;
+  animation-delay:calc(.75s + var(--i)*.032s),calc(1.4s + var(--c)*.09s),
+                  calc(1.5s + (var(--c) + 4.5)*.075s)}
+@keyframes rsBreath{0%,100%{translate:0 0}50%{translate:0 -.7vh}}
+/*  A light running along the rows. It has to be a pulse ON THE FIGURES, not a
+    band drawn over the scene: a gradient box with inset:0 paints a slab of
+    ground beside the people and reads as a rendering fault.                 */
+@keyframes rsPulse{0%,64%,100%{filter:drop-shadow(0 0 .5rem rgba(0,229,255,.4))}
+  10%{filter:drop-shadow(0 0 1.4rem rgba(0,229,255,.95)) brightness(1.3)}}
+/*  fIn ENDS ON transform:none, so it wipes the translateX(-50%) that places
+    this and the glow slides out to the right as a grey smear. Anything placed
+    by a transform gets a keyframe that moves opacity ALONE — the same trap the
+    journey ring and the AI badge hit, and the third time it has cost a shot. */
+.rs .rswave::before{content:"";position:absolute;left:50%;bottom:-1vh;
+  width:46vw;height:8vh;transform:translateX(-50%);pointer-events:none;
+  background:radial-gradient(ellipse at 50% 100%,rgba(0,229,255,.26),transparent 72%);
+  opacity:0;animation:rsFade 1.2s 1.1s both}
+@keyframes rsFade{to{opacity:1}}
+
+/*  Every agent record the branch has, one figure each, grouped by what
+    happened to the person and lit on the two that were ever terminated — so
+    the point is a thing the eye FINDS at the end of the grid rather than a
+    number it is told.  One neutral silhouette throughout: the scene's own
+    note says why no sex is claimed for the sixty-two who left.
+    The base .rsppl::after halo is turned OFF here and repurposed as a ring on
+    the two: eighty-seven radial-gradient halos is a frame cost for nothing. */
+.rs .rsend{display:grid;grid-template-columns:auto 1fr;gap:3.1vw;
+  align-items:center;width:100%;max-width:1190px;text-align:left;margin-top:.3vh}
+.rs .rsendn{position:relative;display:grid;justify-items:center;gap:.2vh}
+.rs .rsendn::before{content:"";position:absolute;left:50%;top:40%;
+  translate:-50% -50%;width:17vw;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,229,255,.17),transparent 68%);
+  opacity:0;animation:rsFade 1.4s .35s both}
+.rs .rsendn .rscnt{font-size:8.2vw;line-height:.86;letter-spacing:-.045em;
+  filter:drop-shadow(0 0 1.8rem rgba(0,229,255,.34))}
+.rs .rsends{display:flex;align-items:center;gap:.65vw;margin-top:1.3vh;
+  font-size:.92vw;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--mut);opacity:0;animation:fUp .6s 1.65s both;white-space:nowrap}
+.rs .rsends em{width:1px;height:1.6vh;background:var(--line)}
+.rs .rsendg{display:grid;gap:3.6vh;justify-items:start;width:100%}
+.rs .rsofs{display:grid;grid-template-columns:repeat(18,1fr);
+  gap:.78vw .34vw;width:100%}
+.rs .rsppl.rsof{width:100%;animation-delay:calc(.3s + var(--i)*.013s)}
+.rs .rsppl.rsof::after{display:none}
+.rs .rsppl.rsof svg{filter:none}
+.rs .rsof.o-in    svg{fill:var(--cy)}
+.rs .rsof.o-good  svg{fill:var(--peri)}
+.rs .rsof.o-out   svg{fill:var(--slate)}
+.rs .rsof.o-none  svg{fill:#36425E}
+.rs .rsof.o-hit   svg{fill:var(--ink);
+  filter:drop-shadow(0 0 .85rem rgba(234,240,255,.8))}
+.rs .rsppl.rsof.o-hit::after{display:block;inset:-34%;border-radius:50%;
+  background:none;border:1px solid rgba(0,229,255,.75);
+  animation:rsRing 2.4s 1.9s infinite}
+.rs .rsoks{display:flex;flex-wrap:nowrap;gap:.88vw;align-items:center;
+  justify-content:space-between;width:100%}
+.rs .rsok{display:inline-flex;align-items:center;gap:.36vw;font-size:.72vw;
+  font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--dim);opacity:0;animation:fUp .5s both;white-space:nowrap;
+  animation-delay:calc(1.55s + var(--i)*.07s)}
+.rs .rsok i{width:.6vw;height:.6vw;border-radius:2px;background:var(--slate)}
+.rs .rsok b{font-size:1.06vw;letter-spacing:-.02em;color:var(--mut)}
+.rs .rsok.o-in i{background:var(--cy)}
+.rs .rsok.o-in b{color:var(--cy)}
+.rs .rsok.o-good i{background:var(--peri)}
+.rs .rsok.o-good b{color:var(--peri)}
+.rs .rsok.o-none i{background:#36425E}
+.rs .rsok.o-hit{color:var(--ink)}
+.rs .rsok.o-hit i{background:var(--ink);box-shadow:0 0 .7rem rgba(234,240,255,.85)}
+.rs .rsok.o-hit b{font-size:1.32vw;color:var(--ink);
+  filter:drop-shadow(0 0 1rem rgba(0,229,255,.55))}
+
+/*  The number carries the room; the people stand beside it.                  */
+.rs .rsnum{display:grid;grid-template-columns:auto 1fr;gap:3.4vw;align-items:center;
+  width:100%;max-width:1180px;text-align:left}
+.rs .rsnumn{position:relative;display:grid;justify-items:center;gap:.2vh}
+.rs .rsnumn::before{content:"";position:absolute;left:50%;top:38%;
+  width:26vw;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,rgba(0,229,255,.3),transparent 66%);
+  opacity:0;animation:rsBurst 1.5s .3s both;pointer-events:none}
+@keyframes rsBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}
+  38%{opacity:1}100%{opacity:.42;transform:translate(-50%,-50%) scale(1)}}
+.rs .rsnumn::after{content:"";position:absolute;left:50%;top:38%;
+  width:19vw;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  border:2px solid rgba(0,229,255,.5);opacity:0;
+  animation:rsRing 1.5s .45s ease-out both;pointer-events:none}
+@keyframes rsRing{0%{opacity:.9;transform:translate(-50%,-50%) scale(.3)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}}
+.rs .rsnumn>*{position:relative;z-index:1}
+.rs .rsnumn .rscnt{font-size:16vw;line-height:.84;letter-spacing:-.05em;
+  filter:drop-shadow(0 0 2.6rem rgba(0,229,255,.32))}
+.rs .rsnuml{font-size:1.7vw;font-weight:700;letter-spacing:.2em;color:var(--mut);
+  text-transform:uppercase;opacity:0;animation:fUp .6s .75s both}
+.rs .rsmw{display:flex;align-items:center;gap:.5vw;margin-top:1.3vh;
+  font-size:1.26vw;font-weight:700;color:var(--ink);white-space:nowrap;
+  opacity:0;animation:fUp .6s 1.15s both}
+.rs .rsmw em{width:1px;height:1.5vh;background:var(--line);margin:0 .5vw}
+.rs .rsppl.mw{width:1.25vw;animation:none;opacity:1;transform:none}
+.rs .rsppl.mw svg{filter:none}
+.rs .rsppl.mw svg{fill:var(--mut)}
+.rs .rsppl.mw::after{display:none}
+.rs .rsnumg{display:grid;gap:1.8vh;justify-items:start}
+.rs .rsgrp{display:grid;gap:.7vh;justify-items:start}
+.rs .rsgrpl{font-size:1.1vw;font-weight:700;letter-spacing:.14em;color:var(--mut);
+  text-transform:uppercase;opacity:0;animation:fRt .5s both;
+  animation-delay:calc(.3s + var(--i, 0)*.1s)}
+.rs .rsgrp:last-child .rsgrpl{animation-delay:1.25s}
+.rs .rsnumg .rschips{justify-content:flex-start;max-width:62vw;gap:.62vw .66vw}
+.rs .rsnumg .rsppl{width:2.5vw}
+.rs .rsnumg .rsppl.sup{width:3.1vw}
+.rs .rsnumg .rsppl.mgr{width:3.4vw}
+.rs .rsnumg .rsppl.mgr svg{fill:var(--ink);
+  filter:drop-shadow(0 0 .7rem rgba(0,229,255,.45))}
+.rs .rsgrpl i{display:block;font-style:normal;font-size:.78vw;font-weight:600;
+  letter-spacing:.07em;color:var(--dim);margin-top:.25vh;text-transform:none}
+.rs .rstwo{display:grid;grid-template-columns:1fr 1fr;gap:3vw;width:74%;max-width:980px;
+  margin-top:.6vh}
+.rs .rscard{position:relative;display:grid;gap:1.1vh;justify-items:center;
+  padding:2.4vh 2vw;border-radius:14px;background:var(--trk, #122043);
+  border:1px solid var(--line);overflow:hidden;
+  opacity:0;transform:translateY(1.4vh);animation:fUp .6s both;
+  animation-delay:calc(.45s + var(--i, 0)*.3s)}
+.rs .rscard.lit{border-color:var(--cy);animation-delay:.45s}
+.rs .rscard:not(.lit){animation-delay:.95s}
+.rs .rscard::after{content:"";position:absolute;top:0;left:-60%;width:45%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.1),transparent);
+  animation:sheen 3.2s 1.4s infinite}
+@keyframes sheen{to{left:130%}}
+.rs .rsct{font-size:1.05vw;font-weight:800;letter-spacing:.2em;color:var(--mut);
+  text-transform:uppercase}
+.rs .rsfield{display:grid;gap:.5vh;justify-items:center}
+.rs .rslab{font-size:.95vw;color:var(--dim)}
+.rs .rsbox{display:flex;align-items:center;gap:.35vw;padding:.9vh 1.6vw;border-radius:9px;
+  background:var(--bg);border:2px solid var(--cy);min-width:11vw;justify-content:center}
+.rs .rstype{font-size:2.1vw;font-weight:800;color:var(--ink);letter-spacing:.14em}
+.rs .rscar{width:2px;height:2.2vw;background:var(--cy);animation:caret 1s step-end infinite}
+@keyframes caret{50%{opacity:0}}
+.rs .rspad{display:flex;gap:.7vw}
+.rs .rspad b{display:grid;place-items:center;width:3.4vw;height:3.4vw;border-radius:10px;
+  background:var(--bg);border:2px solid var(--peri);font-size:2vw;font-weight:800;
+  color:var(--peri);opacity:0;transform:scale(.5);
+  animation:padIn .4s cubic-bezier(.2,1.6,.4,1) both;
+  animation-delay:calc(1.5s + var(--i)*.24s)}
+@keyframes padIn{to{opacity:1;transform:none}}
+.rs .rsnote{font-size:1.02vw;line-height:1.5;color:var(--mut);text-align:center}
+.rs .rssurl{margin-top:1.4vh;font-size:1.25vw;font-weight:700;color:var(--cy);
+  letter-spacing:.03em;opacity:0;animation:fIn .7s 2.5s both}
+/*  29 October 2026: "ad a lot more motion , charts and graphics make thing
+ *  move and a wow". Every one of these rides an element already on the page,
+ *  so a scene gains movement without gaining anything to read.  */
+.rs .rstrk i::after,.rs .rsvb i.ours::after,.rs .rspb i::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.35) 50%,transparent 80%);
+  background-size:220% 100%;animation:swipe 2.6s linear infinite}
+@keyframes swipe{from{background-position:140% 0}to{background-position:-60% 0}}
+.rs .rstrk i,.rs .rsvb i.ours,.rs .rspb i{position:relative;overflow:hidden}
+.rs .rscnt{display:inline-block;animation:numPop .5s both;
+  animation-delay:calc(var(--at, 400ms) + .85s)}
+@keyframes numPop{0%{transform:scale(1)}45%{transform:scale(1.07)}100%{transform:scale(1)}}
+.rs .rseyeb{position:relative}
+.rs .rseyeb::after{content:"";position:absolute;left:50%;bottom:-1.5vh;width:0;height:2px;
+  transform:translateX(-50%);background:linear-gradient(90deg,transparent,var(--cy),transparent);
+  animation:eyeRule .9s .35s both}
+@keyframes eyeRule{to{width:7.5vw}}
+.rs .rsmotes{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.rs .rsmotes i{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--cy);
+  opacity:0;left:calc(var(--x)*1%);top:110%;
+  animation:mote var(--d) linear infinite;animation-delay:calc(var(--i)*-1.7s)}
+@keyframes mote{0%{opacity:0;top:108%}12%{opacity:.5}88%{opacity:.35}100%{opacity:0;top:-8%}}
+.rs .rsfoot{position:relative}
+.rs .rstl{position:relative;width:88%;max-width:1060px;height:24vh;margin-top:1.4vh}
+.rs .rstlr{position:absolute;left:0;right:0;bottom:4.2vh;height:2px;background:var(--line);
+  transform-origin:left;transform:scaleX(0);animation:growX 1.2s .3s both}
+.rs .rsppl.rsdot{position:absolute;left:calc(var(--x)*1%);
+  bottom:calc(4.2vh + var(--s)*1.7vw);width:1.85vw;margin-left:-.92vw;
+  animation-delay:calc(.5s + var(--i)*.07s)}
+.rs .rsppl.rsdot::after{inset:-25% -15% 5%}
+.rs .rsppl.rsdot i{position:absolute;left:50%;bottom:calc(2.1vw + var(--l)*2.6vw);
+  transform:translateX(-50%) rotate(-52deg);transform-origin:left bottom;
+  font-size:.82vw;color:var(--mut);white-space:nowrap;letter-spacing:.02em;margin:0}
+@keyframes dotIn{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
+.rs .rstla,.rs .rstlz{position:absolute;bottom:.9vh;font-size:1.5vw;font-weight:800;
+  color:var(--ink);opacity:0;animation:fIn .7s .6s both}
+.rs .rstla{left:0}.rs .rstlz{right:0}
+.rs .rstk{position:absolute;left:calc(var(--x)*1%);bottom:1.4vh;transform:translateX(-50%);
+  font-size:.88vw;color:var(--dim);opacity:0;animation:fIn .7s 1s both}
+.rs .rsbuilt{display:grid;grid-template-columns:repeat(3,1fr);gap:.75vh 2.4vw;
+  width:88%;max-width:1080px;margin-top:.6vh}
+.rs .rsbi{display:grid;grid-template-columns:2.6vw .7vw 1fr;align-items:center;gap:.7vw;
+  opacity:0;transform:translateY(.6vh);animation:fUp .45s both;
+  animation-delay:calc(.45s + var(--i)*.11s)}
+@keyframes fUp{to{opacity:1;transform:none}}
+.rs .rsbm{font-size:.92vw;font-weight:800;letter-spacing:.12em;color:var(--dim);text-align:right}
+.rs .rsbd{width:.7vw;height:.7vw;border-radius:50%;background:var(--cy);
+  box-shadow:0 0 .55rem rgba(0,229,255,.6)}
+.rs .rsbt{font-size:1.12vw;color:var(--ink);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.rs .rschart.one{grid-template-columns:1fr;width:68%;max-width:860px;gap:.9vh 0}
+.rs .rschart.one .rsrow{grid-template-columns:15vw 1fr 3.4vw;gap:1.1vw}
+.rs .rschart.one .rstrk{height:2.1vh}
+.rs .rsdonut.mid{position:static;width:auto;align-items:center;gap:.8vh}
+.rs .rsdonut.mid .rsring{width:11vw;height:11vw}
+.rs .rsdonut.mid .rsdol b{font-size:2.4vw}
+.rs .rszero{font-size:9vw;font-weight:800;line-height:.9;color:var(--cy);
+  letter-spacing:-.03em;filter:drop-shadow(0 0 2.2rem rgba(0,229,255,.45))}
+.rs .rscol{display:grid;gap:.42vh}
+.rs .rsrow{display:grid;grid-template-columns:7.2vw 1fr 2.2vw;align-items:center;gap:.8vw}
+.rs .rsnm{font-size:1.32vw;color:var(--mut);text-align:right;white-space:nowrap;
+  opacity:0;animation:fIn .4s calc(.25s + var(--i)*.045s) both}
+.rs .rstrk{position:relative;height:1.5vh;background:#122043;border-radius:3px;overflow:hidden}
+.rs .rstrk i{position:absolute;inset:0 auto 0 0;width:0;border-radius:0 4px 4px 0;
+  animation:grow .75s calc(.3s + var(--i)*.05s) both}
+@keyframes grow{to{width:calc(var(--p)*1%)}}
+/* before the bands land every bar is one hue — a single series needs no palette */
+.rs .rstrk i.b-n{background:linear-gradient(90deg,#1D5BC4,var(--cy))}
+/* and after it, hue carries the band the line names. gold/teal worst adjacent
+   pair is dE 18.2 normal vision and 11.4 protan on this ground; the slate is
+   recessive on purpose, and the legend names all three so identity is never
+   colour alone. */
+.rs .rschart.lit .rstrk i.b-g{background:linear-gradient(90deg,#1D5BC4,var(--cy))}
+.rs .rschart.lit .rstrk i.b-s{background:var(--slate)}
+.rs .rschart.lit .rstrk i.b-t{background:linear-gradient(90deg,#3E46A8,var(--peri))}
+.rs .rsyr{font-size:1.28vw;font-weight:700;color:var(--mut);text-align:right;
+  font-variant-numeric:tabular-nums;opacity:0;animation:fIn .4s calc(.75s + var(--i)*.045s) both}
+.rs .rsleg{display:flex;gap:2.2vw;justify-content:center;margin-bottom:1vh;
+  font-size:1.25vw;color:var(--mut);opacity:0;animation:fIn .6s .15s both}
+.rs .rsleg span{display:flex;align-items:center;gap:.5vw}
+.rs .rsleg i{width:1.1vw;height:1.1vw;border-radius:3px;display:inline-block}
+.rs .rsleg i.b-g{background:var(--cy)}
+.rs .rsleg i.b-s{background:var(--slate)}
+.rs .rsleg i.b-t{background:var(--peri)}
+
+/* ── the donut ───────────────────────────────────────────────────────────── */
+.rs .rsdonut{position:absolute;right:2.6vw;bottom:1vh;width:13vw;
+  display:grid;place-items:center;gap:.5vh;opacity:0;animation:fIn .8s 1.5s both}
+.rs .rsdonut .rsring{position:relative;width:9vw;height:9vw;display:grid;place-items:center}
+.rs .rsdo{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.rs .rsdo circle{fill:none;stroke-width:4.2}
+.rs .rsdo .do-bg{stroke:#16254A}
+.rs .rsdo .do-fg{stroke:var(--cy);stroke-linecap:round;
+  stroke-dasharray:0 var(--c);animation:doGo 1.2s 1.7s both}
+@keyframes doGo{to{stroke-dasharray:var(--dash) var(--gap)}}
+.rs .rsdol{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.rs .rsdol b{display:block;font-size:3vw;font-weight:800;color:var(--cy)}
+.rs .rsdol span{display:none}
+.rs .rsdocap{font-size:.95vw;color:var(--mut);text-align:center;white-space:nowrap}
+
+/* ── the year arc ────────────────────────────────────────────────────────── */
+.rs .rsarc{position:relative;width:22vh;height:22vh;display:grid;place-items:center;
+  opacity:0;animation:fIn .7s .4s both}
+.rs .rsarc svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.rs .rsarc circle{fill:none;stroke-width:3.4}
+.rs .rsarc .ar-bg{stroke:#16254A}
+.rs .rsarc .ar-fg{stroke:var(--cy);stroke-linecap:round;
+  stroke-dasharray:0 var(--c);animation:doGo 1.4s .7s both}
+.rs .rsarcl{position:relative;text-align:center}
+.rs .rsarcl b{display:block;font-size:5vw;font-weight:800;color:var(--ink);line-height:1}
+.rs .rsarcl span{font-size:1.1vw;color:var(--mut)}
+
+/* ── who stayed: the chips ───────────────────────────────────────────────── */
+.rs .rschips{display:flex;flex-wrap:wrap;gap:.7vw;justify-content:center;max-width:62vw}
+.rs .rschips.sup{margin-top:.6vh}
+.rs .rschip{width:3.4vw;height:3.4vw;border-radius:50%;display:grid;place-items:center;
+  font-size:1.5vw;font-weight:800;color:#070F26;background:var(--cy);
+  opacity:0;animation:chipIn .4s calc(.25s + var(--i)*.055s) both}
+.rs .rschip.sup{background:var(--peri);width:2.9vw;height:2.9vw;font-size:1.3vw}
+@keyframes chipIn{from{opacity:0;transform:scale(.3)}60%{opacity:1;transform:scale(1.18)}
+  to{opacity:1;transform:scale(1)}}
+
+/* ── one sign-in, and the tools behind it ────────────────────────────────── */
+.rs .rsdoor{position:relative;width:7vw;height:9vw;border:.22vw solid var(--cy);
+  border-radius:.6vw;display:grid;place-items:center;opacity:0;animation:fIn .6s .4s both}
+.rs .rskey{width:1.3vw;height:1.3vw;border-radius:50%;background:var(--cy);
+  box-shadow:0 0 1.4rem rgba(0,229,255,.8);animation:keyPul 2.2s .9s infinite}
+@keyframes keyPul{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.3);opacity:1}}
+.rs .rstools{display:flex;flex-wrap:wrap;gap:.7vw;justify-content:center;max-width:64vw}
+.rs .rstool{font-size:1.2vw;color:var(--mut);border:1px solid var(--line);border-radius:999px;
+  padding:.5vh 1.1vw;opacity:0;animation:toolIn .5s calc(.9s + var(--i)*.1s) both}
+@keyframes toolIn{from{opacity:0;transform:translateY(.8rem) scale(.9)}to{opacity:1;transform:none}}
+
+/* ── the day ─────────────────────────────────────────────────────────────── */
+.rs .rsday{position:relative;width:62vw;height:2.4vh;background:#122043;border-radius:999px;
+  display:flex;align-items:center;opacity:0;animation:fIn .6s .3s both}
+.rs .rsdayb{position:absolute;inset:0;width:0;border-radius:999px;
+  background:linear-gradient(90deg,#1D5BC4,var(--cy));animation:grow2 2.4s .5s both}
+@keyframes grow2{to{width:100%}}
+@keyframes growY{to{transform:none}}
+@keyframes growX{to{transform:none}}
+@keyframes growY{to{transform:none}}
+@keyframes growX{to{transform:none}}
+.rs .rstick{position:absolute;width:1.1vw;height:1.1vw;border-radius:50%;background:#070F26;
+  border:.18vw solid var(--cy);top:50%;left:calc(6% + var(--i)*14.5%);
+  transform:translate(-50%,-50%) scale(0);animation:tickIn .35s calc(.7s + var(--i)*.26s) both}
+@keyframes tickIn{from{transform:translate(-50%,-50%) scale(0)}
+  60%{transform:translate(-50%,-50%) scale(1.3)}to{transform:translate(-50%,-50%) scale(1)}}
+.rs .rsdayl{display:flex;justify-content:space-between;width:62vw;font-size:1.15vw;
+  color:var(--mut);opacity:0;animation:fIn .6s 1.1s both}
+
+/* ── the wall ────────────────────────────────────────────────────────────── */
+.rs .rswall{width:52vw;height:26vh;border:.26vw solid var(--line);border-radius:.8vw;
+  padding:2vh 2vw;display:grid;align-items:end;opacity:0;animation:fIn .6s .3s both}
+.rs .rswbars{display:flex;gap:1.4vw;align-items:flex-end;height:100%}
+.rs .rswbars i{flex:1;border-radius:4px 4px 0 0;height:0;
+  background:linear-gradient(180deg,var(--cy),#1D5BC4);
+  animation:wUp .7s calc(.55s + var(--i)*.09s) both}
+@keyframes wUp{to{height:calc(var(--h)*1%)}}
+
+/* ── the ninety minutes ──────────────────────────────────────────────────── */
+.rs .rssplit{display:flex;width:64vw;height:3.4vh;border-radius:999px;overflow:hidden;
+  background:#122043;opacity:0;animation:fIn .6s .3s both}
+.rs .rssplit i{height:100%;width:0}
+.rs .rssplit i.y{background:linear-gradient(90deg,#1D5BC4,var(--cy));animation:sp 1.1s .6s both}
+.rs .rssplit i.m{background:var(--slate);animation:sp2 1.1s .6s both}
+@keyframes sp{to{width:83.33%}}
+@keyframes sp2{to{width:16.67%}}
+.rs .rssplitl{display:flex;justify-content:space-between;width:64vw;font-size:1.3vw;
+  opacity:0;animation:fIn .6s 1.3s both}
+.rs .rssplitl .y{color:var(--cy);font-weight:700}
+.rs .rssplitl .m{color:var(--mut)}
+
+/* ── the three questions ─────────────────────────────────────────────────── */
+.rs .rsqs{display:flex;gap:1.6vw;justify-content:center}
+.rs .rsq{width:1.5vw;height:1.5vw;border-radius:50%;background:var(--cy);opacity:0;
+  animation:qIn .5s calc(.6s + var(--i)*.22s) both}
+@keyframes qIn{from{opacity:0;transform:scale(.2)}60%{opacity:1;transform:scale(1.35)}
+  to{opacity:.95;transform:scale(1)}}
+
+/* ══ the replica card ═══════════════════════════════════════════════════════
+   One of the branch's own screens, in glass. Nothing here is drawn: these are
+   the tools, shot with sample data. The glare runs on a loop so a card is
+   never a still photograph pinned to the frame. */
+.rs .rsshot{position:relative;margin:0;border-radius:.9vw;overflow:hidden;
+  background:#0C1733;border:1px solid #27406E;
+  box-shadow:0 1.6vh 4vh rgba(2,8,22,.62),0 0 0 1px rgba(124,140,248,.12) inset}
+.rs .rsshot img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 0}
+.rs .rsshot.tall{width:11vw;aspect-ratio:.56}
+.rs .rsshot.rsph{width:8.4vw;aspect-ratio:.47;border-radius:1.4vw}
+.rs .rsshot.lap{width:19vw;aspect-ratio:1.62}
+.rs .rsquad .rsshot.lap{width:26vw}
+.rs .rsshot.wide{width:17vw;aspect-ratio:1.9}
+.rs .rsshot.band{width:28vw;aspect-ratio:3.4}
+.rs .rsgl{position:absolute;top:0;bottom:0;left:-45%;width:38%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(190,220,255,.3),transparent);
+  animation:rsglide 5.4s calc(var(--i,0)*.5s) infinite}
+@keyframes rsglide{0%{left:-45%}55%,100%{left:130%}}
+
+/* ── fifteen years digital: the rail and its milestones ──────────────────── */
+.rs .rsrail{position:relative;width:78vw;height:19vh;margin-top:.6vh}
+.rs .rsrl{position:absolute;left:0;right:0;top:3.1vh;height:2px;transform-origin:0 50%;
+  background:linear-gradient(90deg,var(--cold),var(--cy));animation:growX 1.5s .25s both}
+/*  Each milestone is placed, not flowed. 2013 and 2014 are a year apart on a
+    fifteen-year rail — about eighty pixels — and a label is twice that wide, so
+    they have to sit on two different lanes. Stacking them in a grid and letting
+    a taller spacer push the label down did not do it: the lane never moved and
+    the spacer ended up off to one side. Absolute positions cannot drift. */
+.rs .rsmile{position:absolute;top:0;left:calc(var(--p)*1%);width:0;height:100%;opacity:0;
+  animation:rsPin .55s calc(.75s + var(--i)*.3s) both}
+.rs .rsmd{position:absolute;left:50%;top:3.1vh;width:1.1vw;height:1.1vw;border-radius:50%;
+  background:var(--cy);translate:-50% -50%;
+  box-shadow:0 0 0 .35vw rgba(0,229,255,.16),0 0 1.4vh rgba(0,229,255,.7);
+  animation:rsPing 2.6s calc(1s + var(--i)*.3s) infinite}
+.rs .rsdtk{position:absolute;left:50%;top:3.8vh;width:1px;background:#2B4572;
+  height:calc(1.3vh + var(--lane)*5.2vh)}
+.rs .rsdlb{position:absolute;left:50%;translate:-50% 0;width:13vw;text-align:center;
+  top:calc(5.3vh + var(--lane)*5.2vh)}
+.rs .rsdlb b{display:block;font-size:1.9vw;font-weight:800;color:var(--ink);line-height:1}
+.rs .rsdlb i{display:block;margin-top:.5vh;font-size:1.05vw;font-style:normal;
+  color:var(--mut);line-height:1.3}
+@keyframes rsPin{from{opacity:0;translate:0 1.2vh}to{opacity:1;translate:0 0}}
+@keyframes rsPing{0%,70%,100%{box-shadow:0 0 0 .35vw rgba(0,229,255,.16),0 0 1.4vh rgba(0,229,255,.7)}
+  35%{box-shadow:0 0 0 .95vw rgba(0,229,255,0),0 0 2.2vh rgba(0,229,255,.95)}}
+
+/*  the month shape under the tiles: four bars that grow on their own clock,
+    the running month marked rather than left to look short by accident.     */
+.rs .rsmos{display:flex;align-items:flex-end;justify-content:center;
+  gap:1.45vw;margin-top:2.2vh;width:100%}
+.rs .rsmo{display:grid;justify-items:center;gap:.55vh;width:4.8vw}
+.rs .rsmo b{font-size:1.5vw;font-weight:800;color:var(--mut);line-height:1;
+  opacity:0;animation:fUp .5s both;animation-delay:calc(1.5s + var(--i)*.14s)}
+.rs .rsmo.now b{color:var(--cy)}
+.rs .rsmob{display:flex;flex-direction:column;justify-content:flex-end;
+  align-items:center;gap:.5vh;width:100%;height:12vh}
+.rs .rsmob i{display:block;width:100%;height:calc(var(--h)*100%);border-radius:4px 4px 0 0;
+  background:linear-gradient(180deg,var(--peri),rgba(124,140,248,.25));
+  transform-origin:50% 100%;transform:scaleY(0);
+  animation:growY .7s cubic-bezier(.2,.9,.3,1) both;
+  animation-delay:calc(1.4s + var(--i)*.14s)}
+.rs .rsmo.now .rsmob i{background:linear-gradient(180deg,var(--cy),rgba(0,229,255,.22));
+  box-shadow:0 0 1.6vh rgba(0,229,255,.35)}
+.rs .rsmo em{font-style:normal;font-size:.92vw;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--dim)}
+.rs .rsmo.now em{color:var(--cy)}
+.rs .rsmol{align-self:flex-end;margin-bottom:2.6vh;margin-left:.8vw;font-size:.88vw;
+  font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);
+  max-width:11vw;text-align:left;line-height:1.45;
+  opacity:0;animation:fUp .5s 2.1s both}
+.rs .rsmol i{display:block;font-style:normal;margin-top:.4vh;color:var(--cy);
+  letter-spacing:.06em;text-transform:none;font-weight:600}
+
+/* ── counter tiles, flipping up in turn ──────────────────────────────────── */
+.rs .rstiles{display:flex;gap:2.2vw;justify-content:center;align-items:center;flex-wrap:nowrap}
+.rs .rstiles.four{gap:1.5vw}
+.rs .rstile{position:relative;display:grid;justify-items:center;gap:.5vh;
+  padding:2.4vh 2.2vw;border-radius:.9vw;background:#0C1733;border:1px solid #23375F;
+  opacity:0;transform-origin:50% 100%;
+  animation:rsTile .7s calc(.5s + var(--i)*.28s) both}
+.rs .rstile .rscnt{font-size:3.6vw}
+.rs .rstile.sm .rscnt{font-size:3vw}
+.rs .rstile .rstily{font-size:1.25vw;font-weight:700;color:var(--ink);white-space:nowrap}
+.rs .rstile em{font-size:1vw;font-style:normal;color:var(--dim)}
+.rs .rstile::after{content:"";position:absolute;inset:0;border-radius:.9vw;pointer-events:none;
+  background:linear-gradient(100deg,transparent 40%,rgba(0,229,255,.1) 50%,transparent 60%);
+  background-size:260% 100%;animation:swipe 4.6s calc(var(--i)*.6s) infinite}
+@keyframes rsTile{from{opacity:0;transform:perspective(60vw) rotateX(42deg) translateY(2.4vh)}
+  to{opacity:1;transform:none}}
+
+/* ── the replica wall: twelve real screens, never still ──────────────────── */
+.rs .rsrwall{grid-area:1/1;width:100%;height:100%;display:flex;flex-wrap:wrap;
+  align-content:center;justify-content:center;gap:1.1vw 1vw;padding:0 3vw}
+.rs .rsrc{opacity:0;animation:rsFly .8s calc(.25s + var(--i)*.13s) both}
+.rs .rsrc .rsshot{transform:rotate(var(--r));animation:rsFloat 7s calc(var(--i)*.4s) infinite}
+@keyframes rsFly{from{opacity:0;transform:translateY(4vh) scale(.84)}
+  to{opacity:1;transform:none}}
+@keyframes rsFloat{0%,100%{translate:0 0}50%{translate:0 -1.1vh}}
+.rs .rscap.over{grid-area:1/1;z-index:3;align-content:center;
+  background:radial-gradient(60% 46% at 50% 50%,rgba(7,15,38,.93),rgba(7,15,38,.42) 70%,transparent)}
+.rs .rshead.sm{font-size:3.2vw;font-weight:800;letter-spacing:-.01em}
+
+/* ── the fact find, five screens in order ────────────────────────────────── */
+.rs .rssteps{display:flex;gap:1.5vw;justify-content:center;align-items:flex-start}
+.rs .rsstep{display:grid;justify-items:center;gap:.9vh;opacity:0;
+  animation:rsStep .7s calc(.55s + var(--i)*.34s) both}
+.rs .rsstep i{font-size:.95vw;font-style:normal;color:var(--mut);max-width:11vw;line-height:1.35}
+@keyframes rsStep{from{opacity:0;transform:translateX(3vw) rotate(3deg)}
+  to{opacity:1;transform:none}}
+
+/* ── the walls, four up ──────────────────────────────────────────────────── */
+.rs .rsquads{display:grid;grid-template-columns:repeat(2,auto);gap:1.1vh 1.8vw;justify-content:center}
+.rs .rsquads.three{grid-template-columns:repeat(2,auto)}
+.rs .rsquads.three>:nth-child(3){grid-column:1/-1;justify-self:center}
+.rs .rsquad{display:grid;justify-items:center;gap:.7vh;opacity:0;
+  animation:rsQuad .75s calc(.5s + var(--i)*.26s) both}
+.rs .rsquad i{font-size:1.05vw;font-style:normal;color:var(--mut)}
+@keyframes rsQuad{from{opacity:0;transform:scale(.88) translateY(2vh)}to{opacity:1;transform:none}}
+
+/* ══ the 29 October re-cut ════════════════════════════════════════════════
+   New classes only. A class this sheet ALREADY uses wins silently and both
+   rules look legitimate on their own: .rstl was the story rail and reusing it
+   as a tile label dragged every tile to 280px. Grep this block before naming
+   anything, and never fix a collision with a blanket rename — the sed that
+   "fixed" .rstl renamed the rail too and dropped a whole scene off the frame. */
+
+/* 8a · we led the first one */
+.rs .rsfirst{display:grid;grid-template-columns:auto auto;align-items:center;
+  gap:3vw;justify-content:center;margin-top:1.4vh}
+.rs .rsdoc2{position:relative;width:26vw;padding:2.2vh 1.6vw 3.4vh;border-radius:.7vh;
+  background:#0E1930;border:1px solid var(--line);display:grid;gap:1.1vh;
+  opacity:0;animation:fUp .7s .35s both}
+.rs .rsdl{height:.85vh;border-radius:.4vh;background:#1C2B4C;
+  transform:scaleX(0);transform-origin:left;animation:growX .5s both}
+.rs .rsdoc2 .rsdl:nth-child(1){animation-delay:.6s}
+.rs .rsdoc2 .rsdl:nth-child(2){animation-delay:.74s;width:84%}
+.rs .rsdl.sh{width:58%;animation-delay:.88s}
+.rs .rssig{position:absolute;left:1.6vw;bottom:1.1vh;width:14vw;height:4.4vh}
+.rs .rssig path{stroke-dasharray:420;stroke-dashoffset:420;
+  animation:ckDraw 1.5s 1.35s forwards}
+.rs .rsstamp{position:absolute;right:-1.1vw;top:-1.3vh;padding:.5vh 1vw;
+  border-radius:.4vh;background:var(--cy);color:#07131F;font-weight:800;
+  font-size:1.15vw;letter-spacing:.12em;transform:rotate(-8deg) scale(0);
+  animation:numPop .5s 2.5s both}
+.rs .rsfl{display:grid;gap:.9vh;max-width:28vw;opacity:0;
+  animation:fUp .7s 1.1s both}
+.rs .rsfl b{font-size:2.5vw;line-height:1.14;font-weight:800}
+.rs .rsfl i{font-style:normal;font-size:1.25vw;color:var(--mut);line-height:1.4}
+
+/* 8b · what changed this year */
+.rs .rsai{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  gap:1.8vw;margin-top:2vh;width:66vw}
+.rs .rsaib{display:grid;gap:.9vh;opacity:0;animation:fUp .6s both}
+.rs .rsaib:nth-child(1){animation-delay:.4s}
+.rs .rsaib.lit{animation-delay:1.5s}
+.rs .rsaib span{font-size:1.5vw;color:var(--mut);text-align:center}
+.rs .rsaib.lit span{color:var(--ink);font-weight:700}
+.rs .rsaib i{display:block;height:1.1vh;border-radius:.55vh;background:#1C2B4C;
+  transform:scaleX(0);animation:growX .55s .6s both}
+.rs .rsaib.lit i{height:2vh;border-radius:1vh;
+  background:linear-gradient(90deg,var(--peri),var(--cy));
+  animation-delay:1.7s;box-shadow:0 0 2.4vh rgba(0,229,255,.4)}
+.rs .rsaip{position:relative;display:grid;place-items:center;
+  width:7.2vw;height:7.2vw;border-radius:50%;background:#0E1930;
+  border:2px solid var(--cy);opacity:0;animation:fUp .55s 1.15s both}
+.rs .rsaid{position:absolute;inset:0;border-radius:50%;
+  border:2px solid var(--cy);opacity:.5;animation:rsPing 2.6s 1.6s infinite}
+.rs .rsail{font-size:2vw;font-weight:800;color:var(--cy);letter-spacing:.06em}
+
+/* 12d2 · the fact find order, corrected */
+.rs .rsflow{position:relative;display:grid;
+  grid-template-columns:repeat(5,1fr);gap:1.1vw;width:76vw;margin-top:2.2vh}
+.rs .rsfarr{position:absolute;left:0;right:0;top:3.1vh;height:2px;
+  background:var(--line);transform:scaleX(0);transform-origin:left;
+  animation:growX 1.5s .45s both}
+.rs .rsfstep{position:relative;display:grid;justify-items:center;gap:.7vh;
+  text-align:center;opacity:0;animation:fUp .55s calc(.6s + var(--i)*.2s) both}
+.rs .rsfnum{display:grid;place-items:center;width:4.4vh;height:4.4vh;
+  border-radius:50%;background:#0E1930;border:2px solid var(--line);
+  font-weight:800;font-size:1.4vw;color:var(--mut);position:relative;z-index:1}
+.rs .rsfstep.lit .rsfnum{border-color:var(--cy);color:#07131F;background:var(--cy);
+  box-shadow:0 0 2.6vh rgba(0,229,255,.5)}
+.rs .rsfstep b{font-size:1.45vw;font-weight:800}
+.rs .rsfstep.lit b{color:var(--cy)}
+.rs .rsfstep i{font-style:normal;font-size:1.1vw;color:var(--mut);line-height:1.35}
+.rs .rsfwas{display:grid;gap:.6vh;margin-top:2.6vh;justify-items:center;
+  opacity:0;animation:fUp .6s 2.1s both}
+.rs .rsfwas s{font-size:1.25vw;color:var(--dim)}
+.rs .rsfwas em{font-style:normal;font-size:1.35vw;font-weight:800;color:var(--cy)}
+
+/* 12f · paper, to a full recommendation */
+.rs .rspaper{display:grid;grid-template-columns:auto auto auto;gap:2.4vw;
+  align-items:center;justify-content:center;margin-top:1.6vh}
+.rs .rspap{display:grid;gap:1.6vh;width:16vw;padding:4vh 1.6vw;border-radius:.6vh;
+  background:#0C1527;border:1px dashed #27374F;opacity:0;
+  animation:fUp .6s .4s both;filter:grayscale(1)}
+.rs .rspap span{height:.8vh;border-radius:.4vh;background:#223150}
+.rs .rspap span:nth-child(2){width:78%}
+.rs .rspap span:nth-child(4){width:60%}
+.rs .rspap em{font-style:normal;font-size:1.1vw;color:var(--dim);margin-top:.6vh}
+.rs .rsfarr2{position:relative;width:5vw;height:.55vh;border-radius:.3vh;
+  background:linear-gradient(90deg,#27374F,var(--cy));
+  transform:scaleX(0);transform-origin:left;animation:growX .6s 1.05s both}
+.rs .rsfarr2::after{content:"";position:absolute;right:-.2vw;top:50%;
+  width:1.3vh;height:1.3vh;border-top:.35vh solid var(--cy);
+  border-right:.35vh solid var(--cy);transform:translateY(-50%) rotate(45deg)}
+.rs .rsshot.rspapn{width:15vw;max-height:40vh;animation-delay:1.3s}
+.rs .rsshot.rspapn img{object-fit:cover;object-position:top}
+
+/* 12g · market conduct */
+.rs .rsclx{display:grid;gap:.72vh;width:76vw;margin-top:1.4vh}
+.rs .rsclz{display:grid;grid-template-columns:5.4vw 1fr 1fr;align-items:baseline;
+  gap:1.2vw;padding:.72vh 1vw;border-radius:.5vh;background:#0C1527;
+  border-left:3px solid var(--cy);opacity:0;
+  animation:fRt .5s calc(.45s + var(--i)*.15s) both}
+.rs .rsclz b{font-size:1.2vw;color:var(--cy);font-weight:800}
+.rs .rsclz span{font-size:1.28vw;font-weight:700}
+.rs .rsclz i{font-style:normal;font-size:1.15vw;color:var(--mut)}
+
+/* 12h · fraud, caught at the fact find */
+.rs .rsfr{display:grid;grid-template-columns:auto auto;gap:3vw;
+  align-items:center;justify-content:center;margin-top:1.8vh}
+.rs .rsfrd{position:relative;width:27vw;padding:2.6vh 1.6vw;border-radius:.7vh;
+  background:#0E1930;border:1px solid var(--line);display:grid;gap:1.3vh;
+  overflow:hidden;opacity:0;animation:fUp .6s .35s both}
+.rs .rsfrd .rsdl{animation-delay:.7s}
+.rs .rsscan{position:absolute;left:0;right:0;height:26%;
+  background:linear-gradient(180deg,transparent,rgba(0,229,255,.22),transparent);
+  animation:rsScan 2.1s 1s 2 ease-in-out}
+.rs .rsflg{position:absolute;right:1vw;width:1.5vh;height:1.5vh;border-radius:50%;
+  background:#D9534F;box-shadow:0 0 1.6vh rgba(217,83,79,.6);
+  top:calc(2.8vh + var(--i)*2.9vh);transform:scale(0);
+  animation:numPop .4s calc(2.4s + var(--i)*.26s) both}
+.rs .rsfrl{display:grid;gap:.8vh;max-width:26vw;opacity:0;animation:fUp .6s 2.9s both}
+.rs .rsfrl b{font-size:2.2vw;font-weight:800}
+.rs .rsfrl i{font-style:normal;font-size:1.25vw;color:var(--mut)}
+@keyframes rsScan{from{top:-26%}to{top:100%}}
+
+/* 12i · the journey */
+.rs .rsjour{position:relative;width:46vh;height:46vh;margin-top:.4vh;
+  display:grid;place-items:center}
+.rs .rsjr{position:absolute;inset:6vh;border-radius:50%;border:2px dashed #243655}
+.rs .rsjrun{position:absolute;width:1.9vh;height:1.9vh;border-radius:50%;
+  background:var(--cy);box-shadow:0 0 2.4vh rgba(0,229,255,.7);
+  offset-path:circle(17vh at 50% 50%);animation:rsRun 9s 1s linear infinite}
+.rs .rsjev{position:absolute;left:50%;top:50%;width:17vw;
+  display:grid;justify-items:center;gap:.2vh;text-align:center;opacity:0;
+  transform:translate(-50%,-50%) rotate(var(--a)) translateY(-20vh)
+            rotate(calc(-1*var(--a)));
+  animation:rsJev .5s calc(.5s + var(--i)*.17s) both}
+@keyframes rsJev{to{opacity:1}}
+.rs .rsjd{width:1.5vh;height:1.5vh;border-radius:50%;background:var(--peri);
+  box-shadow:0 0 1.4vh rgba(124,140,248,.6);margin-bottom:.3vh}
+.rs .rsjev b{font-size:1.25vw;font-weight:800;white-space:nowrap}
+.rs .rsjev i{font-style:normal;font-size:1.02vw;color:var(--mut);line-height:1.25}
+.rs .rsjc{display:grid;justify-items:center;gap:.3vh;opacity:0;
+  animation:fUp .6s 1.7s both}
+.rs .rsjc b{font-size:1.9vw;font-weight:800}
+.rs .rsjc i{font-style:normal;font-size:1.15vw;color:var(--cy)}
+@keyframes rsRun{to{offset-distance:100%}}
+
+/* 12k · equipped */
+.rs .rsequip{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6vw;
+  width:70vw;margin-top:2vh}
+.rs .rseq{display:grid;gap:.9vh;padding:2.4vh 1.5vw;border-radius:.7vh;
+  background:#0E1930;border:1px solid var(--line);border-top:3px solid var(--cy);
+  opacity:0;animation:rsTile .6s calc(.5s + var(--i)*.22s) both}
+.rs .rseq b{font-size:1.8vw;font-weight:800}
+.rs .rseq i{font-style:normal;font-size:1.15vw;color:var(--mut);line-height:1.4}
+
+/* 16c2 · the wall outside */
+.rs .rsout{position:relative;display:grid;justify-items:center;margin-top:1.2vh}
+.rs .rsshot.rsoutw{width:46vw;border-width:4px}
+.rs .rsoutp{position:absolute;bottom:-1vh;left:50%;transform:translateX(-50%);
+  display:flex;gap:3.4vw}
+.rs .rsoutp svg{width:4.4vh;height:auto;opacity:0;
+  animation:fUp .6s calc(1.2s + var(--i)*.22s) both}
+
+/* 17a · the commitment */
+.rs .rscom{display:grid;justify-items:center;gap:1.6vh;max-width:68vw}
+.rs .rscoml{font-size:2.1vw;line-height:1.3;text-align:center;font-weight:600;
+  opacity:0;animation:fUp .7s 1.1s both}
+.rs .rscoml b{color:var(--cy);font-weight:800}
+.rs .rscom .rsfoot b{color:var(--ink);font-weight:800}
+
+/* small shared bits */
+.rs .rstiles.sm3{margin-top:1.6vh;gap:1.2vw}
+.rs .rssteps.three{grid-template-columns:repeat(3,auto)}
+"""
+
+
+# A class the shell already styles wins silently, and the first cut of the
+# blast-off learned it the hard way: .stage is the shell's own and its rule
+# collapsed the stage from 461px to 146, so the shield rendered at a sixth of
+# its size with nothing in the console. Every class here is rs-prefixed, and
+# this refuses to write a page where one has slipped through anyway.
+def _guard(html):
+    css = '\n'.join(re.findall(r'<style>(.*?)</style>', SHELL.read_text(), re.S))
+    theirs = set(re.findall(r'\.([a-zA-Z][\w-]*)', css))
+    ours = set()
+    for m in re.findall(r'class="([^"]+)"', html):
+        ours.update(c for c in m.split() if not c.startswith('--'))
+    keep = {'scene', 'inner', 'on', 'cnt'}       # the shell's and render.js's own contract
+    bad = sorted((ours & theirs) - keep)
+    if bad:
+        raise SystemExit('These scene classes are already styled by the shell and would be '
+                         'overridden silently: ' + ', '.join('.' + c for c in bad))
+
+
+def _guard_own(css):
+    #  The guard above only covers the SHELL's classes.  It says nothing about
+    #  a class this film's own sheet already uses, and twice now that has cost
+    #  a shot: .rstl was a scene's rail and then a label inside a tile, and
+    #  .rsout was the outside-wall scene before it was also the outcome grid —
+    #  in both cases two legitimate-looking rules, the later one winning, and
+    #  the scene silently drawn wrong.
+    #
+    #  A broad check for "this class has more than one rule" names nineteen
+    #  classes here, and a second base rule that only ADDS a property is both
+    #  ordinary and harmless (.rsfoot picks up position:relative 300 lines
+    #  later on purpose).  A warning nobody reads is worse than none, so this
+    #  flags the one shape that is always a mistake: two base rules setting the
+    #  SAME property to DIFFERENT values, which is exactly how .rsout lost its
+    #  two-column grid to the outside-wall scene's margin.
+    rules = re.findall(r'^\.rs \.([a-zA-Z][\w-]*)\{(.*?)\}', css, re.M | re.S)
+    seen, clash = {}, {}
+    for cls, body in rules:
+        for decl in body.split(';'):
+            if ':' not in decl:
+                continue
+            prop, _, val = decl.partition(':')
+            prop, val = prop.strip(), val.strip()
+            if not prop or prop.startswith('--'):
+                continue
+            was = seen.setdefault(cls, {}).setdefault(prop, val)
+            if was != val:
+                clash.setdefault(cls, set()).add(prop)
+    if clash:
+        raise SystemExit(
+            "This film's own stylesheet sets the same property twice, with "
+            "different values, on a class two scenes share — so the later rule "
+            "silently wins and one of the two is drawn wrong. Rename the newer "
+            "class by hand (never with a blanket sed: that renames the older "
+            "one too).\n  " + '\n  '.join(
+                f'.rs .{c}  ->  {", ".join(sorted(p))}'
+                for c, p in sorted(clash.items())))
+
+
+_guard(SCENES)
+_guard_own(CSS)
+
+shell = SHELL.read_text()
+chrome_end = shell.index('</div>', shell.index('<div id="chrome">')) + len('</div>')
+tap = shell.index('<div class="tapzone" id="zL"')
+out = shell[:chrome_end] + '\n' + SCENES + '\n\n' + shell[tap:]
+last = out.rindex('</style>')
+out = out[:last] + CSS + '\n' + out[last:]
+out = re.sub(r'<title>.*?</title>',
+             '<title>We rise together — Ricky Rampersad Branch</title>', out, count=1, flags=re.S)
+out = re.sub(r'<span class="who">.*?</span>',
+             '<span class="who">Ricky Rampersad Branch<i>FY27</i></span>', out, count=1, flags=re.S)
+out = re.sub(r'<span class="live">.*?</span>', '', out, count=1, flags=re.S)
+out = out.replace('<body>', '<body class="rsoff">')
+
+# The shell is donthaveanagent's: its chrome carries The Knot in Ink & Coral
+# and its progress bars are coral. Two marks, two products, on purpose — and a
+# branch film carrying the other one is the exact error the mark rule warns
+# about. Both become the branch's own. Nothing is redrawn: the path is
+# logo-mark.svg's.
+MARK = ('<svg class="mark" viewBox="0 0 88 88" aria-hidden="true">'
+        '<defs><linearGradient id="rsg1" x1="0" y1="0" x2="1" y2="1">'
+        '<stop offset="0%" stop-color="#2A6DE0"/><stop offset="60%" stop-color="#1D5BC4"/>'
+        '<stop offset="100%" stop-color="#13408F"/></linearGradient></defs>'
+        f'<path d="{SHIELD}" fill="url(#rsg1)"/>'
+        f'<path d="{CHECK}" stroke="#070F26" stroke-width="6.5" fill="none" '
+        'stroke-linecap="round" stroke-linejoin="round"/>'
+        f'<path d="{CHECK}" stroke="#fff" stroke-width="2.8" fill="none" '
+        'stroke-linecap="round" stroke-linejoin="round"/></svg>')
+out = re.sub(r'<svg class="mark" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>',
+             lambda m: MARK, out, count=1, flags=re.S)
+
+# The shell also wires a WhatsApp share button these scenes do not carry, and
+# an unguarded throw there stops every line of its script after it.
+out = out.replace('document.getElementById("waBtn").href = "https://wa.me/?text=" + encodeURIComponent(MSG);',
+                  'var _wa = document.getElementById("waBtn");\n'
+                  'if (_wa) _wa.href = "https://wa.me/?text=" + encodeURIComponent(MSG);')
+
+out += ('\n<style>'
+        'body.rsoff{background:#070F26}body.rsoff .orb{display:none}'
+        'body.rsoff .conf,body.rsoff #confetti{display:none}'
+        'body.rsoff #chrome .who{color:#9FB0D0}body.rsoff #chrome .who i{color:#6B7A99}'
+        'body.rsoff #bars i{background:#16254A}'
+        'body.rsoff #bars i::after{background:#00E5FF}'
+        'body.rsoff #bars i.done{background:#00E5FF}'
+        'body.rsoff #bars i.run::after{background:#00E5FF}'
+        '</style>\n')
+
+# ── the palette, by name ─────────────────────────────────────────────────────
+#  28 October 2026: "More color options". Gold was turned down the evening
+#  before, so rather than pick a second time, the five below are built on the
+#  same frames and shown to him to choose from. Each is a repaint of one
+#  baseline (the midnight blue of the board films) by exact hex, in a single
+#  pass, so nothing can cascade: a value a palette maps TO is never read back
+#  as a value to map FROM.
+#
+#  Every one clears the three checks that decide whether a reader can tell the
+#  bands apart (CVD separation, normal-vision floor, 3:1 on the ground). The
+#  validator also flags the lightness band and the chroma floor on all five,
+#  and that is the design, not a fault: the slate is MEANT to recede, because
+#  it carries the eight people between the two bands the narration names, and
+#  an equal-weight palette would have the chart shouting all three at once.
+#
+#  Rejected on the measurements: emerald with a sky-blue second accent (tritan
+#  dE 5.5 — the two bands collapse for a tritan viewer), and an ice/steel pair
+#  on the ink ground (dE 13.8 normal vision, under the 15 floor).
+BASE = ['bg','ink','mut','dim','line','a1','a2','slate','cold','trk','ring',
+        'shoff','g1','g2','sh1','sh3','tear1','tear2','tear3','a1rgb']
+NAVY = dict(zip(BASE, [
+    '#070F26','#EAF0FF','#9FB0D0','#6B7A99','#1A2744','#00E5FF','#7C8CF8',
+    '#5E6B85','#8295B5','#122043','#16254A','#24365E','#1D5BC4','#3E46A8',
+    '#2A6DE0','#13408F','#CFE2FF','#7E8FB0','#55658A','0,229,255']))
+
+PALETTES = {
+    # dE normal / deutan / tritan on the worst adjacent pair of the three bands
+    'blue':    dict(zip(BASE, [   # 19.0 / 18.3 / 15.4 — the board films' own
+        '#070F26','#EAF0FF','#9FB0D0','#6B7A99','#1A2744','#00E5FF','#7C8CF8',
+        '#5E6B85','#8295B5','#122043','#16254A','#24365E','#1D5BC4','#3E46A8',
+        '#2A6DE0','#13408F','#CFE2FF','#7E8FB0','#55658A','0,229,255'])),
+    'ink':     dict(zip(BASE, [   # 17.2 / 16.4 / 16.6 — the most restrained
+        '#101217','#EDF1F6','#A3ADBC','#6E7786','#22262E','#CFE0F5','#4E8FD6',
+        '#5A6472','#7D8899','#1A1E26','#20252E','#333945','#2C5E96','#2B4E7E',
+        '#6FA8DC','#2C5E96','#E6EDF5','#8C96A6','#5E6774','207,224,245'])),
+    'emerald': dict(zip(BASE, [   # 26.7 / 14.1 / 15.9 — growth, and ours alone
+        '#07140F','#E8F5EE','#9DBAAB','#6A8277','#16281F','#2FD39A','#C9A4FF',
+        '#5D6B66','#7E9A90','#112A20','#163024','#26453A','#137A57','#6A4BA8',
+        '#3FE0A8','#137A57','#DFF3EA','#7E9A90','#4E6760','47,211,154'])),
+    'violet':  dict(zip(BASE, [   # 23.5 / 14.8 / 17.6 — the purple he liked
+        '#0E0B22','#EEEAFF','#ADA3CE','#766D95','#231E42','#B69CFF','#5EE7D7',
+        '#6B6485','#8E86AE','#1C1740','#221C49','#3A3268','#6A4BC8','#2A8F86',
+        '#C9B4FF','#5B3FB0','#E8E2FF','#8E86AE','#625B82','182,156,255'])),
+    'crimson': dict(zip(BASE, [   # 30.6 / 19.9 / 31.4 — the clearest, and the
+        '#14121A','#F4F0F2','#B2A9B2','#7D7480','#28242F','#FF5D6C','#74C8FF',
+        '#6B6472','#8C94A6','#231F2C','#282433','#413B4C','#A32B3C','#2B6E9E',
+        '#FF8793','#A32B3C','#EFE9EE','#8C8494','#635B6B','255,93,108'])),
+'white':   dict(zip(BASE, [   # 21.2 / 20.9 / 18.3 — the most premium
+        '#0B0E14','#F2F5FA','#A7B0C2','#717B8E','#1C2130','#F0F4FF','#4D8BFF',
+        '#5C6578','#828DA3','#151A26','#1A2030','#2E3647','#6E86B8','#2B5BB5',
+        '#8FA8E8','#2B5BB5','#F2F5FA','#8A94A8','#5F6878','240,244,255'])),
+    'rose':    dict(zip(BASE, [   # 21.9 / 12.5 / 27.3 — warm, and nothing
+        '#1A0F16','#F8EEF1','#BBA6AE','#86707A','#2E1C26','#FF8FA3','#8FD4FF',  # else at the branch is
+        '#70646A','#9A838C','#2A1822','#2F1C27','#4A3340','#A33A52','#2F6E9E',
+        '#FFB0BF','#A33A52','#F6E8EC','#9A838C','#6E5A62','255,143,163'])),
+    'teal':    dict(zip(BASE, [   # 27.1 / 9.1 / 29.1 — the branch's own teal;
+        '#0A1A1F','#E6F4F6','#9AB6BB','#688085','#152C33','#2DD4BF','#FF8A7E',  # the 9.1 is legal
+        '#5A6E70','#7E989D','#12282F','#163036','#27454C','#11796E','#B0493F',  # only because the
+        '#3FE3CE','#11796E','#DFF1F3','#7E989D','#4F6468','45,212,191'])),      # legend names each band
+}
+
+def _paint(html, pal):
+    """Repaint the baseline in one pass.
+
+    Case-sensitive and longest-first, so a value a palette maps TO can never be
+    read back as a value to map FROM: map bg #070F26 -> #14121A while sh3 maps
+    #13408F -> #A32B3C, and a cascading two-pass replace would turn the new
+    ground into something else again.
+    """
+    pairs = {NAVY[k]: pal[k] for k in BASE if NAVY[k] != pal[k]}
+    if not pairs:
+        return html
+    pat = re.compile('|'.join(re.escape(k) for k in sorted(pairs, key=len, reverse=True)))
+    return pat.sub(lambda m: pairs[m.group(0)], html)
+
+
+PAL = os.environ.get('RISE_PAL', 'blue')
+assert PAL in PALETTES, 'unknown palette: ' + PAL
+out = _paint(out, PALETTES[PAL])
+if os.environ.get('RISE_VARIANT'):
+    OUT = ROOT / 'branchmeet' / ('film-%s.html' % PAL)
+
+OUT.parent.mkdir(parents=True, exist_ok=True)
+OUT.write_text(out)
+tot = sum(durs) / 1000
+print(f'{OUT.relative_to(ROOT)} — {len(LINES["scenes"])} scenes, {tot:.1f}s, '
+      f'{len(PEOPLE)} in the chart, {TOTAL} years, bands {LONG}/{MID}/{NEW}')
+
+# The page around the film carries the same figures in prose, and nothing else
+# checks it: the first cut of this guard caught a lede still saying
+# twenty-eight of us and two hundred and sixty-three years, three days after
+# two names came off the roster. The film is written by the time this runs, so
+# a stale page says exactly what to change rather than blocking the rebuild.
+#
+# It reads the prose and the meta descriptions, never the raw markup: the
+# player's own data-chapters attribute carries "Twenty-six still here", which
+# satisfied a naive substring search on a page whose lede still said
+# twenty-eight.
+if not os.environ.get('RISE_VARIANT'):
+    PAGE_OUT = ROOT / 'branchmeet' / 'index.html'
+    if PAGE_OUT.exists():
+        raw = PAGE_OUT.read_text(encoding='utf-8')
+        meta = ' '.join(re.findall(r'<meta[^>]+content="([^"]*)"', raw)).lower()
+        body = re.sub(r'<(script|style)\b.*?</\1>', ' ', raw, flags=re.S | re.I)
+        body = re.sub(r'<[^>]+>', ' ', body)
+        body = re.sub(r'&mdash;|&middot;|&nbsp;', ' ', body)
+        body = re.sub(r'\s+', ' ', body).lower()
+        everyone = len(ROSTER) + 1 + len(SUPPORT)
+        #  The page states the film's length twice (the hero eyebrow and the
+        #  play button) and it goes stale every time a scene is added — which
+        #  is the same class of fault as a stale headcount, so it is checked
+        #  the same way rather than remembered.
+        _s = round(sum(SECS))
+        run = f'{int(_s // 60)}:{_s % 60:02d}'
+        want = [(spoken(everyone), body, 'the headcount, in the lede'),
+                (spoken(TOTAL), body, 'the years, in the lede'),
+                (str(TOTAL), meta, 'the years, in the meta descriptions'),
+                (run, body, f'the running time ({run})')]
+        gone = [f'{w!r} ({why})' for w, where, why in want if w not in where]
+        assert not gone, ('branchmeet/index.html no longer carries ' +
+                          ', '.join(gone) + '. The roster gives '
+                          f'{everyone} people and {TOTAL} years, and the cut '
+                          f'runs {run}: put those in the page.')

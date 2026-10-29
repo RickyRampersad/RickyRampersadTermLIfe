@@ -75,6 +75,9 @@ function propSheet_() {
     'Last Client Update', 'Last Staff Nudge', 'Reminders Sent', 'Assigned To',
     'Insured Since', 'Years Insured', 'Values Last Reviewed', 'Premium History',
     'Rate Per Mille',
+    // From Salesforce's Agent__c on the risk — what lets an agent open the
+    // board and see their own clients, and only theirs.
+    'Agent', 'Agent Email',
   ]);
 }
 
@@ -90,6 +93,8 @@ function propRow_(r, map, rowIndex) {
     renewalDate: fmtDate_(c('renewal date')),
     days: daysUntil_(c('renewal date')),
     client: String(c('client') || ''),
+    agent: String(c('agent') || ''),
+    agentEmail: String(c('agent email') || '').trim().toLowerCase(),
     contact: String(c('contact') || ''),
     email: String(c('email') || '').trim(),
     mobile: String(c('mobile') || ''),
@@ -228,6 +233,15 @@ function propertyPage_(p) {
         email: r.email, mobile: r.mobile,
         stage: r.stage, stageUpdated: r.stageUpdated, status: r.status,
         since: r.since, years: r.years, valuesReviewed: r.valuesReviewed,
+        // How long since these sums insured were looked at, and what that
+        // drift is likely to have cost. Property is the opposite of motor:
+        // rebuilding cost rises while the schedule stands still, so the
+        // client who changes nothing is the one who ends up under-insured.
+        // The portal uses this to seed the reality check — see the note on
+        // the client side about why it must not be seeded with their own
+        // current figure.
+        guide: (typeof propertyValueGuide_ === 'function')
+          ? propertyValueGuide_(r.total, r.valuesReviewed) : null,
         rate: r.rate, taxRate: PROP.TAX_RATE,
         premiumHistory: r.premiumHistory,
         progress: progressFor_(r.token, r.location),
@@ -483,7 +497,8 @@ function sendPropertyInvite_(rows) {
       eduBox_('<b style="color:#a05e03">💡 Remember your excess</b> — the first portion of every claim is yours to carry. ' +
         'Your renewal page shows the excess that applies, peril by peril.') +
       '<p>Reviewing takes two minutes online. Prefer to talk it through? Just reply to this email' +
-      (CONFIG.AGENT_PHONE ? ' or call ' + esc_(CONFIG.AGENT_PHONE) : '') + '.</p>' + sig_(),
+      (CONFIG.AGENT_PHONE ? ' or call ' + esc_(CONFIG.AGENT_PHONE) : '') + '.</p>' + sig_() +
+      (typeof lostLink_ === 'function' ? lostLink_() : ''),
       'Property renewal'),
   });
 }

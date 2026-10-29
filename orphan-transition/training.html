@@ -6,7 +6,10 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Transition Training | Ricky Rampersad Branch</title>
 <link rel="icon" href="../logo-mark.png">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
 <!-- 15 October 2026: "do a test regarding the orphans. So agents do the test, what they're supposed to do. Staff do the
      test and managers." One page: sign in as the board signs in; read your role's workflow (the sections come from
      workflow.html, so the words live once); take your role's test; see your results. The questions come from the
@@ -14,11 +17,24 @@
      every answer is marked there. The branch manager sees every attempt and confirms the written marks; a unit manager
      sees their team's. Nothing on this page knows an answer. -->
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.08%;ascent-override:99.73%;descent-override:21.33%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:99.93%;ascent-override:103.88%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.55%;ascent-override:99.28%;descent-override:21.23%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:106.52%;ascent-override:97.45%;descent-override:20.84%;line-gap-override:0.00%}
+
+
+
+
 :root{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#64798e;--gold:#efc24b;--gold2:#c9942c;--teal:#00CFEA;--tdark:#07606f;
   --paper:#eef4f7;--card:#fff;--line:#d7e3ea;--stop:#8a3324;--stopbg:#fdeeea;--ok:#1f6f4a;--okbg:#eef7f2;--notebg:#eafafd;--warn:#8a6420;--warnbg:#fff8e6;
-  --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif}
+  --f:'Plus Jakarta Sans', 'Plus Jakarta Sans Fallback', 'Plus Jakarta Sans Fallback R',Inter, 'Inter Fallback', 'Inter Fallback R',system-ui,sans-serif}
 *,*::before,*::after{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--body);font:16px/1.6 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--paper);color:var(--body);font:16px/1.6 Inter, 'Inter Fallback', 'Inter Fallback R',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 button,input,textarea,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--teal);outline-offset:2px}
 a{color:var(--tdark)}
@@ -126,7 +142,19 @@ table.t{width:100%;border-collapse:separate;border-spacing:0;background:var(--ca
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:92vw;z-index:9}
 .toast.on{opacity:1}.toast.bad{background:var(--stop)}
 .rolebadge{display:inline-block;background:var(--gold);color:var(--navy);font-family:var(--f);font-weight:800;font-size:12px;border-radius:999px;padding:2px 10px;margin-left:6px}
+/* the workflow film (16 October 2026): watch first; player.js takes its accent from --dp-accent */
+.film{margin:26px 0 0}
+.film .feb{font:800 12px var(--f);letter-spacing:.14em;text-transform:uppercase;color:var(--gold2)}
+.film h2{font-family:var(--f);font-size:22px;color:var(--ink);margin:4px 0 4px;letter-spacing:-.3px}
+.film p{margin:0;color:var(--dim);font-size:14.5px}
+.vwrap{--dp-accent:var(--gold);position:relative;margin:12px 0 0;border-radius:14px;overflow:hidden;background:#000;box-shadow:0 20px 40px -24px rgba(7,19,31,.45);aspect-ratio:16/9}
+.vwrap video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+.vcover{position:absolute;inset:0;background-size:cover;background-position:center;display:grid;place-items:center;cursor:pointer;z-index:4}
+.vcover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,13,22,.2),rgba(4,13,22,.55))}
+.vcover .pl{position:relative;z-index:2;display:flex;align-items:center;gap:10px;background:var(--gold);color:var(--navy);border-radius:12px;padding:12px 20px;font:800 16px var(--f);box-shadow:0 16px 40px rgba(7,19,31,.4)}
+.vcover .pl svg{width:16px;height:16px}
 </style>
+<script src="/rroperations/sso.js"></script>
 </head>
 <body>
 <header><div class="in"><div class="mark"><img src="../logo-mark.png" alt=""></div>
@@ -134,6 +162,18 @@ table.t{width:100%;border-collapse:separate;border-spacing:0;background:var(--ca
   <div class="mright" id="who"></div></div></header>
 
 <main class="wrap">
+  <section class="film" id="film">
+    <div class="feb">Watch first · 3:48</div>
+    <h2>The client transition, start to finish</h2>
+    <p>One client, from the letter to the TT$200: what happens, who does it, and what counts. For agents, Client Support and managers alike.</p>
+    <div class="vwrap">
+      <video playsinline preload="metadata" poster="board-workflow.jpg" data-scenes="10.8,11.7,12.3,15.8,13.8,15.6,12.7,11.9,10.2,15,24.6,20.4,13.1,16.8,16.4,7.3" data-chapters="For agents, Client Support and managers|It starts with the letter|The answer, or the call|On every call, whoever makes it|The household is named|Families the records missed|When an agent is named|The agent&#x27;s call|On every card|After every call|The Salesforce task|The review, and the claim|The branch sees it|Where it ends|Before you start|Everyone, every client">
+        <source src="board-workflow.mp4" type="video/mp4">
+      </video>
+      <div class="vcover" style="background-image:url(board-workflow.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch: start to finish</div></div>
+    </div>
+    <p class="small muted" style="margin-top:8px">Every name and number in the film is made up. Music: &ldquo;Inspired&rdquo; by Kevin MacLeod (incompetech.com), CC BY 4.0.</p>
+  </section>
   <div id="app">
   <form class="gate" id="gate" autocomplete="off">
     <h1>Your workflow, and the test</h1>
@@ -414,6 +454,8 @@ function drawTeam(detail) {
 
 if (AUTH.code) { $('gWho').value = AUTH.who; $('gCode').value = AUTH.code; open_(); }
 </script>
+
+<script src="../orphan-video/player.js"></script>
 
 <!-- rrb-views -->
 <script>

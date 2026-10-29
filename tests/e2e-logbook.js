@@ -53,8 +53,12 @@ env.Session = { getEffectiveUser: () => ({ getEmail: () => 'owner@example.com' }
 env.__mkSheet('Access', 1, ['Name', 'Email', 'Access Code', 'Role', 'Salesforce User Id', 'Active', 'Apps'], [
   ['Sam Support', 'sam@example.com', 'SAM1', 'Sales Support', '', 'Yes', ''],
 ]);
-env.__mkSheet('Agents', 2, ['Agent No', 'Name', 'Email', 'Unit', 'Code', 'Active'], [
-  ['A10001', 'Ana Agent', 'ana@example.com', 'Unit One', '4821', 'Yes'],
+env.__mkSheet('Bag Rota', 1, ['Staff', 'Order', 'Leaves At', 'Active'], [
+  ['Sam Support', 1, '2 pm', 'Yes'], ['Kim Keeper', 2, '3 pm', 'Yes'], ['Lou Ledger', 3, '4 pm', 'Yes']]);
+env.__mkSheet('Agents', 2, ['Agent No', 'Name', 'Email', 'Unit', 'Code', 'Active', 'Role'], [
+  ['A10001', 'Ana Agent', 'ana@example.com', 'Uma Unit', '4821', 'Yes', 'Agent'],
+  ['A20000', 'Uma Unit', 'uma@example.com', '', 'u1', 'Yes', 'Unit Manager'],
+  ['A20002', 'Cal Other', 'cal@example.com', 'Gary Else', 'c1', 'Yes', 'Agent'],
 ]);
 const seen = [];
 
@@ -123,6 +127,11 @@ const server = http.createServer((req, res) => {
   await page.click('#submitBtn');
   ok('no declaration, refused', /declaration/.test(await page.textContent('#subErr')));
   await page.check('#declare');
+  await page.click('#submitBtn');
+  ok('no one named to hand to, refused', /handing the papers to/.test(await page.textContent('#subErr')));
+  const hopts = await page.$$eval('#handSel option', o => o.map(x => x.textContent));
+  ok('the hand-in list is the staff, and "not yet"', hopts.some(t => /Sam Support/.test(t)) && hopts.some(t => /Not yet/.test(t)), hopts.join(' | '));
+  await page.selectOption('#handSel', 'Sam Support');
   const wide = await page.evaluate(() => document.documentElement.scrollWidth);
   ok('nothing runs off the phone', wide <= 390, wide);
   if (SHOTS) await page.screenshot({ path: SHOTS + '/lb-2-form.png', fullPage: true });
@@ -135,7 +144,8 @@ const server = http.createServer((req, res) => {
      sub.entry.items.every(i => i.department === 'GLOC CS RSC - CHAGUANAS' && i.portfolioId === 'a02000000000002AAA'));
   await page.click('#seeMine');
   await page.waitForSelector('#mine .grp');
-  ok('My log shows it waiting to be handed in', /Logged · hand it in/.test(await page.textContent('#mine')));
+  ok('My log shows who has it, waiting for their signature', /With Sam · to sign/.test(await page.textContent('#mine')) && /Handed to Sam Support/.test(await page.textContent('#mine')));
+  ok('the person named is asked to sign', env.__mail.some(m => /Sign for these/.test(m.subject) && /sam@example\.com/.test(m.htmlBody)));
 
   /* what usually travels together */
   await page.click('[data-tab=log]');
@@ -145,6 +155,8 @@ const server = http.createServer((req, res) => {
   await page.waitForFunction(() => /policy on record/.test((document.getElementById('polLine') || {}).textContent || ''));
   await page.selectOption('#docSel', 'ACH Form');
   await page.check('#declare');
+  ok('the hand-in choice starts empty for the next entry', (await page.$eval('#handSel', s => s.value)) === '');
+  await page.selectOption('#handSel', '__later');
   await page.click('#submitBtn');
   await page.waitForSelector('[data-addmiss]');
   const asks = await page.$$eval('[data-addmiss]', b => b.map(x => x.getAttribute('data-addmiss')));
@@ -170,6 +182,9 @@ const server = http.createServer((req, res) => {
   await sp.waitForSelector('#qRecv .grp');
   ok('staff open on the queue, four tabs', (await sp.$$('#tabs [data-tab]')).length === 4);
   ok('the agent\'s lines wait to be received', /Anika Pretend/.test(await sp.textContent('#qRecv')) && (await sp.$$('#qRecv .ln')).length >= 2);
+  ok('papers handed to Sam come first, marked for Sam to accept', /Handed to you/.test(await sp.textContent('#qRecv .grp')) &&
+     /Accept/.test(await sp.textContent('#qRecv .grp [data-recv]')) && !!(await sp.$('#qRecv .grp [data-nwm]')));
+  ok('the tile says what is handed to Sam', /Handed to you/.test(await sp.textContent('#qTiles')));
   if (SHOTS) await sp.screenshot({ path: SHOTS + '/lb-3-queue.png', fullPage: true });
   await sp.click('#qRecv [data-recv]');
   await sp.click('#mYes');
@@ -211,7 +226,7 @@ const server = http.createServer((req, res) => {
   ok('/transmittal opens the transmittals, with who sent them', !(await sp.$eval('#tab-trans', e => e.hidden)) && /TR-/.test(await sp.textContent('#transList')));
   if (SHOTS) await sp.screenshot({ path: SHOTS + '/lb-6-transmittals.png', fullPage: true });
   await sp.click('[data-tab=log]');
-  ok('staff log for an agent: the agent list is there', (await sp.$$eval('#agentSel option', o => o.length)) === 2 && !(await sp.$eval('#agentPick', e => e.hidden)));
+  ok('staff log for an agent: the agent list is there', (await sp.$$eval('#agentSel option', o => o.length)) >= 2 && !(await sp.$eval('#agentPick', e => e.hidden)));
 
   /* back on the phone: the agent sees it sent */
   await page.reload();
@@ -219,6 +234,29 @@ const server = http.createServer((req, res) => {
   await page.click('[data-tab=mine]');
   await page.waitForSelector('#mine .grp');
   ok('the agent sees it sent, with the transmittal', /Sent/.test(await page.textContent('#mine')) && /TR-/.test(await page.textContent('#mine')));
+
+  /* the unit manager: their team, never another unit */
+  { const st = env.lbSession_(env.dbLogin_({ code: 'SAM1' }).token);
+    env.lbSubmit_({ entry: { type: 'Documents for Guardian', client: 'Cora Elsewhere', declared: true, handedTo: '__later', agentNo: 'A20002',
+      items: [{ document: 'PMAR', department: 'RECORDS MANAGEMENT DEPT', policy: '9000000777' }] }, confirmDuplicates: true, confirmMissing: true }, st); }
+  const um = await (await browser.newContext({ viewport: { width: 390, height: 844 } }));
+  await route(um);
+  const up = await um.newPage();
+  up.on('pageerror', e => errors.push(e.message));
+  await up.goto(base + '/rroperations/logbook/?api=' + encodeURIComponent(API));
+  await up.fill('#gNo', 'A20000'); await up.fill('#gCode', 'u1'); await up.click('#gBtn');
+  await up.waitForSelector('#main:not([hidden])');
+  ok('the unit manager gets the agent side, with "My team"', (await up.$$('#tabs [data-tab]')).length === 2 && /My team/.test(await up.textContent('#tabs')));
+  await up.click('[data-tab=mine]');
+  await up.waitForSelector('#mine .grp');
+  const mt = await up.textContent('#mine');
+  ok('the whole team: Ana\'s papers, with her name on them', /Anika Pretend/.test(mt) && /Ana Agent/.test(mt));
+  ok('never another unit\'s papers', !/Cora Elsewhere/.test(mt));
+  ok('no withdrawing a team member\'s entry', (await up.$$('#mine [data-wd]')).length === 0);
+  ok('the team list names the team only', (await up.$$eval('#mineWho option', o => o.map(x => x.textContent))).join('|') === 'Whole team (2)|Just mine|Ana Agent');
+  const umWide = await up.evaluate(() => document.documentElement.scrollWidth);
+  ok('nothing runs off the phone', umWide <= 390, umWide);
+  ok('the blue shield, not the gold', (await up.$eval('.mark img', i => i.getAttribute('src'))) === '/orphan-transition/board-mark.png');
 
   ok('no script errors', errors.length === 0, errors.join(' | '));
   await browser.close(); server.close();

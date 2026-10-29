@@ -326,11 +326,11 @@ const estimateFor = (rateAll, byType, picked) => {
 const sayHowLong = est => {
   if (!est) return "";
   const h = est.hours;
-  if (h < 0.35) return "About twenty minutes at your rate \u2014 too small for its own block.";
+  if (h < 0.35) return "About twenty minutes at your rate \u2014 fit it in around the day.";
   if (h < 0.85) return "About " + (Math.round(h * 2) / 2 === 0.5 ? "half an hour" : "an hour") +
-                       " at your rate \u2014 not a two-hour block on its own.";
+                       " at your rate.";
   if (h < 3) return "About " + (Math.round(h * 2) / 2) + " hours at your rate.";
-  return "About " + Math.round(h) + " hours at your rate \u2014 more than one block.";
+  return "About " + Math.round(h) + " hours at your rate \u2014 a good part of the day.";
 };
 
 const byTypeFor = (metrics, staffId) =>
@@ -658,7 +658,7 @@ function CloseTheDay({ entry, blocks, mail, att, onClose, standing, onWritten })
      reads as owed — the behaviour before there was a fifth block. */
   const left = (blocks || []).filter(b => b.owed !== false && !(entry && blockWorked(entry, b.id)));
   const outstanding = []
-    .concat(left.length ? [left.length === 1 ? "1 block not reported" : left.length + " blocks not reported"] : [])
+    .concat(left.length ? ["day not reported"] : [])
     .concat(!(mail && mail.pm) ? ["the afternoon mail sweep"] : []);
   const out = att && att.out;
   const today = todayISO();
@@ -928,7 +928,7 @@ function YouSection({ me, api, attToday, setAttToday, mail, saveMail, standing, 
 // ---- the quarter so far ------------------------------------------------------
 
 const evidenceLine = (ev, sf) => {
-  const b = [ev.blocks + " block" + (ev.blocks === 1 ? "" : "s")];
+  const b = [ev.blocks + " day" + (ev.blocks === 1 ? "" : "s") + " logged"];
   if (ev.closed != null) b.push(ev.closed + " closed"); else if (!sf) b.push("Salesforce unreachable");
   if (ev.open != null) b.push(ev.open + " open" + (ev.needs ? ", " + ev.needs + " untouched" : ""));
   return b.join(" · ");
@@ -952,7 +952,7 @@ function YourQuarter({ s, onPerf, onMoments }) {
       h("div", { style: { textAlign: "right", whiteSpace: "nowrap" } },
         h("div", { style: { fontSize: 11.5, fontWeight: 800, color: GOLD } }, g.weight + "%"),
         h("div", { style: { fontSize: 11.5, fontWeight: 700, color: tone(g) } },
-          g.landed == null ? "no blocks yet" : "landed " + pct(g.landed) + (g.target ? " · target " + pct(g.target) : ""))))),
+          g.landed == null ? "nothing logged yet" : "landed " + pct(g.landed) + (g.target ? " · target " + pct(g.target) : ""))))),
     s.competencies.length ? h("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 } },
       s.competencies.map(c => {
         const n = (c.signals || []).length + (c.moments || []).length;
@@ -1023,7 +1023,7 @@ function QuarterStrip({ s }) {
   return h("div", { style: { fontSize: 12, color: behind.length ? AMBER : MUTED, fontWeight: 700, margin: "10px 0 0" } },
     "Your quarter · " + s.daysIn + " days in, " + s.daysLeft + " left · " +
     (none ? "nothing landed yet" : behind.length ? "behind on " + behind.map(g => g.goal + " (" + pct(g.landed) + " of " + pct(g.target) + ")").join(", ")
-                                                : "on target on every goal with blocks so far"));
+                                                : "on target on every goal logged so far"));
 }
 
 function CompEvidence({ c, who }) {
@@ -1090,7 +1090,7 @@ function MomentForm({ comps, mine, onSave, busy }) {
 
 function Evidence({ ev, sf }) {
   const bits = [];
-  bits.push(ev.blocks + " block" + (ev.blocks === 1 ? "" : "s") + " worked");
+  bits.push(ev.blocks + " day" + (ev.blocks === 1 ? "" : "s") + " logged");
   if (ev.blocks) bits.push(ev.met.met + " met · " + ev.met.partly + " partly · " + ev.met.no + " not yet");
   if (ev.planned) bits.push(Math.round(ev.planned / 60 * 10) / 10 + " hours planned");
   if (ev.closed != null) bits.push(ev.closed + " closed in Salesforce in the period");
@@ -1432,7 +1432,7 @@ function KpiPicker({ value, opts, onToggle, mine, branch }) {
   const words = opts.filter(k => !k.salesforce && on.indexOf(k.value) < 0);
   const anyCount = numbered.some(k => (mine && mine[k.value]) || (branch && branch[k.value]));
   return React.createElement("div", null,
-    group("This block is for", picked, true),
+    group("Today is for", picked, true),
     group(picked.length ? "Add another" : (anyCount ? "Your Salesforce tasks — open, and how many are late" : "Work Salesforce holds tasks for"), numbered),
     group(picked.length ? "Or work with no Salesforce task — written in words" : "Work with no Salesforce task — write these in words", words));
 }
@@ -1483,7 +1483,9 @@ function KpiHint({ kpi, live }) {
 const BLOCK_ORDER = [{
   id: "kpi1",
   col: "KPI1",
-  label: "KPI 1"
+  /* No more time blocks (17 October 2026): KPI1 is the whole day, one plan
+     from start to finish. The other four stay so old entries still read. */
+  label: "Your day"
 }, {
   id: "kpi2",
   col: "KPI2",
@@ -1530,9 +1532,9 @@ const blocksFor = staffId => BLOCK_ORDER.map(b => {
    leaving it empty — a day that reads "3 of 5" for everyone every evening is
    a tracker the branch stops believing. Four is the floor for a person whose
    schedule has not loaded yet, which is what the day used to say outright. */
-const owedCount = staffId => blocksFor(staffId).filter(b => b.owed).length || 4;
-// Blocks 1–3 are behind you at the 3pm cut; the last one is still running.
-const CHECKPOINT_BLOCKS = 3;
+const owedCount = staffId => blocksFor(staffId).filter(b => b.owed).length || 1;
+// One plan a day: logged by the 3pm cut is on track.
+const CHECKPOINT_BLOCKS = 1;
 
 // ---------------------------------------------------------------------------
 //  Dates
@@ -2165,8 +2167,8 @@ function PlanPanel({ b, plan, span, book, picked, opts, api, active, date, onSav
         items.length ? items.length + " on the plan" : "nothing on the plan yet",
         span ? " · closes itself at " + span.endText : "")),
     React.createElement("p", { style: { fontSize: 12, color: MUTED, margin: "4px 0 8px", lineHeight: 1.45 } },
-      "Pick what you will get done. At " + (span ? span.endText : "the end of the block") +
-      " the sheet reads Salesforce, files the block, and e-mails you only if something did not land."),
+      "Pick what you will get done. At " + (span ? span.endText : "the end of your day") +
+      " the sheet reads Salesforce, files your day, and e-mails you only if something did not land."),
     cands.length ? React.createElement("div", null,
       list.map(t => {
         const on = has({ k: "sf", id: t.id });
@@ -2223,7 +2225,7 @@ function PlanPanel({ b, plan, span, book, picked, opts, api, active, date, onSav
         mk && mk.i === i ? React.createElement("div", { "data-maketask": "1",
           style: { border: "1px solid " + GOLD, background: "#FFFDF6", borderRadius: 9, padding: "9px 10px", margin: "2px 0 8px" } },
           React.createElement("div", { style: { fontSize: 11.5, color: MUTED, lineHeight: 1.45, marginBottom: 7 } },
-            "It goes into Salesforce as yours, and the block reads it back from there when it closes."),
+            "It goes into Salesforce as yours, and your day reads it back from there when it closes."),
           React.createElement("input", { value: mk.subject, onChange: e => setMk(m => ({ ...m, subject: e.target.value })),
             placeholder: "Subject", style: { ...inp, fontSize: 13, padding: "7px 9px" } }),
           React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" } },
@@ -2952,7 +2954,7 @@ function App() {
       margin: "16px 0 4px",
       lineHeight: 1.55
     }
-  }, "Log your day against your KPI blocks \u2014 what was ", /*#__PURE__*/React.createElement("b", {
+  }, "Log your day against your KPIs \u2014 what was ", /*#__PURE__*/React.createElement("b", {
     style: {
       color: INK
     }
@@ -3102,9 +3104,9 @@ function App() {
       /*#__PURE__*/React.createElement(QuarterStrip, { s: standing[active] }),
       /*#__PURE__*/React.createElement("p", {
         style: { fontSize: 13.5, color: MUTED, lineHeight: 1.55, margin: "14px 0 16px" }
-      }, "Set the day before it starts. Tick what each block is for and the",
-         " tracker shows how much of it there actually is \u2014 so two hours",
-         " does not go into three tasks."),
+      }, "Plan the day when your e-mail comes in. Tick what today is for and the",
+         " tracker shows how much of it there actually is; saving is your",
+         " morning check."),
 
       // What the picked types add up to. Absent when Salesforce is silent,
       // rather than a zero that reads like an empty book.
@@ -3124,10 +3126,16 @@ function App() {
                   const oldest = ages.length ? Math.max.apply(null, ages) : 0;
                   return oldest ? " \u00b7 oldest " + oldest + " days" : "";
                 })() : "")
-            : "Tick a block below and this fills in.")) : null,
+            : "Tick your day below and this fills in.")) : null,
 
-      // The blocks themselves.
-      BLOCKS.map(b => {
+      // The day (and any old block that still holds something).
+      BLOCKS.filter(b => {
+        const sc = blockSched(active, b.col);
+        const bl = filled[b.id];
+        return !schedFor(active) || (sc && sc.time) ||
+          (bl && (txt(bl.kpi) || txt(bl.actioned))) ||
+          (P.plans[b.col] && P.plans[b.col].items.length);
+      }).map(b => {
         const bl = filled[b.id] || blankBlock();
         const sc = blockSched(active, b.col) || {};
         const picked = kpiList(bl.kpi);
@@ -3217,7 +3225,8 @@ function App() {
     if (!mine) return /*#__PURE__*/React.createElement(Denied, {
       onBack: () => setView("home")
     });
-    const blocks = blocksFor(active);
+    // The day, and any old block that still holds something (no time blocks, 17 October 2026).
+    const blocks = blocksFor(active).filter(b => b.owed || !schedFor(active) || (entry && blockWorked(entry, b.id)));
     const done = entry ? blocksDone(entry) : 0;
     const P = plans[planKey(active, date)] || { plans: {}, spans: {} };
     const bookOf = (openBook && openBook[active]) || null;
@@ -3307,7 +3316,7 @@ function App() {
         margin: "14px 0 2px",
         lineHeight: 1.5
       }
-    }, "Each block closes itself at its end time, from Salesforce — tick what you are on before then, or say why after. Your KPI is already set from the schedule; change it if the block went elsewhere."), /*#__PURE__*/React.createElement("div", {
+    }, "Your day closes itself at your finish time, from Salesforce — tick what you are on before then, or say why after. Your KPI is already set from your job description; change it if the day went elsewhere."), /*#__PURE__*/React.createElement("div", {
       style: vp.desktop ? {
         display: "grid",
         gridTemplateColumns: "minmax(0,1.35fr) minmax(0,1fr)",
@@ -3337,6 +3346,7 @@ function App() {
         }
       }, /*#__PURE__*/React.createElement("button", {
         onClick: () => setOpenBlock(open ? null : b.id),
+        "data-day": b.col,
         style: blockHead
       }, /*#__PURE__*/React.createElement("div", {
         style: {
@@ -3402,7 +3412,7 @@ function App() {
       // done in it, what happened. The plan used to sit above the picker it
       // reads from, and the writing guide above the boxes it is a guide to.
       /*#__PURE__*/React.createElement(Field, {
-        label: "The KPIs this block covers"
+        label: "The KPIs today covers"
       }, /*#__PURE__*/React.createElement(KpiPicker, {
         value: bl.kpi,
         opts: opts,
@@ -3572,7 +3582,7 @@ function App() {
         }
       }, st.tone === "saving" ? "Sending…"
          : st.tone === "ask" ? "Send it anyway"
-         : at ? "Update block" : "Submit block"))));
+         : at ? "Update my day" : "Submit my day"))));
     }), /*#__PURE__*/React.createElement(YourQuarter, {
       s: standing[active],
       onPerf: () => { setPerfWho(active); setPerfTab("goals"); setView("perf"); },
@@ -3598,7 +3608,7 @@ function App() {
         margin: "0 0 10px",
         lineHeight: 1.45
       }
-    }, "These belong to the day rather than any one block. Save them once, whenever you have them."), /*#__PURE__*/React.createElement(TaskPosition, {
+    }, "These belong to the day as a whole. Save them once, whenever you have them."), /*#__PURE__*/React.createElement(TaskPosition, {
       live: metrics,
       staffId: active,
       entry: entry,
@@ -3705,7 +3715,7 @@ function App() {
         fontWeight: 700,
         color: dayState.tone === "bad" ? RED : dayState.tone === "ok" ? GREEN : MUTED
       }
-    }, dayState.text || done + " of " + owedCount(active) + " blocks in"), /*#__PURE__*/React.createElement("button", {
+    }, dayState.text || (done >= owedCount(active) ? "Day logged" : "Day not logged yet")), /*#__PURE__*/React.createElement("button", {
       onClick: saveDay,
       disabled: dayState.tone === "saving",
       style: {
@@ -3814,7 +3824,7 @@ function App() {
         margin: "14px 0 0",
         lineHeight: 1.5
       }
-    }, "Blocks 1\u20133 are behind them by 3pm; the last block runs to 4. Anyone under ", CHECKPOINT_BLOCKS, " blocks is flagged while there is still time to act on it."), /*#__PURE__*/React.createElement("div", {
+    }, "No time blocks: each person plans the day in the morning, gives progress at midday and closes off before leaving. Anyone with nothing logged by 3pm is flagged while there is still time to act on it."), /*#__PURE__*/React.createElement("div", {
       style: statRow
     }, /*#__PURE__*/React.createElement(Stat, {
       label: "Logged",
@@ -3860,7 +3870,7 @@ function App() {
         fontSize: 13,
         lineHeight: 1.5
       }
-    }, /*#__PURE__*/React.createElement("b", null, "Behind on blocks:"), " ", behind.map(l => l.p.name + " (" + l.done + "/4)").join(", "))) : /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("b", null, "Day not logged:"), " ", behind.map(l => l.p.name).join(", "))) : /*#__PURE__*/React.createElement("div", {
       style: clearBox
     }, "Everyone has logged and is on track at the 3pm cut."), /*#__PURE__*/React.createElement(SectionLabel, null, "Where each person stands"), /*#__PURE__*/React.createElement("div", {
       style: vp.wide ? autoGrid(330, 12) : null
@@ -4259,7 +4269,7 @@ function App() {
         }
       }, mt.va, " value add", mt.va === 1 ? "" : "s", " \xB7 ", mt.ideas, " idea", mt.ideas === 1 ? "" : "s", " \xB7 ", mt.blockers, " blocker", mt.blockers === 1 ? "" : "s", pt.days > 0 && /*#__PURE__*/React.createElement("span", null, " \xB7 last week ", pt.days, "/5 days, ", pt.closed, " closed")));
     })), /*#__PURE__*/React.createElement(SectionLabel, null, "Where the time went"), mixList.length === 0 ? /*#__PURE__*/React.createElement(Empty, {
-      text: "No KPI blocks logged this week."
+      text: "Nothing logged this week."
     }) : /*#__PURE__*/React.createElement("div", {
       style: {
         ...card,
@@ -4857,7 +4867,7 @@ function Login({
       fontSize: 13,
       marginTop: 6
     }
-  }, "Your day, block by block")), /*#__PURE__*/React.createElement("div", {
+  }, "Your day")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: CARD,
       borderRadius: 14,
@@ -5098,7 +5108,7 @@ function PersonRow({
       fontWeight: 700,
       marginTop: 2
     }
-  }, today ? done + "/4 blocks today" : "Nothing logged today"), att === undefined ? null : /*#__PURE__*/React.createElement("div", {
+  }, today ? (done >= CHECKPOINT_BLOCKS ? "Day logged" : "Started") : "Nothing logged today"), att === undefined ? null : /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: att ? (att.status === "absent" ? AMBER : att.late ? AMBER : MUTED) : RED,
@@ -5574,7 +5584,7 @@ const BlockPips = ({
     padding: "8px 14px",
     borderBottom: "1px solid " + LINE
   }
-}, [0, 1, 2, 3].map(i => /*#__PURE__*/React.createElement("div", {
+}, [0].map(i => /*#__PURE__*/React.createElement("div", {
   key: i,
   style: {
     flex: 1,

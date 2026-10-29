@@ -18,6 +18,19 @@
      policy or money, and no household's name, so a shared screen, a lobby television or this page's source shows nothing
      about any client. The team appears by first name and initial. Opened with the branch code, like the wall. -->
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.08%;ascent-override:99.73%;descent-override:21.33%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:99.93%;ascent-override:103.88%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.55%;ascent-override:99.28%;descent-override:21.23%;line-gap-override:0.00%}
+@font-face{font-family:'Plus Jakarta Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:106.52%;ascent-override:97.45%;descent-override:20.84%;line-gap-override:0.00%}
+
+
+
+
   :root{
     --navy:#07131f; --surface:#0c1a28; --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
     --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA;
@@ -27,8 +40,8 @@
     --s-done:#8fe6f2; --s-named:#19b3cc; --s-spoken:#0e7f92; --s-wait:rgba(255,255,255,.13);
     --good:#34d399; --stop:#f0776a; --stopbg:#5a1a14;
     --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11); --grid:rgba(255,255,255,.09);
-    --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
-    --b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+    --f:'Plus Jakarta Sans', 'Plus Jakarta Sans Fallback', 'Plus Jakarta Sans Fallback R',Inter, 'Inter Fallback', 'Inter Fallback R',system-ui,sans-serif;
+    --b:Inter, 'Inter Fallback', 'Inter Fallback R',system-ui,-apple-system,'Segoe UI',sans-serif;
     --eyebrow:clamp(12px,1.1vw,22px);
     --h2:clamp(24px,2.9vw,56px);
     --hero:clamp(76px,13vw,250px);
@@ -190,6 +203,7 @@
     .slide,.stack i,.bar .tr i{transition:none!important}
   }
 </style>
+<script src="/rroperations/sso.js"></script>
 </head>
 <body>
 <div class="tick" id="tick"></div>

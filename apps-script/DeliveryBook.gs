@@ -64,7 +64,7 @@ var DB = {
     OLD: 'Form responses',
   },
   SALES_SUPPORT: 'rickyrampersadsalessupport@myguardiangroup.com',
-  LOGO: 'https://rickyrampersadbranch.com/logo-mark.png',
+  LOGO: 'https://rickyrampersadbranch.com/orphan-transition/board-mark.png',  // the blue shield: RR Operations, 17 Oct 2026
   BRAND: 'Ricky Rampersad Branch',
   DOC_TYPES: ['Policy Contract', 'Certificate', 'Cheque', 'Renewal Notice', 'Cover Note',
               'Claim Payment', 'Endorsement', 'Other'],
@@ -832,9 +832,9 @@ function dbConfirmationHtml_(d, client, who) {
   return '' +
     '<div style="background:#f3f5f8;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#13202e">' +
     '<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden">' +
-    '<div style="background:#07131f;padding:18px 22px">' +
+    '<div style="background:#070F26;padding:18px 22px">' +
     '<img src="' + DB.LOGO + '" width="40" height="40" alt="" style="vertical-align:middle;border-radius:9px">' +
-    '<span style="color:#efc24b;font-weight:bold;font-size:16px;margin-left:12px;vertical-align:middle">' + DB.BRAND + '</span></div>' +
+    '<span style="color:#8FBBFF;font-weight:bold;font-size:16px;margin-left:12px;vertical-align:middle">' + DB.BRAND + '</span></div>' +
     '<div style="padding:24px 22px;font-size:15px;line-height:1.6">' +
     '<p style="margin:0 0 14px">Dear ' + dbEsc_(first) + ',</p>' +
     '<p style="margin:0 0 14px">This confirms the delivery made to you on <b>' + dbEsc_(d.deliveredText) + '</b>.</p>' +
@@ -849,23 +849,40 @@ function dbConfirmationHtml_(d, client, who) {
     '</div></div>';
 }
 
+/* Who a test copy is copied to (18 October 2026: "in the test copy the
+   rickyrampersadsalessupport and support@rickyrampersadbranch.com"). The
+   DB_TEST_CC property, comma-separated, replaces the two; never the test inbox
+   itself twice. */
+function dbTestCc_(to) {
+  var list = String(dbProp_('DB_TEST_CC') || (DB.SALES_SUPPORT + ',support@rickyrampersadbranch.com')).split(/[,;\s]+/);
+  var seen = {}; [].concat(to || []).forEach(function (t) { seen[String(t).toLowerCase()] = 1; });
+  return list.filter(function (x) { var k = x.toLowerCase(); if (!/@/.test(x) || seen[k]) return false; seen[k] = 1; return true; });
+}
+
 function dbSendConfirmation_(d, client, email, who, test) {
   if (!email) return { status: 'No e-mail on file' };
-  var to = email, html = dbConfirmationHtml_(d, client, who);
+  var to = email, cc = [], html = dbConfirmationHtml_(d, client, who);
   var subject = 'Delivery confirmation — ' + d.items.map(function (it) { return it.document; })
     .filter(function (v, i, a) { return a.indexOf(v) === i; }).join(', ') + ' (' + d.ref + ')';
   if (test) {
     to = dbProp_('DB_TEST_INBOX') || Session.getEffectiveUser().getEmail();
+    cc = dbTestCc_([to]);
     subject = '[TEST] ' + subject;
-    html = '<div style="background:#fff4d6;border:1px solid #efc24b;padding:10px 14px;font-family:Arial;font-size:13px">' +
+    html = '<div style="background:#eef4ff;border:1px solid #6FA8FF;padding:10px 14px;font-family:Arial;font-size:13px">' +
       'TEST — in live mode this would have gone to <b>' + dbEsc_(email) + '</b>.</div>' + html;
+  }
+  /* From support@rickyrampersadbranch.com through Microsoft 365 when LogBook.gs and the MS_* properties are in
+     the project (18 October 2026), else from this account as before. */
+  if (typeof lbGraphSend_ === 'function' && lbGraphSend_([to], cc, subject, html, dbProp_('DB_REPLY_TO', DB.SALES_SUPPORT))) {
+    return { status: (test ? 'Test copy sent' : 'Sent') + ' from support@', sentAt: new Date() };
   }
   try {
     if (MailApp.getRemainingDailyQuota && MailApp.getRemainingDailyQuota() < 1) {
       return { status: 'Held: daily mail limit reached' };
     }
-    MailApp.sendEmail({ to: to, subject: subject, htmlBody: html, name: DB.BRAND,
-                        replyTo: dbProp_('DB_REPLY_TO', DB.SALES_SUPPORT) });
+    var mo = { to: to, subject: subject, htmlBody: html, name: DB.BRAND, replyTo: dbProp_('DB_REPLY_TO', DB.SALES_SUPPORT) };
+    if (cc.length) mo.cc = cc.join(',');
+    if (typeof lbAppMail_ === 'function') lbAppMail_(mo); else MailApp.sendEmail(mo);
     return { status: test ? 'Test copy sent' : 'Sent', sentAt: new Date() };
   } catch (e) {
     return { status: 'Failed: ' + e.message };
@@ -977,12 +994,12 @@ function dbHtml_(inner) {
     '<title>' + DB.BRAND + '</title><style>' +
     'body{margin:0;background:#f3f5f8;font-family:Arial,Helvetica,sans-serif;color:#13202e}' +
     '.card{max-width:460px;margin:24px auto;background:#fff;border-radius:14px;overflow:hidden}' +
-    '.top{background:#07131f;padding:16px 20px;color:#efc24b;font-weight:bold}' +
+    '.top{background:#070F26;padding:16px 20px;color:#8FBBFF;font-weight:bold}' +
     '.top img{width:36px;height:36px;border-radius:8px;vertical-align:middle;margin-right:10px}' +
     '.in{padding:22px 20px;line-height:1.55}h1{font-size:20px;margin:0 0 10px}' +
     '.stars{font-size:38px;color:#e2a71e;letter-spacing:4px;margin:6px 0 12px}.stars a{color:inherit;text-decoration:none}' +
     '.off{color:#d5dbe3}textarea{width:100%;box-sizing:border-box;min-height:96px;padding:10px;border:1px solid #cdd5df;border-radius:10px;font:inherit}' +
-    'button{margin-top:10px;width:100%;padding:13px;border:0;border-radius:10px;background:#07131f;color:#efc24b;font-weight:bold;font-size:15px}' +
+    'button{margin-top:10px;width:100%;padding:13px;border:0;border-radius:10px;background:#070F26;color:#8FBBFF;font-weight:bold;font-size:15px}' +
     '.muted{color:#5b6b7f;font-size:13px}</style></head><body><div class="card">' +
     '<div class="top"><img src="' + DB.LOGO + '" alt="">' + DB.BRAND + '</div><div class="in">' + inner + '</div></div></body></html>';
   return HtmlService.createHtmlOutput(page).addMetaTag('viewport', 'width=device-width, initial-scale=1')

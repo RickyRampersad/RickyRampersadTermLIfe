@@ -86,7 +86,7 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
     return j({ok:true});
   });
 
-  await page.goto('http://localhost:8796/wall/', { waitUntil:'networkidle' });
+  await page.goto('http://localhost:8796/wall/classic/', { waitUntil:'networkidle' });   // the classic block wall (20 Oct 2026: /wall/ is the new Wall Intelligence)
   const gi = await page.$$('#gate input');
   if (gi.length >= 2) { await gi[0].fill('ricky@example.com'); await gi[1].fill('1'); await page.click('#gGo'); }
   await page.waitForTimeout(2500);

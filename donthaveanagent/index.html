@@ -11,8 +11,24 @@
 <meta property="og:type" content="website"/>
 <meta name="theme-color" content="#FFF6F4"/>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Crect width='88' height='88' rx='22' fill='%230F1A2B'/%3E%3Cdefs%3E%3CclipPath id='fk1'%3E%3Crect x='30' y='26' width='15' height='36'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg transform='rotate(-40 44 44)'%3E%3Crect x='12' y='31.5' width='45.5' height='25' rx='12.5' fill='none' stroke='%23FFF6F4' stroke-width='6.6'/%3E%3Crect x='31' y='31.5' width='45.5' height='25' rx='12.5' fill='none' stroke='%23FF5C4D' stroke-width='6.6'/%3E%3Cg clip-path='url(%23fk1)'%3E%3Crect x='12' y='31.5' width='45.5' height='25' rx='12.5' fill='none' stroke='%23FFF6F4' stroke-width='6.6'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
 <style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'DM Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:104.31%;ascent-override:95.10%;descent-override:29.72%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:102.04%;ascent-override:97.22%;descent-override:30.38%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:104.79%;ascent-override:94.67%;descent-override:29.58%;line-gap-override:0.00%}
+@font-face{font-family:'DM Sans Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.76%;ascent-override:91.21%;descent-override:28.50%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:112.94%;ascent-override:85.71%;descent-override:22.22%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:110.34%;ascent-override:87.73%;descent-override:22.75%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:113.46%;ascent-override:85.32%;descent-override:22.12%;line-gap-override:0.00%}
+@font-face{font-family:'Montserrat Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:117.62%;ascent-override:82.30%;descent-override:21.34%;line-gap-override:0.00%}
+
+
+
+
 /* ═══════════════════════════════════════════════════════════════════════
    BRAND TOKENS — Ricky Rampersad Branch · your insurer
    Gold-forward on deep navy, which is the insurer house look and the
@@ -57,8 +73,8 @@
   --gold-soft2: rgba(255,92,77,.05);
   --slate-soft: rgba(155,150,160,.20);
 
-  --head: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --head: 'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --body: 'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --r: 16px; --rl: 24px;
 }
 

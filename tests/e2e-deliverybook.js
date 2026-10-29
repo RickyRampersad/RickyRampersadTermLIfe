@@ -60,11 +60,22 @@ const seen = [];
     const u = route.request().url();
     if (u.startsWith(base)) return route.continue();
     if (u.startsWith(API)) {
+      if (/[?&]action=ping/.test(u)) return route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ ok: true, service: 'delivery-book', mode: 'test', docTypes: SESSION.docTypes, relationships: SESSION.relationships, methods: SESSION.methods }) });
       const b = JSON.parse(route.request().postData() || '{}');
       seen.push(b);
       const reply = o => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(o) });
       switch (b.action) {
-        case 'login': return reply(b.code.toUpperCase() === 'PAT1' ? SESSION : { ok: false, error: 'That code is not on the Delivery Book access list.' });
+        case 'lb.login':
+          if (String(b.agentNo).toUpperCase() === 'A00999' && b.code === 'ag1') return reply(Object.assign({}, SESSION, { token: 'TA', name: 'Ann Agent', role: 'Agent', agentNo: 'A00999' }));
+          if (String(b.agentNo).toUpperCase() === 'A00777' && b.code === 'um1') return reply(Object.assign({}, SESSION, { token: 'TU', name: 'Uma Lead', role: 'Unit Manager', agentNo: 'A00777' }));
+          /* As the deployed LogBook.gs answered on 20 October 2026: no lists, and for S002 no Delivery Book. */
+          if (String(b.agentNo).toUpperCase() === 'S002' && b.code === 'old1') return reply({ ok: true, token: 'TO', name: 'Liz Staff', role: 'Staff', mode: 'test', agentNo: 'S002',
+            apps: [{ id: 'logbook', name: 'Log Book', path: '/rroperations/logbook/', status: 'live' }] });
+          if (String(b.agentNo).toUpperCase() === 'S001' && b.code === 'pat1') { const x = Object.assign({}, SESSION); delete x.docTypes; delete x.relationships; delete x.methods; return reply(x); }
+          return reply({ ok: false, error: 'That agent number and password do not match.' });
+        case 'login':
+          return reply(b.code === 'CODE1' ? Object.assign({}, SESSION, { token: 'TC', name: 'Liz Staff' }) : { ok: false, error: 'That code is not on the Delivery Book access list.' });
         case 'apps': return reply({ ok: true, apps: APPS, mode: 'test' });
         case 'lookup': return reply({ ok: true, via: 'policy', policy: 'TT FCP 0700001', clients: [CLIENT] });
         case 'policies': return reply(POLICIES);
@@ -86,22 +97,48 @@ const seen = [];
     return route.abort();
   });
 
-  /* ── the launcher ── */
+  /* ── the branch app: one sign-in, tiles by role ── */
+  const signIn = async (no, pw) => { await page.fill('#no', no); await page.fill('#pw', pw); await page.click('#lockBtn'); };
+  const tileNames = () => page.$$eval('.app b', els => els.map(e => e.textContent));
   await page.goto(base + '/rroperations/?api=' + encodeURIComponent(API));
-  await page.fill('#code', 'nope'); await page.click('#lockBtn');
+  await signIn('S001', 'nope');
   await page.waitForFunction(() => document.getElementById('lockErr').textContent.length > 0);
-  ok('a wrong code is told so', /not on the Delivery Book access list/.test(await page.textContent('#lockErr')));
-  await page.fill('#code', 'pat1'); await page.click('#lockBtn');
+  ok('a wrong password is told so', /do not match/.test(await page.textContent('#lockErr')));
+
+  await signIn('A00999', 'ag1');
   await page.waitForSelector('#home:not([hidden])');
-  const tiles = await page.$$eval('.app', els => els.map(e => ({ t: e.querySelector('b').textContent, live: e.tagName === 'A' })));
-  ok('three apps on the launcher', tiles.length === 3, JSON.stringify(tiles));
-  ok('the Delivery Book opens; the two trackers are coming soon',
-     tiles[0].live && !tiles[1].live && !tiles[2].live && (await page.$$('.badge')).length === 2);
+  let names = await tileNames();
+  ok('an agent sees the Log Book, the clients board and the fact find', ['Log Book', 'My clients board', 'Fact Find'].every(n => names.includes(n)), names.join(', '));
+  ok('an agent sees no Delivery Book and no branch screens', !names.includes('Delivery Book') && !names.includes('Clients dashboard'));
+  ok('an agent is told they see their own work', /your own/.test(await page.textContent('#scope')));
+  await page.click('#signOut');
+  ok('signing out clears the phone', await page.evaluate(() => !localStorage.getItem('rrb-ops-session')));
+
+  await signIn('A00777', 'um1');
+  await page.waitForSelector('#home:not([hidden])');
+  ok('a unit manager is told he sees his team', /team/.test(await page.textContent('#scope')));
+  ok('a unit manager has no Delivery Book', !(await tileNames()).includes('Delivery Book'));
+  await page.click('#signOut');
+
+  await signIn('S001', 'pat1');
+  await page.waitForSelector('#home:not([hidden])');
+  names = await tileNames();
+  ok('staff see the Delivery Book, group clients and the Premium Due Desk', ['Delivery Book', 'Group clients', 'Premium Due Desk'].every(n => names.includes(n)), names.join(', '));
+  // The desk app (21 Oct 2026): petty cash and the gas log are under Forms until they move into the app; Find a tool knows the old names.
+  ok('petty cash and the gas log are under Forms', (await page.$$eval('.form-row b', els => els.map(e => e.textContent))).filter(n => /Petty Cash|Gas Log/.test(n)).length === 2);
+  await page.fill('#find', 'transmittal');
+  ok('Find a tool: "transmittal" finds it', (await tileNames()).join() === 'Transmittal', (await tileNames()).join());
+  await page.fill('#find', 'orphan');
+  ok('and "orphan" finds the clients board', (await tileNames()).includes('My clients board'));
+  await page.fill('#find', '');
+  ok('the old names are shown with where they went', /JotForm Delivery Book → Delivery Book/.test(await page.textContent('#moved')));
+  ok('test mode is shown', /Test mode/.test(await page.textContent('#who')));
   ok('greets him by name', /Pat/.test(await page.textContent('#hello')));
+  ok('nothing runs off a phone', await page.evaluate(() => document.documentElement.scrollWidth <= 390));
   if (SHOTS) await page.screenshot({ path: SHOTS + '/1-launcher.png', fullPage: true });
 
   /* ── the Delivery Book ── */
-  await page.click('a.app');
+  await page.click('a.app[href="/rroperations/delivery-book/"]');
   await page.waitForURL(/delivery-book/);
   await page.waitForSelector('#lock[hidden]', { state: 'attached' });
   ok('signed in already, no second code', await page.$eval('#lock', e => e.hidden));
@@ -116,6 +153,8 @@ const seen = [];
   ok('the policy that found her is already ticked', ticked.length === 1 && ticked[0] === 'TT FCP 0700001', ticked.join());
   const docOfHit = await page.$eval('.pol.on select', s => s.value);
   ok('a property policy defaults to a certificate', docOfHit === 'Certificate');
+  const docOpts = await page.$$eval('.pol.on select option', o => o.map(x => x.textContent));
+  ok('staff signed in by agent number can choose a cheque or a contract', docOpts.includes('Cheque') && docOpts.includes('Policy Contract'), docOpts.join(', '));
   await page.click('.grp:first-child .pol .head');     // tick the LIFE policy
   ok('a life policy defaults to a policy contract', (await page.$eval('.grp:first-child .pol select', s => s.value)) === 'Policy Contract');
   ok('her e-mail on file is shown and locked', await page.$eval('#email', e => e.readOnly && e.value === 'anika@example.com'));
@@ -163,12 +202,29 @@ const seen = [];
     { id: 'petty-cash', name: 'Petty Cash Tracker', path: '/rroperations/petty-cash/', status: 'soon' }] })));
   await p2.goto(base + '/rroperations/delivery-book/');
   await p2.waitForTimeout(200);
-  ok('the Delivery Book refuses someone without it', /not on your access/.test(await p2.textContent('#lockMsg')));
+  ok('the Delivery Book refuses someone without it', /does not open the Delivery Book/.test(await p2.textContent('#lockMsg')));
   await p2.evaluate(() => localStorage.removeItem('rrb-ops-session'));
   const p3 = await ctx.newPage();
   await p3.goto(base + '/rroperations/delivery-book/');
   await p3.waitForURL(/rroperations\/\?next=delivery-book/);
   ok('signed out, the Delivery Book sends you to the launcher', true);
+
+  /* Staff whose agent-number sign-in does not carry the Delivery Book: the access code opens it there and then. */
+  await page.goto(base + '/rroperations/?api=' + encodeURIComponent(API));
+  await page.evaluate(() => localStorage.clear()); await page.reload();
+  await signIn('S002', 'old1');
+  await page.waitForSelector('#home:not([hidden])');
+  await page.goto(base + '/rroperations/delivery-book/?api=' + encodeURIComponent(API));
+  await page.waitForSelector('#codeForm:not([hidden])');
+  ok('without the Delivery Book on their sign-in, staff are offered their access code', /access code/.test(await page.textContent('#lockMsg')));
+  await page.fill('#code', 'CODE1'); await page.click('#codeBtn');
+  await page.waitForSelector('#lock', { state: 'hidden' });
+  ok('the access code opens the Delivery Book on the spot', await page.$eval('#me', e => /Liz Staff/.test(e.textContent)));
+  await page.goto(base + '/rroperations/?api=' + encodeURIComponent(API));
+  await page.evaluate(() => localStorage.clear()); await page.reload();
+  await page.click('#useCode'); await page.fill('#code', 'CODE1'); await page.click('#codeBtn');
+  await page.waitForSelector('#home:not([hidden])');
+  ok('the branch app also takes a staff access code', (await tileNames()).includes('Delivery Book'));
 
   ok('no script errors', errors.length === 0, errors.join(' | '));
   await browser.close(); server.close();

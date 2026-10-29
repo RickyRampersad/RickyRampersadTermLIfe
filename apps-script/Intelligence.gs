@@ -5737,10 +5737,10 @@ function iSecretEq_(a, b) {
   return diff === 0;
 }
 
-function iFindPerson_(who, secret) {
+function iFindPerson_(who, secret, trusted) {
   who = String(who || '').trim().toLowerCase();
   secret = String(secret || '').trim();
-  if (!who || !secret) return null;
+  if (!who || (!secret && !trusted)) return null;
 
   var tabs = iAccessTabs_();
   for (var t = 0; t < tabs.length; t++) {
@@ -5778,7 +5778,7 @@ function iFindPerson_(who, secret) {
       if (cActive >= 0 && /^(no|inactive|disabled|off)$/i.test(String(row[cActive]).trim())) {
         return { blocked: 'This login has been deactivated — speak to the branch.' };
       }
-      if (!iSecretEq_(String(row[cCode]).trim(), secret)) continue;
+      if (!trusted && !iSecretEq_(String(row[cCode]).trim(), secret)) continue;
 
       var roleTxt = (cRole >= 0 ? String(row[cRole]).trim() : '') || 'Agent';
       var role = iRoleOf_(roleTxt);
@@ -6434,6 +6434,7 @@ function intelRoute_(b) {
   if (action.indexOf('intel.') !== 0) return null;
 
   if (action === 'intel.signin') return iActSignin_(b);
+  if (action === 'intel.ssoin') return iActSsoIn_(b);
   /* Which Intelligence.gs a project is carrying, from outside, with no token:
      the answer to "did the paste take". Nothing in it but the build. */
   if (action === 'intel.ping') return iJson_(intelHealth_());
@@ -6498,6 +6499,46 @@ function iActSignin_(b) {
     name: person.name, role: person.role, title: person.title,
     agentName: person.agentName, agentId: person.agentId, unit: person.unit
   });
+}
+
+
+/* ── the branch app's one sign-in ────────────────────────────────────────────
+   18 October 2026: "when they log in they should not have to log back into all the apps". The branch app
+   (rickyrampersadbranch.com/app) signs a person in to RR Operations by agent number and fact find password. Its pages hand
+   this project the session token as the code "OPS:<token>"; this asks RR Operations who the token belongs to (name, role,
+   agent number, never a password) and keeps the answer ten minutes. RROPS_URL in Script properties overrides the address. */
+var I_OPS = { URL: 'https://script.google.com/macros/s/AKfycbyRPFW_RdQItCeSMHvP2HYEN69Zv2HQMrLxw9IUWUlnUlkzjqaVFPdvjFcg_-b-zX78/exec', CACHE_S: 600 };
+function iOpsWho_(token) {
+  token = String(token || '').trim();
+  if (!/^[A-Za-z0-9]{20,80}$/.test(token)) return null;
+  var cache = CacheService.getScriptCache(), key = 'ops-who-' + token.slice(0, 48);
+  var hit = cache.get(key);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  var url = PropertiesService.getScriptProperties().getProperty('RROPS_URL') || I_OPS.URL;
+  try {
+    var r = UrlFetchApp.fetch(url, { method: 'post', contentType: 'text/plain;charset=utf-8', followRedirects: true, muteHttpExceptions: true,
+      payload: JSON.stringify({ action: 'lb.whoami', token: token }) });
+    var j = JSON.parse(r.getContentText());
+    if (!j || !j.ok) return null;
+    var v = { name: String(j.name || ''), role: String(j.role || ''), agentNo: String(j.agentNo || ''), email: String(j.email || '') };
+    cache.put(key, JSON.stringify(v), I_OPS.CACHE_S);
+    return v;
+  } catch (e) { return null; }
+}
+
+/* The branch app's sign-in turned into this desk's own session: the person RR Operations names, found on the access list
+   by agent number, e-mail or name, with no code asked. A token RR Operations does not recognise opens nothing. */
+function iActSsoIn_(b) {
+  var v = iOpsWho_(b.ops);
+  if (!v) return iErr_('Your branch app sign-in has ended. Sign in again at rickyrampersadbranch.com/app.');
+  var person = (v.agentNo && iFindPerson_(v.agentNo, '', true)) || (v.email && iFindPerson_(v.email, '', true)) ||
+               (v.name && iFindPerson_(v.name, '', true));
+  if (person && person.blocked) return iErr_(person.blocked);
+  if (!person) return iErr_('You are signed in to the branch app, but not on this desk\'s access list. Ask the branch to add you.');
+  var s = iIssueSession_(person);
+  iLogAction_(person.name, 'SIGNIN', '', '', person.title + ' · ' + person.tab + ' · branch app');
+  return iOk_({ token: s.token, expires: s.expires, name: person.name, role: person.role, title: person.title,
+    agentName: person.agentName, agentId: person.agentId, unit: person.unit });
 }
 
 function iActSignout_(b) {
