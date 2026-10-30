@@ -7416,6 +7416,73 @@ argument is FPS, not seconds**, and `importvox.py` writes `durs` in seconds
 while `data-d` is milliseconds.
 
 
+### The how-to film: bringing something to the meeting — 30 October 2026
+
+Asked for in these words: *"this is for the meeting tomorrow, how to use the
+builder etc and contributions etc"*, then *"and agents are supposed and all
+persons make the contributions and make a great meeting"*.
+
+`meetings/usefilm.mp4` (1:03), its page to post at **`/meetinghowto/`**, source
+`meetings/usefilm.html`, built by `tools/film/build-mtusefilm.py` from
+`mtuse-lines.json` and `mtuse-timing.json`.
+
+**IT IS NOT DATED TO ONE FRIDAY, AND THAT IS THE LESSON.** The first cut opened
+*"Tomorrow at noon"* and was stale by the next morning — the branch meets every
+week, so a how-to that names a day dies after one use. Line 1 was re-voiced
+undated (runner key `mtusefix`) and mapped back onto index 01. Nothing else in
+the script names a date.
+
+**THE COMPOSER IS ONLY OPEN BEFORE THE REGISTER IS**, which is why the film
+teaches bringing an item the night before and the register as a separate, later
+tap. `floorSection` draws the pre-meeting box only while
+`upcoming = !live && !m.past && !m.checkInOpen`, so it **shuts at 11:30** and the
+floor takes over. Anybody told at 11:20 to "put your item on the agenda" finds
+the box gone ten minutes later.
+
+**The screens are the real page**, shot by `tools/film/mtuseshots/shots.js`
+against a fully mocked backend, so nothing reached the live sheet. The agent,
+every name and every contribution on them are invented. The **agenda items are
+the branch's own standing rota items**, with their own `Detail` text as the
+question under each one, because that is what an agent opening the page actually
+sees — inventing an agenda would have taught a screen that is not there. Gold
+shield, not the board blue: the page it teaches carries gold.
+
+#### A tall card is cropped, not shrunk
+
+`.cardshot` is a 530×468 frame with `overflow:hidden`, so the composer card —
+1,176px tall because of its preamble — lost its own Send button, and the gate
+card lost its Sign in. Two fixes, and the first is the better one:
+
+- **Clip the region the line is about**, not the whole card. `clipTo` in the
+  shooter takes a page screenshot with a `clip` computed from two elements'
+  bounding boxes (`.row3` → `#fl-ask` for "pick the item";
+  `label[for="fl-body"]` → `#fl-go` for "press it"), with an optional third
+  selector naming the element whose **width** to take, since a label is narrow
+  and the crop still has to be card-wide. `document.querySelector` inside
+  `page.evaluate` is plain CSS — a Playwright `>> xpath=` selector throws there.
+- **`.cardshot.fit`** scales rather than crops, and needs `max-width` as well as
+  `max-height`: with height alone a 1.42-aspect crop came out 710px wide in a
+  530px column and squeezed the headline beside it to one word a line.
+
+#### Three smaller traps
+
+- **A class renamed in the CSS and not in the markup renders nothing.** `.kd`
+  became `.knd` in the stylesheet and the scene still emitted `class="kd k1"`,
+  so the four kind cards rendered as unstyled inline text. Grep the generated
+  page for the class, not just the builder — the same lesson as `/branchmeet/`.
+- **An element screenshot of anything tall catches the sticky nav across it**,
+  which reads as a rendering fault. `addStyleTag('.nav{position:static}')`
+  before any tall crop.
+- **PNG shots took the page to 2.4 MB**, since the builder folds every one in as
+  a data URI. The shooter writes JPEG at quality 88; it is 1 MB now.
+
+Re-cut: edit `mtuse-lines.json`, push `tts/job.json` to `tts-run`, then
+`importvox.py <out> vomtuse 1.15 --timing mtuse-timing.json --lines
+mtuse-lines.json`, `build-mtusefilm.py`, `sfx.py`,
+`usetrack.py ../../rr-branch-theme.mp3 mtuse`,
+`render.js ../../meetings/usefilm.html cap-mtuse 30 ../../meetings/usefilm.jpg`,
+`mixany.py`. Re-shoot first with `node mtuseshots/shots.js` if the page changed.
+
 ### The home screen says what to do, by role — 30 October 2026
 
 Asked for in these words, after he signed in as one of the agents the morning
