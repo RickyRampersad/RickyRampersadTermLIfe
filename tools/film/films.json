@@ -1120,36 +1120,40 @@
   "hits": [],
   "capbg": "070F26"
  },
- "mtflow": {
-  "cap": "cap-mtflow",
-  "vox": "vomtflow",
-  "music": "bed-mtflow.wav",
-  "mix": "mtflow-mix.wav",
-  "ass": "captions-mtflow.ass",
-  "dur": 46.9,
+ "mtrise": {
+  "cap": "cap-mtrise",
+  "vox": "vomtrise",
+  "music": "bed-mtrise.wav",
+  "mix": "mtrise-mix.wav",
+  "ass": "captions-mtrise.ass",
+  "dur": 64.8,
   "durs": [
-   4.0,
-   11.4,
-   7.7,
-   5.1,
+   4.8,
+   3.0,
+   7.1,
+   5.5,
+   9.5,
+   6.4,
+   6.3,
+   8.2,
    6.9,
-   7.9,
-   3.9
+   7.1
   ],
-  "out": "../../meetings/flow.mp4",
-  "musicgain": 0.5,
+  "out": "../../meetings/fy27.mp4",
+  "musicgain": 0.56,
   "duck": 0.3,
-  "sfx": "sfx-mtflow.wav",
+  "sfx": "sfx-mtrise.wav",
   "start": 0,
   "capmode": "strip",
-  "dark": [],
+  "dark": [
+   0
+  ],
   "ticks": [],
   "hits": [
-   12.07,
-   24.0,
-   29.61,
-   36.43
+   9.47,
+   20.9,
+   58.2
   ],
-  "capbg": "07080C"
+  "capbg": "05070C"
  }
 }
