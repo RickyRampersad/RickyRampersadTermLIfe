@@ -7331,6 +7331,90 @@ the shared code went, and it does not change.
 a new column on People or a new tab needs no setup step — add it to `SCHEMA`
 and it appears.
 
+### The sign-in film, and the two taps it exists to teach — 30 October 2026
+
+Asked for the night before the meeting, in these words: *"and can you do a
+small vid as to what to do and whats expected?"*
+
+`meetings/signin.mp4` (1:14), its page to post at **`/meetingvideo/`**, source
+`meetings/film.html`, built by `tools/film/build-mtfilm.py`.
+
+**THERE ARE TWO TAPS, NOT ONE, AND THIS IS THE WHOLE POINT OF THE FILM.**
+`apiLogin_` writes only to the Log tab; `apiCheckIn_` alone writes the
+attendance row. So "signing in is the register" — the phrase used throughout
+the section above — is a slogan about there being **no password and no
+enrolment**, and it is *not* the attendance mark. The agent number gets you
+into the room; the **"I am here"** button on the meeting card is the register.
+
+The first cut of the script said "that one tap is what marks you present",
+and so did the WhatsApp message sent the evening before. Left uncorrected,
+the branch signs in the night before, believes it is present, never presses
+the button, and the register reads half the room absent at 12:05. Anything
+written about this product has to carry both taps.
+
+**The phone screens are the real gate**, shot by `tools/film/mtshots/shots.js`
+against a fully mocked backend, so nothing reached the live sheet. The agent
+number (`A10072`) and the name on them are invented, and the action row names
+a **role**, never a person: no real agent number and no client anything goes
+into an MP4 at a public URL. It carries the **gold** shield, not the board
+blue, because the page it teaches carries gold and every screen inside it
+shows gold.
+
+**A phone at 272px in a 1280 frame renders the field they must type into
+about 10px tall.** Nobody reads that. The instructional scenes use tight
+crops taken by `element.screenshot()` on `.gate-card` and `.checkin`, which
+is exact and needs no hand-measured crop box.
+
+#### `.act` is render.js's, and taking it cost an hour
+
+The action table in scene 10 was `<div class="act">`, styled
+`max-width:860px;overflow:hidden`. **`.act` is also the class render.js puts
+on the live scene**, so every active scene inherited both, and 420px was
+clipped off the right of every frame — while `.in`, `.split` and the columns
+all measured correctly, because the layout *was* correct and only the paint
+was clipped.
+
+It presented as four different bugs in turn (a squeezed text column, a card
+overflowing its track, `inset:0` apparently not applying, a section computing
+860px wide), and three rounds of guessing at the cascade found none of them.
+What found it in one call was asking the browser **which rules actually match
+this element**, with `act` on it. When a layout will not do what the rule
+says, enumerate the matched rules rather than re-reading the stylesheet.
+
+`build-mtfilm.py` now refuses to write the page when any rule's **subject**
+(its last compound, so `.sc.wide .R` is fine) styles a name the render
+contract owns: `act`, `out`, `cnt`, `sc`, `in`, `rolling`. That is a third
+family of class collision, after the shell's classes and the film's own
+sheet, and the only one of the three that no existing guard covered.
+
+#### The voice
+
+Twelve lines, Andrew Expressive on the `tts-run` runner, every clip checked
+for its language **and its words**. Three came back wrong and were re-worded
+off the shape rather than around it:
+
+| written | heard |
+|---|---|
+| "It **does** not mark you present" | "It **is** not mark you present" |
+| "**Check-in** opens" | "**Check and** opens" |
+| "Try **the sign-in** tonight" | "Try **to sign in** tonight" |
+
+Two of the three are the **hyphenated compound** ("check-in", "the sign-in"),
+which this voice runs together and Whisper then hears as two words. Avoid a
+hyphenated compound noun in a spoken line; say "the button opens" and "try
+it tonight". `Rampersad` comes back as "Ramperset" on every take, so the URL
+is also **on screen** in that scene, the same mitigation the `Akaash` → "of
+cash" case took.
+
+Re-cut: edit `mtsign-lines.json`, push `tts/job.json` to `tts-run`, then
+`importvox.py <out> vomtsign 1.15 --timing mtsign-timing.json --lines
+mtsign-lines.json`, `build-mtfilm.py`, `sfx.py`, `usetrack.py
+../../rr-branch-theme.mp3 mtsign`, `render.js ../../meetings/film.html
+cap-mtsign 30 ../../meetings/signin.jpg`, `mixany.py`. **render.js's third
+argument is FPS, not seconds**, and `importvox.py` writes `durs` in seconds
+while `data-d` is milliseconds.
+
+
 ## `/branchmeet/` — the FY27 rise, and what the film may not say
 
 Asked for on 28 October 2026, the evening before the branch group sees it:
