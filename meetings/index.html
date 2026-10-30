@@ -203,16 +203,40 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:999px;padding:7px 14px}
   .todo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:12px}
   .todo h2{font-size:16px;font-weight:800;margin-bottom:3px}
-  .todo .who{font-size:12px;color:var(--dim);margin-bottom:14px}
-  .todo ol{list-style:none;counter-reset:td;margin:0;padding:0}
-  .todo li{counter-increment:td;position:relative;padding:0 0 14px 38px;font-size:14px;line-height:1.6}
-  .todo li:last-child{padding-bottom:0}
-  .todo li:before{content:counter(td);position:absolute;left:0;top:1px;width:26px;height:26px;
-    border-radius:50%;background:var(--accent);color:#07131f;font-size:13px;font-weight:800;
-    display:grid;place-items:center}
-  .todo li.ok:before{content:"\2713";background:var(--green)}
-  .todo li .n{display:block;font-size:12.5px;color:var(--muted);margin-top:3px}
-  .todo .btn-row{margin-top:15px}
+  /*  Never .who: the header's user chip owns that class and carries
+   *  white-space:nowrap, which held this line on one line and put
+   *  40px of sideways scroll on the page at 390.
+   */
+  .todo .mewho{font-size:12px;color:var(--dim);margin-bottom:16px;line-height:1.55}
+  .todo .btn-row{margin-top:16px}
+
+  /*  The run-up: one rail from tonight to the minutes, every stop
+   *  with a time on it and the person it belongs to. Ticked where the
+   *  record can actually say so, open where it cannot.
+   */
+  .rail{margin:0;padding:0;list-style:none}
+  .rail li{position:relative;padding:0 0 18px 42px}
+  .rail li:last-child{padding-bottom:0}
+  .rail li:before{content:"";position:absolute;left:11px;top:22px;bottom:0;width:2px;background:var(--line)}
+  .rail li:last-child:before{display:none}
+  .rail li .dot{position:absolute;left:0;top:2px;width:24px;height:24px;border-radius:50%;
+    border:2px solid var(--line);background:var(--bg2);display:grid;place-items:center;
+    font-size:11px;font-weight:800;color:var(--dim)}
+  .rail li.done .dot{background:var(--green);border-color:var(--green);color:#07131f}
+  .rail li.now .dot{background:var(--accent);border-color:var(--accent);color:#07131f}
+  /*  No negative margin on the live stop: it does not overflow
+   *  visibly, but it grows the card's scrollWidth and the page then
+   *  reports a sideways scroll at 390. The highlight is a background
+   *  on the row's own box instead.
+   */
+  .rail li.now{background:rgba(59,158,255,.08);border-radius:12px;
+    box-shadow:0 0 0 1px rgba(59,158,255,.2)}
+  .rail .at{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+  .rail .at .mine{color:var(--support);margin-left:7px}
+  .rail .at .thm{color:var(--dim);margin-left:7px}
+  .rail .ti{font-size:14.5px;font-weight:700;line-height:1.45;margin-top:2px}
+  .rail li.done .ti{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--dim)}
+  .rail .nt{font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:3px}
   .tick{width:52px;height:52px;border-radius:50%;background:rgba(53,208,127,.16);border:2px solid var(--green);
     color:var(--green);display:grid;place-items:center;font-size:26px;margin:0 auto 12px}
 
@@ -877,6 +901,10 @@ function loadHome() {
       S.actionsOverdue = (res.actionCounts && res.actionCounts.overdue) || 0;
       drawTabs();
       render();
+      //  The run-up ticks "attach what you are presenting" only when
+      //  the slots say so, so it asks \u2014 after the page is already up,
+      //  because the home screen must never wait on a second call.
+      if (res.next && res.next.id) loadPrepForRunUp(res.next.id);
     })
     .catch(function (e) {
       $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' +
@@ -921,7 +949,7 @@ function viewHome() {
       : "Two taps: your agent number opens this page, and \u201cI am here\u201d on the meeting is the register. Everything shared with the room is below.") +
     "</p></div>";
 
-  if (next) out += meetingBanner(next) + nextMeetingBlock(next) + todoBlock(next);
+  if (next) out += meetingBanner(next) + nextMeetingBlock(next) + runUpBlock(next);
 
   if (isStaff()) {
     out += '<div class="btn-row" style="margin:14px 0 4px">' +
@@ -993,74 +1021,142 @@ function meetingBanner(m) {
     "</div>";
 }
 
-/*  WHAT YOU DO ABOUT IT.
+/*  THE RUN-UP.
+ *
+ *  Asked for the night before the first meeting on the app: "a walk
+ *  through from today and tomorrow before the meeting so it builds
+ *  from all of us and our role so it will be structured."
+ *
+ *  One rail from tonight to the minutes. Every stop carries a time and
+ *  the person it belongs to, and is ticked only where the record can
+ *  say so \u2014 attendance, the person's own slots, their own action
+ *  count. The rest are open circles, because a tick nobody earned is
+ *  worse than no tick.
  *
  *  There are two taps, not one: the agent number opens the page and
- *  the "I am here" button writes the attendance row. Nothing else in
- *  this app says so in one place, and the branch read the sign-in as
- *  the register, so step one says it outright. The rest is the job
- *  the meeting actually asks of the person signed in.
+ *  "I am here" writes the attendance row. The branch read the sign-in
+ *  as the register, so the stop that matters says it outright.
  */
-function todoBlock(m) {
+function justTime(stamp) {
+  var m = /(\d{1,2}:\d{2}\s*(?:AM|PM|am|pm))/.exec(String(stamp || ""));
+  return m ? m[1].toUpperCase() : "";
+}
+
+function runUpBlock(m) {
   var h = S.home || {};
   var c = h.actionCounts || {};
+  var prep = (S.prep && S.prep.id === m.id) ? S.prep : null;
+  var staff = isStaff();
   var here = !!(m.me && (m.me.status === "present" || m.me.status === "late"));
-  var open = c.open || 0;
-  var over = c.overdue || 0;
-  var li = [];
+  var word = whenWord(m.dateISO);
+  var today = word === "Today";
+  var early = today ? "This morning" : (word === "Tomorrow" ? "Tonight" : "Before the day");
+  var late = today ? "Before 11:30" : "Tomorrow morning";
+  var openAt = justTime(m.checkInOpensAt) || "Half an hour before";
+  var startAt = justTime(m.start) || justTime(m.startsAt) || "The start";
+  var open = c.open || 0, over = c.overdue || 0;
+  var st = [];
 
-  if (here) {
-    li.push('<li class="ok"><b>You are on the register.</b>' +
-      '<span class="n">Signed in at ' + esc(m.me.signedIn || "") +
-      (m.me.status === "late" ? ", recorded late" : ", recorded present") + ".</span></li>");
-  } else if (m.checkInOpen) {
-    li.push("<li><b>Press \u201cI am here\u201d on the card above.</b>" +
-      '<span class="n">Typing your agent number only opened this page. That button is ' +
-      "the register, and nothing else marks you present.</span></li>");
-  } else {
-    li.push("<li><b>Sign in from " + esc(m.checkInOpensAt || "half an hour before the start") +
-      ", and press \u201cI am here\u201d.</b>" +
-      '<span class="n">Typing your agent number only opens this page. That button is the ' +
-      "register. No button pressed is absent.</span></li>");
-  }
+  st.push({
+    at: early, mine: true, title: "Read the agenda, and the pre-read.",
+    note: "Open the meeting below. " + (m.preRead ? "Pre-read: " + esc(m.preRead) + "." : "") +
+      " Ten of the ninety minutes are for reading in the room \u2014 come having read."
+  });
 
-  if (isStaff()) {
-    li.push("<li><b>Check the agenda is right and published.</b>" +
-      '<span class="n">Every item needs an owner and the minutes it is allowed.</span></li>');
-    li.push("<li><b>Chase the material that is not in yet.</b>" +
-      '<span class="n">Presenters attach to their own slot. The register page shows who has not.</span></li>');
-    if (over) {
-      li.push("<li><b>" + over + " action item" + (over === 1 ? " is" : "s are") + " overdue.</b>" +
-        '<span class="n">Carry them into this meeting rather than letting them roll again.</span></li>');
-    }
-    li.push("<li><b>Write the minutes in the app, and publish them.</b>" +
-      '<span class="n">Nothing leaves the room without a name and a date on it.</span></li>');
+  if (staff) {
+    var done = prep ? prep.slots.filter(function (x) { return !x.required || x.count; }).length : 0;
+    var need = prep ? prep.slots.length : 0;
+    st.push({
+      at: early, mine: true, who: "Staff",
+      title: "Every agenda item has an owner and the minutes it is allowed.",
+      note: "Nothing goes on the agenda without a name against it."
+    });
+    st.push({
+      at: m.materialsDue ? "By " + esc(m.materialsDue) : late, mine: true, who: "Staff",
+      done: !!(need && done === need),
+      title: "Chase the material that is not in.",
+      note: prep
+        ? (need ? done + " of " + need + " slots have what they need." : "No slots on this agenda yet.")
+        : "Open the meeting to see who has not attached theirs."
+    });
   } else {
-    li.push("<li><b>Read the agenda before you come.</b>" +
-      '<span class="n">Open the meeting below' +
-      (m.preRead ? ". There is a pre-read: " + esc(m.preRead) : "") + ".</span></li>");
-    li.push("<li><b>If you have a slot, attach what you are presenting.</b>" +
-      '<span class="n">My prep shows your slots' +
-      (m.materialsDue ? ", and material is due " + esc(m.materialsDue) : "") +
-      ". It goes into the branch record, not a chat thread.</span></li>");
-    if (open) {
-      li.push("<li><b>Be ready to report on your " + open + " action item" +
-        (open === 1 ? "" : "s") +
-        (over ? " \u2014 " + over + " of them overdue" : "") + ".</b>" +
-        '<span class="n">You will be asked for each one by name.</span></li>');
+    var mySlots = prep ? prep.slots.filter(function (x) { return x.mine; }) : null;
+    if (!mySlots || mySlots.length) {
+      var filled = mySlots ? mySlots.filter(function (x) { return !x.required || x.count; }).length : 0;
+      st.push({
+        at: m.materialsDue ? "By " + esc(m.materialsDue) : early, mine: true,
+        done: !!(mySlots && mySlots.length && filled === mySlots.length),
+        title: "Attach what you are presenting.",
+        note: mySlots
+          ? (filled === mySlots.length
+              ? "All " + mySlots.length + " of your slots are covered."
+              : mySlots.map(function (x) { return esc(x.title); }).join(", ") +
+                " \u2014 nothing attached yet. My prep, below.")
+          : "My prep shows your slots. It goes into the branch record, not a chat thread."
+      });
     } else {
-      li.push("<li><b>Bring one thing you want the room to decide.</b>" +
-        '<span class="n">Ninety minutes: ten to read, fifty to discuss, twenty to decide.</span></li>');
+      st.push({
+        at: early, mine: true,
+        title: "No slot of your own this time \u2014 bring one thing for the room to decide.",
+        note: "Fifty of the ninety minutes are the discussion. Come with something in it."
+      });
     }
   }
 
-  return '<div class="todo"><h2>What you need to do</h2>' +
-    '<div class="who">' + esc(S.user.name || "") +
-    (S.user.role ? " \u00b7 " + esc(S.user.role) : "") + "</div><ol>" +
-    li.join("") + "</ol>" +
+  st.push({
+    at: late, mine: true,
+    done: !!(open === 0 && (c.total || 0) > 0),
+    title: open
+      ? "Be ready on your " + open + " action item" + (open === 1 ? "" : "s") +
+        (over ? " \u2014 " + over + " overdue" : "") + "."
+      : "Nothing open against your name.",
+    note: open ? "You will be asked for each one by name." : "Carried items are read out and answered for."
+  });
+
+  st.push({
+    at: openAt, mine: true, now: !here, done: here,
+    title: here
+      ? "You are on the register \u2014 signed in at " + esc(m.me.signedIn || "") + "."
+      : "Press \u201cI am here\u201d on the card above.",
+    note: here
+      ? (m.me.status === "late" ? "Recorded late." : "Recorded present.")
+      : "Your agent number only opened this page. That button writes your attendance row, " +
+        "time-stamped. No button pressed is absent."
+  });
+
+  st.push({
+    at: startAt, who: "Everyone",
+    title: "We start. Ninety minutes.",
+    note: "Ten to read \u00b7 fifty to discuss \u00b7 twenty to decide."
+  });
+
+  st.push({
+    at: "After", who: staff ? "Staff" : "Everyone",
+    title: staff ? "Write the minutes in the app, and publish them."
+                 : "The minutes come to you with every decision in them.",
+    note: "Nothing leaves that room without a name and a date on it."
+  });
+
+  var lis = st.map(function (x) {
+    var cls = x.done ? "done" : (x.now ? "now" : "");
+    return '<li class="' + cls + '">' +
+      '<span class="dot">' + (x.done ? "\u2713" : "") + "</span>" +
+      '<div class="at">' + x.at +
+      (x.mine ? '<span class="mine">You</span>' : "") +
+      (x.who ? '<span class="thm">' + esc(x.who) + "</span>" : "") + "</div>" +
+      '<div class="ti">' + x.title + "</div>" +
+      (x.note ? '<div class="nt">' + x.note + "</div>" : "") +
+      "</li>";
+  }).join("");
+
+  return '<div class="todo"><h2>Your run-up to the meeting</h2>' +
+    '<div class="mewho">' + esc(S.user.name || "") +
+    (S.user.role ? " \u00b7 " + esc(S.user.role) : "") +
+    " \u00b7 every stop between now and the minutes</div>" +
+    '<ol class="rail">' + lis + "</ol>" +
     '<div class="btn-row">' +
     '<button class="btn teal sm" data-open="' + esc(m.id) + '">Open the meeting</button>' +
-    (isStaff() ? "" : '<button class="btn ghost sm" id="td-prep">My prep</button>') +
+    (staff ? "" : '<button class="btn ghost sm" id="td-prep">My prep</button>') +
     (open || over ? '<button class="btn ghost sm" id="td-act">Action tracker</button>' : "") +
     "</div></div>";
 }
@@ -3042,6 +3138,15 @@ function endClock(start, mins) {
   if (!p) return "";
   var d = new Date(2000, 0, 1, Number(p[1]), Number(p[2]) + mins);
   return d.toLocaleTimeString("en", { hour: "numeric", minute: "2-digit" });
+}
+
+function loadPrepForRunUp(id) {
+  if (S.prep && S.prep.id === id) return;
+  apiGet("prep", { token: S.token, id: id }).then(guard).then(function (r) {
+    if (!r.ok || !r.slots) return;
+    S.prep = { id: id, slots: r.slots };
+    if (S.view === "home") render();
+  }).catch(function () { /* the run-up reads fine without it */ });
 }
 
 function loadHomeThen(fn) {
