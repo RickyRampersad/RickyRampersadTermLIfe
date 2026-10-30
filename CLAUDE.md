@@ -7415,6 +7415,49 @@ argument is FPS, not seconds**, and `importvox.py` writes `durs` in seconds
 while `data-d` is milliseconds.
 
 
+### The home screen says what to do, by role — 30 October 2026
+
+Asked for in these words, after he signed in as one of the agents the morning
+of the meeting: *"i am so confused, we should highlight the meeting tomorrow
+ans what are the agent suppose dto do and staff???"*
+
+He was right, and the page's own words were half the problem. **Three places
+said signing in was the register** — the lede, the "check-in opens" card and
+the footer — which is the same one-tap error the WhatsApp message carried.
+All three now say that the agent number opens the page and ***I am here*** is
+the register. The README's headline said it too; fixed there as well.
+
+Two blocks on the signed-in home, both **client-side only** (`meetings/index.html`),
+because everything they need is already in the `home` payload: no `Meetings.gs`
+paste, no new deployment, no `TEAM_CODE` to re-enter.
+
+- **`meetingBanner`** — one loud line for a meeting inside the next six days:
+  **Today** / **Tomorrow** / the weekday, the title, the start time, and when
+  check-in opens.
+- **`todoBlock`** — *What you need to do*, numbered, **by role**. An agent:
+  press the button (step one, which says outright that the number only opened
+  the page), read the agenda, attach what they are presenting, be ready on
+  their own action items — the counts come from `actionCounts`, already
+  filtered to them by the backend. Staff get their four instead, ending in
+  publishing the minutes. Once signed in, step one turns into a green tick
+  with the time.
+
+**`whenWord` reads the calendar day, never the whole stamp.**
+`new Date("2026-10-30T00:00:00Z")` is the evening of the **29th** in Trinidad,
+so a meeting today read as yesterday and the banner never drew. It takes the
+leading `YYYY-MM-DD` and builds a local date from the three numbers. The same
+trap as the month stored as a date and the guest number stored as `0`: **a
+value that looks like a date is not what you wrote.**
+
+**`innerText` returns the *transformed* text**, so a `/Today/` assertion fails
+against a `text-transform: uppercase` label that renders TODAY. Match case
+insensitively, or read `textContent`.
+
+`meetings/home-test.js` logic lives in the session scratchpad (36 checks,
+Playwright against a mocked backend: an agent before and after check-in opens,
+an agent already on the register, and staff on a laptop; no sideways scroll at
+390, no page errors).
+
 ## `/branchmeet/` — the FY27 rise, and what the film may not say
 
 Asked for on 28 October 2026, the evening before the branch group sees it:
