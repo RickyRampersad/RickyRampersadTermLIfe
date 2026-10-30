@@ -188,6 +188,31 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     background:linear-gradient(135deg,var(--green),#2BB377);color:#04220f}
   .checkin.done{background:linear-gradient(150deg,rgba(53,208,127,.1),transparent);border-color:rgba(53,208,127,.28)}
   .checkin.shut{background:rgba(255,255,255,.03);border-color:var(--line)}
+
+  /*  The meeting that is almost here, and what this person has to do
+   *  about it. An agent who reads only the check-in card knows one of
+   *  their four jobs, so the jobs are written out, numbered, by role.
+   */
+  .mnow{border-radius:16px;padding:18px 20px;margin-bottom:12px;
+    background:linear-gradient(135deg,rgba(59,158,255,.18),rgba(63,201,176,.08));
+    border:1px solid rgba(59,158,255,.34)}
+  .mnow .lbl{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent)}
+  .mnow .big{font-size:25px;font-weight:800;line-height:1.22;margin:5px 0 3px}
+  .mnow .sub{font-size:13px;color:var(--muted);line-height:1.65}
+  .mnow .cd{display:inline-block;margin-top:11px;font-size:12px;font-weight:700;
+    background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:999px;padding:7px 14px}
+  .todo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:12px}
+  .todo h2{font-size:16px;font-weight:800;margin-bottom:3px}
+  .todo .who{font-size:12px;color:var(--dim);margin-bottom:14px}
+  .todo ol{list-style:none;counter-reset:td;margin:0;padding:0}
+  .todo li{counter-increment:td;position:relative;padding:0 0 14px 38px;font-size:14px;line-height:1.6}
+  .todo li:last-child{padding-bottom:0}
+  .todo li:before{content:counter(td);position:absolute;left:0;top:1px;width:26px;height:26px;
+    border-radius:50%;background:var(--accent);color:#07131f;font-size:13px;font-weight:800;
+    display:grid;place-items:center}
+  .todo li.ok:before{content:"\2713";background:var(--green)}
+  .todo li .n{display:block;font-size:12.5px;color:var(--muted);margin-top:3px}
+  .todo .btn-row{margin-top:15px}
   .tick{width:52px;height:52px;border-radius:50%;background:rgba(53,208,127,.16);border:2px solid var(--green);
     color:var(--green);display:grid;place-items:center;font-size:26px;margin:0 auto 12px}
 
@@ -454,7 +479,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     <p>
       <a href="https://rickyrampersadbranch.com/staff.html">← Staff Portal</a> ·
       © <span id="yr"></span> Ricky Rampersad Branch · Branch Meeting Builder<br>
-      Signing in to a meeting is the attendance register. Every entry is time-stamped and kept in the branch record.
+      Your agent number opens the page; “I am here” on the meeting is the register. Every entry is time-stamped and kept in the branch record.
     </p>
   </footer>
 </div>
@@ -893,10 +918,10 @@ function viewHome() {
     "<h1>Good day, " + esc((S.user.name || "").split(" ")[0]) + "</h1>" +
     "<p>" + (isStaff()
       ? "Build the meeting, see who is in the room, and keep the action tracker in one place."
-      : "Sign in to each meeting when you are there — that is the register. Everything shared with the room is below.") +
+      : "Two taps: your agent number opens this page, and \u201cI am here\u201d on the meeting is the register. Everything shared with the room is below.") +
     "</p></div>";
 
-  if (next) out += nextMeetingBlock(next);
+  if (next) out += meetingBanner(next) + nextMeetingBlock(next) + todoBlock(next);
 
   if (isStaff()) {
     out += '<div class="btn-row" style="margin:14px 0 4px">' +
@@ -924,8 +949,120 @@ function viewHome() {
 
   var nm = $("new-mtg"); if (nm) nm.onclick = function () { go("build", ""); };
   var so = $("see-overdue"); if (so) so.onclick = function () { go("actions"); };
+  var tp = $("td-prep"); if (tp) tp.onclick = function () { go("prep", next ? next.id : ""); };
+  var ta = $("td-act"); if (ta) ta.onclick = function () { go("actions"); };
   wireMeetingRows();
   wireCheckIn();
+}
+
+/*  "Today" and "Tomorrow" rather than a date to decode. Only the day
+ *  is used, never a time: the meeting's start is a separate string and
+ *  combining the two client-side would be a timezone guess.
+ */
+function whenWord(iso) {
+  //  The calendar day only, read as a LOCAL date. "2026-10-30T00:00:00Z"
+  //  parsed whole is the evening of the 29th in Trinidad, so a meeting
+  //  today reads as yesterday and the banner disappears.
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+  if (!m) return "";
+  var b = new Date(+m[1], +m[2] - 1, +m[3]);
+  var d = b;
+  var a = new Date(); a.setHours(0, 0, 0, 0);
+  var days = Math.round((b.getTime() - a.getTime()) / 86400000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Tomorrow";
+  if (days > 1 && days < 7) return d.toLocaleDateString("en", { weekday: "long" });
+  return "";
+}
+
+/** The loud line at the top, for a meeting today or in the next six days. */
+function meetingBanner(m) {
+  var word = whenWord(m.dateISO);
+  if (!word) return "";
+  var when = word === "Today" || word === "Tomorrow" ? word : "This " + word;
+  return '<div class="mnow">' +
+    '<div class="lbl">' + esc(when) + " \u00b7 " + esc(m.type || "Branch meeting") + "</div>" +
+    '<div class="big">' + esc(m.title) + "</div>" +
+    '<div class="sub">' + esc(m.date) +
+    (m.start ? " \u00b7 starts <b>" + esc(m.start) + "</b>" : "") +
+    (m.location ? " \u00b7 " + esc(m.location) : "") +
+    (m.format && !m.location ? " \u00b7 " + esc(m.format) : "") + "</div>" +
+    (m.checkInOpensAt
+      ? '<div class="cd">Check-in opens ' + esc(m.checkInOpensAt) + "</div>"
+      : "") +
+    "</div>";
+}
+
+/*  WHAT YOU DO ABOUT IT.
+ *
+ *  There are two taps, not one: the agent number opens the page and
+ *  the "I am here" button writes the attendance row. Nothing else in
+ *  this app says so in one place, and the branch read the sign-in as
+ *  the register, so step one says it outright. The rest is the job
+ *  the meeting actually asks of the person signed in.
+ */
+function todoBlock(m) {
+  var h = S.home || {};
+  var c = h.actionCounts || {};
+  var here = !!(m.me && (m.me.status === "present" || m.me.status === "late"));
+  var open = c.open || 0;
+  var over = c.overdue || 0;
+  var li = [];
+
+  if (here) {
+    li.push('<li class="ok"><b>You are on the register.</b>' +
+      '<span class="n">Signed in at ' + esc(m.me.signedIn || "") +
+      (m.me.status === "late" ? ", recorded late" : ", recorded present") + ".</span></li>");
+  } else if (m.checkInOpen) {
+    li.push("<li><b>Press \u201cI am here\u201d on the card above.</b>" +
+      '<span class="n">Typing your agent number only opened this page. That button is ' +
+      "the register, and nothing else marks you present.</span></li>");
+  } else {
+    li.push("<li><b>Sign in from " + esc(m.checkInOpensAt || "half an hour before the start") +
+      ", and press \u201cI am here\u201d.</b>" +
+      '<span class="n">Typing your agent number only opens this page. That button is the ' +
+      "register. No button pressed is absent.</span></li>");
+  }
+
+  if (isStaff()) {
+    li.push("<li><b>Check the agenda is right and published.</b>" +
+      '<span class="n">Every item needs an owner and the minutes it is allowed.</span></li>');
+    li.push("<li><b>Chase the material that is not in yet.</b>" +
+      '<span class="n">Presenters attach to their own slot. The register page shows who has not.</span></li>');
+    if (over) {
+      li.push("<li><b>" + over + " action item" + (over === 1 ? " is" : "s are") + " overdue.</b>" +
+        '<span class="n">Carry them into this meeting rather than letting them roll again.</span></li>');
+    }
+    li.push("<li><b>Write the minutes in the app, and publish them.</b>" +
+      '<span class="n">Nothing leaves the room without a name and a date on it.</span></li>');
+  } else {
+    li.push("<li><b>Read the agenda before you come.</b>" +
+      '<span class="n">Open the meeting below' +
+      (m.preRead ? ". There is a pre-read: " + esc(m.preRead) : "") + ".</span></li>");
+    li.push("<li><b>If you have a slot, attach what you are presenting.</b>" +
+      '<span class="n">My prep shows your slots' +
+      (m.materialsDue ? ", and material is due " + esc(m.materialsDue) : "") +
+      ". It goes into the branch record, not a chat thread.</span></li>");
+    if (open) {
+      li.push("<li><b>Be ready to report on your " + open + " action item" +
+        (open === 1 ? "" : "s") +
+        (over ? " \u2014 " + over + " of them overdue" : "") + ".</b>" +
+        '<span class="n">You will be asked for each one by name.</span></li>');
+    } else {
+      li.push("<li><b>Bring one thing you want the room to decide.</b>" +
+        '<span class="n">Ninety minutes: ten to read, fifty to discuss, twenty to decide.</span></li>');
+    }
+  }
+
+  return '<div class="todo"><h2>What you need to do</h2>' +
+    '<div class="who">' + esc(S.user.name || "") +
+    (S.user.role ? " \u00b7 " + esc(S.user.role) : "") + "</div><ol>" +
+    li.join("") + "</ol>" +
+    '<div class="btn-row">' +
+    '<button class="btn teal sm" data-open="' + esc(m.id) + '">Open the meeting</button>' +
+    (isStaff() ? "" : '<button class="btn ghost sm" id="td-prep">My prep</button>') +
+    (open || over ? '<button class="btn ghost sm" id="td-act">Action tracker</button>' : "") +
+    "</div></div>";
 }
 
 /** The card at the top: one button, and it is the register. */
@@ -977,7 +1114,7 @@ function nextMeetingBlock(m) {
 
   return head + '<div class="checkin shut">' +
     "<h2>Check-in opens " + esc(m.checkInOpensAt || "closer to the time") + "</h2>" +
-    "<p>Come back then and sign in — that is the register. Signing in after the meeting " +
+    "<p>Come back then and press “I am here” — that button is the register. Pressing it after the meeting " +
     "has started is recorded present but late, and not signing in at all is absent.</p>" +
     '<div class="btn-row" style="justify-content:center">' +
     '<button class="btn teal auto" data-open="' + esc(m.id) + '">Open the meeting</button></div></div>';
