@@ -977,6 +977,9 @@ function viewHome() {
 
   var nm = $("new-mtg"); if (nm) nm.onclick = function () { go("build", ""); };
   var so = $("see-overdue"); if (so) so.onclick = function () { go("actions"); };
+  Array.prototype.forEach.call(document.querySelectorAll("[data-bring]"), function (b) {
+    b.onclick = function () { S.bring = true; go("meeting", b.getAttribute("data-bring")); };
+  });
   var tp = $("td-prep"); if (tp) tp.onclick = function () { go("prep", next ? next.id : ""); };
   var ta = $("td-act"); if (ta) ta.onclick = function () { go("actions"); };
   wireMeetingRows();
@@ -1103,6 +1106,20 @@ function runUpBlock(m) {
     }
   }
 
+  /*  THE ITEM YOU ARE BRINGING.
+   *
+   *  The form for this already existed, three taps down inside the
+   *  meeting and below the agenda, so nobody found it and the chair
+   *  built the agenda alone. The stop opens it directly.
+   */
+  st.push({
+    at: early, mine: true, who: "Everyone",
+    title: "Put what you are bringing on the agenda.",
+    note: "Pick the item, answer its question, and it is on the agenda before anybody sits " +
+      "down. Everything written is read in the room before anybody speaks. It does not " +
+      "sign you in."
+  });
+
   st.push({
     at: late, mine: true,
     done: !!(open === 0 && (c.total || 0) > 0),
@@ -1155,7 +1172,8 @@ function runUpBlock(m) {
     " \u00b7 every stop between now and the minutes</div>" +
     '<ol class="rail">' + lis + "</ol>" +
     '<div class="btn-row">' +
-    '<button class="btn teal sm" data-open="' + esc(m.id) + '">Open the meeting</button>' +
+    '<button class="btn teal sm" data-bring="' + esc(m.id) + '">Put my item on the agenda</button>' +
+    '<button class="btn ghost sm" data-open="' + esc(m.id) + '">Open the meeting</button>' +
     (staff ? "" : '<button class="btn ghost sm" id="td-prep">My prep</button>') +
     (open || over ? '<button class="btn ghost sm" id="td-act">Action tracker</button>' : "") +
     "</div></div>";
@@ -2027,6 +2045,17 @@ function wireFloor(d) {
     };
     pick.onchange = showAsk;
     showAsk();
+  }
+
+  //  Came in from "Put my item on the agenda": land on the box rather
+  //  than at the top of a page the person has to scroll through.
+  if (S.bring) {
+    S.bring = false;
+    var box = $("fl-body");
+    if (box) setTimeout(function () {
+      box.scrollIntoView({ block: "center", behavior: "smooth" });
+      box.focus();
+    }, 60);
   }
 
   var rec = $("fl-rec");
