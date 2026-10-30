@@ -1,37 +1,52 @@
 {
- "tts/out/mtflow/01.mp3": [
-  "en",
-  0.993,
-  "Every branch meeting has four parts."
- ],
- "tts/out/mtflow/02.mp3": [
-  "en",
-  0.999,
-  "Before, you bring one thing. Your agent number opens the page. Pick the item, answer its question, and it lands on the agenda before anybody sits down."
- ],
- "tts/out/mtflow/03.mp3": [
-  "en",
-  0.996,
-  "The start. Press the button that says I am here. That is the register. Nothing else marks you present."
- ],
- "tts/out/mtflow/04.mp3": [
-  "en",
-  0.989,
-  "Then 10 minutes of quiet while we all read what the room brought."
- ],
- "tts/out/mtflow/05.mp3": [
-  "en",
-  0.997,
-  "The middle, 50 minutes, every question gets an answer or a name and a date on it."
- ],
- "tts/out/mtflow/06.mp3": [
+ "tts/out/mtrise/01.mp3": [
   "en",
   0.995,
-  "After 20 minutes of decisions, read out loud, minutes within the hour on your board by Monday."
+  "This branch took a hit. We're not going pretend it did not happen."
  ],
- "tts/out/mtflow/07.mp3": [
+ "tts/out/mtrise/02.mp3": [
   "en",
-  0.983,
-  "Then again on Wednesday, bring one thing."
+  0.99,
+  "Look what it did not leave."
+ ],
+ "tts/out/mtrise/03.mp3": [
+  "en",
+  0.996,
+  "the lowest laps rate of any branch, for 0.96%, against an average of 8.82."
+ ],
+ "tts/out/mtrise/04.mp3": [
+  "en",
+  0.995,
+  "Not one case from our own fact, find as lapsed. Not one."
+ ],
+ "tts/out/mtrise/05.mp3": [
+  "en",
+  0.996,
+  "2,495 client requests closed in a year, and October was busier than September with fewer of us."
+ ],
+ "tts/out/mtrise/06.mp3": [
+  "en",
+  0.996,
+  "A book of our own came home full of people waiting to hear from somebody who turns up"
+ ],
+ "tts/out/mtrise/07.mp3": [
+  "en",
+  0.996,
+  "This is not a branch in trouble. This is a branch holding everything that matters."
+ ],
+ "tts/out/mtrise/08.mp3": [
+  "en",
+  0.995,
+  "FY27 starts Friday, 12 noon. Bring one thing. Press I am here. That is the register."
+ ],
+ "tts/out/mtrise/09.mp3": [
+  "en",
+  0.999,
+  "Every question gets an answer or a name and a date. Every decision read back out loud."
+ ],
+ "tts/out/mtrise/10.mp3": [
+  "en",
+  0.994,
+  "26 of us more than 200 years between us still here let's go"
  ]
 }
