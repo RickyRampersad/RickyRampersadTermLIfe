@@ -7434,13 +7434,21 @@ paste, no new deployment, no `TEAM_CODE` to re-enter.
 - **`meetingBanner`** — one loud line for a meeting inside the next six days:
   **Today** / **Tomorrow** / the weekday, the title, the start time, and when
   check-in opens.
-- **`todoBlock`** — *What you need to do*, numbered, **by role**. An agent:
-  press the button (step one, which says outright that the number only opened
-  the page), read the agenda, attach what they are presenting, be ready on
-  their own action items — the counts come from `actionCounts`, already
-  filtered to them by the backend. Staff get their four instead, ending in
-  publishing the minutes. Once signed in, step one turns into a green tick
-  with the time.
+- **`runUpBlock`** — *Your run-up to the meeting*: one rail from tonight to
+  the minutes, **every stop with a time on it and the person it belongs to**.
+  Asked for the same night: *"a walk through from today and tomorrow before
+  the meeting so it builds from all of us and our role so it will be
+  structured."* An agent: read the agenda, attach what they are presenting,
+  be ready on their own action items, press the button at 11:30, the shape of
+  the ninety minutes, the minutes afterwards. Staff get the build instead —
+  owners on every item, chasing the material, the overdue items, publishing
+  the minutes.
+
+  **A stop is ticked only where the record can say so** — attendance, the
+  person's own slots, their own action count. The rest are open circles,
+  because a tick nobody earned is worse than no tick. The slots come from a
+  second call (`loadPrepForRunUp`) fired **after** the page is already drawn:
+  the home screen never waits on it, and the rail reads fine without it.
 
 **`whenWord` reads the calendar day, never the whole stamp.**
 `new Date("2026-10-30T00:00:00Z")` is the evening of the **29th** in Trinidad,
@@ -7452,6 +7460,14 @@ value that looks like a date is not what you wrote.**
 **`innerText` returns the *transformed* text**, so a `/Today/` assertion fails
 against a `text-transform: uppercase` label that renders TODAY. Match case
 insensitively, or read `textContent`.
+
+**`.who` is the header's user chip and carries `white-space: nowrap`.** A
+`.todo .who` byline inherited it, could not wrap, and put **40px of sideways
+scroll** on the page at 390 — while no element's rect overflowed, so the
+usual "find what sticks out" scan found nothing. What found it was hiding each
+child of the card in turn and watching `scrollWidth`. Same family as the film
+builders' class-collision guard, on a page this time: **grep the page's own
+stylesheet before naming a class.**
 
 `meetings/home-test.js` logic lives in the session scratchpad (36 checks,
 Playwright against a mocked backend: an agent before and after check-in opens,
