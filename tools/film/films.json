@@ -1087,5 +1087,37 @@
    359.5
   ],
   "capbg": "070F26"
+ },
+ "mtsign": {
+  "cap": "cap-mtsign",
+  "vox": "vomtsign",
+  "music": "bed-mtsign.wav",
+  "mix": "mtsign-mix.wav",
+  "ass": "captions-mtsign.ass",
+  "dur": 74.1,
+  "durs": [
+   6.3,
+   5.3,
+   6.4,
+   4.8,
+   4.8,
+   6.8,
+   6.8,
+   5.0,
+   6.7,
+   5.0,
+   9.3,
+   6.9
+  ],
+  "out": "../../meetings/signin.mp4",
+  "musicgain": 0.44,
+  "duck": 0.3,
+  "sfx": "sfx-mtsign.wav",
+  "start": 0,
+  "capmode": "strip",
+  "dark": [],
+  "ticks": [],
+  "hits": [],
+  "capbg": "070F26"
  }
 }
