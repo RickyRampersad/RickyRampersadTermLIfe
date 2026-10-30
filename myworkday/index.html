@@ -298,6 +298,24 @@
   .agbal b{font:800 20px/1 var(--fd)} .agbal b.dn{color:var(--bad)} .agbal b.up{color:var(--good)}
   #agitems .tc textarea{min-height:70px}
   .agpv{background:rgba(227,178,60,.14);border:1.5px solid var(--gold);border-radius:12px;padding:9px 12px;font:700 13px/1.4 var(--fb);margin:0 0 12px}
+  /* The managers' screen (29 Oct 2026): the unit's work by agent, the day's notes, the manager's numbers. */
+  .uchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+  details.ua{border-top:1px solid var(--line)} details.ua:first-of-type{border-top:0}
+  details.ua>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:11px 0;cursor:pointer}
+  details.ua>summary::-webkit-details-marker{display:none}
+  details.ua>summary .nm{flex:1;min-width:0;font:800 14.5px/1.25 var(--fd);color:var(--navy);overflow-wrap:anywhere}
+  details.ua>summary .ct{flex:none;font:700 12px/1.2 var(--fb);color:var(--muted);text-align:right}
+  details.ua>summary .ct b{color:var(--ink)} details.ua>summary .ct .r{color:var(--bad)} details.ua>summary .ct .a{color:var(--warn)}
+  details.ua>summary::after{content:"\25BE";color:var(--muted);flex:none} details.ua[open]>summary::after{content:"\25B4"}
+  .uab{padding:0 0 10px}
+  .unew{width:100%;margin:6px 0 0;min-height:42px;background:transparent;color:var(--ink);border:1.5px dashed var(--line);font-size:14px}
+  .unf{margin-top:8px;padding:12px;border-radius:12px;background:var(--soft);border:1px solid var(--line)}
+  .unf input,.unf select,.unf textarea,.uck input{width:100%;margin-top:6px;min-height:44px;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font:500 15px var(--fb);background:var(--card);color:var(--ink)}
+  .unf textarea{min-height:76px;resize:vertical} .unf .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .tc .tone{display:flex;gap:6px;margin:4px 0} .tc .tone button{flex:1;min-height:36px;padding:6px;font-size:12.5px;background:var(--card);color:var(--ink);border:1.5px solid var(--line)}
+  .tc .rd2{font-size:12.5px;line-height:1.45;background:var(--card);border-radius:10px;padding:7px 10px;margin:6px 0;border:1px solid var(--line)} .tc .rd2 b{color:var(--navy)}
+  .tl li .s b{color:var(--navy)} .tl li small i{font-style:normal;color:var(--gold);font-weight:700}
+  .uck .q{font:600 14px/1.35 var(--fb);margin-top:10px} .uck .row{display:flex;gap:8px} .uck .row input[type=number]{flex:none;width:76px;font:700 16px var(--fd)}
   .more[hidden]{display:none}
   .showmore{width:100%;margin-top:6px;background:transparent;color:var(--ink);border:1.5px solid var(--line)}
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation:none!important;transition:none!important} .card,ul.list li{opacity:1;transform:none} }
@@ -708,6 +726,142 @@
     if (i.value === "") { b.textContent = ""; b.className = "bal"; return; }
     var d = Number(i.value) - Number(i.getAttribute("data-proj")); b.textContent = balText(d); b.className = "bal " + (d < 0 ? "dn" : "up");
   });
+  /* THE MANAGERS' SCREEN (29 Oct 2026). Ricky, 6:45am, on Akaash: "look at grouping so he can see. And if he needs to comment in
+     the black screen on a pending for his agents, the task that's open, he can chatter on the fly ... If there is no task open, he
+     has the ability to open it ... see that timeline from agents, staff, and managers as the day goes by". The unit's open work by
+     agent (each agent's tasks drawn when opened, so the whole branch stays quick), each task a card with Draft my reply, Post and
+     Close for the agent; a task opened for an agent; the day's notes as they come; the manager's numbers. No performance figures. */
+  function unitCard(m) {
+    var u = m.unit; if (!u) return "";
+    var lab = m.unitLabel || "Your unit";
+    if (u.error) return '<div class="card" id="unit"><div class="ch"><h2>' + esc(lab) + "'s work</h2></div><div class=\"empty\">" + esc(u.error) + "</div></div>";
+    var ag = u.agents || [];
+    return '<div class="card" id="unit"><div class="ch"><h2>' + esc(lab) + "'s work, by agent</h2><span class=\"n\">as at " + esc(u.at || "") + "</span></div>" +
+      '<div class="uchips"><span class="chip"><b>' + (u.open || 0) + '</b>open</span><span class="chip' + (u.late ? " bad" : "") + '"><b>' + (u.late || 0) + '</b>overdue</span><span class="chip"><b>' + (u.pend || 0) + '</b>pendings</span><span class="chip good"><b>' + (u.closedToday || 0) + "</b>closed today</span></div>" +
+      ag.map(function (g, i) {
+        return '<details class="ua" data-ua="' + i + '"><summary><span class="nm">' + esc(g.a) + '</span><span class="ct"><b>' + g.n + "</b> open" + (g.late ? ' · <span class="r">' + g.late + " overdue</span>" : "") + (g.pend ? ' · <span class="a">' + g.pend + " pendings</span>" : "") + '</span></summary><div class="uab"></div></details>';
+      }).join("") + "</div>";
+  }
+  function unitTasks(g, i) {
+    var t = g.tasks || [];
+    return (t.length ? '<ul class="list">' + t.map(function (x, k) {
+      return '<li class="tk ut" data-uid="' + esc(x.id) + '" data-ua="' + i + '" style="animation-delay:' + Math.min(k, 12) * 0.03 + 's"><span class="ic ' + (x.ty === "Pendings" ? "due" : x.late ? "late" : "") + '">' + (x.ty === "Pendings" ? "P" : x.late ? "!" : "&#8226;") + "</span>" +
+        '<div class="li"><div class="s" data-uopen role="button" tabindex="0">' + esc(x.s) + "</div><small>with " + esc(x.o || "the branch") + (x.late ? " · overdue since " + esc(x.due) : x.due ? " · due " + esc(x.due) : "") +
+        (x.ty && x.ty !== "Untyped" ? " · " + esc(tyName(x.ty)) : "") + (x.stale ? " · untouched " + x.stale + " days" : "") + '</small></div><div class="tc" hidden></div></li>';
+    }).join("") + "</ul>" : '<div class="empty">Nothing open for ' + esc(String(g.a).split(" ")[0]) + ".</div>") +
+      '<button type="button" class="unew" data-unew="' + i + '">+ Open a task for ' + esc(String(g.a).split(" ")[0]) + '</button><div class="unfw"></div>';
+  }
+  function unitNewForm(i) {
+    var g = M.unit.agents[i], ut = M.utypes || [], ty = ut.filter(function (t) { return t.k === "Pendings"; })[0] || ut[0] || { k: "Pendings", to: "azariah" };
+    var desks = M.newDesks || M.desks || [];
+    return '<div class="unf" data-ua="' + i + '"><div class="tip">A new task for ' + esc(g.a) + ", in a desk's name, with your note on it first.</div>" +
+      '<input type="text" data-uns placeholder="The client and what is needed, e.g. Ali - medicals for 1000123456">' +
+      '<div class="row2"><select data-unt aria-label="Type">' + ut.map(function (t) { return '<option value="' + esc(t.k) + '" data-to="' + esc(t.to || "") + '"' + (t.k === ty.k ? " selected" : "") + ">" + esc(t.l) + "</option>"; }).join("") + "</select>" +
+      '<select data-und aria-label="With">' + desks.map(function (d) { return '<option value="' + esc(d.sid) + '"' + (d.sid === ty.to ? " selected" : "") + ">With " + esc(d.first) + "</option>"; }).join("") + "</select></div>" +
+      '<textarea data-unn placeholder="Your note: what is needed, from whom, and by when"></textarea>' +
+      '<button type="button" class="go" data-unewgo>Open it</button><div class="cst"></div></div>';
+  }
+  function umCardHtml(c, li) {
+    var notes = (c.notes || []).map(function (n) { return "<div>" + (n.reply ? "&#8627; " : "") + "<b>" + esc(n.who) + "</b>" + (n.day ? " · " + esc(n.day) : "") + ": " + esc(n.s) + "</div>"; }).join("");
+    var first = String(c.a || "the agent").split(" ")[0];
+    return '<div class="lab"><span class="bdg">' + esc(c.label || "Task") + "</span>" + esc(c.a || "") + (c.o ? " · with " + esc(c.o) : "") + "</div>" +
+      (c.todo ? '<div class="todo"><b>What to do:</b> ' + esc(c.todo) + "</div>" : "") + (c.next ? '<div class="nx">' + esc(c.next) + "</div>" : "") +
+      '<div class="notes">' + (notes || "No notes on Chatter yet.") + (c.more ? "<div>and " + c.more + " earlier</div>" : "") + "</div>" +
+      '<div class="rd2" data-uread hidden></div>' +
+      '<textarea data-unote placeholder="Your comment. It goes on the task\'s Chatter as yours, and whoever has it is told."></textarea>' +
+      (M && M.claude ? '<button type="button" class="cai" data-uact="draft">&#10024; Draft my reply</button><div class="tone" data-utone hidden><button type="button" data-uact="draft" data-tone="firmer">Firmer</button><button type="button" data-uact="draft" data-tone="shorter">Shorter</button><button type="button" data-uact="draft" data-tone="kinder">Kinder</button></div>' : "") +
+      '<div class="cbt" style="grid-template-columns:1fr 1fr"><button type="button" class="n" data-uact="note">Post comment</button><button type="button" class="c" data-uact="close">Close for ' + esc(first) + "</button></div>" +
+      '<div class="cst">Post: on its Chatter, headed as yours. Close: your comment is the closing note.</div>';
+  }
+  function timelineCard(m) {
+    var u = m.unit; if (!u || u.error) return "";
+    var t = u.timeline || [];
+    return '<div class="card tl" id="timeline"><div class="ch"><h2>' + esc(m.unitLabel || "Your unit") + ' today, as it happens</h2><span class="n">' + (u.notesToday || 0) + " notes</span></div>" +
+      (t.length ? '<ul class="list">' + t.map(function (x, i) {
+        return '<li style="animation-delay:' + Math.min(i, 12) * 0.03 + 's"><span class="ic k">' + esc(String(x.who || "?").charAt(0)) + '</span><div class="li"><div class="s" data-tlgo="' + esc(x.id) + '" role="button" tabindex="0"><b>' + esc(x.who) + "</b>" + (x.role ? " <small style=\"display:inline\">(" + esc(x.role) + ")</small>" : "") + ": " + esc(x.s) + "</div>" +
+          "<small><i>" + esc(x.at) + "</i> · on " + esc(x.on) + (x.a ? " · " + esc(x.a) : "") + "</small></div></li>";
+      }).join("") + "</ul>" : '<div class="empty">No notes on the unit\'s tasks yet today.</div>') + "</div>";
+  }
+  function checksCard(m) {
+    var c = m.checks; if (!c || !c.length) return "";
+    return '<div class="card uck" id="mychecks"><div class="ch"><h2>Your day as a manager</h2><span class="n">what you will do today</span></div>' + c.map(function (x) {
+      return '<div class="q">' + esc(x.q) + '</div><div class="row"><input type="number" inputmode="numeric" min="0" data-cp="' + esc(x.id) + '" value="' + esc(x.v) + '" placeholder="0"><input type="text" data-cn="' + esc(x.id) + '" value="' + esc(x.n) + '" placeholder="' + esc(x.ph) + '"></div>';
+    }).join("") + '<button type="button" class="go" data-uplan>Save my day</button><div class="cst"></div>' + (m.unitEve ? '<div class="tip" style="margin-top:8px">At the end of the day, the account of it: <a href="' + esc(m.unitEve) + '" target="_blank" rel="noopener">Account for my day</a>.</div>' : "") + "</div>";
+  }
+  function unitFill(d) {
+    var box = d.querySelector(".uab"); if (!box || box.getAttribute("data-on")) return;
+    var i = Number(d.getAttribute("data-ua")); box.setAttribute("data-on", "1"); box.innerHTML = unitTasks(M.unit.agents[i], i);
+  }
+  document.addEventListener("toggle", function (e) { var d = e.target; if (d && d.matches && d.matches("details.ua") && d.open) unitFill(d); }, true);
+  function unitOpen(li) {
+    var tc = li.querySelector(".tc"); if (!tc) return;
+    if (!tc.hidden) { var ta0 = tc.querySelector("textarea"); if (!ta0 || !ta0.value) { tc.hidden = true; li.classList.remove("open"); } return; }
+    tc.hidden = false; li.classList.add("open"); if (tc.getAttribute("data-loaded")) return;
+    tc.innerHTML = '<div class="skel" style="width:60%"></div><div class="skel"></div>';
+    api({ act: "unit", sub: "open", id: li.getAttribute("data-uid") }).then(function (c) {
+      if (!c || !c.ok) { tc.innerHTML = '<div class="cst bad">' + esc((c && c.error) || "That did not open.") + "</div>"; return; }
+      tc.setAttribute("data-loaded", "1"); tc.innerHTML = umCardHtml(c, li);
+    }).catch(function () { tc.innerHTML = '<div class="cst bad">That did not reach the tracker. Tap the task again.</div>'; });
+  }
+  function unitAct(btn) {
+    var li = btn.closest("li.ut"), tc = li.querySelector(".tc"), ta = tc.querySelector("[data-unote]"), st = tc.querySelector(".cst"), act = btn.getAttribute("data-uact"), text = (ta.value || "").trim();
+    if (act !== "draft" && !text) { st.className = "cst bad"; st.textContent = act === "close" ? "Say what was done first: it becomes the closing note." : "Write your comment first."; ta.focus(); return; }
+    var bs = tc.querySelectorAll("button"); for (var k = 0; k < bs.length; k++) bs[k].disabled = true;
+    st.className = "cst"; st.textContent = act === "draft" ? "Claude is reading the whole history…" : "Saving…";
+    api({ act: "unit", sub: act, id: li.getAttribute("data-uid"), text: text, said: text, tone: btn.getAttribute("data-tone") || "" }).then(function (r) {
+      for (var k = 0; k < bs.length; k++) bs[k].disabled = false; r = r || {};
+      if (!r.ok) { st.className = "cst bad"; st.textContent = r.error || "That did not save."; return; }
+      if (act === "draft") {
+        ta.value = r.reply || ta.value; var rd = tc.querySelector("[data-uread]"); if (rd) { rd.hidden = !(r.read || r.next); rd.innerHTML = (r.read ? "<b>Where it stands:</b> " + esc(r.read) : "") + (r.next ? "<br><b>Next:</b> " + esc(r.next) : ""); }
+        var tn = tc.querySelector("[data-utone]"); if (tn) tn.hidden = false;
+        st.className = "cst"; st.textContent = "Claude's reply is in the box: change anything, then Post or Close."; return;
+      }
+      ta.value = ""; ta.defaultValue = ""; st.className = "cst ok"; st.textContent = "✓ " + (r.msg || "Saved");
+      if (r.closed) { var ic = li.querySelector(".ic"); if (ic) { ic.className = "ic"; ic.innerHTML = "&#10003;"; } var sx = li.querySelector(".li .s"); if (sx) sx.classList.add("done"); setTimeout(function () { tc.hidden = true; li.classList.remove("open"); }, 1400); }
+      toast(r.msg || "Saved."); setTimeout(function () { load(true); }, 1600);
+    }).catch(function () { for (var k = 0; k < bs.length; k++) bs[k].disabled = false; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function unitNew(btn) {
+    var f = btn.closest(".unf"), st = f.querySelector(".cst"), i = Number(f.getAttribute("data-ua")), g = M.unit.agents[i];
+    var q = { act: "unit", sub: "new", agent: g.a, subject: (f.querySelector("[data-uns]").value || "").trim(), type: f.querySelector("[data-unt]").value, to: f.querySelector("[data-und]").value, text: (f.querySelector("[data-unn]").value || "").trim() };
+    if (q.subject.length < 6) { st.className = "cst bad"; st.textContent = "Say what the task is: the client and what is needed."; return; }
+    if (!q.text) { st.className = "cst bad"; st.textContent = "Write your note for it first."; return; }
+    btn.disabled = true; btn.textContent = "Opening…";
+    api(q).then(function (r) {
+      btn.disabled = false; btn.textContent = "Open it";
+      if (!r || !r.ok) { st.className = "cst bad"; st.textContent = (r && r.error) || "That did not open."; return; }
+      f.querySelector("[data-uns]").value = ""; f.querySelector("[data-unn]").value = ""; st.className = "cst ok"; st.textContent = "✓ " + (r.msg || "Opened.");
+      toast(r.msg || "Opened."); setTimeout(function () { load(true); }, 1600);
+    }).catch(function () { btn.disabled = false; btn.textContent = "Open it"; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function unitPlan(btn) {
+    var c = btn.closest("#mychecks"), st = c.querySelector(".cst"), q = { act: "unit", sub: "plan" }, any = 0;
+    Array.prototype.forEach.call(c.querySelectorAll("[data-cp]"), function (i) { q["p_" + i.getAttribute("data-cp")] = (i.value || "").trim(); if (i.value !== "") any++; });
+    Array.prototype.forEach.call(c.querySelectorAll("[data-cn]"), function (i) { q["n_" + i.getAttribute("data-cn")] = (i.value || "").trim(); });
+    if (!any) { st.className = "cst bad"; st.textContent = "Set at least one number for your day."; return; }
+    btn.disabled = true; btn.textContent = "Saving…";
+    api(q).then(function (r) { btn.disabled = false; btn.textContent = "Save my day"; if (!r || !r.ok) { st.className = "cst bad"; st.textContent = (r && r.error) || "That did not save."; return; }
+      st.className = "cst ok"; st.textContent = "✓ " + (r.msg || "Saved."); toast(r.msg || "Saved."); setTimeout(function () { load(true); }, 1500);
+    }).catch(function () { btn.disabled = false; btn.textContent = "Save my day"; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function unitGo(id) {
+    var ag = (M && M.unit && M.unit.agents) || [];
+    for (var i = 0; i < ag.length; i++) for (var k = 0; k < (ag[i].tasks || []).length; k++) if (ag[i].tasks[k].id === id) {
+      var d = document.querySelector('details.ua[data-ua="' + i + '"]'); if (!d) return false; d.open = true; unitFill(d);
+      var li = d.querySelector('li.ut[data-uid="' + id + '"]'); if (li) { li.scrollIntoView({ behavior: "smooth", block: "center" }); unitOpen(li); } return true;
+    }
+    return false;
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest ? e.target : null; if (!t) return; var b;
+    if ((b = t.closest("[data-uopen]"))) { unitOpen(b.closest("li.ut")); return; }
+    if ((b = t.closest("[data-uact]"))) { unitAct(b); return; }
+    if ((b = t.closest("[data-unew]"))) { var w = b.parentNode.querySelector(".unfw"); if (w && !w.innerHTML) w.innerHTML = unitNewForm(Number(b.getAttribute("data-unew"))); b.hidden = true; var inp = w && w.querySelector("[data-uns]"); if (inp) inp.focus(); return; }
+    if ((b = t.closest("[data-unewgo]"))) { unitNew(b); return; }
+    if ((b = t.closest("[data-uplan]"))) { unitPlan(b); return; }
+    if ((b = t.closest("[data-tlgo]"))) { unitGo(b.getAttribute("data-tlgo")); return; }
+  });
+  document.addEventListener("change", function (e) { var s0 = e.target; if (s0 && s0.hasAttribute && s0.hasAttribute("data-unt")) { var to = s0.options[s0.selectedIndex].getAttribute("data-to"), d = s0.closest(".unf").querySelector("[data-und]"); if (to && d) d.value = to; } });
   // The agents' My day (27 Oct 2026): Project my day and Close off my day, the same pages the e-mails open.
   function agentCards(m) {
     if (!m.on) return '<div class="card"><div class="ch"><h2>Your day, from the branch</h2></div><div class="tip">Your daily e-mails and this page start when the branch adds you to the agents\' day. Until then, carry on as you are. <a href="' + esc(m.film) + '">See how it works &rarr;</a></div></div>';
@@ -787,7 +941,7 @@
     // One screen (29 Oct 2026): no "Open My day" foot; what the white page did is here.
     // The coach on top (29 Oct 2026, Ricky: "we can put a note on top there"); before check-in, the check-in first.
     var inYet = !!(m.checkin && m.checkin.at);
-    $("main").innerHTML = (inYet ? coachCard(m) + newsCard(m) + checkinCard(m) : checkinCard(m) + coachCard(m) + newsCard(m)) + waitingCard(m) + attCard(m) + listCard(m) + scrubCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + closeCard(m);
+    $("main").innerHTML = (inYet ? coachCard(m) + newsCard(m) + checkinCard(m) : checkinCard(m) + coachCard(m) + newsCard(m)) + waitingCard(m) + attCard(m) + unitCard(m) + timelineCard(m) + checksCard(m) + listCard(m) + scrubCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + closeCard(m);
     if (!m._t) m._t = Date.now();
     coachTick();
     $("upd").hidden = true; pending = null;
@@ -831,7 +985,8 @@
       if ((b.list || []).length > (a.list || []).length) out.push(((b.list || []).length - (a.list || []).length) + " new on your list");
       if (b.news && a.news && b.news.total > a.news.total) out.push((b.news.total - a.news.total) + " new for you" + (b.news.urgent > (a.news.urgent || 0) ? ", urgent" : ""));
     }
-    var ta = (a.team || []).filter(function (x) { return x.at; }).length, tb = (b.team || []).filter(function (x) { return x.at; }).length;
+    if (a.unit && b.unit && Number(b.unit.notesToday || 0) > Number(a.unit.notesToday || 0)) out.push((b.unit.notesToday - a.unit.notesToday) + " new notes in " + (b.unitLabel || "the unit").toLowerCase());
+    var ta = (a.team || []).filter(function (x) { return x.x; }).length * 0 + (a.team || []).filter(function (x) { return x.at; }).length, tb = (b.team || []).filter(function (x) { return x.at; }).length;
     if (tb > ta) out.push((tb - ta) + " more of the team in");
     return out;
   }
@@ -850,7 +1005,8 @@
       var al = t ? document.querySelector('li[data-ag="' + t + '"]') : null;
       if (al) { al.scrollIntoView({ behavior: "smooth", block: "center" }); agOpen(al); return; }
       if (g === "close" && $("closecard")) { closeOpen(); return; }
-      var el = $({ update: "coach", news: "news", waiting: "waiting", list: "list", close: "closecard", agplan: "agplan", agclose: "agclose", agitems: "agitems" }[g] || "");
+      if (t && unitGo(t)) return;
+      var el = $({ update: "coach", news: "news", waiting: "waiting", list: "list", close: "closecard", agplan: "agplan", agclose: "agclose", agitems: "agitems", unit: "unit", timeline: "timeline", mychecks: "mychecks" }[g] || "");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 400);
   }

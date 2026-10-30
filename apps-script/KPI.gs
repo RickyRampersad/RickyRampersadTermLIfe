@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-29e';
+var SCRIPT_VERSION = '2026-10-29f';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -9258,14 +9258,14 @@ function showBranchLink() { var u = unitUrl_('ricky'); Logger.log(u); return u; 
 function unitBook_(sid, day) {
   var agents = unitAgents_(sid);
   var inList = agents.map(soqlStr_).join(',');
-  var open = sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, Owner.Name, Agent__r.Name, What.Name, LastModifiedDate, CreatedDate FROM Task' +
+  var open = sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, Owner.Name, Agent__c, Agent__r.Name, What.Name, LastModifiedDate, CreatedDate FROM Task' +
     ' WHERE IsClosed = false AND Agent__r.Name IN (' + inList + ") AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%') ORDER BY ActivityDate ASC NULLS LAST LIMIT 500");
   var since = sfkUtcAt_(lastWorkdays_(day, 1)[0], 0);
   var closed = sfkQuery_('SELECT Id, Subject, Task_Type__c, CompletedDateTime, Owner.Name, Agent__r.Name FROM Task' +
     ' WHERE IsClosed = true AND Agent__r.Name IN (' + inList + ') AND CompletedDateTime >= ' + since + ' LIMIT 500');
   var t = function (r) {
     return { id: r.Id, subject: shorten_(r.Subject, 95), ty: r.Task_Type__c || '', due: r.ActivityDate || '',
-             late: !!(r.ActivityDate && r.ActivityDate < day), agent: (r.Agent__r && r.Agent__r.Name) || '',
+             late: !!(r.ActivityDate && r.ActivityDate < day), agent: (r.Agent__r && r.Agent__r.Name) || '', aid: r.Agent__c || '',
              owner: (r.Owner && r.Owner.Name) || '', touched: daysSince_(r.LastModifiedDate), status: r.Status || '', account: (r.What && r.What.Name) || '',
              created: String(r.CreatedDate || '').slice(0, 10) };
   };
@@ -9571,6 +9571,12 @@ function umDraft_(o) {
   }
   if (!it) return { ok: false, error: 'That task is no longer on this page. Open the page again from the e-mail.' };
   if (mode === 'brief') return umBrief_(sid, day, it, o);
+  return umReplyDraft_(sid, day, it, o);
+}
+/** Draft my reply for one task, { id, s, due, late, k, a }: the whole history, the record, the branch's tools. Posts nothing. */
+function umReplyDraft_(sid, day, it, o) {
+  o = o || {};
+  var id = String(it.id);
   var key = ''; try { key = String(PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '').trim(); } catch (e) {}
   if (!key) return { ok: false, error: 'Claude is not set up yet (no ANTHROPIC_API_KEY in the tracker).' };
   var notes = []; try { notes = (cmdChatter_([id]) || {})[id] || []; } catch (e) {}
@@ -9734,10 +9740,10 @@ function sendUnitManagerMorning_(sid, day) {
 
   var nLate = book ? book.open.filter(function (t) { return t.late; }).length : 0;
   var nPend = secs.length ? secs[0].list.length : 0;
-  var noSf = noSfLogin_(sid), cLink = noSf ? function (id) { return replyUrl_(sid, day, 'um') + '&i=' + encodeURIComponent(id) + '#i' + id; } : null;
-  var btn = replyButton_(replyUrl_(sid, day, 'um'), noSf ? 'Comment and plan my day' : 'Plan my day and sign in',
-    noSf ? 'No Salesforce login needed. Under any task, Draft my reply reads its whole history and writes your comment for you to check; it goes on that task\'s Chatter, headed as yours. Set your numbers for the day; saving signs you in.'
-         : 'One tap, no password. A box under each item goes on its Chatter; set your numbers for the manager\'s KPIs; saving signs you in.');
+  // The managers' screen (29 Oct 2026): the button and each task open My workday, the unit's work by agent; the old page below.
+  var noSf = noSfLogin_(sid), cLink = function (id) { return workGoUrl_(sid, 'unit', id); };
+  var btn = replyButton_(workGoUrl_(sid, 'unit'), 'Comment and plan my day',
+    'No Salesforce login needed. On My workday: your unit\'s work by agent. Under any task, Draft my reply reads its whole history and writes your comment for you to check; it goes on that task\'s Chatter, headed as yours. Set your numbers for the day; saving signs you in.') + wdMgrOldLine_(replyUrl_(sid, day, 'um'));
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, ' + esc_(first) + '. This is your unit as Salesforce has it this morning' +
       (book ? ' (' + book.agents.length + ' agent' + (book.agents.length === 1 ? '' : 's') + ', you included)' : '') +
@@ -9906,7 +9912,7 @@ function sendUnitManagerProgress_(sid, day) {
       return '<tr><td style="' + td + '"><b>' + esc_(o) + '</b></td><td style="' + td + 'text-align:right;color:' + (x.closed ? MAIL.green : MAIL.muted) + '">' + x.closed + '</td>' +
         '<td style="' + td + 'text-align:right">' + x.open + '</td><td style="' + td + 'text-align:right;' + (x.late ? 'color:' + MAIL.red + ';font-weight:700' : '') + '">' + x.late + '</td></tr>'; }).join('') +
     '</table>' : '';
-  var btn = replyButton_(replyUrl_(sid, day, 'um'), planned ? 'Update my plan' : 'Plan my day and sign in', 'Your plan and a comment on anything in your unit; comments go on Chatter. No password.');
+  var btn = replyButton_(workGoUrl_(sid, 'unit'), planned ? 'Update my plan' : 'Plan my day and sign in', 'On My workday: your plan and a comment on anything in your unit; comments go on Chatter.') + wdMgrOldLine_(replyUrl_(sid, day, 'um'));
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', it is eleven o\'clock. Your progress so far: the support your unit is getting from the branch, and what your agents are doing' +
       (planned ? '.' : '. <b style="color:' + MAIL.red + '">No plan was set this morning.</b>') + ' The account of your day comes at 5:30.</div>' +
@@ -16021,6 +16027,9 @@ function workUrl_(sid) { return WORKDAY.SITE + '?p=' + encodeURIComponent(sid) +
  *  the unit managers' pages. Under each button, wdOldLine_ keeps the old page a tap away, for a phone the screen will not open on. */
 function workGoUrl_(sid, go, t) { return workUrl_(sid) + (go ? '&go=' + encodeURIComponent(go) : '') + (t ? '&t=' + encodeURIComponent(t) : ''); }
 function wdGoUrl_(sid, day, go, oldF) { return sid === 'pawan' || UM_DESKS.indexOf(sid) > -1 ? replyUrl_(sid, day, oldF) : workGoUrl_(sid, go); }
+function wdMgrOldLine_(url) {
+  return '<div style="margin-top:6px;font-size:12px;line-height:1.5;color:' + MAIL.muted + '">If My workday will not open on this phone: <a href="' + esc_(url) + '" style="color:' + MAIL.navy + ';font-weight:700">the same on the full page</a>.</div>';
+}
 function wdOldLine_(sid, url) {
   if (sid === 'pawan' || UM_DESKS.indexOf(sid) > -1) return '';
   return '<div style="margin-top:6px;font-size:12px;line-height:1.5;color:' + MAIL.muted + '">If My workday will not open on this phone: <a href="' + esc_(url) + '" style="color:' + MAIL.navy + ';font-weight:700">the same on the full page</a>.</div>';
@@ -17000,6 +17009,133 @@ function wdNews_(sid, day, inM) {
     open: items.filter(function (x) { return x.k === 'new' || !x.answered; }).length, chase: hit.chase || 0 };
 }
 
+/* ── The managers' screen (29 October 2026, 2026-10-29f) ──
+ *  Ricky, 6:45am, on Akaash: "on Akash, remove the agent's performance because that is out. And look at grouping so he can see.
+ *  And if he needs to comment in the black screen on a pending for his agents, the task that's open, he can chatter on the fly
+ *  ... If there is no task open, he has the ability to open it. So create that sort of user experience so they can see that
+ *  timeline from agents, staff, and managers as the day goes by"; and at 9:21, on his own My branch page opened from a reminder,
+ *  that every page should be the one screen. So Akaash's and his My workday carry the unit (his: the branch) as work, not as a
+ *  ranking: wdUnit_ is every open task for the unit's agents grouped by agent (the agent's name order, the manager first),
+ *  pendings first in each; the day's notes on those tasks from agents, staff and managers as a timeline; and the manager's own
+ *  numbers for the day. A task opens as a card: its notes, what to do, Draft my reply (Claude), Post (on its Chatter, headed as
+ *  his and the owner mentioned, mgrPost_), Close it for the agent (umPostOrClose_'s rules). With no task for what he needs, he
+ *  opens one for the agent (wdUnitOpen_): in a desk's name by the type of work, his note on it first. No performance figures. */
+var WD_UNIT = { TTL: 180, TL: 30, NOTES: 8, TASKS: 500, OWNER: { 'Pendings': 'azariah', 'Renewa/PDl/Bill': 'sasha', 'New Application Process': 'elizabeth', 'Servicing': 'elizabeth' } };
+function wdUnitDesk_(ty) { return WD_UNIT.OWNER[ty] || 'kamla'; }
+/** The unit's open work and the day's notes on it, kept WD_UNIT.TTL seconds. */
+function wdUnit_(sid, day) {
+  var cache = CacheService.getScriptCache(), key = 'wd_unit_' + sid + '_' + day, hit = null;
+  try { hit = JSON.parse(cache.get(key) || 'null'); } catch (e) {}
+  if (hit) return hit;
+  var book = unitBook_(sid, day), me = nameFor_(sid), first = function (n) { return String(n || '').trim().split(/\s+/)[0]; };
+  var open = (book.open || []).slice(0, WD_UNIT.TASKS), by = {};
+  open.forEach(function (t) {
+    var a = t.agent || 'No agent', g = by[a] || (by[a] = { a: a, aid: '', n: 0, late: 0, pend: 0, tasks: [] });
+    if (t.aid && !g.aid) g.aid = t.aid;
+    g.n++; if (t.late) g.late++; if (t.ty === 'Pendings') g.pend++;
+    g.tasks.push({ id: t.id, s: t.subject, ty: t.ty, due: t.due ? shortDate_(t.due) : '', late: !!t.late, o: first(t.owner), stale: t.touched >= 7 ? t.touched : 0 });
+  });
+  var rank = function (x) { return (x.ty === 'Pendings' ? 0 : x.late ? 1 : 2); };
+  var agents = Object.keys(by).map(function (k) { var g = by[k]; g.tasks.sort(function (x, y) { return rank(x) - rank(y); }); return g; })
+    .sort(function (x, y) { if (bkNk_(x.a) === bkNk_(me)) return -1; if (bkNk_(y.a) === bkNk_(me)) return 1; var p = String(x.a).toLowerCase(), q = String(y.a).toLowerCase(); return p < q ? -1 : p > q ? 1 : 0; });
+  // Agents of the unit with nothing open still show, so a task can be opened for them.
+  (book.agents || []).forEach(function (n) { if (!by[n]) agents.push({ a: n, aid: '', n: 0, late: 0, pend: 0, tasks: [] }); });
+  // The day as it goes: today's notes on the unit's open tasks, by anyone (the tracker's own follow-ups and the chase left out).
+  var subj = {}; open.forEach(function (t) { subj[t.id] = { s: t.subject, a: t.agent }; });
+  var ids = open.map(function (t) { return t.id; }), posts = [], users = {}, bySf = {}, names = {};
+  try { users = sfkUsers_() || {}; Object.keys(users).forEach(function (s) { if (users[s] && users[s].id) { bySf[users[s].id] = s; names[users[s].id] = nameFor_(s); } }); } catch (e) {}
+  for (var i = 0; i < ids.length && i < 450; i += 150) {
+    var inList = ids.slice(i, i + 150).map(soqlStr_).join(',');
+    try { sfkQuery_("SELECT Id, ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND ParentId IN (" + inList + ') AND CreatedDate >= ' + sfkUtcAt_(day, 0) + ' ORDER BY CreatedDate DESC LIMIT 300').forEach(function (p) { posts.push(p); }); } catch (e) {}
+    try { sfkQuery_('SELECT Id, ParentId, CreatedById, CreatedDate, CommentBody FROM FeedComment WHERE ParentId IN (' + inList + ') AND CreatedDate >= ' + sfkUtcAt_(day, 0) + ' LIMIT 300')
+      .forEach(function (c) { posts.push({ Id: c.Id, ParentId: c.ParentId, CreatedById: c.CreatedById, CreatedDate: c.CreatedDate, Body: c.CommentBody, reply: true }); }); } catch (e) {}
+  }
+  var unk = {}; posts.forEach(function (p) { if (p.CreatedById && !names[p.CreatedById]) unk[p.CreatedById] = 1; });
+  if (Object.keys(unk).length) { try { sfkQuery_('SELECT Id, Name FROM User WHERE Id IN (' + Object.keys(unk).slice(0, 100).map(soqlStr_).join(',') + ')').forEach(function (u) { names[u.Id] = u.Name; }); } catch (e) {} }
+  try { postWhoAll_(posts, bmSfId_(), bySf); } catch (e) {}
+  var tl = [];
+  posts.forEach(function (p) {
+    var txt = postPlain_(p.Body).replace(/\s+/g, ' ').trim(), l = sfLocal_(p.CreatedDate);
+    if (!txt || !l || l.day !== day || p.who === 'chase' || (p.who === 'system' && !/^(ACTION REQUIRED|MOVED|Moved from)/.test(txt))) return;
+    var np = noteParts_(txt), who = p.who === 'ricky' ? 'Mr Rampersad' : p.who === 'system' ? 'Branch Intelligence' : p.who === 'agent' ? first(String(np.who).split(' · ')[1] || 'An agent')
+      : SCHEDULE[p.who] || DAY_MAIL_DESKS.indexOf(p.who) > -1 || UM_DESKS.indexOf(p.who) > -1 ? first(nameFor_(p.who)) : first(names[p.CreatedById]);
+    var role = p.who === 'ricky' ? 'Branch Manager' : p.who === 'system' ? 'the tracker' : p.who === 'agent' ? 'agent' : UM_DESKS.indexOf(p.who) > -1 ? 'Unit Manager' : p.who === 'kamla' ? 'BMA' : DAY_MAIL_DESKS.indexOf(p.who) > -1 ? 'sales support' : '';
+    tl.push({ id: p.ParentId, m: l.min, at: twelve_(mmText_(l.min)), who: who, role: role, s: shorten_(np.ours ? np.body : txt, 200), on: shorten_((subj[p.ParentId] || {}).s || '', 80), a: first((subj[p.ParentId] || {}).a || ''), reply: !!p.reply });
+  });
+  tl.sort(function (x, y) { return y.m - x.m; });
+  var out = { at: twelve_(hhmm_(new Date())), agents: agents, open: open.length, late: open.filter(function (t) { return t.late; }).length, pend: open.filter(function (t) { return t.ty === 'Pendings'; }).length,
+    closedToday: (book.closedToday || []).length, timeline: tl.slice(0, WD_UNIT.TL), notesToday: tl.length };
+  try { cache.put(key, JSON.stringify(out), WD_UNIT.TTL); } catch (e) {}
+  return out;
+}
+/** One task of the unit's, as the managers' card list holds it; null when it is not the unit's. */
+function wdUnitTask_(sid, day, id) {
+  var u = wdUnit_(sid, day), hit = null;
+  (u.agents || []).forEach(function (g) { g.tasks.forEach(function (t) { if (!hit && t.id === id) hit = { id: t.id, s: t.s, due: t.due, late: t.late, k: t.ty === 'Pendings' ? 'pend' : '', a: g.a, ty: t.ty, o: t.o }; }); });
+  return hit;
+}
+/** The managers' acts: open, note, close, draft, new (a task for an agent), plan (his numbers for the day). */
+function wdUnitAct_(person, sid, day, p) {
+  var sub = String(p.sub || ''), id = String(p.id || '').replace(/[^A-Za-z0-9]/g, ''), at = hhmm_(new Date()), name = nameFor_(sid);
+  var forget = function () { try { CacheService.getScriptCache().remove('wd_unit_' + sid + '_' + day); } catch (e) {} };
+  if (sub === 'plan') {
+    var rows = UM_CHECKS.map(function (c) { return { Item: c.id, Question: c.q, Planned: String(p['p_' + c.id] || '').trim(), Note: String(p['n_' + c.id] || '').trim() }; })
+      .filter(function (r) { return r.Planned !== '' || r.Note; });
+    if (!rows.length) return { ok: false, error: 'Set at least one number for your day.' };
+    mgrWrite_(sid, day, 'plan', rows);
+    var si = null; try { si = signInFromPage_(person); } catch (e) {}
+    if (sid !== 'ricky') { try { umCopy_(sid, day, 'plan', [], rows); } catch (e) {} }
+    return { ok: true, msg: 'Your day is set' + (si && si.at ? '; signed in ' + twelve_(si.at) : '') + '.' };
+  }
+  if (sub === 'new') {
+    var agent = String(p.agent || '').trim(), subject = String(p.subject || '').replace(/\s+/g, ' ').trim(), type = SF_TYPES[String(p.type || '')] ? String(p.type) : 'Pendings';
+    var desk = DAY_MAIL_DESKS.indexOf(String(p.to || '')) > -1 ? String(p.to) : wdUnitDesk_(type), note = String(p.text || '').trim();
+    var g = (wdUnit_(sid, day).agents || []).filter(function (x) { return x.a === agent; })[0];
+    if (!g) return { ok: false, error: 'That agent is not in your unit.' };
+    if (subject.length < 6) return { ok: false, error: 'Say what the task is: the client and what is needed.' };
+    if (!note) return { ok: false, error: 'Write your note for it: what is needed, and by when. It goes on the task first.' };
+    var aid = g.aid;
+    if (!aid) { try { var r = sfkQuery_('SELECT Agent__c FROM Task WHERE Agent__r.Name = ' + soqlStr_(agent) + ' AND Agent__c != null ORDER BY CreatedDate DESC LIMIT 1')[0]; aid = r ? r.Agent__c : ''; } catch (e) {} }
+    if (!aid) { try { var cs = sfkQuery_('SELECT Id FROM Contact WHERE Name = ' + soqlStr_(agent) + ' LIMIT 2'); if (cs.length === 1) aid = cs[0].Id; } catch (e) {} }
+    var u = (sfkUsers_() || {})[desk];
+    if (!u || !u.id) return { ok: false, error: 'No Salesforce user for ' + nameFor_(desk) + '. Choose another desk.' };
+    var tid = '';
+    try { var rec = { Subject: subject.slice(0, 255), OwnerId: u.id, ActivityDate: day, Status: 'Not Started', Task_Type__c: type }; if (aid) rec.Agent__c = aid; tid = sfkInsert_('Task', rec); }
+    catch (e) { return { ok: false, error: 'Salesforce refused it: ' + String(e && e.message || e).slice(0, 140) }; }
+    try { mgrPost_({ ParentId: tid, Body: unitRole_(sid) + ' · ' + name + ' · ' + shortDate_(day) + ' ' + twelve_(at) + '\n\n' + note }, sid); } catch (e) {}
+    try { taskChangeLog_({ TaskId: tid, Subject: subject, Field: 'Created', Before: '', After: type + ' for ' + agent + ', with ' + nameFor_(desk), Why: note, By: name, Result: 'OK' }); } catch (e) {}
+    umPostsAdd_(sid, day, 1); forget(); try { sfkForgetDay_(day); } catch (e) {}
+    return { ok: true, id: tid, msg: 'Opened for ' + agent.split(' ')[0] + ', with ' + String(nameFor_(desk)).split(' ')[0] + (aid ? '' : ' (the agent could not be named on it: add him in Salesforce)') + ', your note on it.' };
+  }
+  var it = id ? wdUnitTask_(sid, day, id) : null;
+  if (!it) return { ok: false, error: 'That task is not in your unit\'s list. Refresh, then try again.' };
+  if (sub === 'open') {
+    var notes = []; try { notes = (cmdChatter_([id]) || {})[id] || []; } catch (e) {}
+    var pb = {}; try { pb = playbookFor_({ subject: it.s, ty: it.ty }, notes, day) || {}; } catch (e) {}
+    return { ok: true, id: id, a: it.a, o: it.o, todo: pb.todo || '', next: pb.next || '', close: pb.close || '', label: pb.label || it.ty || 'Task',
+      notes: notes.slice(0, WD_UNIT.NOTES).map(function (n) { var np = noteParts_(n.text); return { who: np.ours ? String(np.who).split(' · ').pop() : n.by, day: n.day ? shortDate_(n.day) : '', s: shorten_(np.body, 300), reply: !!n.reply }; }),
+      more: Math.max(0, notes.length - WD_UNIT.NOTES) };
+  }
+  if (sub === 'draft') {
+    if (!claudeFor_(sid)) return { ok: false, error: 'Nothing to do.' };
+    return umReplyDraft_(sid, day, it, { said: String(p.said || ''), tone: String(p.tone || '') });
+  }
+  if (sub === 'note' || sub === 'close') {
+    var q = {}; q['c_' + id] = String(p.text || ''); if (sub === 'close') q['x_' + id] = '1';
+    if (!String(p.text || '').trim()) return { ok: false, error: sub === 'close' ? 'Say what was done first: it becomes the closing note.' : 'Write your comment first.' };
+    var done = umPostOrClose_(sid, day, [it], q, at)[0] || { res: 'NOT SAVED' };
+    if (/^NOT/.test(done.res)) return { ok: false, error: done.res.replace(/^NOT (CLOSED|SAVED)[^:]*: ?/, '') || done.res };
+    umPostsAdd_(sid, day, 1); if (done.closed) forget();
+    return { ok: true, act: sub, closed: !!done.closed, msg: done.closed ? 'Closed for ' + String(it.a).split(' ')[0] + ', your note on it.' : 'On its Chatter, as yours.' };
+  }
+  return { ok: false, error: 'Nothing to do.' };
+}
+/** The manager's own numbers for the day, as the page shows them. */
+function wdUnitChecks_(sid, day) {
+  var plan = {}; try { plan = mgrRows_(sid, day, 'plan'); } catch (e) {}
+  return UM_CHECKS.map(function (c) { var r = plan[c.id] || {}; return { id: c.id, q: c.q, ph: c.note || 'Note', v: r.Planned == null ? '' : String(r.Planned), n: String(r.Note || '') }; });
+}
+
 /** Everything the page shows, as JSON. */
 function workdayModel_(sid, day) {
   var person = workdayPerson_(sid);
@@ -17063,7 +17199,17 @@ function workdayModel_(sid, day) {
   m.claude = claudeFor_(sid);
   m.bars = workdayBars_(sid, day);
   m.team = sid === 'ricky' || sid === 'kamla' ? workdayTeam_(day) : [];
+  if (UM_DESKS.indexOf(sid) > -1) wdUnitModel_(m, sid, day);
   return m;
+}
+/** The unit on a manager's My workday (29 Oct 2026): the work by agent, the day's notes, his numbers, the desks to give a task to. */
+function wdUnitModel_(m, sid, day) {
+  try { m.unit = wdUnit_(sid, day); } catch (e) { m.unit = { error: 'Salesforce did not answer: ' + String(e && e.message || e).slice(0, 100), agents: [], timeline: [] }; }
+  m.unitLabel = sid === 'ricky' ? 'The branch' : 'Your unit';
+  m.checks = wdUnitChecks_(sid, day);
+  m.desks = DAY_MAIL_DESKS.map(function (d) { return { sid: d, first: String(nameFor_(d)).split(' ')[0] }; });
+  m.utypes = sfTypeList_().map(function (t) { return { k: t, l: SF_TYPES[t], to: wdUnitDesk_(t) }; });
+  m.unitEve = replyUrl_(sid, day, 'umeve');
 }
 /** His My workday: the leadership bar, what still waits on him with Claude's words, what he did, and the team. */
 function workdayLeadModel_(m, day, now, base) {
@@ -17084,6 +17230,8 @@ function workdayLeadModel_(m, day, now, base) {
   m.bars = workdayNoteBars_(day);
   m.barsLabel = 'your own notes each day';
   m.team = workdayTeam_(day);
+  var post = m.desks; wdUnitModel_(m, 'ricky', day); m.desks = post;   // his Post-to list stays the inbox's
+  m.newDesks = DAY_MAIL_DESKS.map(function (d) { return { sid: d, first: String(nameFor_(d)).split(' ')[0] }; });
   return m;
 }
 /** His own notes per working day, the last WORKDAY.BARS of them (postWho_: his words only). */
@@ -17301,6 +17449,11 @@ function workdayPost_(p) {
   var sid = a.sid;
   var person = workdayPerson_(sid); if (!person) return { ok: false, error: 'That desk is no longer on the register.' };
   if (String(p.act || '') === 'post') { if (sid !== 'ricky') return { ok: false, error: 'Nothing to do.' }; return workdayPostNote_(p, day); }
+  // The managers' screen (29 Oct 2026): the unit's tasks, from here.
+  if (String(p.act || '') === 'unit') {
+    if (sid !== 'ricky' && UM_DESKS.indexOf(sid) < 0) return { ok: false, error: 'Nothing to do.' };
+    try { return wdUnitAct_(person, sid, day, p); } catch (e) { return { ok: false, error: 'That did not save: ' + String(e && e.message || e).slice(0, 140) }; }
+  }
   // My workday is the one screen (29 Oct 2026): the task cards, what came up, the close-out and the sign-out, here.
   var act = String(p.act || '');
   if (act === 'card' || act === 'scrub' || act === 'closeform' || act === 'close') {
