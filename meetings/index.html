@@ -189,6 +189,45 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .checkin.done{background:linear-gradient(150deg,rgba(53,208,127,.1),transparent);border-color:rgba(53,208,127,.28)}
   .checkin.shut{background:rgba(255,255,255,.03);border-color:var(--line)}
 
+  /*  THE AGENDA AS THE BRANCH BUILT IT.
+   *  What came in before anybody sat down, grouped three ways. The
+   *  point of the screen is the contrast: a meeting that arrives
+   *  already written by the room, against one the chair wrote alone.
+   */
+  .btwrap{margin-top:4px}
+  .btstrip{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr));
+    margin-bottom:14px}
+  .btfig{background:linear-gradient(150deg,rgba(59,158,255,.16),rgba(63,201,176,.07));
+    border:1px solid rgba(59,158,255,.3);border-radius:14px;padding:13px 15px;min-width:0}
+  .btfig b{display:block;font-size:27px;font-weight:800;line-height:1.1;color:var(--text);
+    font-variant-numeric:tabular-nums}
+  .btfig span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.45}
+  .btseg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .btseg button{font:600 12.5px/1 inherit;padding:9px 14px;border-radius:999px;cursor:pointer;
+    background:var(--card);color:var(--muted);border:1px solid var(--line)}
+  .btseg button.on{background:var(--accent);border-color:var(--accent);color:#07131f}
+  .btgrp{margin-bottom:16px}
+  .btgh{display:flex;align-items:baseline;gap:9px;margin-bottom:9px;flex-wrap:wrap}
+  .btgh h3{font-size:14px;font-weight:800;margin:0;color:var(--text)}
+  .btgh .n{font-size:11.5px;font-weight:700;color:var(--dim)}
+  .btgh .ask{flex:1 1 100%;font-size:12.5px;color:var(--muted);line-height:1.6}
+  .btcards{display:grid;gap:9px;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))}
+  .btc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+    min-width:0;border-left:3px solid var(--accent)}
+  .btc.k-concern{border-left-color:var(--amber)}
+  .btc.k-commitment{border-left-color:var(--green)}
+  .btc.k-question{border-left-color:var(--violet)}
+  .btc.k-decision{border-left-color:var(--support)}
+  .btc .w{font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:5px;
+    display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  .btc .w b{color:var(--text)}
+  .btc .b{font-size:13.5px;line-height:1.62;color:var(--text);overflow-wrap:anywhere}
+  .btc .o{font-size:11.5px;color:var(--dim);margin-top:6px}
+  .btnone{background:var(--card);border:1px dashed var(--line);border-radius:14px;
+    padding:20px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7}
+  .btwait{font-size:12.5px;color:var(--muted);line-height:1.7;margin-top:4px}
+  .btwait b{color:var(--text)}
+
   /*  The meeting that is almost here, and what this person has to do
    *  about it. An agent who reads only the check-in card knows one of
    *  their four jobs, so the jobs are written out, numbered, by role.
@@ -922,6 +961,7 @@ function render() {
     case "minutes":  return viewMinutes();
     case "archive":  return viewArchive();
     case "document": return viewDocument();
+    case "built":    return viewBuilt();
     case "topics":   return viewTopics();
     case "topic":    return viewTopic();
     case "service":  return viewService();
@@ -980,6 +1020,7 @@ function viewHome() {
   Array.prototype.forEach.call(document.querySelectorAll("[data-bring]"), function (b) {
     b.onclick = function () { S.bring = true; go("meeting", b.getAttribute("data-bring")); };
   });
+  var tb = $("td-built"); if (tb) tb.onclick = function () { go("built", next ? next.id : ""); };
   var tp = $("td-prep"); if (tp) tp.onclick = function () { go("prep", next ? next.id : ""); };
   var ta = $("td-act"); if (ta) ta.onclick = function () { go("actions"); };
   wireMeetingRows();
@@ -1173,6 +1214,7 @@ function runUpBlock(m) {
     '<ol class="rail">' + lis + "</ol>" +
     '<div class="btn-row">' +
     '<button class="btn teal sm" data-bring="' + esc(m.id) + '">Put my item on the agenda</button>' +
+    '<button class="btn ghost sm" id="td-built">See what the branch has brought</button>' +
     '<button class="btn ghost sm" data-open="' + esc(m.id) + '">Open the meeting</button>' +
     (staff ? "" : '<button class="btn ghost sm" id="td-prep">My prep</button>') +
     (open || over ? '<button class="btn ghost sm" id="td-act">Action tracker</button>' : "") +
@@ -1860,6 +1902,165 @@ function openMaterial(id, btn) {
       if (btn) { btn.disabled = false; btn.textContent = label; }
       alertModal("No connection", "Could not fetch that file.");
     });
+}
+
+
+/* ---------------- the agenda, as the branch built it ---------------- */
+/*
+ *  Everything brought in before the meeting, grouped three ways. It is
+ *  one screen because the contrast is the point: an agenda the room
+ *  wrote, against one the chair wrote alone. Nothing here is new data
+ *  \u2014 it is the same contributions the meeting page already carries,
+ *  read for the shape rather than in a list.
+ */
+var BT_KINDS = ["Commitment", "Concern", "Point", "Question", "Decision", "Answer", "Apology"];
+var BT_ASK = {
+  Commitment: "What will you do, by when \u2014 a number and a date.",
+  Concern:    "What worries you that nobody has said.",
+  Point:      "What works for you that others should steal.",
+  Question:   "What you need answered to move. Each one gets an answer, or a name and a date.",
+  Decision:   "What this branch should decide in the room.",
+  Answer:     "Answers to what somebody else asked.",
+  Apology:    "Logged as unable to attend."
+};
+
+function btKey(k) { return String(k || "Point").toLowerCase(); }
+
+function viewBuilt() {
+  var id = S.meetingId || (S.home && S.home.next && S.home.next.id);
+  if (!id) { go("home"); return; }
+  loading("Reading what the branch has brought\u2026");
+  apiGet("meeting", { token: S.token, id: id }).then(guard).then(function (d) {
+    if (!d.ok) throw new Error(d.error);
+    $("view").innerHTML = builtHtml(d);
+    wireBuilt(d);
+  }).catch(function (e) {
+    $("view").innerHTML = '<div class="empty"><span class="big">\u26a0\ufe0f</span>' +
+      esc(e.message || "Could not load.") + "</div>";
+  });
+}
+
+function builtHtml(d) {
+  var m = d.meeting;
+  //  Brought in beforehand carries offset -1; anything else was said in
+  //  the room. Before the day there is nothing else, but the screen is
+  //  worth keeping honest once a meeting has run.
+  var all = (d.contributions || []).slice();
+  var pre = all.filter(function (c) { return (c.offset || 0) < 0; });
+  var list = pre.length ? pre : all;
+  var people = {}, items = {};
+  list.forEach(function (c) {
+    people[c.email || c.name] = c.name;
+    if (c.agendaId) items[c.agendaId] = true;
+  });
+  var nPeople = Object.keys(people).length;
+  var nItems = Object.keys(items).length;
+
+  var out = '<div class="page-head"><div class="kicker">' + esc(m.date) +
+    (m.start ? " \u00b7 " + esc(m.start) : "") + "</div>" +
+    "<h1>The agenda, as the branch built it</h1>" +
+    "<p>Everything brought in before anybody sat down. It is read in the room before " +
+    "anybody speaks.</p></div>";
+
+  if (!list.length) {
+    return out + '<div class="btnone"><b>Nothing brought in yet.</b><br>' +
+      "The first person to put something here sets what the room talks about.<br><br>" +
+      '<button class="btn teal auto" data-bring="' + esc(m.id) + '">Put my item on the agenda</button>' +
+      "</div>";
+  }
+
+  out += '<div class="btwrap"><div class="btstrip">' +
+    '<div class="btfig"><b>' + list.length + "</b><span>thing" +
+      (list.length === 1 ? "" : "s") + " brought in</span></div>" +
+    '<div class="btfig"><b>' + nPeople + "</b><span>people have brought something</span></div>" +
+    '<div class="btfig"><b>' + nItems + "</b><span>agenda item" + (nItems === 1 ? "" : "s") +
+      " answered</span></div>" +
+    "</div>";
+
+  var by = S.builtBy || "kind";
+  out += '<div class="btseg">' +
+    ["kind:By what it is", "item:By agenda item", "who:By person"].map(function (o) {
+      var k = o.split(":")[0];
+      return '<button data-by="' + k + '"' + (by === k ? ' class="on"' : "") + ">" +
+        esc(o.split(":")[1]) + "</button>";
+    }).join("") + "</div>";
+
+  var groups = [];
+  if (by === "kind") {
+    BT_KINDS.forEach(function (k) {
+      var in_ = list.filter(function (c) { return (c.kind || "Point") === k; });
+      if (in_.length) groups.push({ t: k, ask: BT_ASK[k] || "", items: in_ });
+    });
+  } else if (by === "item") {
+    (d.agenda || []).forEach(function (a) {
+      var in_ = list.filter(function (c) { return c.agendaId === a.id; });
+      if (in_.length) groups.push({ t: a.order + ". " + a.title, ask: a.detail || "", items: in_ });
+    });
+    var loose = list.filter(function (c) { return !c.agendaId; });
+    if (loose.length) groups.push({ t: "The meeting as a whole", ask: "", items: loose });
+  } else {
+    var seen = {};
+    list.forEach(function (c) {
+      var k = c.email || c.name;
+      if (!seen[k]) { seen[k] = { t: c.name, ask: "", items: [] }; groups.push(seen[k]); }
+      seen[k].items.push(c);
+    });
+    groups.sort(function (a, b) { return b.items.length - a.items.length; });
+  }
+
+  groups.forEach(function (g) {
+    out += '<div class="btgrp"><div class="btgh"><h3>' + esc(g.t) + "</h3>" +
+      '<span class="n">' + g.items.length + "</span>" +
+      (g.ask ? '<span class="ask">' + esc(g.ask) + "</span>" : "") + "</div>" +
+      '<div class="btcards">' + g.items.map(function (c) {
+        var slot = (d.agenda || []).filter(function (a) { return a.id === c.agendaId; })[0];
+        return '<div class="btc k-' + esc(btKey(c.kind)) + '">' +
+          //  kindBadge returns a CLASS, not markup.
+          '<div class="w"><b>' + esc(c.name) + "</b>" +
+            '<span class="badge ' + kindBadge(c.kind) + '">' + esc(c.kind || "Point") +
+            "</span></div>" +
+          '<div class="b">' + esc(c.body) + "</div>" +
+          (slot && by !== "item"
+            ? '<div class="o">on ' + esc(slot.order + ". " + slot.title) + "</div>" : "") +
+          "</div>";
+      }).join("") + "</div></div>";
+  });
+
+  //  Who has not brought anything is staff material: a person should
+  //  see their own gap on their run-up, not their name on a list in
+  //  front of the branch.
+  if (isStaff() && d.register && d.register.roster) {
+    var yet = d.register.roster.filter(function (r) {
+      return !people[r.email] && !people[r.name];
+    });
+    if (yet.length) {
+      out += '<div class="card flat"><div class="btwait"><b>Yet to bring anything \u2014 ' +
+        yet.length + "</b><br>" +
+        yet.map(function (r) { return esc(String(r.name || "").split(" ")[0]); }).join(" \u00b7 ") +
+        "</div></div>";
+    }
+  }
+
+  out += '<div class="btn-row" style="margin-top:16px">' +
+    '<button class="btn teal sm" data-bring="' + esc(m.id) + '">Add mine</button>' +
+    '<button class="btn ghost sm" data-open="' + esc(m.id) + '">Open the meeting</button>' +
+    "</div></div>";
+  return out;
+}
+
+function wireBuilt(d) {
+  Array.prototype.forEach.call(document.querySelectorAll("[data-by]"), function (b) {
+    b.onclick = function () {
+      S.builtBy = b.getAttribute("data-by");
+      try { localStorage.setItem("rrb-built-by", S.builtBy); } catch (e) { /* private mode */ }
+      $("view").innerHTML = builtHtml(d);
+      wireBuilt(d);
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-bring]"), function (b) {
+    b.onclick = function () { S.bring = true; go("meeting", b.getAttribute("data-bring")); };
+  });
+  wireMeetingRows();
 }
 
 /* ---------------- the floor: who contributed what ---------------- */
@@ -3860,6 +4061,7 @@ function boot() {
 /** Behind the door: pick up a remembered session, or ask who you are. */
 function resume() {
   var saved = null;
+  try { S.builtBy = localStorage.getItem("rrb-built-by") || "kind"; } catch (e) { /* private mode */ }
   try { saved = localStorage.getItem(TOKEN_KEY); } catch (e) { /* private mode */ }
   if (!saved) return showGate("login");
 
