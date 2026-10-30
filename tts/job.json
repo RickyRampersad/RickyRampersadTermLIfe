@@ -3,10 +3,14 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "mtfix": [
-   "That gets you into the room. You are not marked present yet.",
-   "The button opens at half past eleven. We start at twelve.",
-   "Try it tonight. If you can't get in, say so tonight, not at half past eleven."
+  "mtflow": [
+   "Every branch meeting has four parts.",
+   "Before. You bring one thing. Your agent number opens the page. Pick the item, answer its question, and it lands on the agenda before anybody sits down.",
+   "The start. Press the button that says I am here. That is the register. Nothing else marks you present.",
+   "Then ten minutes of quiet, while we all read what the room brought.",
+   "The middle. Fifty minutes. Every question gets an answer, or a name and a date on it.",
+   "After. Twenty minutes of decisions, read out loud. Minutes within the hour. On your board by Monday.",
+   "Then again on Wednesday. Bring one thing."
   ]
  }
 }
