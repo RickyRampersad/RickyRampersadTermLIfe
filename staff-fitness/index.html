@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#080f22">
+<title>Staff Fitness Preview | Ricky Rampersad Branch</title>
+<style>
+:root{color-scheme:dark;--bg:#080f22;--card:#162b49;--line:#34506c;--blue:#79b4ff;--mint:#69e1be}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#183d67,var(--bg) 60%);font:16px system-ui,-apple-system,Segoe UI,sans-serif;color:#f4f8ff}
+main{max-width:920px;margin:auto;padding:26px 18px 80px}header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{font-weight:850;letter-spacing:.1em;font-size:13px} .pill{background:#204d63;color:#c5fff0;padding:8px 12px;border-radius:100px;font-size:12px;font-weight:800}
+h1{font-size:clamp(32px,7vw,58px);line-height:1.08;margin:48px 0 12px}h2{font-size:21px;margin:0 0 15px}.lead{font-size:18px;color:#c2d6eb;max-width:620px;line-height:1.6}
+strong{color:var(--mint)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:28px}
+.card{background:linear-gradient(150deg,#1a385b,var(--card));border:1px solid var(--line);border-radius:22px;padding:24px;box-shadow:0 14px 40px #0002}
+.metric{font-size:37px;font-weight:900;margin:4px 0;color:var(--mint)}.caption,.small{color:#bed0e3;font-size:13px;line-height:1.5}.section{margin-top:28px}
+button,select,input{font:inherit}button{cursor:pointer;background:#4589ee;border:0;border-radius:12px;padding:12px 16px;color:#fff;font-weight:750}
+button.secondary{background:#284863}button:focus-visible,select:focus-visible{outline:3px solid var(--mint)}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.row>*{flex:0 0 auto}.activity{padding:16px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:center}
+select{background:#0d2038;color:white;border:1px solid #54718e;padding:10px;border-radius:9px;max-width:100%}
+.bar{height:13px;background:#0b2138;border-radius:100px;overflow:hidden;margin:16px 0}.fill{height:100%;width:0;background:linear-gradient(90deg,#4589ee,#69e1be);transition:width .25s}
+footer{margin-top:30px;font-size:12px;color:#b4c6da;line-height:1.6}
+</style></head><body><main>
+<header><div class="logo">RICKY RAMPERSAD BRANCH</div><span class="pill">DEMO • SAMPLE DATA ONLY</span></header>
+<h1>Stronger together.<br><strong>One day at a time.</strong></h1>
+<p class="lead">Welcome to Staff Fitness: a simple wellness challenge preview for the branch. Explore activities, record a demo workout, and see how a weekly progress view could work.</p>
+<div class="grid">
+<section class="card"><div class="caption">Demo workouts completed this week</div><div class="metric" id="count">0</div><div class="caption">Stored only in this browser for demonstration.</div></section>
+<section class="card"><div class="caption">Weekly demo goal</div><div class="metric"><span id="goalcount">0</span> / 4</div><div class="bar"><div class="fill" id="progress"></div></div><div class="caption">Complete four activities to fill the bar.</div></section>
+<section class="card"><div class="caption">Staff participation</div><div class="metric">Demo</div><div class="caption">Real attendance reporting and staff identification are not connected yet.</div></section>
+</div>
+<section class="card section"><h2>Choose your activity</h2><div class="row"><label for="activity">Activity</label><select id="activity"><option>Walking</option><option>Running</option><option>Strength training</option><option>Yoga or stretching</option><option>Cycling</option><option>Other movement</option></select><button id="add">Log demo activity</button><button class="secondary" id="reset">Reset demo</button></div><p class="small" id="message" role="status">No health information is sent to a server.</p></section>
+<section class="card section"><h2>Try a 7-day movement challenge</h2>
+<div class="activity"><div><b>Day 1 — Start moving</b><div class="small">A comfortable 15-minute walk</div></div><span>🚶</span></div>
+<div class="activity"><div><b>Day 2 — Strength</b><div class="small">Gentle bodyweight movements</div></div><span>💪</span></div>
+<div class="activity"><div><b>Day 3 — Mobility</b><div class="small">Stretch and reset</div></div><span>🧘</span></div>
+<div class="activity"><div><b>Day 4 onward — Your pace</b><div class="small">Repeat a favourite activity; rest as needed</div></div><span>⭐</span></div>
+</section>
+<footer><b>Preview limitations:</b> This is not an authenticated staff portal. It does not verify an agent number, record actual logins, sync devices, collect medical details, or provide a manager dashboard. Demo records stay on this device and can be reset. Avoid entering personal or health information. A staff-ready deployment requires authentication, access controls, privacy review and explicit publishing approval.</footer>
+</main><script>
+(function(){'use strict';const key='rrb-fitness-preview-v1';let events=[];try{const raw=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(raw))events=raw.filter(x=>typeof x==='string').slice(-100)}catch(e){}
+const $=id=>document.getElementById(id);function render(){const n=events.length;$('count').textContent=n;$('goalcount').textContent=Math.min(n,4);$('progress').style.width=(Math.min(n,4)/4*100)+'%'}$('add').addEventListener('click',()=>{events.push($('activity').value);try{localStorage.setItem(key,JSON.stringify(events))}catch(e){}$('message').textContent='Demo '+$('activity').value.toLowerCase()+' logged on this device.';render()});$('reset').addEventListener('click',()=>{events=[];try{localStorage.removeItem(key)}catch(e){}$('message').textContent='Demo activity cleared.';render()});render()})();
+</script></body></html>
