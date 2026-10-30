@@ -1,17 +1,37 @@
 {
- "tts/out/mtfix/01.mp3": [
+ "tts/out/mtflow/01.mp3": [
+  "en",
+  0.993,
+  "Every branch meeting has four parts."
+ ],
+ "tts/out/mtflow/02.mp3": [
+  "en",
+  0.999,
+  "Before, you bring one thing. Your agent number opens the page. Pick the item, answer its question, and it lands on the agenda before anybody sits down."
+ ],
+ "tts/out/mtflow/03.mp3": [
   "en",
   0.996,
-  "That gets you into the room. You're not marked present yet."
+  "The start. Press the button that says I am here. That is the register. Nothing else marks you present."
  ],
- "tts/out/mtfix/02.mp3": [
+ "tts/out/mtflow/04.mp3": [
   "en",
-  0.996,
-  "The button opens at half past 11. We start at 12."
+  0.989,
+  "Then 10 minutes of quiet while we all read what the room brought."
  ],
- "tts/out/mtfix/03.mp3": [
+ "tts/out/mtflow/05.mp3": [
+  "en",
+  0.997,
+  "The middle, 50 minutes, every question gets an answer or a name and a date on it."
+ ],
+ "tts/out/mtflow/06.mp3": [
   "en",
   0.995,
-  "Try tonight. If you can't get in, say so tonight, not at half past 11."
+  "After 20 minutes of decisions, read out loud, minutes within the hour on your board by Monday."
+ ],
+ "tts/out/mtflow/07.mp3": [
+  "en",
+  0.983,
+  "Then again on Wednesday, bring one thing."
  ]
 }
