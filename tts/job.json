@@ -3,17 +3,11 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "mtrise": [
-   "This branch took a hit. We are not going to pretend it did not happen.",
-   "Look at what did not leave.",
-   "The lowest lapse rate of any branch. Four point nine six per cent, against an average of eight point eight two.",
-   "Not one case from our own fact find has lapsed. Not one.",
-   "Two thousand four hundred and ninety five client requests closed in a year. And October was busier than September, with fewer of us.",
-   "A book of our own came home, full of people waiting to hear from somebody who turns up.",
-   "This is not a branch in trouble. This is a branch holding everything that matters.",
-   "FY27 starts Friday, twelve noon. Bring one thing. Press I am here. That is the register.",
-   "Every question gets an answer, or a name and a date. Every decision read back out loud.",
-   "Twenty six of us. More than two hundred years between us. Still here. Let us go."
+  "mtrisefix": [
+   "This branch took a hit. We will not pretend otherwise.",
+   "Now look at what stayed.",
+   "Our lapse rate is four point nine six per cent. The main branches average eight point eight two.",
+   "From our own fact find, not one case has lapsed. Not one."
   ]
  }
 }
