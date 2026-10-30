@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-10-07a';
+var INTEL_VERSION = '2026-10-30a';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -7398,8 +7398,12 @@ function iBuildWall45_(target) {
                policies: L.policies, premium: Math.round(L.prem * 100) / 100,
                clients: Object.keys(L.clients).length,
                agentCount: Object.keys(L.agents).length,
+               /* Every agent in the stretch, not a top twelve (30 October 2026). The wall folds whoever has left
+                  into one Orphans row (wallScrub_, KPI.gs) after this, so a cut here dropped every departed agent
+                  below twelfth from "on inactive agents' books", and the slide's 60+ by agent added two partial
+                  lists. A few dozen rows a band; the screens take their own top few. */
                agents: Object.keys(L.agents).map(function (k) { return iWallLaneRow_(L.agents[k], letters); })
-                 .sort(function (p, q) { return q.n - p.n || q.prem - p.prem; }).slice(0, 12),
+                 .sort(function (p, q) { return q.n - p.n || q.prem - p.prem; }),
                /* in the table's own order, oldest last, so the bars read as a timeline */
                ageing: IWALL_AGEING[b].map(function (rg) { return iWallLaneRow_(L.ageing[iWallAgeingLabel_(rg)], letters); }),
                survey: iWallLaneSurvey_(L.clients, letters),

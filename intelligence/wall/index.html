@@ -194,7 +194,7 @@
   .alist.d60 .arow .n{color:var(--hot)}
   .arow.orph{background:rgba(255,107,94,.08);border-bottom-color:rgba(255,107,94,.35);padding-left:6px;margin-left:-6px;border-radius:6px}
   .arow.orph .nm{color:var(--hot);font-weight:700}
-  .arow.hd{border-bottom-color:var(--line);font-size:10px;color:var(--faint);letter-spacing:.12em;text-transform:uppercase;padding-top:0}
+  .arow.hd{white-space:nowrap;letter-spacing:.06em;border-bottom-color:var(--line);font-size:10px;color:var(--faint);letter-spacing:.12em;text-transform:uppercase;padding-top:0}
   .arow.hd .n,.arow.hd .n45,.arow.hd .m{font:inherit;color:inherit}
 
   /* The three lines and the letters — one lane per stretch. The survey card
@@ -248,6 +248,10 @@
   footer{position:fixed;left:26px;bottom:5px;font-size:10.5px;color:var(--faint)}
   .hint{position:fixed;right:26px;bottom:5px;font-size:10.5px;color:var(--faint);opacity:.7}
 
+  @media (max-width:1699px){
+    #bands3{gap:6px} .b3{padding:6px 11px} .b3 .bn{font-size:34px;margin:1px 0 3px}
+    .b3 .bo{margin-top:1px;padding-top:2px}
+  }
   @media (min-width:1700px){
     main{grid-template-columns:340px 1fr 1fr 1fr;gap:16px;padding:0 34px 24px}
     .hero .big{font-size:120px} .card{padding:20px 24px}
@@ -591,8 +595,8 @@ function bars(host,list,dim,tone){
 var ORPH = 'Orphans \u00b7 to reassign';
 function isOrph(k){ return String(k||'') === ORPH || /^orphans\b/i.test(String(k||'')); }
 function orphOf(b){
-  var o = (b && b.agents || []).filter(function(a){ return isOrph(a.k); })[0];
-  return { n: o ? (o.n||0) : 0, prem: o ? (o.prem||0) : 0 };
+  return (b && b.agents || []).filter(function(a){ return isOrph(a.k); })
+    .reduce(function(t,a){ t.n += a.n||0; t.prem += a.prem||0; return t; }, { n: 0, prem: 0 });
 }
 /* Beyond sixty days, one row an agent: the 60-89 and 90+ bands added
    together, with the same agent's 45-59 count beside it. The inactive
@@ -601,7 +605,7 @@ function beyond60(D){
   var by = {}, B = D.bands || [];
   B.forEach(function(b){
     (b.agents || []).forEach(function(a){
-      var r = by[a.k] || (by[a.k] = { k: a.k, n45: 0, n: 0, prem: 0 });
+      var key = isOrph(a.k) ? ORPH : a.k, r = by[key] || (by[key] = { k: key, n45: 0, n: 0, prem: 0 });
       if (b.band >= 60) { r.n += a.n || 0; r.prem += a.prem || 0; }
       else r.n45 += a.n || 0;
     });
@@ -609,6 +613,12 @@ function beyond60(D){
   return Object.keys(by).map(function(k){ return by[k]; })
     .filter(function(r){ return r.n > 0; })
     .sort(function(x, y){ return (isOrph(y.k) - isOrph(x.k)) || (y.n - x.n) || (y.prem - x.prem); });
+}
+
+function rowD60(x){
+  var o = isOrph(x.k);
+  return '<div class="arow'+(o?' orph':'')+'"><div class="nm">'+(o?'Inactive agents':esc(x.k))+'</div>'
+    + '<div class="n45">'+(x.n45||'')+'</div><div class="n">'+x.n.toLocaleString("en-US")+'</div><div class="m">'+short(x.prem)+'</div></div>';
 }
 
 function paintBands3(D){
@@ -692,12 +702,12 @@ function paint(){
   if (d60) {
     var tot = (D.bands||[]).reduce(function(s2,b){ return s2+(b.band>=60?(b.policies||0):0); },0), orow = d60.filter(function(r){ return isOrph(r.k); })[0];
     $("#agentCap").innerHTML = '<b style="color:var(--hot)">'+tot.toLocaleString("en-US")+'</b> policies past sixty days'
-      + (orow ? ' \u00b7 <b style="color:var(--hot)">'+orow.n.toLocaleString("en-US")+'</b> on inactive agents\u2019 books, first' : '')
-      + (d60.length>9 ? ' \u00b7 top 9 shown' : '');
-    $("#aList").innerHTML = '<div class="arow hd"><div class="nm">Agent</div><div class="n45">45\u201359</div><div class="n">60+</div><div class="m">premium</div></div>'
-      + d60.slice(0,9).map(function(x){
-        return '<div class="arow'+(isOrph(x.k)?' orph':'')+'"><div class="nm">'+(isOrph(x.k)?'Inactive agents':esc(x.k))+'</div>'
-          + '<div class="n45">'+(x.n45||'')+'</div><div class="n">'+x.n.toLocaleString("en-US")+'</div><div class="m">'+short(x.prem)+'</div></div>';
+      + (orow ? ' \u00b7 <b style="color:var(--hot)">'+orow.n.toLocaleString("en-US")+'</b> on inactive agents\u2019 books, shown first' : '');
+    var L = $("#aList"), cs = getComputedStyle(L), per = cs.gridAutoFlow.indexOf("column") === 0
+      ? Math.max(2, cs.gridTemplateRows.split(" ").filter(Boolean).length) : 0;
+    var hd = '<div class="arow hd"><div class="nm">Agent</div><div class="n45">45\u201359</div><div class="n">60+</div><div class="m">premium</div></div>';
+    L.innerHTML = d60.slice(0, per ? 2*(per-1) : 9).map(function(x, i){
+        return (i === 0 || (per && i % (per-1) === 0) ? hd : '') + rowD60(x);
       }).join("");
   } else {
     var ag=v.agents.slice(0,10);
@@ -726,6 +736,7 @@ function paint(){
    "Follow-up recorded" is OWNER or CLOSED on the survey tab. Nothing in the
    system records that the AGENT rang the client, so the lane never claims it.
    Everything here is a count the server folded; there is no row to click. */
+function topAgents(b,n){ return (b.agents||[]).slice().sort(function(p,q){ return (q.n||0)-(p.n||0) || (q.prem||0)-(p.prem||0); }).slice(0,n); }
 function lrows(list, key, tone, sub){
   var max=0; list.forEach(function(x){ if(x.n>max) max=x.n; });
   return '<div class="lrows">'+list.map(function(x){
@@ -759,7 +770,7 @@ function lane(b, me, anySent){
     body=tiles(ltile(S.sent,'letter went out')
       + ltile(S.silent,'no reply',S.silent?'gold':'')
       + ltile(S.contacted,'branch follow-up recorded','accent'))
-      + lrows((b.agents||[]).slice(0,4),'n','',none?null:function(x){ return x.silent+' silent · '+x.contacted+' recorded'; });
+      + lrows(topAgents(b,4),'n','',none?null:function(x){ return x.silent+' silent · '+x.contacted+' recorded'; });
     note=(none?'By agent. A recorded follow-up is one on the survey tab — nothing here can see whether the agent rang.'
       :'By agent. "Recorded" is a follow-up on the survey tab; nothing here can see whether the agent rang.')+removed;
   } else {
@@ -768,7 +779,7 @@ function lane(b, me, anySent){
       + ltile(why.rating+why.notHeard,'follow-ups: '+why.rating+' rating · '+why.notHeard+' not heard',S.open?'gold':'')
       + ltile(S.outcomes,'closed with an outcome',''))
       + lrows(b.ageing||[],'n','gold')
-      + lrows((b.agents||[]).slice(0,3),'n','',none?null:function(x){ return x.sent+' sent · '+x.outcomes+' outcomes'; });
+      + lrows(topAgents(b,3),'n','',none?null:function(x){ return x.sent+' sent · '+x.outcomes+' outcomes'; });
     var yr=(b.ageing||[]).filter(function(x){return /365/.test(x.k)})[0]||{n:0};
     note='By how long over ninety, then by agent. <b>'+yr.n.toLocaleString("en-US")+'</b> have been unpaid for over a year.'
       + (taps.stop?' <b>'+taps.stop+'</b> asked us to stop.':'')+removed;
