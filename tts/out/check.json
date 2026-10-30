@@ -1,52 +1,22 @@
 {
- "tts/out/mtrise/01.mp3": [
-  "en",
-  0.995,
-  "This branch took a hit. We're not going pretend it did not happen."
- ],
- "tts/out/mtrise/02.mp3": [
-  "en",
-  0.99,
-  "Look what it did not leave."
- ],
- "tts/out/mtrise/03.mp3": [
-  "en",
-  0.996,
-  "the lowest laps rate of any branch, for 0.96%, against an average of 8.82."
- ],
- "tts/out/mtrise/04.mp3": [
-  "en",
-  0.995,
-  "Not one case from our own fact, find as lapsed. Not one."
- ],
- "tts/out/mtrise/05.mp3": [
-  "en",
-  0.996,
-  "2,495 client requests closed in a year, and October was busier than September with fewer of us."
- ],
- "tts/out/mtrise/06.mp3": [
-  "en",
-  0.996,
-  "A book of our own came home full of people waiting to hear from somebody who turns up"
- ],
- "tts/out/mtrise/07.mp3": [
-  "en",
-  0.996,
-  "This is not a branch in trouble. This is a branch holding everything that matters."
- ],
- "tts/out/mtrise/08.mp3": [
-  "en",
-  0.995,
-  "FY27 starts Friday, 12 noon. Bring one thing. Press I am here. That is the register."
- ],
- "tts/out/mtrise/09.mp3": [
-  "en",
-  0.999,
-  "Every question gets an answer or a name and a date. Every decision read back out loud."
- ],
- "tts/out/mtrise/10.mp3": [
+ "tts/out/mtrisefix/01.mp3": [
   "en",
   0.994,
-  "26 of us more than 200 years between us still here let's go"
+  "This branch took a hit. We will not pretend otherwise."
+ ],
+ "tts/out/mtrisefix/02.mp3": [
+  "en",
+  0.996,
+  "Now look at what's stayed."
+ ],
+ "tts/out/mtrisefix/03.mp3": [
+  "en",
+  0.997,
+  "Our lapse rate is 4.96%. The main branches average 8.82."
+ ],
+ "tts/out/mtrisefix/04.mp3": [
+  "en",
+  0.998,
+  "From our own fact find, not one case is lapsed, not one."
  ]
 }
