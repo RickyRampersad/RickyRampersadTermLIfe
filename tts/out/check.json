@@ -1,52 +1,7 @@
 {
- "tts/out/mtuse/01.mp3": [
+ "tts/out/mtusefix/01.mp3": [
   "en",
-  0.998,
-  "Tomorrow at noon. Here is how to bring something to it."
- ],
- "tts/out/mtuse/02.mp3": [
-  "en",
-  0.998,
-  "Go to rickyrampersadbranch.com slash meetings. Type your agent number, nothing else to remember."
- ],
- "tts/out/mtuse/03.mp3": [
-  "en",
-  0.999,
-  "Your day opens with a short list. Read the agenda, then press. Put my item on the agenda."
- ],
- "tts/out/mtuse/04.mp3": [
-  "en",
-  0.999,
-  "Pick the item you want to talk about. Under it is the question to answer."
- ],
- "tts/out/mtuse/05.mp3": [
-  "en",
-  0.998,
-  "Then say what you're bringing, a commitment, a concern, something that works or a question."
- ],
- "tts/out/mtuse/06.mp3": [
-  "en",
-  0.994,
-  "Press the button and it is on the agenda before anybody sits down."
- ],
- "tts/out/mtuse/07.mp3": [
-  "en",
-  0.997,
-  "It does not mark you present. That is a different tap."
- ],
- "tts/out/mtuse/08.mp3": [
-  "en",
-  0.996,
-  "Everybody sees what the branch brought grouped by what it is by item or by person."
- ],
- "tts/out/mtuse/09.mp3": [
-  "en",
-  0.998,
-  "At half past 11, press the button that says I am here. That one is the register."
- ],
- "tts/out/mtuse/10.mp3": [
-  "en",
-  0.975,
-  "Bring one thing."
+  0.992,
+  "Every week, this branch meets. Here is how to bring something to it."
  ]
 }
