@@ -3,9 +3,19 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "mtturn6": [
-   "Rajeev went first. His updates on the record. Seven applications in October.",
-   "Rajeev went first. His updates, on the record. Seven applications, in October."
+  "mtday": [
+   "Here is your day, from both sides. Eight o'clock: your goal, your fact finds, your clients. And our team is already chasing your cases.",
+   "By half past ten, you check in, and you are present. Not checked in? We call, to understand.",
+   "At noon, tell us how it's going. Need help? Your manager hears it, straight away.",
+   "At half past five, you close off. What you planned, and what you did. We see it too.",
+   "You see us. We see you. Everyone is accountable."
+  ],
+  "mtdayb": [
+   "Here is your day, from both sides. Eight o'clock. Your goal, your fact finds, your clients. And our team, already chasing your cases.",
+   "By half past ten, you check in. You are present. Not checked in? We call you, to understand.",
+   "At noon, tell us how it is going. Need help? Your manager hears it straight away.",
+   "At half past five, close off. What you planned, and what you did. And we see it too.",
+   "You see us. We see you. Everyone, accountable."
   ]
  }
 }
