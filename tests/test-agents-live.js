@@ -60,6 +60,24 @@ P.setProperty('FF_CHASE', 'live');
 ok('it still has its own switch', env.ffMode_() === 'live');
 P.deleteProperty('FF_CHASE');
 
+console.log('\nThe morning e-mail says when each is due:\n');
+{
+  env.__mkSheet('Agent Day', 1, env.AGDAY.head, []);
+  const got = []; const keep = env.mailSend_; env.mailSend_ = o => { got.push(o); return 'relay'; };
+  const F = people['a-felicia-rampersad'];
+  const open = [{ id: '00T1', subject: 'Orphan: change of beneficiary - Khalawan', owner: 'Elizabeth Lee', due: '2026-10-30', late: true },
+    { id: '00T2', subject: 'Orphan response - Ramlakhan', owner: 'Elizabeth Lee', due: DAY, late: false },
+    { id: '00T3', subject: 'UWPRO: Sarran', owner: 'Azariah Griffith', due: '2026-11-03', late: false }];
+  env.agentMorningMail_(F, DAY, { open: { [F.key]: open }, closed: { [F.key]: [] }, ff: { [F.key]: [] }, f360: {}, goal: {}, q: {}, orphan: {} }, null);
+  const h = (got[0] || {}).htmlBody || '';
+  const line = s => (h.split(s)[1] || '').split('open &amp; comment')[0];
+  ok('it goes to Felicia, not as a preview', got[0] && got[0].to === F.email && !/\[Preview\]/.test(got[0].subject), got[0] && got[0].subject);
+  ok('overdue since its date', /overdue since Fri 30 Oct/.test(line('Khalawan')));
+  ok('due today only when it is', /due today/.test(line('Ramlakhan')));
+  ok('Tuesday\'s says Tuesday, not today', /due Tue 3 Nov/.test(line('UWPRO')) && !/due today/.test(line('UWPRO')), line('UWPRO'));
+  env.mailSend_ = keep;
+}
+
 console.log('\nThe mail, this morning:\n');
 env.agentPeople_ = () => people;
 env.agentBatchData_ = () => ({});

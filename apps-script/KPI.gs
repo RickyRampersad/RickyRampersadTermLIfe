@@ -14277,7 +14277,10 @@ function agentMorningMail_(a, day, data, cache) {
     sectionLabel_('What the branch is actioning for you today (' + open.length + ')') +
     (open.length ? agCard_(MAIL.navy, open.slice(0, AGENT_LIST_MAX).map(function (t) {
       return agLine_('<b>' + esc_(String(t.owner).split(' ')[0] || '—') + '</b> · ' + esc_(t.subject) +
-        (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>' : ' <span style="color:' + MAIL.amber + '">· due today</span>') +
+        // 2 Nov 2026: only what is due today says so; the rest give their date (Felicia's sample said "due today" on Tuesday's)
+        (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>'
+          : t.due === day ? ' <span style="color:' + MAIL.amber + '">· due today</span>'
+          : t.due ? ' <span style="color:' + MAIL.muted + '">· due ' + esc_(shortDate_(t.due)) + '</span>' : '') +
         ' <a href="' + esc_(workGoUrl_(a.key, 'agitems', t.id)) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &amp; comment &rarr;</a>');
     }).join('') + (open.length > AGENT_LIST_MAX ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (open.length - AGENT_LIST_MAX) + ' more on the page.</div>' : ''))
       : '<div style="font-size:13px;color:' + MAIL.muted + '">Nothing due for your clients today.</div>') +
