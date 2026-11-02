@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-29f';
+var SCRIPT_VERSION = '2026-10-29g';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -10302,9 +10302,24 @@ function agBalanceTable_(b) {
 var AGDAY = { must: ['Date', 'Agent', 'Kind', 'Item'], name: 'Agent Day',
               head: ['Date', 'Agent', 'Email', 'Manager', 'Kind', 'Item', 'Question', 'Planned', 'Done', 'Note', 'At'] };
 
-function agentMode_() {
+/* ── Every agent, live (2 November 2026, 2026-10-29g) ──
+ *  Ricky, 6:42am: "the agents are not supposed to more or less be in draft now ... I presented last Friday and let the agents
+ *  know from today. Their check-ins have been sent." From AGENT_LIVE_FROM every agent on the Skill Bank (Active, not on the
+ *  list of those who have left) gets their own morning, midday and 5:30 mail and their day on My day; no more [Preview]
+ *  samples to Mr Rampersad. AGENT_DAY = pilot goes back to the five; AGENT_DAY = off stops it. The fact-find chase keeps its
+ *  own switch (FF_CHASE, else AGENT_DAY as set): going live here does not start it. */
+var AGENT_LIVE_FROM = '2026-11-02';
+/** AGENT_DAY as set (live / off / preview), the meaning it had before the go-live: the fact-find chase still reads this. */
+function agentModeSet_() {
   var m = String(PropertiesService.getScriptProperties().getProperty('AGENT_DAY') || 'preview').toLowerCase();
   return m === 'live' || m === 'off' ? m : 'preview';
+}
+function agentMode_() {
+  var m = String(PropertiesService.getScriptProperties().getProperty('AGENT_DAY') || '').trim().toLowerCase();
+  if (m === 'off') return 'off';
+  if (m === 'pilot') return 'preview';
+  if (m === 'live') return 'live';
+  return todayISO_() >= AGENT_LIVE_FROM ? 'live' : 'preview';
 }
 /* ── The agents' pilot (27 October 2026) ──
  *  Ricky, 6:24am: "I would really like it scale what the agents get. Put this now live for Neil Ramnanan, Fawaz Mohammed,
@@ -13359,7 +13374,7 @@ var FF_REASONS = [
 ];
 function ffMode_() {
   var p = ''; try { p = String(PropertiesService.getScriptProperties().getProperty('FF_CHASE') || '').trim().toLowerCase(); } catch (e) {}
-  return /^(live|preview|off)$/.test(p) ? p : agentMode_();
+  return /^(live|preview|off)$/.test(p) ? p : agentModeSet_();
 }
 function ffWeek_(day) { return shiftDays_(day, 1 - isoDow_(day)); }
 function ffReason_(id) { return FF_REASONS.filter(function (r) { return r.id === id; })[0] || null; }
@@ -14062,15 +14077,19 @@ function checkBooks() {
 
 function agentPeople_() {
   var sb = {}; try { sb = skillBank_(); } catch (e) {}
-  var fromBank = {};
+  var fromBank = {}, left = {};
+  // Nobody who has left is mailed or copied, even while their row is still on the Skill Bank (2 Nov 2026): the wall's list.
+  try { left = wallLeft_(); } catch (e) {}
+  var gone = function (s) { try { return wallIsLeft_(String(s || ''), left); } catch (e) { return false; } };
   Object.keys(sb).forEach(function (k) {
-    var p = sb[k]; if (!p.isAgent || !p.active || !p.email) return;
+    var p = sb[k]; if (!p.isAgent || !p.active || !p.email || gone(p.name)) return;
     var key = 'a-' + agSlug_(p.name);
     fromBank[key] = { key: key, name: p.name, agentName: p.name, agentId: p.code, email: p.email, role: 'Agent', manager: '', unit: p.unit, code: p.code };
   });
   if (Object.keys(fromBank).length) {
     // the Unit Manager's e-mail from the bank, when the unit names one
-    Object.keys(fromBank).forEach(function (key) { var u = bkNk_(fromBank[key].unit); var um = sb[u]; if (um && um.isUM && um.email) fromBank[key].manager = um.email; });
+    // ... and only a Unit Manager still here: Felicia, once in Gary's unit, is copied to nobody who has left (the Branch Manager instead)
+    Object.keys(fromBank).forEach(function (key) { var u = bkNk_(fromBank[key].unit); var um = sb[u]; if (um && um.isUM && um.email && um.active && !gone(um.name) && !gone(fromBank[key].unit)) fromBank[key].manager = um.email; });
     return fromBank;
   }
   if (typeof iAgentDirectory_ !== 'function') return {};
@@ -14083,6 +14102,7 @@ function agentPeople_() {
     var role = typeof iRoleOf_ === 'function' ? iRoleOf_(p.role) : (/manager|staff|support/i.test(p.role || '') ? 'other' : 'agent');
     if (role !== 'agent') return;
     if (typeof iExcludes_ === 'function' && iExcludes_(skip, p.agentName || p.name || '')) return;
+    if (gone(p.agentName || p.name)) return;
     var key = 'a-' + agSlug_(p.agentName || p.name);
     out[key] = { key: key, name: p.name, agentName: p.agentName || p.name, agentId: p.agentId || '', email: p.email,
                  role: p.role || '', manager: p.manager || '' };
