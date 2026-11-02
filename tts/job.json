@@ -1,14 +1,26 @@
 {
  "voices": {
-  "t2fix": "en-US-AndrewMultilingualNeural"
+  "t3ai": "en-US-AndrewMultilingualNeural",
+  "t3ag": "en-US-BrianNeural"
  },
  "rates": {
-  "t2fix": "+2%"
+  "t3ai": "+2%",
+  "t3ag": "+4%"
  },
  "check": true,
  "films": {
-  "t2fix": [
-   "Fifteen it is. Good call. It lines up with the university goal."
+  "t3ai": [
+   "Two questions before the numbers. What does the household spend a month, mortgage included? And who looks after the children after school?",
+   "That changes the picture. This family depends on both of them, Lisa as much as Jordan. One more: how many years should we plan for? Until Mia turns eighteen, or through university?",
+   "Here's Jordan. If he dies, the mortgage is cleared and spending drops to thirteen thousand. Lisa's nine leaves them four thousand short every month. Over fifteen years, with the mortgage and university, that's one point seven two million. His group cover is two hundred and fifty thousand. The gap: one point four seven million.",
+   "Now Lisa. Her salary isn't the whole story. If she dies, Jordan has to pay for the care she gives today. Clear the mortgage, cover that care until Mia is eighteen, and the need is about eight hundred and thirty thousand. And Lisa has no cover at all.",
+   "If either of them can't work, neither salary carries eighteen thousand a month. Without Jordan's pay, they're nine thousand short. Without Lisa's, three thousand. Neither has income protection.",
+   "And critical illness: no cover on either life. A diagnosis for either of them would come straight out of the mortgage money.",
+   "Here's your shelf, for both lives. Flexi Term can convert to whole life without new medical evidence. Praesidia's disability income pays for up to twenty-four months, for occupation classes one to three. Rejuvenator Plus pays on diagnosis. The choice is yours."
+  ],
+  "t3ag": [
+   "About eighteen thousand, five of that is the mortgage. Lisa picks the kids up, she works shorter hours for it. After-school care would be about three and a half thousand a month.",
+   "Through university. Fifteen years."
   ]
  }
 }
