@@ -1,47 +1,62 @@
 {
- "tts/out/werise/01.mp3": [
+ "tts/out/mtlive/01.mp3": [
   "en",
-  0.982,
-  "Friday we stood together from Friday we rise we reinvent and we reset"
+  0.959,
+  "Friday, we reset. Today, we rise."
  ],
- "tts/out/werise/02.mp3": [
-  "en",
-  0.993,
-  "It starts with one sign in, the branch app, every tool you need in one place."
- ],
- "tts/out/werise/03.mp3": [
-  "en",
-  0.992,
-  "Every morning, your day lands in your inbox. Project it in two minutes by half past ten."
- ],
- "tts/out/werise/04.mp3": [
+ "tts/out/mtlive/02.mp3": [
   "en",
   0.998,
-  "At half past five, you close it off. Your day balances against what you said you would do."
+  "Last week, five agents went first. Rodgie showed us how it works."
  ],
- "tts/out/werise/05.mp3": [
-  "en",
-  0.996,
-  "Our staff get the same, a coach on the screen, telling them what comes next all day long."
- ],
- "tts/out/werise/06.mp3": [
-  "en",
-  0.994,
-  "Your managers see the work as it happens. Who called? Who wrote? What moved?"
- ],
- "tts/out/werise/07.mp3": [
-  "en",
-  0.993,
-  "All of it flows to the wall and into our meeting every Wednesday."
- ],
- "tts/out/werise/08.mp3": [
+ "tts/out/mtlive/03.mp3": [
   "en",
   0.997,
-  "You will know what we are doing. We will know what you are doing. The data is at your fingertips."
+  "Plan the morning. Check in at midday. Close off at half past five."
  ],
- "tts/out/werise/09.mp3": [
+ "tts/out/mtlive/04.mp3": [
   "en",
-  0.993,
-  "The rest is up to you, log in, log out, and rise."
+  0.99,
+  "From today, that is every one of us."
+ ],
+ "tts/out/mtlive/05.mp3": [
+  "en",
+  0.997,
+  "Your morning starts with your goal. Where your month stands against your own plan."
+ ],
+ "tts/out/mtlive/06.mp3": [
+  "en",
+  0.995,
+  "Then one thing to do first, written for you from your own numbers."
+ ],
+ "tts/out/mtlive/07.mp3": [
+  "en",
+  0.994,
+  "Check in, and your plan is already filled in. You are present."
+ ],
+ "tts/out/mtlive/08.mp3": [
+  "en",
+  0.999,
+  "At midday, tell us how it is going. Need help? Say so, and your manager hears it straight away."
+ ],
+ "tts/out/mtlive/09.mp3": [
+  "en",
+  0.992,
+  "At half past five, close off the day, what you planned and what you did."
+ ],
+ "tts/out/mtlive/10.mp3": [
+  "en",
+  0.999,
+  "Your fact finds, your orphan clients, the cases that should settle, the calls to make. One screen."
+ ],
+ "tts/out/mtlive/11.mp3": [
+  "en",
+  0.97,
+  "No rankings. Just you, against your own best."
+ ],
+ "tts/out/mtlive/12.mp3": [
+  "en",
+  0.991,
+  "Reset. Rise. Let's make this the best year ever."
  ]
 }
