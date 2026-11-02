@@ -41,7 +41,8 @@ var H868 = {
 
 function help868Route_(p) {
   var action = String(p.action || '');
-  if (action === 'help868.ping') return { ok: true, on: help868On_(), agents: help868Allow_().length, salesforce: help868SfOn_(), pendingReport: help868ReportFound_(), pendingsChase: !!help868Chase_() };
+  if (action === 'help868.ping') return { ok: true, on: help868On_(), agents: help868Allow_().length, salesforce: help868SfOn_(), salesforceReady: typeof sfkConfigured_ === 'function' && !!sfkConfigured_(), claudeReady: help868Prop_('ANTHROPIC_API_KEY').length > 10,
+    pendingReport: help868ReportFound_(), pendingsChase: !!help868Chase_() };
   if (!help868On_()) return { ok: false, error: 'HELP 868 is not switched on.' };
   if (!help868KeyOk_(p.key)) return { ok: false, error: 'Not allowed.' };
   var digits = help868Digits_(p.phone);

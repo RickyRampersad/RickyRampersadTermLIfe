@@ -215,7 +215,7 @@ let limited = false; for (let i = 0; i < 45; i++) if (route({ key: KEY, action: 
 ok('one number is rate limited', limited);
 
 const out = JSON.parse(env.doGet({ parameter: { action: 'help868.ping' } }).getContent());
-ok('ping says the pending report and the chase list were found, and nothing else about them', out.pendingReport === true && out.pendingsChase === true && Object.keys(out).sort().join() === 'agents,ok,on,pendingReport,pendingsChase,salesforce');
+ok('ping says the pending report and the chase list were found, and nothing else about them', out.pendingReport === true && out.pendingsChase === true && Object.keys(out).sort().join() === 'agents,claudeReady,ok,on,pendingReport,pendingsChase,salesforce,salesforceReady' && out.salesforceReady === true && out.claudeReady === false);
 ok('doGet routes help868.ping', out.ok === true && out.on === true && out.agents === 3, JSON.stringify(out));
 const post = JSON.parse(env.doPost({ parameter: {}, postData: { contents: JSON.stringify({ action: 'help868.case', key: KEY, phone: NEIL, policy: '5000000002' }) } }).getContent());
 ok('doPost routes help868.case', post.found === true);
