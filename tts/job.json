@@ -3,13 +3,17 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "mtff": [
-   "Your fact finds have a journey too. The plan goes to your client the same day. A reminder on day three, another on day eight, then we ask you to call. Half of all confirmations came after a reminder, and every rating since October is five stars.",
-   "To every one of you who stayed the course: thank you. You built this with us, and now we reap it, together."
+  "mtfa": [
+   "Here is your day, from both sides. Seven o'clock: your goal, your fact finds, your clients. And our team is already chasing your cases.",
+   "By six, you close off. What you planned, and what you did. We see it too.",
+   "Every fact find is followed. Each open case asks you: did this close? Two weeks with no fact find, and Monday's note says your response is required. By Wednesday, your manager is copied.",
+   "Coming this month: your dashboard at seven. A bell for whatever needs you. Follow who inspires you, and share what works, straight into the week's wins."
   ],
-  "mtffb": [
-   "Your fact finds have a journey too. The plan goes to your client the same day. A reminder on day three. Another on day eight. Then we ask you to call. Half of all confirmations came after a reminder. And every rating since October, five stars.",
-   "To every one of you who stayed the course, thank you. You built this with us. And now, we reap it together."
+  "mtfab": [
+   "Here is your day, from both sides. Seven o'clock. Your goal, your fact finds, your clients. And our team, already chasing your cases.",
+   "By six, close off. What you planned, and what you did. And we see it too.",
+   "Every fact find is followed. Each open case asks you, did this close? Two weeks with no fact find, and Monday's note says, your response is required. By Wednesday, your manager is copied.",
+   "Coming this month. Your dashboard at seven. A bell for whatever needs you. Follow who inspires you. Share what works, straight into the week's wins."
   ]
  }
 }
