@@ -7,8 +7,11 @@ reads a sheet, Salesforce or this repository: it makes HTTP calls to the Service
 decides what comes back.
 
 ## 1. Service Questionnaire project
-1. Paste `Service.gs` (three lines added: they send `help868.*` actions to `Help868.gs`) and the new `Help868.gs`.
-   **A paste of Service.gs blanks `TEAM_CODE`: put the branch code back before the next step**, or every wall and board locks out.
+1. Add the new file `Help868.gs` (File, then New, Script). For `Service.gs`, **do not paste the whole file**: add three lines by hand,
+   which leaves `TEAM_CODE` and everything else as it is. In `doGet`, directly under the `gcm.` line, add:
+   `if (/^help868\./.test(String(p.action || '')) && typeof help868Route_ === 'function') { try { return json_(help868Route_(p)); } catch (err) { return json_({ ok: false, error: 'HELP 868 could not answer.' }); } }`
+   and in `doPost`, directly under its `gcm.` line, the same with `body` in place of `p`. (The repository copy of `Service.gs` already has them.)
+   If you paste the whole file instead, put the branch code back into `TEAM_CODE` before the next step, or every wall and board locks out.
 2. Manage deployments, pencil, **New version** (never New deployment, which would change the address every front end holds).
 3. Script properties: `HELP868_KEY` (a long random string, 16 characters or more; nothing answers without it), `HELP868_OWNER`
    (who is e-mailed about an enquiry; blank means the first `TRANSITION.CC` address) and, later, `HELP868_SF` = `on`.
@@ -47,4 +50,12 @@ The **HELP 868 on WhatsApp** tile (`rroperations/index.html`) opens `wa.me/18684
 (`to: 'm'`). Widen it to `'alsm'` the day the workflow answers more than the test number. Confirm 868-435-7868 is the
 customer-facing number first.
 
-Tests: `node tests/test-help868.js` (68 checks).
+Tests: `node tests/test-help868.js` (69 checks).
+
+## Why this cannot disturb the existing scripts
+- The only change to a live file is those three lines. They act only on actions starting `help868.`, are guarded by `typeof`, and sit in
+  a try/catch, so with `Help868.gs` missing or `HELP868_KEY` unset they do nothing.
+- `Help868.gs` has 58 top-level names, all starting `help868`/`H868`; none matches a name in any other file (checked), so nothing is
+  redefined and nothing changes meaning.
+- No trigger is added or changed. No new tab is made except "HELP868 Enquiries" on the first enquiry, and no existing tab is touched.
+- The enquiry route takes no script lock, so it neither waits on the letter batches nor holds anything up for them.

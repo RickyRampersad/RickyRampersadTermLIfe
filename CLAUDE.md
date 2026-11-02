@@ -3153,7 +3153,7 @@ voice under the new timing and the caption gives it away.
   the branch every claim, a unit manager his team's and an agent their own,
   by the agent the claim pays. Staff see none. Without the `SF_*` properties
   the e-mails still go, and the tab says to enter the dates by hand.
-  `claims/claims-harness.js` (68 checks) and `claims/claims-test.js`
+  `claims/claims-harness.js` (69 checks) and `claims/claims-test.js`
   (Playwright, 31) in the scratchpad cover it.
   **Since 16 October 2026 the questionnaire's dates in Salesforce drive every claim** (`T_SQ`, `tSqRun_`; `T_SQ.ON`
   false puts back the flow above). The manager: "the date service received is updated by the staff … sales support
@@ -3867,7 +3867,7 @@ voice under the new timing and the caption gives it away.
   - **Caching.** The answer is kept like the wall's (`tServeCached_`, three minutes fresh).
   - **Tests.** `wall8/stream-harness.js` in the scratchpad looks for every client name, first name, surname, token,
     number, e-mail, phone, address, household name, former agent's name and every piece of client words in the answer
-    on the real tabs (68 checks). `wall8/stream-look.js` (32, Playwright) checks every slide fits a television and
+    on the real tabs (69 checks). `wall8/stream-look.js` (32, Playwright) checks every slide fits a television and
     nothing runs off a phone.
   - **Never add a client's anything to it.** If a slide needs a name, it belongs on the wall or the board, behind the
     same code, not here.
@@ -4469,7 +4469,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   (21 October) the hourly refresh held it: the summary read "Busy: the letters or the refresh are running", and no
   group was reminded that day. The reminder now tries again after the staff part, and failing that the hourly run tries
   it from 11:00 (`GCM_RATE_RETRY`), with its own summary to the branch; the staff are never asked twice.
-  `day/day-test.js` (68 checks) and `day/real/dry.js` (the 21 October tabs, test mode, nothing sent) in the session
+  `day/day-test.js` (69 checks) and `day/real/dry.js` (the 21 October tabs, test mode, nothing sent) in the session
   scratchpad cover it. On those tabs one staff member would have been asked about five groups and another about one.
 
 - **Group letters can be put on hold, every group or one, from the staff page** (27 October 2026: a group's bills were
@@ -6798,7 +6798,9 @@ HELP 868 code and `tests/test-help868.js` fails if it ever does.
   after the evidence is scrubbed of e-mails, links, numbers of four digits or more and runs of names; rules decide if it is not set up or
   answers outside the lists. The sentences are composed in code, so no note or e-mail wording reaches WhatsApp. Read once per set of
   evidence (an hour). Someone owing something is the reason; "no open task" is a signal beside it.
-- **An enquiry's reference comes from the log**, so the assistant can only quote one that exists, and promises no time.
+- **An enquiry's reference comes from the log**, so the assistant can only quote one that exists, and promises no time. It is the row's
+  place among today's rows, written after the row is appended, and **the route takes no script lock** (the letter batches in
+  Transition.gs and GroupClients.gs hold it for minutes; an enquiry must neither wait on them nor delay them).
 - **Salesforce logging is off until `HELP868_SF` = `on`.** Then a case look-up is noted on the open Pendings task and an enquiry opens a
   Servicing task on the agent's Contact. The summary and reference are logged; the full chat stays in respond.io.
 - **Nothing answers until `HELP868_KEY` is set.** The branch app tile is branch-manager-only until the respond.io workflow answers more
@@ -6807,7 +6809,7 @@ HELP 868 code and `tests/test-help868.js` fails if it ever does.
   calls); "HELP 868 — Phase 2 Test" carries the agent-number-and-code flow and is switched off until the seven calls are added; one
   published test workflow, no teams, one tag (`HELP868-PILOT`), no knowledge sources. The `HELP868-endpoints.json` and key file live
   in the session scratchpad, never in the repository.
-- Test: `tests/test-help868.js` (68 checks).
+- Test: `tests/test-help868.js` (69 checks).
 
 ## Standing rules
 

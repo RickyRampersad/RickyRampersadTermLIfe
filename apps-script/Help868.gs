@@ -472,32 +472,38 @@ function help868Enquiry_(p, digits) {
   var who = s ? s.name : (listed ? listed.name : help868Clean_(p.name).slice(0, 80));
   var role = s ? 'Agent · code-verified' : (listed ? 'Agent · number on pilot list, not code-verified' : 'Not verified');
   var ss = help868Own_(); if (!ss) return { ok: false, error: 'The enquiry log is not reachable. A person will follow up.' };
-  var lock = LockService.getScriptLock();
-  try { lock.waitLock(10000); } catch (e) { return { ok: false, error: 'Busy. Please try again.' }; }
-  try {
-    var sh = help868Tab_(ss, H868.LOG, H868.LOG_HEAD), now = new Date();
-    var day = Utilities.formatDate(now, help868Tz_(), 'yyMMdd'), end = '·' + digits.slice(-4);
-    var rows = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, H868.LOG_HEAD.length).getValues() : [], n = 0;
-    for (var i = rows.length - 1; i >= 0; i--) {
-      var r = rows[i], ref = String(r[0] || '');
-      if (ref.indexOf('H8-' + day + '-') === 0) n++;
-      var at = new Date(String(r[1]).replace(' ', 'T'));
-      if (String(r[9]) === end && String(r[6]) === summary && !isNaN(at) && now - at < H868.DUPE_MIN * 60000) return { ok: true, ref: ref, filed: true, repeat: true, message: 'Already filed as ' + ref + '.' };
-    }
-    var reference = 'H8-' + day + '-' + ('00' + (n + 1)).slice(-3), owner = help868Owner_();
-    var sf = help868SfTask_(reference, H868.CATS[cat], summary, s ? s.name : (listed ? listed.name : ''));
-    sh.appendRow([reference, Utilities.formatDate(now, help868Tz_(), 'yyyy-MM-dd HH:mm'), H868.CATS[cat], who, role, s ? s.no : (listed ? listed.no : ''), summary, owner, 'New', end, sf]);
-    var mailed = false;
-    if (owner) {
-      try {
-        tMsSend_(owner, 'HELP 868 enquiry ' + reference + ' · ' + H868.CATS[cat],
-          '<div style="font:14px/1.5 Arial,sans-serif"><p><b>' + help868Esc_(reference) + '</b> · ' + help868Esc_(H868.CATS[cat]) + '</p><p>From ' + help868Esc_(who || 'an unnamed WhatsApp contact') + ' (' + help868Esc_(role) +
-          '), number ending ' + help868Esc_(digits.slice(-4)) + ':</p><p style="border-left:3px solid #ccc;padding-left:10px">' + help868Esc_(summary) + '</p>' +
-          '<p>Reply to them on WhatsApp in respond.io. Numbers, e-mails and links were removed from the summary. Salesforce: ' + help868Esc_(sf) + '.</p><p style="color:#777;font-size:12px">Internal. Do not forward outside the branch.</p></div>');
-        mailed = true;
-      } catch (e) { help868Log_('the owner e-mail did not send for ' + reference + ': ' + (e && e.message)); }
-    }
-    return { ok: true, filed: true, ref: reference, category: H868.CATS[cat], codeVerifiedAgent: !!s, ownerNotified: mailed, salesforce: /^00T/.test(sf) ? 'task opened' : sf,
+  /* No script lock: Transition.gs and GroupClients.gs hold it for long batches, and an enquiry must neither wait on them nor make them
+     wait. The row is appended first under a temporary mark; its number is its place among today's rows, so two enquiries at once cannot
+     get the same reference. The Salesforce task and the e-mail come after, outside anything shared. */
+  var sh = help868Tab_(ss, H868.LOG, H868.LOG_HEAD), now = new Date(), day = Utilities.formatDate(now, help868Tz_(), 'yyMMdd'), end = '·' + digits.slice(-4);
+  var today = Utilities.formatDate(now, help868Tz_(), 'yyyy-MM-dd'), stamp = Utilities.formatDate(now, help868Tz_(), 'yyyy-MM-dd HH:mm');
+  var last = sh.getLastRow(), from = Math.max(2, last - 59);
+  var recent = last >= 2 ? sh.getRange(from, 1, last - from + 1, H868.LOG_HEAD.length).getValues() : [];
+  for (var i = recent.length - 1; i >= 0; i--) {
+    var r = recent[i], at = new Date(String(r[1]).replace(' ', 'T'));
+    if (String(r[9]) === end && String(r[6]) === summary && !isNaN(at) && now - at < H868.DUPE_MIN * 60000 && !/^H8-TMP/.test(String(r[0]))) return { ok: true, ref: String(r[0]), filed: true, repeat: true, message: 'Already filed as ' + r[0] + '.' };
+  }
+  var tmp = 'H8-TMP-' + Utilities.getUuid();
+  sh.appendRow([tmp, stamp, H868.CATS[cat], who, role, s ? s.no : (listed ? listed.no : ''), summary, help868Owner_(), 'New', end, '']);
+  var top = sh.getLastRow(), scan = sh.getRange(Math.max(2, top - 59), 1, Math.min(60, top - 1), 2).getValues(), row = -1, n = 0;
+  for (var k = 0; k < scan.length; k++) if (String(scan[k][0]) === tmp) row = Math.max(2, top - 59) + k;
+  if (row < 0) return { ok: false, error: 'The enquiry could not be placed on the log. A person will follow up.' };
+  var seen = sh.getRange(2, 2, row - 1, 1).getValues();
+  for (var q = 0; q < seen.length; q++) if (String(seen[q][0]).slice(0, 10) === today) n++;
+  var reference = 'H8-' + day + '-' + ('00' + n).slice(-3), owner = help868Owner_();
+  sh.getRange(row, 1).setValue(reference);
+  var sf = help868SfTask_(reference, H868.CATS[cat], summary, s ? s.name : (listed ? listed.name : ''));
+  sh.getRange(row, 11).setValue(sf);
+  var mailed = false;
+  if (owner) {
+    try {
+      tMsSend_(owner, 'HELP 868 enquiry ' + reference + ' · ' + H868.CATS[cat],
+        '<div style="font:14px/1.5 Arial,sans-serif"><p><b>' + help868Esc_(reference) + '</b> · ' + help868Esc_(H868.CATS[cat]) + '</p><p>From ' + help868Esc_(who || 'an unnamed WhatsApp contact') + ' (' + help868Esc_(role) +
+        '), number ending ' + help868Esc_(digits.slice(-4)) + ':</p><p style="border-left:3px solid #ccc;padding-left:10px">' + help868Esc_(summary) + '</p>' +
+        '<p>Reply to them on WhatsApp in respond.io. Numbers, e-mails and links were removed from the summary. Salesforce: ' + help868Esc_(sf) + '.</p><p style="color:#777;font-size:12px">Internal. Do not forward outside the branch.</p></div>');
+      mailed = true;
+    } catch (e) { help868Log_('the owner e-mail did not send for ' + reference + ': ' + (e && e.message)); }
+  }
+  return { ok: true, filed: true, ref: reference, category: H868.CATS[cat], codeVerifiedAgent: !!s, ownerNotified: mailed, salesforce: /^00T/.test(sf) ? 'task opened' : sf,
       message: 'Filed as ' + reference + '. A team member will review it. No time has been promised.' };
-  } finally { try { lock.releaseLock(); } catch (e) {} }
 }

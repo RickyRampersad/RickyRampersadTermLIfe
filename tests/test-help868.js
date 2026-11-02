@@ -225,4 +225,5 @@ const fs = require('fs'), svc = fs.readFileSync(__dirname + '/../apps-script/Ser
 ok('Service.gs routes help868 actions on both GET and POST', (svc.match(/help868Route_\(p\)/g) || []).length === 1 && (svc.match(/help868Route_\(body\)/g) || []).length === 1);
 const kpi = fs.readFileSync(__dirname + '/../apps-script/KPI.gs', 'utf8');
 ok('the tracker carries no HELP 868 code', !/help868/i.test(kpi));
+ok('the enquiry route takes no script lock', !/LockService|waitLock/.test(require('fs').readFileSync(__dirname + '/../apps-script/Help868.gs', 'utf8')));
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed'); process.exit(fails ? 1 : 0);
