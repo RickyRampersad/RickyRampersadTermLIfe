@@ -1,0 +1,19 @@
+{
+ "note": "Reset and Rise, part two: the go-live, 2 November 2026. Friday the branch reset; last week five agents went first (Rajiv showed how); from today every agent. Andrew, as the werise film.",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
+ "scenes": [
+  { "say": "Friday, we reset. Today, we rise.", "extra": 0.4 },
+  { "say": "Last week, five agents went first. Rajiv showed us how it works.", "extra": 0.2 },
+  { "say": "Plan the morning. Check in at midday. Close off at half past five.", "extra": 0.3 },
+  { "say": "From today, that is every one of us.", "extra": 0.4 },
+  { "say": "Your morning starts with your goal: where your month stands, against your own plan.", "extra": 0.2 },
+  { "say": "Then one thing to do first, written for you, from your own numbers.", "extra": 0.2 },
+  { "say": "Check in, and your plan is already filled in. You are present.", "extra": 0.3 },
+  { "say": "At midday, tell us how it is going. Need help? Say so, and your manager hears it straight away.", "extra": 0.2 },
+  { "say": "At half past five, close off the day. What you planned, and what you did.", "extra": 0.2 },
+  { "say": "Your fact finds, your orphan clients, the cases that should settle, the calls to make. One screen.", "extra": 0.2 },
+  { "say": "No rankings. Just you, against your own best.", "extra": 0.3 },
+  { "say": "Reset. Rise. Let's make this the best year ever.", "extra": 0.6 }
+ ]
+}
