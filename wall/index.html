@@ -929,7 +929,7 @@ const nwT=m=>{ const h=Math.floor(m/60), mi=m%60; return ((h%12)||12)+":"+(mi<10
 const NW_DAY=[
  {role:"Branch Manager",who:"Ricky",c:COL.gold,ev:[[300,"My day"],[660,"Progress"],[900,"Close-out"],[945,"Still waiting"]]},
  {role:"Unit Manager",who:"Akaash",c:COL.violet,ev:[[330,"My unit"],[660,"Progress"],[900,"The day's account"],[945,"The check"]],span:[360,1080],band:"Draft my reply on every task"},
- {role:"Sales Support",who:"Sasha · Elizabeth · Azariah",c:COL.teal,ev:[[390,"Morning e-mail"],[425,"Check in"],[690,"Progress"],[795,"First close-out"],[915,"Last close-out"]],span:[420,960],band:"Brief me on every task"},
+ {role:"Sales Support",who:"Sasha · Elizabeth · Azariah",c:COL.teal,ev:[[390,"Morning e-mail"],[425,"Check in"],[690,"Progress"],[795,"First close-out"],[915,"Last close-out"]],span:[420,960],band:"The day's coach on every desk"},
  {role:"BMA",who:"Kamla",c:COL.coral,ev:[[450,"Morning e-mail"],[485,"Check in"],[975,"Close-out"]],span:[480,1020],band:"Supervises the desks · Draft my reply"},
  {role:"Agents",who:"",c:COL.sky,ev:[[720,"Papers in"]],span:[480,1020],band:"Calls logged the same day · fact finds · goals"}
 ];
@@ -1172,11 +1172,11 @@ const SCENES=[
             '<div class="tx" style="--ts:4.8s">Chased four times since 8 September with no answer; escalated on 14 October.</div>'+
             '<div class="k2" style="margin-top:.3rem">THE REPLY</div><div class="tx" style="--ts:7s">Please confirm by Friday whether the client accepts the quote and when the payment will be collected. If not, it will be reassigned.</div></div></div>'+
         '<div class="panel" style="gap:.9rem"><div class="ph">WHO GETS WHAT</div>'+
-          [["Branch Manager","Draft my reply","Firmer, shorter or kinder in one tap",COL.gold],["Unit Manager","Draft my reply","Morning and evening, every task in the unit",COL.violet],["BMA","Draft my reply","Ready for Close now, Move now or Post note",COL.coral],["Sales Support","Brief me","Where it stands, what next, what to check. Their note stays their own.",COL.teal]]
+          [["Branch Manager","Draft my reply","Firmer, shorter or kinder in one tap",COL.gold],["Unit Manager","Draft my reply","Morning and evening, every task in the unit",COL.violet],["BMA","Draft my reply","Ready for Close now, Move now or Post note",COL.coral],["Sales Support","The day's coach","What the hour asks, what is new for them, what to do on each task. Their note is their own.",COL.teal]]
             .map((r,i)=>'<div class="nwrole2 a slide" style="--d:'+(.9+i*.25).toFixed(2)+'s;--c:'+r[3]+'"><i>'+esc(r[1])+'</i><div style="min-width:0"><b>'+esc(r[0])+'</b><span>'+esc(r[2])+'</span></div></div>').join("")+
           (closes!=null?'<div class="tiles" style="grid-template-columns:1fr"><div class="tile shine a rise" style="--d:2s;--acc:'+COL.teal+'"><div class="v">'+cnt(closes,2)+'</div><div class="l">tasks closed with a note today: who, what, the outcome, the next step</div></div></div>':'')+'</div></div>'; },
   line:()=>{ const s=S(), c=s&&s.tiles?s.tiles.closes:null; return {live:"Branch Intelligence reads a task's whole history, says where it stands, and drafts the reply."+(c!=null?" "+plural(c,"task")+" closed with a note so far today.":""),
-    rec:"This is Branch Intelligence. It reads a task's whole history, tells you where it stands, and drafts the reply. The managers check it and post it, and Sales Support get a brief."}; }},
+    rec:"This is Branch Intelligence. It reads a task's whole history, tells you where it stands, and drafts the reply. The managers and the BMA check it and post it, and Sales Support get the day's coach."}; }},
 
  {id:"w16",ch:"newway",dwell:19000,when:()=>nwOn(),
   // Ricky, 21 Oct 12:27: "show the branch intelligence draft, how it's done, with a sample". Draft my reply as it runs on

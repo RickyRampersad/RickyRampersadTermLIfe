@@ -5348,6 +5348,123 @@ section links it.
   stage's chip and fills its parent (`width:100%;height:100%`), so each drew a card-wide ellipse and the text ran out
   of the card over the gates. They carry the small solid `.chip` the byline uses, sized inline, and every card now holds
   its text. `tools/careers/sync.py` must be re-run after any edit to `agentmgt/index.html`.
+- **The conversation is booked on the page, the film is on the homepage, and the page has a person on it** (28
+  October 2026: "book a call opens whats app so remove this, and embedded the recruiting video on the site or should
+  you, refine the site further with more emotion etc and an impact what you think"). Every "Book a confidential
+  conversation" button (six on the recruiting page, the homepage's, `/careersvideo/`'s) now opens `/careers/#talk`: a
+  form on the page that posts `q.quote` with the form key `careers` to the Service Questionnaire backend, the road the
+  branch's own quote forms take, so no client link opens another app. `Quotes.gs` gained the `careers` form (`QT-`,
+  `to: 'manager'`: the team e-mail goes to the Branch Manager alone and copies nobody, because the person may be
+  contracted elsewhere today; `client`: the confirmation says he reads it himself; `KIND` `talk` with its own three
+  steps). The page's own script posts it (12-second timeout, the same payload shape as `form.js`, the mail app
+  addressed to him when the backend cannot be reached, a local `QT-` reference either way, the honeypot off screen).
+  The homepage's Careers section carries the 1:27 trailer through the branch's own player (`/orphan-video/player.js`,
+  the `.vwrap` styles scoped to `#careers`), so a visitor sees it without a click. **"Why this branch exists"**
+  (`#why`, after the ledger) is the first layer of the emotion pass: the Branch Manager's own approved quote, in his
+  name, on a dark full-bleed moment with the stake under it ("a family covered before the worst day comes"): the page
+  had no person on it. The rest of that pass needs faces and voices only he can supply (see the reply of 28 October).
+  Checked with Playwright against a mocked backend both ways (filed with a reference; backend down shows the same done
+  screen with the mail-app note), an empty submit refused on the page, no sideways scroll at 390 px on either page.
+  Paste `Quotes.gs` and publish a New version; until then every booking takes the mail-app road.
+- **One palette, and the people on the page (28 October 2026, evening).** "all colours must sync as i am seeing team
+  and red etc so scale and more motion that wil resonate and pop", then "ok so you do have a unit manager Akaash and
+  experienced agenst and staff", then "research akaash on linked in he is alos i lebeive a 2 time top f table and an llb".
+  The page lives at `/careers/` on the branch site, so onyx and wine beside the homepage's teal read as two brands on one
+  site. The recruiting page now carries the homepage's own tokens (`--bg #faf9f2`, `--ink #0d3f5e`, `--a #00728d`, the
+  navy family `#0d1f33` to `#22527f`, `--aL #00CFEA` on dark ground only, shadows `32 20% 42%`), `site-mark.svg` as its
+  mark and `site-icon.svg` as its tab icon (`agentmgt/mark.svg`, `icon.svg` are copies), the share card regenerated,
+  and the quiet text on the dark ground (`--dT3`) lifted to `#b1c3d5`, which is 4.51:1 on the lightest navy; `#8fa3b8`
+  was 3.14:1 there. `scratchpad/agentmgt/recolour.py` did the mapping on the page and on `build-recruitfilm.py`, so
+  **every film cut was re-rendered in the palette** (`.wine` keeps its class name; it is teal now). The `agentmgt/`
+  identity line in this file above ("onyx and wine") is history, not the rule: the rule is the site's palette.
+  **The people section** (`#people`, after `#why`): the Branch Manager, the Unit Manager, the qualifiers and the
+  support team by first name, with initials until photos are approved (the Agent Profiles rule: a person's own
+  picture, never found by a face). **Only source-confirmed facts go on a card.** Akaash Kalladeen's card says Unit
+  Manager, TTAIFA Top Producer (Male) 2022 (ttaifa.com/awards) and Guardian Group's Advisor of the Month, April 2021
+  (Guardian Group's own Facebook page). The two-time Top of the Table and the LLB (University of London, on ZoomInfo
+  only, an aggregator) are **not** on the page until he or Akaash confirms them; "fifteen years" is the branch
+  manager's own word and stays until a source says otherwise. The lead card stacks under 35rem (the face beside the
+  text squeezed the name on a phone). Motion added, all inside the no-preference query: two fields drifting behind
+  the why moment, the people cards landing in turn (`--i` stagger) with a ring off each face, the lead face breathing,
+  the pills and the booking form's focus ring and done screen. Audit 28/28; the stale WhatsApp link check in
+  `audit.js` now expects `#talk`.
+- **The trailer redrawn, and the door replaced by the stage (28 October 2026, night).** "Horrible door and you can do
+  better on the motion and graphics and card and scale as well creativity and apealing to what will want to have a
+  person experience or non experience join us as we are a different branch". The door was a drawn arch with two
+  leaves; it read as a cartoon. **The door is now the branch's own stage** (`blk_gate` in `build-recruitfilm.py`,
+  scenes 6 of the trailer and 30 of the film): the shield with the five gates on the inner ring and the five tools on
+  the outer, opening like an iris on the word "open" (`.iris-wrap` scales from nothing, the mark pops in, a flash
+  leaves it, the chips land in turn), the two audiences either side, and "1 confidential conversation · 20 minutes ·
+  this week" as one line. Every trailer scene was redrawn larger, each with a graphic that moves on its word
+  (`blk_chart`, `blk_gives`, `blk_seats`, `blk_stage`, the booking card on the CTA): the question beside a bar chart
+  whose last bar breaks a dashed ceiling with sparks on "ceiling"; three white cards with an income line drawn past a
+  dashed salary band, a week whose Tuesday and Thursday blocks fill, and a family under an arc that draws itself; the
+  Branch Manager as a coach card above the week and the note; the five seats as five tiles that each light with their
+  step of the build on its word, a rail filling across them; the booking card typing a name, choosing the pills,
+  pressing Book and confirming "he reads it himself"; the close on the stage. All made of the page's own tokens and
+  helpers; no new colour. The portrait and square rules at the foot of the stylesheet restack each block. `scenes.js`
+  in the scratchpad shot all eight in both frames before the render. The feed ads (`ad-a`, `ad-b`) keep their own
+  scenes; the ad hook, match and seats were not redrawn.
+- **Seven places and a sales manager (28 October 2026, late night).** "I'd want to change the 5 to 7. What do you think? And also
+  to a manager, we're looking for a sales manager." Asked first whether to say five seats at all, the research answer was: a
+  limited count helps (Highhouse et al. 1998, the one study on scarcity wording in a job ad) only when it has a reason and a
+  date, because an evergreen "5 seats this year" at a public URL dates the film and tells a strong candidate the door may be
+  shut. So the count is now **a dated class with a reason**: FY27 began on 1 October, its first class is being selected now,
+  **seven places**, each getting the full build, **and one seat for a sales manager** to build a unit here, as its own door.
+  Where it lives: trailer lines 5 and 6, film lines 2 and 30, the ads' line 4 (Andrew Expressive on the runner; a first push
+  of the job was overwritten by another session's job before the runner ran it, so check `tts/out/<key>` exists, not only
+  that a "tts output" commit landed); `blk_seats` carries a `+1 A sales manager` card under the five steps of the build and
+  `blk_gate` a third door, "Leading a team already?", both only when the line says so, so an older line draws the old scene;
+  the recruiting page's hero, metas, strip, apply section (seven seat tiles, You, and the manager's seat set apart by a rule;
+  the row shrinks under 35rem so eight fit one line), a sales manager's door (`#manager`, after the people, whose button
+  preselects "Leading a team already" on the booking form through `data-who`), the form's fourth option, the guide's lines;
+  the homepage careers section, `/careersvideo/`, the two posts, and the pages' chapter marks. Never "unlimited", never a
+  bigger number without a reason, and when the class is full the number comes off, not up.
+- **The coach and the clock, the real screens, the wall 24/7, the servicing timeline, the career timeline (29 October
+  2026).** Four asks in a row: "show our own branch factfind360 and our digital transmittal etc, you do have access
+  to all, slides and motion, a nice timeline on the career path"; "manager is a coach not a clock: where is the clock
+  ticking and coaching motions and images, be impactful"; "digital production wall 24/7, digital outreach to our fact
+  find as it's live and the success rates, what reminders go out, built internal, happy clients rating agents, a
+  timeline on a process showing the cards and delivery and servicing afterwards". What stands:
+  - **Five shared blocks** in `build-recruitfilm.py`, used by the trailer (scene 4) and the film (18, 20, 21, 25, 27):
+    `blk_coach` (a clock whose second hand steps once a second, `ticks` in films.json so `sfx.py` plays them, struck on
+    the word and parked aside with `clkaway`; then two line figures at a table, the morning note typing, the week with
+    Friday lit, the coaching meters, "in person"), `blk_slides` (eight real screens, one at a time on its word, phone
+    or laptop frame, the last stays), `blk_wall24` (the production wall's own month-by-month slide, already public on
+    `/wall/production.html` and carrying no names, with a 24/7 badge; never the held-back-API slide, which names
+    advisors), `blk_service` (six stops on a rail: fact find, delivered and signed for with five stars, 45/60/75/90,
+    the six-month and birthday reviews, a question inside the turnaround, rated by happy clients; a rider travels it)
+    and `blk_career` (one SVG timeline, Apply to Career Sales Rep then the fork into the two roads, `offset-path`
+    riders; a different geometry for the tall frame, the roads rising beside the rail). Lines 18, 20 and 25 re-voiced.
+  - **The screens are captured, never drawn**: `wall/img/lb/transmittal-lap.jpg` and `queue-lap.jpg` from
+    `tests/e2e-logbook.js` with `SHOTS=`, `wall/img/db/*` from `e2e-deliverybook.js`, `wall/img/app/*` from the branch
+    app's `?demo=a`, `wall/img/wi/production-*.jpg` from the production wall; every name and figure on them is the
+    harness's sample. The Wall Intelligence sample was shot and not used: it names staff out sick.
+  - **The page** (`#screens`, `#coach`, the timeline above the roads in `#path`): the finished state is the default,
+    the motion sits in the no-preference query, and a small observer adds `.in` to `.cstage` and `.ctlw`, because the
+    page's `.rv` reveal is scroll-driven where `view()` is supported and never adds a class. Three traps, all
+    specificity: `svg:not([width])` collapsed the clock, the figures and the timeline until the rules carried a parent
+    class; `strong,b{color:var(--ink)}` painted the chip's words navy on navy; `.scp{display:grid}` beat `[hidden]`.
+    A rail that should draw at once needs `pathLength="100"` with a dash of 100, or it is invisible until the offset
+    falls under the real length.
+  - **The scene shooter** (`scenes.js` in the scratchpad) now clears every other scene: with a subset of scenes it had
+    left the previous shot's scene behind the next, which looked like a layout fault and was not one.
+- **Our own fact find, by the numbers (29 October 2026, late).** "the fact find you need to calculate !!! this is big for us as
+  its built by us factfind360 … boast as bigger sales and collaboration etc and compliant, did ask to show the screens and
+  compact and maximum motion and charts for effectiveness". The figures are **factfind360's own**, never typed: the public
+  `action=pulse` feed (weekly counts and sums since 1 July 2026, no client) and the wall feed read on 29 October 2026:
+  141 fact finds, TT$183m of need found, TT$342m of cover recommended, TT$3.4m API recommended, 20/53/33/34 a month,
+  63 plans reviewed by the two managers (50 approved, 13 sent back, median 2.2 and 3 days), October 40 applications from 29
+  clients (18 critical illness, 7 whole life). `FFN` in `build-recruitfilm.py` holds them for **film scene 17** (`blk_ffnum`:
+  four counters, the months as bars, the review as a ring, October's products, the advisor → manager → client → branch
+  team rail to "one file", the Bigger sales and Compliant badges, three screens; scenes 17..32 became 18..33, the hit
+  list and the clock's tick scene moved with them), and the page's `#factfind` section carries the same charts, animated
+  on `.ffnw.in`, with the four figures and the months **refreshed from the pulse feed** when it answers (the true figures
+  ship in the markup, as every counter does). The review and October figures are dated on screen. Re-read the feed and
+  change `FFN` and the voice line together when the film is re-cut; the two must agree. The counters now keep a decimal
+  (`data-dec`) in the film, `render.js`, the scene shooter and the page. The hero band's stale "5 seats" became seven
+  places. The lapse line keeps Ricky's "since launch" with no month: the pulse says the branch went live on 1 July, his
+  word was August.
 - **The motion pass, the same night** ("and add more motion and graphics to pop"), all of it CSS on the page and
   rendered frame by frame: a wine band on every cut (the streak), a slow push-in on every scene for its whole
   length (`--kb`, written by `scene()`), the cards floating and catching a passing light (`.fl`: overflow hidden,
@@ -5386,6 +5503,193 @@ section links it.
   must also fade and be clipped by its parent, or it parks over the headline on the portrait cut.
 - `scenes.js` in the session scratchpad shoots every scene at a fraction of its length in either frame (the same
   seek render.js uses) and tiles them, which is how the layouts were checked before the voice came back.
+
+## The renewal desk — general insurance, from last year to delivery
+
+`renewaldesk/` (staff), `myrenewal/` (the client) and `apps-script/GIRenewals.gs`, a sixth file in the Service
+Questionnaire project, routed by `GroupClients.gs` as `gcm.ren*` (so Service.gs needs no paste). Asked for on 29 October
+2026: "when Pawan logs in and selects the month and year, he can select the risks, motor, home, pl etc … so any person
+can help him, then it pulls up last year and guides the renewal process … the task is always opened on the last year
+renewal … client … approves the cover seeing also the history since inception … comments … channelled through the
+chatter … once proceed to renew, a new transaction is created … the risk created with the confirmed values and an open
+task on the transaction … the email is sent to ggrenewals team and copy support and the salessupport team … 2 days
+turnaround … follow up with the trail and update the chatter … a future event … for a document delivery to pawan".
+`GI-RENEWAL-DESK-SETUP.md` has the steps. The older `/renewal/` portal (Code.gs, Property.gs, sheet-based, token links)
+is separate and untouched.
+
+- **The branch manager's four decisions, the same day:** never renew without the client's yes (reminders at 14 and 10
+  days, a call at 7, then he decides); he or the Branch Manager's Assistant approves every letter, because its points are
+  advice; the letter goes once Guardian General's notice gives the premium, at least 21 days before; the client signs in
+  with a code to their e-mail, and a group also sees its renewals on its own page.
+- **The month comes from Salesforce** (`girMonthRisks_`): every `Risk_Details__c` of the lines' record types (Motor,
+  Property, Public Liability, Workers Compensation, Machinery, Bond, MARINE) renewing that month, Guardian General's only,
+  not sold or cancelled. A term renews the day after `To__c` (or `Next_Renewal_Date__c` within three days of it, as the
+  tracker reads it), or a year after `From__c` when the end date was never entered (flagged). One renewal a policy and
+  month (`key` = policy key + `|yyyy-MM`); the line is the policy number's letters first (`GIR_LINES.pre`), else the
+  record type; Property splits into home (private dwelling or household account) and commercial. A newer term already in
+  Salesforce reads as renewed. A household account "SURNAME, FIRST HH" reads as "First Surname" (`girClientName_`).
+- **One renewal, opened** (`girOne_`): the items; the history since inception (every term on its policy records and every
+  term of its vehicles, across a changed policy number); claims (`Claims_Revised__c`, never health or life); last year's
+  billing and when it was paid (`Payments__c`); open tasks; and **what the record says** (`girInsights_`, facts, never
+  advice): the notice not read, the letter due, the premium change, a vehicle carried at the same value for two or more
+  terms (with the 6–12% a year guide), sums insured unchanged (what average would pay on a TT$100,000 loss), Guardian
+  General's own value, a bank on the policy, money still owed, paid late last year, open claims, a missing end date, an
+  owner who has left, a company filed as a household.
+- **The full history, every year since the policy began** (29 October 2026: "need to see the full history as well").
+  `girHistory_(r, {staff, claims})` gives one entry a term, oldest first:
+  - the term's dates and the policy number it was written under (a changed number is followed through the vehicle);
+  - what was insured, at what value and premium, and the change on the year before;
+  - what was billed and paid, each payment with its date and how, and the days from the renewal to the first payment:
+    every billing record a term points to, plus any on the policy record (`INSURANCE_PORTFOLIO__c`), so a year whose
+    cover term was never linked is still found;
+  - the claims that fell in the term;
+  - the desk's own renewal of that year (letter sent, the client's answer, instructed, not renewed);
+  - for staff only, that year's tasks on its billing records with their last three notes (HTML stripped).
+
+  A `summary` gives the terms, paid since, claims and clean years, the usual days to pay and how often late; `gaps` names
+  any part Salesforce refused. Billing, payments and tasks are queried by the full ids and matched on 15 characters.
+  - **The desk** (Last year step): tiles, the premium year by year, each vehicle's value, then every year as a fold,
+    newest open, with chips (paid on / owed / no billing record, claims, renewal task open or closed, the desk).
+  - **The client** (`girClientView_`, kept on the row when the letter goes): every year with what it covered, billed,
+    paid and when, owed, and its claims; every claim on record (no longer three years); the history in one line. Never a
+    task, a note, a billing record's name or a Salesforce id. The card's chip classes are `c-ok`, `c-bad`, `c-warn`:
+    a bare `ok` matched the page's own thank-you box.
+  - **The letter**: every year (no longer the last six), a claim marked under its year, the bars in the action blue
+    `#2D5BB9` (gold is gone), and "With us since …: N terms, …".
+- **One door for clients, switched by the go-live** (29 October 2026; the branch manager left the call to me: "will
+  depend on you for guidance"). The homepage's "Renew my policy" still opens the old `/renewal/` portal, because its
+  clients hold access codes from earlier letters and `/myrenewal/` signs in only a client whose new letter has gone.
+  The old page asks `gcm.ping` (six seconds at most, never on a personal `?t=` link) and, once `renewals.live` is true
+  (`girGoLive`), shows **"Renewing this month? Sign in with my e-mail"** above its access-code box; in test mode, or
+  with no answer, it is unchanged. `/myrenewal/` links back for an old access code. Retire the old portal (and its
+  sends from `Code.gs`) only after the new desk has run one full month live; then point the homepage at `/myrenewal/`.
+- **The notice** is read in the browser: the desk finds the IFORM PDF in support@ by the policy number (`girSearchPol_`
+  searches "TTCPL0100001", "0100001" and "100001", because Outlook matches whole words), fetches it, and
+  `renewaldesk/girread.js` (pdf.js) parses it: policy, replaces, period, premium, tax, total, Tran Id, each vehicle or
+  location, the requirements. A person checks every figure and saves; a notice for another number needs a tick that it
+  replaces this one.
+- **The letter** (`girLetterHtml_`): the items with the confirmed values, last year against this year, the history, the
+  points worth a look, the documents Guardian General needs, one button to the client's page, ways to pay, the
+  confidentiality footer, the hosted gold `logo-mark.png`. Staff write the opening, up to six points and the closing;
+  *Draft with AI* (`GIR_DRAFT_SYSTEM`, facts only, no pressure, no advice to cancel or replace) gives a first draft. A
+  [blank] left in stops the save. Approval (`girApproveSend_`) is the branch manager's or the BMA's; it sends from
+  support@, sales support copied, and opens the renewal task on last year's billing record in the branch's pattern
+  ("Risk to Renew for -CLIENT Line Renewal Date m/d/yyyy Policy # …", Renewa/PDl/Bill), or finds the one already open.
+- **The client's answer** (`girTakeAnswer_`): approve (with their own values), something has changed, or a question; it
+  goes onto the renewal task's Chatter with the task's owner mentioned, and the person working it and the approvers are
+  e-mailed. A yes taken on the phone is recorded on the desk with who, how and when. The client's page
+  (`/myrenewal/`, `gcm.renCode` and `gcm.renIn`: a six-digit code, five tries, fifteen minutes, a six-hour sign-in; an
+  unknown address gets the same answer and no code) and a group's **Your renewals** tab (`gcm.renGroup`, its list bill and
+  code, a name required) draw the same card, `myrenewal/renewal-card.js`. A group never sees a letter sent in test mode.
+- **Proceed to renew** (`girProceed_`, only on the client's yes and a read notice): a new `TRANSACTIONS__c` (the line's
+  record type, the shell, account, contact, the renewal date, the holder as Owner), a `Risk_Details__c` per item copying
+  last year's details (`GIR_COPY`) with the notice's dates and premium and the confirmed value in `Cover1__c`, a follow-up
+  task on the new record, and an Event for the deliverer (Pawan, or `GIR_DELIVERY`) the working day before the renewal at
+  10:00. A field Salesforce refuses is left out and said (`gblSfwSave_`). The instruction goes from support@ to CRMS
+  Renewals with CRMS SAL Support (personal motor and home) or CRMS Commercial, support@ and sales support copied; motor in
+  Pawan's subject pattern ("Renewal Due -m/d/yyyy Policy #… - Vehicle # - … - Insured - …").
+- **The hourly run** (`girTick_`, from `gcmRefreshTick`, working days 8 to 17, once an hour): Guardian General's reply read
+  from support@ (a Guardian address not ours, after the instruction); "ready for collection" moves the delivery to the
+  next working day; no reply in 2 working days, a follow-up with the trail, every 2 working days, on the follow-up task's
+  Chatter, the approvers told at the fourth; the client's reminders at 14 and 10 days (never within two working days of
+  the letter); at 7 days a call task and the approvers asked to decide.
+- **Test mode until `girGoLive`** (`GIR_LIVE`): client and Guardian General mail to the person who pressed and the test
+  inbox, marked TEST; Salesforce written only on a ticked "really going ahead". `girTestMode`, `girTickNow`.
+- **Practice runs for training** (29 October 2026: "want to test this as I want to do the training with staff"). Staff
+  practise on the month's real renewals in test mode, so nothing practised may leak into Salesforce or to a client:
+  - **The test letter** goes to the approver, the person who has the renewal (`Holder e-mail`) and `GIR_TEST_TO`; `Sent to`
+    keeps every address, and any of them signs in at `/myrenewal/` to answer it as the client (`girSentTo_`). The
+    reminders go to the same list. The client's card says "Practice letter" (`practice` in `girView_`).
+  - **Nothing reaches a real task**: a comment in test mode with no task of the desk's own stays on the desk's log
+    (`comment (test)`); a client's answer on a Test row never looks for last year's open renewal task. A Test row's task
+    exists only when the approver ticked "really going ahead".
+  - **A practice instruction never takes Guardian General's real mail** about the policy as its reply (hourly run).
+  - **Every internal e-mail in test mode** is marked `[TEST]` (`girInternal_`).
+  - **A staff address is never the client's e-mail** (`girOurAddress_`: support@, the branch's mailboxes, anyone on the
+    Agent Skill Bank, `GIR.TEST_TO`).
+  - **Start again** (`reset` act, `girPracticeFor_`, `girPracticePatch_`): the approver, or the person who has the renewal,
+    puts it back to its letter (notice, values and letter kept; needs approving again) or to the beginning (everything
+    cleared), from two buttons under "Every step so far". Never once Salesforce was written for it (`New trans`); live,
+    only a Test row.
+  - **`girGoLive` clears the practice first** (`girClearPractice_`; `girClearPractice` on the editor's Run button between
+    sessions): every Test row back to its letter, a staff address taken off any row, a row Salesforce was written for left
+    and named.
+- **Who signs in**: the group client management sign-in (`gcmWho_`; the branch app's `sso.js` fills it). Pawan must be on
+  the Agent Skill Bank as staff with a Password; a Driver role is refused here. The record is the **GI Renewals** and **GI
+  Renewal Log** tabs of the group sheet.
+- **The look** is the motor quote's: light, soft ocean blue, the blue shield (`orphan-transition/board-mark.png`), on both
+  the desk and the client's page; the e-mails carry the gold `logo-mark.png`.
+- **One item, one term: Salesforce's double entries** (29 October 2026, found testing on the real November renewals before
+  any trainee saw them). Last year's premium came out at two or three times the bill on three renewals.
+  - **The patterns in the record:**
+    - the same term entered twice, one copy on last year's billing record;
+    - a mid-term change kept as a term of its own;
+    - a second full term for the year, dated a year late and on the year before's billing record;
+    - one vehicle with two different terms, both on this year's billing record;
+    - a machine added to a plant policy with no policy number, which read as a renewal of its own.
+  - **The fix** (`girDedupe_`, in the month's bundle and in the full history alike):
+    - Rows merge only when they share an identity (`girIdent_`): a registration, a chassis, a serial, or an address with
+      the same cover type and the same cover.
+    - Rows with none never merge. Four loaders that differ only by serial are four loaders. Four bare rows on a travel
+      policy are four, and their bill says four times the premium.
+    - **Exact copies:** one is kept, the one on its own year's billing record (`girTransOk_`: the record's Renewal Date
+      within 45 days of the term's start), else the first entered.
+    - **Two full terms for one vehicle, chassis or serial in one year:** the one on its own year's billing record wins.
+      When both are, the first entered is kept, and the desk's first insight says to check which is right before the
+      letter goes.
+    - **A shorter term inside a full one, ending with it:** added to that term's premium (`base` and `mid` on the item).
+    - **An item with no policy number:** joins the policy on its billing record, but only when that record carries one
+      policy.
+  - **Nothing in Salesforce is changed.** Each merge is an insight naming the record to correct or remove.
+  - **Measured on the real November rows:** of the 25 renewals that sit on their own year's billing record, last year's
+    premium agreed with the bill on 19 before and 22 after, and none got worse. The three still apart are bills shared by
+    two policies. `gir/real/real-check.js` runs it on the pull kept in the scratchpad (client data, never the repository).
+  - `gir/dup-test.js` (25 checks) covers it on made-up records of the same shapes.
+- **What Guardian General's notice asks for becomes a Servicing task for sales support, with its due diligence form
+  filled** (29 October 2026, with a plant and machinery notice in hand: "whats ever on the letter guardian needs a task is
+  opened as well if a form prefilled and assign to the sales support team to follow up, not only pawan … the task type is
+  servicing and related to the transaction year or the risk").
+  - **The reader** (`girread.js`) now reads the newer notice layout:
+    - "Submission of the undermentioned required on/before … renewal: (a) … (d)";
+    - the Know Your Customer line (`kyc`);
+    - "Sum Insured/Limit of Liability: <label>: $ <amount with cents>". Until then the item read TT$0, with the label run
+      into the location;
+    - the producer, and the address the notice went to.
+
+    The notice form has a tick for the KYC line.
+  - **The task** (`girReqTask_`, `GIR_REQ`) opens in Salesforce:
+    - Task_Type__c `Servicing`, on the term's billing record (`r.trans[0]`), else the cover term, with the contact;
+    - subject `Renewal Due <d/m/yyyy> - Renewal Requirements and KYC Documents - <policy> - <client>`, after Pawan's own
+      "Request for Proposal Form and KYC Documents" task;
+    - due ten days before the renewal, never sooner than two working days; each item a `[ ]` line.
+  - **The owner** (`girReqOwner_`): the person chosen on the desk, else the account owner when they are on the pool
+    (`GIR_REQ.POOL`, or the `GIR_REQ_POOL` Script property), else whoever of the pool has the fewest open requirement
+    tasks. A Chatter post mentions them, and they and the sales support inbox each get an e-mail.
+  - **One a renewal:** the **Req task** column on GI Renewals (added at the end of `GIR_HEAD`) is authoritative, so it
+    never opens twice, open or closed. `reset` leaves it alone, since it is a real task.
+  - **When:** live, on the notice save. In test mode, from the desk (act `reqtask`) only with `really`, or at Proceed with
+    Salesforce written.
+  - **The form, for a company** (`girIsCompany_`: a commercial or business account, or a company word in the name):
+    Guardian General's Customer Due Diligence Check List (GGIL-CDD Checklist/Incorporated Entities-300611-Version 1.0).
+    - It came as a blank attached to an underwriter's e-mail of 21 October, and lives at
+      `renewaldesk/forms/GGIL-CDD-Company.pdf`; a file of that name in `GCM_FORMS_FOLDER` wins.
+    - The scan is flat and both pages are stored at /Rotate 270, page 2 the other way up. `girCddPdf_` turns page 1 to 0
+      and page 2 to 180, and draws at points measured upright (`GIR_CDD`). Page 2's text goes inside a 180-degree
+      transformation matrix rather than a `rotate` option, which pdf-lib's validator refused in the test harness.
+    - From the account and the notice (`girCddData_`): broker, policy, name, place of business, telephone, fax, e-mail,
+      the owner type tick, the policy type tick (`GIR_CDD_TYPE`: liability, workers' compensation and bonds are
+      Accident, machinery Engineering), the annual premium, the value insured, Section H, and the salesperson's name.
+    - Left for a person: incorporation, the registered office, the company type, the documents, the signature and dates.
+    - It goes on the task as a ContentVersion (`girAttach_`), else on the billing record. Act `reqform` downloads it filled
+      on the desk, opening nothing.
+  - **Insight:** "The notice and Salesforce disagree on the sum insured" (more than 5% apart, not motor). The first notice
+    read had about half the sum Salesforce carries.
+  - Tests: `gir/req-test.js` (36, Node) and `gir/req-page.js` (16, Playwright, a laptop and a phone).
+- Tests in the scratchpad (`gir/`): `flow-test.js` (114, the whole journey in Node on a made-up book, three years of
+  billing, payments and an old renewal task with notes), `practice-test.js` (41, a training run from the letter to go live),
+  `desk-test.js` (36, Playwright, the desk with a made-up notice PDF read by pdf.js, the year folds and the practice
+  buttons), `client-test.js` (40, the client's page on a phone and a desk, the years in full, and
+  a group's tab) and `door-test.js` (12, the old page in test mode, live, and with no backend). `read-test.js` checks the notice reader on real notice texts kept in the scratchpad only.
 
 ## The branch's own forms — no client link opens a JotForm
 
@@ -5684,6 +5988,40 @@ has the steps.
 - Stage, question and check keys must match between the page (`STAGES`, `WHY`, `CHECKS`) and the script
   (`ESSAY_STAGES`, `ESSAY_WHY`, `ESSAY_CHECKS`); the test compares them.
 
+## The Study Hub — SEA only
+
+`csec/` is the Study Hub at rickyrampersadbranch.com/csec, built for a child of
+the branch manager's who is sitting the SEA. It began as a CSEC hub, grew a
+primary ladder, and on **16 October 2026** was made for the SEA alone: *"ok want
+sea only"*, said three times, the last after the guide list had been scoped and
+the product still said CSEC on its front door.
+
+- **The switch is `CSEC_SCOPE` at the top of `csec/data/curriculum.js`.** Under
+  `'sea'` every secondary subject, level, stage, roadmap entry and resource
+  group is cut from the data before any page reads it, and `questions.js` and
+  `guides.js` trim themselves the same way. The CSEC data is still in the
+  files, unreachable. The page copy was rewritten to match; nothing visible
+  names CSEC, CXC, the SBA or a Form. The folder and the address stay `csec/`,
+  because that is the link families already hold.
+- **`csec/tests/scope.js` holds it.** Every page, as student, parent and
+  teacher, fails on any visible trace of the old ladder. Run the five suites
+  in `csec/tests/` before pushing (`README.md` there says how).
+- **The code names stay.** `CSEC.esc`, `window.CSEC_GUIDES`, `csec-config.js`
+  are identifiers, not copy. Renaming them buys nothing and breaks everything.
+- **`/sea/` is a different product** — the RRB Academy, the manager's own, with
+  its own backend and passwords. On 16 October 2026 a session overwrote it
+  by mistake and restored it byte for byte; *"dont wan this in my acadeny
+  module as this is different ok"*. Never write into `sea/` from Study Hub work.
+- **No child's name or script enters the repository.** The marks that shaped
+  the writing module (Content 0, the other three criteria 5 each — an off-topic
+  answer, not weak writing) are described, never attributed. A second child's
+  test was shared in confidence to build the skill set and stays out of the
+  repository entirely.
+- **The writing guides keep one house style**, held by `csec/tests/guides.js`:
+  one guide owns the clock, one name per thing, no priced marks, identical
+  letter headings, every model sentence correct Standard English because a
+  child copies it. The header of the SEA block in `guides.js` lists the rules.
+
 ## The Premium Due Desk — checked by a person, sent at ten
 
 `premium-due/` and `apps-script/PremiumDueDesk.gs`, in the Branch Intelligence
@@ -5952,6 +6290,85 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     e-mail on record is the one copied on the desk e-mail.
   - The Opportunity's `Producer__c` is that agent; its description says who placed it. The owner stays `MQ_SF_OWNER`.
   - Tests: `tests/test-motor-quote.js` (199 checks) and `tests/e2e-motor-quote.js` (134).
+- **Agents can try it in test mode** (29 October 2026, for the launch: "test with the agent as we have moved from
+  Jotform"). In test mode every e-mail went to the test inbox, the sign-in code included, so an agent could never sign
+  in. `mqTester_` now lets a tester's own e-mail through, marked [TEST], with the test inbox copied: an active agent of
+  the branch's units (`mqAgentByEmail_`), anyone on the `MQ_TESTERS` Script property (comma-separated, for staff), and
+  the test inbox. A client's e-mail and the quotes desk still go only to the test inbox, and Salesforce is still not
+  written, until `mqGoLive()`. The same day the client's "Check and send" summary stopped printing "On a loan:
+  undefined" on a quick quote (and "Owned by", the same pattern); the page test now fails on the word.
+- **The launch film** (29 October 2026). `/motorquotevideo/` plays `motor-quote/film/launch.mp4` (2:12, poster
+  `launch.jpg`, WhatsApp card `launch-card.jpg`): thirteen scenes for agents, from "Motor quotes have a new home. No
+  more JotForm" to "try it this week with one client". It is in the branch app (Learn, beside a new Motor quote tile
+  under Clients and queries, sign-in "E-mail code"). Built like the board films: `tools/film/mqlaunch-lines.json`
+  (the words, voiced on the `tts-run` runner as Andrew Expressive with the English check, key `mqlaunch`),
+  `mqlaunch-timing.json` (each clip's length and word starts), `build-mqfilm.py` (the page, in the motor quote's
+  light blue, every reveal on the word that names it), `render.js` (frame by frame), and an ffmpeg mix of the branch
+  theme ducked under the voice to -14 LUFS. The phone screens are the real page driven against the page test's fake
+  backend (made-up client "Anika Pretend", made-up agent "Mala Madeup"): the capture script is the page test with
+  screenshots added, kept in the session scratchpad. Re-cut it when the page changes. The old form's "41 questions,
+  filled in twice" is the JotForm's own record (see the first bullet of this section).
+- **One place to renew: the Renewal Platform** (26 October 2026). The motor quote page had its own renewal path
+  beside the branch's Renewal Platform (`apps-script/Code.gs`, the client portal from the renewal e-mail), so a client
+  could renew in two places with two sets of records. A renew-by-registration door built for this page that morning
+  (pull request #265) was reverted before it went live. The page still shows the renewal it reads from Salesforce (the
+  days to go, the terms, the premium chart), and every renew button opens Track your renewal
+  (`CONFIG.RENEW_PORTAL`, the platform's `?find=1` with `e=` the client's e-mail filled in), which e-mails the
+  client's secure link. A client with no vehicle under their e-mail is told their renewal is in the portal.
+  `mqSubmit_` turns away a renewal sent by an older page, with the way there (`MQ.RENEW_PORTAL`). The renewal form
+  code on the page is no longer reached.
+- **Renewing is back on this page, vehicle first** (29 October 2026: "without even asking for a vehicle number it's opening
+  the portal and cannot find … very confusing … apply best practices and enhance with AI"). The 26 October rule (every renew
+  button opens the Renewal Platform's Track your renewal) sent a signed-in client to a second page that asked for the e-mail
+  again and found only renewals already loaded on the platform's sheet, so most clients got "check your inbox" and nothing.
+  Now nothing opens another site:
+  - **Renew this vehicle** (the renewal card) and **Renew early** (a vehicle row) open the renewal step for that vehicle.
+  - **"Renewing a vehicle not listed here?"** takes a registration or policy number, matched letters and digits only against
+    the client's own vehicles (never looked up for anyone else). Not matched: it says so plainly and **Send it to our renewals
+    team** opens the step marked "Not matched to your e-mail yet"; `mqRenewFromRecord_` writes "not found on file" for the desk.
+  - **Your renewal in plain words** (`renewBrief`, `mqRenewBrief_`): Claude reads only that vehicle's record (`mqBriefFacts_`)
+    and writes two sentences and up to three things to confirm, each a "Yes, change this" tap that writes the change in.
+    `mqBriefOk_` throws the answer away for the plain one (`mqBriefPlain_`) if it carries a number not on the record or advice
+    (cancel, switch, cheaper, recommend); kept six hours, within the day's AI allowance. Never for an unmatched vehicle.
+  - Three choices: Renew as it is, Renew with changes, **Talk to us first** (a call before anything is renewed).
+  - `mqSubmit_` takes the renewal again (an agent still cannot) and sends it to `MQ_RENEW_TO`, else the quotes desk, read
+    again from the record. `MQ.RENEW_PORTAL` is no longer used by the page.
+- **What is due comes first, then everything they hold, then ideas** (29 October 2026: "it should have what is currently
+  due at the very top and a history of the other policies with us and the renewal month for only general and look for
+  cross selling opportunities").
+  - **Due now** (`#dueTop`, a `.t-renew` section directly under the welcome band, before the three paths): the motor
+    renewal cards due or lapsed, and each general policy due (`genDueCard`, Renew this). The lead and the Renew path
+    count both.
+  - **Everything you hold with us** (`holdHtml`, `#trHold`):
+    - *General insurance* (vehicles, home, property, liability, workers' compensation, machinery, bond, marine), each with
+      "Renews every <Month>" and the next date, and a twelve-month strip with the renewal months lit and this month ringed.
+    - *Life, pension and health* (`me.life`), with plan, type, since, in force / current / application, and the cover.
+      They have no renewal month, because they do not renew.
+    - The ended ones are a count (`me.lifeEnded`), never listed.
+  - **Where it comes from** (`mqLookup_`, each read in its own try):
+    - `mqGeneral_` reads `Risk_Details__c` of the general record types (`MQ_GEN_TYPES`), one entry a policy, renewal
+      the day after the cover ends (or `Next_Renewal_Date__c` within three days of it). A policy number starting
+      FHO or FHC is Home (`mqGenLine_`). Ended ones are dropped.
+    - `mqLife_` reads `CLIENT_PORTFOLIO__c` (`MQ_LIFE_TYPES`). `mqLifeState_` reads the status: the status field
+      is often a code or blank, so a coded status counts as current only while the policy is paid to within 400 days.
+  - **Ideas for you** (`mqOpps_`, three at most, facts off the record, never advice):
+    - home cover where there is none;
+    - life cover where there is none, else critical illness where the life cover has none;
+    - windscreen cover for a vehicle with none, which opens that vehicle's renewal with "Add windscreen cover"
+      written in;
+    - personal accident.
+
+    Each opens the branch's own page (`/quote/property/`, `/apply/xpress-life/`, `/quote/critical-illness/`), never a
+    JotForm. The page says nothing is added unless the client asks.
+  - **A general policy renews on the same step** (`startRenewGen`; typing its number in the finder works too).
+    - The page sends `line`, which `mqRead_` keeps only from its own list.
+    - `mqRenewFromRecord_` reads it again from `me.general`.
+    - The desk e-mail and the task are "<Line> renewal request", and the receipt names the line.
+    - The brief is asked for by the policy number.
+    - The step shows no motor cover box and asks for a new sum insured, and the review shows "The policy".
+  - An agent sees none of it.
+  - Paste MotorQuote.gs (2026-10-29c) and publish a New version: the old live script sends none of these blocks, and
+    the page then shows only the vehicles, as before.
 - **Three paths, never mixed** (21 October 2026: "do not confuse invoice … a quote and a renewal … on a mobile … a proper
   layout, professional … motion and graphics and charts … infographic"). The home screen opens on three choices, each with
   its own colour, icon, section and numbered steps (`PATH`, `.t-renew` teal, `.t-quote` blue, `.t-take` violet):
@@ -5984,6 +6401,60 @@ quote as this goes to CRMSQuotes@guardianonline.onmicrosoft.com". `MOTOR-QUOTE-S
     tick and clears itself in under three seconds.
 - The home page's Motor tile and the profiler's "My vehicle" open `/motor-quote/`. The JotForm is still enabled at Jotform
   until the page is live and wired; disable it then, so an old link does not take a client back to it.
+
+## The renewal experience: one place to renew, one look
+
+The Renewal Platform (`apps-script/Code.gs`, `Property.gs`, `RenewalLines.gs`, `SalesforceSync.gs`, `RenewalBoard.gs`)
+is where a client renews motor and property: the renewal e-mail's link opens the client portal, Track your renewal
+(`?find=1`) e-mails a lost link, staff work the dashboard (`?staff=`), and the renewal board (`?board=`) gives the
+branch, staff and each agent their own view. The motor quote page sends every renewal there (see the motor quote
+section). Asked for on 26 October 2026: "the theme and scaling has to be brand consistent", "lot of motion, charts
+and graphics as well easy to manoeuvre and understand", in the motor quote's look, which the manager chose.
+
+- **One theme, two homes.** `renewal/theme.css` and `renewal/theme.js` (classes `rr-`, helpers `window.RR`: line
+  icons, counters, bars, columns, stacks, rings, tiles, toast, the scroll reveal, waves on every `.rr-band`). The
+  static pages in `/renewal/` link them; `tools/renewal/build-theme.py` folds both into
+  `apps-script/RenewalTheme.html`, which every Apps Script page takes through `<?!= rrTheme_() ?>` (`rrTheme_` in
+  Code.gs). Edit the two sources and run the builder; `tests/test-renewal-theme.js` fails on a stale copy, a page
+  without the theme, the gold, a near-black ground, an old webfont or an emoji.
+- **The blue shield** (`orphan-transition/board-mark.png`) on every renewal page, as on the motor quote. The old
+  pages' Midnight / Ocean / Daylight picker (`rrb_theme`) is gone: its themes were the dark and gold ones turned down.
+- **White text only on fills of 4.5:1 or better.** The bar, the band and the buttons are a shade deeper than the
+  motor quote's (`#2C5FA8` to `#3672C9`; white on the motor quote's `#4C94E6` is 3.1:1); the property band is
+  `#5E3A9C` to `#8A62C4`, the teal `#095D58` to `#107F78`.
+- **The pages:** the client portal (`Portal.html`: a ring of days to go, one card per policy with its journey, the
+  value history as columns with a range scale that follows the figure typed, three choice cards for the instruction);
+  Track your renewal (`findPage_`, which fills in `e=` from the motor quote page, escaped, only as the input's value);
+  the property portal (`PropertyPortal.html`: the average clause drawn to scale and redrawn as figures are typed);
+  the staff dashboard (`Staff.html`: the pipeline as a stack, renewals by month, tiles that filter, tabs for
+  Pipeline, Tasks, Reports, Production and Audit); the renewal board (`Board.html`); and `/renewal/index.html`,
+  `motor-policy.html` and `corporate.html`. Every field, id and server call is as before.
+- **This month and next** (26 October 2026: "this month and next I was of the opinion you had renewals in the next
+  section"). The staff dashboard's Pipeline tab opens on a section with the two calendar months side by side
+  (`mmView` in `Staff.html`): every motor and property renewal due in each, the date worked out from its days to go so
+  the year is right, how many renewed, overdue and open as a stacked bar, then each file (date, client, policy, who
+  has it, status), open ones first and renewed last. A file opens its drawer; past twelve, "Show all" filters the
+  pipeline to that month.
+- **The renewal board would not open** until 26 October: `Board.html` parsed `<?!= payload ?>`, an object, so it
+  threw on load. It reads `<?!= JSON.stringify(payload) ?>` now, like the others.
+- Tests: `tests/e2e-renewal-portal.js` (211), `e2e-renewal-property.js` (80), `e2e-renewal-staff.js` (101),
+  `e2e-renewal-board.js` (125, the real RenewalBoard.gs as admin, staff and agent), `e2e-renewal-site.js` (240), each
+  at 360, 390 and 1366 wide with reduced motion.
+- **Sign-ins, the sum insured and one-tap buttons, from pull request #283** (merged 29 October 2026, the fixes only, at
+  the branch manager's choice). `RenewalTeam.gs` (a seventh file, menu "Who can sign in") puts Ricky (admin), Kamla
+  (manager) and Pawan (staff) on the Staff tab and issues six-digit access codes that never begin with a zero. It
+  creates the access-code column, which nothing had made: a blank code read as "no code needed", so anyone with the
+  link and an e-mail on the tab could open the board. `sfSumInsured_` (SalesforceSync.gs) reads `Total_Value__c`, then
+  `Total_Property_Cover__c`, then `Cover1__c`, because the rollup read 0 on every November property renewal. The motor
+  e-mail carries the property e-mail's three one-tap choices, worded by line (`stageTaps_`), and both e-mails a "Lost
+  this e-mail?" line (`lostLink_`); a tap opens the portal with the choice ticked and the words "Carried over from your
+  e-mail", and never sends it (`preselect` in Portal.html). The board's backend gained the readiness check
+  (`boardReadiness`), the second-vehicle fix (`rowIndex`) and an `invite` action the page does not use yet. **Left out:**
+  the new board at `/renewals` and its `Renewals.gs`, because `/renewals/` is the Renewals wall on the TV
+  (WALL-SETUP.md) and the GI renewal desk now does that job.
+- To put it live: merge, then paste `Code.gs`, `RenewalBoard.gs`, `Portal.html`, `PropertyPortal.html`, `Staff.html`,
+  `Board.html` and the new `RenewalTheme.html` into the Renewal Platform project (plus `SalesforceSync.gs` and
+  `Property.gs` from the board's change), and publish a New version (pencil, never New deployment).
 
 ## RR Operations and the Delivery Book — one sign-in, the client told the same day
 
@@ -6151,6 +6622,16 @@ for a reason". Then: "1 day or same day turnaround as the time and date stamped"
   and word agree (`LB_TONES`), the headline, figure tiles that wrap three to a row, and the lines as a striped table up
   to three columns or as cards beyond that, so nothing runs off a phone; `lbBtn_` makes buttons Outlook keeps.
   Checked by rendering at 760 and 390 px.
+- **Handed to** (17 October 2026: "staff is collecting documents, but … departments being lost … that dropdown has to be who
+  it's handed to. The staff signs on their phones … accept it"). Step 4 of the log form asks *Who are you handing the papers
+  to?*: the staff list (`lbStaff_`: the RR Operations Access tab with the Log Book on their Apps, plus the fact find's staff
+  rows) or *Not yet: I will hand them in later*, named afterwards from My log (`lb.handto`). The line keeps `Handed To` and
+  `Handed At`. The person named is e-mailed at once to sign on their phone (`lbHandedMail_`, sales support copied); their
+  Queue puts those papers first under *Handed to you* with **Accept & sign** and **Not with me** (`lb.notwithme`: the name
+  comes off, the line is flagged and the agent asked who has them). Signing e-mails the agent the proof (`lbSignedMail_`).
+  Not signed for after `LB.ACCEPT_HOURS` (2): `lbChaseHanded_` asks the person named, sales support and the agent copied,
+  once a working day, and the agent's own "hand them in" reminder and the never-handed-in count stop for that line. Signed
+  by someone other than the person named is allowed (cover) and flagged. The 5pm digest lists papers handed and not signed for.
 - **The films** (17 October 2026: "the vid to send off", then "two films: agents and staff"). `rroperations/logbook/films.html`
   (short address `/logbook-films`) plays *The Log Book, for agents* (`logbook-agents.mp4`, poster `film-agents.jpg`) and *The Log
   Book, for staff* (`logbook-staff.mp4`, `film-staff.jpg`); the Log Book's "▶ Film" button opens each person's own. They are
@@ -6265,6 +6746,19 @@ guide you. In your session review notes on the step back in place from all memor
   is the branch's own five-line objective for the two days, a draft the branch manager edits by logging a position
   against the session key `objective`. The brief prints all three and ends with the sources. The guide is sent the
   evidence and the sixty seconds with the notes.
+- **Last year, this year: the circles** (asked for the same day, with the 2025 agenda: "Please see last years retreat and
+  find that we continued to make circles"). The 2025 Joint Sales Managers Strategic Meeting ran three days; its agenda
+  is in the page as data, in its own words. `PRIOR` sets each 2026 session beside the 2025 sessions that covered the
+  same ground, with what to ask of it ("Last year, 2025" in the session, a "2025 too" label on its header, in the brief
+  and in what the guide is sent). Eight of the ten working sessions return to 2025 ground; Agent & Unit Transfers is the
+  one new subject. The **Last year: the circles** tab carries the same question a year later (`PAIRS`), the ten things
+  the 2025 workshops and plenaries set out to produce (`OUTPUTS`, each with the 2026 session it resurfaces in and what
+  the branch built meanwhile), the 2025 goals ($250M risk-based API, $50M annuity premium, 450 full-time agents, which no
+  2026 session reports against) and the branch's ask of the action log. Whether each output was issued is on neither
+  agenda: the branch manager or a unit manager marks it (Issued, In part, Not issued, Not sure), logged as a `fact`
+  contribution under the session key `c25-<id>` with `[yes|part|no|unk]` in the point, so the backend needs nothing new.
+  The objective's fifth line is "Break the circle"; Our Strategic Journey and Consolidation of Recommendations carry their
+  sixty seconds. Every quotation was checked against the 2025 agenda's text; keep it so.
 - **The Step-Back notes say plainly what the record does not hold.** Nothing on the branch's record defines the
   Step-Back Approach as a recruitment or career-path method; the only "step back" on file is the motor No Claim
   Discount rule. The tab gives what bears on the agenda's question (how the tracker counts recruitment, the licence
@@ -6274,8 +6768,8 @@ guide you. In your session review notes on the step back in place from all memor
 - **Until the paste** (Service.gs and StrategicMeeting.gs, then a New version), the backend answers "Unknown action":
   a sign-in opens on the device (the code cannot be checked yet) with a notice saying so, contributions are kept on the
   device (`rrb-sm-local`) and offered to the sheet once the backend is linked.
-- Tests: `tests/test-strategic-meeting.js` (65 checks, the script under the fake Sheets with the sign-in, the stream
-  and Claude stubbed, then the page and Service.gs against it) and `tests/e2e-strategic-meeting.js` (28, Playwright,
+- Tests: `tests/test-strategic-meeting.js` (71 checks, the script under the fake Sheets with the sign-in, the stream
+  and Claude stubbed, then the page and Service.gs against it) and `tests/e2e-strategic-meeting.js` (34, Playwright,
   a laptop as the branch, a phone as the unit manager, and the unlinked backend).
 
 ## Standing rules
@@ -6407,6 +6901,15 @@ guide you. In your session review notes on the step back in place from all memor
   `#i<id>`); those pages show `chatterNotes_` (latest two, the whole history a
   tap away) and the `SPEAK_PH` box; the command centre drops "Open in
   Salesforce" for them. Ricky and the staff keep their Salesforce links.
+- **A manager closes a task for the agent** (`umPostOrClose_`, 27 October 2026:
+  "the managers must be able to close off on behalf of the agents as it's
+  appearing on their dash"). Every task on the Unit Manager's page (`f=um` and
+  `f=umeve`) has "Close this task for <agent>". His comment is the closing note:
+  it is posted on Chatter first, headed "closed for <agent>", then the task is
+  Completed and logged (`taskChangeLog_`). A close is refused, and the page says
+  why, when there is no note, the note is a single word (`tcardThin_`), or the
+  client is still waiting for an agent (`tcardWantsAgent_`) and the note does not
+  name one. Pinned in `tests/test-um-close.js`.
 - **Day items in pieces** (`bigPut_`/`bigGet_`): the unit, agent, plan and
   fact-find lists were cut at 8,900 characters, and cut JSON read back as
   nothing. They are kept in 8,000-character pieces now.
@@ -6577,15 +7080,59 @@ guide you. In your session review notes on the step back in place from all memor
 - **The Branch Portal on the same report, and its notes into Salesforce (27 Oct 2026, 2026-10-27i).** The Portal (`apps-script/branch-portal/Code.gs`, the Branch Portfolio's own bound script, pasted by hand into that project, not the tracker) now reads the newest `Branch Pendings_` tab for its Requirements view (`pendReport_`, one entry a policy: outstanding by kind, days since submission, red at Guardian, suspense, underwriting decision; agents matched by `sameAgent_` however the name is written) and the tracker's "Pendings Chase" tab for each policy's Salesforce task and last notes. The Portal has no Salesforce access, so the workbook is the bridge: the tracker's `pendSyncTick_` (on `keepWarm`, every ten minutes, weekdays 7am–7pm) posts each Requirements Log comment with nothing in column I as a FeedItem on the policy's most recently touched open Pendings task, signed "Branch Portal · <who>", and marks column I (or says there is no open task); then rewrites "Pendings Chase" whole (one row a report policy: task, owner, due, open, overdue, last note, earlier notes). Nothing is deleted. Tests: `tests/test-pend-sync.js`, `tests/test-portal-reqs.js`. Production stays on Branch Settlement Exp PBI Production for both until Ricky says which tab head office counts.
 - **My day that helps at once: reviews carried, started on open, Save in place, and the time they left (28 Oct 2026, 2026-10-28a).** Ricky, 6:10am: "when I open my day ... I am not seeing it drafting the responses and using the intelligence!! Also it's taking long when I post", 6:11: "would like to have the time left as well". Found: the 4:50 run did the night's scrub and then Claude's inbox review in the same run (it ran Apps Script's six minutes out, so nothing was kept), the review store began empty every day, and the hourly review was only at :35 from 6:35 to 4:15pm. Now: `ixDeepGet_` merges the last `IX_DEEP.CARRY_DAYS` days' reviews (today's win), `ixDeepCarryNow_` writes the carried ones for mail still open into today's store at 4:50 and at the start of `sdPrune_` (before the old days are dropped), `ixDeepWarm_` keeps only today's list, re-asks only what moved (the stamp), runs one at a time (`ix_busy_<day>` in the cache, `opts.force` from the editor) and takes `opts.parallel`; the 4:50 run scrubs and carries, and from 5:00 to 7pm (`IX_DEEP.FROM`/`TO`) every run with something unreviewed reviews it (never in the same run as the deep drafts or the hourly scrub). On My branch an unreviewed item says Claude is on it (`.ixwait`) and `IX_WAIT_JS` calls `ixReviewNow` (his page only; the review built by `ixReviewHtml_`, the same as the page's) and puts each in place, asking again while any are left. Save: the form has `id="ufm"`; `UNIT_SAVE_JS` sends it to `unitSaveNow` → `unitSave_(person, day, p, true)`, which writes as before and returns `{html, fields, inbox}` (each `out` item carries `f`, its field names, and inbox items `k`); the page shows the result above the button, clears the fields of what saved, folds inbox items dealt with, and falls back to posting the form if the call fails. Attendance (`workdayAtt_`): each in/late cell carries `o` (sign-out), `early` (minutes before the day's own finish past `WD_ATT.EARLY_MIN`) or `noout` (a past day with no sign-out); myworkday shows "left 3:58pm" under the time in, early in amber, and times no longer break across lines. Tests: `tests/test-inbox-fast.js`, `tests/e2e-myday-inplace.js`, `tests/test-inbox-review.js` (the clock), `tests/e2e-workday.js`.
 - **Slides 5 and 6 rebuilt, and Issued this month (28 Oct 2026, 2026-10-28b).** Ricky, 11:45am: "please fix the increases and group and individual Health wall this is incorrect"; 11:46: "slide 6 in the intell wall is far down and does this make any sense"; 11:56: "and what about the policies issued this month by agent and unit?". Found: the increases copy (`_Intel Wall` tab, key `groups`) was last built on 18 September (no clock rebuilt it), two of its health "pendings" were from 2020, the scrub folded eight increases into one Orphans line (it folded any list of objects with a departed name), and slide 6 was the September triage screen running past the fold. Now: `wallScrub_` keeps every row of a list of cases (`WALL_ITEMS`, or any list where a name repeats), each departed name reading Orphans, and still folds a list of people; `wallFeedOut_` runs intel.groups through `wallGroupsTidy_` (rows past `WALL_GRP.OLD_DAYS` leave every count and list and are counted in `d.old` as records to close; the increases pending figures are worked again; `builtAt` says when Salesforce was read); `wallFeedsTick_(t0)`, at the end of `keepWarm`, rebuilds the groups copy when it is over `WALL_GRP.REBUILD_MIN` old between `FROM_H` and `TO_H`, and runs `intelRebuildWall45` once in the early morning (prop `wall45_catch`) when the dues copy is over 20 hours old (its midnight build had not landed since Monday). `wallPendLive_` adds `codes` (each requirement: code, kind, out, red, amber, new this week, policies, the commonest who-acts-next, the top `WALL_PEND.CODE_AGENTS` agents) and `codeCount`, and `who` items carry `p` (policies). New `wallIssued_(day)` on `wall.issued` (routed in doPost before intelRoute_, through the scrub, cached 5 minutes): the newest `Branch Production_` tab, SETTLED_MONTH this month, premium ANNUAL_PREMIUM or modal × payments a year (`WALL_ISSUED.MODE`), Guardian's own SETTLED_LAST_7_DAYS, week by week, the same day last month by the report's own date; each unit (`WALL_UNITS`, or the Script Property as JSON; a unit named for a manager only while the manager is here) and each agent against their own usual (the average of the `USUAL_MONTHS` before this one, of the people here now: whoever has left is out of every usual and off the list unless they settled something, when they read Orphans), agents in name order, no agent premium. Pages: `increases.html`, `codes.html` (paged every 8s; 34s on the wall) and the new `issued.html` (after codes in all.html), in the pending slide's look and player; Andrew's narration, six lines each (lines.py `increases`, `codes`, `issued`; rebuild a page and the audio must be embedded again). Tests: `tests/test-walls-5-6.js`, `tests/test-issued.js`, `tests/test-pend-live.js` (code by code), `tests/e2e-walls-5-6.js` (full feeds at 1920, 1366 and a phone).
-- **The orphan campaign on the Branch Intelligence wall (28 Oct 2026).** Ricky, about 2:40pm: "can a dash on the orphans management, can a dash be created to assign to that wall?". `intelligence/wall/orphans.html` (tab "The orphan campaign", 30 s, after Issued this month in `all.html`; sixteen stops now) reads the **campaign script**, not the tracker: GET `action=board&who=wall` on the Service Questionnaire `/exec`, with no code. `transitionBoard_` routes `who=wall` to `transitionOrphanWall_` → `tOrphanWall_`, kept by `tServeCached_` (`T_OWALL`, five minutes fresh, six hours kept), so Service.gs needs no paste; a Transition.gs older than this takes "wall" for a person, refuses, and the page says to paste Transition.gs and publish a New version. What it carries:
+- **The orphan campaign on the Branch Intelligence wall (28 Oct 2026).** Ricky, about 2:40pm: "can a dash on the orphans management, can a dash be created to assign to that wall?". `intelligence/wall/orphans.html` (tab "The orphan campaign", 30 s, after Issued this month in `all.html`; eighteen stops since part 2 below) reads the **campaign script**, not the tracker: GET `action=board&who=wall` on the Service Questionnaire `/exec`, with no code. `transitionBoard_` routes `who=wall` to `transitionOrphanWall_` → `tOrphanWall_`, kept by `tServeCached_` (`T_OWALL`, five minutes fresh, six hours kept), so Service.gs needs no paste; a Transition.gs older than this takes "wall" for a person, refuses, and the page says to paste Transition.gs and publish a New version. What it carries:
   - **the campaign**: the stream's own counts (`tStream_` through `T_STREAM`, so the two screens agree), picked by `tOwallCampaign_`: households on the books, answered, asked, how far those got (completed, agent named, spoken to, waiting on us), letters, reminders, answered after a reminder, households past the line, the first call (median working days, within two). None of the stream's lists by name comes through;
   - **open tasks**: every open task whose subject starts "Orphan", by who holds it (open, past date, due today, closed today); staff by first name (Liz for Elizabeth), the Branch Manager as such, anyone else as Others;
   - **today's lists**: the morning run's "ON YOUR LIST TODAY — <name>, #n of N" posts under the Branch Manager's user (`T_OWALL.LIST`), and for each listed task what that desk did today: closed (done), a note saying the client was spoken to (reached), a call or message that did not get through, or a message left or sent (tried), another note (noted), or nothing; a date moved with no note is nothing, a tracker note under the branch's user counts by the name at its head, "not touched" never; each desk's first and last entry today;
   - **agents**: clients named in Salesforce (Assigned Agent, Campaign Orphan) **since 9 September** (`NAMED_FROM`: Salesforce also holds Campaign "Orphan" namings from earlier years, many to agents who have left) and only to agents whose Employment Status reads Active, never the Branch Manager: clients, this week, today, with feedback.
 
   No client's name, number, policy, words or task id, and no former agent. The page keeps the last good answer on the screen (`rrb-owall-snapshot`, twelve hours), the gold shield, Andrew at −12% (lines.py `orphans`, voiced on the `tts-run` runner as `wallorphans`). Tests: `tests/test-orphan-wall.js` (the backend, Salesforce and the stream made up, with the leak check) and `tests/e2e-orphan-wall.js` (1920, 1366, 1280 and a phone; an old script; a dead feed after a good one); the stop is in `e2e-intelwall`, `e2e-wallfit` and `e2e-wallphone`.
+- **Part 2: what the campaign earned, and the First-Contact Cup (28 Oct 2026).** Ricky, the same afternoon: "when the agent submit the service questionnaire, they do get a $200 … add up how much actually still pending in all and how much paid so far … how much sales … premiums actually paid back, reinstated … who is the owner, the agent … a reward system for the staff … Liz, Sasha, and Azaria … rates them on communication and bringing it home". Two more stops after the first (`orphans-results.html`, tab "Orphan results"; `orphans-cup.html`, tab "First-Contact Cup"; 30 s each), on the same answer: `tOrphanWall_` adds `said` and `back` (no Salesforce needed) and `tOrphanWall2_` adds `money`, `results.apps`, `charge` and `cup`.
+  - **money** (`tOwallMoney_`): one claim a client (their Contact) whose `Date_SQ_submitted__c` is on or after 9 September, at `T_CLAIM.AMOUNT`. Its stage is the furthest any of its records reached: received, with Customer Service, processed by Customer Service, with Retention, **to be paid** (a `Date_Comm_Paid__c` still ahead, the commission run) or **paid** (that date has come). "Yes" in Was Agent Paid with no paid date counts as on its way and is counted apart (`noDate`). The agent is Assigned Agent while Active, else the agent on the policy; the branch manager's own claims are left out; anyone not on the roster (`tRoster_`) is one line, "Agents who left", never named. By week, and median days to Retention and to paid. On 28 October: 16 clients since 9 September, 24 policy records, four of them on books of agents who have left.
+  - **results.apps** (`tOwallApps_`): applications received since the first letters (`T_OWALL2.FROM`, 25 September) whose Contact also holds a policy the campaign wrote about (`tPolTokens_`, excluded and Test rows aside). The new business carries no client number, and so must be matched through the client's older policies. Settled, with underwriting, not taken; the branch's own total apart. On 28 October: 55 branch-wide, one from an orphan client (settled).
+  - **back** (`tOwallBack_`, the Client Book): letter I clients whose every policy still paying is now paid past the letter's `paid_to` (paid up), still behind, or with nothing paying; letter G clients with a policy in force again. On the 28 October export: 135, 121 and 36 of 292; 4 of 578 back in force.
+  - **said** (`tOwallSaid_`): the stream's counts, by code, with the script's own words (`T_STREAM_TAPS`, `T_STREAM_THEMES`, `T_RISK`); a stream label is never passed through.
+  - **charge** (`tOwallCharge_`): each agent named since 9 September with their support person (the Skill Bank's Support column, else `T_SUPPORT.MAP`), clients, questionnaires and TT$200 paid; who named the clients (the Assignment Log's By: Branch Manager, a staff first name, "In Salesforce"); each support person's agents.
+  - **cup** (`tOwallCup_`, data from `tCupData_`, kept ten minutes): for Liz, Sasha and Azariah (`T_OWALL2.PLAYERS`) over the campaign, last week and this week (Wednesday to Tuesday, as the Wednesday wins run). The timeline per client is every orphan task's notes by them, or posted for them by the board ("From the assignment board · Name") or the tracker ("Sales Support · Name ·"), with their comments, the outcomes stamped on the board, and details taken on a call (`call by <name>`). The trigger is the client's first answer, else their first orphan task. Points (`T_OWALL2.POINTS`): 3 for each client they were the first on the team to have a conversation with (`tCupKind_`); 2 more within 2 working days of the trigger; 10 for a service questionnaire (Salesforce's date, or the Service Questionnaires tab by link) within 30 days of that first conversation, 5 more within 7; 1 each when the AI rates their notes on a client 4 or 5 for communication, and for bringing it home. Also the median working days to a first contact.
+  - **The AI reads** (`tCupRun_`, from `tWatchRun_` with what is left of the five-minute run; every 15 minutes, 7:00 to 19:00 on working days, 30 timelines a run in batches of 10; `transitionCupReadNow` on the editor's Run button does up to 400): one staff member's notes on one client, with the trigger, whether the questionnaire came in and whether others worked it too, scored 1 to 5 for communication and for bringing it home (`T_CUP_SYSTEM`, structured output through `tGuideClaude_`). The client's name, numbers, e-mails and links are taken out before it is sent. Each read is a row on the **Cup Reads** tab (Read on, Staff, Token, Key, Communication, Bringing it home, Why, By), read again only when the timeline changes. Until a timeline is read, the rules score it (`tCupRule_`) and the slide says how many the AI has read.
+  - **The prize is the branch manager's to set.** The slide names last week's winner "for the Wednesday meeting" and nothing more.
+  - Every Salesforce read here pages (`tOwallAll_` → `tSfComposite_`), because the campaign's notes run past one page: 2,353 posts on orphan tasks since 25 September by the three and the branch's user.
+  - Tests: `tests/test-orphan-wall2.js` (Node, Salesforce, the sheet and the AI made up; the leak check) and `tests/e2e-orphan-wall2.js` (1920, 1366, 1280 and a phone, an old script, a dead feed, an answer without part 2).
+- **Part 3: the Branch Manager's drive, and Javid off the slides (28 Oct 2026).** Ricky, the same evening: "remove Javid from this clip, and it's important to remove Javid. So scan the conversations the staff are having and how they are interpreting things. Also put me as the branch manager, the kinds of emails and what I am doing from the automation that went out … I need to be recognized. I need to state when the staff is responding, because … I am encouraging them to do the things, otherwise they will not do it on their own."
+  - **Names the orphan slides never show** (`T_OWALL2.HIDE`, `tOwallHidden_`): Javid Ali, and Aleema Mohammed-Ali with him by the 17 September rule for the pending wall ("leave Javid's name off the wall, and Aleema's"). The `OWALL_HIDE` Script property adds more, comma separated. A name matches by its key or by the same first and last name whatever sits between. Their rows leave every list (the agents named, the money's agents, new business, who looks after whom); the totals keep them, so the counts stay true. Javid and Aleema are active agents in the branch manager's unit; they had appeared only in the made-up agent list the screenshots were drawn from, and in live data could reach the new-business bars through their own applications.
+  - **One more stop after the cup**: `orphans-driver.html`, tab "The Branch Manager's drive", 30 s, on the same answer (`drive`). The gold shield; Mr Rampersad named as the Branch Manager; first names for the team; counts only.
+  - **mail** (`tOwallMail_`, no Salesforce needed): what his automation sent, by kind, from the stream's own counts (letters, reminders, letters sent again, thank-you receipts, "still on it" notes, notes in his name, introductions, late alerts, client replies read and filed), the Agent Briefs tab (rows `sent`), and Branch Watch (the clock's reminders to agents, chasing alerts, questions on notes, rows `sent…` or `posted…`). Grouped on the slide by who it went to.
+  - **posts** (`tOwallDriver_`, from `tCupData_`, which now also keeps every entry on every orphan task, `tasks`): every entry under his user since 25 September, by kind (`tOwallBmKind_`): his own words (`own`, including his notes through the board); the morning chase the tracker sends in his voice (`chase`: four or more of his own-words posts within three minutes, `T_OWALL2.BURST_N`/`BURST_MIN`); the daily lists (`list`, `T_OWALL.LIST`); Branch Intelligence (`intel`); `FOLLOW-UP` posts (`follow`); tasks moved for cover (`move`: MOVED, Moved from, ACTION REQUIRED, BACK, "X, this one is yours"); namings (`name`) and records (`auto`: SERVICE RATING, NOTE —, the tracker's "not touched" line), which are not prompts. A post under his user headed with a staff member's name (the board's "From the assignment board · Name", the tracker's "Sales Support · Name ·") is theirs (`tOwallStaffOf_`), and Kamla (`T_OWALL2.BMA`) is read too.
+  - **answer**: each prompt (own, chase, list, intel, follow, move) and the first entry by the team on that task after it (a note, a comment, or the close of a task they hold): the same day, the next working day (`tWorkingDays_` ≤ 1), later, or not yet. Every prompt still open on a task is answered by that one entry. Prompts never answered count against whoever holds the task (`waiting`).
+  - **team** (Liz, Sasha, Azariah, Kamla; `T_DRIVE.TEAM`): notes, after a prompt (a prompt on that task still unanswered when the note was written) or on their own, closes, and what the notes say (`tOwallTheme_`: reached, tried, waiting on him to name an agent (`T_DRIVE.PARK`), the questionnaire, premium or payment, details confirmed, a next step with a time, a status with no outcome), read as one of drive (a next step or the questionnaire), record (what happened), park (left for him to name an agent) or status (`tOwallReading_`). **days**: the last ten working days, his prompts by hand and by automation beside the team's notes and how many came after a prompt.
+  - **The patterns were read off the real posts** (every post and comment on the 387 orphan tasks, 25 September to 28 October: 1,754 under his user, of which 217 carry a staff header and 21 are agents' notes through the board). Under his user the kinds are: instructions the tracker and the routine draft (`ACTION REQUIRED`, `FOLLOW-UP`, `UPDATE —`, `NOTE —`, `NEW FROM THE CLIENT`, `CORRECTION`, `EMAIL TRAIL`, `Inbox scrub`, `New e-mail in`: kind `follow`, a prompt); moves and reopenings (`MOVED`, `Moved from`, `BACK —`, `RETURNED to`, `REASSIGNED TO`, `REOPENED`, `Reopened by`); `HOLD —` and `CARRY ON —` notices (kind `hold`, counted, not a prompt); namings (`AGENT NAMED`, `NAMED —`, the board's "Named to"). A board note headed with anyone but him is never his (`tOwallStaffOf_`), and the tracker's staff header may read `Staff ·`. `tOwallStrip_` takes the board's and the tracker's headers off before a note is read, so the tracker's close-off line ("Not done today: … New date …") is theme `x`, a date moved with no outcome. Run on those posts, the wall's own code gave: 1,395 prompts (24 in his own hand, 365 in bursts in his voice, 661 instructions drafted for him, 274 moves, 40 daily lists, 31 Branch Intelligence) and 105 hold notices; 76% of the prompts answered (296 the same day, 419 the next working day, 350 later, 330 not yet); of the team's 1,003 notes, 512 came after a prompt still unanswered on that task. Most posts in his voice are drafted by the tracker or the routine; the slide says so ("sent in his voice", "drafted for him") and calls them his automation.
+  - **Rebuilt as flowing charts on one slide, 29 October 2026** ("any other insights?? And much more impactful charts flowing on 1 slide"). `tOwallDriver_` adds:
+    - `flow`: each prompt by kind (hand, chase, instr, move, list) to when it was answered (same, next, later, open) to who answered it, or whose task it waits on;
+    - `hours`: his prompts and the team's notes by hour, 5:00 to 19:00 (`T_DRIVE.HOURS`), with each peak;
+    - `wave`: hours from a prompt to the first word after it, in `T_DRIVE.WAVE` buckets, with the median and the counts inside 4 and 24 hours; and each person's median (`team[].hours`);
+    - `weeks`: the last five weeks (Monday start), prompts, answered, same day, notes, notes after a prompt;
+    - `lift`: the team's notes a day on the half of the working days he prompted most, against the half he prompted least, and the correlation;
+    - `parked`: notes that left a client with him to name an agent, and the tasks whose last word still does (`now`);
+    - `stream`: the last twenty working days.
+
+    The page (`orphans-driver.html`) is one screen: the Branch Manager with his prompts as one bar by kind; four figures (answered, the lift on his busiest days, the share of notes after a prompt, what his automation sent); one insight at a time across the top (and all of them on the ticker), worked out on the page from the answer; a Sankey of kind → when → who with flowing ribbons; the hour of day mirrored (his prompts above the line, the team's notes below); how fast the answer comes (bars and the running total); the twenty-day stream; the team, each with a ring for notes after a prompt, a median answer time, prompts waiting and what their notes say. The charts are SVG drawn to their box on every paint, every label kept inside it; motion lives in CSS and stops under reduced motion. On the real posts of 25 September to 28 October: on his busiest days the team wrote 44.7 notes a day against 27.8 on his quietest (+61%, correlation 0.32); his busiest hour 9 am, theirs 10 am; 198 prompts answered inside four hours, half within 2.1 days; same-day answers 6 in the week of 28 September and 110 in the week of 26 October; 170 notes left a client with him to name an agent, 13 still waiting on him; median answer: Sasha 28 hours, Kamla 33, Azariah 2.2 days, Liz 3.2 days.
+  - **More motion, 29 October 2026** ("Plenty motion"). Every motion is skipped under reduced motion (`RM` on the page; the motes and sheens hide in CSS):
+    - packets ride every Sankey ribbon, one to three a band, and dots ride the hour, wave and stream lines (`rider()`, SMIL `animateMotion` on the chart's own path);
+    - a light sweeps the hours (7 s), the wave (6 s) and the stream (9 s) (`scanner()`);
+    - twelve motes drift behind the screen;
+    - a sheen crosses one card at a time, every 1.7 s in turn, and pops its figure. One at a time is on purpose: sheens on every card at once took a frame from 16.7 to 33 ms under software rendering. The sheen animates `transform`, never `box-shadow` or a glow;
+    - the figures count up, the rings' halos turn, the waiting counts beat, the lift arrow bobs, and the insight line carries a timer that fills.
+
+    The median frame stays at 16.7 ms. `e2e-orphan-driver.js` checks at least 40 riders, 3 scanners, 12 motes, at most one sheen, and that nothing travels under reduced motion.
+  - `tests/test-orphan-driver.js` (Node, the leak check, Javid and Aleema off every list, the real shapes above, the flow and the other new blocks) and `tests/e2e-orphan-driver.js` (1920, 1366, 1280 and a phone, an old script, a dead feed, an answer with no Salesforce) cover it; the stop is in `e2e-intelwall`, `e2e-wallfit` and `e2e-wallphone`. `owall/real/run.js` in the scratchpad runs `tOwallDriver_` on a pull of the real posts (the pull holds client data and stays out of the repository).
 - **The noon and 3pm nudges read the day as it is kept now (28 Oct 2026, 2026-10-28c).** Ricky, 12:38pm, with Kamla's noon "Your day is not planned": "this triggered despite persons working today". `remindMidday` and `remindCheckpoint` still asked only `blocksSubmittedOn_` (the old KPI1–EVE text, unused since 17 October), so everyone at work heard both. Now `dayStates_(day, people)` reads, per person: the register's sign-in and absence, the Block Plans rows (items, a note or PlannedAt; the `daystart_plan_` mark), the old blocks still, progress or a close on the plan (ClosedAt, Filed, Achieved, SFClosed), and `deskToday_` (closed and notes in Salesforce today; null when Salesforce does not answer). Noon: only somebody with no sign-in, no plan and nothing done hears "You have not checked in today"; the run log names who was at work. 3pm: only somebody at work today (signed in or planned) with nothing closed, noted or logged hears "Your day is not logged"; nobody not in, nobody whose day has ended, nobody at all when Salesforce does not answer. Absent: neither. Test: `tests/test-nudges.js`.
 - **Slide 2 is the day, hour by hour; slide 3 flags no money paid (28 Oct 2026, 2026-10-28d).** Ricky, 1:15pm, after checking slide 2 against Salesforce's own list: "it shows task closed off as the day goes by for what task type and agent and what was touched but not closed and aging? ... bring in me as i automated and show the tasks by me as servicing as its birthdays, the timeblocks are important ... motion, scaled"; 1:25pm: "I love these circles and the bars ... the same thing for the workday with the circles" and, of slide 3, "can the persons who have not paid any monies have the days out highlighted in red". New `wallDayHours_(day)` on intel.day as `hours` (cached 4 minutes; one Task query and one FeedItem query from midnight here): each desk and the Branch Manager, per hour 7am–5pm (`WALL_HOURS`), the tasks closed (owner, CompletedDateTime, by Task_Type__c; `Email:` subjects are e-mails, and the Branch Manager's are `automated`, by type, out of the desks' totals), worked on and not closed (the desk itself is LastModifiedById, or wrote a note today; once a task, in the hour it last moved; never what runs as the Branch Manager; his notes are counted as `noted`), how old the touched work is (0–7, 8–30, 31–90, 90+) and the oldest, and the agents served (3:43pm: "and where is the agent served?": each agent on a close or a task worked on, `c` closed, `w` worked on, `by` the desks that served them, in name order, through the scrub). `blocks.html` (title "The Day, Hour by Hour", 28s on the wall) is one grid so every hour sits in one column all the way down: the top turns every 10s between the hours chart (closes up by type, worked-on down, the automated lane, a moving now line) and each desk's ring (closed against the day's target, the clock mark, List and Day bars, from `system`); and a third, the agents served as bubbles (sized by the work done for them to fit the room, the ring the share closed, the desks under the name; 32s on the wall); then a row per desk and the Branch Manager last (hour cells, closed with a type bar, worked on, e-mails, the age bar), and the agents along the foot. `wallPendPolicies_` adds `pol.unpaid`/`unpaidOldest`/`unpaid30` and each board agent's `unpaid`/`unpaidDays` (a first premium outstanding and nothing in suspense); `pending.html` shows a red tile and a red pill on the agent's row with the days out, and draws the age bands as one bar. Tests: `tests/test-day-hours.js`, `tests/test-pend-live.js`, `tests/e2e-wallfit.js` (the hours aligned top to bottom).
+- **My workday is the one screen (29 Oct 2026, 2026-10-29a).** Ricky, 6:15am, with the dark My workday and the white "Opening your day…" page side by side: "I believe there's a duplicate ... shouldn't you just get the first dark screen, and persons can actually do it in the dark screen ... at the top ... if they see the update on it, so they can leave that screen and refresh, and at the end they could put a checkout or close their day under that". `myworkday/index.html` has no "Open My day" foot. For a desk (the model carries `types` and `closeInline`): each task on the list and the overdue list opens a card under it (`act=card&sub=open`: what to do, the last three Chatter notes, the templates), and Close now, Move now, Post note and Draft with Claude go to `wdCard_` → `cardAct_`, the day page's own cards with every rule they have; `workdayModel_` joins the page's tasks to the day's card list (`wdCardList_`, `sd_list_<sid>_<day>`). Add to my day (`act=scrub`, `wdScrub_`): one task a line. Close my day is at the foot of the page: `act=closeform` (`wdCloseForm_`: done, not done with a reason and a new date, the checks, the mailbag, the innovation hour) and `act=close`, which is `hkCloseCore_`, split out of `hkReplySave_` so the close-out page and My workday save the same way. Pawan keeps his errands link. The Branch Manager and the unit managers check out (`act=signout`, `signOutDay_`). The day is read every two minutes; with nothing typed and no card open it redraws, otherwise the bar at the top (`#upd`) says what changed and Refresh draws it, so a half-written note is never wiped. Waiting on you shows ten and "Show N more" (`LEAD.WAITING` 40). Tests: `tests/test-workday-one.js`, `tests/e2e-workday-one.js`, `tests/e2e-workday.js`.
+- **The day's coach, what is new for you, and Claude for the managers only (29 Oct 2026, 2026-10-29b).** Ricky, 6:45am: "remind them about the lunchtime, and we can put a note on top there. Remember, 30 minutes, the progress update before you leave to lunch ... built-in intelligence will tell you 30 minutes before you need to scrub ... letting them know the expectations when you set in", "what things came in during the morning and routed, and new task open, sensing the urgency with the chatter tasks", and "Claude AI, it's only for the branch manager and the unit manager ... and the BMA so far, right? Not the staff." **Coach** (`wdCoach_(sid, day, nowM, s)`, `WD_COACH`): from the desk's own hours (`scheduleFor_`, `closeoutAt_`), the stops check in (missed at start + `ABSENT_AFTER_MIN`), scrub (start + 15), update (`UPDATE_LEAD` 30 before lunch; 11:30 "Midday update" on a Flexible lunch), lunch (done when over, never missed), scrub after lunch, close my day, the finish, each `done` from what happened (sign-in, the scrub times, the last Salesforce entry `_lastM` at or after the update time, the sign-out); and `lines`, one per stretch of the day, contiguous from 0 to 1440, none overlapping (start, morning, update, lunch, back, afternoon, close, late; before / notin / absent / closed when those hold), with the numbers: `byLunch` = the target times the working minutes to lunch over the day's, what is left, overdue, closes with no note; the update line carries a checklist. The page (`coachCard`, `coachTick` every 30 s, `#cline` in the sticky bar) picks the line for `coach.now` plus the minutes since the model came (`m._t`), so it moves on with no tracker. Checked in, the coach is the first card; before, the check-in is. Staff desks only (not Akaash, not Ricky). **Marks** (`wdDayGet_` / `wdDayMark_`, property `wdday_<sid>_<day>`, kept 3 days by `STORE.SHORT`): `createTask_` marks every task it makes as the desk's `own`, and with `data.scrub` (the three scrubs: My workday, the day page, the plan page) the time. **News** (`wdNews_`, `wdNewsBuild_`): one read for every desk, each slice cached `NEWS_TTL` 180 s: tasks created today, today's FeedItems and FeedComments on tasks, the older tasks they sit on, unknown user names. For the desk: tasks routed to them today (not their own login's, not `own`, not closed; by Routed from the inbox / Mr Rampersad / a desk / a user's name) and notes on their open tasks by anyone else (`postWhoAll_`: Mr Rampersad, a desk, the unit manager, an agent by the name in the header, Branch Intelligence only for ACTION REQUIRED / MOVED / Moved from; the chase counted in `chase`, not listed; yesterday's never), each `answered` when the desk wrote after it, `u` 2 for Mr Rampersad, ACTION REQUIRED or `WD_URGENT` words, 1 for a person, 0 for the system; unanswered and urgent first; `fresh` since check-in. The items join the card list, so each opens as a task card. **Claude** (`claudeFor_`: ricky, kamla, the unit managers): `cardAct_` refuses `draft` for a desk; `tcardHtml_(t, pb, day, sid)` and the day page's Brief me / Intelligence card only for them; `umDraft_` via the day page refuses a desk; `m.claude` shows Draft with Claude on My workday's cards. The team wall (channel 5) says Sales Support get the day's coach, w5's line re-recorded. Tests: `tests/test-coach.js`, `tests/e2e-coach.js` (the page clock run on, 390 and 360 wide), `test-task-cards.js` and `test-um-draft.js` updated.
+- **Marked absent by a manager, before the day starts (29 Oct 2026, 2026-10-29c).** Ricky, 7:39am: "if a staff is not out or whats app and a staff is saying they are not well and will not be out the BMA or Branch Manger should have the ability to mark Absent and triggers follow and auto reassignments before the day starts, also a trigger to the employee noting the non attendance for the record copying the staff as to the outstanding workload and the redistribution to all as well the BMA on urgent matter also wishing the person well" (Azariah, sick that morning). **My day** (his and Kamla's register card): today's `wait` cell (before start + `ABSENT_AFTER_MIN`) can be marked ("Not yet · tap to mark"; the box asks "not coming in today?" and says what the mark does). **`workdayMarkAbsent_`** returns `{ ok, who, date, why, moved, kept, asked, already, mailed, mailWhy, cc }`; for today it runs `absenceCoverNow_` then `absenceNotice_`; `mm.marked` carries it and the toast says what moved and who was told. **Cover now** (`absenceCoverNow_`, `absencePresence_`): `coverRun_` (the clock's one pass, pulled out of `coverTick_`) with receivers signed in or due in today and not yet late (`present[r] = 'due'`), so before 8 the work moves; sets `cover_<sid>_<day>` so the clock's first pass does not run again (the 8:15 second pass does); Pawan (not in `COVER.POOL`) moves nothing; already covered by the clock: `absenceMovesToday_` reads today's Workload Moves. **Notice** (`absenceNotice_`, `ABSENCE`, once a day: `absnote_<sid>_<day>`): to the person, cc the staff at work today (`DAY_MAIL_DESKS` not absent), the BMA and `dayStartCc_` (managers, the support inbox); "Mrs Dookran has marked you absent today" + a wish (`ABSENCE.WELL` sickness, `LEAVE`, other), For the record (date, Absent, reason, by and time), the work in tiles (due or overdue, moved, stay with them, nobody free, due on return asked), Now with <first> (n) per receiver, Urgent for Mrs Dookran (money and claims, and what nobody took; for Mr Rampersad when Kamla is away), Due on the return; no links. `coverMail_(…, opts)`: with `opts.notice` no "Covering for" mails, and no "While you are out" once the notice went; the Branch Manager's summary with Undo always. Tests: `tests/test-absence-notice.js`, `e2e-workday.js` (the register: marking today ahead).
+- **Every e-mail button opens My workday (29 Oct 2026, 2026-10-29d).** Ricky, 9:21am, on the white My branch page opened from a reminder: "on all the reminder emails, should this not open up the same way as the morning to show the progress and back on track with all the AI built into it?" `workGoUrl_(sid, go, t)` = `workUrl_` + `&go=` (update, close, news, waiting, list) + `&t=` (a task); `wdGoUrl_(sid, day, go, oldF)` keeps `replyUrl_(sid, day, oldF)` for Pawan and the unit managers; `wdOldLine_(sid, url)` puts "the same on the full page" under a staff button. Moved: the close-out notice (`sendHousekeeping_`), the check after it (`closeoutCheck_`) and the finish reminder (`notClosedReminder_`, Pawan's errands kept) to go=close; the midday e-mail (`sendMidday_`) to go=update with the progress page a link below; work moved to you (`coverMail_`, `rebalanceMail_`) to go=news; his Respond / Reply with Claude's drafts / Reply to them now (`sendBranchManagerDay_`, `sendBranchManagerProgress_` evening, `bmCloseoutCheck_`) to go=waiting with the bm page below; the late-plan nudge (`nudgeReplySave_`) to check in. Still on their pages: the managers' My branch / My unit (`um`, `umeve`: the next release brings them onto the screen), the command page (`cmd`), Undo, Query Pal, Pawan's errands, the agents'. The page (`myworkday/index.html`): `GO`, `GOT` from the address, `goTo()` after the first live draw: the task's card opened, Close my day opened (`closeOpen`), or the place scrolled to; then the address loses go and t. Tests: `tests/test-mail-workday.js`, `tests/e2e-workday-go.js`, `test-closeout-times.js` and `test-score.js` check the links.
+- **The agent's day on My workday (29 Oct 2026, 2026-10-29e).** Ricky, 12:41pm, with the agents' midday e-mail ("[Preview] Midday progress · Faizal Mohammed") opening the white projection page: "my trigger at 12 is showing this". **Auth:** `wdAuth_` takes an agent's own link (`wd` an `a-` key in `agentPeople_`, `k = workSig_(key)`) as `{ agent, link: true }`; `workdayGet_` passes `preview` when the agent is not live (a [Preview] copy opened by Mr Rampersad), so `agentDayModel_(a, day, opt)` shows it (`m.on`), marked; the branch app sign-in for an agent outside the pilot still says it is coming. **Model** (`m.native`): `metrics` (the seven `AGENT_METRICS` with planned, pnote, done, dnote from `agRows_`), `summary`, `items` (the morning's `ag_items_` with who has each, due, late, `done` when closed today, the last two Chatter notes by first name, `more`), `closedToday` and `tiles` (worked, late, closed) from `agDayTasks_` (closed today for the agent, kept 180 s), `balance` once closed off, `lateForPlan` past `AGENT_ABSENT_AT`. **Save:** `agSaveCore_(a, day, kind, p)` is the page's save as data (`agReplySave_` renders from it); `workdayPost_` acts `agplan`, `agclose` (every line needed; rows, the copy to the manager as before) and `agnote` (`only`: one update on a task in `ag_items_`, headed "Agent · Name · date"). **E-mails:** morning, midday and 5:30 buttons `workGoUrl_(a.key, 'agplan' | 'agclose')`, each task's "open & comment" `go=agitems&t=<id>`; `agOldLine_` puts the full page (with the private-window hint) below. **Page:** `agentNative(m)`: tiles, Your projection (number + note a line, words, Save), Being worked for your clients (tap: notes and an update box, Post), Close off my day (from noon, `[data-bal]` +/−/even as they type, the day's balance once done), Done for your clients today; `goTo` knows agplan, agclose, agitems and `t=` an item. Tests: `tests/test-agent-workday.js`, `tests/e2e-agent-workday.js`; `test-agent-pilot.js`, `test-agent-ready.js`, `test-unit.js` updated for the links.
+- **The managers' screen (29 Oct 2026, 2026-10-29f).** Ricky, 6:45am, on Akaash: "remove the agent's performance ... look at grouping so he can see ... chatter on the fly ... If there is no task open, he has the ability to open it ... see that timeline from agents, staff, and managers as the day goes by"; 2:10pm "i want to see the sample ... send me mines" (`tests/e2e-managers.js` draws his with a sample day). **`wdUnit_(sid, day)`** (cached `WD_UNIT.TTL` 180 s): `unitBook_` (now with `Agent__c` as `aid`) grouped by agent, the manager first then by name (never by count), pendings first then overdue in each, `o` who has it, `stale` days untouched; the unit's agents with nothing open listed; totals open, late, pend, closedToday; `timeline`: today's FeedItems and FeedComments on those tasks (`postWhoAll_`; the chase and the tracker's follow-ups out, ACTION REQUIRED and MOVED kept), who, role (agent, sales support, BMA, Unit Manager, Branch Manager), on which task, for which agent, newest first, `WD_UNIT.TL`. No performance figure. **`wdUnitAct_`** (act `unit`, managers only): `open` (notes, playbook), `note` / `close` (`umPostOrClose_`: headed `unitRole_` · name, the owner mentioned by `mgrPost_`; close needs a real note and never while the client wants an agent), `draft` (`umReplyDraft_`, pulled out of `umDraft_`; `claudeFor_`), `new` (a task for an agent: `WD_UNIT.OWNER` desk by type, Pendings Azariah, premium dues Sasha, servicing and new applications Elizabeth, else Kamla, or the desk he picks; `Agent__c` from the unit's tasks, a past task or a single Contact; his note first; logged), `plan` (`UM_CHECKS` numbers, `mgrWrite_`, signs him in, `umCopy_` for a unit manager). **Model:** `wdUnitModel_(m, sid, day)` for Akaash (`workdayModel_`) and for him (`workdayLeadModel_`, his Post-to `m.desks` kept; `m.newDesks`): `unit`, `unitLabel` (The branch / Your unit), `checks`, `utypes`, `unitEve`. **Page:** `unitCard` (agents as `<details>`, tasks drawn when opened: `unitFill`), `umCardHtml` (Draft my reply with Firmer / Shorter / Kinder, Post comment, Close for <agent>), `unitNewForm` (type picks the desk), `timelineCard` (tap: `unitGo` opens the agent and the task), `checksCard`; `goTo` knows unit, timeline, mychecks and `t=` a unit task; the update bar counts new notes. **E-mails:** `sendUnitManagerMorning_` and `sendUnitManagerProgress_` open `workGoUrl_(sid, 'unit')` (each task `go=unit&t=`), `wdMgrOldLine_` the old page below; the evening account (`umeve`) stays its page, linked from the numbers card. Tests: `tests/test-managers-workday.js`, `tests/e2e-managers.js`.
 - **Wall Intelligence, the new wall (20 Oct 2026, 2026-10-20g).** Ricky: "the wall needs to be redesigned with a lot of animation and motions and graphics ... what the managers do, what the agents do, and what staff actually does ... streamed outside as well as inside", then "I would like sound ... Andrew's voice, this song ... streams outside without client's name so the agents can see what is being actioned, who is doing what, who is out today ... and the gamification." **`/wall/` is now Wall Intelligence** (`wall/index.html`); the block wall moved to **`/wall/classic/`** (`tests/e2e-wall.js` and `tests/test-substance.js` read it there). **Feed** (`wallIntel_(day, outside)`, cached 5 minutes as `wall2_in_<day>` / `wall2_out_<day>`): `wallStaff_` (who is in, out today or later; cover from Workload Moves; tasks closed with a proper note by hour 7–17 and by kind `wallKind_`: new, orphan, retention, claims, other; par, quests, streaks, gain from the game), `wallAgents_` (`agentPeople_`, `agentFunnel_`, `ff360Agent_`, `goalFor_`, `agentDaySummary_` and Agent Day `At` times; the year as % of goal against % of the year gone), `wallManagers_` (My Day Log groups against `myTasks_` by `dayGroup_`, Akaash's unit, cover, Query Pal answered this week), and a running feed newest first. **Never on the wall, inside or out:** a client, a policy number, a note, a task subject, why someone is out. **Outside** also drops arrival times, lateness, points, dollars, agents with nothing yet, agent projection times, the inbox, Query Pal past turnaround, and gains below someone's usual. **Access:** `handle_` action `wall2` (signed in: the Branch Manager gets inside, anyone else outside) and `wallout` (no sign-in, `WALL_OUTSIDE_KEY`; run `wallOutsideLink()` in the editor for the link `https://rickyrampersadbranch.com/wall/?k=…`; a new key changes it). **Page:** an ident, then Staff (who is in / cover flow; hour by hour; the kind of work; the team game), Agents (the field today; review to cover and FY27), Managers, Live; heavy motion (rings, bars, donut, heat grid, flows, counters), warm graphite ground (no saturated blue), the branch bar and a ticker always along the bottom, captions. **Sound:** the branch Motivation track (`/rr-branch-theme.mp3`) under Andrew; recorded lines `wall/audio/v2/n0..n8.mp3` (made with `wall/audio/v2/build-voice.sh` on Ricky's computer, en-US-AndrewNeural at −12%, since the speech service is blocked from the sandbox) play on any screen, else Microsoft Edge's built-in plain Andrew voice reads the live lines with today's numbers, else captions only; `?voice=recorded|live|off`. `?demo=1` (and `&view=outside`) shows a marked sample. Pinned by `tests/test-wall2.js` and `tests/e2e-wall2.js`.
 
 - **The wall on a phone, more motion, and the Branch Manager's day (20 Oct 2026, 2026-10-20h).** Ricky: "viewing on mobile and it's not scaled ... more graphics and more animations and motions for a max impact", then "Can we also build the managers? I am doing a lot right now as the branch manager" and "remember my day starts at 5am". **Phones** (`sizeUp`: width under 900 or height under 560) get `body.mob`: a stacked layout that scrolls, a sticky header, the caption and the branch bar pinned at the foot, two-up tiles, one column of panels (game cards two-up), every row rebuilt for a narrow screen through `mq(tv, mob)`; a phone on its side adds `short`: smaller type, two columns, four-up tiles, a slim bar without the ticker, and Andrew's line only while he speaks. **Motion:** a channel bumper (a band of the channel's colour sweeps across with its name) on every change of channel, titles that land word by word, floating motes, an equaliser by LIVE (gold and faster with the sound on), shines on the tiles, counters that pop when they land, a ripple on the newest event. **Managers** is two scenes: the Branch Manager's day (`wallManagers_().bm`: My Day Log by the hour from `WALL2.BM_FROM_H` = 5am to 6pm, notes, closes, e-mails, moves, tasks, inbox, the busiest hour, his latest actions as kind and group only via `wallBmWhat_`, never the subject; his Salesforce notes and closes are read fresh with `dayLogSalesforce_` on each wall read; inside also his check-in time; his actions join the running feed as Mr Rampersad), then the unit and the desks. Andrew's recorded line for it is `n9`.
@@ -6622,6 +7169,1403 @@ guide you. In your session review notes on the step back in place from all memor
 - **Service ratings, task by task (21 Oct 2026, 2026-10-21f).** Ricky, 12:37pm: "I am seeing the Ratings coming in but a lot more data is needed: the timelines, the chats, the intelligence etc, the client, the department, how, so I can see this, the type etc, build more intel". **At send time** `rateRun_` keeps eight more columns, appended to the end of `RATETAB.head` so older rows still line up (`rateCols_` adds them to an existing tab): `Agent`, `Client` (the task's Who when a CLIENT), `Department` (the Who, or the Agent__c, when a BUSINESS CONTACT; otherwise the first department the notes name, newest first, then the subject, `RATE_DEPTS`; otherwise where the playbook routes the kind, `RATE_DEPT_BY_KIND`), `Opened` and `Closed` (branch time, "2026-10-14 08:00"), `Notes` (Chatter text notes), `Timeline` (JSON `[{a, k, b, x}]`: open with the subject and due date; every note, who and when, 140 characters, the page's head line removed; replies; workload moves from Workload Moves; date moves from Task Changes and Due Moves, the same move once; close with the closing note, 300 characters; at most `RATEPG.TL_MAX` = 40 steps) and `Intel`. `rateFacts_` builds it from what the run already read plus two Salesforce reads a run, only when there is something to send: FeedComment (the replies) and User (names not on the register); the Task query gained `CreatedById, ActivityDate`. `rateReads_` makes ONE Claude call a run for every task (`ANTHROPIC_MODEL` or `CLAUDE_READ.MODEL`), answering `{summary, intel}` per id: the agent's two-sentence summary as before, and two or three sentences on how it went (how long it sat, the follow-ups, where the wait was, how it was worked, whether the closing note says what was done). Without a key, on a failure or a missing answer: the note, and `rateIntelPlain_` (the same points from the record: days, notes before the close, replies, moves, phone/e-mail/WhatsApp from the notes `RATE_HOW`, the longest wait between two steps and what the notes say it waited on `PLAYBOOK_WAIT_RE`, and `RATE_DONE_RE` on the closing note). **His page** `?rs=ricky&f=rate&k=` (`rateIntelUrl_`, signed `replySig_(sid, 'always', 'rate')`, one link for every day, not in `FAST.KINDS`: it reads the tab only): the week (ratings, the average, five-star share, answered of asked, the days, notes and department most involved, by who closed it, by type, the three lowest as links), then a card per rating, newest first (latest `RATEPG.MAX` = 200): stars and comment or "Waiting for a rating" / "Not sent", who closed it for whom, client, department, agent, type and kind, opened to closed, days and notes, the intelligence, the timeline as a vertical list; filters by closer, agent or client, type and stars, client-side. Rows from before show "—". `&i=<token>` opens that card: the 1 or 2 star e-mail (`rateAlert_`) now carries "See the whole task" and the read. The link: his morning mail and his 11:00 / 3:00 mails ("Also:"), My day's links, and under the ratings on his day page (`gameBmSec_`). For him alone; Script Property `RATE_PAGE_ALSO` (e.g. `kamla, akaash`) opens it to the BMA or a Unit Manager, `showRatingsLink("kamla")` gives the link; never a desk. Never on the wall: `rateStats_`, which `wallStaff_` reads, carries none of it. Test: `tests/test-rate-intel.js`.
 - **The wall knows the kinds in each hour, and who has the bag (21 Oct 2026, 2026-10-21f).** Ricky: "hour by hour what's being actioned, the task type should be in a colour inside the green, as well who does the bag as well built in". `wallStaff_` now sends each person's `hourKinds` (per hour, the closes with a note by `wallKind_`: new, orphan, retention, claims, other) and `bag` ({who, at, h, cutoff, covering}) from `mailbagRouter_` (the weekly rota, the next one in when the router is out) and `mailbagLeaves_` (12 noon unless `MAILBAG_AT`), papers in a quarter of an hour before. The wall colours each green hour by kind and rings the bag's hour in gold. Tests: `tests/test-wall2.js`.
 - **Sample ratings for the Branch Manager (21 Oct 2026, 2026-10-21g).** Ricky, 1:55pm: "send some samples to see the revised and let me click". `rateSamples(n)` in the editor, or **Send me sample ratings** on his Ratings page (a signed POST `rs=ricky&f=rate&k=…&act=samples` through `replyPost_`, him alone, not `RATE_PAGE_ALSO`; a second press within `RATE.SAMPLE_GAP_MIN` = 2 minutes sends nothing), sends up to `RATE.SAMPLES` = 3 agent rating e-mails in the real format (`rateAgentMail_`, subject `[Sample] …`) to `managerEmails_()` only, each from one of the latest real agent rows (its subject from the timeline's open step, kind, days, closer, the closing note as what was done, and the record's columns), or from `RATE_SAMPLE_MADE` (no client) when there are none; then one e-mail with every sample's five stars, its card and his page. Each sample is a row of its own (Kind and Status `sample`, Email his), so the stars, the thank-you page, a comment and the 1–2 star alert (`[Sample] Low rating …`, with See the whole task) all work. `rateIsSample_`: no Chatter post from `rateClick_` or `ratePost_`, `&out=1` changes nothing, and `rateStats_` (the week, the game's cards and board, the Service Star, his day page, the wall's `svc` and ticker) and `rateRun_`'s cap, cool-down and opt-outs skip it. His page marks sample cards (dashed, Sample), has Hide samples, and never counts them in the week. Agent e-mails only: client mail stays held. Test: `tests/test-rate-samples.js`.
+
+## The meeting sign-in — the agent number is the whole of it
+
+Decided 28 October 2026, in these words: *"only the agent number[,] guest can
+come in and you can put the guest as 0000[,] this can be displayed as
+executives are looking in the what app group."*
+
+**The shared branch code is gone.** `/meetings/` used to ask for `STAFF2026` or
+`AGENT2026` before the personal sign-in. Those codes were sitting in the page's
+own source, so the door protected nothing, and it stood in front of the one
+gate that does identify a person. It is what locked the branch manager out of
+his own meeting the night before, and on a Friday at 11:30 it is thirty people
+meeting an unexplained box while the register marks them absent.
+
+**The number on the card signs you in, and that is the register.** A password
+is still accepted from anybody who types one, so a page left open somewhere
+keeps working, but nothing asks for one and nobody is sent to enrol. Being on
+the roll is what lets you in, and `pullRoster` is what puts you on it.
+
+**`0000` looks in**, as a `guest`. A guest is never on the roll — `roster_()`
+is the denominator the register is measured against, and three executives
+looking in must not be counted as absent branch members and drop the month's
+attendance. The standing visitor opens whatever meeting is published, and a
+guest named against one meeting still gets that one only.
+
+**What this costs, and he took it knowingly:** a number is not a secret, so the
+register says who *said* they were here, not who was. He asked for the number
+to go in the WhatsApp group.
+
+Two traps, both of which make the guest fail silently:
+
+- **`normNo_` strips leading zeros**, so it turns `0000` into nothing and
+  `findPersonByAgentNo_` gives up before it looks. Left that way, every guest
+  sign-in appends another Visitor row and every one of them is still told guest
+  sign-in is not set up. `guestFind_` compares the number exactly.
+- **`readPeople_` drops any row with no e-mail**, so the Visitor row is written
+  and then never found again. It carries `0000@guest.invalid` — the TLD
+  reserved for exactly this, which cannot resolve or be delivered to, so the
+  row can never quietly become a mailbox somebody writes to.
+
+`tests/test-friday.js` covers it (100 checks), and the page is driven in a real
+browser against a mocked backend in the session scratchpad.
+
+### Nobody could sign in, and it was three faults — 29 October 2026
+
+The afternoon before the meeting, agents typing their number were refused.
+What the branch saw was "That agent number and password do not match" on a
+page that says the number is the whole sign-in. Three separate faults behind
+one screen, and only the first was the real cause.
+
+**1. `pullRoster` had never been run.** The ping said it in one line —
+`roster: { onTheRoll: 1 }` — which is the state `pullRoster`'s own comment
+warns about: *"until it is run, the People tab holds only the manager that
+setupMeetings() seeded, and a meeting opened in that state marks the whole
+branch absent."* So every agent was correctly told they were not on the roll,
+and nothing anywhere said that one unrun step was why. **Check the ping before
+reading anything else**: `?action=ping` needs no sign-in and `onTheRoll`
+against the branch's real headcount settles it in seconds. `roster.onTheRoll`
+of 1 is never right.
+
+The gate now says so itself (`checkRoll`, `#li-roll`): with the roll at 1 or
+less it tells the agent it is not their number, points them at `0000` so they
+can still read the agenda, and names `pullRoster` for the branch manager. It
+costs one ping on the gate and it is the only place anybody would have looked.
+
+**2. The number on the card is not the number on the skill bank.** The bank
+writes `A10024` and the card says `10024`, and `normNo_` only ever stripped
+punctuation and leading zeros — so the two never matched. Worse, the box was
+`inputmode="numeric"`, and an iPhone's number pad has no A on it, so that
+agent could not type the bank's form either. `normNo_` now drops a leading
+letter prefix when what is left is all digits, which is what `tWho_` in the
+branch app has always done; a row that really is letters (`SASHA`) is still
+compared whole, and `0000` still normalises away so `guestFind_`'s exact
+compare is untouched. The input lost its number pad.
+
+**3. The page answered the refusal with a password box, and the phone filled
+it in.** The box was a bridge for the window between publishing the page and
+publishing the script. The script went out, the window closed, and the bridge
+was what agents hit instead: the box appeared, the phone autofilled a saved
+portal password, the next tap sent it, and a plain "you are not on the roll"
+came back as a password failure — which reads as the agent's fault and is not.
+Worse, a password in the request turns on the backend's lockout counter
+(`MAX_ATTEMPTS` 5, `LOCKOUT_MINUTES` 15), so a few taps lock a real person
+out. **No password box on this page, ever again.** A refusal shows the
+backend's own words.
+
+Two things worth keeping from the testing:
+
+- **A fallback whose premise has expired is worse than no fallback.** It fires
+  exactly when something else is already wrong, and it fires into a browser
+  that will helpfully fill it in.
+- `tests/e2e-meetings-gate.js` drives the gate itself (21 checks), which
+  `e2e-friday.js` never could: that one plants a token and skips the door. Use
+  **`localhost`**, never `127.0.0.1` — the session proxy bypasses the one and
+  not the other, and the page loads as `chrome-error://chromewebdata` with no
+  error thrown — and **`domcontentloaded`**, never `networkidle`, because the
+  page's Google fonts never settle behind the proxy.
+
+### The fourth fault: 0000 was stored as the number 0 — 29 October 2026
+
+The script was pasted and deployed, `pullRoster` was run, the ping read
+`onTheRoll: 19, canSignIn: 19, cannot: 0` — and `0000` was still refused, with
+*"Guest sign-in is not set up yet. Speak to the branch manager."*
+
+**`guestRow_` writes `'0000'`; Sheets parses it on the way in and stores the
+number 0, which reads back as `'0'`.** `guestFind_` compared that against the
+literal `'0000'`, so it never found the row it had itself just written: every
+executive looking in was turned away, and **every attempt appended one more
+Visitor row**. The same comparison was in `isStandingGuest_`.
+
+`isGuestNo_` recognises the guest by **all zeros**, which matches the text and
+the number both, so the rows the old build left behind still work. A **blank**
+Agent No is explicitly not the guest: `readPeople_` hands back `''` for an
+empty cell, and a blank number must never open the branch's meeting.
+
+The irony is that the comment above `guestRow_` had already worked out half of
+this — it says in as many words that `normNo_` turns `'0000'` into nothing, so
+`guestFind_` does its own exact compare. It guarded the *input* and never asked
+what the sheet does to the *stored* value.
+
+**This is the same family as the month read back as a month** (the group
+billing note above). The rule that falls out of both: **a value that looks like
+a number or a date is not what you wrote — write it as text, and never key a
+lookup on its spelling.**
+
+**And the fake sheet could not reproduce it**, for the reason recorded there
+too: it kept whatever it was given. `SHEETS_PARSE=1` now makes
+`tests/harness.js` parse like Sheets, and `setNumberFormat('@')` marks a cell
+text. Watch for a chainable stub of the same name further down the object
+literal — `setNumberFormat() { return this; }` was shadowing the real one, so
+the flag did nothing until it was removed. `tests/test-guest-signin.js` (24
+checks) fails on the build this replaced, pile-up included.
+
+Three faults became four on one gate in two days. Each was invisible from
+outside and each needed a different probe: the ping for the roll, the skill
+bank for the number's form, the page itself for the password box, and a live
+POST as `0000` for this one. **Probe the thing the branch will actually do**,
+and do it on the guest number, which touches no agent's row and no lockout
+counter.
+
+### 0000 is the door, not the identity — 29 October 2026
+
+Asked for in these words: *"guest should have a code 0000 and prompts the
+guest name, the guest first name, the guest first and last name, so we will
+know who visited us … as well their role in the organization, or what's their
+job."*
+
+**Being off the roll and being anonymous are two different things.** The 28
+October decision needed only the first — three executives must not be counted
+as absent branch members and drop the month's attendance — and delivered it by
+making the guest anonymous as well, which was never required. `role === 'guest'`
+is what keeps them off: `roster_()` and the ping both filter it, so the
+denominator is safe however many people look in, named or not.
+
+So `0000` is the door. It answers **`needGuest`** — a welcome, not a refusal,
+and the page must not render it as one — and asks for first name, last name and
+role. Each visitor gets **their own People row**, keyed `first.last@guest.invalid`
+so the same person returning lands back on it, and **their own token**. The
+shared row was worse than anonymous: two executives looking in at once took
+turns owning the one token and knocked each other out.
+
+Their Agent No stays `0000`, which is what keeps `isStandingGuest_` true for
+them — a visitor is invited to whatever meeting is open and nothing else — and
+`normNo_` strips it to `''`, so it can never collide with a real agent number.
+
+**A VISITOR IS NEVER ON THE REGISTER, and this is the trap to remember.**
+`register_` builds its groups from the attendance rows but takes its absents
+from `rosterFor_`, which excludes a guest. An attendance row for a visitor is
+therefore counted present against a roll that does not contain them, and three
+of them push the branch past 100% — the exact harm the anonymous guest was
+meant to prevent. `apiCheckIn_` refuses to write one for a guest; the visit
+goes in the visitors' book, and `register_` returns `visitors` **beside the
+count and never inside it**. Any future route that writes attendance has to
+make the same check.
+
+**The visitors' book is the durable record**, not the People row: a roster pull
+may clear the row, and the book keeps when, which meeting, the name and the
+job. It is written at **sign-in**, not at check-in, so it fills whether or not
+the check-in window is open — which is why it catches somebody who only looked
+in at the film.
+
+The name is self-reported, like the agent number. The register says who *said*
+they were here; the book says who *said* they looked in. That was accepted when
+the shared code went, and it does not change.
+
+`ensureTab_` backfills a missing tab and a missing column on the next call, so
+a new column on People or a new tab needs no setup step — add it to `SCHEMA`
+and it appears.
+
+### The sign-in film, and the two taps it exists to teach — 30 October 2026
+
+Asked for the night before the meeting, in these words: *"and can you do a
+small vid as to what to do and whats expected?"*
+
+`meetings/signin.mp4` (1:14), its page to post at **`/meetingvideo/`**, source
+`meetings/film.html`, built by `tools/film/build-mtfilm.py`.
+
+**THERE ARE TWO TAPS, NOT ONE, AND THIS IS THE WHOLE POINT OF THE FILM.**
+`apiLogin_` writes only to the Log tab; `apiCheckIn_` alone writes the
+attendance row. So "signing in is the register" — the phrase used throughout
+the section above — is a slogan about there being **no password and no
+enrolment**, and it is *not* the attendance mark. The agent number gets you
+into the room; the **"I am here"** button on the meeting card is the register.
+
+The first cut of the script said "that one tap is what marks you present",
+and so did the WhatsApp message sent the evening before. Left uncorrected,
+the branch signs in the night before, believes it is present, never presses
+the button, and the register reads half the room absent at 12:05. Anything
+written about this product has to carry both taps.
+
+**The phone screens are the real gate**, shot by `tools/film/mtshots/shots.js`
+against a fully mocked backend, so nothing reached the live sheet. The agent
+number (`A10072`) and the name on them are invented, and the action row names
+a **role**, never a person: no real agent number and no client anything goes
+into an MP4 at a public URL. It carries the **gold** shield, not the board
+blue, because the page it teaches carries gold and every screen inside it
+shows gold.
+
+**A phone at 272px in a 1280 frame renders the field they must type into
+about 10px tall.** Nobody reads that. The instructional scenes use tight
+crops taken by `element.screenshot()` on `.gate-card` and `.checkin`, which
+is exact and needs no hand-measured crop box.
+
+#### `.act` is render.js's, and taking it cost an hour
+
+The action table in scene 10 was `<div class="act">`, styled
+`max-width:860px;overflow:hidden`. **`.act` is also the class render.js puts
+on the live scene**, so every active scene inherited both, and 420px was
+clipped off the right of every frame — while `.in`, `.split` and the columns
+all measured correctly, because the layout *was* correct and only the paint
+was clipped.
+
+It presented as four different bugs in turn (a squeezed text column, a card
+overflowing its track, `inset:0` apparently not applying, a section computing
+860px wide), and three rounds of guessing at the cascade found none of them.
+What found it in one call was asking the browser **which rules actually match
+this element**, with `act` on it. When a layout will not do what the rule
+says, enumerate the matched rules rather than re-reading the stylesheet.
+
+`build-mtfilm.py` now refuses to write the page when any rule's **subject**
+(its last compound, so `.sc.wide .R` is fine) styles a name the render
+contract owns: `act`, `out`, `cnt`, `sc`, `in`, `rolling`. That is a third
+family of class collision, after the shell's classes and the film's own
+sheet, and the only one of the three that no existing guard covered.
+
+#### The voice
+
+Twelve lines, Andrew Expressive on the `tts-run` runner, every clip checked
+for its language **and its words**. Three came back wrong and were re-worded
+off the shape rather than around it:
+
+| written | heard |
+|---|---|
+| "It **does** not mark you present" | "It **is** not mark you present" |
+| "**Check-in** opens" | "**Check and** opens" |
+| "Try **the sign-in** tonight" | "Try **to sign in** tonight" |
+
+Two of the three are the **hyphenated compound** ("check-in", "the sign-in"),
+which this voice runs together and Whisper then hears as two words. Avoid a
+hyphenated compound noun in a spoken line; say "the button opens" and "try
+it tonight". `Rampersad` comes back as "Ramperset" on every take, so the URL
+is also **on screen** in that scene, the same mitigation the `Akaash` → "of
+cash" case took.
+
+Re-cut: edit `mtsign-lines.json`, push `tts/job.json` to `tts-run`, then
+`importvox.py <out> vomtsign 1.15 --timing mtsign-timing.json --lines
+mtsign-lines.json`, `build-mtfilm.py`, `sfx.py`, `usetrack.py
+../../rr-branch-theme.mp3 mtsign`, `render.js ../../meetings/film.html
+cap-mtsign 30 ../../meetings/signin.jpg`, `mixany.py`. **render.js's third
+argument is FPS, not seconds**, and `importvox.py` writes `durs` in seconds
+while `data-d` is milliseconds.
+
+
+### The home screen says what to do, by role — 30 October 2026
+
+Asked for in these words, after he signed in as one of the agents the morning
+of the meeting: *"i am so confused, we should highlight the meeting tomorrow
+ans what are the agent suppose dto do and staff???"*
+
+He was right, and the page's own words were half the problem. **Three places
+said signing in was the register** — the lede, the "check-in opens" card and
+the footer — which is the same one-tap error the WhatsApp message carried.
+All three now say that the agent number opens the page and ***I am here*** is
+the register. The README's headline said it too; fixed there as well.
+
+Two blocks on the signed-in home, both **client-side only** (`meetings/index.html`),
+because everything they need is already in the `home` payload: no `Meetings.gs`
+paste, no new deployment, no `TEAM_CODE` to re-enter.
+
+- **`meetingBanner`** — one loud line for a meeting inside the next six days:
+  **Today** / **Tomorrow** / the weekday, the title, the start time, and when
+  check-in opens.
+- **`runUpBlock`** — *Your run-up to the meeting*: one rail from tonight to
+  the minutes, **every stop with a time on it and the person it belongs to**.
+  Asked for the same night: *"a walk through from today and tomorrow before
+  the meeting so it builds from all of us and our role so it will be
+  structured."* An agent: read the agenda, attach what they are presenting,
+  be ready on their own action items, press the button at 11:30, the shape of
+  the ninety minutes, the minutes afterwards. Staff get the build instead —
+  owners on every item, chasing the material, the overdue items, publishing
+  the minutes.
+
+  **A stop is ticked only where the record can say so** — attendance, the
+  person's own slots, their own action count. The rest are open circles,
+  because a tick nobody earned is worse than no tick. The slots come from a
+  second call (`loadPrepForRunUp`) fired **after** the page is already drawn:
+  the home screen never waits on it, and the rail reads fine without it.
+
+**`whenWord` reads the calendar day, never the whole stamp.**
+`new Date("2026-10-30T00:00:00Z")` is the evening of the **29th** in Trinidad,
+so a meeting today read as yesterday and the banner never drew. It takes the
+leading `YYYY-MM-DD` and builds a local date from the three numbers. The same
+trap as the month stored as a date and the guest number stored as `0`: **a
+value that looks like a date is not what you wrote.**
+
+**`innerText` returns the *transformed* text**, so a `/Today/` assertion fails
+against a `text-transform: uppercase` label that renders TODAY. Match case
+insensitively, or read `textContent`.
+
+**`.who` is the header's user chip and carries `white-space: nowrap`.** A
+`.todo .who` byline inherited it, could not wrap, and put **40px of sideways
+scroll** on the page at 390 — while no element's rect overflowed, so the
+usual "find what sticks out" scan found nothing. What found it was hiding each
+child of the card in turn and watching `scrollWidth`. Same family as the film
+builders' class-collision guard, on a page this time: **grep the page's own
+stylesheet before naming a class.**
+
+`meetings/home-test.js` logic lives in the session scratchpad (36 checks,
+Playwright against a mocked backend: an agent before and after check-in opens,
+an agent already on the register, and staff on a laptop; no sideways scroll at
+390, no page errors).
+
+## `/branchmeet/` — the FY27 rise, and what the film may not say
+
+Asked for on 28 October 2026, the evening before the branch group sees it:
+*"we had about 12 agents who left us... it's our first meeting coming together
+after they have left. We want to rise strong and something that signifies the
+uprise. So even more powerful, more graphs, more charts, more colors, more
+graphics, more motion."*
+
+**The address is `/branchmeet/`, renamed 29 October 2026** — asked for in those
+words, "relabel instead of blast off branchmeet". The film, its poster and the
+MP4 (`branchmeet.mp4`) moved with the folder. **`/blastoff/` is a redirect stub**
+and stays one: the old address was in the branch group before the rename, and a
+dead link in a WhatsApp group is a link nobody taps twice. It carries no view
+beacon, like every other stub. `build-risefilm.py`, `chapters.py` and
+`films.json` all point at the new folder; the deleted first builder keeps its
+own old name below, which is history rather than a path.
+
+**One address, one film.** The first cut (the cocoon, 1:06, 28 October) was
+replaced at the same URL the same evening rather than published beside it: the
+link was already out, and two blast-offs is one too many to send a branch.
+`build-blastoff.py` and its lines and timing were deleted with it — two
+builders writing one `branchmeet.mp4` is how the wrong cut ships. Git has the
+first cut if it is ever wanted.
+
+### What it may not say, which decided the whole script
+
+**Nobody who left is characterised, and nobody is counted.** The rule on the
+transition letters is that Guardian Life's notice is stated and nothing else:
+no reason, no adjective, no number. This file sits at a **public** URL that
+anybody can forward, so it holds to that harder, not more loosely. The film
+says *"This branch took a hit. People left. The work didn't."* and never
+returns to them. The crack across the shield says the rest.
+
+**No client anything.** Never a client name and never a client count in an
+MP4. So the orphan campaign's own figures — which are client counts — are not
+in it, however good they would look. Every number on screen is about our own
+people, our own year, and Friday's own agenda.
+
+**Four branch papers went in on 29 October, and most of what is in them may
+not be.** The branch manager sent the Three-Year Plan executive summary, the
+Note for the Record of the Branch Progression meeting of 12 October, the
+Production and Manpower Record 2014–2026, and a unit's own three-year plan,
+asking for "the career path and our revised strategic plan". **They are
+confidential and the film is not.** What stayed out, and must stay out of
+anything at a public address:
+
+- the competitor by name, and the person who runs it;
+- the mediation, what was refused there, and the assurances given about
+  re-contracting;
+- anyone who left, by name, rank or number — including the two managers this
+  branch grew who are now gone, which is why the career-path scene shows the
+  **ladder** and not who climbed it;
+- any agent's own quota miss, persistency or stated intent to leave, all of
+  which the unit plan sets out by first name;
+- every dollar figure: the quotas, settled API, production per agent;
+- the quota-attainment ranking (#13 of 14), which is also the one number in
+  those papers that would flatten a room.
+
+What came out of them and **is** in the film is the branch's own quality
+record, which is the part worth saying out loud: the lowest lapse rate of
+every branch, 4.96% against 8.82% for the main branches to 31 August; 67% of
+agents still here after a year against a published 55–60%; 31% at four years
+against about 16%; 67% of the 2023 intake kept to August against 48% across
+the network; the career ladder; and the plan's horizon, 1 October 2026 to
+30 September 2029. If he ever wants the money or the ranking in, the film has
+to move behind the meeting sign-in first — it cannot be done at `/branchmeet/`.
+
+**One figure was left alone on purpose.** The Note for the Record says the
+branch manager has 35 years in the business; Salesforce gives his hire date as
+December 1993, which is what the chart draws and what the total is built from.
+Both can be true — the business is not the same as this company — but the film
+states neither, because a spoken 35 beside a drawn 32 is the kind of
+contradiction a room catches in a second.
+
+**No client anything, still.** Never a client name and never a client count in
+an MP4. The orphan campaign opened 347 follow-up tasks in October, which is a
+fine number and reads as a client count, so it is not in the film either.
+
+**What is left is the stronger answer anyway: count who stayed.** The spine of
+the film is the branch's own roster, read out of Salesforce on 28 October 2026
+— the active AGENT contacts of the two units, Ricky_Rampersad and
+Akaash_Kalladeen. **Two came off on 29 October on his word** ("take out javid,
+aleema"), both carrying twenty years, so the headcount, the total and the
+ten-year band all moved with them: **twenty on the chart, 221 years between
+them**, nine at ten years or more, three joined in the last three. Twenty-one
+are active (one has no hire date on file), and the five of the support team
+are on screen beside them, because leaving them out of "who stayed" would be a
+lie by omission: twenty-six still here.
+
+**Every narrated figure is asserted against the roster.** A line is recorded
+once and then lives in an MP4 nobody re-reads, so `build-risefilm.py` spells
+the derived numbers out in words and refuses to write the page if the script
+disagrees with them — which is exactly what caught the three stale lines when
+those two names came out. Change the roster, and the build tells you which
+line to re-voice.
+
+**The bars show FULL years, and say so.** The chart carries the line *"full
+years each · 221 in all"* so anybody who adds them up can reconcile the two.
+Flooring rather than rounding also keeps the bands honest — Randolph is 9.94
+years in, and rounding put a "10" on a bar that the ten-year colour does not
+claim. Anyone under a year reads `<1`, never `0`.
+
+### What the branch's own systems put in it
+
+Six scenes are measurements rather than claims, and each names where it came
+from on screen or in the builder's comment:
+
+- **the rise**: 204 requests closed in September, 240 in October, read off
+  Salesforce over the five support desks with logged e-mails and the birthday
+  flow left out — counted, those are five times the volume and would flatter
+  the record into meaninglessness. October still had two days to run when the
+  film was cut, and the foot says so, because a figure that is going to grow
+  is stronger stated short than rounded up;
+- **the work**: 2,495 requests closed in twelve months, by kind;
+- **the papers**: 3,634 lines through the Log Book and 72% on to Guardian
+  inside one working day, measured off the old book rather than claimed;
+- **since August**: eighteen things live in ninety days, the list being
+  `BUILT` in the builder, and the spoken count is `len(BUILT)` so adding one
+  and forgetting the line fails the build;
+- **the branch on one line**: a dot per person at the year they joined, 1993
+  to now;
+- **the fact find**: not one of those cases lapsed, which is his own line from
+  the FY27 wall.
+
+
+### The palette is doing a job, not decorating — and it is not gold
+
+Gold is out, same evening, in these words: *"Change the entire color to much
+more polished and professional. Hate the gold!!!"* That is the fifth time the
+gold has been turned down (the board films, the group letters, the agent
+introduction, the homepage, this). **Do not reach for it again on anything new
+without being asked for it by name.** `logo-mark.png` stays gold and untouched,
+because the client letters already sent load it.
+
+The film moved to the **midnight blue he chose for the three board films on 15
+October**, which also puts it in one family with the board pages, RR Operations
+and the Log Book films instead of standing alone. The page at `/branchmeet/`
+moved with it and carries `orphan-transition/board-mark.svg`, the blue shield,
+not the gold one.
+
+**Then he asked twice for "more color options", so he picks, not me.** There
+are eight, as `PALETTES` in `build-risefilm.py`: *blue* (the board films'),
+*ink* (platinum on near-black, the most restrained), *emerald*, *violet* (the
+purple he liked once), *crimson*, *white* (near-white on midnight, the most
+premium), *rose* and *teal*. `RISE_PAL=<name> python3 build-risefilm.py`
+repaints the whole film; add `RISE_VARIANT=1` to write `film-<name>.html`
+beside it instead of over the real page, which is how the comparison sheet is
+shot — the same three frames in every palette, because a palette judged on
+different pictures is not judged at all. **Those variant files are never
+committed**: they are 516 KB each, they would be served at
+`/branchmeet/film-crimson.html`, and one command regenerates any of them.
+
+Each is a repaint of one baseline by exact hex in a single pass, longest
+literal first, so a value a palette maps *to* can never be read back as a value
+to map *from*. Two were rejected on the measurements rather than on taste:
+emerald with a sky-blue second accent collapses for a tritan viewer (ΔE 5.5),
+and an ice-and-steel pair on the ink ground measures ΔE 13.8 in full colour
+vision, under the floor of 15.
+
+"More colours" is still answered with **two accents and a recessive neutral**,
+each carrying a band the narration names, never a hue per person:
+
+| | |
+|---|---|
+| ground `#070F26` | near-black navy, the board films' own |
+| cyan `#00E5FF` | ten years or more (11) |
+| periwinkle `#7C8CF8` | joined in the last three (3) |
+| slate `#5E6B85` | the eight between, recessive |
+| blue `#1D5BC4` → `#2A6DE0` | structure: the shield, the bar gradients |
+| cold `#8295B5` | the hit, scenes 1–3 only |
+
+Run through the dataviz validator against the ground: worst adjacent pair
+**ΔE 19.0 normal vision, 18.3 deutan**, every slot over 3:1. The legend names
+all three, so identity is never colour alone. Two palettes were rejected by the
+validator first — cyan with the corporate blue `#2A6DE0` fails against the
+slate at ΔE 13.9, below the floor where full-colour vision can separate them.
+
+**A sequential ramp was tried before any of this and rejected on meaning, not
+on colour**: it dimmed the newest people in a film about who stayed. The colour
+journey cold → cyan across the film is the emotional arc, and the mend is cyan
+light running through the crack rather than molten gold.
+
+### What the pipeline taught, this time
+
+- **`importvox.py` built captions with no punctuation**, because edge-tts's
+  WordBoundary events carry the bare word. Worse, its own sentence-end test
+  could then never fire, so cues only ever broke at the nine-word ceiling and
+  read as run-ons: *"Twenty-three agents and managers Five more behind them"*.
+  It now takes `--lines <film>-lines.json` and walks the punctuation back on
+  from the line as written, and a sentence over the ceiling is split into
+  near-equal halves rather than chopped, so no cue ends on an orphan word. The
+  backtrack has to treat a hyphen as part of a word, or "Twenty-three" comes
+  back as "three". `--lines` also carries each scene's `extra`, so a re-cut
+  reproduces the timing.
+- **`data-d` is milliseconds and `importvox.py` writes seconds.** The older
+  hand-built timing files are in milliseconds. Mixing them builds an
+  eighteen-scene film 0.1s long, and nothing complains. The unit is now decided
+  out loud in the builder.
+- **`.rscap` was a grid**, so every word of a kinetic headline became its own
+  grid row — eight lines of one word, and in one scene they ran straight
+  through the crop. Words need one block to flow inside.
+- **`.rssh.gold path` matched the check too** and painted it gold on gold, so
+  the one stroke the close is built around was invisible. It takes the casing
+  the mark itself uses: a dark stroke under a white one.
+- The three faults the first cut turned up still stand and are still guarded:
+  the shell is donthaveanagent's and leaks The Knot, coral bars and a WhatsApp
+  button; a scene class the shell already styles wins silently (the builder
+  refuses to write one); and **the mixer crops the bottom 104px away**, so the
+  scene box ends at 616.
+
+### Two traps in the film shell, both of which draw nothing at all
+
+- **`grow` and `grow2` animate `width`.** A rule that starts at
+  `transform: scale(0)` and names one of them is filled `both` against a
+  transform nothing ever changes, so it renders at zero for the whole scene.
+  Three elements were invisible this way — the comparison bars, the timeline
+  rail — and each read as a missing element rather than a broken animation,
+  which is the hard kind of bug to see. `growY` and `growX` animate the
+  transform; use those for anything that grows from a scale.
+- **A flex item shrinks by default.** The comparison column holds a number, a
+  bar and a label, so it overflows on purpose; the bar was the thing that gave
+  way and rendered at zero height. `flex: none`, and size the bar off a length
+  rather than a percentage of a box it is overflowing.
+
+The class-collision guard earned its keep twice more: `.us` and `.mark` are
+both styled by the shell, so a comparison bar and a benchmark marker were
+silently taking the shell's rules. It refuses to write the page and names the
+class.
+
+**`data-sep` on a counter** is new in `render.js` and opt-in, so every film
+built before it is unchanged: with it, a four-figure count reads 2,495 rather
+than 2495, on the markup and on every frame the renderer writes.
+
+### People, the sign-in, and motion everywhere — 29 October 2026
+
+Asked for in these words: *"ok so more motition and beter icons show ppeople
+not dots and at the emd where is the log in!!! to log in with agent number and
+guest a code 000 can you please ad a lot more motion , charts and graphics make
+thing move and a wow"*. 3:13 now, 29 scenes.
+
+**People, not dots.** Everywhere the film counted a person it drew a disc, and
+a disc is a data point rather than a colleague. `person()` draws a head and
+shoulders on a 24×27 canvas with the initial under it; the roster scene is
+twenty-one cyan figures and five periwinkle, and the timeline scene stands them
+on the 1993→2026 line under their names. The bands still carry their meaning in
+colour *and* in the legend, so identity is never colour alone.
+
+**The sign-in is a scene, because the film is what the branch will actually
+watch.** It comes second to last: two cards side by side — **YOU · Agent
+number**, a boxed `A•••••` with a caret blinking in it, "That is the whole
+sign-in. Signing in is the register"; and **A VISITOR**, a `0 0 0 0` keypad
+popping in, "Four zeros. Guests are never on the roll" — then
+`rickyrampersadbranch.com/meetings`. The narration spells the code out
+("zero, zero, zero, zero"): Whisper heard "four zeros" as "40s" on the first
+take, and a spoken code that comes out wrong is worse than no code.
+
+**The motion layer, all of it CSS so render.js can seek it.** A travelling
+sheen on every bar and every card, counters that pop as they land, an eyebrow
+rule that draws itself, and fourteen motes drifting behind every scene. The
+motes are **seeded from the scene's index, never random**: render.js draws each
+frame on its own, so a random field jitters between frames instead of drifting.
+
+**The player's rail knows the scenes now.** `chapters.py` gained
+`branchmeet/film.html`, and a scene may name itself with **`data-ch`**, which
+wins over anything read off the picture. That is new and opt-in, so every film
+built before it is unchanged. It was needed here because several scenes carry
+no eyebrow at all — the opening three, the mended shield, the close — and the
+fallback handed the rail its own first words, which on a kinetic headline is a
+dump of fragments and on the roster scene is a row of bare initials.
+
+**The page's figures are guarded too, and the guard has to read the prose.**
+The builder now checks `branchmeet/index.html` for the spoken headcount, the
+spoken total and the numeric total in the meta descriptions, after the film is
+written — so a stale page names what to change instead of blocking the rebuild.
+The first cut of that check searched the raw markup and passed on a lede still
+saying *twenty-eight of us and two hundred and sixty-three years*: the player's
+own `data-chapters` attribute carries "Twenty-six still here", which satisfied
+the substring. It strips tags and reads the text, and reads the meta
+descriptions from their own `content` attributes.
+
+**The page said the wrong thing about signing in, and that is the rule, not a
+typo.** It promised the branch access code and then an e-mail and a PIN. The
+shared door went on 28 October and the sign-in is the agent number alone —
+which is what the film now narrates, so the page had to say it too. A promise
+made in one place has to be kept in the other.
+
+### Fifteen years digital, and the tools themselves — 29 October 2026
+
+Asked for in these words: *"i am not seeing anything new in the video!!! i did
+ask for a lot of a difference!!! the link the tools we used re jotforms you can
+see from mcp how long we were digital and continue to revise with even better
+tools, the fact find went live revised and more robust 1 august 2026 and draw
+the insights as this is big so to our transmittal, goals and production walls
+etc etc etc so so much and your presentation is boring as i want maximum motion
+and lots of cards with the replica"*. 4:16 now, thirty-five scenes.
+
+He was right, and the fault is nameable: the scenes added the day before were
+**charts about the work** rather than **the work**. "Lots of cards with the
+replica" is the instruction — show the actual screens.
+
+**Every screen in the film is one of the branch's own.** `SHOTS` in
+`build-risefilm.py` maps a key to a file and a shape; `shot()` puts it in a
+glass card with a glare that runs on a loop, so a card is never a still
+photograph pinned to the frame. Two sources, both already public and both
+carrying their own "sample data" banner:
+
+- `wall/img/ff|lb|meet|jr/*` — twenty-nine screens shot for the FY27 wall;
+- `branchmeet/img/*` — six more, shot for this film from **`/wall/?demo=1`**
+  (the wall's own marked sample). Shoot them past the start dialog: the first
+  run caught every scene dimmed behind "Start with sound", which is the kind of
+  thing that looks like a rendering fault rather than a missed click.
+
+**The caption under a replica is ours, never read off the picture**, so a
+re-shoot can never silently change what the film claims.
+
+**The long digital record, and why it is not from JotForm.** He pointed at the
+JotForm MCP; it needs authorising before it will answer, and Claude cannot
+start that flow. The dates came instead from Salesforce's own copy of the same
+work, read on 29 October 2026 — the earliest record each object holds:
+
+| | | |
+|---|---|---|
+| `Submission__c` | 5,523 | 28 Mar 2011 → 23 May 2017 |
+| `Attendance_Register__c` | 7,355 | 25 Aug 2013 → 10 May 2024 |
+| `Market_Survey__c` | 680 | 3 Apr 2014 → 29 Oct 2024 |
+| `POP7__c` | 39 | 27 Apr 2014 → 27 Apr 2026 |
+| `Policy_Queries__c` | 229 | 8 Apr 2019 → 25 Jun 2019 |
+| `jotform__JotformUser__c` | — | 18 Nov 2023, the forms wired in |
+
+So **2011**, and fifteen years. The JotForm form ids in the branch app start
+`22…`, `24…`, `26…`, which looks like a year and is not: no source confirms
+that those digits encode a date, so nothing in the film rests on it.
+
+**The fact find, and the money rule.** FactFind360's own wall feed answers at
+the `/exec` in `FF360` in `KPI.gs` with the key printed in `wall.html`, so it
+can be read without a sheet. It carries API, premium, cover and the protection
+gap, **and those stay out**: this file sits at a public URL anybody can
+forward, and what the branch writes is nobody else's business. **Counts, days
+and shares only.** The same rule put the dollar figures of the three-year-plan
+papers out of the earlier cut.
+
+**And read the feed's shape before turning one row into the branch's
+headline.** The first cut of that scene said *100% read by a manager · 2.2 days
+· 29% sent back*, and all three were wrong. `year.submitted` is 144;
+`managerPerf` is a row **per manager**, and the two together have reviewed
+38 + 25 = **63** of them, approved 50, returned 13, at medians of 2.2 and 3.0
+days. So 2.2 and 29% were the Branch Manager's own figures printed as the
+branch's, and 100% was never measured at all. It says 144 · 63 · 1 in 5 · 2–3
+days now, and the thing that *is* true of all 144 is said as the process it is:
+nothing reaches a client until a manager signs it off. Shipping a 100% that is
+really 44% would have cost every other figure in the film its credibility.
+
+**The strict word check is new, and it earns its keep.** Until now a clip was
+checked for its language only ("all twenty-nine Whisper-checked English at 0.97
+or better"), which cannot catch a clip that is confidently English and wrong.
+The check now compares the words Whisper heard against the words written, with
+punctuation and case dropped. Most of what it flags is Whisper writing numerals
+— "two hundred and four" heard as "204" is not a fault. Three were:
+
+- **"Four point nine six" came back as "for point nine six."** A listener would
+  hear it the same way, and it is the lapse-rate line the whole quality claim
+  rests on. Re-worded to "Ours is four point nine six per cent", which lands.
+- **"our fact find" came back as "our fact fine."** Re-worded so the phrase
+  ends a clause rather than being rushed through the middle of one.
+- **"Trainee Manager" comes back as "Training Manager", on both takes.** Two
+  takes with different punctuation, same word: the voice is deterministic and
+  this is its read, the same way it hears "No ceiling" as "No seating". The
+  ladder on screen carries the right word, so it was kept — but a rung name is
+  the kind of thing a room checks, so it is written down here.
+
+**Another session took the voice job again.** The job was pushed at 02:10 and
+another session's push replaced `tts/job.json` at 02:14. Mine had already run,
+so the audio was safe — but the second run **overwrote `tts/out/check.json`**,
+which is the only place the transcriptions live. Recover them from the run's
+own commit (`git show <sha>:tts/out/check.json`), which the workflow log names;
+do not assume a missing check.json means the clips were never checked.
+
+**Two lanes on the timeline, placed rather than flowed.** 2013 and 2014 are a
+year apart on a fifteen-year rail — about eighty pixels — and a label is twice
+that wide, so on one lane they land on top of each other. Stacking the dot, a
+spacer and the label in a grid and letting a taller spacer push alternate
+labels down **did not work**: measured in the browser, the lane never moved and
+the spacer sat off to one side, in a rule that plainly read
+`display:grid;justify-items:center`. Each milestone is absolutely positioned
+now, with the label at `top:calc(5.3vh + var(--lane)*5.2vh)`. When a layout
+will not do what the rule says, measure it in the page rather than reasoning
+about the cascade — the measurement took one minute and the reasoning had
+already taken ten.
+
+**Ten cards on the replica wall, not twelve.** Twelve wrapped to a third row
+and the last card was cut in half by the caption strip the mixer pads back on.
+
+**A sample figure beside a real first name is fine on a wall and not fine in a
+film.** The wall's own demo marks itself SAMPLE FIGURES in the masthead, and
+that badge is legible on a television three feet away. Shrunk into a card in a
+film anybody can forward, it is four pixels tall. So `branchmeet/img/goals.jpg`
+is **cropped above the per-agent rings** — "Daniel 58% of API pace" reads as a
+verdict on a named person however it is labelled — and the shots that carry a
+per-agent league table (the fact-find funnel) are not in the film and are not
+in the repository. The production wall stayed: its name list is small, ordinal
+and all positive, and the same frame is already public in `/howweworkvid/`.
+When in doubt, crop the panel rather than trust the badge.
+
+**Two class collisions in one hour, the second worse than the first, and the
+guard does not cover either.** `build-risefilm.py` refuses a class the *shell*
+already styles. It says nothing about a class this film's own sheet already
+uses, and both faults were that:
+
+- `.rstl` was the `story` scene's rail, `height:24vh`. Reused a day later as
+  the label inside a counter tile, it dragged every tile to 280px. Nothing
+  complained, because both rules were legitimate on their own.
+- Fixing it with `sed s/class="rstl"/class="rstlab"/g` **renamed the rail as
+  well**, which dropped the whole branch timeline off the bottom of the frame
+  — a worse bug than the one being fixed, and invisible unless that scene is
+  looked at again.
+
+A build-time warning for this was written and then thrown away: narrowed as far
+as it could usefully go it still named nineteen classes, because a base rule
+plus a modifier rule on one class is the ordinary pattern. A warning nobody
+reads is worse than none, since it trains you to skip the build line. What
+protects this instead: **grep the film's own CSS before naming a new class**,
+and **never fix a collision with a blanket rename** — rename the new thing by
+hand, at its own call sites. And shoot the scene you changed *and* any scene
+that shares a word with the class you touched.
+
+### The order put right, and what the film may still not say — 29 October 2026
+
+Asked for in a long brief the evening before the branch sees it. The parts
+that changed the film: the fact find's approval order is wrong in the cut that
+shipped that morning; the branch led the team that built the company's **first
+digital application with a digital signature**, at the then chief executive's
+request, and *"do not call names"*; *"it's not in the 90 days — we have been
+using jot forms right through"*; market conduct and *"how do we protect our
+agents?"*; fraud rising and caught early, with the surveys explaining why people
+had pushed back; *"we don't look at relationships as transactions, we have built
+journeys with every client"*; the orphan campaign and *"how much emails went
+out"*; Query Pal, the branch site and clients signing in themselves; the
+transmittal, the JotForm scrapped, and *"flash the wall… what agents see in the
+outside area, to hold persons more accountable"*; *"35 years in the business…
+the only way you can guide and scale is to leverage your skill sets in a form
+that it can help everybody"*; and the form: condensed, maximum motion, a wow.
+
+**39 scenes, 4:59.** Eleven new (`first`, `ai`, `ffflow`, `ffagents`,
+`conduct`, `fraud`, `journey`, `orphan`, `equipped`, `outside`, `commit`), five
+cut (`forms` folded into `digital`, `one` into `equipped`, `wall` into
+`outside`, `rebuild`, `built`, `mix`, `fy27`). It is 43 seconds longer than the
+cut it replaced and carries about fifteen more subjects, which is the trade he
+asked for; if a shorter cut is ever wanted, `plan`, `ask` and `story` are the
+three that go first.
+
+#### The fact find order, which is a correctness fix and not a style one
+
+*"The client gets the draft who approves. Only when the client approves, it
+goes to the manager. We had this process done wrong because prior to then, the
+manager approved and went with the approval for the client to sign."*
+
+So the order is **you → the draft → your client approves → a manager reviews and
+signs → on file**, and `FFSTEPS` in `build-risefilm.py` is that order. Do not
+reorder it without being told to.
+
+**The five captured screens in `wall/img/ff/` are of the OLD order**, so the
+`ffnew` strip no longer walks through them: its first screen used to be the
+draft e-mail and its second the manager's sign-off. A room reads screens, and a
+screen that contradicts the narration is worse than no screen. The corrected
+order is **drawn** (`ffflow`), and `ffnew` keeps only the three screens that
+assert no order at all — the client approving, the signature and rating, and
+what the branch sees.
+
+**One paragraph of the live product still carries the old order**, and it is
+worth fixing before Friday: the draft e-mail
+(`wall/img/ff/01-client-draft.jpg`, built in **fact-find-analyzer**, a different
+repository on a different hosting chain) ends *"your fact find is now being
+reviewed by Akaash to make sure the recommendation is right for you. **No action
+is needed from you yet** — I'll be in touch as soon as the review is complete."*
+Its own button already says *"Read it, confirm it, rate the advice and sign
+online. Nothing goes ahead until it is right"*, so the client-approval step
+exists; it is that one "being reviewed / no action needed yet" paragraph that is
+left over from the old order. The film teaches the corrected order, so the two
+disagree until it is changed.
+
+#### What was asked for and is still not in it
+
+He asked for three things about the people who left, and none of them can go at
+a public, forwardable URL:
+
+- that **none of them did the digital fact find**, with their ranks counted;
+- that the **terminated agent went for a compliance issue**, by name;
+- that **his manager supported him**.
+
+The standing rule is that nothing characterises anyone who left — Guardian's
+notice and nothing else, no reason, no adjective, no number — and a stated
+termination reason with a named manager's complicity is the single most exposing
+sentence that could be put on this page. The same point is made by our own
+record instead, which is the stronger version anyway: every fact find reviewed,
+market conduct clause by clause, fraud caught early.
+
+**The then chief executive is not named**, asked for in those words. Nor is a
+date invented for the digital-signature launch: the branch has the story, the
+repository has no record of when it shipped, so the scene says what happened and
+when it did not.
+
+#### The counts that did go in, and the line they sit on
+
+**The orphan campaign is our own output, not a client count.** `ORPHAN` carries
+nearly three thousand letters and reminders, **349** files opened since 25
+September and **158** already closed — the tasks read off Salesforce on 29
+October (`Subject LIKE 'Orphan%'`, `CreatedDate >= 2026-09-25`). What is **not**
+there, and may not be: how many clients, how many households, the size of the
+book. Those are client counts by another name, and an MP4 at a public URL may
+not carry one. The letters figure is an aggregate of our sends and gives no book
+size.
+
+**Market conduct** is the same seven clauses the FY27 wall carries on `w23`
+(`CONDUCT`), so the wall and the film cannot drift apart. **Fraud invents no
+statistic**: the claim is that a proper fact find surfaces it early and that the
+surveys explained the resistance, which is what he said.
+
+#### Three voice faults, two of which changed the meaning
+
+The strict word check (Whisper's words against what was written, not just the
+language) earned its keep three times over. `wordcheck.py` lives in the session
+scratchpad; it normalises numerals both ways so only real differences show.
+
+- **"The main branches average eight point eight two"** came back as *"the main
+  branch **is average** 8.82"* — which inverts the one claim the quality record
+  rests on. Re-worded to "The average across the main branches is…".
+- **"put what you know into something that helps everybody"** came back as
+  *"what you know **and is** something"*, in the film's heart line. Re-worded to
+  "build what you know into something" and it came back **identically wrong**:
+  the voice swallows `into` after `know`, deterministically. Take three dropped
+  the word — "put everything you know where everybody can reach it" — and it
+  reads clean. **When a re-word comes back with the same fault, stop re-wording
+  around it and remove the word.**
+- **"A proper fact find catches it early"** → *"a proper fact **fine**"*, the
+  same fault as the 28 October cut. The fix that works is to end the clause on
+  the word: "Early detection is the job of a proper fact find."
+
+Accepted as transcription artifacts rather than read faults, because the voice
+says them correctly and a listener has the context: `pendings`→"pinnings",
+`Trainee Manager`→"Training Manager", `Rebuilt`→"Rebuild", `pushed`→"push", and
+**`Akaash`→"of cash"**. For that last one the name is now also **on screen** in
+the same scene, so the room reads it while it hears it.
+
+#### Four build faults, each invisible in a different way
+
+- **`numPop` never touches opacity.** It is `scale(1)` → `1.07` → `scale(1)`, so
+  anything set `opacity:0` and animated with it stays invisible for ever — which
+  is what happened to the AI badge. An element that starts at `scale(0)` is fine,
+  because numPop's own 0% frame puts it back. Use `fUp`/`fIn` when opacity has to
+  move.
+- **The journey ring piled all six events on the centre.** Rotating a zero-size
+  node and counter-rotating each child separately does not work. It is the
+  classic place-on-a-circle one-liner:
+  `translate(-50%,-50%) rotate(var(--a)) translateY(-r) rotate(calc(-1*var(--a)))`.
+  And **`fIn` ends on `transform:none`**, which throws a placed element back to
+  the middle, so the ring has its own entrance that only moves opacity.
+- **The container's half-height must be the event radius.** At first the events
+  sat at a bigger radius than the box holding them and the top one climbed out
+  onto the eyebrow; the dashed ring is inset instead.
+- **Rewriting `rise-lines.json` wholesale lost every `screen` value**, so thirty
+  scenes rendered with an empty eyebrow — and the two that were restored from
+  git were themselves stale (`28`, `263 YEARS`, from before two names came off
+  the roster). Never rewrite that file whole; patch the scenes you are changing.
+
+The figures guard now **tolerates a cut scene** instead of crashing on it, and
+prints which ones it did not check, so cutting a line is visible rather than
+silent. It still fails on a line that is in the cut and carries a stale number.
+
+### People, not dots — and three things that may not be counted — 29 October 2026
+
+Asked for in these words: *"can't we have a more impactful number with figurines
+of men and women and drop off a couple and rise to the top with those who's
+standing? Make much more, add a lot more motion and graphics to make an
+impact."* Then, the same afternoon: *"in the timeline some retired, some
+resigned, 2 was terminated and some vested, so highlight in branch as ours we
+only had 3 terminations, [two names], this will make an impact."*
+
+**The two names he gave there are elided**, as of 30 October 2026. They were
+written out here when this section was first added, and that was wrong: this
+file is published at the repository root, and naming a person as terminated on
+a public page is the exact thing the standing rule exists to prevent. Nothing
+downstream reads them — the counts in `build-risefilm.py` carry the record.
+
+**40 scenes, 5:09.** The opening is now one story told across four beats: a cold
+scattered crowd, three of them sink away, the rest rise and warm into ordered
+rows, and the figure lands beside them.
+
+#### Sex comes off the record, never off a first name
+
+`ROSTER` carries a fourth field and `SUPPORT` a second, read from each person's
+own Salesforce Contact — `Salutation`, and `Gender__c` where it is filled —
+pulled on 29 October 2026. **Do not guess it from a name.** A wrong guess
+misgenders a colleague on a film the whole branch sits down and watches, and a
+name is not evidence. `MEN` and `WOMEN` are derived from those fields like every
+other figure here, so they cannot drift from the roster: **16 men and 10 women**,
+being 15 and 6 among the agents and managers and four women and one man on the
+support team.
+
+`person()` draws two silhouettes on one 24×27 canvas so a mixed row still lines
+up. The woman is **hair framing the head and falling either side**, with
+slightly narrower shoulders — not the toilet-door dress, which reads as dated
+and is unrecognisable at the size these actually render. Hair is the only
+difference that survives at twenty pixels, which is why it carries it.
+
+#### The crowd is not a count, and must never become one
+
+The house rule is that nobody who leaves is characterised **or counted**, and
+this file sits at a public, forwardable URL. So the `left` scene is a *scatter*,
+not a row: 45 figures with jitter wider than the column pitch, staggered rows,
+and scale and opacity by depth. There is no caption, no number on screen and no
+number in the line. **Three** sink away — his own "a couple", a visual device,
+not the branch's arithmetic. **Do not make it twelve.**
+
+The first cut jittered by a seventh of the pitch and rendered as a tidy grid of
+34 — which is to say, as a number. If the eye can resolve a count out of it, it
+is wrong.
+
+#### The names he asked for are not in the film
+
+He asked for two people to be named as terminated. They are not in it and must
+not be added. Naming a person as terminated at a public URL is the single most
+exposing line that could go on one, and it is the exact harm the no-naming rule
+exists to prevent. The count makes his point and names nobody.
+
+**The figure is the branch's own, on his word**, asked and answered the same day
+(he chose "say three, on your word" over three alternatives). It is labelled on
+screen as the branch's own record, because the system does not support it:
+Salesforce's `Employment_Status__c` gives **four** Terminated under the two
+current units — 2012, 2015, 2018 and 2019 — and does not carry the September
+2026 case at all; and unit membership today is not thirty-two years of branch
+history, since the old units are gone. So the screen says whose record it is
+rather than passing it off as Salesforce's. If that number is ever changed it is
+one constant and one re-voiced line.
+
+The `outcome` scene puts it beside the ordinary outcomes — retired, vested,
+resigned — which is what reframes September as thirty-two years of branch life.
+Those are **his own four words**, and the first cut softened "resigned" to
+"moved on", which is a euphemism sitting among three HR terms: the parallel is
+what makes the row read as ordinary branch life rather than as a verdict.
+Those three carry no figures and no counts: there is no reliable split behind
+them (`Not Active` is a catch-all over twenty people), and a silhouette on the
+terminated tile would invite the eye to read a sex or a face onto three real
+people.
+
+#### Four traps, three of them the same trap
+
+- **`fIn` ends on `transform: none`**, so it wipes the `translateX(-50%)` that
+  places an element, and the rise's ground glow slid out to the right as a grey
+  smear. **Third time this has cost a shot** — the journey ring and the AI badge
+  were the first two. Anything placed by a transform gets a keyframe that moves
+  **opacity alone**; `rsFade` is that keyframe.
+- **`numPop` never touches opacity** — it is `scale(1)` → `1.07` → `scale(1)`,
+  so anything set `opacity: 0` and animated with it stays invisible for ever.
+  An element starting at `scale(0)` is fine, because numPop's own 0% frame
+  restores it.
+- **A `::after` with `inset: 0` and a gradient is not a light sweep**, it is a
+  slab of painted ground beside the subject, and it reads as a rendering fault.
+  A sweep lights the **subject**: here a brightness pulse on the figures
+  themselves, delayed by column.
+- **`.small` is the shell's**, and the class-collision guard caught it — the
+  fourth time that guard has earned its keep. It still does **not** cover a
+  collision with this film's own sheet, so grep the film's CSS before naming a
+  class, and never fix a collision with a blanket `sed` rename.
+
+#### Two children of `.inner` is a 165px hole
+
+`.rs .inner` is a grid with `gap: 0` and `place-items: center`, so two children
+become two **stretched** rows and each centres in its own half. The headline and
+the wave sat 165px apart for that reason alone. One child — the wave inside the
+`.rscap` — and `.rscap`'s own 1.6vh gap is the whole of it.
+
+#### The page's running time is guarded now
+
+The page states the film's length twice, and it goes stale every time a scene is
+added. That is the same class of fault as a stale headcount, so the builder
+checks it the same way rather than leaving it to memory: the stated `m:ss` has
+to match `sum(SECS)`, and a mismatch names the right value.
+
+### Nineteen agents, and eighty-seven over sixteen years — 29 October 2026
+
+Asked for in these words: *"ok so its 19agents we have as a count and all our
+staff none of our admins left us 3 support and a Bma, also you need to condense
+and deep dive as we have alot going for us and mush more motion and graphics
+that apeals"*, then *"can you get the number resigned, vested, and retired this
+will make an impact. research"*, then *"pull up the names and i will tell you so
+we can update"*.
+
+**33 scenes, 4:58** — seven scenes out of the cut and eleven seconds shorter,
+with a whole new deep-dive scene in it.
+
+#### The count was wrong, and the fix is a labelling one
+
+Twenty-one active agent Contacts sit under the two current units once Javid and
+Aleema come off (*"javid and aleema will come off the agent count in the next 3
+years so they are not in the branch and other under a different arrangement"*).
+**Two of the twenty-one are the Branch Manager and the Unit Manager**, so the
+film's old "twenty-one agents and managers" was counting the managers as
+agents. It now reads **19 agents · 2 managers · 5 behind them**, and the five
+are named for what they are: **3 support, the BMA, and the branch driver**.
+`MANAGERS`, `AGENTS` and `ADMIN` are derived, so none of it can drift.
+
+**Pawan is the driver, not an admin, and he is not dropped.** His own word was
+"3 support and a BMA", which is the admin team; the driver is branch staff all
+the same, and leaving a colleague out of a film about who stayed is the lie by
+omission that put the support team on this film in the first place.
+
+#### Salesforce cannot say who retired, so the branch said it
+
+The ask was for the number resigned, vested and retired. **Salesforce holds
+none of it.** Its `Employment_Status__c` picklist carries four values — Active,
+Resigned, Terminated, Not Active — and `Agent_Work_Status__c` is **empty on all
+87 agent records**. So "Not Active" (26 people) was carrying the retirements,
+the vestings and the transfers with nothing to tell them apart.
+
+The 31 Not Active and Terminated names went to the branch manager with each
+one's hire date, leaving date, years served and age at exit, and he went through
+them one by one. **That markup is the only record of the distinction** and it
+lives in `OUTCOMES` in `build-risefilm.py`:
+
+| | | |
+|---|---|---|
+| Still here | **23** | 19 agents, 2 managers, and Javid and Aleema |
+| Resigned | **51** | |
+| Retired | **4** | all four left at 57 or over, with 7–18 years in |
+| Vested | **3** | |
+| Transferred | **2** | moved on inside Guardian |
+| Terminated | **2** | |
+| Unrecorded | **2** | no status on the Contact at all |
+| | **87** | every agent record the four units hold |
+
+**His markup moved four of Salesforce's five "Terminated" to resigned**, and
+moved one of its "Not Active" — the September 2026 case, which Salesforce has
+simply wrong — to terminated. So **two terminations**, not the five on the
+picklist and not the three he first recalled from memory. A name-by-name count
+beats a recollection, and two is the stronger number anyway.
+
+**Salesforce's agent history starts in 2010**: its oldest exit on file is
+September 2010. So the film says **sixteen years**, not the branch's full
+thirty-two, and the scene's foot says whose record it is.
+
+**The names are not in the film and must never be.** This page sits at a
+public, forwardable URL and the standing rule that nothing characterises anyone
+who left is at its strongest here. He had earlier asked for two people to be
+named as terminated; the count makes the point and names nobody, and no count
+here can be worked back to a person.
+
+#### The scene: eighty-seven figures, and the eye finds the two
+
+`outcome` is now the whole sixteen years on one screen — one figure per agent
+record, grouped by what happened, the two terminated in white with a ring
+leaving them. The point is a thing the room **finds** rather than a number it is
+told. Three things about it worth keeping:
+
+- **One neutral silhouette for all 87.** The figurines elsewhere carry each
+  person's sex off their own Salesforce record; for the sixty-two who left that
+  is not on file and would have to be guessed, so this grid claims nothing
+  about anybody.
+- **Eighteen across, not fifteen.** Six rows crowded the legend and the foot.
+- **The `.rsppl::after` halo is off here.** Eighty-seven radial-gradient halos
+  is a frame cost for nothing; the two lit figures reuse it as a ring.
+
+#### Three live rendering bugs, found by a guard that should have existed
+
+`_guard()` has always refused a scene class the **shell** already styles. It
+said nothing about a class **this film's own sheet** already uses, and that had
+silently broken three scenes in the cut that shipped:
+
+- **`.rstick`** — `day`'s seven tick marks along the 5am–6pm bar were being
+  drawn by `digital`'s rule (`left:50%;width:1px`), so all seven collapsed onto
+  one invisible line at the centre.
+- **`.rslab`** — `signin`'s "Agent number" caption was being absolutely
+  positioned by `digital`'s timeline rule and floating away from its box.
+- **`.rsurl`** — `ask`'s big periwinkle URL was being drawn small and cyan by
+  `signin`'s rule.
+
+All three were `digital`'s unprefixed timeline classes winning on source order.
+They are `.rsdtk` and `.rsdlb` now, and `signin`'s is `.rssurl`.
+
+**`_guard_own()`** now refuses the shape that causes it: **two base rules
+setting the same property to different values**. A broad "this class has more
+than one rule" check names nineteen classes here, because a base rule plus a
+later additive one is the ordinary pattern (`.rsfoot` picks up
+`position:relative` three hundred lines on, deliberately) — and a warning
+nobody reads is worse than none. The narrow check has no false positives, and
+it caught a duplicated `display` inside a single rule of mine within the hour.
+
+It is **not** a complete guard: the `.rslab` case had no overlapping property
+and would still slip through. So the rule stands — **grep the film's own CSS
+before naming a class, and never fix a collision with a blanket `sed`**, which
+renames the older one too.
+
+#### A number followed straight by a verb is what this voice slurs
+
+The strict word check earned its keep three more times:
+
+- **"Four retired out of it" came back as "for a tired out of it"** — on the
+  retirements line, the thing he had asked for by name. The fix is not to
+  re-word around it but to change the shape: **"There were four retirements"**,
+  a noun phrase, which this voice has never got wrong. Same family as "No
+  ceiling" → "No seating" and "into something" → "and is something".
+- **"So we didn't go digital this year" → "So it didn't"**, the two-word
+  opening clause again. The "So" went, rather than being worked around.
+- **One clip came back 0.72 seconds long**, cut off after six of its
+  thirty-seven words. That is a **retry, not a rewrite** — the same words came
+  back clean and complete on the second run. Always compare the word count in
+  `words.json` against the line before concluding the voice cannot say it.
+
+Accepted as transcription artifacts rather than read faults, because the voice
+says them correctly: `pendings`→"pinnings", `every one`→"everyone", and every
+numeral Whisper writes as digits.
+
+#### The condense, and what it actually bought
+
+Seven scenes left the cut. Five were merges where one of the two visuals was
+clearly the stronger and the other's line folded into it — `first` into
+`digital` (the fifteen-year rail beats the document), `ffagents` into `ffdata`
+(numbers beat the paper graphic), `fraud` into `conduct` (seven clauses beat
+three flags), `outside` into `prod` (three wall screens beat one), `friday`
+into `yours` (the 75-of-90 split carries the point, so it took the date into
+its eyebrow). Two were dropped outright: **`replica`**, ten real screens behind
+a line that only said "these are real", every one of which is already on screen
+in another scene; and **`plan`**, whose three-year horizon folded into `path`'s
+career ladder, since five closing scenes already looked forward.
+
+**Words went up, not down**, and that is the trade he asked for: the deep dive
+added thirty-seven words of new content and the merges removed fifty-one of
+framing. "Condense and deep dive **as we have a lot going for us**" means fit
+more in without it getting longer, not say less.
+
+#### `ffdata` gained the shape of the fact-find year
+
+Four bars — July 20, August 53, September 33, October 34 — read off
+FactFind360's own pulse feed on 29 October, with October marked as still
+running. **They do not sum to the 144 year-to-date** because the feed counts
+from 1 July, so the strip is labelled by month and never as a total. The figure
+sits **on** its bar rather than in a grid row of its own: with the number on a
+fixed row, July's 20 floated a long way above its short bar and read as
+unattached.
+
+### The ethics block, the two waves, and ninety-eight agents — 30 October 2026
+
+Asked for across a morning, in these words: *"we had a migration … we did rise
+back up … deep dive to show how we are resilient. We have been through it.
+It's normal. It's natural"*; *"deep dive in terms of international, what goes
+on"*; *"people when they look at the branch speak about us not hitting quotas,
+you never hear about the ethics and values we stand for … do you allow fraud
+etc, with the systems the branch built it's detected early and decisions made
+… no one can point a finger at us!!! so build this into the message deep so
+all will know our culture and what we stand for"*; *"central bank market
+conduct, all ads, processes etc is being built with market conduct in mind
+from all our communication"*; *"allowed both [unit managers] to recruit but
+was concerned about the quality of recruiting as we cannot be about a number,
+they did not like, so frame this properly"*; and *"i want this to be very
+impressive"*, with *"i will be sharing this with our executives"*.
+
+**The quotations above are elided where he named somebody or named the
+competitor**, for the reason the next section gives: this file is published.
+
+**Nine new scenes, 42 in all.** `stand`, `bycode`, `examiner`, `caught`,
+`cost`, `quality`, `waves`, `world`, `rebuild`, in that order, straight after
+`outcome` — so the arc is: here is the sixteen-year record → here is what we
+stand for → here is that it is designed in → here is what an examiner would
+find → here is what we did when we found something → here is what the standard
+costs → and at the door too → we have taken a wave before → it happens
+everywhere → so here is how we rebuild.
+
+#### What may not go in it, which decided the whole block
+
+He described five departures by name and by the conduct behind each, and asked
+for it to be built into the message. **None of it is in the film and none of it
+is in this file**, which is published at the repository root like every other
+page. The rule that nothing characterises anyone who left is at its strongest
+here, and three things make this the clearest case of it yet:
+
+- an unproven allegation about a named, identifiable person, **published**, is
+  the one thing that would destroy the argument these scenes make — a branch
+  cannot claim it is compliant on a page that libels somebody;
+- two of the people described are **serving agents**, which makes that one a
+  live matter for Compliance, not film content;
+- the April 2026 brief that most of the hard numbers come from is marked
+  CONFIDENTIAL and carries **client names and a policy number**, which may
+  never enter this repository or an MP4 at a public URL.
+
+So the argument is made with **counts and controls**, which name nobody and
+cannot be worked back to a person — and it is stronger that way, because every
+line of it is a record the branch can actually hand over. Where he wanted a
+person characterised, the film says what the branch did instead: *"We found it.
+We investigated it. We called the client ourselves. We recovered the money. And
+we put the whole record on file."*
+
+Neither unit manager is named in `quality` either. The decision to recruit to a
+standard was the branch's; who disliked it is not film content.
+
+**No money figure.** He asked for profitability. Every dollar figure stays off
+this film, as it did for the three-year-plan papers, and the cash-collection
+control's own value and the renewals report's tracked sum came out with them —
+the **count** makes the compliance point and the money does not. The branch's
+persistency, 4.96% lapse against 8.82%, is the profitability argument an
+insurer actually makes, and the `keep` scene already carries it.
+
+#### The record type is a trap: 87 agents was wrong, and 98 is right
+
+The earlier cut said 87, counting Contact records of record type **AGENT**.
+Twelve more licensed agents of this branch sit under **BUSINESS CONTACT**,
+**ORPHAN** and **RECRUIT** instead — one of them wrote 360 policies — because
+when an agent leaves and their book is orphaned, somebody switches the record
+type.
+
+**So the test for "an agent came through this branch" is a LIFE LICENCE DATE
+(or a contracted date), never the record type.** On that test it is 98 records
+on the branch's four units, and three of the twelve hidden ones are marked
+Terminated — which is exactly why the terminations were undercounted too. Fix
+both together or neither.
+
+Salesforce's `Employment_Status__c` does carry a **Transferred** value, used
+once; the earlier note that it had none was wrong. `Agent_Work_Status__c` is
+still empty on every record.
+
+#### Four terminations, and two the branch has not ruled on
+
+His markup of 29 October gave two. The third he had recalled himself the day
+before, and Salesforce marks that record Terminated too — so his memory of
+three was right all along, and the reason the count came back as two is that
+it was read off the AGENT record type alone. The fourth he named on 30 October, and
+**Salesforce carries no termination date for that one at all**: the licence
+simply lapsed in June 2022 and was never renewed, and the production tails off
+through early 2023. That is a data gap on a termination and worth putting right.
+
+Salesforce's own Terminated flag is unreliable — he read four of the six he
+reviewed as resignations — so **a verdict of his always beats the flag**, and a
+flag he has not ruled on is counted apart as *Unrecorded* rather than asserted
+either way. Two sit there, from 2013 and 2019, both under the ORPHAN record
+type he never saw. Say the word and it is a one-line change to six.
+
+The table, which must total 98: still here 22, retired 4, vested 3,
+transferred 3, resigned 60, terminated 4, unrecorded 2.
+
+#### The two waves, measured
+
+`WAVES` is the headcount of licensed agents on the branch's units at each 30
+September, off the same 98 records. It is the whole argument of that scene and
+it is measured, not recalled:
+
+| | |
+|---|---|
+| best year | **41**, in 2018 |
+| the wave | 40 → **27** in 2020, thirteen in one year |
+| back | **39** by 2024, four years |
+| now | 22 |
+
+**Where people went is not in Salesforce.** It has no field for it. That a
+group of the 2020 leavers went to one competitor, and the 2026 wave to another,
+is his own knowledge, not the record's — so the scene says *a competitor* and
+names none, which is the standing rule anyway.
+
+**Why the last bar is 22 and the roster scene says 21, which is not a
+contradiction and must not be "fixed":** the series counts licensed agent
+records on the units at a 30 September, including the two who come off over the
+next three years under a different arrangement, because they are active in
+Salesforce today. The roster scene counts who is in the branch now, 19 agents
+and 2 managers, with those two left out. Different populations, a month apart,
+both true. The builder comment says so, so nobody edits one to match the other.
+
+#### What the outside says, with each figure labelled
+
+Checked 30 October 2026. They measure different things and must not be averaged
+into one number, so each is labelled on screen with whose it is:
+
+- **Gurun, Stoffman & Yonker, *Journal of Financial Economics*, 2021** — about
+  **40%** of client assets follow an adviser who changes firms, estimated from
+  registration filings across whole firms. The one peer-reviewed estimate, so
+  it leads, and 60% staying is what the split bar draws.
+- **Cerulli Associates, 2025** — about **22%** of assets lost moving between
+  broker-dealers, about 11% between independent firms. No published sample size,
+  so it is marked as a consultancy's.
+- **Broadridge, 2019** — **47%** of Gen X clients would stay with the firm even
+  if their adviser left.
+- **LIMRA** — about **15%** of full-time financial professionals were still
+  with their hiring company after four years (2020), about 14% recently. That
+  one carries the `quality` scene against the branch's own 31%, and the
+  one-year pair (67% against a published 55–60%) is already in `stay`.
+
+Advisers' own reported retention (80–86%, Fidelity 2023 and Schwab 2024) is
+left out: it measures the clients they *wanted* to bring, which is a different
+thing, and the source says so itself. None of it is Trinidad life insurance,
+and the scene's foot says so.
+
+#### Three traps, and two new guards
+
+- **A second `if name == 'x'` branch in `V()` wins silently.** A `rebuild`
+  branch left over from the 29 October cut was still in the file; my new one
+  shadowed it, and deleting mine would have handed the scene back to a stale
+  one. **`_guard_dup()`** now refuses the build and names the duplicate. That
+  is the fourth guard this film has earned, after the shell-class guard, the
+  own-stylesheet guard and the figures guard.
+- **`spoken()` only went to 999.** The cash-collection control is 2,191, and
+  `divmod(n, 100)` then indexed `_ONES[21]` and threw. It handles thousands
+  now, with "and" before a tens or units remainder the way it is actually said.
+- **A rename that catches the CSS and not the markup is invisible.** The split
+  bar's right-hand label kept `class="g"` after its rule became `.rswgl`, so it
+  fell back to the base rule, lost its `right:` and stacked on top of the other
+  label. Grep the generated `film.html` for the class, not just the builder.
+- A line through the "what most cannot produce" column read as *cancelled*.
+  That column is not cancelled — it is what is **missing** somewhere else — so
+  it is dim with an open marker, and the header carries the meaning.
+
+#### Re-cutting
+
+Nine lines were voiced under their own key and mapped back onto 9–17 and 15;
+the staging directory is built **from scratch** by walking the new scene list,
+never by shifting, because this cut both inserts and revoices and a shift
+cannot express that. Everything else in `### Re-cutting it` below still holds.
+
+### Re-cutting it
+
+Edit `tools/film/rise-lines.json`, push a `tts/job.json` to `tts-run` (**check
+the run was not replaced before it ran** — another session's push 58 seconds
+later took this one's place once already), then:
+
+```bash
+cd tools/film
+python3 importvox.py <tts/out/rise> vorise 1.15 --timing rise-timing.json --lines rise-lines.json
+python3 build-risefilm.py
+python3.13 sfx.py "$(…films.json rise…)" sfx-rise.wav
+python3.13 usetrack.py ../../rr-branch-theme.mp3 rise
+node render.js ../../branchmeet/film.html cap-rise 30
+python3.13 mixany.py "$(…films.json rise…)" ../../branchmeet/branchmeet.mp4
+```
+
+**`importvox.py` does not write `films.json`.** It prints the durations and
+writes the timing file; `durs`, `dur`, and the two cue lists have to be put in
+by hand, and the cue lists are the easy thing to miss — `dark` is scene
+*indices* and `hits` is *seconds*, so both move whenever a scene is inserted.
+Derive them from the timing file's own scene starts rather than guessing:
+inserting ten scenes left the old cues pointing at the wrong moments entirely.
+Reading the built page for `data-at` and walking the scene starts does both in
+one pass, which is how the 29 October cues were made.
+
+The music is the branch's own theme, so the page carries no licence credit.
+`capbg` in films.json is `070F26`, so the burned-in caption strip is the film's
+own navy and not donthaveanagent's. Voice: Andrew Expressive, every one of
+the thirty-three clips checked for their language **and their words** (`wordcheck.py` in the
+session scratchpad; see the strict word check above). **Re-voice only the lines
+that changed**, under a key of their own (`risefix`, `risefix2`), and copy each
+clip onto its real index before `importvox.py` runs: the runner numbers a job's
+lines from 01, so a six-line fix lands as 01–06 and has to be mapped back.
+
+**Inserting or dropping a scene means renumbering the vox**, because
+`importvox.py` reads a whole runner directory and numbers the timing from it.
+For an insertion, stage a copy of the last full run (`vox39` etc. in the session
+scratchpad) and shift every clip at or after the insertion point up by one
+**newest first**, so nothing is overwritten on the way past. For a cut that both
+drops scenes and merges others, do not shift at all — **build the staging
+directory from scratch** by walking the new scene list and copying each
+unchanged clip from its old index, which is what `vox33` is; a shift cannot
+express a reorder and will quietly put the wrong voice under half the film.
+Then run `importvox.py` on the staged directory. `tools/film/vorise` itself has to be shifted the same way, or
+the mixer re-encodes the old voice under the new timing and the caption gives it
+away. Check the printed durations against the previous list: every unchanged
+scene should come back identical, which is how you know the mapping was right.
+**Delete the clips past the new scene count** (`vorise/34..40` after a cut down
+to 33), or a stale WAV waits in the directory for the next cut that grows.
+The poster is cut from the finished MP4 at 2.5 seconds before the end —
+the mended shield on the close, which is the one frame that says what the film
+is for.
 
 ## Web fonts — non-blocking, with a fallback that does not move the page
 
@@ -6694,3 +8638,140 @@ recorded frame by frame, and a recorder must have the real face on frame one
 or the swap shows as a font pop in the MP4. Same for
 `tools/letters/film-card.html`, which is rendered to a JPEG. `apps-script/`
 templates are not web pages and never had one.
+
+
+## Apps Script — the last definition wins, and that is a trap
+
+The branch backend is one shared namespace across `Code.gs`, `RRBranchOS.gs`,
+`RRBranchEmails.gs` and `RRB_Additions.gs`. Two functions with the same name are
+not an error: **the last one loaded is the one that runs.** Every fix delivered
+to this project is therefore a block appended at the end of a file, because an
+append always wins over whatever is above it.
+
+That works, and it is why nothing here is ever edited in place over WhatsApp —
+a paste that lands inside an existing function eats its closing brace, and the
+whole project stops with a `SyntaxError` on a line nobody typed.
+
+**But an append also silently discards any later fix to the same function.**
+
+On 4 September the settlement board could not find its tab. The spreadsheet id
+had been saved to Script Properties, and the version of `rrbSettleSheet_` that
+reads that property had been pasted and saved. Both were correct. The board was
+running a *different* `rrbSettleSheet_` — an older copy, from a settlement block
+that had been pasted three more times underneath it. Last wins, and last was the
+one that did not know about the property.
+
+It cost an evening, because from outside the script all three possible causes
+look identical: the file not pasted, the version not deployed, and a later copy
+winning. Reading the file settled it in seconds.
+
+So, when appending:
+
+- **Say what the block redefines**, at the top, by name. If a function is being
+  replaced, the next person needs to know without diffing.
+- **Never send the same block twice.** A second paste of an older copy undoes
+  every fix made to those functions since.
+- **Carry a build marker** in `doGet`'s "Unknown action" reply. `?action=zzz`
+  then names the running build from outside, with no sign-in.
+- **Ship a self-check** with anything structural. `String(fn).indexOf('...')`
+  reads the *live* function body, so the script can be asked which copy won
+  instead of it being inferred. `rrbSettlementSelfCheck` is the pattern.
+
+A marker alone is not enough: it lives inside the block being pasted, so it
+cannot tell "never pasted" apart from "never deployed". The self-check can.
+
+## Apps Script — a gated action must never go in `cacheableActions`
+
+`doGet` caches some replies under the key
+`"rrb_" + action + code + year`. **There is no token in that key.** So a
+sign-in-gated action added to that list is gated only until the first
+authorised read: the reply is stored, and for the next `ttl` seconds anyone
+with the URL and no sign-in gets the stored copy back. The wall re-reads its
+feeds every few minutes, so the copy never expires.
+
+On 8 September 2026 the `ratings` action — every advisor's average and the
+clients' own words — was readable from outside for that reason, on both
+deployments, for most of a day. Found by probing `?action=ratings` with no
+token and getting data instead of "Sign in to see ratings."
+
+Rules:
+
+- **Nothing that calls `rrbAuthorize_` goes in `cacheableActions`.** If it
+  must be cached, the key has to carry the token — and then it is per-person
+  and barely worth caching.
+- **After every deploy, probe each gated action from outside with no token**
+  (`settlement`, `ratings`, `submitted`, `clear_cache`). The only acceptable
+  answer is a sign-in error. `?action=zzz` proves the build; it does not
+  prove the gates.
+
+## Production is counted on the pick-up date, not the submission date
+
+Branch production — the "submitted" figure on the wall and the one head office
+reads — comes from **Salesforce**, not from the fact find sheet, and it is
+keyed on a date that is easy to get wrong.
+
+**It is two Salesforce objects, not one**, and their field names do not match.
+
+New business — life and pensions:
+
+| | |
+|---|---|
+| Object | `CLIENT_PORTFOLIO__c` |
+| Date | `Production_Picked_up_Date__c` |
+| API | `SUM(Total_API__c)` |
+| Apps | `SUM(App_Count__c)` |
+| Agent | `AGENT__r.Agent__c` |
+| Product mix | `RecordType.Name` |
+
+Increases — their own object, their own dates:
+
+| | |
+|---|---|
+| Object | **`Policy_Increases__c`** |
+| Date | `Increase_Production_Picked_Up_Date__c` |
+| API | `SUM(Increase_API__c)` |
+| Apps | `SUM(App_Count_Inc__c)` |
+| Agent | `Policy_Increases__r.AGENT__r.Agent__c` — through the relationship, not direct |
+
+**Mind the capital.** New business is `Picked_up`; the increase is
+`Picked_Up`. One letter, and Salesforce refuses the whole query. Copy these
+names, do not retype them.
+
+Branch production is the two added together. Query one and the number is wrong
+and looks right.
+
+**"Picked up" means the application pick-up date** — the day the application
+was collected, which is the day the branch is credited with the production. It
+is not the day the policy was issued, not the day cover started, and not the
+day the advisor submitted the fact find. The whole report hangs on that one
+date, on both objects.
+
+`wall.html` states the rule on the report itself: *"Total API = new business on
+its production picked-up date + increases on theirs."*
+
+Two routes serve it, both on that same basis:
+
+- `?action=prodboard` → `sfBoard` → `pbSalesforce.gs`, querying Salesforce live
+- `?action=submitted` → `getSubmitted()` in `Code.gs`, reading `PENDING_SHEET_ID`,
+  whose pick-up tab is recognised by the headers `production picked up date`,
+  `total api`, `app count` (`_identifyTab`, Code.gs ~1647)
+
+**Why this bites.** Every other date on a policy is tempting and wrong.
+`EFFECTIVE_DT` is when cover starts, `submittedAt` is when the advisor sent the
+fact find, `App_Received_Date__c` is when it was keyed. Totalling on any of
+them produces a number that looks plausible, disagrees with the wall, and
+disagrees with what head office already has — and nothing says which is right.
+
+**And increases count.** An increase on an existing policy is production on the
+day it is picked up. Counting new business alone understates the branch.
+
+Note this is a different question from the fact find's cover rule: there, only
+life sums assured count toward the underwriting ceiling. That is about cover
+recommended to one client. This is about what the branch wrote and had picked
+up. The two rules do not conflict and must not be mixed.
+
+**There is no stored production report.** `RRB-production-YYYY-MM-DD.xlsx` is
+built in the browser by `wall.html` when the Spreadsheet button is pressed. Six
+tabs, of which only `Submitted` is live — the other five read the hardcoded
+`PROD` literal, frozen at its `asOf` date, because `PROD_ENDPOINT` is blank.
+Searching Drive for that workbook finds nothing; it has to be computed.

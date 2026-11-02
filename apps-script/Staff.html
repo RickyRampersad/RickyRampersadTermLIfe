@@ -1,108 +1,190 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <base target="_top">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guardian Renewals: Staff</title>
+<link rel="icon" href="https://rickyrampersadbranch.com/orphan-transition/board-mark.png">
+<?!= rrTheme_() ?>
 <style>
-:root{
-  --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
-  --gold:#efc24b; --gold2:#dca530; --teal:#00CFEA; --teal2:#00A8C5;
-  --text:#edf4fb; --muted:#a9bbcf; --faint:#7a90a8; --line:rgba(255,255,255,.10);
-  --green:#35d07f; --red:#ff7a7a; --amber:#efc24b;
+/* ---- the staff dashboard, on the renewal theme (26 October 2026) ----
+   A work tool used all day: wider than the client pages on a laptop, one
+   column on a phone, every status a word and a colour, actions in reach. */
+.rr-main.st-wide{width:min(1360px,100% - 32px)}
+@media (min-width:700px){.rr-main.st-wide{width:min(1360px,100% - 48px)}}
+.rr-top .brand{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rr-top .meb{display:flex;align-items:center;gap:10px;min-width:0;flex:none}
+.rr-top .meb .who b{max-width:200px}
+@media (max-width:560px){.rr-top .meb .who{display:none}}
+@media (max-width:400px){.rr-tabs{top:54px}}
+
+/* the first screen */
+.st-hero .rr-band{padding-bottom:40px}
+.st-hero .hrow{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+.st-hero .hrow>div{min-width:0;flex:1 1 300px}
+.st-hero .hrow p{margin:4px 0 0;max-width:60ch}
+.rr-btn.onband{background:#fff;color:var(--mid);box-shadow:0 8px 22px rgba(17,35,64,.18)}
+.rr-btn.onband:hover{color:var(--ink)}
+.st-hero .glance{display:grid;gap:18px;grid-template-columns:1fr}
+@media (min-width:900px){.st-hero .glance{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px}}
+.gl-h{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:.8rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:0 0 6px}
+.gl-h .end{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:600}
+@media (max-width:600px){.gl-h .end{margin-left:0;flex-basis:100%;padding-left:1.6em}}
+
+/* tiles that filter */
+.st-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:600px){.st-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (min-width:1180px){.st-tiles{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.st-tiles .rr-tile{min-height:96px}
+.st-tiles .rr-tile .k{font-size:.7rem;line-height:1.25;align-items:flex-start}
+.st-tiles .rr-tile .k svg.i{margin-top:1px}
+@media (max-width:440px){.st-tiles .rr-tile{padding:11px 12px 10px;min-height:88px}.st-tiles .rr-tile .v{font-size:1.5rem}}
+
+/* the pipeline, stacked, with keys that filter */
+.pk-row{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 0;padding:0;list-style:none}
+.pk{font:inherit;font-size:.8rem;white-space:nowrap;color:var(--body);background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:6px 11px 6px 9px;min-height:36px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.pk:before{content:"";width:10px;height:10px;border-radius:3px;background:var(--c)}
+.pk b{color:var(--ink)}
+.pk:hover{border-color:var(--blue2)}
+.pk.on{border-color:var(--ink);box-shadow:0 0 0 2px rgba(27,42,68,.12)}
+.st-stack{height:22px;margin:4px 0 10px}
+
+/* renewals by month: columns, renewed under open, the count on top */
+.mch{display:flex;align-items:flex-end;gap:5px;margin:2px 0 0;padding:0}
+.mch .mc{flex:1;min-width:0;font:inherit;background:none;border:0;padding:4px 0 2px;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--dim)}
+.mch .mc:hover{background:var(--soft)}
+.mch .mc.sel{background:var(--sky);box-shadow:inset 0 0 0 2px var(--blue2)}
+.mch .mc b{font-size:.74rem;color:var(--ink);font-variant-numeric:tabular-nums;min-height:1.1em}
+.mch .mc .st{display:flex;flex-direction:column;justify-content:flex-end;width:100%;max-width:30px;height:var(--H,110px);gap:2px}
+.mch .mc .st i{display:block;width:100%;height:var(--h);border-radius:6px 6px 2px 2px;transform-origin:50% 100%;animation:rr-grow .9s var(--ease) both}
+.mch .mc .st i.o{background:linear-gradient(180deg,var(--blue2),var(--blue))}
+.mch .mc .st i.d{background:linear-gradient(180deg,#28B07D,var(--ok));border-radius:2px}
+.mch .mc .st i.o+i.d{border-radius:2px}
+.mch .mc small{font-size:.68rem;font-weight:700}
+.mch .mc.now small{color:var(--rn);font-weight:900}
+.mch .mc.now small:after{content:"";display:block;width:5px;height:5px;border-radius:50%;background:var(--rn);margin:2px auto 0}
+.mkey{display:flex;gap:14px;font-size:.78rem;color:var(--body);margin:8px 0 0;padding:0;list-style:none}
+.mkey li{display:inline-flex;align-items:center;gap:6px}
+.mkey li:before{content:"";width:10px;height:10px;border-radius:3px;background:var(--c)}
+
+/* this month and next: the two months side by side, every renewal in them */
+.mm{display:grid;gap:14px;grid-template-columns:1fr}
+@media (min-width:760px){.mm{grid-template-columns:1fr 1fr}}
+.mm-col{border:1.5px solid var(--line);border-radius:16px;padding:14px;background:#fff;min-width:0;animation:rr-rise .45s var(--ease) both}
+.mm-col+.mm-col{animation-delay:.08s}
+.mm-col.now{border-color:var(--blue2);box-shadow:0 10px 26px rgba(58,123,213,.10)}
+.mm-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 4px}
+.mm-h b{font-size:1.18rem;color:var(--ink)}
+.mm-h small{color:var(--dim);font-size:.8rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.mm-n{font-size:2rem;font-weight:900;color:var(--ink);line-height:1.1;font-variant-numeric:tabular-nums}
+.mm-sub{color:var(--body);font-size:.88rem;margin:0 0 10px}
+.mm-list{display:grid;gap:6px;margin:12px 0 0;padding:0;list-style:none}
+.mm-r{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;font:inherit;text-align:left;background:#FAFCFE;border:1.5px solid var(--line);border-radius:12px;padding:8px 10px;min-height:48px;cursor:pointer;color:var(--ink);position:relative;overflow:hidden}
+.mm-r:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.mm-r:hover{border-color:var(--blue2)}
+.mm-r:focus-visible{outline:3px solid var(--blue2);outline-offset:2px}
+.mm-d{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:var(--sky);color:var(--mid);font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.mm-d small{font-size:.62rem;font-weight:800;text-transform:uppercase}
+.mm-w{min-width:0}
+.mm-w b{display:block;font-size:.92rem;overflow-wrap:anywhere;line-height:1.25}
+.mm-w small{display:block;color:var(--dim);font-size:.78rem;overflow-wrap:anywhere}
+.mm-r .rr-pill{white-space:nowrap}
+.mm-more{margin:10px 0 0}
+.mm-empty{color:var(--dim);font-size:.9rem;margin:12px 0 0}
+
+/* the toolbar */
+.st-tools{display:grid;gap:10px;margin:0 0 14px}
+.st-tools .r1{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.st-tools .srch{position:relative;flex:1 1 240px;min-width:0}
+.st-tools .srch svg.i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--dim)}
+.st-tools .srch .rr-in{padding-left:42px}
+.st-tools .r2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:8px}
+.st-tools .rr-opts{margin:0}
+.st-tools .rr-opts button{min-height:46px}
+
+/* the list: one row a renewal */
+.rl{display:grid;gap:8px}
+.rrow,.rhead{display:grid;grid-template-columns:minmax(9rem,1.6fr) 8.2rem 8.6rem 8.4rem minmax(6rem,.9fr) 8.4rem;gap:10px;align-items:center}
+@media (min-width:900px){.c-due .dd{flex-direction:column;gap:0}.rrow .c-lt small{display:none}}
+.rhead{padding:0 12px 4px 18px;font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.rrow{border:1.5px solid var(--line);border-radius:14px;padding:10px 12px 10px 18px;background:#fff;position:relative;overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .12s;animation:rr-rise .4s var(--ease) both}
+.rrow:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c,var(--line))}
+.rrow:hover{border-color:var(--blue2);box-shadow:0 8px 20px rgba(58,123,213,.12)}
+.rrow:focus-visible{outline:3px solid var(--blue2);outline-offset:2px}
+.rl .rrow:nth-child(2){animation-delay:.03s}.rl .rrow:nth-child(3){animation-delay:.06s}.rl .rrow:nth-child(4){animation-delay:.09s}.rl .rrow:nth-child(n+5){animation-delay:.12s}
+.c-who{min-width:0}
+.c-who b{display:block;color:var(--ink);font-size:.98rem;overflow-wrap:anywhere;line-height:1.3}
+.c-who small,.c-lt small{display:block;color:var(--dim);font-size:.8rem;overflow-wrap:anywhere}
+.c-due{min-width:0;font-size:.86rem;color:var(--ink)}
+.c-due .dd{display:flex;justify-content:space-between;gap:6px;font-variant-numeric:tabular-nums}
+.c-due .dd span{color:var(--dim);font-size:.78rem;white-space:nowrap}
+.c-due .dd span.hot{color:var(--bad);font-weight:800}
+.dm{height:7px;border-radius:999px;background:#EAF0F8;overflow:hidden;margin:5px 0 0}
+.dm i{display:block;height:100%;width:var(--w);background:var(--c);border-radius:999px;transform-origin:0 50%;animation:rr-growx .9s var(--ease) both}
+.c-st .rr-pill{white-space:normal;text-align:left}
+.c-lt{min-width:0;font-size:.82rem;color:var(--body)}
+.c-asg label{display:block}
+.c-act{display:flex;gap:6px;justify-content:flex-end}
+.c-act .rr-btn.sm{min-height:44px}
+.ic-btn{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line2);background:#fff;color:var(--blue);display:grid;place-items:center;text-decoration:none;flex:none}
+.ic-btn:hover{border-color:var(--blue2);color:var(--mid)}
+.asg{font:inherit;font-size:max(16px,.86rem);color:var(--ink);background:#FAFCFE;border:1.5px solid var(--line2);border-radius:11px;padding:8px 30px 8px 10px;min-height:44px;width:100%;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%233A7BD5' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;cursor:pointer}
+.asg:focus{outline:0;border-color:var(--blue2);box-shadow:0 0 0 3px rgba(76,148,230,.18)}
+.asg.none{color:var(--dim)}
+@media (min-width:900px){.asg{font-size:.86rem}}
+@media (max-width:899px){
+  .rhead{display:none}
+  .rrow{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"who st" "due due" "asg act" "lt lt";gap:9px 10px;padding:12px 12px 12px 17px}
+  .c-who{grid-area:who}.c-st{grid-area:st;justify-self:end}.c-due{grid-area:due}.c-asg{grid-area:asg}.c-act{grid-area:act}.c-lt{grid-area:lt}
+  .c-lt:empty{display:none}
+  .c-lt small{display:inline;margin-right:6px}
+  .st-tools .r2{grid-template-columns:1fr 1fr}
+  .pk{font-size:.76rem;padding:5px 9px 5px 8px;min-height:34px;gap:5px}
+  .pk-row{gap:5px}
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{font:14px/1.55 'DM Sans',sans-serif;color:var(--text);
-  background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 70%,var(--bg) 100%);
-  min-height:100vh;padding-bottom:70px}
-h1,h2,h3,h4{font-family:'Montserrat',sans-serif}
-.head{background:rgba(7,19,31,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:12px 18px;position:sticky;top:0;z-index:30}
-.head .in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.gmark{width:38px;height:38px;flex-shrink:0}
-.head h1{font:800 15px/1.2 'Montserrat';color:var(--gold);letter-spacing:.3px}
-.head .sub{font-size:11.5px;color:var(--muted)}
-.thpick{margin-left:auto}
-.head .me{margin-left:0;font-size:12.5px;color:var(--muted)}
-.head .me b{color:var(--text)}
-.head .me a{color:var(--teal)}
-.wrap{max-width:1180px;margin:0 auto;padding:16px 14px}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;transition:.15s}
-.kpi:hover{border-color:var(--teal2)}
-.kpi.active{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal)}
-.kpi .n{font:800 23px 'Montserrat';color:var(--teal)}
-.kpi.warn .n{color:var(--red)}
-.kpi.gold .n{color:var(--gold)}
-.kpi .l{font-size:11.5px;color:var(--muted)}
-.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
-.bar input[type=search]{flex:1;min-width:180px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;background:var(--bg);color:var(--text);outline:none}
-.bar input[type=search]:focus{border-color:var(--teal)}
-.abtn{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:8px 13px;font:600 13px 'DM Sans';color:var(--text);cursor:pointer;transition:.15s}
-.abtn:hover{border-color:var(--teal)}
-.abtn.primary{background:linear-gradient(135deg,var(--teal),var(--teal2));border-color:transparent;color:#04202b;font-weight:700}
-.abtn.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));border-color:transparent;color:#3a2c05;font-weight:700}
-.abtn.sm{padding:5px 10px;font-size:12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:14px;overflow:hidden}
-.card h2{font:800 11.5px 'Montserrat';color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:12px 16px;border-bottom:1px solid var(--line)}
-table{width:100%;border-collapse:collapse}
-th{background:var(--bg2);color:var(--teal);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:9px 12px;white-space:nowrap}
-td{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}
-tbody tr{cursor:pointer}
-tbody tr:hover{background:rgba(0,207,234,.05)}
-.chip{display:inline-block;font:700 10.5px 'Montserrat';padding:2px 9px;border-radius:99px;white-space:nowrap}
-.c-over{background:rgba(255,122,122,.15);color:var(--red)}
-.c-due{background:rgba(239,194,75,.15);color:var(--gold)}
-.c-wait{background:rgba(0,207,234,.15);color:var(--teal)}
-.c-done{background:rgba(53,208,127,.15);color:var(--green)}
-.c-up{background:rgba(255,255,255,.08);color:var(--muted)}
-.mini{font-size:11px;color:var(--faint)}
-.login{max-width:420px;margin:70px auto;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px}
-.login h2{color:var(--gold);margin-bottom:6px}
-.login p{font-size:13px;color:var(--muted);margin-bottom:14px}
-.login input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:inherit;background:var(--bg);color:var(--text);margin-bottom:10px;outline:none}
-.login input:focus{border-color:var(--teal)}
-.err{background:rgba(255,122,122,.12);color:var(--red);border-radius:10px;padding:10px 13px;margin-top:10px;font-size:13px;display:none}
-/* drawer */
-.ov{position:fixed;inset:0;background:rgba(2,8,14,.6);z-index:40;display:none}
-.ov.open{display:block}
-.dr{position:fixed;top:0;right:-540px;width:540px;max-width:96vw;height:100vh;background:var(--bg2);border-left:1px solid var(--line);z-index:50;box-shadow:-8px 0 30px rgba(0,0,0,.5);transition:right .2s;display:flex;flex-direction:column}
-.dr.open{right:0}
-.dr .dh{background:var(--bg);border-bottom:1px solid var(--line);padding:16px 20px}
-.dr .dh h3{font-size:16px;color:var(--gold)}
-.dr .db{flex:1;overflow-y:auto;padding:16px 20px 40px}
-.sec{margin-bottom:18px}
-.sec h4{font:800 11px 'Montserrat';color:var(--teal);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}
-.kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:13px}
-.kv .k{color:var(--faint);font-size:11px;text-transform:uppercase}
-.kv .v{font-weight:600}
-.tl{border-left:2px solid var(--line);padding-left:12px}
-.tl .it{margin-bottom:9px;font-size:12.5px}
-.tl .it .w{color:var(--faint);font-size:11px}
-.tl b{color:var(--teal)}
-textarea,select,input[type=text],input[type=date],input[type=email]{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;background:var(--bg);color:var(--text);outline:none}
-textarea:focus,select:focus,input[type=text]:focus,input[type=date]:focus,input[type=email]:focus{border-color:var(--teal)}
-select option{background:var(--bg2);color:var(--text)}
-textarea{min-height:56px;resize:vertical}
-label{display:block;font-size:12px;color:var(--muted);font-weight:600;margin:9px 0 3px}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.task{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 11px;margin-bottom:6px;font-size:13px}
-.task.over{border-color:rgba(255,122,122,.5);background:rgba(255,122,122,.07)}
-.task .t{flex:1}
-.modal{position:fixed;inset:0;z-index:60;background:rgba(2,8,14,.7);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px}
-.modal.open{display:flex}
-.mw{background:var(--bg2);border:1px solid var(--line);border-radius:16px;max-width:520px;width:100%;padding:22px}
-.mw h3{color:var(--gold);margin-bottom:12px}
-.grid2col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:900px){.grid2col{grid-template-columns:1fr}}
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--gold);color:#3a2c05;font-weight:700;padding:10px 20px;border-radius:99px;font-size:13px;z-index:80;display:none}
-/* production — head office's own look */
-.pbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-.pwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
-.ptable{width:100%;border-collapse:collapse;font:13px 'DM Sans';min-width:720px;background:#fff;color:#1a2433}
-.ptable th,.ptable td{border:1px solid #c9d4c4;padding:5px 9px;white-space:nowrap}
-.ptable thead tr.ptitle th{background:#4a7c2f;color:#fff;font:800 12.5px 'Montserrat';letter-spacing:.14em;text-align:center;padding:6px}
-.ptable thead tr:last-child th{background:#dfe9d8;color:#1f3d14;font:700 11.5px 'DM Sans';text-align:right}
+.more{font-size:.84rem;color:var(--dim);text-align:center;margin:8px 0 0}
+
+/* side lists: tasks, activity, feedback, queries */
+.tk{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;margin:0 0 8px;background:#fff;position:relative;overflow:hidden;animation:rr-rise .4s var(--ease) both}
+.tk:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,var(--blue2))}
+.tk.over{--c:var(--bad);background:#FFFBFA}
+.tk .ti{width:36px;height:36px;border-radius:10px;background:var(--bg,var(--sky));color:var(--c,var(--blue));display:grid;place-items:center;flex:none}
+.tk .tx{flex:1;min-width:0;font-size:.9rem;color:var(--body)}
+.tk .tx b{color:var(--ink);overflow-wrap:anywhere}
+.tk .tx small{display:block;color:var(--dim);font-size:.8rem;margin:2px 0 0;overflow-wrap:anywhere}
+.tk .done-b{min-height:44px;flex:none}
+.tk textarea{margin:8px 0 0}
+.side-pipe .tk{flex-wrap:wrap}
+.side-pipe .tk .tx{flex:1 1 calc(100% - 50px)}
+.side-pipe .tk .done-b{margin-left:46px}
+.stars{display:inline-flex;gap:1px;vertical-align:-3px}
+.stars svg.i{width:16px;height:16px;color:#9DB4D3}
+.stars .on svg.i{color:var(--blue);fill:var(--blue)}
+
+/* reports */
+.funnel{display:grid;gap:8px;margin:6px 0 4px}
+.fs{display:grid;grid-template-columns:7.5rem 1fr;gap:10px;align-items:center;font-size:.88rem}
+.fs .fl{color:var(--body);font-weight:700}
+.fs .fb{display:flex;justify-content:center}
+.fs .fb i{display:flex;align-items:center;justify-content:center;gap:8px;height:38px;width:var(--w);min-width:76px;border-radius:10px;color:#fff;font-style:normal;font-weight:800;font-size:.86rem;background:linear-gradient(90deg,var(--c),var(--c2));transform-origin:50% 50%;animation:rr-growx .9s var(--ease) both;white-space:nowrap}
+.fs .fb i small{font-weight:600;opacity:.92}
+@media (max-width:440px){.fs{grid-template-columns:1fr}.fs .fb{justify-content:flex-start}}
+.rings{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+.rings figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.8rem;font-weight:700;color:var(--dim)}
+.wl td.n0{color:var(--dim)}
+.wl tr[data-who]{cursor:pointer}
+@media (max-width:700px){.wl tbody tr{display:grid!important;grid-template-columns:1fr 1fr;column-gap:14px}.wl tbody td:first-child{grid-column:1/-1}}
+.scroll-y{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:14px;padding:0 8px}
+@media (max-width:700px){.scroll-y{border:0;padding:0;max-height:none}}
+
+/* production: head office's own format, kept, inside the theme */
+.pbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 12px}
+.pwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+.ptable{width:100%;border-collapse:collapse;font-size:.84rem;min-width:720px;background:#fff;color:#1a2433}
+.ptable th,.ptable td{border:1px solid #c9d4c4;padding:6px 9px;white-space:nowrap}
+.ptable thead tr.ptitle th{background:#4a7c2f;color:#fff;font-weight:800;letter-spacing:.14em;text-align:center;padding:7px}
+.ptable thead tr:last-child th{background:#dfe9d8;color:#1f3d14;font-weight:700;font-size:.78rem;text-align:right}
 .ptable thead tr:last-child th.pname{text-align:left}
 .ptable td.pname{text-align:left}
 .ptable td.pnum{text-align:right;font-variant-numeric:tabular-nums}
@@ -112,129 +194,153 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:600;margin:9px
 .ptable td.pnum.hot{background:#ffe9a8;font-weight:700}
 .ptable tr.lvl-branch td.pnum.hot,.ptable tr.lvl-unit td.pnum.hot{background:#f8c9c2}
 .ptable tfoot tr.ptotal td{background:#cfe3c4;font-weight:800;border-top:2px solid #4a7c2f}
-/* reports */
-.rept{font:800 11px 'Montserrat';color:var(--teal);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 8px}
-.chart{display:flex;align-items:flex-end;gap:8px;padding:6px 2px 0;min-height:150px}
-.chart .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;cursor:pointer;min-width:0}
-.chart .col:hover .seg{filter:brightness(1.25)}
-.chart .stack{display:flex;flex-direction:column;gap:2px;width:100%;max-width:34px;justify-content:flex-end}
-.chart .seg{width:100%;border-radius:4px 4px 2px 2px}
-.chart .seg.done{background:#35d07f}
-.chart .seg.open{background:#00A8C5}
-.chart .cnt{font:700 11px 'Montserrat';color:var(--text)}
-.chart .ml{font-size:10px;color:var(--faint)}
-.legend{display:flex;gap:16px;margin-top:8px;font-size:12px;color:var(--muted)}
-.legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-.legend .sw.done{background:#35d07f}.legend .sw.open{background:#00A8C5}
-.frow{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13px}
-.frow .fl{width:80px;color:var(--muted)}
-.frow .fbar{height:14px;background:#00A8C5;border-radius:4px;min-width:3px}
-.frow b{color:var(--text)}
-tr[data-who]{cursor:pointer}
-.rasg{background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--muted);font:11px 'DM Sans';padding:2px 4px;max-width:110px;width:auto}
 
-/* ---- colour themes: Midnight (default) · Ocean · Daylight ---- */
-html[data-theme="ocean"]{
-  --bg:#03151c; --bg2:#062430; --card:#0b3140; --card2:#0e3c4e;
-  --gold:#ffd166; --gold2:#e6b34a; --teal:#2ee6c8; --teal2:#19b89e;
-  --text:#eafffa; --muted:#9cc4bd; --faint:#6f948e; --line:rgba(255,255,255,.10);
-  --good:#3ce08a; --bad:#ff8585; --green:#3ce08a; --red:#ff8585; --amber:#ffd166;
-  --navy:#eafffa; --blue:#2ee6c8; --light:#062430; --ink:#eafffa; --ink2:#9cc4bd;
-}
-html[data-theme="daylight"]{
-  --bg:#eef3f8; --bg2:#ffffff; --card:#ffffff; --card2:#f4f8fc;
-  --gold:#a1720a; --gold2:#8a5f06; --teal:#0092b0; --teal2:#006e86;
-  --text:#152738; --muted:#54677b; --faint:#7d8fa3; --line:rgba(16,42,70,.14);
-  --good:#1e7d4f; --bad:#b3261e; --green:#1e7d4f; --red:#b3261e; --amber:#a1720a;
-  --navy:#152738; --blue:#0092b0; --light:#eef3f8; --ink:#152738; --ink2:#54677b;
-}
-html[data-theme="daylight"] body{background:linear-gradient(180deg,#eef3f8,#ffffff 55%,#eef3f8)}
-html[data-theme="daylight"] .card{box-shadow:0 2px 14px rgba(20,50,90,.07)}
-.thpick{display:flex;gap:7px;align-items:center}
-.thpick button{width:22px;height:22px;border-radius:50%;border:2px solid rgba(127,127,127,.35);cursor:pointer;padding:0}
-.thpick button.on{border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,160,190,.35)}
-html[data-theme="daylight"] .head{background:rgba(255,255,255,.92)}
-html[data-theme="ocean"] .head{background:rgba(3,21,28,.92)}
+/* the drawer and the add-renewal sheet */
+.ov{position:fixed;inset:0;z-index:40;background:rgba(17,35,64,.45);backdrop-filter:blur(2px);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
+.ov.open{opacity:1;visibility:visible}
+.dr{position:fixed;z-index:41;right:0;top:0;bottom:0;width:min(580px,100%);background:#fff;box-shadow:-20px 0 50px rgba(17,35,64,.2);overflow:auto;overscroll-behavior:contain;padding:0 0 30px;transform:translateX(100%);visibility:hidden;transition:transform .3s var(--ease),visibility .3s}
+.dr.open{transform:none;visibility:visible}
+.dr .hd{position:sticky;top:0;z-index:3;display:flex;align-items:flex-start;gap:12px;padding:14px 16px 14px 18px;background:#fff;border-bottom:1px solid var(--line)}
+.dr .hd .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;flex:none;color:#fff;background:linear-gradient(135deg,var(--c,var(--blue)),var(--c2,var(--blue2)))}
+.dr .hd .tt{flex:1;min-width:0}
+.dr .hd .tt b{display:block;color:var(--ink);font-size:1.1rem;overflow-wrap:anywhere}
+.dr .hd .tt small{display:block;color:var(--dim);font-size:.82rem;margin:3px 0 0;overflow-wrap:anywhere}
+.dr .bd{padding:16px 18px}
+.dr .facts{display:flex;gap:16px;align-items:center;margin:0 0 6px}
+.dr .facts .kvs{flex:1;min-width:0}
+.dr .acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:8px;margin:14px 0 4px}
+.dr .rr-steps{margin-top:10px}
+.jv{list-style:none;margin:6px 0 10px;padding:0}
+.jv li{display:flex;gap:12px;align-items:flex-start;padding:0 0 14px;position:relative}
+.jv li:before{content:"";position:absolute;left:15px;top:32px;bottom:2px;width:2px;background:var(--line)}
+.jv li:last-child:before{display:none}
+.jv .dot{width:32px;height:32px;border-radius:50%;border:3px solid var(--line);background:#fff;color:var(--dim);display:grid;place-items:center;font-size:.8rem;font-weight:800;flex:none;position:relative;z-index:1}
+.jv li.done .dot{background:var(--ok);border-color:var(--ok);color:#fff}
+.jv li.done:before{background:var(--ok)}
+.jv li.on .dot{background:var(--pr);border-color:var(--pr);color:#fff;animation:rr-pulse 1.8s ease-in-out infinite}
+.jv .jt{flex:1;min-width:0;font-size:.88rem;color:var(--dim);padding-top:4px}
+.jv .jt b{display:block;color:var(--ink);font-size:.95rem}
+.jv li.on .jt b{color:var(--pr)}
+.jv .rr-btn{margin-top:4px}
+.veh{border:1.5px solid var(--line);border-radius:14px;padding:11px 12px;margin:0 0 8px;display:flex;gap:11px;align-items:flex-start}
+.veh .ti{width:40px;height:40px;border-radius:11px;background:var(--sky);color:var(--blue);display:grid;place-items:center;flex:none}
+.veh .tx{flex:1;min-width:0;font-size:.85rem;color:var(--dim)}
+.veh .tx b{display:block;color:var(--ink);font-size:.95rem}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(17,35,64,.45);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px}
+.modal.open{display:flex}
+.mw{background:#fff;border-radius:20px;max-width:560px;width:100%;padding:0 18px 20px;box-shadow:var(--sh2);overflow:hidden;animation:rr-rise .3s var(--ease) both}
+.mw .rr-band{margin:0 -18px 16px}
+.mw .row-b{display:flex;gap:8px;margin:16px 0 0}
+.mw .row-b .rr-btn{flex:1}
 </style>
 </head>
-<body>
-<div class="head"><div class="in">
-  <svg class="gmark" viewBox="0 0 88 88" aria-hidden="true">
-    <defs><linearGradient id="gn" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
-    </linearGradient></defs>
-    <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gn)"/>
-    <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-  <div><h1>Ricky Rampersad Branch — Staff</h1><div class="sub" id="subT">Renewal operations · Guardian Group</div></div>
-  <div class="thpick" title="Colour theme" aria-label="Colour theme">
-  <button data-th="" style="background:linear-gradient(135deg,#0d2137 55%,#efc24b 55%)" title="Midnight"></button>
-  <button data-th="ocean" style="background:linear-gradient(135deg,#062430 55%,#2ee6c8 55%)" title="Ocean"></button>
-  <button data-th="daylight" style="background:linear-gradient(135deg,#ffffff 55%,#0092b0 55%)" title="Daylight"></button>
-</div>
-  <div class="me" id="meBox" style="margin-left:14px"></div>
-</div></div>
+<body class="rr">
+<header class="rr-top">
+  <span class="mark"><img src="https://rickyrampersadbranch.com/orphan-transition/board-mark.png" alt=""></span>
+  <span class="brand">Ricky Rampersad Branch<i id="subT">Renewal operations · staff</i></span>
+  <span class="meb" id="meBox"></span>
+  <span class="prog" aria-hidden="true"></span>
+</header>
 <div id="app"></div>
 <div class="ov" id="ov"></div>
-<aside class="dr" id="dr"></aside>
-<div class="modal" id="modal"><div class="mw" id="mw"></div></div>
-<div class="toast" id="toast"></div>
+<aside class="dr" id="dr" role="dialog" aria-modal="true" aria-label="Renewal file"></aside>
+<div class="modal" id="modal"><div class="mw" id="mw" role="dialog" aria-modal="true" aria-label="Add a renewal"></div></div>
 
 <script>
 const BOOT = JSON.parse(<?!= JSON.stringify(payload) ?>);
 const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = v => { const n=Number(v); return (!v&&v!==0)||isNaN(n) ? esc(v) : 'TT$'+n.toLocaleString('en-US',{maximumFractionDigits:0}); };
+const I = (n,c) => RR.i(n,c);
 let D = null, ME = localStorage.getItem('gg_staff_email')||'', PIN = localStorage.getItem('gg_staff_pin')||'', FILTER='action', Q='';
 let AUDIT = { on:false, by:'', type:'', q:'' };
 let PIPE = { month:'', cov:'', who:'' };
 let REP = { on:false };
 let PROD = { on:false, data:null, loading:false, err:'' };
+let VIEW = 'pipeline';           // pipeline · tasks · reports · production · audit
+let FRESH = true, FRESHV = true; // animate the top after a load, the view after a tab change; otherwise hold still
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const monthOf=s=>{const m=String(s||'').match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/);return m?m[1]:'';};
+const who = e => String(e||'').split('@')[0];
+/* Colours of the pipeline, each always beside its word. */
+const PC = { instructed:'#138A82', overdue:'#B5352A', due14:'#C98A00', due30:'#3A7BD5', up:'#8FB3E0', nodate:'#AAB6C8', done:'#0F7A55' };
 
-function toast(m){ const t=$('#toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
+function toast(m, tone){ RR.toast(m, tone||'ok'); }
+function fail(e){ toast((e&&e.message)?e.message:String(e), 'bad'); }
 
 function statusOf(r){
-  if(/RENEWED/i.test(r.renewalStatus)||r.renewedDate) return {k:'done',label:'Renewed',cls:'c-done',ord:5};
-  if(/—/.test(r.renewalStatus)) return {k:'instructed',label:'⚡ Client instructed',cls:'c-wait',ord:0};
-  if(r.days===null) return {k:'nodate',label:'No date',cls:'c-up',ord:6};
-  if(r.days<0) return {k:'overdue',label:'Overdue '+Math.abs(r.days)+'d',cls:'c-over',ord:1};
-  if(r.days<=7) return {k:'due7',label:'Due '+r.days+'d',cls:'c-due',ord:2};
-  if(r.days<=14) return {k:'due14',label:'Due '+r.days+'d',cls:'c-due',ord:3};
-  if(r.days<=30) return {k:'due30',label:'Due '+r.days+'d',cls:'c-up',ord:4};
-  return {k:'up',label:'Upcoming',cls:'c-up',ord:6};
+  if(/RENEWED/i.test(r.renewalStatus)||r.renewedDate) return {k:'done',label:'Renewed',cls:'ok',c:PC.done,ord:5};
+  if(/—/.test(r.renewalStatus)) return {k:'instructed',label:'Client instructed',cls:'teal',c:PC.instructed,ord:0};
+  if(r.days===null||r.days===undefined||r.days==='') return {k:'nodate',label:'No date',cls:'grey',c:PC.nodate,ord:6};
+  if(r.days<0) return {k:'overdue',label:'Overdue '+Math.abs(r.days)+'d',cls:'bad',c:PC.overdue,ord:1};
+  if(r.days<=7) return {k:'due7',label:'Due in '+r.days+'d',cls:'warn',c:PC.due14,ord:2};
+  if(r.days<=14) return {k:'due14',label:'Due in '+r.days+'d',cls:'warn',c:PC.due14,ord:3};
+  if(r.days<=30) return {k:'due30',label:'Due in '+r.days+'d',cls:'',c:PC.due30,ord:4};
+  return {k:'up',label:'Upcoming',cls:'grey',c:PC.up,ord:6};
 }
+/* Days to renewal, in words, with a meter that fills as the date comes closer. */
+function daysCell(r, st){
+  const d=r.days;
+  let txt, w, hot=false;
+  if(st.k==='done'){ txt='Renewed'+(r.renewedDate?' '+r.renewedDate:''); w=100; }
+  else if(d===null||d===undefined||d===''){ txt='No date'; w=0; }
+  else if(d<0){ txt=Math.abs(d)+' day'+(d===-1?'':'s')+' overdue'; w=100; hot=true; }
+  else if(d===0){ txt='Due today'; w=100; hot=true; }
+  else { txt='in '+d+' day'+(d===1?'':'s'); w=Math.max(6,Math.round((30-Math.min(d,30))/30*100)); }
+  return `<div class="dd"><b>${esc(r.nextDue||'No date')}</b><span class="${hot?'hot':''}">${esc(txt)}</span></div>
+    <div class="dm" aria-hidden="true"><i style="--w:${w}%;--c:${st.c}"></i></div>`;
+}
+function stars(n){ n=Math.max(0,Math.min(5,Math.round(Number(n)||0))); let s=''; for(let i=1;i<=5;i++) s+=`<span class="${i<=n?'on':''}">${I('star')}</span>`; return `<span class="stars" role="img" aria-label="${n} of 5">${s}</span>`; }
+function sec(icon, title, sub, c, end){ return `<div class="rr-sec"${c?` style="--c:${c[0]};--c2:${c[1]}"`:''}><span class="ic">${I(icon)}</span><div><b>${title}</b>${sub?`<small>${sub}</small>`:''}</div>${end?`<span class="end">${end}</span>`:''}</div>`; }
 
 function boot(){
-  if(!BOOT.ok){ $('#app').innerHTML = `<div class="login"><h2>Staff access</h2><p>This staff link is invalid. Ask an admin for the current staff dashboard link.</p></div>`; return; }
+  if(!BOOT.ok){
+    $('#app').innerHTML = `<main class="rr-main" style="max-width:520px"><div class="rr-card"><div class="rr-band"><p class="eyebrow">Staff access</p><h1>This link does not open the dashboard</h1></div>
+      <div class="rr-note warn">${I('lock')}<div>${esc(BOOT.why||'This staff link is invalid. Ask an admin for the current staff dashboard link.')}</div></div>
+      <p class="muted">Ask an admin for the current staff dashboard link.</p></div></main>`;
+    RR.init(); return;
+  }
   if(!ME){ renderLogin(); } else { load(); }
 }
 function renderLogin(msg){
-  $('#app').innerHTML = `<div class="login"><h2>Staff sign-in</h2>
-    <p>Enter your work email and your personal access code (the code beside your name on the <b>Staff</b> tab) — every action you take is logged under this identity.</p>
-    <input type="email" id="lEmail" placeholder="you@myguardiangroup.com" value="${esc(ME)}">
-    <input type="password" id="lPin" inputmode="numeric" autocomplete="off" placeholder="Access code">
-    <button class="abtn primary" style="width:100%;padding:11px" id="lGo">Enter dashboard</button>
-    <div class="err" id="lErr" ${msg?'style="display:block"':''}>${esc(msg||'')}</div></div>`;
+  $('#meBox').innerHTML='';
+  $('#app').innerHTML = `<main class="rr-main" style="max-width:520px"><div class="rr-card">
+    <div class="rr-band"><p class="eyebrow">Renewal operations</p><h1>Staff sign-in</h1><p>Motor and property renewals, the team's tasks and the audit trail, in one place.</p></div>
+    <p>Enter your work email and your personal access code (the code beside your name on the <b>Staff</b> tab). Every action you take is logged under this identity.</p>
+    <label class="rr-f"><b>Work email</b><input class="rr-in" type="email" id="lEmail" autocomplete="username" placeholder="you@myguardiangroup.com" value="${esc(ME)}"></label>
+    <label class="rr-f"><b>Access code</b><input class="rr-in" type="password" id="lPin" inputmode="numeric" autocomplete="off" placeholder="Access code"></label>
+    <button class="rr-btn wide main" id="lGo">${I('lock')} Enter dashboard</button>
+    <div class="rr-err" id="lErr" role="alert">${esc(msg||'')}</div></div></main>`;
+  RR.init();
   const go=()=>{ ME = $('#lEmail').value.trim().toLowerCase(); PIN = $('#lPin').value.trim(); if(!ME) return;
     localStorage.setItem('gg_staff_email',ME); localStorage.setItem('gg_staff_pin',PIN); load(); };
   $('#lGo').onclick = go;
   $('#lPin').addEventListener('keydown',e=>{ if(e.key==='Enter') go(); });
 }
+function loadingView(){
+  $('#app').innerHTML = `<main class="rr-main st-wide" aria-busy="true"><div class="rr-card flat"><div class="rr-band"><p class="eyebrow">Renewal operations</p><h1>Opening the dashboard</h1><p>Reading the renewals, the tasks and the trail.</p></div>
+    <div class="rr-skel" style="height:22px"></div><div class="rr-skel" style="height:110px"></div></div>
+    <div class="rr-tiles st-tiles">${'<div class="rr-skel" style="height:96px;margin:0"></div>'.repeat(8)}</div></main>`;
+  RR.init();
+}
 function load(){
   $('#subT').textContent = 'Loading…';
+  loadingView();
   google.script.run
-    .withSuccessHandler(d=>{ D=d; $('#subT').textContent='Motor renewal operations'; renderApp(); })
+    .withSuccessHandler(d=>{ D=d; FRESH=true; FRESHV=true; $('#subT').textContent='Motor renewal operations'; renderApp(); })
     .withFailureHandler(e=>{ PIN=''; localStorage.removeItem('gg_staff_pin'); renderLogin(e&&e.message?e.message:String(e)); $('#subT').textContent='Motor renewal operations'; })
     .staffData(BOOT.key, ME, true, PIN);
 }
 function act(action, params, okMsg){
   google.script.run
     .withSuccessHandler(d=>{ D=d; renderApp(); if(okMsg) toast(okMsg); })
-    .withFailureHandler(e=>toast('⚠ '+(e&&e.message?e.message:e)))
+    .withFailureHandler(fail)
     .staffAction(BOOT.key, ME, action, params||{}, PIN);
+}
+function setView(v){
+  VIEW=v; REP.on=v==='reports'; AUDIT.on=v==='audit'; PROD.on=v==='production'; FRESHV=true;
+  renderApp();
+  if(v==='production'&&!PROD.data&&!PROD.loading) loadProduction();
 }
 
 function filtered(){
@@ -243,6 +349,9 @@ function filtered(){
   else if(FILTER==='instructed') rows = rows.filter(r=>r.st.k==='instructed');
   else if(FILTER==='overdue') rows = rows.filter(r=>r.st.k==='overdue');
   else if(FILTER==='due14') rows = rows.filter(r=>['due7','due14'].includes(r.st.k));
+  else if(FILTER==='due30') rows = rows.filter(r=>r.st.k==='due30');
+  else if(FILTER==='up') rows = rows.filter(r=>r.st.k==='up');
+  else if(FILTER==='nodate') rows = rows.filter(r=>r.st.k==='nodate');
   else if(FILTER==='renewed') rows = rows.filter(r=>r.st.k==='done');
   if(PIPE.month) rows = rows.filter(r=>monthOf(r.nextDue)===PIPE.month);
   if(PIPE.cov) rows = rows.filter(r=>r.coverage===PIPE.cov);
@@ -257,134 +366,150 @@ function filteredProps(){
   if(PIPE.month) ps = ps.filter(p=>monthOf(p.renewalDate)===PIPE.month);
   if(PIPE.who==='unassigned') ps = ps.filter(p=>!(p.assignedTo||'').trim());
   else if(PIPE.who) ps = ps.filter(p=>(p.assignedTo||'').toLowerCase()===PIPE.who);
-  if(PIPE.cov && PIPE.cov!=='__prop') return [];   // a motor coverage is selected — property table empties
+  if(PIPE.cov && PIPE.cov!=='__prop') return [];   // a motor coverage is selected: the property list empties
   if(Q) ps = ps.filter(p=>(p.client+' '+p.policy+' '+(p.assignedTo||'')).toLowerCase().includes(Q));
   return ps;
 }
+const FLABEL = { action:'Needs action', all:'All renewals', instructed:'Client instructed', overdue:'Overdue', due14:'Due in 14 days', due30:'Due in 15 to 30 days', up:'Upcoming', nodate:'No date', renewed:'Renewed' };
+
+/* ---------- charts ---------- */
+function monthData(){
+  const rows=D.renewals.map(r=>({...r,st:statusOf(r)})), props=D.properties||[];
+  const mon={}; MONTHS.forEach(m=>mon[m]={total:0,done:0});
+  rows.forEach(r=>{const m=monthOf(r.nextDue); if(m){mon[m].total++; if(r.st.k==='done')mon[m].done++;}});
+  props.forEach(p=>{const m=monthOf(p.renewalDate); if(m){mon[m].total++; if(p.stage==='issued')mon[m].done++;}});
+  return mon;
+}
+function monthChart(H){
+  const mon=monthData(), mmax=Math.max(...MONTHS.map(m=>mon[m].total),1), now=MONTHS[new Date().getMonth()];
+  return `<div class="mch" style="--H:${H}px" role="list" aria-label="Renewals by month, motor and property">${MONTHS.map((m,k)=>{const d=mon[m], open=d.total-d.done;
+    const ho=open?Math.max(3,Math.round(open/mmax*H)):0, hd=d.done?Math.max(3,Math.round(d.done/mmax*H)):0;
+    return `<button type="button" role="listitem" class="mc${m===now?' now':''}${m===PIPE.month?' sel':''}" data-m="${m}" aria-pressed="${m===PIPE.month}" aria-label="${m}: ${d.total} renewal${d.total===1?'':'s'}, ${d.done} renewed, ${open} open" title="${m}: ${d.total} renewal${d.total===1?'':'s'}, ${d.done} renewed, ${open} open">
+      <b>${d.total||''}</b><span class="st">${open?`<i class="o" style="--h:${ho}px;animation-delay:${k*.04}s"></i>`:''}${d.done?`<i class="d" style="--h:${hd}px;animation-delay:${k*.04+.1}s"></i>`:''}</span><small>${m}</small></button>`;}).join('')}</div>
+    <ul class="mkey"><li style="--c:${PC.done}">Renewed</li><li style="--c:${PC.due30}">Open</li></ul>`;
+}
+function pipeStack(rows){
+  const n=k=>rows.filter(r=>r.st.k===k).length;
+  const parts=[
+    {f:'instructed',l:'Client instructed',v:n('instructed'),c:PC.instructed},
+    {f:'overdue',l:'Overdue',v:n('overdue'),c:PC.overdue},
+    {f:'due14',l:'Due in 14 days',v:n('due7')+n('due14'),c:PC.due14},
+    {f:'due30',l:'Due in 15 to 30 days',v:n('due30'),c:PC.due30},
+    {f:'up',l:'Upcoming',v:n('up'),c:PC.up},
+    {f:'nodate',l:'No date',v:n('nodate'),c:PC.nodate},
+    {f:'renewed',l:'Renewed',v:n('done'),c:PC.done},
+  ];
+  const total=parts.reduce((a,p)=>a+p.v,0)||1;
+  return `<div class="rr-stack st-stack" aria-hidden="true">${parts.filter(p=>p.v).map((p,k)=>`<i style="--w:${(p.v/total*100).toFixed(2)}%;--c:${p.c};animation-delay:${k*.1}s"></i>`).join('')}</div>
+    <ul class="pk-row">${parts.map(p=>`<li><button type="button" class="pk${FILTER===p.f?' on':''}" data-f="${p.f}" style="--c:${p.c}" aria-pressed="${FILTER===p.f}">${esc(p.l)} <b>${p.v}</b></button></li>`).join('')}</ul>`;
+}
 
 function renderApp(){
-  $('#meBox').innerHTML = `Signed in as <b>${esc(D.me.name)}</b> (${esc(D.me.role)}) · <a href="#" id="lo">switch</a>`;
+  $('#meBox').innerHTML = `<span class="who" title="Signed in as ${esc(D.me.name)}"><b>${esc(D.me.name)}</b>${esc(D.me.role)}</span><a href="#" id="lo" class="lk" title="Switch to another staff member">${I('out')} Switch</a>`;
   const rows = D.renewals.map(r=>({...r, st:statusOf(r)}));
   const n = k => rows.filter(r=>r.st.k===k).length;
   const myTasks = D.tasks.filter(t=>t.status==='Open' && (t.assignee||'').toLowerCase()===ME).length;
   const openTasks = D.tasks.filter(t=>t.status==='Open');
   const renewedMonth = rows.filter(r=>r.st.k==='done').length;
-
   const myQ = (D.queries||[]).filter(q=>q.status==='Open' && q.of===ME);
   const openQAll = (D.queries||[]).filter(q=>q.status==='Open');
+  const propOpen = (D.properties||[]).filter(p=>p.stage&&p.stage!=='issued').length;
+  const canProd = /admin|manager/i.test(D.me.role||'');
+  if(VIEW==='production'&&!canProd) VIEW='pipeline';
+  const nAction = n('instructed')+n('overdue')+n('due7')+n('due14');
+  const first = String(D.me.name||'').split(/[ ,]/).filter(Boolean)[0]||'';
+  const next = n('instructed') ? `Start with the ${n('instructed')} client instruction${n('instructed')===1?'':'s'}, then the overdue files.`
+    : n('overdue') ? `Start with the ${n('overdue')} overdue file${n('overdue')===1?'':'s'}, then what is due in the next 14 days.`
+    : (n('due7')+n('due14')) ? `Call the ${n('due7')+n('due14')} client${n('due7')+n('due14')===1?'':'s'} due in the next 14 days.` : 'Nothing is waiting: the book is being worked.';
 
-  $('#app').innerHTML = `<div class="wrap">
-    ${myQ.length?`<div class="card" style="border-color:rgba(239,194,75,.5)"><h2 style="color:var(--gold)">❓ Needs your answer (${myQ.length}) — these are on the audit trail</h2><div style="padding:12px 16px">
-      ${myQ.map(q=>`<div class="task"><div class="t"><b>${esc(q.client||'General')}</b> — ${esc(q.question)}
-        <div class="mini">asked by ${esc(q.by.split('@')[0])} · ${esc(q.created)}</div>
-        <textarea id="qa_${esc(q.id)}" placeholder="Your answer — logged under your name"></textarea>
-        <button class="abtn primary sm" data-qans="${esc(q.id)}" style="margin-top:6px">Send answer</button>
-      </div></div>`).join('')}
-    </div></div>`:''}
-    <div class="kpis">
-      ${kpi('instructed','⚡ '+n('instructed'),'Client instructed — process now','warn')}
-      ${kpi('overdue',n('overdue'),'Overdue','warn')}
-      ${kpi('due14',n('due7')+n('due14'),'Due in 14 days','gold')}
-      ${kpi('renewed',renewedMonth,'Renewed','')}
-      <div class="kpi ${myTasks?'gold':''}" id="kTasks"><div class="n">${myTasks}</div><div class="l">My open tasks</div></div>
-      <div class="kpi ${(D.properties||[]).filter(p=>p.stage&&p.stage!=='issued').length?'gold':''}"><div class="n">${(D.properties||[]).filter(p=>p.stage&&p.stage!=='issued').length}</div><div class="l">🏠 Property files open</div></div>
-      <div class="kpi ${openQAll.length?'warn':''}"><div class="n">${openQAll.length}</div><div class="l">❓ Open queries</div></div>
-      <div class="kpi"><div class="n">${D.surveys.count?D.surveys.avgSat+'★':'—'}</div><div class="l">Avg satisfaction (${D.surveys.count})</div></div>
-    </div>
+  const tile = (f,label,v,tone,icon,sub,extra) => `<button type="button" class="rr-tile t-${tone}${FILTER===f&&!extra?' on':''}"${f?` data-f="${f}"`:''}${extra||''} aria-pressed="${FILTER===f&&!extra}"><span class="k">${I(icon)}${label}</span><span class="v">${typeof v==='number'?RR.cu(v):esc(v)}</span><small>${sub}</small></button>`;
 
-    <div class="bar">
-      <input type="search" id="q" placeholder="Search client, policy, staff…" value="${esc(Q)}">
-      <button class="abtn ${FILTER==='action'?'primary':''}" data-f="action">Needs action</button>
-      <button class="abtn ${FILTER==='all'?'primary':''}" data-f="all">All</button>
-      <button class="abtn ${REP.on?'primary':''}" id="repBtn">📊 Reports</button>
-      ${/admin|manager/i.test(D.me.role||'')?`<button class="abtn ${PROD.on?'primary':''}" id="prodBtn">📈 Production</button>`:''}
-      <button class="abtn ${AUDIT.on?'primary':''}" id="audBtn">🔍 Audit</button>
-      <button class="abtn gold" id="addBtn">＋ Add renewal</button>
-    </div>
-    <div class="bar">
-      <select id="fMon" style="width:auto"><option value="">📅 All months</option>${MONTHS.map(m=>`<option ${m===PIPE.month?'selected':''}>${m}</option>`).join('')}</select>
-      <select id="fCov" style="width:auto"><option value="">🚗🏠 All types</option>${[...new Set(D.renewals.map(r=>r.coverage).filter(Boolean))].sort().map(c=>`<option ${c===PIPE.cov?'selected':''} value="${esc(c)}">${esc(c.replace(' (assumed)',''))}</option>`).join('')}</select>
-      <select id="fWho" style="width:auto"><option value="">👤 Everyone</option><option value="unassigned" ${PIPE.who==='unassigned'?'selected':''}>— Unassigned —</option>${D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===PIPE.who?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
-      ${(PIPE.month||PIPE.cov||PIPE.who)?`<button class="abtn sm" id="fClear">✕ Clear filters</button>`:''}
-    </div>
-    ${PROD.on?productionView():''}
-    ${REP.on?reportView():''}
-    ${AUDIT.on?auditView():''}
-
-    <div class="grid2col">
-      <div>
-        <div class="card"><h2>Renewal pipeline (${filtered().length})</h2>
-          <div style="overflow-x:auto"><table><thead><tr><th>Client</th><th>Coverage</th><th>Due</th><th>Status</th><th>Assigned</th><th>Last touch</th></tr></thead>
-          <tbody>${filtered().slice(0,150).map(r=>`<tr data-row="${r.rowIndex}">
-            <td><b>${esc(r.client)}</b><div class="mini">${esc(r.policy||'')}</div></td>
-            <td>${esc(r.coverage.replace(' (assumed)',''))}</td>
-            <td>${esc(r.nextDue)}</td>
-            <td><span class="chip ${r.st.cls}">${r.st.label}</span></td>
-            <td><select class="rasg" data-rw="${r.rowIndex}" data-tok="${esc(r.token)}" data-cl="${esc(r.client)}"><option value="">—</option>${D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===(r.assignedTo||'').toLowerCase()?'selected':''}>${esc(s.name.split(' ')[0])}</option>`).join('')}</select></td>
-            <td class="mini">${D.lastTouch[r.token]?esc(D.lastTouch[r.token].when+' · '+D.lastTouch[r.token].by.split('@')[0]):'—'}</td>
-          </tr>`).join('')}</tbody></table></div>
-        </div>
-        ${(D.properties&&D.properties.length)?`<div class="card"><h2>🏠 Property renewals (${filteredProps().length})</h2>
-          <div style="overflow-x:auto"><table><thead><tr><th>Client</th><th>Policy</th><th>Due</th><th>Stage</th><th>Assigned</th></tr></thead>
-          <tbody>${filteredProps().slice(0,80).map(pp=>{
-            const st=propStatus(pp);
-            return `<tr data-prop="${esc(pp.token)}">
-              <td><b>${esc(pp.client)}</b><div class="mini">${pp.locations} location${pp.locations===1?'':'s'} · ${money(pp.premium)}</div></td>
-              <td class="mini">${esc(pp.policy||'—')}</td>
-              <td>${esc(pp.renewalDate)}</td>
-              <td><span class="chip ${st.cls}">${st.label}</span></td>
-              <td><select class="prasg" data-tok="${esc(pp.token)}"><option value="">—</option>${D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===(pp.assignedTo||'').toLowerCase()?'selected':''}>${esc(s.name.split(' ')[0])}</option>`).join('')}</select></td>
-            </tr>`;}).join('')}</tbody></table></div>
-        </div>`:''}
+  $('#app').innerHTML = `<main class="rr-main st-wide">
+   <div id="topArea" class="${FRESH?'':'still'}">
+    <section class="rr-card st-hero">
+      <div class="rr-band"><div class="hrow"><div>
+        <p class="eyebrow">Renewal operations · ${esc(D.me.role||'staff')}</p>
+        <h1>${first?esc(first)+', ':''}${nAction} file${nAction===1?'':'s'} need${nAction===1?'s':''} action</h1>
+        <p>${esc(next)}${myQ.length?` ${myQ.length} quer${myQ.length===1?'y is':'ies are'} waiting on your answer.`:''}</p></div>
+        <button class="rr-btn onband" id="addBtn">${I('plus')} Add renewal</button></div></div>
+      <div class="glance">
+        <div><p class="gl-h">${I('chart')} The motor pipeline <span class="end">${rows.length} renewal${rows.length===1?'':'s'} · tap a part to filter</span></p>${pipeStack(rows)}</div>
+        <div><p class="gl-h">${I('calendar')} Renewals by month <span class="end">${PIPE.month?`showing ${esc(PIPE.month)} · tap again to clear`:'tap a month to filter'}</span></p>${monthChart(96)}</div>
       </div>
-      <div>
-        <div class="card"><h2>Open tasks (${openTasks.length})</h2><div style="padding:12px 14px">
-          ${openTasks.length?openTasks.slice(0,20).map(t=>`
-            <div class="task ${t.dueDays!==null&&t.dueDays<0?'over':''}">
-              <div class="t"><b>${esc(t.title)}</b><div class="mini">${esc(t.client||'')} · ${t.assignee?esc(t.assignee.split('@')[0]):'unassigned'}${t.due?' · due '+esc(t.due):''} · by ${esc(t.createdBy.split('@')[0])}</div></div>
-              <button class="abtn sm" data-done="${t.id}">✓ Done</button>
-            </div>`).join(''):'<p class="mini">No open tasks — nice.</p>'}
-        </div></div>
-        <div class="card"><h2>Recent activity — the accountability trail</h2><div style="padding:12px 16px" class="tl">
-          ${D.feed.slice(0,18).map(a=>`<div class="it"><b>${esc(a.by.split('@')[0])}</b> · ${esc(a.type)} — ${esc(a.client)}<div class="w">${esc(a.when)} · ${esc(a.details.slice(0,90))}</div></div>`).join('')||'<p class="mini">No activity yet.</p>'}
-        </div></div>
-        ${D.surveys.recent.length?`<div class="card"><h2>Latest client feedback</h2><div style="padding:12px 16px">
-          ${D.surveys.recent.map(s=>`<div class="task"><div class="t"><b>${'★'.repeat(s.sat)}${'☆'.repeat(5-s.sat)}</b> ${esc(s.client)}<div class="mini">${esc(s.when)}${s.comments?' · "'+esc(s.comments.slice(0,100))+'"':''}</div></div></div>`).join('')}
-        </div></div>`:''}
-      </div>
+    </section>
+    ${myQ.length?`<section class="rr-card" style="border-color:#F3D48A">${sec('chat','Needs your answer ('+myQ.length+')','These are on the audit trail: your answer is logged under your name',['#C98A00','#E0A82E'])}
+      ${myQ.map(q=>`<div class="tk" style="--c:#C98A00"><span class="ti" style="--bg:var(--warnbg);--c:var(--warn)">${I('chat')}</span><div class="tx"><b>${esc(q.client||'General')}</b>: ${esc(q.question)}
+        <small>asked by ${esc(who(q.by))} · ${esc(q.created)}</small>
+        <textarea class="rr-in" id="qa_${esc(q.id)}" placeholder="Your answer, logged under your name"></textarea>
+        <button class="rr-btn sm" data-qans="${esc(q.id)}" style="margin-top:8px">${I('send')} Send answer</button>
+      </div></div>`).join('')}</section>`:''}
+    <div class="rr-tiles st-tiles" role="group" aria-label="Counts: tap to filter">
+      ${tile('instructed','Client instructed',n('instructed'),'teal','renew','Process now')}
+      ${tile('overdue','Overdue',n('overdue'),'bad','alert','Past the renewal date')}
+      ${tile('due14','Due in 14 days',n('due7')+n('due14'),'warn','clock','Call this week')}
+      ${tile('renewed','Renewed',renewedMonth,'ok','checkc','Done')}
+      <button type="button" class="rr-tile t-${myTasks?'warn':'blue'}" id="kTasks"><span class="k">${I('task')}My open tasks</span><span class="v">${RR.cu(myTasks)}</span><small>Tap to see your files</small></button>
+      <button type="button" class="rr-tile t-prop" id="kProp"><span class="k">${I('building')}Property files open</span><span class="v">${RR.cu(propOpen)}</span><small>Not yet issued</small></button>
+      <button type="button" class="rr-tile t-${openQAll.length?'bad':'blue'}" id="kQ"><span class="k">${I('chat')}Open queries</span><span class="v">${RR.cu(openQAll.length)}</span><small>On the audit trail</small></button>
+      <button type="button" class="rr-tile t-violet" id="kSat"><span class="k">${I('star')}Avg satisfaction</span><span class="v">${D.surveys.count?esc(D.surveys.avgSat)+'<small style="display:inline;font-size:.9rem"> / 5</small>':'None yet'}</span><small>${D.surveys.count} survey${D.surveys.count===1?'':'s'}</small></button>
     </div>
-  </div>`;
+   </div>
+    <nav class="rr-tabs" role="tablist" aria-label="Views">
+      <button role="tab" id="pipeBtn" aria-selected="${VIEW==='pipeline'}" class="${VIEW==='pipeline'?'on':''}">${I('car')} Pipeline <span class="n">${filtered().length}</span></button>
+      <button role="tab" id="taskBtn" aria-selected="${VIEW==='tasks'}" class="${VIEW==='tasks'?'on':''}">${I('task')} Tasks <span class="n">${openTasks.length}</span></button>
+      <button role="tab" id="repBtn" aria-selected="${VIEW==='reports'}" class="${VIEW==='reports'?'on':''}">${I('chart')} Reports</button>
+      ${canProd?`<button role="tab" id="prodBtn" aria-selected="${VIEW==='production'}" class="${VIEW==='production'?'on':''}">${I('trend')} Production</button>`:''}
+      <button role="tab" id="audBtn" aria-selected="${VIEW==='audit'}" class="${VIEW==='audit'?'on':''}">${I('search')} Audit <span class="n">${openQAll.length}</span></button>
+    </nav>
+    <div id="viewArea" class="${FRESH||FRESHV?'':'still'}">
+      ${VIEW==='pipeline'?pipelineView(openTasks):''}
+      ${VIEW==='tasks'?`<div class="rr-grid two-eq">${sideCards(openTasks,true)}</div>`:''}
+      ${PROD.on?productionView():''}
+      ${REP.on?reportView():''}
+      ${AUDIT.on?auditView():''}
+    </div>
+    <p class="rr-foot">Every action you take here is logged under your name on the Activity tab.</p>
+  </main>`;
+  FRESH=false; FRESHV=false;
+  RR.init($('#app'));
 
-  function kpi(f,nv,l,cls){ return `<div class="kpi ${cls} ${FILTER===f?'active':''}" data-f="${f}"><div class="n">${nv}</div><div class="l">${l}</div></div>`; }
-  document.querySelectorAll('[data-f]').forEach(el=>el.onclick=()=>{ FILTER=el.dataset.f; renderApp(); });
-  $('#q').oninput = e=>{ Q=e.target.value.toLowerCase(); renderApp(); const qq=$('#q'); qq.focus(); qq.setSelectionRange(qq.value.length,qq.value.length); };
+  document.querySelectorAll('[data-f]').forEach(el=>el.onclick=()=>{ FILTER=el.dataset.f; if(VIEW!=='pipeline'){ VIEW='pipeline'; REP.on=AUDIT.on=PROD.on=false; FRESHV=true; } renderApp(); });
+  const q=$('#q'); if(q) q.oninput = e=>{ Q=e.target.value.toLowerCase(); renderApp(); const qq=$('#q'); qq.focus(); qq.setSelectionRange(qq.value.length,qq.value.length); };
   $('#addBtn').onclick = addRenewalModal;
   $('#lo').onclick = e=>{ e.preventDefault(); ME=''; PIN=''; localStorage.removeItem('gg_staff_email'); localStorage.removeItem('gg_staff_pin'); renderLogin(); };
   document.querySelectorAll('[data-done]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); act('completeTask',{id:b.dataset.done},'Task completed'); });
-  document.querySelectorAll('tbody tr[data-row]').forEach(tr=>tr.onclick=()=>openDetail(Number(tr.dataset.row)));
-  document.querySelectorAll('tbody tr[data-prop]').forEach(tr=>tr.onclick=()=>openProp(tr.dataset.prop));
-  document.querySelectorAll('.rasg').forEach(s=>{ s.onclick=e=>e.stopPropagation();
+  document.querySelectorAll('.rrow[data-row]').forEach(tr=>{ tr.onclick=()=>openDetail(Number(tr.dataset.row)); tr.onkeydown=e=>{ if(e.target===tr&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); openDetail(Number(tr.dataset.row)); } }; });
+  document.querySelectorAll('.rrow[data-prop]').forEach(tr=>{ tr.onclick=()=>openProp(tr.dataset.prop); tr.onkeydown=e=>{ if(e.target===tr&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); openProp(tr.dataset.prop); } }; });
+  document.querySelectorAll('.rrow a.ic-btn').forEach(a=>a.onclick=e=>e.stopPropagation());
+  document.querySelectorAll('.rasg').forEach(s=>{ s.onclick=e=>e.stopPropagation(); s.onkeydown=e=>e.stopPropagation();
     s.onchange=e=>{ e.stopPropagation(); act('assign',{rowIndex:Number(s.dataset.rw),token:s.dataset.tok,client:s.dataset.cl,assignee:s.value},'Assigned'); }; });
-  document.querySelectorAll('.prasg').forEach(s=>{ s.onclick=e=>e.stopPropagation();
+  document.querySelectorAll('.prasg').forEach(s=>{ s.onclick=e=>e.stopPropagation(); s.onkeydown=e=>e.stopPropagation();
     s.onchange=e=>{ e.stopPropagation(); act('propAssign',{token:s.dataset.tok,assignee:s.value},'Assigned'); }; });
-  $('#kTasks').onclick=()=>{ Q=ME.split('@')[0]; renderApp(); };
-  $('#audBtn').onclick=()=>{ AUDIT.on=!AUDIT.on; renderApp(); };
-  $('#repBtn').onclick=()=>{ REP.on=!REP.on; renderApp(); };
-  const pb=$('#prodBtn');
-  if(pb) pb.onclick=()=>{ PROD.on=!PROD.on; renderApp(); if(PROD.on&&!PROD.data&&!PROD.loading) loadProduction(); };
+  $('#kTasks').onclick=()=>{ Q=ME.split('@')[0]; if(VIEW!=='pipeline'){ VIEW='pipeline'; REP.on=AUDIT.on=PROD.on=false; FRESHV=true; } renderApp(); };
+  $('#kProp').onclick=()=>{ if(VIEW!=='pipeline') setView('pipeline'); const pc=$('#propCard'); if(pc) pc.scrollIntoView({behavior:RR.calm()?'auto':'smooth',block:'start'}); };
+  $('#kQ').onclick=()=>setView('audit');
+  $('#kSat').onclick=()=>setView('reports');
+  $('#pipeBtn').onclick=()=>setView('pipeline');
+  $('#taskBtn').onclick=()=>setView('tasks');
+  $('#audBtn').onclick=()=>setView(VIEW==='audit'?'pipeline':'audit');
+  $('#repBtn').onclick=()=>setView(VIEW==='reports'?'pipeline':'reports');
+  const pb=$('#prodBtn'); if(pb) pb.onclick=()=>setView(VIEW==='production'?'pipeline':'production');
   const pd=$('#prodDl'); if(pd) pd.onclick=downloadProduction;
+  document.querySelectorAll('.mch .mc').forEach(c=>c.onclick=()=>{ const m=c.dataset.m; PIPE.month = (VIEW==='pipeline'&&PIPE.month===m)?'':m; if(VIEW!=='pipeline'){ VIEW='pipeline'; REP.on=AUDIT.on=PROD.on=false; FRESHV=true; } renderApp(); });
   if(REP.on){
-    document.querySelectorAll('.chart .col').forEach(c=>c.onclick=()=>{ PIPE.month=c.dataset.m; REP.on=false; renderApp(); });
-    document.querySelectorAll('[data-who]').forEach(tr=>tr.onclick=()=>{ PIPE.who=tr.dataset.who; REP.on=false; renderApp(); });
+    document.querySelectorAll('[data-who]').forEach(tr=>tr.onclick=()=>{ PIPE.who=tr.dataset.who; VIEW='pipeline'; REP.on=false; FRESHV=true; renderApp(); });
     document.querySelectorAll('[data-fuopen]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); openDetail(Number(b.dataset.fuopen)); });
   }
-  $('#fMon').onchange=e=>{ PIPE.month=e.target.value; renderApp(); };
-  $('#fCov').onchange=e=>{ PIPE.cov=e.target.value; renderApp(); };
-  $('#fWho').onchange=e=>{ PIPE.who=e.target.value; renderApp(); };
-  const fc=$('#fClear'); if(fc) fc.onclick=()=>{ PIPE={month:'',cov:'',who:''}; renderApp(); };
+  document.querySelectorAll('[data-mmrow]').forEach(b=>b.onclick=()=>openDetail(Number(b.dataset.mmrow)));
+  document.querySelectorAll('[data-mmprop]').forEach(b=>b.onclick=()=>openProp(b.dataset.mmprop));
+  document.querySelectorAll('[data-mmall]').forEach(b=>b.onclick=()=>{ PIPE.month=b.dataset.mmall; FILTER='all'; renderApp(); const pc=$('#pipeCard'); if(pc) pc.scrollIntoView({behavior:RR.calm()?'auto':'smooth',block:'start'}); });
+  const fm=$('#fMon'); if(fm) fm.onchange=e=>{ PIPE.month=e.target.value; renderApp(); };
+  const fv=$('#fCov'); if(fv) fv.onchange=e=>{ PIPE.cov=e.target.value; renderApp(); };
+  const fw=$('#fWho'); if(fw) fw.onchange=e=>{ PIPE.who=e.target.value; renderApp(); };
+  const fc=$('#fClear'); if(fc) fc.onclick=()=>{ PIPE={month:'',cov:'',who:''}; Q=''; renderApp(); };
   document.querySelectorAll('[data-qans]').forEach(b=>b.onclick=()=>{
     const t=document.getElementById('qa_'+b.dataset.qans).value.trim();
-    if(!t){ toast('Type your answer first'); return; }
+    if(!t){ toast('Type your answer first','bad'); return; }
     act('answer',{id:b.dataset.qans,answer:t},'Answer logged on the audit trail');
   });
   if(AUDIT.on){
@@ -395,13 +520,139 @@ function renderApp(){
   }
 }
 
+/* ---------- this month and next ----------
+   Every motor and property renewal whose date falls in this calendar month or the next, read from its days to go
+   (so the year is right), each tappable to open the file. */
+function mmMonths(){
+  const now=new Date(), a=new Date(now.getFullYear(),now.getMonth(),1), b=new Date(now.getFullYear(),now.getMonth()+1,1);
+  return [{y:a.getFullYear(),m:a.getMonth(),key:'this',label:'This month'},{y:b.getFullYear(),m:b.getMonth(),key:'next',label:'Next month'}];
+}
+function mmDateOf(days){
+  if(days===null||days===undefined||days===''||isNaN(Number(days))) return null;
+  const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()+Number(days)); return d;
+}
+function mmItems(){
+  const out=[];
+  D.renewals.forEach(r=>{ const d=mmDateOf(r.days); if(d) out.push({kind:'motor',d,client:r.client,sub:(r.policy||'no policy #')+' · '+String(r.coverage||'Motor').replace(' (assumed)',''),st:statusOf(r),row:r.rowIndex,who:r.assignedTo}); });
+  (D.properties||[]).forEach(pp=>{ const d=mmDateOf(pp.days); if(!d) return; const st=propStatus(pp);
+    out.push({kind:'prop',d,client:pp.client,sub:'Property · '+(pp.policy||'no policy #'),st:{k:pp.stage==='issued'?'done':(pp.days<0?'overdue':'open'),label:st.label,cls:st.cls,c:st.c},tok:pp.token,who:pp.assignedTo}); });
+  return out;
+}
+function mmView(){
+  const all=mmItems(), mons=mmMonths();
+  const cols=mons.map((M,k)=>{
+    const its=all.filter(x=>x.d.getFullYear()===M.y&&x.d.getMonth()===M.m).sort((a,b)=>(a.st.k==='done')-(b.st.k==='done')||a.d-b.d);
+    const done=its.filter(x=>x.st.k==='done').length, over=its.filter(x=>x.st.k==='overdue').length, open=its.length-done-over;
+    const mName=MONTHS[M.m], full=new Date(M.y,M.m,1).toLocaleString('en-GB',{month:'long',year:'numeric'});
+    const nm=its.filter(x=>x.kind==='motor').length, np=its.length-nm;
+    const SHOW=12, shown=its.slice(0,SHOW);
+    return `<div class="mm-col${k===0?' now':''}" aria-label="${esc(M.label)}, ${esc(full)}">
+      <div class="mm-h"><b>${esc(full)}</b><small>${esc(M.label)}</small></div>
+      <div class="mm-n">${RR.cu(its.length)}</div>
+      <p class="mm-sub">renewal${its.length===1?'':'s'}${its.length?` · ${nm} motor${np?`, ${np} property`:''} · <b>${done}</b> renewed${over?`, <b style="color:var(--bad)">${over}</b> overdue`:''}, ${open} open`:''}</p>
+      ${its.length?RR.stack([{l:'Renewed',v:done,c:PC.done},{l:'Overdue',v:over,c:PC.overdue},{l:'Open',v:open,c:PC.due30}].filter(p=>p.v)):''}
+      ${its.length?`<ul class="mm-list">${shown.map(x=>`<li><button type="button" class="mm-r" style="--c:${x.st.c}" ${x.kind==='motor'?`data-mmrow="${x.row}"`:`data-mmprop="${esc(x.tok)}"`} aria-label="${esc(x.client)}, renews ${x.d.getDate()} ${mName}, ${esc(x.st.label)}">
+          <span class="mm-d" aria-hidden="true">${x.d.getDate()}<small>${mName}</small></span>
+          <span class="mm-w"><b>${esc(x.client)}</b><small>${esc(x.sub)}${x.who?' · '+esc(who(x.who)):' · unassigned'}</small></span>
+          <span class="rr-pill ${x.st.cls}">${esc(x.st.label)}</span></button></li>`).join('')}</ul>
+        ${its.length>SHOW?`<button type="button" class="rr-btn ghost sm mm-more" data-mmall="${mName}">Show all ${its.length} in ${esc(full.split(' ')[0])} ${I('arrow')}</button>`:''}`
+        :`<p class="mm-empty">No renewals on the sheet for ${esc(full)}.</p>`}
+    </div>`;
+  }).join('');
+  return `<section class="rr-card flat" id="mmCard">${sec('calendar','This month and next','Every motor and property renewal due in the two months, renewed last. Tap one to open the file',['#2C5FA8','#3A7BD5'])}<div class="mm">${cols}</div></section>`;
+}
+
+/* ---------- the pipeline view ---------- */
+function staffOpts(sel, short){ return D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===sel?'selected':''}>${esc(short?s.name.split(' ')[0]:s.name)}</option>`).join(''); }
+function pipelineView(openTasks){
+  const list=filtered(), shown=list.slice(0,150), props=filteredProps();
+  const covs=[...new Set(D.renewals.map(r=>r.coverage).filter(Boolean))].sort();
+  const anyF = PIPE.month||PIPE.cov||PIPE.who||Q;
+  return `${mmView()}<div class="rr-grid two-side">
+   <div>
+    <section class="rr-card flat" id="pipeCard">
+      ${sec('car','Renewal pipeline · '+esc(FLABEL[FILTER]||FILTER)+' ('+list.length+')','Tap a file to open it: tasks, comments, invite, mark renewed')}
+      <div class="st-tools">
+        <div class="r1">
+          <label class="srch"><span class="vh">Search</span>${I('search')}<input class="rr-in" type="search" id="q" placeholder="Search client, policy, staff…" value="${esc(Q)}"></label>
+          <div class="rr-opts" role="group" aria-label="Show">
+            <button type="button" class="${FILTER==='action'?'on':''}" data-f="action" aria-pressed="${FILTER==='action'}">${I('alert')} Needs action</button>
+            <button type="button" class="${FILTER==='all'?'on':''}" data-f="all" aria-pressed="${FILTER==='all'}">All</button>
+          </div>
+        </div>
+        <div class="r2">
+          <label><span class="vh">Month</span><select class="rr-in" id="fMon"><option value="">All months</option>${MONTHS.map(m=>`<option ${m===PIPE.month?'selected':''}>${m}</option>`).join('')}</select></label>
+          <label><span class="vh">Cover</span><select class="rr-in" id="fCov"><option value="">All covers</option>${covs.map(c=>`<option ${c===PIPE.cov?'selected':''} value="${esc(c)}">${esc(c.replace(' (assumed)',''))}</option>`).join('')}</select></label>
+          <label><span class="vh">Who</span><select class="rr-in" id="fWho"><option value="">Everyone</option><option value="unassigned" ${PIPE.who==='unassigned'?'selected':''}>Unassigned</option>${staffOpts(PIPE.who)}</select></label>
+          ${anyF?`<button type="button" class="rr-btn ghost sm" id="fClear" style="min-height:50px">Clear filters</button>`:''}
+        </div>
+      </div>
+      ${shown.length?`<div class="rhead" aria-hidden="true"><span>Client</span><span>Renewal date</span><span>Status</span><span>Assigned</span><span>Last touch</span><span></span></div>
+      <div class="rl" role="list">${shown.map(r=>{ const lt=D.lastTouch[r.token]; const a=(r.assignedTo||'').toLowerCase();
+        return `<article class="rrow" role="listitem" tabindex="0" data-row="${r.rowIndex}" style="--c:${r.st.c}" aria-label="${esc(r.client)}, ${esc(r.st.label)}">
+        <div class="c-who"><b>${esc(r.client)}</b><small>${esc(r.policy||'no policy #')} · ${esc(r.coverage.replace(' (assumed)',''))}</small></div>
+        <div class="c-due">${daysCell(r,r.st)}</div>
+        <div class="c-st"><span class="rr-pill ${r.st.cls}">${esc(r.st.label)}</span></div>
+        <div class="c-asg"><label><span class="vh">Assigned to</span><select class="asg rasg${a?'':' none'}" data-rw="${r.rowIndex}" data-tok="${esc(r.token)}" data-cl="${esc(r.client)}"><option value="">Unassigned</option>${staffOpts(a,true)}</select></label></div>
+        <div class="c-lt">${lt?`<small>Last touch</small>${esc(lt.when)} · ${esc(who(lt.by))}`:''}</div>
+        <div class="c-act">${r.mobile?`<a class="ic-btn" href="tel:${esc(String(r.mobile).replace(/[^\d+]/g,''))}" title="Call ${esc(r.mobile)}" aria-label="Call ${esc(r.client)}">${I('phone')}</a>`:''}<button type="button" class="rr-btn ghost sm" tabindex="-1">Open ${I('arrow')}</button></div>
+      </article>`;}).join('')}</div>
+      ${list.length>shown.length?`<p class="more">Showing the first ${shown.length} of ${list.length}. Search or filter to narrow it.</p>`:''}`
+      :`<div class="rr-empty"><span class="ic">${I('checkc')}</span><b>Nothing here</b>${anyF||FILTER!=='all'?'No renewal matches these filters. Try All, or clear the filters.':'No renewals on the sheet yet.'}</div>`}
+    </section>
+    ${(D.properties&&D.properties.length)?propertyCard(props):''}
+   </div>
+   <div class="side-pipe">${sideCards(openTasks,false)}</div>
+  </div>`;
+}
+function propertyCard(props){
+  const stages=D.propStages||[];
+  const PS=['#9470CF','#7A4FB8','#4F44C2','#3A7BD5','#138A82','#0F7A55'];
+  const all=D.properties||[];
+  const parts=[{l:'Not started',v:all.filter(p=>!p.stage||stages.findIndex(x=>x.key===p.stage)<0).length,c:'#AAB6C8'}]
+    .concat(stages.map((s,i)=>({l:s.label,v:all.filter(p=>p.stage===s.key).length,c:PS[i%PS.length]})));
+  return `<section class="rr-card flat" id="propCard">
+    ${sec('building','Property renewals ('+props.length+')','Where each property file stands with Guardian',['#7A4FB8','#9470CF'])}
+    ${RR.stack(parts.filter(p=>p.v))}
+    ${props.length?`<div class="rl" role="list">${props.slice(0,80).map(pp=>{ const st=propStatus(pp); const a=(pp.assignedTo||'').toLowerCase();
+      return `<article class="rrow" role="listitem" tabindex="0" data-prop="${esc(pp.token)}" style="--c:${st.c}" aria-label="${esc(pp.client)}, ${esc(st.label)}">
+        <div class="c-who"><b>${esc(pp.client)}</b><small>${pp.locations} location${pp.locations===1?'':'s'} · ${money(pp.premium)}</small></div>
+        <div class="c-due">${daysCell({nextDue:pp.renewalDate,days:pp.days},{k:pp.stage==='issued'?'done':'',c:st.c})}</div>
+        <div class="c-st"><span class="rr-pill ${st.cls}">${esc(st.label)}</span></div>
+        <div class="c-asg"><label><span class="vh">Assigned to</span><select class="asg prasg${a?'':' none'}" data-tok="${esc(pp.token)}"><option value="">Unassigned</option>${staffOpts(a,true)}</select></label></div>
+        <div class="c-lt"><small>Policy</small>${esc(pp.policy||'none on file')}</div>
+        <div class="c-act"><button type="button" class="rr-btn ghost sm" tabindex="-1">Open ${I('arrow')}</button></div>
+      </article>`;}).join('')}</div>`:`<div class="rr-empty"><span class="ic">${I('building')}</span><b>No property file matches</b>Clear the filters to see them all.</div>`}
+  </section>`;
+}
+function sideCards(openTasks, full){
+  return `<section class="rr-card flat">${sec('task','Open tasks ('+openTasks.length+')','Due dates in red are past')}
+      ${openTasks.length?openTasks.slice(0,full?60:20).map(t=>{ const over=t.dueDays!==null&&t.dueDays!==undefined&&t.dueDays<0;
+        return `<div class="tk ${over?'over':''}"><span class="ti">${I(over?'alert':'task')}</span><div class="tx"><b>${esc(t.title)}</b>
+          <small>${esc(t.client||'')}${t.client?' · ':''}${t.assignee?esc(who(t.assignee)):'unassigned'}${t.due?' · due '+esc(t.due):''} · by ${esc(who(t.createdBy))}${over?' · <span class="rr-pill bad">Overdue</span>':''}</small></div>
+          <button class="rr-btn ghost sm done-b" data-done="${esc(t.id)}" title="Mark done">${I('check')} Done</button></div>`;}).join('')
+        :`<div class="rr-empty"><span class="ic">${I('checkc')}</span><b>No open tasks</b>Nice.</div>`}
+    </section>
+    <div>
+    <section class="rr-card flat">${sec('clock','Recent activity','The accountability trail, newest first',['#138A82','#3A9BD9'])}
+      ${D.feed.length?`<ul class="rr-tl">${D.feed.slice(0,full?40:18).map(a=>`<li><b>${esc(who(a.by))}</b> · ${esc(a.type)}: ${esc(a.client)}<span class="k">${esc(a.when)} · ${esc(a.details.slice(0,90))}</span></li>`).join('')}</ul>`
+        :`<p class="muted">No activity yet.</p>`}
+    </section>
+    ${D.surveys.recent.length?`<section class="rr-card flat">${sec('star','Latest client feedback','From the survey after each renewal',['#4F44C2','#7468E4'])}
+      ${D.surveys.recent.map(s=>`<div class="tk" style="--c:var(--ac2)"><div class="tx">${stars(s.sat)} <b>${esc(s.client)}</b> <span class="muted">${esc(s.sat)} of 5</span>
+        <small>${esc(s.when)}${s.comments?' · "'+esc(s.comments.slice(0,100))+'"':''}</small></div></div>`).join('')}
+    </section>`:''}
+    </div>`;
+}
+
 /* ---------- production: head office format, management only ---------- */
 function prodMoney(v){ return v?Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):''; }
 function prodMoney0(v){ return v?'$'+Number(v).toLocaleString('en-US',{maximumFractionDigits:0}):''; }
 function prodCount(v){ return v?String(v):''; }
 function productionView(){
-  if(PROD.err) return `<div class="card"><h2>📈 Production</h2><div style="padding:16px"><div class="err" style="display:block">${esc(PROD.err)}</div></div></div>`;
-  if(!PROD.data) return `<div class="card"><h2>📈 Production</h2><div style="padding:18px" class="mini">Loading the submitted figures…</div></div>`;
+  const head = sec('trend','Production · submitted','Confidential: branch management only',['#4a7c2f','#6a9c4a']);
+  if(PROD.err) return `<section class="rr-card flat">${head}<div class="rr-note bad">${I('alert')}<div>${esc(PROD.err)}</div></div></section>`;
+  if(!PROD.data) return `<section class="rr-card flat">${head}<p class="muted"><span class="rr-spin" style="vertical-align:middle;margin-right:8px"></span>Loading the submitted figures…</p><div class="rr-skel" style="height:180px"></div></section>`;
   const d=PROD.data, m=d.marks||{};
   const cell=(v,f,fmt)=>{
     const hot = v && m[f] && v>=m[f];
@@ -416,14 +667,21 @@ function productionView(){
       ${cell(r.appsY,'appsY',prodCount)}${cell(r.apiY,'apiY',prodMoney)}</tr>`;
   };
   const t=d.total;
-  return `<div class="card"><h2>📈 Production — SUBMITTED</h2>
-    <div style="padding:12px 16px 16px">
+  const agents=(d.rows||[]).filter(r=>r.level==='agent'&&Number(r.apiM)>0).sort((a,b)=>b.apiM-a.apiM).slice(0,8);
+  return `<section class="rr-card flat">${head}
       <div class="pbar">
-        <div class="mini">As at <b style="color:var(--text)">${esc(d.asOf)}</b> · viewed by ${esc(d.by)} (${esc(d.role)})
-          · <span style="color:var(--gold)">confidential — branch management only</span></div>
-        <button class="abtn gold sm" id="prodDl">⬇ Download</button>
+        <div class="muted">As at <b>${esc(d.asOf)}</b> · viewed by ${esc(d.by)} (${esc(d.role)})</div>
+        <button class="rr-btn sm" id="prodDl">${I('doc')} Download the workbook</button>
       </div>
-      <div class="pwrap"><table class="ptable">
+      <div class="rr-tiles">
+        ${RR.tile('Apps this week',Number(t.appsW)||0,{icon:'doc',tone:'teal'})}
+        ${RR.tile('Apps this month',Number(t.appsM)||0,{icon:'doc'})}
+        ${RR.tile('Apps this year',Number(t.appsY)||0,{icon:'doc',tone:'violet'})}
+        ${RR.tile('API this month',prodMoney0(t.apiM)||'$0',{icon:'money',tone:'ok'})}
+        ${RR.tile('API this year',prodMoney0(t.apiY)||'$0',{icon:'money',tone:'ok'})}
+      </div>
+      ${agents.length?`<p class="gl-h">${I('chart')} API this month, by agent (top ${agents.length})</p>${RR.bars(agents.map(a=>({l:(a.code?a.code+' - ':'')+a.name,v:a.apiM,t:prodMoney0(a.apiM)})))}`:''}
+      <div class="pwrap" style="margin-top:14px"><table class="ptable">
         <thead>
           <tr class="ptitle"><th colspan="7">SUBMITTED</th></tr>
           <tr><th class="pname">Hierachy</th><th>Apps -W</th><th>API - W</th><th>Apps -M</th><th>Api -M</th><th>Apps -Y</th><th>API</th></tr>
@@ -434,13 +692,13 @@ function productionView(){
           <td class="pnum">${prodCount(t.appsM)}</td><td class="pnum">${prodMoney(t.apiM)}</td>
           <td class="pnum">${prodCount(t.appsY)}</td><td class="pnum">${prodMoney(t.apiY)}</td></tr></tfoot>
       </table></div>
-      <div class="mini" style="margin-top:10px">Every view and download is recorded on the Activity tab under your name.</div>
-    </div></div>`;
+      <p class="muted" style="margin-top:10px">Shaded figures are the standouts: who is carrying the week, the month and the year. Every view and download is recorded on the Activity tab under your name.</p>
+    </section>`;
 }
 function loadProduction(){
   PROD.loading=true; PROD.err='';
   google.script.run
-    .withSuccessHandler(d=>{ PROD.data=d; PROD.loading=false; renderApp(); })
+    .withSuccessHandler(d=>{ PROD.data=d; PROD.loading=false; FRESHV=true; renderApp(); })
     .withFailureHandler(e=>{ PROD.err=(e&&e.message)?e.message:String(e); PROD.loading=false; renderApp(); })
     .productionData(BOOT.key, ME, PIN);
 }
@@ -449,16 +707,16 @@ function downloadProduction(){
   google.script.run
     .withSuccessHandler(r=>{
       /* A real workbook, not a CSV of one: the report is recognised by the
-         green banner, the shaded unit lines and the gold standouts, so it has
+         green banner, the shaded unit lines and the standout figures, so it has
          to arrive looking like the report it is. */
       const blob=new Blob([r.xml],{type:'application/vnd.ms-excel'});
       const a=document.createElement('a');
       a.href=URL.createObjectURL(blob); a.download=r.filename;
       document.body.appendChild(a); a.click();
       setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1500);
-      toast('Downloaded — logged under your name');
+      toast('Downloaded: logged under your name');
     })
-    .withFailureHandler(e=>toast('⚠ '+((e&&e.message)?e.message:e)))
+    .withFailureHandler(fail)
     .productionWorkbook(BOOT.key, ME, PIN);
 }
 
@@ -467,23 +725,19 @@ function money0(v){ const n=Number(v); return isNaN(n)?'—':'TT$'+n.toLocaleStr
 function reportView(){
   const rows=D.renewals.map(r=>({...r,st:statusOf(r)}));
   const props=D.properties||[];
-  // --- money tiles ---
+  // money
   const bookPrem=rows.reduce((s,r)=>s+(Number(r.premium)||0),0)+props.reduce((s,p)=>s+(Number(p.premium)||0),0);
   const renewedPrem=rows.filter(r=>r.st.k==='done').reduce((s,r)=>s+(Number(r.premium)||0),0);
   const riskPrem=rows.filter(r=>r.st.k==='overdue').reduce((s,r)=>s+(Number(r.premium)||0),0);
-  // --- funnel ---
+  // the funnel
   const invited=rows.filter(r=>(r.remindersSent||'').trim()).length;
   const instructed=rows.filter(r=>r.st.k==='instructed').length;
   const renewed=rows.filter(r=>r.st.k==='done').length;
   const fmax=Math.max(invited,instructed+renewed,renewed,1);
-  const funnel=[['Invited',invited],['Instructed',instructed+renewed],['Renewed',renewed]];
-  // --- by month (motor + property), renewed split ---
-  const mon={}; MONTHS.forEach(m=>mon[m]={total:0,done:0});
-  rows.forEach(r=>{const m=monthOf(r.nextDue); if(m){mon[m].total++; if(r.st.k==='done')mon[m].done++;}});
-  props.forEach(p=>{const m=monthOf(p.renewalDate); if(m){mon[m].total++; if(p.stage==='issued')mon[m].done++;}});
-  const mmax=Math.max(...MONTHS.map(m=>mon[m].total),1);
-  // --- team workload ---
-  const team=[...D.staff.map(s=>({email:s.email,name:s.name})),{email:'',name:'— Unassigned —'}];
+  const funnel=[['Invited',invited,'#3A7BD5','#4C94E6'],['Instructed',instructed+renewed,'#0B6F69','#138A82'],['Renewed',renewed,'#0F7A55','#17A06F']];
+  const conv=invited?Math.round(renewed/invited*100):null;
+  // team workload
+  const team=[...D.staff.map(s=>({email:s.email,name:s.name})),{email:'',name:'Unassigned'}];
   const wl=team.map(t=>{
     const mine=r=>String(r.assignedTo||'').toLowerCase()===t.email;
     const mineP=p=>String(p.assignedTo||'').toLowerCase()===t.email;
@@ -496,56 +750,55 @@ function reportView(){
       queries:(D.queries||[]).filter(q=>q.status==='Open'&&q.of===t.email).length,
       renewed:rows.filter(r=>mine(r)&&r.st.k==='done').length };
   }).filter(t=>t.files||t.instructed||t.overdue||t.prop||t.tasks||t.queries||t.renewed||t.email==='');
-  // --- follow-up radar ---
+  // the follow-up radar
   const today=new Date();
   const days=s=>{const d=new Date(s); return isNaN(d.getTime())?null:Math.round((today-d)/86400000);};
   const fu=[];
   rows.forEach(r=>{
     if(r.st.k==='instructed'){const m=(r.renewalStatus||'').match(/— (\d{1,2} \w{3} \d{4})\s*$/);const dd=m?days(m[1]):null;
-      fu.push({r,why:'⚡ Instructed '+(dd!=null?dd+'d ago':'')+' — process now',ord:0,age:dd??0});}
-    else if(r.st.k==='overdue') fu.push({r,why:'Overdue '+Math.abs(r.days)+'d — call '+(r.mobile||'client'),ord:1,age:Math.abs(r.days)});
+      fu.push({r,why:'Instructed '+(dd!=null?dd+'d ago':'')+': process now',ord:0,age:dd??0});}
+    else if(r.st.k==='overdue') fu.push({r,why:'Overdue '+Math.abs(r.days)+'d: call '+(r.mobile||'client'),ord:1,age:Math.abs(r.days)});
     else if(['due7','due14'].includes(r.st.k)){const lt=D.lastTouch[r.token];const dd=lt?days(lt.when):null;
-      if(dd===null||dd>7) fu.push({r,why:'Due '+r.days+'d — '+(dd===null?'never touched':'no touch in '+dd+'d'),ord:2,age:dd??99});}
+      if(dd===null||dd>7) fu.push({r,why:'Due '+r.days+'d: '+(dd===null?'never touched':'no touch in '+dd+'d'),ord:2,age:dd??99});}
   });
   fu.sort((a,b)=>a.ord-b.ord||b.age-a.age);
-  return `<div class="card"><h2>📊 Reports — the book, the team, the follow-ups</h2><div style="padding:14px 16px">
-    <div class="kpis" style="margin-bottom:16px">
-      <div class="kpi" style="cursor:default"><div class="n" style="font-size:19px">${money0(bookPrem)}</div><div class="l">Book premium (motor + property)</div></div>
-      <div class="kpi" style="cursor:default"><div class="n" style="font-size:19px;color:var(--green)">${money0(renewedPrem)}</div><div class="l">Renewed premium</div></div>
-      <div class="kpi warn" style="cursor:default"><div class="n" style="font-size:19px">${money0(riskPrem)}</div><div class="l">At risk — overdue files</div></div>
-      <div class="kpi" style="cursor:default"><div class="n">${invited?Math.round(renewed/invited*100)+'%':'—'}</div><div class="l">Invited → renewed</div></div>
-    </div>
-
-    <h4 class="rept">Renewals by month — click a bar to open that month</h4>
-    <div class="chart">${MONTHS.map(m=>{const d=mon[m];const open=d.total-d.done;
-      return `<div class="col" data-m="${m}" title="${m}: ${d.total} renewal${d.total===1?'':'s'} — ${d.done} renewed, ${open} open">
-        ${d.total?`<div class="cnt">${d.total}</div>`:''}
-        <div class="stack">
-          ${open?`<div class="seg open" style="height:${Math.round(open/mmax*120)||2}px"></div>`:''}
-          ${d.done?`<div class="seg done" style="height:${Math.round(d.done/mmax*120)||2}px"></div>`:''}
-        </div><div class="ml">${m}</div></div>`;}).join('')}
-    </div>
-    <div class="legend"><span><i class="sw done"></i>Renewed</span><span><i class="sw open"></i>Open</span></div>
-
-    <h4 class="rept">The funnel</h4>
-    ${funnel.map(([l,v])=>`<div class="frow"><span class="fl">${l}</span><div class="fbar" style="width:${Math.round(v/fmax*100)}%"></div><b>${v}</b>${l!=='Invited'&&invited?`<span class="mini">${Math.round(v/invited*100)}%</span>`:''}</div>`).join('')}
-
-    <h4 class="rept">Team workload — click a name to see their files</h4>
-    <div style="overflow-x:auto"><table><thead><tr><th>Staff</th><th>Open files</th><th>⚡ Instructed</th><th>Overdue</th><th>🏠 Property</th><th>Tasks</th><th>❓ Queries</th><th>Renewed</th></tr></thead>
-    <tbody>${wl.map(t=>`<tr data-who="${esc(t.email||'unassigned')}"><td><b>${esc(t.name)}</b></td>
-      <td>${t.files}</td><td>${t.instructed?`<span class="chip c-wait">${t.instructed}</span>`:'0'}</td>
-      <td>${t.overdue?`<span class="chip c-over">${t.overdue}</span>`:'0'}</td><td>${t.prop}</td>
-      <td>${t.tasks}</td><td>${t.queries?`<span class="chip c-due">${t.queries}</span>`:'0'}</td><td>${t.renewed}</td></tr>`).join('')}</tbody></table></div>
-
-    <h4 class="rept">🔥 Follow-up radar — who needs contact now (${fu.length})</h4>
-    ${fu.slice(0,12).map((x,i)=>`<div class="task ${x.ord<2?'over':''}"><div class="t"><b>${esc(x.r.client)}</b> <span class="mini">${esc(x.r.policy||'')}${x.r.mobile?' · 📞 '+esc(x.r.mobile):''}</span>
-      <div class="mini">${esc(x.why)} · assigned: ${esc((x.r.assignedTo||'nobody').split('@')[0])}</div></div>
-      <button class="abtn sm" data-fuopen="${x.r.rowIndex}">Open file</button></div>`).join('')||'<p class="mini">Nothing waiting — the book is being worked.</p>'}
-    ${D.surveys.count?`<h4 class="rept">Client scores (${D.surveys.count} surveys)</h4>
-    <div class="kpis">${D.surveys.avgSat?`<div class="kpi" style="cursor:default"><div class="n">${D.surveys.avgSat}★</div><div class="l">Satisfaction</div></div>`:''}
-    ${D.surveys.avgEase?`<div class="kpi" style="cursor:default"><div class="n">${D.surveys.avgEase}★</div><div class="l">Ease</div></div>`:''}
-    ${D.surveys.avgSpeed?`<div class="kpi" style="cursor:default"><div class="n">${D.surveys.avgSpeed}★</div><div class="l">Speed</div></div>`:''}</div>`:''}
-  </div></div>`;
+  const pill=(v,cls)=>v?`<span class="rr-pill ${cls}">${v}</span>`:'0';
+  const sv=D.surveys;
+  return `<section class="rr-card flat">${sec('money','The book','Premium across motor and property')}
+      <div class="rr-tiles">
+        ${RR.tile('Book premium',money0(bookPrem),{icon:'money',sub:'Motor and property'})}
+        ${RR.tile('Renewed premium',money0(renewedPrem),{icon:'checkc',tone:'ok',sub:'Files marked renewed'})}
+        ${RR.tile('At risk',money0(riskPrem),{icon:'alert',tone:'bad',sub:'Overdue files'})}
+      </div>
+      <div class="rr-grid two-eq">
+        <div><p class="gl-h">${I('trend')} The funnel</p>
+          <div class="funnel">${funnel.map(([l,v,c,c2],k)=>`<div class="fs"><span class="fl">${l}</span><span class="fb"><i style="--w:${Math.max(4,Math.round(v/fmax*100))}%;--c:${c};--c2:${c2};animation-delay:${k*.12}s">${v}${l!=='Invited'&&invited?` <small>${Math.round(v/invited*100)}%</small>`:''}</i></span></div>`).join('')}</div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:center">${RR.ring(conv||0, conv===null?'—':conv+'%', 'renewed', {lg:true,c:'var(--ok)',label:'Invited to renewed: '+(conv===null?'none invited yet':conv+'%')})}
+          <p class="muted" style="margin:0">Invited to renewed: <b>${conv===null?'none invited yet':conv+'%'}</b>. ${renewed} of ${invited} invited client${invited===1?'':'s'} renewed.</p></div>
+      </div>
+    </section>
+    <section class="rr-card flat">${sec('calendar','Renewals by month','Motor and property. Tap a month to open its files',['#138A82','#3A9BD9'])}${monthChart(130)}</section>
+    <section class="rr-card flat">${sec('users','Team workload','Tap a name to see their files',['#4F44C2','#7468E4'])}
+      ${RR.bars(wl.filter(t=>t.files).map(t=>({l:t.name,v:t.files,t:t.files+' open'})))}
+      <table class="rr-table wl"><thead><tr><th>Staff</th><th>Open files</th><th>Instructed</th><th>Overdue</th><th>Property</th><th>Tasks</th><th>Queries</th><th>Renewed</th></tr></thead>
+      <tbody>${wl.map(t=>`<tr data-who="${esc(t.email||'unassigned')}" tabindex="0"><td data-l="Staff"><b>${esc(t.name)}</b></td>
+        <td data-l="Open files">${t.files}</td><td data-l="Instructed">${pill(t.instructed,'teal')}</td>
+        <td data-l="Overdue">${pill(t.overdue,'bad')}</td><td data-l="Property">${t.prop}</td>
+        <td data-l="Tasks">${t.tasks}</td><td data-l="Queries">${pill(t.queries,'warn')}</td><td data-l="Renewed">${t.renewed}</td></tr>`).join('')}</tbody></table>
+    </section>
+    <section class="rr-card flat">${sec('phone','Follow-up radar ('+fu.length+')','Who needs contact now, most pressing first',['#B5352A','#D9604F'])}
+      ${fu.slice(0,12).map(x=>`<div class="tk ${x.ord<2?'over':''}"><span class="ti">${I(x.ord===0?'renew':x.ord===1?'alert':'clock')}</span><div class="tx"><b>${esc(x.r.client)}</b> <span class="muted">${esc(x.r.policy||'')}${x.r.mobile?' · '+esc(x.r.mobile):''}</span>
+        <small>${esc(x.why)} · assigned: ${esc(who(x.r.assignedTo||'nobody'))}</small></div>
+        ${x.r.mobile?`<a class="ic-btn" href="tel:${esc(String(x.r.mobile).replace(/[^\d+]/g,''))}" aria-label="Call ${esc(x.r.client)}">${I('phone')}</a>`:''}
+        <button class="rr-btn ghost sm done-b" data-fuopen="${x.r.rowIndex}">Open file</button></div>`).join('')||`<div class="rr-empty"><span class="ic">${I('checkc')}</span><b>Nothing waiting</b>The book is being worked.</div>`}
+    </section>
+    ${sv.count?`<section class="rr-card flat">${sec('star','Client scores ('+sv.count+' survey'+(sv.count===1?'':'s')+')','Out of 5, from the survey after each renewal',['#4F44C2','#7468E4'])}
+      <div class="rings">
+        ${sv.avgSat?`<figure>${RR.ring(sv.avgSat/5*100,sv.avgSat,'of 5',{c:'var(--ac)',label:'Satisfaction '+sv.avgSat+' of 5'})}<figcaption>Satisfaction ${esc(sv.avgSat)}</figcaption></figure>`:''}
+        ${sv.avgEase?`<figure>${RR.ring(sv.avgEase/5*100,sv.avgEase,'of 5',{c:'var(--blue)',label:'Ease '+sv.avgEase+' of 5'})}<figcaption>Ease ${esc(sv.avgEase)}</figcaption></figure>`:''}
+        ${sv.avgSpeed?`<figure>${RR.ring(sv.avgSpeed/5*100,sv.avgSpeed,'of 5',{c:'var(--rn2)',label:'Speed '+sv.avgSpeed+' of 5'})}<figcaption>Speed ${esc(sv.avgSpeed)}</figcaption></figure>`:''}
+      </div></section>`:''}`;
 }
 
 /* ---------- interactive audit view: every action, filterable ---------- */
@@ -561,78 +814,89 @@ function auditView(){
   });
   const qOpen=(D.queries||[]).filter(q=>q.status==='Open');
   const qDone=(D.queries||[]).filter(q=>q.status!=='Open');
-  return `<div class="card"><h2>🔍 Audit trail — showing ${rows.length} of ${feed.length} actions</h2>
-    <div style="padding:12px 16px">
-    <div class="bar" style="margin-bottom:10px">
-      <input type="search" id="audQ" placeholder="Filter by client, policy, detail…" value="${esc(AUDIT.q)}">
-      <select id="audBy" style="width:auto"><option value="">Everyone</option>${people.map(p=>`<option ${p===AUDIT.by?'selected':''} value="${esc(p)}">${esc(p.split('@')[0])}</option>`).join('')}</select>
-      <select id="audType" style="width:auto"><option value="">All actions</option>${types.map(t=>`<option ${t===AUDIT.type?'selected':''}>${esc(t)}</option>`).join('')}</select>
-    </div>
-    <div style="overflow-x:auto;max-height:420px;overflow-y:auto"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Client</th><th>Details</th></tr></thead>
-    <tbody>${rows.slice(0,200).map(a=>`<tr style="cursor:default"><td class="mini" style="white-space:nowrap">${esc(a.when)}</td><td><b>${esc(a.by.split('@')[0])}</b></td><td><span class="chip ${/query/.test(a.type)?'c-due':/login/.test(a.type)?'c-up':/instruction|renewed|survey/.test(a.type)?'c-done':'c-wait'}">${esc(a.type.replace(/^TEST:/,''))}</span></td><td>${esc(a.client)}</td><td class="mini">${esc(a.details.slice(0,140))}</td></tr>`).join('')}</tbody></table></div>
-    <h4 style="font:800 11px 'Montserrat';color:var(--teal);text-transform:uppercase;letter-spacing:.08em;margin:16px 0 6px">Queries — open (${qOpen.length}) · answered (${qDone.length})</h4>
-    ${[...qOpen,...qDone].slice(0,30).map(q=>`<div class="task ${q.status==='Open'?'over':''}"><div class="t">
-      <b>${esc(q.client||'General')}</b> — ${esc(q.question)}
-      <div class="mini">${esc(q.by.split('@')[0])} → ${esc(q.of.split('@')[0])} · ${esc(q.created)} · <b>${q.status}</b>${q.answer?` — “${esc(q.answer.slice(0,140))}” (${esc(q.answeredBy.split('@')[0])}, ${esc(q.answered)})`:''}</div>
-    </div></div>`).join('')||'<p class="mini">No queries yet.</p>'}
-  </div></div>`;
+  const byType={}; rows.forEach(a=>{ const t=a.type.replace(/^TEST:/,''); byType[t]=(byType[t]||0)+1; });
+  const top=Object.keys(byType).sort((a,b)=>byType[b]-byType[a]).slice(0,6);
+  const tcls=t=>/query/.test(t)?'warn':/login/.test(t)?'grey':/instruction|renewed|survey/.test(t)?'ok':'';
+  return `<section class="rr-card flat">${sec('search','Audit trail','Showing '+rows.length+' of '+feed.length+' actions',['#1B2A44','#3A4A66'])}
+    <div class="st-tools"><div class="r2">
+      <label class="srch" style="grid-column:1/-1"><span class="vh">Filter</span>${I('search')}<input class="rr-in" type="search" id="audQ" placeholder="Filter by client, policy, detail…" value="${esc(AUDIT.q)}"></label>
+      <label><span class="vh">Who</span><select class="rr-in" id="audBy"><option value="">Everyone</option>${people.map(p=>`<option ${p===AUDIT.by?'selected':''} value="${esc(p)}">${esc(who(p))}</option>`).join('')}</select></label>
+      <label><span class="vh">Action</span><select class="rr-in" id="audType"><option value="">All actions</option>${types.map(t=>`<option ${t===AUDIT.type?'selected':''}>${esc(t)}</option>`).join('')}</select></label>
+    </div></div>
+    ${top.length?`<p class="gl-h">${I('chart')} What was done, in these ${rows.length} actions</p>${RR.bars(top.map(t=>({l:t,v:byType[t]})))}`:''}
+    <div class="scroll-y"><table class="rr-table"><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Client</th><th>Details</th></tr></thead>
+    <tbody>${rows.slice(0,200).map(a=>{ const t=a.type.replace(/^TEST:/,''); return `<tr><td data-l="When" class="muted" style="white-space:nowrap">${esc(a.when)}</td><td data-l="Who"><b>${esc(who(a.by))}</b></td><td data-l="Action"><span class="rr-pill ${tcls(a.type)}">${esc(t)}</span></td><td data-l="Client">${esc(a.client)}</td><td data-l="Details" class="muted">${esc(a.details.slice(0,140))}</td></tr>`;}).join('')
+      ||`<tr><td colspan="5" class="muted">No action matches these filters.</td></tr>`}</tbody></table></div>
+  </section>
+  <section class="rr-card flat">${sec('chat','Queries','Open '+qOpen.length+' · answered '+qDone.length,['#C98A00','#E0A82E'])}
+    ${[...qOpen,...qDone].slice(0,30).map(q=>`<div class="tk ${q.status==='Open'?'over':''}" style="${q.status==='Open'?'--c:#C98A00':'--c:var(--ok)'}"><span class="ti">${I(q.status==='Open'?'chat':'checkc')}</span><div class="tx">
+      <b>${esc(q.client||'General')}</b>: ${esc(q.question)} <span class="rr-pill ${q.status==='Open'?'warn':'ok'}">${esc(q.status)}</span>
+      <small>${esc(who(q.by))} asked ${esc(who(q.of))} · ${esc(q.created)}${q.answer?` · “${esc(q.answer.slice(0,140))}” (${esc(who(q.answeredBy))}, ${esc(q.answered)})`:''}</small>
+    </div></div>`).join('')||`<p class="muted">No queries yet.</p>`}
+  </section>`;
 }
 
+const PSC=['#9470CF','#7A4FB8','#4F44C2','#3A7BD5','#138A82','#0F7A55'];
 function propStatus(pp){
   const stages=D.propStages||[];
   const i=stages.findIndex(x=>x.key===pp.stage);
-  if(pp.stage==='issued') return {label:'✓ Issued',cls:'c-done'};
-  if(i>=0) return {label:stages[i].label,cls:'c-wait'};
-  if(pp.days!==null&&pp.days<0) return {label:'Overdue '+Math.abs(pp.days)+'d',cls:'c-over'};
-  if(pp.days!==null&&pp.days<=14) return {label:'Due '+pp.days+'d',cls:'c-due'};
-  return {label:pp.status?pp.status.slice(0,18):'Not invited',cls:'c-up'};
+  if(pp.stage==='issued') return {label:'Issued',cls:'ok',c:PC.done};
+  if(i>=0) return {label:stages[i].label,cls:'violet',c:'#7A4FB8'};
+  if(pp.days!==null&&pp.days!==undefined&&pp.days<0) return {label:'Overdue '+Math.abs(pp.days)+'d',cls:'bad',c:PC.overdue};
+  if(pp.days!==null&&pp.days!==undefined&&pp.days<=14) return {label:'Due in '+pp.days+'d',cls:'warn',c:PC.due14};
+  return {label:pp.status?pp.status.slice(0,18):'Not invited',cls:'grey',c:PC.nodate};
 }
 
+/* ---------- the drawer ---------- */
+function openDr(){ $('#ov').classList.add('open'); $('#dr').classList.add('open'); $('#dr').scrollTop=0; const x=$('#dX'); if(x){ x.onclick=closeDr; setTimeout(()=>x.focus(),60); } }
+function ringDays(days, done){
+  if(done) return RR.ring(100,'Done','',{c:'var(--ok)',label:'Renewed'});
+  if(days===null||days===undefined||days==='') return RR.ring(0,'—','no date',{label:'No renewal date'});
+  if(days<0) return RR.ring(100,Math.abs(days),'late',{c:'var(--bad)',label:Math.abs(days)+' days overdue'});
+  return RR.ring(Math.max(4,Math.round((30-Math.min(days,30))/30*100)),days,'to go',{c:days<=14?'#C98A00':'var(--blue)',label:days+' days to renewal'});
+}
 function openProp(token){
   const pp=(D.properties||[]).find(x=>x.token===token); if(!pp) return;
   const st=propStatus(pp);
   const stages=D.propStages||[];
   const at=stages.findIndex(x=>x.key===pp.stage);
   const link=D.portalBase? D.portalBase+(D.portalBase.includes('?')?'&':'?')+'p='+encodeURIComponent(pp.token):'';
+  const hist=(pp.premiumHistory||[]).filter(h=>h&&h.year);
   $('#dr').innerHTML=`
-    <div class="dh"><h3>🏠 ${esc(pp.client)} <span class="chip ${st.cls}" style="vertical-align:middle">${st.label}</span></h3>
-    <div style="font-size:12px;color:var(--muted)">${esc(pp.policy||'no policy #')} · ${pp.locations} location(s) · renews ${esc(pp.renewalDate)}</div></div>
-    <div class="db">
-      <div class="sec"><div class="kv">
-        <div><div class="k">Premium (all locations)</div><div class="v">${money(pp.premium)}</div></div>
-        <div><div class="k">Email</div><div class="v">${esc(pp.email||'—')}</div></div>
-        <div><div class="k">Stage since</div><div class="v">${esc(pp.stageUpdated||'—')}</div></div>
-        <div><div class="k">Assigned to</div><div class="v">
-          <select id="pAssign">${['',...D.staff.map(x=>x.email)].map(e=>`<option ${e===(pp.assignedTo||'').toLowerCase()?'selected':''}>${e}</option>`).join('')}</select>
-        </div></div>
+    <div class="hd" style="--c:var(--pr);--c2:var(--pr2)"><span class="ic">${I('building')}</span><div class="tt"><b>${esc(pp.client)}</b>
+      <small>${esc(pp.policy||'no policy #')} · ${pp.locations} location(s) · renews ${esc(pp.renewalDate)}</small>
+      <span class="rr-pill ${st.cls}" style="margin-top:6px">${esc(st.label)}</span></div>
+      <button class="rr-x" id="dX" aria-label="Close">${I('back')}</button></div>
+    <div class="bd">
+      <ol class="rr-steps" style="--w:${stages.length>1?Math.max(0,Math.min(1,at/(stages.length-1)))*82:0}%"><span class="fill"></span>${stages.map((x,i)=>`<li data-n="${i+1}" class="${i<at||pp.stage==='issued'?'done':i===at?'on':''}"><span>${esc(x.label)}</span></li>`).join('')}</ol>
+      <div class="facts">${ringDays(pp.days,pp.stage==='issued')}<div class="kvs">
+        <div class="rr-kv"><span>Premium (all locations)</span><span>${money(pp.premium)}</span></div>
+        <div class="rr-kv"><span>Email</span><span>${esc(pp.email||'—')}</span></div>
+        <div class="rr-kv"><span>Stage since</span><span>${esc(pp.stageUpdated||'—')}</span></div>
       </div></div>
-      <div class="sec"><h4>Renewal journey</h4>
-        ${stages.map((x,i)=>`<div class="task" style="${i===at?'border-color:var(--gold);background:rgba(239,194,75,.08)':''}">
-          <div class="t"><b>${i<at?'✅ ':i===at?'🟡 ':''}${esc(x.label)}</b><div class="mini">${esc(x.blurb)}</div></div>
-          ${i===at+1?`<button class="abtn sm" data-adv="${x.key}">Advance →</button>`:''}
-        </div>`).join('')}
-        <label>Note for the client's progress update (optional)</label>
-        <input type="text" id="pNote" placeholder="e.g. Terms received from Guardian — reviewing now">
+      <label class="rr-f"><b>Assigned to</b><select class="rr-in" id="pAssign">${['',...D.staff.map(x=>x.email)].map(e=>`<option value="${esc(e)}" ${e===(pp.assignedTo||'').toLowerCase()?'selected':''}>${e?esc(e):'Unassigned'}</option>`).join('')}</select></label>
+      <div class="acts">
+        <button class="rr-btn violet" id="pInvite">${I('mail')} Send or resend renewal invite</button>
+        <button class="rr-btn ghost" id="pRate">${I('trend')} Request loyalty rate review</button>
+        ${pp.mobile?`<button class="rr-btn ghost" id="pWa">${I('whatsapp')} WhatsApp the link</button>`:''}
+        ${link?`<button class="rr-btn ghost" id="pLink">${I('doc')} Copy portal link</button>`:''}
       </div>
-      ${pp.rate?`<div class="sec"><h4>Rate check</h4>
-        <div class="task"><div class="t"><b>$${pp.rate.toFixed(2)} per $1,000</b> before tax
-          <div class="mini">${(pp.premiumHistory||[]).map(h=>h.year+': '+money(h.amount)).join(' · ')||'no history on file'}${pp.years?' · '+pp.years+' yrs with us':''}</div>
-        </div></div></div>`:''}
-      <div class="sec"><h4>❓ Raise a query — the person named must answer, on the record</h4>
-        <label>Who must answer</label><select id="pAskWho">${D.staff.map(s=>`<option value="${esc(s.email)}">${esc(s.name)}</option>`).join('')}</select>
-        <label>Question</label><textarea id="pAskT" placeholder="e.g. Terms overdue from Guardian — please chase and advise"></textarea>
-        <button class="abtn sm" id="pAskGo" style="margin-top:8px">❓ Send query</button>
-      </div>
-      <div class="sec" style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="abtn primary" id="pInvite">✉ Send/resend renewal invite</button>
-        <button class="abtn gold" id="pRate">⚖ Request loyalty rate review</button>
-        ${pp.mobile?`<button class="abtn" id="pWa">📱 WhatsApp the link</button>`:''}
-        ${link?`<button class="abtn" id="pLink">⧉ Copy portal link</button>`:''}
-      </div>
+      ${sec('renew','Renewal journey','Advance the file one stage at a time: the client is e-mailed each time',['#7A4FB8','#9470CF'])}
+      <ol class="jv">${stages.map((x,i)=>`<li class="${i<at||pp.stage==='issued'?'done':i===at?'on':''}"><span class="dot">${i<at||pp.stage==='issued'?I('check'):i+1}</span><div class="jt"><b>${esc(x.label)}${i===at?' <span class="rr-pill violet">Now</span>':''}</b>${esc(x.blurb)}
+          ${i===at+1?`<br><button class="rr-btn violet sm" data-adv="${esc(x.key)}">Advance to this stage ${I('arrow')}</button>`:''}</div></li>`).join('')}</ol>
+      <label class="rr-f"><b>Note for the client's progress update (optional)</b><input class="rr-in" type="text" id="pNote" placeholder="e.g. Terms received from Guardian, reviewing now"></label>
+      ${pp.rate?`${sec('chart','Rate check','The rate and the premium on file, year by year',['#3A7BD5','#4C94E6'])}
+        <div class="rr-note">${I('info')}<div><b>$${pp.rate.toFixed(2)} per $1,000</b> before tax${pp.years?` · ${esc(pp.years)} yrs with us`:''}${hist.length?'':' · no premium history on file'}</div></div>
+        ${hist.length?RR.cols(hist.map((h,k)=>({l:String(h.year),v:Number(h.amount)||0,t:money(h.amount),now:k===hist.length-1}))):''}
+        ${hist.length?`<p class="muted">${hist.map(h=>esc(h.year)+': '+money(h.amount)).join(' · ')}</p>`:''}`:''}
+      ${sec('chat','Raise a query','The person named must answer, on the record',['#C98A00','#E0A82E'])}
+      <label class="rr-f"><b>Who must answer</b><select class="rr-in" id="pAskWho">${staffOpts('')}</select></label>
+      <label class="rr-f"><b>Question</b><textarea class="rr-in" id="pAskT" placeholder="e.g. Terms overdue from Guardian, please chase and advise"></textarea></label>
+      <button class="rr-btn ghost" id="pAskGo">${I('send')} Send query</button>
     </div>`;
-  $('#ov').classList.add('open'); $('#dr').classList.add('open');
+  openDr();
   document.querySelectorAll('[data-adv]').forEach(btn=>btn.onclick=()=>{
-    closeDr(); act('propStage',{token:pp.token,stage:btn.dataset.adv,note:$('#pNote').value},'Stage advanced — client updated by email');
+    closeDr(); act('propStage',{token:pp.token,stage:btn.dataset.adv,note:$('#pNote').value},'Stage advanced: client updated by email');
   });
   $('#pInvite').onclick=()=>{ closeDr(); act('propInvite',{token:pp.token},'Invitation sent to '+(pp.email||'client')); };
   $('#pRate').onclick=()=>{ closeDr(); act('propRateReview',{token:pp.token},'Rate review request sent to Guardian'); };
@@ -641,14 +905,14 @@ function openProp(token){
     let d=(pp.mobile||'').replace(/\D/g,'');
     if(d.length===7) d='1868'+d;
     else if(d.length===10&&d.startsWith('868')) d='1'+d;
-    if(d.length!==11||!d.startsWith('1868')){ toast('Check the mobile number format: '+pp.mobile); return; }
+    if(d.length!==11||!d.startsWith('1868')){ toast('Check the mobile number format: '+pp.mobile,'bad'); return; }
     const first=(pp.client||'').split(/[ ,]/).filter(Boolean)[1]||(pp.client||'').split(/[ ,]/)[0]||'there';
     const msg=`Hi, this is the Ricky Rampersad Branch (Guardian Group). Your property renewal${pp.policy?' — policy '+pp.policy:''} is due ${pp.renewalDate}. You can review your cover, check your values and send us your instructions in about 2 minutes here:\n\n${link}\n\nAny questions, just reply here or call (868) 678-5921.`;
     window.open('https://wa.me/'+d+'?text='+encodeURIComponent(msg),'_blank');
-    act('comment',{token:pp.token,client:pp.client,text:'WhatsApp renewal link sent to '+pp.mobile},'WhatsApp opened — press send there');
+    act('comment',{token:pp.token,client:pp.client,text:'WhatsApp renewal link sent to '+pp.mobile},'WhatsApp opened: press send there');
   };
   $('#pAssign').onchange=e=>act('propAssign',{token:pp.token,assignee:e.target.value},'Assigned');
-  $('#pAskGo').onclick=()=>{ const t=$('#pAskT').value.trim(); if(!t){ toast('Type the question first'); return; } closeDr(); act('ask',{token:pp.token,client:pp.client,assignee:$('#pAskWho').value,text:t},'Query sent — it must be answered'); };
+  $('#pAskGo').onclick=()=>{ const t=$('#pAskT').value.trim(); if(!t){ toast('Type the question first','bad'); return; } closeDr(); act('ask',{token:pp.token,client:pp.client,assignee:$('#pAskWho').value,text:t},'Query sent: it must be answered'); };
   const pl=$('#pLink'); if(pl) pl.onclick=async()=>{ try{ await navigator.clipboard.writeText(link); toast('Portal link copied'); }catch(e){ prompt('Copy the link:', link); } };
 }
 
@@ -658,92 +922,98 @@ function openDetail(rowIndex){
   const acts = D.feed.filter(a=>a.client===r.client).slice(0,12);
   const tasks = D.tasks.filter(t=>t.token===r.token && t.status==='Open');
   const link = D.portalBase ? D.portalBase + (D.portalBase.includes('?')?'&':'?') + 't=' + encodeURIComponent(r.token) : '';
+  // where the renewal stands, from what the sheet records
+  const steps=[['Renewal date set',!!r.nextDue],['Invite sent',!!String(r.remindersSent||'').trim()],['Client instructed',st.k==='instructed'||st.k==='done'],['Renewed',st.k==='done']];
+  let on=steps.findIndex(s=>!s[1]); const doneN=on<0?steps.length:on;
+  const fillW=Math.max(0,Math.min(1,(doneN-(on<0?1:0))/(steps.length-1)))*82;
+  const veh=(D.vehicles&&D.vehicles[r.token])||null;
   $('#dr').innerHTML = `
-    <div class="dh"><h3>${esc(r.client)} <span class="chip ${st.cls}" style="vertical-align:middle">${st.label}</span></h3>
-    <div style="font-size:12px;color:var(--muted)">${esc(r.coverage)} · ${esc(r.policy||'no policy #')} · due ${esc(r.nextDue)}</div></div>
-    <div class="db">
-      <div class="sec"><div class="kv">
-        <div><div class="k">Premium</div><div class="v">${money(r.premium)}</div></div>
-        <div><div class="k">Balance owing</div><div class="v">${money(r.balance)}</div></div>
-        <div><div class="k">Payment status</div><div class="v">${esc(r.payStatus||'—')}</div></div>
-        <div><div class="k">Renewal status</div><div class="v">${esc(r.renewalStatus||'—')}</div></div>
-        <div><div class="k">Email</div><div class="v">${esc(r.email||'—')}</div></div>
-        <div><div class="k">Mobile</div><div class="v">${esc(r.mobile||'—')}</div></div>
-        <div><div class="k">Reminders sent</div><div class="v" style="font-weight:400;font-size:11.5px">${esc(r.remindersSent||'none yet')}</div></div>
-        <div><div class="k">Assigned to</div><div class="v">
-          <select id="dAssign">${['',...D.staff.map(s=>s.email)].map(e=>`<option ${e===(r.assignedTo||'').toLowerCase()?'selected':''}>${e}</option>`).join('')}</select>
-        </div></div>
+    <div class="hd" style="--c:${st.c};--c2:${st.c}"><span class="ic">${I('car')}</span><div class="tt"><b>${esc(r.client)}</b>
+      <small>${esc(r.coverage)} · ${esc(r.policy||'no policy #')} · due ${esc(r.nextDue)}</small>
+      <span class="rr-pill ${st.cls}" style="margin-top:6px">${esc(st.label)}</span></div>
+      <button class="rr-x" id="dX" aria-label="Close">${I('back')}</button></div>
+    <div class="bd">
+      <ol class="rr-steps" style="--w:${fillW}%"><span class="fill"></span>${steps.map((s,i)=>`<li data-n="${i+1}" class="${s[1]&&i<doneN?'done':i===on?'on':''}"><span>${esc(s[0])}</span></li>`).join('')}</ol>
+      <div class="facts">${ringDays(r.days,st.k==='done')}<div class="kvs">
+        <div class="rr-kv"><span>Premium</span><span>${money(r.premium)}</span></div>
+        <div class="rr-kv"><span>Balance owing</span><span>${money(r.balance)}${Number(r.balance)>0?' <span class="rr-pill warn">Owing</span>':''}</span></div>
+        <div class="rr-kv"><span>Payment status</span><span>${esc(r.payStatus||'—')}</span></div>
       </div></div>
-      ${(D.vehicles && D.vehicles[r.token] ? `<div class="sec"><h4>Vehicles on record (${D.vehicles[r.token].length})</h4>
-        ${D.vehicles[r.token].map(v=>`<div class="task"><div class="t"><b>${esc(v.reg||'—')}</b> ${esc([v.make,v.model,v.year].filter(Boolean).join(' '))}
-          <div class="mini">${esc(v.cover||'')}${v.value?' · insured '+money(v.value):''}${v.ncd?' · NCD '+esc(v.ncd)+'%':''}${v.years?' · with us '+esc(v.years)+'y':''}${v.chassis?' · chassis '+esc(v.chassis):''}${v.engine?' · engine '+esc(v.engine):''}</div>
-          ${v.address?`<div class="mini">📍 ${esc(v.address)}</div>`:''}
-        </div></div>`).join('')}</div>` : '')}
-      <div class="sec" style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="abtn primary" id="dRenewed">✓ Mark renewed</button>
-        <button class="abtn" id="dInvite">✉ Send/resend invite</button>
-        ${link?`<button class="abtn" id="dLink">⧉ Copy portal link</button>`:''}
+      <div class="rr-kv"><span>Renewal status</span><span>${esc(r.renewalStatus||'—')}</span></div>
+      <div class="rr-kv"><span>Email</span><span>${r.email?`<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`:'—'}</span></div>
+      <div class="rr-kv"><span>Mobile</span><span>${r.mobile?`<a href="tel:${esc(String(r.mobile).replace(/[^\d+]/g,''))}">${esc(r.mobile)}</a>`:'—'}</span></div>
+      <div class="rr-kv"><span>Reminders sent</span><span style="font-weight:500;font-size:.84rem">${esc(r.remindersSent||'none yet')}</span></div>
+      <label class="rr-f" style="margin-top:10px"><b>Assigned to</b><select class="rr-in" id="dAssign">${['',...D.staff.map(s=>s.email)].map(e=>`<option value="${esc(e)}" ${e===(r.assignedTo||'').toLowerCase()?'selected':''}>${e?esc(e):'Unassigned'}</option>`).join('')}</select></label>
+      <div class="acts">
+        <button class="rr-btn ok" id="dRenewed">${I('checkc')} Mark renewed</button>
+        <button class="rr-btn ghost" id="dInvite">${I('mail')} Send or resend invite</button>
+        ${link?`<button class="rr-btn ghost" id="dLink">${I('doc')} Copy portal link</button>`:''}
       </div>
-      <div class="sec"><h4>Open tasks (${tasks.length})</h4>
-        ${tasks.map(t=>`<div class="task"><div class="t"><b>${esc(t.title)}</b><div class="mini">${t.assignee?esc(t.assignee.split('@')[0]):'unassigned'}</div></div><button class="abtn sm" data-ddone="${t.id}">✓</button></div>`).join('')||'<p class="mini">None.</p>'}
-        <label>New task</label><input type="text" id="dTaskT" placeholder="e.g. Call re updated vehicle value">
-        <div class="row2"><div><label>Assign to</label><select id="dTaskA">${D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===ME?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
-        <div><label>Due</label><input type="date" id="dTaskD"></div></div>
-        <button class="abtn sm" id="dTaskAdd" style="margin-top:8px">＋ Add task</button>
-      </div>
-      <div class="sec"><h4>❓ Raise a query — the person named must answer, on the record</h4>
-        <label>Who must answer</label><select id="dAskWho">${D.staff.map(s=>`<option value="${esc(s.email)}">${esc(s.name)}</option>`).join('')}</select>
-        <label>Question</label><textarea id="dAskT" placeholder="e.g. Client called twice — please advise status"></textarea>
-        <button class="abtn sm" id="dAskGo" style="margin-top:8px">❓ Send query</button>
-      </div>
-      <div class="sec"><h4>Comments & history</h4>
-        <div class="tl">${acts.map(a=>`<div class="it"><b>${esc(a.by.split('@')[0])}</b> · ${esc(a.type)}<div class="w">${esc(a.when)} · ${esc(a.details.slice(0,120))}</div></div>`).join('')||'<p class="mini">No activity yet.</p>'}</div>
-        <label>Add comment</label><textarea id="dCom" placeholder="Spoke to client, awaiting docs…"></textarea>
-        <button class="abtn sm" id="dComAdd" style="margin-top:8px">＋ Comment</button>
-      </div>
+      ${veh?`${sec('car','Vehicles on record ('+veh.length+')','From the Risk Details tab')}
+        ${veh.map(v=>`<div class="veh"><span class="ti">${I('car')}</span><div class="tx"><b>${esc(v.reg||'—')} ${esc([v.make,v.model,v.year].filter(Boolean).join(' '))}</b>
+          ${esc(v.cover||'')}${v.value?' · insured '+money(v.value):''}${v.ncd?' · NCD '+esc(v.ncd)+'%':''}${v.years?' · with us '+esc(v.years)+'y':''}${v.chassis?' · chassis '+esc(v.chassis):''}${v.engine?' · engine '+esc(v.engine):''}
+          ${v.address?`<br>${I('map')} ${esc(v.address)}`:''}
+        </div></div>`).join('')}`:''}
+      ${sec('task','Open tasks ('+tasks.length+')','On this file')}
+      ${tasks.map(t=>`<div class="tk"><span class="ti">${I('task')}</span><div class="tx"><b>${esc(t.title)}</b><small>${t.assignee?esc(who(t.assignee)):'unassigned'}${t.due?' · due '+esc(t.due):''}</small></div><button class="rr-btn ghost sm done-b" data-ddone="${esc(t.id)}" aria-label="Mark done">${I('check')} Done</button></div>`).join('')||'<p class="muted">None.</p>'}
+      <label class="rr-f"><b>New task</b><input class="rr-in" type="text" id="dTaskT" placeholder="e.g. Call re updated vehicle value"></label>
+      <div class="rr-row"><label class="rr-f"><b>Assign to</b><select class="rr-in" id="dTaskA">${staffOpts(ME)}</select></label>
+        <label class="rr-f"><b>Due</b><input class="rr-in" type="date" id="dTaskD"></label></div>
+      <button class="rr-btn ghost" id="dTaskAdd">${I('plus')} Add task</button>
+      ${sec('chat','Raise a query','The person named must answer, on the record',['#C98A00','#E0A82E'])}
+      <label class="rr-f"><b>Who must answer</b><select class="rr-in" id="dAskWho">${staffOpts('')}</select></label>
+      <label class="rr-f"><b>Question</b><textarea class="rr-in" id="dAskT" placeholder="e.g. Client called twice, please advise status"></textarea></label>
+      <button class="rr-btn ghost" id="dAskGo">${I('send')} Send query</button>
+      ${sec('clock','Comments and history','Newest first',['#138A82','#3A9BD9'])}
+      ${acts.length?`<ul class="rr-tl">${acts.map(a=>`<li><b>${esc(who(a.by))}</b> · ${esc(a.type)}<span class="k">${esc(a.when)} · ${esc(a.details.slice(0,120))}</span></li>`).join('')}</ul>`:'<p class="muted">No activity yet.</p>'}
+      <label class="rr-f" style="margin-top:8px"><b>Add comment</b><textarea class="rr-in" id="dCom" placeholder="Spoke to client, awaiting docs…"></textarea></label>
+      <button class="rr-btn ghost" id="dComAdd">${I('plus')} Comment</button>
     </div>`;
-  $('#ov').classList.add('open'); $('#dr').classList.add('open');
-  $('#dRenewed').onclick=()=>{ closeDr(); act('markRenewed',{rowIndex:r.rowIndex,token:r.token,client:r.client},'Marked renewed — survey follows in 7 days'); };
+  openDr();
+  $('#dRenewed').onclick=()=>{ closeDr(); act('markRenewed',{rowIndex:r.rowIndex,token:r.token,client:r.client},'Marked renewed: survey follows in 7 days'); };
   $('#dInvite').onclick=()=>act('resendInvite',{rowIndex:r.rowIndex},'Invite sent to '+r.email);
   const lk=$('#dLink'); if(lk) lk.onclick=async()=>{ try{ await navigator.clipboard.writeText(link); toast('Portal link copied'); }catch(e){ prompt('Copy the link:', link); } };
   $('#dAssign').onchange=e=>act('assign',{rowIndex:r.rowIndex,token:r.token,client:r.client,assignee:e.target.value},'Assigned');
   $('#dTaskAdd').onclick=()=>{ const t=$('#dTaskT').value.trim(); if(!t) return; closeDr(); act('addTask',{title:t,assignee:$('#dTaskA').value,due:$('#dTaskD').value,client:r.client,token:r.token},'Task created'); };
   $('#dComAdd').onclick=()=>{ const t=$('#dCom').value.trim(); if(!t) return; closeDr(); act('comment',{token:r.token,client:r.client,text:t},'Comment logged'); };
-  $('#dAskGo').onclick=()=>{ const t=$('#dAskT').value.trim(); if(!t){ toast('Type the question first'); return; } closeDr(); act('ask',{token:r.token,client:r.client,assignee:$('#dAskWho').value,text:t},'Query sent — it must be answered'); };
+  $('#dAskGo').onclick=()=>{ const t=$('#dAskT').value.trim(); if(!t){ toast('Type the question first','bad'); return; } closeDr(); act('ask',{token:r.token,client:r.client,assignee:$('#dAskWho').value,text:t},'Query sent: it must be answered'); };
   document.querySelectorAll('[data-ddone]').forEach(b=>b.onclick=()=>{ closeDr(); act('completeTask',{id:b.dataset.ddone},'Task completed'); });
 }
 function closeDr(){ $('#ov').classList.remove('open'); $('#dr').classList.remove('open'); }
 $('#ov').onclick=closeDr;
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeDr(); $('#modal').classList.remove('open'); } });
+$('#modal').addEventListener('click',e=>{ if(e.target.id==='modal') $('#modal').classList.remove('open'); });
 
 function addRenewalModal(){
-  $('#mw').innerHTML = `<h3>Add a renewal</h3>
-    <label>Client / account name *</label><input type="text" id="aClient">
-    <label>Contact person</label><input type="text" id="aContact">
-    <div class="row2">
-      <div><label>Coverage *</label><select id="aCov"><option>Third Party</option><option>Comprehensive</option><option>Third Party Fire & Theft</option></select></div>
-      <div><label>Renewal date *</label><input type="date" id="aDue"></div>
+  $('#mw').innerHTML = `<div class="rr-band"><p class="eyebrow">New file</p><h2>Add a renewal</h2><p>A personal portal link is made for the client.</p></div>
+    <label class="rr-f"><b>Client / account name *</b><input class="rr-in" type="text" id="aClient"></label>
+    <label class="rr-f"><b>Contact person</b><input class="rr-in" type="text" id="aContact"></label>
+    <div class="rr-row">
+      <label class="rr-f"><b>Coverage *</b><select class="rr-in" id="aCov"><option>Third Party</option><option>Comprehensive</option><option>Third Party Fire & Theft</option></select></label>
+      <label class="rr-f"><b>Renewal date *</b><input class="rr-in" type="date" id="aDue"></label>
     </div>
-    <div class="row2">
-      <div><label>Premium (TT$)</label><input type="text" id="aPrem" inputmode="numeric"></div>
-      <div><label>Sum insured (TT$, comp only)</label><input type="text" id="aSum" inputmode="numeric"></div>
+    <div class="rr-row">
+      <label class="rr-f"><b>Premium (TT$)</b><input class="rr-in" type="text" id="aPrem" inputmode="numeric"></label>
+      <label class="rr-f"><b>Sum insured (TT$)</b><input class="rr-in" type="text" id="aSum" inputmode="numeric"><small>Comprehensive only</small></label>
     </div>
-    <label>Policy #</label><input type="text" id="aPol">
-    <div class="row2">
-      <div><label>Email</label><input type="email" id="aEmail"></div>
-      <div><label>Mobile</label><input type="text" id="aMob"></div>
+    <label class="rr-f"><b>Policy #</b><input class="rr-in" type="text" id="aPol"></label>
+    <div class="rr-row">
+      <label class="rr-f"><b>Email</b><input class="rr-in" type="email" id="aEmail"></label>
+      <label class="rr-f"><b>Mobile</b><input class="rr-in" type="text" id="aMob" inputmode="tel"></label>
     </div>
-    <label>Assign to</label><select id="aAssign">${D.staff.map(s=>`<option value="${esc(s.email)}" ${s.email===ME?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
-    <div style="display:flex;gap:8px;margin-top:16px">
-      <button class="abtn primary" id="aGo" style="flex:1">Add renewal</button>
-      <button class="abtn" id="aX">Cancel</button>
+    <label class="rr-f"><b>Assign to</b><select class="rr-in" id="aAssign">${staffOpts(ME)}</select></label>
+    <div class="row-b">
+      <button class="rr-btn" id="aGo">${I('plus')} Add renewal</button>
+      <button class="rr-btn ghost" id="aX">Cancel</button>
     </div>
-    <p class="mini" style="margin-top:10px">A personal portal token & link are generated automatically. The reminder automation picks the row up from the next daily run.</p>`;
+    <p class="muted" style="margin-top:10px">A personal portal token and link are made automatically. The reminder automation picks the row up from the next daily run.</p>`;
   $('#modal').classList.add('open');
+  RR.init($('#mw'));
+  setTimeout(()=>{ const c=$('#aClient'); if(c) c.focus(); },50);
   $('#aX').onclick=()=>$('#modal').classList.remove('open');
   $('#aGo').onclick=()=>{
     const client=$('#aClient').value.trim(), due=$('#aDue').value;
-    if(!client||!due){ toast('Client and renewal date are required'); return; }
+    if(!client||!due){ toast('Client and renewal date are required','bad'); return; }
     $('#modal').classList.remove('open');
     act('addRenewal',{client:client,contact:$('#aContact').value,coverage:$('#aCov').value,nextDue:due,
       premium:$('#aPrem').value,sumInsured:$('#aSum').value,policy:$('#aPol').value,
@@ -752,16 +1022,15 @@ function addRenewalModal(){
 }
 boot();
 </script>
-<script>
-(function(){
-  var saved=''; try{saved=localStorage.getItem('rrb_theme')||'';}catch(e){}
-  function apply(v){ if(v)document.documentElement.setAttribute('data-theme',v);
-    else document.documentElement.removeAttribute('data-theme');
-    document.querySelectorAll('.thpick button').forEach(function(b){b.classList.toggle('on',(b.getAttribute('data-th')||'')===v);}); }
-  apply(saved);
-  document.querySelectorAll('.thpick button').forEach(function(b){
-    b.onclick=function(){var v=b.getAttribute('data-th')||''; apply(v); try{localStorage.setItem('rrb_theme',v);}catch(e){}};});
-})();
-</script>
+<style>
+/* layout pieces used above (after the theme so they win) */
+.rr-grid.two-side{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:1280px){.rr-grid.two-side{grid-template-columns:minmax(0,1fr) 310px;gap:20px}}
+@media (max-width:1279px){.side-pipe{display:none}}
+.rr-grid.two-eq{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media (min-width:900px){.rr-grid.two-eq{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}}
+.t-blue{--c:var(--blue2)}
+#topArea.still *:not(.w1):not(.w2):not(.w3):not(.glide), #viewArea.still *{animation:none!important}
+</style>
 </body>
 </html>

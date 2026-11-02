@@ -23,7 +23,7 @@ let fails = 0;
 const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (x && !c ? '  — ' + x : '')); if (!c) fails++; };
 
 const AGENTS = ['Neil R.', 'Felicia R.', 'Rajiv S.', 'Malcolm S.', 'Premchand D.', 'Randolph G.', 'Fawwaz M.', 'Meera P.', 'Narissa M.',
-  'Daniel B.', 'Joy S.', 'Darryl M.', 'Varun S.', 'Aleema M.', 'Javid A.', 'Faizal M.', 'Akaash K.'];
+  'Daniel B.', 'Joy S.', 'Darryl M.', 'Varun S.', 'Faizal M.', 'Akaash K.'];
 const FEED = {
   ok: true, wall: 1, at: '28 Oct, 2:35 PM', today: '2026-10-28',
   campaign: { households: { all: 2168, answered: 470, asked: 300, toReach: 120, stage: { done: 35, named: 80, spoken: 55, waiting: 130 }, agent: { one: 70, split: 5, none: 225 } },

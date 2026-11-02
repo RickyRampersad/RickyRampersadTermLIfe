@@ -47,6 +47,8 @@ function world(props, opts) {
     created: [], queries: [],
   };
   if (opts.risks) SF.risks = opts.risks;
+  if (opts.general) SF.general = opts.general;
+  if (opts.life) SF.life = opts.life;
   const AI = { calls: [], answer: opts.ai || null, code: opts.aiCode || 200 };
   const MS = { sent: [] };
   const res = (code, body) => ({ getResponseCode: () => code, getContentText: () => typeof body === 'string' ? body : JSON.stringify(body) });
@@ -70,11 +72,16 @@ function world(props, opts) {
       if (/FROM RecordType/.test(q)) return res(200, { records: [{ Id: '012000000000001AAA' }] });
       if (/FROM CLIENT_PORTFOLIO__c/.test(q) && /POLICY__c = '/.test(q)) { const pols = (q.match(/POLICY__c = '([^']+)'/g) || []).map(x => x.slice(13, -1));
         return res(200, { records: SF.portfolios.filter(r => pols.indexOf(r.POLICY__c) > -1).map(r => ({ Contact__c: r.Contact__c, Contact__r: { LastName: (SF.contacts.find(c => c.Id === r.Contact__c) || {}).LastName } })) }); }
+      /* A query naming record types gets only rows of those types, as Salesforce would. */
+      const rts = ((q.match(/RecordType\.Name IN \(([^)]*)\)/) || [, ''])[1].match(/'[^']+'/g) || []).map(u => u.slice(1, -1));
+      const ofType = r => !rts.length || rts.indexOf(r.RecordType && r.RecordType.Name) > -1;
       if (/FROM CLIENT_PORTFOLIO__c/.test(q)) { const ids = (q.match(/Contact__c IN \(([^)]*)\)/) || [, ''])[1];
-        return res(200, { records: SF.portfolios.filter(r => ids.indexOf(r.Contact__c) > -1) }); }
+        const em = (q.match(/Email__c = '([^']+)'/) || [])[1];
+        return res(200, { records: SF.portfolios.concat(SF.life || []).filter(r => ofType(r) && (/LIKE '%MOTOR%'/.test(q) ? /MOTOR/.test((r.RecordType || {}).Name) : true) && (ids.indexOf(r.Contact__c) > -1 || (em && r.Email__c === em))) }); }
       if (/FROM Risk_Details__c/.test(q) && opts.noRenewFields && /Next_Renewal_Date__c/.test(q)) return res(400, [{ message: "No such column 'Next_Renewal_Date__c'" }]);
       if (/FROM Risk_Details__c/.test(q)) { const ids = (q.match(/Insured__c IN \(([^)]*)\)/) || [, ''])[1];
-        return res(200, { records: ids ? SF.risks : [] }); }
+        if (rts.length) return res(200, { records: ids ? (SF.general || []).filter(ofType) : [] });
+        return res(200, { records: ids ? SF.risks.filter(r => r.Vehicle__c) : [] }); }
       return res(400, [{ message: 'unexpected query ' + q }]);
     }
     if (p === '/sobjects/Contact' && o.method === 'post') { const b = JSON.parse(o.payload); SF.created.push({ obj: 'Contact', body: b }); return res(201, { id: '003000000000009AAA' }); }
@@ -353,7 +360,7 @@ const RISKS = [
     Cover1__c: 40000, Windscreen__c: 'Yes', From__c: day(-100), To__c: day(265) },
 ];
 {
-  const { env } = world(SFPROPS, { risks: RISKS });
+  const { env, mails } = world(SFPROPS, { risks: RISKS });
   const v = post(env, { action: 'verifyCode', email: 'anika@example.com', code: (post(env, { action: 'requestCode', email: 'anika@example.com' }), '211110') });
   const vs = v.me.vehicles, a = vs[0];
   ok('the vehicle due comes first, the later one after', vs.length === 2 && a.reg === 'PDX 1234' && a.renewState === 'due' && vs[1].renewState === 'later');
@@ -366,38 +373,103 @@ const RISKS = [
   ok('every line is a fact, never advice', !/should|recommend|advise|must/i.test(f));
   ok('a vehicle with windscreen cover is not told it has none', !/windscreen/i.test(vs[1].facts.join(' ')));
 
+  /* A renewal is asked for here, vehicle first (29 October 2026), and read again from the record at the send. */
   const tok = v.token;
-  const none = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'PDX 1234' } });
-  ok('a renewal needs the choice', none.ok === false && /client asks/.test(none.error));
-  const chg = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'PDX 1234', renewChoice: 'Renew with changes' } });
-  ok('with changes needs the changes', chg.ok === false && /changed/.test(chg.error));
+  const r = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'PDX1234', renewChoice: 'Renew as it is', value: '1' } });
+  ok('a renewal is accepted and goes to the desk', r.ok === true && r.flow === 'renew' && /^MQ-/.test(r.ref));
+  const desk = mails.find(m => /Motor renewal request/.test(m.subject));
+  ok('…read again from the record: the reg as on file, the renewal date, the premium, the terms', desk && /PDX 1234/.test(desk.subject) && /renews/.test(desk.subject) &&
+    /TT\$ 4,322/.test(desk.htmlBody) && /Third Party/.test(desk.htmlBody));
+  ok('the client gets the renewal receipt', mails.some(m => /We have your renewal request/.test(m.subject)));
+  const t = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'PDX 1234', renewChoice: 'Talk to us first' } });
+  ok('"Talk to us first" is a choice of its own', t.ok && mails.some(m => /Motor renewal request/.test(m.subject) && /Talk to us first/.test(m.subject)));
+  const u = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'ZZZ 999', renewChoice: 'Renew as it is' } });
+  const um = mails.filter(m => /Motor renewal request/.test(m.subject)).pop();
+  ok('a vehicle not on her record still goes, marked for the desk to match', u.ok && /ZZZ 999/.test(um.subject) && /not found on file/.test(um.htmlBody));
+  ok('a renewal needs a choice', /Still needed/.test(post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'A', mobile: '1', reg: 'PDX 1234' } }).error || ''));
+
+  /* The renewal in plain words: without the key, written plainly from the record. */
+  const pb = post(env, { action: 'renewBrief', token: tok, reg: 'pdx-1234' });
+  ok('the plain brief names the vehicle and when it renews, with things to confirm', pb.ok && pb.brief && pb.brief.ai === false && /Toyota Aqua/.test(pb.brief.summary) && /renews on/.test(pb.brief.summary) &&
+    pb.brief.checks.length === 3 && /TT\$ 95,000/.test(pb.brief.checks[0].question) && /windscreen/i.test(pb.brief.checks[2].question));
+  ok('a brief for a vehicle not hers is nothing', post(env, { action: 'renewBrief', token: tok, reg: 'TDA 99' }).brief === null);
+  ok('a brief needs a sign-in', post(env, { action: 'renewBrief', token: 'x'.repeat(40), reg: 'PDX 1234' }).signedOut === true);
 }
 {
-  const { env, mails } = world(Object.assign({}, SFPROPS, { MQ_RENEW_TO: 'renewals@example.com' }), { risks: RISKS });
-  const tok = signIn(env, 'anika@example.com'); mails.length = 0;
-  const r = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'pdx1234', renewChoice: 'Renew as it is',
-    renewOnText: '1 January 1999', lastPremium: 1 }, files: [{ kind: 'request', name: 'motor-quotation-request.pdf', type: 'application/pdf', data: Buffer.from('%PDF-1.7').toString('base64') }] });
-  ok('a renewal goes as it is, with nothing else typed', r.ok && r.flow === 'renew' && r.sentTo === 'renewals@example.com', r.error || '');
-  const desk = mails.find(m => /Motor renewal request/.test(m.subject));
-  ok('the subject says renewal, the vehicle, when it renews and what the client asks', desk && /2019 Toyota Aqua \(PDX 1234\) · renews \d+ \w+ \d{4} · Renew as it is · Anika Pretend/.test(desk.subject));
-  ok('a renewal never carries the request form', !(desk.attachments || []).length && !/Quotation Request form/.test(desk.htmlBody));
-  ok('the date and the premium come from Salesforce, never from the page', !/1999/.test(desk.htmlBody) && /TT\$ 4,322/.test(desk.htmlBody));
-  ok('the desk gets every term on file and what the record shows', /Third Party/.test(desk.htmlBody) && /With us since/.test(desk.htmlBody) && /TT\$ 95,000/.test(desk.htmlBody));
-  ok('MQ_RENEW_TO is named in the test banner', /renewals@example.com/.test(desk.htmlBody));
-  const rcpt = mails.find(m => /We have your renewal request/.test(m.subject));
-  ok('the receipt is a renewal receipt with the date', rcpt && /renews on <b>\d+ \w+ \d{4}<\/b>/.test(rcpt.htmlBody));
-  const sh = env.__sheets['Motor Quotes'], hdr = sh._grid[0], row = sh._grid[1], col = n => row[hdr.indexOf(n)];
-  ok('the row holds the renewal: type, date, choice, premium, policy', col('Request type') === 'Renewal' && /\d{4}/.test(col('Renewal date')) && col('Renewal choice') === 'Renew as it is' &&
-    col('Last premium') === 'TT$ 4,322' && col('Existing policy') === 'TTMV00000001');
-  const other = post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'ZZZ 999', renewChoice: 'Renew as it is' } });
-  const d2 = mails.filter(m => /Motor renewal request/.test(m.subject))[1];
-  ok('a vehicle not on file for this e-mail still goes, flagged for a check', other.ok && /not found on file/.test(d2.htmlBody));
+  /* With the key: Claude writes it from the record, and nothing it says may carry a number not on the record or advice. */
+  const good = { summary: 'Your 2019 Toyota Aqua renews in 21 days. It has been insured for TT$ 95,000 for the last 2 terms.',
+    checks: [{ question: 'Is TT$ 95,000 still what it is worth?', change: 'Update the insured value' }, { question: 'Will anyone new drive it?', change: 'A new driver' }] };
+  const { env, AI } = world(Object.assign({}, SFPROPS, { ANTHROPIC_API_KEY: 'sk-test' }), { risks: RISKS, ai: good });
+  const tok = signIn(env, 'anika@example.com');
+  const b1 = post(env, { action: 'renewBrief', token: tok, reg: 'PDX 1234' });
+  ok('Claude writes the brief from her record', b1.brief.ai === true && /Toyota Aqua/.test(b1.brief.summary) && b1.brief.checks.length === 2);
+  const sent = AI.calls[0] && AI.calls[0].body;
+  ok('…given only her vehicle\'s facts, as data, with the rules', sent && /<record>/.test(sent.messages[0].content) && /PDX 1234/.test(sent.messages[0].content) && !/TDA 77/.test(sent.messages[0].content) &&
+    /never advise/.test(sent.system) && /never state a number/.test(sent.system));
+  post(env, { action: 'renewBrief', token: tok, reg: 'PDX 1234' });
+  ok('the same brief is kept, not asked for twice', AI.calls.length === 1);
+}
+{
+  const bad = { summary: 'Your Toyota Aqua renews soon; expect about TT$ 5,000 this year, so you should switch to a cheaper plan.', checks: [] };
+  const { env } = world(Object.assign({}, SFPROPS, { ANTHROPIC_API_KEY: 'sk-test' }), { risks: RISKS, ai: bad });
+  const b = post(env, { action: 'renewBrief', token: signIn(env, 'anika@example.com'), reg: 'PDX 1234' });
+  ok('a brief with a number not on the record, or advice, is thrown away for the plain one', b.brief.ai === false && !/TT\$ 5,000|switch/.test(JSON.stringify(b.brief)));
 }
 {
   const { env } = world(SFPROPS, { risks: RISKS, noRenewFields: true });
   const v = post(env, { action: 'verifyCode', email: 'anika@example.com', code: (post(env, { action: 'requestCode', email: 'anika@example.com' }), '211110') });
   ok('an org without the renewal fields still gives the vehicles, renewing the day after the cover ends', v.me.vehicles.length === 2 && v.me.vehicles[0].renewOn === day(21) &&
     env.__sheets['Quote Log']._grid.some(x => x[2] === 'renewal-fields-failed'));
+}
+
+/* ── everything else she holds: general insurance with its renewal month, life with none, and ideas ── */
+const GEN = [
+  { Policy__c: 'TTFHO0100009', RecordType: { Name: 'Property' }, Risk_Location__c: '12 Sample Street\nSampletown', Property_Type__c: 'Private dwelling',
+    Property_Coverage_Type__c: 'Fire and allied perils', Total_Cover__c: 900000, From__c: day(-355), To__c: day(10), Premium_Due__c: 2400 },
+  { Policy__c: 'TTFHO0100009', RecordType: { Name: 'Property' }, Risk_Location__c: '12 Sample Street', Total_Cover__c: 850000, From__c: day(-720), To__c: day(-356), Premium_Due__c: 2300 },
+  { Policy__c: 'TTPL0100004', RecordType: { Name: 'Public Liability' }, Risk_Location__c: 'Sample Shop', Total_Cover__c: 500000, From__c: day(-60), To__c: day(305) },
+  { Policy__c: 'TTPL0100005', RecordType: { Name: 'Public Liability' }, Risk_Location__c: 'Old Shop', From__c: day(-1200), To__c: day(-835) },   // long ended
+];
+const LIFE = [
+  { POLICY__c: '0001234567', RecordType: { Name: 'LIFE' }, PLAN_NAME__c: 'Sample Term 20', ISSUE_DATE__c: '2015-03-01', Paid_To_Date__c: day(20),
+    Policy_Status_Description_R__c: 'Premium Paying', Life_Coverage__c: 500000, Critical_Illness_Coverage__c: 0, Contact__c: '003000000000001AAA' },
+  { POLICY__c: '0001234568', RecordType: { Name: 'PENSION' }, Pension_Plan_Name__c: 'Sample Pension', ISSUE_DATE__c: '2018-01-01', Paid_To_Date__c: day(-30),
+    Policy_Status_Description_R__c: 'B', Contact__c: '003000000000001AAA' },
+  { POLICY__c: '0001234569', RecordType: { Name: 'LIFE' }, PLAN_NAME__c: 'Old Plan', ISSUE_DATE__c: '2001-01-01', Paid_To_Date__c: '2010-01-01',
+    Policy_Status_Description_R__c: 'Surrendered', Contact__c: '003000000000001AAA' },
+];
+{
+  const { env, mails } = world(SFPROPS, { risks: RISKS, general: GEN, life: LIFE });
+  const v = post(env, { action: 'verifyCode', email: 'anika@example.com', code: (post(env, { action: 'requestCode', email: 'anika@example.com' }), '211110') });
+  const g = v.me.general || [], h = g[0];
+  ok('general insurance comes back, one entry a policy, the one due first, the long-ended one left out', g.length === 2 && h.policy === 'TTFHO0100009' && g[1].policy === 'TTPL0100004');
+  ok('…a home policy reads as Home, with its location on one line', h.line === 'Home' && h.location === '12 Sample Street, Sampletown' && g[1].line === 'Liability');
+  ok('…with the renewal date, month and state', h.renewOn === day(11) && h.renewState === 'due' && h.renewMonth && h.renewIn === 11 && g[1].renewState === 'later');
+  ok('…the sum insured, the premium and since when', h.sumInsured === 900000 && h.lastPremium === 2400 && h.termCount === 2 && /^\d{4}$/.test(h.since));
+  const L = v.me.life || [];
+  ok('life and pension come back with no renewal month; the surrendered one is counted, not listed', L.length === 2 && L.every(p => !p.renewOn && !p.renewMonth) && v.me.lifeEnded === 1);
+  ok('…a premium-paying policy is in force; a coded status paid to within the year is current', L.find(p => p.policy === '0001234567').state === 'inforce' && L.find(p => p.policy === '0001234568').state === 'current' &&
+    L.find(p => p.policy === '0001234567').type === 'Life' && L.find(p => p.policy === '0001234568').type === 'Pension');
+  const O = (v.me.opps || []).map(o => o.key);
+  ok('ideas: she has life cover with no critical illness, and a vehicle with no windscreen cover; she has home cover, so no home idea', O.indexOf('ci') > -1 && O.indexOf('windscreen') > -1 && O.indexOf('home') < 0 && O.indexOf('life') < 0 && O.length <= 3);
+  ok('every idea is a fact about her record, never advice', (v.me.opps || []).every(o => !/should|recommend|advise|must/i.test(o.why)));
+  /* A general policy is renewed the same way, read again from the record. */
+  const r = post(env, { action: 'submit', token: v.token, quote: { flow: 'renew', line: 'Home', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'TTFHO0100009', renewChoice: 'Renew with changes', renewChanges: 'Add the contents' } });
+  const desk = mails.filter(m => /renewal request MQ-/.test(m.subject)).pop();
+  ok('a home renewal goes, named as a Home renewal, read again from the record', r.ok && desk && /\bHome renewal request/.test(desk.subject) && /12 Sample Street/.test(desk.htmlBody) && /TT\$ 2,400/.test(desk.htmlBody));
+  ok('…the receipt names the home insurance', mails.some(m => /We have your renewal request/.test(m.subject) && /Home insurance/.test(m.htmlBody)));
+  const bad = post(env, { action: 'submit', token: v.token, quote: { flow: 'renew', line: 'Spaceship', name: 'Anika Pretend', mobile: '868-555-0101', reg: 'PDX 1234', renewChoice: 'Renew as it is' } });
+  ok('a line the page cannot send is ignored: it is a motor renewal', bad.ok && /\bMotor renewal request/.test(mails.filter(m => /renewal request MQ-/.test(m.subject)).pop().subject));
+  const pb = post(env, { action: 'renewBrief', token: v.token, reg: 'TTFHO-0100009' });
+  ok('the plain brief knows a home policy', pb.ok && pb.brief && /home insurance/i.test(pb.brief.summary) && pb.brief.checks.some(c => /property/i.test(c.question)));
+}
+{
+  /* Nothing but a vehicle: the ideas are a home, life cover and (when room) personal accident. */
+  const { env } = world(SFPROPS, { risks: RISKS });
+  const v = post(env, { action: 'verifyCode', email: 'anika@example.com', code: (post(env, { action: 'requestCode', email: 'anika@example.com' }), '211110') });
+  const O = (v.me.opps || []).map(o => o.key);
+  ok('a client with only a vehicle is offered home cover and life cover first, three ideas at most', O[0] === 'home' && O[1] === 'life' && O.length === 3 && (v.me.general || []).length === 0 && (v.me.life || []).length === 0);
+  ok('…each idea opens the branch\'s own page, never a JotForm', (v.me.opps || []).every(o => o.action || /^\/(quote|apply)\/|^\/#/.test(o.href)));
 }
 
 /* ── a tab made by the first version gains the new columns on the end ─ */
@@ -641,6 +713,26 @@ const PFILES = [{ kind: 'quote', name: 'quote.pdf', type: 'application/pdf', dat
     const cm = post(env, { action: 'me', token: ct });
     ok('the client sees it too when they sign in, without the agent\'s label on it', cm.requests.length === 1 && cm.requests[0].client === '');
   }
+  /* Test mode: a branch agent can try it. Their own code and copies reach them; the client and the desk never do. */
+  {
+    const { env, mails } = world(Object.assign({}, SFPROPS, { MQ_TESTERS: 'sasha.staff@example.com' }));
+    post(env, { action: 'requestCode', email: AGENT });
+    const code = mails[mails.length - 1];
+    ok('test mode: an agent gets their own sign-in code, marked TEST, the test inbox copied', code.to === AGENT && /^\[TEST\] 211110 is your/.test(code.subject) && code.cc === 'test@example.com');
+    post(env, { action: 'requestCode', email: 'sasha.staff@example.com' });
+    ok('test mode: someone on MQ_TESTERS gets their own code too', mails[mails.length - 1].to === 'sasha.staff@example.com');
+    post(env, { action: 'requestCode', email: 'stranger@example.com' });
+    ok('test mode: anyone else\'s code still goes to the test inbox', mails[mails.length - 1].to === 'test@example.com');
+    post(env, { action: 'requestCode', email: 'omar.else@example.com' });
+    ok('test mode: another branch\'s agent is not a tester', mails[mails.length - 1].to === 'test@example.com');
+    const tok = signIn(env, AGENT);
+    const n0 = mails.length;
+    const r = post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, { name: 'Dev Madeup', clientEmail: 'dev.client@example.com', clientStatus: 'new' }) });
+    const sent = mails.slice(n0);
+    const rcpt = sent.find(m => /We have your motor quote request/.test(m.subject)), desk = sent.find(m => /Motor quote request/.test(m.subject) && m !== rcpt);
+    ok('test mode: the client\'s receipt goes to the test inbox, the agent copied', r.ok && rcpt && rcpt.to === 'test@example.com' && rcpt.cc === AGENT && /would go to <b>dev.client@example.com/.test(rcpt.htmlBody));
+    ok('test mode: the quotes desk never hears; its copy goes to the test inbox, the agent copied', desk && desk.to === 'test@example.com' && String(desk.cc).indexOf(AGENT) > -1 && !/crmsquotes|guardianonline/i.test((desk.to || '') + (desk.cc || '')) && /^\[TEST\]/.test(desk.subject));
+  }
   /* The agent's client is already with us: found by their e-mail, never by the agent's. */
   {
     const { env, SF } = world(Object.assign({}, SFPROPS, OWN));
@@ -656,7 +748,7 @@ const PFILES = [{ kind: 'quote', name: 'quote.pdf', type: 'application/pdf', dat
     const tok = signIn(env, AGENT);
     ok('an agent\'s quote needs the client\'s e-mail', /client's e-mail/.test(post(env, { action: 'submit', token: tok, quote: GOOD }).error));
     ok('…and not the agent\'s own', /not yours/.test(post(env, { action: 'submit', token: tok, quote: Object.assign({}, GOOD, { clientEmail: AGENT.toUpperCase() }) }).error));
-    ok('an agent does not ask for a renewal', /renewal is asked for by the client/.test(post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'A B', mobile: '1', reg: 'PDX 1234', renewChoice: 'Renew as it is', clientEmail: 'c@example.com' } }).error));
+    ok('an agent does not ask for a renewal', /client from their own sign-in/.test(post(env, { action: 'submit', token: tok, quote: { flow: 'renew', name: 'A B', mobile: '1', reg: 'PDX 1234', renewChoice: 'Renew as it is', clientEmail: 'c@example.com' } }).error));
     ok('an agent does not sign a proposal for a client', /from their own sign-in/.test(post(env, { action: 'propose', token: tok, answers: PA, files: PFILES }).error));
     ok('an agent does not update a permit from the home screen', post(env, { action: 'permit', token: tok, permit: 'DP-1' }).ok === false);
   }

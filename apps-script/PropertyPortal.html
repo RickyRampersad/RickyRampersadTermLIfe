@@ -1,206 +1,248 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <base target="_top">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="icon" href="https://rickyrampersadbranch.com/orphan-transition/board-mark.png">
+<?!= rrTheme_() ?>
 <style>
-:root{
-  --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
-  --gold:#efc24b; --gold2:#dca530; --teal:#00CFEA; --teal2:#00A8C5;
-  --text:#edf4fb; --muted:#a9bbcf; --line:rgba(255,255,255,.10);
-  --good:#35d07f; --bad:#ff7a7a;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font:15px/1.65 'DM Sans',sans-serif;color:var(--text);
-  background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);
-  min-height:100vh;padding-bottom:110px}
-h1,h2,h3,h4,.mont{font-family:'Montserrat',sans-serif}
-.head{padding:20px 18px;border-bottom:1px solid var(--line)}
-.head .in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:13px}
-.gmark{width:46px;height:46px;flex-shrink:0}
-.head .brand{font:800 15px/1.15 'Montserrat',sans-serif;color:var(--gold);letter-spacing:.3px}
-.head .sub{font-size:12px;color:var(--muted);margin-top:2px}
-.wrap{max-width:760px;margin:0 auto;padding:20px 16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:18px}
-.card h2{font-size:17px;font-weight:800;color:var(--text)}
-.chipdue{display:inline-block;font:700 11px 'Montserrat';padding:4px 12px;border-radius:99px;background:rgba(239,194,75,.15);color:var(--gold);margin-left:8px;vertical-align:middle}
-.chipdue.over{background:rgba(255,122,122,.15);color:var(--bad)}
-.loc-sub{font-size:13px;color:var(--muted);margin-top:3px}
-.loyal{display:flex;gap:10px;align-items:center;background:linear-gradient(90deg,rgba(239,194,75,.14),rgba(239,194,75,.04));
-  border:1px solid rgba(239,194,75,.35);border-radius:14px;padding:12px 16px;margin:14px 0;font-size:13.5px}
-.loyal b{color:var(--gold)}
-.bigrow{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0 4px}
-.big{flex:1;min-width:150px;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
-.big .v{font:800 21px 'Montserrat';color:var(--teal);letter-spacing:-.3px}
-.big .k{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
-.trendline{display:flex;align-items:flex-end;gap:6px;margin:12px 2px 2px;height:44px}
-.trendline .tb{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
-.trendline .bar{width:100%;max-width:56px;background:linear-gradient(180deg,var(--teal),var(--teal2));border-radius:5px 5px 2px 2px;min-height:5px}
-.trendline .yr{font-size:10.5px;color:var(--muted)}
-.trendnote{font-size:12px;color:var(--muted);margin-top:6px}
-.step{font:800 11.5px 'Montserrat';color:var(--teal);text-transform:uppercase;letter-spacing:.12em;margin:24px 0 10px}
-/* location panel */
-.locpanel{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:18px;margin:12px 0}
-.locpanel .lname{font:800 15px 'Montserrat';color:var(--text)}
-.locpanel .locc{font-size:12.5px;color:var(--muted);margin:2px 0 12px}
-.vrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line)}
-.vrow:last-of-type{border-bottom:none}
-.vrow .lab{font-size:13.5px;color:var(--text)}
-.vrow .lab small{display:block;color:var(--muted);font-size:11px}
-.vcell{position:relative}
-.vcell input{width:150px;background:transparent;border:none;border-bottom:2px dashed rgba(0,207,234,.4);
-  color:var(--text);font:700 15px 'DM Sans';text-align:right;padding:4px 22px 4px 4px;outline:none;border-radius:4px 4px 0 0}
-.vcell input:focus{border-bottom:2px solid var(--teal);background:rgba(0,207,234,.07)}
-.vcell input.changed{color:var(--gold);border-bottom-color:var(--gold)}
-.vcell .pen{position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--teal2);pointer-events:none}
-.vcell .was{position:absolute;right:0;top:100%;font-size:10.5px;color:var(--muted);white-space:nowrap}
-.vtotal{display:flex;justify-content:space-between;align-items:center;padding:12px 2px 4px;margin-top:6px;border-top:2px solid var(--line)}
-.vtotal .lab{font:800 13px 'Montserrat';text-transform:uppercase;letter-spacing:.06em}
-.vtotal .amt{font:800 18px 'Montserrat';color:var(--teal)}
-.vtotal .amt.changed{color:var(--gold)}
-.est{display:none;background:rgba(0,207,234,.10);border:1px solid rgba(0,207,234,.35);border-radius:12px;padding:12px 15px;margin-top:12px;font-size:13.5px}
-.est b{color:var(--teal)}
-.premline{font-size:12.5px;color:var(--muted);margin-top:10px}
-.premline b{color:var(--text)}
-/* replacement check */
-.repl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:rgba(239,194,75,.07);
-  border:1px solid rgba(239,194,75,.3);border-radius:12px;padding:12px 15px;margin-top:12px}
-.repl label{font-size:12.5px;color:var(--text);flex:1;min-width:180px}
-.rhint{flex:1 0 100%;font-size:12px;color:var(--muted);line-height:1.55}
-.rhint b{color:var(--text)}
-.rmine{display:block;margin-top:3px;color:var(--gold);font-weight:600}
-.repl input{width:140px;background:var(--bg);border:1px solid var(--line);border-radius:9px;color:var(--text);
-  font:700 14px 'DM Sans';text-align:right;padding:9px 10px;outline:none}
-.repl input:focus{border-color:var(--gold)}
-.repl .verdict{width:100%;font-size:13px;line-height:1.55}
-.repl .verdict.ok{color:var(--good)}
-.repl .verdict.warn{color:var(--bad)}
-/* excess chips */
-.exgrid{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
-.exchip{font-size:11.5px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:5px 11px;color:var(--muted)}
-.exchip b{color:var(--text);font-weight:600}
-.exnote{font-size:11.5px;color:var(--muted);margin-top:8px}
-/* address / occupancy */
-.addr{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-top:14px;font-size:13px}
-.addr b{display:block;color:var(--text);margin-bottom:3px;font-size:13.5px}
-.addr .why{color:var(--muted)}
-.chk{display:flex;gap:10px;align-items:flex-start;margin-top:10px;cursor:pointer;font-weight:600;color:var(--text)}
-.chk input{margin-top:3px;accent-color:var(--teal);width:16px;height:16px}
-.fld{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin:12px 0 5px}
-input[type=text].txt,input[type=email].txt,textarea.txt{width:100%;background:var(--bg);border:1px solid var(--line);
-  border-radius:11px;padding:11px 13px;font:14px 'DM Sans';color:var(--text);outline:none}
-input.txt:focus,textarea.txt:focus{border-color:var(--teal)}
-textarea.txt{min-height:64px;resize:vertical}
-/* choices */
-.opt{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:14px;
-  padding:13px 15px;margin-bottom:9px;cursor:pointer;background:var(--bg2);transition:.15s}
-.opt:hover{border-color:var(--teal2)}
-.opt.sel{border-color:var(--teal);background:rgba(0,207,234,.08);box-shadow:0 0 0 1px var(--teal)}
-.opt input{margin-top:4px;accent-color:var(--teal)}
-.opt b{display:block;font-size:14.5px;font-family:'Montserrat'}
-.opt span{font-size:12.5px;color:var(--muted)}
-.edu{background:rgba(239,194,75,.08);border-left:3px solid var(--gold);border-radius:0 12px 12px 0;
-  padding:13px 16px;margin:14px 0;font-size:13.5px;color:var(--text)}
-.edu b{color:var(--gold)}
-.warnbox{background:rgba(255,122,122,.08);border-left:3px solid var(--bad);border-radius:0 12px 12px 0;
-  padding:13px 16px;margin:14px 0;font-size:13.5px}
-.warnbox b{color:var(--bad)}
-.btn{width:100%;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#04202b;
-  font:800 15px 'Montserrat';border:none;border-radius:13px;padding:16px;cursor:pointer;margin-top:16px;transition:.15s}
-.btn:hover{filter:brightness(1.1)}
-.btn:disabled{opacity:.5;cursor:wait}
-.ok{background:rgba(53,208,127,.12);border:1px solid rgba(53,208,127,.4);color:var(--good);border-radius:12px;padding:14px;margin-top:12px;font-weight:600;display:none}
-.err{background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.4);color:var(--bad);border-radius:12px;padding:14px;margin-top:12px;display:none}
-/* tracker */
-.track{margin-top:10px}
-.tstep{display:grid;grid-template-columns:34px 1fr;gap:12px;padding-bottom:16px;position:relative}
-.tstep::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--line)}
-.tstep:last-child::before{display:none}
-.tdot{width:34px;height:34px;border-radius:50%;background:var(--bg2);border:2px solid var(--line);color:var(--muted);
-  display:grid;place-items:center;font:800 13px 'Montserrat';z-index:1}
-.tstep.done .tdot{background:var(--good);border-color:var(--good);color:#04202b}
-.tstep.now .tdot{background:var(--gold);border-color:var(--gold);color:#3a2c05}
-.tstep h4{font-size:13.5px}
-.tstep.todo h4{color:var(--muted)}
-.tstep p{font-size:12px;color:var(--muted)}
-.feed{border-top:1px solid var(--line);margin-top:8px;padding-top:10px}
-.feed div{font-size:12px;color:var(--muted);margin:4px 0}
-.feed b{color:var(--teal)}
-/* sticky action bar */
-.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(7,19,31,.92);backdrop-filter:blur(10px);
-  border-top:1px solid var(--line);padding:12px 16px;display:none;z-index:50}
-.bar .in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:14px}
-.bar .nums{flex:1;font-size:12.5px;color:var(--muted);line-height:1.4}
-.bar .nums b{color:var(--gold);font-family:'Montserrat'}
-.bar button{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#3a2c05;font:800 13.5px 'Montserrat';
-  border:none;border-radius:11px;padding:12px 20px;cursor:pointer;white-space:nowrap}
-.nf{max-width:560px;margin:60px auto;text-align:center;padding:20px}
-/* communication history + survey */
-.citem{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
-.citem:last-child{border-bottom:none}
-.cdot{width:9px;height:9px;border-radius:50%;margin-top:6px;flex-shrink:0}
-.cdot.us{background:var(--teal)}
-.cdot.you{background:var(--gold)}
-.cwhen{font-size:11.5px;color:var(--muted)}
-.stars{display:flex;gap:6px;margin:6px 0 2px}
-.stars button{font-size:30px;background:none;border:none;cursor:pointer;color:#3a5570;line-height:1}
-.stars button.on{color:var(--gold)}
-.foot{max-width:760px;margin:6px auto;padding:0 16px;font-size:11px;color:#5c7590;line-height:1.6}
+/* The property renewal portal, in the renewal experience's look (26 October
+   2026). The shared theme gives the bar, cards, buttons and charts; what is
+   here is property's own: the violet accent, the value rows, the average
+   graphic and the bar that follows a changed figure. */
+.rr .rr-band.t-prop{background:linear-gradient(135deg,#5E3A9C 0%,#7A4FB8 60%,#8A62C4 100%)}
+.rr .rr-btn.prop{background:linear-gradient(135deg,#8A62C4,#6A3FA8);box-shadow:0 8px 20px rgba(122,79,184,.3)}
+.rr .rr-btn.prop:hover{box-shadow:0 12px 26px rgba(122,79,184,.38)}
+.rr .rr-btn.onband{background:#fff;color:#5E3A9C;box-shadow:0 8px 20px rgba(40,20,80,.22)}
+.rr .rr-btn.onband:hover{color:#4A2D80}
+.rr .rr-btn.onband.ghost{background:rgba(255,255,255,.14);color:#fff;border:1.5px solid rgba(255,255,255,.55);box-shadow:none}
+.rr .rr-sec .ic.pr{--c:#7A4FB8;--c2:#9470CF}
+.rr .rr-sec .ic.bl{--c:var(--blue);--c2:var(--blue2)}
+.rr .rr-sec .ic.tl{--c:var(--rn);--c2:var(--teal)}
+.rr .rr-sec .ic.bd{--c:#B5352A;--c2:#D9604F}
+.rr .rr-pill.prop{background:var(--prbg);color:#6A3FA8}
+.rr .rr-tile .v.m{font-size:1.45rem}
+.rr-tabs{top:64px}
+@media (max-width:400px){.rr-tabs{top:54px}}
+[data-tgt]{scroll-margin-top:128px}
+body.rr{padding-bottom:20px}
+body.rr.has-sbar{padding-bottom:96px}
+.rr-top .who{max-width:42%}
 
-/* ---- colour themes: Midnight (default) · Ocean · Daylight ---- */
-html[data-theme="ocean"]{
-  --bg:#03151c; --bg2:#062430; --card:#0b3140; --card2:#0e3c4e;
-  --gold:#ffd166; --gold2:#e6b34a; --teal:#2ee6c8; --teal2:#19b89e;
-  --text:#eafffa; --muted:#9cc4bd; --faint:#6f948e; --line:rgba(255,255,255,.10);
-  --good:#3ce08a; --bad:#ff8585; --green:#3ce08a; --red:#ff8585; --amber:#ffd166;
-  --navy:#eafffa; --blue:#2ee6c8; --light:#062430; --ink:#eafffa; --ink2:#9cc4bd;
-}
-html[data-theme="daylight"]{
-  --bg:#eef3f8; --bg2:#ffffff; --card:#ffffff; --card2:#f4f8fc;
-  --gold:#a1720a; --gold2:#8a5f06; --teal:#0092b0; --teal2:#006e86;
-  --text:#152738; --muted:#54677b; --faint:#7d8fa3; --line:rgba(16,42,70,.14);
-  --good:#1e7d4f; --bad:#b3261e; --green:#1e7d4f; --red:#b3261e; --amber:#a1720a;
-  --navy:#152738; --blue:#0092b0; --light:#eef3f8; --ink:#152738; --ink2:#54677b;
-}
-html[data-theme="daylight"] body{background:linear-gradient(180deg,#eef3f8,#ffffff 55%,#eef3f8)}
-html[data-theme="daylight"] .card{box-shadow:0 2px 14px rgba(20,50,90,.07)}
-.thpick{display:flex;gap:7px;align-items:center}
-.thpick button{width:22px;height:22px;border-radius:50%;border:2px solid rgba(127,127,127,.35);cursor:pointer;padding:0}
-.thpick button.on{border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,160,190,.35)}
-html[data-theme="daylight"] .bar{background:rgba(255,255,255,.94)}
-html[data-theme="ocean"] .bar{background:rgba(3,21,28,.92)}
+/* the welcome */
+.hero .rr-band{padding-bottom:42px}
+.hero .lede{max-width:46rem}
+.howto{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr))}
+.howto li{display:flex;gap:11px;align-items:flex-start;background:var(--soft);border:1px solid #E3EAF5;border-radius:14px;padding:10px 12px;font-size:.86rem;line-height:1.4;color:var(--body);animation:rr-rise .5s var(--ease) both}
+.howto li:nth-child(2){animation-delay:.08s}.howto li:nth-child(3){animation-delay:.16s}
+.howto .n{width:30px;height:30px;border-radius:50%;background:var(--prbg);color:#6A3FA8;font-weight:900;display:grid;place-items:center;flex:none;font-size:.85rem}
+.howto b{display:block;color:var(--ink)}
+.go-row{display:flex;flex-wrap:wrap;gap:10px}
+.go-row .rr-btn{flex:1 1 13rem}
+
+/* a policy: the head, then the work and the side column */
+.phead .figs{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap;margin:0 0 14px}
+.phead .figs .rr-tiles{flex:1 1 20rem;margin:0}
+.phead .dring{display:flex;gap:12px;align-items:center;flex:1 1 14rem;background:var(--prbg);border-radius:16px;padding:10px 14px}
+.phead .dring .rr-ring{--c:#7A4FB8}
+.phead .dring .rr-ring small{letter-spacing:.02em}
+.phead .dring p{margin:0;font-size:.9rem;color:var(--body)}
+.phead .dring p b{display:block;color:var(--ink);font-size:1.05rem}
+.rr-sec .tail{display:block;margin-top:6px}
+.rr-sec .tail .rr-pill{display:inline-flex}
+@media (max-width:440px){.phead .rr-tiles{grid-template-columns:1fr}}
+@media (max-width:420px){.phead .rr-steps li span{display:block;font-size:.6rem;line-height:1.2;font-weight:700}.phead .rr-steps li{padding:0 1px}}
+.pside .rr-cols .c i{--c:#7A4FB8;--c2:#9470CF}
+.pside .rr-cols .c.now i{background:linear-gradient(180deg,#2FB3A9,var(--rn))}
+.rr .rr-chk input{accent-color:#7A4FB8}
+.phead .stage{font-size:.9rem;margin:0 0 4px;color:var(--body)}
+.pgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:0 22px;align-items:start}
+@media (min-width:960px){.pgrid{grid-template-columns:minmax(0,1fr) 340px}.pmain{grid-column:1;grid-row:1}.pside{grid-column:2;grid-row:1;position:sticky;top:132px}}
+
+/* how average works: an example drawn to scale */
+.demo{display:grid;gap:12px;margin:14px 0 2px;background:var(--soft);border:1px solid #E3EAF5;border-radius:16px;padding:14px}
+.demo .dr{display:grid;grid-template-columns:minmax(7rem,30%) 1fr;gap:6px 12px;align-items:center;font-size:.86rem}
+.demo .dr>span:first-child{color:var(--ink);font-weight:700}
+.demo .dt{position:relative;height:22px;border-radius:8px;background:#E6ECF5;overflow:hidden}
+.demo .dt i{position:absolute;top:0;bottom:0;left:0;border-radius:8px}
+.demo .dt .full{width:100%;background:linear-gradient(90deg,#8FA6C8,#6C82A8)}
+.demo .dt .ins{width:70%;background:linear-gradient(90deg,#9470CF,#7A4FB8);transform-origin:0 50%;animation:rr-growx 1s var(--ease) .1s both}
+.demo .dt .gap,.avg .gap{background:repeating-linear-gradient(135deg,rgba(181,53,42,.22) 0 6px,rgba(181,53,42,.08) 6px 12px);border:1.5px dashed #C9574B}
+.demo .dt .gap{left:70%;width:30%;border-radius:0 8px 8px 0}
+.demo .dt .pay{width:70%;background:linear-gradient(90deg,#17A06F,var(--ok));border-radius:8px 0 0 8px;transform-origin:0 50%;animation:rr-growx 1s var(--ease) .25s both}
+.demo .dt .car{left:70%;width:30%;background:linear-gradient(90deg,#D9604F,var(--bad));border-radius:0 8px 8px 0}
+.demo .dt .cl{justify-content:flex-end;color:#fff}
+.demo .dt b{position:absolute;inset:0;display:flex;align-items:center;padding:0 9px;font-size:.74rem;color:#fff;z-index:1;white-space:nowrap}
+.demo .dt .gl{justify-content:flex-end;color:var(--bad)}
+.demo .dn{grid-column:2;font-size:.8rem;color:var(--dim)}
+@media (max-width:440px){.demo .dr{grid-template-columns:1fr}.demo .dn{grid-column:1}}
+
+/* a location */
+.loc{border:1.5px solid var(--line);border-radius:18px;padding:16px 14px;margin:0 0 16px;background:#fff;position:relative;overflow:hidden;animation:rr-rise .5s var(--ease) both}
+.loc:before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:linear-gradient(90deg,#7A4FB8,#9470CF,#4C94E6)}
+@media (min-width:700px){.loc{padding:20px 20px 18px}.vrow{grid-template-columns:minmax(0,1fr) minmax(10rem,44%)}}
+@media (max-width:440px){.vrow .lab{font-size:.86rem}.loc{padding:14px 12px}.repl{padding:12px 11px}.avg{padding:11px 10px}}
+.loc-h{display:flex;gap:12px;align-items:flex-start;margin:0 0 12px}
+.loc-h .lic{width:44px;height:44px;border-radius:13px;background:var(--prbg);color:#6A3FA8;display:grid;place-items:center;flex:none}
+.loc-h .lic svg.i{width:1.4em;height:1.4em}
+.loc-h b{display:block;color:var(--ink);font-size:1.02rem;overflow-wrap:anywhere}
+.loc-h small{display:block;color:var(--dim);font-size:.82rem}
+.mix .rr-stack{height:14px;margin:2px 0 8px}
+.mix .rr-stack i{transition:width .45s var(--ease)}
+.mix .rr-key{margin:0 0 10px}
+.vrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(10rem,58%);gap:8px 12px;align-items:center;padding:9px 0;border-top:1px solid var(--soft)}
+.vrow .lab{font-size:.92rem;color:var(--ink);font-weight:600;display:flex;gap:8px;align-items:center}
+.vrow .lab .sw{width:10px;height:10px;border-radius:3px;flex:none;background:var(--c)}
+.vrow .lab small{display:block;color:var(--dim);font-size:.76rem;font-weight:500}
+.vcell{position:relative;display:flex;align-items:center}
+.vcell .cur{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:.82rem;font-weight:700;pointer-events:none}
+.vcell input{width:100%;font:inherit;font-size:max(16px,1rem);font-weight:800;color:var(--ink);text-align:right;background:#FAFCFE;border:1.5px dashed #C9B6E6;border-radius:12px;padding:10px 32px 10px 38px;min-height:48px;font-variant-numeric:tabular-nums;transition:border-color .15s,box-shadow .15s,background .15s}
+.vcell input:focus{outline:0;border-style:solid;border-color:#7A4FB8;background:#fff;box-shadow:0 0 0 4px rgba(122,79,184,.16)}
+.vcell input.changed{border-style:solid;border-color:#7A4FB8;background:var(--prbg);color:#4A2D80}
+.vcell .pen{position:absolute;right:10px;color:#7A4FB8;pointer-events:none;display:flex}
+.vrow .was{grid-column:2;text-align:right;font-size:.76rem;color:var(--dim);margin-top:-4px}
+.vrow .was:empty{display:none}
+.vtotal{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0 4px;margin-top:4px;border-top:2px solid var(--line)}
+.vtotal .lab{font-weight:800;color:var(--ink);font-size:.82rem;text-transform:uppercase;letter-spacing:.06em}
+.vtotal .amt{font-weight:900;font-size:1.3rem;color:var(--ink);font-variant-numeric:tabular-nums;transition:color .2s}
+.vtotal .amt.changed{color:#6A3FA8}
+.vtotal .amt.changed:after{content:"changed";margin-left:8px;font-size:.7rem;font-weight:800;vertical-align:.25em;background:var(--prbg);color:#6A3FA8;border-radius:999px;padding:2px 8px;letter-spacing:.02em}
+.est{display:none;margin:10px 0 0}
+.premline{font-size:.86rem;color:var(--dim);margin:10px 0 0}
+.premline b{color:var(--ink)}
+
+/* the reality check, with the average drawn to scale */
+.repl{margin:16px 0 0;border-radius:16px;background:linear-gradient(180deg,#F7F3FD,#FBFAFE);border:1px solid #E2D6F3;padding:14px}
+.repl-h{display:flex;gap:10px;align-items:flex-start;margin:0 0 8px}
+.repl-h .ic{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#7A4FB8,#9470CF);color:#fff;display:grid;place-items:center;flex:none}
+.repl-h b{display:block;color:var(--ink)}
+.repl-h span{font-size:.9rem;color:var(--body)}
+.rhint{font-size:.88rem;color:var(--body);margin:0 0 10px}
+.rhint b{color:var(--ink)}
+.rmine{display:block;margin-top:3px;color:#6A3FA8;font-weight:700}
+.money-in{position:relative}
+.money-in .cur{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--dim);font-weight:700;font-size:.85rem;pointer-events:none}
+.money-in .rr-in{padding-left:46px;font-weight:800;font-variant-numeric:tabular-nums}
+.money-in .rr-in:focus{border-color:#7A4FB8;box-shadow:0 0 0 4px rgba(122,79,184,.16)}
+.avg{background:#fff;border:1px solid #E3EAF5;border-radius:14px;padding:13px;margin:4px 0 10px}
+.avg-h{display:flex;gap:12px;align-items:center;margin:0 0 10px}
+.aring{--p:0;--c:var(--ok);width:74px;height:74px;border-radius:50%;flex:none;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--p)*1%),#E3ECF7 0);position:relative;transition:--p .6s var(--ease)}
+.aring:before{content:"";position:absolute;inset:7px;border-radius:50%;background:#fff}
+.aring span{position:relative;text-align:center;line-height:1}
+.aring b{display:block;font-size:1.15rem;color:var(--ink);font-weight:900}
+.aring small{font-size:.58rem;color:var(--dim);font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.avg.under .aring{--c:var(--bad)}
+.avg.nofig .aring{--c:#B9C6DA}
+.avg-h .hd{font-weight:800;color:var(--ink);font-size:.95rem;line-height:1.35}
+.avg-h .hd small{display:block;font-weight:500;color:var(--dim);font-size:.8rem;margin-top:2px}
+.ab{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;font-size:.84rem;margin:0 0 9px}
+.ab .l{color:var(--body);font-weight:600}
+.ab .n{font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+.ab .t{grid-column:1/-1;position:relative;height:16px;border-radius:999px;background:#EEF2F8;overflow:hidden}
+.ab .t i{position:absolute;top:0;bottom:0;left:0;border-radius:999px;transition:width .5s var(--ease),left .5s var(--ease)}
+.ab .t .rb{background:linear-gradient(90deg,#8FA6C8,#6C82A8)}
+.ab .t .sb{background:linear-gradient(90deg,#9470CF,#7A4FB8)}
+.ab .t .gap{border-radius:0 999px 999px 0}
+.avg:not(.under) .gap,.avg.nofig .gap{display:none}
+.avg .gapl{font-size:.8rem;color:var(--bad);font-weight:800;margin:-3px 0 8px;text-align:right}
+.avg:not(.under) .gapl,.avg.nofig .gapl{display:none}
+.claim{border-top:1px dashed var(--line2);padding-top:10px;margin-top:4px}
+.avg.nofig .claim{display:none}
+.claim .ch{font-size:.84rem;font-weight:700;color:var(--ink);margin:0 0 6px}
+.claim .cs{display:flex;height:16px;border-radius:999px;overflow:hidden;background:#EEF2F8}
+.claim .cs i{display:block;height:100%;transition:width .5s var(--ease)}
+.claim .cs .pay{background:linear-gradient(90deg,#17A06F,var(--ok))}
+.claim .cs .carry{background:linear-gradient(90deg,#D9604F,var(--bad))}
+.claim .rr-key{margin:8px 0 0}
+.verdict{margin:0}
+.verdict:empty{display:none}
+.verdict svg.i{flex:none}
+
+/* excess, address */
+.exgrid{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 0}
+.exh{display:flex;gap:8px;align-items:center;color:var(--ink);margin:16px 0 0}
+.exgrid .rr-pill{white-space:normal;font-weight:600;padding:5px 11px;font-size:.8rem}
+.exgrid .rr-pill b{font-weight:800}
+.exnote{font-size:.82rem;color:var(--dim);margin:8px 0 0;display:flex;gap:8px;align-items:flex-start}
+.addr{margin:16px 0 0;border-top:1px solid var(--soft);padding-top:14px}
+.addr>b{display:flex;gap:8px;align-items:center;color:var(--ink)}
+.addr .why{display:block;color:var(--dim);font-size:.86rem;margin:2px 0 0}
+.addr .rr-chk span{overflow-wrap:anywhere}
+.addr .rr-f{margin:12px 0 0}
+
+/* the instruction */
+.opts{display:grid;gap:10px;margin:0 0 16px}
+.opt{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;background:#fff;min-height:64px;transition:border-color .15s,box-shadow .15s,background .15s,transform .12s;position:relative}
+.opt:hover{border-color:#9470CF}
+.opt.sel{border-color:#7A4FB8;background:var(--prbg);box-shadow:0 0 0 3px rgba(122,79,184,.16)}
+.opt input{width:22px;height:22px;margin:2px 0 0;flex:none;accent-color:#7A4FB8}
+.opt .oi{width:38px;height:38px;border-radius:11px;background:var(--sky);color:var(--blue);display:grid;place-items:center;flex:none}
+.opt.o-renew .oi{background:var(--rnbg);color:var(--rn)}
+.opt.o-adjust .oi{background:var(--prbg);color:#6A3FA8}
+.opt b{display:block;color:var(--ink);font-size:.98rem}
+.opt span.d{display:block;font-size:.84rem;color:var(--dim)}
+.sentok{margin:12px 0 0}
+
+/* the progress card */
+.tsteps{list-style:none;margin:4px 0 0;padding:0}
+.tsteps li{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:0 0 14px;position:relative}
+.tsteps li:before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--line)}
+.tsteps li:last-child:before{display:none}
+.tsteps li.done:before{background:var(--ok)}
+.tsteps .tdot{width:34px;height:34px;border-radius:50%;background:#fff;border:3px solid var(--line);color:var(--dim);display:grid;place-items:center;font-weight:800;font-size:.82rem;z-index:1}
+.tsteps li.done .tdot{background:var(--ok);border-color:var(--ok);color:#fff}
+.tsteps li.now .tdot{background:#7A4FB8;border-color:#7A4FB8;color:#fff;animation:rr-pulse 1.8s ease-in-out infinite}
+.tsteps h4{font-size:.92rem;margin:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tsteps li.todo h4{color:var(--dim)}
+.tsteps p{font-size:.82rem;color:var(--dim);margin:2px 0 0}
+.phead .rr-steps li.on:before{background:#7A4FB8;border-color:#7A4FB8}
+.phead .rr-steps .fill{background:linear-gradient(90deg,var(--ok),#7A4FB8)}
+
+/* the communication history */
+.rr-tl li.you{--c:#7A4FB8}
+
+/* the bar that follows a changed figure */
+.sbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid #E2D6F3;box-shadow:0 -10px 26px rgba(40,20,80,.12);padding:10px 16px calc(10px + env(safe-area-inset-bottom));animation:rr-fade .25s both}
+.sbar:before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#7A4FB8,#4C94E6)}
+.sbar .in{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.sbar .sic{width:40px;height:40px;border-radius:12px;background:var(--prbg);color:#6A3FA8;display:grid;place-items:center;flex:none}
+.sbar .nums{flex:1;min-width:0;font-size:.86rem;color:var(--body);line-height:1.4}
+.sbar .nums b{color:var(--ink)}
+.sbar .nums .d{display:inline-block;margin-left:4px}
+.sbar button{flex:none}
+@media (max-width:440px){.sbar .sic,.sbar .nums .d{display:none}.sbar .nums{font-size:.8rem}.sbar .rr-btn{padding:8px 12px}}
+
+/* the survey */
+.q{margin:0 0 18px}
+.q>.l{display:block;color:var(--ink);font-weight:700;margin:0 0 6px}
+.stars{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.stars button{width:48px;height:48px;border-radius:13px;border:1.5px solid var(--line2);background:#fff;color:#9AA8C0;cursor:pointer;display:grid;place-items:center;transition:transform .12s,background .15s,color .15s,border-color .15s}
+.stars button svg.i{width:26px;height:26px}
+.stars button:hover{border-color:#9470CF;transform:translateY(-1px)}
+.stars button.on{background:var(--prbg);border-color:#7A4FB8;color:#6A3FA8}
+.stars button.on svg.i{fill:currentColor}
+.stars .sv{font-size:.84rem;font-weight:700;color:#6A3FA8;margin-left:6px}
 </style>
 </head>
-<body>
-<div class="head"><div class="in">
-  <svg class="gmark" viewBox="0 0 88 88" aria-hidden="true">
-    <defs><linearGradient id="gn" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
-    </linearGradient></defs>
-    <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gn)"/>
-    <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-  <div><div class="brand">Ricky Rampersad<br>Branch</div><div class="sub">Property Renewal · Guardian Group</div></div>
-  <div class="thpick" style="margin-left:auto" title="Colour theme" aria-label="Colour theme">
-  <button data-th="" style="background:linear-gradient(135deg,#0d2137 55%,#efc24b 55%)" title="Midnight"></button>
-  <button data-th="ocean" style="background:linear-gradient(135deg,#062430 55%,#2ee6c8 55%)" title="Ocean"></button>
-  <button data-th="daylight" style="background:linear-gradient(135deg,#ffffff 55%,#0092b0 55%)" title="Daylight"></button>
-</div>
+<body class="rr">
+<header class="rr-top">
+  <span class="mark"><img src="https://rickyrampersadbranch.com/orphan-transition/board-mark.png" alt=""></span>
+  <span class="brand">Ricky Rampersad Branch<i>Property renewal · Guardian Group</i></span>
+  <span class="who" id="who"></span>
+  <span class="prog" aria-hidden="true"></span>
+</header>
+
+<main id="app" class="rr-main"></main>
+
+<div class="sbar" id="bar" style="display:none" role="region" aria-label="Your changed figures"><div class="in">
+  <span class="sic" id="barIc"></span>
+  <div class="nums" id="barNums" aria-live="polite"></div>
+  <button type="button" class="rr-btn sm prop" onclick="document.getElementById('sendcard0').scrollIntoView({behavior:'smooth',block:'center'})">Review &amp; send</button>
 </div></div>
 
-<div id="app" class="wrap"></div>
-
-<div class="bar" id="bar"><div class="in">
-  <div class="nums" id="barNums"></div>
-  <button onclick="document.getElementById('sendcard0').scrollIntoView({behavior:'smooth',block:'center'})">Review &amp; send ↓</button>
-</div></div>
-
-<div class="foot">This page is a plain-language summary for your information — full terms are set out in your policy wording and
+<p class="rr-foot">This page is a plain-language summary for your information: full terms are set out in your policy wording and
 schedule, which govern in all cases. Nothing is bound until Guardian confirms your renewal. Never send card numbers through
-this page or by email — our team arranges secure payment with you.</div>
+this page or by email: our team arranges secure payment with you.</p>
 
 <script>
 const DATA = JSON.parse(<?!= JSON.stringify(payload) ?>);
@@ -210,6 +252,12 @@ const money=v=>{const n=Number(v);return (!v&&v!==0)||isNaN(n)?'—':'TT$'+n.toL
 const money0=v=>{const n=Number(v);return isNaN(n)?'—':'TT$'+n.toLocaleString('en-US',{maximumFractionDigits:0});};
 const numv=v=>{const n=Number(String(v).replace(/[^0-9.]/g,''));return isFinite(n)?n:0;};
 const fmtN=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:0});
+const I=(n,c)=>window.RR?RR.i(n,c):'';
+const PEN='<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
+/* one colour a value line; the key beside the bar names every one */
+const LINE_C=['#7A4FB8','#3A7BD5','#1FA8A0','#D2694F','#6C7A96'];
+const lineC=k=>LINE_C[Math.max(0,DATA.lines.findIndex(L=>L.key===k))%LINE_C.length];
+const pl=(n,w)=>n+' '+w+(n===1?'':'s');
 
 function policies(){
   const key=r=>(r.policy||'(no policy)').replace(/\s+/g,'').toUpperCase();
@@ -229,46 +277,117 @@ const locTotal=loc=>DATA.lines.reduce((s,L)=>s+(Number(loc.values[L.key])||0),0)
 
 function dueChip(g){
   if(g.days==null) return '';
-  if(g.days<0) return `<span class="chipdue over">${Math.abs(g.days)} days overdue</span>`;
-  if(g.days===0) return `<span class="chipdue over">renews today</span>`;
-  if(g.days<=60) return `<span class="chipdue">${g.days} days to go</span>`;
+  if(g.days<0) return `<span class="rr-pill bad chipdue over">${I('alert')}${Math.abs(g.days)} days overdue</span>`;
+  if(g.days===0) return `<span class="rr-pill bad chipdue over">${I('alert')}renews today</span>`;
+  if(g.days<=60) return `<span class="rr-pill warn chipdue">${I('clock')}${g.days} days to go</span>`;
   return '';
 }
 
-function trend(g){
-  const h=g.premiumHistory||[];
-  if(h.length<2) return '';
-  const max=Math.max(...h.map(x=>x.amount));
-  const pct=h[0].amount?Math.round(100*(h[h.length-1].amount/h[0].amount-1)):0;
-  return `<div class="trendline">${h.map(x=>`<div class="tb">
-      <div class="bar" style="height:${Math.max(8,Math.round(40*x.amount/max))}px" title="${money(x.amount)}"></div>
-      <div class="yr">${esc(x.year)}</div></div>`).join('')}</div>
-    <div class="trendnote">Your premium over ${h.length} renewals${pct?` · ${pct>0?'+':''}${pct}% since ${esc(h[0].year)}`:''} — premiums follow your values, the rate and your record.</div>`;
+/* ---------- the welcome ---------- */
+function hero(pols){
+  const soon=pols.filter(g=>g.days!=null).sort((a,b)=>a.days-b.days)[0]||pols[0];
+  const yrs=Math.max(0,...pols.map(g=>Number(g.years)||0));
+  const n=DATA.risks.length;
+  let stats='';
+  if(soon&&soon.renewalDate) stats+=`<span><b>${esc(soon.renewalDate)}</b>${pols.length>1?'First renewal':'Renewal date'}</span>`;
+  if(soon&&soon.days!=null) stats+=soon.days>=0?`<span>${RR.cu(soon.days)}days to go</span>`:`<span>${RR.cu(-soon.days)}days overdue</span>`;
+  stats+=`<span>${RR.cu(n)}${n===1?'location':'locations'}</span>`;
+  if(pols.length>1) stats+=`<span>${RR.cu(pols.length)}policies</span>`;
+  else if(yrs) stats+=`<span>${RR.cu(yrs)}years with us</span>`;
+  return `<section class="rr-card hero">
+    <div class="rr-band t-prop">
+      <p class="eyebrow">Property renewal · ${esc((pols[0]&&pols[0].carrier)||'Guardian General')}</p>
+      <h1>Welcome, ${esc(DATA.firstName)}</h1>
+      <p class="lede">Review your cover below: <b>tap any figure to change it on the spot</b>, then send your instruction.
+        Two minutes, and you can track everything after.</p>
+      <div class="stats">${stats}</div>
+    </div>
+    <ol class="howto">
+      <li><span class="n">1</span><span><b>Check your values</b>Each location's sums insured, line by line.</span></li>
+      <li><span class="n">2</span><span><b>Run the reality check</b>Your cover against what rebuilding costs today.</span></li>
+      <li><span class="n">3</span><span><b>Send your instruction</b>Renew as-is, with your new values, or ask us to call.</span></li>
+    </ol>
+    <div class="go-row">
+      <button type="button" class="rr-btn prop main" data-go="cover0">${I('home')}Check my values</button>
+      <button type="button" class="rr-btn ghost" data-go="inst0">${I('send')}Send my instruction</button>
+    </div>
+  </section>`;
+}
+
+function tabs(pols){
+  let b='';
+  if(pols.length>1){
+    b=pols.map((g,gi)=>`<button type="button" data-go="pol${gi}">${I('home')}${g.policy?'Policy '+esc(g.policy):'Policy '+(gi+1)}</button>`).join('');
+  } else {
+    b=`<button type="button" data-go="cover0">${I('home')}Values</button>
+      <button type="button" data-go="avg0">${I('shield')}Average</button>
+      <button type="button" data-go="inst0">${I('send')}Instruction</button>
+      <button type="button" data-go="track0">${I('clock')}Progress</button>`;
+  }
+  if((DATA.comms||[]).length) b+=`<button type="button" data-go="comms">${I('mail')}Messages <span class="n">${DATA.comms.length}</span></button>`;
+  return `<nav class="rr-tabs" id="tabs" aria-label="Sections">${b}</nav>`;
+}
+
+/* ---------- a policy ---------- */
+function stageAt(g){return DATA.stages.findIndex(s=>s.key===g.stage);}
+
+function stepsStrip(g){
+  const at=stageAt(g), n=DATA.stages.length;
+  const w=at<0?0:Math.round(at/Math.max(1,n-1)*82);
+  return `<ol class="rr-steps" aria-label="Where your renewal stands"><span class="fill" style="--w:${w}%"></span>${DATA.stages.map((s,k)=>
+    `<li data-n="${k+1}" class="${k<at?'done':k===at?'on':''}"><span>${esc(s.label)}</span></li>`).join('')}</ol>`;
+}
+
+function polHead(g,gi){
+  const polPrem=g.locs.reduce((s,l)=>s+(Number(l.premium)||0),0);
+  const polVal=g.locs.reduce((s,l)=>s+locTotal(l),0);
+  const at=stageAt(g);
+  const ring=g.days==null?'':`<div class="dring">${g.days>=0
+    ? RR.ring(Math.max(4,Math.min(100,Math.round((60-g.days)/60*100))),String(g.days),'days',{c:'#7A4FB8',label:g.days+' days to renewal on '+g.renewalDate})
+    : RR.ring(100,String(-g.days),'days',{c:'#B5352A',label:Math.abs(g.days)+' days overdue'})}
+      <p><b>${g.days>=0?pl(g.days,'day')+' to go':pl(-g.days,'day')+' overdue'}</b>${g.days>=0?'until your renewal on '+esc(g.renewalDate):'since your renewal date, '+esc(g.renewalDate)}</p></div>`;
+  return `<section class="rr-card phead" id="pol${gi}" data-tgt>
+    <div class="rr-sec"><span class="ic pr">${I('home')}</span>
+      <div><b>${g.policy?'Policy '+esc(g.policy):'Your property policy'}</b>
+      <small>${esc(g.carrier||'Guardian General')} · renews <b style="display:inline">${esc(g.renewalDate)}</b> · ${pl(g.locs.length,'location')}</small>
+      ${dueChip(g)?`<span class="tail">${dueChip(g)}</span>`:''}</div></div>
+    <div class="figs">${ring}
+      <div class="rr-tiles">
+        <div class="rr-tile t-prop"><span class="k">${I('shield')}Total sums insured</span><span class="v m" id="polval_${gi}">${money0(polVal)}</span><small>across ${pl(g.locs.length,'location')}</small></div>
+        <div class="rr-tile t-teal"><span class="k">${I('money')}Renewal premium</span><span class="v m">${money0(polPrem)}</span><small>incl. Government Tax</small></div>
+      </div></div>
+    ${g.years?`<div class="rr-note ok">${I('star')}<span><b>${esc(g.years)} years with us</b>${g.since?`, since ${esc(g.since)}`:''}. Thank you: let's make sure your cover is exactly right.</span></div>`:''}
+    <p class="stage">${at<0?'Your renewal journey starts when you send your instruction.':`Where it stands: <b>${esc(DATA.stages[at].label)}</b>`}</p>
+    ${stepsStrip(g)}
+  </section>`;
+}
+
+function avgExplainer(g,gi){
+  return `<section class="rr-card avgx sr" id="avg${gi}" data-tgt>
+    <div class="rr-sec"><span class="ic bd">${I('alert')}</span><div><b>The one clause that decides claims: average</b><small>Worth a minute before you check your values</small></div></div>
+    <p>If a location is insured for less than replacement cost, <u>every</u> claim there is cut in the same proportion:
+      insure at 70% and a $100,000 claim pays $70,000. ${g.locs.length>1?'It applies to <b>each location separately</b>. ':''}
+      The reality check under each location below shows where you stand.</p>
+    <div class="demo" role="img" aria-label="Example: rebuilding costs 100%, insured for 70%, so a $100,000 claim pays $70,000 and you carry $30,000">
+      <div class="dr"><span>Rebuilding cost</span><span class="dt"><i class="full"></i><b>100%</b></span></div>
+      <div class="dr"><span>Insured for</span><span class="dt"><i class="ins"></i><i class="gap"></i><b>70%</b><b class="gl">30% short</b></span></div>
+      <div class="dr"><span>A $100,000 claim</span><span class="dt"><i class="pay"></i><i class="car"></i><b>Pays $70,000</b><b class="cl">$30,000</b></span>
+        <span class="dn">The policy pays $70,000 and you carry $30,000, on a small claim as much as a total loss.</span></div>
+    </div>
+  </section>`;
 }
 
 function excessChips(str){
   const rows=String(str||'').split(/;|\n/).map(x=>{const m=x.split(/:(.+)/);
     return m[0]&&m[0].trim()?{p:m[0].trim(),v:(m[1]||'').trim()}:null;}).filter(Boolean);
   if(!rows.length) return '';
-  return `<div class="exgrid">${rows.map(r=>`<span class="exchip">${esc(r.p)} <b>${esc(r.v)}</b></span>`).join('')}</div>
-  <div class="exnote">💡 The excess is the first part of any claim that you carry. Percentages apply to the sum insured here — one more reason the values above must be right.</div>`;
-}
-
-function tracker(g){
-  const at=DATA.stages.findIndex(s=>s.key===g.stage);
-  if(at<0) return '';
-  return `<div class="card"><h2>📍 Your renewal progress</h2>
-    <div class="loc-sub">We update this as your renewal moves — and email you as each step completes.</div>
-    <div class="track">${DATA.stages.map((s,i)=>`<div class="tstep ${i<at?'done':i===at?'now':'todo'}">
-      <div class="tdot">${i<at?'✓':i+1}</div><div><h4>${esc(s.label)}</h4><p>${esc(s.blurb)}</p></div></div>`).join('')}</div>
-    ${g.progress&&g.progress.length?`<div class="feed">${g.progress.slice(0,6).map(p=>
-      `<div><b>${esc(p.when)}</b> — ${esc(p.note||p.stage)}</div>`).join('')}</div>`:''}
-  </div>`;
+  return `<b class="exh">${I('money')}Your excess</b><div class="exgrid" aria-label="Your excess">${rows.map(r=>`<span class="rr-pill grey exchip">${esc(r.p)} <b>${esc(r.v)}</b></span>`).join('')}</div>
+  <p class="exnote">${I('info')}<span>The excess is the first part of any claim that you carry. Percentages apply to the sum insured here: one more reason the values above must be right.</span></p>`;
 }
 
 /* The reality check.
    This box used to open pre-filled with the client's OWN current sums
-   insured, which meant every client landed on "✅ Insured at full value — a
+   insured, which meant every client landed on "Insured at full value — a
    claim here pays in full" before touching anything, while the average box
    directly above sent them here to see where they stood. The one screen that
    exists to catch under-insurance was reassuring by default.
@@ -288,123 +407,167 @@ function replBlock(loc,i){
   if(g&&g.suggested&&g.suggested>cur){
     hint=`<div class="rhint">${since} At about 5% a year, rebuilding here is likely nearer
       <b>${money0(g.suggested)}</b> than the ${money0(cur)} on your schedule.
-      <span class="rmine">That is our estimate, not a valuation — please correct it.</span></div>`;
+      <span class="rmine">That is our estimate, not a valuation: please correct it.</span></div>`;
   } else {
     hint=`<div class="rhint">${since}
       <span class="rmine">Put in what it would cost to rebuild and replace today.</span></div>`;
   }
   return `<div class="repl">
-      <label><b>Reality check:</b> what would it cost to replace everything here today?</label>
+      <div class="repl-h"><span class="ic">${I('shield')}</span><div><b>Reality check</b><span>What would it cost to replace everything here today?</span></div></div>
       ${hint}
-      <input id="rc_${i}" inputmode="numeric" value="${seed?fmtN(seed):''}"
-             placeholder="Rebuilding cost today" data-seed="${seed||''}">
-      <div class="verdict ok" id="rcv_${i}"></div>
+      <label class="rr-f"><span class="l">Rebuilding and replacement cost today</span>
+        <span class="money-in"><span class="cur">TT$</span><input class="rr-in" id="rc_${i}" inputmode="numeric" value="${seed?fmtN(seed):''}"
+             placeholder="Rebuilding cost today" data-seed="${seed||''}" autocomplete="off"></span></label>
+      <div class="avg nofig" id="rcg_${i}">
+        <div class="avg-h">
+          <div class="aring" data-f="ring" role="img" aria-label="Share insured"><span><b data-f="rp">—</b><small>insured</small></span></div>
+          <div class="hd" data-f="head">Put in the rebuilding cost to see where you stand.</div>
+        </div>
+        <div class="ab"><span class="l" data-f="rl">Rebuilding cost today</span><span class="n" data-f="rv">Not given yet</span><span class="t"><i class="rb" data-f="rb" style="width:0"></i></span></div>
+        <div class="ab"><span class="l">Your sums insured</span><span class="n" data-f="sv">${money0(cur)}</span><span class="t"><i class="sb" data-f="sb" style="width:100%"></i><i class="gap" data-f="gb"></i></span></div>
+        <div class="gapl" data-f="gl"></div>
+        <div class="claim">
+          <div class="ch">If you claimed $100,000 at this location</div>
+          <div class="cs" aria-hidden="true"><i class="pay" data-f="pay"></i><i class="carry" data-f="carry"></i></div>
+          <ul class="rr-key"><li style="--c:var(--ok)">The policy pays <b data-f="payv"></b></li><li style="--c:var(--bad)">You carry <b data-f="carryv"></b></li></ul>
+        </div>
+      </div>
+      <div class="verdict" id="rcv_${i}" aria-live="polite"></div>
     </div>`;
 }
 
 function locationBlock(loc){
   const i=loc.idx;
-  return `<div class="locpanel">
-    <div class="lname">📍 ${esc(loc.location||'Location not on record')}</div>
-    <div class="locc">${loc.occupancy?esc(loc.occupancy)+' · ':''}tap any amount to change it</div>
+  const mix=DATA.lines.map(L=>({k:L.key,l:L.label,v:Number(loc.values[L.key])||0}));
+  const tot=mix.reduce((s,m)=>s+m.v,0)||1;
+  return `<div class="loc" id="loc_${i}">
+    <div class="loc-h"><span class="lic">${I('map')}</span><div><b>${esc(loc.location||'Location not on record')}</b>
+      <small>${loc.occupancy?esc(loc.occupancy)+' · ':''}tap any amount to change it</small></div></div>
+    <div class="mix" id="mix_${i}">
+      <div class="rr-stack" aria-hidden="true">${mix.map((m,k)=>`<i data-k="${m.k}" style="--w:${(m.v/tot*100).toFixed(2)}%;width:${(m.v/tot*100).toFixed(2)}%;--c:${lineC(m.k)};animation-delay:${k*.1}s"></i>`).join('')}</div>
+    </div>
     ${DATA.lines.map(L=>{
       const cur=Number(loc.values[L.key])||0;
       if(!cur && L.key==='building') return '';
       return `<div class="vrow">
-        <div class="lab">${esc(L.label)}${!cur?'<small>not currently covered — add a value to request it</small>':''}</div>
+        <label class="lab" for="val_${i}_${L.key}"><span class="sw" style="--c:${lineC(L.key)}"></span><span>${esc(L.label)}${!cur?'<small>not currently covered: add a value to request it</small>':''}</span></label>
         <div class="vcell">
-          <input id="val_${i}_${L.key}" data-cur="${cur}" value="${cur?fmtN(cur):''}" inputmode="numeric" placeholder="0">
-          <span class="pen">✏️</span>
-          <span class="was" id="was_${i}_${L.key}"></span>
+          <span class="cur">TT$</span>
+          <input id="val_${i}_${L.key}" data-cur="${cur}" value="${cur?fmtN(cur):''}" inputmode="numeric" placeholder="0" autocomplete="off">
+          <span class="pen">${PEN}</span>
         </div>
+        <span class="was" id="was_${i}_${L.key}"></span>
       </div>`;}).join('')}
     <div class="vtotal"><div class="lab">Total sums insured</div><div class="amt" id="tot_${i}">${money0(locTotal(loc))}</div></div>
-    <div class="est" id="est_${i}"></div>
+    <div class="est rr-note" id="est_${i}"></div>
     <div class="premline">Premium for this location: <b>${money(loc.premium)}</b> incl. Government Tax
       ${loc.rate?` · your rate: <b>$${loc.rate.toFixed(2)} per $1,000</b> of cover`:''}</div>
     ${replBlock(loc,i)}
     ${excessChips(loc.excess)}
     <div class="addr">
-      <b>Is this address exactly right?</b>
+      <b>${I('map')}Is this address exactly right?</b>
       <span class="why">Your policy only responds at the address on the schedule.</span>
-      <label class="chk"><input type="checkbox" id="addrok_${i}" checked data-addr="${i}"><span>Yes — "${esc(loc.location)}" is correct</span></label>
+      <label class="rr-chk"><input type="checkbox" id="addrok_${i}" checked data-addr="${i}"><span>Yes, "${esc(loc.location)}" is correct</span></label>
       <div id="addrfix_${i}" style="display:none">
-        <label class="fld">It should read:</label>
-        <input type="text" class="txt" id="addrnew_${i}" placeholder="Full address as it should appear">
+        <label class="rr-f"><span class="l">It should read:</span>
+        <input type="text" class="rr-in txt" id="addrnew_${i}" placeholder="Full address as it should appear"></label>
       </div>
-      <label class="fld">What happens at this location? <span style="font-weight:400">(current occupancy — several occupiers? list each)</span></label>
-      <input type="text" class="txt" id="occ_${i}" value="${esc(loc.occupancy||'')}" placeholder="e.g. Supermarket — Haoli Supermarket">
+      <label class="rr-f"><span class="l">What happens at this location?</span>
+        <input type="text" class="rr-in txt" id="occ_${i}" value="${esc(loc.occupancy||'')}" placeholder="e.g. Supermarket, Haoli Supermarket">
+        <small>Current occupancy. Several occupiers? List each.</small></label>
     </div>
   </div>`;
+}
+
+function instruction(g,gi){
+  return `<section class="rr-card sr" id="inst${gi}" data-pol="${gi}" data-tgt>
+    <div class="rr-sec"><span class="ic pr">${I('send')}</span><div><b>Your instruction</b><small>Choose one, then send it to our renewals team</small></div></div>
+    <div class="opts" role="radiogroup" aria-label="Your instruction">
+      <label class="opt o-renew"><input type="radio" name="inst${gi}" value="RENEW — existing terms"><span class="oi">${I('renew')}</span>
+        <span><b>Renew as-is</b><span class="d">My values are right: proceed with the renewal</span></span></label>
+      <label class="opt o-adjust"><input type="radio" name="inst${gi}" value="RENEW — adjusted values"><span class="oi">${PEN}</span>
+        <span><b>Renew with my adjusted values</b><span class="d">Use the figures I changed above</span></span></label>
+      <label class="opt o-call"><input type="radio" name="inst${gi}" value="PLEASE CALL ME"><span class="oi">${I('phone')}</span>
+        <span><b>Call me first</b><span class="d">I'd like to talk before renewing</span></span></label>
+    </div>
+    <label class="rr-f"><span class="l">Anything we should know?</span>
+      <textarea class="rr-in txt" id="notes${gi}" placeholder="e.g. Stock at Chase Village is much higher this year."></textarea>
+      <small>Renovations, new equipment, a location to add or remove…</small></label>
+    <div class="rr-row">
+      <label class="rr-f"><span class="l">Best email</span><input type="email" class="rr-in txt" id="email${gi}" value="${esc(g.locs[0].email)}" autocomplete="email"></label>
+      <label class="rr-f"><span class="l">Best mobile / WhatsApp</span><input type="text" class="rr-in txt" id="mob${gi}" value="${esc(g.locs[0].mobile)}" inputmode="tel" autocomplete="tel"></label>
+    </div>
+    <div id="sendcard${gi}">
+      <div class="rr-note edu">${I('doc')}<span><b>Your duty to disclose.</b> You're legally obliged to tell us any material
+        fact that could affect the insurer's decision: change of use, new occupiers, works, past losses.
+        If in doubt, put it in the notes.</span></div>
+      <label class="rr-chk"><input type="checkbox" id="mf_${gi}">
+        <span>The information I've given is accurate, I've disclosed all material facts, and I'll provide any outstanding
+        "Know Your Customer" documents at renewal.</span></label>
+      <button type="button" class="rr-btn wide prop main" data-submit="${gi}" style="margin-top:16px">Send my renewal instruction</button>
+      <div class="rr-note ok sentok" id="ok${gi}" style="display:none">${I('checkc')}<span>Sent! Our renewals team has your instruction. A confirmation is on its way, and you can track every step right here.</span></div>
+      <div class="rr-err" id="err${gi}" style="display:none"></div>
+    </div>
+  </section>`;
+}
+
+function tracker(g,gi){
+  const at=stageAt(g);
+  return `<section class="rr-card sr" id="track${gi}" data-tgt>
+    <div class="rr-sec"><span class="ic bl">${I('clock')}</span><div><b>Your renewal progress</b><small>We update this as your renewal moves, and email you as each step completes.</small></div></div>
+    ${at<0?`<div class="rr-note">${I('info')}<span>Your renewal journey starts when you send your instruction. This is what follows.</span></div>`:''}
+    <ol class="tsteps track">${DATA.stages.map((s,k)=>{
+      const st=k<at?'done':k===at?'now':'todo';
+      const word=st==='done'?'<span class="rr-pill ok">Done</span>':st==='now'?'<span class="rr-pill prop">Now</span>':'';
+      return `<li class="tstep ${st}"><span class="tdot">${st==='done'?I('check'):k+1}</span><div><h4>${esc(s.label)} ${word}</h4><p>${esc(s.blurb)}</p></div></li>`;}).join('')}</ol>
+    ${g.progress&&g.progress.length?`<div class="feed"><div class="eyebrow" style="margin-top:6px">Latest</div><ul class="rr-tl">${g.progress.slice(0,6).map(p=>
+      `<li><b>${esc(p.when)}</b><span class="k">${esc(p.note||p.stage)}</span></li>`).join('')}</ul></div>`:''}
+  </section>`;
+}
+
+function trend(g){
+  const h=g.premiumHistory||[];
+  if(h.length<2) return '';
+  const pct=h[0].amount?Math.round(100*(h[h.length-1].amount/h[0].amount-1)):0;
+  return `<section class="rr-card sr">
+    <div class="rr-sec"><span class="ic tl">${I('trend')}</span><div><b>Your premium over time</b><small>${pl(h.length,'renewal')} on record</small>
+      ${pct?`<span class="tail"><span class="rr-pill ${pct>0?'warn':'ok'}">${pct>0?'+':''}${pct}% since ${esc(h[0].year)}</span></span>`:''}</div></div>
+    ${RR.cols(h.map((x,k)=>({l:String(x.year),v:x.amount,t:money0(x.amount),now:k===h.length-1})))}
+    <p class="muted trendnote">Your premium over ${h.length} renewals${pct?` · ${pct>0?'+':''}${pct}% since ${esc(h[0].year)}`:''}: premiums follow your values, the rate and your record.</p>
+  </section>`;
 }
 
 function render(){
   const app=$('#app');
   if(!DATA.ok){
-    app.innerHTML=`<div class="nf"><h2 style="color:var(--gold)">We couldn't find your renewal</h2>
-      <p style="margin-top:10px;color:var(--muted)">Please use the personal link from your renewal message, or contact
-      ${esc(DATA.agent.name)}${DATA.agent.phone?' at '+esc(DATA.agent.phone):''} for a fresh link.</p></div>`;
+    app.innerHTML=`<section class="rr-card nf"><div class="rr-empty"><div class="ic">${I('search')}</div>
+      <b>We couldn't find your renewal</b>
+      <p>Please use the personal link from your renewal message, or contact
+      ${esc(DATA.agent.name)}${DATA.agent.phone?' at '+esc(DATA.agent.phone):''} for a fresh link.</p></div></section>`;
+    RR.init(app);
     return;
   }
+  $('#who').innerHTML=DATA.firstName?`Signed in<b>${esc(DATA.firstName)}</b>`:'';
   if(DATA.survey){ renderSurvey(app); return; }
   const pols=policies();
-  let html=`<div class="card"><h2>Welcome, ${esc(DATA.firstName)} 👋</h2>
-    <div class="loc-sub">Review your cover below — <b style="color:var(--teal)">tap any figure to change it on the spot</b> —
-    then send your instruction. Two minutes, and you can track everything after.</div></div>`;
+  let html=hero(pols)+tabs(pols);
 
   pols.forEach((g,gi)=>{
-    const polPrem=g.locs.reduce((s,l)=>s+(Number(l.premium)||0),0);
-    const polVal=g.locs.reduce((s,l)=>s+locTotal(l),0);
-    html+=tracker(g);
-    html+=`<div class="card">
-      <h2>${g.policy?'Policy '+esc(g.policy):'Your property policy'} ${dueChip(g)}</h2>
-      <div class="loc-sub">${esc(g.carrier||'Guardian General')} · renews <b style="color:var(--text)">${esc(g.renewalDate)}</b> · ${g.locs.length} location${g.locs.length===1?'':'s'}</div>
-      ${g.years?`<div class="loyal">🏆 <span><b>${esc(g.years)} years with us</b>${g.since?` — since ${esc(g.since)}`:''}. Thank you — let's make sure your cover is exactly right.</span></div>`:''}
-      <div class="bigrow">
-        <div class="big"><div class="v" id="polval_${gi}">${money0(polVal)}</div><div class="k">Total sums insured</div></div>
-        <div class="big"><div class="v">${money0(polPrem)}</div><div class="k">Renewal premium (incl. tax)</div></div>
-      </div>
-      ${trend(g)}
-
-      <div class="step">Your locations — check &amp; adjust</div>
-      ${g.locs.map(loc=>locationBlock(loc)).join('')}
-
-      <div class="warnbox"><b>⚠️ The one clause that decides claims — "average".</b>
-        If a location is insured for less than replacement cost, <u>every</u> claim there is cut in the same proportion —
-        insure at 70% and a $100,000 claim pays $70,000. ${g.locs.length>1?'It applies to <b>each location separately</b>. ':''}
-        The reality check under each location shows where you stand.</div>
-
-      <div class="step">Your instruction</div>
-      <label class="opt"><input type="radio" name="inst${gi}" value="RENEW — existing terms">
-        <div><b>✅ Renew as-is</b><span>My values are right — proceed with the renewal</span></div></label>
-      <label class="opt"><input type="radio" name="inst${gi}" value="RENEW — adjusted values">
-        <div><b>✏️ Renew with my adjusted values</b><span>Use the figures I changed above</span></div></label>
-      <label class="opt"><input type="radio" name="inst${gi}" value="PLEASE CALL ME">
-        <div><b>📞 Call me first</b><span>I'd like to talk before renewing</span></div></label>
-
-      <label class="fld">Anything we should know? (renovations, new equipment, a location to add or remove…)</label>
-      <textarea class="txt" id="notes${gi}" placeholder="e.g. Stock at Chase Village is much higher this year."></textarea>
-      <label class="fld">Best email</label><input type="email" class="txt" id="email${gi}" value="${esc(g.locs[0].email)}">
-      <label class="fld">Best mobile / WhatsApp</label><input type="text" class="txt" id="mob${gi}" value="${esc(g.locs[0].mobile)}">
-
-      <div id="sendcard${gi}">
-        <div class="edu" style="margin-top:16px"><b>📋 Your duty to disclose.</b> You're legally obliged to tell us any material
-        fact that could affect the insurer's decision — change of use, new occupiers, works, past losses.
-        If in doubt, put it in the notes.</div>
-        <label class="chk"><input type="checkbox" id="mf_${gi}">
-          <span>The information I've given is accurate, I've disclosed all material facts, and I'll provide any outstanding
-          "Know Your Customer" documents at renewal.</span></label>
-        <button class="btn" data-submit="${gi}">Send my renewal instruction</button>
-        <div class="ok" id="ok${gi}">✓ Sent! Our renewals team has your instruction — a confirmation is on its way, and you can track every step right here.</div>
-        <div class="err" id="err${gi}"></div>
-      </div>
-    </div>`;
+    html+=polHead(g,gi);
+    html+=`<div class="pgrid"><div class="pmain">
+      ${avgExplainer(g,gi)}
+      <section class="rr-card" id="cover${gi}" data-tgt>
+        <div class="rr-sec"><span class="ic pr">${I('building')}</span><div><b>Your locations: check and adjust</b><small>Tap any amount to change it. The total and the reality check follow you.</small></div></div>
+        ${g.locs.map(loc=>locationBlock(loc)).join('')}
+      </section>
+      ${instruction(g,gi)}
+    </div><aside class="pside">${tracker(g,gi)}${trend(g)}</aside></div>`;
   });
   html+=commsCard();
   app.innerHTML=html;
 
   document.querySelectorAll('.opt input').forEach(el=>el.addEventListener('change',e=>{
-    const card=e.target.closest('.card');
+    const card=e.target.closest('[data-pol]');
     card.querySelectorAll('.opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
   }));
   document.querySelectorAll('[data-submit]').forEach(b=>b.onclick=()=>submit(Number(b.dataset.submit),b));
@@ -428,6 +591,8 @@ function render(){
     }
     touch(i); check(i);
   });
+  wireGo(app);
+  RR.init(app);
 
   // Email one-tap options preselect the instruction
   const optIdx={renew:0,adjust:1,call:2}[DATA.opt];
@@ -439,6 +604,24 @@ function render(){
       setTimeout(()=>radios[optIdx].closest('.opt').scrollIntoView({behavior:'smooth',block:'center'}),350);
     }
   }
+}
+
+/* The tabs and the welcome's buttons go to a section by script, never by a
+   #link: under <base target="_top"> a link would leave the page. */
+function wireGo(root){
+  root.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{
+    const t=document.getElementById(b.dataset.go);
+    if(t) t.scrollIntoView({behavior:RR.calm()?'auto':'smooth',block:'start'});
+  }));
+  const tabsEl=$('#tabs'); if(!tabsEl) return;
+  const btns=[...tabsEl.querySelectorAll('[data-go]')];
+  const on=()=>{
+    let cur=btns[0];
+    btns.forEach(b=>{const t=document.getElementById(b.dataset.go);if(t&&t.getBoundingClientRect().top<150)cur=b;});
+    btns.forEach(b=>{const s=b===cur;b.classList.toggle('on',s);b.setAttribute('aria-current',s?'true':'false');});
+  };
+  if(!window.__goScroll){window.__goScroll=true;addEventListener('scroll',()=>{if(window.__goOn)window.__goOn();},{passive:true});}
+  window.__goOn=on; on();
 }
 
 function locState(i){
@@ -459,6 +642,22 @@ function locState(i){
   return {total,changed};
 }
 
+/* the bar of value lines follows what is typed */
+function drawMix(i){
+  const box=document.getElementById('mix_'+i); if(!box) return;
+  const r=DATA.risks[i];
+  const vals=DATA.lines.map(L=>{
+    const el=document.getElementById(`val_${i}_${L.key}`);
+    const cur=Number(r.values[L.key])||0;
+    return {k:L.key,v:el?(el.value.trim()===''?(Number(el.dataset.cur)||0):numv(el.value)):cur};
+  });
+  const tot=vals.reduce((s,x)=>s+x.v,0)||1;
+  vals.forEach(x=>{
+    const seg=box.querySelector(`.rr-stack i[data-k="${x.k}"]`);
+    if(seg) seg.style.width=(x.v/tot*100).toFixed(2)+'%';
+  });
+}
+
 function touch(i){
   const r=DATA.risks[i];
   const st=locState(i);
@@ -469,12 +668,13 @@ function touch(i){
     if(st.changed&&r.rate){
       const p=st.total*r.rate/1000*(1+(r.taxRate||0.06));
       const diff=p-(Number(r.premium)||0);
-      est.style.display='block';
-      est.innerHTML=`💡 At these values this location's premium becomes <b>≈ ${money(p)}</b> incl. tax —
+      est.style.display='flex';
+      est.innerHTML=`${I('chart')}<span>At these values this location's premium becomes <b>≈ ${money(p)}</b> incl. tax:
         ${diff>=0?`about <b>${money(diff)}</b> more`:`about <b>${money(-diff)}</b> less`} than now.
-        <span style="color:var(--muted)">Estimate at your rate of $${r.rate.toFixed(2)}/$1,000; Guardian confirms final terms.</span>`;
+        <span class="muted" style="display:block">Estimate at your rate of $${r.rate.toFixed(2)}/$1,000; Guardian confirms final terms.</span></span>`;
     } else est.style.display='none';
   }
+  drawMix(i);
   /* The rebuilding cost is NOT the sums insured and must never be set from
      them. This line used to copy the client's new total into the reality
      check the moment they edited a value, so raising cover always produced
@@ -485,53 +685,103 @@ function touch(i){
   bar();
 }
 
+/* The average, drawn to scale from the two figures on this location: the
+   sums insured and the rebuilding cost in the reality check. The $100,000
+   claim is the same worked example the page has always used. */
+function drawAvg(i,total,repl,ours){
+  const g=document.getElementById('rcg_'+i); if(!g) return;
+  const f=k=>g.querySelector(`[data-f="${k}"]`);
+  const max=Math.max(total,repl,1);
+  f('sv').textContent=money0(total);
+  f('sb').style.width=(total/max*100).toFixed(2)+'%';
+  const ring=f('ring');
+  if(!repl){
+    g.classList.add('nofig');g.classList.remove('under');
+    f('rl').textContent='Rebuilding cost today';
+    f('rv').textContent='Not given yet';f('rb').style.width='0%';
+    f('rp').textContent='—';ring.style.setProperty('--p',0);
+    ring.setAttribute('aria-label','Share insured: not known until a rebuilding cost is given');
+    f('head').innerHTML='Put in the rebuilding cost to see where you stand.';
+    return;
+  }
+  g.classList.remove('nofig');
+  const pct=Math.round(total/repl*100);
+  const share=Math.min(1,total/repl);
+  const under=total<repl;
+  g.classList.toggle('under',under);
+  f('rl').textContent=ours?'Our estimate of rebuilding cost':'Rebuilding cost you gave';
+  f('rv').textContent=money0(repl);
+  f('rb').style.width=(repl/max*100).toFixed(2)+'%';
+  f('gb').style.left=(total/max*100).toFixed(2)+'%';
+  f('gb').style.width=under?((repl-total)/max*100).toFixed(2)+'%':'0%';
+  f('gl').textContent=under?`Short by ${money0(repl-total)} (${100-pct}%)`:'';
+  f('rp').textContent=pct+'%';
+  ring.style.setProperty('--p',Math.min(100,pct));
+  ring.setAttribute('aria-label',`Insured at ${pct}% of the rebuilding cost`);
+  f('head').innerHTML=under
+    ?`Insured at ${pct}% of ${ours?'our estimated':'that'} rebuilding cost<small>Every claim here would be cut by ${100-pct}%.</small>`
+    :`Your cover meets ${ours?'our estimate of':'that'} rebuilding cost<small>${ours?'Only the real figure settles it.':'Average does not cut a claim here.'}</small>`;
+  f('pay').style.width=(share*100).toFixed(2)+'%';
+  f('carry').style.width=((1-share)*100).toFixed(2)+'%';
+  f('payv').textContent=money0(100000*share);
+  f('carryv').textContent=money0(100000*(1-share));
+}
+
 function check(i){
   const st=locState(i);
   const rc=document.getElementById('rc_'+i), out=document.getElementById('rcv_'+i);
   if(!rc||!out) return;
   const repl=numv(rc.value);
-  if(!repl){out.className='verdict ok';out.textContent='';return;}
   /* Is this figure the client's, or still the one we suggested? Saying
      "insured at full value" off our own estimate would be us clearing our
      own homework — and if our estimate is low, we would have told them they
      were covered right up to the moment of a claim. */
   const seed=Number(rc.dataset.seed||0);
-  const ours=seed&&Math.round(repl)===Math.round(seed);
+  const ours=!!(seed&&Math.round(repl)===Math.round(seed));
+  drawAvg(i,st.total,repl,ours);
+  if(!repl){out.className='verdict ok';out.textContent='';return;}
   if(st.total>=repl){
     if(ours){
-      out.className='verdict ok';
-      out.innerHTML=`Your cover meets <b>our estimate</b> of the rebuilding cost.
-        Average is only satisfied against the <u>real</u> figure — if you know it, put it in.`;
+      out.className='verdict ok rr-note';
+      out.innerHTML=`${I('info')}<span>Your cover meets <b>our estimate</b> of the rebuilding cost.
+        Average is only satisfied against the <u>real</u> figure: if you know it, put it in.</span>`;
     } else {
-      out.className='verdict ok';
-      out.textContent=`✅ Insured at full value — average does not bite, and a claim here pays in full, subject to your excess.`;
+      out.className='verdict ok rr-note';
+      out.innerHTML=`${I('checkc')}<span>Insured at full value: average does not bite, and a claim here pays in full, subject to your excess.</span>`;
     }
   } else {
     const pct=Math.round((1-st.total/repl)*100);
-    out.className='verdict warn';
-    out.innerHTML=`⚠️ Insured at <b>${Math.round(st.total/repl*100)}%</b> of ${ours?'our estimated':'that'} rebuilding cost,
-      so <b>average</b> cuts every claim here by the same ${pct}% — a $100,000 loss pays
+    out.className='verdict warn rr-note bad';
+    out.innerHTML=`${I('alert')}<span>Insured at <b>${Math.round(st.total/repl*100)}%</b> of ${ours?'our estimated':'that'} rebuilding cost,
+      so <b>average</b> cuts every claim here by the same ${pct}%: a $100,000 loss pays
       <b>${money0(100000*st.total/repl)}</b> and you carry ${money0(100000*(1-st.total/repl))}.
-      It applies to a small claim as much as a total loss. Tap the figures above to close the gap.`;
+      It applies to a small claim as much as a total loss. Tap the figures above to close the gap.</span>`;
   }
 }
 
 function bar(){
   const pols=policies();
   if(!pols.length) return;
+  pols.forEach((pg,gi)=>{
+    const el=document.getElementById('polval_'+gi);
+    if(el) el.textContent=money0(pg.locs.reduce((s,l)=>s+locState(l.idx).total,0));
+  });
   const g=pols[0];
-  let total=0, prem=0, changed=false;
+  let total=0, prem=0, changed=false, was=0;
   g.locs.forEach(l=>{
     const st=locState(l.idx);
-    total+=st.total;
+    total+=st.total; was+=locTotal(l);
     if(st.changed) changed=true;
     prem+=(st.changed&&l.rate)?st.total*l.rate/1000*(1+(l.taxRate||0.06)):(Number(l.premium)||0);
   });
   const b=$('#bar');
   if(changed){
     b.style.display='block';
-    $('#barNums').innerHTML=`New total: <b>${money0(total)}</b> · Est. premium: <b>≈ ${money(prem)}</b> incl. tax`;
-  } else b.style.display='none';
+    document.body.classList.add('has-sbar');
+    $('#barIc').innerHTML=I('chart');
+    const d=total-was;
+    $('#barNums').innerHTML=`New total: <b>${money0(total)}</b> <span class="rr-pill ${d>=0?'prop':'grey'} d" title="Change on your schedule">${d>=0?'+':'−'}${money0(Math.abs(d))}</span><br>Est. premium: <b>≈ ${money(prem)}</b> incl. tax`;
+  } else {b.style.display='none';document.body.classList.remove('has-sbar');}
 }
 
 function submit(gi,btn){
@@ -540,7 +790,7 @@ function submit(gi,btn){
   const err=document.getElementById('err'+gi); err.style.display='none';
   if(!sel){err.textContent='Choose an instruction so we know how to proceed.';err.style.display='block';return;}
   const mf=document.getElementById('mf_'+gi);
-  if(mf&&!mf.checked){err.textContent='Please tick the declaration — it covers your legal duty to disclose material facts.';err.style.display='block';return;}
+  if(mf&&!mf.checked){err.textContent='Please tick the declaration: it covers your legal duty to disclose material facts.';err.style.display='block';return;}
   const locations=g.locs.map(loc=>{
     const adjusted={};
     DATA.lines.forEach(L=>{
@@ -561,9 +811,10 @@ function submit(gi,btn){
   btn.disabled=true;btn.textContent='Sending…';
   google.script.run
     .withSuccessHandler(res=>{
-      btn.textContent='Sent ✓';
-      document.getElementById('ok'+gi).style.display='block';
-      $('#bar').style.display='none';
+      btn.textContent='Sent';
+      document.getElementById('ok'+gi).style.display='flex';
+      $('#bar').style.display='none';document.body.classList.remove('has-sbar');
+      RR.toast('Sent: our renewals team has your instruction.','ok');
       if(res&&res.stage){
         g.locs.forEach(loc=>{DATA.risks[loc.idx].stage=res.stage;DATA.risks[loc.idx].progress=res.progress||[];});
         render();
@@ -572,7 +823,7 @@ function submit(gi,btn){
     })
     .withFailureHandler(e=>{
       btn.disabled=false;btn.textContent='Send my renewal instruction';
-      err.textContent='Something went wrong: '+(e&&e.message?e.message:e)+' — please try again or reply to your renewal email.';
+      err.textContent='Something went wrong: '+(e&&e.message?e.message:e)+'. Please try again or reply to your renewal email.';
       err.style.display='block';
     })
     .submitPropertyInstruction({
@@ -587,37 +838,42 @@ function submit(gi,btn){
 function commsCard(){
   const c=DATA.comms||[];
   if(!c.length) return '';
-  return `<div class="card"><h2>📨 Communication history</h2>
-    <div class="loc-sub">Every touchpoint between us on this renewal — so you always know where things stand.</div>
-    <div style="margin-top:10px">${c.map(x=>`
-      <div class="citem"><span class="cdot ${x.from}"></span>
-        <div><b style="font-size:13.5px">${esc(x.label)}</b>
-        <div class="cwhen">${esc(x.when)}${x.detail?' · '+esc(x.detail):''}</div></div>
-      </div>`).join('')}</div></div>`;
+  return `<section class="rr-card sr" id="comms" data-tgt>
+    <div class="rr-sec"><span class="ic bl">${I('mail')}</span><div><b>Communication history</b><small>Every touchpoint between us on this renewal, so you always know where things stand.</small></div>
+      <span class="end rr-pill">${pl(c.length,'message')}</span></div>
+    <ul class="rr-tl">${c.map(x=>`
+      <li class="citem ${x.from==='you'?'you':'us'}"><b>${esc(x.label)}</b>
+        <span class="rr-pill ${x.from==='you'?'prop':''}" style="margin-left:6px">${x.from==='you'?'From you':'From us'}</span>
+        <span class="k cwhen">${esc(x.when)}${x.detail?' · '+esc(x.detail):''}</span></li>`).join('')}</ul>
+  </section>`;
 }
 
 /* ---------- post-renewal survey (?p=TOKEN&survey=1) ---------- */
 let surveyScores={sat:0,ease:0,speed:0};
 function renderSurvey(app){
-  app.innerHTML=`<div class="card">
-    <h2>How did we do, ${esc(DATA.firstName)}?</h2>
-    <div class="loc-sub">Your renewal is complete — thank you for staying with Guardian. 30 seconds of honest feedback helps us serve you better.</div>
-    <label class="fld">How satisfied are you with your renewal experience?</label>
-    <div class="stars" data-k="sat">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
-    <label class="fld">How easy was it to review and instruct us?</label>
-    <div class="stars" data-k="ease">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
-    <label class="fld">How was our speed — from your instruction to your schedule in hand?</label>
-    <div class="stars" data-k="speed">${[1,2,3,4,5].map(n=>`<button data-n="${n}">★</button>`).join('')}</div>
-    <label class="fld">Anything we should know — good or bad? (optional)</label>
-    <textarea class="txt" id="svComments" placeholder="Tell us what stood out, or what we could do better…"></textarea>
-    <button class="btn" id="svSend">Send my feedback</button>
-    <div class="ok" id="svOk">✓ Thank you! Your feedback goes straight to the team.</div>
-    <div class="err" id="svErr"></div>
-  </div>`;
+  const stars=k=>`<div class="stars" data-k="${k}" role="group">${[1,2,3,4,5].map(n=>
+    `<button type="button" data-n="${n}" aria-label="${n} star${n===1?'':'s'}" aria-pressed="false">${I('star')}</button>`).join('')}<span class="sv" aria-live="polite"></span></div>`;
+  app.innerHTML=`<section class="rr-card">
+    <div class="rr-band t-prop">
+      <p class="eyebrow">Your renewal is complete</p>
+      <h1>How did we do, ${esc(DATA.firstName)}?</h1>
+      <p>Your renewal is complete: thank you for staying with Guardian. 30 seconds of honest feedback helps us serve you better.</p>
+    </div>
+    <div class="q"><span class="l">How satisfied are you with your renewal experience?</span>${stars('sat')}</div>
+    <div class="q"><span class="l">How easy was it to review and instruct us?</span>${stars('ease')}</div>
+    <div class="q"><span class="l">How was our speed, from your instruction to your schedule in hand?</span>${stars('speed')}</div>
+    <label class="rr-f"><span class="l">Anything we should know, good or bad? (optional)</span>
+    <textarea class="rr-in txt" id="svComments" placeholder="Tell us what stood out, or what we could do better…"></textarea></label>
+    <button type="button" class="rr-btn wide prop main" id="svSend">${I('send')}Send my feedback</button>
+    <div class="rr-note ok" id="svOk" style="display:none;margin-top:14px">${I('checkc')}<span>Thank you! Your feedback goes straight to the team.</span></div>
+    <div class="rr-err" id="svErr" style="display:none"></div>
+  </section>`;
   document.querySelectorAll('.stars').forEach(row=>{
     row.querySelectorAll('button').forEach(b=>b.onclick=()=>{
       surveyScores[row.dataset.k]=Number(b.dataset.n);
-      row.querySelectorAll('button').forEach(x=>x.classList.toggle('on',Number(x.dataset.n)<=Number(b.dataset.n)));
+      row.querySelectorAll('button').forEach(x=>{const on=Number(x.dataset.n)<=Number(b.dataset.n);x.classList.toggle('on',on);x.setAttribute('aria-pressed',on?'true':'false');});
+      row.querySelector('.sv').textContent=b.dataset.n+' of 5';
+      if(surveyScores.sat&&surveyScores.ease&&surveyScores.speed) document.getElementById('svErr').style.display='none';
     });
   });
   document.getElementById('svSend').onclick=()=>{
@@ -625,23 +881,13 @@ function renderSurvey(app){
     if(!surveyScores.sat||!surveyScores.ease||!surveyScores.speed){err.textContent='Please tap a star rating for all three questions.';err.style.display='block';return;}
     const btn=document.getElementById('svSend');btn.disabled=true;btn.textContent='Sending…';
     google.script.run
-      .withSuccessHandler(()=>{btn.style.display='none';document.getElementById('svOk').style.display='block';})
+      .withSuccessHandler(()=>{btn.style.display='none';document.getElementById('svOk').style.display='flex';})
       .withFailureHandler(e=>{btn.disabled=false;btn.textContent='Send my feedback';err.textContent='Something went wrong: '+(e&&e.message?e.message:e);err.style.display='block';})
       .submitSurvey({token:DATA.token,sat:surveyScores.sat,ease:surveyScores.ease,speed:surveyScores.speed,comments:document.getElementById('svComments').value});
   };
+  RR.init(app);
 }
 render();
-</script>
-<script>
-(function(){
-  var saved=''; try{saved=localStorage.getItem('rrb_theme')||'';}catch(e){}
-  function apply(v){ if(v)document.documentElement.setAttribute('data-theme',v);
-    else document.documentElement.removeAttribute('data-theme');
-    document.querySelectorAll('.thpick button').forEach(function(b){b.classList.toggle('on',(b.getAttribute('data-th')||'')===v);}); }
-  apply(saved);
-  document.querySelectorAll('.thpick button').forEach(function(b){
-    b.onclick=function(){var v=b.getAttribute('data-th')||''; apply(v); try{localStorage.setItem('rrb_theme',v);}catch(e){}};});
-})();
 </script>
 </body>
 </html>

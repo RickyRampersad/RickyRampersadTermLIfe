@@ -76,7 +76,7 @@ const srcOf = page => page.evaluate(() => {
     }
     ok('it moves through the stories on its own', seen.size >= 3, [...seen].join(' → '));
     ok('in the order the rail lists them',
-       [...seen].slice(0, 3).join() === 'day.html,blocks.html,pending.html', [...seen].join(' → '));
+       [...seen].slice(0, 3).join() === 'day.html,blocks.html,transmittal.html', [...seen].join(' → '));
     ok('and never holds more than one at a time', live(s.page) === 2, String(live(s.page)));
     ok('the timer is still counting', /next in \d+s|fetching/.test(await s.page.locator('#state').innerText()),
        await s.page.locator('#state').innerText());

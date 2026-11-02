@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SEA &amp; CSEC Study Hub | Standard 1 to Form 5</title>
-<meta name="description" content="A CSEC / CXC study hub for Trinidad and Tobago secondary students — daily practice, syllabus mastery tracking, and official past-paper resources from Form 1 through Form 5."/>
+<title>SEA Study Hub | Standard 1 to Standard 5</title>
+<meta name="description" content="A study hub for the Secondary Entrance Assessment, Trinidad and Tobago: daily practice on the three SEA papers, progress tracked strand by strand, and the Ministry of Education’s own past papers, from Standard 1 to Standard 5."/>
+<meta property="og:title" content="SEA Study Hub | Standard 1 to Standard 5"/>
+<meta property="og:description" content="Daily practice for the Secondary Entrance Assessment: the three SEA papers, progress by strand, and the Ministry’s own past papers, from Standard 1 to Standard 5."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,7 +42,7 @@
 <header class="top">
   <div class="wrap topbar">
     <div class="mark"><img src="../logo-mark.png" alt=""></div>
-    <div class="brandtext"><b>Study Hub</b><span>Form 1 – Form 5</span></div>
+    <div class="brandtext"><b>Study Hub</b><span>Standard 1 – Standard 5</span></div>
     <nav class="topnav">
       <a href="start.html">Start here</a>
       <a href="index.html" class="on">Sign in</a>
@@ -56,10 +58,11 @@
   <div class="wrap">
 
     <div class="pagehead">
-      <div class="eyebrow">CSEC · CXC · Trinidad &amp; Tobago</div>
-      <h1>Five years of preparation, one subject at a time.</h1>
-      <p>Daily practice tied to the actual CSEC syllabus, mastery tracked strand by strand, and a
-         straight line from Form 1 to the examination hall. Sign in to pick up where you left off.</p>
+      <div class="eyebrow">SEA · Ministry of Education · Trinidad &amp; Tobago</div>
+      <h1>Five years of preparation, one examination.</h1>
+      <p>Daily practice on the three SEA papers, progress tracked strand by strand, and a straight
+         line from Standard 1 to the examination hall in Standard 5. Sign in to pick up where you
+         left off.</p>
     </div>
 
     <!-- ============ WHO ARE YOU ============ -->
@@ -201,24 +204,13 @@
         <div class="field" id="c-formwrap">
           <label class="fl">Which year is she in right now?</label>
           <p style="font-size:.79rem;color:var(--muted);line-height:1.55;margin:-2px 0 9px">
-            This drives everything — the daily plan, the syllabus, the milestones and the countdown.
-            You move up a form each year in Settings, and the old year stays on the record.</p>
-          <div class="picklab">Primary school <span>→ SEA</span></div>
-          <div class="formpick" id="c-form-primary">
-            <button type="button" data-f="1"><b>Std 1</b><span>Starting out</span></button>
-            <button type="button" data-f="2"><b>Std 2</b><span>Building</span></button>
-            <button type="button" data-f="3"><b>Std 3</b><span>Turning point</span></button>
-            <button type="button" data-f="4"><b>Std 4</b><span>SEA prep</span></button>
-            <button type="button" data-f="5"><b>Std 5</b><span>SEA year</span></button>
-          </div>
-          <div class="picklab" style="margin-top:11px">Secondary school <span>→ CSEC</span></div>
-          <div class="formpick" id="c-form">
-            <button type="button" data-f="6"><b>Form 1</b><span>Foundations</span></button>
-            <button type="button" data-f="7"><b>Form 2</b><span>Building</span></button>
-            <button type="button" data-f="8"><b>Form 3</b><span>Choosing</span></button>
-            <button type="button" data-f="9"><b>Form 4</b><span>CSEC yr 1</span></button>
-            <button type="button" data-f="10"><b>Form 5</b><span>Exam year</span></button>
-          </div>
+            This drives everything — the daily plan, the strands, the milestones and the countdown
+            to SEA. You move up a standard each year in Settings, and the old year stays on the
+            record.</p>
+          <div class="picklab" id="c-picklab">Primary school <span>→ SEA</span></div>
+          <!-- One button a year, written from the ladder in the data (CSEC.levels) when
+               the page loads, so this picker can never offer a year the hub does not teach. -->
+          <div class="formpick" id="c-form-primary"></div>
           <p style="font-size:.78rem;color:var(--muted);margin-top:9px" id="c-formnote">
             Nothing selected yet.</p>
         </div>
@@ -253,22 +245,22 @@
         back tomorrow. Get it right repeatedly and the gap widens.</p>
       </div>
       <div class="card">
-        <h3>📊 Mastery by syllabus strand</h3>
-        <p class="sub">Progress is tracked against the actual CSEC syllabus sections — not "Maths 62%"
-        but "Consumer Arithmetic 45%, Algebra 81%". That is the difference between knowing you are
-        behind and knowing what to do about it.</p>
+        <h3>📊 Progress by strand</h3>
+        <p class="sub">Progress is tracked against the strands the SEA papers test — not "Maths 62%"
+        but "Fractions 45%, Perimeter and Area 81%". That is the difference between knowing a child
+        is behind and knowing what to do about it.</p>
       </div>
       <div class="card">
         <h3>📚 Official sources, properly linked</h3>
-        <p class="sub">Every CSEC syllabus, specimen paper and mark scheme is free from CXC, and the
-        Ministry of Education carries worked solutions for T&amp;T students. The hub points you at the
-        real ones rather than a copy of unknown vintage.</p>
+        <p class="sub">The Ministry of Education publishes SEA past papers, specimen papers and mark
+        schemes free, on moe.gov.tt and its School Learning Management System. The hub points you at
+        the real ones rather than a copy of unknown vintage.</p>
       </div>
       <div class="card">
-        <h3>🧭 Form 1 to Form 5, in order</h3>
-        <p class="sub">Form 3 is when subject choices are made and Form 4 is when the syllabus starts
-        for real. The planner shows the whole road, and only sets work from the forms you have
-        actually reached.</p>
+        <h3>🧭 <span id="ladder-title">Standard 1 to Standard 5</span>, in order</h3>
+        <p class="sub">Three papers, sat in Standard 5: Mathematics, English Language Arts and ELA
+        Writing, weighted 100 : 60 : 40. The journey shows the whole road, and only sets work from
+        the standards a child has actually reached.</p>
       </div>
     </div>
 
@@ -285,7 +277,7 @@
 
 <footer class="foot">
   <div class="wrap">
-    <a href="../index.html">← Ricky Rampersad Branch</a> · Study Hub · Built for Trinidad &amp; Tobago students
+    <a href="../index.html">← Ricky Rampersad Branch</a> · SEA Study Hub · Built for Trinidad &amp; Tobago families
   </div>
 </footer>
 
@@ -395,28 +387,43 @@
   });
   $('c-back').addEventListener('click',function(){fillProfiles();show('signin');});
   /* Nothing is pre-selected: a silently wrong default would quietly mis-set the
-     syllabus, the milestones and the countdown for the next five years. */
+     strands, the milestones and the countdown for the next five years. */
   var pickedForm=null;
-  var FORMNOTE={
-    1:'Standard 1 — the first year of real schoolwork. Sits SEA in five years.',
-    2:'Standard 2 — fractions start and writing gets longer. SEA in four years.',
-    3:'Standard 3 — the turning point. What is shaky now will hurt at SEA.',
-    4:'Standard 4 — SEA preparation begins properly.',
-    5:'Standard 5 — the SEA year. The examination is in March.',
-    6:'Form 1 — the foundation year of secondary. Sits CSEC in five years.',
-    7:'Form 2 — building the base. CSEC in four years.',
-    8:'Form 3 — the subject-choice year. CSEC in three years.',
-    9:'Form 4 — the CSEC syllabus starts, and so does the SBA.',
-    10:'Form 5 — the examination year.'
+  /* The ladder is the data's, never this page's: one button a year from
+     CSEC.levels, so the picker cannot offer a year the hub does not teach. The
+     top rung is the examination year. */
+  var LEVELS=(CSEC.levels||[]).slice();
+  var TOP=LEVELS.length?LEVELS[LEVELS.length-1].n:5;
+  var STAGE=((CSEC.curriculum&&CSEC.curriculum.stages)||[])[0]||{label:'Primary school',exam:'SEA'};
+  var TAG={1:'Starting out',2:'Building',3:'Turning point',4:'SEA prep',5:'SEA year'};
+  var NOTE={
+    1:'the first year of real schoolwork.',
+    2:'fractions start and writing gets longer.',
+    3:'the turning point. What is shaky now will hurt at SEA.',
+    4:'SEA preparation begins properly.',
+    5:'the SEA year. The examination is in March.'
   };
-  var pickBtns=[].concat(
-    Array.prototype.slice.call($('c-form-primary').children),
-    Array.prototype.slice.call($('c-form').children));
+  function formNote(n){
+    var years=TOP-n;
+    var WORDS=['','one','two','three','four','five','six','seven','eight','nine'];
+    var when=years<=0?'':years===1?' Sits SEA next year.':' Sits SEA in '+(WORDS[years]||years)+' years.';
+    return CSEC.levelLabel(n)+' \u2014 '+(NOTE[n]||'')+when;
+  }
+  $('c-picklab').innerHTML=CSEC.esc(STAGE.label)+' <span>\u2192 '+CSEC.esc(STAGE.exam)+'</span>';
+  var pick=$('c-form-primary');
+  pick.style.gridTemplateColumns='repeat('+(LEVELS.length||5)+',1fr)';
+  pick.innerHTML=LEVELS.map(function(l){
+    return '<button type="button" data-f="'+l.n+'"><b>'+CSEC.esc(l.short)+'</b><span>'+CSEC.esc(TAG[l.n]||'')+'</span></button>';
+  }).join('');
+  if(LEVELS.length){
+    $('ladder-title').textContent=CSEC.levelLabel(LEVELS[0].n)+' to '+CSEC.levelLabel(TOP);
+  }
+  var pickBtns=Array.prototype.slice.call(pick.children);
   pickBtns.forEach(function(b){
     b.addEventListener('click',function(){
       pickedForm=parseInt(b.getAttribute('data-f'),10);
       pickBtns.forEach(function(o){ o.classList.toggle('on',o===b); });
-      $('c-formnote').textContent=FORMNOTE[pickedForm];
+      $('c-formnote').textContent=formNote(pickedForm);
       $('c-err').textContent='';
     });
   });
@@ -484,9 +491,11 @@
     if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
       $('c-err').textContent='That does not look like an e-mail address. Leave it blank if you would rather not.'; return;
     }
+    /* A parent or a teacher has no year of their own: they view from the top
+       of the ladder, which is the examination year, read from the data. */
     var p=CSEC.createProfile({
       name:name, role:role2,
-      level:pickedForm||8,
+      level:pickedForm||TOP,
       school:$('c-school').value.trim(), email:email
     });
     CSEC.signIn(p.id,'','name');

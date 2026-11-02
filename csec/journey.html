@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>My Journey | SEA &amp; CSEC Study Hub</title>
-<meta name="description" content="The guided journey from Standard 1 to CSEC — what this term is for, what is new this year, what is carried forward, and every milestone ahead."/>
+<title>My Journey | SEA Study Hub</title>
+<meta name="description" content="The guided journey from Standard 1 to the SEA in Standard 5 — what this term is for, what is new this year, what is carried forward, and every milestone ahead."/>
+<meta property="og:description" content="The guided journey from Standard 1 to the SEA in Standard 5 — what this term is for, what is new this year, what is carried forward, and every milestone ahead."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,7 +22,7 @@
 
 
 
-  /* the spine: primary → lower → upper → CSEC */
+  /* the spine: Standard 1 to Standard 5, one examination */
   .spine{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
   .sg{flex:1;min-width:170px;padding:14px;border-radius:13px;border:1px solid var(--line);
       background:rgba(0,0,0,.2)}
@@ -75,21 +76,12 @@
          what you are still carrying, and what is coming.</p>
     </div>
 
-    <!-- form selector, for anyone not signed in as a student -->
+    <!-- year selector, for anyone not signed in as a student. Its options are
+         built from CSEC.levels in the script below, so the ladder on this page
+         can never differ from the one in the data. -->
     <div class="card hidden" id="pickwrap" style="margin-bottom:18px">
       <label class="fl" for="formsel" id="picklabel">Show the journey for</label>
-      <select class="fi" id="formsel">
-        <optgroup label="Primary school">
-          <option value="1">Standard 1</option><option value="2">Standard 2</option>
-          <option value="3">Standard 3</option><option value="4">Standard 4</option>
-          <option value="5">Standard 5 — SEA year</option>
-        </optgroup>
-        <optgroup label="Secondary school">
-          <option value="6">Form 1</option><option value="7">Form 2</option>
-          <option value="8">Form 3</option><option value="9">Form 4</option>
-          <option value="10">Form 5 — CSEC year</option>
-        </optgroup>
-      </select>
+      <select class="fi" id="formsel"></select>
     </div>
 
     <!-- ---------- you are here ---------- -->
@@ -98,8 +90,8 @@
         <div style="flex:none;width:92px;height:92px;border-radius:22px;display:grid;place-items:center;
                     background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f">
           <div style="text-align:center;line-height:1.05">
-            <div style="font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:1px">FORM</div>
-            <div style="font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:2.2rem;font-weight:900" id="yh-form">3</div>
+            <div style="font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:1px">STANDARD</div>
+            <div style="font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:2.2rem;font-weight:900" id="yh-form">5</div>
           </div>
         </div>
         <div style="flex:1;min-width:220px">
@@ -121,7 +113,7 @@
     <!-- ---------- new this year ---------- -->
     <div class="section-label">New to you this year <span class="pill gold" id="new-count"></span></div>
     <p class="sub" style="margin:-6px 0 12px;color:var(--muted);font-size:.87rem">
-      Syllabus strands that start in this form. These are the ones nobody has taught you yet,
+      Syllabus strands that start in this standard. These are the ones nobody has taught you yet,
       so they are where a term goes wrong quietly.</p>
     <div class="rows" id="newlist"></div>
 
@@ -129,8 +121,8 @@
     <div id="carry-wrap" class="hidden">
       <div class="section-label">Carried forward — still weak from earlier years</div>
       <p class="sub" style="margin:-6px 0 12px;color:var(--muted);font-size:.87rem">
-        Topics from a form below this one that are still under 60%. This is the debt that sinks a
-        Form 4, and it is far cheaper to clear now than later.</p>
+        Topics from an earlier standard that are still under 60%. This is the debt that sinks a
+        Standard 5, and it is cheaper to clear now than in the SEA year.</p>
       <div class="rows" id="carrylist"></div>
     </div>
 
@@ -167,20 +159,33 @@
     ? '<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
       '<a href="journey.html" class="on">Journey</a>'+
       (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
-      /* SEA papers are for the primary ladder only; a Form 3 has no use for them. */
-      ((me.role!=='student'||me.level<=5)?'<a href="sea.html">SEA Papers</a>':'')+
+      /* SEA papers are for the ladder in the data; a level outside it has no use for them. */
+      ((me.role!=='student'||CSEC.levelInfo(me.level))?'<a href="sea.html">SEA Papers</a>':'')+
       '<a href="guides.html">Guides</a><a href="kpi.html">KPIs</a>'+
       '<a href="planner.html">Syllabus</a><a href="papers.html">Resources</a><a href="settings.html">Settings</a>'
     : '<a href="start.html">Start here</a><a href="index.html">Sign in</a><a href="journey.html" class="on">Journey</a>'+
       '<a href="guides.html">Guides</a><a href="planner.html">Syllabus</a><a href="papers.html">Resources</a>';
 
-  /* A signed-in student sees their own year. Anyone else picks one. */
+  /* The ladder is whatever the data says it is: its years, and the year the
+     examination is sat. Nothing on this page spells a level out by hand. */
+  var LEVELS = CSEC.levels || [];
+  var TOP = LEVELS.length ? LEVELS[LEVELS.length-1].n : 5;
+  var examLevelOf = function(level){ var st=CSEC.stageOf(level); return st && st.examLevel; };
+
+  /* A signed-in student sees their own year. Anyone else picks one, and opens
+     on the last year of the ladder, the examination year. A level the data no
+     longer carries falls back to that year too, so the page never paints null. */
   var isStudent = me && me.role==='student';
-  var viewLevel = isStudent ? me.level : 8;
+  var viewLevel = isStudent ? me.level : TOP;
+  if(!CSEC.levelInfo(viewLevel)) viewLevel = TOP;
 
   if(!isStudent){
     $('pickwrap').classList.remove('hidden');
     if(me) $('picklabel').textContent='Show the journey for';
+    $('formsel').innerHTML = LEVELS.map(function(l){
+      var exam = examLevelOf(l.n)===l.n ? ' — '+CSEC.stageOf(l.n).exam+' year' : '';
+      return '<option value="'+l.n+'">'+esc(l.label+exam)+'</option>';
+    }).join('');
     $('formsel').value=String(viewLevel);
     $('formsel').addEventListener('change',function(){ viewLevel=parseInt(this.value,10); paint(); });
   }
@@ -210,12 +215,14 @@
 
   function paint(){
     var year=CSEC.roadmapFor(viewLevel), stage=CSEC.stageOf(viewLevel);
+    if(!year) return;   /* a year the data does not carry has nothing to paint */
     var t=CSEC.termOf(), termNo=t.term;
     var cd=CSEC.countdown(viewLevel);
 
     /* ---------- you are here ---------- */
-    $('yh-form').textContent=CSEC.levelInfo(viewLevel).short;
-    $('yh-stage').textContent=stage.label+' · '+t.year;
+    var info=CSEC.levelInfo(viewLevel)||{n:viewLevel,short:String(viewLevel)};
+    $('yh-form').textContent=info.n;
+    $('yh-stage').textContent=(stage?stage.label:'')+' · '+t.year;
     $('yh-phase').textContent=year.label+' — '+year.phase;
     $('yh-focus').textContent=year.focus;
     $('yh-term').textContent=termNo;
@@ -242,8 +249,8 @@
     $('newlist').innerHTML = nw.length
       ? nw.map(function(r){ return strandRow(r,isStudent); }).join('')
       : '<div class="note"><b>Nothing new starts this year.</b> '+
-        (viewLevel===10
-          ? 'Form 5 is not about new content — it is about finishing the syllabus you already have and practising it under time until the paper holds no surprises.'
+        (viewLevel===examLevelOf(viewLevel)
+          ? esc(CSEC.levelLabel(viewLevel))+' is not about new content — it is about finishing the syllabus you already have and practising it to time until the paper holds no surprises.'
           : 'Every strand in your subjects this year was already introduced below. Use the time to deepen them.')+'</div>';
 
     /* ---------- carried forward ---------- */
@@ -272,7 +279,7 @@
         '<div class="r-text"><b>'+esc(m.what)+(m.now?' — this term':'')+'</b>'+
         '<span style="color:var(--teal);font-size:.74rem;font-weight:700">'+CSEC.levelLabel(m.level)+', Term '+m.term+'</span>'+
         '<span>'+esc(m.why)+'</span></div></div>';
-    }).join('') : '<div class="note">No milestones left — the examinations are the last one.</div>';
+    }).join('') : '<div class="note">No milestones left — the SEA is the last one.</div>';
 
     /* ---------- the spine ---------- */
     $('spine').innerHTML=(C.stages||[]).map(function(sg){
@@ -283,9 +290,13 @@
         '<span class="yr" style="color:var(--gold)">ends at '+esc(sg.exam)+'</span>'+
         '<div class="nt">'+esc(sg.note)+'</div></div>';
     }).join('');
-    $('spine-note').textContent='Ten years, two examinations. SEA at the end of Standard 5 decides the '+
-      'secondary school; CSEC at the end of Form 5 decides what comes after it. The hub follows a '+
-      'student across the whole run without losing what came before.';
+    var first=LEVELS[0], last=LEVELS[LEVELS.length-1];
+    var WORDS=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten'];
+    $('spine-note').textContent = (first&&last)
+      ? (WORDS[LEVELS.length]||LEVELS.length)+' years, one examination. The SEA, written in March of '+last.label+', decides '+
+        'which secondary school a child is placed in. The hub follows a child from '+first.label+' to '+
+        'that morning without losing what came before.'
+      : '';
 
     /* ---------- every year, expandable ---------- */
     $('years').innerHTML=(C.roadmap||[]).map(function(r){
@@ -315,9 +326,9 @@
      from the curriculum alone using the default subject selection. */
   function newForLevel(level){
     var out=[];
-    /* Signed out there is no profile, so seed from the defaults for that stage —
-       a Standard 2 view must not be built from a CSEC timetable. */
-    var seed = level<=5 ? (C.defaultPrimary||[]) : (C.defaultSelection||[]);
+    /* Signed out there is no profile, so seed from the primary defaults: the
+       subjects a child in any standard carries. */
+    var seed = C.defaultPrimary || C.defaultSelection || [];
     seed.forEach(function(id){
       var subj=C.subjects[id]; if(!subj) return;
       subj.strands.forEach(function(t){

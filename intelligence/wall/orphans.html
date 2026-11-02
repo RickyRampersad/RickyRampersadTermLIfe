@@ -266,10 +266,10 @@ function paint(){
   if(G){
     $("#aK").textContent = "Clients named to an agent: "+fmt(G.clients);
     $("#aCap").innerHTML = "Named in Salesforce since 9 September, agent by agent. <b>"+fmt(G.week)+"</b> in the last seven days, <b>"+fmt(G.today)+"</b> today.";
-    buildPages(G.people||[]);
-  } else { $("#agents").innerHTML = ""; $("#pager").innerHTML = ""; }
+  }
   $("#key").innerHTML = "<b>Done</b> the task closed today. <b>Reached</b> a note today that the client was spoken to. <b>Tried</b> a call or message that did not get through. "
     + "<b>Noted</b> another note. <b>Nothing yet</b> no entry today; a new date with no note counts here. A household is as far along as its least-served member who asked.";
+  if(G) buildPages(G.people||[]); else { $("#agents").innerHTML = ""; $("#pager").innerHTML = ""; }
   grow();
   /* the ticker */
   var bits = [];

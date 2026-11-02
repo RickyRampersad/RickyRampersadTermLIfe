@@ -156,6 +156,8 @@
   .markbox .row button{flex:1 1 auto;padding:11px 12px;font-size:14px;background:var(--card);color:var(--navy);border:1.5px solid var(--line)}
   .markbox input{width:100%;box-sizing:border-box;margin-top:8px;padding:11px 12px;border-radius:10px;border:1.5px solid var(--line);font:500 15px var(--fb);background:var(--card);color:var(--ink)}
   .attkey{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .att td.wait{background:transparent;border:1.5px dashed var(--line);color:var(--muted)}
+  .markbox .mkn{font-size:12px;line-height:1.5;color:var(--muted);margin-top:9px}
   .tip b{color:var(--ink)}
   .closed{margin-top:12px;font-size:14px;color:var(--muted)} .closed b{color:var(--good)} .closed a{color:inherit;font-weight:700}
   .ic.no{color:var(--bad)} .ic.late{color:var(--bad)} .ic.due{color:var(--warn)} .ic.k{color:var(--navy)} .ic.todo{color:var(--muted)}
@@ -194,6 +196,128 @@
   .skel{height:14px;border-radius:7px;background:linear-gradient(90deg,var(--track),var(--soft),var(--track));background-size:200% 100%;animation:sheen 1.4s linear infinite;margin:8px 0}
   .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translate(-50%,30px);opacity:0;background:var(--navy);color:var(--bg);padding:11px 16px;border-radius:12px;font:700 14px/1.3 var(--fb);transition:.35s var(--ease);z-index:9;max-width:calc(100% - 32px);text-align:center}
   .toast.on{transform:translate(-50%,0);opacity:1}
+  /* The one screen (29 Oct 2026): the task cards, what came up, the close-out and the update bar, here. */
+  .upline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;font-size:12px;color:var(--muted)}
+  .upline a{font-weight:800;cursor:pointer;text-decoration:underline;text-underline-offset:2px;color:var(--ink)}
+  .upd{display:flex;align-items:center;gap:10px;margin-top:8px;padding:9px 12px;border-radius:12px;background:var(--soft);border:1.5px solid var(--gold);font:700 13px/1.35 var(--fb);color:var(--ink);animation:rise .4s var(--ease)}
+  .upd[hidden]{display:none}
+  .upd span{flex:1;min-width:0} .upd button{flex:none;min-height:38px;padding:9px 14px;font-size:13.5px;background:var(--gold);color:#141C4A}
+  ul.list li.tk{flex-wrap:wrap}
+  li.tk .li .s{cursor:pointer} li.tk .li .s::after{content:" \25BE";color:var(--muted);font-size:.85em}
+  li.tk.open .li .s::after{content:" \25B4"}
+  .tc{flex:0 0 100%;margin:8px 0 2px 34px;padding:12px;border-radius:12px;background:var(--soft);border:1px solid var(--line);animation:rise .35s var(--ease)}
+  .tc[hidden]{display:none}
+  @media (max-width:420px){ .tc{margin-left:0} }
+  .tc .lab{font:700 12px/1.4 var(--fb);color:var(--muted);margin-bottom:6px} .tc .lab .bdg{display:inline-block;font:800 10.5px/1 var(--fb);letter-spacing:.05em;text-transform:uppercase;padding:4px 7px;border-radius:6px;background:var(--card);color:var(--ink);margin-right:6px}
+  .tc .lab .bdg.r{color:var(--bad)}
+  .tc .todo{font-size:14px;line-height:1.45;color:var(--ink)} .tc .todo b{color:var(--navy)}
+  .tc .nx{font:700 13.5px/1.4 var(--fb);color:var(--bad);margin-top:4px}
+  .tc .hint{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .tc .notes{margin:8px 0 2px;font-size:12.5px;color:var(--muted)} .tc .notes div{margin-top:3px;overflow-wrap:anywhere} .tc .notes b{color:var(--ink)}
+  .tpl{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 6px}
+  .tpl button{min-height:0;flex:1 1 auto;padding:8px 10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;font:600 12.5px/1.35 var(--fb);text-align:left}
+  .tpl button i{font-style:normal;font:800 10px/1 var(--fb);letter-spacing:.06em;text-transform:uppercase;margin-right:6px;padding:2px 7px;border-radius:999px;background:var(--soft);color:var(--muted);vertical-align:1px}
+  .tpl button i.c{color:var(--good)} .tpl button i.m{color:var(--warn)}
+  .tc textarea,.cl textarea,.sc textarea{width:100%;min-height:84px;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:15px/1.45 var(--fb);color:var(--ink);background:var(--card);resize:vertical}
+  .tc textarea:focus,.cl textarea:focus,.sc textarea:focus{outline:none;border-color:var(--good)}
+  .tc .cai{width:100%;margin:6px 0;background:transparent;color:var(--gold);border:1.5px dashed var(--gold);font-size:14px;min-height:44px}
+  .tc .dt{display:block;font-size:12.5px;color:var(--muted);margin:4px 0 8px}
+  .tc input[type=date],.cl input[type=date],.cl input[type=text],.cl select,.sc select{display:block;width:100%;margin-top:4px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font:600 15px var(--fb);background:var(--card);color:var(--ink);min-height:44px}
+  .cbt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .cbt button{min-height:46px;padding:10px 4px;font-size:14px}
+  .cbt .c{background:var(--good);color:#fff} .cbt .m{background:var(--warn);color:#fff} .cbt .n{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+  .cbt button[disabled],.tc .cai[disabled]{opacity:.5}
+  .cst{font-size:12.5px;color:var(--muted);margin-top:6px;min-height:16px} .cst.ok{color:var(--good);font-weight:800} .cst.bad{color:var(--bad);font-weight:700}
+  .tc .sf{display:inline-block;margin-top:8px;font:700 12.5px var(--fb);color:var(--muted)}
+  .sc .row{display:flex;gap:8px;margin-top:8px} .sc .row select{flex:1;margin:0} .sc .row .go{margin:0;width:auto;flex:none;padding:0 18px}
+  .sc .res div{font-size:13px;margin-top:4px} .sc .res .bad{color:var(--bad)}
+  .cl .grp{margin-top:14px} .cl .grp h3{font:800 14px/1.3 var(--fd);color:var(--navy);margin:0 0 6px}
+  .cl .it{padding:10px 0;border-top:1px solid var(--line)} .cl .it:first-of-type{border-top:0}
+  .cl .it .s{font:600 14px/1.4 var(--fb);overflow-wrap:anywhere}
+  .cl .seg{display:flex;gap:6px;margin-top:6px} .cl .seg label{flex:1;display:flex}
+  .cl .seg input{position:absolute;opacity:0;pointer-events:none}
+  .cl .seg span{flex:1;text-align:center;padding:11px 6px;border-radius:10px;border:1.5px solid var(--line);font:800 13.5px/1.2 var(--fd);cursor:pointer;color:var(--muted)}
+  .cl .seg input:checked+span{border-color:var(--good);color:var(--good);background:var(--card)}
+  .cl .seg input[value^="Not"]:checked+span{border-color:var(--bad);color:var(--bad)}
+  .cl .done div{font-size:13.5px;color:var(--good);margin-top:2px}
+  .cl .out{display:flex;gap:10px;align-items:center;font:800 14px var(--fd);margin-top:14px} .cl .out input{width:22px;height:22px}
+  /* The day's coach (29 Oct 2026): what the time of day asks of you, the day's stops, and what is new for you. */
+  .cline{display:flex;align-items:center;gap:9px;margin-top:8px;padding:8px 11px;border-radius:12px;background:var(--soft);font:800 13.5px/1.3 var(--fd);color:var(--navy);cursor:pointer;animation:rise .4s var(--ease)}
+  .cline[hidden]{display:none}
+  .cline .cd{flex:none;width:9px;height:9px;border-radius:50%;background:var(--good);animation:ping 2.2s infinite}
+  .cline span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cline.warn{background:rgba(227,154,59,.15);color:var(--warn)} .cline.warn .cd{background:var(--warn)}
+  .cline.bad{background:rgba(238,107,91,.15);color:var(--bad)} .cline.bad .cd{background:var(--bad)}
+  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(227,178,60,.6)}70%{box-shadow:0 0 0 9px rgba(227,178,60,0)}100%{box-shadow:0 0 0 0 rgba(227,178,60,0)}}
+  .coach{position:relative;overflow:hidden;border-left:4px solid var(--good)}
+  .coach.warn{border-left-color:var(--warn)} .coach.bad{border-left-color:var(--bad)}
+  .coach::after{content:"";position:absolute;right:-50px;top:-50px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(227,178,60,.18),transparent 70%);animation:glow 5s ease-in-out infinite alternate;pointer-events:none}
+  .coach .ck{font:800 11px/1 var(--fb);letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+  .coach .chh{font:800 19px/1.25 var(--fd);color:var(--navy)}
+  .coach.warn .chh{color:var(--warn)} .coach.bad .chh{color:var(--bad)}
+  .coach .chs{font-size:14px;line-height:1.5;margin-top:4px}
+  .coach ul{list-style:none;margin:10px 0 0;padding:0}
+  .coach li{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.4;padding:5px 0;opacity:0;transform:translateX(-6px);animation:slide .45s var(--ease) forwards}
+  .coach li i{flex:none;width:21px;height:21px;border-radius:7px;display:grid;place-items:center;font:800 11px/1 var(--fd);font-style:normal;background:var(--soft);color:var(--muted)}
+  .coach li.ok{color:var(--muted)} .coach li.ok i{color:var(--good)}
+  .rail{position:relative;margin:18px 0 0;height:66px}
+  .rail .rl,.rail .rf{position:absolute;top:11px;left:0;right:0;height:4px;border-radius:3px;background:var(--track)}
+  .rail .rf{right:auto;width:0;background:linear-gradient(90deg,var(--good),var(--gold));transition:width 1.6s var(--ease)}
+  .rail .rn{position:absolute;top:3px;width:20px;height:20px;margin-left:-10px;border-radius:50%;border:3px solid var(--gold);background:var(--card);left:0;transition:left 1.6s var(--ease);animation:ping 2.2s infinite;z-index:2}
+  .rail .st{position:absolute;top:0;width:58px;margin-left:-29px;text-align:center}
+  .rail .st b{display:grid;place-items:center;width:26px;height:26px;margin:0 auto;border-radius:50%;background:var(--card);border:2px solid var(--line);font:800 12px/1 var(--fd);color:var(--muted);position:relative;z-index:1;transition:background .4s,border-color .4s,transform .4s}
+  .rail .st.done b{background:var(--good);border-color:var(--good);color:#fff}
+  .rail .st.missed b{border-color:var(--bad);color:var(--bad);background:var(--card)}
+  .rail .st.owe b{border-color:var(--gold);color:var(--gold);transform:scale(1.15)}
+  .rail .st em{display:block;font:800 10.5px/1.2 var(--fb);font-style:normal;color:var(--ink);margin-top:5px;white-space:nowrap}
+  .rail .st small{display:block;font:600 10.5px/1.2 var(--fb);color:var(--muted);white-space:nowrap}
+  .rail .st.missed em{color:var(--bad)} .rail .st.owe em{color:var(--warn)}
+  @media (max-width:400px){ .rail .st{width:42px;margin-left:-21px} .rail .st em,.rail .st small{font-size:9.5px} }
+  .nwu{font:800 13px/1.3 var(--fb);color:var(--bad);background:rgba(238,107,91,.12);border-radius:10px;padding:7px 10px;margin:0 0 6px}
+  .tag.ok{color:var(--good)} .tag.wn{color:var(--warn)} .tag.nwn{color:var(--gold)}
+  #news li.dim .li{opacity:.62}
+  #news .li .s b{color:var(--navy)}
+  /* The agent's day on this screen (29 Oct 2026): the tiles, the projection, the close-off with its balance, the tasks. */
+  .agt{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 14px}
+  .agt div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center;box-shadow:var(--shadow);opacity:0;transform:translateY(8px);animation:rise .5s var(--ease) forwards}
+  .agt div:nth-child(2){animation-delay:.05s}.agt div:nth-child(3){animation-delay:.1s}.agt div:nth-child(4){animation-delay:.15s}
+  .agt b{display:block;font:800 22px/1 var(--fd);color:var(--navy)} .agt small{display:block;font:600 10.5px/1.25 var(--fb);color:var(--muted);margin-top:5px}
+  .agt .r b{color:var(--bad)} .agt .g b{color:var(--good)} .agt .a b{color:var(--warn)}
+  .agm{padding:9px 0;border-top:1px solid var(--line)} .agm:first-of-type{border-top:0}
+  .agm .q{font:600 14px/1.35 var(--fb);margin-bottom:5px} .agm .q small{color:var(--muted);font-weight:500}
+  .agm .row{display:flex;gap:8px;align-items:center}
+  .agm input[type=number]{flex:none;width:76px;min-height:44px;border:1.5px solid var(--line);border-radius:10px;padding:0 10px;font:700 16px var(--fd);background:var(--card);color:var(--ink)}
+  .agm input[type=text]{flex:1;min-width:0;min-height:44px;border:1.5px solid var(--line);border-radius:10px;padding:0 10px;font:500 14px var(--fb);background:var(--card);color:var(--ink)}
+  .agm input:focus,.agc textarea:focus{outline:none;border-color:var(--good)}
+  .agm .bal{flex:none;min-width:48px;text-align:center;font:800 13px/1 var(--fd);padding:7px 6px;border-radius:8px;background:var(--soft);color:var(--muted)}
+  .agm .bal.up{color:var(--good)} .agm .bal.dn{color:var(--bad)} .agm .bal:empty{background:transparent}
+  .agc textarea{width:100%;min-height:72px;margin-top:8px;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:15px/1.45 var(--fb);color:var(--ink);background:var(--card);resize:vertical}
+  .agc .done{display:inline-block;font:800 11px/1 var(--fb);letter-spacing:.04em;padding:4px 7px;border-radius:6px;background:var(--soft);color:var(--good);margin-left:6px;vertical-align:2px}
+  .agc .wait{font-size:13.5px;color:var(--muted)}
+  .agbal{display:flex;gap:10px;align-items:center;margin:4px 0 10px;padding:10px 12px;border-radius:12px;background:var(--soft);font:700 14px/1.3 var(--fb)}
+  .agbal b{font:800 20px/1 var(--fd)} .agbal b.dn{color:var(--bad)} .agbal b.up{color:var(--good)}
+  #agitems .tc textarea{min-height:70px}
+  .agpv{background:rgba(227,178,60,.14);border:1.5px solid var(--gold);border-radius:12px;padding:9px 12px;font:700 13px/1.4 var(--fb);margin:0 0 12px}
+  /* The managers' screen (29 Oct 2026): the unit's work by agent, the day's notes, the manager's numbers. */
+  .uchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+  details.ua{border-top:1px solid var(--line)} details.ua:first-of-type{border-top:0}
+  details.ua>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:11px 0;cursor:pointer}
+  details.ua>summary::-webkit-details-marker{display:none}
+  details.ua>summary .nm{flex:1;min-width:0;font:800 14.5px/1.25 var(--fd);color:var(--navy);overflow-wrap:anywhere}
+  details.ua>summary .ct{flex:none;font:700 12px/1.2 var(--fb);color:var(--muted);text-align:right}
+  details.ua>summary .ct b{color:var(--ink)} details.ua>summary .ct .r{color:var(--bad)} details.ua>summary .ct .a{color:var(--warn)}
+  details.ua>summary::after{content:"\25BE";color:var(--muted);flex:none} details.ua[open]>summary::after{content:"\25B4"}
+  .uab{padding:0 0 10px}
+  .unew{width:100%;margin:6px 0 0;min-height:42px;background:transparent;color:var(--ink);border:1.5px dashed var(--line);font-size:14px}
+  .unf{margin-top:8px;padding:12px;border-radius:12px;background:var(--soft);border:1px solid var(--line)}
+  .unf input,.unf select,.unf textarea,.uck input{width:100%;margin-top:6px;min-height:44px;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font:500 15px var(--fb);background:var(--card);color:var(--ink)}
+  .unf textarea{min-height:76px;resize:vertical} .unf .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .tc .tone{display:flex;gap:6px;margin:4px 0} .tc .tone button{flex:1;min-height:36px;padding:6px;font-size:12.5px;background:var(--card);color:var(--ink);border:1.5px solid var(--line)}
+  .tc .rd2{font-size:12.5px;line-height:1.45;background:var(--card);border-radius:10px;padding:7px 10px;margin:6px 0;border:1px solid var(--line)} .tc .rd2 b{color:var(--navy)}
+  .tl li .s b{color:var(--navy)} .tl li small i{font-style:normal;color:var(--gold);font-weight:700}
+  .uck .q{font:600 14px/1.35 var(--fb);margin-top:10px} .uck .row{display:flex;gap:8px} .uck .row input[type=number]{flex:none;width:76px;font:700 16px var(--fd)}
+  .more[hidden]{display:none}
+  .showmore{width:100%;margin-top:6px;background:transparent;color:var(--ink);border:1.5px solid var(--line)}
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation:none!important;transition:none!important} .card,ul.list li{opacity:1;transform:none} }
 </style>
 </head>
@@ -219,6 +343,9 @@
       <div class="now" id="nowm" title="Where the working day is now"></div>
     </div>
     <div class="pace" id="pace">&nbsp;</div>
+    <div class="cline" id="cline" role="button" tabindex="0" hidden><i class="cd" aria-hidden="true"></i><span id="clinet"></span></div>
+    <div class="upline"><span id="upat">&nbsp;</span><a id="uprefresh" role="button" tabindex="0">Refresh</a></div>
+    <div class="upd" id="upd" hidden><span id="updt"></span><button type="button" id="updgo">Refresh</button></div>
   </section>
 
   <div id="notice"></div>
@@ -257,7 +384,9 @@
   if (OPS || fromApp) { var ta = document.getElementById("toapp"); if (ta) ta.hidden = false; }
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
-  var M = null, busy = false;
+  var M = null, busy = false, pending = null;
+  // Where an e-mail's button sends you (29 Oct 2026): go = update, close, news, waiting, list; t = a task's card.
+  var GO = String(Q.get("go") || "").replace(/[^a-z]/g, ""), GOT = String(Q.get("t") || "").replace(/[^A-Za-z0-9]/g, "");
 
   function tick() {
     var d = new Date();
@@ -268,7 +397,7 @@
   var prog = $("prog");
   window.addEventListener("scroll", function () { prog.classList.toggle("stuck", window.scrollY > 8); }, { passive: true });
 
-  function toast(t) { var e = $("toast"); e.textContent = t; e.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(function () { e.classList.remove("on"); }, 3200); }
+  function toast(t) { var e = $("toast"); e.textContent = t; e.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(function () { e.classList.remove("on"); }, Math.max(3200, String(t).length * 55)); }
   function notice(html, bad) { $("notice").innerHTML = html ? '<div class="notice' + (bad ? " bad" : "") + '">' + html + "</div>" : ""; }
   function countUp(el, to) {
     var from = Number(el.getAttribute("data-v") || 0), t0 = performance.now(), dur = 1100;
@@ -333,26 +462,30 @@
       '<button class="go" id="ci">Check in and start my day</button></div>';
     var late = Number(c.late || 0), cl = m.close;
     // Close my day (27 Oct 2026): the close-out, from here, with or without the e-mail.
-    var close = !cl ? "" : c.out
-      ? '<div class="closed"><b>Day closed</b> · signed out ' + esc(c.out) + '. <a href="' + esc(cl.url) + '">Open the close-out again</a></div>'
-      : '<a class="btn go" id="closeday" href="' + esc(cl.url) + '">Close my day</a><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:8px">At the end of your day' + (cl.end ? " (" + esc(cl.end) + ")" : "") + ': a reason and a new date for anything not done, the checks, and sign out.</div>';
+    // Close my day (27 Oct 2026), here on this screen since 29 Oct: the button goes to the close-out at the foot of the page.
+    var close = c.out ? '<div class="closed"><b>Day closed</b> · signed out ' + esc(c.out) + ".</div>"
+      : m.closeInline ? '<button type="button" class="btn go" id="closeday" data-closego>Close my day</button><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:8px">At the end of your day' + (cl && cl.end ? " (" + esc(cl.end) + ")" : "") + ": it is at the bottom of this page.</div>"
+      : cl ? '<a class="btn go" id="closeday" href="' + esc(cl.url) + '">Close my day</a><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:8px">At the end of your day' + (cl.end ? " (" + esc(cl.end) + ")" : "") + ': a reason and a new date for anything not done, the checks, and sign out.</div>'
+      : '<button type="button" class="btn go" id="closeday" data-signout>Check out</button><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:8px">When you leave: the register\'s sign-out.</div>';
     return '<div class="card"><div class="ci"><div class="dot' + (late ? " late" : "") + '">&#10003;</div><div><div class="t">In at ' + esc(c.at) + (late ? " · " + late + " min late" : " · on time") + "</div>" +
       '<div class="s">Your day started at ' + esc(m.start) + (c.out ? " · signed out " + esc(c.out) : "") + "</div></div></div>" + close + "</div>";
   }
   // A first name from "Sasha Lalla-Jagassar" or "kamla.dookran@myguardiangroup.com".
+  // A task type in words, from the tracker's own labels when it sent them (29 Oct 2026: "Renewa/PDl/Bill" read as code).
+  function tyName(t) { var l = M && M.types ? M.types.filter(function (x) { return x.k === t; })[0] : null; return l && l.l ? l.l : t; }
   function firstOf(by) { var b = String(by || "").trim(); if (!b) return "Someone"; if (b.indexOf("@") > -1) b = b.split("@")[0].split(/[._-]/)[0]; b = b.split(/\s+/)[0]; return b.charAt(0).toUpperCase() + b.slice(1); }
   function waitingCard(m) {
     var w = m.waiting; if (!w) return "";
     if (!w.length) return '<div class="card"><div class="ch"><h2>Waiting on you</h2></div><div class="empty">Nobody is waiting on your word. Well done.</div></div>';
     var desks = m.desks || [];
-    return '<div class="card" id="waiting"><div class="ch"><h2>Waiting on you</h2><span class="n">' + w.length + "</span></div>" + w.map(function (x) {
+    return '<div class="card" id="waiting"><div class="ch"><h2>Waiting on you</h2><span class="n">' + w.length + "</span></div>" + w.map(function (x, wi) {
       var sel = x.k === "inbox" && desks.length ? '<select aria-label="Post to" data-to>' + desks.map(function (d) { return '<option value="' + esc(d.sid) + '"' + (d.sid === (x.to || "ricky") ? " selected" : "") + ">" + esc(d.first) + "</option>"; }).join("") + "</select>" : "";
-      return '<div class="wt" data-k="' + esc(x.k) + '" data-id="' + esc(x.id) + '"><div class="who">' + esc(firstOf(x.by)) + " <span>· " + esc(x.s) + "</span></div>" +
+      return '<div class="wt' + (wi >= 10 ? ' more' : '') + '"' + (wi >= 10 ? ' hidden' : '') + ' data-k="' + esc(x.k) + '" data-id="' + esc(x.id) + '"><div class="who">' + esc(firstOf(x.by)) + " <span>· " + esc(x.s) + "</span></div>" +
         (x.said ? '<div class="said">"' + esc(x.said) + '"</div>' : "") +
         (x.read || x.next || x.done ? '<div class="rd">' + (x.done ? "<b>Done so far:</b> " + esc(x.done) + "<br>" : "") + (x.read ? "<b>Claude:</b> " + esc(x.read) : "") + (x.next ? (x.read ? "<br>" : "") + "<b>Next:</b> " + esc(x.next) : "") + "</div>" : "") +
         '<textarea aria-label="Your answer" placeholder="' + (x.draft ? "" : "Claude has not written this one yet. Type your answer.") + '">' + esc(x.draft || "") + "</textarea>" +
         '<div class="act">' + sel + '<button class="go" data-post>Post</button></div></div>';
-    }).join("") + "</div>";
+    }).join("") + (w.length > 10 ? '<button type="button" class="showmore" data-more>Show ' + (w.length - 10) + " more</button>" : "") + "</div>";
   }
   function achievedCard(m) {
     var a = m.achieved || [], lab = { close: "Closed", note: "Note", email: "E-mail", task: "Task", inbox: "Inbox", draft: "Note", move: "Moved" };
@@ -370,26 +503,46 @@
     var done = l.filter(function (x) { return x.done; }).length;
     if (!l.length) return '<div class="card"><div class="ch"><h2>Your list today</h2></div><div class="empty">' + (m.listSet ? "Your list is clear." : "Nothing to set yet: nothing is overdue or due today.") + "</div></div>";
     return '<div class="card" id="list"><div class="ch"><h2>Your list today</h2><span class="n">' + (m.listSet ? done + " of " + l.length + " done" : "set when you check in") + '</span></div><ul class="list">' + l.map(function (x, i) {
-      var s = x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.s) + "</a>" : esc(x.s);
-      return '<li style="animation-delay:' + i * 0.03 + 's"><span class="ic ' + (x.done ? "" : "todo") + '">' + (x.done ? "&#10003;" : "&#9675;") + '</span><div class="li"><div class="s' + (x.done ? " done" : "") + '">' + s + "</div><small>" +
-        (x.done ? "Closed today" : "Open it in Salesforce, do it, note it in the client's words, close it") + (x.ty && x.ty !== "Untyped" ? " · " + esc(x.ty) : "") + "</small></div></li>";
+      var card = m.types && !x.done && x.id, s = card ? esc(x.s) : x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.s) + "</a>" : esc(x.s);
+      return '<li class="' + (card ? "tk" : "") + '"' + (card ? ' data-id="' + esc(x.id) + '" data-url="' + esc(x.url || "") + '"' : "") + ' style="animation-delay:' + i * 0.03 + 's"><span class="ic ' + (x.done ? "" : "todo") + '">' + (x.done ? "&#10003;" : "&#9675;") + '</span><div class="li"><div class="s' + (x.done ? " done" : "") + '"' + (card ? ' data-open role="button" tabindex="0"' : "") + ">" + s + "</div><small>" +
+        (x.done ? "Closed today" : card ? "Tap it: what to do, a note, and Close, Move or Note from here" : "Open it in Salesforce, do it, note it in the client's words, close it") + (x.ty && x.ty !== "Untyped" ? " · " + esc(tyName(x.ty)) : "") + "</small></div>" + (card ? '<div class="tc" hidden></div>' : "") + "</li>";
     }).join("") + "</ul></div>";
   }
   function nextCard(m) {
     var on = {}, hasList = !!(m.list && m.list.length); (m.list || []).forEach(function (x) { if (x.id) on[x.id] = 1; });
     var n = (m.next || []).filter(function (x) { return !(x.id && on[x.id]); });
     if (hasList && !n.length) return "";
-    if (hasList) return '<div class="card"><div class="ch"><h2>Also overdue or due</h2><span class="n">oldest first</span></div><ul class="list">' + n.map(function (x, i) {
-      var s = x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.s) + "</a>" : esc(x.s);
-      return '<li style="animation-delay:' + i * 0.04 + 's"><span class="ic ' + (x.late ? "late" : "due") + '">' + (x.late ? "!" : "&#8226;") + '</span><div class="li"><div class="s">' + s + "</div><small>" +
-        (x.late ? "Overdue since " + esc(x.due) : "Due today") + (x.ty && x.ty !== "Untyped" ? " · " + esc(x.ty) : "") + "</small></div></li>";
-    }).join("") + "</ul></div>";
+    if (hasList) return '<div class="card"><div class="ch"><h2>Also overdue or due</h2><span class="n">oldest first</span></div><ul class="list">' + n.map(taskLi(m)).join("") + "</ul></div>";
     if (!n.length) return '<div class="card"><div class="ch"><h2>' + (m.waiting ? "Your own tasks today" : "Next up") + '</h2></div><div class="empty">Nothing overdue or due today. Well done.</div></div>';
-    return '<div class="card"><div class="ch"><h2>' + (m.waiting ? "Your own tasks today" : "Next up") + '</h2><span class="n">oldest first</span></div><ul class="list">' + n.map(function (x, i) {
-      var s = x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.s) + "</a>" : esc(x.s);
-      return '<li style="animation-delay:' + i * 0.04 + 's"><span class="ic ' + (x.late ? "late" : "due") + '">' + (x.late ? "!" : "&#8226;") + '</span><div class="li"><div class="s">' + s + "</div><small>" +
-        (x.late ? "Overdue since " + esc(x.due) : "Due today") + (x.ty && x.ty !== "Untyped" ? " · " + esc(x.ty) : "") + "</small></div></li>";
-    }).join("") + "</ul></div>";
+    return '<div class="card"><div class="ch"><h2>' + (m.waiting ? "Your own tasks today" : "Next up") + '</h2><span class="n">oldest first</span></div><ul class="list">' + n.map(taskLi(m)).join("") + "</ul></div>";
+  }
+  /* A task in the overdue-and-due lists: for a desk, a card opens under it (29 Oct 2026); otherwise a link to Salesforce. */
+  function taskLi(m) {
+    return function (x, i) {
+      var card = m.types && x.id, s = card ? esc(x.s) : x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.s) + "</a>" : esc(x.s);
+      return '<li class="' + (card ? "tk" : "") + '"' + (card ? ' data-id="' + esc(x.id) + '" data-url="' + esc(x.url || "") + '"' : "") + ' style="animation-delay:' + i * 0.04 + 's"><span class="ic ' + (x.late ? "late" : "due") + '">' + (x.late ? "!" : "&#8226;") + '</span><div class="li"><div class="s"' + (card ? ' data-open role="button" tabindex="0"' : "") + ">" + s + "</div><small>" +
+        (x.late ? "Overdue since " + esc(x.due) : "Due today") + (x.ty && x.ty !== "Untyped" ? " · " + esc(tyName(x.ty)) : "") + "</small></div>" + (card ? '<div class="tc" hidden></div>' : "") + "</li>";
+    };
+  }
+  /* What came up (the scrub): one a line, each a Salesforce task in your day. */
+  function scrubCard(m) {
+    if (!m.types) return "";
+    return '<div class="card sc" id="scrub"><div class="ch"><h2>Add to my day</h2><span class="n">inbox, WhatsApp, calls</span></div>' +
+      '<div class="tip" style="margin-bottom:8px">Anything that came up and needs doing: one a line. Each becomes a Salesforce task in your name, due today.</div>' +
+      '<textarea id="scrubt" placeholder="e.g. Agent Persad asked for the Mohammed medical requirements"></textarea>' +
+      '<div class="row"><select id="scrubty" aria-label="Task type">' + m.types.map(function (t) { return '<option value="' + esc(t.k) + '"' + (t.k === "Servicing" ? " selected" : "") + ">" + esc(t.l) + "</option>"; }).join("") + "</select>" +
+      '<button type="button" class="go" data-scrub>Add</button></div><div class="res" id="scrubres"></div></div>';
+  }
+  /* The end of the day, at the foot of the page: the close-out for a desk, the sign-out for the managers. */
+  function closeCard(m) {
+    var c = m.checkin || {};
+    if (!c.at || c.status === "absent") return "";
+    if (c.out) return '<div class="card" id="closecard"><div class="ch"><h2>Your day is closed</h2></div><div class="closed"><b>Signed out ' + esc(c.out) + '.</b> Thank you.</div></div>';
+    if (m.closeInline) return '<div class="card cl" id="closecard"><div class="ch"><h2>Close my day</h2><span class="n">' + (m.close && m.close.end ? "by " + esc(m.close.end) : "") + "</span></div>" +
+      '<div class="tip">What you set out to do and what is done; a reason and a new date for anything not done; the three checks; and you are signed out. It goes to Mr Rampersad and sales support.</div>' +
+      '<div id="closebody"><button type="button" class="go" data-closego>Close my day</button></div></div>';
+    if (m.close) return "";
+    return '<div class="card" id="closecard"><div class="ch"><h2>Check out</h2></div><div class="tip">When you leave: the register\'s sign-out.</div><button type="button" class="go" data-signout>Check out</button></div>';
   }
   function barsCard(m) {
     var b = m.bars || []; if (!b.length) return "";
@@ -408,11 +561,307 @@
         '<div class="v">' + (x.closed == null ? "–" : "<b>" + x.closed + "</b>/" + x.target) + "</div></div>";
     }).join("") + "</div>";
   }
-  function footCard(m) {
-    return '<div class="foot"><a class="btn go" href="' + esc(m.full) + '">' + esc(m.fullLabel || "Open my day page") + " &rarr;</a>" +
-      '<div style="color:var(--muted);font-size:12.5px;text-align:center">Anything not here (drafts, the inbox with Claude\'s notes, every task card) is on the full page, a slower Google page.</div></div>';
-  }
 
+  /* THE DAY'S COACH (29 Oct 2026). Ricky, 6:45am: "letting them know the expectations when you set in ... Remember, 30 minutes, the
+     progress update before you leave to lunch ... built-in intelligence will tell you 30 minutes before you need to scrub". The tracker
+     lays the day out from your own hours (wdCoach_); the page picks the line for the time now and moves the marker along the day's
+     stops every half minute, without asking the tracker again. */
+  function coachNow(c) { return Number(c.now || 0) + Math.floor((Date.now() - ((M && M._t) || Date.now())) / 60000); }
+  function coachLine(c, now) { var ls = c.lines || []; for (var i = 0; i < ls.length; i++) if (now >= ls[i].from && now < ls[i].to) return ls[i]; return ls[ls.length - 1] || null; }
+  function stopState(x, now) {
+    if (x.doneAt != null) return now >= x.doneAt ? "done" : now >= x.at ? "owe" : "next";
+    return x.done ? "done" : x.miss != null && now >= x.miss ? "missed" : now >= x.at ? "owe" : "next";
+  }
+  function railPos(i, n) { return n < 2 ? 50 : 5 + 90 * i / (n - 1); }
+  function railNow(stops, now) {
+    var n = stops.length; if (!n) return 0;
+    if (now <= stops[0].at) return Math.max(0, railPos(0, n) - (stops[0].at - now) / 12);
+    for (var i = 0; i < n - 1; i++) if (now < stops[i + 1].at) return railPos(i, n) + (railPos(i + 1, n) - railPos(i, n)) * (now - stops[i].at) / Math.max(1, stops[i + 1].at - stops[i].at);
+    return railPos(n - 1, n);
+  }
+  function shortT(t) { return String(t || "").replace(/(am|pm)$/i, ""); }
+  function coachCard(m) {
+    var c = m.coach; if (!c || !c.lines || !c.lines.length) return "";
+    return '<div class="card coach" id="coach"><div class="ck" id="coachk"></div><div class="chh" id="coachh"></div><div class="chs" id="coachs"></div><ul id="coachi"></ul>' +
+      '<div class="rail" id="rail" aria-label="Your day\'s stops"><i class="rl"></i><i class="rf" id="railf"></i>' + c.stops.map(function (x, i) {
+        return '<div class="st" style="left:' + railPos(i, c.stops.length) + '%"><b></b><em>' + esc(x.l === "Close my day" ? "Close" : x.l === "Day ends" ? "Out" : x.l === "Check in" ? "In" : x.l === "Midday update" ? "Update" : x.l) + "</em><small>" + esc(shortT(x.t)) + "</small></div>";
+      }).join("") + '<span class="rn" id="railn" title="Now"></span></div></div>';
+  }
+  function coachTick() {
+    var c = M && M.coach, card = $("coach"), cl = $("cline");
+    if (!c || !card) { if (cl) cl.hidden = true; return; }
+    var now = coachNow(c), ln = coachLine(c, now) || { k: "", h: "", s: "", items: [], tone: "" }, key = ln.k + "|" + ln.h + "|" + ln.s;
+    if (card.getAttribute("data-k") !== key) {
+      card.setAttribute("data-k", key);
+      card.className = "card coach" + (ln.tone ? " " + ln.tone : "");
+      $("coachk").textContent = ln.k === "start" || ln.k === "before" ? "What today asks of you" : ln.k === "update" ? (/^Midday/.test(ln.h) ? "Midday" : "Before lunch") : "Your day, right now";
+      $("coachh").textContent = ln.h; $("coachs").textContent = ln.s;
+      $("coachi").innerHTML = (ln.items || []).map(function (x, i) {
+        var o = typeof x === "string" ? { s: x, n: i + 1 } : x;
+        return '<li class="' + (o.done ? "ok" : "") + '" style="animation-delay:' + i * 0.07 + 's"><i>' + (o.done ? "&#10003;" : o.n ? o.n : "&#9675;") + "</i><span>" + esc(o.s) + "</span></li>";
+      }).join("");
+    }
+    if (cl) { cl.hidden = false; cl.className = "cline" + (ln.tone ? " " + ln.tone : ""); $("clinet").textContent = ln.h; }
+    var els = card.querySelectorAll(".rail .st");
+    c.stops.forEach(function (x, i) {
+      var st = stopState(x, now), el = els[i]; if (!el) return;
+      el.className = "st " + st; el.querySelector("b").innerHTML = st === "done" ? "&#10003;" : st === "missed" ? "!" : st === "owe" ? "&#9679;" : "";
+      el.title = x.l + " · " + x.t + (st === "done" ? " · done" : st === "missed" ? " · not done" : st === "owe" ? " · now" : "");
+    });
+    var pos = railNow(c.stops, now);
+    requestAnimationFrame(function () { var f = $("railf"), n = $("railn"); if (f) f.style.width = pos + "%"; if (n) n.style.left = pos + "%"; });
+  }
+  setInterval(coachTick, 30000);
+  function toCoach() { var c = $("coach"); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  $("cline").addEventListener("click", toCoach);
+  $("cline").addEventListener("keydown", function (e) { if (e.key === "Enter") toCoach(); });
+  /* What is new for you today (29 Oct 2026): tasks routed to you and notes on your tasks by anyone else, the unanswered and the urgent
+     first. Each opens as a card, so the answer goes on the task's Chatter from here. */
+  function newsCard(m) {
+    var n = m.news; if (!n) return "";
+    if (!n.items || !n.items.length) return '<div class="card" id="news"><div class="ch"><h2>New for you today</h2></div><div class="empty">Nothing routed to you and no new notes on your tasks yet today.</div></div>';
+    return '<div class="card" id="news"><div class="ch"><h2>New for you today</h2><span class="n">' + (n.fresh ? n.fresh + " since you checked in" : n.total + " today") + "</span></div>" +
+      (n.urgent ? '<div class="nwu">' + n.urgent + " urgent: answer " + (n.urgent === 1 ? "it" : "them") + " first</div>" : "") +
+      '<ul class="list">' + n.items.map(function (x, i) {
+        var tag = x.k === "new" ? '<span class="tag nwn">new task</span>' : x.answered ? '<span class="tag ok">answered</span>' : x.u === 2 ? '<span class="tag bad">urgent</span>' : '<span class="tag wn">answer it</span>';
+        return '<li class="tk' + (x.answered ? " dim" : "") + '" data-id="' + esc(x.id) + '" data-url="' + esc(x.url || "") + '" style="animation-delay:' + i * 0.04 + 's"><span class="ic ' + (x.u === 2 && !x.answered ? "late" : x.k === "new" ? "k" : "due") + '">' + (x.k === "new" ? "+" : "&#8220;") + "</span>" +
+          '<div class="li"><div class="s" data-open role="button" tabindex="0">' + (x.k === "note" ? "<b>" + esc(x.by) + ":</b> " + esc(x.said) : esc(x.s)) + "</div>" +
+          "<small>" + esc(x.at) + (x.fresh ? " · since you checked in" : "") + " · " + (x.k === "new" ? esc(x.by) : "on " + esc(x.s)) + tag + "</small></div>" + '<div class="tc" hidden></div></li>';
+      }).join("") + "</ul>" + (n.more ? '<div class="tip">And ' + n.more + " more today.</div>" : "") + "</div>";
+  }
+  /* THE AGENT'S DAY, HERE (29 Oct 2026). Ricky, 12:41pm, with the agents' midday e-mail opening the white projection page: the
+     agents' day is on this screen too. The projection (a number and a note a line), the close-off from midday with the balance
+     against the projection as they type, and the tasks being worked for their clients, each with its last notes and an update box
+     that posts on its Chatter. */
+  function agTiles(m) {
+    var t = m.tiles || {}, b = m.balance;
+    var cell = function (v, l, c) { return '<div class="' + (c || "") + '"><b>' + esc(v) + "</b><small>" + esc(l) + "</small></div>"; };
+    return '<div class="agt">' + cell(t.worked || 0, "being worked for you", "") + cell(t.closed || 0, "closed for you today", (t.closed ? "g" : "")) +
+      cell(t.late || 0, "of them overdue", t.late ? "r" : "") +
+      (b ? cell(b.text, "your day, balanced", b.bal < 0 ? "r" : "g") : cell(m.project && m.project.done ? "Yes" : "No", "projection set today", m.project && m.project.done ? "g" : "r")) + "</div>";
+  }
+  function agMetricRows(m, eve) {
+    return (m.metrics || []).map(function (x) {
+      var v = eve ? x.done : x.planned, n = eve ? x.dnote : x.pnote, hasP = x.planned !== "";
+      var bal = eve && hasP ? '<span class="bal" data-bal>' + (x.done !== "" ? balText(Number(x.done) - Number(x.planned)) : "") + "</span>" : "";
+      return '<div class="agm"><div class="q">' + esc(eve ? x.d : x.p) + (eve && hasP ? " <small>· you projected " + esc(x.planned) + "</small>" : "") + '</div><div class="row">' +
+        '<input type="number" inputmode="numeric" min="0" data-m="' + esc(x.id) + '" value="' + esc(v) + '" placeholder="0"' + (eve && hasP ? ' data-proj="' + esc(x.planned) + '"' : "") + ">" + bal +
+        '<input type="text" data-n="' + esc(x.id) + '" value="' + esc(n) + '" placeholder="Who, or a note"></div></div>';
+    }).join("");
+  }
+  function balText(d) { return d > 0 ? "+" + d : d < 0 ? "−" + (-d) : "even"; }
+  function agPlanCard(m) {
+    var done = m.project && m.project.done;
+    return '<div class="card agc" id="agplan"><div class="ch"><h2>Your projection for today' + (done ? '<span class="done">SET</span>' : "") + '</h2><span class="n">' + (done ? "change it any time" : "by " + esc(m.absentAt || "10:30am")) + "</span></div>" +
+      '<div class="tip">' + (m.lateForPlan ? '<b style="color:var(--bad)">No projection yet, and it is past ' + esc(m.absentAt) + ": until it is in, today reads as not working.</b> " : "") +
+        "What you expect to do today, in numbers. At 5:30 you give what was done, and the day balances against this.</div>" +
+      agMetricRows(m, false) + '<textarea data-sum placeholder="Your projection in words: who you are seeing, what you are closing">' + esc(m.summary ? m.summary.plan : "") + "</textarea>" +
+      '<button type="button" class="go" data-agsave="plan">' + (done ? "Update my projection" : "Save my projection") + '</button><div class="cst" data-st></div></div>';
+  }
+  function agCloseCard(m) {
+    var c = m.close || {}, b = m.balance;
+    if (!c.open && !c.done) return '<div class="card agc" id="agclose"><div class="ch"><h2>Close off my day</h2><span class="n">opens at 12 noon</span></div><div class="wait">From midday: what you did, in numbers, against what you projected. Due by ' + esc(c.at || "5:30pm") + ".</div></div>";
+    return '<div class="card agc" id="agclose"><div class="ch"><h2>Close off my day' + (c.done ? '<span class="done">DONE</span>' : "") + '</h2><span class="n">by ' + esc(c.at || "5:30pm") + "</span></div>" +
+      (b ? '<div class="agbal">Projected <b>' + b.proj + "</b> · done <b>" + b.done + '</b> · balance <b class="' + (b.bal < 0 ? "dn" : "up") + '">' + esc(b.text) + "</b>" + (b.pct != null ? " · " + b.pct + "% met" : "") + "</div>" : "") +
+      '<div class="tip">What was done, 0 where nothing was. The balance against this morning shows as you type. It goes to your manager and sales support.</div>' +
+      agMetricRows(m, true) + '<textarea data-sum placeholder="The day in a line or two">' + esc(m.summary ? m.summary.close : "") + "</textarea>" +
+      '<button type="button" class="go" data-agsave="close">' + (c.done ? "Update my close-off" : "Close off my day") + '</button><div class="cst" data-st></div></div>';
+  }
+  function agItemsCard(m) {
+    var it = m.items || [];
+    if (!it.length) return '<div class="card" id="agitems"><div class="ch"><h2>Being worked for your clients</h2></div><div class="empty">Nothing due for your clients today.</div></div>';
+    return '<div class="card" id="agitems"><div class="ch"><h2>Being worked for your clients</h2><span class="n">' + it.length + '</span></div><div class="tip" style="margin-bottom:4px">Tap one: its last notes, and an update that goes straight on the task for the person working it.</div><ul class="list">' + it.map(function (x, i) {
+      var notes = (x.notes || []).map(function (n) { return "<div>" + (n.reply ? "&#8627; " : "") + "<b>" + esc(n.who) + "</b>" + (n.day ? " · " + esc(n.day) : "") + ": " + esc(n.s) + "</div>"; }).join("");
+      return '<li class="tk" data-ag="' + esc(x.id) + '" style="animation-delay:' + Math.min(i, 12) * 0.04 + 's"><span class="ic ' + (x.done ? "" : x.late ? "late" : "due") + '">' + (x.done ? "&#10003;" : x.late ? "!" : "&#8226;") + "</span>" +
+        '<div class="li"><div class="s' + (x.done ? " done" : "") + '" data-agopen role="button" tabindex="0">' + esc(x.s) + "</div><small>with " + esc(x.o) + (x.done ? " · closed today" : x.due ? " · " + (x.late ? "overdue since " : "due ") + esc(x.due) : "") + "</small></div>" +
+        '<div class="tc" hidden><div class="notes">' + (notes || "No notes on Chatter yet.") + (x.more ? "<div>and " + x.more + " earlier</div>" : "") + "</div>" +
+        '<textarea data-agtext placeholder="Your update: what you did or know, in the client\'s words. It goes on the task."></textarea>' +
+        '<div class="cbt" style="grid-template-columns:1fr"><button type="button" class="c" data-agnote>Post my update</button></div><div class="cst"></div></div></li>';
+    }).join("") + "</ul></div>";
+  }
+  function agDoneCard(m) {
+    var c = m.closedToday || []; if (!c.length) return "";
+    return '<div class="card"><div class="ch"><h2>Done for your clients today</h2><span class="n">' + c.length + '</span></div><ul class="list">' + c.map(function (x, i) {
+      return '<li style="animation-delay:' + i * 0.04 + 's"><span class="ic">&#10003;</span><div class="li"><div class="s">' + esc(x.s) + "</div><small>by " + esc(x.o) + "</small></div></li>"; }).join("") + "</ul></div>";
+  }
+  function agentNative(m) {
+    return (m.preview ? '<div class="agpv">Preview: this is ' + esc(m.first) + "'s day as " + esc(m.first) + " will see it. Anything saved here is saved for " + esc(m.first) + ".</div>" : "") +
+      agTiles(m) + agPlanCard(m) + agItemsCard(m) + agCloseCard(m) + agDoneCard(m) +
+      '<div class="card"><div class="tip">If this screen will not open on your phone, the same pages: <a href="' + esc(m.project.url) + '" target="_blank" rel="noopener">projection</a> · <a href="' + esc(m.close.url) + '" target="_blank" rel="noopener">close-off</a>. <a href="' + esc(m.film) + '">Watch the 2-minute film &rarr;</a></div></div>';
+  }
+  function agSave(btn) {
+    var card = btn.closest(".card"), st = card.querySelector("[data-st]"), kind = btn.getAttribute("data-agsave"), q = { act: kind === "close" ? "agclose" : "agplan" }, blank = 0;
+    Array.prototype.forEach.call(card.querySelectorAll("[data-m]"), function (i) { var v = (i.value || "").trim(); if (v === "") blank++; q["m_" + i.getAttribute("data-m")] = v; });
+    Array.prototype.forEach.call(card.querySelectorAll("[data-n]"), function (i) { q["n_" + i.getAttribute("data-n")] = (i.value || "").trim(); });
+    q.summary = ((card.querySelector("[data-sum]") || {}).value || "").trim();
+    if (blank) { st.className = "cst bad"; st.textContent = "Put a number against every line, 0 where there is none: " + blank + " left blank."; return; }
+    btn.disabled = true; var was = btn.textContent; btn.textContent = "Saving…"; st.className = "cst"; st.textContent = "";
+    api(q).then(function (m) {
+      if (!m || !m.ok) { btn.disabled = false; btn.textContent = was; st.className = "cst bad"; st.textContent = (m && m.error) || "That did not save. Try again."; return; }
+      m._t = Date.now(); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false);
+      toast(kind === "close" ? "Your day is closed off" + (m.balance ? ": " + m.balance.text + "." : ".") + " Your manager has a copy." : "Your projection is in. Your manager has a copy.");
+    }).catch(function () { btn.disabled = false; btn.textContent = was; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function agNote(btn) {
+    var li = btn.closest("li"), ta = li.querySelector("[data-agtext]"), st = li.querySelector(".tc .cst"), text = (ta.value || "").trim();
+    if (!text) { st.className = "cst bad"; st.textContent = "Write your update first."; ta.focus(); return; }
+    btn.disabled = true; btn.textContent = "Posting…";
+    api({ act: "agnote", id: li.getAttribute("data-ag"), text: text }).then(function (m) {
+      btn.disabled = false; btn.textContent = "Post my update";
+      if (!m || !m.ok || (m.saved && m.saved.failed)) { st.className = "cst bad"; st.textContent = (m && m.error) || "That did not post. Try again."; return; }
+      ta.value = ""; ta.defaultValue = ""; st.className = "cst ok"; st.textContent = "✓ Posted on the task.";
+      toast("Your update is on the task."); setTimeout(function () { m._t = Date.now(); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); }, 1200);
+    }).catch(function () { btn.disabled = false; btn.textContent = "Post my update"; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function agOpen(li) { var tc = li.querySelector(".tc"); if (!tc) return; tc.hidden = !tc.hidden; li.classList.toggle("open", !tc.hidden); if (!tc.hidden) { var ta = tc.querySelector("textarea"); if (ta) setTimeout(function () { try { ta.focus({ preventScroll: true }); } catch (e) {} }, 50); } }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest ? e.target : null; if (!t) return; var b;
+    if ((b = t.closest("[data-agsave]"))) { agSave(b); return; }
+    if ((b = t.closest("[data-agnote]"))) { agNote(b); return; }
+    if ((b = t.closest("[data-agopen]"))) { agOpen(b.closest("li")); return; }
+  });
+  document.addEventListener("input", function (e) {
+    var i = e.target; if (!i || !i.hasAttribute || !i.hasAttribute("data-proj")) return;
+    var b = i.parentNode.querySelector("[data-bal]"); if (!b) return;
+    if (i.value === "") { b.textContent = ""; b.className = "bal"; return; }
+    var d = Number(i.value) - Number(i.getAttribute("data-proj")); b.textContent = balText(d); b.className = "bal " + (d < 0 ? "dn" : "up");
+  });
+  /* THE MANAGERS' SCREEN (29 Oct 2026). Ricky, 6:45am, on Akaash: "look at grouping so he can see. And if he needs to comment in
+     the black screen on a pending for his agents, the task that's open, he can chatter on the fly ... If there is no task open, he
+     has the ability to open it ... see that timeline from agents, staff, and managers as the day goes by". The unit's open work by
+     agent (each agent's tasks drawn when opened, so the whole branch stays quick), each task a card with Draft my reply, Post and
+     Close for the agent; a task opened for an agent; the day's notes as they come; the manager's numbers. No performance figures. */
+  function unitCard(m) {
+    var u = m.unit; if (!u) return "";
+    var lab = m.unitLabel || "Your unit";
+    if (u.error) return '<div class="card" id="unit"><div class="ch"><h2>' + esc(lab) + "'s work</h2></div><div class=\"empty\">" + esc(u.error) + "</div></div>";
+    var ag = u.agents || [];
+    return '<div class="card" id="unit"><div class="ch"><h2>' + esc(lab) + "'s work, by agent</h2><span class=\"n\">as at " + esc(u.at || "") + "</span></div>" +
+      '<div class="uchips"><span class="chip"><b>' + (u.open || 0) + '</b>open</span><span class="chip' + (u.late ? " bad" : "") + '"><b>' + (u.late || 0) + '</b>overdue</span><span class="chip"><b>' + (u.pend || 0) + '</b>pendings</span><span class="chip good"><b>' + (u.closedToday || 0) + "</b>closed today</span></div>" +
+      ag.map(function (g, i) {
+        return '<details class="ua" data-ua="' + i + '"><summary><span class="nm">' + esc(g.a) + '</span><span class="ct"><b>' + g.n + "</b> open" + (g.late ? ' · <span class="r">' + g.late + " overdue</span>" : "") + (g.pend ? ' · <span class="a">' + g.pend + " pendings</span>" : "") + '</span></summary><div class="uab"></div></details>';
+      }).join("") + "</div>";
+  }
+  function unitTasks(g, i) {
+    var t = g.tasks || [];
+    return (t.length ? '<ul class="list">' + t.map(function (x, k) {
+      return '<li class="tk ut" data-uid="' + esc(x.id) + '" data-ua="' + i + '" style="animation-delay:' + Math.min(k, 12) * 0.03 + 's"><span class="ic ' + (x.ty === "Pendings" ? "due" : x.late ? "late" : "") + '">' + (x.ty === "Pendings" ? "P" : x.late ? "!" : "&#8226;") + "</span>" +
+        '<div class="li"><div class="s" data-uopen role="button" tabindex="0">' + esc(x.s) + "</div><small>with " + esc(x.o || "the branch") + (x.late ? " · overdue since " + esc(x.due) : x.due ? " · due " + esc(x.due) : "") +
+        (x.ty && x.ty !== "Untyped" ? " · " + esc(tyName(x.ty)) : "") + (x.stale ? " · untouched " + x.stale + " days" : "") + '</small></div><div class="tc" hidden></div></li>';
+    }).join("") + "</ul>" : '<div class="empty">Nothing open for ' + esc(String(g.a).split(" ")[0]) + ".</div>") +
+      '<button type="button" class="unew" data-unew="' + i + '">+ Open a task for ' + esc(String(g.a).split(" ")[0]) + '</button><div class="unfw"></div>';
+  }
+  function unitNewForm(i) {
+    var g = M.unit.agents[i], ut = M.utypes || [], ty = ut.filter(function (t) { return t.k === "Pendings"; })[0] || ut[0] || { k: "Pendings", to: "azariah" };
+    var desks = M.newDesks || M.desks || [];
+    return '<div class="unf" data-ua="' + i + '"><div class="tip">A new task for ' + esc(g.a) + ", in a desk's name, with your note on it first.</div>" +
+      '<input type="text" data-uns placeholder="The client and what is needed, e.g. Ali - medicals for 1000123456">' +
+      '<div class="row2"><select data-unt aria-label="Type">' + ut.map(function (t) { return '<option value="' + esc(t.k) + '" data-to="' + esc(t.to || "") + '"' + (t.k === ty.k ? " selected" : "") + ">" + esc(t.l) + "</option>"; }).join("") + "</select>" +
+      '<select data-und aria-label="With">' + desks.map(function (d) { return '<option value="' + esc(d.sid) + '"' + (d.sid === ty.to ? " selected" : "") + ">With " + esc(d.first) + "</option>"; }).join("") + "</select></div>" +
+      '<textarea data-unn placeholder="Your note: what is needed, from whom, and by when"></textarea>' +
+      '<button type="button" class="go" data-unewgo>Open it</button><div class="cst"></div></div>';
+  }
+  function umCardHtml(c, li) {
+    var notes = (c.notes || []).map(function (n) { return "<div>" + (n.reply ? "&#8627; " : "") + "<b>" + esc(n.who) + "</b>" + (n.day ? " · " + esc(n.day) : "") + ": " + esc(n.s) + "</div>"; }).join("");
+    var first = String(c.a || "the agent").split(" ")[0];
+    return '<div class="lab"><span class="bdg">' + esc(c.label || "Task") + "</span>" + esc(c.a || "") + (c.o ? " · with " + esc(c.o) : "") + "</div>" +
+      (c.todo ? '<div class="todo"><b>What to do:</b> ' + esc(c.todo) + "</div>" : "") + (c.next ? '<div class="nx">' + esc(c.next) + "</div>" : "") +
+      '<div class="notes">' + (notes || "No notes on Chatter yet.") + (c.more ? "<div>and " + c.more + " earlier</div>" : "") + "</div>" +
+      '<div class="rd2" data-uread hidden></div>' +
+      '<textarea data-unote placeholder="Your comment. It goes on the task\'s Chatter as yours, and whoever has it is told."></textarea>' +
+      (M && M.claude ? '<button type="button" class="cai" data-uact="draft">&#10024; Draft my reply</button><div class="tone" data-utone hidden><button type="button" data-uact="draft" data-tone="firmer">Firmer</button><button type="button" data-uact="draft" data-tone="shorter">Shorter</button><button type="button" data-uact="draft" data-tone="kinder">Kinder</button></div>' : "") +
+      '<div class="cbt" style="grid-template-columns:1fr 1fr"><button type="button" class="n" data-uact="note">Post comment</button><button type="button" class="c" data-uact="close">Close for ' + esc(first) + "</button></div>" +
+      '<div class="cst">Post: on its Chatter, headed as yours. Close: your comment is the closing note.</div>';
+  }
+  function timelineCard(m) {
+    var u = m.unit; if (!u || u.error) return "";
+    var t = u.timeline || [];
+    return '<div class="card tl" id="timeline"><div class="ch"><h2>' + esc(m.unitLabel || "Your unit") + ' today, as it happens</h2><span class="n">' + (u.notesToday || 0) + " notes</span></div>" +
+      (t.length ? '<ul class="list">' + t.map(function (x, i) {
+        return '<li style="animation-delay:' + Math.min(i, 12) * 0.03 + 's"><span class="ic k">' + esc(String(x.who || "?").charAt(0)) + '</span><div class="li"><div class="s" data-tlgo="' + esc(x.id) + '" role="button" tabindex="0"><b>' + esc(x.who) + "</b>" + (x.role ? " <small style=\"display:inline\">(" + esc(x.role) + ")</small>" : "") + ": " + esc(x.s) + "</div>" +
+          "<small><i>" + esc(x.at) + "</i> · on " + esc(x.on) + (x.a ? " · " + esc(x.a) : "") + "</small></div></li>";
+      }).join("") + "</ul>" : '<div class="empty">No notes on the unit\'s tasks yet today.</div>') + "</div>";
+  }
+  function checksCard(m) {
+    var c = m.checks; if (!c || !c.length) return "";
+    return '<div class="card uck" id="mychecks"><div class="ch"><h2>Your day as a manager</h2><span class="n">what you will do today</span></div>' + c.map(function (x) {
+      return '<div class="q">' + esc(x.q) + '</div><div class="row"><input type="number" inputmode="numeric" min="0" data-cp="' + esc(x.id) + '" value="' + esc(x.v) + '" placeholder="0"><input type="text" data-cn="' + esc(x.id) + '" value="' + esc(x.n) + '" placeholder="' + esc(x.ph) + '"></div>';
+    }).join("") + '<button type="button" class="go" data-uplan>Save my day</button><div class="cst"></div>' + (m.unitEve ? '<div class="tip" style="margin-top:8px">At the end of the day, the account of it: <a href="' + esc(m.unitEve) + '" target="_blank" rel="noopener">Account for my day</a>.</div>' : "") + "</div>";
+  }
+  function unitFill(d) {
+    var box = d.querySelector(".uab"); if (!box || box.getAttribute("data-on")) return;
+    var i = Number(d.getAttribute("data-ua")); box.setAttribute("data-on", "1"); box.innerHTML = unitTasks(M.unit.agents[i], i);
+  }
+  document.addEventListener("toggle", function (e) { var d = e.target; if (d && d.matches && d.matches("details.ua") && d.open) unitFill(d); }, true);
+  function unitOpen(li) {
+    var tc = li.querySelector(".tc"); if (!tc) return;
+    if (!tc.hidden) { var ta0 = tc.querySelector("textarea"); if (!ta0 || !ta0.value) { tc.hidden = true; li.classList.remove("open"); } return; }
+    tc.hidden = false; li.classList.add("open"); if (tc.getAttribute("data-loaded")) return;
+    tc.innerHTML = '<div class="skel" style="width:60%"></div><div class="skel"></div>';
+    api({ act: "unit", sub: "open", id: li.getAttribute("data-uid") }).then(function (c) {
+      if (!c || !c.ok) { tc.innerHTML = '<div class="cst bad">' + esc((c && c.error) || "That did not open.") + "</div>"; return; }
+      tc.setAttribute("data-loaded", "1"); tc.innerHTML = umCardHtml(c, li);
+    }).catch(function () { tc.innerHTML = '<div class="cst bad">That did not reach the tracker. Tap the task again.</div>'; });
+  }
+  function unitAct(btn) {
+    var li = btn.closest("li.ut"), tc = li.querySelector(".tc"), ta = tc.querySelector("[data-unote]"), st = tc.querySelector(".cst"), act = btn.getAttribute("data-uact"), text = (ta.value || "").trim();
+    if (act !== "draft" && !text) { st.className = "cst bad"; st.textContent = act === "close" ? "Say what was done first: it becomes the closing note." : "Write your comment first."; ta.focus(); return; }
+    var bs = tc.querySelectorAll("button"); for (var k = 0; k < bs.length; k++) bs[k].disabled = true;
+    st.className = "cst"; st.textContent = act === "draft" ? "Claude is reading the whole history…" : "Saving…";
+    api({ act: "unit", sub: act, id: li.getAttribute("data-uid"), text: text, said: text, tone: btn.getAttribute("data-tone") || "" }).then(function (r) {
+      for (var k = 0; k < bs.length; k++) bs[k].disabled = false; r = r || {};
+      if (!r.ok) { st.className = "cst bad"; st.textContent = r.error || "That did not save."; return; }
+      if (act === "draft") {
+        ta.value = r.reply || ta.value; var rd = tc.querySelector("[data-uread]"); if (rd) { rd.hidden = !(r.read || r.next); rd.innerHTML = (r.read ? "<b>Where it stands:</b> " + esc(r.read) : "") + (r.next ? "<br><b>Next:</b> " + esc(r.next) : ""); }
+        var tn = tc.querySelector("[data-utone]"); if (tn) tn.hidden = false;
+        st.className = "cst"; st.textContent = "Claude's reply is in the box: change anything, then Post or Close."; return;
+      }
+      ta.value = ""; ta.defaultValue = ""; st.className = "cst ok"; st.textContent = "✓ " + (r.msg || "Saved");
+      if (r.closed) { var ic = li.querySelector(".ic"); if (ic) { ic.className = "ic"; ic.innerHTML = "&#10003;"; } var sx = li.querySelector(".li .s"); if (sx) sx.classList.add("done"); setTimeout(function () { tc.hidden = true; li.classList.remove("open"); }, 1400); }
+      toast(r.msg || "Saved."); setTimeout(function () { load(true); }, 1600);
+    }).catch(function () { for (var k = 0; k < bs.length; k++) bs[k].disabled = false; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function unitNew(btn) {
+    var f = btn.closest(".unf"), st = f.querySelector(".cst"), i = Number(f.getAttribute("data-ua")), g = M.unit.agents[i];
+    var q = { act: "unit", sub: "new", agent: g.a, subject: (f.querySelector("[data-uns]").value || "").trim(), type: f.querySelector("[data-unt]").value, to: f.querySelector("[data-und]").value, text: (f.querySelector("[data-unn]").value || "").trim() };
+    if (q.subject.length < 6) { st.className = "cst bad"; st.textContent = "Say what the task is: the client and what is needed."; return; }
+    if (!q.text) { st.className = "cst bad"; st.textContent = "Write your note for it first."; return; }
+    btn.disabled = true; btn.textContent = "Opening…";
+    api(q).then(function (r) {
+      btn.disabled = false; btn.textContent = "Open it";
+      if (!r || !r.ok) { st.className = "cst bad"; st.textContent = (r && r.error) || "That did not open."; return; }
+      f.querySelector("[data-uns]").value = ""; f.querySelector("[data-unn]").value = ""; st.className = "cst ok"; st.textContent = "✓ " + (r.msg || "Opened.");
+      toast(r.msg || "Opened."); setTimeout(function () { load(true); }, 1600);
+    }).catch(function () { btn.disabled = false; btn.textContent = "Open it"; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function unitPlan(btn) {
+    var c = btn.closest("#mychecks"), st = c.querySelector(".cst"), q = { act: "unit", sub: "plan" }, any = 0;
+    Array.prototype.forEach.call(c.querySelectorAll("[data-cp]"), function (i) { q["p_" + i.getAttribute("data-cp")] = (i.value || "").trim(); if (i.value !== "") any++; });
+    Array.prototype.forEach.call(c.querySelectorAll("[data-cn]"), function (i) { q["n_" + i.getAttribute("data-cn")] = (i.value || "").trim(); });
+    if (!any) { st.className = "cst bad"; st.textContent = "Set at least one number for your day."; return; }
+    btn.disabled = true; btn.textContent = "Saving…";
+    api(q).then(function (r) { btn.disabled = false; btn.textContent = "Save my day"; if (!r || !r.ok) { st.className = "cst bad"; st.textContent = (r && r.error) || "That did not save."; return; }
+      st.className = "cst ok"; st.textContent = "✓ " + (r.msg || "Saved."); toast(r.msg || "Saved."); setTimeout(function () { load(true); }, 1500);
+    }).catch(function () { btn.disabled = false; btn.textContent = "Save my day"; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function unitGo(id) {
+    var ag = (M && M.unit && M.unit.agents) || [];
+    for (var i = 0; i < ag.length; i++) for (var k = 0; k < (ag[i].tasks || []).length; k++) if (ag[i].tasks[k].id === id) {
+      var d = document.querySelector('details.ua[data-ua="' + i + '"]'); if (!d) return false; d.open = true; unitFill(d);
+      var li = d.querySelector('li.ut[data-uid="' + id + '"]'); if (li) { li.scrollIntoView({ behavior: "smooth", block: "center" }); unitOpen(li); } return true;
+    }
+    return false;
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest ? e.target : null; if (!t) return; var b;
+    if ((b = t.closest("[data-uopen]"))) { unitOpen(b.closest("li.ut")); return; }
+    if ((b = t.closest("[data-uact]"))) { unitAct(b); return; }
+    if ((b = t.closest("[data-unew]"))) { var w = b.parentNode.querySelector(".unfw"); if (w && !w.innerHTML) w.innerHTML = unitNewForm(Number(b.getAttribute("data-unew"))); b.hidden = true; var inp = w && w.querySelector("[data-uns]"); if (inp) inp.focus(); return; }
+    if ((b = t.closest("[data-unewgo]"))) { unitNew(b); return; }
+    if ((b = t.closest("[data-uplan]"))) { unitPlan(b); return; }
+    if ((b = t.closest("[data-tlgo]"))) { unitGo(b.getAttribute("data-tlgo")); return; }
+  });
+  document.addEventListener("change", function (e) { var s0 = e.target; if (s0 && s0.hasAttribute && s0.hasAttribute("data-unt")) { var to = s0.options[s0.selectedIndex].getAttribute("data-to"), d = s0.closest(".unf").querySelector("[data-und]"); if (to && d) d.value = to; } });
   // The agents' My day (27 Oct 2026): Project my day and Close off my day, the same pages the e-mails open.
   function agentCards(m) {
     if (!m.on) return '<div class="card"><div class="ch"><h2>Your day, from the branch</h2></div><div class="tip">Your daily e-mails and this page start when the branch adds you to the agents\' day. Until then, carry on as you are. <a href="' + esc(m.film) + '">See how it works &rarr;</a></div></div>';
@@ -431,7 +880,8 @@
   function attCard(m) {
     var a = m.att; if (!a || !a.desks) return "";
     var cell = function (x, d, day) {
-      var mark = d.mark && (x.st === "none" || x.st === "notin" || (x.st === "absent" && x.auto)) ? ' data-mark="' + esc(d.sid) + '|' + esc(day.d) + '|' + esc(d.first) + '|' + esc(day.l) + '"' : "";
+      // Today before the day starts too (29 Oct 2026): "a staff is saying they are not well and will not be out".
+      var mark = d.mark && (x.st === "none" || x.st === "notin" || x.st === "wait" || (x.st === "absent" && x.auto)) ? ' data-mark="' + esc(d.sid) + '|' + esc(day.d) + '|' + esc(d.first) + '|' + esc(day.l) + '|' + (x.st === "wait" ? "ahead" : "") + '"' : "";
       // In, and out (28 Oct 2026): the time they left under the time they came, early in amber, no sign-out said so.
       var out = x.o ? '<small class="out' + (x.early ? ' early' : '') + '">left ' + esc(x.o) + (x.early ? " · " + x.early + " min early" : "") + "</small>"
         : x.noout ? '<small class="out none">no sign-out</small>' : "";
@@ -440,29 +890,34 @@
       if (x.st === "absent") return '<td class="absent"' + mark + '>Absent<small>' + esc(x.why) + (x.by ? " · " + esc(x.by) : "") + "</small></td>";
       if (x.st === "none") return '<td class="none"' + mark + '>No record' + (mark ? "<small>tap to mark</small>" : "") + "</td>";
       if (x.st === "notin") return '<td class="notin"' + mark + '>Not in' + (mark ? "<small>tap to mark</small>" : "") + "</td>";
+      if (x.st === "wait") return '<td class="wait"' + mark + '>Not yet' + (mark ? "<small>tap to mark</small>" : "") + "</td>";
       return "<td>&middot;</td>";
     };
     return '<div class="card" id="attcard"><div class="ch"><h2>Attendance</h2><span class="n">last ' + a.days.length + ' working days</span></div>' +
       '<table class="att"><tr><th></th>' + a.days.map(function (d) { return "<th>" + esc(d.l) + "</th>"; }).join("") + "</tr>" +
       a.desks.map(function (d) { return '<tr><td class="nm">' + esc(d.first) + "</td>" + d.cells.map(function (x, i) { return cell(x, d, a.days[i]); }).join("") + "</tr>"; }).join("") +
-      '</table><div id="markbox"></div><div class="attkey">Each day: the time in, and under it the time they left. <b>No record</b>: nothing was written that day (no sign-in, and no morning e-mail to mark it). Tap one to say why.</div></div>';
+      '</table><div id="markbox"></div><div class="attkey">Each day: the time in, and under it the time they left. <b>No record</b>: nothing was written that day (no sign-in, and no morning e-mail to mark it). Tap one to say why. <b>Not yet</b>: today, before their day starts; tap it when someone says they are not coming in.</div></div>';
   }
   document.addEventListener("click", function (e) {
     var td = e.target.closest && e.target.closest("td[data-mark]"); if (!td) return;
     var p = td.getAttribute("data-mark").split("|"), box = $("markbox"); if (!box) return;
-    box.innerHTML = '<div class="markbox"><div class="q">' + esc(p[2]) + ", " + esc(p[3]) + ': not in. Why?</div><div class="row">' +
+    var today = p[1] === new Date().toLocaleDateString("en-CA", { timeZone: "America/Port_of_Spain" });
+    box.innerHTML = '<div class="markbox"><div class="q">' + esc(p[2]) + ", " + esc(p[3]) + (p[4] === "ahead" ? ": not coming in today? Why?" : ": not in. Why?") + '</div><div class="row">' +
       '<button type="button" data-why="Sick">Sick</button><button type="button" data-why="On leave">On leave</button><button type="button" data-why="">Other…</button></div>' +
-      '<input type="text" id="whyother" placeholder="In a few words, then press Other again" hidden></div>';
+      '<input type="text" id="whyother" placeholder="In a few words, then press Other again" hidden>' +
+      (today ? '<div class="mkn">This marks the register, moves ' + esc(p[2]) + '\'s due work to whoever is in today (money and claims to the BMA first), and e-mails ' + esc(p[2]) + ' for the record, copying the team. The reason is in the e-mail as you choose it: keep it general.</div>' : "") + "</div>";
     box.setAttribute("data-who", p[0]); box.setAttribute("data-date", p[1]); box.scrollIntoView({ block: "nearest", behavior: "smooth" });
   });
   document.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-why]"); if (!b) return;
     var box = $("markbox"), inp = $("whyother"), why = b.getAttribute("data-why");
     if (!why) { if (inp.hidden) { inp.hidden = false; inp.focus(); return; } why = (inp.value || "").trim(); if (!why) { inp.focus(); return; } }
-    b.disabled = true; b.textContent = "Saving…";
+    b.disabled = true; b.textContent = box.getAttribute("data-date") === new Date().toLocaleDateString("en-CA", { timeZone: "America/Port_of_Spain" }) ? "Marking and moving the work…" : "Saving…";
     var body = auth(new URLSearchParams()); body.set("act", "absent"); body.set("who", box.getAttribute("data-who")); body.set("date", box.getAttribute("data-date")); body.set("why", why);
     fetch(TRACKER, { method: "POST", body: body, redirect: "follow" }).then(function (r) { return r.json(); })
-      .then(function (m) { if (!m || !m.ok) { b.disabled = false; b.textContent = why || "Other…"; toast((m && m.error) || "That did not save. Try again."); return; } store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); toast("Marked absent: " + why + "."); })
+      .then(function (m) { if (!m || !m.ok) { b.disabled = false; b.textContent = why || "Other…"; toast((m && m.error) || "That did not save. Try again."); return; } m._t = Date.now(); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false);
+        var k = m.marked || {}, who = box.getAttribute("data-who"), nm = (who || "").charAt(0).toUpperCase() + (who || "").slice(1);
+        toast("Marked absent: " + why + "." + (k.moved != null ? " " + k.moved + " task" + (k.moved === 1 ? "" : "s") + (k.already ? " already moved this morning" : " moved") + (k.mailed ? "; " + nm + " and the team told." : k.mailWhy ? "; notice not sent (" + k.mailWhy + ")." : ".") : "")); })
       .catch(function () { b.disabled = false; b.textContent = why || "Other…"; toast("That did not reach the tracker. Try again."); });
   });
   function drawAgent(m, cached) {
@@ -471,8 +926,9 @@
     $("when").textContent = (m.date || "") + " · agent";
     $("hours").textContent = "";
     $("prog").style.display = "none";
-    $("main").innerHTML = agentCards(m);
+    $("main").innerHTML = m.on && m.native ? agentNative(m) : agentCards(m);
     $("asat").textContent = (cached ? "As at " : "Updated ") + (m.at || "") + (cached ? " · updating…" : "");
+    var cl = $("cline"); if (cl) cl.hidden = true;
   }
   function draw(m, cached) {
     if (m && m.agent) return drawAgent(m, cached);
@@ -482,7 +938,14 @@
     $("when").textContent = (m.date || "") + (m.hours ? " · " + m.hours : "");
     $("hours").textContent = m.lunch && m.lunch !== "Flexible" ? "lunch " + m.lunch : "";
     drawProgress(m);
-    $("main").innerHTML = checkinCard(m) + waitingCard(m) + attCard(m) + listCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + footCard(m);
+    // One screen (29 Oct 2026): no "Open My day" foot; what the white page did is here.
+    // The coach on top (29 Oct 2026, Ricky: "we can put a note on top there"); before check-in, the check-in first.
+    var inYet = !!(m.checkin && m.checkin.at);
+    $("main").innerHTML = (inYet ? coachCard(m) + newsCard(m) + checkinCard(m) : checkinCard(m) + coachCard(m) + newsCard(m)) + waitingCard(m) + attCard(m) + unitCard(m) + timelineCard(m) + checksCard(m) + listCard(m) + scrubCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + closeCard(m);
+    if (!m._t) m._t = Date.now();
+    coachTick();
+    $("upd").hidden = true; pending = null;
+    $("upat").textContent = (cached ? "As at " : "Updated ") + (m.at || "") + (cached ? " · updating…" : "");
     requestAnimationFrame(function () {
       Array.prototype.forEach.call(document.querySelectorAll(".bb"), function (e) { var t = e.parentNode.clientHeight - 18; e.style.height = Math.max(4, Math.round(t * Number(e.getAttribute("data-h") || 0) / 100)) + "px"; });
       Array.prototype.forEach.call(document.querySelectorAll(".mini i"), function (e) { e.style.width = e.getAttribute("data-w") + "%"; });
@@ -503,16 +966,61 @@
     }
     var a = $("again"); if (a) a.addEventListener("click", function (e) { e.preventDefault(); load.tries = 0; load(); });
   }
-  function load() {
+  /* THE UPDATE BAR (29 Oct 2026, Ricky: "if they see the update on it, so they can leave that screen and refresh"). Every two
+     minutes the day is read again. With nothing typed and no card open, it is simply redrawn; otherwise the new day waits and a
+     bar at the top says what changed, with Refresh, so a half-written note is never wiped. */
+  function dirty() {
+    var main = $("main"); if (!main || !M) return false;
+    if (main.querySelector(".tc:not([hidden])") || $("closeform")) return true;
+    var els = main.querySelectorAll("textarea, input[type=text], input[type=number]");
+    for (var i = 0; i < els.length; i++) if (els[i].value && els[i].value !== els[i].defaultValue) return true;
+    var a = document.activeElement; return !!(a && main.contains(a) && /^(TEXTAREA|INPUT|SELECT)$/.test(a.tagName));
+  }
+  function changes(a, b) {
+    var ga = a.progress || {}, gb = b.progress || {}, out = [], n = function (x) { return Number(x || 0); };
+    if (gb.lead) { if (n(gb.waiting) > n(ga.waiting)) out.push((n(gb.waiting) - n(ga.waiting)) + " new waiting on you"); if (n(gb.cleared) > n(ga.cleared)) out.push((n(gb.cleared) - n(ga.cleared)) + " more cleared"); }
+    else {
+      if (n(gb.closed) > n(ga.closed)) out.push((n(gb.closed) - n(ga.closed)) + " more closed");
+      if ((b.next || []).length > (a.next || []).length) out.push(((b.next || []).length - (a.next || []).length) + " new due");
+      if ((b.list || []).length > (a.list || []).length) out.push(((b.list || []).length - (a.list || []).length) + " new on your list");
+      if (b.news && a.news && b.news.total > a.news.total) out.push((b.news.total - a.news.total) + " new for you" + (b.news.urgent > (a.news.urgent || 0) ? ", urgent" : ""));
+    }
+    if (a.unit && b.unit && Number(b.unit.notesToday || 0) > Number(a.unit.notesToday || 0)) out.push((b.unit.notesToday - a.unit.notesToday) + " new notes in " + (b.unitLabel || "the unit").toLowerCase());
+    var ta = (a.team || []).filter(function (x) { return x.x; }).length * 0 + (a.team || []).filter(function (x) { return x.at; }).length, tb = (b.team || []).filter(function (x) { return x.at; }).length;
+    if (tb > ta) out.push((tb - ta) + " more of the team in");
+    return out;
+  }
+  function banner(m) {
+    var ch = changes(M, m);
+    $("updt").textContent = "Updated " + (m.at || "") + (ch.length ? ": " + ch.join(" · ") : "") + ". Refresh when you are ready" + (dirty() ? " (what you have typed stays until then)" : "") + ".";
+    $("upd").hidden = false;
+  }
+  function goTo() {
+    if (!GO && !GOT) return;
+    var g = GO, t = GOT; GO = ""; GOT = "";
+    try { var u = new URL(location.href); u.searchParams.delete("go"); u.searchParams.delete("t"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {}
+    setTimeout(function () {
+      var li = t ? document.querySelector('li.tk[data-id="' + t + '"]') : null;
+      if (li) { li.scrollIntoView({ behavior: "smooth", block: "center" }); openCard(li); return; }
+      var al = t ? document.querySelector('li[data-ag="' + t + '"]') : null;
+      if (al) { al.scrollIntoView({ behavior: "smooth", block: "center" }); agOpen(al); return; }
+      if (g === "close" && $("closecard")) { closeOpen(); return; }
+      if (t && unitGo(t)) return;
+      var el = $({ update: "coach", news: "news", waiting: "waiting", list: "list", close: "closecard", agplan: "agplan", agclose: "agclose", agitems: "agitems", unit: "unit", timeline: "timeline", mychecks: "mychecks" }[g] || "");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 400);
+  }
+  function load(silent) {
     if (!OPS && (!P || !K)) { notice('Open <b>My day</b> in the <a href="/rroperations/">branch app</a>, or the <b>My workday</b> link in your morning e-mail. After that it opens from your home screen.', false); $("of").textContent = ""; $("main").innerHTML = ""; return; }
     if (busy) return; busy = true;
     // 27 Oct 2026: a phone can let go of a slow first answer of the day; it waits up to 90 s and tries once more by itself.
     var ctl = window.AbortController ? new AbortController() : null, timer = setTimeout(function () { if (ctl) ctl.abort(); }, 90000);
     fetch(TRACKER + "?" + auth(new URLSearchParams()).toString() + "&t=" + Date.now(), { redirect: "follow", cache: "no-store", signal: ctl ? ctl.signal : undefined })
       .then(function (r) { return r.json(); })
-      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { fail((m && m.error) || "The tracker did not answer."); return; } load.tries = 0; notice(""); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); })
+      .then(function (m) { clearTimeout(timer); busy = false; if (!m || !m.ok) { if (!silent) fail((m && m.error) || "The tracker did not answer."); return; } load.tries = 0; notice(""); m._t = Date.now(); store.set("wd_day_" + WHO, { day: m.day, m: m });
+        if (silent === true && dirty()) { pending = m; banner(m); return; } draw(m, false); if (silent !== true) goTo(); })
       // Three more tries, further apart (2, 5 and 10 seconds), before it says so: a busy minute at the tracker passes (28 Oct 2026).
-      .catch(function () { clearTimeout(timer); busy = false; load.tries = (load.tries || 0) + 1;
+      .catch(function () { clearTimeout(timer); busy = false; if (silent === true) return; load.tries = (load.tries || 0) + 1;
         if (load.tries <= 3) { if (!M) $("of").textContent = "Still opening your day… (try " + (load.tries + 1) + " of 4)"; setTimeout(load, [0, 2000, 5000, 10000][load.tries]); return; }
         load.tries = 0; fail("The tracker did not answer this time."); });
   }
@@ -528,7 +1036,7 @@
         if (!r || !r.ok) { btn.disabled = false; btn.textContent = was; toast((r && r.error) || "That did not post. Try again."); return; }
         row.style.maxHeight = row.offsetHeight + "px"; requestAnimationFrame(function () { row.classList.add("gone"); });
         toast("Done: " + (r.res || "posted") + ".");
-        setTimeout(load, 900);
+        setTimeout(function () { load(true); }, 900);
       })
       .catch(function () { btn.disabled = false; btn.textContent = was; toast("That did not reach the tracker. Try again."); });
   }
@@ -550,10 +1058,151 @@
   var keep = WHO ? store.get("wd_day_" + WHO) : null, today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Port_of_Spain" });
   if (keep && keep.m && keep.day === today) draw(keep.m, true);
   load();
-  $("refresh").addEventListener("click", load);
-  $("refresh").addEventListener("keydown", function (e) { if (e.key === "Enter") load(); });
-  setInterval(function () { if (document.visibilityState === "visible") load(); }, 5 * 60 * 1000);
-  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && M && Date.now() - (load.t || 0) > 60000) { load.t = Date.now(); load(); } });
+  var refreshNow = function () { if (pending) { draw(pending, false); return; } load(); };
+  $("refresh").addEventListener("click", refreshNow);
+  $("refresh").addEventListener("keydown", function (e) { if (e.key === "Enter") refreshNow(); });
+  $("uprefresh").addEventListener("click", refreshNow);
+  $("uprefresh").addEventListener("keydown", function (e) { if (e.key === "Enter") refreshNow(); });
+  $("updgo").addEventListener("click", refreshNow);
+  setInterval(function () { if (document.visibilityState === "visible") load(true); }, 2 * 60 * 1000);
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && M && Date.now() - (load.t || 0) > 60000) { load.t = Date.now(); load(true); } });
+
+  /* ── The one screen (29 Oct 2026): the task cards, what came up, the close-out, the sign-out ── */
+  function api(params) {
+    var body = auth(new URLSearchParams()); Object.keys(params).forEach(function (k) { if (params[k] != null) body.set(k, params[k]); });
+    return fetch(TRACKER, { method: "POST", body: body, redirect: "follow" }).then(function (r) { return r.json(); });
+  }
+  function cardHtml(c, url) {
+    var notes = (c.notes || []).map(function (n) { return "<div>" + (n.reply ? "&#8627; " : "") + "<b>" + esc(n.who) + "</b>" + (n.day ? " · " + esc(n.day) : "") + ": " + esc(n.s) + "</div>"; }).join("");
+    return '<div class="lab"><span class="bdg' + (c.must ? " r" : "") + '">' + esc(c.label || "Task") + "</span>" + (c.client ? esc(c.client) : "") + (c.policy ? " · " + esc(c.policy) : "") + "</div>" +
+      '<div class="todo"><b>What to do:</b> ' + esc(c.todo) + "</div>" + (c.next ? '<div class="nx">' + esc(c.next) + "</div>" : "") + (c.close ? '<div class="hint">' + esc(c.close) + "</div>" : "") +
+      '<div class="notes">' + (notes || "No notes on Chatter yet.") + (c.more ? "<div>and " + c.more + " earlier</div>" : "") + "</div>" +
+      '<div class="tpl">' + (c.tpl || []).map(function (t) { return '<button type="button" data-tpl data-a="' + esc(t.a) + '" data-n="' + esc(t.n) + '"><i class="' + (t.a === "close" ? "c" : t.a === "move" ? "m" : "") + '">' + (t.a === "close" ? "closes" : t.a === "move" ? "moves" : "note") + "</i>" + esc(t.n) + "</button>"; }).join("") + "</div>" +
+      '<textarea data-note placeholder="What was done, who you spoke to, the outcome and the next step. It goes on the task\'s Chatter."></textarea>' +
+      (M && M.claude ? '<button type="button" class="cai" data-cact="draft">&#10024; Draft with Claude</button>' : "") +
+      '<label class="dt">Or it cannot be done today: the new date<input type="date" data-to min="' + esc(c.min || "") + '"></label>' +
+      '<div class="cbt"><button type="button" class="c" data-cact="close">Close now</button><button type="button" class="m" data-cact="move">Move now</button><button type="button" class="n" data-cact="note">Post note</button></div>' +
+      '<div class="cst">Close now, Move now or Post note: it is done at once, with your note on Chatter.</div>' + (url ? '<a class="sf" href="' + esc(url) + '" target="_blank" rel="noopener">Open in Salesforce &#8599;</a>' : "");
+  }
+  function openCard(li) {
+    var tc = li.querySelector(".tc"); if (!tc) return;
+    if (!tc.hidden) { if (!tc.querySelector("textarea") || !tc.querySelector("textarea").value) { tc.hidden = true; li.classList.remove("open"); } else tc.querySelector("textarea").focus(); return; }
+    tc.hidden = false; li.classList.add("open");
+    if (tc.getAttribute("data-loaded")) return;
+    tc.innerHTML = '<div class="skel" style="width:60%"></div><div class="skel"></div><div class="skel" style="width:80%"></div>';
+    api({ act: "card", sub: "open", id: li.getAttribute("data-id") }).then(function (c) {
+      if (!c || !c.ok) { tc.innerHTML = '<div class="cst bad">' + esc((c && c.error) || "That did not open.") + "</div>"; return; }
+      tc.setAttribute("data-loaded", "1"); tc.innerHTML = cardHtml(c, li.getAttribute("data-url"));
+    }).catch(function () { tc.innerHTML = '<div class="cst bad">That did not reach the tracker. Tap the task again.</div>'; });
+  }
+  function blankSel(ta) { var i = ta.value.indexOf("["); ta.focus(); if (i > -1) { var j = ta.value.indexOf("]", i); try { ta.setSelectionRange(i, j > i ? j + 1 : i); } catch (e) {} } }
+  function cardAct(btn) {
+    var tc = btn.closest(".tc"), li = btn.closest("li.tk"), ta = tc.querySelector("[data-note]"), to = tc.querySelector("[data-to]"), st = tc.querySelector(".cst"), act = btn.getAttribute("data-cact");
+    var bs = tc.querySelectorAll(".cbt button,.cai"), on = function (v) { for (var i = 0; i < bs.length; i++) bs[i].disabled = !v; };
+    if (act !== "draft" && !(ta.value || "").trim()) { st.className = "cst bad"; st.textContent = act === "close" ? "Say what was done first, in the note." : act === "move" ? "Say why the date moves, in the note." : "Write the note first."; ta.focus(); return; }
+    if (act === "move" && !to.value) { st.className = "cst bad"; st.textContent = "Choose the new date first."; try { to.focus(); if (to.showPicker) to.showPicker(); } catch (e) {} return; }
+    on(false); st.className = "cst"; st.textContent = act === "draft" ? "Claude is writing the note…" : "Saving…";
+    api({ act: "card", sub: act, id: li.getAttribute("data-id"), note: ta.value, to: to.value }).then(function (r) {
+      on(true); r = r || {};
+      if (!r.ok) { st.className = "cst bad"; st.textContent = r.error || "That did not save."; return; }
+      if (act === "draft") { ta.value = r.note || ta.value; st.className = "cst" + (r.warn ? " bad" : ""); st.textContent = r.warn || "Claude's note is in the box: check it, fill any [blanks], then Close now, Move now or Post note."; if (/\[/.test(ta.value)) blankSel(ta); return; }
+      ta.value = ""; ta.defaultValue = ""; if (to) to.value = ""; st.className = "cst ok"; st.textContent = "\u2713 " + (r.msg || "Saved");
+      if (r.act === "close" || r.act === "move") {
+        var ic = li.querySelector(".ic"); if (ic) { ic.className = "ic"; ic.innerHTML = "&#10003;"; }
+        var sx = li.querySelector(".li .s"); if (sx && r.act === "close") sx.classList.add("done");
+        var sm = li.querySelector(".li small"); if (sm) sm.textContent = r.msg || "";
+        setTimeout(function () { tc.hidden = true; li.classList.remove("open"); load(true); }, 1400);
+        toast(r.msg || "Saved.");
+      }
+    }).catch(function () { on(true); st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function scrub(btn) {
+    var ta = $("scrubt"), res = $("scrubres"), lines = (ta.value || "").trim();
+    if (!lines) { ta.focus(); toast("Write what came up first: one a line."); return; }
+    btn.disabled = true; btn.textContent = "Adding…";
+    api({ act: "scrub", lines: lines, type: $("scrubty").value }).then(function (r) {
+      btn.disabled = false; btn.textContent = "Add";
+      if (!r || !r.ok) { toast((r && r.error) || "That did not add. Try again."); return; }
+      ta.value = ""; res.innerHTML = r.out.map(function (o) { return '<div class="' + (o.ok ? "" : "bad") + '">' + (o.ok ? "&#10003; " : "&#9888; ") + esc(o.s) + " · <b>" + esc(o.res) + "</b></div>"; }).join("");
+      toast(r.out.filter(function (o) { return o.ok; }).length + " added to your day."); setTimeout(function () { load(true); }, 1200);
+    }).catch(function () { btn.disabled = false; btn.textContent = "Add"; toast("That did not reach the tracker. Try again."); });
+  }
+  function closeFormHtml(f) {
+    var radios = function (name, vals, sel, attr) { return '<div class="seg">' + vals.map(function (v) { return '<label><input type="radio" name="' + esc(name) + '" value="' + esc(v[0]) + '"' + (sel === v[0] ? " checked" : "") + (attr || "") + "><span>" + esc(v[1]) + "</span></label>"; }).join("") + "</div>"; };
+    var h = '<div id="closeform"><div class="grp done"><h3>What you set out to do' + (f.done.length + f.open.length ? " · " + f.done.length + " of " + (f.done.length + f.open.length) + " done" : "") + "</h3>" +
+      (f.done.length ? f.done.map(function (x) { return "<div>&#10003; " + esc(x) + "</div>"; }).join("") : '<div class="tip">Nothing closed from it yet.</div>') + "</div>";
+    if (f.open.length) h += '<div class="grp"><h3>Not done: a reason and a new date</h3><div class="tip">The new date goes on the task in Salesforce, the reason on its Chatter.</div>' + f.open.map(function (t) {
+      return '<div class="it"><div class="s">' + esc(t.s) + '</div><input type="text" data-r="' + esc(t.id) + '" value="' + esc(t.r) + '" placeholder="Not done because..."><label class="tip">New date<input type="date" data-d="' + esc(t.id) + '" min="' + esc(f.min) + '" value="' + esc(t.d) + '"></label></div>'; }).join("") + "</div>";
+    if (f.checks.length) h += '<div class="grp"><h3>The checks</h3>' + f.checks.map(function (c) {
+      var not = !c.done && c.r;
+      return '<div class="it"><div class="s">' + esc(c.s) + "</div>" + radios("c_" + c.id, [["Done", "Done"], ["Not done", "Not done"]], c.done ? "Done" : not ? "Not done" : "", ' data-chk="' + esc(c.id) + '"') +
+        '<input type="text" data-cr="' + esc(c.id) + '" value="' + esc(c.r) + '" placeholder="What is left, and why"' + (not ? "" : " hidden") + "></div>"; }).join("") + "</div>";
+    var mb = f.mailbag;
+    if (mb) h += '<div class="grp"><h3>The mailbag' + (mb.router ? " · you route it this week" : " · " + esc(mb.routerName) + " routes it this week") + "</h3>" +
+      '<div class="tip">' + (mb.router ? esc(mb.n) + " collected today" + (mb.backlog ? " · <b>" + esc(mb.backlog) + " not yet sent</b>" : "") : "You collected <b>" + esc(mb.n) + "</b> document" + (mb.n === 1 ? "" : "s") + " today.") + "</div>" +
+      radios("mb", mb.router ? [["Sent", "The " + mb.leaves + " bag went"], ["Not sent", "It did not go"]] : [["Handed over", "All handed to " + mb.routerName], ["Not handed over", "Some still with me"]], "", " data-mb") +
+      '<select data-mbr hidden><option value="">Why?</option>' + (mb.reasons || []).map(function (r) { return '<option value="' + esc(r) + '">' + esc(r) + "</option>"; }).join("") + "</select>" +
+      '<input type="text" data-mbn placeholder="' + (mb.router ? "Note: tracking number, courier, or what is still to go" : "Note") + '"></div>';
+    if (f.inno) h += '<div class="grp"><h3>Innovation hour · what moved?</h3><textarea data-inno placeholder="What you built, tested or found, and the next step">' + esc(f.innoSaid) + "</textarea></div>";
+    h += '<div class="grp"><h3>Comment for Mr Rampersad</h3><textarea data-comment placeholder="Anything he should know before tomorrow"></textarea></div>' +
+      '<label class="out"><input type="checkbox" data-out checked> Sign me out now: this is the register</label>' +
+      '<button type="button" class="go" data-closesend>Close my day and sign out</button><div class="cst" id="closest"></div></div>';
+    return h;
+  }
+  function closeOpen() {
+    var card = $("closecard"), body = $("closebody"); if (!card) return;
+    card.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!body || $("closeform")) return;
+    body.innerHTML = '<div class="skel" style="width:50%"></div><div class="skel"></div><div class="skel" style="width:70%"></div>';
+    api({ act: "closeform" }).then(function (r) {
+      if (!r || !r.ok) { body.innerHTML = '<div class="cst bad">' + esc((r && r.error) || "The close-out did not open.") + '</div><button type="button" class="go" data-closego>Try again</button>'; return; }
+      body.innerHTML = closeFormHtml(r.form);
+    }).catch(function () { body.innerHTML = '<div class="cst bad">That did not reach the tracker.</div><button type="button" class="go" data-closego>Try again</button>'; });
+  }
+  function closeSend(btn) {
+    var f = $("closeform"), st = $("closest"), q = { act: "close" }, missing = 0;
+    Array.prototype.forEach.call(f.querySelectorAll("[data-r]"), function (i) { var id = i.getAttribute("data-r"), d = f.querySelector('[data-d="' + id + '"]'); q["r_" + id] = i.value.trim(); q["d_" + id] = d ? d.value : ""; if (!q["r_" + id] || !q["d_" + id]) missing++; });
+    var names = {}; Array.prototype.forEach.call(f.querySelectorAll("[data-chk]"), function (i) { names[i.name] = i.getAttribute("data-chk"); });
+    Object.keys(names).forEach(function (n) { var c = f.querySelector('input[name="' + n + '"]:checked'), id = names[n], cr = f.querySelector('[data-cr="' + id + '"]');
+      if (!c) { missing++; return; } q[n] = c.value; q["cr_" + id] = cr ? cr.value.trim() : ""; if (c.value === "Not done" && !q["cr_" + id]) missing++; });
+    var mb = f.querySelector('input[name="mb"]:checked');
+    if (f.querySelector('input[name="mb"]')) { if (!mb) missing++; else { q.mb = mb.value; q.mbr = (f.querySelector("[data-mbr]") || {}).value || ""; q.mbn = (f.querySelector("[data-mbn]") || {}).value || ""; if (/Not/.test(mb.value) && !q.mbr) missing++; } }
+    var inno = f.querySelector("[data-inno]"); if (inno) { q.inno = inno.value.trim(); if (!q.inno) missing++; }
+    q.comment = (f.querySelector("[data-comment]") || {}).value || ""; if ((f.querySelector("[data-out]") || {}).checked) q.out = "1";
+    if (missing) { st.className = "cst bad"; st.textContent = missing + " answer" + (missing === 1 ? " is" : "s are") + " missing: every task not done needs a reason and a new date, and every check an answer."; return; }
+    btn.disabled = true; btn.textContent = "Closing your day…"; st.className = "cst"; st.textContent = "";
+    api(q).then(function (m) {
+      if (!m || !m.ok) { btn.disabled = false; btn.textContent = "Close my day and sign out"; st.className = "cst bad"; st.textContent = (m && m.error) || "That did not save. Try again."; return; }
+      store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); window.scrollTo({ top: 0, behavior: "smooth" });
+      toast("Your day is closed." + (m.closed && m.closed.out ? " Signed out at " + m.closed.out + "." : ""));
+    }).catch(function () { btn.disabled = false; btn.textContent = "Close my day and sign out"; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  function signOut(btn) {
+    btn.disabled = true; btn.textContent = "Checking out…";
+    api({ act: "signout" }).then(function (m) {
+      if (!m || !m.ok) { btn.disabled = false; btn.textContent = "Check out"; toast((m && m.error) || "That did not sign you out."); return; }
+      store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); toast("Checked out" + (m.signedOut ? " at " + m.signedOut : "") + ". Thank you.");
+    }).catch(function () { btn.disabled = false; btn.textContent = "Check out"; toast("That did not reach the tracker. Try again."); });
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest ? e.target : null; if (!t) return;
+    var b;
+    if ((b = t.closest("[data-more]"))) { Array.prototype.forEach.call(document.querySelectorAll("#waiting .more"), function (x) { x.hidden = false; }); b.remove(); return; }
+    if ((b = t.closest("[data-open]"))) { openCard(b.closest("li.tk")); return; }
+    if ((b = t.closest("[data-tpl]"))) { var tc = b.closest(".tc"), ta = tc.querySelector("[data-note]"), to = tc.querySelector("[data-to]"); ta.value = b.getAttribute("data-n");
+      if (b.getAttribute("data-a") === "move" && to) { try { to.focus(); if (to.showPicker) to.showPicker(); } catch (x) {} } blankSel(ta); return; }
+    if ((b = t.closest("[data-cact]"))) { cardAct(b); return; }
+    if ((b = t.closest("[data-scrub]"))) { scrub(b); return; }
+    if ((b = t.closest("[data-closego]"))) { closeOpen(); return; }
+    if ((b = t.closest("[data-closesend]"))) { closeSend(b); return; }
+    if ((b = t.closest("[data-signout]"))) { signOut(b); return; }
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Enter" && e.target && e.target.hasAttribute && e.target.hasAttribute("data-open")) { e.preventDefault(); openCard(e.target.closest("li.tk")); } });
+  document.addEventListener("change", function (e) {
+    var t = e.target; if (!t || !t.closest) return;
+    if (t.hasAttribute("data-chk")) { var cr = t.closest(".it").querySelector("[data-cr]"); if (cr) cr.hidden = t.value !== "Not done"; }
+    if (t.hasAttribute("data-mb")) { var s2 = t.closest(".grp").querySelector("[data-mbr]"); if (s2) s2.hidden = !/Not/.test(t.value); }
+  });
 })();
 </script>
 </body>

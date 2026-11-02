@@ -123,7 +123,8 @@ ok('her page says it is a card page, filling the note box', kpage.indexOf('"k":"
 let kparsed = true; (kpage.match(/<script>([\s\S]*?)<\/script>/g) || []).forEach(x => { try { new Function(x.replace(/^<script>|<\/script>$/g, '')); } catch (e) { kparsed = false; console.log('    ' + e.message); } });
 ok('its scripts parse', kparsed);
 const spage = env.sdPage_({ staffId: 'sasha', name: 'Sasha Lalla-Jagassar' }, DAY).getContent();
-ok('Sasha\'s day page has Brief me instead, not the manager\'s reply', />&#128161;<\/span> Brief me</.test(spage) && !/Draft my reply/.test(spage) && /Branch Intelligence briefs you/.test(spage) && /"mode":"brief"/.test(spage));
+// 29 Oct 2026, Ricky: "Claude AI, it's only for the branch manager and the unit manager ... and the BMA so far, right? Not the staff."
+ok('Sasha\'s day page has no Claude: no Brief me, no reply, no Intelligence card', !/Brief me/.test(spage) && !/Draft my reply/.test(spage) && !/Branch Intelligence briefs you/.test(spage) && !/onclick="umAI\('00T/.test(spage) && !/umAIAll\(\)"/.test(spage));
 let sparsed = true; (spage.match(/<script>([\s\S]*?)<\/script>/g) || []).forEach(x => { try { new Function(x.replace(/^<script>|<\/script>$/g, '')); } catch (e) { sparsed = false; console.log('    ' + e.message); } });
 ok('its scripts parse', sparsed);
 asked = [];
@@ -136,9 +137,12 @@ ok('and when she is the one to act, it is her own note', /when the writer is the
 ok('the card page\'s signature is checked', /expired/.test(env.umDraft({ rs: 'kamla', d: DAY, k: env.replySig_('kamla', DAY, 'um'), via: 'card', id: KT.id }).error));
 ok('a task not on her list is refused', /no longer on this page/.test(env.umDraft({ rs: 'kamla', d: DAY, k: kk, via: 'card', id: '00TNOPE' }).error));
 
-console.log('\nStaff get the brief: where it stands, what next, what to check; the note is still theirs:\n');
+console.log('\nStaff: no Claude (29 Oct 2026); the brief itself, kept behind claudeFor_:\n');
 const sk = env.replySig_('sasha', DAY, 'card');
 asked = [];
+const no = env.umDraft({ rs: 'sasha', d: DAY, k: sk, via: 'card', id: KT.id });
+ok('a staff desk asking for the brief is refused, and Claude is not called', !no.ok && /managers and the BMA/.test(no.error) && asked.length === 0, JSON.stringify(no));
+const realFor = env.claudeFor_; env.claudeFor_ = () => true;
 reply = JSON.stringify({ read: 'Overdue since 19 Oct; underwriting has not answered.', next: 'Chase underwriting today for the decision.', add: ['Check the Log Book for the medical', 'x', 'y', 'z'], action: 'chase',
   reply: 'Underwriting, please confirm the decision on this renewal by Friday 23 October; the client is waiting.' });
 const sb = env.umDraft({ rs: 'sasha', d: DAY, k: sk, via: 'card', id: KT.id });
@@ -154,6 +158,7 @@ P.setProperty('INTEL_REPLY_DESKS', 'kamla, sasha'); asked = [];
 reply = JSON.stringify({ read: 'r', reply: 'Sasha note', next: 'n', add: [], action: 'wait' });
 ok('INTEL_REPLY_DESKS gives a desk the full reply', env.umDraft({ rs: 'sasha', d: DAY, k: sk, via: 'card', id: KT.id }).reply === 'Sasha note' && /when the writer is the one who must act/.test(asked[0].messages[0].content));
 P.setProperty('INTEL_REPLY_DESKS', '');
+env.claudeFor_ = realFor;
 
 console.log('\nAkaash\'s evening page, and whose name heads his comments:\n');
 env.bigPut_(env.umItemsKey_('akaash', DAY) + '_eve', [{ id: ID2, s: 'Investment Discussions - Neal Balroop', a: 'Marcus', due: '2026-10-20', late: true, k: 'new' }]);

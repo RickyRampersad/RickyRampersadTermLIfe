@@ -146,7 +146,9 @@ function gcmDoGet_(p) {
                                    hold: (function () { try { var h = gcmHoldState_(); return { all: !!h.all, groups: Object.keys(h.groups).length + h.legacy.length }; } catch (e) { return 0; } })(),
                                    /* the group bills' day and report, so a browser can tell which GroupBilling.gs is live */
                                    bills: (function () { try { if (typeof gblDayInfo_ !== 'function') return 0; var d = gblDayInfo_();
-                                     return { next: d.label, report: d.reportLabel || '', live: !!d.live, drive: !!d.drive }; } catch (e) { return 0; } })() };
+                                     return { next: d.label, report: d.reportLabel || '', live: !!d.live, drive: !!d.drive }; } catch (e) { return 0; } })(),
+                                   /* the general insurance renewal desk (GIRenewals.gs) */
+                                   renewals: (function () { try { return typeof girPing_ === 'function' ? girPing_() : 0; } catch (e) { return 0; } })() };
       case 'gcm.draft':   return gcmDraft_(p);
       case 'gcm.board':   return gcmBoard_(p);
       case 'gcm.group':   return gcmGroupView_(p);
@@ -169,6 +171,15 @@ function gcmDoGet_(p) {
       case 'gcm.billTaskUpdates': return typeof gblTaskUpdates_ === 'function' ? gblTaskUpdates_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
       case 'gcm.billPeople': return typeof gblPeopleStep_ === 'function' ? gblPeopleStep_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
       case 'gcm.billStatement': return typeof gblStatement_ === 'function' ? gblStatement_(p) : { ok: false, error: 'GroupBilling.gs is not in the project yet.' };
+      /* general insurance renewals (GIRenewals.gs, 29 October 2026): the desk's month, one renewal, the notice in support@,
+         the letter as the client reads it, the client's page and a group's tab */
+      case 'gcm.renList':       return typeof girList_ === 'function' ? girList_(p) : { ok: false, error: 'GIRenewals.gs is not in the project yet.' };
+      case 'gcm.renOne':        return typeof girOne_ === 'function' ? girOne_(p) : { ok: false, error: 'GIRenewals.gs is not in the project yet.' };
+      case 'gcm.renNoticeFind': return typeof girNoticeFind_ === 'function' ? girNoticeFind_(p) : { ok: false, error: 'GIRenewals.gs is not in the project yet.' };
+      case 'gcm.renNoticePdf':  return typeof girNoticePdf_ === 'function' ? girNoticePdf_(p) : { ok: false, error: 'GIRenewals.gs is not in the project yet.' };
+      case 'gcm.renPreview':    return typeof girPreview_ === 'function' ? girPreview_(p) : { ok: false, error: 'GIRenewals.gs is not in the project yet.' };
+      case 'gcm.renMine':       return typeof girMine_ === 'function' ? girMine_(p) : { ok: false, error: 'Renewals are being updated. Please call the branch.' };
+      case 'gcm.renGroup':      return typeof girGroupView_ === 'function' ? girGroupView_(p) : { ok: true, renewals: [] };
     }
     return { ok: false, error: 'Unknown action' };
   } catch (e) {
@@ -200,6 +211,12 @@ function gcmDoPost_(b) {
       case 'gcm.clientPost':  return typeof gblClientPost_ === 'function' ? gblClientPost_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.clientTell':  return typeof gblClientTell_ === 'function' ? gblClientTell_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.clientFormSend': return typeof gblClientFormSend_ === 'function' ? gblClientFormSend_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
+      /* general insurance renewals (GIRenewals.gs): a press on the desk, the client's code and answer, a group's answer */
+      case 'gcm.renAct':         return typeof girAct_ === 'function' ? girAct_(b) : { ok: false, error: 'GIRenewals.gs is not in the project yet.' };
+      case 'gcm.renCode':        return typeof girCode_ === 'function' ? girCode_(b) : { ok: false, error: 'Renewals are being updated. Please call the branch.' };
+      case 'gcm.renIn':          return typeof girIn_ === 'function' ? girIn_(b) : { ok: false, error: 'Renewals are being updated. Please call the branch.' };
+      case 'gcm.renAnswer':      return typeof girAnswer_ === 'function' ? girAnswer_(b) : { ok: false, error: 'Renewals are being updated. Please call the branch.' };
+      case 'gcm.renGroupAnswer': return typeof girGroupAnswer_ === 'function' ? girGroupAnswer_(b) : { ok: false, error: 'Renewals are being updated. Please call the branch.' };
     }
     return { ok: false, error: 'Unknown action' };
   } catch (e) {
@@ -246,6 +263,9 @@ function gcmRefreshTick() {
   /* and once the branch manager has given the go, the 10:30 group day (star reminders, staff asked why, tasks), caught up
      here if its own trigger did not fire */
   try { gcmDayCatchUp_(d, h); } catch (e) {}
+  /* general insurance renewals (GIRenewals.gs): Guardian General's replies read, the follow-ups with the trail, the
+     client's reminders at 14 and 10 days and the call at 7 */
+  try { if (typeof girTick_ === 'function') girTick_({ auto: true }); } catch (e) {}
 }
 
 /* ── sheet plumbing ─────────────────────────────────────────────── */

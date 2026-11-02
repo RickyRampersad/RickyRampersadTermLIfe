@@ -1,5 +1,5 @@
 /**
- * RRB CSEC Study Hub — sync service.
+ * RRB SEA Study Hub — sync service.
  *
  * Lets one family (or one teacher's class) share study progress across devices.
  * A group has a code; anyone holding the code can read and write that group.

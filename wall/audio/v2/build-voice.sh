@@ -26,7 +26,7 @@ say w1 "It's a new financial year, and we've got a new way of working. Let me sh
 say w2 "One app, and one sign-in. Every tool we use, from the Log Book to the forms, lives at rickyrampersadbranch dot com, slash app."
 say w3 "So, who does what, every day? The Branch Manager, the Unit Manager, the BMA, Sales Support and our agents. Each one has a rhythm."
 say w4 "And every week has its beat. Premium letters every morning, group letters on Monday, and on Wednesday, our branch meeting, where we celebrate the week's wins."
-say w5 "This is Branch Intelligence. It reads a task's whole history, tells you where it stands, and drafts the reply. The managers check it and post it, and Sales Support get a brief."
+say w5 "This is Branch Intelligence. It reads a task's whole history, tells you where it stands, and drafts the reply. The managers and the BMA check it and post it, and Sales Support get the day's coach."
 say w6 "And here's the game for the new year. Par, three quests a day, streaks and levels, and one team goal: get the backlog down by Friday."
 say w7 "The Branch Manager, the Unit Manager, the BMA, Sales Support, and every one of our agents. One branch. Thank you, team. Here's to our new financial year!"
 say w8 "Here's how the papers move, end to end. The agent logs them, Sales Support signs for them, they're in by noon, and they go out on a transmittal."

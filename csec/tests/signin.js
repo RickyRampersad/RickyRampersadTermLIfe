@@ -121,11 +121,14 @@ const step=async(n,f)=>{try{await f();console.log('✓ '+n);pass++;}catch(e){con
     console.log('   '+(rows-1)+' entries, successes and refusals both shown');
   });
 
-  await step('the year picker offers all ten years and actually saves',async()=>{
+  await step('the year picker offers the five primary years and actually saves',async()=>{
+    /* The product is for SEA alone, so the ladder is Standard 1 to Standard 5 and
+       nothing above it is offered anywhere. */
     const opts=await pg.locator('#p-form option').allTextContents();
-    if(opts.length!==10) throw new Error('years offered='+opts.length+': '+opts.join(','));
-    if(!opts.some(o=>/Standard 1/.test(o))||!opts.some(o=>/Form 5/.test(o)))
+    if(opts.length!==5) throw new Error('years offered='+opts.length+': '+opts.join(','));
+    if(!opts.some(o=>/Standard 1/.test(o))||!opts.some(o=>/Standard 5/.test(o)))
       throw new Error('ladder not complete: '+opts.join(','));
+    if(opts.some(o=>/Form/.test(o))) throw new Error('a Form is still offered: '+opts.join(','));
     await pg.selectOption('#p-form','4');
     await pg.click('#save-prof');
     await pg.waitForTimeout(400);

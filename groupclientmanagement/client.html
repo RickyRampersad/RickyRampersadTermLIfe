@@ -325,6 +325,7 @@ footer a{color:inherit}
 </main>
 <footer>Questions? <a href="mailto:rickyrampersadsalessupport@myguardiangroup.com">rickyrampersadsalessupport@myguardiangroup.com</a> · <a href="../index.html">Ricky Rampersad Branch</a></footer>
 
+<script src="/myrenewal/renewal-card.js?v=2026-10-29"></script>
 <script>
 const SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
 const $ = id => document.getElementById(id);
@@ -376,6 +377,7 @@ async function open_() {
   const fromStar = RATE_IN && (toBill ? !A._bstars : !A._stars);
   if (fromStar) { if (toBill) A._bstars = RATE_IN; else A._stars = RATE_IN; saveDraft(); }
   render();
+  loadRenewals();
   /* a star tapped in the reminder or the bill: the page opens on the rating, with that star chosen */
   if (fromStar) { const r = $(toBill ? 'brate' : 'rate'); if (r) setTimeout(() => r.scrollIntoView({ block: 'start', behavior: 'smooth' }), 150); }
 }
@@ -478,11 +480,15 @@ function bindBrate() {
 /* the page in two tabs (25 October 2026): the weekly items and the billing never share a screen. The bill e-mail's link
    carries ?tab=billing; the weekly letter's opens on the items. */
 let CT = /(^|[?&])tab=billing(&|$)/.test(location.search) ? 'billing' : /(^|[?&])tab=people(&|$)/.test(location.search) ? 'people' : 'items';
+/* ?tab=renewals opens on the renewals once they are read (they arrive after the page) */
+const WANT_REN = /(^|[?&])tab=renewals(&|$)/.test(location.search);
 function ctabsHtml(hasBill, items) {
   const B = D.billing, owed = hasBill ? B.lines.reduce((n, l) => n + (l.owed > 0 ? 1 : 0), 0) : 0, pend = Array.isArray(D.pending) ? D.pending.length : 0;
   return '<div class="ctabs" role="tablist" aria-label="Your page"><button type="button" role="tab" class="ctab" data-ct="items" aria-selected="' + (CT === 'items') + '"><span class="lg">Your service items</span><span class="sh">Items</span><span class="n">' + items + '</span></button>' +
     (hasBill ? '<button type="button" role="tab" class="ctab" data-ct="billing" aria-selected="' + (CT === 'billing') + '"><span class="lg">Your billing</span><span class="sh">Billing</span>' + (owed ? '<i class="bdot" aria-hidden="true" title="an amount is still open"></i>' : '') + (B.statement ? '<span class="n">' + esc(B.statement.label.replace(/ \d{4}$/, '')) + '</span>' : '') + '</button>' : '') +
-    '<button type="button" role="tab" class="ctab" data-ct="people" aria-selected="' + (CT === 'people') + '"><span class="lg">Your people</span><span class="sh">People</span>' + (pend ? '<span class="n" title="' + pend + ' pending">' + pend + ' pending</span>' : '') + '</button></div>';
+    '<button type="button" role="tab" class="ctab" data-ct="people" aria-selected="' + (CT === 'people') + '"><span class="lg">Your people</span><span class="sh">People</span>' + (pend ? '<span class="n" title="' + pend + ' pending">' + pend + ' pending</span>' : '') + '</button>' +
+    /* general insurance renewals (29 October 2026): only when the group has one with a letter from us */
+    (renOn() ? '<button type="button" role="tab" class="ctab" data-ct="renewals" aria-selected="' + (CT === 'renewals') + '"><span class="lg">Your renewals</span><span class="sh">Renewals</span>' + (renOpen() ? '<span class="n">' + renOpen() + ' to approve</span>' : '') + '</button>' : '') + '</div>';
 }
 function bindCtabs() { document.querySelectorAll('[data-ct]').forEach(b => b.onclick = () => { CT = b.dataset.ct; render(); window.scrollTo(0, 0); }); }
 /* the statement of account the bill e-mail carried: this month's lines, the earlier invoices still open, what changed */
@@ -883,7 +889,7 @@ function render() {
     (D.nextLetter ? 'Your next letter comes ' + esc(D.nextLetter) + '.' : '') + '</p></div>' +
     '<div class="links">' + (D.film ? '<a class="pill" href="' + esc(D.film) + '" target="_blank" rel="noopener"><span class="play" aria-hidden="true">▶</span>How this page works · ' + esc(D.filmLength || '') + '</a>' : '') +
     '<a class="pill plain" href="' + (CT === 'billing' ? '#brate' : '#rate') + '">Rate our service</a></div></div>' +
-    ctabsHtml(hasBill, items.length) + (CT === 'billing' ? billingHtml() : CT === 'people' ? peopleHtml() : pendHtml() + comingHtml() +
+    ctabsHtml(hasBill, items.length) + (CT === 'renewals' && renOn() ? renewalsHtml() : CT === 'billing' ? billingHtml() : CT === 'people' ? peopleHtml() : pendHtml() + comingHtml() +
     '<div class="tiles"><div class="tile"><b>' + items.length + '</b><span>open items</span></div><div class="tile' + (waiting ? ' alert' : '') + '"><b>' + waiting + '</b><span>waiting on you</span></div>' +
     '<div class="tile' + (late ? ' alert' : '') + '"><b>' + late + '</b><span>past target</span></div><div class="tile"><b>' + D.doneWeek + '</b><span>completed this week</span></div></div>' +
     '<h2 class="sec">Your open items</h2><p class="sub">For each one, tell us whether it is correct. If something needs our attention, mark it and add a short note: it goes straight onto that item for the person handling it.</p>');
@@ -938,7 +944,36 @@ function render() {
   }
   $('app').innerHTML = h;
   $('prog').classList.toggle('hide', CT !== 'items');
-  bindCtabs(); if (CT === 'billing') bindBilling(); else if (CT === 'people') bindPeople(); else { bind(); bindPend(); progress(); }
+  bindCtabs(); if (CT === 'renewals' && renOn()) bindRenewals(); else if (CT === 'billing') bindBilling(); else if (CT === 'people') bindPeople(); else { bind(); bindPend(); progress(); }
+}
+/* ── the group's general insurance renewals (29 October 2026): its property, liability, motor fleet and other covers
+   renewing with Guardian General, read from GIRenewals.gs after the page opens, so the page never waits on them. The card
+   is /myrenewal/renewal-card.js, the same as the client's own renewal page. ── */
+function renOn() { return !!(D && Array.isArray(D.renewals) && D.renewals.length); }
+function renOpen() { return renOn() ? D.renewals.filter(r => r.open && !(r.answer && r.answer.decision === 'approve')).length : 0; }
+async function loadRenewals(said) {
+  if (typeof RenewalCard === 'undefined') return;
+  let r;
+  try { r = JSON.parse(await (await fetch(SVC + '?action=gcm.renGroup&lb=' + encodeURIComponent(CRED.lb) + '&code=' + encodeURIComponent(CRED.code) + '&z=' + Date.now())).text()); } catch (e) { return; }
+  if (!r || !r.ok) return;
+  const had = renOn();
+  if (WANT_REN && !had && (r.renewals || []).length) CT = 'renewals';
+  D.renewals = r.renewals || []; D.renSaid = said || '';
+  if (renOn() || had) render();
+}
+function renewalsHtml() {
+  return '<h2 class="sec">Your renewals</h2><p class="sub">Your general insurance with Guardian General, renewing soon: what renews, this year\'s premium against last year\'s, and your history since each policy began. Nothing is renewed until you say yes.</p>' +
+    (D.renSaid ? '<div class="done" role="status" style="margin:10px 0"><b>' + esc(D.renSaid) + '</b></div>' : '') +
+    D.renewals.map(v => RenewalCard.html(v, { group: true })).join('');
+}
+function bindRenewals() {
+  RenewalCard.bind($('app'), async (key, body) => {
+    let r;
+    try { r = JSON.parse(await (await fetch(SVC, { method: 'POST', body: JSON.stringify(Object.assign({ action: 'gcm.renGroupAnswer', lb: CRED.lb, code: CRED.code }, body)) })).text()); }
+    catch (e) { r = { ok: false, error: 'We could not reach our system. Check your connection and try again.' }; }
+    if (r.ok) { await loadRenewals(r.said); window.scrollTo(0, 0); }
+    return r;
+  });
 }
 function bind() {
   document.querySelectorAll('.ch').forEach(b => b.onclick = () => {

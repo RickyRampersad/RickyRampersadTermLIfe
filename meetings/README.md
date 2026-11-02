@@ -5,10 +5,11 @@ Lives at **rickyrampersadbranch.com/meetings**
 The whole meeting in one place: the agenda, what each person is presenting,
 who was in the room, the action tracker and the minutes.
 
-**Signing in *is* the attendance register.** There is no separate register to
-fill in and no sheet to reconcile afterwards. You open the meeting, press
-*I'm here*, and that writes your row — time-stamped, once, in the branch
-record.
+**There are two taps, not one.** Your agent number opens the page — that is
+all it does. Pressing ***I am here*** on the meeting is what writes your
+attendance row, time-stamped, once, in the branch record. There is no separate
+register to fill in and no sheet to reconcile afterwards, but a person who
+signs in and never presses the button is **absent**.
 
 ---
 

@@ -12,69 +12,128 @@
 
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#3A7BD5" />
 <title>Your Guardian Motor Policy, Decoded — Ricky Rampersad</title>
 <meta name="description" content="A plain-English walkthrough of the Guardian General Private Motor Vehicle Policy — what's covered, what's not, your No Claim Discount, optional benefits, and your duties." />
+<link rel="icon" type="image/png" href="/orphan-transition/board-mark.png" />
+<link rel="stylesheet" href="theme.css" />
+<script src="theme.js"></script>
 <style>
-  :root{
-    --navy-900:#0E2A47;--navy-800:#14395F;--teal-600:#0E8C8C;--teal-500:#12A5A0;--teal-50:#E9F7F6;
-    --gold:#F2B33D;--gold-ink:#5C3D00;--ink:#152435;--muted:#5B7186;--bg:#F4F8FB;
-    --red:#D64545;--red-50:#FCEDED;--green:#2F9E62;--green-50:#EAF7F0;
-    --radius:18px;--shadow:0 16px 40px rgba(14,42,71,.12);
-    --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  /* Page-specific pieces on top of the shared renewal theme (theme.css). */
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  .rr section[id]{scroll-margin-top:124px}
+  @media (max-width:400px){.rr .rr-tabs{top:54px}}
+  .rr .ii{display:inline-flex}
+  @media (max-width:400px){.rr .rr-top a.lk>span:last-child{display:none}.rr .rr-top a.lk{padding:6px 10px}}
+  /* white on the theme's light teal end measures under 4.5:1, so the teal buttons here run on the deeper renewal teal */
+  .rr .rr-btn.teal{background:linear-gradient(135deg,#107F78,var(--rn));box-shadow:0 8px 20px rgba(11,111,105,.28)}
+  .rr .crumb{display:inline-flex;align-items:center;gap:7px;color:#fff;font-weight:700;font-size:.9rem;text-decoration:none;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:6px 13px;min-height:40px;margin:0 0 14px}
+  .rr .crumb:hover{background:rgba(255,255,255,.26);color:#fff}
+  .rr .hero h1{max-width:24ch}
+  .rr .hero p{max-width:64ch}
+  .rr .hero .stats span{display:inline-flex;flex-direction:column}
+  @media (max-width:520px){.rr .hero .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.rr .hero .stats span{padding:7px 8px;font-size:.72rem;line-height:1.25}.rr .hero .stats span b{font-size:1.2rem}}
+  .rr .sec-sub{color:var(--dim);font-size:.92rem;margin:-4px 0 12px}
+
+  /* the accordions */
+  .rr details.acc{border:1.5px solid var(--line);border-radius:16px;margin:0 0 10px;background:#fff;overflow:hidden;transition:box-shadow .2s,border-color .2s}
+  .rr details.acc[open]{border-color:var(--line2);box-shadow:var(--sh)}
+  .rr details.acc summary{cursor:pointer;padding:12px 14px;font-weight:800;color:var(--ink);font-size:.98rem;list-style:none;display:flex;align-items:center;gap:12px;min-height:56px}
+  .rr details.acc summary::-webkit-details-marker{display:none}
+  .rr details.acc summary .si{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--sky);color:var(--blue);flex:none}
+  .rr details.acc summary .st{flex:1;min-width:0}
+  .rr details.acc summary .chev{color:var(--blue2);flex:none;transition:transform .25s var(--ease)}
+  .rr details.acc[open] summary .chev{transform:rotate(180deg)}
+  .rr details.acc .body{padding:2px 16px 16px;font-size:.93rem;animation:rr-rise .35s var(--ease) both}
+  .rr details.acc .body ul{padding-left:20px;margin:0 0 10px}
+  .rr details.acc .body li{margin:0 0 6px}
+  .rr details.acc .body strong{color:var(--ink)}
+  .rr .rr-note{margin:10px 0}
+  .rr .rr-note .ii svg.i{margin-top:2px}
+
+  /* No Claim Discount: two series by year */
+  .rr .gchart{display:flex;align-items:flex-end;gap:10px;height:180px;padding:22px 0 0;border-bottom:2px solid var(--line);margin:6px 0 4px}
+  .rr .gchart .g{flex:1;min-width:0;display:flex;align-items:flex-end;justify-content:center;gap:5px;height:100%}
+  .rr .gchart .g i{position:relative;display:block;flex:1;max-width:38px;height:var(--h);border-radius:8px 8px 2px 2px;transform-origin:50% 100%;animation:rr-grow .9s var(--ease) both}
+  .rr .gchart .g i.a{background:linear-gradient(180deg,var(--blue2),var(--mid))}
+  .rr .gchart .g i.b{background:linear-gradient(180deg,#2FB3A9,var(--rn));animation-delay:.12s}
+  .rr .gchart .g i b{position:absolute;left:50%;bottom:100%;transform:translateX(-50%);font-size:.72rem;color:var(--ink);font-style:normal;padding:0 0 3px;white-space:nowrap}
+  .rr .gchart-l{display:flex;gap:10px;font-size:.74rem;color:var(--dim);margin:0 0 6px}
+  .rr .gchart-l span{flex:1;min-width:0;text-align:center}
+  /* three short columns fit a phone, so this table stays a table */
+  @media (max-width:700px){
+    .rr table.ncdt{display:table;width:100%}.rr table.ncdt thead{display:table-header-group}.rr table.ncdt tbody{display:table-row-group;width:auto}
+    .rr table.ncdt tr{display:table-row;border:0;padding:0;margin:0;width:auto}
+    .rr table.ncdt td,.rr table.ncdt th{display:table-cell;width:auto;padding:8px 6px;border-bottom:1px solid var(--soft);white-space:normal}
+    .rr table.ncdt td:before{content:none}
   }
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.65;-webkit-font-smoothing:antialiased}
-  a{color:var(--teal-600)}
-  .wrap{width:min(860px,92%);margin-inline:auto}
-  header{background:linear-gradient(160deg,var(--navy-900),var(--teal-600) 160%);color:#fff;padding:52px 0 46px}
-  header .crumb{font-size:.85rem;margin-bottom:14px}
-  header .crumb a{color:#BFD9E8;text-decoration:none}
-  header h1{font-size:clamp(1.7rem,4.5vw,2.6rem);font-weight:800;letter-spacing:-.02em;line-height:1.15}
-  header p{color:#BFD9E8;margin-top:10px;max-width:640px}
-  main{padding:44px 0 70px}
-  .note{background:#FFF7E8;border:1.5px solid #F4D89A;color:#6B5426;border-radius:var(--radius);padding:16px 20px;font-size:.9rem;margin-bottom:30px}
-  h2.sec{font-size:1.3rem;font-weight:800;margin:38px 0 6px;letter-spacing:-.01em}
-  p.sec-sub{color:var(--muted);font-size:.93rem;margin-bottom:14px}
-  details{background:#fff;border:1px solid #E3EDF5;border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
-  details[open]{box-shadow:var(--shadow)}
-  summary{cursor:pointer;padding:16px 20px;font-weight:800;font-size:.98rem;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
-  summary::-webkit-details-marker{display:none}
-  summary::after{content:"+";font-size:1.3rem;color:var(--teal-600);font-weight:800;flex:none}
-  details[open] summary::after{content:"–"}
-  .body{padding:0 20px 20px;color:#33475b;font-size:.93rem}
-  .body p{margin-bottom:10px}
-  .body ul{padding-left:20px;margin-bottom:10px}
-  .body li{margin-bottom:5px}
-  .body strong{color:var(--ink)}
-  .good{background:var(--green-50);border-left:4px solid var(--green);padding:10px 14px;border-radius:8px;margin:10px 0}
-  .bad{background:var(--red-50);border-left:4px solid var(--red);padding:10px 14px;border-radius:8px;margin:10px 0}
-  .tip{background:var(--teal-50);border-left:4px solid var(--teal-500);padding:10px 14px;border-radius:8px;margin:10px 0}
-  table{width:100%;border-collapse:collapse;font-size:.9rem;margin:10px 0}
-  th{background:var(--navy-800);color:#fff;text-align:left;padding:8px 12px;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
-  td{padding:8px 12px;border-bottom:1px solid #EDF3F8}
-  .cta{background:#fff;border:1px solid #E3EDF5;border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;text-align:center;margin-top:40px}
-  .btn{display:inline-flex;align-items:center;gap:10px;font-weight:700;border-radius:999px;padding:14px 28px;border:none;cursor:pointer;font-size:1rem;text-decoration:none;background:var(--gold);color:var(--gold-ink)}
-  footer{background:var(--navy-900);color:#7E9AB0;padding:30px 0;font-size:.78rem;line-height:1.6}
+  .rr .stepback{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .rr .stepback span{display:inline-flex;align-items:center;gap:6px;background:var(--soft);border-radius:999px;padding:5px 12px;font-size:.84rem;font-weight:800;color:var(--ink)}
+  .rr .stepback span .ii svg.i{width:15px;height:15px;color:var(--dim)}
+
+  /* optional extra benefits by cover type */
+  .rr .matrix{width:100%;border-collapse:separate;border-spacing:0;font-size:.86rem;margin:4px 0 14px}
+  .rr .matrix th{font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);font-weight:800;padding:6px 3px;text-align:center}
+  .rr .matrix th:first-child{text-align:left}
+  .rr .matrix td{padding:7px 3px;border-top:1px solid var(--soft);text-align:center;vertical-align:middle}
+  .rr .matrix td:first-child{text-align:left;color:var(--ink);font-weight:700}
+  .rr .matrix td:first-child small{display:block;font-weight:500;color:var(--dim);font-size:.76rem}
+  .rr .yn{display:inline-flex;flex-direction:column;align-items:center;gap:1px;font-size:.64rem;font-weight:800;text-transform:uppercase}
+  .rr .yn .ii{width:24px;height:24px;border-radius:50%;display:grid;place-items:center}
+  .rr .yn .ii svg.i{width:14px;height:14px}
+  .rr .yn.y{color:var(--ok)}.rr .yn.y .ii{background:var(--okbg)}
+  .rr .yn.n{color:#5F6F8C}.rr .yn.n .ii{background:#EEF1F6}
+
+  /* the close */
+  .rr .cta{text-align:center}
+  .rr .cta .rr-band{text-align:center}
+  .rr .cta .rr-band p{max-width:52ch;margin:0 auto}
+  .rr .footer{background:#fff;border:1px solid #E3EAF5;border-radius:20px;padding:18px;box-shadow:var(--sh);font-size:.8rem;color:var(--dim);line-height:1.6}
+  .rr .footer b{color:var(--ink)}
 </style>
 </head>
-<body>
+<body class="rr">
 
-<header>
-  <div class="wrap">
-    <div class="crumb"><a href="index.html">← Back to your renewal</a></div>
-    <h1>Your Guardian motor policy, decoded.</h1>
-    <p>A plain-English walkthrough of the Guardian General Private Motor Vehicle Policy (GG-MOT-POL-APV-10/09) — because you should always understand exactly what you're paying for.</p>
-  </div>
+<header class="rr-top">
+  <span class="mark"><img src="/orphan-transition/board-mark.png" alt=""></span>
+  <span class="brand">Ricky Rampersad Branch<i>Your motor policy, decoded</i></span>
+  <a class="lk" aria-label="Back to your renewal" href="index.html"><span class="ii" data-i="back"></span><span>Renewal</span></a>
+  <span class="prog" aria-hidden="true"></span>
 </header>
 
-<main>
-  <div class="wrap">
-    <div class="note">📌 This guide explains the policy in everyday language. The official policy wording, your Schedule and your Certificate of Insurance are the binding documents — if anything here differs from them, they win. Want the full official wording? Ask us and we'll send it.</div>
+<main class="rr-main">
 
-    <h2 class="sec">The building blocks</h2>
-    <p class="sec-sub">Your insurance isn't one document — it's a set that works together.</p>
-    <details>
-      <summary>📄 What makes up "the policy"</summary>
+  <section class="rr-card hero" id="top">
+    <div class="rr-band">
+      <a class="crumb" href="index.html"><span class="ii" data-i="back"></span>Back to your renewal</a>
+      <h1>Your Guardian motor policy, decoded.</h1>
+      <p>A plain-English walkthrough of the Guardian General Private Motor Vehicle Policy (GG-MOT-POL-APV-10/09) — because you should always understand exactly what you're paying for.</p>
+      <div class="stats">
+        <span><b class="cu" style="--to:9"><span class="vh">9</span></b>parts, explained</span>
+        <span><b class="cu" style="--to:8"><span class="vh">8</span></b>optional extra benefits</span>
+        <span><b>60%</b>top No Claim Discount</span>
+      </div>
+    </div>
+    <div class="rr-note"><span class="ii" data-i="info"></span><span>This guide explains the policy in everyday language. The official policy wording, your Schedule and your Certificate of Insurance are the binding documents — if anything here differs from them, they win. Want the full official wording? Ask us and we'll send it.</span></div>
+  </section>
+
+  <nav class="rr-tabs" id="tabs" aria-label="Parts of the policy">
+    <a href="#blocks"><span class="ii" data-i="book"></span>Building blocks</a>
+    <a href="#s2"><span class="ii" data-i="car"></span>Your vehicle</a>
+    <a href="#s3"><span class="ii" data-i="users"></span>Other people</a>
+    <a href="#s4"><span class="ii" data-i="gift"></span>Built-in benefits</a>
+    <a href="#s5"><span class="ii" data-i="plus"></span>Optional benefits</a>
+    <a href="#s6"><span class="ii" data-i="money"></span>No Claim Discount</a>
+    <a href="#s7"><span class="ii" data-i="alert"></span>Never covered</a>
+    <a href="#s8"><span class="ii" data-i="task"></span>Your duties</a>
+    <a href="#s9"><span class="ii" data-i="bookmark"></span>Endorsements</a>
+  </nav>
+
+  <section class="rr-card sr" id="blocks">
+    <div class="rr-sec"><span class="ic"><span class="ii" data-i="book"></span></span><div><b>The building blocks</b><small>Your insurance isn't one document — it's a set that works together</small></div></div>
+    <details class="acc">
+      <summary><span class="si"><span class="ii" data-i="doc"></span></span><span class="st">What makes up "the policy"</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <ul>
           <li><strong>Your Proposal &amp; Declaration</strong> — the answers you gave when applying. The whole contract is built on these being true, so keeping them updated matters (more on that below).</li>
@@ -82,11 +141,11 @@
           <li><strong>The Certificate of Insurance</strong> — the legal proof of cover; it names who may drive (the "Authorised Drivers") and what the vehicle may be used for.</li>
           <li><strong>The policy wording</strong> — the rulebook explained on this page.</li>
         </ul>
-        <div class="tip">💡 Which sections of the rulebook apply to you depends on the cover named in your Schedule: <strong>Comprehensive</strong>, <strong>Third Party Fire &amp; Theft</strong>, or <strong>Third Party</strong>.</div>
+        <div class="rr-note"><span class="ii" data-i="info"></span><span>Which sections of the rulebook apply to you depends on the cover named in your Schedule: <strong>Comprehensive</strong>, <strong>Third Party Fire &amp; Theft</strong>, or <strong>Third Party</strong>.</span></div>
       </div>
     </details>
-    <details>
-      <summary>📖 Key words the policy uses (and what they really mean)</summary>
+    <details class="acc">
+      <summary><span class="si"><span class="ii" data-i="book"></span></span><span class="st">Key words the policy uses (and what they really mean)</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <ul>
           <li><strong>Sum Insured</strong> — the maximum Guardian pays for your vehicle. Set it right: claims settle at market value or sum insured, <em>whichever is less</em>.</li>
@@ -98,23 +157,25 @@
         </ul>
       </div>
     </details>
+  </section>
 
-    <h2 class="sec">Section 2 — Loss or damage to your vehicle</h2>
-    <p class="sec-sub">Applies to Comprehensive (all of it) and Fire &amp; Theft (fire/theft causes only).</p>
-    <details>
-      <summary>🚗 What Guardian pays when your vehicle is damaged or stolen</summary>
+  <section class="rr-card sr" id="s2">
+    <div class="rr-sec"><span class="ic"><span class="ii" data-i="car"></span></span><div><b>Section 2 — Loss or damage to your vehicle</b><small>Applies to Comprehensive (all of it) and Fire &amp; Theft (fire/theft causes only)</small></div></div>
+    <details class="acc" open>
+      <summary><span class="si"><span class="ii" data-i="car"></span></span><span class="st">What Guardian pays when your vehicle is damaged or stolen</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <p>Guardian chooses to <strong>repair</strong>, <strong>replace</strong>, or <strong>pay cash</strong> — and the ceiling is always the lesser of market value and your sum insured, minus your excess.</p>
-        <div class="good">✔ Also included: reasonable towing/protection costs to the nearest repairer after a covered incident, and you may authorise repairs yourself below the limit in your Schedule (send the estimate, accident report form and a photo right away).</div>
-        <div class="bad">✘ Not paid: wear &amp; tear, depreciation, mechanical/electrical breakdown, tyres alone, glass alone (unless OEB 2), loss of use, and betterment (repairs that leave the car better than before).</div>
-        <div class="tip">💡 Total loss by theft: Guardian may wait 30 days from the report before settling. If the vehicle is financed, settlement goes to the finance company first.</div>
+        <div class="rr-note ok"><span class="ii" data-i="check"></span><span>Also included: reasonable towing/protection costs to the nearest repairer after a covered incident, and you may authorise repairs yourself below the limit in your Schedule (send the estimate, accident report form and a photo right away).</span></div>
+        <div class="rr-note bad"><span class="ii" data-i="x"></span><span>Not paid: wear &amp; tear, depreciation, mechanical/electrical breakdown, tyres alone, glass alone (unless OEB 2), loss of use, and betterment (repairs that leave the car better than before).</span></div>
+        <div class="rr-note"><span class="ii" data-i="info"></span><span>Total loss by theft: Guardian may wait 30 days from the report before settling. If the vehicle is financed, settlement goes to the finance company first.</span></div>
       </div>
     </details>
+  </section>
 
-    <h2 class="sec">Section 3 — Your liability to other people</h2>
-    <p class="sec-sub">This is the heart of every policy — and the part the law requires.</p>
-    <details>
-      <summary>🧑‍⚖️ Who's protected when there's an accident</summary>
+  <section class="rr-card sr" id="s3">
+    <div class="rr-sec"><span class="ic"><span class="ii" data-i="users"></span></span><div><b>Section 3 — Your liability to other people</b><small>This is the heart of every policy — and the part the law requires</small></div></div>
+    <details class="acc" open>
+      <summary><span class="si"><span class="ii" data-i="scale"></span></span><span class="st">Who's protected when there's an accident</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <p>Guardian covers what you become <strong>legally liable to pay</strong> for injury or death to others and damage to their property, up to the Limits of Liability in your Schedule. That protection extends to:</p>
         <ul>
@@ -123,14 +184,16 @@
           <li>You, when driving another private car you don't own or haven't hired</li>
           <li>Your employer or partner in connection with your vehicle's use</li>
         </ul>
-        <div class="good">✔ Legal costs: Guardian can arrange representation at inquests and defend court proceedings, and covers emergency medical treatment required by law. Manslaughter defence costs are included within limits (driver must be an authorised driver, 21+).</div>
-        <div class="bad">✘ Not covered: injury to your own employees in the course of work, property in your custody or being carried in the vehicle, and damage to the insured vehicle itself (that's Section 2's job).</div>
+        <div class="rr-note ok"><span class="ii" data-i="check"></span><span>Legal costs: Guardian can arrange representation at inquests and defend court proceedings, and covers emergency medical treatment required by law. Manslaughter defence costs are included within limits (driver must be an authorised driver, 21+).</span></div>
+        <div class="rr-note bad"><span class="ii" data-i="x"></span><span>Not covered: injury to your own employees in the course of work, property in your custody or being carried in the vehicle, and damage to the insured vehicle itself (that's Section 2's job).</span></div>
       </div>
     </details>
+  </section>
 
-    <h2 class="sec">Section 4 — Extra benefits built in</h2>
-    <details>
-      <summary>🎁 Benefits many clients don't know they have</summary>
+  <section class="rr-card sr" id="s4">
+    <div class="rr-sec"><span class="ic"><span class="ii" data-i="gift"></span></span><div><b>Section 4 — Extra benefits built in</b><small>Benefits many clients don't know they have</small></div></div>
+    <details class="acc">
+      <summary><span class="si"><span class="ii" data-i="gift"></span></span><span class="st">Benefits many clients don't know they have</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <ul>
           <li><strong>Garage fire damage</strong> — if fire damages your private garage and no other policy covers it.</li>
@@ -139,84 +202,112 @@
           <li><strong>Luggage &amp; personal effects</strong> — covered in the vehicle, though money, jewellery, phones, laptops and business goods are excluded.</li>
           <li><strong>Motor trade protection</strong> — cover continues while your car is with the mechanic for service or repair.</li>
         </ul>
-        <p style="font-size:.85rem;color:var(--muted)">Which of these apply depends on your cover type — comprehensive gets the full set; third party policies get a reduced set.</p>
+        <p class="muted">Which of these apply depends on your cover type — comprehensive gets the full set; third party policies get a reduced set.</p>
       </div>
     </details>
+  </section>
 
-    <h2 class="sec">Section 5 — Optional Extra Benefits (the renewal menu)</h2>
-    <p class="sec-sub">Each costs a little extra and must be listed by number on your Schedule. Renewal is the perfect time to add them.</p>
-    <details open>
-      <summary>🌊 OEB 1 — Special Perils (our #1 recommendation)</summary>
+  <section class="rr-card sr" id="s5">
+    <div class="rr-sec" style="--c:var(--rn);--c2:#2FB3A9"><span class="ic"><span class="ii" data-i="plus"></span></span><div><b>Section 5 — Optional Extra Benefits (the renewal menu)</b><small>Each costs a little extra and must be listed by number on your Schedule. Renewal is the perfect time to add them.</small></div></div>
+    <table class="matrix" aria-label="Which cover types each optional benefit is available on">
+      <thead><tr><th scope="col">Benefit</th><th scope="col">Comp&shy;rehensive</th><th scope="col">Fire &amp; Theft</th><th scope="col">Third party</th></tr></thead>
+      <tbody>
+        <tr><td>OEB 1<small>Special Perils</small></td><td><span class="yn y"><span class="ii" data-i="check"></span>Yes</span></td><td><span class="yn n"><span class="ii" data-i="x"></span>No</span></td><td><span class="yn n"><span class="ii" data-i="x"></span>No</span></td></tr>
+        <tr><td>OEB 2<small>Windscreen &amp; glass</small></td><td><span class="yn y"><span class="ii" data-i="check"></span>Yes</span></td><td><span class="yn y"><span class="ii" data-i="check"></span>Yes</span></td><td><span class="yn n"><span class="ii" data-i="x"></span>No</span></td></tr>
+        <tr><td>OEB 3<small>Passenger accident</small></td><td><span class="yn y"><span class="ii" data-i="check"></span>Yes</span></td><td><span class="yn y"><span class="ii" data-i="check"></span>Yes</span></td><td><span class="yn y"><span class="ii" data-i="check"></span>Yes</span></td></tr>
+        <tr><td>OEB 4<small>Courtesy car</small></td><td><span class="yn y"><span class="ii" data-i="check"></span>Yes</span></td><td><span class="yn n"><span class="ii" data-i="x"></span>No</span></td><td><span class="yn n"><span class="ii" data-i="x"></span>No</span></td></tr>
+        <tr><td>OEB 5<small>Agreed value</small></td><td><span class="yn y"><span class="ii" data-i="check"></span>Yes</span></td><td><span class="yn y"><span class="ii" data-i="check"></span>Yes</span></td><td><span class="yn n"><span class="ii" data-i="x"></span>No</span></td></tr>
+        <tr><td>OEB 6<small>Hospitalisation</small></td><td><span class="yn y"><span class="ii" data-i="check"></span>Yes</span></td><td><span class="yn n"><span class="ii" data-i="x"></span>No</span></td><td><span class="yn n"><span class="ii" data-i="x"></span>No</span></td></tr>
+        <tr><td>OEB 7 &amp; 8<small>Higher limits</small></td><td><span class="yn y"><span class="ii" data-i="check"></span>Yes</span></td><td><span class="yn y"><span class="ii" data-i="check"></span>Yes</span></td><td><span class="yn y"><span class="ii" data-i="check"></span>Yes</span></td></tr>
+      </tbody>
+    </table>
+    <details class="acc" open>
+      <summary><span class="si" style="background:var(--rnbg);color:var(--rn)"><span class="ii" data-i="storm"></span></span><span class="st">OEB 1 — Special Perils (our #1 recommendation)</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <p>The standard policy <strong>excludes flood, hurricane, windstorm, tornado, earthquake and other natural disasters</strong>. OEB 1 deletes that exclusion.</p>
-        <div class="tip">💡 In Trinidad &amp; Tobago's rainy season, this is the difference between a covered claim and a total loss you carry alone. If you have comprehensive cover and no OEB 1, ask us for the price today.</div>
+        <div class="rr-note"><span class="ii" data-i="info"></span><span>In Trinidad &amp; Tobago's rainy season, this is the difference between a covered claim and a total loss you carry alone. If you have comprehensive cover and no OEB 1, ask us for the price today.</span></div>
         <p><em>Available on: Comprehensive.</em></p>
       </div>
     </details>
-    <details>
-      <summary>🪟 OEB 2 — Windscreen &amp; All Glass</summary>
+    <details class="acc">
+      <summary><span class="si"><span class="ii" data-i="glass"></span></span><span class="st">OEB 2 — Windscreen &amp; All Glass</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <p>Glass-only claims are paid with <strong>no excess</strong> and <strong>no impact on your No Claim Discount</strong>. After a replacement, cover reinstates free once per period up to $2,500.</p>
         <p><em>Available on: Comprehensive and Fire &amp; Theft.</em></p>
       </div>
     </details>
-    <details>
-      <summary>👥 OEB 3 — Personal Accident for Un-named Passengers</summary>
+    <details class="acc">
+      <summary><span class="si"><span class="ii" data-i="users"></span></span><span class="st">OEB 3 — Personal Accident for Un-named Passengers</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <p>Extends lump-sum accident benefits (death/serious injury, ages 17–65, plus $50/week disablement up to 26 weeks) to your passengers. If you carry more people than the vehicle's seating capacity, benefits reduce pro-rata.</p>
         <p><em>Available on: all cover types.</em></p>
       </div>
     </details>
-    <details>
-      <summary>🚗 OEB 4 — Courtesy Car / Loss of Use</summary>
+    <details class="acc">
+      <summary><span class="si"><span class="ii" data-i="car"></span></span><span class="st">OEB 4 — Courtesy Car / Loss of Use</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <p>While your vehicle is being repaired after a covered claim (or until a total loss is finalised), Guardian provides a substitute vehicle or up to <strong>$100/day</strong> toward a registered rental — up to the number of days on your Schedule.</p>
         <p><em>Available on: Comprehensive.</em></p>
       </div>
     </details>
-    <details>
-      <summary>📋 OEB 5 — Agreed Value</summary>
+    <details class="acc">
+      <summary><span class="si"><span class="ii" data-i="doc"></span></span><span class="st">OEB 5 — Agreed Value</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <p>On a total loss, Guardian pays your <strong>Sum Insured</strong> (less 15%/year depreciation applied pro-rata, less excess) instead of debating market value after the fact.</p>
-        <div class="tip">💡 The catch: it only works if you provide a written valuation from an approved valuator at the start of each period — another reason valuations at renewal matter.</div>
+        <div class="rr-note"><span class="ii" data-i="info"></span><span>The catch: it only works if you provide a written valuation from an approved valuator at the start of each period — another reason valuations at renewal matter.</span></div>
         <p><em>Available on: Comprehensive and Fire &amp; Theft.</em></p>
       </div>
     </details>
-    <details>
-      <summary>🏥 OEB 6 — Hospitalisation</summary>
+    <details class="acc">
+      <summary><span class="si"><span class="ii" data-i="hospital"></span></span><span class="st">OEB 6 — Hospitalisation</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <p>Up to <strong>$15,000 per 12-month period</strong> toward hospital bills from injury or sickness (reimbursement basis; claims within 90 days with original bills). Benefits halve at 65 and end at 70; pre-existing conditions, pregnancy and certain other causes are excluded.</p>
         <p><em>Available on: Comprehensive.</em></p>
       </div>
     </details>
-    <details>
-      <summary>⚖️ OEB 7 &amp; 8 — Increased Legal &amp; Third-Party Limits</summary>
+    <details class="acc">
+      <summary><span class="si"><span class="ii" data-i="scale"></span></span><span class="st">OEB 7 &amp; 8 — Increased Legal &amp; Third-Party Limits</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <p>OEB 7 raises the manslaughter legal-defence limit; OEB 8 raises your third-party liability limits. Worth discussing if your exposure is higher than average — commercial contexts, frequent passengers, high-traffic driving.</p>
         <p><em>Available on: all cover types.</em></p>
       </div>
     </details>
+  </section>
 
-    <h2 class="sec">Section 6 — Your No Claim Discount</h2>
-    <details open>
-      <summary>💰 The discount you've earned — and how it's protected</summary>
+  <section class="rr-card sr" id="s6">
+    <div class="rr-sec" style="--c:var(--ok);--c2:#28C286"><span class="ic"><span class="ii" data-i="money"></span></span><div><b>Section 6 — Your No Claim Discount</b><small>The discount you've earned — and how it's protected</small></div></div>
+    <div class="gchart" role="img" aria-label="No Claim Discount by claim-free years. Comprehensive: 1 year 30%, 2 years 40%, 3 years 50%, 4 or more years 60%. Third Party and TPF&amp;T: 15%, 20%, 25%, 35%.">
+      <div class="g"><i class="a" style="--h:42%"><b>30%</b></i><i class="b" style="--h:21%"><b>15%</b></i></div>
+      <div class="g"><i class="a" style="--h:56%"><b>40%</b></i><i class="b" style="--h:28%"><b>20%</b></i></div>
+      <div class="g"><i class="a" style="--h:70%"><b>50%</b></i><i class="b" style="--h:35%"><b>25%</b></i></div>
+      <div class="g"><i class="a" style="--h:84%"><b>60%</b></i><i class="b" style="--h:49%"><b>35%</b></i></div>
+    </div>
+    <div class="gchart-l" aria-hidden="true"><span>1 year</span><span>2 years</span><span>3 years</span><span>4+ years</span></div>
+    <ul class="rr-key"><li style="--c:var(--blue)">Comprehensive</li><li style="--c:var(--rn2)">Third Party / TPF&amp;T</li></ul>
+    <details class="acc" open>
+      <summary><span class="si"><span class="ii" data-i="money"></span></span><span class="st">The discount you've earned — and how it's protected</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
-        <table>
-          <tr><th>Claim-free years</th><th>Comprehensive</th><th>Third Party / TPF&amp;T</th></tr>
-          <tr><td>1 year</td><td><strong>30%</strong></td><td><strong>15%</strong></td></tr>
-          <tr><td>2 consecutive</td><td><strong>40%</strong></td><td><strong>20%</strong></td></tr>
-          <tr><td>3 consecutive</td><td><strong>50%</strong></td><td><strong>25%</strong></td></tr>
-          <tr><td>4+ consecutive</td><td><strong>60%</strong></td><td><strong>35%</strong></td></tr>
+        <table class="rr-table ncdt">
+          <thead><tr><th>Claim-free years</th><th>Comprehensive</th><th>Third Party / TPF&amp;T</th></tr></thead>
+          <tbody>
+            <tr><td data-l="Claim-free years">1 year</td><td data-l="Comprehensive"><strong>30%</strong></td><td data-l="Third Party / TPF&amp;T"><strong>15%</strong></td></tr>
+            <tr><td data-l="Claim-free years">2 consecutive</td><td data-l="Comprehensive"><strong>40%</strong></td><td data-l="Third Party / TPF&amp;T"><strong>20%</strong></td></tr>
+            <tr><td data-l="Claim-free years">3 consecutive</td><td data-l="Comprehensive"><strong>50%</strong></td><td data-l="Third Party / TPF&amp;T"><strong>25%</strong></td></tr>
+            <tr><td data-l="Claim-free years">4+ consecutive</td><td data-l="Comprehensive"><strong>60%</strong></td><td data-l="Third Party / TPF&amp;T"><strong>35%</strong></td></tr>
+          </tbody>
         </table>
+        <div class="stepback"><span>50% <span class="ii" data-i="arrow"></span> 30%</span><span>60% <span class="ii" data-i="arrow"></span> 40%</span></div>
         <p><strong>Step-Back (comprehensive):</strong> after you've earned at least the 3rd-year discount, one claim doesn't zero you — 50% steps back to 30%, and 60% to 40%. A second claim in the same period loses the discount.</p>
         <p><strong>Protected maximum:</strong> after 2+ consecutive years at the full 60% with Guardian, a single claim leaves your discount untouched.</p>
-        <div class="tip">💡 Each vehicle earns its own discount even under one policy — and emergency-treatment payments alone don't count as a claim against it.</div>
+        <div class="rr-note"><span class="ii" data-i="info"></span><span>Each vehicle earns its own discount even under one policy — and emergency-treatment payments alone don't count as a claim against it.</span></div>
       </div>
     </details>
+  </section>
 
-    <h2 class="sec">Section 7 — What's never covered (unless added back)</h2>
-    <details>
-      <summary>🚫 The general exclusions, in plain English</summary>
+  <section class="rr-card sr" id="s7">
+    <div class="rr-sec" style="--c:var(--bad);--c2:#E06A5E"><span class="ic"><span class="ii" data-i="alert"></span></span><div><b>Section 7 — What's never covered (unless added back)</b><small>The general exclusions, in plain English</small></div></div>
+    <details class="acc">
+      <summary><span class="si" style="background:var(--badbg);color:var(--bad)"><span class="ii" data-i="x"></span></span><span class="st">The general exclusions, in plain English</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <ul>
           <li><strong>Natural disasters</strong> — flood, hurricane, windstorm, earthquake, volcanic eruption… <em>unless you add OEB 1 Special Perils.</em></li>
@@ -227,13 +318,15 @@
           <li><strong>War, terrorism, nuclear risks, data/cyber events</strong> — standard market exclusions.</li>
           <li><strong>Airport airside areas</strong> — vehicles in restricted airport zones.</li>
         </ul>
-        <p style="font-size:.85rem;color:var(--muted)">Where the law (the Motor Vehicles Insurance (Third-Party Risks) legislation) requires Guardian to pay a third party anyway, Guardian can recover that money from you if the policy terms were broken — one more reason the rules above matter.</p>
+        <p class="muted">Where the law (the Motor Vehicles Insurance (Third-Party Risks) legislation) requires Guardian to pay a third party anyway, Guardian can recover that money from you if the policy terms were broken — one more reason the rules above matter.</p>
       </div>
     </details>
+  </section>
 
-    <h2 class="sec">Section 8 — Your duties (the ones that decide claims)</h2>
-    <details>
-      <summary>📝 Do these things and claims go smoothly</summary>
+  <section class="rr-card sr" id="s8">
+    <div class="rr-sec" style="--c:var(--rn);--c2:#2FB3A9"><span class="ic"><span class="ii" data-i="task"></span></span><div><b>Section 8 — Your duties (the ones that decide claims)</b><small>Do these things and claims go smoothly</small></div></div>
+    <details class="acc">
+      <summary><span class="si"><span class="ii" data-i="task"></span></span><span class="st">Do these things and claims go smoothly</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <ul>
           <li><strong>Keep the vehicle roadworthy</strong> and allow Guardian to inspect it.</li>
@@ -243,14 +336,16 @@
           <li><strong>After an accident,</strong> don't drive the car before repairs if driving could worsen the damage — further damage isn't paid.</li>
           <li><strong>Disclose changes immediately:</strong> replacing the vehicle, modifications, different use, new address. Your renewal is built on your original declarations staying true — this is exactly what the "I have changes" option on your renewal page is for.</li>
         </ul>
-        <div class="bad">✘ Fraudulent or exaggerated claims void the policy completely — Guardian keeps the premium and can recover anything paid.</div>
-        <p style="font-size:.85rem;color:var(--muted)">Also in this section: cancellation rules (10 days' notice from Guardian with a refund of unused premium; you can cancel anytime with short-period rates applied), arbitration for disputed amounts, and coordination when another policy covers the same loss.</p>
+        <div class="rr-note bad"><span class="ii" data-i="x"></span><span>Fraudulent or exaggerated claims void the policy completely — Guardian keeps the premium and can recover anything paid.</span></div>
+        <p class="muted">Also in this section: cancellation rules (10 days' notice from Guardian with a refund of unused premium; you can cancel anytime with short-period rates applied), arbitration for disputed amounts, and coordination when another policy covers the same loss.</p>
       </div>
     </details>
+  </section>
 
-    <h2 class="sec">Section 9 — Endorsements</h2>
-    <details>
-      <summary>🔖 Special conditions that may be on your Schedule</summary>
+  <section class="rr-card sr" id="s9">
+    <div class="rr-sec"><span class="ic"><span class="ii" data-i="bookmark"></span></span><div><b>Section 9 — Endorsements</b><small>Special conditions that may be on your Schedule</small></div></div>
+    <details class="acc">
+      <summary><span class="si"><span class="ii" data-i="bookmark"></span></span><span class="st">Special conditions that may be on your Schedule</span><span class="chev"><span class="ii" data-i="chev"></span></span></summary>
       <div class="body">
         <ul>
           <li><strong>Hire purchase / mortgage / lease</strong> — claim settlements are paid to the finance company, bank or lessor first.</li>
@@ -259,22 +354,65 @@
         </ul>
       </div>
     </details>
+  </section>
 
-    <div class="cta">
-      <h2 style="font-weight:800;font-size:1.3rem;margin-bottom:6px">Questions about any of this?</h2>
-      <p style="color:var(--muted);margin-bottom:18px">That's literally what we're here for. Ask us anything when you confirm your renewal — or add any Optional Extra Benefit with one tick.</p>
-      <a class="btn" href="index.html#respond">Back to My Renewal →</a>
+  <section class="rr-card cta sr" id="questions">
+    <div class="rr-band t-renew">
+      <h2>Questions about any of this?</h2>
+      <p>That's literally what we're here for. Ask us anything when you confirm your renewal — or add any Optional Extra Benefit with one tick.</p>
     </div>
-  </div>
+    <a class="rr-btn teal main" href="index.html#respond">Back to My Renewal <span class="ii" data-i="arrow"></span></a>
+  </section>
+
+  <footer class="footer">
+    <b>Prepared by Ricky Rampersad, Guardian Group Agent · (868) 678-5921 · ricky.rampersad@myguardiangroup.com</b><br/><br/>
+    This page summarises the Guardian General Insurance Limited Private Motor Vehicle Policy (ref. GG-MOT-POL-APV-10/09) in plain language for client education. It is not the policy. Your official policy wording, Schedule, Certificate of Insurance and any endorsements are the binding contract documents and prevail over anything written here. Benefit amounts and availability depend on your cover type and Schedule.
+  </footer>
 </main>
 
-<footer>
-  <div class="wrap">
-    Prepared by Ricky Rampersad, Guardian Group Agent · (868) 678-5921 · ricky.rampersad@myguardiangroup.com<br/><br/>
-    This page summarises the Guardian General Insurance Limited Private Motor Vehicle Policy (ref. GG-MOT-POL-APV-10/09) in plain language for client education. It is not the policy. Your official policy wording, Schedule, Certificate of Insurance and any endorsements are the binding contract documents and prevail over anything written here. Benefit amounts and availability depend on your cover type and Schedule.
-  </div>
-</footer>
+<script>
+/* Line icons: the theme's set (RR.i), with the few this page needs added. */
+const XI = {
+  x: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+  storm: '<path d="M7 15.5h10.5a3.5 3.5 0 0 0 .4-7A6 6 0 0 0 6.4 9.6 3 3 0 0 0 7 15.5z"/><path d="M12.5 15l-2 3h3l-2 3"/>',
+  glass: '<path d="M3 16C4.5 9.5 7.8 6.5 12 6.5s7.5 3 9 9.5z"/><path d="M10 9.5l-1.5 3 2 1-1 2.5"/>',
+  hospital: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/>',
+  scale: '<path d="M12 4v16M8 20h8M5 7.5h14"/><path d="M5 7.5l-2.5 5.5a2.5 2.5 0 0 0 5 0zM19 7.5l-2.5 5.5a2.5 2.5 0 0 0 5 0z"/>',
+  bookmark: '<path d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/>',
+  chev: '<path d="M6 9l6 6 6-6"/>'
+};
+function ico(n) {
+  if (XI[n]) return '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + XI[n] + '</svg>';
+  return window.RR ? RR.i(n) : "";
+}
+document.querySelectorAll("[data-i]").forEach((el) => { el.innerHTML = ico(el.getAttribute("data-i")); el.setAttribute("aria-hidden", "true"); });
 
+/* A tab opens the part it names, so the reader lands on the words. */
+const nav = document.getElementById("tabs");
+nav.addEventListener("click", (e) => {
+  const a = e.target.closest('a[href^="#"]'); if (!a) return;
+  const sec = document.querySelector(a.getAttribute("href"));
+  const d = sec && sec.querySelector("details.acc");
+  if (d) d.open = true;
+});
+(function watchTabs() {
+  const links = Array.from(nav.querySelectorAll('a[href^="#"]'));
+  const pairs = links.map((a) => [document.querySelector(a.getAttribute("href")), a]).filter((p) => p[0]);
+  let last = null;
+  const on = () => {
+    let cur = pairs[0][1];
+    pairs.forEach(([s, a]) => { if (s.getBoundingClientRect().top - 140 <= 0) cur = a; });
+    links.forEach((a) => { const isOn = a === cur; a.classList.toggle("on", isOn); if (isOn) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
+    if (cur !== last) {
+      last = cur;
+      const left = cur.offsetLeft - (nav.clientWidth - cur.offsetWidth) / 2;
+      try { nav.scrollTo({ left: Math.max(0, left), behavior: window.RR && RR.calm() ? "auto" : "smooth" }); } catch (e) { nav.scrollLeft = left; }
+    }
+  };
+  addEventListener("scroll", on, { passive: true }); on();
+})();
+if (window.RR) RR.init();
+</script>
 <!-- rrb-views -->
 <script>
 (function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{

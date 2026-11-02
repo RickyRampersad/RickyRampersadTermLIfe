@@ -127,6 +127,11 @@ const server = http.createServer((req, res) => {
   await page.click('#submitBtn');
   ok('no declaration, refused', /declaration/.test(await page.textContent('#subErr')));
   await page.check('#declare');
+  await page.click('#submitBtn');
+  ok('no one named to hand to, refused', /handing the papers to/.test(await page.textContent('#subErr')));
+  const hopts = await page.$$eval('#handSel option', o => o.map(x => x.textContent));
+  ok('the hand-in list is the staff, and "not yet"', hopts.some(t => /Sam Support/.test(t)) && hopts.some(t => /Not yet/.test(t)), hopts.join(' | '));
+  await page.selectOption('#handSel', 'Sam Support');
   const wide = await page.evaluate(() => document.documentElement.scrollWidth);
   ok('nothing runs off the phone', wide <= 390, wide);
   if (SHOTS) await page.screenshot({ path: SHOTS + '/lb-2-form.png', fullPage: true });
@@ -139,7 +144,8 @@ const server = http.createServer((req, res) => {
      sub.entry.items.every(i => i.department === 'GLOC CS RSC - CHAGUANAS' && i.portfolioId === 'a02000000000002AAA'));
   await page.click('#seeMine');
   await page.waitForSelector('#mine .grp');
-  ok('My log shows it waiting to be handed in', /Logged · hand it in/.test(await page.textContent('#mine')));
+  ok('My log shows who has it, waiting for their signature', /With Sam · to sign/.test(await page.textContent('#mine')) && /Handed to Sam Support/.test(await page.textContent('#mine')));
+  ok('the person named is asked to sign', env.__mail.some(m => /Sign for these/.test(m.subject) && /sam@example\.com/.test(m.htmlBody)));
 
   /* what usually travels together */
   await page.click('[data-tab=log]');
@@ -149,6 +155,8 @@ const server = http.createServer((req, res) => {
   await page.waitForFunction(() => /policy on record/.test((document.getElementById('polLine') || {}).textContent || ''));
   await page.selectOption('#docSel', 'ACH Form');
   await page.check('#declare');
+  ok('the hand-in choice starts empty for the next entry', (await page.$eval('#handSel', s => s.value)) === '');
+  await page.selectOption('#handSel', '__later');
   await page.click('#submitBtn');
   await page.waitForSelector('[data-addmiss]');
   const asks = await page.$$eval('[data-addmiss]', b => b.map(x => x.getAttribute('data-addmiss')));
@@ -174,6 +182,9 @@ const server = http.createServer((req, res) => {
   await sp.waitForSelector('#qRecv .grp');
   ok('staff open on the queue, four tabs', (await sp.$$('#tabs [data-tab]')).length === 4);
   ok('the agent\'s lines wait to be received', /Anika Pretend/.test(await sp.textContent('#qRecv')) && (await sp.$$('#qRecv .ln')).length >= 2);
+  ok('papers handed to Sam come first, marked for Sam to accept', /Handed to you/.test(await sp.textContent('#qRecv .grp')) &&
+     /Accept/.test(await sp.textContent('#qRecv .grp [data-recv]')) && !!(await sp.$('#qRecv .grp [data-nwm]')));
+  ok('the tile says what is handed to Sam', /Handed to you/.test(await sp.textContent('#qTiles')));
   if (SHOTS) await sp.screenshot({ path: SHOTS + '/lb-3-queue.png', fullPage: true });
   await sp.click('#qRecv [data-recv]');
   await sp.click('#mYes');
@@ -226,7 +237,7 @@ const server = http.createServer((req, res) => {
 
   /* the unit manager: their team, never another unit */
   { const st = env.lbSession_(env.dbLogin_({ code: 'SAM1' }).token);
-    env.lbSubmit_({ entry: { type: 'Documents for Guardian', client: 'Cora Elsewhere', declared: true, agentNo: 'A20002',
+    env.lbSubmit_({ entry: { type: 'Documents for Guardian', client: 'Cora Elsewhere', declared: true, handedTo: '__later', agentNo: 'A20002',
       items: [{ document: 'PMAR', department: 'RECORDS MANAGEMENT DEPT', policy: '9000000777' }] }, confirmDuplicates: true, confirmMissing: true }, st); }
   const um = await (await browser.newContext({ viewport: { width: 390, height: 844 } }));
   await route(um);

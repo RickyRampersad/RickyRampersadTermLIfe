@@ -84,7 +84,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
     ok('the header lights FY27', /FY27/.test(await page.evaluate(() => (document.querySelector('.chan.on') || {}).innerText || '')));
     const all = text.join('\n');
     ok('what changed, the app, the day, the week, Branch Intelligence, the game, the team', /We changed the way we work/.test(all) && /rickyrampersadbranch.com\/app/.test(all) && /Every role has its rhythm/.test(all) &&
-      /Every week has its beat/.test(all) && /Draft my reply/.test(all) && /Brief me/.test(all) && /Nobody is ranked/.test(all) && /One branch/.test(all) &&
+      /Every week has its beat/.test(all) && /Draft my reply/.test(all) && /The day's coach/.test(all) && !/Brief me/.test(all) && /Nobody is ranked/.test(all) && /One branch/.test(all) &&
       /Transmittal/.test(all) && /no client waits/.test(all) && /Every manager, one page each morning/.test(all) && /FACT FIND INSIGHTS/.test(all) && /Everyone sees the score/.test(all) &&
       /Every voice heard, with a structure/.test(all) && /The team holds 75 minutes/.test(all) && /Signing in is the register/.test(all) && /The minutes, the same day/.test(all) &&
       /The work shows up for the client/.test(all) &&

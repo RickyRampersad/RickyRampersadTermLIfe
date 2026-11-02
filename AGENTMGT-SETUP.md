@@ -123,7 +123,7 @@ The 7:34 film is what a candidate watches after the call, and the 1:27 trailer i
 feed shows: LinkedIn and Facebook stop paying out after about thirty seconds, and most of the audience watches
 muted. So the ad itself is 35 seconds, in two variants, one per reader, each five scenes: the question, the fear
 answered (A: never from zero, clients matched and leads on your board; B: leads from people who asked to be
-called, the day set every morning, trained before you are contracted), a coach not a clock, five seats, and
+called, the day set every morning, trained before you are contracted), a coach not a clock, seven places in the first class of FY27 and one seat for a sales manager, and
 agentmgt.com with the QR. Post the **square** cut in the feed and the **tall** cut as a Reel or Story; the first
 frame carries the shield and the question, which is what shows before anyone taps.
 
@@ -145,6 +145,22 @@ A square frame is "portrait" to the page's media query (height is not less than 
 the stylesheet comes after the portrait rules and only resizes what a square cannot hold. The bottom fifth of every
 frame stays clear: the mixer burns the captions there.
 
+## The conversation is booked on the page, never in another app
+
+Since 28 October 2026 ("book a call opens WhatsApp so remove this") every "Book a confidential conversation" button
+on the recruiting page, the homepage and `/careersvideo/` opens **`/careers/#talk`**: a form on the page (name, phone,
+e-mail, where they are now, the best time for the call, one optional line) that posts `q.quote` with the form key
+`careers` to the Service Questionnaire backend, the road the branch's own quote forms take. The backend files one row
+on the Quote Requests tab with a `QT-` reference, e-mails **the Branch Manager alone** (never the sales support inbox:
+the person may be contracted elsewhere today), and sends the person a confirmation that says Mr Rampersad reads it
+himself. If the backend cannot be reached inside 12 seconds, the page still shows a reference and opens the mail app
+addressed to him with the same details.
+
+**Paste `apps-script/Quotes.gs` into the Service Questionnaire project, put `TEAM_CODE` back in Service.gs if you
+paste that too, then Deploy → Manage deployments → pencil → New version.** Until the paste, the live backend answers
+"Unknown form" and every booking takes the mail-app road, which still reaches him. `?action=q.ping` lists `careers`
+among `forms` once the new version is live.
+
 ## The posts
 
 Two posts, one film, by the 27 October research (CLAUDE.md, "The reframe"): each names its reader in the first
@@ -155,7 +171,7 @@ reader's own fear, then the specific answer, then one low-commitment ask. Under 
 
 > *Good at what you do, but stuck where you are?*
 >
-> The thing that keeps a good advisor where they are is the fear of starting from zero. At our branch you don't: clients whose agent has moved on are matched to you, household by household, with the file and the first thing to say. Leads land on your own board, in the prospect's words. The fact find does the arithmetic while you talk. Your name goes up every Wednesday. Your manager is a coach, not a clock. Thirty-two years in Trinidad. Five seats this year.
+> The thing that keeps a good advisor where they are is the fear of starting from zero. At our branch you don't: clients whose agent has moved on are matched to you, household by household, with the file and the first thing to say. Leads land on your own board, in the prospect's words. The fact find does the arithmetic while you talk. Your name goes up every Wednesday. Your manager is a coach, not a clock. Thirty-two years in Trinidad. Seven places in the first class of FY27, and one seat for a sales manager.
 >
 > One confidential conversation. Twenty minutes, this week. Nobody will know you asked.
 >
@@ -169,7 +185,7 @@ Post it with `ad-a-square.mp4` attached (the feed plays the video; the link is f
 
 > *Want a career with no ceiling, but afraid of the first year?*
 >
-> Fair fear. Here is what is different: the leads come to you, so you are not selling to your friends and family. Every morning the system sets your day. You get training, boot camp and one-on-one coaching, and the Branch Manager interviews and coaches you personally. No salary band, no ceiling, and the ladder written down rung by rung. Thirty-two years in Trinidad. Five seats this year.
+> Fair fear. Here is what is different: the leads come to you, so you are not selling to your friends and family. Every morning the system sets your day. You get training, boot camp and one-on-one coaching, and the Branch Manager interviews and coaches you personally. No salary band, no ceiling, and the ladder written down rung by rung. Thirty-two years in Trinidad. Seven places in the first class of FY27, and one seat for a sales manager.
 >
 > One 20-minute conversation. Bring your questions; we show you the branch's own figures, not an adjective.
 >
