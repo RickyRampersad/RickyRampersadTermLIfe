@@ -109,6 +109,8 @@ ok('digits that fit two cases ask for more', /2 of this agent/.test(route({ ...b
 ok('another agent\'s policy is not found', route({ ...base, action: 'help868.case', policy: '5000000003' }).found === false);
 ok('under four digits asks for more', /last four/.test(route({ ...base, action: 'help868.case', policy: '123' }).message));
 ok('Salesforce is off by default', c.salesforce === 'off');
+const cs0 = route({ ...base, action: 'help868.case', policy: '5000000001' });
+ok('stall read without Claude or notes: rules from the report (a future premium is owed)', cs0.stall && cs0.stall.reason === 'waiting_payment' && /premium payment/.test(cs0.stall.headline) && /arrange the premium/i.test(cs0.stall.suggestedNextStep) && /report and the task facts/.test(cs0.stall.basis), JSON.stringify(cs0.stall));
 
 // the session is the number's own and ends with the pilot tab
 ok('another number has no session', route({ key: KEY, action: 'help868.case', phone: '8685550102', policy: '5000000001' }).needCode === true);
@@ -118,10 +120,10 @@ tabs[0].rows[1][3] = 'Yes';
 ok('and switching back on restores it within the session window', route({ ...base, action: 'help868.case', policy: '5000000001' }).found === true);
 
 // Salesforce
-const sfIns = [], sfQ = [];
+const sfIns = [], sfQ = []; const taskIns = () => sfIns.filter(x => x[0] === 'Task');
 env.sfkConfigured_ = () => true;
 env.sfkQuery_ = q => { sfQ.push(q);
-  if (/FROM Task/.test(q)) return [{ Id: '00TPEND' }];
+  if (/FROM Task/.test(q)) return [{ Id: '00TPEND', ActivityDate: '2026-10-30', CreatedDate: '2026-10-20T10:00:00.000+0000' }];
   if (/FROM Contact/.test(q)) return [{ Id: '003NEIL', Name: 'Neil Ramnanan' }];
   if (/FROM Policy_Increases__c/.test(q)) return [
     { Policy__c: '6000000009', Policy_Description_Status__c: 'Pending', Submitted_Date__c: '2026-10-01', Days_O_S__c: 32, Policy_Requirements__c: 'Signed form 5551234567 outstanding', Support__c: 'Sasha Lalla', Picked_Up_For_Production__c: 'No', Life_Increase_Premium__c: 888 },
@@ -138,6 +140,35 @@ ok('ping shows Salesforce logging on', route({ action: 'help868.ping' }).salesfo
 c = route({ ...base, action: 'help868.case', policy: '5000000001' });
 ok('a case look-up is noted on the open Pendings task', c.salesforce === 'noted on the task' && sfIns.length === 1 && sfIns[0][0] === 'FeedItem' && sfIns[0][1].ParentId === '00TPEND', JSON.stringify(sfIns));
 ok('the note names the agent and says no client details were sent', /Neil Ramnanan/.test(sfIns[0][1].Body) && /No client details/.test(sfIns[0][1].Body) && !/FUTPY|Future premium/.test(sfIns[0][1].Body));
+
+
+// what is holding it up: notes, inbox and report read together, only a reason and a next step come out
+const prompts = []; let claudeSays = '{"reason":"waiting_agent","next":"send_requirement"}', claudeCalls = 0;
+props.setProperty('ANTHROPIC_API_KEY', 'sk-test');
+env.cmdChatter_ = ids => ({ '00TPEND': [
+  { at: '2026-11-01T14:00:00.000+0000', day: '2026-11-01', by: 'Sasha Lalla', text: 'Called Mr John Smith on 868-555-9999 (john@x.com): the signed form for 5000000001 is still with the agent, he will bring it Thursday.' },
+  { at: '2026-10-28T14:00:00.000+0000', day: '2026-10-28', by: 'Sasha Lalla', text: 'Medical report requested.' }] });
+env.bmDeepRows_ = () => [{ Subject: 'Re: forms for 5000000001', Gist: 'Agent says the signed form will come in on Thursday', Ask: 'Please confirm receipt', From: 'agent@example.com', Received: '2026-11-01T15:00:00Z', Date: '2026-11-01', Status: 'open' }];
+env.claudeFetchAll_ = (key, reqs) => { claudeCalls++; prompts.push(reqs[0].prompt); return [{ getContentText: () => JSON.stringify({ content: [{ type: 'text', text: claudeSays }] }) }]; };
+c = route({ ...base, action: 'help868.case', policy: '5000000001' });
+ok('with notes and an inbox item, Claude\'s reason is used', c.stall.reason === 'waiting_agent' && c.stall.waitingOn === 'the agent' && /bring|Send the outstanding/i.test(c.stall.suggestedNextStep) && /read together/.test(c.stall.basis), JSON.stringify(c.stall));
+ok('what Claude was sent has no e-mail, phone, policy number or personal name', prompts.length === 1 && !/john@x|555-9999|5000000001|John Smith|Sasha Lalla|agent@example/.test(prompts[0]) && /\[name\]/.test(prompts[0]), prompts[0] && prompts[0].slice(prompts[0].indexOf('RECORD:'), prompts[0].indexOf('RECORD:') + 700));
+ok('the notes\' and e-mail\'s words never come back', !/signed form|Thursday|Medical report|Smith|john|agent@example|Please confirm/.test(JSON.stringify(c)), JSON.stringify(c.stall));
+ok('the safe signals count the notes, the e-mail and the quiet days', c.stall.signals.some(s => /2 notes on the task/.test(s)) && c.stall.signals.some(s => /1 related e-mail/.test(s)) && c.stall.daysSinceLastActivity >= 0 && c.stall.signals.some(s => /Last recorded activity \d+ day/.test(s) || /today/.test(s)));
+route({ ...base, action: 'help868.case', policy: '5000000001' });
+ok('the same evidence is read once, not on every ask', claudeCalls === 1);
+cache.removeAll(Object.keys({}));
+claudeSays = '{"reason":"the agent is lazy","next":"fire everyone"}';
+env.cmdChatter_ = ids => ({ '00TPEND': [{ at: '2026-11-02T14:00:00.000+0000', day: '2026-11-02', by: 'Azariah', text: 'Chased underwriting again.' }] });
+c = route({ ...base, action: 'help868.case', policy: '5000000001' });
+ok('an answer outside the fixed lists is ignored and the rules decide', claudeCalls === 2 && c.stall.reason === 'waiting_payment' && /report and the task facts/.test(c.stall.basis), JSON.stringify(c.stall));
+claudeSays = 'not json at all';
+env.cmdChatter_ = ids => ({ '00TPEND': [{ at: '2026-11-02T15:00:00.000+0000', day: '2026-11-02', by: 'Azariah', text: 'Another chase.' }] });
+ok('an unreadable answer falls back to the rules too', route({ ...base, action: 'help868.case', policy: '5000000001' }).stall.reason === 'waiting_payment');
+props.setProperty('ANTHROPIC_API_KEY', '');
+env.cmdChatter_ = ids => ({});
+c = route({ ...base, action: 'help868.case', policy: '5000000002' });
+ok('no key and an agent-owned requirement: the rules say waiting on the agent, and that nobody is tracking it', c.stall.reason === 'waiting_agent' && c.stall.signals.some(s => /nobody on the team is tracking/.test(s)), JSON.stringify(c.stall));
 
 // increases and groups (Salesforce, for the signed-in agent)
 let inc = route({ ...base, action: 'help868.increases' });
@@ -163,8 +194,8 @@ env.sfkConfigured_ = () => true;
 let e = route({ ...base, action: 'help868.enquiry', category: 'payment', summary: 'My payment of 1234567 is missing, call 868-555-0000 or pat@example.com http://x.co/a' });
 ok('enquiry filed with a reference, marked code-verified', e.ok && /^H8-\d{6}-001$/.test(e.ref) && e.codeVerifiedAgent === true, JSON.stringify(e));
 const log = tabs.find(t => t.getName() === 'HELP868 Enquiries');
-ok('a Servicing task opens on the agent\'s Contact', e.salesforce === 'task opened' && sfIns[1][0] === 'Task' && sfIns[1][1].WhoId === '003NEIL' && sfIns[1][1].Task_Type__c === 'Servicing' && sfIns[1][1].Subject.indexOf(e.ref) > -1, JSON.stringify(sfIns[1]));
-ok('the task and the log carry the cleaned summary', log.rows[1][6] === 'My payment of [number removed] is missing, call [number removed] or [e-mail removed] [link removed]' && sfIns[1][1].Description.indexOf('[number removed]') > -1 && log.rows[1][10] === '00TNEW', log.rows[1].join('|'));
+ok('a Servicing task opens on the agent\'s Contact', e.salesforce === 'task opened' && taskIns()[0] && taskIns()[0][1].WhoId === '003NEIL' && taskIns()[0][1].Task_Type__c === 'Servicing' && taskIns()[0][1].Subject.indexOf(e.ref) > -1, JSON.stringify(taskIns()[0]));
+ok('the task and the log carry the cleaned summary', log.rows[1][6] === 'My payment of [number removed] is missing, call [number removed] or [e-mail removed] [link removed]' && taskIns()[0][1].Description.indexOf('[number removed]') > -1 && log.rows[1][10] === '00TNEW', log.rows[1].join('|'));
 ok('only the last four of the number is kept', log.rows[1][9] === '·0101' && !JSON.stringify(log.rows).includes('8685550101'));
 const mn = mails.length;
 ok('owner e-mailed once, with the reference', mails[mn - 1].to === 'boss@example.com' && mails[mn - 1].subject.indexOf(e.ref) > -1);
@@ -172,7 +203,7 @@ const again = route({ ...base, action: 'help868.enquiry', category: 'payment', s
 ok('same words from the same number are not filed twice', again.repeat && again.ref === e.ref && log.rows.length === 2 && mails.length === mn);
 e = route({ key: KEY, action: 'help868.enquiry', phone: '8689990001', name: 'Pat', category: 'nonsense', summary: '=HYPERLINK("x")' });
 ok('a stranger: not verified, Other, formula neutralised, numbered 002', /-002$/.test(e.ref) && log.rows[2][2] === 'Other' && log.rows[2][4] === 'Not verified' && log.rows[2][6][0] === "'" && e.codeVerifiedAgent === false, log.rows[2].join('|'));
-ok('a stranger gets no Salesforce task without a matching Contact name', sfIns.filter(x => x[0] === 'Task').length === 2);
+ok('a stranger\'s enquiry still opens a task, with no Contact attached', taskIns().length === 2 && taskIns()[1][1].WhoId === undefined && taskIns()[1][1].Subject.indexOf(e.ref) > -1);
 ok('empty summary refused', route({ key: KEY, action: 'help868.enquiry', phone: '8689990002', summary: '  ' }).ok === false);
 
 // Salesforce failing never loses an enquiry

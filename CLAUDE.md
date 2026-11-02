@@ -3867,7 +3867,7 @@ voice under the new timing and the caption gives it away.
   - **Caching.** The answer is kept like the wall's (`tServeCached_`, three minutes fresh).
   - **Tests.** `wall8/stream-harness.js` in the scratchpad looks for every client name, first name, surname, token,
     number, e-mail, phone, address, household name, former agent's name and every piece of client words in the answer
-    on the real tabs (59 checks). `wall8/stream-look.js` (32, Playwright) checks every slide fits a television and
+    on the real tabs (68 checks). `wall8/stream-look.js` (32, Playwright) checks every slide fits a television and
     nothing runs off a phone.
   - **Never add a client's anything to it.** If a slide needs a name, it belongs on the wall or the board, behind the
     same code, not here.
@@ -4469,7 +4469,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   (21 October) the hourly refresh held it: the summary read "Busy: the letters or the refresh are running", and no
   group was reminded that day. The reminder now tries again after the staff part, and failing that the hourly run tries
   it from 11:00 (`GCM_RATE_RETRY`), with its own summary to the branch; the staff are never asked twice.
-  `day/day-test.js` (59 checks) and `day/real/dry.js` (the 21 October tabs, test mode, nothing sent) in the session
+  `day/day-test.js` (68 checks) and `day/real/dry.js` (the 21 October tabs, test mode, nothing sent) in the session
   scratchpad cover it. On those tabs one staff member would have been asked about five groups and another about one.
 
 - **Group letters can be put on hold, every group or one, from the staff page** (27 October 2026: a group's bills were
@@ -6791,12 +6791,19 @@ comes back. Asked for in these words: *"I would like pendings and queries dealt 
   (`help868.increases`, `help868.groups`). **Salesforce is read for the status field saying Pending and nothing else** (Ricky, 3 November 2026: "it only reading the status field pending"). No in-force counts, no settled-date test. On 2 November the branch manager had 4 pending group records (2 life, 2 health) and no pending increases; the 156 increases with no Date Settled are Premium Paying records and are deliberately not reported. Individual life, PA and the rest of the Google sheet's tabs are not served yet.
 - **Salesforce logging is off until `HELP868_SF` = `on`.** Then a case look-up is noted on the open Pendings task and an enquiry
   opens a Servicing task on the agent's Contact. The summary and reference are logged; the full chat stays in respond.io.
+- **What is holding a case up is read privately and returned as a choice from fixed lists** (3 November 2026: "analyze the Google
+  sheets, the tasks, the inbox and the Chatter to see what's stalling"). `help868Stall_` reads the report's requirements, the open
+  Pendings task, its last Chatter notes (`cmdChatter_`) and any inbox item naming the policy (`bmDeepMail_`). Claude, if
+  `ANTHROPIC_API_KEY` is set, picks a reason and a next step from fixed lists after the evidence is scrubbed of e-mails, links,
+  numbers of four digits or more and runs of names; rules decide otherwise, or if its answer is outside the lists. The sentences
+  are composed in code. A note's or an e-mail's words never reach WhatsApp, only counts and days. Read once per set of evidence
+  (an hour).
 - **An enquiry's reference comes from the log**, so the assistant can only quote one that exists, and promises no time.
 - **Nothing answers until `HELP868_KEY` is set.** The branch app tile is branch-manager-only until the respond.io workflow
   answers more than the test number. Do not widen it earlier: an agent would tap it and get silence.
 - **respond.io state on 2 Nov:** three AI agents (one active, assignment and close actions off, instructions out of order), one
   published test workflow, no teams, one tag, no knowledge sources. Nothing was changed there from the repository.
-- Test: `tests/test-help868.js` (59 checks).
+- Test: `tests/test-help868.js` (68 checks).
 
 ## Standing rules
 

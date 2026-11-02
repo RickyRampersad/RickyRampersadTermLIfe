@@ -19,7 +19,7 @@ HTTP calls to the tracker (`apps-script/Help868.gs`, beside `KPI.gs`), and the t
 | `help868.code` (`key`, `phone`, `agentNo`) | an agent on the pilot tab | e-mails a 6-digit code to the address the Skill Bank holds for that agent number. The reply is the same words whether or not a code was sent. One code a minute. |
 | `help868.verify` (`key`, `phone`, `agentNo`, `code`) | the same agent | signs this WhatsApp number in for 30 minutes. Five wrong tries or ten minutes voids the code. Switching the agent off on the tab ends the session. |
 | `help868.pendings` (`key`, `phone`) | signed in only | the agent's own cases: policy last four digits, open tasks, overdue, due, who has it (first name), when last noted. |
-| `help868.case` (`key`, `phone`, `policy`) | signed in only | one of the agent's policies, typed in full or by its last digits: days since submission, underwriting decision, each open requirement (code, name, status, who acts next), and the Pendings task. **No money, client name, note words, date of birth or other agent's case.** Staff notes and e-mails are not returned. |
+| `help868.case` (`key`, `phone`, `policy`) | signed in only | one of the agent's policies, typed in full or by its last digits: days since submission, underwriting decision, each open requirement (code, name, status, who acts next), and the Pendings task. **No money, client name, note words, date of birth or other agent's case.** It also returns `stall`: what is holding the case up, from the report, the Pendings task, its Chatter notes and related inbox items. The reason and next step come from fixed lists, so no note or e-mail wording can reach the chat. |
 | `help868.increases` (`key`, `phone`) | signed in only | the agent's increases whose Salesforce status field says **Pending**, and nothing else: policy last four, submitted, days outstanding, requirement text, who supports it. No amounts. |
 | `help868.groups` (`key`, `phone`) | signed in only | the agent's Group Life, Group Health and Pension policy records whose status says **Pending**, and nothing else: a count by line, then each by last four digits and days since received. Records, not employers. |
 | `help868.enquiry` (`key`, `phone`, `category`, `summary`, `name`) | anyone | files a row on **HELP868 Enquiries**, e-mails the owner, returns a reference `H8-yymmdd-nnn`. Numbers, e-mails and links are stripped from the summary. The same words from the same number inside 12 minutes return the first reference. |
@@ -47,4 +47,4 @@ The **HELP 868 on WhatsApp** tile (`rroperations/index.html`) opens `wa.me/18684
 (`to: 'm'`). Widen it to `'alsm'` the day the workflow answers more than the test number, so no agent taps it and gets silence.
 Confirm 868-435-7868 is the right customer-facing number before widening.
 
-Tests: `node tests/test-help868.js` (59 checks).
+Tests: `node tests/test-help868.js` (68 checks).
