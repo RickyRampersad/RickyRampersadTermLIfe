@@ -1240,3 +1240,354 @@ vaai 6 attempt 0: Traceback (most recent call last):
     raise NoAudioReceived(
 edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
 
+dict 1 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 1 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 1 attempt 2: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 2 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 3 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 5 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 5 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 9 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 10 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 10 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 10 attempt 2: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 11 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 12 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 14 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 18 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 36 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 39 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 40 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 40 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 40 attempt 2: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 42 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 43 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 49 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 51 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 55 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 60 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 60 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 60 attempt 2: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 60 attempt 3: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 73 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 77 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 80 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 80 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 81 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 86 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 87 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 88 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 90 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+dict 95 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+  File "/home/runner/.local/lib/python3.12/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+

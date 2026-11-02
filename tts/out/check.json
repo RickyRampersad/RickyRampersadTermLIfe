@@ -1,62 +1,487 @@
 {
- "tts/out/vaai/01.mp3": [
+ "tts/out/dict/01.mp3": [
+  "en",
+  0.997,
+  "What's the client's full name?"
+ ],
+ "tts/out/dict/02.mp3": [
+  "en",
+  0.98,
+  "about the client."
+ ],
+ "tts/out/dict/03.mp3": [
+  "en",
+  0.997,
+  "What's the client's date of birth?"
+ ],
+ "tts/out/dict/04.mp3": [
+  "en",
+  0.998,
+  "Is the client single married common law divorced, separated or widowed?"
+ ],
+ "tts/out/dict/05.mp3": [
+  "en",
+  0.997,
+  "I did not match that. The choices are single, married, divorced, widowed, separated common law."
+ ],
+ "tts/out/dict/06.mp3": [
+  "en",
+  0.993,
+  "What is the best phone number?"
+ ],
+ "tts/out/dict/07.mp3": [
+  "en",
+  0.998,
+  "and the email address, say like John to Smith at gmail.com."
+ ],
+ "tts/out/dict/08.mp3": [
+  "en",
+  0.996,
+  "What is the home address with the town?"
+ ],
+ "tts/out/dict/09.mp3": [
+  "en",
+  0.997,
+  "is the client full-time, part-time, self-employed, or other."
+ ],
+ "tts/out/dict/10.mp3": [
+  "en",
+  0.97,
+  "Work in income."
+ ],
+ "tts/out/dict/11.mp3": [
+  "en",
+  0.998,
+  "I did not match that. The choices are full-time, part-time, self-employed other."
+ ],
+ "tts/out/dict/12.mp3": [
+  "en",
+  0.994,
+  "What does the client do for a living?"
+ ],
+ "tts/out/dict/13.mp3": [
+  "en",
+  0.988,
+  "Who is the employer?"
+ ],
+ "tts/out/dict/14.mp3": [
+  "en",
+  0.991,
+  "How long has the client been there?"
+ ],
+ "tts/out/dict/15.mp3": [
+  "en",
+  0.998,
+  "Was the client's gross monthly income?"
+ ],
+ "tts/out/dict/16.mp3": [
+  "en",
+  0.983,
+  "Does the client own a business?"
+ ],
+ "tts/out/dict/17.mp3": [
+  "en",
+  0.996,
+  "What percentage of the business does the client own?"
+ ],
+ "tts/out/dict/18.mp3": [
+  "en",
+  0.999,
+  "Roughly, what does the business turn over in a year?"
+ ],
+ "tts/out/dict/19.mp3": [
+  "en",
+  0.994,
+  "What's the spouse's full name?"
+ ],
+ "tts/out/dict/20.mp3": [
+  "en",
+  0.986,
+  "Spouse or Partner"
+ ],
+ "tts/out/dict/21.mp3": [
+  "en",
+  0.991,
+  "and the spouse's date of birth."
+ ],
+ "tts/out/dict/22.mp3": [
   "en",
   0.995,
-  "Ineal, let's put the fact find together. How did the interview go?"
+  "is a spouse male or female."
  ],
- "tts/out/vaai/02.mp3": [
+ "tts/out/dict/23.mp3": [
+  "en",
+  0.997,
+  "I did not match that. The choices are F, M."
+ ],
+ "tts/out/dict/24.mp3": [
   "en",
   0.998,
-  "Great. I've got Jordan Baptiste 34, Mary DeLisa with two children earning 15,000 a month. Is that right?"
+  "is a spouse full-time, part-time, self-employed or not-employed."
  ],
- "tts/out/vaai/03.mp3": [
+ "tts/out/dict/25.mp3": [
   "en",
   0.998,
-  "Got it! Now the home. What's the house worth and what's still owed on the mortgage?"
+  "I did not match that. The choices are full-time, part-time, self-employed, not employed, other."
  ],
- "tts/out/vaai/04.mp3": [
+ "tts/out/dict/26.mp3": [
+  "en",
+  0.994,
+  "What does a spouse do?"
+ ],
+ "tts/out/dict/27.mp3": [
+  "en",
+  0.984,
+  "and the spouse's monthly income."
+ ],
+ "tts/out/dict/28.mp3": [
   "en",
   0.999,
-  "Thanks. Let me run the numbers. Ten years of Jordan's income is 1.8 million. Add the 600,000 mortgage and 400,000 for the children's education. That's 2.8 million as family would need."
+  "How many children does the client have? Say none if there are none."
  ],
- "tts/out/vaai/05.mp3": [
+ "tts/out/dict/29.mp3": [
+  "en",
+  0.91,
+  "Children"
+ ],
+ "tts/out/dict/30.mp3": [
   "en",
   0.998,
-  "He has 250,000 through work, so the gap is 2.5 million. That's the need your recommendation has to answer."
+  "What was the first child's name?"
  ],
- "tts/out/vaai/06.mp3": [
-  "en",
-  0.998,
-  "Before we finish, two things are still blank. His date of birth, and who his work policy pays."
- ],
- "tts/out/vaai/07.mp3": [
+ "tts/out/dict/31.mp3": [
   "en",
   0.996,
-  "12th of April 1992, and the beneficiary is Lisa. Got it!"
+  "and the child's date of birth."
  ],
- "tts/out/vaai/08.mp3": [
+ "tts/out/dict/32.mp3": [
+  "en",
+  0.972,
+  "Poor girl"
+ ],
+ "tts/out/dict/33.mp3": [
+  "en",
+  0.997,
+  "What is the second child's name?"
+ ],
+ "tts/out/dict/34.mp3": [
+  "en",
+  0.998,
+  "was the third child's name."
+ ],
+ "tts/out/dict/35.mp3": [
+  "en",
+  0.994,
+  "Does the client have any life or critical illness insurance today with any company, including group cover at work?"
+ ],
+ "tts/out/dict/36.mp3": [
+  "en",
+  0.98,
+  "Existing cover"
+ ],
+ "tts/out/dict/37.mp3": [
+  "en",
+  0.997,
+  "Which company is the policy with?"
+ ],
+ "tts/out/dict/38.mp3": [
+  "en",
+  0.996,
+  "I did not match that. The choices are none Guardian Life, Sajakor, Maritime, Tattle Life, Beacon."
+ ],
+ "tts/out/dict/39.mp3": [
+  "en",
+  0.997,
+  "Whose life is it on? The client, the spouse, joint, or child?"
+ ],
+ "tts/out/dict/40.mp3": [
+  "en",
+  0.997,
+  "I did not match that. The choices are client, spouse, joint child."
+ ],
+ "tts/out/dict/41.mp3": [
+  "en",
+  0.998,
+  "What kind of policy is it? For example, term, whole life, group life, or critical illness."
+ ],
+ "tts/out/dict/42.mp3": [
+  "en",
+  0.995,
+  "How much is the cover?"
+ ],
+ "tts/out/dict/43.mp3": [
   "en",
   0.999,
-  "That's it. Every section is complete, and the numbers are calculated. Now you choose the plans, and the client confirms the draft by email before it goes to your manager."
+  "What is the premium? Say zero if the employer pays."
  ],
- "tts/out/vaag/01.mp3": [
+ "tts/out/dict/44.mp3": [
   "en",
   0.998,
-  "It went well. Jordan Baptiste, he's 34, married to Lisa, two kids. The earns about 15,000 a month."
+  "Is that paid monthly, quarterly, half yearly or yearly?"
  ],
- "tts/out/vaag/02.mp3": [
+ "tts/out/dict/45.mp3": [
   "en",
-  0.976,
-  "Yes, Kai is 8 and Mia is 5."
+  0.998,
+  "I did not match that. The choices are monthly, quarterly, semi-annual, annual."
  ],
- "tts/out/vaag/03.mp3": [
+ "tts/out/dict/46.mp3": [
+  "en",
+  0.995,
+  "Is it active, lapsed, paid up, or surrendered?"
+ ],
+ "tts/out/dict/47.mp3": [
+  "en",
+  0.995,
+  "I did not match that. The choices are active, lapsed, paid up, surrendered."
+ ],
+ "tts/out/dict/48.mp3": [
+  "en",
+  0.989,
+  "Is there another policy?"
+ ],
+ "tts/out/dict/49.mp3": [
+  "en",
+  0.997,
+  "Which company is the next policy with?"
+ ],
+ "tts/out/dict/50.mp3": [
   "en",
   0.996,
-  "The house is about 1.2 million. 600,000 left on the mortgage."
+  "What a household's total monthly expenses."
  ],
- "tts/out/vaag/04.mp3": [
+ "tts/out/dict/51.mp3": [
+  "en",
+  0.358,
+  "budget"
+ ],
+ "tts/out/dict/52.mp3": [
   "en",
   0.996,
-  "Born 12th of April, 1992, the work policy pays Lisa."
+  "Is anything in the next 12 months likely to change the income or expenses a lot?"
+ ],
+ "tts/out/dict/53.mp3": [
+  "en",
+  0.909,
+  "What is it?"
+ ],
+ "tts/out/dict/54.mp3": [
+  "en",
+  0.997,
+  "How much can the client put aside each year for protection and savings?"
+ ],
+ "tts/out/dict/55.mp3": [
+  "en",
+  0.997,
+  "What is the house worth? Say none if there is no house."
+ ],
+ "tts/out/dict/56.mp3": [
+  "en",
+  0.975,
+  "Assets and Dets"
+ ],
+ "tts/out/dict/57.mp3": [
+  "en",
+  0.996,
+  "How much is in cash in in the bank?"
+ ],
+ "tts/out/dict/58.mp3": [
+  "en",
+  0.999,
+  "any investments or mutual funds. How much?"
+ ],
+ "tts/out/dict/59.mp3": [
+  "en",
+  0.997,
+  "was still owed on a mortgage. Say none if there is none."
+ ],
+ "tts/out/dict/61.mp3": [
+  "en",
+  0.997,
+  "any bank or credit union loans. How much is owed?"
+ ],
+ "tts/out/dict/62.mp3": [
+  "en",
+  0.995,
+  "and a monthly loan payment."
+ ],
+ "tts/out/dict/63.mp3": [
+  "en",
+  0.989,
+  "Any credit card balance?"
+ ],
+ "tts/out/dict/64.mp3": [
+  "en",
+  0.997,
+  "What is the client's main goal? For example, family protection, education, mortgage protection, retirement, critical illness, or health."
+ ],
+ "tts/out/dict/65.mp3": [
+  "en",
+  0.734,
+  "Goals"
+ ],
+ "tts/out/dict/66.mp3": [
+  "en",
+  0.998,
+  "I did not match that. The choices are life insurance, slash family protection, critical illness cover, income protection, slash disability, mortgage protection, health insurance, funeral, slash final expenses."
+ ],
+ "tts/out/dict/67.mp3": [
+  "en",
+  0.993,
+  "Tell me about it in a few words."
+ ],
+ "tts/out/dict/68.mp3": [
+  "en",
+  0.993,
+  "How much is needed for it?"
+ ],
+ "tts/out/dict/69.mp3": [
+  "en",
+  0.996,
+  "when as soon as possible in the next three years, three to five years, or six years and more."
+ ],
+ "tts/out/dict/70.mp3": [
+  "en",
+  0.995,
+  "I did not match that. The choices are, at soonest, zero to three years, three to five years, six plus Y-RES."
+ ],
+ "tts/out/dict/71.mp3": [
+  "en",
+  0.984,
+  "Is there another goal?"
+ ],
+ "tts/out/dict/72.mp3": [
+  "en",
+  0.99,
+  "What's the next goal?"
+ ],
+ "tts/out/dict/73.mp3": [
+  "en",
+  0.994,
+  "In retirement, what percentage of today's income would the client want to live on? 70 is common."
+ ],
+ "tts/out/dict/74.mp3": [
+  "en",
+  0.969,
+  "Retirement"
+ ],
+ "tts/out/dict/75.mp3": [
+  "en",
+  0.994,
+  "For how many years should that income last?"
+ ],
+ "tts/out/dict/76.mp3": [
+  "en",
+  0.997,
+  "Does anyone in the family have a medical condition we should note?"
+ ],
+ "tts/out/dict/77.mp3": [
+  "en",
+  0.821,
+  "Health."
+ ],
+ "tts/out/dict/78.mp3": [
+  "en",
+  0.937,
+  "Who is it?"
+ ],
+ "tts/out/dict/79.mp3": [
+  "en",
+  0.984,
+  "What's the condition?"
+ ],
+ "tts/out/dict/80.mp3": [
+  "en",
+  0.981,
+  "and a treatment."
+ ],
+ "tts/out/dict/81.mp3": [
+  "en",
+  0.995,
+  "Anyone else? Say none if not."
+ ],
+ "tts/out/dict/82.mp3": [
+  "en",
+  0.992,
+  "Last, anything else for the notes? How the meeting went, declines comfort with the premium, anything to follow up? Speak as long as you like, and say done when you have finished."
+ ],
+ "tts/out/dict/83.mp3": [
+  "en",
+  0.898,
+  "You know it's..."
+ ],
+ "tts/out/dict/84.mp3": [
+  "en",
+  0.998,
+  "Let's go through the fact find, answer each question, or say skip, back, repeat, or stop at any time."
+ ],
+ "tts/out/dict/85.mp3": [
+  "en",
+  0.94,
+  "Got it!"
+ ],
+ "tts/out/dict/86.mp3": [
+  "en",
+  0.991,
+  "I will leave that one for you."
+ ],
+ "tts/out/dict/87.mp3": [
+  "en",
+  0.989,
+  "Sorry, I did not catch that. Say it again, or say skip."
+ ],
+ "tts/out/dict/88.mp3": [
+  "en",
+  0.991,
+  "Say the date like April 12, 1988."
+ ],
+ "tts/out/dict/89.mp3": [
+  "en",
+  0.996,
+  "I need a number. Say it like 15,000 or say skip."
+ ],
+ "tts/out/dict/90.mp3": [
+  "en",
+  0.998,
+  "How many? Say a number or none."
+ ],
+ "tts/out/dict/91.mp3": [
+  "en",
+  0.993,
+  "Please say yes or no."
+ ],
+ "tts/out/dict/92.mp3": [
+  "en",
+  0.994,
+  "Say it like John to Smith at gmail.com."
+ ],
+ "tts/out/dict/93.mp3": [
+  "en",
+  0.995,
+  "Say the number digit by digit."
+ ],
+ "tts/out/dict/94.mp3": [
+  "en",
+  0.978,
+  "Thank you, your notes are in."
+ ],
+ "tts/out/dict/95.mp3": [
+  "en",
+  0.998,
+  "Every question already has an answer. Tick ask everything to go through them again."
+ ],
+ "tts/out/dict/96.mp3": [
+  "en",
+  0.998,
+  "That is the interview. A few answers are left for you. They are listed on the panel. Check the form, then add your recommendations."
+ ],
+ "tts/out/dict/97.mp3": [
+  "en",
+  0.996,
+  "That is the interview. Check the form, then add your recommendations."
+ ],
+ "tts/out/dict/98.mp3": [
+  "en",
+  0.997,
+  "Hi, I'm your Fact Fine Partner. Tell me about the client in your own words, as much or as little as you like. I'll fill the Fact Fine as you go, read it back to you, work out the need, and tell you what's still missing."
  ]
 }
