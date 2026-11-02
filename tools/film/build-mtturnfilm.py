@@ -91,7 +91,17 @@ def people(n, d, step=.03, centre=None, cls='pp'):
                    '<path d="M2.4 26.5a9.6 9.6 0 0 1 19.2 0z"/></svg>' % (cls, d + abs(i - c) * step) for i in range(n))
 
 
-STEPS = [('8:00', 'Morning'), ('10:30', 'Check in'), ('12:00', 'Midday'), ('5:30', 'Close off')]
+BELLI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></svg>'
+FOLI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M19 8v6M16 11h6"/></svg>'
+SHRI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>'
+
+PHI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>'
+
+
+def rsn(t, n, kd):
+    return '<div class="rsn" style="--kd:%.2fs;--w:%d%%"><span>%s</span><b>%d</b><i></i></div>' % (kd, round(n / 19.0 * 100), t, n)
+
+STEPS = [('7:00', 'Morning'), ('10:30', 'Check in'), ('12:00', 'Midday'), ('6:00', 'Close off')]
 
 
 def day(cur, kd, you, us):
@@ -199,7 +209,7 @@ def build():
     # 3-6 the day, from both sides: YOU large (the agent), US beside it, a live link between them
     sc.append(S(3, day(0, at(3, 'Here'),
         '<em>You</em><h3>%s</h3><div class="yg">%s<div class="yl">%s%s%s%s</div></div>'
-        % (kin('Your goal, first.', at(3, 'sides') - .2, .08), mring(41, at(3, 'Eight')),
+        % (kin('Your goal, first.', at(3, 'sides') - .2, .08), mring(41, at(3, 'Seven')),
            yrow('2', 'Fact finds this week', at(3, 'fact') - .2), yrow('3', 'Orphan clients to call', at(3, 'clients') - .2),
            yrow('1', 'Case that should settle', at(3, 'clients') + .3, 'g'), yrow('6', 'Calls for today', at(3, 'clients') + .6)),
         '<em>Us</em><h3>Already on your cases</h3>%s%s%s'
@@ -229,7 +239,7 @@ def build():
            bar('Calls', 5, 6, at(6, 'planned')), bar('Fact finds', 2, 2, at(6, 'planned') + .25), bar('Cases settled', 1, 1, at(6, 'planned') + .5),
            at(6, 'did'), int(at(6, 'did') * 1000)),
         '<em>Us</em><h3>%s</h3>%s%s'
-        % (kin('We see it too', at(6, 'see'), .08), urow('Close-off', 'received 5:31pm', at(6, 'see'), True),
+        % (kin('We see it too', at(6, 'see'), .08), urow('Close-off', 'received 5:52pm', at(6, 'see'), True),
            urow('Your manager', 'sees your day', at(6, 'see') + .35, True))), 'd4'))
     # 7 both ways: everyone accountable
     sc.append(S(7,
@@ -247,89 +257,121 @@ def build():
         % (at(7, 'You'), at(7, 'You') + .2, at(7, 'You') + .4, at(7, 'You') + .6, at(7, 'We'), at(7, 'We'),
            at(7, 'We') + .2, at(7, 'We') + .4, at(7, 'We') + .6, kin('Everyone is accountable.', at(7, 'Everyone'), .1)),
         'both2'))
-    # 8 every reminder on a template: yours, and your clients'
+    # 8 the managers' chase to the agent, on its real subject lines: FactFind360's daily "Did this close?" on every open case
+    #   (Times Chased / Last Chased At: 303 chases on 84 real cases since 13 Sep 2026, test rows out); the tracker's FF_CHASE: Monday 7:00
+    #   "Fact finds: your response is required" to an agent with none in 14 days, Wednesday "Reminder:" with the manager copied,
+    #   and "Fact finds: response received" when the agent answers.
     sc.append(S(8,
-        '<div class="rem"><div class="inbx" style="--kd:.15s"><em>You &middot; your reminders</em>%s%s%s%s</div>'
-        '<div class="cmail" style="--kd:%.2fs"><div class="cmh"><small>To your client</small><b>Your request is complete</b></div>'
-        '<div class="cmb"><p>Dear [first name],</p><p>We have now taken care of your request. Thank you for giving us the chance to help.</p>'
-        '<p class="ask">How did we do? Tap a star.</p>%s</div>'
-        '<div class="chips3"><span style="--kd:%.2fs">A question about your first year with us</span>'
-        '<span style="--kd:%.2fs">Thank you. We have received your response.</span><span style="--kd:%.2fs">Still on it.</span></div></div></div>'
-        % (mailrow('8:00am', 'Your day &middot; good morning', 'Your goal, your fact finds, your clients', at(8, 'morning')),
-           mailrow('12 noon', 'Midday progress', 'How is it going? Going well, or need help', at(8, 'midday')),
-           mailrow('5:30pm', 'Close off your day', 'What you planned, and what you did', at(8, 'close-off')),
-           mailrow('Closed', 'Done: your case &middot; how did we do?', stars(at(8, 'star') + .1), at(8, 'star'), 'hot'),
-           at(8, 'clients') - .3, stars(at(8, 'clients') + .5, step=.14),
-           at(8, 'too') - .2, at(8, 'too'), at(8, 'too') + .2),
-        'tpl'))
-    # 9 and they answer: every client written to, a dot each; the answers light up; the calls asked for, in gold
+        '<div class="rem"><div class="inbx" style="--kd:.15s"><em>You &middot; from your managers</em>%s%s%s%s</div>'
+        '<div class="stts">%s%s<div class="bigwin sm2" style="--kd:%.2fs">Nobody is left stuck.</div></div></div>'
+        % (mailrow('Every day', 'Did this close?', 'Picked up &middot; Still working &middot; Not proceeding', at(8, 'close'), 'hot'),
+           mailrow('Monday', 'Fact finds: your response is required', 'Two weeks with no fact find: what is in the way?', at(8, 'Monday')),
+           mailrow('Wednesday', 'Reminder: Fact finds: your response is required', 'Your manager is copied', at(8, 'Wednesday')),
+           mailrow('You answer', 'Fact finds: response received', 'What you will do, by Friday', at(8, 'copied') + .3),
+           stat('303', 'times we asked<br>&ldquo;did this close?&rdquo;', at(8, 'close') + .4), stat('84', 'cases followed<br>since 13 September', at(8, 'Two'), cls='g'),
+           at(8, 'copied') + .6),
+        'chase'))
+    # 9 since August: FFRevised by submission month (fresh export, test rows out): fact finds 50/37/38, confirmed 1/13/15,
+    #   signed 1/17/25 (Client Sig Date). October: the most confirmations and signatures yet.
+    M = [('Aug', 50, 1, 1), ('Sep', 37, 13, 17), ('Oct', 38, 15, 25)]
+    def mbar(v, cls, kd):
+        return '<span class="mgb %s" style="--h:%dpx;--kd:%.2fs"><em>%d</em></span>' % (cls, round(v / 50.0 * 250), kd, v)
+    groups = ''.join('<div class="mg%s"><div class="mgs">%s%s%s</div><b>%s</b>%s</div>'
+                     % (' best' if m == 'Oct' else '', mbar(f, 'f', at(9, 'August') + i * .25), mbar(c, 'c', at(9, 'confirm') + i * .25),
+                        mbar(g, 'g', at(9, 'sign') + i * .25), m,
+                        '<i class="bestb" style="--kd:%.2fs">Best yet</i>' % at(9, 'best') if m == 'Oct' else '')
+                     for i, (m, f, c, g) in enumerate(M))
     sc.append(S(9,
-        '<div class="rem"><div class="dotw"><div class="dots">%s</div><div class="dkey"><span class="k1">Answered</span><span class="k2">Asked us to call</span></div></div>'
-        '<div class="stts">%s%s%s<div class="bigwin" style="--kd:%.2fs">That is the big win.</div></div></div>'
-        % (dotfield(at(9, 'written'), at(9, 'answered'), at(9, 'call')),
-           stat('1781', 'clients written to', at(9, 'Seventeen')), stat('665', 'answered', at(9, 'Six'), cls='g'),
-           stat('262', 'asked us to call', at(9, 'Two')), at(9, 'big') - .2),
-        'win'))
+        '<div class="lb"><div class="stts">%s<div class="lgd"><span class="k1">Fact finds</span><span class="k2">Client confirmed</span><span class="k3">Client signed</span></div></div>'
+        '<div class="mch">%s</div></div>'
+        % (stat('125', 'fact finds<br>since August', at(9, 'hundred')), groups),
+        'since'))
     # 10 the fact find's journey: FFRevised (Client Draft Sent At, Journey Reminder 1 At, Journey Reminder 2 At, Journey Call Asked At,
-    #    Client Confirmed At, Client Rating), counted 2 Nov 2026: 24 confirmed, 12 on the first e-mail, 8 after reminder 1, 4 after
-    #    reminder 2; every rating since 1 October five stars (14 of 14); 125 fact finds since the August launch.
+    #    Client Confirmed At, Client Rating), fresh export 2 Nov 2026, test rows out: 29 confirmed (26 yes, 3 changes asked), 12 on the
+    #    first e-mail, 10 after reminder 1, 6 after reminder 2 or the call ask, 1 with no journey mail; 30 of 32 ratings five stars;
+    #    125 fact finds since the August launch.
     sc.append(S(10,
         '<div class="ffj"><div class="eyebrow" style="--kd:.1s">The fact find&rsquo;s journey &middot; 125 since August</div>'
         '<div class="jt"><span class="jf" style="--kd:%.2fs;--jd:%.2fs"></span>%s%s%s%s</div>'
-        '<div class="jst"><div class="cbar" style="--kd:%.2fs"><div class="cbh">24 clients confirmed</div><div class="cb">'
+        '<div class="jst"><div class="cbar" style="--kd:%.2fs"><div class="cbh">29 clients confirmed</div><div class="cb">'
         '<i class="c1" style="--kd:%.2fs"></i><i class="c2" style="--kd:%.2fs"></i><i class="c3" style="--kd:%.2fs"></i></div>'
-        '<div class="cbl"><span>12 on the first e-mail</span><span>8 after reminder 1</span><span>4 after 2</span></div>'
-        '<div class="cbh2" style="--kd:%.2fs">Half came after a reminder</div></div>'
-        '<div class="st14" style="--kd:%.2fs">%s<span>14 of 14 ratings<br>since October</span></div></div></div>'
+        '<div class="cbl"><span>12 first e-mail</span><span>10 after reminder 1</span><span>6 after 2 or the call</span></div>'
+        '<div class="cbh2" style="--kd:%.2fs">More than half came after a reminder</div></div>'
+        '<div class="st14" style="--kd:%.2fs">%s<span>30 of 32 ratings<br>five stars</span></div></div></div>'
         % (at(10, 'same'), max(1.0, at(10, 'call') - at(10, 'same')),
            jstop('Day 0', 'Plan sent', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>', at(10, 'same')), jstop('Day 3', 'Reminder 1', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></svg>', at(10, 'three')),
            jstop('Day 8', 'Reminder 2', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></svg>', at(10, 'eight')), jstop('Then', 'We ask you to call', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>', at(10, 'call'), 'call'),
-           at(10, 'Half') - .4, at(10, 'Half') - .3, at(10, 'Half') + .1, at(10, 'Half') + .4, at(10, 'Half') + .6,
-           at(10, 'rating') - .2, stars(at(10, 'rating'), step=.1)),
+           at(10, 'half') - .4, at(10, 'half') - .3, at(10, 'half') + .1, at(10, 'half') + .4, at(10, 'half') + .6,
+           at(10, 'thirty') - .2, stars(at(10, 'thirty'), step=.1)),
         'ffj2'))
-    # 11 no more guessing: the system shows us, then people coach, in person
+    # 11 when it stalls: the agents' own notes (Decision n Reason on plans put off: still reviewing 19, budget 13, one plan first 6,
+    #    wants cash value 5; Rationale Gap: client choice 27, affordability 19); after the call ask (17 cases) 6 confirmed, 5 within
+    #    8 hours; 16 stalled cases still open (draft sent, not confirmed). Fresh export 2 Nov 2026.
     sc.append(S(11,
+        '<div class="rem"><div class="inbx nts" style="--kd:.15s"><em>Your notes &middot; why it stalls</em>%s%s%s%s</div>'
+        '<div class="stts">%s%s<div class="callcta" style="--kd:%.2fs"><i>%s</i>Call them this week</div></div></div>'
+        % (rsn('The client wants time', 19, at(11, 'time')), rsn('The budget is tight', 13, at(11, 'budget')),
+           rsn('One plan first', 6, at(11, 'budget') + .4), rsn('Wants cash value', 5, at(11, 'budget') + .7),
+           stat('6', 'more said yes after<br>the call &middot; 5 within hours', at(11, 'six'), cls='g'),
+           stat('16', 'still waiting', at(11, 'Sixteen')), at(11, 'week') - .3, PHI),
+        'stall'))
+    # 12 no more guessing: the system shows us, then people coach, in person
+    sc.append(S(12,
         '<div class="co2"><div class="co2t">'
         '<div class="gss" style="--kd:.15s"><em>Before</em><div class="qm"><b style="--kd:.3s">?</b><b style="--kd:.45s">?</b><b style="--kd:.6s">?</b></div>'
         '<span class="gw">Guessing</span><i class="sk" style="--kd:%.2fs"></i></div>'
         '<div class="knw" style="--kd:%.2fs"><em>Now &middot; the system shows us</em>%s%s%s%s</div></div>'
         '<div class="cch"><span class="cc" style="--kd:%.2fs"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></i>A call</span><span class="cc" style="--kd:%.2fs"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6"/></svg></i>A visit</span>'
         '<span class="cc" style="--kd:%.2fs"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="6" r="2.5"/><circle cx="17" cy="6" r="2.5"/><path d="M3 21v-5a4 4 0 0 1 8 0v5M13 21v-5a4 4 0 0 1 8 0v5M2 13h20"/></svg></i>A sit-down</span></div><b class="co2h" style="--kd:%.2fs">Systems show us. People coach.</b></div>'
-        % (at(11, 'guessing') + .2, at(11, 'system'),
-           kn('Present', '8:12am', at(11, 'shows')), kn('Fact finds', '2 waiting on you', at(11, 'shows') + .3),
-           kn('To close off', '$4.8k should settle', at(11, 'stands') - .2), kn('Midday', 'Need help, 12:04pm', at(11, 'stands') + .1),
-           at(11, 'call'), at(11, 'visit'), at(11, 'sit-down'), at(11, 'facts') - .1),
+        % (at(12, 'guessing') + .2, at(12, 'system'),
+           kn('Present', '8:12am', at(12, 'shows')), kn('Fact finds', '2 waiting on you', at(12, 'shows') + .3),
+           kn('To close off', '$4.8k should settle', at(12, 'stands') - .2), kn('Midday', 'Need help, 12:04pm', at(12, 'stands') + .1),
+           at(12, 'call'), at(12, 'visit'), at(12, 'sit-down'), at(12, 'facts') - .1),
         'coach'))
-    # 12 Rajiv: his screen, his record
-    sc.append(S(12,
+    # 13 coming this month: the dashboard at seven, the bell, follow and share (the home-screen preview, not live yet)
+    sc.append(S(13,
+        '<div class="half"><div class="L"><div class="eyebrow" style="--kd:.15s">Coming this month</div><h1 class="ttl">%s</h1>'
+        '<div class="cm3"><span style="--kd:%.2fs"><i>%s</i>A bell for what needs you</span><span style="--kd:%.2fs"><i>%s</i>Follow who inspires you</span>'
+        '<span style="--kd:%.2fs"><i>%s</i>Share what works</span></div></div>'
+        '<div class="R">%s</div></div>'
+        % (kin('Your dashboard at seven.', at(13, 'dashboard'), .08),
+           at(13, 'bell'), BELLI, at(13, 'Follow'), FOLI, at(13, 'share'), SHRI,
+           phone('<div class="hm"><div class="hmt"><b>Good morning</b><span class="hbell" style="--kd:%.2fs">%s<i>3</i></span></div>'
+                 '<div class="hring">%s</div>'
+                 '<div class="hcard" style="--kd:%.2fs"><em>Rajiv &middot; what is working</em>Updates the staff on the record, the same day<u>Add to my plan</u></div>'
+                 '<div class="hcard hw" style="--kd:%.2fs"><em>You shared a win</em>Client confirmed after the day 8 reminder<u>Added to the week&rsquo;s wins</u></div></div>'
+                 % (at(13, 'bell'), BELLI, mring(41, at(13, 'dashboard') + .3), at(13, 'Follow') + .2, at(13, 'share') + .2), 'slide')),
+        'home2'))
+    # 14 Rajiv: his screen, his record
+    sc.append(S(14,
         '<div class="half"><div class="L"><div class="eyebrow" style="--kd:.15s">Rajiv went first</div>'
         '<div class="seven" style="--kd:%.2fs"><b class="cnt" data-to="7" data-at="%d">7</b><span>applications<br>in October</span></div>'
         '<h2 class="lead">%s</h2></div><div class="R">%s</div></div>'
-        % (at(12, 'Seven') - .1, int(at(12, 'Seven') * 1000), kin('His updates, on the record.', at(12, 'updates'), .08),
+        % (at(14, 'Seven') - .1, int(at(14, 'Seven') * 1000), kin('His updates, on the record.', at(14, 'updates'), .08),
            phone('<div class="rh"><b>Rajiv</b><span>My day</span></div>'
                  '<div class="msg" style="--kd:%.2fs"><em>Wed 28 Oct &middot; to Sasha</em>&ldquo;All o/s will be sorted out today.&rdquo;</div>'
                  '<div class="rate" style="--kd:%.2fs"><em>Mon 2 Nov &middot; Sasha closed it</em><span>%s</span></div>'
                  '<div class="pick" style="--kd:%.2fs"><em>October &middot; picked up</em><b>7 apps</b></div>'
-                 % (at(12, 'updates'), at(12, 'record'), ''.join('<i style="--kd:%.2fs">&#9733;</i>' % (at(12, 'record') + k * .12) for k in range(5)), at(12, 'Seven')), 'slide')),
+                 % (at(14, 'updates'), at(14, 'record'), ''.join('<i style="--kd:%.2fs">&#9733;</i>' % (at(14, 'record') + k * .12) for k in range(5)), at(14, 'Seven')), 'slide')),
         'rajiv'))
-    # 13 that is the level: every one of us
-    sc.append(S(13,
+    # 15 that is the level: every one of us
+    sc.append(S(15,
         '<div class="mid"><div class="lvl"><div class="bar2" style="--kd:%.2fs"><span>Rajiv&rsquo;s level</span></div>'
         '<div class="crowd2">%s</div></div><h1 class="go">%s</h1></div>'
-        % (at(13, 'level'), people(26, at(13, 'Every'), .025, cls='pr2'), kin('Every one of us, there.', at(13, 'Every'), .1)),
+        % (at(15, 'level'), people(26, at(15, 'Every'), .025, cls='pr2'), kin('Every one of us, there.', at(15, 'Every'), .1)),
         'level'))
-    # 14 thank you, to every one of us who stayed the course
-    sc.append(S(14,
+    # 16 thank you, to every one of us who stayed the course
+    sc.append(S(16,
         '<div class="mid"><div class="eyebrow" style="--kd:.15s">To every one of you who stayed the course</div>'
         '<div class="crowd2">%s</div><h1 class="tyh">%s</h1><h2 class="lead">%s</h2></div>'
-        % (people(26, at(14, 'stayed'), .03, cls='ty'), kin('Thank you.', at(14, 'thank'), .12),
-           kin('You built this with us. Now we reap it, together.', at(14, 'built'), .07)),
+        % (people(26, at(16, 'stayed'), .03, cls='ty'), kin('Thank you.', at(16, 'thank'), .12),
+           kin('You built this with us. Now we reap it, together.', at(16, 'built'), .07)),
         'thanks'))
-    # 15 check in, lift each other, rise
-    sc.append(S(15,
+    # 17 check in, lift each other, rise
+    sc.append(S(17,
         '<div class="mid"><div class="flare big" style="--kd:%.2fs"></div><div class="eyebrow" style="--kd:.15s">Ricky Rampersad Branch &middot; FY27</div>'
         '<div class="three"><span style="--kd:%.2fs">Check in.</span><span style="--kd:%.2fs">Lift each other.</span><b style="--kd:%.2fs">Rise.</b></div></div>'
-        % (at(15, 'Rise'), at(15, 'Check'), at(15, 'Lift'), at(15, 'Rise')),
+        % (at(17, 'Rise'), at(17, 'Check'), at(17, 'Lift'), at(17, 'Rise')),
         'end'))
     return ''.join(sc)
 
@@ -442,7 +484,8 @@ h1.end{font-size:96px;color:#E3B23C;letter-spacing:-2px}
 .pg.oct s{color:#7D8792}
 .pg.nov{background:linear-gradient(160deg,#E3B23C,#C98E1A);color:#1A1405;box-shadow:0 0 60px rgba(227,178,60,.45)}
 @keyframes flipin{from{opacity:0;transform:rotateX(80deg) translateY(-30px)}to{opacity:1;transform:none}}
-.flare.big{top:50%}
+.flare.big{top:50%;width:900px;height:900px;margin:-450px 0 0 -450px;background:radial-gradient(circle,rgba(110,231,183,.42),rgba(110,231,183,0) 62%);box-shadow:none;animation-name:burst2}
+@keyframes burst2{0%{opacity:0;transform:scale(.15)}35%{opacity:1}100%{opacity:0;transform:scale(1.15)}}
 .room{position:relative;display:flex;flex-wrap:wrap;gap:10px 14px;justify-content:center;max-width:760px;margin:0 auto 30px}
 .bubs{position:absolute;inset:-26px 0 0 0;display:flex;flex-wrap:wrap;gap:10px 14px;justify-content:center;pointer-events:none}
 .bub{width:38px;height:22px;display:block;position:relative;opacity:0;animation:bpop 1.6s ease-out both;animation-delay:var(--kd)}
@@ -652,7 +695,7 @@ h1.end{font-size:96px;color:#E3B23C;letter-spacing:-2px}
 .cbh{font-size:30px;font-weight:700;color:#FFFFFF;margin-bottom:12px}
 .cb{display:flex;height:34px;border-radius:10px;overflow:hidden;background:#22302A}
 .cb i{display:block;height:100%;transform-origin:0 50%;animation:grow2 .8s cubic-bezier(.3,.8,.2,1) both;animation-delay:var(--kd)}
-.cb i.c1{width:50%;background:#34D399} .cb i.c2{width:33.4%;background:#E3B23C} .cb i.c3{width:16.6%;background:#F2D27E}
+.cb i.c1{width:41.4%;background:#34D399} .cb i.c2{width:34.5%;background:#E3B23C} .cb i.c3{width:20.7%;background:#F2D27E}
 .cbl{display:flex;justify-content:space-between;font-size:17px;color:#C9D6CF;margin-top:8px}
 .cbh2{margin-top:14px;font-size:28px;font-weight:700;color:#E3B23C;animation:wup .5s both;animation-delay:var(--kd)}
 .st14{text-align:center;animation:rup .6s both;animation-delay:var(--kd)}
@@ -661,6 +704,46 @@ h1.end{font-size:96px;color:#E3B23C;letter-spacing:-2px}
 .ty{width:42px;height:46px;fill:#2B3A33;animation:tylit .7s ease-out both;animation-delay:var(--kd)}
 @keyframes tylit{from{opacity:.3;transform:translateY(10px)}to{opacity:1;transform:none;fill:#E3B23C;filter:drop-shadow(0 0 10px rgba(227,178,60,.55))}}
 h1.tyh{font-size:96px;color:#FFFFFF;margin-top:22px;letter-spacing:-2px}
+.bigwin.sm2{font-size:34px;color:#E3B23C}
+.cm3{display:flex;flex-direction:column;gap:16px;margin-top:26px}
+.cm3 span{display:flex;align-items:center;gap:14px;font-size:28px;font-weight:600;color:#FFFFFF;animation:slin .5s both;animation-delay:var(--kd)}
+.cm3 i{width:52px;height:52px;border-radius:50%;background:#E3B23C;color:#1A1405;display:flex;align-items:center;justify-content:center}
+.cm3 i svg{width:26px;height:26px}
+.hm{display:flex;flex-direction:column;gap:10px}
+.hmt{display:flex;justify-content:space-between;align-items:center}
+.hmt b{font-size:20px;color:#141C4A}
+.hbell{position:relative;width:38px;height:38px;border-radius:50%;border:1.5px solid #E7E2D6;display:flex;align-items:center;justify-content:center;color:#141C4A;animation:slam2 .6s both;animation-delay:var(--kd)}
+.hbell svg{width:20px;height:20px}
+.hbell i{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#C2412D;color:#FFFFFF;font-style:normal;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.hring{display:flex;justify-content:center}
+.hring .mr{flex:0 0 150px}
+.hring .ring.mini{width:150px;height:150px}
+.hcard{background:#FFFFFF;border:1px solid #E7E2D6;border-radius:14px;padding:10px 12px;font-size:14.5px;line-height:1.35;animation:rup .55s cubic-bezier(.2,1.3,.4,1) both;animation-delay:var(--kd)}
+.hcard em{display:block;font-style:normal;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#8A6A12;margin-bottom:3px}
+.hcard u{display:inline-block;margin-top:6px;text-decoration:none;font-size:12.5px;font-weight:700;color:#FFFFFF;background:#EC6A1F;border-radius:999px;padding:4px 10px}
+.hcard.hw u{background:#2C7A57}
+.lb{width:100%;display:flex;gap:70px;align-items:center;justify-content:center}
+.lgd{display:flex;flex-direction:column;gap:8px;margin-top:14px;font-size:18px;color:#C9D6CF}
+.lgd span:before{content:'';display:inline-block;width:14px;height:14px;border-radius:4px;margin-right:10px;vertical-align:-1px}
+.lgd .k1:before{background:#E3B23C} .lgd .k2:before{background:#34D399} .lgd .k3:before{background:#9FE3C4}
+.mch{display:flex;gap:46px;align-items:flex-end}
+.mg{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px}
+.mg>b{font-size:24px;color:#FFFFFF}
+.mgs{display:flex;gap:10px;align-items:flex-end;height:290px}
+.mgb{position:relative;width:46px;height:var(--h);border-radius:10px 10px 4px 4px;transform-origin:50% 100%;animation:barup .9s cubic-bezier(.2,1.1,.3,1) both;animation-delay:var(--kd)}
+@keyframes barup{from{transform:scaleY(0)}to{transform:none}}
+.mgb em{position:absolute;left:0;right:0;top:-28px;text-align:center;font-style:normal;font-size:20px;font-weight:700;color:#FFFFFF}
+.mgb.f{background:#E3B23C} .mgb.c{background:#34D399} .mgb.g{background:#9FE3C4}
+.mg.best .mgs{filter:drop-shadow(0 0 22px rgba(227,178,60,.35))}
+.bestb{position:absolute;top:-62px;font-style:normal;font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#1A1405;background:#E3B23C;border-radius:999px;padding:6px 14px;animation:slam2 .6s cubic-bezier(.2,1.5,.35,1) both;animation-delay:var(--kd)}
+.nts{flex:0 0 560px}
+.rsn{position:relative;display:flex;align-items:center;gap:12px;padding:14px 8px 18px;border-top:1px solid #E7E2D6;font-size:22px;animation:slin .5s both;animation-delay:var(--kd)}
+.rsn span{flex:1 1 auto;color:#141C4A;font-weight:600}
+.rsn b{font-size:26px;color:#B07F0E}
+.rsn i{position:absolute;left:8px;bottom:8px;height:5px;width:calc((100% - 16px) * var(--w) / 100);border-radius:3px;background:#E3B23C;transform-origin:0 50%;animation:grow2 .9s both;animation-delay:var(--kd)}
+.callcta{display:inline-flex;align-items:center;gap:14px;margin-top:6px;background:#2C7A57;color:#FFFFFF;border-radius:999px;padding:12px 22px 12px 12px;font-size:28px;font-weight:700;animation:slam2 .7s cubic-bezier(.2,1.5,.35,1) both;animation-delay:var(--kd)}
+.callcta i{width:46px;height:46px;border-radius:50%;background:#FFFFFF;color:#2C7A57;display:flex;align-items:center;justify-content:center}
+.callcta i svg{width:24px;height:24px}
 .seven b{font-size:190px;font-weight:700;line-height:.85;color:#E3B23C;letter-spacing:-6px;text-shadow:0 0 50px rgba(227,178,60,.35)}
 .seven span{font-size:30px;font-weight:600;line-height:1.15;color:#FFFFFF}
 .rh{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #E7E2D6;padding-bottom:10px}

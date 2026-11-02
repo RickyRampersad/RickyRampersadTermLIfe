@@ -1,5 +1,5 @@
 {
- "note": "Reset and rise, the turn (2 Nov 2026). Ricky, 8:51am: more compact, more encouraging; a typical day; they see us, we see them, everyone accountable; not a coach all day but us calling to understand; Rajiv's screens, how it is working for him, where he is, everybody up to that level; mean what we said, we listened on Friday; October done, the turn from the 1st. Rajiv's figure is his own Salesforce record: 7 applications picked up in October (CLIENT_PORTFOLIO__c, A14158). Recut 9:17am (Ricky: 'where are the cards as to what happens from both sides? With the focus on the agents and more motion and impact'): the day as four paired cards, YOU (the agent, large) and US (the branch), 8:00, 10:30, 12:00, 5:30, the day's circles across the top. 9:29am ('show the templates and the success of responses ... this is a big win'): every reminder on its template, yours and your clients'; then the orphan-client letters' answers from Service Questionnaires (Transition Send: 1,781 e-mailed 25 Sep to 1 Oct; Client Responses, test tokens left out: 665 answered, 262 asked us to call), counted 2 Nov 2026. 10:03am ('deep insights ... how innovation is taking place and how with the systems, we are both human coaching, physical coaching, and touching base with the relevant insights instead of not knowing'): no more guessing; the system shows us, then we coach in person. 10:13am ('the template that went out, template 1, 2, 3, after how much days, then the clients checked that they are ready ... thank the ones who stayed the course'): the fact find's journey from FFRevised (draft same day, reminder day 3, reminder day 8, then the advisor is asked to call; 24 confirmed, half after a reminder; 14 of 14 ratings since October five stars), and a thank-you.",
+ "note": "Reset and rise, the turn (2 Nov 2026). Ricky, 8:51am: more compact, more encouraging; a typical day; they see us, we see them, everyone accountable; not a coach all day but us calling to understand; Rajiv's screens, how it is working for him, where he is, everybody up to that level; mean what we said, we listened on Friday; October done, the turn from the 1st. Rajiv's figure is his own Salesforce record: 7 applications picked up in October (CLIENT_PORTFOLIO__c, A14158). Recut 9:17am (Ricky: 'where are the cards as to what happens from both sides? With the focus on the agents and more motion and impact'): the day as four paired cards, YOU (the agent, large) and US (the branch), 8:00, 10:30, 12:00, 5:30, the day's circles across the top. 9:29am ('show the templates and the success of responses ... this is a big win'): every reminder on its template, yours and your clients'; then the orphan-client letters' answers from Service Questionnaires (Transition Send: 1,781 e-mailed 25 Sep to 1 Oct; Client Responses, test tokens left out: 665 answered, 262 asked us to call), counted 2 Nov 2026. 10:03am ('deep insights ... how innovation is taking place and how with the systems, we are both human coaching, physical coaching, and touching base with the relevant insights instead of not knowing'): no more guessing; the system shows us, then we coach in person. 10:13am ('the template that went out, template 1, 2, 3, after how much days, then the clients checked that they are ready ... thank the ones who stayed the course'): the fact find's journey from FFRevised (draft same day, reminder day 3, reminder day 8, then the advisor is asked to call; 24 confirmed, half after a reminder; 14 of 14 ratings since October five stars), and a thank-you. 10:57am: this film is the agents' fact find only (the service questionnaire is a separate programme and is out). Day at 7am, close off by 6pm; the managers' chase on its real subject lines; since August by month; the journey (fresh export: 29 confirmed, more than half after a reminder; 30 of 32 ratings five stars); why it stalls from the agents' own notes and the calls that followed; the dashboard, bell, follow and share coming this month.",
  "voice": "en-US-AndrewMultilingualNeural",
  "rate": "+0%",
  "scenes": [
@@ -12,7 +12,7 @@
    "extra": 0.3
   },
   {
-   "say": "Here is your day, from both sides. Eight o'clock: your goal, your fact finds, your clients. And our team is already chasing your cases.",
+   "say": "Here is your day, from both sides. Seven o'clock: your goal, your fact finds, your clients. And our team is already chasing your cases.",
    "extra": 0.2
   },
   {
@@ -24,7 +24,7 @@
    "extra": 0.2
   },
   {
-   "say": "At half past five, you close off. What you planned, and what you did. We see it too.",
+   "say": "By six, you close off. What you planned, and what you did. We see it too.",
    "extra": 0.2
   },
   {
@@ -32,19 +32,27 @@
    "extra": 0.3
   },
   {
-   "say": "Every reminder runs on a template. Yours: morning, midday, close-off, and a star for every case we close. Your clients hear from us too.",
-   "extra": 0.2
+   "say": "Every fact find is followed. Each open case asks you: did this close? Two weeks with no fact find, and Monday's note says your response is required. By Wednesday, your manager is copied.",
+   "extra": 0.3
   },
   {
-   "say": "And they answer. Seventeen hundred and eighty-one clients, written to. Six hundred and sixty-five, answered. Two hundred and sixty-two asked us to call. That is the big win.",
-   "extra": 0.4
+   "say": "Since August, one hundred and twenty-five fact finds. Every month, more clients confirm, and sign. October, our best yet: fifteen confirmed. Twenty-five signed.",
+   "extra": 0.3
   },
   {
-   "say": "Your fact finds have a journey too. The plan goes to your client the same day. A reminder on day three, another on day eight, then we ask you to call. Half of all confirmations came after a reminder, and every rating since October is five stars.",
+   "say": "Your fact finds have a journey too. The plan goes to your client the same day. A reminder on day three, another on day eight, then we ask you to call. More than half of all confirmations came after a reminder, and thirty of thirty-two ratings are five stars.",
+   "extra": 0.3
+  },
+  {
+   "say": "When a fact find stalls, your own notes tell us why. The client wants time, or the budget is tight. After the call we ask you to make, six more said yes. Five within hours. Sixteen are still waiting. Let's call them, this week.",
    "extra": 0.3
   },
   {
    "say": "No more guessing. The system shows us where every one of us stands. Then we coach in person. A call, a visit, a sit-down, with the facts in hand.",
+   "extra": 0.3
+  },
+  {
+   "say": "Coming this month: your dashboard at seven. A bell for whatever needs you. Follow who inspires you, and share what works, straight into the week's wins.",
    "extra": 0.3
   },
   {
