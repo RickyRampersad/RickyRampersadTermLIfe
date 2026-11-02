@@ -1,7 +1,47 @@
 {
- "tts/out/mtusefix/01.mp3": [
+ "tts/out/werise/01.mp3": [
+  "en",
+  0.982,
+  "Friday we stood together from Friday we rise we reinvent and we reset"
+ ],
+ "tts/out/werise/02.mp3": [
+  "en",
+  0.993,
+  "It starts with one sign in, the branch app, every tool you need in one place."
+ ],
+ "tts/out/werise/03.mp3": [
   "en",
   0.992,
-  "Every week, this branch meets. Here is how to bring something to it."
+  "Every morning, your day lands in your inbox. Project it in two minutes by half past ten."
+ ],
+ "tts/out/werise/04.mp3": [
+  "en",
+  0.998,
+  "At half past five, you close it off. Your day balances against what you said you would do."
+ ],
+ "tts/out/werise/05.mp3": [
+  "en",
+  0.996,
+  "Our staff get the same, a coach on the screen, telling them what comes next all day long."
+ ],
+ "tts/out/werise/06.mp3": [
+  "en",
+  0.994,
+  "Your managers see the work as it happens. Who called? Who wrote? What moved?"
+ ],
+ "tts/out/werise/07.mp3": [
+  "en",
+  0.993,
+  "All of it flows to the wall and into our meeting every Wednesday."
+ ],
+ "tts/out/werise/08.mp3": [
+  "en",
+  0.997,
+  "You will know what we are doing. We will know what you are doing. The data is at your fingertips."
+ ],
+ "tts/out/werise/09.mp3": [
+  "en",
+  0.993,
+  "The rest is up to you, log in, log out, and rise."
  ]
 }
