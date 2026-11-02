@@ -1,27 +1,62 @@
 {
- "tts/out/mtfb/01.mp3": [
-  "en",
-  0.994,
-  "Since August, 125 FACF fines. Every month, more clients confirm and sign. October was our best yet, 15 confirmed 25 signed."
- ],
- "tts/out/mtfb/02.mp3": [
-  "en",
-  0.998,
-  "Your fact finds out a journey to the plan goes to your client the same day, a reminder on day three, another on day eight, then we ask you to call more than half of all confirmations came after a reminder and 30 of 32 ratings are five stars"
- ],
- "tts/out/mtfb/03.mp3": [
-  "en",
-  0.997,
-  "When a fact finds stalls, your own notes tell us why. The client wants time, where the budget is tight. After the call we ask you to make, six more said yes, five within hours. Sixteen are still waiting. Let's call them this week."
- ],
- "tts/out/mtfbb/01.mp3": [
+ "tts/out/vaai/01.mp3": [
   "en",
   0.995,
-  "since August 125 fact fines. Every month more clients confirm and sign. October, our best yet, 15 confirmed. 25 signed."
+  "Ineal, let's put the fact find together. How did the interview go?"
  ],
- "tts/out/mtfbb/03.mp3": [
+ "tts/out/vaai/02.mp3": [
   "en",
   0.998,
-  "When a fact finds stalls, your own notes tell us why. The client wants time, or the budget is tight. After the call we ask you to make, six more said yes. Five within hours. Sixteen are still waiting. Let's call them this week."
+  "Great. I've got Jordan Baptiste 34, Mary DeLisa with two children earning 15,000 a month. Is that right?"
+ ],
+ "tts/out/vaai/03.mp3": [
+  "en",
+  0.998,
+  "Got it! Now the home. What's the house worth and what's still owed on the mortgage?"
+ ],
+ "tts/out/vaai/04.mp3": [
+  "en",
+  0.999,
+  "Thanks. Let me run the numbers. Ten years of Jordan's income is 1.8 million. Add the 600,000 mortgage and 400,000 for the children's education. That's 2.8 million as family would need."
+ ],
+ "tts/out/vaai/05.mp3": [
+  "en",
+  0.998,
+  "He has 250,000 through work, so the gap is 2.5 million. That's the need your recommendation has to answer."
+ ],
+ "tts/out/vaai/06.mp3": [
+  "en",
+  0.998,
+  "Before we finish, two things are still blank. His date of birth, and who his work policy pays."
+ ],
+ "tts/out/vaai/07.mp3": [
+  "en",
+  0.996,
+  "12th of April 1992, and the beneficiary is Lisa. Got it!"
+ ],
+ "tts/out/vaai/08.mp3": [
+  "en",
+  0.999,
+  "That's it. Every section is complete, and the numbers are calculated. Now you choose the plans, and the client confirms the draft by email before it goes to your manager."
+ ],
+ "tts/out/vaag/01.mp3": [
+  "en",
+  0.998,
+  "It went well. Jordan Baptiste, he's 34, married to Lisa, two kids. The earns about 15,000 a month."
+ ],
+ "tts/out/vaag/02.mp3": [
+  "en",
+  0.976,
+  "Yes, Kai is 8 and Mia is 5."
+ ],
+ "tts/out/vaag/03.mp3": [
+  "en",
+  0.996,
+  "The house is about 1.2 million. 600,000 left on the mortgage."
+ ],
+ "tts/out/vaag/04.mp3": [
+  "en",
+  0.996,
+  "Born 12th of April, 1992, the work policy pays Lisa."
  ]
 }
