@@ -78,6 +78,21 @@ console.log('\nThe morning e-mail says when each is due:\n');
   env.mailSend_ = keep;
 }
 
+console.log('\nEach client once; fact finds named and once (from his 5:36am copy of Felicia\'s):\n');
+ok('two policies, one line', JSON.stringify(env.agByClient_([{ client: 'Jabraele Talleh' }, { client: 'Jabraele Talleh' }, { client: 'Jason Banmally' }], false)) === JSON.stringify(['Jabraele Talleh (2 policies)', 'Jason Banmally']));
+ok('with the oldest days', JSON.stringify(env.agByClient_([{ client: 'Shivani Pancham', days: 1829 }, { client: 'Shivani Pancham', days: 367 }, { client: 'Alex John', days: 77 }, { client: 'Alex John', days: 77 }], true)) === JSON.stringify(['Shivani Pancham (2 policies, 1829d)', 'Alex John (2 policies, 77d)']));
+{
+  const keepQ = env.sfkQuery_, keepF = env.ff360Feed_;
+  env.ff360Feed_ = () => null;
+  env.sfkQuery_ = q => /Fact_Finding_Interviews__c/.test(q) ? [
+    { Agent_Email__c: 'felicia@example.com', Name: 'Amrita Kimberly Rattan', Full_Name__c: null, Occupation__c: 'House Officer- Physician', Date_of_Interview__c: '2026-03-24', CreatedDate: '2026-03-25T01:06:53.000+0000' },
+    { Agent_Email__c: 'felicia@example.com', Name: 'Amrita Kimberly Rattan', Full_Name__c: null, Occupation__c: 'House Officer- Physician', Date_of_Interview__c: '2026-03-24', CreatedDate: '2026-03-25T00:56:29.000+0000' }] : [];
+  const d = env.agentBatchData_([people['a-felicia-rampersad']], DAY);
+  const ff = d.ff['a-felicia-rampersad'];
+  ok('the interview saved twice is one fact find, with the client\'s name', ff.length === 1 && ff[0].name === 'Amrita Kimberly Rattan', JSON.stringify(ff));
+  env.sfkQuery_ = keepQ; env.ff360Feed_ = keepF;
+}
+
 console.log('\nThe mail, this morning:\n');
 env.agentPeople_ = () => people;
 env.agentBatchData_ = () => ({});

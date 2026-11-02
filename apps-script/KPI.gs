@@ -14169,15 +14169,32 @@ function agentBatchData_(list, day) {
   } catch (e) {}
   try {
     var byEmail = {}; list.forEach(function (a) { byEmail[String(a.email).toLowerCase()] = a.key; });
-    sfkQuery_('SELECT Agent_Email__c, Full_Name__c, Occupation__c, Date_of_Interview__c, CreatedDate FROM Fact_Finding_Interviews__c' +
+    // 2 Nov 2026: the client's name is the record's Name when Full_Name__c is blank (Felicia's showed "—"), and the same
+    // interview saved twice (same client, same day) is one fact find.
+    var ffSeen = {};
+    sfkQuery_('SELECT Agent_Email__c, Name, Full_Name__c, Occupation__c, Date_of_Interview__c, CreatedDate FROM Fact_Finding_Interviews__c' +
       ' WHERE Agent_Email__c IN (' + emails.map(soqlStr_).join(',') + ') ORDER BY CreatedDate DESC LIMIT 2000').forEach(function (r) {
         var k = byEmail[String(r.Agent_Email__c || '').toLowerCase()]; if (!k) return;
-        out.ff[k].push({ name: r.Full_Name__c || '', occ: r.Occupation__c || '', on: r.Date_of_Interview__c || String(r.CreatedDate || '').slice(0, 10) });
+        var nm = String(r.Full_Name__c || r.Name || '').trim(), on = r.Date_of_Interview__c || String(r.CreatedDate || '').slice(0, 10);
+        var key = k + '|' + nm.toLowerCase().replace(/\s+/g, ' ') + '|' + on; if (ffSeen[key]) return; ffSeen[key] = 1;
+        out.ff[k].push({ name: nm, occ: r.Occupation__c || '', on: on });
       });
   } catch (e) {}
   return out;
 }
 
+/** One line per client, not per policy (2 Nov 2026: "Jabraele Talleh, Jabraele Talleh"): "Shivani Pancham (2 policies, 1829d)". */
+function agByClient_(list, withDays) {
+  var by = {}, order = [];
+  (list || []).forEach(function (x) {
+    var c = String((x && x.client) || '').trim() || '—', k = c.toLowerCase().replace(/\s+/g, ' ');
+    if (!by[k]) { by[k] = { c: c, n: 0, days: 0 }; order.push(k); }
+    by[k].n++; by[k].days = Math.max(by[k].days, Number(x && x.days) || 0);
+  });
+  return order.map(function (k) { var o = by[k], bits = [];
+    if (o.n > 1) bits.push(o.n + ' policies'); if (withDays && o.days) bits.push(o.days + 'd');
+    return o.c + (bits.length ? ' (' + bits.join(', ') + ')' : ''); });
+}
 /** The agent's book from Branch Intelligence: premium dues, lapses, pendings. */
 function agentBook_(a, cache) {
   if (!cache || typeof iScope_ !== 'function') return null;
@@ -14285,9 +14302,9 @@ function agentMorningMail_(a, day, data, cache) {
     }).join('') + (open.length > AGENT_LIST_MAX ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (open.length - AGENT_LIST_MAX) + ' more on the page.</div>' : ''))
       : '<div style="font-size:13px;color:' + MAIL.muted + '">Nothing due for your clients today.</div>') +
     (book ? sectionLabel_('Your book') + agCard_(MAIL.red,
-        (book.lapsed.length ? agLine_('<b style="color:' + MAIL.red + '">Lapsed last night: ' + book.lapsed.length + '</b> · ' + esc_(book.lapsed.slice(0, 4).map(function (x) { return x.client; }).join(', '))) : '') +
-        (book.slipped.length ? agLine_('<b style="color:' + MAIL.amber + '">Slipped into arrears: ' + book.slipped.length + '</b> · ' + esc_(book.slipped.slice(0, 4).map(function (x) { return x.client; }).join(', '))) : '') +
-        agLine_('<b>Premiums past 60 days: ' + book.urgent.length + '</b>' + (book.urgent.length ? ' · oldest: ' + esc_(book.urgent.slice(0, 4).map(function (x) { return x.client + ' (' + x.days + 'd)'; }).join(', ')) : '')) +
+        (book.lapsed.length ? agLine_('<b style="color:' + MAIL.red + '">Lapsed last night: ' + book.lapsed.length + '</b> · ' + esc_(agByClient_(book.lapsed, false).slice(0, 4).join(', '))) : '') +
+        (book.slipped.length ? agLine_('<b style="color:' + MAIL.amber + '">Slipped into arrears: ' + book.slipped.length + '</b> · ' + esc_(agByClient_(book.slipped, false).slice(0, 4).join(', '))) : '') +
+        agLine_('<b>Premiums past 60 days: ' + book.urgent.length + '</b>' + (book.urgent.length ? ' · oldest: ' + esc_(agByClient_(book.urgent, true).slice(0, 4).join(', ')) : '')) +
         agLine_('<b>Premium dues to chase: ' + book.chase.length + '</b>') +
         agLine_('<b>Pending business holding money: ' + book.pend.length + '</b>' + (book.pend.length ? ' · ' + esc_(book.pend.slice(0, 3).map(function (x) { return x.client + ' (' + (x.requirement || x.status || 'pending') + ')'; }).join(', ')) : '')) +
         (book.follow.length ? agLine_('<b>Follow-ups you promised, due: ' + book.follow.length + '</b> · ' + esc_(book.follow.slice(0, 3).map(function (x) { return x.client; }).join(', '))) : '')) : '') +
