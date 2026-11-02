@@ -6772,6 +6772,24 @@ guide you. In your session review notes on the step back in place from all memor
   and Claude stubbed, then the page and Service.gs against it) and `tests/e2e-strategic-meeting.js` (34, Playwright,
   a laptop as the branch, a phone as the unit manager, and the unlinked backend).
 
+## HELP 868 — the WhatsApp assistant (2 November 2026)
+
+respond.io's AI agent answers on the branch's WhatsApp line. It never reads sheets, Salesforce or this repository; it calls
+two routes in the tracker (`apps-script/Help868.gs`, `help868.pendings` and `help868.enquiry`), and the tracker decides what
+comes back. Asked for in these words: *"I would like pendings and queries dealt with"*. `HELP868-SETUP.md` has the steps.
+
+- **The "HELP868 Agents" tab is the pilot list and the identity check.** The WhatsApp number (verified by Meta) must be on it,
+  and an agent number, if given, must agree. No password in WhatsApp, ever. A wrong agent number and an unknown number get the
+  same reply. The Skill Bank has no phone column, which is why the tab exists.
+- **An agent sees only their own cases, and only counts.** Last four digits of a policy, days, who has it by first name. Never a
+  client name, a note's words, money or a date of birth. The words of a note need a team member.
+- **An enquiry's reference comes from the log**, so the assistant can only quote one that exists, and promises no time.
+- **Nothing answers until `HELP868_KEY` is set.** The branch app tile is branch-manager-only until the respond.io workflow
+  answers more than the test number. Do not widen it earlier: an agent would tap it and get silence.
+- **respond.io state on 2 Nov:** three AI agents (one active, assignment and close actions off, instructions out of order), one
+  published test workflow, no teams, one tag, no knowledge sources. Nothing was changed there from the repository.
+- Test: `tests/test-help868.js`.
+
 ## Standing rules
 
 - **Client data never enters the repository.** `Orphan-Register.xlsx` and

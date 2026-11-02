@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-29f';
+var SCRIPT_VERSION = '2026-11-02a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2161,6 +2161,8 @@ function doGet(e) {
     catch (err) { return replyPage_('Thank you.', 'Your rating did not record this time. Reply to the e-mail and the branch will take it from there.', ''); }
   }
   // My workday on the branch's own site asks for the day as JSON (23 Oct 2026).
+  // HELP 868: the WhatsApp assistant's two narrow calls (2 Nov 2026). Help868.gs decides what comes back.
+  if (String(p.action || '').indexOf('help868.') === 0 && typeof help868Route_ === 'function') { try { return json_(help868Route_(p)); } catch (err) { return json_({ ok: false, error: 'HELP 868 could not answer.' }); } }
   if (p.wd) { try { return json_(workdayGet_(p)); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); } }
   if (p.rs) {
     // A link from an e-mail opens at once: a light page, and the page built behind it (21 Oct 2026). openPage() builds it with full=1.
@@ -2197,6 +2199,7 @@ function doPost(e) {
   var body = {};
   try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
   // The wall's Issued this month, from the newest production report (28 Oct 2026).
+  if (String(body.action || '').indexOf('help868.') === 0 && typeof help868Route_ === 'function') { try { return json_(help868Route_(body)); } catch (err) { return json_({ ok: false, error: 'HELP 868 could not answer.' }); } }
   if (String(body.action || '') === 'wall.issued') { try { return json_({ ok: true, data: wallScrub_(wallIssued_(todayISO_())) }); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); } }
   if (typeof intelRoute_ === 'function') {
     try {
@@ -2226,6 +2229,7 @@ function handle_(action, data, token) {
                     intel:   typeof intelRoute_ === 'function',
                     salesforce: sfkConfigured_(),
                     mailRelay: typeof mailRelayReady_ === 'function' && mailRelayReady_(),
+                    help868: typeof help868Route_ === 'function',
                     // 22 Oct 2026: whether Claude is switched on (never the key), which models, and how many of his items are written at full depth today.
                     claude: (function () { try { return !!String(PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '').trim(); } catch (e) { return false; } })() },
              // 27 Oct 2026: the agents' mail, so a check needs no editor: the mode (preview runs the pilot) and how many agents were mailed today, by run.
