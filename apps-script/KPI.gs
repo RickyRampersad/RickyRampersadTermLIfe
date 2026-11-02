@@ -13431,7 +13431,7 @@ function ffAskMail_(s, week, kind) {
       { value: s.goalWk || '—', label: 'your own weekly goal' }
     ]) +
     replyButton_(replyUrl_(a.key, week, 'agff'), 'Give my response', 'One page, two minutes, no sign-in. The link is good all week.') +
-    '<div style="font-size:13px;color:' + MAIL.muted + ';line-height:1.55;margin-top:10px">Your answer goes to your Unit Manager and sales support. If you need help (appointments, names to call, or the fact find itself), say so and your manager gets it as a task.' +
+    '<div style="font-size:13px;color:' + MAIL.muted + ';line-height:1.55;margin-top:10px">Your answer goes to your manager and Mrs Dookran. If you need help (appointments, names to call, or the fact find itself), say so and your manager gets it as a task.' +
       (kind === 'remind' ? ' No response by Friday goes to Mr Rampersad.' : '') + '</div>' +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
   return { subject: (kind === 'remind' ? 'Reminder: ' : '') + 'Fact finds: your response is required · ' + a.name,
@@ -13464,7 +13464,7 @@ function ffChaseTick_(day, mins) {
       if (sent >= FF_CHASE.PER_RUN || !a || props.getProperty('ffq_' + x.k + '_' + week) || !ffQuotaOk_()) return;
       var mail = ffAskMail_(ffFromList_(x, a), week, 'ask');
       props.setProperty('ffq_' + x.k + '_' + week, hhmm_(new Date()));
-      try { mailSend_({ to: a.email, cc: DAYSTART_CC_DEFAULT, subject: mail.subject, htmlBody: mail.html }); sent++; out.push(a.name + ' (fact finds asked)'); }
+      try { mailSend_({ to: a.email, cc: agentCopies_(a).join(','), subject: mail.subject, htmlBody: mail.html }); sent++; out.push(a.name + ' (fact finds asked)'); }
       catch (e) { out.push(a.name + ' fact-find ask FAILED: ' + (e && e.message)); }
     });
   } else if (dow === 3 && mode === 'live') {
@@ -13472,8 +13472,7 @@ function ffChaseTick_(day, mins) {
     list.forEach(function (x) {
       var a = people[x.k];
       if (sent >= FF_CHASE.PER_RUN || !a || resp[x.k] || !props.getProperty('ffq_' + x.k + '_' + week) || props.getProperty('ffr_' + x.k + '_' + week) || !ffQuotaOk_()) return;
-      var mail = ffAskMail_(ffFromList_(x, a), week, 'remind'), cc = [DAYSTART_CC_DEFAULT], mgr = agentManagerEmail_(a);
-      if (mgr && cc.indexOf(mgr) < 0) cc.push(mgr);
+      var mail = ffAskMail_(ffFromList_(x, a), week, 'remind'), cc = agentCopies_(a);
       props.setProperty('ffr_' + x.k + '_' + week, hhmm_(new Date()));
       try { mailSend_({ to: a.email, cc: cc.join(','), subject: mail.subject, htmlBody: mail.html }); sent++; out.push(a.name + ' (fact finds reminded)'); }
       catch (e) { out.push(a.name + ' fact-find reminder FAILED: ' + (e && e.message)); }
@@ -13489,7 +13488,7 @@ function ffPreview_(list, people, week) {
   var mgr = managerEmails_(); if (!mgr.length || !list.length) return false;
   var first = people[list[0].k], sample = first ? ffAskMail_(ffFromList_(list[0], first), week, 'ask') : null;
   var rows = list.map(function (x) { var a = people[x.k]; return a ? '<div style="font-size:12.5px;padding:4px 0;border-top:1px solid ' + MAIL.line + '"><b>' + esc_(a.name) + '</b> · ' + (x.last ? 'last ' + esc_(shortDate_(x.last)) + ' (' + x.since + ' days)' : 'none on record') + (x.m != null ? ' · ' + x.m + ' this month' : '') + '</div>' : ''; }).join('');
-  mailSend_({ to: mgr.join(','), cc: DAYSTART_CC_DEFAULT, subject: '[Preview] Fact finds: ' + list.length + ' agent' + (list.length === 1 ? '' : 's') + ' with none in ' + FF_CHASE.DAYS + ' days',
+  mailSend_({ to: mgr.join(','), cc: agentBma_(mgr).join(','), subject: '[Preview] Fact finds: ' + list.length + ' agent' + (list.length === 1 ? '' : 's') + ' with none in ' + FF_CHASE.DAYS + ' days',
     htmlBody: '<div style="background:#EEF9FD;border:1px solid #0EA5C9;padding:10px 14px;font:600 13px Segoe UI,Arial;margin:0 0 8px">Preview. In live mode each of these agents is asked for a response this morning, reminded on Wednesday, and you get the week on Friday. ' +
       'Switch on with Script Property FF_CHASE = live.</div>' + shell_('Fact finds: who would be asked', 'Week of ' + prettyDate_(week), rows) + (sample ? '<div style="margin-top:16px;font:600 12px Segoe UI,Arial;color:#6A7180">The e-mail ' + esc_(first.name) + ' would get:</div>' + sample.html : '') });
   return true;
@@ -13524,7 +13523,7 @@ function ffWeekSummary_(week, day, mode, list) {
     '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:8px">Done: fact finds since Monday, the higher of Salesforce and FactFind360.</div>';
   var to = mgr.slice();
   if (mode === 'live') UM_DESKS.forEach(function (s) { var e = emailFor_(s); if (e && to.indexOf(e) < 0) to.push(e); });
-  mailSend_({ to: to.join(','), cc: DAYSTART_CC_DEFAULT, subject: 'Fact finds this week · ' + answered.length + ' of ' + rows.length + ' answered, ' + done + ' done' + (committed ? ' of ' + committed + ' committed' : ''),
+  mailSend_({ to: to.join(','), cc: agentBma_(to).join(','), subject: 'Fact finds this week · ' + answered.length + ' of ' + rows.length + ' answered, ' + done + ' done' + (committed ? ' of ' + committed + ' committed' : ''),
     htmlBody: shell_('Fact finds · the week', 'Week of ' + prettyDate_(week), body) });
   return true;
 }
@@ -13541,7 +13540,7 @@ function ffReplyPage_(person, week, error, notice) {
   var reasons = FF_REASONS.map(function (r) {
     return '<label class="t"><input type="radio" name="reason" value="' + r.id + '"' + (v('Reason') === r.id ? ' checked' : '') + ' required><span>' + esc_(r.label) + '</span></label>'; }).join('');
   return replyPage_('Your fact finds · week of ' + prettyDate_(week),
-    'Two minutes. Your answer goes to your Unit Manager and sales support' + (s && s.last ? '; your last fact find on record is from ' + esc_(shortDate_(s.last)) : '') + '.',
+    'Two minutes. Your answer goes to your manager and Mrs Dookran' + (s && s.last ? '; your last fact find on record is from ' + esc_(shortDate_(s.last)) : '') + '.',
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') + (notice ? '<div class="card ok">' + notice + '</div>' : '') +
     (had && !notice ? '<div class="card ok">You answered on ' + esc_(String(had.At || '')) + '. Sending again replaces it.</div>' : '') + tiles +
     '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(a.key, week, 'agff') +
@@ -13585,11 +13584,11 @@ function ffReplySave_(person, week, p) {
       .concat(who ? ['Who and when: ' + esc_(who)] : []).concat(help ? ['Help asked for: ' + esc_(help)] : []).concat(note ? [esc_(note)] : []), task);
   var mail = { subject: 'Fact finds: response received · ' + a.name + ' · ' + commit + ' by Friday', html: shell_('Your fact-find response', a.name + ' · week of ' + prettyDate_(week), body) };
   try {
-    var mode = ffMode_(), cc = [DAYSTART_CC_DEFAULT]; if (mgr && cc.indexOf(mgr) < 0) cc.push(mgr);
+    var mode = ffMode_(), cc = agentCopies_(a);
     if (mode === 'live') mailSend_({ to: a.email, cc: cc.join(','), subject: mail.subject, htmlBody: mail.html });
     else if (mode === 'preview') { var m = managerEmails_(); if (m.length) mailSend_({ to: m.join(','), subject: '[Preview] ' + mail.subject, htmlBody: mail.html }); }
   } catch (e) {}
-  return replyPage_('Thank you · your response is in', 'Your Unit Manager and sales support have it. ' + task,
+  return replyPage_('Thank you · your response is in', 'Your manager and Mrs Dookran have it. ' + task,
     '<div class="card ok"><div class="ln"><b>' + esc_(rs.label) + '</b></div><div class="ln">Committed: <b>' + esc_(commit) + '</b> by Friday</div>' +
       (who ? '<div class="ln">Who and when: ' + esc_(who) + '</div>' : '') + (help ? '<div class="ln">Help asked for: ' + esc_(help) + '</div>' : '') + '</div>' +
     '<div class="card"><div class="bf">Log each fact find on FactFind360 the day you do it, so the branch sees it.</div></div>');
@@ -14128,6 +14127,21 @@ function agentManagerEmail_(a) {
   return (managerEmails_() || [])[0] || '';
 }
 
+/* Who is copied on an agent's e-mails (2 Nov 2026). Ricky, 7:17am: "ensure the direct manager gets the respective emails. So
+ * Akash gets his agents and I get my agents. Support is not copied at all, only the BMA, which is Kamla Dookran." */
+function agentBmaEmail_() { var e = ''; try { e = emailFor_('kamla'); } catch (x) {} return e || ''; }
+/** The BMA, unless she is already among `to`. */
+function agentBma_(to) {
+  var k = agentBmaEmail_(), have = (to || []).map(function (x) { return normEmail_(x); });
+  return k && have.indexOf(normEmail_(k)) < 0 ? [k] : [];
+}
+/** The agent's direct manager (Akaash for his unit, Mr Rampersad for his own) and the BMA; never the agent, never twice. */
+function agentCopies_(a) {
+  var out = [], seen = {}; seen[normEmail_(a && a.email)] = 1;
+  [agentManagerEmail_(a) || (managerEmails_() || [])[0] || '', agentBmaEmail_()].forEach(function (e) {
+    var k = normEmail_(e); if (!e || seen[k]) return; seen[k] = 1; out.push(e); });
+  return out;
+}
 /** Salesforce for a batch of agents: open tasks for them, closed today, fact finds. */
 function agentBatchData_(list, day) {
   var names = [], emails = [];
@@ -14330,7 +14344,7 @@ function agentMorningMail_(a, day, data, cache) {
       '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:6px">A number against each on the page: what you expect to do today. At 5:30 you give what was done, and the day balances against your projection.</div>') + btn +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
   var sentOk = agSend_(a, 'Your day · ' + a.name + ' · ' + shortDate_(day) + ' · ' + open.length + ' being worked for you' + (book ? ', ' + book.urgent.length + ' premiums 60+ days' : ''),
-    shell_('Good morning · your day', a.name + ' · ' + prettyDate_(day), body), []);
+    shell_('Good morning · your day', a.name + ' · ' + prettyDate_(day), body), agentCopies_(a));
   // A preview goes to Mr Rampersad, not the agent: the notes wait for the agent's own mail.
   if (sentOk && mgrNotes.length && agentLiveFor_(a)) { try { umNotesMarkSent_(a.agentName || a.name, day); } catch (e) {} }
   return sentOk;
@@ -14361,7 +14375,7 @@ function agentMiddayMail_(a, day, data) {
       return agLine_('<b>' + esc_(String(t.owner).split(' ')[0] || '—') + '</b> · ' + esc_(t.subject) +
         (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>' : '')); }).join('')) : '');
   return agSend_(a, 'Midday progress · ' + a.name + ' · ' + shortDate_(day) + ' · ' + closed.length + ' closed, ' + open.length + ' open',
-    shell_('Midday progress', a.name + ' · ' + prettyDate_(day), body), []);
+    shell_('Midday progress', a.name + ' · ' + prettyDate_(day), body), agentCopies_(a));
 }
 
 function agentEveningMail_(a, day, data) {
@@ -14370,7 +14384,7 @@ function agentEveningMail_(a, day, data) {
   var btn = replyButton_(workGoUrl_(a.key, 'agclose'), 'Close off my day', 'On My day: what you did, in numbers, balanced against what you projected. No answer reads as nothing done today.') + agOldLine_(replyUrl_(a.key, day, 'agc'));
   var body =
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', it is half past five. Close off your day' +
-      (planned ? ': give what was done, and it balances against what you projected this morning' : ' (no projection was set this morning)') + '. It goes to your manager and sales support.</div>' +
+      (planned ? ': give what was done, and it balances against what you projected this morning' : ' (no projection was set this morning)') + '. It goes to your manager and Mrs Dookran.</div>' +
     statTiles_([
       { value: closed.length, label: 'the branch closed for you', color: MAIL.green },
       { value: open.length, label: 'still open, due', color: open.length ? MAIL.amber : MAIL.navy },
@@ -14380,7 +14394,7 @@ function agentEveningMail_(a, day, data) {
       return agLine_('&#10003; <b>' + esc_(String(t.owner).split(' ')[0]) + '</b> · ' + esc_(t.subject)); }).join('')) : '') +
     (planned ? sectionLabel_('What you projected this morning') + agCard_(MAIL.gold, AGENT_METRICS.filter(function (m) { return plan[m.id]; }).map(function (m) {
       return '<div style="font-size:13px;padding:2px 0">' + esc_(m.p) + ': <b>' + esc_(plan[m.id].Planned || '—') + '</b></div>'; }).join('')) : '') + btn;
-  return agSend_(a, 'Close off your day · ' + a.name + ' · ' + shortDate_(day), shell_('Close off your day', a.name + ' · ' + prettyDate_(day), body), []);
+  return agSend_(a, 'Close off your day · ' + a.name + ' · ' + shortDate_(day), shell_('Close off your day', a.name + ' · ' + prettyDate_(day), body), agentCopies_(a));
 }
 
 /** Runs from the day tick: the morning check from 5:30, the midday progress from 12:00, the sign-off from 17:30. */
@@ -14462,7 +14476,7 @@ function agReplyPage_(person, day, kind, error, opt) {
     '<div class="bf">Tap into any one: its history is there, and an update you write goes straight on the task.</div>' + rest.map(function (it) { return item(it, false); }).join('') +
     '<button type="submit" name="only" value="1">Post my updates</button><div class="br2" style="margin-top:4px">Posts what you wrote above now. Your projection can follow.</div></div>' : '';
   return replyPage_((eve ? 'Close off your day · ' : 'Your day · ') + prettyDate_(day),
-    eve ? 'What was done against what you projected, 0 where nothing was done. Your manager and sales support get it.' : 'Project your day in numbers and comment on anything the team is working for you. One save at the bottom.',
+    eve ? 'What was done against what you projected, 0 where nothing was done. Your manager and Mrs Dookran get it.' : 'Project your day in numbers and comment on anything the team is working for you. One save at the bottom.',
     (opt.posted ? '<div class="card ok">' + opt.posted + '</div>' : '') +
     (error ? '<div class="card bad"><b style="color:#DC3F3F">' + esc_(error) + '</b></div>' : '') +
     score.html + '<form method="post" action="' + esc_(execBase_()) + '" target="_top">' + replyHidden_(a.key, day, kind) + openCard + metrics + list +
@@ -14507,7 +14521,7 @@ function agReplySave_(person, day, kind, p) {
   if (!r.ok) return agReplyPage_(person, day, kind, r.error, { keep: p, posted: comments.length ? '<b>Your update' + (comments.length === 1 ? ' is' : 's are') + ' posted</b>' + postedHtml : '' });
   var bal = '';
   if (eve) { var cl = {}; rows.forEach(function (r) { cl[r.Item] = r; }); try { bal = agBalanceCard_(agBalance_(agRows_(a.key, day, 'plan'), cl)); } catch (e) {} }
-  return replyPage_(eve ? 'Your day is closed off' : 'Your projection is in', 'Your manager and sales support have a copy. Thank you.',
+  return replyPage_(eve ? 'Your day is closed off' : 'Your projection is in', 'Your manager and Mrs Dookran have a copy. Thank you.',
     bal + '<div class="card ok">' + rows.map(function (r) { return '<div class="ln">' + esc_(r.Question) + ': <b>' + esc_(eve ? (r.Done || '') : (r.Planned || '')) + '</b>' + (r.Note ? ' · ' + esc_(r.Note) : '') + '</div>'; }).join('') +
     comments.map(function (c) { return '<div class="ln">' + (/^NOT/.test(c.res) ? '&#9888; ' : '&#10003; ') + esc_(c.s) + ' · ' + esc_(c.res) + '</div>'; }).join('') + '</div>');
 }
@@ -14532,7 +14546,7 @@ function agCopy_(a, day, eve, rows, comments) {
   var bl = null;
   if (eve) { var cl = {}; rows.forEach(function (r) { cl[r.Item] = r; }); bl = agBalance_(plan, cl); }
   var sum = rows.filter(function (r) { return r.Item === 'summary'; })[0];
-  agSendCopy_(to, [DAYSTART_CC_DEFAULT], (eve ? 'Day closed off · ' : 'Projection received · ') + a.name + ' · Agent · ' + shortDate_(day) +
+  agSendCopy_(to, agentBma_(to), (eve ? 'Day closed off · ' : 'Projection received · ') + a.name + ' · Agent · ' + shortDate_(day) +
       (bl && bl.proj ? ' · ' + bl.done + ' done of ' + bl.proj + ' projected, ' + agBalText_(bl.bal) : ''),
     shell_(eve ? 'The agent\'s day, balanced' : 'The agent\'s projection', a.name + ' · ' + prettyDate_(day) + ' · ' + hhmm_(new Date()),
       (bl && bl.proj ? '<div style="font-size:14px;margin:0 0 10px">Projected <b>' + bl.proj + '</b> this morning · done <b>' + bl.done + '</b> · balance <b style="color:' + (bl.bal < 0 ? MAIL.red : MAIL.green) + '">' + agBalText_(bl.bal) + '</b>' + (bl.pct != null ? ' · <b>' + bl.pct + '%</b> of the projection met' : '') + '</div>' : '') +

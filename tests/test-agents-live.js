@@ -75,6 +75,21 @@ console.log('\nThe morning e-mail says when each is due:\n');
   ok('overdue since its date', /overdue since Fri 30 Oct/.test(line('Khalawan')));
   ok('due today only when it is', /due today/.test(line('Ramlakhan')));
   ok('Tuesday\'s says Tuesday, not today', /due Tue 3 Nov/.test(line('UWPRO')) && !/due today/.test(line('UWPRO')), line('UWPRO'));
+
+  // Ricky, 7:17am: "Akash gets his agents and I get my agents. Support is not copied at all, only the BMA, which is Kamla Dookran."
+  const keepE = env.emailFor_; env.emailFor_ = sid => ({ kamla: 'kamla@example.com', akaash: 'akaash@example.com' })[sid] || '';
+  got.length = 0;
+  env.agentMorningMail_(F, DAY, { open: { [F.key]: open }, closed: { [F.key]: [] }, ff: { [F.key]: [] }, f360: {}, goal: {}, q: {}, orphan: {} }, null);
+  ok('Felicia\'s copied to Mr Rampersad (her manager now) and Kamla, nobody else', got[0] && got[0].cc === 'ricky@example.com,kamla@example.com', got[0] && got[0].cc);
+  const N = people['a-neil-ramnanan']; got.length = 0;
+  env.agentMiddayMail_(N, DAY, { open: { [N.key]: [] }, closed: { [N.key]: [] }, ff: { [N.key]: [] }, f360: {}, goal: {}, q: {}, orphan: {} });
+  ok('Neil\'s copied to Akaash and Kamla', got[0] && got[0].cc === 'akaash@example.com,kamla@example.com', got[0] && got[0].cc);
+  got.length = 0; env.agentEveningMail_(N, DAY, { open: { [N.key]: [] }, closed: { [N.key]: [] }, ff: { [N.key]: [] }, f360: {}, goal: {}, q: {}, orphan: {} });
+  ok('the 5:30 too', got[0] && got[0].cc === 'akaash@example.com,kamla@example.com', got[0] && got[0].cc);
+  got.length = 0; env.agCopy_(N, DAY, false, [{ Item: 'calls', Question: 'Calls to make', Planned: '10', Note: '' }], []);
+  ok('his projection goes to Akaash, Kamla copied, not sales support', got[0] && got[0].to === 'akaash@example.com' && got[0].cc === 'kamla@example.com', got[0] && (got[0].to + ' / ' + got[0].cc));
+  ok('and nothing anywhere to sales support', !got.concat([]).some(m => /salessupport/.test(String(m.to) + String(m.cc))));
+  env.emailFor_ = keepE;
   env.mailSend_ = keep;
 }
 
