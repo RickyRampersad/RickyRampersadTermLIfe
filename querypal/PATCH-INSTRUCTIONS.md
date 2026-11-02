@@ -1020,6 +1020,61 @@ quoting somebody else's completion is not writing one.
 
 ---
 
+### 30 — let the agent rate the automation
+
+**One insertion.** Ctrl+F for this line (it is intact):
+
+```
+if (p.action === 'outcomes')   return outcomes_(e);
+```
+
+Tap at the **very end** of that line, press **Enter**, and paste:
+
+```
+  if (p.action === 'autorate')   return qpAutoRate_(e);
+```
+
+Then run **`qpSetupAgentSurvey()`** once from the editor. That is the whole
+installation — it runs on its own daily trigger, so nothing else in `Code.gs`
+changes.
+
+### What it does, and why it did not exist
+
+The branch has one satisfaction measure and it points at the client:
+`sendSurvey_` asks the person whose policy it was whether the **outcome** was
+good. Nothing asked the agent whether the **service** was good — whether
+logging it once and forgetting it actually worked. That is the promise the
+whole thing is sold on, and it had never been measured.
+
+When a case closes, the agent who logged it now gets a one-tap rating with the
+real numbers in front of them: days to close against the turnaround, how many
+chases the system sent on their behalf, and **how many times a human had to
+step in**. That last number is the point. A case the chasers carried alone is
+the system working; a case staff had to rescue is the system failing, and the
+rating should be able to tell them apart. The email says which it was, in
+those words.
+
+Guards, because this sends real mail:
+
+| | |
+|---|---|
+| `QP_AGENT_RATE_WINDOW_D` = 7 | only cases closed in the last week, so switching it on does not email every agent about 110 historical cases |
+| `QP_AGENT_RATE_MAX` = 10 | per run, so it cannot drain the sending day |
+| no servicing agent | skipped — that is 27 of 115 rows, and they must not land on anybody |
+| asked once | tracked on its own **Automation Ratings** tab, never in the autopilot's columns |
+| a failed send | not recorded as asked, so the agent is not silently skipped |
+
+Ratings land on the **Automation Ratings** tab. **`qpAutomationScore()`** reads
+it back: the average, the response rate, and — the line worth watching — the
+average split between cases Query Pal carried alone and cases where staff had
+to step in. The gap between those two numbers is the value of the automation,
+measured by the people who depend on it.
+
+`tests/agent-survey.test.mjs` — 24 assertions, most of them about the guards
+rather than the email.
+
+---
+
 ## URGENT — rotate the branch master codes
 
 **Do this today, and do it before anything else on this page.**

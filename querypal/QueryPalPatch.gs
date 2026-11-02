@@ -2663,3 +2663,262 @@ function qpClassifyAudit() {
   Logger.log(msg);
   return msg;
 }
+
+
+/* ══════════════ 18. ASK THE AGENT HOW THE AUTOMATION DID ══════════════
+   The branch has one satisfaction measure and it points at the client:
+   sendSurvey_ asks the person whose policy it was whether the OUTCOME was
+   good. Nothing asks the agent whether the SERVICE was good — whether logging
+   it once and forgetting it actually worked.
+
+   That is the promise the whole thing is sold on, and it has never been
+   measured. On RRB/2026/105 the system logged the request, failed to send it,
+   flagged that honestly, chased the department on a fresh email, got the
+   statement back and (once edit 29 is in) will close itself — all without a
+   person touching it. Fawaaz has no way to say whether that felt like service.
+
+   So: when a case closes, the agent who logged it gets a one-tap rating of the
+   branch automation, with the actual numbers in front of them — how long it
+   took against the turnaround, how many chases the system sent on their
+   behalf, and whether any human had to step in. That last number is the point.
+   A case the chasers carried alone is the system working; a case staff had to
+   rescue is the system failing, and the rating should be able to tell them
+   apart.
+
+   Deliberately NOT wired into Code.gs. It runs on its own daily trigger, so
+   the only change to Code.gs is one router line for the rating click:
+
+       if (p.action === 'autorate')   return qpAutoRate_(e);
+
+   Install it once from the editor:  qpSetupAgentSurvey()
+
+   Guards, because this sends real mail:
+     - only cases closed in the last QP_AGENT_RATE_WINDOW_D days, so switching
+       it on does not email every agent about 110 historical cases
+     - at most QP_AGENT_RATE_MAX per run, so it cannot drain the sending day
+     - skipped where there is no servicing agent, which is 27 of 115 rows
+     - asked once per case, tracked in its own tab, never in the autopilot's
+       columns                                                               */
+
+var QP_AGENT_RATE_TAB    = 'Automation Ratings';
+var QP_AGENT_RATE_WINDOW_D = 7;     // only ask about recently closed cases
+var QP_AGENT_RATE_MAX    = 10;      // per run, to protect the daily quota
+
+function qpRateTab_() {
+  var heads = ['When', 'Reference', 'Agent', 'Agent Email', 'Score', 'Comment',
+               'Handled by', 'Chases', 'Days to close', 'Turnaround'];
+  if (typeof outSheet_ === 'function') return outSheet_(QP_AGENT_RATE_TAB, heads);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(QP_AGENT_RATE_TAB);
+  if (!sh) {
+    sh = ss.insertSheet(QP_AGENT_RATE_TAB);
+    sh.getRange(1, 1, 1, heads.length).setValues([heads])
+      .setFontWeight('bold').setBackground('#003e66').setFontColor('#ffffff');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function qpRateBase_() {
+  return 'https://script.google.com/macros/s/AKfycbxHFobr89jyLMK-CL5cUxs8GhYtkvTVbbqeDo9L5RgUxMGlbFBKK0vanwEjf49gCakpAw/exec';
+}
+
+/* How the case was actually carried: 'the system alone', or staff stepping in. */
+function qpHandledBy_(rec) {
+  if (!rec) return { label: 'Query Pal, start to finish', solo: true, human: 0 };
+  var human = Number(rec.human) || 0;
+  if (!human) return { label: 'Query Pal, start to finish', solo: true, human: 0 };
+  return { label: human + ' staff action' + (human === 1 ? '' : 's') + ' were needed',
+           solo: false, human: human };
+}
+
+function qpAgentSurvey_(row, rec) {
+  var F = 'font-family:Segoe UI,Helvetica,Arial,sans-serif;';
+  var ref = String(row[0] || ''), agentMail = String(row[10] || '').trim();
+  if (!agentMail) return false;
+  var agent = String(row[9] || '').trim();
+  var first = (agent.split(/\s+/)[0] || 'there');
+  first = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+  var qtype = String(row[12] || ''), dept = String(row[13] || '');
+  var days = (row[21] === 0 || row[21]) ? String(row[21]) : '—';
+  var tat = String(row[15] || '').replace(/[^0-9]/g, '') || '—';
+  var chases = Number(row[22]) || 0;
+  var how = qpHandledBy_(rec);
+  var onTime = (tat !== '—' && days !== '—' && Number(days) <= Number(tat));
+
+  var stat = function (big, small, colour) {
+    return '<td style="width:33.3%;padding:4px;"><div style="background:#f4f9fd;border-radius:12px;padding:13px 6px;text-align:center;">'
+      + '<div style="' + F + 'font-size:21px;font-weight:800;color:' + colour + ';line-height:1;">' + big + '</div>'
+      + '<div style="' + F + 'font-size:8.5px;font-weight:800;color:#5e7a93;letter-spacing:.1em;text-transform:uppercase;margin-top:6px;">' + small + '</div></div></td>';
+  };
+  var stars = '', labels = ['Poor', 'Fair', 'Good', 'Great', 'Excellent'];
+  for (var s = 1; s <= 5; s++) {
+    stars += '<td style="padding:4px;"><a href="' + qpRateBase_() + '?action=autorate&ref='
+      + encodeURIComponent(ref) + '&score=' + s + '" '
+      + 'style="display:block;background:#fff9ee;border:1.5px solid #f2ce8a;border-radius:14px;padding:13px 6px 10px;text-decoration:none;text-align:center;">'
+      + '<span style="font-size:22px;line-height:1;">⭐</span><br>'
+      + '<span style="' + F + 'font-size:15px;font-weight:800;color:#7a5210;">' + s + '</span><br>'
+      + '<span style="' + F + 'font-size:9px;font-weight:700;letter-spacing:.06em;color:#b07d1d;text-transform:uppercase;">' + labels[s - 1] + '</span></a></td>';
+  }
+
+  var html = '<div style="background:#eef6fc;padding:28px 12px;' + F + '">'
+    + '<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 12px 34px rgba(8,42,76,.14);border:1px solid #e1ebf4;">'
+    + '<div style="background:linear-gradient(128deg,#0a2f4f,#0b6ab4);padding:18px 26px;">'
+    + '<table width="100%" cellpadding="0" cellspacing="0"><tr>'
+    + '<td style="padding-right:13px;vertical-align:middle;"><div style="' + F + 'font-size:16px;font-weight:800;color:#fff;">Ricky Rampersad Branch</div>'
+    + '<div style="' + F + 'font-size:11px;color:#bfe0ff;margin-top:2px;">Query Pal &middot; Rampersad Branch 26000</div></td>'
+    + '<td style="text-align:right;vertical-align:middle;"><span style="display:inline-block;background:'
+    + (how.solo ? '#15803d' : '#b45309') + ';color:#fff;' + F + 'font-size:9.5px;font-weight:800;letter-spacing:.14em;padding:6px 12px;border-radius:20px;">CASE CLOSED</span></td>'
+    + '</tr></table></div>'
+    + '<div style="padding:24px 26px;">'
+    + '<p style="margin:0 0 6px;' + F + 'font-size:19px;color:#0a2138;font-weight:800;">' + qpEsc_(first) + ', how did we do on this one?</p>'
+    + '<p style="margin:0 0 16px;' + F + 'font-size:13.5px;color:#5e7a93;line-height:1.6;">You logged <b>'
+    + qpEsc_(qtype) + '</b> for <b>' + qpEsc_(String(row[5] || '')) + '</b> and it is now closed. '
+    + 'This is not about the client &mdash; it is about <b>the branch service</b>. Did logging it once and leaving it to us actually work?</p>'
+    + '<table cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 14px;"><tr>'
+    + stat(days + (days === '1' ? ' day' : ' days'), onTime ? 'closed, within target' : 'to close', onTime ? '#15803d' : '#b45309')
+    + stat(chases, chases === 1 ? 'chase we sent' : 'chases we sent', '#0b6ab4')
+    + stat(how.human || '0', how.solo ? 'times staff stepped in' : 'staff actions needed', how.solo ? '#15803d' : '#b45309')
+    + '</tr></table>'
+    + '<div style="background:' + (how.solo ? '#e9f7ee' : '#fdf3e7') + ';border-left:4px solid '
+    + (how.solo ? '#15803d' : '#b45309') + ';border-radius:0 10px 10px 0;padding:12px 15px;margin:0 0 18px;'
+    + F + 'font-size:13px;color:#0a2138;line-height:1.6;">'
+    + (how.solo
+        ? 'This one was carried <b>by Query Pal, start to finish</b> &mdash; routed to ' + qpEsc_(dept)
+          + ', chased on your behalf, and closed on the department’s reply. Nobody at the branch had to touch it.'
+        : '<b>' + how.human + ' staff action' + (how.human === 1 ? '' : 's') + '</b> were needed on this one. '
+          + 'That is worth knowing &mdash; it is where the system still leaves work behind.')
+    + '</div>'
+    + '<table cellpadding="0" cellspacing="0" style="width:100%;"><tr>' + stars + '</tr></table>'
+    + '<p style="margin:16px 0 0;' + F + 'font-size:11px;color:#8fa6ba;text-align:center;">Reference <span style="font-family:Consolas,Menlo,monospace;">' + qpEsc_(ref) + '</span></p>'
+    + '</div>'
+    + '<div style="background:#f6fafd;border-top:1px solid #e4eef6;padding:14px 26px;text-align:center;">'
+    + '<div style="' + F + 'font-size:11.5px;color:#8fa6ba;">Log it once and forget it. The system does the rest.</div>'
+    + '</div></div></div>';
+
+  var plain = first + ', how did we do on ' + ref + '?\n\n'
+    + qtype + ' for ' + String(row[5] || '') + ' — closed in ' + days + ' days (target ' + tat + '), '
+    + chases + ' chase(s) sent, ' + (how.solo ? 'no staff action needed' : how.human + ' staff actions needed') + '.\n\n'
+    + 'Rate the branch service 1-5: ' + qpRateBase_() + '?action=autorate&ref='
+    + encodeURIComponent(ref) + '&score=5   (change score=5 to your rating)\n\n'
+    + '— Query Pal, Rampersad Branch';
+
+  MailApp.sendEmail({
+    to: (typeof TEST_MODE !== 'undefined' && TEST_MODE) ? TEST_EMAIL : agentMail,
+    replyTo: BRANCH_SUPPORT, name: 'Ricky Rampersad Branch',
+    subject: ((typeof TEST_MODE !== 'undefined' && TEST_MODE) ? '[TEST] ' : '')
+           + 'How did we do on ' + qtype + '? — ' + String(row[5] || ''),
+    body: plain, htmlBody: html
+  });
+  return true;
+}
+
+/* Daily. Installed by qpSetupAgentSurvey(). */
+function qpAgentSurveySweep() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return 'The log is empty.';
+  var tab = qpRateTab_();
+  var asked = {};
+  if (tab.getLastRow() > 1) {
+    var seen = tab.getRange(2, 2, tab.getLastRow() - 1, 1).getValues();
+    for (var s = 0; s < seen.length; s++) asked[String(seen[s][0]).trim()] = 1;
+  }
+  var touch = {};
+  try { touch = qpTouchMap_(); } catch (e) {}
+
+  var data = sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(29, sh.getMaxColumns())).getValues();
+  var sent = 0, skippedNoAgent = 0, tooOld = 0;
+  for (var r = 0; r < data.length && sent < QP_AGENT_RATE_MAX; r++) {
+    var row = data[r], ref = String(row[0] || '').trim();
+    if (!ref || asked[ref]) continue;
+    if (!/closed|resolved|completed/i.test(String(row[3] || ''))) continue;
+    var closed = row[20] ? new Date(row[20]) : null;
+    if (!closed || isNaN(closed)) continue;
+    if ((Date.now() - closed.getTime()) > QP_AGENT_RATE_WINDOW_D * 86400000) { tooOld++; continue; }
+    var mail = String(row[10] || '').trim();
+    if (mail.indexOf('@') < 0) { skippedNoAgent++; continue; }
+
+    var rec = touch[ref];
+    var how = qpHandledBy_(rec);
+    var ok = false;
+    try { ok = qpAgentSurvey_(row, rec); } catch (se) { ok = false; }
+    if (!ok) continue;
+    tab.appendRow([new Date(), ref, String(row[9] || ''), mail, '', '',
+                   how.label, Number(row[22]) || 0,
+                   (row[21] === 0 || row[21]) ? row[21] : '', String(row[15] || '')]);
+    asked[ref] = 1; sent++;
+  }
+  var msg = 'Agent survey sweep — ' + sent + ' asked'
+    + (tooOld ? ', ' + tooOld + ' closed more than ' + QP_AGENT_RATE_WINDOW_D + ' days ago (not asked)' : '')
+    + (skippedNoAgent ? ', ' + skippedNoAgent + ' with no servicing agent on the row' : '')
+    + '.';
+  Logger.log(msg);
+  return msg;
+}
+
+function qpSetupAgentSurvey() {
+  var ts = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < ts.length; i++) {
+    if (ts[i].getHandlerFunction() === 'qpAgentSurveySweep') ScriptApp.deleteTrigger(ts[i]);
+  }
+  ScriptApp.newTrigger('qpAgentSurveySweep').timeBased().everyDays(1).atHour(16).create();
+  return 'Agent survey armed — daily at 4PM, the hour after the chase sweep. '
+       + 'Only cases closed in the last ' + QP_AGENT_RATE_WINDOW_D + ' days are asked about, '
+       + 'at most ' + QP_AGENT_RATE_MAX + ' a run. Ratings land on the "'
+       + QP_AGENT_RATE_TAB + '" tab.';
+}
+
+/* The agent taps a star. Router: if (p.action === 'autorate') return qpAutoRate_(e); */
+function qpAutoRate_(e) {
+  var p = e.parameter || {};
+  var ref = String(p.ref || '').trim();
+  var n = Math.max(1, Math.min(5, Number(p.score) || 0));
+  if (!ref || !n) return (typeof surveyPage_ === 'function')
+    ? surveyPage_('Reference not found', 'Please use the buttons in the email.')
+    : HtmlService.createHtmlOutput('Reference not found');
+  var tab = qpRateTab_();
+  var hit = -1;
+  if (tab.getLastRow() > 1) {
+    var refs = tab.getRange(2, 2, tab.getLastRow() - 1, 1).getValues();
+    for (var i = refs.length - 1; i >= 0; i--) {
+      if (String(refs[i][0]).trim() === ref) { hit = i + 2; break; }
+    }
+  }
+  if (hit < 0) { tab.appendRow([new Date(), ref, '', '', n, '', '', '', '', '']); }
+  else { tab.getRange(hit, 5).setValue(n); }
+  var stars = ''; for (var k = 0; k < n; k++) stars += '⭐';
+  if (typeof surveyPage_ === 'function') {
+    return surveyPage_(stars, 'Thank you — your <b>' + n + '/5</b> on the branch service is recorded. '
+      + 'This rates <b>Query Pal</b>, not the client outcome, and it is what tells us whether '
+      + '“log it once and forget it” is holding up.');
+  }
+  return HtmlService.createHtmlOutput(stars + ' recorded — thank you.');
+}
+
+/* Read-only. What the branch's own people think of the automation. */
+function qpAutomationScore() {
+  var tab = qpRateTab_();
+  if (tab.getLastRow() < 2) return 'No agent ratings yet. Run qpSetupAgentSurvey() to start asking.';
+  var d = tab.getRange(2, 1, tab.getLastRow() - 1, 10).getValues();
+  var n = 0, sum = 0, solo = { n: 0, sum: 0 }, helped = { n: 0, sum: 0 }, asked = d.length;
+  for (var i = 0; i < d.length; i++) {
+    var sc = Number(d[i][4]); if (!sc) continue;
+    n++; sum += sc;
+    var bucket = /start to finish/i.test(String(d[i][6] || '')) ? solo : helped;
+    bucket.n++; bucket.sum += sc;
+  }
+  var avg = function (b) { return b.n ? (Math.round(b.sum / b.n * 10) / 10) : '—'; };
+  var msg = ['AUTOMATION SCORE — what the branch\'s own agents say', '',
+    '  asked        : ' + asked,
+    '  answered     : ' + n + (asked ? '  (' + Math.round(n / asked * 100) + '%)' : ''),
+    '  average      : ' + (n ? (Math.round(sum / n * 10) / 10) + ' / 5' : '—'),
+    '',
+    '  carried by Query Pal alone : ' + avg(solo) + '   (' + solo.n + ' rated)',
+    '  staff had to step in       : ' + avg(helped) + '   (' + helped.n + ' rated)',
+    '',
+    '  The gap between those two lines is the value of the automation,',
+    '  measured by the people who depend on it.'].join('\n');
+  Logger.log(msg);
+  return msg;
+}

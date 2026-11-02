@@ -196,8 +196,20 @@ console.log('\nthe patch\n');
   t('failing to find a thread is stated, not papered over',
     /no-department-thread/.test(body));
 }
+/* A section runs from its banner to the next one. Slicing to the end of the
+   file instead folds every later section into this audit — which is how this
+   assertion went red twice as new sections landed. */
+const section = (name) => {
+  const a = PATCH.indexOf(name);
+  if (a < 0) return '';
+  const rest = PATCH.slice(a + name.length);
+  const next = rest.search(/\n\/\* [\u2550=]{10,}/);
+  return next > -1 ? PATCH.slice(a, a + name.length + next) : PATCH.slice(a);
+};
+
+const S16 = section('16. A CLIENT');
 t('section 16 never sends anything',
-  !/MailApp|\.replyAll\(|\.reply\(/.test(PATCH.slice(PATCH.indexOf('16. A CLIENT'))),
+  !/MailApp|\.replyAll\(|\.reply\(/.test(S16),
   'it decides whose reply it is — the sending stays where it was');
 
 console.log();

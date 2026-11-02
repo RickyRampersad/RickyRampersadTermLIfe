@@ -141,7 +141,18 @@ t('the blocker wins when both appear in what they wrote',
 
 console.log('\nthe shape of section 17\n');
 
-const S17 = PATCH.slice(PATCH.indexOf('17. CLASSIFY WHAT THE PERSON WROTE'));
+/* A section runs from its banner to the next one. Slicing to the end of the
+   file instead folds every later section into this audit — which is how this
+   assertion went red twice as new sections landed. */
+const section = (name) => {
+  const a = PATCH.indexOf(name);
+  if (a < 0) return '';
+  const rest = PATCH.slice(a + name.length);
+  const next = rest.search(/\n\/\* [\u2550=]{10,}/);
+  return next > -1 ? PATCH.slice(a, a + name.length + next) : PATCH.slice(a);
+};
+
+const S17 = section('17. CLASSIFY WHAT THE PERSON WROTE');
 t('section 17 exists', S17.length > 1000);
 t('it never sends, closes or writes',
   !/MailApp|GmailApp|\.setValue\(|appendRow/.test(S17),
