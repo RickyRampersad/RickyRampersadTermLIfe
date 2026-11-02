@@ -1,7 +1,47 @@
 {
- "tts/out/dict3/01.mp3": [
+ "tts/out/anai/01.mp3": [
   "en",
-  0.997,
-  "Hi, how did the interview go? Tell me about the client in your own words. And I'll put it all on the fact find as we talk."
+  0.991,
+  "E-neal. Out of the interview, go."
+ ],
+ "tts/out/anai/02.mp3": [
+  "en",
+  0.999,
+  "Sounds like a good meeting. I got Jordan, Lisa, the two children in both incomes. One thing you said 34, but the date of birth on the form makes him 36, which is right."
+ ],
+ "tts/out/anai/03.mp3": [
+  "en",
+  0.998,
+  "Thanks, I've fixed his age and added the mortgage in the group cover. The fact fine now shows a need of 2.8 million against 250,000 of cover. That's a gap of about 2.55 million. If his income stopped, what would he want for Lisa and the kids?"
+ ],
+ "tts/out/anai/04.mp3": [
+  "en",
+  0.996,
+  "I look that up. The National Insurance Board says the retirement pension starts from age 60. I'll put both goals on the form. And for your file, his only cover is through work so it ends if he changes jobs."
+ ],
+ "tts/out/anai/05.mp3": [
+  "en",
+  0.996,
+  "Nearly, we still need his beneficiaries and his health. And for your next appointment, ask early weather Lisa has cover of her own. Then you're ready for your recommendation."
+ ],
+ "tts/out/anag/01.mp3": [
+  "en",
+  0.996,
+  "really well. Jordan Baptiste, 34, married to Lisa, two kids, eight and five. He's a teacher on 15,000 a month and Lisa earns nine."
+ ],
+ "tts/out/anag/02.mp3": [
+  "en",
+  0.982,
+  "Good catch he's 36 they owe 600,000 on the house and his only cover is group life at work 250,000"
+ ],
+ "tts/out/anag/03.mp3": [
+  "en",
+  0.995,
+  "He wants the mortgage cleared and the kids schooling paid. He also asked when NIS would pay him a pension."
+ ],
+ "tts/out/anag/04.mp3": [
+  "en",
+  0.957,
+  "I think that's everything."
  ]
 }
