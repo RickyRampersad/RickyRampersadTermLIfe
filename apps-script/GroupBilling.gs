@@ -1368,7 +1368,7 @@ function gblSend_(b) {
     if (!test) task = gblLateTask_(g, cut, who.name + ': the ' + gblMonthLabel_(month) + ' ' + fresh.map(function (x) { return GBL.LABEL[x.line].toLowerCase(); }).join(' and ') + ' bill went to the group by Send now at ' + at + '. Why it missed ' + gblCutWords_(cut) + ': ' + (lr.reason || 'no reason given') + '.');
     if (who.role !== 'branch') { try { gblLateMail_(g, fresh, who, { cut: cut, reason: lr.reason, at: at, to: to.join(', '), test: test, task: task }); } catch (e) {} }
   }
-  var lateTail = cut ? ' The reason is on the bill and its Chatter' + (task ? ', it answers and closes the 10:30 task' : '') + (who.role !== 'branch' ? ', and the branch manager has it.' : '.') : '';
+  var lateTail = cut ? ' The reason is on the bill and its Chatter' + (task ? ', it answers and closes the GROUP BILL NOT SENT task' : '') + (who.role !== 'branch' ? ', and the branch manager has it.' : '.') : '';
   return { ok: true, test: test, to: to, at: at, kept: keptUsed, late: cut ? { cutoff: cut, reason: lr.reason, task: task } : null,
     said: (test ? 'Test sent to ' + to.join(', ') + '. Nothing went to the group: run gblGoLive from the editor when the branch is ready.' : 'Sent to ' + to.join(', ') + ' from support@ at ' + at + '.') + (keptUsed ? ' The PDF kept at the approval went with it.' : '') + lateTail };
 }
@@ -2607,22 +2607,27 @@ function gblPostMail_(g, name, role, p, item, text, taskId, owner, opened) {
 
 /* ── the board: one line a group, for the staff page's accounts table ───────────────── */
 /** Where each group's billing stands this month, for the team dashboard: lines uploaded, open fixes, reconciled, sent. */
-/* ── The billing day: the 26th at 10:00, the next working day when the 26th is a weekend or a holiday ───────────────────
+/* ── The billing day: the 26th at 13:00, the next working day when the 26th is a weekend or a holiday ───────────────────
  *  24 October 2026: "On the 26th group billings go out, and weekly on a Monday at 10am the queries go out, but staff has
  *  to approve." On 25 October it went to a Tuesday for a few hours, and back the same day: "I would leave it for the 26th
  *  of the month, excepting when it falls on a holiday or a weekend … We get the billings on the 25th, but on the 25th, we
  *  check it and verify it … And on the 25th in the afternoon, I get the report … So at 1 o'clock, I have a report."
  *  Head Office's bills come in on the 25th; staff upload, verify against Salesforce, reconcile and press Approve for the
- *  26th; the PDF waits in the Drive folder; at 10:00 on the 26th (or the next working day: never a Saturday, a Sunday or
+ *  26th; the PDF waits in the Drive folder; at 13:00 on the 26th (or the next working day: never a Saturday, a Sunday or
  *  a public holiday, GBL_DAY.HOLIDAYS and the GCM_BILL_HOLIDAYS Script property) every approved bill goes from support@
- *  with its PDF. A bill approved after that run, within LATE_DAYS of it, is a late bill and goes at 10:00 the next working
+ *  with its PDF. A bill approved after that run, within LATE_DAYS of it, is a late bill and goes at 13:00 the next working
  *  day, so it never waits a month. At 13:00 on the 25th (the last working day before it when the 25th is not one) the
  *  branch manager gets the report of who has worked each group's bills and what is left (gblMondayReport_, its old name
- *  kept), the staff copied. At 10:30 on the billing day the group day asks each staff member whose group had no bill why,
- *  and opens the KPI task. When the 26th is a Monday the bills and the weekly letters both go at 10:00 that morning. */
+ *  kept), the staff copied. After the run on the billing day, the first hourly run asks each staff member whose group had
+ *  no bill why, and opens the KPI task (gblChaseAfter_, once a billing day).
+ *  2 November 2026: "The group billings go out at 1 p.m. However, the group task management is customary, triggers at
+ *  10 a.m." So the bills go at 13:00 (HOUR) and the Monday letters stay at 10:00 (GroupClients.gs). The 10:30 group day
+ *  no longer runs the bills or asks about them: on the billing day it would have asked before the bills had gone. */
 var GBL_DAY = {
   DAY: 26,                      // the bills go on this day (the GCM_BILL_DAY Script property overrides, 1 to 28)
-  HOUR: 10,                     // at 10:00, as the Monday letters
+  HOUR: 13,                     // at 13:00 (2 November 2026); the Monday letters stay at 10:00
+  REPLY_BY: '3 p.m.',           // a staff member asked why a bill did not go answers by then (the run is at 13:00)
+  CHASE_PROP: 'GCM_BILL_CHASE_LAST',   // the billing day the staff were last asked why, so they are asked once
   REPORT_HOUR: 13,              // the report on the day before (the 25th), while the staff are still in (the first goes home at 2)
   LATE_DAYS: 14,                // a bill approved this many days after the billing day is late, and goes the next working day
   REPORT_PROP: 'GCM_BILL_REPORT_LAST',
@@ -2639,9 +2644,9 @@ var GBL_DAY = {
     '2027-02-08', '2027-02-09', '2027-03-10', '2027-03-26', '2027-03-29', '2027-05-27', '2027-10-29'
   ],
   TRAIN: [
-    ['Billings Management', 'The bills go out on the 26th at 10:00, or the next working day when the 26th is a weekend or a public holiday. Head Office’s bills come in on the 25th: that day upload the month’s bill on each line, verify it against Salesforce, fix or resolve what is marked fix, mark it reconciled, and press Approve with the PDF attached.'],
-    ['Billings Management', 'At 13:00 on the 25th the branch manager has the report of who has worked each group’s bills and what is left. At 10:00 on the billing day every approved bill goes by itself from support@, with its PDF, copied to sales support. A bill approved after that goes at 10:00 the next working day, or when you press Send now.'],
-    ['Billings Management', 'Send now works only on an approved bill. After the 10:00 cut-off, Approve and Send now each ask why the bill was not done by then: the reason goes on the bill, its Chatter and to the branch manager.'],
+    ['Billings Management', 'The bills go out on the 26th at 13:00, or the next working day when the 26th is a weekend or a public holiday. Head Office’s bills come in on the 25th: that day upload the month’s bill on each line, verify it against Salesforce, fix or resolve what is marked fix, mark it reconciled, and press Approve with the PDF attached.'],
+    ['Billings Management', 'At 13:00 on the 25th the branch manager has the report of who has worked each group’s bills and what is left. At 13:00 on the billing day every approved bill goes by itself from support@, with its PDF, copied to sales support. A bill approved after that goes at 13:00 the next working day, or when you press Send now.'],
+    ['Billings Management', 'Send now works only on an approved bill. After the 13:00 cut-off, Approve and Send now each ask why the bill was not done by then: the reason goes on the bill, its Chatter and to the branch manager.'],
     ['Billings Management', 'Reconciled is a person’s tick: nothing goes to a group that a person has not checked against Salesforce.']
   ]
 };
@@ -2696,7 +2701,7 @@ function gblNextBillDay_(now) {
   return gblBillDays_(today).filter(function (d) { return d > today || (d === today && h < GBL_DAY.HOUR); })[0];
 }
 /** The run an approval made now goes on: the next billing day, unless the last one's run has gone in the past LATE_DAYS,
- *  when it is a late bill and goes at 10:00 on the next working day (today, before 10:00 on a working day). */
+ *  when it is a late bill and goes at HOUR (13:00) on the next working day (today, before 13:00 on a working day). */
 function gblNextRunDay_(now) {
   now = now || new Date();
   var today = gcmYmd_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H'));
@@ -2753,7 +2758,7 @@ function gblStaffEmail_(name) {
 /* ── After the cut-off: Send now needs the approval, and the reason (25 October 2026) ───────────────────────────────
  *  "Staff has to keep Send now but has to have the approval and reasons why it was not done at the specified cut off
  *  time." Send now goes only on an approved bill; a bill already sent goes again with no question. Each bill's cut-off is
- *  10:00 on the billing day it was meant for (gblCutoffOf_). After it, Approve and Send now both ask why it was not done
+ *  13:00 (HOUR) on the billing day it was meant for (gblCutoffOf_). After it, Approve and Send now both ask why it was not done
  *  by then: staff and the deputy must answer, the branch manager may. The reason is kept on the bill (Late reason), on
  *  Group Changes ('late send'), on the billing task's Chatter and in the run's summary; when the bill reaches the group it
  *  answers and closes that cycle's GROUP BILL NOT SENT task, and the branch manager has an e-mail at once. A late send
@@ -2771,13 +2776,13 @@ function gblCutoffOf_(bill) {
   if (!up || up < before || (up === before && (bill.atHour || 0) < GBL_DAY.HOUR)) return before;
   return gcmDays_(before, up) <= GBL_DAY.LATE_DAYS ? before : gblBillDayOf_(bill.month);
 }
-/** Whether 10:00 on a day has passed. */
+/** Whether HOUR (13:00) on a day has passed. */
 function gblPast_(day, now) {
   if (!day) return false;
   var today = gcmYmd_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H'));
   return today > day || (today === day && h >= GBL_DAY.HOUR);
 }
-/** The earliest cut-off a bill missed, else ''. A bill missed its cut-off when 10:00 that day has passed and it was not
+/** The earliest cut-off a bill missed, else ''. A bill missed its cut-off when 13:00 that day has passed and it was not
  *  approved for that run (approved later, or not at all), or it was held at the run. One approved in time that the run
  *  has not reached yet did not miss it. */
 function gblMissed_(bill, now) {
@@ -2811,7 +2816,7 @@ function gblKeptBlobs_(bills) {
   });
   return { blobs: blobs, missing: missing };
 }
-/** That cycle's GROUP BILL NOT SENT task for the group (opened at 10:30 on the cut-off day): the reason posted on its
+/** That cycle's GROUP BILL NOT SENT task for the group (opened after the run on the cut-off day): the reason posted on its
  *  Chatter and the task closed, now the bill has gone to the group. Returns the task id, or ''. */
 function gblLateTask_(g, cut, text) {
   if (!tSfOn_()) return '';
@@ -2892,10 +2897,17 @@ function gblApprove_(g, who, bill, b, L) {
     steps: gblSteps_(gblBillRows_(g).filter(function (x) { return x.line === line && x.month === month; })[0]) };
 }
 
-/** The run at 10:00 on the billing day (from the hourly refresh, and first thing in the 10:30 group day): every approved bill
+/** The run at 13:00 on the billing day (from the hourly refresh): every approved bill
  *  whose day has come, group by group, with its PDFs from Drive. o.rehearse sends every approved bill as a TEST to its approver
  *  and marks nothing; o.auto (the hourly run) says nothing when nothing is due; o.now and o.force are for tests. */
 function gblDayRun_(o) {
+  o = o || {};
+  var r = gblDayRunCore_(o);
+  /* the hourly run, once the bills have gone: each staff member whose billed group had none is asked why (once a billing day) */
+  if (o.auto && !r.error) { try { gblChaseAfter_(o.now); } catch (e) {} }
+  return r;
+}
+function gblDayRunCore_(o) {
   o = o || {};
   var now = o.now || new Date(), today = gcmYmd_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H'));
   var rows = gblRows_(GBL.BILLS).map(gblBillOf_).filter(function (b) { return b.status === 'approved' && b.approvedFor && !b.sentAt; });
@@ -3053,7 +3065,7 @@ function gblChaseList_(L, now) {
 /** One staff member's e-mail on the billing day. */
 function gblChaseMail_(o, list, tasks) {
   var E = tEsc_, first = String(o.name || '').split(/\s+/)[0] || 'team', n = o.missed.length, day = gblDayLabel_(list.cycle.end);
-  var subject = 'Group bills: ' + n + ' of your groups had no bill for ' + list.month + ' · reply by ' + GCM_DAY.REPLY_BY;
+  var subject = 'Group bills: ' + n + ' of your groups had no bill for ' + list.month + ' · reply by ' + GBL_DAY.REPLY_BY;
   var th = 'style="text-align:left;padding:7px 10px;border-bottom:2px solid #13408F;font:700 13px Arial,sans-serif;color:#13408F"';
   var td = 'style="padding:8px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;color:#142033;vertical-align:top"';
   var table = function (head, rows) { return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 16px"><tr>' +
@@ -3061,13 +3073,13 @@ function gblChaseMail_(o, list, tasks) {
   var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:720px">' +
     '<p>Good morning, ' + E(first) + '.</p>' +
     '<p>The group bills went at ' + GBL_DAY.HOUR + ':00 today, ' + E(day.replace(/, \d+:\d+$/, '')) + '. <b>' + n + ' of your groups had none.</b> Approve it today and it goes by itself at ' + GBL_DAY.HOUR + ':00 on ' +
-      E(gblDayLabel_(gblNextWorkingDay_(list.cycle.end)).replace(/, \d+:\d+$/, '')) + ', or press Send now to send it at once. Each asks why it was not done by 10:00, and your reason comes to Mr Rampersad.</p>' +
+      E(gblDayLabel_(gblNextWorkingDay_(list.cycle.end)).replace(/, \d+:\d+$/, '')) + ', or press Send now to send it at once. Each asks why it was not done by ' + GBL_DAY.HOUR + ':00, and your reason comes to Mr Rampersad.</p>' +
     table(['Group', 'Where it stands', 'Do this today'], o.missed.map(function (m) {
       var t = tasks && tasks[m.g.key];
       return ['<b>' + E(m.g.name) + '</b>' + (t && t.id ? '<br><span style="color:#4B586C;font-size:12.5px">Salesforce task ' + E(t.id) + '</span>' : ''), m.states.filter(function (s) { return s.state !== 'queued'; }).map(function (s) { return E(s.why); }).join('<br>'), E(m.todo)];
     })) +
     (tasks && Object.keys(tasks).length ? '<p>A Salesforce task (' + E(GCM_DAY.TASK_TYPE) + ') is open for each one in your name. Close it with your reason in its comments.</p>' : '') +
-    '<p style="background:#FFF4D6;border-left:4px solid #E0A800;padding:10px 14px"><b>Please reply to this e-mail by ' + E(GCM_DAY.REPLY_BY) + '</b> with why each bill was not approved by ' + GBL_DAY.HOUR + ':00, and when it will go. Your reply goes to Mr Rampersad.</p>' +
+    '<p style="background:#FFF4D6;border-left:4px solid #E0A800;padding:10px 14px"><b>Please reply to this e-mail by ' + E(GBL_DAY.REPLY_BY) + '</b> with why each bill was not approved by ' + GBL_DAY.HOUR + ':00, and when it will go. Your reply goes to Mr Rampersad.</p>' +
     '<p style="margin:16px 0 6px;font-weight:700">From your training: Billings Management</p>' +
     GBL_DAY.TRAIN.map(function (t) { return '<p style="margin:0 0 8px;padding:8px 12px;background:#F4F7FA;border-left:3px solid #1D5BC4"><i>“' + E(t[1]) + '”</i><br><span style="font-size:12.5px;color:#4B586C">' + E(t[0]) + '</span></p>'; }).join('') +
     '<p><a href="' + GCM.SITE + '" style="color:#1D5BC4;font-weight:700">Open group client management</a></p>' +
@@ -3078,7 +3090,7 @@ function gblChaseMail_(o, list, tasks) {
     '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
   var text = ['Good morning, ' + first + '.', '', n + ' of your groups had no bill for ' + list.month + ':']
     .concat(o.missed.map(function (m) { return '- ' + m.g.name + ': ' + m.why + '. ' + m.todo; }))
-    .concat(['', 'Please reply by ' + GCM_DAY.REPLY_BY + ' with why each was not approved by ' + GBL_DAY.HOUR + ':00, and when it will go.']).join('\n');
+    .concat(['', 'Please reply by ' + GBL_DAY.REPLY_BY + ' with why each was not approved by ' + GBL_DAY.HOUR + ':00, and when it will go.']).join('\n');
   return { subject: subject, html: html, text: text };
 }
 /** The staff part of the billing day: a task for each group that missed, then one e-mail to each staff member, from support@,
@@ -3094,7 +3106,7 @@ function gblChaseRun_(o) {
     ow.missed.forEach(function (m) { if (tasks[m.g.key]) mine[m.g.key] = tasks[m.g.key]; });
     var m = gblChaseMail_(ow, list, mine), to = ow.active && ow.email ? ow.email : me, html = m.html;
     if (o.test) {
-      html = '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00"><b>TEST.</b> This goes to <b>' + E(to) + '</b>, copied to you, at 10:30 on the billing day. Tasks it would open:<br>' +
+      html = '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00"><b>TEST.</b> This goes to <b>' + E(to) + '</b>, copied to you, after the ' + GBL_DAY.HOUR + ':00 run on the billing day. Tasks it would open:<br>' +
         ow.missed.map(function (x) { return '· ' + E((tasks[x.g.key] || {}).subject || x.g.name); }).join('<br>') + '</div>' + html;
       to = me;
     }
@@ -3107,15 +3119,42 @@ function gblChaseRun_(o) {
   return { ok: true, list: list, tasks: tasks, sent: sent, failed: failed,
     said: (sent.length ? sent.length + ' staff e-mail' + (sent.length === 1 ? '' : 's') + (o.test ? ' (tests to ' + me + ')' : '') + ': ' + sent.join(', ') : 'every billed group had its bill this cycle: no staff e-mail') + (failed.length ? '; did not go: ' + failed.join('; ') : '') + '.' };
 }
-/** The bills' part of the 10:30 group day (gcmDay_): on the billing day, the run (if 10:00 did not reach it) and then the
- *  staff asked why; every day, the block for the branch manager's summary. o.test rehearses both to the branch manager. */
+/** The staff asked why, once a billing day: each staff member whose billed group had no bill this cycle, with the KPI task.
+ *  GBL_DAY.CHASE_PROP keeps the billing day they were last asked on, so the hourly run and a late group day never ask twice.
+ *  o.test sends it all to the branch manager, marks nothing and opens no task. */
+function gblChaseOnce_(o) {
+  o = o || {};
+  var now = o.now || new Date(), cycle = gblCycle_(now), props = PropertiesService.getScriptProperties();
+  if (!o.test && props.getProperty(GBL_DAY.CHASE_PROP) === cycle.end) return { ok: true, already: true, sent: [], failed: [], tasks: {}, said: 'already asked today, after the ' + GBL_DAY.HOUR + ':00 run.' };
+  var r = gblChaseRun_({ test: !!o.test, now: now });
+  if (!o.test) props.setProperty(GBL_DAY.CHASE_PROP, cycle.end);
+  return r;
+}
+/** From the hourly run, once the run is done on the billing day (it is 13:00 or later and no approved bill for today is
+ *  still waiting to go): the staff asked why. Only once the bills are live: in test mode the bills reach nobody but their
+ *  approvers, so nobody is asked and no task opens. */
+function gblChaseAfter_(now) {
+  now = now || new Date();
+  var cycle = gblCycle_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H'));
+  if (!cycle.isDay || h < GBL_DAY.HOUR || !gblLive_()) return null;
+  if (PropertiesService.getScriptProperties().getProperty(GBL_DAY.CHASE_PROP) === cycle.end) return null;
+  var waiting = gblRows_(GBL.BILLS).map(gblBillOf_).filter(function (b) { return b.status === 'approved' && b.approvedFor && b.approvedFor <= cycle.today && !b.sentAt; });
+  if (waiting.length) return null;   // the run has not reached them all yet: the next hourly run sends them, then asks
+  return gblChaseOnce_({ now: now });
+}
+/** The bills' part of the 10:30 group day (gcmDay_). Before 13:00 on the billing day it only reports where the bills stand
+ *  (they go at 13:00, and the hourly run then asks the staff why); a group day that runs late, after 13:00 on the billing
+ *  day, runs what the hourly run has not. Every day, the block for the branch manager's summary. o.test rehearses the run
+ *  and the staff e-mails to the branch manager. */
 function gblDay_(o) {
   o = o || {};
-  var now = o.now || new Date(), cycle = gblCycle_(now), info = gblDayInfo_(now), out = { info: info, cycle: cycle, run: null, chase: null, said: '', html: '' }, said = [];
-  if (cycle.isDay || o.test) {
+  var now = o.now || new Date(), cycle = gblCycle_(now), info = gblDayInfo_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H'));
+  var ran = cycle.isDay && h >= GBL_DAY.HOUR;
+  var out = { info: info, cycle: cycle, ran: ran, run: null, chase: null, said: '', html: '' }, said = [];
+  if (ran || o.test) {
     try { out.run = gblDayRun_(o.test ? { rehearse: true, now: now } : { now: now }); if (out.run.said) said.push(out.run.said); } catch (e) { out.run = { sent: [], held: [], said: String(e && e.message ? e.message : e).slice(0, 160) }; said.push(out.run.said); }
     if (gblLive_() || o.test) {
-      try { out.chase = gblChaseRun_({ test: !!o.test, now: now }); said.push('staff: ' + out.chase.said); } catch (e) { out.chase = { sent: [], failed: [], said: String(e && e.message ? e.message : e).slice(0, 160) }; said.push('staff: ' + out.chase.said); }
+      try { out.chase = gblChaseOnce_({ test: !!o.test, now: now }); said.push('staff: ' + out.chase.said); } catch (e) { out.chase = { sent: [], failed: [], said: String(e && e.message ? e.message : e).slice(0, 160) }; said.push('staff: ' + out.chase.said); }
     } else {
       // Test mode: the bills reach nobody but their approvers, so nobody is asked why one did not go, and no KPI task opens. The summary still says what would have been asked.
       var heldList = null; try { heldList = gblChaseList_(gcmLoad_(), now); } catch (e) {}
@@ -3127,7 +3166,7 @@ function gblDay_(o) {
   if (!said.length) {
     var L = gcmLoad_(), list = gblChaseList_(L, now), n = 0, miss = 0;
     list.owners.forEach(function (ow) { n += ow.sent.length + ow.missed.length; miss += ow.missed.length; });
-    said.push('the next billing day is ' + info.label + (info.daysTo ? ', in ' + info.daysTo + ' day' + (info.daysTo === 1 ? '' : 's') : '') + ': ' + (n - miss) + ' of ' + n + ' billed groups sent or approved.');
+    said.push((cycle.isDay ? 'the bills go today at ' + GBL_DAY.HOUR + ':00' : 'the next billing day is ' + info.label + (info.daysTo ? ', in ' + info.daysTo + ' day' + (info.daysTo === 1 ? '' : 's') : '')) + ': ' + (n - miss) + ' of ' + n + ' billed groups sent or approved.');
   }
   out.said = said.join(' ');
   return out;
@@ -3143,7 +3182,8 @@ function gblDayHtml_(d, o) {
   list.owners.forEach(function (ow) { ow.sent.forEach(function (x) { sentG.push({ ow: ow, x: x }); }); ow.missed.forEach(function (x) { missed.push({ ow: ow, x: x }); }); ow.notReady.forEach(function (x) { notReady.push({ ow: ow, x: x }); }); });
   var n = sentG.length + missed.length, tasks = (d.chase && d.chase.tasks) || {};
   var h = '<h3 style="margin:18px 0 6px;font:700 16px Arial,sans-serif;color:#13408F">Group bills: ' + E(gblDayLabel_(d.cycle.end)) + '</h3>';
-  if (d.cycle.isDay || (o && o.test)) {
+  var dayView = d.ran || (o && o.test) || (d.cycle.isDay && d.ran === undefined);
+  if (dayView) {
     var r = d.run || { sent: [], held: [] };
     h += '<p><b>' + sentG.length + ' of ' + n + '</b> billed groups had their ' + E(list.month) + ' bill' + (sentG.length && sentG.every(function (s) { return s.x.test; }) ? ' (test copies: the bills are in test mode until gblGoLive)' : '') + '. ' +
       'The ' + GBL_DAY.HOUR + ':00 run' + (o && o.test ? ' (rehearsed)' : '') + ': ' + r.sent.length + ' bill' + (r.sent.length === 1 ? '' : 's') + ' went, ' + r.held.length + ' waited.' + (r.held.length ? ' Waiting: ' + r.held.map(function (x) { return E(x.group) + ' (' + E(x.why) + ')'; }).join('; ') + '.' : '') + '</p>' +
@@ -3152,11 +3192,11 @@ function gblDayHtml_(d, o) {
         return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why), E(t.id ? (t.existing ? 'open since earlier: ' : 'opened: ') + t.id : t.test ? 'would open' : d.chase && d.chase.held ? 'would open after gblGoLive' : t.error || '–')]); })) : '') +
       '<p><b>Staff asked why:</b> ' + E(d.chase ? d.chase.said : 'not run') + '</p>';
   } else {
-    h += '<p>The next billing day is <b>' + E(info.label) + '</b>' + (info.daysTo ? ' (in ' + info.daysTo + ' day' + (info.daysTo === 1 ? '' : 's') + ')' : '') + '. ' +
+    h += '<p>' + (d.cycle.isDay ? 'The bills go <b>today at ' + GBL_DAY.HOUR + ':00</b>, and the staff are asked straight after about any group with none' : 'The next billing day is <b>' + E(info.label) + '</b>') + (info.daysTo ? ' (in ' + info.daysTo + ' day' + (info.daysTo === 1 ? '' : 's') + ')' : '') + '. ' +
       '<b>' + (n - missed.length) + ' of ' + n + '</b> billed groups have their ' + E(list.month) + ' bill sent or approved' + (info.drive ? '' : '. <b>The Drive folder is not set</b> (' + GBL_PDF.FOLDER_PROP + '), so a bill cannot be approved with its PDF, and Send now needs an approved bill') + '.</p>' +
       (missed.length ? tbl(['Group', 'Looked after by', 'Where it stands'], missed.map(function (a) { return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why)]); })) : '');
   }
-  if (sentG.length && (d.cycle.isDay || (o && o.test))) h += '<p style="margin:12px 0 6px;font-weight:700">Had their bill</p>' + tbl(['Group', 'Looked after by', 'Sent', 'Lines'], sentG.map(function (a) { return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name), E(a.x.at) + (a.x.test ? ' (test copy)' : ''), E(a.x.lines.map(function (l) { return GBL.LABEL[l]; }).join(', '))]); }));
+  if (sentG.length && dayView) h += '<p style="margin:12px 0 6px;font-weight:700">Had their bill</p>' + tbl(['Group', 'Looked after by', 'Sent', 'Lines'], sentG.map(function (a) { return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name), E(a.x.at) + (a.x.test ? ' (test copy)' : ''), E(a.x.lines.map(function (l) { return GBL.LABEL[l]; }).join(', '))]); }));
   if (notReady.length) h += '<p style="margin:12px 0 6px;font-weight:700">Cannot have a bill yet</p>' + tbl(['Group', 'Looked after by', 'What is missing'], notReady.map(function (a) { return row(['<b>' + E(a.x.g.name) + '</b>', E(a.ow.name || 'nobody'), E(a.x.why)]); }));
   /* the bills that went after their cut-off since the last billing day, each with the reason given */
   var late = []; try { late = gblLateSends_(d.cycle.isDay ? d.cycle.end : d.cycle.start); } catch (e) {}
@@ -3172,7 +3212,7 @@ function gblDayTest() { var r = gblDay_({ test: true }); try { gcmDaySummary_({ 
  *  "On the 25th in the afternoon, I get the report, because during the day on the 25th, reference is made to that billing
  *  in the morning. So at 1 o'clock, I have a report." At 13:00 on the 25th (the last working day before it when the 25th
  *  is a weekend or a holiday), while the staff are still in: every billed group, each line where it stands and who did each
- *  step (uploaded, reconciled, approved), and what is left before 10:00 on the billing day. To the branch manager, the staff
+ *  step (uploaded, reconciled, approved), and what is left before 13:00 on the billing day. To the branch manager, the staff
  *  who look after the groups copied. Internal only: nothing reaches a group. */
 function gblReportRows_(L, now) {
   var cycle = gblCycle_(now), exp = gblExpected_(L, cycle), all = gblRows_(GBL.BILLS).map(gblBillOf_), m1 = cycle.end.slice(0, 7), m2 = gblAddMonths_(m1, 1), rows = [];
@@ -3242,7 +3282,7 @@ function gblBillReport_(o) {
           }).join('');
         }).join('');
     }).join('') +
-    '<p>A line approved after ' + E(when) + ' is a late bill and goes at ' + GBL_DAY.HOUR + ':00 the next working day, or when someone presses Send now; either way the approval or the send asks why it missed ' + GBL_DAY.HOUR + ':00. At 10:30 on ' + E(dayWords) + ' each staff member whose group had no bill is asked why, and a task opens' + (live ? '' : ' once the bills are live') + '.</p>' +
+    '<p>A line approved after ' + E(when) + ' is a late bill and goes at ' + GBL_DAY.HOUR + ':00 the next working day, or when someone presses Send now; either way the approval or the send asks why it missed ' + GBL_DAY.HOUR + ':00. Straight after the ' + GBL_DAY.HOUR + ':00 run on ' + E(dayWords) + ' each staff member whose group had no bill is asked why, and a task opens' + (live ? '' : ' once the bills are live') + '.</p>' +
     '<p><a href="' + GCM.SITE + 'billing.html" style="color:#1D5BC4;font-weight:700">Open Billings Management</a></p>' +
     '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
   var to = me;

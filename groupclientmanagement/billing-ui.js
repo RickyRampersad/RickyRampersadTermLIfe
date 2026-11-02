@@ -587,14 +587,14 @@ async function blReconcile(line) {
 /* the billing day (24 October 2026; for a few hours on 25 October a Tuesday, then back the same day: "I would leave it for
    the 26th of the month, excepting when it falls on a holiday or a weekend … on the 25th in the afternoon, I get the
    report … at 1 o'clock"): the strip under the title, the Approve button on a reconciled line, and the state once
-   approved. The PDF read in this session travels with the approval and waits in the branch's Drive folder for the 10:00 run. */
+   approved. The PDF read in this session travels with the approval and waits in the branch's Drive folder for the 13:00 run (the bill run's hour comes from the backend, day.hour). */
 function blDayStrip(day, live) {
   if (!day) return '';
   const when = day.isDay ? '<b>today, ' + esc(day.label) + '</b>' : '<b>' + esc(day.label) + '</b>' + (day.daysTo ? ' (in ' + day.daysTo + ' day' + (day.daysTo === 1 ? '' : 's') + ')' : '');
   const moved = day.moved ? ' The ' + (day.dayOfMonth || 26) + 'th is a weekend or a public holiday this month, so they go the next working day.' : '';
   const late = day.late && day.run ? ' <b>The billing day has passed:</b> a bill approved now is a late bill and goes on ' + esc(day.runLabel) + '.' : '';
   return '<div class="note info blday"><div><b>The bills go out by themselves on ' + when + '.</b>' + moved + ' Before then, on each line: upload the bill, verify it against Salesforce, fix what is marked fix, mark it reconciled and press <b>Approve</b> with the PDF attached. ' +
-    'At ' + (day.reportHour || 13) + ':00 on ' + esc(day.reportLabel ? day.reportLabel.replace(/, \d+:\d+$/, '') : 'the ' + ((day.dayOfMonth || 26) - 1) + 'th') + ' the branch manager has the report of who has worked each group. A line approved after the ' + day.hour + ':00 run goes at ' + day.hour + ':00 the next working day, or when you press Send now. Send now works only on an approved bill, and after the cut-off Approve and Send now each ask why it was not done by ' + day.hour + ':00; at 10:30 on the billing day the branch manager is told which groups had no bill, and asks why.' + late +
+    'At ' + (day.reportHour || 13) + ':00 on ' + esc(day.reportLabel ? day.reportLabel.replace(/, \d+:\d+$/, '') : 'the ' + ((day.dayOfMonth || 26) - 1) + 'th') + ' the branch manager has the report of who has worked each group. A line approved after the ' + day.hour + ':00 run goes at ' + day.hour + ':00 the next working day, or when you press Send now. Send now works only on an approved bill, and after the cut-off Approve and Send now each ask why it was not done by ' + day.hour + ':00; straight after the ' + day.hour + ':00 run on the billing day, whoever looks after a group with no bill is asked why.' + late +
     (live ? '' : ' <span class="muted">The bills are in test mode: the run sends each approved bill to its approver and the branch, marked TEST, until the branch manager runs gblGoLive.</span>') +
     (day.drive ? '' : ' <b>The Drive folder is not linked yet</b> (the GCM_FORMS_FOLDER Script property, GROUP-CLIENTS-SETUP.md), so a bill cannot be approved with its PDF yet, and Send now needs an approved bill.') + '</div></div>';
 }
@@ -611,7 +611,7 @@ function blDayLabel(ymd) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd || '');
 async function blApprove(line, reason) {
   const o = BILL.lines.find(x => x.line === line), files = BILL_FILES[line] || [], day = BILL.day || {};
   const who = BILL.live ? 'the group (' + (BILL.group.contact || BILL.group.to.join(', ')) + ')' : 'you, marked TEST (test mode)';
-  const what = 'the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to go by itself on ' + (day.runLabel || day.label || 'the billing day at 10:00') + ' to ' + who + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : ', with NO file attached (upload the PDF again in this session to attach it)');
+  const what = 'the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to go by itself on ' + (day.runLabel || day.label || 'the billing day at ' + (day.hour || 13) + ':00') + ' to ' + who + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : ', with NO file attached (upload the PDF again in this session to attach it)');
   /* after the cut-off: why it was not done by then, in the box (it stands for the confirmation) */
   if (reason === undefined && o.cut && o.cut.past) return blLateAsk(o, 'approve', 'Approve ' + what + '.');
   if (reason === undefined && !confirm('Approve ' + what + '?')) return;
@@ -653,10 +653,10 @@ const BL_LATE_PICKS = ['Head Office’s bill reached us after the cut-off.', 'Sa
 /** The box: why it was not done by the cut-off, with one-tap starts; it stands for the confirmation. */
 function blLateAsk(o, kind, what) {
   const cut = o.cut || {}, opt = BILL.reasonNeeded === false, min = BILL.lateMin || 15;
-  const held = o.steps && o.steps.held ? 'It was held at the 10:00 run: ' + o.steps.held + '.' : '';
+  const held = o.steps && o.steps.held ? 'It was held at the ' + ((BILL.day && BILL.day.hour) || 13) + ':00 run: ' + o.steps.held + '.' : '';
   const picks = (held ? [held] : []).concat(BL_LATE_PICKS);
   $('dlgT').textContent = (kind === 'send' ? 'Send now' : 'Approve') + ' · after the cut-off';
-  $('dlgB').innerHTML = '<p>The ' + esc(blMon(BILL.month)) + ' ' + esc(o.label.toLowerCase()) + ' bill missed the ' + esc((BILL.day && BILL.day.hour) || 10) + ':00 cut-off on <b>' + esc(cut.label ? cut.label.replace(/, \d+:\d+$/, '') : 'the billing day') + '</b>. ' +
+  $('dlgB').innerHTML = '<p>The ' + esc(blMon(BILL.month)) + ' ' + esc(o.label.toLowerCase()) + ' bill missed the ' + esc((BILL.day && BILL.day.hour) || 13) + ':00 cut-off on <b>' + esc(cut.label ? cut.label.replace(/, \d+:\d+$/, '') : 'the billing day') + '</b>. ' +
     '<b>Why was it not done by then?</b> ' + (opt ? 'As branch manager you may leave this out.' : 'Your reason goes on the bill, its Chatter and to Mr Rampersad.') + '</p>' +
     '<div class="chips tpl" style="margin:0 0 10px">' + picks.map((x, i) => '<button type="button" class="chip" data-lpick="' + i + '">' + esc(x) + '</button>').join('') + '</div>' +
     '<textarea class="field" id="lateWhy" rows="3" maxlength="600" placeholder="What held it up, and what was done about it">' + esc(cut.reason || '') + '</textarea>' +

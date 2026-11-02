@@ -520,7 +520,7 @@ async function dMail() {
 /* ── step 8: approve and send ── */
 function dApprove() {
   const d = BILL, can = d.canAct !== false, withBill = d.lines.filter(o => o.bill);
-  let h = '<h3 class="ptitle">Approve and send</h3><p class="plead">A reconciled line goes by itself on the billing day once it is approved, or now with Send now, which works only on an approved bill. After the 10:00 cut-off, Approve and Send now each ask why it was not done by then. The e-mail carries the bill, the statement of account (inline and as a PDF) and the cover note, from support@ with sales support copied.</p>';
+  let h = '<h3 class="ptitle">Approve and send</h3><p class="plead">A reconciled line goes by itself on the billing day once it is approved, or now with Send now, which works only on an approved bill. After the 13:00 cut-off, Approve and Send now each ask why it was not done by then. The e-mail carries the bill, the statement of account (inline and as a PDF) and the cover note, from support@ with sales support copied.</p>';
   h += blDayStrip(d.day, d.live);
   if (withBill.length) h += '<div class="dnote dmail"><div><b>The e-mail the group gets</b><span class="small muted"> · addressed to their contact by name, signed by the person who looks after the account, with the sign-in to comment on any line and five stars to rate that person.</span></div><button class="btn ghost sm" type="button" id="dMail">See the e-mail as the group reads it</button></div>';
   if (!d.live) h += '<div class="note info"><div><b>Sending is in test mode.</b> A bill sent from here goes to you and the branch, marked TEST, until the branch manager runs gblGoLive in the script editor. Everything else is live: the checks, the Salesforce fixes, the tasks and the Chatter.</div></div>';

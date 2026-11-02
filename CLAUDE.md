@@ -4759,13 +4759,24 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       scratchpad placed in a mocked Drive folder) and `billing/page-test.js` (99, pdf.js from the vendor copies); the
       harness (`gcmlive/env-sq.js`) mocks `DriveApp`, serves the site's forms from the repository and pdf-lib from the
       scratchpad. `forms/gas-sync.js` there is the proof that pdf-lib runs under the synchronous Promise.
-  - **The billing day: the 26th at 10:00, or the next working day; approved by staff, sent by the system, reported on the
-    25th at 13:00, chased at 10:30** (24 October 2026: "on the 26th group billings go out and weekly on a Monday at 10am
+  - **The billing day: the 26th at 13:00 (10:00 until 2 November 2026), or the next working day; approved by staff, sent by
+    the system, reported on the 25th at 13:00, chased straight after the run** (24 October 2026: "on the 26th group billings go out and weekly on a Monday at 10am
     the queries go out but staff has to approve". On 25 October it went to a Tuesday for a few hours, so a client would
     never have the weekly letter and a bill on one morning, and came back the same day: "I would leave it for the 26th of
     the month, excepting when it falls on a holiday or a weekend … We get the billings on the 25th, but on the 25th, we
     check it and verify it. And on the 26th, it's sent out … on the 25th in the afternoon, I get the report … So at 1
     o'clock, I have a report"). `GBL_DAY` in GroupBilling.gs:
+    - **Since 2 November 2026 the bills go at 13:00, and the Monday letters stay at 10:00.** Asked for in these words:
+      "The group billings go out at 1 p.m. However, the group task management is customary, triggers at 10 a.m."
+      `GBL_DAY.HOUR` is 13, so the run, the cut-off, a late bill's next-working-day run and every page and e-mail that
+      names the hour all read 13:00. Where the bullets below say 10:00 for the bills, read 13:00.
+      - **The "why no bill?" check moved out of the 10:30 group day.** At 10:30 it would ask staff before the bills had
+        gone. `gblChaseAfter_` runs it from the first hourly run after 13:00 on the billing day, once
+        (`GCM_BILL_CHASE_LAST`), and only once no approved bill for that day is still waiting. It runs only when the bills
+        are live, and asks for a reply by 3 p.m. (`GBL_DAY.REPLY_BY`).
+      - **The 10:30 summary on the billing day** says the bills go today at 13:00 and how many are approved. A group day
+        that runs after 13:00 runs what the hourly run has not, and never asks twice.
+      - **Tests:** `billing/bills1pm-test.js` in the scratchpad (14 checks).
     - **The day** (`gblBillDayOf_`): the 26th (`GCM_BILL_DAY` moves it, 1 to 28), and when that is a Saturday, a Sunday
       or a public holiday, the next working day (`gblWorkingDay_`): Mon 28 Sep, Mon 26 Oct, Thu 26 Nov, Mon 28 Dec 2026
       (Boxing Day is a Saturday), Tue 26 Jan, Fri 26 Feb, Wed 31 Mar 2027 (Good Friday, the weekend, Easter Monday and
