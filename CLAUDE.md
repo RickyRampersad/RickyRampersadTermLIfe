@@ -6788,10 +6788,7 @@ comes back. Asked for in these words: *"I would like pendings and queries dealt 
   and the support@ e-mails are not returned: those need a team member.
 - **Where each answer comes from** (3 November 2026): pendings from the Branch Pendings report and the "Pendings Chase" tab in
   the Branch Portfolio workbook; increases, Group Life, Group Health and Pension from Salesforce, read for the signed-in agent
-  (`help868.increases`, `help868.groups`). **Pending means the Salesforce status says Pending**, not a missing Date Settled: on
-  2 November the branch had two pending increases and the branch manager's own 156 "unsettled" were Premium Paying records with no
-  Date Settled entered, which the answer counts apart as records to tidy. Individual life, PA and the rest of the Google sheet's
-  tabs are not served yet.
+  (`help868.increases`, `help868.groups`). **Salesforce is read for the status field saying Pending and nothing else** (Ricky, 3 November 2026: "it only reading the status field pending"). No in-force counts, no settled-date test. On 2 November the branch manager had 4 pending group records (2 life, 2 health) and no pending increases; the 156 increases with no Date Settled are Premium Paying records and are deliberately not reported. Individual life, PA and the rest of the Google sheet's tabs are not served yet.
 - **Salesforce logging is off until `HELP868_SF` = `on`.** Then a case look-up is noted on the open Pendings task and an enquiry
   opens a Servicing task on the agent's Contact. The summary and reference are logged; the full chat stays in respond.io.
 - **An enquiry's reference comes from the log**, so the assistant can only quote one that exists, and promises no time.

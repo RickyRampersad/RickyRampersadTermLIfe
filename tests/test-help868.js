@@ -123,18 +123,13 @@ env.sfkConfigured_ = () => true;
 env.sfkQuery_ = q => { sfQ.push(q);
   if (/FROM Task/.test(q)) return [{ Id: '00TPEND' }];
   if (/FROM Contact/.test(q)) return [{ Id: '003NEIL', Name: 'Neil Ramnanan' }];
-  if (/COUNT\(Id\) n FROM Policy_Increases__c/.test(q)) return [{ n: 7 }];
   if (/FROM Policy_Increases__c/.test(q)) return [
     { Policy__c: '6000000009', Policy_Description_Status__c: 'Pending', Submitted_Date__c: '2026-10-01', Days_O_S__c: 32, Policy_Requirements__c: 'Signed form 5551234567 outstanding', Support__c: 'Sasha Lalla', Picked_Up_For_Production__c: 'No', Life_Increase_Premium__c: 888 },
     { Policy__c: '6000000010', Policy_Description_Status__c: 'Pending', Submitted_Date__c: '2026-10-25', Days_O_S__c: null, Policy_Requirements__c: '', Support__c: '', Picked_Up_For_Production__c: '' }];
-  if (/GROUP BY RecordType.Name/.test(q)) return [
-    { RecordType: { Name: 'LIFE(GROUP)' }, Policy_Status_Description__c: 'PREMIUM PAYING', n: 184 }, { RecordType: { Name: 'LIFE(GROUP)' }, Policy_Status_Description__c: 'Pending', n: 2 },
-    { RecordType: { Name: 'LIFE(GROUP)' }, Policy_Status_Description__c: null, n: 29 }, { RecordType: { Name: 'LIFE(GROUP)' }, Policy_Status_Description__c: 'Not Proceeded With', n: 2 },
-    { RecordType: { Name: 'HEALTH (GROUP)' }, Policy_Status_Description__c: 'premiu paying', n: 1 }, { RecordType: { Name: 'HEALTH (GROUP)' }, Policy_Status_Description__c: 'Premium paying (Inforce)', n: 1 },
-    { RecordType: { Name: 'HEALTH (GROUP)' }, Policy_Status_Description__c: 'Pending', n: 2 }, { RecordType: { Name: 'HEALTH (GROUP)' }, Policy_Status_Description__c: '1', n: 14 }, { RecordType: { Name: 'HEALTH (GROUP)' }, Policy_Status_Description__c: 'ANP', n: 1 },
-    { RecordType: { Name: 'PENSION' }, Policy_Status_Description__c: 'Premium Paying', n: 10 }];
   if (/FROM CLIENT_PORTFOLIO__c/.test(q)) return [
-    { POLICY__c: 'TT 7000000555', RecordType: { Name: 'HEALTH (GROUP)' }, Policy_Status_Description__c: 'Pending', App_Received_Date__c: '2026-10-20' }];
+    { POLICY__c: 'TT 7000000555', RecordType: { Name: 'HEALTH (GROUP)' }, App_Received_Date__c: '2026-10-20' },
+    { POLICY__c: 'TT 7000000556', RecordType: { Name: 'LIFE(GROUP)' }, App_Received_Date__c: '2026-10-25' },
+    { POLICY__c: 'TT 7000000557', RecordType: { Name: 'HEALTH (GROUP)' }, App_Received_Date__c: '2026-10-27' }];
   return []; };
 env.sfkInsert_ = (o, b) => { sfIns.push([o, b]); return { id: o === 'Task' ? '00TNEW' : '0D5NEW' }; };
 ok('switched on only by the property', route({ action: 'help868.ping' }).salesforce === false);
@@ -146,18 +141,18 @@ ok('the note names the agent and says no client details were sent', /Neil Ramnan
 
 // increases and groups (Salesforce, for the signed-in agent)
 let inc = route({ ...base, action: 'help868.increases' });
-ok('increases: those whose status is Pending, with last four digits', inc.found && inc.pending === 2 && inc.increases[0].policy === '••••0009' && inc.increases[0].status === 'Pending', JSON.stringify(inc).slice(0, 220));
+ok('increases: those whose status is Pending, with last four digits', inc.found && inc.pending === 2 && inc.increases[0].policy === '••••0009', JSON.stringify(inc).slice(0, 220));
 ok('increases: days outstanding from Salesforce, else worked out', inc.increases[0].daysOutstanding === 32 && inc.increases[1].daysOutstanding >= 0 && inc.over30Days === 1);
-ok('increases: premium-paying records with no settled date are counted apart, not as pending', inc.premiumPayingWithNoSettledDate === 7 && /not pending increases/.test(inc.note));
+ok('increases: only the Pending status is read, no second query and no other status', sfQ.filter(q => /Policy_Increases__c/.test(q)).length === 1 && /Policy_Description_Status__c = 'Pending'/.test(sfQ.filter(q => /Policy_Increases__c/.test(q))[0]) && !/Premium Paying|Date_Settled/.test(sfQ.join(' ')) && inc.premiumPayingWithNoSettledDate === undefined);
 ok('increases: no amounts, no phone-like numbers in the requirement text', !/888|5551234567/.test(JSON.stringify(inc)) && /\[number removed\]/.test(inc.increases[0].requirement));
 ok('increases: supported-by is a first name', inc.increases[0].supportedBy === 'Sasha');
-ok('increases are asked of Salesforce by the matched agent only', sfQ.some(q => /Policy_Increases__r\.AGENT__c = '003NEIL'/.test(q)) && sfQ.some(q => /Policy_Description_Status__c = 'Pending'/.test(q)));
+ok('increases are asked of Salesforce by the matched agent only', sfQ.some(q => /Policy_Increases__r\.AGENT__c = '003NEIL'/.test(q)));
 let gr = route({ ...base, action: 'help868.groups' });
-const L = n => gr.lines.filter(l => l.line === n)[0];
-ok('groups: three lines in a fixed order', gr.found && gr.lines.map(l => l.line).join() === 'Group Life,Group Health,Pension', gr.lines.map(l => l.line).join());
-ok('groups: life in force, pending, ended and unrecorded', L('Group Life').total === 217 && L('Group Life').inForce === 184 && L('Group Life').pending === 2 && L('Group Life').ended === 2 && L('Group Life').unrecorded === 29, JSON.stringify(L('Group Life')));
-ok('groups: typos still count as in force, a bare 1 and ANP are unrecorded, only Pending is pending', L('Group Health').inForce === 2 && L('Group Health').pending === 2 && L('Group Health').unrecorded === 15, JSON.stringify(L('Group Health')));
-ok('groups: the pending record is listed by line and last four digits', gr.pending.length === 1 && gr.pending[0].line === 'Group Health' && gr.pending[0].policy === '••••0555' && gr.pending[0].daysSinceReceived > 0, JSON.stringify(gr.pending));
+const byLine = n => gr.byLine.filter(l => l.line === n)[0].pending;
+ok('groups: pending only, counted by line in a fixed order', gr.found && gr.pending === 3 && gr.byLine.map(l => l.line).join() === 'Group Life,Group Health,Pension' && byLine('Group Life') === 1 && byLine('Group Health') === 2 && byLine('Pension') === 0, JSON.stringify(gr.byLine));
+ok('groups: each pending record by line, last four digits and days since received', gr.cases[0].line === 'Group Health' && gr.cases[0].policy === '••••0555' && gr.cases[0].daysSinceReceived > 0, JSON.stringify(gr.cases[0]));
+const gq = sfQ.filter(q => /FROM CLIENT_PORTFOLIO__c/.test(q) && /RecordType/.test(q)).pop();
+ok('groups: the one query asks for status Pending only', /Policy_Status_Description__c = 'Pending'/.test(gq) && !/GROUP BY|PREMIUM/i.test(gq), gq);
 ok('groups: records, not employers, and no names', /records and not employers/.test(gr.note) && !/Ltd|Limited|Company/.test(JSON.stringify(gr)));
 ok('increases and groups need the code too', route({ key: KEY, action: 'help868.increases', phone: '8685550102' }).needCode === true && route({ key: KEY, action: 'help868.groups', phone: '8685550102' }).needCode === true);
 env.sfkConfigured_ = () => false;

@@ -16,10 +16,10 @@
  *                      the underwriting decision, each open requirement (code, name, status, who acts next), and the Pendings
  *                      task (open, overdue, due, who has it, when it was last noted). Never money, a client's name, a note's
  *                      words, a date of birth or another agent's case.
- *    help868.increases signed in only: that agent's increases whose Salesforce status is Pending: policy last four, submitted, days
- *                      outstanding, requirement text, who supports it. No amounts. Premium Paying with no Date Settled is counted apart.
- *    help868.groups    signed in only: that agent's Group Life, Group Health and Pension policy records by where they stand (in force,
- *                      pending, ended, unrecorded) and the pending ones. Counts and last four digits; no employer or member names.
+ *    help868.increases signed in only: that agent's increases whose Salesforce status is Pending, and nothing else: policy last four,
+ *                      submitted, days outstanding, requirement text, who supports it. No amounts.
+ *    help868.groups    signed in only: that agent's Group Life, Group Health and Pension policy records whose Salesforce status is Pending, and
+ *                      nothing else: counts by line, then each by last four digits and days since received. No employer or member names.
  *    help868.enquiry   anyone: files an enquiry on the "HELP868 Enquiries" tab with a reference and e-mails the owner.
  *
  *  Salesforce (HELP868_SF = on, off until then): a verified case look-up is noted on that policy's open Pendings task; an
@@ -289,57 +289,38 @@ function help868Increases_(p, digits) {
   if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return H868_NO_SF;
   var id = help868AgentId_(s.name);
   if (!id) return { ok: true, verified: true, found: false, message: 'The agent record could not be matched on its own, so a team member needs to check the increases.' };
-  var rows, gap = 0;
+  var rows;
   try {
     rows = sfkQuery_("SELECT Policy__c, Policy_Description_Status__c, Submitted_Date__c, Days_O_S__c, Policy_Requirements__c, Support__c, Picked_Up_For_Production__c " +
       'FROM Policy_Increases__c WHERE Policy_Increases__r.AGENT__c = ' + soqlStr_(id) + " AND Policy_Description_Status__c = 'Pending' ORDER BY Submitted_Date__c ASC LIMIT 60");
-    // Premium Paying with no Date Settled is a record to tidy, not a pending increase (the branch's own status says Pending, 2 Nov 2026).
-    var g = sfkQuery_("SELECT COUNT(Id) n FROM Policy_Increases__c WHERE Policy_Increases__r.AGENT__c = " + soqlStr_(id) +
-      " AND Policy_Description_Status__c = 'Premium Paying' AND Date_Settled__c = null AND Submitted_Date__c = LAST_N_DAYS:365");
-    gap = Number(g[0] && (g[0].n || g[0].expr0)) || 0;
   } catch (e) { try { runlog_('HELP 868: increases read failed: ' + (e && e.message)); } catch (e2) {} return H868_NO_SF; }
   var today = todayISO_(), list = rows.map(function (r) {
     var sub = String(r.Submitted_Date__c || ''), days = Number(r.Days_O_S__c) || (sub ? Math.max(0, daysBetween_(sub, today) || 0) : 0);
-    return { policy: '••••' + String(r.Policy__c || '').replace(/\D/g, '').slice(-4), status: String(r.Policy_Description_Status__c || ''), submitted: sub, daysOutstanding: days,
+    return { policy: '••••' + String(r.Policy__c || '').replace(/\D/g, '').slice(-4), submitted: sub, daysOutstanding: days,
       requirement: help868Clean_(r.Policy_Requirements__c).slice(0, 120), supportedBy: help868First_(r.Support__c), pickedUpForProduction: String(r.Picked_Up_For_Production__c || '') };
   }).sort(function (a, b) { return b.daysOutstanding - a.daysOutstanding; });
   return { ok: true, verified: true, found: true, name: help868First_(s.name), pending: list.length, over30Days: list.filter(function (x) { return x.daysOutstanding > 30; }).length,
-    shown: Math.min(list.length, H868.MAX_ROWS), increases: list.slice(0, H868.MAX_ROWS), premiumPayingWithNoSettledDate: gap,
-    note: 'Pending means the increase\'s status in Salesforce says Pending. ' + (gap ? gap + ' more are Premium Paying with no Date Settled entered in the last year: those are records for staff to tidy, not pending increases. ' : '') + 'No amounts are shown.' };
-}
-/** Where a policy record stands, from the portfolio's free-text status: in force, pending, ended or unrecorded. */
-function help868Bucket_(st) {
-  var t = String(st || '').trim().toLowerCase();
-  if (!t || /^\d+$/.test(t)) return 'unrecorded';
-  if (/prem(iu)?m? ?paying|in ?force|paid up|waiver/.test(t)) return 'inForce';
-  if (/^pending/.test(t)) return 'pending';
-  if (/lapse|terminat|declin|not proceeded|npw|surrender|matured|expired|cancel/.test(t)) return 'ended';
-  return 'unrecorded';
+    shown: Math.min(list.length, H868.MAX_ROWS), increases: list.slice(0, H868.MAX_ROWS),
+    note: 'Pending means the increase\'s status in Salesforce says Pending. Nothing else is read. No amounts are shown.' };
 }
 function help868Groups_(p, digits) {
   var s = help868Session_(digits); if (!s) return H868_NEED_CODE;
   if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return H868_NO_SF;
   var id = help868AgentId_(s.name);
   if (!id) return { ok: true, verified: true, found: false, message: 'The agent record could not be matched on its own, so a team member needs to check the group policies.' };
-  var agg, pend;
+  var rows;
   try {
-    agg = sfkQuery_("SELECT RecordType.Name, Policy_Status_Description__c, COUNT(Id) n FROM CLIENT_PORTFOLIO__c WHERE AGENT__c = " + soqlStr_(id) +
-      " AND RecordType.Name IN ('LIFE(GROUP)','HEALTH (GROUP)','PENSION') GROUP BY RecordType.Name, Policy_Status_Description__c");
-    pend = sfkQuery_("SELECT POLICY__c, RecordType.Name, Policy_Status_Description__c, App_Received_Date__c FROM CLIENT_PORTFOLIO__c WHERE AGENT__c = " + soqlStr_(id) +
-      " AND RecordType.Name IN ('LIFE(GROUP)','HEALTH (GROUP)','PENSION') AND Policy_Status_Description__c = 'Pending' ORDER BY App_Received_Date__c ASC LIMIT 25");
+    rows = sfkQuery_("SELECT POLICY__c, RecordType.Name, App_Received_Date__c FROM CLIENT_PORTFOLIO__c WHERE AGENT__c = " + soqlStr_(id) +
+      " AND RecordType.Name IN ('LIFE(GROUP)','HEALTH (GROUP)','PENSION') AND Policy_Status_Description__c = 'Pending' ORDER BY App_Received_Date__c ASC LIMIT 200");
   } catch (e) { try { runlog_('HELP 868: group read failed: ' + (e && e.message)); } catch (e2) {} return H868_NO_SF; }
-  var label = { 'LIFE(GROUP)': 'Group Life', 'HEALTH (GROUP)': 'Group Health', 'PENSION': 'Pension' }, lines = {};
-  agg.forEach(function (r) {
-    var line = label[r.RecordType && r.RecordType.Name]; if (!line) return;
-    var o = lines[line] = lines[line] || { line: line, total: 0, inForce: 0, pending: 0, ended: 0, unrecorded: 0 };
-    var n = Number(r.n || r.expr0) || 0; o.total += n; o[help868Bucket_(r.Policy_Status_Description__c)] += n;
-  });
-  var today = todayISO_();
-  return { ok: true, verified: true, found: true, name: help868First_(s.name),
-    lines: Object.keys(label).map(function (k) { return lines[label[k]] || { line: label[k], total: 0, inForce: 0, pending: 0, ended: 0, unrecorded: 0 }; }),
-    pending: pend.slice(0, H868.MAX_ROWS).map(function (r) { var rec = String(r.App_Received_Date__c || '');
-      return { line: label[r.RecordType && r.RecordType.Name] || '', policy: '••••' + String(r.POLICY__c || '').replace(/\D/g, '').slice(-4), received: rec, daysSinceReceived: rec ? daysBetween_(rec, today) : null }; }),
-    note: 'These are Salesforce policy records, one for each member under a group plan, so a count is records and not employers. Status words are typed by hand, so "unrecorded" means the status is blank or unclear. Employer and member names need a team member.' };
+  var label = { 'LIFE(GROUP)': 'Group Life', 'HEALTH (GROUP)': 'Group Health', 'PENSION': 'Pension' }, count = { 'Group Life': 0, 'Group Health': 0, 'Pension': 0 }, today = todayISO_();
+  var list = rows.map(function (r) { var line = label[r.RecordType && r.RecordType.Name] || ''; if (line) count[line]++;
+    var rec = String(r.App_Received_Date__c || '');
+    return { line: line, policy: '••••' + String(r.POLICY__c || '').replace(/\D/g, '').slice(-4), received: rec, daysSinceReceived: rec ? daysBetween_(rec, today) : null }; });
+  return { ok: true, verified: true, found: true, name: help868First_(s.name), pending: list.length,
+    byLine: Object.keys(count).map(function (k) { return { line: k, pending: count[k] }; }),
+    shown: Math.min(list.length, H868.MAX_ROWS), cases: list.slice(0, H868.MAX_ROWS),
+    note: 'Pending means the status in Salesforce says Pending. Nothing else is read. Each is a policy record, which for a group plan means one member, so a count is records and not employers. Employer and member names need a team member.' };
 }
 
 /* ───────── enquiries ───────── */
