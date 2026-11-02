@@ -67,7 +67,7 @@ DAY = '2026-10-27';
 console.log('\nThe buttons:\n');
 const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'apps-script', 'KPI.gs'), 'utf8');
 // 29 Oct 2026: the buttons open My day; under each, the full page and what to do when Google's page will not open.
-ok('the morning, midday and close-off buttons open My day, the full page below with what to do when Google\'s page will not open', (src.match(/\) \+ agOldLine_\(replyUrl_\(a\.key, day, 'agc?'\)\);/g) || []).length === 3 && /private \(incognito\) window/.test(env.agOldLine_('x')) && (src.match(/workGoUrl_\(a\.key, 'ag(plan|close)'\)/g) || []).length === 3);
+ok('the morning, midday and close-off buttons open My day, the full page below with what to do when Google\'s page will not open', (src.match(/\) \+ agOldLine_\(replyUrl_\(a\.key, day, 'agc?'\)\);/g) || []).length >= 3   /* the coach's morning has one too (2 Nov 2026) */ && /private \(incognito\) window/.test(env.agOldLine_('x')) && (src.match(/workGoUrl_\(a\.key, 'ag(plan|close)'\)/g) || []).length >= 3);
 console.log('\nThe ping:\n');
 const props = env.PropertiesService.getScriptProperties();
 const pingNow = () => JSON.parse(env.doGet({ parameter: { action: 'ping' } }).getContent());
