@@ -1155,5 +1155,37 @@
    58.2
   ],
   "capbg": "05070C"
+ },
+ "werise": {
+  "cap": "cap-werise",
+  "vox": "vowerise",
+  "music": "bed-werise.wav",
+  "mix": "werise-mix.wav",
+  "ass": "captions-werise.ass",
+  "dur": 63.3,
+  "durs": [
+   8.3,
+   7.0,
+   7.6,
+   6.7,
+   7.1,
+   7.4,
+   6.2,
+   6.7,
+   6.3
+  ],
+  "out": "../../werise/werise.mp4",
+  "musicgain": 0.5,
+  "duck": 0.32,
+  "sfx": "sfx-werise.wav",
+  "start": 0,
+  "capmode": "strip",
+  "dark": [
+   0,
+   8
+  ],
+  "ticks": [],
+  "hits": [],
+  "capbg": "070F26"
  }
 }

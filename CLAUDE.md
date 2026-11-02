@@ -7442,6 +7442,31 @@ argument is FPS, not seconds**, and `importvox.py` writes `durs` in seconds
 while `data-d` is milliseconds.
 
 
+### The rise film, after the Friday meeting — 2 November 2026
+
+Asked for as *"a small little voice video ... arising out of the Friday meeting ... from Friday, we rise and
+reinvent ourselves and reset ... they have all the data at their fingertips. We will know what they're doing
+and they will know what we are doing. So screenshots as to our new way forward"*, the morning the agents'
+day mail went live for the whole branch.
+
+`werise/werise.mp4` (1:03, poster `werise.jpg`), its page to post at **`/werise/`**, source `werise/film.html`,
+built by `tools/film/build-werisefilm.py` from `werise-lines.json` and `werise-timing.json`. Nine scenes:
+the title (Rise · Reinvent · Reset), the Branch App, the morning projection by 10:30, the 5:30pm close-off
+and its balance, the staff coach, the managers' timeline, the wall and Wednesday's meeting, both ways, and
+"Log in. Log out. Rise." Midnight blue with the blue shield, because the app and My day carry it.
+
+**Every screen is a real page on a mocked backend**: the agent's My day and close-off from
+`tests/e2e-agent-workday.js`, the staff coach from `e2e-coach.js`, the managers' timeline from
+`e2e-managers.js`, the app home from `rroperations/?demo=a`, the wall from `wall/?demo=1`, the agenda from
+`wall/img/meet/agenda-lap.jpg`. They live in `tools/film/wrshots/`; each scrolls slowly down its page across
+the scene (`screen()`). Staff and agents are the branch's own, every client and figure is the harnesses'
+sample. Re-shoot by running those tests with `SHOTS=<dir>` and cropping as the builder expects.
+
+Andrew Expressive on the `tts-run` runner, key `werise`, all nine clips heard as English with the words
+written. Re-cut: edit the lines, push the job, `importvox.py ... vowerise 1.15 --timing werise-timing.json
+--lines werise-lines.json`, `build-werisefilm.py`, `sfx.py`, `usetrack.py ../../rr-branch-theme.mp3 werise`,
+`render.js ../../werise/film.html cap-werise 30 ../../werise/werise.jpg`, `mixany.py`.
+
 ### The home screen says what to do, by role — 30 October 2026
 
 Asked for in these words, after he signed in as one of the agents the morning

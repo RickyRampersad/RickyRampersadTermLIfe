@@ -1,0 +1,43 @@
+{
+ "note": "From Friday, we rise: the short film after the Fri 30 Oct branch meeting (2 Nov 2026). Andrew Expressive +0% on the tts-run runner, Whisper-checked.",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
+ "scenes": [
+  {
+   "say": "Friday, we stood together. From Friday, we rise. We reinvent, and we reset.",
+   "extra": 0.6
+  },
+  {
+   "say": "It starts with one sign in. The Branch App. Every tool you need, in one place.",
+   "extra": 0.2
+  },
+  {
+   "say": "Every morning, your day lands in your inbox. Project it in two minutes, by half past ten.",
+   "extra": 0.2
+  },
+  {
+   "say": "At half past five, you close it off. Your day balances against what you said you would do.",
+   "extra": 0.3
+  },
+  {
+   "say": "Our staff get the same. A coach on the screen, telling them what comes next, all day long.",
+   "extra": 0.2
+  },
+  {
+   "say": "Your managers see the work as it happens. Who called. Who wrote. What moved.",
+   "extra": 0.3
+  },
+  {
+   "say": "All of it flows to the wall, and into our meeting every Wednesday.",
+   "extra": 0.3
+  },
+  {
+   "say": "You will know what we are doing. We will know what you are doing. The data is at your fingertips.",
+   "extra": 0.4
+  },
+  {
+   "say": "The rest is up to you. Log in. Log out. And rise.",
+   "extra": 1.0
+  }
+ ]
+}
