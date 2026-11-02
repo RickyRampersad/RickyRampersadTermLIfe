@@ -5,7 +5,7 @@
 // switched off; a case shows requirements and task facts but never money, client names, note words or another agent's policy;
 // Salesforce logging is off until HELP868_SF = on, then notes the Pendings task and opens a Servicing task on the agent's
 // Contact; an enquiry gets a reference, is cleaned, is not filed twice, and a cell cannot start as a formula.
-process.env.GS_PATH = __dirname + '/../apps-script/KPI.gs,' + __dirname + '/../apps-script/Help868.gs';
+process.env.GS_PATH = __dirname + '/../apps-script/Help868.gs';
 const { makeEnv } = require('./harness');
 let fails = 0;
 const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (x ? '  ' + x : '')); if (!c) fails++; };
@@ -40,18 +40,22 @@ const tabs = [
     ['5000000003', '', 'Someone Else', 'FINQ', 'Financial questionnaire', 'Agent', 'Red', 'Ordered - awaiting receipt', 40, '', '', '']])
 ];
 const ss = { getSheets: () => tabs, getSheetByName: n => tabs.find(t => t.getName() === n) || null, insertSheet: n => { const s = sheet(n, []); tabs.push(s); return s; } };
-env.help868Ss_ = () => ss; env.iSs_ = () => ss;
+env.ss_ = () => ss; env.SpreadsheetApp.openById = () => ss; env.tBookId_ = () => 'BOOK'; env.tTz_ = () => 'America/Port_of_Spain'; env.log_ = () => {};
 const realFmt = env.Utilities.formatDate;
 env.Utilities.formatDate = (d, tz, f) => { const p2 = n => ('0' + n).slice(-2), y = d.getFullYear();
   if (f === 'yyMMdd') return p2(y % 100) + p2(d.getMonth() + 1) + p2(d.getDate());
   if (f === 'yyyy-MM-dd HH:mm') return y + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
   return realFmt(d, tz, f); };
-const mails = []; env.mailSend_ = o => { mails.push(o); return 'gmail'; };
-env.managerEmails_ = () => ['boss@example.com'];
-env.skillBank_ = () => ({ neil: { code: 'A10024', name: 'Neil Ramnanan', email: 'neil@example.com', isAgent: true, active: true },
-  joy: { code: 'A10031', name: 'Joy Sammah', email: 'joy@example.com', isAgent: true, active: true },
-  rajiv: { code: 'A10040', name: 'Rajiv Soodoo', email: 'rajiv@example.com', isAgent: true, active: true },
-  sasha: { code: 'S1', name: 'Sasha Lalla', email: 'sasha@example.com', isAgent: false, active: true } });
+const mails = []; env.tMsSend_ = (to, subject, html) => { mails.push({ to, subject, htmlBody: html }); }; env.tMsCreds_ = () => true;
+env.TRANSITION = { CC: ['boss@example.com'], MS_FROM: 'support@example.com' };
+env.tTeam_ = () => ({ people: [
+  { name: 'Neil Ramnanan', no: 'A10024', email: 'neil@example.com', role: 'agent', active: true },
+  { name: 'Joy Sammah', no: 'A10031', email: 'joy@example.com', role: 'agent', active: true },
+  { name: 'Rajiv Soodoo', no: 'A10040', email: 'rajiv@example.com', role: 'agent', active: true },
+  { name: 'Sasha Lalla', no: 'S1', email: 'sasha@example.com', role: 'staff', active: true }] });
+let aiKey = '';
+env.gcmAiKey_ = () => aiKey;
+let sfReady = false; env.tSfOn_ = () => sfReady;
 const props = env.PropertiesService.getScriptProperties();
 const cache = env.CacheService.getScriptCache();
 const route = p => env.help868Route_(p);
@@ -121,8 +125,8 @@ ok('and switching back on restores it within the session window', route({ ...bas
 
 // Salesforce
 const sfIns = [], sfQ = []; const taskIns = () => sfIns.filter(x => x[0] === 'Task');
-env.sfkConfigured_ = () => true;
-env.sfkQuery_ = q => { sfQ.push(q);
+sfReady = true;
+env.tSfQuery_ = q => { sfQ.push(q);
   if (/FROM Task/.test(q)) return [{ Id: '00TPEND', ActivityDate: '2026-10-30', CreatedDate: '2026-10-20T10:00:00.000+0000' }];
   if (/FROM Contact/.test(q)) return [{ Id: '003NEIL', Name: 'Neil Ramnanan' }];
   if (/FROM Policy_Increases__c/.test(q)) return [
@@ -133,7 +137,7 @@ env.sfkQuery_ = q => { sfQ.push(q);
     { POLICY__c: 'TT 7000000556', RecordType: { Name: 'LIFE(GROUP)' }, App_Received_Date__c: '2026-10-25' },
     { POLICY__c: 'TT 7000000557', RecordType: { Name: 'HEALTH (GROUP)' }, App_Received_Date__c: '2026-10-27' }];
   return []; };
-env.sfkInsert_ = (o, b) => { sfIns.push([o, b]); return { id: o === 'Task' ? '00TNEW' : '0D5NEW' }; };
+env.tSfSend_ = (m, path, b) => { const o = path.replace('/sobjects/', ''); sfIns.push([o, b]); return { id: o === 'Task' ? '00TNEW' : '0D5NEW' }; };
 ok('switched on only by the property', route({ action: 'help868.ping' }).salesforce === false);
 props.setProperty('HELP868_SF', 'on');
 ok('ping shows Salesforce logging on', route({ action: 'help868.ping' }).salesforce === true);
@@ -144,12 +148,12 @@ ok('the note names the agent and says no client details were sent', /Neil Ramnan
 
 // what is holding it up: notes, inbox and report read together, only a reason and a next step come out
 const prompts = []; let claudeSays = '{"reason":"waiting_agent","next":"send_requirement"}', claudeCalls = 0;
-props.setProperty('ANTHROPIC_API_KEY', 'sk-test');
-env.cmdChatter_ = ids => ({ '00TPEND': [
+aiKey = 'sk-test-0123456789';
+env.help868Notes_ = id => [
   { at: '2026-11-01T14:00:00.000+0000', day: '2026-11-01', by: 'Sasha Lalla', text: 'Called Mr John Smith on 868-555-9999 (john@x.com): the signed form for 5000000001 is still with the agent, he will bring it Thursday.' },
-  { at: '2026-10-28T14:00:00.000+0000', day: '2026-10-28', by: 'Sasha Lalla', text: 'Medical report requested.' }] });
-env.bmDeepRows_ = () => [{ Subject: 'Re: forms for 5000000001', Gist: 'Agent says the signed form will come in on Thursday', Ask: 'Please confirm receipt', From: 'agent@example.com', Received: '2026-11-01T15:00:00Z', Date: '2026-11-01', Status: 'open' }];
-env.claudeFetchAll_ = (key, reqs) => { claudeCalls++; prompts.push(reqs[0].prompt); return [{ getContentText: () => JSON.stringify({ content: [{ type: 'text', text: claudeSays }] }) }]; };
+  { at: '2026-10-28T14:00:00.000+0000', day: '2026-10-28', by: 'Sasha Lalla', text: 'Medical report requested.' }];
+env.help868Mailbox_ = () => [{ day: '2026-11-01', gist: 'Re: forms for 5000000001. Agent says the signed form will come in on Thursday. Please confirm receipt' }];
+env.gcmClaude_ = (system, user) => { claudeCalls++; prompts.push(system + '\n' + user); return claudeSays; };
 c = route({ ...base, action: 'help868.case', policy: '5000000001' });
 ok('with notes and an inbox item, Claude\'s reason is used', c.stall.reason === 'waiting_agent' && c.stall.waitingOn === 'the agent' && /bring|Send the outstanding/i.test(c.stall.suggestedNextStep) && /read together/.test(c.stall.basis), JSON.stringify(c.stall));
 ok('what Claude was sent has no e-mail, phone, policy number or personal name', prompts.length === 1 && !/john@x|555-9999|5000000001|John Smith|Sasha Lalla|agent@example/.test(prompts[0]) && /\[name\]/.test(prompts[0]), prompts[0] && prompts[0].slice(prompts[0].indexOf('RECORD:'), prompts[0].indexOf('RECORD:') + 700));
@@ -159,14 +163,14 @@ route({ ...base, action: 'help868.case', policy: '5000000001' });
 ok('the same evidence is read once, not on every ask', claudeCalls === 1);
 cache.removeAll(Object.keys({}));
 claudeSays = '{"reason":"the agent is lazy","next":"fire everyone"}';
-env.cmdChatter_ = ids => ({ '00TPEND': [{ at: '2026-11-02T14:00:00.000+0000', day: '2026-11-02', by: 'Azariah', text: 'Chased underwriting again.' }] });
+env.help868Notes_ = id => [{ at: '2026-11-02T14:00:00.000+0000', day: '2026-11-02', by: 'Azariah', text: 'Chased underwriting again.' }];
 c = route({ ...base, action: 'help868.case', policy: '5000000001' });
 ok('an answer outside the fixed lists is ignored and the rules decide', claudeCalls === 2 && c.stall.reason === 'waiting_payment' && /report and the task facts/.test(c.stall.basis), JSON.stringify(c.stall));
 claudeSays = 'not json at all';
-env.cmdChatter_ = ids => ({ '00TPEND': [{ at: '2026-11-02T15:00:00.000+0000', day: '2026-11-02', by: 'Azariah', text: 'Another chase.' }] });
+env.help868Notes_ = id => [{ at: '2026-11-02T15:00:00.000+0000', day: '2026-11-02', by: 'Azariah', text: 'Another chase.' }];
 ok('an unreadable answer falls back to the rules too', route({ ...base, action: 'help868.case', policy: '5000000001' }).stall.reason === 'waiting_payment');
-props.setProperty('ANTHROPIC_API_KEY', '');
-env.cmdChatter_ = ids => ({});
+aiKey = '';
+env.help868Notes_ = id => []; env.help868Mailbox_ = () => [];
 c = route({ ...base, action: 'help868.case', policy: '5000000002' });
 ok('no key and an agent-owned requirement: the rules say waiting on the agent, and that nobody is tracking it', c.stall.reason === 'waiting_agent' && c.stall.signals.some(s => /nobody on the team is tracking/.test(s)), JSON.stringify(c.stall));
 
@@ -186,9 +190,9 @@ const gq = sfQ.filter(q => /FROM CLIENT_PORTFOLIO__c/.test(q) && /RecordType/.te
 ok('groups: the one query asks for status Pending only', /Policy_Status_Description__c = 'Pending'/.test(gq) && !/GROUP BY|PREMIUM/i.test(gq), gq);
 ok('groups: records, not employers, and no names', /records and not employers/.test(gr.note) && !/Ltd|Limited|Company/.test(JSON.stringify(gr)));
 ok('increases and groups need the code too', route({ key: KEY, action: 'help868.increases', phone: '8685550102' }).needCode === true && route({ key: KEY, action: 'help868.groups', phone: '8685550102' }).needCode === true);
-env.sfkConfigured_ = () => false;
+sfReady = false;
 ok('without Salesforce they say so and show nothing', route({ ...base, action: 'help868.increases' }).found === false && route({ ...base, action: 'help868.groups' }).found === false);
-env.sfkConfigured_ = () => true;
+sfReady = true;
 
 // enquiries
 let e = route({ ...base, action: 'help868.enquiry', category: 'payment', summary: 'My payment of 1234567 is missing, call 868-555-0000 or pat@example.com http://x.co/a' });
@@ -207,17 +211,18 @@ ok('a stranger\'s enquiry still opens a task, with no Contact attached', taskIns
 ok('empty summary refused', route({ key: KEY, action: 'help868.enquiry', phone: '8689990002', summary: '  ' }).ok === false);
 
 // Salesforce failing never loses an enquiry
-env.sfkInsert_ = () => { throw new Error('boom'); };
+env.tSfSend_ = () => { throw new Error('boom'); };
 e = route({ key: KEY, action: 'help868.enquiry', phone: '8689990004', summary: 'Anything' });
 ok('Salesforce failing still files the enquiry', e.ok && e.filed && e.salesforce === 'failed', JSON.stringify(e));
 
 let limited = false; for (let i = 0; i < 45; i++) if (route({ key: KEY, action: 'help868.case', phone: '8689990003' }).limited) limited = true;
 ok('one number is rate limited', limited);
 
-const out = JSON.parse(env.doGet({ parameter: { action: 'help868.ping' } }).getContent());
-ok('ping says the pending report and the chase list were found, and nothing else about them', out.pendingReport === true && out.pendingsChase === true && Object.keys(out).sort().join() === 'agents,claudeReady,ok,on,pendingReport,pendingsChase,salesforce,salesforceReady' && out.salesforceReady === true && out.claudeReady === false);
-ok('doGet routes help868.ping', out.ok === true && out.on === true && out.agents === 3, JSON.stringify(out));
-const post = JSON.parse(env.doPost({ parameter: {}, postData: { contents: JSON.stringify({ action: 'help868.case', key: KEY, phone: NEIL, policy: '5000000002' }) } }).getContent());
-ok('doPost routes help868.case', post.found === true);
-ok('ping reports the file is in the project', env.handle_('ping', {}).has.help868 === true);
+const out = route({ action: 'help868.ping' });
+ok('ping says what is ready, as true or false, and nothing else about it', out.ok === true && out.on === true && out.agents === 3 && out.pendingReport === true && out.pendingsChase === true && out.salesforceReady === true && out.claudeReady === false && out.mailReady === true && Object.keys(out).sort().join() === 'agents,claudeReady,mailReady,ok,on,pendingReport,pendingsChase,salesforce,salesforceReady', JSON.stringify(out));
+aiKey = 'sk-test-0123456789'; ok('claudeReady follows the Anthropic key', route({ action: 'help868.ping' }).claudeReady === true); aiKey = '';
+const fs = require('fs'), svc = fs.readFileSync(__dirname + '/../apps-script/Service.gs', 'utf8');
+ok('Service.gs routes help868 actions on both GET and POST', (svc.match(/help868Route_\(p\)/g) || []).length === 1 && (svc.match(/help868Route_\(body\)/g) || []).length === 1);
+const kpi = fs.readFileSync(__dirname + '/../apps-script/KPI.gs', 'utf8');
+ok('the tracker carries no HELP 868 code', !/help868/i.test(kpi));
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed'); process.exit(fails ? 1 : 0);

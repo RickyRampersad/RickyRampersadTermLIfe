@@ -6774,35 +6774,39 @@ guide you. In your session review notes on the step back in place from all memor
 
 ## HELP 868 — the WhatsApp assistant (2 November 2026)
 
-respond.io's AI agent answers on the branch's WhatsApp line. It never reads sheets, Salesforce or this repository; it calls
-two routes in the tracker (`apps-script/Help868.gs`, `help868.pendings` and `help868.enquiry`), and the tracker decides what
-comes back. Asked for in these words: *"I would like pendings and queries dealt with"*. `HELP868-SETUP.md` has the steps.
+respond.io's AI agent answers on the branch's WhatsApp line. It never reads sheets, Salesforce or this repository; it calls routes in
+the **Service Questionnaire** project (`apps-script/Help868.gs`, `help868.*`, routed from `Service.gs`), and that project decides what
+comes back. Asked for in these words: *"I would like pendings and queries dealt with"*. `HELP868-SETUP.md` has the steps. It was
+first written in the tracker and moved on 3 November because *"all the keys are in the Service Questionnaire"*; the tracker carries no
+HELP 868 code and `tests/test-help868.js` fails if it ever does.
 
-- **Three things must agree before anything about a case is shown** (3 November 2026: "ask for the agent number and give a code"):
-  the WhatsApp number is on the "HELP868 Agents" tab, the Skill Bank holds that agent number for the same person, and the agent types
-  the 6-digit code e-mailed to the Skill Bank address. That opens a 30-minute session for that number. No password in WhatsApp,
-  ever. A wrong agent number, an unknown number and an inactive agent all get the same words. The Skill Bank has no phone column,
-  which is why the tab exists; Salesforce mobiles filled it.
-- **An agent sees only their own cases.** The list shows the last four digits; a case shows days, the decision, each open
-  requirement and who acts next, and the Pendings task. Never a client name, a note's words, money or a date of birth. Staff notes
-  and the support@ e-mails are not returned: those need a team member.
-- **Where each answer comes from** (3 November 2026): pendings from the Branch Pendings report and the "Pendings Chase" tab in
-  the Branch Portfolio workbook; increases, Group Life, Group Health and Pension from Salesforce, read for the signed-in agent
-  (`help868.increases`, `help868.groups`). **Salesforce is read for the status field saying Pending and nothing else** (Ricky, 3 November 2026: "it only reading the status field pending"). No in-force counts, no settled-date test. On 2 November the branch manager had 4 pending group records (2 life, 2 health) and no pending increases; the 156 increases with no Date Settled are Premium Paying records and are deliberately not reported. Individual life, PA and the rest of the Google sheet's tabs are not served yet.
-- **Salesforce logging is off until `HELP868_SF` = `on`.** Then a case look-up is noted on the open Pendings task and an enquiry
-  opens a Servicing task on the agent's Contact. The summary and reference are logged; the full chat stays in respond.io.
-- **What is holding a case up is read privately and returned as a choice from fixed lists** (3 November 2026: "analyze the Google
-  sheets, the tasks, the inbox and the Chatter to see what's stalling"). `help868Stall_` reads the report's requirements, the open
-  Pendings task, its last Chatter notes (`cmdChatter_`) and any inbox item naming the policy (`bmDeepMail_`). Claude, if
-  `ANTHROPIC_API_KEY` is set, picks a reason and a next step from fixed lists after the evidence is scrubbed of e-mails, links,
-  numbers of four digits or more and runs of names; rules decide otherwise, or if its answer is outside the lists. The sentences
-  are composed in code. A note's or an e-mail's words never reach WhatsApp, only counts and days. Read once per set of evidence
-  (an hour).
+- **Three things must agree before anything about a case is shown** (3 November: *"ask for the agent number and give a code"*): the
+  WhatsApp number is on the "HELP868 Agents" tab, the Agent Skill Bank holds that agent number for the same person (agent, unit manager
+  or branch manager, never staff), and the agent types the 6-digit code e-mailed from support@. That opens a 30-minute session for that
+  number. No password in WhatsApp, ever. A wrong agent number, an unknown number and an inactive agent all get the same words.
+- **Where each answer comes from:** pendings from the Branch Pendings report and the "Pendings Chase" tab in the Branch Portfolio
+  (the tracker rebuilds the second every ten minutes); increases and Group Life, Group Health and Pension from Salesforce.
+  **Salesforce is read for the status field saying Pending and nothing else** (*"it only reading the status field pending"*): no
+  in-force counts, no settled-date test. On 2 November the branch manager had 4 pending group records (2 life, 2 health) and no pending
+  increases; the 156 increases with no Date Settled are Premium Paying records and are deliberately not reported. Individual life, PA and
+  the rest of the Google sheet's tabs are not served yet.
+- **An agent sees only their own cases.** The list shows the last four digits; a case shows days, the decision, each open requirement,
+  who acts next and the Pendings task. Never a client name, a note's words, money or a date of birth.
+- **What is holding a case up is read privately and returned as a choice from fixed lists** (*"analyze the Google sheets, the tasks, the
+  inbox and the Chatter to see what's stalling"*). `help868Stall_` reads the report's requirements, the open Pendings task, its Chatter
+  notes and any support@ e-mail naming the policy (Graph search). Claude (`gcmClaude_`) picks a reason and a next step from fixed lists
+  after the evidence is scrubbed of e-mails, links, numbers of four digits or more and runs of names; rules decide if it is not set up or
+  answers outside the lists. The sentences are composed in code, so no note or e-mail wording reaches WhatsApp. Read once per set of
+  evidence (an hour). Someone owing something is the reason; "no open task" is a signal beside it.
 - **An enquiry's reference comes from the log**, so the assistant can only quote one that exists, and promises no time.
-- **Nothing answers until `HELP868_KEY` is set.** The branch app tile is branch-manager-only until the respond.io workflow
-  answers more than the test number. Do not widen it earlier: an agent would tap it and get silence.
-- **respond.io state on 2 Nov:** three AI agents (one active, assignment and close actions off, instructions out of order), one
-  published test workflow, no teams, one tag, no knowledge sources. Nothing was changed there from the repository.
+- **Salesforce logging is off until `HELP868_SF` = `on`.** Then a case look-up is noted on the open Pendings task and an enquiry opens a
+  Servicing task on the agent's Contact. The summary and reference are logged; the full chat stays in respond.io.
+- **Nothing answers until `HELP868_KEY` is set.** The branch app tile is branch-manager-only until the respond.io workflow answers more
+  than the test number. Do not widen it earlier: an agent would tap it and get silence.
+- **respond.io state on 3 Nov:** the live "HELP 868 Assistant." has handover and internal notes on and a clean instruction (no tracker
+  calls); "HELP 868 — Phase 2 Test" carries the agent-number-and-code flow and is switched off until the seven calls are added; one
+  published test workflow, no teams, one tag (`HELP868-PILOT`), no knowledge sources. The `HELP868-endpoints.json` and key file live
+  in the session scratchpad, never in the repository.
 - Test: `tests/test-help868.js` (68 checks).
 
 ## Standing rules
