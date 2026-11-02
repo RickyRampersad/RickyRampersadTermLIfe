@@ -1,17 +1,12 @@
 {
- "tts/out/mtwin/02.mp3": [
+ "tts/out/mtcoach/01.mp3": [
   "en",
-  0.996,
-  "In a answer, 1781 clients written 2, 665 answered, 262 asked us to call. That is the big win."
+  0.998,
+  "No more guessing. The system shows us where each of us stands. Then we coach, in-person, a call of visit-a-sit-down with the facts in hand."
  ],
- "tts/out/mtwinb/01.mp3": [
+ "tts/out/mtcoachb/01.mp3": [
   "en",
   0.997,
-  "Every reminder runs on a template, yours, morning, midday, close-off, and a star for every case we close. Your clients here from us too."
- ],
- "tts/out/mtwinb/02.mp3": [
-  "en",
-  0.997,
-  "And they answered 1781 clients written to 665 answered 262 asked us to call. That is the big win."
+  "No more guessing. The system shows us where every one of us stands. Then we coach in person, a call, a visit, a sit down with the facts in hand."
  ]
 }
