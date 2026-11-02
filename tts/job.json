@@ -3,19 +3,9 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "mtlive": [
-   "Friday, we reset. Today, we rise.",
-   "Last week, five agents went first. Rajiv showed us how it works.",
-   "Plan the morning. Check in at midday. Close off at half past five.",
-   "From today, that is every one of us.",
-   "Your morning starts with your goal: where your month stands, against your own plan.",
-   "Then one thing to do first, written for you, from your own numbers.",
-   "Check in, and your plan is already filled in. You are present.",
-   "At midday, tell us how it is going. Need help? Say so, and your manager hears it straight away.",
-   "At half past five, close off the day. What you planned, and what you did.",
-   "Your fact finds, your orphan clients, the cases that should settle, the calls to make. One screen.",
-   "No rankings. Just you, against your own best.",
-   "Reset. Rise. Let's make this the best year ever."
+  "mtlivefix": [
+   "Last week, five agents went first. Rajeev showed us how it works.",
+   "Last week, five agents went first. Ra-jeev showed us how it works."
   ]
  }
 }
