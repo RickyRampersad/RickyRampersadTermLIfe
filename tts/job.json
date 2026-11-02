@@ -1,14 +1,26 @@
 {
  "voices": {
-  "dict3": "en-US-AndrewMultilingualNeural"
+  "anai": "en-US-AndrewMultilingualNeural",
+  "anag": "en-US-BrianNeural"
  },
  "rates": {
-  "dict3": "+0%"
+  "anai": "+0%",
+  "anag": "+0%"
  },
  "check": true,
  "films": {
-  "dict3": [
-   "Hi. How did the interview go? Tell me about the client in your own words, and I'll put it all on the fact find as we talk."
+  "anai": [
+   "Hi Neil. How did the interview go?",
+   "Sounds like a good meeting. I've got Jordan, Lisa, the two children and both incomes. One thing: you said thirty-four, but the date of birth on the form makes him thirty-six. Which is right?",
+   "Thanks, I've fixed his age, and added the mortgage and the group cover. The fact find now shows a need of two point eight million against two hundred and fifty thousand of cover. That's a gap of about two point five five million. If his income stopped, what would he want for Lisa and the kids?",
+   "I looked that up. The National Insurance Board says the retirement pension starts from age sixty. I've put both goals on the form. And for your file: his only cover is through work, so it ends if he changes jobs.",
+   "Nearly. We still need his beneficiaries and his health. And for your next appointment, ask early whether Lisa has cover of her own. Then you're ready for your recommendation."
+  ],
+  "anag": [
+   "Really well. Jordan Baptiste, thirty-four, married to Lisa, two kids, eight and five. He's a teacher on fifteen thousand a month, and Lisa earns nine.",
+   "Good catch, he's thirty-six. They owe six hundred thousand on the house, and his only cover is group life at work, two hundred and fifty thousand.",
+   "He wants the mortgage cleared and the kids' schooling paid. He also asked when NIS would pay him a pension.",
+   "I think that's everything."
   ]
  }
 }
