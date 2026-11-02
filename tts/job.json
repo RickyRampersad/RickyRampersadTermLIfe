@@ -3,13 +3,11 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "mtwin": [
-   "Every reminder runs on a template. Yours: the morning, midday, and close-off, and a star for every case we close. And your clients hear from us too.",
-   "And they answer. Seventeen hundred and eighty-one clients written to. Six hundred and sixty-five answered. Two hundred and sixty-two asked us to call. That is the big win."
+  "mtcoach": [
+   "No more guessing. The system shows us where each of us stands. Then we coach, in person: a call, a visit, a sit-down, with the facts in hand."
   ],
-  "mtwinb": [
-   "Every reminder runs on a template. Yours: morning, midday, close-off, and a star for every case we close. Your clients hear from us too.",
-   "And they answer. Seventeen hundred and eighty-one clients, written to. Six hundred and sixty-five, answered. Two hundred and sixty-two asked us to call. That is the big win."
+  "mtcoachb": [
+   "No more guessing. The system shows us where every one of us stands. Then we coach in person. A call, a visit, a sit-down, with the facts in hand."
   ]
  }
 }
