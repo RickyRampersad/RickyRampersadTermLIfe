@@ -1,57 +1,87 @@
 {
- "tts/out/tzai/01.mp3": [
-  "en",
-  0.992,
-  "Emile, how do the interview go?"
- ],
- "tts/out/tzai/02.mp3": [
+ "tts/out/t2ai/01.mp3": [
   "en",
   0.993,
-  "Got it. It's all in the fact find. Let's start where matters. The needs."
+  "Emile, how did the interview go?"
  ],
- "tts/out/tzai/03.mp3": [
+ "tts/out/t2ai/02.mp3": [
   "en",
-  0.998,
-  "If Jordan dies, his family needs 2.8 million. He has 250,000. That's a gap of 2.55 million."
+  0.999,
+  "Before the numbers, one question for you. If Jordan died, how long should Lisa's income be topped up? Until Mia finishes school, about 13 years or longer."
  ],
- "tts/out/tzai/04.mp3": [
+ "tts/out/t2ai/04.mp3": [
   "en",
-  0.998,
-  "If you can't work, 15,000 a month stops and nothing replaces it. That's income protection."
+  0.999,
+  "Here's the need. If Jordan dies, his family needs 2.8 million. He has 250,000. That's a gap of 2.5 million."
  ],
- "tts/out/tzai/05.mp3": [
-  "en",
-  0.995,
-  "Income continuity on Lisa's salary alone the household keeps just over a third of what comes in today"
- ],
- "tts/out/tzai/06.mp3": [
+ "tts/out/t2ai/05.mp3": [
   "en",
   0.997,
+  "If you can't work, 15,000 a month stops and nothing replaces it."
+ ],
+ "tts/out/t2ai/06.mp3": [
+  "en",
+  0.99,
+  "On lease is salary alone. The household keeps just over a third of what comes in today."
+ ],
+ "tts/out/t2ai/07.mp3": [
+  "en",
+  0.998,
   "In critical illness, no cover at all. A diagnosis would come straight out of the mortgage money."
  ],
- "tts/out/tzai/07.mp3": [
+ "tts/out/t2ai/08.mp3": [
   "en",
-  0.997,
-  "One more thing. His only cover is through work. It is the day he changes jobs."
+  0.951,
+  "Here's your shelf for each need. Flexi-term can convert to whole life without new medical evidence. Presidious disability income pays for up to 24 months for occupation classes 1-3. A teacher qualifies. Rejuvenator plus pays ont bien nosy. The choice is yours."
  ],
- "tts/out/tzai/08.mp3": [
+ "tts/out/t2ai/09.mp3": [
   "en",
   0.998,
-  "Every section is complete and the numbers are calculated. Shall I send the draft to Jordan to confirm?"
+  "One thing we didn't cover, Beneficiaries, with two children under 18, the market conduct guideline asks that Jordan understands what naming a minor means. Shall I add it to your follow-up?"
  ],
- "tts/out/tzai/09.mp3": [
+ "tts/out/t2ai/10.mp3": [
+  "en",
+  0.998,
+  "Done, now the live numbers. Inflation today is 0.6%, but one low year doesn't last, so I plan to 3, the fact finds on setting. At 3%, the 400,000 for university becomes about 538,000 by the time"
+ ],
+ "tts/out/t2ai/11.mp3": [
+  "en",
+  0.999,
+  "and NIS. The full pension age rises from 60 to 65, starting in January 2028. So I plan Jordan's retirement at 65. 70% of his income is 10,500 a month today. By then, that's about 24,700."
+ ],
+ "tts/out/t2ai/12.mp3": [
+  "en",
+  0.998,
+  "and the file is compliant, needs gathered before any recommendation. The duty of disclosure explained, advice and writing, and under the Insurance Act, no policy is replaced without first discussing the advantages and disadvantages."
+ ],
+ "tts/out/t2ai/13.mp3": [
   "en",
   0.997,
-  "Sent, Jordan confirms with one tap and it goes straight to your manager for sign-off."
+  "Every section is complete. Shall I send the draft to Jordan to confirm?"
  ],
- "tts/out/tzag/01.mp3": [
+ "tts/out/t2ai/14.mp3": [
   "en",
-  0.993,
-  "Great meeting. Jordan 36. Mary to Lisa. Two kids. He's a teacher on 15,000 a month. Lisa earns nine. 600,000 left on the mortgage and just his group life at work."
+  0.998,
+  "Sant, Jordan confirms with one tap and it goes straight to your manager."
  ],
- "tts/out/tzag/02.mp3": [
+ "tts/out/t2ag/01.mp3": [
   "en",
-  0.715,
+  0.996,
+  "Great meeting Jordan 36 married to Lisa two kids eight and five he's a teacher on 15,000 a month Lisa earns nine six hundred thousand left on the mortgage and just his group life at work"
+ ],
+ "tts/out/t2ag/02.mp3": [
+  "en",
+  0.998,
+  "Let's say 15 years. She'd want the kids through university."
+ ],
+ "tts/out/t2ag/03.mp3": [
+  "en",
+  0.973,
+  "Good catch. Yes, add it."
+ ],
+ "tts/out/t2ag/04.mp3": [
+  "en",
+  0.782,
   "Yes, send it."
  ]
 }
