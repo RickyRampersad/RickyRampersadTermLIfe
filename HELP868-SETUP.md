@@ -7,7 +7,7 @@ HTTP calls to the tracker (`apps-script/Help868.gs`, beside `KPI.gs`), and the t
 1. Paste `KPI.gs` and the new `Help868.gs`. Manage deployments, pencil, **New version** (never New deployment).
 2. Script properties: `HELP868_KEY` (a long random string, 16 characters or more; nothing answers without it) and
    `HELP868_OWNER` (who is e-mailed about an enquiry; blank means the Branch Manager).
-3. Check: `<exec URL>?action=help868.ping` answers `{"ok":true,"on":true,"agents":N}`.
+3. Check: `<exec URL>?action=help868.ping` answers `on`, `agents` (the rows on the tab), `pendingReport` (the newest "Branch Pendings" tab was found), `pendingsChase` and `salesforce`. Any false tells you which piece is missing; no data is in the answer.
 4. Make the tab **HELP868 Agents** with the header `Agent no. | Name | WhatsApp number | Active | Pendings`. **The tab is the pilot
    list.** Only a number on it gets pending-application status, and only about that agent's own cases. Put three or four agents
    on it first. `Pendings` = No keeps an agent on the list but off the status route.

@@ -39,7 +39,7 @@ var H868 = {
 
 function help868Route_(p) {
   var action = String(p.action || '');
-  if (action === 'help868.ping') return { ok: true, on: help868On_(), agents: help868Allow_().length, salesforce: help868SfOn_() };
+  if (action === 'help868.ping') return { ok: true, on: help868On_(), agents: help868Allow_().length, salesforce: help868SfOn_(), pendingReport: help868ReportFound_(), pendingsChase: !!help868Chase_() };
   if (!help868On_()) return { ok: false, error: 'HELP 868 is not switched on.' };
   if (!help868KeyOk_(p.key)) return { ok: false, error: 'Not allowed.' };
   var digits = help868Digits_(p.phone);
@@ -184,6 +184,14 @@ function help868Pendings_(p, digits) {
     total: rows.length, overdue: rows.filter(function (x) { return x.overdue > 0; }).length, noOpenTask: rows.filter(function (x) { return !x.openTasks; }).length,
     shown: Math.min(rows.length, H868.MAX_ROWS), cases: rows.slice(0, H868.MAX_ROWS),
     note: 'Ask which policy they want to look at, by its number or last digits, and use the case call.' };
+}
+/** Whether the newest "Branch Pendings" tab is in the workbook the tracker reads. A yes or no only: the ping carries no data. */
+function help868ReportFound_() {
+  try {
+    var ss = (typeof iSs_ === 'function' ? iSs_() : null) || help868Ss_(); if (!ss) return false;
+    var prefix = (typeof WALL_PEND !== 'undefined' && WALL_PEND.PREFIX) || 'Branch Pendings';
+    return ss.getSheets().some(function (sh) { return sh.getName().indexOf(prefix) === 0; });
+  } catch (e) { return false; }
 }
 /** The newest pending report's rows for one agent's policy: { policy, app, ... } or a reason. */
 function help868Report_(agentName, typed) {
