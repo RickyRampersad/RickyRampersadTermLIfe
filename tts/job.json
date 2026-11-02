@@ -1,27 +1,34 @@
 {
  "voices": {
-  "tzai": "en-US-AndrewMultilingualNeural",
-  "tzag": "en-US-BrianNeural"
+  "t2ai": "en-US-AndrewMultilingualNeural",
+  "t2ag": "en-US-BrianNeural"
  },
  "rates": {
-  "tzai": "+0%",
-  "tzag": "+4%"
+  "t2ai": "+2%",
+  "t2ag": "+4%"
  },
  "check": true,
  "films": {
-  "tzai": [
+  "t2ai": [
    "Hi Neil. How did the interview go?",
-   "Got it. It's all on the fact find. Let's start where it matters: the needs.",
-   "If Jordan dies, his family needs two point eight million. He has two hundred and fifty thousand. That's a gap of two point five five million.",
-   "If he can't work, fifteen thousand a month stops, and nothing replaces it. That's income protection.",
-   "Income continuity: on Lisa's salary alone, the household keeps just over a third of what comes in today.",
+   "Before the numbers, one question for you. If Jordan died, how long should Lisa's income be topped up? Until Mia finishes school, about thirteen years, or longer?",
+   "Fifteen it is. Good call. It lines up with the university goal.",
+   "Here's the need. If Jordan dies, his family needs two point eight million. He has two hundred and fifty thousand. That's a gap of two point five five million.",
+   "If he can't work, fifteen thousand a month stops, and nothing replaces it.",
+   "On Lisa's salary alone, the household keeps just over a third of what comes in today.",
    "And critical illness: no cover at all. A diagnosis would come straight out of the mortgage money.",
-   "One more thing. His only cover is through work. It ends the day he changes jobs.",
-   "Every section is complete, and the numbers are calculated. Shall I send the draft to Jordan to confirm?",
-   "Sent. Jordan confirms with one tap, and it goes straight to your manager for sign-off."
+   "Here's your shelf for each need. Flexi Term can convert to whole life without new medical evidence. Praesidia's disability income pays for up to twenty-four months, for occupation classes one to three. A teacher qualifies. Rejuvenator Plus pays on diagnosis. The choice is yours.",
+   "One thing we didn't cover: beneficiaries. With two children under eighteen, the market conduct guideline asks that Jordan understands what naming a minor means. Shall I add it to your follow-up?",
+   "Done. Now the live numbers. Inflation today is point six percent, but one low year doesn't last, so I've planned at three, the fact find's own setting. At three percent, the four hundred thousand for university becomes about five hundred and thirty-eight thousand by the time Kai starts.",
+   "And NIS. The full pension age rises from sixty to sixty-five, starting in January twenty twenty-eight. So I've planned Jordan's retirement at sixty-five. Seventy percent of his income is ten thousand five hundred a month today. By then, that's about twenty-four thousand seven hundred.",
+   "And the file is compliant. Needs gathered before any recommendation. The duty of disclosure explained. Advice in writing. And under the Insurance Act, no policy is replaced without first discussing the advantages and disadvantages.",
+   "Every section is complete. Shall I send the draft to Jordan to confirm?",
+   "Sent. Jordan confirms with one tap, and it goes straight to your manager."
   ],
-  "tzag": [
-   "Great meeting. Jordan, thirty-six, married to Lisa, two kids. He's a teacher on fifteen thousand a month, Lisa earns nine. Six hundred thousand left on the mortgage, and just his group life at work.",
+  "t2ag": [
+   "Great meeting. Jordan, thirty-six, married to Lisa, two kids, eight and five. He's a teacher on fifteen thousand a month, Lisa earns nine. Six hundred thousand left on the mortgage, and just his group life at work.",
+   "Let's say fifteen years. She'd want the kids through university.",
+   "Good catch. Yes, add it.",
    "Yes. Send it."
   ]
  }
