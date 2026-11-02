@@ -46,7 +46,11 @@ function help868KeyOk_(key) {
   return diff === 0;
 }
 /** The last ten digits, which is how a Trinidad number (868 + seven) is compared whatever the formatting. */
-function help868Digits_(s) { var d = String(s == null ? '' : s).replace(/\D/g, ''); return d.length >= 7 ? d.slice(-10) : ''; }
+function help868Digits_(s) {
+  var d = String(s == null ? '' : s).replace(/\D/g, '');
+  if (d.length === 7) d = '868' + d;   // Salesforce holds some mobiles as seven digits with no area code (2 Nov 2026: two of 23 agents)
+  return d.length >= 10 ? d.slice(-10) : '';
+}
 function help868AgentNo_(s) { var t = String(s || '').trim().replace(/^[A-Za-z]{1,3}/, '').replace(/\D/g, ''); return t.replace(/^0+/, ''); }
 /** At most PER_HOUR calls an hour from one number: a runaway loop in a workflow cannot fill the tab or the inbox. */
 function help868Rate_(digits) {

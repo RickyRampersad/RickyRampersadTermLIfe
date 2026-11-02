@@ -22,7 +22,7 @@ function sheet(name, rows) {
 }
 const tabs = [
   sheet('HELP868 Agents', [['Agent no.', 'Name', 'WhatsApp number', 'Active', 'Pendings'],
-    ['A10024', 'Neil Ramnanan', '+1 (868) 555-0101', 'Yes', ''], ['A10031', 'Joy Sammah', '868 555 0102', 'No', ''], ['A10040', 'Rajiv Soodoo', '8685550103', 'Yes', 'No']]),
+    ['A10024', 'Neil Ramnanan', '+1 (868) 555-0101', 'Yes', ''], ['A10031', 'Joy Sammah', '868 555 0102', 'No', ''], ['A10040', 'Rajiv Soodoo', '8685550103', 'Yes', 'No'], ['', 'Seven Digits', '5550104', 'Yes', '']]),
   sheet('Pendings Chase', [['Policy', 'Agent', 'Task', 'Owner', 'Due', 'Open tasks', 'Overdue', 'Last note at', 'Last note by', 'Last note', 'Earlier notes', 'Updated'],
     ['5000000001', 'Neil Ramnanan', 'Pending forms', 'Sasha Lalla-Jagassar', '2026-10-30', 1, 1, '1 Nov, 9:00 AM', 'Sasha Lalla-Jagassar', 'CLIENT SMITH medical booked', '[]', '2 Nov 2026, 6:00 AM'],
     ['5000000002', 'Neil Ramnanan', '', '', '', 0, 0, '', '', '', '[]', '2 Nov 2026, 6:00 AM'],
@@ -57,6 +57,8 @@ const bad = route({ action: 'help868.pendings', key: KEY, phone: '8685550101', a
 const unk = route({ action: 'help868.pendings', key: KEY, phone: '8689999999' });
 ok('wrong agent number and unknown number answer the same', bad.verified === false && bad.message === unk.message && !bad.cases);
 ok('inactive agent not verified', route({ action: 'help868.pendings', key: KEY, phone: '8685550102' }).verified === false);
+ok('a seven-digit Salesforce number matches its WhatsApp form', route({ action: 'help868.pendings', key: KEY, phone: '+1 868 555 0104' }).verified === true);
+ok('a bare seven digits is never a match', route({ action: 'help868.pendings', key: KEY, phone: '5550104' }).error === 'No WhatsApp number was sent.');
 ok('Pendings = No not verified for pendings', route({ action: 'help868.pendings', key: KEY, phone: '8685550103' }).verified === false);
 
 let e = route({ action: 'help868.enquiry', key: KEY, phone: '8689990001', name: 'Pat', category: 'payment', summary: 'My payment of 1234567 is missing, call 868-555-0000 or pat@example.com http://x.co/a' });
@@ -75,7 +77,7 @@ let limited = false; for (let i = 0; i < 25; i++) if (route({ action: 'help868.p
 ok('one number is rate limited', limited);
 
 const out = JSON.parse(env.doGet({ parameter: { action: 'help868.ping' } }).getContent());
-ok('doGet routes help868.ping', out.ok === true && out.on === true && out.agents === 2, JSON.stringify(out));
+ok('doGet routes help868.ping', out.ok === true && out.on === true && out.agents === 3, JSON.stringify(out));
 const post = JSON.parse(env.doPost({ parameter: {}, postData: { contents: JSON.stringify({ action: 'help868.pendings', key: KEY, phone: '8685550101' }) } }).getContent());
 ok('doPost routes help868.pendings', post.verified === true);
 ok('ping reports the file is in the project', env.handle_('ping', {}).has.help868 === true);
