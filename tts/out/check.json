@@ -1,47 +1,57 @@
 {
- "tts/out/anai/01.mp3": [
+ "tts/out/tzai/01.mp3": [
   "en",
-  0.991,
-  "E-neal. Out of the interview, go."
+  0.992,
+  "Emile, how do the interview go?"
  ],
- "tts/out/anai/02.mp3": [
+ "tts/out/tzai/02.mp3": [
   "en",
-  0.999,
-  "Sounds like a good meeting. I got Jordan, Lisa, the two children in both incomes. One thing you said 34, but the date of birth on the form makes him 36, which is right."
+  0.993,
+  "Got it. It's all in the fact find. Let's start where matters. The needs."
  ],
- "tts/out/anai/03.mp3": [
+ "tts/out/tzai/03.mp3": [
   "en",
   0.998,
-  "Thanks, I've fixed his age and added the mortgage in the group cover. The fact fine now shows a need of 2.8 million against 250,000 of cover. That's a gap of about 2.55 million. If his income stopped, what would he want for Lisa and the kids?"
+  "If Jordan dies, his family needs 2.8 million. He has 250,000. That's a gap of 2.55 million."
  ],
- "tts/out/anai/04.mp3": [
+ "tts/out/tzai/04.mp3": [
   "en",
-  0.996,
-  "I look that up. The National Insurance Board says the retirement pension starts from age 60. I'll put both goals on the form. And for your file, his only cover is through work so it ends if he changes jobs."
+  0.998,
+  "If you can't work, 15,000 a month stops and nothing replaces it. That's income protection."
  ],
- "tts/out/anai/05.mp3": [
-  "en",
-  0.996,
-  "Nearly, we still need his beneficiaries and his health. And for your next appointment, ask early weather Lisa has cover of her own. Then you're ready for your recommendation."
- ],
- "tts/out/anag/01.mp3": [
-  "en",
-  0.996,
-  "really well. Jordan Baptiste, 34, married to Lisa, two kids, eight and five. He's a teacher on 15,000 a month and Lisa earns nine."
- ],
- "tts/out/anag/02.mp3": [
-  "en",
-  0.982,
-  "Good catch he's 36 they owe 600,000 on the house and his only cover is group life at work 250,000"
- ],
- "tts/out/anag/03.mp3": [
+ "tts/out/tzai/05.mp3": [
   "en",
   0.995,
-  "He wants the mortgage cleared and the kids schooling paid. He also asked when NIS would pay him a pension."
+  "Income continuity on Lisa's salary alone the household keeps just over a third of what comes in today"
  ],
- "tts/out/anag/04.mp3": [
+ "tts/out/tzai/06.mp3": [
   "en",
-  0.957,
-  "I think that's everything."
+  0.997,
+  "In critical illness, no cover at all. A diagnosis would come straight out of the mortgage money."
+ ],
+ "tts/out/tzai/07.mp3": [
+  "en",
+  0.997,
+  "One more thing. His only cover is through work. It is the day he changes jobs."
+ ],
+ "tts/out/tzai/08.mp3": [
+  "en",
+  0.998,
+  "Every section is complete and the numbers are calculated. Shall I send the draft to Jordan to confirm?"
+ ],
+ "tts/out/tzai/09.mp3": [
+  "en",
+  0.997,
+  "Sent, Jordan confirms with one tap and it goes straight to your manager for sign-off."
+ ],
+ "tts/out/tzag/01.mp3": [
+  "en",
+  0.993,
+  "Great meeting. Jordan 36. Mary to Lisa. Two kids. He's a teacher on 15,000 a month. Lisa earns nine. 600,000 left on the mortgage and just his group life at work."
+ ],
+ "tts/out/tzag/02.mp3": [
+  "en",
+  0.715,
+  "Yes, send it."
  ]
 }
