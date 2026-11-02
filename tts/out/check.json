@@ -1,12 +1,42 @@
 {
- "tts/out/mtlivefix/01.mp3": [
+ "tts/out/mtshort/01.mp3": [
   "en",
-  0.997,
-  "Last week, five agents went first. Rajeev showed us how it works."
+  0.989,
+  "Friday, we set it together. We rise together."
  ],
- "tts/out/mtlivefix/02.mp3": [
+ "tts/out/mtshort/02.mp3": [
   "en",
   0.994,
-  "Last week, five agents went first. R-A-GV showed us how it works."
+  "And we're not going back to what it was."
+ ],
+ "tts/out/mtshort/03.mp3": [
+  "en",
+  0.993,
+  "From today, every agent starts the day with their goal and one thing to do first."
+ ],
+ "tts/out/mtshort/04.mp3": [
+  "en",
+  0.988,
+  "Our staff work with a coach on the screen all day."
+ ],
+ "tts/out/mtshort/05.mp3": [
+  "en",
+  0.998,
+  "Your managers see your day as it happens. Ask for help and we come to you."
+ ],
+ "tts/out/mtshort/06.mp3": [
+  "en",
+  0.991,
+  "All of it goes to the wall. Each of us, against our own best, never ranked."
+ ],
+ "tts/out/mtshort/07.mp3": [
+  "en",
+  0.993,
+  "Rajeev went first. Now, is every one of us."
+ ],
+ "tts/out/mtshort/08.mp3": [
+  "en",
+  0.993,
+  "Check in. Lift each other. Rise."
  ]
 }
