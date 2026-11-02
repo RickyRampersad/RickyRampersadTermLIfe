@@ -3,19 +3,13 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "mtday": [
-   "Here is your day, from both sides. Eight o'clock: your goal, your fact finds, your clients. And our team is already chasing your cases.",
-   "By half past ten, you check in, and you are present. Not checked in? We call, to understand.",
-   "At noon, tell us how it's going. Need help? Your manager hears it, straight away.",
-   "At half past five, you close off. What you planned, and what you did. We see it too.",
-   "You see us. We see you. Everyone is accountable."
+  "mtwin": [
+   "Every reminder runs on a template. Yours: the morning, midday, and close-off, and a star for every case we close. And your clients hear from us too.",
+   "And they answer. Seventeen hundred and eighty-one clients written to. Six hundred and sixty-five answered. Two hundred and sixty-two asked us to call. That is the big win."
   ],
-  "mtdayb": [
-   "Here is your day, from both sides. Eight o'clock. Your goal, your fact finds, your clients. And our team, already chasing your cases.",
-   "By half past ten, you check in. You are present. Not checked in? We call you, to understand.",
-   "At noon, tell us how it is going. Need help? Your manager hears it straight away.",
-   "At half past five, close off. What you planned, and what you did. And we see it too.",
-   "You see us. We see you. Everyone, accountable."
+  "mtwinb": [
+   "Every reminder runs on a template. Yours: morning, midday, close-off, and a star for every case we close. Your clients hear from us too.",
+   "And they answer. Seventeen hundred and eighty-one clients, written to. Six hundred and sixty-five, answered. Two hundred and sixty-two asked us to call. That is the big win."
   ]
  }
 }
