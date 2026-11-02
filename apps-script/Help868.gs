@@ -1,44 +1,57 @@
 /* ─────────────────── HELP 868: what the WhatsApp assistant may ask of the tracker ───────────────────
  *  Built 2 November 2026, in the Branch Intelligence (tracker) project beside KPI.gs. Asked for by Ricky: the assistant on
- *  the branch's WhatsApp line deals with pendings and queries from what the branch already holds.
+ *  the branch's WhatsApp line deals with pendings and queries from what the branch already holds, an agent proves who they are
+ *  with their agent number and a code, and the conversation is logged in Salesforce.
  *
- *  respond.io's AI never reads a sheet, the repository or Salesforce. It makes two HTTP calls to this file, and this file
- *  decides what comes back:
+ *  respond.io's AI never reads a sheet, the repository or Salesforce. It makes HTTP calls to this file, and this file decides
+ *  what comes back:
  *
- *    help868.pendings  an agent asks where their pending applications stand. Answers only for an agent whose WhatsApp number
- *                      is on the "HELP868 Agents" tab (the tab IS the pilot list), and only about that agent's own cases,
- *                      read from the "Pendings Chase" tab. Counts, days and who has it. Never a client's name, a note's words,
- *                      money, a date of birth or a full policy number (last four digits only).
- *    help868.enquiry   anyone: files an enquiry on the "HELP868 Enquiries" tab with a reference, and tells the owner by e-mail.
- *                      The reference comes from this file, so the assistant can only quote one that exists.
+ *    help868.code      an agent gives an agent number. If the WhatsApp number is on the "HELP868 Agents" tab AND the Skill Bank
+ *                      holds that agent number for the same person, a 6-digit code goes to the e-mail on the Skill Bank. The
+ *                      reply is the same whatever happened, so it never says which half was wrong.
+ *    help868.verify    the agent types the code back. Right: this WhatsApp number is signed in for SESSION_MIN minutes.
+ *                      Five wrong tries, or ten minutes, and the code is void.
+ *    help868.pendings  signed in only: where that agent's pending applications stand, counts and who has each.
+ *    help868.case      signed in only: one policy of that agent's (typed in full or by its last digits): days since submission,
+ *                      the underwriting decision, each open requirement (code, name, status, who acts next), and the Pendings
+ *                      task (open, overdue, due, who has it, when it was last noted). Never money, a client's name, a note's
+ *                      words, a date of birth or another agent's case.
+ *    help868.enquiry   anyone: files an enquiry on the "HELP868 Enquiries" tab with a reference and e-mails the owner.
+ *
+ *  Salesforce (HELP868_SF = on, off until then): a verified case look-up is noted on that policy's open Pendings task; an
+ *  enquiry opens a Servicing task on the agent's Contact (when exactly one matches). The words kept are the summary and the
+ *  reference, never the full chat: the full conversation stays in respond.io.
  *
  *  Setup (Script properties): HELP868_KEY, a long random string the respond.io calls send as `key`; HELP868_OWNER, who is
- *  e-mailed about an enquiry (blank = the Branch Manager). Nothing answers until HELP868_KEY is set.
- *  Identity: the WhatsApp number is verified by Meta; it is matched to the tab, and an agent number, if given, must agree.
- *  Not a password and never asked for one. No match = a person takes over; the reply never says which half was wrong. */
+ *  e-mailed about an enquiry (blank = the Branch Manager); HELP868_SF = on when Salesforce logging should start.
+ *  Nothing answers until HELP868_KEY is set. No password is ever asked for or typed in WhatsApp. */
 var H868 = {
   ALLOW: 'HELP868 Agents', LOG: 'HELP868 Enquiries', CHASE: 'Pendings Chase',
   ALLOW_HEAD: ['Agent no.', 'Name', 'WhatsApp number', 'Active', 'Pendings'],
-  LOG_HEAD: ['Reference', 'When', 'Category', 'Who', 'Role', 'Agent no.', 'Summary', 'Owner', 'Status', 'Number ending'],
+  LOG_HEAD: ['Reference', 'When', 'Category', 'Who', 'Role', 'Agent no.', 'Summary', 'Owner', 'Status', 'Number ending', 'Salesforce'],
   CATS: { pending: 'Pending application', payment: 'Premium or payment', general: 'General follow-up', other: 'Other' },
-  PER_HOUR: 20, MAX_ROWS: 12, DUPE_MIN: 12, SUMMARY: 400
+  PER_HOUR: 40, MAX_ROWS: 12, DUPE_MIN: 12, SUMMARY: 400, CODE_MIN: 10, CODE_TRIES: 5, CODE_GAP_SEC: 60, SESSION_MIN: 30, MAX_REQS: 12
 };
 
 function help868Route_(p) {
   var action = String(p.action || '');
-  if (action === 'help868.ping') return { ok: true, on: help868On_(), agents: help868Allow_().length };
+  if (action === 'help868.ping') return { ok: true, on: help868On_(), agents: help868Allow_().length, salesforce: help868SfOn_() };
   if (!help868On_()) return { ok: false, error: 'HELP 868 is not switched on.' };
   if (!help868KeyOk_(p.key)) return { ok: false, error: 'Not allowed.' };
   var digits = help868Digits_(p.phone);
   if (!digits) return { ok: false, error: 'No WhatsApp number was sent.' };
   if (!help868Rate_(digits)) return { ok: false, error: 'Too many requests from this number. A person will follow up.', limited: true };
+  if (action === 'help868.code') return help868Code_(p, digits);
+  if (action === 'help868.verify') return help868Verify_(p, digits);
   if (action === 'help868.pendings') return help868Pendings_(p, digits);
+  if (action === 'help868.case') return help868Case_(p, digits);
   if (action === 'help868.enquiry') return help868Enquiry_(p, digits);
   return { ok: false, error: 'Unknown HELP 868 action.' };
 }
 
 function help868Prop_(k) { try { return String(PropertiesService.getScriptProperties().getProperty(k) || '').trim(); } catch (e) { return ''; } }
 function help868On_() { return help868Prop_('HELP868_KEY').length >= 16; }
+function help868SfOn_() { return /^on$/i.test(help868Prop_('HELP868_SF')) && typeof sfkConfigured_ === 'function' && sfkConfigured_(); }
 function help868KeyOk_(key) {
   var want = help868Prop_('HELP868_KEY'), got = String(key || '');
   if (!want || want.length !== got.length) return false;
@@ -82,16 +95,9 @@ function help868Allow_() {
   });
   return out;
 }
-/** The agent this number belongs to, or null. A supplied agent number must agree with the tab's. */
-function help868Agent_(digits, agentNo) {
-  var hit = help868Allow_().filter(function (a) { return a.digits === digits; })[0] || null;
-  if (!hit) return null;
-  var given = help868AgentNo_(agentNo);
-  if (given && hit.no && given !== hit.no) return null;
-  return hit;
-}
+function help868Listed_(digits) { return help868Allow_().filter(function (a) { return a.digits === digits; })[0] || null; }
 function help868NameKey_(s) { return (typeof bkNk_ === 'function' ? bkNk_(s) : String(s || '').toLowerCase().replace(/[^a-z ]/g, '')).split(' ').filter(String); }
-/** Same person however the report writes the name: equal, or every word of the shorter inside the longer (two words at least). */
+/** Same person however a report writes the name: equal, or every word of the shorter inside the longer (two words at least). */
 function help868SameName_(a, b) {
   var x = help868NameKey_(a), y = help868NameKey_(b); if (!x.length || !y.length) return false;
   var s = x.length <= y.length ? x : y, l = x.length <= y.length ? y : x;
@@ -99,27 +105,158 @@ function help868SameName_(a, b) {
   return s.every(function (w) { return l.indexOf(w) > -1; });
 }
 function help868First_(s) { return String(s || '').trim().split(/\s+/)[0] || ''; }
+function help868Hash_(text) { return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(String(text), help868Prop_('HELP868_KEY'))); }
 
-function help868Pendings_(p, digits) {
-  var a = help868Agent_(digits, p.agentNo);
-  if (!a || !a.pendings) return { ok: true, verified: false, message: 'This number is not set up for pending-application updates. A team member will need to help.' };
+/* ───────── the code, and the session it opens ───────── */
+/** The Skill Bank's active agent with this agent number: { name, email } or null. */
+function help868Bank_(agentNo) {
+  var no = help868AgentNo_(agentNo); if (!no) return null;
+  var bank = {}; try { bank = skillBank_() || {}; } catch (e) { return null; }
+  var hit = null;
+  Object.keys(bank).forEach(function (k) { var b = bank[k]; if (b && b.isAgent && b.active && b.email && help868AgentNo_(b.code) === no) hit = b; });
+  return hit;
+}
+var H868_CODE_REPLY = 'If that agent number belongs to this WhatsApp number, a 6-digit code has been sent to the e-mail the branch holds for the agent. Ask the agent to type the code here. It lasts 10 minutes.';
+function help868Code_(p, digits) {
+  var c = CacheService.getScriptCache(), reply = { ok: true, message: H868_CODE_REPLY };
+  if (c.get('h868g_' + digits)) return { ok: true, message: 'A code was sent a moment ago. Check the e-mail, or try again in a minute.' };
+  c.put('h868g_' + digits, '1', H868.CODE_GAP_SEC);
+  var listed = help868Listed_(digits), bank = help868Bank_(p.agentNo);
+  if (!listed || !listed.pendings || !bank || !help868SameName_(listed.name, bank.name)) return reply;   // the same words as success
+  if (listed.no && listed.no !== help868AgentNo_(p.agentNo)) return reply;
+  var code = String(100000 + Math.floor(Math.random() * 900000));
+  c.put('h868c_' + digits, JSON.stringify({ h: help868Hash_(code + '|' + digits + '|' + help868AgentNo_(p.agentNo)), no: help868AgentNo_(p.agentNo), name: bank.name }), H868.CODE_MIN * 60);
+  c.remove('h868t_' + digits);
+  try {
+    mailSend_({ to: bank.email, subject: 'Your HELP 868 code',
+      htmlBody: '<div style="font:14px/1.55 Arial,sans-serif"><p>Hello ' + esc_(help868First_(bank.name)) + ',</p><p>Your HELP 868 verification code is:</p>' +
+        '<p style="font-size:26px;letter-spacing:4px;font-weight:700">' + code + '</p><p>Type it into the WhatsApp chat. It lasts ' + H868.CODE_MIN + ' minutes. ' +
+        'If you did not ask for it, ignore this e-mail. Nobody at the branch will ask you for this code by phone or message.</p>' +
+        '<p style="color:#777;font-size:12px">Ricky Rampersad Branch · sent automatically</p></div>' });
+  } catch (e) { try { runlog_('HELP 868: the code e-mail did not send: ' + (e && e.message)); } catch (e2) {} }
+  return reply;
+}
+function help868Verify_(p, digits) {
+  var c = CacheService.getScriptCache(), raw = c.get('h868c_' + digits), bad = { ok: true, verified: false, message: 'That code did not match. Ask for a new one if it was more than 10 minutes ago.' };
+  if (!raw) return bad;
+  var tries = Number(c.get('h868t_' + digits) || 0) + 1;
+  if (tries > H868.CODE_TRIES) { c.remove('h868c_' + digits); return { ok: true, verified: false, message: 'Too many tries. Ask for a new code.' }; }
+  c.put('h868t_' + digits, String(tries), H868.CODE_MIN * 60);
+  var rec; try { rec = JSON.parse(raw); } catch (e) { return bad; }
+  var code = String(p.code || '').replace(/\D/g, '');
+  if (!code || help868Hash_(code + '|' + digits + '|' + rec.no) !== rec.h) return bad;
+  c.remove('h868c_' + digits); c.remove('h868t_' + digits);
+  c.put('h868s_' + digits, JSON.stringify({ no: rec.no, name: rec.name }), H868.SESSION_MIN * 60);
+  return { ok: true, verified: true, name: help868First_(rec.name), minutes: H868.SESSION_MIN, message: 'Verified for ' + H868.SESSION_MIN + ' minutes.' };
+}
+/** A signed-in agent for this number, or null. The pilot tab is read again, so switching an agent off ends their session. */
+function help868Session_(digits) {
+  var raw = CacheService.getScriptCache().get('h868s_' + digits); if (!raw) return null;
+  var s; try { s = JSON.parse(raw); } catch (e) { return null; }
+  var listed = help868Listed_(digits); if (!listed || !listed.pendings || !help868SameName_(listed.name, s.name)) return null;
+  return s;
+}
+var H868_NEED_CODE = { ok: true, verified: false, needCode: true, message: 'To see applications, ask for the agent number, then use the code call. Nothing is shown until the agent types the code from their e-mail.' };
+
+/* ───────── pendings ───────── */
+function help868Chase_() {
   var ss = (typeof iSs_ === 'function' ? (function () { try { return iSs_(); } catch (e) { return null; } })() : null) || help868Ss_();
-  var sh = ss && ss.getSheetByName(H868.CHASE);
-  if (!sh || sh.getLastRow() < 2) return { ok: true, verified: true, name: help868First_(a.name), ready: false, message: 'The pending list is not ready right now. A team member can check.' };
+  var sh = ss && ss.getSheetByName(H868.CHASE); if (!sh || sh.getLastRow() < 2) return null;
   var v = sh.getDataRange().getValues(), h = v[0].map(function (x) { return String(x).trim(); }), ix = function (n) { return h.indexOf(n); };
-  var cp = ix('Policy'), cg = ix('Agent'), co = ix('Owner'), cdue = ix('Due'), cop = ix('Open tasks'), cov = ix('Overdue'), cla = ix('Last note at'), clb = ix('Last note by'), cu = ix('Updated');
-  var mine = v.slice(1).filter(function (r) { return help868SameName_(r[cg], a.name); });
-  var rows = mine.map(function (r) {
-    var pol = String(r[cp] || '');
-    return { policy: '••••' + pol.slice(-4), openTasks: Number(r[cop] || 0) || 0, overdue: Number(r[cov] || 0) || 0, due: String(r[cdue] || ''),
-      withTeam: help868First_(r[co]), lastNote: String(r[cla] || ''), lastNoteBy: help868First_(r[clb]) };
+  return { rows: v.slice(1), cp: ix('Policy'), cg: ix('Agent'), co: ix('Owner'), cdue: ix('Due'), cop: ix('Open tasks'), cov: ix('Overdue'), cla: ix('Last note at'), clb: ix('Last note by'), cu: ix('Updated') };
+}
+function help868Pendings_(p, digits) {
+  var s = help868Session_(digits); if (!s) return H868_NEED_CODE;
+  var ch = help868Chase_();
+  if (!ch) return { ok: true, verified: true, name: help868First_(s.name), ready: false, message: 'The pending list is not ready right now. A team member can check.' };
+  var rows = ch.rows.filter(function (r) { return help868SameName_(r[ch.cg], s.name); }).map(function (r) {
+    var pol = String(r[ch.cp] || '');
+    return { policy: '••••' + pol.slice(-4), openTasks: Number(r[ch.cop] || 0) || 0, overdue: Number(r[ch.cov] || 0) || 0, due: String(r[ch.cdue] || ''),
+      withTeam: help868First_(r[ch.co]), lastNote: String(r[ch.cla] || ''), lastNoteBy: help868First_(r[ch.clb]) };
   }).sort(function (x, y) { return (y.overdue - x.overdue) || ((x.openTasks ? 0 : 1) - (y.openTasks ? 0 : 1)) || String(x.due || '9').localeCompare(String(y.due || '9')); });
-  return { ok: true, verified: true, ready: true, name: help868First_(a.name), updated: cu > -1 && v[1] ? String(v[1][cu] || '') : '',
+  return { ok: true, verified: true, ready: true, name: help868First_(s.name), updated: ch.cu > -1 && ch.rows[0] ? String(ch.rows[0][ch.cu] || '') : '',
     total: rows.length, overdue: rows.filter(function (x) { return x.overdue > 0; }).length, noOpenTask: rows.filter(function (x) { return !x.openTasks; }).length,
     shown: Math.min(rows.length, H868.MAX_ROWS), cases: rows.slice(0, H868.MAX_ROWS),
-    note: 'Counts, days and who has each case only. Reasons and requirement details need a team member.' };
+    note: 'Ask which policy they want to look at, by its number or last digits, and use the case call.' };
+}
+/** The newest pending report's rows for one agent's policy: { policy, app, ... } or a reason. */
+function help868Report_(agentName, typed) {
+  var ss = (typeof iSs_ === 'function' ? (function () { try { return iSs_(); } catch (e) { return null; } })() : null) || help868Ss_();
+  if (!ss) return { none: 'The pending report is not reachable right now.' };
+  var prefix = (typeof WALL_PEND !== 'undefined' && WALL_PEND.PREFIX) || 'Branch Pendings';
+  var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(prefix) === 0; })
+    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  if (!tabs.length) return { none: 'The pending report is not ready right now.' };
+  var v = tabs[0].getDataRange().getValues(); if (v.length < 2) return { none: 'The pending report is empty.' };
+  var h = v[0].map(function (x) { return String(x).trim(); }), ix = function (n) { return h.indexOf(n); };
+  var c = { pol: ix('POLICY'), app: ix('application_number'), agent: ix('Agent Name'), code: ix('REQUIREMENT_CODE'), name: ix('requirement_name'), who: ix('WHO_ACTS_NEXT'),
+    rag: ix('RAG_STATUS'), st: ix('REQUIREMENT_STATUS'), days: ix('DAYS_SINCE_SUBMISSION'), dec: ix('DecisionType') };
+  if (c.pol < 0 || c.agent < 0) return { none: 'The pending report is not in the layout expected.' };
+  var cell = function (r, i) { return i > -1 && r[i] != null ? String(r[i]).trim() : ''; };
+  var mine = v.slice(1).filter(function (r) {
+    if (!help868SameName_(cell(r, c.agent), agentName)) return false;
+    var pol = cell(r, c.pol), app = cell(r, c.app);
+    return pol.slice(-typed.length) === typed || (app && app.slice(-typed.length) === typed);
+  });
+  var pols = {}; mine.forEach(function (r) { pols[cell(r, c.pol)] = 1; });
+  var keys = Object.keys(pols);
+  if (!keys.length) return { none: 'No pending case under this agent matches those digits.' };
+  if (keys.length > 1) return { ambiguous: true, count: keys.length };
+  var closedRe = /closed|received|waived|complete|cancel/i, open = mine.filter(function (r) { return !closedRe.test(cell(r, c.st)); });
+  return { policy: keys[0], app: cell(mine[0], c.app), days: Math.max.apply(null, mine.map(function (r) { return Number(cell(r, c.days)) || 0; })), decision: cell(mine[0], c.dec),
+    openCount: open.length, closedCount: mine.length - open.length,
+    requirements: open.slice(0, H868.MAX_REQS).map(function (r) { return { code: cell(r, c.code), name: cell(r, c.name), status: cell(r, c.st), whoActsNext: cell(r, c.who), rag: cell(r, c.rag) }; }) };
+}
+function help868Case_(p, digits) {
+  var s = help868Session_(digits); if (!s) return H868_NEED_CODE;
+  var typed = String(p.policy || '').replace(/\D/g, '');
+  if (typed.length < 4) return { ok: true, verified: true, found: false, message: 'Ask for the policy number, or at least its last four digits.' };
+  var rep = help868Report_(s.name, typed);
+  if (rep.ambiguous) return { ok: true, verified: true, found: false, message: rep.count + ' of this agent\'s cases end that way. Ask for more of the number.' };
+  if (rep.none) return { ok: true, verified: true, found: false, message: rep.none };
+  var out = { ok: true, verified: true, found: true, name: help868First_(s.name), policy: rep.policy, applicationNo: rep.app, daysSinceSubmission: rep.days, decision: rep.decision,
+    openRequirements: rep.openCount, closedRequirements: rep.closedCount, requirements: rep.requirements };
+  var ch = help868Chase_();
+  if (ch) {
+    var row = ch.rows.filter(function (r) { return String(r[ch.cp] || '') === rep.policy; })[0];
+    if (row) out.task = { openTasks: Number(row[ch.cop] || 0) || 0, overdue: Number(row[ch.cov] || 0) || 0, due: String(row[ch.cdue] || ''), withTeam: help868First_(row[ch.co]),
+      lastNote: String(row[ch.cla] || ''), lastNoteBy: help868First_(row[ch.clb]) };
+  }
+  out.note = 'Requirement names, who acts next, and who has the task. The words of staff notes and any e-mails need a team member.';
+  out.salesforce = help868SfNoteCase_(s, rep);
+  return out;
 }
 
+/* ───────── Salesforce ───────── */
+/** A line on the policy's open Pendings task: the agent asked for an update on WhatsApp. Returns a word for the answer. */
+function help868SfNoteCase_(s, rep) {
+  if (!help868SfOn_()) return 'off';
+  try {
+    var tasks = sfkQuery_("SELECT Id FROM Task WHERE Task_Type__c = 'Pendings' AND IsClosed = false AND (Subject LIKE '%" + String(rep.policy).replace(/\D/g, '') + "%'" +
+      (rep.app ? " OR Subject LIKE '%" + String(rep.app).replace(/\D/g, '') + "%'" : '') + ') ORDER BY LastModifiedDate DESC LIMIT 1');
+    if (!tasks.length) return 'no open task';
+    sfkInsert_('FeedItem', { ParentId: tasks[0].Id, Body: 'HELP 868 · ' + s.name + ' (agent ' + s.no + ', code-verified) asked for an update on WhatsApp. Shown: requirement names, who acts next, task status. No client details were sent.' });
+    return 'noted on the task';
+  } catch (e) { try { runlog_('HELP 868: Salesforce note failed: ' + (e && e.message)); } catch (e2) {} return 'failed'; }
+}
+/** A Servicing task on the agent's Contact for an enquiry. Returns the task id, or a word. */
+function help868SfTask_(ref, cat, summary, agentName) {
+  if (!help868SfOn_()) return 'off';
+  try {
+    var who = '';
+    if (agentName) {
+      var q = sfkQuery_("SELECT Id FROM Contact WHERE RecordType.Name = 'AGENT' AND Name LIKE " + soqlStr_('%' + help868First_(agentName) + '%' + String(agentName).trim().split(/\s+/).slice(-1)[0] + '%') + ' LIMIT 3');
+      if (q.length === 1) who = q[0].Id;
+    }
+    var body = { Subject: 'HELP 868 enquiry ' + ref + ' · ' + cat, Description: summary + '\n\nFiled from WhatsApp by HELP 868. The conversation is in respond.io.', Status: 'Not Started', Priority: 'Normal',
+      ActivityDate: Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd'), Task_Type__c: 'Servicing' };
+    if (who) body.WhoId = who;
+    var res = sfkInsert_('Task', body);
+    return String((res && (res.id || res.Id)) || 'created');
+  } catch (e) { try { runlog_('HELP 868: Salesforce task failed: ' + (e && e.message)); } catch (e2) {} return 'failed'; }
+}
+
+/* ───────── enquiries ───────── */
 /** Anything that looks like a number, e-mail or link is taken out before it reaches a sheet or an inbox. */
 function help868Clean_(s) {
   var t = String(s == null ? '' : s).replace(/https?:\/\/\S+/gi, '[link removed]').replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[e-mail removed]')
@@ -130,8 +267,9 @@ function help868Enquiry_(p, digits) {
   var summary = help868Clean_(p.summary);
   if (!summary) return { ok: false, error: 'Say in a few words what the enquiry is about.' };
   var cat = H868.CATS[String(p.category || '').toLowerCase()] ? String(p.category).toLowerCase() : 'other';
-  var a = help868Agent_(digits, p.agentNo);
-  var who = a ? a.name : help868Clean_(p.name).slice(0, 80), role = a ? 'Agent' : 'Not verified';
+  var s = help868Session_(digits), listed = s ? null : help868Listed_(digits);
+  var who = s ? s.name : (listed ? listed.name : help868Clean_(p.name).slice(0, 80));
+  var role = s ? 'Agent · code-verified' : (listed ? 'Agent · number on pilot list, not code-verified' : 'Not verified');
   var ss = help868Ss_(); if (!ss) return { ok: false, error: 'The enquiry log is not reachable. A person will follow up.' };
   var lock = LockService.getScriptLock();
   try { lock.waitLock(10000); } catch (e) { return { ok: false, error: 'Busy. Please try again.' }; }
@@ -146,18 +284,19 @@ function help868Enquiry_(p, digits) {
       if (String(r[9]) === end && String(r[6]) === summary && !isNaN(at) && now - at < H868.DUPE_MIN * 60000) return { ok: true, ref: ref, filed: true, repeat: true, message: 'Already filed as ' + ref + '.' };
     }
     var reference = 'H8-' + day + '-' + ('00' + (n + 1)).slice(-3), owner = help868Prop_('HELP868_OWNER') || (managerEmails_() || [])[0] || '';
-    sh.appendRow([reference, Utilities.formatDate(now, CONFIG.TZ, 'yyyy-MM-dd HH:mm'), H868.CATS[cat], who, role, a ? a.no : '', summary, owner, 'New', end]);
+    var sf = help868SfTask_(reference, H868.CATS[cat], summary, s ? s.name : (listed ? listed.name : ''));
+    sh.appendRow([reference, Utilities.formatDate(now, CONFIG.TZ, 'yyyy-MM-dd HH:mm'), H868.CATS[cat], who, role, s ? s.no : (listed ? listed.no : ''), summary, owner, 'New', end, sf]);
     var mailed = false;
     if (owner) {
       try {
         mailSend_({ to: owner, subject: 'HELP 868 enquiry ' + reference + ' · ' + H868.CATS[cat],
           htmlBody: '<div style="font:14px/1.5 Arial,sans-serif"><p><b>' + esc_(reference) + '</b> · ' + esc_(H868.CATS[cat]) + '</p><p>From ' + esc_(who || 'an unnamed WhatsApp contact') + ' (' + esc_(role) +
             '), number ending ' + esc_(digits.slice(-4)) + ':</p><p style="border-left:3px solid #ccc;padding-left:10px">' + esc_(summary) + '</p>' +
-            '<p>Reply to them on WhatsApp in respond.io. Numbers, e-mails and links were removed from the summary.</p><p style="color:#777;font-size:12px">Internal. Do not forward outside the branch.</p></div>' });
+            '<p>Reply to them on WhatsApp in respond.io. Numbers, e-mails and links were removed from the summary. Salesforce: ' + esc_(sf) + '.</p><p style="color:#777;font-size:12px">Internal. Do not forward outside the branch.</p></div>' });
         mailed = true;
       } catch (e) { try { runlog_('HELP 868: the owner e-mail did not send for ' + reference + ': ' + (e && e.message)); } catch (e2) {} }
     }
-    return { ok: true, filed: true, ref: reference, category: H868.CATS[cat], verifiedAgent: !!a, ownerNotified: mailed,
+    return { ok: true, filed: true, ref: reference, category: H868.CATS[cat], codeVerifiedAgent: !!s, ownerNotified: mailed, salesforce: /^00T/.test(sf) ? 'task opened' : sf,
       message: 'Filed as ' + reference + '. A team member will review it. No time has been promised.' };
   } finally { try { lock.releaseLock(); } catch (e) {} }
 }

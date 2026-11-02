@@ -6778,17 +6778,22 @@ respond.io's AI agent answers on the branch's WhatsApp line. It never reads shee
 two routes in the tracker (`apps-script/Help868.gs`, `help868.pendings` and `help868.enquiry`), and the tracker decides what
 comes back. Asked for in these words: *"I would like pendings and queries dealt with"*. `HELP868-SETUP.md` has the steps.
 
-- **The "HELP868 Agents" tab is the pilot list and the identity check.** The WhatsApp number (verified by Meta) must be on it,
-  and an agent number, if given, must agree. No password in WhatsApp, ever. A wrong agent number and an unknown number get the
-  same reply. The Skill Bank has no phone column, which is why the tab exists.
-- **An agent sees only their own cases, and only counts.** Last four digits of a policy, days, who has it by first name. Never a
-  client name, a note's words, money or a date of birth. The words of a note need a team member.
+- **Three things must agree before anything about a case is shown** (3 November 2026: "ask for the agent number and give a code"):
+  the WhatsApp number is on the "HELP868 Agents" tab, the Skill Bank holds that agent number for the same person, and the agent types
+  the 6-digit code e-mailed to the Skill Bank address. That opens a 30-minute session for that number. No password in WhatsApp,
+  ever. A wrong agent number, an unknown number and an inactive agent all get the same words. The Skill Bank has no phone column,
+  which is why the tab exists; Salesforce mobiles filled it.
+- **An agent sees only their own cases.** The list shows the last four digits; a case shows days, the decision, each open
+  requirement and who acts next, and the Pendings task. Never a client name, a note's words, money or a date of birth. Staff notes
+  and the support@ e-mails are not returned: those need a team member.
+- **Salesforce logging is off until `HELP868_SF` = `on`.** Then a case look-up is noted on the open Pendings task and an enquiry
+  opens a Servicing task on the agent's Contact. The summary and reference are logged; the full chat stays in respond.io.
 - **An enquiry's reference comes from the log**, so the assistant can only quote one that exists, and promises no time.
 - **Nothing answers until `HELP868_KEY` is set.** The branch app tile is branch-manager-only until the respond.io workflow
   answers more than the test number. Do not widen it earlier: an agent would tap it and get silence.
 - **respond.io state on 2 Nov:** three AI agents (one active, assignment and close actions off, instructions out of order), one
   published test workflow, no teams, one tag, no knowledge sources. Nothing was changed there from the repository.
-- Test: `tests/test-help868.js`.
+- Test: `tests/test-help868.js` (46 checks).
 
 ## Standing rules
 

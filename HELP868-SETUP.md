@@ -13,18 +13,29 @@ HTTP calls to the tracker (`apps-script/Help868.gs`, beside `KPI.gs`), and the t
    on it first. `Pendings` = No keeps an agent on the list but off the status route.
 5. "Pendings Chase" must exist (the tracker writes it every ten minutes on weekdays from the newest pending report).
 
-## 2. What the two calls return
+## 2. What the calls return
 | call | for | returns |
 |---|---|---|
-| `help868.pendings` (`key`, `phone`, `agentNo`) | a listed agent only | counts, overdue, no open task, and up to 12 cases: policy last four digits, open tasks, overdue, due date, who has it (first name), when it was last noted. **No note text, client name, money or full policy number.** |
+| `help868.code` (`key`, `phone`, `agentNo`) | an agent on the pilot tab | e-mails a 6-digit code to the address the Skill Bank holds for that agent number. The reply is the same words whether or not a code was sent. One code a minute. |
+| `help868.verify` (`key`, `phone`, `agentNo`, `code`) | the same agent | signs this WhatsApp number in for 30 minutes. Five wrong tries or ten minutes voids the code. Switching the agent off on the tab ends the session. |
+| `help868.pendings` (`key`, `phone`) | signed in only | the agent's own cases: policy last four digits, open tasks, overdue, due, who has it (first name), when last noted. |
+| `help868.case` (`key`, `phone`, `policy`) | signed in only | one of the agent's policies, typed in full or by its last digits: days since submission, underwriting decision, each open requirement (code, name, status, who acts next), and the Pendings task. **No money, client name, note words, date of birth or other agent's case.** Staff notes and e-mails are not returned. |
 | `help868.enquiry` (`key`, `phone`, `category`, `summary`, `name`) | anyone | files a row on **HELP868 Enquiries**, e-mails the owner, returns a reference `H8-yymmdd-nnn`. Numbers, e-mails and links are stripped from the summary. The same words from the same number inside 12 minutes return the first reference. |
 
-A wrong agent number and an unknown number get the same reply. One number is limited to 20 calls an hour.
+One number is limited to 40 calls an hour.
+
+**Salesforce logging** is off until the Script property `HELP868_SF` = `on`. Then a case look-up is noted on the policy's open
+Pendings task ("asked for an update on WhatsApp", nothing about the client), and an enquiry opens a Servicing task on the agent's
+Contact when exactly one Contact matches. The summary and reference go to Salesforce; the full conversation stays in respond.io.
 
 ## 3. respond.io (AI agent "HELP 868 Assistant.")
 Needs the AI agent's **HTTP request** action. I could not confirm your plan includes it: check Actions on the agent.
-- Endpoint 1, GET `<exec URL>`: params `action=help868.pendings`, `key=<HELP868_KEY>`, `phone={{$contact.phone}}`, data input `agentNo`.
-- Endpoint 2, GET `<exec URL>`: params `action=help868.enquiry`, `key=<HELP868_KEY>`, `phone={{$contact.phone}}`, data inputs `category` (pending, payment, general, other), `summary`, `name`.
+All five are GET `<exec URL>` with `key=<HELP868_KEY>` and `phone={{$contact.phone}}`:
+- `action=help868.code`, data input `agentNo`.
+- `action=help868.verify`, data inputs `agentNo`, `code`.
+- `action=help868.pendings`, no data input.
+- `action=help868.case`, data input `policy`.
+- `action=help868.enquiry`, data inputs `category` (pending, payment, general, other), `summary`, `name`.
 - Instruction lines to add: quote a reference **only** if the call returned one; never promise a time; say "counts and who has it, a team member explains why"; if `verified` is false, say a team member will help and file an enquiry.
 - Fix the prompt order (the agent-or-client block sits inside the category list) and merge the Pendings pilot agent into this one.
 - Keep the workflow limited to the `HELP868-PILOT` tag until the week of testing is done.
@@ -34,4 +45,4 @@ The **HELP 868 on WhatsApp** tile (`rroperations/index.html`) opens `wa.me/18684
 (`to: 'm'`). Widen it to `'alsm'` the day the workflow answers more than the test number, so no agent taps it and gets silence.
 Confirm 868-435-7868 is the right customer-facing number before widening.
 
-Tests: `node tests/test-help868.js` (23 checks).
+Tests: `node tests/test-help868.js` (46 checks).

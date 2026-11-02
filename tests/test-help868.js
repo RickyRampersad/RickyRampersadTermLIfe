@@ -1,8 +1,10 @@
 // HELP 868: what the WhatsApp assistant may ask of the tracker (2 November 2026).
-// Pinned: nothing answers without the key; pendings answer only for a number on the HELP868 Agents tab, only about that agent's
-// own cases, with the last four digits of a policy and never a note's words; a wrong agent number is the same answer as an
-// unknown number; an enquiry gets a reference from the log, is cleaned of numbers/e-mails/links, is not filed twice in a
-// row, and a cell cannot start as a formula; one number is rate limited.
+// Pinned: nothing answers without the key; nothing about a case is shown until the agent number AND the e-mailed code are right;
+// the code goes only when the WhatsApp number is on the pilot tab and the Skill Bank agrees (and the reply is the same words
+// whatever happened); five wrong tries void the code; a session lasts for the number it was opened on and ends when the agent is
+// switched off; a case shows requirements and task facts but never money, client names, note words or another agent's policy;
+// Salesforce logging is off until HELP868_SF = on, then notes the Pendings task and opens a Servicing task on the agent's
+// Contact; an enquiry gets a reference, is cleaned, is not filed twice, and a cell cannot start as a formula.
 process.env.GS_PATH = __dirname + '/../apps-script/KPI.gs,' + __dirname + '/../apps-script/Help868.gs';
 const { makeEnv } = require('./harness');
 let fails = 0;
@@ -16,21 +18,29 @@ function sheet(name, rows) {
     appendRow: r => { s.rows.push(r.slice()); },
     getRange: (r, c, nr, nc) => ({
       getValues: () => Array.from({ length: nr || 1 }, (_, i) => Array.from({ length: nc || 1 }, (_, j) => { const row = s.rows[r - 1 + i] || []; return row[c - 1 + j] == null ? '' : row[c - 1 + j]; })),
-      setValues: vs => vs.forEach((v, i) => v.forEach((x, j) => { while (s.rows.length < r + i) s.rows.push([]); s.rows[r - 1 + i][c - 1 + j] = x; }))
+      setValues: vs => vs.forEach((v, i) => v.forEach((x, j) => { while (s.rows.length < r + i) s.rows.push([]); s.rows[r - 1 + i][c - 1 + j] = x; })),
+      setValue: v => { while (s.rows.length < r) s.rows.push([]); s.rows[r - 1][c - 1] = v; }
     })
   });
 }
+const RH = ['POLICY', 'application_number', 'Agent Name', 'REQUIREMENT_CODE', 'requirement_name', 'WHO_ACTS_NEXT', 'RAG_STATUS', 'REQUIREMENT_STATUS', 'DAYS_SINCE_SUBMISSION', 'DecisionType', 'mode_premium', 'SUSPENDED_AMOUNT'];
 const tabs = [
   sheet('HELP868 Agents', [['Agent no.', 'Name', 'WhatsApp number', 'Active', 'Pendings'],
-    ['A10024', 'Neil Ramnanan', '+1 (868) 555-0101', 'Yes', ''], ['A10031', 'Joy Sammah', '868 555 0102', 'No', ''], ['A10040', 'Rajiv Soodoo', '8685550103', 'Yes', 'No'], ['', 'Seven Digits', '5550104', 'Yes', '']]),
+    ['', 'Neil Ramnanan', '+1 (868) 555-0101', 'Yes', ''], ['A10031', 'Joy Sammah', '868 555 0102', 'No', ''], ['', 'Rajiv Soodoo', '8685550103', 'Yes', 'No'], ['', 'Seven Digits', '5550104', 'Yes', '']]),
   sheet('Pendings Chase', [['Policy', 'Agent', 'Task', 'Owner', 'Due', 'Open tasks', 'Overdue', 'Last note at', 'Last note by', 'Last note', 'Earlier notes', 'Updated'],
-    ['5000000001', 'Neil Ramnanan', 'Pending forms', 'Sasha Lalla-Jagassar', '2026-10-30', 1, 1, '1 Nov, 9:00 AM', 'Sasha Lalla-Jagassar', 'CLIENT SMITH medical booked', '[]', '2 Nov 2026, 6:00 AM'],
+    ['5000000001', 'Neil Ramnanan', 'Pending forms - CLIENT SMITH', 'Sasha Lalla-Jagassar', '2026-10-30', 1, 1, '1 Nov, 9:00 AM', 'Sasha Lalla-Jagassar', 'CLIENT SMITH medical booked', '[]', '2 Nov 2026, 6:00 AM'],
     ['5000000002', 'Neil Ramnanan', '', '', '', 0, 0, '', '', '', '[]', '2 Nov 2026, 6:00 AM'],
-    ['5000000003', 'Someone Else', 'x', 'Azariah Griffith', '2026-11-05', 1, 0, '', '', 'secret', '[]', '2 Nov 2026, 6:00 AM']])
+    ['7000000001', 'Neil Ramnanan', '', '', '', 0, 0, '', '', '', '[]', '2 Nov 2026, 6:00 AM'],
+    ['5000000003', 'Someone Else', 'x', 'Azariah Griffith', '2026-11-05', 1, 0, '', '', 'secret', '[]', '2 Nov 2026, 6:00 AM']]),
+  sheet('Branch Pendings_2026-11-02-0800', [RH,
+    ['5000000001', '1000000001', 'Neil Ramnanan', 'FUTPY', 'Future premium payment', 'Agent', 'Red', 'Ordered - awaiting receipt', 21, 'Standard', '999', '555'],
+    ['5000000001', '1000000001', 'Neil Ramnanan', 'FACTF', 'Fact find form', 'Underwriting', 'Green', 'Received and accepted', 21, 'Standard', '999', '555'],
+    ['5000000002', '', 'Neil Ramnanan', 'AGEAD', 'Proof of identity', 'Agent', 'Amber', 'Ordered - awaiting receipt', 9, '', '', ''],
+    ['7000000001', '', 'Neil Ramnanan', 'PRADD', 'Proof of address', 'Agent', 'Amber', 'Ordered - awaiting receipt', 5, '', '', ''],
+    ['5000000003', '', 'Someone Else', 'FINQ', 'Financial questionnaire', 'Agent', 'Red', 'Ordered - awaiting receipt', 40, '', '', '']])
 ];
 const ss = { getSheets: () => tabs, getSheetByName: n => tabs.find(t => t.getName() === n) || null, insertSheet: n => { const s = sheet(n, []); tabs.push(s); return s; } };
 env.help868Ss_ = () => ss; env.iSs_ = () => ss;
-// The harness's Utilities.formatDate ignores the pattern; this one honours the two patterns the file uses.
 const realFmt = env.Utilities.formatDate;
 env.Utilities.formatDate = (d, tz, f) => { const p2 = n => ('0' + n).slice(-2), y = d.getFullYear();
   if (f === 'yyMMdd') return p2(y % 100) + p2(d.getMonth() + 1) + p2(d.getDate());
@@ -38,47 +48,114 @@ env.Utilities.formatDate = (d, tz, f) => { const p2 = n => ('0' + n).slice(-2), 
   return realFmt(d, tz, f); };
 const mails = []; env.mailSend_ = o => { mails.push(o); return 'gmail'; };
 env.managerEmails_ = () => ['boss@example.com'];
+env.skillBank_ = () => ({ neil: { code: 'A10024', name: 'Neil Ramnanan', email: 'neil@example.com', isAgent: true, active: true },
+  joy: { code: 'A10031', name: 'Joy Sammah', email: 'joy@example.com', isAgent: true, active: true },
+  rajiv: { code: 'A10040', name: 'Rajiv Soodoo', email: 'rajiv@example.com', isAgent: true, active: true },
+  sasha: { code: 'S1', name: 'Sasha Lalla', email: 'sasha@example.com', isAgent: false, active: true } });
 const props = env.PropertiesService.getScriptProperties();
+const cache = env.CacheService.getScriptCache();
 const route = p => env.help868Route_(p);
-const KEY = 'k'.repeat(24);
+const KEY = 'k'.repeat(24), NEIL = '+18685550101';
+const lastCode = () => { const m = /letter-spacing:4px[^>]*>(\d{6})</.exec(mails[mails.length - 1].htmlBody); return m && m[1]; };
+const base = { key: KEY, phone: NEIL };
 
-ok('off until the key is set', route({ action: 'help868.pendings', key: KEY, phone: '8685550101' }).error === 'HELP 868 is not switched on.');
+ok('off until the key is set', route({ action: 'help868.case', key: KEY, phone: NEIL }).error === 'HELP 868 is not switched on.');
 props.setProperty('HELP868_KEY', KEY);
-ok('wrong key refused', route({ action: 'help868.pendings', key: 'x', phone: '8685550101' }).error === 'Not allowed.');
-ok('no number refused', /No WhatsApp number/.test(route({ action: 'help868.pendings', key: KEY }).error));
+ok('wrong key refused', route({ action: 'help868.case', key: 'x', phone: NEIL }).error === 'Not allowed.');
+ok('no number refused', /No WhatsApp number/.test(route({ action: 'help868.case', key: KEY }).error));
+ok('short number refused', /No WhatsApp number/.test(route({ action: 'help868.case', key: KEY, phone: '55501' }).error));
 
-let r = route({ action: 'help868.pendings', key: KEY, phone: '+18685550101', agentNo: '10024' });
-ok('a listed number sees its own cases only', r.verified && r.total === 2 && r.cases.length === 2, JSON.stringify(r));
-ok('policy is the last four digits only', r.cases[0].policy === '••••0001', r.cases[0].policy);
-ok('overdue case first', r.cases[0].overdue === 1 && r.overdue === 1 && r.noOpenTask === 1);
-ok('first names only, no note words anywhere', r.cases[0].withTeam === 'Sasha' && !/SMITH|medical|secret|Someone/.test(JSON.stringify(r)));
-ok('agent number may carry the letter', route({ action: 'help868.pendings', key: KEY, phone: '8685550101', agentNo: 'A10024' }).verified === true);
-const bad = route({ action: 'help868.pendings', key: KEY, phone: '8685550101', agentNo: 'A99999' });
-const unk = route({ action: 'help868.pendings', key: KEY, phone: '8689999999' });
-ok('wrong agent number and unknown number answer the same', bad.verified === false && bad.message === unk.message && !bad.cases);
-ok('inactive agent not verified', route({ action: 'help868.pendings', key: KEY, phone: '8685550102' }).verified === false);
-ok('a seven-digit Salesforce number matches its WhatsApp form', route({ action: 'help868.pendings', key: KEY, phone: '+1 868 555 0104' }).verified === true);
-ok('fewer than seven digits is refused', route({ action: 'help868.pendings', key: KEY, phone: '55501' }).error === 'No WhatsApp number was sent.');
-ok('Pendings = No not verified for pendings', route({ action: 'help868.pendings', key: KEY, phone: '8685550103' }).verified === false);
+// before any code
+let r = route({ ...base, action: 'help868.pendings' });
+ok('no code, no list: it asks for the code flow', r.needCode === true && r.verified === false && !r.cases);
+ok('no code, no case either', route({ ...base, action: 'help868.case', policy: '5000000001' }).needCode === true);
 
-let e = route({ action: 'help868.enquiry', key: KEY, phone: '8689990001', name: 'Pat', category: 'payment', summary: 'My payment of 1234567 is missing, call 868-555-0000 or pat@example.com http://x.co/a' });
-ok('enquiry filed with a reference', e.ok && /^H8-\d{6}-001$/.test(e.ref), JSON.stringify(e));
+// the code goes only when both halves agree, and the reply never says which
+const sent0 = mails.length;
+const ok1 = route({ ...base, action: 'help868.code', agentNo: 'A10024' });
+const clr = n => cache.remove('h868g_' + n);
+clr('8685550101'); const wrongNo = route({ ...base, action: 'help868.code', agentNo: 'A10031' });
+clr('8689999999'); const unknownPhone = route({ key: KEY, action: 'help868.code', phone: '8689999999', agentNo: 'A10024' });
+clr('8685550102'); const inactive = route({ key: KEY, action: 'help868.code', phone: '8685550102', agentNo: 'A10031' });
+clr('8685550103'); const noPend = route({ key: KEY, action: 'help868.code', phone: '8685550103', agentNo: 'A10040' });
+ok('a matching number and agent number e-mails one code, to the Skill Bank address', mails.length === sent0 + 1 && mails[sent0].to === 'neil@example.com' && /^\d{6}$/.test(lastCode()), mails[sent0] && mails[sent0].to);
+ok('every other case sends nothing and gets the same words', mails.length === sent0 + 1 && [wrongNo, unknownPhone, inactive, noPend].every(x => x.message === ok1.message && x.ok === true));
+ok('a second request inside a minute is held', /a moment ago/.test(route({ ...base, action: 'help868.code', agentNo: 'A10024' }).message));
+
+// verify: wrong tries, then right
+const code = lastCode();
+ok('a wrong code does not sign in', route({ ...base, action: 'help868.verify', code: '000000' }).verified === false);
+ok('still no list after a wrong code', route({ ...base, action: 'help868.pendings' }).needCode === true);
+const v = route({ ...base, action: 'help868.verify', code });
+ok('the right code signs the number in', v.verified === true && v.name === 'Neil', JSON.stringify(v));
+ok('a used code cannot be used again', route({ ...base, action: 'help868.verify', code }).verified === false);
+// five wrong tries void a code
+clr('8685550101'); route({ ...base, action: 'help868.code', agentNo: '10024' }); const c2 = lastCode();
+for (let i = 0; i < 5; i++) route({ ...base, action: 'help868.verify', code: '111111' });
+ok('five wrong tries void the code even for the right one', route({ ...base, action: 'help868.verify', code: c2 }).verified === false);
+
+// pendings and case, signed in (session from the first code is still open)
+r = route({ ...base, action: 'help868.pendings' });
+ok('signed in: own cases only', r.verified && r.total === 3 && r.cases.length === 3, JSON.stringify(r).slice(0, 200));
+ok('list shows the last four digits only, first names only', r.cases[0].policy === '••••0001' && r.cases[0].withTeam === 'Sasha' && !/SMITH|medical|secret|Someone/.test(JSON.stringify(r)));
+let c = route({ ...base, action: 'help868.case', policy: '5000000001' });
+ok('case by full number: decision, days, open and closed requirements', c.found && c.daysSinceSubmission === 21 && c.decision === 'Standard' && c.openRequirements === 1 && c.closedRequirements === 1, JSON.stringify(c).slice(0, 300));
+ok('requirement carries code, name, status and who acts next', c.requirements[0].code === 'FUTPY' && c.requirements[0].whoActsNext === 'Agent' && c.requirements[0].name === 'Future premium payment');
+ok('task facts: open, overdue, who has it, last noted', c.task.openTasks === 1 && c.task.overdue === 1 && c.task.withTeam === 'Sasha' && c.task.lastNoteBy === 'Sasha');
+ok('no money, client name or note words anywhere', !/999|555|SMITH|medical|secret/.test(JSON.stringify(c)));
+c = route({ ...base, action: 'help868.case', policy: '0002' });
+ok('last digits that fit one case find it', c.found && c.policy === '5000000002', JSON.stringify(c).slice(0, 120));
+ok('digits that fit two cases ask for more', /2 of this agent/.test(route({ ...base, action: 'help868.case', policy: '0001' }).message));
+ok('another agent\'s policy is not found', route({ ...base, action: 'help868.case', policy: '5000000003' }).found === false);
+ok('under four digits asks for more', /last four/.test(route({ ...base, action: 'help868.case', policy: '123' }).message));
+ok('Salesforce is off by default', c.salesforce === 'off');
+
+// the session is the number's own and ends with the pilot tab
+ok('another number has no session', route({ key: KEY, action: 'help868.case', phone: '8685550102', policy: '5000000001' }).needCode === true);
+tabs[0].rows[1][3] = 'No';
+ok('switching the agent off ends the session at once', route({ ...base, action: 'help868.case', policy: '5000000001' }).needCode === true);
+tabs[0].rows[1][3] = 'Yes';
+ok('and switching back on restores it within the session window', route({ ...base, action: 'help868.case', policy: '5000000001' }).found === true);
+
+// Salesforce
+const sfIns = [], sfQ = [];
+env.sfkConfigured_ = () => true;
+env.sfkQuery_ = q => { sfQ.push(q); if (/FROM Task/.test(q)) return [{ Id: '00TPEND' }]; if (/FROM Contact/.test(q)) return [{ Id: '003NEIL' }]; return []; };
+env.sfkInsert_ = (o, b) => { sfIns.push([o, b]); return { id: o === 'Task' ? '00TNEW' : '0D5NEW' }; };
+ok('switched on only by the property', route({ action: 'help868.ping' }).salesforce === false);
+props.setProperty('HELP868_SF', 'on');
+ok('ping shows Salesforce logging on', route({ action: 'help868.ping' }).salesforce === true);
+c = route({ ...base, action: 'help868.case', policy: '5000000001' });
+ok('a case look-up is noted on the open Pendings task', c.salesforce === 'noted on the task' && sfIns.length === 1 && sfIns[0][0] === 'FeedItem' && sfIns[0][1].ParentId === '00TPEND', JSON.stringify(sfIns));
+ok('the note names the agent and says no client details were sent', /Neil Ramnanan/.test(sfIns[0][1].Body) && /No client details/.test(sfIns[0][1].Body) && !/FUTPY|Future premium/.test(sfIns[0][1].Body));
+
+// enquiries
+let e = route({ ...base, action: 'help868.enquiry', category: 'payment', summary: 'My payment of 1234567 is missing, call 868-555-0000 or pat@example.com http://x.co/a' });
+ok('enquiry filed with a reference, marked code-verified', e.ok && /^H8-\d{6}-001$/.test(e.ref) && e.codeVerifiedAgent === true, JSON.stringify(e));
 const log = tabs.find(t => t.getName() === 'HELP868 Enquiries');
-ok('numbers, e-mails and links stripped from the stored summary', log.rows[1][6] === 'My payment of [number removed] is missing, call [number removed] or [e-mail removed] [link removed]', log.rows[1][6]);
-ok('only the last four of the number is kept', log.rows[1][9] === '·0001' && !JSON.stringify(log.rows).includes('8689990001'));
-ok('owner e-mailed once, with the reference', mails.length === 1 && mails[0].to === 'boss@example.com' && mails[0].subject.indexOf(e.ref) > -1);
-const again = route({ action: 'help868.enquiry', key: KEY, phone: '8689990001', category: 'payment', summary: 'My payment of 1234567 is missing, call 868-555-0000 or pat@example.com http://x.co/a' });
-ok('same words from the same number are not filed twice', again.repeat && again.ref === e.ref && log.rows.length === 2 && mails.length === 1);
-e = route({ action: 'help868.enquiry', key: KEY, phone: '8689990001', category: 'nonsense', summary: '=HYPERLINK("x")' });
-ok('second enquiry numbered 002, unknown category is Other, formula is neutralised', /-002$/.test(e.ref) && log.rows[2][2] === 'Other' && log.rows[2][6][0] === "'", log.rows[2].join('|'));
-ok('verified agent is recorded as such', route({ action: 'help868.enquiry', key: KEY, phone: '8685550101', summary: 'Pending forms query' }).verifiedAgent === true);
-ok('empty summary refused', route({ action: 'help868.enquiry', key: KEY, phone: '8689990002', summary: '  ' }).ok === false);
-let limited = false; for (let i = 0; i < 25; i++) if (route({ action: 'help868.pendings', key: KEY, phone: '8689990003' }).limited) limited = true;
+ok('a Servicing task opens on the agent\'s Contact', e.salesforce === 'task opened' && sfIns[1][0] === 'Task' && sfIns[1][1].WhoId === '003NEIL' && sfIns[1][1].Task_Type__c === 'Servicing' && sfIns[1][1].Subject.indexOf(e.ref) > -1, JSON.stringify(sfIns[1]));
+ok('the task and the log carry the cleaned summary', log.rows[1][6] === 'My payment of [number removed] is missing, call [number removed] or [e-mail removed] [link removed]' && sfIns[1][1].Description.indexOf('[number removed]') > -1 && log.rows[1][10] === '00TNEW', log.rows[1].join('|'));
+ok('only the last four of the number is kept', log.rows[1][9] === '·0101' && !JSON.stringify(log.rows).includes('8685550101'));
+const mn = mails.length;
+ok('owner e-mailed once, with the reference', mails[mn - 1].to === 'boss@example.com' && mails[mn - 1].subject.indexOf(e.ref) > -1);
+const again = route({ ...base, action: 'help868.enquiry', category: 'payment', summary: 'My payment of 1234567 is missing, call 868-555-0000 or pat@example.com http://x.co/a' });
+ok('same words from the same number are not filed twice', again.repeat && again.ref === e.ref && log.rows.length === 2 && mails.length === mn);
+e = route({ key: KEY, action: 'help868.enquiry', phone: '8689990001', name: 'Pat', category: 'nonsense', summary: '=HYPERLINK("x")' });
+ok('a stranger: not verified, Other, formula neutralised, numbered 002', /-002$/.test(e.ref) && log.rows[2][2] === 'Other' && log.rows[2][4] === 'Not verified' && log.rows[2][6][0] === "'" && e.codeVerifiedAgent === false, log.rows[2].join('|'));
+ok('a stranger gets no Salesforce task without a matching Contact name', sfIns.filter(x => x[0] === 'Task').length === 2);
+ok('empty summary refused', route({ key: KEY, action: 'help868.enquiry', phone: '8689990002', summary: '  ' }).ok === false);
+
+// Salesforce failing never loses an enquiry
+env.sfkInsert_ = () => { throw new Error('boom'); };
+e = route({ key: KEY, action: 'help868.enquiry', phone: '8689990004', summary: 'Anything' });
+ok('Salesforce failing still files the enquiry', e.ok && e.filed && e.salesforce === 'failed', JSON.stringify(e));
+
+let limited = false; for (let i = 0; i < 45; i++) if (route({ key: KEY, action: 'help868.case', phone: '8689990003' }).limited) limited = true;
 ok('one number is rate limited', limited);
 
 const out = JSON.parse(env.doGet({ parameter: { action: 'help868.ping' } }).getContent());
 ok('doGet routes help868.ping', out.ok === true && out.on === true && out.agents === 3, JSON.stringify(out));
-const post = JSON.parse(env.doPost({ parameter: {}, postData: { contents: JSON.stringify({ action: 'help868.pendings', key: KEY, phone: '8685550101' }) } }).getContent());
-ok('doPost routes help868.pendings', post.verified === true);
+const post = JSON.parse(env.doPost({ parameter: {}, postData: { contents: JSON.stringify({ action: 'help868.case', key: KEY, phone: NEIL, policy: '5000000002' }) } }).getContent());
+ok('doPost routes help868.case', post.found === true);
 ok('ping reports the file is in the project', env.handle_('ping', {}).has.help868 === true);
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed'); process.exit(fails ? 1 : 0);
