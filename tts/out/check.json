@@ -1,7 +1,37 @@
 {
- "tts/out/mtshortfix/02.mp3": [
+ "tts/out/mtturn/01.mp3": [
   "en",
   0.998,
-  "Rajeev went first. Now it's every one of us."
+  "October is done. November the first was the turn."
+ ],
+ "tts/out/mtturn/02.mp3": [
+  "en",
+  0.995,
+  "On Friday, we listen to every one of you. Now we mean it."
+ ],
+ "tts/out/mtturn/03.mp3": [
+  "en",
+  0.991,
+  "Here is a day, you check in, and your goal is right there."
+ ],
+ "tts/out/mtturn/04.mp3": [
+  "en",
+  0.997,
+  "You see us working for your clients. We see you day. Everyone is accountable."
+ ],
+ "tts/out/mtturn/05.mp3": [
+  "en",
+  0.995,
+  "And when something stalls, we don't wait. We call you to understand and to help."
+ ],
+ "tts/out/mtturn/07.mp3": [
+  "en",
+  0.986,
+  "That is the level. Every one of us there."
+ ],
+ "tts/out/mtturn/08.mp3": [
+  "en",
+  0.989,
+  "Check in, lift each other, rise."
  ]
 }
