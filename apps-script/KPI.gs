@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-29h';
+var SCRIPT_VERSION = '2026-11-02a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -17648,7 +17648,7 @@ function agFFCases_(a) {
     if (!rows.length) return null;
     var keys = Object.keys(rows[0]), find = function (rx) { for (var i = 0; i < keys.length; i++) if (rx.test(keys[i])) return keys[i]; return ''; };
     var K = { email: find(/agent\s*e-?mail/i), code: find(/agent\s*(code|no)/i), adv: find(/advisor\s*name/i), client: find(/^client\s*name$/i) || find(/client\s*name/i),
-      sub: find(/submitted\s*at/i), status: find(/^status$/i), outcome: find(/case\s*outcome/i), chased: find(/chased\s*at/i), count: find(/chase\s*count/i),
+      sub: find(/submitted\s*at/i), status: find(/^status$/i), outcome: find(/case\s*outcome/i), chased: find(/chased\s*at/i), count: find(/chase\s*count|times\s*chased/i),
       closed: find(/^closed\s*at$/i), interview: find(/interview\s*date/i), id: find(/submission\s*id/i) };
     if (!K.email && !K.code) return null;
     all = {};
