@@ -1194,5 +1194,40 @@
    65.49
   ],
   "capbg": "06080A"
+ },
+ "mtshort": {
+  "cap": "cap-mtshort",
+  "vox": "vomtshort",
+  "music": "bed-mtshort.wav",
+  "mix": "mtshort-mix.wav",
+  "ass": "captions-mtshort.ass",
+  "dur": 43.0,
+  "durs": [
+   5.2,
+   3.6,
+   6.7,
+   4.5,
+   6.4,
+   6.9,
+   4.8,
+   4.9
+  ],
+  "out": "../../resetrise/short.mp4",
+  "musicgain": 0.6,
+  "duck": 0.3,
+  "sfx": "sfx-mtshort.wav",
+  "start": 0,
+  "capmode": "strip",
+  "dark": [
+   1
+  ],
+  "ticks": [],
+  "hits": [
+   2.66,
+   6.26,
+   31.19,
+   40.51
+  ],
+  "capbg": "06080A"
  }
 }
