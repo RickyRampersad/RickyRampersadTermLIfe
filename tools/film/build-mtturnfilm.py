@@ -91,6 +91,90 @@ def people(n, d, step=.03, centre=None, cls='pp'):
                    '<path d="M2.4 26.5a9.6 9.6 0 0 1 19.2 0z"/></svg>' % (cls, d + abs(i - c) * step) for i in range(n))
 
 
+STEPS = [('8:00', 'Morning'), ('10:30', 'Check in'), ('12:00', 'Midday'), ('5:30', 'Close off')]
+
+
+def day(cur, kd, you, us):
+    """The day's four circles across the top, then the agent's card and ours, joined live."""
+    f0, f1 = max(cur - 1, 0) / 3.0, cur / 3.0
+    st = ''.join('<div class="dst %s" style="--kd:%.2fs"><i>%s</i><b>%s</b><small>%s</small></div>'
+                 % ('done' if i < cur else ('now' if i == cur else ''), kd + (.25 if i == cur else 0),
+                    '&#10003;' if i < cur else str(i + 1), t, l) for i, (t, l) in enumerate(STEPS))
+    return ('<div class="dayw"><div class="trk"><span class="tf" style="--f0:%.3f;--f1:%.3f;--kd:%.2fs"></span>%s</div>'
+            '<div class="duo"><div class="you" style="--kd:%.2fs">%s</div>'
+            '<div class="link"><i style="--kd:%.2fs"></i><i class="b2" style="--kd:%.2fs"></i><i style="--kd:%.2fs"></i></div>'
+            '<div class="us" style="--kd:%.2fs">%s</div></div></div>'
+            % (f0, f1, kd + .1, st, kd + .15, you, kd + .6, kd + 1.3, kd + 2.0, kd + .45, us))
+
+
+def mring(pct, kd):
+    return ('<div class="mr"><svg class="ring mini" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="48" class="rt"/>'
+            '<circle cx="60" cy="60" r="48" class="rf5" style="--to:%d;--kd:%.2fs"/></svg>'
+            '<div class="mrt"><b class="cnt" data-to="%d" data-suf="%%" data-at="%d">%d%%</b><small>of November</small></div></div>'
+            % (round(302 * (1 - pct / 100.0)), kd, pct, int(kd * 1000), pct))
+
+
+def yrow(n, label, kd, cls=''):
+    return '<div class="yrow" style="--kd:%.2fs"><b class="%s">%s</b><span>%s</span></div>' % (kd, cls, n, label)
+
+
+def urow(who, what, kd, done):
+    return ('<div class="urow" style="--kd:%.2fs"><b>%s</b><span>%s</span>%s</div>'
+            % (kd, who, what, '<s style="--kd:%.2fs">&#10003;</s>' % (kd + .5) if done else '<s class="wip"></s>'))
+
+
+def callr(av, who, sub, kd):
+    return ('<div class="callr" style="--kd:%.2fs"><div class="av2"><i></i><i></i>%s</div><div><b>%s</b><small>%s</small></div></div>'
+            % (kd, av, who, sub))
+
+
+def bar(label, done, plan, kd):
+    return ('<div class="br"><div><span>%s</span><b>%d of %d</b></div><p><i style="--w:%d%%;--kd:%.2fs"></i></p></div>'
+            % (label, done, plan, round(100.0 * done / plan), kd))
+
+
+def mailrow(tm, subj, sub, kd, cls=''):
+    """One reminder as it lands: when, its real subject line, and what it carries."""
+    return ('<div class="ml %s" style="--kd:%.2fs"><span class="mt">%s</span><div><b>%s</b><small>%s</small></div></div>'
+            % (cls, kd, tm, subj, sub))
+
+
+def stars(kd, n=5, step=.12):
+    return '<span class="st5">%s</span>' % ''.join('<i style="--kd:%.2fs">&#9733;</i>' % (kd + k * step) for k in range(n))
+
+
+def stat(big, label, kd, suf='', cls=''):
+    """A count that rolls up when it is said."""
+    sep = ' data-sep="1"' if int(big) >= 1000 else ''
+    return ('<div class="stt %s" style="--kd:%.2fs"><b class="cnt" data-to="%s" data-suf="%s" data-at="%d"%s>%s%s</b><span>%s</span></div>'
+            % (cls, kd - .15, big, suf, int(kd * 1000), sep, '{:,}'.format(int(big)), suf, label))
+
+
+def dotfield(t0, t1, t2, n=1781, lit=665, gold=262, cols=59):
+    """1,781 clients written to, one dot each (Transition Send, 25 Sep to 1 Oct 2026). 665 answered (Client Responses,
+       test tokens left out); 262 of them asked us to call. Which dots light is a fixed shuffle: no dot is a client."""
+    import random
+    rnd = random.Random(26000)
+    order = list(range(n)); rnd.shuffle(order)
+    ans = order[:lit]; calls = set(ans[:gold]); ans_rank = {d: i for i, d in enumerate(ans)}
+    call_rank = {d: i for i, d in enumerate(ans[:gold])}
+    out = []
+    for i in range(n):
+        r, c = divmod(i, cols)
+        a = t0 + (c + r * .6) / (cols + 30 * .6) * 1.0
+        inner = ''
+        if i in ans_rank:
+            inner += '<b style="--b:%.2fs"></b>' % (t1 + ans_rank[i] / lit * 1.6)
+        if i in calls:
+            inner += '<u style="--c:%.2fs"></u>' % (t2 + call_rank[i] / gold * 1.2)
+        out.append('<i style="--a:%.2fs">%s</i>' % (a, inner))
+    return ''.join(out)
+
+
+def kn(k, v, kd):
+    return '<div class="kn" style="--kd:%.2fs"><b>%s</b><span>%s</span><s>&#10003;</s></div>' % (kd, k, v)
+
+
 def build():
     sc = []
     # 1 October done, November the turn
@@ -108,19 +192,43 @@ def build():
         '<div class="room">%s<div class="bubs">%s</div></div><h1 class="shout">%s</h1></div>'
         % (people(26, .2, .02), bub, kin('We listened. Now we mean it.', at(2, 'listened'), .1)),
         'heard'))
-    # 3 a day: check in, the goal right there
-    ring = ('<svg class="ring huge" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="48" class="rt"/>'
-            '<circle cx="60" cy="60" r="48" class="rf4" style="--kd:%.2fs"/></svg>' % at(3, 'goal'))
-    sc.append(S(3,
-        '<div class="half"><div class="L"><div class="eyebrow" style="--kd:.15s">A day &middot; 8:12am</div><h1 class="ttl">%s</h1><h2 class="lead">%s</h2></div>'
-        '<div class="R">%s</div></div>'
-        % (kin('Check in.', at(3, 'check'), .1), kin('Your goal, right there.', at(3, 'goal'), .08),
-           phone('<div class="btn2" style="--kd:%.2fs">Check in and plan my day</div><div class="pres2" style="--kd:%.2fs">Present &#10003;</div>'
-                 '<div class="rw">%s<div class="rwt"><b class="cnt" data-to="62" data-suf="%%" data-at="%d">62%%</b><small>of the month, on your plan</small></div></div>'
-                 % (at(3, 'check'), at(3, 'check') + .7, ring, int(at(3, 'goal') * 1000)), 'slide')),
-        'day'))
-    # 4 both ways: everyone accountable
-    sc.append(S(4,
+    # 3-6 the day, from both sides: YOU large (the agent), US beside it, a live link between them
+    sc.append(S(3, day(0, at(3, 'Here'),
+        '<em>You</em><h3>%s</h3><div class="yg">%s<div class="yl">%s%s%s%s</div></div>'
+        % (kin('Your goal, first.', at(3, 'sides') - .2, .08), mring(41, at(3, 'Eight')),
+           yrow('2', 'Fact finds this week', at(3, 'fact') - .2), yrow('3', 'Orphan clients to call', at(3, 'clients') - .2),
+           yrow('1', 'Case that should settle', at(3, 'clients') + .3, 'g'), yrow('6', 'Calls for today', at(3, 'clients') + .6)),
+        '<em>Us</em><h3>Already on your cases</h3>%s%s%s'
+        % (urow('Sasha', 'chasing a pending', at(3, 'clients') - .4, True), urow('Elizabeth', 'documents in', at(3, 'team'), True),
+           urow('Azariah', 'underwriting follow-up', at(3, 'chasing'), False))), 'd1'))
+    sc.append(S(4, day(1, .2,
+        '<em>You</em><h3>%s</h3><div class="btn2" style="--kd:%.2fs">Check in and plan my day</div>'
+        '<div class="pres2" style="--kd:%.2fs">Present &#10003;</div>'
+        '<div class="plan" style="--kd:%.2fs"><b>Plan</b> 6 calls &middot; 2 fact finds &middot; 1 to settle</div><div class="wk">%s</div>'
+        % (kin('Check in. You are present.', at(4, 'check'), .08), at(4, 'check'), at(4, 'present'), at(4, 'present') + .3,
+           ''.join('<span class="%s" style="--kd:%.2fs">%s</span>' % (c, at(4, 'present') + .4 + k * .1, d)
+                   for k, (d, c) in enumerate([('Mon', 'on'), ('Tue', 'on'), ('Wed', 'on'), ('Thu', 'on'), ('Fri', 'td')]))),
+        '<em>Us</em><h3>We see you</h3><div class="pres3" style="--kd:%.2fs">Present &middot; 8:12am &#10003;</div>'
+        '<div class="ifn" style="--kd:%.2fs">Not checked in?</div>%s'
+        % (at(4, 'present'), at(4, 'Not'), callr('M', 'We call you', 'to understand', at(4, 'call')))), 'd2'))
+    sc.append(S(5, day(2, .2,
+        '<em>You</em><h3>%s</h3><div class="ch2"><span style="--kd:%.2fs">Going well</span><span class="hl" style="--kd:%.2fs">Need help</span></div>'
+        '<div class="typed" style="--kd:%.2fs"><em>Your note &middot; 12:04pm</em>Waiting on a client&rsquo;s medical. Can you push it?</div>'
+        % (kin('How is it going?', at(5, 'noon'), .08), at(5, 'going'), at(5, 'Need'), at(5, 'Need') + .7),
+        '<em>Us</em><h3>Straight to your manager</h3>'
+        '<div class="ntf" style="--kd:%.2fs"><em>Need help &middot; 12:04pm</em><b>A client&rsquo;s medical is outstanding</b></div>%s'
+        % (at(5, 'manager'), callr('M', 'Your manager', 'calling you&hellip;', at(5, 'straight')))), 'd3'))
+    sc.append(S(6, day(3, .2,
+        '<em>You</em><h3>%s</h3><div class="yc"><div class="bars">%s%s%s</div>'
+        '<div class="donep" style="--kd:%.2fs"><b class="cnt" data-to="89" data-suf="%%" data-at="%d">89%%</b><span>of your plan,<br>done</span></div></div>'
+        % (kin('Close off. Planned, and done.', at(6, 'close'), .08),
+           bar('Calls', 5, 6, at(6, 'planned')), bar('Fact finds', 2, 2, at(6, 'planned') + .25), bar('Cases settled', 1, 1, at(6, 'planned') + .5),
+           at(6, 'did'), int(at(6, 'did') * 1000)),
+        '<em>Us</em><h3>%s</h3>%s%s'
+        % (kin('We see it too', at(6, 'see'), .08), urow('Close-off', 'received 5:31pm', at(6, 'see'), True),
+           urow('Your manager', 'sees your day', at(6, 'see') + .35, True))), 'd4'))
+    # 7 both ways: everyone accountable
+    sc.append(S(7,
         '<div class="mid"><div class="both">'
         '<div class="side L2" style="--kd:%.2fs"><em>You see us</em>'
         '<div class="ln2" style="--kd:%.2fs"><b>Sasha</b> closed it &middot; client called</div>'
@@ -129,43 +237,71 @@ def build():
         '<div class="arrows" style="--kd:%.2fs"><i></i><i></i></div>'
         '<div class="side R2" style="--kd:%.2fs"><em>We see you</em>'
         '<div class="ln2" style="--kd:%.2fs"><b>Present</b> 8:12am</div>'
-        '<div class="ln2" style="--kd:%.2fs"><b>Plan</b> 6 calls &middot; 2 fact finds</div>'
-        '<div class="ln2" style="--kd:%.2fs"><b>Midday</b> on track</div></div></div>'
+        '<div class="ln2" style="--kd:%.2fs"><b>Midday</b> help asked, called</div>'
+        '<div class="ln2" style="--kd:%.2fs"><b>Close-off</b> 89%% of the plan</div></div></div>'
         '<h1 class="go sm">%s</h1></div>'
-        % (at(4, 'see'), at(4, 'working'), at(4, 'working') + .25, at(4, 'clients'), at(4, 'We') - .2, at(4, 'We') - .2,
-           at(4, 'We') + .1, at(4, 'We') + .35, at(4, 'We') + .6, kin('Everyone is accountable.', at(4, 'Everyone'), .1)),
+        % (at(7, 'You'), at(7, 'You') + .2, at(7, 'You') + .4, at(7, 'You') + .6, at(7, 'We'), at(7, 'We'),
+           at(7, 'We') + .2, at(7, 'We') + .4, at(7, 'We') + .6, kin('Everyone is accountable.', at(7, 'Everyone'), .1)),
         'both2'))
-    # 5 we call
-    sc.append(S(5,
-        '<div class="half"><div class="L"><div class="eyebrow" style="--kd:.15s">When something stalls</div><h1 class="ttl">%s</h1><h2 class="lead">%s</h2></div>'
-        '<div class="R"><div class="callw">%s</div></div></div>'
-        % (kin('We call you.', at(5, 'call'), .1), kin('To understand. To help.', at(5, 'understand'), .1),
-           phone('<div class="inc" style="--kd:%.2fs"><div class="rip"><i></i><i></i><i></i></div><div class="av">M</div><b>Your manager</b><small>calling&hellip;</small>'
-                 '<div class="cbtn"><span class="no"></span><span class="yes"></span></div></div>' % at(5, 'stalls'), 'dark')),
-        'call'))
-    # 6 Rajiv: his screen, his record
-    sc.append(S(6,
+    # 8 every reminder on a template: yours, and your clients'
+    sc.append(S(8,
+        '<div class="rem"><div class="inbx" style="--kd:.15s"><em>You &middot; your reminders</em>%s%s%s%s</div>'
+        '<div class="cmail" style="--kd:%.2fs"><div class="cmh"><small>To your client</small><b>Your request is complete</b></div>'
+        '<div class="cmb"><p>Dear [first name],</p><p>We have now taken care of your request. Thank you for giving us the chance to help.</p>'
+        '<p class="ask">How did we do? Tap a star.</p>%s</div>'
+        '<div class="chips3"><span style="--kd:%.2fs">A question about your first year with us</span>'
+        '<span style="--kd:%.2fs">Thank you. We have received your response.</span><span style="--kd:%.2fs">Still on it.</span></div></div></div>'
+        % (mailrow('8:00am', 'Your day &middot; good morning', 'Your goal, your fact finds, your clients', at(8, 'morning')),
+           mailrow('12 noon', 'Midday progress', 'How is it going? Going well, or need help', at(8, 'midday')),
+           mailrow('5:30pm', 'Close off your day', 'What you planned, and what you did', at(8, 'close-off')),
+           mailrow('Closed', 'Done: your case &middot; how did we do?', stars(at(8, 'star') + .1), at(8, 'star'), 'hot'),
+           at(8, 'clients') - .3, stars(at(8, 'clients') + .5, step=.14),
+           at(8, 'too') - .2, at(8, 'too'), at(8, 'too') + .2),
+        'tpl'))
+    # 9 and they answer: every client written to, a dot each; the answers light up; the calls asked for, in gold
+    sc.append(S(9,
+        '<div class="rem"><div class="dotw"><div class="dots">%s</div><div class="dkey"><span class="k1">Answered</span><span class="k2">Asked us to call</span></div></div>'
+        '<div class="stts">%s%s%s<div class="bigwin" style="--kd:%.2fs">That is the big win.</div></div></div>'
+        % (dotfield(at(9, 'written'), at(9, 'answered'), at(9, 'call')),
+           stat('1781', 'clients written to', at(9, 'Seventeen')), stat('665', 'answered', at(9, 'Six'), cls='g'),
+           stat('262', 'asked us to call', at(9, 'Two')), at(9, 'big') - .2),
+        'win'))
+    # 10 no more guessing: the system shows us, then people coach, in person
+    sc.append(S(10,
+        '<div class="co2"><div class="co2t">'
+        '<div class="gss" style="--kd:.15s"><em>Before</em><div class="qm"><b style="--kd:.3s">?</b><b style="--kd:.45s">?</b><b style="--kd:.6s">?</b></div>'
+        '<span class="gw">Guessing</span><i class="sk" style="--kd:%.2fs"></i></div>'
+        '<div class="knw" style="--kd:%.2fs"><em>Now &middot; the system shows us</em>%s%s%s%s</div></div>'
+        '<div class="cch"><span class="cc" style="--kd:%.2fs"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></i>A call</span><span class="cc" style="--kd:%.2fs"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6"/></svg></i>A visit</span>'
+        '<span class="cc" style="--kd:%.2fs"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="6" r="2.5"/><circle cx="17" cy="6" r="2.5"/><path d="M3 21v-5a4 4 0 0 1 8 0v5M13 21v-5a4 4 0 0 1 8 0v5M2 13h20"/></svg></i>A sit-down</span></div><b class="co2h" style="--kd:%.2fs">Systems show us. People coach.</b></div>'
+        % (at(10, 'guessing') + .2, at(10, 'system'),
+           kn('Present', '8:12am', at(10, 'shows')), kn('Fact finds', '2 waiting on you', at(10, 'shows') + .3),
+           kn('To close off', '$4.8k should settle', at(10, 'stands') - .2), kn('Midday', 'Need help, 12:04pm', at(10, 'stands') + .1),
+           at(10, 'call'), at(10, 'visit'), at(10, 'sit-down'), at(10, 'facts') - .1),
+        'coach'))
+    # 11 Rajiv: his screen, his record
+    sc.append(S(11,
         '<div class="half"><div class="L"><div class="eyebrow" style="--kd:.15s">Rajiv went first</div>'
         '<div class="seven" style="--kd:%.2fs"><b class="cnt" data-to="7" data-at="%d">7</b><span>applications<br>in October</span></div>'
         '<h2 class="lead">%s</h2></div><div class="R">%s</div></div>'
-        % (at(6, 'Seven') - .1, int(at(6, 'Seven') * 1000), kin('His updates, on the record.', at(6, 'updates'), .08),
+        % (at(11, 'Seven') - .1, int(at(11, 'Seven') * 1000), kin('His updates, on the record.', at(11, 'updates'), .08),
            phone('<div class="rh"><b>Rajiv</b><span>My day</span></div>'
                  '<div class="msg" style="--kd:%.2fs"><em>Wed 28 Oct &middot; to Sasha</em>&ldquo;All o/s will be sorted out today.&rdquo;</div>'
                  '<div class="rate" style="--kd:%.2fs"><em>Mon 2 Nov &middot; Sasha closed it</em><span>%s</span></div>'
                  '<div class="pick" style="--kd:%.2fs"><em>October &middot; picked up</em><b>7 apps</b></div>'
-                 % (at(6, 'updates'), at(6, 'record'), ''.join('<i style="--kd:%.2fs">&#9733;</i>' % (at(6, 'record') + k * .12) for k in range(5)), at(6, 'Seven')), 'slide')),
+                 % (at(11, 'updates'), at(11, 'record'), ''.join('<i style="--kd:%.2fs">&#9733;</i>' % (at(11, 'record') + k * .12) for k in range(5)), at(11, 'Seven')), 'slide')),
         'rajiv'))
-    # 7 that is the level: every one of us
-    sc.append(S(7,
+    # 12 that is the level: every one of us
+    sc.append(S(12,
         '<div class="mid"><div class="lvl"><div class="bar2" style="--kd:%.2fs"><span>Rajiv&rsquo;s level</span></div>'
         '<div class="crowd2">%s</div></div><h1 class="go">%s</h1></div>'
-        % (at(7, 'level'), people(26, at(7, 'Every'), .025, cls='pr2'), kin('Every one of us, there.', at(7, 'Every'), .1)),
+        % (at(12, 'level'), people(26, at(12, 'Every'), .025, cls='pr2'), kin('Every one of us, there.', at(12, 'Every'), .1)),
         'level'))
-    # 8 check in, lift each other, rise
-    sc.append(S(8,
+    # 13 check in, lift each other, rise
+    sc.append(S(13,
         '<div class="mid"><div class="flare big" style="--kd:%.2fs"></div><div class="eyebrow" style="--kd:.15s">Ricky Rampersad Branch &middot; FY27</div>'
         '<div class="three"><span style="--kd:%.2fs">Check in.</span><span style="--kd:%.2fs">Lift each other.</span><b style="--kd:%.2fs">Rise.</b></div></div>'
-        % (at(8, 'Rise'), at(8, 'Check'), at(8, 'Lift'), at(8, 'Rise')),
+        % (at(13, 'Rise'), at(13, 'Check'), at(13, 'Lift'), at(13, 'Rise')),
         'end'))
     return ''.join(sc)
 
@@ -319,6 +455,158 @@ h1.end{font-size:96px;color:#E3B23C;letter-spacing:-2px}
 .seven{display:flex;align-items:center;gap:20px;margin:6px 0 4px;transform-origin:left center;animation:sevin .7s cubic-bezier(.2,1.35,.4,1) both;animation-delay:var(--kd)}
 @keyframes sevin{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:none}}
 .heard .eyebrow{margin-bottom:46px}
+.dayw{width:100%}
+.trk{position:relative;display:flex;justify-content:space-between;margin:0 30px 24px}
+.trk:before{content:'';position:absolute;left:75px;right:75px;top:21px;height:4px;border-radius:2px;background:#22302A}
+.tf{position:absolute;left:75px;top:21px;height:4px;border-radius:2px;background:#34D399;width:calc((100% - 150px) * var(--f1));
+  animation:tfill 1s cubic-bezier(.3,.8,.2,1) both;animation-delay:var(--kd)}
+@keyframes tfill{from{width:calc((100% - 150px) * var(--f0))}to{width:calc((100% - 150px) * var(--f1))}}
+.dst{position:relative;z-index:1;width:150px;display:flex;flex-direction:column;align-items:center}
+.dst i{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:20px;font-weight:700;
+  background:#141A17;border:3px solid #2B3A33;color:#5C6B63}
+.dst b{margin-top:8px;font-size:21px;font-weight:700;color:#5C6B63}
+.dst small{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#5C6B63}
+.dst.done i{background:#34D399;border-color:#34D399;color:#06120C}
+.dst.done b{color:#DDE7E1} .dst.done small{color:#8FA39A}
+.dst.now i{background:#E3B23C;border-color:#E3B23C;color:#1A1405;box-shadow:0 0 0 8px rgba(227,178,60,.18);animation:nowpop .7s cubic-bezier(.2,1.5,.35,1) both;animation-delay:var(--kd)}
+.dst.now b{color:#FFFFFF} .dst.now small{color:#E3B23C}
+@keyframes nowpop{from{transform:scale(.4);background:#141A17;border-color:#2B3A33}to{transform:none}}
+.duo{display:flex;align-items:stretch}
+.you{flex:0 0 660px;position:relative;background:#F7F5EF;color:#1F2433;border-radius:26px;padding:20px 26px 22px;box-shadow:0 30px 80px rgba(0,0,0,.5);
+  animation:youin .75s cubic-bezier(.2,1.2,.3,1) both;animation-delay:var(--kd)}
+.us{flex:0 0 392px;background:linear-gradient(160deg,#103026,#0B1A15);border:1px solid rgba(110,231,183,.32);border-radius:26px;padding:20px 24px;color:#E6F2EC;
+  animation:usin .75s cubic-bezier(.2,1.2,.3,1) both;animation-delay:var(--kd)}
+@keyframes youin{from{opacity:0;transform:translateX(-90px) rotate(-2deg) scale(.9)}to{opacity:1;transform:none}}
+@keyframes usin{from{opacity:0;transform:translateX(90px) rotate(2deg) scale(.9)}to{opacity:1;transform:none}}
+.you>em,.us>em{display:block;font-style:normal;font-size:16px;font-weight:700;letter-spacing:5px;text-transform:uppercase}
+.you>em{color:#B07F0E} .us>em{color:#6EE7B7}
+.you h3{font-size:36px;font-weight:700;line-height:1.1;letter-spacing:-.6px;color:#141C4A;margin:4px 0 14px}
+.us h3{font-size:25px;font-weight:700;line-height:1.15;color:#FFFFFF;margin:4px 0 12px}
+.link{flex:1 1 auto;position:relative}
+.link:before{content:'';position:absolute;left:4px;right:4px;top:50%;border-top:3px dotted rgba(227,178,60,.45)}
+.link i{position:absolute;top:50%;left:0;width:12px;height:12px;margin-top:-5px;border-radius:50%;background:#E3B23C;box-shadow:0 0 14px #E3B23C;
+  opacity:0;animation:trav 1.5s linear infinite;animation-delay:var(--kd)}
+.link i.b2{background:#6EE7B7;box-shadow:0 0 14px #6EE7B7;animation-name:travb}
+@keyframes trav{0%{left:0;opacity:0}15%{opacity:1}85%{opacity:1}100%{left:calc(100% - 12px);opacity:0}}
+@keyframes travb{0%{left:calc(100% - 12px);opacity:0}15%{opacity:1}85%{opacity:1}100%{left:0;opacity:0}}
+.yg{display:flex;gap:24px;align-items:center}
+.mr{position:relative;flex:0 0 170px}
+.ring.mini{width:170px;height:170px}
+.rf5{fill:none;stroke:#2C7A57;stroke-width:12;stroke-linecap:round;stroke-dasharray:302;animation:fill 1.4s cubic-bezier(.3,.8,.2,1) both;animation-delay:var(--kd)}
+.mrt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.mrt b{font-size:42px;font-weight:700;color:#141C4A;line-height:1}
+.mrt small{font-size:13px;color:#6A7180;margin-top:4px}
+.yl{flex:1 1 auto}
+.yrow{display:flex;align-items:center;gap:14px;padding:8px 0;border-top:1px solid #E7E2D6;font-size:20px;animation:slin .5s both;animation-delay:var(--kd)}
+.yrow b{flex:0 0 42px;height:42px;border-radius:12px;background:#E8F3EC;color:#1F5E42;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700}
+.yrow b.g{background:#FFF1CC;color:#8A6A12}
+.urow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(110,231,183,.16);font-size:18px;animation:slin .5s both;animation-delay:var(--kd)}
+.urow b{color:#6EE7B7;font-weight:700}
+.urow span{color:#D5E3DC}
+.urow s{margin-left:auto;text-decoration:none;font-weight:700;font-size:20px;color:#34D399;animation:slam2 .5s cubic-bezier(.2,1.5,.35,1) both;animation-delay:var(--kd)}
+.urow s.wip{width:16px;height:16px;border-radius:50%;border:3px solid rgba(227,178,60,.35);border-top-color:#E3B23C;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.plan{margin-top:14px;font-size:20px;animation:rup .5s both;animation-delay:var(--kd)}
+.plan b{color:#1F5E42;margin-right:6px}
+.wk{display:flex;gap:10px;margin-top:14px}
+.wk span{flex:1 1 0;text-align:center;padding:10px 0;border-radius:12px;font-size:16px;font-weight:700;animation:rup .4s both;animation-delay:var(--kd)}
+.wk span.on{background:#E8F3EC;color:#1F5E42}
+.wk span.td{background:#E3B23C;color:#1A1405;animation:slam2 .6s cubic-bezier(.2,1.5,.35,1) both;animation-delay:var(--kd)}
+.pres3{background:rgba(52,211,153,.14);color:#6EE7B7;border-radius:14px;padding:12px 14px;font-size:19px;font-weight:700;animation:slam2 .6s cubic-bezier(.2,1.5,.35,1) both;animation-delay:var(--kd)}
+.ifn{margin-top:18px;font-size:14px;letter-spacing:2px;text-transform:uppercase;color:#E3B23C;animation:wup .5s both;animation-delay:var(--kd)}
+.callr{display:flex;align-items:center;gap:16px;margin-top:12px;animation:rup .55s cubic-bezier(.2,1.3,.4,1) both;animation-delay:var(--kd)}
+.av2{position:relative;flex:0 0 62px;height:62px;border-radius:50%;background:#2C7A57;color:#FFFFFF;font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.av2 i{position:absolute;inset:0;border-radius:50%;border:3px solid #34D399;animation:ripple 1.8s ease-out infinite}
+.av2 i+i{animation-delay:.9s}
+.callr b{display:block;font-size:21px;color:#FFFFFF}
+.callr small{display:block;font-size:16px;color:#A9B8B0}
+.ch2{display:flex;gap:14px;margin:4px 0 14px}
+.ch2 span{flex:1 1 0;text-align:center;border:2px solid #D9CFBA;border-radius:999px;padding:14px 0;font-size:21px;font-weight:600;animation:rup .5s both;animation-delay:var(--kd)}
+.ch2 span.hl{animation:tap 1.3s both;animation-delay:var(--kd)}
+@keyframes tap{0%{opacity:0;transform:translateY(10px)}25%{opacity:1;transform:none;background:transparent;border-color:#D9CFBA}
+  55%{transform:scale(.92)}75%{transform:scale(1.04);background:#E3B23C;border-color:#E3B23C;color:#1A1405}100%{transform:none;background:#E3B23C;border-color:#E3B23C;color:#1A1405}}
+.typed{background:#FFFFFF;border:1px solid #E7E2D6;border-left:5px solid #E3B23C;border-radius:14px;padding:12px 14px;font-size:19px;line-height:1.4;animation:rup .5s both;animation-delay:var(--kd)}
+.typed em{display:block;font-style:normal;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#8A6A12;margin-bottom:4px}
+.ntf{background:rgba(255,255,255,.06);border:1px solid rgba(227,178,60,.55);border-radius:16px;padding:12px 14px;animation:drop .6s cubic-bezier(.2,1.4,.4,1) both;animation-delay:var(--kd)}
+@keyframes drop{from{opacity:0;transform:translateY(-34px) scale(.9)}to{opacity:1;transform:none}}
+.ntf em{display:block;font-style:normal;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#E3B23C;margin-bottom:4px}
+.ntf b{display:block;font-size:19px;color:#FFFFFF;font-weight:600}
+.yc{display:flex;gap:22px;align-items:center}
+.bars{flex:1 1 auto}
+.br{margin:0 0 12px}
+.br div{display:flex;justify-content:space-between;font-size:19px}
+.br div b{color:#141C4A}
+.br p{height:14px;border-radius:7px;background:#ECE7DA;margin-top:6px;overflow:hidden}
+.br p i{display:block;height:100%;width:var(--w);border-radius:7px;background:#2C7A57;transform-origin:0 50%;animation:grow2 1.1s cubic-bezier(.3,.8,.2,1) both;animation-delay:var(--kd)}
+.donep{flex:0 0 190px;text-align:center;animation:sevin .7s cubic-bezier(.2,1.35,.4,1) both;animation-delay:var(--kd)}
+.donep b{display:block;font-size:78px;font-weight:700;line-height:1;color:#2C7A57;letter-spacing:-2px}
+.donep span{display:block;font-size:17px;color:#6A7180;margin-top:4px;line-height:1.25}
+.both .L2{animation-name:youin}
+.both .R2{animation-name:usin}
+.rem{width:100%;display:flex;gap:40px;align-items:center;justify-content:center}
+.inbx{flex:0 0 620px;background:#F7F5EF;color:#1F2433;border-radius:26px;padding:16px 18px 10px;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:youin .75s cubic-bezier(.2,1.2,.3,1) both;animation-delay:var(--kd)}
+.inbx>em{display:block;font-style:normal;font-size:15px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#B07F0E;padding:2px 6px 8px}
+.ml{display:flex;gap:14px;align-items:center;padding:10px 8px;border-top:1px solid #E7E2D6;animation:mailin .55s cubic-bezier(.2,1.3,.4,1) both;animation-delay:var(--kd)}
+@keyframes mailin{from{opacity:0;transform:translateY(-26px) scale(.95)}to{opacity:1;transform:none}}
+.ml .mt{flex:0 0 74px;font-size:14px;font-weight:700;color:#8A6A12;text-transform:uppercase;letter-spacing:1px}
+.ml b{display:block;font-size:19px;font-weight:700;color:#141C4A;line-height:1.2}
+.ml small{display:block;font-size:15px;color:#6A7180;margin-top:2px}
+.ml.hot{background:#FFF7E3;border-radius:14px;border-top-color:transparent}
+.st5 i{display:inline-block;font-style:normal;font-size:26px;color:#E3B23C;margin-right:2px;animation:slam2 .45s cubic-bezier(.2,1.5,.35,1) both;animation-delay:var(--kd)}
+.stts{flex:1 1 auto;display:flex;flex-direction:column;gap:18px}
+.stt{animation:rup .6s cubic-bezier(.2,1.3,.4,1) both;animation-delay:var(--kd)}
+.stt b{display:block;font-size:96px;font-weight:700;line-height:.95;color:#E3B23C;letter-spacing:-3px;text-shadow:0 0 40px rgba(227,178,60,.3)}
+.stt span{display:block;font-size:24px;font-weight:600;color:#FFFFFF;margin-top:2px;line-height:1.2}
+.stt.g b{color:#6EE7B7;text-shadow:0 0 40px rgba(110,231,183,.3)}
+.cmail{flex:0 0 470px;background:#FFFFFF;color:#1F2433;border-radius:24px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:youin .75s cubic-bezier(.2,1.2,.3,1) both;animation-delay:var(--kd)}
+.cmh{background:#0F2A22;color:#E6F2EC;padding:14px 20px}
+.cmh small{display:block;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#6EE7B7}
+.cmh b{display:block;font-size:22px;margin-top:2px}
+.cmb{padding:16px 20px 14px;font-size:18px;line-height:1.5}
+.cmb p{margin:0 0 8px}
+.cmb .ask{font-weight:700;margin-top:6px}
+.cmb .st5 i{font-size:40px;margin-right:6px}
+.chips3{display:flex;flex-wrap:wrap;gap:8px;padding:0 20px 16px}
+.chips3 span{font-size:14px;border:1px solid #E7E2D6;border-radius:999px;padding:6px 12px;color:#3B4150;background:#F7F5EF;animation:rup .45s both;animation-delay:var(--kd)}
+.tapd{position:relative}
+.tapd:after{content:'';position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #E3B23C;opacity:0;animation:tapring .9s ease-out both;animation-delay:var(--kd)}
+@keyframes tapring{0%{opacity:0;transform:scale(.4)}30%{opacity:1}100%{opacity:0;transform:scale(1.8)}}
+.dotw{flex:0 0 650px}
+.dots{display:grid;grid-template-columns:repeat(59,8px);gap:3px}
+.dots i{position:relative;width:8px;height:8px;border-radius:50%;background:#26352E;opacity:0;animation:dotin .35s both;animation-delay:var(--a)}
+@keyframes dotin{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
+.dots i b,.dots i u{position:absolute;left:0;top:0;width:8px;height:8px;border-radius:50%;opacity:0;animation:dlit .45s both}
+.dots i b{background:#34D399;box-shadow:0 0 6px rgba(52,211,153,.75);animation-delay:var(--b)}
+.dots i u{background:#E3B23C;box-shadow:0 0 8px rgba(227,178,60,.85);animation-delay:var(--c)}
+@keyframes dlit{from{opacity:0;transform:scale(2)}to{opacity:1;transform:none}}
+.dkey{display:flex;gap:26px;margin-top:16px;font-size:17px;color:#C9D6CF}
+.dkey span:before{content:'';display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;vertical-align:-1px}
+.dkey .k1:before{background:#34D399} .dkey .k2:before{background:#E3B23C}
+.bigwin{margin-top:6px;font-size:40px;font-weight:700;color:#FFFFFF;animation:slam2 .7s cubic-bezier(.2,1.5,.35,1) both;animation-delay:var(--kd)}
+.win .stt b{font-size:84px}
+.win .stts{gap:12px}
+.co2{width:100%;display:flex;flex-direction:column;align-items:center;gap:24px}
+.co2t{display:flex;gap:34px;align-items:stretch}
+.gss{position:relative;flex:0 0 300px;border-radius:24px;border:2px dashed #3A4A42;padding:20px 22px;text-align:center;animation:rup .6s both;animation-delay:var(--kd)}
+.gss em,.knw em{display:block;font-style:normal;font-size:14px;font-weight:700;letter-spacing:3px;text-transform:uppercase}
+.gss em{color:#7D8792}
+.qm{display:flex;justify-content:center;gap:16px;margin:16px 0 8px}
+.qm b{font-size:72px;font-weight:700;color:#4A5A52;animation:wob 1.6s ease-in-out both;animation-delay:var(--kd)}
+@keyframes wob{0%{opacity:0;transform:translateY(20px) rotate(-12deg)}40%{opacity:1;transform:rotate(8deg)}100%{opacity:.8;transform:rotate(-4deg)}}
+.gw{font-size:30px;font-weight:600;color:#7D8792}
+.sk{position:absolute;left:30px;right:30px;top:54%;height:6px;border-radius:3px;background:#E3B23C;transform-origin:0 50%;transform:rotate(-8deg) scaleX(0);animation:skr .5s cubic-bezier(.3,.8,.2,1) forwards;animation-delay:var(--kd)}
+@keyframes skr{to{transform:rotate(-8deg) scaleX(1)}}
+.knw{flex:0 0 560px;background:#F7F5EF;color:#1F2433;border-radius:24px;padding:18px 22px;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:usin .75s cubic-bezier(.2,1.2,.3,1) both;animation-delay:var(--kd)}
+.knw em{color:#2C7A57;margin-bottom:6px}
+.kn{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid #E7E2D6;font-size:20px;animation:slin .5s both;animation-delay:var(--kd)}
+.kn b{flex:0 0 150px;color:#141C4A}
+.kn span{flex:1 1 auto;color:#3B4150}
+.kn s{text-decoration:none;color:#2C7A57;font-weight:700;font-size:22px}
+.cch{display:flex;align-items:center;gap:22px}
+.cc{display:flex;align-items:center;gap:12px;font-size:24px;font-weight:600;color:#FFFFFF;animation:slam2 .6s cubic-bezier(.2,1.5,.35,1) both;animation-delay:var(--kd)}
+.cc i{width:60px;height:60px;border-radius:50%;background:#2C7A57;color:#FFFFFF;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 8px rgba(52,211,153,.15)}
+.cc i svg{width:28px;height:28px}
+.co2h{font-size:38px;font-weight:700;color:#E3B23C;animation:wup .6s both;animation-delay:var(--kd)}
 .seven b{font-size:190px;font-weight:700;line-height:.85;color:#E3B23C;letter-spacing:-6px;text-shadow:0 0 50px rgba(227,178,60,.35)}
 .seven span{font-size:30px;font-weight:600;line-height:1.15;color:#FFFFFF}
 .rh{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #E7E2D6;padding-bottom:10px}

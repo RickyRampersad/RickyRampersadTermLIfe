@@ -1,15 +1,59 @@
 {
- "note": "Reset and rise, the turn (2 Nov 2026). Ricky, 8:51am: more compact, more encouraging; a typical day; they see us, we see them, everyone accountable; not a coach all day but us calling to understand; Rajiv's screens, how it is working for him, where he is, everybody up to that level; mean what we said, we listened on Friday; October done, the turn from the 1st. Rajiv's figure is his own Salesforce record: 7 applications picked up in October (CLIENT_PORTFOLIO__c, A14158).",
+ "note": "Reset and rise, the turn (2 Nov 2026). Ricky, 8:51am: more compact, more encouraging; a typical day; they see us, we see them, everyone accountable; not a coach all day but us calling to understand; Rajiv's screens, how it is working for him, where he is, everybody up to that level; mean what we said, we listened on Friday; October done, the turn from the 1st. Rajiv's figure is his own Salesforce record: 7 applications picked up in October (CLIENT_PORTFOLIO__c, A14158). Recut 9:17am (Ricky: 'where are the cards as to what happens from both sides? With the focus on the agents and more motion and impact'): the day as four paired cards, YOU (the agent, large) and US (the branch), 8:00, 10:30, 12:00, 5:30, the day's circles across the top. 9:29am ('show the templates and the success of responses ... this is a big win'): every reminder on its template, yours and your clients'; then the orphan-client letters' answers from Service Questionnaires (Transition Send: 1,781 e-mailed 25 Sep to 1 Oct; Client Responses, test tokens left out: 665 answered, 262 asked us to call), counted 2 Nov 2026. 10:03am ('deep insights ... how innovation is taking place and how with the systems, we are both human coaching, physical coaching, and touching base with the relevant insights instead of not knowing'): no more guessing; the system shows us, then we coach in person.",
  "voice": "en-US-AndrewMultilingualNeural",
  "rate": "+0%",
  "scenes": [
-  { "say": "October is done. November the first was the turn.", "extra": 0.4 },
-  { "say": "On Friday, we listened to every one of you. Now we mean it.", "extra": 0.3 },
-  { "say": "Here is a day. You check in, and your goal is right there.", "extra": 0.2 },
-  { "say": "You see us working for your clients. We see your day. Everyone is accountable.", "extra": 0.2 },
-  { "say": "And when something stalls, we don't wait. We call you, to understand, and to help.", "extra": 0.2 },
-  { "say": "Rajiv went first. His updates on the record. Seven applications in October.", "extra": 0.3 },
-  { "say": "That is the level. Every one of us, there.", "extra": 0.3 },
-  { "say": "Check in. Lift each other. Rise.", "extra": 0.8 }
+  {
+   "say": "October is done. November the first was the turn.",
+   "extra": 0.4
+  },
+  {
+   "say": "On Friday, we listened to every one of you. Now we mean it.",
+   "extra": 0.3
+  },
+  {
+   "say": "Here is your day, from both sides. Eight o'clock: your goal, your fact finds, your clients. And our team is already chasing your cases.",
+   "extra": 0.2
+  },
+  {
+   "say": "By half past ten, you check in, and you are present. Not checked in? We call, to understand.",
+   "extra": 0.2
+  },
+  {
+   "say": "At noon, tell us how it's going. Need help? Your manager hears it, straight away.",
+   "extra": 0.2
+  },
+  {
+   "say": "At half past five, you close off. What you planned, and what you did. We see it too.",
+   "extra": 0.2
+  },
+  {
+   "say": "You see us. We see you. Everyone is accountable.",
+   "extra": 0.3
+  },
+  {
+   "say": "Every reminder runs on a template. Yours: morning, midday, close-off, and a star for every case we close. Your clients hear from us too.",
+   "extra": 0.2
+  },
+  {
+   "say": "And they answer. Seventeen hundred and eighty-one clients, written to. Six hundred and sixty-five, answered. Two hundred and sixty-two asked us to call. That is the big win.",
+   "extra": 0.4
+  },
+  {
+   "say": "No more guessing. The system shows us where every one of us stands. Then we coach in person. A call, a visit, a sit-down, with the facts in hand.",
+   "extra": 0.3
+  },
+  {
+   "say": "Rajiv went first. His updates on the record. Seven applications in October.",
+   "extra": 0.3
+  },
+  {
+   "say": "That is the level. Every one of us, there.",
+   "extra": 0.3
+  },
+  {
+   "say": "Check in. Lift each other. Rise.",
+   "extra": 0.8
+  }
  ]
 }
