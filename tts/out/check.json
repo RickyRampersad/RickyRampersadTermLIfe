@@ -1,12 +1,22 @@
 {
- "tts/out/mtcoach/01.mp3": [
+ "tts/out/mtff/01.mp3": [
+  "en",
+  0.999,
+  "Your fact finds a journey too. The plan goes to your client the same day. A reminder on day three, another on day eight, then we ask you to call. Half of all confirmations came after a reminder, and every rating since October is five stars."
+ ],
+ "tts/out/mtff/02.mp3": [
+  "en",
+  0.994,
+  "to every one of you who stayed the course. Thank you. You built this with us and now we reap it together."
+ ],
+ "tts/out/mtffb/01.mp3": [
   "en",
   0.998,
-  "No more guessing. The system shows us where each of us stands. Then we coach, in-person, a call of visit-a-sit-down with the facts in hand."
+  "Your fact finds have a journey too. The plan goes to your client the same day. A reminder on day 3. Another on day 8. Then we ask you to call. Half of all confirmations came after a reminder. In every rating since October 5 stars."
  ],
- "tts/out/mtcoachb/01.mp3": [
+ "tts/out/mtffb/02.mp3": [
   "en",
-  0.997,
-  "No more guessing. The system shows us where every one of us stands. Then we coach in person, a call, a visit, a sit down with the facts in hand."
+  0.987,
+  "To everyone of you who've stayed the course, thank you. You built this with us. And now, we reap it together."
  ]
 }
