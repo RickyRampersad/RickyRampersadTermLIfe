@@ -960,6 +960,66 @@ including "the client keep-warm thread is not mistaken for the department".
 
 ---
 
+### 29 — classify what the person wrote, not what rode along
+
+**One find-and-replace.** Ctrl+F for:
+
+```js
+classifyReply_(reply.text)
+```
+
+One hit, inside `autoSweep`. Change it to:
+
+```js
+qpClassifyReply_(reply.text)
+```
+
+### Why the loop never closed itself
+
+`RRB/2026/105` went to Customer Service on 29 October. The routed email never
+sent — the trail carries section 13's NOT EMAILED flag — the 31 October chase
+reached them as a fresh email, and on 2 November the team leader replied with
+the statement attached. **The case stayed Open.**
+
+`classifyReply_` reads the whole plain body, which on a corporate reply is the
+two words the person typed followed by the entire quoted trail and the
+footers. Run against that reply it found three blocker words, and not one of
+them was hers:
+
+| word | where it came from |
+|---|---|
+| `need ` | "do you really **need** to print this email?" — Help Save Paper |
+| `incomplete` | "not be liable for the **incomplete** transmission" — the disclaimer |
+| `please provide` | "Good Day Team, **please provide** the statement" — our own request, quoted back |
+
+Every Guardian reply carries that disclaimer and most quote the request
+underneath, so `REPLY_AUTOCLOSE_ON` could never fire on a real reply. The loop
+was built to close itself and had no way to.
+
+`qpReplyBody_` keeps only what sits above the first quote marker or footer, and
+feeds that to the same `classifyReply_`. The branch's own words for done and
+blocked stay the branch's — only the text they are matched against changes. A
+reply with nothing above the quote reads `unclear`, which is honest: somebody
+top-posted empty.
+
+One addition: `see attached`, `find attached` and a few near neighbours now
+count as a completion. That is how a department answers a request for a
+document, and it was the exact reply on 105. Checked only after the real list
+says `unclear`, so nothing already understood changes meaning.
+
+### Judge it on real replies first
+
+Run **`qpClassifyAudit()`** from the editor. Read-only — it sends nothing and
+closes nothing. For every open case with a detected department reply it prints
+the old verdict, the new one, and the first words the person actually wrote, so
+the change can be judged before it closes anything.
+
+`tests/classify.test.mjs` — 21 assertions, including that a bare "noted with
+thanks" is still `unclear`, that a blocker above the quote still wins, and that
+quoting somebody else's completion is not writing one.
+
+---
+
 ## URGENT — rotate the branch master codes
 
 **Do this today, and do it before anything else on this page.**

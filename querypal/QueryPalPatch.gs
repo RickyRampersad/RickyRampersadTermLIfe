@@ -2550,3 +2550,116 @@ function qpThreadAudit() {
   Logger.log(msg);
   return msg;
 }
+
+
+/* ══════════ 17. CLASSIFY WHAT THE PERSON WROTE, NOT WHAT RODE ALONG ══════════
+   RRB/2026/105 went to Customer Service on 29 October. The routed email never
+   sent (the trail carries section 13's NOT EMAILED flag), the 31 October chase
+   reached them as a fresh email, and on 2 November Nakesha Gill-Long replied
+   with the statement attached. The case stayed Open.
+
+   classifyReply_ reads the whole plain body, which on a corporate reply is the
+   two words the person typed followed by the entire quoted trail and the
+   standard footers. Run against that reply it finds three blocker words, and
+   none of them are hers:
+
+     'need '          "do you really NEED to print this email?"   — Help Save Paper
+     'incomplete'     "not be liable for the INCOMPLETE transmission"  — the disclaimer
+     'please provide' "Good Day Team, PLEASE PROVIDE the statement"   — our own request,
+                                                                        quoted back
+
+   Every Guardian reply carries that disclaimer, and most carry the original
+   request quoted underneath. So REPLY_AUTOCLOSE_ON could never fire on a real
+   reply — the loop was built to close itself and had no way to.
+
+   qpReplyBody_ keeps only what sits above the first quote marker or footer.
+   The vocabulary is unchanged: this feeds classifyReply_ the same way, just
+   with the right text. A reply with nothing above the quote reads 'unclear',
+   which is honest — somebody top-posted empty.
+
+   Code.gs edit 29: in autoSweep, find
+
+       classifyReply_(reply.text)
+
+   (one hit) and change it to
+
+       qpClassifyReply_(reply.text)                                          */
+
+/* Everything from here down was written by somebody else, or by a lawyer. */
+var QP_QUOTE_MARKS = [
+  /\n_{10,}/,                            // Outlook's horizontal rule
+  /\nFrom:\s/i, /\nSent:\s/i, /\nTo:\s/i,
+  /\nOn .{0,100}wrote:/i,
+  /\n-{3,}\s*Original Message/i,
+  /\n\s*>/,                              // plain-text quoting
+  /\nHelp Save Paper/i,
+  /\nThis (message|e-?mail)\b[^\n]{0,140}(confidential|intended recipient|protected from disclosure)/i,
+  /\*\*EXTERNAL EMAIL\*\*/i,
+  /\nGet Outlook for/i,
+  /\nSent from my /i
+];
+
+function qpReplyBody_(text) {
+  var s = String(text || '').replace(/\r\n/g, '\n');
+  var at = s.length;
+  for (var i = 0; i < QP_QUOTE_MARKS.length; i++) {
+    var m = s.search(QP_QUOTE_MARKS[i]);
+    if (m > -1 && m < at) at = m;
+  }
+  return s.slice(0, at);
+}
+
+/* A handful of completions the existing vocabulary misses. "See attached" is
+   how this branch's departments actually answer a request for a document —
+   it was the exact reply on 105 — and classifyReply_ only knew the longer
+   "please find attached" form. Checked only after the real list says unclear,
+   so nothing already understood changes meaning. */
+var QP_DONE_EXTRA = ['see attached', 'find attached', 'as attached', 'attached herewith',
+                     'attached for your', 'herewith attached', 'kindly see', 'please see the attached'];
+
+function qpClassifyReply_(text) {
+  var body = qpReplyBody_(text);
+  if (!body.replace(/\s/g, '')) return 'unclear';       // nothing above the quote
+  var verdict = classifyReply_(body);
+  if (verdict !== 'unclear') return verdict;
+  var t = body.toLowerCase().replace(/\s+/g, ' ');
+  for (var i = 0; i < QP_DONE_EXTRA.length; i++) {
+    if (t.indexOf(QP_DONE_EXTRA[i]) > -1) return 'resolved';
+  }
+  return 'unclear';
+}
+
+/* Read-only. Shows, for every open case with a detected department reply, what
+   the old classifier made of it and what the new one makes of it — so the
+   change can be judged on real replies before it closes anything. Prints the
+   verdicts and the first few words the person actually wrote, never the trail. */
+function qpClassifyAudit() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return 'The log is empty.';
+  var d = sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(29, sh.getMaxColumns())).getValues();
+  var out = ['CLASSIFIER AUDIT — read-only, nothing is sent or closed', ''];
+  var n = 0, flips = 0;
+  for (var i = 0; i < d.length; i++) {
+    var ref = String(d[i][0] || '').trim();
+    if (!ref || /closed|resolved|completed/i.test(String(d[i][3] || ''))) continue;
+    var r = null;
+    try { r = qpExternalReply_(d[i]); } catch (e) {}
+    if (!r || !r.text) continue;
+    n++;
+    var was = 'unclear', now = 'unclear';
+    try { was = classifyReply_(r.text); } catch (e) {}
+    try { now = qpClassifyReply_(r.text); } catch (e) {}
+    if (was !== now) flips++;
+    var said = qpReplyBody_(r.text).replace(/\s+/g, ' ').trim().slice(0, 52);
+    out.push('  ' + ref);
+    out.push('      was: ' + was + '   now: ' + now + (was !== now ? '   <-- changed' : ''));
+    out.push('      they wrote: "' + said + '"');
+  }
+  out.push('');
+  out.push('  ' + n + ' open case' + (n === 1 ? '' : 's') + ' with a department reply, '
+         + flips + ' read differently now.');
+  if (!n) out.push('  Nothing to judge yet — no open case has a detected reply.');
+  var msg = out.join('\n');
+  Logger.log(msg);
+  return msg;
+}
