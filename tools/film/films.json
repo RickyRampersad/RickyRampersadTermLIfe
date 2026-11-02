@@ -1229,5 +1229,39 @@
    40.51
   ],
   "capbg": "06080A"
+ },
+ "mtturn": {
+  "cap": "cap-mtturn",
+  "vox": "vomtturn",
+  "music": "bed-mtturn.wav",
+  "mix": "mtturn-mix.wav",
+  "ass": "captions-mtturn.ass",
+  "dur": 44.9,
+  "durs": [
+   5.0,
+   5.3,
+   5.0,
+   6.1,
+   6.9,
+   7.5,
+   4.2,
+   4.9
+  ],
+  "out": "../../resetrise/turn.mp4",
+  "musicgain": 0.62,
+  "duck": 0.3,
+  "sfx": "sfx-mtturn.wav",
+  "start": 0,
+  "capmode": "strip",
+  "dark": [],
+  "ticks": [],
+  "hits": [
+   3.07,
+   8.51,
+   18.66,
+   32.26,
+   42.41
+  ],
+  "capbg": "06080A"
  }
 }

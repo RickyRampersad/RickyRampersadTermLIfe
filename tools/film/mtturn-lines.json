@@ -1,0 +1,15 @@
+{
+ "note": "Reset and rise, the turn (2 Nov 2026). Ricky, 8:51am: more compact, more encouraging; a typical day; they see us, we see them, everyone accountable; not a coach all day but us calling to understand; Rajiv's screens, how it is working for him, where he is, everybody up to that level; mean what we said, we listened on Friday; October done, the turn from the 1st. Rajiv's figure is his own Salesforce record: 7 applications picked up in October (CLIENT_PORTFOLIO__c, A14158).",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
+ "scenes": [
+  { "say": "October is done. November the first was the turn.", "extra": 0.4 },
+  { "say": "On Friday, we listened to every one of you. Now we mean it.", "extra": 0.3 },
+  { "say": "Here is a day. You check in, and your goal is right there.", "extra": 0.2 },
+  { "say": "You see us working for your clients. We see your day. Everyone is accountable.", "extra": 0.2 },
+  { "say": "And when something stalls, we don't wait. We call you, to understand, and to help.", "extra": 0.2 },
+  { "say": "Rajiv went first. His updates on the record. Seven applications in October.", "extra": 0.3 },
+  { "say": "That is the level. Every one of us, there.", "extra": 0.3 },
+  { "say": "Check in. Lift each other. Rise.", "extra": 0.8 }
+ ]
+}
