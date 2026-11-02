@@ -1,47 +1,17 @@
 {
- "tts/out/mtday/02.mp3": [
-  "en",
-  0.998,
-  "By half past 10, you check in and you're present. Not checked in, we call to understand."
- ],
- "tts/out/mtday/03.mp3": [
-  "en",
-  0.998,
-  "At noon, tell us how it's going. Need help? Your manager hears it straight away."
- ],
- "tts/out/mtday/04.mp3": [
-  "en",
-  0.997,
-  "At half past five, you close off, what you planned and what you did. We see it too."
- ],
- "tts/out/mtday/05.mp3": [
-  "en",
-  0.993,
-  "You see us. We see you. Everyone is accountable."
- ],
- "tts/out/mtdayb/01.mp3": [
-  "en",
-  0.997,
-  "Here is your day from both sides. Eight o'clock, your goal, your fact finds your clients, and our team already chasing your cases."
- ],
- "tts/out/mtdayb/02.mp3": [
+ "tts/out/mtwin/02.mp3": [
   "en",
   0.996,
-  "By half past ten, you check in. You are present. Now check in. We call you to understand."
+  "In a answer, 1781 clients written 2, 665 answered, 262 asked us to call. That is the big win."
  ],
- "tts/out/mtdayb/03.mp3": [
+ "tts/out/mtwinb/01.mp3": [
   "en",
   0.997,
-  "At noon, tell us how it is going. Need help? Your manager hears it straight away."
+  "Every reminder runs on a template, yours, morning, midday, close-off, and a star for every case we close. Your clients here from us too."
  ],
- "tts/out/mtdayb/04.mp3": [
+ "tts/out/mtwinb/02.mp3": [
   "en",
   0.997,
-  "at half past five, close off, what you planned, and what you did. And we see it too."
- ],
- "tts/out/mtdayb/05.mp3": [
-  "en",
-  0.991,
-  "You see us. We see you. Everyone accountable."
+  "And they answered 1781 clients written to 665 answered 262 asked us to call. That is the big win."
  ]
 }
