@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-10-29h';
+var SCRIPT_VERSION = '2026-11-02a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3993,7 +3993,7 @@ function housekeepingTick_() {
     }
   });
 
-  // The agents: 7:00 their day, 17:00 the close-off, eight a run, never in a
+  // The agents: 7:00 their day, 17:30 the close-off (done by 6pm), eight a run, never in a
   // run that is already carrying staff morning mail.
   if (!morningSent) { try { agentTick_(day, mins).forEach(function (s) { sent.push(s); }); } catch (e) {} }
   // The fact-find chase: Monday ask, Wednesday reminder, Friday the week.
@@ -10186,7 +10186,7 @@ function checkUnitAgents() { var out = UM_DESKS.map(function (s) { return s + ':
 /* Agents work six to six (Ricky, 17 October 2026): the morning check in the
    e-mail half an hour before, a progress report at midday, and the evening
    sign-off half an hour before six. */
-var AGENT_AM_AT = 5 * 60 + 30;     // 5:30am
+var AGENT_AM_AT = 7 * 60;          // 7:00am: Ricky, 2 Nov 2026, "the dashboard the agent gets at 7 o'clock in the morning" (was 5:30am)
 var AGENT_MD_AT = 12 * 60;         // midday progress
 var AGENT_PM_AT = 17 * 60 + 30;    // 5:30pm
 var AGENT_PER_RUN = 8;             // agents a ten-minute run; the rest follow
@@ -14389,7 +14389,7 @@ function agentEveningMail_(a, day, data) {
   var btn = replyButton_(workGoUrl_(a.key, 'agclose'), 'Close off my day', 'On My day: what you did, in numbers, balanced against what you projected. No answer reads as nothing done today.') + agOldLine_(replyUrl_(a.key, day, 'agc'));
   var coachEve = ''; if (agCoachOn_(a)) { try { coachEve = agCoachLine_(a, day, true); } catch (e) {} }
   var body = coachEve +
-    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', it is half past five. Close off your day' +
+    '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', it is half past five. Close off your day by 6pm' +
       (planned ? ': give what was done, and it balances against what you projected this morning' : ' (no projection was set this morning)') + '. It goes to your manager and Mrs Dookran.</div>' +
     statTiles_([
       { value: closed.length, label: 'the branch closed for you', color: MAIL.green },
@@ -17648,7 +17648,7 @@ function agFFCases_(a) {
     if (!rows.length) return null;
     var keys = Object.keys(rows[0]), find = function (rx) { for (var i = 0; i < keys.length; i++) if (rx.test(keys[i])) return keys[i]; return ''; };
     var K = { email: find(/agent\s*e-?mail/i), code: find(/agent\s*(code|no)/i), adv: find(/advisor\s*name/i), client: find(/^client\s*name$/i) || find(/client\s*name/i),
-      sub: find(/submitted\s*at/i), status: find(/^status$/i), outcome: find(/case\s*outcome/i), chased: find(/chased\s*at/i), count: find(/chase\s*count/i),
+      sub: find(/submitted\s*at/i), status: find(/^status$/i), outcome: find(/case\s*outcome/i), chased: find(/chased\s*at/i), count: find(/chase\s*count|times\s*chased/i),
       closed: find(/^closed\s*at$/i), interview: find(/interview\s*date/i), id: find(/submission\s*id/i) };
     if (!K.email && !K.code) return null;
     all = {};
