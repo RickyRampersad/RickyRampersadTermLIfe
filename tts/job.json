@@ -1,44 +1,21 @@
 {
  "voices": {
-  "coai": "en-US-AndrewMultilingualNeural",
-  "coag": "en-US-BrianNeural"
+  "agrise": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "coai": "+0%",
-  "coag": "+4%"
+  "agrise": "+0%"
  },
  "check": true,
  "films": {
-  "coai": [
-   "FactFind360 now talks back. Here's one fact find, start to finish, the new way.",
-   "Before: the agent typed every box, worked out the needs alone, and the client got a long draft to read and sign.",
-   "Now: the agent talks, I work it out with them, and the client gets their own plan, presented by their advisor.",
-   "The interview is done. Type it, or just talk.",
-   "Got it, that's all on the fact find. Quick one: what does the household spend a month, and could either salary carry it alone?",
-   "Then both lives are dependent. Denise as much as Marcus. And Denise has no cover of her own.",
-   "Before you send anything, here's what I notice.",
-   "Their only cover is group life through work. Two hundred and fifty thousand, and it ends if the job ends.",
-   "University for two becomes about four hundred and seventy-eight thousand in six years, at three percent inflation.",
-   "And the full NIS pension age moves from sixty to sixty-five, from January twenty twenty-eight.",
-   "So the family would need about one point one seven million. The gap is about nine hundred and fifteen thousand. What do you recommend, Neil?",
-   "Recorded, in your words. Here's the draft before it goes.",
-   "Every section lines up. The family, the figures, the need, the gap, and your recommendation, with your reasons.",
-   "Sent. Now, the client's side.",
-   "Five forty, Monday. Marcus is crawling home on the highway. The e-mail lands.",
-   "He doesn't have to read a thing. One tap, and he listens to the plan Neil prepared.",
-   "Hello Marcus and Denise. This is your family plan, prepared for you by Neil Ramnanan, from the Ricky Rampersad Branch.",
-   "Your family spends seventeen thousand nine hundred a month. Neither salary covers that alone. You depend on each other.",
-   "Here's what Neil recommends. Flexi Term to sixty-five for Marcus, to clear the mortgage and keep the family going while the children are in school.",
-   "Rejuvenator, a lump sum if Marcus is ever diagnosed with a critical illness. And Praesidia, because an accident that stops him working is the likelier risk.",
-   "At home, he and Denise watch it together. It makes sense. They tap Confirm.",
-   "And Neil sees it all. Opened on the drive home, played to the end, confirmed that evening. He calls them knowing exactly where they stand.",
-   "Talk it. Know it. Show it. Close it. FactFind360, from the Ricky Rampersad Branch. Coming soon."
-  ],
-  "coag": [
-   "Andrew, I've just left Marcus and Denise Alleyne. Two children, Yvonne and Jordan. Marcus earns fourteen five, Denise nine eight, and they owe seven eighty on the house.",
-   "About seventeen nine. No, neither could.",
-   "Flexi Term to sixty-five for Marcus, Rejuvenator for critical illness, and Praesidia for accident.",
-   "Looks right. Send it."
+  "agrise": [
+   "Good morning. From today, this is your day. Rise.",
+   "Your month and your week, at a glance: business picked up against your goal, and fact finds against your weekly number.",
+   "Your streak. Check in and plan by seven, and every day counts.",
+   "The bell shows only what is waiting on you. A note from your manager. A client waiting on a call.",
+   "Your fact finds with clients: when the plan went, how long they have waited, and how often we followed up.",
+   "Today's list: what the branch is working on for your clients, with one tap to comment.",
+   "Kudos, only for what you have earned. Share it with your manager.",
+   "Close off your day by six. Check in, lift each other, and rise."
   ]
  }
 }
