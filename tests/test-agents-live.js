@@ -36,6 +36,12 @@ ok('nobody who has left, even marked Active (Alyssa, Anthony); nor anyone Inacti
 ok('Neil\'s copy goes to Akaash', people['a-neil-ramnanan'].manager === 'akaash@example.com');
 ok('Felicia\'s copy goes to nobody who has left: the Branch Manager', people['a-felicia-rampersad'].manager === '' && env.agentManagerEmail_(people['a-felicia-rampersad']) === 'ricky@example.com',
   people['a-felicia-rampersad'].manager + ' / ' + env.agentManagerEmail_(people['a-felicia-rampersad']));
+// Intelligence.gs sits beside KPI.gs in the tracker's project; its INTEL_EXCLUDE_AGENTS reader, as it reads (3 Nov 2026)
+env.iExcluded_ = () => { const o = {}; String(P.getProperty('INTEL_EXCLUDE_AGENTS') || '').split(',').forEach(n => { const k = n.trim().toLowerCase(); if (k) o[k] = true; }); return o; };
+env.iExcludes_ = (skip, name) => !!skip[String(name || '').trim().toLowerCase()];
+P.setProperty('INTEL_EXCLUDE_AGENTS', 'Narissa Mohammed');
+ok('anyone on INTEL_EXCLUDE_AGENTS gets nothing, though Active on the Skill Bank (3 Nov 2026)', !env.agentPeople_()['a-narissa-mohammed'] && !!env.agentPeople_()['a-neil-ramnanan']);
+P.deleteProperty('INTEL_EXCLUDE_AGENTS');
 bank[env.bkNk_('Akaash Kalladeen')].active = false;
 ok('nor a Unit Manager marked Inactive', env.agentPeople_()['a-neil-ramnanan'].manager === '');
 bank[env.bkNk_('Akaash Kalladeen')].active = true;

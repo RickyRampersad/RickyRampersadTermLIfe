@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-02a';
+var SCRIPT_VERSION = '2026-11-03a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -14080,8 +14080,13 @@ function agentPeople_() {
   // Nobody who has left is mailed or copied, even while their row is still on the Skill Bank (2 Nov 2026): the wall's list.
   try { left = wallLeft_(); } catch (e) {}
   var gone = function (s) { try { return wallIsLeft_(String(s || ''), left); } catch (e) { return false; } };
+  // Nor anyone on Branch Intelligence's exclusion list (Script Property INTEL_EXCLUDE_AGENTS): an excluded agent gets nothing
+  // from the branch, not the intelligence and not the day (Ricky, 3 Nov 2026: "not sending any intelligence nor anything for
+  // Alima and Javed"). The Skill Bank path did not read it; only the fallback directory did.
+  var skipX = {}; try { skipX = typeof iExcluded_ === 'function' ? iExcluded_() : {}; } catch (e) {}
+  var off = function (s) { try { return typeof iExcludes_ === 'function' && iExcludes_(skipX, String(s || '')); } catch (e) { return false; } };
   Object.keys(sb).forEach(function (k) {
-    var p = sb[k]; if (!p.isAgent || !p.active || !p.email || gone(p.name)) return;
+    var p = sb[k]; if (!p.isAgent || !p.active || !p.email || gone(p.name) || off(p.name)) return;
     var key = 'a-' + agSlug_(p.name);
     fromBank[key] = { key: key, name: p.name, agentName: p.name, agentId: p.code, email: p.email, role: 'Agent', manager: '', unit: p.unit, code: p.code };
   });
