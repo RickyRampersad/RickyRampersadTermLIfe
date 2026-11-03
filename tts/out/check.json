@@ -1,137 +1,42 @@
 {
- "tts/out/coai/01.mp3": [
+ "tts/out/agrise/01.mp3": [
+  "en",
+  0.984,
+  "Good morning. From today, this is your day. Rise."
+ ],
+ "tts/out/agrise/02.mp3": [
   "en",
   0.998,
-  "FactFind 360 now talks back. Here's one fact find. Start to finish the new way."
+  "your month and your week at a glance. Business picked up against your goal and fact finds against your weekly number."
  ],
- "tts/out/coai/02.mp3": [
+ "tts/out/agrise/03.mp3": [
   "en",
-  0.996,
-  "Before, the agent typed every box worked out the needs alone and the client got a long draft to read and sign."
+  0.987,
+  "your streak check in and plan by seven and everyday counts"
  ],
- "tts/out/coai/03.mp3": [
+ "tts/out/agrise/04.mp3": [
   "en",
-  0.999,
-  "Now, the agent talks, I work it out with them and the client gets their own plan presented by their advisor."
+  0.994,
+  "The bell shows only what is waiting on you. A note from your manager. A client waiting on a call."
  ],
- "tts/out/coai/04.mp3": [
+ "tts/out/agrise/05.mp3": [
   "en",
   0.997,
-  "The interview is done. Type it or just talk."
+  "Your fact finds of clients, when the plan went, how long they have waited, and how often we followed up."
  ],
- "tts/out/coai/05.mp3": [
-  "en",
-  0.998,
-  "Got it. That's all on the fact find. Quick one. What does the household spend a month and could either salary carry it alone?"
- ],
- "tts/out/coai/06.mp3": [
+ "tts/out/agrise/06.mp3": [
   "en",
   0.995,
-  "then both lies are dependent. Denise is much as Marcus. And Denise has no cover of her own."
+  "Today's list, what the branch is working on for your clients with one tap to comment."
  ],
- "tts/out/coai/07.mp3": [
+ "tts/out/agrise/07.mp3": [
+  "en",
+  0.993,
+  "Kudos, only for what you have earned. Share it with your manager."
+ ],
+ "tts/out/agrise/08.mp3": [
   "en",
   0.992,
-  "Before you send anything, here's what I notice."
- ],
- "tts/out/coai/08.mp3": [
-  "en",
-  0.993,
-  "Their only cover is group life through work. 250,000 and it ends if the job ends."
- ],
- "tts/out/coai/09.mp3": [
-  "en",
-  0.991,
-  "University for 2 becomes about 478,000 in 6 years at 3% inflation."
- ],
- "tts/out/coai/10.mp3": [
-  "en",
-  0.991,
-  "and the full NIS pension age moved from 60 to 65 from January 20, 20, 28."
- ],
- "tts/out/coai/11.mp3": [
-  "en",
-  0.998,
-  "So the family would need about 1.17 million. The gap is about 915,000. What do you recommend, Neil?"
- ],
- "tts/out/coai/12.mp3": [
-  "en",
-  0.991,
-  "Record it in your words. Here's the draft before it goes."
- ],
- "tts/out/coai/13.mp3": [
-  "en",
-  0.996,
-  "Every section lines up, the family, the figures, the need, the gap, and your recommendation with your reasons."
- ],
- "tts/out/coai/14.mp3": [
-  "en",
-  0.975,
-  "Sent. Now the client side."
- ],
- "tts/out/coai/15.mp3": [
-  "en",
-  0.988,
-  "540 Monday, Marcus is crawling home on the highway, but email ants."
- ],
- "tts/out/coai/16.mp3": [
-  "en",
-  0.996,
-  "He doesn't have to read a thing, one tap, and he listens to the plan he'll prepared."
- ],
- "tts/out/coai/17.mp3": [
-  "en",
-  0.993,
-  "Hello Marcus and Denise. This is your family plan prepared for you by Neil Raminin from the Ricky Rampersat Branch."
- ],
- "tts/out/coai/18.mp3": [
-  "en",
-  0.997,
-  "Your family spends 17,900 a month. Neither salary covers that alone. You depend on each other."
- ],
- "tts/out/coai/19.mp3": [
-  "en",
-  0.999,
-  "Here's what Neil recommends. Flexi term to 65 for Marcus to clear the mortgage and keep the family going while the children are in school."
- ],
- "tts/out/coai/20.mp3": [
-  "en",
-  0.996,
-  "Rejuvenator, Alumpsum if Marcus is ever diagnosed with a critical illness, and Presidia because an accident that stops him working is the likely risk."
- ],
- "tts/out/coai/21.mp3": [
-  "en",
-  0.991,
-  "At home, he and Denise watch it together. It makes sense. They tap confirm."
- ],
- "tts/out/coai/22.mp3": [
-  "en",
-  0.991,
-  "And he'll seize it all, open on the drive home, play to the end, confirm that evening. He calls them knowing exactly where they stand."
- ],
- "tts/out/coai/23.mp3": [
-  "en",
-  0.996,
-  "Pocket. Know it. Show it. Close it. Fact find 360 from the Ricky Rampers ad branch. Coming soon."
- ],
- "tts/out/coag/01.mp3": [
-  "en",
-  0.99,
-  "Andrew, I've just left Marcus and Denise Alien, two children, Yvonne and Jordan. Marcus earns 14-5, Denise 9-8, and they owe 7-80 on the house."
- ],
- "tts/out/coag/02.mp3": [
-  "en",
-  0.989,
-  "About 179. No neither could."
- ],
- "tts/out/coag/03.mp3": [
-  "en",
-  0.991,
-  "Flexi term to 65 for Marcus, Rejuvenator for Critical Illness, and Presidia for Accident."
- ],
- "tts/out/coag/04.mp3": [
-  "en",
-  0.979,
-  "Looks right. Send it."
+  "Close off your day by 6. Check in, lift each other and rise."
  ]
 }
