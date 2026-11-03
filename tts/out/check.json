@@ -1,152 +1,22 @@
 {
- "tts/out/cv/01.mp3": [
-  "en",
-  0.997,
-  "When a fact find is done, your client doesn't just get a draft to sign. They get their own plan presented by you."
- ],
- "tts/out/cv/02.mp3": [
-  "en",
-  0.997,
-  "One to happen at plays. Here's what Marcus and Denise see."
- ],
- "tts/out/cv/03.mp3": [
-  "en",
-  0.985,
-  "Hello Marcus and Denise. This is your family plan prepared for you by Nia Osay from the Ricky Rampersad Branch of Guardian Life."
- ],
- "tts/out/cv/04.mp3": [
-  "en",
-  0.995,
-  "It takes about three minutes. Watch it together and if you're driving, just listen."
- ],
- "tts/out/cv/05.mp3": [
-  "en",
-  0.989,
-  "Here's what you told us."
- ],
- "tts/out/cv/06.mp3": [
-  "en",
-  0.985,
-  "You're married to Denise."
- ],
- "tts/out/cv/07.mp3": [
-  "en",
-  0.987,
-  "You have two children, Yvonne, Twelve, and Jordan Seven."
- ],
- "tts/out/cv/08.mp3": [
-  "en",
-  0.982,
-  "Marcus earns $14,500 a month and Denise $9,800."
- ],
- "tts/out/cv/09.mp3": [
-  "en",
-  0.989,
-  "There's 780,000 still owed on your home."
- ],
- "tts/out/cv/10.mp3": [
-  "en",
-  0.998,
-  "and what matters most to you, University for Yvonne and Jordan, and clearing the mortgage if Marcus dies."
- ],
- "tts/out/cv/11.mp3": [
-  "en",
-  0.994,
-  "Here's what we noticed."
- ],
- "tts/out/cv/12.mp3": [
-  "en",
-  0.998,
-  "Your family spends 17,900 a month. Neither salary covers that alone. You depend on each other."
- ],
- "tts/out/cv/13.mp3": [
-  "en",
-  0.995,
-  "Your only cover today is group life through work, 250,000. It usually ends if the job ends."
- ],
- "tts/out/cv/14.mp3": [
-  "en",
-  0.997,
-  "Denise has no life cover of her own. Nothing on file protects the family if Denise could not be there."
- ],
- "tts/out/cv/15.mp3": [
+ "tts/out/cvn/01.mp3": [
   "en",
   0.992,
-  "The 400,000 you set aside for university becomes about 478,000 in six years at 3% inflation."
+  "Hello Marcus and Denise. This is your family plan prepared for you by Neil Raminin from the Ricky Rampersad Branch of Guardian Life."
  ],
- "tts/out/cv/16.mp3": [
-  "en",
-  0.996,
-  "And the full NIS pension age rises from 60 to 65, starting in January 2028, worth knowing as you plan for retirement."
- ],
- "tts/out/cv/17.mp3": [
-  "en",
-  0.997,
-  "If the unexpected happened, here's what your family would need."
- ],
- "tts/out/cv/18.mp3": [
-  "en",
-  0.992,
-  "in all about 1.17 million."
- ],
- "tts/out/cv/19.mp3": [
-  "en",
-  0.975,
-  "You have 250,000 to cover today."
- ],
- "tts/out/cv/20.mp3": [
-  "en",
-  0.998,
-  "That leaves a gap of about 915,000. That's what Nia's recommendation is here to close."
- ],
- "tts/out/cv/21.mp3": [
-  "en",
-  0.995,
-  "Here's what Nia recommends."
- ],
- "tts/out/cv/22.mp3": [
-  "en",
-  0.983,
-  "Flexi term to age 65 for Marcus $750,000 of cover for $310 a month."
- ],
- "tts/out/cv/23.mp3": [
-  "en",
-  0.998,
-  "Why? It clears the mortgage and keeps the family's living costs paid for 10 years, while both children are at school."
- ],
- "tts/out/cv/24.mp3": [
-  "en",
-  0.98,
-  "Rejuvenator for Critical Illness, $150,000 for $95 a month."
- ],
- "tts/out/cv/25.mp3": [
-  "en",
-  0.996,
-  "Why? Alumped some on diagnosis, so treatment never comes out of the mortgage money."
- ],
- "tts/out/cv/26.mp3": [
-  "en",
-  0.988,
-  "Presidia Personal Accident $100,000 for $48 a month"
- ],
- "tts/out/cv/27.mp3": [
-  "en",
-  0.994,
-  "Why? Marcus is on his feet all day. An accident that stops him working is the likely risk."
- ],
- "tts/out/cv/28.mp3": [
+ "tts/out/cvn/02.mp3": [
   "en",
   0.999,
-  "If this looks right, tap confirm and NIA takes it from here."
+  "That leaves a gap of about 915,000. That's what Niels' recommendation is here to close."
  ],
- "tts/out/cv/29.mp3": [
+ "tts/out/cvn/03.mp3": [
   "en",
-  0.993,
-  "If you have questions first, just ask. Thank you for trusting the Ricky Rampersad branch with your family's future."
+  0.998,
+  "Here's what Neil recommends."
  ],
- "tts/out/cv/30.mp3": [
+ "tts/out/cvn/04.mp3": [
   "en",
-  0.995,
-  "Every client, their own plan, present by you, coming soon on Fact Find 360."
+  0.999,
+  "If this looks right, tap confirm, and you'll take it from here."
  ]
 }
