@@ -385,6 +385,31 @@
   @media(max-width:600px){.rrow{grid-template-columns:1fr;gap:2px}.rrow dt{font-size:.8rem}}
   .review + .review{margin-top:16px}
 
+  /* ── what we noticed ──
+     Checked against the policy itself, so these can be specific. A "stop" is
+     never a locked door: the client corrects it or says why it is right, and
+     their answer travels with the claim. Our register can be stale, and a real
+     claim must never be turned away by us. */
+  .checks{border-radius:var(--radius-md);padding:18px 20px;margin-top:20px;border:1.5px solid var(--line);background:#fff}
+  .checks > h3{font-size:1.02rem;font-weight:800;margin-bottom:4px}
+  .checks > p.lede-sm{color:var(--muted);font-size:.88rem;margin-bottom:14px}
+  .ck{border-left:4px solid var(--line);padding:12px 0 12px 14px;margin-top:12px}
+  .ck:first-of-type{margin-top:0}
+  .ck b{display:block;font-size:.96rem;margin-bottom:3px}
+  .ck span{font-size:.89rem;color:var(--muted);line-height:1.55;display:block}
+  .ck.stop{border-left-color:var(--red)}
+  .ck.stop b{color:var(--red-ink)}
+  .ck.check{border-left-color:var(--gold-2)}
+  .ck.check b{color:var(--gold-ink)}
+  .ck-fix{display:inline-block;margin-top:9px;background:none;border:none;color:var(--teal-600);font-weight:700;
+    font-size:.86rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:8px 0;min-height:40px}
+  .ck-say{margin-top:10px}
+  .ck-say label{display:block;font-weight:700;font-size:.84rem;margin-bottom:5px}
+  .ck-say input{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);
+    font-size:max(16px,1rem);font-family:inherit;background:#fff;color:var(--ink)}
+  .ck-say input:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(184,115,51,.18)}
+  .checks.all-clear{background:var(--green-50);border-color:#BFE5CF}
+  .checks.all-clear h3{color:var(--green-ink)}
   .declare{background:#F2F0EC;border:1.5px solid var(--line);border-radius:var(--radius-md);padding:18px;margin-top:20px}
   .check{display:flex;gap:12px;align-items:flex-start;cursor:pointer;font-size:.92rem;line-height:1.55}
   /* 24, not 20: WCAG 2.2 2.5.8 AA, and these three are the declaration boxes
@@ -848,6 +873,7 @@
           <p>Read this the way an assessor will. Anything wrong? Tap back and fix it — it is far quicker now than after filing.</p>
         </div>
         <div id="review-body"></div>
+        <div id="checks"></div>
         <div class="declare" id="declare">
           <label class="check">
             <input type="checkbox" id="dec-true" />
@@ -1054,6 +1080,11 @@
     </p>
   </div>
 </footer>
+
+<!-- The claim checked against the policy we already hold. Loaded before the app,
+     and the app runs without it if it fails: a broken validator must never be
+     the reason a claim cannot be filed. -->
+<script src="/claims/claim-checks.js"></script>
 
 <script>
 /* ══════════════════════════════════════════════════════════════
@@ -1389,12 +1420,21 @@ const state = {
   type: "",
   subtype: "",
   answers: {},      // fieldId -> value
+  policy: {},       // what the policy itself says — see POLICY_FACTS
   files: {},        // docId -> [{file, name, size, url, error}]
   skipped: {},      // docId -> true when "I don't have this yet"
   step: 0,
   ref: "",
   uploadKey: "",
 };
+
+/* The lookup has always fetched these from Salesforce and the page has always
+   thrown them away, because they are not questions — they are what the policy
+   says. They are exactly what the checks need: whether the loss falls inside
+   the cover period is the first thing any claims desk looks at, and we were
+   discarding the dates that answer it. Kept apart from state.answers so they
+   can never be rendered as a field or edited by the client. */
+const POLICY_FACTS = ["coverFrom", "coverTo", "carrier", "insuredValue", "windscreen", "permitOnFile"];
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, html) => {
@@ -1431,7 +1471,9 @@ function saveDraft() {
   try {
     localStorage.setItem(DRAFT_KEY, JSON.stringify({
       type: state.type, subtype: state.subtype, answers: state.answers,
-      skipped: state.skipped, at: Date.now(),
+      skipped: state.skipped, said: checkSaid, at: Date.now(),
+      // state.policy is deliberately NOT here. It is the policy's own facts,
+      // not the client's answers, and a shared phone should not keep them.
     }));
   } catch (err) { /* private browsing — carry on without a draft */ }
 }
@@ -1447,6 +1489,8 @@ function loadDraft() {
     state.subtype = d.subtype || "";
     state.answers = d.answers || {};
     state.skipped = d.skipped || {};
+    // their own words about anything we flagged, so a reload does not lose them
+    Object.keys(d.said || {}).forEach((k) => { checkSaid[k] = d.said[k]; });
     return true;
   } catch (err) { return false; }
 }
@@ -2000,6 +2044,12 @@ function applyPrefill(prefill) {
   // The insured value is worth carrying across as context, not as the claim amount.
   if (prefill.insuredValue) state.answers.insuredValueNote = prefill.insuredValue;
 
+  // Keep what the policy itself says, so the checks have something to check against.
+  POLICY_FACTS.forEach((k) => { if (prefill[k]) state.policy[k] = prefill[k]; });
+  if (prefill.policy) state.policy.policy = prefill.policy;
+  if (prefill.vehicleReg) state.policy.vehicleReg = prefill.vehicleReg;
+  if (prefill.name) state.policy.name = prefill.name;
+
   // Add to what is already marked rather than replacing it — signing in fills
   // the contact fields before a policy is ever chosen, and those marks stay.
   lookup.filled = Array.from(new Set((lookup.filled || []).concat(filled)));
@@ -2045,7 +2095,7 @@ function showStep(n) {
     if (n === 1) { renderFields($("detail-fields"), currentType().fields); showLookup(); markPrefilled(lookup.filled); }
     if (n === 2) renderDocs();
     if (n === 3) { renderFields($("you-fields"), YOU_FIELDS); markPrefilled(lookup.filled); }
-    if (n === 4) renderReview();
+    if (n === 4) { renderReview(); renderChecks(); }
   } else {
     $(n).hidden = false;
   }
@@ -2133,12 +2183,85 @@ function validateStep(n) {
     return true;
   }
   if (n === 4) {
+    // A stop has to be answered — corrected above, or explained here. It is never
+    // a locked door: our register can be stale and a real claim must not be
+    // turned away by us. The explanation travels with the claim.
+    const unanswered = checkFindings.filter((f) =>
+      f.level === "stop" && !String(checkSaid[f.id] || "").trim());
+    if (unanswered.length) {
+      renderChecks();
+      showError(4, "Please answer what we flagged above — fix it, or tell us in a line why it is right. " +
+        "We will file it either way.");
+      const box = $("ck-say-" + unanswered[0].id);
+      if (box) { box.focus(); box.scrollIntoView({ behavior: "smooth", block: "center" }); }
+      return false;
+    }
     const all = $("dec-true").checked && $("dec-share").checked && $("dec-contact").checked;
     $("declare").classList.toggle("bad", !all);
     if (!all) { showError(4, "Please tick all three declarations — we cannot file the claim without them."); return false; }
     return true;
   }
   return true;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   What we noticed — the claim against the policy we hold
+   ══════════════════════════════════════════════════════════════ */
+let checkFindings = [];      // the last run
+const checkSaid = {};        // finding id -> what the client said about it
+
+function runChecks() {
+  if (typeof ClaimChecks === "undefined") { checkFindings = []; return checkFindings; }
+  const a = Object.assign({}, state.answers, { name: state.answers.name || state.policy.name });
+  try { checkFindings = ClaimChecks.run(a, state.policy) || []; }
+  catch (err) { checkFindings = []; }          // a broken check must never block a claim
+  return checkFindings;
+}
+
+function renderChecks() {
+  const box = $("checks");
+  if (!box) return;
+  runChecks();
+  // Notes are for the assessor, never for the client.
+  const shown = checkFindings.filter((f) => f.level !== "note");
+  if (!shown.length) {
+    box.className = "checks all-clear";
+    box.innerHTML = "<h3>" + ICON("check") + " We checked this against your policy</h3>" +
+      '<p class="lede-sm" style="margin:0">Your dates sit inside your cover, the vehicle matches the policy, ' +
+      "and nothing contradicts itself. Nothing for you to fix.</p>";
+    return;
+  }
+  const stops = shown.filter((f) => f.level === "stop").length;
+  box.className = "checks";
+  box.innerHTML =
+    "<h3>Before you send — " + shown.length + (shown.length === 1 ? " thing" : " things") + " to look at</h3>" +
+    '<p class="lede-sm">We checked what you typed against your policy. ' +
+    (stops ? "Fix what you can, and for anything that is right as it stands, tell us why in a line — we file it either way."
+           : "None of these stops the claim; they are worth a second look.") + "</p>" +
+    shown.map((f) => {
+      const fix = f.fields && f.fields.length
+        ? '<button type="button" class="ck-fix" data-fix="' + esc(f.fields[0]) + '">Take me to it</button>' : "";
+      const say = f.level === "stop"
+        ? '<div class="ck-say"><label for="ck-say-' + esc(f.id) + '">If that is right, tell us why</label>' +
+          '<input id="ck-say-' + esc(f.id) + '" type="text" data-said="' + esc(f.id) + '" ' +
+          'value="' + esc(checkSaid[f.id] || "") + '" placeholder="e.g. the policy was renewed on 16 January" /></div>'
+        : "";
+      return '<div class="ck ' + f.level + '"><b>' + esc(f.title) + "</b><span>" + esc(f.detail) + "</span>" + fix + say + "</div>";
+    }).join("");
+
+  box.querySelectorAll("[data-said]").forEach((input) => {
+    input.addEventListener("input", () => { checkSaid[input.dataset.said] = input.value; saveDraft(); });
+  });
+  box.querySelectorAll("[data-fix]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.fix;
+      showStep("step-1");                       // the detail step, where these fields live
+      setTimeout(() => {
+        const el = $("f-" + id);
+        if (el) { el.focus(); el.closest(".field").scrollIntoView({ behavior: "smooth", block: "center" }); }
+      }, 80);
+    });
+  });
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -2253,6 +2376,15 @@ function claimPayload() {
     bankName: a.bankName || "", bankBranch: a.bankBranch || "",
     bankAccount: a.bankAccount || "", bankType: a.bankType || "",
     page: location.href,
+
+    /* What the policy itself says, and what checking the claim against it
+       turned up. The desk should never have to re-derive this, and a stop the
+       client explained has to reach a person with the explanation attached. */
+    policyFacts: Object.assign({}, state.policy),
+    checks: (checkFindings || []).map((f) => ({
+      id: f.id, level: f.level, title: f.title, detail: f.detail,
+      said: String(checkSaid[f.id] || "").trim(),
+    })),
   };
 }
 
@@ -2535,7 +2667,8 @@ function acctSignOut(silent) {
     api({ action: "signOut", token: acct.token }).catch(() => {});
   }
   acct.token = "";
-  profile = null;   // their policies leave with them
+  profile = null;        // their policies leave with them
+  state.policy = {};     // and so do the policy's own facts — a shared phone
   try { localStorage.removeItem(TOKEN_KEY); } catch (err) {}
   $("acct-in").hidden = true;
   $("acct-out").hidden = false;
