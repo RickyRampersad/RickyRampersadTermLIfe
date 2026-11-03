@@ -1,14 +1,43 @@
 {
  "voices": {
-  "t4ai": "en-US-AndrewMultilingualNeural"
+  "cv": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "t4ai": "+2%"
+  "cv": "+0%"
  },
  "check": true,
  "films": {
-  "t4ai": [
-   "Here's the difference. Before, you typed every box, and worked it out on your own. Now you talk, and I work it out with you: the questions, the needs on both lives, the live numbers, and the rules, as we go."
+  "cv": [
+   "When the fact find is done, your client doesn't just get a draft to sign. They get their own plan, presented by you.",
+   "One tap, and it plays. Here's what Marcus and Denise see.",
+   "Hello Marcus and Denise. This is your family plan, prepared for you by Nia Osei, from the Ricky Rampersad Branch of Guardian Life.",
+   "It takes about three minutes. Watch it together, and if you're driving, just listen.",
+   "Here's what you told us.",
+   "You're married to Denise.",
+   "You have two children, Yvonne, twelve, and Jordan, seven.",
+   "Marcus earns fourteen thousand five hundred a month, and Denise nine thousand eight hundred.",
+   "There's seven hundred and eighty thousand still owed on your home.",
+   "And what matters most to you: university for Yvonne and Jordan, and clearing the mortgage if Marcus dies.",
+   "Here's what we noticed.",
+   "Your family spends seventeen thousand nine hundred a month. Neither salary covers that alone. You depend on each other.",
+   "Your only cover today is group life through work, two hundred and fifty thousand. It usually ends if the job ends.",
+   "Denise has no life cover of her own. Nothing on file protects the family if Denise could not be there.",
+   "The four hundred thousand you set aside for university becomes about four hundred and seventy-eight thousand in six years, at three percent inflation.",
+   "And the full NIS pension age rises from sixty to sixty-five, starting in January twenty twenty-eight. Worth knowing as you plan for retirement.",
+   "If the unexpected happened, here's what your family would need.",
+   "In all, about one point one seven million.",
+   "You have two hundred and fifty thousand of cover today.",
+   "That leaves a gap of about nine hundred and fifteen thousand. That's what Nia's recommendation is here to close.",
+   "Here's what Nia recommends.",
+   "Flexi Term, to age sixty-five, for Marcus: seven hundred and fifty thousand of cover, for three hundred and ten dollars a month.",
+   "Why? It clears the mortgage and keeps the family's living costs paid for ten years, while both children are in school.",
+   "Rejuvenator, for critical illness: one hundred and fifty thousand, for ninety-five dollars a month.",
+   "Why? A lump sum on diagnosis, so treatment never comes out of the mortgage money.",
+   "Praesidia, personal accident: one hundred thousand, for forty-eight dollars a month.",
+   "Why? Marcus is on his feet all day. An accident that stops him working is the likelier risk.",
+   "If this looks right, tap Confirm, and Nia takes it from here.",
+   "If you have questions first, just ask. Thank you for trusting the Ricky Rampersad Branch with your family's future.",
+   "Every client. Their own plan. Presented by you. Coming soon, on FactFind360."
   ]
  }
 }
