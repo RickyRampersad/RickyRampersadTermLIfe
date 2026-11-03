@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-03a';
+var SCRIPT_VERSION = '2026-11-03c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -8478,13 +8478,11 @@ function rateClick_(e) {
   }
   var n = Math.max(1, Math.min(5, parseInt(p.r, 10) || 0));
   if (!p.r) n = Number(row.Rating) || 0;
-  if (p.r) {
-    writeRow_(f.sh, f.at, map, { Rating: n, RatedAt: new Date() }); forgetHr_(RATETAB);
-    var who = String(row.Kind) === 'agent' ? 'the agent, ' + String(row.ToName || '').split(' ')[0] : 'the client';
-    // A sample leaves no trace on the task: nothing on its Chatter (21 Oct 2026, 2026-10-21g).
-    if (!sample) { try { sfkInsert_('FeedItem', { ParentId: String(row.TaskId), Body: 'SERVICE RATING · ' + n + ' of 5 from ' + who + '. Thank you, ' + gameFirst_(String(row.Closer)) + '.' }); } catch (err) {} }
-    if (n <= RATE.LOW && !String(row.Alerted || '')) { try { rateAlert_(Object.assign({}, row, { Rating: n })); writeRow_(f.sh, f.at, map, { Alerted: hhmm_(new Date()) }); } catch (err) {} }
-  }
+  // A tap on a star no longer records (3 Nov 2026, 2026-11-03c). Mail scanners open every link in an e-mail, so one
+  // rating put five or seven "SERVICE RATING" posts on a task within seconds (3, 2, 1, 4, 5...) and could set off the
+  // low-rating alert. The tap opens this page; the rating is recorded, and goes once onto the task's trail, only
+  // when the person presses Confirm (ratePost_). A scanner reads pages; it does not press buttons.
+  if (p.r && String(p.r) !== String(Number(row.Rating) || '')) return rateConfirmPage_(row, n, sample);
   var stars = '<div style="font-size:40px;color:#E3B85A;letter-spacing:4px;margin:4px 0 10px">' + '&#9733;'.repeat(n) + '<span style="color:#DDD">' + '&#9733;'.repeat(5 - n) + '</span></div>';
   var form = '<form method="post" action="' + esc_(execBase_()) + '" target="_top" class="card"><input type="hidden" name="sr" value="' + esc_(String(row.Token)) + '">' +
     '<div class="bh">Anything to add?</div><div class="bf">Optional. It goes to the branch with your rating.</div>' +
@@ -8496,14 +8494,59 @@ function rateClick_(e) {
 function ratePost_(e) {
   var p = (e && e.parameter) || {}, f = rateFind_(p.sr);
   if (!f) return ratePage_('That link has expired.', '');
+  var map = colMap_(f.sh), row = f.row, sample = rateIsSample_(row);
   var c = String(p.comment || '').replace(/\s+/g, ' ').trim().slice(0, 1000);
-  if (c) {
-    writeRow_(f.sh, f.at, colMap_(f.sh), { Comment: c }); forgetHr_(RATETAB);
-    if (!rateIsSample_(f.row)) { try { sfkInsert_('FeedItem', { ParentId: String(f.row.TaskId), Body: 'SERVICE RATING · comment from ' + (String(f.row.Kind) === 'agent' ? 'the agent' : 'the client') + ': "' + c + '"' }); } catch (err) {} }
-    var n = Number(f.row.Rating) || 0;
-    if (n && n <= RATE.LOW) { try { rateAlert_(Object.assign({}, f.row, { Comment: c })); } catch (err) {} }
+  var n = p.r ? Math.max(1, Math.min(5, parseInt(p.r, 10) || 0)) : 0;
+  if (n) {
+    // The confirmed rating: recorded, the low alert once, and one note on the task's trail (2026-11-03c).
+    writeRow_(f.sh, f.at, map, { Rating: n, RatedAt: new Date() }); forgetHr_(RATETAB);
+    row = Object.assign({}, row, { Rating: n });
+    if (n <= RATE.LOW && !String(row.Alerted || '')) { try { rateAlert_(Object.assign({}, row, c ? { Comment: c } : {})); writeRow_(f.sh, f.at, map, { Alerted: hhmm_(new Date()) }); } catch (err) {} }
   }
-  return ratePage_('Thank you.', c ? 'Your comment is with the branch.' : 'Nothing was added. Your rating stands.');
+  if (c) { writeRow_(f.sh, f.at, map, { Comment: c }); forgetHr_(RATETAB); }
+  if (c && !n) { var n0 = Number(row.Rating) || 0; if (n0 && n0 <= RATE.LOW) { try { rateAlert_(Object.assign({}, row, { Comment: c })); } catch (err) {} } }
+  // A sample leaves no trace on the task: nothing on its Chatter (21 Oct 2026, 2026-10-21g).
+  if (!sample && (n || c)) { try { rateChatter_(row, n || Number(row.Rating) || 0, c); } catch (err) {} }
+  var stars = n ? '<div style="font-size:40px;color:#E3B85A;letter-spacing:4px;margin:4px 0 10px">' + '&#9733;'.repeat(n) + '<span style="color:#DDD">' + '&#9733;'.repeat(5 - n) + '</span></div>' : '';
+  var note = sample && n ? '<div class="card" style="border-left:4px solid #D9A21B"><div class="bh">A sample</div><div class="bf" style="margin:2px 0 0">Recorded on its sample row only: nothing on the task\'s Chatter, ' +
+    'and it counts nowhere (not the week, the game or the wall).' + (n <= RATE.LOW ? ' The low-rating e-mail has gone to you, marked [Sample].' : ' Try 1 or 2 stars to see the low-rating e-mail.') + '</div></div>' : '';
+  var more = n && !c ? '<form method="post" action="' + esc_(execBase_()) + '" target="_top" class="card"><input type="hidden" name="sr" value="' + esc_(String(row.Token)) + '">' +
+    '<div class="bh">Anything to add?</div><div class="bf">Optional. It goes to the branch with your rating.</div>' +
+    '<textarea name="comment" rows="3" placeholder="' + (n <= RATE.LOW ? 'What should we have done better?' : 'What went well?') + '"></textarea><button type="submit">Send</button></form>' : '';
+  return ratePage_('Thank you.', n ? 'Your rating of ' + n + ' out of 5 has been recorded and will be read by the branch.' + (c ? ' Your comment is with the branch.' : '')
+    : (c ? 'Your comment is with the branch.' : 'Nothing was added. Your rating stands.'), (stars ? '<div class="card">' + stars + '</div>' : '') + note + more);
+}
+/** The page a star opens: the stars chosen, an optional comment, and Confirm. Nothing is recorded until Confirm. */
+function rateConfirmPage_(row, n, sample) {
+  var stars = '<div style="font-size:40px;color:#E3B85A;letter-spacing:4px;margin:4px 0 10px">' + '&#9733;'.repeat(n) + '<span style="color:#DDD">' + '&#9733;'.repeat(5 - n) + '</span></div>';
+  var form = '<form method="post" action="' + esc_(execBase_()) + '" target="_top" class="card"><input type="hidden" name="sr" value="' + esc_(String(row.Token)) + '">' +
+    '<input type="hidden" name="r" value="' + n + '">' + stars +
+    '<div class="bf">Anything to add? Optional. It goes to the branch with your rating.</div>' +
+    '<textarea name="comment" rows="3" placeholder="' + (n <= RATE.LOW ? 'What should we have done better?' : 'What went well?') + '"></textarea>' +
+    '<button type="submit">Confirm ' + n + ' of 5</button></form>';
+  var note = sample ? '<div class="card" style="border-left:4px solid #D9A21B"><div class="bh">A sample</div><div class="bf" style="margin:2px 0 0">Recorded on its sample row only: nothing on the task\'s Chatter.</div></div>' : '';
+  return ratePage_('Your rating: ' + n + ' of 5', 'Press Confirm to send it. A different star? Go back and tap it.', form + note);
+}
+/** The rating's one note on the task's trail: once per rating row. A second confirm (a change of mind) edits that note
+ *  rather than adding another; if Salesforce will not take the edit, nothing more is posted. */
+function rateChatter_(row, n, comment) {
+  var who = String(row.Kind) === 'agent' ? 'the agent, ' + String(row.ToName || '').split(' ')[0] : 'the client';
+  var text = 'SERVICE RATING · ' + (n ? n + ' of 5 from ' + who + '. ' : 'from ' + who + '. ') + 'Thank you, ' + gameFirst_(String(row.Closer)) + '.' +
+    (comment ? '\nComment: "' + comment + '"' : '');
+  var key = 'RATEPOST_' + String(row.Token), props = PropertiesService.getScriptProperties(), lock = null;
+  try { lock = LockService.getScriptLock(); lock.waitLock(10000); } catch (e) { lock = null; }
+  try {
+    var had = ''; try { had = props.getProperty(key) || ''; } catch (e) {}
+    if (had) {
+      var bits = had.split(':'), kind = bits[0], id = bits[1];
+      try { sfkPatch_(kind === 'c' ? 'FeedComment' : 'FeedItem', id, kind === 'c' ? { CommentBody: text } : { Body: text }); } catch (e) {}
+      return { id: id, kind: kind === 'c' ? 'comment' : 'post', edited: true };
+    }
+    var closerId = ''; try { closerId = ((sfkUsers_() || {})[String(row.Closer)] || {}).id || ''; } catch (e) {}
+    var res = sfTrailPost_(String(row.TaskId), text, { authorId: closerId });
+    try { props.setProperty(key, (res.kind === 'comment' ? 'c' : 'p') + ':' + res.id); } catch (e) {}
+    return res;
+  } finally { try { if (lock) lock.releaseLock(); } catch (e) {} }
 }
 /** 1 or 2 stars: to Mr Rampersad alone, at once. */
 function rateAlert_(row) {
@@ -22190,6 +22233,40 @@ function savePlan_(data, profile) {
 // ---------------------------------------------------------------------------
 
 /** POST one record. Returns its Id. Throws with Salesforce's own words. */
+/** THE TRAIL RULE (Ricky, 3 Nov 2026: "chatter on the trails"). A note from the tracker onto a task goes as a reply in
+ *  the task's live thread, not as a new post: under the latest post by opt.authorId, else the latest post whose body
+ *  matches opt.headRe, else the task's latest post. A new post only when the task has no Chatter, or its latest post
+ *  is more than TRAIL_DAYS old, or Salesforce refuses the reply. Returns { id, kind: 'comment'|'post' }; throws like
+ *  sfkInsert_ when even the post is refused. */
+var TRAIL_DAYS = 14;
+function sfTrailPost_(taskId, text, opt) {
+  opt = opt || {}; taskId = String(taskId || '');
+  var rows = [];
+  try { rows = sfkQuery_("SELECT Id, CreatedById, CreatedDate, Body FROM FeedItem WHERE ParentId = '" + taskId.replace(/'/g, '') +
+    "' AND Type IN ('TextPost','ContentPost','LinkPost') ORDER BY CreatedDate DESC LIMIT 25") || []; } catch (e) { rows = []; }
+  var fresh = rows.length && (Date.now() - new Date(String(rows[0].CreatedDate).replace(/\+0000$/, 'Z')).getTime()) <= TRAIL_DAYS * 86400000;
+  if (fresh) {
+    var pick = null;
+    if (opt.authorId) pick = rows.filter(function (r) { return String(r.CreatedById) === String(opt.authorId); })[0] || null;
+    if (!pick && opt.headRe) pick = rows.filter(function (r) { return opt.headRe.test(String(r.Body || '')); })[0] || null;
+    if (!pick) pick = rows[0];
+    try { return { id: sfkInsert_('FeedComment', { FeedItemId: String(pick.Id), CommentBody: String(text).slice(0, 9900) }), kind: 'comment', under: String(pick.Id) }; }
+    catch (e) { try { runlog_('trail reply refused on ' + taskId + ': ' + (e && e.message)); } catch (e2) {} }
+  }
+  return { id: sfkInsert_('FeedItem', { ParentId: taskId, Body: String(text).slice(0, 9900) }), kind: 'post' };
+}
+/** An edit to a record (PATCH): true, or throws with what Salesforce said. */
+function sfkPatch_(object, id, body) {
+  function send(tok) {
+    return UrlFetchApp.fetch(tok.instance_url + '/services/data/' + SFK.API + '/sobjects/' + object + '/' + id,
+      { method: 'patch', contentType: 'application/json', muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + tok.access_token }, payload: JSON.stringify(body) });
+  }
+  var res = send(sfkToken_());
+  if (res.getResponseCode() === 401) { sfkProps_().deleteProperty('SFK_TOKEN'); res = send(sfkToken_()); }
+  var code = res.getResponseCode();
+  if (code !== 204 && code !== 200) throw new Error(sfkSaid_(res.getContentText()));
+  return true;
+}
 function sfkInsert_(object, body) {
   function send(tok) {
     return UrlFetchApp.fetch(
