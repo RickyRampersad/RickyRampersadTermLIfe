@@ -1873,6 +1873,14 @@ function lookupNoun() {
     : "policy or plan number";
 }
 
+// ...and the same for the confirm line. "Is that your vehicle?" was being
+// asked on every line, so a family health plan came back as a vehicle.
+function lookupThing() {
+  return state.type === "motor" ? "vehicle"
+       : state.type === "property" ? "property"
+       : "policy";
+}
+
 function showLookup() {
   const box = $("lookup");
   box.hidden = lookup.dismissed || !CONFIG.API_URL || !state.type;
@@ -1919,7 +1927,9 @@ async function findPolicy() {
     lookup.method = lookup.methods.length ? lookup.methods[0].id : "";
 
     $("lk-vehicle").textContent = data.vehicle;
-    $("lk-coverage").textContent = data.coverage ? data.coverage + " — is that your vehicle?" : "Is that your vehicle?";
+    $("lk-coverage").textContent = data.coverage
+      ? data.coverage + " — is that your " + lookupThing() + "?"
+      : "Is that your " + lookupThing() + "?";
     $("lk-step-find").hidden = true;
     $("lk-step-verify").hidden = false;
     renderVerifyMethod();
