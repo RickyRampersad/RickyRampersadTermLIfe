@@ -167,6 +167,11 @@
   .kv{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;font-size:.9rem}
   .kv dt{color:var(--muted)}
   .kv dd{font-weight:600;word-break:break-word;white-space:pre-wrap}
+  /* The flagged panel has to read as a warning without saying so by colour
+     alone — the heading names it, and the flag glyph carries it too. */
+  .d-sec.flagged{border-color:#EBD4BE;background:var(--gold-50)}
+  .d-sec.flagged h3{color:#6B3C12}
+  .flag-body{font-size:.89rem;line-height:1.6;white-space:pre-wrap}
   .d-files li{margin:5px 0;font-size:.9rem}
   .d-files a{color:var(--teal-600);font-weight:700;text-decoration:none}
   .d-files a:hover{text-decoration:underline}
@@ -643,7 +648,20 @@ function renderDrawer() {
       kv("Review due", c.reviewDue ? c.reviewDue + (c.reviewOverdue ? " — due now" : "") : "") +
       kv("Location", c.location) + kv("Estimated", c.amount) +
       kv("What happened", c.description) +
+      /* Guardian's accident report form asks for all three, and the client is
+         the only person who can read them off the permit. Shown here so the
+         desk never has to open the sheet to answer "was the permit valid?". */
+      kv("Driver's permit", (c.extra || {}).driverPermit) +
+      kv("Permit issued", (c.extra || {}).permitIssue) +
+      kv("Permit expires", (c.extra || {}).permitExpiry) +
     "</dl></div>" +
+
+    /* What the claim's own checks caught before it was filed, and what the
+       client said about each. Read this before anything else: it is where a
+       date outside cover or an expired permit is already written down, with
+       the claimant's own explanation beside it. */
+    (c.flagged ? '<div class="d-sec flagged"><h3>' + ICON("flag") + " What we flagged before it was filed</h3>" +
+      '<div class="flag-body">' + esc(c.flagged) + "</div></div>" : "") +
 
     '<div class="d-sec"><h3>Documents (' + c.files.length + ")</h3><ul class=\"d-files\">" +
       (c.files.map((f) => '<li><b>' + esc(f.doc) + "</b> — <a href=\"" + esc(f.link) + '" target="_blank" rel="noopener">' + esc(f.name) + "</a></li>").join("") || "<li>None yet.</li>") +

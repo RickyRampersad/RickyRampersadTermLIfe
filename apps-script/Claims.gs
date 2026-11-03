@@ -264,6 +264,22 @@ function namedSheet_(name, headers) {
     sh.appendRow(headers);
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground(CBRAND.light);
+    return sh;
+  }
+  /* A column added to this file after the tab was made has to be added to the
+     tab, by name, or it is invisible: every reader here keys on the header text
+     and getLastColumn() counts the data rows, so a row written one column wider
+     than its header comes back under a blank key. Appended at the end, never
+     reordered, so a tab somebody has already sorted or filtered is untouched. */
+  var last = sh.getLastColumn();
+  var have = {};
+  sh.getRange(1, 1, 1, Math.max(last, 1)).getValues()[0].forEach(function (h) {
+    have[String(h).trim()] = true;
+  });
+  var add = headers.filter(function (h) { return !have[h]; });
+  if (add.length) {
+    sh.getRange(1, last + 1, 1, add.length).setValues([add])
+      .setFontWeight('bold').setBackground(CBRAND.light);
   }
   return sh;
 }
@@ -276,6 +292,15 @@ var CLAIM_COLUMNS = [
   'Third Party', 'Bank Details', 'Files', 'Missing Documents',
   'Drive Folder', 'Claim Form PDF', 'Assigned To', 'Internal Notes',
   'Follow-ups Sent', 'Review Due', 'Last Updated',
+  /* What the claim's own checks flagged, and what the client said about each —
+     the thing the desk most wants to read before it picks the file up. In the
+     client's own words, so an assessor can weigh it rather than guess. */
+  'Flagged Checks',
+  /* Everything the claim answered that has no column of its own: the permit and
+     its two dates, the vehicle details off the register, the policy's own cover
+     period. JSON, because the set differs by claim type and a column per answer
+     would make this tab unreadable. Read back by claimObject_ as claim.extra. */
+  'Answers (JSON)',
 ];
 
 /* ---- working-day arithmetic ---- */
@@ -567,6 +592,165 @@ function sfCreate_(objectName, fields) {
   return body.id;
 }
 
+/** Update one record. Returns true, or throws. */
+function sfPatch_(objectName, id, fields) {
+  var c = sfProps_();
+  var res = UrlFetchApp.fetch(c.domain + '/services/data/v60.0/sobjects/' + objectName + '/' + id, {
+    method: 'patch', contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + sfToken_() },
+    payload: JSON.stringify(fields), muteHttpExceptions: true,
+  });
+  if (res.getResponseCode() >= 300) {
+    var body = JSON.parse(res.getContentText() || '{}');
+    throw new Error('Salesforce update failed: ' +
+      ((body[0] && body[0].message) || body.message || res.getContentText().slice(0, 200)));
+  }
+  return true;
+}
+
+
+/* ============================ the permit, written back ============================
+
+ * Asked for on 3 November 2026: "if we don't have it and they put in the driver's
+ * permit, it updates our records. It updates the issue date and the expiry date
+ * as well."
+ *
+ * This is the valuable half of the permit work, because the cupboard is nearly
+ * bare: measured on the live org that day, a permit number sits on about one
+ * CLIENT contact in sixteen, an expiry on one in twenty-eight and an issue date
+ * on one in three hundred. A client filing a claim has the permit in their hand
+ * and Guardian's form demands all three, so this is the one moment in the year
+ * when the record can be filled in by the only person who can read it.
+ *
+ * The rules are MotorQuote's own (mqPermitPlan_), and they exist so that one
+ * mistyped digit on a bad morning cannot spoil a record that was right:
+ *
+ *   - a blank is filled;
+ *   - a LATER expiry replaces an earlier one, and carries its issue date with it
+ *     when that is later too — a renewed permit;
+ *   - an EARLIER expiry is never written: a client reading an old permit must not
+ *     roll the record backwards;
+ *   - a DIFFERENT permit number is never written over one we hold. It is flagged
+ *     for a person instead, because the other reading is that someone else was
+ *     driving, and the claim's own checks already ask that question.
+ *
+ * Nothing here ever blocks a claim. Every refusal is a note on the claim row.
+ * ============================================================================= */
+
+function permitPlan_(given, held) {
+  var out = { fields: {}, notes: [] };
+  var num = String(given.number || '').trim();
+  var heldNum = String(held.number || '').trim();
+  var gi = iso_(given.issue), ge = iso_(given.expiry);
+  var hi = iso_(held.issue), he = iso_(held.expiry);
+
+  if (num) {
+    if (!heldNum) { out.fields.DP__c = num; out.notes.push('permit number ' + num + ' added'); }
+    else if (normKey_(num) !== normKey_(heldNum)) {
+      /* Never silently. Either they mistyped, or a different person was driving. */
+      out.notes.push('permit given as ' + num + ' but we hold ' + heldNum + ' — not changed, please check');
+      return out;                       // and nothing else on this record is touched either
+    }
+  }
+
+  if (ge) {
+    if (!he) { out.fields.Driver_s_Permit_Expiry__c = ge; out.notes.push('permit expiry ' + ge + ' added'); }
+    else if (ge > he) {
+      out.fields.Driver_s_Permit_Expiry__c = ge;
+      out.notes.push('permit expiry moved from ' + he + ' to ' + ge);
+    } else if (ge < he) {
+      out.notes.push('permit expiry given as ' + ge + ', earlier than the ' + he + ' we hold — not changed');
+    }
+  }
+
+  if (gi) {
+    /* The issue date rides with the expiry: on its own it tells us nothing new,
+       and a renewal is the only reason it should move. */
+    if (!hi) { out.fields.Drivers_Permit_Issue_Date__c = gi; out.notes.push('permit first issued ' + gi + ' added'); }
+    else if (gi > hi && out.fields.Driver_s_Permit_Expiry__c) {
+      out.fields.Drivers_Permit_Issue_Date__c = gi;
+      out.notes.push('permit issue date moved from ' + hi + ' to ' + gi);
+    }
+  }
+
+  return out;
+}
+
+/**
+ * Write what the client typed back onto their Contact. Called after the claim
+ * is filed and recorded, never before: the claim is the deliverable and a
+ * Salesforce hiccup must not cost it.
+ *
+ * Returns a line for the claim's internal notes, or '' when there was nothing
+ * to do. Never throws.
+ */
+function permitWriteBack_(claim) {
+  try {
+    if (claim.kind !== 'motor') return '';
+    if (!sfConnected_()) return '';
+    var a = claim.extra || {};
+    var given = { number: a.driverPermit, issue: a.permitIssue, expiry: a.permitExpiry };
+    if (!given.number && !given.issue && !given.expiry) return '';
+
+    /* The Contact id and what we already hold both come off the register row the
+       lookup matched, so this costs no extra read. Without a matched row there is
+       nobody to write to — a claim filed by hand names no Salesforce record. */
+    var reg = findVehicle_(a.vehicleReg || claim.policy || '');
+    if (!reg) return '';
+    var id = String(reg['Contact Id'] || '').trim();
+    if (!id) return '';
+
+    var plan = permitPlan_(given, {
+      number: reg['Permit #'], issue: reg['Permit Issued'], expiry: reg['Permit Expires'],
+    });
+    if (!plan.notes.length) return '';
+
+    var wrote = Object.keys(plan.fields).length;
+    if (wrote) {
+      sfPatch_('Contact', id, plan.fields);
+      /* Keep the register in step, so the next claim on this vehicle reads the
+         new value rather than waiting for the 3am sync. */
+      permitRegisterUpdate_(a.vehicleReg || claim.policy || '', plan.fields);
+    }
+    logClaim_(claim.ref, wrote ? 'permit-updated' : 'permit-not-updated', 'system', plan.notes.join('; '));
+    return 'Permit: ' + plan.notes.join('; ');
+  } catch (err) {
+    logClaim_(claim.ref, 'permit-write-failed', 'system', String(err));
+    return 'Permit: could not be written to Salesforce (' + String(err).slice(0, 120) + ')';
+  }
+}
+
+/** Put the same values on the register row, so the register does not lie until 3am. */
+function permitRegisterUpdate_(query, fields) {
+  try {
+    var sh = registerSheet_();
+    var last = sh.getLastRow();
+    if (last < 2) return;
+    var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]
+      .map(function (h) { return String(h).trim(); });
+    var col = function (name) { return headers.indexOf(name) + 1; };
+    var keyCol = col('Reg Key'), polCol = col('Policy Key');
+    if (!keyCol) return;
+    var want = normKey_(query);
+    var keys = sh.getRange(2, keyCol, last - 1, 1).getValues();
+    var pols = polCol ? sh.getRange(2, polCol, last - 1, 1).getValues() : null;
+    for (var i = 0; i < keys.length; i++) {
+      if (normKey_(keys[i][0]) !== want && !(pols && normKey_(pols[i][0]) === want)) continue;
+      var map = {
+        DP__c: 'Permit #',
+        Drivers_Permit_Issue_Date__c: 'Permit Issued',
+        Driver_s_Permit_Expiry__c: 'Permit Expires',
+      };
+      Object.keys(fields).forEach(function (f) {
+        var c = col(map[f]);
+        if (c) sh.getRange(i + 2, c).setValue(fields[f]);
+      });
+      return;
+    }
+  } catch (err) { /* the register catching up late is not worth failing a claim for */ }
+}
+
+
 /* ---- nightly register sync ---- */
 
 /** CLIENT PORTFOLIO → Policy Register tab. Record Type separates the lines. */
@@ -608,7 +792,8 @@ function syncVehicleRegister() {
     "SELECT Policy__c, Vehicle__c, Vehicle_Make__c, Model__c, Year_of_Manufacture__c, " +
     "Chassis__c, Engine__c, Motor_Vehicle_Coverage_Type__c, Cover1__c, Windscreen__c, " +
     "Carrier__c, From__c, To__c, Vehicle_Status__c, Contact__c, Email__c, " +
-    "Insured__r.Name, Insured__r.Email, Insured__r.MobilePhone " +
+    "Insured__r.Name, Insured__r.Email, Insured__r.MobilePhone, Insured__c, " +
+    "Insured__r.DP__c, Insured__r.Drivers_Permit_Issue_Date__c, Insured__r.Driver_s_Permit_Expiry__c " +
     "FROM Risk_Details__c WHERE Vehicle__c != null ORDER BY To__c NULLS FIRST");
   var byKey = {};
   rows.forEach(function (r) {
@@ -626,6 +811,10 @@ function syncVehicleRegister() {
     merged.client = contact.Name || r.Contact__c || prev.client || '';
     merged.email = contact.Email || r.Email__c || prev.email || '';
     merged.mobile = contact.MobilePhone || prev.mobile || '';
+    merged.permit = contact.DP__c || prev.permit || '';
+    merged.permitIssue = contact.Drivers_Permit_Issue_Date__c || prev.permitIssue || '';
+    merged.permitExpiry = contact.Driver_s_Permit_Expiry__c || prev.permitExpiry || '';
+    merged.insuredId = r.Insured__c || prev.insuredId || '';
     byKey[key] = merged;
   });
   var out = Object.keys(byKey).map(function (key) {
@@ -635,7 +824,9 @@ function syncVehicleRegister() {
       String(m.Vehicle_Make__c || ''), String(m.Model__c || ''), String(m.Year_of_Manufacture__c || ''),
       String(m.Chassis__c || ''), String(m.Engine__c || ''), String(m.Motor_Vehicle_Coverage_Type__c || ''),
       String(m.Cover1__c || ''), String(m.Windscreen__c || ''), String(m.Carrier__c || ''),
-      String(m.From__c || ''), String(m.To__c || ''), String(m.Vehicle_Status__c || ''), ''];
+      String(m.From__c || ''), String(m.To__c || ''), String(m.Vehicle_Status__c || ''), '',
+      String(m.permit || ''), String(m.permitIssue || ''), String(m.permitExpiry || ''),
+      String(m.insuredId || '')];
   });
   var sh = registerSheet_();
   if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
@@ -1053,6 +1244,13 @@ function apiStaffData_(b) {
         assigned: g('Assigned To'), notes: g('Internal Notes'),
         reviewDue: fmtOrBlank_(claimField_(hit, 'Review Due')),
         reviewOverdue: !!claimField_(hit, 'Review Due') && daysSince_(claimField_(hit, 'Review Due')) >= 0,
+        /* What the claim's own checks caught before it was sent, and what the
+           client said about each. This is the first thing an assessor wants to
+           know and the branch had no way to see it. */
+        flagged: g('Flagged Checks'),
+        /* The permit and the rest, for the desk to read without opening the
+           sheet. The whole map; the page shows the few it knows the labels for. */
+        extra: parseExtra_(g('Answers (JSON)')),
       });
     });
   }
@@ -1194,6 +1392,49 @@ function doPost(e) {
  * to the sheet immediately, so a failed upload never loses the claim
  * itself. Returns the reference the client keeps.
  */
+/* The checks the page ran, as something a person can read down in one go.
+   Only what was shown to the client and what they typed about it; the notes the
+   page keeps from them are kept here too, marked, because they were written for
+   the assessor in the first place. */
+function checkLines_(checks) {
+  if (!checks || !checks.length) return '';
+  return checks.slice(0, 20).map(function (c) {
+    var level = String(c.level || '').toLowerCase();
+    var tag = level === 'stop' ? '⚠' : level === 'check' ? '•' : 'ℹ';
+    var line = tag + ' ' + clean_(c.title, 160);
+    if (c.detail) line += ' — ' + clean_(c.detail, 400);
+    if (c.said) line += '\n   Client says: ' + clean_(c.said, 600);
+    return line;
+  }).join('\n');
+}
+
+/* Every answer that has no column of its own, plus what the policy itself said,
+   so the desk and the claim form can both read one place. Capped, and each value
+   cleaned, because this is client-typed text going into a cell. */
+var EXTRA_KEYS = [
+  'driverPermit', 'permitIssue', 'permitExpiry', 'driverName', 'driverSame', 'driverRel',
+  'vehicleReg', 'vehicleMake', 'vehicleYear', 'chassis', 'engine', 'coverage',
+  'insuredValueNote', 'damage', 'cause', 'provider', 'injuries', 'thirdparty',
+  'tpName', 'tpVehicle', 'tpInsurer', 'tpContact',
+];
+function extraJson_(b) {
+  var out = {};
+  /* b.answers from this version of the page; b itself for a page cached from
+     before it, which named a few of these at the top level. */
+  var src = (b.answers && typeof b.answers === 'object') ? b.answers : b;
+  EXTRA_KEYS.forEach(function (k) {
+    var v = clean_(src[k], 300);
+    if (!v) v = clean_(b[k], 300);
+    if (v) out[k] = v;
+  });
+  var facts = b.policyFacts || {};
+  var keep = {};
+  ['coverFrom', 'coverTo', 'carrier', 'insuredValue', 'windscreen', 'permitOnFile', 'policy', 'vehicleReg', 'name']
+    .forEach(function (k) { var v = clean_(facts[k], 120); if (v) keep[k] = v; });
+  if (Object.keys(keep).length) out._policy = keep;
+  try { return JSON.stringify(out).slice(0, 8000); } catch (err) { return ''; }
+}
+
 function apiClaimStart_(b) {
   var type = clean_(b.type, 20).toLowerCase();
   if (!CLAIM_TYPES[type]) throw new Error('Please choose what kind of claim you are making.');
@@ -1235,6 +1476,8 @@ function apiClaimStart_(b) {
     'Follow-ups Sent': '',
     'Review Due': addWorkingDays_(new Date(), CLAIMS.REVIEW_WORKING_DAYS),
     'Last Updated': new Date(),
+    'Flagged Checks': checkLines_(b.checks),
+    'Answers (JSON)': extraJson_(b),
   });
 
   logClaim_(ref, 'claim-opened', 'client',
@@ -1383,6 +1626,15 @@ function apiClaimFinish_(b) {
   try { sfLogClaim_(claim); }
   catch (err) { logClaim_(ref, 'sf-writeback-failed', 'system', String(err)); }
 
+  /* The permit the client typed goes back onto their Contact — after the claim
+     is safely recorded and the desk has been told, never before. Returns a line
+     for the file and never throws; a Salesforce hiccup must not cost a claim. */
+  var permitNote = permitWriteBack_(claim);
+  if (permitNote) {
+    var had = String(claimField_(hit, 'Internal Notes') || '');
+    setClaimField_(hit, 'Internal Notes', (had ? had + '\n' : '') + permitNote);
+  }
+
   return { ok: true, ref: ref, files: files.length, missing: missing };
 }
 
@@ -1405,7 +1657,30 @@ function claimObject_(hit) {
     policeReport: g('Police Report #'), policeStation: g('Police Station'),
     thirdParty: g('Third Party'), bank: g('Bank Details'), folder: g('Drive Folder'),
     assigned: g('Assigned To'), reviewDue: claimField_(hit, 'Review Due'),
+    flagged: g('Flagged Checks'),
+    /* kind is the machine-readable type ('motor'); type is the label the sheet
+       and the e-mails print ('Motor'). Two readers wanted two things, and one
+       of them silently compared a label against a key. */
+    kind: typeKey_(g('Claim Type')),
+    extra: parseExtra_(g('Answers (JSON)')),
   };
+}
+
+function parseExtra_(s) {
+  if (!s) return {};
+  try { var o = JSON.parse(s); return (o && typeof o === 'object') ? o : {}; }
+  catch (err) { return {}; }
+}
+
+/** 'Motor' back to 'motor' — the reverse of typeLabel_. */
+function typeKey_(label) {
+  var want = String(label || '').trim().toLowerCase();
+  var keys = Object.keys(CLAIM_TYPES);
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i] === want) return keys[i];
+    if (String(typeLabel_(keys[i])).trim().toLowerCase() === want) return keys[i];
+  }
+  return want;
 }
 
 
@@ -1436,11 +1711,45 @@ function registerSheet_() {
     'Make', 'Model', 'Year', 'Chassis #', 'Engine #', 'Coverage Type',
     'Insured Value (TT$)', 'Windscreen (TT$)', 'Carrier', 'Cover From', 'Cover To',
     'Vehicle Status', 'Years Insured',
+    /* The permit, off the insured's own Contact. Guardian's accident report form
+       asks for the number, the date of first issue and the date of expiry, and
+       the expiry against the date of loss is the most material thing on a motor
+       claim. Measured on the live org on 3 November 2026: a number on about one
+       CLIENT contact in sixteen, an expiry on one in twenty-eight, an issue date
+       on one in three hundred. So these are mostly blank, and the claim form is
+       where the record finally gets filled in — which is the point of writing
+       what the client types back to the Contact. */
+    'Permit #', 'Permit Issued', 'Permit Expires',
+    /* The insured's Contact id, so the write-back is one PATCH and not a
+       second lookup. An internal id, never shown to a client. */
+    'Contact Id',
   ]);
 }
 
 function normKey_(value) {
   return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+/* yyyy-MM-dd, which is the only thing an <input type="date"> accepts.
+   A date written to a sheet as the text "2014-03-14" is parsed on the way in
+   and comes back as a Date, whose toString is "Fri Mar 14 2014 00:00:00
+   GMT-0400" — which a date input rejects in silence, so the field simply shows
+   empty and the prefill looks as though it never happened. Same family as the
+   group billing month that read back as a month. */
+function iso_(value) {
+  if (value === null || value === undefined || value === '') return '';
+  if (Object.prototype.toString.call(value) === '[object Date]') {
+    if (isNaN(value.getTime())) return '';
+    return Utilities.formatDate(value, Session.getScriptTimeZone() || 'America/Port_of_Spain', 'yyyy-MM-dd');
+  }
+  var s = String(value).trim();
+  var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+  m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);            // dd/MM/yyyy
+  if (m) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+  var d = new Date(s);
+  if (isNaN(d.getTime())) return '';
+  return Utilities.formatDate(d, Session.getScriptTimeZone() || 'America/Port_of_Spain', 'yyyy-MM-dd');
 }
 
 /** Every register row, cached for a few minutes — this is read on every lookup. */
@@ -1619,8 +1928,16 @@ function apiVerifyPolicy_(b) {
       vehicleYear: val('Year'), chassis: val('Chassis #'), engine: val('Engine #'),
       policy: val('Policy #'), coverage: val('Coverage Type'),
       insuredValue: val('Insured Value (TT$)'), windscreen: val('Windscreen (TT$)'),
-      carrier: val('Carrier'), coverFrom: val('Cover From'), coverTo: val('Cover To'),
+      carrier: val('Carrier'),
+      coverFrom: iso_(row['Cover From']), coverTo: iso_(row['Cover To']),
       name: val('Client'), email: val('Email'), mobile: val('Mobile'),
+      /* driverPermit fills the field; permitOnFile is kept beside it as the
+         policy's own value, so the page can tell the client their permit is
+         not the one we hold when they overwrite it. Both come from the same
+         cell, which is why prefilling cannot make that check fire by itself. */
+      driverPermit: val('Permit #'),
+      permitIssue: iso_(row['Permit Issued']), permitExpiry: iso_(row['Permit Expires']),
+      permitOnFile: val('Permit #'),
     } };
   }
 

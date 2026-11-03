@@ -410,6 +410,18 @@
   .ck-say input:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(184,115,51,.18)}
   .checks.all-clear{background:var(--green-50);border-color:#BFE5CF}
   .checks.all-clear h3{color:var(--green-ink)}
+  /* Guardian's own accident report form, filled and shown before it goes.
+     A claimant who can read the form that reaches the assessor catches the
+     wrong plate or the wrong date here, where it costs nothing. */
+  .gg{border-radius:var(--radius-md);padding:18px 20px;margin-top:20px;border:1.5px solid var(--line);background:#fff}
+  .gg > h3{font-size:1.02rem;font-weight:800;margin-bottom:4px}
+  .gg > p{color:var(--muted);font-size:.88rem;line-height:1.55;margin-bottom:14px}
+  .gg-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .gg-note{font-size:.84rem;color:var(--muted);margin-top:10px;line-height:1.5}
+  .gg-pages{margin-top:16px;display:grid;gap:14px}
+  .gg-pages canvas{width:100%;height:auto;display:block;border:1px solid var(--line);
+    border-radius:var(--radius-sm);background:#fff;box-shadow:0 2px 10px rgba(32,26,18,.07)}
+  .gg-pg{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
   .declare{background:#F2F0EC;border:1.5px solid var(--line);border-radius:var(--radius-md);padding:18px;margin-top:20px}
   .check{display:flex;gap:12px;align-items:flex-start;cursor:pointer;font-size:.92rem;line-height:1.55}
   /* 24, not 20: WCAG 2.2 2.5.8 AA, and these three are the declaration boxes
@@ -662,6 +674,12 @@
       <path pathLength="100" d="M20.6 3.4 10.8 13.2"/>
       <path pathLength="100" d="M20.6 3.4 14.4 20.5l-3.6-7.3-7.3-3.6z"/>
     </symbol>
+    <!-- Lucide's download: 24x24, 2px stroke, round joins, 1px of padding. -->
+    <symbol id="ic-down" viewBox="0 0 24 24">
+      <path pathLength="100" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <path pathLength="100" d="M7 10l5 5 5-5"/>
+      <path pathLength="100" d="M12 15V3"/>
+    </symbol>
   </defs>
 </svg>
 
@@ -874,6 +892,7 @@
         </div>
         <div id="review-body"></div>
         <div id="checks"></div>
+        <div id="ggform"></div>
         <div class="declare" id="declare">
           <label class="check">
             <input type="checkbox" id="dec-true" />
@@ -1085,6 +1104,10 @@
      and the app runs without it if it fails: a broken validator must never be
      the reason a claim cannot be filed. -->
 <script src="/claims/claim-checks.js"></script>
+<!-- Where every answer sits on Guardian's own accident report form. Small, and
+     loaded with the page; pdf-lib is 500KB and fetched only when a motor
+     claimant actually asks to see the form. -->
+<script src="/claims/claim-forms.js"></script>
 
 <script>
 /* ══════════════════════════════════════════════════════════════
@@ -1144,6 +1167,16 @@ const TYPES = {
       { id: "driverName", label: "Who was driving?", type: "text", ph: "Your name, or the driver's full name", req: true, half: true,
         hint: "The named driver at the time — this is checked against your policy." },
       { id: "driverPermit", label: "Driver's permit number", type: "text", half: true },
+      /* Guardian's accident report form asks for all three (section 3.(b): the
+         number, the date of first issue and the date of expiry), and the expiry
+         against the date of loss is the single most material thing on a motor
+         claim. We hold a permit number for about one client in sixteen and an
+         issue date for one in three hundred, so most people are filling a blank
+         — which is how the record ever gets populated. */
+      { id: "permitIssue", label: "Permit first issued", type: "date", half: true,
+        hint: "On the permit itself. Leave it if you are not sure." },
+      { id: "permitExpiry", label: "Permit expires", type: "date", half: true,
+        hint: "We check this against the date of the accident." },
 
       { sec: "The incident" },
       { id: "incidentDate", label: "Date it happened", type: "date", req: true, half: true },
@@ -1771,7 +1804,7 @@ async function addFiles(d, incoming) {
    sends back what it found. The client taps "Use these" — nothing is ever
    filled in silently, and nothing already typed is touched. */
 const SCAN_TARGETS = {
-  permit:        { fields: ["driverName", "driverPermit"] },
+  permit:        { fields: ["driverName", "driverPermit", "permitIssue", "permitExpiry"] },
   police:        { fields: ["policeReport", "policeStation"] },
   certinsurance: { fields: ["policy", "vehicleReg", "chassis"] },
   receipt:       { fields: ["amount", "provider", "incidentDate"] },
@@ -1780,6 +1813,7 @@ const SCAN_LABELS = {
   driverName: "Driver", driverPermit: "Permit #", policeReport: "Report #",
   policeStation: "Station", policy: "Policy #", vehicleReg: "Reg",
   chassis: "Chassis", amount: "Total TT$", provider: "Provider", incidentDate: "Date",
+  permitIssue: "Issued", permitExpiry: "Expires",
 };
 
 async function scanAttachment(d, entry, card) {
@@ -1907,6 +1941,14 @@ const PREFILL_MAP = {
   vehicleReg: "vehicleReg", vehicleMake: "vehicleMake", vehicleYear: "vehicleYear",
   chassis: "chassis", engine: "engine", coverage: "coverage",
   policy: "policy", name: "name", email: "email", mobile: "mobile",
+  /* The permit. Asked for on 3 November 2026: "we do have the driver's permit,
+     so the data driver's permit should pull in". We hold a number for about one
+     client in sixteen and an issue date for one in three hundred, so most of
+     these arrive blank and the client is populating the record rather than
+     reading it back. permitOnFile stays out of this map on purpose: it is the
+     policy's own value, kept for the mismatch check to compare against, and
+     prefilling from it as well would make that check unable to fire. */
+  driverPermit: "driverPermit", permitIssue: "permitIssue", permitExpiry: "permitExpiry",
 };
 
 // Motor and property answer to a plate; everything else to a policy or plan
@@ -2095,7 +2137,7 @@ function showStep(n) {
     if (n === 1) { renderFields($("detail-fields"), currentType().fields); showLookup(); markPrefilled(lookup.filled); }
     if (n === 2) renderDocs();
     if (n === 3) { renderFields($("you-fields"), YOU_FIELDS); markPrefilled(lookup.filled); }
-    if (n === 4) { renderReview(); renderChecks(); }
+    if (n === 4) { renderReview(); renderChecks(); renderGGForm(); }
   } else {
     $(n).hidden = false;
   }
@@ -2265,6 +2307,234 @@ function renderChecks() {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   GUARDIAN'S OWN FORM — filled here, read here, sent with the claim
+
+   Asked for on 3 November 2026: "the data has to be uploaded into Guardian
+   Life's claim form, and they can preview the claim form."
+
+   It is filled in the browser, not on the server, for three reasons. The
+   preview comes free — the same bytes that go to the desk are the bytes on
+   screen. pdf-lib and pdf.js already live here and the motor quote already
+   does exactly this. And Apps Script has no await, so filling a PDF there
+   needs a synchronous-Promise shim (see GroupBilling's gblPdfFill_), which is
+   a thing to maintain for no gain when the client's own phone can do it.
+
+   The blank is Guardian's, unflattened, so the desk can still correct a box.
+   Guardian asks for a good deal this branch never collects — sex, date of
+   birth, occupation, class of vehicle, convictions, the third party's insurer.
+   Those blanks are left empty on purpose: a form that invents them is worse
+   than one with gaps.
+   ══════════════════════════════════════════════════════════════ */
+const GG = {
+  PDF: "/claims/forms/gg-motor-accident-report.pdf",
+  LIB: "/motor-quote/vendor/pdf-lib-1.17.1.min.js",
+  PDFJS: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+  WORKER: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
+};
+let ggBytes = null;        // the filled form, once built — this is what is uploaded
+let ggBusy = false;
+
+/* The subtype the client chose, in the words Guardian's "Cause of Loss" blank
+   expects. Short, because the blank is about 90pt wide. "Someone is claiming
+   against me" is not a cause of loss at all — it is who is claiming — so that
+   one is left for a person. */
+const GG_CAUSE = {
+  accident: "Collision", theft: "Theft", breakin: "Break-in",
+  glass: "Glass damage", fire: "Fire", flood: "Flood / storm",
+  hitrun: "Hit and run",
+};
+
+function ggApplies() { return state.type === "motor"; }
+
+/* Our answers onto Guardian's blanks. Only what we actually hold; a name split
+   on the last space, because the form asks first name and surname separately
+   and the branch records one field. */
+function ggValues() {
+  const a = state.answers, p = state.policy || {};
+  const split = (full) => {
+    const w = String(full || "").trim().split(/\s+/).filter(Boolean);
+    if (!w.length) return ["", ""];
+    if (w.length === 1) return [w[0], ""];
+    return [w.slice(0, -1).join(" "), w[w.length - 1]];
+  };
+  const dmy = (iso) => {
+    const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? m[3] + "/" + m[2] + "/" + m[1] : String(iso || "");
+  };
+  const ins = split(a.name || p.name);
+  const same = /^(y|yes)/i.test(String(a.driverSame || ""));
+  const drv = split(same ? (a.name || p.name) : (a.driverName || ""));
+
+  return {
+    claimRef: state.ref || "",
+    vehicleReg: a.vehicleReg || p.vehicleReg || "",
+    insFirst: ins[0], insSurname: ins[1],
+    insMobile: a.mobile || "", insEmail: a.email || "",
+    driverSame: a.driverSame ? (same ? "Yes" : "No") : "",
+    driverRel: same ? "Self" : (a.driverRel || ""),
+    driverFirst: drv[0], driverSurname: drv[1],
+    driverMobile: same ? (a.mobile || "") : "",
+    driverEmail: same ? (a.email || "") : "",
+    permitNo: a.driverPermit || "",
+    permitIssue: dmy(a.permitIssue), permitExpiry: dmy(a.permitExpiry),
+    lossDate: dmy(a.incidentDate), lossTime: a.incidentTime || "",
+    lossLocation: a.location || "",
+    /* Cause of Loss is one of Guardian's starred fields, and the claim already
+       knows it: it is what the client picked on the first screen. "Accident /
+       collision", "Fire", "Flood or storm damage" are causes of loss in the
+       form's own sense. The blank is a short one, so the longer labels are cut
+       to the part that names the cause. */
+    lossCause: GG_CAUSE[state.subtype] || "",
+    policeStation: a.policeStation || "",
+    description: ggDescription(),
+    damageDetails: a.damage || "",
+    garageEstimate: a.amount || "",
+    anyoneInjured: a.injuries ? (/^(y|yes)/i.test(String(a.injuries)) ? "Yes" : "No") : "",
+    reportDate: dmy(todayISO()),
+  };
+}
+
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+}
+
+/* Guardian's "Description of Accident" box, which asks for the client's own
+   account of what happened.
+   NOT buildDescription(): that one appends every extra answer as "Label:
+   value", which is right for the branch's own summary and wrong here. The
+   first cut used it, and the box came out reading "Registration number: PDL
+   4471  Driver's permit number: TT-1184772  Permit first issued: …" — every
+   one of which has its own printed blank earlier in the same form. It filled
+   the one box on the form that is for the client's own words with a machine's
+   restatement of the boxes above it.
+   So: their account, and after it only an answer this form has nowhere else
+   to put. GG_HAS is the list of answers that already have a blank. */
+const GG_HAS = [
+  "description", "vehicleReg", "driverPermit", "permitIssue", "permitExpiry",
+  "incidentDate", "incidentTime", "location", "amount", "policeReport", "policeStation",
+  "driverName", "driverSame", "driverRel", "damage", "injuries",
+  "tpName", "tpVehicle", "tpInsurer", "tpContact",
+];
+function ggDescription() {
+  const t = currentType();
+  const spare = t.fields.filter(applies)
+    .filter((f) => f.sec === undefined && f.note === undefined && GG_HAS.indexOf(f.id) < 0)
+    .map((f) => {
+      const v = String(state.answers[f.id] || "").trim();
+      return v ? f.label.replace(/&amp;/g, "&") + ": " + v : "";
+    }).filter(Boolean);
+  const own = String(state.answers.description || "").trim();
+  return (own + (spare.length ? (own ? "  " : "") + spare.join(". ") : "")).trim();
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if ([...document.scripts].some((s) => s.src === src || s.src.endsWith(src))) return resolve();
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error("could not load " + src));
+    document.head.appendChild(s);
+  });
+}
+
+/* Build it. Returns the bytes, or throws with something a person can read. */
+async function ggBuild() {
+  await loadScript(GG.LIB);
+  if (typeof PDFLib === "undefined") throw new Error("the PDF library did not load");
+  if (typeof ClaimForms === "undefined") throw new Error("the form positions did not load");
+  const res = await fetch(GG.PDF);
+  if (!res.ok) throw new Error("Guardian's blank form could not be fetched");
+  const blank = await res.arrayBuffer();
+  ggBytes = await ClaimForms.fillAccident(blank, ggValues(), PDFLib);
+  return ggBytes;
+}
+
+function renderGGForm() {
+  const box = $("ggform");
+  if (!box) return;
+  if (!ggApplies()) { box.innerHTML = ""; box.className = ""; return; }
+  box.className = "gg";
+  box.innerHTML =
+    "<h3>Guardian's accident report form</h3>" +
+    "<p>We fill Guardian General's own form (GG-MOT-CLM-02/2025) from what you have " +
+    "told us, and it goes to the claims desk with your documents. Read it before you " +
+    "send — this is the page an assessor opens. Anything Guardian asks that we do not " +
+    "hold is left blank for a person to complete with you.</p>" +
+    '<div class="gg-row">' +
+      '<button class="btn btn-ghost" type="button" id="gg-show">' + ICON("doc") +
+      " Show me the filled form</button>" +
+      '<a class="btn btn-ghost" id="gg-dl" hidden download="guardian-accident-report.pdf">' +
+      ICON("down") + " Download it</a>" +
+    "</div>" +
+    '<div class="gg-note" id="gg-note"></div>' +
+    '<div class="gg-pages" id="gg-pages"></div>';
+
+  $("gg-show").addEventListener("click", ggShow);
+}
+
+async function ggShow() {
+  if (ggBusy) return;
+  ggBusy = true;
+  const btn = $("gg-show"), note = $("gg-note"), pages = $("gg-pages");
+  btn.disabled = true;
+  btn.textContent = "Filling it in…";
+  note.textContent = "";
+  pages.innerHTML = "";
+  try {
+    const bytes = await ggBuild();
+
+    // Download works whether or not pdf.js is reachable.
+    const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+    const dl = $("gg-dl");
+    dl.href = url;
+    dl.hidden = false;
+
+    await loadScript(GG.PDFJS);
+    if (typeof pdfjsLib === "undefined") throw new Error("preview");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = GG.WORKER;
+    // A copy, because pdf.js takes ownership of the buffer it is handed and
+    // the same bytes still have to be uploaded afterwards.
+    const doc = await pdfjsLib.getDocument({ data: bytes.slice(0) }).promise;
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await doc.getPage(n);
+      const vp = page.getViewport({ scale: 1.6 });
+      const wrap = document.createElement("div");
+      const label = document.createElement("div");
+      label.className = "gg-pg";
+      label.textContent = "Page " + n + " of " + doc.numPages;
+      const canvas = document.createElement("canvas");
+      canvas.width = vp.width;
+      canvas.height = vp.height;
+      wrap.appendChild(label);
+      wrap.appendChild(canvas);
+      pages.appendChild(wrap);
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
+    }
+    note.innerHTML = "Filled from your answers. The claim number fills itself in when you " +
+      "send, and your signature is not on it — the branch takes that when the claim is " +
+      "reviewed with you.";
+    btn.textContent = "Filled in";
+  } catch (err) {
+    // Two different failures, and the client should be told which.
+    if (String(err && err.message) === "preview" && ggBytes) {
+      note.textContent = "The form is filled in and will be sent with your claim, but this " +
+        "browser could not display it here. Use Download it to read it.";
+      btn.textContent = "Filled in";
+    } else {
+      note.textContent = "We could not build the form just now. It makes no difference to your " +
+        "claim — the branch fills it from your answers at this end. " +
+        (err && err.message ? "(" + err.message + ")" : "");
+      btn.disabled = false;
+      btn.textContent = "Try again";
+    }
+  } finally {
+    ggBusy = false;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
    STEP 5 — review
    ══════════════════════════════════════════════════════════════ */
 function reviewRows(list) {
@@ -2385,6 +2655,14 @@ function claimPayload() {
       id: f.id, level: f.level, title: f.title, detail: f.detail,
       said: String(checkSaid[f.id] || "").trim(),
     })),
+
+    /* Everything else the claim answered, in one key. The permit and its two
+       dates, who was driving, the vehicle off the register — Guardian's form
+       asks for all of it and the named fields above carry none of it.
+       Deliberately the whole map rather than another hand-written list: two
+       lists of field names drift apart, and the backend has its own allowlist
+       (EXTRA_KEYS) deciding what it keeps, so nothing arrives by surprise. */
+    answers: Object.assign({}, a),
   };
 }
 
@@ -2426,6 +2704,20 @@ async function submitClaim() {
     const started = await api(Object.assign({ action: "claimStart" }, claimPayload()));
     state.ref = started.ref;
     state.uploadKey = started.uploadKey || "";
+
+    /* Guardian's own form goes with the documents. Built here, after the
+       reference exists, so the form carries it in its own claim-number box —
+       which is why it is not simply the bytes the preview made. If it cannot
+       be built, the claim still files and the desk fills the form at its end;
+       that is a note on the claim, never a failure. */
+    if (ggApplies()) {
+      try {
+        say("Filling Guardian's accident report form…");
+        const bytes = await ggBuild();
+        const file = new File([bytes], "guardian-accident-report.pdf", { type: "application/pdf" });
+        queue.push({ label: "Guardian accident report form", entry: { file: file, name: file.name } });
+      } catch (err) { /* the claim matters more than the attachment */ }
+    }
 
     const failed = [];
     for (let i = 0; i < queue.length; i++) {
