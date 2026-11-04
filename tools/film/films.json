@@ -1155,5 +1155,38 @@
    58.2
   ],
   "capbg": "05070C"
+ },
+ "h868": {
+  "durs": [
+   7.258,
+   7.718,
+   8.198,
+   6.662,
+   7.766,
+   7.526,
+   6.566,
+   7.022,
+   7.406,
+   11.822
+  ],
+  "dur": 77.9,
+  "vox": "voh868",
+  "start": 0,
+  "musicgain": 0.5,
+  "duck": 0.45,
+  "dark": [],
+  "ticks": [],
+  "hits": [],
+  "capmode": "over",
+  "cap": "cap-h868",
+  "out": "../../help868/launch.mp4",
+  "mix": "h868-mix.wav",
+  "music": "bed-h868.wav",
+  "sfx": "sfx-h868.wav",
+  "ass": "captions-h868.ass",
+  "w": 1080,
+  "h": 1920,
+  "capsize": 50,
+  "capwrap": 26
  }
 }
