@@ -6233,10 +6233,32 @@ function tSfNoteTasks_(tok, cno, ha, body) {
     var x = tSfOpenTasks_(tok, cno, ha);
     if (!x.recs.length) return { posted: 0, note: 'Salesforce has none of this client’s policies' };
     if (!x.open.length) return { posted: 0, note: 'no open task' };
-    var n = 0, fails = [];
-    x.open.forEach(function (t) { try { tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.Id, Body: body }); n++; } catch (e) { fails.push(String(e && e.message ? e.message : e).slice(0, 80)); } });
-    return { posted: n, note: n ? 'posted to ' + tN_(n, 'open task', 'open tasks') : 'not posted: ' + fails[0] };
+    // One task, on its trail (3 Nov 2026, "chatter on the trails"): the same line on every open task of a client
+    // doubled the noise, and a new post beside a live thread read as a fresh ask.
+    var t1 = tSfOneTask_(x.open), n = 0, fails = [];
+    try { tSfTrailPost_(t1.Id, body); n = 1; } catch (e) { fails.push(String(e && e.message ? e.message : e).slice(0, 80)); }
+    return { posted: n, note: n ? 'posted to 1 open task (' + tTaskSubject_(t1.Subject) + ')' : 'not posted: ' + fails[0] };
   } catch (e) { return { posted: 0, note: 'not posted: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
+}
+/** Of a client's open tasks, the one the board's lines go on: the orphan assignment task, else the newest (the list
+ *  comes newest first). */
+function tSfOneTask_(open) {
+  return open.filter(function (t) { return /^Orphan assignment/i.test(String(t.Subject || '')); })[0] || open[0];
+}
+/** THE TRAIL RULE for the board (Ricky, 3 Nov 2026): a reply in the task's live thread, under the latest
+ *  "Branch Manager · Ricky Rampersad" post, else the latest post; a new post only when the task has no Chatter or the
+ *  latest post is more than 14 days old, or the reply is refused. Throws when even the post is refused. */
+function tSfTrailPost_(taskId, body) {
+  var rows = [];
+  try { rows = tSfQuery_("SELECT Id, CreatedDate, Body FROM FeedItem WHERE ParentId = '" + String(taskId).replace(/'/g, '') +
+    "' AND Type IN ('TextPost','ContentPost','LinkPost') ORDER BY CreatedDate DESC LIMIT 25") || []; } catch (e) { rows = []; }
+  var fresh = rows.length && (Date.now() - new Date(String(rows[0].CreatedDate).replace(/\+0000$/, 'Z')).getTime()) <= 14 * 86400000;
+  if (fresh) {
+    var pick = rows.filter(function (r) { return /^\s*Branch Manager · Ricky Rampersad/.test(String(r.Body || '')); })[0] || rows[0];
+    try { tSfSend_('post', '/sobjects/FeedComment', { FeedItemId: pick.Id, CommentBody: body }); return 'comment'; } catch (e) {}
+  }
+  tSfSend_('post', '/sobjects/FeedItem', { ParentId: taskId, Body: body });
+  return 'post';
 }
 /** A person's name as a line in Salesforce reads it: the Agent Skill Bank's capitals ("SASHA LALLA") in title case, any other spelling as it is. */
 function tNiceName_(name) {
@@ -6261,7 +6283,7 @@ function tSfLogCall_(tok, cno, client, who, roleWord, outcome, extra, back, at) 
     var body = 'From the assignment board · ' + who + (roleWord ? ' (' + roleWord + ')' : '') + ', ' + when + ': ' + outcome + (extra ? ' · ' + extra : '') +
       (back ? ' · call-back: ' + (back === 'agent' ? 'a licensed agent should call' : back === 'branch' ? 'the branch should call' : back === 'dnc' ? 'do not call again' : 'cleared') : '');
     var n = 0, fails = [];
-    x.open.forEach(function (t) { try { tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.Id, Body: body }); n++; } catch (e) { fails.push(String(e && e.message ? e.message : e).slice(0, 80)); } });
+    if (x.open.length) { var t1 = tSfOneTask_(x.open); try { tSfTrailPost_(t1.Id, body); n = 1; } catch (e) { fails.push(String(e && e.message ? e.message : e).slice(0, 80)); } }
     var seen = x.open.map(function (t) { return { id: t.Id, subject: tTaskSubject_(t.Subject), owner: t.Owner ? t.Owner.Name : '', due: t.ActivityDate ? tDmy_(String(t.ActivityDate)) : '', status: String(t.Status || '') }; });
     if (x.open.length) return { on: true, posted: n, opened: '', tasks: seen, note: n ? 'logged on ' + tN_(n, 'open task', 'open tasks') : 'not logged: ' + fails[0] };
     if (!T_SFTASK.OPEN_ON_LOG) return { on: true, posted: 0, opened: '', tasks: [], note: 'no open task' };

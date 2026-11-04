@@ -14,6 +14,9 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
 const DAY = '2026-10-29';
 const env = makeEnv();
 env.todayISO_ = () => DAY;
+// The clock held at that morning, so "untouched for 10 days" stays 10 whatever day the test runs (2 Nov 2026).
+{ const realDate = env.Date, NOW = new realDate(DAY + 'T10:00:00').getTime();
+  env.Date = new Proxy(realDate, { construct(t, a) { return a.length ? new realDate(...a) : new realDate(NOW); }, get(t, k) { return k === 'now' ? () => NOW : t[k]; } }); }
 env.__mkSheet('Access', 1, ['Name', 'StaffId', 'Email', 'Password', 'Role', 'Unit', 'Active'],
   [['Ricky Rampersad', 'ricky', 'ricky@example.com', '1', 'Branch Manager', 'Branch', 'Yes'], ['Akaash Kalladeen', 'akaash', 'akaash@example.com', '1', 'Unit Manager', 'Akaash', 'Yes'],
    ['Azariah Griffith', 'azariah', 'az@example.com', '1', 'Sales Support', 'Support', 'Yes'], ['Sasha Lalla-Jagassar', 'sasha', 'sasha@example.com', '1', 'Sales Support', 'Support', 'Yes'],

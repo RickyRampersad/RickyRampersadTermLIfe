@@ -1156,6 +1156,132 @@
   ],
   "capbg": "05070C"
  },
+ "mtlive": {
+  "cap": "cap-mtlive",
+  "vox": "vomtlive",
+  "music": "bed-mtlive.wav",
+  "mix": "mtlive-mix.wav",
+  "ass": "captions-mtlive.ass",
+  "dur": 70.6,
+  "durs": [
+   4.9,
+   6.1,
+   5.6,
+   4.6,
+   6.4,
+   5.8,
+   5.9,
+   7.5,
+   5.6,
+   7.7,
+   4.9,
+   5.6
+  ],
+  "out": "../../resetrise/rise.mp4",
+  "musicgain": 0.56,
+  "duck": 0.3,
+  "sfx": "sfx-mtlive.wav",
+  "start": 0,
+  "capmode": "strip",
+  "dark": [
+   0
+  ],
+  "ticks": [],
+  "hits": [
+   2.39,
+   18.6,
+   37.4,
+   65.49
+  ],
+  "capbg": "06080A"
+ },
+ "mtshort": {
+  "cap": "cap-mtshort",
+  "vox": "vomtshort",
+  "music": "bed-mtshort.wav",
+  "mix": "mtshort-mix.wav",
+  "ass": "captions-mtshort.ass",
+  "dur": 43.0,
+  "durs": [
+   5.2,
+   3.6,
+   6.7,
+   4.5,
+   6.4,
+   6.9,
+   4.8,
+   4.9
+  ],
+  "out": "../../resetrise/short.mp4",
+  "musicgain": 0.6,
+  "duck": 0.3,
+  "sfx": "sfx-mtshort.wav",
+  "start": 0,
+  "capmode": "strip",
+  "dark": [
+   1
+  ],
+  "ticks": [],
+  "hits": [
+   2.66,
+   6.26,
+   31.19,
+   40.51
+  ],
+  "capbg": "06080A"
+ },
+ "mtturn": {
+  "cap": "cap-mtturn",
+  "vox": "vomtturn",
+  "music": "bed-mtturn.wav",
+  "mix": "mtturn-mix.wav",
+  "ass": "captions-mtturn.ass",
+  "dur": 154.3,
+  "durs": [
+   5.0,
+   5.3,
+   11.4,
+   7.3,
+   6.7,
+   6.0,
+   5.5,
+   14.7,
+   13.0,
+   17.0,
+   15.7,
+   10.9,
+   10.8,
+   7.5,
+   4.2,
+   8.4,
+   4.9
+  ],
+  "out": "../../resetrise/turn.mp4",
+  "musicgain": 0.62,
+  "duck": 0.3,
+  "sfx": "sfx-mtturn.wav",
+  "start": 0,
+  "capmode": "strip",
+  "dark": [],
+  "ticks": [],
+  "hits": [
+   10.55,
+   21.95,
+   29.25,
+   35.95,
+   41.95,
+   47.45,
+   62.15,
+   75.15,
+   92.15,
+   107.85,
+   118.75,
+   129.55,
+   141.25,
+   149.65
+  ],
+  "capbg": "06080A"
+ },
  "h868": {
   "durs": [
    7.258,

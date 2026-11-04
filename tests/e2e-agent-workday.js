@@ -73,7 +73,15 @@ const model = (planned, closeDone) => ({ ok: true, v: '2026-10-29e', agent: true
   if (OUT) await p2.screenshot({ path: path.join(OUT, 'agent-close-dark.png') });
   await p2.goto('http://localhost:8817/myworkday/?p=a-neil-ramnanan&k=KEY&go=agitems&t=00TAG1'); await p2.waitForTimeout(1500);
   ok('the task from the morning e-mail opens', !(await p2.isHidden('#agitems li[data-ag="00TAG1"] .tc')));
-  await c2.close(); await b.close(); server.close();
+  await c2.close();
+  // 2 Nov 2026: with Reduce motion on (an iPhone setting), the tiles stayed invisible: they only appeared by animating in.
+  console.log('\nWith Reduce motion on:\n');
+  const c3 = await b.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' }); const p3 = await c3.newPage(); current = model(null, null);
+  await p3.route(/script\.google\.com\/macros/, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(current) }));
+  await p3.goto('http://localhost:8817/myworkday/?p=a-neil-ramnanan&k=KEY'); await p3.waitForTimeout(1200);
+  const tiles = await p3.$$eval('.agt div', els => els.map(e => getComputedStyle(e).opacity));
+  ok('the tiles show at once', tiles.length >= 3 && tiles.every(o => o === '1'), JSON.stringify(tiles));
+  await c3.close(); await b.close(); server.close();
   console.log(fails ? '\n' + fails + ' FAILED' : '\nall green');
   process.exit(fails ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

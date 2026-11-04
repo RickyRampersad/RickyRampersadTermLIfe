@@ -1,0 +1,15 @@
+{
+ "note": "Reset and rise, the short cut (2 Nov 2026): Friday's words (We rise together; not going back to what it was; lift each other, from the Blast Off minutes), then the whole system in one breath: the agent's goal ring and one thing first, staff with the coach, managers seeing the day and coming when asked, the wall where each is against their own best, Rajiv first, everyone now.",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
+ "scenes": [
+  { "say": "Friday, we said it together. We rise together.", "extra": 0.5 },
+  { "say": "And we are not going back to what it was.", "extra": 0.4 },
+  { "say": "From today, every agent starts the day with their goal, and one thing to do first.", "extra": 0.2 },
+  { "say": "Our staff work with a coach on the screen, all day.", "extra": 0.2 },
+  { "say": "Your managers see your day as it happens. Ask for help, and we come to you.", "extra": 0.2 },
+  { "say": "All of it goes to the wall. Each of us, against our own best. Never ranked.", "extra": 0.3 },
+  { "say": "Rajiv went first. Now, it's every one of us.", "extra": 0.3 },
+  { "say": "Check in. Lift each other. Rise.", "extra": 0.8 }
+ ]
+}
