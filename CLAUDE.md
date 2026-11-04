@@ -4934,6 +4934,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     zone (`gblMon_`), keeps one Group Bills row a group, line and month (the newest), and `gblCell_` writes months as
     text. The test harness (`gcmlive/env-sq.js` in the scratchpad) never caught it because its cells kept what they were
     given; `SHEETS_DATES=1` makes them behave as Sheets does, and `billing/month-test.js` (25) covers the live case.
+  - **The month list has no gaps** (4 November 2026: a group with no October 2026 record in Salesforce and no October bill uploaded had no October to choose, so its October bill could not be uploaded). `blMonthList` in `billing-ui.js`, used by the door and the review, lists every month from the oldest bill or Salesforce record to next month, at most four years back, whether or not anything is on file for it.
   - **Group Life comes in two layouts** (27 October 2026: "the group Life members are on and its not reading"). Guardian's
     member bill carries ten figures a row when the plan has New Life cover (basic, accidental death, new life, then each
     premium with its tax, then the premium) and seven when it has none (`LIFE_COLS`, `lifeFig` in `billread.js`); the

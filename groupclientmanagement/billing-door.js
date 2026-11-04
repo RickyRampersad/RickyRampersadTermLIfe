@@ -132,9 +132,7 @@ function drawBilling() {
   const d = BILL, g = d.group, S = dStates();
   if (!DOOR.step || !S[DOOR.step]) DOOR.step = dFirstOpen(S);
   $('mhello').innerHTML = '';
-  const months = new Set([d.month, blAddM(d.today.slice(0, 7), 1), d.today.slice(0, 7)]);
-  d.lines.forEach(o => { o.stored.forEach(x => months.add(x.month)); o.sf.history.forEach(x => months.add(x.month)); });
-  const opts = [...months].filter(Boolean).sort().reverse().map(m => '<option value="' + m + '"' + (m === d.month ? ' selected' : '') + '>' + blMon(m) + '</option>').join('');
+  const opts = blMonthList(d).map(m => '<option value="' + m + '"' + (m === d.month ? ' selected' : '') + '>' + blMon(m) + '</option>').join('');
   let h = '<button class="back" type="button" id="blBack">← All groups</button>' +
     '<div class="dhead"><div><h2>' + esc(g.name) + ' <span class="muted">· ' + esc(d.monthLabel) + '</span></h2><p class="sub">List bill ' + esc(g.bills.join(', ') || 'none') + ' · bills go to ' + esc(g.contact || g.to.join(', ') || 'nobody yet') +
     (d.canAct === false ? ' · <b>read only</b>: ' + esc(g.assigned || 'its owner') + ', the assistant branch manager or the branch manager act here' : '') + (d.salesforce ? '' : ' · <b>Salesforce is not linked</b>') + ' <span id="dsync" class="muted"></span></p></div>' +
