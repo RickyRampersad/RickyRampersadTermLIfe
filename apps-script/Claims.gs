@@ -3056,6 +3056,35 @@ function claimSurveySweep_() {
 
 /* ============================ setup & menu ============================ */
 
+/* Say how setup went, without hanging.
+ *
+ * SpreadsheetApp.getUi().alert() posts its dialog in the SPREADSHEET tab and
+ * then blocks until somebody clicks it. Run setupClaims from the Apps Script
+ * editor — which is what the runbook tells you to do, and what anyone setting
+ * this up for the first time does — and the dialog appears in a tab you are
+ * not looking at. Six minutes later the run dies with "Exceeded maximum
+ * execution time", after every bit of the work has already been done
+ * successfully. It reads as a failed setup and is not one. That happened on
+ * the first live setup, 4 November 2026.
+ *
+ * So the summary always goes to the execution log, which is where the editor
+ * already has you looking, and the dialog is only shown from the menu, where
+ * somebody is looking at the sheet and will click it. */
+function claimsSetupSay_(summary) {
+  Logger.log(summary);
+  if (claimsFromMenu_) {
+    try { SpreadsheetApp.getUi().alert(summary); } catch (err) { /* no UI; the log has it */ }
+  }
+  return summary;
+}
+var claimsFromMenu_ = false;
+
+/** The menu's "Set up / repair everything" — same work, and it does show the box. */
+function setupClaimsFromMenu() {
+  claimsFromMenu_ = true;
+  try { return setupClaims(); } finally { claimsFromMenu_ = false; }
+}
+
 function setupClaims() {
   filesSheet_(); logSheet_(); registerSheet_(); policyRegisterSheet_();
   claimSurveysSheet_();
@@ -3083,7 +3112,7 @@ function setupClaims() {
   ScriptApp.newTrigger('claimsFollowUp').timeBased().everyDays(1).atHour(9).create();
 
   var vehicles = Math.max(registerSheet_().getLastRow() - 1, 0);
-  SpreadsheetApp.getUi().alert(
+  return claimsSetupSay_(
     'Claims TT is ready.\n\n' +
     'Tabs: ' + CLAIMS.CLAIMS_SHEET + ', ' + CLAIMS.FILES_SHEET + ', ' +
       CLAIMS.LOG_SHEET + ', ' + CLAIMS.REGISTER_SHEET + ', ' +
@@ -3106,7 +3135,7 @@ function setupClaims() {
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Claims TT')
-    .addItem('1. Set up / repair everything', 'setupClaims')
+    .addItem('1. Set up / repair everything', 'setupClaimsFromMenu')
     .addSeparator()
     .addItem('Open the claims Drive folder', 'openClaimsFolder')
     .addItem('Email the client their new status', 'notifyStatusChange')
