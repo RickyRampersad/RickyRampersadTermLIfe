@@ -1,21 +1,23 @@
 {
  "voices": {
-  "agrise": "en-US-AndrewMultilingualNeural"
+  "h868": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "agrise": "+0%"
+  "h868": "+0%"
  },
  "check": true,
  "films": {
-  "agrise": [
-   "Good morning. From today, this is your day. Rise.",
-   "Your month and your week, at a glance: business picked up against your goal, and fact finds against your weekly number.",
-   "Your streak. Check in and plan by seven, and every day counts.",
-   "The bell shows only what is waiting on you. A note from your manager. A client waiting on a call.",
-   "Your fact finds with clients: when the plan went, how long they have waited, and how often we followed up.",
-   "Today's list: what the branch is working on for your clients, with one tap to comment.",
-   "Kudos, only for what you have earned. Share it with your manager.",
-   "Close off your day by six. Check in, lift each other, and rise."
+  "h868": [
+   "Meet Help eight six eight. Your branch, on WhatsApp, any hour of the day.",
+   "Your clients message us the way they message everyone else. One tap, and the chat opens.",
+   "We say hello, and ask what they need. A question, a claim, an update, a payment, or a quote.",
+   "They just pick a number. No forms, no phone tag, and no waiting for Monday.",
+   "We take their name, and the policy number if they have one. Never bank details, never ID numbers.",
+   "Then it's logged on our query system, with a ticket reference, and our team routes it to the right department.",
+   "Your client gets that reference right there in WhatsApp, while the chat is still in their hand.",
+   "Our support team sees the whole chat, with a note on what was asked, and takes it from there.",
+   "Agents, this is for your clients too. Share the link, and every query lands in one place.",
+   "Help eight six eight. Always on, and always us. Tap the green button on our website, and say hello."
   ]
  }
 }
