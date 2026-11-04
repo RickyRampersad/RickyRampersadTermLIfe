@@ -1,5 +1,65 @@
 # Claims TT — Setup Guide
 
+## Go live — the short version
+
+The page is **already published** at
+<https://rickyrampersadbranch.com/claims/>. What it has not got is a backend:
+`CONFIG.API_URL` is empty, so nothing a client types reaches anybody. Six
+steps, and only three of them are yours.
+
+| # | Who | What | How long |
+|---|---|---|---|
+| 1 | **You** | Merge the branch so the live page is the current one | 1 min |
+| 2 | **You** | New Google Sheet **Claims TT** → Extensions → Apps Script → paste `apps-script/Claims.gs` → Run **setupClaims** → Deploy → New deployment → Web app (Execute as **Me**, Who has access **Anyone**) → copy the `/exec` URL | 10 min |
+| 3 | Claude | Paste that URL into `claims/index.html` and `claims/staff.html`, push | 1 min |
+| 4 | **You** | Claims TT menu → **Turn test mode ON**, then file a claim against yourself and read what arrives | 10 min |
+| 5 | **You** | Salesforce Connected App → Claims TT menu → **Connect Salesforce** (Part 4) | 15 min |
+| 6 | **You** | Add the staff who need the dashboard to the **Staff** tab, then **test mode OFF** | 5 min |
+
+**Step 5 is optional for day one.** Without Salesforce the site works — the
+claimant types their own policy number instead of it filling itself in, and
+nothing writes back to `Claims__c`. Everything else is unchanged.
+
+### Before you turn test mode off: the desk addresses
+
+A claim is only forwarded to a line's claims desk when that line is listed in
+`CLAIMS.DESK_OK`. **Only `health` is**, because only its address is confirmed
+(`EBCustomercare@myguardiangroup.com` — EB's own replies say to direct
+everything about a health claim there, and the renewal desk already files
+change forms to it).
+
+The other four shipped as guesses and the branch's own record contradicts
+them, so they are now blank. A claim on an unconfirmed line still files, still
+goes into Drive, still acknowledges the client, and still e-mails you and
+sales support — with a red banner saying **"Pass this on by hand"** and which
+address to set. Nothing is ever sent to an address nobody has confirmed: a
+claim landing in an unwatched mailbox reads as handled, to us and to the
+client, until somebody asks why nothing happened.
+
+The addresses are in the **Log Book's own Departments tab**, which is where
+the branch really keeps them. `LB_DEPTS` in `LogBook.gs` says which department
+each document goes to, measured over 3,634 real lines:
+
+| Line | Department the Log Book uses |
+|---|---|
+| health | **EBD HEALTH CLAIMS** (19 of 31) or **EBD CUSTOMER CARE** (12) |
+| life | **GLOC CLAIMS - CUSTOMER SUPPORT** (17 of 23 Claim Submission Forms) |
+| motor, property | **Guardian General — Motor Claims Department** (a different company from Guardian Life) |
+| pension | not yet seen in the Log Book — ask sales support |
+
+Copy each address off that tab into `CLAIMS.DESK`, add the key to
+`CLAIMS.DESK_OK`, and file one test claim on that line to watch it arrive.
+
+### Where claimstt.com fits
+
+Nowhere, yet — and it is not in the way. GitHub Pages takes **one** custom
+domain per site and this one is `rickyrampersadbranch.com`, so claimstt.com
+can only redirect there until hosting moves. Go live on
+`rickyrampersadbranch.com/claims/` and treat the domain as a separate job;
+see *Pointing claimstt.com at it* below.
+
+---
+
 The custom claims intake for **claimstt.com**, replacing the Jotform hand-off.
 
 A client picks their claim type, answers only the questions that apply to it,
@@ -132,7 +192,8 @@ const CONFIG = {
   ...
 ```
 
-Commit and push — Netlify redeploys automatically. The orange "Preview mode"
+Commit and push — GitHub Pages rebuilds in a minute or two (this repository is
+served by Pages, not Netlify; see Part 1). The orange "Preview mode"
 banner disappears once `API_URL` is set; that is how you know it is live.
 
 **Test it safely:** in the sheet, **Claims TT menu → 🧪 Turn test mode ON**

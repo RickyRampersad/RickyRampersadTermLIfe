@@ -64,20 +64,50 @@ var CLAIMS = {
   // and has to be forwarded by hand. The registers already hold each
   // policy's Carrier, so routing by carrier is a small change when you
   // want it; say so and it gets built.
+  /* Where a filed claim is forwarded, by line of business.
+   *
+   * DESK_OK is the list of lines whose address somebody has actually
+   * CONFIRMED. A line not on it is never e-mailed: the claim still files, the
+   * branch is still told, and the e-mail says in as many words that it was not
+   * forwarded and why. That rule exists because the opposite failure is
+   * invisible and expensive — a claim sent to an address nobody checks looks
+   * exactly like a claim that was handled, to us and to the client, until the
+   * day somebody asks why nothing happened.
+   *
+   * Four of the five addresses below were guesses, and the branch's own record
+   * contradicts them. Measured on 3,634 Log Book lines (LB_DEPTS in
+   * LogBook.gs), a Health Claim Form goes to EBD HEALTH CLAIMS or EBD CUSTOMER
+   * CARE, and a Claim Submission Form - Life & CI goes to GLOC CLAIMS -
+   * CUSTOMER SUPPORT. Motor is a different company altogether: Guardian
+   * General's Motor Claims Department. So the names are right here and the
+   * addresses have to come from the Log Book's own Departments tab, which is
+   * private and holds the ones the branch really uses.
+   *
+   * To switch a line on: put the real address in DESK, add the key to DESK_OK,
+   * and file one claim in test mode to see it arrive. */
   DESK: {
-    motor:    'GuardianGeneralClaims@myguardiangroup.com',
-    property: 'GuardianGeneralClaims@myguardiangroup.com',
-    health:   'healthclaims@myguardiangroup.com',
-    life:     'lifeclaims@myguardiangroup.com',
-    pension:  'pensions@myguardiangroup.com',
+    // Guardian General — Motor Claims Department. NOT Guardian Life.
+    motor:    '',
+    property: '',
+    // Employee Benefits customer care. Confirmed: EB's own replies say to
+    // direct everything about a health claim here, and the renewal desk
+    // already files change forms to it.
+    health:   'EBCustomercare@myguardiangroup.com',
+    // GLOC Claims — Customer Support, the Log Book's own route for a
+    // life/CI claim submission. Address to be read off the Departments tab.
+    life:     '',
+    pension:  '',
   },
-  DESK_DEFAULT: 'GuardianGeneralClaims@myguardiangroup.com',
+  DESK_OK: ['health'],
+  DESK_DEFAULT: '',
 
-  // Copied on every claim, whatever the type.
+  // Copied on every claim, whatever the type. With a line's desk not yet
+  // confirmed, these are the only people who get it — which is why the branch
+  // inbox has to be on the list.
   MAIL_CC: [
-    'ricky.rampersad@myguardiangroup.com',   // you
-    'salessupport@myguardiangroup.com',      // sales support team
-    'support@rickyrampersadbranch.com',      // branch support inbox
+    'Ricky.Rampersad@myguardiangroup.com',               // you
+    'rickyrampersadsalessupport@myguardiangroup.com',    // sales support team
+    'support@rickyrampersadbranch.com',                  // branch support inbox
   ],
 
   FROM_NAME: 'Ricky Rampersad — Claims TT',
@@ -485,8 +515,21 @@ function typeLabel_(type) {
   return (CLAIM_TYPES[type] && CLAIM_TYPES[type].label) || 'Claim';
 }
 
+/** The confirmed desk for a line, or '' when there is none. Never a guess. */
 function deskFor_(type) {
-  return CLAIMS.DESK[type] || CLAIMS.DESK_DEFAULT;
+  var ok = CLAIMS.DESK_OK || [];
+  if (ok.indexOf(type) >= 0 && CLAIMS.DESK[type]) return CLAIMS.DESK[type];
+  return CLAIMS.DESK_DEFAULT || '';
+}
+
+/** Why a claim was not forwarded, in words the branch can act on. */
+function deskGap_(type) {
+  if (deskFor_(type)) return '';
+  var label = typeLabel_(type) || type;
+  return 'This claim was NOT forwarded to a claims desk: the address for ' + label +
+    ' has not been confirmed yet. It is filed, the documents are in Drive, and the ' +
+    'client has been acknowledged — someone has to pass it on by hand until ' +
+    'CLAIMS.DESK.' + type + ' is set and "' + type + '" is added to CLAIMS.DESK_OK.';
 }
 
 function ccList_() {
@@ -2024,16 +2067,24 @@ function fileListHtml_(files) {
 
 function notifyDesk_(claim, files, missing, form) {
   var type = typeKeyFromLabel_(claim.type);
-  var subject = 'NEW CLAIM — ' + claim.ref + ' — ' + claim.type +
+  var desk = deskFor_(type);
+  var gap = deskGap_(type);
+  var subject = (gap ? 'NEW CLAIM (not forwarded) — ' : 'NEW CLAIM — ') + claim.ref + ' — ' + claim.type +
     (claim.subtype ? ' (' + claim.subtype + ')' : '') + ' — ' + claim.name;
 
+  /* No confirmed desk: the branch alone gets it, with the reason at the top.
+     Never a fallback address — a claim landing in an unwatched mailbox reads
+     as handled and is not. */
+  var cc = ccList_();
   sendMail_({
-    to: deskFor_(type), cc: ccList_(), replyTo: claim.email || undefined, name: CLAIMS.FROM_NAME,
+    to: desk || cc, cc: desk ? cc : '', replyTo: claim.email || undefined, name: CLAIMS.FROM_NAME,
     subject: subject,
     htmlBody:
       '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1a2433">' +
       '<div style="background:' + CBRAND.navy + ';color:#fff;padding:14px 18px;border-radius:8px 8px 0 0">' +
       '<b>New claim submitted online — ' + esc_(claim.ref) + '</b></div>' +
+      (gap ? '<div style="background:#fbe9e7;border-left:4px solid #b3261e;padding:12px 16px;margin:0 0 4px">' +
+        '<b>Pass this on by hand.</b><br>' + esc_(gap) + '</div>' : '') +
       '<table style="border-collapse:collapse;width:100%;max-width:680px">' +
       tr_('<b>Reference</b>', '<b>' + esc_(claim.ref) + '</b>') +
       tr_('Claim type', esc_(claim.type) + (claim.subtype ? ' — ' + esc_(claim.subtype) : '')) +
