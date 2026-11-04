@@ -20,6 +20,29 @@ steps, and only three of them are yours.
 claimant types their own policy number instead of it filling itself in, and
 nothing writes back to `Claims__c`. Everything else is unchanged.
 
+### Re-paste `Claims.gs` — 4 November 2026
+
+Steps 1 to 4 are done. Two things the first live test found, both fixed in
+`apps-script/Claims.gs`, and **both need the file pasted again and a new
+version deployed** (Deploy → Manage deployments → ✏️ → Version: **New
+version** → Deploy; never *New deployment*, which issues a fresh `/exec` and
+every front end has to be re-wired):
+
+- **The documents now travel with the e-mail.** The desk notice used to
+  attach the branch's own claim form and nothing else, so Guardian's own
+  accident report form — the one document the motor desk works from — arrived
+  as a Drive link. Guardian's forms are attached first, then the papers an
+  assessor reads, then the photographs, up to 18 MB; anything that did not fit
+  is named in the body with its link. The client gets their own forms back,
+  not their own photographs.
+- **The time of loss was wrong on the desk notice.** A client who typed
+  **14:30** had `Sat Dec 30 1899 18:30:00` printed to the claims desk, and the
+  claim form PDF said the same, and `Date_of_Service__c` was written as
+  **null** in Salesforce on every claim. One root cause — see the house note
+  in `CLAUDE.md` — fixed at the one place both fields are read.
+
+The staff card also gains a **When it happened** row, which it never had.
+
 ### Before you turn test mode off: the desk addresses
 
 A claim is only forwarded to a line's claims desk when that line is listed in
