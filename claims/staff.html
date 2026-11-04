@@ -644,6 +644,7 @@ function renderDrawer() {
     '<div class="d-sec"><h3>Claim</h3><dl class="kv">' +
       kv("Client", c.name) + kv("Type", c.type + (c.subtype ? " — " + c.subtype : "")) +
       kv("Policy #", c.policy) + kv("Mobile", c.mobile) + kv("Email", c.email) +
+      kv("When it happened", c.when) +
       kv("Filed", c.filed) +
       kv("Review due", c.reviewDue ? c.reviewDue + (c.reviewOverdue ? " — due now" : "") : "") +
       kv("Location", c.location) + kv("Estimated", c.amount) +

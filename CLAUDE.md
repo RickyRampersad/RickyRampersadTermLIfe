@@ -7336,6 +7336,25 @@ billing note above). The rule that falls out of both: **a value that looks like
 a number or a date is not what you wrote — write it as text, and never key a
 lookup on its spelling.**
 
+**A third instance, 4 November 2026, and the worst of them: a TIME-only cell.**
+The claims intake stored a motor loss at `14:30`; Sheets keeps a time with no
+date on **30 December 1899**, and that date is old enough to carry a
+local-mean-time offset — Port of Spain ran at −04:06:04 until 1912 — so
+`String()`ing the Date it handed back printed **`Sat Dec 30 1899 18:30:00
+GMT-0400`**. The desk notice therefore told Guardian's claims desk the loss
+happened at **18:30**. Same root cause, three symptoms at once: the e-mail and
+the claim-form PDF printed a raw Date, and `Date_of_Service__c` was written as
+**null** on every claim, because the guard was
+`/^\d{4}-\d{2}-\d{2}$/.test(claim.incidentDate) ? … : null` and the raw string
+failed it *quietly*. So: **a date or a time is normalised at the one place it
+is read** (`iso_`, `hhmm_` in `Claims.gs`), **formatted in the SPREADSHEET's
+zone and not the script's** (they are separate settings, and a midnight date
+cell formatted in the wrong one moves to the day before), and **never passed
+through `new Date()` once it is `yyyy-MM-dd`** — `new Date('2026-11-01')` is
+UTC midnight, which is 31 October here, which is the `whenWord` trap above.
+A regex guard that answers `null` on a value it does not recognise hides this
+class of bug for months; make it log or normalise, never silently drop.
+
 **And the fake sheet could not reproduce it**, for the reason recorded there
 too: it kept whatever it was given. `SHEETS_PARSE=1` now makes
 `tests/harness.js` parse like Sheets, and `setNumberFormat('@')` marks a cell

@@ -377,6 +377,21 @@ function appendClaim_(vals) {
   var sh = claimsSheet_();
   var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
   sh.appendRow(headers.map(function (h) { return (h in vals) ? vals[h] : ''; }));
+
+  /* Sheets parses '2026-11-01' into a Date and '14:30' into a time on 30
+     December 1899, and neither reads back as the client typed it — the second
+     put the WRONG TIME OF LOSS on the desk notice. So those two cells are set
+     to plain text and written again. It is the house rule a month cell taught
+     twice over: a value that looks like a date is not what you wrote.
+     iso_ and hhmm_ still read the rows stored before this. */
+  var row = sh.getLastRow();
+  ['Incident Date', 'Incident Time'].forEach(function (h) {
+    var c = headers.indexOf(h);
+    if (c < 0 || !(h in vals)) return;
+    var cell = sh.getRange(row, c + 1);
+    cell.setNumberFormat('@');
+    cell.setValue(String(vals[h] === null || vals[h] === undefined ? '' : vals[h]));
+  });
 }
 
 function filesSheet_() {
@@ -948,7 +963,10 @@ function sfLogClaim_(claim) {
     Claim_Category__c: m.cat,
     Type_Of_Claim__c: m.type,
     Date_Submitted__c: Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'America/Port_of_Spain', 'yyyy-MM-dd'),
-    Date_of_Service__c: /^\d{4}-\d{2}-\d{2}$/.test(claim.incidentDate) ? claim.incidentDate : null,
+    /* iso_ again, not a bare read: Date of Service was null on every claim
+       filed before this, because the raw Date the sheet hands back fails the
+       yyyy-MM-dd test and the test quietly answered null. */
+    Date_of_Service__c: iso_(claim.incidentDate) || null,
     Patient_s_Name__c: String(claim.name).slice(0, 100),
     Amount__c: amount,
     Submitted_Charges__c: amount || null,
@@ -1278,6 +1296,13 @@ function apiStaffData_(b) {
         name: g('Client Name'), policy: g('Policy #'),
         mobile: g('Mobile'), email: g('Email'),
         filed: fmtOrBlank_(claimField_(hit, 'Timestamp')),
+        /* When it happened — the first question an assessor asks, and the
+           card had no answer: it was only ever on the sheet and in the
+           e-mail, where it printed as a raw Date. */
+        when: whenText_({
+          incidentDate: claimField_(hit, 'Incident Date'),
+          incidentTime: claimField_(hit, 'Incident Time'),
+        }),
         quietDays: Math.max(daysSince_(claimField_(hit, 'Last Updated')), 0),
         amount: g('Estimated Amount (TT$)'),
         location: g('Location'), description: g('Description'),
@@ -1695,7 +1720,14 @@ function claimObject_(hit) {
   return {
     ref: g('Reference'), status: g('Status'), type: g('Claim Type'), subtype: g('Sub-type'),
     name: g('Client Name'), policy: g('Policy #'), mobile: g('Mobile'), email: g('Email'),
-    nationalId: g('National ID'), incidentDate: g('Incident Date'), incidentTime: g('Incident Time'),
+    nationalId: g('National ID'),
+    /* Normalised here, once, because every reader wanted them normalised and
+       none of them was: String()ing the Date the sheet hands back gave the
+       desk 'Sun Nov 01 2026 03:00:00 GMT-0400', gave the claim form PDF the
+       same, and made Salesforce's own yyyy-MM-dd test fail, so Date of
+       Service was written as null on every claim. */
+    incidentDate: iso_(claimField_(hit, 'Incident Date')),
+    incidentTime: hhmm_(claimField_(hit, 'Incident Time')),
     location: g('Location'), description: g('Description'), amount: g('Estimated Amount (TT$)'),
     policeReport: g('Police Report #'), policeStation: g('Police Station'),
     thirdParty: g('Third Party'), bank: g('Bank Details'), folder: g('Drive Folder'),
@@ -1779,11 +1811,66 @@ function normKey_(value) {
    GMT-0400" — which a date input rejects in silence, so the field simply shows
    empty and the prefill looks as though it never happened. Same family as the
    group billing month that read back as a month. */
+/* The zone Sheets used to BUILD the Date it hands back, which is the only
+   zone that reads it back as the day and the hour that were typed. The
+   script's own zone is a different setting and need not agree; formatting a
+   midnight date cell in the wrong one moves it to the day before. */
+function sheetTz_() {
+  try { return cs_().getSpreadsheetTimeZone() || Session.getScriptTimeZone(); }
+  catch (err) { return Session.getScriptTimeZone() || 'America/Port_of_Spain'; }
+}
+
+/**
+ * A time-only cell, back as HH:mm.
+ *
+ * Sheets stores a time with no date on **30 December 1899**, and that date is
+ * old enough to carry a local-mean-time offset — Port of Spain ran at
+ * -04:06:04 until 1912 — so String()ing the Date it hands back printed
+ * 'Sat Dec 30 1899 18:30:00 GMT-0400' for a client who had typed 14:30.
+ * The claims desk would have read the wrong time of loss on a motor claim.
+ */
+function hhmm_(value) {
+  if (value === null || value === undefined || value === '') return '';
+  if (Object.prototype.toString.call(value) === '[object Date]') {
+    if (isNaN(value.getTime())) return '';
+    return Utilities.formatDate(value, sheetTz_(), 'HH:mm');
+  }
+  var s = String(value).trim();
+  var m = s.match(/^(\d{1,2}):(\d{2})\s*([ap])\.?m\.?$/i);               // 2:30 pm
+  if (m) {
+    var h = Number(m[1]) % 12;
+    if (m[3].toLowerCase() === 'p') h += 12;
+    return ('0' + h).slice(-2) + ':' + m[2];
+  }
+  m = s.match(/(\d{1,2}):(\d{2})/);                                      // 14:30
+  if (m) return ('0' + Math.min(23, Number(m[1]))).slice(-2) + ':' + m[2];
+  return '';
+}
+
+/** 'yyyy-MM-dd' as a person reads it, WITHOUT going through new Date():
+    new Date('2026-11-01') is UTC midnight, which is 31 October here. */
+function niceDate_(value) {
+  var s = iso_(value);
+  var m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return String(value || '');
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return m[3] + ' ' + (months[Number(m[2]) - 1] || m[2]) + ' ' + m[1];
+}
+
+/** The incident as the desk should read it: '01 Nov 2026 at 14:30'. */
+function whenText_(claim) {
+  var d = niceDate_(claim.incidentDate);
+  var t = hhmm_(claim.incidentTime);
+  if (!d) return '';
+  return d + (t ? ' at ' + t : '');
+}
+
 function iso_(value) {
   if (value === null || value === undefined || value === '') return '';
   if (Object.prototype.toString.call(value) === '[object Date]') {
     if (isNaN(value.getTime())) return '';
-    return Utilities.formatDate(value, Session.getScriptTimeZone() || 'America/Port_of_Spain', 'yyyy-MM-dd');
+    return Utilities.formatDate(value, sheetTz_(), 'yyyy-MM-dd');
   }
   var s = String(value).trim();
   var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
@@ -2065,10 +2152,120 @@ function fileListHtml_(files) {
   }).join('') + '</ul>';
 }
 
+/* ==================== what travels with the e-mail ====================
+
+ * The desk notice used to attach the branch's own claim form and nothing
+ * else: every document the client had just uploaded was a Drive link in the
+ * body. So Guardian's own Motor Vehicle Accident Report Form — the one
+ * document the motor desk actually works from, filled on the client's own
+ * phone — arrived as a link, and the first live test came back with exactly
+ * that: "did not go on the Guardian PDF".
+ *
+ * The documents travel with the mail now. Two things decide what fits:
+ *
+ *  - ORDER, because a budget cuts from the end. Guardian's own forms first,
+ *    since the desk cannot open a file without them; then the papers an
+ *    assessor reads — permit, estimate, police report, invoice; then the
+ *    photographs, which are the heaviest and the least urgent.
+ *  - A BUDGET, because Gmail refuses a message over 25 MB whole, and a
+ *    refused message is a claim nobody hears about. 18 MB leaves room for
+ *    the body, the branch form and MIME's own overhead.
+ *
+ * Anything that did not fit is named in the body with its link, so a desk
+ * person is never left wondering whether a document exists.
+ */
+var ATTACH_BUDGET_MB = 18;
+
+/** Guardian's own form, which the desk cannot work without. */
+function isGuardianForm_(f) {
+  return /guardian/i.test(String(f.doc) + ' ' + String(f.name)) &&
+    /\.pdf$/i.test(String(f.name));
+}
+
+function attachRank_(f) {
+  if (isGuardianForm_(f)) return 0;
+  if (/^image\//i.test(String(f.mime))) return 2;
+  return 1;
+}
+
+function driveIdFromUrl_(url) {
+  var s = String(url || '');
+  var m = s.match(/\/d\/([A-Za-z0-9_-]{20,})/) || s.match(/[?&]id=([A-Za-z0-9_-]{20,})/);
+  return m ? m[1] : '';
+}
+
+/* An attachment is named for what it IS, never IMG_4821.jpg. Drive holds
+   'Driver's permit — IMG_4821.jpg'; a mail client shows a long name badly,
+   so the label carries it and the extension is kept, because a .pdf that
+   loses its extension will not open on a desk machine. */
+function attachName_(f, blob, seen) {
+  var raw = String(f.name || blob.getName() || 'document');
+  var dot = raw.lastIndexOf('.');
+  var ext = dot > 0 ? raw.slice(dot) : '';
+  var label = String(f.doc || '').replace(/[^A-Za-z0-9 '()&+.-]/g, '').trim();
+  if (!label) return raw;
+  seen[label] = (seen[label] || 0) + 1;
+  return label + (seen[label] > 1 ? ' ' + seen[label] : '') + ext;
+}
+
+/**
+ * The blobs that go with a claim e-mail, and whatever stayed behind.
+ * Never throws: a document Drive will not hand back must not cost the desk
+ * its notice.
+ */
+function claimAttachments_(files, form, opts) {
+  var o = opts || {};
+  var out = form ? [form] : [];
+  var used = form ? form.getBytes().length : 0;
+  var budget = ATTACH_BUDGET_MB * 1024 * 1024;
+  var left = [];
+  var seen = {};
+
+  var queue = (files || []).slice().sort(function (a, b) {
+    return attachRank_(a) - attachRank_(b);
+  });
+  /* The client gets their own forms back for their records — not their own
+     photographs, which they took and do not need posted to them. */
+  if (o.formsOnly) queue = queue.filter(isGuardianForm_);
+
+  for (var i = 0; i < queue.length; i++) {
+    var f = queue[i];
+    var id = driveIdFromUrl_(f.link);
+    if (!id) { left.push(f); continue; }
+    try {
+      var blob = DriveApp.getFileById(id).getBlob();
+      var size = blob.getBytes().length;
+      if (used + size > budget) { left.push(f); continue; }
+      blob.setName(attachName_(f, blob, seen));
+      out.push(blob);
+      used += size;
+    } catch (err) { left.push(f); }
+  }
+  return { blobs: out, left: left };
+}
+
+function leftBehindHtml_(left) {
+  if (!left || !left.length) return '';
+  return '<div style="background:#fdf6e9;border-left:4px solid ' + CBRAND.gold +
+    ';padding:12px 16px;margin:14px 0"><b>Not attached — open these in the folder:</b>' +
+    fileListHtml_(left) + '</div>';
+}
+
+/** 'Attached: the claim form and 3 documents.' */
+function attachedLine_(pack, form) {
+  var docs = pack.blobs.length - (form ? 1 : 0);
+  if (!form && !docs) return '';
+  var bits = [];
+  if (form) bits.push('the completed claim form');
+  if (docs) bits.push(docs + ' document' + (docs === 1 ? '' : 's'));
+  return ' Attached: ' + bits.join(' and ') + '. Everything is also saved in the folder.';
+}
+
 function notifyDesk_(claim, files, missing, form) {
   var type = typeKeyFromLabel_(claim.type);
   var desk = deskFor_(type);
   var gap = deskGap_(type);
+  var pack = claimAttachments_(files, form);
   var subject = (gap ? 'NEW CLAIM (not forwarded) — ' : 'NEW CLAIM — ') + claim.ref + ' — ' + claim.type +
     (claim.subtype ? ' (' + claim.subtype + ')' : '') + ' — ' + claim.name;
 
@@ -2093,7 +2290,7 @@ function notifyDesk_(claim, files, missing, form) {
       tr_('Mobile', esc_(claim.mobile)) +
       tr_('Email', esc_(claim.email || '(none)')) +
       (claim.nationalId ? tr_('National ID', esc_(claim.nationalId)) : '') +
-      tr_('Incident', esc_(claim.incidentDate || '(not given)') + (claim.incidentTime ? ' at ' + esc_(claim.incidentTime) : '')) +
+      tr_('Incident', esc_(whenText_(claim) || '(not given)')) +
       (claim.location ? tr_('Location', esc_(claim.location)) : '') +
       (claim.amount ? tr_('Estimated amount', esc_(fmtMoney_(claim.amount) || claim.amount)) : '') +
       (claim.policeReport ? tr_('Police report #', esc_(claim.policeReport)) : '') +
@@ -2104,6 +2301,7 @@ function notifyDesk_(claim, files, missing, form) {
       '</table>' +
       '<h3 style="margin:20px 0 4px;font-size:15px">Documents received (' + files.length + ')</h3>' +
       fileListHtml_(files) +
+      leftBehindHtml_(pack.left) +
       (missing.length
         ? '<div style="background:#fbe9e7;border-left:4px solid #b3261e;padding:12px 16px;margin:14px 0">' +
           '<b>Client flagged as still outstanding:</b><br>' + esc_(missing.join(', ')) + '</div>'
@@ -2112,13 +2310,15 @@ function notifyDesk_(claim, files, missing, form) {
       ';color:' + CBRAND.navy + ';text-decoration:none;font-weight:bold;padding:12px 26px;border-radius:8px;display:inline-block">' +
       'Open the document folder</a></p>' +
       '<p style="color:#5a6b80;font-size:12px">Submitted through Claims TT on ' + nowStamp_() + '.' +
-      (form ? ' The completed claim form is attached and saved in the folder.' : '') + '</p></div>',
-    attachments: form ? [form] : [],
+      attachedLine_(pack, form) + '</p></div>',
+    attachments: pack.blobs,
   });
 }
 
 function ackClient_(claim, files, missing, form) {
   var first = String(claim.name).split(' ')[0] || 'there';
+  var pack = claimAttachments_(files, form, { formsOnly: true });
+  var forms = pack.blobs.length - (form ? 1 : 0);
   sendMail_({
     to: claim.email, name: CLAIMS.FROM_NAME,
     subject: 'We have your claim — ' + claim.ref,
@@ -2149,11 +2349,17 @@ function ackClient_(claim, files, missing, form) {
         : '') +
       noteBox_('<b style="color:#a05e03">Please do not start repairs</b> until the claim has been inspected or you have written approval — ' +
         'work done beforehand may not be reimbursed.') +
-      (form ? '<p>Your completed <b>claim form</b> is attached — keep it for your records. You do not need to print, sign or return it; you completed and declared it online.</p>' : '') +
+      (form || forms
+        ? '<p>Your completed <b>claim form</b>' +
+          (forms ? ' and the <b>insurer’s own accident report form</b>, filled in from your answers,' : '') +
+          ' ' + (form && forms ? 'are' : 'is') + ' attached — keep ' +
+          (form && forms ? 'them' : 'it') + ' for your records. You do not need to print, sign or return ' +
+          (form && forms ? 'them' : 'it') + '; you completed and declared everything online.</p>'
+        : '') +
       '<p>Any question at all, call me on <b>' + esc_(CLAIMS.AGENT_PHONE) + '</b> (' + esc_(CLAIMS.BRANCH_HOURS) + ').</p>' +
       sig_(),
       'Claim acknowledgement'),
-    attachments: form ? [form] : [],
+    attachments: pack.blobs,
   });
 }
 
@@ -2217,7 +2423,7 @@ function claimFormBlob_(claim, files, missing) {
       pdfRow_('National ID', esc_(claim.nationalId), true) +
 
       pdfSection_('The incident') +
-      pdfRow_('Date', esc_(claim.incidentDate) + (claim.incidentTime ? ' at ' + esc_(claim.incidentTime) : ''), true) +
+      pdfRow_('Date', esc_(whenText_(claim)), true) +
       pdfRow_('Location', esc_(claim.location), true) +
       pdfRow_('Estimated amount', esc_(fmtMoney_(claim.amount) || claim.amount), true) +
       (claim.policeReport || claim.policeStation
