@@ -1,23 +1,14 @@
 {
  "voices": {
-  "h868": "en-US-AndrewMultilingualNeural"
+  "h868fix": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "h868": "+0%"
+  "h868fix": "+0%"
  },
  "check": true,
  "films": {
-  "h868": [
-   "Meet Help eight six eight. Your branch, on WhatsApp, any hour of the day.",
-   "Your clients message us the way they message everyone else. One tap, and the chat opens.",
-   "We say hello, and ask what they need. A question, a claim, an update, a payment, or a quote.",
-   "They just pick a number. No forms, no phone tag, and no waiting for Monday.",
-   "We take their name, and the policy number if they have one. Never bank details, never ID numbers.",
-   "Then it's logged on our query system, with a ticket reference, and our team routes it to the right department.",
-   "Your client gets that reference right there in WhatsApp, while the chat is still in their hand.",
-   "Our support team sees the whole chat, with a note on what was asked, and takes it from there.",
-   "Agents, this is for your clients too. Share the link, and every query lands in one place.",
-   "Help eight six eight. Always on, and always us. Tap the green button on our website, and say hello."
+  "h868fix": [
+   "Agents, this is for your clients too. Share the link. Every query lands in one place."
   ]
  }
 }
