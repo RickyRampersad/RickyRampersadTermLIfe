@@ -875,25 +875,43 @@ function lbStaffEmail_(name) {
    Book. The RR Operations Access tab (active, with the Log Book on their Apps
    or Apps blank) and the fact find's staff rows, one entry per person. */
 function lbStaff_() {
-  var out = [], seen = {};
-  var add = function (name, role) {
-    name = String(name || '').trim();
-    var k = lbNameKey_(name);
-    if (!k || seen[k]) return;
-    seen[k] = 1; out.push({ name: name, role: String(role || 'Staff').trim() || 'Staff' });
+  /* Active staff only, once each (4 November 2026: the list carried a manager
+     who had left, the driver, and two people twice with their codes, because
+     the Access tab now writes "Not Active" and "AG-003 - Azariah Griffith"). */
+  var out = [], gone = [];
+  var inactive = /^(no|false|not active|inactive|resigned|terminated|disabled|off)/i;
+  var clean = function (n) {
+    n = String(n || '').replace(/^\s*[A-Z]{0,3}\s*-?\s*\d{2,6}\s*-\s*/i, '').replace(/\s+/g, ' ').trim();
+    return (n === n.toUpperCase() ? n.toLowerCase() : n)
+      .replace(/(^|[\s'-])([a-z])/g, function (m, p, c) { return p + c.toUpperCase(); });
   };
+  var notStaff = function (role) {
+    role = String(role || '').trim();
+    return /^(agent|unit manager|assistant branch manager)$/i.test(role) || lbIsDriverRole_(role);
+  };
+  var add = function (name, role) {
+    name = clean(name);
+    if (!lbNameKey_(name)) return;
+    if (gone.some(function (g) { return lbSamePerson_(g, name); })) return;
+    if (out.some(function (s) { return lbSamePerson_(s.name, name); })) return;
+    out.push({ name: name, role: String(role || 'Staff').trim() || 'Staff' });
+  };
+  var rows = [];
   var sh = dbSheet_(DB.TABS.ACCESS, DB_ACCESS_COLUMNS);
   var hm = dbHeaderMap_(sh), last = sh.getLastRow();
   if (last > 1) sh.getRange(2, 1, last - 1, hm.head.length).getValues().forEach(function (r) {
-    var active = String(r[hm.map['Active']] == null ? 'yes' : r[hm.map['Active']]).trim().toLowerCase();
-    if (active === 'no' || active === 'false') return;
     var role = String(r[hm.map['Role']] || 'Staff');
-    if (/^(agent|unit manager)$/i.test(role.trim())) return;
+    var off = 'Active' in hm.map && inactive.test(String(r[hm.map['Active']] || '').trim());
     var apps = 'Apps' in hm.map ? r[hm.map['Apps']] : '';
-    if (!opsAppsFor_(apps).some(function (x) { return x.id === 'logbook'; })) return;
-    add(r[hm.map['Name']], role);
+    var noLb = !opsAppsFor_(apps).some(function (x) { return x.id === 'logbook'; });
+    rows.push({ name: r[hm.map['Name']], role: role, out: off || notStaff(role) || noLb, off: off });
   });
-  lbAgents_().forEach(function (a) { if (a.active && lbIsStaffRole_(a.role)) add(a.name, a.role); });
+  lbAgents_().forEach(function (a) {
+    rows.push({ name: a.name, role: a.role, out: !a.active || notStaff(a.role) || !lbIsStaffRole_(a.role), off: !a.active });
+  });
+  /* Anyone either list marks inactive is out, whatever the other says. */
+  rows.forEach(function (r) { if (r.off && lbNameKey_(clean(r.name))) gone.push(clean(r.name)); });
+  rows.forEach(function (r) { if (!r.out) add(r.name, r.role); });
   return out.sort(function (a, b) { return a.name < b.name ? -1 : 1; });
 }
 
