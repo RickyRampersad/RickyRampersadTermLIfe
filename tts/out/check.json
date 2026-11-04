@@ -1,42 +1,52 @@
 {
- "tts/out/agrise/01.mp3": [
-  "en",
-  0.984,
-  "Good morning. From today, this is your day. Rise."
- ],
- "tts/out/agrise/02.mp3": [
-  "en",
-  0.998,
-  "your month and your week at a glance. Business picked up against your goal and fact finds against your weekly number."
- ],
- "tts/out/agrise/03.mp3": [
-  "en",
-  0.987,
-  "your streak check in and plan by seven and everyday counts"
- ],
- "tts/out/agrise/04.mp3": [
-  "en",
-  0.994,
-  "The bell shows only what is waiting on you. A note from your manager. A client waiting on a call."
- ],
- "tts/out/agrise/05.mp3": [
-  "en",
-  0.997,
-  "Your fact finds of clients, when the plan went, how long they have waited, and how often we followed up."
- ],
- "tts/out/agrise/06.mp3": [
+ "tts/out/h868/01.mp3": [
   "en",
   0.995,
-  "Today's list, what the branch is working on for your clients with one tap to comment."
+  "Meet Help 868, your branch on WhatsApp any hour of the day."
  ],
- "tts/out/agrise/07.mp3": [
+ "tts/out/h868/02.mp3": [
   "en",
-  0.993,
-  "Kudos, only for what you have earned. Share it with your manager."
+  0.999,
+  "Your client's message us the way they message everyone else. One tap and the chat opens."
  ],
- "tts/out/agrise/08.mp3": [
+ "tts/out/h868/03.mp3": [
   "en",
-  0.992,
-  "Close off your day by 6. Check in, lift each other and rise."
+  0.999,
+  "We say hello and ask what they need. A question, a claim, an update, a payment, or a quote."
+ ],
+ "tts/out/h868/04.mp3": [
+  "en",
+  0.997,
+  "They just pick a number, no forms, no phone tag, and no waiting for Monday."
+ ],
+ "tts/out/h868/05.mp3": [
+  "en",
+  0.999,
+  "We take their name and the policy number if they have one. Never bank details, never ID numbers."
+ ],
+ "tts/out/h868/06.mp3": [
+  "en",
+  0.998,
+  "then it's logged on our query system with a ticket reference and our team routes it to the right department."
+ ],
+ "tts/out/h868/07.mp3": [
+  "en",
+  0.996,
+  "Your client gets that reference right there in WhatsApp while the chat is still in their hand."
+ ],
+ "tts/out/h868/08.mp3": [
+  "en",
+  0.994,
+  "Our support team sees the whole chat with a note on what was asked and takes it from there."
+ ],
+ "tts/out/h868/09.mp3": [
+  "en",
+  0.998,
+  "Agents, this is for your clients too. Share the link in every query lands in one place."
+ ],
+ "tts/out/h868/10.mp3": [
+  "en",
+  0.996,
+  "Help 868. Always on and always us. Tap the green button on our website and say hello."
  ]
 }
