@@ -2928,6 +2928,12 @@ voice under the new timing and the caption gives it away.
     <agent> on contact made with the client and the outcome. Log <agent>'s feedback in the task trail. Keep this task
     open until the service questionnaire is signed." One task a household and agent: an open one with that subject on
     the Account is found and none is added.
+  - **No second task beside an open one** (Ricky, 4 Nov 2026). Before opening that task, `tSfHouseholdTasks_` looks for any
+    open orphan task on the household members' contacts or policy records; if one is open, the naming goes on its Chatter
+    as "AGENT NAMED: …" (a comment under today's post if the branch already posted there today) and nothing is opened.
+    A task that is opened sits on the client's policy record (`CLIENT_PORTFOLIO__c`, the first in force), never the
+    household Account. On 3 Nov the first run after a paste backfilled every Salesforce naming since 22 Oct and opened 78
+    tasks, 64 of them beside an open task; those were closed on 4 Nov with their notes carried to the original.
   - **Both are automatic** on every naming: the board's (`transitionAssign_`), Match's and staff's, and a naming made in
     Salesforce (`tSfBriefs_`, after the brief). `tSfAssignWrite_` reads the client's policies by number and then every
     record on their own Contact (`tSameClient_`, so a daughter's own policy on her own Contact is never touched), and

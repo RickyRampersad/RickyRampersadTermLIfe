@@ -5845,6 +5845,28 @@ function tSfHouseholdTasks_(clients, agent, at, by, hhOf, sfw) {
       var lead = T_SUPPORT.SUBJECT + agent.name;
       var exists = tSfQuery_("SELECT Id FROM Task WHERE IsClosed = false AND WhatId = '" + svcSoqlLit_(head.p.account) + "' AND Subject LIKE '" + svcSoqlLit_(lead) + "%' LIMIT 1");
       if (exists.length) { out.skipped++; return; }
+      /* Ricky, 4 Nov 2026: when a client already has an open orphan task, the naming goes on that task's Chatter and no
+         new task is opened. On 3 Nov this routine opened 65 second tasks beside open ones. A new task, when one is needed,
+         sits on the client's policy record (CLIENT_PORTFOLIO__c), never on the household account. */
+      var whos = [], whats = [];
+      m.forEach(function (x) { if (x.p.contact) whos.push(x.p.contact); (x.p.recs || []).forEach(function (r) { if (r.id) whats.push(r.id); }); });
+      var lit = function (a) { return a.map(function (v) { return "'" + svcSoqlLit_(v) + "'"; }).join(','); };
+      var openQ = [];
+      if (whos.length) openQ.push('WhoId IN (' + lit(whos) + ')');
+      if (whats.length) openQ.push('WhatId IN (' + lit(whats) + ')');
+      var open = openQ.length ? tSfQuery_("SELECT Id, Subject FROM Task WHERE IsClosed = false AND Subject LIKE '%Orphan%' AND (" + openQ.join(' OR ') +
+        ") ORDER BY LastModifiedDate DESC LIMIT 1") : [];
+      if (open.length) {
+        var note = 'AGENT NAMED: ' + agent.name + ', ' + on + ' (by ' + tNiceName_(by) + '). ' + supFirst + ': follow up with ' + agFirst +
+          ' on contact made with the client and the outcome, and log ' + agFirst + '’s feedback here. Keep this task open until the service questionnaire is signed.';
+        try {
+          var today = tSfQuery_("SELECT Id FROM FeedItem WHERE ParentId = '" + svcSoqlLit_(open[0].Id) + "' AND CreatedDate = TODAY ORDER BY CreatedDate DESC LIMIT 1");
+          if (today.length) tSfSend_('post', '/sobjects/FeedComment', { FeedItemId: today[0].Id, CommentBody: note });
+          else tSfSend_('post', '/sobjects/FeedItem', { ParentId: open[0].Id, Body: note });
+          out.noted = (out.noted || 0) + 1; out.tasks.push({ id: open[0].Id, subject: open[0].Subject, noted: true });
+        } catch (e) { out.why = 'note on the open task failed: ' + String(e && e.message ? e.message : e).slice(0, 150); }
+        return;
+      }
       var names = m.map(function (x) { return x.c.client; });
       var subject = (lead + ' re ' + (names.length > 2 ? names[0] + ' and ' + (names.length - 1) + ' family members' : names.join(' and ')) + ' (assigned ' + on + ')').slice(0, 255);
       var lines = ['Orphan Project. Agent ' + agent.name + ' assigned ' + on + ' by ' + tNiceName_(by) + '.'];
@@ -5859,7 +5881,8 @@ function tSfHouseholdTasks_(clients, agent, at, by, hhOf, sfw) {
       });
       lines.push('');
       lines.push(supFirst + ': follow up with ' + agFirst + ' on contact made with the client and the outcome. Log ' + agFirst + '’s feedback in the task trail. Keep this task open until the service questionnaire is signed.');
-      var rec = { Subject: subject, Status: 'Not Started', Priority: 'High', ActivityDate: day, WhatId: head.p.account, Description: lines.join('\n') };
+      var pols = head.p.recs || [], pol = pols.filter(function (r) { return r.id && /premium paying|in force|paid up|waiver/i.test(r.st); })[0] || pols.filter(function (r) { return r.id; })[0];
+      var rec = { Subject: subject, Status: 'Not Started', Priority: 'High', ActivityDate: day, WhatId: pol ? pol.id : head.p.account, Description: lines.join('\n') };
       if (head.p.contact) rec.WhoId = head.p.contact;
       if (owner) rec.OwnerId = owner;
       var made = null;
