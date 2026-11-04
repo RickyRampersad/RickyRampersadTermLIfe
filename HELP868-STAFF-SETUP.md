@@ -32,3 +32,15 @@ Profile → Notifications: turn on **new conversation assigned to me**, **new me
 
 ## What this cannot do
 Staff are not licensed to advise: anything about cover, a claim decision or a quote price goes to a licensed agent.
+
+## 7. Closing a case: the client gets a recap and a rating request
+Workflow **"HELP 868 — Close and Rate"** (respond.io, saved as a draft until the branch manager says go). When staff close a conversation, the
+client gets one WhatsApp message with what it was about (the closing **summary**), the type (the **closing note** category) and the time to
+resolve, then is asked to tap 1 to 5. The answer is saved on the contact (`HELP868 Rating`). A rating of 1 or 2 also adds an internal comment
+for a call-back, so a low score is never missed.
+
+**Staff, when closing:** pick the closing note and write a one-line **summary** in plain words ("Asked for an embassy letter; sent to the client").
+The client reads that line, so no names, numbers or internal notes in it. A close with no summary reads as blank.
+
+A close made by the system (not by a person) sends nothing. Inside 24 hours of the client's last message it is a normal message; after that,
+WhatsApp needs an approved template, which is not set up yet.
