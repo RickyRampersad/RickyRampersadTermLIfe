@@ -107,8 +107,11 @@
                    : gap + ' day' + (gap === 1 ? '' : 's') + ' before cover ended on ' + show(to) + '.'), []);
     }
 
-    /* --- late notification ------------------------------------------------ */
-    if (loss !== null && today !== null && days(today, loss) > 90) {
+    /* --- late notification ------------------------------------------------
+       Health has its own ninety-day finding below, which names Guardian's own
+       rule and the days left; two findings saying the same thing is noise, so
+       the general one stands down for that line. */
+    if (a.type !== 'health' && loss !== null && today !== null && days(today, loss) > 90) {
       add('check', 'loss-old', 'This happened some time ago',
         show(loss) + ' is ' + days(today, loss) + ' days back. Late notice can affect a claim, ' +
         'so tell us in your account why it is being reported now.', ['incidentDate', 'description']);
@@ -197,6 +200,31 @@
       add('note', 'injuries', 'Someone was injured',
         'Guardian\'s form has a section for each injured person. The desk will need their names, ' +
         'dates of birth and the treating physician.', []);
+    }
+
+    /* --- health: Guardian gives ninety days from the date of treatment ----
+       Their own claim checklist asks the member "have 90 days or less passed
+       since your claim date?", and the branch has been asking it on paper for
+       years. We hold the date, so it is arithmetic rather than a question —
+       and the client is told while they can still do something about it.
+
+       Never a 'stop'. A late claim may still be considered, and a register or
+       a typed date can be wrong; turning a real claim away at our own door is
+       the one failure this page must not have. */
+    if (a.type === 'health' && loss !== null && today !== null && loss <= today) {
+      var age = days(today, loss);
+      if (age > 90) {
+        add('check', 'health-90', 'This treatment was more than ninety days ago',
+          'It was ' + show(loss) + ', ' + age + ' days ago. Guardian\'s health claim form asks ' +
+          'whether ninety days or less have passed. Send it anyway — we will put the reason ' +
+          'to the claims desk with it — but tell us below why it is only being claimed now.',
+          ['incidentDate']);
+      } else if (age > 75) {
+        add('check', 'health-90-soon', 'You have ' + (90 - age) + ' day' + (90 - age === 1 ? '' : 's') +
+          ' of the ninety left',
+          'The treatment was ' + show(loss) + ', ' + age + ' days ago. Guardian allows ninety days ' +
+          'from the date of treatment, so this one should go today.', []);
+      }
     }
 
     return out;
