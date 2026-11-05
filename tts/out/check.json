@@ -2,22 +2,22 @@
  "tts/out/oftlaunch/01.mp3": [
   "en",
   0.999,
-  "Lefty kids have moved into the logbook. No more FedEx. Every kid now gets its own tracking number, and you can follow it all the way to the Colation Branch."
+  "OFT kids have moved into the logbook. No more FedEx. Every kid now gets its own tracking number and you can follow it all the way to the Colation Branch."
  ],
  "tts/out/oftlaunch/02.mp3": [
   "en",
   0.998,
-  "Here's how it works. You collect the sample from your client, then open the logbook and choose OFD kit."
+  "Here's how it works. You collect the sample from your client, then open the logbook and choose OFT kit."
  ],
  "tts/out/oftlaunch/03.mp3": [
   "en",
-  0.998,
+  0.997,
   "Pick your client and the policy straight from Salesforce. One kit per line."
  ],
  "tts/out/oftlaunch/04.mp3": [
   "en",
-  0.996,
-  "Press log, and your tracking number appears, R-R-B-O-F-T, then today's date, then the kid's own number. Right on the kid."
+  0.997,
+  "Press log and your tracking number appears, R-R-B-O-F-T, then today's date, then the kid's own number. Right on the kid."
  ],
  "tts/out/oftlaunch/05.mp3": [
   "en",
@@ -37,6 +37,6 @@
  "tts/out/oftlaunch/08.mp3": [
   "en",
   0.996,
-  "So from today, log every OFD kit in the logbook. Ricky RampersadBranch.com slash logbook."
+  "So from today, log every OFT kit in the logbook. Ricky Rampersad branch dot com slash logbook."
  ]
 }
