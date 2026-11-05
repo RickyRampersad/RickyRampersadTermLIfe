@@ -824,7 +824,7 @@
           <div class="lookup-row" id="lk-step-find">
             <div class="field">
               <label for="lk-q" id="lk-q-label">Number plate or policy number</label>
-              <input id="lk-q" type="text" placeholder="PDL 4471" autocomplete="off" spellcheck="false" />
+              <input id="lk-q" type="text" placeholder="TAA 1234" autocomplete="off" spellcheck="false" />
             </div>
             <button class="btn btn-teal" type="button" id="lk-find">Find my policy</button>
           </div>
@@ -1159,7 +1159,7 @@ const TYPES = {
     ],
     fields: [
       { sec: "The vehicle" },
-      { id: "vehicleReg", label: "Registration number", type: "text", ph: "PBX 1234", req: true, half: true },
+      { id: "vehicleReg", label: "Registration number", type: "text", ph: "TAA 1234", req: true, half: true },
       { id: "vehicleMake", label: "Make &amp; model", type: "text", ph: "Nissan Almera", half: true },
       { id: "vehicleYear", label: "Year", type: "text", ph: "2019", half: true },
       { id: "coverage", label: "Type of cover", type: "text", ph: "Private Comprehensive", half: true },
@@ -1203,7 +1203,7 @@ const TYPES = {
       { sec: "The other party", show: ["accident", "thirdparty"] },
       { note: "If more than one other vehicle was involved, put the rest in the description above.", show: ["accident", "thirdparty"] },
       { id: "tpName", label: "Other driver's name", type: "text", half: true, show: ["accident", "thirdparty"] },
-      { id: "tpVehicle", label: "Their vehicle &amp; registration", type: "text", ph: "Silver Toyota Hilux, PCX 5678", half: true, show: ["accident", "thirdparty"] },
+      { id: "tpVehicle", label: "Their vehicle &amp; registration", type: "text", ph: "Silver Toyota Hilux, TBB 5678", half: true, show: ["accident", "thirdparty"] },
       { id: "tpInsurer", label: "Their insurance company", type: "text", half: true, show: ["accident", "thirdparty"] },
       { id: "tpContact", label: "Their phone number", type: "tel", half: true, show: ["accident", "thirdparty"] },
     ],
@@ -1470,6 +1470,15 @@ const state = {
    discarding the dates that answer it. Kept apart from state.answers so they
    can never be rendered as a field or edited by the client. */
 const POLICY_FACTS = ["coverFrom", "coverTo", "carrier", "insuredValue", "windscreen", "permitOnFile"];
+
+/* Every year of cover on this vehicle, newest first, as the lookup returned
+   them. A vehicle renewed five times has five terms, each with its own period,
+   policy number and sum insured, and a claim is assessed against the one that
+   was in force on the date of loss — not against whatever has been renewed
+   since. Until 5 November 2026 only the current term was held, so a claim for
+   an accident in last year's term came back "the loss is before this policy
+   started", which was our record's fault and read as the client's. */
+let coverTerms = [];
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, html) => {
@@ -1976,11 +1985,15 @@ function showLookup() {
   if (state.type === "motor" || state.type === "property") {
     $("lk-blurb").textContent = "Enter your number plate or policy number and we'll fill in your vehicle and contact details from our records — chassis and engine numbers included.";
     $("lk-q-label").textContent = "Number plate or policy number";
-    $("lk-q").placeholder = "PDL 4471";
+    /* Invented, and it has to stay invented: this page is served from the
+       repository root, so a placeholder is published. Two real ones were in
+       here until 5 November 2026 — a client's registration and a client's
+       plan number — which is the same rule the films and these notes keep. */
+    $("lk-q").placeholder = "TAA 1234";
   } else {
     $("lk-blurb").textContent = "Enter your policy or plan number and we'll fill in your details from our records — after you confirm it's yours.";
     $("lk-q-label").textContent = "Policy or plan number";
-    $("lk-q").placeholder = "TQG0897-00014-00";
+    $("lk-q").placeholder = "TAA0001-00001-00";
   }
 }
 
@@ -2064,6 +2077,8 @@ async function verifyPolicy() {
       action: "verifyPolicy", query: lookup.query,
       method: lookup.method, answer: answer,
     });
+    /* Every year of cover, before the prefill, so syncCoverTerm has them. */
+    coverTerms = Array.isArray(data.terms) ? data.terms : [];
     applyPrefill(data.prefill || {});
   } catch (err) {
     lkMessage("lk-err", esc(err && err.message ? err.message : "That didn't match. Try again, or type your details in below."));
@@ -2093,6 +2108,7 @@ function applyPrefill(prefill) {
   if (prefill.policy) state.policy.policy = prefill.policy;
   if (prefill.vehicleReg) state.policy.vehicleReg = prefill.vehicleReg;
   if (prefill.name) state.policy.name = prefill.name;
+  syncCoverTerm();
 
   // Add to what is already marked rather than replacing it — signing in fills
   // the contact fields before a policy is ever chosen, and those marks stay.
@@ -2254,7 +2270,67 @@ function validateStep(n) {
 let checkFindings = [];      // the last run
 const checkSaid = {};        // finding id -> what the client said about it
 
+/* The cover the claim is assessed against, re-picked whenever the date of loss
+   changes.
+ *
+ * state.policy is not a field the client can edit — it is what the policy says
+ * — so these are overwritten rather than protected. What the client typed is
+ * never touched. The matched facts travel with the claim as policyFacts, so the
+ * desk notice, the claim form and the ledger all carry the right year's sum
+ * insured and policy number instead of this year's.
+ *
+ * termAt comes from ClaimChecks, so the fields and the findings can never
+ * disagree about which term it is. */
+function termsNow() {
+  /* coverTerms is set by the lookup; state.policy.terms is where syncCoverTerm
+     parked them, which is what the two profile call sites read when they apply
+     a prefill without having gone through the lookup again.
+   *
+   * Neither survives a reload, and that is on purpose: saveDraft deliberately
+   * keeps state.policy out of localStorage, because a cover period, a sum
+   * insured and a policy number are the policy's facts and should not be left
+   * on a borrowed phone. A reloaded draft therefore has no terms and no cover
+   * dates, so the cover checks stand down — which is right. They must never
+   * come back half-informed and tell a client the loss is before their policy
+   * started on the strength of one term. */
+  if (coverTerms.length) return coverTerms;
+  return Array.isArray(state.policy.terms) ? state.policy.terms : [];
+}
+
+function syncCoverTerm() {
+  const terms = termsNow();
+  if (!terms.length || typeof ClaimChecks === "undefined") return;
+  coverTerms = terms;
+  state.policy.terms = terms;
+  const loss = ClaimChecks._day(state.answers.incidentDate);
+  const t = ClaimChecks.termAt(terms, loss) || terms[0];
+  const matched = !!ClaimChecks.termAt(terms, loss);
+  ["coverFrom", "coverTo", "carrier", "insuredValue", "windscreen"].forEach((k) => {
+    if (t[k]) state.policy[k] = t[k];
+  });
+  if (t.policy) state.policy.policy = t.policy;
+  state.policy.termMatched = matched;
+  state.policy.termCurrent = t === terms[0];
+}
+
+/* One plain line on the review step saying which year of cover this is being
+   assessed against. Shown when there is more than one term — with one, there
+   is nothing to choose and saying so is noise. */
+function coverTermLine() {
+  if (termsNow().length < 2 || !state.policy.termMatched) return "";
+  const d = (v) => { const m = ClaimChecks._day(v); return m === null ? "" : new Date(m).toUTCString().slice(5, 16); };
+  const span = d(state.policy.coverFrom) + " to " + d(state.policy.coverTo);
+  return '<p class="lede-sm" style="margin:10px 0 0">' +
+    (state.policy.termCurrent
+      ? "Assessed against your current cover, " + esc(span) + "."
+      : "Your loss falls in an earlier year of cover, " + esc(span) +
+        (state.policy.policy ? " (policy " + esc(state.policy.policy) + ")" : "") +
+        ". That is the cover we will assess it against, and it is the right one.") +
+    "</p>";
+}
+
 function runChecks() {
+  syncCoverTerm();
   if (typeof ClaimChecks === "undefined") { checkFindings = []; return checkFindings; }
   /* the line of business too, so a check can be one line's own — the
      ninety-day rule is Guardian's for health and nobody else's */
@@ -2275,7 +2351,7 @@ function renderChecks() {
     box.className = "checks all-clear";
     box.innerHTML = "<h3>" + ICON("check") + " We checked this against your policy</h3>" +
       '<p class="lede-sm" style="margin:0">Your dates sit inside your cover, the vehicle matches the policy, ' +
-      "and nothing contradicts itself. Nothing for you to fix.</p>";
+      "and nothing contradicts itself. Nothing for you to fix.</p>" + coverTermLine();
     return;
   }
   const stops = shown.filter((f) => f.level === "stop").length;
@@ -2294,7 +2370,7 @@ function renderChecks() {
           'value="' + esc(checkSaid[f.id] || "") + '" placeholder="e.g. the policy was renewed on 16 January" /></div>'
         : "";
       return '<div class="ck ' + f.level + '"><b>' + esc(f.title) + "</b><span>" + esc(f.detail) + "</span>" + fix + say + "</div>";
-    }).join("");
+    }).join("") + coverTermLine();
 
   box.querySelectorAll("[data-said]").forEach((input) => {
     input.addEventListener("input", () => { checkSaid[input.dataset.said] = input.value; saveDraft(); });

@@ -899,7 +899,10 @@ function wbLegacy_() {
 
 /* ============================ privacy helpers ============================ */
 
-// "Shalima" + "Mohammed" → "Shalima M." — enough for the team, nothing for a stranger.
+// "Priya" + "Example" → "Priya E." — enough for the team, nothing for a stranger.
+// The name here is invented on purpose: until 5 November 2026 this comment
+// illustrated the masking rule with a real client's full name, in a file
+// served from the repository root.
 function wbMask_(first, last) {
   var f = String(first || '').trim(), l = String(last || '').trim();
   if (!f && !l) return 'Client';

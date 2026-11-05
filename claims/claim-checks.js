@@ -53,7 +53,7 @@
     return d.getUTCDate() + ' ' + M[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
   }
 
-  /* letters and digits only, so "PDL 4471" and "pdl-4471" are one registration */
+  /* letters and digits only, so "TAA 1234" and "taa-1234" are one registration */
   function key(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
   function money(s) {
     var n = parseFloat(String(s === null || s === undefined ? '' : s).replace(/[^0-9.]/g, ''));
@@ -65,6 +65,36 @@
       .filter(function (w) { return w.length > 1; }).sort().join(' ');
   }
   function yes(v) { return /^(y|yes|true|1)$/i.test(String(v || '').trim()); }
+
+  /* ---- cover terms ------------------------------------------------------
+     A vehicle has one term per year of cover, newest first. The term in force
+     on a given day is the one that brackets it; a term missing one end counts
+     as open at that end, because a renewal in progress has no To date yet and
+     refusing a claim over that would be our record's fault, not the client's. */
+  function termAt(terms, loss) {
+    if (!terms || !terms.length || loss === null) return null;
+    for (var i = 0; i < terms.length; i++) {
+      var f = day(terms[i].coverFrom), t = day(terms[i].coverTo);
+      if (f === null && t === null) continue;
+      if (f !== null && loss < f) continue;
+      if (t !== null && loss > t) continue;
+      return terms[i];
+    }
+    return null;
+  }
+
+  /* The earliest start and the latest end across every term, so "before cover"
+     and "after cover" mean before the FIRST and after the LAST, never before
+     whichever term happened to be newest. */
+  function termSpan(terms) {
+    var first = null, last = null;
+    (terms || []).forEach(function (t) {
+      var f = day(t.coverFrom), e = day(t.coverTo);
+      if (f !== null && (first === null || f < first)) first = f;
+      if (e !== null && (last === null || e > last)) last = e;
+    });
+    return { first: first, last: last };
+  }
 
   /* ---- the checks -------------------------------------------------------- */
 
@@ -81,23 +111,79 @@
     var from = day(p.coverFrom), to = day(p.coverTo);
     var issue = day(a.permitIssue), expiry = day(a.permitExpiry);
 
-    /* --- the date of loss against the cover period ----------------------- */
+    /* --- the date of loss against the cover period -----------------------
+
+       EVERY TERM, not only this year's. Until 5 November 2026 the register
+       collapsed a vehicle's terms into one row, so a claim for an accident in
+       last year's term — filed after the renewal, which is routine — came back
+       "the loss is before this policy started". The client was right and we
+       were wrong, and that is the worst kind of finding to show somebody.
+
+       p.terms is every term on file, newest first; termAt picks the one in
+       force on the date of loss. With no terms (a policy typed by hand, or a
+       page cached from before this) it falls back to p.coverFrom/coverTo and
+       behaves exactly as it used to. */
+    var terms = Array.isArray(p.terms) ? p.terms : [];
+    var cover = termAt(terms, loss);
+    if (cover) { from = day(cover.coverFrom); to = day(cover.coverTo); }
+
     if (loss !== null && today !== null && loss > today) {
       add('stop', 'loss-future', 'The date of loss is in the future',
         'You entered ' + show(loss) + ', which has not happened yet.', ['incidentDate']);
     }
-    if (loss !== null && from !== null && loss < from) {
-      add('stop', 'loss-before-cover', 'The loss is before this policy started',
-        'Cover on ' + (p.policy || 'this policy') + ' starts ' + show(from) +
-        '. The loss is ' + show(loss) + ', ' + Math.abs(days(loss, from)) + ' days earlier.',
-        ['incidentDate']);
+
+    if (loss !== null && terms.length && !cover) {
+      /* Outside every term we hold. Which of the three it is matters, because
+         the client can act on only one of them. */
+      var span = termSpan(terms);
+      if (span.first !== null && loss < span.first) {
+        add('stop', 'loss-before-cover', 'The loss is before this policy started',
+          'The earliest cover we hold on ' + (p.vehicleReg || 'this policy') + ' starts ' +
+          show(span.first) + '. The loss is ' + show(loss) + ', ' +
+          Math.abs(days(loss, span.first)) + ' days earlier.', ['incidentDate']);
+      } else if (span.last !== null && loss > span.last) {
+        add('stop', 'loss-after-cover', 'The loss is after cover ended',
+          'The latest cover we hold ran to ' + show(span.last) + '. The loss is ' +
+          show(loss) + ', ' + days(loss, span.last) + ' days later. ' +
+          'If the policy was renewed, say so and we will check the renewal.',
+          ['incidentDate']);
+      } else {
+        /* A gap BETWEEN two terms. Materially the same as no cover, and the
+           client has to be told plainly — but our own record can be
+           incomplete, so it is a stop they can answer and not a refusal. */
+        add('stop', 'cover-gap', 'We hold no cover on that date',
+          'Our record has cover on ' + (p.vehicleReg || 'this policy') + ' before and after ' +
+          show(loss) + ' but not on the day itself. If the policy was in force then, ' +
+          'say so and we will check it.', ['incidentDate']);
+      }
+    } else if (loss !== null && !terms.length) {
+      // One term only: the behaviour this check has always had.
+      if (from !== null && loss < from) {
+        add('stop', 'loss-before-cover', 'The loss is before this policy started',
+          'Cover on ' + (p.policy || 'this policy') + ' starts ' + show(from) +
+          '. The loss is ' + show(loss) + ', ' + Math.abs(days(loss, from)) + ' days earlier.',
+          ['incidentDate']);
+      }
+      if (to !== null && loss > to) {
+        add('stop', 'loss-after-cover', 'The loss is after cover ended',
+          'Cover on ' + (p.policy || 'this policy') + ' ran to ' + show(to) +
+          '. The loss is ' + show(loss) + ', ' + days(loss, to) + ' days later. ' +
+          'If the policy was renewed, say so and we will check the renewal.',
+          ['incidentDate']);
+      }
     }
-    if (loss !== null && to !== null && loss > to) {
-      add('stop', 'loss-after-cover', 'The loss is after cover ended',
-        'Cover on ' + (p.policy || 'this policy') + ' ran to ' + show(to) +
-        '. The loss is ' + show(loss) + ', ' + days(loss, to) + ' days later. ' +
-        'If the policy was renewed, say so and we will check the renewal.',
-        ['incidentDate']);
+
+    /* Matched a term that is not the current one: the assessor has to know
+       which year's cover and which policy number this is being assessed
+       against, because the client's own policy number has moved on since. */
+    if (cover && terms.length > 1 && cover !== terms[0]) {
+      add('note', 'prior-term', 'Assessed against an earlier year of cover',
+        'The loss on ' + show(loss) + ' falls in the term ' + show(day(cover.coverFrom)) +
+        ' to ' + show(day(cover.coverTo)) +
+        (cover.policy ? ', policy ' + cover.policy : '') +
+        (cover.insuredValue ? ', sum insured ' + cover.insuredValue : '') +
+        '. The current term is ' + show(day(terms[0].coverFrom)) + ' to ' +
+        show(day(terms[0].coverTo)) + '.', []);
     }
     /* inside cover but close to the end: worth the assessor knowing, not the client */
     if (loss !== null && to !== null && loss <= to && days(to, loss) <= 7) {
@@ -237,7 +323,11 @@
     return { stop: n.stop, check: n.check, note: n.note, mustResolve: n.stop > 0 };
   }
 
-  var api = { run: run, summary: summary, _day: day, _nameKey: nameKey, _key: key };
+  /* termAt is exported because the page needs the same answer the checks got:
+     it refills the cover fields from the term the loss falls in, and two
+     different ideas of which term that is would be worse than none. */
+  var api = { run: run, summary: summary, termAt: termAt, termSpan: termSpan,
+    _day: day, _nameKey: nameKey, _key: key };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.ClaimChecks = api;
 })(typeof window !== 'undefined' ? window : this);

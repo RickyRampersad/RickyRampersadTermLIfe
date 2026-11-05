@@ -6926,6 +6926,450 @@ shape came from — including its own footer on the submission that was read:
 *"Attachments: Because the total size is more than 5MB the uploads are not
 attached."* That is the failure the 18MB budget above exists to prevent.
 
+### The same bug was one layer down, in the printed form
+
+Found an hour later, by reading the test health claim's own PDF back rather
+than asserting against it. The email body had been put right; **the
+attachment had not.** `claimFormBlob_` was still motor's shape for every
+line — a health claim headed THE INCIDENT, printing *Date*, *Location* and
+*Estimated amount* for a treatment whose amount is a receipt total and not an
+estimate, with the patient's name, relationship and date of birth nowhere
+except buried in the free text under a rule of dashes.
+
+**That is the worse of the two, and the reason to check the attachment and
+not only the body.** The email is read once; the PDF is what gets filed,
+forwarded and opened again six weeks later, and on a health claim the person
+treated is often not the member, so the patient has to be the first thing an
+assessor sees. `pdfFields_` makes the same split `deskFields_` makes, and
+`pdfNinetyNote_` puts the ninety-day decision on the form too, so whoever
+opens it later can see the date was known and flagged on the day it was filed.
+
+**The client's own words print once now.** `claims/index.html` folds every
+type-specific answer onto the end of the description under `— — —`, because
+for a long time that was the only way those answers reached anybody — which is
+the same gap `EXTRA_KEYS` left. With labelled rows above it, printing the
+block as well said the patient's name, their relationship and their date of
+birth twice in one email. `claimWords_` strips it from the notice and the
+form; **the sheet's Description column keeps the whole folded text**, because
+that is the raw record of what was submitted, and `Answers (JSON)` holds the
+same answers structured. A tail line is only dropped if it reads as one of
+ours (`Label: value`, a short label with no colon), so a client who types a
+row of dashes themselves keeps every word.
+
+`niceDate_` was checked while it was in hand and is **right**: it matches the
+ISO string with a regex and reads the three numbers off it, never
+`new Date('yyyy-MM-dd')`. The two test failures it produced were the test's
+wrong expectations, not the code's. When a date assertion fails, check which
+side holds the bug before changing the code — the live email had already said
+"born 03 Apr 2012".
+
+**A function-lifting harness has to skip regex literals.** `esc_` carries
+`/"/g`, and a brace walker that knows only quotes reads that double quote as
+the start of a string and runs off the end of the function. It is also easier
+to **define every top-level function in the file** than to chase the next
+missing helper one run at a time: a body only runs when it is called, so
+defining one that reaches for an unstubbed global costs nothing.
+`pdf-test.js` in the session scratchpad covers all four lines (72 checks).
+
+### "Can I use this now" has to be answerable from outside — 5 November 2026
+
+Asked in those words, and it could not be. `?action=ping` returned the
+file-size limits and nothing else, so whether test mode was on, which lines had
+a confirmed desk and whether Salesforce was connected were all invisible from a
+browser — and the only honest answer was a guess.
+
+It now returns `build`, `testMode`, `live`, `desks` (a flag a line), `salesforce`
+and **`says`**: the whole state in one sentence a person can act on, in three
+forms — test mode, live with the unrouted lines named, live and fully routed.
+
+**`build` is `CLAIMS.BUILD`, a date, and it is the point of the thing.** From
+outside, "never pasted", "pasted but never deployed" and "a later paste of an
+older copy won the same function name" look identical; this repository has lost
+an evening to exactly that before (the settlement board, 4 September). Change
+it with any change worth deploying.
+
+It leaks nothing — the addresses are already in the public file, so the ping
+reports only *whether* each line has one.
+
+**A key in `DESK_OK` is not enough on its own**: `deskFor_` wants an address
+*and* the flag. That is the right rule, and my first cut of the test got it
+wrong rather than the code — the same lesson as the date assertions a day
+earlier. **Check which side holds the bug before changing anything.**
+
+`ping-test.js` in the session scratchpad covers it (12 checks: today's real
+state, live-with-gaps, fully routed, and that no address is in the answer).
+
+### Built, live, and nowhere a person looks — 5 November 2026
+
+*"I am not seeing claims in my site!"* He was right, and nothing was broken.
+Both pages answered **200** and the homepage carried five links to them, all
+identical to the repository's. They were simply not on any route a person
+takes:
+
+- the top nav read Quotes | Apply | Clients | Careers | Portals | FAQ. **No
+  Claims.** And the burger does not reveal that list — it opens `#menuDlg`, a
+  **separate** dialog with its own links, which had none either. On a phone,
+  which is how his clients arrive, that dialog *is* the navigation;
+- the only claim tile sat **ten screens down** (8,240px into a 17,483px page at
+  390), behind a full-width orphan-policy panel;
+- the footer link is at screen 20;
+- the branch app had **no claims tile**, so `claims/staff.html` — the desk the
+  staff work from — was unreachable.
+
+**A thing is not shipped when it answers 200.** Every claim of "it is live"
+this week was true and useless. The question to ask of anything new is not
+"does the URL work" but "what does a person tap, from the screen they are
+already on" — and for a page with two audiences, that is two answers.
+
+The fix was four small edits and no new code: **Claims** in the nav and **File
+a claim** in the phone menu, both to `#claim`; the "Make a claim" group lifted
+above the orphan panel so it leads the Clients section, which its own lede
+already promised ("File a claim, respond to a premium notice…"); a `/claim`
+stub for the singular a person types into WhatsApp; and two tiles in the
+branch app under Clients and queries — **File a claim** (`si: 'open'`, every
+role) and **Claims desk** (`si: 'code'`, staff and the branch manager), with
+`['JotForm claim forms', 'File a claim']` on the app's **moved** line.
+
+**A sticky nav needs `scroll-margin-top` on any anchor it points at.** This
+page sets none anywhere, so `#claim` parked the heading under the bar; it
+carries `6rem` inline.
+
+**`.row rise` at `opacity: 0` is not the known reveal bug.** Measuring the live
+page without scrolling showed both tiles at zero, which looks exactly like the
+recorded `view()` failure. It is not: scrolled to, both reach 1, and with
+motion off they start at 1. Scroll to the element before concluding, and assert
+`>= 0.9` — a reading taken mid-animation comes back at 0.997 and fails a
+`=== 1`.
+
+Two test traps worth keeping: **`page.$('a, b, c')` returns the first matching
+element in document order**, not the first matching selector, so a comma list
+can hand back a hidden input from a sign-in card three sections up — name the
+id. And **count links within the section**, not the page: the FAQ and the
+footer legitimately link to `claims/` too, so a page-wide count of 3 reads as a
+duplicate that was never made.
+
+`claims-visible.js` in the session scratchpad covers it (44 checks: the nav and
+the phone menu at 1366/390/360, where the tile lands against the sticky bar,
+the reveal, sideways scroll, the stub's query string, and the app's tiles as
+staff and as an agent with the search).
+
+### The motor desk, found in the branch's own sent mail — 5 November 2026
+
+Asked for in these words: *"Ok so go ahead I want to place a motor claim for a
+client."* He could not: `motor` was blank, so the claim would have filed,
+stored its documents and acknowledged the client while telling him in a red
+banner to *"pass this on by hand"*. The one thing in the way was an address.
+
+**It was in the mailbox, not on a department list.** `CLAIMS-SETUP.md` had been
+sending whoever picked this up to the Log Book's private Departments tab. The
+faster and better source is the branch's own sent mail: one motor claim ran
+from 14 August to 2 November 2026 on a single thread, and **GGIL PC Claims**
+(`GGILPCClaims@myguardiangroup.com`, Guardian General, a different company from
+Guardian Life) is on every message of it — in the **To** line beside the Motor
+Claims Department representative handling it. The branch's own first
+notification of loss went to the same desk, with `CRMSClaims@myguardiangroup.com`
+beside it. That is now the motor desk, with CRMS Claims in `DESK_CC`.
+
+**Only department inboxes go in `DESK` or `DESK_CC`, never the representative
+on one claim.** People move; a desk is what gets read. The same search turned up
+two named claims representatives and neither is configured.
+
+**Property has no desk inbox in the record at all, and that is the finding
+rather than an absence of looking.** A property claim ran three months in
+mid-2026 and every message on it is addressed to **named representatives** of
+Guardian General's own P&C Claims Solutions Department — not one department
+inbox in To or Cc on any of them. So "P&C covers property too" is an argument
+about the department, not evidence of a shared inbox, and property stays blank.
+The question to put to the desk is narrow: which inbox a property first
+notification of loss should go to.
+
+**The pattern behind that: a first notification goes to a department inbox,
+and everything after it goes to the representative assigned.** Both motor
+claims in the record show it — the notification to GGIL PC Claims and CRMS
+Claims, then three months of thread with one named representative. Our intake
+only ever sends a first notification, so a desk inbox is the right target and
+an individual is the wrong one.
+
+**`CRMSClaims@` is not a claims-only desk**, which is worth knowing before
+reading too much into it: it sits on the branch's ordinary motor distribution
+list and appears on motor *renewal* threads as often as on a claim. It is on
+the branch's own motor claim notification, which is why it is a `DESK_CC` and
+not the `DESK`.
+
+**The subject is per line of business, because the desks file by different
+ones.** Guardian General has filed this branch's motor claims under
+`Vehicle # - <plate> Insured - <name> Date of Accident - <date>` for years, and
+every reply quotes it, so a thread that does not match it starts life detached
+from the way they work. `deskSubject_` gives motor their shape with our
+reference on the end and leaves `RRB CLAIMS SUBMISSION - <type> - <client> -
+<ref>` — sales support's own form — on everything else. One format for all five
+would be wrong on four of them. A missing plate or date prints `(not given)`
+and **keeps the label**: a gap in a subject they file by is a question they can
+answer, where a missing label reads as some other kind of message.
+
+**The JotForm this replaces is the argument for it.** The 13 August claim came
+through `noreply@jotform.com` to six addresses with a motor claim PDF attached,
+and his own note forwarding it reads *"Please address this as the claim form was
+not completed properly."* The subject on that thread reads
+`Vehicle # - <plate> Insured - Date of Accident -` — the insured and the date
+both **empty**, because nothing made them required. That is the failure the
+required-whole-or-refused rule exists to prevent. (A registration identifies a
+vehicle and through it a client, so it does not go in these notes: the first
+draft of this paragraph quoted the real one, and this file is served from the
+repository root on the open web.)
+
+**Turning a line on changes what a silent fallback costs.**
+`typeKeyFromLabel_` answers `'motor'` for a label it cannot read. That was
+harmless while motor had no desk — an unreadable claim went nowhere and said so
+— and the moment motor became a live desk at another company the same guess
+would send a client's claim there on the strength of a label we could not parse.
+`typeKeyStrict_` is the same lookup returning `''`, and `notifyDesk_` — the one
+place that decides who is e-mailed — uses it; the lenient one still serves the
+display. A real claim cannot reach that state (`apiClaimStart_` validates the
+key and stores `CLAIM_TYPES[key].label`, so the label always round-trips),
+**which is exactly why it would have gone unnoticed if it ever did.** Ask of any
+line you switch on: what did this address being blank used to protect?
+
+**Splitting one function into two breaks a function-lifting harness silently.**
+`health-test.js` lifts a named list of functions into a `new Function`, so
+`typeKeyFromLabel_` threw a `ReferenceError` from a body that reads unchanged.
+Add the new name to the list — or, per the note further down, define the whole
+file.
+
+And again: **check which side holds the bug.** Two suites failed on this change.
+`desk-test`'s "motor has no desk" was asserting the state the change was
+deliberately replacing, and my own new test said `type: 'Health'` where the
+sheet stores `Health / Medical`, so `typeKeyFromLabel_` fell back to motor and
+the subject came out right for the wrong reason. Both were the tests.
+
+`motor-desk.js` in the session scratchpad covers it (37 checks: the routing,
+both `DESK_CC` lists not leaking into each other, no representative addressed,
+the subject in both shapes with and without a plate, the `(not forwarded)` flag
+on each, the strict lookup, and the ping). 289 checks across nine suites.
+
+### Every term kept, and a task opened — 5 November 2026
+
+Asked for in one word, **"Both"**, after I set out two gaps: the register knew
+only the current year's cover, and a filed claim opened no task.
+
+#### One row per vehicle per term
+
+`syncVehicleRegister` collapsed every term of a vehicle into **one row**, newest
+winning, blanks never erasing. So a claim for an accident **in last year's
+term, filed after the renewal** — which is routine — came back *"the loss is
+before this policy started"*. The client was right and we were wrong, and that
+is the worst kind of finding to put in front of somebody with a good claim.
+
+The split that makes it work is between **what belongs to the vehicle** and
+**what belongs to the term**:
+
+| | |
+|---|---|
+| identity, merged across every term | plate, make, model, model year, chassis, engine, the insured's name, e-mail, mobile and permit |
+| cover, never merged | the period, sum insured, windscreen limit, coverage type, carrier, **policy number**, vehicle status |
+
+Merging identity is what recovers a chassis recorded once in 2019 and never
+again — and it now fills the **old** rows too, which the single-row version
+could not do. Never merge cover: a loss in 2023 is assessed against 2023's sum
+insured on 2023's policy number.
+
+- **Two terms with the same period are one term.** This org holds exact
+  duplicate cover rows — the renewal desk found last year's premium coming out
+  at two or three times the bill for that reason (`girDedupe_`). The **first**
+  row's `Risk Id` wins the merge, not a later duplicate's, because the choice
+  has to be stable or the register's parent id moves on every sync. That is the
+  renewal desk's own tie-break ("else the first entered") with no billing
+  record to prefer.
+- **Newest term first within a plate**, which is what keeps `findVehicle_` — and
+  so the sign-in, the prefill and the permit write-back — reading this year's
+  cover with no change to any of them.
+- `findVehicleTerms_` matches the **plate against the whole register before**
+  trying the policy number, and a policy-number hit then returns every term of
+  *that vehicle*: a client quoting last year's number still gets this year's
+  cover offered. `vehicleTermOn_` picks the term in force on a date;
+  `vehicleForClaim_` falls back to the newest rather than refusing.
+- **A term missing one end is open at that end.** A renewal in progress has no
+  To date, and refusing a claim over that would be our record's fault.
+- `permitRegisterUpdate_` writes **every** row of the vehicle, not the first
+  that matches: the permit belongs to the insured, not to a year of cover.
+- Two columns appended at the end (`namedSheet_` backfills by name, never
+  reorders): **Term**, so two rows for one plate can be told apart at a glance,
+  and **Risk Id**. `Years Insured` finally says something — the number of terms.
+
+**The checks are term-aware** (`claims/claim-checks.js`), and the three ways a
+loss can sit outside our record are now told apart, because the client can act
+on only one of them: before the **earliest** term, after the **latest**, or in a
+**gap between two** — a lapse, which gets its own `cover-gap` finding. All three
+stay `stop`s the client can answer in a line, never refusals: a register can be
+stale and a real claim must never be turned away by us. `termAt` is exported so
+the page and the checks can never disagree about which term it is.
+
+**The page re-picks the term when the date of loss is typed** and says so in
+plain words — *"Your loss falls in an earlier year of cover, 01 Mar 2024 to 28
+Feb 2025. That is the cover we will assess it against, and it is the right
+one."* The matched facts travel as `policyFacts`, so the desk notice, the claim
+form and the ledger all carry the right year's sum insured and policy number.
+The **desk notice and the printed form now show the vehicle, the cover in force
+and that year's sum insured** — until this they showed none of the three, and
+motor's own branch of `deskFields_` printed no vehicle at all.
+
+**A reloaded draft deliberately has no cover facts.** `saveDraft` keeps
+`state.policy` out of `localStorage` so a borrowed phone does not keep
+somebody's cover period and sum insured. What matters is that their absence
+leaves the cover checks **silent** rather than half-informed: one term
+resurrected on its own would reproduce the exact bug.
+
+#### The task
+
+`sfLogClaim_` already wrote one `Claims__c` row per filed claim — **I told him
+the permit write-back was the only Salesforce write, and that was wrong**; the
+ledger row has been there all along. What was missing is that the ledger is not
+work anybody is shown, and the branch works from task lists. So a claim could
+be filed, acknowledged, forwarded to Guardian General, and sitting in nobody's
+day.
+
+`sfClaimTask_` opens one task per claim. It **never throws**: a claim that is
+recorded, acknowledged and forwarded has done the important part, and a task
+that could not be written is a line in the log and a line in the claim's own
+Internal Notes.
+
+- **Subject**: `RRB CLAIM <ref> - <line> — <subtype> - <client> - <plate>`, the
+  reference first because the point is that a reply finds the file. The **line**
+  leads, not `submissionType_` alone, which gives "Collision" and says nothing
+  about which desk; health keeps Guardian's own submission wording.
+- **Parents**: motor on the **Risk_Details__c term in force on the date of
+  loss** (not this year's), everything else on the `CLIENT_PORTFOLIO__c` policy
+  record, plus the client's Contact as `WhoId`. The policy register gained
+  `Contact Id` and `Portfolio Id` for it — `Portfolio` was the record's *name*,
+  which cannot be a parent.
+- **A retry ladder, because what the org refuses must be dropped and never
+  claimed as written** (`gblSfwSave_`'s rule): WhatId first (a custom object
+  needs activities enabled), then `Task_Type__c` (`Claims/ Mat`, read off the
+  branch's own tasks — the space after the slash is the org's), then WhoId. The
+  note records which attempt won.
+- **Owner**: `CLAIMS.TASK.OWNER`, or the `CLAIMS_TASK_OWNER` Script Property,
+  resolved to an **active standard** user and **exactly one match**. The branch
+  manager's address also sits on four site guest users in this org
+  (`gblOwnerId_` found that the hard way) and a task owned by a guest user is a
+  task nobody opens. Unresolved, the task still files on the integration user
+  and says so — recoverable; not filing would not be.
+- **High** when a check fired, due in two working days, and `?action=ping`
+  returns `writes: {ledger, task, taskDueDays}` so "did it open a task?" is
+  answerable from a browser.
+
+#### Two things this cost, both recorded here because they keep recurring
+
+**A named-list function-lifting harness broke for the fourth time.** Splitting
+one function into two (`typeKeyFromLabel_` → `typeKeyStrict_`, then
+`deskFields_` → `coverTermText_`) throws a `ReferenceError` from inside a body
+that reads completely unchanged, which costs a run to diagnose every time. The
+lists are gone: `claims-sandbox.js` in the session scratchpad **defines every
+top-level function in the file** — a body only runs when it is called, so
+defining one that reaches for an unstubbed global is free.
+
+**Two real client registrations and a real plan number were in the published
+page**, as placeholders (`PDL 4471` in two places, `TQG0897-00014-00`) and in a
+comment. They are `TAA 1234` / `TBB 5678` / `TAA0001-00001-00` now. The leak
+check that found one of them only looked for `T**` plates and missed `PDL`; a
+Trinidad plate is **any** three letters and four digits. `claims/` is served
+from the repository root, so a placeholder is published — the same rule the
+films and these notes keep.
+
+Tests in the session scratchpad: `terms-test.js` (138 checks, Node, Salesforce
+and the sheet made up) and `terms-page.js` (32, Playwright, the real page
+against a mocked backend). 503 checks across twelve suites, none failing.
+
+### Nobody could sign in, and no code was ever sent — 5 November 2026
+
+Reported in these words: *"online now and not getting the code when logginng
+in"*. Nothing had gone wrong with mail. **No sign-in code had ever been sent**
+— his whole Gmail holds not one, while the three test claims' own
+acknowledgements are sitting there from the night before. `apiRequestCode_`
+was returning before it reached `sendMail_`.
+
+**The sign-in has two silent bail-outs, and the vague answer is right for one
+of them and wrong for the other.** Both answer *"If we have that on file, a
+sign-in code is on its way to the email we hold"* and send nothing:
+
+- **the staff door** — the address is not on the **Staff** tab;
+- **the client door** — the address has no filed claim under it.
+
+For a client that vagueness is the whole point: the endpoint must not be
+usable to fish for whether we hold somebody. **For staff there is no client to
+protect**, and a branch member who reads "a code is on its way" and never gets
+one cannot tell being off the list from a mail failure. So the staff door now
+says what is wrong and names the fix, and the page honours it: until this,
+`staff.html` ignored `sent === false`, showed the message and *then opened the
+code box*, asking for a code that was never sent.
+
+**The client door keeps the vague answer for everyone except one of our own
+addresses.** Reported straight after the staff fix: *"signing in as a client
+and no emsil for the code being generated"*. Every claim on file was filed
+under a made-up address (`test.member@example.com` and two like it), so his
+own address matched nothing and the page said a code was on its way to an
+inbox that does not exist. The privacy property is worth keeping — a stranger
+must not learn whether we hold a given person — but **a branch address asking
+about itself is not a stranger**, it is somebody testing. `claimsTester_`
+already knows which addresses those are, so the client door tells them plainly
+that there is no claim on file under it and what the door actually knows. A
+mobile number is never a trusted identity, so it keeps the vague answer. Do
+not widen this: the honest answer is for the branch's own addresses only.
+
+**`setupClaims` seeded one address, once, into an empty tab** — `MAIL_CC[0]`,
+the Guardian address — so the Google account that owns the script was never on
+the list. "1. Set up / repair everything" now **repairs**: on every run it adds
+any of `MAIL_CC` and the script owner that is missing, and leaves an address
+already there exactly as it is, `Active = N` included, since somebody may have
+turned it off on purpose.
+
+**And test mode was swallowing the code, which is the motor quote's own
+recorded fault in a second product.** The note on it reads: *"In test mode
+every e-mail went to the test inbox, the sign-in code included, so an agent
+could never sign in."* `sendMail_` is a blanket gate, so a staff member on the
+list still could not have used a code — it went to the test inbox.
+
+**A sign-in code is the one e-mail test mode may not reroute**, because
+rerouting it makes the whole sign-in untestable. `sendMail_` now passes one
+through when `opts.signIn` is set **and** `claimsTester_(opts.to)` agrees:
+anyone active on the Staff tab, anyone on `MAIL_CC`, the script owner, or an
+address in the `CLAIMS_TESTERS` property. It goes to them marked `[TEST]` with
+the test inbox copied and a banner saying why it came through, and a client's
+code still reroutes, so no client ever hears from a test.
+
+**The gate decides who qualifies, never the caller.** `signIn` on its own
+cannot get mail out of test mode: that is what stops the flag from becoming a
+back door the next caller reaches for, and a desk notice to a trusted address
+still reroutes, because it carries no flag.
+
+**The test caught a live-mode bug in that same change**: the untouched
+`opts` — our own `signIn` field included — was being handed straight to
+`MailApp.sendEmail`, which validates what it is given. A sign-in code falling
+over on a field we invented, in live mode only, would have been worse than the
+fault being fixed. **Strip your own flags on every path, before the branch.**
+
+**The ping is what dated the problem**, and it is the argument for having one:
+the live deployment answered `{"ok":true,"service":"claims-tt","maxFileMb":15,
+"maxFiles":30}` — the old shape, with no `build`, no `testMode`, no `says`. So
+the live script predated every one of that day's changes, and nothing from
+inside the editor would have shown it. It now also returns **`staffCanSignIn`,
+a count and never the addresses**: the endpoint needs no sign-in, and zero is
+exactly the state that makes a staff sign-in answer "a code is on its way" and
+send nothing.
+
+**A test that pins a literal build marker fails on the next honest bump.**
+`terms-test.js` asserted `p.build === '2026-11-05e'` under the label "the build
+moved". It checks the shape and that the marker is not older than the work it
+covers.
+
+Tests in the session scratchpad: `signin-test.js` (66 checks, Node — live mode,
+every trusted address, a client's code still held, the gate overriding the
+caller, both doors' wording for a stranger and for one of our own, a mobile
+number keeping the vague answer, the rate limit, the ping, and `setupClaims`
+repairing a tab that already has a row) and `staff-page.js` (24, Playwright —
+both doors' refusals shown as refusals with no code box, the whole staff
+sign-in through to the token, and a phone). 594 checks across fourteen suites,
+none failing.
+
 ### The pages are light, on the branch's own palette
 
 Decided 5 November 2026, asked for in these words: *"also i dint like the dark

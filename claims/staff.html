@@ -445,6 +445,11 @@ async function sendCode() {
   try {
     state.email = email;
     const data = await api({ action: "requestCode", kind: "staff", identity: email });
+    /* A refusal must not be followed by a code box. Until 5 Nov 2026 this
+       advanced whatever came back, so an address that is not on the staff
+       list showed a hopeful line and then waited for a code that was never
+       sent — indistinguishable from a mail failure. */
+    if (data.sent === false) { gateMsg("g-err", data.message || "We could not send a code to that address."); return; }
     gateMsg("g-msg", data.message || "If that email is on the staff list, a code is on its way.");
     $("g-step-id").hidden = true;
     $("g-step-code").hidden = false;

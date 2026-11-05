@@ -52,6 +52,13 @@
  */
 
 var CLAIMS = {
+  /* Which copy of this file is actually running, as a date. `?action=ping`
+   * returns it, so a browser can tell a pasted-and-deployed build from one
+   * that was pasted and never deployed — from outside those look identical,
+   * and so does a later paste of an older copy winning the same function
+   * name. Change it with any change worth deploying. */
+  BUILD: '2026-11-05g',
+
   /* ---- where notifications go ---------------------------- */
 
   // The claims desk for each line of business. Any line left blank falls
@@ -86,8 +93,13 @@ var CLAIMS = {
    * To switch a line on: put the real address in DESK, add the key to DESK_OK,
    * and file one claim in test mode to see it arrive. */
   DESK: {
-    // Guardian General — Motor Claims Department. NOT Guardian Life.
-    motor:    '',
+    /* Guardian General — P&C Claims. NOT Guardian Life.
+       Confirmed 5 November 2026 off the branch's own record: a live motor
+       claim ran from 14 August to 2 November 2026 on this one thread, and
+       GGIL PC Claims is on every message of it — in the To line beside the
+       Motor Claims Department representative handling it. The branch's own
+       first notification of loss went to the same desk. */
+    motor:    'GGILPCClaims@myguardiangroup.com',
     property: '',
     /* Health Claims TT. Confirmed 5 November 2026 by the branch manager —
        "this is guardian health claims email … so healthclaimstt@" — and by
@@ -101,13 +113,17 @@ var CLAIMS = {
     life:     '',
     pension:  '',
   },
-  DESK_OK: ['health'],
+  DESK_OK: ['health', 'motor'],
   DESK_DEFAULT: '',
 
   /* Copied on one line's claims only, beside MAIL_CC. EB Customer Care is on
-     every health claim the branch files by hand, so it stays on ours. */
+     every health claim the branch files by hand, so it stays on ours; CRMS
+     Claims is on every motor claim the branch has filed, so it stays on ours.
+     Only department inboxes go here, never the individual representative
+     handling one claim — they change, and a desk is what gets read. */
   DESK_CC: {
     health: ['EBCustomercare@myguardiangroup.com'],
+    motor:  ['CRMSClaims@myguardiangroup.com'],
   },
 
   // Copied on every claim, whatever the type. With a line's desk not yet
@@ -118,6 +134,31 @@ var CLAIMS = {
     'rickyrampersadsalessupport@myguardiangroup.com',    // sales support team
     'support@rickyrampersadbranch.com',                  // branch support inbox
   ],
+
+  /* ---- the Salesforce task ------------------------------------------------
+   * Asked for on 5 November 2026: "a claim is opened with a task". Until then a
+   * filed claim became a Claims__c row in the ledger and nothing else, so it
+   * appeared on the client's record and in nobody's task list — and the one
+   * thing a branch actually works from is a task list.
+   *
+   * OWNER is resolved to a Salesforce User by e-mail, and only an ACTIVE
+   * STANDARD user: the branch manager's address also sits on four site guest
+   * users in this org (gblOwnerId_ in GroupBilling.gs found that the hard way),
+   * and a task owned by a guest user is a task nobody will ever see. The
+   * `CLAIMS_TASK_OWNER` Script Property overrides it without a paste, and a
+   * per-line address wins over the default when one is set. Unresolved, the
+   * task still files — it lands on the integration user, and the claim's own
+   * notes say so, which is recoverable. Not filing it would not be. */
+  TASK: {
+    ON: true,
+    OWNER: { '': 'rickyrampersadsalessupport@myguardiangroup.com' },
+    /* Task_Type__c, read off the branch's own tasks: the org's picklist carries
+       Servicing, Pendings, Renewa/PDl/Bill, Lic/Staffing/SA/HR and this one.
+       The space after the slash is the org's, not a typo. A value the org
+       refuses is dropped and the task files without it. */
+    TYPE: 'Claims/ Mat',
+    DUE_WORKING_DAYS: 2,
+  },
 
   FROM_NAME: 'Ricky Rampersad — Claims TT',
   AGENT_NAME: 'Ricky Rampersad',
@@ -242,9 +283,11 @@ var CBRAND = { navy: '#0E2A47', blue: '#1C4E80', teal: '#0E8C8C', gold: '#F2B33D
 /* ============================ test mode ============================
  * Same pattern as the renewals backend: a Script Properties switch, so
  * flipping it needs no redeploy. While ON, every email — desk, client,
- * chase, sign-in code — is rerouted to TEST_INBOX with a [TEST] subject
- * and a banner naming the real recipients. File a test claim end to end
- * and nothing ever reaches a client or a claims desk.                  */
+ * chase — is rerouted to TEST_INBOX with a [TEST] subject and a banner
+ * naming the real recipients. File a test claim end to end and nothing
+ * ever reaches a client or a claims desk.
+ *
+ * ONE exception, and it is the sign-in code: see sendMail_ below.      */
 
 function testMode_() {
   return PropertiesService.getScriptProperties().getProperty('TEST_MODE') === 'on';
@@ -254,19 +297,74 @@ function testInbox_() {
   return CLAIMS.TEST_INBOX || Session.getEffectiveUser().getEmail();
 }
 
-/** Single gate for ALL outgoing mail. Live: passes straight through. */
+/** Addresses the branch itself trusts: anyone active on the Staff tab,
+ *  anyone on MAIL_CC, the account that owns the script, and anything named
+ *  in the CLAIMS_TESTERS property (comma separated). Never a client — a
+ *  client is known by their claim, which is not on any of these lists. */
+function claimsTester_(email) {
+  var want = String(email || '').trim().toLowerCase();
+  if (!want) return false;
+  var list = CLAIMS.MAIL_CC.slice();
+  try { list.push(Session.getEffectiveUser().getEmail()); } catch (e) {}
+  try { list.push(testInbox_()); } catch (e) {}
+  String(PropertiesService.getScriptProperties().getProperty('CLAIMS_TESTERS') || '')
+    .split(/[,;\s]+/).forEach(function (a) { if (a) list.push(a); });
+  for (var i = 0; i < list.length; i++) {
+    if (String(list[i]).trim().toLowerCase() === want) return true;
+  }
+  try { if (staffByEmail_(want)) return true; } catch (e) {}
+  return false;
+}
+
+function testBanner_(inner) {
+  return '<div style="background:#b3261e;color:#fff;padding:10px 16px;border-radius:6px;' +
+    'margin:0 0 14px;font-family:Arial,sans-serif;font-size:13px">' +
+    '<b>🧪 TEST MODE</b> — ' + inner + '</div>';
+}
+
+/** Single gate for ALL outgoing mail. Live: passes straight through.
+ *
+ *  ONE exception in test mode, decided 5 November 2026 because the branch
+ *  manager could not sign in at all: a SIGN-IN CODE for an address the
+ *  branch itself trusts goes to that address, marked [TEST], with the test
+ *  inbox copied. A code delivered somewhere else is a code nobody can use,
+ *  which makes the whole sign-in untestable — the exact fault the motor
+ *  quote hit ("the sign-in code included, so an agent could never sign in")
+ *  and fixed with mqTester_.
+ *
+ *  THE GATE DECIDES WHO QUALIFIES, NEVER THE CALLER. `signIn` alone cannot
+ *  get mail out of test mode: claimsTester_ has to agree, so a client's own
+ *  sign-in code still reroutes and no client ever hears from a test. */
 function sendMail_(opts) {
-  if (!testMode_()) { MailApp.sendEmail(opts); return; }
-  var would = 'To: ' + (opts.to || '(none)') + (opts.cc ? ' · CC: ' + opts.cc : '');
+  /* Copy and strip OUR OWN flag first, on every path: MailApp.sendEmail
+     validates the options object it is handed, and a live sign-in code is
+     the last thing that should fall over on a field we invented. */
   var o = {};
   for (var k in opts) o[k] = opts[k];
+  delete o.signIn;
+
+  if (!testMode_()) { MailApp.sendEmail(o); return; }
+
+  if (opts.signIn && claimsTester_(opts.to)) {
+    o.cc = testInbox_();
+    delete o.bcc; delete o.replyTo;
+    o.subject = '[TEST] ' + (opts.subject || '');
+    if (o.htmlBody) {
+      o.htmlBody = testBanner_('this is a sign-in code, so it came to you rather than to the ' +
+        'test inbox. Every other claims email is still going to ' + esc_(testInbox_()) +
+        ' instead of its real recipient.') + o.htmlBody;
+    }
+    MailApp.sendEmail(o);
+    return;
+  }
+
+  var would = 'To: ' + (opts.to || '(none)') + (opts.cc ? ' · CC: ' + opts.cc : '');
   delete o.cc; delete o.bcc; delete o.replyTo;
   o.to = testInbox_();
   o.subject = '[TEST] ' + (opts.subject || '');
   if (o.htmlBody) {
-    o.htmlBody =
-      '<div style="background:#b3261e;color:#fff;padding:10px 16px;border-radius:6px;margin:0 0 14px;font-family:Arial,sans-serif;font-size:13px">' +
-      '<b>🧪 TEST MODE</b> — nothing was sent to the real recipients.<br>Would have gone to — ' + esc_(would) + '</div>' + o.htmlBody;
+    o.htmlBody = testBanner_('nothing was sent to the real recipients.<br>' +
+      'Would have gone to — ' + esc_(would)) + o.htmlBody;
   }
   MailApp.sendEmail(o);
 }
@@ -604,6 +702,7 @@ function sfProps_() {
     id: p.getProperty('SF_CLIENT_ID') || '',
     secret: p.getProperty('SF_CLIENT_SECRET') || '',
     writeClaims: p.getProperty('SF_WRITE_CLAIMS') !== 'off',   // on by default once connected
+    writeTasks: p.getProperty('SF_WRITE_TASKS') !== 'off',     // likewise, see CLAIMS.TASK
   };
 }
 
@@ -794,7 +893,13 @@ function permitWriteBack_(claim) {
   }
 }
 
-/** Put the same values on the register row, so the register does not lie until 3am. */
+/** Put the same values on the register row, so the register does not lie until 3am.
+ *
+ *  EVERY row of that vehicle, not the first one that matches. The permit belongs
+ *  to the insured, not to a year of cover, and since 5 November 2026 a vehicle
+ *  has one register row per term — so writing only the first would leave the
+ *  older terms carrying a permit the client has just corrected, and a claim on
+ *  one of those terms would read it back. */
 function permitRegisterUpdate_(query, fields) {
   try {
     var sh = registerSheet_();
@@ -808,18 +913,23 @@ function permitRegisterUpdate_(query, fields) {
     var want = normKey_(query);
     var keys = sh.getRange(2, keyCol, last - 1, 1).getValues();
     var pols = polCol ? sh.getRange(2, polCol, last - 1, 1).getValues() : null;
+    var map = {
+      DP__c: 'Permit #',
+      Drivers_Permit_Issue_Date__c: 'Permit Issued',
+      Driver_s_Permit_Expiry__c: 'Permit Expires',
+    };
+    /* The plate the policy number belongs to, so a client who quoted last
+       year's policy number still has every one of their terms updated. */
+    var plate = want;
+    for (var p = 0; pols && p < keys.length; p++) {
+      if (normKey_(pols[p][0]) === want && normKey_(keys[p][0])) { plate = normKey_(keys[p][0]); break; }
+    }
     for (var i = 0; i < keys.length; i++) {
-      if (normKey_(keys[i][0]) !== want && !(pols && normKey_(pols[i][0]) === want)) continue;
-      var map = {
-        DP__c: 'Permit #',
-        Drivers_Permit_Issue_Date__c: 'Permit Issued',
-        Driver_s_Permit_Expiry__c: 'Permit Expires',
-      };
+      if (normKey_(keys[i][0]) !== plate && !(pols && normKey_(pols[i][0]) === want)) continue;
       Object.keys(fields).forEach(function (f) {
         var c = col(map[f]);
         if (c) sh.getRange(i + 2, c).setValue(fields[f]);
       });
-      return;
     }
   } catch (err) { /* the register catching up late is not worth failing a claim for */ }
 }
@@ -830,7 +940,7 @@ function permitRegisterUpdate_(query, fields) {
 /** CLIENT PORTFOLIO → Policy Register tab. Record Type separates the lines. */
 function syncPolicyRegister() {
   var rows = sfQuery_(
-    "SELECT Name, RecordType.Name, POLICY__c, Product_Name__c, Contact__r.Name, " +
+    "SELECT Id, Name, RecordType.Name, POLICY__c, Product_Name__c, Contact__r.Name, Contact__c, " +
     "Email__c, Home_Tele__c, Home_Phone__c, Date_Of_Birth__c, Expiry_Date__c " +
     "FROM CLIENT_PORTFOLIO__c WHERE POLICY__c != null");
   var seen = {};
@@ -846,6 +956,7 @@ function syncPolicyRegister() {
       String(r.Email__c || '').toLowerCase(), String(mobile || ''),
       String(r.Date_Of_Birth__c || ''), String(r.Product_Name__c || ''),
       String(r.Expiry_Date__c || ''), String(r.Name || ''),
+      String(r.Contact__c || ''), String(r.Id || ''),
     ]);
   });
   var sh = policyRegisterSheet_();
@@ -855,70 +966,147 @@ function syncPolicyRegister() {
   return out.length;
 }
 
-/** Risk Details → Vehicle Register tab, with the per-year merge that
- *  recovers a chassis number recorded once in 2019 and never again. */
+/** Risk Details → Vehicle Register tab: ONE ROW PER VEHICLE PER TERM.
+ *
+ *  The split that makes this work is between what belongs to the VEHICLE and
+ *  what belongs to the TERM.
+ *
+ *  Identity — the plate, make, model, model year, chassis, engine, and the
+ *  insured's name, e-mail, mobile and permit — belongs to the vehicle, so it is
+ *  merged across every term the way the whole row used to be: the newest
+ *  non-blank value wins and a blank never erases what an older year knew. That
+ *  is what recovers a chassis number recorded once in 2019 and never again, and
+ *  it now fills in the OLD rows too, which the single-row version could not do.
+ *
+ *  Cover — the period, the sum insured, the windscreen limit, the coverage
+ *  type, the carrier, the policy number and the vehicle's status — belongs to
+ *  the term, and is never merged. A claim for an accident in 2023 has to be
+ *  assessed against 2023's sum insured on 2023's policy number, and the single
+ *  row only ever held this year's.
+ *
+ *  Two terms with the same period are ONE term. The renewal desk found
+ *  Salesforce holding exact duplicate cover rows (girDedupe_ in GIRenewals.gs,
+ *  which is why last year's premium came out at two or three times the bill),
+ *  so they are merged here rather than written twice.
+ *
+ *  Newest term first within a plate, which is what keeps findVehicle_ — and so
+ *  the sign-in, the prefill and the permit write-back — reading this year's
+ *  cover with no change to any of them. */
 function syncVehicleRegister() {
   // Field names verified against the live org: the plate is Vehicle__c, the
   // make Vehicle_Make__c, the model year Year_of_Manufacture__c (Year__c is
   // the policy year), the sum insured Cover1__c, and the client hangs off
   // the Insured__c contact lookup.
   var rows = sfQuery_(
-    "SELECT Policy__c, Vehicle__c, Vehicle_Make__c, Model__c, Year_of_Manufacture__c, " +
+    "SELECT Id, Policy__c, Vehicle__c, Vehicle_Make__c, Model__c, Year_of_Manufacture__c, " +
     "Chassis__c, Engine__c, Motor_Vehicle_Coverage_Type__c, Cover1__c, Windscreen__c, " +
     "Carrier__c, From__c, To__c, Vehicle_Status__c, Contact__c, Email__c, " +
     "Insured__r.Name, Insured__r.Email, Insured__r.MobilePhone, Insured__c, " +
     "Insured__r.DP__c, Insured__r.Drivers_Permit_Issue_Date__c, Insured__r.Driver_s_Permit_Expiry__c " +
     "FROM Risk_Details__c WHERE Vehicle__c != null ORDER BY To__c NULLS FIRST");
-  var byKey = {};
+
+  var TERM_FIELDS = ['Motor_Vehicle_Coverage_Type__c', 'Cover1__c', 'Windscreen__c',
+    'Carrier__c', 'From__c', 'To__c', 'Vehicle_Status__c', 'Policy__c'];
+  var ID_FIELDS = ['Vehicle__c', 'Vehicle_Make__c', 'Model__c',
+    'Year_of_Manufacture__c', 'Chassis__c', 'Engine__c'];
+  var set = function (into, from, fields) {
+    fields.forEach(function (f) {
+      if (from[f] !== null && from[f] !== undefined && String(from[f]).trim() !== '') into[f] = from[f];
+    });
+  };
+
+  var cars = {};
   rows.forEach(function (r) {
     var key = normKey_(r.Vehicle__c);
     if (key.length < 4 || key.length > 8 || !/\d/.test(key)) return;
-    var prev = byKey[key] || {};
-    // Later rows (newer cover) overwrite; blanks never erase what an older year knew.
-    var merged = {};
-    ['Vehicle__c', 'Vehicle_Make__c', 'Model__c', 'Year_of_Manufacture__c', 'Chassis__c',
-     'Engine__c', 'Motor_Vehicle_Coverage_Type__c', 'Cover1__c', 'Windscreen__c',
-     'Carrier__c', 'From__c', 'To__c', 'Vehicle_Status__c', 'Policy__c'].forEach(function (f) {
-      merged[f] = (r[f] !== null && r[f] !== undefined && String(r[f]).trim() !== '') ? r[f] : prev[f];
-    });
+    var car = cars[key] || (cars[key] = { ident: {}, terms: {}, order: [] });
+
+    // Identity: the vehicle's, merged across every term it has ever had.
+    set(car.ident, r, ID_FIELDS);
     var contact = r.Insured__r || {};
-    merged.client = contact.Name || r.Contact__c || prev.client || '';
-    merged.email = contact.Email || r.Email__c || prev.email || '';
-    merged.mobile = contact.MobilePhone || prev.mobile || '';
-    merged.permit = contact.DP__c || prev.permit || '';
-    merged.permitIssue = contact.Drivers_Permit_Issue_Date__c || prev.permitIssue || '';
-    merged.permitExpiry = contact.Driver_s_Permit_Expiry__c || prev.permitExpiry || '';
-    merged.insuredId = r.Insured__c || prev.insuredId || '';
-    byKey[key] = merged;
+    var ident = car.ident;
+    if (contact.Name || r.Contact__c) ident.client = contact.Name || r.Contact__c;
+    if (contact.Email || r.Email__c) ident.email = contact.Email || r.Email__c;
+    if (contact.MobilePhone) ident.mobile = contact.MobilePhone;
+    if (contact.DP__c) ident.permit = contact.DP__c;
+    if (contact.Drivers_Permit_Issue_Date__c) ident.permitIssue = contact.Drivers_Permit_Issue_Date__c;
+    if (contact.Driver_s_Permit_Expiry__c) ident.permitExpiry = contact.Driver_s_Permit_Expiry__c;
+    if (r.Insured__c) ident.insuredId = r.Insured__c;
+
+    // Cover: the term's own, and the same period twice is the same term.
+    var tk = iso_(r.From__c) + '|' + iso_(r.To__c);
+    if (!car.terms[tk]) { car.terms[tk] = {}; car.order.push(tk); }
+    set(car.terms[tk], r, TERM_FIELDS);
+    /* The Id of the FIRST row that made this term, never a later duplicate's.
+       Both records are real and either is a valid parent for a task, but the
+       choice has to be stable or the register's Risk Id moves on every sync —
+       and the first row is the fuller one in every duplicate pair seen so far.
+       This is the renewal desk's own tie-break (girDedupe_: "else the first
+       entered"), which has no billing record to prefer here. */
+    if (!car.terms[tk].Id && r.Id) car.terms[tk].Id = r.Id;
   });
-  var out = Object.keys(byKey).map(function (key) {
-    var m = byKey[key];
-    return [key, String(m.Vehicle__c || ''), normKey_(m.Policy__c), String(m.Policy__c || ''),
-      String(m.client || ''), String(m.email || '').toLowerCase(), String(m.mobile || ''),
-      String(m.Vehicle_Make__c || ''), String(m.Model__c || ''), String(m.Year_of_Manufacture__c || ''),
-      String(m.Chassis__c || ''), String(m.Engine__c || ''), String(m.Motor_Vehicle_Coverage_Type__c || ''),
-      String(m.Cover1__c || ''), String(m.Windscreen__c || ''), String(m.Carrier__c || ''),
-      String(m.From__c || ''), String(m.To__c || ''), String(m.Vehicle_Status__c || ''), '',
-      String(m.permit || ''), String(m.permitIssue || ''), String(m.permitExpiry || ''),
-      String(m.insuredId || '')];
+
+  var out = [];
+  Object.keys(cars).forEach(function (key) {
+    var car = cars[key];
+    var m = car.ident;
+    var n = car.order.length;
+    // Newest first: the query ran oldest-last, so reversing the order it saw
+    // puts this year's cover at the top of the plate's rows.
+    car.order.slice().reverse().forEach(function (tk) {
+      var t = car.terms[tk];
+      var from = iso_(t.From__c), to = iso_(t.To__c);
+      out.push([key, String(m.Vehicle__c || ''), normKey_(t.Policy__c), String(t.Policy__c || ''),
+        String(m.client || ''), String(m.email || '').toLowerCase(), String(m.mobile || ''),
+        String(m.Vehicle_Make__c || ''), String(m.Model__c || ''), String(m.Year_of_Manufacture__c || ''),
+        String(m.Chassis__c || ''), String(m.Engine__c || ''), String(t.Motor_Vehicle_Coverage_Type__c || ''),
+        String(t.Cover1__c || ''), String(t.Windscreen__c || ''), String(t.Carrier__c || ''),
+        from, to, String(t.Vehicle_Status__c || ''), n,
+        String(m.permit || ''), String(m.permitIssue || ''), String(m.permitExpiry || ''),
+        String(m.insuredId || ''),
+        (from || to) ? (from || '?') + ' → ' + (to || '?') : '',
+        String(t.Id || '')]);
+    });
   });
+
   var sh = registerSheet_();
   if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
   if (out.length) sh.getRange(2, 1, out.length, out[0].length).setValues(out);
-  logClaim_('(sync)', 'vehicle-register-synced', 'system', out.length + ' vehicles from Salesforce');
+  logClaim_('(sync)', 'vehicle-register-synced', 'system',
+    out.length + ' terms over ' + Object.keys(cars).length + ' vehicles from Salesforce');
   return out.length;
 }
 
 /** The nightly job. Each register fails independently — one bad field
- *  name in one object must not take down the other register. */
+ *  name in one object must not take down the other register.
+ *
+ *  VEHICLES GO FIRST, AND THAT ORDER MATTERS. The two registers are very
+ *  different sizes: about 1,600 vehicles against about 54,000 policies, which
+ *  is 28 pages of SOQL and half a million cells. Apps Script stops an
+ *  execution at six minutes and a timeout is not catchable, so whichever
+ *  register runs second is the one that silently never happens. The plate
+ *  lookup is what the motor page leans on and it is the cheap one, so it
+ *  runs first; policies have `sfFindPortfolio_` to fall back on, which asks
+ *  Salesforce directly for anything the register has not seen. */
 function salesforceNightlySync() {
   if (!sfConnected_()) return;
   var notes = [];
+  try { notes.push(syncVehicleRegister() + ' cover terms'); }
+  catch (err) { logClaim_('(sync)', 'vehicle-sync-failed', 'system', String(err)); notes.push('vehicles FAILED'); }
   try { notes.push(syncPolicyRegister() + ' policies'); }
   catch (err) { logClaim_('(sync)', 'policy-sync-failed', 'system', String(err)); notes.push('policies FAILED'); }
-  try { notes.push(syncVehicleRegister() + ' vehicles'); }
-  catch (err) { logClaim_('(sync)', 'vehicle-sync-failed', 'system', String(err)); notes.push('vehicles FAILED'); }
   return notes.join(', ');
+}
+
+/** Just the plate register, for when the policy half is what ran out of time.
+ *  On the Claims TT menu as "Sync vehicles only (fast)". */
+function syncVehiclesNow() {
+  if (!sfConnected_()) {
+    SpreadsheetApp.getUi().alert('Connect Salesforce first (Claims TT menu → Connect Salesforce).');
+    return;
+  }
+  SpreadsheetApp.getUi().alert('Synced ' + syncVehicleRegister() +
+    ' cover terms — one row per vehicle per year of cover.');
 }
 
 /* ---- live fallback lookup ---- */
@@ -989,6 +1177,198 @@ function sfLogClaim_(claim) {
   });
   logClaim_(claim.ref, 'sf-claim-created', 'system', 'Claims__c/' + id);
   return id;
+}
+
+
+/* ============================ the task ============================
+ *
+ * Asked for on 5 November 2026: "a claim is opened with a task".
+ *
+ * Until this, a filed claim wrote one Claims__c row and nothing else. That row
+ * is the ledger — it is on the client's record and it is what a report counts —
+ * but it is not work anybody is shown, and the branch works from task lists.
+ * So a claim could be filed, acknowledged, forwarded to Guardian General, and
+ * still be sitting in nobody's day.
+ *
+ * It never throws. A claim that is recorded, acknowledged and forwarded has
+ * done the important part; a task that could not be written is a line in the
+ * log and a line in the claim's own notes, and the claim stands.
+ */
+
+/** The task's owner: an e-mail resolved to a Salesforce User, cached six hours.
+ *
+ *  ACTIVE and STANDARD, and exactly one match. The branch manager's own address
+ *  sits on four site guest users in this org, and a task owned by a guest user
+ *  is a task nobody will ever open; two standard users on one address is
+ *  somebody's data problem and not something to guess at. Either way the task
+ *  still files — it lands on the integration user — and the claim's notes say
+ *  so, which is a thing a person can put right. */
+function sfTaskOwnerId_(kind) {
+  var map = CLAIMS.TASK.OWNER || {};
+  var email = '';
+  try { email = String(PropertiesService.getScriptProperties().getProperty('CLAIMS_TASK_OWNER') || '').trim(); }
+  catch (err) { email = ''; }
+  email = email || String(map[kind] || map[''] || '').trim();
+  if (!email) return '';
+  var cache = CacheService.getScriptCache();
+  var ck = 'sf-user.' + email.toLowerCase();
+  var hit = cache.get(ck);
+  if (hit) return hit === '-' ? '' : hit;
+  var id = '';
+  try {
+    var rows = sfQuery_("SELECT Id FROM User WHERE Email = '" + email.replace(/'/g, "\\'") +
+      "' AND IsActive = true AND UserType = 'Standard' LIMIT 2");
+    if (rows.length === 1) id = rows[0].Id;
+  } catch (err) { id = ''; }
+  cache.put(ck, id || '-', 21600);
+  return id;
+}
+
+/** The Salesforce records this claim belongs to.
+ *
+ *  Motor comes off the vehicle register, on the term in force on the date of
+ *  loss — so the task hangs off the year's cover the claim is actually assessed
+ *  against, not whatever was renewed since. Everything else comes off the
+ *  policy register. Either way, a claim filed by hand with a policy number we
+ *  do not hold names no record, and the task still opens with neither. */
+function claimSfIds_(claim) {
+  var out = { contact: '', parent: '', parentKind: '', term: '', policy: '' };
+  try {
+    if (claim.kind === 'motor') {
+      var a = claim.extra || {};
+      var found = vehicleForClaim_(a.vehicleReg || claim.policy || '', claim.incidentDate);
+      if (!found.row) return out;
+      out.contact = String(found.row['Contact Id'] || '').trim();
+      out.parent = String(found.row['Risk Id'] || '').trim();
+      out.parentKind = out.parent ? 'the cover term' : '';
+      out.term = String(found.row['Term'] || '').trim();
+      out.policy = String(found.row['Policy #'] || '').trim();
+      out.matched = found.matched;
+      out.terms = found.terms.length;
+      return out;
+    }
+    var reg = findPolicyRecord_(claim.policy || '');
+    if (!reg) return out;
+    out.contact = String(reg['Contact Id'] || '').trim();
+    out.parent = String(reg['Portfolio Id'] || '').trim();
+    out.parentKind = out.parent ? 'the policy record' : '';
+    out.policy = String(reg['Policy #'] || '').trim();
+    return out;
+  } catch (err) { return out; }
+}
+
+/** Reference first, because the whole point is that a reply finds the file. */
+function claimTaskSubject_(claim) {
+  /* The LINE and then the subtype, because a task list is scanned by line:
+     submissionType_ alone gives 'Collision', which says nothing about which
+     desk or which kind of claim it is. Health keeps Guardian's own submission
+     wording, which is the useful thing there. */
+  var line = typeKeyStrict_(claim.type) === 'health'
+    ? submissionType_(claim)
+    : [claim.type, claim.subtype].filter(String).join(' — ');
+  var bits = ['RRB CLAIM ' + claim.ref, line, claim.name];
+  if (claim.kind === 'motor') {
+    var plate = String((claim.extra || {}).vehicleReg || '').trim();
+    if (plate) bits.push(plate);
+  }
+  return bits.filter(String).join(' - ').slice(0, 255);
+}
+
+/** What whoever opens the task needs in front of them, without opening the
+ *  sheet, the Drive folder or their e-mail. */
+function claimTaskBody_(claim, claimsId, ids, files, missing) {
+  var L = [];
+  var add = function (label, value) { if (value) L.push(label + ': ' + value); };
+  L.push('Filed on claimstt.com and forwarded to the claims desk.');
+  L.push('');
+  add('Reference', claim.ref);
+  add('Line', submissionType_(claim));
+  add('Client', claim.name);
+  add('Mobile', claim.mobile);
+  add('E-mail', claim.email);
+  add('Policy', claim.policy || ids.policy);
+  if (claim.kind === 'motor') {
+    var a = claim.extra || {};
+    add('Vehicle', [a.vehicleReg, a.vehicleMake, a.vehicleYear].filter(String).join(' · '));
+    if (ids.term) {
+      add('Cover term', ids.term + (ids.matched === false && ids.terms > 1
+        ? ' (the loss falls outside every term we hold — newest shown)' : ''));
+    }
+  }
+  add('Date of loss', niceDate_(claim.incidentDate) + (claim.incidentTime ? ' at ' + claim.incidentTime : ''));
+  add('Location', claim.location);
+  add('Estimated amount', claim.amount ? 'TT$ ' + claim.amount : '');
+  add('Documents', (files || []).length + ' uploaded');
+  add('Still outstanding', (missing || []).join(', '));
+  add('Checks to read', claim.flagged);
+  add('Ledger record', claimsId ? 'Claims__c ' + claimsId : '');
+  add('Documents folder', claim.folder);
+  L.push('');
+  L.push('Review due ' + CLAIMS.TASK.DUE_WORKING_DAYS + ' working days from filing. ' +
+    'The client has the reference and can check their own claim at ' +
+    'rickyrampersadbranch.com/claims/ with it and the last four digits of their mobile.');
+  return L.join('\n').slice(0, 30000);
+}
+
+/** One task per filed claim. Returns a line for the claim's own notes. */
+function sfClaimTask_(claim, claimsId, files, missing) {
+  if (!CLAIMS.TASK.ON) return '';
+  if (!sfConnected_() || !sfProps_().writeTasks) return '';
+  if (testMode_()) { logClaim_(claim.ref, 'claim-task-skipped', 'system', 'test mode'); return ''; }
+  try {
+    var ids = claimSfIds_(claim);
+    var base = {
+      Subject: claimTaskSubject_(claim),
+      Status: 'Not Started',
+      /* High when a check fired. A loss outside the cover period, an expired
+         permit or a date in the future is the kind of thing that wants a human
+         eye before the assessor's, and the claim says which. */
+      Priority: claim.flagged ? 'High' : 'Normal',
+      ActivityDate: Utilities.formatDate(
+        addWorkingDays_(new Date(), CLAIMS.TASK.DUE_WORKING_DAYS), sheetTz_(), 'yyyy-MM-dd'),
+      Description: claimTaskBody_(claim, claimsId, ids, files, missing),
+    };
+    var owner = sfTaskOwnerId_(claim.kind);
+    if (owner) base.OwnerId = owner;
+
+    /* Each attempt drops one more thing the org might refuse, in the order
+       they are most likely to be refused: a custom object as a parent needs
+       activities enabled on it, a picklist value has to be on the picklist,
+       and a WhoId has to be a Contact that still exists. The first attempt
+       that lands wins, and what was dropped is recorded rather than passed
+       over — the same rule the group billing writes keep (gblSfwSave_): never
+       claim to have written something the org refused. */
+    var attempts = [];
+    if (ids.parent) attempts.push({ Task_Type__c: CLAIMS.TASK.TYPE, WhoId: ids.contact, WhatId: ids.parent });
+    attempts.push({ Task_Type__c: CLAIMS.TASK.TYPE, WhoId: ids.contact });
+    if (ids.contact) attempts.push({ WhoId: ids.contact });
+    attempts.push({});
+
+    var last = '';
+    for (var i = 0; i < attempts.length; i++) {
+      var fields = {};
+      Object.keys(base).forEach(function (k) { fields[k] = base[k]; });
+      Object.keys(attempts[i]).forEach(function (k) { if (attempts[i][k]) fields[k] = attempts[i][k]; });
+      try {
+        var id = sfCreate_('Task', fields);
+        var on = [];
+        if (fields.WhatId) on.push(ids.parentKind || 'the policy');
+        if (fields.WhoId) on.push("the client's record");
+        if (!on.length) on.push('no record — the policy number matched nothing we hold');
+        var note = 'Salesforce task opened on ' + on.join(' and ') +
+          ', due ' + base.ActivityDate +
+          (owner ? '' : ', owner not set (CLAIMS_TASK_OWNER did not resolve to one active user)') +
+          (i > 0 ? ' [after ' + i + ' field(s) the org refused]' : '');
+        logClaim_(claim.ref, 'claim-task-opened', 'system', 'Task/' + id + ' · ' + note);
+        return note;
+      } catch (err) { last = String(err); }
+    }
+    logClaim_(claim.ref, 'claim-task-failed', 'system', last);
+    return 'Salesforce task could NOT be opened: ' + last.slice(0, 160);
+  } catch (err) {
+    logClaim_(claim.ref, 'claim-task-failed', 'system', String(err));
+    return 'Salesforce task could NOT be opened: ' + String(err).slice(0, 160);
+  }
 }
 
 /* ---- menu plumbing ---- */
@@ -1172,11 +1552,37 @@ function apiRequestCode_(b) {
   var email = '', name = '';
   if (kind === 'staff') {
     var staff = staffByEmail_(id.kind === 'email' ? id.value : '');
-    if (!staff) return generic;
+    if (!staff) {
+      /* The vague answer above exists to stop a stranger fishing for CLIENTS.
+         There is no client behind a staff address, and a branch member who
+         reads "a code is on its way" and never gets one cannot tell being off
+         the list from a mail failure — which is exactly what happened on
+         5 November 2026. So the staff door says what is actually wrong. */
+      return { ok: true, sent: false,
+        message: 'That email is not on the Claims TT staff list, so there is no code to send. ' +
+          'Open the Claims TT sheet, add it to the Staff tab (Email, Name, Role, Active = Y), ' +
+          'or run Claims TT → "1. Set up / repair everything", which puts the branch addresses on.' };
+    }
     email = staff.email; name = staff.name;
   } else {
     var mine = claimsForIdentity_(b.identity);
-    if (!mine.length) return generic;
+    if (!mine.length) {
+      /* The vague answer above is for a STRANGER, who must not be able to use
+         this endpoint to find out whether we hold a given person. One of the
+         branch's own addresses asking about ITSELF is not a stranger — it is
+         somebody testing, and on 5 November 2026 that vagueness cost an
+         evening: every claim on file was under a made-up address, so the
+         client door answered "a code is on its way" and had nothing to send
+         it to. A client still gets the standard answer, every time. */
+      if (claimsTester_(id.value)) {
+        return { ok: true, sent: false,
+          message: 'No claim on file under ' + id.value + ', so there is no code to send. ' +
+            'The client sign-in only knows an address or mobile number already on a filed ' +
+            'claim — file one carrying this address and it will work. You are told this ' +
+            'because it is a branch address; anyone else gets the standard answer.' };
+      }
+      return generic;
+    }
     // Newest claim with an email wins — that is where the code goes.
     for (var i = mine.length - 1; i >= 0; i--) {
       var e = String(mine[i].values[mine[i].map['email']] || '').trim();
@@ -1195,6 +1601,9 @@ function apiRequestCode_(b) {
   cache.put(sendSlot, String(Number(cache.get(sendSlot) || 0) + 1), 3600);
 
   sendMail_({
+    /* signIn: the gate's one test-mode exception — a code for an address the
+       branch trusts reaches that inbox. A client's still reroutes. */
+    signIn: true,
     to: email, name: CLAIMS.FROM_NAME,
     subject: code + ' is your Claims TT sign-in code',
     htmlBody: brandWrap_(
@@ -1407,6 +1816,78 @@ function fmtOrBlank_(v) {
 
 /* ============================ web app routing ============================ */
 
+/* Is this thing on, and is it safe to send a client to it?
+ *
+ * Added 5 November 2026, on the question "can I use this now" — which could
+ * not be answered from outside. The old ping said the file-size limits and
+ * nothing else, so whether test mode was on, which lines had a desk, and
+ * whether Salesforce was connected were all invisible, and the honest answer
+ * was a guess. CLAUDE.md's own Apps Script note prescribes exactly this: a
+ * build marker and a self-check, because from outside "not pasted", "not
+ * deployed" and "a later copy won the name" look identical.
+ *
+ * It leaks nothing. The desk addresses are already in this public file, so
+ * this reports only WHETHER each line has one; `build` is the date in this
+ * file's own header, which is how a browser tells which copy is deployed. */
+function claimPing_() {
+  var lines = {}, ready = [];
+  Object.keys(CLAIMS.DESK).forEach(function (k) {
+    var on = !!deskFor_(k);
+    lines[k] = on;
+    if (on) ready.push(k);
+  });
+  var test = testMode_();
+  /* How many people the staff desk will let in. A COUNT ONLY — this endpoint
+     needs no sign-in, so it must never list the addresses. Zero is why a
+     staff sign-in answers "a code is on its way" and sends nothing, which
+     took an evening to find on 5 November 2026. */
+  var staffCount = -1;
+  try { staffCount = staffNames_().length; } catch (e) {}
+  return {
+    ok: true,
+    service: 'claims-tt',
+    build: CLAIMS.BUILD,
+    testMode: test,
+    live: !test,
+    desks: lines,
+    desksReady: ready,
+    staffCanSignIn: staffCount,
+    salesforce: sfConnected_(),
+    /* What a filed claim writes to Salesforce, so "did it open a task?" is
+       answerable from a browser. `task` false with salesforce true means the
+       switch is off, not that it failed. */
+    writes: {
+      ledger: sfConnected_() && sfProps_().writeClaims,
+      task: sfConnected_() && sfProps_().writeTasks && CLAIMS.TASK.ON,
+      taskDueDays: CLAIMS.TASK.DUE_WORKING_DAYS,
+    },
+    maxFileMb: CLAIMS.MAX_FILE_MB,
+    maxFiles: CLAIMS.MAX_FILES,
+    /* One sentence a person can act on, so nobody has to read the flags. */
+    says: (test
+      ? 'TEST MODE. Every e-mail goes to the test inbox — a real client would ' +
+        'hear nothing, and nothing is written to Salesforce. Claims TT menu → ' +
+        '"Turn test mode OFF" when the desks are set.'
+      : (ready.length === Object.keys(lines).length
+        ? 'Live, and every line has a claims desk.'
+        : 'LIVE. Claims on ' + Object.keys(lines).filter(function (k) { return !lines[k]; }).join(', ') +
+          ' are filed and acknowledged but NOT forwarded — someone must pass ' +
+          'them on by hand until those desk addresses are set.')) +
+      (sfConnected_()
+        ? ''
+        : ' Salesforce is not connected, so a filed claim opens no task and ' +
+          'writes no ledger record: Claims TT menu → Connect Salesforce.') +
+      (staffCount === 0
+        ? ' Nobody is on the staff list, so the staff sign-in can send no code ' +
+          'to anyone: Claims TT menu → "1. Set up / repair everything".'
+        : '') +
+      (test && staffCount > 0
+        ? ' A staff sign-in code still reaches the staff member in test mode, ' +
+          'so the desk can be tested; a client\'s code does not.'
+        : ''),
+  };
+}
+
 function doGet(e) {
   var p = (e && e.parameter) || {};
   /*  The feedback page is HTML, not JSON, so it is answered before the
@@ -1424,7 +1905,7 @@ function doGet(e) {
   var out;
   try {
     switch (p.action) {
-      case 'ping':       out = { ok: true, service: 'claims-tt', maxFileMb: CLAIMS.MAX_FILE_MB, maxFiles: CLAIMS.MAX_FILES }; break;
+      case 'ping':       out = claimPing_(); break;
       case 'status':     out = apiStatus_(p.ref, p.last4); break;
       case 'findPolicy': out = apiFindPolicy_(p.q); break;
       default:           out = { ok: false, error: 'Unknown action' };
@@ -1685,11 +2166,24 @@ function folderFromUrl_(url) {
 }
 
 function typeKeyFromLabel_(label) {
+  return typeKeyStrict_(label) || 'motor';
+}
+
+/** The same lookup with no fallback, for the one decision where guessing is
+ *  expensive: who the claim is e-mailed to. typeKeyFromLabel_ answers 'motor'
+ *  when it does not recognise a label, which was harmless while motor had no
+ *  desk — an unrecognised claim simply went nowhere and said so. Motor is a
+ *  confirmed desk at Guardian General now, so the same guess would send a
+ *  client's claim to another company on the strength of a label we could not
+ *  read. A real claim cannot reach that state (apiClaimStart_ validates the
+ *  key and stores CLAIM_TYPES[key].label, so the label always round-trips),
+ *  which is exactly why it would go unnoticed if it ever did. */
+function typeKeyStrict_(label) {
   var l = String(label || '').toLowerCase();
   for (var k in CLAIM_TYPES) {
     if (CLAIM_TYPES[k].label.toLowerCase() === l) return k;
   }
-  return 'motor';
+  return '';
 }
 
 /**
@@ -1723,16 +2217,25 @@ function apiClaimFinish_(b) {
     files.length + ' document(s)' + (missing.length ? ' · outstanding: ' + missing.join(', ') : ''));
 
   // The branch ledger writes itself: one Claims__c row per filed claim.
-  try { sfLogClaim_(claim); }
+  var claimsId = '';
+  try { claimsId = sfLogClaim_(claim); }
   catch (err) { logClaim_(ref, 'sf-writeback-failed', 'system', String(err)); }
+
+  /* ...and one task, so the claim is somebody's work and not only a record.
+     After the ledger, so the task can name it. Never throws. */
+  var notes = [];
+  var taskNote = sfClaimTask_(claim, claimsId, files, missing);
+  if (taskNote) notes.push(taskNote);
 
   /* The permit the client typed goes back onto their Contact — after the claim
      is safely recorded and the desk has been told, never before. Returns a line
      for the file and never throws; a Salesforce hiccup must not cost a claim. */
   var permitNote = permitWriteBack_(claim);
-  if (permitNote) {
+  if (permitNote) notes.push(permitNote);
+
+  if (notes.length) {
     var had = String(claimField_(hit, 'Internal Notes') || '');
-    setClaimField_(hit, 'Internal Notes', (had ? had + '\n' : '') + permitNote);
+    setClaimField_(hit, 'Internal Notes', (had ? had + '\n' : '') + notes.join('\n'));
   }
 
   return { ok: true, ref: ref, files: files.length, missing: missing };
@@ -1830,6 +2333,23 @@ function registerSheet_() {
     /* The insured's Contact id, so the write-back is one PATCH and not a
        second lookup. An internal id, never shown to a client. */
     'Contact Id',
+    /* ONE ROW PER VEHICLE PER TERM since 5 November 2026, so these two are
+       appended at the end — namedSheet_ backfills a new column by name onto a
+       tab that already exists, and only at the end, so a register somebody has
+       sorted or filtered is untouched.
+
+       Until then every term of a vehicle was collapsed into one row, newest
+       winning, and the register knew only the current year's cover. A claim for
+       an accident in LAST year's term, filed after the renewal, therefore read
+       as "the loss is before this policy started" — which is the wrong thing to
+       say to a client with a perfectly good claim, and mid-term renewals are
+       routine.
+
+       'Term' is the cover period as a person reads it, so two rows for one
+       plate can be told apart at a glance. 'Risk Id' is the Risk_Details__c
+       record itself, which is what lets the claim name the exact term it
+       attached to. */
+    'Term', 'Risk Id',
   ]);
 }
 
@@ -1930,18 +2450,73 @@ function registerRows_() {
   });
 }
 
-/** Match on the plate or the policy number — claimants have one or the other. */
-function findVehicle_(query) {
+/** Every term on file for one vehicle, newest first.
+ *
+ *  Match on the plate or the policy number — claimants have one or the other.
+ *  The plate is tried against every row before the policy number is tried at
+ *  all, because a policy number can be reissued and a plate cannot: matching
+ *  plate-first on the whole register, rather than row by row, is what stops a
+ *  2019 policy number pulling up the wrong vehicle's terms.
+ *
+ *  The register is written newest-term-first per plate (syncVehicleRegister),
+ *  and the rows are returned in that order, so rows[0] is this year's cover. */
+function findVehicleTerms_(query) {
   var key = normKey_(query);
-  if (key.length < 4) return null;
+  if (key.length < 4) return [];
   var rows = registerRows_();
-  for (var i = 0; i < rows.length; i++) {
-    if (normKey_(rows[i]['Reg Key'] || rows[i]['Vehicle Reg']) === key) return rows[i];
-  }
-  for (var j = 0; j < rows.length; j++) {
-    if (normKey_(rows[j]['Policy Key'] || rows[j]['Policy #']) === key) return rows[j];
+  var hit = rows.filter(function (r) {
+    return normKey_(r['Reg Key'] || r['Vehicle Reg']) === key;
+  });
+  if (hit.length) return hit;
+  /* A policy number names one term directly. Give back that term and every
+     other term of the SAME VEHICLE, so a client who quotes last year's policy
+     number still gets this year's cover offered to them. */
+  var byPolicy = rows.filter(function (r) {
+    return normKey_(r['Policy Key'] || r['Policy #']) === key;
+  });
+  if (!byPolicy.length) return [];
+  var plate = normKey_(byPolicy[0]['Reg Key'] || byPolicy[0]['Vehicle Reg']);
+  if (!plate) return byPolicy;
+  return rows.filter(function (r) {
+    return normKey_(r['Reg Key'] || r['Vehicle Reg']) === plate;
+  });
+}
+
+/** The newest term on file. What the sign-in, the prefill and the permit
+ *  write-back have always used, and still should: a client typing their plate
+ *  has not told us the date of loss yet. */
+function findVehicle_(query) {
+  var terms = findVehicleTerms_(query);
+  return terms.length ? terms[0] : null;
+}
+
+/** The term that was in force on a given day, or null.
+ *
+ *  This is the whole point of keeping every term. A loss on 14 March 2024 is
+ *  assessed against March 2024's sum insured, on March 2024's policy number,
+ *  with March 2024's coverage type — none of which the single-row register
+ *  could say. An undated or unmatched loss returns null and every caller falls
+ *  back to the newest term, which is where they all were before. */
+function vehicleTermOn_(terms, isoDay) {
+  var want = iso_(isoDay);
+  if (!want || !terms || !terms.length) return null;
+  for (var i = 0; i < terms.length; i++) {
+    var from = iso_(terms[i]['Cover From']), to = iso_(terms[i]['Cover To']);
+    if (!from && !to) continue;                       // a term with no period dates
+    if (from && want < from) continue;
+    if (to && want > to) continue;
+    return terms[i];
   }
   return null;
+}
+
+/** The register row a claim should be assessed against: the term in force on
+ *  the date of loss, else the newest. Returns { row, terms, matched }. */
+function vehicleForClaim_(query, isoDay) {
+  var terms = findVehicleTerms_(query);
+  if (!terms.length) return { row: null, terms: [], matched: false };
+  var on = vehicleTermOn_(terms, isoDay);
+  return { row: on || terms[0], terms: terms, matched: !!on };
 }
 
 /* ---- the non-motor register: health, life, pension, PA ---- */
@@ -1950,6 +2525,11 @@ function policyRegisterSheet_() {
   return namedSheet_(CLAIMS.POLICY_REGISTER_SHEET, [
     'Policy Key', 'Policy #', 'Line', 'Client', 'Email', 'Mobile',
     'DOB', 'Product', 'Expiry', 'Portfolio',
+    /* The two ids the Salesforce task hangs off: the client's Contact and the
+       policy record itself. Appended at the end (namedSheet_ backfills by name)
+       and internal — never shown to a client. 'Portfolio' above is the policy
+       record's NAME, which cannot be a parent id, which is why both are here. */
+    'Contact Id', 'Portfolio Id',
   ]);
 }
 
@@ -2085,7 +2665,7 @@ function apiVerifyPolicy_(b) {
 
   if (source === 'vehicle') {
     logClaim_('(lookup)', 'policy-prefill', 'client', 'Matched ' + val('Vehicle Reg') + ' via ' + method);
-    return { ok: true, prefill: {
+    return { ok: true, terms: vehicleTermList_(query), prefill: {
       vehicleReg: val('Vehicle Reg'), vehicleMake: [val('Make'), val('Model')].filter(String).join(' '),
       vehicleYear: val('Year'), chassis: val('Chassis #'), engine: val('Engine #'),
       policy: val('Policy #'), coverage: val('Coverage Type'),
@@ -2108,6 +2688,23 @@ function apiVerifyPolicy_(b) {
     policy: val('Policy #'), coverage: [val('Line'), val('Product')].filter(String).join(' — '),
     name: val('Client'), email: String(val('Email')).toLowerCase(), mobile: val('Mobile'),
   } };
+}
+
+/** Every term on file for this vehicle, for the page to pick from once the
+ *  client types the date of loss.
+ *
+ *  Only what the client is entitled to see about their own cover — no Contact
+ *  id, no Risk id, no permit. Newest first, same order as the register. */
+function vehicleTermList_(query) {
+  return findVehicleTerms_(query).map(function (r) {
+    var v = function (f) { return String(r[f] === null || r[f] === undefined ? '' : r[f]).trim(); };
+    return {
+      coverFrom: iso_(r['Cover From']), coverTo: iso_(r['Cover To']),
+      policy: v('Policy #'), coverage: v('Coverage Type'),
+      insuredValue: v('Insured Value (TT$)'), windscreen: v('Windscreen (TT$)'),
+      carrier: v('Carrier'), status: v('Vehicle Status'),
+    };
+  }).filter(function (t) { return t.coverFrom || t.coverTo; });
 }
 
 
@@ -2333,6 +2930,37 @@ function submissionType_(claim) {
   return sub || String(claim.type || 'Claim');
 }
 
+/** The subject the desk already files by — which is not the same shape on
+ *  every line, so one format for all five would be wrong on four of them.
+ *
+ *  Guardian General's motor desk has filed this branch's claims under
+ *  "Vehicle # - <plate> Insured - <name> Date of Accident - <date>" for
+ *  years: one claim ran three months on that single subject, and every reply
+ *  quotes it, so a thread that does not match it starts life detached from
+ *  how they work. Motor therefore keeps their shape and carries our own
+ *  reference on the end, because the reference is what a reply has to quote
+ *  for the claim to find its way back to the file.
+ *
+ *  Every other line keeps "RRB CLAIMS SUBMISSION - <type> - <client> -
+ *  <ref>", which is the form sales support has sent by hand for years. */
+function deskSubject_(claim, type, gap) {
+  var flag = gap ? ' (not forwarded)' : '';
+  if (type === 'motor') {
+    var x = claim.extra || {};
+    var plate = String(x.vehicleReg || claim.policy || '').trim();
+    var when = niceDate_(claim.incidentDate);
+    /* Their own wording keeps the label even when we have no value, because
+       a gap in a subject they file by is a question they can answer; a
+       missing label reads as a different kind of message altogether. */
+    return 'Vehicle # - ' + (plate || '(not given)') + flag +
+      ' Insured - ' + (claim.name || '(not given)') +
+      ' Date of Accident - ' + (when || '(not given)') +
+      ' - ' + claim.ref;
+  }
+  return 'RRB CLAIMS SUBMISSION' + flag + ' - ' +
+    submissionType_(claim) + ' - ' + claim.name + ' - ' + claim.ref;
+}
+
 /** Guardian gives ninety days from the date of treatment. We hold that date,
  *  so the desk is told rather than asked — and the branch sees it on the day
  *  the claim is filed, which is the only day it can still be acted on. */
@@ -2362,6 +2990,33 @@ function ninetyDayNote_(claim) {
       'The treatment was ' + days + ' days ago.</div>';
   }
   return '';
+}
+
+/* The client's own words, without the block the page folds onto the end of
+   them. claims/index.html appends every type-specific answer to the
+   description under a "— — —" rule, because for a long time that was the only
+   way those answers reached anybody. They now have labelled rows of their own
+   on the desk notice and on the printed form, so printing the block as well
+   says the patient's name, their relationship and their date of birth twice
+   in the same e-mail.
+
+   The Description column on the sheet keeps the whole folded text, untouched:
+   it is the raw record of what was submitted, and Answers (JSON) holds the
+   same answers structured. Nothing is lost by not printing it twice.
+
+   A line is only taken off if it reads as one of ours — "Label: value", with
+   a short label carrying no colon, which is every label the page can append.
+   A client who types a row of dashes themselves keeps every word. */
+function claimWords_(claim) {
+  var text = String(claim.description || '');
+  var cut = text.indexOf('\n\n— — —\n');
+  if (cut < 0) return text.trim();
+  var tail = text.slice(cut + 8).split('\n').filter(function (l) { return l.trim() !== ''; });
+  if (!tail.length) return text.trim();
+  for (var i = 0; i < tail.length; i++) {
+    if (!/^[^:\n]{1,60}: \S/.test(tail[i])) return text.trim();
+  }
+  return text.slice(0, cut).trim();
 }
 
 function deskFields_(claim) {
@@ -2413,6 +3068,13 @@ function deskFields_(claim) {
   } else {
     row('Client', esc_(claim.name));
     row('Policy #', esc_(claim.policy || '(not given)'));
+    row('Vehicle', esc_(join([x.vehicleReg, x.vehicleMake, x.vehicleYear])));
+    /* The cover term the loss falls in, and that term's sum insured — not
+       whatever has been renewed since. An assessor reading a claim for a loss
+       in March 2024 needs March 2024's figure, and until the register kept
+       every term it could only ever show this year's. */
+    row('Cover in force', esc_(coverTermText_(claim)));
+    row('Sum insured then', money(coverFact_(claim, 'insuredValue')));
     row('Incident', esc_(whenText_(claim) || '(not given)'));
     row('Location', esc_(claim.location || ''));
     row('Estimated amount', money(claim.amount));
@@ -2426,22 +3088,18 @@ function deskFields_(claim) {
   row('National ID', esc_(claim.nationalId || ''));
   row('Settlement bank', esc_(claim.bank || ''));
   row('<b>' + (type === 'health' ? 'What the treatment was for' : 'What happened') + '</b>',
-    esc_(claim.description).replace(/\n/g, '<br>'));
+    esc_(claimWords_(claim)).replace(/\n/g, '<br>'));
   return out.join('');
 }
 
 function notifyDesk_(claim, files, missing, form) {
-  var type = typeKeyFromLabel_(claim.type);
+  // Strict: an unreadable label gets no desk, never motor's. See typeKeyStrict_.
+  var type = typeKeyStrict_(claim.type);
   var desk = deskFor_(type);
   var gap = deskGap_(type);
   var pack = claimAttachments_(files, form);
-  /* The branch's own subject line, which is what these desks already file
-     by: sales support has sent "RRB CLAIMS SUBMISSION - Prescription/Pharmacy
-     Claim - <client> - <agent>" by hand for years. Ours carries the reference
-     in the agent's place, because the reference is what a reply has to quote
-     for the claim to find its way back to the file. */
-  var subject = 'RRB CLAIMS SUBMISSION' + (gap ? ' (not forwarded)' : '') + ' - ' +
-    submissionType_(claim) + ' - ' + claim.name + ' - ' + claim.ref;
+  // The branch's own subject line, per line of business. See deskSubject_.
+  var subject = deskSubject_(claim, type, gap);
 
   /* No confirmed desk: the branch alone gets it, with the reason at the top.
      Never a fallback address — a claim landing in an unwatched mailbox reads
@@ -2553,10 +3211,164 @@ function pdfSection_(title) {
     'text-transform:uppercase;color:' + CBRAND.teal + ';border:none">' + esc_(title) + '</td></tr>';
 }
 
+/* The printed form's own middle, per line of business — the same split
+   deskFields_ makes, for the same reason and one layer further in.
+
+   Found 5 November 2026, reading a health claim's own PDF back: the e-mail
+   body had been put right that morning and the attachment had not. It was
+   still motor's shape for every line — a health claim headed THE INCIDENT,
+   printing "Date", "Location" and "Estimated amount" for a treatment whose
+   amount is a receipt total and not an estimate, and carrying the patient's
+   name, their relationship and their date of birth nowhere except buried in
+   the free text under a rule of dashes.
+
+   That matters more than the e-mail did. The e-mail is read once; the PDF is
+   what gets filed, forwarded and opened again six weeks later, and on a
+   health claim the patient is the first thing an assessor needs to know,
+   because the person treated is often not the member. */
+function pdfFields_(claim) {
+  var x = claim.extra || {};
+  var out = [];
+  var sec = function (title) { out.push(pdfSection_(title)); };
+  var row = function (label, value) {
+    if (value === null || value === undefined || String(value).trim() === '') return;
+    out.push(pdfRow_(label, String(value), true));
+  };
+  var join = function (parts) { return parts.filter(String).join(' · '); };
+  var money = function (v) { return v ? esc_(fmtMoney_(v) || v) : ''; };
+  var type = typeKeyFromLabel_(claim.type);
+
+  sec('The claim');
+  row('Claim type', esc_(claim.type) + (claim.subtype ? ' — ' + esc_(claim.subtype) : ''));
+  if (type === 'health') row('Submission type', esc_(submissionType_(claim)));
+  row('Date filed', nowStamp_());
+  row('Status', esc_(claim.status || 'Received'));
+
+  sec(type === 'health' ? 'The member' : type === 'life' ? 'The policy' : 'The claimant');
+  row(type === 'health' ? 'Member' : type === 'life' ? 'Policy owner' : 'Name', esc_(claim.name));
+  row(type === 'health' ? 'Plan / policy number' : 'Policy number', esc_(claim.policy));
+  row('Mobile', esc_(claim.mobile));
+  row('Email', esc_(claim.email));
+  row('National ID', esc_(claim.nationalId));
+
+  if (type === 'health') {
+    sec('The patient');
+    row('Patient', esc_(x.patientName || claim.name));
+    row('Relationship to the member', esc_(x.patientRel || ''));
+    row('Date of birth', x.patientDob ? esc_(niceDate_(x.patientDob)) : '');
+
+    sec('The treatment');
+    row('Date of treatment', esc_(niceDate_(claim.incidentDate)));
+    row('Provider', esc_(x.provider || ''));
+    row('Where', esc_(claim.location));
+    row('Amount claimed', money(claim.amount));
+    row('Pre-authorised', esc_(x.preauth || ''));
+    row('Covered by another plan', esc_(x.otherCover || ''));
+    row('What the treatment was for', esc_(claimWords_(claim)).replace(/\n/g, '<br>'));
+  } else if (type === 'property') {
+    sec('The property');
+    row('Address', esc_(claim.location));
+    row('What it is', esc_(x.propertyUse || ''));
+    row('Anyone there at the time', esc_(x.occupied || ''));
+
+    sec('The incident');
+    row('Date', esc_(whenText_(claim)));
+    row('Estimated loss', money(claim.amount));
+    row('Emergency work done', esc_(x.emergency || ''));
+    row('Fire station attended', esc_(x.fireStation || ''));
+    row('Police report', esc_(join([claim.policeStation, claim.policeReport])));
+    row('What happened', esc_(claimWords_(claim)).replace(/\n/g, '<br>'));
+  } else if (type === 'life') {
+    sec('The life assured');
+    row('Life assured', esc_(x.lifeAssured || ''));
+    row('Date of birth', x.lifeDob ? esc_(niceDate_(x.lifeDob)) : '');
+    row('National ID', esc_(x.lifeId || ''));
+    row('Employer', esc_(x.employer || ''));
+
+    sec('The claimant');
+    row('Claimant', esc_(x.claimantName || ''));
+    row('Relationship', esc_(x.claimantRel || ''));
+
+    sec('The claim');
+    row('Date', esc_(whenText_(claim)));
+    row('Amount', money(claim.amount));
+    row('What happened', esc_(claimWords_(claim)).replace(/\n/g, '<br>'));
+  } else {
+    sec('The vehicle and the cover');
+    row('Registration', esc_(x.vehicleReg || ''));
+    row('Make and model', esc_(x.vehicleMake || ''));
+    row('Year', esc_(x.vehicleYear || ''));
+    row('Chassis', esc_(x.chassis || ''));
+    row('Engine', esc_(x.engine || ''));
+    row('Coverage', esc_(x.coverage || coverFact_(claim, 'coverage')));
+    /* The year of cover the loss falls in. The form is what gets filed and
+       opened again weeks later, so the term is on it rather than only in the
+       covering e-mail. */
+    row('Cover in force', esc_(coverTermText_(claim)));
+    row('Sum insured then', money(coverFact_(claim, 'insuredValue')));
+    row('Carrier', esc_(coverFact_(claim, 'carrier')));
+
+    sec('The incident');
+    row('Date', esc_(whenText_(claim)));
+    row('Location', esc_(claim.location));
+    row('Estimated amount', money(claim.amount));
+    row('Police report', esc_(join([claim.policeStation, claim.policeReport])));
+    row('Third party', esc_(claim.thirdParty || ''));
+    row('What happened', esc_(claimWords_(claim)).replace(/\n/g, '<br>'));
+  }
+
+  if (claim.bank) { sec('Settlement'); row('Bank details', esc_(claim.bank)); }
+  return out.join('');
+}
+
+/* ---- the cover term the claim is assessed against ----
+ *
+ * `_policy` in Answers (JSON) is what the CLIENT confirmed on the page: the
+ * term whose dates bracket their date of loss, picked when they typed it
+ * (claims/index.html), not whatever has been renewed since. That is the right
+ * thing to print — it is what they saw and agreed to — and the Salesforce task
+ * carries the register's own answer beside it, so the two can be compared if
+ * they ever disagree.
+ *
+ * Empty for a claim filed by hand, and empty on every claim filed before 5
+ * November 2026. Both print nothing rather than a guess. */
+function coverFacts_(claim) {
+  var x = claim.extra || {};
+  return (x._policy && typeof x._policy === 'object') ? x._policy : {};
+}
+function coverFact_(claim, key) {
+  return String(coverFacts_(claim)[key] || '').trim();
+}
+function coverTermText_(claim) {
+  var p = coverFacts_(claim);
+  var from = niceDate_(p.coverFrom), to = niceDate_(p.coverTo);
+  if (!from && !to) return '';
+  var span = (from || '?') + ' to ' + (to || '?');
+  var pol = String(p.policy || '').trim();
+  return span + (pol && pol !== String(claim.policy || '').trim() ? ' · policy ' + pol : '');
+}
+
+/* The ninety-day decision travels on the form too, not only in the covering
+   e-mail: the form is what is filed, and whoever opens it later has to see
+   that the date was already known and flagged on the day it was filed. */
+function pdfNinetyNote_(claim) {
+  if (typeKeyFromLabel_(claim.type) !== 'health') return '';
+  var days = claimAgeDays_(claim);
+  if (days === null || days < 0 || days <= 75) return '';
+  var over = days > 90;
+  return '<table width="100%" style="border-collapse:collapse;margin-bottom:12px"><tr>' +
+    '<td style="background:' + (over ? '#FBE9E7' : '#FFF7E6') + ';border-left:4px solid ' +
+      (over ? '#B3261E' : '#D9A93F') + ';padding:9px 12px;font-size:10.5px;color:#152435">' +
+    (over
+      ? '<b>Over ninety days old.</b> The treatment was ' + days + ' days ago. Guardian\'s claim ' +
+        'checklist asks whether ninety days or less have passed.'
+      : '<b>' + (90 - days) + ' day' + (90 - days === 1 ? '' : 's') + ' left of the ninety.</b> ' +
+        'The treatment was ' + days + ' days ago.') +
+    '</td></tr></table>';
+}
+
 /** The claim, as a form. Returns a PDF blob. */
 function claimFormBlob_(claim, files, missing) {
-  var nl = function (s) { return esc_(s).replace(/\n/g, '<br>'); };
-
   var html =
     '<html><body style="font-family:Helvetica,Arial,sans-serif;color:#152435;margin:0">' +
     '<table width="100%" style="border-collapse:collapse;margin-bottom:14px">' +
@@ -2570,29 +3382,10 @@ function claimFormBlob_(claim, files, missing) {
       '</td></tr>' +
     '</table>' +
 
+    pdfNinetyNote_(claim) +
+
     '<table width="100%" style="border-collapse:collapse">' +
-      pdfSection_('The claim') +
-      pdfRow_('Claim type', esc_(claim.type) + (claim.subtype ? ' — ' + esc_(claim.subtype) : ''), true) +
-      pdfRow_('Date filed', nowStamp_(), true) +
-      pdfRow_('Status', esc_(claim.status || 'Received'), true) +
-
-      pdfSection_('The claimant') +
-      pdfRow_('Name', esc_(claim.name), true) +
-      pdfRow_('Policy number', esc_(claim.policy), true) +
-      pdfRow_('Mobile', esc_(claim.mobile), true) +
-      pdfRow_('Email', esc_(claim.email), true) +
-      pdfRow_('National ID', esc_(claim.nationalId), true) +
-
-      pdfSection_('The incident') +
-      pdfRow_('Date', esc_(whenText_(claim)), true) +
-      pdfRow_('Location', esc_(claim.location), true) +
-      pdfRow_('Estimated amount', esc_(fmtMoney_(claim.amount) || claim.amount), true) +
-      (claim.policeReport || claim.policeStation
-        ? pdfRow_('Police report', esc_([claim.policeStation, claim.policeReport].filter(String).join(' · ')), true) : '') +
-      (claim.thirdParty ? pdfRow_('Third party', esc_(claim.thirdParty), true) : '') +
-      pdfRow_('What happened', nl(claim.description), true) +
-
-      (claim.bank ? pdfSection_('Settlement') + pdfRow_('Bank details', esc_(claim.bank), true) : '') +
+      pdfFields_(claim) +
 
       pdfSection_('Documents received (' + files.length + ')') +
       pdfRow_('Attached', files.length
@@ -3457,11 +4250,34 @@ function setupClaims() {
   claimSurveysSheet_();
   var root = rootFolder_();
 
-  // Staff tab: seed you as Admin so the staff dashboard works immediately.
+  /* Staff tab: make sure every branch address can sign in, on EVERY run —
+     "Set up / repair everything" has to repair. Until 5 November 2026 this
+     seeded one address and only into an empty tab, so the Google account
+     that owns the script was not on the list: the staff sign-in answered the
+     branch manager with "a code is on its way" and sent nothing at all.
+     An address already on the tab is left exactly as it is, Active = N
+     included — somebody may have turned it off on purpose. */
   var staff = staffSheet_();
-  if (staff.getLastRow() < 2) {
-    staff.appendRow([CLAIMS.MAIL_CC[0], CLAIMS.AGENT_NAME, 'Admin', 'Y']);
+  var staffHave = {};
+  if (staff.getLastRow() > 1) {
+    staff.getRange(2, 1, staff.getLastRow() - 1, 1).getValues().forEach(function (r) {
+      var a = String(r[0] || '').trim().toLowerCase();
+      if (a) staffHave[a] = true;
+    });
   }
+  var staffSeed = [];
+  CLAIMS.MAIL_CC.forEach(function (a, i) {
+    staffSeed.push([a, i === 0 ? CLAIMS.AGENT_NAME : 'Branch inbox', i === 0 ? 'Admin' : 'Staff']);
+  });
+  try { staffSeed.push([Session.getEffectiveUser().getEmail(), CLAIMS.AGENT_NAME, 'Admin']); } catch (e) {}
+  var staffAdded = [];
+  staffSeed.forEach(function (row) {
+    var key = String(row[0] || '').trim().toLowerCase();
+    if (!key || key.indexOf('@') < 0 || staffHave[key]) return;
+    staffHave[key] = true;
+    staff.appendRow([String(row[0]).trim(), row[1], row[2], 'Y']);
+    staffAdded.push(String(row[0]).trim());
+  });
 
   // Status column gets a dropdown so the desk cannot invent new statuses.
   var sh = claimsSheet_();
@@ -3484,8 +4300,12 @@ function setupClaims() {
     'Tabs: ' + CLAIMS.CLAIMS_SHEET + ', ' + CLAIMS.FILES_SHEET + ', ' +
       CLAIMS.LOG_SHEET + ', ' + CLAIMS.REGISTER_SHEET + ', ' +
       CLAIMS.POLICY_REGISTER_SHEET + ', ' + CLAIMS.STAFF_SHEET + '\n' +
-    'Staff sign-in: add each staff email to the ' + CLAIMS.STAFF_SHEET + ' tab (Active=Y); ' +
-      'they sign in at /claims/staff.html with a code emailed to them\n' +
+    'Staff sign-in: ' + (staffAdded.length
+      ? 'added ' + staffAdded.join(', ') + ' to the ' + CLAIMS.STAFF_SHEET + ' tab'
+      : 'every branch address is already on the ' + CLAIMS.STAFF_SHEET + ' tab') +
+      '. Add anyone else there (Active=Y); they sign in at /claims/staff.html ' +
+      'with a code emailed to them — in test mode a staff code still reaches ' +
+      'them, so the sign-in can be tested\n' +
     'Drive folder: ' + root.getUrl() + '\n' +
     'Automatic follow-up: installed, runs daily ~9am (incl. the ' +
       CLAIMS.REVIEW_WORKING_DAYS + '-working-day review)\n' +
@@ -3513,6 +4333,7 @@ function onOpen() {
     .addSeparator()
     .addItem('☁️ Connect Salesforce (one-time)', 'connectSalesforce')
     .addItem('Sync registers from Salesforce now', 'syncSalesforceNow')
+    .addItem('Sync vehicles only (fast)', 'syncVehiclesNow')
     .addSeparator()
     .addItem('🧪 Turn test mode ON (emails only reach you)', 'testModeOn_')
     .addItem('Turn test mode OFF (live emails)', 'testModeOff_')
