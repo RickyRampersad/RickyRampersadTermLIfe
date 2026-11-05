@@ -2203,7 +2203,7 @@ function attachName_(f, blob, seen) {
   var dot = raw.lastIndexOf('.');
   var ext = dot > 0 ? raw.slice(dot) : '';
   /* Strip what a file system will not take, then collapse the gap it leaves:
-     "Driver's permit \u2014 front and back" lost the dash and arrived at the desk
+     "Driver's permit — front and back" lost the dash and arrived at the desk
      as "Driver's permit  front and back.pdf", with two spaces in it. */
   var label = String(f.doc || '').replace(/[^A-Za-z0-9 '()&+.-]/g, ' ')
     .replace(/\s+/g, ' ').trim();

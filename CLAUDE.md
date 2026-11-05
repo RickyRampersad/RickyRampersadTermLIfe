@@ -3153,7 +3153,7 @@ voice under the new timing and the caption gives it away.
   the branch every claim, a unit manager his team's and an agent their own,
   by the agent the claim pays. Staff see none. Without the `SF_*` properties
   the e-mails still go, and the tab says to enter the dates by hand.
-  `claims/claims-harness.js` (68 checks) and `claims/claims-test.js`
+  `claims/claims-harness.js` (69 checks) and `claims/claims-test.js`
   (Playwright, 31) in the scratchpad cover it.
   **Since 16 October 2026 the questionnaire's dates in Salesforce drive every claim** (`T_SQ`, `tSqRun_`; `T_SQ.ON`
   false puts back the flow above). The manager: "the date service received is updated by the staff … sales support
@@ -3867,7 +3867,7 @@ voice under the new timing and the caption gives it away.
   - **Caching.** The answer is kept like the wall's (`tServeCached_`, three minutes fresh).
   - **Tests.** `wall8/stream-harness.js` in the scratchpad looks for every client name, first name, surname, token,
     number, e-mail, phone, address, household name, former agent's name and every piece of client words in the answer
-    on the real tabs (46 checks). `wall8/stream-look.js` (32, Playwright) checks every slide fits a television and
+    on the real tabs (69 checks). `wall8/stream-look.js` (32, Playwright) checks every slide fits a television and
     nothing runs off a phone.
   - **Never add a client's anything to it.** If a slide needs a name, it belongs on the wall or the board, behind the
     same code, not here.
@@ -4469,7 +4469,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   (21 October) the hourly refresh held it: the summary read "Busy: the letters or the refresh are running", and no
   group was reminded that day. The reminder now tries again after the staff part, and failing that the hourly run tries
   it from 11:00 (`GCM_RATE_RETRY`), with its own summary to the branch; the staff are never asked twice.
-  `day/day-test.js` (46 checks) and `day/real/dry.js` (the 21 October tabs, test mode, nothing sent) in the session
+  `day/day-test.js` (69 checks) and `day/real/dry.js` (the 21 October tabs, test mode, nothing sent) in the session
   scratchpad cover it. On those tabs one staff member would have been asked about five groups and another about one.
 
 - **Group letters can be put on hold, every group or one, from the staff page** (27 October 2026: a group's bills were
@@ -4934,6 +4934,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     zone (`gblMon_`), keeps one Group Bills row a group, line and month (the newest), and `gblCell_` writes months as
     text. The test harness (`gcmlive/env-sq.js` in the scratchpad) never caught it because its cells kept what they were
     given; `SHEETS_DATES=1` makes them behave as Sheets does, and `billing/month-test.js` (25) covers the live case.
+  - **The month list has no gaps** (4 November 2026: a group with no October 2026 record in Salesforce and no October bill uploaded had no October to choose, so its October bill could not be uploaded). `blMonthList` in `billing-ui.js`, used by the door and the review, lists every month from the oldest bill or Salesforce record to next month, at most four years back, whether or not anything is on file for it.
   - **Group Life comes in two layouts** (27 October 2026: "the group Life members are on and its not reading"). Guardian's
     member bill carries ten figures a row when the plan has New Life cover (basic, accidental death, new life, then each
     premium with its tax, then the premium) and seven when it has none (`LIFE_COLS`, `lifeFig` in `billread.js`); the
@@ -6771,6 +6772,45 @@ guide you. In your session review notes on the step back in place from all memor
 - Tests: `tests/test-strategic-meeting.js` (71 checks, the script under the fake Sheets with the sign-in, the stream
   and Claude stubbed, then the page and Service.gs against it) and `tests/e2e-strategic-meeting.js` (34, Playwright,
   a laptop as the branch, a phone as the unit manager, and the unlinked backend).
+
+## HELP 868 — the WhatsApp assistant (2 November 2026)
+
+respond.io's AI agent answers on the branch's WhatsApp line. It never reads sheets, Salesforce or this repository; it calls routes in
+the **Service Questionnaire** project (`apps-script/Help868.gs`, `help868.*`, routed from `Service.gs`), and that project decides what
+comes back. Asked for in these words: *"I would like pendings and queries dealt with"*. `HELP868-SETUP.md` has the steps. It was
+first written in the tracker and moved on 3 November because *"all the keys are in the Service Questionnaire"*; the tracker carries no
+HELP 868 code and `tests/test-help868.js` fails if it ever does.
+
+- **Three things must agree before anything about a case is shown** (3 November: *"ask for the agent number and give a code"*): the
+  WhatsApp number is on the "HELP868 Agents" tab, the Agent Skill Bank holds that agent number for the same person (agent, unit manager
+  or branch manager, never staff), and the agent types the 6-digit code e-mailed from support@. That opens a 30-minute session for that
+  number. No password in WhatsApp, ever. A wrong agent number, an unknown number and an inactive agent all get the same words.
+- **Where each answer comes from:** pendings from the Branch Pendings report and the "Pendings Chase" tab in the Branch Portfolio
+  (the tracker rebuilds the second every ten minutes); increases and Group Life, Group Health and Pension from Salesforce.
+  **Salesforce is read for the status field saying Pending and nothing else** (*"it only reading the status field pending"*): no
+  in-force counts, no settled-date test. On 2 November the branch manager had 4 pending group records (2 life, 2 health) and no pending
+  increases; the 156 increases with no Date Settled are Premium Paying records and are deliberately not reported. Individual life, PA and
+  the rest of the Google sheet's tabs are not served yet.
+- **An agent sees only their own cases.** The list shows the last four digits; a case shows days, the decision, each open requirement,
+  who acts next and the Pendings task. Never a client name, a note's words, money or a date of birth.
+- **What is holding a case up is read privately and returned as a choice from fixed lists** (*"analyze the Google sheets, the tasks, the
+  inbox and the Chatter to see what's stalling"*). `help868Stall_` reads the report's requirements, the open Pendings task, its Chatter
+  notes and any support@ e-mail naming the policy (Graph search). Claude (`gcmClaude_`) picks a reason and a next step from fixed lists
+  after the evidence is scrubbed of e-mails, links, numbers of four digits or more and runs of names; rules decide if it is not set up or
+  answers outside the lists. The sentences are composed in code, so no note or e-mail wording reaches WhatsApp. Read once per set of
+  evidence (an hour). Someone owing something is the reason; "no open task" is a signal beside it.
+- **An enquiry's reference comes from the log**, so the assistant can only quote one that exists, and promises no time. It is the row's
+  place among today's rows, written after the row is appended, and **the route takes no script lock** (the letter batches in
+  Transition.gs and GroupClients.gs hold it for minutes; an enquiry must neither wait on them nor delay them).
+- **Salesforce logging is off until `HELP868_SF` = `on`.** Then a case look-up is noted on the open Pendings task and an enquiry opens a
+  Servicing task on the agent's Contact. The summary and reference are logged; the full chat stays in respond.io.
+- **Nothing answers until `HELP868_KEY` is set.** The branch app tile is branch-manager-only until the respond.io workflow answers more
+  than the test number. Do not widen it earlier: an agent would tap it and get silence.
+- **respond.io state on 3 Nov:** the live "HELP 868 Assistant." has handover and internal notes on and a clean instruction (no tracker
+  calls); "HELP 868 — Phase 2 Test" carries the agent-number-and-code flow and is switched off until the seven calls are added; one
+  published test workflow, no teams, one tag (`HELP868-PILOT`), no knowledge sources. The `HELP868-endpoints.json` and key file live
+  in the session scratchpad, never in the repository.
+- Test: `tests/test-help868.js` (69 checks).
 
 ## The claims intake — `claims/` and `apps-script/Claims.gs`
 

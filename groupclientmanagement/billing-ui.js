@@ -26,6 +26,20 @@ const blMoney = n => { n = Number(n) || 0; return (n < 0 ? '−' : '') + 'TT$' +
 const BL_MON = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const blMon = m => { const x = /^(\d{4})-(\d{2})/.exec(m || ''); return x ? BL_MON[+x[2] - 1] + ' ' + x[1] : ''; };
 const blAddM = (m, n) => { const x = /^(\d{4})-(\d{2})/.exec(m); const d = new Date(Date.UTC(+x[1], +x[2] - 1 + n, 1)); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0'); };
+/* Every month from the oldest bill or Salesforce record to next month, with no gaps:
+   a month with neither (October 2026 for a group nobody billed) must still be choosable,
+   or nobody can upload its bill. At most four years back. */
+function blMonthList(d) {
+  const ok = m => /^\d{4}-\d{2}$/.test(m);
+  const seen = new Set([d.month, blAddM(d.today.slice(0, 7), 1), d.today.slice(0, 7)]);
+  d.lines.forEach(o => { (o.stored || []).forEach(x => seen.add(String(x.month || '').slice(0, 7))); ((o.sf && o.sf.history) || []).forEach(x => seen.add(String(x.month || '').slice(0, 7))); });
+  const all = [...seen].filter(ok).sort();
+  const top = all[all.length - 1];
+  let m = all[0] < blAddM(top, -47) ? blAddM(top, -47) : all[0];
+  const out = new Set(ok(d.month) ? [d.month] : []);
+  for (; m <= top; m = blAddM(m, 1)) out.add(m);
+  return [...out].sort().reverse();
+}
 
 /* ── opening the review ── */
 async function openBilling(key, month) {
@@ -42,9 +56,7 @@ function blSteps(s) {
 function drawBilling() {
   const d = BILL, g = d.group;
   $('mhello').innerHTML = '';
-  const months = new Set([d.month, blAddM(d.today.slice(0, 7), 1), d.today.slice(0, 7)]);
-  d.lines.forEach(o => { o.stored.forEach(x => months.add(x.month)); o.sf.history.forEach(h => months.add(h.month)); });
-  const opts = [...months].filter(Boolean).sort().reverse().map(m => '<option value="' + m + '"' + (m === d.month ? ' selected' : '') + '>' + blMon(m) + '</option>').join('');
+  const opts = blMonthList(d).map(m => '<option value="' + m + '"' + (m === d.month ? ' selected' : '') + '>' + blMon(m) + '</option>').join('');
   let h = '<button class="back" type="button" id="blBack">← ' + esc(g.name) + '</button>' +
     '<div class="blhead"><div><h2 style="margin:8px 0 2px">Billing review <span class="muted">· ' + esc(g.name) + '</span></h2><p class="small muted" style="margin:0">List bill ' + esc(g.bills.join(', ') || 'none') + ' · letters go to ' + esc(g.contact || g.to.join(', ') || 'nobody yet') + (d.canAct === false ? ' · <b>read only</b>: ' + esc(g.assigned || 'its owner') + ', the assistant branch manager or the branch manager acts here' : '') + '</p></div>' +
     '<div class="blctl"><label class="sel">Month <select id="blMonth">' + opts + '</select></label><button class="btn ghost sm" type="button" id="blFresh">Read Salesforce again</button>' + (d.ai ? '<button class="btn ghost sm" type="button" id="blAi">Read this month with AI</button>' : '') + '</div></div>';

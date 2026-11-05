@@ -195,6 +195,7 @@ function doPost(e) {
   try {
     /* group client management (GroupClients.gs): a letter sent, a share changed, a group's answers */
     if (/^gcm\./.test(String(body.action || '')) && typeof gcmDoPost_ === 'function') return json_(gcmDoPost_(body));
+    if (/^help868\./.test(String(body.action || '')) && typeof help868Route_ === 'function') { try { return json_(help868Route_(body)); } catch (err) { return json_({ ok: false, error: 'HELP 868 could not answer.' }); } }
     /* the strategic meeting page (StrategicMeeting.gs, 20 October 2026): a contribution logged or taken back, the AI guide */
     if (/^sm\./.test(String(body.action || '')) && typeof smDoPost_ === 'function') return json_(smDoPost_(body));
     /* the branch's own six forms (Quotes.gs, 22 October 2026): the motor, property, critical
@@ -224,6 +225,8 @@ function doGet(e) {
   var p = (e && e.parameter) || {};
   /* group client management (GroupClients.gs): staff, the manager, a group's own page and the group wall */
   if (/^gcm\./.test(String(p.action || '')) && typeof gcmDoGet_ === 'function') return json_(gcmDoGet_(p));
+  /* HELP 868: the WhatsApp assistant's calls (3 Nov 2026), Help868.gs decides what comes back */
+  if (/^help868\./.test(String(p.action || '')) && typeof help868Route_ === 'function') { try { return json_(help868Route_(p)); } catch (err) { return json_({ ok: false, error: 'HELP 868 could not answer.' }); } }
   /* the strategic meeting page (StrategicMeeting.gs, 20 October 2026): sign-in, the contributions, the live counts */
   if (/^sm\./.test(String(p.action || '')) && typeof smDoGet_ === 'function') return json_(smDoGet_(p));
   /* the branch's own six forms (Quotes.gs): a check from a browser that the live deployment carries them */

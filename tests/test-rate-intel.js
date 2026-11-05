@@ -174,9 +174,9 @@ P.setProperty('ANTHROPIC_API_KEY', '');
 
 console.log('\nTaps, and the 1 or 2 star e-mail opens the task\'s card:\n');
 const tok = (n, kind) => rows.find(r => r.TaskId === id(n) && r.Kind === kind).Token;
-env.doGet({ parameter: { sr: tok(1, 'agent'), r: '5' } }); fresh();
+env.doPost({ parameter: { sr: tok(1, 'agent'), r: '5' } }); fresh();
 mails = [];
-env.doGet({ parameter: { sr: tok(2, 'agent'), r: '2' } }); fresh();
+env.doPost({ parameter: { sr: tok(2, 'agent'), r: '2' } }); fresh();
 const alert = mails.find(m => /^Low rating · 2 of 5/.test(m.subject));
 const cardUrl = env.rateIntelUrl_('ricky', tok(2, 'agent'));
 ok('the alert links straight to that task\'s card on his page', !!alert && alert.htmlBody.indexOf(env.esc_(cardUrl)) > -1 && /&amp;f=rate&amp;k=/.test(alert.htmlBody) && /&amp;i=r/.test(alert.htmlBody), alert && alert.subject);
