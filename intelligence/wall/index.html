@@ -1,25 +1,30 @@
 <!DOCTYPE html>
-<!-- PREMIUM DUES · THE LETTERS (rebuilt 5 November 2026; stop 13 of the Intelligence wall, tab "Premium dues · the letters").
+<!-- PREMIUM DUES · THE LETTERS (rebuilt 5 November 2026, again 6 November; stop 13 of the Intelligence wall, tab "Premium dues · the letters").
      Ricky, 4 November: "can they run within the slides and change, so you have the policies under 1 year, then 2 year, then
-     3 year, then 4 year, then 5 years, then over 5 years, and the ability to pause as each [is] given powerful insights with
-     motion and graphics etc, and then the 45 days, the 60, 75 and the 90 days before the lapse, and then the lapses".
-     Eleven scenes inside this one stop, about nine seconds each, that turn by themselves:
-       1-6   one per band of how long the policy has been in force: behind on a premium, the premium, how they pay and what
-             should have collected itself, whose book (active agents', and orphans' to reassign), where they sit across the
-             45, 60, 75 and 90-day lines, and what lapsed
-       7-10  the four letters the Premium Due Desk sends (45, 60, 75, and 90 before the lapse): the letter as the client gets
-             it, what is on that line today, who checked it, what went at ten (a test copy is never called a letter), the
-             week, what came back and what happened after
-       11    the lapses this year: by month, by band, by agent, and which letters each had first
-     Pause, step back and forward: the buttons at the foot, the space bar and the arrow keys; the dots jump to a scene.
+     3 year, then 4 year, then 5 years, then over 5 years, and the ability to pause ... and then the 45 days, the 60, 75 and the
+     90 days before the lapse, and then the lapses". Then, 6 November: "More motion more graphic that impacts and more scaling
+     that will pop and need to have motion in the slide with very powerful insights. It's import for the agents to know the
+     emails going out."
+     Thirteen scenes inside this one stop, about nine seconds each, that turn by themselves:
+       1-6   one per band of how long the policy has been in force: behind on a premium, what should have collected itself,
+             whose book, how far behind and which email that means, how they pay, the agents carrying most
+       7     the emails your clients get: 45-59, 60-74, 75-89, 90+ and the lapse notice on one line, each with its subject,
+             who is copied, how many go today and the client's one-tap choices
+       8-11  each email as the client gets it: the subject, "our conversation so far" (the emails before it and what was tapped),
+             the buttons, and beside it what clients tapped, today's line, the week, what came back and what happened after
+       12    the lapse notice (lapsed under two years): why they let it go, how well we followed up
+       13    the lapses this year: by month, by band, by agent, and whether an email went first
+     Every scene leads with one sentence worked out from the figures. Motion only inside prefers-reduced-motion:
+     no-preference, transform and opacity only, only on the scene that is up, and parked by Pause.
      From intel.wall's `journey` block (iWallJourney_ in PremiumDueDesk.gs). Counts, premium totals, staff first names and
-     our own agents' names; never a client. Dominic, Javid, Aleema and Terek are still with the company: active, always. -->
+     our own agents' names; never a client. The "our conversation so far" block is an example dated back from today.
+     Dominic, Javid, Aleema and Terek are still with the company: active, always. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Premium Dues · The Letters | Ricky Rampersad Branch</title>
-<meta name="description" content="Premiums due, scene by scene: by how long the policy has been in force, the letters at 45, 60, 75 and 90 days, and the lapses.">
+<meta name="description" content="Premiums due, scene by scene: by how long the policy has been in force, the emails clients get at 45, 60, 75 and 90 days and after the lapse, and the lapses.">
 <meta name="theme-color" content="#0E1116">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,7 +44,7 @@
     --bg:#0E1116; --panel:rgba(255,255,255,.045); --line:rgba(255,255,255,.10);
     --ink:#F4F1EA; --dim:#B4B0A8; --faint:#8C877F;
     --gold:#E3B85A; --amber:#EF9A4B; --teal:#4FC1B0; --green:#78D198; --coral:#EF8A6B; --red:#E8625A; --grey:#6E6A64; --violet:#AB94E8;
-    --s45:#4FC1B0; --s60:#E3B85A; --s75:#EF9A4B; --s90:#EF8A6B;
+    --s45:#4FC1B0; --s60:#E3B85A; --s75:#EF9A4B; --s90:#EF8A6B; --slapse:#E8625A;
     --fd:'Plus Jakarta Sans','Plus Jakarta Sans Fallback','Plus Jakarta Sans Fallback R',system-ui,-apple-system,Segoe UI,sans-serif;
     --fb:Inter,'Inter Fallback','Inter Fallback R',system-ui,-apple-system,Segoe UI,sans-serif;
     --ease:cubic-bezier(.16,1,.3,1); --c:var(--gold);
@@ -49,10 +54,10 @@
   html,body{height:100%;background:var(--bg);color:var(--ink);overflow:hidden}
   body{font-family:var(--fb);display:flex;flex-direction:column;position:relative;-webkit-font-smoothing:antialiased}
   .glow{position:fixed;border-radius:50%;filter:blur(7rem);pointer-events:none;z-index:0;transition:background 1.2s}
-  .g1{width:44rem;height:44rem;left:-14rem;top:-20rem;background:var(--c);opacity:.20}
+  .g1{width:44rem;height:44rem;left:-14rem;top:-20rem;background:var(--c);opacity:.22}
   .g2{width:40rem;height:40rem;right:-12rem;bottom:-22rem;background:#4FC1B0;opacity:.12}
 
-  header{position:relative;z-index:2;display:flex;align-items:center;gap:1.1rem;padding:1.2rem 2.2rem .3rem}
+  header{position:relative;z-index:2;display:flex;align-items:center;gap:1.1rem;padding:1.1rem 2.2rem .2rem}
   .mark{width:3.2rem;height:3.2rem;flex:none;display:grid;place-items:center}
   .mark img{width:100%;height:100%;display:block}
   header h1{font:800 2rem/1.05 var(--fd);letter-spacing:-.02em}
@@ -63,7 +68,7 @@
   .btn.on{background:var(--gold);color:#16171B}
   .btn:disabled{opacity:.45;cursor:default}
   .live{display:flex;align-items:center;gap:.5rem;font:700 .95rem var(--fd);color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
-  .live i{width:.75rem;height:.75rem;border-radius:50%;background:var(--faint)}
+  .live i{width:.75rem;height:.75rem;border-radius:50%;background:var(--faint);position:relative}
   .live.on i{background:var(--green)}
   .clock{font:800 1.9rem var(--fd);font-variant-numeric:tabular-nums}
   .mode{font:800 .9rem var(--fd);letter-spacing:.04em;padding:.4rem .75rem;border-radius:.6rem;white-space:nowrap}
@@ -72,87 +77,137 @@
   .mode.held{background:rgba(232,98,90,.14);color:var(--coral);border:1px solid rgba(232,98,90,.4)}
 
   /* the stage: one scene at a time */
-  #stage{position:relative;z-index:1;flex:1;min-height:0;margin:.4rem 2.2rem .4rem}
+  #stage{position:relative;z-index:1;flex:1;min-height:0;margin:.3rem 2.2rem .3rem}
   .scene{position:absolute;inset:0;display:flex;flex-direction:column;gap:.8rem;opacity:0;visibility:hidden;transition:opacity .6s,visibility 0s .6s}
   .scene.on{opacity:1;visibility:visible;transition:opacity .6s}
-  .shead{display:flex;align-items:flex-end;gap:1.4rem}
-  .shead .tag{flex:none;font:800 1rem var(--fd);letter-spacing:.16em;text-transform:uppercase;color:var(--c)}
-  .shead .tag b{display:block;font:800 3.6rem/1 var(--fd);letter-spacing:-.03em;text-transform:none;color:var(--c);margin-top:.25rem}
-  .shead .say{font:700 1.5rem/1.35 var(--fd);color:var(--ink);max-width:70rem;padding-bottom:.35rem}
+  .shead{display:flex;align-items:center;gap:1.8rem;min-height:7.4rem}
+  .shead .tag{flex:none;font:800 1rem var(--fd);letter-spacing:.16em;text-transform:uppercase;color:var(--c);max-width:40rem}
+  .shead .tag b{display:block;font:800 4.4rem/1 var(--fd);letter-spacing:-.035em;text-transform:none;color:var(--c);margin-top:.25rem}
+  .shead .say{font:800 2.15rem/1.22 var(--fd);letter-spacing:-.01em;color:var(--ink);max-width:76rem;padding-left:1.8rem;border-left:.3rem solid var(--c)}
   .shead .say em{font-style:normal;color:var(--c)}
+  .shead .say small{display:block;font:600 1.05rem/1.4 var(--fb);color:var(--dim);margin-top:.45rem;letter-spacing:0}
+  .shead .say small b{color:var(--ink)}
   .grid{flex:1;min-height:0;display:grid;gap:.9rem}
-  .g-band{grid-template-columns:31rem minmax(0,1fr) minmax(0,1fr)}
-  .g-letter{grid-template-columns:36rem minmax(0,1fr) minmax(0,1fr)}
+  .g-band{grid-template-columns:34rem minmax(0,1fr) minmax(0,1fr)}
+  .g-letter{grid-template-columns:40rem minmax(0,1fr) minmax(0,1fr)}
   .g-lapse{grid-template-columns:31rem minmax(0,1.2fr) minmax(0,1fr)}
-  .col{display:flex;flex-direction:column;gap:.9rem;min-height:0}
+  .col{display:flex;flex-direction:column;gap:.9rem;min-height:0;min-width:0}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:1.4rem;padding:1rem 1.25rem;min-height:0;position:relative;overflow:hidden;display:flex;flex-direction:column}
-  .col > .card{flex:1 1 auto}
+  .col > .card{flex:1 0 auto}
+  .col > .card.grow{flex:20 1 0;min-height:0}
   .card .rows{flex:1;justify-content:space-evenly}
   .card.grow{flex:1}
   .kick{font:800 .9rem var(--fd);letter-spacing:.15em;text-transform:uppercase;color:var(--gold)}
   .kick span{color:var(--faint);letter-spacing:.04em;text-transform:none;font-weight:700}
   .note{font:600 .95rem/1.4 var(--fb);color:var(--faint)}
   .note b{color:var(--dim)}
-  .big{font:800 6.4rem/1 var(--fd);letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:var(--c)}
-  .bigk{font:700 1.1rem/1.35 var(--fb);color:var(--dim);margin-top:.35rem}
+  .big{font:800 8.2rem/.95 var(--fd);letter-spacing:-.045em;font-variant-numeric:tabular-nums;color:var(--c)}
+  .bigk{font:700 1.15rem/1.35 var(--fb);color:var(--dim);margin-top:.35rem}
   .bigk b{color:var(--ink)}
   .tiles{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.8rem}
   .tiles.three{grid-template-columns:repeat(3,1fr)}
   .tile{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:1rem;padding:.6rem .8rem;min-width:0}
-  .tile b{display:block;font:800 2rem/1 var(--fd);font-variant-numeric:tabular-nums}
-  .tile small{display:block;font:600 .88rem/1.25 var(--fb);color:var(--dim);margin-top:.3rem}
+  .tile b{display:block;font:800 2.4rem/1 var(--fd);font-variant-numeric:tabular-nums}
+  .tile small{display:block;font:600 .9rem/1.25 var(--fb);color:var(--dim);margin-top:.3rem}
   .tile.z b{color:rgba(255,255,255,.28)}
   .ringw{display:flex;align-items:center;gap:1.1rem;margin-top:.9rem}
-  .ring{width:9rem;height:9rem;flex:none;position:relative}
+  .ring{width:9.5rem;height:9.5rem;flex:none;position:relative}
   .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
   .ring circle{fill:none;stroke-width:11}
   .ring .bgc{stroke:rgba(255,255,255,.08)}
   .ring .fg{stroke:var(--c);stroke-linecap:round}
-  .ring b{position:absolute;inset:0;display:grid;place-items:center;font:800 2.1rem var(--fd)}
-  .ringw p{font:600 1rem/1.4 var(--fb);color:var(--dim)} .ringw p b{color:var(--ink)}
-  .split{display:flex;height:1rem;border-radius:1rem;overflow:hidden;margin-top:.6rem;background:rgba(255,255,255,.07)}
+  .ring b{position:absolute;inset:0;display:grid;place-items:center;font:800 2.3rem var(--fd)}
+  .ring .sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 80%,rgba(255,255,255,.22) 96%,transparent 100%);-webkit-mask:radial-gradient(circle,transparent 58%,#fff 59%,#fff 70%,transparent 71%);mask:radial-gradient(circle,transparent 58%,#fff 59%,#fff 70%,transparent 71%);opacity:0}
+  .ringw p{font:600 1.05rem/1.4 var(--fb);color:var(--dim)} .ringw p b{color:var(--ink)}
+  .split{display:flex;height:1.1rem;border-radius:1rem;overflow:hidden;margin-top:.6rem;background:rgba(255,255,255,.07);position:relative}
   .split i{display:block;height:100%;width:0}
   .lg{display:flex;gap:1.2rem;margin-top:.45rem;font:600 .95rem var(--fb);color:var(--dim);flex-wrap:wrap}
   .lg span{white-space:nowrap} .lg i{display:inline-block;width:.7rem;height:.7rem;border-radius:.2rem;margin-right:.35rem;vertical-align:.02rem}
   .lg b{color:var(--ink)}
+  /* a light that travels along a bar while the scene is up */
+  .shine{position:relative;overflow:hidden}
+  .shine::after{content:"";position:absolute;top:0;bottom:0;left:0;width:30%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),transparent);transform:translateX(-120%);opacity:0;pointer-events:none}
   /* horizontal bars */
   .rows{display:flex;flex-direction:column;gap:.45rem;margin-top:.6rem}
   .r{display:grid;grid-template-columns:minmax(0,12rem) minmax(0,1fr) 4rem;gap:.8rem;align-items:center}
   .r .l{font:600 1.1rem var(--fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .r .t{height:.95rem;border-radius:1rem;background:rgba(255,255,255,.07);overflow:hidden}
+  .r .t{height:1rem;border-radius:1rem;background:rgba(255,255,255,.07);overflow:hidden}
   .r .t i{display:block;height:100%;width:0;border-radius:1rem;background:var(--grey)}
   .r .t i.a{background:var(--teal)} .r .t i.o{background:var(--coral)} .r .t i.g{background:var(--gold)} .r .t i.c{background:var(--c)}
   .r .v{font:800 1.3rem var(--fd);text-align:right;font-variant-numeric:tabular-nums}
   .r.orph .l{color:var(--coral)}
+  .r.me .l{color:var(--c);font-weight:800}
+  .rows.wide .r{grid-template-columns:minmax(0,19rem) minmax(0,1fr) 3.6rem}
+  .rows.wide .r .l{white-space:normal;line-height:1.2;font-size:1.02rem}
   /* the days-behind ladder */
   .ladder{display:grid;grid-template-columns:repeat(5,1fr);gap:.7rem;align-items:end;flex:1;min-height:9rem;margin-top:.8rem}
   .ladder div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
-  .ladder i{display:block;width:100%;height:0;max-height:calc(100% - 4.4rem);border-radius:.6rem .6rem 0 0;background:var(--k,var(--grey));flex:none}
-  .ladder em{font:800 1.4rem var(--fd);font-style:normal;margin-bottom:.3rem;font-variant-numeric:tabular-nums}
+  .ladder i{display:block;width:100%;height:0;max-height:calc(100% - 4.4rem);border-radius:.6rem .6rem 0 0;background:var(--k,var(--grey));flex:none;position:relative}
+  .ladder em{font:800 1.6rem var(--fd);font-style:normal;margin-bottom:.3rem;font-variant-numeric:tabular-nums}
   .ladder span{font:700 .9rem var(--fb);color:var(--dim);margin-top:.35rem;text-align:center;line-height:1.2}
-  /* the letter */
-  .env{flex:none;background:#F7F4EC;color:#1E2228;border-radius:1.2rem;padding:1.2rem 1.4rem 1.3rem;position:relative;box-shadow:0 1rem 2.6rem rgba(4,6,10,.45)}
-  .env::before{content:"";position:absolute;left:0;top:0;bottom:0;width:.5rem;border-radius:1.2rem 0 0 1.2rem;background:var(--c)}
+  .ladder i b,.wk i b{position:absolute;left:0;right:0;top:-.15rem;height:.3rem;border-radius:1rem;background:rgba(255,255,255,.85);opacity:0}
+  /* the email, as the client gets it */
+  .env{flex:none;background:#F7F4EC;color:#1E2228;border-radius:1.2rem;padding:1.1rem 1.4rem 1.2rem;position:relative;box-shadow:0 1rem 2.6rem rgba(4,6,10,.45);overflow:hidden}
+  .env::before{content:"";position:absolute;left:0;top:0;bottom:0;width:.5rem;background:var(--c)}
   .env .from{display:flex;align-items:center;gap:.6rem;font:700 .95rem var(--fb);color:#5A5F66}
   .env .from img{width:1.7rem;height:1.7rem}
-  .env .from span{margin-left:auto;font-weight:600}
-  .env .to{font:600 .9rem var(--fb);color:#6B7078;margin-top:.35rem;padding-bottom:.55rem;border-bottom:1px solid #E2DDD0}
-  .env .subj{font:800 1.5rem/1.25 var(--fd);margin-top:.7rem;color:#12161B}
-  .env .gist{font:500 1.08rem/1.5 var(--fb);color:#3D434B;margin-top:.6rem}
-  .env .ask{display:inline-block;margin-top:.9rem;font:800 1rem var(--fd);background:#1E2228;color:#F7F4EC;border-radius:.6rem;padding:.5rem .9rem}
-  .env .alts{font:600 .9rem/1.4 var(--fb);color:#6B7078;margin-top:.8rem;padding-top:.6rem;border-top:1px dashed #D6D0C2}
-  .env .alts b{color:#3D434B}
+  .env .from span{margin-left:auto;font-weight:700;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:#8A5A12;background:#F1E3C3;border-radius:.4rem;padding:.2rem .5rem}
+  .env .to{font:600 .9rem/1.35 var(--fb);color:#5F646C;margin-top:.35rem;padding-bottom:.5rem;border-bottom:1px solid #E2DDD0}
+  .env .to b{color:#1E2228}
+  .env .subj{font:800 1.65rem/1.22 var(--fd);margin-top:.6rem;color:#12161B}
+  .env .gist{font:500 1.02rem/1.45 var(--fb);color:#3D434B;margin-top:.5rem}
+  .trail{margin-top:.7rem;background:#EFEADD;border-radius:.8rem;padding:.55rem .8rem;border-left:.25rem solid #C9BFA6}
+  .trail .th{font:800 .78rem var(--fd);letter-spacing:.13em;text-transform:uppercase;color:#6B6455}
+  .trail .tr{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.2rem .7rem;align-items:baseline;font:600 .9rem/1.35 var(--fb);color:#3D434B;margin-top:.3rem}
+  .trail .tr i{font-style:normal;font:800 .82rem var(--fd);color:#1E2228;white-space:nowrap}
+  .trail .tr u{text-decoration:none;color:#14615A;font-weight:700}
+  .opts{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.8rem}
+  .opt{position:relative;font:700 .92rem/1.2 var(--fb);background:#1E2228;color:#F7F4EC;border-radius:.6rem;padding:.48rem .75rem;max-width:100%}
+  .opt.alt{background:transparent;color:#3D434B;border:1px solid #C9C2B2}
+  .opt::after{content:"";position:absolute;inset:-.25rem;border-radius:.8rem;border:.18rem solid var(--c);opacity:0;pointer-events:none}
+  .rate{display:flex;gap:.4rem;margin-top:.5rem}
+  .rate span{width:2.4rem;height:2.4rem;border-radius:.55rem;display:grid;place-items:center;font:800 1.1rem var(--fd);background:#1E2228;color:#F7F4EC}
+  .env .lbl{font:800 .8rem var(--fd);letter-spacing:.12em;text-transform:uppercase;color:#6B6455;margin-top:.75rem}
+  .copied{display:inline-flex;align-items:center;gap:.4rem;font:700 .88rem/1.3 var(--fb);color:#14615A;background:#DDEFE9;border-radius:.5rem;padding:.3rem .6rem;margin-top:.7rem}
+  .copied::before{content:"";width:.55rem;height:.55rem;border-radius:50%;background:#14615A;flex:none}
+  /* the journey */
+  .flow{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;gap:.9rem}
+  .ftrack{position:absolute;left:3%;right:3%;top:2.15rem;height:.35rem;border-radius:1rem;background:linear-gradient(90deg,var(--s45),var(--s60),var(--s75),var(--s90),var(--slapse));opacity:.55;overflow:hidden}
+  .frun{position:absolute;inset:0;transform:translateX(-5%)}
+  .frun b{position:absolute;left:0;top:50%;width:3.2rem;height:1.2rem;margin-top:-.6rem;border-radius:1rem;background:radial-gradient(closest-side,#fff,rgba(255,255,255,0))}
+  .fnodes{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1rem;flex:1;min-height:0}
+  .fn{position:relative;display:flex;flex-direction:column;min-width:0;min-height:0}
+  .fn .dot{width:4.6rem;height:4.6rem;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:var(--bg);border:.35rem solid var(--k);font:800 1.5rem var(--fd);color:var(--k);position:relative;z-index:1}
+  .fn .dot::after{content:"";position:absolute;inset:-.6rem;border-radius:50%;border:.2rem solid var(--k);opacity:0}
+  .fn .box{flex:1;min-height:0;margin-top:.7rem;background:var(--panel);border:1px solid var(--line);border-top:.35rem solid var(--k);border-radius:1.2rem;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.55rem;overflow:hidden}
+  .fn .rng{font:800 1.9rem/1 var(--fd);color:var(--k);letter-spacing:-.02em}
+  .fn .rng small{display:block;font:800 .82rem var(--fd);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:.35rem}
+  .fn .mail{background:#F7F4EC;color:#12161B;border-radius:.8rem;padding:.6rem .75rem;font:800 1.05rem/1.28 var(--fd)}
+  .fn .mail small{display:block;font:700 .72rem var(--fd);letter-spacing:.12em;text-transform:uppercase;color:#6B6455;margin-bottom:.25rem}
+  .fn .tag2{font:700 .88rem/1.3 var(--fb);color:var(--ink);background:rgba(255,255,255,.07);border-radius:.5rem;padding:.3rem .55rem}
+  .fn .tag2.ag{color:#9EE3D4;background:rgba(79,193,176,.12)}
+  .fn .today{display:flex;align-items:baseline;gap:.6rem;margin-top:auto}
+  .fn .today b{font:800 3.6rem/1 var(--fd);color:var(--k);font-variant-numeric:tabular-nums}
+  .fn .today span{font:700 .95rem/1.25 var(--fb);color:var(--dim)}
+  .fn .chips{display:flex;flex-wrap:wrap;gap:.35rem}
+  .chip{font:700 .82rem/1.2 var(--fb);color:var(--ink);border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:.5rem;padding:.28rem .5rem;max-width:100%}
+  .chip em{font-style:normal;color:var(--k,var(--c));font-weight:800;margin-left:.3rem}
+  .chip.more{color:var(--faint)}
+  .fstrip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.9rem;flex:none}
+  .fstrip .tile b{font-size:2.6rem}
+  /* charts */
   .wk{display:flex;align-items:flex-end;gap:.6rem;flex:1;min-height:6rem;margin-top:.7rem}
   .wk div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
-  .wk i{display:block;width:100%;height:0;max-height:calc(100% - 3rem);border-radius:.5rem .5rem 0 0;background:var(--c);flex:none;min-height:.2rem}
+  .wk i{display:block;width:100%;height:0;max-height:calc(100% - 3rem);border-radius:.5rem .5rem 0 0;background:var(--c);flex:none;min-height:.2rem;position:relative}
   .wk i.t{background:repeating-linear-gradient(135deg,var(--c) 0 .4rem,transparent .4rem .75rem);border:1px solid var(--c);border-bottom:0}
-  .wk em{font:800 1.2rem var(--fd);font-style:normal;margin-bottom:.25rem}
+  .wk em{font:800 1.3rem var(--fd);font-style:normal;margin-bottom:.25rem}
   .wk span{font:700 .9rem var(--fb);color:var(--faint);margin-top:.3rem}
-  .stack{display:flex;height:1rem;border-radius:1rem;overflow:hidden;margin-top:.5rem;background:rgba(255,255,255,.07)}
+  .wk div.now span{color:var(--ink)}
+  .stack{display:flex;height:1.1rem;border-radius:1rem;overflow:hidden;margin-top:.5rem;background:rgba(255,255,255,.07)}
   .stack i{display:block;height:100%;width:0}
   .cols{display:flex;align-items:flex-end;gap:.45rem;flex:1;min-height:9rem;margin-top:.8rem}
   .cols div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
-  .cols i{display:block;width:100%;height:0;max-height:calc(100% - 2.6rem);border-radius:.4rem .4rem 0 0;background:var(--coral);flex:none}
+  .cols i{display:block;width:100%;height:0;max-height:calc(100% - 2.6rem);border-radius:.4rem .4rem 0 0;background:var(--coral);flex:none;position:relative}
   .cols i.now{background:var(--red)}
   .cols em{font:800 .95rem var(--fd);font-style:normal;margin-bottom:.2rem}
   .cols span{font:700 .8rem var(--fb);color:var(--faint);margin-top:.25rem}
@@ -160,11 +215,11 @@
   .notice b{color:var(--amber)}
 
   /* the foot: which scene, and the controls */
-  .player{position:relative;z-index:2;display:flex;align-items:center;gap:1rem;padding:.55rem 2.2rem .8rem}
+  .player{position:relative;z-index:2;display:flex;align-items:center;gap:1rem;padding:.5rem 2.2rem .75rem}
   .ctl{display:flex;gap:.4rem;flex:none}
   .ctl button{font:800 1.05rem var(--fd);color:var(--ink);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:.7rem;width:2.9rem;height:2.6rem;cursor:pointer}
   .ctl button.pp{width:auto;padding:0 .9rem;min-width:6.4rem}
-  .dots{flex:1;display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:.4rem;min-width:0}
+  .dots{flex:1;display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:.4rem;min-width:0}
   .dots button{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:.3rem;min-width:0}
   .dots button i{display:block;height:.35rem;border-radius:1rem;background:rgba(255,255,255,.14);overflow:hidden;position:relative}
   .dots button i u{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--dc,var(--gold))}
@@ -174,23 +229,51 @@
   .dots button:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:.3rem}
   .ctl button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
+  /* Motion is opt-in. Every finished state above is the plain default; what
+     moves lives here, only on the scene that is up, and parks when paused. */
   @media (prefers-reduced-motion:no-preference){
     .glow{animation:drift 26s ease-in-out infinite alternate}
     .g2{animation-duration:32s;animation-direction:alternate-reverse}
     @keyframes drift{to{transform:translate(8rem,4rem) scale(1.1)}}
-    .live.on i{animation:ping 1.8s infinite}
-    @keyframes ping{0%{box-shadow:0 0 0 0 rgba(120,209,152,.7)}70%{box-shadow:0 0 0 .8rem rgba(120,209,152,0)}100%{box-shadow:0 0 0 0 rgba(120,209,152,0)}}
+    .live.on i::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--green);animation:ping 1.8s infinite}
+    @keyframes ping{from{transform:scale(1);opacity:.7}to{transform:scale(2.8);opacity:0}}
     .scene.on .card{animation:rise .8s var(--ease) backwards}
     .scene.on .col:nth-child(2) .card{animation-delay:.12s} .scene.on .col:nth-child(3) .card{animation-delay:.24s}
     @keyframes rise{from{opacity:0;transform:translateY(1.4rem)}}
     .scene.on .shead .tag b{animation:pop .9s var(--ease) backwards}
-    @keyframes pop{from{opacity:0;transform:scale(.85)}}
-    .scene.on .shead .say{animation:rise .9s var(--ease) .15s backwards}
-    .scene.on .env{animation:post 1.1s var(--ease) .2s backwards}
-    @keyframes post{from{opacity:0;transform:translateY(-2.2rem) rotate(-2.5deg) scale(.95)}}
+    @keyframes pop{from{opacity:0;transform:scale(.8)}}
+    .scene.on .shead .say{animation:sayin 1s var(--ease) .2s backwards}
+    @keyframes sayin{from{opacity:0;transform:translateX(2.4rem)}}
+    .scene.on .big{animation:pop 1s var(--ease) .3s backwards}
+    .scene.on .env{animation:post 1.1s var(--ease) .15s backwards}
+    @keyframes post{from{opacity:0;transform:translate(-3rem,-2.4rem) rotate(-4deg) scale(.92)}}
+    .scene.on .trail .tr{animation:slide .7s var(--ease) backwards}
+    .scene.on .trail .tr:nth-child(2){animation-delay:.8s} .scene.on .trail .tr:nth-child(3){animation-delay:1s}
+    .scene.on .trail .tr:nth-child(4){animation-delay:1.2s} .scene.on .trail .tr:nth-child(5){animation-delay:1.4s}
+    @keyframes slide{from{opacity:0;transform:translateX(-1.6rem)}}
+    .scene.on .opt,.scene.on .rate span{animation:pop .6s var(--ease) backwards;animation-delay:calc(1.1s + var(--n,0) * .09s)}
+    /* the client's finger, button to button */
+    .scene.on .opt::after{animation:tap var(--cyc,6s) ease-out infinite;animation-delay:calc(1.8s + var(--n,0) * .9s)}
+    @keyframes tap{0%{opacity:0;transform:scale(1.15)}4%{opacity:1;transform:scale(1)}12%{opacity:0;transform:scale(1)}100%{opacity:0}}
     .r .t i,.split i,.stack i{transition:width 1.3s var(--ease)}
     .ladder i,.wk i,.cols i{transition:height 1.2s var(--ease)}
-    .ring .fg{transition:stroke-dashoffset 1.5s var(--ease)}
+    .ring .fg{transition:stroke-dashoffset 1.6s var(--ease)}
+    .scene.on .ring .sweep{animation:sweep 3.2s linear 1.6s infinite}
+    @keyframes sweep{from{opacity:1;transform:rotate(0)}to{opacity:1;transform:rotate(360deg)}}
+    .scene.on .shine::after{animation:shine 3.4s ease-in-out 1.4s infinite}
+    @keyframes shine{0%{opacity:1;transform:translateX(-120%)}60%,100%{opacity:1;transform:translateX(420%)}}
+    .scene.on .ladder i b,.scene.on .wk i b,.scene.on .cols i b{animation:beat 1.6s ease-in-out 1.4s infinite}
+    @keyframes beat{0%,100%{opacity:.15}50%{opacity:1}}
+    /* the journey: the emails fly in, a light runs the line, each node lights as it passes */
+    .scene.on .fn{animation:fly .9s var(--ease) backwards;animation-delay:calc(.25s + var(--n) * .16s)}
+    @keyframes fly{from{opacity:0;transform:translateY(3rem) scale(.94)}}
+    .scene.on .frun{animation:run 5s linear .8s infinite}
+    @keyframes run{from{transform:translateX(-5%)}to{transform:translateX(100%)}}
+    .scene.on .fn .dot::after{animation:node 5s ease-out infinite;animation-delay:calc(.8s + var(--n) * 1s)}
+    @keyframes node{0%{opacity:0;transform:scale(.8)}6%{opacity:1;transform:scale(1)}22%{opacity:0;transform:scale(1.25)}100%{opacity:0}}
+    .scene.on .fn .mail{animation:post .9s var(--ease) backwards;animation-delay:calc(.55s + var(--n) * .16s)}
+    .scene.on .fstrip .tile{animation:rise .8s var(--ease) backwards;animation-delay:calc(1.1s + var(--n,0) * .1s)}
+    body.paused .scene *,body.paused .scene *::before,body.paused .scene *::after{animation-play-state:paused!important}
   }
   @media (max-width:900px){
     html{font-size:12.5px} html,body{height:auto;overflow:auto}
@@ -199,16 +282,23 @@
     #stage{margin:.4rem 1.4rem}
     .scene{position:static;display:none}
     .scene.on{display:flex}
-    .shead{flex-direction:column;align-items:flex-start;gap:.4rem}
-    .shead .tag b{font-size:3rem} .shead .say{font-size:1.3rem}
+    .shead{flex-direction:column;align-items:flex-start;gap:.6rem}
+    .shead .tag b{font-size:3.2rem} .shead .say{font-size:1.55rem;padding-left:1rem}
     .grid,.g-band,.g-letter,.g-lapse{grid-template-columns:1fr}
-    .big{font-size:4.4rem}
+    .big{font-size:5.4rem}
     .player{position:sticky;bottom:0;background:var(--bg);flex-wrap:wrap;padding:.7rem 1.4rem;border-top:1px solid var(--line)}
-    .dots{grid-template-columns:repeat(11,1fr);order:-1;flex-basis:100%}
+    .dots{grid-template-columns:repeat(13,1fr);order:-1;flex-basis:100%}
     .dots button span{display:none}
     .r{grid-template-columns:minmax(0,9rem) minmax(0,1fr) 3.4rem}
-    .col > .card{flex:none} .card .rows{flex:none}
+    .rows.wide .r{grid-template-columns:minmax(0,13rem) minmax(0,1fr) 3rem}
+    .col > .card,.col > .card.grow{flex:none} .card .rows{flex:none}
     .ladder{flex:none;height:13rem} .wk{flex:none;height:9rem} .cols{flex:none;height:11rem}
+    .ftrack{display:none}
+    .fnodes{grid-template-columns:1fr;gap:.6rem}
+    .fn{display:grid;grid-template-columns:4.6rem minmax(0,1fr);gap:.8rem;align-items:start}
+    .fn .box{margin-top:0}
+    .fn .today b{font-size:2.8rem}
+    .fstrip{grid-template-columns:1fr 1fr}
   }
 </style>
 </head>
@@ -216,7 +306,7 @@
 <i class="glow g1"></i><i class="glow g2"></i>
 <header>
   <div class="mark"><img src="../../logo-mark.svg" alt=""></div>
-  <div><h1>Premium Dues &middot; The Letters</h1><div class="sub" id="sub">Every policy behind on a premium, by how long it has been in force, the four letters, and the lapses</div></div>
+  <div><h1>Premium Dues &middot; The Letters</h1><div class="sub" id="sub">Every policy behind on a premium, by how long it has been in force, the emails your clients get, and the lapses</div></div>
   <div class="right">
     <span class="mode held" id="mode">letters state not known</span>
     <button class="btn" id="sound" onclick="toggleSound()">▶ Narrate</button>
@@ -240,17 +330,21 @@
    agents' names; no client, no policy number. The feed is intel.wall, which
    takes no token; this stop's picture is its `journey` block. Until the feed
    answers, the snapshot below is shown, and it says so: every number in it is
-   illustrative. */
+   illustrative. Every field added on 5 November (auto, options, trail, copies,
+   back.asked, notice, flow) may be missing from an older PremiumDueDesk.gs:
+   each scene falls back to what it can say without it. */
 var WALL45_URL = "https://script.google.com/macros/s/AKfycbzb9gzh3TldhLCQA7MCz3vdyWLAWTHpR9X7M3uvPNtqJbnnYRMcDSkm0D1C8SgENvn44g/exec";
-var SNAPSHOT = {"generatedAt":"2026-11-05 10:30","today":"2026-11-05","todayLabel":"Thursday 5 November","mode":"test","blocked":false,"sendHour":10,"nextSend":"2026-11-06","nextSendWords":"tomorrow","lastRun":{"when":"Thu 5 Nov, 10:02","mode":"test","sent":0,"test":17,"notSent":1,"waiting":0},"bands":[{"key":"t0","label":"Under 1 year"},{"key":"t1","label":"1 to 2 years"},{"key":"t2","label":"2 to 3 years"},{"key":"t3","label":"3 to 4 years"},{"key":"t4","label":"4 to 5 years"},{"key":"t5","label":"Over 5 years"}],"letters":[{"stage":45,"upTo":51,"subject":"4 years with us — thank you","subjects":[{"under":1,"subject":"A question about your first year with us"},{"under":2,"subject":"Two years with the branch — how are we doing?"},{"under":5,"subject":"4 years with us — thank you"},{"under":10,"subject":"9 years of cover — thank you"},{"under":20,"subject":"19 years with the branch — thank you"}],"gist":"Thanks them for their years with us, tells them how the premium is collected and that the last one did not come through, and asks one question: rate the service, one tap.","asks":"A rating, 1 to 5"},{"stage":60,"upTo":66,"subject":"Following up on our note about your premium","subjects":null,"gist":"A follow-up. It opens on what they said last time, says the premium is still outstanding and how to sort it. No rating if they gave one.","asks":"A rating if none yet"},{"stage":75,"upTo":81,"subject":"Your cover stops on [the lapse date] unless the premium is paid","subjects":null,"gist":"Names the day the cover stops unless the premium is paid, gives the ways to pay, and a button: ask my agent to call me.","asks":"Ask my agent to call me"},{"stage":90,"upTo":96,"subject":"Before your policy lapses: the options open to you","subjects":null,"gist":"Before the policy lapses: pay what is outstanding, reduce the cover, make it paid-up, or ask for time, and a button to have the branch call about the options.","asks":"Call me about my options"}],"scope":{"t0":{"key":"t0","label":"Under 1 year","behind":44,"behindPrem":13420,"clients":39,"active":32,"orphan":12,"orphanPrem":3600,"over45":24,"over45Prem":7200,"under45":20,"autoFail":24,"autoFailPrem":7920,"next7":10,"lapsed":{"month":3,"monthPrem":739,"d30":3,"d30Prem":862,"ytd":26,"ytdPrem":7528,"monthName":"November"},"billing":[{"k":"Bankers Order","n":18,"prem":5544,"auto":true},{"k":"Salary Deduction","n":8,"prem":2376,"auto":true},{"k":"Pre Authorized Cheque","n":4,"prem":1056,"auto":true},{"k":"Direct Bill","n":14,"prem":4224,"auto":false}],"units":[{"k":"Ricky Rampersad","n":18,"prem":5544},{"k":"Akaash Kalladeen","n":14,"prem":4092},{"k":"Orphans · to reassign","n":12,"prem":3564}],"agents":[{"k":"Neil Ramnanan","n":2,"prem":893,"orphan":false},{"k":"Randolph Gonzales","n":2,"prem":702,"orphan":false},{"k":"Meera Persad-Khan","n":2,"prem":574,"orphan":false},{"k":"Joy Sammah","n":2,"prem":447,"orphan":false},{"k":"Premchand Dookran","n":2,"prem":383,"orphan":false},{"k":"Fawwaz Mohamed","n":1,"prem":510,"orphan":false},{"k":"Narissa Mohammed","n":1,"prem":319,"orphan":false},{"k":"Daniel Ramdial","n":1,"prem":255,"orphan":false},{"k":"Dominic Harding","n":1,"prem":191,"orphan":false},{"k":"Javid Ali","n":1,"prem":128,"orphan":false},{"k":"Orphans · to reassign","n":7,"prem":2046,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":11,"lineClients":10,"lineActive":8,"lineOrphan":3,"linePrem":3410,"stretch":26,"stretchPrem":8320,"stretchActive":18,"stretchOrphan":8,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":8,"lineClients":7,"lineActive":6,"lineOrphan":2,"linePrem":2480,"stretch":23,"stretchPrem":7360,"stretchActive":16,"stretchOrphan":7,"today":{"checked":2,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":6,"lineClients":5,"lineActive":4,"lineOrphan":2,"linePrem":1860,"stretch":15,"stretchPrem":4800,"stretchActive":10,"stretchOrphan":5,"today":{"checked":1,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":5,"lineClients":5,"lineActive":3,"lineOrphan":2,"linePrem":1550,"stretch":57,"stretchPrem":18240,"stretchActive":40,"stretchOrphan":17,"today":{"checked":1,"ticked":0,"skipped":1,"waiting":1,"sent":0,"test":0,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":0},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":0},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":0}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]},"t1":{"key":"t1","label":"1 to 2 years","behind":64,"behindPrem":19520,"clients":56,"active":46,"orphan":18,"orphanPrem":5400,"over45":35,"over45Prem":10500,"under45":29,"autoFail":37,"autoFailPrem":11520,"next7":14,"lapsed":{"month":4,"monthPrem":1042,"d30":4,"d30Prem":1215,"ytd":37,"ytdPrem":10608,"monthName":"November"},"billing":[{"k":"Bankers Order","n":27,"prem":8064,"auto":true},{"k":"Salary Deduction","n":12,"prem":3456,"auto":true},{"k":"Pre Authorized Cheque","n":5,"prem":1536,"auto":true},{"k":"Direct Bill","n":20,"prem":6144,"auto":false}],"units":[{"k":"Ricky Rampersad","n":27,"prem":8064},{"k":"Akaash Kalladeen","n":20,"prem":5952},{"k":"Orphans · to reassign","n":17,"prem":5184}],"agents":[{"k":"Neil Ramnanan","n":4,"prem":1259,"orphan":false},{"k":"Randolph Gonzales","n":4,"prem":989,"orphan":false},{"k":"Joy Sammah","n":3,"prem":629,"orphan":false},{"k":"Meera Persad-Khan","n":2,"prem":809,"orphan":false},{"k":"Fawwaz Mohamed","n":2,"prem":719,"orphan":false},{"k":"Narissa Mohammed","n":2,"prem":450,"orphan":false},{"k":"Daniel Ramdial","n":2,"prem":360,"orphan":false},{"k":"Premchand Dookran","n":1,"prem":539,"orphan":false},{"k":"Dominic Harding","n":1,"prem":270,"orphan":false},{"k":"Javid Ali","n":1,"prem":180,"orphan":false},{"k":"Orphans · to reassign","n":10,"prem":2883,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":16,"lineClients":14,"lineActive":11,"lineOrphan":5,"linePrem":4960,"stretch":37,"stretchPrem":11840,"stretchActive":26,"stretchOrphan":11,"today":{"checked":3,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":2,"notSent":0,"why":[],"by":[{"k":"Sasha","n":2},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":2},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":2},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":12,"lineClients":11,"lineActive":8,"lineOrphan":4,"linePrem":3720,"stretch":32,"stretchPrem":10240,"stretchActive":22,"stretchOrphan":10,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":2,"notSent":0,"why":[],"by":[{"k":"Sasha","n":2},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":2},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":2},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":8,"lineClients":7,"lineActive":6,"lineOrphan":2,"linePrem":2480,"stretch":22,"stretchPrem":7040,"stretchActive":15,"stretchOrphan":7,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":2},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":2},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":2},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":7,"lineClients":6,"lineActive":5,"lineOrphan":2,"linePrem":2170,"stretch":81,"stretchPrem":25920,"stretchActive":57,"stretchOrphan":24,"today":{"checked":1,"ticked":1,"skipped":1,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":2},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":0},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]},"t2":{"key":"t2","label":"2 to 3 years","behind":56,"behindPrem":17080,"clients":49,"active":40,"orphan":16,"orphanPrem":4800,"over45":31,"over45Prem":9300,"under45":25,"autoFail":34,"autoFailPrem":10080,"next7":12,"lapsed":{"month":3,"monthPrem":907,"d30":4,"d30Prem":1058,"ytd":32,"ytdPrem":9239,"monthName":"November"},"billing":[{"k":"Bankers Order","n":24,"prem":7056,"auto":true},{"k":"Salary Deduction","n":10,"prem":3024,"auto":true},{"k":"Pre Authorized Cheque","n":4,"prem":1344,"auto":true},{"k":"Direct Bill","n":18,"prem":5376,"auto":false}],"units":[{"k":"Ricky Rampersad","n":24,"prem":7056},{"k":"Akaash Kalladeen","n":17,"prem":5208},{"k":"Orphans · to reassign","n":15,"prem":4536}],"agents":[{"k":"Neil Ramnanan","n":5,"prem":1096,"orphan":false},{"k":"Fawwaz Mohamed","n":3,"prem":626,"orphan":false},{"k":"Randolph Gonzales","n":2,"prem":861,"orphan":false},{"k":"Meera Persad-Khan","n":2,"prem":705,"orphan":false},{"k":"Premchand Dookran","n":2,"prem":470,"orphan":false},{"k":"Narissa Mohammed","n":2,"prem":392,"orphan":false},{"k":"Joy Sammah","n":1,"prem":548,"orphan":false},{"k":"Daniel Ramdial","n":1,"prem":313,"orphan":false},{"k":"Dominic Harding","n":1,"prem":235,"orphan":false},{"k":"Javid Ali","n":1,"prem":157,"orphan":false},{"k":"Orphans · to reassign","n":8,"prem":2511,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":14,"lineClients":13,"lineActive":10,"lineOrphan":4,"linePrem":4340,"stretch":32,"stretchPrem":10240,"stretchActive":22,"stretchOrphan":10,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":2,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":2},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":10,"lineClients":9,"lineActive":7,"lineOrphan":3,"linePrem":3100,"stretch":28,"stretchPrem":8960,"stretchActive":20,"stretchOrphan":8,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":2},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":7,"lineClients":6,"lineActive":5,"lineOrphan":2,"linePrem":2170,"stretch":19,"stretchPrem":6080,"stretchActive":13,"stretchOrphan":6,"today":{"checked":1,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":2},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":6,"lineClients":5,"lineActive":4,"lineOrphan":2,"linePrem":1860,"stretch":70,"stretchPrem":22400,"stretchActive":49,"stretchOrphan":21,"today":{"checked":1,"ticked":1,"skipped":1,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":0},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]},"t3":{"key":"t3","label":"3 to 4 years","behind":50,"behindPrem":15250,"clients":44,"active":36,"orphan":14,"orphanPrem":4200,"over45":28,"over45Prem":8400,"under45":22,"autoFail":32,"autoFailPrem":9000,"next7":11,"lapsed":{"month":3,"monthPrem":806,"d30":3,"d30Prem":941,"ytd":28,"ytdPrem":8213,"monthName":"November"},"billing":[{"k":"Bankers Order","n":21,"prem":6300,"auto":true},{"k":"Salary Deduction","n":9,"prem":2700,"auto":true},{"k":"Pre Authorized Cheque","n":4,"prem":1200,"auto":true},{"k":"Direct Bill","n":16,"prem":4800,"auto":false}],"units":[{"k":"Ricky Rampersad","n":21,"prem":6300},{"k":"Akaash Kalladeen","n":16,"prem":4650},{"k":"Orphans · to reassign","n":14,"prem":4050}],"agents":[{"k":"Neil Ramnanan","n":3,"prem":974,"orphan":false},{"k":"Randolph Gonzales","n":3,"prem":766,"orphan":false},{"k":"Meera Persad-Khan","n":3,"prem":626,"orphan":false},{"k":"Joy Sammah","n":2,"prem":487,"orphan":false},{"k":"Premchand Dookran","n":2,"prem":418,"orphan":false},{"k":"Fawwaz Mohamed","n":1,"prem":557,"orphan":false},{"k":"Narissa Mohammed","n":1,"prem":348,"orphan":false},{"k":"Daniel Ramdial","n":1,"prem":278,"orphan":false},{"k":"Dominic Harding","n":1,"prem":209,"orphan":false},{"k":"Javid Ali","n":1,"prem":139,"orphan":false},{"k":"Orphans · to reassign","n":7,"prem":2232,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":12,"lineClients":11,"lineActive":8,"lineOrphan":4,"linePrem":3720,"stretch":28,"stretchPrem":8960,"stretchActive":20,"stretchOrphan":8,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":9,"lineClients":8,"lineActive":6,"lineOrphan":3,"linePrem":2790,"stretch":25,"stretchPrem":8000,"stretchActive":17,"stretchOrphan":8,"today":{"checked":2,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":6,"lineClients":5,"lineActive":4,"lineOrphan":2,"linePrem":1860,"stretch":17,"stretchPrem":5440,"stretchActive":12,"stretchOrphan":5,"today":{"checked":1,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":5,"lineClients":5,"lineActive":3,"lineOrphan":2,"linePrem":1550,"stretch":62,"stretchPrem":19840,"stretchActive":43,"stretchOrphan":19,"today":{"checked":1,"ticked":0,"skipped":1,"waiting":1,"sent":0,"test":0,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":0},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":0},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":0}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]},"t4":{"key":"t4","label":"4 to 5 years","behind":44,"behindPrem":13420,"clients":39,"active":32,"orphan":12,"orphanPrem":3600,"over45":24,"over45Prem":7200,"under45":20,"autoFail":29,"autoFailPrem":7920,"next7":9,"lapsed":{"month":2,"monthPrem":672,"d30":3,"d30Prem":784,"ytd":24,"ytdPrem":6844,"monthName":"November"},"billing":[{"k":"Bankers Order","n":18,"prem":5544,"auto":true},{"k":"Salary Deduction","n":8,"prem":2376,"auto":true},{"k":"Pre Authorized Cheque","n":4,"prem":1056,"auto":true},{"k":"Direct Bill","n":14,"prem":4224,"auto":false}],"units":[{"k":"Ricky Rampersad","n":18,"prem":5544},{"k":"Akaash Kalladeen","n":14,"prem":4092},{"k":"Orphans · to reassign","n":12,"prem":3564}],"agents":[{"k":"Neil Ramnanan","n":3,"prem":812,"orphan":false},{"k":"Randolph Gonzales","n":3,"prem":638,"orphan":false},{"k":"Fawwaz Mohamed","n":2,"prem":464,"orphan":false},{"k":"Joy Sammah","n":2,"prem":406,"orphan":false},{"k":"Meera Persad-Khan","n":1,"prem":522,"orphan":false},{"k":"Premchand Dookran","n":1,"prem":348,"orphan":false},{"k":"Narissa Mohammed","n":1,"prem":290,"orphan":false},{"k":"Daniel Ramdial","n":1,"prem":232,"orphan":false},{"k":"Dominic Harding","n":1,"prem":174,"orphan":false},{"k":"Javid Ali","n":1,"prem":116,"orphan":false},{"k":"Orphans · to reassign","n":6,"prem":1860,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":10,"lineClients":9,"lineActive":7,"lineOrphan":3,"linePrem":3100,"stretch":24,"stretchPrem":7680,"stretchActive":17,"stretchOrphan":7,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":8,"lineClients":7,"lineActive":6,"lineOrphan":2,"linePrem":2480,"stretch":21,"stretchPrem":6720,"stretchActive":15,"stretchOrphan":6,"today":{"checked":1,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":5,"lineClients":5,"lineActive":3,"lineOrphan":2,"linePrem":1550,"stretch":14,"stretchPrem":4480,"stretchActive":10,"stretchOrphan":4,"today":{"checked":1,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":4,"lineClients":4,"lineActive":3,"lineOrphan":1,"linePrem":1240,"stretch":52,"stretchPrem":16640,"stretchActive":36,"stretchOrphan":16,"today":{"checked":1,"ticked":0,"skipped":1,"waiting":1,"sent":0,"test":0,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":0},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":0},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":0}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]},"t5":{"key":"t5","label":"Over 5 years","behind":184,"behindPrem":56120,"clients":162,"active":132,"orphan":52,"orphanPrem":15600,"over45":101,"over45Prem":30300,"under45":83,"autoFail":129,"autoFailPrem":33120,"next7":41,"lapsed":{"month":11,"monthPrem":3024,"d30":13,"d30Prem":3528,"ytd":106,"ytdPrem":30798,"monthName":"November"},"billing":[{"k":"Bankers Order","n":77,"prem":23184,"auto":true},{"k":"Salary Deduction","n":33,"prem":9936,"auto":true},{"k":"Pre Authorized Cheque","n":15,"prem":4416,"auto":true},{"k":"Direct Bill","n":59,"prem":17664,"auto":false}],"units":[{"k":"Ricky Rampersad","n":77,"prem":23184},{"k":"Akaash Kalladeen","n":57,"prem":17112},{"k":"Orphans · to reassign","n":50,"prem":14904}],"agents":[{"k":"Neil Ramnanan","n":16,"prem":3654,"orphan":false},{"k":"Fawwaz Mohamed","n":9,"prem":2088,"orphan":false},{"k":"Meera Persad-Khan","n":8,"prem":2349,"orphan":false},{"k":"Randolph Gonzales","n":7,"prem":2871,"orphan":false},{"k":"Narissa Mohammed","n":6,"prem":1305,"orphan":false},{"k":"Joy Sammah","n":5,"prem":1827,"orphan":false},{"k":"Premchand Dookran","n":5,"prem":1566,"orphan":false},{"k":"Daniel Ramdial","n":3,"prem":1044,"orphan":false},{"k":"Dominic Harding","n":3,"prem":783,"orphan":false},{"k":"Javid Ali","n":2,"prem":522,"orphan":false},{"k":"Orphans · to reassign","n":28,"prem":8370,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":47,"lineClients":42,"lineActive":33,"lineOrphan":14,"linePrem":14570,"stretch":106,"stretchPrem":33920,"stretchActive":74,"stretchOrphan":32,"today":{"checked":8,"ticked":7,"skipped":0,"waiting":3,"sent":0,"test":5,"notSent":0,"why":[],"by":[{"k":"Sasha","n":5},{"k":"Elizabeth","n":3},{"k":"Azariah","n":2}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":4},{"day":"2026-11-02","label":"Mon","sent":0,"test":5},{"day":"2026-11-03","label":"Tue","sent":0,"test":3},{"day":"2026-11-04","label":"Wed","sent":0,"test":5},{"day":"2026-11-05","label":"Thu","sent":0,"test":4}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":34,"lineClients":31,"lineActive":24,"lineOrphan":10,"linePrem":10540,"stretch":94,"stretchPrem":30080,"stretchActive":66,"stretchOrphan":28,"today":{"checked":6,"ticked":5,"skipped":0,"waiting":3,"sent":0,"test":5,"notSent":0,"why":[],"by":[{"k":"Sasha","n":5},{"k":"Elizabeth","n":3},{"k":"Azariah","n":2}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":4},{"day":"2026-11-02","label":"Mon","sent":0,"test":5},{"day":"2026-11-03","label":"Tue","sent":0,"test":3},{"day":"2026-11-04","label":"Wed","sent":0,"test":5},{"day":"2026-11-05","label":"Thu","sent":0,"test":4}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":24,"lineClients":22,"lineActive":17,"lineOrphan":7,"linePrem":7440,"stretch":63,"stretchPrem":20160,"stretchActive":44,"stretchOrphan":19,"today":{"checked":5,"ticked":5,"skipped":0,"waiting":3,"sent":0,"test":4,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":5},{"k":"Elizabeth","n":3},{"k":"Azariah","n":2}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":4},{"day":"2026-11-02","label":"Mon","sent":0,"test":5},{"day":"2026-11-03","label":"Tue","sent":0,"test":3},{"day":"2026-11-04","label":"Wed","sent":0,"test":5},{"day":"2026-11-05","label":"Thu","sent":0,"test":4}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":20,"lineClients":18,"lineActive":14,"lineOrphan":6,"linePrem":6200,"stretch":234,"stretchPrem":74880,"stretchActive":164,"stretchOrphan":70,"today":{"checked":3,"ticked":2,"skipped":1,"waiting":3,"sent":0,"test":2,"notSent":0,"why":[],"by":[{"k":"Sasha","n":5},{"k":"Elizabeth","n":3},{"k":"Azariah","n":2}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":2},{"day":"2026-11-02","label":"Mon","sent":0,"test":3},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":2},{"day":"2026-11-05","label":"Thu","sent":0,"test":2}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]},"all":{"key":"all","label":"Every policy","behind":416,"behindPrem":126880,"clients":366,"active":300,"orphan":116,"orphanPrem":34800,"over45":229,"over45Prem":68700,"under45":187,"autoFail":229,"autoFailPrem":74880,"next7":98,"lapsed":{"month":26,"monthPrem":7190,"d30":30,"d30Prem":8389,"ytd":253,"ytdPrem":73231,"monthName":"November"},"billing":[{"k":"Bankers Order","n":175,"prem":52416,"auto":true},{"k":"Salary Deduction","n":75,"prem":22464,"auto":true},{"k":"Pre Authorized Cheque","n":33,"prem":9984,"auto":true},{"k":"Direct Bill","n":133,"prem":39936,"auto":false}],"units":[{"k":"Ricky Rampersad","n":175,"prem":52416},{"k":"Akaash Kalladeen","n":129,"prem":38688},{"k":"Orphans · to reassign","n":112,"prem":33696}],"agents":[{"k":"Randolph Gonzales","n":24,"prem":6827,"orphan":false},{"k":"Meera Persad-Khan","n":24,"prem":5585,"orphan":false},{"k":"Neil Ramnanan","n":22,"prem":8688,"orphan":false},{"k":"Premchand Dookran","n":16,"prem":3724,"orphan":false},{"k":"Joy Sammah","n":15,"prem":4344,"orphan":false},{"k":"Fawwaz Mohamed","n":13,"prem":4965,"orphan":false},{"k":"Daniel Ramdial","n":9,"prem":2482,"orphan":false},{"k":"Narissa Mohammed","n":8,"prem":3103,"orphan":false},{"k":"Dominic Harding","n":8,"prem":1862,"orphan":false},{"k":"Javid Ali","n":3,"prem":1241,"orphan":false},{"k":"Orphans · to reassign","n":66,"prem":19902,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":111,"lineClients":100,"lineActive":78,"lineOrphan":33,"linePrem":34410,"stretch":253,"stretchPrem":80960,"stretchActive":177,"stretchOrphan":76,"today":{"checked":19,"ticked":17,"skipped":0,"waiting":6,"sent":0,"test":13,"notSent":0,"why":[],"by":[{"k":"Sasha","n":11},{"k":"Elizabeth","n":6},{"k":"Azariah","n":4}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":9},{"day":"2026-11-02","label":"Mon","sent":0,"test":13},{"day":"2026-11-03","label":"Tue","sent":0,"test":6},{"day":"2026-11-04","label":"Wed","sent":0,"test":11},{"day":"2026-11-05","label":"Thu","sent":0,"test":9}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":81,"lineClients":73,"lineActive":57,"lineOrphan":24,"linePrem":25110,"stretch":223,"stretchPrem":71360,"stretchActive":156,"stretchOrphan":67,"today":{"checked":15,"ticked":13,"skipped":0,"waiting":6,"sent":0,"test":11,"notSent":0,"why":[],"by":[{"k":"Sasha","n":11},{"k":"Elizabeth","n":6},{"k":"Azariah","n":4}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":9},{"day":"2026-11-02","label":"Mon","sent":0,"test":13},{"day":"2026-11-03","label":"Tue","sent":0,"test":6},{"day":"2026-11-04","label":"Wed","sent":0,"test":11},{"day":"2026-11-05","label":"Thu","sent":0,"test":9}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":58,"lineClients":52,"lineActive":41,"lineOrphan":17,"linePrem":17980,"stretch":150,"stretchPrem":48000,"stretchActive":105,"stretchOrphan":45,"today":{"checked":11,"ticked":11,"skipped":0,"waiting":6,"sent":0,"test":9,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":11},{"k":"Elizabeth","n":6},{"k":"Azariah","n":4}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":9},{"day":"2026-11-02","label":"Mon","sent":0,"test":13},{"day":"2026-11-03","label":"Tue","sent":0,"test":6},{"day":"2026-11-04","label":"Wed","sent":0,"test":11},{"day":"2026-11-05","label":"Thu","sent":0,"test":9}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":47,"lineClients":42,"lineActive":33,"lineOrphan":14,"linePrem":14570,"stretch":556,"stretchPrem":177920,"stretchActive":389,"stretchOrphan":167,"today":{"checked":6,"ticked":4,"skipped":1,"waiting":6,"sent":0,"test":4,"notSent":0,"why":[],"by":[{"k":"Sasha","n":11},{"k":"Elizabeth","n":6},{"k":"Azariah","n":4}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":4},{"day":"2026-11-02","label":"Mon","sent":0,"test":6},{"day":"2026-11-03","label":"Tue","sent":0,"test":3},{"day":"2026-11-04","label":"Wed","sent":0,"test":5},{"day":"2026-11-05","label":"Thu","sent":0,"test":4}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]}},"lapses":{"year":2026,"month":"November","ytd":412,"ytdPrem":119480,"d30":46,"d30Prem":13340,"mon":9,"monPrem":2610,"orphan":131,"bands":[{"k":"t0","label":"Under 1 year","n":42,"prem":12283},{"k":"t1","label":"1 to 2 years","n":60,"prem":17308},{"k":"t2","label":"2 to 3 years","n":52,"prem":15075},{"k":"t3","label":"3 to 4 years","n":46,"prem":13400},{"k":"t4","label":"4 to 5 years","n":39,"prem":11166},{"k":"t5","label":"Over 5 years","n":173,"prem":50249}],"months":[{"k":"Jan","n":38,"prem":11020},{"k":"Feb","n":41,"prem":11890},{"k":"Mar","n":35,"prem":10150},{"k":"Apr","n":44,"prem":12760},{"k":"May","n":39,"prem":11310},{"k":"Jun","n":36,"prem":10440},{"k":"Jul","n":42,"prem":12180},{"k":"Aug","n":40,"prem":11600},{"k":"Sep","n":37,"prem":10730},{"k":"Oct","n":51,"prem":14790},{"k":"Nov","n":9,"prem":2610}],"agents":[{"k":"Neil Ramnanan","n":28,"prem":8120,"orphan":false},{"k":"Randolph Gonzales","n":22,"prem":6380,"orphan":false},{"k":"Meera Persad-Khan","n":18,"prem":5220,"orphan":false},{"k":"Fawwaz Mohamed","n":16,"prem":4640,"orphan":false},{"k":"Joy Sammah","n":14,"prem":4060,"orphan":false},{"k":"Premchand Dookran","n":12,"prem":3480,"orphan":false},{"k":"Orphans · to reassign","n":131,"prem":37990,"orphan":true}],"agentCount":18,"letters":{"45":18,"60":11,"75":7,"90":4,"none":388}},"unplaced":{"checks":0,"letters":0},"orphans":"Orphans · to reassign","snapshot":true};
+var SNAPSHOT = {"generatedAt":"2026-11-05 10:30","today":"2026-11-05","todayLabel":"Thursday 5 November","mode":"test","blocked":false,"sendHour":10,"nextSend":"2026-11-06","nextSendWords":"tomorrow","lastRun":{"when":"Thu 5 Nov, 10:02","mode":"test","sent":0,"test":17,"notSent":1,"waiting":0},"bands":[{"key":"t0","label":"Under 1 year"},{"key":"t1","label":"1 to 2 years"},{"key":"t2","label":"2 to 3 years"},{"key":"t3","label":"3 to 4 years"},{"key":"t4","label":"4 to 5 years"},{"key":"t5","label":"Over 5 years"}],"letters":[{"stage":45,"upTo":59,"subject":"4 years with us — thank you","subjects":[{"under":1,"subject":"A question about your first year with us"},{"under":2,"subject":"Two years with the branch — how are we doing?"},{"under":5,"subject":"4 years with us — thank you"},{"under":10,"subject":"9 years of cover — thank you"},{"under":20,"subject":"19 years with the branch — thank you"}],"gist":"Thanks them for their years with us, tells them how the premium is collected and that the last one did not come through, and asks one question: rate the service, one tap.","asks":"A rating, 1 to 5","options":[{"key":"paid","label":"I have already paid"},{"key":"bank","label":"I will sort it out with my bank or payroll this week"},{"key":"week","label":"I will pay within the next 7 days"},{"key":"method","label":"I would like to change how I pay"},{"key":"callme","label":"Please call me"},{"key":"review","label":"I would like someone to go through my cover with me"},{"key":"issue","label":"Something about my policy is not right"},{"key":"private","label":"I would like to write to the branch manager, privately"},{"key":"help","label":"I would like to talk about my options"},{"key":"stop","label":"Please do not contact me like this again"}],"trail":false,"copies":"Your agent, the unit manager and sales support are copied"},{"stage":60,"upTo":74,"subject":"Following up on our note about your premium","subjects":null,"gist":"A follow-up. It opens on what they said last time, says the premium is still outstanding and how to sort it. No rating if they gave one.","asks":"A rating if none yet","options":[{"key":"paid","label":"I have already paid"},{"key":"week","label":"I will pay within the next 7 days"},{"key":"month","label":"I will pay by the end of the month"},{"key":"method","label":"I would like to change how I pay"},{"key":"callme","label":"Please call me"},{"key":"help","label":"I would like to talk about my options"},{"key":"issue","label":"Something about my policy is not right"},{"key":"private","label":"I would like to write to the branch manager, privately"},{"key":"stop","label":"Please do not contact me like this again"}],"trail":true,"copies":"Your agent, the unit manager and sales support are copied"},{"stage":75,"upTo":89,"subject":"Your cover stops on [the lapse date] unless the premium is paid","subjects":null,"gist":"Names the day the cover stops unless the premium is paid, gives the ways to pay, and a button: ask my agent to call me.","asks":"Ask my agent to call me","options":[{"key":"paid","label":"I have already paid"},{"key":"week","label":"I will pay within the next 7 days"},{"key":"callme","label":"Please call me"},{"key":"method","label":"I would like to change how I pay"},{"key":"help","label":"I would like to talk about my options"},{"key":"issue","label":"Something about my policy is not right"},{"key":"private","label":"I would like to write to the branch manager, privately"},{"key":"stop","label":"Please do not contact me like this again"}],"trail":true,"copies":"Your agent, the unit manager and sales support are copied"},{"stage":90,"upTo":104,"subject":"Before your policy lapses: the options open to you","subjects":null,"gist":"Before the policy lapses: pay what is outstanding, reduce the cover, make it paid-up, or ask for time, and a button to have the branch call about the options.","asks":"Call me about my options","options":[{"key":"paid","label":"I have already paid"},{"key":"reduce","label":"Tell me about reducing the cover"},{"key":"paidup","label":"Tell me about making it paid-up"},{"key":"time","label":"I need a little more time"},{"key":"callme","label":"Please call me"},{"key":"private","label":"I would like to write to the branch manager, privately"},{"key":"stop","label":"Please do not contact me like this again"}],"trail":true,"copies":"Your agent, the unit manager and sales support are copied"}],"scope":{"t0":{"key":"t0","label":"Under 1 year","behind":44,"behindPrem":13420,"clients":39,"active":32,"orphan":12,"orphanPrem":3600,"over45":24,"over45Prem":7200,"under45":20,"autoFail":24,"autoFailPrem":7920,"next7":10,"lapsed":{"month":3,"monthPrem":739,"d30":3,"d30Prem":862,"ytd":26,"ytdPrem":7528,"monthName":"November"},"billing":[{"k":"Bankers Order","n":18,"prem":5544,"auto":true},{"k":"Salary Deduction","n":8,"prem":2376,"auto":true},{"k":"Pre Authorized Cheque","n":4,"prem":1056,"auto":true},{"k":"Direct Bill","n":14,"prem":4224,"auto":false}],"units":[{"k":"Ricky Rampersad","n":18,"prem":5544},{"k":"Akaash Kalladeen","n":14,"prem":4092},{"k":"Orphans · to reassign","n":12,"prem":3564}],"agents":[{"k":"Neil Ramnanan","n":2,"prem":893,"orphan":false},{"k":"Randolph Gonzales","n":2,"prem":702,"orphan":false},{"k":"Meera Persad-Khan","n":2,"prem":574,"orphan":false},{"k":"Joy Sammah","n":2,"prem":447,"orphan":false},{"k":"Premchand Dookran","n":2,"prem":383,"orphan":false},{"k":"Fawwaz Mohamed","n":1,"prem":510,"orphan":false},{"k":"Narissa Mohammed","n":1,"prem":319,"orphan":false},{"k":"Daniel Ramdial","n":1,"prem":255,"orphan":false},{"k":"Dominic Harding","n":1,"prem":191,"orphan":false},{"k":"Javid Ali","n":1,"prem":128,"orphan":false},{"k":"Orphans · to reassign","n":7,"prem":2046,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":11,"lineClients":10,"lineActive":8,"lineOrphan":3,"linePrem":3410,"stretch":26,"stretchPrem":8320,"stretchActive":18,"stretchOrphan":8,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":8,"lineClients":7,"lineActive":6,"lineOrphan":2,"linePrem":2480,"stretch":23,"stretchPrem":7360,"stretchActive":16,"stretchOrphan":7,"today":{"checked":2,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":6,"lineClients":5,"lineActive":4,"lineOrphan":2,"linePrem":1860,"stretch":15,"stretchPrem":4800,"stretchActive":10,"stretchOrphan":5,"today":{"checked":1,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":5,"lineClients":5,"lineActive":3,"lineOrphan":2,"linePrem":1550,"stretch":57,"stretchPrem":18240,"stretchActive":40,"stretchOrphan":17,"today":{"checked":1,"ticked":0,"skipped":1,"waiting":1,"sent":0,"test":0,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":0},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":0},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":0}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]},"t1":{"key":"t1","label":"1 to 2 years","behind":64,"behindPrem":19520,"clients":56,"active":46,"orphan":18,"orphanPrem":5400,"over45":35,"over45Prem":10500,"under45":29,"autoFail":37,"autoFailPrem":11520,"next7":14,"lapsed":{"month":4,"monthPrem":1042,"d30":4,"d30Prem":1215,"ytd":37,"ytdPrem":10608,"monthName":"November"},"billing":[{"k":"Bankers Order","n":27,"prem":8064,"auto":true},{"k":"Salary Deduction","n":12,"prem":3456,"auto":true},{"k":"Pre Authorized Cheque","n":5,"prem":1536,"auto":true},{"k":"Direct Bill","n":20,"prem":6144,"auto":false}],"units":[{"k":"Ricky Rampersad","n":27,"prem":8064},{"k":"Akaash Kalladeen","n":20,"prem":5952},{"k":"Orphans · to reassign","n":17,"prem":5184}],"agents":[{"k":"Neil Ramnanan","n":4,"prem":1259,"orphan":false},{"k":"Randolph Gonzales","n":4,"prem":989,"orphan":false},{"k":"Joy Sammah","n":3,"prem":629,"orphan":false},{"k":"Meera Persad-Khan","n":2,"prem":809,"orphan":false},{"k":"Fawwaz Mohamed","n":2,"prem":719,"orphan":false},{"k":"Narissa Mohammed","n":2,"prem":450,"orphan":false},{"k":"Daniel Ramdial","n":2,"prem":360,"orphan":false},{"k":"Premchand Dookran","n":1,"prem":539,"orphan":false},{"k":"Dominic Harding","n":1,"prem":270,"orphan":false},{"k":"Javid Ali","n":1,"prem":180,"orphan":false},{"k":"Orphans · to reassign","n":10,"prem":2883,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":16,"lineClients":14,"lineActive":11,"lineOrphan":5,"linePrem":4960,"stretch":37,"stretchPrem":11840,"stretchActive":26,"stretchOrphan":11,"today":{"checked":3,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":2,"notSent":0,"why":[],"by":[{"k":"Sasha","n":2},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":2},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":2},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":12,"lineClients":11,"lineActive":8,"lineOrphan":4,"linePrem":3720,"stretch":32,"stretchPrem":10240,"stretchActive":22,"stretchOrphan":10,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":2,"notSent":0,"why":[],"by":[{"k":"Sasha","n":2},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":2},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":2},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":8,"lineClients":7,"lineActive":6,"lineOrphan":2,"linePrem":2480,"stretch":22,"stretchPrem":7040,"stretchActive":15,"stretchOrphan":7,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":2},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":2},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":2},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":7,"lineClients":6,"lineActive":5,"lineOrphan":2,"linePrem":2170,"stretch":81,"stretchPrem":25920,"stretchActive":57,"stretchOrphan":24,"today":{"checked":1,"ticked":1,"skipped":1,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":2},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":0},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]},"t2":{"key":"t2","label":"2 to 3 years","behind":56,"behindPrem":17080,"clients":49,"active":40,"orphan":16,"orphanPrem":4800,"over45":31,"over45Prem":9300,"under45":25,"autoFail":34,"autoFailPrem":10080,"next7":12,"lapsed":{"month":3,"monthPrem":907,"d30":4,"d30Prem":1058,"ytd":32,"ytdPrem":9239,"monthName":"November"},"billing":[{"k":"Bankers Order","n":24,"prem":7056,"auto":true},{"k":"Salary Deduction","n":10,"prem":3024,"auto":true},{"k":"Pre Authorized Cheque","n":4,"prem":1344,"auto":true},{"k":"Direct Bill","n":18,"prem":5376,"auto":false}],"units":[{"k":"Ricky Rampersad","n":24,"prem":7056},{"k":"Akaash Kalladeen","n":17,"prem":5208},{"k":"Orphans · to reassign","n":15,"prem":4536}],"agents":[{"k":"Neil Ramnanan","n":5,"prem":1096,"orphan":false},{"k":"Fawwaz Mohamed","n":3,"prem":626,"orphan":false},{"k":"Randolph Gonzales","n":2,"prem":861,"orphan":false},{"k":"Meera Persad-Khan","n":2,"prem":705,"orphan":false},{"k":"Premchand Dookran","n":2,"prem":470,"orphan":false},{"k":"Narissa Mohammed","n":2,"prem":392,"orphan":false},{"k":"Joy Sammah","n":1,"prem":548,"orphan":false},{"k":"Daniel Ramdial","n":1,"prem":313,"orphan":false},{"k":"Dominic Harding","n":1,"prem":235,"orphan":false},{"k":"Javid Ali","n":1,"prem":157,"orphan":false},{"k":"Orphans · to reassign","n":8,"prem":2511,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":14,"lineClients":13,"lineActive":10,"lineOrphan":4,"linePrem":4340,"stretch":32,"stretchPrem":10240,"stretchActive":22,"stretchOrphan":10,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":2,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":2},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":10,"lineClients":9,"lineActive":7,"lineOrphan":3,"linePrem":3100,"stretch":28,"stretchPrem":8960,"stretchActive":20,"stretchOrphan":8,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":2},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":7,"lineClients":6,"lineActive":5,"lineOrphan":2,"linePrem":2170,"stretch":19,"stretchPrem":6080,"stretchActive":13,"stretchOrphan":6,"today":{"checked":1,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":2},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":6,"lineClients":5,"lineActive":4,"lineOrphan":2,"linePrem":1860,"stretch":70,"stretchPrem":22400,"stretchActive":49,"stretchOrphan":21,"today":{"checked":1,"ticked":1,"skipped":1,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1},{"k":"Azariah","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":0},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]},"t3":{"key":"t3","label":"3 to 4 years","behind":50,"behindPrem":15250,"clients":44,"active":36,"orphan":14,"orphanPrem":4200,"over45":28,"over45Prem":8400,"under45":22,"autoFail":32,"autoFailPrem":9000,"next7":11,"lapsed":{"month":3,"monthPrem":806,"d30":3,"d30Prem":941,"ytd":28,"ytdPrem":8213,"monthName":"November"},"billing":[{"k":"Bankers Order","n":21,"prem":6300,"auto":true},{"k":"Salary Deduction","n":9,"prem":2700,"auto":true},{"k":"Pre Authorized Cheque","n":4,"prem":1200,"auto":true},{"k":"Direct Bill","n":16,"prem":4800,"auto":false}],"units":[{"k":"Ricky Rampersad","n":21,"prem":6300},{"k":"Akaash Kalladeen","n":16,"prem":4650},{"k":"Orphans · to reassign","n":14,"prem":4050}],"agents":[{"k":"Neil Ramnanan","n":3,"prem":974,"orphan":false},{"k":"Randolph Gonzales","n":3,"prem":766,"orphan":false},{"k":"Meera Persad-Khan","n":3,"prem":626,"orphan":false},{"k":"Joy Sammah","n":2,"prem":487,"orphan":false},{"k":"Premchand Dookran","n":2,"prem":418,"orphan":false},{"k":"Fawwaz Mohamed","n":1,"prem":557,"orphan":false},{"k":"Narissa Mohammed","n":1,"prem":348,"orphan":false},{"k":"Daniel Ramdial","n":1,"prem":278,"orphan":false},{"k":"Dominic Harding","n":1,"prem":209,"orphan":false},{"k":"Javid Ali","n":1,"prem":139,"orphan":false},{"k":"Orphans · to reassign","n":7,"prem":2232,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":12,"lineClients":11,"lineActive":8,"lineOrphan":4,"linePrem":3720,"stretch":28,"stretchPrem":8960,"stretchActive":20,"stretchOrphan":8,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":9,"lineClients":8,"lineActive":6,"lineOrphan":3,"linePrem":2790,"stretch":25,"stretchPrem":8000,"stretchActive":17,"stretchOrphan":8,"today":{"checked":2,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":6,"lineClients":5,"lineActive":4,"lineOrphan":2,"linePrem":1860,"stretch":17,"stretchPrem":5440,"stretchActive":12,"stretchOrphan":5,"today":{"checked":1,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":5,"lineClients":5,"lineActive":3,"lineOrphan":2,"linePrem":1550,"stretch":62,"stretchPrem":19840,"stretchActive":43,"stretchOrphan":19,"today":{"checked":1,"ticked":0,"skipped":1,"waiting":1,"sent":0,"test":0,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":0},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":0},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":0}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]},"t4":{"key":"t4","label":"4 to 5 years","behind":44,"behindPrem":13420,"clients":39,"active":32,"orphan":12,"orphanPrem":3600,"over45":24,"over45Prem":7200,"under45":20,"autoFail":29,"autoFailPrem":7920,"next7":9,"lapsed":{"month":2,"monthPrem":672,"d30":3,"d30Prem":784,"ytd":24,"ytdPrem":6844,"monthName":"November"},"billing":[{"k":"Bankers Order","n":18,"prem":5544,"auto":true},{"k":"Salary Deduction","n":8,"prem":2376,"auto":true},{"k":"Pre Authorized Cheque","n":4,"prem":1056,"auto":true},{"k":"Direct Bill","n":14,"prem":4224,"auto":false}],"units":[{"k":"Ricky Rampersad","n":18,"prem":5544},{"k":"Akaash Kalladeen","n":14,"prem":4092},{"k":"Orphans · to reassign","n":12,"prem":3564}],"agents":[{"k":"Neil Ramnanan","n":3,"prem":812,"orphan":false},{"k":"Randolph Gonzales","n":3,"prem":638,"orphan":false},{"k":"Fawwaz Mohamed","n":2,"prem":464,"orphan":false},{"k":"Joy Sammah","n":2,"prem":406,"orphan":false},{"k":"Meera Persad-Khan","n":1,"prem":522,"orphan":false},{"k":"Premchand Dookran","n":1,"prem":348,"orphan":false},{"k":"Narissa Mohammed","n":1,"prem":290,"orphan":false},{"k":"Daniel Ramdial","n":1,"prem":232,"orphan":false},{"k":"Dominic Harding","n":1,"prem":174,"orphan":false},{"k":"Javid Ali","n":1,"prem":116,"orphan":false},{"k":"Orphans · to reassign","n":6,"prem":1860,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":10,"lineClients":9,"lineActive":7,"lineOrphan":3,"linePrem":3100,"stretch":24,"stretchPrem":7680,"stretchActive":17,"stretchOrphan":7,"today":{"checked":2,"ticked":2,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":8,"lineClients":7,"lineActive":6,"lineOrphan":2,"linePrem":2480,"stretch":21,"stretchPrem":6720,"stretchActive":15,"stretchOrphan":6,"today":{"checked":1,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":5,"lineClients":5,"lineActive":3,"lineOrphan":2,"linePrem":1550,"stretch":14,"stretchPrem":4480,"stretchActive":10,"stretchOrphan":4,"today":{"checked":1,"ticked":1,"skipped":0,"waiting":1,"sent":0,"test":1,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":1},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":1}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":4,"lineClients":4,"lineActive":3,"lineOrphan":1,"linePrem":1240,"stretch":52,"stretchPrem":16640,"stretchActive":36,"stretchOrphan":16,"today":{"checked":1,"ticked":0,"skipped":1,"waiting":1,"sent":0,"test":0,"notSent":0,"why":[],"by":[{"k":"Sasha","n":1},{"k":"Elizabeth","n":1}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":0},{"day":"2026-11-02","label":"Mon","sent":0,"test":1},{"day":"2026-11-03","label":"Tue","sent":0,"test":0},{"day":"2026-11-04","label":"Wed","sent":0,"test":1},{"day":"2026-11-05","label":"Thu","sent":0,"test":0}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]},"t5":{"key":"t5","label":"Over 5 years","behind":184,"behindPrem":56120,"clients":162,"active":132,"orphan":52,"orphanPrem":15600,"over45":101,"over45Prem":30300,"under45":83,"autoFail":129,"autoFailPrem":33120,"next7":41,"lapsed":{"month":11,"monthPrem":3024,"d30":13,"d30Prem":3528,"ytd":106,"ytdPrem":30798,"monthName":"November"},"billing":[{"k":"Bankers Order","n":77,"prem":23184,"auto":true},{"k":"Salary Deduction","n":33,"prem":9936,"auto":true},{"k":"Pre Authorized Cheque","n":15,"prem":4416,"auto":true},{"k":"Direct Bill","n":59,"prem":17664,"auto":false}],"units":[{"k":"Ricky Rampersad","n":77,"prem":23184},{"k":"Akaash Kalladeen","n":57,"prem":17112},{"k":"Orphans · to reassign","n":50,"prem":14904}],"agents":[{"k":"Neil Ramnanan","n":16,"prem":3654,"orphan":false},{"k":"Fawwaz Mohamed","n":9,"prem":2088,"orphan":false},{"k":"Meera Persad-Khan","n":8,"prem":2349,"orphan":false},{"k":"Randolph Gonzales","n":7,"prem":2871,"orphan":false},{"k":"Narissa Mohammed","n":6,"prem":1305,"orphan":false},{"k":"Joy Sammah","n":5,"prem":1827,"orphan":false},{"k":"Premchand Dookran","n":5,"prem":1566,"orphan":false},{"k":"Daniel Ramdial","n":3,"prem":1044,"orphan":false},{"k":"Dominic Harding","n":3,"prem":783,"orphan":false},{"k":"Javid Ali","n":2,"prem":522,"orphan":false},{"k":"Orphans · to reassign","n":28,"prem":8370,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":47,"lineClients":42,"lineActive":33,"lineOrphan":14,"linePrem":14570,"stretch":106,"stretchPrem":33920,"stretchActive":74,"stretchOrphan":32,"today":{"checked":8,"ticked":7,"skipped":0,"waiting":3,"sent":0,"test":5,"notSent":0,"why":[],"by":[{"k":"Sasha","n":5},{"k":"Elizabeth","n":3},{"k":"Azariah","n":2}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":4},{"day":"2026-11-02","label":"Mon","sent":0,"test":5},{"day":"2026-11-03","label":"Tue","sent":0,"test":3},{"day":"2026-11-04","label":"Wed","sent":0,"test":5},{"day":"2026-11-05","label":"Thu","sent":0,"test":4}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":34,"lineClients":31,"lineActive":24,"lineOrphan":10,"linePrem":10540,"stretch":94,"stretchPrem":30080,"stretchActive":66,"stretchOrphan":28,"today":{"checked":6,"ticked":5,"skipped":0,"waiting":3,"sent":0,"test":5,"notSent":0,"why":[],"by":[{"k":"Sasha","n":5},{"k":"Elizabeth","n":3},{"k":"Azariah","n":2}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":4},{"day":"2026-11-02","label":"Mon","sent":0,"test":5},{"day":"2026-11-03","label":"Tue","sent":0,"test":3},{"day":"2026-11-04","label":"Wed","sent":0,"test":5},{"day":"2026-11-05","label":"Thu","sent":0,"test":4}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":24,"lineClients":22,"lineActive":17,"lineOrphan":7,"linePrem":7440,"stretch":63,"stretchPrem":20160,"stretchActive":44,"stretchOrphan":19,"today":{"checked":5,"ticked":5,"skipped":0,"waiting":3,"sent":0,"test":4,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":5},{"k":"Elizabeth","n":3},{"k":"Azariah","n":2}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":4},{"day":"2026-11-02","label":"Mon","sent":0,"test":5},{"day":"2026-11-03","label":"Tue","sent":0,"test":3},{"day":"2026-11-04","label":"Wed","sent":0,"test":5},{"day":"2026-11-05","label":"Thu","sent":0,"test":4}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":20,"lineClients":18,"lineActive":14,"lineOrphan":6,"linePrem":6200,"stretch":234,"stretchPrem":74880,"stretchActive":164,"stretchOrphan":70,"today":{"checked":3,"ticked":2,"skipped":1,"waiting":3,"sent":0,"test":2,"notSent":0,"why":[],"by":[{"k":"Sasha","n":5},{"k":"Elizabeth","n":3},{"k":"Azariah","n":2}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":2},{"day":"2026-11-02","label":"Mon","sent":0,"test":3},{"day":"2026-11-03","label":"Tue","sent":0,"test":1},{"day":"2026-11-04","label":"Wed","sent":0,"test":2},{"day":"2026-11-05","label":"Thu","sent":0,"test":2}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]},"all":{"key":"all","label":"Every policy","behind":416,"behindPrem":126880,"clients":366,"active":300,"orphan":116,"orphanPrem":34800,"over45":229,"over45Prem":68700,"under45":187,"autoFail":229,"autoFailPrem":74880,"next7":98,"lapsed":{"month":26,"monthPrem":7190,"d30":30,"d30Prem":8389,"ytd":253,"ytdPrem":73231,"monthName":"November"},"billing":[{"k":"Bankers Order","n":175,"prem":52416,"auto":true},{"k":"Salary Deduction","n":75,"prem":22464,"auto":true},{"k":"Pre Authorized Cheque","n":33,"prem":9984,"auto":true},{"k":"Direct Bill","n":133,"prem":39936,"auto":false}],"units":[{"k":"Ricky Rampersad","n":175,"prem":52416},{"k":"Akaash Kalladeen","n":129,"prem":38688},{"k":"Orphans · to reassign","n":112,"prem":33696}],"agents":[{"k":"Randolph Gonzales","n":24,"prem":6827,"orphan":false},{"k":"Meera Persad-Khan","n":24,"prem":5585,"orphan":false},{"k":"Neil Ramnanan","n":22,"prem":8688,"orphan":false},{"k":"Premchand Dookran","n":16,"prem":3724,"orphan":false},{"k":"Joy Sammah","n":15,"prem":4344,"orphan":false},{"k":"Fawwaz Mohamed","n":13,"prem":4965,"orphan":false},{"k":"Daniel Ramdial","n":9,"prem":2482,"orphan":false},{"k":"Narissa Mohammed","n":8,"prem":3103,"orphan":false},{"k":"Dominic Harding","n":8,"prem":1862,"orphan":false},{"k":"Javid Ali","n":3,"prem":1241,"orphan":false},{"k":"Orphans · to reassign","n":66,"prem":19902,"orphan":true}],"agentCount":10,"stages":[{"stage":45,"upTo":51,"line":111,"lineClients":100,"lineActive":78,"lineOrphan":33,"linePrem":34410,"stretch":253,"stretchPrem":80960,"stretchActive":177,"stretchOrphan":76,"today":{"checked":19,"ticked":17,"skipped":0,"waiting":6,"sent":0,"test":13,"notSent":0,"why":[],"by":[{"k":"Sasha","n":11},{"k":"Elizabeth","n":6},{"k":"Azariah","n":4}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":9},{"day":"2026-11-02","label":"Mon","sent":0,"test":13},{"day":"2026-11-03","label":"Tue","sent":0,"test":6},{"day":"2026-11-04","label":"Wed","sent":0,"test":11},{"day":"2026-11-05","label":"Thu","sent":0,"test":9}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":60,"upTo":66,"line":81,"lineClients":73,"lineActive":57,"lineOrphan":24,"linePrem":25110,"stretch":223,"stretchPrem":71360,"stretchActive":156,"stretchOrphan":67,"today":{"checked":15,"ticked":13,"skipped":0,"waiting":6,"sent":0,"test":11,"notSent":0,"why":[],"by":[{"k":"Sasha","n":11},{"k":"Elizabeth","n":6},{"k":"Azariah","n":4}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":9},{"day":"2026-11-02","label":"Mon","sent":0,"test":13},{"day":"2026-11-03","label":"Tue","sent":0,"test":6},{"day":"2026-11-04","label":"Wed","sent":0,"test":11},{"day":"2026-11-05","label":"Thu","sent":0,"test":9}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":75,"upTo":81,"line":58,"lineClients":52,"lineActive":41,"lineOrphan":17,"linePrem":17980,"stretch":150,"stretchPrem":48000,"stretchActive":105,"stretchOrphan":45,"today":{"checked":11,"ticked":11,"skipped":0,"waiting":6,"sent":0,"test":9,"notSent":1,"why":[{"k":"moved to the next line","n":1}],"by":[{"k":"Sasha","n":11},{"k":"Elizabeth","n":6},{"k":"Azariah","n":4}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":9},{"day":"2026-11-02","label":"Mon","sent":0,"test":13},{"day":"2026-11-03","label":"Tue","sent":0,"test":6},{"day":"2026-11-04","label":"Wed","sent":0,"test":11},{"day":"2026-11-05","label":"Thu","sent":0,"test":9}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}},{"stage":90,"upTo":96,"line":47,"lineClients":42,"lineActive":33,"lineOrphan":14,"linePrem":14570,"stretch":556,"stretchPrem":177920,"stretchActive":389,"stretchOrphan":167,"today":{"checked":6,"ticked":4,"skipped":1,"waiting":6,"sent":0,"test":4,"notSent":0,"why":[],"by":[{"k":"Sasha","n":11},{"k":"Elizabeth","n":6},{"k":"Azariah","n":4}]},"week":[{"day":"2026-10-30","label":"Fri","sent":0,"test":4},{"day":"2026-11-02","label":"Mon","sent":0,"test":6},{"day":"2026-11-03","label":"Tue","sent":0,"test":3},{"day":"2026-11-04","label":"Wed","sent":0,"test":5},{"day":"2026-11-05","label":"Thu","sent":0,"test":4}],"back":{"days":30,"sent":0,"answered":0,"rated":0,"avg":null,"help":0,"review":0,"issue":0},"after":{"days":120,"sent":0,"paid":0,"part":0,"behind":0,"lapsed":0,"gone":0}}]}},"lapses":{"year":2026,"month":"November","ytd":412,"ytdPrem":119480,"d30":46,"d30Prem":13340,"mon":9,"monPrem":2610,"orphan":131,"bands":[{"k":"t0","label":"Under 1 year","n":42,"prem":12283},{"k":"t1","label":"1 to 2 years","n":60,"prem":17308},{"k":"t2","label":"2 to 3 years","n":52,"prem":15075},{"k":"t3","label":"3 to 4 years","n":46,"prem":13400},{"k":"t4","label":"4 to 5 years","n":39,"prem":11166},{"k":"t5","label":"Over 5 years","n":173,"prem":50249}],"months":[{"k":"Jan","n":38,"prem":11020},{"k":"Feb","n":41,"prem":11890},{"k":"Mar","n":35,"prem":10150},{"k":"Apr","n":44,"prem":12760},{"k":"May","n":39,"prem":11310},{"k":"Jun","n":36,"prem":10440},{"k":"Jul","n":42,"prem":12180},{"k":"Aug","n":40,"prem":11600},{"k":"Sep","n":37,"prem":10730},{"k":"Oct","n":51,"prem":14790},{"k":"Nov","n":9,"prem":2610}],"agents":[{"k":"Neil Ramnanan","n":28,"prem":8120,"orphan":false},{"k":"Randolph Gonzales","n":22,"prem":6380,"orphan":false},{"k":"Meera Persad-Khan","n":18,"prem":5220,"orphan":false},{"k":"Fawwaz Mohamed","n":16,"prem":4640,"orphan":false},{"k":"Joy Sammah","n":14,"prem":4060,"orphan":false},{"k":"Premchand Dookran","n":12,"prem":3480,"orphan":false},{"k":"Orphans · to reassign","n":131,"prem":37990,"orphan":true}],"agentCount":18,"letters":{"45":18,"60":11,"75":7,"90":4,"none":388}},"unplaced":{"checks":0,"letters":0},"orphans":"Orphans · to reassign","snapshot":true,"auto":true,"notice":{"subject":"Your policy has lapsed. Can we help you bring it back?","gist":"Tells them the cover has stopped, asks why they let it go, offers to check if it can be reinstated, and asks how well we followed up.","under":2,"options":[{"key":"reinstate","label":"I would like to know if it can be reinstated"},{"key":"callme","label":"Please call me"},{"key":"details","label":"Let me tell you in my own words"}],"reasons":[{"key":"r_afford","label":"I could not keep up the premium"},{"key":"r_else","label":"I have cover somewhere else now"},{"key":"r_need","label":"I no longer need the cover"},{"key":"r_service","label":"I was not happy with the service"},{"key":"r_unaware","label":"I did not know the premium had stopped"}],"copies":"Your agent, the unit manager and sales support are copied","today":{"sent":0,"test":3,"waiting":1},"back":{"sent":0,"answered":0,"rated":0,"avg":null,"reinstate":0,"reasons":{},"asked":{}}},"flow":[{"stage":45,"label":"45–59 days","subject":"4 years with us — thank you"},{"stage":60,"label":"60–74 days","subject":"Following up on our note about your premium"},{"stage":75,"label":"75–89 days","subject":"Your cover stops on [the lapse date] unless the premium is paid"},{"stage":90,"label":"90–104 days","subject":"Before your policy lapses: the options open to you"},{"stage":"lapse","label":"Lapsed, under 2 years","subject":"Your policy has lapsed. Can we help you bring it back?"}]};
 var J = SNAPSHOT, LEGACY = null, SRC = "snapshot";
 var ORPH = "Orphans · to reassign";
 var Q = new URLSearchParams(location.search);
 var DWELL = Math.max(3, Number(Q.get("dwell")) || 9) * 1000;
-var COL = { 45: "var(--s45)", 60: "var(--s60)", 75: "var(--s75)", 90: "var(--s90)" };
+var STAGES = [45, 60, 75, 90];
+var COL = { 45: "var(--s45)", 60: "var(--s60)", 75: "var(--s75)", 90: "var(--s90)", lapse: "var(--slapse)" };
 var BANDCOL = { t0: "#4FC1B0", t1: "#6FCBA4", t2: "#E3B85A", t3: "#EFA94B", t4: "#EF8A6B", t5: "#AB94E8" };
-var NAME = { 45: "The first letter", 60: "The follow-up", 75: "Before the cover stops", 90: "Before the lapse" };
+var NAME = { 45: "The first email", 60: "The follow-up", 75: "Before the cover stops", 90: "The options" };
 var BAND_LABEL = { t0: "Under 1 year", t1: "1 to 2 years", t2: "2 to 3 years", t3: "3 to 4 years", t4: "4 to 5 years", t5: "Over 5 years" };
+var COPIES = "Your agent is copied";
 
 function $(s){ return document.querySelector(s); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
@@ -263,126 +357,262 @@ function clock(){ var t=new Date(new Date().toLocaleString("en-US",{timeZone:"Am
 clock(); setInterval(clock, 15000);
 var MOTION = !window.matchMedia || window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
 var PHONE = function(){ return window.matchMedia && window.matchMedia("(max-width:900px)").matches; };
-
-function rows(list, cls, n){
+/* A share said the way a room hears it: "1 in 2", "3 in 4", "nearly every". */
+function ratio(p){
+  if (p >= 95) return "Nearly every";
+  if (p <= 0) return "None";
+  var C = [[1,10],[1,5],[1,4],[1,3],[2,5],[1,2],[3,5],[2,3],[3,4],[4,5],[9,10]], best = C[0], d = 99;
+  C.forEach(function(c){ var x = Math.abs(100*c[0]/c[1] - p); if (x < d) { d = x; best = c; } });
+  return best[0] + " in " + best[1];
+}
+function rows(list, cls, n, wide){
   list = list || []; var max = 1; list.forEach(function(x){ if (x.n > max) max = x.n; });
-  return list.length ? '<div class="rows">' + list.slice(0, n || 99).map(function(x){
+  return list.length ? '<div class="rows'+(wide?' wide':'')+'">' + list.slice(0, n || 99).map(function(x, i){
     var o = x.k === ORPH || x.orphan;
-    return '<div class="r'+(o?' orph':'')+'"><div class="l" title="'+esc(first(x.k))+'">'+esc(first(x.k))+'</div>'
-      + '<div class="t"><i class="'+(o?'o':(typeof cls==="function"?cls(x):cls))+'" data-w="'+(100*x.n/max).toFixed(1)+'"></i></div>'
+    return '<div class="r'+(o?' orph':'')+(x.me?' me':'')+'"><div class="l" title="'+esc(first(x.k))+'">'+esc(first(x.k))+'</div>'
+      + '<div class="t'+(i===0||x.me?' shine':'')+'"><i class="'+(o?'o':(typeof cls==="function"?cls(x):cls))+'" data-w="'+(100*x.n/max).toFixed(1)+'"></i></div>'
       + '<div class="v">'+fmt(x.n)+'</div></div>';
   }).join("") + '</div>' : '<div class="note" style="margin-top:.6rem">None.</div>';
 }
 function cap(a, n){ a = a || []; var o = a.filter(function(x){ return x.k === ORPH || x.orphan; })[0]; var r = a.filter(function(x){ return x !== o; }).slice(0, n); return o ? r.concat([o]) : r; }
 function ring(p, label){
   var C = 2*Math.PI*48, off = C*(1-Math.max(0,Math.min(100,p))/100);
-  return '<div class="ring"><svg viewBox="0 0 110 110"><circle class="bgc" cx="55" cy="55" r="48"/><circle class="fg" cx="55" cy="55" r="48" stroke-dasharray="'+C.toFixed(1)+'" data-off="'+off.toFixed(1)+'" style="stroke-dashoffset:'+C.toFixed(1)+'"/></svg><b>'+(label||p+'%')+'</b></div>';
+  return '<div class="ring"><svg viewBox="0 0 110 110"><circle class="bgc" cx="55" cy="55" r="48"/><circle class="fg" cx="55" cy="55" r="48" stroke-dasharray="'+C.toFixed(1)+'" data-off="'+off.toFixed(1)+'" style="stroke-dashoffset:'+(MOTION?C.toFixed(1):off.toFixed(1))+'"/></svg><i class="sweep"></i><b>'+(label||p+'%')+'</b></div>';
 }
 function letterOf(st){ var L = (J && J.letters) || SNAPSHOT.letters; for (var i=0;i<L.length;i++) if (L[i].stage===st) return L[i]; return {}; }
 function sc(k){ return J && J.scope && J.scope[k]; }
+function stageOf(k, st){ var P = sc(k); return P ? (P.stages||[]).filter(function(x){ return x.stage===st; })[0] : null; }
+function testMode(){ return !J || J.mode !== "live"; }
+function hour(){ return (J && J.sendHour) || 10; }
+function upTo(st){ var L = letterOf(st); return L.upTo && L.upTo >= st + 14 ? L.upTo : st + 14; }
+function range(st){ return st + "–" + upTo(st) + " days"; }
+function flowOf(st){ var F = (J && J.flow) || []; for (var i=0;i<F.length;i++) if (String(F[i].stage)===String(st)) return F[i]; return null; }
+/* The client's one-click choices on an email. An older backend sends none:
+   then the email's one ask stands in for them. */
+function optsOf(st){
+  var o = st === "lapse" ? (J && J.notice && J.notice.options) : letterOf(st).options;
+  if (o && o.length) return o;
+  var L = st === "lapse" ? {} : letterOf(st);
+  return L.asks ? [{ key:"ask", label:L.asks }] : [];
+}
+function askedOf(st){ if (st === "lapse") return (J && J.notice && J.notice.back && J.notice.back.asked) || {}; var S = stageOf("all", st); return (S && S.back && S.back.asked) || {}; }
+function copiesOf(st){ return (st === "lapse" ? (J && J.notice && J.notice.copies) : letterOf(st).copies) || COPIES; }
+function topAsk(st){
+  var A = askedOf(st), best = null, tot = 0;
+  optsOf(st).forEach(function(o){ var n = Number(A[o.key])||0; tot += n; if (n && (!best || n > best.n)) best = { key:o.key, label:o.label, n:n }; });
+  if (best) best.share = pct(best.n, tot); return best;
+}
+function today(st){
+  var T = st === "lapse" ? ((J && J.notice && J.notice.today) || null) : ((stageOf("all", st)||{}).today || null);
+  if (!T) return null;
+  return { went: testMode() ? (T.test||0) : (T.sent||0), waiting: T.waiting||0, checked: T.checked };
+}
+function autoLine(){
+  if (!J || J.auto === undefined) return "Sales support checks each one · sent at " + hour() + ":00";
+  return J.auto ? "Automatic at " + hour() + ":00 · sales support can hold one" : "Ticked by sales support · sent at " + hour() + ":00";
+}
+function dayBack(n){
+  var d = J && J.today ? new Date(J.today + "T12:00:00Z") : new Date(); d.setUTCDate(d.getUTCDate() - n);
+  return ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getUTCDay()] + " " + d.getUTCDate() + " " + ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()];
+}
+/* "Our conversation so far": the earlier emails and what was tapped on each.
+   An example for the room, dated back from today; the tap is the one clients
+   chose most on that email, else its first choice. */
+function trail(st){
+  var at = st === "lapse" ? 110 : st, earlier = STAGES.filter(function(s){ return s < at; });
+  if (!earlier.length) return "";
+  return '<div class="trail"><div class="th">Our conversation so far</div>' + earlier.map(function(s, i){
+    var t = topAsk(s), o = optsOf(s)[0];
+    var said = t ? t.label : (o ? o.label : "");
+    return '<div class="tr"><i>'+dayBack(at - s)+' · email '+(i+1)+'</i><span>'+(said ? 'You tapped <u>'+esc(said)+'</u>' : 'No answer yet')+'</span></div>';
+  }).join("") + '</div>';
+}
+function optButtons(st, max){
+  var o = optsOf(st), n = Math.min(o.length, max || 6);
+  var cyc = Math.max(4, n * .9 + 1.5).toFixed(1) + "s";
+  return '<div class="opts" style="--cyc:'+cyc+'">' + o.slice(0, n).map(function(x, i){ return '<span class="opt'+(i>2?' alt':'')+'" style="--n:'+i+'">'+esc(x.label)+'</span>'; }).join("")
+    + (o.length > n ? '<span class="opt alt" style="--n:'+n+'">+'+(o.length-n)+' more</span>' : '') + '</div>';
+}
+function clickRows(st, max){
+  var A = askedOf(st), o = optsOf(st), tot = 0;
+  var list = o.map(function(x){ var n = Number(A[x.key])||0; tot += n; return { k:x.label, n:n }; }).sort(function(a,b){ return b.n - a.n; });
+  max = max || 6;
+  var rest = list.slice(max), restN = rest.reduce(function(s,x){ return s + x.n; }, 0);
+  if (!tot) return { html: '', total: 0 };
+  return { html: rows(list.slice(0, max), "c", max, true) + (rest.length ? '<div class="note" style="margin-top:.4rem">and '+plural(rest.length,"other choice")+(restN?', '+fmt(restN)+' taps':'')+'</div>' : ''), total: tot };
+}
 
 /* ── the scenes ── */
 function bandScene(k){
   var P = sc(k), c = BANDCOL[k];
   if (!P) return { c:c, tag:"How long in force", title:BAND_LABEL[k], say:"The figures for this band come with the paste.", body:'' };
   var S = {}; (P.stages||[]).forEach(function(x){ S[x.stage] = x; });
-  var autoP = pct(P.autoFail, P.behind), orphP = pct(P.orphan, P.behind);
-  var say = '<em>' + plural(P.behind, "policy", "policies") + '</em> held ' + esc(P.label.toLowerCase()) + ' are behind on a premium, '
-    + fmt(P.over45) + ' of them 45 days or more. ' + (P.behind ? autoP + '% were meant to collect themselves' + (P.orphan ? ', and ' + fmt(P.orphan) + ' sit on books to reassign.' : '.') : '')
-    + (P.lapsed.ytd ? ' ' + plural(P.lapsed.ytd, "lapsed", "lapsed") + ' this year.' : '');
-  var ladder = [["1–44", P.under45, "#8C877F"]].concat([45,60,75,90].map(function(st){ return [st + (st===90?"+":"–"+(st+14)), (S[st]||{}).stretch||0, COL[st]]; }));
-  var lmax = 1; ladder.forEach(function(x){ if (x[1] > lmax) lmax = x[1]; });
+  var autoP = pct(P.autoFail, P.behind), orphP = pct(P.orphan, P.behind), lo = P.label.toLowerCase(), inf = 'in force ' + lo.replace('under 1 year', 'under a year');
+  var say;
+  if (!P.behind) say = 'Nothing in force ' + esc(lo) + ' is behind today.';
+  else if (autoP >= 35) say = '<em>' + ratio(autoP) + '</em> of the policies behind here were meant to pay themselves: the bank or payroll stopped, not the client.';
+  else if (orphP >= 25) say = '<em>' + ratio(orphP) + '</em> of the policies behind here sit on books waiting to be reassigned.';
+  else say = '<em>' + fmt(P.over45) + '</em> of them are 45 days or more behind: the emails are already going.';
+  say += '<small><b>' + plural(P.behind, "policy", "policies") + '</b> behind · ' + money(P.behindPrem) + ' of premium · <b>' + fmt(P.next7) + '</b> reach the next line in a week'
+    + (P.lapsed.ytd ? ' · ' + fmt(P.lapsed.ytd) + ' lapsed this year' : '') + '</small>';
+  var ladder = [["1–44", P.under45, "#8C877F"]].concat(STAGES.map(function(st){ return [st===90 ? "90+" : st + "–" + upTo(st), (S[st]||{}).stretch||0, COL[st]]; }));
+  var lmax = 1, li = 0; ladder.forEach(function(x, i){ if (x[1] > lmax) { lmax = x[1]; li = i; } });
   var body = '<div class="grid g-band">'
     + '<div class="col"><div class="card"><div class="kick">Behind on a premium</div>'
-    +   '<div class="big" data-c="'+P.behind+'">0</div><div class="bigk"><b>'+plural(P.clients,"client")+'</b> &middot; '+money(P.behindPrem)+' of modal premium</div>'
-    +   '<div class="ringw">'+ring(autoP)+'<p><b>'+fmt(P.autoFail)+'</b> were on a bank order, deduction or cheque that should have collected itself, '+money(P.autoFailPrem)+'</p></div>'
+    +   '<div class="big" data-c="'+P.behind+'">'+(MOTION?0:fmt(P.behind))+'</div><div class="bigk"><b>'+plural(P.clients,"client")+'</b> &middot; '+money(P.behindPrem)+'</div>'
+    +   '<div class="ringw">'+ring(autoP)+'<p><b>'+fmt(P.autoFail)+'</b> on a bank order, deduction or cheque that should have collected itself</p></div>'
     +   '<div class="kick" style="margin-top:1rem">Whose book</div>'
-    +   '<div class="split"><i data-w="'+(100-orphP)+'" style="background:var(--teal)"></i><i data-w="'+orphP+'" style="background:var(--coral)"></i></div>'
-    +   '<div class="lg"><span><i style="background:var(--teal)"></i>Active agents <b>'+fmt(P.active)+'</b></span><span><i style="background:var(--coral)"></i>Orphans, to reassign <b>'+fmt(P.orphan)+'</b></span></div>'
-    + '</div><div class="card"><div class="kick">Across the book <span>&middot; behind, by how long in force</span></div>'
+    +   '<div class="split shine"><i data-w="'+(100-orphP)+'" style="background:var(--teal)"></i><i data-w="'+orphP+'" style="background:var(--coral)"></i></div>'
+    +   '<div class="lg"><span><i style="background:var(--teal)"></i>Active agents <b>'+fmt(P.active)+'</b></span><span><i style="background:var(--coral)"></i>Orphans <b>'+fmt(P.orphan)+'</b></span></div>'
+    + '</div><div class="card"><div class="kick">How they pay <span>&middot; gold should collect itself</span></div>'+rows(P.billing, function(x){ return x.auto ? "g" : ""; }, 4)+'</div></div>'
+    + '<div class="col"><div class="card grow"><div class="kick">How far behind <span>&middot; and which email they get</span></div><div class="ladder">'
+    +   ladder.map(function(x, i){ return '<div style="--k:'+x[2]+'"><em>'+fmt(x[1])+'</em><i data-h="'+(100*x[1]/lmax).toFixed(1)+'">'+(i===li?'<b></b>':'')+'</i><span>'+x[0]+'<br>'+(i?'email '+i:'days')+'</span></div>'; }).join("")
+    +   '</div></div></div>'
+    + '<div class="col"><div class="card"><div class="kick">Across the book</div>'
     +   rows(["t0","t1","t2","t3","t4","t5"].map(function(b){ var Q2 = sc(b); return { k:BAND_LABEL[b], n:Q2 ? Q2.behind : 0, me:b===k }; }), function(x){ return x.me ? "c" : ""; })
-    + '</div></div>'
-    + '<div class="col"><div class="card"><div class="kick">How far behind <span>&middot; days past the paid-to date</span></div><div class="ladder">'
-    +   ladder.map(function(x){ return '<div style="--k:'+x[2]+'"><em>'+fmt(x[1])+'</em><i data-h="'+(100*x[1]/lmax).toFixed(1)+'"></i><span>'+x[0]+'<br>days</span></div>'; }).join("")
-    +   '</div></div>'
-    +   '<div class="card grow"><div class="kick">Lapsed, from this band</div><div class="tiles three">'
-    +   '<div class="tile'+(P.lapsed.month?'':' z')+'"><b style="color:var(--coral)">'+fmt(P.lapsed.month)+'</b><small>in '+esc(P.lapsed.monthName||"this month")+'</small></div>'
-    +   '<div class="tile'+(P.lapsed.d30?'':' z')+'"><b style="color:var(--coral)">'+fmt(P.lapsed.d30)+'</b><small>in the last 30 days</small></div>'
-    +   '<div class="tile'+(P.lapsed.ytd?'':' z')+'"><b style="color:var(--coral)">'+fmt(P.lapsed.ytd)+'</b><small>this year, '+money(P.lapsed.ytdPrem)+'</small></div></div>'
-    +   '<div class="kick" style="margin-top:1rem">How they pay <span>&middot; gold should collect itself</span></div>'+rows(P.billing, function(x){ return x.auto ? "g" : ""; }, 4)+'</div></div>'
-    + '<div class="col"><div class="card"><div class="kick">By unit</div>'+rows(cap(P.units, 3), "a")+'</div>'
-    +   '<div class="card grow"><div class="kick">The agents carrying most <span>&middot; '+plural(P.agentCount,"active agent")+'</span></div>'+rows(cap(P.agents, 6), "a")+'</div></div>'
+    +   '</div><div class="card grow"><div class="kick">The agents carrying most <span>&middot; '+plural(P.agentCount,"active agent")+'</span></div>'+rows(cap(P.agents, 5), "a")+'</div></div>'
     + '</div>';
-  return { c:c, tag:"How long in force", title:P.label, say:say, body:body };
+  return { c:c, tag:"In force", title:P.label, say:say, body:body };
+}
+/* The emails your clients get: the whole journey on one line. */
+function flowScene(){
+  var c = "var(--gold)", nodes = STAGES.concat(["lapse"]), N = J && J.notice, totalWent = 0, totalWait = 0, known = false;
+  var html = nodes.map(function(st, i){
+    var k = COL[st], f = flowOf(st), isL = st === "lapse", L = isL ? {} : letterOf(st);
+    var subj = (f && f.subject) || (isL ? (N && N.subject) : L.subject) || "";
+    var label = (f && f.label) || (isL ? "Lapsed, under " + ((N && N.under) || 2) + " years" : range(st));
+    var t = today(st); if (t) { known = true; totalWent += t.went; totalWait += t.waiting; }
+    var o = optsOf(st), A = askedOf(st);
+    var chips = o.slice(0, 5).map(function(x){ var n = Number(A[x.key])||0; return '<span class="chip">'+esc(x.label)+(n?'<em>'+fmt(n)+'</em>':'')+'</span>'; }).join("") + (o.length > 5 ? '<span class="chip more">+'+(o.length-5)+' more</span>' : '');
+    var tr = isL ? "Carries every email and their answers" : i ? "Carries email" + (i > 1 ? "s 1–" + i : " 1") + " and their answers" : "Opens the conversation";
+    return '<div class="fn" style="--k:'+k+';--n:'+i+'"><div class="dot">'+(isL?'!':(i+1))+'</div><div class="box">'
+      + '<div class="rng"><small>'+(isL ? 'The lapse notice' : 'Email '+(i+1))+'</small>'+esc(label)+'</div>'
+      + (subj ? '<div class="mail"><small>Subject</small>'+esc(subj)+'</div>' : '<div class="mail"><small>Subject</small>Comes with the paste</div>')
+      + '<div class="tag2">'+esc(tr)+'</div>'
+      + '<div class="tag2 ag">'+esc(copiesOf(st))+'</div>'
+      + (chips ? '<div class="chips">'+chips+'</div>' : '')
+      + '<div class="today"><b'+(t?' data-c="'+t.went+'"':'')+'>'+(t ? (MOTION?0:fmt(t.went)) : '–')+'</b><span>'+(t ? (testMode() ? 'test copies today' : 'went at ' + hour() + ':00 today') + (t.waiting ? '<br>' + fmt(t.waiting) + ' waiting' : '') : 'today, with the paste')+'</span></div>'
+      + '</div></div>';
+  }).join("");
+  var B = { sent:0, answered:0 }; STAGES.forEach(function(st){ var S = stageOf("all", st); if (S && S.back) { B.sent += S.back.sent||0; B.answered += S.back.answered||0; } });
+  if (N && N.back) { B.sent += N.back.sent||0; B.answered += N.back.answered||0; }
+  var say = known
+    ? '<em>' + plural(totalWent, testMode() ? "test copy" : "email", testMode() ? "test copies" : "emails") + '</em> ' + (testMode() ? 'today, ' : 'to clients today, ') + 'and every one copies the client’s agent.'
+    : 'Up to five emails, from 45 days to the lapse, and every one copies the client’s agent.';
+  say += '<small>' + esc(autoLine()) + ' · each one carries the emails before it and what the client tapped</small>';
+  var strip = '<div class="fstrip">'
+    + '<div class="tile" style="--n:0"><b style="color:var(--gold)" data-c="'+totalWent+'">'+(MOTION?0:fmt(totalWent))+'</b><small>'+(testMode()?'test copies today':'emails today')+'</small></div>'
+    + '<div class="tile" style="--n:1"><b data-c="'+totalWait+'">'+(MOTION?0:fmt(totalWait))+'</b><small>waiting for '+hour()+':00</small></div>'
+    + '<div class="tile" style="--n:2"><b style="color:var(--teal)">'+(B.sent ? pct(B.answered, B.sent) + '%' : '–')+'</b><small>'+(B.sent ? 'answered in 30 days, ' + fmt(B.answered) + ' of ' + fmt(B.sent) : 'answers show once emails reach clients')+'</small></div>'
+    + '<div class="tile" style="--n:3"><b style="color:var(--coral)">1 tap</b><small>every choice is one button in the email</small></div></div>';
+  return { c:c, tag:"For the agents", title:"The emails your clients get", say:say, body:'<div class="flow"><div class="ftrack"><i class="frun"><b></b></i></div><div class="fnodes">'+html+'</div>'+strip+'</div>' };
+}
+function envelope(st, extra){
+  var c = COL[st], isL = st === "lapse", L = isL ? (J && J.notice) || {} : letterOf(st);
+  var to = isL ? 'the client, whose policy lapsed under ' + ((L.under)||2) + ' years in' : 'the client, ' + range(st) + ' behind';
+  return '<div class="env" style="--c:'+c+'"><div class="from"><img src="../../logo-mark.svg" alt="">Ricky Rampersad Branch<span>Example</span></div>'
+    + '<div class="to">To: '+esc(to)+'<br><b>'+esc(copiesOf(st))+'</b></div>'
+    + '<div class="subj">'+esc(L.subject||"")+'</div>'
+    + trail(st)
+    + (L.gist ? '<div class="gist">'+esc(L.gist)+'</div>' : '')
+    + (extra || '')
+    + '<div class="lbl">One tap</div>' + optButtons(st, isL ? 3 : 5)
+    + '</div>';
+}
+function weekCard(S, c){
+  var wk = S.week || [], wmax = 1; wk.forEach(function(w){ var n=(w.sent||0)+(w.test||0); if(n>wmax) wmax=n; });
+  return '<div class="card"><div class="kick">The last five working days <span>&middot; '+(testMode()?'test copies':'emails')+'</span></div><div class="wk">'
+    + wk.map(function(w, i){ var n=(w.sent||0)+(w.test||0), last = i === wk.length-1; return '<div class="'+(last?'now':'')+'"><em>'+fmt(n)+'</em><i class="'+(w.sent?'':'t')+'" data-h="'+(100*n/wmax).toFixed(1)+'">'+(last?'<b></b>':'')+'</i><span>'+esc(w.label)+'</span></div>'; }).join("")+'</div></div>';
 }
 function letterScene(st){
-  var A = sc("all"), L = letterOf(st), c = COL[st], live = !!A;
-  var S = live ? (A.stages||[]).filter(function(x){ return x.stage===st; })[0] : null;
-  var testMode = !J || J.mode !== "live";
-  var alts = L.subjects && L.subjects.length > 1 ? L.subjects.map(function(x){ return '<b>'+(x.under ? (x.under===1 ? 'Under a year' : 'Under '+x.under+' years') : 'Longer')+':</b> “'+esc(x.subject)+'”'; }).join('<br>') : "";
-  var env = '<div class="env" style="--c:'+c+'"><div class="from"><img src="../../logo-mark.svg" alt="">Ricky Rampersad Branch<span>'+(J&&J.sendHour?J.sendHour:10)+':00, Monday to Friday</span></div>'
-    + '<div class="to">To: the client, '+st+' to '+(st+6)+' days behind &middot; their agent copied</div>'
-    + '<div class="subj">'+esc(L.subject||"")+'</div><div class="gist">'+esc(L.gist||"")+'</div>'
-    + (L.asks ? '<span class="ask">'+esc(L.asks)+'</span>' : '')
-    + (alts ? '<div class="alts">The subject follows how long they have held it:<br>'+alts+'</div>' : '') + '</div>';
-  if (!S) return { c:c, tag:st + " days", title:NAME[st], say:"What the client receives at " + st + " days. The figures come with the paste.",
-    body:'<div class="grid g-letter"><div class="col">'+env+'</div><div class="col"><div class="card grow"><div class="note">The figures for this line come with the paste.</div></div></div><div class="col"></div></div>' };
-  var T = S.today, B = S.back, Af = S.after;
-  var went = testMode ? T.test : T.sent;
-  var by = (T.by||[]).map(function(x){ return esc(x.k) + " " + fmt(x.n); }).join(", ");
-  var why = (T.why||[])[0];
-  var say = '<em>' + plural(S.line, "policy", "policies") + '</em> ' + (S.line === 1 ? 'is' : 'are') + ' on the ' + st + '-day line today'
-    + (S.lineOrphan ? ', ' + fmt(S.lineOrphan) + ' of them orphans' : '') + '. ' + (T.checked ? fmt(T.checked) + ' checked today' : 'None checked yet today')
-    + (testMode ? '; test copies only, no client written to yet.' : '; ' + fmt(T.sent) + ' letters went at ' + (J.sendHour||10) + ':00.');
-  var wk = S.week || [], wmax = 1; wk.forEach(function(w){ var n=(w.sent||0)+(w.test||0); if(n>wmax) wmax=n; });
-  var bands = (J.bands || []).map(function(b){ var P = sc(b.key), x = P && (P.stages||[]).filter(function(y){ return y.stage===st; })[0]; return { k:b.label, n:x ? x.line : 0, key:b.key }; });
+  var c = COL[st], S = stageOf("all", st), L = letterOf(st), idx = STAGES.indexOf(st) + 1;
+  var tag = "Email " + idx + " · " + range(st);
+  if (!S) return { c:c, tag:tag, title:NAME[st], say:"What the client receives at " + st + " days. The figures come with the paste.",
+    body:'<div class="grid g-letter"><div class="col">'+envelope(st)+'</div><div class="col"><div class="card grow"><div class="note">The figures for this line come with the paste.</div></div></div><div class="col"></div></div>' };
+  var T = S.today, B = S.back || {}, Af = S.after || {}, tm = testMode();
+  var went = tm ? T.test : T.sent, by = (T.by||[]).map(function(x){ return esc(x.k) + " " + fmt(x.n); }).join(", "), why = (T.why||[])[0];
+  var top = topAsk(st);
+  var say = top ? '<em>' + top.share + '%</em> of clients who tapped chose “' + esc(top.label) + '”.'
+    : B.sent && B.answered ? '<em>' + pct(B.answered, B.sent) + '%</em> of clients answered this email in ' + B.days + ' days.'
+    : '<em>' + plural(S.line, "client policy", "client policies") + '</em> on this line today' + (tm ? ': test copies only, no client written to yet.' : '.');
+  say += '<small><b>' + fmt(S.line) + '</b> on the line today · <b>' + fmt(went) + '</b> ' + (tm ? 'test copies' : 'sent at ' + hour() + ':00') + (T.waiting ? ' · <b>' + fmt(T.waiting) + '</b> waiting' : '') + ' · ' + fmt(S.stretch) + ' in the whole stretch, ' + money(S.stretchPrem) + '</small>';
   var after = [["paid","var(--green)","paid up"],["part","var(--teal)","paid some"],["behind","var(--amber)","still behind"],["lapsed","var(--coral)","lapsed"],["gone","var(--grey)","off the extract"]];
+  var nTap = st >= 75 ? 4 : 5, clicks = clickRows(st, nTap);
   var body = '<div class="grid g-letter">'
-    + '<div class="col">'+env+'<div class="card"><div class="kick">The whole stretch <span>&middot; '+st+(st===90?' days and more':' to '+(st+14)+' days')+', until the next letter</span></div>'
-    +   '<div class="tiles"><div class="tile"><b style="color:'+c+'">'+fmt(S.stretch)+'</b><small>policies, '+money(S.stretchPrem)+' of modal premium</small></div>'
-    +   '<div class="tile"><b style="color:var(--coral)">'+fmt(S.stretchOrphan)+'</b><small>on orphans\' books, '+pct(S.stretchOrphan,S.stretch)+'%</small></div></div>'
-    +   '<div class="split"><i data-w="'+(100-pct(S.stretchOrphan,S.stretch))+'" style="background:var(--teal)"></i><i data-w="'+pct(S.stretchOrphan,S.stretch)+'" style="background:var(--coral)"></i></div>'
-    +   '<div class="note" style="margin-top:.6rem">'+(st===90 ? 'After this letter the next step is the lapse, the date on the extract.' : 'Fifteen days on, the '+(st+15)+'-day letter goes to whoever is still behind.')+'</div></div></div>'
-    + '<div class="col"><div class="card"><div class="kick">On this line today</div>'
-    +   '<div class="big" data-c="'+S.line+'">0</div><div class="bigk"><b>'+plural(S.lineClients,"client")+'</b> &middot; '+fmt(S.lineActive)+' active, <span style="color:var(--coral)">'+fmt(S.lineOrphan)+' orphan</span></div>'
+    + '<div class="col">'+envelope(st)
+    +   '<div class="card grow"><div class="kick">What clients tapped <span>&middot; last 30 days</span></div>'+clicks.html
+    +   (clicks.total ? '' : '<div class="note" style="margin-top:.5rem">'+(tm ? 'No email has reached a client yet: every one goes to the test inbox.' : 'No taps on this email in the last 30 days.')+'</div>')+'</div></div>'
+    + '<div class="col"><div class="card grow"><div class="kick">On this line today</div>'
+    +   '<div class="big" data-c="'+S.line+'">'+(MOTION?0:fmt(S.line))+'</div><div class="bigk"><b>'+plural(S.lineClients,"client")+'</b> &middot; '+fmt(S.lineActive)+' active, <span style="color:var(--coral)">'+fmt(S.lineOrphan)+' orphan</span></div>'
     +   '<div class="tiles three">'
     +     '<div class="tile'+(T.checked?'':' z')+'"><b>'+fmt(T.checked)+'</b><small>checked today</small></div>'
-    +     '<div class="tile'+(went?'':' z')+'"><b>'+fmt(went)+'</b><small>'+(testMode?'test copies today':'sent today')+'</small></div>'
-    +     '<div class="tile'+(T.waiting?'':' z')+'"><b>'+fmt(T.waiting)+'</b><small>ticked, waiting for '+(J.sendHour||10)+':00</small></div></div>'
-    +   '<div class="note" style="margin-top:.7rem">'+(by ? 'Checked by <b>'+by+'</b>' : 'Nobody has checked this line yet today')
-    +     (T.skipped ? ' &middot; <b>'+fmt(T.skipped)+'</b> decided against' : '') + (T.notSent ? ' &middot; <b>'+fmt(T.notSent)+'</b> not sent'+(why?': '+esc(why.k):'') : '')+'</div></div>'
-    +   '<div class="card grow"><div class="kick">On the line, by how long in force</div>'+rows(bands, function(x){ return "c"; })+'</div></div>'
-    + '<div class="col"><div class="card"><div class="kick">The last five working days <span>&middot; '+(testMode?'test copies':'letters')+'</span></div><div class="wk">'
-    +   wk.map(function(w){ var n=(w.sent||0)+(w.test||0); return '<div><em>'+fmt(n)+'</em><i class="'+(w.sent?'':'t')+'" data-h="'+(100*n/wmax).toFixed(1)+'"></i><span>'+esc(w.label)+'</span></div>'; }).join("")+'</div></div>'
-    +   '<div class="card grow"><div class="kick">What came back</div>'
-    +   (B.sent ? '<div class="tiles"><div class="tile"><b>'+pct(B.answered,B.sent)+'%</b><small>answered, '+fmt(B.answered)+' of '+fmt(B.sent)+' in '+B.days+' days</small></div>'
-                + '<div class="tile"><b>'+(B.avg!=null?B.avg:'–')+'</b><small>average rating'+(B.help?', '+fmt(B.help)+' want a call':'')+'</small></div></div>'
-            : '<div class="note" style="margin-top:.6rem">'+(testMode ? '<b>No letter has reached a client yet.</b> Until the desk goes live, every one goes to the test inbox, so nothing can come back.' : 'No letter on this line in the last '+B.days+' days.')+'</div>')
-    +   (Af.sent ? '<div class="kick" style="margin-top:1rem">After the letter <span>&middot; '+Af.days+' days</span></div><div class="stack">'+after.map(function(a){ return '<i data-w="'+(100*(Af[a[0]]||0)/Af.sent).toFixed(1)+'" style="background:'+a[1]+'"></i>'; }).join("")+'</div>'
-            + '<div class="lg">'+after.filter(function(a){ return Af[a[0]]; }).map(function(a){ return '<span><i style="background:'+a[1]+'"></i>'+a[2]+' <b>'+fmt(Af[a[0]])+'</b></span>'; }).join("")+'</div>' : '')
+    +     '<div class="tile'+(went?'':' z')+'"><b>'+fmt(went)+'</b><small>'+(tm?'test copies':'sent today')+'</small></div>'
+    +     '<div class="tile'+(T.waiting?'':' z')+'"><b>'+fmt(T.waiting)+'</b><small>waiting for '+hour()+':00</small></div></div>'
+    +   '<div class="note" style="margin-top:.6rem">'+(by ? 'Checked by <b>'+by+'</b>' : 'Nobody has checked this line yet today')
+    +     (T.skipped ? ' &middot; <b>'+fmt(T.skipped)+'</b> held' : '') + (T.notSent ? ' &middot; <b>'+fmt(T.notSent)+'</b> not sent'+(why?': '+esc(why.k):'') : '')+'</div></div>'
+    +   '<div class="card"><div class="kick">What came back <span>&middot; '+(B.days||30)+' days</span></div>'
+    +   '<div class="tiles"><div class="tile'+(B.sent?'':' z')+'"><b style="color:'+c+'">'+(B.sent?pct(B.answered,B.sent)+'%':'–')+'</b><small>answered'+(B.sent?', '+fmt(B.answered)+' of '+fmt(B.sent):'')+'</small></div>'
+    +   '<div class="tile'+(B.avg!=null?'':' z')+'"><b>'+(B.avg!=null?B.avg:'–')+'</b><small>average rating</small></div></div></div></div>'
+    + '<div class="col">'+weekCard(S, c).replace('<div class="card">','<div class="card grow">')
+    +   '<div class="card"><div class="kick">After the email <span>&middot; '+(Af.days||120)+' days</span></div>'
+    +   (Af.sent ? '<div class="stack shine">'+after.map(function(a){ return '<i data-w="'+(100*(Af[a[0]]||0)/Af.sent).toFixed(1)+'" style="background:'+a[1]+'"></i>'; }).join("")+'</div>'
+            + '<div class="lg">'+after.filter(function(a){ return Af[a[0]]; }).map(function(a){ return '<span><i style="background:'+a[1]+'"></i>'+a[2]+' <b>'+fmt(Af[a[0]])+'</b></span>'; }).join("")+'</div>'
+            : '<div class="note" style="margin-top:.6rem">Nothing to read yet: what happened after shows once emails have reached clients.</div>')
+    +   '<div class="note" style="margin-top:.6rem">'+(st===90 ? 'After this email the next step is the lapse, then the lapse notice.' : 'Fifteen days on, email '+(idx+1)+' goes to whoever is still behind.')+'</div>'
     +   '</div></div></div>';
-  return { c:c, tag:st + (st===90 ? " days · before the lapse" : " days"), title:NAME[st], say:say, body:body };
+  return { c:c, tag:tag, title:NAME[st], say:say, body:body };
+}
+/* The lapse notice: close-off questions, a rating of how we followed up. */
+function noticeScene(){
+  var N = J && J.notice, c = COL.lapse;
+  if (!N) return { c:c, tag:"After the lapse", title:"The lapse notice", say:"The lapse notice goes to a client whose policy lapsed under two years in. It comes with the paste.", body:'' };
+  var T = N.today || {}, B = N.back || {}, tm = testMode(), went = tm ? (T.test||0) : (T.sent||0);
+  var reasons = (N.reasons || []);
+  var extra = reasons.length ? '<div class="lbl">Why did you let it go?</div><div class="opts" style="--cyc:'+Math.max(4, reasons.length*.9+1.5).toFixed(1)+'s">'
+    + reasons.slice(0, 5).map(function(x, i){ return '<span class="opt alt" style="--n:'+(i+3)+'">'+esc(x.label)+'</span>'; }).join("") + '</div>' : '';
+  extra += '<div class="lbl">How well did we follow up?</div><div class="rate">'+[1,2,3,4,5].map(function(n){ return '<span style="--n:'+(n+7)+'">'+n+'</span>'; }).join("")+'</div>';
+  var R = B.reasons || {}, rl = reasons.map(function(x){ return { k:x.label, n:Number(R[x.key])||0 }; }).sort(function(a,b){ return b.n-a.n; });
+  var topR = rl[0] && rl[0].n ? rl[0] : null, rTot = rl.reduce(function(s,x){ return s + x.n; }, 0);
+  var say = B.reinstate ? '<em>' + plural(B.reinstate, "client") + '</em> asked us to bring their policy back.'
+    : topR ? '<em>' + pct(topR.n, rTot) + '%</em> of clients who told us why said “' + esc(topR.k) + '”.'
+    : 'Every lapse under two years gets one last email: <em>why</em>, and <em>how did we do</em>.';
+  say += '<small><b>' + fmt(went) + '</b> ' + (tm ? 'test copies' : 'sent') + ' today' + (T.waiting ? ' · <b>' + fmt(T.waiting) + '</b> waiting' : '') + ' · ' + esc(copiesOf("lapse")) + '</small>';
+  var clicks = clickRows("lapse");
+  var body = '<div class="grid g-letter">'
+    + '<div class="col">'+envelope("lapse", extra)+'</div>'
+    + '<div class="col"><div class="card"><div class="kick">Today</div>'
+    +   '<div class="big" data-c="'+went+'">'+(MOTION?0:fmt(went))+'</div><div class="bigk">'+(tm?'test copies today':'lapse notices sent today')+'</div>'
+    +   '<div class="tiles"><div class="tile'+(T.waiting?'':' z')+'"><b>'+fmt(T.waiting)+'</b><small>waiting for '+hour()+':00</small></div>'
+    +   '<div class="tile'+(B.sent?'':' z')+'"><b>'+fmt(B.sent)+'</b><small>sent in 30 days</small></div></div></div>'
+    +   '<div class="card grow"><div class="kick">How we followed up <span>&middot; their rating</span></div>'
+    +   '<div class="ringw">'+ring(B.sent ? pct(B.answered, B.sent) : 0, B.sent ? pct(B.answered, B.sent) + '%' : '–')+'<p><b>'+fmt(B.answered)+'</b> answered'+(B.rated ? ', <b>'+fmt(B.rated)+'</b> rated us' : '')+(B.avg!=null ? '<br>average <b>'+B.avg+' of 5</b>' : '')+(B.reinstate ? '<br><b>'+fmt(B.reinstate)+'</b> want it reinstated' : '')+'</p></div></div></div>'
+    + '<div class="col"><div class="card grow"><div class="kick">Why they let it go</div>'+rows(rl, "c", 6, true)
+    +   (rTot ? '' : '<div class="note" style="margin-top:.5rem">'+(tm ? 'No notice has reached a client yet.' : 'No reasons given in the last 30 days.')+'</div>')+'</div>'
+    +   '<div class="card"><div class="kick">What they tapped</div>'+(clicks.html || '<div class="note" style="margin-top:.5rem">Reinstate, a call, or their own words: the taps show here.</div>')+'</div></div>'
+    + '</div>';
+  return { c:c, tag:"After the lapse · under " + (N.under || 2) + " years", title:"The lapse notice", say:say, body:body };
 }
 function lapseScene(){
   var X = J && J.lapses, c = "var(--coral)";
   if (!X) return { c:c, tag:"The lapses", title:"What we lost", say:"The lapses come with the paste.", body:'' };
   var lt = X.letters || {}, had = (lt[45]||0)+(lt[60]||0)+(lt[75]||0)+(lt[90]||0);
-  var say = '<em>' + plural(X.ytd, "policy", "policies") + '</em> lapsed this year, ' + money(X.ytdPrem) + ' of premium; ' + fmt(X.d30) + ' in the last 30 days.'
-    + (X.ytd ? ' ' + fmt(lt.none||0) + ' had no letter from the desk first.' : '');
+  var none = lt.none||0, noneP = pct(none, X.ytd);
+  var say = X.ytd ? '<em>' + ratio(noneP) + '</em> policies that lapsed this year never had an email from the desk first.' : 'Nothing has lapsed this year.';
+  say += '<small><b>' + plural(X.ytd, "policy", "policies") + '</b> lapsed in ' + esc(X.year) + ' · ' + money(X.ytdPrem) + ' · <b>' + fmt(X.d30) + '</b> in the last 30 days</small>';
   var mm = X.months || [], mmax = 1; mm.forEach(function(m){ if (m.n > mmax) mmax = m.n; });
   var bands = (X.bands||[]).map(function(b){ return { k:b.label, n:b.n, key:b.k }; });
-  var lrows = [{ k:"No letter first", n:lt.none||0 }].concat([45,60,75,90].map(function(st){ return { k:"Had the " + st + "-day letter", n:lt[st]||0, st:st }; }));
+  var lrows = [{ k:"No email first", n:none }].concat(STAGES.map(function(st, i){ return { k:"Had email " + (i+1) + " (" + st + ")", n:lt[st]||0, st:st }; }));
   var body = '<div class="grid g-lapse">'
     + '<div class="col"><div class="card grow"><div class="kick">Lapsed in '+esc(X.year)+'</div>'
-    +   '<div class="big" data-c="'+X.ytd+'">0</div><div class="bigk">'+money(X.ytdPrem)+' of premium, the cover now gone</div>'
-    +   '<div class="tiles"><div class="tile"><b style="color:var(--coral)">'+fmt(X.d30)+'</b><small>in the last 30 days, '+money(X.d30Prem)+'</small></div>'
+    +   '<div class="big" data-c="'+X.ytd+'">'+(MOTION?0:fmt(X.ytd))+'</div><div class="bigk">'+money(X.ytdPrem)+' of premium, the cover now gone</div>'
+    +   '<div class="tiles"><div class="tile"><b style="color:var(--coral)">'+fmt(X.d30)+'</b><small>in the last 30 days</small></div>'
     +   '<div class="tile"><b style="color:var(--coral)">'+fmt(X.mon)+'</b><small>so far in '+esc(X.month)+'</small></div></div>'
-    +   '<div class="kick" style="margin-top:1rem">Whose book</div><div class="split"><i data-w="'+(100-pct(X.orphan,X.ytd))+'" style="background:var(--teal)"></i><i data-w="'+pct(X.orphan,X.ytd)+'" style="background:var(--coral)"></i></div>'
+    +   '<div class="kick" style="margin-top:1rem">Whose book</div><div class="split shine"><i data-w="'+(100-pct(X.orphan,X.ytd))+'" style="background:var(--teal)"></i><i data-w="'+pct(X.orphan,X.ytd)+'" style="background:var(--coral)"></i></div>'
     +   '<div class="lg"><span><i style="background:var(--teal)"></i>Active agents <b>'+fmt(X.ytd-X.orphan)+'</b></span><span><i style="background:var(--coral)"></i>Orphans <b>'+fmt(X.orphan)+'</b></span></div></div></div>'
     + '<div class="col"><div class="card"><div class="kick">Month by month</div><div class="cols">'
-    +   mm.map(function(m,i){ return '<div><em>'+fmt(m.n)+'</em><i class="'+(i===mm.length-1?'now':'')+'" data-h="'+(100*m.n/mmax).toFixed(1)+'"></i><span>'+esc(m.k)+'</span></div>'; }).join("")+'</div></div>'
+    +   mm.map(function(m,i){ var last = i===mm.length-1; return '<div><em>'+fmt(m.n)+'</em><i class="'+(last?'now':'')+'" data-h="'+(100*m.n/mmax).toFixed(1)+'">'+(last?'<b></b>':'')+'</i><span>'+esc(m.k)+'</span></div>'; }).join("")+'</div></div>'
     +   '<div class="card grow"><div class="kick">By how long in force</div>'+rows(bands, function(){ return "o"; })+'</div></div>'
-    + '<div class="col"><div class="card"><div class="kick">Did a letter go first? <span>&middot; live letters this year</span></div>'+rows(lrows, function(x){ return x.st ? "g" : ""; })+'</div>'
+    + '<div class="col"><div class="card"><div class="kick">Did an email go first? <span>&middot; live emails this year</span></div>'+rows(lrows, function(x){ return x.st ? "g" : ""; })+'</div>'
     +   '<div class="card grow"><div class="kick">Whose they were <span>&middot; '+plural(X.agentCount,"active agent")+'</span></div>'+rows(cap(X.agents, 4), "a")+'</div></div>'
     + '</div>';
   return { c:c, tag:"The lapses", title:"What we lost", say:say, body:body };
@@ -390,7 +620,9 @@ function lapseScene(){
 var SCENES = [];
 function scenes(){
   return ["t0","t1","t2","t3","t4","t5"].map(function(k){ return { id:k, dot:BAND_LABEL[k], dc:BANDCOL[k], make:function(){ return bandScene(k); } }; })
-    .concat([45,60,75,90].map(function(st){ return { id:"s"+st, dot:st+" days"+(st===90?" · lapse":""), dc:COL[st], make:function(){ return letterScene(st); } }; }))
+    .concat([{ id:"flow", dot:"The emails", dc:"var(--gold)", make:flowScene }])
+    .concat(STAGES.map(function(st, i){ return { id:"s"+st, dot:"Email "+(i+1)+" · "+st, dc:COL[st], make:function(){ return letterScene(st); } }; }))
+    .concat([{ id:"notice", dot:"Lapse notice", dc:COL.lapse, make:noticeScene }])
     .concat([{ id:"lapse", dot:"The lapses", dc:"var(--coral)", make:lapseScene }]);
 }
 
@@ -399,7 +631,7 @@ var at = 0, paused = false, t0 = 0, held = 0, timer = null;
 function draw(){
   SCENES = scenes();
   var notice = SRC === "feed" && !(J && J.scope)
-    ? '<div class="notice"><b>The figures are not live yet.</b> Paste <b>Intelligence.gs</b>, <b>PremiumDueDesk.gs</b> and <b>KPI.gs</b> into the Branch Intelligence project, then Manage deployments, the pencil, New version. Until then each scene shows what it will hold, and the letters as the client gets them.' + (J && J.journeyError ? ' (' + esc(J.journeyError) + ')' : '') + '</div>' : "";
+    ? '<div class="notice"><b>The figures are not live yet.</b> Paste <b>Intelligence.gs</b>, <b>PremiumDueDesk.gs</b> and <b>KPI.gs</b> into the Branch Intelligence project, then Manage deployments, the pencil, New version. Until then each scene shows what it will hold, and the emails as the client gets them.' + (J && J.journeyError ? ' (' + esc(J.journeyError) + ')' : '') + '</div>' : "";
   $("#stage").innerHTML = SCENES.map(function(s, i){
     var x = s.make();
     return '<section class="scene'+(i===at?' on':'')+'" style="--c:'+x.c+'" aria-hidden="'+(i===at?'false':'true')+'" aria-label="'+esc(x.tag+': '+x.title)+'">'
@@ -410,10 +642,10 @@ function draw(){
   Array.prototype.forEach.call(document.querySelectorAll("#dots button"), function(b){ b.addEventListener("click", function(){ go(+b.getAttribute("data-i"), true); }); });
   var m = J && J.mode, mEl = $("#mode");
   mEl.className = "mode " + (m || "held");
-  mEl.textContent = !(J && J.scope) ? "letters state not known" : m === "live" ? "Live: letters go to clients at " + (J.sendHour||10) + ":00"
+  mEl.textContent = !(J && J.scope) ? "letters state not known" : m === "live" ? "Live: emails go to clients at " + hour() + ":00"
     : m === "test" ? "Test mode: copies go to the test inbox" : "Client mail is held";
   var when = J && J.generatedAt ? J.generatedAt.slice(11) : "";
-  $("#sub").innerHTML = "Every policy behind on a premium, active agents' and orphans' books"
+  $("#sub").innerHTML = "Every policy behind on a premium, the emails your clients get, and the lapses"
     + (SRC === "snapshot" ? " &middot; <b style=\"color:var(--amber)\">snapshot: illustrative numbers</b>" : (when ? " &middot; read at <b>" + esc(when) + "</b>" : ""));
   show(at, true);
 }
@@ -432,11 +664,12 @@ function reset(el){
   Array.prototype.forEach.call(el.querySelectorAll("[data-w]"), function(i){ i.style.width="0"; });
   Array.prototype.forEach.call(el.querySelectorAll("[data-h]"), function(i){ i.style.height="0"; });
   Array.prototype.forEach.call(el.querySelectorAll("[data-off]"), function(i){ i.style.strokeDashoffset=i.getAttribute("stroke-dasharray"); });
-  Array.prototype.forEach.call(el.querySelectorAll("[data-c]"), function(c){ c.setAttribute("data-v", 0); c.textContent = "0"; });
+  Array.prototype.forEach.call(el.querySelectorAll("[data-c]"), function(c){ c.textContent = "0"; });
 }
+/* Counters count UP TO the figure; with motion off the figure is already there. */
 function count(el, to){ to=Math.max(0,Math.round(Number(to)||0));
   if(!MOTION){ el.textContent = to.toLocaleString("en-US"); return; }
-  var t1=performance.now(), dur=1300;
+  var t1=performance.now(), dur=1500;
   (function step(t){ var k=Math.min(1,(t-t1)/dur), e=1-Math.pow(1-k,3); el.textContent=Math.round(to*e).toLocaleString("en-US"); if(k<1) requestAnimationFrame(step); })(t1); }
 function show(i, first){
   var ss = document.querySelectorAll(".scene");
@@ -453,6 +686,7 @@ function go(i, byHand){ show(i); if (byHand) t0 = Date.now(); }
 function setPaused(v){
   paused = !!v;
   if (paused) held = Date.now() - t0; else t0 = Date.now() - held;
+  document.body.classList.toggle("paused", paused);
   $("#pp").innerHTML = paused ? "▶ Play" : "❚❚ Pause";
   $("#pp").setAttribute("aria-label", paused ? "Play" : "Pause");
 }
