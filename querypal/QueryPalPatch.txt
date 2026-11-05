@@ -2974,13 +2974,35 @@ function qpAutomationScore() {
 var QP_REAL_FROM = new Date('2025-01-01T00:00:00Z').getTime();
 var QP_VOID_STATUS = 'Void';
 
+/* The ten rows logged by "HELP 868 WhatsApp" are what the respond.io template
+   produced while it was being set up, and they failed in two different ways.
+   RRB/2026/109 still had its braces: {{clientName}}, {{policyNumber}},
+   {{turnaround}}. By 110 the braces were gone but the variable names were not,
+   so every description read
+
+       WhatsApp ticket (HELP 868). Intended department: .intendedDepartment. .description
+
+   — the client's own words missing, and the department never named.
+
+   The timestamp caught all ten, because none of them had one. That stops being
+   true the moment edit 31 is in: qpStamp_ hands a respond.io ticket the time it
+   arrived, which is the point of it. A template still in this state then lands
+   as an ordinary open request with a real date, an empty description and a
+   policy number of "None", and the sweep mails a department a request with
+   nothing in it and chases it for ever. So the residue itself is the signal to
+   keep, not the clock. These are this branch's own variable names. */
+var QP_TPL_RESIDUE = /\{\{|\}\}|\.(?:clientName|clientEmail|clientPhone|policyNumber|intendedDepartment|description|subject|turnaround)\b/;
+
 function qpRowLooksJunk_(row) {
   var why = [];
   var ts = row[2];
   var d = (ts instanceof Date) ? ts : new Date(ts);
   if (!ts || isNaN(d) || d.getTime() < QP_REAL_FROM) why.push('timestamp is not a real date');
-  var blob = String(row[5] || '') + ' ' + String(row[17] || '') + ' ' + String(row[18] || '');
+  /* Policy and turnaround carried placeholders too, so they are read as well. */
+  var blob = String(row[5] || '') + ' ' + String(row[8] || '') + ' ' + String(row[15] || '')
+           + ' ' + String(row[17] || '') + ' ' + String(row[18] || '');
   if (blob.indexOf('{{') > -1) why.push('unfilled template placeholder');
+  else if (QP_TPL_RESIDUE.test(blob)) why.push('unsubstituted template variable');
   if (!String(row[5] || '').trim() && !String(row[13] || '').trim())
     why.push('no client and no department');
   return why;
@@ -3032,8 +3054,9 @@ function qpQuarantineJunk(dryRun) {
       sh.getRange(i + 2, 4).setValue(QP_VOID_STATUS);
       try {
         cmtSheet_().appendRow([new Date(), ref, 'Query Pal', 'system',
-          '⛔ Voided — ' + why.join('; ') + '. Not a real request; the sweep was '
-          + 'chasing it daily and spending the branch’s sending limit on it.', 'internal']);
+          '⛔ Voided — ' + why.join('; ') + '. The sweep was chasing it daily and '
+          + 'spending the branch’s sending limit on it. If this was a real request, '
+          + 'set Status back to Open and it rejoins the loop.', 'internal']);
       } catch (ce) {}
     }
     done.push('  ' + ref.slice(0, 46) + '  (' + why.join('; ') + ')');

@@ -41,6 +41,8 @@ function row(o) {
   r[13] = o.dept === undefined ? 'Customer Service – Chaguanas' : o.dept;
   r[17] = o.subject === undefined ? 'Tax Statement' : o.subject;
   r[18] = o.desc === undefined ? 'Please provide the 2025 statement' : o.desc;
+  if (o.policy !== undefined) r[8] = o.policy;
+  if (o.tat !== undefined) r[15] = o.tat;
   return r;
 }
 
@@ -95,6 +97,33 @@ console.log('\nwhat counts as junk\n');
     'rows 055 to 060 are empty');
 
   t('a real request is left alone', why({}).length === 0);
+
+  /* The ten HELP 868 WhatsApp rows, verbatim. 109 kept its braces; 110 onward
+     lost the braces and kept the names, which is the shape that survives
+     edit 31 giving the row a real timestamp. */
+  const WA = 'WhatsApp ticket (HELP 868). Intended department: .intendedDepartment. .description';
+  t('a description still carrying bare template variables is caught',
+    why({ desc: WA }).join().includes('unsubstituted template variable'),
+    'rows 110 to 118 all read exactly this');
+  t('and it is caught even with a perfectly good timestamp',
+    why({ desc: WA, ts: new Date('2026-11-05T09:26:00Z') }).length > 0,
+    'after edit 31 respond.io tickets get a real date — the residue is the only signal left');
+  t('a braced placeholder in the policy column is caught',
+    why({ desc: 'x' , policy: '{{policyNumber}}' }).join().includes('placeholder'),
+    'RRB/2026/109 carried it there, not in the description');
+  t('a braced placeholder in the turnaround column is caught',
+    why({ desc: 'x', tat: '{{turnaround}}' }).join().includes('placeholder'));
+  t('braces are reported as a placeholder, not doubly as a variable',
+    why({ desc: '{{description}}' }).filter(w => /template/.test(w)).length === 1,
+    why({ desc: '{{description}}' }).join(' | '));
+
+  t('a client who writes the word description is not junk',
+    why({ desc: 'Please send the policy description and the premium.' }).length === 0,
+    'the signal is the variable shape, not the word');
+  t('a real WhatsApp ticket that did substitute is left alone',
+    why({ desc: 'WhatsApp ticket (HELP 868). Intended department: Sales Support. '
+               + 'Client asks why the premium was not deducted.' }).length === 0,
+    'this is what the channel looks like once the template is fixed');
   t('a real request with no client name but a department is left alone',
     why({ client: '' }).length === 0,
     '27 of 115 rows have gaps — a gap is not junk');
