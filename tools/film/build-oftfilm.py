@@ -146,18 +146,16 @@ KIT = 'RRB-OFT-26-11-05-001'
 random.seed(1105)
 scenes, styles = [], []
 
-# 1 ─ OFT kits move into the Log Book
+# 1 ─ a first for the branch
 n = 0
 scenes.append(f"""
-<div class="left">
-  {head(n, 'New · Log Book', 'OFT kits have moved into the Log Book.')}
-  <div class="strike" style="animation-delay:{at(n, 'fedex')}ms"><span>FedEx</span><i style="animation-delay:{at(n, 'fedex', plus=250)}ms"></i></div>
-  <p class="lede" style="animation-delay:{at(n, 'tracking')}ms">Every kit, its own tracking number. Followed all the way to the collation branch.</p>
-</div>
-<div class="kit fl2" style="animation-delay:{at(n, 'every')}ms"><div class="lid"></div><div class="box"><span class="kl">OFT KIT</span>
-  <div class="lab" style="animation-delay:{at(n, 'number')}ms"><small>Tracking #</small><b>{''.join(f'<i style="animation-delay:{at(n, "number") + 60 * k}ms">{c}</i>' for k, c in enumerate(KIT))}</b></div>
-  <svg class="route" viewBox="0 0 300 40"><path style="animation-delay:{at(n, 'collation')}ms" d="M6 20 H294"/><circle cx="294" cy="20" r="7" style="animation-delay:{at(n, 'collation', plus=600)}ms"/></svg>
-  <span class="dest2" style="animation-delay:{at(n, 'collation', plus=500)}ms">Collation branch</span></div></div>""")
+<div class="first">
+  <div class="cmark sm"><span class="ring" style="animation-delay:200ms"></span><span class="ring" style="animation-delay:1000ms"></span><img src="{MARK}" alt=""></div>
+  <p class="kick c" style="animation-delay:{at(n, 'first')}ms">A first for the branch</p>
+  <h1 class="mega">{words('Every OFT kit, tracked.', at(n, 'log'), 110)}</h1>
+  <div class="lab big" style="animation-delay:{at(n, 'tracking')}ms"><small>Tracking number</small><b>{''.join(f'<i style="animation-delay:{at(n, "tracking") + 55 * k}ms">{c}</i>' for k, c in enumerate(KIT))}</b></div>
+  <div class="routeline"><span class="rp" style="animation-delay:{at(n, 'moment')}ms">Logged</span><svg class="route" viewBox="0 0 300 40"><path style="animation-delay:{at(n, 'moment', plus=300)}ms" d="M6 20 H294"/><circle cx="294" cy="20" r="7" style="animation-delay:{at(n, 'collation')}ms"/></svg><span class="rp c" style="animation-delay:{at(n, 'collation')}ms">Collation branch</span></div>
+</div>""")
 
 # 2 ─ collect, open, choose OFT Kit
 n = 1
@@ -223,7 +221,7 @@ kits = ''.join(f'<tr style="animation-delay:{at(n, "every") + 160 * k}ms"><td>{k
 scenes.append(f"""
 <div class="left narrow">
   {head(n, 'Sales support', 'One transmittal. The right branch.')}
-  <div class="pick" style="animation-delay:{at(n, 'picks')}ms"><small>Collation branch</small><b>Sample Branch</b><span>this quarter ▾</span></div>
+  <div class="pick" style="animation-delay:{at(n, 'chooses')}ms"><small>Collation branch</small><b>Sample Branch</b><span>this quarter ▾</span></div>
 </div>
 <div class="tpaper fl2" style="animation-delay:{at(n, 'transmittal')}ms">
   <div class="th"><img src="{MARK}" alt=""><div><b>TRANSMITTAL</b><small>From: Ricky Rampersad Branch</small></div><span>No. <b>TR-261105-01</b></span></div>
@@ -236,7 +234,7 @@ scenes.append(f"""
 n = 6
 q = 'RRB-OFT-26-11-05-002'
 typed = ''.join(f'<i style="animation-delay:{at(n, "search") + 55 * k}ms">{c}</i>' for k, c in enumerate(q))
-trail = [('Logged', 'Thu 5 Nov · 9:14 am', 'Alex Example\'s agent', 'when', -900), ('Received', 'Thu 5 Nov · 9:40 am', 'Sales support', 'who', 0), ('Sent', 'Thu 5 Nov · 11:55 am', 'TR-261105-01 · Sample Branch', 'when', 300)]
+trail = [('Logged', 'Thu 5 Nov · 9:14 am', 'By the agent', 'see', 0), ('Received', 'Thu 5 Nov · 9:40 am', 'Signed for by sales support', 'exactly', 0), ('Sent', 'Thu 5 Nov · 11:55 am', 'TR-261105-01 · Sample Branch', 'where', 0)]
 tr = ''.join(f'<div class="ts" style="animation-delay:{at(n, w, plus=pl) + 250 * k}ms"><span class="td"></span><b>{a}</b><small>{b}</small><em>{c}</em></div>' for k, (a, b, c, w, pl) in enumerate(trail))
 scenes.append(f"""
 <div class="left">
@@ -256,13 +254,13 @@ M = qq.get_matrix()
 qr = ''.join(f'M{x},{y}h1v1h-1z' for y, row in enumerate(M) for x, v in enumerate(row) if v)
 conf = ''.join(
     f'<i class="cf" style="--x:{random.randint(-620, 620)}px;--y:{random.randint(-420, 260)}px;--r:{random.randint(-540, 540)}deg;'
-    f'background:{random.choice(["#3A7BD5", "#1FA8A0", "#6C4BC2", "#4C94E6", "#F2B33D"])};animation-delay:{at(n, "today") + random.randint(0, 260)}ms"></i>'
+    f'background:{random.choice(["#4C94E6", "#00E5FF", "#7FB2FF", "#2A6DE0", "#F2B33D", "#FFFFFF"])};animation-delay:{at(n, "first") + random.randint(0, 260)}ms"></i>'
     for _ in range(70))
 scenes.append(f"""
 <div class="close">
   <div class="cmark"><span class="ring" style="animation-delay:200ms"></span><span class="ring" style="animation-delay:900ms"></span><img src="{MARK}" alt=""></div>
-  <h1>{words('Every OFT kit, in the Log Book.', 300)}</h1>
-  <p class="lede" style="animation-delay:{at(n, 'today')}ms">From today.</p>
+  <p class="kick c" style="animation-delay:300ms">A first for our branch</p>
+  <h1 class="mega">{words('Every OFT kit, logged.', at(n, 'today'), 110)}</h1>
   <div class="cta">
     <div class="url big" style="animation-delay:{at(n, 'ricky')}ms"><span class="dot"></span>rickyrampersadbranch.com/<b>logbook</b></div>
     <svg class="qr" style="animation-delay:{at(n, 'slash')}ms" viewBox="-2 -2 {len(M) + 4} {len(M) + 4}"><rect x="-2" y="-2" width="{len(M) + 4}" height="{len(M) + 4}" fill="#fff"/><path d="{qr}" fill="#13284A"/></svg>
@@ -476,7 +474,7 @@ EXTRA = r"""
 .lab{margin-top:18px;border:2px dashed #E0962A;border-radius:14px;padding:12px 14px;background:#FFF8EA;opacity:0}
 .act .lab{animation:pop .5s var(--e) both}
 .lab small{display:block;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--amb)}
-.lab b{display:block;font:800 25px/1.25 ui-monospace,Menlo,monospace;color:var(--ink);letter-spacing:.02em;white-space:nowrap}
+.lab b{display:block;font:800 25px/1.25 'InterF',system-ui,sans-serif;color:var(--ink);letter-spacing:.02em;white-space:nowrap}
 .lab b i{font-style:normal;opacity:0}
 .act .lab b i{animation:typ .05s linear both}
 @keyframes typ{to{opacity:1}}
@@ -510,10 +508,10 @@ EXTRA = r"""
 .num{display:flex;align-items:flex-start;gap:6px;margin:22px 0 26px}
 .part{display:flex;flex-direction:column;align-items:center;opacity:0}
 .act .part{animation:pop .6s var(--e) both}
-.part b{font:800 64px/1 ui-monospace,Menlo,monospace;color:var(--b1);background:#fff;border:2px solid var(--line);border-radius:18px;padding:14px 18px;box-shadow:0 14px 30px rgba(19,40,74,.1)}
+.part b{font:800 64px/1 'InterF',system-ui,sans-serif;color:var(--b1);background:#fff;border:2px solid var(--line);border-radius:18px;padding:14px 18px;box-shadow:0 14px 30px rgba(19,40,74,.1)}
 .part:last-child b{color:var(--teal);border-color:var(--teal2)}
 .part small{margin-top:10px;font-size:16px;font-weight:700;color:var(--dim)}
-.dash{font:800 54px/1 ui-monospace,Menlo,monospace;color:var(--dim);padding-top:22px}
+.dash{font:800 54px/1 'InterF',system-ui,sans-serif;color:var(--dim);padding-top:22px}
 /* hand in */
 .dest.r{left:auto;right:0}
 .flow .dest.d1{left:0;top:40px}.flow .dest.d2{top:180px;left:400px}.flow .dest.d3{left:0;top:330px}
@@ -544,11 +542,11 @@ EXTRA = r"""
 .tpaper tr{opacity:1}
 .tpaper tbody tr{opacity:0}
 .act .tpaper tbody tr{animation:fadeUp .45s var(--e) both}
-.tpaper code{font:700 14px ui-monospace,Menlo,monospace;color:var(--b1)}
+.tpaper code{font:700 14px 'InterF',system-ui,sans-serif;color:var(--b1)}
 .tpaper{padding-bottom:64px}
 .tpaper .stamp{top:auto;bottom:16px;right:22px}
 /* find a kit */
-.srch{max-width:560px;display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--b2);border-radius:16px;padding:14px 18px;box-shadow:0 12px 26px rgba(19,40,74,.1);font:700 24px ui-monospace,Menlo,monospace;color:var(--ink)}
+.srch{max-width:560px;display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--b2);border-radius:16px;padding:14px 18px;box-shadow:0 12px 26px rgba(19,40,74,.1);font:700 24px 'InterF',system-ui,sans-serif;color:var(--ink)}
 .mg{color:var(--b2)}.mg svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.4}
 .tq i{font-style:normal;opacity:0}
 .act .tq i{animation:typ .05s linear both}
@@ -561,17 +559,85 @@ EXTRA = r"""
 .ts b{font-size:22px;display:block}.ts small{font-size:15px;color:var(--b1);font-weight:700}.ts em{display:block;font-style:normal;font-size:15px;color:var(--dim)}
 """
 
-wide_scenes = {3, 4, 5, 6, 7}
+THEME = r"""
+/* the midnight look (5 November 2026: "more refined … scaled … another first … the fonts refine for a better and powerful impact") */
+:root{--ink:#F4F7FF;--body:#C8D5EC;--dim:#93A7C9;--line:rgba(127,178,255,.22);--sky:rgba(127,178,255,.14);--b1:#8DBBFF;--b2:#5AA2FF;--b3:#7FB2FF;
+  --teal:#3FE0D0;--teal2:#2BC6B8;--ok:#3FE0A4;--bad:#FF7A66;--card:rgba(20,38,80,.74);--cy:#00E5FF}
+html,body{background:#081431;font-feature-settings:"ss01","cv11";font-variant-numeric:tabular-nums}
+#bg .b1{background:radial-gradient(closest-side,rgba(42,109,224,.55),transparent)}
+#bg .b2{background:radial-gradient(closest-side,rgba(0,229,255,.22),transparent)}
+#bg .b3{background:radial-gradient(closest-side,rgba(108,75,194,.28),transparent)}
+#bg .dots{background-image:radial-gradient(rgba(127,178,255,.16) 1.2px,transparent 1.3px);opacity:.55}
+#bg::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 120%,rgba(8,20,49,0) 40%,rgba(4,10,26,.65));pointer-events:none}
+.brand{color:#fff}.brand small{color:var(--cy)}
+.scene.act{animation:sIn .75s var(--e) both,push var(--pd,9s) linear both}
+@keyframes push{from{scale:1}to{scale:1.035}}
+h1{font-size:62px;font-weight:850;letter-spacing:-.038em;line-height:1.02;color:#fff;text-wrap:balance}
+h1.mega{font-size:86px;letter-spacing:-.045em;color:#fff;text-shadow:0 0 42px rgba(90,162,255,.45)}
+h1.mega .w:last-child{color:var(--cy)}
+.kick{color:var(--cy);font-size:15px;letter-spacing:.22em}
+.kick:before{background:linear-gradient(90deg,var(--cy),var(--b2))}
+.kick.c{justify-content:center}
+.lede{color:var(--body)}.under{color:var(--dim)}
+.row,.stat,.st,.path,.dest,.rec,.chip,.pick,.ts,.strike,.codebox span{background:var(--card);border-color:var(--line);box-shadow:0 18px 40px rgba(2,8,24,.45),inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:none}
+.row b,.st,.dest b,.ts b,.pick b{color:#fff}
+.st u{color:var(--cy)}
+.st b{background:linear-gradient(135deg,#2A6DE0,#00B4D8)}
+.ri{background:rgba(63,224,164,.16)}
+.dest .pi,.rec .pi{background:rgba(90,162,255,.16);color:var(--b1)}
+.ts small{color:var(--cy)}
+.td{border-color:#081431;background:var(--cy);box-shadow:0 0 0 6px rgba(0,229,255,.15)}
+.trail{border-left-color:rgba(127,178,255,.25)}
+.ln{stroke:var(--cy)}
+.badge{background:linear-gradient(90deg,#FFC94D,#F2A93B);color:#2A1A00}
+.url{background:linear-gradient(90deg,#2A6DE0,#00A8D6);box-shadow:0 18px 40px rgba(0,168,214,.35)}
+.srch{background:var(--card);border-color:var(--cy);color:#fff;box-shadow:0 0 0 6px rgba(0,229,255,.08),0 18px 40px rgba(2,8,24,.45)}
+.mg{color:var(--cy)}.caret{background:var(--cy)}
+.pick{border-color:var(--cy)}.pick small{color:var(--cy)}
+.phone{background:linear-gradient(160deg,#3B78E0,#13408F);box-shadow:0 40px 80px rgba(2,8,24,.6),0 0 0 1px rgba(127,178,255,.3),inset 0 0 0 2px rgba(255,255,255,.18)}
+.tpaper{box-shadow:0 40px 80px rgba(2,8,24,.6)}
+.tpaper,.tpaper td,.tpaper th{color:#13284A}
+.tpaper .th small,.tpaper .tm span,.tpaper th{color:#5D6F86}
+.tpaper code{color:#2C5FA8}
+.tpaper .th>span b,.tpaper .tm b,.tpaper .th b{color:#13284A}
+/* the number */
+.part b{white-space:nowrap;background:var(--card);border:1.5px solid var(--line);color:#fff;font-size:72px;font-weight:850;letter-spacing:-.02em;padding:16px 24px;border-radius:22px;box-shadow:0 22px 50px rgba(2,8,24,.5)}
+.part:last-child b{color:var(--cy);border-color:rgba(0,229,255,.55);box-shadow:0 0 40px rgba(0,229,255,.25),0 22px 50px rgba(2,8,24,.5)}
+.part small{color:var(--body);font-size:17px}
+.dash{color:var(--dim);font-size:56px;padding-top:26px}
+.lab b{font-weight:850;letter-spacing:-.005em}
+/* the opening and the close */
+.first{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-bottom:110px}
+.first h1.mega{margin:4px 0 26px}
+.cmark.sm{width:84px;height:84px;margin-bottom:22px}.cmark.sm img{width:84px;height:84px;border-radius:20px}
+.ring{border-color:var(--cy)}
+.lab.big{margin-top:0;padding:16px 26px;background:rgba(255,201,77,.08);border-color:#FFC94D}
+.lab.big small{color:#FFC94D}
+.lab.big b{font-size:40px;color:#fff}
+.routeline{display:flex;align-items:center;gap:14px;margin-top:22px;width:640px}
+.routeline .route{flex:1;margin:0}
+.rp{font-weight:800;font-size:18px;color:var(--body);opacity:0}.rp.c{color:var(--cy)}
+.act .rp{animation:fadeUp .5s var(--e) both}
+.route path{stroke:var(--cy)}.route circle{fill:var(--cy)}
+.close h1.mega{font-size:72px;margin:6px 0 10px}
+.kit .box{background:#fff}
+.cap{background:rgba(8,20,49,.72);border-color:rgba(127,178,255,.2);color:rgba(244,247,255,.32);font-size:21px;backdrop-filter:none}
+@keyframes lit{to{color:#fff}}
+.first .cap,.close .cap{}
+"""
+
+wide_scenes = {0, 3, 4, 5, 6, 7}
 secs = []
 for i, s in enumerate(scenes):
     cls = 'scene wide' if i in wide_scenes else 'scene'
-    secs.append(f'<section class="{cls}" data-d="{D[i]}">{s}{caption(i)}</section>')
+    secs.append(f'<section class="{cls}" data-d="{D[i]}" style="--pd:{D[i]}ms">{s}{caption(i)}</section>')
 
 HTML = f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>OFT kits, in the Log Book</title>
 <meta name="viewport" content="width=1280">
 <style>{CSS}
 {EXTRA}
+{THEME}
 {chr(10).join(styles)}</style></head>
 <body>
 <div id="bg"><i class="b1 grain"></i><i class="b2 grain"></i><i class="b3 grain"></i><div class="dots"></div></div>
