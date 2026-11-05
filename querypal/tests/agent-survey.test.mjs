@@ -89,7 +89,9 @@ function load(opts) {
     qpEsc_: (s) => String(s == null ? '' : s),
     ScriptApp: { getProjectTriggers: () => [], newTrigger: () => ({ timeBased: () => ({ everyDays: () => ({ atHour: () => ({ create() {} }) }) }) }) },
     MailApp: { sendEmail: (m) => { if (o.sendThrows) throw new Error('quota'); mails.push(m); } },
-    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: () => sheet(ROWS), insertSheet: () => sheet(TAB) }) },
+    SpreadsheetApp: { getActiveSpreadsheet: () => ({
+      getSheetByName: () => { if (o.ownerThrows) throw new Error('sheet unreadable'); return sheet(ROWS); },
+      insertSheet: () => sheet(TAB) }) },
   };
   const names = Object.keys(sandbox);
   const want = ['qpAgentSurveySweep', 'qpAgentSurvey_', 'qpAutoRate_', 'qpHandledBy_',
@@ -184,7 +186,7 @@ console.log('\nthe rating\n');
 {
   const REF = 'RRB/2026/105/Rakesh Lochan/Rakesh Lochan 8004206085';
   const tab = [[new Date(), REF, 'Fawwaz Mohamed', AGENT, '', '', 'Query Pal, start to finish', 1, 2, '1 day']];
-  const { api } = load({ tab });
+  const { api } = load({ tab, rows: [row({ ref: REF })] });
   api.qpAutoRate_({ parameter: { ref: REF, score: '4' } });
   t('the score lands on the row that was asked', tab[0][4] === 4, JSON.stringify(tab[0]));
   api.qpAutoRate_({ parameter: { ref: REF, score: '2' } });
@@ -197,9 +199,46 @@ console.log('\nthe rating\n');
 }
 {
   const tab = [];
-  const { api } = load({ tab });
-  api.qpAutoRate_({ parameter: { ref: 'RRB/2026/999/X/Y', score: '9' } });
+  const { api } = load({ tab, rows: [row({})] });
+  api.qpAutoRate_({ parameter: { ref: row({})[0], score: '9' } });
   t('a score out of range is clamped to 5', tab.length === 1 && tab[0][4] === 5);
+  t('a first rating records who the case belonged to',
+    tab[0][2] === 'Fawwaz Mohamed' && tab[0][3] === AGENT,
+    JSON.stringify(tab[0]) + ' — blank agent columns made the tab unreadable');
+}
+
+/* This endpoint answers on the public /exec URL, which is in the page source.
+   Before the existence check, any reference at all appended a row. */
+console.log('\nthe rating link is public\n');
+{
+  const tab = [];
+  const { api } = load({ tab, rows: [row({})] });
+  const r = api.qpAutoRate_({ parameter: { ref: 'RRB/2026/999/Made/Up', score: '5' } });
+  t('a reference that is not a real case writes nothing',
+    tab.length === 0, JSON.stringify(tab));
+  t('and it is refused the same way an empty one is', /not found/i.test(r._title || ''));
+}
+{
+  const tab = [];
+  const { api } = load({ tab, rows: [] });
+  api.qpAutoRate_({ parameter: { ref: 'RRB/2026/105/Rakesh Lochan/Rakesh Lochan 8004206085', score: '5' } });
+  t('an empty log cannot be rated into', tab.length === 0);
+}
+{
+  /* A sheet that will not answer must refuse, not write. A row written on a
+     bad read is indistinguishable from a real rating afterwards. */
+  const tab = [];
+  const sandbox = { rows: [row({})], tab };
+  const { api } = load(sandbox);
+  const r = api.qpAutoRate_({ parameter: { ref: row({})[0], score: '3' } });
+  t('a readable sheet still records normally', tab.length === 1 && tab[0][4] === 3);
+}
+{
+  const tab = [];
+  const { api } = load({ tab, rows: [row({})], ownerThrows: true });
+  const r = api.qpAutoRate_({ parameter: { ref: row({})[0], score: '3' } });
+  t('a sheet that throws refuses rather than writing a rating it cannot trust',
+    tab.length === 0 && /not found/i.test(r._title || ''), JSON.stringify(tab));
 }
 
 /* ---------- the shape --------------------------------------------------- */

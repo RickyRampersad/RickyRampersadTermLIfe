@@ -2882,6 +2882,17 @@ function qpAutoRate_(e) {
   if (!ref || !n) return (typeof surveyPage_ === 'function')
     ? surveyPage_('Reference not found', 'Please use the buttons in the email.')
     : HtmlService.createHtmlOutput('Reference not found');
+  /* This answers on the public /exec URL, which is in the page source, so the
+     reference has to be a real case or anyone could fill the tab with rows.
+     A rating is not worth a credential — but it is worth existing. A sheet
+     that will not answer refuses too: another click costs the agent nothing,
+     and a row written on a bad read cannot be told from a real one later. */
+  var own = null;
+  try { own = qpCaseOwner_(ref); } catch (e2) { own = null; }
+  if (!own) return (typeof surveyPage_ === 'function')
+    ? surveyPage_('Reference not found', 'Please use the buttons in the email.')
+    : HtmlService.createHtmlOutput('Reference not found');
+
   var tab = qpRateTab_();
   var hit = -1;
   if (tab.getLastRow() > 1) {
@@ -2890,7 +2901,7 @@ function qpAutoRate_(e) {
       if (String(refs[i][0]).trim() === ref) { hit = i + 2; break; }
     }
   }
-  if (hit < 0) { tab.appendRow([new Date(), ref, '', '', n, '', '', '', '', '']); }
+  if (hit < 0) { tab.appendRow([new Date(), ref, own.agent, own.email, n, '', '', '', '', '']); }
   else { tab.getRange(hit, 5).setValue(n); }
   var stars = ''; for (var k = 0; k < n; k++) stars += '⭐';
   if (typeof surveyPage_ === 'function') {
