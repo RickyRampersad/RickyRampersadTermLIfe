@@ -293,18 +293,25 @@ mode, the desk addresses and the Salesforce link were all invisible, and the
 honest answer was a guess. `?action=ping` now answers:
 
 ```json
-{ "ok": true, "service": "claims-tt", "build": "2026-11-05c",
+{ "ok": true, "service": "claims-tt", "build": "2026-11-05f",
   "testMode": true, "live": false,
-  "desks": { "motor": false, "property": false, "health": true,
+  "desks": { "motor": true, "property": false, "health": true,
              "life": false, "pension": false },
-  "desksReady": ["health"], "salesforce": false,
+  "desksReady": ["health", "motor"], "staffCanSignIn": 4,
+  "salesforce": false,
   "says": "TEST MODE. Every e-mail goes to the test inbox — a real client
            would hear nothing. Claims TT menu → \"Turn test mode OFF\"…" }
 ```
 
 **`says` is the whole answer in one sentence**, so nobody has to read flags. It
 has three forms: test mode; live with lines that have no desk, which it names;
-and live with every line routed.
+and live with every line routed, plus a sentence each for Salesforce not being
+connected and for nobody being on the staff list.
+
+**`staffCanSignIn` is a count, never the addresses** — this endpoint needs no
+sign-in. **Zero is the state to look for**: the staff sign-in then answers
+every address with "a code is on its way" and sends nothing, which is exactly
+what happened on 5 November 2026. Run **1. Set up / repair everything**.
 
 **`build` is how a browser tells which copy is running.** It is `CLAIMS.BUILD`,
 a date in this file's own header. From outside, "never pasted", "pasted but
@@ -423,12 +430,22 @@ served by Pages, not Netlify; see Part 1). The orange "Preview mode"
 banner disappears once `API_URL` is set; that is how you know it is live.
 
 **Test it safely:** in the sheet, **Claims TT menu → 🧪 Turn test mode ON**
-— every email (desk, client, chase, sign-in codes) is then rerouted to your
-own inbox with a `[TEST]` banner naming the real recipients, so nothing can
-reach a client or a claims desk while you experiment. File a claim against
-yourself with a photo attached: you should get the acknowledgement with the
-PDF and the desk email with the Drive folder link, both marked `[TEST]`.
-Turn test mode OFF from the same menu when you go live.
+— every email (desk, client, chase) is then rerouted to your own inbox with a
+`[TEST]` banner naming the real recipients, so nothing can reach a client or a
+claims desk while you experiment. File a claim against yourself with a photo
+attached: you should get the acknowledgement with the PDF and the desk email
+with the Drive folder link, both marked `[TEST]`. Turn test mode OFF from the
+same menu when you go live.
+
+**One exception: a staff sign-in code.** Rerouting that one makes the staff
+dashboard impossible to test — the code arrives somewhere the person signing in
+cannot use it, which is precisely what stopped the branch manager signing in on
+5 November 2026. So in test mode a sign-in code for an address the branch
+already trusts goes **to that address**, marked `[TEST]`, with the test inbox
+copied: anyone active on the **Staff** tab, anyone on `CLAIMS.MAIL_CC`, the
+Google account that owns the script, and anything listed in the
+**`CLAIMS_TESTERS`** Script Property (comma separated). **A client's own
+sign-in code still reroutes**, so no client hears from a test.
 
 ---
 
@@ -638,9 +655,16 @@ digits) still works, so nobody is locked out.
 
 **Staff** sign in at `/claims/staff.html` — but only emails listed on the
 **`Staff` tab** of the Claims TT sheet (`Email, Name, Role, Active`) with
-`Active=Y` ever receive a code. `setupClaims` seeds you as `Admin`; add each
-team member as a row. Removing someone = set Active to `N` (their next
-sign-in fails; their current session dies within 12 hours). The dashboard
+`Active=Y` ever receive a code. **An address that is not on the tab is told
+so plainly**, and the page does not then ask for a code: the deliberately
+vague "if we have that on file" answer is for the *client* door, where it
+stops a stranger fishing for whether we hold somebody, and there is no client
+behind a staff address. **Run 1. Set up / repair everything** and it puts
+every address on `CLAIMS.MAIL_CC` and the Google account that owns the script
+on the tab as `Admin`, adding only what is missing — an address already there
+is left exactly as it is, `Active = N` included. Add each team member as a
+row. Removing someone = set Active to `N` (their next sign-in fails; their
+current session dies within 12 hours). The dashboard
 gives them the pipeline (counts by status), search, and per-claim: full
 detail, the documents with Drive links, editing what's outstanding, a
 one-click chase email, status changes (optionally emailing the client),

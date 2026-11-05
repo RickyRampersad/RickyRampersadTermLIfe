@@ -57,7 +57,7 @@ var CLAIMS = {
    * that was pasted and never deployed — from outside those look identical,
    * and so does a later paste of an older copy winning the same function
    * name. Change it with any change worth deploying. */
-  BUILD: '2026-11-05e',
+  BUILD: '2026-11-05f',
 
   /* ---- where notifications go ---------------------------- */
 
@@ -283,9 +283,11 @@ var CBRAND = { navy: '#0E2A47', blue: '#1C4E80', teal: '#0E8C8C', gold: '#F2B33D
 /* ============================ test mode ============================
  * Same pattern as the renewals backend: a Script Properties switch, so
  * flipping it needs no redeploy. While ON, every email — desk, client,
- * chase, sign-in code — is rerouted to TEST_INBOX with a [TEST] subject
- * and a banner naming the real recipients. File a test claim end to end
- * and nothing ever reaches a client or a claims desk.                  */
+ * chase — is rerouted to TEST_INBOX with a [TEST] subject and a banner
+ * naming the real recipients. File a test claim end to end and nothing
+ * ever reaches a client or a claims desk.
+ *
+ * ONE exception, and it is the sign-in code: see sendMail_ below.      */
 
 function testMode_() {
   return PropertiesService.getScriptProperties().getProperty('TEST_MODE') === 'on';
@@ -295,19 +297,74 @@ function testInbox_() {
   return CLAIMS.TEST_INBOX || Session.getEffectiveUser().getEmail();
 }
 
-/** Single gate for ALL outgoing mail. Live: passes straight through. */
+/** Addresses the branch itself trusts: anyone active on the Staff tab,
+ *  anyone on MAIL_CC, the account that owns the script, and anything named
+ *  in the CLAIMS_TESTERS property (comma separated). Never a client — a
+ *  client is known by their claim, which is not on any of these lists. */
+function claimsTester_(email) {
+  var want = String(email || '').trim().toLowerCase();
+  if (!want) return false;
+  var list = CLAIMS.MAIL_CC.slice();
+  try { list.push(Session.getEffectiveUser().getEmail()); } catch (e) {}
+  try { list.push(testInbox_()); } catch (e) {}
+  String(PropertiesService.getScriptProperties().getProperty('CLAIMS_TESTERS') || '')
+    .split(/[,;\s]+/).forEach(function (a) { if (a) list.push(a); });
+  for (var i = 0; i < list.length; i++) {
+    if (String(list[i]).trim().toLowerCase() === want) return true;
+  }
+  try { if (staffByEmail_(want)) return true; } catch (e) {}
+  return false;
+}
+
+function testBanner_(inner) {
+  return '<div style="background:#b3261e;color:#fff;padding:10px 16px;border-radius:6px;' +
+    'margin:0 0 14px;font-family:Arial,sans-serif;font-size:13px">' +
+    '<b>🧪 TEST MODE</b> — ' + inner + '</div>';
+}
+
+/** Single gate for ALL outgoing mail. Live: passes straight through.
+ *
+ *  ONE exception in test mode, decided 5 November 2026 because the branch
+ *  manager could not sign in at all: a SIGN-IN CODE for an address the
+ *  branch itself trusts goes to that address, marked [TEST], with the test
+ *  inbox copied. A code delivered somewhere else is a code nobody can use,
+ *  which makes the whole sign-in untestable — the exact fault the motor
+ *  quote hit ("the sign-in code included, so an agent could never sign in")
+ *  and fixed with mqTester_.
+ *
+ *  THE GATE DECIDES WHO QUALIFIES, NEVER THE CALLER. `signIn` alone cannot
+ *  get mail out of test mode: claimsTester_ has to agree, so a client's own
+ *  sign-in code still reroutes and no client ever hears from a test. */
 function sendMail_(opts) {
-  if (!testMode_()) { MailApp.sendEmail(opts); return; }
-  var would = 'To: ' + (opts.to || '(none)') + (opts.cc ? ' · CC: ' + opts.cc : '');
+  /* Copy and strip OUR OWN flag first, on every path: MailApp.sendEmail
+     validates the options object it is handed, and a live sign-in code is
+     the last thing that should fall over on a field we invented. */
   var o = {};
   for (var k in opts) o[k] = opts[k];
+  delete o.signIn;
+
+  if (!testMode_()) { MailApp.sendEmail(o); return; }
+
+  if (opts.signIn && claimsTester_(opts.to)) {
+    o.cc = testInbox_();
+    delete o.bcc; delete o.replyTo;
+    o.subject = '[TEST] ' + (opts.subject || '');
+    if (o.htmlBody) {
+      o.htmlBody = testBanner_('this is a sign-in code, so it came to you rather than to the ' +
+        'test inbox. Every other claims email is still going to ' + esc_(testInbox_()) +
+        ' instead of its real recipient.') + o.htmlBody;
+    }
+    MailApp.sendEmail(o);
+    return;
+  }
+
+  var would = 'To: ' + (opts.to || '(none)') + (opts.cc ? ' · CC: ' + opts.cc : '');
   delete o.cc; delete o.bcc; delete o.replyTo;
   o.to = testInbox_();
   o.subject = '[TEST] ' + (opts.subject || '');
   if (o.htmlBody) {
-    o.htmlBody =
-      '<div style="background:#b3261e;color:#fff;padding:10px 16px;border-radius:6px;margin:0 0 14px;font-family:Arial,sans-serif;font-size:13px">' +
-      '<b>🧪 TEST MODE</b> — nothing was sent to the real recipients.<br>Would have gone to — ' + esc_(would) + '</div>' + o.htmlBody;
+    o.htmlBody = testBanner_('nothing was sent to the real recipients.<br>' +
+      'Would have gone to — ' + esc_(would)) + o.htmlBody;
   }
   MailApp.sendEmail(o);
 }
@@ -1495,7 +1552,17 @@ function apiRequestCode_(b) {
   var email = '', name = '';
   if (kind === 'staff') {
     var staff = staffByEmail_(id.kind === 'email' ? id.value : '');
-    if (!staff) return generic;
+    if (!staff) {
+      /* The vague answer above exists to stop a stranger fishing for CLIENTS.
+         There is no client behind a staff address, and a branch member who
+         reads "a code is on its way" and never gets one cannot tell being off
+         the list from a mail failure — which is exactly what happened on
+         5 November 2026. So the staff door says what is actually wrong. */
+      return { ok: true, sent: false,
+        message: 'That email is not on the Claims TT staff list, so there is no code to send. ' +
+          'Open the Claims TT sheet, add it to the Staff tab (Email, Name, Role, Active = Y), ' +
+          'or run Claims TT → "1. Set up / repair everything", which puts the branch addresses on.' };
+    }
     email = staff.email; name = staff.name;
   } else {
     var mine = claimsForIdentity_(b.identity);
@@ -1518,6 +1585,9 @@ function apiRequestCode_(b) {
   cache.put(sendSlot, String(Number(cache.get(sendSlot) || 0) + 1), 3600);
 
   sendMail_({
+    /* signIn: the gate's one test-mode exception — a code for an address the
+       branch trusts reaches that inbox. A client's still reroutes. */
+    signIn: true,
     to: email, name: CLAIMS.FROM_NAME,
     subject: code + ' is your Claims TT sign-in code',
     htmlBody: brandWrap_(
@@ -1751,6 +1821,12 @@ function claimPing_() {
     if (on) ready.push(k);
   });
   var test = testMode_();
+  /* How many people the staff desk will let in. A COUNT ONLY — this endpoint
+     needs no sign-in, so it must never list the addresses. Zero is why a
+     staff sign-in answers "a code is on its way" and sends nothing, which
+     took an evening to find on 5 November 2026. */
+  var staffCount = -1;
+  try { staffCount = staffNames_().length; } catch (e) {}
   return {
     ok: true,
     service: 'claims-tt',
@@ -1759,6 +1835,7 @@ function claimPing_() {
     live: !test,
     desks: lines,
     desksReady: ready,
+    staffCanSignIn: staffCount,
     salesforce: sfConnected_(),
     /* What a filed claim writes to Salesforce, so "did it open a task?" is
        answerable from a browser. `task` false with salesforce true means the
@@ -1783,7 +1860,15 @@ function claimPing_() {
       (sfConnected_()
         ? ''
         : ' Salesforce is not connected, so a filed claim opens no task and ' +
-          'writes no ledger record: Claims TT menu → Connect Salesforce.'),
+          'writes no ledger record: Claims TT menu → Connect Salesforce.') +
+      (staffCount === 0
+        ? ' Nobody is on the staff list, so the staff sign-in can send no code ' +
+          'to anyone: Claims TT menu → "1. Set up / repair everything".'
+        : '') +
+      (test && staffCount > 0
+        ? ' A staff sign-in code still reaches the staff member in test mode, ' +
+          'so the desk can be tested; a client\'s code does not.'
+        : ''),
   };
 }
 
@@ -4149,11 +4234,34 @@ function setupClaims() {
   claimSurveysSheet_();
   var root = rootFolder_();
 
-  // Staff tab: seed you as Admin so the staff dashboard works immediately.
+  /* Staff tab: make sure every branch address can sign in, on EVERY run —
+     "Set up / repair everything" has to repair. Until 5 November 2026 this
+     seeded one address and only into an empty tab, so the Google account
+     that owns the script was not on the list: the staff sign-in answered the
+     branch manager with "a code is on its way" and sent nothing at all.
+     An address already on the tab is left exactly as it is, Active = N
+     included — somebody may have turned it off on purpose. */
   var staff = staffSheet_();
-  if (staff.getLastRow() < 2) {
-    staff.appendRow([CLAIMS.MAIL_CC[0], CLAIMS.AGENT_NAME, 'Admin', 'Y']);
+  var staffHave = {};
+  if (staff.getLastRow() > 1) {
+    staff.getRange(2, 1, staff.getLastRow() - 1, 1).getValues().forEach(function (r) {
+      var a = String(r[0] || '').trim().toLowerCase();
+      if (a) staffHave[a] = true;
+    });
   }
+  var staffSeed = [];
+  CLAIMS.MAIL_CC.forEach(function (a, i) {
+    staffSeed.push([a, i === 0 ? CLAIMS.AGENT_NAME : 'Branch inbox', i === 0 ? 'Admin' : 'Staff']);
+  });
+  try { staffSeed.push([Session.getEffectiveUser().getEmail(), CLAIMS.AGENT_NAME, 'Admin']); } catch (e) {}
+  var staffAdded = [];
+  staffSeed.forEach(function (row) {
+    var key = String(row[0] || '').trim().toLowerCase();
+    if (!key || key.indexOf('@') < 0 || staffHave[key]) return;
+    staffHave[key] = true;
+    staff.appendRow([String(row[0]).trim(), row[1], row[2], 'Y']);
+    staffAdded.push(String(row[0]).trim());
+  });
 
   // Status column gets a dropdown so the desk cannot invent new statuses.
   var sh = claimsSheet_();
@@ -4176,8 +4284,12 @@ function setupClaims() {
     'Tabs: ' + CLAIMS.CLAIMS_SHEET + ', ' + CLAIMS.FILES_SHEET + ', ' +
       CLAIMS.LOG_SHEET + ', ' + CLAIMS.REGISTER_SHEET + ', ' +
       CLAIMS.POLICY_REGISTER_SHEET + ', ' + CLAIMS.STAFF_SHEET + '\n' +
-    'Staff sign-in: add each staff email to the ' + CLAIMS.STAFF_SHEET + ' tab (Active=Y); ' +
-      'they sign in at /claims/staff.html with a code emailed to them\n' +
+    'Staff sign-in: ' + (staffAdded.length
+      ? 'added ' + staffAdded.join(', ') + ' to the ' + CLAIMS.STAFF_SHEET + ' tab'
+      : 'every branch address is already on the ' + CLAIMS.STAFF_SHEET + ' tab') +
+      '. Add anyone else there (Active=Y); they sign in at /claims/staff.html ' +
+      'with a code emailed to them — in test mode a staff code still reaches ' +
+      'them, so the sign-in can be tested\n' +
     'Drive folder: ' + root.getUrl() + '\n' +
     'Automatic follow-up: installed, runs daily ~9am (incl. the ' +
       CLAIMS.REVIEW_WORKING_DAYS + '-working-day review)\n' +

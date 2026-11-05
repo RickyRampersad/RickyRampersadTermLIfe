@@ -7279,6 +7279,82 @@ Tests in the session scratchpad: `terms-test.js` (138 checks, Node, Salesforce
 and the sheet made up) and `terms-page.js` (32, Playwright, the real page
 against a mocked backend). 503 checks across twelve suites, none failing.
 
+### Nobody could sign in, and no code was ever sent — 5 November 2026
+
+Reported in these words: *"online now and not getting the code when logginng
+in"*. Nothing had gone wrong with mail. **No sign-in code had ever been sent**
+— his whole Gmail holds not one, while the three test claims' own
+acknowledgements are sitting there from the night before. `apiRequestCode_`
+was returning before it reached `sendMail_`.
+
+**The sign-in has two silent bail-outs, and the vague answer is right for one
+of them and wrong for the other.** Both answer *"If we have that on file, a
+sign-in code is on its way to the email we hold"* and send nothing:
+
+- **the staff door** — the address is not on the **Staff** tab;
+- **the client door** — the address has no filed claim under it.
+
+For a client that vagueness is the whole point: the endpoint must not be
+usable to fish for whether we hold somebody. **For staff there is no client to
+protect**, and a branch member who reads "a code is on its way" and never gets
+one cannot tell being off the list from a mail failure. So the staff door now
+says what is wrong and names the fix, and the page honours it: until this,
+`staff.html` ignored `sent === false`, showed the message and *then opened the
+code box*, asking for a code that was never sent.
+
+**`setupClaims` seeded one address, once, into an empty tab** — `MAIL_CC[0]`,
+the Guardian address — so the Google account that owns the script was never on
+the list. "1. Set up / repair everything" now **repairs**: on every run it adds
+any of `MAIL_CC` and the script owner that is missing, and leaves an address
+already there exactly as it is, `Active = N` included, since somebody may have
+turned it off on purpose.
+
+**And test mode was swallowing the code, which is the motor quote's own
+recorded fault in a second product.** The note on it reads: *"In test mode
+every e-mail went to the test inbox, the sign-in code included, so an agent
+could never sign in."* `sendMail_` is a blanket gate, so a staff member on the
+list still could not have used a code — it went to the test inbox.
+
+**A sign-in code is the one e-mail test mode may not reroute**, because
+rerouting it makes the whole sign-in untestable. `sendMail_` now passes one
+through when `opts.signIn` is set **and** `claimsTester_(opts.to)` agrees:
+anyone active on the Staff tab, anyone on `MAIL_CC`, the script owner, or an
+address in the `CLAIMS_TESTERS` property. It goes to them marked `[TEST]` with
+the test inbox copied and a banner saying why it came through, and a client's
+code still reroutes, so no client ever hears from a test.
+
+**The gate decides who qualifies, never the caller.** `signIn` on its own
+cannot get mail out of test mode: that is what stops the flag from becoming a
+back door the next caller reaches for, and a desk notice to a trusted address
+still reroutes, because it carries no flag.
+
+**The test caught a live-mode bug in that same change**: the untouched
+`opts` — our own `signIn` field included — was being handed straight to
+`MailApp.sendEmail`, which validates what it is given. A sign-in code falling
+over on a field we invented, in live mode only, would have been worse than the
+fault being fixed. **Strip your own flags on every path, before the branch.**
+
+**The ping is what dated the problem**, and it is the argument for having one:
+the live deployment answered `{"ok":true,"service":"claims-tt","maxFileMb":15,
+"maxFiles":30}` — the old shape, with no `build`, no `testMode`, no `says`. So
+the live script predated every one of that day's changes, and nothing from
+inside the editor would have shown it. It now also returns **`staffCanSignIn`,
+a count and never the addresses**: the endpoint needs no sign-in, and zero is
+exactly the state that makes a staff sign-in answer "a code is on its way" and
+send nothing.
+
+**A test that pins a literal build marker fails on the next honest bump.**
+`terms-test.js` asserted `p.build === '2026-11-05e'` under the label "the build
+moved". It checks the shape and that the marker is not older than the work it
+covers.
+
+Tests in the session scratchpad: `signin-test.js` (58 checks, Node — live mode,
+every trusted address, a client's code still held, the gate overriding the
+caller, both doors' wording, the rate limit, the ping, and `setupClaims`
+repairing a tab that already has a row) and `staff-page.js` (19, Playwright —
+the refusal shown as a refusal with no code box, the whole sign-in through to
+the token, and a phone). 581 checks across fourteen suites, none failing.
+
 ### The pages are light, on the branch's own palette
 
 Decided 5 November 2026, asked for in these words: *"also i dint like the dark
