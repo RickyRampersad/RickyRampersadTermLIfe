@@ -102,7 +102,7 @@
  */
 
 var LB = {
-  TABS: { LINES: 'Log Book', TRANS: 'Transmittals', AGENTS: 'Agents', DEPTS: 'Departments' },
+  TABS: { LINES: 'Log Book', TRANS: 'Transmittals', AGENTS: 'Agents', DEPTS: 'Departments', OFT: 'OFT Collation' },
   TYPES: ['Documents for Guardian', 'Contract for delivery'],
   CUTOFF_HOUR: 12,
   BAG: { CUTOFF: 12, AT: 13, NUDGE: 11, GRACE_MIN: 60, ROTA_FROM: '2026-10-19',
@@ -123,7 +123,15 @@ var LB = {
   BRANCH_LINE: 'Ricky Rampersad Branch · 26000 · GLOC Chaguanas',
   // Forms that are not about one policy.
   NO_POLICY: ['Agent Contract', 'Licence Renewal', 'CBTT Receipt', 'CPD Certificate', 'Company Documents', 'Other'],
-  OFT: 'OFT (FEDEX)',
+  /* OFT kits (5 November 2026: "we have scrapped the entire FedEx process … the agent collects the
+     sample … submits to the sales support using a unique tracking number … the staff generates the
+     transmittal to accompany the OFT kits … to the relevant branch, who is the collation branch for the
+     particular quarter"). Each kit gets RRB-OFT-YYMM-NNN when it is logged; the transmittal names the
+     collation branch, chosen from the OFT Collation tab. */
+  OFT: 'OFT KITS (COLLATION BRANCH)',
+  OFT_OLD: 'OFT (FEDEX)',
+  OFT_DOC: 'OFT Kit',
+  OFT_PREFIX: 'RRB-OFT-',
   CONFIRM_DAYS: 3,
   COMPANION_PCT: 70,              // a document that travels with another this often is asked about when missing
   DIGEST_HOUR: 17,                // the branch manager's daily digest
@@ -148,7 +156,7 @@ var LB_COLUMNS = [
   'Transmittal', 'Sent At', 'Sent By', 'Tracking #',
   'Late Reason', 'Reason At', 'Reason By',
   'Returned At', 'Returned By', 'Return Reason', 'Delivered At',
-  'Alerts', 'Flags', 'Source', 'Salesforce Task',
+  'Alerts', 'Flags', 'Source', 'Salesforce Task', 'OFT No',
 ];
 var LB_TRANS_COLUMNS = ['Transmittal', 'Department', 'Attention', 'Sent At', 'Sent By', 'Lines', 'Documents',
                         'Tracking #', 'Late Lines', 'Status', 'Line Ids',
@@ -194,9 +202,11 @@ var LB_DEPTS = [  // [name, documents routed there in the history, alias pattern
   ["SCANNING TEAM", 2, "SCANNING"],
   ["DISPATCH QUERIES", 1, "DISPATCH"],
   ["OFT (FEDEX)", 4, "^OFT$|FEDEX"],
+  ["OFT KITS (COLLATION BRANCH)", 0, "^OFT KITS"],
 ];
 
 var LB_DOCS = [  // [name, times in the history, [[department, times]...], [[sent with, % of visits]...], alias pattern]
+  ["OFT Kit", 0, [["OFT KITS (COLLATION BRANCH)", 1]], [], "^OFT KITS?$"],
   ["Signed Script", 1114, [["RECORDS MANAGEMENT DEPT", 1100], ["GLOC CS RSC - CHAGUANAS", 10], ["SCANNING TEAM", 2]], [], "^SIO?GNED SCRIPTS?$|^SCRIPTS?$"],
   ["Proof of ID", 413, [["GLOC CS RSC - CHAGUANAS", 225], ["GLOC BIR DEPARTMENT", 74], ["RECORDS MANAGEMENT DEPT", 48]], [["Policy Contract", 58], ["Surrender Documents", 45]], "^(PROOF OF )?ID,?$|^IDENTIFICATION$|^PROOF OF ID|^POLICY OWNER ID|^ID CARD"],
   ["Beneficiary ID", 5, [["GLOC CLAIMS - CUSTOMER SUPPORT", 3], ["GLOC CS RSC - CHAGUANAS", 2]], [], "BENEFICIARY ID"],
@@ -395,7 +405,7 @@ function lbRows_() {
       returnedAt: lbDate_(g(r, 'Returned At')), returnedBy: String(g(r, 'Returned By')), returnReason: String(g(r, 'Return Reason')),
       deliveredAt: lbDate_(g(r, 'Delivered At')),
       alerts: String(g(r, 'Alerts')), flags: String(g(r, 'Flags')), source: String(g(r, 'Source')),
-      sfTask: String(g(r, 'Salesforce Task')),
+      sfTask: String(g(r, 'Salesforce Task')), oftNo: String(g(r, 'OFT No')),
     };
   });
   return LB_READ_;
@@ -1098,6 +1108,7 @@ function lbHandle_(b) {
     case 'lb.transmittal':  return lbTransmittal_(b, who);
     case 'lb.unsend':       return lbUnsend_(b, who);
     case 'lb.transmittals': return lbTransmittals_(b, who);
+    case 'lb.oft':          return lbOftFind_(b, who);
     case 'lb.reason':       return lbReason_(b, who);
     case 'lb.delivered':    return lbDelivered_(b, who);
     case 'lb.stats':        return lbStats_(b, who);
@@ -1121,7 +1132,7 @@ function lbConfig_(who) {
   return { ok: true, name: who.name, role: who.role, agent: who.isAgent, manager: !!who.isManager, lead: !!who.isLead,
            team: who.isLead ? lbTeam_(who).map(function (t) { return { agentNo: t.agentNo, name: t.name, self: !!t.self }; }) : [],
            agentNo: who.agentNo || '', mode: dbMode_(), types: LB.TYPES, departments: depts, documents: docs,
-           cutoff: lbCutoff_(), bag: lbBagInfo_(new Date()), oft: LB.OFT, declareDocs: LB.DECLARE_DOCS, declareContract: LB.DECLARE_CONTRACT,
+           cutoff: lbCutoff_(), bag: lbBagInfo_(new Date()), oft: LB.OFT, oftDoc: LB.OFT_DOC, oftBranches: lbOftBranches_(), declareDocs: LB.DECLARE_DOCS, declareContract: LB.DECLARE_CONTRACT,
            salesforce: dbSfConfigured_(), staff: lbStaff_().map(function (s) { return { name: s.name, role: s.role }; }),
            later: LB.LATER, acceptHours: LB.ACCEPT_HOURS };
 }
@@ -1232,16 +1243,18 @@ function lbValidate_(b, who) {
     if (!doc) throw new Error('Choose each document from the list ("Other" is there, with a note).');
     var note = dbClean_(it.note, 120);
     if (doc === 'Other' && !note) throw new Error('Say what the "Other" document is.');
-    var dept = contract ? 'AGENT DELIVERY' : (depts.indexOf(it.department) >= 0 ? it.department : lbCanonDept_(it.department));
+    var oftKit = !contract && doc === LB.OFT_DOC;
+    var dept = contract ? 'AGENT DELIVERY' : oftKit ? LB.OFT : (depts.indexOf(it.department) >= 0 ? it.department : lbCanonDept_(it.department));
     if (!dept) throw new Error('Choose the department for the ' + doc.toLowerCase() + '.');
     var pol = dbClean_(it.policy, 60);
     if (!pol && LB.NO_POLICY.indexOf(doc) < 0) throw new Error('The ' + doc.toLowerCase() + ' needs its policy number.');
-    var sug = contract ? { department: '' } : lbSuggest_(doc);
+    var sug = contract ? { department: '' } : oftKit ? { department: LB.OFT } : lbSuggest_(doc);
     return {
       document: doc, note: note, department: dept, suggested: sug.department || '',
       policy: pol, recordType: dbClean_(it.type, 40).toUpperCase(), plan: dbClean_(it.plan, 80),
       portfolioId: dbIsSfId_(it.portfolioId) ? it.portfolioId : '',
-      quantity: Math.max(1, Math.min(50, parseInt(it.quantity, 10) || 1)),
+      quantity: oftKit ? 1 : Math.max(1, Math.min(50, parseInt(it.quantity, 10) || 1)),
+      oft: oftKit,
     };
   });
   if (!items.length) throw new Error('Add at least one document.');
@@ -1340,6 +1353,8 @@ function lbSubmit_(b, who) {
   lock.waitLock(20000);
   try {
     var first = sh.getLastRow() + 1;
+    var oftNext = lbOftNext_(now);
+    d.items.forEach(function (it) { if (it.oft) it.oftNo = oftNext(); });
     var rows = d.items.map(function (it, i) {
       return dbRowFor_(sh, {
         'Line Id': ref + '-' + (i + 1), 'Ref': ref, 'Line': i + 1, 'Type': d.type,
@@ -1351,6 +1366,7 @@ function lbSubmit_(b, who) {
         'Department': it.department, 'Suggested Department': it.suggested, 'Notes': d.notes,
         'Handed To': d.handedTo, 'Handed At': d.handedTo ? now : '',
         'Declaration': d.declaration, 'Flags': d.flags.join('; '), 'Source': 'App' + (dbMode_() === 'live' ? '' : ' (test)'),
+        'OFT No': it.oftNo || '',
       });
     });
     sh.getRange(first, 1, rows.length, rows[0].length).setValues(rows);
@@ -1361,6 +1377,7 @@ function lbSubmit_(b, who) {
   var mail = lbReceiptMail_(ref, d, who, now);
   var handMail = d.handedTo && !lbSamePerson_(d.handedTo, who.name) ? lbHandedMail_(ref, d, who, now) : '';
   return { ok: true, ref: ref, lines: d.items.length, status: contract ? 'With agent' : 'Logged',
+           oftNos: d.items.filter(function (it) { return it.oftNo; }).map(function (it) { return { no: it.oftNo, policy: it.policy }; }),
            flags: d.flags, mail: mail, handedTo: d.handedTo, handMail: handMail, bag: contract ? null : lbBagInfo_(now),
            due: contract ? Utilities.formatDate(new Date(now.getTime() + LB.CONTRACT_DAYS * 86400000), dbTz_(), 'EEEE d MMMM yyyy') : '' };
 }
@@ -1379,7 +1396,7 @@ function lbReceiptMail_(ref, d, who, now) {
   if (!d.agent.email) return 'No agent e-mail on file';
   var contract = d.type === LB.TYPES[1];
   var rows = d.items.map(function (it) {
-    return [it.document + (it.quantity > 1 ? ' × ' + it.quantity : '') + (it.note ? ' (' + it.note + ')' : ''),
+    return [it.document + (it.oftNo ? ' · ' + it.oftNo : '') + (it.quantity > 1 ? ' × ' + it.quantity : '') + (it.note ? ' (' + it.note + ')' : ''),
             it.policy || '—', contract ? 'Deliver to the client' : it.department];
   });
   var html = lbMailHtml_(
@@ -1407,7 +1424,7 @@ function lbPageUrl_(tab) { return String(dbProp_('LB_PAGE_URL', LB.PAGE)).replac
 function lbHandedMail_(ref, d, who, now) {
   var to = lbStaffEmail_(d.handedTo);
   var rows = d.items.map(function (it) {
-    return [it.document + (it.quantity > 1 ? ' × ' + it.quantity : '') + (it.note ? ' (' + it.note + ')' : ''), it.policy || '—', it.department];
+    return [it.document + (it.oftNo ? ' · ' + it.oftNo : '') + (it.quantity > 1 ? ' × ' + it.quantity : '') + (it.note ? ' (' + it.note + ')' : ''), it.policy || '—', it.department];
   });
   var html = lbMailHtml_('Papers handed to you: sign for them',
     '<p>' + dbEsc_(lbFirst_(d.handedTo)) + ', ' + dbEsc_(d.agent.name) + ' has handed you the papers below for <b>' + dbEsc_(d.client) +
@@ -1440,7 +1457,7 @@ function lbPublic_(r, now, staff) {
     reason: r.reason, reasonAt: r.reasonAt ? r.reasonAt.toISOString() : '', reasonBy: r.reasonBy,
     returnedAt: r.returnedAt ? r.returnedAt.toISOString() : '', returnReason: r.returnReason,
     deliveredAt: r.deliveredAt ? r.deliveredAt.toISOString() : '', flags: r.flags, notes: r.notes,
-    late: lbIsLate_(r, now), reasonFresh: lbReasonFresh_(r, now), bag: lbBagOf_(r, now),
+    late: lbIsLate_(r, now), reasonFresh: lbReasonFresh_(r, now), bag: lbBagOf_(r, now), oftNo: r.oftNo || '',
   };
   if (r.status === 'Received') o.daysHeld = lbWorkDays_(r.receivedAt, now);
   if (r.status === 'Logged') o.daysWaiting = lbWorkDays_(r.loggedAt, now);
@@ -1707,7 +1724,11 @@ function lbTransmittal_(b, who) {
   var dept = rows[0].department;
   if (rows.some(function (r) { return r.department !== dept; })) throw new Error('A transmittal is for one department. Choose lines for one.');
   var tracking = dbClean_(b.tracking, 40);
-  if (dept === LB.OFT && !tracking) throw new Error('Enter the FedEx tracking number.');
+  var collation = '';
+  if (dept === LB.OFT) {
+    collation = dbClean_(b.collation, 80);
+    if (!collation) throw new Error('Choose the collation branch the OFT kits go to.');
+  }
   var now = new Date();
   var reasons = b.reasons || {};
   var need = rows.filter(function (r) {
@@ -1724,7 +1745,8 @@ function lbTransmittal_(b, who) {
   LB_READ_ = null;
 
   var attnRow = lbDeptRows_().filter(function (d) { return d.name === dept; })[0];
-  var attn = dbClean_(b.attn, 80) || (attnRow ? attnRow.attn : '');
+  var attn = collation ? 'Collation branch: ' + collation : (dbClean_(b.attn, 80) || (attnRow ? attnRow.attn : ''));
+  if (collation) lbOftBranchUsed_(collation);
   var sh = lbTransTab_();
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -1785,6 +1807,74 @@ function lbUnsend_(b, who) {
   var sh = lbTransTab_(), hm = dbHeaderMap_(sh);
   sh.getRange(t.row, hm.map['Status'] + 1).setValue('Cancelled by ' + who.name);
   return { ok: true, back: rows.length };
+}
+
+
+/* ============================== OFT kits ============================== */
+
+/* The next kit numbers for this month: RRB-OFT-2611-001, -002 … read off the
+   sheet under the submit's lock, so two agents logging at once never share one. */
+function lbOftNext_(now) {
+  var ymd = Utilities.formatDate(now, dbTz_(), 'yyyy-MM-dd');
+  var stem = LB.OFT_PREFIX + ymd.slice(2, 4) + ymd.slice(5, 7) + '-';
+  var max = 0;
+  lbRows_().forEach(function (r) {
+    if (r.oftNo && r.oftNo.indexOf(stem) === 0) max = Math.max(max, parseInt(r.oftNo.slice(stem.length), 10) || 0);
+  });
+  return function () { max++; return stem + (max < 100 ? (max < 10 ? '00' : '0') : '') + max; };
+}
+
+/* The collation branches: the OFT Collation tab (Branch, Active, Current), the
+   one marked Current first, then any branch an OFT transmittal has gone to. */
+function lbOftTab_() {
+  return dbSheet_(LB.TABS.OFT, ['Branch', 'Active', 'Current', 'Added By', 'Added At']);
+}
+function lbOftBranches_() {
+  var list = [], seen = {}, current = '';
+  var add = function (n) { n = String(n || '').trim(); var k = n.toLowerCase(); if (n && !seen[k]) { seen[k] = 1; list.push(n); } };
+  try {
+    var sh = lbOftTab_(), hm = dbHeaderMap_(sh), last = sh.getLastRow();
+    if (last > 1) sh.getRange(2, 1, last - 1, hm.head.length).getValues().forEach(function (r) {
+      var act = String(r[hm.map['Active']] || 'Yes').trim();
+      if (/^(no|false|not active|inactive|off)/i.test(act)) return;
+      var n = String(r[hm.map['Branch']] || '').trim();
+      if (n && /^(y|yes|true|current|x)$/i.test(String(r[hm.map['Current']] || '').trim()) && !current) current = n;
+      add(n);
+    });
+  } catch (e) {}
+  lbTransRows_().filter(function (t) { return t.department === LB.OFT && t.status === 'Sent'; })
+    .sort(function (a, c) { return (c.sentAt || 0) - (a.sentAt || 0); })
+    .forEach(function (t) { add(String(t.attn || '').replace(/^Collation branch:\s*/i, '')); });
+  if (!current && list.length) current = list[0];
+  return { list: list, current: current };
+}
+/* A branch typed at the transmittal joins the tab, so it is in the list next time. */
+function lbOftBranchUsed_(name) {
+  try {
+    var have = lbOftBranches_().list.some(function (n) { return n.toLowerCase() === name.toLowerCase(); });
+    if (!have) { var sh = lbOftTab_(); sh.appendRow(dbRowFor_(sh, { 'Branch': name, 'Active': 'Yes', 'Current': '', 'Added At': new Date() })); }
+  } catch (e) {}
+}
+
+/* One kit's whole trail, by its number, a policy or a client. An agent sees
+   only their own kits. */
+function lbOftFind_(b, who) {
+  var q = String(b.q || '').trim().toUpperCase().replace(/\s+/g, '');
+  if (q.length < 3) throw new Error('Type a kit number, policy number or client name.');
+  var now = new Date();
+  var hits = lbRows_().filter(function (r) {
+    if (!r.oftNo) return false;
+    if (who.isAgent && lbAgentKey_(r.agentNo) !== lbAgentKey_(who.agentNo)) return false;
+    return r.oftNo.toUpperCase().indexOf(q) >= 0 || dbKey_(r.policy) === dbKey_(q) ||
+      r.client.toUpperCase().replace(/\s+/g, '').indexOf(q) >= 0;
+  }).slice(-20).reverse();
+  var trans = {};
+  lbTransRows_().forEach(function (t) { trans[t.no] = t; });
+  return { ok: true, kits: hits.map(function (r) {
+    var o = lbPublic_(r, now, !who.isAgent), t = trans[r.transmittal];
+    o.collation = t ? String(t.attn || '').replace(/^Collation branch:\s*/i, '') : '';
+    return o;
+  }) };
 }
 
 
@@ -2245,7 +2335,7 @@ function lbSetTrans_(t, obj) {
  *  or more and not yet asked about. */
 function lbConfirmRun_(now) {
   var due = lbTransRows_().filter(function (t) {
-    return t.status === 'Sent' && t.sentAt && !t.askedAt && lbWorkDays_(t.sentAt, now) >= LB.CONFIRM_DAYS;
+    return t.status === 'Sent' && t.sentAt && !t.askedAt && t.department !== LB.OFT && lbWorkDays_(t.sentAt, now) >= LB.CONFIRM_DAYS;
   });
   var n = 0;
   due.forEach(function (t) { if (/sent/i.test(lbConfirmAsk_(t))) n++; });

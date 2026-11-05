@@ -289,13 +289,26 @@ console.log('received and sent');
   ok('the line is sent', tab(env, 'Log Book').find(r => r[0] === rm[0].id)[col(env, 'Log Book', 'Status')] === 'Sent');
   const re = env.lbTransmittals_({ no: t2.transmittal.no }, staff);
   ok('a reprint is the same page', re.ok && re.lines.length === 1 && re.transmittal.no === t2.transmittal.no);
-  ok('FedEx needs a tracking number', (() => {
-    env.lbSubmit_({ entry: entry({ items: [{ document: 'OFT Form', department: 'OFT (FEDEX)', policy: '9000000001' }] }), confirmDuplicates: true }, agent);
-    const oft = env.lbQueue_({}, staff).lines.find(l => l.document === 'OFT Form');
-    env.lbReceive_({ ids: [oft.id], signature: SIG }, staff);
-    return throws(() => env.lbTransmittal_({ ids: [oft.id] }, staff), /tracking/) &&
-      env.lbTransmittal_({ ids: [oft.id], tracking: '80 12850000', reasons: { [oft.id]: 'After the cut-off, if the clock says so' } }, staff).transmittal.tracking === '80 12850000';
-  })());
+  {
+    // OFT kits (5 November 2026): a number for each kit at logging, the collation branch on the transmittal.
+    const s1 = env.lbSubmit_({ entry: entry({ items: [{ document: 'OFT Kit', department: 'RECORDS MANAGEMENT DEPT', policy: '9000000001', quantity: 4 },
+                                                       { document: 'OFT Kit', policy: '9000000002' }] }), confirmDuplicates: true }, agent);
+    const ymd = env.Utilities.formatDate(new Date(), env.dbTz_(), 'yyyy-MM-dd'), stem = 'RRB-OFT-' + ymd.slice(2, 4) + ymd.slice(5, 7) + '-';
+    ok('each OFT kit gets its own RRB-OFT number', s1.oftNos.length === 2 && s1.oftNos[0].no === stem + '001' && s1.oftNos[1].no === stem + '002');
+    const s2 = env.lbSubmit_({ entry: entry({ items: [{ document: 'OFT Kit', policy: '9000000003' }] }), confirmDuplicates: true }, agent);
+    ok('the numbers carry on and never repeat', s2.oftNos[0].no === stem + '003', JSON.stringify(s2.oftNos));
+    const kits = env.lbQueue_({}, staff).lines.filter(l => l.oftNo);
+    ok('a kit routes itself to the OFT department, one to a line', kits.length === 3 && kits.every(l => l.department === 'OFT KITS (COLLATION BRANCH)' && l.quantity === 1));
+    env.lbReceive_({ ids: kits.map(l => l.id), signature: SIG }, staff);
+    const rs = Object.fromEntries(kits.map(l => [l.id, 'After the cut-off, if the clock says so']));
+    ok('the OFT transmittal needs the collation branch', throws(() => env.lbTransmittal_({ ids: kits.map(l => l.id), reasons: rs }, staff), /collation branch/));
+    const tt = env.lbTransmittal_({ ids: kits.map(l => l.id), reasons: rs, collation: 'San Fernando Branch' }, staff);
+    ok('it names the collation branch and lists every kit', tt.transmittal.attn === 'Collation branch: San Fernando Branch' && tt.lines.length === 3 && tt.lines.every(l => /^RRB-OFT-/.test(l.oftNo)));
+    ok('a new collation branch joins the list, as this quarter\'s', env.lbOftBranches_().list.includes('San Fernando Branch') && env.lbOftBranches_().current === 'San Fernando Branch');
+    const f = env.lbOftFind_({ q: stem + '002' }, staff);
+    ok('a kit is found by its number, with the branch it went to', f.kits.length === 1 && f.kits[0].policy === '9000000002' && f.kits[0].collation === 'San Fernando Branch' && f.kits[0].status === 'Sent');
+    ok('an agent finds their own kits', env.lbOftFind_({ q: '9000000003' }, agent).kits.length === 1);
+  }
   const back = env.lbUnsend_({ no: t2.transmittal.no }, staff);
   ok('a transmittal can be taken back the same day', back.ok && back.back === 1 &&
      tab(env, 'Log Book').find(r => r[0] === rm[0].id)[col(env, 'Log Book', 'Status')] === 'Received');
