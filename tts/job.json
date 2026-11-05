@@ -3,15 +3,8 @@
  "rate": "-5%",
  "check": true,
  "films": {
-  "oftlaunch": [
-   "This is a first for our branch. O F T kits are now in the Log Book, and every single kit gets its own tracking number, from the moment it's logged, all the way to the collation branch.",
-   "Here's how it works. Collect the sample from your client, open the Log Book, and choose O F T Kit.",
-   "Pick your client and the policy, straight from Salesforce. One kit per line.",
-   "Press log, and your tracking number appears. R R B, O F T, today's date, then the kit's own number. Write it on the kit.",
-   "Hand the kit to sales support. They sign for it on their phone, and you get an e-mail the moment they do.",
-   "Sales support builds one transmittal, and chooses this quarter's collation branch. Every kit, every number, on one page.",
-   "Need to find a kit? Search the number, the policy, or your client's name, and see exactly where it is.",
-   "A first for our branch. From today, every O F T kit goes through the Log Book. Ricky Rampersad branch dot com, slash log book."
+  "oftfix4": [
+   "Press log, and your tracking number appears. R R B, O F T, today's date, then a number for this kit. Write that number on the kit, before you hand it in."
   ]
  }
 }
