@@ -6051,6 +6051,27 @@ servicing work".
   Salesforce joined), `pddSendNow()`. `pdd3/` in the session scratchpad holds
   the harness on a made-up branch (`test.js`, 87 checks; `page-test.js`, 40,
   Playwright; `world.js`, the fake workbook and Salesforce).
+- **The letters go by themselves, carry the trail, and end in a lapse notice (5 November 2026, PDD 2026-11-06a).** Ricky:
+  "an email that automatically goes out to the client showing their policy now falls in the 45-60 day bucket, and options
+  for the client to check and sales support review and give back insights, the agent is always copied ... with the email
+  trail and their responses on the first ... then the notice that the policy has lapsed if it's under 2 years".
+  - **Buckets** 45–59, 60–74, 75–89, 90–104 (`PDD.LATE` 14). **Automatic at ten** (`PDD.AUTO`; Script Property `PDD_AUTO`
+    = off brings back the tick): `pddAutoQueue_` queues every client with nothing standing on that line and no flag, as
+    "Automatic (nobody held it by ten)". "Do not send" before ten holds one; a flagged client waits for a tick and is named
+    in the summary.
+  - **One-tap answers by line** (`ISURVEY_QUICK`, `ISURVEY_QUICK_BY`), each with its own reply page, recorded in Asked for,
+    and e-mailed to sales support with the agent always copied, with a signed **review link** (`?sv=&k=`, key
+    `PDD_REVIEW_KEY`): "What we did" (the client reads it on the next letter's trail) and an internal insight that goes to
+    the agent and the unit manager; "close it" closes the row.
+  - **The trail** (`iSurveyTrailHtml_`): every earlier note this episode, date, subject (new Subject column), what they
+    tapped, what we did. Never the private message.
+  - **The lapse notice** (`iSurveyLapsePool_`, `iSurveyNoticeHtml_`, `pddNotices_`, Stage 120): lapsed within 14 days, in
+    force under two years at the lapse, once a policy; the trail, "can it be reinstated" (never a promise), why they let it
+    go, "in my own words" (Details column), a rating of how we kept in touch. `PDD_NOTICES` = off stops it.
+  - Intel Surveys gains Subject, Details, Reviewed (31–33). The tracker's `doPost` now routes the letter forms
+    (`iSurveyPost_`): until then the private line's form posted into the tracker and went nowhere.
+  - The wording changed: the approval lapses until `intelSurveyApprove`. Test mode sends test copies only.
+    `flow06/flow-test.js` in the scratchpad covers it.
 - **The wall's Premium dues stop: eleven scenes that turn by themselves (5 November 2026, PDD 2026-11-05a).** Ricky, 4
   November: "Policies under 3 years ... under 5 years for both active and inactive agents, with the exceptions of Dominic,
   Javid, Aleema, Tarek. Those persons are still with the company ... can this dashboard paint a picture", then, the same

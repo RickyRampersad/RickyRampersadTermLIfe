@@ -2182,6 +2182,11 @@ function doPost(e) {
     try { var bp = blockReasonPost_(e); if (bp) return bp; }
     catch (err) { return closeoutPage_('That did not record.', String(err && err.message || err), null); }
   }
+  // The forms behind a premium letter: the private line, the client's own words, sales support's review (5 Nov 2026).
+  if (typeof iSurveyPost_ === 'function' && e && e.parameter && ((e.parameter.s && e.parameter.msg) || (e.parameter.sv && e.parameter.k))) {
+    try { var sp = iSurveyPost_(e); if (sp) return sp; }
+    catch (err) { return HtmlService.createHtmlOutput('That did not send. Go back and try again, or call the branch.'); }
+  }
   // A comment under a service rating, form-encoded.
   if (e && e.parameter && e.parameter.sr) {
     try { return ratePost_(e); }

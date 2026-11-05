@@ -6957,7 +6957,7 @@ function iWallSurveyMap_() {
   var out = { byClient: {}, rows: 0, live: 0, ignored: 0 };
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return out;
-  var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
+  var wide = Math.max(sh.getLastColumn(), ISCOL.LAST);
   var vals = sh.getRange(2, 1, last - 1, wide).getValues();
   vals.forEach(function (r) {
     out.rows++;
@@ -9036,14 +9036,22 @@ function intelMailStatus() {
          'Switch everything off: intelMailOff(). Back on: intelMailOn(); agents and clients then still need their own phrase.';
 }
 
+/* The forms behind a client letter post form-encoded: the private line, the
+   client's own words, and sales support's review. The tracker's doPost (KPI.gs)
+   calls this too, so they answer in the project that sends the letters. */
+function iSurveyPost_(e) {
+  var p = (e && e.parameter) || {};
+  if (p.sv && p.k) return iSurveyReviewSave_(e);
+  if (p.s && p.msg) return iSurveyPrivateSend_(e);
+  return null;
+}
+
 function intelDoPost_(e) {
   try {
     /* The private-message form posts form-encoded, not JSON — handle it before
        trying to parse a body that was never JSON in the first place. */
-    if (e && e.parameter && e.parameter.s && e.parameter.msg) {
-      var page = iSurveyPrivateSend_(e);
-      if (page) return page;
-    }
+    var form = iSurveyPost_(e);
+    if (form) return form;
     var b = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     var hit = intelRoute_(b);
     if (hit) return hit;
@@ -11505,12 +11513,17 @@ var ISURVEY = {
   LIVE_PHRASE:'send to clients',
   COOLDOWN:   120,   // days between arrears EPISODES — not between 45/60/90
   EPISODE:    150,   // a letter this recent belongs to the same conversation
-  MAX_RUN:    60     // never fire more than this in one go without asking again
+  MAX_RUN:    60,    // never fire more than this in one go without asking again
+  /* The lapse notice (5 November 2026, Ricky: "then the notice that the policy
+     has lapsed if it's under 2 years and having for details to close off the
+     file given the attached trails as well a rating as how we followed up").
+     Logged on Intel Surveys with Stage 120 so it is never mistaken for a 90. */
+  NOTICE:     120,
+  NOTICE_UNDER: 2,   // years in force at the lapse: only policies younger than this
+  NOTICE_BACK: 14    // days after the lapse a notice may still go; older ones are a call
 };
 
-function iSurveyTab_() {
-  return iSheet_(ISURVEY.TAB,
-    ['Token', 'Sent', 'Client number', 'Client', 'E-mail', 'Policy', 'Agent', 'Unit',
+var ISURVEY_HEAD = ['Token', 'Sent', 'Client number', 'Client', 'E-mail', 'Policy', 'Agent', 'Unit',
      'Years in force', 'Band', 'Billing', 'Premium', 'Template',
      'Rating', 'Rated at', 'Heard from agent', 'Comment', 'Mode',
      /* what happened AFTER they answered — see intelSurveyFollowUp */
@@ -11518,7 +11531,24 @@ function iSurveyTab_() {
      /* Which of the four taps they used, and WHEN a private message was sent.
         The private message itself is deliberately not here — see the note above
         iSurveyOptionsHtml_. A confidential channel everybody can read is a lie. */
-     'Asked for', 'Asked at', 'Private sent', 'Opted out', 'Stage']);
+     'Asked for', 'Asked at', 'Private sent', 'Opted out', 'Stage',
+     /* 5 November 2026: the letter's own subject (for the trail the next one
+        carries), the client's words from the details page (never the private
+        line), and sales support's review, internal. */
+     'Subject', 'Details', 'Reviewed'];
+function iSurveyTab_() {
+  var sh = iSheet_(ISURVEY.TAB, ISURVEY_HEAD);
+  /* A tab made before the three new columns gets their headings once. */
+  if (!iSurveyTab_.done) {
+    iSurveyTab_.done = true;
+    try {
+      var w = ISURVEY_HEAD.length, have = sh.getRange(1, 1, 1, w).getValues()[0];
+      if (String(have[w - 1] || '').trim() !== ISURVEY_HEAD[w - 1]) {
+        sh.getRange(1, 1, 1, w).setValues([ISURVEY_HEAD.map(function (h, i) { return String(have[i] || '').trim() || h; })]);
+      }
+    } catch (e) { /* the columns still work without their names */ }
+  }
+  return sh;
 }
 
 /* Columns, by number, because Apps Script counts from 1 and getting this wrong
@@ -11528,7 +11558,7 @@ var ISCOL = { TOKEN:1, SENT:2, CLIENTNO:3, CLIENT:4, EMAIL:5, POLICY:6, AGENT:7,
               RATING:14, RATEDAT:15, HEARD:16, COMMENT:17, MODE:18,
               THANKED:19, FOLLOWUP:20, OWNER:21, DUE:22, CLOSED:23,
               CLOSEDBY:24, OUTCOME:25, ASKED:26, ASKEDAT:27, PRIVATE:28, OPTOUT:29,
-              STAGE:30 };
+              STAGE:30, SUBJECT:31, DETAILS:32, REVIEWED:33, LAST:33 };
 
 /* ── The six letters ───────────────────────────────────────────────────────
    One per tenure band, because "thank you for your first eight months" and
@@ -11684,6 +11714,95 @@ var ISURVEY_OPTIONS = [
     to:    'desk' }
 ];
 
+/* ══════════════════════════════════════════════════════════════════════════
+   ONE TAP, BY THE LINE THE CLIENT IS ON (5 November 2026)
+   ══════════════════════════════════════════════════════════════════════════
+   Ricky: "options for the client to check and sales support review and give
+   back insights, the agent is always copied. You are to give some great
+   options so a client can just click." So each letter opens its answers with
+   the taps that fit where the client is, before the "anything else" list:
+   at 45 most stops are a bank or a payroll, so "I have paid" and "I will sort
+   it with my bank"; at 60 a promise with a date; at 75 a call today; at 90
+   the four ways out; on the lapse notice whether it can be reinstated and why
+   they let it go. Every tap is recorded on the letter's row (Asked for),
+   reaches sales support with a link to review it, and copies the agent.
+   Nothing in a tap is a commitment the client could be held to: a promise to
+   pay is noted, never a mandate. */
+var ISURVEY_QUICK = [
+  { key: 'paid',     label: 'I have already paid',
+    note: 'We will check the payment has reached Guardian Life and confirm it with you.',
+    reply: 'Thank you. Sales support will check the payment has reached Guardian Life and confirm it with you within two working days. If it has crossed with our letter, nothing more is needed.' },
+  { key: 'bank',     label: 'I will sort it out with my bank or payroll this week',
+    note: 'Most stops are a card reissued, an account moved or a new employer.',
+    reply: 'Thank you. We have noted it, and your agent has been told. If anything gets in the way, call the branch and we will help.' },
+  { key: 'week',     label: 'I will pay within the next 7 days',
+    note: 'We will note it, so you are not chased in the meantime.',
+    reply: 'Thank you. We have noted that you will pay within seven days, and your agent has been told. To pay, call the branch or come in.' },
+  { key: 'month',    label: 'I will pay by the end of the month',
+    note: 'We will note the date and check back with you after it.',
+    reply: 'Thank you. We have noted the end of the month, and your agent has been told. If you need longer, tap "talk about my options" on our letter.' },
+  { key: 'method',   label: 'I would like to change how I pay',
+    note: 'A different bank, a salary deduction, or paying at the branch.',
+    reply: 'Thank you. Sales support will be in touch within two working days with the form for the new way of paying.' },
+  { key: 'callme',   label: 'Please call me',
+    note: 'Your agent or the branch will call you within two working days.',
+    reply: 'Thank you. Your agent, or someone at the branch, will call you within two working days.' },
+  { key: 'reduce',   label: 'Tell me about reducing the cover',
+    note: 'A smaller sum assured and a smaller premium. The policy stays alive.',
+    reply: 'Thank you. Your agent will call you within two working days to go through what a reduced cover would look like. Nothing changes until you agree.' },
+  { key: 'paidup',   label: 'Tell me about making it paid-up',
+    note: 'Stop paying and keep a reduced amount of cover, where the plan allows it.',
+    reply: 'Thank you. Your agent will call you within two working days to explain whether your plan can be made paid-up and what it would keep.' },
+  { key: 'time',     label: 'I need a little more time',
+    note: 'A short arrangement while things settle. We will call to agree it.',
+    reply: 'Thank you. Someone from the branch will call you within two working days to agree a short arrangement.' },
+  { key: 'reinstate', label: 'I would like to know if it can be reinstated',
+    note: 'Many policies can be brought back within a period after they lapse.',
+    reply: 'Thank you. Sales support will check what reinstating your policy would need, and your agent will call you within two working days. There is no obligation.' },
+  { key: 'details',  label: 'Let me tell you in my own words',
+    note: 'A short box to write in. It goes to sales support and your agent.',
+    reply: '' },
+  /* Why they let it go, on the lapse notice: what closes the file properly. */
+  { key: 'r_afford',  label: 'I could not keep up the premium',
+    note: '', reply: 'Thank you for telling us. If things change, a smaller policy may fit, and your agent can go through it with you whenever you are ready.' },
+  { key: 'r_else',    label: 'I have cover somewhere else now',
+    note: '', reply: 'Thank you for telling us. We will close the file on this policy. If you ever want a second look at your cover, we are here.' },
+  { key: 'r_need',    label: 'I no longer need the cover',
+    note: '', reply: 'Thank you for telling us. We will close the file on this policy.' },
+  { key: 'r_service', label: 'I was not happy with the service',
+    note: '', reply: 'Thank you for telling us. The branch manager reads every one of these, and someone from the branch will call you within two working days.' },
+  { key: 'r_unaware', label: 'I did not know the premium had stopped',
+    note: '', reply: 'Thank you for telling us. Sales support will check whether your policy can be reinstated, and your agent will call you within two working days.' }
+];
+/* Which taps each letter offers, first, in order. "Anything else" follows on
+   every letter but the 90 and the notice, which carry their own. */
+var ISURVEY_QUICK_BY = {
+  45:  ['paid', 'bank', 'week', 'method', 'callme'],
+  60:  ['paid', 'week', 'month', 'method', 'callme', 'help'],
+  75:  ['paid', 'week', 'callme', 'method', 'help'],
+  90:  ['paid', 'reduce', 'paidup', 'time', 'callme'],
+  120: ['reinstate', 'callme']
+};
+var ISURVEY_REASONS = ['r_afford', 'r_else', 'r_need', 'r_service', 'r_unaware', 'details'];
+var ISURVEY_ELSE_BY = {
+  45:  ['review', 'issue', 'private', 'help', 'stop'],
+  60:  ['issue', 'private', 'stop'],
+  75:  ['issue', 'private', 'stop'],
+  90:  ['private', 'stop'],
+  120: ['private', 'stop']
+};
+/* Any tap by its key, whichever list it came from. */
+function iSurveyOpt_(key) {
+  var all = ISURVEY_OPTIONS.concat(ISURVEY_QUICK);
+  for (var i = 0; i < all.length; i++) if (all[i].key === key) return all[i];
+  return null;
+}
+/* What the client tapped, in their words, for the trail and the wall. */
+function iSurveyAskedWords_(asked) {
+  return String(asked || '').split(',').map(function (k) { return k.trim(); }).filter(Boolean)
+    .map(function (k) { var o = iSurveyOpt_(k); return o ? o.label : ''; }).filter(Boolean);
+}
+
 /* At 90 days the policy is close to lapsing, and a third letter asking somebody
    to rate the service would be tone-deaf. What a client three months behind
    needs is options, and there are real ones: most of these policies can be
@@ -11760,7 +11879,6 @@ function iSurvey75Html_(d, bill, office) {
       + 'border-bottom:1px solid #e2e8ee">' + a + '</td><td style="padding:8px 0;border-bottom:1px solid #e2e8ee;color:#3d4c5a">'
       + b + '</td></tr>';
   };
-  var agent = String(d.agent || '').split(/\s+/)[0] || 'your agent';
   return '<div style="margin:22px 0 0;border:2px solid ' + IBRAND.GOLD + ';border-radius:12px;padding:16px 18px">'
     + '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#8a5a00;font-weight:700;margin-bottom:6px">'
     + (d.lapseWords ? 'Before ' + iEsc_(d.lapseWords) : 'Before your cover lapses') + '</div>'
@@ -11769,11 +11887,7 @@ function iSurvey75Html_(d, bill, office) {
     + row('At the branch', 'Chaguanas, Monday to Friday')
     + row('By phone', d.branchPhone ? 'Call ' + iEsc_(d.branchPhone) + ' and we will take it with you' : 'Call the branch and we will take it with you')
     + (bill && bill.auto ? row(office === 'your payroll office' ? 'Your payroll' : 'Your bank', 'Ask ' + iEsc_(office) + ' to restart the payment to Guardian Life') : '')
-    + '</table>'
-    + '<div style="margin:16px 0 0"><a href="' + d.base + '?s=' + d.token + '&o=help" '
-    + 'style="display:block;text-align:center;text-decoration:none;background:' + IBRAND.GOLD + ';'
-    + 'color:' + IBRAND.NAVY + ';border-radius:11px;padding:15px;font-weight:700">'
-    + 'Ask ' + iEsc_(agent) + ' to call me</a></div></div>';
+    + '</table></div>';
 }
 
 function iSurvey90OptionsHtml_(d) {
@@ -11793,15 +11907,13 @@ function iSurvey90OptionsHtml_(d) {
     + '<p style="margin:0 0 12px;font-size:14px;color:#5c6b7a">Most policies can be '
     + 'reduced or paused rather than lost. Which one is right depends on your plan, '
     + 'so the call is worth having.</p>'
-    + '<table style="border-collapse:collapse;width:100%;font-size:14.5px">' + rows + '</table>'
-    + '<div style="margin:18px 0 0"><a href="' + d.base + '?s=' + d.token + '&o=help" '
-    + 'style="display:block;text-align:center;text-decoration:none;background:' + IBRAND.GOLD + ';'
-    + 'color:' + IBRAND.NAVY + ';border-radius:11px;padding:15px;font-weight:700">'
-    + 'Ask the branch to call me about my options</a></div></div>';
+    + '<table style="border-collapse:collapse;width:100%;font-size:14.5px">' + rows + '</table></div>';
 }
 
 function iSurveyOptionsHtml_(d) {
-  var rows = ISURVEY_OPTIONS.map(function (o) {
+  var stage = Number(d.stage) || 45;
+  var keys = ISURVEY_ELSE_BY[stage] || ISURVEY_ELSE_BY[45];
+  var rows = keys.map(iSurveyOpt_).filter(Boolean).map(function (o) {
     return '<a href="' + d.base + '?s=' + d.token + '&o=' + o.key + '" '
       + 'style="display:block;text-decoration:none;color:#16202b;border:1px solid #dde4ec;'
       + 'border-radius:10px;padding:13px 16px;margin:0 0 9px">'
@@ -11815,6 +11927,191 @@ function iSurveyOptionsHtml_(d) {
     + '<b>five working days</b>.</p>' + rows + '</div>';
 }
 
+/* The taps that fit the line, as big buttons, first thing under the letter.
+   Gold for the first, white for the rest, so the eye lands on the likeliest. */
+function iSurveyQuickHtml_(d, keys, head, sub) {
+  var btns = keys.map(iSurveyOpt_).filter(Boolean).map(function (o, i) {
+    var lead = i === 0;
+    return '<a href="' + d.base + '?s=' + d.token + '&o=' + o.key + '" '
+      + 'style="display:block;text-decoration:none;border-radius:11px;padding:14px 16px;margin:0 0 9px;'
+      + (lead ? 'background:' + IBRAND.GOLD + ';color:' + IBRAND.NAVY + ';border:1px solid ' + IBRAND.GOLD2
+              : 'background:#ffffff;color:#00254d;border:1.5px solid #c9d4de') + '">'
+      + '<span style="font-weight:700;font-size:15px">' + iEsc_(o.label) + '</span>'
+      + (o.note ? '<span style="display:block;font-size:12.5px;margin-top:3px;color:' + (lead ? '#3a2c06' : '#5c6b7a') + '">'
+        + iEsc_(o.note) + '</span>' : '') + '</a>';
+  }).join('');
+  return '<div style="margin:22px 0 0"><p style="margin:0 0 4px;font-weight:700;font-size:16px;color:#00254d">'
+    + iEsc_(head || 'One tap is all it takes') + '</p>'
+    + '<p style="margin:0 0 12px;font-size:14px;color:#5c6b7a">' + iEsc_(sub || 'It reaches sales support and your agent the moment you tap.') + '</p>'
+    + btns + '</div>';
+}
+
+/* "Our conversation so far": every letter this episode, oldest first, with
+   what the client told us on each and, once sales support has closed it, what
+   the branch did. Never the private message: only that they wrote. Asked for on
+   5 November 2026: "the send email goes to the client with the email trail and
+   their responses on the first". */
+function iSurveyTrailHtml_(d) {
+  var t = (d.hist && d.hist.trail) || [];
+  if (!t.length) return '';
+  var items = t.map(function (x, i) {
+    return '<tr><td style="vertical-align:top;padding:0 12px 14px 0;width:16px">'
+      + '<div style="width:12px;height:12px;border-radius:6px;background:' + IBRAND.GOLD + ';margin-top:5px"></div>'
+      + (i < t.length - 1 ? '<div style="width:2px;background:#e2e8ee;height:100%;min-height:30px;margin:2px 0 0 5px"></div>' : '')
+      + '</td><td style="vertical-align:top;padding:0 0 14px">'
+      + '<div style="font-size:12px;color:#5c6b7a;font-weight:700;letter-spacing:.04em;text-transform:uppercase">'
+      + iEsc_(x.when) + ' &middot; our ' + iEsc_(['first', 'second', 'third', 'fourth', 'fifth', 'sixth'][i] || 'next') + ' note</div>'
+      + '<div style="font-size:14.5px;color:#16202b;font-weight:600;margin:2px 0 4px">&ldquo;' + iEsc_(x.subject || 'Our note about your premium') + '&rdquo;</div>'
+      + '<div style="font-size:14px;color:#3d4c5a">' + iEsc_(x.said) + '</div>'
+      + (x.did ? '<div style="font-size:14px;color:#0b5a2e;margin-top:4px"><b>What we did:</b> ' + iEsc_(x.did) + '</div>' : '')
+      + '</td></tr>';
+  }).join('');
+  return '<div style="border:1px solid #dbe4ee;border-radius:12px;padding:15px 17px 4px;margin:0 0 18px;background:#fbfcfe">'
+    + '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#5c6b7a;font-weight:700;margin-bottom:10px">'
+    + 'Our conversation so far</div>'
+    + '<table role="presentation" style="border-collapse:collapse;width:100%">' + items + '</table></div>';
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE LAPSE NOTICE (5 November 2026)
+   ══════════════════════════════════════════════════════════════════════════
+   For a policy that lapsed in its first two years (ISURVEY.NOTICE_UNDER),
+   within a fortnight of the lapse. It says plainly that the cover has stopped
+   and why, carries the trail of every letter before it and what the client
+   answered, asks whether it can be reinstated, why they let it go (one tap,
+   or their own words), and how well we kept in touch. It never says the
+   policy CAN be reinstated: that depends on the plan and on Guardian Life,
+   so it offers to check. And no amount: the extract does not say what is owed. */
+function iSurveyNoticeHtml_(d) {
+  var tail = String(d.policy || '').replace(/\D/g, '').slice(-4);
+  var stars = '';
+  for (var i = 1; i <= 5; i++) {
+    stars += '<a href="' + d.base + '?s=' + d.token + '&r=' + i + '" '
+      + 'style="display:inline-block;width:50px;height:50px;line-height:50px;margin:0 5px;text-align:center;'
+      + 'font:700 19px Georgia,serif;color:' + IBRAND.NAVY + ';background:' + IBRAND.GOLD + ';border-radius:25px;'
+      + 'text-decoration:none">' + i + '</a>';
+  }
+  var t = (d.hist && d.hist.trail) || [];
+  var before = t.length
+    ? '<p style="margin:0 0 14px">We wrote to you ' + (t.length === 1 ? 'once' : t.length + ' times')
+      + ' before this happened. Every note, and what you told us, is below, so you can see the whole conversation in one place.</p>'
+    : '<p style="margin:0 0 14px">We are sorry we did not reach you before this happened.</p>';
+  var reasons = ISURVEY_REASONS.map(iSurveyOpt_).filter(Boolean).map(function (o) {
+    return '<a href="' + d.base + '?s=' + d.token + '&o=' + o.key + '" '
+      + 'style="display:inline-block;text-decoration:none;color:#00254d;border:1.5px solid #c9d4de;'
+      + 'border-radius:22px;padding:9px 15px;margin:0 6px 8px 0;font-size:14px;font-weight:600">'
+      + iEsc_(o.label) + '</a>';
+  }).join('');
+  return ''
+  + '<div style="font:15px/1.62 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'
+  + 'color:#16202b;max-width:600px;margin:0 auto;padding:0 4px">'
+  + iBrandHead_()
+  + '<p style="margin:0 0 14px">Dear ' + iEsc_(d.greeting) + ',</p>'
+  + '<div style="border:2px solid #b8463c;border-radius:12px;padding:15px 18px;margin:0 0 18px;background:#fdf6f5">'
+  +   '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#8f2f27;font-weight:700;margin-bottom:6px">'
+  +   'Your policy has lapsed</div>'
+  +   '<p style="margin:0;font-size:15px">Our records show your policy' + (tail ? ' ending <b>' + iEsc_(tail) + '</b>' : '')
+  +   ' lapsed' + (d.lapseWords ? ' on <b>' + iEsc_(d.lapseWords) + '</b>' : '') + ', because the premium'
+  +   (d.paidToWords ? ' due from ' + iEsc_(d.paidToWords) : '') + ' was not received. The cover it gave has stopped.</p></div>'
+  + before
+  + iSurveyTrailHtml_(d)
+  + iSurveyQuickHtml_(d, ISURVEY_QUICK_BY[ISURVEY.NOTICE], 'It may not be too late',
+      'Many policies can be brought back within a period after they lapse. Tap and we will check what yours would need. There is no obligation.')
+  + '<div style="margin:24px 0 0"><p style="margin:0 0 4px;font-weight:700;font-size:16px;color:#00254d">'
+  +   'If you have decided to let it go, help us close your file properly</p>'
+  +   '<p style="margin:0 0 12px;font-size:14px;color:#5c6b7a">One tap tells us why. It is read by a person at the branch.</p>'
+  +   reasons + '</div>'
+  + '<div style="margin:24px 0 0;background:#f4f7fa;border-radius:12px;padding:16px 18px;text-align:center">'
+  +   '<p style="margin:0 0 4px;font-weight:700;color:#00254d">One last question</p>'
+  +   '<p style="margin:0 0 14px;font-size:14px">How well did we keep in touch with you before this happened?</p>'
+  +   stars
+  +   '<table role="presentation" style="width:100%;max-width:330px;margin:8px auto 0"><tr>'
+  +   '<td style="font-size:11.5px;color:#5c6b7a;text-align:left">1 — not at all</td>'
+  +   '<td style="font-size:11.5px;color:#5c6b7a;text-align:right">5 — very well</td></tr></table></div>'
+  + iSurveyOptionsHtml_(d)
+  + '<p style="margin:22px 0 14px;font-size:13.5px;color:#5c6b7a">'
+  +   'Your agent, ' + iEsc_(d.agent) + ', has a copy of this note. We will never ask you for a password, '
+  +   'a card number or a payment through an e-mail link. To pay or reinstate, '
+  +   (d.branchPhone ? 'call the branch on ' + iEsc_(d.branchPhone) + '.' : 'call the branch directly.') + '</p>'
+  + '<hr style="border:0;border-top:1px solid #e2e8ee;margin:22px 0 14px">'
+  + '<div style="font-size:12.5px;color:#5c6b7a">'
+  +   'Ricky Rampersad Branch · Guardian Life of the Caribbean<br>'
+  +   'Chaguanas, Trinidad and Tobago' + (d.branchPhone ? ' · ' + iEsc_(d.branchPhone) : '') + '<br>'
+  +   'Your agent: ' + iEsc_(d.agent) + (d.agentEmail ? ' · ' + iEsc_(d.agentEmail) : '') + '</div></div>';
+}
+
+/* Who gets a lapse notice today: status 1 on the dues extract, a projected
+   lapse date gone by in the last ISURVEY.NOTICE_BACK days, in force under
+   ISURVEY.NOTICE_UNDER years at the lapse, an address, not opted out, and no
+   notice on that policy before. Excluded agents' books, companies and the
+   agent's own policy are passed over, as on the lines. One per client. */
+function iSurveyLapsePool_() {
+  var sh = iTabDues_();
+  if (!sh) return { error: 'No dues tab found.' };
+  var d = iReadCols_(sh, {
+    agent: ['agent'], number: ['number'], clientNo: ['client number'], client: ['client'],
+    premium: ['premium'], issue: ['issue date'], status: ['status'], paidTo: ['paid to date'],
+    billing: ['billing type'], email: ['email'], lapseDate: ['projected lapse date']
+  });
+  var today = iToday_(), DAY = 86400000, YEAR = 365.25 * DAY;
+  var mailOf = {}, units = iBuildUnits_(), unitOf = {};
+  Object.keys(units).forEach(function (u) { units[u].forEach(function (m) { var k = iNameKey_(m.name); if (k) unitOf[k] = u; }); });
+  iAccessTabs_().forEach(function (sh2) {
+    var head = iHeaders_(sh2), last = sh2.getLastRow();
+    if (last < 2) return;
+    var cN = iCol_(head, ['name']), cE = iCol_(head, ['email']);
+    if (cN < 0 || cE < 0) return;
+    sh2.getRange(2, 1, last - 1, sh2.getLastColumn()).getValues().forEach(function (row) {
+      var id = iIdentity_(row[cN], '', ''), k = iNameKey_(id.agentName || row[cN]);
+      if (k && row[cE]) mailOf[k] = iEmail_(row[cE]);
+    });
+  });
+  var sh3 = iSurveyTab_(), last3 = sh3.getLastRow();
+  var vals3 = last3 > 1 ? sh3.getRange(2, 1, last3 - 1, Math.max(sh3.getLastColumn(), ISCOL.LAST)).getValues() : [];
+  var noticed = {}, stopped = {};
+  vals3.forEach(function (v) {
+    if ((Number(v[ISCOL.STAGE - 1]) || 0) === ISURVEY.NOTICE) noticed[pddPolKeyI_(v[ISCOL.POLICY - 1])] = 1;
+    if (String(v[ISCOL.OPTOUT - 1] || '').trim()) stopped[String(v[ISCOL.CLIENTNO - 1]).trim()] = 1;
+  });
+  var skip = iExcluded_(), rows = [], skipped = { old: 0, noEmail: 0, optedOut: 0, excluded: 0, done: 0 };
+  for (var r = 0; r < d.rows; r++) {
+    if (String(d.get('status', r)).trim() !== '1') continue;
+    var gone = iDate_(d.get('lapseDate', r));
+    if (!gone || gone > today) continue;
+    var ago = Math.round((today - gone) / DAY);
+    if (ago > ISURVEY.NOTICE_BACK) continue;
+    var issue = iDate_(d.get('issue', r));
+    var years = issue ? (gone - issue) / YEAR : null;
+    if (years == null || years >= ISURVEY.NOTICE_UNDER || years < 0) { skipped.old++; continue; }
+    var policy = String(d.get('number', r)).trim();
+    if (noticed[pddPolKeyI_(policy)]) { skipped.done++; continue; }
+    if (iExcludes_(skip, d.get('agent', r))) { skipped.excluded++; continue; }
+    var clientNo = String(d.get('clientNo', r)).trim();
+    if (stopped[clientNo]) { skipped.optedOut++; continue; }
+    var email = iEmail_(d.get('email', r));
+    if (!email) { skipped.noEmail++; continue; }
+    var agent = String(d.get('agent', r)).trim(), client = String(d.get('client', r)).trim(), nk = iNameKey_(agent);
+    var paid = iDate_(d.get('paidTo', r));
+    rows.push({
+      clientNo: clientNo, client: client, greeting: iSurveyGreeting_(client), email: email, policy: policy,
+      agent: agent, agentEmail: mailOf[nk] || '', unit: unitOf[nk] || 'Unassigned',
+      years: Math.round(years * 10) / 10, yWord: iSurveyYearsWord_(years), months: Math.max(1, Math.round(years * 12)),
+      issued: issue ? Utilities.formatDate(issue, iTz_(), 'MMMM yyyy') : 'record unclear',
+      billing: String(d.get('billing', r)).trim() || 'Direct Bill', premium: iNum_(d.get('premium', r)),
+      branchPhone: iProp_('INTEL_BRANCH_PHONE'), stage: ISURVEY.NOTICE,
+      days: paid ? Math.round((today - paid) / DAY) : 0,
+      lapseWords: Utilities.formatDate(gone, iTz_(), 'd MMMM yyyy'),
+      paidToWords: paid ? Utilities.formatDate(paid, iTz_(), 'd MMMM yyyy') : '',
+      hist: iSurveyHistory_(sh3, clientNo, today, vals3),
+      tpl: iSurveyTemplate_(years)
+    });
+  }
+  var byClient = {};
+  rows.forEach(function (x) { var k = x.clientNo || x.email; if (!byClient[k]) byClient[k] = x; });
+  return { rows: Object.keys(byClient).map(function (k) { return byClient[k]; }), skipped: skipped };
+}
+function pddPolKeyI_(p) { return String(p == null ? '' : p).replace(/^\s+|\s+$/g, '').replace(/\.0$/, ''); }
+
 function iSurveyHtml_(d) {
   var t = d.tpl, bill = ISURVEY_BILLING[d.billing] || { auto: false, says: d.billing };
   var stars = '';
@@ -11827,6 +12124,7 @@ function iSurveyHtml_(d) {
   }
 
   var stage = Number(d.stage) || 45;
+  if (stage === ISURVEY.NOTICE) return iSurveyNoticeHtml_(d);
   var st = ISURVEY_STAGES[stage] || ISURVEY_STAGES[45];
   /* The first letter this episode, whatever the stage: a client the desk did
      not write to at 45 gets a first letter at 60, not a follow-up to nothing. */
@@ -11855,7 +12153,8 @@ function iSurveyHtml_(d) {
   var carried = (!first)
     ? '<div style="background:#eef4fa;border-left:3px solid #0b7fd4;border-radius:0 9px 9px 0;'
       + 'padding:14px 17px;margin:0 0 16px;font-size:14.5px;color:#3d4c5a">'
-      + iEsc_(st.kicker(d.hist, d)) + '</div>'
+      + iEsc_(String(st.kicker(d.hist && d.hist.trail && d.hist.trail.length
+          ? { when: d.hist.when, count: d.hist.count, said: '' } : d.hist, d)).replace(/\s{2,}/g, ' ')) + '</div>'
     : '';
   /* The rating is asked once an episode, on the first letter, and never on a
      letter about lapsing. */
@@ -11869,8 +12168,13 @@ function iSurveyHtml_(d) {
 
   + '<p style="margin:0 0 14px">Dear ' + iEsc_(d.greeting) + ',</p>'
   + carried
+  + iSurveyTrailHtml_(d)
   + (first ? '<p style="margin:0 0 14px">' + t.open(d) + '</p>' : '')
   + payment
+  /* the one-tap answers first, while the client is still reading about the premium */
+  + iSurveyQuickHtml_(d, ISURVEY_QUICK_BY[stage] || ISURVEY_QUICK_BY[45],
+      stage >= 90 ? 'Choose what suits you' : stage >= 75 ? 'Before your cover stops: one tap' : 'One tap is all it takes',
+      'It reaches sales support and ' + (String(d.agent || '').split(/\s+/)[0] || 'your agent') + ' the moment you tap.')
 
   + '<div style="background:#f4f7fa;border-radius:10px;padding:16px 18px;margin:20px 0">'
   +   '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#5c6b7a;'
@@ -11990,11 +12294,20 @@ function iSurveyHash_() {
   [45, 60, 75, 90].forEach(function (st) {
     var d = { yWord: 'X years', months: 9, issued: 'MONTH YEAR', agent: 'AGENT', greeting: 'NAME', billing: 'Bankers Order',
               years: 5, stage: st, token: 'T', base: 'B', branchPhone: 'PHONE', lapseWords: 'DATE',
-              hist: st === 45 ? null : { when: 'WHEN', said: 'SAID', count: st === 60 ? 1 : st === 75 ? 2 : 3 },
+              hist: st === 45 ? null : { when: 'WHEN', said: 'SAID', count: st === 60 ? 1 : st === 75 ? 2 : 3, trail: [{ when: 'WHEN', subject: 'SUBJECT', said: 'SAID', did: 'DID' }] },
               svc: { done: 2, lastDone: 'MONTH', policies: 2 } };
     d.tpl = iSurveyTemplate_(5);
     parts.push('stage:' + st, iSurveySubject_(d), iSurveyHtml_(d));
   });
+  /* The lapse notice and every one-tap answer, with the page it lands on. */
+  var dn = { yWord: '1 year', months: 12, issued: 'MONTH YEAR', agent: 'AGENT', greeting: 'NAME', billing: 'Direct Bill',
+             years: 1, stage: ISURVEY.NOTICE, token: 'T', base: 'B', branchPhone: 'PHONE', lapseWords: 'DATE',
+             paidToWords: 'DATE', policy: '0001234',
+             hist: { count: 2, trail: [{ when: 'WHEN', subject: 'SUBJECT', said: 'SAID', did: 'DID' }] } };
+  dn.tpl = iSurveyTemplate_(1);
+  parts.push('notice', iSurveySubject_(dn), iSurveyNoticeHtml_(dn));
+  ISURVEY_QUICK.forEach(function (o) { parts.push(o.key, o.label, o.note, o.reply); });
+  Object.keys(ISURVEY_QUICK_BY).forEach(function (k) { parts.push('by' + k, ISURVEY_QUICK_BY[k].join(',')); });
   /* The line a later letter opens with, for every answer a client can give. */
   ['', 'private', 'review', 'issue', 'help'].forEach(function (k) {
     var row = []; row[ISCOL.RATING - 1] = k ? 0 : 4; row[ISCOL.ASKED - 1] = k;
@@ -12108,11 +12421,22 @@ function iSurveyOrdinal_(h) {
    a letter about lapsing reads as a form letter nobody looked at. */
 function iSurveySubject_(d) {
   var s = Number(d.stage) || 45;
+  if (s === ISURVEY.NOTICE) return 'Your policy has lapsed: help us close your file properly';
   if (s >= 90) return 'Before your policy lapses: the options open to you';
   if (s >= 75) return d.lapseWords ? 'Your cover stops on ' + d.lapseWords + ' unless the premium is paid'
                                    : 'Your cover is close to lapsing';
   if (s >= 60) return d.hist ? 'Following up on our note about your premium' : 'A note about the premium on your policy';
   return d.tpl.subject(d);
+}
+
+/* A subject for a letter logged before the Subject column existed. */
+function iSurveySubjectGeneric_(stage) {
+  var s = Number(stage) || 45;
+  if (s === ISURVEY.NOTICE) return 'Your policy has lapsed: help us close your file properly';
+  if (s >= 90) return 'Before your policy lapses: the options open to you';
+  if (s >= 75) return 'Your cover is close to lapsing';
+  if (s >= 60) return 'Following up on our note about your premium';
+  return 'A note about the premium on your policy';
 }
 
 /* What to say about what happened last time. Never the private words. */
@@ -12133,6 +12457,12 @@ function iSurveyHistoryLine_(row) {
   /* Until 13 October a client who tapped "talk about my options" read "we did
      not hear back" on the next letter: the tap was not on this list. */
   if (asked.indexOf('help') >= 0)   bits.push('You asked to talk about your options.');
+  /* The one-tap answers of 5 November, in the words the client tapped. */
+  var quick = asked.split(',').map(function (k) { return k.trim(); })
+    .filter(function (k) { return k && ['private', 'review', 'issue', 'help', 'stop', 'details'].indexOf(k) < 0; })
+    .map(function (k) { var o = iSurveyOpt_(k); return o ? o.label : ''; }).filter(Boolean);
+  if (quick.length) bits.push('You told us: \u201c' + quick.join('\u201d and \u201c') + '.\u201d');
+  if (String(row[ISCOL.DETAILS - 1] || '').trim()) bits.push('You wrote to us in your own words.');
   if (!bits.length) bits.push('We did not hear back, which is fair enough — you may not have wanted to.');
   if (closed instanceof Date && outcome && outcome !== '(none recorded)') {
     bits.push('What we did about it: ' + outcome + '.');
@@ -12151,7 +12481,7 @@ function iSurveyHistory_(sh, clientNo, today, vals) {
   if (!vals) {
     var last = sh.getLastRow();
     if (last < 2) return null;
-    var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
+    var wide = Math.max(sh.getLastColumn(), ISCOL.LAST);
     vals = sh.getRange(2, 1, last - 1, wide).getValues();
   }
   if (!vals.length) return null;
@@ -12181,6 +12511,22 @@ function iSurveyHistory_(sh, clientNo, today, vals) {
   });
   best.stagesUsed = stages;
   best.count = Object.keys(stages).length;
+  /* The trail: every letter of this episode, oldest first (5 November 2026). */
+  var trail = [];
+  vals.forEach(function (v) {
+    if (String(v[ISCOL.CLIENTNO - 1]).trim() !== clientNo) return;
+    var st2 = v[ISCOL.SENT - 1];
+    if (!(st2 instanceof Date) || (today - st2) / DAY > ISURVEY.EPISODE) return;
+    var stg = Number(v[ISCOL.STAGE - 1]) || 45;
+    var did = v[ISCOL.CLOSED - 1] instanceof Date ? String(v[ISCOL.OUTCOME - 1] || '').trim() : '';
+    trail.push({ at: st2.getTime(), when: Utilities.formatDate(st2, iTz_(), 'd MMMM'), stage: stg,
+                 subject: String(v[ISCOL.SUBJECT - 1] || '').trim() || iSurveySubjectGeneric_(stg),
+                 said: iSurveyHistoryLine_(v.slice(0, ISCOL.CLOSED - 1).concat([''], v.slice(ISCOL.CLOSED)))
+                   .replace(/^We did not hear back, which is fair enough[^.]*\./, 'No reply.'),
+                 did: did && did !== '(none recorded)' ? did : '' });
+  });
+  trail.sort(function (x, y) { return x.at - y.at; });
+  best.trail = trail;
   best.when = Utilities.formatDate(best.sent, iTz_(), 'd MMMM');
   best.said = iSurveyHistoryLine_(best.row);
   return best;
@@ -12246,7 +12592,7 @@ function iSurveyPool_(stage, late) {
   var recent = {}, stopped = {}, sh3 = iSurveyTab_(), last3 = sh3.getLastRow();
   /* Read once, wide enough for the history as well as the cooldown. */
   var vals3 = last3 > 1
-    ? sh3.getRange(2, 1, last3 - 1, Math.max(sh3.getLastColumn(), ISCOL.STAGE)).getValues() : [];
+    ? sh3.getRange(2, 1, last3 - 1, Math.max(sh3.getLastColumn(), ISCOL.LAST)).getValues() : [];
   if (vals3.length) {
     vals3.forEach(function (r) {
       var when = r[ISCOL.SENT - 1], who = String(r[ISCOL.CLIENTNO - 1]).trim();
@@ -12441,13 +12787,14 @@ function iSurveySupport_() {
    is a client of this branch, and no more than that. */
 function iSurveyClick_(e) {
   var p = (e && e.parameter) || {};
+  if (p.sv) return iSurveyReviewPage_(String(p.sv), String(p.k || ''));
   var token = String(p.s || '').trim();
   if (!token) return null;
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return iSurveyPage_('That link has expired.', '', '');
   /* Read the whole row, not a fixed 18 — the tab grew a follow-up block and a
      hardcoded width silently returns blanks for every column past it. */
-  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.STAGE)).getValues();
+  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.LAST)).getValues();
   for (var r = 0; r < vals.length; r++) {
     if (String(vals[r][0]) !== token) continue;
     var agent = String(vals[r][6] || 'your agent');
@@ -12455,6 +12802,10 @@ function iSurveyClick_(e) {
       var n = Math.max(1, Math.min(5, parseInt(p.r, 10) || 0));
       sh.getRange(r + 2, 14).setValue(n);
       sh.getRange(r + 2, 15).setValue(new Date());
+      if ((Number(vals[r][ISCOL.STAGE - 1]) || 45) === ISURVEY.NOTICE) {
+        iSurveyOptionAlert_({ key: 'rating', label: 'Rated how we kept in touch: ' + n + ' out of 5', to: 'desk' }, vals[r], '');
+        return iSurveyPage_('Thank you.', 'You rated how we kept in touch ' + n + ' out of 5. The branch manager reads every one of these.', '', '');
+      }
       return iSurveyPage_('Thank you.', 'Your rating of ' + n + ' out of 5 has been recorded ' +
         'and will be read by the branch. Nothing further is needed.', token, agent);
     }
@@ -12497,8 +12848,7 @@ function iSurveyPage_(head, body, token, agent) {
 /* One of the four taps. Everything except the private line is recorded and
    routed the same day; the private line opens a page to write on instead. */
 function iSurveyOption_(sh, r, key, row) {
-  var opt = null;
-  ISURVEY_OPTIONS.forEach(function (o) { if (o.key === key) opt = o; });
+  var opt = iSurveyOpt_(key);
   if (!opt) return iSurveyPage_('That link has expired.', '', '', '');
 
   var prev = String(row[ISCOL.ASKED - 1] || '');
@@ -12508,6 +12858,11 @@ function iSurveyOption_(sh, r, key, row) {
   }
 
   if (key === 'private') return iSurveyPrivatePage_(String(row[ISCOL.TOKEN - 1]));
+  if (key === 'details') return iSurveyDetailsPage_(String(row[ISCOL.TOKEN - 1]));
+  if (opt.reply) {
+    iSurveyOptionAlert_(opt, row, '');
+    return iSurveyPage_('Thank you, that is on its way.', opt.reply, '', '');
+  }
 
   if (key === 'stop') {
     sh.getRange(r + 2, ISCOL.OPTOUT).setValue(new Date());
@@ -12569,9 +12924,19 @@ function iSurveyPrivateSend_(e) {
   var p = (e && e.parameter) || {};
   var token = String(p.s || '').trim(), msg = String(p.msg || '').trim();
   if (!token || !msg) return null;
+  if (String(p.kind || '') === 'details') {
+    var f = iSurveyFind_(token);
+    if (!f) return iSurveyPage_('That link has expired.', '', '', '');
+    var prevD = String(f.row[ISCOL.DETAILS - 1] || '').trim();
+    var stampD = Utilities.formatDate(new Date(), iTz_(), 'd MMM HH:mm');
+    f.sh.getRange(f.r, ISCOL.DETAILS).setValue((prevD ? prevD + '\n' : '') + stampD + (p.callme ? ' (call me)' : '') + ': ' + msg.slice(0, 3000));
+    f.sh.getRange(f.r, ISCOL.ASKEDAT).setValue(new Date());
+    iSurveyOptionAlert_(iSurveyOpt_('details'), f.row, (p.callme ? 'They would like a call.\n\n' : '') + msg.slice(0, 3000));
+    return iSurveyPage_('Thank you, it is with us.', 'Sales support and your agent have it, and somebody will be back to you within two working days.', '', '');
+  }
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return iSurveyPage_('That link has expired.', '', '', '');
-  var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
+  var wide = Math.max(sh.getLastColumn(), ISCOL.LAST);
   var vals = sh.getRange(2, 1, last - 1, wide).getValues();
   for (var r = 0; r < vals.length; r++) {
     if (String(vals[r][ISCOL.TOKEN - 1]) !== token) continue;
@@ -12610,19 +12975,167 @@ function iSurveyPrivateSend_(e) {
    private one, and never with the client's words in it. */
 function iSurveyOptionAlert_(opt, row, extra) {
   var support = iSurveySupport_();
-  var to = opt.to === 'agent'
-    ? [iSurveyAgentEmail_(String(row[ISCOL.AGENT - 1])), support.desk]
-    : [support.desk, iProp_('INTEL_MANAGER_EMAIL')];
-  to = to.filter(function (x) { return x; }).join(',');
+  /* Sales support first, and the agent always copied (5 November 2026: "sales
+     support review and give back insights, the agent is always copied"). */
+  var to = [support.desk, iSurveyAgentEmail_(String(row[ISCOL.AGENT - 1]))]
+    .concat(opt.to === 'manager' ? [iProp_('INTEL_MANAGER_EMAIL')] : []);
+  to = to.join(',').split(',').map(function (x) { return String(x || '').trim(); })
+    .filter(function (x, i, a) { return x && a.indexOf(x) === i; }).join(',');
   if (!to) return;
-  iSend_(to, 'Survey: ' + opt.label,
-    '<div style="font:15px/1.6 sans-serif;color:#16202b">'
-    + '<p>A client has tapped <b>' + iEsc_(opt.label) + '</b> on the survey.</p>'
-    + '<p><b>Their agent:</b> ' + iEsc_(String(row[ISCOL.AGENT - 1])) + '<br>'
-    + '<b>Unit:</b> ' + iEsc_(String(row[ISCOL.UNIT - 1])) + '<br>'
-    + '<b>Reference:</b> ' + iEsc_(String(row[ISCOL.TOKEN - 1]).slice(0, 8)) + '</p>'
-    + '<p>They were told somebody would be back to them within <b>five working days</b>. '
-    + 'Open the client in Branch Intelligence to see who they are.</p></div>');
+  var stage = Number(row[ISCOL.STAGE - 1]) || 45;
+  var token = String(row[ISCOL.TOKEN - 1]);
+  var link = iSurveyReviewUrl_(token);
+  iSend_(to, 'Client answered: ' + opt.label + ' · ' + String(row[ISCOL.CLIENT - 1] || ''),
+    '<div style="font:15px/1.6 sans-serif;color:#16202b;max-width:620px">'
+    + '<p>A client tapped <b>' + iEsc_(opt.label) + '</b> on the '
+    + (stage === ISURVEY.NOTICE ? 'lapse notice' : stage + '-day premium letter') + '.</p>'
+    + '<p><b>Client:</b> ' + iEsc_(String(row[ISCOL.CLIENT - 1] || '')) + '<br>'
+    + '<b>Policy:</b> ' + iEsc_(String(row[ISCOL.POLICY - 1] || '')) + '<br>'
+    + '<b>Agent:</b> ' + iEsc_(String(row[ISCOL.AGENT - 1])) + ' (copied)<br>'
+    + '<b>Unit:</b> ' + iEsc_(String(row[ISCOL.UNIT - 1])) + '</p>'
+    + (extra ? '<p style="white-space:pre-wrap;background:#f4f7fa;border-radius:10px;padding:14px 16px">' + iEsc_(extra) + '</p>' : '')
+    + '<p>They were told: ' + iEsc_(opt.reply || 'somebody will be back to them within five working days.') + '</p>'
+    + (link ? '<p><a href="' + link + '" style="display:inline-block;background:#00254d;color:#fff;padding:11px 18px;'
+      + 'border-radius:9px;text-decoration:none;font-weight:700">Review it and write what we did</a></p>'
+      + '<p style="font-size:13px;color:#5c6b7a">What you write under "What we did" is shown to the client in our next note; '
+      + 'your insight for the agent is not.</p>' : '')
+    + '<p style="font-size:12px;color:#8b98a6">Internal: it names a client. Do not forward outside the branch.</p></div>');
+}
+
+/* ── Sales support's review (5 November 2026) ──────────────────────────────
+   A signed link in every answer e-mail opens one client's letter, what they
+   told us, and two boxes: what we did (the client reads it on the next letter's
+   trail) and an insight for the agent and the branch (internal). Saving e-mails
+   the agent and the unit manager, sales support copied, and with "close it"
+   ticked the letter's follow-up is closed with the words. The key is the
+   PDD_REVIEW_KEY Script property, made the first time. */
+function iSurveyReviewKey_() {
+  var k = iProp_('PDD_REVIEW_KEY');
+  if (!k) { k = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, ''); iSetProp_('PDD_REVIEW_KEY', k); }
+  return k;
+}
+function iSurveyReviewSig_(token) {
+  var b = Utilities.computeHmacSha256Signature(String(token), iSurveyReviewKey_());
+  return b.map(function (x) { return ('0' + (x & 0xFF).toString(16)).slice(-2); }).join('').slice(0, 24);
+}
+function iSurveyReviewUrl_(token) {
+  var base = iSurveyBase_();
+  if (!base || !token) return '';
+  return base + '?sv=' + encodeURIComponent(token) + '&k=' + iSurveyReviewSig_(token);
+}
+function iSurveyFind_(token) {
+  var sh = iSurveyTab_(), last = sh.getLastRow();
+  if (last < 2) return null;
+  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.LAST)).getValues();
+  for (var r = 0; r < vals.length; r++) if (String(vals[r][ISCOL.TOKEN - 1]) === token) return { sh: sh, r: r + 2, row: vals[r] };
+  return null;
+}
+function iSurveyReviewPage_(token, sig, saved) {
+  if (!token || sig !== iSurveyReviewSig_(token)) return iSurveyPage_('That link is not valid.', 'Open it from the e-mail it came in.', '', '');
+  var f = iSurveyFind_(token);
+  if (!f) return iSurveyPage_('That letter is not on the tab any more.', '', '', '');
+  var v = f.row, stage = Number(v[ISCOL.STAGE - 1]) || 45;
+  var rating = Number(v[ISCOL.RATING - 1]);
+  var asked = iSurveyAskedWords_(v[ISCOL.ASKED - 1]);
+  var esc = iEsc_, base = iSurveyBase_();
+  var line = function (a, b) { return '<tr><td style="padding:6px 12px 6px 0;color:#5c6b7a;vertical-align:top;white-space:nowrap">' + a
+    + '</td><td style="padding:6px 0">' + b + '</td></tr>'; };
+  var html = '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<div style="font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#16202b;max-width:640px;margin:5vh auto;padding:0 20px">'
+    + '<div style="font:700 15px Georgia,serif;color:#00254d;margin-bottom:18px">Ricky Rampersad Branch'
+    + '<span style="display:block;font:400 12.5px sans-serif;color:#5c6b7a">Sales support review · internal</span></div>'
+    + (saved ? '<div style="background:#e9f7ef;border:1px solid #9bd3b0;border-radius:10px;padding:12px 15px;margin:0 0 16px">'
+      + esc(saved) + '</div>' : '')
+    + '<h1 style="font:700 24px Georgia,serif;color:#00254d;margin:0 0 10px">' + esc(String(v[ISCOL.CLIENT - 1] || '')) + '</h1>'
+    + '<table style="border-collapse:collapse;font-size:15px;margin:0 0 14px">'
+    + line('Letter', esc(stage === ISURVEY.NOTICE ? 'Lapse notice' : stage + '-day letter') + ', sent '
+      + esc(v[ISCOL.SENT - 1] instanceof Date ? Utilities.formatDate(v[ISCOL.SENT - 1], iTz_(), 'd MMM yyyy') : ''))
+    + line('Subject', esc(String(v[ISCOL.SUBJECT - 1] || iSurveySubjectGeneric_(stage))))
+    + line('Policy', esc(String(v[ISCOL.POLICY - 1] || '')))
+    + line('Agent', esc(String(v[ISCOL.AGENT - 1] || '')))
+    + line('They tapped', esc(asked.join(' · ') || 'nothing yet'))
+    + line('Rating', rating >= 1 && rating <= 5 ? rating + ' out of 5' : 'none')
+    + (String(v[ISCOL.DETAILS - 1] || '').trim() ? line('In their words', '<span style="white-space:pre-wrap">' + esc(String(v[ISCOL.DETAILS - 1])) + '</span>') : '')
+    + (String(v[ISCOL.PRIVATE - 1] || '').trim() ? line('Private line', 'They wrote to the branch manager privately. The words are with him only.') : '')
+    + (String(v[ISCOL.REVIEWED - 1] || '').trim() ? line('Reviewed so far', '<span style="white-space:pre-wrap">' + esc(String(v[ISCOL.REVIEWED - 1])) + '</span>') : '')
+    + '</table>'
+    + '<form method="post" action="' + esc(base) + '">'
+    + '<input type="hidden" name="sv" value="' + esc(token) + '"><input type="hidden" name="k" value="' + esc(sig) + '">'
+    + '<label style="display:block;font-weight:700;margin:6px 0 4px">What we did <span style="font-weight:400;color:#5c6b7a">(the client reads this on our next note)</span></label>'
+    + '<textarea name="did" rows="3" maxlength="400" placeholder="e.g. Your payment of 2 November reached us and your policy is up to date." '
+    + 'style="width:100%;box-sizing:border-box;padding:12px;border:1.5px solid #c9d4de;border-radius:10px;font:16px/1.5 inherit">'
+    + esc(String(v[ISCOL.OUTCOME - 1] || '')) + '</textarea>'
+    + '<label style="display:block;font-weight:700;margin:14px 0 4px">Insight for the agent and the branch <span style="font-weight:400;color:#5c6b7a">(internal)</span></label>'
+    + '<textarea name="note" rows="4" maxlength="1500" placeholder="What you found, what the agent should do next, by when." '
+    + 'style="width:100%;box-sizing:border-box;padding:12px;border:1.5px solid #c9d4de;border-radius:10px;font:16px/1.5 inherit"></textarea>'
+    + '<label style="display:block;font-weight:700;margin:14px 0 4px">Your name</label>'
+    + '<input name="by" required maxlength="80" style="width:100%;box-sizing:border-box;padding:12px;border:1.5px solid #c9d4de;border-radius:10px;font:16px inherit">'
+    + '<label style="display:block;margin:14px 0 18px;font-size:15px"><input type="checkbox" name="close" value="1" style="margin-right:8px;transform:scale(1.3)">'
+    + 'Close it: this client has been dealt with</label>'
+    + '<button type="submit" style="width:100%;padding:15px;border:0;border-radius:11px;background:#00254d;color:#fff;font:700 16px inherit;cursor:pointer">'
+    + 'Save and tell the agent</button></form>'
+    + '<p style="font-size:12.5px;color:#8b98a6;margin-top:18px">Internal. It names a client. Do not forward outside the branch.</p></div>';
+  return HtmlService.createHtmlOutput(html).setTitle('Sales support review');
+}
+function iSurveyReviewSave_(e) {
+  var p = (e && e.parameter) || {};
+  var token = String(p.sv || ''), sig = String(p.k || '');
+  if (!token || sig !== iSurveyReviewSig_(token)) return iSurveyPage_('That link is not valid.', '', '', '');
+  var by = String(p.by || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  var did = String(p.did || '').replace(/\s+/g, ' ').trim().slice(0, 400);
+  var note = String(p.note || '').trim().slice(0, 1500);
+  if (!by) return iSurveyReviewPage_(token, sig, 'Put your name, so the agent knows who reviewed it. Nothing was saved.');
+  if (!did && !note && !p.close) return iSurveyReviewPage_(token, sig, 'Write what we did or an insight. Nothing was saved.');
+  var f = iSurveyFind_(token);
+  if (!f) return iSurveyPage_('That letter is not on the tab any more.', '', '', '');
+  var now = new Date(), stamp = by + ' · ' + Utilities.formatDate(now, iTz_(), 'd MMM HH:mm');
+  var prev = String(f.row[ISCOL.REVIEWED - 1] || '').trim();
+  f.sh.getRange(f.r, ISCOL.REVIEWED).setValue((prev ? prev + '\n' : '') + stamp + ': ' + (note || did || 'closed'));
+  if (did) f.sh.getRange(f.r, ISCOL.OUTCOME).setValue(did);
+  if (p.close) {
+    f.sh.getRange(f.r, ISCOL.CLOSED).setValue(now);
+    f.sh.getRange(f.r, ISCOL.CLOSEDBY).setValue(by);
+    if (!did && !String(f.row[ISCOL.OUTCOME - 1] || '').trim()) f.sh.getRange(f.r, ISCOL.OUTCOME).setValue('(none recorded)');
+  }
+  var v = f.row, support = iSurveySupport_();
+  var agentMail = iSurveyAgentEmail_(String(v[ISCOL.AGENT - 1]));
+  var to = [agentMail, support.managerFor(String(v[ISCOL.UNIT - 1])), support.desk].join(',').split(',')
+    .map(function (x) { return String(x || '').trim(); }).filter(function (x, i, a) { return x && a.indexOf(x) === i; }).join(',');
+  if (to) {
+    iSend_(to, 'Sales support review: ' + String(v[ISCOL.CLIENT - 1] || '') + (p.close ? ' · closed' : ''),
+      '<div style="font:15px/1.6 sans-serif;color:#16202b;max-width:620px">'
+      + '<p><b>' + iEsc_(by) + '</b> reviewed what ' + iEsc_(String(v[ISCOL.CLIENT - 1] || 'the client')) + ' told us on the '
+      + ((Number(v[ISCOL.STAGE - 1]) || 45) === ISURVEY.NOTICE ? 'lapse notice' : (Number(v[ISCOL.STAGE - 1]) || 45) + '-day letter') + '.</p>'
+      + '<p><b>They tapped:</b> ' + iEsc_(iSurveyAskedWords_(v[ISCOL.ASKED - 1]).join(' · ') || 'nothing') + '<br>'
+      + '<b>Policy:</b> ' + iEsc_(String(v[ISCOL.POLICY - 1] || '')) + '</p>'
+      + (note ? '<p style="white-space:pre-wrap;background:#f4f7fa;border-radius:10px;padding:14px 16px"><b>Insight:</b> ' + iEsc_(note) + '</p>' : '')
+      + (did ? '<p><b>What we did</b> (the client reads this on our next note): ' + iEsc_(did) + '</p>' : '')
+      + (p.close ? '<p>Closed.</p>' : '<p>Still open.</p>')
+      + '<p style="font-size:12px;color:#8b98a6">Internal: it names a client. Do not forward outside the branch.</p></div>');
+  }
+  return iSurveyReviewPage_(token, sig, 'Saved' + (p.close ? ' and closed' : '') + '. The agent' + (to ? ' has been told.' : ' could not be told: no address on the access list.'));
+}
+
+/* "Let me tell you in my own words": a box, not the private line. What they
+   write is kept on the letter's row (Details) for sales support and the agent. */
+function iSurveyDetailsPage_(token) {
+  var base = iSurveyBase_();
+  return HtmlService.createHtmlOutput(
+    '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<div style="font:16px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#16202b;max-width:560px;margin:7vh auto;padding:0 22px">'
+    + '<div style="font:700 15px Georgia,serif;color:#00254d;margin-bottom:24px">Ricky Rampersad Branch'
+    + '<span style="display:block;font:400 12.5px sans-serif;color:#5c6b7a">Guardian Life · Chaguanas</span></div>'
+    + '<h1 style="font:700 26px Georgia,serif;color:#00254d;margin:0 0 10px">Tell us in your own words</h1>'
+    + '<p style="margin:0 0 16px;color:#3d4c5a">It goes to sales support and your agent, and somebody will be back to you within '
+    + '<b>two working days</b>. Please do not include a card number or a password.</p>'
+    + '<form method="post" action="' + iEsc_(base) + '"><input type="hidden" name="s" value="' + iEsc_(token) + '">'
+    + '<input type="hidden" name="kind" value="details">'
+    + '<textarea name="msg" rows="8" required maxlength="3000" placeholder="What happened, and what you would like us to do." '
+    + 'style="width:100%;box-sizing:border-box;padding:14px;border:1.5px solid #dde4ec;border-radius:11px;font:16px/1.55 inherit"></textarea>'
+    + '<label style="display:block;margin:12px 0 16px;font-size:14px;color:#5c6b7a"><input type="checkbox" name="callme" value="1" style="margin-right:7px">'
+    + 'Please call me</label>'
+    + '<button type="submit" style="width:100%;padding:15px;border:0;border-radius:11px;background:' + IBRAND.GOLD + ';color:' + IBRAND.NAVY
+    + ';font:700 16px inherit;cursor:pointer">Send</button></form></div>').setTitle('Tell us in your own words');
 }
 
 function iSurveyAgentEmail_(name) {
@@ -12712,7 +13225,7 @@ function intelSurveyFollowUp() {
 
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return 'Nothing has been sent yet.';
-  var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
+  var wide = Math.max(sh.getLastColumn(), ISCOL.LAST);
   var vals = sh.getRange(2, 1, last - 1, wide).getValues();
   var today = iToday_(), DAY = 86400000;
   var thanked = 0, opened = 0, alerts = [];
@@ -12799,7 +13312,7 @@ function intelSurveyClose(token, who, outcome) {
   if (!token || !who) return 'intelSurveyClose("<ref>", "your name", "what you did")';
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return 'Nothing to close.';
-  var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
+  var wide = Math.max(sh.getLastColumn(), ISCOL.LAST);
   var vals = sh.getRange(2, 1, last - 1, wide).getValues();
   for (var r = 0; r < vals.length; r++) {
     var t = String(vals[r][ISCOL.TOKEN - 1]);
@@ -12816,7 +13329,7 @@ function intelSurveyClose(token, who, outcome) {
 function iSurveyOpenRows_() {
   var sh = iSurveyTab_(), last = sh.getLastRow();
   if (last < 2) return [];
-  var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
+  var wide = Math.max(sh.getLastColumn(), ISCOL.LAST);
   var vals = sh.getRange(2, 1, last - 1, wide).getValues();
   var today = iToday_(), out = [];
   vals.forEach(function (row) {
@@ -12861,7 +13374,7 @@ function iBuildSurveyStats_() {
   if (last < 2) return out;
   /* Read the whole row, not a fixed 18 — the tab grew a follow-up block and a
      hardcoded width silently returns blanks for every column past it. */
-  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.STAGE)).getValues();
+  var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.LAST)).getValues();
   var band = {}, unit = {}, sum = 0, latest = null;
   vals.forEach(function (r) {
     /* MODE is written as "live · cleared <hash> by <who>", never the bare word,
