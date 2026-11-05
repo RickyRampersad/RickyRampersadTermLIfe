@@ -40,7 +40,9 @@ def b64(path, mime):
 
 
 FONT = b64(os.path.join(HERE, 'fonts', 'Inter-var.woff2'), 'font/woff2')
-MARK = b64(os.path.join(ROOT, 'orphan-transition', 'board-mark.png'), 'image/png')
+# The film's own mark (5 November 2026: "have the logo also reflect the scaled colors"): favicon.svg's shield and
+# check, no tile, in the film's cyan and blue. Nothing is redrawn; it is the board mark's own shape recoloured.
+MARK = b64(os.path.join(HERE, 'oft-mark.svg'), 'image/svg+xml')
 
 
 def shot(name):
@@ -624,6 +626,11 @@ h1.mega .w:last-child{color:var(--cy)}
 .cap{background:rgba(8,20,49,.72);border-color:rgba(127,178,255,.2);color:rgba(244,247,255,.32);font-size:21px;backdrop-filter:none}
 @keyframes lit{to{color:#fff}}
 .first .cap,.close .cap{}
+.brand img{border-radius:0;filter:drop-shadow(0 0 10px rgba(0,229,255,.45))}
+.cmark img{border-radius:0;box-shadow:none;filter:drop-shadow(0 0 26px rgba(0,229,255,.55)) drop-shadow(0 14px 30px rgba(2,8,24,.6))}
+.cmark.sm img{width:96px;height:96px}.cmark.sm{width:96px;height:96px}
+.ring{border-radius:50%}
+.th img{border-radius:0}
 """
 
 wide_scenes = {0, 3, 4, 5, 6, 7}
