@@ -7147,6 +7147,138 @@ both `DESK_CC` lists not leaking into each other, no representative addressed,
 the subject in both shapes with and without a plate, the `(not forwarded)` flag
 on each, the strict lookup, and the ping). 289 checks across nine suites.
 
+### Every term kept, and a task opened — 5 November 2026
+
+Asked for in one word, **"Both"**, after I set out two gaps: the register knew
+only the current year's cover, and a filed claim opened no task.
+
+#### One row per vehicle per term
+
+`syncVehicleRegister` collapsed every term of a vehicle into **one row**, newest
+winning, blanks never erasing. So a claim for an accident **in last year's
+term, filed after the renewal** — which is routine — came back *"the loss is
+before this policy started"*. The client was right and we were wrong, and that
+is the worst kind of finding to put in front of somebody with a good claim.
+
+The split that makes it work is between **what belongs to the vehicle** and
+**what belongs to the term**:
+
+| | |
+|---|---|
+| identity, merged across every term | plate, make, model, model year, chassis, engine, the insured's name, e-mail, mobile and permit |
+| cover, never merged | the period, sum insured, windscreen limit, coverage type, carrier, **policy number**, vehicle status |
+
+Merging identity is what recovers a chassis recorded once in 2019 and never
+again — and it now fills the **old** rows too, which the single-row version
+could not do. Never merge cover: a loss in 2023 is assessed against 2023's sum
+insured on 2023's policy number.
+
+- **Two terms with the same period are one term.** This org holds exact
+  duplicate cover rows — the renewal desk found last year's premium coming out
+  at two or three times the bill for that reason (`girDedupe_`). The **first**
+  row's `Risk Id` wins the merge, not a later duplicate's, because the choice
+  has to be stable or the register's parent id moves on every sync. That is the
+  renewal desk's own tie-break ("else the first entered") with no billing
+  record to prefer.
+- **Newest term first within a plate**, which is what keeps `findVehicle_` — and
+  so the sign-in, the prefill and the permit write-back — reading this year's
+  cover with no change to any of them.
+- `findVehicleTerms_` matches the **plate against the whole register before**
+  trying the policy number, and a policy-number hit then returns every term of
+  *that vehicle*: a client quoting last year's number still gets this year's
+  cover offered. `vehicleTermOn_` picks the term in force on a date;
+  `vehicleForClaim_` falls back to the newest rather than refusing.
+- **A term missing one end is open at that end.** A renewal in progress has no
+  To date, and refusing a claim over that would be our record's fault.
+- `permitRegisterUpdate_` writes **every** row of the vehicle, not the first
+  that matches: the permit belongs to the insured, not to a year of cover.
+- Two columns appended at the end (`namedSheet_` backfills by name, never
+  reorders): **Term**, so two rows for one plate can be told apart at a glance,
+  and **Risk Id**. `Years Insured` finally says something — the number of terms.
+
+**The checks are term-aware** (`claims/claim-checks.js`), and the three ways a
+loss can sit outside our record are now told apart, because the client can act
+on only one of them: before the **earliest** term, after the **latest**, or in a
+**gap between two** — a lapse, which gets its own `cover-gap` finding. All three
+stay `stop`s the client can answer in a line, never refusals: a register can be
+stale and a real claim must never be turned away by us. `termAt` is exported so
+the page and the checks can never disagree about which term it is.
+
+**The page re-picks the term when the date of loss is typed** and says so in
+plain words — *"Your loss falls in an earlier year of cover, 01 Mar 2024 to 28
+Feb 2025. That is the cover we will assess it against, and it is the right
+one."* The matched facts travel as `policyFacts`, so the desk notice, the claim
+form and the ledger all carry the right year's sum insured and policy number.
+The **desk notice and the printed form now show the vehicle, the cover in force
+and that year's sum insured** — until this they showed none of the three, and
+motor's own branch of `deskFields_` printed no vehicle at all.
+
+**A reloaded draft deliberately has no cover facts.** `saveDraft` keeps
+`state.policy` out of `localStorage` so a borrowed phone does not keep
+somebody's cover period and sum insured. What matters is that their absence
+leaves the cover checks **silent** rather than half-informed: one term
+resurrected on its own would reproduce the exact bug.
+
+#### The task
+
+`sfLogClaim_` already wrote one `Claims__c` row per filed claim — **I told him
+the permit write-back was the only Salesforce write, and that was wrong**; the
+ledger row has been there all along. What was missing is that the ledger is not
+work anybody is shown, and the branch works from task lists. So a claim could
+be filed, acknowledged, forwarded to Guardian General, and sitting in nobody's
+day.
+
+`sfClaimTask_` opens one task per claim. It **never throws**: a claim that is
+recorded, acknowledged and forwarded has done the important part, and a task
+that could not be written is a line in the log and a line in the claim's own
+Internal Notes.
+
+- **Subject**: `RRB CLAIM <ref> - <line> — <subtype> - <client> - <plate>`, the
+  reference first because the point is that a reply finds the file. The **line**
+  leads, not `submissionType_` alone, which gives "Collision" and says nothing
+  about which desk; health keeps Guardian's own submission wording.
+- **Parents**: motor on the **Risk_Details__c term in force on the date of
+  loss** (not this year's), everything else on the `CLIENT_PORTFOLIO__c` policy
+  record, plus the client's Contact as `WhoId`. The policy register gained
+  `Contact Id` and `Portfolio Id` for it — `Portfolio` was the record's *name*,
+  which cannot be a parent.
+- **A retry ladder, because what the org refuses must be dropped and never
+  claimed as written** (`gblSfwSave_`'s rule): WhatId first (a custom object
+  needs activities enabled), then `Task_Type__c` (`Claims/ Mat`, read off the
+  branch's own tasks — the space after the slash is the org's), then WhoId. The
+  note records which attempt won.
+- **Owner**: `CLAIMS.TASK.OWNER`, or the `CLAIMS_TASK_OWNER` Script Property,
+  resolved to an **active standard** user and **exactly one match**. The branch
+  manager's address also sits on four site guest users in this org
+  (`gblOwnerId_` found that the hard way) and a task owned by a guest user is a
+  task nobody opens. Unresolved, the task still files on the integration user
+  and says so — recoverable; not filing would not be.
+- **High** when a check fired, due in two working days, and `?action=ping`
+  returns `writes: {ledger, task, taskDueDays}` so "did it open a task?" is
+  answerable from a browser.
+
+#### Two things this cost, both recorded here because they keep recurring
+
+**A named-list function-lifting harness broke for the fourth time.** Splitting
+one function into two (`typeKeyFromLabel_` → `typeKeyStrict_`, then
+`deskFields_` → `coverTermText_`) throws a `ReferenceError` from inside a body
+that reads completely unchanged, which costs a run to diagnose every time. The
+lists are gone: `claims-sandbox.js` in the session scratchpad **defines every
+top-level function in the file** — a body only runs when it is called, so
+defining one that reaches for an unstubbed global is free.
+
+**Two real client registrations and a real plan number were in the published
+page**, as placeholders (`PDL 4471` in two places, `TQG0897-00014-00`) and in a
+comment. They are `TAA 1234` / `TBB 5678` / `TAA0001-00001-00` now. The leak
+check that found one of them only looked for `T**` plates and missed `PDL`; a
+Trinidad plate is **any** three letters and four digits. `claims/` is served
+from the repository root, so a placeholder is published — the same rule the
+films and these notes keep.
+
+Tests in the session scratchpad: `terms-test.js` (138 checks, Node, Salesforce
+and the sheet made up) and `terms-page.js` (32, Playwright, the real page
+against a mocked backend). 503 checks across twelve suites, none failing.
+
 ### The pages are light, on the branch's own palette
 
 Decided 5 November 2026, asked for in these words: *"also i dint like the dark

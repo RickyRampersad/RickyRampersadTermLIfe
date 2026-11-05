@@ -115,6 +115,15 @@ like a broken connection.
 every field name in both queries confirmed to resolve: about **1,600
 vehicles** and about **54,000 policies**.
 
+**The vehicle count is now a count of COVER TERMS, not of vehicles**, and it
+will be several times larger: one row per vehicle per year of cover, so a car
+insured with us for five years is five rows. The menu says so. That is what
+lets a claim for an accident in an earlier term be assessed against that
+year's sum insured instead of being told the loss is before the policy
+started. Two new columns at the end of the tab, **Term** and **Risk Id**, tell
+one year's row from another's — and `Years Insured` now says how many terms
+are on file, which it never did before.
+
 **Vehicles sync first, on purpose.** Those two sizes are very different — the
 policy half is 28 pages of SOQL and half a million cells — and Apps Script
 stops an execution at six minutes. **A timeout is not catchable**, so whichever
@@ -435,12 +444,25 @@ The system reads Salesforce itself. Once connected:
 
 - the **registers rebuild themselves nightly (~3am)** from `CLIENT
   PORTFOLIO` (policies — Record Type separates health/life/pension) and
-  `Risk Details` (vehicles, with the per-year merge that recovers old
-  chassis numbers),
-- a policy the sync hasn't seen yet is **looked up live** at claim time, and
+  `Risk Details` (vehicles — **one row per vehicle per year of cover** since
+  5 November 2026, so a claim for an accident in an earlier term is assessed
+  against that year's sum insured and policy number),
+- a policy the sync hasn't seen yet is **looked up live** at claim time,
 - every filed claim **writes itself into `Claims__c`** — Opened, dated,
-  policy-linked — so the branch ledger stops depending on manual typing.
-  (Skipped automatically in test mode.)
+  policy-linked — so the branch ledger stops depending on manual typing, and
+- every filed claim **opens one Task**, due in two working days, on the
+  client's Contact and on the policy record (for motor, on the cover term the
+  loss falls in), with the reference in the subject so a reply finds the file.
+
+Both writes are skipped automatically in test mode.
+
+**Who owns the task.** It goes to `rickyrampersadsalessupport@` unless the
+**`CLAIMS_TASK_OWNER`** Script Property names someone else. Whoever it is must
+be an **active standard** Salesforce user with that e-mail — the branch
+manager's address also sits on four *site guest* users in this org, and a task
+owned by a guest user is a task nobody will ever open, so the lookup insists on
+exactly one standard match. If it cannot resolve one, the task still opens
+(owned by the integration user) and the claim's Internal Notes say so.
 
 **One-time admin step in Salesforce** (Setup → App Manager → New Connected
 App):
@@ -449,9 +471,12 @@ App):
 2. Scopes: *Manage user data via APIs (api)*.
 3. Tick **Enable Client Credentials Flow**, and under the app's *Manage →
    Edit Policies*, set the **Run As** user — an integration (or your own)
-   user with read access to `CLIENT_PORTFOLIO__c` and `Risk_Details__c` and
-   create access to `Claims__c`.
+   user with read access to `CLIENT_PORTFOLIO__c`, `Risk_Details__c` and
+   `User`, and create access to `Claims__c` and `Task`.
 4. Copy the **Consumer Key** and **Consumer Secret**.
+
+`SF_WRITE_CLAIMS=off` turns off the ledger row and `SF_WRITE_TASKS=off` the
+task, either as a Script Property, without touching the code.
 
 Then in the Claims TT sheet: **Claims TT menu → ☁️ Connect Salesforce**,
 paste your My Domain URL (`https://yourorg.my.salesforce.com`), the key and
