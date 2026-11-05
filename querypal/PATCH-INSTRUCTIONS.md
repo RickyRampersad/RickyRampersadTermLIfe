@@ -1314,3 +1314,47 @@ only rule worth remembering here.
 There is no sign the codes were used by anyone outside the branch — the log
 shows 99 cases and no unexplained sign-ins — but that is not something the
 system can prove either way, which is the reason to rotate rather than hope.
+
+---
+
+### 34 — do not reassure a client about a request nobody received
+
+**One expression.** RRB/2026/098 (Shaun Ali) was logged on 21 October 2026 and
+its routed email never sent. The branch then told him three times — 27 and
+29 October, 3 November — that it was working on it. No department had seen the
+request. Fifteen days.
+
+The keep-warm gate asks whether updates are on and whether the client has an
+address. It never asks whether the request reached anybody, so the one case
+that most needed attention was the one being papered over.
+
+Ctrl+F in `Code.gs` for this line (one hit, in `autoSweep`):
+
+```js
+if (CLIENT_UPDATE_ON && row[6]) {
+```
+
+and change it to:
+
+```js
+if (CLIENT_UPDATE_ON && row[6] && qpKeepClientWarm_(row)) {
+```
+
+Nothing else changes. A case that reached its department behaves exactly as
+before. A case that did not gets one internal note saying why the client is
+hearing nothing, and `qpWarmHeldReport()` lists them.
+
+This is the stopgap, not the cure — **edit 32 is the cure.** Once
+`qpChaseOrSend_` is in, an unrouted case is sent as the original request on the
+next sweep, stops being unrouted, and the client gets a true update instead of
+a held one. Edit 34 is what holds in the gap, and for a case that can never be
+routed because it has no department address.
+
+### Then run
+
+```
+qpWarmHeldReport()
+```
+
+Read-only. It names every open case whose department never received it, and how
+many progress updates already went out saying otherwise.

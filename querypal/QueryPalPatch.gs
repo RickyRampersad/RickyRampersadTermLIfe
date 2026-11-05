@@ -3182,7 +3182,10 @@ function qpChaseOrSend_(row, n, due, sup, sh, r) {
           + ' at last. It had been logged but never emailed, so this was sent as the request '
           + 'itself, not as a follow-up.', 'internal']);
       } catch (ce) {}
-      return 'sent-original';
+      /* Section 22 caches which cases never reached a department. This one just
+       did, so the cache must not hold a client's update back on stale state. */
+    try { qpRouteStateClear_(); } catch (e3) {}
+    return 'sent-original';
     }
     return 'send-failed';                      // leave the flag; try again next sweep
   }
@@ -3311,6 +3314,122 @@ function qpAliasCheck() {
     out.push('  afterwards. It starts sending as the branch by itself.');
   }
   var msg = out.join('\n');
+  Logger.log(msg);
+  return msg;
+}
+
+
+/* ═══ 22. DO NOT REASSURE A CLIENT ABOUT A REQUEST NOBODY RECEIVED ═══
+   RRB/2026/098 — Shaun Ali, Opportunity — Cash Value — was logged on
+   21 October 2026 and its routed email never sent; the day's quota was gone
+   and section 13 wrote NOT EMAILED on the trail, honestly. Then:
+
+       27 Oct   Client progress update #1 sent (we are working on it)
+       29 Oct   Client progress update #2 sent (we are working on it)
+        3 Nov   Client progress update #3 sent (we are working on it)
+
+   Three times the branch told a client it was working on his request. No
+   department has ever seen it. Fifteen days.
+
+   The keep-warm gate in autoSweep is `CLIENT_UPDATE_ON && row[6]` — updates
+   are switched on, and the client has an address to receive them. Nothing in
+   it asks whether the request ever reached anybody. So the one case that most
+   needs somebody to notice is the one being papered over, and the papering
+   over is what stops anybody noticing.
+
+   Silence would have been better than those three emails. This is not the
+   keep-warm being too eager; it is the keep-warm not knowing. So it is told.
+
+   Section 20 is the other half and the real cure: once edit 32 is in,
+   qpChaseOrSend_ sends the original when the chase comes due, the case stops
+   being unrouted, and the client gets a true update instead of a held one.
+   This guard is what stands between those two moments — and what holds if a
+   case can never be routed at all, because it has no department address.
+
+   The trail is read once per run, not once per case: qpNeverEmailed_ reads all
+   757 comment rows every call, and the sweep would do that for every open
+   case. qpChaseOrSend_ clears the cache when it routes something, so a case
+   sent earlier in the same sweep is not held back on stale state.
+
+   Code.gs edit 34, one expression, the keep-warm gate in autoSweep: the
+   condition gains a call to qpKeepClientWarm_ with the row. The string to
+   search for is in PATCH-INSTRUCTIONS.md under edit 34; search Code.gs with
+   it, not this file.                                                        */
+
+var QP_WARM_HELD_MARK = 'progress update held back';
+var QP_ROUTE_STATE = null;
+
+/* ref -> true (never reached a department) / false (did reach it), plus the
+   refs whose trail already carries the held-back note, in one pass. */
+function qpRouteState_() {
+  if (QP_ROUTE_STATE) return QP_ROUTE_STATE;
+  var st = { never: {}, noted: {} };
+  try {
+    var cm = cmtSheet_();
+    if (cm.getLastRow() > 1) {
+      var d = cm.getRange(2, 1, cm.getLastRow() - 1, 6).getValues();
+      for (var i = 0; i < d.length; i++) {
+        var ref = String(d[i][1] || '').trim();
+        if (!ref) continue;
+        var tx = String(d[i][4] || '');
+        if (/NOT EMAILED/i.test(tx)) st.never[ref] = true;
+        else if (/\bROUTED\b/.test(tx)) st.never[ref] = false;
+        if (tx.indexOf(QP_WARM_HELD_MARK) > -1) st.noted[ref] = true;
+      }
+    }
+  } catch (e) {}
+  QP_ROUTE_STATE = st;
+  return st;
+}
+
+function qpRouteStateClear_() { QP_ROUTE_STATE = null; }
+
+/* True when the client may be told the branch is working on it. */
+function qpKeepClientWarm_(row) {
+  var ref = String(row[0] || '').trim();
+  if (!ref) return true;
+  var st = qpRouteState_();
+  if (st.never[ref] !== true) return true;          // it reached its department
+
+  /* Held back. Say so once, on the trail, so this is visible rather than just
+     quiet — a case nobody is updating needs somebody to know. */
+  if (!st.noted[ref]) {
+    try {
+      cmtSheet_().appendRow([new Date(), ref, 'Query Pal', 'system',
+        '✋ Client ' + QP_WARM_HELD_MARK + ' — this request has never reached '
+        + 'a department, so telling the client it is being worked on would not be '
+        + 'true. It sends as the original request on the next sweep.', 'internal']);
+      st.noted[ref] = true;
+    } catch (e) {}
+  }
+  return false;
+}
+
+/* Which clients are being told nothing, and why. Read-only. */
+function qpWarmHeldReport() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return 'The log is empty.';
+  var d = sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(29, sh.getMaxColumns())).getValues();
+  var st = qpRouteState_(), out = [];
+  for (var i = 0; i < d.length; i++) {
+    var ref = String(d[i][0] || '').trim();
+    if (!ref) continue;
+    var stat = String(d[i][3] || '').toLowerCase();
+    if (stat && stat.indexOf('open') === -1) continue;
+    if (st.never[ref] !== true) continue;
+    var updates = (String(d[i][18] || '').match(/client-updates:(\d+)/) || [0, '0'])[1];
+    out.push('  ' + ref.slice(0, 50) + '\n      -> ' + String(d[i][13] || '')
+      + '  |  ' + updates + ' progress update(s) already sent to '
+      + String(d[i][6] || '(no client address)'));
+  }
+  var msg = ['CLIENTS BEING TOLD NOTHING — read-only, nothing is sent', '',
+    out.length
+      ? out.length + ' open case' + (out.length === 1 ? '' : 's') + ' never reached a department.\n'
+        + 'Any progress update already counted above went out before this guard,\n'
+        + 'and said the branch was working on something nobody had received.\n\n' + out.join('\n')
+        + '\n\nWith edit 32 in, the next sweep sends each one as the request itself.'
+      : 'Every open case has reached its department. Nothing is being held back.'
+  ].join('\n');
   Logger.log(msg);
   return msg;
 }
