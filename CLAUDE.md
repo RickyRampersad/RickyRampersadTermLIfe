@@ -6971,6 +6971,34 @@ missing helper one run at a time: a body only runs when it is called, so
 defining one that reaches for an unstubbed global costs nothing.
 `pdf-test.js` in the session scratchpad covers all four lines (72 checks).
 
+### "Can I use this now" has to be answerable from outside — 5 November 2026
+
+Asked in those words, and it could not be. `?action=ping` returned the
+file-size limits and nothing else, so whether test mode was on, which lines had
+a confirmed desk and whether Salesforce was connected were all invisible from a
+browser — and the only honest answer was a guess.
+
+It now returns `build`, `testMode`, `live`, `desks` (a flag a line), `salesforce`
+and **`says`**: the whole state in one sentence a person can act on, in three
+forms — test mode, live with the unrouted lines named, live and fully routed.
+
+**`build` is `CLAIMS.BUILD`, a date, and it is the point of the thing.** From
+outside, "never pasted", "pasted but never deployed" and "a later paste of an
+older copy won the same function name" look identical; this repository has lost
+an evening to exactly that before (the settlement board, 4 September). Change
+it with any change worth deploying.
+
+It leaks nothing — the addresses are already in the public file, so the ping
+reports only *whether* each line has one.
+
+**A key in `DESK_OK` is not enough on its own**: `deskFor_` wants an address
+*and* the flag. That is the right rule, and my first cut of the test got it
+wrong rather than the code — the same lesson as the date assertions a day
+earlier. **Check which side holds the bug before changing anything.**
+
+`ping-test.js` in the session scratchpad covers it (12 checks: today's real
+state, live-with-gaps, fully routed, and that no address is in the answer).
+
 ### Built, live, and nowhere a person looks — 5 November 2026
 
 *"I am not seeing claims in my site!"* He was right, and nothing was broken.

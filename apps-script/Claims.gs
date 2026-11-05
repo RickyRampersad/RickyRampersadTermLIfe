@@ -52,6 +52,13 @@
  */
 
 var CLAIMS = {
+  /* Which copy of this file is actually running, as a date. `?action=ping`
+   * returns it, so a browser can tell a pasted-and-deployed build from one
+   * that was pasted and never deployed — from outside those look identical,
+   * and so does a later paste of an older copy winning the same function
+   * name. Change it with any change worth deploying. */
+  BUILD: '2026-11-05c',
+
   /* ---- where notifications go ---------------------------- */
 
   // The claims desk for each line of business. Any line left blank falls
@@ -1426,6 +1433,50 @@ function fmtOrBlank_(v) {
 
 /* ============================ web app routing ============================ */
 
+/* Is this thing on, and is it safe to send a client to it?
+ *
+ * Added 5 November 2026, on the question "can I use this now" — which could
+ * not be answered from outside. The old ping said the file-size limits and
+ * nothing else, so whether test mode was on, which lines had a desk, and
+ * whether Salesforce was connected were all invisible, and the honest answer
+ * was a guess. CLAUDE.md's own Apps Script note prescribes exactly this: a
+ * build marker and a self-check, because from outside "not pasted", "not
+ * deployed" and "a later copy won the name" look identical.
+ *
+ * It leaks nothing. The desk addresses are already in this public file, so
+ * this reports only WHETHER each line has one; `build` is the date in this
+ * file's own header, which is how a browser tells which copy is deployed. */
+function claimPing_() {
+  var lines = {}, ready = [];
+  Object.keys(CLAIMS.DESK).forEach(function (k) {
+    var on = !!deskFor_(k);
+    lines[k] = on;
+    if (on) ready.push(k);
+  });
+  var test = testMode_();
+  return {
+    ok: true,
+    service: 'claims-tt',
+    build: CLAIMS.BUILD,
+    testMode: test,
+    live: !test,
+    desks: lines,
+    desksReady: ready,
+    salesforce: sfConnected_(),
+    maxFileMb: CLAIMS.MAX_FILE_MB,
+    maxFiles: CLAIMS.MAX_FILES,
+    /* One sentence a person can act on, so nobody has to read the flags. */
+    says: test
+      ? 'TEST MODE. Every e-mail goes to the test inbox — a real client would ' +
+        'hear nothing. Claims TT menu → "Turn test mode OFF" when the desks are set.'
+      : (ready.length === Object.keys(lines).length
+        ? 'Live, and every line has a claims desk.'
+        : 'LIVE. Claims on ' + Object.keys(lines).filter(function (k) { return !lines[k]; }).join(', ') +
+          ' are filed and acknowledged but NOT forwarded — someone must pass ' +
+          'them on by hand until those desk addresses are set.'),
+  };
+}
+
 function doGet(e) {
   var p = (e && e.parameter) || {};
   /*  The feedback page is HTML, not JSON, so it is answered before the
@@ -1443,7 +1494,7 @@ function doGet(e) {
   var out;
   try {
     switch (p.action) {
-      case 'ping':       out = { ok: true, service: 'claims-tt', maxFileMb: CLAIMS.MAX_FILE_MB, maxFiles: CLAIMS.MAX_FILES }; break;
+      case 'ping':       out = claimPing_(); break;
       case 'status':     out = apiStatus_(p.ref, p.last4); break;
       case 'findPolicy': out = apiFindPolicy_(p.q); break;
       default:           out = { ok: false, error: 'Unknown action' };

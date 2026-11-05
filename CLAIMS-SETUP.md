@@ -241,6 +241,41 @@ https://rickyrampersadbranch.com/claims/
 https://rickyrampersadbranch.com/claim          ← the short one, for WhatsApp
 ```
 
+### Is it safe to send a client to it? Ask the ping — 5 November 2026
+
+Asked in three words — *"can I use this now"* — and it could not be answered
+from outside. The ping returned the file-size limits and nothing else, so test
+mode, the desk addresses and the Salesforce link were all invisible, and the
+honest answer was a guess. `?action=ping` now answers:
+
+```json
+{ "ok": true, "service": "claims-tt", "build": "2026-11-05c",
+  "testMode": true, "live": false,
+  "desks": { "motor": false, "property": false, "health": true,
+             "life": false, "pension": false },
+  "desksReady": ["health"], "salesforce": false,
+  "says": "TEST MODE. Every e-mail goes to the test inbox — a real client
+           would hear nothing. Claims TT menu → \"Turn test mode OFF\"…" }
+```
+
+**`says` is the whole answer in one sentence**, so nobody has to read flags. It
+has three forms: test mode; live with lines that have no desk, which it names;
+and live with every line routed.
+
+**`build` is how a browser tells which copy is running.** It is `CLAIMS.BUILD`,
+a date in this file's own header. From outside, "never pasted", "pasted but
+never deployed" and "a later paste of an older copy won the same function name"
+look identical — that is the standing Apps Script trap, and a build marker is
+the only cheap way through it. **Change `CLAIMS.BUILD` with any change worth
+deploying.**
+
+It leaks nothing: the desk addresses are already in this public file, so the
+ping reports only *whether* each line has one.
+
+**A key in `DESK_OK` is not enough on its own.** `deskFor_` wants an address
+*and* the flag, which is the right rule — it is what stops a half-finished
+switch-on from silently routing claims into the void.
+
 ### How a person finds it without being sent a link — 5 November 2026
 
 Reported in these words: *"I am not seeing claims in my site!"* He was right,
