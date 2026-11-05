@@ -1,14 +1,25 @@
 {
  "voices": {
-  "h868fix": "en-US-AndrewMultilingualNeural"
+  "h868v2": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "h868fix": "+0%"
+  "h868v2": "+0%"
  },
  "check": true,
  "films": {
-  "h868fix": [
-   "Agents, this is for your clients too. Share the link. Every query lands in one place."
+  "h868v2": [
+   "Help eight six eight just got a lot smarter. Your branch, on WhatsApp, any hour of the day.",
+   "One tap on the green button, and the chat opens. No app to download, and no forms to fill.",
+   "We say hello, and show a menu. Your client taps what they need. A question, a claim, an update, a payment, or a quote.",
+   "Every question after that is a tap too. Is it urgent? Yes or no, one tap. Nobody types a number, and nothing is asked twice.",
+   "We only ask for their name, and a policy number if they have one. Never bank details, never I D numbers.",
+   "Then it lands on Query Pal, our query system, with a reference, and goes to the right department.",
+   "Your client gets a receipt card right in WhatsApp, with the reference and the target time. The same confirmation arrives by email.",
+   "Our support team sees the whole chat, with the details already filled in. Query Pal now has a pal to work with.",
+   "When it's resolved, we close it with a summary, and ask for a star rating, right there in the chat. A low rating gets a call back.",
+   "And if a query is still open, we don't go quiet. A friendly update comes every three working days, until it's done.",
+   "Agents, share the link with your clients. We've just welcomed our first client, and the insights are coming soon.",
+   "Help eight six eight. Always on, and always us. Tap the green button on our website, and say hello."
   ]
  }
 }
