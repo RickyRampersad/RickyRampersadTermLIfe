@@ -9,6 +9,13 @@
    After adding this file, make the small edits listed in
    PATCH-INSTRUCTIONS.md, then Deploy → Manage deployments → pencil →
    Version: New version → Deploy.
+
+   WHEN YOU SEARCH FOR AN EDIT, SEARCH Code.gs — not this file. The search
+   strings live in PATCH-INSTRUCTIONS.md and the lines they match live in
+   Code.gs. Ctrl+F in the Apps Script editor searches the file that is open,
+   so with this one open you find these paragraphs instead of your code, and
+   the count at the top right counts them. Click Code.gs in the left sidebar
+   first; save this file before you switch, or the orange dot stays.
    ============================================================================ */
 
 
@@ -2479,13 +2486,10 @@ function qpFoldChases_(payload) {
    ignores messages from the client and from us. No department thread means no
    reply — silence is the honest answer, not a guess.
 
-   Code.gs edit 28: in autoSweep, find
-
-       latestExternalReplyText_(row[0])
-
-   (one hit) and change it to
-
-       qpExternalReply_(row)                                                  */
+   Code.gs edit 28, in autoSweep: the single call to latestExternalReplyText_
+   becomes qpExternalReply_, and takes the whole row rather than just the
+   reference. The string to search for is in PATCH-INSTRUCTIONS.md under
+   edit 28; search Code.gs with it, not this file.                           */
 
 function qpExternalReply_(row) {
   try {
@@ -2581,13 +2585,10 @@ function qpThreadAudit() {
    with the right text. A reply with nothing above the quote reads 'unclear',
    which is honest — somebody top-posted empty.
 
-   Code.gs edit 29: in autoSweep, find
-
-       classifyReply_(reply.text)
-
-   (one hit) and change it to
-
-       qpClassifyReply_(reply.text)                                          */
+   Code.gs edit 29, in autoSweep: the one place that hands the reply text to
+   classifyReply_ hands it to qpClassifyReply_ instead. The argument does not
+   change. The string to search for is in PATCH-INSTRUCTIONS.md under edit 29;
+   search Code.gs with it, not this file.                                    */
 
 /* Everything from here down was written by somebody else, or by a lawyer. */
 var QP_QUOTE_MARKS = [
@@ -2934,8 +2935,9 @@ function qpAutomationScore() {
    Query Pal's own traffic does not come close to a hundred. Sixteen rows did.
 
    Every one of them carries a timestamp of 1970-01-01T00:00:00.000Z. That is
-   epoch zero: `new Date(d.timestamp)` was handed nothing it could parse, and
-   stored the result. The app always sends an ISO timestamp, and nothing here
+   epoch zero: doPost converts the payload's timestamp field to a Date with
+   nothing in between, so a payload carrying no timestamp at all stores that.
+   The app always sends an ISO timestamp, and nothing here
    produces the literal `{{clientName}}` that sits in the client column of
    RRB/2026/109 — so these were POSTed straight at the webhook by something
    outside the app, a template or a harness that never filled its fields in.
@@ -3041,8 +3043,9 @@ function qpQuarantineJunk(dryRun) {
 /* ══════ 20. A REQUEST THAT NEVER SENT NEEDS SENDING, NOT CHASING ══════
    Two faults with one cause, and respond.io is how they were found.
 
-   FIRST — the timestamp. doPost stores `new Date(d.timestamp)` with nothing
-   between it and the sheet. Hand it a payload with no timestamp and it stores
+   FIRST — the timestamp. doPost converts the payload's timestamp field to a
+   Date with nothing between it and the sheet. Hand it a payload with no
+   timestamp and it stores
    epoch zero, which deadlineAt_ then treats as a request from 1970 — about
    fifty-seven years overdue, chased every sweep, for ever. Sixteen rows on
    this log are in that state and nine of them were still Open on 5 November,
@@ -3075,11 +3078,12 @@ function qpQuarantineJunk(dryRun) {
    recoverable — they rode on the original POST and were never stored — so the
    email says so rather than pretending otherwise.
 
-   Code.gs edits 31 and 32, both single expressions:
-
-     31   new Date(d.timestamp)                 ->  qpStamp_(d.timestamp)
-     32   sendFollowUp_(row, count + 1, due, sup);
-            ->  qpChaseOrSend_(row, count + 1, due, sup, sh, r);           */
+   Code.gs edits 31 and 32, both single expressions. 31 wraps the payload's
+   timestamp in qpStamp_ where doPost converts it. 32 sends a due chase through
+   qpChaseOrSend_ rather than sendFollowUp_, adding the sheet and the row index
+   to the arguments it already passes. Both strings to search for are in
+   PATCH-INSTRUCTIONS.md under "31 and 32"; search Code.gs with them, not this
+   file.                                                                     */
 
 function qpStamp_(v) {
   var d = (v instanceof Date) ? v : new Date(v);
@@ -3210,9 +3214,11 @@ function qpUnroutedReport() {
    working by itself the moment the alias is set up — nothing to remember, and
    nothing breaks in the meantime.
 
-   Code.gs edit 33, one expression, in sendRoutedEmail:
-
-       MailApp.sendEmail(mail);   ->   qpSendAs_(mail);
+   Code.gs edit 33, one expression, in sendRoutedEmail: the MailApp send of the
+   assembled mail object goes through qpSendAs_ instead. The string to search
+   for is in PATCH-INSTRUCTIONS.md under edit 33; search Code.gs with it, not
+   this file — qpSendAs_'s own body a few lines below sends the same way, so in
+   here you would find that as well.
 
    That covers the original routed request and every resend, since section 20
    sends through sendRoutedEmail. Run qpAliasCheck() to see where you stand. */
