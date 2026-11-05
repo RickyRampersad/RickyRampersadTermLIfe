@@ -126,7 +126,8 @@ var LB = {
   /* OFT kits (5 November 2026: "we have scrapped the entire FedEx process … the agent collects the
      sample … submits to the sales support using a unique tracking number … the staff generates the
      transmittal to accompany the OFT kits … to the relevant branch, who is the collation branch for the
-     particular quarter"). Each kit gets RRB-OFT-YYMM-NNN when it is logged; the transmittal names the
+     particular quarter"). Each kit gets RRB-OFT-YY-MM-DD-NNN when it is logged (the date it was logged, then
+     that day's count); the transmittal names the
      collation branch, chosen from the OFT Collation tab. */
   OFT: 'OFT KITS (COLLATION BRANCH)',
   OFT_OLD: 'OFT (FEDEX)',
@@ -1812,11 +1813,11 @@ function lbUnsend_(b, who) {
 
 /* ============================== OFT kits ============================== */
 
-/* The next kit numbers for this month: RRB-OFT-2611-001, -002 … read off the
+/* The next kit numbers for today: RRB-OFT-26-11-05-001, -002 … read off the
    sheet under the submit's lock, so two agents logging at once never share one. */
 function lbOftNext_(now) {
   var ymd = Utilities.formatDate(now, dbTz_(), 'yyyy-MM-dd');
-  var stem = LB.OFT_PREFIX + ymd.slice(2, 4) + ymd.slice(5, 7) + '-';
+  var stem = LB.OFT_PREFIX + ymd.slice(2) + '-';
   var max = 0;
   lbRows_().forEach(function (r) {
     if (r.oftNo && r.oftNo.indexOf(stem) === 0) max = Math.max(max, parseInt(r.oftNo.slice(stem.length), 10) || 0);

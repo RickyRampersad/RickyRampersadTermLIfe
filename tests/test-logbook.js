@@ -293,7 +293,7 @@ console.log('received and sent');
     // OFT kits (5 November 2026): a number for each kit at logging, the collation branch on the transmittal.
     const s1 = env.lbSubmit_({ entry: entry({ items: [{ document: 'OFT Kit', department: 'RECORDS MANAGEMENT DEPT', policy: '9000000001', quantity: 4 },
                                                        { document: 'OFT Kit', policy: '9000000002' }] }), confirmDuplicates: true }, agent);
-    const ymd = env.Utilities.formatDate(new Date(), env.dbTz_(), 'yyyy-MM-dd'), stem = 'RRB-OFT-' + ymd.slice(2, 4) + ymd.slice(5, 7) + '-';
+    const ymd = env.Utilities.formatDate(new Date(), env.dbTz_(), 'yyyy-MM-dd'), stem = 'RRB-OFT-' + ymd.slice(2) + '-';
     ok('each OFT kit gets its own RRB-OFT number', s1.oftNos.length === 2 && s1.oftNos[0].no === stem + '001' && s1.oftNos[1].no === stem + '002');
     const s2 = env.lbSubmit_({ entry: entry({ items: [{ document: 'OFT Kit', policy: '9000000003' }] }), confirmDuplicates: true }, agent);
     ok('the numbers carry on and never repeat', s2.oftNos[0].no === stem + '003', JSON.stringify(s2.oftNos));
