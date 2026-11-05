@@ -7302,6 +7302,19 @@ says what is wrong and names the fix, and the page honours it: until this,
 `staff.html` ignored `sent === false`, showed the message and *then opened the
 code box*, asking for a code that was never sent.
 
+**The client door keeps the vague answer for everyone except one of our own
+addresses.** Reported straight after the staff fix: *"signing in as a client
+and no emsil for the code being generated"*. Every claim on file was filed
+under a made-up address (`test.member@example.com` and two like it), so his
+own address matched nothing and the page said a code was on its way to an
+inbox that does not exist. The privacy property is worth keeping — a stranger
+must not learn whether we hold a given person — but **a branch address asking
+about itself is not a stranger**, it is somebody testing. `claimsTester_`
+already knows which addresses those are, so the client door tells them plainly
+that there is no claim on file under it and what the door actually knows. A
+mobile number is never a trusted identity, so it keeps the vague answer. Do
+not widen this: the honest answer is for the branch's own addresses only.
+
 **`setupClaims` seeded one address, once, into an empty tab** — `MAIL_CC[0]`,
 the Guardian address — so the Google account that owns the script was never on
 the list. "1. Set up / repair everything" now **repairs**: on every run it adds
@@ -7348,12 +7361,14 @@ send nothing.
 moved". It checks the shape and that the marker is not older than the work it
 covers.
 
-Tests in the session scratchpad: `signin-test.js` (58 checks, Node — live mode,
+Tests in the session scratchpad: `signin-test.js` (66 checks, Node — live mode,
 every trusted address, a client's code still held, the gate overriding the
-caller, both doors' wording, the rate limit, the ping, and `setupClaims`
-repairing a tab that already has a row) and `staff-page.js` (19, Playwright —
-the refusal shown as a refusal with no code box, the whole sign-in through to
-the token, and a phone). 581 checks across fourteen suites, none failing.
+caller, both doors' wording for a stranger and for one of our own, a mobile
+number keeping the vague answer, the rate limit, the ping, and `setupClaims`
+repairing a tab that already has a row) and `staff-page.js` (24, Playwright —
+both doors' refusals shown as refusals with no code box, the whole staff
+sign-in through to the token, and a phone). 594 checks across fourteen suites,
+none failing.
 
 ### The pages are light, on the branch's own palette
 

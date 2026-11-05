@@ -57,7 +57,7 @@ var CLAIMS = {
    * that was pasted and never deployed — from outside those look identical,
    * and so does a later paste of an older copy winning the same function
    * name. Change it with any change worth deploying. */
-  BUILD: '2026-11-05f',
+  BUILD: '2026-11-05g',
 
   /* ---- where notifications go ---------------------------- */
 
@@ -1566,7 +1566,23 @@ function apiRequestCode_(b) {
     email = staff.email; name = staff.name;
   } else {
     var mine = claimsForIdentity_(b.identity);
-    if (!mine.length) return generic;
+    if (!mine.length) {
+      /* The vague answer above is for a STRANGER, who must not be able to use
+         this endpoint to find out whether we hold a given person. One of the
+         branch's own addresses asking about ITSELF is not a stranger — it is
+         somebody testing, and on 5 November 2026 that vagueness cost an
+         evening: every claim on file was under a made-up address, so the
+         client door answered "a code is on its way" and had nothing to send
+         it to. A client still gets the standard answer, every time. */
+      if (claimsTester_(id.value)) {
+        return { ok: true, sent: false,
+          message: 'No claim on file under ' + id.value + ', so there is no code to send. ' +
+            'The client sign-in only knows an address or mobile number already on a filed ' +
+            'claim — file one carrying this address and it will work. You are told this ' +
+            'because it is a branch address; anyone else gets the standard answer.' };
+      }
+      return generic;
+    }
     // Newest claim with an email wins — that is where the code goes.
     for (var i = mine.length - 1; i >= 0; i--) {
       var e = String(mine[i].values[mine[i].map['email']] || '').trim();

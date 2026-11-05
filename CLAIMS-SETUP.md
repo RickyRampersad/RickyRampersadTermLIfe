@@ -653,6 +653,16 @@ review*. Sessions last 30 days on that device. Clients with no email on file
 can't receive codes — for them the **quick check** (reference + last 4 mobile
 digits) still works, so nobody is locked out.
 
+**The client sign-in only knows an address or mobile number that is already on
+a filed claim.** Anything else gets the deliberately vague *"if we have that on
+file, a code is on its way"* and nothing is sent — that is what stops the page
+being used to find out whether we hold a given person. **One exception: one of
+the branch's own addresses** (the `Staff` tab, `CLAIMS.MAIL_CC`, the script
+owner, `CLAIMS_TESTERS`) **is told plainly** that there is no claim under it,
+because that is somebody testing rather than a stranger fishing. So to try the
+client side on yourself, **file a claim carrying your own address first** —
+until then there is nothing for the client door to find.
+
 **Staff** sign in at `/claims/staff.html` — but only emails listed on the
 **`Staff` tab** of the Claims TT sheet (`Email, Name, Role, Active`) with
 `Active=Y` ever receive a code. **An address that is not on the tab is told
