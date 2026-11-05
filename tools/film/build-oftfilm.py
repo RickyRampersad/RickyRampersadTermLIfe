@@ -62,7 +62,7 @@ def head(n, kicker, title, base=250):
 
 
 def caption(n):
-    txt = LINES[n].replace('R R B, O F T', 'RRB-OFT').replace('O F T', 'OFT').split(' ')
+    txt = LINES[n].replace('O F T', 'OFT').split(' ')
     ws = TIM[n]['words']
     out, j = [], 0
     for tok in txt:
@@ -159,8 +159,32 @@ scenes.append(f"""
   <div class="routeline"><span class="rp" style="animation-delay:{at(n, 'moment')}ms">Logged</span><svg class="route" viewBox="0 0 300 40"><path style="animation-delay:{at(n, 'moment', plus=300)}ms" d="M6 20 H294"/><circle cx="294" cy="20" r="7" style="animation-delay:{at(n, 'collation')}ms"/></svg><span class="rp c" style="animation-delay:{at(n, 'collation')}ms">Collation branch</span></div>
 </div>""")
 
-# 2 ─ collect, open, choose OFT Kit
+# 2 ─ before, by hand; now, the system
 n = 1
+OLD = '80 1285 3285'
+def sheet(title, k):
+    rows = ''.join(f'<div class="orow" style="animation-delay:{at(n, "sheet") + 260 * k + 120 * r}ms"><span>{OLD}</span><i></i></div>' for r in range(4))
+    return f'<div class="osheet" style="animation-delay:{at(n, "typed") + 200 * k}ms;--r:{(-3, 1.5, -1)[k]}deg"><b>{title}</b>{rows}</div>'
+scenes.append(f"""
+<div class="ba">
+  <div class="before">
+    <p class="tagb" style="animation-delay:{at(n, 'before')}ms">Before</p>
+    <div class="sheets">{sheet('OFT print', 0)}{sheet('Collation sheet', 1)}{sheet('Commercial invoice', 2)}
+    <span class="byhand" style="animation-delay:{at(n, 'again', 2, plus=150)}ms">By hand. Again and again.</span></div>
+  </div>
+  <div class="now" style="animation-delay:{at(n, 'now')}ms">
+    <p class="tagn">Now</p>
+    <h2 class="nowh">{words('The system does it.', at(n, 'system'), 90)}</h2>
+    <div class="rows">
+      {tick('Logged once', at(n, 'system', plus=500), 'ok')}
+      {tick('Numbered by the system', at(n, 'system', plus=800), 'ok')}
+      {tick('On the transmittal by itself', at(n, 'system', plus=1100), 'ok')}
+    </div>
+  </div>
+</div>""")
+
+# 3 ─ collect, open, choose OFT Kit
+n = 2
 docs = ['Signed Script', 'Change of Beneficiary', 'OFT Kit', 'Proof of ID', 'Bank Statement', 'ACH Form']
 dl = ''.join(f'<div class="dli{" on" if d == "OFT Kit" else ""}" style="animation-delay:{at(n, "open") + 80 * k}ms">{d}</div>' for k, d in enumerate(docs))
 scenes.append(f"""
@@ -174,36 +198,48 @@ scenes.append(f"""
 </div>
 {screen(f'<div class="sh">Log Book <small>Log documents</small></div><div class="sl">What are you handing in?</div><div class="dl">{dl}</div>' + tap(195, 352, at(n, 'kit')))}""")
 
-# 3 ─ client and policy, one kit per line
-n = 2
+# 4 ─ our branch system fills it in
+n = 3
+q = 'Jordan'
+typed = ''.join(f'<i style="animation-delay:{at(n, "our") + 90 * k}ms">{c}</i>' for k, c in enumerate(q))
 scenes.append(f"""
 <div class="left">
-  {head(n, 'Step 4 · From Salesforce', 'Your client and the policy.')}
+  {head(n, 'Our branch system', 'It fills itself in.')}
   <div class="rows">
-    {tick('Your client, from Salesforce', at(n, 'client'), 'ok', 'Picked, never typed')}
-    {tick('The policy it is for', at(n, 'policy'), 'ok')}
-    {tick('One kit per line', at(n, 'one'), 'ok', 'Two kits? Two lines, two numbers')}
+    {tick('Looks up your client', at(n, 'looks'), 'ok')}
+    {tick('Fills in the policy number', at(n, 'fills'), 'ok', 'No digging for it, no typing it')}
+    {tick('Made for busy agents on the go', at(n, 'busy'), 'ok', 'Less typing, more time with clients')}
   </div>
 </div>
 {screen(f"""<div class="sh">Log Book <small>Log documents</small></div>
-<div class="cc" style="animation-delay:{at(n, 'client')}ms"><span class="av">JS</span><div><b>Jordan Sample</b><small>Sample client · made up</small></div></div>
-<div class="it" style="animation-delay:{at(n, 'policy')}ms"><b>OFT Kit</b><small>Policy</small><div class="sel">1000 123 456 · LIFE</div>
-<div class="sg" style="animation-delay:{at(n, 'one')}ms">✓ One kit per line. Its tracking number is made when you log it.</div></div>""")}""")
+<div class="fsr"><span class="tq">{typed}</span><span class="caret"></span></div>
+<div class="cc" style="animation-delay:{at(n, 'looks', plus=150)}ms"><span class="av">JS</span><div><b>Jordan Sample</b><small>Sample client · made up</small></div></div>
+<div class="it" style="animation-delay:{at(n, 'fills', plus=-200)}ms"><b>OFT Kit</b><small>Policy</small><div class="sel fill" style="animation-delay:{at(n, 'policy')}ms">1000 123 456 · LIFE</div>
+<div class="sg" style="animation-delay:{at(n, 'policy', plus=300)}ms">✓ Filled in for you</div></div>""")}""")
 
-# 4 ─ the number
-n = 3
-parts = [('RRB', 'Our branch', at(n, 'r')), ('OFT', 'The kit', at(n, 'o')), ('26-11-05', "Today's date", at(n, 'date')), ('001', "The kit's own number", at(n, 'number'))]
-pp = '<span class="dash">-</span>'.join(f'<span class="part" style="animation-delay:{t}ms"><b>{a}</b><small>{b}</small></span>' for a, b, t in parts)
+# 5 ─ the number, in one run
+n = 4
+GL = 'ABCDEFGHJKLMNPRSTUVWXYZ0123456789'
+def roll(ch, k, t0):
+    if ch == '-':
+        return f'<span class="rc dash2" style="animation-delay:{t0 + 38 * k}ms">-</span>'
+    junk = ''.join(random.choice(GL) for _ in range(5))
+    strip = ''.join(f'<b>{c}</b>' for c in junk + ch)
+    return f'<span class="rc"><span class="fin">{ch}</span><span class="rs" style="animation-delay:{t0 + 38 * k}ms">{strip}</span></span>'
+t0 = at(n, 'tracking')
+run = ''.join(roll(c, k, t0) for k, c in enumerate(KIT))
 scenes.append(f"""
-<div class="numwrap">
-  {head(n, 'Press log', 'Your tracking number appears.')}
-  <div class="num">{pp}</div>
-  <div class="badge" style="animation-delay:{at(n, 'write')}ms">{ico('take')} Write it on the kit</div>
-  <p class="under" style="animation-delay:{at(n, 'write', plus=400)}ms">Never repeated. It is also in the e-mail you get.</p>
+<div class="numrun">
+  {head(n, 'Press log', 'Your tracking number. Instantly.')}
+  <div class="runline"><div class="runnum">{run}</div><span class="streak" style="animation-delay:{t0 + 38 * len(KIT) + 200}ms"></span></div>
+  <div class="numfoot">
+    <div class="badge" style="animation-delay:{at(n, 'write')}ms">{ico('take')} Write it on the kit</div>
+    <p class="under" style="animation-delay:{at(n, 'hand')}ms">Made by the system. Never repeated. In your e-mail too.</p>
+  </div>
 </div>""")
 
-# 5 ─ hand it in, signed for on the phone
-n = 4
+# 6 ─ hand it in, signed for on the phone
+n = 5
 scenes.append(f"""
 <div class="left narrow">
   {head(n, 'Hand it in', 'Signed for. You are told.')}
@@ -216,24 +252,25 @@ scenes.append(f"""
   <div class="dest d3" style="animation-delay:{at(n, 'e-mail')}ms"><span class="pi">{ico('mail')}</span><b>An e-mail to you</b><small>The moment they sign</small></div>
 </div>""")
 
-# 6 ─ the transmittal and the collation branch
-n = 5
-kits = ''.join(f'<tr style="animation-delay:{at(n, "every") + 160 * k}ms"><td>{k + 1}</td><td><code>RRB-OFT-26-11-05-00{k + 1}</code></td><td>{c}</td><td>{p}</td></tr>'
+# 7 ─ the transmittal, built by the system
+n = 6
+kits = ''.join(f'<tr style="animation-delay:{at(n, "all") + 160 * k}ms"><td>{k + 1}</td><td><code>RRB-OFT-26-11-05-00{k + 1}</code></td><td>{c}</td><td>{p}</td></tr>'
                for k, (c, p) in enumerate([('Jordan Sample', '1000 123 456'), ('Alex Example', '1000 654 321'), ('Sam Madeup', '1000 222 333')]))
 scenes.append(f"""
 <div class="left narrow">
-  {head(n, 'Sales support', 'One transmittal. The right branch.')}
-  <div class="pick" style="animation-delay:{at(n, 'chooses')}ms"><small>Collation branch</small><b>Sample Branch</b><span>this quarter ▾</span></div>
+  {head(n, 'Built by the system', 'Built for them. Just print.')}
+  <div class="pick" style="animation-delay:{at(n, 'collation')}ms"><small>Collation branch</small><b>Sample Branch</b><span>set for this quarter</span></div>
+  <div class="printbtn" style="animation-delay:{at(n, 'print', plus=-250)}ms">{ico('desk')} Print</div>
 </div>
 <div class="tpaper fl2" style="animation-delay:{at(n, 'transmittal')}ms">
   <div class="th"><img src="{MARK}" alt=""><div><b>TRANSMITTAL</b><small>From: Ricky Rampersad Branch</small></div><span>No. <b>TR-261105-01</b></span></div>
   <div class="tm"><span>Department</span><b>OFT KITS (COLLATION BRANCH)</b><span>Attention</span><b class="hlb" style="animation-delay:{at(n, 'collation')}ms">Collation branch: Sample Branch</b></div>
   <table><thead><tr><th>#</th><th>Tracking #</th><th>Client</th><th>Policy</th></tr></thead><tbody>{kits}</tbody></table>
-  <span class="stamp" style="animation-delay:{at(n, 'page')}ms">Ready to print</span>
+  <span class="stamp" style="animation-delay:{at(n, 'print')}ms">Ready to print</span>
 </div>""")
 
-# 7 ─ find a kit
-n = 6
+# 8 ─ find a kit
+n = 7
 q = 'RRB-OFT-26-11-05-002'
 typed = ''.join(f'<i style="animation-delay:{at(n, "search") + 55 * k}ms">{c}</i>' for k, c in enumerate(q))
 trail = [('Logged', 'Thu 5 Nov · 9:14 am', 'By the agent', 'see', 0), ('Received', 'Thu 5 Nov · 9:40 am', 'Signed for by sales support', 'exactly', 0), ('Sent', 'Thu 5 Nov · 11:55 am', 'TR-261105-01 · Sample Branch', 'where', 0)]
@@ -246,8 +283,8 @@ scenes.append(f"""
 </div>
 <div class="trail">{tr}</div>""")
 
-# 8 ─ close
-n = 7
+# 9 ─ close
+n = 8
 import qrcode
 qq = qrcode.QRCode(border=0, error_correction=qrcode.constants.ERROR_CORRECT_M)
 qq.add_data('https://rickyrampersadbranch.com/logbook')
@@ -626,6 +663,63 @@ h1.mega .w:last-child{color:var(--cy)}
 .cap{background:rgba(8,20,49,.72);border-color:rgba(127,178,255,.2);color:rgba(244,247,255,.32);font-size:21px;backdrop-filter:none}
 @keyframes lit{to{color:#fff}}
 .first .cap,.close .cap{}
+
+/* v3: before and after */
+.ba{position:absolute;left:70px;right:70px;top:96px;bottom:120px;display:grid;grid-template-columns:1fr 1fr;gap:34px}
+.before{position:relative}
+.osheet{filter:grayscale(1) brightness(.88)}
+.tagb,.tagn{margin:0 0 12px;font-weight:900;font-size:15px;letter-spacing:.22em;text-transform:uppercase;color:#93A7C9;opacity:0}
+.tagn{color:var(--cy)}
+.act .tagb,.act .tagn{animation:fadeUp .5s var(--e) both}
+.sheets{position:relative;height:330px}
+.osheet{position:absolute;width:270px;background:#EEF1F5;border-radius:10px;padding:12px 14px;box-shadow:0 18px 36px rgba(2,8,24,.5);transform:rotate(var(--r));opacity:0}
+.osheet:nth-child(1){left:0;top:0}.osheet:nth-child(2){left:70px;top:70px}.osheet:nth-child(3){left:140px;top:140px}
+.act .osheet{animation:popS .6s var(--e) both}
+@keyframes popS{from{opacity:0;transform:translateY(24px) rotate(var(--r))}to{opacity:1;transform:rotate(var(--r))}}
+.osheet b{display:block;font-size:13px;color:#46566B;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em}
+.orow{display:flex;align-items:center;gap:6px;height:24px;border-bottom:1px solid #D7DDE5;font-size:14px;color:#3A4757;opacity:0}
+.act .orow{animation:typ .05s linear both}
+.byhand{position:absolute;left:40px;top:300px;white-space:nowrap;z-index:5;font-size:26px;font-weight:900;color:#FF8A7A;border:3px solid #FF8A7A;border-radius:12px;padding:6px 14px;transform:rotate(-6deg);background:rgba(8,20,49,.85);filter:none;opacity:0}
+.act .byhand{animation:stampB .5s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes stampB{from{opacity:0;transform:rotate(-6deg) scale(2)}to{opacity:1;transform:rotate(-6deg) scale(1)}}
+.before .byhand{filter:none}
+.now{position:relative;border-radius:24px;padding:26px 28px;background:linear-gradient(160deg,rgba(42,109,224,.28),rgba(0,229,255,.08));border:1.5px solid rgba(0,229,255,.45);box-shadow:0 0 60px rgba(0,229,255,.18);opacity:0}
+.act .now{animation:pop .8s var(--e) both}
+.nowh{margin:0 0 18px;font-size:46px;font-weight:850;letter-spacing:-.035em;color:#fff;line-height:1.05}
+.act .nowh .w{animation:wd .65s var(--e) both}
+/* v3: the phone search */
+.fsr{display:flex;align-items:center;gap:6px;margin:14px 2px 0;padding:11px 14px;border-radius:12px;background:#0B1530;border:1px solid #6FA8FF;font-weight:700;font-size:16px;color:#fff}
+.fsr .tq i{font-style:normal;opacity:0}
+.act .fsr .tq i{animation:typ .05s linear both}
+.fsr .caret{height:18px}
+.sel.fill{position:relative}
+.act .sel.fill{animation:fillg 1.2s ease both}
+@keyframes fillg{0%{color:transparent;box-shadow:none}35%{color:#fff;box-shadow:0 0 0 3px rgba(0,229,255,.7),0 0 26px rgba(0,229,255,.6)}100%{color:#fff;box-shadow:0 0 0 1px rgba(0,229,255,.5)}}
+/* v3: the number, one run */
+.numrun{position:absolute;left:70px;right:70px;top:120px}
+.runline{position:relative;margin:34px 0 34px;padding:26px 30px;border-radius:24px;background:var(--card);border:1.5px solid rgba(0,229,255,.45);box-shadow:0 0 70px rgba(0,229,255,.18),0 26px 60px rgba(2,8,24,.55);overflow:hidden}
+.runnum{display:flex;justify-content:center;font-size:84px;font-weight:850;letter-spacing:-.01em;color:#fff;line-height:1}
+.rc{position:relative;display:inline-block;height:1em;line-height:1em;overflow:hidden;vertical-align:top}
+.fin{visibility:hidden}
+.rs{position:absolute;left:-.3em;right:-.3em;top:0;display:flex;flex-direction:column;align-items:center;transform:translateY(0)}
+.rs b{display:block;height:1em;line-height:1em;font-weight:850}
+.act .rs{animation:rollc .42s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rollc{from{transform:translateY(0);opacity:0}15%{opacity:1}to{transform:translateY(-5em);opacity:1}}
+.rc.dash2{color:#5D7BA8;opacity:0}
+.act .rc.dash2{animation:typ .05s linear both}
+.runnum .rc:nth-last-child(-n+3) .rs b:last-child{color:var(--cy)}
+.runnum .rc.dash2{padding:0 .04em}
+.streak{position:absolute;top:0;bottom:0;left:-30%;width:28%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-18deg);opacity:0}
+.act .streak{animation:streak 1.1s ease-in-out both}
+@keyframes streak{0%{left:-30%;opacity:1}100%{left:110%;opacity:1}}
+.numfoot{display:flex;align-items:center;gap:22px}
+.numfoot .badge{margin-top:0}.numfoot .under{margin:0}
+/* v3: print */
+.printbtn{display:inline-flex;align-items:center;gap:10px;margin:18px 0 0 0;padding:14px 26px;border-radius:14px;background:linear-gradient(135deg,#2A6DE0,#00A8D6);color:#fff;font-weight:850;font-size:22px;box-shadow:0 18px 40px rgba(0,168,214,.4);opacity:0}
+.printbtn svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2.4}
+.act .printbtn{animation:press 1.4s var(--e) both}
+@keyframes press{0%{opacity:0;transform:translateY(14px)}30%{opacity:1;transform:none}55%{transform:scale(.94)}70%{transform:scale(1.04);box-shadow:0 0 0 10px rgba(0,229,255,.25),0 18px 40px rgba(0,168,214,.4)}100%{opacity:1;transform:none}}
+
 .brand img{border-radius:0;filter:drop-shadow(0 0 10px rgba(0,229,255,.45))}
 .cmark img{border-radius:0;box-shadow:none;filter:drop-shadow(0 0 26px rgba(0,229,255,.55)) drop-shadow(0 14px 30px rgba(2,8,24,.6))}
 .cmark.sm img{width:96px;height:96px}.cmark.sm{width:96px;height:96px}
@@ -633,7 +727,7 @@ h1.mega .w:last-child{color:var(--cy)}
 .th img{border-radius:0}
 """
 
-wide_scenes = {0, 3, 4, 5, 6, 7}
+wide_scenes = {0, 1, 4, 5, 6, 7, 8}
 secs = []
 for i, s in enumerate(scenes):
     cls = 'scene wide' if i in wide_scenes else 'scene'
