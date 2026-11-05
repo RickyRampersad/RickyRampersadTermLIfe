@@ -2364,6 +2364,33 @@ function ninetyDayNote_(claim) {
   return '';
 }
 
+/* The client's own words, without the block the page folds onto the end of
+   them. claims/index.html appends every type-specific answer to the
+   description under a "— — —" rule, because for a long time that was the only
+   way those answers reached anybody. They now have labelled rows of their own
+   on the desk notice and on the printed form, so printing the block as well
+   says the patient's name, their relationship and their date of birth twice
+   in the same e-mail.
+
+   The Description column on the sheet keeps the whole folded text, untouched:
+   it is the raw record of what was submitted, and Answers (JSON) holds the
+   same answers structured. Nothing is lost by not printing it twice.
+
+   A line is only taken off if it reads as one of ours — "Label: value", with
+   a short label carrying no colon, which is every label the page can append.
+   A client who types a row of dashes themselves keeps every word. */
+function claimWords_(claim) {
+  var text = String(claim.description || '');
+  var cut = text.indexOf('\n\n— — —\n');
+  if (cut < 0) return text.trim();
+  var tail = text.slice(cut + 8).split('\n').filter(function (l) { return l.trim() !== ''; });
+  if (!tail.length) return text.trim();
+  for (var i = 0; i < tail.length; i++) {
+    if (!/^[^:\n]{1,60}: \S/.test(tail[i])) return text.trim();
+  }
+  return text.slice(0, cut).trim();
+}
+
 function deskFields_(claim) {
   var x = claim.extra || {};
   var out = [];
@@ -2426,7 +2453,7 @@ function deskFields_(claim) {
   row('National ID', esc_(claim.nationalId || ''));
   row('Settlement bank', esc_(claim.bank || ''));
   row('<b>' + (type === 'health' ? 'What the treatment was for' : 'What happened') + '</b>',
-    esc_(claim.description).replace(/\n/g, '<br>'));
+    esc_(claimWords_(claim)).replace(/\n/g, '<br>'));
   return out.join('');
 }
 
@@ -2553,10 +2580,123 @@ function pdfSection_(title) {
     'text-transform:uppercase;color:' + CBRAND.teal + ';border:none">' + esc_(title) + '</td></tr>';
 }
 
+/* The printed form's own middle, per line of business — the same split
+   deskFields_ makes, for the same reason and one layer further in.
+
+   Found 5 November 2026, reading a health claim's own PDF back: the e-mail
+   body had been put right that morning and the attachment had not. It was
+   still motor's shape for every line — a health claim headed THE INCIDENT,
+   printing "Date", "Location" and "Estimated amount" for a treatment whose
+   amount is a receipt total and not an estimate, and carrying the patient's
+   name, their relationship and their date of birth nowhere except buried in
+   the free text under a rule of dashes.
+
+   That matters more than the e-mail did. The e-mail is read once; the PDF is
+   what gets filed, forwarded and opened again six weeks later, and on a
+   health claim the patient is the first thing an assessor needs to know,
+   because the person treated is often not the member. */
+function pdfFields_(claim) {
+  var x = claim.extra || {};
+  var out = [];
+  var sec = function (title) { out.push(pdfSection_(title)); };
+  var row = function (label, value) {
+    if (value === null || value === undefined || String(value).trim() === '') return;
+    out.push(pdfRow_(label, String(value), true));
+  };
+  var join = function (parts) { return parts.filter(String).join(' · '); };
+  var money = function (v) { return v ? esc_(fmtMoney_(v) || v) : ''; };
+  var type = typeKeyFromLabel_(claim.type);
+
+  sec('The claim');
+  row('Claim type', esc_(claim.type) + (claim.subtype ? ' — ' + esc_(claim.subtype) : ''));
+  if (type === 'health') row('Submission type', esc_(submissionType_(claim)));
+  row('Date filed', nowStamp_());
+  row('Status', esc_(claim.status || 'Received'));
+
+  sec(type === 'health' ? 'The member' : type === 'life' ? 'The policy' : 'The claimant');
+  row(type === 'health' ? 'Member' : type === 'life' ? 'Policy owner' : 'Name', esc_(claim.name));
+  row(type === 'health' ? 'Plan / policy number' : 'Policy number', esc_(claim.policy));
+  row('Mobile', esc_(claim.mobile));
+  row('Email', esc_(claim.email));
+  row('National ID', esc_(claim.nationalId));
+
+  if (type === 'health') {
+    sec('The patient');
+    row('Patient', esc_(x.patientName || claim.name));
+    row('Relationship to the member', esc_(x.patientRel || ''));
+    row('Date of birth', x.patientDob ? esc_(niceDate_(x.patientDob)) : '');
+
+    sec('The treatment');
+    row('Date of treatment', esc_(niceDate_(claim.incidentDate)));
+    row('Provider', esc_(x.provider || ''));
+    row('Where', esc_(claim.location));
+    row('Amount claimed', money(claim.amount));
+    row('Pre-authorised', esc_(x.preauth || ''));
+    row('Covered by another plan', esc_(x.otherCover || ''));
+    row('What the treatment was for', esc_(claimWords_(claim)).replace(/\n/g, '<br>'));
+  } else if (type === 'property') {
+    sec('The property');
+    row('Address', esc_(claim.location));
+    row('What it is', esc_(x.propertyUse || ''));
+    row('Anyone there at the time', esc_(x.occupied || ''));
+
+    sec('The incident');
+    row('Date', esc_(whenText_(claim)));
+    row('Estimated loss', money(claim.amount));
+    row('Emergency work done', esc_(x.emergency || ''));
+    row('Fire station attended', esc_(x.fireStation || ''));
+    row('Police report', esc_(join([claim.policeStation, claim.policeReport])));
+    row('What happened', esc_(claimWords_(claim)).replace(/\n/g, '<br>'));
+  } else if (type === 'life') {
+    sec('The life assured');
+    row('Life assured', esc_(x.lifeAssured || ''));
+    row('Date of birth', x.lifeDob ? esc_(niceDate_(x.lifeDob)) : '');
+    row('National ID', esc_(x.lifeId || ''));
+    row('Employer', esc_(x.employer || ''));
+
+    sec('The claimant');
+    row('Claimant', esc_(x.claimantName || ''));
+    row('Relationship', esc_(x.claimantRel || ''));
+
+    sec('The claim');
+    row('Date', esc_(whenText_(claim)));
+    row('Amount', money(claim.amount));
+    row('What happened', esc_(claimWords_(claim)).replace(/\n/g, '<br>'));
+  } else {
+    sec('The incident');
+    row('Date', esc_(whenText_(claim)));
+    row('Location', esc_(claim.location));
+    row('Estimated amount', money(claim.amount));
+    row('Police report', esc_(join([claim.policeStation, claim.policeReport])));
+    row('Third party', esc_(claim.thirdParty || ''));
+    row('What happened', esc_(claimWords_(claim)).replace(/\n/g, '<br>'));
+  }
+
+  if (claim.bank) { sec('Settlement'); row('Bank details', esc_(claim.bank)); }
+  return out.join('');
+}
+
+/* The ninety-day decision travels on the form too, not only in the covering
+   e-mail: the form is what is filed, and whoever opens it later has to see
+   that the date was already known and flagged on the day it was filed. */
+function pdfNinetyNote_(claim) {
+  if (typeKeyFromLabel_(claim.type) !== 'health') return '';
+  var days = claimAgeDays_(claim);
+  if (days === null || days < 0 || days <= 75) return '';
+  var over = days > 90;
+  return '<table width="100%" style="border-collapse:collapse;margin-bottom:12px"><tr>' +
+    '<td style="background:' + (over ? '#FBE9E7' : '#FFF7E6') + ';border-left:4px solid ' +
+      (over ? '#B3261E' : '#D9A93F') + ';padding:9px 12px;font-size:10.5px;color:#152435">' +
+    (over
+      ? '<b>Over ninety days old.</b> The treatment was ' + days + ' days ago. Guardian\'s claim ' +
+        'checklist asks whether ninety days or less have passed.'
+      : '<b>' + (90 - days) + ' day' + (90 - days === 1 ? '' : 's') + ' left of the ninety.</b> ' +
+        'The treatment was ' + days + ' days ago.') +
+    '</td></tr></table>';
+}
+
 /** The claim, as a form. Returns a PDF blob. */
 function claimFormBlob_(claim, files, missing) {
-  var nl = function (s) { return esc_(s).replace(/\n/g, '<br>'); };
-
   var html =
     '<html><body style="font-family:Helvetica,Arial,sans-serif;color:#152435;margin:0">' +
     '<table width="100%" style="border-collapse:collapse;margin-bottom:14px">' +
@@ -2570,29 +2710,10 @@ function claimFormBlob_(claim, files, missing) {
       '</td></tr>' +
     '</table>' +
 
+    pdfNinetyNote_(claim) +
+
     '<table width="100%" style="border-collapse:collapse">' +
-      pdfSection_('The claim') +
-      pdfRow_('Claim type', esc_(claim.type) + (claim.subtype ? ' — ' + esc_(claim.subtype) : ''), true) +
-      pdfRow_('Date filed', nowStamp_(), true) +
-      pdfRow_('Status', esc_(claim.status || 'Received'), true) +
-
-      pdfSection_('The claimant') +
-      pdfRow_('Name', esc_(claim.name), true) +
-      pdfRow_('Policy number', esc_(claim.policy), true) +
-      pdfRow_('Mobile', esc_(claim.mobile), true) +
-      pdfRow_('Email', esc_(claim.email), true) +
-      pdfRow_('National ID', esc_(claim.nationalId), true) +
-
-      pdfSection_('The incident') +
-      pdfRow_('Date', esc_(whenText_(claim)), true) +
-      pdfRow_('Location', esc_(claim.location), true) +
-      pdfRow_('Estimated amount', esc_(fmtMoney_(claim.amount) || claim.amount), true) +
-      (claim.policeReport || claim.policeStation
-        ? pdfRow_('Police report', esc_([claim.policeStation, claim.policeReport].filter(String).join(' · ')), true) : '') +
-      (claim.thirdParty ? pdfRow_('Third party', esc_(claim.thirdParty), true) : '') +
-      pdfRow_('What happened', nl(claim.description), true) +
-
-      (claim.bank ? pdfSection_('Settlement') + pdfRow_('Bank details', esc_(claim.bank), true) : '') +
+      pdfFields_(claim) +
 
       pdfSection_('Documents received (' + files.length + ')') +
       pdfRow_('Attached', files.length

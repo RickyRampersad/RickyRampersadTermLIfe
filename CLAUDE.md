@@ -6926,6 +6926,51 @@ shape came from — including its own footer on the submission that was read:
 *"Attachments: Because the total size is more than 5MB the uploads are not
 attached."* That is the failure the 18MB budget above exists to prevent.
 
+### The same bug was one layer down, in the printed form
+
+Found an hour later, by reading the test health claim's own PDF back rather
+than asserting against it. The email body had been put right; **the
+attachment had not.** `claimFormBlob_` was still motor's shape for every
+line — a health claim headed THE INCIDENT, printing *Date*, *Location* and
+*Estimated amount* for a treatment whose amount is a receipt total and not an
+estimate, with the patient's name, relationship and date of birth nowhere
+except buried in the free text under a rule of dashes.
+
+**That is the worse of the two, and the reason to check the attachment and
+not only the body.** The email is read once; the PDF is what gets filed,
+forwarded and opened again six weeks later, and on a health claim the person
+treated is often not the member, so the patient has to be the first thing an
+assessor sees. `pdfFields_` makes the same split `deskFields_` makes, and
+`pdfNinetyNote_` puts the ninety-day decision on the form too, so whoever
+opens it later can see the date was known and flagged on the day it was filed.
+
+**The client's own words print once now.** `claims/index.html` folds every
+type-specific answer onto the end of the description under `— — —`, because
+for a long time that was the only way those answers reached anybody — which is
+the same gap `EXTRA_KEYS` left. With labelled rows above it, printing the
+block as well said the patient's name, their relationship and their date of
+birth twice in one email. `claimWords_` strips it from the notice and the
+form; **the sheet's Description column keeps the whole folded text**, because
+that is the raw record of what was submitted, and `Answers (JSON)` holds the
+same answers structured. A tail line is only dropped if it reads as one of
+ours (`Label: value`, a short label with no colon), so a client who types a
+row of dashes themselves keeps every word.
+
+`niceDate_` was checked while it was in hand and is **right**: it matches the
+ISO string with a regex and reads the three numbers off it, never
+`new Date('yyyy-MM-dd')`. The two test failures it produced were the test's
+wrong expectations, not the code's. When a date assertion fails, check which
+side holds the bug before changing the code — the live email had already said
+"born 03 Apr 2012".
+
+**A function-lifting harness has to skip regex literals.** `esc_` carries
+`/"/g`, and a brace walker that knows only quotes reads that double quote as
+the start of a string and runs off the end of the function. It is also easier
+to **define every top-level function in the file** than to chase the next
+missing helper one run at a time: a body only runs when it is called, so
+defining one that reaches for an unstubbed global costs nothing.
+`pdf-test.js` in the session scratchpad covers all four lines (72 checks).
+
 ### The pages are light, on the branch's own palette
 
 Decided 5 November 2026, asked for in these words: *"also i dint like the dark

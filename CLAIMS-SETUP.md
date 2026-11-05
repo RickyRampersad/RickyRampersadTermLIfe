@@ -77,6 +77,32 @@ Manage deployments → ✏️ → Version: **New version** → Deploy). What it 
 
 The page half (the ninety-day check) is HTML and goes live on merge.
 
+**Verified live** on CLM-2611-9805: the subject read `RRB CLAIMS SUBMISSION -
+Prescription/Pharmacy Claim - …`, the notice opened on the red ninety-day
+banner, the field block was health's with no motor rows in it, and the
+*would have gone to* line named `healthclaimstt@myguardiangroup.com` with
+EB Customer Care copied. `preauth` was correctly absent — it is only asked for
+hospitalisation, overseas treatment and physiotherapy, and the blank row was
+cut as designed.
+
+### Re-paste `Claims.gs` once more — 5 November 2026 · **the printed form**
+
+Reading that same claim's own PDF back showed the morning's fix had reached
+the email body and not the attachment. **Paste `apps-script/Claims.gs` again
+and publish a New version.** What it carries:
+
+- **The printed claim form is per line of business.** It was motor's shape for
+  every line: a health claim headed THE INCIDENT, printing *Date*, *Location*
+  and *Estimated amount* for a treatment whose amount is a receipt total and
+  not an estimate, and carrying the patient's name, relationship and date of
+  birth nowhere except buried in the free text.
+- **The ninety-day banner is on the form too**, not only in the covering email.
+- **The client's words print once.** The block the site folds onto the end of
+  the description is stripped before printing, now that every line of it has a
+  labelled row above it. The sheet's Description column is untouched.
+
+Nothing to do on the site for this one; it is all backend.
+
 ### Testing the Salesforce link
 
 Setting `SF_LOGIN_URL`, `SF_KEY` and `SF_SECRET` does not fill the registers —
@@ -92,10 +118,12 @@ A synced register answers with the vehicle and a way to confirm it is yours.
 ### Before you turn test mode off: the desk addresses
 
 A claim is only forwarded to a line's claims desk when that line is listed in
-`CLAIMS.DESK_OK`. **Only `health` is**, because only its address is confirmed
-(`EBCustomercare@myguardiangroup.com` — EB's own replies say to direct
-everything about a health claim there, and the renewal desk already files
-change forms to it).
+`CLAIMS.DESK_OK`. **Only `health` is**, because only its address is confirmed:
+`healthclaimstt@myguardiangroup.com`, with `EBCustomercare@myguardiangroup.com`
+copied. That ordering is the branch's own — every health claim sales support
+has filed by hand goes To: Health Claims TT with EB Customer Care in copy, not
+the other way round. EB Customer Care is the right address for a change of
+cover or a billing question, which is what the renewal desk uses it for.
 
 The other four shipped as guesses and the branch's own record contradicts
 them, so they are now blank. A claim on an unconfirmed line still files, still
@@ -536,6 +564,29 @@ Every claim renders one: the answers laid out as a form on branded paper, saved
 into the claim's Drive folder and attached to both the desk email and the
 client's acknowledgement. It carries the declaration the client accepted
 online, so nothing needs printing or signing.
+
+**It is laid out per line of business**, the same split the desk notice makes.
+A health claim is headed *The member · The patient · The treatment* and prints
+the patient, their relationship to the member and their date of birth as rows
+of their own; property is headed *The property · The incident*; life is *The
+life assured · The claimant*; motor keeps *The claimant · The incident*. A row
+with nothing in it is cut, never printed as a dash.
+
+That matters more than the email's layout does. The email is read once; **the
+PDF is what gets filed, forwarded and opened again six weeks later**, and on a
+health claim the person treated is often not the member, so the patient has to
+be the first thing an assessor sees.
+
+**A health claim's form carries the ninety-day banner too**, so whoever opens
+it later can see the date was known and flagged on the day it was filed.
+
+**The client's own words print once.** The site folds every type-specific
+answer onto the end of the description under a rule of dashes, because for a
+long time that was the only way those answers reached anybody. They now have
+labelled rows, so the appended block is stripped before printing — on the form
+and in the email alike. The sheet's **Description** column still holds the whole
+folded text, untouched: that is the raw record of what was submitted, and
+**Answers (JSON)** holds the same answers structured.
 
 ### Filling Guardian's own AcroForm instead
 
