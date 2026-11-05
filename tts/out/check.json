@@ -1,7 +1,47 @@
 {
- "tts/out/oftfix4/01.mp3": [
+ "tts/out/oftlaunch3/01.mp3": [
   "en",
-  0.996,
-  "Press Log and your tracking number appears. R-R-B-O-F-T. Today's date then a number for this kit. Write that number on the kit before you hand it in."
+  0.998,
+  "This is a first for our branch. OFT kits are now in the log book and every single kit gets its own tracking number from the moment it's logged all the way to the collation branch."
+ ],
+ "tts/out/oftlaunch3/02.mp3": [
+  "en",
+  0.997,
+  "Before every kit was typed by hand, sheet after sheet, the same number again and again. Now, the system does it for us."
+ ],
+ "tts/out/oftlaunch3/03.mp3": [
+  "en",
+  0.998,
+  "Here's how it works. Collect the sample from your client, open the logbook, and choose OFT Kit."
+ ],
+ "tts/out/oftlaunch3/04.mp3": [
+  "en",
+  0.998,
+  "Our branch system looks up your client and fills in the policy number for you. Less typing and more time for busy agents on the go."
+ ],
+ "tts/out/oftlaunch3/05.mp3": [
+  "en",
+  0.995,
+  "Press Log, and your tracking number appears instantly. Right on the kit, before you hand it in."
+ ],
+ "tts/out/oftlaunch3/06.mp3": [
+  "en",
+  0.995,
+  "Hand the kit to sale support. They sign for it on their phone and you get an email the moment they do."
+ ],
+ "tts/out/oftlaunch3/07.mp3": [
+  "en",
+  0.994,
+  "Then the system builds the transmittal for them with this quarter collation branch and every kid on one page. All they do is print."
+ ],
+ "tts/out/oftlaunch3/08.mp3": [
+  "en",
+  0.998,
+  "need to find a kit, search the number, the policy, where your client's name, and see exactly where it is."
+ ],
+ "tts/out/oftlaunch3/09.mp3": [
+  "en",
+  0.995,
+  "a first for a branch. From today, every OFT kit goes through the logbook. Ricky Rampersadbranch.com. Slash logbook."
  ]
 }
