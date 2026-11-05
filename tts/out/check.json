@@ -1,62 +1,42 @@
 {
- "tts/out/h868v2/01.mp3": [
-  "en",
-  0.995,
-  "Help 868 just got a lot smarter. Your branch on WhatsApp any hour of the day."
- ],
- "tts/out/h868v2/02.mp3": [
-  "en",
-  0.997,
-  "One tap on the green button, and the chat opens. No app to download, and no forms to fill."
- ],
- "tts/out/h868v2/03.mp3": [
+ "tts/out/oftlaunch/01.mp3": [
   "en",
   0.999,
-  "We say hello and show a menu your client taps what they need a question a claim an update a payment or quote"
+  "Lefty kids have moved into the logbook. No more FedEx. Every kid now gets its own tracking number, and you can follow it all the way to the Colation Branch."
  ],
- "tts/out/h868v2/04.mp3": [
-  "en",
-  0.999,
-  "Every question after that is a tab two. Is it urgent? Yes or no, one tab. Nobody types a number and nothing is asked twice."
- ],
- "tts/out/h868v2/05.mp3": [
-  "en",
-  0.999,
-  "We only ask for their name and a policy number if they have one. Never bank details, never ID numbers."
- ],
- "tts/out/h868v2/06.mp3": [
+ "tts/out/oftlaunch/02.mp3": [
   "en",
   0.998,
-  "then it lands on query pal our query system with a reference and goes to the right department"
+  "Here's how it works. You collect the sample from your client, then open the logbook and choose OFD kit."
  ],
- "tts/out/h868v2/07.mp3": [
-  "en",
-  0.999,
-  "Your client gets a receipt card right in WhatsApp with the reference and the target time. The same confirmation arrives by email."
- ],
- "tts/out/h868v2/08.mp3": [
+ "tts/out/oftlaunch/03.mp3": [
   "en",
   0.998,
-  "Our support team sees the whole chat with the details already filled in. Query Pal now has a pal to work with."
+  "Pick your client and the policy straight from Salesforce. One kit per line."
  ],
- "tts/out/h868v2/09.mp3": [
+ "tts/out/oftlaunch/04.mp3": [
   "en",
-  0.995,
-  "When it's resolved, we close it with a summary and ask for a star rating right there in the chat. A low rating gets a call back."
+  0.996,
+  "Press log, and your tracking number appears, R-R-B-O-F-T, then today's date, then the kid's own number. Right on the kid."
  ],
- "tts/out/h868v2/10.mp3": [
-  "en",
-  0.997,
-  "And if a query is still open, we don't go quiet. A friendly update comes every three working days, until it's done."
- ],
- "tts/out/h868v2/11.mp3": [
+ "tts/out/oftlaunch/05.mp3": [
   "en",
   0.997,
-  "Agents share the link with your clients. We've just welcomed our first client and insights are coming soon."
+  "then hand a kit to sale support. They sign for it on their phone and you get an email the moment they do."
  ],
- "tts/out/h868v2/12.mp3": [
+ "tts/out/oftlaunch/06.mp3": [
   "en",
-  0.995,
-  "Help 868. Always on and always us. Tap the green button on our website and say hello."
+  0.997,
+  "Sales support builds the transmittal and picks this quarter's collation branch from a list. Every kit and every tracking number on one page."
+ ],
+ "tts/out/oftlaunch/07.mp3": [
+  "en",
+  0.999,
+  "You need to find a kit, search the tracking number, the policy, or your client's name. You'll see who had it and when."
+ ],
+ "tts/out/oftlaunch/08.mp3": [
+  "en",
+  0.996,
+  "So from today, log every OFD kit in the logbook. Ricky RampersadBranch.com slash logbook."
  ]
 }
