@@ -1,7 +1,62 @@
 {
- "tts/out/h868fix/01.mp3": [
+ "tts/out/h868v2/01.mp3": [
   "en",
-  0.996,
-  "Agents, this is for your clients too. Share the link. Every query lands in one place."
+  0.995,
+  "Help 868 just got a lot smarter. Your branch on WhatsApp any hour of the day."
+ ],
+ "tts/out/h868v2/02.mp3": [
+  "en",
+  0.997,
+  "One tap on the green button, and the chat opens. No app to download, and no forms to fill."
+ ],
+ "tts/out/h868v2/03.mp3": [
+  "en",
+  0.999,
+  "We say hello and show a menu your client taps what they need a question a claim an update a payment or quote"
+ ],
+ "tts/out/h868v2/04.mp3": [
+  "en",
+  0.999,
+  "Every question after that is a tab two. Is it urgent? Yes or no, one tab. Nobody types a number and nothing is asked twice."
+ ],
+ "tts/out/h868v2/05.mp3": [
+  "en",
+  0.999,
+  "We only ask for their name and a policy number if they have one. Never bank details, never ID numbers."
+ ],
+ "tts/out/h868v2/06.mp3": [
+  "en",
+  0.998,
+  "then it lands on query pal our query system with a reference and goes to the right department"
+ ],
+ "tts/out/h868v2/07.mp3": [
+  "en",
+  0.999,
+  "Your client gets a receipt card right in WhatsApp with the reference and the target time. The same confirmation arrives by email."
+ ],
+ "tts/out/h868v2/08.mp3": [
+  "en",
+  0.998,
+  "Our support team sees the whole chat with the details already filled in. Query Pal now has a pal to work with."
+ ],
+ "tts/out/h868v2/09.mp3": [
+  "en",
+  0.995,
+  "When it's resolved, we close it with a summary and ask for a star rating right there in the chat. A low rating gets a call back."
+ ],
+ "tts/out/h868v2/10.mp3": [
+  "en",
+  0.997,
+  "And if a query is still open, we don't go quiet. A friendly update comes every three working days, until it's done."
+ ],
+ "tts/out/h868v2/11.mp3": [
+  "en",
+  0.997,
+  "Agents share the link with your clients. We've just welcomed our first client and insights are coming soon."
+ ],
+ "tts/out/h868v2/12.mp3": [
+  "en",
+  0.995,
+  "Help 868. Always on and always us. Tap the green button on our website and say hello."
  ]
 }
