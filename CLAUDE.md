@@ -1943,7 +1943,11 @@ voice under the new timing and the caption gives it away.
   The mailbox's display name read "querymypolicy.com" until 24 September
   2026, when it was renamed "Ricky Rampersad Branch" (Microsoft 365 admin →
   Users → Active users → Edit user → Display name); the address did not
-  change and must not — the letters send from it.
+  change and must not — the letters send from it. On 5 November 2026 it was
+  renamed again, to "RRB Support Team", because "Ricky Rampersad Branch" read
+  as Guardian's own branch inbox (RickyRampersadBranch@myguardiangroup.com),
+  which is a different mailbox. Nothing in the scripts reads the display name;
+  they match on the address.
   **Until the Entra app exists, the letters go through the Claude Microsoft
   365 connector instead** (24 September 2026: "I don't know how to do the
   Entra, it's complicated, can you just work with what we have"). The
