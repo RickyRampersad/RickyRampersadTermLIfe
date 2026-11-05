@@ -1,42 +1,7 @@
 {
- "tts/out/oftlaunch/01.mp3": [
-  "en",
-  0.998,
-  "This is a first for our branch. OFT kits are now in the log book and every single kit gets its own tracking number from the moment it's logged all the way to the collation branch."
- ],
- "tts/out/oftlaunch/02.mp3": [
-  "en",
-  0.997,
-  "Here's how it works. Collect the sample from your client, open the logbook, and choose OFT Kit."
- ],
- "tts/out/oftlaunch/03.mp3": [
+ "tts/out/oftfix4/01.mp3": [
   "en",
   0.996,
-  "Pick your client and the policy straight from Salesforce. One kit per line."
- ],
- "tts/out/oftlaunch/04.mp3": [
-  "en",
-  0.995,
-  "Press Log, and your tracking number appears. RRB-O-F-T, today's date, then the kid's own number. Right on the kid."
- ],
- "tts/out/oftlaunch/05.mp3": [
-  "en",
-  0.995,
-  "Hand the kit to sale support. They sign for it on their phone and you get an email the moment they do."
- ],
- "tts/out/oftlaunch/06.mp3": [
-  "en",
-  0.994,
-  "Sales support builds one transmittal and chooses this quarter's collation branch. Every kit, every number, on one page."
- ],
- "tts/out/oftlaunch/07.mp3": [
-  "en",
-  0.998,
-  "You need to find a kit, search the number, the policy, where your client's name, and see exactly where it is."
- ],
- "tts/out/oftlaunch/08.mp3": [
-  "en",
-  0.994,
-  "a first for a branch. From today, every OFT kit goes through the logbook. Ricky Rampersadbranch.com. Slash logbook."
+  "Press Log and your tracking number appears. R-R-B-O-F-T. Today's date then a number for this kit. Write that number on the kit before you hand it in."
  ]
 }
