@@ -1214,9 +1214,22 @@ the agent, the manager and branch support.
 
 `MailApp` will only set `from` to an address the sending account has verified
 under Gmail's **Send mail as**. As of 5 November 2026,
-`support@rickyrampersadbranch.com` is a **GoDaddy forwarding address** — mail
-for it arrives into the gmail account through GoDaddy's forwarder, and nothing
-has ever been sent from it. A forwarder receives; it does not send.
+`support@rickyrampersadbranch.com` is a **full Microsoft 365 mailbox** named
+"Ricky Rampersad Branch", on the tenant GoDaddy provisioned for the domain
+(`NETORGFT4069153.onmicrosoft.com`). The domain's MX points at
+`rickyrampersadbranch-com.mail.protection.outlook.com`, so **Microsoft carries
+the branch's mail, not Google.** The SPF record already includes
+`_spf.google.com` alongside Outlook's.
+
+Because it is a real mailbox, verifying it under Gmail's "Send mail as" is
+straightforward: Google emails a code to the address, it arrives in Outlook,
+and once entered Gmail will send as it. **No SMTP details and no DNS change
+are needed.**
+
+> An earlier version of this section called the address a GoDaddy forwarder
+> that could not send, and advised pointing the domain's MX at Google. Both
+> were wrong, and the MX change would have cut off the branch's own email.
+> **Leave the MX on Microsoft.**
 
 **So no code change alone can make the system send as the branch.** The address
 has to be added under *Settings → Accounts and Import → Send mail as*, which

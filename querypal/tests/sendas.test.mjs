@@ -10,12 +10,17 @@
    Code.gs. So the branch's own address answers replies but never sends.
 
    MailApp will only set `from` to an address the account has verified under
-   Gmail's "Send mail as". On 5 November 2026 support@rickyrampersadbranch.com
-   is a GoDaddy forwarding address — mail for it arrives into the gmail
-   account through GoDaddy's forwarder and nothing has ever gone out from it.
-   A forwarder receives; it does not send. So qpSendAs_ asks Gmail what it may
-   actually send as and uses the branch address only if it is really there.
-   It can go in now and starts working by itself once the alias exists.
+   Gmail's "Send mail as". support@rickyrampersadbranch.com is a full Microsoft
+   365 mailbox on the tenant GoDaddy provisioned for the domain, and the
+   domain's MX points at Outlook, so Microsoft carries the branch's mail. The
+   address can therefore be verified under "Send mail as" — Google's code
+   arrives in Outlook — but it is not verified yet, so qpSendAs_ asks Gmail
+   what it may actually send as and uses the branch address only if it is
+   really there. It can go in now and starts working by itself once the alias
+   exists.
+
+   (This comment first said the address was a GoDaddy forwarder that could not
+   send. It is a real mailbox. The MX must stay on Microsoft.)
 
    Separately: sales support was on the original routed email and fell off
    every chase, because the fallback CC was only agent, manager and branch
@@ -113,9 +118,12 @@ console.log('\nthe check\n');
   const r = api.qpAliasCheck();
   t('it names the account actually sending', r.includes(ME));
   t('it says plainly that the branch address cannot send yet', /can send as it\s*: NO/.test(r));
-  t('it says a forwarding address is not enough',
-    /FORWARDING address will not do/.test(r),
-    'this is the actual situation — GoDaddy forwards it in, nothing sends out');
+  t('it says where the verification code will arrive',
+    /arrive in Outlook/.test(r),
+    'the branch address is a Microsoft 365 mailbox, so the code is readable');
+  t('it warns against moving the MX, which would cut off the branch',
+    /MX must stay on Microsoft/.test(r),
+    'advice to point the MX at Google would have destroyed the branch mail');
   t('it says where to fix it', /Send mail as/.test(r));
   t('it says nothing else needs changing afterwards', /starts sending as the branch by itself/.test(r));
 }

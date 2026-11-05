@@ -3238,12 +3238,24 @@ function qpUnroutedReport() {
    is code.
 
    THE PART THAT IS NOT CODE. MailApp will only set `from` to an address the
-   sending account has verified under Gmail's "Send mail as". On 5 November
-   support@rickyrampersadbranch.com is a GoDaddy forwarding address: mail for
-   it arrives into the gmail account through GoDaddy's forwarder, and nothing
-   has ever been sent from it. A forwarder receives; it does not send. Until
-   it is added under Settings → Accounts → "Send mail as", with working SMTP,
-   no code can send as it.
+   sending account has verified under Gmail's "Send mail as".
+
+   support@rickyrampersadbranch.com is a full Microsoft 365 mailbox, named
+   "Ricky Rampersad Branch", on the tenant GoDaddy provisioned for the domain
+   (NETORGFT4069153.onmicrosoft.com). The domain's MX points at
+   rickyrampersadbranch-com.mail.protection.outlook.com, so Microsoft carries
+   the branch's mail, not Google — and the SPF record already includes
+   _spf.google.com alongside Outlook's.
+
+   That it is a real mailbox is what makes this straightforward: adding it
+   under Settings → Accounts → "Send mail as" sends a verification code to it,
+   the code arrives in Outlook, and once entered Gmail will send as it. No SMTP
+   details and no DNS change are needed for that.
+
+   (An earlier version of this comment called it a GoDaddy forwarding address
+   that could not send. That was wrong, and the advice that followed from it —
+   point the domain's MX at Google — would have cut off the branch's working
+   email. Microsoft serves this domain. Leave the MX alone.)
 
    THE PART THAT IS CODE. qpSendAs_ asks Gmail which addresses this account may
    send as, and uses BRANCH_SUPPORT only if it is genuinely one of them.
@@ -3306,9 +3318,10 @@ function qpAliasCheck() {
   if (!ok) {
     out.push('  Until it is verified, every email still goes out as ' + (me || 'the script account') + '.');
     out.push('  To fix, in that account: Settings -> Accounts and Import -> "Send mail as"');
-    out.push('  -> Add another email address. A GoDaddy FORWARDING address will not do');
-    out.push('  on its own — forwarding only receives. It needs SMTP details for the');
-    out.push('  domain, or the address moved onto a real mailbox.');
+    out.push('  -> Add another email address. The branch address is a real Microsoft 365');
+    out.push('  mailbox, so the verification code Google sends will arrive in Outlook.');
+    out.push('  Enter it there and this flips to YES. No DNS change is needed, and the');
+    out.push("  domain's MX must stay on Microsoft or the branch loses its own mail.");
     out.push('');
     out.push('  qpSendAs_ checks this every run, so nothing else needs changing');
     out.push('  afterwards. It starts sending as the branch by itself.');
