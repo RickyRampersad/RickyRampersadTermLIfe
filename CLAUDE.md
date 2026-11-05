@@ -7268,12 +7268,28 @@ top-level function in the file** — a body only runs when it is called, so
 defining one that reaches for an unstubbed global is free.
 
 **Two real client registrations and a real plan number were in the published
-page**, as placeholders (`PDL 4471` in two places, `TQG0897-00014-00`) and in a
-comment. They are `TAA 1234` / `TBB 5678` / `TAA0001-00001-00` now. The leak
-check that found one of them only looked for `T**` plates and missed `PDL`; a
+page**, as placeholders in two places and in a comment. They are `TAA 1234` /
+`TBB 5678` / `TAA0001-00001-00` now. The leak check that found one of them only
+looked for `T**` plates and missed a prefix that does not start with a T; a
 Trinidad plate is **any** three letters and four digits. `claims/` is served
 from the repository root, so a placeholder is published — the same rule the
 films and these notes keep.
+
+**This note named them, which was the same leak one layer out — and so did two
+served scripts in `data/`** (5 November 2026). Writing a value into the record
+of its own removal republishes it: `CLAUDE.md` sits at the repository root, and
+so does `data/`, whose `netlify.toml` block is inert on Pages (see the hosting
+note). So the values are elided above, and
+`data/build-policy-register.py` and `data/build-vehicle-register.py` carry
+invented examples in their `norm_` docstrings instead of the real policy number
+and registration they were written with — that registration is on **seven**
+cover terms in Salesforce, so it is a live client's vehicle, not a stale one.
+Same correction as the two names elided from the `/branchmeet/` section on 30
+October. **Redact the value from the note that records the redaction, and grep
+every served directory, not only the page you were looking at.** The scan that
+finds these is `\b[A-Z]{3} ?[0-9]{4}\b` for a plate and `[A-Z]{3}[0-9]{4}-` for
+a policy number, run over `*.md`, `*.html`, `*.gs`, `*.js` **and `*.py`** — the
+pass that cleaned the page searched the first four and missed a docstring.
 
 Tests in the session scratchpad: `terms-test.js` (138 checks, Node, Salesforce
 and the sheet made up) and `terms-page.js` (32, Playwright, the real page
