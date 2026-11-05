@@ -1117,6 +1117,70 @@ that the only column touched is Status.
 
 ---
 
+### 31 and 32 — make respond.io work, and send what never sent
+
+**Two single-expression edits.**
+
+**31** — Ctrl+F for `new Date(d.timestamp)` (one hit, in `doPost`) and replace
+just that with:
+
+```js
+qpStamp_(d.timestamp)
+```
+
+**32** — Ctrl+F for `sendFollowUp_(row, count + 1, due, sup);` (one hit, in
+`autoSweep`) and replace the whole call with:
+
+```js
+qpChaseOrSend_(row, count + 1, due, sup, sh, r);
+```
+
+### Why — and why respond.io is the reason
+
+`doPost` stored `new Date(d.timestamp)` with nothing between it and the sheet.
+A payload with no timestamp field becomes **epoch zero**, and `deadlineAt_`
+then counts working days forward from 1970 — so the request is about
+fifty-seven years overdue, and gets chased every sweep, for ever.
+
+Sixteen rows are in that state. **They are the branch's respond.io test.**
+`RRB/2026/109` carries the literal `{{clientName}}` and `{{subject}}` —
+respond.io's own template syntax, posted through unrendered — and the payload
+has no timestamp field at all. Nine were still Open on 5 November, which is
+why a real query logged at 11:32 that morning had no sending quota left.
+
+So the fix has to **make respond.io work, not block it**. `qpStamp_` gives a
+missing, unparseable or impossible timestamp the moment it arrived. A
+respond.io request then has a real logged date, a real deadline and an
+ordinary place in the chase loop — which is what the test is trying to
+achieve. A real ISO timestamp from the app passes through untouched.
+
+With edit 31 in, nothing new can land in that state, and the section 19
+quarantine is only needed for the sixteen already there.
+
+**Edit 32 is the other half.** When `doPost` cannot send the routed email,
+section 13 writes NOT EMAILED on the trail and the row stays Open — and
+nothing ever sends it. The case waits for its turnaround to expire and then
+the department gets *"following up on the request below — our records still
+show it open"* for a request they have never seen. `RRB/2026/119` is sitting
+in exactly that state.
+
+`qpChaseOrSend_` checks the trail first. If the case was never emailed and it
+has a department address, it sends **the original request** and writes ROUTED
+so it is not sent twice. Otherwise it chases exactly as before. The resend goes
+through `qpSendRouted_`, so quota trimming still applies, and a resend that
+fails keeps the flag and tries again next sweep rather than stranding the case.
+
+Attachments cannot be recovered — they rode on the original POST and were
+never stored — so the email says so plainly instead of pretending otherwise.
+
+Run **`qpUnroutedReport()`** to see which open cases are waiting on their
+original rather than on a chase.
+
+`tests/resend.test.mjs` — 31 assertions, including that a real timestamp
+passes through untouched and that another case's flag cannot trigger a resend.
+
+---
+
 ## URGENT — rotate the branch master codes
 
 **Do this today, and do it before anything else on this page.**

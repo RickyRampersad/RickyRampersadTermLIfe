@@ -3032,3 +3032,145 @@ function qpQuarantineJunk(dryRun) {
   Logger.log(msg);
   return msg;
 }
+
+
+/* ══════ 20. A REQUEST THAT NEVER SENT NEEDS SENDING, NOT CHASING ══════
+   Two faults with one cause, and respond.io is how they were found.
+
+   FIRST — the timestamp. doPost stores `new Date(d.timestamp)` with nothing
+   between it and the sheet. Hand it a payload with no timestamp and it stores
+   epoch zero, which deadlineAt_ then treats as a request from 1970 — about
+   fifty-seven years overdue, chased every sweep, for ever. Sixteen rows on
+   this log are in that state and nine of them were still Open on 5 November,
+   which is why a real query logged at 11:32 that morning had no sending
+   quota left.
+
+   Those rows are the branch's respond.io test. RRB/2026/109 has the literal
+   `{{clientName}}` and `{{subject}}` in its client and subject columns —
+   respond.io's own template syntax, posted through unrendered — and its
+   payload carries no timestamp field at all. So this is not junk arriving
+   from nowhere; it is a real integration being set up, against a backend that
+   had no opinion about bad input.
+
+   qpStamp_ gives it one: anything missing, unparseable or older than this
+   branch's own log becomes the moment it arrived. A respond.io request now
+   gets a real logged date, a real deadline and a normal place in the chase
+   loop — which is what the test is trying to achieve. It also means the
+   quarantine in section 19 stops being needed for anything sent afterwards.
+
+   SECOND — the resend. When doPost cannot send the routed email, section 13
+   writes NOT EMAILED on the trail and the row stays Open. Nothing ever sends
+   it. The case simply waits until its turnaround expires and then the
+   department gets "following up on the request below — our records still show
+   it open" for a request they have never seen. RRB/2026/119 is sitting in
+   exactly that state now.
+
+   So when a chase comes due on a case whose trail says it was never emailed,
+   qpChaseOrSend_ sends the ORIGINAL routed email instead of a follow-up, and
+   writes ROUTED on the trail so it is not sent twice. Attachments are not
+   recoverable — they rode on the original POST and were never stored — so the
+   email says so rather than pretending otherwise.
+
+   Code.gs edits 31 and 32, both single expressions:
+
+     31   new Date(d.timestamp)                 ->  qpStamp_(d.timestamp)
+     32   sendFollowUp_(row, count + 1, due, sup);
+            ->  qpChaseOrSend_(row, count + 1, due, sup, sh, r);           */
+
+function qpStamp_(v) {
+  var d = (v instanceof Date) ? v : new Date(v);
+  if (!v || isNaN(d) || d.getTime() < QP_REAL_FROM) return new Date();
+  return d;
+}
+
+/* The trail's last word on whether this case ever reached its department.
+   Section 13 writes NOT EMAILED on a failure; qpChaseOrSend_ writes ROUTED on
+   a later success, so the most recent of the two wins. */
+function qpNeverEmailed_(ref) {
+  var state = null;
+  try {
+    var cm = cmtSheet_();
+    if (cm.getLastRow() < 2) return false;
+    var d = cm.getRange(2, 1, cm.getLastRow() - 1, 6).getValues();
+    for (var i = 0; i < d.length; i++) {
+      if (String(d[i][1]).trim() !== String(ref).trim()) continue;
+      var tx = String(d[i][4] || '');
+      if (/NOT EMAILED/i.test(tx)) state = true;
+      else if (/\bROUTED\b/.test(tx)) state = false;
+    }
+  } catch (e) { return false; }
+  return state === true;
+}
+
+/* Rebuild the request from its row. Attachments are gone — they were never
+   stored — so anything that needs them has to be asked for again. */
+function qpRequestFromRow_(row) {
+  return {
+    reference: String(row[0] || ''), timestamp: row[2], status: String(row[3] || 'Open'),
+    loggedBy: String(row[4] || ''), client: String(row[5] || ''), name: String(row[5] || ''),
+    email: String(row[6] || ''), phone: String(row[7] || ''), policy: String(row[8] || ''),
+    agent: String(row[9] || ''), agentEmail: String(row[10] || ''),
+    category: String(row[11] || ''), queryType: String(row[12] || ''),
+    department: String(row[13] || ''), departmentEmail: String(row[14] || ''),
+    turnaround: String(row[15] || ''), priority: String(row[16] || ''),
+    subject: String(row[17] || ''), description: String(row[18] || ''),
+    cc: String(row[19] || ''), assignedStaff: String(row[28] || '')
+  };
+}
+
+function qpChaseOrSend_(row, n, due, sup, sh, r) {
+  var ref = String(row[0] || '').trim();
+
+  if (ref && qpNeverEmailed_(ref) && String(row[14] || '').indexOf('@') > -1) {
+    var d = qpRequestFromRow_(row);
+    d.description = String(d.description || '')
+      + '\n\n[Re-sent by the branch tracking system. This request was logged on '
+      + ((row[2] instanceof Date)
+          ? Utilities.formatDate(row[2], Session.getScriptTimeZone() || 'America/Port_of_Spain', 'd MMM yyyy')
+          : 'the date shown')
+      + ' but the original email could not be delivered at the time, so this is the '
+      + 'first you are seeing of it. Any attachments will need to be requested from '
+      + 'the branch — they were not retained.]';
+    var ok = false;
+    try { ok = qpSendRouted_(d, sh, ref); } catch (se) { ok = false; }
+    if (ok) {
+      try {
+        cmtSheet_().appendRow([new Date(), ref, 'Query Pal', 'system',
+          '✅ ROUTED — the original request reached ' + String(row[13] || 'the department')
+          + ' at last. It had been logged but never emailed, so this was sent as the request '
+          + 'itself, not as a follow-up.', 'internal']);
+      } catch (ce) {}
+      return 'sent-original';
+    }
+    return 'send-failed';                      // leave the flag; try again next sweep
+  }
+
+  sendFollowUp_(row, n, due, sup);
+  return 'chased';
+}
+
+/* Read-only. Which open cases are waiting on their original, not on a chase. */
+function qpUnroutedReport() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return 'The log is empty.';
+  var d = sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(29, sh.getMaxColumns())).getValues();
+  var out = [], noDept = 0;
+  for (var i = 0; i < d.length; i++) {
+    var ref = String(d[i][0] || '').trim();
+    if (!ref) continue;
+    var st = String(d[i][3] || '').toLowerCase();
+    if (/closed|resolved|completed/.test(st) || (st && st.indexOf('open') === -1)) continue;
+    if (!qpNeverEmailed_(ref)) continue;
+    if (String(d[i][14] || '').indexOf('@') < 0) { noDept++; continue; }
+    out.push('  ' + ref.slice(0, 46) + '\n      -> ' + String(d[i][13] || '') + '  <' + String(d[i][14] || '') + '>');
+  }
+  var msg = ['NEVER ROUTED — read-only, nothing is sent', '',
+    out.length
+      ? out.length + ' open case' + (out.length === 1 ? '' : 's') + ' logged but never emailed.\n'
+        + 'The next sweep sends each one as the request itself, not as a chase:\n\n' + out.join('\n')
+      : 'Every open case has reached its department.',
+    noDept ? '\n' + noDept + ' more have no department address and cannot be sent at all.' : ''
+  ].join('\n');
+  Logger.log(msg);
+  return msg;
+}
