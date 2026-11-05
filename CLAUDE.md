@@ -5631,6 +5631,28 @@ is separate and untouched.
   buttons), `client-test.js` (40, the client's page on a phone and a desk, the years in full, and
   a group's tab) and `door-test.js` (12, the old page in test mode, live, and with no backend). `read-test.js` checks the notice reader on real notice texts kept in the scratchpad only.
 
+## Guardian Life's letter on a former-agent reply: `apps-script/Letters.gs`
+
+Asked for on 5 November 2026: when a client says a former agent is still there, the reply must carry Guardian Life's
+own 6 October letter, and the letter must be visible and printable. The Microsoft 365 connector Claude drafts with
+cannot attach a file, so the draft carries one line, `[[letter: <former agent> | <page(s)> | <client> | <staff e-mail>]]`,
+and `Letters.gs` (a file in the Service Questionnaire project, beside `Transition.gs` and `GroupBilling.gs`) does the
+rest every ten minutes (`lettersSetup()` installs the trigger, `lettersAttachNow()` runs it at once):
+
+- finds the former agent's book (one PDF per agent, one page per client) in Ricky's Drive folder of the letters
+  (`LETTERS.FOLDER`, or the `LETTERS_FOLDER_ID` Script property), unzipping a zip into "Books (unzipped)" the first time;
+- cuts the client's page with pdf-lib, attaches it to the draft through Graph, and takes the marker line out;
+- keeps a copy in "Letters attached" and e-mails a print copy to the staff member and Ricky (internal);
+- logs a row on the **Letters Attached** tab. Nothing goes to the client: the draft waits for Ricky.
+
+**pdf-lib needs its own loader for a book.** `gblSyncPromise_` (GroupBilling.gs) runs each callback inside the one
+before it; on a 447-page book pdf-lib awaits once per object, the stack overflows, the overflow is swallowed, and the
+load never settles. `lettersPromise_` queues callbacks and `lettersDrain_` runs them in a flat loop: the page is cut in
+about a second. The forms code is left as it was.
+
+**Needs, once:** Mail.ReadWrite (application) with admin consent on the Entra app, because a draft is changed, not
+sent. A 403 from Graph names it. The letter books themselves are client data and stay in Drive, never here.
+
 ## The branch's own forms — no client link opens a JotForm
 
 `quote/`, `enrol/oas/`, `apply/xpress-life/`, the shared `forms/form.css`
