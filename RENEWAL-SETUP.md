@@ -166,7 +166,7 @@ original Salesforce date is in the `SF Last Renewal` column) — please sanity-c
 them, and note most property rows have no email yet (16 of 44 were matched from
 your motor book).
 
-## Corporate fleet portal (RPM, NU-IRON, …)
+## Corporate fleet portal (the branch's three commercial fleet accounts)
 
 Corporate clients with multiple vehicles sign in at
 `https://YOUR-SITE.netlify.app/renewal/corporate.html` with their **company access

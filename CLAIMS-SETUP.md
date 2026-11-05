@@ -517,7 +517,7 @@ quarantined: 24 rows whose registration is not a registration
 Risk Details holds one row per vehicle *per policy year*, each carrying a
 different fragment of the truth. The script merges them, which is what lifts
 chassis coverage — a number recorded once in 2019 and never again comes back
-into the current record. It also folds `PDJ-3899` and `PDJ 3899` into one
+into the current record. It also folds `TAA-1234` and `TAA 1234` into one
 vehicle, which is where 66 of the duplicate records went.
 
 ### Import it
