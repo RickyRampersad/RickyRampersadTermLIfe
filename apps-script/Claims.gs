@@ -910,15 +910,34 @@ function syncVehicleRegister() {
 }
 
 /** The nightly job. Each register fails independently — one bad field
- *  name in one object must not take down the other register. */
+ *  name in one object must not take down the other register.
+ *
+ *  VEHICLES GO FIRST, AND THAT ORDER MATTERS. The two registers are very
+ *  different sizes: about 1,600 vehicles against about 54,000 policies, which
+ *  is 28 pages of SOQL and half a million cells. Apps Script stops an
+ *  execution at six minutes and a timeout is not catchable, so whichever
+ *  register runs second is the one that silently never happens. The plate
+ *  lookup is what the motor page leans on and it is the cheap one, so it
+ *  runs first; policies have `sfFindPortfolio_` to fall back on, which asks
+ *  Salesforce directly for anything the register has not seen. */
 function salesforceNightlySync() {
   if (!sfConnected_()) return;
   var notes = [];
-  try { notes.push(syncPolicyRegister() + ' policies'); }
-  catch (err) { logClaim_('(sync)', 'policy-sync-failed', 'system', String(err)); notes.push('policies FAILED'); }
   try { notes.push(syncVehicleRegister() + ' vehicles'); }
   catch (err) { logClaim_('(sync)', 'vehicle-sync-failed', 'system', String(err)); notes.push('vehicles FAILED'); }
+  try { notes.push(syncPolicyRegister() + ' policies'); }
+  catch (err) { logClaim_('(sync)', 'policy-sync-failed', 'system', String(err)); notes.push('policies FAILED'); }
   return notes.join(', ');
+}
+
+/** Just the plate register, for when the policy half is what ran out of time.
+ *  On the Claims TT menu as "Sync vehicles only (fast)". */
+function syncVehiclesNow() {
+  if (!sfConnected_()) {
+    SpreadsheetApp.getUi().alert('Connect Salesforce first (Claims TT menu → Connect Salesforce).');
+    return;
+  }
+  SpreadsheetApp.getUi().alert('Synced ' + syncVehicleRegister() + ' vehicles.');
 }
 
 /* ---- live fallback lookup ---- */
@@ -3634,6 +3653,7 @@ function onOpen() {
     .addSeparator()
     .addItem('☁️ Connect Salesforce (one-time)', 'connectSalesforce')
     .addItem('Sync registers from Salesforce now', 'syncSalesforceNow')
+    .addItem('Sync vehicles only (fast)', 'syncVehiclesNow')
     .addSeparator()
     .addItem('🧪 Turn test mode ON (emails only reach you)', 'testModeOn_')
     .addItem('Turn test mode OFF (live emails)', 'testModeOff_')

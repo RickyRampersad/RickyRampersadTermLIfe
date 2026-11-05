@@ -111,6 +111,21 @@ reports how many vehicles and policies it wrote. Until it has run, the number
 plate lookup on the claims page misses every real plate, which looks exactly
 like a broken connection.
 
+**What it should find**, checked against the live org on 5 November 2026, with
+every field name in both queries confirmed to resolve: about **1,600
+vehicles** and about **54,000 policies**.
+
+**Vehicles sync first, on purpose.** Those two sizes are very different — the
+policy half is 28 pages of SOQL and half a million cells — and Apps Script
+stops an execution at six minutes. **A timeout is not catchable**, so whichever
+register runs second is the one that silently never happens, and the plate
+lookup is both the cheap one and the one the motor page leans on. Policies
+have a fallback the plates do not: `sfFindPortfolio_` asks Salesforce directly
+for any policy the register has not seen.
+
+So if the run ends in a timeout rather than a count, the vehicles are already
+in. *Sync vehicles only (fast)* on the same menu does that half on its own.
+
 Then test it from the page: open `/claims/`, pick Motor, continue to the
 details step and type a registration into **Number plate or policy number**.
 A synced register answers with the vehicle and a way to confirm it is yours.
