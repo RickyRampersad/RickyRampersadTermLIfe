@@ -2202,7 +2202,11 @@ function attachName_(f, blob, seen) {
   var raw = String(f.name || blob.getName() || 'document');
   var dot = raw.lastIndexOf('.');
   var ext = dot > 0 ? raw.slice(dot) : '';
-  var label = String(f.doc || '').replace(/[^A-Za-z0-9 '()&+.-]/g, '').trim();
+  /* Strip what a file system will not take, then collapse the gap it leaves:
+     "Driver's permit \u2014 front and back" lost the dash and arrived at the desk
+     as "Driver's permit  front and back.pdf", with two spaces in it. */
+  var label = String(f.doc || '').replace(/[^A-Za-z0-9 '()&+.-]/g, ' ')
+    .replace(/\s+/g, ' ').trim();
   if (!label) return raw;
   seen[label] = (seen[label] || 0) + 1;
   return label + (seen[label] > 1 ? ' ' + seen[label] : '') + ext;

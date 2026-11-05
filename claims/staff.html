@@ -5,19 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Claims TT — Staff</title>
 <meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" type="image/svg+xml" href="/site-icon.svg" />
 <style>
   :root{
-    --navy-900:#1C1D20;--navy-800:#2A2C31;
-    --violet:#D08A4E;--violet-2:#BE7739;--lime:#D08A4E;
-    --teal-600:#6B3C12;--teal-500:#A25F26;--teal-50:#FAF0E7;--teal-ink:#6B3C12;--teal-vivid:#D08A4E;
-    --gold:#D08A4E;--gold-2:#BE7739;--gold-50:#FAF0E7;--gold-ink:#6B3C12;--lime-ink:#6B3C12;--ink:#1C1D20;--muted:#6A6862;--bg:#F6F4F1;--line:#E3DFD9;
+    /* The branch's own light palette, the same block the client page carries.
+       Graphite and copper went on 5 November 2026: "i dint like the dark
+       website". --navy-900 is now the branch's deep blue, which is what the
+       header, the drawer head and the toast sit on; white on it is 13.11:1. */
+    --navy-900:#0a3350;--navy-800:#0d3f5e;
+    --violet:#00728d;--violet-2:#005a70;--lime:#00728d;
+    --teal-600:#005a70;--teal-500:#00728d;--teal-50:#e8f3f6;--teal-ink:#005a70;--teal-vivid:#0e93b0;
+    --gold:#00728d;--gold-2:#005a70;--gold-50:#e8f3f6;--gold-ink:#005a70;--lime-ink:#005a70;
+    --ink:#0d3f5e;--body:#2b3b47;--muted:#5b6670;--bg:#faf9f2;--bg-2:#f4f2e8;
+    --line:#e4e0d4;--line-strong:#7d8890;--line-2:#cfe4ea;
     --red:#D1344F;--red-50:#FDECEF;--red-ink:#9B1B32;--green:#14B87A;--green-50:#E4F8F1;--green-ink:#0A6B46;
     --radius-lg:20px;--radius-md:14px;--radius-sm:10px;
-    --shadow:0 14px 34px rgba(28,29,32,.16);--shadow-sm:0 4px 14px rgba(28,29,32,.10);
+    --shadow:0 14px 34px hsl(32deg 20% 42% / .16);--shadow-sm:0 4px 14px hsl(32deg 20% 42% / .10);
     --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   *{margin:0;padding:0;box-sizing:border-box}
+  /* An author display rule beats the UA sheet's [hidden]{display:none}, so a
+     .who or a .row with display:flex/grid on it renders while it is still
+     marked hidden. That is why "Sign out" and the 6-digit code box were on
+     screen before anybody had asked for a code. Found 5 November 2026. */
+  [hidden]{display:none!important}
   body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
   a{color:inherit}
   button{font:inherit;color:inherit}
@@ -25,7 +36,12 @@
   :focus-visible{outline:3px solid var(--teal-500);outline-offset:2px;border-radius:6px}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 
-  header{position:sticky;top:0;z-index:40;background:var(--navy-900);color:#fff}
+  /* Light, like the client page's own header — 5 November 2026. It was the
+     near-black the branch has turned down five times, and the shield that
+     sits on it (site-mark.svg) ends in the same deep blue the dark header
+     used, so on a dark band the lower corner of the mark disappeared. */
+  header{position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);
+    background:rgba(250,249,242,.92);color:var(--ink);border-bottom:1px solid var(--line)}
   .nav{display:flex;align-items:center;justify-content:space-between;height:60px;gap:14px}
   .logo{display:flex;align-items:center;gap:10px;font-weight:800;text-decoration:none}
   /* Untiled, per the 21 October decision — see claims/index.html. */
@@ -33,8 +49,8 @@
   .logo-badge img{width:100%;height:100%;display:block}
   /* 12px floor — .68rem computed to 10.88px, which is below what the client
      page already holds itself to. */
-  .logo small{display:block;font-size:max(12px,.75rem);font-weight:600;color:#9B9995}
-  .who{display:flex;align-items:center;gap:12px;font-size:.88rem;color:#ABAAA6}
+  .logo small{display:block;font-size:max(12px,.75rem);font-weight:600;color:var(--muted)}
+  .who{display:flex;align-items:center;gap:12px;font-size:.88rem;color:var(--muted)}
 
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;border-radius:999px;padding:10px 20px;border:none;cursor:pointer;font-size:.93rem;transition:transform .15s;text-decoration:none}
   .btn:hover:not(:disabled){transform:translateY(-1px)}
@@ -47,7 +63,7 @@
   .field label{display:block;font-weight:700;font-size:.86rem;margin-bottom:6px}
   /* max(16px,1rem): iOS zooms the page in on any control computing under 16. */
   .field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--radius-sm);font-size:max(16px,1rem);font-family:inherit;background:#fff;color:var(--ink)}
-  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(184,115,51,.18)}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(0,114,141,.18)}
   .hint{font-size:.8rem;color:var(--muted);margin-top:5px;display:block}
   .notice{border-radius:var(--radius-md);padding:12px 16px;font-size:.9rem;margin-top:14px}
   .notice.bad{background:var(--red-50);border-left:4px solid var(--red);color:#9B1B32}
@@ -120,8 +136,8 @@
   .onums{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:.86rem;color:var(--muted)}
   .onums span b{display:inline;font-size:1.05rem;color:var(--ink);margin-right:4px}
   .ttable{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:var(--radius-md);overflow:hidden}
-  .ttable th,.ttable td{padding:11px 14px;text-align:left;font-size:.9rem;border-bottom:1px solid #E7E4DE}
-  .ttable th{background:#F2F0EC;font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .ttable th,.ttable td{padding:11px 14px;text-align:left;font-size:.9rem;border-bottom:1px solid var(--line)}
+  .ttable th{background:var(--bg-2);font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
   .ttable td b{font-variant-numeric:tabular-nums}
   .callout{background:var(--red-50);border-left:4px solid var(--red);border-radius:var(--radius-sm);padding:12px 16px;font-size:.92rem;margin-bottom:16px}
   .toolbar{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
@@ -137,22 +153,22 @@
   .rc-who b{display:block;font-size:.95rem}
   .rc-who span{font-size:.82rem;color:var(--muted)}
   .rc-flags{font-size:.8rem;color:var(--muted)}
-  .rc-flags .owe{color:#6B3C12;font-weight:700}
+  .rc-flags .owe{color:var(--teal-600);font-weight:700}
   .rc-flags .quiet{color:var(--red-ink);font-weight:700}
-  .pill{display:inline-block;font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:5px 11px;border-radius:999px;background:var(--teal-50);color:var(--teal-600);border:1px solid #EBD4BE;white-space:nowrap}
-  .pill.p-Received{background:var(--gold-50);color:#6B3C12;border-color:#EBD4BE}
+  .pill{display:inline-block;font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:5px 11px;border-radius:999px;background:var(--teal-50);color:var(--teal-600);border:1px solid var(--line-2);white-space:nowrap}
+  .pill.p-Received{background:var(--gold-50);color:var(--teal-600);border-color:var(--line-2)}
   .pill.p-Awaiting{background:var(--red-50);color:var(--red-ink);border-color:#F5C6CE}
-  .pill.p-Settled,.pill.p-Closed,.pill.p-Declined{background:#F0EEEA;color:var(--muted);border-color:var(--line)}
-  /* Not --muted. That grey is picked against the page ground #F6F4F1, and this
+  .pill.p-Settled,.pill.p-Closed,.pill.p-Declined{background:var(--bg-2);color:var(--muted);border-color:var(--line)}
+  /* Not --muted. That grey is picked against the page ground var(--bg), and this
      message sits on the tinted panel instead, where it measured 4.43:1 — on
      the wrong side of 4.5 by a hair. Same trap the house note records about
      choosing a muted grey against white rather than against the real ground. */
   .empty{color:#5F5D5A;text-align:center;padding:40px 0}
 
   /* detail drawer */
-  .scrim{position:fixed;inset:0;background:rgba(28,29,32,.45);z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}
+  .scrim{position:fixed;inset:0;background:hsl(32deg 20% 42% / .45);z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}
   .scrim.open{opacity:1;pointer-events:auto}
-  .drawer{position:fixed;top:0;right:-620px;width:min(600px,100%);height:100%;background:var(--bg);z-index:60;transition:right .25s ease;display:flex;flex-direction:column;box-shadow:-18px 0 40px rgba(28,29,32,.25)}
+  .drawer{position:fixed;top:0;right:-620px;width:min(600px,100%);height:100%;background:var(--bg);z-index:60;transition:right .25s ease;display:flex;flex-direction:column;box-shadow:-18px 0 40px hsl(32deg 20% 42% / .25)}
   .drawer.open{right:0}
   .d-head{background:var(--navy-900);color:#fff;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px}
   .d-head b{font-size:1.15rem;letter-spacing:.02em}
@@ -169,8 +185,8 @@
   .kv dd{font-weight:600;word-break:break-word;white-space:pre-wrap}
   /* The flagged panel has to read as a warning without saying so by colour
      alone — the heading names it, and the flag glyph carries it too. */
-  .d-sec.flagged{border-color:#EBD4BE;background:var(--gold-50)}
-  .d-sec.flagged h3{color:#6B3C12}
+  .d-sec.flagged{border-color:var(--line-2);background:var(--gold-50)}
+  .d-sec.flagged h3{color:var(--teal-600)}
   .flag-body{font-size:.89rem;line-height:1.6;white-space:pre-wrap}
   .d-files li{margin:5px 0;font-size:.9rem}
   .d-files a{color:var(--teal-600);font-weight:700;text-decoration:none}
@@ -179,9 +195,9 @@
   .d-actions .pair{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}
   .check{display:flex;gap:8px;align-items:center;font-size:.86rem;font-weight:600;cursor:pointer}
   .check input{width:17px;height:17px;accent-color:var(--teal-600)}
-  .miss-chip{display:inline-flex;align-items:center;gap:7px;background:var(--gold-50);border:1px solid #EBD4BE;border-radius:999px;padding:5px 7px 5px 13px;font-size:.84rem;font-weight:600;margin:0 6px 6px 0}
-  .miss-chip button{background:none;border:none;cursor:pointer;font-size:.9rem;color:#6B3C12}
-  .log-line{font-size:.82rem;padding:7px 0;border-top:1px solid #E7E4DE;color:var(--muted)}
+  .miss-chip{display:inline-flex;align-items:center;gap:7px;background:var(--gold-50);border:1px solid var(--line-2);border-radius:999px;padding:5px 7px 5px 13px;font-size:.84rem;font-weight:600;margin:0 6px 6px 0}
+  .miss-chip button{background:none;border:none;cursor:pointer;font-size:.9rem;color:var(--teal-600)}
+  .log-line{font-size:.82rem;padding:7px 0;border-top:1px solid var(--line);color:var(--muted)}
   .log-line b{color:var(--ink)}
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy-900);color:#fff;padding:12px 22px;border-radius:999px;font-weight:700;font-size:.9rem;z-index:80;transition:transform .25s;box-shadow:var(--shadow)}
   .toast.show{transform:translateX(-50%) translateY(0)}
@@ -290,7 +306,7 @@
 <header>
   <div class="wrap nav">
     <a class="logo" href="./">
-      <span class="logo-badge" aria-hidden="true"><img src="/claims/claims-mark.svg" alt="" /></span>
+      <span class="logo-badge" aria-hidden="true"><img src="/site-mark.svg" alt="" /></span>
       <span>Claims&nbsp;TT<small>Staff dashboard</small></span>
     </a>
     <div class="who" id="who" hidden>
