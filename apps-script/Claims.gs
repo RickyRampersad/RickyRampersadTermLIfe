@@ -89,10 +89,13 @@ var CLAIMS = {
     // Guardian General — Motor Claims Department. NOT Guardian Life.
     motor:    '',
     property: '',
-    // Employee Benefits customer care. Confirmed: EB's own replies say to
-    // direct everything about a health claim here, and the renewal desk
-    // already files change forms to it.
-    health:   'EBCustomercare@myguardiangroup.com',
+    /* Health Claims TT. Confirmed 5 November 2026 by the branch manager —
+       "this is guardian health claims email … so healthclaimstt@" — and by
+       the branch's own record: every health claim sales support has filed
+       goes To: healthclaimstt@, with EB Customer Care copied, not the other
+       way round. EBCustomercare@ is the right desk for a change of cover or
+       a billing question, which is what the renewal desk uses it for. */
+    health:   'healthclaimstt@myguardiangroup.com',
     // GLOC Claims — Customer Support, the Log Book's own route for a
     // life/CI claim submission. Address to be read off the Departments tab.
     life:     '',
@@ -100,6 +103,12 @@ var CLAIMS = {
   },
   DESK_OK: ['health'],
   DESK_DEFAULT: '',
+
+  /* Copied on one line's claims only, beside MAIL_CC. EB Customer Care is on
+     every health claim the branch files by hand, so it stays on ours. */
+  DESK_CC: {
+    health: ['EBCustomercare@myguardiangroup.com'],
+  },
 
   // Copied on every claim, whatever the type. With a line's desk not yet
   // confirmed, these are the only people who get it — which is why the branch
@@ -547,8 +556,15 @@ function deskGap_(type) {
     'CLAIMS.DESK.' + type + ' is set and "' + type + '" is added to CLAIMS.DESK_OK.';
 }
 
-function ccList_() {
-  return CLAIMS.MAIL_CC.filter(String).join(',');
+function ccList_(type) {
+  var extra = (CLAIMS.DESK_CC && CLAIMS.DESK_CC[type]) || [];
+  var seen = {}, out = [];
+  CLAIMS.MAIL_CC.concat(extra).forEach(function (a) {
+    var k = String(a || '').trim().toLowerCase();
+    if (!k || seen[k]) return;
+    seen[k] = 1; out.push(String(a).trim());
+  });
+  return out.join(',');
 }
 
 /** Last four digits of a mobile number, used to gate status lookups. */
@@ -1479,11 +1495,27 @@ function checkLines_(checks) {
 /* Every answer that has no column of its own, plus what the policy itself said,
    so the desk and the claim form can both read one place. Capped, and each value
    cleaned, because this is client-typed text going into a cell. */
+/* Every answer that has no column of its own. It was motor's list alone until
+   5 November 2026, so a health claim collected the patient's name, their
+   relationship to the member, their date of birth, whether the treatment was
+   pre-authorised and whether another plan covers it — and threw all five away
+   before the desk ever saw them. Property lost four and life six the same way.
+   Motor was complete, which is why nobody noticed: motor was the line tested.
+
+   Anything added to a type's `fields` on claims/index.html has to be added
+   here too, or the client answers it for nothing. */
 var EXTRA_KEYS = [
+  // motor
   'driverPermit', 'permitIssue', 'permitExpiry', 'driverName', 'driverSame', 'driverRel',
   'vehicleReg', 'vehicleMake', 'vehicleYear', 'chassis', 'engine', 'coverage',
-  'insuredValueNote', 'damage', 'cause', 'provider', 'injuries', 'thirdparty',
+  'insuredValueNote', 'damage', 'cause', 'injuries', 'thirdparty',
   'tpName', 'tpVehicle', 'tpInsurer', 'tpContact',
+  // health — 'provider' is shared with motor's repairer
+  'provider', 'patientName', 'patientRel', 'patientDob', 'preauth', 'otherCover',
+  // property
+  'propertyUse', 'occupied', 'emergency', 'fireStation',
+  // life and critical illness
+  'lifeAssured', 'lifeDob', 'lifeId', 'claimantName', 'claimantRel', 'employer',
 ];
 function extraJson_(b) {
   var out = {};
@@ -2265,18 +2297,156 @@ function attachedLine_(pack, form) {
   return ' Attached: ' + bits.join(' and ') + '. Everything is also saved in the folder.';
 }
 
+/* ─────────────────── what the desk is told, by line ───────────────────
+ *
+ * One shape for every line printed motor's questions at a health desk:
+ * "Incident", "Location", "Police report #". The patient, their relationship
+ * to the member, the provider, whether it was pre-authorised and whether
+ * another plan pays were all asked of the client and then never shown to
+ * anybody. Rewritten 5 November 2026 — "the fields need to be different as
+ * this is a health claim submission".
+ *
+ * The order is the desk's own reading order, and a blank line is cut rather
+ * than printed as "(not given)": a desk reads what is there faster than it
+ * reads a column of dashes. Only the reference, the client and the claim
+ * type are always printed, because those three identify the file.
+ * ──────────────────────────────────────────────────────────────────── */
+
+/** Guardian's own words for a health claim, beside ours. Their desk files by
+ *  these, and the branch's own submissions have always carried them. */
+var HEALTH_SUBMISSION = {
+  'Prescription drugs': 'Prescription/Pharmacy Claim',
+  'Doctor visit / consultation': 'Doctor Visit Claim',
+  'Lab & diagnostics': 'Laboratory/Diagnostic Claim',
+  'Dental': 'Dental Claim',
+  'Optical': 'Optical Claim',
+  'Hospitalisation / surgery': 'Hospitalisation/Surgical Claim',
+  'Physiotherapy': 'Physiotherapy Claim',
+  'Overseas treatment': 'Overseas Treatment Claim',
+};
+
+function submissionType_(claim) {
+  var sub = String(claim.subtype || '').trim();
+  if (typeKeyFromLabel_(claim.type) === 'health') {
+    return HEALTH_SUBMISSION[sub] || (sub ? sub + ' Claim' : 'Health Claim');
+  }
+  return sub || String(claim.type || 'Claim');
+}
+
+/** Guardian gives ninety days from the date of treatment. We hold that date,
+ *  so the desk is told rather than asked — and the branch sees it on the day
+ *  the claim is filed, which is the only day it can still be acted on. */
+function claimAgeDays_(claim) {
+  var iso = iso_(claim.incidentDate);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+  var part = iso.split('-');
+  var then = Date.UTC(+part[0], +part[1] - 1, +part[2]);
+  var today = iso_(new Date()).split('-');
+  var now = Date.UTC(+today[0], +today[1] - 1, +today[2]);
+  return Math.round((now - then) / 86400000);
+}
+
+function ninetyDayNote_(claim) {
+  if (typeKeyFromLabel_(claim.type) !== 'health') return '';
+  var days = claimAgeDays_(claim);
+  if (days === null || days < 0) return '';
+  if (days > 90) {
+    return '<div style="background:#fbe9e7;border-left:4px solid #b3261e;padding:12px 16px;margin:0 0 4px">' +
+      '<b>Over ninety days old.</b> The treatment was ' + days + ' days ago. Guardian\'s own claim ' +
+      'checklist asks whether ninety days or less have passed, so this one needs a decision ' +
+      'rather than a routine submission.</div>';
+  }
+  if (days > 75) {
+    return '<div style="background:#fff7e6;border-left:4px solid #d9a93f;padding:12px 16px;margin:0 0 4px">' +
+      '<b>' + (90 - days) + ' day' + (90 - days === 1 ? '' : 's') + ' left of the ninety.</b> ' +
+      'The treatment was ' + days + ' days ago.</div>';
+  }
+  return '';
+}
+
+function deskFields_(claim) {
+  var x = claim.extra || {};
+  var out = [];
+  var row = function (label, value) {
+    if (value === null || value === undefined || String(value).trim() === '') return;
+    out.push(tr_(label, String(value)));
+  };
+  var join = function (parts) { return parts.filter(String).join(' · '); };
+  var money = function (v) { return v ? esc_(fmtMoney_(v) || v) : ''; };
+
+  row('<b>Reference</b>', '<b>' + esc_(claim.ref) + '</b>');
+  row('Claim type', esc_(claim.type) + (claim.subtype ? ' — ' + esc_(claim.subtype) : ''));
+
+  var type = typeKeyFromLabel_(claim.type);
+  if (type === 'health') {
+    row('Submission type', esc_(submissionType_(claim)));
+    row('Member', esc_(claim.name));
+    row('Plan / policy #', esc_(claim.policy || '(not given)'));
+    row('Patient', join([esc_(x.patientName || claim.name),
+      x.patientRel ? esc_(x.patientRel) : '', x.patientDob ? 'born ' + esc_(niceDate_(x.patientDob)) : '']));
+    row('Date of treatment', esc_(niceDate_(claim.incidentDate) || '(not given)'));
+    row('Provider', esc_(x.provider || ''));
+    row('Where', esc_(claim.location || ''));
+    row('Amount claimed', money(claim.amount));
+    row('Pre-authorised', esc_(x.preauth || ''));
+    row('Covered by another plan', esc_(x.otherCover || ''));
+  } else if (type === 'property') {
+    row('Client', esc_(claim.name));
+    row('Policy #', esc_(claim.policy || '(not given)'));
+    row('Property', esc_(claim.location || '(not given)'));
+    row('What it is', esc_(x.propertyUse || ''));
+    row('Anyone there', esc_(x.occupied || ''));
+    row('Incident', esc_(whenText_(claim) || '(not given)'));
+    row('Estimated loss', money(claim.amount));
+    row('Emergency work done', esc_(x.emergency || ''));
+    row('Fire station', esc_(x.fireStation || ''));
+    row('Police report #', esc_(claim.policeReport || ''));
+  } else if (type === 'life') {
+    row('Policy owner', esc_(claim.name));
+    row('Policy #', esc_(claim.policy || '(not given)'));
+    row('Life assured', join([esc_(x.lifeAssured || ''),
+      x.lifeDob ? 'born ' + esc_(niceDate_(x.lifeDob)) : '', x.lifeId ? 'ID ' + esc_(x.lifeId) : '']));
+    row('Claimant', join([esc_(x.claimantName || ''), esc_(x.claimantRel || '')]));
+    row('Employer', esc_(x.employer || ''));
+    row('Date', esc_(whenText_(claim) || '(not given)'));
+    row('Amount', money(claim.amount));
+  } else {
+    row('Client', esc_(claim.name));
+    row('Policy #', esc_(claim.policy || '(not given)'));
+    row('Incident', esc_(whenText_(claim) || '(not given)'));
+    row('Location', esc_(claim.location || ''));
+    row('Estimated amount', money(claim.amount));
+    row('Police report #', esc_(claim.policeReport || ''));
+    row('Police station', esc_(claim.policeStation || ''));
+    row('Third party', esc_(claim.thirdParty || ''));
+  }
+
+  row('Mobile', esc_(claim.mobile));
+  row('Email', esc_(claim.email || '(none)'));
+  row('National ID', esc_(claim.nationalId || ''));
+  row('Settlement bank', esc_(claim.bank || ''));
+  row('<b>' + (type === 'health' ? 'What the treatment was for' : 'What happened') + '</b>',
+    esc_(claim.description).replace(/\n/g, '<br>'));
+  return out.join('');
+}
+
 function notifyDesk_(claim, files, missing, form) {
   var type = typeKeyFromLabel_(claim.type);
   var desk = deskFor_(type);
   var gap = deskGap_(type);
   var pack = claimAttachments_(files, form);
-  var subject = (gap ? 'NEW CLAIM (not forwarded) — ' : 'NEW CLAIM — ') + claim.ref + ' — ' + claim.type +
-    (claim.subtype ? ' (' + claim.subtype + ')' : '') + ' — ' + claim.name;
+  /* The branch's own subject line, which is what these desks already file
+     by: sales support has sent "RRB CLAIMS SUBMISSION - Prescription/Pharmacy
+     Claim - <client> - <agent>" by hand for years. Ours carries the reference
+     in the agent's place, because the reference is what a reply has to quote
+     for the claim to find its way back to the file. */
+  var subject = 'RRB CLAIMS SUBMISSION' + (gap ? ' (not forwarded)' : '') + ' - ' +
+    submissionType_(claim) + ' - ' + claim.name + ' - ' + claim.ref;
 
   /* No confirmed desk: the branch alone gets it, with the reason at the top.
      Never a fallback address — a claim landing in an unwatched mailbox reads
      as handled and is not. */
-  var cc = ccList_();
+  var cc = ccList_(type);
   sendMail_({
     to: desk || cc, cc: desk ? cc : '', replyTo: claim.email || undefined, name: CLAIMS.FROM_NAME,
     subject: subject,
@@ -2286,22 +2456,9 @@ function notifyDesk_(claim, files, missing, form) {
       '<b>New claim submitted online — ' + esc_(claim.ref) + '</b></div>' +
       (gap ? '<div style="background:#fbe9e7;border-left:4px solid #b3261e;padding:12px 16px;margin:0 0 4px">' +
         '<b>Pass this on by hand.</b><br>' + esc_(gap) + '</div>' : '') +
+      ninetyDayNote_(claim) +
       '<table style="border-collapse:collapse;width:100%;max-width:680px">' +
-      tr_('<b>Reference</b>', '<b>' + esc_(claim.ref) + '</b>') +
-      tr_('Claim type', esc_(claim.type) + (claim.subtype ? ' — ' + esc_(claim.subtype) : '')) +
-      tr_('Client', esc_(claim.name)) +
-      tr_('Policy #', esc_(claim.policy || '(not given)')) +
-      tr_('Mobile', esc_(claim.mobile)) +
-      tr_('Email', esc_(claim.email || '(none)')) +
-      (claim.nationalId ? tr_('National ID', esc_(claim.nationalId)) : '') +
-      tr_('Incident', esc_(whenText_(claim) || '(not given)')) +
-      (claim.location ? tr_('Location', esc_(claim.location)) : '') +
-      (claim.amount ? tr_('Estimated amount', esc_(fmtMoney_(claim.amount) || claim.amount)) : '') +
-      (claim.policeReport ? tr_('Police report #', esc_(claim.policeReport)) : '') +
-      (claim.policeStation ? tr_('Police station', esc_(claim.policeStation)) : '') +
-      (claim.thirdParty ? tr_('Third party', esc_(claim.thirdParty)) : '') +
-      (claim.bank ? tr_('Settlement bank', esc_(claim.bank)) : '') +
-      tr_('<b>What happened</b>', esc_(claim.description).replace(/\n/g, '<br>')) +
+      deskFields_(claim) +
       '</table>' +
       '<h3 style="margin:20px 0 4px;font-size:15px">Documents received (' + files.length + ')</h3>' +
       fileListHtml_(files) +
@@ -2669,7 +2826,7 @@ function sendReviewDue_(claim, missing) {
 
 function sendDeskNudge_(claim, age, quiet, missing) {
   sendMail_({
-    to: deskFor_(typeKeyFromLabel_(claim.type)), cc: ccList_(), name: CLAIMS.FROM_NAME,
+    to: deskFor_(typeKeyFromLabel_(claim.type)), cc: ccList_(typeKeyFromLabel_(claim.type)), name: CLAIMS.FROM_NAME,
     subject: 'Still open after ' + age + ' days — claim ' + claim.ref + ' — ' + claim.name,
     htmlBody:
       '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1a2433">' +

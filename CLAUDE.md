@@ -6864,6 +6864,68 @@ the script's, never put a `yyyy-MM-dd` through `new Date()`, and write the two
 cells back as text. A regex guard that answers `null` on what it does not
 recognise hides this class of bug for months.
 
+### The desk is told what its own line needs
+
+Rewritten 5 November 2026: *"this is guardiaan health claims email an dth filds
+need to be different as this is a health claim submission, so
+healthclaimstt@myguardiangroup.com"*.
+
+**`EXTRA_KEYS` was motor's list alone, and everything off it was discarded.**
+A field with no column of its own goes into `Answers (JSON)` via
+`extraJson_`, and that function only ever copied the keys on `EXTRA_KEYS`.
+Fifteen answers were collected from the client and thrown away before anybody
+saw them:
+
+| line | lost |
+|---|---|
+| health | `patientName`, `patientRel`, `patientDob`, `preauth`, `otherCover` |
+| property | `propertyUse`, `occupied`, `emergency`, `fireStation` |
+| life | `lifeAssured`, `lifeDob`, `lifeId`, `claimantName`, `claimantRel`, `employer` |
+
+Motor was complete, which is exactly why it went unnoticed: motor is the line
+that was tested. **Anything added to a type's `fields` on
+`claims/index.html` has to be added to `EXTRA_KEYS` as well**, or the client
+answers it for nothing.
+
+**The desk notice printed motor's questions at every desk.** One field block
+for all five lines, so a health claim arrived headed *Incident*, *Location*,
+*Police report #*, *Police station*, *Third party* — and said nothing about
+the patient, the provider, pre-authorisation or another plan. `deskFields_`
+is per line now: health leads on the submission type, the member, the plan
+number, the patient and the provider; property on the address, what it is and
+whether anyone was there; life on the life assured and the claimant; motor
+keeps what it had. **A blank line is cut, never printed as a dash** — a desk
+reads what is there faster than a column of "(not given)".
+
+**The health desk is `healthclaimstt@myguardiangroup.com`**, confirmed by the
+branch manager and by the branch's own record: every health claim sales
+support has filed goes To: Health Claims TT with EB Customer Care copied, not
+the other way round. `EBCustomercare@` is right for a change of cover or a
+billing question, which is what the renewal desk uses it for, so it stays as a
+health-only Cc through the new `CLAIMS.DESK_CC`.
+
+**The subject is the branch's own convention**, because these desks already
+file by it: sales support has sent `RRB CLAIMS SUBMISSION - Prescription/Pharmacy
+Claim - <client> - <agent>` by hand for years. Ours puts the reference where
+the agent's address was, since the reference is what a reply has to quote for
+the claim to find its file. `HEALTH_SUBMISSION` maps our subtype wording to
+Guardian's own ("Prescription drugs" → "Prescription/Pharmacy Claim").
+
+**Ninety days is arithmetic, not a question.** Guardian's health claim form
+asks the member whether ninety days or less have passed since the claim date.
+We hold that date, so the client is told on the review step while they can
+still act (`health-90` and `health-90-soon` in `claim-checks.js`) and the desk
+is told at the top of the notice (`ninetyDayNote_`). It is a **`check`, never
+a `stop`**: a late claim may still be considered, a typed date can be wrong,
+and turning a real claim away at our own door is the one failure this page
+must not have. The general `loss-old` check stands down for health, so the
+two never say the same thing twice.
+
+The replaced JotForm ("Claim Health E Form", id 230135714666051) is where the
+shape came from — including its own footer on the submission that was read:
+*"Attachments: Because the total size is more than 5MB the uploads are not
+attached."* That is the failure the 18MB budget above exists to prevent.
+
 ### The pages are light, on the branch's own palette
 
 Decided 5 November 2026, asked for in these words: *"also i dint like the dark

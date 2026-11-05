@@ -2256,7 +2256,10 @@ const checkSaid = {};        // finding id -> what the client said about it
 
 function runChecks() {
   if (typeof ClaimChecks === "undefined") { checkFindings = []; return checkFindings; }
-  const a = Object.assign({}, state.answers, { name: state.answers.name || state.policy.name });
+  /* the line of business too, so a check can be one line's own — the
+     ninety-day rule is Guardian's for health and nobody else's */
+  const a = Object.assign({}, state.answers,
+    { name: state.answers.name || state.policy.name, type: state.type, subtype: state.subtype });
   try { checkFindings = ClaimChecks.run(a, state.policy) || []; }
   catch (err) { checkFindings = []; }          // a broken check must never block a claim
   return checkFindings;

@@ -53,11 +53,41 @@ branch homepage's own light palette, and the staff header, the hero and the
 mark changed with it — the reasoning is in `CLAUDE.md`. These are HTML and CSS
 only, so they go live when the branch is merged. **No paste, no new version.**
 
-### `Claims.gs` has one cosmetic fix waiting
+### Re-paste `Claims.gs` — 5 November 2026 · **health, and a real data loss**
 
-Not worth a paste on its own; take it with the next one. An attachment reached
-the desk as `Driver's permit  front and back.pdf`, with two spaces where the
-em-dash was stripped out of the label. `attachName_` collapses the gap now.
+**Paste `apps-script/Claims.gs` again and publish a New version** (Deploy →
+Manage deployments → ✏️ → Version: **New version** → Deploy). What it carries:
+
+- **Fifteen answers were being thrown away.** Only motor's fields were on the
+  list of things worth storing, so a health claim collected the patient's
+  name, their relationship to the member, their date of birth, whether the
+  treatment was pre-authorised and whether another plan covers it — and
+  discarded all five. Property lost four and life six the same way.
+- **The health desk is now `healthclaimstt@myguardiangroup.com`**, with
+  EB Customer Care copied rather than addressed.
+- **The desk notice is per line.** It printed motor's questions at every desk.
+- **The subject follows the branch's own convention**, which these desks
+  already file by: `RRB CLAIMS SUBMISSION - <type> - <client> - <reference>`.
+- **Ninety days.** Guardian's health form asks whether ninety days or less
+  have passed; we hold the date, so the client is told on the review step and
+  the desk at the top of the notice.
+- The cosmetic fix from 4 November: an attachment reached the desk as
+  `Driver's permit  front and back.pdf`, with two spaces where the em-dash
+  was stripped out. `attachName_` collapses the gap.
+
+The page half (the ninety-day check) is HTML and goes live on merge.
+
+### Testing the Salesforce link
+
+Setting `SF_LOGIN_URL`, `SF_KEY` and `SF_SECRET` does not fill the registers —
+**run the menu item** *Claims TT → Sync registers from Salesforce now*. It
+reports how many vehicles and policies it wrote. Until it has run, the number
+plate lookup on the claims page misses every real plate, which looks exactly
+like a broken connection.
+
+Then test it from the page: open `/claims/`, pick Motor, continue to the
+details step and type a registration into **Number plate or policy number**.
+A synced register answers with the vehicle and a way to confirm it is yours.
 
 ### Before you turn test mode off: the desk addresses
 
