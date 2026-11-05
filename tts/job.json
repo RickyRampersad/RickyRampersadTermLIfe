@@ -3,8 +3,16 @@
  "rate": "-5%",
  "check": true,
  "films": {
-  "oftfix4": [
-   "Press log, and your tracking number appears. R R B, O F T, today's date, then a number for this kit. Write that number on the kit, before you hand it in."
+  "oftlaunch3": [
+   "This is a first for our branch. O F T kits are now in the Log Book, and every single kit gets its own tracking number, from the moment it's logged, all the way to the collation branch.",
+   "Before, every kit was typed by hand. Sheet after sheet, the same number again and again. Now, the system does it for us.",
+   "Here's how it works. Collect the sample from your client, open the Log Book, and choose O F T Kit.",
+   "Our branch system looks up your client and fills in the policy number for you. Less typing, and more time for busy agents on the go.",
+   "Press log, and your tracking number appears, instantly. Write it on the kit, before you hand it in.",
+   "Hand the kit to sales support. They sign for it on their phone, and you get an e-mail the moment they do.",
+   "Then the system builds the transmittal for them, with this quarter's collation branch and every kit on one page. All they do is print.",
+   "Need to find a kit? Search the number, the policy, or your client's name, and see exactly where it is.",
+   "A first for our branch. From today, every O F T kit goes through the Log Book. Ricky Rampersad branch dot com, slash log book."
   ]
  }
 }
