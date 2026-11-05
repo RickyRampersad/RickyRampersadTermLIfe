@@ -6051,6 +6051,41 @@ servicing work".
   Salesforce joined), `pddSendNow()`. `pdd3/` in the session scratchpad holds
   the harness on a made-up branch (`test.js`, 87 checks; `page-test.js`, 40,
   Playwright; `world.js`, the fake workbook and Salesforce).
+- **The wall's Premium dues stop: eleven scenes that turn by themselves (5 November 2026, PDD 2026-11-05a).** Ricky, 4
+  November: "Policies under 3 years ... under 5 years for both active and inactive agents, with the exceptions of Dominic,
+  Javid, Aleema, Tarek. Those persons are still with the company ... can this dashboard paint a picture", then, the same
+  evening: "under 1 year, then 2 year, then 3 year, then 4 year, then 5 years, then over 5 years, and the ability to pause
+  ... then the 45 days, the 60, 75 and the 90 days before the lapse, and then the lapses". `intelligence/wall/index.html`
+  ("Premium Dues · The Letters", tab "Premium dues · the letters", `secs:100` in all.html) is a scene player: six band
+  scenes, four letter scenes, one lapse scene, nine seconds each (`?dwell=`), with pause, back and forward (buttons, space,
+  arrow keys) and a dot per scene. all.html now sends a stop `{rrb:'shown'}` when it turns to it, and this stop starts again
+  from scene 1; others ignore it.
+  - **The data** is a `journey` block that `iActWall45_` attaches live to intel.wall (band 45 only; the rest of the feed is
+    still the nightly copy): `iWallJourney_` in PremiumDueDesk.gs, kept ten minutes (`PDD_WALL`).
+  - **Bands** (`PDD_WALL.BANDS`, keys t0 to t5, plus `all`): under 1 year, 1 to 2, 2 to 3, 3 to 4, 4 to 5, over 5, from the
+    extract's issue date. Each: behind (policies, clients, premium), how they pay and what should have collected itself, the
+    days-behind ladder (1 to 44, then each letter's stretch), units, agents, orphans, and lapsed (this month, 30 days, year).
+  - **Both books**: active agents' and the books of those who left, one row `Orphans · to reassign`, never named. Left =
+    INTEL_EXCLUDE_AGENTS, the tracker's WALL_LEFT, or on no access list; this block counts INTEL_EXCLUDE_AGENTS' books (every
+    other figure on the wall still leaves them out). **Dominic Harding (A04104), Javid Ali, Aleema Mohammed-Ali and Terek
+    Ali (A09091; "Terek Hassan Ali" in Salesforce) are always active** (`PDD_WALL.STAYS`, and `WALL_STAYS` / `wallStays_` in
+    KPI.gs so `wallScrub_` can never fold them, even if put on WALL_LEFT by mistake; the Script Property WALL_STAYS replaces
+    the list). Salesforce reads Dominic "Transferred" and Terek "Not Active"; Ricky says both are still with the company.
+    Javid's and Aleema's names can show on this stop's agent lists, as they did before; the orphan slides and the pending
+    wall still hide them.
+  - **The four letters** (PDD.STAGES): the letter as the client gets it (the subject `iSurveySubject_` and the templates
+    write, a gist of ISURVEY_STAGES / iSurvey75Html_ / iSurvey90OptionsHtml_, the button it carries), on the line today
+    (stage to stage + LATE) by band, checked today and by whom (staff first names), sent today or test copies (a test copy
+    is never called a letter), waiting for ten, not sent and why, the last five working days, what came back in 30 days
+    (Intel Surveys, live rows) and what happened after in 120 days.
+  - **The lapses**: status 1 on the extract with a projected lapse date this year: by month, band, agent (orphans one row),
+    and whether a live letter went first (Intel Surveys by policy, sent before the lapse date).
+  - Counts, premium totals, staff first names and our own agents' names only. Narration lines rewritten in
+    `audio/lines.py` ('index') and not voiced: the button is off until `build-voice.py index` and `embed-audio.py index`.
+  - **To put it live: paste Intelligence.gs, PremiumDueDesk.gs and KPI.gs into the Branch Intelligence project, then
+    Manage deployments, pencil, New version.** Until then each scene says its figures come with the paste and the letters
+    still show. `wall45/journey-test.js` and `wall45/shots2.js` (scenes at 1920x1080, 1366x768, 1280x720, a phone, no
+    `journey`, a dead feed, and the player's turning, pause and keys) in the session scratchpad cover it.
 
 ## The motor quote — the client signs in, Salesforce fills in, the desk quotes
 

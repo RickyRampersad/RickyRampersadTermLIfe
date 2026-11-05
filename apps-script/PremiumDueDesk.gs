@@ -107,7 +107,7 @@
  ******************************************************************************/
 
 var PDD = {
-  VERSION: '2026-10-13b',
+  VERSION: '2026-11-05a',
   STAGE: 45,            // the first line; the page and the editor helpers read it as the default
   STAGES: [45, 60, 75, 90],   // the four lines (13 October 2026: "45 days, 60 days, 75 days and 90 days")
   LATE: 6,              // days past each stage a client stays on its line: 45 to 51, 60 to 66, 75 to 81, 90 to 96
@@ -1718,4 +1718,452 @@ function pddToday() {
   var text = out.join('\n');
   Logger.log(text);
   return text;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE WALL'S PICTURE OF THE LETTERS (5 November 2026)
+   ══════════════════════════════════════════════════════════════════════════
+   Ricky, 4 November, on the Intelligence wall's "Premium dues" stop: "Policies
+   under 3 years ... under 5 years for both active and inactive agents, with
+   the exceptions of Dominic, Javid, Aleema, Tarek. Those persons are still
+   with the company ... the wall will show what emails are going out to the
+   clients today on 45 days ... On the 60 days, what goes out? And on the 75
+   days ... And when the policy is about to lapse ... can this dashboard paint
+   a picture."
+
+   iWallJourney_ is that picture, attached live to intel.wall by iActWall45_
+   (the rest of the feed is still the nightly copy; this part is kept ten
+   minutes, so a tick made at 9:40 is on the wall by 9:50). Read from the dues
+   extract, the Premium Due Checks tab and the Intel Surveys tab.
+
+   SCOPE. Every policy, cut by how long it has been in force: under a year,
+   1 to 2, 2 to 3, 3 to 4, 4 to 5 and over five (PDD_WALL.BANDS, the keys t0
+   to t5), and `all`. Asked first as "under 3 and under 5 years" and then, the
+   same evening, as a scene a band: "under 1 year, then 2 year, then 3 year,
+   then 4 year, then 5 years, then over 5 years ... then the 45 days, the 60,
+   75 and the 90 days before the lapse, and then the lapses". A check or a
+   letter is placed in a band by its policy's issue date on the extract, or the
+   YEARS the letter logged; one that cannot be placed counts in `all` only.
+
+   BOTH BOOKS. Active agents' books and the books of agents who have left.
+   Somebody who has left is never named: their policies are one row,
+   PDD_WALL.ORPHANS. Who has left is INTEL_EXCLUDE_AGENTS, the tracker's
+   WALL_LEFT (wallLeft_ in KPI.gs), or an agent on no access list; and
+   PDD_WALL.STAYS (Dominic Harding, Javid Ali, Aleema Mohammed-Ali, Terek Ali,
+   or the WALL_STAYS Script property) are always active, whatever any list
+   says, because they are still with the company. Note INTEL_EXCLUDE_AGENTS
+   still takes its names out of every OTHER figure on the wall; this block
+   counts them, because it was asked for both books.
+
+   AGGREGATES ONLY. Counts, premium totals, staff first names, our own active
+   agents' names. Never a client, a policy number or one client's figure.
+
+   THE FOUR TOUCHPOINTS are PDD.STAGES. Each says what the client receives,
+   in the subject line iSurveySubject_ writes and a gist of the letter as
+   ISURVEY_STAGES and iSurvey75Html_ / iSurvey90OptionsHtml_ write it; what is
+   on that line today and what the desk did with it; the last five working
+   days; and what came back. A test copy is never called a letter a client
+   received: mode says which it is.
+   ────────────────────────────────────────────────────────────────────────── */
+var PDD_WALL = {
+  TTL: 600, KEY: 'pdd_wall_jny',
+  ORPHANS: 'Orphans · to reassign',
+  STAYS: ['Dominic Harding', 'Javid Ali', 'Aleema Mohammed-Ali', 'Terek Ali'],
+  BACK_DAYS: 30, OUT_DAYS: 120, WEEK: 5, AGENTS: 10,
+  /* how long in force, one scene each on the wall (4 November: "under 1 year, then 2 year ... then over 5 years") */
+  BANDS: [{ key: 't0', label: 'Under 1 year', to: 1 }, { key: 't1', label: '1 to 2 years', to: 2 },
+          { key: 't2', label: '2 to 3 years', to: 3 }, { key: 't3', label: '3 to 4 years', to: 4 },
+          { key: 't4', label: '4 to 5 years', to: 5 }, { key: 't5', label: 'Over 5 years', to: 1e9 }]
+};
+var PDD_WALL_GIST = {
+  45: 'Thanks them for their years with us, tells them how the premium is collected and that the last one did not come through, and asks one question: rate the service, one tap.',
+  60: 'A follow-up. It opens on what they said last time, says the premium is still outstanding and how to sort it. No rating if they gave one.',
+  75: 'Names the day the cover stops unless the premium is paid, gives the ways to pay, and a button: ask my agent to call me.',
+  90: 'Before the policy lapses: pay what is outstanding, reduce the cover, make it paid-up, or ask for time, and a button to have the branch call about the options.'
+};
+function pddWallTokens_(s) { return iNameKey_(s).split(' ').filter(Boolean); }
+/* Is this agent one of the four who stay? Every token of the stay name in the
+   agent's name, or the other way round, with the same surname: "Terek Hassan
+   Ali" and "A09091 - Terek Ali" are one man. */
+function pddWallStays_(name, stays) {
+  var ks = pddWallTokens_(name).filter(function (t) { return !/^a?\d+$/.test(t); });
+  if (ks.length < 2) return false;
+  for (var i = 0; i < stays.length; i++) {
+    var es = stays[i];
+    if (es[es.length - 1] !== ks[ks.length - 1]) continue;
+    var a = es.every(function (t) { return ks.indexOf(t) >= 0; }),
+        b = ks.every(function (t) { return es.indexOf(t) >= 0; });
+    if (a || b) return true;
+  }
+  return false;
+}
+function pddWallStayList_() {
+  var raw = String(iProp_('WALL_STAYS') || '').trim();
+  return (raw ? raw.split(/\s*,\s*/) : PDD_WALL.STAYS).map(pddWallTokens_).filter(function (t) { return t.length >= 2; });
+}
+function pddWallFirst_(name) {
+  var s = String(name || '').replace(/^[A-Za-z]?\d+\s*-\s*/, '').trim().split(/\s+/)[0] || '';
+  return s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
+}
+function pddWallNotSent_(note) {
+  var n = String(note || '').toLowerCase();
+  if (/moved to the \d+-day line/.test(n)) return 'moved to the next line';
+  if (/passed/.test(n)) return 'passed the line while held';
+  if (/no longer|paid|off the|not on the line|not on the extract/.test(n)) return 'paid, or off the line';
+  if (/address|e-?mail|agent/.test(n)) return 'details changed since the check';
+  if (/held|wording|approved|allowance|quota/.test(n)) return 'held';
+  return 'other';
+}
+
+function iWallJourney_(fresh) {
+  if (!fresh) {
+    var hit = pddCacheGet_(PDD_WALL.KEY);
+    if (hit && hit.v === PDD.VERSION) return hit;
+  }
+  var out = iWallJourneyBuild_();
+  out.v = PDD.VERSION;
+  if (!out.error) pddCachePut_(PDD_WALL.KEY, out, PDD_WALL.TTL);
+  return out;
+}
+
+function iWallJourneyBuild_() {
+  var now = new Date(), today = iToday_(), todayIso = pddDay_(now), DAY = 86400000, YEAR = 365.25 * DAY;
+  var STAGES = PDD.STAGES, LATE = PDD.LATE;
+  var BANDS = PDD_WALL.BANDS, SC = BANDS.map(function (b) { return b.key; }).concat(['all']);
+  var bandOf = function (years) {
+    if (years == null || isNaN(years) || years < 0) return null;
+    for (var i = 0; i < BANDS.length; i++) if (years < BANDS[i].to) return BANDS[i].key;
+    return BANDS[BANDS.length - 1].key;
+  };
+  var inScope = function (s, key) { return !!s && (key === 'all' || key === s); };
+  var stayList = pddWallStayList_();
+  var skip = iExcluded_();
+  var left = null;
+  try { if (typeof wallLeft_ === 'function') left = wallLeft_(); } catch (e) { left = null; }
+  var units = iBuildUnits_(), unitOf = {};
+  Object.keys(units).forEach(function (u) {
+    units[u].forEach(function (m) { var k = iNameKey_(m.name); if (k) unitOf[k] = u; });
+  });
+  var unitFor = function (agent) {
+    var k = iNameKey_(agent); if (!k) return null;
+    if (unitOf[k]) return unitOf[k];
+    var ks = k.split(' '), hit = null, n = 0;
+    Object.keys(unitOf).forEach(function (o) {
+      var os = o.split(' ');
+      if (os[os.length - 1] !== ks[ks.length - 1]) return;
+      if (ks.every(function (t) { return os.indexOf(t) >= 0; }) || os.every(function (t) { return ks.indexOf(t) >= 0; })) { hit = unitOf[o]; n++; }
+    });
+    return n === 1 ? hit : null;
+  };
+  var agentMemo = {};
+  /* { active, name, unit } for an agent as the extract writes it */
+  var who = function (agent) {
+    var raw = String(agent || '').trim();
+    if (agentMemo.hasOwnProperty(raw)) return agentMemo[raw];
+    var clean = raw.replace(/^[A-Za-z]?\d+\s*-\s*/, '').trim();
+    var unit = unitFor(clean);
+    var stays = pddWallStays_(clean, stayList);
+    var gone = !stays && (!clean || iExcludes_(skip, clean) ||
+      (left && typeof wallIsLeft_ === 'function' && wallIsLeft_(clean, left)) || !unit);
+    var r = gone ? { active: false, name: PDD_WALL.ORPHANS, unit: PDD_WALL.ORPHANS }
+                 : { active: true, name: clean, unit: unit || 'No unit on the access list' };
+    agentMemo[raw] = r;
+    return r;
+  };
+  var blankSc = function (f) { var o = {}; SC.forEach(function (k) { o[k] = f(); }); return o; };
+  var add = function (bySc, s, fn) { SC.forEach(function (k) { if (inScope(s, k)) fn(bySc[k]); }); };
+  var round = function (n) { return Math.round(n * 100) / 100; };
+  var AUTO = { 'Bankers Order': 1, 'Pre Authorized Cheque': 1, 'Salary Deduction': 1, 'Military Pay': 1, 'Post Dated Cheque': 1 };
+
+  /* ── 1. The extract ── */
+  var sh = iTabDues_();
+  if (!sh) return { error: 'No dues tab found.' };
+  var d = iReadCols_(sh, {
+    agent: ['agent'], number: ['number'], clientNo: ['client number'], premium: ['premium'],
+    issue: ['issue date'], status: ['status'], paidTo: ['paid to date'], billing: ['billing type'],
+    lapseDate: ['projected lapse date']
+  });
+  var yearsOfPol = {}, lapsedPols = [];
+  var stageBlank = function () {
+    var o = {};
+    STAGES.forEach(function (st) {
+      o[st] = { line: 0, lineClients: {}, lineActive: 0, lineOrphan: 0, linePrem: 0,
+                stretch: 0, stretchPrem: 0, stretchActive: 0, stretchOrphan: 0 };
+    });
+    return o;
+  };
+  var book = blankSc(function () {
+    return { behind: 0, behindPrem: 0, active: 0, orphan: 0, orphanPrem: 0, clients: {}, over45: 0, over45Prem: 0,
+             autoFail: 0, autoFailPrem: 0, billing: {}, units: {}, agents: {}, stages: stageBlank(), next7: 0, under45: 0,
+             lapsed: { month: 0, monthPrem: 0, d30: 0, d30Prem: 0, ytd: 0, ytdPrem: 0 } };
+  });
+  var monthName = Utilities.formatDate(today, iTz_(), 'MMMM');
+  for (var r = 0; r < d.rows; r++) {
+    var status = String(d.get('status', r)).trim();
+    var issue = iDate_(d.get('issue', r));
+    var years = issue ? (today - issue) / YEAR : null;
+    var pol = pddPolKey_(d.get('number', r));
+    if (pol && years != null) yearsOfPol[pol] = years;
+    var s = bandOf(years);
+    if (!s) continue;
+    var prem = iNum_(d.get('premium', r));
+    if (status === '1') {
+      var gone = iDate_(d.get('lapseDate', r)), ago = iDays_(gone, today);
+      if (!gone || ago < 0 || gone.getFullYear() !== today.getFullYear()) continue;
+      var wl = who(d.get('agent', r));
+      lapsedPols.push({ pol: pol, band: s, at: gone, prem: prem, w: wl, ago: ago });
+      add(book, s, function (b) {
+        b.lapsed.ytd++; b.lapsed.ytdPrem += prem;
+        if (ago <= 30) { b.lapsed.d30++; b.lapsed.d30Prem += prem; }
+        if (gone.getMonth() === today.getMonth()) { b.lapsed.month++; b.lapsed.monthPrem += prem; }
+      });
+      continue;
+    }
+    if (status !== '2') continue;
+    var paid = iDate_(d.get('paidTo', r));
+    if (!paid) continue;
+    var days = Math.round((today - paid) / DAY);
+    if (days <= 0 || days > 4000) continue;
+    var w = who(d.get('agent', r));
+    var cno = String(d.get('clientNo', r)).trim();
+    var bill = String(d.get('billing', r)).trim() || 'Direct Bill';
+    var stLine = 0, stStretch = 0;
+    STAGES.forEach(function (st) { if (days >= st && days <= st + LATE) stLine = st; if (days >= st) stStretch = st; });
+    add(book, s, function (b) {
+      b.behind++; b.behindPrem += prem;
+      if (w.active) b.active++; else { b.orphan++; b.orphanPrem += prem; }
+      if (cno) b.clients[cno] = 1;
+      if (days >= 38 && days < 45) b.next7++;
+      if (days < 45) b.under45++;
+      var B = b.billing[bill] || (b.billing[bill] = { k: bill, n: 0, prem: 0, auto: !!AUTO[bill] }); B.n++; B.prem += prem;
+      if (AUTO[bill]) { b.autoFail++; b.autoFailPrem += prem; }
+      var U = b.units[w.unit] || (b.units[w.unit] = { k: w.unit, n: 0, prem: 0 }); U.n++; U.prem += prem;
+      var A = b.agents[w.name] || (b.agents[w.name] = { k: w.name, n: 0, prem: 0, orphan: !w.active }); A.n++; A.prem += prem;
+      if (days >= 45) { b.over45++; b.over45Prem += prem; }
+      if (stStretch) {
+        var S = b.stages[stStretch]; S.stretch++; S.stretchPrem += prem;
+        if (w.active) S.stretchActive++; else S.stretchOrphan++;
+      }
+      if (stLine) {
+        var L = b.stages[stLine]; L.line++; L.linePrem += prem; if (cno) L.lineClients[cno] = 1;
+        if (w.active) L.lineActive++; else L.lineOrphan++;
+      }
+    });
+  }
+
+  /* ── 2. The desk: checks today, the send, the last five working days ── */
+  var days5 = [], cur = new Date(today.getTime());
+  while (days5.length < PDD_WALL.WEEK) {
+    if (pddWorkday_(cur)) days5.unshift(pddDay_(cur));
+    cur = new Date(cur.getTime() - DAY);
+  }
+  var deskBlank = function () {
+    var o = {};
+    STAGES.forEach(function (st) {
+      var wk = {}; days5.forEach(function (x) { wk[x] = { sent: 0, test: 0 }; });
+      o[st] = { checked: 0, ticked: 0, skipped: 0, waiting: 0, sent: 0, test: 0, notSent: 0, why: {}, by: {}, week: wk };
+    });
+    return o;
+  };
+  var desk = blankSc(deskBlank);
+  var unplaced = { checks: 0, letters: 0 };
+  var checks = [];
+  try { checks = pddChecks_().rows; } catch (e) { checks = []; }
+  checks.forEach(function (c) {
+    var y = yearsOfPol[c.policy];
+    var s = bandOf(y);
+    if (!s) { unplaced.checks++; s = null; }
+    var st = pddStageOf_(c.days);
+    if (STAGES.indexOf(st) < 0) return;
+    var atIso = c.at instanceof Date ? pddDay_(c.at) : '';
+    var doneIso = c.done instanceof Date ? pddDay_(c.done) : '';
+    /* a check off the extract (paid since) still counts in the whole branch */
+    SC.forEach(function (k) {
+      if (!(k === 'all' || (s && k === s))) return;
+      var X = desk[k][st];
+      if (atIso === todayIso && c.status !== 'withdrawn' && c.status !== 'undone') {
+        X.checked++;
+        if (c.decision === 'send') X.ticked++; else X.skipped++;
+        var fn = pddWallFirst_(c.by); if (fn) X.by[fn] = (X.by[fn] || 0) + 1;
+      }
+      if (c.status === 'waiting' || c.status === 'sending') X.waiting++;
+      if (doneIso === todayIso) {
+        if (c.status === 'sent') X.sent++;
+        else if (c.status === 'test copy') X.test++;
+        else if (c.status === 'not sent') { X.notSent++; var q = pddWallNotSent_(c.note); X.why[q] = (X.why[q] || 0) + 1; }
+      }
+      if (X.week[doneIso]) {
+        if (c.status === 'sent') X.week[doneIso].sent++;
+        else if (c.status === 'test copy') X.week[doneIso].test++;
+      }
+    });
+  });
+
+  /* ── 3. What came back, what happened after, and the letters a lapsed policy had ── */
+  var back = blankSc(function () {
+    var o = {};
+    STAGES.forEach(function (st) {
+      o[st] = { sent: 0, answered: 0, rated: 0, ratingSum: 0, help: 0, review: 0, issue: 0,
+                out: { sent: 0, paid: 0, part: 0, behind: 0, lapsed: 0, gone: 0 } };
+    });
+    return o;
+  });
+  var duesNow = {};
+  for (var r2 = 0; r2 < d.rows; r2++) {
+    var p2 = pddPolKey_(d.get('number', r2));
+    if (p2) duesNow[p2] = { status: String(d.get('status', r2)).trim(), paidTo: iDate_(d.get('paidTo', r2)) };
+  }
+  var lettersByPol = {};      // policy → [{stage, sent}] live letters this year
+  try {
+    var ssh = iSurveyTab_(), slast = ssh.getLastRow();
+    if (slast > 1) {
+      ssh.getRange(2, 1, slast - 1, Math.max(ssh.getLastColumn(), ISCOL.STAGE)).getValues().forEach(function (v) {
+        var sent = v[ISCOL.SENT - 1];
+        if (!(sent instanceof Date)) return;
+        if (!/^live/i.test(String(v[ISCOL.MODE - 1] || '').trim())) return;
+        var stage = Number(v[ISCOL.STAGE - 1]) || 45;
+        var pol = pddPolKey_(v[ISCOL.POLICY - 1]);
+        if (pol && sent.getFullYear() === today.getFullYear()) (lettersByPol[pol] = lettersByPol[pol] || []).push({ stage: stage, sent: sent });
+        var age = (today - sent) / DAY;
+        if (age > PDD_WALL.OUT_DAYS || STAGES.indexOf(stage) < 0) return;
+        var yl = Number(v[ISCOL.YEARS - 1]);
+        var y = yearsOfPol[pol] != null ? yearsOfPol[pol] : (v[ISCOL.YEARS - 1] === '' || isNaN(yl) ? null : yl);
+        var s = bandOf(y);
+        if (!s) unplaced.letters++;
+        var rating = Number(v[ISCOL.RATING - 1]);
+        var asked = String(v[ISCOL.ASKED - 1] || '');
+        var answered = (rating >= 1 && rating <= 5) || !!asked.trim();
+        var dn = duesNow[pol], paidThen = new Date(sent.getTime() - stage * DAY);
+        var kind = !dn ? 'gone' : dn.status === '1' ? 'lapsed' : dn.status !== '2' ? 'paid'
+          : (dn.paidTo && dn.paidTo.getTime() > paidThen.getTime() + 15 * DAY) ? 'part' : 'behind';
+        SC.forEach(function (k) {
+          if (!(k === 'all' || (s && k === s))) return;
+          var X = back[k][stage];
+          X.out.sent++; X.out[kind]++;
+          if (age <= PDD_WALL.BACK_DAYS) {
+            X.sent++;
+            if (answered) X.answered++;
+            if (rating >= 1 && rating <= 5) { X.rated++; X.ratingSum += rating; }
+            if (asked.indexOf('help') >= 0) X.help++;
+            if (asked.indexOf('review') >= 0) X.review++;
+            if (asked.indexOf('issue') >= 0) X.issue++;
+          }
+        });
+      });
+    }
+  } catch (e) { /* the picture without the replies is still the picture */ }
+
+  /* ── 4. The lapses this year: by band, by agent, and which letters each had first ── */
+  var lapses = { year: today.getFullYear(), month: monthName, ytd: 0, ytdPrem: 0, d30: 0, d30Prem: 0, mon: 0, monPrem: 0,
+                 bands: {}, agents: {}, letters: { none: 0 }, months: {} , orphan: 0 };
+  STAGES.forEach(function (st) { lapses.letters[st] = 0; });
+  BANDS.forEach(function (b) { lapses.bands[b.key] = { k: b.key, label: b.label, n: 0, prem: 0 }; });
+  lapsedPols.forEach(function (x) {
+    lapses.ytd++; lapses.ytdPrem += x.prem;
+    if (x.ago <= 30) { lapses.d30++; lapses.d30Prem += x.prem; }
+    if (x.at.getMonth() === today.getMonth()) { lapses.mon++; lapses.monPrem += x.prem; }
+    var mk = Utilities.formatDate(x.at, iTz_(), 'MMM');
+    lapses.months[x.at.getMonth()] = lapses.months[x.at.getMonth()] || { k: mk, n: 0, prem: 0 };
+    lapses.months[x.at.getMonth()].n++; lapses.months[x.at.getMonth()].prem += x.prem;
+    lapses.bands[x.band].n++; lapses.bands[x.band].prem += x.prem;
+    if (!x.w.active) lapses.orphan++;
+    var A = lapses.agents[x.w.name] || (lapses.agents[x.w.name] = { k: x.w.name, n: 0, prem: 0, orphan: !x.w.active });
+    A.n++; A.prem += x.prem;
+    var had = (lettersByPol[x.pol] || []).filter(function (l) { return l.sent.getTime() <= x.at.getTime() + DAY; });
+    if (!had.length) lapses.letters.none++;
+    var seen = {};
+    had.forEach(function (l) { if (!seen[l.stage] && lapses.letters.hasOwnProperty(l.stage)) { seen[l.stage] = 1; lapses.letters[l.stage]++; } });
+  });
+
+  /* ── 5. The letters themselves, in the code's own words ── */
+  var sample = function (stage, extra) {
+    var o = { stage: stage, hist: stage > 45 ? { count: 1 } : null, lapseWords: '', yWord: '3 years' };
+    for (var k in extra) o[k] = extra[k];
+    try { return iSurveySubject_(o); } catch (e) { return ''; }
+  };
+  var firstSubjects = [];
+  try {
+    ISURVEY_TEMPLATES.forEach(function (t) {
+      var yw = t.max <= 1 ? 'Under a year' : t.max > 50 ? '30 years' : (t.max - 1) + ' years';
+      firstSubjects.push({ under: t.max > 50 ? null : t.max, subject: t.subject({ yWord: yw }) });
+    });
+  } catch (e) {}
+  var letters = STAGES.map(function (st) {
+    return {
+      stage: st, upTo: st + LATE,
+      subject: st === 45 ? (firstSubjects[2] || firstSubjects[0] || {}).subject || ''
+             : st === 75 ? sample(75, { lapseWords: '[the lapse date]' }) : sample(st, {}),
+      subjects: st === 45 ? firstSubjects : null,
+      gist: PDD_WALL_GIST[st] || '',
+      asks: st === 45 ? 'A rating, 1 to 5' : st === 60 ? 'A rating if none yet' : st === 75 ? 'Ask my agent to call me' : 'Call me about my options'
+    };
+  });
+
+  /* ── 6. Folded into the answer ── */
+  var mode = iMailState_().clients;
+  var blocked = '';
+  try { blocked = mode === 'live' ? iSurveyBlocked_() : ''; } catch (e) { blocked = ''; }
+  var lastRun = null;
+  try { lastRun = JSON.parse(iProp_('PDD_LAST_RUN') || 'null'); } catch (e) { lastRun = null; }
+  var list = function (m, n) {
+    return Object.keys(m).map(function (k) { var x = m[k]; x.prem = round(x.prem); return x; })
+      .sort(function (a, b) { return b.n - a.n || b.prem - a.prem; }).slice(0, n || 99);
+  };
+  var withOrph = function (m) {
+    var all = list(m, 999), act = all.filter(function (a) { return !a.orphan; }),
+        orph = all.filter(function (a) { return a.orphan; })[0] || null;
+    return { rows: act.slice(0, PDD_WALL.AGENTS).concat(orph ? [orph] : []), count: act.length };
+  };
+  var scope = {};
+  SC.forEach(function (k) {
+    var b = book[k], D = desk[k], Bk = back[k], ag = withOrph(b.agents);
+    var band = BANDS.filter(function (x) { return x.key === k; })[0];
+    scope[k] = {
+      key: k, label: band ? band.label : 'Every policy',
+      behind: b.behind, behindPrem: round(b.behindPrem), clients: Object.keys(b.clients).length,
+      active: b.active, orphan: b.orphan, orphanPrem: round(b.orphanPrem),
+      over45: b.over45, over45Prem: round(b.over45Prem), under45: b.under45,
+      autoFail: b.autoFail, autoFailPrem: round(b.autoFailPrem), next7: b.next7,
+      lapsed: { month: b.lapsed.month, monthPrem: round(b.lapsed.monthPrem), d30: b.lapsed.d30, d30Prem: round(b.lapsed.d30Prem),
+                ytd: b.lapsed.ytd, ytdPrem: round(b.lapsed.ytdPrem), monthName: monthName },
+      billing: list(b.billing, 6), units: list(b.units, 8),
+      agents: ag.rows, agentCount: ag.count,
+      stages: STAGES.map(function (st) {
+        var S = b.stages[st], X = D[st], R = Bk[st];
+        return {
+          stage: st, upTo: st + LATE,
+          line: S.line, lineClients: Object.keys(S.lineClients).length, lineActive: S.lineActive, lineOrphan: S.lineOrphan,
+          linePrem: round(S.linePrem),
+          stretch: S.stretch, stretchPrem: round(S.stretchPrem), stretchActive: S.stretchActive, stretchOrphan: S.stretchOrphan,
+          today: { checked: X.checked, ticked: X.ticked, skipped: X.skipped, waiting: X.waiting,
+                   sent: X.sent, test: X.test, notSent: X.notSent,
+                   why: Object.keys(X.why).map(function (q) { return { k: q, n: X.why[q] }; }).sort(function (p, q) { return q.n - p.n; }),
+                   by: Object.keys(X.by).map(function (q) { return { k: q, n: X.by[q] }; }).sort(function (p, q) { return q.n - p.n; }) },
+          week: days5.map(function (x) { return { day: x, label: Utilities.formatDate(new Date(x + 'T12:00:00'), iTz_(), 'EEE'), sent: X.week[x].sent, test: X.week[x].test }; }),
+          back: { days: PDD_WALL.BACK_DAYS, sent: R.sent, answered: R.answered, rated: R.rated,
+                  avg: R.rated ? Math.round(R.ratingSum / R.rated * 10) / 10 : null,
+                  help: R.help, review: R.review, issue: R.issue },
+          after: { days: PDD_WALL.OUT_DAYS, sent: R.out.sent, paid: R.out.paid, part: R.out.part, behind: R.out.behind,
+                   lapsed: R.out.lapsed, gone: R.out.gone }
+        };
+      })
+    };
+  });
+  var la = withOrph(lapses.agents);
+  return {
+    generatedAt: Utilities.formatDate(now, iTz_(), 'yyyy-MM-dd HH:mm'),
+    today: todayIso, todayLabel: Utilities.formatDate(now, iTz_(), 'EEEE d MMMM'),
+    mode: mode, blocked: blocked ? true : false,
+    sendHour: PDD.HOUR, nextSend: pddNextSend_(now), nextSendWords: pddDayWords_(pddNextSend_(now), now),
+    lastRun: lastRun ? { when: lastRun.when || '', mode: lastRun.mode || '', sent: lastRun.sent || 0, test: lastRun.test || 0,
+                         notSent: lastRun.notSent || 0, waiting: lastRun.waiting || 0 } : null,
+    bands: BANDS.map(function (b) { return { key: b.key, label: b.label }; }),
+    letters: letters, scope: scope,
+    lapses: { year: lapses.year, month: lapses.month, ytd: lapses.ytd, ytdPrem: round(lapses.ytdPrem),
+              d30: lapses.d30, d30Prem: round(lapses.d30Prem), mon: lapses.mon, monPrem: round(lapses.monPrem), orphan: lapses.orphan,
+              bands: BANDS.map(function (b) { var x = lapses.bands[b.key]; return { k: b.key, label: b.label, n: x.n, prem: round(x.prem) }; }),
+              months: Object.keys(lapses.months).sort(function (a, b) { return a - b; }).map(function (m) { var x = lapses.months[m]; return { k: x.k, n: x.n, prem: round(x.prem) }; }),
+              agents: la.rows, agentCount: la.count, letters: lapses.letters },
+    unplaced: unplaced, orphans: PDD_WALL.ORPHANS
+  };
 }

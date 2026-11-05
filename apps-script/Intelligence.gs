@@ -6881,7 +6881,20 @@ function iActWall45_(b) {
   if (IWALL_BANDS.indexOf(band) < 0) {
     return iErr_('Band must be one of ' + IWALL_BANDS.join(', ') + ' — got ' + band + '.');
   }
-  return iWallServe_('wall' + band, function () { return iBuildWall45_(band); });
+  var served = iWallServe_('wall' + band, function () { return iBuildWall45_(band); });
+  /* The letters, live (5 November 2026): what goes out at 45, 60, 75 and the
+     line before lapse, scoped to policies under five years. The rest of the
+     feed is the nightly copy; this block is kept ten minutes, so a tick on
+     the desk reaches the wall within the quarter hour. See iWallJourney_ in
+     PremiumDueDesk.gs. A wall without it still draws, and says so. */
+  if (band !== 45 || typeof iWallJourney_ !== 'function') return served;
+  try {
+    var j = JSON.parse(served.getContent());
+    if (!j || !j.ok || !j.data) return served;
+    try { j.data.journey = iWallJourney_(false); }
+    catch (e) { j.data.journey = { error: String(e && e.message || e) }; }
+    return iJson_(j);
+  } catch (e2) { return served; }
 }
 
 var IWALL_BANDS = [45, 60, 90];

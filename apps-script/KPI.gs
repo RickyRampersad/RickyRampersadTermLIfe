@@ -16107,8 +16107,26 @@ function wallLeft_() {
   var out = {}; (v ? v.split(/\s*,\s*/) : WALL_LEFT).forEach(function (n) { var k = wallKey_(n); if (k) out[k] = 1; });
   return out;
 }
+/* Still with the company, whatever any list says (Ricky, 4 November 2026: "with the exceptions of Dominic, Javid, Aleema,
+ * Tarek. Those persons are still with the company"). Never folded into Orphans, never read as left, even if a name is put on
+ * WALL_LEFT or its Script Property by mistake. The Script Property WALL_STAYS (names, comma separated) replaces the list. */
+var WALL_STAYS = ['Dominic Harding', 'Javid Ali', 'Aleema Mohammed-Ali', 'Terek Ali'];
+var WALL_STAYS_KEYS = null;   // read once an execution: wallScrub_ asks for every name in a feed
+function wallStays_(v) {
+  if (!WALL_STAYS_KEYS) {
+    var raw = ''; try { raw = String(PropertiesService.getScriptProperties().getProperty('WALL_STAYS') || '').trim(); } catch (e) {}
+    WALL_STAYS_KEYS = (raw ? raw.split(/\s*,\s*/) : WALL_STAYS).map(function (n) { return wallKey_(n).split(' ').filter(Boolean); })
+      .filter(function (es) { return es.length >= 2; });
+  }
+  var ks = wallKey_(v).split(' ').filter(Boolean); if (ks.length < 2) return false;
+  return WALL_STAYS_KEYS.some(function (es) {
+    if (es[es.length - 1] !== ks[ks.length - 1]) return false;
+    return es.every(function (t) { return ks.indexOf(t) >= 0; }) || ks.every(function (t) { return es.indexOf(t) >= 0; });
+  });
+}
 function wallIsLeft_(v, left) {
   if (typeof v !== 'string' || v.length >= 80) return false;
+  if (wallStays_(v)) return false;
   var k = wallKey_(v); if (left[k]) return true;
   // A unit named for someone who has left ("KERWYN RAMROACH UNIT-CHAGUANAS REG CEN") is theirs too.
   var m = /^(.+?) unit\b/.exec(k); return !!(m && left[m[1]]);
