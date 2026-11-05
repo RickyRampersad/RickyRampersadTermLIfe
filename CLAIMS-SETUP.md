@@ -180,11 +180,19 @@ each document goes to, measured over 3,634 real lines:
 | motor, property | **Guardian General — Motor Claims Department** (a different company from Guardian Life) — *motor settled: GGIL PC Claims* |
 | pension | not yet seen in the Log Book — ask sales support |
 
-**Property most likely shares motor's desk** — P&C means Property & Casualty,
-and a property claim the branch filed in August 2026 was handled by a Claims
-representative at the same company. It is deliberately still blank: that is a
-likelihood, not the confirmation `DESK_OK` is for, and one e-mail to the desk
-settles it.
+**Property is blank because the record has no desk inbox for it**, not because
+nobody looked. A property claim ran three months in mid-2026 and every message
+on it went to **named representatives** of Guardian General's own P&C Claims
+Solutions Department — no department inbox on any of them. P&C does mean
+Property & Casualty, so the department is right; the inbox is the open
+question. Ask the desk which inbox a **property first notification of loss**
+should go to, and that is the whole of it.
+
+That is the pattern on both motor claims in the record too: the first
+notification goes to a department inbox, and the thread after it runs with the
+one representative assigned. The intake only ever sends a first notification,
+so a department inbox is the right target — and an individual, who moves, is
+the wrong one.
 
 Copy each address off that tab into `CLAIMS.DESK`, add the key to
 `CLAIMS.DESK_OK`, and file one test claim on that line to watch it arrive.

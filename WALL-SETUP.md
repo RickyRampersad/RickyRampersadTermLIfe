@@ -251,7 +251,7 @@ places:
   the public site — so it is **fully anonymous**: risk types, dates and
   amounts only. No client names, no claim references, no policy numbers.
 - The **live feed** never touches git, so it may say a little more: clients
-  as **first name + last initial** ("Shalima M."), claims as reference
+  as **first name + last initial** ("Priya E."), claims as reference
   numbers only. Still no policy numbers, emails or phone numbers — the
   `/exec` URL is fetchable by anyone who has it.
 

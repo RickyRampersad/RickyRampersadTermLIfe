@@ -7074,10 +7074,27 @@ beside it. That is now the motor desk, with CRMS Claims in `DESK_CC`.
 on one claim.** People move; a desk is what gets read. The same search turned up
 two named claims representatives and neither is configured.
 
-**Property most likely shares that desk** — P&C is Property & Casualty, and a
-property claim the branch filed in August 2026 was handled at the same company
-— and it is deliberately still blank. A likelihood is not the confirmation
-`DESK_OK` exists to record. One e-mail settles it.
+**Property has no desk inbox in the record at all, and that is the finding
+rather than an absence of looking.** A property claim ran three months in
+mid-2026 and every message on it is addressed to **named representatives** of
+Guardian General's own P&C Claims Solutions Department — not one department
+inbox in To or Cc on any of them. So "P&C covers property too" is an argument
+about the department, not evidence of a shared inbox, and property stays blank.
+The question to put to the desk is narrow: which inbox a property first
+notification of loss should go to.
+
+**The pattern behind that: a first notification goes to a department inbox,
+and everything after it goes to the representative assigned.** Both motor
+claims in the record show it — the notification to GGIL PC Claims and CRMS
+Claims, then three months of thread with one named representative. Our intake
+only ever sends a first notification, so a desk inbox is the right target and
+an individual is the wrong one.
+
+**`CRMSClaims@` is not a claims-only desk**, which is worth knowing before
+reading too much into it: it sits on the branch's ordinary motor distribution
+list and appears on motor *renewal* threads as often as on a claim. It is on
+the branch's own motor claim notification, which is why it is a `DESK_CC` and
+not the `DESK`.
 
 **The subject is per line of business, because the desks file by different
 ones.** Guardian General has filed this branch's motor claims under
@@ -7093,10 +7110,13 @@ answer, where a missing label reads as some other kind of message.
 **The JotForm this replaces is the argument for it.** The 13 August claim came
 through `noreply@jotform.com` to six addresses with a motor claim PDF attached,
 and his own note forwarding it reads *"Please address this as the claim form was
-not completed properly."* The subject on that thread is
-`Vehicle # - TDW7413 Insured - Date of Accident -` — the insured and the date
+not completed properly."* The subject on that thread reads
+`Vehicle # - <plate> Insured - Date of Accident -` — the insured and the date
 both **empty**, because nothing made them required. That is the failure the
-required-whole-or-refused rule exists to prevent.
+required-whole-or-refused rule exists to prevent. (A registration identifies a
+vehicle and through it a client, so it does not go in these notes: the first
+draft of this paragraph quoted the real one, and this file is served from the
+repository root on the open web.)
 
 **Turning a line on changes what a silent fallback costs.**
 `typeKeyFromLabel_` answers `'motor'` for a label it cannot read. That was
