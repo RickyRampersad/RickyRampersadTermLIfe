@@ -6971,6 +6971,60 @@ missing helper one run at a time: a body only runs when it is called, so
 defining one that reaches for an unstubbed global costs nothing.
 `pdf-test.js` in the session scratchpad covers all four lines (72 checks).
 
+### Built, live, and nowhere a person looks — 5 November 2026
+
+*"I am not seeing claims in my site!"* He was right, and nothing was broken.
+Both pages answered **200** and the homepage carried five links to them, all
+identical to the repository's. They were simply not on any route a person
+takes:
+
+- the top nav read Quotes | Apply | Clients | Careers | Portals | FAQ. **No
+  Claims.** And the burger does not reveal that list — it opens `#menuDlg`, a
+  **separate** dialog with its own links, which had none either. On a phone,
+  which is how his clients arrive, that dialog *is* the navigation;
+- the only claim tile sat **ten screens down** (8,240px into a 17,483px page at
+  390), behind a full-width orphan-policy panel;
+- the footer link is at screen 20;
+- the branch app had **no claims tile**, so `claims/staff.html` — the desk the
+  staff work from — was unreachable.
+
+**A thing is not shipped when it answers 200.** Every claim of "it is live"
+this week was true and useless. The question to ask of anything new is not
+"does the URL work" but "what does a person tap, from the screen they are
+already on" — and for a page with two audiences, that is two answers.
+
+The fix was four small edits and no new code: **Claims** in the nav and **File
+a claim** in the phone menu, both to `#claim`; the "Make a claim" group lifted
+above the orphan panel so it leads the Clients section, which its own lede
+already promised ("File a claim, respond to a premium notice…"); a `/claim`
+stub for the singular a person types into WhatsApp; and two tiles in the
+branch app under Clients and queries — **File a claim** (`si: 'open'`, every
+role) and **Claims desk** (`si: 'code'`, staff and the branch manager), with
+`['JotForm claim forms', 'File a claim']` on the app's **moved** line.
+
+**A sticky nav needs `scroll-margin-top` on any anchor it points at.** This
+page sets none anywhere, so `#claim` parked the heading under the bar; it
+carries `6rem` inline.
+
+**`.row rise` at `opacity: 0` is not the known reveal bug.** Measuring the live
+page without scrolling showed both tiles at zero, which looks exactly like the
+recorded `view()` failure. It is not: scrolled to, both reach 1, and with
+motion off they start at 1. Scroll to the element before concluding, and assert
+`>= 0.9` — a reading taken mid-animation comes back at 0.997 and fails a
+`=== 1`.
+
+Two test traps worth keeping: **`page.$('a, b, c')` returns the first matching
+element in document order**, not the first matching selector, so a comma list
+can hand back a hidden input from a sign-in card three sections up — name the
+id. And **count links within the section**, not the page: the FAQ and the
+footer legitimately link to `claims/` too, so a page-wide count of 3 reads as a
+duplicate that was never made.
+
+`claims-visible.js` in the session scratchpad covers it (44 checks: the nav and
+the phone menu at 1366/390/360, where the tile lands against the sticky bar,
+the reveal, sideways scroll, the stub's query string, and the app's tiles as
+staff and as an agent with the search).
+
 ### The pages are light, on the branch's own palette
 
 Decided 5 November 2026, asked for in these words: *"also i dint like the dark

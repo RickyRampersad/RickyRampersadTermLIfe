@@ -238,7 +238,42 @@ serves this repository, so the moment this lands on `main` it is live at:
 
 ```
 https://rickyrampersadbranch.com/claims/
+https://rickyrampersadbranch.com/claim          ← the short one, for WhatsApp
 ```
+
+### How a person finds it without being sent a link — 5 November 2026
+
+Reported in these words: *"I am not seeing claims in my site!"* He was right,
+and nothing was broken. Both pages answered **200**, and the homepage carried
+five links to them. They were simply nowhere a person looks:
+
+- the top nav read Quotes | Apply | Clients | Careers | Portals | FAQ — **no
+  Claims**, and the phone menu behind the burger is a *separate* list of links
+  that had none either;
+- the only claim tile sat **ten screens down** on a phone (8,240px into a
+  17,483px page), behind a full-width orphan-policy panel;
+- the footer link is at screen 20, which is nobody's route;
+- and the branch app had **no claims tile at all**, so `claims/staff.html` —
+  the desk the staff are supposed to work from — could not be reached.
+
+What changed: **Claims** in the nav and **File a claim** in the phone menu,
+both pointing at `#claim`; the "Make a claim" group moved above the orphan
+panel, so it is the first thing in Clients, as that section's own lede already
+promised ("File a claim, respond to a premium notice…"); a `/claim` stub for
+the address a person actually types; and two tiles in the branch app under
+Clients and queries — **File a claim** for everyone, **Claims desk** for staff
+and the branch manager.
+
+**The anchor needs `scroll-margin-top`.** The nav is `position: sticky` and the
+page sets no scroll margin anywhere, so without it a jump to `#claim` parks the
+heading *under* the bar. It is on the heading, inline, at `6rem`.
+
+**A `.row rise` at `opacity: 0` is not a bug.** Measuring the live page without
+scrolling showed both tiles at zero and it reads like the known failure mode in
+CLAUDE.md. It is not: the reveal is `animation-timeline: view()`, and both
+reach opacity 1 as soon as they are scrolled to — with motion off they are at 1
+from the start. Scroll to it before concluding anything, and sample for
+`>= 0.9`, since a reading taken mid-animation comes back at 0.997.
 
 Deep links pre-select the claim type — this is what to put in an SMS to a
 client who has just called about an accident:
