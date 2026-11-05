@@ -94,124 +94,148 @@ scenes = []
 
 # 1 ─ meet HELP 868
 n = 0
-scenes.append(f'''
+scenes.append(f"""
 <div class="center">
   <div class="logo" style="animation-delay:150ms"><span class="ring"></span><span class="ring r2"></span>{WA}</div>
-  <p class="kick" style="animation-delay:{at(n, 'meet') + 100}ms">New · on WhatsApp</p>
-  <h1 class="huge">{words('Meet HELP 868', at(n, 'meet') + 200, 160)}</h1>
+  <p class="kick" style="animation-delay:{at(n, 'smarter') - 300}ms">Now smarter · on WhatsApp</p>
+  <h1 class="huge">{words('Meet HELP 868', 300, 160)}</h1>
   <p class="lede" style="animation-delay:{at(n, 'your')}ms">Your branch, on WhatsApp.</p>
   <div class="pill live" style="animation-delay:{at(n, 'any')}ms"><i></i>Here any hour of the day</div>
-</div>''')
+</div>""")
 
 # 2 ─ one tap
 n = 1
-scenes.append(f'''
+scenes.append(f"""
 <div class="center">
   {head('For your clients', 'One tap and the chat opens.')}
   <div class="site fl">
     <div class="sbar"><i></i><i></i><i></i><span>rickyrampersadbranch.com</span></div>
     <div class="sbody"><b>Protecting your family</b><i></i><i class="s"></i><i></i><i class="s"></i></div>
-    <div class="fab" style="animation-delay:{at(n, 'message') + 100}ms">{WA}<u class="tapx" style="animation-delay:{at(n, 'tap', plus=100)}ms"></u></div>
+    <div class="fab" style="animation-delay:{at(n, 'green') - 200}ms">{WA}<u class="tapx" style="animation-delay:{at(n, 'tap', plus=100)}ms"></u></div>
   </div>
-  <p class="under" style="animation-delay:{at(n, 'tap', plus=500)}ms">The green button, on every phone.</p>
-</div>''')
-
-# 3 ─ the welcome and the menu
-n = 2
-menu = ''.join(f'<li style="animation-delay:{at(n, w) + 150}ms"><b>{i}</b>{t}</li>' for i, (w, t) in enumerate(
-    [('question', 'A question about my policy'), ('claim', 'Make or check a claim'), ('update', 'Update my details'),
-     ('payment', 'Pay or check a premium'), ('quote', 'Get a quote')], 1))
-scenes.append(f'''
-<div class="center">
-  {head('The welcome', 'We say hello, and ask what they need.')}
-  {chatwin(bub('in', '<b>Hello and welcome to Ricky Rampersad Branch!</b> What can we help you with today?', at(n, 'say')) +
-           f'<div class="b in menu" style="animation-delay:{at(n, 'question', plus=-250)}ms"><ol>{menu}</ol></div>')}
-</div>''')
-
-# 4 ─ pick a number
-n = 3
-scenes.append(f'''
-<div class="center">
-  {head('The easy part', 'They just pick a number.')}
-  {chatwin(bub('in', '<b>What would you like to do?</b><br>1. Make a claim<br>2. Check on a claim<br>3. Health claim', 120) +
-           bub('out', '2', at(n, 'pick'), 'big') +
-           bub('in', '<b>Is it urgent?</b><br>1. Yes<br>2. No', at(n, 'no', plus=-200)))}
   <div class="rows">
-    <div class="tg" style="animation-delay:{at(n, 'forms')}ms">{ico('x')}<span>No forms</span></div>
-    <div class="tg" style="animation-delay:{at(n, 'phone')}ms">{ico('x')}<span>No phone tag</span></div>
-    <div class="tg" style="animation-delay:{at(n, 'monday')}ms">{ico('x')}<span>No waiting for Monday</span></div>
+    <div class="tg" style="animation-delay:{at(n, 'app')}ms">{ico('x')}<span>No app to download</span></div>
+    <div class="tg" style="animation-delay:{at(n, 'forms')}ms">{ico('x')}<span>No forms to fill</span></div>
   </div>
-</div>''')
+</div>""")
+
+# 3 ─ the welcome and the tap menu
+n = 2
+menu = ''.join(f'<li class="btn" style="animation-delay:{at(n, w) + 100}ms">{t}</li>' for w, t in
+    [('question', 'A question about my policy'), ('claim', 'Make or check a claim'), ('update', 'Update my details'),
+     ('payment', 'Pay or check a premium'), ('quote', 'Get a quote')])
+scenes.append(f"""
+<div class="center">
+  {head('The welcome', 'We say hello. They tap.')}
+  {chatwin(bub('in', '<b>Hello and welcome to Ricky Rampersad Branch!</b> What can we help you with today?', at(n, 'say')) +
+           f'<div class="b in menu" style="animation-delay:{at(n, 'menu') + 200}ms"><ul>{menu}</ul></div>')}
+</div>""")
+
+# 4 ─ every question is a tap
+n = 3
+scenes.append(f"""
+<div class="center">
+  {head('The easy part', 'Every question is a tap.')}
+  {chatwin(bub('in', '<b>Is it urgent?</b>', 120) +
+           f'<div class="b in menu" style="animation-delay:{at(n, 'urgent') + 150}ms"><ul><li class="btn" style="animation-delay:{at(n, 'urgent') + 250}ms">Yes, it is urgent</li><li class="btn" style="animation-delay:{at(n, 'urgent') + 400}ms">No, it can wait</li></ul></div>' +
+           bub('out', 'No, it can wait', at(n, 'one'), 'tapd') +
+           bub('in', '<b>Thanks! What is your name?</b>', at(n, 'nobody')))}
+  <div class="rows">
+    <div class="tg" style="animation-delay:{at(n, 'nobody')}ms">{ico('x')}<span>Nobody types a number</span></div>
+    <div class="tg" style="animation-delay:{at(n, 'nothing')}ms">{ico('x')}<span>Nothing asked twice</span></div>
+  </div>
+</div>""")
 
 # 5 ─ privacy
 n = 4
-scenes.append(f'''
+scenes.append(f"""
 <div class="center">
   {head('Safe by design', 'Only what we need.')}
   <div class="two">
     <div class="col yes">
-      <p class="cl" style="animation-delay:{at(n, 'name', plus=-250)}ms">We ask for</p>
+      <p class="cl" style="animation-delay:{at(n, 'only') - 250}ms">We ask for</p>
       <div class="tg ok" style="animation-delay:{at(n, 'name')}ms">{ico('user')}<span>Their name</span></div>
       <div class="tg ok" style="animation-delay:{at(n, 'policy')}ms">{ico('doc')}<span>Policy number, if they have one</span></div>
     </div>
     <div class="col no">
-      <p class="cl" style="animation-delay:{at(n, 'bank', plus=-250)}ms">We never ask for</p>
+      <p class="cl" style="animation-delay:{at(n, 'never') - 250}ms">We never ask for</p>
       <div class="tg bad" style="animation-delay:{at(n, 'bank')}ms">{ico('lock')}<span>Bank or card details</span></div>
-      <div class="tg bad" style="animation-delay:{at(n, 'id')}ms">{ico('lock')}<span>ID numbers</span></div>
+      <div class="tg bad" style="animation-delay:{at(n, 'i', 2)}ms">{ico('lock')}<span>ID numbers</span></div>
     </div>
   </div>
-</div>''')
+</div>""")
 
-# 6 ─ logged with a reference
+# 6 ─ lands on Query Pal
 n = 5
-scenes.append(f'''
+scenes.append(f"""
 <div class="center">
-  {head('Logged, not lost', 'A ticket, on our query system.')}
-  <div class="ticket fl" style="animation-delay:{at(n, 'logged')}ms">
+  {head('Logged, not lost', 'It lands on Query Pal.')}
+  <div class="ticket fl" style="animation-delay:{at(n, 'query', 1)}ms">
     <small>Ticket reference</small>
-    <b class="ref">RRB / 2026 / <span class="cnt" data-to="418" data-at="{at(n, 'ticket')}">418</span></b>
+    <b class="ref">RRB / 2026 / <span class="cnt" data-to="418" data-at="{at(n, 'reference')}">418</span></b>
     <div class="trow"><span>{ico('doc')}Request logged</span><em>just now</em></div>
   </div>
-  <svg class="arrow" viewBox="0 0 40 120"><path d="M20 4v100M8 92l12 14 12-14" style="animation-delay:{at(n, 'routes')}ms"/></svg>
-  <div class="dept" style="animation-delay:{at(n, 'right')}ms">{ico('desk')}<span><b>The right department</b><small>Routed by our team</small></span></div>
-</div>''')
+  <svg class="arrow" viewBox="0 0 40 120"><path d="M20 4v100M8 92l12 14 12-14" style="animation-delay:{at(n, 'and')}ms"/></svg>
+  <div class="dept" style="animation-delay:{at(n, 'right')}ms">{ico('desk')}<span><b>The right department</b><small>Routed automatically</small></span></div>
+</div>""")
 
-# 7 ─ the reference in the chat
+# 7 ─ receipt card + email
 n = 6
-scenes.append(f'''
+scenes.append(f"""
 <div class="center">
-  {head('Right in their hand', 'The reference arrives in the chat.')}
-  {chatwin(bub('in', "<b>Logged on our query system</b> ✅<br>Ticket reference: <b>RRB/2026/418</b><br>Our team will follow up.", at(n, 'reference')) +
-           bub('in', 'Reply 0 for the menu.', at(n, 'chat', plus=700)))}
-</div>''')
+  {head('Right in their hand', 'A receipt card, and an email.')}
+  {chatwin(bub('in', "✅ <b>Request logged</b><br>🎫 Reference: <b>RRB/2026/418</b><br>📌 Request: Claim<br>⏱ Target: 2 working days<br>🔄 <i>Logged ▸ With our team ▸ Resolved</i>", at(n, 'receipt')))}
+  <div class="tg ok mailtag" style="animation-delay:{at(n, 'email')}ms">{ico('doc')}<span>Same confirmation, by email</span></div>
+</div>""")
 
-# 8 ─ the team sees it
+# 8 ─ team sees it + pal
 n = 7
-scenes.append(f'''
+scenes.append(f"""
 <div class="center">
-  {head('Behind the scenes', 'Our team sees the whole chat.')}
+  {head('Behind the scenes', 'Our team has the whole story.')}
   <div class="inbox fl">
     <div class="ihead"><b>Client Support</b><span class="dot"></span></div>
-    <div class="irow" style="animation-delay:{at(n, 'sees')}ms"><span class="av">C</span><div><b>New client chat</b><small>Claim · urgent</small></div><em>now</em></div>
-    <div class="note" style="animation-delay:{at(n, 'note')}ms"><small>Internal note</small>Client asks about a claim. Ticket logged. Urgent: yes.</div>
-    <div class="take" style="animation-delay:{at(n, 'takes')}ms">{ico('ok')}Assigned to the team</div>
+    <div class="irow" style="animation-delay:{at(n, 'support')}ms"><span class="av">C</span><div><b>New client chat</b><small>Claim · routine</small></div><em>now</em></div>
+    <div class="note" style="animation-delay:{at(n, 'details')}ms"><small>Filled in for us</small>Reference · request · policy · email · opened date.</div>
+    <div class="take" style="animation-delay:{at(n, 'pal')}ms">{ico('ok')}Query Pal + a pal to work with</div>
   </div>
-</div>''')
+</div>""")
 
-# 9 ─ for agents
+# 9 ─ close and rate
 n = 8
-scenes.append(f'''
+stars = ''.join(f'<span class="star" style="animation-delay:{at(n, "star") + 120 * i}ms">★</span>' for i in range(5))
+scenes.append(f"""
 <div class="center">
-  {head('For agents', 'Your clients can use it too.')}
-  <div class="share fl">
-    <div class="srow" style="animation-delay:{at(n, 'share')}ms">{ico('share')}<span><b>Share the link</b><small>On WhatsApp, e-mail or a business card</small></span></div>
-    <div class="url" style="animation-delay:{at(n, 'link')}ms"><span class="dot"></span>rickyrampersadbranch.com/<b>help868</b></div>
-    <div class="srow" style="animation-delay:{at(n, 'every')}ms">{ico('doc')}<span><b>Every query, one place</b><small>Logged, with a reference</small></span></div>
-  </div>
-</div>''')
+  {head('Closed properly', 'Resolved. Then rated.')}
+  {chatwin(bub('in', "✅ <b>Resolved</b><br>Reference RRB/2026/418<br>Here is what we did for you.", at(n, 'summary')) +
+           f'<div class="b in" style="animation-delay:{at(n, 'star') - 200}ms"><b>How did we do?</b><div class="stars">{stars}</div></div>')}
+  <div class="tg ok mailtag" style="animation-delay:{at(n, 'low')}ms">{ico('ok')}<span>Low rating? We call back</span></div>
+</div>""")
 
-# 10 ─ close
+# 10 ─ reminders
 n = 9
+dots = ''.join(f'<div class="rem" style="animation-delay:{at(n, "every") + 450 * i}ms"><b>{i * 3 + 3}</b><small>working days</small><span>Update sent</span></div>' for i in range(3))
+scenes.append(f"""
+<div class="center">
+  {head('We stay on it', 'Never quiet.')}
+  <div class="remrow">{dots}</div>
+  <p class="under" style="animation-delay:{at(n, 'done')}ms">A friendly update, until it's done.</p>
+</div>""")
+
+# 11 ─ for agents + first client
+n = 10
+scenes.append(f"""
+<div class="center">
+  {head('For agents', 'Share the link.')}
+  <div class="share fl">
+    <div class="url" style="animation-delay:{at(n, 'link')}ms"><span class="dot"></span>rickyrampersadbranch.com/<b>help868</b></div>
+    <div class="srow" style="animation-delay:{at(n, 'first')}ms">{ico('user')}<span><b>First client welcomed</b><small>Our first client is on board</small></span></div>
+    <div class="srow" style="animation-delay:{at(n, 'insights')}ms">{ico('share')}<span><b>Insights coming soon</b><small>Right here on the wall</small></span></div>
+  </div>
+</div>""")
+
+# 12 ─ close
+n = 11
 import qrcode
 q = qrcode.QRCode(border=0, error_correction=qrcode.constants.ERROR_CORRECT_M)
 q.add_data('https://rickyrampersadbranch.com/help868/')
@@ -364,6 +388,19 @@ h1.huge{font-size:150px;line-height:1}
 .cf{position:absolute;width:16px;height:26px;border-radius:4px;opacity:0}
 .act .cf{animation:conf 2.8s cubic-bezier(.15,.7,.3,1) both}
 @keyframes conf{0%{opacity:1;transform:translate(0,0) rotate(0)}80%{opacity:1}100%{opacity:0;transform:translate(var(--x),calc(var(--y) + 420px)) rotate(var(--r))}}
+.btn{list-style:none;padding:16px 22px;border-radius:999px;background:#e7f6ef;border:3px solid #25D366;color:#0d3f5e;font-weight:700;text-align:center;font-size:32px}
+.menu ul{list-style:none;padding:0;display:grid;gap:12px}
+.menu li.btn{opacity:0}.act .menu li.btn{animation:rise .5s var(--e) both}
+.b.tapd{font-weight:700}
+.mailtag{margin-top:30px}
+.stars{display:flex;gap:10px;margin-top:10px;font-size:64px;color:#d9d9d9}
+.act .star{animation:starpop .5s var(--e) both;display:inline-block}
+@keyframes starpop{from{transform:scale(0) rotate(-40deg);color:#d9d9d9}60%{transform:scale(1.3)}to{transform:scale(1);color:#f5b301}}
+.star{color:#d9d9d9}
+.remrow{display:flex;gap:26px;margin-top:50px}
+.rem{width:290px;padding:34px 20px;border-radius:34px;background:var(--card);border:3px solid var(--g);opacity:0}
+.act .rem{animation:pop .6s var(--e) both}
+.rem b{display:block;font-size:110px;line-height:1;font-weight:900}.rem small{display:block;font-size:28px;color:var(--mut);font-weight:700;margin-bottom:14px}.rem span{font-size:30px;font-weight:800;color:var(--g)}
 #ctrl{position:fixed;left:12px;bottom:12px;z-index:9;font:13px system-ui;display:flex;gap:6px}
 '''.replace('__FONT__', FONT)
 
