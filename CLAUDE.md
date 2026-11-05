@@ -6812,6 +6812,118 @@ HELP 868 code and `tests/test-help868.js` fails if it ever does.
   in the session scratchpad, never in the repository.
 - Test: `tests/test-help868.js` (69 checks).
 
+## The claims intake — `claims/` and `apps-script/Claims.gs`
+
+The custom claims intake at rickyrampersadbranch.com/claims, with its own
+container-bound Apps Script project on the Claims TT sheet. `CLAIMS-SETUP.md`
+is the runbook. A client picks the line of business, answers what that line
+asks, photographs the documents and submits; the claim becomes a Drive folder,
+a row on **Claims**, a row per file on **Claim Files** and a notice to the
+desk. **Test mode is a Script Property** (`TEST_MODE`), and while it is on
+every e-mail goes to the test inbox with a banner naming who it would have
+reached.
+
+**The documents travel with the e-mail.** Reported on 4 November 2026 in these
+words: *"did not go on the guardian pdf"*. The desk notice had exactly one
+attachment, the branch's own claim form, and Guardian General's accident
+report form — the page an assessor actually opens — was a link in the body.
+A link means the desk logs into Drive before it can start, and nobody does.
+
+So `claimAttachments_` attaches the uploads too, under two rules that both
+matter:
+
+- **Order, because a budget cuts from the end.** Guardian's own form first
+  (`isGuardianForm_`), then the rest of the papers, then photographs. The
+  client page builds Guardian's form itself with pdf-lib after the reference
+  exists — so the form carries its own claim number — and uploads it as
+  *Guardian accident report form* / `guardian-accident-report.pdf`, which is
+  what that test matches on.
+- **An 18MB budget**, because Gmail refuses a message over 25MB **whole**.
+  A rejected message is a claim nobody hears about, which is worse than a
+  photograph the desk has to open in Drive. What does not fit is named in an
+  amber box in the body, with its link.
+
+The client's copy gets `formsOnly`: their own forms back, not their own
+photographs.
+
+**The time of loss was four hours out, and it is the Sheets-parsing trap
+again.** Found by reading that same e-mail: the client typed 14:30 and the
+desk read *"Sat Dec 30 1899 18:30:00 GMT-0400"*. A time-only cell is stored
+by Sheets on **30 December 1899**, and that date is old enough to carry a
+local-mean-time offset — Port of Spain ran at −04:06:04 until 1912 — so
+`String()`ing the Date it hands back moves the hour. Three symptoms, one
+cause: the e-mail and the claim-form PDF printed a raw Date, and
+`Date_of_Service__c` was written **null** on every claim, because its guard
+was `/^\d{4}-\d{2}-\d{2}$/.test(...) ? ... : null` and the raw string failed
+it *silently*.
+
+The rules that came out of it are in the Sheets-parsing note further down:
+normalise at the one place the field is read (`hhmm_`, `niceDate_`,
+`whenText_` in `claimObject_`), format in the **spreadsheet's** zone and not
+the script's, never put a `yyyy-MM-dd` through `new Date()`, and write the two
+cells back as text. A regex guard that answers `null` on what it does not
+recognise hides this class of bug for months.
+
+### The pages are light, on the branch's own palette
+
+Decided 5 November 2026, asked for in these words: *"also i dint like the dark
+website and please some alterations"*. They were graphite `#1C1D20` with a
+copper accent, a serif display face and a WebGL caustic field in the hero.
+
+That is the **sixth** time this branch has turned down a dark ground, and it
+was also two of the named tells that make a page read as machine-generated:
+near-black with a lone warm pop, and warm cream with a serif display and a
+terracotta accent. Read the 21 October lesson before reaching for a palette:
+*"I don't like the blacks" meant go light, not go to a richer dark.*
+
+So both pages now carry **the homepage's own tokens** — ground `#faf9f2`,
+white cards, ink `#0d3f5e`, body `#2b3b47`, muted `#5b6670`, action `#00728d`,
+line `#e4e0d4`, control `#7d8890` — which are Guardian Life of the Caribbean's
+own values, with their measured ratios. A client who arrives from
+rickyrampersadbranch.com is plainly still on the same site.
+
+- **The hero is light and the shader is gone.** The canvas, its two shaders
+  and the scrim that had to be laid over them to keep white type legible all
+  went: on paper the type reads at 10:1 with no help. What replaces it is the
+  homepage's own device, two soft colour fields drifting with a long
+  transparent falloff, opt-in inside `prefers-reduced-motion: no-preference`.
+  Gradients, never `filter: blur()` on a moving layer.
+- **`section{padding:52px 0}` was invisible on a dark hero** and reads as a
+  hole on a light one, on top of `.hero-inner`'s own padding. `.hero` takes
+  `padding:0`.
+- **The mark is `site-mark.svg`**, the homepage's own shield, because the
+  pages now carry the homepage's own palette. `claims/claims-mark.svg` was
+  that shield in the copper and nothing references it any more. **The staff
+  header had to go light for this**: site-mark's darkest stop is `#0a3350`,
+  the same deep blue the header would have used, so the shield's lower corner
+  vanished into the band.
+- **The one dark fill left is `--navy-900` `#0a3350`**, the branch's own deep
+  blue — the footer, the wizard's step bar, the drawer head, the toast. It is
+  what the homepage's own footer uses and white on it is 13.11:1. Never
+  near-black, and never `rgba(0,0,0,…)` on a coloured ground: shadows are
+  `hsl(32deg 20% 42% / …)`, the ground's own hue.
+- **Gold and copper can never come back as an accent here**, and that is
+  arithmetic. On `#faf9f2`, `#efc24b` measures 1.68:1 and `#c9942c` 2.71:1,
+  both under the 3:1 floor for a non-text mark, let alone a button. The gold
+  shield stays on the e-mails, where the ground is navy.
+- **White on a gradient has to clear 4.5:1 at its LIGHTEST stop.** The primary
+  button's first cut ran from `#0e93b0`, where white measures 3.42:1; the ramp
+  starts at `#007a95` (4.98:1) instead. The audit cannot read a gradient from
+  computed style, so it reports such text for the eye the way axe reports
+  "incomplete" — check those stops by hand.
+
+`CBRAND` in `Claims.gs` drives the **e-mails and the PDFs**, which keep navy
+and the gold shield: an e-mail masthead is a different problem from a web
+page, and changing it means re-checking every notice in Gmail first.
+
+**A `[hidden]` element was rendering on both pages.** An author
+`display:flex`/`grid` rule beats the UA sheet's `[hidden]{display:none}`, so
+"Sign out" sat on the staff sign-in screen and the 6-digit code box sat under
+"Email me a code" before anybody had asked for one — four elements across the
+two pages. Both now carry `[hidden]{display:none!important}` at the top of the
+sheet. Reveal with `el.hidden = false`, never `style.display`, or that
+`!important` wins instead.
+
 ## Standing rules
 
 - **Client data never enters the repository.** `Orphan-Register.xlsx` and

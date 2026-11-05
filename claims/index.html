@@ -18,45 +18,56 @@
 <meta property="og:title" content="Claims TT — File your insurance claim online" />
 <meta property="og:description" content="Motor, health, property and life claims. Photograph your documents, upload securely, get a claim reference in minutes." />
 <meta property="og:type" content="website" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" type="image/svg+xml" href="/site-icon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Inter:wght@400;500;600;700;800&display=swap" />
 <style>
   :root{
-    /* Graphite & copper. One accent doing two jobs: bright copper where it
-       sits on the dark ground and has to carry, deep copper where white
-       type has to sit on top of it. Metal is never small text on paper —
-       that is what --copper-ink is for. */
-    --navy-900:#1C1D20;   /* ground */
-    --navy-800:#2A2C31;   /* raised dark surface */
-    --navy-700:#31343A;
-    --copper:#D08A4E;     /* on the dark ground: 5.96:1 */
-    --copper-2:#BE7739;
-    --copper-deep:#A25F26;/* a fill that carries white text: 5.00:1 */
-    --copper-ink:#6B3C12; /* the accent as text on paper: 8.39:1 */
-    --copper-50:#FAF0E7;
+    /* The branch's own light palette — the homepage's, sampled from Guardian
+       Life of the Caribbean's own stylesheet on 21 October 2026, with its
+       measured ratios. The claims pages carried graphite and copper until
+       5 November 2026: "i dint like the dark website". The page is light now
+       and its accent is the branch teal, so a client who comes here from
+       rickyrampersadbranch.com is plainly still on the same site.
+
+       Gold and copper can never come back as an accent HERE: on this ground
+       #efc24b measures 1.68:1 and #c9942c 2.71:1, both under the 3:1 floor
+       for a non-text mark, let alone a button. That is arithmetic, not taste.
+       The gold shield stays on the e-mails, where the ground is navy. */
+    --navy-900:#0a3350;   /* deep fill · white on it 13.11:1 */
+    --navy-800:#0d3f5e;   /* raised fill · white on it 10.57:1 */
+    --navy-700:#164a68;
+    --copper:#00728d;     /* the accent · 5.25:1 on the ground */
+    --copper-2:#005a70;   /* hover */
+    --copper-deep:#005a70;/* a fill that carries white text: 7.18:1 */
+    --copper-ink:#005a70; /* the accent as text on paper: 6.92:1 */
+    --copper-50:#e8f3f6;
     /* the old token names still carry the accent, so every rule that
        already referenced them keeps working and means the new thing */
-    --violet:#D08A4E;
-    --violet-2:#BE7739;
-    --violet-50:#FAF0E7;
-    --lime:#D08A4E;
-    --lime-ink:#6B3C12;
-    --teal-600:#6B3C12;   /* text-safe copper on paper */
-    --teal-500:#A25F26;
-    --teal-vivid:#D08A4E;
-    --teal-ink:#6B3C12;
-    --teal-50:#FAF0E7;
-    --gold:#D08A4E;
-    --gold-2:#BE7739;
-    --gold-ink:#6B3C12;
-    --gold-50:#FAF0E7;
-    --ink:#1C1D20;
-    --muted:#6A6862;
-    --bg:#F6F4F1;
+    --violet:#00728d;
+    --violet-2:#005a70;
+    --violet-50:#e8f3f6;
+    --lime:#00728d;
+    --lime-ink:#005a70;
+    --teal-600:#005a70;   /* text-safe accent on paper */
+    --teal-500:#00728d;
+    --teal-vivid:#0e93b0;
+    --teal-ink:#005a70;
+    --teal-50:#e8f3f6;
+    --gold:#00728d;
+    --gold-2:#005a70;
+    --gold-ink:#005a70;
+    --gold-50:#e8f3f6;
+    --ink:#0d3f5e;        /* headings · 10.53:1 */
+    --body:#2b3b47;       /* body copy · 10.94:1 */
+    --muted:#5b6670;      /* secondary · 5.56:1 (NOT #64748d, which is 4.50) */
+    --bg:#faf9f2;
+    --bg-2:#f4f2e8;       /* recessed band */
     --white:#ffffff;
-    --line:#E3DFD9;
+    --line:#e4e0d4;        /* decorative only · 1.25:1 */
+    --line-strong:#7d8890; /* controls and focus · 3.43:1 */
+    --line-2:#cfe4ea;      /* a border on a tinted surface */
     --red:#D1344F;
     --red-ink:#9B1B32;   /* the accent is a fill; small type on paper needs this */
     --red-50:#FDECEF;
@@ -66,12 +77,19 @@
     --radius-lg:24px;
     --radius-md:16px;
     --radius-sm:12px;
-    --shadow:0 16px 40px rgba(28,29,32,.16);
-    --shadow-sm:0 4px 14px rgba(28,29,32,.10);
+    /* a shadow takes its hue from the ground, never from black: transparent
+       black desaturates a warm surface and reads as grey haze */
+    --shadow:0 16px 40px hsl(32deg 20% 42% / .16);
+    --shadow-sm:0 4px 14px hsl(32deg 20% 42% / .10);
     --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     --display:"Newsreader","Iowan Old Style","Palatino Linotype",Georgia,"Times New Roman",serif;
   }
   *{margin:0;padding:0;box-sizing:border-box}
+  /* An author display rule beats the UA sheet's [hidden]{display:none}, so a
+     .who or a .row with display:flex/grid on it renders while it is still
+     marked hidden. That is why "Sign out" and the 6-digit code box were on
+     screen before anybody had asked for a code. Found 5 November 2026. */
+  [hidden]{display:none!important}
   html{scroll-behavior:smooth}
   body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
   img,svg{max-width:100%;display:block}
@@ -83,7 +101,7 @@
   :focus-visible{outline:3px solid var(--teal-500);outline-offset:2px;border-radius:6px}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
-  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-600);background:var(--teal-50);border:1px solid #EBD4BE;padding:7px 14px;border-radius:999px;margin-bottom:16px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-600);background:var(--teal-50);border:1px solid var(--line-2);padding:7px 14px;border-radius:999px;margin-bottom:16px}
   .h2{font-family:var(--display);font-size:clamp(1.8rem,3.8vw,2.7rem);font-weight:400;letter-spacing:-.018em;line-height:1.12;text-wrap:balance;margin-bottom:12px}
   .h2 em{font-style:italic;color:var(--teal-600)}
   .h3{font-size:1.12rem;font-weight:800;letter-spacing:-.01em;margin-bottom:6px}
@@ -92,16 +110,15 @@
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:700;border-radius:999px;padding:14px 26px;border:none;cursor:pointer;font-size:1rem;white-space:nowrap;transition:transform .18s ease,box-shadow .18s ease,background .18s ease;text-decoration:none}
   .btn:hover:not(:disabled){transform:translateY(-2px)}
   .btn:disabled{opacity:.5;cursor:not-allowed}
-  .btn-primary{background:var(--navy-800);color:#fff;box-shadow:0 12px 26px rgba(28,29,32,.32)}
-  .btn-teal{background:var(--teal-500);color:#fff;box-shadow:0 12px 26px rgba(184,115,51,.32)}
-  .btn-gold{background:linear-gradient(135deg,#D9985E,#D08A4E 46%,#BE7739);color:#1C1D20;
-    box-shadow:0 10px 30px rgba(184,115,51,.45),inset 0 1px 0 rgba(255,255,255,.28)}
-  .btn-ghost{background:#fff;color:var(--navy-900);border:1.5px solid var(--line)}
-  .hero .btn-ghost{background:rgba(255,255,255,.07);color:#fff;border-color:rgba(255,255,255,.34);backdrop-filter:blur(6px)}
+  .btn-primary{background:var(--navy-800);color:#fff;box-shadow:0 12px 26px hsl(32deg 20% 42% / .26)}
+  .btn-teal{background:var(--teal-500);color:#fff;box-shadow:0 12px 26px rgba(0,114,141,.26)}
+  .btn-gold{background:linear-gradient(135deg,#007a95,#00728d 46%,#005a70);color:#fff;
+    box-shadow:0 10px 26px rgba(0,114,141,.34),inset 0 1px 0 rgba(255,255,255,.22)}
+  .btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line-strong)}
   .btn-sm{padding:9px 18px;font-size:.88rem}
 
   /* ── header ── */
-  header{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);background:rgba(246,244,241,.9);border-bottom:1px solid rgba(28,29,32,.08)}
+  header{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);background:rgba(250,249,242,.9);border-bottom:1px solid var(--line)}
   .nav{display:flex;align-items:center;justify-content:space-between;height:68px;gap:14px}
   .logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:1.02rem;letter-spacing:-.01em;color:var(--navy-900);text-decoration:none}
   /* No tile. Decided 21 October 2026 — "i dont like the blacks" — the rounded
@@ -114,7 +131,7 @@
   @media(max-width:420px){.logo span{font-size:.95rem}.logo small{font-size:.75rem}}
   .nav-actions{display:flex;align-items:center;gap:10px}
   .nav-tel{font-weight:700;font-size:.9rem;color:var(--navy-900);text-decoration:none;padding:9px 14px;border-radius:999px}
-  .nav-tel:hover{background:rgba(28,29,32,.07)}
+  .nav-tel:hover{background:rgba(0,114,141,.08)}
   @media(max-width:700px){.nav-tel span{display:none}}
 
 
@@ -149,52 +166,38 @@
 
 
 
-  /* ── hero: the aegis field ──
-     A WebGL canvas sits over a CSS gradient that is a complete picture on
-     its own. If the context never opens — no WebGL, Save-Data, an old
-     phone — nothing is missing; the canvas simply stays empty. */
-  .hero{position:relative;isolation:isolate;color:#fff;overflow:hidden;
-    /* This is what shows when WebGL is declined — a software-rendering device,
-       Save-Data, an old phone — so it has to read like the shader, not like a
-       different design. Copper has to arrive as light, tight and bright, and
-       leave most of the graphite alone: spread wide and half-strength it does
-       not glow, it stains the whole ground brown. */
+  /* ── hero ──
+     Light, as of 5 November 2026: "i dint like the dark website". It was
+     graphite with a copper WebGL caustic field over it, and the whole of
+     that went — the canvas, its two shaders and the scrim that had to be
+     laid over them to keep white type legible. On a light ground none of
+     it has anything to do: the type sits on paper and reads at 10:1
+     without help.
+
+     What replaces it is the homepage's own device, so the two pages move
+     the same way: two soft colour fields drifting behind the column, with
+     a long transparent falloff. Gradients, not filter:blur() on a moving
+     layer — that has to be re-rasterised every frame and is what took an
+     earlier build on the homepage to about 5fps. Motion is opt-IN: the
+     finished state is the plain CSS default and the drift lives inside
+     prefers-reduced-motion: no-preference, so it can never strand the
+     hero invisible. */
+  .hero{position:relative;isolation:isolate;color:var(--body);overflow:clip;background:var(--bg);padding:0}
+  .hero::before{content:"";position:absolute;inset:-8%;z-index:0;pointer-events:none;
     background:
-      radial-gradient(74% 54% at 13% -12%, rgba(216,148,88,.27), transparent 60%),
-      radial-gradient(56% 44% at 89% 3%, rgba(208,138,78,.15), transparent 64%),
-      radial-gradient(20% 15% at 94% -2%, rgba(242,196,146,.22), transparent 70%),
-      linear-gradient(168deg,#1C1D20 0%,#2A2C31 56%,#31343A 100%)}
-  .hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:-1;
-    opacity:0;transition:opacity 1.2s ease}
-  .hero canvas.lit{opacity:1}
-  /* A caustic is a light source, and light sources blow out. Measured with the
-     shader live, the copper ridges reach rgb(255,199,141) and white 16px copy
-     over them reads 1.38:1 — the lede disappears, and the italic "cover" in the
-     headline measured 1:1, which is to say invisible. This never showed up
-     before because the shader declines a software renderer
-     (failIfMajorPerformanceCaveat), so every earlier contrast pass was reading
-     the quiet CSS gradient underneath rather than the thing people see.
-     The scrim goes between the canvas (z-index -1) and the copy (z-index 1),
-     weighted to the left where the column sits so the field still glows across
-     the rest of the frame. */
-  /* Vertical, not horizontal. The column is centred and 880 wide inside 1280,
-     so a left-to-right fade leaves the end of every headline out in the open —
-     measured at 1280 that put "cover" at 1.09:1. The band that carries the
-     eyebrow, headline and lede is held down hard; it opens up through the
-     middle so the field still glows where the buttons are, and comes back a
-     little under the figures at the foot. */
-  .hero::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
-    background:
-      linear-gradient(to bottom,rgba(16,17,20,.90) 0%,rgba(16,17,20,.87) 40%,rgba(16,17,20,.66) 60%,rgba(16,17,20,.50) 78%,rgba(16,17,20,.58) 100%),
-      linear-gradient(100deg,rgba(16,17,20,.30) 0%,rgba(16,17,20,.10) 55%,rgba(16,17,20,0) 100%)}
-  /* On a phone the column is full width, so a horizontal fade has nowhere to
-     hide and the scrim has to be even across the frame. */
-  @media(max-width:860px){
-    .hero::before{background:linear-gradient(to bottom,rgba(16,17,20,.80) 0%,rgba(16,17,20,.70) 40%,rgba(16,17,20,.66) 72%,rgba(16,17,20,.78) 100%)}
+      radial-gradient(44% 48% at 14% 0%, rgba(0,114,141,.22), transparent 62%),
+      radial-gradient(40% 44% at 88% 6%, rgba(14,147,176,.20), transparent 64%),
+      radial-gradient(36% 38% at 64% 100%, rgba(10,51,80,.10), transparent 68%)}
+  @media(prefers-reduced-motion:no-preference){
+    .hero::before{animation:heroDrift 28s ease-in-out infinite alternate}
+  }
+  @keyframes heroDrift{
+    from{transform:translate3d(-2%,-1.2%,0) scale(1.02)}
+    to{transform:translate3d(2%,1.2%,0) scale(1.08)}
   }
   .hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;z-index:1;
-    background:linear-gradient(90deg,transparent,rgba(208,138,78,.75) 22%,rgba(232,176,120,.6) 78%,transparent)}
-  .hero-inner{position:relative;z-index:1;padding:clamp(56px,9vw,104px) 0 clamp(52px,8vw,92px)}
+    background:linear-gradient(90deg,transparent,rgba(0,114,141,.55) 22%,rgba(14,147,176,.42) 78%,transparent)}
+  .hero-inner{position:relative;z-index:1;padding:clamp(44px,7vw,84px) 0 clamp(44px,6.5vw,76px)}
   .hero .wrap,#file .wrap{max-width:880px}
   #file{padding-top:36px}
 
@@ -202,25 +205,25 @@
     letter-spacing:.2em;text-transform:uppercase;color:var(--lime);margin-bottom:22px}
   .kicker::before{content:"";width:28px;height:1px;background:currentColor;opacity:.6}
   .hero h1{font-family:var(--display);font-size:clamp(2.5rem,6.4vw,4.5rem);font-weight:300;
-    letter-spacing:-.022em;line-height:1.02;text-wrap:balance;margin-bottom:20px}
+    letter-spacing:-.022em;line-height:1.02;text-wrap:balance;margin-bottom:20px;color:var(--ink)}
   .hero h1 em{font-style:italic;color:var(--lime)}
-  .lede{color:#ABAAA6;max-width:53ch;font-size:clamp(1rem,1.6vw,1.16rem);line-height:1.65}
+  .lede{color:var(--body);max-width:53ch;font-size:clamp(1rem,1.6vw,1.16rem);line-height:1.65}
   .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:34px}
   .assur{display:flex;gap:clamp(20px,4vw,44px);flex-wrap:wrap;margin-top:clamp(36px,6vw,56px);
-    padding-top:26px;border-top:1px solid rgba(255,255,255,.14)}
+    padding-top:26px;border-top:1px solid var(--line)}
   .assur div{min-width:88px}
   .assur dt{font-family:var(--display);font-size:1.7rem;font-weight:400;color:var(--lime);
     line-height:1;margin-bottom:6px;font-variant-numeric:tabular-nums}
-  .assur dd{font-size:.82rem;color:#9B9995;letter-spacing:.02em;line-height:1.4}
-  .hero-facts{display:flex;gap:26px;flex-wrap:wrap;margin-top:30px;padding-top:24px;border-top:1px solid rgba(255,255,255,.16)}
+  .assur dd{font-size:.82rem;color:var(--muted);letter-spacing:.02em;line-height:1.4}
+  .hero-facts{display:flex;gap:26px;flex-wrap:wrap;margin-top:30px;padding-top:24px;border-top:1px solid var(--line)}
   .fact b{display:block;font-size:1.3rem;font-weight:800;color:var(--gold)}
-  .fact span{font-size:.82rem;color:#ABAAA6}
+  .fact span{font-size:.82rem;color:var(--muted)}
 
   /* ── first steps strip ── */
-  .steps-strip{background:var(--gold-50);border-block:1px solid #F0DFCB;padding:26px 0}
+  .steps-strip{background:var(--gold-50);border-block:1px solid var(--line-2);padding:26px 0}
   .steps-strip h2{font-size:1.05rem;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:9px}
   .first-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}
-  .fs{background:#fff;border:1px solid #EBD4BE;border-radius:var(--radius-sm);padding:14px 16px}
+  .fs{background:#fff;border:1px solid var(--line-2);border-radius:var(--radius-sm);padding:14px 16px}
   .fs b{display:block;font-size:.92rem;margin-bottom:3px}
   .fs span{font-size:.85rem;color:var(--muted);line-height:1.5}
 
@@ -228,12 +231,12 @@
   .wizard{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
   .progress{display:flex;background:var(--navy-900);color:#fff;padding:0;overflow-x:auto;scrollbar-width:none}
   .progress::-webkit-scrollbar{display:none}
-  .pstep{flex:1;min-width:118px;padding:14px 10px;text-align:center;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#A9A7A2;border-bottom:3px solid transparent;position:relative;transition:color .2s,border-color .2s;background:none;border-top:none;border-inline:none;cursor:default}
-  .pstep .pnum{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:50%;background:rgba(255,255,255,.13);font-size:.75rem;margin-right:6px;vertical-align:-4px}
+  .pstep{flex:1;min-width:118px;padding:14px 10px;text-align:center;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.74);border-bottom:3px solid transparent;position:relative;transition:color .2s,border-color .2s;background:none;border-top:none;border-inline:none;cursor:default}
+  .pstep .pnum{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:50%;background:rgba(255,255,255,.18);font-size:.75rem;margin-right:6px;vertical-align:-4px}
   .pstep.active{color:#fff;border-bottom-color:var(--gold)}
   .pstep.done{cursor:pointer}
   .pstep.done:hover{color:#fff}
-  .pstep.active .pnum{background:var(--gold);color:var(--navy-900)}
+  .pstep.active .pnum{background:#fff;color:var(--navy-900)}
   .pstep.done{color:var(--teal-50);cursor:pointer}
   .pstep.done .pnum{background:var(--teal-500);color:#fff}
   .pstep.done:hover{color:#fff}
@@ -248,7 +251,7 @@
   .type-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}
   .type-card{position:relative;text-align:left;background:#fff;border:2px solid var(--line);border-radius:var(--radius-md);padding:20px 18px;cursor:pointer;transition:border-color .18s,box-shadow .18s,transform .18s}
   .type-card:hover{border-color:var(--teal-500);transform:translateY(-3px);box-shadow:var(--shadow-sm)}
-  .type-card[aria-pressed="true"]{border-color:var(--teal-600);background:var(--teal-50);box-shadow:0 0 0 4px rgba(184,115,51,.16)}
+  .type-card[aria-pressed="true"]{border-color:var(--teal-600);background:var(--teal-50);box-shadow:0 0 0 4px rgba(0,114,141,.16)}
   /* Fixed box, so every card's title lands on the same baseline whatever
      the glyph draws. */
   .type-card .tico{height:34px;display:flex;align-items:center;margin-bottom:10px}
@@ -278,7 +281,7 @@
      friendly" turns out to mean in practice. It still scales with the user's
      own text size, because 1rem wins once they raise it. */
   .field input,.field select,.field textarea{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--radius-sm);font-size:max(16px,1rem);font-family:inherit;background:#fff;color:var(--ink);transition:border-color .16s,box-shadow .16s}
-  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(184,115,51,.18)}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(0,114,141,.18)}
   .field textarea{min-height:120px;resize:vertical;line-height:1.6}
   .field.bad input,.field.bad select,.field.bad textarea{border-color:var(--red);background:var(--red-50)}
   .err{display:none;color:var(--red-ink);font-size:.82rem;font-weight:600;margin-top:5px}
@@ -289,7 +292,7 @@
   .fieldset-note{grid-column:1/-1;color:var(--muted);font-size:.87rem;margin-top:-6px}
 
   /* ── who's claiming (identity first) ── */
-  .who{background:linear-gradient(150deg,var(--teal-50),#FBF5EF);border:1.5px solid #EBD4BE;border-radius:var(--radius-md);padding:20px;margin-bottom:26px}
+  .who{background:linear-gradient(150deg,var(--teal-50),var(--white));border:1.5px solid var(--line-2);border-radius:var(--radius-md);padding:20px;margin-bottom:26px}
   .who h3{font-size:1.05rem;font-weight:800;margin-bottom:4px}
   .who>p{color:var(--muted);font-size:.9rem;margin-bottom:14px}
   .who-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
@@ -298,7 +301,7 @@
   .who-skip{margin-top:12px}
   .task-chips{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 16px}
   .task-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 16px;font-size:.87rem;font-weight:700;text-decoration:none;color:var(--ink)}
-  .task-chip.open{border-color:#EBD4BE;background:var(--gold-50)}
+  .task-chip.open{border-color:var(--line-2);background:var(--gold-50)}
   .task-chip .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
   .task-chip.open .dot{background:var(--gold)}
   .pol-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
@@ -313,7 +316,7 @@
   .change-type{background:none;border:none;color:var(--teal-600);font-weight:700;font-size:.88rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:6px 0}
 
   /* ── policy prefill ── */
-  .lookup{background:linear-gradient(150deg,var(--teal-50),#FBF5EF);border:1.5px solid #EBD4BE;border-radius:var(--radius-md);padding:18px 20px;margin-bottom:26px}
+  .lookup{background:linear-gradient(150deg,var(--teal-50),var(--white));border:1.5px solid var(--line-2);border-radius:var(--radius-md);padding:18px 20px;margin-bottom:26px}
   .lookup[hidden]{display:none}
   .lookup-head{display:flex;gap:13px;align-items:flex-start;margin-bottom:16px}
   .lk-ico{flex:none;display:flex;align-items:center}
@@ -322,7 +325,7 @@
   .lookup-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
   @media(max-width:560px){.lookup-row{grid-template-columns:1fr}}
   .lookup .field input{background:#fff}
-  .lk-found{font-size:1rem;margin-bottom:14px;padding:12px 16px;background:#fff;border:1px solid #EBD4BE;border-radius:var(--radius-sm)}
+  .lk-found{font-size:1rem;margin-bottom:14px;padding:12px 16px;background:#fff;border:1px solid var(--line-2);border-radius:var(--radius-sm)}
   .lk-found b{color:var(--navy-900)}
   .lk-found span{color:var(--muted);font-size:.88rem;display:block;margin-top:2px}
   .lk-alt{margin-top:10px;display:flex;gap:14px;flex-wrap:wrap}
@@ -330,18 +333,18 @@
   .lookup-confirm[hidden]{display:none}
   #lk-step-find[hidden]{display:none}
   .prefilled{position:relative}
-  .prefilled input,.prefilled select,.prefilled textarea{border-color:#D9B68C;background:#FDF8F3}
-  .prefilled label::after{content:"from your policy";font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--teal-600);background:var(--teal-50);border:1px solid #EBD4BE;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:1px}
+  .prefilled input,.prefilled select,.prefilled textarea{border-color:var(--teal-500);background:var(--teal-50)}
+  .prefilled label::after{content:"from your policy";font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--teal-600);background:var(--teal-50);border:1px solid var(--line-2);padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:1px}
 
   /* ── documents ── */
-  .doc-intro{background:var(--teal-50);border:1px solid #EBD4BE;border-radius:var(--radius-md);padding:16px 18px;margin-bottom:22px;font-size:.92rem}
+  .doc-intro{background:var(--teal-50);border:1px solid var(--line-2);border-radius:var(--radius-md);padding:16px 18px;margin-bottom:22px;font-size:.92rem}
   .doc-intro b{color:var(--teal-600)}
   .docs{display:grid;gap:14px}
   .doc{border:1.5px solid var(--line);border-radius:var(--radius-md);padding:16px 18px;transition:border-color .18s,background .18s}
   .doc.has{border-color:var(--green);background:var(--green-50)}
-  .doc.skipped{border-color:#DDBE95;background:var(--gold-50)}
+  .doc.skipped{border-color:var(--line-strong);background:var(--gold-50)}
   .doc-top{display:flex;gap:12px;align-items:flex-start}
-  .doc-mark{width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:.82rem;font-weight:800;background:#F0EEEA;color:var(--muted);border:1.5px solid var(--line);margin-top:1px}
+  .doc-mark{width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:.82rem;font-weight:800;background:var(--bg-2);color:var(--muted);border:1.5px solid var(--line);margin-top:1px}
   .doc.has .doc-mark{background:var(--green);border-color:var(--green);color:#fff}
   .doc.skipped .doc-mark{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}
   .doc-meta{flex:1;min-width:0}
@@ -349,7 +352,7 @@
   .doc-meta .hint{color:var(--muted);font-size:.85rem;line-height:1.5;display:block;margin-top:2px}
   .pill{display:inline-block;font-size:.68rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:3px 9px;border-radius:999px;vertical-align:2px;margin-left:8px}
   .pill.need{background:var(--red-50);color:var(--red)}
-  .pill.opt{background:#F0EEEA;color:var(--muted)}
+  .pill.opt{background:var(--bg-2);color:var(--muted)}
   .doc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
   .drop{border:2px dashed var(--line);border-radius:var(--radius-sm);padding:11px 16px;font-size:.88rem;font-weight:700;color:var(--navy-800);background:#fff;cursor:pointer;transition:all .16s;display:inline-flex;align-items:center;gap:8px}
   .drop:hover{border-color:var(--teal-500);background:var(--teal-50)}
@@ -362,13 +365,13 @@
   .thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
   .thumb{position:relative;width:104px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
   .thumb img{width:100%;height:70px;object-fit:cover;display:block}
-  .thumb .fileico{height:70px;display:grid;place-items:center;font-size:1.7rem;background:#F0EEEA}
+  .thumb .fileico{height:70px;display:grid;place-items:center;font-size:1.7rem;background:var(--bg-2)}
   .thumb .tname{font-size:.68rem;padding:5px 6px;color:var(--muted);word-break:break-all;line-height:1.35;max-height:38px;overflow:hidden}
   .thumb .rm{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(21,36,53,.78);color:#fff;font-size:.8rem;line-height:1;cursor:pointer;display:grid;place-items:center}
   .thumb .rm:hover{background:var(--red)}
   .thumb.bad{border-color:var(--red)}
   .thumb .warn{font-size:.68rem;color:var(--red-ink);padding:0 6px 5px;font-weight:700}
-  .scan-tip{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--teal-50);border:1px solid #EBD4BE;border-radius:var(--radius-sm);padding:10px 14px;margin-top:12px;font-size:.88rem}
+  .scan-tip{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--teal-50);border:1px solid var(--line-2);border-radius:var(--radius-sm);padding:10px 14px;margin-top:12px;font-size:.88rem}
   .scan-tip b{color:var(--teal-600)}
   .scan-tip .vals{flex:1;min-width:180px}
   .scan-tip button{background:var(--teal-500);color:#fff;border:none;border-radius:999px;padding:8px 16px;font-weight:700;font-size:.84rem;cursor:pointer}
@@ -377,8 +380,8 @@
 
   /* ── review ── */
   .review{border:1.5px solid var(--line);border-radius:var(--radius-md);overflow:hidden}
-  .review h3{background:#F2F0EC;padding:12px 18px;font-size:.79rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
-  .rrow{display:grid;grid-template-columns:190px 1fr;gap:14px;padding:11px 18px;border-bottom:1px solid #E7E4DE;font-size:.93rem}
+  .review h3{background:var(--bg-2);padding:12px 18px;font-size:.79rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+  .rrow{display:grid;grid-template-columns:190px 1fr;gap:14px;padding:11px 18px;border-bottom:1px solid var(--line);font-size:.93rem}
   .rrow:last-child{border-bottom:none}
   .rrow dt{color:var(--muted);font-weight:600}
   .rrow dd{font-weight:600;word-break:break-word;white-space:pre-wrap}
@@ -407,7 +410,7 @@
   .ck-say label{display:block;font-weight:700;font-size:.84rem;margin-bottom:5px}
   .ck-say input{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);
     font-size:max(16px,1rem);font-family:inherit;background:#fff;color:var(--ink)}
-  .ck-say input:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(184,115,51,.18)}
+  .ck-say input:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(0,114,141,.18)}
   .checks.all-clear{background:var(--green-50);border-color:#BFE5CF}
   .checks.all-clear h3{color:var(--green-ink)}
   /* Guardian's own accident report form, filled and shown before it goes.
@@ -422,7 +425,7 @@
   .gg-pages canvas{width:100%;height:auto;display:block;border:1px solid var(--line);
     border-radius:var(--radius-sm);background:#fff;box-shadow:0 2px 10px rgba(32,26,18,.07)}
   .gg-pg{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
-  .declare{background:#F2F0EC;border:1.5px solid var(--line);border-radius:var(--radius-md);padding:18px;margin-top:20px}
+  .declare{background:var(--bg-2);border:1.5px solid var(--line);border-radius:var(--radius-md);padding:18px;margin-top:20px}
   .check{display:flex;gap:12px;align-items:flex-start;cursor:pointer;font-size:.92rem;line-height:1.55}
   /* 24, not 20: WCAG 2.2 2.5.8 AA, and these three are the declaration boxes
      a claim cannot be filed without. */
@@ -442,7 +445,7 @@
   .uploading{text-align:center;padding:34px 20px}
   .uploading .ring{width:64px;height:64px;border-radius:50%;border:5px solid var(--line);border-top-color:var(--teal-500);margin:0 auto 20px;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .bar{height:9px;background:#E4E1DB;border-radius:999px;overflow:hidden;max-width:420px;margin:16px auto 8px}
+  .bar{height:9px;background:var(--line);border-radius:999px;overflow:hidden;max-width:420px;margin:16px auto 8px}
   .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal-500),var(--teal-600));width:0;transition:width .3s ease;border-radius:999px}
   .uploading .what{font-size:.9rem;color:var(--muted);min-height:22px}
   @media (prefers-reduced-motion:reduce){.ring{animation-duration:2.4s}.btn:hover{transform:none}.type-card:hover{transform:none}}
@@ -451,11 +454,11 @@
   .done-head{text-align:center;padding:8px 0 22px}
   .done-head .tick{width:74px;height:74px;border-radius:50%;background:var(--green-50);border:2px solid var(--green);color:var(--green-ink);display:grid;place-items:center;font-size:2.1rem;margin:0 auto 18px}
   .refbox{background:var(--navy-900);color:#fff;border-radius:var(--radius-md);padding:22px;text-align:center;margin:22px 0}
-  .refbox span{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:#9B9995;font-weight:700}
+  .refbox span{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.70);font-weight:700}
   .refbox b{display:block;font-size:clamp(1.6rem,5vw,2.1rem);font-weight:800;letter-spacing:.06em;color:var(--gold);margin:6px 0 12px}
   .next-list{counter-reset:n;margin:6px 0}
   .next-list li{counter-increment:n;position:relative;padding-left:44px;margin-bottom:14px;font-size:.95rem;color:#4A4844}
-  .next-list li::before{content:counter(n);position:absolute;left:0;top:-1px;width:30px;height:30px;border-radius:50%;background:var(--teal-50);border:1.5px solid #EBD4BE;color:var(--teal-600);font-weight:800;font-size:.88rem;display:grid;place-items:center}
+  .next-list li::before{content:counter(n);position:absolute;left:0;top:-1px;width:30px;height:30px;border-radius:50%;background:var(--teal-50);border:1.5px solid var(--line-2);color:var(--teal-600);font-weight:800;font-size:.88rem;display:grid;place-items:center}
   .next-list li b{display:block;color:var(--ink)}
 
   /* ── status lookup ── */
@@ -480,12 +483,12 @@
   .claim-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:clamp(18px,3.5vw,26px);margin-bottom:16px}
   .claim-head{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:baseline;margin-bottom:6px}
   .claim-head b{font-size:1.08rem;letter-spacing:.02em}
-  .status-pill{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:5px 12px;border-radius:999px;background:var(--teal-50);color:var(--teal-600);border:1px solid #EBD4BE}
-  .status-pill.closed{background:#F0EEEA;color:var(--muted);border-color:var(--line)}
+  .status-pill{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:5px 12px;border-radius:999px;background:var(--teal-50);color:var(--teal-600);border:1px solid var(--line-2)}
+  .status-pill.closed{background:var(--bg-2);color:var(--muted);border-color:var(--line)}
   .claim-meta{color:var(--muted);font-size:.9rem;margin-bottom:10px}
-  .owe{background:var(--gold-50);border:1px solid #EBD4BE;border-radius:var(--radius-md);padding:14px 16px;margin-top:12px}
+  .owe{background:var(--gold-50);border:1px solid var(--line-2);border-radius:var(--radius-md);padding:14px 16px;margin-top:12px}
   .owe b{display:block;margin-bottom:8px;font-size:.93rem}
-  .owe-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-top:1px solid #EBD4BE;flex-wrap:wrap}
+  .owe-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line-2);flex-wrap:wrap}
   .owe-row:first-of-type{border-top:none}
   .owe-row span{font-size:.92rem;font-weight:600}
   .owe-row .drop{padding:8px 14px;font-size:.84rem}
@@ -503,7 +506,7 @@
   details.q .a b{color:var(--ink)}
 
   /* ── footer ── */
-  footer{background:var(--navy-900);color:#ABAAA6;padding:44px 0 32px;font-size:.9rem}
+  footer{background:var(--navy-900);color:rgba(255,255,255,.78);padding:44px 0 32px;font-size:.9rem}
   footer a{color:#fff;text-decoration:none;font-weight:600}
   /* a link alone in a list item has no sentence around it, so 2.5.8's inline
      exemption does not apply and it has to carry its own target height */
@@ -513,7 +516,7 @@
   @media(max-width:720px){.foot-grid{grid-template-columns:1fr}}
   .foot-grid h4{color:#fff;font-size:.79rem;letter-spacing:.11em;text-transform:uppercase;margin-bottom:12px}
   .foot-grid li{margin-bottom:7px}
-  .disclaimer{border-top:1px solid rgba(255,255,255,.13);padding-top:18px;font-size:.79rem;color:#8C8A85;line-height:1.65}
+  .disclaimer{border-top:1px solid rgba(255,255,255,.13);padding-top:18px;font-size:.79rem;color:rgba(255,255,255,.64);line-height:1.65}
 
   /* ── print: the claim summary only ── */
   @media print{
@@ -686,7 +689,7 @@
 <header>
   <div class="wrap nav">
     <a class="logo" href="/">
-      <span class="logo-badge" aria-hidden="true"><img src="/claims/claims-mark.svg" alt="" /></span>
+      <span class="logo-badge" aria-hidden="true"><img src="/site-mark.svg" alt="" /></span>
       <span>Claims&nbsp;TT<small>Ricky Rampersad Branch</small></span>
     </a>
     <div class="nav-actions">
@@ -698,7 +701,6 @@
 
 <!-- ══════════════ HERO ══════════════ -->
 <section class="hero" id="hero" aria-labelledby="hero-title">
-  <canvas id="aegis" aria-hidden="true"></canvas>
   <div class="hero-inner">
     <div class="wrap">
       <p class="kicker">Ricky Rampersad · Trinidad &amp; Tobago</p>
@@ -2559,7 +2561,7 @@ function renderReview() {
         (files.length === 1 ? " file" : " files") + " — " + esc(files.map((f) => f.name).join(", ")) + "</dd></div>";
     }
     if (isRequired(d)) {
-      return '<div class="rrow"><dt>' + d.label + '</dt><dd style="color:#6B3C12">⏳ Not available yet — we will expect it</dd></div>';
+      return '<div class="rrow"><dt>' + d.label + '</dt><dd style="color:var(--teal-600)">⏳ Not available yet — we will expect it</dd></div>';
     }
     return "";
   }).join("");
@@ -3334,232 +3336,6 @@ if (TYPES[wanted]) {
   renderSubtypes();
 }
 </script>
-<!-- ══════════════════════════════════════════════════════════════
-     THE AEGIS FIELD — the hero's ambient light
-     One fullscreen triangle, one fragment shader, no library: gold
-     caustics drifting under a faint shield tessellation. It is
-     decoration, and it behaves like decoration — it never blocks
-     paint, it stops when scrolled past or the tab is hidden, and on a
-     thin connection or an old phone it never opens a context at all.
-     The CSS gradient beneath it is a finished picture on its own.
-     ══════════════════════════════════════════════════════════════ -->
-<script type="x-shader/x-vertex" id="aegis-vs">
-attribute vec2 aPos;
-void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }
-</script>
-<script type="x-shader/x-fragment" id="aegis-fs">
-#ifdef GL_FRAGMENT_PRECISION_HIGH
-precision highp float;
-#else
-precision mediump float;
-#endif
-
-uniform vec2  uRes;
-uniform float uTime;
-uniform vec2  uPtr;
-
-float hash(vec2 p){
-  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-}
-
-float vnoise(vec2 p){
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(mix(hash(i),                hash(i + vec2(1.0, 0.0)), u.x),
-             mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
-}
-
-float fbm(vec2 p){
-  float v = 0.0;
-  float a = 0.5;
-  for (int i = 0; i < 4; i++){
-    v += a * vnoise(p);
-    p = p * 2.03 + vec2(17.3, 9.1);
-    a *= 0.5;
-  }
-  return v;
-}
-
-void main(){
-  vec2 uv = gl_FragCoord.xy / uRes;
-  vec2 p  = (gl_FragCoord.xy - 0.5 * uRes) / min(uRes.x, uRes.y);
-  p += uPtr * 0.045;
-
-  float t = uTime * 0.055;
-
-  /* Domain warp — the slow drift of light through moving water. */
-  vec2  q = vec2(fbm(p * 2.1 + t), fbm(p * 2.1 + vec2(5.2, 1.3) - t * 0.8));
-  float f = fbm(p * 3.1 + q * 1.5 + t * 0.45);
-
-  /* Where the warped field crosses its own midpoint, light gathers.
-     Sharpened hard, so most of the frame stays dark and the light reads
-     as filaments rather than fog. */
-  float caustic = 1.0 - abs(f * 2.0 - 1.0);
-  caustic = pow(caustic, 4.5);
-
-  /* Light arrives from above and falls away, as it does through water. */
-  float fall = smoothstep(-0.10, 0.98, uv.y);
-  float vig  = smoothstep(1.40, 0.18, length(p));
-
-  /* The shield's scales: a whisper of tessellation, never a pattern you notice. */
-  vec2  hp = p * vec2(7.8, 9.0);
-  hp.y += mod(floor(hp.x), 2.0) * 0.5;
-  vec2  hf = abs(fract(hp) - 0.5);
-  float scale = smoothstep(0.44, 0.5, max(hf.x, hf.y));
-
-  vec3 base   = vec3(0.1098, 0.1137, 0.1255);   /* #1C1D20 graphite     */
-  vec3 deep   = vec3(0.1647, 0.1725, 0.1922);   /* #2A2C31 raised       */
-  vec3 copper = vec3(0.8157, 0.5412, 0.3059);   /* #D08A4E the light    */
-  vec3 flare  = vec3(0.9098, 0.6902, 0.4706);   /* #E8B078 the filament */
-
-  vec3 col = mix(base, deep, fall);
-
-  /* Copper carries the light, at full strength — on a graphite ground a
-     half-strength accent just turns everything the colour of dust. */
-  float lit = caustic * fall * vig;
-  /* 0.72, not the 1.15 this was built at. At full strength the ridges clip to
-     rgb(255,199,141) and the hero's own copper words land on them at 1:1 —
-     the headline's italic "cover" is the same copper as the light, so no
-     amount of brightness separates them and only a darker ground does. */
-  col += copper * lit * 0.72;
-
-  /* The pale bronze only where the filaments are thinnest and hottest, the
-     way the centre of a flame goes white. It is what keeps the field
-     reading as heated metal rather than as brown. */
-  col += flare * pow(caustic, 3.4) * 0.20 * fall * vig;
-
-  col += copper * scale * 0.030 * fall;
-
-  /* A little grain, so the gradient cannot band on a wide screen. */
-  col += (hash(gl_FragCoord.xy * 0.7 + uTime) - 0.5) * 0.010;
-
-  gl_FragColor = vec4(col, 1.0);
-}
-</script>
-<script>
-(function () {
-  var cv = document.getElementById("aegis");
-  if (!cv || !window.requestAnimationFrame) return;
-
-  // Never spend a client's data or battery on decoration.
-  var net = navigator.connection || {};
-  if (net.saveData === true || /(^|-)2g$/.test(net.effectiveType || "") ||
-      (navigator.deviceMemory && navigator.deviceMemory <= 2) ||
-      (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2)) return;
-
-  var opts = { alpha: false, antialias: false, depth: false, stencil: false,
-               preserveDrawingBuffer: false, powerPreference: "low-power",
-               failIfMajorPerformanceCaveat: true };
-  var gl = null;
-  try {
-    gl = cv.getContext("webgl2", opts) || cv.getContext("webgl", opts) ||
-         cv.getContext("experimental-webgl", opts);
-  } catch (e) { return; }
-  if (!gl) return;
-
-  function build(type, src) {
-    var s = gl.createShader(type);
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { gl.deleteShader(s); return null; }
-    return s;
-  }
-  var vs = build(gl.VERTEX_SHADER, document.getElementById("aegis-vs").textContent);
-  var fs = build(gl.FRAGMENT_SHADER, document.getElementById("aegis-fs").textContent);
-  if (!vs || !fs) return;
-
-  var prog = gl.createProgram();
-  gl.attachShader(prog, vs);
-  gl.attachShader(prog, fs);
-  gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
-  gl.useProgram(prog);
-
-  // One triangle large enough to cover the clip volume — cheaper than a quad.
-  var buf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-  var loc = gl.getAttribLocation(prog, "aPos");
-  gl.enableVertexAttribArray(loc);
-  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-
-  var uRes = gl.getUniformLocation(prog, "uRes");
-  var uTime = gl.getUniformLocation(prog, "uTime");
-  var uPtr = gl.getUniformLocation(prog, "uPtr");
-
-  var dpr = Math.min(window.devicePixelRatio || 1, 1.75);
-  function resize() {
-    var w = Math.max(cv.clientWidth, 1), h = Math.max(cv.clientHeight, 1);
-    var W = Math.round(w * dpr), H = Math.round(h * dpr);
-    if (cv.width !== W || cv.height !== H) {
-      cv.width = W; cv.height = H;
-      gl.viewport(0, 0, W, H);
-    }
-    gl.uniform2f(uRes, cv.width, cv.height);
-  }
-
-  // Pointer parallax, lerped so it drifts rather than tracks. Fine pointers only.
-  var px = 0, py = 0, tx = 0, ty = 0;
-  if (window.matchMedia && matchMedia("(pointer: fine)").matches) {
-    addEventListener("pointermove", function (e) {
-      tx = (e.clientX / innerWidth) * 2 - 1;
-      ty = 1 - (e.clientY / innerHeight) * 2;
-    }, { passive: true });
-  }
-
-  var still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var visible = true, onScreen = true, running = false, t0 = performance.now(), last = 0;
-  var STEP = 1000 / 30;   // ambient light does not need sixty frames a second
-
-  function frame(now) {
-    if (!running) return;
-    requestAnimationFrame(frame);
-    if (now - last < STEP) return;
-    last = now;
-    px += (tx - px) * 0.045;
-    py += (ty - py) * 0.045;
-    resize();
-    gl.uniform1f(uTime, (now - t0) / 1000);
-    gl.uniform2f(uPtr, px, py);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-    cv.classList.add("lit");
-  }
-
-  function run(on) {
-    on = on && visible && !still;
-    if (on === running) return;
-    running = on;
-    if (on) { last = 0; requestAnimationFrame(frame); }
-  }
-
-  if (still) {                       // one considered frame, then silence
-    resize();
-    gl.uniform1f(uTime, 12.0);
-    gl.uniform2f(uPtr, 0, 0);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-    cv.classList.add("lit");
-  }
-
-  document.addEventListener("visibilitychange", function () {
-    visible = !document.hidden;
-    run(visible && onScreen);
-  });
-
-  var onScreen = true;
-  if (window.IntersectionObserver) {
-    new IntersectionObserver(function (es) {
-      onScreen = es[0].isIntersecting;
-      run(onScreen);
-    }, { threshold: 0 }).observe(cv);
-  }
-
-  cv.addEventListener("webglcontextlost", function (e) { e.preventDefault(); run(false); });
-  addEventListener("resize", resize, { passive: true });
-  run(true);
-})();
-</script>
-
 <!-- rrb-views -->
 <script>
 (function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{

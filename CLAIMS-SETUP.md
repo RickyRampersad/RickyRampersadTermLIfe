@@ -20,13 +20,15 @@ steps, and only three of them are yours.
 claimant types their own policy number instead of it filling itself in, and
 nothing writes back to `Claims__c`. Everything else is unchanged.
 
-### Re-paste `Claims.gs` — 4 November 2026
+### Re-paste `Claims.gs` — 4 November 2026 · **DONE, and verified live**
 
-Steps 1 to 4 are done. Two things the first live test found, both fixed in
-`apps-script/Claims.gs`, and **both need the file pasted again and a new
-version deployed** (Deploy → Manage deployments → ✏️ → Version: **New
-version** → Deploy; never *New deployment*, which issues a fresh `/exec` and
-every front end has to be re-wired):
+Pasted and deployed on 4 November. The same `/exec` was kept, so nothing had
+to be re-wired. Test claim **CLM-2611-6840** confirmed both fixes on the live
+backend: the desk notice carried five attachments, with
+`Guardian accident report form.pdf` second after the branch's own claim form,
+and the incident read **01 Nov 2026 at 14:30** — the time as it was typed.
+
+What the paste carried:
 
 - **The documents now travel with the e-mail.** The desk notice used to
   attach the branch's own claim form and nothing else, so Guardian's own
@@ -42,6 +44,20 @@ every front end has to be re-wired):
   in `CLAUDE.md` — fixed at the one place both fields are read.
 
 The staff card also gains a **When it happened** row, which it never had.
+
+### The pages went light — 5 November 2026 · nothing to paste
+
+Asked for in these words: *"also i dint like the dark website and please some
+alterations"*. Both claims pages are off graphite and copper and on to the
+branch homepage's own light palette, and the staff header, the hero and the
+mark changed with it — the reasoning is in `CLAUDE.md`. These are HTML and CSS
+only, so they go live when the branch is merged. **No paste, no new version.**
+
+### `Claims.gs` has one cosmetic fix waiting
+
+Not worth a paste on its own; take it with the next one. An attachment reached
+the desk as `Driver's permit  front and back.pdf`, with two spaces where the
+em-dash was stripped out of the label. `attachName_` collapses the gap now.
 
 ### Before you turn test mode off: the desk addresses
 
