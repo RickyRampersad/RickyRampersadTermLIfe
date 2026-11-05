@@ -7053,6 +7053,80 @@ the phone menu at 1366/390/360, where the tile lands against the sticky bar,
 the reveal, sideways scroll, the stub's query string, and the app's tiles as
 staff and as an agent with the search).
 
+### The motor desk, found in the branch's own sent mail — 5 November 2026
+
+Asked for in these words: *"Ok so go ahead I want to place a motor claim for a
+client."* He could not: `motor` was blank, so the claim would have filed,
+stored its documents and acknowledged the client while telling him in a red
+banner to *"pass this on by hand"*. The one thing in the way was an address.
+
+**It was in the mailbox, not on a department list.** `CLAIMS-SETUP.md` had been
+sending whoever picked this up to the Log Book's private Departments tab. The
+faster and better source is the branch's own sent mail: one motor claim ran
+from 14 August to 2 November 2026 on a single thread, and **GGIL PC Claims**
+(`GGILPCClaims@myguardiangroup.com`, Guardian General, a different company from
+Guardian Life) is on every message of it — in the **To** line beside the Motor
+Claims Department representative handling it. The branch's own first
+notification of loss went to the same desk, with `CRMSClaims@myguardiangroup.com`
+beside it. That is now the motor desk, with CRMS Claims in `DESK_CC`.
+
+**Only department inboxes go in `DESK` or `DESK_CC`, never the representative
+on one claim.** People move; a desk is what gets read. The same search turned up
+two named claims representatives and neither is configured.
+
+**Property most likely shares that desk** — P&C is Property & Casualty, and a
+property claim the branch filed in August 2026 was handled at the same company
+— and it is deliberately still blank. A likelihood is not the confirmation
+`DESK_OK` exists to record. One e-mail settles it.
+
+**The subject is per line of business, because the desks file by different
+ones.** Guardian General has filed this branch's motor claims under
+`Vehicle # - <plate> Insured - <name> Date of Accident - <date>` for years, and
+every reply quotes it, so a thread that does not match it starts life detached
+from the way they work. `deskSubject_` gives motor their shape with our
+reference on the end and leaves `RRB CLAIMS SUBMISSION - <type> - <client> -
+<ref>` — sales support's own form — on everything else. One format for all five
+would be wrong on four of them. A missing plate or date prints `(not given)`
+and **keeps the label**: a gap in a subject they file by is a question they can
+answer, where a missing label reads as some other kind of message.
+
+**The JotForm this replaces is the argument for it.** The 13 August claim came
+through `noreply@jotform.com` to six addresses with a motor claim PDF attached,
+and his own note forwarding it reads *"Please address this as the claim form was
+not completed properly."* The subject on that thread is
+`Vehicle # - TDW7413 Insured - Date of Accident -` — the insured and the date
+both **empty**, because nothing made them required. That is the failure the
+required-whole-or-refused rule exists to prevent.
+
+**Turning a line on changes what a silent fallback costs.**
+`typeKeyFromLabel_` answers `'motor'` for a label it cannot read. That was
+harmless while motor had no desk — an unreadable claim went nowhere and said so
+— and the moment motor became a live desk at another company the same guess
+would send a client's claim there on the strength of a label we could not parse.
+`typeKeyStrict_` is the same lookup returning `''`, and `notifyDesk_` — the one
+place that decides who is e-mailed — uses it; the lenient one still serves the
+display. A real claim cannot reach that state (`apiClaimStart_` validates the
+key and stores `CLAIM_TYPES[key].label`, so the label always round-trips),
+**which is exactly why it would have gone unnoticed if it ever did.** Ask of any
+line you switch on: what did this address being blank used to protect?
+
+**Splitting one function into two breaks a function-lifting harness silently.**
+`health-test.js` lifts a named list of functions into a `new Function`, so
+`typeKeyFromLabel_` threw a `ReferenceError` from a body that reads unchanged.
+Add the new name to the list — or, per the note further down, define the whole
+file.
+
+And again: **check which side holds the bug.** Two suites failed on this change.
+`desk-test`'s "motor has no desk" was asserting the state the change was
+deliberately replacing, and my own new test said `type: 'Health'` where the
+sheet stores `Health / Medical`, so `typeKeyFromLabel_` fell back to motor and
+the subject came out right for the wrong reason. Both were the tests.
+
+`motor-desk.js` in the session scratchpad covers it (37 checks: the routing,
+both `DESK_CC` lists not leaking into each other, no representative addressed,
+the subject in both shapes with and without a plate, the `(not forwarded)` flag
+on each, the strict lookup, and the ping). 289 checks across nine suites.
+
 ### The pages are light, on the branch's own palette
 
 Decided 5 November 2026, asked for in these words: *"also i dint like the dark

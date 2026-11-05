@@ -133,14 +133,35 @@ A synced register answers with the vehicle and a way to confirm it is yours.
 ### Before you turn test mode off: the desk addresses
 
 A claim is only forwarded to a line's claims desk when that line is listed in
-`CLAIMS.DESK_OK`. **Only `health` is**, because only its address is confirmed:
-`healthclaimstt@myguardiangroup.com`, with `EBCustomercare@myguardiangroup.com`
-copied. That ordering is the branch's own — every health claim sales support
-has filed by hand goes To: Health Claims TT with EB Customer Care in copy, not
-the other way round. EB Customer Care is the right address for a change of
-cover or a billing question, which is what the renewal desk uses it for.
+`CLAIMS.DESK_OK`. **`health` and `motor` are**, because only those two
+addresses are confirmed.
 
-The other four shipped as guesses and the branch's own record contradicts
+**Health** is `healthclaimstt@myguardiangroup.com`, with
+`EBCustomercare@myguardiangroup.com` copied. That ordering is the branch's own
+— every health claim sales support has filed by hand goes To: Health Claims TT
+with EB Customer Care in copy, not the other way round. EB Customer Care is the
+right address for a change of cover or a billing question, which is what the
+renewal desk uses it for.
+
+**Motor** is `GGILPCClaims@myguardiangroup.com` — GGIL P&C Claims, at Guardian
+General, which is a different company from Guardian Life — with
+`CRMSClaims@myguardiangroup.com` copied. Confirmed 5 November 2026 off the
+branch's own record rather than off a department list: one motor claim ran from
+14 August to 2 November 2026 on a single e-mail thread, and GGIL PC Claims is on
+every message of it, in the To line beside the Motor Claims Department
+representative who handled it. The branch's own first notification of loss went
+to the same desk. Only department inboxes are configured, never the individual
+representative on one claim — people move, and a desk is what gets read.
+
+**A motor claim's subject is Guardian General's own, not ours.** Their desk has
+filed this branch's claims under `Vehicle # - <plate> Insured - <name> Date of
+Accident - <date>` for years, and every reply quotes it, so a thread that does
+not match it starts life detached from the way they work. Motor keeps their
+shape with our reference on the end; health and the rest keep
+`RRB CLAIMS SUBMISSION - <type> - <client> - <ref>`, the form sales support has
+always used. One format for all five would be wrong on four of them.
+
+The other three shipped as guesses and the branch's own record contradicts
 them, so they are now blank. A claim on an unconfirmed line still files, still
 goes into Drive, still acknowledges the client, and still e-mails you and
 sales support — with a red banner saying **"Pass this on by hand"** and which
@@ -154,10 +175,16 @@ each document goes to, measured over 3,634 real lines:
 
 | Line | Department the Log Book uses |
 |---|---|
-| health | **EBD HEALTH CLAIMS** (19 of 31) or **EBD CUSTOMER CARE** (12) |
+| health | **EBD HEALTH CLAIMS** (19 of 31) or **EBD CUSTOMER CARE** (12) — *settled: Health Claims TT* |
 | life | **GLOC CLAIMS - CUSTOMER SUPPORT** (17 of 23 Claim Submission Forms) |
-| motor, property | **Guardian General — Motor Claims Department** (a different company from Guardian Life) |
+| motor, property | **Guardian General — Motor Claims Department** (a different company from Guardian Life) — *motor settled: GGIL PC Claims* |
 | pension | not yet seen in the Log Book — ask sales support |
+
+**Property most likely shares motor's desk** — P&C means Property & Casualty,
+and a property claim the branch filed in August 2026 was handled by a Claims
+representative at the same company. It is deliberately still blank: that is a
+likelihood, not the confirmation `DESK_OK` is for, and one e-mail to the desk
+settles it.
 
 Copy each address off that tab into `CLAIMS.DESK`, add the key to
 `CLAIMS.DESK_OK`, and file one test claim on that line to watch it arrive.

@@ -57,7 +57,7 @@ var CLAIMS = {
    * that was pasted and never deployed — from outside those look identical,
    * and so does a later paste of an older copy winning the same function
    * name. Change it with any change worth deploying. */
-  BUILD: '2026-11-05c',
+  BUILD: '2026-11-05d',
 
   /* ---- where notifications go ---------------------------- */
 
@@ -93,8 +93,13 @@ var CLAIMS = {
    * To switch a line on: put the real address in DESK, add the key to DESK_OK,
    * and file one claim in test mode to see it arrive. */
   DESK: {
-    // Guardian General — Motor Claims Department. NOT Guardian Life.
-    motor:    '',
+    /* Guardian General — P&C Claims. NOT Guardian Life.
+       Confirmed 5 November 2026 off the branch's own record: a live motor
+       claim ran from 14 August to 2 November 2026 on this one thread, and
+       GGIL PC Claims is on every message of it — in the To line beside the
+       Motor Claims Department representative handling it. The branch's own
+       first notification of loss went to the same desk. */
+    motor:    'GGILPCClaims@myguardiangroup.com',
     property: '',
     /* Health Claims TT. Confirmed 5 November 2026 by the branch manager —
        "this is guardian health claims email … so healthclaimstt@" — and by
@@ -108,13 +113,17 @@ var CLAIMS = {
     life:     '',
     pension:  '',
   },
-  DESK_OK: ['health'],
+  DESK_OK: ['health', 'motor'],
   DESK_DEFAULT: '',
 
   /* Copied on one line's claims only, beside MAIL_CC. EB Customer Care is on
-     every health claim the branch files by hand, so it stays on ours. */
+     every health claim the branch files by hand, so it stays on ours; CRMS
+     Claims is on every motor claim the branch has filed, so it stays on ours.
+     Only department inboxes go here, never the individual representative
+     handling one claim — they change, and a desk is what gets read. */
   DESK_CC: {
     health: ['EBCustomercare@myguardiangroup.com'],
+    motor:  ['CRMSClaims@myguardiangroup.com'],
   },
 
   // Copied on every claim, whatever the type. With a line's desk not yet
@@ -1755,11 +1764,24 @@ function folderFromUrl_(url) {
 }
 
 function typeKeyFromLabel_(label) {
+  return typeKeyStrict_(label) || 'motor';
+}
+
+/** The same lookup with no fallback, for the one decision where guessing is
+ *  expensive: who the claim is e-mailed to. typeKeyFromLabel_ answers 'motor'
+ *  when it does not recognise a label, which was harmless while motor had no
+ *  desk — an unrecognised claim simply went nowhere and said so. Motor is a
+ *  confirmed desk at Guardian General now, so the same guess would send a
+ *  client's claim to another company on the strength of a label we could not
+ *  read. A real claim cannot reach that state (apiClaimStart_ validates the
+ *  key and stores CLAIM_TYPES[key].label, so the label always round-trips),
+ *  which is exactly why it would go unnoticed if it ever did. */
+function typeKeyStrict_(label) {
   var l = String(label || '').toLowerCase();
   for (var k in CLAIM_TYPES) {
     if (CLAIM_TYPES[k].label.toLowerCase() === l) return k;
   }
-  return 'motor';
+  return '';
 }
 
 /**
@@ -2403,6 +2425,37 @@ function submissionType_(claim) {
   return sub || String(claim.type || 'Claim');
 }
 
+/** The subject the desk already files by — which is not the same shape on
+ *  every line, so one format for all five would be wrong on four of them.
+ *
+ *  Guardian General's motor desk has filed this branch's claims under
+ *  "Vehicle # - <plate> Insured - <name> Date of Accident - <date>" for
+ *  years: one claim ran three months on that single subject, and every reply
+ *  quotes it, so a thread that does not match it starts life detached from
+ *  how they work. Motor therefore keeps their shape and carries our own
+ *  reference on the end, because the reference is what a reply has to quote
+ *  for the claim to find its way back to the file.
+ *
+ *  Every other line keeps "RRB CLAIMS SUBMISSION - <type> - <client> -
+ *  <ref>", which is the form sales support has sent by hand for years. */
+function deskSubject_(claim, type, gap) {
+  var flag = gap ? ' (not forwarded)' : '';
+  if (type === 'motor') {
+    var x = claim.extra || {};
+    var plate = String(x.vehicleReg || claim.policy || '').trim();
+    var when = niceDate_(claim.incidentDate);
+    /* Their own wording keeps the label even when we have no value, because
+       a gap in a subject they file by is a question they can answer; a
+       missing label reads as a different kind of message altogether. */
+    return 'Vehicle # - ' + (plate || '(not given)') + flag +
+      ' Insured - ' + (claim.name || '(not given)') +
+      ' Date of Accident - ' + (when || '(not given)') +
+      ' - ' + claim.ref;
+  }
+  return 'RRB CLAIMS SUBMISSION' + flag + ' - ' +
+    submissionType_(claim) + ' - ' + claim.name + ' - ' + claim.ref;
+}
+
 /** Guardian gives ninety days from the date of treatment. We hold that date,
  *  so the desk is told rather than asked — and the branch sees it on the day
  *  the claim is filed, which is the only day it can still be acted on. */
@@ -2528,17 +2581,13 @@ function deskFields_(claim) {
 }
 
 function notifyDesk_(claim, files, missing, form) {
-  var type = typeKeyFromLabel_(claim.type);
+  // Strict: an unreadable label gets no desk, never motor's. See typeKeyStrict_.
+  var type = typeKeyStrict_(claim.type);
   var desk = deskFor_(type);
   var gap = deskGap_(type);
   var pack = claimAttachments_(files, form);
-  /* The branch's own subject line, which is what these desks already file
-     by: sales support has sent "RRB CLAIMS SUBMISSION - Prescription/Pharmacy
-     Claim - <client> - <agent>" by hand for years. Ours carries the reference
-     in the agent's place, because the reference is what a reply has to quote
-     for the claim to find its way back to the file. */
-  var subject = 'RRB CLAIMS SUBMISSION' + (gap ? ' (not forwarded)' : '') + ' - ' +
-    submissionType_(claim) + ' - ' + claim.name + ' - ' + claim.ref;
+  // The branch's own subject line, per line of business. See deskSubject_.
+  var subject = deskSubject_(claim, type, gap);
 
   /* No confirmed desk: the branch alone gets it, with the reason at the top.
      Never a fallback address — a claim landing in an unwatched mailbox reads
