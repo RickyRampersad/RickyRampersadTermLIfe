@@ -2922,3 +2922,113 @@ function qpAutomationScore() {
   Logger.log(msg);
   return msg;
 }
+
+
+/* ══════════════ 19. JUNK ROWS DRAIN THE SENDING DAY ══════════════
+   On 5 November 2026 a real query was logged — RRB/2026/119 — and no email
+   left the building, because the day's hundred recipients were already gone.
+   Query Pal's own traffic does not come close to a hundred. Sixteen rows did.
+
+   Every one of them carries a timestamp of 1970-01-01T00:00:00.000Z. That is
+   epoch zero: `new Date(d.timestamp)` was handed nothing it could parse, and
+   stored the result. The app always sends an ISO timestamp, and nothing here
+   produces the literal `{{clientName}}` that sits in the client column of
+   RRB/2026/109 — so these were POSTed straight at the webhook by something
+   outside the app, a template or a harness that never filled its fields in.
+
+   The damage is in the arithmetic. deadlineAt_ counts working days forward
+   from 1970, so every one of those rows is about fifty-seven years overdue,
+   nine of them are Open, and the sweep tries to chase all nine every single
+   day. Nine chases at three or four recipients each, repeated daily, against
+   a hundred-recipient ceiling — and a real client request logged at 11:32 in
+   the morning has nothing left to send with.
+
+   `if (isNaN(logged)) continue` in autoSweep does not catch this: epoch zero
+   is a perfectly valid Date. It is just not a date this branch existed on.
+
+   qpQuarantineJunk() sets those rows' Status to 'Void'. autoSweep skips any
+   status that is neither blank nor contains 'open', so a Void row is left
+   alone entirely — and, unlike closing it, Void fires no satisfaction survey
+   at whatever address is in the client column. It is reversible: set the
+   status back to Open and the row rejoins the loop.                        */
+
+/* No request predates the branch's own log. Anything older is a parse
+   failure, not a request. */
+var QP_REAL_FROM = new Date('2025-01-01T00:00:00Z').getTime();
+var QP_VOID_STATUS = 'Void';
+
+function qpRowLooksJunk_(row) {
+  var why = [];
+  var ts = row[2];
+  var d = (ts instanceof Date) ? ts : new Date(ts);
+  if (!ts || isNaN(d) || d.getTime() < QP_REAL_FROM) why.push('timestamp is not a real date');
+  var blob = String(row[5] || '') + ' ' + String(row[17] || '') + ' ' + String(row[18] || '');
+  if (blob.indexOf('{{') > -1) why.push('unfilled template placeholder');
+  if (!String(row[5] || '').trim() && !String(row[13] || '').trim())
+    why.push('no client and no department');
+  return why;
+}
+
+/* Read-only. What is on the log that should never have been. */
+function qpJunkReport() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return 'The log is empty.';
+  var d = sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(29, sh.getMaxColumns())).getValues();
+  var open = [], closed = 0;
+  for (var i = 0; i < d.length; i++) {
+    if (!String(d[i][0] || '').trim()) continue;
+    var why = qpRowLooksJunk_(d[i]);
+    if (!why.length) continue;
+    var st = String(d[i][3] || '').toLowerCase();
+    if (/closed|resolved|completed/.test(st) || (st && st.indexOf('open') === -1)) { closed++; continue; }
+    open.push('  ' + String(d[i][0]).slice(0, 46) + '\n      ' + why.join('; '));
+  }
+  var msg = ['JUNK ROW REPORT — read-only, nothing is changed', '',
+    open.length
+      ? open.length + ' OPEN row' + (open.length === 1 ? '' : 's') + ' the sweep still works on every day:\n'
+        + open.join('\n')
+      : 'No open junk rows. The sweep is only working on real cases.',
+    '',
+    closed + ' already closed or voided (harmless — they are skipped).',
+    '',
+    open.length ? 'qpQuarantineJunk(true) to rehearse, qpQuarantineJunk() to set them Void.' : ''
+  ].join('\n');
+  Logger.log(msg);
+  return msg;
+}
+
+/* Sets Status to Void on open junk rows. Pass true to rehearse. */
+function qpQuarantineJunk(dryRun) {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return 'The log is empty.';
+  var n = sh.getLastRow() - 1;
+  var d = sh.getRange(2, 1, n, Math.min(29, sh.getMaxColumns())).getValues();
+  var done = [];
+  for (var i = 0; i < d.length; i++) {
+    var ref = String(d[i][0] || '').trim();
+    if (!ref) continue;
+    var st = String(d[i][3] || '').toLowerCase();
+    if (/closed|resolved|completed/.test(st) || (st && st.indexOf('open') === -1)) continue;
+    var why = qpRowLooksJunk_(d[i]);
+    if (!why.length) continue;
+    if (!dryRun) {
+      sh.getRange(i + 2, 4).setValue(QP_VOID_STATUS);
+      try {
+        cmtSheet_().appendRow([new Date(), ref, 'Query Pal', 'system',
+          '⛔ Voided — ' + why.join('; ') + '. Not a real request; the sweep was '
+          + 'chasing it daily and spending the branch’s sending limit on it.', 'internal']);
+      } catch (ce) {}
+    }
+    done.push('  ' + ref.slice(0, 46) + '  (' + why.join('; ') + ')');
+  }
+  var msg = (dryRun ? 'DRY RUN — nothing written\n\n' : '')
+    + (done.length
+        ? done.length + ' row' + (done.length === 1 ? '' : 's')
+          + (dryRun ? ' would be set to ' : ' set to ') + QP_VOID_STATUS + ':\n' + done.join('\n')
+          + '\n\nThe sweep skips any status that is not blank and does not contain "open", so '
+          + 'these are left alone from now on. No survey is sent, which is why this is Void and '
+          + 'not Closed. To bring one back, set its Status to Open.'
+        : 'Nothing to void. Every open row looks like a real request.');
+  Logger.log(msg);
+  return msg;
+}

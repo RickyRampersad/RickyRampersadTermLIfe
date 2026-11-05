@@ -1075,6 +1075,48 @@ rather than the email.
 
 ---
 
+### Junk rows are spending the branch's sending day
+
+**No Code.gs edit.** Two functions, run from the editor.
+
+On 5 November 2026 a real query was logged — `RRB/2026/119` at 11:32 — and no
+email left the building. The day's hundred recipients were already gone. Query
+Pal's own traffic does not come close to a hundred. **Sixteen rows did.**
+
+Every one carries a timestamp of `1970-01-01T00:00:00.000Z` — epoch zero, what
+`new Date(d.timestamp)` returns when handed nothing it can parse. The app
+always sends an ISO timestamp, and nothing in this repository produces the
+literal `{{clientName}}` sitting in `RRB/2026/109`'s client column. **These
+were POSTed straight at the webhook from outside the app** — a template or a
+harness that never filled its fields in.
+
+`deadlineAt_` counts working days forward from 1970, so each one is about
+**fifty-seven years overdue**. Nine were Open. The sweep tried to chase all
+nine every single day, and a real client request logged mid-morning had
+nothing left to send with.
+
+`if (isNaN(logged)) continue` in `autoSweep` does not catch this. Epoch zero is
+a perfectly valid `Date` — just not one this branch existed on.
+
+Run **`qpJunkReport()`** first — read-only. Then **`qpQuarantineJunk(true)`** to
+rehearse, and **`qpQuarantineJunk()`** to do it.
+
+It sets their Status to **`Void`**, not Closed, and the difference matters:
+
+- `autoSweep` skips any status that is neither blank nor contains `open`, so a
+  Void row is left alone from then on.
+- Closing them would fire `sendSurvey_` at **whatever address is in the client
+  column** of a row nobody filled in properly.
+
+Reversible: set a row's Status back to Open and it rejoins the loop. Each voided
+row gets an internal note on its trail saying why.
+
+`tests/junk.test.mjs` — 27 assertions, including that Void reads as neither
+open nor closed, that a real request with a missing agent is **not** junk, and
+that the only column touched is Status.
+
+---
+
 ## URGENT — rotate the branch master codes
 
 **Do this today, and do it before anything else on this page.**
