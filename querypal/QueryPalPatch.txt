@@ -2339,6 +2339,10 @@ function qpChaseCc_(row, mgr, sup) {
   add(row[10]);                     // col 11 servicing agent
   add(mgr);
   add(BRANCH_SUPPORT);
+  /* Sales support was on the original routed email and then fell off every
+     chase, because the fallback CC was only [agent, manager, branch support].
+     They drive the branch's half of these, so they belong on the chase too. */
+  if (typeof RR_SUPPORT !== 'undefined') add(RR_SUPPORT);
   var out = [];
   for (var k in set) out.push(set[k]);
   return out.join(',');
@@ -3171,6 +3175,102 @@ function qpUnroutedReport() {
       : 'Every open case has reached its department.',
     noDept ? '\n' + noDept + ' more have no department address and cannot be sent at all.' : ''
   ].join('\n');
+  Logger.log(msg);
+  return msg;
+}
+
+
+/* ══════════════ 21. SEND AS THE BRANCH, NOT AS A GMAIL ACCOUNT ══════════════
+   Every email this system has ever sent went out as whatever Google account
+   runs the script. On 5 November 2026 that is rampersadricky@gmail.com, and
+   the department sees it:
+
+       From: RR Branch Query Pal <rampersadricky@gmail.com>
+       Cc:   Ricky Rampersad <...>; Support <support@rickyrampersadbranch.com>
+
+   BRANCH_SUPPORT is set to support@rickyrampersadbranch.com and has only ever
+   been used as `replyTo`. There is not one `from:` anywhere in Code.gs. So the
+   branch's own address answers replies but never sends, and a Guardian
+   department receives branch correspondence from a personal gmail address.
+
+   It should send as the branch. That needs two things, and only one of them
+   is code.
+
+   THE PART THAT IS NOT CODE. MailApp will only set `from` to an address the
+   sending account has verified under Gmail's "Send mail as". On 5 November
+   support@rickyrampersadbranch.com is a GoDaddy forwarding address: mail for
+   it arrives into the gmail account through GoDaddy's forwarder, and nothing
+   has ever been sent from it. A forwarder receives; it does not send. Until
+   it is added under Settings → Accounts → "Send mail as", with working SMTP,
+   no code can send as it.
+
+   THE PART THAT IS CODE. qpSendAs_ asks Gmail which addresses this account may
+   send as, and uses BRANCH_SUPPORT only if it is genuinely one of them.
+   Otherwise it sends exactly as before. So this can go in now and starts
+   working by itself the moment the alias is set up — nothing to remember, and
+   nothing breaks in the meantime.
+
+   Code.gs edit 33, one expression, in sendRoutedEmail:
+
+       MailApp.sendEmail(mail);   ->   qpSendAs_(mail);
+
+   That covers the original routed request and every resend, since section 20
+   sends through sendRoutedEmail. Run qpAliasCheck() to see where you stand. */
+
+var QP_ALIASES = null;
+function qpCanSendAs_(addr) {
+  addr = String(addr || '').toLowerCase().trim();
+  if (!addr) return false;
+  if (QP_ALIASES === null) {
+    try { QP_ALIASES = GmailApp.getAliases() || []; } catch (e) { QP_ALIASES = []; }
+    try {
+      var me = Session.getEffectiveUser().getEmail();
+      if (me) QP_ALIASES.push(me);
+    } catch (e2) {}
+  }
+  for (var i = 0; i < QP_ALIASES.length; i++) {
+    if (String(QP_ALIASES[i]).toLowerCase().trim() === addr) return true;
+  }
+  return false;
+}
+
+/* Send, as the branch where that is allowed. Never throws for the alias's
+   sake: an address we may not send as is simply left off. */
+function qpSendAs_(mail) {
+  try {
+    if (mail && !mail.from && typeof BRANCH_SUPPORT !== 'undefined'
+        && qpCanSendAs_(BRANCH_SUPPORT)) {
+      mail.from = BRANCH_SUPPORT;
+    }
+  } catch (e) {}
+  return MailApp.sendEmail(mail);
+}
+
+/* Read-only. Says plainly whether the branch address can send yet. */
+function qpAliasCheck() {
+  var me = '';
+  try { me = String(Session.getEffectiveUser().getEmail() || ''); } catch (e) {}
+  var aliases = [];
+  try { aliases = GmailApp.getAliases() || []; } catch (e) {}
+  var ok = qpCanSendAs_(typeof BRANCH_SUPPORT !== 'undefined' ? BRANCH_SUPPORT : '');
+  var out = ['SEND-AS CHECK — read-only, nothing is sent', '',
+    '  the script runs as : ' + (me || '(unknown)'),
+    '  it may also send as: ' + (aliases.length ? aliases.join(', ') : '(no verified aliases)'),
+    '',
+    '  branch address     : ' + (typeof BRANCH_SUPPORT !== 'undefined' ? BRANCH_SUPPORT : '(unset)'),
+    '  can send as it     : ' + (ok ? 'YES — emails now go out as the branch' : 'NO'),
+    ''];
+  if (!ok) {
+    out.push('  Until it is verified, every email still goes out as ' + (me || 'the script account') + '.');
+    out.push('  To fix, in that account: Settings -> Accounts and Import -> "Send mail as"');
+    out.push('  -> Add another email address. A GoDaddy FORWARDING address will not do');
+    out.push('  on its own — forwarding only receives. It needs SMTP details for the');
+    out.push('  domain, or the address moved onto a real mailbox.');
+    out.push('');
+    out.push('  qpSendAs_ checks this every run, so nothing else needs changing');
+    out.push('  afterwards. It starts sending as the branch by itself.');
+  }
+  var msg = out.join('\n');
   Logger.log(msg);
   return msg;
 }

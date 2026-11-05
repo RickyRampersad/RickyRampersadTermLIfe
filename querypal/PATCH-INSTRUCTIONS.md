@@ -1181,6 +1181,63 @@ passes through untouched and that another case's flag cannot trigger a resend.
 
 ---
 
+### 33 — send as the branch, and copy sales support on chases
+
+**One expression.** Ctrl+F for `MailApp.sendEmail(mail);` (one hit, in
+`sendRoutedEmail`) and replace it with:
+
+```js
+qpSendAs_(mail);
+```
+
+The sales-support CC needs no edit at all — it is inside `qpChaseCc_`, which
+edit 27 already wired in.
+
+### What the history actually shows
+
+`BRANCH_SUPPORT` is `support@rickyrampersadbranch.com` and has only ever been
+used as **`replyTo`**. There is not one `from:` anywhere in `Code.gs`. So every
+email goes out as whatever Google account runs the script, and a Guardian
+department sees:
+
+```
+From: RR Branch Query Pal <rampersadricky@gmail.com>
+Cc:   Ricky Rampersad <...>; Support <support@rickyrampersadbranch.com>
+```
+
+The branch's own address answers replies but never sends. And sales support —
+`rickyrampersadsalessupport@myguardiangroup.com` — is on the original routed
+email but **fell off every chase**, because the follow-up fallback copied only
+the agent, the manager and branch support.
+
+### The part that is not code
+
+`MailApp` will only set `from` to an address the sending account has verified
+under Gmail's **Send mail as**. As of 5 November 2026,
+`support@rickyrampersadbranch.com` is a **GoDaddy forwarding address** — mail
+for it arrives into the gmail account through GoDaddy's forwarder, and nothing
+has ever been sent from it. A forwarder receives; it does not send.
+
+**So no code change alone can make the system send as the branch.** The address
+has to be added under *Settings → Accounts and Import → Send mail as*, which
+needs SMTP details for the domain or the address moved onto a real mailbox.
+
+### The part that is code
+
+`qpSendAs_` asks Gmail which addresses the account may actually send as, and
+uses the branch address **only if it is genuinely one of them**. Otherwise it
+sends exactly as before. So edit 33 can go in today and **starts sending as the
+branch by itself** the moment the alias is set up — nothing to come back and
+change, and nothing breaks in the meantime.
+
+Run **`qpAliasCheck()`** to see where you stand: it names the account actually
+sending, lists the verified aliases, and says yes or no on the branch address.
+
+`tests/sendas.test.mjs` — 21 assertions, including that a missing alias is
+never the reason an email fails to go.
+
+---
+
 ## URGENT — rotate the branch master codes
 
 **Do this today, and do it before anything else on this page.**
