@@ -1,42 +1,62 @@
 {
- "tts/out/oftlaunch/01.mp3": [
-  "en",
-  0.999,
-  "OFT kids have moved into the logbook. No more FedEx. Every kid now gets its own tracking number and you can follow it all the way to the Colation Branch."
- ],
- "tts/out/oftlaunch/02.mp3": [
-  "en",
-  0.998,
-  "Here's how it works. You collect the sample from your client, then open the logbook and choose OFT kit."
- ],
- "tts/out/oftlaunch/03.mp3": [
+ "tts/out/vandrew/01.mp3": [
   "en",
   0.997,
-  "Pick your client and the policy straight from Salesforce. One kit per line."
+  "This is a first for a branch. Every OFT kit now gets its own tracking number."
  ],
- "tts/out/oftlaunch/04.mp3": [
+ "tts/out/vandrew/02.mp3": [
   "en",
   0.997,
-  "Press log and your tracking number appears, R-R-B-O-F-T, then today's date, then the kid's own number. Right on the kid."
+  "Write the number on the kit, then hand the kit to sale support. That's it."
  ],
- "tts/out/oftlaunch/05.mp3": [
+ "tts/out/vbrian/01.mp3": [
   "en",
-  0.997,
-  "then hand a kit to sale support. They sign for it on their phone and you get an email the moment they do."
+  0.995,
+  "This is a first for our branch. Every OFT kit now gets its own tracking number."
  ],
- "tts/out/oftlaunch/06.mp3": [
+ "tts/out/vbrian/02.mp3": [
   "en",
-  0.997,
-  "Sales support builds the transmittal and picks this quarter's collation branch from a list. Every kit and every tracking number on one page."
+  0.992,
+  "Write the number on the kit, then hand the kit to sale support. That's it."
  ],
- "tts/out/oftlaunch/07.mp3": [
+ "tts/out/vchris/01.mp3": [
   "en",
-  0.999,
-  "You need to find a kit, search the tracking number, the policy, or your client's name. You'll see who had it and when."
+  0.987,
+  "This is a first for our branch. Every OFT kit now gets its own tracking number."
  ],
- "tts/out/oftlaunch/08.mp3": [
+ "tts/out/vchris/02.mp3": [
+  "en",
+  0.981,
+  "Write the number on the kit, then hand the kit to sale support. That's it."
+ ],
+ "tts/out/vguy/01.mp3": [
   "en",
   0.996,
-  "So from today, log every OFT kit in the logbook. Ricky Rampersad branch dot com slash logbook."
+  "This is a first for our branch. Every OFT kit now gets its own tracking number."
+ ],
+ "tts/out/vguy/02.mp3": [
+  "en",
+  0.995,
+  "Write the number on the kit, then hand the kit to Sail Support. That's it."
+ ],
+ "tts/out/vryan/01.mp3": [
+  "en",
+  0.997,
+  "This is a first-for-our-branch. Every OFT kit now gets its own tracking number."
+ ],
+ "tts/out/vryan/02.mp3": [
+  "en",
+  0.997,
+  "Write the number on the kit, then hand the kit to sale support. That's it."
+ ],
+ "tts/out/vava/01.mp3": [
+  "en",
+  0.998,
+  "This is a first for our branch. Every OFT kit now gets its own tracking number."
+ ],
+ "tts/out/vava/02.mp3": [
+  "en",
+  0.998,
+  "Write the number on the kit, then hand the kit to sales support. That's it."
  ]
 }
