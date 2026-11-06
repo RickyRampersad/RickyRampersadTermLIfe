@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-03c';
+var SCRIPT_VERSION = '2026-11-06a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -9361,7 +9361,7 @@ function umItemsKey_(sid, day) { return 'um_items_' + sid + '_' + day; }
 var STORE = {
   LIMIT_KB: 500, RELIEF_KB: 380, WARN_KB: 430, SHORT_DAYS: 3, LONG_DAYS: 21, WATCH_AFTER: 10,
   SAME_DAY: /^(?:bm_deep_|ix_deep_)/,
-  SHORT: /^(?:ag_items_|unit_(?:ids|qids|ags|mine|rtasks|inbox|drafts)_|intel_model_|sd_(?:list|qids)_|um_items_|lead_|game_ideas_|co_(?:ask|un)_|wdday_)/
+  SHORT: /^(?:cmd_items_|ag_items_|unit_(?:ids|qids|ags|mine|rtasks|inbox|drafts)_|intel_model_|sd_(?:list|qids)_|um_items_|lead_|game_ideas_|co_(?:ask|un)_|wdday_)/
 };
 /** Script Properties in use, in KB (keys and values). */
 function storeKb_() {
@@ -9395,6 +9395,7 @@ function storeTick_(day, mins) {
   var c = CacheService.getScriptCache(), hk = 'store_chk_' + day + '_' + Math.floor(mins / 60);
   if (c.get(hk)) return '';
   c.put(hk, '1', 3600);
+  if (!c.get('store_trim_' + day)) { c.put('store_trim_' + day, '1', 86400); try { var tn = bigStoreTrim_(day); if (tn) runlog_('store tab: ' + tn + ' old rows trimmed'); } catch (e) {} }
   var kb = storeKb_(), msg = '';
   if (kb >= STORE.RELIEF_KB) {
     var n = storeRelief_(day, false), kb2 = storeKb_();
@@ -9441,18 +9442,141 @@ function morningWatch_(day, mins, people, absent) {
   runlog_('morning not gone by start + ' + STORE.WATCH_AFTER + ': ' + late.map(function (p) { return p.staffId; }).join(', ') + ' (Mr Rampersad told)');
   return late.map(function (p) { return p.staffId; });
 }
-function bigPut_(key, obj) {
-  var props = PropertiesService.getScriptProperties(), js = JSON.stringify(obj), n = Math.max(1, Math.ceil(js.length / 8000));
+/* ─────────── The big day copies live in a sheet tab, not in Script Properties (6 Nov 2026) ───────────
+ *  Script Properties hold 500 KB for the whole project, and the day copies alone (the inbox units, the AI
+ *  reviews, the lists behind each page, 7.8 KB a chunk) filled it: 490 KB in 1,658 entries on 6 Nov, and a
+ *  full store stops marks and e-mails saving. They now live in a hidden tab, '_store', one row per key
+ *  (key | updated | chunks | json...), with the script cache in front. A key not yet in the tab is read from
+ *  the old property chunks once, copied across and the chunks deleted (lazy move). storeTick_ trims the tab
+ *  once a day to the same windows storeRelief_ uses; storeCleanupNow() empties the old copies at once. */
+var BIGSTORE = { TAB: '_store', CELL: 45000, CACHE_MAX: 95000, TTL: 21600 };
+var bigStoreMemo_ = null;            // this run's index: { sh, rows: { key: row } }
+var bigValMemo_ = {};                // this run's values: { key: json }
+function bigStoreSheet_() {
+  if (bigStoreMemo_ && bigStoreMemo_.sh) return bigStoreMemo_;
+  var ss = ss_(); if (!ss) throw new Error('no spreadsheet');
+  var sh = ss.getSheetByName(BIGSTORE.TAB);
+  if (!sh) {
+    sh = ss.insertSheet(BIGSTORE.TAB);
+    sh.appendRow(['key', 'updated', 'chunks', 'json']);
+    try { sh.hideSheet(); } catch (e) {}
+  }
+  var rows = {}, last = sh.getLastRow();
+  if (last > 1) sh.getRange(2, 1, last - 1, 1).getValues().forEach(function (r, i) { if (r[0] !== '') rows[String(r[0])] = i + 2; });
+  bigStoreMemo_ = { sh: sh, rows: rows };
+  return bigStoreMemo_;
+}
+function bigStoreForget_() { bigStoreMemo_ = null; bigValMemo_ = {}; }
+function bigPropsKeys_(props, key) {
+  var n = Number(props.getProperty(key + '_n') || 1), ks = [];
+  for (var i = 0; i < Math.max(n, 1); i++) ks.push(key + (i ? '_' + i : ''));
+  ks.push(key + '_n');
+  return ks;
+}
+/** The old way, kept for a script with no sheet to hand. */
+function bigPutProps_(key, js) {
+  var props = PropertiesService.getScriptProperties(), n = Math.max(1, Math.ceil(js.length / 8000));
   var old = Number(props.getProperty(key + '_n') || 1);
   for (var i = 0; i < n; i++) propSet_(props, key + (i ? '_' + i : ''), js.slice(i * 8000, (i + 1) * 8000));
   for (var j = n; j < old; j++) { try { props.deleteProperty(key + '_' + j); } catch (e) {} }
   if (n > 1) propSet_(props, key + '_n', String(n)); else { try { props.deleteProperty(key + '_n'); } catch (e) {} }
 }
-function bigGet_(key, dflt) {
+function bigGetProps_(key) {
   var props = PropertiesService.getScriptProperties(), n = Number(props.getProperty(key + '_n') || 1), js = '';
   for (var i = 0; i < n; i++) js += props.getProperty(key + (i ? '_' + i : '')) || '';
+  return js;
+}
+function bigWriteRow_(key, js) {
+  var lock = null;
+  try { lock = LockService.getScriptLock(); lock.waitLock(20000); } catch (e) { lock = null; }
+  try {
+    var st = bigStoreSheet_(), chunks = [];
+    for (var i = 0; i < Math.max(1, Math.ceil(js.length / BIGSTORE.CELL)); i++) chunks.push('j:' + js.slice(i * BIGSTORE.CELL, (i + 1) * BIGSTORE.CELL));
+    var vals = [key, new Date().toISOString(), String(chunks.length)].concat(chunks), row = st.rows[key];
+    if (row) st.sh.getRange(row, 1, 1, vals.length).setValues([vals]);
+    else { st.sh.appendRow(vals); st.rows[key] = st.sh.getLastRow(); }
+  } finally { try { if (lock) lock.releaseLock(); } catch (e) {} }
+}
+function bigReadRow_(key) {
+  var st = bigStoreSheet_(), row = st.rows[key];
+  if (!row) return null;
+  var head = st.sh.getRange(row, 1, 1, 3).getValues()[0];
+  if (String(head[0]) !== key) { bigStoreForget_(); st = bigStoreSheet_(); row = st.rows[key]; if (!row) return null; head = st.sh.getRange(row, 1, 1, 3).getValues()[0]; }
+  var n = Math.max(1, Number(head[2]) || 1);
+  return st.sh.getRange(row, 4, 1, n).getValues()[0].map(function (c) { return String(c).replace(/^j:/, ''); }).join('');
+}
+function bigPut_(key, obj) {
+  var js = JSON.stringify(obj);
+  bigValMemo_[key] = js;
+  try { bigWriteRow_(key, js); }
+  catch (e) { bigPutProps_(key, js); return; }
+  try { if (js.length <= BIGSTORE.CACHE_MAX) CacheService.getScriptCache().put('bs:' + key, js, BIGSTORE.TTL); else CacheService.getScriptCache().remove('bs:' + key); } catch (e) {}
+  // The old chunks for this key, if any, out of the small store.
+  try {
+    var props = PropertiesService.getScriptProperties();
+    if (props.getProperty(key) != null || props.getProperty(key + '_n') != null) bigPropsKeys_(props, key).forEach(function (k) { try { props.deleteProperty(k); } catch (e) {} });
+  } catch (e) {}
+}
+function bigGet_(key, dflt) {
+  var js = bigValMemo_[key];
+  if (js == null) { try { js = CacheService.getScriptCache().get('bs:' + key); } catch (e) { js = null; } }
+  if (js == null) { try { js = bigReadRow_(key); } catch (e) { js = null; } }
+  if (js == null) {
+    // Not in the tab yet: the old property chunks, moved across on the way.
+    js = bigGetProps_(key);
+    if (js) { try { bigPut_(key, JSON.parse(js)); } catch (e) {} }
+  }
   if (!js) return dflt;
+  bigValMemo_[key] = js;
   try { return JSON.parse(js); } catch (e) { return dflt; }
+}
+/** The key's day, and whether it is past keeping: same-day families before today, the rest past STORE.SHORT_DAYS. */
+function bigStoreStale_(key, day) {
+  var d = (/(\d{4}-\d{2}-\d{2})/.exec(key) || [])[1];
+  if (!d) return false;
+  if (STORE.SAME_DAY.test(key)) return d < day;
+  return d < shiftDays_(day, -STORE.SHORT_DAYS);
+}
+/** Once a day: the tab's old rows out, bottom up so the row numbers hold. */
+function bigStoreTrim_(day) {
+  var st = bigStoreSheet_(), sh = st.sh, last = sh.getLastRow(), n = 0;
+  if (last < 2) return 0;
+  var keys = sh.getRange(2, 1, last - 1, 1).getValues().map(function (r) { return String(r[0]); });
+  for (var i = keys.length - 1; i >= 0; i--) {
+    if (!keys[i] || bigStoreStale_(keys[i], day)) {
+      var end = i;
+      while (i - 1 >= 0 && (!keys[i - 1] || bigStoreStale_(keys[i - 1], day))) i--;
+      var count = end - i + 1;
+      if (typeof sh.deleteRows === 'function') sh.deleteRows(i + 2, count); else for (var k = 0; k < count; k++) sh.deleteRow(i + 2);
+      n += count;
+    }
+  }
+  bigStoreForget_();
+  return n;
+}
+/** From the editor, once after the deploy: every big day copy out of Script Properties. The old ones deleted,
+ *  the ones still in their window moved into the '_store' tab. Logs the size before and after. */
+function storeCleanupNow() {
+  var day = todayISO_(), kb0 = storeKb_(), props = PropertiesService.getScriptProperties();
+  var keys = typeof props.getKeys === 'function' ? props.getKeys() : Object.keys(props.getProperties());
+  var bases = {}, dropped = 0, moved = 0;
+  keys.forEach(function (k) {
+    if (!(STORE.SHORT.test(k) || STORE.SAME_DAY.test(k) || /^cmd_items_/.test(k))) return;
+    var m = /^(.*\d{4}-\d{2}-\d{2})(?:_(?:\d+|n))?$/.exec(k);
+    if (m) bases[m[1]] = true;
+  });
+  Object.keys(bases).forEach(function (b) {
+    if (bigStoreStale_(b, day)) { bigPropsKeys_(props, b).forEach(function (k) { try { props.deleteProperty(k); } catch (e) {} }); dropped++; return; }
+    var js = bigGetProps_(b);
+    if (js) { try { bigPut_(b, JSON.parse(js)); moved++; } catch (e) {} }
+  });
+  var trimmed = 0; try { trimmed = bigStoreTrim_(day); } catch (e) {}
+  var kb1 = storeKb_();
+  var msg = 'Store: ' + kb0 + ' KB before, ' + kb1 + ' KB after. ' + moved + ' day copies moved to the _store tab, ' +
+            dropped + ' old ones deleted, ' + trimmed + ' old rows trimmed from the tab.';
+  try { runlog_(msg); } catch (e) {}
+  Logger.log(msg);
+  return msg;
 }
 /** A task's Chatter on the tracker's own pages, for people with no Salesforce login: the latest two
  *  notes, and the whole history a tap away (replies marked). Ricky, 19 Oct 2026: "they are only allowed
@@ -12422,18 +12546,8 @@ function cmdHistory_(it, ctx) {
    Property holds 9 KB, and sixty items run past it, so they are kept in
    chunks; the save finds each item by its id, not by its place, so a page
    opened twice cannot apply a move to the wrong row. */
-function cmdStore_(sid, day, arr) {
-  var props = PropertiesService.getScriptProperties(), base = cmdKey_(sid, day), js = JSON.stringify(arr);
-  try { Object.keys(props.getProperties()).forEach(function (k) { if (k.indexOf('cmd_items_' + sid + '_') === 0 && k.indexOf(base) !== 0) props.deleteProperty(k); }); } catch (e) {}
-  var n = Math.max(1, Math.ceil(js.length / 8000));
-  for (var i = 0; i < n; i++) props.setProperty(base + (i ? '_' + i : ''), js.slice(i * 8000, (i + 1) * 8000));
-  props.setProperty(base + '_n', String(n));
-}
-function cmdLoad_(sid, day) {
-  var props = PropertiesService.getScriptProperties(), base = cmdKey_(sid, day), n = Number(props.getProperty(base + '_n') || 1), js = '';
-  for (var i = 0; i < n; i++) js += props.getProperty(base + (i ? '_' + i : '')) || '';
-  try { return JSON.parse(js || '[]'); } catch (e) { return []; }
-}
+function cmdStore_(sid, day, arr) { bigPut_(cmdKey_(sid, day), arr || []); }
+function cmdLoad_(sid, day) { var v = bigGet_(cmdKey_(sid, day), []); return Array.isArray(v) ? v : []; }
 
 /* ─────────── Risk and the client in one view (18 Oct 2026) ───────────
  *  "A priority score per item" and "one view per client" (Ricky: ok).
