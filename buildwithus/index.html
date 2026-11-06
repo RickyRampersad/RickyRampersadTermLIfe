@@ -79,7 +79,11 @@
 
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+/* scroll-behavior:smooth is NOT switched off by prefers-reduced-motion on its
+   own, and smooth scrolling is exactly the kind of movement that causes
+   vestibular trouble — so it lives in the no-preference query with the rest. */
+html{-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 body{margin:0;background:var(--bg);color:var(--body);font:400 var(--f-0)/1.65 var(--text);
   overflow-x:clip;-webkit-font-smoothing:antialiased}
 img,svg,video{max-width:100%}
@@ -326,6 +330,37 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 .pills input:checked + span{background:var(--a);border-color:var(--a);color:#fff}
 .pills input:focus-visible + span{outline:3px solid var(--a);outline-offset:3px}
 .cc{display:flex;justify-content:space-between;gap:.5rem;font-size:var(--f--2);color:var(--muted);margin-top:.3rem}
+/* the progress rail — moves on input, never on scroll */
+.rail{position:sticky;top:var(--bar);z-index:20;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-s);padding:.7rem .9rem;margin:0 0 var(--sp-s);box-shadow:var(--e1)}
+.rail-top{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;
+  font:600 var(--f--1)/1.3 var(--text);color:var(--ink);margin-bottom:.45rem}
+.rail-top span{font-weight:400;color:var(--muted);font-size:var(--f--2)}
+.rail-bar{height:6px;border-radius:4px;background:var(--line);overflow:hidden}
+.rail-bar i{display:block;height:100%;width:0;border-radius:4px;
+  background:linear-gradient(90deg,#007a95,var(--aD));transition:width .35s var(--ease)}
+.rail.full .rail-bar i{background:linear-gradient(90deg,#0f7a52,#0b5f40)}
+.rail.full .rail-top{color:var(--ok)}
+/* form sections */
+.fsec{border-top:1px solid var(--line);padding-top:var(--sp-m);margin-top:var(--sp-xs)}
+.fsec:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.fsec > h3{display:flex;align-items:center;gap:.6rem;font-size:var(--f-0);margin-bottom:.2rem}
+.fsec > h3 b{flex:none;width:1.7rem;height:1.7rem;border-radius:50%;background:var(--a-tint);color:var(--aD);
+  display:grid;place-items:center;font:600 var(--f--2)/1 var(--display);transition:background .25s,color .25s}
+.fsec.secok > h3 b{background:var(--ok);color:#fff}
+.fsec.secok > h3 b::before{content:"\2713"}
+.fsec.secok > h3 b i{display:none}
+.fsec > .hint{margin:0 0 var(--sp-m);font-size:var(--f--1);color:var(--muted)}
+.fsec .grid{display:grid;gap:var(--sp-m)}
+/* the tool grid: checkboxes, none required */
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:.5rem}
+.tools label{display:flex;align-items:flex-start;gap:.55rem;margin:0;padding:.6rem .7rem;
+  border:1.5px solid var(--line);border-radius:var(--r-s);cursor:pointer;font-weight:400;
+  font-size:max(16px,.95rem);line-height:1.35;transition:border-color .18s,background .18s}
+.tools label:hover{border-color:var(--a)}
+.tools input{flex:none;width:1.15rem;height:1.15rem;margin:.1rem 0 0;accent-color:var(--a)}
+.tools label:has(input:checked){border-color:var(--a);background:var(--a-tint)}
+.tools label:has(input:focus-visible){outline:3px solid var(--a);outline-offset:2px}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .err{margin:0;color:#a3301f;font:600 var(--f--1)/1.4 var(--text);display:none}
 .err.on{display:block}
@@ -451,12 +486,12 @@ footer .ic{width:16px;height:16px}
   <div class="wrap">
     <div class="hgrid">
       <div>
-        <span class="eyebrow">One seat &middot; Chaguanas &middot; apply by reading our code</span>
-        <h1 data-words>You have the ideas. <em>We have the tools.</em></h1>
-        <p class="hsub">Somewhere right now there is an administrator who can see exactly how their office should work &mdash; and has a spreadsheet, a WhatsApp group and no permission. We are looking for that person. Not for the one who waits to be told.</p>
+        <span class="eyebrow">One seat &middot; Chaguanas &middot; Guardian Life of the Caribbean</span>
+        <h1 data-words>You already know how your office should run. <em>Nobody has given you the tools.</em></h1>
+        <p class="hsub">Somewhere right now there is an administrator who can see exactly what should be fixed &mdash; and has a spreadsheet, a WhatsApp group and no permission. We are looking for that person. Not for the one who waits to be told.</p>
         <div class="ctas">
-          <a class="btn btn-1" href="#test">Take the five questions <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-          <a class="btn btn-2" href="#code">Read our code first</a>
+          <a class="btn btn-1" href="#test">Is it you? Five questions <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-2" href="#real">What the job actually is</a>
         </div>
         <p class="hnote">
           <span><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg>Chaguanas, Central Trinidad</span>
@@ -596,33 +631,32 @@ footer .ic{width:16px;height:16px}
   <div class="wrap">
     <div class="rv">
       <span class="eyebrow">Proof, not adjectives</span>
-      <h2 data-words>Before you apply, <em>go and read our code.</em></h2>
-      <p class="lede">Every recruiting page claims a great environment. Ours can be checked. The branch's whole codebase is public, and you can have it open in a tab in ten seconds &mdash; backend, website, build tools, tests and all.</p>
+      <h2 data-words>Most employers show you a job description. <em>We will show you the whole workshop.</em></h2>
+      <p class="lede">Every advertisement claims a great environment, and almost none can be checked. Ours can. Everything this branch has built is out in the open &mdash; you can look through all of it, today, before you decide whether to spend fifteen minutes applying.</p>
+      <p class="small" style="max-width:58ch">It lives on a site called GitHub, which is where people keep the things they build. <strong>You do not need an account and you do not need to understand all of it.</strong> Open it, scroll, and see whether this looks like somewhere you would want to be.</p>
     </div>
     <div class="rv" style="margin-top:var(--sp-l)">
       <div class="term">
         <div class="term-bar"><i></i><i></i><i></i><b>the repository &mdash; public, no sign-in</b></div>
         <div class="term-body">
-<div style="--l:0"><span class="c"># open it in your browser</span></div>
+<div style="--l:0"><span class="c"># one link. nothing to install, nothing to sign up for.</span></div>
 <div style="--l:1"><span class="p">&rsaquo;</span> <a href="https://github.com/RickyRampersad/RickyRampersadTermLIfe" target="_blank" rel="noopener">github.com/RickyRampersad/RickyRampersadTermLIfe</a></div>
 <div style="--l:2"></div>
-<div style="--l:3"><span class="c"># or clone it and look around</span></div>
-<div style="--l:4"><span class="p">$</span> git clone https://github.com/RickyRampersad/RickyRampersadTermLIfe.git</div>
-<div style="--l:5"><span class="p">$</span> cd RickyRampersadTermLIfe</div>
-<div style="--l:6"><span class="p">$</span> ls apps-script/          <span class="c"># the 36 backend files</span></div>
-<div style="--l:7"><span class="p">$</span> less CLAUDE.md           <span class="c"># every decision, and why</span></div>
+<div style="--l:3"><span class="c"># three folders worth opening, in this order</span></div>
+<div style="--l:4"><span class="p">&rsaquo;</span> <span class="k">CLAUDE.md</span>      <span class="s">what we built, and what broke</span></div>
+<div style="--l:5"><span class="p">&rsaquo;</span> <span class="k">apps-script/</span>   <span class="s">the 36 files that run the branch</span></div>
+<div style="--l:6"><span class="p">&rsaquo;</span> <span class="k">claims/</span>        <span class="s">a page a real client fills in</span></div>
           </div>
       </div>
     </div>
     <ul class="cards">
-      <li class="card rv" style="--i:0"><h3><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg>Start with <code>CLAUDE.md</code></h3><p>The branch's working notes: what was built, what broke, and what we decided never to do again. It is long and it is honest. If reading it makes you want to join in, you are probably the person.</p></li>
-      <li class="card rv" style="--i:1"><h3><svg class="ic" aria-hidden="true"><use href="#i-code"/></svg>Then <code>apps-script/</code></h3><p><code>LogBook.gs</code> tracks every document through the branch. <code>GroupBilling.gs</code> checks an insurer's monthly invoice against our own records, line by line. Open either one.</p></li>
-      <li class="card rv" style="--i:2"><h3><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>And the pages you already use</h3><p><code>claims/</code>, <code>motor-quote/</code>, <code>buildwithus/</code> &mdash; this page too. Everything a client or an agent touches is in there, exactly as served.</p></li>
+      <li class="card rv" style="--i:0"><h3><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg>Start with the notes</h3><p>A long file called <code>CLAUDE.md</code> &mdash; the branch's own working diary. What we built, what broke, and what we decided never to do again. It is honest about the mistakes. If reading it makes you want to join in, you are probably the person.</p></li>
+      <li class="card rv" style="--i:1"><h3><svg class="ic" aria-hidden="true"><use href="#i-code"/></svg>Then the machinery</h3><p>One file tracks every document through the branch. Another checks an insurer's monthly invoice against our own records, line by line, and tells us where they disagree. You do not have to follow the code &mdash; look at how much of it there is.</p></li>
+      <li class="card rv" style="--i:2"><h3><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>And the pages themselves</h3><p>The claims form, the motor quote, this very page. Everything a client or an agent touches is in there, exactly as it is served. Nothing is a mock-up.</p></li>
     </ul>
     <div class="ctas rv" style="margin-top:var(--sp-l)">
-      <a class="btn btn-1" href="https://github.com/RickyRampersad/RickyRampersadTermLIfe" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-git"/></svg>Open the repository</a>
-      <a class="btn btn-2" href="https://github.com/RickyRampersad/RickyRampersadTermLIfe/blob/main/CLAUDE.md" target="_blank" rel="noopener">Read <code style="background:none;color:inherit;padding:0">CLAUDE.md</code> first</a>
-      <a class="btn btn-3" href="#how">Then see what we ask you to do with it <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      <a class="btn btn-1" href="https://github.com/RickyRampersad/RickyRampersadTermLIfe" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-git"/></svg>Look inside the workshop</a>
+      <a class="btn btn-3" href="#how">Then see what we ask of you <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
     </div>
     <p class="small rv" style="margin-top:var(--sp-m)">Nothing in that repository is client data, and that is deliberate &mdash; the rule is written down in it. Client records live in a private sheet behind tokens and never touch the code. You will learn that discipline here too.</p>
   </div>
@@ -743,13 +777,13 @@ footer .ic{width:16px;height:16px}
   <div class="wrap">
     <div class="rv">
       <span class="eyebrow">How we choose</span>
-      <h2 data-words>Two gates. <em>Neither is a CV sift.</em></h2>
-      <p class="lede">We are not trying to find out where you have worked. We are trying to find out what you do when something is badly designed.</p>
+      <h2 data-words>Three gates. <em>None of them is a CV sift.</em></h2>
+      <p class="lede">We do care where you have worked and what you were paid &mdash; the form asks both, plainly, so that the conversation can be honest. But none of that decides it. What decides it is what you do when something is badly designed.</p>
     </div>
     <ol class="gates">
-      <li class="gate rv"><h3>The form below &mdash; about ten minutes</h3><p>Your details, the five answers, and three short written ones. Write them yourself, plainly. We would far rather read four honest lines about a spreadsheet you built than a polished paragraph that says nothing.</p><p>It goes to the Branch Manager alone. If you are working somewhere today, nobody there hears of it.</p></li>
-      <li class="gate rv"><h3>Then: read our code and open one issue</h3><p>If the form reads like you, we will ask you for one thing &mdash; and it is the whole interview. Go into the public repository, find something that is clumsy, missing, or would save somebody an hour, and open a GitHub issue about it.</p><p>Say what is wrong, why it matters, and roughly how you would fix it. You do not have to write the fix. We are reading for whether you can find a real problem in an unfamiliar system and explain it to someone else. <strong>That is the job, so that is the test.</strong></p></li>
-      <li class="gate rv"><h3>Then a conversation, and a decision</h3><p>Twenty minutes with the Branch Manager about your issue and your answers. Terms and pay are discussed there, openly. If it is not right for either of us, we say so and that is the end of it, with no hard feelings.</p></li>
+      <li class="gate rv"><h3>The form below &mdash; about fifteen minutes</h3><p>Where you have worked, what you changed there, what you are earning now, and three questions in your own words. It is longer than most application forms on purpose. <strong>If fifteen minutes is too long to spend on this, then it is honestly not the job</strong> &mdash; and we would both rather know that now.</p><p>Write it yourself, plainly. Four honest lines about a spreadsheet you built beats a polished paragraph that says nothing.</p></li>
+      <li class="gate rv"><h3>Then: one thing you would fix here</h3><p>If the form reads like you, we ask you for one thing, and it is the whole interview. Look through what we have built, find something clumsy, missing, or that would save somebody an hour, and tell us about it &mdash; what is wrong, why it matters, and roughly how you would fix it.</p><p>A page, a form, a process on this very site. You do not have to write the fix and you do not have to be right. We are reading for whether you can walk into an unfamiliar system, find a real problem and explain it to somebody else. <strong>That is the job, so that is the test.</strong></p><p class="small" style="margin-top:.6rem"><strong>Send it however you like</strong> &mdash; an e-mail, a voice note, a page of writing. If you happen to use GitHub, you can post it there as an issue instead and we will see it. Most people do not, and it counts for nothing either way.</p></li>
+      <li class="gate rv"><h3>Then a conversation, and a decision</h3><p>Twenty minutes with the Branch Manager about what you found and what you wrote. Terms and pay are discussed there, openly, against the figures you gave us. If it is not right for either of us, we say so and that is the end of it, with no hard feelings.</p></li>
     </ol>
   </div>
 </section>
@@ -760,70 +794,204 @@ footer .ic{width:16px;height:16px}
     <div class="fgrid">
       <div class="rv">
         <span class="eyebrow">Apply</span>
-        <h2 data-words>Ten minutes. <em>Read by one person.</em></h2>
-        <p>Your name and answers reach Mr Rampersad and nobody else &mdash; not an inbox the branch shares. If you are employed today, that matters, and we treat it that way.</p>
+        <h2 data-words>Fifteen minutes. <em>Read by one person.</em></h2>
+        <p>Your name, your figures and your answers reach Mr Rampersad and nobody else &mdash; not an inbox the branch shares. If you are employed today, that matters, and we treat it that way.</p>
+        <p class="small">It is a long form and that is deliberate. We are filling one seat, not sorting a hundred CVs, so we would rather read fifteen minutes of your actual thinking than scan a page of job titles.</p>
         <ol class="steps">
           <li>He reads it himself, within 48 hours.</li>
-          <li>If it reads like you, he asks you for the GitHub issue.</li>
+          <li>If it reads like you, he asks you for one thing you would fix here.</li>
           <li>Then twenty minutes on the phone, and a straight answer either way.</li>
         </ol>
         <p class="small" style="margin-top:var(--sp-l)">A branch appointment with Guardian Life of the Caribbean, at the Chaguanas branch. Terms and pay are discussed on the call. Prefer to write instead? <a href="mailto:Ricky.Rampersad@myguardiangroup.com?subject=Build%20with%20us%20%E2%80%94%20the%20administrator%27s%20seat">E-mail him directly</a> or call <a href="tel:+18686785821">678-5821</a>.</p>
       </div>
       <div class="rv">
         <form class="form" id="jf" novalidate autocomplete="on">
-          <div class="two">
-            <div><label for="jName">Your name</label><input id="jName" name="name" type="text" autocomplete="name" required></div>
-            <div><label for="jPhone">Phone</label><input id="jPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required></div>
+          <div class="rail" id="rail" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="How much of the application is filled in">
+            <p class="rail-top" aria-hidden="true"><b id="railN">0 of 18 answered</b><span id="railS">about 15 minutes</span></p>
+            <div class="rail-bar"><i id="railI"></i></div>
           </div>
-          <div><label for="jMail">E-mail</label><input id="jMail" name="email" type="email" inputmode="email" autocomplete="email" required></div>
 
-          <fieldset><legend>Where are you now?</legend>
-            <div class="pills">
-              <label><input type="radio" name="now" value="In a job with no tools to build with" checked><span>In a job with no tools</span></label>
-              <label><input type="radio" name="now" value="In a job where I already build things" ><span>Already building where I am</span></label>
-              <label><input type="radio" name="now" value="Studying, or between jobs"><span>Studying or between jobs</span></label>
-              <label><input type="radio" name="now" value="Freelance or contracting"><span>Freelance or contracting</span></label>
+          <!-- 1 ─────────────────────────────────────────────── -->
+          <div class="fsec" data-sec>
+            <h3><b><i>1</i></b>You</h3>
+            <div class="grid">
+              <div class="two">
+                <div><label for="jName">Your name</label><input id="jName" name="name" type="text" autocomplete="name" required></div>
+                <div><label for="jPhone">Phone</label><input id="jPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required></div>
+              </div>
+              <div class="two">
+                <div><label for="jMail">E-mail</label><input id="jMail" name="email" type="email" inputmode="email" autocomplete="email" required></div>
+                <div><label for="jTown">Where do you live? <small>&middot; town or area</small></label><input id="jTown" name="town" type="text" autocomplete="address-level2" required placeholder="the branch is in Chaguanas"></div>
+              </div>
+              <fieldset><legend>Getting to Chaguanas</legend>
+                <div class="pills">
+                  <label><input type="radio" name="travel" value="I drive, own vehicle" required><span>I drive</span></label>
+                  <label><input type="radio" name="travel" value="Public transport"><span>Public transport</span></label>
+                  <label><input type="radio" name="travel" value="Dropped, or within walking distance"><span>Dropped or walking</span></label>
+                  <label><input type="radio" name="travel" value="Would need to work it out"><span>Would work it out</span></label>
+                </div>
+              </fieldset>
             </div>
-          </fieldset>
+          </div>
 
-          <fieldset><legend>Best time for a call</legend>
-            <div class="pills">
-              <label><input type="radio" name="when" value="Morning" checked><span>Morning</span></label>
-              <label><input type="radio" name="when" value="Afternoon"><span>Afternoon</span></label>
-              <label><input type="radio" name="when" value="Evening"><span>Evening</span></label>
+          <!-- 2 ─────────────────────────────────────────────── -->
+          <div class="fsec" data-sec>
+            <h3><b><i>2</i></b>Where you have worked</h3>
+            <p class="hint">Two jobs is plenty. We are reading the third box, not the first two.</p>
+            <div class="grid">
+              <fieldset><legend>How long have you been working?</legend>
+                <div class="pills">
+                  <label><input type="radio" name="exp" value="Under 2 years" required><span>Under 2 years</span></label>
+                  <label><input type="radio" name="exp" value="2 to 5 years"><span>2&ndash;5 years</span></label>
+                  <label><input type="radio" name="exp" value="5 to 10 years"><span>5&ndash;10 years</span></label>
+                  <label><input type="radio" name="exp" value="Over 10 years"><span>Over 10 years</span></label>
+                </div>
+              </fieldset>
+              <div class="two">
+                <div><label for="e1c">Your current or most recent employer</label><input id="e1c" name="emp_co" type="text" autocomplete="organization" required></div>
+                <div><label for="e1r">Your role there</label><input id="e1r" name="emp_role" type="text" autocomplete="organization-title" required></div>
+              </div>
+              <div><label for="e1d">From and to <small>&middot; e.g. March 2023 &ndash; now</small></label><input id="e1d" name="emp_dates" type="text" required></div>
+              <div>
+                <label for="e1w">What is different there because you worked there?</label>
+                <textarea id="e1w" name="emp_changed" maxlength="500" rows="3" required placeholder="Not your duties — anybody can list duties. One thing that was not the same after you arrived."></textarea>
+                <p class="cc"><span>This is the box that matters most in this section.</span><span><b data-cc="e1w">0</b>/500</span></p>
+              </div>
+              <div class="two">
+                <div><label for="e2c">The employer before that <small>&middot; optional</small></label><input id="e2c" name="emp2_co" type="text"></div>
+                <div><label for="e2r">Your role there <small>&middot; optional</small></label><input id="e2r" name="emp2_role" type="text"></div>
+              </div>
+              <div><label for="jEdu">Highest qualification or training <small>&middot; in plain words, whatever it is</small></label><input id="jEdu" name="edu" type="text" required placeholder="CXC, a diploma, a short course, self-taught — all fine"></div>
             </div>
-          </fieldset>
-
-          <div>
-            <label for="w1">One thing you built or set up that nobody asked you to <small>&middot; what was annoying, what you made, who used it</small></label>
-            <textarea id="w1" name="w_built" maxlength="700" rows="4" required></textarea>
-            <p class="cc"><span>Plain words. A spreadsheet counts.</span><span><b data-cc="w1">0</b>/700</span></p>
           </div>
 
-          <div>
-            <label for="w2">The slim-down <small>&middot; pick either job from <a href="#slim">Two real jobs</a> above, or anything else on this page</small></label>
-            <textarea id="w2" name="w_slim" maxlength="700" rows="4" required placeholder="How would you make it take half the time? You are not expected to know our systems — we want to see how you think about it."></textarea>
-            <p class="cc"><span>How you'd approach it, not a finished plan.</span><span><b data-cc="w2">0</b>/700</span></p>
+          <!-- 3 ─────────────────────────────────────────────── -->
+          <div class="fsec" data-sec>
+            <h3><b><i>3</i></b>Pay, honestly, both ways</h3>
+            <p class="hint">We ask so that the conversation is straight and nobody's time is wasted. You can decline either one and it is not held against you.</p>
+            <div class="grid">
+              <div class="two">
+                <div>
+                  <label for="payNow">What you earn now <small>&middot; monthly, TT$</small></label>
+                  <select id="payNow" name="pay_now" required>
+                    <option value="">Choose&hellip;</option>
+                    <option>Under $4,000</option><option>$4,000 &ndash; $6,000</option>
+                    <option>$6,000 &ndash; $8,000</option><option>$8,000 &ndash; $10,000</option>
+                    <option>$10,000 &ndash; $14,000</option><option>Over $14,000</option>
+                    <option>Not working at the moment</option><option>Prefer not to say</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="payWant">What you are looking for <small>&middot; monthly, TT$</small></label>
+                  <select id="payWant" name="pay_want" required>
+                    <option value="">Choose&hellip;</option>
+                    <option>Under $4,000</option><option>$4,000 &ndash; $6,000</option>
+                    <option>$6,000 &ndash; $8,000</option><option>$8,000 &ndash; $10,000</option>
+                    <option>$10,000 &ndash; $14,000</option><option>Over $14,000</option>
+                    <option>Open — tell me what the job is worth</option><option>Prefer not to say</option>
+                  </select>
+                </div>
+              </div>
+              <fieldset><legend>If we agreed, when could you start?</legend>
+                <div class="pills">
+                  <label><input type="radio" name="start" value="Immediately" required><span>Immediately</span></label>
+                  <label><input type="radio" name="start" value="Two weeks' notice"><span>Two weeks</span></label>
+                  <label><input type="radio" name="start" value="One month's notice"><span>One month</span></label>
+                  <label><input type="radio" name="start" value="Longer than a month"><span>Longer</span></label>
+                </div>
+              </fieldset>
+            </div>
           </div>
 
-          <div>
-            <label for="w3">What do you want on your CV in two years that is not there now?</label>
-            <textarea id="w3" name="w_cv" maxlength="400" rows="3" required></textarea>
-            <p class="cc"><span>Be specific. &ldquo;Growth&rdquo; tells us nothing.</span><span><b data-cc="w3">0</b>/400</span></p>
+          <!-- 4 ─────────────────────────────────────────────── -->
+          <div class="fsec" data-sec>
+            <h3><b><i>4</i></b>What you can already do</h3>
+            <p class="hint">Tick anything you have genuinely used, even badly, even once. <strong>Ticking nothing is a real answer</strong> and it does not rule you out &mdash; it only tells us where to start you.</p>
+            <div class="grid">
+              <div class="tools" id="tools">
+                <label><input type="checkbox" name="tool" value="Excel or Sheets formulas"><span>Excel or Sheets formulas</span></label>
+                <label><input type="checkbox" name="tool" value="Pivot tables"><span>Pivot tables</span></label>
+                <label><input type="checkbox" name="tool" value="Google Forms"><span>Google Forms</span></label>
+                <label><input type="checkbox" name="tool" value="Mail merge"><span>Mail merge</span></label>
+                <label><input type="checkbox" name="tool" value="Canva or design"><span>Canva or design</span></label>
+                <label><input type="checkbox" name="tool" value="A CRM (Salesforce or another)"><span>A CRM, any CRM</span></label>
+                <label><input type="checkbox" name="tool" value="WhatsApp Business"><span>WhatsApp Business</span></label>
+                <label><input type="checkbox" name="tool" value="Zapier, Make or Power Automate"><span>Zapier or Make</span></label>
+                <label><input type="checkbox" name="tool" value="AI tools (ChatGPT, Claude, Copilot)"><span>AI tools</span></label>
+                <label><input type="checkbox" name="tool" value="Built a website or a page"><span>Built a page or site</span></label>
+                <label><input type="checkbox" name="tool" value="Written code of any kind"><span>Written code, any kind</span></label>
+                <label><input type="checkbox" name="tool" value="None of these yet"><span>None of these yet</span></label>
+              </div>
+              <div><label for="jSelf">Something you taught yourself <small>&middot; it does not have to be work</small></label><input id="jSelf" name="self_taught" type="text" placeholder="optional, but we do read it"></div>
+            </div>
           </div>
 
-          <div class="two">
-            <div><label for="jGh">GitHub username <small>&middot; optional</small></label><input id="jGh" name="gh" type="text" autocomplete="off" placeholder="if you have one"></div>
-            <div><label for="jLink">A link to anything you made <small>&middot; optional</small></label><input id="jLink" name="link" type="url" inputmode="url" placeholder="https://"></div>
+          <!-- 5 ─────────────────────────────────────────────── -->
+          <div class="fsec" data-sec>
+            <h3><b><i>5</i></b>In your own words</h3>
+            <p class="hint">These three decide it. Take your time on them and write them yourself.</p>
+            <div class="grid">
+              <div>
+                <label for="w1">One thing you built or set up that nobody asked you to <small>&middot; what was annoying, what you made, who used it</small></label>
+                <textarea id="w1" name="w_built" maxlength="700" rows="4" required></textarea>
+                <p class="cc"><span>Plain words. A spreadsheet counts.</span><span><b data-cc="w1">0</b>/700</span></p>
+              </div>
+              <div>
+                <label for="w2">The slim-down <small>&middot; pick either job from <a href="#slim">Two real jobs</a> above</small></label>
+                <textarea id="w2" name="w_slim" maxlength="700" rows="4" required placeholder="How would you make it take half the time? You are not expected to know our systems — we want to see how you think about it."></textarea>
+                <p class="cc"><span>How you'd approach it, not a finished plan.</span><span><b data-cc="w2">0</b>/700</span></p>
+              </div>
+              <div>
+                <label for="w3">What do you want on your CV in two years that is not there now?</label>
+                <textarea id="w3" name="w_cv" maxlength="400" rows="3" required></textarea>
+                <p class="cc"><span>Be specific. &ldquo;Growth&rdquo; tells us nothing.</span><span><b data-cc="w3">0</b>/400</span></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6 ─────────────────────────────────────────────── -->
+          <div class="fsec" data-sec>
+            <h3><b><i>6</i></b>Last things</h3>
+            <div class="grid">
+              <div class="two">
+                <div><label for="jLink">A link to anything you made <small>&middot; optional</small></label><input id="jLink" name="link" type="url" inputmode="url" placeholder="https://"></div>
+                <div><label for="jGh">GitHub username <small>&middot; optional, and almost nobody has one</small></label><input id="jGh" name="gh" type="text" autocomplete="off"></div>
+              </div>
+              <fieldset><legend>Best time for a call</legend>
+                <div class="pills">
+                  <label><input type="radio" name="when" value="Morning" checked><span>Morning</span></label>
+                  <label><input type="radio" name="when" value="Afternoon"><span>Afternoon</span></label>
+                  <label><input type="radio" name="when" value="Evening"><span>Evening</span></label>
+                </div>
+              </fieldset>
+              <div><label for="jHeard">Where did you see this? <small>&middot; optional</small></label><input id="jHeard" name="heard" type="text" placeholder="LinkedIn, WhatsApp, someone told me…"></div>
+            </div>
           </div>
 
           <div class="hp" aria-hidden="true"><label for="jWeb" tabindex="-1">Website</label><input id="jWeb" name="website" type="text" tabindex="-1" autocomplete="off"></div>
           <p class="err" id="jErr" role="alert"></p>
           <button class="btn btn-1" type="submit" id="jSend">Send it to Mr Rampersad <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></button>
-          <p class="fine">Read by the Branch Manager alone. Nothing is sent to anyone else, and nothing is shared with your current employer.</p>
+          <p class="fine">Read by the Branch Manager alone. Nothing is sent to anyone else, and nothing reaches your current employer. Your pay answers are used for the conversation and nothing else.</p>
         </form>
         <div class="done" id="jDone" role="status" aria-live="polite"></div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ THE OTHER DOOR ══════════════════ -->
+<section class="dark" id="agents">
+  <div class="wrap">
+    <div class="rv" style="max-width:52rem">
+      <span class="eyebrow">The other door</span>
+      <h2 data-words>Came for this and found yourself reading about the agents?</h2>
+      <p class="lede" style="color:var(--dT2)">It happens, and it is not a wrong turn. This page is one seat in the back office. The branch's other door is the one in front of clients &mdash; a licensed advisor, building your own book, paid on what you write rather than on a salary.</p>
+      <p style="color:var(--dT2)">Same branch, same tools, same people. Newcomers are trained, licensed and put through a full build before they are contracted, and practising advisors move across confidentially. If that sounds more like you than a desk does, go and look &mdash; the conversation is with the same person either way.</p>
+      <div class="ctas" style="margin-top:var(--sp-m)">
+        <a class="btn btn-1" href="/careers/">The advisor path <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-2" href="/careers/#quiz">Their 60-second test</a>
+      </div>
+      <p class="small" style="color:var(--dT3);margin-top:var(--sp-m)">And if you cannot decide which you are, say so in the form above. It is a fair thing not to know, and he will tell you straight which door he thinks is yours.</p>
     </div>
   </div>
 </section>
@@ -1058,9 +1226,9 @@ footer .ic{width:16px;height:16px}
       f.style.display='none';
       done.innerHTML='<span class="eyebrow">Sent</span><h3>Thank you, '+esc(first)+'. It is with Mr Rampersad.</h3>'
         +'<div class="ref" aria-label="'+esc(ref)+'" title="'+esc(ref)+'">'+esc(ref)+'</div>'
-        +'<p>He reads it himself, within 48 hours. If it reads like you, he will ask you for the GitHub issue &mdash; so you may as well '
-        +'<a href="https://github.com/RickyRampersad/RickyRampersadTermLIfe" target="_blank" rel="noopener">start reading the code</a> now. '
-        +'Keep the reference if you need to reach him: <a href="tel:+18686785821">678-5821</a>.</p>'
+        +'<p>He reads it himself, within 48 hours. If it reads like you, he will ask you for one thing you would fix here &mdash; so you may as well '
+        +'<a href="https://github.com/RickyRampersad/RickyRampersadTermLIfe" target="_blank" rel="noopener">start looking through what we have built</a> now, '
+        +'and have your answer ready. Keep the reference if you need to reach him: <a href="tel:+18686785821">678-5821</a>.</p>'
         +(sent?'':'<p class="warn">We could not reach our system just now, so your mail app has opened with the same answers addressed to him. Press send there and it reaches him the same way.</p>');
       done.classList.add('on');
       done.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
@@ -1071,6 +1239,34 @@ footer .ic{width:16px;height:16px}
       body.fields.forEach(function(x){if(x.value)t+=x.label+':\n'+x.value+'\n\n'});
       location.href='mailto:'+TO+'?subject='+encodeURIComponent('Build with us — '+ref)+'&body='+encodeURIComponent(t);
     }
+    /* ── the progress rail: moves on input, never on scroll, and a section
+          ticks only when everything it needs is really filled in ── */
+    var REQ=['name','phone','email','town','travel','exp','emp_co','emp_role','emp_dates',
+             'emp_changed','edu','pay_now','pay_want','start','w_built','w_slim','w_cv','when'];
+    var rail=d.getElementById('rail'), railN=d.getElementById('railN'),
+        railI=d.getElementById('railI'), railS=d.getElementById('railS');
+    function filled(n){var v=val(n);return n==='w_built'||n==='w_slim'?v.length>=40:n==='emp_changed'?v.length>=20:!!v}
+    function tick(){
+      var n=0; REQ.forEach(function(k){if(filled(k))n++});
+      var pc=Math.round(n/REQ.length*100);
+      if(railI)railI.style.width=pc+'%';
+      if(railN)railN.textContent=n+' of '+REQ.length+' answered';
+      if(rail){rail.setAttribute('aria-valuenow',String(pc));rail.classList.toggle('full',n===REQ.length)}
+      if(railS)railS.textContent=n===REQ.length?'ready to send':n>REQ.length/2?'nearly there':'about 15 minutes';
+      /* A section with nothing required would otherwise never tick, which
+         reads as broken rather than optional — so it ticks once everything
+         required is in AND the person has actually answered something in it. */
+      [].slice.call(f.querySelectorAll('[data-sec]')).forEach(function(s){
+        var need=[].slice.call(s.querySelectorAll('[required]'))
+          .map(function(e){return e.name}).filter(function(v,i,a){return a.indexOf(v)===i});
+        var any=[].slice.call(s.querySelectorAll('input,select,textarea')).some(function(e){
+          return (e.type==='checkbox'||e.type==='radio') ? e.checked : String(e.value||'').trim()!=='';
+        });
+        s.classList.toggle('secok',need.every(filled)&&any);
+      });
+    }
+    f.addEventListener('input',tick); f.addEventListener('change',tick); tick();
+
     f.addEventListener('submit',function(e){
       e.preventDefault();
       var name=val('name'), phone=val('phone'), email=val('email'),
@@ -1078,19 +1274,35 @@ footer .ic{width:16px;height:16px}
       var bad=!name?'We need your name.'
         :!/^[+\d][\d\s().-]{6,}$/.test(phone)?'We need a phone number he can call.'
         :!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)?'That e-mail address does not look right.'
+        :!val('town')?'Which town or area do you live in?'
+        :!val('travel')?'How would you get to Chaguanas?'
+        :!val('exp')?'How long have you been working?'
+        :!val('emp_co')?'Who do you work for now, or last?'
+        :!val('emp_role')?'What is, or was, your role there?'
+        :!val('emp_dates')?'Roughly when were you there?'
+        :val('emp_changed').length<20?'What is different at that job because you were there? One honest line.'
+        :!val('edu')?'Your highest qualification or training — whatever it is.'
+        :!val('pay_now')?'What you earn now. "Prefer not to say" is a real option.'
+        :!val('pay_want')?'What you are looking for. "Open" is a real option.'
+        :!val('start')?'When could you start?'
         :w1.length<40?'Tell us about one thing you built — a few honest lines is plenty, but we do need them.'
         :w2.length<40?'The slim-down answer is the one he reads most carefully. A few lines.'
         :w3.length<10?'What do you want on your CV in two years?':'';
       err.textContent=bad; err.classList.toggle('on',!!bad);
       if(bad){
-        var el=bad.indexOf('name')>-1?f.name:bad.indexOf('phone')>-1?f.phone:bad.indexOf('e-mail address')>-1?f.email
-          :bad.indexOf('built')>-1?f.w_built:bad.indexOf('slim')>-1?f.w_slim:f.w_cv;
-        if(el&&el.focus)el.focus();
+        var first=null;
+        for(var i=0;i<REQ.length;i++){if(!filled(REQ[i])){first=f.querySelector('[name="'+REQ[i]+'"]');break}}
+        if(first){
+          var sec=first.closest('[data-sec]')||first;
+          sec.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
+          setTimeout(function(){try{first.focus({preventScroll:true})}catch(x){first.focus()}},noMotion.matches?0:320);
+        }
         return;
       }
       if(f.dataset.sending)return;
       f.dataset.sending='1'; var was=btn.innerHTML; btn.disabled=true; btn.textContent='Sending…';
-      var now=val('now'), when=val('when'), gh=val('gh'), link=val('link');
+      var when=val('when'), gh=val('gh'), link=val('link');
+      var tools=[].slice.call(f.querySelectorAll('[name="tool"]:checked')).map(function(x){return x.value}).join(', ');
       var score=''; try{score=sessionStorage.getItem('rrbAdminScore')||''}catch(x){}
       if(!score&&typeof window.__rrbScore==='number')score=String(window.__rrbScore);
       var body={action:'q.quote',form:'admin',code:'QB',line:'Build with us',
@@ -1098,14 +1310,29 @@ footer .ic{width:16px;height:16px}
         core:{name:name,email:email,phone:phone,reach:'call',when:when,agent:'',
               notes:w1,website:val('website')},
         fields:[
-          {section:'Where they are',k:'now',label:'Where they are now',value:now},
-          {section:'Where they are',k:'when_talk',label:'Best time for a call',value:when},
-          {section:'Where they are',k:'score',label:'The five questions, out of 20',value:score},
+          {section:'Them',k:'score',label:'The five questions, out of 20',value:score},
+          {section:'Them',k:'town',label:'Where they live',value:val('town')},
+          {section:'Them',k:'travel',label:'Getting to Chaguanas',value:val('travel')},
+          {section:'Them',k:'when_talk',label:'Best time for a call',value:when},
+          {section:'Where they have worked',k:'exp',label:'Years working',value:val('exp')},
+          {section:'Where they have worked',k:'emp_co',label:'Current or most recent employer',value:val('emp_co')},
+          {section:'Where they have worked',k:'emp_role',label:'Role there',value:val('emp_role')},
+          {section:'Where they have worked',k:'emp_dates',label:'From and to',value:val('emp_dates')},
+          {section:'Where they have worked',k:'emp_changed',label:'What is different there because of them',value:val('emp_changed')},
+          {section:'Where they have worked',k:'emp2_co',label:'Employer before that',value:val('emp2_co')},
+          {section:'Where they have worked',k:'emp2_role',label:'Role there',value:val('emp2_role')},
+          {section:'Where they have worked',k:'edu',label:'Highest qualification or training',value:val('edu')},
+          {section:'Pay',k:'pay_now',label:'Earning now (monthly, TT$)',value:val('pay_now')},
+          {section:'Pay',k:'pay_want',label:'Looking for (monthly, TT$)',value:val('pay_want')},
+          {section:'Pay',k:'start',label:'Could start',value:val('start')},
+          {section:'What they can do',k:'tools',label:'Tools they have used',value:tools},
+          {section:'What they can do',k:'self_taught',label:'Something they taught themselves',value:val('self_taught')},
           {section:'In their own words',k:'w_built',label:'One thing they built that nobody asked for',value:w1},
           {section:'In their own words',k:'w_slim',label:'The slim-down: how they would halve it',value:w2},
           {section:'In their own words',k:'w_cv',label:'What they want on their CV in two years',value:w3},
-          {section:'Links',k:'gh',label:'GitHub username',value:gh},
-          {section:'Links',k:'link',label:'A link to something they made',value:link}
+          {section:'Last things',k:'link',label:'A link to something they made',value:link},
+          {section:'Last things',k:'gh',label:'GitHub username',value:gh},
+          {section:'Last things',k:'heard',label:'Where they saw it',value:val('heard')}
         ],
         page:location.pathname,
         ref_from:(new URLSearchParams(location.search)).get('from')||'',

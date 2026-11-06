@@ -98,7 +98,7 @@ var QUOTE = {
     'careers':          ['who', 'when_talk', 'note'],
     /* The score first, because it is the one thing that says whether to read
        the rest now or later; then where they are, and the thing they built. */
-    'admin':            ['score', 'now', 'w_built']
+    'admin':            ['score', 'emp_role', 'pay_now']
   },
 
   /* A client who taps send twice, or whose connection retries, must not
@@ -119,8 +119,8 @@ var QUOTE = {
     apply: ['The branch opens your file under this reference straight away.',
             'A licensed agent calls you at the time you chose.',
             'Five health questions, no medical exam, and the cover is issued.'],
-    join:  ['Mr Rampersad reads it himself, within two working days. Your name reaches nobody else.',
-            'If it reads like you, he asks you for one thing: a GitHub issue on our public code, saying what you would fix.',
+    join:  ['Mr Rampersad reads it himself, within two working days. Your name and your figures reach nobody else.',
+            'If it reads like you, he asks you for one thing: something here you would fix, and how.',
             'Then twenty minutes on the phone — terms and pay openly — and a straight answer either way.'],
     talk:  ['Mr Rampersad reads it himself. Your name reaches nobody else.',
             'He calls you at the time you chose, within two working days, for twenty minutes.',

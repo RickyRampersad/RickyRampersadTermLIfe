@@ -58,29 +58,37 @@ minute of signal — the road `/careers/` already takes.
 
 ## The ad
 
-Four cuts of one ad. The first line is doing all the work in each of them,
-because this person is **not** searching for the words "administrative
-assistant" — they are scrolling past them.
+Five cuts of one ad. The first line does all the work in each, because this
+person is **not** searching the words "administrative assistant" — they are
+scrolling past them.
+
+**We no longer lead with "our code is public."** Decided 6 November 2026, and
+he was right: the administrator with ideas and no tools is very unlikely to
+know what GitHub is, so that line reads as jargon to the person we want and as
+a beacon to developers, who want a different job and would leave when they
+found out half the day is petty cash and licence renewals. The asset is real,
+so it stays — demoted from the hook to the proof, and in plain words: **"Most
+employers show you a job description. We will show you the whole workshop."**
 
 ### 1 · LinkedIn (the flagship — this is where the person with a job is)
 
 > **You already know how your office should run. Nobody has given you the tools.**
 >
-> I am hiring one administrator for my branch in Chaguanas. Before you scroll past the word "administrator", read what the job is.
+> I am hiring one administrator for my branch in Chaguanas, and before you scroll past that word, read what the job actually is.
 >
-> We write our own software. Thirty-six backend files, about 100,000 lines of Google Apps Script, 331 pages — all of it running the branch every day. The client letters. The document log. The claims intake. The monthly billing check against the insurer's own invoice, line by line. We read and write Salesforce from our own code. There is an AI agent live on our WhatsApp line. Every bit of it was built in-branch, by people who were not hired as developers.
+> This branch writes and runs its own software. The client letters. The document log. The claims intake. The monthly check of an insurer's invoice against our own records, line by line. Thirty-six files and about a hundred thousand lines of it — all built in-branch, by people who were not hired as developers and did not know how when they started.
 >
-> So here is the seat. Half your day is the branch's administration, and it has to be right, because if it is not then an agent cannot work and a client waits. The other half is making that first half smaller — taking a job you do by hand and turning it into a form, a script, a page, and then measuring whether it actually worked.
+> So here is the seat. Half your day is the branch's administration, and it has to be right, because if it is not then an agent cannot work and a client waits. The other half is making that first half smaller: taking a job you do by hand and turning it into a form, a script, a page, and then measuring whether it actually worked.
 >
-> You do not need to arrive knowing how. You need to be the person who has already built something out of whatever you were given, because the alternative was doing it by hand forever.
+> You do not need to arrive knowing how. You need to be the person who has already built something out of whatever they were given — a spreadsheet, a WhatsApp group, a template — because the alternative was doing it by hand forever.
 >
-> Two things make this different from any other advertisement you will read today.
+> Two things make this different from anything else you will read today.
 >
-> **Our code is public.** Go and read it before you apply: github.com/RickyRampersad/RickyRampersadTermLIfe — every claim above is in there, including the parts we have not finished.
+> **We show you the whole workshop before you apply.** Not a job description: everything this branch has actually built, open, for you to look through and judge for yourself.
 >
-> **Reading it is how you apply.** There is no CV sift. Ten minutes of honest answers, and if it reads like you I will ask you for one thing: open a GitHub issue on our code saying what you would fix and why. That is the whole interview, because that is the job.
+> **And the interview is not a CV.** It is one question — find something here that is clumsy, missing, or that would save somebody an hour, and tell us how you would fix it.
 >
-> I read every application myself. If you are employed today, nobody there will hear of it.
+> The form takes fifteen minutes and asks what you earn now, because the conversation should be honest from the first minute. I read every one myself. If you are employed today, nobody there will hear of it.
 >
 > **rickyrampersadbranch.com/buildwithus**
 >
@@ -88,16 +96,16 @@ assistant" — they are scrolling past them.
 
 ### 2 · WhatsApp (your own network and the branch group)
 
-Under 120 words, bold with single asterisks, no hard line wraps, and it ends in
-an ask that is easy to answer — the house rules for a branch message.
+Under 120 words, bold with single asterisks, no hard line wraps, and an ask
+that is easy to answer — the house rules for a branch message.
 
 > *We are hiring one administrator. Not a normal one.*
 >
-> This branch writes its own software — the letters, the claims intake, the billing checks. About 100,000 lines of it, all built in-branch by people who were never hired as developers.
+> This branch writes its own software — the letters, the claims intake, the billing checks. About a hundred thousand lines of it, built in-branch by people who were never hired as developers.
 >
-> So the job is half administration and half making that administration unnecessary. Apps Script, Salesforce, respond.io, AI. You do not need to arrive knowing how.
+> So the job is half administration and half making that administration unnecessary. You do not need to arrive knowing how.
 >
-> Here is the part nobody else does: our code is public, and reading it is how you apply. No CV sift.
+> Before you apply we show you everything we have built, so you can judge for yourself. The form takes fifteen minutes. The interview is one question: what would you fix here?
 >
 > rickyrampersadbranch.com/buildwithus
 >
@@ -107,11 +115,11 @@ an ask that is easy to answer — the house rules for a branch message.
 
 > **If you have ever built a spreadsheet to fix something nobody asked you to fix, this is for you.**
 >
-> One administrator's seat. Chaguanas. An insurance branch that writes its own software and will hand you the keys to it — Apps Script, Salesforce, AI.
+> One administrator's seat. Chaguanas. An insurance branch that writes its own software and will hand you the keys to it.
 >
 > Half admin. Half making the admin unnecessary.
 >
-> Our code is public. Reading it is how you apply.
+> We show you everything we have built before you apply.
 >
 > → rickyrampersadbranch.com/buildwithus
 
@@ -120,123 +128,135 @@ an ask that is easy to answer — the house rules for a branch message.
 > **ADMINISTRATOR & BRANCH BUILDER** — Ricky Rampersad Branch, Guardian Life of
 > the Caribbean. Chaguanas, Central Trinidad.
 >
-> An administrator's seat in a branch that writes and runs its own software:
-> Google Apps Script, Salesforce, respond.io on WhatsApp, and AI, all in
-> production today. Half the role is the branch's administration, done
-> properly. The other half is automating it — and you are given the tools, the
-> access and the time to do that.
+> An administrator's seat in a branch that writes and runs its own software.
+> Half the role is the branch's administration, done properly. The other half
+> is automating it — and you are given the tools, the access and the time.
 >
-> No development qualification required. We are looking for someone who has
+> No technical qualification required. We are looking for someone who has
 > already improved a process with whatever they were handed, and who finishes
 > what they start. Care with figures is essential; this work reaches real
 > families.
 >
-> **Our codebase is public and reading it is part of applying.** Apply in about
-> ten minutes at **rickyrampersadbranch.com/buildwithus**. Applications are read
-> by the Branch Manager personally and treated confidentially.
+> Apply in about fifteen minutes at **rickyrampersadbranch.com/buildwithus**.
+> Applications are read by the Branch Manager personally and treated
+> confidentially.
 
 ### 5 · One person, by message (the highest-yield cut of all)
 
-The best hire for this seat is somebody already known to somebody in the branch.
-Send this to one person rather than broadcasting it:
+The best hire for this seat is probably already known to somebody in the
+branch. Send this to one person rather than broadcasting it:
 
 > I am hiring an administrator and I thought of you. Not a normal admin job —
-> half of it is building the tools instead of using them. Our code is public, so
-> you can see exactly what you would be walking into before you decide:
+> half of it is building the tools instead of just using them. You can see
+> exactly what you would be walking into before you decide:
 > rickyrampersadbranch.com/buildwithus. Have a look and tell me honestly if it
 > is you.
 
 ### Notes on the wording
 
 - **Never "administrative assistant" in the headline.** The person we want has
-  stopped reading those. The job title appears on the page, in the first
-  section, where it belongs — and the page says plainly what the job is before
-  it asks for anything.
-- **The public repository is the whole hook.** Every recruiting advertisement
-  claims a great environment; almost none can be checked. Ours can be, in ten
-  seconds, by anyone. That one line does more work than every adjective.
+  stopped reading those. The title appears on the page, in the first section,
+  where it belongs.
 - **Say "you do not need to arrive knowing how" every time.** Leave it out and
-  the ad filters for developers, who are a different person wanting a different
-  job. The seat is for someone with the instinct and no outlet.
-- **Do not print a salary.** It is discussed on the call, and the page says so.
-- **No seat count, no closing date.** This page sits at a public URL and an
-  evergreen "5 places" dates it. `/careers/` carries a dated class with a
-  reason, which is the only form that holds up.
+  the ad filters for developers, who are the wrong person for this seat.
+- **Do not print a salary.** The form asks what they earn and what they want,
+  and the figure is agreed on the call.
+- **No seat count and no closing date.** This page sits at a public URL and an
+  evergreen "5 places" dates it.
 - **Compliance.** The page makes no representation about Guardian Life terms,
   grading or benefits beyond "a branch appointment; terms and pay are discussed
-  on the call." If Guardian HR want the wording seen before it is advertised
-  outside the branch, this is the paragraph to show them.
-
----
+  on the call." That is the paragraph to show Guardian HR if the ad is going
+  outside the branch.
 
 ## The questionnaire, and how to read what comes back
 
 Two gates, and neither is a CV sift.
 
-### Gate 1 — the page: five taps, then three written answers
+### Gate 1 — the page: five taps, then the application
 
-**The five taps** are behavioural rather than aspirational, and they are scored
-out of 20. The score travels with the application and is the **first** column of
-the row's summary, so a glance tells you whether to read the rest now or later.
+**The five taps** are behavioural rather than aspirational, scored out of 20.
+The score travels with the application and leads the row's summary, so a glance
+tells you whether to read the rest now or later.
 
 | What it tests | Why it is there |
 |---|---|
-| What you did about a repetitive job | Builders build. Documenters document. Grinders grind. All three are visible in the answers. |
+| What you did about a repetitive job | Builders build. Documenters document. Grinders grind. All three show in the answers. |
 | **Is something you built in use by somebody else right now** | The single best filter on the page. Ideas are common; shipping is not. |
-| What happened when an idea was refused | A stuck innovator has a story here. "Nobody has ever asked me for an idea" scores **2**, not 0 — that is the person we are looking for. |
+| What happened when an idea was refused | A stuck innovator has a story. "Nobody has ever asked me for an idea" scores **2**, not 0 — that is the person we want. |
 | A wrong figure on a letter going to 300 clients | The care test, and the only question with a genuinely wrong answer. |
-| How far you have gone with code | Lowest answer still scores **1**. Never knowing code must not sink the right person. |
+| How far you have gone with code | The lowest answer still scores **1**. Never knowing code must not sink the right person. |
 
-**Reading the score:**
+**Reading the score:** 16–20, read their written answers that day. 11–15, worth
+a conversation. Under 11, honest no, and the page sends them to `/careers/`.
+**Any score with the careless answer on question four** stops them and does not
+invite them to apply, whatever else they said.
 
-- **16–20** — the person this was written for. Read their written answers that
-  day.
-- **11–15** — worth a conversation. The thing the taps cannot show is whether
-  they finish, so read the first written answer closely.
-- **Under 11** — honest no, and the page sends them to `/careers/` instead,
-  which is often the right door.
-- **Any score at all, with the careless answer on question four** — the page
-  stops them and does not invite them to apply, whatever the rest said.
-  Somebody who would send a figure they already suspect is wrong to three
-  hundred families is wrong for an insurance branch, and no other strength
-  makes up for it.
+**The application itself is six sections and about fifteen minutes**, with a
+progress rail that moves on input. The length is part of the filter — the page
+says so out loud: *"If fifteen minutes is too long to spend on this, then it is
+honestly not the job."*
 
-**The three written answers** are the real filter, and all three are required:
+1. **You** — name, phone, e-mail, the town they live in, and how they would get
+   to Chaguanas. The commute kills more admin hires than anything else.
+2. **Where you have worked** — years working, current or most recent employer,
+   role, dates, the employer before that, and their highest qualification. Then
+   the box that matters: **"What is different there because you worked there?"**
+   with the instruction *"Not your duties — anybody can list duties."*
+3. **Pay, honestly, both ways** — what they earn now and what they are looking
+   for, as monthly TT$ bands, plus when they could start. **"Prefer not to say"
+   and "Open — tell me what the job is worth" are real options on each**, so
+   nobody is barred for declining.
+4. **What you can already do** — twelve tick boxes from Sheets formulas and
+   pivot tables through a CRM, Zapier, AI tools and "written code of any kind",
+   ending with "None of these yet". The page says plainly that **ticking
+   nothing does not rule you out** — it only says where to start them.
+5. **In your own words** — the three that decide it (below).
+6. **Last things** — an optional link, an optional GitHub name, the best time
+   to call, and where they saw the ad.
+
+**The income bands are my assumption and yours to change**, in one place in
+`buildwithus/index.html` (search `payNow`): under $4,000 · $4,000–6,000 ·
+$6,000–8,000 · $8,000–10,000 · $10,000–14,000 · over $14,000, monthly TT$.
+They are set to straddle what a Trinidad administrator typically earns so the
+answer is informative at both ends. Change both selects together.
+
+**The three written answers** are the real filter:
 
 1. *One thing you built that nobody asked you to.* Score it on **specificity**.
    "I improved efficiency" is nothing. "The same eleven fields went into three
    systems so I built a form that filled all three" is the hire.
 2. *The slim-down.* They pick one of the two real undone jobs named on the page
-   and say how they would halve it. We are reading for **how they think about
-   an unfamiliar system**, not for a correct answer — they have not seen ours.
-3. *What they want on their CV in two years.* If this is vague, they do not
-   actually want this seat; they want a job.
+   and say how they would halve it. We are reading **how they think about an
+   unfamiliar system**, not for a right answer.
+3. *What they want on their CV in two years.* Vague here means they want a job,
+   not this seat.
 
-The page also takes a GitHub username and one link, both optional.
-
-### Gate 2 — the GitHub issue (this is the interview)
+### Gate 2 — one thing you would fix here (this is the interview)
 
 If the form reads like them, ask for exactly one thing:
 
-> Go into our public repository, find something that is clumsy, missing, or
-> would save somebody an hour, and open a GitHub issue about it. Say what is
-> wrong, why it matters, and roughly how you would fix it. You do not have to
-> write the fix.
+> Look through what we have built, find something clumsy, missing, or that
+> would save somebody an hour, and tell me about it — what is wrong, why it
+> matters, and roughly how you would fix it. You do not have to write the fix
+> and you do not have to be right.
 
-**Why this is the right test.** It is the job, almost exactly: read an
-unfamiliar system, find a real problem in it, and explain it clearly enough that
+**They can send it any way they like** — an e-mail, a voice note, a page of
+writing. If they happen to use GitHub they can post it there as an issue and
+you will see it in one place, but the page says plainly that almost nobody does
+and that it counts for nothing either way. That change was made on 6 November
+2026: requiring a GitHub issue filtered for developers, who are the wrong
+person for this seat.
+
+**Why this is the right test.** It is the job, almost exactly: walk into an
+unfamiliar system, find a real problem, and explain it clearly enough that
 somebody else can act. It cannot be faked by a CV, it cannot be bought, and it
-costs effort — which by itself removes everybody who is applying to forty things
-this week. And the issues are all in one place for you to compare.
+costs effort — which alone removes everybody applying to forty things this
+week.
 
-**Read each issue for, in this order:** is the problem real; is it explained so
-a third person would understand it; is the suggested fix proportionate (a small
-finishable thing beats a grand rewrite); and did they notice something we had
-not. The last one is the strongest signal there is.
-
-All of this works **today** — the repository is public, issues are on, and
-nothing new has to be built for it. Filter them with a label, say
-`candidate`, once the first few arrive.
+**Read each answer for, in this order:** is the problem real; is it explained
+so a third person would understand it; is the fix proportionate (a small
+finishable thing beats a grand rewrite); and did they notice something you had
+not. The last is the strongest signal there is.
 
 ### Gate 3 — twenty minutes on the phone
 
