@@ -1,132 +1,27 @@
 {
- "tts/out/bwadmin/01.mp3": [
-  "en",
-  0.998,
-  "You already know how your office should run. Nobody has given you the tools."
- ],
- "tts/out/bwadmin/02.mp3": [
-  "en",
-  0.996,
-  "We are a branch that writes its own software."
- ],
- "tts/out/bwadmin/03.mp3": [
-  "en",
-  0.991,
-  "36 files, 100,000 lines, all of the built right here."
- ],
- "tts/out/bwadmin/04.mp3": [
+ "tts/out/bwfix/01.mp3": [
   "en",
   0.995,
-  "Google Apps Script, Salesforce, an AI agent on WhatsApp, Claude with Guard Rails."
+  "36 files, 100,000 lines, every line of it written right here."
  ],
- "tts/out/bwadmin/05.mp3": [
+ "tts/out/bwfix/02.mp3": [
   "en",
   0.998,
-  "Half your day is the Branch's administration. The other half is making that administration unnecessary."
+  "Point your camera at the code. It takes 15 minutes and the branch manager reads them all himself."
  ],
- "tts/out/bwadmin/06.mp3": [
-  "en",
-  0.998,
-  "You do not need to arrive knowing how. Nobody here was hired as a developer."
- ],
- "tts/out/bwadmin/07.mp3": [
-  "en",
-  0.997,
-  "We are looking for one person who cannot leave a bad process alone."
- ],
- "tts/out/bwadmin/08.mp3": [
-  "en",
-  0.998,
-  "Point your camera at the code. It takes 15 minutes and the branch manager reads everyone himself."
- ],
- "tts/out/bwagent/01.mp3": [
-  "en",
-  0.997,
-  "Most people start this career the same way. A list of your friends, and good luck."
- ],
- "tts/out/bwagent/02.mp3": [
-  "en",
-  0.995,
-  "That is not how it works here."
- ],
- "tts/out/bwagent/03.mp3": [
-  "en",
-  0.994,
-  "Your leads come from a board. People who ask to be called."
- ],
- "tts/out/bwagent/04.mp3": [
-  "en",
-  0.998,
-  "Your clients are matched to you, household by household, with the whole file already read."
- ],
- "tts/out/bwagent/05.mp3": [
-  "en",
-  0.998,
-  "The fact find does the arithmetic and a manager signs it off before it reaches your client."
- ],
- "tts/out/bwagent/06.mp3": [
-  "en",
-  0.998,
-  "Your numbers are on the wall every day in front of everybody. Mine are two."
- ],
- "tts/out/bwagent/07.mp3": [
-  "en",
-  0.993,
-  "a coach, not a clock"
- ],
- "tts/out/bwagent/08.mp3": [
-  "en",
-  0.993,
-  "If you're contracted somewhere today, nobody there will hear of this."
- ],
- "tts/out/bwagent/09.mp3": [
+ "tts/out/bwfix/03.mp3": [
   "en",
   0.996,
-  "Point your camera at the code. See the whole thing before you apply."
+  "Your leads come from a board. These are people who want to hear from you."
  ],
- "tts/out/bwuw/01.mp3": [
+ "tts/out/bwfix/04.mp3": [
   "en",
   0.996,
-  "We are opening a general insurance agency, and we need one underwriter."
+  "Your numbers are on the wall every day in front of everybody. So, or mine."
  ],
- "tts/out/bwuw/02.mp3": [
-  "en",
-  0.997,
-  "an experienced one, somebody who has carried a book and knows a bad risk when they see it."
- ],
- "tts/out/bwuw/03.mp3": [
-  "en",
-  0.988,
-  "Here, is what is different."
- ],
- "tts/out/bwuw/04.mp3": [
-  "en",
-  0.994,
-  "The quote, the proposal form, the customer checks, all filled from the record, never typed twice."
- ],
- "tts/out/bwuw/05.mp3": [
-  "en",
-  0.992,
-  "The renewal desk reads every term since the policy began before you open it."
- ],
- "tts/out/bwuw/06.mp3": [
+ "tts/out/bwfix/05.mp3": [
   "en",
   0.991,
-  "A claim arrives, already checked against the cover that was in force on the day of the loss."
- ],
- "tts/out/bwuw/07.mp3": [
-  "en",
-  0.998,
-  "So your judgment goes on the risk and not on the paperwork."
- ],
- "tts/out/bwuw/08.mp3": [
-  "en",
-  0.993,
-  "If you're somewhere with no room to grow, this is a seat with the tools already built."
- ],
- "tts/out/bwuw/09.mp3": [
-  "en",
-  0.994,
-  "Point your camera at the code, your CV in 15 minutes."
+  "Point your camera at the code. Send your CV. It takes 15 minutes."
  ]
 }
