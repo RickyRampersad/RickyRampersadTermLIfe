@@ -4,26 +4,36 @@
  * Attach this script to the branch Google Sheet (Extensions → Apps Script)
  * or run standalone with SHEET_ID set below.
  *
- * What it does, driven by the "Days" (arrears) column your staff update daily:
- *   Day 45+ : client email — thank-you, full policy history, payment note,
- *             1-click satisfaction survey (stored in "Survey Responses").
- *   Day 60+ : client follow-up that references the 45-day email and the
- *             survey (re-asks politely if not answered).
- *   Day 75+ : agent email referencing the 45-day email + the client's survey
- *             feedback, with a link to the Conservation Action form
- *             (replaces OTForms). When the agent submits, the manager is
- *             emailed to respond; the response is logged and sent back
- *             to the agent.
+ * What it does: the Requirements view, the client 360 lookup, the opportunities
+ * and campaigns modules, the production figures and the staff dashboard — all
+ * reads off the branch sheet, plus a page-driven conservation workflow (an
+ * agent submits a plan, a manager responds).
+ *
+ * THE 45/60/75-DAY PREMIUM-DUE LADDER WAS REMOVED FROM THIS FILE ON
+ * 6 NOVEMBER 2026, and must not be added back here. It is now the Premium Due
+ * Desk: apps-script/PremiumDueDesk.gs in the RRB KPI Tracker project, serving
+ * rickyrampersadbranch.com/premium-due. There the wording is approved once
+ * (intelSurveyApprove) and every letter is ticked by a person before it goes.
+ * Two ladders means two wordings and two gates, and this one was gated only by
+ * the TEST_MODE constant below — one stale paste away from writing to clients.
+ * What went: the 9am dailyAutomation run and its trigger installer, the four
+ * client letters and their blocks, the 75-day agent letter, the 3-day nudges,
+ * the conservation-form reminders, sendDemoSequence, apiPreviewLetter and
+ * apiSendStage45 (a staff route that mailed the 45-day letter to a ticked list).
+ * The send log, Survey Responses and the history engine are untouched, so every
+ * record of what was sent before is still readable.
  *
  * Web app (one URL, role-based):  ?page=...
- *   client portal  — token link in every client email (portfolio + history)
- *   survey         — 1-click rating links from the 45/60-day emails
+ *   client portal  — token link (portfolio + history)
+ *   survey         — 1-click rating links already in clients' inboxes
  *   agent          — login: pending conservation cases + their arrears book
  *   manager        — login: agent submissions awaiting response, survey feed
- *   staff          — login: daily queue, send log, survey feed
+ *   staff          — login: requirements, lookup, production, send log
  *
  * SAFETY: TEST_MODE is ON by default — every email goes to TEST_EMAIL only.
- * Flip it to false only after you have reviewed real sends.
+ * Nothing in this file writes to a client on a clock any more. The one path
+ * that can reach a client is a manager pressing respond on a conservation
+ * plan (apiManagerRespond), which is a person sending their own words.
  */
 
 // ============================== CONFIG =====================================
@@ -117,10 +127,7 @@ function onOpen() {
     SpreadsheetApp.getUi().createMenu('★ Branch Automation')
       .addItem('1. Set up tabs & seed users', 'setupTabs')
       .addItem('1b. Seed branch team logins', 'seedBranchTeam')
-      .addItem('2. Install daily trigger (9am)', 'installTriggers')
-      .addItem('3. Run automation now', 'dailyAutomation')
-      .addItem('Preview today’s queue (no send)', 'previewQueue')
-      .addItem('Send demo sequence to my inbox', 'sendDemoSequence')
+      .addItem('2. Remove the old 9am premium-due trigger', 'removeLadderTriggers')
       .addItem('Send responses report now (3pm report)', 'dailyResponsesReport')
       .addItem('Send weekly summary now', 'weeklyDigest')
       .addToUi();
@@ -214,14 +221,34 @@ function apiLoginList() {
   return { ok: true, team: team };
 }
 
-function installTriggers() {
-  var mine = ['dailyAutomation', 'dailyResponsesReport', 'weeklyDigest'];
+/** RUN THIS ONCE after pasting this version.
+ *
+ *  Deleting a function does NOT delete a trigger that was installed to call
+ *  it. The old 9am trigger still exists in the project and still fires
+ *  'dailyAutomation' by name every morning; with that function gone it now
+ *  fails and emails the script owner a failure notice every day. It sends
+ *  nothing to anybody else — a missing handler cannot write to a client — but
+ *  it has to be unhooked, and only running this does that.
+ *
+ *  It removes ONLY triggers calling a function this file no longer has. The
+ *  3pm responses report and the Friday summary still work and are left alone;
+ *  they are internal and go to OPS_EMAIL. */
+function removeLadderTriggers() {
+  var gone = ['dailyAutomation', 'installTriggers', 'previewQueue', 'sendDemoSequence'];
+  var removed = [], kept = [];
   ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (mine.indexOf(t.getHandlerFunction()) > -1) ScriptApp.deleteTrigger(t);
+    var fn = t.getHandlerFunction();
+    if (gone.indexOf(fn) > -1) { ScriptApp.deleteTrigger(t); removed.push(fn); }
+    else kept.push(fn);
   });
-  ScriptApp.newTrigger('dailyAutomation').timeBased().atHour(9).everyDays(1).create();
-  ScriptApp.newTrigger('dailyResponsesReport').timeBased().atHour(15).everyDays(1).create();   // 3pm daily
-  ScriptApp.newTrigger('weeklyDigest').timeBased().onWeekDay(ScriptApp.WeekDay.FRIDAY).atHour(16).create(); // Fri 4pm
+  var msg = removed.length
+    ? 'Removed ' + removed.length + ' trigger(s) for functions that no longer exist: ' + removed.join(', ') + '.'
+    : 'Nothing to remove — no trigger was calling a removed function.';
+  msg += kept.length ? '\n\nStill installed (these functions exist and are internal only): ' + kept.join(', ') + '.'
+                     : '\n\nNo triggers are installed in this project now.';
+  msg += '\n\nThe premium-due ladder now lives in the Premium Due Desk (RRB KPI Tracker), at rickyrampersadbranch.com/premium-due.';
+  try { SpreadsheetApp.getUi().alert(msg); } catch (e) { Logger.log(msg); }
+  return msg;
 }
 
 // ============================== RESPONSE REPORTS ===========================
@@ -322,39 +349,6 @@ function weeklyDigest() {
       (sends['CLIENT-RESPONDED'] + sends['PAYMENT-RECEIVED']) + ' saved/paid — week ending ' + fmtDate_(new Date()),
     htmlBody: emailShell_(body), name: 'Branch Intelligence'
   });
-}
-
-/** Sends the full email sequence for ONE real policy to TEST_EMAIL only —
- *  regardless of TEST_MODE — so you can rehearse the whole journey in your
- *  own inbox without touching a client. Nothing is logged; safe to repeat. */
-function sendDemoSequence() {
-  var pick = null;
-  var book = getBook_();
-  for (var i = 0; i < book.length; i++) {
-    var p = book[i];
-    if (CONFIG.ELIGIBLE_STATUSES.indexOf(p.statusDesc) > -1 && p.days >= CONFIG.STAGE_CLIENT_1 &&
-        p.days <= CONFIG.MAX_DAYS && p.email) { pick = p; break; }
-  }
-  if (!pick) throw new Error('No eligible 45+ day Premium Paying policy with an email found in the data.');
-  var saveMode = CONFIG.TEST_MODE, saveTest = CONFIG.TEST_EMAIL;
-  CONFIG.TEST_MODE = true; // force-redirect everything in this run
-  DEMO_RUN = true;
-  try {
-    sendClient45_(pick);
-    logComm_('CLIENT-45', pick, CONFIG.TEST_EMAIL, 'SENT', 'Demo rehearsal');
-    sendClient60_(pick, commsIndex_());
-    logComm_('CLIENT-60', pick, CONFIG.TEST_EMAIL, 'SENT', 'Demo rehearsal');
-    sendAgentEmail_(pick, CONFIG.TEST_EMAIL, commsIndex_());
-    logComm_('AGENT-75', pick, CONFIG.TEST_EMAIL, 'SENT', 'Demo rehearsal');
-    sendClient90_(pick, commsIndex_());
-  } finally {
-    CONFIG.TEST_MODE = saveMode; CONFIG.TEST_EMAIL = saveTest; DEMO_RUN = false;
-  }
-  var msg = 'Demo sequence for ' + titleCase_(pick.client) + ' (' + pick.policy + ', ' + pick.days +
-    'd) sent to ' + CONFIG.TEST_EMAIL + ': 45-day, 60-day, 75-day agent, 90-day + case file. ' +
-    'Logged as DEMO entries — search this client in the portal History tab to see the timeline.';
-  try { SpreadsheetApp.getUi().alert(msg); } catch (e) { Logger.log(msg); }
-  return msg;
 }
 
 // ============================== DATA LAYER =================================
@@ -697,8 +691,10 @@ function logComm_(stage, p, recipient, status, notes) {
   ]);
 }
 
-// ============================== QUEUE LOGIC ================================
-/** Which stage (if any) is due for a row, given what was already sent. */
+// ============================== QUEUE LOGIC (READ ONLY) ====================
+/** Which stage (if any) is due for a row, given what was already sent.
+ *  Nothing sends off this any more: apiStaffDashboard reads it to SHOW who is
+ *  due, and the letters themselves are the Premium Due Desk's. */
 function stageDue_(p, sent) {
   if (CONFIG.ELIGIBLE_STATUSES.indexOf(p.statusDesc) === -1) return null;
   if (CONFIG.RESPECT_SEND_FLAG && p.send === 'N') return null;
@@ -730,160 +726,9 @@ function buildQueue_() {
   return queue;
 }
 
-function previewQueue() {
-  var q = buildQueue_();
-  var counts = { 'CLIENT-45': 0, 'CLIENT-60': 0, 'AGENT-75': 0, 'CLIENT-90': 0 };
-  q.forEach(function (i) { counts[i.stage]++; });
-  var msg = 'Queue today: ' + q.length + ' total — 45-day: ' + counts['CLIENT-45'] +
-    ', 60-day: ' + counts['CLIENT-60'] + ', 75-day agent: ' + counts['AGENT-75'] +
-    ', 90-day lapse: ' + counts['CLIENT-90'] +
-    '. Daily cap: ' + CONFIG.DAILY_SEND_CAP + '.' + (CONFIG.TEST_MODE ? ' [TEST MODE ON]' : '');
-  try { SpreadsheetApp.getUi().alert(msg); } catch (e) { Logger.log(msg); }
-  return msg;
-}
-
-// ============================== MAIN RUN ===================================
-function dailyAutomation() {
-  var queue = buildQueue_();
-  var sentCount = 0, skipped = [], results = [];
-  var users = usersIndex_();
-
-  var awaitingReview = 0;
-  for (var i = 0; i < queue.length && sentCount < CONFIG.DAILY_SEND_CAP; i++) {
-    var item = queue[i], p = item.p;
-    try {
-      if (item.stage === 'CLIENT-45' && CONFIG.SEND_MODE === 'manual') {
-        awaitingReview++;   // stays on the staff dashboard until they click Send
-        continue;
-      }
-      if (item.stage === 'AGENT-75') {
-        var agentEmail = (users.byAgentName[p.agent] || {}).email;
-        if (!agentEmail) { skipped.push('75d ' + p.policy + ' — no email for agent "' + p.agent + '" in App Users'); continue; }
-        sendAgentEmail_(p, agentEmail, item.sent);
-        logComm_('AGENT-75', p, agentEmail, 'SENT', '');
-      } else {
-        if (!p.email) { skipped.push(item.stage + ' ' + p.policy + ' — no client email'); continue; }
-        if (item.stage === 'CLIENT-45') sendClient45_(p);
-        else if (item.stage === 'CLIENT-60') sendClient60_(p, item.sent);
-        else sendClient90_(p, item.sent);
-        logComm_(item.stage, p, p.email, 'SENT', '');
-      }
-      sentCount++;
-      results.push(item.stage + '  ' + p.policy + '  ' + p.client + '  (' + p.days + 'd)');
-    } catch (err) {
-      logComm_(item.stage, p, '', 'ERROR', String(err));
-      skipped.push(item.stage + ' ' + p.policy + ' — ' + err);
-    }
-  }
-  cacheBust_();
-  var nudges = clientReminders_(sentCount);
-  sentCount += nudges;
-  var reminders = remindPending_(users);
-  sendDigest_(queue.length, sentCount, results, skipped, reminders, awaitingReview, nudges);
-}
-
-/** Every REMINDER_EVERY_DAYS after the (staff-sent) 45-day letter, nudge the
- *  client again — until they respond, staff mark a response/payment, or the
- *  60-day stage takes over. */
-function clientReminders_(alreadySent) {
-  var sent = commsIndex_(), count = 0;
-  var budget = CONFIG.DAILY_SEND_CAP - alreadySent;
-  var answered = {};
-  var svSh = ss_().getSheetByName(TABS.SURVEY);
-  if (svSh) svSh.getDataRange().getValues().slice(1).forEach(function (r) {
-    if (r[3]) answered[String(r[3])] = true;   // any survey/check-in row = response
-  });
-  getBook_().forEach(function (p) {
-    if (count >= budget) return;
-    if (CONFIG.ELIGIBLE_STATUSES.indexOf(p.statusDesc) === -1 || !p.email) return;
-    if (p.days < CONFIG.STAGE_CLIENT_1 || p.days >= CONFIG.STAGE_CLIENT_2) return;
-    var s45 = sent[p.policy + '|CLIENT-45'];
-    if (!s45) return;
-    if (answered[p.policy]) return;
-    if (sent[p.policy + '|CLIENT-RESPONDED'] || sent[p.policy + '|PAYMENT-RECEIVED']) return;
-    if (CONFIG.RESPECT_SEND_FLAG && p.send === 'N') return;
-    var lastNudge = sent[p.policy + '|REMIND-CLIENT'];
-    var lastTouch = new Date(lastNudge ? lastNudge.when : s45.when);
-    var daysSince = (Date.now() - lastTouch.getTime()) / 86400000;
-    if (daysSince < CONFIG.REMINDER_EVERY_DAYS) return;
-    try {
-      sendClientNudge_(p, fmtDate_(new Date(s45.when)));
-      logComm_('REMIND-CLIENT', p, p.email, 'SENT', 'No response since 45-day letter');
-      count++;
-    } catch (e) { logComm_('REMIND-CLIENT', p, p.email, 'ERROR', String(e)); }
-  });
-  return count;
-}
-
-/** Short, warm 3-day nudge referencing the 45-day letter. */
-function sendClientNudge_(p, sentDate) {
-  var body =
-    '<p style="font-size:15px">Dear ' + esc_(titleCase_(firstName_(p.client))) + ',</p>' +
-    '<p style="font-size:14px;color:#334;line-height:1.7">Just a gentle nudge on the note we sent you on <b>' + esc_(sentDate) +
-    '</b> about policy <b>' + esc_(p.policy) + '</b> (' + esc_(p.plan) + '). We have not heard back yet, and we do not want ' +
-    'this to slip while your protection is still fully intact.</p>' +
-    '<p style="font-size:14px;color:#334;line-height:1.7">The quick questions take under a minute — one tap tells us exactly how to help:</p>' +
-    checkinBlock_(p, 'CLIENT-45') +
-    '<p style="font-size:14px;color:#334;line-height:1.7">Already sorted it? Wonderful — reply to this email or tell ' +
-    (p.agent ? esc_(titleCase_(p.agent)) : 'your agent') + ' and we will close the loop with our thanks.</p>' +
-    '<p style="font-size:14px;color:#334">Warm regards,<br><b>' + esc_(CONFIG.BRANCH_NAME) + '</b></p>';
-  sendMail_(p.email, 'A gentle nudge — your Guardian Life policy ' + p.policy, emailShell_(body));
-}
-
-/** Daily nudges to agents (form not filled) and managers (form not answered)
- *  until they respond. One reminder per person per day, bundled. */
-function remindPending_(users) {
-  var sent = commsIndex_(), acts = actionsIndex_(), count = 0;
-  var today = Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd');
-  function remindedToday(key) {
-    var rec = sent[key + '|REMIND'];
-    return rec && Utilities.formatDate(new Date(rec.when), tz_(), 'yyyy-MM-dd') === today;
-  }
-  // Agents: AGENT-75 sent, no Conservation Action row yet, still on the book
-  var byAgent = {};
-  getBook_().forEach(function (p) {
-    if (sent[p.policy + '|AGENT-75'] && !acts.byPolicy[p.policy] &&
-        CONFIG.ELIGIBLE_STATUSES.indexOf(p.statusDesc) > -1 && p.days <= CONFIG.MAX_DAYS) {
-      (byAgent[p.agent] = byAgent[p.agent] || []).push(p);
-    }
-  });
-  Object.keys(byAgent).forEach(function (agent) {
-    var u = users.byAgentName[agent];
-    if (!u || !u.email || remindedToday('AGT:' + agent)) return;
-    var list = byAgent[agent].map(function (p) {
-      return '<li><b>' + esc_(titleCase_(p.client)) + '</b> — ' + esc_(p.policy) + ' (' + p.days + ' days)</li>';
-    }).join('');
-    sendMail_(u.email, 'Reminder: ' + byAgent[agent].length + ' conservation form(s) still outstanding',
-      emailShell_('<p style="font-size:14px">Hi ' + esc_(u.name.split(' ')[0]) + ',</p>' +
-        '<p style="font-size:14px;color:#334">These clients passed the 75-day mark and are still waiting on your Conservation Action form. This reminder repeats daily until each form is submitted:</p>' +
-        '<ul style="font-size:13px;color:#334">' + list + '</ul>' +
-        (webUrl_() ? '<p style="text-align:center"><a href="' + webUrl_() + '?page=agent" style="background:' + BRAND.gold + ';color:' + BRAND.navy + ';padding:12px 26px;border-radius:8px;text-decoration:none;font-weight:700">Open my cases</a></p>' : '')));
-    logComm_('REMIND', { policy: 'AGT:' + agent, clientNo: '', client: agent, agent: agent, days: '' }, u.email, 'SENT', byAgent[agent].length + ' pending forms');
-    count++;
-  });
-  // Managers: submissions sitting in Pending Manager
-  var byMgr = {};
-  acts.rows.forEach(function (a) {
-    if (a.status !== 'Pending Manager') return;
-    var agentUser = users.byEmail[cleanEmail_(a.agentEmail)];
-    var mgr = (agentUser && agentUser.managerEmail) || CONFIG.MANAGER_EMAIL;
-    (byMgr[mgr] = byMgr[mgr] || []).push(a);
-  });
-  Object.keys(byMgr).forEach(function (mgr) {
-    if (remindedToday('MGR:' + mgr)) return;
-    var list = byMgr[mgr].map(function (a) {
-      return '<li><b>' + esc_(titleCase_(String(a.client))) + '</b> — ' + esc_(a.policy) + ' (form ' + esc_(a.id) + ', submitted ' + esc_(fmtDate_(new Date(a.submitted))) + ')</li>';
-    }).join('');
-    sendMail_(mgr, 'Reminder: ' + byMgr[mgr].length + ' conservation form(s) awaiting your response',
-      emailShell_('<p style="font-size:14px;color:#334">These agent submissions are waiting on your review. This reminder repeats daily until each is answered:</p>' +
-        '<ul style="font-size:13px;color:#334">' + list + '</ul>' +
-        (webUrl_() ? '<p style="text-align:center"><a href="' + webUrl_() + '?page=manager" style="background:' + BRAND.navy + ';color:#fff;padding:12px 26px;border-radius:8px;text-decoration:none;font-weight:700">Review now</a></p>' : '')));
-    logComm_('REMIND', { policy: 'MGR:' + mgr, clientNo: '', client: mgr, agent: '', days: '' }, mgr, 'SENT', byMgr[mgr].length + ' pending reviews');
-    count++;
-  });
-  return count;
-}
-
+// ============================== EMAIL PLUMBING =============================
+/** The only sender left in this file. Its one client-facing caller is
+ *  apiManagerRespond — a manager pressing respond on a conservation plan. */
 function sendMail_(to, subject, html) {
   var target = CONFIG.TEST_MODE ? CONFIG.TEST_EMAIL : to;
   var subj = (CONFIG.TEST_MODE ? '[TEST → ' + to + '] ' : '') + subject;
@@ -893,7 +738,6 @@ function sendMail_(to, subject, html) {
   });
 }
 
-// ============================== EMAIL TEMPLATES ============================
 function emailShell_(bodyHtml) {
   return '<div style="background:#f4f6f9;padding:24px 8px;font-family:Segoe UI,Arial,sans-serif">' +
     '<div style="max-width:640px;margin:0 auto;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0">' +
@@ -907,341 +751,8 @@ function emailShell_(bodyHtml) {
     'If you have already settled your premium, please disregard this notice with our thanks.</div></div></div>';
 }
 
-function historyTable_(policies, highlightPolicy) {
-  // Beneficiary column appears as soon as the data tab carries beneficiary info
-  var hasBene = policies.some(function (q) { return q.beneficiary; });
-  var rows = policies.map(function (q) {
-    var hot = highlightPolicy && q.policy === highlightPolicy;
-    var td = 'padding:10px 12px;border-bottom:1px solid #eef2f7;' + (hot ? 'background:#fdf1f1;' : '');
-    return '<tr>' +
-      '<td style="' + td + (hot ? 'border-left:4px solid #b02a2a;font-weight:700;color:#b02a2a' : '') + '">' + esc_(q.policy) + '</td>' +
-      '<td style="' + td + '">' + esc_(q.plan) + '</td>' +
-      '<td style="' + td + '">' + esc_(q.issue) + '</td>' +
-      '<td style="' + td + 'text-align:right">' + money_(q.premium) + '</td>' +
-      '<td style="' + td + (hot ? 'color:#b02a2a;font-weight:700' : '') + '">' + esc_(q.paidTo || '—') + '</td>' +
-      (hasBene ? '<td style="' + td + '">' + esc_(q.beneficiary ? titleCase_(q.beneficiary) : '—') + '</td>' : '') +
-      '<td style="' + td + '">' + esc_(q.statusDesc) + '</td></tr>';
-  }).join('');
-  return '<table style="border-collapse:collapse;width:100%;font-size:13px;margin:20px 0 6px">' +
-    '<tr style="background:' + BRAND.light + '">' +
-    '<th style="padding:10px 12px;text-align:left">Policy</th><th style="padding:10px 12px;text-align:left">Plan</th>' +
-    '<th style="padding:10px 12px;text-align:left">Issued</th><th style="padding:10px 12px;text-align:right">Premium</th>' +
-    '<th style="padding:10px 12px;text-align:left">Paid To</th>' +
-    (hasBene ? '<th style="padding:10px 12px;text-align:left">Beneficiary</th>' : '') +
-    '<th style="padding:10px 12px;text-align:left">Status</th></tr>' +
-    rows + '</table>' +
-    (highlightPolicy ? '<div style="font-size:12px;color:#b02a2a;margin:0 0 14px">■ Highlighted in red: the policy that needs your attention.</div>' : '');
-}
-
-/** "On record for you" block — address & contact details, so notices never
- *  miss the client. Corrections come back through the check-in. */
-function onRecordBlock_(p) {
-  if (!p.address && !p.phone && !p.email) return '';
-  return '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:16px 18px;margin:18px 0;background:#fbfdff">' +
-    '<div style="font-weight:700;color:' + BRAND.navy + ';font-size:13px;margin-bottom:6px">ON RECORD FOR YOU — so a notice never misses you</div>' +
-    (p.address ? '<div style="font-size:13px;color:#334;line-height:1.6">🏠 Address: <b>' + esc_(p.address) + '</b></div>' : '') +
-    (p.phone ? '<div style="font-size:13px;color:#334;line-height:1.6">📞 Phone: <b>' + esc_(p.phone) + '</b></div>' : '') +
-    (p.email ? '<div style="font-size:13px;color:#334;line-height:1.6">✉️ Email: <b>' + esc_(p.email) + '</b></div>' : '') +
-    '<div style="font-size:12px;color:#889;margin-top:6px">Moved, changed numbers, new email? Tell us in the quick questions below — it takes one line.</div></div>';
-}
-
-/** Payment-method intelligence: what their current Billing type tells us about
- *  WHY the premium stopped, and which fix to lead with. Grounded in
- *  persistency research: automatic methods lapse far less than billed ones;
- *  failed drafts and job changes silently kill auto-payments. */
-function payInsight_(p) {
-  var b = String(p.billing || '').toLowerCase();
-  if (/banker|standing|order/.test(b)) return {
-    key: 'bank-order',
-    inline: 'Since you pay by <b>' + esc_(p.billing) + '</b>, the most common cause is a standing order that quietly stopped at the bank ' +
-      '(a changed account, a card reissue, one short month) — one call to your bank usually restarts it, and we can send the exact form.',
-    chips: ['Bank standing order (automatic)', 'Salary deduction', 'Online banking transfer', 'Not sure — talk me through the options']
-  };
-  if (/salary|payroll|deduction/.test(b)) return {
-    key: 'salary',
-    inline: 'Since you pay by <b>' + esc_(p.billing) + '</b>, a job or payroll change may have switched your deduction off without telling ' +
-      'anyone — one form re-establishes it, or we can chase the payroll side for you.',
-    chips: ['Salary deduction', 'Bank standing order (automatic)', 'Online banking transfer', 'Not sure — talk me through the options']
-  };
-  if (/direct/.test(b)) return {
-    key: 'direct-bill',
-    inline: 'Since you pay by <b>' + esc_(p.billing) + '</b>, every due date depends on memory — and industry experience is clear that clients ' +
-      'on automatic payment keep their policies at far higher rates. Five minutes sets one up, and this email never needs to happen again.',
-    chips: ['Bank standing order (automatic)', 'Salary deduction', 'Online banking transfer', 'Keep my current method']
-  };
-  return {
-    key: 'other',
-    inline: 'Many clients also switch to a bank standing order or salary deduction so this never needs a reminder again — we can set that up for you.',
-    chips: ['Bank standing order (automatic)', 'Salary deduction', 'Online banking transfer', 'Not sure — talk me through the options']
-  };
-}
-
-/** Tap-to-answer blocks INSIDE the email — email apps strip real dropdowns,
- *  so every option is a button: one tap records the answer immediately and
- *  opens the check-in with it pre-selected and the rest as dropdowns. */
-function tapAnswersBlock_(p, stage) {
-  var base = webUrl_();
-  if (!base) return '';
-  var t = tokenForClient_(p.clientNo);
-  var link = base + '?page=checkin&t=' + t + '&pol=' + encodeURIComponent(p.policy) + '&stage=' + stage;
-  function q(n, text) {
-    return '<div style="font-weight:700;color:' + BRAND.navy + ';font-size:14px;margin-top:16px">' + n + ' · ' + text + '</div>';
-  }
-  function chips(param, opts) {
-    return '<div style="margin:8px 0 4px">' + opts.map(function (o) {
-      return '<a href="' + link + '&' + param + '=' + encodeURIComponent(o) + '" style="display:inline-block;margin:3px;background:' +
-        BRAND.light + ';color:' + BRAND.navy + ';border:1px solid #cfdded;padding:9px 14px;border-radius:20px;' +
-        'text-decoration:none;font-weight:600;font-size:12px">' + esc_(o) + '</a>';
-    }).join('') + '</div>';
-  }
-  var ins = payInsight_(p);
-  return '<div style="background:#fafbfe;border:1px solid #e2e8f0;border-radius:10px;padding:24px;margin:24px 0">' +
-    '<div style="font-weight:700;color:' + BRAND.navy + ';font-size:16px;text-align:center;margin-bottom:4px">Help us get this right — answer right here, one tap per question</div>' +
-    '<div style="font-size:13px;color:#556;text-align:center;margin-bottom:8px">Every tap is saved instantly and goes straight to ' +
-    (p.agent ? esc_(titleCase_(p.agent)) : 'your agent') + ' and our branch team. Answer one or answer all.</div>' +
-    q(1, 'Going forward, how would you prefer to pay?') + chips('pre_pay', ins.chips) +
-    q(2, p.beneficiary ? 'Your beneficiary on record is <span style="color:#7a5a10">' + esc_(titleCase_(p.beneficiary)) + '</span> — still right?'
-                       : 'Are your beneficiary details up to date?') +
-    chips('pre_bene', ['Yes — my beneficiary is current', 'No — please contact me to update it', 'Not sure — please tell me who is on record']) +
-    q(3, 'Are your address and contact details still current?') +
-    chips('pre_addr', ['All current — nothing to change', 'My address has changed (details below)', 'My phone or email has changed (details below)']) +
-    q(4, 'What has made it difficult to keep the premium current?') +
-    chips('pre_diff', ['Cash flow is tight right now', 'I forgot / didn\'t get the bill', 'Bank or salary-deduction issue',
-                       'I\'m reconsidering whether I need this policy', 'I\'ve already paid — this may be an error']) +
-    q(5, 'What would help you most?') +
-    chips('pre_help', ['A payment plan to catch up gradually', 'Switching to a different payment schedule (monthly/quarterly)',
-                       'A short premium break while I get back on my feet', 'Using my policy\'s own values to keep cover going',
-                       'Setting up automatic payments so this doesn\'t recur', 'A call from my agent to talk it through']) +
-    q(6, 'Anything you’d like to explore while we’re in touch?') +
-    chips('pre_interest', ['Increasing my coverage', 'Updating or changing my beneficiary', 'Protection for my spouse or children',
-                           'Health or critical illness cover', 'Education or retirement savings', 'A full financial review with my agent',
-                           'Not right now — let\'s just sort this policy']) +
-    q(7, 'Best way and time to reach you?') +
-    '<div style="font-size:13px;color:#556;margin:6px 0 12px">One line on the next screen — it opens with everything you tapped already saved.</div>' +
-    '<div style="text-align:center;margin-top:8px"><a href="' + link + '" style="background:' + BRAND.gold + ';color:' + BRAND.navy +
-    ';padding:14px 34px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px">Finish &amp; send my answers</a></div></div>';
-}
-
-/** One clear CTA into the check-in questionnaire (used on the 60-day email;
- *  the 45-day letter uses the richer tap-to-answer block). The questions
- *  themselves are previewed so the client knows exactly what's coming. */
-function checkinBlock_(p, stage) {
-  var base = webUrl_();
-  if (!base) return '';
-  var t = tokenForClient_(p.clientNo);
-  var link = base + '?page=checkin&t=' + t + '&pol=' + encodeURIComponent(p.policy) + '&stage=' + stage;
-  var qs = ['How would you prefer to pay going forward?',
-            'Are your beneficiary details up to date?',
-            'Are your address and contact details still current?',
-            'What has made it difficult to keep the premium current?',
-            'What would help you most right now?',
-            'Anything you’d like to explore — more coverage, family protection, savings?',
-            'When and how should we reach you?'];
-  return '<div style="background:#fafbfe;border:1px solid #e2e8f0;border-radius:10px;padding:24px;text-align:center;margin:24px 0">' +
-    '<div style="font-weight:700;color:' + BRAND.navy + ';font-size:16px;margin-bottom:6px">Help us get this right — 60 seconds</div>' +
-    '<div style="font-size:13px;color:#556;margin-bottom:12px">Seven quick questions, all tap-to-answer:</div>' +
-    '<table style="margin:0 auto 16px;text-align:left;font-size:13px;color:#334;line-height:1.9">' +
-    qs.map(function (q, i) {
-      return '<tr><td style="color:' + BRAND.gold + ';font-weight:700;padding-right:10px;vertical-align:top">' + (i + 1) + '.</td><td>' + esc_(q) + '</td></tr>';
-    }).join('') + '</table>' +
-    '<a href="' + link + '" style="background:' + BRAND.gold + ';color:' + BRAND.navy + ';padding:14px 34px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px">Answer the quick questions</a>' +
-    '<div style="font-size:12px;color:#889;margin-top:10px">Your answers go straight to your agent and our branch team.</div></div>';
-}
-
-/** Soft cross-sell block for the 45-day letter: life changes → review moments.
- *  Marketing by service — every item is answerable inside the check-in. */
-function lifeChangesBlock_(p) {
-  var items = [
-    ['💍', 'Married, or a new addition to the family?', 'A beneficiary update takes minutes — and a growing family often means it’s time to review how much cover they’d have.'],
-    ['🏠', 'New home, new job, or bigger responsibilities?', 'Many clients increase their coverage as life grows — often for less than they expect.'],
-    ['🛡️', 'Health and critical illness', 'Ask ' + (p.agent ? esc_(titleCase_(p.agent).split(' ')[0]) : 'your agent') + ' about protection that pays you while you recover — not only after.'],
-    ['🎓', 'Education & retirement goals', 'The same visit that fixes a premium can start a savings plan for what’s next.']
-  ];
-  return '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:20px 22px;margin:22px 0;background:#fffdf7">' +
-    '<div style="font-weight:700;color:' + BRAND.navy + ';font-size:15px;margin-bottom:4px">Life changes. Your protection should keep up.</div>' +
-    '<div style="font-size:13px;color:#556;margin-bottom:12px">While we have you — a 2-minute review with ' +
-    (p.agent ? esc_(titleCase_(p.agent)) : 'your agent') + ' can cover any of these, in the same conversation:</div>' +
-    items.map(function (it) {
-      return '<div style="display:flex;gap:10px;margin:9px 0"><div style="font-size:17px">' + it[0] + '</div>' +
-        '<div style="font-size:13px;color:#334;line-height:1.6"><b style="color:' + BRAND.navy + '">' + it[1] + '</b><br>' + it[2] + '</div></div>';
-    }).join('') +
-    '<div style="font-size:12px;color:#889;margin-top:10px">Tick what interests you in the quick questions above — no obligation, ever.</div></div>';
-}
-
-/** Gold-highlighted servicing agent chip for client letters. */
-function agentChip_(agentName) {
-  if (!agentName) return '';
-  return '<span style="background:#fdf6e7;border:1px solid #eed9a9;color:#7a5a10;border-radius:14px;padding:2px 12px;font-weight:700;white-space:nowrap">' +
-    esc_(titleCase_(agentName)) + '</span>';
-}
-
-function portalBlock_(p) {
-  var base = webUrl_();
-  if (!base) return '';
-  var t = tokenForClient_(p.clientNo);
-  return '<p style="text-align:center;margin:20px 0"><a href="' + base + '?page=client&t=' + t +
-    '" style="background:' + BRAND.blue + ';color:#fff;padding:12px 26px;border-radius:8px;text-decoration:none;font-weight:700">View my policy portfolio</a></p>';
-}
-
 function clientPolicies_(clientNo) {
   return getBook_().filter(function (q) { return q.clientNo === clientNo; });
-}
-
-/** 45-day: thank-you + history + interactive check-in (questions stored,
- *  team notified). Tone: appreciation first, zero guilt, concrete options. */
-function sendClient45_(p) {
-  sendMail_(p.email, esc_(titleCase_(firstName_(p.client))) + ', a quick check-in on your Guardian Life policy ' + p.policy, emailShell_(build45Body_(p)));
-}
-
-function build45Body_(p) {
-  var all = clientPolicies_(p.clientNo);
-  var years = '';
-  var m = String(p.issue || '').match(/(\d{4})/);
-  if (m) { var y = new Date().getFullYear() - Number(m[1]); if (y >= 2) years = y + ' years'; }
-  var body =
-    '<p style="font-size:15px">Dear ' + esc_(titleCase_(firstName_(p.client))) + ',</p>' +
-    '<p style="font-size:14px;color:#334;line-height:1.7">Some relationships deserve a proper thank-you, and this is one of them. ' +
-    (years ? 'For <b>' + esc_(years) + '</b> you' : 'You') + ' have trusted ' +
-    (p.agent ? 'your servicing agent, ' + agentChip_(p.agent) + ', and ' : '') +
-    'our <b style="color:' + BRAND.navy + '">' + esc_(CONFIG.BRANCH_NAME.split('—')[0].trim()) + '</b> family with something deeply personal — ' +
-    'the protection of the people you love. That trust is the foundation of everything we do, and we never take it for granted.</p>' +
-    '<p style="font-size:14px;color:#334;line-height:1.7">' +
-    (p.agent ? esc_(titleCase_(p.agent).split(' ')[0]) + ' and our' : 'Our') +
-    ' branch team review every client’s file personally, and yours came up this week. Before anything else: this is a service note, not a demand — ' +
-    'we simply noticed something we don’t want you to lose.</p>' +
-    '<p style="font-size:14px;color:#334;line-height:1.7">Here is your policy record with our branch — the one needing attention is marked in red:</p>' +
-    historyTable_(all, p.policy) +
-    '<div style="background:#fdf1f1;border:1px solid #f3caca;border-left:4px solid #b02a2a;border-radius:8px;padding:14px 16px;margin:18px 0">' +
-    '<div style="font-size:14px;color:#7a1f1f;line-height:1.7">Policy <b>' + esc_(p.policy) + '</b> (' + esc_(p.plan) +
-    ') is paid to <b>' + esc_(p.paidTo || 'a date now past') + '</b>' +
-    (p.billing ? ', currently paid by <b>' + esc_(p.billing) + '</b>' : '') +
-    (p.beneficiary ? '. Beneficiary on record: <b>' + esc_(titleCase_(p.beneficiary)) + '</b>' : '') +
-    '. Your protection is still fully intact today — this note is about keeping it that way.</div></div>' +
-    onRecordBlock_(p) +
-    '<p style="font-size:14px;color:#334;line-height:1.7">Life gets busy and payments slip — it happens to many of our best clients. ' +
-    'What matters is that the protection and the value you have built stay intact, and right now they still are. ' +
-    payInsight_(p).inline + '</p>' +
-    '<p style="font-size:14px;color:#334;line-height:1.7"><b>Ways to bring it current:</b> ' + esc_(CONFIG.PAYMENT_INSTRUCTIONS) + '</p>' +
-    tapAnswersBlock_(p, 'CLIENT-45') +
-    '<p style="font-size:14px;color:#334;line-height:1.7">If money is simply tight right now, say so in the questions above — there are options ' +
-    '(catch-up plans, payment mode changes, short premium breaks, using your policy’s own values to hold cover) and we would far rather arrange one than see you lose what you’ve built.</p>' +
-    lifeChangesBlock_(p) +
-    '<p style="font-size:14px;color:#334;line-height:1.7">Thank you again for choosing ' +
-    (p.agent ? esc_(titleCase_(p.agent)) + ' and ' : '') + 'our branch. It is a privilege to stand behind you.</p>' +
-    '<p style="font-size:14px;color:#334">With warm appreciation,<br><b>' + esc_(CONFIG.BRANCH_NAME) + '</b>' +
-    (p.agent ? '<br><span style="font-size:13px;color:#556">Servicing agent: ' + esc_(titleCase_(p.agent)) + '</span>' : '') + '</p>';
-  return body;
-}
-
-/** Letter template preview for the review queue — see exactly what the client
- *  would receive before clicking Send. */
-function apiPreviewLetter(token, policy) {
-  auth_(token, ['staff', 'manager']);
-  var p = getBook_().filter(function (q) { return q.policy === String(policy); })[0];
-  if (!p) return { ok: false, error: 'Policy not found' };
-  return { ok: true, html: emailShell_(build45Body_(p)),
-           subject: titleCase_(firstName_(p.client)) + ', a quick check-in on your Guardian Life policy ' + p.policy };
-}
-
-/** 60-day: references the 45-day email; mirrors the client's own check-in
- *  answers back to them if they responded, re-invites gently if not. */
-function sendClient60_(p, sent) {
-  var prev = sent[p.policy + '|CLIENT-45'];
-  var prevDate = prev && prev.when ? fmtDate_(new Date(prev.when)) : null;
-  var answers = surveyFor_(p.clientNo);
-  var last = answers.length ? answers[answers.length - 1] : null;
-  var answeredBlock = '';
-  if (last && (last.difficulty || last.help || last.payMethod || last.beneficiary)) {
-    answeredBlock =
-      '<div style="background:#fbfdff;border:1px solid #dbe6f2;border-radius:10px;padding:14px;margin:12px 0">' +
-      '<div style="font-weight:700;color:' + BRAND.navy + ';font-size:13px;margin-bottom:4px">You told us:</div>' +
-      (last.difficulty ? '<div style="font-size:13px;color:#334">• What made it difficult: <b>' + esc_(last.difficulty) + '</b></div>' : '') +
-      (last.help ? '<div style="font-size:13px;color:#334">• What would help most: <b>' + esc_(last.help) + '</b></div>' : '') +
-      (last.payMethod ? '<div style="font-size:13px;color:#334">• Preferred way to pay going forward: <b>' + esc_(last.payMethod) + '</b></div>' : '') +
-      (last.beneficiary && /yes|not sure/i.test(last.beneficiary) ? '<div style="font-size:13px;color:#334">• Beneficiary details: <b>' + esc_(last.beneficiary) + '</b></div>' : '') +
-      '<div style="font-size:13px;color:#334;margin-top:6px">That is exactly what our team is preparing for you — expect contact shortly. ' +
-      'If anything has changed since, just reply to this email.</div></div>';
-  }
-  var body =
-    '<p style="font-size:15px">Dear ' + esc_(titleCase_(firstName_(p.client))) + ',</p>' +
-    '<p style="font-size:14px;color:#334;line-height:1.6">' +
-    (prevDate
-      ? 'We wrote to you on <b>' + esc_(prevDate) + '</b> with your policy record and a short check-in, and we promised to stay close — so here we are.'
-      : 'We recently reviewed your policy record and wanted to reach out personally.') +
-    ' The premium on policy <b>' + esc_(p.policy) + '</b> is still outstanding' +
-    (p.paidTo ? ' (paid to <b>' + esc_(p.paidTo) + '</b>)' : '') + '.</p>' +
-    answeredBlock +
-    (p.lapseDate ? '<p style="font-size:14px;color:#334;line-height:1.6">To be transparent with you: if nothing changes, this policy is projected to lapse around <b>' +
-      esc_(p.lapseDate) + '</b>. A lapse pauses your protection, and restarting later usually costs more and can require fresh medical evidence — so acting this month genuinely matters.</p>' : '') +
-    '<p style="font-size:14px;color:#334;line-height:1.6">' + esc_(CONFIG.PAYMENT_INSTRUCTIONS) +
-    (last ? '' : ' If your circumstances have changed, the 60-second check-in below tells us exactly how to help — catch-up plans, a different payment schedule, a short premium break, or using the policy’s own values to keep cover going.') + '</p>' +
-    portalBlock_(p) +
-    (last
-      ? '<p style="font-size:13px;color:#556">Thank you again for the answers you shared — they have been passed to our branch team and your agent.</p>'
-      : checkinBlock_(p, 'CLIENT-60')) +
-    '<p style="font-size:14px;color:#334">We’re on your side,<br><b>' + esc_(CONFIG.BRANCH_NAME) + '</b></p>';
-  sendMail_(p.email, 'Following up on our ' + (prevDate ? esc_(prevDate) + ' ' : '') + 'note — policy ' + p.policy, emailShell_(body));
-}
-
-/** 90-day: lapse stage. References the whole history (emails, the client's own
- *  words, the agent/manager plan) — honest, urgent, still on the client's side. */
-function sendClient90_(p, sent) {
-  var d45 = sent[p.policy + '|CLIENT-45'], d60 = sent[p.policy + '|CLIENT-60'];
-  var answers = surveyFor_(p.clientNo);
-  var last = answers.length ? answers[answers.length - 1] : null;
-  var act = actionsIndex_().byPolicy[p.policy];
-  var historyItems = [];
-  if (d45) historyItems.push('our policy review and check-in on <b>' + esc_(fmtDate_(new Date(d45.when))) + '</b>');
-  if (d60) historyItems.push('our follow-up on <b>' + esc_(fmtDate_(new Date(d60.when))) + '</b>');
-  if (last && (last.difficulty || last.help)) historyItems.push('your reply telling us ' +
-    (last.difficulty ? '“' + esc_(last.difficulty) + '”' : 'what would help'));
-  if (act && act.status === 'Responded') historyItems.push('the plan your agent and manager prepared for you');
-  var planBlock = '';
-  if (act) {
-    planBlock = '<div style="background:#fbfdff;border:1px solid #dbe6f2;border-radius:10px;padding:14px;margin:12px 0">' +
-      '<div style="font-weight:700;color:' + BRAND.navy + ';font-size:13px;margin-bottom:4px">The plan we prepared for you:</div>' +
-      '<div style="font-size:13px;color:#334">' + esc_(act.recommended || act.outcome || 'A personal payment arrangement') +
-      (act.managerResponse ? ' — approved by branch management: “' + esc_(act.managerResponse) + '”' : '') +
-      '</div><div style="font-size:13px;color:#334;margin-top:4px">It is still available — one call activates it.</div></div>';
-  }
-  var body =
-    '<p style="font-size:15px">Dear ' + esc_(titleCase_(firstName_(p.client))) + ',</p>' +
-    '<p style="font-size:14px;color:#334;line-height:1.6">This is the note we hoped we would not have to send. Policy <b>' +
-    esc_(p.policy) + '</b> (' + esc_(p.plan) + ') has now reached the lapse stage' +
-    (p.lapseDate ? ' — projected to lapse around <b>' + esc_(p.lapseDate) + '</b>' : '') + '.</p>' +
-    (historyItems.length ? '<p style="font-size:14px;color:#334;line-height:1.6">We have stayed in touch along the way — ' +
-      historyItems.join(', ') + ' — because this policy is worth fighting for.</p>' : '') +
-    planBlock +
-    '<p style="font-size:14px;color:#334;line-height:1.7"><b>What a lapse actually means for you:</b> your protection stops, ' +
-    'and reinstating later usually needs the arrears paid plus fresh evidence of good health — cover that costs more, or may not be offered at all. ' +
-    'Every year of premiums you have already paid was building something; letting it go now is the most expensive option on the table.</p>' +
-    '<p style="font-size:14px;color:#334;line-height:1.7"><b>At this stage the paths are simple, and we will walk any of them with you:</b></p>' +
-    '<ul style="font-size:13px;color:#334;line-height:1.8">' +
-    '<li><b>Settle the arrears this week</b> — ' + esc_(CONFIG.PAYMENT_INSTRUCTIONS) + '</li>' +
-    '<li><b>A structured catch-up arrangement</b> — split the outstanding amount over the coming months, agreed in one call.</li>' +
-    '<li><b>A restructure conversation</b> — sometimes a smaller, sustainable premium protects your family better than a lapsed larger one.</li>' +
-    '<li><b>If it does lapse</b> — ask us about reinstatement early; the sooner you apply, the simpler and cheaper it tends to be.</li></ul>' +
-    portalBlock_(p) +
-    '<p style="font-size:14px;color:#334;line-height:1.7">One conversation is all it takes. We are ready when you are.</p>' +
-    exitSurveyBlock_(p) +
-    '<p style="font-size:14px;color:#334">Still in your corner,<br><b>' + esc_(CONFIG.BRANCH_NAME) + '</b>' +
-    (p.agent ? '<br><span style="font-size:13px;color:#556">Servicing agent: ' + esc_(titleCase_(p.agent)) + '</span>' : '') + '</p>';
-  sendMail_(p.email, 'Last chance to protect policy ' + p.policy + ' — we can still fix this together', emailShell_(body));
-  sendCaseFile90_(p, sent);
-}
-
-/** Final-word survey at the lapse stage — captures for the record why the
- *  policy could not be saved and how the client experienced us. */
-function exitSurveyBlock_(p) {
-  var base = webUrl_();
-  if (!base) return '';
-  var t = tokenForClient_(p.clientNo);
-  var link = base + '?page=exit&t=' + t + '&pol=' + encodeURIComponent(p.policy);
-  return '<div style="background:#fafbfe;border:1px solid #e2e8f0;border-radius:10px;padding:22px;text-align:center;margin:22px 0">' +
-    '<div style="font-weight:700;color:' + BRAND.navy + ';font-size:15px;margin-bottom:6px">Whatever you decide — help us understand</div>' +
-    '<div style="font-size:13px;color:#556;margin-bottom:14px">Two minutes, completely honest. If we could not save this policy, we want to know why, ' +
-    'what we should have done differently, and whether you would want us to reach out when the time is right again. It goes on your file and it makes us better.</div>' +
-    '<a href="' + link + '" style="background:' + BRAND.navy + ';color:#fff;padding:13px 30px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px">Share your final word</a></div>';
 }
 
 /** Internal case file at day 90 — the complete record of how we assisted this
@@ -1267,66 +778,6 @@ function sendCaseFile90_(p, sent) {
     name: 'Branch Automation'
   });
   logComm_('CASE-90', p, to, 'SENT', 'Internal case file');
-}
-
-/** 75-day: to the servicing agent — full context pack: both client emails,
- *  the client's own check-in answers, and the fact find with ratios. */
-function sendAgentEmail_(p, agentEmail, sent) {
-  var s45 = sent[p.policy + '|CLIENT-45'], s60 = sent[p.policy + '|CLIENT-60'];
-  var surveys = surveyFor_(p.clientNo);
-  var surveyHtml = surveys.length
-    ? surveys.map(function (s) {
-        return '<li>Responded ' + esc_(fmtDate_(new Date(s.when))) +
-          (s.difficulty ? ' · difficulty: <b>' + esc_(s.difficulty) + '</b>' : '') +
-          (s.help ? ' · wants: <b>' + esc_(s.help) + '</b>' : '') +
-          (s.payMethod ? ' · pay by: <b>' + esc_(s.payMethod) + '</b>' : '') +
-          (s.beneficiary ? ' · beneficiary: <b>' + esc_(s.beneficiary) + '</b>' : '') +
-          (s.interest && !/not right now/i.test(s.interest) ? ' · <b style="color:#1a7f43">★ interested in: ' + esc_(s.interest) + '</b>' : '') +
-          (s.contactUpdate && !/current/i.test(s.contactUpdate) ? ' · <b style="color:#b02a2a">⚠ contact update: ' + esc_(s.contactUpdate) + '</b>' : '') +
-          (s.bestContact ? ' · reach them: <b>' + esc_(s.bestContact) + '</b>' : '') +
-          (s.comment ? ' — “' + esc_(s.comment) + '”' : '') + '</li>';
-      }).join('')
-    : '<li>No check-in response yet — you are going in without their side of the story, so lead by listening.</li>';
-  var base = webUrl_();
-  var body =
-    '<p style="font-size:15px">Hi ' + esc_(firstName_(agentEmail.split('@')[0])) + ',</p>' +
-    '<p style="font-size:14px;color:#334;line-height:1.6"><b>' + esc_(titleCase_(p.client)) + '</b> (client #' + esc_(p.clientNo) +
-    ') is now <b>' + p.days + ' days</b> in arrears on policy <b>' + esc_(p.policy) + '</b> (' + esc_(p.plan) +
-    ', premium ' + money_(p.premium) + ', paid to ' + esc_(p.paidTo || '—') +
-    (p.lapseDate ? ', projected lapse ' + esc_(p.lapseDate) : '') + '). This case is now yours to conserve.</p>' +
-    '<p style="font-size:14px;color:#334;line-height:1.6"><b>What the branch has already done:</b></p><ul style="font-size:13px;color:#334">' +
-    '<li>45-day client care email ' + (s45 ? 'sent <b>' + esc_(fmtDate_(new Date(s45.when))) + '</b> (policy history + check-in questions)' : '<b>not sent</b> (no valid email on file)') + '</li>' +
-    '<li>60-day follow-up ' + (s60 ? 'sent <b>' + esc_(fmtDate_(new Date(s60.when))) + '</b> (referenced the 45-day note' + (surveys.length ? ' and their answers' : '') + ')' : 'not sent yet') + '</li>' +
-    '<li>Client phone: <b>' + esc_(p.phone || 'not on file') + '</b> · email: <b>' + esc_(p.email || 'not on file') + '</b></li></ul>' +
-    '<p style="font-size:14px;color:#334;line-height:1.6"><b>In the client’s own words (check-in answers):</b></p><ul style="font-size:13px;color:#334">' + surveyHtml + '</ul>' +
-    clientIntelHtml_(p) +
-    '<p style="font-size:14px;color:#334;line-height:1.6">Use the portfolio picture above when you call: an only-policy client losing their cover means losing the client; ' +
-    'a household with other policies slipping needs one conversation that rescues all of them; a client who has lapsed before needs the payment method fixed for good, not just this premium collected. ' +
-    'And every save is a doorway — the flags above tell you what to open next.</p>' +
-    '<p style="font-size:14px;color:#334;line-height:1.6">Then complete the <b>Conservation Action form</b> — it asks why this policy reached 75 days and what you recommend. ' +
-    'Your submission goes to your direct manager (copy to the branch head, sales support and the Conservation Department) and <b>you will get a daily reminder until it is submitted</b>. This replaces OTForms.</p>' +
-    (base ? '<p style="text-align:center;margin:20px 0"><a href="' + base + '?page=agent" style="background:' + BRAND.gold +
-      ';color:' + BRAND.navy + ';padding:12px 26px;border-radius:8px;text-decoration:none;font-weight:700">Open Conservation Action form</a></p>' : '') +
-    '<p style="font-size:14px;color:#334">Thanks,<br><b>' + esc_(CONFIG.BRANCH_NAME) + '</b></p>';
-  sendMail_(agentEmail, 'ACTION (75-day): ' + titleCase_(p.client) + ' — policy ' + p.policy + ' conservation', emailShell_(body));
-}
-
-function sendDigest_(queued, sentCount, results, skipped, reminders, awaitingReview, nudges) {
-  var body =
-    '<p style="font-size:14px">Daily automation run — ' + fmtDate_(new Date()) + (CONFIG.TEST_MODE ? ' <b style="color:#c00">[TEST MODE]</b>' : '') + '</p>' +
-    '<ul style="font-size:13px"><li>In queue: <b>' + queued + '</b></li>' +
-    (CONFIG.SEND_MODE === 'manual' ? '<li><b style="color:#9a6205">' + (awaitingReview || 0) +
-      ' × 45-day letters awaiting STAFF REVIEW &amp; SEND</b> on the dashboard</li>' : '') +
-    '<li>Sent this run: <b>' + sentCount + '</b> (cap ' + CONFIG.DAILY_SEND_CAP + ')' +
-    (nudges ? ' — incl. <b>' + nudges + '</b> 3-day client nudges' : '') + '</li>' +
-    '<li>Reminders to agents/managers: <b>' + (reminders || 0) +
-    '</b></li><li>Skipped: <b>' + skipped.length + '</b></li></ul>' +
-    (results.length ? '<p style="font-size:13px"><b>Sent:</b><br>' + results.map(esc_).join('<br>') + '</p>' : '') +
-    (skipped.length ? '<p style="font-size:13px;color:#a33"><b>Skipped / needs attention:</b><br>' + skipped.slice(0, 40).map(esc_).join('<br>') + '</p>' : '');
-  MailApp.sendEmail({
-    to: CONFIG.OPS_EMAIL, subject: '[Branch Automation] ' + sentCount + ' sent, ' + skipped.length + ' skipped — ' + fmtDate_(new Date()),
-    htmlBody: emailShell_(body), name: 'Branch Automation'
-  });
 }
 
 // ============================== SURVEYS ====================================
@@ -2456,27 +1907,28 @@ function apiProduction(token) {
   return OUT;
 }
 
-// ---- Staff review-and-send (manual mode) ----
-/** Staff click-send the 45-day letters after their reference checks. */
+// ---- The two letter routes, kept as refusals on purpose ----
+/*  apiSendStage45 used to mail the 45-day letter to a ticked list of policies,
+ *  and apiPreviewLetter used to render one. Both are gone (see the file header).
+ *  They are NOT deleted outright, because App.html may still have the buttons:
+ *  a deleted route gives whoever presses it a raw "Script function not found",
+ *  which reads as a broken page and invites somebody to "fix" it by putting the
+ *  letters back. These answer plainly instead, and send nothing. Delete them
+ *  once the buttons are off the page. */
+var LETTERS_MOVED = 'The premium-due letters are no longer sent from here. ' +
+  'They are the Premium Due Desk: rickyrampersadbranch.com/premium-due, where the ' +
+  'wording is approved once and every letter is ticked by a person before it goes.';
+
 function apiSendStage45(token, policies) {
-  var u = auth_(token, ['staff', 'manager']);
-  var sent = commsIndex_();
-  var byPolicy = {};
-  getBook_().forEach(function (p) { byPolicy[p.policy] = p; });
-  var ok = 0, errors = [];
-  (policies || []).forEach(function (pol) {
-    var p = byPolicy[String(pol)];
-    if (!p) { errors.push(pol + ': not in the data'); return; }
-    if (sent[p.policy + '|CLIENT-45']) { errors.push(pol + ': already sent'); return; }
-    if (!p.email) { errors.push(pol + ': no client email on file'); return; }
-    try {
-      sendClient45_(p);
-      logComm_('CLIENT-45', p, p.email, 'SENT', 'Reviewed & sent by ' + u.email);
-      ok++;
-    } catch (e) { errors.push(pol + ': ' + e); }
-  });
-  cacheBust_();
-  return { ok: true, sent: ok, errors: errors };
+  auth_(token, ['staff', 'manager']);
+  var n = (policies || []).length;
+  Logger.log('apiSendStage45 refused: ' + n + ' policy(ies) — letters moved to the Premium Due Desk');
+  return { ok: false, sent: 0, error: LETTERS_MOVED, errors: [LETTERS_MOVED] };
+}
+
+function apiPreviewLetter(token, policy) {
+  auth_(token, ['staff', 'manager']);
+  return { ok: false, error: LETTERS_MOVED, html: '<p style="font-size:14px">' + esc_(LETTERS_MOVED) + '</p>' };
 }
 
 /** Staff record a response or payment — stops the 3-day nudges; a payment
