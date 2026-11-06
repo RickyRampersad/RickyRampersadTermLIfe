@@ -3293,6 +3293,15 @@ function lineToType(line) {
 }
 
 function chooseProfilePolicy(p) {
+  /* Every year of cover on the vehicle they just tapped, so the claim is
+     assessed against the term in force on the date of loss and not against
+     whatever has been renewed since. The lookup path sets coverTerms itself;
+     this path never went through the lookup, so it has to set them here —
+     syncCoverTerm (called by applyPrefill below) then parks them in
+     state.policy.terms and picks the one that matches. Without this a vehicle
+     chosen from the profile would be judged on its newest term alone, which is
+     the exact bug the one-row-per-term register was built to kill. */
+  if (Array.isArray(p.terms) && p.terms.length) coverTerms = p.terms;
   const t = lineToType(p.line);
   if (t && TYPES[t]) {
     if (state.type !== t) { state.subtype = ""; state.files = {}; state.skipped = {}; }

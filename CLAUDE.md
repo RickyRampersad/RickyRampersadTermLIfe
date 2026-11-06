@@ -7446,6 +7446,126 @@ two pages. Both now carry `[hidden]{display:none!important}` at the top of the
 sheet. Reveal with `el.hidden = false`, never `style.display`, or that
 `!important` wins instead.
 
+### The signed-in client's vehicles, and the claim record — 6 November 2026
+
+Asked for in these words: *"i am an existing client and it needs to put in my
+vehicle details when i log in as an existing client so i did state its pulling
+in all the vehicles on the risk object and if its a claim it will create a
+claim on the claim object releated to the risk etc."*
+
+Half of it was built against an endpoint that did not exist, and the other half
+was writing to an object the branch abandoned in 2016.
+
+#### The page called an action the backend never had
+
+`claims/index.html` has called `action: "myProfile"` since it was written.
+`doPost`'s switch had `myClaims` and no `myProfile`, so it answered *Unknown
+action*, `whoLoad()` caught it and returned `false`, and **a signed-in client
+saw nothing at all** — no welcome, no claims, no policies, no vehicles. The
+whole signed-in half of the page was dead and looked like a sign-in problem.
+
+It is invisible from outside because the failure is a silent `catch`. The same
+shape as the gate faults of 29 October: **a fallback that fires on error tells
+you nothing about which error.** `?action=ping` now answers `profile: true`
+and the register counts, so "does signing in do anything?" is answerable from
+a browser.
+
+`apiMyProfile_` returns the client's contact, their open and closed claims, and
+one card per policy — every vehicle from the Vehicle Register (which since
+5 November is **one row per vehicle per term, straight off `Risk_Details__c`**),
+each carrying all its terms, plus their non-motor policies. Tapping a card
+fills the claim in. **`chooseProfilePolicy` had to set `coverTerms` from the
+card**: `applyPrefill` copies `POLICY_FACTS` and never the terms, so a vehicle
+chosen from the profile would otherwise be judged on its newest term alone —
+the exact bug the per-term register was built to kill, reintroduced by the
+other door.
+
+**A client is never sent the Contact id, the Risk id or the portfolio id.**
+They live in the register for the write-back's sake and are stripped here, as
+`vehicleTermList_` already strips them.
+
+**`registerRowsFor_` matches as `claimsForIdentity_` does** — an e-mail
+exactly, a mobile on its last seven digits — then widens by **Contact id**, so
+a second car recorded under a work address still comes back once one row
+matched. A stranger's vehicle never does.
+
+#### Claims__c is dead; the live object is Claims_Revised__c
+
+Measured on the org, 6 November 2026:
+
+| | records | 2026 | last used |
+|---|---|---|---|
+| `Claims__c` | 3,509 | **1** | ~2016 (994 in 2015) |
+| `Claims_Revised__c` | 573 | **21** | continuously since 2019 |
+
+`sfLogClaim_` was writing `Claims__c`. A ledger row on the dead object is a row
+nobody opens — and `GIRenewals.gs` already reads `Claims_Revised__c` for a
+client's claims history, so the two halves of this repository disagreed about
+where a claim lives.
+
+**It would also have failed outright.** It set `Policy__c`, which is a
+**Formula (Text)** field on *both* objects. Salesforce rejects a write to a
+formula field, so the first real insert would have thrown. It had never fired
+because Salesforce is not connected and test mode skips it — a bug sitting
+behind two switches, which is the kind that ships.
+
+#### "Related to the risk" is not a thing Salesforce can do here yet
+
+Checked field by field: **neither claims object has any lookup to
+`Risk_Details__c`** — `Claims__c` has 46 fields (lookups to Account, CLIENT
+PORTFOLIO, Case, Relationship Group), `Claims_Revised__c` has 42 (master-detail
+to CLIENT PORTFOLIO and to Contact, lookup to Requirement). A true relationship
+needs a Salesforce admin to add the field; that is the branch's call, not a
+code change.
+
+**So the claim is related the way the branch's own 35 motor claims are
+related**, read off the live records: the **policy** by master-detail
+`CLIENT_PORTFOLIO__c`, the **client** by master-detail `Contact__c`, and the
+vehicle as the **plate with no separator** in `Vehicle__c` (Text(7)) — the same
+form `normKey_` and `norm_reg` produce. `CLAIMS.SF_CLAIM.RISK_FIELD` is
+attempted anyway and **dropped when the org refuses** (`gblSfwSave_`'s rule),
+so the day somebody adds the lookup the claims carry it with no paste. Until
+then the term is named in `Notes__c`, so which year of cover a claim attached
+to is on the record in words.
+
+**Both parents are master-detail, so both are required**: there is no filing a
+claim record with a policy number alone. `sfClaimParents_` resolves them from
+the registers (`Contact Id`, `Portfolio Id`) and falls back to a live read
+(`sfPortfolioIds_`, which asks for the two ids — `sfFindPortfolio_` next door
+selects neither, because it exists to prefill a form and a client is never
+shown an id). With either missing the claim is **skipped with a note saying
+why**, never thrown: the claim is filed, the desk has it, and a person can put
+it right.
+
+**`Vehiclee__c` is a dead duplicate field** — null on every record the branch
+has ever made. Never write to it.
+
+#### Three traps, two of them mine
+
+- **`vehicleForClaim_` returns `{row, terms, matched}`, not a row.** Reading it
+  as a row gives `undefined` for every field and says nothing about it, so the
+  Contact id and the Risk id were both quietly empty. Caught by a test that
+  asserted the Risk id rather than just that the insert happened.
+- **I wrote three real client registrations into `Claims.gs`**, as examples in
+  the comment documenting the plate convention — in a file served from the
+  repository root. The leak checks in `terms-test.js` and `health-test.js`
+  failed and that is the only reason it did not ship. Same mistake as 5
+  November, one day later, in the note explaining the convention rather than in
+  the code. **Examples in a comment are published; invent them.**
+- **An incomplete test fixture reads exactly like a backend fault.**
+  `renderMyClaims` threw on a claim shape missing `type`/`filedOn`/`documents`,
+  `acctLoad` caught it and `acctSignOut(true)` cleared the token — so the
+  browser test looked like "the token is not being set". Check which side holds
+  the bug: it was the fixture, for the third time in this product.
+
+Tests in the session scratchpad: `profile-test.js` (62, Node, Salesforce and
+the sheet made of nothing — every term, no ids leaked, the right object, the
+formula field never written, the Risk field dropped when refused, a claim with
+no parent skipped) and `signedin-page.js` (69, Playwright on a laptop and a
+phone: sign in, both vehicles and the health policy on screen, tapping the car
+fills chassis and permit, all three terms travel with it, a loss in an earlier
+year judged on that year). 547 checks across fourteen suites, none failing.
+
 ## Standing rules
 
 - **Client data never enters the repository.** `Orphan-Register.xlsx` and
