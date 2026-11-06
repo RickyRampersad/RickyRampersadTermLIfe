@@ -366,7 +366,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     <p class="hsub">We are opening a general insurance agency, and we need one experienced underwriter. Somebody who has carried a book and knows a bad risk when they see it. What is different here is that the paperwork around you is already built.</p>
     <div class="ctas">
       <a class="btn btn-1" href="#apply">Apply &mdash; CV and fifteen minutes <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-      <a class="btn btn-2" href="#film">Watch it first &middot; 45 sec</a>
+      <a class="btn btn-2" href="#film">Watch it first &middot; 51 sec</a>
     </div>
     <p class="hnote">
       <span><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg>Chaguanas, Central Trinidad</span>
@@ -667,8 +667,18 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 
   var MAXB=6*1024*1024;
   var OKEXT=/\.(pdf|docx?)$/i;
-  function val(n){var el=f.querySelector('[name="'+n+'"]:checked')||f.querySelector('[name="'+n+'"]');
-    return el?String(el.value||'').trim():''}
+  /* An unchecked radio group answers NOTHING. Without the type test the
+     fallback returns the first radio in the group, so a question nobody
+     touched reads as answered: the rail opened at "3 of 17", the gate let the
+     form through, and the Branch Manager was sent "Under 3 years" as the
+     candidate's own answer. A fabricated answer is worse than a blank one. */
+  function val(n){
+    var ch=f.querySelector('[name="'+n+'"]:checked');
+    if(ch)return String(ch.value||'').trim();
+    var el=f.querySelector('[name="'+n+'"]');
+    if(!el||el.type==='radio'||el.type==='checkbox')return '';
+    return String(el.value||'').trim();
+  }
   function classes(){return [].slice.call(f.querySelectorAll('[name="cls"]:checked')).map(function(x){return x.value})}
 
   var REQ=['name','phone','email','town','uw_years','uw_auth','uw_systems','uw_quals',

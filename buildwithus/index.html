@@ -1246,7 +1246,18 @@ footer .ic{width:16px;height:16px}
     var f=d.getElementById('jf'), done=d.getElementById('jDone'),
         err=d.getElementById('jErr'), btn=d.getElementById('jSend');
     if(!f)return;
-    function val(n){var el=f.querySelector('[name="'+n+'"]:checked')||f.querySelector('[name="'+n+'"]');return el?String(el.value||'').trim():''}
+    /* An unchecked radio group answers NOTHING. Without the type test the
+       fallback returns the first radio in the group, so a question nobody
+       touched reads as answered: the rail opened at "4 of 18", the gate let
+       the form through, and the first option was filed as the candidate's own
+       answer. A fabricated answer is worse than a blank one. */
+    function val(n){
+      var ch=f.querySelector('[name="'+n+'"]:checked');
+      if(ch)return String(ch.value||'').trim();
+      var el=f.querySelector('[name="'+n+'"]');
+      if(!el||el.type==='radio'||el.type==='checkbox')return '';
+      return String(el.value||'').trim();
+    }
     function localRef(){var t=new Date(),p=function(n){return(n<10?'0':'')+n};
       return 'QB-'+String(t.getFullYear()).slice(2)+p(t.getMonth()+1)+p(t.getDate())+'-'+p(t.getHours())+p(t.getMinutes())}
     function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
