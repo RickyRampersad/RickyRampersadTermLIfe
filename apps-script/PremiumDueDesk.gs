@@ -76,11 +76,12 @@
  *
  *   THE LINES ARE THE BUCKETS: 45 to 59, 60 to 74, 75 to 89, 90 to 104 (LATE 14).
  *
- *   AUTOMATIC AT TEN (PDD.AUTO; PDD_AUTO = off brings back the tick). After
- *   Liz's morning update, every client on a line with nothing standing for them
- *   and nothing flagged is queued at ten by "Automatic (nobody held it by ten)"
- *   (pddAutoQueue_). Sales support holds anyone with "Do not send" before ten;
- *   a flagged client still waits for a person's tick, and the summary names them.
+ *   A PERSON TICKS EVERY LETTER (6 November 2026, Ricky: "this is not an auto.
+ *   Staff has to click the send off ... they've checked ... so they can click,
+ *   so it'll send out"). PDD.AUTO is false: nothing is queued for anyone, and a
+ *   letter goes at ten only after a staff member has opened it, done the checks
+ *   and ticked it. pddAutoQueue_ stays for the record and runs only if the
+ *   PDD_AUTO Script property is set to on, which nobody should do without Ricky.
  *
  *   EVERY LETTER AFTER THE FIRST CARRIES THE TRAIL (iSurveyTrailHtml_): each
  *   earlier note by date and subject, what the client tapped, and what sales
@@ -96,7 +97,9 @@
  *   THE LAPSE NOTICE (pddNotices_, iSurveyNoticeHtml_): a policy that lapsed in
  *   its first two years, within 14 days of the lapse, once: the trail, reinstate,
  *   why they let it go (one tap or their own words), and a rating of how we kept
- *   in touch. Logged with Stage 120. PDD_NOTICES = off stops it.
+ *   in touch. Logged with Stage 120. Not automatic either: the notices do not
+ *   go until there is a place on the desk to check and tick them, so
+ *   pddNotices_ sends nothing unless the PDD_NOTICES Script property is on.
  *
  *   The wording changed, so the approval lapses: intelSurveyApprove again.
  *
@@ -141,12 +144,12 @@
  ******************************************************************************/
 
 var PDD = {
-  VERSION: '2026-11-06a',
+  VERSION: '2026-11-06b',
   STAGE: 45,            // the first line; the page and the editor helpers read it as the default
   STAGES: [45, 60, 75, 90],   // the four lines (13 October 2026: "45 days, 60 days, 75 days and 90 days")
   LATE: 14,             // days past each stage a client stays on its line: 45 to 59, 60 to 74, 75 to 89, 90 to 104
                         // (5 November 2026: "45-60 day bucket ... 60-75 ... 75-90"; a week wide until then)
-  AUTO: true,           // the letters go by themselves at ten unless sales support holds one; PDD_AUTO = off brings back the tick
+  AUTO: false,          // never automatic (Ricky, 6 Nov): a letter goes at ten only when a staff member has checked it and ticked it
   NOTICES_MAX: 30,      // lapse notices in one morning
   HOUR: 10,             // the send, ten in the morning, Monday to Friday
   MAX_PER_RUN: 60,      // ISURVEY.MAX_RUN: more than this in a morning is a cohort, not a day
@@ -1415,10 +1418,8 @@ function pddRunNow_(now, today) {
   var t0 = new Date().getTime();
   var checks = pddChecks_(), sh = checks.sh;
   pddRecover_(checks);
-  /* Automatic (5 November 2026): every client on a line who is not flagged and
-     not held by sales support is queued at ten, in sales support's place, so
-     the letters go by themselves after Liz's morning update. A flagged client
-     still waits for a person's tick, and "Do not send" before ten holds anyone. */
+  /* Not automatic (Ricky, 6 Nov): only rows a staff member ticked go. The
+     automatic queue runs only if PDD_AUTO is set to on. */
   var poolPre = null, auto = null;
   if (pddAuto_()) {
     poolPre = iSurveyPool_(PDD.STAGES, PDD.LATE);
@@ -1645,8 +1646,10 @@ function pddAutoQueue_(checks, pool, now, today) {
    manager copied. Test: to the test inbox, once per policy (PDD_NOTICE_TESTED). */
 function pddNotices_(mode, left, t0) {
   var out = { sent: 0, test: 0, skipped: 0, names: [] };
-  var off = String(iProp_('PDD_NOTICES') || '').trim().toLowerCase();
-  if (off === 'off' || off === 'no') return out;
+  /* Off unless switched on: nothing goes to a client without a person's tick
+     (Ricky, 6 Nov), and the notices have no tick on the desk yet. */
+  var on = String(iProp_('PDD_NOTICES') || '').trim().toLowerCase();
+  if (on !== 'on' && on !== 'yes') return out;
   if (mode === 'held') return out;
   var blocked = mode === 'live' ? iSurveyBlocked_() : '';
   var base = pddBase_() || iSurveyBase_();

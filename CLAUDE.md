@@ -6077,14 +6077,15 @@ servicing work".
   Salesforce joined), `pddSendNow()`. `pdd3/` in the session scratchpad holds
   the harness on a made-up branch (`test.js`, 87 checks; `page-test.js`, 40,
   Playwright; `world.js`, the fake workbook and Salesforce).
-- **The letters go by themselves, carry the trail, and end in a lapse notice (5 November 2026, PDD 2026-11-06a).** Ricky:
+- **The letters carry the trail and end in a lapse notice, and a person ticks every one (5–6 November 2026, PDD 2026-11-06b).** Ricky:
   "an email that automatically goes out to the client showing their policy now falls in the 45-60 day bucket, and options
   for the client to check and sales support review and give back insights, the agent is always copied ... with the email
   trail and their responses on the first ... then the notice that the policy has lapsed if it's under 2 years".
-  - **Buckets** 45–59, 60–74, 75–89, 90–104 (`PDD.LATE` 14). **Automatic at ten** (`PDD.AUTO`; Script Property `PDD_AUTO`
-    = off brings back the tick): `pddAutoQueue_` queues every client with nothing standing on that line and no flag, as
-    "Automatic (nobody held it by ten)". "Do not send" before ten holds one; a flagged client waits for a tick and is named
-    in the summary.
+  - **Buckets** 45–59, 60–74, 75–89, 90–104 (`PDD.LATE` 14).
+  - **Never automatic** (6 Nov, Ricky: *"Remember, this is not an auto ... Staff has to click the send off ... they've
+    checked ... So they can click, so it'll send out."*). `PDD.AUTO` is false. A letter goes at ten only after a staff member
+    has opened it, done the checks and ticked it, as before 5 Nov. `pddAutoQueue_` ("Automatic (nobody held it by ten)")
+    runs only if the `PDD_AUTO` Script property reads on. Never set it without Ricky.
   - **One-tap answers by line** (`ISURVEY_QUICK`, `ISURVEY_QUICK_BY`), each with its own reply page, recorded in Asked for,
     and e-mailed to sales support with the agent always copied, with a signed **review link** (`?sv=&k=`, key
     `PDD_REVIEW_KEY`): "What we did" (the client reads it on the next letter's trail) and an internal insight that goes to
@@ -6093,7 +6094,8 @@ servicing work".
     tapped, what we did. Never the private message.
   - **The lapse notice** (`iSurveyLapsePool_`, `iSurveyNoticeHtml_`, `pddNotices_`, Stage 120): lapsed within 14 days, in
     force under two years at the lapse, once a policy; the trail, "can it be reinstated" (never a promise), why they let it
-    go, "in my own words" (Details column), a rating of how we kept in touch. `PDD_NOTICES` = off stops it.
+    go, "in my own words" (Details column), a rating of how we kept in touch. It has no tick on the desk yet, so it sends
+    nothing unless the `PDD_NOTICES` Script property reads on (it used to go unless set to off).
   - Intel Surveys gains Subject, Details, Reviewed (31–33). The tracker's `doPost` now routes the letter forms
     (`iSurveyPost_`): until then the private line's form posted into the tracker and went nowhere.
   - The wording changed: the approval lapses until `intelSurveyApprove`. Test mode sends test copies only.
