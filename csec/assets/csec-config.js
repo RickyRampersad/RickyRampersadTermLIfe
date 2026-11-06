@@ -1,4 +1,4 @@
-/* SEA & CSEC Study Hub — deployment configuration.
+/* SEA Study Hub — deployment configuration.
  *
  * This is the ONLY file to edit when wiring up the hub. Nothing else needs
  * touching, and upgrading the other assets will never lose these values.

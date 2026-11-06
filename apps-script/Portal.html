@@ -276,6 +276,40 @@ function render(){
   wireNav();
   RR.init(app);
   countMoney(app);
+  preselect();
+}
+
+/* A one-tap option from the renewal e-mail: ?opt=renew|changes|call arrives
+   with the instruction already chosen, so a client who has decided taps once
+   in their inbox and once on the page.
+
+   It only ticks the box. Nothing is sent until they press send themselves,
+   because mail security opens every link in an e-mail — Avanan does it at
+   Guardian — and a tap that renewed a policy would renew it for every client
+   whose mail was scanned. The transition letters' answer page keeps the same rule. */
+const OPTS = { renew:'RENEW — proceed', changes:'RENEW WITH CHANGES', call:'PLEASE CALL ME' };
+function preselect(){
+  const want = OPTS[String(DATA.opt||'').toLowerCase()];
+  if(!want) return;
+  let first = null;
+  document.querySelectorAll('.opt input').forEach(r=>{
+    if(r.value!==want) return;
+    r.checked = true;
+    const card = r.closest('.rr-card');
+    if(card) card.querySelectorAll('.opt').forEach(o=>o.classList.toggle('sel', o.querySelector('input').checked));
+    if(!first) first = r;
+  });
+  if(!first) return;
+  /* Say it was carried over, or a ticked box the client does not remember
+     ticking reads as us having decided for them. */
+  const note = document.createElement('p');
+  note.style.cssText = 'font-size:12.5px;color:var(--dim);margin:2px 0 10px';
+  note.textContent = 'Carried over from your e-mail — change it here if you like, then send below.';
+  const box = first.closest('.opt');
+  if(box && box.parentNode) box.parentNode.insertBefore(note, box);
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches)
+    first.closest('.rr-card').scrollIntoView({behavior:'smooth', block:'center'});
+  else first.closest('.rr-card').scrollIntoView({block:'center'});
 }
 
 /* ---------- one policy: where it stands, what it holds, the three steps ---------- */

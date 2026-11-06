@@ -169,6 +169,22 @@ function sfNewer_(a, b) {
   var db = String(b.From__c || b.Renewal_Date__c || '');
   return da >= db ? a : b;
 }
+/**
+ * The sum insured on a property risk.
+ * Total_Value__c rolls up Value_1..5, which the branch leaves empty — it reads 0 on
+ * every risk in the book while the real figure sits in Total_Property_Cover__c and
+ * Cover1__c. Checked 26 October 2026 against the November renewals: every one of them
+ * had Total_Value__c 0 and a figure in the other two. Reading only the rollup gave the
+ * property portal nothing to put the average clause against.
+ */
+function sfSumInsured_(r) {
+  var tries = [r.Total_Value__c, r.Total_Property_Cover__c, r.Cover1__c];
+  for (var i = 0; i < tries.length; i++) {
+    var n = Number(tries[i]);
+    if (n > 0) return n;
+  }
+  return '';
+}
 /** Next anniversary of a renewal date, so the ladder always has a future date. */
 function sfNextRenewal_(v) {
   var d = sfDate_(v);
@@ -196,7 +212,7 @@ function syncPropertyFromSalesforce() {
     recs = sfQuery_(
       "SELECT Account__c, Contact__c, Email__c, Policy__c, Carrier__c, Risk_Location__c, Occupancy__c, " +
       "Cover1__c, Stock__c, General_Contents__c, Plant_Equipment_Machinery__c, Electronic_Equipment__c, " +
-      "Total_Value__c, Total_Premiums_Gov_t_Inclusive__c, Renewal_Date__c, From__c, To__c, " +
+      "Total_Value__c, Total_Property_Cover__c, Total_Premiums_Gov_t_Inclusive__c, Renewal_Date__c, From__c, To__c, " +
       "Agent__c, Agent_Email__c " +
       "FROM Risk_Details__c WHERE Policy__c != null AND Renewal_Date__c >= LAST_N_YEARS:6 " +
       "ORDER BY Renewal_Date__c ASC");
@@ -258,7 +274,7 @@ function syncPropertyFromSalesforce() {
     put(target, 'general contents', r.General_Contents__c || '');
     put(target, 'plant, equipment & machinery', r.Plant_Equipment_Machinery__c || '');
     put(target, 'electronic equipment', r.Electronic_Equipment__c || '');
-    put(target, 'total value', r.Total_Value__c || '');
+    put(target, 'total value', sfSumInsured_(r));
     put(target, 'premium', r.Total_Premiums_Gov_t_Inclusive__c || '');
 
     // email: from this record, else any record for the same account

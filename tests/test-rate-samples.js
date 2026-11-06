@@ -106,11 +106,11 @@ ok('the real agents were sent nothing more', !mails.some(m => /agents\.example|c
 console.log('\nEvery link works, and leaves no trace:\n');
 const tk1 = fromReal[0].Token, tk2 = rows.find(r => r.TaskId === id(2)).Token;
 posts = []; mails = [];
-let page = env.doGet({ parameter: { sr: tk1, r: '4' } }).getContent();
+let page = env.doPost({ parameter: { sr: tk1, r: '4' } }).getContent();
 ok('a tap: the thank-you page, said to be a sample', /Your rating of 4 out of 5 has been recorded/.test(page) && /A sample/.test(page) && /nothing on the task's Chatter/.test(page) && /textarea name="comment"/.test(page));
 ok('recorded on the sample row', Number(sampleRows().find(r => r.Token === tk1).Rating) === 4);
 ok('nothing on the task\'s Chatter, no e-mail for four stars', !posts.length && !mails.length, JSON.stringify(posts));
-page = env.doGet({ parameter: { sr: tk2, r: '2' } }).getContent();
+page = env.doPost({ parameter: { sr: tk2, r: '2' } }).getContent();
 const alert = mails.find(m => /Low rating/.test(m.subject));
 ok('two stars: the low-rating e-mail, marked [Sample], to him alone', mails.length === 1 && toRicky(alert) && /^\[Sample\] Low rating · 2 of 5 from agent Marissa Khan · closed by Sasha$/.test(alert.subject), mails.map(m => m.subject).join(' | '));
 ok('saying it is a sample, with See the whole task opening its card', /<b>A sample\.<\/b>/.test(alert.htmlBody) && /See the whole task/.test(alert.htmlBody) && alert.htmlBody.indexOf(env.esc_(env.rateIntelUrl_('ricky', tk2))) > -1);
@@ -125,10 +125,10 @@ ok('"stop these e-mails" on a sample changes nothing', /Nothing was changed/.tes
 console.log('\nSamples count nowhere:\n');
 // One real rating, and three five-star samples for Elizabeth (enough for a Service Star if they counted).
 const realTok = realRow.Token;
-env.doGet({ parameter: { sr: realTok, r: '5' } }); fresh();
+env.doPost({ parameter: { sr: realTok, r: '5' } }); fresh();
 mails = [];
 env.rateSamples(3); fresh();
-sampleRows().filter(r => r.Closer === 'elizabeth' && !r.Rating).forEach(r => { env.doGet({ parameter: { sr: r.Token, r: '5' } }); fresh(); });
+sampleRows().filter(r => r.Closer === 'elizabeth' && !r.Rating).forEach(r => { env.doPost({ parameter: { sr: r.Token, r: '5' } }); fresh(); });
 ok('(Elizabeth now has three rated samples: a Service Star if they counted)', sampleRows().filter(r => r.Closer === 'elizabeth' && Number(r.Rating) >= 4).length >= 3);
 const st = env.rateStats_(DAY, DAY);
 ok('the week\'s ratings: the real one alone', st.all.n === 1 && st.by.elizabeth.n === 1 && !st.by.sasha && st.list.length === 1, JSON.stringify(st.by));

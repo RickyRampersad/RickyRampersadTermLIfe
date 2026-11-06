@@ -1,4 +1,4 @@
-/* SEA & CSEC Study Hub — practice bank
+/* SEA Study Hub — practice bank
  *
  * These questions are written for this hub in CSEC Paper 01 style. They are not
  * copies of CXC past papers — CXC owns those and sells them, so the hub links
@@ -951,3 +951,10 @@ window.CSEC_QUESTIONS.push(
 {id:'pm160',subj:'p-mathematics',strand:'pm-fractions',level:5,diff:2,q:'Simplify 12/18 to its lowest terms.',opts:['2/3','6/9','4/6','12/18'],a:0,why:'Both divide by 6: 12 ÷ 6 = 2 and 18 ÷ 6 = 3.',tech:'Divide top and bottom by the largest number that goes into both.'},
 {id:'pm161',subj:'p-mathematics',strand:'pm-money',level:5,diff:2,q:'Three friends share $96 equally. How much does each get?',opts:['$32','$33','$30','$288'],a:0,why:'96 ÷ 3 = 32.',tech:'Sharing equally always means divide by the number of people.'}
 );
+
+/* Scope: under 'sea' only the primary bank remains. Filtered in place, so a page
+   that already holds the array sees the same object. */
+(function (A) {
+  if (window.CSEC_SCOPE !== 'sea' || !A) return;
+  for (var i = A.length - 1; i >= 0; i--) if (!/^p-/.test(A[i].subj)) A.splice(i, 1);
+})(window.CSEC_QUESTIONS);

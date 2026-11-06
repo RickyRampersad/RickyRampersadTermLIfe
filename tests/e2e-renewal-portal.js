@@ -297,6 +297,27 @@ async function noSideScroll(page) {
     await page.close();
   }
 
+  /* ===== a one-tap option from the renewal e-mail: it ticks, it never sends ===== */
+  for (const [w, h, tag] of [[390, 844, 'phone390'], [1366, 900, 'desktop']]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+    const page = await ctx.newPage(); const errs = [];
+    page.on('pageerror', e => errs.push(e.message));
+    await page.setContent(withStub(portalHtml({ ...BASE, opt: 'changes' })), { waitUntil: 'load' }); await page.waitForTimeout(400);
+    const picked = await page.$$eval('.opt input:checked', a => a.map(x => x.value));
+    ok(picked.length === 2 && picked.every(v => v === 'RENEW WITH CHANGES'), tag + ' opt=changes ticks Renew with changes on each policy ' + JSON.stringify(picked));
+    ok(await page.$$eval('.opt.sel', a => a.length) === 2, tag + ' the chosen card is lit');
+    ok(/Carried over from your e-mail/.test(await page.innerText('body')), tag + ' it says the choice came from the e-mail');
+    ok((await page.evaluate(() => window.__calls.length)) === 0, tag + ' nothing is sent until they press send');
+    const p2 = await ctx.newPage(); p2.on('pageerror', e => errs.push(e.message));
+    await p2.setContent(withStub(portalHtml({ ...BASE, opt: 'junk<script>' })), { waitUntil: 'load' }); await p2.waitForTimeout(300);
+    const p3 = await ctx.newPage();
+    await p3.setContent(withStub(portalHtml(BASE)), { waitUntil: 'load' }); await p3.waitForTimeout(300);
+    const plainPick = await p3.$$eval('.opt input:checked', a => a.map(x => x.value).join('|'));
+    ok((await p2.$$eval('.opt input:checked', a => a.map(x => x.value).join('|'))) === plainPick && !/Carried over/.test(await p2.innerText('body')), tag + ' an unknown opt changes nothing ' + JSON.stringify([plainPick, await p2.$$eval('.opt input:checked', a => a.map(x => x.value).join('|')), /Carried over/.test(await p2.innerText('body'))]));
+    ok(!errs.length, tag + ' no script errors on the one-tap page ' + errs.join(' | '));
+    await ctx.close();
+  }
+
   await browser.close();
   console.log(`\n${pass} passed, ${fail} failed. Screenshots: ${SHOTS}`);
   process.exit(fail ? 1 : 0);

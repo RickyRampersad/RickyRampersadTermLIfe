@@ -80,13 +80,29 @@
  * Mail follows DB_MODE: in test (the default) every e-mail goes to
  * DB_TEST_INBOX with a banner naming who it was for.
  *
+ * ── HANDED TO (17 October 2026) ──────────────────────────────────────────
+ * "Staff is collecting documents, but when I'm looking at when the
+ * transmittals are going down, departments being lost … it must be that staff
+ * signs for the document on their digital log, so who it was given to. So that
+ * dropdown has to be who it's handed to. The staff signs on their phones …
+ * accept it." So the agent names the staff member they hand the papers to
+ * (or "not yet" when they log ahead of handing in, and name them later from
+ * My log). That person is e-mailed at once to sign for them on their phone;
+ * the agent is e-mailed the moment they do. Papers handed to someone and not
+ * signed for after LB.ACCEPT_HOURS are chased to that person, sales support
+ * and the agent copied, once a working day; the agent's own "hand them in"
+ * reminder stops, because the papers are no longer theirs to account for.
+ * "Not with me" from the named person clears the name, flags the line and
+ * tells the agent. Signed by someone other than the named person: allowed
+ * (cover), and the line says so.
+ *
  * Nothing here is client data, and nothing client-identifying may be added to
  * this file: the repository is public. The tables below are names of
  * departments and forms, and counts.
  */
 
 var LB = {
-  TABS: { LINES: 'Log Book', TRANS: 'Transmittals', AGENTS: 'Agents', DEPTS: 'Departments' },
+  TABS: { LINES: 'Log Book', TRANS: 'Transmittals', AGENTS: 'Agents', DEPTS: 'Departments', OFT: 'OFT Collation' },
   TYPES: ['Documents for Guardian', 'Contract for delivery'],
   CUTOFF_HOUR: 12,
   BAG: { CUTOFF: 12, AT: 13, NUDGE: 11, GRACE_MIN: 60, ROTA_FROM: '2026-10-19',
@@ -107,11 +123,23 @@ var LB = {
   BRANCH_LINE: 'Ricky Rampersad Branch · 26000 · GLOC Chaguanas',
   // Forms that are not about one policy.
   NO_POLICY: ['Agent Contract', 'Licence Renewal', 'CBTT Receipt', 'CPD Certificate', 'Company Documents', 'Other'],
-  OFT: 'OFT (FEDEX)',
+  /* OFT kits (5 November 2026: "we have scrapped the entire FedEx process … the agent collects the
+     sample … submits to the sales support using a unique tracking number … the staff generates the
+     transmittal to accompany the OFT kits … to the relevant branch, who is the collation branch for the
+     particular quarter"). Each kit gets RRB-OFT-YY-MM-DD-NNN when it is logged (the date it was logged, then
+     that day's count); the transmittal names the
+     collation branch, chosen from the OFT Collation tab. */
+  OFT: 'OFT KITS (COLLATION BRANCH)',
+  OFT_OLD: 'OFT (FEDEX)',
+  OFT_DOC: 'OFT Kit',
+  OFT_PREFIX: 'RRB-OFT-',
   CONFIRM_DAYS: 3,
   COMPANION_PCT: 70,              // a document that travels with another this often is asked about when missing
   DIGEST_HOUR: 17,                // the branch manager's daily digest
-  NEVER_IN_DAYS: 3,               // logged and not handed in after this many working days: counted against the agent                // working days after a transmittal, the department is asked "did you get it"
+  NEVER_IN_DAYS: 3,               // logged and not handed in after this many working days: counted against the agent
+  ACCEPT_HOURS: 2,                // handed to a staff member and not signed for after this many hours: they are asked
+  LATER: '__later',               // "Not yet: I will hand them in later"
+  PAGE: 'https://rickyrampersadbranch.com/logbook',
   SUPPORT_FROM: 'support@rickyrampersadbranch.com',
   DECLARE_DOCS: 'I confirm these are the documents I am handing to the branch, complete and signed where they must be.',
   DECLARE_CONTRACT: 'I, the agent listed on the insurance policy contract, confirm that I have received the contract for my ' +
@@ -124,11 +152,12 @@ var LB_COLUMNS = [
   'Agent No', 'Agent', 'Agent Email', 'Unit',
   'Client', 'Salesforce Contact', 'Client Email', 'Policy #', 'Record Type', 'Plan', 'Portfolio Id',
   'Document', 'Quantity', 'Item Note', 'Department', 'Suggested Department', 'Notes', 'Declaration',
+  'Handed To', 'Handed At',
   'Received At', 'Received By', 'Receipt Signature', 'Routing Changed',
   'Transmittal', 'Sent At', 'Sent By', 'Tracking #',
   'Late Reason', 'Reason At', 'Reason By',
   'Returned At', 'Returned By', 'Return Reason', 'Delivered At',
-  'Alerts', 'Flags', 'Source', 'Salesforce Task',
+  'Alerts', 'Flags', 'Source', 'Salesforce Task', 'OFT No',
 ];
 var LB_TRANS_COLUMNS = ['Transmittal', 'Department', 'Attention', 'Sent At', 'Sent By', 'Lines', 'Documents',
                         'Tracking #', 'Late Lines', 'Status', 'Line Ids',
@@ -174,9 +203,11 @@ var LB_DEPTS = [  // [name, documents routed there in the history, alias pattern
   ["SCANNING TEAM", 2, "SCANNING"],
   ["DISPATCH QUERIES", 1, "DISPATCH"],
   ["OFT (FEDEX)", 4, "^OFT$|FEDEX"],
+  ["OFT KITS (COLLATION BRANCH)", 0, "^OFT KITS"],
 ];
 
 var LB_DOCS = [  // [name, times in the history, [[department, times]...], [[sent with, % of visits]...], alias pattern]
+  ["OFT Kit", 0, [["OFT KITS (COLLATION BRANCH)", 1]], [], "^OFT KITS?$"],
   ["Signed Script", 1114, [["RECORDS MANAGEMENT DEPT", 1100], ["GLOC CS RSC - CHAGUANAS", 10], ["SCANNING TEAM", 2]], [], "^SIO?GNED SCRIPTS?$|^SCRIPTS?$"],
   ["Proof of ID", 413, [["GLOC CS RSC - CHAGUANAS", 225], ["GLOC BIR DEPARTMENT", 74], ["RECORDS MANAGEMENT DEPT", 48]], [["Policy Contract", 58], ["Surrender Documents", 45]], "^(PROOF OF )?ID,?$|^IDENTIFICATION$|^PROOF OF ID|^POLICY OWNER ID|^ID CARD"],
   ["Beneficiary ID", 5, [["GLOC CLAIMS - CUSTOMER SUPPORT", 3], ["GLOC CS RSC - CHAGUANAS", 2]], [], "BENEFICIARY ID"],
@@ -366,6 +397,7 @@ function lbRows_() {
       policy: String(g(r, 'Policy #')), recordType: String(g(r, 'Record Type')), plan: String(g(r, 'Plan')), portfolioId: String(g(r, 'Portfolio Id')),
       document: String(g(r, 'Document')), quantity: Number(g(r, 'Quantity')) || 1, itemNote: String(g(r, 'Item Note')),
       department: String(g(r, 'Department')), suggested: String(g(r, 'Suggested Department')), notes: String(g(r, 'Notes')),
+      handedTo: String(g(r, 'Handed To')), handedAt: lbDate_(g(r, 'Handed At')),
       receivedAt: lbDate_(g(r, 'Received At')), receivedBy: String(g(r, 'Received By')), signed: !!g(r, 'Receipt Signature'),
       routingChanged: String(g(r, 'Routing Changed')),
       transmittal: String(g(r, 'Transmittal')), sentAt: lbDate_(g(r, 'Sent At')), sentBy: String(g(r, 'Sent By')),
@@ -374,7 +406,7 @@ function lbRows_() {
       returnedAt: lbDate_(g(r, 'Returned At')), returnedBy: String(g(r, 'Returned By')), returnReason: String(g(r, 'Return Reason')),
       deliveredAt: lbDate_(g(r, 'Delivered At')),
       alerts: String(g(r, 'Alerts')), flags: String(g(r, 'Flags')), source: String(g(r, 'Source')),
-      sfTask: String(g(r, 'Salesforce Task')),
+      sfTask: String(g(r, 'Salesforce Task')), oftNo: String(g(r, 'OFT No')),
     };
   });
   return LB_READ_;
@@ -850,6 +882,59 @@ function lbStaffEmail_(name) {
   return a ? a.email : '';
 }
 
+/* The people papers can be handed to: everyone with the staff side of the Log
+   Book. The RR Operations Access tab (active, with the Log Book on their Apps
+   or Apps blank) and the fact find's staff rows, one entry per person. */
+function lbStaff_() {
+  /* Active staff only, once each (4 November 2026: the list carried a manager
+     who had left, the driver, and two people twice with their codes, because
+     the Access tab now writes "Not Active" and "AG-003 - Azariah Griffith"). */
+  var out = [], gone = [];
+  var inactive = /^(no|false|not active|inactive|resigned|terminated|disabled|off)/i;
+  var clean = function (n) {
+    n = String(n || '').replace(/^\s*[A-Z]{0,3}\s*-?\s*\d{2,6}\s*-\s*/i, '').replace(/\s+/g, ' ').trim();
+    return (n === n.toUpperCase() ? n.toLowerCase() : n)
+      .replace(/(^|[\s'-])([a-z])/g, function (m, p, c) { return p + c.toUpperCase(); });
+  };
+  var notStaff = function (role) {
+    role = String(role || '').trim();
+    return /^(agent|unit manager|assistant branch manager)$/i.test(role) || lbIsDriverRole_(role);
+  };
+  var add = function (name, role) {
+    name = clean(name);
+    if (!lbNameKey_(name)) return;
+    if (gone.some(function (g) { return lbSamePerson_(g, name); })) return;
+    if (out.some(function (s) { return lbSamePerson_(s.name, name); })) return;
+    out.push({ name: name, role: String(role || 'Staff').trim() || 'Staff' });
+  };
+  var rows = [];
+  var sh = dbSheet_(DB.TABS.ACCESS, DB_ACCESS_COLUMNS);
+  var hm = dbHeaderMap_(sh), last = sh.getLastRow();
+  if (last > 1) sh.getRange(2, 1, last - 1, hm.head.length).getValues().forEach(function (r) {
+    var role = String(r[hm.map['Role']] || 'Staff');
+    var off = 'Active' in hm.map && inactive.test(String(r[hm.map['Active']] || '').trim());
+    var apps = 'Apps' in hm.map ? r[hm.map['Apps']] : '';
+    var noLb = !opsAppsFor_(apps).some(function (x) { return x.id === 'logbook'; });
+    rows.push({ name: r[hm.map['Name']], role: role, out: off || notStaff(role) || noLb, off: off });
+  });
+  lbAgents_().forEach(function (a) {
+    rows.push({ name: a.name, role: a.role, out: !a.active || notStaff(a.role) || !lbIsStaffRole_(a.role), off: !a.active });
+  });
+  /* Anyone either list marks inactive is out, whatever the other says. */
+  rows.forEach(function (r) { if (r.off && lbNameKey_(clean(r.name))) gone.push(clean(r.name)); });
+  rows.forEach(function (r) { if (!r.out) add(r.name, r.role); });
+  return out.sort(function (a, b) { return a.name < b.name ? -1 : 1; });
+}
+
+/* The same person under two spellings: "Sasha Lalla-Jagassar" and "Sasha
+   Lalla Jagassar", or a full name against a first and last. */
+function lbSamePerson_(a, b) {
+  var x = lbNameKey_(a), y = lbNameKey_(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  var xs = x.split(' '), ys = y.split(' ');
+  return xs[0] === ys[0] && xs[xs.length - 1] === ys[ys.length - 1];
+}
 /* People with no agent number (21 October 2026: Pawan, the driver, "see pawan from the access link", the Access tab of
    the Branch Portfolio workbook, which the tracker and the Premium Due Desk sign in from). Sign-in takes a name or an
    e-mail in the number box: first a name only one person on the agent lists carries, then the Branch Portfolio's
@@ -1006,7 +1091,8 @@ function lbHandle_(b) {
   if (!who.isAgent && !opsCanUse_(who, 'logbook')) return { ok: false, error: 'The Log Book is not on your access. Ask the branch to add it.' };
   var staff = !who.isAgent;
   var STAFF_ONLY = { 'lb.queue': 1, 'lb.receive': 1, 'lb.return': 1, 'lb.transmittal': 1, 'lb.unsend': 1,
-                     'lb.transmittals': 1, 'lb.reason': 1, 'lb.delivered': 1, 'lb.stats': 1, 'lb.agents': 1, 'lb.bag': 1 };
+                     'lb.transmittals': 1, 'lb.reason': 1, 'lb.delivered': 1, 'lb.stats': 1, 'lb.agents': 1, 'lb.bag': 1,
+                     'lb.notwithme': 1 };
   if (STAFF_ONLY[b.action] && !staff) return { ok: false, error: 'That is for the branch staff.' };
   switch (b.action) {
     case 'lb.config':       return lbConfig_(who);
@@ -1015,12 +1101,15 @@ function lbHandle_(b) {
     case 'lb.submit':       return lbSubmit_(b, who);
     case 'lb.mine':         return lbMine_(b, who);
     case 'lb.cancel':       return lbCancel_(b, who);
+    case 'lb.handto':       return lbHandTo_(b, who);
+    case 'lb.notwithme':    return lbNotWithMe_(b, who);
     case 'lb.queue':        return lbQueue_(b, who);
     case 'lb.receive':      return lbReceive_(b, who);
     case 'lb.return':       return lbReturn_(b, who);
     case 'lb.transmittal':  return lbTransmittal_(b, who);
     case 'lb.unsend':       return lbUnsend_(b, who);
     case 'lb.transmittals': return lbTransmittals_(b, who);
+    case 'lb.oft':          return lbOftFind_(b, who);
     case 'lb.reason':       return lbReason_(b, who);
     case 'lb.delivered':    return lbDelivered_(b, who);
     case 'lb.stats':        return lbStats_(b, who);
@@ -1044,8 +1133,9 @@ function lbConfig_(who) {
   return { ok: true, name: who.name, role: who.role, agent: who.isAgent, manager: !!who.isManager, lead: !!who.isLead,
            team: who.isLead ? lbTeam_(who).map(function (t) { return { agentNo: t.agentNo, name: t.name, self: !!t.self }; }) : [],
            agentNo: who.agentNo || '', mode: dbMode_(), types: LB.TYPES, departments: depts, documents: docs,
-           cutoff: lbCutoff_(), bag: lbBagInfo_(new Date()), oft: LB.OFT, declareDocs: LB.DECLARE_DOCS, declareContract: LB.DECLARE_CONTRACT,
-           salesforce: dbSfConfigured_() };
+           cutoff: lbCutoff_(), bag: lbBagInfo_(new Date()), oft: LB.OFT, oftDoc: LB.OFT_DOC, oftBranches: lbOftBranches_(), declareDocs: LB.DECLARE_DOCS, declareContract: LB.DECLARE_CONTRACT,
+           salesforce: dbSfConfigured_(), staff: lbStaff_().map(function (s) { return { name: s.name, role: s.role }; }),
+           later: LB.LATER, acceptHours: LB.ACCEPT_HOURS };
 }
 
 
@@ -1154,16 +1244,18 @@ function lbValidate_(b, who) {
     if (!doc) throw new Error('Choose each document from the list ("Other" is there, with a note).');
     var note = dbClean_(it.note, 120);
     if (doc === 'Other' && !note) throw new Error('Say what the "Other" document is.');
-    var dept = contract ? 'AGENT DELIVERY' : (depts.indexOf(it.department) >= 0 ? it.department : lbCanonDept_(it.department));
+    var oftKit = !contract && doc === LB.OFT_DOC;
+    var dept = contract ? 'AGENT DELIVERY' : oftKit ? LB.OFT : (depts.indexOf(it.department) >= 0 ? it.department : lbCanonDept_(it.department));
     if (!dept) throw new Error('Choose the department for the ' + doc.toLowerCase() + '.');
     var pol = dbClean_(it.policy, 60);
     if (!pol && LB.NO_POLICY.indexOf(doc) < 0) throw new Error('The ' + doc.toLowerCase() + ' needs its policy number.');
-    var sug = contract ? { department: '' } : lbSuggest_(doc);
+    var sug = contract ? { department: '' } : oftKit ? { department: LB.OFT } : lbSuggest_(doc);
     return {
       document: doc, note: note, department: dept, suggested: sug.department || '',
       policy: pol, recordType: dbClean_(it.type, 40).toUpperCase(), plan: dbClean_(it.plan, 80),
       portfolioId: dbIsSfId_(it.portfolioId) ? it.portfolioId : '',
-      quantity: Math.max(1, Math.min(50, parseInt(it.quantity, 10) || 1)),
+      quantity: oftKit ? 1 : Math.max(1, Math.min(50, parseInt(it.quantity, 10) || 1)),
+      oft: oftKit,
     };
   });
   if (!items.length) throw new Error('Add at least one document.');
@@ -1198,6 +1290,20 @@ function lbValidate_(b, who) {
     items.forEach(function (it) {
       if (it.portfolioId && !mine.portfolios[it.portfolioId]) throw new Error('Policy ' + it.policy + ' is not one of yours.');
     });
+  }
+  /* Who the papers are handed to: a name from the staff list, or "not yet".
+     A contract goes the other way (the branch hands it to the agent). */
+  out.handedTo = '';
+  if (!contract) {
+    /* A page from before this change sends no handedTo at all: taken as "not
+       yet", so a phone still holding the old page can log. */
+    var h = d.handedTo == null ? LB.LATER : String(d.handedTo).trim();
+    if (!h) throw new Error('Choose who you are handing the papers to.');
+    if (h !== LB.LATER) {
+      var person = lbStaff_().filter(function (s) { return lbSamePerson_(s.name, h); })[0];
+      if (!person) throw new Error('Choose who you are handing the papers to from the list.');
+      out.handedTo = person.name;
+    }
   }
   /* Both declarations, every time (27 October 2026: "Declaration 1 and Declaration 2 these were there
      before and agents not seeing this"). A page from before sends declared alone and is taken as before. */
@@ -1248,6 +1354,8 @@ function lbSubmit_(b, who) {
   lock.waitLock(20000);
   try {
     var first = sh.getLastRow() + 1;
+    var oftNext = lbOftNext_(now);
+    d.items.forEach(function (it) { if (it.oft) it.oftNo = oftNext(); });
     var rows = d.items.map(function (it, i) {
       return dbRowFor_(sh, {
         'Line Id': ref + '-' + (i + 1), 'Ref': ref, 'Line': i + 1, 'Type': d.type,
@@ -1257,7 +1365,9 @@ function lbSubmit_(b, who) {
         'Policy #': it.policy, 'Record Type': it.recordType, 'Plan': it.plan, 'Portfolio Id': it.portfolioId,
         'Document': it.document, 'Quantity': it.quantity, 'Item Note': it.note,
         'Department': it.department, 'Suggested Department': it.suggested, 'Notes': d.notes,
+        'Handed To': d.handedTo, 'Handed At': d.handedTo ? now : '',
         'Declaration': d.declaration, 'Flags': d.flags.join('; '), 'Source': 'App' + (dbMode_() === 'live' ? '' : ' (test)'),
+        'OFT No': it.oftNo || '',
       });
     });
     sh.getRange(first, 1, rows.length, rows[0].length).setValues(rows);
@@ -1266,8 +1376,10 @@ function lbSubmit_(b, who) {
   CacheService.getScriptCache().remove('lb_routing');
 
   var mail = lbReceiptMail_(ref, d, who, now);
+  var handMail = d.handedTo && !lbSamePerson_(d.handedTo, who.name) ? lbHandedMail_(ref, d, who, now) : '';
   return { ok: true, ref: ref, lines: d.items.length, status: contract ? 'With agent' : 'Logged',
-           flags: d.flags, mail: mail, bag: contract ? null : lbBagInfo_(now),
+           oftNos: d.items.filter(function (it) { return it.oftNo; }).map(function (it) { return { no: it.oftNo, policy: it.policy }; }),
+           flags: d.flags, mail: mail, handedTo: d.handedTo, handMail: handMail, bag: contract ? null : lbBagInfo_(now),
            due: contract ? Utilities.formatDate(new Date(now.getTime() + LB.CONTRACT_DAYS * 86400000), dbTz_(), 'EEEE d MMMM yyyy') : '' };
 }
 
@@ -1285,7 +1397,7 @@ function lbReceiptMail_(ref, d, who, now) {
   if (!d.agent.email) return 'No agent e-mail on file';
   var contract = d.type === LB.TYPES[1];
   var rows = d.items.map(function (it) {
-    return [it.document + (it.quantity > 1 ? ' × ' + it.quantity : '') + (it.note ? ' (' + it.note + ')' : ''),
+    return [it.document + (it.oftNo ? ' · ' + it.oftNo : '') + (it.quantity > 1 ? ' × ' + it.quantity : '') + (it.note ? ' (' + it.note + ')' : ''),
             it.policy || '—', contract ? 'Deliver to the client' : it.department];
   });
   var html = lbMailHtml_(
@@ -1293,14 +1405,42 @@ function lbReceiptMail_(ref, d, who, now) {
     '<p>' + dbEsc_(contract
       ? 'You collected the contract below on ' + Utilities.formatDate(now, dbTz_(), 'EEEE d MMMM yyyy') +
         '. It is to reach the client within 20 days. Record the handover in the Delivery Book.'
-      : 'These are logged for ' + d.client + '. Hand the papers to the branch with this reference. ' + lbBagLine_(now)) + '</p>',
+      : d.handedTo
+        ? 'These are logged for ' + d.client + ' and handed to ' + d.handedTo + '. ' + lbFirst_(d.handedTo) +
+          ' signs for them on the phone, and you get an e-mail the moment that is done. ' + lbBagLine_(now)
+        : 'These are logged for ' + d.client + '. Hand the papers to the branch with this reference, and choose who you handed them to in My log. ' + lbBagLine_(now)) + '</p>',
     ['Document', 'Policy', contract ? 'Next' : 'Department'], rows,
     '<p style="color:#5b6b7f;font-size:13px">Reference <b>' + dbEsc_(ref) + '</b> · logged by ' + dbEsc_(who.name) + '</p>',
-    { tone: contract ? 'info' : 'ok', kicker: contract ? '20 days start today' : 'Logged · hand them in',
+    { tone: contract ? 'info' : 'ok', kicker: contract ? '20 days start today' : d.handedTo ? 'Logged · handed to ' + lbFirst_(d.handedTo) : 'Logged · hand them in',
       tiles: [['Reference', ref, 'info'], ['Documents', d.items.reduce(function (s, it) { return s + it.quantity; }, 0), 'ok'],
               contract ? ['Deliver by', Utilities.formatDate(new Date(now.getTime() + LB.CONTRACT_DAYS * 86400000), dbTz_(), 'd MMM'), 'warn']
+                       : d.handedTo ? ['Handed to', lbFirst_(d.handedTo), 'info']
                        : ['Departments', Object.keys(d.items.reduce(function (o, it) { o[it.department] = 1; return o; }, {})).length, 'info']] });
   return lbMail_({ to: [d.agent.email], subject: (contract ? 'Contract for delivery' : 'Log Book') + ': ' + d.client + ' (' + ref + ')', html: html });
+}
+
+function lbPageUrl_(tab) { return String(dbProp_('LB_PAGE_URL', LB.PAGE)).replace(/\/+$/, '') + '/' + (tab ? '#' + tab : ''); }
+
+/* The staff member the papers were handed to: sign for them on the phone. */
+function lbHandedMail_(ref, d, who, now) {
+  var to = lbStaffEmail_(d.handedTo);
+  var rows = d.items.map(function (it) {
+    return [it.document + (it.oftNo ? ' · ' + it.oftNo : '') + (it.quantity > 1 ? ' × ' + it.quantity : '') + (it.note ? ' (' + it.note + ')' : ''), it.policy || '—', it.department];
+  });
+  var html = lbMailHtml_('Papers handed to you: sign for them',
+    '<p>' + dbEsc_(lbFirst_(d.handedTo)) + ', ' + dbEsc_(d.agent.name) + ' has handed you the papers below for <b>' + dbEsc_(d.client) +
+    '</b>. Check them against the lines and sign for them on your phone. Signing stamps the date collected, and they go to Guardian Life the same working day.</p>' +
+    '<div style="margin:18px 0 6px">' + lbBtn_(lbPageUrl_('queue'), 'Open the Log Book and sign &rarr;', '#15803d', '#ffffff') + '</div>' +
+    '<p style="color:#5b6b7f;font-size:13px">Not with you? Press <b>Not with me</b> on the Queue and the agent is told. ' +
+    'Not signed for in ' + LB.ACCEPT_HOURS + ' hours, you are asked again, with sales support and the agent copied.</p>',
+    ['Document', 'Policy', 'Department'], rows,
+    '<p style="color:#5b6b7f;font-size:13px">Reference <b>' + dbEsc_(ref) + '</b> · handed in ' + dbEsc_(Utilities.formatDate(now, dbTz_(), 'EEE d MMM, h:mm a')) +
+    '. Sales support is copied.</p>',
+    { tone: 'info', kicker: 'Handed to you · sign on your phone',
+      tiles: [['Reference', ref, 'info'], ['Documents', d.items.reduce(function (s, it) { return s + it.quantity; }, 0), 'ok'],
+              ['Handed in', Utilities.formatDate(now, dbTz_(), 'h:mm a'), 'info']] });
+  return lbMail_({ to: [to || lbSalesSupport_()], cc: [lbSalesSupport_()],
+                   subject: 'Sign for these: ' + d.agent.name + ' handed you ' + rows.length + ' document' + (rows.length === 1 ? '' : 's') + ' (' + ref + ')', html: html });
 }
 
 
@@ -1312,15 +1452,17 @@ function lbPublic_(r, now, staff) {
     loggedAt: r.loggedAt ? r.loggedAt.toISOString() : '', loggedBy: r.loggedBy,
     agentNo: r.agentNo, agent: r.agent, unit: r.unit, client: r.client, policy: r.policy, recordType: r.recordType,
     document: r.document, quantity: r.quantity, itemNote: r.itemNote, department: r.department, suggested: r.suggested,
+    handedTo: r.handedTo, handedAt: r.handedAt ? r.handedAt.toISOString() : '',
     receivedAt: r.receivedAt ? r.receivedAt.toISOString() : '', receivedBy: r.receivedBy,
     transmittal: r.transmittal, sentAt: r.sentAt ? r.sentAt.toISOString() : '', sentBy: r.sentBy, tracking: r.tracking,
     reason: r.reason, reasonAt: r.reasonAt ? r.reasonAt.toISOString() : '', reasonBy: r.reasonBy,
     returnedAt: r.returnedAt ? r.returnedAt.toISOString() : '', returnReason: r.returnReason,
     deliveredAt: r.deliveredAt ? r.deliveredAt.toISOString() : '', flags: r.flags, notes: r.notes,
-    late: lbIsLate_(r, now), reasonFresh: lbReasonFresh_(r, now), bag: lbBagOf_(r, now),
+    late: lbIsLate_(r, now), reasonFresh: lbReasonFresh_(r, now), bag: lbBagOf_(r, now), oftNo: r.oftNo || '',
   };
   if (r.status === 'Received') o.daysHeld = lbWorkDays_(r.receivedAt, now);
   if (r.status === 'Logged') o.daysWaiting = lbWorkDays_(r.loggedAt, now);
+  if (r.status === 'Logged' && r.handedTo && r.handedAt) o.hoursHanded = Math.floor((now - r.handedAt) / 3600000);
   if (r.type === LB.TYPES[1] && r.loggedAt) {
     o.contractDay = lbCalDays_(r.loggedAt, r.deliveredAt || now);
     o.contractDue = new Date(r.loggedAt.getTime() + LB.CONTRACT_DAYS * 86400000).toISOString();
@@ -1364,6 +1506,49 @@ function lbCancel_(b, who) {
   }
   lbSet_(rows, { 'Status': 'Cancelled', 'Flags': function (r) { return lbAddFlag_(r.flags, 'Withdrawn by ' + who.name); } });
   return { ok: true };
+}
+
+/** The agent names who they handed the papers to, after logging ahead ("not
+ *  yet"), or after the named person said they were not with them. Staff can
+ *  do it for a line they logged. That person is e-mailed to sign. */
+function lbHandTo_(b, who) {
+  var ref = dbClean_(b.ref, 30);
+  var rows = lbRows_().filter(function (r) { return r.ref === ref && r.status === 'Logged'; });
+  if (!rows.length) throw new Error('Nothing on that entry is waiting to be handed in.');
+  if (who.isAgent && lbAgentKey_(rows[0].agentNo) !== lbAgentKey_(who.agentNo)) throw new Error('That entry is not yours.');
+  if (!who.isAgent && rows[0].loggedBy !== who.name) throw new Error('Only the person who logged it can say who has it.');
+  var person = lbStaff_().filter(function (s) { return lbSamePerson_(s.name, b.handedTo); })[0];
+  if (!person) throw new Error('Choose who you handed the papers to from the list.');
+  var now = new Date();
+  lbSet_(rows, { 'Handed To': person.name, 'Handed At': now });
+  var a = lbFindAgent_(rows[0].agentNo) || {};
+  var d = { client: rows[0].client, handedTo: person.name, agent: { name: rows[0].agent, email: rows[0].agentEmail || a.email },
+            items: rows.map(function (r) { return { document: r.document, quantity: r.quantity, note: r.itemNote, policy: r.policy, department: r.department }; }) };
+  var mail = lbSamePerson_(person.name, who.name) ? '' : lbHandedMail_(ref, d, who, now);
+  return { ok: true, handedTo: person.name, lines: rows.length, mail: mail };
+}
+
+/** "Not with me": the named person does not have the papers. The name comes
+ *  off, the line says so, and the agent is told to hand them in again. */
+function lbNotWithMe_(b, who) {
+  var rows = lbPick_(b.ids, ['Logged']);
+  var now = new Date(), when = Utilities.formatDate(now, dbTz_(), 'd MMM h:mm a');
+  var was = rows[0].handedTo;
+  lbSet_(rows, { 'Handed To': '', 'Handed At': '',
+    'Flags': function (r) { return lbAddFlag_(r.flags, 'Not with ' + (r.handedTo || who.name) + ' (' + who.name + ', ' + when + ')'); } });
+  var byAgent = {};
+  rows.forEach(function (r) { var k = r.agentEmail || r.agent; (byAgent[k] = byAgent[k] || []).push(r); });
+  Object.keys(byAgent).forEach(function (k) {
+    var list = byAgent[k];
+    var html = lbMailHtml_('Not with ' + lbFirst_(was || who.name) + ': who has these papers?',
+      '<p>' + dbEsc_(who.name) + ' says the papers below are not with ' + (was && !lbSamePerson_(was, who.name) ? dbEsc_(was) : 'them') +
+      '. Until someone signs for them, nobody can show where they are.</p><p>Hand them to the branch and choose who you handed them to in <b>My log</b>.</p>' +
+      '<div style="margin:18px 0 6px">' + lbBtn_(lbPageUrl_('mine'), 'Open My log &rarr;', '#b45309', '#ffffff') + '</div>',
+      ['Client', 'Document', 'Logged'], list.map(function (r) { return [r.client, r.document, Utilities.formatDate(r.loggedAt, dbTz_(), 'EEE d MMM')]; }), '',
+      { tone: 'warn', kicker: 'Not signed for' });
+    lbMail_({ to: [list[0].agentEmail || lbSalesSupport_()], cc: [lbSalesSupport_()], subject: 'Log Book: not with ' + lbFirst_(was || who.name) + ' (' + list[0].client + ')', html: html });
+  });
+  return { ok: true, lines: rows.length };
 }
 
 function lbAddFlag_(flags, f) { return flags ? flags + '; ' + f : f; }
@@ -1424,10 +1609,39 @@ function lbReceive_(b, who) {
     'Routing Changed': function (r) {
       return changes[r.id] && changes[r.id] !== r.department ? r.department + ' → ' + changes[r.id] + ' by ' + who.name : r.routingChanged;
     },
-    'Flags': function (r) { return note ? lbAddFlag_(r.flags, 'At receipt: ' + note) : r.flags; },
+    'Flags': function (r) {
+      var f = note ? lbAddFlag_(r.flags, 'At receipt: ' + note) : r.flags;
+      return r.handedTo && !lbSamePerson_(r.handedTo, who.name) ? lbAddFlag_(f, 'Handed to ' + r.handedTo + ', signed for by ' + who.name) : f;
+    },
   });
   CacheService.getScriptCache().remove('lb_routing');
-  return { ok: true, received: rows.length, at: now.toISOString() };
+  var mails = lbSignedMail_(rows, who, now);
+  return { ok: true, received: rows.length, at: now.toISOString(), mail: mails };
+}
+
+/* The agent's proof: who signed for their papers, and when. One e-mail per
+   agent per signing. */
+function lbSignedMail_(rows, who, now) {
+  var byAgent = {};
+  rows.forEach(function (r) { var k = r.agentEmail || (lbFindAgent_(r.agentNo) || {}).email || ''; if (k) (byAgent[k] = byAgent[k] || []).push(r); });
+  var tz = dbTz_(), late = lbHour_(now) >= lbCutoff_();
+  return Object.keys(byAgent).map(function (k) {
+    var list = byAgent[k], clients = {};
+    list.forEach(function (r) { clients[r.client] = 1; });
+    var html = lbMailHtml_('Signed for: your papers are with the branch',
+      '<p>' + dbEsc_(who.name) + ' signed for the documents below at <b>' + dbEsc_(Utilities.formatDate(now, tz, 'h:mm a')) + '</b> on ' +
+      dbEsc_(Utilities.formatDate(now, tz, 'EEEE d MMMM')) + '. ' + (late
+        ? 'They were signed for after ' + lbCutoff_() + ':00. If they cannot go today, the reason is printed on the transmittal beside the date collected and the date sent.'
+        : 'They go to Guardian Life today, on a transmittal that prints the date collected and the date sent.') +
+      ' Three working days after it goes, the department is asked to confirm it arrived.</p>',
+      ['Document', 'Policy', 'Department'],
+      list.map(function (r) { return [r.document + (r.quantity > 1 ? ' × ' + r.quantity : ''), r.policy || '—', r.department]; }),
+      '<p style="color:#5b6b7f;font-size:13px">Reference ' + dbEsc_(Object.keys(list.reduce(function (o, r) { o[r.ref] = 1; return o; }, {})).join(', ')) + '</p>',
+      { tone: 'ok', kicker: 'Signed for · ' + Utilities.formatDate(now, tz, 'd MMM, h:mm a'),
+        tiles: [['Signed by', lbFirst_(who.name), 'ok'], ['Documents', list.reduce(function (s, r) { return s + r.quantity; }, 0), 'ok'],
+                ['Goes', late ? 'Next run' : 'Today', late ? 'warn' : 'info']] });
+    return lbMail_({ to: [k], subject: 'Signed for by ' + lbFirst_(who.name) + ': ' + Object.keys(clients).join(', ') + ' (' + list.length + ' document' + (list.length === 1 ? '' : 's') + ')', html: html });
+  }).join('; ');
 }
 
 /** The papers go back to the agent: incomplete, unsigned, the wrong form. */
@@ -1511,7 +1725,11 @@ function lbTransmittal_(b, who) {
   var dept = rows[0].department;
   if (rows.some(function (r) { return r.department !== dept; })) throw new Error('A transmittal is for one department. Choose lines for one.');
   var tracking = dbClean_(b.tracking, 40);
-  if (dept === LB.OFT && !tracking) throw new Error('Enter the FedEx tracking number.');
+  var collation = '';
+  if (dept === LB.OFT) {
+    collation = dbClean_(b.collation, 80);
+    if (!collation) throw new Error('Choose the collation branch the OFT kits go to.');
+  }
   var now = new Date();
   var reasons = b.reasons || {};
   var need = rows.filter(function (r) {
@@ -1528,7 +1746,8 @@ function lbTransmittal_(b, who) {
   LB_READ_ = null;
 
   var attnRow = lbDeptRows_().filter(function (d) { return d.name === dept; })[0];
-  var attn = dbClean_(b.attn, 80) || (attnRow ? attnRow.attn : '');
+  var attn = collation ? 'Collation branch: ' + collation : (dbClean_(b.attn, 80) || (attnRow ? attnRow.attn : ''));
+  if (collation) lbOftBranchUsed_(collation);
   var sh = lbTransTab_();
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -1589,6 +1808,74 @@ function lbUnsend_(b, who) {
   var sh = lbTransTab_(), hm = dbHeaderMap_(sh);
   sh.getRange(t.row, hm.map['Status'] + 1).setValue('Cancelled by ' + who.name);
   return { ok: true, back: rows.length };
+}
+
+
+/* ============================== OFT kits ============================== */
+
+/* The next kit numbers for today: RRB-OFT-26-11-05-001, -002 … read off the
+   sheet under the submit's lock, so two agents logging at once never share one. */
+function lbOftNext_(now) {
+  var ymd = Utilities.formatDate(now, dbTz_(), 'yyyy-MM-dd');
+  var stem = LB.OFT_PREFIX + ymd.slice(2) + '-';
+  var max = 0;
+  lbRows_().forEach(function (r) {
+    if (r.oftNo && r.oftNo.indexOf(stem) === 0) max = Math.max(max, parseInt(r.oftNo.slice(stem.length), 10) || 0);
+  });
+  return function () { max++; return stem + (max < 100 ? (max < 10 ? '00' : '0') : '') + max; };
+}
+
+/* The collation branches: the OFT Collation tab (Branch, Active, Current), the
+   one marked Current first, then any branch an OFT transmittal has gone to. */
+function lbOftTab_() {
+  return dbSheet_(LB.TABS.OFT, ['Branch', 'Active', 'Current', 'Added By', 'Added At']);
+}
+function lbOftBranches_() {
+  var list = [], seen = {}, current = '';
+  var add = function (n) { n = String(n || '').trim(); var k = n.toLowerCase(); if (n && !seen[k]) { seen[k] = 1; list.push(n); } };
+  try {
+    var sh = lbOftTab_(), hm = dbHeaderMap_(sh), last = sh.getLastRow();
+    if (last > 1) sh.getRange(2, 1, last - 1, hm.head.length).getValues().forEach(function (r) {
+      var act = String(r[hm.map['Active']] || 'Yes').trim();
+      if (/^(no|false|not active|inactive|off)/i.test(act)) return;
+      var n = String(r[hm.map['Branch']] || '').trim();
+      if (n && /^(y|yes|true|current|x)$/i.test(String(r[hm.map['Current']] || '').trim()) && !current) current = n;
+      add(n);
+    });
+  } catch (e) {}
+  lbTransRows_().filter(function (t) { return t.department === LB.OFT && t.status === 'Sent'; })
+    .sort(function (a, c) { return (c.sentAt || 0) - (a.sentAt || 0); })
+    .forEach(function (t) { add(String(t.attn || '').replace(/^Collation branch:\s*/i, '')); });
+  if (!current && list.length) current = list[0];
+  return { list: list, current: current };
+}
+/* A branch typed at the transmittal joins the tab, so it is in the list next time. */
+function lbOftBranchUsed_(name) {
+  try {
+    var have = lbOftBranches_().list.some(function (n) { return n.toLowerCase() === name.toLowerCase(); });
+    if (!have) { var sh = lbOftTab_(); sh.appendRow(dbRowFor_(sh, { 'Branch': name, 'Active': 'Yes', 'Current': '', 'Added At': new Date() })); }
+  } catch (e) {}
+}
+
+/* One kit's whole trail, by its number, a policy or a client. An agent sees
+   only their own kits. */
+function lbOftFind_(b, who) {
+  var q = String(b.q || '').trim().toUpperCase().replace(/\s+/g, '');
+  if (q.length < 3) throw new Error('Type a kit number, policy number or client name.');
+  var now = new Date();
+  var hits = lbRows_().filter(function (r) {
+    if (!r.oftNo) return false;
+    if (who.isAgent && lbAgentKey_(r.agentNo) !== lbAgentKey_(who.agentNo)) return false;
+    return r.oftNo.toUpperCase().indexOf(q) >= 0 || dbKey_(r.policy) === dbKey_(q) ||
+      r.client.toUpperCase().replace(/\s+/g, '').indexOf(q) >= 0;
+  }).slice(-20).reverse();
+  var trans = {};
+  lbTransRows_().forEach(function (t) { trans[t.no] = t; });
+  return { ok: true, kits: hits.map(function (r) {
+    var o = lbPublic_(r, now, !who.isAgent), t = trans[r.transmittal];
+    o.collation = t ? String(t.attn || '').replace(/^Collation branch:\s*/i, '') : '';
+    return o;
+  }) };
 }
 
 
@@ -1709,7 +1996,8 @@ function lbDigestSend_(now) {
   var same = sent.filter(function (r) { return lbDay_(r.receivedAt) === today; });
   var late = rows.filter(function (r) { return lbIsLate_(r, now); });
   var lateNo = late.filter(function (r) { return !lbReasonFresh_(r, now); });
-  var notIn = rows.filter(function (r) { return r.status === 'Logged' && lbWorkDays_(r.loggedAt, now) >= 1; });
+  var notIn = rows.filter(function (r) { return r.status === 'Logged' && !r.handedTo && lbWorkDays_(r.loggedAt, now) >= 1; });
+  var unsigned = rows.filter(function (r) { return r.status === 'Logged' && r.handedTo && r.handedAt && (now - r.handedAt) >= LB.ACCEPT_HOURS * 3600000; });
   var contracts = rows.filter(function (r) { return r.status === 'With agent' && r.loggedAt && lbCalDays_(r.loggedAt, now) >= LB.CONTRACT_WARN[0]; });
   var trans = lbTransRows_();
   var noAns = trans.filter(function (t) { return t.status === 'Sent' && t.askedAt && /^Awaiting/.test(t.answer) && lbWorkDays_(t.askedAt, now) >= 2; });
@@ -1722,13 +2010,16 @@ function lbDigestSend_(now) {
       (note ? '<div style="font-size:13px;color:#5b6b7f">' + note + '</div>' : '') + lbTable_(head, list.slice(0, 15)) +
       (list.length > 15 ? '<div style="font-size:12px;color:#5b6b7f">and ' + (list.length - 15) + ' more in the Log Book.</div>' : '');
   };
-  var calm = !lateNo.length && !noAns.length && !saidNo.length && !contracts.length && !notIn.length;
+  var calm = !lateNo.length && !noAns.length && !saidNo.length && !contracts.length && !notIn.length && !unsigned.length;
   var html = lbMailHtml_('The Log Book today',
     '<p>' + dbEsc_(Utilities.formatDate(now, tz, 'EEEE d MMMM')) + '. ' + (calm ? 'Nothing is waiting on anyone.' : 'What needs someone is below, most pressing first.') + '</p>',
     [], [],
     sec('Received and not sent, no reason given', ['Client', 'Document', 'Department', 'Received', 'By'],
         lateNo.map(function (r) { return [r.client, r.document, r.department, Utilities.formatDate(r.receivedAt, tz, 'EEE d MMM'), r.receivedBy]; }),
         'The person who received them has been asked.') +
+    sec('Handed to staff and not signed for', ['Client', 'Document', 'Handed to', 'Handed in', 'Agent'],
+        unsigned.map(function (r) { return [r.client, r.document, r.handedTo, Utilities.formatDate(r.handedAt, tz, 'EEE d MMM, h:mm a'), r.agent]; }),
+        'Each has been asked to sign or say the papers are not with them.') +
     sec('Departments that said No', ['Transmittal', 'Department', 'Answered', 'What they said', 'Follow-up'],
         saidNo.map(function (t) { return [t.no, t.department, Utilities.formatDate(t.answeredAt, tz, 'd MMM'), t.deptNote || '—', t.followUp || '—']; })) +
     sec('Departments that have not answered in 2 working days', ['Transmittal', 'Department', 'Sent', 'Asked'],
@@ -1765,6 +2056,7 @@ function lbHourly() {
   if (h < 8 || h > 19) return 'out of hours';
   LB_READ_ = null;
   var out = [];
+  out.push(lbChaseHanded_(now));
   if (h >= lbBagHour_()) out.push(lbChaseLate_(now));
   if (h >= LB.BAG.NUDGE && h < lbCutoff_()) out.push(lbNudgeAgents_(now));
   if (h >= lbCutoff_()) out.push(lbBagPrep_(now));
@@ -1818,6 +2110,42 @@ function lbChaseLate_(now) {
   return 'late: ' + due.length + ' lines, ' + sent + ' e-mails';
 }
 
+/* Handed to a staff member and not signed for after LB.ACCEPT_HOURS: that
+   person is asked to sign or say "not with me", sales support and the agent
+   copied, once a working day per line. */
+function lbChaseHanded_(now) {
+  var today = lbDay_(now);
+  var due = lbRows_().filter(function (r) {
+    return r.source !== 'Imported' && r.status === 'Logged' && r.handedTo && r.handedAt &&
+      (now - r.handedAt) >= LB.ACCEPT_HOURS * 3600000 && !lbAlerted_(r, 'accept ' + today);
+  });
+  if (!due.length) return 'handed: none';
+  var by = {};
+  due.forEach(function (r) { (by[lbNameKey_(r.handedTo)] = by[lbNameKey_(r.handedTo)] || []).push(r); });
+  var n = 0;
+  Object.keys(by).forEach(function (k) {
+    var list = by[k], staff = list[0].handedTo;
+    var agents = {};
+    list.forEach(function (r) { var em = r.agentEmail || (lbFindAgent_(r.agentNo) || {}).email; if (em) agents[em.toLowerCase()] = em; });
+    var hours = function (r) { return Math.floor((now - r.handedAt) / 3600000); };
+    var html = lbMailHtml_('Handed to you and not signed for',
+      '<p>' + dbEsc_(lbFirst_(staff)) + ', the agents below handed you these papers and they are not signed for. ' +
+      'Until they are, nobody can show where they are. Sign for them in the Log Book now, or press <b>Not with me</b> if you do not have them.</p>' +
+      '<div style="margin:18px 0 6px">' + lbBtn_(lbPageUrl_('queue'), 'Sign for them &rarr;', '#b45309', '#ffffff') + '</div>',
+      ['Client', 'Document', 'Agent', 'Handed in', 'Hours'],
+      list.map(function (r) { return [r.client, r.document + (r.quantity > 1 ? ' × ' + r.quantity : ''), r.agent,
+                                      Utilities.formatDate(r.handedAt, dbTz_(), 'EEE d MMM, h:mm a'), String(hours(r))]; }),
+      '<p style="color:#5b6b7f;font-size:13px">Sales support and the agents are copied. You are asked once a working day until they are signed for.</p>',
+      { tone: 'warn', kicker: 'Sign, or say not with me',
+        tiles: [['Documents', list.length, 'warn'], ['Longest, hours', list.reduce(function (m, r) { return Math.max(m, hours(r)); }, 0), 'bad']] });
+    var res = lbMail_({ to: [lbStaffEmail_(staff) || lbSalesSupport_()], cc: [lbSalesSupport_()].concat(Object.keys(agents).map(function (x) { return agents[x]; })),
+                        subject: 'Not signed for: ' + list.length + ' document' + (list.length === 1 ? '' : 's') + ' handed to you (' + list[0].client +
+                                 (list.some(function (r) { return r.client !== list[0].client; }) ? ' and others' : '') + ')', html: html });
+    if (/sent/i.test(res)) { lbMarkAlert_(list, 'accept ' + today); n++; }
+  });
+  return 'handed: ' + due.length + ' lines, ' + n + ' e-mails';
+}
+
 /* 12:00: the person on the bag gets what is going down today, by department,
    and what agents logged and have not handed in. Once a day. */
 function lbBagPrep_(now) {
@@ -1847,6 +2175,7 @@ function lbNudgeAgents_(now) {
   var today = lbDay_(now);
   var due = lbRows_().filter(function (r) {
     if (r.source === 'Imported' || r.status !== 'Logged' || !r.loggedAt || !r.agentEmail) return false;
+    if (r.handedTo) return false;   // with a named staff member: lbChaseHanded_ asks them
     var d = lbWorkDays_(r.loggedAt, now);
     return (d === 0 || LB.NUDGE_DAYS.indexOf(d) >= 0) && !lbAlerted_(r, 'nudged ' + today);
   });
@@ -2007,7 +2336,7 @@ function lbSetTrans_(t, obj) {
  *  or more and not yet asked about. */
 function lbConfirmRun_(now) {
   var due = lbTransRows_().filter(function (t) {
-    return t.status === 'Sent' && t.sentAt && !t.askedAt && lbWorkDays_(t.sentAt, now) >= LB.CONFIRM_DAYS;
+    return t.status === 'Sent' && t.sentAt && !t.askedAt && t.department !== LB.OFT && lbWorkDays_(t.sentAt, now) >= LB.CONFIRM_DAYS;
   });
   var n = 0;
   due.forEach(function (t) { if (/sent/i.test(lbConfirmAsk_(t))) n++; });
@@ -2424,7 +2753,7 @@ function lbStats_(b, who) {
       if (r.status === 'Returned') o.returned++;
       if (r.routingChanged) o.changed++;
       if (!r.policy && LB.NO_POLICY.indexOf(r.document) < 0) o.noPolicy++;
-      if (r.status === 'Cancelled' || (r.status === 'Logged' && lbWorkDays_(r.loggedAt, now) >= LB.NEVER_IN_DAYS)) o.neverIn++;
+      if (r.status === 'Cancelled' || (r.status === 'Logged' && !r.handedTo && lbWorkDays_(r.loggedAt, now) >= LB.NEVER_IN_DAYS)) o.neverIn++;
     });
     return Object.keys(m).map(function (k) {
       var o = m[k]; o.sameDayPct = pct(o.sameDay, o.sent); o.within1Pct = pct(o.within1, o.sent); return o;

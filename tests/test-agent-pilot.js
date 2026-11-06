@@ -32,7 +32,7 @@ const run = mins => { const out = []; for (let i = 0; i < 5; i++) out.push(...en
 const to = n => mails.filter(m => m.to === n.split(' ')[0].toLowerCase() + '@example.com');
 
 console.log('\nThe morning, in preview with the pilot:\n');
-run(6 * 60 + 40);
+run(7 * 60 + 10);   // the morning mail starts at 7:00am (2 Nov 2026)
 const five = ['Neil Ramnanan', 'Fawwaz Mohamed', 'Rajiv Soodoo', 'Joy Barbara Sammah', 'Darryl Manick'];
 ok('each of the five gets their own morning mail, once', five.every(n => to(n).length === 1), five.map(n => n.split(' ')[0] + ':' + to(n).length).join(' '));
 ok('copied to their unit manager, not marked preview', five.every(n => to(n)[0] && to(n)[0].cc === 'um@example.com' && !/\[Preview\]/.test(to(n)[0].subject)));
@@ -40,7 +40,7 @@ ok('nobody outside the pilot is mailed', ['Narissa Mohammed', 'Premchand Dookran
 const prev = mails.filter(m => /\[Preview\]/.test(m.subject));
 ok('he still gets three preview samples, all from outside the pilot', prev.length === 3 && prev.every(m => !five.some(n => m.subject.indexOf(n) > -1)), prev.map(m => m.subject).join(' | '));
 ok('the pilot\'s mail is marked live (ag_)', five.every(n => !!P.getProperty('ag_am_a-' + env.agSlug_(n) + '_' + DAY)));
-const before = mails.length; run(6 * 60 + 50);
+const before = mails.length; run(7 * 60 + 20);
 ok('a later run sends nothing again', mails.length === before);
 
 console.log('\nThe midday and the close-off:\n');
@@ -66,7 +66,8 @@ DAY = '2026-10-27';
 
 console.log('\nThe buttons:\n');
 const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'apps-script', 'KPI.gs'), 'utf8');
-ok('the morning, midday and close-off buttons say what to do when Google\'s page will not open', (src.match(/\) \+ agOpenHint_\(\);/g) || []).length === 3 && /private \(incognito\) window/.test(env.agOpenHint_()));
+// 29 Oct 2026: the buttons open My day; under each, the full page and what to do when Google's page will not open.
+ok('the morning, midday and close-off buttons open My day, the full page below with what to do when Google\'s page will not open', (src.match(/\) \+ agOldLine_\(replyUrl_\(a\.key, day, 'agc?'\)\);/g) || []).length >= 3   /* the coach's morning has one too (2 Nov 2026) */ && /private \(incognito\) window/.test(env.agOldLine_('x')) && (src.match(/workGoUrl_\(a\.key, 'ag(plan|close)'\)/g) || []).length >= 3);
 console.log('\nThe ping:\n');
 const props = env.PropertiesService.getScriptProperties();
 const pingNow = () => JSON.parse(env.doGet({ parameter: { action: 'ping' } }).getContent());

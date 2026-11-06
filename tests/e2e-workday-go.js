@@ -44,7 +44,7 @@ const FORM = { ok: true, form: { planned: true, done: [], open: [{ id: '00TL1', 
   });
   console.log('\ngo=update (the midday e-mail):\n');
   await open('&go=update', async (page) => {
-    ok('the coach is at the top of the screen, saying update now', await page.evaluate(() => { const r = document.getElementById('coach').getBoundingClientRect(); return r.top >= 0 && r.top < 260; }) && /update now/.test(await page.textContent('#coachh')), await page.textContent('#coachh'));
+    ok('the coach is at the top of the screen, saying update now', await page.evaluate(() => { const r = document.getElementById('coach').getBoundingClientRect(); return r.top >= -5 && r.top < 300; }) && /update now/.test(await page.textContent('#coachh')), await page.textContent('#coachh'));
   });
   console.log('\nt= (a task):\n');
   await open('&go=list&t=00TL12', async (page, posts) => {

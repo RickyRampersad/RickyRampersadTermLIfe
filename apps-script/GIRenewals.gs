@@ -60,7 +60,7 @@ var GIR_HEAD = {
   'GI Renewals': ['Key', 'Policy', 'Line', 'Client', 'Account', 'Contact', 'E-mail', 'Renewal', 'Stage', 'Holder', 'Holder e-mail',
     'Last trans', 'Notice', 'Values', 'Letter', 'Submitted by', 'Approved by', 'Approved at', 'Sent at', 'Sent to', 'Test', 'Task',
     'Client view', 'Client answer', 'Reminders', 'Proceed by', 'Proceed at', 'GG to', 'GG subject', 'GG sent at', 'GG mail',
-    'New trans', 'New risks', 'Follow task', 'Event', 'Chases', 'GG reply', 'Delivered', 'Paid', 'Outcome', 'Updated'],
+    'New trans', 'New risks', 'Follow task', 'Event', 'Chases', 'GG reply', 'Delivered', 'Paid', 'Outcome', 'Updated', 'Req task'],
   'GI Renewal Log': ['When', 'Key', 'Policy', 'Client', 'Step', 'By', 'Detail']
 };
 /* The lines, in the order the desk shows them. pre: the policy number's middle letters; rt: Salesforce's cover-term
@@ -504,7 +504,7 @@ function girOne_(p) {
     proceed: s && s['Proceed at'] ? { by: gcmText_(s['Proceed by']), at: gcmWhen_(s['Proceed at']), to: gcmText_(s['GG to']), subject: gcmText_(s['GG subject']),
       trans: gcmText_(s['New trans']), risks: girJ_(s['New risks'], []), follow: gcmText_(s['Follow task']), event: gcmText_(s.Event) } : null,
     chases: s ? girJ_(s.Chases, []) : [], ggReply: s ? girJ_(s['GG reply'], null) : null, delivered: s ? gcmText_(s.Delivered) : '', paid: s ? gcmText_(s.Paid) : '',
-    outcome: s ? gcmText_(s.Outcome) : '', log: log, sfUrl: girSfBase_(), practice: girPracticeFor_(who, s) };
+    outcome: s ? gcmText_(s.Outcome) : '', log: log, sfUrl: girSfBase_(), practice: girPracticeFor_(who, s), req: girReqInfo_(r, s, notice) };
 }
 function girSfBase_() { try { return svcSfToken_().instance_url + '/'; } catch (e) { return ''; } }
 /** The renewal without Salesforce's raw shape: what the pages and the letter need. */
@@ -776,7 +776,12 @@ function girInsights_(r, hist, claims, bills, notice, today) {
     if (notice && notice.adequacy) add('note', 'Guardian General asks for the sums to be reviewed', 'The notice asks the client to check that the sums insured reflect the current replacement cost.');
   }
   if (notice && notice.declaration) add('act', 'Declarations are needed', 'This cover is written on a declaration basis: the actual figures for last year and the estimate for next year must go with the instruction.');
-  if (notice && notice.reqs && notice.reqs.length) add('act', 'Guardian General needs ' + notice.reqs.length + ' document' + (notice.reqs.length === 1 ? '' : 's'), notice.reqs.join('; '));
+  var needs = girReqList_(notice);
+  if (needs.length) add('act', 'Guardian General needs ' + needs.length + ' item' + (needs.length === 1 ? '' : 's') + ' before it renews', needs.join('; ') + '. A Servicing task for sales support carries them' + (girIsCompany_(r) ? ', with Guardian General\'s due diligence check list filled in' : '') + '.');
+  if (notice && notice.items && r.line !== 'motor') {
+    var nSum = notice.items.reduce(function (t, x) { return t + (Number(x.value) || 0); }, 0);
+    if (nSum > 0 && r.lastCover > 0 && Math.abs(nSum - r.lastCover) / r.lastCover > 0.05) add('check', 'The notice and Salesforce disagree on the sum insured', 'Guardian General\'s notice has ' + girWhole_(nSum) + ' (the sum as expiring); Salesforce has ' + girWhole_(r.lastCover) + ' on last year\'s terms. Check which is right before the letter states it.');
+  }
   var recent = (claims || []).filter(function (c) { return c.on && c.on >= girAddYears_(today, -3); }), open = (claims || []).filter(function (c) { return /open/i.test(c.status); });
   if (open.length) add('check', open.length + ' claim' + (open.length === 1 ? '' : 's') + ' still open', open.map(function (c) { return c.type + (c.vehicle ? ' ' + c.vehicle : '') + ' (' + tDmy_(c.on) + ')'; }).join('; ') + '. An open claim may change the renewal terms.');
   if (recent.length) add('note', recent.length + ' claim' + (recent.length === 1 ? '' : 's') + ' in three years', recent.map(function (c) { return tDmy_(c.on) + ' ' + c.type + (c.paid ? ', paid ' + girMoney_(c.paid) : ''); }).join('; ') + '.');
@@ -1052,6 +1057,240 @@ function girRenewalTask_(r, st, who) {
   return String(res.id || '');
 }
 
+/* ── what Guardian General asks for: a Servicing task for sales support, with its due diligence form ─── */
+/* Asked for on 29 October 2026, with a plant and machinery notice in hand: "whats ever on the letter guardian needs a
+   task is opened as well if a form prefilled and assign to the sales support team to follow up, not only pawan … the
+   task type is servicing and related to the transaction year or the risk". So every document the notice lists, and its
+   "Know Your Customer" line, becomes one Servicing task on the term's billing record (else the cover term), owned by a
+   person on the sales support team: the account owner when they are on it, else whoever of them has the fewest open
+   requirement tasks, or the person chosen on the desk. For a company, Guardian General's own Customer Due Diligence Check
+   List (GGIL-CDD, Incorporated Entities) is filled from Salesforce and the notice and attached to the task. Nothing on it
+   is signed: the registered salesperson signs and dates it once the documents are seen. Live, the task opens when the
+   notice is saved; in test mode only on a press with "this is real" ticked; at Proceed with Salesforce written, if not
+   yet. One task a renewal: an open one with the subject is found and none is added. */
+var GIR_REQ = {
+  TYPE: 'Servicing',
+  POOL: ['Sasha Lalla-Jagassar', 'Azariah Griffith', 'Elizabeth Lee'],   // the GIR_REQ_POOL Script property (names, comma-separated) replaces it
+  WORDS: 'Renewal Requirements and KYC Documents',                        // "Renewal Due <d/m/yyyy> - <WORDS> - <policy> - <client>", the branch's pattern
+  DUE_BEFORE: 10,                                                         // due this many days before the renewal, never sooner than two working days
+  KYC_LINE: 'Any outstanding "Know Your Customer" documents (the notice asks for them at renewal)',
+  FORM: 'GGIL-CDD-Company.pdf', FORM_SITE: 'https://rickyrampersadbranch.com/renewaldesk/forms/',
+  FORM_CODE: 'GGIL-CDD Checklist/Incorporated Entities-300611-Version 1.0',
+  COMPANY: /\b(ltd|limited|unlimited|inc|incorporated|company|corporation|corp|llc|plc|co\.)(?=\W|$)/i
+};
+/* Where each answer goes on the form, in points from the bottom-left of the upright page (page 1 is turned to 0 and page 2
+   to 180 degrees, so both read upright when printed). Measured on the blank Guardian General sent on 21 October 2026. */
+var GIR_CDD = {
+  size: 9, min: 6.5,
+  broker: [104, 423, 205], policy: [360, 423, 215], name: [92, 393, 480],
+  business: [[426, 366, 148], [318, 354, 256], [318, 339.5, 256], [318, 325.5, 256]],
+  tel: [106, 309, 70], fax: [228, 309, 75], email: [380, 309, 196],
+  owner: { company: [41, 280.5], partnership: [283.5, 280.5] },
+  type: { motor: [51.5, 220], accident: [146.5, 220], property: [255.5, 220], engineering: [363, 220], marine: [499.5, 220] },
+  p2: { premium: [226, 514, 60], value: [195, 500, 90], other: [[42, 394, 530], [42, 381, 530], [42, 367, 530]], signName: [70, 310, 140] }
+};
+var GIR_CDD_TYPE = { motor: 'motor', home: 'property', property: 'property', machinery: 'engineering', marine: 'marine', liability: 'accident', wc: 'accident', bond: 'accident' };
+
+/** The documents the notice asks for, with its KYC line when it has one. */
+function girReqList_(n) {
+  var list = ((n && n.reqs) || []).map(function (x) { return String(x).trim(); }).filter(String);
+  if (n && n.kyc && !list.some(function (x) { return /know your customer|\bkyc\b/i.test(x); })) list.push(GIR_REQ.KYC_LINE);
+  return list;
+}
+/** A company or partnership (the CDD form is for them): a commercial or business account, or a name that says so. */
+function girIsCompany_(r) {
+  return /commercial|business/i.test(r.acctRt || '') || GIR_REQ.COMPANY.test(String(r.client || '')) || /\bpartners?(hip)?\b|&\s*(sons|co)\b/i.test(String(r.client || ''));
+}
+function girReqPool_() {
+  var p = '';
+  try { p = String(PropertiesService.getScriptProperties().getProperty('GIR_REQ_POOL') || '').trim(); } catch (e) {}
+  var list = p ? p.split(',').map(function (s) { return s.trim(); }).filter(String) : GIR_REQ.POOL.slice();
+  return list;
+}
+/** Who follows up: the person chosen (if on the team), else the account owner when on the team, else whoever on the team
+ *  has the fewest open requirement tasks. { name, id, via }. */
+function girReqOwner_(r, pick) {
+  var pool = girReqPool_(), same = function (a, b) { return gcmSameName_(a, b) || tNameKey_(a) === tNameKey_(b); };
+  var on = function (n) { return pool.filter(function (p) { return same(p, n); })[0] || ''; };
+  var name = '', via = '';
+  if (pick && on(pick)) { name = on(pick); via = 'chosen'; }
+  if (!name && r.owner && r.owner.active && on(r.owner.name)) { name = on(r.owner.name); via = 'account owner'; }
+  if (!name) {
+    var load = {};
+    try {
+      gcmQuery_("SELECT Owner.Name, COUNT(Id) n FROM Task WHERE IsClosed = false AND Subject LIKE '%" + svcSoqlLit_(GIR_REQ.WORDS) + "%' GROUP BY Owner.Name").forEach(function (x) {
+        var nm = x.Name || (x.Owner && x.Owner.Name) || ''; if (nm) load[tNameKey_(nm)] = Number(x.n || x.expr0 || 0);
+      });
+    } catch (e) {}
+    var best = null;
+    pool.forEach(function (p) { var n = 0; Object.keys(load).forEach(function (k) { if (same(k, p) || k === tNameKey_(p)) n = load[k]; }); if (!best || n < best.n) best = { p: p, n: n }; });
+    if (best) { name = best.p; via = 'fewest open (' + best.n + ')'; }
+  }
+  var id = '';
+  try { id = name ? (tSfUserId_(name) || '') : ''; } catch (e) {}
+  return { name: name, id: id, via: via };
+}
+function girDmySlash_(ymd) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd || ''); return m ? Number(m[3]) + '/' + Number(m[2]) + '/' + m[1] : ''; }
+function girReqSubject_(r, n) { return 'Renewal Due ' + girDmySlash_(r.ren) + ' - ' + GIR_REQ.WORDS + ' - ' + ((n && n.policy) || r.policy) + ' - ' + r.client; }
+/** For the desk's notice step: what is asked, whether the task is open, who would get it, and the form. */
+function girReqInfo_(r, s, n) {
+  var list = girReqList_(n), task = girJ_(s && s['Req task'], null);
+  var out = { list: list, task: task, company: girIsCompany_(r), pool: girReqPool_(), suggest: null };
+  if (list.length && !task) { try { out.suggest = girReqOwner_(r, ''); delete out.suggest.id; } catch (e) {} }
+  return out;
+}
+/** The open requirement task already on this renewal, else null. */
+function girReqFind_(r, st) {
+  var have = girJ_(st && st['Req task'], null);
+  var d = girDigits_(r.policy), words = GIR_REQ.WORDS.toLowerCase();
+  if (have && have.id) return have;   /* one a renewal: once opened, never a second, open or closed */
+  var open = girTasks_(r).filter(function (t) { return String(t.subject).toLowerCase().indexOf(words) >= 0 && (!d || t.subject.replace(/\s+/g, '').indexOf(d) >= 0); });
+  return open[0] ? { id: open[0].id, owner: open[0].owner, found: true } : null;
+}
+
+/** What goes on the CDD form: every value read from Salesforce or the notice, nothing guessed. */
+function girCddData_(r, st, n) {
+  var acct = {};
+  try { acct = gcmQuery_("SELECT Name, BillingStreet, BillingCity, BillingState, BillingPostalCode, BillingCountry, Phone, Fax, Email__c FROM Account WHERE Id = '" + svcSoqlLit_(r.account) + "' LIMIT 1")[0] || {}; } catch (e) {}
+  var addr = [acct.BillingStreet, acct.BillingCity, acct.BillingState, acct.BillingPostalCode].map(function (s) { return String(s || '').replace(/\s+/g, ' ').trim(); }).filter(String).join(', ');
+  if (!addr && n && n.address) addr = n.address;
+  var em = [acct.Email__c, st && gcmText_(st['E-mail']), r.contact.email].map(function (s) { return String(s || '').trim(); }).filter(function (s) { return s && !girOurAddress_(s); })[0] || '';
+  var value = ((n && n.items) || []).reduce(function (s, x) { return s + (Number(x.value) || 0); }, 0);
+  var other = [];
+  if (n) other.push('Renewal of ' + (n.policy || r.policy) + ', ' + tDmy_(n.from || r.ren) + ' to ' + tDmy_(n.to || '') + (n.tranId ? ' (Guardian General notice, Tran Id ' + n.tranId + ')' : '') + '.');
+  var locs = ((n && n.items) || []).map(function (x) { return x.location || ''; }).filter(String);
+  if (locs.length) other.push('Risk location: ' + locs.join('; '));
+  return {
+    broker: (n && n.producer) || 'Ricky Rampersad', policy: (n && n.policy) || r.policy, name: (n && n.insured) || acct.Name || r.client,
+    business: addr, tel: String(acct.Phone || r.contact.mobile || '').trim(), fax: String(acct.Fax || '').trim(), email: em,
+    owner: girIsCompany_(r) ? (/\bpartners?(hip)?\b/i.test(r.client) ? 'partnership' : 'company') : '', type: GIR_CDD_TYPE[r.line] || '',
+    premium: n && n.premium ? n.premium : 0, value: value, other: other, signName: (n && n.producer) || '',
+    missing: ['the date and place of incorporation', 'the registered office', 'the company type (public, private, owner managed)', 'the documents attached', 'the business activities', 'the signature and date']
+      .concat(addr ? [] : ['the place of business']).concat(String(acct.Phone || r.contact.mobile || '').trim() ? [] : ['the telephone']).concat(em ? [] : ['an e-mail address'])
+  };
+}
+/** Words cut to fit a width, shrinking to the smallest size first. */
+function girFit_(font, text, width, size, min) {
+  text = String(text || ''); var s = size;
+  while (s > min && font.widthOfTextAtSize(text, s) > width) s -= 0.5;
+  while (text.length > 1 && font.widthOfTextAtSize(text, s) > width) text = text.slice(0, -2) + '…';
+  return { text: text, size: s };
+}
+/** Address words over the form's lines, the first line shorter. */
+function girLines_(font, text, widths, size) {
+  var words = String(text || '').split(/\s+/).filter(String), out = [], i = 0;
+  widths.forEach(function (w) {
+    var line = '';
+    while (i < words.length) { var t = line ? line + ' ' + words[i] : words[i]; if (font.widthOfTextAtSize(t, size) > w && line) break; line = t; i++; }
+    out.push(line);
+  });
+  if (i < words.length && out.length) out[out.length - 1] += ' …';
+  return out;
+}
+/** The blank form: the Drive forms folder's copy (GCM_FORMS_FOLDER) first, then the site's. */
+function girCddBlank_() {
+  var id = '';
+  try { id = PropertiesService.getScriptProperties().getProperty('GCM_FORMS_FOLDER') || ''; } catch (e) {}
+  if (id) { try { var it = DriveApp.getFolderById(id).getFilesByName(GIR_REQ.FORM); if (it.hasNext()) return it.next().getBlob(); } catch (e) {} }
+  var res = UrlFetchApp.fetch(GIR_REQ.FORM_SITE + GIR_REQ.FORM, { muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) throw new Error('Guardian General\'s due diligence form is neither in the forms folder nor on the site (HTTP ' + res.getResponseCode() + ').');
+  return res.getBlob();
+}
+/** Guardian General's CDD check list, filled: a PDF Blob. The scan is flat, so each value is drawn where it belongs. */
+function girCddPdf_(d, fileName) {
+  var lib = gblPdfLib_(), C = GIR_CDD;
+  var doc = gblSync_(lib.PDFDocument.load(gblU8_(girCddBlank_().getBytes()), { ignoreEncryption: true, updateMetadata: false }), 'Reading the due diligence form');
+  var font = gblSync_(doc.embedFont(lib.StandardFonts.Helvetica), 'The font'), bold = gblSync_(doc.embedFont(lib.StandardFonts.HelveticaBold), 'The font');
+  var pages = doc.getPages(), p1 = pages[0], p2 = pages[1];
+  p1.setRotation(lib.degrees(0)); if (p2) p2.setRotation(lib.degrees(180));
+  var put = function (pos, text) {
+    if (!pos || text === undefined || text === null || text === '') return;
+    var f = girFit_(font, text, pos[2] || 200, C.size, C.min);
+    p1.drawText(f.text, { x: pos[0], y: pos[1], size: f.size, font: font });
+  };
+  var put2 = function (pos, text) {   /* page 2 is turned 180 degrees: its drawing is turned with it, so the words read upright */
+    if (!p2 || !pos || text === undefined || text === null || text === '') return;
+    var f = girFit_(font, text, pos[2] || 200, C.size, C.min);
+    p2.pushOperators(lib.pushGraphicsState(), lib.concatTransformationMatrix(-1, 0, 0, -1, p2.getWidth(), p2.getHeight()));
+    p2.drawText(f.text, { x: pos[0], y: pos[1], size: f.size, font: font });
+    p2.pushOperators(lib.popGraphicsState());
+  };
+  var tick = function (pos) { if (pos) p1.drawText('X', { x: pos[0], y: pos[1], size: 8.5, font: bold }); };
+  put(C.broker, d.broker); put(C.policy, d.policy); put(C.name, d.name);
+  var lines = girLines_(font, d.business, C.business.map(function (b) { return b[2]; }), C.size);
+  C.business.forEach(function (b, i) { put(b, lines[i]); });
+  put(C.tel, d.tel); put(C.fax, d.fax); put(C.email, d.email);
+  if (d.owner) tick(C.owner[d.owner]);
+  if (d.type) tick(C.type[d.type]);
+  var fmt = function (x) { return (Math.round(x * 100) / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
+  if (d.premium) put2(C.p2.premium, fmt(d.premium));
+  if (d.value) put2(C.p2.value, fmt(d.value));
+  (d.other || []).slice(0, C.p2.other.length).forEach(function (t, i) { put2(C.p2.other[i], t); });
+  if (d.signName) put2(C.p2.signName, d.signName);
+  var bytes = gblSync_(doc.save({ useObjectStreams: false }), 'Writing the due diligence form');
+  return Utilities.newBlob(gblSigned_(bytes), 'application/pdf', (fileName || 'GGIL-CDD') + '.pdf');
+}
+function girCddName_(r, n) { return 'GGIL-CDD Checklist - ' + String((n && n.policy) || r.policy).replace(/\s+/g, ' ') + ' - ' + String(r.client).replace(/[\\/:*?"<>|]+/g, ' ').slice(0, 60); }
+/** A file on a Salesforce record (the task; the billing record when the task will not take it). Returns the record it went on. */
+function girAttach_(blob, ids) {
+  var b64 = Utilities.base64Encode(blob.getBytes());
+  for (var i = 0; i < ids.length; i++) {
+    if (!ids[i]) continue;
+    try { var res = tSfSend_('post', '/sobjects/ContentVersion', { Title: blob.getName().replace(/\.pdf$/i, ''), PathOnClient: blob.getName(), VersionData: b64, FirstPublishLocationId: ids[i] }); if (res && res.id) return { on: ids[i], id: String(res.id) }; } catch (e) {}
+  }
+  return null;
+}
+
+/** The requirements task: found if open, else opened, with the form attached for a company. Never throws.
+ *  { ok, id, made, owner, via, form: {attached, on} | null, why } */
+function girReqTask_(r, st, who, opt) {
+  opt = opt || {};
+  var n = girJ_(st && st.Notice, null) || opt.notice || null, list = girReqList_(n);
+  if (!list.length) return { ok: false, why: 'The notice asks for nothing.' };
+  if (!tSfOn_()) return { ok: false, why: 'Salesforce is not linked to this project.' };
+  var have = girReqFind_(r, st);
+  if (have) return { ok: true, id: have.id, made: false, owner: have.owner || '', found: true };
+  var o = girReqOwner_(r, opt.to), today = gcmToday_();
+  var due = gcmAddDays_(r.ren, -GIR_REQ.DUE_BEFORE), soonest = girAddWorking_(today, 2); if (due < soonest) due = soonest;
+  var holder = gcmText_(st && st.Holder), company = girIsCompany_(r);
+  var lines = ['Guardian General\'s renewal notice for ' + ((n && n.policy) || r.policy) + ' (' + r.lineLabel + '), renewing ' + tDmy_(r.ren) + (n && n.tranId ? ', Tran Id ' + n.tranId : '') +
+      ', asks for these before it renews. Read on the renewal desk by ' + ((n && n.by) || who.name) + (n && n.at ? ' on ' + n.at : '') + '.', ''];
+  list.forEach(function (x) { lines.push('[ ] ' + x); });
+  lines.push('');
+  if (company) lines.push('Attached: Guardian General\'s Customer Due Diligence Check List (' + GIR_REQ.FORM_CODE + '), filled from our records and the notice. Check it, have the client supply what it lists, and the registered salesperson signs and dates it once the documents are seen: it is not the client\'s to sign.');
+  lines.push('Follow up with ' + r.client + (r.contact.name && r.contact.name !== r.client ? ' (' + r.contact.name + (r.contact.mobile ? ', ' + r.contact.mobile : '') + ')' : (r.contact.mobile ? ' (' + r.contact.mobile + ')' : '')) + ' for each one. Note each here as it comes in, and send them to Guardian General with the renewal (CRMS Renewals). Close this task only when every document is with Guardian General.');
+  lines.push('Opened by the renewal desk for ' + (o.name || 'sales support') + ' (' + o.via + ')' + (holder ? '; the renewal is held by ' + girTitle_(holder) : '') + '. The desk: ' + GIR.DESK + '#' + encodeURIComponent(r.key));
+  var rec = { Subject: girReqSubject_(r, n).slice(0, 255), WhatId: r.trans[0] || (r.items[0] && r.items[0].id) || r.account, WhoId: r.contact.id || null, OwnerId: o.id || undefined,
+    ActivityDate: due, Priority: gcmDays_(today, r.ren) <= 14 ? 'High' : 'Normal', Status: 'Not Started', Task_Type__c: GIR_REQ.TYPE, Description: lines.join('\n').slice(0, 31000) };
+  if (!rec.WhoId) delete rec.WhoId;
+  if (!rec.OwnerId) delete rec.OwnerId;
+  var id = '';
+  try { id = String((typeof gblSfwSave_ === 'function' ? gblSfwSave_('post', '/sobjects/Task', rec).res : tSfSend_('post', '/sobjects/Task', rec)).id || ''); }
+  catch (e) { return { ok: false, why: 'Salesforce did not open the task: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
+  if (!id) return { ok: false, why: 'Salesforce did not open the task.' };
+  var form = null;
+  if (company) {
+    try { var blob = girCddPdf_(girCddData_(r, st, n), girCddName_(r, n)); form = girAttach_(blob, [id, rec.WhatId]) || { on: '', id: '' }; form.attached = !!form.id; }
+    catch (e) { form = { attached: false, why: String(e && e.message ? e.message : e).slice(0, 160) }; }
+  }
+  girFeed_(id, 'Renewal desk · ' + list.length + ' item' + (list.length === 1 ? '' : 's') + ' Guardian General needs for ' + ((n && n.policy) || r.policy) + ' by ' + tDmy_(r.ren) + ': ' + list.join('; ') + '.' +
+    (form && form.attached ? ' The due diligence form is attached, filled from our records.' : '') + ' Yours to follow up' + (o.name ? ', ' + o.name.split(' ')[0] : '') + '.', o.id || null);
+  var to = [];
+  var oe = o.name ? (tTeam_().people.filter(function (p) { return p.email && gcmSameName_(p.name, o.name); })[0] || {}).email : '';
+  if (oe) to.push(oe);
+  if (gcmText_(st && st['Holder e-mail'])) to.push(gcmText_(st['Holder e-mail']));
+  to.push(GIR.CC[1]);
+  to = to.filter(function (x, i) { return x && to.indexOf(x) === i; });
+  to.forEach(function (addr) { try {
+    girInternal_(addr, 'Renewal requirements · ' + r.client + ' · ' + ((n && n.policy) || r.policy) + ' · due ' + tDmy_(due),
+      '<p>Guardian General needs these before it renews <b>' + tEsc_(r.client) + '</b>, ' + tEsc_(r.lineLabel) + ' ' + tEsc_((n && n.policy) || r.policy) + ' (' + tEsc_(tDmy_(r.ren)) + '):</p><ul>' +
+      list.map(function (x) { return '<li>' + tEsc_(x) + '</li>'; }).join('') + '</ul><p>A Servicing task is open in Salesforce for <b>' + tEsc_(o.name || 'sales support') + '</b>, due ' + tEsc_(tDmy_(due)) + '.' +
+      (form && form.attached ? ' Guardian General\'s due diligence check list is on it, filled from our records: check it, and the registered salesperson signs it once the documents are seen.' : '') +
+      '</p><p><a href="' + GIR.DESK + '#' + encodeURIComponent(r.key) + '">Open it on the renewal desk</a></p>');
+  } catch (e) {} });
+  return { ok: true, id: id, made: true, owner: o.name, via: o.via, due: due, form: form, test: !girLive_() };
+}
+
 /* ── the desk's presses ────────────────────────────────────────────────────────────────── */
 /** gcm.renAct: one press on the desk. */
 function girAct_(b) {
@@ -1089,9 +1328,16 @@ function girAct_(b) {
         var other = n.key && n.key !== r.pk && girPolKey_(n.replaces || '') !== r.pk && !gcmYes_(b.confirmOther);
         if (other) return { ok: false, needConfirm: true, error: 'This notice is for ' + n.policy + ', not ' + r.policy + '. Tick that it replaces the old number, then save again.' };
         n.by = who.name; n.at = gcmWhen_(new Date());
+        n.reqs = (n.reqs || []).map(function (x) { return String(x).trim().slice(0, 300); }).filter(String).slice(0, 20); n.kyc = !!n.kyc;
         save({ Notice: n, Stage: GIR_STAGES[stage].n < GIR_STAGES.notice.n ? 'notice' : stage });
         girLog_(key, r, 'notice read', who.name, girMoney_(n.total) + ' for ' + tDmy_(n.from) + ' to ' + tDmy_(n.to) + (n.source && n.source.name ? ' (' + n.source.name + ')' : ''));
-        return { ok: true, said: 'Notice saved: ' + girMoney_(n.total) + '.' };
+        var need = girReqList_(n), saidN = 'Notice saved: ' + girMoney_(n.total) + '.';
+        if (need.length && girLive_()) {
+          var rq = girReqTask_(r, girState_()[key] || st, who, { notice: n });
+          if (rq.ok) { if (rq.made) save({ 'Req task': { id: rq.id, owner: rq.owner, via: rq.via, due: rq.due, at: gcmWhen_(new Date()), by: who.name, form: rq.form || null } }); girLog_(key, r, rq.made ? 'requirements task opened' : 'requirements task found', who.name, (rq.owner || '') + ' ' + rq.id); }
+          saidN += rq.ok ? (rq.made ? ' A Servicing task for the ' + need.length + ' item' + (need.length === 1 ? '' : 's') + ' Guardian General needs is open for ' + rq.owner + (rq.form && rq.form.attached ? ', with the due diligence form attached' : '') + '.' : ' The requirements task was already open.') : ' The requirements task did not open: ' + rq.why;
+        } else if (need.length) saidN += ' Guardian General needs ' + need.length + ' item' + (need.length === 1 ? '' : 's') + ': open the task for sales support on the notice step (test mode: tick that it is real).';
+        return { ok: true, said: saidN };
       }
       case 'values': {
         var v = girJ_(st && st.Values, {}), got = girJ_(b.values, null) || b.values || {};
@@ -1165,6 +1411,24 @@ function girAct_(b) {
         var fid = girFeed_(tid, 'Renewal desk · ' + who.name + ': ' + tx);
         girLog_(key, r, 'comment', who.name, tx);
         return { ok: !!fid, said: fid ? 'Posted on the renewal task\'s Chatter.' : 'Salesforce did not take the post.' };
+      }
+      case 'reqtask': {
+        if (!girJ_(st && st.Notice, null)) return { ok: false, error: 'Read Guardian General\'s notice first: the task lists what it asks for.' };
+        if (!girReqList_(girJ_(st.Notice, null)).length) return { ok: false, error: 'The notice asks for nothing. Add what Guardian General needs to the notice and save it.' };
+        if (!girLive_() && !gcmYes_(b.really)) return { ok: false, error: 'Test mode: tick that this is real (the task opens in Salesforce for the person who follows up).' };
+        var rq2 = girReqTask_(r, st, who, { to: String(b.to || '') });
+        if (!rq2.ok) return { ok: false, error: rq2.why };
+        if (rq2.made) save({ 'Req task': { id: rq2.id, owner: rq2.owner, via: rq2.via, due: rq2.due, at: gcmWhen_(new Date()), by: who.name, form: rq2.form || null } });
+        girLog_(key, r, rq2.made ? 'requirements task opened' : 'requirements task found', who.name, (rq2.owner || '') + ' ' + rq2.id);
+        return { ok: true, said: rq2.made ? 'Opened for ' + rq2.owner + ', due ' + tDmy_(rq2.due) + (rq2.form ? (rq2.form.attached ? ', with the due diligence form attached.' : '. The form was not attached: ' + (rq2.form.why || 'Salesforce did not take the file') + '.') : '.') : 'It was already open in Salesforce.' };
+      }
+      case 'reqform': {
+        var nf = girJ_(st && st.Notice, null);
+        if (!nf) return { ok: false, error: 'Read Guardian General\'s notice first.' };
+        if (!girIsCompany_(r)) return { ok: false, error: 'Guardian General\'s due diligence check list is for a company or partnership; ' + r.client + ' reads as a person.' };
+        var dd = girCddData_(r, st, nf), pdf = girCddPdf_(dd, girCddName_(r, nf));
+        girLog_(key, r, 'due diligence form filled', who.name, '');
+        return { ok: true, name: pdf.getName(), b64: Utilities.base64Encode(pdf.getBytes()), missing: dd.missing };
       }
       case 'proceed': return girProceed_(who, r, st, b, save);
       case 'reset': {
@@ -1298,6 +1562,11 @@ function girProceed_(who, r, st, b, save) {
     if (r.contact.id) task.WhoId = r.contact.id;
     if (ownerId) task.OwnerId = ownerId;
     try { out.follow = String(gblSfwSave_('post', '/sobjects/Task', task).res.id || ''); } catch (e) { out.dropped.push('the follow-up task (' + String(e.message || e).slice(0, 80) + ')'); }
+    if (girReqList_(notice).length && !girJ_(st && st['Req task'], null)) {
+      var rq = girReqTask_(r, st, who, { notice: notice });
+      if (rq.ok && rq.made) { out.req = rq.id; save({ 'Req task': { id: rq.id, owner: rq.owner, via: rq.via, due: rq.due, at: gcmWhen_(new Date()), by: who.name, form: rq.form || null } }); }
+      else if (!rq.ok) out.dropped.push('the requirements task (' + rq.why + ')');
+    }
     var dv = girDeliverer_();
     if (dv) {
       var day = girPrevWorking_(r.ren), soonest = girAddWorking_(today, 2);

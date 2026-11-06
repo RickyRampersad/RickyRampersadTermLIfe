@@ -5,6 +5,12 @@
 // each, Claude's reply or what to do (close it, move it, write a note) and the words, with one button to post them.
 // Pinned here: the replies to people asking him come first; his own tasks follow, "keep" left out; the subject says
 // how many Claude has written; with no answer from Claude the mail says so; with no key the section is not there.
+//
+// EVERY CLIENT, POLICY NUMBER, REGISTRATION AND ADDRESS HERE IS INVENTED,
+// and has to stay that way: GitHub Pages serves this repository from its
+// root, so `tests/` is on the open web. Real ones were in this file until
+// 5 November 2026. When adding a case, invent the client — the fixture is
+// about the arithmetic, and a real name adds nothing to it.
 const { makeEnv } = require('./harness');
 const env = makeEnv();
 let fails = 0;
@@ -24,7 +30,7 @@ env.inboxScrub_ = () => null;
 env.inboxView_ = () => null;
 const mails = []; env.MailApp = { sendEmail: m => mails.push(m), getRemainingDailyQuota: () => 90 };
 const W = { mine: [{ id: '00TM1', subject: 'Investment Discussions - Neal Balroop', due: '2026-09-18', late: true }], byOwner: {}, ignored: [],
-  ask: [{ id: '00TA1', subject: 'Bond letter for RPM Express', by: 'Kamla Dookran', said: 'Mr Rampersad, can I send the revised bond letter to the client?', at: DAY + 'T09:00:00.000Z' }] };
+  ask: [{ id: '00TA1', subject: 'Bond letter for Harbour Point Logistics', by: 'Kamla Dookran', said: 'Mr Rampersad, can I send the revised bond letter to the client?', at: DAY + 'T09:00:00.000Z' }] };
 env.bmWaiting_ = () => W;
 const MINE = [{ id: '00TM1', subject: 'Investment Discussions - Neal Balroop', due: '2026-09-18', late: true, ty: 'Opportunity' },
   { id: '00TM2', subject: 'Refund of premium receipt for Tanya', due: '2026-10-15', late: true, ty: 'Servicing' },
@@ -41,7 +47,7 @@ ADV = { 'a:00TA1': { act: 'reply', why: 'Approve the revised bond letter?', note
   '00TM3': { act: 'keep', why: 'In hand', note: '', ai: true } };
 let am = send();
 ok('the 5:00 mail carries what Claude wrote', !!am && /Claude has written these for you \(3\)/.test(am.htmlBody), am && am.subject);
-ok('a reply to the person asking him, with what she said', /Kamla Dookran<\/b> asks you on Bond letter for RPM Express/.test(am.htmlBody) && /can I send the revised bond letter/.test(am.htmlBody) && /Claude&#39;s reply · Approve the revised bond letter\?|Claude's reply · Approve the revised bond letter\?/.test(am.htmlBody) && /Kamla, yes, send the revised bond letter/.test(am.htmlBody));
+ok('a reply to the person asking him, with what she said', /Kamla Dookran<\/b> asks you on Bond letter for Harbour Point Logistics/.test(am.htmlBody) && /can I send the revised bond letter/.test(am.htmlBody) && /Claude&#39;s reply · Approve the revised bond letter\?|Claude's reply · Approve the revised bond letter\?/.test(am.htmlBody) && /Kamla, yes, send the revised bond letter/.test(am.htmlBody));
 ok('his own tasks: close it, write a note, with the words', /Claude: Close it · The receipt went to the client on 16 Oct/.test(am.htmlBody) && /Claude: Write a note · No note since September/.test(am.htmlBody) && /Where does the Balroop investment discussion stand/.test(am.htmlBody));
 ok('a task in hand is left out', !/Staff appraisal for Liz/.test(am.htmlBody));
 ok('people waiting on him come first', am.htmlBody.indexOf('People waiting on your word') > -1 && am.htmlBody.indexOf('People waiting on your word') < am.htmlBody.indexOf('Your own tasks (2)'));
@@ -62,7 +68,7 @@ console.log('\nBranch Intelligence at full depth (2026-10-22b):\n');
 props.setProperty('ANTHROPIC_API_KEY', 'k');
 // The record, its neighbours, the whole Chatter and the inbox, as Salesforce and the scrub hold them.
 env.sfkQuery_ = q => {
-  if (/FROM Task WHERE Id = '00TA1'/.test(q)) return [{ Id: '00TA1', Subject: 'Bond letter for RPM Express', Status: 'In Progress', Priority: 'High', ActivityDate: '2026-10-20', Description: 'Bond renewal for RPM Express Ltd, policy 8000123456', CreatedDate: '2026-10-01T10:00:00.000+0000', WhatId: '001X', What: { Name: 'RPM Express Ltd' }, Who: { Name: 'Christine Ramdass' }, Owner: { Name: 'Kamla Dookran' }, CreatedBy: { Name: 'Ricky Rampersad' } }];
+  if (/FROM Task WHERE Id = '00TA1'/.test(q)) return [{ Id: '00TA1', Subject: 'Bond letter for Harbour Point Logistics', Status: 'In Progress', Priority: 'High', ActivityDate: '2026-10-20', Description: 'Bond renewal for Harbour Point Logistics Ltd, policy 8000123456', CreatedDate: '2026-10-01T10:00:00.000+0000', WhatId: '001X', What: { Name: 'Harbour Point Logistics Ltd' }, Who: { Name: 'Nadia Pretend' }, Owner: { Name: 'Kamla Dookran' }, CreatedBy: { Name: 'Ricky Rampersad' } }];
   if (/WhatId = '001X'/.test(q)) return [{ Subject: 'Collect bond premium', ActivityDate: '2026-10-23', Status: 'Not Started', Owner: { Name: 'Pawan Probhu' } }];
   return [];
 };
@@ -70,7 +76,7 @@ const NOTES = []; for (let i = 0; i < 30; i++) NOTES.push({ day: '2026-10-' + St
 let CHATN = { '00TA1': NOTES.slice(), '00TM1': [{ day: '2026-09-18', at: '2026-09-18T10:00:00.000Z', by: 'Ricky Rampersad', text: 'Meeting set with Neal.' }] };
 env.cmdChatter_ = ids => { const o = {}; ids.forEach(id => { if (CHATN[id]) o[id] = CHATN[id]; }); return o; };
 env.inboxRows_ = () => [
-  { Key: 'm1', Date: DAY, Received: DAY + 'T08:00:00Z', From: 'Christine Ramdass', Subject: 'Bond 8000123456: revised letter?', Gist: 'Client asks whether the revised bond letter is ready.', Ask: 'Send the revised letter', Status: 'open', TaskId: '' },
+  { Key: 'm1', Date: DAY, Received: DAY + 'T08:00:00Z', From: 'Nadia Pretend', Subject: 'Bond 8000123456: revised letter?', Gist: 'Client asks whether the revised bond letter is ready.', Ask: 'Send the revised letter', Status: 'open', TaskId: '' },
   { Key: 'm2', Date: DAY, Received: DAY + 'T07:00:00Z', From: 'Someone Else', Subject: 'Unrelated motor quote', Gist: 'Nothing to do with it.', Ask: '', Status: 'open', TaskId: '' }];
 let calls = [], answer = null;
 env.UrlFetchApp = { fetch: (u, o) => { const body = JSON.parse(o.payload); calls.push(body);
@@ -78,7 +84,7 @@ env.UrlFetchApp = { fetch: (u, o) => { const body = JSON.parse(o.payload); calls
   const js = {}; ids.forEach(id => { js[id] = answer ? answer(id) : { read: 'Open 21 days; Kamla asked on ' + DAY + '; the client e-mailed this morning.', reply: 'Kamla, yes: send the revised bond letter to Christine today and copy me. Pawan collects the premium by Fri 23 Oct.', next: 'Kamla sends the letter today', add: ['Check the Log Book for the signed bond form'], action: 'chase' }; });
   return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ content: [{ type: 'text', text: JSON.stringify(js) }] }) }; } };
 
-const got = env.bmDeepDraft_(DAY, [{ id: '00TA1', k: 'ask', s: 'Bond letter for RPM Express', by: 'Kamla Dookran', said: 'can I send the revised bond letter?' }], 'Say yes and copy me');
+const got = env.bmDeepDraft_(DAY, [{ id: '00TA1', k: 'ask', s: 'Bond letter for Harbour Point Logistics', by: 'Kamla Dookran', said: 'can I send the revised bond letter?' }], 'Say yes and copy me');
 const sent = calls[0] && JSON.parse(calls[0].messages[0].content.slice(calls[0].messages[0].content.indexOf('[{')));
 ok('the full read: the whole Chatter (25 notes), oldest first', sent && sent[0].history_oldest_first.length === 25 && /Note number 24/.test(sent[0].history_oldest_first[0].text));
 ok('the record and the other open tasks on it', sent && sent[0].record && /8000123456/.test(sent[0].record.description) && sent[0].other_open_tasks_on_this_record.length === 1);
@@ -101,7 +107,7 @@ am = send();
 ok('the 5:00 mail reads it: where it stands, the reply, the next step, what to check', !!am && /Where it stands:<\/b> Open 21 days/.test(am.htmlBody) && /Kamla, yes: send the revised bond letter/.test(am.htmlBody) && /<b>Next:<\/b> Kamla sends the letter today/.test(am.htmlBody) && /Check first:<\/b> Check the Log Book/.test(am.htmlBody));
 ok('and says it read the whole Chatter, the record and his inbox', /Branch Intelligence read each task&#39;s whole Chatter|Branch Intelligence read each task's whole Chatter/.test(am.htmlBody) && /and the e-mail in your inbox about it/.test(am.htmlBody) && /Read with 1 e-mail from your inbox/.test(am.htmlBody));
 ok('his own task: the action Claude chose', /Claude: Chase/.test(am.htmlBody));
-const dr = env.bmDraftsFor_(DAY, [{ id: '00TA1', k: 'ask', s: 'Bond letter for RPM Express' }], true);
+const dr = env.bmDraftsFor_(DAY, [{ id: '00TA1', k: 'ask', s: 'Bond letter for Harbour Point Logistics' }], true);
 ok('the respond page and the 3:00 read the same reply', dr['00TA1'] && /Kamla, yes/.test(dr['00TA1'].note));
 const md = env.bmdDrafts_({ day: DAY, w: W, mine: MINE, adv: {} });
 ok('My day\'s drafts too', md.some(x => x.id === '00TA1' && /Kamla, yes/.test(x.text)) && md.some(x => x.id === '00TM1' && x.kind === 'own'));

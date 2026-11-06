@@ -178,7 +178,7 @@
       </div>
       <div class="rr-f">
         <label class="lab" for="ff-changes">Vehicles to add, remove, or change — and anything else we should action</label>
-        <textarea class="rr-in" id="ff-changes" rows="4" placeholder="e.g. Renew all vehicles as-is. TEG7960 was sold — please remove. Adding a new Hilux, reg to follow."></textarea>
+        <textarea class="rr-in" id="ff-changes" rows="4" placeholder="e.g. Renew all vehicles as-is. TAA4567 was sold — please remove. Adding a new Hilux, reg to follow."></textarea>
       </div>
       <div class="rr-f"><label class="lab" for="ff-name">Your name</label><input class="rr-in" id="ff-name" /></div>
       <div class="rr-row">
@@ -226,16 +226,21 @@ function fillIcons(root) {
   });
 }
 
+/* Every value here is invented. The registrations were real ones until
+   5 November 2026 — the account name had been changed to SAMPLE LOGISTICS LTD
+   and the plates left as they were, which anonymises nothing: a registration
+   identifies a vehicle and through it a client, and this page is served on the
+   open web. If you refresh this sample from live data, change the plates too. */
 const DEMO = {
   found:true, client:"SAMPLE LOGISTICS LTD", contact:"Operations", email:"", mobile:"",
   policies:[{coverage:"Third Party",nextDue:"2026-11-14",premium:48000,paid:20000,balance:28000,paymentStatus:"Balance owing",policyNo:"TTACF0000000"}],
   fleet:[
-    {account:"SAMPLE LOGISTICS LTD",reg:"TEG2239",make:"Toyota",model:"Hilux Revo",status:"Current",renewal:"2026-11-14",policyNo:"TTACF0000000",premium:1563.50},
-    {account:"SAMPLE LOGISTICS LTD",reg:"TDW7413",make:"Toyota",model:"Hiace",status:"Current",renewal:"2026-11-14",policyNo:"TTACF0000000",premium:1563.50},
-    {account:"SAMPLE LOGISTICS LTD",reg:"TEB6334",make:"Isuzu",model:"Dump Truck",status:"Current",renewal:"2026-11-14",policyNo:"TTACF0000000",premium:6598.99},
-    {account:"SAMPLE LOGISTICS LTD",reg:"TEG7960",make:"Ford",model:"Ranger",status:"Sold",renewal:"2026-11-14",policyNo:"TTACF0000000",premium:1563.50},
-    {account:"SAMPLE LOGISTICS LTD",reg:"TEG2239",make:"Toyota",model:"Hilux Revo",status:"Current",renewal:"2025-11-14",policyNo:"TTACF0000000",premium:1490.00},
-    {account:"SAMPLE LOGISTICS LTD",reg:"TDW7413",make:"Toyota",model:"Hiace",status:"Current",renewal:"2025-11-14",policyNo:"TTACF0000000",premium:1490.00}
+    {account:"SAMPLE LOGISTICS LTD",reg:"TAA1234",make:"Toyota",model:"Hilux Revo",status:"Current",renewal:"2026-11-14",policyNo:"TTACF0000000",premium:1563.50},
+    {account:"SAMPLE LOGISTICS LTD",reg:"TAA2345",make:"Toyota",model:"Hiace",status:"Current",renewal:"2026-11-14",policyNo:"TTACF0000000",premium:1563.50},
+    {account:"SAMPLE LOGISTICS LTD",reg:"TAA3456",make:"Isuzu",model:"Dump Truck",status:"Current",renewal:"2026-11-14",policyNo:"TTACF0000000",premium:6598.99},
+    {account:"SAMPLE LOGISTICS LTD",reg:"TAA4567",make:"Ford",model:"Ranger",status:"Sold",renewal:"2026-11-14",policyNo:"TTACF0000000",premium:1563.50},
+    {account:"SAMPLE LOGISTICS LTD",reg:"TAA1234",make:"Toyota",model:"Hilux Revo",status:"Current",renewal:"2025-11-14",policyNo:"TTACF0000000",premium:1490.00},
+    {account:"SAMPLE LOGISTICS LTD",reg:"TAA2345",make:"Toyota",model:"Hiace",status:"Current",renewal:"2025-11-14",policyNo:"TTACF0000000",premium:1490.00}
   ]
 };
 
@@ -410,7 +415,7 @@ else if(!CONFIG.API_URL){ /* wait for click in preview */ }
 </script>
 <!-- rrb-views -->
 <script>
-(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{
 (new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
 }catch(e){}})();
 </script>

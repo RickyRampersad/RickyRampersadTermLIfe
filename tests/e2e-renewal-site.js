@@ -365,7 +365,7 @@ async function common(page, name, w) {
     ok(d.name === 'SAMPLE LOGISTICS LTD' && /Preview mode/.test(d.banner), 'preview mode shows the sample fleet');
     ok(/Vehicles on cover \(latest cycle\)/.test(d.kpis) && /TT\$ 11,289\.49/.test(d.kpis) && /2026-11-14/.test(d.kpis) && /TT\$ 28,000\.00/.test(d.kpis) && /please settle/.test(d.kpis), 'the four figures, as before');
     ok(d.fleet === 4 && d.hist === 1 && d.pol === 1 && d.tabs === 5, 'fleet table, one earlier cycle, one policy, five tabs');
-    ok(/TT\$ 6,598\.99/.test(d.veh) && /TEG7960 \(Sold\)/.test(d.veh), 'premium by vehicle writes its values');
+    ok(/TT\$ 6,598\.99/.test(d.veh) && /TAA4567 \(Sold\)/.test(d.veh), 'premium by vehicle writes its values');
     ok(/2025-11-14: TT\$ 2,980\.00/.test(d.cyc) && /2026-11-14: TT\$ 11,289\.49/.test(d.cyc), 'premium by cycle writes its totals');
     ok(/On cover 3/.test(d.st) && /Sold or removed 1/.test(d.st) && /Paid TT\$ 20,000\.00/.test(d.pay) && /Owing TT\$ 28,000\.00/.test(d.pay), 'status and payment stacks write their values');
     ok(d.ff === 'Operations', 'the form is prefilled');
@@ -376,13 +376,13 @@ async function common(page, name, w) {
     ok(await page.evaluate(() => document.getElementById('fleet-form').getBoundingClientRect().top < 300), 'Confirm Fleet Renewal goes to the form');
     if (w === 390) {
       await page.evaluate((u) => { CONFIG.API_URL = u; }, base + '/api');
-      await page.fill('#ff-changes', 'Remove TEG7960.');
+      await page.fill('#ff-changes', 'Remove TAA4567.');
       srv.posts.length = 0;
       await page.click('#ff-btn');
       await page.waitForSelector('#ff-success', { state: 'visible' });
       const p = srv.posts.find((x) => x.method === 'POST');
       const body = p ? JSON.parse(p.body) : {};
-      ok(body.action === 'submit' && body.decision === 'Fleet renewal instructions' && body.token === 'DEMO1' && body.changes === 'Remove TEG7960.' && body.notes === 'Submitted via corporate fleet portal', 'fleet instructions post the same payload');
+      ok(body.action === 'submit' && body.decision === 'Fleet renewal instructions' && body.token === 'DEMO1' && body.changes === 'Remove TAA4567.' && body.notes === 'Submitted via corporate fleet portal', 'fleet instructions post the same payload');
     }
     ok(page.errors.length === 0, `corporate @${w}: no page errors ${page.errors.join(' ; ')}`);
     await page.evaluate(() => scrollTo({ left: 0, top: 0, behavior: 'instant' }));

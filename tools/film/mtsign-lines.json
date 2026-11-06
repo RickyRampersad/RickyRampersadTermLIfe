@@ -1,0 +1,55 @@
+{
+ "note": "The meeting sign-in film. Voiced Andrew Expressive +0% on the tts-run runner.",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
+ "scenes": [
+  {
+   "say": "Tomorrow we meet at twelve. Here's how you get in, and what we expect of you.",
+   "extra": 0.5
+  },
+  {
+   "say": "Open Ricky Rampersad branch dot com, slash meetings.",
+   "extra": 0
+  },
+  {
+   "say": "Type your agent number. The one on your card. No password, nothing else to remember.",
+   "extra": 0
+  },
+  {
+   "say": "That gets you into the room. You are not marked present yet.",
+   "extra": 0.4
+  },
+  {
+   "say": "The meeting card asks, are you here. Press it.",
+   "extra": 0.3
+  },
+  {
+   "say": "That tap is the register. It time-stamps you, and there is nothing else to sign.",
+   "extra": 0.3
+  },
+  {
+   "say": "Sign in and never press it, and the register has you absent. So press it.",
+   "extra": 0.6
+  },
+  {
+   "say": "The button opens at half past eleven. We start at twelve.",
+   "extra": 0.2
+  },
+  {
+   "say": "Ninety minutes. Ten to read. Fifty to discuss. Twenty to decide.",
+   "extra": 0.4
+  },
+  {
+   "say": "Nothing leaves that room without a name and a date on it.",
+   "extra": 0.4
+  },
+  {
+   "say": "Looking in rather than attending? Sign in as zero, zero, zero, zero, then give us your name and your role.",
+   "extra": 0.2
+  },
+  {
+   "say": "Try it tonight. If you can't get in, say so tonight, not at half past eleven.",
+   "extra": 0.8
+  }
+ ]
+}
