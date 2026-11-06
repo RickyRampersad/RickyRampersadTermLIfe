@@ -20,6 +20,8 @@ The ad is below. The video comes after it, as asked.
 | | |
 |---|---|
 | The page | `buildwithus/index.html` → **rickyrampersadbranch.com/buildwithus** |
+| The film | `buildwithus/buildwithus.mp4` (wide) and `buildwithus-story.mp4` (upright) |
+| The film's page to post | `buildwithusvideo/index.html` → **/buildwithusvideo** |
 | The backend | the `admin` form key in `apps-script/Quotes.gs`, code **`QB`** |
 | Where applications land | **Quote Requests** tab, and one e-mail to the Branch Manager alone |
 | Linked from | the homepage's Careers section, as its own block |
@@ -287,13 +289,65 @@ immediately that there is room to do something that matters.
 
 ---
 
+## The film
+
+**Thirty seconds (29.18s), two cuts, no voice-over.** `buildwithus.mp4` is
+1920×1080 for a feed; `buildwithus-story.mp4` is 1080×1920 for WhatsApp Status,
+Reels and Stories. Posters beside each. `/buildwithusvideo/` plays both with a
+switch, carries the Open Graph tags so a pasted link previews properly, and
+offers both files to download for posting.
+
+**Why no narration.** Feed video is watched with the sound off, so the words are
+on screen and the track carries the rhythm. It also means no voice to re-record
+when a line changes.
+
+**It is cut to the music's own beat.** The track was measured rather than
+guessed: 98.7 BPM, a beat every 0.608s, bars of 2.432s, first beat at 0.289s.
+Every scene change, every word and every counter lands on a beat. 29.18s is
+exactly 48 beats, and it is under the 30-second WhatsApp Status limit on
+purpose.
+
+**⚠ The music is yours to clear before this is posted publicly.** The track is
+the 19-second "Western Avenue 15" clip sent on 6 November 2026, looped to
+29.18s with a crossfade on the beat. **I do not know its licence.** Every other
+film in this repository uses either the branch's own `rr-branch-theme.mp3` or
+Kevin MacLeod's "Inspired" under CC BY with the credit attached, precisely
+because an MP4 at a public URL is a redistribution. Before posting: confirm the
+track is licensed for this, or say the word and the bed is swapped for the
+branch theme in one command.
+
+**Every screen in it is real**, taken from `wall/img/` — screens already public
+on `/wall/`, each carrying sample data. The names and figures on them are
+invented. No client appears anywhere, which is the standing rule for an MP4.
+
+**The QR is checked, not assumed.** It encodes
+`https://rickyrampersadbranch.com/buildwithus`, and it was decoded back out of
+the finished video — both at full size and from a 405×720 phone-sized preview —
+so it is known to scan.
+
+### Re-cutting it
+
+Everything lives in the session scratchpad under `film/`:
+
+- `film.html` — every frame is a pure function of `t`, so a frame-by-frame
+  render and a real-time play are identical and there is no capture drift to
+  measure and undo. The shape comes from the URL (`?shape=v`), **not** from a
+  property set after load — reading it after load silently gave the upright cut
+  the wide layout.
+- `render.js <v|w> <fps>` — renders the frames.
+- `peek.js <v|w>` — one frame per scene, for checking a change without
+  rendering nine hundred.
+- The bed is built with ffmpeg from the beat grid above, loudness-normalised to
+  −14 LUFS, then encoded at CRF 19.
+
+To change a line, edit the scene in `film.html` and re-render. Nothing is
+timed by hand: the beats are `b(n)`.
+
 ## Still to do
 
-- **The video**, as asked — the ad first, the film after. The recruiting film
-  pipeline in `tools/film/` is the road: a `buildwithus-lines.json`, Andrew
-  Expressive on the `tts-run` runner with the Whisper English-and-words check,
-  and the page's own screens as the picture. The strongest 6-second hook for a
-  feed cut is the first line of the LinkedIn ad.
+- **Clear the music licence**, or swap the bed for the branch theme. See the
+  film section above — this is the one thing standing between the film and
+  being posted.
 - **A share card** (`og-image`). The page currently falls back to the
   homepage's, which is correct but generic; its own card would preview better
   in WhatsApp.

@@ -189,6 +189,14 @@ h1 em{font-style:normal;color:var(--a);display:block}
 .term-body .k{color:#ffd79a}
 .term-body .s{color:#9ff0c6}
 
+/* ── the film ── */
+.filmgrid{display:grid;gap:var(--sp-l);align-items:center}
+@media (min-width:52rem){.filmgrid{grid-template-columns:1.25fr .75fr;gap:var(--sp-xl)}}
+.filmgrid > *{min-width:0}
+.vwrap{position:relative;border-radius:var(--r);overflow:hidden;background:var(--d0);
+  aspect-ratio:16/9;box-shadow:var(--e3)}
+.vwrap video{width:100%;height:100%;display:block;object-fit:contain;background:var(--d0)}
+
 /* ── counters ── */
 .band{background:var(--d0);color:var(--dT2);border-block:1px solid var(--d2);padding-block:var(--sp-l)}
 .cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,8rem),1fr));gap:var(--sp-m) var(--sp-s);text-align:center}
@@ -516,6 +524,26 @@ footer .ic{width:16px;height:16px}
 <div style="--l:10"><span class="p">&rsaquo;</span> <span class="s">all of it public. github.com &rarr; read it.</span></div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ THE FILM ══════════════════ -->
+<section class="alt" id="film" style="padding-block:var(--sp-xl)">
+  <div class="wrap">
+    <div class="filmgrid rv">
+      <div class="vwrap">
+        <video id="fv" playsinline preload="metadata" poster="buildwithus.jpg"
+               controls controlslist="nodownload" aria-label="Thirty seconds on the seat, the tools and what we stand for">
+          <source src="buildwithus.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div>
+        <span class="eyebrow">Thirty seconds</span>
+        <h2 data-words>If you would rather just watch it.</h2>
+        <p>The seat, the tools, what we stand for, and the one thing we are looking for. No voice-over &mdash; it reads fine with the sound off, which is how you are probably watching.</p>
+        <p class="small">Every screen in it is a real branch screen with sample data on it. Nothing is a mock-up and no client appears anywhere.</p>
       </div>
     </div>
   </div>
