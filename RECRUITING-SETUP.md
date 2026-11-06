@@ -586,11 +586,61 @@ nothing else, by about 5%. Nothing is hand-tuned per scene, which is what keeps
 a re-worded line from quietly overflowing later; a render reports every scene
 it shrank and warns below 62%.
 
+**The upright and feed cuts have the opposite problem, and the same pass
+fixes it.** The wide frame is tight; the upright one is 1080 × 1920 with the
+same words, so a scene sized to the width floated in the middle of it with a
+third of the frame empty above and below — which reads as an accident rather
+than as composition. After shrinking, those two shapes grow `--u` back up in
+5.5% steps until the scene fills about three quarters of its frame, capped at
+1.3×, **re-measuring at every step** (bigger type wraps to more lines, which
+adds height) and backing off the moment the height would exceed the frame or
+anything would run off the side. The wide cut never grows: it has no room.
+
 **Measure the children, not `scrollHeight`**, and **measure before `SEEK`.**
 The pad is a centred flex column, so it overflows equally at both ends and
 `scrollHeight` reports half of it; and `SEEK` puts a `scale(1.022)` on the
 scene for its entrance, which inflates every child's `getBoundingClientRect`
 by 2.2% and makes a scene that fits look as though it does not.
+
+## The colour and the motion were rebuilt once too
+
+Asked for in these words: *"you can have more soft colors that is apealing and
+easy on the eyes also lots of cutting edge motion an dgraphivs and graphics and
+movements."*
+
+**The dark ground came off near-black, which is the sixth time this branch has
+asked for that.** It was `#0b1b2d`; it is `#17334a` now, with every dark scene
+a soft 168° wash from `#1b3b55` into `#132b40` rather than one flat fill. The
+light scenes wash `#fbfaf5` into `#eef2ee`. No flat black anywhere and no
+`rgba(0,0,0,…)`: shadows take their hue from the ground.
+
+**The accent came off electric cyan.** `#00CFEA` on a dark ground is a screen
+colour, not an easy one. The film's teal is `#2e8296`, accent text on dark is
+`#a9e4ea` (4.5:1 on `#17334a`) and accent text on light stays `#00728d`
+(5.25:1 on `#faf9f2`) — the branch's own token, because that is the one value
+that works on a light ground and the arithmetic for it is in CLAUDE.md.
+
+**Every moving thing is a function of `t`**, drawn from `SEEK(t)` and never a
+CSS animation, because `render.js` seeks the film frame by frame and a CSS
+timeline cannot be seeked. Four layers:
+
+- **A canvas per scene**, at half resolution because it is blurred anyway and
+  nine full-frame canvases is memory the renderer should not spend. It carries
+  three large radial blobs drifting on their own sine paths with
+  `globalCompositeOperation = 'lighter'`, and a dot grid with a band of light
+  travelling across it. Every path is seeded from the scene index, so two
+  renders of the same frame are identical.
+- **A blurred light band** that crosses the frame on every cut, over the push.
+- **A real tilt in three dimensions** on the device frames: `perspective` on
+  the stage, `rotateY`/`rotateX` easing out of the entrance and then breathing,
+  so the screenshots turn toward the camera instead of sitting flat.
+- The entrances, counters, bars, strikes and stamps that were already there.
+
+Watch two traps. The canvas has to sit **inside** each scene, above that
+scene's own background and below the words — one global canvas is covered by
+the first scene's fill, and during a cut two scenes with different grounds
+overlap. And `ctx.filter = 'blur(...)'` is the whole cost of the layer: at half
+resolution it is cheap, at full resolution it is not.
 
 ## The voice and the music
 
