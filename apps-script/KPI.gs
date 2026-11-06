@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-06a';
+var SCRIPT_VERSION = '2026-11-06b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -11085,7 +11085,7 @@ function notClosedWeek_(sid, day) {
 function notClosedReminder_(person, day) {
   var sid = String(person.staffId), to = emailFor_(sid);
   if (!to || signedOutAt_(sid, day)) return false;
-  var first = String(nameFor_(sid)).split(' ')[0], btn = sid === 'pawan' ? replyButton_(replyUrl_(sid, day, 'errand') + '&c=leave', 'Close my day', 'Answer each errand and sign out.')
+  var first = String(nameFor_(sid)).split(' ')[0], btn = sid === 'pawan' ? replyButton_(replyUrl_(sid, day, 'errand') + '&cm=leave', 'Close my day', 'Answer each errand and sign out.')
     : replyButton_(workGoUrl_(sid, 'close'), 'Close my day and sign out', 'On My workday: a reason and a new date for anything not done, the checks, and sign out. Two minutes.') + wdOldLine_(sid, replyUrl_(sid, day, 'hk'));
   mailSend_({ to: to, subject: 'Your day is not closed · ' + shortDate_(day),
     htmlBody: shell_('Your day is not closed', prettyDate_(day), '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">' + esc_(first) + ', you are still signed in. Close your day now: in half an hour the register reads "' + NOCLOSE.LABEL + '" and Mr Rampersad is told.</div>' + btn) });
@@ -16343,7 +16343,7 @@ function replyClick_(e) {
   if (!person) return replyPage_('That link has expired.', 'The desk is no longer on the register.', '');
   if (f === 'plan' || f === 'in') return systemDayOn_() && sid !== 'pawan' ? sdPage_(person, day, '') : planReplyPage_(person, day, '');
   if (f === 'prog') return progReplyPage_(person, day, '');
-  if (f === 'errand') return errandReplyPage_(person, day, String(p.c || 'progress'), '');
+  if (f === 'errand') return errandReplyPage_(person, day, String(p.cm || p.c || 'progress'), '');
   if (f === 'undo') return undoReplyPage_(person, day, '');
   if (f === 'bm') return bmReplyPage_(person, day, '');
   if (f === 'cmd') return cmdReplyPage_(person, day, '', '');
@@ -17547,7 +17547,7 @@ function workdayModel_(sid, day) {
   // Check-in was already on it; the close-out (a reason and a new date for anything not done, the checks, sign out) is the
   // same page the 3:15 e-mail opens, signed for today, so nobody needs the e-mail to close the day. Pawan's is his errands page.
   if (UM_DESKS.indexOf(sid) < 0) {
-    m.close = { url: sid === 'pawan' ? replyUrl_(sid, day, 'errand') + '&c=leave' : replyUrl_(sid, day, 'hk'), end: twelve_(mmText_(endFor_(sid))) };
+    m.close = { url: sid === 'pawan' ? replyUrl_(sid, day, 'errand') + '&cm=leave' : replyUrl_(sid, day, 'hk'), end: twelve_(mmText_(endFor_(sid))) };
   }
   // The day's list (27 Oct 2026): what the system set at check-in, each ticked when closed today; before check-in, what it will set.
   if (UM_DESKS.indexOf(sid) < 0) {
@@ -19529,8 +19529,8 @@ function sendPawanDay_(day, kind) {
       { value: gi.length, label: 'GI expiring ' + PAWAN_GI_DAYS + 'd' }
     ]) +
     (kind === 'first'
-      ? replyButton_(workUrl_(sid), 'Check in and start my day', 'One tap: checking in is the register. It opens at once, on any phone.') + workdayMailFull_(replyUrl_(sid, day, 'errand') + '&c=progress', 'today\'s run, to confirm each errand')
-      : replyButton_(replyUrl_(sid, day, 'errand') + '&c=' + (kind === 'leave' ? 'leave' : 'progress'),
+      ? replyButton_(workUrl_(sid), 'Check in and start my day', 'One tap: checking in is the register. It opens at once, on any phone.') + workdayMailFull_(replyUrl_(sid, day, 'errand') + '&cm=progress', 'today\'s run, to confirm each errand')
+      : replyButton_(replyUrl_(sid, day, 'errand') + '&cm=' + (kind === 'leave' ? 'leave' : 'progress'),
           kind === 'midday' ? 'Mark what is done' : 'Close my day and sign out',
           'One tap per errand: done, on it, needs another day, or can\'t. No sign-in.') + workdayMailLine_(sid)) +
     intelBox_(lines, 'What the calendar shows') +
@@ -19587,7 +19587,7 @@ function errandReplyPage_(person, day, c, error) {
 }
 
 function errandReplySave_(person, day, p, all) {
-  var c = ERRAND_CHOICES[String(p.c)] ? String(p.c) : 'progress';
+  var cv = String(p.cm || p.c || ''), c = ERRAND_CHOICES[cv] ? cv : 'progress';
   var sid = String(person.staffId), it = pawanItems_(day), rows = [], missing = 0, label = { note: 'Comment' };
   ERRAND_CHOICES[c].forEach(function (o) { label[o[0]] = o[1]; });
   it.events.map(function (e) { return { id: e.id, s: (e.allDay ? 'All day' : twelve_(mmText_(e.start))) + ' · ' + e.s }; })
