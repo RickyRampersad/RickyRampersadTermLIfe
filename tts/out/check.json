@@ -1,27 +1,7 @@
 {
- "tts/out/bwfix/01.mp3": [
+ "tts/out/bwfix2/01.mp3": [
   "en",
   0.995,
-  "36 files, 100,000 lines, every line of it written right here."
- ],
- "tts/out/bwfix/02.mp3": [
-  "en",
-  0.998,
-  "Point your camera at the code. It takes 15 minutes and the branch manager reads them all himself."
- ],
- "tts/out/bwfix/03.mp3": [
-  "en",
-  0.996,
-  "Your leads come from a board. These are people who want to hear from you."
- ],
- "tts/out/bwfix/04.mp3": [
-  "en",
-  0.996,
-  "Your numbers are on the wall every day in front of everybody. So, or mine."
- ],
- "tts/out/bwfix/05.mp3": [
-  "en",
-  0.991,
-  "Point your camera at the code. Send your CV. It takes 15 minutes."
+  "Your numbers are on the wall every day in front of everybody. The managers numbers are up there too."
  ]
 }
