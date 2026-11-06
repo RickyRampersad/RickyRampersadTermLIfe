@@ -619,123 +619,12 @@
     {
       "key": "xpress-life",
       "code": "QX",
-      "dir": "apply/xpress-life",
-      "title": "Xpress Life application",
       "line": "Xpress Life",
       "icon": "bolt",
-      "eyebrow": "Apply",
-      "lede": "Term life cover, instant issue, no medical exams. Start here so the branch has your file and your reference — then finish it online, or have an agent sit with you and do it.",
-      "cta": "Start my application",
-      "mins": "2 minutes",
-      "note": "Nothing here asks about your health. The five health questions are on the Xpress Life application itself, which is where the cover is actually issued.",
-      "finish_url": "https://xpresslifett.com",
-      "finish_label": "Finish it now on Xpress Life",
-      "done_extra": "You can finish the application online right now, or wait for us — whichever you chose. Either way the branch has your file under this reference.",
-      "sections": [
-        {
-          "name": "Who the cover is for",
-          "fields": [
-            {
-              "k": "for_whom",
-              "t": "radio",
-              "label": "The cover is for",
-              "req": true,
-              "opts": [
-                "Myself",
-                "My husband or wife",
-                "Myself and my spouse"
-              ]
-            },
-            {
-              "k": "life_dob",
-              "t": "date",
-              "label": "Date of birth of the person to be covered",
-              "req": true,
-              "w": "s"
-            },
-            {
-              "k": "life_gender",
-              "t": "select",
-              "label": "Gender",
-              "req": true,
-              "w": "s",
-              "opts": [
-                "Female",
-                "Male"
-              ]
-            },
-            {
-              "k": "life_job",
-              "t": "text",
-              "label": "Occupation",
-              "req": true,
-              "w": "s",
-              "ph": "Electrician"
-            },
-            {
-              "k": "life_smoke",
-              "t": "radio",
-              "label": "Smoked or used tobacco in the last 12 months?",
-              "req": true,
-              "opts": [
-                "No",
-                "Yes"
-              ],
-              "help": "It changes the rate, which is why we ask it here."
-            }
-          ]
-        },
-        {
-          "name": "The cover you want",
-          "fields": [
-            {
-              "k": "sum_want",
-              "t": "money",
-              "label": "Amount of cover",
-              "w": "s",
-              "help": "Leave blank and we will show you two or three levels."
-            },
-            {
-              "k": "term_want",
-              "t": "select",
-              "label": "For how long?",
-              "w": "s",
-              "opts": [
-                "10 years",
-                "15 years",
-                "20 years",
-                "To age 65",
-                "Not sure — advise me"
-              ]
-            },
-            {
-              "k": "pays_who",
-              "t": "select",
-              "label": "Who would it pay?",
-              "w": "s",
-              "opts": [
-                "My husband or wife",
-                "My children",
-                "My parents",
-                "My estate",
-                "Not decided yet"
-              ],
-              "help": "You name the person on the application itself. This is just so we quote it right."
-            },
-            {
-              "k": "how_finish",
-              "t": "radio",
-              "label": "How would you like to finish it?",
-              "req": true,
-              "opts": [
-                "I will complete it online myself now",
-                "Have an agent sit with me and do it",
-                "Either — call me and we will decide"
-              ]
-            }
-          ]
-        }
-      ]
+      "lede": "Life cover up to TT$500,000 with five health questions and no medical exam. See your rate and apply on the branch's own Xpress Life page.",
+      "elsewhere": "/xpresslife/",
+      "index_cta": "See my rate",
+      "_note": "Xpress Life is NOT built here. /xpresslife/ (xpresslife/index.html) is the full application, moved onto the branch site from xpresslifett.com on 29 October 2026: the rate, the five health questions, the Guardian forms, tracking, posting to the Xpress Life Apps Script backend. This form used to ask for a term in years and a smoking answer, neither of which Xpress Life has (it is a 20-pay plan covered to about age 100, priced on age, gender and cover only), and took any amount where only 100K-500K exist. /apply/xpress-life/ is now a stub that forwards to /xpresslife/. Quotes.gs still knows the QX key; nothing posts to it."
     }
   ],
   "common": {

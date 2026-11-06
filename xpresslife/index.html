@@ -1,0 +1,2197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xpress Life · Ricky Rampersad Branch</title>
+<meta name="description" content="One day, the people you love will get a phone call. Whether that day leaves them a burden or a blessing is decided now — up to TT$500,000, from under $6 a day, right from your phone.">
+<link rel="canonical" href="https://rickyrampersadbranch.com/xpresslife/">
+<link rel="icon" href="/site-icon.svg" type="image/svg+xml">
+<meta property="og:url" content="https://rickyrampersadbranch.com/xpresslife/">
+<meta property="og:title" content="Leave Them a Blessing, Not a Bill — Covered Online in 5 Minutes">
+<meta property="og:description" content="Up to TT$500,000 for the people you love, from under $6 a day. Pay 20 years, then never again. Apply from your phone in about 5 minutes. Xpress Life is underwritten and issued by Guardian Life of the Caribbean Limited.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://rickyrampersadbranch.com/xpresslife/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://rickyrampersadbranch.com/xpresslife/og-image.jpg">
+<meta name="theme-color" content="#0a3350">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+<style>
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:96.22%;ascent-override:100.68%;descent-override:25.07%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:95.31%;ascent-override:101.64%;descent-override:25.31%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:96.66%;ascent-override:100.22%;descent-override:24.95%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:101.60%;ascent-override:95.35%;descent-override:23.74%;line-gap-override:0.00%}
+:root{
+  --display:'Inter Tight','Inter Tight Fallback','Inter Tight Fallback R',system-ui,sans-serif;
+  --text:'Inter','Inter Fallback','Inter Fallback R',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --deep:#0a3350; --teal:#0d3f5e; --teal2:#0f4c6e;
+  --royal:#3fc6dc; --royal-rgb:63,198,220;
+  --gold-top:#5fd6e8; --gold-lite:#a8e9f2; --gold-hot:#00a2bd; --gold-rgb:14,147,176;
+  --brite:#5fd6e8; --brite-rgb:95,214,232; --btntxt:#04252f;
+  --input:#FFFFFF; --tintwarm:#e6f4f6; --tinttxt:#0a4f60;
+  --bump1:#eef8f9; --bump2:#dcf0f3; --bumptxt:#0a4f60;
+  --lede:#BAD3E4; --chip:#e3f3f6;
+  --foot:#0a2638; --footmut:#7E93A9; --foottxt:#A6BACB; --phone:#2E5E86;
+  --emerald:#3fc6dc; --emerald-bright:#a8e9f2;
+  --gold:#0e93b0; --gold-deep:#00728d;
+  --paper:#faf9f2; --card:#FFFFFF;
+  --ink:#2b3b47; --muted:#5b6670; --muted-dark:#A9BBCB;
+  --line:#e4e0d4; --danger:#C4462F;
+  --turtle:#39B981; --turtle-deep:#0E7A55;
+  --logo-gold:#0e93b0; --logo-rim:#0a3350; --logo-check:#ffffff;
+}
+
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+body{font-family:var(--text);background:var(--paper);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1.08;letter-spacing:-.02em}
+.bless{font-family:var(--display);font-style:italic;font-weight:600;position:relative;
+  background:linear-gradient(100deg,#5fd6e8 20%,#c4f1f7 40%,#ffffff 50%,#c4f1f7 60%,#5fd6e8 80%);
+  background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-fill-color:transparent;animation:blessShine 4.6s ease-in-out infinite;
+  filter:drop-shadow(0 0 18px rgba(14,147,176,.45))}
+@keyframes blessShine{0%{background-position:120% 0}55%{background-position:-20% 0}100%{background-position:-20% 0}}
+@keyframes heroGlow{0%,100%{opacity:.45;transform:translate(-50%,-50%) scale(1)}50%{opacity:.8;transform:translate(-50%,-50%) scale(1.08)}}
+@keyframes sparkFloat{0%{opacity:0;transform:translateY(8px) scale(.6)}30%{opacity:1}70%{opacity:1}100%{opacity:0;transform:translateY(-26px) scale(1)}}
+@keyframes ctaBreath{0%,100%{box-shadow:0 14px 34px rgba(14,147,176,.4),0 0 0 0 rgba(14,147,176,.5)}50%{box-shadow:0 18px 44px rgba(14,147,176,.6),0 0 0 12px rgba(14,147,176,0)}}
+.hero h1{position:relative;z-index:2}
+.heroGlow{position:absolute;left:50%;top:38%;width:78%;height:150px;pointer-events:none;z-index:0;
+  background:radial-gradient(closed-side,rgba(14,147,176,.5),transparent 70%);
+  background:radial-gradient(60% 60% at 50% 50%,rgba(14,147,176,.5),transparent 70%);
+  filter:blur(28px);animation:heroGlow 5.4s ease-in-out infinite}
+.spark{position:absolute;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:1;
+  background:radial-gradient(circle,#eef8f9,rgba(168,233,242,.6) 60%,transparent);
+  box-shadow:0 0 10px rgba(95,214,232,.9)}
+.bless{display:inline-block}
+.bless::after{content:"";position:absolute;left:50%;top:-0.34em;width:1.18em;height:0.34em;
+  transform:translateX(-50%) rotate(-7deg);border-radius:50%;
+  border:2.5px solid rgba(238,248,249,.95);
+  box-shadow:0 0 14px 3px rgba(200,236,242,.9),0 0 36px 10px rgba(63,198,220,.55),inset 0 0 8px rgba(255,255,255,.8);
+  pointer-events:none;animation:haloBreath 4.6s ease-in-out infinite}
+.bless::before{content:"";position:absolute;left:50%;top:-0.55em;width:2.1em;height:1.1em;transform:translateX(-50%);
+  background:radial-gradient(50% 60% at 50% 45%,rgba(232,246,248,.5),rgba(95,214,232,.22) 55%,transparent 75%);
+  filter:blur(6px);pointer-events:none;animation:haloBreath 4.6s ease-in-out infinite}
+@keyframes haloBreath{0%,100%{opacity:.75;transform:translateX(-50%) rotate(-7deg) translateY(0)}50%{opacity:1;transform:translateX(-50%) rotate(-7deg) translateY(-2px)}}
+.heroRays{position:absolute;inset:-10% -20% auto -20%;height:75%;pointer-events:none;z-index:0;opacity:.5;
+  background:repeating-linear-gradient(105deg,transparent 0 34px,rgba(228,245,247,.05) 34px 40px,transparent 40px 92px);
+  -webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.9),transparent 85%);mask-image:linear-gradient(180deg,rgba(0,0,0,.9),transparent 85%);
+  animation:raysDrift 14s linear infinite}
+@keyframes raysDrift{0%{transform:translateX(-30px)}100%{transform:translateX(30px)}}
+.blessTick{min-height:22px;margin:2px 0 10px;font-size:13.5px;font-weight:700;letter-spacing:.02em;color:var(--gold-top)}
+.blessTick span{display:inline-block;opacity:0;transform:translateY(6px);transition:opacity .5s,transform .5s}
+.blessTick span.on{opacity:1;transform:none}
+.blessTick i{font-style:normal;opacity:.75;margin-right:7px}
+.bill{position:relative;display:inline-block;color:#8FA6B8;text-shadow:0 3px 10px rgba(0,0,0,.45);animation:billSag 7s ease-in-out infinite}
+.bill::after{content:"";position:absolute;left:-5%;right:-5%;top:52%;height:4px;border-radius:4px;
+  background:linear-gradient(90deg,var(--gold-hot),var(--gold));box-shadow:0 0 12px rgba(240,74,53,.7);
+  transform:scaleX(0);transform-origin:left center;animation:billStrike 7s ease-in-out infinite;pointer-events:none}
+@keyframes billStrike{0%,46%{transform:scaleX(0)}56%,88%{transform:scaleX(1)}96%,100%{transform:scaleX(0);transform-origin:right center}}
+@keyframes billSag{0%,44%{transform:translateY(0)}50%{transform:translateY(3px) rotate(.4deg)}58%,100%{transform:translateY(0)}}
+#startApply{overflow:hidden}
+#startApply::before{content:"";position:absolute;top:0;left:-60%;width:38%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);
+  transform:skewX(-18deg);animation:ctaSheen 4.2s ease-in-out infinite;pointer-events:none}
+@keyframes ctaSheen{0%,62%{left:-60%}82%{left:135%}100%{left:135%}}
+.rv{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+.rv.in{opacity:1;transform:none}
+.decFlash{position:fixed;inset:0;z-index:250;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 42%,rgba(95,214,232,.95),rgba(14,147,176,.35) 45%,transparent 72%);
+  animation:decHit .8s ease-out forwards}
+@keyframes decHit{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+.trustToast{position:fixed;left:12px;bottom:14px;z-index:60;max-width:75%;background:rgba(11,37,64,.94);
+  border:1px solid rgba(95,214,232,.4);color:#d3eff4;font:700 12px var(--text);
+  padding:10px 14px;border-radius:14px;box-shadow:0 14px 36px rgba(0,0,0,.45);
+  opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s;pointer-events:auto;cursor:pointer}
+.trustToast.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.bless{animation:none}.bless::before,.bless::after{animation:none}.heroGlow,.spark,.heroRays{display:none}
+.bill{animation:none}.bill::after{animation:none;transform:scaleX(1)}#startApply::before{animation:none;display:none}.rv{opacity:1;transform:none;transition:none}}
+.heart{font-family:var(--display);font-style:italic;font-size:19px;line-height:1.7;text-align:center;color:var(--ink)}
+.heart b{color:var(--gold-deep)}
+a{color:inherit} button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:4px}
+.wrap{max-width:620px;margin:0 auto;padding:0 20px}
+.eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);font-weight:700}
+
+/* header */
+header{position:sticky;top:0;z-index:50;background:rgba(8,22,48,.94);backdrop-filter:blur(10px)}
+.hbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;max-width:620px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff}
+.brand svg{width:28px;height:32px;flex:none}
+.brand-name{font-family:var(--display);font-weight:400;font-size:14px}
+.brand-sub{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted-dark)}
+.wa-pill{display:inline-flex;align-items:center;gap:6px;background:var(--emerald);color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:8px 14px;border-radius:999px}
+
+/* hero */
+.hero{background:radial-gradient(120% 90% at 85% -10%, var(--teal2) 0%, transparent 55%),radial-gradient(70% 55% at 20% 10%, rgba(var(--royal-rgb),.28) 0%, transparent 65%),radial-gradient(90% 70% at -10% 100%, var(--teal) 0%, transparent 60%),var(--deep);color:#fff;padding:48px 0 118px;position:relative;overflow:hidden;text-align:center}
+.hero::after{content:"";position:absolute;inset:0;background:radial-gradient(50% 34% at 50% 8%, rgba(var(--gold-rgb),.13), transparent 70%);pointer-events:none}
+.hero h1{font-size:clamp(38px,10.5vw,56px);font-weight:400;margin:14px 0 14px}
+.hero h1 .gold{background:linear-gradient(100deg,var(--gold),#FFE58A,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lede{font-size:17px;color:var(--lede);max-width:30em;margin:0 auto}
+.hero p.lede b{color:#fff}
+.mini-steps{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:20px 0 4px}
+.mini-steps span{font-size:12px;font-weight:700;color:var(--chip);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);padding:7px 12px;border-radius:999px}
+.mini-steps b{color:var(--brite)}
+.hero .ctas{display:flex;flex-wrap:wrap;gap:12px;margin:20px auto 0;justify-content:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:14px;font-size:16px;font-weight:700;padding:17px 28px;text-decoration:none;transition:transform .12s ease}
+.btn:active{transform:scale(.97)}
+.btn-gold{background:linear-gradient(120deg,var(--gold-top) 0%,var(--gold-lite) 45%,var(--gold-hot) 100%);background-size:200% 100%;color:var(--btntxt);box-shadow:0 10px 28px rgba(var(--gold-rgb),.4);animation:sheen 4s ease-in-out infinite}
+@keyframes sheen{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
+.btn-green{background:var(--emerald);color:#fff;box-shadow:0 8px 24px rgba(var(--gold-rgb),.35)}
+.btn-dark{background:var(--deep);color:#fff}
+.watch-link{display:inline-flex;align-items:center;gap:10px;margin-top:16px;color:#fff;font-weight:700;font-size:14px;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:3px}
+.watch-link .pl{width:26px;height:26px;border-radius:50%;background:var(--gold-top);position:relative;flex:none}.watch-link .pl::after{content:"";position:absolute;left:10px;top:7px;border-left:9px solid #04252f;border-top:6px solid transparent;border-bottom:6px solid transparent}
+.explain{max-width:440px;margin:18px auto 0}.explain video{width:100%;aspect-ratio:9/16;border-radius:22px;background:#0a3350;display:block;box-shadow:0 24px 60px rgba(8,22,48,.28)}
+.explain .ex-note{font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.5}
+.explain details{margin-top:12px;font-size:14px}.explain details summary{cursor:pointer;font-weight:700;color:var(--teal)}.explain details p{margin-top:8px;color:var(--ink)}
+.btn-ghost-l{background:rgba(255,255,255,.08);color:#fff;border:1.5px solid rgba(255,255,255,.35)}
+.btn-ghost-d{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+
+/* phone mockup */
+.phone{width:196px;margin:30px auto 0;position:relative;animation:float 5s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.phone .body{background:var(--foot);border:3px solid var(--phone);border-radius:30px;padding:12px 10px 16px;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.phone .notch{width:66px;height:7px;background:#2E5E86;border-radius:99px;margin:0 auto 10px}
+.phone .screen{background:linear-gradient(170deg,#F4FBFC,#E7F6EF);border-radius:18px;padding:16px 12px;text-align:center}
+.phone .s-brand{font-size:8.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+.phone .s-seal{width:56px;height:64px;margin:10px auto 6px}
+.phone .s-seal .check-path{stroke-dasharray:60;stroke-dashoffset:60;animation:draw .6s 1s ease forwards}
+.phone .s-status{font-family:var(--display);font-weight:400;font-size:17px;color:#00728d}
+.phone .s-ref{font-family:var(--display);font-size:8.5px;color:var(--muted);margin:3px 0 10px}
+.phone .s-btn{background:var(--emerald);color:#fff;font-size:10px;font-weight:700;border-radius:8px;padding:8px}
+.phone .dot{position:absolute;border-radius:50%;animation:bob 3.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.trust-line{margin-top:22px;font-size:12.5px;color:var(--muted-dark)}
+.trust-line b{color:#fff}
+
+/* quote card */
+.quote-section{margin-top:-72px;padding-bottom:44px;position:relative;z-index:2}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:0 22px 55px rgba(8,22,48,.16);padding:28px 22px;position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--gold-top),var(--gold-hot) 45%,var(--royal))}
+.card h2{font-size:24px;font-weight:400;margin-bottom:4px}
+.card .sub{font-size:13.5px;color:var(--muted);margin-bottom:20px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:7px}
+select,input[type=text],input[type=tel],input[type=email],input[type=date]{width:100%;padding:15px 14px;font-size:17px;font-weight:600;font-family:var(--text);border:2px solid #6FA3AE;border-radius:12px;background:#FFFFFF;color:#0a3350;appearance:none;-webkit-appearance:none}
+input::placeholder{color:#8FB0B7;font-weight:500}
+select:invalid,select option[value=""]{color:#5E838B}
+.miss{border-color:var(--danger)!important;background:#f1f9fa!important;box-shadow:0 0 0 4px rgba(196,70,47,.15)!important}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2307302C' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+select:focus,input:focus{border-color:var(--gold-deep);outline:none;box-shadow:0 0 0 4px rgba(255,197,61,.28)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{padding:14px;border:1.5px solid var(--line);border-radius:12px;background:var(--input);font-size:15px;font-weight:700;color:var(--teal)}
+.seg button.on{background:var(--deep);color:#fff;border-color:var(--deep)}
+.bands{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.bands button{padding:12px 2px;border:1.5px solid var(--line);border-radius:12px;background:var(--input);font-size:12.5px;font-weight:700;color:var(--teal);font-family:var(--display)}
+.bands button.on{background:linear-gradient(135deg,var(--gold),var(--gold-deep));border-color:var(--gold-deep);color:var(--btntxt)}
+@media(max-width:430px){.bands{grid-template-columns:repeat(3,1fr)}}
+.ledger{margin-top:20px;background:linear-gradient(160deg,var(--deep),var(--teal));border-radius:18px;padding:22px 18px;text-align:center;display:none;color:#fff;position:relative;overflow:hidden}
+.ledger::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 60% at 50% 0%,rgba(var(--brite-rgb),.18),transparent 70%);pointer-events:none}
+.ledger.show{display:block;animation:rise .4s ease}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.ledger>*{position:relative}
+.ledger .l-label{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted-dark)}
+.ledger .l-amount{font-family:var(--display);font-size:47px;font-weight:600;color:var(--brite);margin:4px 0 2px;text-shadow:0 0 30px rgba(var(--brite-rgb),.4)}
+.ledger .l-amount span{font-size:18px;color:var(--muted-dark);font-weight:400}
+.ledger .l-annual{font-size:13px;color:var(--muted-dark)}
+.ledger .l-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px;text-align:left}
+.ledger .l-facts div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 12px}
+.ledger .l-facts b{display:block;font-family:var(--display);font-size:15px;color:var(--gold)}
+.ledger .l-facts small{font-size:11px;color:var(--muted-dark)}
+.ledger .l-note{font-size:10.5px;color:var(--muted-dark);margin-top:14px}
+.apply-cta{margin-top:16px;width:100%;font-size:17px;padding:18px}
+
+/* sections */
+section.pad{padding:44px 0}
+section h2.title{font-size:30px;font-weight:400;margin:8px 0 8px}
+section p.subtitle{color:var(--muted);font-size:14.5px;margin-bottom:22px}
+.dark{background:var(--deep);color:#fff}
+.dark h2.title{color:#fff}
+.dark p.subtitle{color:var(--muted-dark)}
+.cmp{background:var(--card);border-radius:18px;overflow:hidden;box-shadow:0 16px 40px rgba(8,22,48,.12)}
+.cmp .row{display:grid;grid-template-columns:1.1fr 1fr 1fr;border-bottom:1px solid var(--line)}
+.cmp .row:last-child{border-bottom:none}
+.cmp .row>div{padding:14px 12px;font-size:13px}
+.cmp .h{background:var(--deep);color:#fff;font-weight:700;font-size:12px}
+.cmp .h .us{color:var(--gold)}
+.cmp .feat{font-weight:600;color:var(--teal)}
+.cmp .us-cell{background:var(--tintwarm);font-weight:700;color:var(--tinttxt)}
+.cmp .them-cell{color:var(--muted)}
+.cmp.glance .row{grid-template-columns:.8fr 2fr}.cmp.glance .us-cell{font-weight:600}
+.ready{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:10px}.ready li{font-size:14.5px;padding-left:30px;position:relative;color:var(--ink)}.ready li::before{content:"";position:absolute;left:4px;top:5px;width:14px;height:8px;border-left:3px solid var(--gold-deep);border-bottom:3px solid var(--gold-deep);transform:rotate(-45deg)}
+.cmp-foot{font-size:11px;color:var(--muted-dark);margin-top:12px}
+.promise-card{background:linear-gradient(160deg,var(--teal),var(--teal2));border-radius:22px;padding:28px 22px;color:#fff;box-shadow:0 20px 50px rgba(8,22,48,.3)}
+.promise-card h2{font-size:26px;font-weight:400;margin-bottom:12px}
+.promise-card h2 span{color:var(--gold)}
+.promise-card p{font-size:15px;color:var(--lede);margin-bottom:12px}
+.promise-card p b{color:#fff}
+.promise-card p .g{color:var(--gold);font-weight:700}
+.schedule{margin-top:16px;border-top:1px solid rgba(255,255,255,.15)}
+.schedule .srow{display:flex;justify-content:space-between;padding:12px 2px;border-bottom:1px solid rgba(255,255,255,.12);font-size:14px}
+.schedule .srow b{font-family:var(--display);color:var(--brite)}
+
+/* RAI strip */
+.rai-strip .card{display:flex;gap:16px;align-items:flex-start;border:1.5px solid var(--emerald);box-shadow:0 16px 40px rgba(var(--gold-rgb),.18)}
+.rai-face{flex:none;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--deep),var(--teal2));display:flex;align-items:center;justify-content:center;position:relative}
+.rai-face::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--gold);animation:pulse 2.4s infinite}
+@keyframes pulse{0%{transform:scale(1);opacity:.9}70%{transform:scale(1.18);opacity:0}100%{opacity:0}}
+.rai-face svg{width:28px;height:32px}
+.rai-turtle .blink{animation:tblink 4.6s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes tblink{0%,91%,100%{transform:scaleY(1)}94%{transform:scaleY(.12)}}
+.rai-fab .rai-turtle{width:42px;height:50px}
+.rai-face .rai-turtle{width:32px;height:38px}
+.rai-strip h3{font-size:19px;font-weight:400}
+.rai-strip h3 span{color:var(--emerald)}
+.rai-strip p{font-size:14px;color:var(--muted);margin:4px 0 12px}
+.rai-chips{display:flex;flex-wrap:wrap;gap:8px}
+.rai-chips button{font-size:12.5px;font-weight:600;padding:8px 12px;border-radius:999px;border:1.5px solid var(--line);background:var(--input);color:var(--teal)}
+
+/* faq */
+details{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:14px;margin-bottom:10px;overflow:hidden;color:#fff}
+summary{padding:16px 18px;font-weight:600;font-size:15px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:10px}
+summary::after{content:"+";font-family:var(--display);color:var(--gold);font-size:18px}
+details[open] summary::after{content:"–"}
+details .a{padding:0 18px 16px;font-size:14px;color:var(--lede)}
+.trust-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:34px}
+.trust-grid div{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:15px}
+.trust-grid b{display:block;font-family:var(--display);font-weight:400;font-size:23px;color:var(--gold)}
+.trust-grid small{font-size:12px;color:var(--muted-dark)}
+
+/* wizard */
+.apply-wrap{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;background:linear-gradient(180deg,var(--paper),#eef6f7);overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;padding:0 0 90px}
+.apply-wrap.open,.apply-wrap.show{display:block!important}
+#apply:target{display:block!important}
+body.locked{overflow:hidden}
+.ovhead{position:sticky;top:0;z-index:5;background:var(--deep);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:14px 18px;font-weight:800;font-size:14px}
+.apply-wrap .wrap{padding-top:18px}
+.rs{border:1.5px solid var(--line);border-radius:16px;overflow:hidden;margin:0 0 14px;background:#fff}
+.rs h5{background:var(--teal);color:#fff;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:10px 14px;font-family:var(--text);font-weight:800}
+.rs .kv{display:flex;justify-content:space-between;gap:14px;padding:9px 14px;border-top:1px solid #dcecef;font-size:13.5px}
+.rs .kv:first-of-type{border-top:none}
+.rs .kv span{color:var(--muted)}
+.rs .kv b{text-align:right;color:var(--ink)}
+.fhint{display:none;font-size:11.5px;font-weight:700;margin-top:6px}
+.fhint.ok{display:block;color:#00728d}
+.fhint.warn{display:block;color:#8C5A2B}
+.fhint.tap{cursor:pointer;text-decoration:underline}
+.progress{display:flex;gap:6px;margin:0 0 18px}
+.progress i{height:6px;flex:1;background:var(--line);border-radius:99px}
+.progress i.done{background:linear-gradient(90deg,var(--gold),var(--gold-deep))}
+.wstep{display:none}
+.wstep.on{display:block;animation:rise .35s ease}
+.wstep h3{font-size:22px;font-weight:400;margin-bottom:4px}
+.wstep .sub{font-size:13px;color:var(--muted);margin-bottom:18px}
+.wnav{display:flex;gap:10px;margin-top:22px}
+.wnav .btn{flex:1}
+.err{color:var(--danger);font-size:13px;margin-top:8px;display:none}
+.track-link{color:#BAD3E4;font-size:12.5px;font-weight:700;text-decoration:none;margin-right:8px}
+.lifehead{display:none}
+.joint .lifehead{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin:0 0 10px}
+.ansRow{display:grid;grid-template-columns:1fr;gap:8px}
+.joint .ansRow{grid-template-columns:1fr 1fr}
+.sq{display:none}
+.joint .sq{display:block}
+.tl{margin-top:18px}
+.tl .trow{display:flex;gap:12px;align-items:flex-start;padding:0 0 18px;position:relative}
+.tl .trow::before{content:"";position:absolute;left:10px;top:22px;bottom:-2px;width:2px;background:var(--line)}
+.tl .trow:last-child::before{display:none}
+.tl .dot{flex:none;width:22px;height:22px;border-radius:50%;border:2.5px solid var(--line);background:#fff;z-index:1}
+.tl .trow.done .dot{background:var(--gold);border-color:var(--gold-deep)}
+.tl .trow.now .dot{border-color:var(--gold);box-shadow:0 0 0 5px rgba(var(--gold-rgb),.25)}
+.tl b{font-size:14.5px}
+.tl .trow.now b{color:var(--gold-deep)}
+.tl small{display:block;color:var(--muted);font-size:12px}
+.wiz-note{display:none;font-size:12.5px;font-weight:600;border-radius:12px;padding:11px 14px;margin:0 0 14px}
+.err.show{display:block}
+.q-item{margin-bottom:14px}
+.q-item p{font-size:14.5px;font-weight:600;color:var(--teal);margin-bottom:8px}
+.summary-quote{background:linear-gradient(135deg,var(--tintwarm),var(--input));border:1.5px solid var(--gold-deep);border-radius:14px;padding:16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.summary-quote b{font-family:var(--display);font-size:20px;color:#00728d}
+.summary-quote small{display:block;color:var(--muted);font-size:11px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:430px){.grid2{grid-template-columns:1fr}}
+
+/* cross-sell bump */
+.bump{background:linear-gradient(135deg,var(--bump1),var(--bump2));border:1.5px dashed var(--gold-deep);border-radius:16px;padding:16px;margin:20px 0 4px}
+.bump .b-tag{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-deep)}
+.bump h4{font-family:var(--text);font-size:15.5px;font-weight:700;margin:5px 0 4px;color:var(--ink)}
+.bump p{font-size:13px;color:var(--bumptxt);margin-bottom:12px}
+.bump-opts{display:flex;flex-direction:column;gap:8px}
+.bump-opt{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;text-align:left;font-size:13.5px;font-weight:600;color:var(--teal);width:100%}
+.bump-opt{cursor:pointer}
+.bump-opt .tick{flex:none;width:32px;height:32px;border-radius:9px;border:2.5px solid #5E97A3;background:#fff;display:flex;align-items:center;justify-content:center;color:transparent;font-size:20px;font-weight:800;transition:all .15s;font-family:var(--text)}
+.bump-opt.on .tick{color:#fff;transform:scale(1.05)}
+.bump-opt:not(.on):active .tick{background:#e6f4f6}
+.reqchip{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.12em;background:var(--gold);color:#04252f;border-radius:99px;padding:3px 9px;margin-left:8px;vertical-align:middle;font-family:var(--text)}
+.wizsum{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,var(--tintwarm),#fff);border:1.5px solid var(--gold-deep);border-radius:12px;padding:10px 14px;margin:0 0 14px;font-size:13px;font-weight:700;color:var(--teal)}
+.wizsum b{font-family:var(--display);font-size:18px;color:#00728d}
+.wizsum a{font-size:11.5px;color:var(--gold-deep)}
+.bump-opt.on{border-color:var(--emerald);background:#F2FBF7}
+.bump-opt.on .tick{background:var(--emerald);border-color:var(--emerald)}
+.bump-opt.on{border-width:2px}
+.bump-opt small{display:block;font-weight:500;color:var(--muted);font-size:11.5px}
+
+/* decision */
+.decision{display:none;text-align:center;padding:10px 0 4px;position:relative}
+.decision.on{display:block}
+.seal{width:124px;height:140px;margin:6px auto 14px;filter:drop-shadow(0 10px 24px rgba(var(--gold-rgb),.35))}
+.seal.stamp{animation:stamp .55s cubic-bezier(.2,1.4,.4,1)}
+@keyframes stamp{0%{transform:scale(1.8) rotate(-8deg);opacity:0}60%{transform:scale(.95) rotate(1deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+.check-path{stroke-dasharray:60;stroke-dashoffset:60}
+.seal .check-path{animation:draw .5s .45s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.decision h3{font-size:32px;font-weight:400;margin-bottom:6px}
+.status-pre{color:#00728d}
+.status-rec{color:var(--gold-deep)}
+.decision .ref{font-family:var(--display);font-size:14px;background:var(--tintwarm);display:inline-block;padding:6px 14px;border-radius:8px;border:1px dashed var(--gold-deep);margin:8px 0 6px}
+.decision .saved{font-size:12px;font-weight:700;margin-bottom:10px}
+.decision .saved.ok{color:#00728d}
+.decision .saved.warn{color:var(--gold-deep)}
+.decision p.msg{font-size:14.5px;color:var(--teal);max-width:32em;margin:0 auto 8px}
+.decision .addon-note{font-size:13px;color:#00728d;font-weight:600;background:#e6f4f6;border-radius:10px;padding:10px 14px;display:inline-block;margin-top:6px}
+.decision .fine{font-size:11px;color:var(--muted);margin-top:14px}
+.decision .actions{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.confetti{position:fixed;top:-12px;border-radius:2px;pointer-events:none;z-index:200;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.9}}
+
+/* footer + sticky */
+footer{background:var(--foot);color:var(--foottxt);padding:36px 0 100px;font-size:12.5px}
+footer .brand-name{color:#fff}
+footer .brand-sub{color:var(--footmut)}
+footer p{margin-top:14px;line-height:1.65}
+footer .disc{font-size:11px;color:var(--footmut);margin-top:14px}
+.sticky-bar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--deep);color:#fff;display:none;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;box-shadow:0 -8px 24px rgba(4,12,30,.5)}
+.sticky-bar.show{display:flex}
+.sb-amt{font-family:var(--display);font-size:18px;font-weight:600;color:var(--brite)}
+.sb-amt small{display:block;font-family:var(--text);font-size:10.5px;color:var(--muted-dark);font-weight:400}
+.sticky-bar .btn{padding:12px 18px;font-size:14px}
+
+
+/* RAI chat */
+.rai-fab{position:fixed;right:16px;bottom:86px;z-index:70;width:62px;height:62px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--deep),var(--teal2));box-shadow:0 10px 30px rgba(8,22,48,.45);display:flex;align-items:center;justify-content:center}
+.rai-fab::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2.5px solid var(--gold);animation:pulse 2.4s infinite}
+.rai-fab svg{width:32px;height:36px}
+.rai-badge{position:absolute;top:-4px;right:-4px;background:var(--gold);color:#04252f;font-size:9px;font-weight:800;font-family:var(--text);padding:3px 6px;border-radius:999px;letter-spacing:.06em}
+.rai-hello{position:fixed;right:88px;bottom:98px;z-index:70;background:#fff;border:1.5px solid var(--emerald);border-radius:14px 14px 2px 14px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--ink);box-shadow:0 10px 30px rgba(8,22,48,.25);display:none;max-width:230px}
+.rai-hello.show{display:block;animation:rise .4s ease}
+.rai-panel{position:fixed;inset:auto 0 0 0;z-index:80;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -20px 60px rgba(4,12,30,.5);display:none;flex-direction:column;height:78vh;max-width:620px;margin:0 auto}
+.rai-panel.open{display:flex;animation:slideup .3s ease}
+@keyframes slideup{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.rai-head{display:flex;align-items:center;gap:12px;padding:14px 18px;background:linear-gradient(135deg,var(--deep),var(--teal));border-radius:22px 22px 0 0;color:#fff}
+.rai-head .rai-face{width:44px;height:44px}
+.rai-head .rai-face::after{display:none}
+.rai-head b{font-family:var(--display);font-size:16px}
+.rai-head small{display:block;font-size:11px;color:var(--brite)}
+.rai-close{margin-left:auto;background:rgba(255,255,255,.12);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:16px}
+.rai-log{flex:1;overflow-y:auto;padding:16px;background:var(--paper)}
+.msg-row{display:flex;margin-bottom:10px}
+.msg-row.user{justify-content:flex-end}
+.bubble{max-width:82%;padding:11px 14px;border-radius:16px;font-size:14px;line-height:1.5}
+.msg-row.rai .bubble{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px;color:var(--ink)}
+.msg-row.user .bubble{background:var(--deep);color:#fff;border-bottom-right-radius:4px}
+.bubble b{color:#00728d}
+.msg-row.user .bubble b{color:var(--gold)}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 12px}
+.chips button{font-size:12px;font-weight:700;padding:8px 12px;border-radius:999px;border:1.5px solid var(--emerald);background:#fff;color:#00728d}
+.typing{display:inline-flex;gap:4px;padding:12px 14px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.2s}
+.typing i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.rai-input{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line);background:#fff}
+.rai-input input{flex:1;padding:13px 14px;font-size:15px;border:1.5px solid var(--line);border-radius:999px;background:var(--input)}
+.rai-input button{width:48px;height:48px;border-radius:50%;border:none;background:var(--emerald);color:#fff;font-size:18px;flex:none}
+.rai-foot{font-size:9.5px;color:var(--muted);text-align:center;padding:0 14px 10px;background:#fff}
+
+/* ================= DESIGN SYSTEM SYNC =================
+   Roles: DM Serif Display = display headlines & money figures only.
+          Plus Jakarta Sans = every interface element (brand, nav, labels, pills). */
+.brand-name{font-family:var(--text)!important;font-weight:800!important;font-size:15px!important;letter-spacing:.01em}
+.brand-sub{font-size:9.5px!important;letter-spacing:.22em!important}
+.track-link{font-weight:800!important;font-size:12.5px!important;color:var(--lede)!important;letter-spacing:.04em}
+.wa-pill{background:linear-gradient(120deg,var(--gold-top),var(--gold-lite) 45%,var(--gold-hot))!important;color:var(--btntxt)!important;font-weight:800!important;border:none!important;box-shadow:0 6px 16px rgba(var(--gold-rgb),.35)}
+.eyebrow{font-family:var(--text)!important;color:var(--gold-deep)!important;letter-spacing:.18em!important;font-weight:800!important}
+.hero .eyebrow,.dark .eyebrow,.promise .eyebrow{color:var(--brite)!important}
+section h2.title{font-size:clamp(28px,6.5vw,36px)!important;line-height:1.12!important;margin:10px 0 12px!important}
+.hero h1{line-height:1.08!important;letter-spacing:0!important}
+.wstep h3{font-size:25px;line-height:1.15}
+#decTitle{font-size:30px;line-height:1.1}
+.rai-head b{font-family:var(--text)!important;font-weight:800!important;font-size:15px!important;letter-spacing:.01em}
+.rai-head small{letter-spacing:.14em!important;text-transform:uppercase;font-weight:800!important;font-size:9.5px!important}
+.rai-strip h3{font-size:24px}
+.ovhead{border-bottom:1px solid rgba(255,255,255,.12);font-family:var(--text)}
+.ovwrap{display:flex;align-items:center;gap:10px;min-width:0}
+.ovhead svg{width:26px;height:30px;flex:none}
+.ovttl{display:block;font-weight:800;font-size:14.5px;line-height:1.15;letter-spacing:.01em}
+.ovhead .ovsub{display:block;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:800;color:var(--brite)}
+.rs h5,.lifehead{letter-spacing:.14em!important}
+.btn{font-family:var(--text);font-weight:800!important;letter-spacing:.01em}
+.q-item p{font-weight:600;color:var(--ink)}
+.field label{color:var(--teal)!important;letter-spacing:.1em!important;text-transform:uppercase}
+.sub{font-size:14px;color:var(--muted)}
+
+/* ================= POLISH & POP ================= */
+header{background:linear-gradient(180deg,var(--deep) 0%,#0d3f5e 100%)!important;position:relative}
+header::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px;background:linear-gradient(90deg,var(--gold-top),var(--gold-hot) 45%,var(--royal))}
+.badge100{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(120deg,var(--gold-top),var(--gold-lite) 45%,var(--gold-hot));color:var(--btntxt);font:800 12.5px/1 var(--text);letter-spacing:.12em;text-transform:uppercase;padding:11px 18px;border-radius:999px;box-shadow:0 12px 30px rgba(var(--gold-rgb),.45);margin-bottom:6px}
+.ovhead{background:linear-gradient(180deg,var(--deep) 0%,#0d3f5e 100%)!important;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--gold-top),var(--gold-hot) 45%,var(--royal)) 1}
+.ovbadge{background:linear-gradient(120deg,var(--gold-top),var(--gold-lite) 45%,var(--gold-hot));color:var(--btntxt);font:800 9.5px/1 var(--text);letter-spacing:.14em;padding:7px 11px;border-radius:99px;white-space:nowrap}
+section h2.title{position:relative;padding-bottom:14px}
+section h2.title::after{content:"";position:absolute;left:0;bottom:0;width:58px;height:5px;border-radius:4px;background:linear-gradient(90deg,var(--gold-top),var(--gold-hot))}
+.dark h2.title::after{background:linear-gradient(90deg,var(--gold-top),var(--royal))}
+section.pad{padding:clamp(52px,9vw,86px) 0!important}
+.tint{background:linear-gradient(180deg,#f1f8f9 0%,#dfeef1 100%)}
+.card{box-shadow:0 30px 70px rgba(8,15,30,.20)!important}
+.sb-on{display:block;font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--brite);margin-top:2px}
+footer{border-top:3px solid transparent;border-image:linear-gradient(90deg,var(--gold-top),var(--gold-hot) 45%,var(--royal)) 1}
+.hero{padding-top:clamp(40px,8vw,72px)!important}
+.hero h1{text-shadow:0 4px 30px rgba(0,0,0,.35)}
+.l-amount{text-shadow:0 0 44px rgba(var(--brite-rgb),.5)}
+
+/* ===== tap-safety: decorative layers must never intercept touches ===== */
+.card::before,.ledger::before,header::after,section h2.title::after,.tl .trow::before,.rai-face::after,.rai-fab::after,.hero::after{pointer-events:none!important}
+.apply-cta,#startApply,#sbApply{position:relative;z-index:3}
+#startApply{animation:ctaBreath 3.2s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){#startApply{animation:none}}
+
+.docrow{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px}
+.docrow b{font-size:13.5px}
+.docrow small{display:block;color:var(--muted);font-size:11px}
+.docrow .btn{padding:10px 16px;font-size:13px;width:auto}
+/* ===== APP-MODE FORM SKIN (clarity first) ===== */
+.apply-wrap{background:#F6FAFB!important}
+.apply-wrap .wrap{max-width:640px}
+#wizCard{border-radius:0;border:none;box-shadow:none!important;padding:22px 18px 34px}
+#wizCard::before{display:none}
+@media(min-width:641px){#wizCard{border-radius:20px;margin:14px 0;box-shadow:0 20px 50px rgba(8,15,30,.12)!important}}
+.progress i{height:8px;border-radius:6px}
+.steplabel{display:block;font:800 11px var(--text);letter-spacing:.16em;text-transform:uppercase;color:var(--teal);margin:0 0 14px}
+.wstep h3{font-size:26px;margin-bottom:8px}
+.wstep .sub{margin-bottom:18px}
+.field{margin-bottom:16px}
+.field label{font-size:12px!important;margin-bottom:7px}
+select,input[type=text],input[type=tel],input[type=email],input[type=date]{padding:16px 14px;border-radius:14px}
+.q-item{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.q-item p{font-size:14.5px;margin-bottom:10px}
+.wnav{margin-top:22px;gap:12px}
+.wnav .btn{padding:16px 18px;font-size:16px}
+.bump-opt{background:#fff}
+.rs .kv b{max-width:60%}
+
+.freqrow{display:flex;gap:6px;margin:10px 0 8px;flex-wrap:wrap}
+.fq{flex:1;min-width:74px;border:1.5px solid rgba(95,214,232,.45);background:transparent;color:#d3eff4;font:700 11.5px var(--text);padding:9px 6px;border-radius:11px;cursor:pointer;position:relative}
+.fq.on{background:linear-gradient(120deg,var(--gold-top),var(--gold) 55%,var(--gold-hot));color:var(--btntxt);border-color:transparent;box-shadow:0 8px 20px rgba(var(--gold-rgb),.4)}
+.fq em{font-style:normal;display:block;font-size:9px;letter-spacing:.04em;opacity:.95}
+.savechip{background:rgba(57,185,129,.16);border:1px solid rgba(57,185,129,.5);color:#CFF5E4;font-size:12px;font-weight:700;border-radius:10px;padding:8px 12px;margin:0 0 8px}
+.raiIntel{background:rgba(255,255,255,.07);border:1px solid rgba(95,214,232,.3);border-radius:14px;padding:12px 13px;margin:12px 0 14px;text-align:left}
+.ri-head{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-top);margin-bottom:8px}
+.ri{font-size:12.5px;line-height:1.55;color:var(--lede);padding:7px 0;border-top:1px dashed rgba(95,214,232,.25)}
+.ri:first-child{border-top:none;padding-top:0}
+.ri b{color:#fff}
+.ri button{display:inline-block;margin-top:5px;background:transparent;border:1.5px solid var(--gold);color:var(--gold-top);font:800 11px 'Plus Jakarta Sans';padding:6px 11px;border-radius:99px;cursor:pointer}
+</style>
+</head>
+<body>
+<script>
+window.__BUILD='V36 · 15 Jul 2026 · 00:50';
+window.__openApply=function(){
+  var a=document.getElementById('apply');
+  if(!a)return;
+  a.classList.add('open');
+  document.body.classList.add('locked');
+  a.scrollTop=0;
+};
+window.addEventListener('error',function(e){
+  if(!/[?&]debug\b/.test(location.search))return;
+  try{
+    var b=document.getElementById('errbar');
+    if(!b){b=document.createElement('div');b.id='errbar';
+      b.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#B3261E;color:#fff;font:700 12px -apple-system,system-ui;padding:10px 40px 10px 14px;';
+      var x=document.createElement('span');x.textContent='✕';x.style.cssText='position:absolute;right:12px;top:8px;font-size:16px';
+      x.onclick=function(){b.remove();};b.appendChild(x);
+      (document.body||document.documentElement).appendChild(b);}
+    b.insertBefore(document.createTextNode('⚠ Page error: '+(e.message||e.type)+' — screenshot this. '),b.firstChild);
+  }catch(_){}
+},true);
+document.addEventListener('click',function(e){
+  var t=e.target;
+  while(t&&t!==document){
+    if(t.id==='startApply'||t.id==='sbApply'||(t.getAttribute&&t.getAttribute('href')==='#apply')){window.__openApply();break;}
+    t=t.parentNode;
+  }
+},true);
+document.addEventListener('DOMContentLoaded',function(){
+  fetch('guardian-decl.pdf',{method:'HEAD'}).then(function(r){if(!r.ok)console.error('Xpress Life: Guardian form templates missing - deploy the whole folder');})
+  .catch(function(){console.error('Xpress Life: Guardian form templates missing - deploy the whole folder');});});
+console.log('%cRRB Xpress Life — Build '+window.__BUILD,'color:#0e93b0;font-weight:bold');
+</script>
+
+<!-- ============ CONFIG — EDIT THESE LINES ============ -->
+<script>
+const CONFIG = {
+  WHATSAPP: "18686785921",                   // branch WhatsApp, digits only incl. 1868
+  EMAIL: "apply@rickyrampersadbranch.com",   // EDIT: branch applications inbox
+  LOCATION: "Endeavour Industrial Estate, Chaguanas, Trinidad & Tobago",
+  ISSUE_PROMISE_HOURS: 24,
+  GAS_URL: "https://script.google.com/macros/s/AKfycbzv59iKByTcRtvlezmzLmy1L5vUPrFt7-nzDn4JX19qpHxCFHB_p42LLH3l-VhEHLWM/exec"
+};
+</script>
+<!-- =================================================== -->
+
+
+
+<header>
+  <div class="hbar">
+    <a class="brand" href="/" aria-label="Ricky Rampersad Branch home">
+      <svg viewBox="0 0 60 68" fill="none" aria-hidden="true">
+        <path d="M30 2 L56 12 V36 C56 50 45 61 30 66 C15 61 4 50 4 34 V12 Z" fill="var(--logo-gold)" stroke="var(--logo-rim)" stroke-width="2.5"/>
+        <path d="M18 34 L27 43 L44 24" stroke="var(--logo-check)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <span><span class="brand-name">Ricky Rampersad Branch</span><br><span class="brand-sub">A Guardian Life agency · Trinidad</span></span>
+    </a>
+    <span style="display:flex;align-items:center"><a class="track-link" href="#track">Track</a><a class="wa-pill" id="waTop" href="https://wa.me/18686785921?text=Hi%2C%20I%20have%20a%20question%20about%20Xpress%20Life" target="_blank" rel="noopener">Help</a></span>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ================= HERO ================= -->
+<section class="hero">
+  <div class="wrap">
+    <div class="heroRays" aria-hidden="true"></div><div class="heroGlow"></div><div id="sparks" aria-hidden="true"></div>
+    <span class="badge100">⚡ 100% Online · Apply in 5 minutes</span>
+    <h1>Leave them a <span class="bless">blessing,</span><br>not a <span class="bill">bill.</span></h1>
+    <p class="lede">One day, the people you love will get a phone call. Whether that day leaves them a burden or a blessing is decided now — <b>up to TT$500,000</b> for them, from under <b>$6 a day</b><sup>*</sup>, right from your phone.</p>
+    <p style="font-size:12px;opacity:.75;margin-top:6px">*Woman aged 18, TT$100,000, paid annually. Your rate depends on age, gender, cover and how you pay.</p>
+    <div class="blessTick" aria-hidden="true"><i>✦</i><span id="btWord" class="on">Tuition, paid in full.</span></div>
+    <div class="mini-steps">
+      <span><b>1</b> · 10-sec rate</span><span><b>2</b> · 5-min apply</span><span><b>3</b> · Guardian reviews</span>
+    </div>
+    <div class="ctas">
+      <a class="btn btn-gold" href="#quote">See my rate now</a>
+      <button class="btn btn-ghost-l" onclick="openRai()">Ask RAI</button>
+    </div>
+    <a class="watch-link" href="#explainer"><span class="pl" aria-hidden="true"></span>Watch how it works · 0:59</a>
+
+    <div class="phone" aria-hidden="true">
+      <span class="dot" style="width:10px;height:10px;background:var(--gold);left:-26px;top:60px"></span>
+      <span class="dot" style="width:7px;height:7px;background:var(--brite);right:-20px;top:110px;animation-delay:.8s"></span>
+      <span class="dot" style="width:8px;height:8px;background:#FFE58A;right:-30px;top:30px;animation-delay:1.6s"></span>
+      <div class="body">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="s-brand">Xpress Life</div>
+          <svg class="s-seal" viewBox="0 0 60 68" fill="none">
+            <path d="M30 2 L56 12 V36 C56 50 45 61 30 66 C15 61 4 50 4 34 V12 Z" fill="var(--logo-gold)" stroke="var(--logo-rim)" stroke-width="2.5"/>
+            <path class="check-path" d="M18 34 L27 43 L44 24" stroke="var(--logo-check)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+          <div class="s-status">SUBMITTED</div>
+          <div class="s-ref">Ref: RRB-XL-4K7M2A</div>
+          <div class="s-btn">Apply in 5 minutes ➤</div>
+        </div>
+      </div>
+    </div>
+    <p class="trust-line">Underwritten and issued by <b>Guardian Life of the Caribbean</b> · offered by the Ricky Rampersad Branch, a Guardian Life agency</p>
+  </div>
+</section>
+
+<!-- ================= QUOTE ================= -->
+<section class="quote-section" id="quote">
+  <div class="wrap">
+    <div class="card">
+      <h2>Your rate, right now</h2>
+      <p class="sub">Three answers. No name, no number, no waiting.</p>
+      <div class="field"><label for="qAge">Your age</label><select id="qAge"></select></div>
+      <div class="field"><label id="gLabel">Gender</label>
+        <div class="seg" role="group" aria-labelledby="gLabel">
+          <button type="button" id="gF" class="on">Female</button>
+          <button type="button" id="gM">Male</button>
+        </div>
+      </div>
+      <div class="field"><label id="bLabel">Coverage for your family (TT$)</label>
+        <div class="bands" role="group" aria-labelledby="bLabel">
+          <button type="button" data-b="0">100K</button>
+          <button type="button" data-b="1" class="on">200K</button>
+          <button type="button" data-b="2">300K</button>
+          <button type="button" data-b="3">400K</button>
+          <button type="button" data-b="4">500K</button>
+        </div>
+      </div>
+      <div class="ledger" id="ledger" aria-live="polite">
+        <div class="l-label" id="pFreqLabel">Your monthly premium</div>
+        <div class="l-amount">$<span id="pMonthly">—</span><span id="pUnit"> /mo</span></div>
+        <div class="freqrow" role="tablist" aria-label="Payment frequency">
+          <button type="button" class="fq on" data-fq="monthly">Monthly</button><button type="button" class="fq" data-fq="quarterly">Quarterly</button><button type="button" class="fq" data-fq="semi">Semi-annual</button><button type="button" class="fq" data-fq="annual">Annual <em id="fqSaveTag"></em></button>
+        </div>
+        <div class="savechip" id="saveChip" style="display:none">💰 <b id="saveAmt"></b> back in your pocket every year vs monthly</div>
+        <div class="l-annual" id="pEffLine">TT$<span id="pAnnual">—</span> per year · fixed, never increases</div>
+        <div class="l-annual" style="margin-top:3px">That's about <b style="color:#fff">$<span id="pDaily">—</span> a day</b></div>
+        <div class="l-facts">
+          <div><b id="fPaidUp">—</b><small id="fPaidUpSub">then you never pay again</small></div>
+          <div><b>$<span id="fTotal">—</span></b><small>total you'll ever pay</small></div>
+          <div><b>$<span id="fCover">—</span></b><small>cover from year 3</small></div>
+          <div><b>100% back</b><small>premiums, if you give it up in year 21</small></div>
+        </div>
+        <p class="l-note">Indicative premium. Your exact premium is confirmed on your policy at issue.</p>
+        <div class="raiIntel" id="raiIntel" style="display:none">
+          <div class="ri-head"><svg viewBox="0 0 120 144" style="width:20px;height:24px"><ellipse cx="60" cy="23" rx="15" ry="13.5" fill="#39B981"/><path d="M60 40 L104 56 V88 C104 112 86 128 60 136 C34 128 16 112 16 88 V56 Z" fill="var(--logo-gold)" stroke="var(--logo-rim)" stroke-width="6"/><path d="M40 88 L54 102 L82 70" stroke="var(--logo-check)" stroke-width="10" stroke-linecap="round" fill="none"/></svg><b>RAI ran your numbers</b></div>
+          <div id="riBody"></div>
+        </div>
+        <a class="btn btn-gold apply-cta" id="startApply" href="#apply" onclick="__openApply();return false;">Protect them now — apply in 5 minutes</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= EXPLAINER FILM ================= -->
+<section class="pad tint" id="explainer">
+  <div class="wrap" style="text-align:center">
+    <span class="eyebrow">One minute, sound on or off</span>
+    <h2 class="title">How Xpress Life works</h2>
+    <div class="explain">
+      <video controls playsinline preload="metadata" poster="explainer-poster.jpg" aria-describedby="exTranscript">
+        <source src="xpress-life-explainer.mp4" type="video/mp4">
+      </video>
+      <p class="ex-note">Xpress Life is underwritten and issued by Guardian Life of the Caribbean Limited. The Ricky Rampersad Branch is a Guardian Life agency. This film is a summary: the policy contract sets out the full terms and governs. Every application is reviewed and decided by Guardian's underwriters. The example premium is for a woman aged 40, TT$200,000, paid monthly.</p>
+      <details id="exTranscript"><summary>Read what the film says</summary><p>Xpress Life, from Guardian Life of the Caribbean. Life cover up to five hundred thousand dollars. No medical exam.</p><p>Self-employed? Or only covered through your job? Then the mortgage and the bills could fall on your family.</p><p>If you&#x27;re eighteen to sixty-nine, and you can honestly answer no to five health questions, you can apply.</p><p>Get your rate in ten seconds. A woman of forty, with two hundred thousand in cover, pays about three hundred and fourteen dollars a month.</p><p>Your premium is fixed. Pay for twenty years, then never again. You&#x27;re covered to age one hundred.</p><p>Full cover starts in year three. In year one, your premiums are returned. In year two, half your cover is paid.</p><p>Apply in about five minutes from your phone. Guardian&#x27;s underwriters review it, and our branch keeps you posted.</p><p>xpresslifett.com. The Ricky Rampersad Branch, a Guardian Life agency. leave them a blessing… not a bill.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- ================= AT A GLANCE (from the policy contract) ================= -->
+<section class="pad dark">
+  <div class="wrap">
+    <span class="eyebrow">Straight from the policy contract</span>
+    <h2 class="title">Xpress Life at a glance.</h2>
+    <p class="subtitle">What you get, what it costs and what it doesn't do, in plain words.</p>
+    <div class="cmp glance" role="table" aria-label="Xpress Life at a glance">
+      <div class="row" role="row"><div class="feat" role="rowheader">Who can apply</div><div class="us-cell" role="cell">Ages 18 to 69 who can honestly answer <b>No</b> to five health questions. No medical exam.</div></div>
+      <div class="row" role="row"><div class="feat" role="rowheader">Cover you choose</div><div class="us-cell" role="cell">TT$100,000, 200,000, 300,000, 400,000 or 500,000. All your Xpress Life policies together can't exceed TT$500,000.</div></div>
+      <div class="row" role="row"><div class="feat" role="rowheader">What you pay</div><div class="us-cell" role="cell">A fixed premium for 20 years, then nothing more. Monthly, quarterly, half-yearly or yearly. No policy fee.</div></div>
+      <div class="row" role="row"><div class="feat" role="rowheader">If you die in year 1</div><div class="us-cell" role="cell">Your premiums paid are returned.</div></div>
+      <div class="row" role="row"><div class="feat" role="rowheader">In year 2</div><div class="us-cell" role="cell">Half your cover is paid.</div></div>
+      <div class="row" role="row"><div class="feat" role="rowheader">From year 3</div><div class="us-cell" role="cell">Your full cover is paid.</div></div>
+      <div class="row" role="row"><div class="feat" role="rowheader">Year 21 only</div><div class="us-cell" role="cell">You may give up the policy and get back every premium you paid, without interest. There is no cash value in any other year.</div></div>
+      <div class="row" role="row"><div class="feat" role="rowheader">At about age 100</div><div class="us-cell" role="cell">If the policy is still in force, the full cover is paid to you in cash.</div></div>
+      <div class="row" role="row"><div class="feat" role="rowheader">Wherever you live</div><div class="us-cell" role="cell">Covered anywhere in the world, with no extra premium.</div></div>
+      <div class="row" role="row"><div class="feat" role="rowheader">Not covered</div><div class="us-cell" role="cell">Suicide in the first two years (premiums returned only), and death from war or insurrection.</div></div>
+    </div>
+    <p class="cmp-foot">A summary only. The Xpress Life policy contract issued by Guardian Life of the Caribbean Limited sets out the full terms, and it governs. Ask us for a copy before you apply.</p>
+  </div>
+</section>
+
+<!-- ================= HAVE READY ================= -->
+<section class="pad tint" style="padding-bottom:0">
+  <div class="wrap">
+    <div class="card" style="border:1.5px solid var(--gold-deep)">
+      <span class="eyebrow" style="color:var(--gold-deep)">Before you start</span>
+      <h2 style="font-size:22px;font-weight:400;margin:6px 0 8px">Have these ready and it takes about 5 minutes</h2>
+      <ul class="ready">
+        <li><b>Your ID</b>: National ID, Driver's Permit or Passport</li>
+        <li><b>Proof of address</b>: a utility bill or bank statement from the last 3 months</li>
+        <li><b>Your beneficiary's full name</b>: who receives the money</li>
+        <li><b>Your first month's premium</b>: it is collected with the application</li>
+      </ul>
+      <p style="font-size:13px;color:var(--muted);margin-top:10px">Card and bank account numbers are never typed into this site.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 20/21 PROMISE ================= -->
+<section class="pad">
+  <div class="wrap">
+    <div class="promise-card">
+      <h2>Pay for 20 years. <span>Covered to age 100.</span></h2>
+      <p>Pay for <b>20 years only</b> — your cover carries on with nothing more to pay. Then in year 21, choose:</p>
+      <p><span class="g">Keep it</span> — your cover carries on, and if the policy is in force at about age 100, the full cover is paid to <i>you</i>, in cash.</p>
+      <p><span class="g">Take it back</span> — give up the policy in year 21 and receive <b>every premium you paid, without interest</b>. The policy then ends.</p>
+      <div class="schedule" aria-label="Death benefit schedule">
+        <div class="srow"><span>Policy year 1</span><b>Premiums refunded</b></div>
+        <div class="srow"><span>Policy year 2</span><b>50% of sum assured</b></div>
+        <div class="srow"><span>Year 3 onward</span><b>100% of sum assured</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HEART ================= -->
+<section style="padding:38px 0 0">
+  <div class="wrap">
+    <p class="heart">The greatest gift you can leave your family<br>is a day to grieve — <b>not a debt to carry.</b></p>
+  </div>
+</section>
+
+<!-- ================= RAI STRIP ================= -->
+<section class="pad rai-strip" style="padding-top:0">
+  <div class="wrap">
+    <div class="card">
+      <div class="rai-face"><svg viewBox="0 0 120 144" class="rai-turtle" aria-hidden="true">
+        <ellipse cx="30" cy="123" rx="9.5" ry="5.5" style="fill:var(--turtle)" transform="rotate(35 30 123)"/>
+        <ellipse cx="90" cy="123" rx="9.5" ry="5.5" style="fill:var(--turtle)" transform="rotate(-35 90 123)"/>
+        <path d="M55 132 L60 143 L65 132 Z" style="fill:var(--turtle)"/>
+        <path d="M48 46 Q60 30 72 46 L72 52 L48 52 Z" style="fill:var(--turtle)"/>
+        <ellipse cx="60" cy="23" rx="15" ry="13.5" style="fill:var(--turtle)"/>
+        <ellipse cx="60" cy="31" rx="7.5" ry="4.2" style="fill:var(--turtle-deep)" opacity=".35"/>
+        <circle cx="49" cy="13.5" r="2" style="fill:var(--gold-lite)" opacity=".8"/>
+        <circle cx="71" cy="12.5" r="1.6" style="fill:var(--gold-lite)" opacity=".8"/>
+        <path d="M60 40 L104 56 V88 C104 112 86 128 60 136 C34 128 16 112 16 88 V56 Z" style="fill:var(--logo-gold);stroke:var(--logo-rim)" stroke-width="4.5"/>
+        <path d="M40 88 L54 102 L82 70" style="stroke:var(--logo-check)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <ellipse cx="18" cy="62" rx="15" ry="6.5" style="fill:var(--turtle)" transform="rotate(-34 18 62)"/>
+        <ellipse cx="102" cy="62" rx="15" ry="6.5" style="fill:var(--turtle)" transform="rotate(34 102 62)"/>
+        <g class="blink">
+          <ellipse cx="52.5" cy="21" rx="5" ry="5.6" fill="#fff"/>
+          <circle cx="53.8" cy="22.2" r="2.5" style="fill:var(--deep)"/>
+          <circle cx="55" cy="20.2" r=".95" fill="#fff"/>
+          <ellipse cx="67.5" cy="21" rx="5" ry="5.6" fill="#fff"/>
+          <circle cx="68.8" cy="22.2" r="2.5" style="fill:var(--deep)"/>
+          <circle cx="70" cy="20.2" r=".95" fill="#fff"/>
+        </g>
+        <path d="M54 30 Q60 34.5 66 30" style="stroke:var(--deep)" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      </svg></div>
+      <div>
+        <h3>Meet <span>RAI</span>, our leatherback — every question answered, 24/7</h3>
+        <p>Born on a Trini beach, built to protect for 100 years. Ask your cost at your exact age, what your family gets in every policy year, and more.</p>
+        <div class="rai-chips">
+          <button onclick="openRai('What would $300,000 cost me?')">What would $300K cost me?</button>
+          <button onclick="openRai('Can I apply?')">Can I apply?</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= APPLICATION WIZARD ================= -->
+<section class="apply-wrap" id="apply">
+  <div class="ovhead"><span class="ovwrap"><svg viewBox="0 0 60 68" fill="none" aria-hidden="true"><path d="M30 2 L56 12 V36 C56 50 45 61 30 66 C15 61 4 50 4 34 V12 Z" fill="#0d3f5e" stroke="#0e93b0" stroke-width="3"/><path d="M18 34 L27 43 L44 24" stroke="var(--logo-check)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span><span class="ovttl">Xpress Life application</span><span class="ovsub">Ricky Rampersad Branch · 100% online</span></span></span><span style="display:flex;align-items:center;gap:10px"><span class="ovbadge">100% ONLINE</span><a id="closeApply" href="#!" aria-label="Close" onclick="try{document.getElementById('apply').classList.remove('open');document.body.classList.remove('locked');}catch(_){}">✕</a></span></div>
+  <div class="wrap">
+    <div class="card" id="wizCard">
+      <div class="progress" id="prog"><i class="done"></i><i></i><i></i><i></i></div>
+      <span class="steplabel" id="stepLabel">Step 1 of 4 · Your cover</span>
+      <div class="wiz-note" id="wizNote"></div>
+      <div class="wizsum" id="wizsum"><span id="wizsumTxt">—</span><a href="#quote">change</a></div>
+
+      <div class="wstep on" data-step="1">
+        <h3>Ready in 3 short steps</h3>
+        <p class="sub">Your cover is locked in below. Applying with your spouse? One tap adds them — then continue.</p>
+        <div class="summary-quote">
+          <div><small>Coverage</small><b id="sqCover">—</b></div>
+          <div style="text-align:right"><small>Monthly premium</small><b id="sqPrem">—</b></div>
+        </div>
+        <button type="button" class="bump-opt" id="jointBox"><span class="tick">✓</span><span><b>We're applying together — add my spouse</b><small>Two policies, one application. Protect each other in one go.</small></span></button>
+        <div id="spouseQuote" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
+          <p style="font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:10px">Your spouse's cover</p>
+          <div class="grid2">
+            <div class="field"><label for="sAge">Spouse's age</label><select id="sAge"></select></div>
+            <div class="field"><label id="sgLabel">Gender</label>
+              <div class="seg" role="group" aria-labelledby="sgLabel">
+                <button type="button" id="sgF">Female</button>
+                <button type="button" id="sgM" class="on">Male</button>
+              </div></div>
+          </div>
+          <div class="field"><label id="sbLabel">Spouse's coverage (TT$)</label>
+            <div class="bands" id="sBands" role="group" aria-labelledby="sbLabel">
+              <button type="button" data-b="0">100K</button><button type="button" data-b="1" class="on">200K</button><button type="button" data-b="2">300K</button><button type="button" data-b="3">400K</button><button type="button" data-b="4">500K</button>
+            </div></div>
+          <div class="summary-quote"><div><small>Spouse coverage</small><b id="sqCover2">—</b></div><div style="text-align:right"><small>Monthly premium</small><b id="sqPrem2">—</b></div></div>
+          <div class="summary-quote" style="border-style:dashed"><div><small>Household total</small><b id="sqTotal">—</b></div><div style="text-align:right"><small>protecting</small><b id="sqTotCover">—</b></div></div>
+        </div>
+        <div class="wnav"><button class="btn btn-dark" data-next>Continue</button></div>
+      </div>
+
+      <div class="wstep" data-step="2">
+        <h3>About you</h3>
+        <p class="sub">Exactly as it appears on your ID.</p>
+        <div class="field"><label for="aName">Full name</label><input type="text" id="aName" autocomplete="name" placeholder="e.g. Michelle Guevara"></div>
+        <div class="grid2">
+          <div class="field"><label for="aDob">Date of birth</label><input type="date" id="aDob" autocomplete="bday"></div>
+          <div class="field"><label for="aIdType">ID type</label>
+            <select id="aIdType"><option value="">Select…</option><option>National ID</option><option>Driver's Permit</option><option>Passport</option></select></div>
+        </div>
+        <div class="field"><label for="aIdNum">ID number</label><input type="text" id="aIdNum" inputmode="numeric" autocomplete="off" autocapitalize="characters" enterkeyhint="next"></div>
+        <div class="grid2">
+          <div class="field"><label for="aPhone">Mobile number</label><input type="tel" id="aPhone" inputmode="tel" autocomplete="tel" placeholder="e.g. 868 000 0000"></div>
+          <div class="field"><label for="aEmail">Email</label><input type="email" id="aEmail" autocomplete="email"></div>
+        </div>
+        <div class="field"><label for="aAddr">Home address</label><input type="text" id="aAddr" autocomplete="street-address"></div>
+        <div class="field"><label for="aOcc">Occupation</label><input type="text" id="aOcc"></div>
+        <div id="spouseAbout" style="display:none;border-top:1px solid var(--line);padding-top:14px">
+          <p style="font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:10px">About your spouse</p>
+          <div class="field"><label for="sName">Spouse's full name</label><input type="text" id="sName" autocomplete="off" autocapitalize="words" enterkeyhint="next"></div>
+          <div class="grid2">
+            <div class="field"><label for="sDob">Spouse's date of birth</label><input type="date" id="sDob"></div>
+            <div class="field"><label for="sIdType">Spouse's ID type</label>
+              <select id="sIdType"><option value="">Select…</option><option>National ID</option><option>Driver's Permit</option><option>Passport</option></select></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label for="sIdNum">Spouse's ID number</label><input type="text" id="sIdNum" inputmode="numeric" autocomplete="off" autocapitalize="characters" enterkeyhint="next"></div>
+            <div class="field"><label for="sPhone">Spouse's mobile (optional)</label><input type="tel" id="sPhone" inputmode="tel" enterkeyhint="next"></div>
+          </div>
+          <div class="field"><label for="sOcc">Spouse's occupation</label><input type="text" id="sOcc"></div>
+          <p style="font-size:11.5px;color:var(--muted)">We'll use your address and email for the household.</p>
+        </div>
+        <p class="err" id="err2">Please complete every field to continue.</p>
+        <div class="wnav"><button class="btn btn-ghost-d" data-back>Back</button><button class="btn btn-dark" data-next>Continue</button></div>
+      </div>
+
+      <div class="wstep" data-step="3">
+        <h3>Five eligibility questions</h3>
+        <p class="sub">Word-for-word from the official application. A "Yes" or a blank means that plan can't be issued — answer honestly.</p>
+        <div class="lifehead"><span>You</span><span>Your spouse</span></div>
+        <div class="q-item"><p>1. Within the last 5 years, have you ever had, been told you had, or been treated for heart or blood vessel disease, stroke, kidney disease or cancer?</p>
+          <div class="ansRow"><select id="q1"><option value="">Select…</option><option>No</option><option>Yes</option></select><select id="sq1" class="sq"><option value="">Select…</option><option>No</option><option>Yes</option></select></div></div>
+        <div class="q-item"><p>2. Within the last 5 years, have you ever had, been told you had, or been treated for alcohol abuse, alcoholism or drug abuse?</p>
+          <div class="ansRow"><select id="q2"><option value="">Select…</option><option>No</option><option>Yes</option></select><select id="sq2" class="sq"><option value="">Select…</option><option>No</option><option>Yes</option></select></div></div>
+        <div class="q-item"><p>3. Have you ever been told you have, been diagnosed with, or treated for AIDS, an AIDS-related complex, any disorder of the immune system, or tested positive for HIV?</p>
+          <div class="ansRow"><select id="q3"><option value="">Select…</option><option>No</option><option>Yes</option></select><select id="sq3" class="sq"><option value="">Select…</option><option>No</option><option>Yes</option></select></div></div>
+        <div class="q-item"><p>4. Have you ever been rated, postponed/deferred or declined for Life or Health insurance because of your health or habits of life?</p>
+          <div class="ansRow"><select id="q4"><option value="">Select…</option><option>No</option><option>Yes</option></select><select id="sq4" class="sq"><option value="">Select…</option><option>No</option><option>Yes</option></select></div></div>
+        <div class="q-item"><p>5. Do you have any Easicover policy/ies with Bancassurance Caribbean Limited where the total sum assured, together with this application, would exceed $500,000?</p>
+          <div class="ansRow"><select id="q5"><option value="">Select…</option><option>No</option><option>Yes</option></select><select id="sq5" class="sq"><option value="">Select…</option><option>No</option><option>Yes</option></select></div></div>
+        <div class="q-item" style="border-top:1px solid var(--line);padding-top:14px"><p>Guardian's declaration also asks: have you used tobacco or nicotine products in the last 12 months? <i>(This does not change the Xpress Life premium.)</i></p>
+          <div class="ansRow"><select id="q6"><option value="">Select…</option><option>No</option><option>Yes</option></select><select id="sq6" class="sq"><option value="">Select…</option><option>No</option><option>Yes</option></select></div></div>
+        <p class="err" id="err3">Please answer every question.</p>
+        <div class="wnav"><button class="btn btn-ghost-d" data-back>Back</button><button class="btn btn-dark" data-next>Continue</button></div>
+      </div>
+
+      <div class="wstep" data-step="4">
+        <h3>Beneficiary &amp; payments</h3>
+        <p class="sub">Who we protect, and how your premiums are set up.</p>
+        <div class="field"><label for="bName">Your beneficiary — full name</label><input type="text" id="bName"></div>
+        <div class="field"><label for="bRel">Relationship to you</label>
+          <select id="bRel"><option value="">Select…</option><option>Spouse</option><option>Child</option><option>Parent</option><option>Sibling</option><option>Other family</option><option>Estate</option></select></div>
+        <div id="spouseBene" style="display:none">
+          <button type="button" class="bump-opt" id="eachOther" style="margin-bottom:14px"><span class="tick">✓</span><span><b>We are each other's beneficiaries</b><small>One tap fills both — you can still edit</small></span></button>
+          <div class="field"><label for="sbName">Spouse's beneficiary — full name</label><input type="text" id="sbName"></div>
+          <div class="field"><label for="sbRel">Relationship to your spouse</label>
+            <select id="sbRel"><option value="">Select…</option><option>Spouse</option><option>Child</option><option>Parent</option><option>Sibling</option><option>Other family</option><option>Estate</option></select></div>
+        </div>
+
+        <div class="field"><label for="payMethod">Ongoing premium payments</label>
+          <select id="payMethod"><option value="">Select…</option><option>Online banking — recurring from my bank</option><option>Recurring credit card — via myGG portal</option><option>I'll decide on my confirmation call</option></select></div>
+
+        <div id="achFields" style="display:none">
+          <div class="field"><label for="achBank">Your bank</label>
+            <select id="achBank"><option value="">Select…</option><option>FCB</option><option>RBC Royal Bank</option><option>Republic Bank</option><option>Scotiabank</option></select></div>
+          <p style="font-size:11.5px;color:var(--muted);margin:-4px 0 10px">We prepare your official <b>Online Banking Mandate</b>. After you set up the recurring payment in your bank app, just email a screenshot of the confirmation to <b>rickyrampersadsalessupport@myguardiangroup.com</b> — we file everything for you.</p>
+        </div>
+        <div id="rccFields" style="display:none">
+          <p style="font-size:12px;background:var(--tintcool,#e6f4f6);border-radius:12px;padding:11px 14px;margin:0 0 10px;color:var(--ink)">🔒 <b>Set up in the myGG portal</b> — your card details go directly to Guardian, never through us. We'll send you the link (<b>myggonline.app</b>) with your confirmation; it takes about 3 minutes.</p>
+        </div>
+        <div id="drawWrap" class="field" style="display:none"><label for="drawDate">Monthly draw date</label>
+          <select id="drawDate"><option value="">Select…</option><option>1st</option><option>10th</option><option>20th</option><option>25th</option><option>28th</option></select></div>
+
+        <div class="field"><label for="firstPrem">Your first premium</label>
+          <select id="firstPrem"><option value="">Select…</option><option>One-time credit card (e-signed authorisation)</option><option>Online bank transfer (details emailed to you)</option></select></div>
+
+        <div class="field"><label for="cTime">Best time for our confirmation call (we call once, to verify)</label>
+          <select id="cTime"><option value="">Select…</option><option>Morning (8am–12pm)</option><option>Afternoon (12pm–4pm)</option><option>Evening (4pm–7pm)</option></select></div>
+
+        <p style="font-size:12px;color:var(--muted);background:var(--tintwarm);border-radius:12px;padding:11px 14px;margin:2px 0 6px"><b style="color:var(--tinttxt)">Your security:</b> card and account numbers are <b>never</b> entered on this website. First premium is taken by one-time card authorisation (e-signed via DocuSign) or by your own online bank transfer — your choice above.</p>
+
+        <div class="bump">
+          <span class="b-tag">Optional · ages 18 to 59</span>
+          <h4>Add accident cover from day one</h4>
+          <p>Xpress Life pays in full from year 3. Guardian offers two add-ons that pay from the first day if death or disablement is caused by an accident. Each costs extra, can be up to your cover amount, and ends at age 65. Tick one and our team gives you the price and terms on your confirmation call.</p>
+          <div class="bump-opts">
+            <button type="button" class="bump-opt" id="addPA"><span class="tick">✓</span><span><b>Accidental Death Benefit</b><small>Pays if death is caused by an accident, from the first day</small></span></button>
+            <button type="button" class="bump-opt" id="addCI"><span class="tick">✓</span><span><b>Accidental Death &amp; Permanent Disablement</b><small>Also pays if an accident leaves you permanently disabled</small></span></button>
+          </div>
+        </div>
+
+        <button type="button" class="bump-opt" id="declBox" style="margin-top:14px"><span class="tick">✓</span><span><b>My/our answers are true and complete <em class="reqchip">TAP TO TICK · REQUIRED</em></b><small>No physician has advised me (or my spouse, if applying jointly) of any condition putting me at risk of death within 12 months. I understand my answers form the basis of the policy, and untrue statements may void it with only premiums refunded</small></span></button>
+
+        <p class="err" id="err4">Please complete every field and confirm your declaration to submit.</p>
+        <div class="wnav"><button class="btn btn-ghost-d" data-back>Back</button><button class="btn btn-gold" data-next>Review my application</button></div>
+      </div>
+
+      <div class="wstep" data-step="5">
+        <h3>Check it — then send it</h3>
+        <p class="sub">This is exactly what we receive. A PDF copy is emailed to you the moment you submit.</p>
+        <div id="reviewSheet"></div>
+        <p style="font-size:12px;color:var(--muted);background:var(--tintwarm);border-radius:12px;padding:11px 14px">You declared: answers true &amp; complete · no physician has advised of any condition risking death within 12 months · untrue statements may void the policy with premiums refunded only.</p>
+        <p class="err" id="err5"></p>
+        <div class="wnav"><button class="btn btn-ghost-d" data-back>Back</button><button class="btn btn-gold" id="submitApp">Submit my application</button></div>
+      </div>
+
+      <div class="wstep" data-step="R">
+        <h3>One more step — our team takes it from here</h3>
+        <p class="sub" id="reviewLead"></p>
+        <div class="field"><label for="cTimeR">Best time for our team to call</label>
+          <select id="cTimeR"><option value="">Select…</option><option>Morning (8am–12pm)</option><option>Afternoon (12pm–4pm)</option><option>Evening (4pm–7pm)</option></select></div>
+        <button type="button" class="bump-opt" id="consentBox"><span class="tick">✓</span><span><b>Send my details for personal review <em class="reqchip">TAP TO TICK</em></b><small>Your answers go securely to the Ricky Rampersad Branch team, who will call you at your chosen time — nothing is issued without you</small></span></button>
+        <p class="err" id="errR">Please choose a call time and confirm consent.</p>
+        <div class="wnav"><button class="btn btn-ghost-d" data-back>Back</button><button class="btn btn-gold" id="submitReview">Send for review</button></div>
+      </div>
+
+      <div class="decision" id="decision">
+        <svg class="seal" id="sealSvg" viewBox="0 0 60 68" fill="none" aria-hidden="true">
+          <path d="M30 2 L56 12 V36 C56 50 45 61 30 66 C15 61 4 50 4 34 V12 Z" fill="var(--logo-gold)" stroke="var(--logo-rim)" stroke-width="2.5"/>
+          <path class="check-path" d="M18 34 L27 43 L44 24" stroke="var(--logo-check)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        <h3 id="decTitle" class="status-pre">Application received</h3>
+        <div class="ref">Ref: <span id="decRef">—</span></div>
+        <div class="saved" id="decSaved"></div>
+        <div id="payNext"></div>
+        <p class="msg" id="decBody">—</p>
+        <div id="addonNote"></div>
+        <div id="codeCard" style="display:none;background:linear-gradient(135deg,var(--tintwarm),#fff);border:2px solid var(--gold-deep);border-radius:16px;padding:16px;margin:14px 0;text-align:center">
+          <b style="display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--tinttxt)">Your tracking login</b>
+          <span style="font-size:13.5px">Ref <b id="ccRef">—</b></span><br>
+          <span style="font-family:var(--display);font-size:34px;letter-spacing:8px;color:#00728d" id="ccCode">——</span>
+          <small style="display:block;color:var(--muted);font-size:11.5px">Save these — also in your email. Track every step below.</small>
+        </div>
+        <div id="docsPanel" style="margin:14px 0"></div>
+        <button class="btn btn-dark" id="goHome" style="width:100%;margin-top:4px">Done - back to home</button>
+        <div class="actions">
+          <button class="btn btn-dark" id="trackJump">Track my application</button>
+          <button class="btn btn-ghost-d" id="doneBtn">Done — back to home</button>
+        </div>
+        <p class="fine">Nothing on this screen is an approval. Every application is reviewed and decided by the underwriters of Guardian Life of the Caribbean Limited, who issue the policy. Your answers form part of the Proposal and Declaration on which the policy is issued; untrue statements may void the policy, with only premiums refunded. Your application has been transmitted securely to the Ricky Rampersad Branch.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= TRACKING PORTAL ================= -->
+<section class="pad tint" id="track">
+  <div class="wrap">
+    <div class="card">
+      <span class="eyebrow">Client portal</span>
+      <h2 style="font-size:24px;margin:6px 0 4px">Track your application</h2>
+      <p class="sub">Your Ref and Access Code were emailed the moment you applied. We update you at every step — check live any time.</p>
+      <div class="grid2">
+        <div class="field"><label for="trackRef">Reference</label><input type="text" id="trackRef" placeholder="RRB-XL-XXXXXX" autocomplete="off"></div>
+        <div class="field"><label for="trackCode">Access code</label><input type="text" id="trackCode" inputmode="numeric" placeholder="6 digits" autocomplete="off"></div>
+      </div>
+      <button class="btn btn-dark" id="trackBtn" style="width:100%">View my progress</button>
+      <p style="text-align:right;margin-top:8px"><a href="#" id="trackOut" style="font-size:12px;color:var(--muted)">Log out</a></p>
+      <p class="err" id="trackErr"></p>
+      <div id="trackResult"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TRUST + FAQ ================= -->
+<section class="pad dark">
+  <div class="wrap">
+    <h2 class="title">Why families trust this branch</h2>
+    <div class="trust-grid">
+      <div><b>32 yrs</b><small>serving Trinidadian families</small></div>
+      <div><b>23×</b><small>MDRT-qualified leadership</small></div>
+      <div><b>5 min</b><small>to apply online, from your phone</small></div>
+      <div><b>1 month</b><small>claims paid within one month of satisfactory proof</small></div>
+    </div>
+    <h2 class="title">Straight answers</h2>
+    <details><summary>How fast do I actually get covered?</summary><div class="a">Your rate shows in seconds and the application takes about 5 minutes. It then goes to Guardian Life's underwriters, who review it and decide; the branch cannot approve a policy. Our team confirms your details with you and keeps you updated at every step. No medical exam for most applicants.</div></details>
+    <details><summary>What does my family get if something happens early?</summary><div class="a">Year 1: the premiums paid are returned. Year 2: half your cover is paid. Year 3 onward: your full cover is paid. If you are 18 to 59, the optional Accidental Death Benefit pays from the first day when death is caused by an accident.</div></details>
+    <details><summary>When do my payments stop?</summary><div class="a">After 20 years. Your premium is fixed from day one and never increases. After year 20 you never pay again, and your cover carries on to about age 100.</div></details>
+    <details><summary>What is the year-21 money-back option?</summary><div class="a">In year 21 only, you may give up the policy and receive every premium you paid, without interest; the policy then ends. Guardian writes to you before year 21 to remind you. There is no cash value in any other year. Or keep the policy, and if it is in force at about age 100 the full cover is paid to you in cash.</div></details>
+    <details><summary>What's not covered?</summary><div class="a">We show you the fine print upfront. Suicide within the first two years pays a refund of premiums only. Death caused directly or indirectly by war or insurrection is excluded. And untrue answers on the application can void the policy entirely — which is exactly why we ask you to answer honestly.</div></details>
+    <details><summary>Who can apply?</summary><div class="a">Ages 18 to 69 who can honestly answer No to all five health questions on Guardian's declaration. That makes it a plan for people in good health, not for everyone. If you're 70 or over, or a question is a Yes for you, talk to our team about other Guardian plans.</div></details>
+    <details><summary>What if I miss a payment?</summary><div class="a">A 30-day grace period applies. After three years of premiums, Guardian must give you written notice before the policy can lapse. A lapsed policy can be reinstated once, within three years, with evidence of good health and all missed premiums paid, and the year-1 and year-2 reduced benefits start again from the reinstatement.</div></details>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="#top" style="text-decoration:none">
+      <svg width="26" height="30" viewBox="0 0 60 68" fill="none" aria-hidden="true">
+        <path d="M30 2 L56 12 V36 C56 50 45 61 30 66 C15 61 4 50 4 34 V12 Z" fill="none" stroke="#0e93b0" stroke-width="3"/>
+        <path d="M18 34 L27 43 L44 24" stroke="var(--logo-check)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <span><span class="brand-name">Ricky Rampersad Branch</span><br><span class="brand-sub">Endeavour Industrial Estate, Chaguanas</span></span>
+    </a>
+    <p>A fully online service — get your rate, apply, and track your application through Guardian's underwriting to delivery, right here. Ask RAI any hour.</p>
+    <p class="disc">Premiums shown are indicative and confirmed at issue. "From under $6 a day" is a woman aged 18, TT$100,000 cover, paying annually (TT$2,131 a year, about $5.84 a day); paying monthly, the same cover is about $6.26 a day. Every application is reviewed and decided by Guardian Life's underwriters. RAI provides general product information only and does not give financial advice. Xpress Life is a plan of assurance issued by Guardian Life of the Caribbean Limited. Personal Accident and Critical Illness options are quoted separately. This page is operated by the Ricky Rampersad Branch.</p>
+  </div>
+</footer>
+
+<div class="sticky-bar" id="stickyBar">
+  <div class="sb-amt">$<span id="sbAmt">—</span><small id="sbCover">—</small><small class="sb-on">100% online · no paperwork</small></div>
+  <a class="btn btn-gold" id="sbApply" href="#apply" onclick="__openApply();return false;">Apply now</a>
+</div>
+
+<!-- RAI -->
+<div class="rai-hello" id="raiHello" role="status">Hi, I'm <b style="color:#00728d">RAI</b> 🐢 Ask me anything — or get your rate in 10 seconds.</div>
+<button class="rai-fab" id="raiFab" aria-label="Chat with RAI, the branch leatherback" onclick="openRai()">
+  <svg viewBox="0 0 120 144" class="rai-turtle" aria-hidden="true">
+        <ellipse cx="30" cy="123" rx="9.5" ry="5.5" style="fill:var(--turtle)" transform="rotate(35 30 123)"/>
+        <ellipse cx="90" cy="123" rx="9.5" ry="5.5" style="fill:var(--turtle)" transform="rotate(-35 90 123)"/>
+        <path d="M55 132 L60 143 L65 132 Z" style="fill:var(--turtle)"/>
+        <path d="M48 46 Q60 30 72 46 L72 52 L48 52 Z" style="fill:var(--turtle)"/>
+        <ellipse cx="60" cy="23" rx="15" ry="13.5" style="fill:var(--turtle)"/>
+        <ellipse cx="60" cy="31" rx="7.5" ry="4.2" style="fill:var(--turtle-deep)" opacity=".35"/>
+        <circle cx="49" cy="13.5" r="2" style="fill:var(--gold-lite)" opacity=".8"/>
+        <circle cx="71" cy="12.5" r="1.6" style="fill:var(--gold-lite)" opacity=".8"/>
+        <path d="M60 40 L104 56 V88 C104 112 86 128 60 136 C34 128 16 112 16 88 V56 Z" style="fill:var(--logo-gold);stroke:var(--logo-rim)" stroke-width="4.5"/>
+        <path d="M40 88 L54 102 L82 70" style="stroke:var(--logo-check)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <ellipse cx="18" cy="62" rx="15" ry="6.5" style="fill:var(--turtle)" transform="rotate(-34 18 62)"/>
+        <ellipse cx="102" cy="62" rx="15" ry="6.5" style="fill:var(--turtle)" transform="rotate(34 102 62)"/>
+        <g class="blink">
+          <ellipse cx="52.5" cy="21" rx="5" ry="5.6" fill="#fff"/>
+          <circle cx="53.8" cy="22.2" r="2.5" style="fill:var(--deep)"/>
+          <circle cx="55" cy="20.2" r=".95" fill="#fff"/>
+          <ellipse cx="67.5" cy="21" rx="5" ry="5.6" fill="#fff"/>
+          <circle cx="68.8" cy="22.2" r="2.5" style="fill:var(--deep)"/>
+          <circle cx="70" cy="20.2" r=".95" fill="#fff"/>
+        </g>
+        <path d="M54 30 Q60 34.5 66 30" style="stroke:var(--deep)" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      </svg>
+  <span class="rai-badge">RAI</span>
+</button>
+<div class="rai-panel" id="raiPanel" role="dialog" aria-label="RAI assistant">
+  <div class="rai-head">
+    <div class="rai-face"><svg viewBox="0 0 120 144" class="rai-turtle" aria-hidden="true">
+        <ellipse cx="30" cy="123" rx="9.5" ry="5.5" style="fill:var(--turtle)" transform="rotate(35 30 123)"/>
+        <ellipse cx="90" cy="123" rx="9.5" ry="5.5" style="fill:var(--turtle)" transform="rotate(-35 90 123)"/>
+        <path d="M55 132 L60 143 L65 132 Z" style="fill:var(--turtle)"/>
+        <path d="M48 46 Q60 30 72 46 L72 52 L48 52 Z" style="fill:var(--turtle)"/>
+        <ellipse cx="60" cy="23" rx="15" ry="13.5" style="fill:var(--turtle)"/>
+        <ellipse cx="60" cy="31" rx="7.5" ry="4.2" style="fill:var(--turtle-deep)" opacity=".35"/>
+        <circle cx="49" cy="13.5" r="2" style="fill:var(--gold-lite)" opacity=".8"/>
+        <circle cx="71" cy="12.5" r="1.6" style="fill:var(--gold-lite)" opacity=".8"/>
+        <path d="M60 40 L104 56 V88 C104 112 86 128 60 136 C34 128 16 112 16 88 V56 Z" style="fill:var(--logo-gold);stroke:var(--logo-rim)" stroke-width="4.5"/>
+        <path d="M40 88 L54 102 L82 70" style="stroke:var(--logo-check)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <ellipse cx="18" cy="62" rx="15" ry="6.5" style="fill:var(--turtle)" transform="rotate(-34 18 62)"/>
+        <ellipse cx="102" cy="62" rx="15" ry="6.5" style="fill:var(--turtle)" transform="rotate(34 102 62)"/>
+        <g class="blink">
+          <ellipse cx="52.5" cy="21" rx="5" ry="5.6" fill="#fff"/>
+          <circle cx="53.8" cy="22.2" r="2.5" style="fill:var(--deep)"/>
+          <circle cx="55" cy="20.2" r=".95" fill="#fff"/>
+          <ellipse cx="67.5" cy="21" rx="5" ry="5.6" fill="#fff"/>
+          <circle cx="68.8" cy="22.2" r="2.5" style="fill:var(--deep)"/>
+          <circle cx="70" cy="20.2" r=".95" fill="#fff"/>
+        </g>
+        <path d="M54 30 Q60 34.5 66 30" style="stroke:var(--deep)" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      </svg></div>
+    <div><b>RAI</b><small>● Online now · answers instantly</small></div>
+    <button class="rai-close" onclick="closeRai()" aria-label="Close chat">✕</button>
+  </div>
+  <div class="rai-log" id="raiLog"></div>
+  <div class="rai-input">
+    <input type="text" id="raiText" placeholder="Ask RAI anything…" autocomplete="off">
+    <button id="raiSend" aria-label="Send">➤</button>
+  </div>
+  <p class="rai-foot">RAI gives general product info. Premiums are indicative and confirmed at issue.</p>
+</div>
+
+<script>
+/* =========================================================
+   RATE ENGINE — OFFICIAL GUARDIAN RATES (exact, no estimation)
+   Source: 2020_04 Trinidad Xpress Life Premium Rates (annual $/1000),
+   ages 18–69, Male & Female, all five sums assured.
+   Modal factors OFFICIAL (Product Spec v2): monthly ×0.08928,
+   quarterly ×0.25893, semi ×0.51785, annual ×1.
+   Verified: M/45/$500K = $8,790.00/yr = $784.77/mo (matches Guardian illustration).
+   ========================================================= */
+const BANDS=[100000,200000,300000,400000,500000];
+// Official annual premium rate per $1,000 sum assured, by age (18–69).
+const RATE_M={18:[21.87,13.87,11.22,9.91,9.12],19:[21.93,14.00,11.37,10.06,9.28],20:[21.99,14.12,11.51,10.22,9.44],21:[22.05,14.25,11.66,10.38,9.61],22:[22.12,14.38,11.82,10.54,9.78],23:[22.19,14.51,11.97,10.71,9.96],24:[22.26,14.65,12.14,10.88,10.14],25:[22.34,14.79,12.30,11.06,10.33],26:[22.43,14.95,12.48,11.25,10.52],27:[22.52,15.11,12.66,11.45,10.72],28:[22.63,15.28,12.86,11.65,10.94],29:[22.74,15.46,13.06,11.87,11.16],30:[22.87,15.66,13.28,12.10,11.40],31:[23.02,15.87,13.52,12.35,11.65],32:[23.18,16.10,13.76,12.61,11.92],33:[23.36,16.34,14.03,12.89,12.21],34:[23.55,16.61,14.31,13.19,12.51],35:[23.77,16.89,14.62,13.50,12.84],36:[24.01,17.20,14.95,13.84,13.19],37:[24.27,17.52,15.30,14.21,13.55],38:[24.56,17.88,15.68,14.60,13.95],39:[24.88,18.26,16.09,15.01,14.37],40:[25.23,18.67,16.52,15.46,14.82],41:[25.61,19.11,16.99,15.94,15.30],42:[26.09,19.59,17.48,16.44,15.82],43:[26.64,20.10,18.02,16.99,16.37],44:[27.23,20.65,18.59,17.57,16.95],45:[27.87,21.24,19.21,18.19,17.58],46:[28.57,21.91,19.87,18.86,18.26],47:[29.33,22.71,20.58,19.58,18.98],48:[30.15,23.57,21.37,20.36,19.76],49:[31.06,24.51,22.31,21.22,20.60],50:[32.04,25.52,23.34,22.25,21.59],51:[33.11,26.63,24.45,23.37,22.71],52:[34.28,27.82,25.66,24.58,23.93],53:[35.55,29.12,26.96,25.88,25.24],54:[36.94,30.52,28.37,27.30,26.65],55:[38.45,32.05,29.90,28.83,28.19],56:[40.09,33.70,31.56,30.49,29.85],57:[41.86,35.48,33.35,32.28,31.63],58:[43.79,37.41,35.27,34.20,33.56],59:[45.87,39.49,37.35,36.28,35.64],60:[48.10,41.71,39.57,38.50,37.86],61:[50.49,44.08,41.94,40.86,40.22],62:[53.04,46.61,44.46,43.38,42.73],63:[55.74,49.28,47.12,46.04,45.39],64:[58.62,52.13,49.96,48.87,48.21],65:[61.69,55.15,52.96,51.87,51.21],66:[64.96,58.36,56.16,55.06,54.39],67:[68.44,61.79,59.56,58.45,57.78],68:[72.15,65.43,63.18,62.06,61.38],69:[76.12,69.32,67.05,65.91,65.23]};
+const RATE_F={18:[21.31,13.11,10.38,9.03,8.22],19:[21.35,13.21,10.51,9.17,8.36],20:[21.39,13.32,10.64,9.31,8.51],21:[21.44,13.43,10.78,9.46,8.67],22:[21.49,13.55,10.92,9.61,8.83],23:[21.55,13.68,11.07,9.77,9.00],24:[21.62,13.81,11.23,9.94,9.17],25:[21.70,13.95,11.39,10.12,9.36],26:[21.78,14.10,11.57,10.30,9.55],27:[21.87,14.26,11.75,10.50,9.75],28:[21.97,14.43,11.94,10.70,9.96],29:[22.08,14.61,12.14,10.91,10.18],30:[22.21,14.80,12.36,11.14,10.42],31:[22.34,15.00,12.58,11.38,10.66],32:[22.49,15.21,12.82,11.63,10.92],33:[22.65,15.45,13.07,11.89,11.19],34:[22.83,15.69,13.34,12.18,11.48],35:[23.03,15.96,13.63,12.47,11.78],36:[23.24,16.24,13.93,12.79,12.11],37:[23.48,16.54,14.25,13.12,12.45],38:[23.73,16.86,14.59,13.48,12.81],39:[24.01,17.20,14.96,13.85,13.20],40:[24.31,17.57,15.35,14.26,13.60],41:[24.64,17.96,15.77,14.68,14.04],42:[25.00,18.39,16.22,15.15,14.50],43:[25.40,18.85,16.70,15.64,15.00],44:[25.86,19.35,17.22,16.17,15.54],45:[26.44,19.88,17.78,16.74,16.12],46:[27.07,20.47,18.39,17.36,16.74],47:[27.76,21.10,19.04,18.02,17.40],48:[28.50,21.80,19.74,18.72,18.11],49:[29.32,22.65,20.49,19.48,18.88],50:[30.20,23.56,21.34,20.30,19.70],51:[31.15,24.55,22.33,21.23,20.58],52:[32.18,25.60,23.40,22.30,21.64],53:[33.29,26.73,24.54,23.44,22.78],54:[34.47,27.94,25.76,24.66,24.01],55:[35.74,29.23,27.05,25.96,25.31],56:[37.10,30.60,28.43,27.34,26.69],57:[38.54,32.06,29.89,28.80,28.15],58:[40.08,33.60,31.44,30.35,29.70],59:[41.71,35.24,33.08,32.00,31.34],60:[43.40,36.93,34.77,33.69,33.04],61:[45.10,38.64,36.48,35.39,34.74],62:[46.82,40.36,38.20,37.11,36.46],63:[48.57,42.11,39.95,38.86,38.21],64:[50.37,43.90,41.74,40.65,40.00],65:[52.23,45.76,43.60,42.51,41.86],66:[54.19,47.71,45.55,44.46,43.81],67:[56.26,49.77,47.61,46.52,45.86],68:[58.49,51.98,49.81,48.72,48.06],69:[60.89,54.36,52.18,51.09,50.43]};
+const MODAL={annual:1,semi:0.51785,quarterly:0.25893,monthly:0.08928};
+function rateRow(g,a){const T=(g==='M')?RATE_M:RATE_F;const lo=18,hi=69;const aa=Math.max(lo,Math.min(hi,a));return T[aa]||T[hi];}
+function annualPremium(g,a,i){return rateRow(g,a)[i]*(BANDS[i]/1000);}
+function quote(g,a,i){
+  const an=annualPremium(g,a,i);
+  return {annual:an, monthly:an*MODAL.monthly, quarterly:an*MODAL.quarterly, semi:an*MODAL.semi};
+}
+const fmt=n=>n.toLocaleString('en-TT',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0=n=>n.toLocaleString('en-TT');
+
+let S={gender:'F',age:40,band:1,monthly:0,annual:0};
+const ageSel=document.getElementById('qAge');
+for(let i=18;i<=69;i++){const o=document.createElement('option');o.value=i;o.textContent=i;if(i===40)o.selected=true;ageSel.appendChild(o);}
+let joint=false;
+function updateWizsum(){
+  const el=document.getElementById('wizsumTxt');
+  if(!el)return;
+  let t='TT$'+fmt0(BANDS[S.band])+' · <b>$'+fmt(S.modal||S.monthly)+' '+FREQ[S.freq].unit+'</b>';
+  if(joint)t+=' &nbsp;+&nbsp; spouse TT$'+fmt0(BANDS[S2.band])+' · <b>$'+fmt(S2.modal||S2.monthly)+' '+FREQ[S.freq].unit+'</b>';
+  el.innerHTML=t;
+}
+const FREQ={monthly:{k:'monthly',unit:'/mo',label:'Your monthly premium',short:'mo',payments:12},
+ quarterly:{k:'quarterly',unit:'/qtr',label:'Your quarterly premium',short:'qtr',payments:4},
+ semi:{k:'semi',unit:'/half-yr',label:'Your semi-annual premium',short:'half-yr',payments:2},
+ annual:{k:'annual',unit:'/yr',label:'Your annual premium',short:'yr',payments:1}};
+S.freq='monthly';
+function animateNum(el,from,to){
+  try{
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches){el.textContent=fmt(to);return;}
+    const t0=performance.now(),dur=620;
+    (function step(t){const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);
+      el.textContent=fmt(from+(to-from)*e);
+      if(p<1)requestAnimationFrame(step);else el.textContent=fmt(to);})(t0);
+  }catch(err){el.textContent=fmt(to);}
+}
+function yearCost(q,f){return q[f]*FREQ[f].payments;}
+document.querySelectorAll('.fq').forEach(b=>b.addEventListener('click',function(){
+  document.querySelectorAll('.fq').forEach(x=>x.classList.remove('on'));this.classList.add('on');
+  S.freq=this.dataset.fq;renderQuote();}));
+function renderInsights(q){
+  const box=document.getElementById('raiIntel'),body=document.getElementById('riBody');
+  const items=[];
+  const f=S.freq, an=q.annual;
+  const mYear=yearCost(q,'monthly'), save=(mYear-an);
+  if(f!=='annual'){
+    items.push('<div class="ri">💡 Pay <b>once a year</b> and keep <b>$'+fmt(save)+'</b> in your pocket — every single year. Over your 20 payments that\'s <b>$'+fmt0(Math.round(save*20))+'</b> back in your family\'s hands.<br><button type="button" data-act="annual">Switch to annual — save $'+fmt0(Math.round(save))+'/yr →</button></div>');
+  } else {
+    items.push('<div class="ri">✅ <b>Smart move.</b> Annual keeps <b>$'+fmt(save)+'</b> with you every year vs monthly — <b>$'+fmt0(Math.round(save*20))+'</b> over the plan.</div>');
+  }
+  if(S.band<4){
+    const qN=quote(S.gender,S.age,S.band+1);
+    const dDay=(qN.annual-an)/365, dMode=qN[f]-q[f];
+    items.push('<div class="ri">🛡️ You\'re one step from <b>TT$'+fmt0(BANDS[S.band+1])+'</b>: about <b>$'+fmt(dDay)+' more a day</b> ($'+fmt(dMode)+' per '+FREQ[f].short+'). Most families never feel the difference — until the day it matters.<br><button type="button" data-act="upgrade">Upgrade to $'+fmt0(BANDS[S.band+1]/1000)+'K →</button></div>');
+  }
+  if(S.age<69){
+    const qA=quote(S.gender,S.age+1,S.band);
+    const dyr=qA.annual-an;
+    if(dyr>0.5)items.push('<div class="ri">⏳ Your rate <b>locks at age '+S.age+'</b>. At '+(S.age+1)+', this exact cover costs <b>$'+fmt(dyr)+' more each year</b> — <b>$'+fmt0(Math.round(dyr*20))+'</b> over the plan. Your birthday is the real deadline.</div>');
+  }
+  body.innerHTML=items.join('');box.style.display=items.length?'block':'none';
+}
+document.getElementById('riBody').addEventListener('click',function(e){
+  const b=e.target.closest('button[data-act]');if(!b)return;
+  if(b.dataset.act==='annual'){const f=document.querySelector('.fq[data-fq=annual]');if(f)f.click();}
+  if(b.dataset.act==='upgrade'){const bb=document.querySelector('[data-b="'+(S.band+1)+'"]');if(bb)bb.click();}
+});
+function renderQuote(){
+  S.age=parseInt(ageSel.value,10);
+  const q=quote(S.gender,S.age,S.band);
+  S.monthly=q.monthly;S.annual=q.annual;S.modal=q[S.freq];
+  document.getElementById('pFreqLabel').textContent=FREQ[S.freq].label;
+  animateNum(document.getElementById('pMonthly'), S._last||0, q[S.freq]); S._last=q[S.freq];
+  document.getElementById('pUnit').textContent=' '+FREQ[S.freq].unit;
+  const mY=yearCost(q,'monthly');
+  document.getElementById('fqSaveTag').textContent='save $'+fmt0(Math.round(mY-q.annual));
+  const chip=document.getElementById('saveChip');
+  if(S.freq!=='monthly'){const sv=mY-yearCost(q,S.freq);
+    document.getElementById('saveAmt').textContent='$'+fmt(sv);chip.style.display=sv>1?'block':'none';
+  } else chip.style.display='none';
+  document.getElementById('pEffLine').innerHTML = (S.freq==='annual')
+    ? 'One payment · TT$'+fmt(q.annual)+' per year · fixed, never increases'
+    : 'TT$'+fmt(yearCost(q,S.freq))+' per year this way · fixed, never increases';
+  document.getElementById('pAnnual')&&0;
+  renderInsights(q);
+  document.getElementById('pDaily').textContent=fmt(q.annual/365);
+  document.getElementById('fTotal').textContent=fmt0(Math.round(yearCost(q,S.freq)*20));
+  const py=new Date().getFullYear()+20;
+  document.getElementById('fPaidUp').textContent='Paid-up '+py;
+  document.getElementById('fPaidUpSub').textContent='final payment at age '+(S.age+20)+' — then never again';
+  document.getElementById('fCover').textContent=fmt0(BANDS[S.band]);
+  document.getElementById('ledger').classList.add('show');
+  document.getElementById('sbAmt').textContent=fmt(q[S.freq])+' '+FREQ[S.freq].unit;
+  document.getElementById('sbCover').textContent='TT$'+fmt0(BANDS[S.band])+' coverage';
+  document.getElementById('stickyBar').classList.add('show');
+  document.getElementById('sqCover').textContent='TT$'+fmt0(BANDS[S.band]);
+  document.getElementById('sqPrem').textContent='$'+fmt(q[S.freq])+FREQ[S.freq].unit;
+  updateWizsum();
+}
+ageSel.addEventListener('change',renderQuote);
+document.getElementById('gF').addEventListener('click',function(){S.gender='F';this.classList.add('on');document.getElementById('gM').classList.remove('on');renderQuote();});
+document.getElementById('gM').addEventListener('click',function(){S.gender='M';this.classList.add('on');document.getElementById('gF').classList.remove('on');renderQuote();});
+document.querySelectorAll('.bands button').forEach(b=>b.addEventListener('click',function(){
+  document.querySelectorAll('.bands button').forEach(x=>x.classList.remove('on'));
+  this.classList.add('on');S.band=parseInt(this.dataset.b,10);renderQuote();
+}));
+renderQuote();
+
+/* ---------- joint / spouse quote ---------- */
+let S2={gender:'M',age:40,band:1,monthly:0,annual:0};
+const sAgeSel=document.getElementById('sAge');
+for(let i=18;i<=69;i++){const o=document.createElement('option');o.value=i;o.textContent=i;if(i===40)o.selected=true;sAgeSel.appendChild(o);}
+function renderQuote2(){
+  S2.age=parseInt(sAgeSel.value,10);
+  const q=quote(S2.gender,S2.age,S2.band);
+  S2.monthly=q.monthly;S2.annual=q.annual;S2.modal=q[S.freq];
+  document.getElementById('sqCover2').textContent='TT$'+fmt0(BANDS[S2.band]);
+  document.getElementById('sqPrem2').textContent='$'+fmt(q[S.freq])+FREQ[S.freq].unit;
+  document.getElementById('sqTotal').textContent='$'+fmt(S.modal+q[S.freq])+FREQ[S.freq].unit;
+  document.getElementById('sqTotCover').textContent='TT$'+fmt0(BANDS[S.band]+BANDS[S2.band]);
+  updateWizsum();
+}
+sAgeSel.addEventListener('change',renderQuote2);
+document.getElementById('sgF').addEventListener('click',function(){S2.gender='F';this.classList.add('on');document.getElementById('sgM').classList.remove('on');renderQuote2();});
+document.getElementById('sgM').addEventListener('click',function(){S2.gender='M';this.classList.add('on');document.getElementById('sgF').classList.remove('on');renderQuote2();});
+document.querySelectorAll('#sBands button').forEach(b=>b.addEventListener('click',function(){
+  document.querySelectorAll('#sBands button').forEach(x=>x.classList.remove('on'));
+  this.classList.add('on');S2.band=parseInt(this.dataset.b,10);renderQuote2();
+}));
+document.getElementById('jointBox').addEventListener('click',function(){
+  joint=!joint;this.classList.toggle('on',joint);
+  document.getElementById('spouseQuote').style.display=joint?'block':'none';
+  document.getElementById('spouseAbout').style.display=joint?'block':'none';
+  document.getElementById('spouseBene').style.display=joint?'block':'none';
+  document.getElementById('wizCard').classList.toggle('joint',joint);
+  if(joint)renderQuote2();
+  updateWizsum();
+});
+document.getElementById('eachOther').addEventListener('click',function(){
+  document.getElementById('bName').value=val('sName');document.getElementById('bRel').value='Spouse';
+  document.getElementById('sbName').value=val('aName');document.getElementById('sbRel').value='Spouse';
+  this.classList.add('on');
+});
+
+/* ---------- cross-sell toggles ---------- */
+let addons={PA:false,CI:false};
+document.getElementById('addPA').addEventListener('click',function(){addons.PA=!addons.PA;this.classList.toggle('on',addons.PA);});
+document.getElementById('addCI').addEventListener('click',function(){addons.CI=!addons.CI;this.classList.toggle('on',addons.CI);});
+let decl=false;
+document.getElementById('declBox').addEventListener('click',function(){decl=!decl;this.classList.toggle('on',decl);});
+
+/* ---------- wizard ---------- */
+let step=1;
+const applyWrap=document.getElementById('apply');
+let autoAdv=false;
+const STEPNAMES={1:'Your cover',2:'About you',3:'Health questions',4:'Beneficiary & payments',5:'Review & submit'};
+function setStepLabel(t){const el=document.getElementById('stepLabel');if(el)el.textContent=t;}
+function showStep(n){
+  step=n;autoAdv=false;
+  setStepLabel(n<=4?('Step '+n+' of 4 · '+STEPNAMES[n]):('Final check · '+STEPNAMES[5]));
+  document.querySelectorAll('.wstep').forEach(w=>w.classList.toggle('on',parseInt(w.dataset.step,10)===n));
+  document.querySelectorAll('#prog i').forEach((b,i)=>b.classList.toggle('done',i<n));
+  applyWrap.scrollTo({top:0,behavior:'smooth'});
+  const s=document.querySelector('.wstep.on');
+  const f=s&&s.querySelector('input[type=text]');
+  if(f&&n===2)setTimeout(()=>f.focus({preventScroll:true}),450);
+}
+document.addEventListener('change',e=>{
+  if(step!==3||autoAdv)return;
+  let ids=['q1','q2','q3','q4','q5','q6'];
+  if(joint)ids=ids.concat(['sq1','sq2','sq3','sq4','sq5','sq6']);
+  if(ids.every(id=>val(id)!=='')){
+    autoAdv=true;
+    setTimeout(()=>{const b=document.querySelector('.wstep[data-step="3"] [data-next]');if(b&&step===3)b.click();},420);
+  }
+},true);
+function openApply(){
+  applyWrap.classList.add('open');document.body.classList.add('locked');applyWrap.scrollTop=0;applyWrap.classList.add('show');document.getElementById('decision').classList.remove('on');showStep(1);}
+document.getElementById('startApply').addEventListener('click',openApply);
+document.getElementById('sbApply').addEventListener('click',openApply);
+const wizEl=document.getElementById('wizNote');
+function wizNote(msg,isErr){wizEl.textContent=msg;wizEl.style.display='block';wizEl.style.background=isErr?'#d8eff3':'#e6f4f6';wizEl.style.color=isErr?'#08404e':'#7A5200';}
+function hideWizNote(){wizEl.style.display='none';}
+let reviewReason='health';
+function ageLastBirthday(dstr){const d=new Date(dstr);if(isNaN(d))return null;const t=new Date();let a=t.getFullYear()-d.getFullYear();const m=t.getMonth()-d.getMonth();if(m<0||(m===0&&t.getDate()<d.getDate()))a--;return a;}
+function knockout(){return ['q1','q2','q3','q5'].some(id=>val(id)==='Yes');}
+function showReview(){
+  step=4;
+  setStepLabel('Personal review · our team calls you');
+  document.querySelectorAll('.wstep').forEach(w=>w.classList.toggle('on',w.dataset.step==='R'));
+  document.querySelectorAll('#prog i').forEach((b,i)=>b.classList.toggle('done',i<3));
+  document.getElementById('reviewLead').innerHTML = reviewReason==='age'
+    ? 'Xpress Life issues online from ages 18 to 69 — and you deserve better than an algorithm anyway. A senior member of our branch team will personally walk you through the options genuinely available at your age. When should we call?'
+    : 'Based on your answers, this plan can\'t be offered on these answers — it is issued strictly on the truth of these questions. That\'s not the end of the road: our branch team will personally review the options genuinely available to you. When should we call?';
+  applyWrap.scrollIntoView({behavior:'smooth',block:'start'});
+}
+let LF={aKO:false,bKO:false,aAge:false,bAge:false};
+document.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>{
+  if(step===2){
+    if(!validStep2())return;
+    hideWizNote();
+    const a=ageLastBirthday(val('aDob'));
+    if(a!==null){
+      if(a<18){wizNote('Applicants must be at least 18. If this plan is for a loved one aged 18–69, apply using their details.',true);return;}
+      if(a>69&&!joint){reviewReason='age';showReview();return;}
+      LF.aAge=a>69;
+      if(a>=18&&a<=69&&a!==S.age){S.age=a;ageSel.value=a;renderQuote();wizNote('Your premium was matched to your date of birth — age '+a+' last birthday, the basis on which the policy is issued.',false);}
+    }
+    if(joint){
+      const b2=ageLastBirthday(val('sDob'));
+      if(b2!==null){
+        if(b2<18){wizNote('Your spouse must be at least 18 to be covered.',true);return;}
+        LF.bAge=b2>69;
+        if(b2>=18&&b2<=69&&b2!==S2.age){S2.age=b2;sAgeSel.value=b2;renderQuote2();wizNote('Premiums were matched to the dates of birth provided — the basis on which each policy is issued.',false);}
+        if(LF.bAge)wizNote('Your spouse is over the online issue age (69) — their options will be reviewed personally by our team. Your own application continues normally.',false);
+      }
+    }
+  }
+  if(step===4){
+    if(!validStep4())return;
+    buildReview();
+  }
+  if(step===3){
+    if(!validStep3())return;
+    LF.aKO=knockout();
+    LF.bKO=joint&&['sq1','sq2','sq3','sq4','sq5'].some(id=>val(id)==='Yes');
+    const aFlag=LF.aKO||LF.aAge, bFlag=LF.bKO||LF.bAge;
+    if(aFlag&&(!joint||bFlag)){reviewReason='health';showReview();return;}
+  }
+  showStep(step+1);
+}));
+let consent=false;
+document.getElementById('consentBox').addEventListener('click',function(){consent=!consent;this.classList.toggle('on',consent);});
+document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',()=>showStep(step-1)));
+const val=id=>{const el=document.getElementById(id);return el?String(el.value).trim():'';};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function validStep2(){document.querySelectorAll('.miss').forEach(x=>x.classList.remove('miss'));let ids=['aName','aDob','aIdType','aIdNum','aPhone','aEmail','aAddr','aOcc'];if(joint)ids=ids.concat(['sName','sDob','sIdType','sIdNum','sOcc']);let first=null;ids.forEach(id=>{if(val(id)===''){const el=mark(id);if(!first)first=el;}});const ok=!first;document.getElementById('err2').classList.toggle('show',!ok);if(first)first.scrollIntoView({behavior:'smooth',block:'center'});return ok;}
+function validStep3(){document.querySelectorAll('.miss').forEach(x=>x.classList.remove('miss'));let ids=['q1','q2','q3','q4','q5','q6'];if(joint)ids=ids.concat(['sq1','sq2','sq3','sq4','sq5','sq6']);let first=null;ids.forEach(id=>{if(val(id)===''){const el=mark(id);if(!first)first=el;}});const ok=!first;document.getElementById('err3').classList.toggle('show',!ok);if(first)first.scrollIntoView({behavior:'smooth',block:'center'});return ok;}
+function payIsACH(){return val('payMethod').indexOf('Online banking')===0;}
+function payIsRCC(){return val('payMethod').indexOf('Recurring')===0;}
+function mark(id){const el=document.getElementById(id);if(el){el.classList.add('miss');return el;}return null;}
+document.addEventListener('input',e=>{if(e.target&&e.target.classList)e.target.classList.remove('miss');},true);
+document.addEventListener('change',e=>{if(e.target&&e.target.classList)e.target.classList.remove('miss');},true);
+function validStep4(){
+  document.querySelectorAll('.miss').forEach(x=>x.classList.remove('miss'));
+  const missing=[];let firstEl=null;
+  const need=(id,label)=>{if(val(id)===''){missing.push(label);const el=mark(id);if(!firstEl)firstEl=el;}};
+  need('bName','your beneficiary\'s name');need('bRel','relationship');
+  if(joint){need('sbName','spouse\'s beneficiary');need('sbRel','spouse beneficiary relationship');}
+  need('payMethod','payment method');
+  need('firstPrem','how you\'ll pay your first premium');
+  if(payIsACH()){need('achBank','your bank');need('drawDate','monthly draw date');}
+  need('cTime','best call time');
+  if(!decl){missing.push('the declaration tick (gold box below)');const el=document.getElementById('declBox');if(el){el.classList.add('miss');if(!firstEl)firstEl=el;}}
+  const err=document.getElementById('err4');
+  if(missing.length){
+    err.textContent='Almost there — still needed: '+missing.join(', ')+'.';
+    err.classList.add('show');
+    if(firstEl)firstEl.scrollIntoView({behavior:'smooth',block:'center'});
+    return false;
+  }
+  err.classList.remove('show');return true;
+}
+document.getElementById('payMethod').addEventListener('change',()=>{
+  document.getElementById('achFields').style.display=payIsACH()?'block':'none';
+  document.getElementById('rccFields').style.display=payIsRCC()?'block':'none';
+  document.getElementById('drawWrap').style.display=payIsACH()?'block':'none';
+});
+
+/* ---------- field intelligence ---------- */
+function fhint(id,msg,cls,onTap){
+  const el=document.getElementById(id);if(!el)return;
+  let hp=el.parentElement.querySelector('.fhint');
+  if(!hp){hp=document.createElement('small');hp.className='fhint';el.parentElement.appendChild(hp);}
+  hp.className='fhint '+(msg?cls:'');hp.innerHTML=msg||'';
+  hp.onclick=onTap||null;if(onTap)hp.classList.add('tap');
+}
+function fmtTT(v){
+  let d=v.replace(/\D/g,'');
+  if(d.startsWith('1868'))d=d.slice(1);
+  if(d.startsWith('868')&&d.length>3)return '868-'+d.slice(3,6)+(d.length>6?'-'+d.slice(6,10):'');
+  if(d.length===7)return '868-'+d.slice(0,3)+'-'+d.slice(3);
+  return v.trim();
+}
+function wirePhone(id){const el=document.getElementById(id);if(!el)return;
+  el.addEventListener('blur',()=>{el.value=fmtTT(el.value);
+    const d=el.value.replace(/\D/g,'');
+    if(!d){fhint(id,'','');return;}
+    fhint(id, d.length===10&&d.startsWith('868')?'Looks good \u2713':'TT mobiles are 7 digits \u2014 we format as 868-XXX-XXXX', d.length===10?'ok':'warn');
+  });}
+const MAILFIX={'gmial.com':'gmail.com','gamil.com':'gmail.com','gmal.com':'gmail.com','hotmial.com':'hotmail.com','hotmal.com':'hotmail.com','yahooo.com':'yahoo.com','yaho.com':'yahoo.com','outlok.com':'outlook.com','iclod.com':'icloud.com'};
+function wireEmail(id){const el=document.getElementById(id);if(!el)return;
+  el.addEventListener('blur',()=>{
+    const v=el.value.trim();if(!v){fhint(id,'','');return;}
+    const m=v.match(/^[^@\s]+@([^@\s]+)$/);
+    if(!m){fhint(id,'Please check \u2014 that email looks incomplete','warn');return;}
+    const dom=m[1].toLowerCase(), fix=MAILFIX[dom];
+    if(fix){fhint(id,'Did you mean <b>'+v.split('@')[0]+'@'+fix+'</b>? Tap to fix','warn',()=>{el.value=v.split('@')[0]+'@'+fix;fhint(id,'Fixed \u2713','ok');});}
+    else fhint(id,'Looks good \u2713','ok');
+  });}
+function idDob(d){ // TT national ID: yyyymmdd + 3
+  if(!/^\d{11}$/.test(d))return null;
+  const y=+d.slice(0,4),mo=+d.slice(4,6),da=+d.slice(6,8);
+  if(y<1900||y>2010||mo<1||mo>12||da<1||da>31)return null;
+  return y+'-'+String(mo).padStart(2,'0')+'-'+String(da).padStart(2,'0');
+}
+function wireID(idNum,idType,dobId){const el=document.getElementById(idNum),ty=document.getElementById(idType);if(!el||!ty)return;
+  el.addEventListener('blur',()=>{
+    const t=ty.value,v=el.value.replace(/\s/g,'');el.value=v;
+    if(!v){fhint(idNum,'','');return;}
+    if(t==='National ID'){
+      const d=idDob(v);
+      if(!/^\d{11}$/.test(v)){fhint(idNum,'National ID is 11 digits','warn');return;}
+      const dobEl=document.getElementById(dobId);
+      if(d&&dobEl){
+        if(!dobEl.value){dobEl.value=d;dobEl.dispatchEvent(new Event('change',{bubbles:true}));fhint(idNum,'Date of birth filled from your ID \u2713','ok');}
+        else if(dobEl.value!==d){fhint(idNum,'Your ID suggests DOB '+d+' \u2014 please double-check','warn');}
+        else fhint(idNum,'ID matches your date of birth \u2713','ok');
+      } else fhint(idNum,'Looks good \u2713','ok');
+    } else if(t==="Driver's Permit"){fhint(idNum,/^\d{6,10}$/.test(v)?'Looks good \u2713':'Permits are usually 6\u201310 digits',/^\d{6,10}$/.test(v)?'ok':'warn');}
+    else {fhint(idNum,/^[A-Za-z0-9]{6,9}$/.test(v)?'Looks good \u2713':'Passports are 6\u20139 letters/numbers',/^[A-Za-z0-9]{6,9}$/.test(v)?'ok':'warn');}
+  });}
+function wireName(id){const el=document.getElementById(id);if(!el)return;
+  el.addEventListener('blur',()=>{const v=el.value.trim();
+    if(!v){fhint(id,'','');return;}
+    fhint(id, v.split(/\s+/).length>=2?'\u2713':'Please enter first AND last name', v.split(/\s+/).length>=2?'ok':'warn');
+  });}
+wirePhone('aPhone');wirePhone('sPhone');wireEmail('aEmail');
+wireID('aIdNum','aIdType','aDob');wireID('sIdNum','sIdType','sDob');
+wireName('aName');wireName('sName');wireName('bName');wireName('sbName');
+
+/* ---------- review sheet ---------- */
+function kv(k,v){return '<div class="kv"><span>'+k+'</span><b>'+esc(String(v||'—'))+'</b></div>';}
+function buildReview(){
+  const QS=['Heart/stroke/kidney/cancer (5yr)','Alcohol/drug abuse (5yr)','HIV/immune disorder (ever)','Rated/postponed/declined (ever)','Easicover >$500K combined','Tobacco (12mo)'];
+  let pay=val('payMethod');
+  if(payIsACH()) pay='Online banking — '+val('achBank')+', '+val('drawDate')+' monthly (mandate prepared)';
+  if(payIsRCC()) pay='Recurring credit card — client sets up in myGG portal';
+  const lifeSec=(t,n,d,cv,mo,ids,bn,br)=>{
+    let s='<div class="rs"><h5>'+t+'</h5>'+kv('Name',n)+kv('Date of birth',d)+kv('Coverage',cv)+kv('Monthly premium',mo)+kv('Beneficiary',bn+' ('+br+')');
+    ids.forEach((id,i)=>s+=kv(QS[i],val(id)));
+    return s+'</div>';
+  };
+  let html=lifeSec('Your policy',val('aName'),val('aDob'),'TT$'+fmt0(BANDS[S.band]),'$'+fmt(S.monthly)+'/mo',['q1','q2','q3','q4','q5','q6'],val('bName'),val('bRel'));
+  if(joint)html+=lifeSec("Spouse's policy",val('sName'),val('sDob'),'TT$'+fmt0(BANDS[S2.band]),'$'+fmt(S2.modal||S2.monthly)+' '+FREQ[S.freq].unit,['sq1','sq2','sq3','sq4','sq5','sq6'],val('sbName'),val('sbRel'));
+  html+='<div class="rs"><h5>Contact & payments</h5>'+kv('Phone',val('aPhone'))+kv('Email',val('aEmail'))+kv('Address',val('aAddr'))
+    +kv('First premium',val('firstPrem'))+kv('Ongoing',pay)+kv('We call you',val('cTime'))
+    +kv('Payment frequency',FREQ[S.freq].label.replace('Your ','').replace(' premium',''))+(joint?kv('Household total','$'+fmt((S.modal||S.monthly)+(S2.modal||S2.monthly))+' '+FREQ[S.freq].unit):'')+'</div>';
+  document.getElementById('reviewSheet').innerHTML=html;
+}
+
+/* ---------- submit: shared finalize + two paths + Google Sheet ---------- */
+let lastDoc=null,lastPdfB64=null,lastPdfName='',lastGuide=null,lastGuideB64=null,lastAchB64=null,lastAchName='';
+let DOCS=[];let submitting=false;
+function openBlob(blob,name){
+  try{const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}
+  catch(e){try{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();}catch(_){}}
+}
+function renderDocs(){
+  const el=document.getElementById('docsPanel');if(!el)return;
+  el.innerHTML=DOCS.length?'<b style="display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin:4px 0 10px">Your documents — tap to view</b>':'';
+  DOCS.forEach((d,i)=>{
+    const row=document.createElement('div');row.className='docrow';
+    row.innerHTML='<span><b>'+esc(d.title)+'</b><small>'+esc(d.sub||'PDF')+'</small></span>';
+    const b=document.createElement('button');b.className='btn '+(i===0?'btn-gold':'btn-ghost-d');b.textContent='View';
+    b.addEventListener('click',()=>openBlob(d.blob,d.name));
+    row.appendChild(b);el.appendChild(row);
+  });
+}
+
+/* ===== GUARDIAN FORMS ENGINE v3 — official fillable Guardian blanks ===== */
+const FORM_MAPS={
+ "declFields": {
+  "agent": "Agent Number",
+  "branch": "Branch Code",
+  "first": "First Name",
+  "surname": "Surname",
+  "dob": "Textfield-10",
+  "agFirst": "Agents First Name",
+  "agMid": "Middle Initial",
+  "agLast": "Agents Last Name"
+ },
+ "declNoBoxes": [
+  "ChkBox",
+  "ChkBox-0",
+  "ChkBox-1",
+  "ChkBox-2",
+  "ChkBox-3"
+ ],
+ "declPartBoxes": {
+  "A": "Decl checkbox a",
+  "C": "ChkBox-6",
+  "D": "ChkBox-7"
+ },
+ "otcFields": {
+  "email": "Email",
+  "phone": "Telephone",
+  "idnum": "ID Type tick one Li DP Li ID Li PP",
+  "address": "Address",
+  "amount": "Amount TT",
+  "authamt": "below for TT",
+  "name": "Cardholders Name",
+  "p1name": "POLICY OWNERS NAME",
+  "p1prem": "PREMIUMS TT",
+  "p1total": "TOTAL TT"
+ },
+ "otcTicks": {
+  "firstprem": [
+   45.3,
+   294.7
+  ],
+  "National ID": [
+   170.0,
+   248.6
+  ],
+  "Driver's Permit": [
+   131.4,
+   248.9
+  ],
+  "Passport": [
+   206.0,
+   247.9
+  ]
+ },
+ "obm": {
+  "text": [
+   [
+    "name",
+    57,
+    178.5,
+    10
+   ],
+   [
+    "draw",
+    216,
+    276.6,
+    10
+   ],
+   [
+    "total",
+    218,
+    309.6,
+    10
+   ],
+   [
+    "contact",
+    213,
+    359,
+    10
+   ],
+   [
+    "email",
+    213,
+    375.4,
+    10
+   ],
+   [
+    "owner",
+    143,
+    466,
+    9.5
+   ],
+   [
+    "prem",
+    312,
+    466,
+    9.5
+   ],
+   [
+    "rowtotal",
+    520,
+    466,
+    9.5
+   ],
+   [
+    "grandtotal",
+    520,
+    605.6,
+    10
+   ]
+  ],
+  "ticks": {
+   "FCB": [
+    207.3,
+    223
+   ],
+   "RBC": [
+    261.4,
+    223
+   ],
+   "Republic Bank": [
+    311.7,
+    223
+   ],
+   "Scotia": [
+    388.0,
+    223
+   ],
+   "Monthly": [
+    210.8,
+    289
+   ]
+  }
+ }
+};
+const BANK2TICK={'FCB':'FCB','RBC Royal Bank':'RBC','Republic Bank':'Republic Bank','Scotiabank':'Scotia'};
+function b64bytes(bytes){let bin='';const CH=8192;for(let i=0;i<bytes.length;i+=CH)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));return btoa(bin);}
+async function buildGuardianForms(record){
+  const forms=[],planned=[];
+  const mk=async(tpl,outName,fill)=>{planned.push(outName);
+    if(!window.PDFLib)return;
+    try{const r=await fetch(tpl);if(!r.ok){console.warn('template missing',tpl);return;}
+      const pdf=await PDFLib.PDFDocument.load(await r.arrayBuffer());
+      await fill(pdf);forms.push({name:outName,b64:b64bytes(await pdf.save())});
+    }catch(e){console.error('form',tpl,e);}};
+  const money=String(record.monthly).replace('$','');const FREQL=record.frequency||'Monthly';
+  const setT=(f,n,v)=>{try{f.getTextField(n).setText(String(v));}catch(e){}};
+  const chk=(f,n)=>{try{f.getCheckBox(n).check();}catch(e){}};
+  const declFill=(nm,dob)=>async(pdf)=>{
+    const f=pdf.getForm(),M=FORM_MAPS.declFields;
+    const parts=String(nm).trim().split(/\s+/);
+    const first=parts.slice(0,-1).join(' ')||parts[0]||'',sur=parts.length>1?parts[parts.length-1]:'';
+    const d=String(dob);
+    setT(f,M.first,first);setT(f,M.surname,sur);
+    setT(f,M.dob,d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4));
+    setT(f,M.agent,'A00427');setT(f,M.branch,'26000');
+    setT(f,M.agFirst,'RICKY');setT(f,M.agLast,'RAMPERSAD');
+    FORM_MAPS.declNoBoxes.forEach(b=>chk(f,b));
+    Object.values(FORM_MAPS.declPartBoxes).forEach(b=>chk(f,b));
+    const font=await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
+    f.updateFieldAppearances(font);
+  };
+  await mk('guardian-decl.pdf','Guardian-Declaration-'+record.ref+'.pdf',declFill(record.name,record.dob));
+  if(record.joint==='Yes')await mk('guardian-decl.pdf','Guardian-Declaration-SPOUSE-'+record.ref+'.pdf',declFill(record.sName,record.sDob));
+  if(String(record.firstPremium).indexOf('One-time')===0){
+    await mk('guardian-otc.pdf','Guardian-OTC-FirstPremium-'+record.ref+'.pdf',async(pdf)=>{
+      const f=pdf.getForm(),M=FORM_MAPS.otcFields;
+      setT(f,M.email,record.email);setT(f,M.phone,String(record.phone).replace(/\D/g,'').slice(-7));
+      setT(f,M.idnum,record.idNum);setT(f,M.address,record.address);
+      setT(f,M.amount,money);setT(f,M.authamt,money);setT(f,M.name,record.name);
+      setT(f,M.p1name,record.name);setT(f,M.p1prem,money);setT(f,M.p1total,money);
+      const font=await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
+      f.updateFieldAppearances(font);
+      const pg=pdf.getPage(0),H=pg.getHeight(),ink=PDFLib.rgb(0.10,0.15,0.35);
+      [FORM_MAPS.otcTicks.firstprem,FORM_MAPS.otcTicks[record.idType]||FORM_MAPS.otcTicks['National ID']]
+        .forEach(c=>pg.drawText('X',{x:c[0]-3.2,y:H-(c[1]+3.6),size:11,color:ink,font:font}));
+    });
+  }
+  if(payIsACH()){
+    await mk('guardian-obm.pdf','Guardian-OnlineBanking-Mandate-'+record.ref+'.pdf',async(pdf)=>{
+      const M=FORM_MAPS.obm,pg=pdf.getPage(0),H=pg.getHeight();
+      const font=await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
+      const ink=PDFLib.rgb(0.10,0.15,0.35);
+      const vals={name:record.name,draw:val('drawDate')+(FREQL==='Monthly'?' of each month':' · '+FREQL),total:money,contact:record.phone,
+        email:record.email,owner:record.name,prem:money,rowtotal:money,grandtotal:money};
+      M.text.forEach(r=>{const v=vals[r[0]];if(v)pg.drawText(String(v),{x:r[1],y:H-r[2],size:r[3],color:ink,font:font});});
+      const bt=M.ticks[BANK2TICK[val('achBank')]];
+      [bt,M.ticks[FREQL]||M.ticks.Monthly].forEach(c=>{if(c)pg.drawText('X',{x:c[0]-3.2,y:H-(c[1]+3.6),size:10.5,color:ink,font:font});});
+    });
+  }
+  if(String(record.firstPremium).indexOf('Online')===0){
+    planned.push('Guardian-ACH-Remittance-Guidelines.pdf');
+    try{const r=await fetch('guardian-remit.pdf');
+      if(r.ok){const b=new Uint8Array(await r.arrayBuffer());forms.push({name:'Guardian-ACH-Remittance-Guidelines.pdf',b64:b64bytes(b)});}
+    }catch(e){}
+  }
+  return {forms:forms,planned:planned};
+}
+async function fillGuardianACH(){lastAchB64=null;lastAchName='';return false;}
+function buildPdf(record,stA,stB){
+  try{
+    const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'pt',format:'a4'});
+    const W=595,M=46;let y=0;
+    doc.setFillColor(4,48,58);doc.rect(0,0,W,72,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(13);
+    doc.text('RICKY RAMPERSAD BRANCH',M,30);
+    doc.setTextColor(255,197,61);doc.text('XPRESS LIFE — APPLICATION SUMMARY',M,50);doc.setFontSize(7.5);doc.setTextColor(255,255,255);doc.text('Questions reproduced word-for-word from Guardian Life Declaration 1, Section 1.C (V411). Official forms follow by DocuSign.',M,64);
+    doc.setFillColor(255,197,61);doc.rect(0,72,W,4,'F');y=100;
+    const line=(k,v)=>{doc.setFont('helvetica','bold');doc.setTextColor(10,110,133);doc.setFontSize(9);doc.text(k.toUpperCase(),M,y);doc.setFont('helvetica','normal');doc.setTextColor(9,56,67);doc.setFontSize(11);const t=doc.splitTextToSize(String(v||'—'),W-2*M-140);doc.text(t,M+140,y);y+=Math.max(16,t.length*13+3);chk();};
+    const head=t=>{y+=8;doc.setFillColor(234,246,242);doc.rect(M-8,y-12,W-2*M+16,20,'F');doc.setFont('helvetica','bold');doc.setTextColor(4,48,58);doc.setFontSize(11);doc.text(t,M,y+2);y+=24;chk();};
+    const chk=()=>{if(y>790){doc.addPage();y=60;}};
+    line('Reference',record.ref);line('Date',new Date().toLocaleString('en-TT'));
+    line('Agent',record.agent+'  ·  Branch '+record.branch);line('Result on screen',record.status);
+    const QT=['Within the last 5 years: heart or blood vessel disease, stroke, kidney disease or cancer?','Within the last 5 years: alcohol abuse, alcoholism or drug abuse?','Ever diagnosed/treated for AIDS, ARC, any immune disorder, or tested HIV positive?','Ever rated, postponed/deferred or declined for Life or Health insurance?','Easicover with Bancassurance Caribbean Ltd exceeding $500,000 combined with this application?','Used tobacco or nicotine products in the last 12 months? (rate question)'];
+    const lifePdf=(t,o,qs,st)=>{head(t);line('Full name',o.n);line('Date of birth',o.d+'  (age '+o.a+', '+o.g+')');line('ID',o.it+' '+o.id);line('Occupation',o.oc);line('Coverage',o.cv);line('Premium ('+(record.freqShort||'mo')+')',o.mo);line('Beneficiary',o.bn+' ('+o.br+')');head(t+' — declared answers');qs.forEach((ans,i)=>line('Q'+(i+1)+'. '+QT[i],ans));line('On-screen result',st);};
+    lifePdf('Life assured 1',{n:record.name,d:record.dob,a:record.age,g:record.gender,it:record.idType,id:record.idNum,oc:record.occupation,cv:record.coverage,mo:record.monthly,bn:record.beneficiary,br:record.relationship},[record.q1,record.q2,record.q3,record.q4,record.q5,record.q6],stA);
+    if(record.joint==='Yes')lifePdf('Life assured 2 (spouse)',{n:record.sName,d:record.sDob,a:record.sAge,g:record.sGender,it:record.sIdType,id:record.sIdNum,oc:record.sOcc,cv:record.sCoverage,mo:record.sMonthly,bn:record.sBeneficiary,br:record.sRelationship},[record.sq1,record.sq2,record.sq3,record.sq4,record.sq5,record.sq6],stB);
+    head('Contact & payments');
+    line('Phone',record.phone);line('Email',record.email);line('Address',record.address);
+    line('First premium',record.firstPremium);line('Ongoing',record.payment);line('Add-ons requested',record.addons);line('Call time',record.callTime);
+    head('Declaration');
+    doc.setFont('helvetica','normal');doc.setTextColor(9,56,67);doc.setFontSize(10);
+    const dec=doc.splitTextToSize('I/We declare that the answers recorded above were supplied by me/us and are true and complete. No physician has advised me/us of any condition placing me/us at risk of death within twelve months of this application. I/We understand these answers form the basis on which the policy is issued, and that untrue statements may void the policy with only premiums refunded.',W-2*M);
+    doc.text(dec,M,y);y+=dec.length*13+10;chk();
+    doc.setFont('helvetica','bold');line('Confirmed electronically',new Date().toLocaleString('en-TT')+'  ·  Ref '+record.ref);
+    doc.setFontSize(8);doc.setTextColor(111,152,161);
+    doc.text('Premiums indicative, confirmed at issue. Xpress Life is a plan of assurance issued by Guardian Life of the Caribbean Limited. Prepared via the Ricky Rampersad Branch online service.',M,820,{maxWidth:W-2*M});
+    lastDoc=doc;lastPdfName=record.ref+'-application.pdf';
+    lastPdfB64=doc.output('datauristring').split(',')[1];
+    return true;
+  }catch(e){console.error('pdf',e);lastDoc=null;lastPdfB64=null;return false;}
+}
+function buildGuidePdf(){
+  try{
+    const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'pt',format:'a4'});
+    const W=595,M=46;let y=0;
+    const chk=()=>{if(y>780){doc.addPage();y=60;}};
+    const H=(t)=>{y+=10;doc.setFillColor(234,246,242);doc.rect(M-8,y-13,W-2*M+16,22,'F');doc.setFont('helvetica','bold');doc.setTextColor(4,48,58);doc.setFontSize(12);doc.text(t,M,y+2);y+=26;chk();};
+    const P=(t,b)=>{doc.setFont('helvetica',b?'bold':'normal');doc.setTextColor(9,56,67);doc.setFontSize(10.5);const L=doc.splitTextToSize(t,W-2*M);doc.text(L,M,y);y+=L.length*13+7;chk();};
+    const B=(t)=>{doc.setFont('helvetica','normal');doc.setTextColor(9,56,67);doc.setFontSize(10.5);const L=doc.splitTextToSize('•  '+t,W-2*M-8);doc.text(L,M+4,y);y+=L.length*13+4;chk();};
+    doc.setFillColor(4,48,58);doc.rect(0,0,W,86,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text('RICKY RAMPERSAD BRANCH',M,36);
+    doc.setTextColor(255,197,61);doc.setFontSize(11);doc.text('YOUR GUIDE — THE BRANCH & YOUR XPRESS LIFE PLAN',M,58);
+    doc.setFillColor(255,197,61);doc.rect(0,86,W,4,'F');y=116;
+    H('Who is behind your policy');
+    P('The Ricky Rampersad Branch (Branch 26000) is a Guardian Life of the Caribbean agency in Chaguanas, built so that everything, from application to policy delivery, happens from your phone. Your policy is administered under Agent A00427 Ricky Rampersad, and a real team in Chaguanas, Trinidad stands behind every online application.');
+    B('100% online application, reviewed and decided by Guardian Life underwriting');
+    B('A real branch team \u2014 you are emailed and called by name, never a call centre queue');
+    B('Track every step live with your Ref and Access Code, right up to policy delivery');
+    H('Xpress Life \u2014 the essentials');
+    B('Choose TT$100,000 to TT$500,000 of life cover (all your Xpress Life policies together up to TT$500,000)');
+    B('Premiums are payable for 20 years only. After that, you never pay again \u2014 cover continues');
+    B('How protection builds: year 1 \u2014 your premiums are returned; year 2 \u2014 50% of your sum assured; year 3 onward \u2014 the full sum assured');
+    B('Year-21 option: give up the policy in year 21 and receive every premium you paid, without interest; no cash value in any other year');
+    B('If the policy is still in force around age 100, the full sum assured is paid to you in cash');
+    B('Covered wherever you live in the world, with no extra premium');
+    H('The small print that protects you');
+    B('30-day grace period on every premium \u2014 your policy stays in force while you catch up');
+    B('After 3 years the policy is incontestable except for fraud \u2014 honesty on your answers is everything');
+    B('Standard exclusions apply (e.g. suicide within the first 2 years; acts of war), as set out in the contract');
+    B('Premiums draw automatically on the 1st, 10th, 20th, 25th or 28th \u2014 you chose your date');
+    H('What happens after you submit');
+    B('1. Review the confirmation email and tap \u201CYes \u2014 my details are correct\u201D');
+    B('2. Our team prepares your official documents and emails them for e-signature (DocuSign)');
+    B('3. First premium: one-time card authorisation (DocuSign) or your own online bank transfer \u2014 never on this website');
+    B('4. Policy issued and delivered \u2014 we email you at every single step');
+    y+=6;doc.setFontSize(8);doc.setTextColor(111,152,161);
+    doc.text('This guide summarises key features for convenience. The policy contract issued by Guardian Life of the Caribbean Limited governs in all cases. Premiums are indicative until confirmed at issue. Ricky Rampersad Branch \u00B7 Endeavour Industrial Estate, Chaguanas \u00B7 Agent A00427 \u00B7 Branch 26000.',M,y,{maxWidth:W-2*M});
+    lastGuide=doc;lastGuideB64=doc.output('datauristring').split(',')[1];
+    return true;
+  }catch(e){console.error('guide',e);lastGuide=null;lastGuideB64=null;return false;}
+}
+document.getElementById('doneBtn').addEventListener('click',()=>{location.href=location.pathname;});
+document.getElementById('trackJump').addEventListener('click',()=>{
+  applyWrap.classList.remove('open');document.body.classList.remove('locked');
+  document.getElementById('track').scrollIntoView({behavior:'smooth'});
+});
+function lifeStatus(flagKO,flagAge){return (flagKO||flagAge)?'ADVISOR REVIEW':'PRE-APPROVED';}
+async function finalize(mode,x){
+  // mode: 'app' (from step 4) or 'review' (all lives flagged)
+  const ref='RRB-XL-'+Date.now().toString(36).toUpperCase().slice(-6);
+  const first=esc(val('aName').split(' ')[0]);
+  const stA = mode==='review' ? 'ADVISOR REVIEW' : lifeStatus(LF.aKO,LF.aAge);
+  const stB = joint ? (mode==='review' ? 'ADVISOR REVIEW' : lifeStatus(LF.bKO,LF.bAge)) : '';
+  const anyPre = stA==='PRE-APPROVED' || stB==='PRE-APPROVED';
+  const allPre = stA==='PRE-APPROVED' && (!joint || stB==='PRE-APPROVED');
+  const addList=(mode==='app')?[addons.PA?'Accidental Death Benefit':null,addons.CI?'Accidental Death & Permanent Disablement':null].filter(Boolean):[];
+  const addStr=addList.length?addList.join(' + '):'None';
+
+  const title=document.getElementById('decTitle');
+  title.textContent = allPre ? (joint?'Both applications received':'Application received') : anyPre ? 'Received — 1 of 2' : 'Our team will call you';
+  title.className = anyPre?'status-pre':'status-rec';
+  let body;
+  if(allPre) body='Congratulations, <b>'+first+'</b>'+(joint?' — both applications are in.':' — you just did what most people only talk about.')+' Your application is <b>submitted to Guardian Life underwriting</b>, who review it and decide — check your email now to confirm your details and collect your tracking code, and <b>expect your digital signing package (DocuSign) shortly</b> - sign right from your phone. We keep you updated at every step until Guardian issues your policy.';
+  else if(anyPre) body='<b>'+first+'</b>, one application goes to Guardian Life underwriting today — the other needs a personal review, because this plan is issued strictly on the truth of its questions. One call from our team at your chosen time handles both of you together.';
+  else body='Thank you for your honesty, <b>'+first+'</b>. This plan is issued strictly on the truth of its questions, so it cannot be offered on these answers — but our branch team will personally call you at your chosen time with the options genuinely available. Nothing about your future is decided by a screen.';
+  document.getElementById('decBody').innerHTML=body;
+  document.getElementById('decRef').textContent=ref;
+  document.getElementById('addonNote').innerHTML=(mode==='app'&&anyPre)
+    ?(addList.length
+      ?'<div class="addon-note">✓ Your '+addStr+' quote will be included with your confirmation</div>'
+      :'<div class="addon-note" style="background:var(--bump1);color:var(--bumptxt)">Optional: the <b>Accidental Death Benefit</b> pays from the first day if death is caused by an accident (ages 18 to 59) — ask on your confirmation call</div>')
+    :'';
+
+  const record={
+    'form-name':'xpress-application',ref:ref,
+    status: joint ? ('A: '+stA+' | B: '+stB) : (stA==='PRE-APPROVED'?'PRE-APPROVED':'NOT APPROVED ONLINE — ADVISOR REVIEW'),
+    statusA:stA,statusB:stB,joint:joint?'Yes':'No',
+    declaration:x.declaration,
+    name:val('aName'),dob:val('aDob'),age:String(S.age),
+    gender:S.gender==='F'?'Female':'Male',
+    idType:val('aIdType'),idNum:val('aIdNum'),
+    phone:val('aPhone'),email:val('aEmail'),address:val('aAddr'),occupation:val('aOcc'),
+    coverage:'TT$'+fmt0(BANDS[S.band]),monthly:'$'+fmt(S.modal||S.monthly),annual:'$'+fmt(S.annual),frequency:FREQ[S.freq].label.replace('Your ','').replace(' premium',''),freqShort:FREQ[S.freq].short,
+    q1:val('q1'),q2:val('q2'),q3:val('q3'),q4:val('q4'),q5:val('q5'),q6:val('q6'),
+    sName:joint?val('sName'):'',sDob:joint?val('sDob'):'',sAge:joint?String(S2.age):'',
+    sGender:joint?(S2.gender==='F'?'Female':'Male'):'',
+    sIdType:joint?val('sIdType'):'',sIdNum:joint?val('sIdNum'):'',sPhone:joint?val('sPhone'):'',sOcc:joint?val('sOcc'):'',
+    sCoverage:joint?('TT$'+fmt0(BANDS[S2.band])):'',sMonthly:joint?('$'+fmt(S2.modal||S2.monthly)):'',
+    sq1:joint?val('sq1'):'',sq2:joint?val('sq2'):'',sq3:joint?val('sq3'):'',sq4:joint?val('sq4'):'',sq5:joint?val('sq5'):'',sq6:joint?val('sq6'):'',
+    beneficiary:x.beneficiary,relationship:x.relationship,
+    sBeneficiary:joint?x.sBeneficiary:'',sRelationship:joint?x.sRelationship:'',
+    payment:x.payment,
+    payMethod:val('payMethod')||'—',payBank:val('achBank')||'—',firstPrem:val('firstPrem')||'—',
+    drawDate:val('drawDate')||'—',
+    firstPremium:val('firstPrem'),
+    agent:'A00427 Ricky Rampersad',branch:'26000',
+    callTime:x.callTime,addons:addStr,submittedAt:new Date().toISOString()
+  };
+
+  const pdfOK=buildPdf(record,stA,stB);
+  await fillGuardianACH(record);
+  const GF=await buildGuardianForms(record);
+  record.formsPlanned=GF.planned.join(' | ');
+  const gOK=buildGuidePdf();
+  DOCS=[];
+  (GF.forms||[]).forEach(f=>{
+    try{const bin=atob(f.b64);const u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+      const nm=f.name.indexOf('SPOUSE')>-1?'Guardian Declaration — spouse':(f.name.indexOf('Declaration')>-1?'Guardian Declaration':(f.name.indexOf('RCC')>-1?'Guardian Recurring Card Authorisation':'Guardian One-Time Card (first premium)'));
+      DOCS.push({title:nm,sub:'Official Guardian form · prepared for e-signature',name:f.name,blob:new Blob([u8],{type:'application/pdf'})});
+    }catch(e){}
+  });
+  if(lastAchB64){try{const bin=atob(lastAchB64);const u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+    DOCS.push({title:'Guardian ACH Authorisation',sub:'Official Guardian form · prepared for e-signature',name:lastAchName,blob:new Blob([u8],{type:'application/pdf'})});}catch(e){}}
+  if(lastDoc){try{DOCS.push({title:'Application summary',sub:'Everything you entered, with your declaration',name:lastPdfName,blob:lastDoc.output('blob')});}catch(e){}}
+  if(lastGuide){try{DOCS.push({title:'Branch & Xpress Life guide',sub:'Key facts about your plan and your branch',name:'RRB-XpressLife-Guide.pdf',blob:lastGuide.output('blob')});}catch(e){}}
+  renderDocs();
+  const tr=document.getElementById('trackRef');if(tr)tr.value=ref;
+  const pn=document.getElementById('payNext');let pnh='';
+  if(payIsRCC())pnh+='<div class="rs"><h5>Set up your recurring card — 3 minutes</h5><div style="padding:12px 14px;font-size:13px">Your card details go straight to Guardian through the secure <b>myGG portal</b> — never through this website or our office.<br><a class="btn btn-gold" style="margin-top:10px" href="https://www.myggonline.app/" target="_blank" rel="noopener">Open the myGG portal ➜</a></div></div>';
+  if(payIsACH())pnh+='<div class="rs"><h5>Your Online Banking Mandate — one small step</h5><div style="padding:12px 14px;font-size:13px">We prepared your official mandate ('+esc(val('achBank'))+', '+esc(val('drawDate'))+' monthly). After you set the recurring payment in your bank app, email a <b>screenshot of the confirmation</b> to <a href="mailto:rickyrampersadsalessupport@myguardiangroup.com">rickyrampersadsalessupport@myguardiangroup.com</a> — we file it to your policy record for you.</div></div>';
+  if(String(record.firstPremium).indexOf('Online')===0)pnh+='<div class="rs"><h5>First premium — online transfer details</h5><div style="padding:12px 14px;font-size:13px"><b>RBC Royal Bank</b> · Independence Square, Port of Spain<br>Account <b>100004110145902</b> · Guardian Life of the Caribbean Limited<br style="margin-bottom:6px">Then email your remittance advice (plan name, month, amount, your Ref '+esc(ref)+') to <a href="mailto:PremiumsApplicationUnit@myguardiangroup.com">PremiumsApplicationUnit@myguardiangroup.com</a> on the day of transfer — the official guidelines are attached to your email.</div></div>';
+  pn.innerHTML=pnh;
+
+  const savedEl=document.getElementById('decSaved');
+  savedEl.textContent='Saving…';savedEl.className='saved warn';
+  let netOK=false,gasOK=false;
+  if(CONFIG.GAS_URL&&CONFIG.GAS_URL.indexOf('http')===0){
+    try{
+      const g=await fetch(CONFIG.GAS_URL,{method:'POST',body:JSON.stringify({action:'submit',record:record,pdf:lastPdfB64,pdfName:lastPdfName,guide:lastGuideB64,guideName:'RRB-XpressLife-Guide.pdf',ach:lastAchB64,achName:lastAchName,forms:GF.forms})});
+      const gd=await g.json();gasOK=!!gd.ok;
+      if(gd&&gd.code){
+        document.getElementById('ccRef').textContent=ref;
+        document.getElementById('ccCode').textContent=gd.code;
+        document.getElementById('codeCard').style.display='block';
+        const tc=document.getElementById('trackCode');if(tc)tc.value=gd.code;
+      }
+      if(!gasOK&&gd&&gd.error)window.__gasErr=String(gd.error).slice(0,120);
+    }catch(e){}
+  }
+  if(gasOK){savedEl.textContent='✓ Submitted · confirmation email on its way with your PDF pack and Tracking Access Code'+((GF.forms.length+(lastAchB64?1:0))>0?' · '+(GF.forms.length+(lastAchB64?1:0))+' official Guardian forms prepared for e-signature':'');savedEl.className='saved ok';}
+  else if(netOK){savedEl.textContent='✓ Submitted to branch records · we will email you shortly';savedEl.className='saved ok';}
+  else{savedEl.textContent='We could not reach our records server'+(window.__gasErr?' ('+window.__gasErr+')':'')+' — please email '+CONFIG.EMAIL+' and our team will finish this with you';savedEl.className='saved warn';}
+
+  document.querySelectorAll('.wstep').forEach(w=>w.classList.remove('on'));
+  document.querySelectorAll('#prog i').forEach(b=>b.classList.add('done'));
+  const dec=document.getElementById('decision');
+  dec.classList.add('on');
+  const seal=document.getElementById('sealSvg');
+  seal.classList.remove('stamp');void seal.offsetWidth;seal.classList.add('stamp');
+  if(anyPre){confetti();
+    try{const f=document.createElement('div');f.className='decFlash';document.body.appendChild(f);setTimeout(()=>f.remove(),900);}catch(e){}
+    try{navigator.vibrate&&navigator.vibrate([18,45,18]);}catch(e){}
+  }
+  dec.scrollIntoView({behavior:'smooth',block:'center'});
+}
+document.getElementById('submitApp').addEventListener('click',async function(){
+  if(submitting)return;submitting=true;this.disabled=true;this.textContent='Submitting…';
+  try{
+  if(!validStep4())return;
+  let pay=val('payMethod');
+  if(payIsACH()) pay='Online banking — '+val('achBank')+', '+val('drawDate')+' monthly (mandate prepared)';
+  if(payIsRCC()) pay='Recurring credit card — client sets up in myGG portal';
+  await finalize('app',{
+    beneficiary:val('bName'),relationship:val('bRel'),
+    sBeneficiary:val('sbName'),sRelationship:val('sbRel'),
+    payment:pay,callTime:val('cTime'),
+    declaration:'Confirmed true & complete (incl. 12-month statement)',
+    declLine:'Declaration: answers confirmed true & complete (incl. 12-month statement)'
+  });
+  }catch(e){
+    const err=document.getElementById('err5');
+    err.textContent='Something glitched on this device ('+e.message+') — tap again, or email '+CONFIG.EMAIL+' and we\'ll finish it with you.';
+    err.classList.add('show');console.error(e);
+    submitting=false;this.disabled=false;this.textContent='Submit my application';
+  }
+});
+document.getElementById('submitReview').addEventListener('click',async function(){
+  if(submitting)return;submitting=true;this.disabled=true;
+  try{
+  const ok=val('cTimeR')!==''&&consent;
+  document.getElementById('errR').classList.toggle('show',!ok);
+  if(!ok)return;
+  await finalize('review',{
+    beneficiary:'N/A — not approved online',relationship:'—',
+    sBeneficiary:joint?'N/A — not approved online':'',sRelationship:joint?'—':'',
+    payment:'To be discussed on review call',callTime:val('cTimeR'),
+    declaration:'Consented to branch review contact',
+    declLine:'Consent: details shared for branch review'
+  });
+  }catch(e){
+    const err=document.getElementById('errR');
+    err.textContent='Something glitched ('+e.message+') — tap again or email '+CONFIG.EMAIL+'.';
+    err.classList.add('show');console.error(e);
+  }
+});
+
+/* ---------- tracking portal ---------- */
+document.getElementById('goHome').addEventListener('click',()=>{
+  applyWrap.classList.remove('open');document.body.classList.remove('locked');
+  try{location.replace(location.pathname);}catch(e){try{location.reload();}catch(_){}}
+});
+document.getElementById('trackOut').addEventListener('click',e=>{e.preventDefault();
+  document.getElementById('trackRef').value='';document.getElementById('trackCode').value='';
+  document.getElementById('trackResult').innerHTML='';document.getElementById('trackErr').classList.remove('show');
+});
+document.getElementById('trackBtn').addEventListener('click',async()=>{
+  const ref=val('trackRef').toUpperCase(),code=val('trackCode');
+  const err=document.getElementById('trackErr'),out=document.getElementById('trackResult');
+  err.classList.remove('show');out.innerHTML='';
+  if(!ref||!code){err.textContent='Enter your Ref and 6-digit Access Code (they were emailed to you).';err.classList.add('show');return;}
+  if(!(CONFIG.GAS_URL&&CONFIG.GAS_URL.indexOf('http')===0)){err.textContent='Tracking is being switched on — email '+CONFIG.EMAIL+' for a live update.';err.classList.add('show');return;}
+  out.innerHTML='<p style="font-size:13px;color:var(--muted);margin-top:12px">Checking…</p>';
+  try{
+    const r=await fetch(CONFIG.GAS_URL,{method:'POST',body:JSON.stringify({action:'status',ref:ref,code:code})});
+    const d=await r.json();
+    if(!d.ok)throw new Error(d.error||'No match');
+    let tl='<div class="tl">';
+    d.stages.forEach((s,i)=>{
+      const cls=i<d.stageIndex?'done':(i===d.stageIndex?'done now':'');
+      tl+='<div class="trow '+cls+'"><div class="dot"></div><div><b>'+esc(s)+'</b>'+(i===d.stageIndex?'<small>Current step · updated '+esc(d.updated)+'</small>':'')+'</div></div>';
+    });
+    tl+='</div>';
+    out.innerHTML='<p style="margin-top:14px;font-weight:700">Hi '+esc(d.name.split(' ')[0])+' — here\'s where you are:</p>'+tl+
+      '<p style="font-size:12px;color:var(--muted)">We email you automatically at every step'+(d.joint==='Yes'?' · joint application':'')+'.</p>';
+  }catch(e){
+    out.innerHTML='';err.textContent='No match — check your Ref and Access Code exactly as emailed, or email '+CONFIG.EMAIL+'.';err.classList.add('show');
+  }
+});
+
+function confetti(){
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const colors=[cssv('--gold-top'),cssv('--gold-lite'),cssv('--royal'),cssv('--gold-hot'),'#FFFFFF'];
+  for(let i=0;i<46;i++){
+    const c=document.createElement('div');c.className='confetti';
+    const size=6+Math.random()*8;
+    c.style.cssText='left:'+(Math.random()*100)+'vw;width:'+size+'px;height:'+(size*0.5)+'px;background:'+colors[i%colors.length]+';animation-duration:'+(2+Math.random()*1.8)+'s;animation-delay:'+(Math.random()*0.5)+'s;';
+    document.body.appendChild(c);setTimeout(()=>c.remove(),4600);
+  }
+}
+const raiPanel=document.getElementById('raiPanel');
+const raiLog=document.getElementById('raiLog');
+let raiOpened=false,raiGreeted=false;
+function openRai(){
+  raiOpened=true;
+  document.getElementById('raiHello').classList.remove('show');
+  raiPanel.classList.add('open');
+  if(!raiGreeted){
+    raiGreeted=true;
+    raiSay('Hi! I\'m <b>RAI</b> \ud83d\udc22 \u2014 ask me anything about Xpress Life: your exact rate, what your family gets in each policy year, how payments and tracking work\u2026 or tap below.',[goQuote,goApply,goHuman]);
+  }
+  setTimeout(()=>{const t=document.getElementById('raiText');if(t)t.focus({preventScroll:true});},350);
+}
+function closeRai(){raiPanel.classList.remove('open');}
+setTimeout(()=>{if(!raiOpened)document.getElementById('raiHello').classList.add('show');},4000);
+document.getElementById('raiHello').addEventListener('click',()=>openRai());
+function addMsg(cls,html){
+  const row=document.createElement('div');row.className='msg-row '+cls;
+  const b=document.createElement('div');b.className='bubble';b.innerHTML=html;
+  row.appendChild(b);raiLog.appendChild(row);raiLog.scrollTop=raiLog.scrollHeight;return row;
+}
+function addChips(list){
+  if(!list||!list.length)return;
+  const c=document.createElement('div');c.className='chips';
+  list.forEach(t=>{
+    const btn=document.createElement('button');
+    btn.textContent=t.label||t;
+    btn.addEventListener('click',()=>{if(t.action)t.action();else userAsk(t.label||t);});
+    c.appendChild(btn);
+  });
+  raiLog.appendChild(c);raiLog.scrollTop=raiLog.scrollHeight;
+}
+function raiSay(html,chips){
+  const t=addMsg('rai','<span class="typing"><i></i><i></i><i></i></span>');
+  setTimeout(()=>{t.querySelector('.bubble').innerHTML=html;addChips(chips);raiLog.scrollTop=raiLog.scrollHeight;},550);
+}
+function userAsk(text){addMsg('user',esc(text));setTimeout(()=>raiAnswer(text),200);}
+document.getElementById('raiSend').addEventListener('click',()=>{
+  const inp=document.getElementById('raiText');
+  if(inp.value.trim()){userAsk(inp.value.trim());inp.value='';}
+});
+document.getElementById('raiText').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();const inp=e.target;if(inp.value.trim()){userAsk(inp.value.trim());inp.value='';}}
+});
+(function scrollReveal(){
+  try{
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const secs=document.querySelectorAll('section:not(.hero)');
+    secs.forEach(s=>s.classList.add('rv'));
+    if(!('IntersectionObserver' in window)){secs.forEach(s=>s.classList.add('in'));return;}
+    const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
+    secs.forEach(s=>io.observe(s));
+  }catch(e){}
+})();
+(function trustToast(){
+  try{
+    if(sessionStorage.getItem('xl_toast'))return;
+    const T=['🛡️ A plan of assurance issued by Guardian Life of the Caribbean','⏱ Most people finish applying in under 5 minutes','🔒 Card & account numbers never touch this website'];
+    const el=document.createElement('div');el.className='trustToast';el.textContent=T[0];document.body.appendChild(el);
+    let i=0;setTimeout(()=>el.classList.add('on'),6500);
+    const rot=setInterval(()=>{i++;if(i<T.length){el.textContent=T[i];}else{el.classList.remove('on');clearInterval(rot);setTimeout(()=>el.remove(),600);}},4600);
+    el.addEventListener('click',()=>{el.classList.remove('on');clearInterval(rot);setTimeout(()=>el.remove(),400);});
+    sessionStorage.setItem('xl_toast','1');
+  }catch(e){}
+})();
+(function blessTicker(){
+  try{
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    var L=['Tuition, paid in full.','The mortgage, cleared.','Groceries — for years.','No GoFundMe. No borrowing.','The funeral, handled with dignity.','Their dreams, still on schedule.'];
+    var el=document.getElementById('btWord');if(!el)return;var i=0;
+    setInterval(function(){
+      if(document.hidden)return;
+      el.classList.remove('on');
+      setTimeout(function(){i=(i+1)%L.length;el.textContent=L[i];el.classList.add('on');},480);
+    },3400);
+  }catch(e){}
+})();
+(function heroSparks(){
+  try{
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    var host=document.getElementById('sparks');if(!host)return;
+    setInterval(function(){
+      if(document.hidden)return;
+      var s=document.createElement('div');s.className='spark';
+      s.style.left=(12+Math.random()*76)+'%';s.style.top=(20+Math.random()*46)+'%';
+      s.style.animation='sparkFloat '+(1.6+Math.random()*1.4)+'s ease-out forwards';
+      host.appendChild(s);setTimeout(function(){s.remove();},3200);
+    },520);
+  }catch(e){}
+})();
+addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();document.getElementById('raiSend').click();}});
+
+const goQuote={label:'Get my rate ➜',action:()=>{closeRai();document.getElementById('quote').scrollIntoView({behavior:'smooth'});}};
+const goApply={label:'Apply now ➜',action:()=>{closeRai();openApply();}};
+const goHuman={label:'📧 Email the branch',action:()=>{window.open('mailto:'+CONFIG.EMAIL+'?subject=Xpress%20Life%20question','_blank');}};
+
+function parseQuoteFrom(t){
+  const nums=(t.match(/[\d,]+(?:\.\d+)?\s*k?/gi)||[]).map(x=>{let v=parseFloat(x.replace(/,/g,''));if(/k/i.test(x))v*=1000;return v;});
+  let age=null,amt=null;
+  nums.forEach(v=>{if(v>=18&&v<=69&&age===null)age=Math.round(v);if(v>=50000)amt=v;});
+  return{age,amt};
+}
+function nearestBand(a){let bi=0,bd=Infinity;BANDS.forEach((b,i)=>{const d=Math.abs(b-a);if(d<bd){bd=d;bi=i;}});return bi;}
+
+function raiFreqAnswer(){const q=quote(S.gender,S.age,S.band);const sv=yearCost(q,'monthly')-q.annual;return 'Paying <b>annually</b> keeps <b>$'+fmt(sv)+'</b> with you every year vs monthly — that\'s <b>$'+fmt0(Math.round(sv*20))+'</b> over your 20 payments. Quarterly and semi-annual each save about half of that. Want me to switch your quote to annual?';}
+function raiAnswer(raw){
+  const t=raw.toLowerCase();
+  const has=(...ws)=>ws.some(w=>t.includes(w));
+
+  if(has('accident','critical illness','injury','sick','diagnos','ci cover','pa cover','add-on','addon','rider')){
+    raiSay('Xpress Life pays in full from year 3. Guardian offers two optional add-ons for ages 18 to 59, which pay from the <b>first day</b> when the cause is an accident:<br>• <b>Accidental Death Benefit</b><br>• <b>Accidental Death &amp; Permanent Disablement</b><br>Each costs extra, can be up to your cover amount and ends at age 65. Tick one in your application and our team gives you the price and terms on your confirmation call. Critical illness is not part of Xpress Life.',
+      [goApply,goHuman]);
+    return;
+  }
+  if(has('cost','price','premium','how much','rate','quote','pay per','monthly','afford')){
+    const p=parseQuoteFrom(raw);
+    const age=p.age||S.age,band=p.amt?nearestBand(p.amt):S.band;
+    const q=quote(S.gender,age,band);
+    raiSay('For a <b>'+(S.gender==='F'?'female':'male')+', age '+age+'</b>, <b>TT$'+fmt0(BANDS[band])+'</b> of lifetime coverage is about <b>$'+fmt(q.monthly)+' per month</b> — fixed, never increases, and you stop paying after 20 years. Total you\'d ever pay: about $'+fmt0(Math.round(q.annual*20))+'. <br><br><i>Indicative; confirmed at issue. Adjust the calculator for other combinations.</i>',
+      [goApply,goQuote,'What happens in year 1?']);
+    return;
+  }
+  if(has('qualify','eligib','can i apply','age limit','too old','old to','how old','minimum age')){
+    raiSay('You can apply from <b>age 18 up to 69</b> — fully online. Five yes/no health questions decide if you can apply for this plan: answer all clear and your application goes straight to Guardian Life underwriting. A "Yes" to a health question means this plan can\'t be offered — but a licensed advisor will personally review real options with you. Over 70? Message our advisors.',
+      [goApply,goHuman]);
+    return;
+  }
+  if(has('how fast','how long','instant','approved','approval','quick','when covered','same day')){
+    raiSay('Fast: your rate in <b>10 seconds</b>, the application in about <b>5 minutes</b>, and then it goes to <b>Guardian Life underwriting</b>, who decide. Our licensed team confirms your details and keeps you updated at every step.',
+      [goApply,'Can I apply?']);
+    return;
+  }
+  if(has('year 1','first year','year one','die early','waiting','wait period','2 year','two year','early death','pass away early')){
+    raiSay('Straight answer: <b>Year 1</b> — all premiums refunded. <b>Year 2</b> — your family receives <b>half the sum assured</b> (on $300,000 that\'s $150,000). <b>Year 3 onward</b> — the <b>full sum assured</b>. Aged 18 to 59? The optional <b>Accidental Death Benefit</b> pays from day one when death is caused by an accident.',
+      ['Tell me about add-ons',goApply]);
+    return;
+  }
+  if(has('20 year','how long do i pay','stop paying','pay forever','payment stop','pay until')){
+    raiSay('You pay for <b>20 years only</b> — then never again, while protection continues for life. Compare that to plans collecting premiums until age 85 or 100. Your premium is <b>fixed from day one</b>, guaranteed never to increase.',
+      ['What is the money-back option?',goQuote]);
+    return;
+  }
+  if(has('money back','money-back','refund','cash back','surrender','year 21','get back','take back')){
+    raiSay('The <b>year-21 money-back option</b>: after your 20 payment years, give it up in year 21 and receive <b>every premium you paid, without interest</b> (the policy then ends; there is no cash value in other years). Or keep it, and if it is in force at about age 100 the full cover is paid to <i>you</i> in cash.',
+      [goApply,'When do payments stop?']);
+    return;
+  }
+  if(has('maturity','live to 100','if i live','100 years','survive')){
+    raiSay('If you\'re alive at maturity — around <b>age 100</b> — the policy pays the <b>full sum assured to you, in cash</b>. It pays your family if you pass, or pays you if you outlive it. Either way, it pays.',
+      [goQuote,goApply]);
+    return;
+  }
+  if(has('medical','exam','doctor','blood','test','health check','check up','checkup')){
+    raiSay('<b>No medical exam for most applicants.</b> Five simple yes/no questions on your phone — the policy is issued on the truth of your answers. All clear means your application goes to Guardian\'s underwriters; a "Yes" means this plan can\'t be offered and an advisor reviews your options personally. Honesty is what makes your family\'s claim unbreakable.',
+      [goApply,'Can I apply?']);
+    return;
+  }
+  if(has('miss','late','grace','lapse','can\'t pay','skip')){
+    raiSay('Life happens — you have a <b>30-day grace period</b> on every payment. After three years of premiums, extra legal protections apply before any lapse, and a lapsed policy can be <b>reinstated once, within 3 years</b>, with evidence of good health and the missed premiums paid (the reduced benefits of years 1 and 2 then start again).',
+      [goApply,goHuman]);
+    return;
+  }
+  if(has('abroad','travel','overseas','migrate','foreign','leave trinidad','usa','canada','uk')){
+    raiSay('Yes — coverage is <b>worldwide</b>. Travel or reside anywhere with no extra premium and no loss of protection.',[goQuote]);
+    return;
+  }
+  if(has('beneficiary','who gets','who receives','my kids','my children','my wife','my husband','change bene')){
+    raiSay('You name your beneficiary when you apply — spouse, children, anyone you choose — and can <b>change it at any time</b>, free. The payout is a <b>tax-free lump sum</b> paid directly to them.',[goApply]);
+    return;
+  }
+  if(has('salary','bank order','standing order','pay with','payment method','deduction','how do i pay')){
+    raiSay('Your <b>first premium</b> is a one-time credit card charge on the official signed authorisation — never on this website. Ongoing premiums run automatically by <b>ACH from your bank account</b> or <b>recurring credit card</b>, drawn on the <b>1st, 10th, 20th, 25th or 28th</b> — you choose the date that matches your payday.',[goApply]);
+    return;
+  }
+  if(has('claim','payout','pay out','how paid','death benefit paid','family paid')){
+    raiSay('Claims are paid within <b>one calendar month</b> of satisfactory proof — and your family isn\'t left with an email address. A <b>named licensed advisor walks them through every document</b>, personally.',
+      ['Vs. funeral plans?',goApply]);
+    return;
+  }
+  if(has('my bank','the bank','bank plan','bank insurance','already have','existing plan','review my plan','switch from','bought a plan')){
+    raiSay('Keep what you have while you look. A licensed advisor can go through your current policy with you and what Xpress Life would add. We never suggest cancelling or replacing a policy without first setting out what you would gain and what you would lose.',
+      [{label:'Start my free review',action:()=>{window.open('mailto:'+CONFIG.EMAIL+'?subject='+encodeURIComponent('Free side-by-side plan review')+'&body='+encodeURIComponent('Hi RRB team, I would like a free review of my existing plan. My policy schedule photo is attached.'),'_blank');}},goQuote]);
+    return;
+  }
+  if(has('funeral plan','serene','republic','compare','difference','other plan','guaranteed issue','better than','competitor','versus','vs')){
+    raiSay('I don\'t compare other companies\' plans. Here is exactly what Xpress Life does: cover from <b>TT$100,000 to $500,000</b>; year 1 your premiums back, year 2 half your cover, year 3 onward your full cover; you pay for <b>20 years</b>; in year 21 you may take back every premium you paid, without interest. The policy contract sets out the full terms.',
+      [goQuote,goApply]);
+    return;
+  }
+  if(has('suicide','not covered','exclusion','exclus','war')){
+    raiSay('We show the fine print upfront: <b>suicide within the first two years</b> pays a refund of premiums only; death caused by <b>war or insurrection</b> is excluded; and <b>untrue answers</b> on the application can void the policy entirely. Outside those, the schedule applies: year 1 premiums refunded, year 2 half, year 3+ full.',
+      ['What happens in year 1?',goApply]);
+    return;
+  }
+  if(has('who are you','what is rai','are you real','robot','ai','human','real person','agent','speak to someone','talk to someone')){
+    raiSay('I\'m <b>RAI</b> — the branch\'s leatherback turtle. Leatherbacks are born on Trinidad\'s beaches and live for about a century, so protection is literally what I carry on my back. I answer instantly, any hour, using verified plan facts only. Want a human? A <b>licensed advisor</b> is one tap away on WhatsApp.',
+      [goHuman,goQuote]);
+    return;
+  }
+  if(has('where','location','office','address','visit','come in','branch')){
+    raiSay('We operate from <b>'+CONFIG.LOCATION+'</b> — but you never need to visit. This service is <b>100% online</b>: quote, apply, track, advisor on WhatsApp.',
+      [goQuote,goHuman]);
+    return;
+  }
+  if(has('legit','scam','trust','safe','real company','licensed','regulated')){
+    raiSay('Fair question. This page is operated by the <b>Ricky Rampersad Branch</b> — a Guardian Life agency in Chaguanas, 32 years serving Trinidadian families, with 23× MDRT-qualified leadership. Xpress Life is underwritten and issued by <b>Guardian Life of the Caribbean Limited</b>. Every application is handled by licensed advisors.',
+      [goQuote,goHuman]);
+    return;
+  }
+  if(has('smok','tobacco','vape','nicotine','cigarette')){
+    raiSay('You can still apply — just answer the tobacco question honestly. Xpress Life premiums don\'t change for smokers; Guardian confirms your final premium at issue. Honesty now protects your family\'s claim later.',[goApply]);
+    return;
+  }
+  if(has('track','progress','status of','where is my','application status','my application')){
+    raiSay('Easy — your <b>Ref</b> and 6-digit <b>Access Code</b> were emailed the moment you applied. Enter them in the portal and you\'ll see every step live, right up to policy delivery. We also email you automatically at each stage.',
+      [{label:'Open the portal ➜',action:()=>{closeRai();document.getElementById('track').scrollIntoView({behavior:'smooth'});}},goHuman]);
+    return;
+  }
+  if(has('apply','sign up','start','ready','yes let','begin','how do i get')){
+    raiSay('Brilliant — about <b>5 minutes</b>: confirm your quote, a few details, five yes/no questions, name your beneficiary. You get a reference number right away, and Guardian\'s underwriters take it from there.',[goApply,goQuote]);
+    return;
+  }
+  if(has('hello','hi ','good day','good morning','good night','good evening','hey')||t==='hi'){
+    raiSay('Good day! 👋 Ask me anything — your cost at your exact age, what your family receives each policy year, or how this compares to funeral plans.',
+      ['What would it cost me?','Can I apply?','Vs. funeral plans?']);
+    return;
+  }
+  if(has('thank','thanks','ok good','great','nice')){
+    raiSay('My pleasure! Whenever you\'re ready — rate in 10 seconds, application in about 5 minutes.',[goQuote,goApply]);
+    return;
+  }
+  raiSay('I want you to have a <b>precise</b> answer to that — let me connect you to a licensed advisor on WhatsApp who\'ll reply personally, usually within minutes during business hours. Or try one of these:',
+    [goHuman,'What would it cost me?','What happens in year 1?','Can I apply?']);
+}
+</script>
+
+
+<script>
+/* resilience: Apply must always work, independent of everything else */
+(function(){
+  function go(){var a=document.getElementById('apply');if(!a)return;a.classList.add('open');document.body.classList.add('locked');a.scrollTop=0;}
+  ['startApply','sbApply'].forEach(function(id){var b=document.getElementById(id);if(b)b.addEventListener('click',go);});
+})();
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

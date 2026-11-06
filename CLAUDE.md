@@ -1969,7 +1969,11 @@ voice under the new timing and the caption gives it away.
   The mailbox's display name read "querymypolicy.com" until 24 September
   2026, when it was renamed "Ricky Rampersad Branch" (Microsoft 365 admin →
   Users → Active users → Edit user → Display name); the address did not
-  change and must not — the letters send from it.
+  change and must not — the letters send from it. On 5 November 2026 it was
+  renamed again, to "RRB Support Team", because "Ricky Rampersad Branch" read
+  as Guardian's own branch inbox (RickyRampersadBranch@myguardiangroup.com),
+  which is a different mailbox. Nothing in the scripts reads the display name;
+  they match on the address.
   **Until the Entra app exists, the letters go through the Claude Microsoft
   365 connector instead** (24 September 2026: "I don't know how to do the
   Entra, it's complicated, can you just work with what we have"). The
@@ -2954,6 +2958,12 @@ voice under the new timing and the caption gives it away.
     <agent> on contact made with the client and the outcome. Log <agent>'s feedback in the task trail. Keep this task
     open until the service questionnaire is signed." One task a household and agent: an open one with that subject on
     the Account is found and none is added.
+  - **No second task beside an open one** (Ricky, 4 Nov 2026). Before opening that task, `tSfHouseholdTasks_` looks for any
+    open orphan task on the household members' contacts or policy records; if one is open, the naming goes on its Chatter
+    as "AGENT NAMED: …" (a comment under today's post if the branch already posted there today) and nothing is opened.
+    A task that is opened sits on the client's policy record (`CLIENT_PORTFOLIO__c`, the first in force), never the
+    household Account. On 3 Nov the first run after a paste backfilled every Salesforce naming since 22 Oct and opened 78
+    tasks, 64 of them beside an open task; those were closed on 4 Nov with their notes carried to the original.
   - **Both are automatic** on every naming: the board's (`transitionAssign_`), Match's and staff's, and a naming made in
     Salesforce (`tSfBriefs_`, after the brief). `tSfAssignWrite_` reads the client's policies by number and then every
     record on their own Contact (`tSameClient_`, so a daughter's own policy on her own Contact is never touched), and
@@ -5692,6 +5702,28 @@ is separate and untouched.
   buttons), `client-test.js` (40, the client's page on a phone and a desk, the years in full, and
   a group's tab) and `door-test.js` (12, the old page in test mode, live, and with no backend). `read-test.js` checks the notice reader on real notice texts kept in the scratchpad only.
 
+## Guardian Life's letter on a former-agent reply: `apps-script/Letters.gs`
+
+Asked for on 5 November 2026: when a client says a former agent is still there, the reply must carry Guardian Life's
+own 6 October letter, and the letter must be visible and printable. The Microsoft 365 connector Claude drafts with
+cannot attach a file, so the draft carries one line, `[[letter: <former agent> | <page(s)> | <client> | <staff e-mail>]]`,
+and `Letters.gs` (a file in the Service Questionnaire project, beside `Transition.gs` and `GroupBilling.gs`) does the
+rest every ten minutes (`lettersSetup()` installs the trigger, `lettersAttachNow()` runs it at once):
+
+- finds the former agent's book (one PDF per agent, one page per client) in Ricky's Drive folder of the letters
+  (`LETTERS.FOLDER`, or the `LETTERS_FOLDER_ID` Script property), unzipping a zip into "Books (unzipped)" the first time;
+- cuts the client's page with pdf-lib, attaches it to the draft through Graph, and takes the marker line out;
+- keeps a copy in "Letters attached" and e-mails a print copy to the staff member and Ricky (internal);
+- logs a row on the **Letters Attached** tab. Nothing goes to the client: the draft waits for Ricky.
+
+**pdf-lib needs its own loader for a book.** `gblSyncPromise_` (GroupBilling.gs) runs each callback inside the one
+before it; on a 447-page book pdf-lib awaits once per object, the stack overflows, the overflow is swallowed, and the
+load never settles. `lettersPromise_` queues callbacks and `lettersDrain_` runs them in a flat loop: the page is cut in
+about a second. The forms code is left as it was.
+
+**Needs, once:** Mail.ReadWrite (application) with admin consent on the Entra app, because a draft is changed, not
+sent. A 403 from Graph names it. The letter books themselves are client data and stay in Drive, never here.
+
 ## The branch's own forms — no client link opens a JotForm
 
 `quote/`, `enrol/oas/`, `apply/xpress-life/`, the shared `forms/form.css`
@@ -5954,6 +5986,17 @@ silent faults nobody would have reported:
   filled one adds nothing to the count, Enter moving on rather than sending,
   the restored-draft notice and its count, Start again, and the index's own
   stage, headline and measured bar).
+## Xpress Life — one of the branch's products, at /xpresslife/
+
+Moved onto the branch site on 29 October 2026 (*"i want this as a link to one of our products not a seperate site"*). `xpresslife/index.html` is the whole application that used to be xpresslifett.com on Netlify: the rate, the five health questions, the Guardian forms (`guardian-*.pdf`, fetched relatively, so they live beside it), tracking, and the post to the Xpress Life Apps Script backend (`CONFIG.GAS_URL`, its own project, not `Service.gs`). It takes the homepage's palette and fonts (deep blue `#0a3350`, teal `#0e93b0`/`#00728d`, ground `#faf9f2`, Inter Tight and Inter) in place of the old coral, and the brand links home.
+
+- **xpresslifett.com is a shortcut only**: one `_redirects` line on Netlify, `/* https://rickyrampersadbranch.com/xpresslife/:splat 301!`. The ad's QR code and the spoken "Xpress Life TT dot com" still land here. Never rebuild a second Xpress Life site there.
+- **The Netlify Forms copy is gone** with the move (the hidden form and the `fetch('/')` post): GitHub Pages cannot take it. The Apps Script backend is the record.
+- **`/apply/xpress-life/` and `/xpress-life-application/` forward here.** The old branch form asked for a term in years and a smoking answer; Xpress Life has neither (a 20-pay plan covered to about age 100, priced on age, gender and cover). `forms.json` lists it as `elsewhere: /xpresslife/`, the motor pattern; `Quotes.gs` still knows `QX`, and nothing posts to it.
+- **What the product is, from the contract and Guardian's specification:** TT$100K–500K in steps of 100K, ages 18–69, five questions all answered No (one asks whether the person was **ever rated, postponed or declined**, so it is never a product for someone already refused cover), year 1 returns premiums, year 2 pays half, full cover from year 3, premiums for 20 years, surrender only in year 21 for premiums back without interest, covered anywhere in the world at the same premium (clause 11), no third-party policies, TT$500K across all Xpress Life. Never "term", "instant", "pre-approved" or "approved": Guardian reviews every application.
+- **It is one door of the branch, not the offer.** The ad and the page say: no time for a medical, Xpress Life; health issues or more cover, the branch finds another Guardian plan.
+- Guardian's written approval of the page and the ad (Market Conduct Guideline 5.5.3(a)) is still outstanding.
+
 ## The English B essay workshop — it asks, the student writes
 
 `englishb/index.html` (rickyrampersadbranch.com/englishb/) and `apps-script/EssayWorkshop.gs`, **its own Apps Script
@@ -6135,6 +6178,69 @@ servicing work".
   Salesforce joined), `pddSendNow()`. `pdd3/` in the session scratchpad holds
   the harness on a made-up branch (`test.js`, 87 checks; `page-test.js`, 40,
   Playwright; `world.js`, the fake workbook and Salesforce).
+- **The letters carry the trail and end in a lapse notice, and a person ticks every one (5–6 November 2026, PDD 2026-11-06b).** Ricky:
+  "an email that automatically goes out to the client showing their policy now falls in the 45-60 day bucket, and options
+  for the client to check and sales support review and give back insights, the agent is always copied ... with the email
+  trail and their responses on the first ... then the notice that the policy has lapsed if it's under 2 years".
+  - **Buckets** 45–59, 60–74, 75–89, 90–104 (`PDD.LATE` 14).
+  - **Never automatic** (6 Nov, Ricky: *"Remember, this is not an auto ... Staff has to click the send off ... they've
+    checked ... So they can click, so it'll send out."*). `PDD.AUTO` is false. A letter goes at ten only after a staff member
+    has opened it, done the checks and ticked it, as before 5 Nov. `pddAutoQueue_` ("Automatic (nobody held it by ten)")
+    runs only if the `PDD_AUTO` Script property reads on. Never set it without Ricky.
+  - **One-tap answers by line** (`ISURVEY_QUICK`, `ISURVEY_QUICK_BY`), each with its own reply page, recorded in Asked for,
+    and e-mailed to sales support with the agent always copied, with a signed **review link** (`?sv=&k=`, key
+    `PDD_REVIEW_KEY`): "What we did" (the client reads it on the next letter's trail) and an internal insight that goes to
+    the agent and the unit manager; "close it" closes the row.
+  - **The trail** (`iSurveyTrailHtml_`): every earlier note this episode, date, subject (new Subject column), what they
+    tapped, what we did. Never the private message.
+  - **The lapse notice** (`iSurveyLapsePool_`, `iSurveyNoticeHtml_`, Stage 120): lapsed within 14 days, in
+    force under two years at the lapse, once a policy; the trail, "can it be reinstated" (never a promise), why they let it
+    go, "in my own words" (Details column), a rating of how we kept in touch.
+  - **The lapse notice has its own tab, ticked like the letters (6 Nov, PDD 2026-11-06c).** "Lapsed · notice" is a fifth
+    tab on the desk (`pddLines_` reads the four lines and the notices together): open the notice, then tick it or "Do not
+    send" with a reason; the ten o'clock send sends the ticked ones with the letters, re-checking each is still due one. A
+    notice check is the Checks row with 120 in Days due (`pddStageOf_`), no new column. Nothing goes unticked:
+    `pddNotices_` and `PDD_NOTICES` are gone. The notice's wording was already inside the approval, so it stands.
+  - Intel Surveys gains Subject, Details, Reviewed (31–33). The tracker's `doPost` now routes the letter forms
+    (`iSurveyPost_`): until then the private line's form posted into the tracker and went nowhere.
+  - The wording changed: the approval lapses until `intelSurveyApprove`. Test mode sends test copies only.
+    `flow06/flow-test-on.js`, `flow06/notice-tick-test.js` (38) and `flow06/notice-page-test.js` (26, Playwright) in the
+    scratchpad cover it.
+- **The wall's Premium dues stop: eleven scenes that turn by themselves (5 November 2026, PDD 2026-11-05a).** Ricky, 4
+  November: "Policies under 3 years ... under 5 years for both active and inactive agents, with the exceptions of Dominic,
+  Javid, Aleema, Tarek. Those persons are still with the company ... can this dashboard paint a picture", then, the same
+  evening: "under 1 year, then 2 year, then 3 year, then 4 year, then 5 years, then over 5 years, and the ability to pause
+  ... then the 45 days, the 60, 75 and the 90 days before the lapse, and then the lapses". `intelligence/wall/index.html`
+  ("Premium Dues · The Letters", tab "Premium dues · the letters", `secs:100` in all.html) is a scene player: six band
+  scenes, four letter scenes, one lapse scene, nine seconds each (`?dwell=`), with pause, back and forward (buttons, space,
+  arrow keys) and a dot per scene. all.html now sends a stop `{rrb:'shown'}` when it turns to it, and this stop starts again
+  from scene 1; others ignore it.
+  - **The data** is a `journey` block that `iActWall45_` attaches live to intel.wall (band 45 only; the rest of the feed is
+    still the nightly copy): `iWallJourney_` in PremiumDueDesk.gs, kept ten minutes (`PDD_WALL`).
+  - **Bands** (`PDD_WALL.BANDS`, keys t0 to t5, plus `all`): under 1 year, 1 to 2, 2 to 3, 3 to 4, 4 to 5, over 5, from the
+    extract's issue date. Each: behind (policies, clients, premium), how they pay and what should have collected itself, the
+    days-behind ladder (1 to 44, then each letter's stretch), units, agents, orphans, and lapsed (this month, 30 days, year).
+  - **Both books**: active agents' and the books of those who left, one row `Orphans · to reassign`, never named. Left =
+    INTEL_EXCLUDE_AGENTS, the tracker's WALL_LEFT, or on no access list; this block counts INTEL_EXCLUDE_AGENTS' books (every
+    other figure on the wall still leaves them out). **Dominic Harding (A04104), Javid Ali, Aleema Mohammed-Ali and Terek
+    Ali (A09091; "Terek Hassan Ali" in Salesforce) are always active** (`PDD_WALL.STAYS`, and `WALL_STAYS` / `wallStays_` in
+    KPI.gs so `wallScrub_` can never fold them, even if put on WALL_LEFT by mistake; the Script Property WALL_STAYS replaces
+    the list). Salesforce reads Dominic "Transferred" and Terek "Not Active"; Ricky says both are still with the company.
+    Javid's and Aleema's names can show on this stop's agent lists, as they did before; the orphan slides and the pending
+    wall still hide them.
+  - **The four letters** (PDD.STAGES): the letter as the client gets it (the subject `iSurveySubject_` and the templates
+    write, a gist of ISURVEY_STAGES / iSurvey75Html_ / iSurvey90OptionsHtml_, the button it carries), on the line today
+    (stage to stage + LATE) by band, checked today and by whom (staff first names), sent today or test copies (a test copy
+    is never called a letter), waiting for ten, not sent and why, the last five working days, what came back in 30 days
+    (Intel Surveys, live rows) and what happened after in 120 days.
+  - **The lapses**: status 1 on the extract with a projected lapse date this year: by month, band, agent (orphans one row),
+    and whether a live letter went first (Intel Surveys by policy, sent before the lapse date).
+  - Counts, premium totals, staff first names and our own agents' names only. Narration lines rewritten in
+    `audio/lines.py` ('index') and not voiced: the button is off until `build-voice.py index` and `embed-audio.py index`.
+  - **To put it live: paste Intelligence.gs, PremiumDueDesk.gs and KPI.gs into the Branch Intelligence project, then
+    Manage deployments, pencil, New version.** Until then each scene says its figures come with the paste and the letters
+    still show. `wall45/journey-test.js` and `wall45/shots2.js` (scenes at 1920x1080, 1366x768, 1280x720, a phone, no
+    `journey`, a dead feed, and the player's turning, pause and keys) in the session scratchpad cover it.
 
 ## The motor quote — the client signs in, Salesforce fills in, the desk quotes
 

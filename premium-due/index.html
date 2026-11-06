@@ -178,6 +178,10 @@ button.tick:disabled{opacity:.5;cursor:default}
 .stg{display:inline-block;font:700 10.5px var(--mono);padding:2px 6px;border-radius:6px;margin-right:6px;
   background:rgba(0,207,234,.13);color:var(--teal);border:1px solid rgba(0,207,234,.35)}
 .stg.s75,.stg.s90{background:rgba(255,122,143,.12);color:var(--bad);border-color:rgba(255,122,143,.4)}
+.stg.s120{background:rgba(240,182,74,.14);color:var(--warn);border-color:rgba(240,182,74,.45)}
+.tabnote{margin:10px 0 0;padding:10px 14px;border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:10px;
+  background:var(--card);font-size:13.5px;line-height:1.5;color:var(--muted)}
+.tabnote b{color:var(--text)}
 .tags{margin-top:5px;display:flex;flex-wrap:wrap;gap:4px}
 .tag{font:600 11px var(--sans);padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.07);color:var(--muted)}
 .tag.w{background:rgba(240,182,74,.14);color:var(--warn)}
@@ -275,6 +279,7 @@ button.aibtn:disabled{opacity:.55;cursor:default}
   <div id="gateMsg"></div>
 
   <div class="tabs" id="tabs" role="tablist" aria-label="The lines"></div>
+  <p class="tabnote" id="tabNote" hidden></p>
   <div class="dayai" id="dayAi" hidden></div>
 
   <div class="cols">
@@ -454,6 +459,12 @@ document.addEventListener('visibilitychange', function () {
 });
 
 function stages() { return (STATE && STATE.stages) || [{ stage: 45, upTo: (STATE && STATE.upTo) || 51 }]; }
+/* The four lines, without the fifth tab: the lapse notices (stage 120). */
+function lines() { return stages().filter(function (x) { return !x.notice; }); }
+var NOTICE = 120;
+function isNotice(r) { return Number(r && r.stage) === NOTICE; }
+function stageName(st) { return Number(st) === NOTICE ? 'notice' : String(st); }
+function noticeTab() { return stages().filter(function (x) { return x.notice; })[0] || null; }
 function upToOf(r) { var u = 0; stages().forEach(function (x) { if (x.stage === r.stage) u = x.upTo; }); return u || r.stage + 6; }
 function counts(rows) {
   var c = { open: 0, ticked: 0, skipped: 0 };
@@ -478,7 +489,8 @@ function paintHead(r) {
       : ' You can read each letter. Staff check the clients and tick them.';
   $('standfirst').textContent = r.today + '. ' +
     (r.you.branchWide ? 'The whole branch' : 'Your own clients') + ', on four lines: ' +
-    stages().map(function (x) { return x.stage + ' to ' + x.upTo; }).join(', ') + ' days behind.' + how;
+    lines().map(function (x) { return x.stage + ' to ' + x.upTo; }).join(', ') + ' days behind' +
+    (noticeTab() ? ', and the lapse notices.' : '.') + how;
 
   var p = [];
   var mc = m.clients === 'live' ? 'live' : m.clients === 'test' ? 'test' : 'held';
@@ -529,6 +541,14 @@ function paintHead(r) {
 }
 
 function daysChip(r) {
+  if (isNotice(r)) {
+    var ago = r.ago == null ? null : Number(r.ago), back = (noticeTab() || {}).back || 14;
+    var left = ago == null ? null : back - ago;
+    var tip = 'Lapsed' + (r.lapsedOn ? ' on ' + r.lapsedOn : '') + (ago != null ? ', ' + ago + ' day' + (ago === 1 ? '' : 's') + ' ago' : '')
+      + '. A notice may go up to ' + back + ' days after the lapse.' + (left != null && left <= 2 ? ' Tick before ten or it drops off.' : '');
+    return '<span class="days ' + (left != null && left <= 2 ? 'end' : 'late') + '" title="' + esc(tip) + '">'
+      + (ago != null ? 'lapsed ' + ago + 'd' : 'lapsed') + '</span>';
+  }
   var st = r.stage, d = Number(r.days) || st, end = upToOf(r), cls = d >= end ? 'end' : d > st ? 'late' : '';
   var tip = d > st ? 'Reached ' + st + ' days ' + (d - st) + ' day' + (d - st === 1 ? '' : 's') + ' ago' : 'Reached ' + st + ' days today';
   if (d >= end) tip += '. Last day on the ' + st + '-day line: tick before ten or it drops off.';
@@ -537,7 +557,8 @@ function daysChip(r) {
 
 /* ── the tabs and the filters ────────────────────────────────────────── */
 function tabWords(st) {
-  return { 45: 'The first note', 60: 'Following up', 75: 'Before the cover stops', 90: 'The options' }[st] || '';
+  return { 45: 'The first note', 60: 'Following up', 75: 'Before the cover stops', 90: 'The options',
+           120: 'Lapsed in its first two years' }[st] || '';
 }
 function paintTabs() {
   var all = counts(), html = ['<button class="tab" role="tab" data-t="all" aria-selected="' + (VIEW.tab === 'all') + '">'
@@ -545,14 +566,22 @@ function paintTabs() {
   stages().forEach(function (x) {
     var rows = ROWS.filter(function (r) { return r.stage === x.stage; }), c = counts(rows);
     html.push('<button class="tab" role="tab" data-t="' + x.stage + '" aria-selected="' + (String(VIEW.tab) === String(x.stage)) + '">'
-      + '<b>' + x.stage + ' days</b><div class="big">' + rows.length + '</div><span>' + esc(tabWords(x.stage)) + '<br>'
+      + '<b>' + esc(x.notice ? (x.label || 'Lapsed · notice') : x.stage + ' days') + '</b><div class="big">' + rows.length + '</div><span>' + esc(tabWords(x.stage)) + '<br>'
       + c.open + ' to check · ' + c.ticked + ' ticked</span></button>');
   });
   $('tabs').innerHTML = html.join('');
   $('tabs').querySelectorAll('.tab').forEach(function (b) {
     b.onclick = function () { VIEW.tab = b.dataset.t; saveView(); paintTabs(); paintRows(); };
   });
-  $('listTitle').textContent = VIEW.tab === 'all' ? 'Due for a letter, every line' : 'The ' + VIEW.tab + '-day line';
+  var nt = noticeTab(), onN = nt && String(VIEW.tab) === String(nt.stage);
+  $('listTitle').textContent = VIEW.tab === 'all' ? 'Due for a letter, every line' : onN ? 'Lapse notices' : 'The ' + VIEW.tab + '-day line';
+  $('tabNote').hidden = !onN;
+  if (onN) {
+    $('tabNote').innerHTML = '<b>The lapse notice</b> is for a policy that lapsed in its first ' + esc(nt.under || 2)
+      + ' years, within ' + esc(nt.back || 14) + ' days of the lapse. It goes once a policy, never again, and asks whether the '
+      + 'policy can be reinstated and why it went, with the trail of every note before it. Open the notice, check it, then tick it '
+      + 'or mark it “Do not send”: a ticked notice goes at ten with the letters, and nothing goes unticked.';
+  }
 }
 function opts(sel, label, vals, cur) {
   var html = '<option value="">' + label + '</option>' + vals.map(function (v) {
@@ -675,12 +704,12 @@ function paintRows() {
     var flags = r.flags && r.flags.length
       ? '<span class="flag" title="' + esc(r.flags.join(' ')) + '">' + r.flags.length + ' to check</span>' : '';
     var lapse = r.lapse ? '<span class="soon">' + esc(r.lapse) + '</span>' : '<span style="color:var(--faint)">not on file</span>';
-    var chip = '<span class="stg s' + r.stage + '">' + r.stage + '</span>';
+    var chip = '<span class="stg s' + r.stage + '">' + esc(stageName(r.stage)) + '</span>';
     var k = r.state && r.state.kind, on = k === 'ticked' || k === 'sending';
     var box = '';
     if (canTick()) {
       var dis = BUSY[r.policy] || k === 'sending' || (!on && !SEEN[r.policy]);
-      box = '<input type="checkbox" aria-label="Send ' + esc(first(r.client)) + '\'s letter at ten" data-p="' + esc(r.policy) + '"' +
+      box = '<input type="checkbox" aria-label="Send ' + esc(first(r.client)) + '\'s ' + (isNotice(r) ? 'lapse notice' : 'letter') + ' at ten" data-p="' + esc(r.policy) + '"' +
         (on ? ' checked' : '') + (dis ? ' disabled' : '') +
         (!on && !SEEN[r.policy] ? ' title="Open the letter first"' : '') + '>';
     }
@@ -737,7 +766,9 @@ function preview(r) {
       '<button class="ghost back" id="backBtn">&larr; Back to the list</button>' +
       '<div class="prevmeta"><b>To</b> ' + esc(res.to) + '<br>' +
       '<b>Copying</b> ' + esc(res.cc || 'nobody: check the access list') + '<br>' +
-      '<b>Line</b> ' + esc(r.stage) + ' days (' + esc(tabWords(r.stage).toLowerCase()) + ')<br>' +
+      (isNotice(r)
+        ? '<b>Line</b> Lapse notice (lapsed' + (r.lapsedOn ? ' on ' + esc(r.lapsedOn) : '') + '; sent once, never again)<br>'
+        : '<b>Line</b> ' + esc(r.stage) + ' days (' + esc(tabWords(r.stage).toLowerCase()) + ')<br>') +
       '<b>Subject</b> ' + esc(res.subject) + flags + '</div>' +
       '<div id="decide"></div>' + aiHtml(r) + knowHtml(r) +
       '<div class="sheet">' + res.html + '</div>';
@@ -864,7 +895,7 @@ function paintDecide() {
   } else {
     if (k === 'tested') html += '<div class="say w">A test copy of this letter went ' + esc(s.when) + '. The client was not written to.</div>';
     if (k === 'notsent') html += '<div class="say w">Not sent at ten: ' + esc(s.why) + '.</div>';
-    html += '<div class="say">Checked ' + esc(name) + '? The letter goes at ten ' + esc(tw) + ', with your name on the record.</div>' +
+    html += '<div class="say">Checked ' + esc(name) + '? The ' + (isNotice(r) ? 'lapse notice' : 'letter') + ' goes at ten ' + esc(tw) + ', with your name on the record.</div>' +
       '<div class="btns"><button class="tick" id="dTick">&#10003; I have checked ' + esc(name) + ': send at ten</button>' +
       '<button class="ghost" id="dSkip">Do not send…</button></div>' +
       '<div class="skipform" id="skipForm" hidden>' +
@@ -913,7 +944,7 @@ function setTick(r, on) {
       resort(); paintRows(); paintDecide();
       var s = r.state;
       say(on ? (s && s.kind === 'ticked'
-            ? first(r.client) + ' is ticked: the letter goes at ten ' + s.goesWords + '.'
+            ? first(r.client) + ' is ticked: the ' + (isNotice(r) ? 'lapse notice' : 'letter') + ' goes at ten ' + s.goesWords + '.'
             : 'Saved.')
           : first(r.client) + '\'s tick is withdrawn. Nothing will go.');
     }).catch(function () {
@@ -932,7 +963,7 @@ function setSkip(r, why, undo) {
       if (!res.ok) { say(res.error || 'That did not save.', true); paintRows(); return; }
       r.state = res.state || null;
       resort(); paintRows(); paintDecide();
-      say(undo ? 'Undone: ' + first(r.client) + ' is back to check.' : 'Recorded: no letter for ' + first(r.client) + '.');
+      say(undo ? 'Undone: ' + first(r.client) + ' is back to check.' : 'Recorded: no ' + (isNotice(r) ? 'lapse notice' : 'letter') + ' for ' + first(r.client) + '.');
     }).catch(function () {
       delete BUSY[r.policy]; paintRows();
       say('Could not reach the branch script. Nothing was saved; try again.', true);
@@ -965,7 +996,7 @@ function paintOutcomes(r) {
       + '<td class="n warn-t">' + x.behind + '</td><td class="n bad-t">' + x.lapsed + '</td><td class="n">' + x.gone + '</td>'
       + '<td><div class="bar">' + seg('paid') + seg('part') + seg('behind') + seg('lapsed') + seg('gone') + '</div></td></tr>';
   };
-  var html = stages().map(function (x) { return row(x.stage + ' days', (o.stages || {})[x.stage] || { sent: 0, answered: 0, paid: 0, part: 0, behind: 0, lapsed: 0, gone: 0 }); });
+  var html = lines().map(function (x) { return row(x.stage + ' days', (o.stages || {})[x.stage] || { sent: 0, answered: 0, paid: 0, part: 0, behind: 0, lapsed: 0, gone: 0 }); });
   html.push(row('Every line', o.total));
   $('obody').innerHTML = html.join('');
   $('otally').textContent = o.total.sent ? o.total.sent + ' letter' + (o.total.sent === 1 ? '' : 's') + ' · ' + pct(o.total.paid, o.total.sent) + ' back in good standing' : 'no letters yet';
@@ -984,7 +1015,7 @@ function paintRecent(r) {
     var what = x.status === 'sent' ? '<span class="ok-t">Sent</span>'
       : x.status === 'test copy' ? '<span class="warn-t">Test copy: the client was not written to</span>'
       : '<span class="bad-t">Not sent:</span> ' + esc(x.note);
-    return '<tr><td class="n">' + esc(x.when) + '</td><td class="n">' + esc(x.stage || 45) + '</td><td>' + esc(x.client) +
+    return '<tr><td class="n">' + esc(x.when) + '</td><td class="n">' + esc(stageName(x.stage || 45)) + '</td><td>' + esc(x.client) +
       '<br><code style="font:12px var(--mono);color:var(--muted)">' + esc(x.policy) + '</code></td>' +
       '<td>' + esc(x.agent) + '</td><td>' + esc(x.by) + '</td><td>' + what + '</td></tr>';
   }).join('');

@@ -106,7 +106,7 @@ function signOut() { try { localStorage.removeItem('rrb-gcm-code'); localStorage
 function head() {
   $('who').innerHTML = esc(BOARD.me) + ' · ' + (BOARD.title || ROLE[BOARD.role] || 'Staff') +
     (BOARD.refreshed ? ' · Salesforce as at ' + esc(BOARD.refreshed) : '') +
-    ' <button class="btn ghost" id="rf" type="button">Refresh from Salesforce</button> <a class="btn ghost" href="training.html">Training</a> <button class="btn ghost" type="button" onclick="signOut()">Sign out</button>';
+    ' <button class="btn ghost" id="rf" type="button">Refresh from Salesforce</button> <a class="btn ghost" href="training.html">Training</a> <a class="btn ghost" href="/premium-due/" title="The 45, 60, 75 and 90-day letters and the lapse notices, checked before 10:00">Premium dues</a> <button class="btn ghost" type="button" onclick="signOut()">Sign out</button>';
   $('rf').onclick = refresh;
 }
 async function refresh() {
