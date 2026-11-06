@@ -7509,36 +7509,75 @@ formula field, so the first real insert would have thrown. It had never fired
 because Salesforce is not connected and test mode skips it — a bug sitting
 behind two switches, which is the kind that ships.
 
-#### "Related to the risk" is not a thing Salesforce can do here yet
+#### The vehicle or the transaction? Neither — they meet at the policy record
 
-Checked field by field: **neither claims object has any lookup to
-`Risk_Details__c`** — `Claims__c` has 46 fields (lookups to Account, CLIENT
-PORTFOLIO, Case, Relationship Group), `Claims_Revised__c` has 42 (master-detail
-to CLIENT PORTFOLIO and to Contact, lookup to Requirement). A true relationship
-needs a Salesforce admin to add the field; that is the branch's call, not a
-code change.
+Asked in those words on 6 November 2026. The **describe** is the authority
+here, not a field list: `Claims_Revised__c` has exactly five lookups —
+`Contact__c` (master-detail, **required**), `CLIENT_PORTFOLIO__c`
+(master-detail, **required**), `Claims_Officer__c` (a Contact),
+`Claims_Revis__c` (an Account) and `Requirement__c`. **No `Risk_Details__c`
+and no `TRANSACTIONS__c`**, and its only custom child is
+`Requirement_Claims__c`. All 25 of the most recent records agree: every one
+hangs off a `CLIENT_PORTFOLIO__c` whose record type is the line (MOTOR, HEALTH,
+HEALTH (GROUP), PROPERTY, LIFE) plus the client's Contact.
 
-**So the claim is related the way the branch's own 35 motor claims are
-related**, read off the live records: the **policy** by master-detail
-`CLIENT_PORTFOLIO__c`, the **client** by master-detail `Contact__c`, and the
-vehicle as the **plate with no separator** in `Vehicle__c` (Text(7)) — the same
-form `normKey_` and `norm_reg` produce. `CLAIMS.SF_CLAIM.RISK_FIELD` is
-attempted anyway and **dropped when the org refuses** (`gblSfwSave_`'s rule),
-so the day somebody adds the lookup the claims carry it with no paste. Until
-then the term is named in `Notes__c`, so which year of cover a claim attached
-to is on the record in words.
+**But the claim and the vehicle do meet, one hop apart, at the policy record.**
+`Risk_Details__c` — the vehicle — has **two required parents of its own**:
+`TRANSACTIONS__c` (the billing record) and `Client_Portfolio_Look_Up__c` (the
+policy record). The claim's own required parent is that same policy record. So
+"related to the risk" is already true without a new field: a claim written on
+the client's MOTOR policy record sits on the same parent as every vehicle term
+of that policy.
+
+That is why the vehicle register now carries **`Portfolio Id`**, read off the
+vehicle's own `Client_Portfolio_Look_Up__c`, and why **`sfClaimParents_` takes
+the matched term's policy record first** on a motor claim.
+
+**It is not a convenience, and this is the part that bites.** The policy
+register is built `WHERE POLICY__c != null`, and **one of the branch's only two
+motor claims hangs off a MOTOR policy record with a null policy number** — so
+that client is in no policy register at all, and `sfPortfolioIds_` has no
+number to ask by either. Before the vehicle carried its own policy record, that
+claim would have found no parent and been skipped. Taking it off the vehicle
+also lands the claim on the right **year**: the policy register is keyed on the
+policy number, which changes between terms while the vehicle does not.
+
+**`CLAIMS.SF_CLAIM.RISK_FIELD` is now `''`, deliberately.** The describe proves
+no such field exists, so sending one is a guaranteed failed insert on *every*
+claim — two Salesforce calls instead of one on a page a client is waiting on,
+and a Salesforce error in the log on every single claim, which is exactly the
+noise that hides a real one. Set it the day an admin adds the lookup; the
+attempt-and-drop (`gblSfwSave_`'s rule) still covers it if the org refuses.
+Meanwhile the vehicle is the **plate with no separator** in `Vehicle__c`
+(Text(7)) — the form `normKey_` and `norm_reg` produce — and the term and the
+`Risk_Details__c` id are named in `Notes__c`.
+
+**The term's policy record is read off the same row as its `Risk Id`**, not
+through `TERM_FIELDS`. A term's other fields take the *last* row's value while
+its Risk Id takes the *first* (the duplicate-term tie-break); if the policy
+record followed `TERM_FIELDS` a duplicate pair could parent the claim on one
+record while it names another in `Notes__c`.
 
 **Both parents are master-detail, so both are required**: there is no filing a
-claim record with a policy number alone. `sfClaimParents_` resolves them from
-the registers (`Contact Id`, `Portfolio Id`) and falls back to a live read
-(`sfPortfolioIds_`, which asks for the two ids — `sfFindPortfolio_` next door
-selects neither, because it exists to prefill a form and a client is never
-shown an id). With either missing the claim is **skipped with a note saying
-why**, never thrown: the claim is filed, the desk has it, and a person can put
-it right.
+claim record with a policy number alone. With either missing the claim is
+**skipped with a note saying why**, never thrown: the claim is filed, the desk
+has it, and a person can put it right. `sfPortfolioIds_` is the last resort and
+asks for exactly the two ids — `sfFindPortfolio_` next door selects neither,
+because it exists to prefill a form and a client is never shown an id.
+
+**`Claim_Type__c` is a picklist**: Health, Motor, Property, Life, Critical
+Illness, Accidental Death, Maturity, Other. `Claim_Status__c` is **Opened or
+Closed, nothing else**. Counted in use: Health 183, Motor 35, Property 14, Life
+3, Critical Illness 1, Other 1, and 362 with none — several PROPERTY-record-type
+claims are typed "Health" by hand, which is data entry rather than a missing
+value. Pension has no value of its own and takes Other.
 
 **`Vehiclee__c` is a dead duplicate field** — null on every record the branch
 has ever made. Never write to it.
+
+**`FieldDefinition` is not queryable on this org** (`INVALID_OPERATION`), so a
+field question is answered with `getObjectSchema` plus a live sample, never with
+a SOQL metadata query.
 
 #### Three traps, two of them mine
 
@@ -7558,13 +7597,36 @@ has ever made. Never write to it.
   browser test looked like "the token is not being set". Check which side holds
   the bug: it was the fixture, for the third time in this product.
 
-Tests in the session scratchpad: `profile-test.js` (62, Node, Salesforce and
+- **A test that asserts the state a change deliberately replaced fails, and
+  that is the test's bug.** Turning `RISK_FIELD` off broke two assertions ("it
+  tried with the lookup, then without") that were correct the day before. Same
+  as `desk-test`'s "motor has no desk" the day motor got one. Rewrite them to
+  the new contract and keep the old one under a block that *sets* the field, so
+  the attempt-and-drop stays covered for the day it is added.
+- **A missing method on a fake sheet reads as a backend fault.** The ping's
+  single-cell check reported `unknown` because `profile-test.js`'s fake
+  `getRange` had `getValues` and no `getValue`. Fourth fixture fault in this
+  product; fix the harness, not the code.
+
+Tests in the session scratchpad: `profile-test.js` (70, Node, Salesforce and
 the sheet made of nothing — every term, no ids leaked, the right object, the
-formula field never written, the Risk field dropped when refused, a claim with
-no parent skipped) and `signedin-page.js` (69, Playwright on a laptop and a
-phone: sign in, both vehicles and the health policy on screen, tapping the car
-fills chassis and permit, all three terms travel with it, a loss in an earlier
-year judged on that year). 547 checks across fourteen suites, none failing.
+formula field never written, one insert and not a failed one plus a retry, the
+parent off the vehicle term and not this year's, a motor policy the policy
+register has never seen, the lookup attempted and dropped the day it exists, a
+claim with no parent skipped), `terms-test.js` (145, which now covers the
+`Portfolio Id` per term and that a duplicate's never wins) and
+`signedin-page.js` (69, Playwright on a laptop and a phone: sign in, both
+vehicles and the health policy on screen, tapping the car fills chassis and
+permit, all three terms travel with it, a loss in an earlier year judged on
+that year). **570 Node checks across twelve suites and 169 browser checks
+across four, none failing.**
+
+**`?action=ping` reports `registers.vehiclePortfolioIds`** — `yes`, `not synced
+yet`, `column missing` or `register empty` — so whether the register carries the
+policy-record id is answerable from a browser. `not synced yet` means re-run
+**Sync registers from Salesforce now** or a motor claim may find no parent. It
+is two cheap reads (the header and one row) on purpose: the endpoint needs no
+sign-in and must not invite a heavy scan.
 
 ## Standing rules
 
