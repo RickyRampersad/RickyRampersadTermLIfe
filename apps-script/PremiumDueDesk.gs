@@ -94,12 +94,20 @@
  *   and an insight for the agent and the unit manager (internal), and closes it.
  *   The agent is copied on every letter and every answer.
  *
- *   THE LAPSE NOTICE (pddNotices_, iSurveyNoticeHtml_): a policy that lapsed in
+ *   THE LAPSE NOTICE (iSurveyLapsePool_, iSurveyNoticeHtml_): a policy that lapsed in
  *   its first two years, within 14 days of the lapse, once: the trail, reinstate,
  *   why they let it go (one tap or their own words), and a rating of how we kept
- *   in touch. Logged with Stage 120. Not automatic either: the notices do not
- *   go until there is a place on the desk to check and tick them, so
- *   pddNotices_ sends nothing unless the PDD_NOTICES Script property is on.
+ *   in touch. Logged with Stage 120.
+ *
+ *   THE LAPSE NOTICE HAS ITS OWN TAB, TICKED LIKE THE LETTERS (6 November 2026,
+ *   Ricky agreed). The desk reads the notices beside the four lines
+ *   (pddLines_: iSurveyPool_ and iSurveyLapsePool_, one definition each) as a
+ *   fifth line, stage 120. A person opens the notice, then ticks it or marks it
+ *   "Do not send" with the reason; the ten o'clock send sends the ticked ones
+ *   with the letters, re-checking each is still due a notice. A notice check is
+ *   the row whose Days due reads 120 (pddStageOf_ maps it to the notice line),
+ *   so the tab gains no column. Nothing goes unticked: the old automatic path
+ *   (pddNotices_ and the PDD_NOTICES property) is gone.
  *
  *   The wording changed, so the approval lapses: intelSurveyApprove again.
  *
@@ -144,13 +152,13 @@
  ******************************************************************************/
 
 var PDD = {
-  VERSION: '2026-11-06b',
+  VERSION: '2026-11-06c',
   STAGE: 45,            // the first line; the page and the editor helpers read it as the default
   STAGES: [45, 60, 75, 90],   // the four lines (13 October 2026: "45 days, 60 days, 75 days and 90 days")
   LATE: 14,             // days past each stage a client stays on its line: 45 to 59, 60 to 74, 75 to 89, 90 to 104
                         // (5 November 2026: "45-60 day bucket ... 60-75 ... 75-90"; a week wide until then)
   AUTO: false,          // never automatic (Ricky, 6 Nov): a letter goes at ten only when a staff member has checked it and ticked it
-  NOTICES_MAX: 30,      // lapse notices in one morning
+  NOTICES_MAX: 30,      // ticked lapse notices sent in one morning; the rest wait for the next send
   HOUR: 10,             // the send, ten in the morning, Monday to Friday
   MAX_PER_RUN: 60,      // ISURVEY.MAX_RUN: more than this in a morning is a cohort, not a day
   RESERVE: 10,          // recipients of the day's mail allowance kept for the branch's own mail
@@ -317,6 +325,8 @@ function pddPolKey_(p) { return String(p == null ? '' : p).replace(/^\s+|\s+$/g,
    the 45-day checks written before 13 October read as the 45-day line they were. */
 function pddStageOf_(days) {
   var n = iNum_(days), out = PDD.STAGES[0];
+  /* A lapse notice's check carries 120 in Days due: the four lines end at 104. */
+  if (n >= ISURVEY.NOTICE) return ISURVEY.NOTICE;
   PDD.STAGES.forEach(function (st) { if (n >= st) out = st; });
   return out;
 }
@@ -451,18 +461,43 @@ function pddPool_(fresh) {
     var hit = pddCacheGet_('pdd_line');
     if (hit && hit.late === PDD.LATE && hit.v === PDD.VERSION) return hit;
   }
-  var pool = iSurveyPool_(PDD.STAGES, PDD.LATE);
+  var pool = pddLines_();
   if (pool.error) return pool;
   pddDress_(pool.rows || []);
   var out = {
     rows: (pool.rows || []).map(function (d) { return { row: pddRow_(d), d: pddPlain_(d) }; }),
     skipped: pool.skipped || {},
+    noticeError: pool.noticeError || '',
     at: new Date().getTime(),
     late: PDD.LATE,
     v: PDD.VERSION
   };
   pddCachePut_('pdd_line', out, PDD.POOL_TTL);
   return out;
+}
+
+/* The four lines and the lapse notices, as one list: iSurveyPool_ decides who
+   is on a line and iSurveyLapsePool_ who is due a notice, so the desk and the
+   ten o'clock send read the same two definitions. The lines are status 2 on the
+   extract and the notices status 1, so a policy is on one or the other; a
+   notices read that fails leaves the four lines standing. */
+function pddLines_() {
+  var pool = iSurveyPool_(PDD.STAGES, PDD.LATE);
+  if (pool.error) return pool;
+  var rows = (pool.rows || []).slice(), have = {}, notices = null;
+  rows.forEach(function (d) { have[pddPolKey_(d.policy)] = 1; });
+  try { notices = iSurveyLapsePool_(); } catch (e) { notices = { error: String(e && e.message || e) }; }
+  if (notices && !notices.error) {
+    (notices.rows || []).forEach(function (d) { if (!have[pddPolKey_(d.policy)]) rows.push(d); });
+  }
+  return { rows: rows, skipped: pool.skipped || {}, noticeError: notices && notices.error ? String(notices.error) : '' };
+}
+function pddIsNotice_(stage) { return Number(stage) === ISURVEY.NOTICE; }
+/* The line a page's request is about: the notice when it says so, else the
+   line its days fall on. */
+function pddStageB_(b) {
+  if (b && pddIsNotice_(b.stage)) return ISURVEY.NOTICE;
+  return pddStageOf_((b && (b.days || b.stage)) || PDD.STAGE);
 }
 
 /* A pool row without its functions, so it can be kept and rebuilt. */
@@ -474,7 +509,8 @@ function pddPlain_(d) {
     billing: d.billing, premium: d.premium, branchPhone: d.branchPhone,
     stage: d.stage, days: d.days, tpl: d.tpl ? d.tpl.id : '',
     hist: d.hist ? { when: d.hist.when, said: d.hist.said, count: d.hist.count || 1, trail: d.hist.trail || [] } : null,
-    lapseWords: d.lapseWords || '', paidToWords: d.paidToWords || '', svc: d.svc || null
+    lapseWords: d.lapseWords || '', paidToWords: d.paidToWords || '', svc: d.svc || null,
+    ago: d.ago == null ? null : d.ago
   };
 }
 
@@ -484,6 +520,7 @@ function pddPlain_(d) {
 function pddDress_(rows) {
   var lapses = pddLapseMap_();
   rows.forEach(function (d) {
+    if (pddIsNotice_(d.stage) && d.lapseWords) return;   // the notice brings its own lapse date
     var l = pddDate_(lapses[pddPolKey_(d.policy)] || '');
     d.lapseWords = l ? pddFmt_(l, 'd MMMM yyyy') : '';
   });
@@ -576,7 +613,10 @@ function pddList_(b, session) {
   return iOk_({
     v: PDD.VERSION,
     stage: PDD.STAGE, late: PDD.LATE, upTo: PDD.STAGE + PDD.LATE,
-    stages: PDD.STAGES.map(function (st) { return { stage: st, upTo: st + PDD.LATE }; }),
+    stages: PDD.STAGES.map(function (st) { return { stage: st, upTo: st + PDD.LATE }; })
+      .concat([{ stage: ISURVEY.NOTICE, upTo: ISURVEY.NOTICE, notice: true, label: 'Lapsed · notice',
+                 under: ISURVEY.NOTICE_UNDER, back: ISURVEY.NOTICE_BACK }]),
+    noticeError: pool.noticeError || '',
     outcomes: iSeesBranch_(session.role) ? pddOutcomes_(now) : null,
     ai: !!pddAiKey_(),
     today: pddFmt_(now, 'EEEE d MMMM yyyy'),
@@ -698,8 +738,11 @@ function pddRow_(d) {
     email:    String(d.email || ''),
     premium:  iNum_(d.premium),
     years:    iNum_(d.years),
-    days:     iNum_(d.days) || PDD.STAGE,
+    days:     pddIsNotice_(d.stage) ? iNum_(d.days) : (iNum_(d.days) || PDD.STAGE),
     stage:    Number(d.stage) || PDD.STAGE,
+    notice:   pddIsNotice_(d.stage),
+    ago:      pddIsNotice_(d.stage) && d.ago != null ? iNum_(d.ago) : null,
+    lapsedOn: pddIsNotice_(d.stage) ? String(d.lapseWords || '') : '',
     intel:    d.intel || null,
     billing:  String(d.billing || ''),
     lapse:    lapse ? Utilities.formatDate(lapse, iTz_(), 'd MMM yyyy') : '',
@@ -1247,8 +1290,8 @@ function pddPreview_(b, session) {
   if (!policy) return iErr_('Which policy? Pass policy.');
   var pool = pddPool_(false);
   if (pool.error) return iErr_(pool.error);
-  var hit = null;
-  pool.rows.forEach(function (x) { if (x.row.policy === policy) hit = x; });
+  var hit = null, want = b && b.stage ? pddStageB_(b) : 0;
+  pool.rows.forEach(function (x) { if (x.row.policy === policy && (!want || hit == null || x.row.stage === want)) hit = x; });
   if (!hit || !pddScope_([hit.row], session).length) {
     return iErr_('That policy is not on any of the lines any more, or it is not yours to see.');
   }
@@ -1294,10 +1337,10 @@ function pddTick_(b, session) {
   var on = !(b && (b.on === false || b.on === 'false' || b.on === 0 || b.on === '0'));
   var found = {};
   if (on) {
-    found = pddFound_(policy);
+    found = pddFound_(policy, b && b.stage ? pddStageB_(b) : 0);
     if (!found) return iErr_('This client is no longer on the line. Refresh the desk.');
   }
-  var stage = Number(found.stage) || pddStageOf_((b && (b.days || b.stage)) || PDD.STAGE);
+  var stage = Number(found.stage) || pddStageB_(b);
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) return iErr_('The desk is busy for a moment. Tick it again.');
   try {
@@ -1337,8 +1380,8 @@ function pddSkip_(b, session) {
   var undo = !!(b && b.undo);
   var why = String((b && b.why) || '').replace(/\s+/g, ' ').trim().slice(0, 300);
   if (!undo && !why) return iErr_('Say why it is not going, so the next person knows.');
-  var found = undo ? {} : (pddFound_(policy) || {});
-  var stage = Number(found.stage) || pddStageOf_((b && (b.days || b.stage)) || PDD.STAGE);
+  var found = undo ? {} : (pddFound_(policy, b && b.stage ? pddStageB_(b) : 0) || {});
+  var stage = Number(found.stage) || pddStageB_(b);
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) return iErr_('The desk is busy for a moment. Try again.');
   try {
@@ -1364,8 +1407,11 @@ function pddSkip_(b, session) {
    copy of the line when it has one, and what the page showed when it has not. */
 function pddNewRow_(now, goes, policy, found, b, session, decision, reason, status) {
   var pick = function (k, n) { return String(found[k] || (b && b[k]) || '').slice(0, n); };
+  /* A lapse notice is marked by 120 in Days due, whatever days behind it is:
+     that is how pddStageOf_ knows the check belongs to the notice line. */
+  var notice = pddIsNotice_(found.stage) || (!found.stage && pddIsNotice_(b && b.stage));
   return [now, goes, policy, pick('clientNo', 40), pick('client', 200), pick('email', 200),
-          pick('agent', 200), iNum_(found.days || (b && (b.days || b.stage))) || PDD.STAGE,
+          pick('agent', 200), notice ? ISURVEY.NOTICE : (iNum_(found.days || (b && (b.days || b.stage))) || PDD.STAGE),
           session.name, decision, String(reason || '').slice(0, 500), status, '', '', ''];
 }
 
@@ -1373,12 +1419,14 @@ function pddNewRow_(now, goes, policy, found, b, session, decision, reason, stat
    a fresh read (kept for the next ten minutes) when it has not. A client who
    is not on it is not ticked: the record of a check has to say who was
    checked, and the desk has nothing to say about a client it cannot see. */
-function pddFound_(policy) {
+function pddFound_(policy, stage) {
   var pool = pddCacheGet_('pdd_line');
   if (!pool || !pool.rows || pool.late !== PDD.LATE || pool.v !== PDD.VERSION) pool = pddPool_(false);
   if (!pool || pool.error || !pool.rows) return null;
   var out = null;
-  pool.rows.forEach(function (x) { if (x.row && x.row.policy === policy) out = x.row; });
+  pool.rows.forEach(function (x) {
+    if (x.row && x.row.policy === policy && (!stage || x.row.stage === stage)) out = x.row;
+  });
   return out;
 }
 
@@ -1422,7 +1470,7 @@ function pddRunNow_(now, today) {
      automatic queue runs only if PDD_AUTO is set to on. */
   var poolPre = null, auto = null;
   if (pddAuto_()) {
-    poolPre = iSurveyPool_(PDD.STAGES, PDD.LATE);
+    poolPre = pddLines_();
     if (!poolPre.error) {
       auto = pddAutoQueue_(checks, poolPre, now, today);
       checks = pddChecks_(); sh = checks.sh;
@@ -1434,12 +1482,11 @@ function pddRunNow_(now, today) {
   });
   var at = pddFmt_(now, 'HH:mm');
   if (!due.length) {
-    var nNo = pddNotices_(iMailState_().clients, pddQuota_(), t0);
     iSetProp_('PDD_SENT_ON', today);
     pddLastRun_({ at: now.toISOString(), when: pddFmt_(now, 'EEE d MMM, HH:mm'), mode: '', sent: 0,
-                  test: 0, notSent: 0, waiting: 0, note: 'nothing was ticked', notices: nNo });
-    if (nNo.sent || nNo.test || (auto && auto.flagged.length)) pddFinish_(now, { mode: iMailState_().clients, sent: [], test: [], notSent: [], waiting: [], why: '', auto: auto, notices: nNo });
-    return { did: nNo.sent + nNo.test > 0, text: 'premium due: nothing ticked for today; notices ' + (nNo.sent + nNo.test) };
+                  test: 0, notSent: 0, waiting: 0, note: 'nothing was ticked' });
+    if (auto && auto.flagged.length) pddFinish_(now, { mode: iMailState_().clients, sent: [], test: [], notSent: [], waiting: [], why: '', auto: auto });
+    return { did: false, text: 'premium due: nothing ticked for today' };
   }
 
   var mode = iMailState_().clients;        // live, test or held
@@ -1482,7 +1529,7 @@ function pddRunNow_(now, today) {
     return { did: false, text: 'premium due: ' + due.length + ' ticked, none sent: ' + hold };
   }
 
-  var pool = poolPre && !poolPre.error ? poolPre : iSurveyPool_(PDD.STAGES, PDD.LATE);
+  var pool = poolPre && !poolPre.error ? poolPre : pddLines_();
   if (pool.error) {
     due.forEach(function (r) { put(r, sum.waiting, 'waiting', 'held at ' + at + ': ' + pool.error); });
     sum.why = pool.error;
@@ -1490,24 +1537,31 @@ function pddRunNow_(now, today) {
     pddFinish_(now, sum);
     return { did: false, text: 'premium due: ' + pool.error };
   }
-  var byPolicy = {};
-  (pool.rows || []).forEach(function (d) { byPolicy[pddPolKey_(d.policy)] = d; });
+  /* A notice's check is looked up among the notices, a letter's among the
+     lines, so a policy that lapsed after its 90-day tick never sends a notice
+     in the letter's place, nor the other way round. */
+  var byPolicy = {}, byNotice = {};
+  (pool.rows || []).forEach(function (d) {
+    (pddIsNotice_(d.stage) ? byNotice : byPolicy)[pddPolKey_(d.policy)] = d;
+  });
+  var lineOf = function (r) { return pddIsNotice_(pddStageOf_(r.days)) ? byNotice[r.policy] : byPolicy[r.policy]; };
   /* the letter's extras for the clients going today only, not the whole line */
-  pddDress_(due.map(function (r) { return byPolicy[r.policy]; }).filter(Boolean));
+  pddDress_(due.map(lineOf).filter(Boolean));
 
   /* Oldest first: the client nearest the end of the line cannot wait for the
      next send. Then the soonest to lapse. */
   var lapses = pddLapseMap_();
   var lapseOf = function (r) { var l = pddDate_(lapses[r.policy]); return l ? l.getTime() : 8640000000000; };
   due.sort(function (x, y) {
-    var dx = byPolicy[x.policy] ? byPolicy[x.policy].days : daysNow(x);
-    var dy = byPolicy[y.policy] ? byPolicy[y.policy].days : daysNow(y);
+    var lx = lineOf(x), ly = lineOf(y);
+    var dx = lx ? (pddIsNotice_(lx.stage) ? 1000 : lx.days) : daysNow(x);
+    var dy = ly ? (pddIsNotice_(ly.stage) ? 1000 : ly.days) : daysNow(y);
     return dx !== dy ? dy - dx : lapseOf(x) - lapseOf(y);
   });
 
   var surveys = iSurveyTab_(), test = iProp_('INTEL_TEST_TO');
   var hash = mode === 'live' ? iSurveyHash_() : '', approver = iProp_('INTEL_SURVEY_APPROVED_BY');
-  var left = pddQuota_(), stoppedFor = '';
+  var left = pddQuota_(), stoppedFor = '', nNotices = 0;
   for (var i = 0; i < due.length; i++) {
     var r = due[i];
     if (!stoppedFor && new Date().getTime() - t0 > PDD.BUDGET_MS) {
@@ -1518,8 +1572,17 @@ function pddRunNow_(now, today) {
     }
     if (stoppedFor) { put(r, sum.waiting, 'waiting', stoppedFor); continue; }
 
-    var d = byPolicy[r.policy], stageR = pddStageOf_(r.days);
-    if (d && Number(d.stage) !== stageR) {
+    var stageR = pddStageOf_(r.days), isN = pddIsNotice_(stageR), d = lineOf(r);
+    if (isN && nNotices >= PDD.NOTICES_MAX) {
+      put(r, sum.waiting, 'waiting', 'more than ' + PDD.NOTICES_MAX + ' lapse notices in one morning; it goes at the next send');
+      continue;
+    }
+    if (isN && !d) {
+      put(r, sum.notSent, 'not sent', 'no longer due a lapse notice at ten: paid or reinstated since it was checked, '
+        + 'more than ' + ISURVEY.NOTICE_BACK + ' days past the lapse, a notice already went on this policy, or opted out');
+      continue;
+    }
+    if (!isN && d && Number(d.stage) !== stageR) {
       put(r, sum.notSent, 'not sent', 'it moved to the ' + d.stage + '-day line before it could go: check it again there');
       continue;
     }
@@ -1561,10 +1624,11 @@ function pddRunNow_(now, today) {
     d.base = base || iSurveyBase_();
     var html = iSurveyHtml_(d), subject = iSurveySubject_(d);
     d.subject = subject;
+    var what = isN ? 'lapse notice · ' : '';
     var checked = (/^automatic/i.test(r.by) ? 'sent automatically at ten, nobody held it' : 'checked by ' + r.by + ' ' + pddFmt_(r.at, 'd MMM HH:mm'));
     try {
       if (mode === 'live') {
-        var logged = pddLogLetter_(surveys, d, 'sending · desk · ' + checked);
+        var logged = pddLogLetter_(surveys, d, 'sending · desk · ' + what + checked);
         try {
           MailApp.sendEmail({ to: d.email, cc: cc.join(','), name: 'Ricky Rampersad Branch',
                               subject: subject, htmlBody: html });
@@ -1572,19 +1636,20 @@ function pddRunNow_(now, today) {
           pddUnlog_(surveys, logged, token);
           throw sendErr;
         }
-        if (logged) surveys.getRange(logged, ISCOL.MODE).setValue('live · desk · ' + checked
+        if (logged) surveys.getRange(logged, ISCOL.MODE).setValue('live · desk · ' + what + checked
           + ' · sent at ten · cleared ' + hash + ' by ' + approver);
         put(r, sum.sent, 'sent', 'to ' + d.email + (cc.length ? ', copying ' + cc.join(', ') : ''), token);
       } else {
         MailApp.sendEmail({ to: test, name: 'Branch Intelligence', subject: '[TEST] ' + subject,
           htmlBody: '<div style="background:#E8A020;color:#00254d;padding:10px 14px;'
-            + 'font:700 13px sans-serif;border-radius:8px;margin-bottom:14px">TEST MODE — the ' + iEsc_(String(d.stage))
-            + '-day letter. At ten this would have gone to ' + iEsc_(d.email) + ', copying ' + iEsc_(pddCc_(d).join(', ') || 'nobody')
+            + 'font:700 13px sans-serif;border-radius:8px;margin-bottom:14px">TEST MODE — '
+            + (isN ? 'the lapse notice' : 'the ' + iEsc_(String(d.stage)) + '-day letter') + '. At ten this would have gone to ' + iEsc_(d.email) + ', copying ' + iEsc_(pddCc_(d).join(', ') || 'nobody')
             + '. Checked by ' + iEsc_(r.by) + ' ' + iEsc_(pddFmt_(r.at, 'd MMM HH:mm'))
             + ' on the Premium Due Desk. The client was not written to.</div>' + html });
         put(r, sum.test, 'test copy', 'went to the test inbox at ' + pddFmt_(new Date(), 'HH:mm')
           + '; the client was not written to');
       }
+      if (isN) nNotices++;
       left -= need;
     } catch (err) {
       var msg = String(err && err.message || err);
@@ -1596,10 +1661,8 @@ function pddRunNow_(now, today) {
 
   /* A send that ran out of time is not today's send done: the next hour's
      firing carries on with what is left. */
-  if (!/out of time/.test(stoppedFor)) {
-    sum.notices = pddNotices_(mode, left, t0);
-    iSetProp_('PDD_SENT_ON', today);
-  }
+  if (!/out of time/.test(stoppedFor)) iSetProp_('PDD_SENT_ON', today);
+  sum.notices = pddNoticeTally_(sum, today);
   pddCacheDrop_('pdd_line');
   sum.left = pddQuota_();
   pddFinish_(now, sum);
@@ -1641,63 +1704,19 @@ function pddAutoQueue_(checks, pool, now, today) {
   return out;
 }
 
-/* The lapse notices, at the end of the ten o'clock send. Live: logged on Intel
-   Surveys (Stage 120) before the mail goes, agent, sales support and the unit
-   manager copied. Test: to the test inbox, once per policy (PDD_NOTICE_TESTED). */
-function pddNotices_(mode, left, t0) {
-  var out = { sent: 0, test: 0, skipped: 0, names: [] };
-  /* Off unless switched on: nothing goes to a client without a person's tick
-     (Ricky, 6 Nov), and the notices have no tick on the desk yet. */
-  var on = String(iProp_('PDD_NOTICES') || '').trim().toLowerCase();
-  if (on !== 'on' && on !== 'yes') return out;
-  if (mode === 'held') return out;
-  var blocked = mode === 'live' ? iSurveyBlocked_() : '';
-  var base = pddBase_() || iSurveyBase_();
-  if (blocked || (mode === 'live' && !base)) { out.skipped = -1; return out; }
-  var pool = iSurveyLapsePool_();
-  if (pool.error) return out;
-  var tested = {};
-  try { tested = JSON.parse(iProp_('PDD_NOTICE_TESTED') || '{}') || {}; } catch (e) { tested = {}; }
-  var cut = new Date().getTime() - 40 * 86400000;
-  Object.keys(tested).forEach(function (k) { if (tested[k] < cut) delete tested[k]; });
-  var surveys = iSurveyTab_(), test = iProp_('INTEL_TEST_TO'), n = 0;
-  var lastLog = { day: pddDay_(new Date()), sent: 0, test: 0 };
-  for (var i = 0; i < pool.rows.length; i++) {
-    if (n >= PDD.NOTICES_MAX || new Date().getTime() - t0 > PDD.BUDGET_MS + 60000) { out.skipped++; continue; }
-    var d = pool.rows[i], pk = pddPolKey_(d.policy);
-    if (mode !== 'live' && tested[pk]) continue;
-    var cc = pddCc_(d), need = mode === 'live' ? 1 + cc.length : 1;
-    if (left - need < PDD.RESERVE) { out.skipped++; continue; }
-    d.token = Utilities.getUuid().replace(/-/g, '');
-    d.base = base;
-    var html = iSurveyHtml_(d), subject = iSurveySubject_(d);
-    d.subject = subject;
-    try {
-      if (mode === 'live') {
-        var logged = pddLogLetter_(surveys, d, 'sending · lapse notice');
-        try {
-          MailApp.sendEmail({ to: d.email, cc: cc.join(','), name: 'Ricky Rampersad Branch', subject: subject, htmlBody: html });
-        } catch (se) { pddUnlog_(surveys, logged, d.token); throw se; }
-        if (logged) surveys.getRange(logged, ISCOL.MODE).setValue('live · lapse notice · sent at ten · cleared ' + iSurveyHash_());
-        out.sent++; lastLog.sent++;
-      } else {
-        if (!test) break;
-        MailApp.sendEmail({ to: test, name: 'Branch Intelligence', subject: '[TEST] ' + subject,
-          htmlBody: '<div style="background:#E8A020;color:#00254d;padding:10px 14px;font:700 13px sans-serif;border-radius:8px;margin-bottom:14px">'
-            + 'TEST MODE: the lapse notice. Live, this would have gone to ' + iEsc_(d.email) + ', copying ' + iEsc_(cc.join(', ') || 'nobody')
-            + '. The client was not written to. The taps in a test copy record nothing.</div>' + html });
-        tested[pk] = new Date().getTime();
-        out.test++; lastLog.test++;
-      }
-      out.names.push(d.client);
-      left -= need; n++;
-    } catch (err) {
-      out.skipped++;
-      if (/too many|quota|limit/i.test(String(err && err.message || err))) break;
-    }
-  }
-  try { iSetProp_('PDD_NOTICE_TESTED', JSON.stringify(tested)); } catch (e) {}
-  try { iSetProp_('PDD_LAST_NOTICES', JSON.stringify(lastLog)); } catch (e) {}
+/* The ticked lapse notices in this send's lists, for the summary e-mail and
+   for the wall's "notices today" (PDD_LAST_NOTICES). There is no other path
+   for a notice: each one goes only because a person ticked it on the desk. */
+function pddNoticeTally_(sum, today) {
+  var isN = function (r) { return pddIsNotice_(pddStageOf_(r.days)); };
+  var out = { sent: sum.sent.filter(isN).length, test: sum.test.filter(isN).length, skipped: 0,
+              names: sum.sent.concat(sum.test).filter(isN).map(function (r) { return r.client; }) };
+  try {
+    var prev = JSON.parse(iProp_('PDD_LAST_NOTICES') || 'null');
+    var keep = prev && prev.day === today ? prev : { day: today, sent: 0, test: 0 };
+    keep.sent = (keep.sent || 0) + out.sent; keep.test = (keep.test || 0) + out.test;
+    if (out.sent || out.test || !prev || prev.day !== today) iSetProp_('PDD_LAST_NOTICES', JSON.stringify(keep));
+  } catch (e) {}
   return out;
 }
 
@@ -1772,8 +1791,9 @@ function pddFinish_(now, sum) {
       + '<td style="padding:6px 10px;border-bottom:1px solid #e2e8ee">' + iEsc_(what) + '</td></tr>';
   };
   var rows = [];
-  sum.sent.forEach(function (r) { rows.push(line(r, 'Sent')); });
-  sum.test.forEach(function (r) { rows.push(line(r, 'Test copy')); });
+  var nw = function (r, w) { return pddIsNotice_(pddStageOf_(r.days)) ? w + ' (lapse notice)' : w; };
+  sum.sent.forEach(function (r) { rows.push(line(r, nw(r, 'Sent'))); });
+  sum.test.forEach(function (r) { rows.push(line(r, nw(r, 'Test copy'))); });
   sum.notSent.forEach(function (r) { rows.push(line(r, 'Not sent: ' + r.note)); });
   sum.waiting.forEach(function (r) { rows.push(line(r, 'Waiting: ' + r.note)); });
   var html = '<div style="font:14px/1.55 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#16202b;max-width:760px">'
@@ -1788,7 +1808,7 @@ function pddFinish_(now, sum) {
         + iEsc_(sum.auto.flagged.slice(0, 15).map(function (f) { return f.client + ' (' + f.why + ')'; }).join('; '))
         + (sum.auto.flagged.length > 15 ? '…' : '') + '. Tick them on the desk once checked.' : '.') + '</p>' : '')
     + (sum.notices && (sum.notices.sent || sum.notices.test || sum.notices.skipped)
-      ? '<p style="margin:10px 0 0">Lapse notices (lapsed under two years): <b>' + (sum.mode === 'live' ? sum.notices.sent + ' sent' : sum.notices.test + ' test copies')
+      ? '<p style="margin:10px 0 0">Lapse notices, ticked on the desk (lapsed under two years): <b>' + (sum.mode === 'live' ? sum.notices.sent + ' sent' : sum.notices.test + ' test copies')
         + '</b>' + (sum.notices.names.length ? ': ' + iEsc_(sum.notices.names.join(', ')) : '') + '.</p>' : '')
     + (sum.left != null ? '<p style="margin:14px 0 0;color:#5c6b7a">Mail allowance left today: ' + sum.left + ' recipients.</p>' : '')
     + '<p style="margin:14px 0 0;color:#8b98a6;font-size:12px">Internal: it names clients. Do not forward outside the branch.</p></div>';
@@ -1846,7 +1866,8 @@ function pddToday() {
     by[r.stage] = (by[r.stage] || 0) + 1;
   });
   var out = ['The four lines, ' + Utilities.formatDate(new Date(), iTz_(), 'd MMMM yyyy') + ': '
-               + PDD.STAGES.map(function (st) { return st + ' to ' + (st + PDD.LATE) + ' days: ' + (by[st] || 0); }).join(' · '),
+               + PDD.STAGES.map(function (st) { return st + ' to ' + (st + PDD.LATE) + ' days: ' + (by[st] || 0); }).join(' · ')
+               + ' · lapse notices: ' + (by[ISURVEY.NOTICE] || 0) + (pool.noticeError ? ' (could not read: ' + pool.noticeError + ')' : ''),
              rows.length + ' client' + (rows.length === 1 ? '' : 's') + ' in all, '
                + flagged + ' with something to check.',
              'Client mail: ' + iMailState_().clients + '.',

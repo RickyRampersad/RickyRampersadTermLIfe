@@ -6092,14 +6092,19 @@ servicing work".
     the agent and the unit manager; "close it" closes the row.
   - **The trail** (`iSurveyTrailHtml_`): every earlier note this episode, date, subject (new Subject column), what they
     tapped, what we did. Never the private message.
-  - **The lapse notice** (`iSurveyLapsePool_`, `iSurveyNoticeHtml_`, `pddNotices_`, Stage 120): lapsed within 14 days, in
+  - **The lapse notice** (`iSurveyLapsePool_`, `iSurveyNoticeHtml_`, Stage 120): lapsed within 14 days, in
     force under two years at the lapse, once a policy; the trail, "can it be reinstated" (never a promise), why they let it
-    go, "in my own words" (Details column), a rating of how we kept in touch. It has no tick on the desk yet, so it sends
-    nothing unless the `PDD_NOTICES` Script property reads on (it used to go unless set to off).
+    go, "in my own words" (Details column), a rating of how we kept in touch.
+  - **The lapse notice has its own tab, ticked like the letters (6 Nov, PDD 2026-11-06c).** "Lapsed · notice" is a fifth
+    tab on the desk (`pddLines_` reads the four lines and the notices together): open the notice, then tick it or "Do not
+    send" with a reason; the ten o'clock send sends the ticked ones with the letters, re-checking each is still due one. A
+    notice check is the Checks row with 120 in Days due (`pddStageOf_`), no new column. Nothing goes unticked:
+    `pddNotices_` and `PDD_NOTICES` are gone. The notice's wording was already inside the approval, so it stands.
   - Intel Surveys gains Subject, Details, Reviewed (31–33). The tracker's `doPost` now routes the letter forms
     (`iSurveyPost_`): until then the private line's form posted into the tracker and went nowhere.
   - The wording changed: the approval lapses until `intelSurveyApprove`. Test mode sends test copies only.
-    `flow06/flow-test.js` in the scratchpad covers it.
+    `flow06/flow-test-on.js`, `flow06/notice-tick-test.js` (38) and `flow06/notice-page-test.js` (26, Playwright) in the
+    scratchpad cover it.
 - **The wall's Premium dues stop: eleven scenes that turn by themselves (5 November 2026, PDD 2026-11-05a).** Ricky, 4
   November: "Policies under 3 years ... under 5 years for both active and inactive agents, with the exceptions of Dominic,
   Javid, Aleema, Tarek. Those persons are still with the company ... can this dashboard paint a picture", then, the same

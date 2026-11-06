@@ -12099,7 +12099,7 @@ function iSurveyLapsePool_() {
       issued: issue ? Utilities.formatDate(issue, iTz_(), 'MMMM yyyy') : 'record unclear',
       billing: String(d.get('billing', r)).trim() || 'Direct Bill', premium: iNum_(d.get('premium', r)),
       branchPhone: iProp_('INTEL_BRANCH_PHONE'), stage: ISURVEY.NOTICE,
-      days: paid ? Math.round((today - paid) / DAY) : 0,
+      days: paid ? Math.round((today - paid) / DAY) : 0, ago: ago,
       lapseWords: Utilities.formatDate(gone, iTz_(), 'd MMMM yyyy'),
       paidToWords: paid ? Utilities.formatDate(paid, iTz_(), 'd MMMM yyyy') : '',
       hist: iSurveyHistory_(sh3, clientNo, today, vals3),
