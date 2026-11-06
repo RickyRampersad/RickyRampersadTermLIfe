@@ -76,7 +76,14 @@ var QUOTE = {
        Manager. It goes to him alone, never to the sales support inbox, because
        the person asking may be contracted elsewhere today. */
     'careers':          { code: 'QT', line: 'Careers', title: 'Confidential conversation', to: 'manager',
-                          client: 'Your request is with Mr Rampersad himself. Nobody else in the branch sees it.' }
+                          client: 'Your request is with Mr Rampersad himself. Nobody else in the branch sees it.' },
+    /* /buildwithus/ — the administrator's seat, the branch's own operations
+       and automation role. It goes to the Branch Manager alone for the same
+       reason the careers booking does: the person answering may be employed
+       somewhere today, and an application that reached a shared branch inbox
+       would be a breach of the discretion the page promises them. */
+    'admin':            { code: 'QB', line: 'Build with us', title: 'Administrator and branch builder', to: 'manager',
+                          client: 'Your answers are with Mr Rampersad himself. Nobody else in the branch sees them, and nothing reaches your current employer.' }
   },
 
   /* The line of the summary column, per form: the two or three answers a
@@ -88,7 +95,10 @@ var QUOTE = {
     'key-person':       ['biz_name', 'kp_count', 'kp_role', 'kp_why', 'sum_want'],
     'oas':              ['emp_name', 'contrib', 'pay_how'],
     'xpress-life':      ['for_whom', 'life_dob', 'life_smoke', 'sum_want', 'how_finish'],
-    'careers':          ['who', 'when_talk', 'note']
+    'careers':          ['who', 'when_talk', 'note'],
+    /* The score first, because it is the one thing that says whether to read
+       the rest now or later; then where they are, and the thing they built. */
+    'admin':            ['score', 'now', 'w_built']
   },
 
   /* A client who taps send twice, or whose connection retries, must not
@@ -109,6 +119,9 @@ var QUOTE = {
     apply: ['The branch opens your file under this reference straight away.',
             'A licensed agent calls you at the time you chose.',
             'Five health questions, no medical exam, and the cover is issued.'],
+    join:  ['Mr Rampersad reads it himself, within two working days. Your name reaches nobody else.',
+            'If it reads like you, he asks you for one thing: a GitHub issue on our public code, saying what you would fix.',
+            'Then twenty minutes on the phone — terms and pay openly — and a straight answer either way.'],
     talk:  ['Mr Rampersad reads it himself. Your name reaches nobody else.',
             'He calls you at the time you chose, within two working days, for twenty minutes.',
             'Your questions and the branch\'s own figures, no pitch. Then you decide.']
@@ -116,7 +129,8 @@ var QUOTE = {
 
   KIND: {
     'motor': 'quote', 'property': 'quote', 'critical-illness': 'quote',
-    'key-person': 'quote', 'oas': 'enrol', 'xpress-life': 'apply', 'careers': 'talk'
+    'key-person': 'quote', 'oas': 'enrol', 'xpress-life': 'apply', 'careers': 'talk',
+    'admin': 'join'
   },
 
   BRANCH_TEL: '(868) 226-6461',

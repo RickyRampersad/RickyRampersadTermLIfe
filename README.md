@@ -35,4 +35,9 @@ with a full history rewrite. Do not make it a third time.
   (signing in is the register), action tracker and minutes
 - `rroperations/` — RR Operations: the team's sign-in and app launcher; first app the
   Delivery Book (`rroperations/delivery-book/`). Setup in `RROPERATIONS-SETUP.md`
+- `agentmgt/` → `careers/` — advisor recruiting (edit `agentmgt/`, then run
+  `tools/careers/sync.py`; never edit `careers/index.html` by hand)
+- `buildwithus/` — the administrator's seat: the branch's operations and
+  automation role, with the filter questionnaire. The ad copy and how to read
+  the answers are in `BUILDWITHUS-SETUP.md`
 - `apps-script/` — backend source (deployed to Google Apps Script, not run here)
