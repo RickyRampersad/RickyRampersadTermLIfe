@@ -83,7 +83,23 @@ var QUOTE = {
        somewhere today, and an application that reached a shared branch inbox
        would be a breach of the discretion the page promises them. */
     'admin':            { code: 'QB', line: 'Build with us', title: 'Administrator and branch builder', to: 'manager',
-                          client: 'Your answers are with Mr Rampersad himself. Nobody else in the branch sees them, and nothing reaches your current employer.' }
+                          client: 'Your answers are with Mr Rampersad himself. Nobody else in the branch sees them, and nothing reaches your current employer.' },
+    /* /underwriter/ — the general insurance agency's underwriting seat. To
+       the Branch Manager alone, like the other two recruiting forms, and the
+       only form that takes a file: the CV. */
+    'underwriter':      { code: 'QU', line: 'Underwriter', title: 'Underwriter, general insurance', to: 'manager', cv: true,
+                          client: 'Your application is with Mr Rampersad himself. Nobody else in the branch sees it, and nothing reaches your current employer.' }
+  },
+
+  /* The CV upload. Only a form whose def carries cv:true may send one.
+     QUOTE_CV_FOLDER is the Drive folder id; without it the file is skipped
+     and the row says so rather than the application being lost. */
+  CV: {
+    MAX_BYTES: 6 * 1024 * 1024,
+    TYPES: { 'application/pdf': 'pdf', 'application/msword': 'doc',
+             'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx' },
+    FOLDER: function () { return (PropertiesService.getScriptProperties()
+      .getProperty('QUOTE_CV_FOLDER') || '').trim(); }
   },
 
   /* The line of the summary column, per form: the two or three answers a
@@ -98,7 +114,8 @@ var QUOTE = {
     'careers':          ['who', 'when_talk', 'note'],
     /* The score first, because it is the one thing that says whether to read
        the rest now or later; then where they are, and the thing they built. */
-    'admin':            ['score', 'emp_role', 'pay_now']
+    'admin':            ['score', 'emp_role', 'pay_now'],
+    'underwriter':      ['uw_years', 'uw_classes', 'uw_auth']
   },
 
   /* A client who taps send twice, or whose connection retries, must not
@@ -130,7 +147,7 @@ var QUOTE = {
   KIND: {
     'motor': 'quote', 'property': 'quote', 'critical-illness': 'quote',
     'key-person': 'quote', 'oas': 'enrol', 'xpress-life': 'apply', 'careers': 'talk',
-    'admin': 'join'
+    'admin': 'join', 'underwriter': 'join'
   },
 
   BRANCH_TEL: '(868) 226-6461',
@@ -213,12 +230,23 @@ function quoteSubmit_(body) {
   row['Page']        = quoteClean_(body.page, 120);
   row['Note']        = '';
 
+  /* The CV, for the one form that takes one. In its own try and BEFORE the
+     row is written: a file that will not save must never lose the
+     application, so the row records what happened either way. */
+  var cv = null;
+  if (def.cv && body && body.cv) {
+    try { cv = quoteSaveCv_(ref, body.cv, name); }
+    catch (e) { quoteLog_(ref, 'cv-failed', e); cv = { error: String(e).slice(0, 120) }; }
+    row['Note'] = cv && cv.url ? 'CV: ' + cv.url
+                : 'CV did not attach (' + ((cv && cv.error) || 'unknown') + ') — ask them to e-mail it.';
+  }
+
   quoteAppend_(sh, row);
 
   /* Both e-mails are in their own try. A mail that will not send must
      never lose the row that is already filed. */
   var told = { team: false, client: false };
-  try { quoteTeamMail_(ref, def, row, answers, now); told.team = true; }
+  try { quoteTeamMail_(ref, def, row, answers, now, cv); told.team = true; }
   catch (e) { quoteLog_(ref, 'team-mail-failed', e); }
   try { quoteClientMail_(ref, def, form, row); told.client = true; }
   catch (e) { quoteLog_(ref, 'client-mail-failed', e); }
@@ -226,7 +254,43 @@ function quoteSubmit_(body) {
   quoteLog_(ref, 'filed', def.line + ' · ' + (told.team ? 'team told' : 'TEAM NOT TOLD')
                         + ' · ' + (told.client ? 'client told' : 'CLIENT NOT TOLD'));
 
-  return { ok: true, ref: ref, emailed: told.client };
+  return { ok: true, ref: ref, emailed: told.client, cv: !!(cv && cv.url) };
+}
+
+
+/* ============================ the CV ============================ */
+
+/**
+ * Save one uploaded CV to Drive and give back { name, url }.
+ *
+ * It is deliberately strict: only the three document types a CV actually
+ * comes as, only up to QUOTE.CV.MAX_BYTES, and only into the folder the
+ * QUOTE_CV_FOLDER property names. Anything else throws, and the caller
+ * records that on the row rather than losing the application.
+ */
+function quoteSaveCv_(ref, cv, who) {
+  var folderId = QUOTE.CV.FOLDER();
+  if (!folderId) throw new Error('QUOTE_CV_FOLDER is not set');
+
+  var type = String((cv && cv.type) || '').toLowerCase().split(';')[0];
+  var ext  = QUOTE.CV.TYPES[type];
+  if (!ext) throw new Error('not a PDF or Word document');
+
+  var b64 = String((cv && cv.data) || '');
+  var comma = b64.indexOf(',');
+  if (b64.slice(0, 5) === 'data:' && comma > -1) b64 = b64.slice(comma + 1);
+  if (!b64) throw new Error('empty file');
+  /* base64 is 4 characters per 3 bytes; check before decoding so a huge
+     paste cannot blow the run up on the decode itself. */
+  if (b64.length / 4 * 3 > QUOTE.CV.MAX_BYTES) throw new Error('over 6 MB');
+
+  var bytes = Utilities.base64Decode(b64);
+  if (bytes.length > QUOTE.CV.MAX_BYTES) throw new Error('over 6 MB');
+
+  var safe = String(who || 'candidate').replace(/[^A-Za-z0-9 .-]/g, '').slice(0, 60).trim() || 'candidate';
+  var blob = Utilities.newBlob(bytes, type, ref + ' - ' + safe + '.' + ext);
+  var file = DriveApp.getFolderById(folderId).createFile(blob);
+  return { name: file.getName(), url: file.getUrl() };
 }
 
 
@@ -381,7 +445,7 @@ function quoteEsc_(s) {
  * Internal. Carries a client's name and contact details, so it says so
  * at the foot — the house rule for every internal e-mail that does.
  */
-function quoteTeamMail_(ref, def, row, answers, now) {
+function quoteTeamMail_(ref, def, row, answers, now, cv) {
   var tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone() || 'America/Port_of_Spain';
   var when = Utilities.formatDate(now, tz, 'd MMM yyyy, h:mm a');
 
@@ -415,6 +479,11 @@ function quoteTeamMail_(ref, def, row, answers, now) {
     +     head('Reach them', (row['Reach'] || '—') + ' · ' + (row['Best time'] || 'any time'))
     +     (row['Agent named'] ? head('Agent named by the client', row['Agent named']) : '')
     +     head('Came in', when)
+    +     (cv && cv.url
+          ? head('Their CV', '<a href="' + quoteEsc_(cv.url) + '">' + quoteEsc_(cv.name) + '</a>')
+          : (cv && cv.error
+             ? head('Their CV', 'did not attach (' + quoteEsc_(cv.error) + ') &mdash; ask them to e-mail it')
+             : ''))
     +   '</table>'
     +   (row['Summary']
         ? '<div style="margin:18px 0;padding:12px 16px;background:#e8f3f6;border-left:4px solid #00728d;'

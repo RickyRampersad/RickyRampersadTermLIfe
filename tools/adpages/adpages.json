@@ -1,0 +1,65 @@
+{
+  "_note": "The three recruiting ad pages. Edit this and run build-adpages.py; never edit a generated page. Each ad's own landing page (/buildwithus/, /joinourbranch/, /underwriter/) is hand-written and is NOT generated here.",
+  "common": {
+    "site": "Ricky Rampersad Branch",
+    "footer": "A Ricky Rampersad initiative &middot; Guardian Life of the Caribbean &middot; Chaguanas Branch",
+    "tel": "+18686785821",
+    "telText": "678-5821",
+    "shapes": [
+      { "k": "v", "label": "Upright &middot; Reels, TikTok, Status", "w": 1080, "h": 1920, "download": "the upright cut (9:16)" },
+      { "k": "f", "label": "Feed &middot; Facebook, Instagram", "w": 1080, "h": 1350, "download": "the feed cut (4:5)" },
+      { "k": "w", "label": "Wide &middot; YouTube, LinkedIn", "w": 1920, "h": 1080, "download": "the wide cut (16:9)" }
+    ],
+    "note": "Narrated, with the branch's own music, and the words are on screen the whole way through &mdash; it reads with the sound off, which is how most of a feed is watched. Every screen in it is a real branch screen carrying sample data; no client appears anywhere."
+  },
+  "ads": [
+    {
+      "key": "bwadmin",
+      "dir": "buildwithusvideo",
+      "page": "buildwithus",
+      "title": "You already know how your office should run",
+      "h1": "You already know how your office should run.",
+      "h1em": "Nobody has given you the tools.",
+      "lede": "One administrator&rsquo;s seat, in a branch that writes and runs its own software. Half the day is the branch&rsquo;s admin. The other half is making that admin unnecessary.",
+      "desc": "One administrator's seat in a branch that writes its own software — Apps Script, Salesforce, AI. Half admin, half making the admin unnecessary. Fifty seconds.",
+      "metaDesc": "Fifty seconds on one administrator's seat in a branch that writes its own software. Chaguanas, Trinidad. Apply in fifteen minutes.",
+      "ctas": [
+        { "href": "/buildwithus/", "text": "See the seat and apply &mdash; 15 min", "primary": true },
+        { "href": "/buildwithus/#test", "text": "Five questions first" },
+        { "href": "/joinourbranch/", "text": "Looking to become an advisor instead?" }
+      ]
+    },
+    {
+      "key": "bwagent",
+      "dir": "joinourbranchvideo",
+      "page": "joinourbranch",
+      "title": "Most people start this career with a list of their friends",
+      "h1": "Most people start this career with a list of their friends.",
+      "h1em": "Not here.",
+      "lede": "Leads from a board of people who asked to hear from somebody. Clients matched to you household by household, with the whole file already read. A fact find that does the arithmetic, a client who confirms the plan in their own inbox, and a manager who signs it before anything is placed.",
+      "desc": "Leads from a board. Clients matched to you household by household. A fact find that does the arithmetic. Forty-six seconds on what this branch gives an advisor.",
+      "metaDesc": "Forty-six seconds on what a Guardian Life advisor gets in this branch: leads, matched households, a fact find that does the arithmetic, numbers on the wall. Chaguanas, Trinidad.",
+      "ctas": [
+        { "href": "/joinourbranch/", "text": "See what you would be given", "primary": true },
+        { "href": "/joinourbranch/#build", "text": "Tell us what is in your way" },
+        { "href": "/buildwithus/", "text": "Not a sales role? The administrator&rsquo;s seat" }
+      ]
+    },
+    {
+      "key": "bwuw",
+      "dir": "underwritervideo",
+      "page": "underwriter",
+      "title": "Your judgement on the risk. Not on the paperwork",
+      "h1": "Your judgement on the risk.",
+      "h1em": "Not on the paperwork.",
+      "lede": "We are opening a general insurance agency and we need one underwriter. The quote, the proposal form and the customer checks fill themselves from the record, so the part of the day that is yours is the part only you can do.",
+      "desc": "An experienced underwriter for a new general insurance agency. The paperwork is already done; the judgement is yours. Fifty-one seconds.",
+      "metaDesc": "Fifty-one seconds on one underwriter's seat in a new general insurance agency in Chaguanas, Trinidad. The paperwork fills itself; the judgement is yours.",
+      "ctas": [
+        { "href": "/underwriter/", "text": "See the seat and send your CV", "primary": true },
+        { "href": "/underwriter/#apply", "text": "Three judgement questions" },
+        { "href": "/joinourbranch/", "text": "Looking to become an advisor instead?" }
+      ]
+    }
+  ]
+}
