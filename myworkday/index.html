@@ -397,7 +397,7 @@
 (function () {
   "use strict";
   // The tracker's web app: the same one the walls read. ?api= points it elsewhere for a test.
-  var TRACKER = "https://script.google.com/macros/s/AKfycbzb9gzh3TldhLCQA7MCz3vdyWLAWTHpR9X7M3uvPNtqJbnnYRMcDSkm0D1C8SgENvn44g/exec";
+  var TRACKER = "https://script.google.com/macros/s/AKfycbympAk9o8Ns8un0UXKY1PHkS__nYa-Hx6Q3TzbCRSMyezkFhRtFFrz56qOCuSug1-34OQ/exec";
   var Q = new URLSearchParams(location.search);
   if (Q.get("api") && /^https:\/\/script\.google\.com\/|^http:\/\/(localhost|127\.0\.0\.1)[:/]/.test(Q.get("api"))) TRACKER = Q.get("api");
   var store = {
