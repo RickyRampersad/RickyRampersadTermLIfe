@@ -12809,8 +12809,8 @@ function iSurveyClick_(e) {
       return iSurveyPage_('Thank you.', 'Your rating of ' + n + ' out of 5 has been recorded ' +
         'and will be read by the branch. Nothing further is needed.', token, agent);
     }
-    if (p.c) {
-      sh.getRange(r + 2, ISCOL.HEARD).setValue(String(p.c).toLowerCase() === 'yes' ? 'Yes' : 'No');
+    if (p.cm || p.c) {
+      sh.getRange(r + 2, ISCOL.HEARD).setValue(String(p.cm || p.c).toLowerCase() === 'yes' ? 'Yes' : 'No');
       return iSurveyPage_('Thank you — that is genuinely useful.',
         'The branch will see it alongside your rating.', '', '');
     }
@@ -12826,10 +12826,10 @@ function iSurveyPage_(head, body, token, agent) {
     ? '<div style="margin-top:26px;padding-top:22px;border-top:1px solid #e2e8ee">'
       + '<p style="margin:0 0 12px;font-size:15px">One more, only if you have a moment — '
       + 'have you heard from <b>' + iEsc_(agent) + '</b> in the last year?</p>'
-      + '<a href="?s=' + iEsc_(token) + '&c=yes" style="display:inline-block;padding:11px 26px;'
+      + '<a href="?s=' + iEsc_(token) + '&cm=yes" style="display:inline-block;padding:11px 26px;'
       + 'margin-right:8px;background:#0b7fd4;color:#fff;border-radius:8px;text-decoration:none;'
       + 'font-weight:600">Yes</a>'
-      + '<a href="?s=' + iEsc_(token) + '&c=no" style="display:inline-block;padding:11px 26px;'
+      + '<a href="?s=' + iEsc_(token) + '&cm=no" style="display:inline-block;padding:11px 26px;'
       + 'background:#eef2f6;color:#16202b;border-radius:8px;text-decoration:none;'
       + 'font-weight:600">No</a></div>'
     : '';
