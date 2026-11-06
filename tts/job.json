@@ -1,10 +1,39 @@
 {
  "voice": "en-US-AndrewMultilingualNeural",
- "rate": "-5%",
+ "rate": "+0%",
  "check": true,
  "films": {
-  "oftfix7": [
-   "Then the system builds the transmittal for them, with this quarter's collation branch, and all the kits on one page. All they do is print."
+  "bwadmin": [
+   "You already know how your office should run. Nobody has given you the tools.",
+   "We are a branch that writes its own software.",
+   "Thirty six files. A hundred thousand lines. All of it built right here.",
+   "Google Apps Script. Salesforce. An AI agent on WhatsApp. Claude, with guardrails.",
+   "Half your day is the branch's administration. The other half is making that administration unnecessary.",
+   "You do not need to arrive knowing how. Nobody here was hired as a developer.",
+   "We are looking for one person who cannot leave a bad process alone.",
+   "Point your camera at the code. It takes fifteen minutes, and the Branch Manager reads every one himself."
+  ],
+  "bwagent": [
+   "Most people start this career the same way. A list of your friends, and good luck.",
+   "That is not how it works here.",
+   "Your leads come from a board. People who asked to be called.",
+   "Your clients are matched to you, household by household, with the whole file already read.",
+   "The fact find does the arithmetic, and a manager signs it off before it reaches your client.",
+   "Your numbers are on the wall every day, in front of everybody. Mine are too.",
+   "A coach, not a clock.",
+   "If you are contracted somewhere today, nobody there will hear of this.",
+   "Point your camera at the code. See the whole thing before you apply."
+  ],
+  "bwuw": [
+   "We are opening a general insurance agency, and we need one underwriter.",
+   "An experienced one. Somebody who has carried a book, and knows a bad risk when they see it.",
+   "Here is what is different.",
+   "The quote, the proposal form, the customer checks. All filled from the record, never typed twice.",
+   "The renewal desk reads every term since the policy began, before you open it.",
+   "A claim arrives already checked against the cover that was in force on the day of the loss.",
+   "So your judgement goes on the risk, and not on the paperwork.",
+   "If you are somewhere with no room to grow, this is a seat with the tools already built.",
+   "Point your camera at the code. Your CV, and fifteen minutes."
   ]
  }
 }
