@@ -1739,12 +1739,26 @@ function qpHealth_() {
     add('Routing table', routes > 40, routes + ' request types mapped');
   } catch (e) { add('Routing table', false, String(e)); }
 
+  /* "Installed" only ever meant the trigger exists. On the morning of
+     6 November this line was green, the trail had not gained a row overnight,
+     and there was no way to tell from here which of the two it was: a sweep
+     doing nothing because AUTOPILOT_ON is false, or no sweep at all. A green
+     light on a thing that may be switched off is the fault this whole system
+     exists to stop, so the switch is reported too. */
   try {
     var trg = ScriptApp.getProjectTriggers(), names = [];
     for (var i = 0; i < trg.length; i++) names.push(trg[i].getHandlerFunction());
-    add('Autopilot installed', names.indexOf('autoSweep') > -1,
-        names.length ? names.join(', ') : 'NONE — run setupTriggers()');
-  } catch (e) { add('Autopilot installed', false, String(e)); }
+    var hasSweep = names.indexOf('autoSweep') > -1;
+    var flagOn = (typeof AUTOPILOT_ON === 'undefined') ? null : !!AUTOPILOT_ON;
+    add('Autopilot trigger', hasSweep, names.length ? names.join(', ') : 'NONE — run setupTriggers()');
+    add('Autopilot switched on', flagOn !== false,
+        flagOn === null ? 'AUTOPILOT_ON not found in Code.gs'
+        : flagOn ? 'AUTOPILOT_ON = true — the sweep does its work'
+                 : 'AUTOPILOT_ON = false — the sweep runs and does NOTHING');
+    add('Agent survey trigger', names.indexOf('qpAgentSurveySweep') > -1,
+        names.indexOf('qpAgentSurveySweep') > -1 ? 'installed'
+          : 'not installed — run qpSetupAgentSurvey() once');
+  } catch (e) { add('Autopilot trigger', false, String(e)); }
 
   try {
     var left = MailApp.getRemainingDailyQuota();
