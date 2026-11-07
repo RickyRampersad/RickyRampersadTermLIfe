@@ -1,7 +1,62 @@
 {
- "tts/out/bwfix6/01.mp3": [
+ "tts/out/bwadmin/01.mp3": [
   "en",
-  0.999,
-  "The numbers are done for you. Your client confirms the plan and a manager signs it off."
+  0.998,
+  "Somewhere right now, there's an administrator who can see exactly what should be fixed."
+ ],
+ "tts/out/bwadmin/02.mp3": [
+  "en",
+  0.995,
+  "You got a spreadsheet, a WhatsApp group, and no permission."
+ ],
+ "tts/out/bwadmin/03.mp3": [
+  "en",
+  0.995,
+  "We're a guardian life branch in Chaguanas. We got tired of waiting too."
+ ],
+ "tts/out/bwadmin/04.mp3": [
+  "en",
+  0.996,
+  "So we wrote our own software, 36 files, about 100,000 lines. Nobody here was hired as a developer."
+ ],
+ "tts/out/bwadmin/05.mp3": [
+  "en",
+  0.994,
+  "Here is what you would actually work on."
+ ],
+ "tts/out/bwadmin/06.mp3": [
+  "en",
+  0.998,
+  "The logbook, every document that leaves this branch logged, routed, and signed for on a phone."
+ ],
+ "tts/out/bwadmin/07.mp3": [
+  "en",
+  0.995,
+  "The premium do desk. Before policy lapses, the client gets a letter and a person checks every single one."
+ ],
+ "tts/out/bwadmin/08.mp3": [
+  "en",
+  0.984,
+  "group billing, and insurers invoice, check line by line against our own records before anybody pays it."
+ ],
+ "tts/out/bwadmin/09.mp3": [
+  "en",
+  0.994,
+  "Half a day is that work. The other half is making it smaller."
+ ],
+ "tts/out/bwadmin/10.mp3": [
+  "en",
+  0.997,
+  "You take a job you do by hand and you turn it into a script that does it for you."
+ ],
+ "tts/out/bwadmin/11.mp3": [
+  "en",
+  0.895,
+  "Up it is creeped, workspace, cells false, clode. Already paid for, already connected. You get the keys, not a request form."
+ ],
+ "tts/out/bwadmin/12.mp3": [
+  "en",
+  0.984,
+  "One Administrator's seat, Chaguanas, come and build with us."
  ]
 }
