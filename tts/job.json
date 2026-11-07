@@ -3,17 +3,8 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "uwadmin": [
-   "Somewhere right now there's an underwriter who can price a risk in ten minutes, and spends the day typing it into three different places.",
-   "You retype the proposal form. You wait three days for a referral. And the file you are rating has no history on it.",
-   "We are opening a general insurance agency, here in Chaguanas.",
-   "Motor, property, liability, engineering, marine and bonds. A real commercial book.",
-   "Before you open a file, every term since the policy began is already on the screen. What was covered, at what value, what was paid, and the claims that fell in each term.",
-   "The insurer's notice is read for you, and every figure is checked against our own record. Where the two disagree, the desk says so.",
-   "Here is the part most underwriters never get. A rule you decide is not a ticket at head office. It is written into the desk, and it runs on every file that week.",
-   "Your own referral rules. A flag that fires when the declared value stops moving. A rating check the client never has to ask for.",
-   "The paperwork is finished. The underwriting is not. That is the job.",
-   "One underwriting seat. Chaguanas. Come and build the book."
+  "uwadminfix": [
+   "One seat, for an underwriter. Chaguanas. Come and build the book."
   ]
  }
 }
