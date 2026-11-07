@@ -1,12 +1,52 @@
 {
- "tts/out/bwadminfix/01.mp3": [
-  "en",
-  0.993,
-  "Half of your day is that work. The other half is making it smaller."
- ],
- "tts/out/bwadminfix/02.mp3": [
+ "tts/out/uwadmin/01.mp3": [
   "en",
   0.998,
-  "You would be writing apps script, working in Salesforce and Google workspace with Claw beside you. Already paid for, already connected. You get the keys, not a request form."
+  "Somewhere right now, there's an underwriter who can price a risk in 10 minutes and spends the day typing it into three different places."
+ ],
+ "tts/out/uwadmin/02.mp3": [
+  "en",
+  0.998,
+  "you retype the proposal form, you wait three days for a referral, and the file you are rating has no history on it."
+ ],
+ "tts/out/uwadmin/03.mp3": [
+  "en",
+  0.995,
+  "We are opening a general insurance agency here in Chaguanas."
+ ],
+ "tts/out/uwadmin/04.mp3": [
+  "en",
+  0.996,
+  "motor, property, liability, engineering, marine, and bonds. A real commercial book."
+ ],
+ "tts/out/uwadmin/05.mp3": [
+  "en",
+  0.998,
+  "Before you open a file, every term since the policy began is already on the screen. What was covered, what value, what was paid, and the claims that fell in each term."
+ ],
+ "tts/out/uwadmin/06.mp3": [
+  "en",
+  0.995,
+  "The insurers notice is red for you, and every figure is checked against our own record. Where the two disagree, the desk says so."
+ ],
+ "tts/out/uwadmin/07.mp3": [
+  "en",
+  0.997,
+  "Here is the part most underwriters never get. A rule you decide is not a ticket at head office. It is written into the desk and it runs on every file that week."
+ ],
+ "tts/out/uwadmin/08.mp3": [
+  "en",
+  0.998,
+  "your own referral rules, a flag that fires when the declared value stops moving. A rating check the client never has to ask for."
+ ],
+ "tts/out/uwadmin/09.mp3": [
+  "en",
+  0.998,
+  "The paperwork is finished. The underwriting is not. That is the job."
+ ],
+ "tts/out/uwadmin/10.mp3": [
+  "en",
+  0.996,
+  "One on a riding seat, Chaguanas, come and build the book."
  ]
 }
