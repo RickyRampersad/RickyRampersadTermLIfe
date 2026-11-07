@@ -3,19 +3,9 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "bwadmin": [
-   "Somewhere right now, there's an administrator who can see exactly what should be fixed.",
-   "You've got a spreadsheet, a WhatsApp group, and no permission.",
-   "We're a Guardian Life branch in Chaguanas. We got tired of waiting too.",
-   "So we wrote our own software. Thirty six files. About a hundred thousand lines. Nobody here was hired as a developer.",
-   "Here is what you would actually work on.",
-   "The Log Book. Every document that leaves this branch, logged, routed, and signed for on a phone.",
-   "The Premium Due Desk. Before a policy lapses, the client gets a letter, and a person checks every single one.",
-   "Group billing. An insurer's invoice, checked line by line against our own records, before anybody pays it.",
-   "Half your day is that work. The other half is making it smaller.",
-   "You take a job you do by hand, and you turn it into a script that does it for you.",
-   "Apps Script, Workspace, Salesforce, Claude. Already paid for, already connected. You get the keys, not a request form.",
-   "One administrator's seat. Chaguanas. Come and build with us."
+  "bwadminfix": [
+   "Half of your day is that work. The other half is making it smaller.",
+   "You would be writing Apps Script, working in Salesforce and Google Workspace, with Claude beside you. Already paid for, already connected. You get the keys, not a request form."
   ]
  }
 }
