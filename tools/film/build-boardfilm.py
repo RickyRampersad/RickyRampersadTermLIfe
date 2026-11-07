@@ -1786,14 +1786,28 @@ BW_HALF = {'at': 'Half', 'at2': 'other', 'at3': 'smaller',
 
 
 def s_bwhalf(i, sc, D):
-    """Two halves, and one of them shrinking."""
+    """Two halves, and one of them shrinking — the slide he asked to make pop.
+
+    The bar drops in, a cyan divider travels with the shrink, a sheen crosses
+    the white half as it finishes, the blue half keeps a drifting light and an
+    edge that pulses outward, and the chips underneath tick the finished work
+    off on the left while the work that is yours lights up on the right.
+    `lchips`/`rchips` are optional: a scene without them draws the bar alone."""
     cfg = sc.get('split', BW_HALF)
     tH, tO, tS = w(i, cfg['at']), w(i, cfg['at2']), w(i, cfg['at3'])
+    lc = ''.join(f'<i class="bwhc bwhdone" style="--at:{ms(tS + 180 + k * 150)}">{ico("check")}<span>{x}</span></i>'
+                 for k, x in enumerate(cfg.get('lchips', [])))
+    rc = ''.join(f'<i class="bwhc bwhlive" style="--at:{ms(tO + 420 + k * 170)}"><span>{x}</span></i>'
+                 for k, x in enumerate(cfg.get('rchips', [])))
+    chips = (f'<div class="bwhchips"><div class="bwhcl">{lc}</div><div class="bwhcr">{rc}</div></div>'
+             if lc or rc else '')
     return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'<div class="bwsplit" style="--at:{ms(tH - 200)};--sh:{ms(tS)}">'
             f'<i class="bwhl"><b>{cfg["l"][0]}</b><small>{cfg["l"][1]}</small></i>'
-            f'<i class="bwhr" style="--at:{ms(tO - 150)}"><b>{cfg["r"][0]}</b><small>{cfg["r"][1]}</small></i>'
-            f'</div>{at(tS + 300, "at up bwaline", inner=cfg["line"])}</div>')
+            f'<i class="bwhr" style="--at:{ms(tO - 150)}"><b>{cfg["r"][0]}</b><small>{cfg["r"][1]}</small>'
+            f'<u class="bwhpulse"></u></i>'
+            f'<u class="bwhdiv"></u>'
+            f'</div>{chips}{at(tS + 300, "at up bwaline bwhfin", inner=cfg["line"])}</div>')
 
 
 BW_SCRIPT = {'at': 'hand', 'at2': 'script',
@@ -1923,6 +1937,11 @@ BW_CSS = r"""
   border:1px solid rgba(0,229,255,.3);border-radius:8px;padding:6px 11px;opacity:0}
 .scene.act .bwf{animation:bwFly .55s cubic-bezier(.2,.9,.3,1) var(--at) both}
 @keyframes bwFly{from{opacity:0;transform:translateY(22px) scale(.86)}to{opacity:1;transform:none}}
+.bf .bwstk{position:relative;overflow:hidden;padding:4px 0}
+.bf .bwstk::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 40%,rgba(0,229,255,.16) 50%,transparent 60%);transform:translateX(-120%)}
+.scene.act .bwstk::after{animation:bwStkSheen 2.6s ease-in-out 1.6s infinite}
+@keyframes bwStkSheen{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
 .bf .bwnums{display:flex;gap:16px;margin-top:20px}
 .bf .bwnum{background:#fff;border-radius:14px;padding:12px 22px;text-align:center;box-shadow:0 18px 44px rgba(0,0,0,.45)}
 .bf .bwnum b{display:block;font:700 34px var(--head);color:var(--blue);line-height:1}
@@ -1933,6 +1952,8 @@ BW_CSS = r"""
 /* the six systems */
 .bf .bwgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:1000px;margin-top:24px}
 .bf .bwsys{background:#fff;border-radius:14px;padding:15px 16px;box-shadow:0 18px 44px rgba(0,0,0,.45);text-align:left}
+.scene.act .bwsys{animation:bwCardFloat 6.4s ease-in-out calc(var(--at) + .6s) infinite}
+@keyframes bwCardFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 .bf .bwsys b{display:block;font:700 16px var(--head);color:var(--ink);margin-top:9px}
 .bf .bwsys small{display:block;font:500 12.5px var(--body);color:var(--mute);margin-top:3px;line-height:1.35}
 .bf .bwsi{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#1D5BC4,#13408F);color:#fff;display:grid;place-items:center}
@@ -1985,17 +2006,63 @@ BW_CSS = r"""
 .bf .bwpay{margin-top:18px;font:700 14px var(--head);color:#fff;background:linear-gradient(135deg,#1D5BC4,#13408F);
   border-radius:10px;padding:10px 20px}
 
-/* half and half */
+/* half and half — the slide he asked to make pop (7 November 2026) */
 .bf .bwsplit{position:relative;display:flex;width:900px;height:118px;margin-top:26px;border-radius:16px;overflow:hidden;
   box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.scene.act .bwsplit{animation:bwSplitIn .62s cubic-bezier(.2,.9,.25,1) var(--at) both,
+  bwSplitBreathe 7s ease-in-out calc(var(--sh) + 2s) infinite}
+@keyframes bwSplitIn{from{opacity:0;transform:translateY(18px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes bwSplitBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.008)}}
 .bf .bwsplit i{display:grid;align-content:center;gap:4px;padding:0 24px}
 .bf .bwsplit b{font:700 19px var(--head)}
 .bf .bwsplit small{font:500 13px var(--body);opacity:.8}
-.bf .bwhl{background:#fff;color:var(--ink);width:50%;transform-origin:left}
+.bf .bwhl{position:relative;overflow:hidden;background:#fff;color:var(--ink);width:50%;transform-origin:left}
 .scene.act .bwhl{animation:bwShrink 1.5s cubic-bezier(.4,0,.2,1) var(--sh) both}
 @keyframes bwShrink{to{width:28%}}
-.bf .bwhr{background:linear-gradient(135deg,#1D5BC4,#13408F);color:#fff;flex:1;opacity:0}
+/* the sheen that crosses the white half as it finishes */
+.bf .bwhl::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(105deg,transparent 32%,rgba(29,91,196,.20) 50%,transparent 68%);transform:translateX(-130%)}
+.scene.act .bwhl::after{animation:bwSheenX 1.35s ease-out var(--sh) both}
+@keyframes bwSheenX{to{transform:translateX(130%)}}
+.bf .bwhr{position:relative;overflow:hidden;background:linear-gradient(135deg,#1D5BC4,#13408F);color:#fff;flex:1;opacity:0}
 .scene.act .bwhr{animation:bfIn .5s var(--at) both}
+/* a light drifting inside the blue half, and an edge that keeps leaving it */
+.bf .bwhr::before{content:"";position:absolute;inset:-45%;z-index:0;pointer-events:none;
+  background:radial-gradient(circle at 32% 50%,rgba(0,229,255,.26),transparent 56%)}
+.scene.act .bwhr::before{animation:bwGlowDrift 6.5s ease-in-out infinite}
+@keyframes bwGlowDrift{0%,100%{transform:translateX(-11%)}50%{transform:translateX(11%)}}
+.bf .bwhr b,.bf .bwhr small{position:relative;z-index:1}
+.bf .bwhpulse{position:absolute;right:0;top:0;bottom:0;width:3px;background:var(--cyan);opacity:0;
+  transform-origin:right;z-index:2}
+.scene.act .bwhpulse{animation:bwEdgeOut 2.4s ease-out calc(var(--sh) + .4s) infinite}
+@keyframes bwEdgeOut{0%{opacity:.85;transform:scaleX(1)}100%{opacity:0;transform:scaleX(7)}}
+/* the divider, travelling with the shrink */
+.bf .bwhdiv{position:absolute;top:0;bottom:0;left:50%;width:2px;z-index:4;opacity:0;
+  background:linear-gradient(180deg,transparent,var(--cyan) 22%,var(--cyan) 78%,transparent);
+  box-shadow:0 0 20px 3px rgba(0,229,255,.5)}
+.scene.act .bwhdiv{animation:bfIn .4s var(--at) both,bwDivMove 1.5s cubic-bezier(.4,0,.2,1) var(--sh) both}
+@keyframes bwDivMove{to{left:28%}}
+/* what is finished, and what is yours */
+.bf .bwhchips{display:flex;width:900px;margin-top:14px;gap:12px;align-items:flex-start}
+.bf .bwhcl{width:28%;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.bf .bwhcr{flex:1;display:flex;gap:8px;flex-wrap:wrap}
+.bf .bwhc{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;opacity:0;
+  font:600 11.5px var(--head);white-space:nowrap}
+.bf .bwhc.bwhdone{background:rgba(255,255,255,.07);color:#9FB4D6;border:1px solid rgba(191,211,247,.18)}
+.bf .bwhc.bwhdone .ico{width:12px;height:12px;color:var(--cyan)}
+.bf .bwhc.bwhlive{background:linear-gradient(135deg,#1D5BC4,#2A6DE0);color:#fff;
+  box-shadow:0 8px 22px rgba(29,91,196,.45)}
+.scene.act .bwhc{animation:bwChipIn .5s cubic-bezier(.2,.9,.25,1) var(--at) both}
+.scene.act .bwhc.bwhlive{animation:bwChipIn .5s cubic-bezier(.2,.9,.25,1) var(--at) both,
+  bwChipFloat 3.2s ease-in-out calc(var(--at) + .5s) infinite}
+@keyframes bwChipIn{from{opacity:0;transform:translateY(9px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes bwChipFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+/* the closing line draws its own rule */
+.bf .bwhfin{position:relative}
+.bf .bwhfin::after{content:"";position:absolute;left:50%;bottom:-9px;height:2px;width:0;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);transform:translateX(-50%)}
+.scene.act .bwhfin::after{animation:bwRuleOut .9s cubic-bezier(.2,.9,.25,1) calc(var(--at) + .35s) both}
+@keyframes bwRuleOut{to{width:62%}}
 
 /* by hand, then a script */
 .bf .bwsc{display:grid;grid-template-columns:1fr 70px 1fr;gap:10px;width:960px;margin-top:22px;align-items:center}

@@ -57,13 +57,13 @@
   },
   {
    "visual": "bwstack",
-   "eyebrow": "The book you would look after",
+   "eyebrow": "What we write",
    "headline": "You would not be building one. / <em>It is already there</em>",
-   "at": "hundred",
-   "at3": "every",
+   "at": "one",
+   "at3": "endorsement",
    "files": [
     "Motor",
-    "Home",
+    "Household",
     "Commercial property",
     "Public liability",
     "Workers&rsquo; compensation",
@@ -71,19 +71,19 @@
     "Bonds"
    ],
    "n1": [
-    "three",
-    103,
+    "Seven",
+    7,
     "",
-    "clients"
+    "lines of business"
    ],
    "n2": [
-    "five",
-    195,
+    "twelve",
+    12,
     "",
-    "policies in force"
+    "months with renewals in them"
    ],
-   "line": "Renewals in every month of the year. The largest motor policy on it carries sixty-one vehicles.",
-   "say": "You would not be building a book. We have one. A hundred and three clients, a hundred and ninety five policies in force, and renewals in every single month of the year."
+   "line": "Personal and commercial, fleets included. Every endorsement written to the Act &mdash; and we drive that ourselves.",
+   "say": "You would not be building a book. We have one. Seven lines of business, personal and commercial, with renewals in all twelve months of the year. And every endorsement on it written to the Act."
   },
   {
    "visual": "bwdues",
@@ -180,8 +180,8 @@
     ],
     [
      "lock",
-     "The Act, and what changes in it",
-     "market conduct, in writing, on the file"
+     "Compliance, driven",
+     "the Act and market conduct &mdash; we do not wait to be told"
     ],
     [
      "flag",
@@ -194,7 +194,7 @@
      "because one day it will not be you"
     ]
    ],
-   "say": "The job is the part a system cannot do. Endorsements and extensions. The renewal conversation. Telling a client plainly what the cover does and what it does not. And knowing when the Act changes."
+   "say": "The job is the part a system cannot do. Endorsements and extensions, written to the Act. The renewal conversation. Telling a client plainly what the cover does and what it does not. We drive compliance here. We do not wait to be told."
   },
   {
    "visual": "bwscript",
@@ -261,7 +261,18 @@
      "The advice",
      "not settled &mdash; and that is yours"
     ],
-    "line": "How this agency looks after its clients is the part we want you for."
+    "line": "How this agency looks after its clients is the part we want you for.",
+    "lchips": [
+     "the quote",
+     "the forms",
+     "the history"
+    ],
+    "rchips": [
+     "endorsements",
+     "the renewal call",
+     "what the cover does",
+     "the Act"
+    ]
    },
    "say": "The paperwork is finished. The advice is not. That is the job."
   },

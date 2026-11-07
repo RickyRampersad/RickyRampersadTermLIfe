@@ -36,7 +36,7 @@ voice and the music.
 | The page | `/buildwithus/` | `/joinourbranch/` | `/clientmanager/` |
 | The film's page to post | `/buildwithusvideo/` | `/joinourbranchvideo/` | `/clientmanagervideo/` |
 | The films | `buildwithus/film-w.mp4` | `joinourbranch/film-{v,f,w}.mp4` | `clientmanager/film-w.mp4` |
-| Length | 86.3 s | 45.60 s | 110.7 s |
+| Length | 86.3 s | 45.60 s | 114.7 s |
 | Where it applies | this branch, `Quotes.gs` | **TalentNest** | this branch, `Quotes.gs` |
 | Form key / reference | `admin` → **`QB-`** | — | `underwriter` → **`QU-`** (kept, see below) |
 | CV upload | no | no | **yes**, to Drive |
@@ -533,36 +533,49 @@ key stays `underwriter` and the reference stays `QU-`, so `Quotes.gs` needs no
 paste and no new deployment; `QC-` was not available anyway, since the critical
 illness quote owns it.
 
-## The book is real, and the figures on the page are counted, not claimed
+## The book: how to count it, and what may be published
 
-Asked whether the ad could name the book's size, he chose *"name its size and
-classes"* and gave no figures — so they were **counted out of Salesforce on
-7 November 2026** rather than recalled, and the page says on what basis.
+Asked on 7 November whether the ad could name the book's size, he chose *"name
+its size and classes"*; shown the counted figures the same evening he changed
+his mind: **"don't mention the amount of clients. Give an assumption in terms
+of all the lines we write and our specialties."**
 
-In force that day (`Risk_Details__c`, the general record types the renewal desk
-reads, excluding `Vehicle_Status__c` = Sold):
+**So no client count and no policy count appears anywhere** — not on the page,
+not in the film, not in the ads, and **not in this file**, which sits at the
+repository root and is therefore served on the open web. The house rule in
+`CLAUDE.md` already says per-book client counts are not published; this is that
+rule, applied to a recruiting page.
 
-| | |
-|---|---|
-| Clients | **103** (105 accounts, so some households) |
-| Policies | **195**, across **336** separate pieces of cover |
-| Motor | 251 vehicles on cover |
-| Property | 71 — **45 private dwelling**, 25 commercial, 1 unclassified |
-| Workers' compensation | 7 |
-| Public liability | 5 |
-| Machinery, bonds | 1 each |
-| Marine | **none in force**, so the page does not claim it |
-| Fleets | the largest motor policy carries **61 vehicles**; six carry four or more |
-| Renewals | **11 to 30 policies a month**, every month, November the heaviest |
+What the ad says instead: **seven lines of business, personal and commercial,
+renewals falling in every month of the year**, the classes named, fleet called
+out as a capability rather than a number, and marine named as a class the
+system reads with nothing on it yet. Plus the specialty he asked to lead on —
+endorsements and extensions, written to the Act.
 
-**Quote the policy count, not the term count.** 336 terms against 195 policies
-is partly real (one motor policy carries many vehicles) and partly the
-duplicate-term problem `girDedupe_` exists to clean. The client count is the
-safest figure of the three.
+**To re-derive the figures when somebody needs them internally** (an interview,
+a conversation with the insurer), this is the count, and it takes one query:
 
-**No policy number and no client name leaves Salesforce.** The fleet line is a
-count; the policy numbers behind it are client-identifying and are not in this
-repository, the page or the film.
+```sql
+SELECT COUNT_DISTINCT(Client_Portfolio_Look_Up__r.Contact__c),
+       COUNT_DISTINCT(Policy__c), COUNT(Id)
+FROM Risk_Details__c
+WHERE RecordType.Name IN ('Motor','Property','Public Liability',
+      'Workers Compensation','Machinery','Bond','MARINE')
+  AND To__c >= TODAY
+  AND (Vehicle_Status__c = null OR Vehicle_Status__c != 'Sold')
+```
+
+Three things learned counting it, which the next person will hit too:
+
+- **Quote the policy count, not the term count.** One motor policy carries many
+  `Risk_Details__c` rows, one per vehicle, so terms run far ahead of policies.
+  Part of the gap is also the duplicate-term problem `girDedupe_` exists to
+  clean, so the term count overstates twice over.
+- **`Vehicle_Status__c = 'Sold'` has to be excluded** or the book looks bigger
+  than it is.
+- **Marine reads as a live class and is not one.** It is in `GIR_LINES` with
+  nothing in force, so an ad listing "eight classes" off the config would be
+  claiming a class we do not write. Count, do not read the config.
 
 ## What the page says now
 
@@ -591,7 +604,7 @@ repository, the page or the film.
   before you quote it* is exactly a client manager's judgement. The nine
   findings are still ones `girInsights_` genuinely computes.
 
-## The film — `cmadmin`, 1:51, cut 7 November 2026
+## The film — `cmadmin`, 1:55, cut 7 November 2026
 
 Eleven scenes on the same engine, replacing `uwadmin` at the same path. Three
 things the reframe forced, all of them real faults in the cut before it:
@@ -603,9 +616,10 @@ things the reframe forced, all of them real faults in the cut before it:
   as the carrier whose notice the renewal desk reads.
 - **"Build the book"** was the closing line. We have a book. It is *"Look after
   the book."*
-- **Scene 4 is the book by its numbers** (`bwstack`: the classes as chips, 103
-  and 195 as the counters), which is the strongest scene in it and did not
-  exist before.
+- **Scene 4 is what we write** (`bwstack`: the seven classes as chips, and
+  **7 lines** and **12 months with renewals in them** as the counters). It began
+  as the book by its client count and was changed the same evening — see the
+  book section above for why no count is published anywhere.
 
 **Two lines came back slurred in ways that changed the meaning** and were
 re-worded off the shape rather than around it, which is the rule this voice
@@ -632,7 +646,7 @@ thing that catches a reveal landing on a word that is never said.
 >
 > The Ricky Rampersad Branch has opened its own general insurance agency, and we need one Client Manager to look after it.
 >
-> It is not a start-up. The book comes with it: 103 clients and 195 policies in force — motor, household, commercial property, liability, workers' compensation, machinery and bonds — renewing in every month of the year. The largest motor policy on it carries 61 vehicles.
+> It is not a start-up. The book comes with it, across seven lines of business — motor and fleet, household, commercial property, public liability, workers' compensation, machinery and plant, bonds — with renewals falling in every month of the year.
 >
 > Here is what you would be walking into. The quote fills itself from the client's own record. Guardian's proposal form and the customer due-diligence checklist are filled by the system, field by field, and attached. The renewal desk reads every term since the policy began — not just this year's — before anyone opens the file. The insurer's notice is read and checked figure by figure against our own record, and where the two disagree the desk says so.
 >
@@ -654,7 +668,7 @@ thing that catches a reveal landing on a word that is never said.
 
 > *One seat: Client Manager, general insurance.*
 >
-> The branch has opened its own general insurance agency and it already has a book — 103 clients, 195 policies in force, renewals every month.
+> The branch has opened its own general insurance agency and it already has a book — seven lines of business, personal and commercial, renewals every month of the year.
 >
 > The paperwork side is built: the quote and the forms fill themselves from the record, and every term since the policy began is on the screen before you open the file.
 >
@@ -667,11 +681,11 @@ thing that catches a reveal landing on a word that is never said.
 > **CLIENT MANAGER — GENERAL INSURANCE** · Ricky Rampersad Branch · Chaguanas,
 > Central Trinidad.
 >
-> To look after an existing general insurance book of 103 clients and 195
-> policies in force: motor, household, commercial property, liability,
-> workers' compensation, machinery and bonds. Renewals, endorsements and
-> extensions, the advice that goes with them, and the market conduct
-> obligations under the Insurance Act.
+> To look after an existing general insurance book across seven lines of
+> business: motor and fleet, household, commercial property, public liability,
+> workers' compensation, machinery and plant, and bonds. Renewals,
+> endorsements and extensions, the advice that goes with them, and the market
+> conduct obligations under the Insurance Act.
 >
 > Required: general insurance experience on a real book, and time actually
 > spent underwriting. Professional qualifications (ACII, CII Diploma or
@@ -692,9 +706,14 @@ thing that catches a reveal landing on a word that is never said.
   agency."* Name the branch. The insurer appears only as the carrier whose
   notices and forms the desk already handles. The job-board cut above no
   longer carries "Guardian Life of the Caribbean" after the branch name.
-- **The book's figures are checkable, so do not round them up.** 103 and 195,
-  counted on 7 November 2026. Re-count before a later run rather than
-  reprinting these.
+- **Never print the client count or the policy count.** Said in those words on
+  7 November 2026: *"don't mention the amount of clients."* The ad says the
+  lines we write and what we are known for; the figures stay in Salesforce,
+  and the query to re-derive them for an interview is in the book section
+  above.
+- **Compliance is a selling point here, not a footnote.** *"Our endorsements,
+  our everything is compliant and we drive compliance."* It leads the Act card,
+  it is in the hero, and it closes the film's "what we write" scene.
 - **Do not print the authority limit the seat will carry.** The form asks
   theirs; ours is agreed on the call.
 - **Compliance.** A general insurance agency is a separate registration; show

@@ -118,6 +118,43 @@ Invisible on screen, and still wrong — the committed source no longer
 reproduced the committed MP4. The offsets are back, with the reason in a
 comment.
 
+## The half-and-half slide, made to pop — 7 November 2026
+
+Asked for in those words: *"I like the half the work on this slide and a lot
+more motion to let this really pop."* The slide had two moves — the white half
+shrinking and the blue half fading in — and nothing else. It now has eight,
+and every one of them means something rather than decorating:
+
+- the bar drops in with a scale, and breathes once it has settled;
+- a cyan divider **travels with the shrink**, so the eye follows the boundary
+  rather than noticing afterwards that it moved;
+- a sheen crosses the white half as it finishes;
+- a light drifts inside the blue half, and its outer edge keeps pulsing out;
+- chips under the bar **tick the finished work off on the left** and **light
+  the work that is yours up on the right** (`lchips` / `rchips`, both optional
+  — a scene without them draws the bar alone, as the administrator's does);
+- the closing line draws its own rule.
+
+**Key a chip to the beat it belongs to, not to the slide's last cue.** The
+right-hand chips were first strung off `at3`, which on this line is the word
+*job* in the last sentence; the fourth chip was still arriving as the scene
+cut. The left ticks belong to the shrink (`at3`) and the right belong to the
+half appearing (`at2`), and then they spread across the whole scene.
+
+**The chip count has to match the counter.** The "what we write" scene showed
+eight class chips above a counter reading **7 lines of business** — because
+Fleet is motor, not a line. A candidate counts them. Where a scene puts a list
+beside a number, the number is the list's length or the scene is wrong.
+
+Two broad lifts went in at the same time and reach every film on this engine,
+so **re-render the administrator's film as well after touching `BW_CSS`**: the
+cards in a grid now float gently at rest instead of sitting dead once landed,
+and a light crosses the chips of a stack once they have all arrived.
+
+**`.done` and `.live` are the shell's**, which the class-collision guard caught
+on the first build of the chips — the fifth time it has paid for itself. They
+are `.bwhdone` and `.bwhlive`.
+
 **`"ticks": false`** on the rule scene drops the green ticks that march down
 the left column. They mean *and then these do themselves*, which is right where
 a rule automates the manual steps and wrong where it replaces a queue: a tick
