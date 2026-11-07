@@ -176,7 +176,7 @@ whole application against a mocked backend and prints what he actually reads.
 >
 > So here is the seat. Half your day is the branch's administration, and it has to be right, because if it is not then an agent cannot work and a client waits. The other half is making that first half smaller: taking a job you do by hand and turning it into a form, a script, a page, and then measuring whether it actually worked.
 >
-> You do not need to arrive knowing how. You need to be the person who has already built something out of whatever they were given — a spreadsheet, a WhatsApp group, a template — because the alternative was doing it by hand forever.
+> You do not need to be a developer. You do need to have already written something — a Google Apps Script, a formula that got out of hand, a Zap, a page, something you talked an AI through until it worked — because the alternative was doing it by hand forever. Apps Script, Google Workspace, Salesforce and Claude are already paid for and already connected here. You get the keys, not a request form.
 >
 > Two things make this different from anything else you will read today.
 >
@@ -199,7 +199,7 @@ that is easy to answer — the house rules for a branch message.
 >
 > This branch writes its own software — the letters, the claims intake, the billing checks. About a hundred thousand lines of it, built in-branch by people who were never hired as developers.
 >
-> So the job is half administration and half making that administration unnecessary. You do not need to arrive knowing how.
+> So the job is half administration and half making that administration unnecessary. Not a developer's job — but you have written something already, on your own time, because nobody was going to do it for you.
 >
 > Before you apply we show you everything we have built, so you can judge for yourself. The form takes fifteen minutes. The interview is one question: what would you fix here?
 >
@@ -209,7 +209,7 @@ that is easy to answer — the house rules for a branch message.
 
 ### 3 · Facebook and Instagram (feed, read with the sound off)
 
-> **If you have ever built a spreadsheet to fix something nobody asked you to fix, this is for you.**
+> **If you have ever written a script to fix something nobody asked you to fix, this is for you.**
 >
 > One administrator's seat. Chaguanas. An insurance branch that writes its own software and will hand you the keys to it.
 >
@@ -253,8 +253,19 @@ branch. Send this to one person rather than broadcasting it:
 - **Never "administrative assistant" in the headline.** The person we want has
   stopped reading those. The title appears on the page, in the first section,
   where it belongs.
-- **Say "you do not need to arrive knowing how" every time.** Leave it out and
-  the ad filters for developers, who are the wrong person for this seat.
+- **The bar is "not a developer, but you have written something", and both halves
+  have to be said every time.** The brief changed on 7 November 2026, in these
+  words: *"The person must have a bit of coding experience, understand Google
+  scripts, Google Workplace, being able to work with, you know, different AI
+  tools… Also Salesforce or any other CRM, but they get the tools if they're
+  creative."* The earlier rule here was the first half alone — "you do not need
+  to arrive knowing how" — written to stop the ad filtering for developers, and
+  the reason for it still holds: a developer is the wrong person for this seat
+  and will not take it. But the seat does need somebody who has already written
+  something, so the line moved rather than went. Leave off "not a developer"
+  and the only people who apply are developers; leave off "you have written
+  something" and the shortlist is administrators who have never opened a script
+  editor, which is what the twelve-fault form cannot screen for.
 - **Do not print a salary.** The form asks what they earn and what they want,
   and the figure is agreed on the call.
 - **No seat count and no closing date.** This page sits at a public URL and an
