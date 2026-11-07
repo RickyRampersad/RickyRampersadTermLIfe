@@ -284,33 +284,6 @@ h1 em{font-style:normal;color:var(--a);display:block}
   margin:0 auto;color:#fff}
 .statement .small{color:var(--dT3);margin-top:var(--sp-m)}
 
-/* ── the test ── */
-.quizwrap{max-width:46rem;margin-inline:auto}
-.qcard{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-  padding:var(--sp-l) var(--sp-m);box-shadow:var(--e2);overflow:hidden}
-@media (min-width:36rem){.qcard{padding:var(--sp-xl) var(--sp-l)}}
-.qmeter{display:flex;gap:.35rem;margin-bottom:var(--sp-m)}
-.qmeter i{flex:1;height:5px;border-radius:3px;background:var(--line);transition:background .3s var(--ease)}
-.qmeter i.on{background:var(--a)}
-.qcount{font:600 var(--f--2)/1 var(--text);letter-spacing:.1em;text-transform:uppercase;
-  color:var(--muted);margin:0 0 .7rem}
-.qtext{font-size:var(--f-1);line-height:1.3;margin-bottom:var(--sp-m)}
-.qopts{display:grid;gap:.6rem}
-.qopt{display:block;width:100%;text-align:left;background:var(--card);border:1.5px solid var(--line-strong);
-  border-radius:var(--r-s);padding:.85rem 1rem;cursor:pointer;color:var(--body);
-  font:500 max(16px,1rem)/1.45 var(--text);transition:border-color .18s var(--ease),background .18s var(--ease)}
-.qopt:hover{border-color:var(--a);background:var(--a-tint)}
-.qback{margin-top:var(--sp-m);background:none;border:0;color:var(--muted);cursor:pointer;
-  font:500 var(--f--1)/1 var(--text);padding:.4rem 0}
-.qback:hover{color:var(--a)}
-.verdict .vscore{font:700 clamp(2.2rem,1.6rem + 2.4vw,3.4rem)/1 var(--display);color:var(--ink);
-  letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-.verdict .vscore small{font:500 var(--f-0)/1 var(--text);color:var(--muted)}
-.verdict h3{margin:.6rem 0 .5rem;font-size:var(--f-2)}
-.q-restart{margin-top:var(--sp-s);background:none;border:0;color:var(--a);cursor:pointer;
-  font:600 var(--f--1)/1 var(--text);padding:.4rem 0}
-#confetti{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
-
 /* ── the form ── */
 .fgrid{display:grid;gap:var(--sp-xl)}
 @media (min-width:62rem){.fgrid{grid-template-columns:.85fr 1.15fr;gap:var(--sp-2xl)}}
@@ -443,11 +416,111 @@ footer .ic{width:16px;height:16px}
     animation-delay:calc(var(--l) * 160ms + .2s)}
   .pills input:checked + span{animation:pop .3s var(--ease)}
   @keyframes pop{40%{scale:1.06}}
-  .qmeter i.on{animation:pop .35s var(--ease)}
   .gate:hover::before{animation:pop .35s var(--ease)}
 }
 @media (prefers-reduced-motion:reduce){.rv{opacity:1;translate:none}}
 @media print{.rv{opacity:1!important;translate:none!important}.sticky,.topbar{display:none}}
+
+/* ── the form that is the interview ─────────────────────────────────────
+   The sheet is deliberately ugly: a photocopied internal form, grey rules,
+   a form number and a revision date from twelve years ago. That is what
+   makes the person this seat wants wince before they have read a word of
+   the job description. Everything around it is the page's own system. */
+.fixsec{background:var(--bg2)}
+.fixns{margin-top:var(--sp-m);padding:var(--sp-s) var(--sp-m);border-left:3px solid var(--a);
+  background:var(--card);color:var(--body);max-width:62ch}
+.fixgrid{display:grid;gap:var(--sp-l);margin-top:var(--sp-l);
+  grid-template-columns:minmax(0,1.55fr) minmax(min(100%,17rem),1fr);align-items:start}
+@media (max-width:60rem){.fixgrid{grid-template-columns:1fr}}
+@media (max-width:34rem){
+  .srows li{padding:.05rem 0}
+  .spot{min-height:2.2rem;padding:.25rem .35rem}
+  .sheet{padding:.9rem .7rem}
+}
+/* the tally is a long scroll away on a phone, so a mark answers for itself
+   where the thumb is. It sits above the page's own apply bar, never under. */
+#mToast{position:fixed;left:50%;transform:translate(-50%,1.2rem);z-index:60;
+  bottom:calc(4.6rem + env(safe-area-inset-bottom,0px));
+  background:var(--ink);color:#fff;border-radius:999px;padding:.55rem 1.1rem;
+  font:600 var(--f--1)/1 var(--text);box-shadow:var(--e3);
+  opacity:0;pointer-events:none;transition:opacity .18s var(--ease),transform .18s var(--ease)}
+#mToast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){#mToast{transition:none}}
+@media (min-width:60.01rem){#mToast{display:none}}
+
+.sheet{background:#fff;border:1px solid #cfcabc;border-radius:2px;min-width:0;
+  box-shadow:var(--e2);font-family:var(--mono);color:#2a2a28;
+  padding:clamp(.9rem,.5rem + 1.6vw,1.6rem)}
+.shead{border-bottom:2px solid #2a2a28;padding-bottom:.55rem;margin-bottom:.9rem;
+  display:flex;flex-wrap:wrap;gap:.4rem .9rem;align-items:baseline;justify-content:space-between}
+.shead b{font-size:var(--f--1);letter-spacing:.06em}
+.shead span{font-size:var(--f--2);color:#6d6a62}
+.sttl{font-size:var(--f--1);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+
+.srows{list-style:none;margin:0;padding:0;display:grid;gap:.1rem}
+.srows li{display:grid;grid-template-columns:1.6rem minmax(0,10.5rem) minmax(0,1fr);
+  gap:.2rem .5rem;align-items:center;padding:.18rem 0;border-bottom:1px dotted #ded9cc}
+@media (max-width:34rem){.srows li{grid-template-columns:1.4rem minmax(0,1fr);}
+  .srows li .spot{grid-column:1/-1}}
+.sn{color:#9a968c;font-size:var(--f--2)}
+.sl{font-size:var(--f--2);color:#4a4740;text-transform:uppercase;letter-spacing:.03em}
+.sl em{text-transform:none;letter-spacing:0;color:#8a867c}
+
+/* a spot is a real button, so it is reachable by keyboard and announced */
+.spot{appearance:none;background:transparent;border:1.5px dashed transparent;
+  border-radius:4px;cursor:pointer;width:100%;text-align:left;
+  padding:.35rem .4rem;min-height:2.6rem;display:flex;flex-wrap:wrap;
+  align-items:center;gap:.4rem;font:inherit;color:inherit;position:relative;
+  transition:background .14s var(--ease),border-color .14s var(--ease)}
+.spot:hover{background:#fff8e6;border-color:#d9c48a}
+.spot:focus-visible{outline:3px solid var(--a);outline-offset:2px}
+.spot .rule{flex:1 1 6rem;min-width:4rem;height:1px;background:#b9b4a6;align-self:flex-end;
+  margin-bottom:.45rem}
+.spot em{font-size:var(--f--2);color:#8a867c;font-style:italic}
+.spot.tiny{max-width:9rem}
+.spot .yn{font-weight:700;letter-spacing:.06em;font-size:var(--f--2)}
+.spot.sums{display:grid;grid-template-columns:1fr;gap:.1rem;max-width:22rem}
+.sum{display:flex;justify-content:space-between;gap:.6rem;font-size:var(--f--2)}
+.sum i{font-style:normal;color:#6d6a62}
+.sum.tot{border-top:1px solid #2a2a28;padding-top:.2rem;font-weight:700}
+.spot.line{display:block;font-size:var(--f--2);color:#4a4740;min-height:0;padding:.4rem}
+.sfoot{margin-top:.9rem;padding-top:.6rem;border-top:1px solid #ded9cc;display:grid;gap:.15rem}
+.spot.office{display:grid;gap:.3rem;background:#f1efe6;border:1.5px dashed #cfcabc}
+.spot.office:hover{background:#fff8e6;border-color:#d9c48a}
+.ol{font-size:var(--f--2);text-transform:uppercase;letter-spacing:.08em;color:#6d6a62}
+.orow{display:flex;flex-wrap:wrap;gap:.4rem .7rem;align-items:flex-end}
+.orow i{font-style:normal;font-size:var(--f--2);color:#6d6a62}
+.orow .rule{flex:1 1 3.5rem}
+
+/* marked */
+.spot[aria-pressed="true"]{background:var(--a-tint);border-color:var(--a);border-style:solid}
+.spot[aria-pressed="true"]::after{content:attr(data-n);position:absolute;top:-.6rem;left:-.6rem;
+  width:1.45rem;height:1.45rem;border-radius:999px;background:var(--a);color:#fff;
+  font:700 .75rem/1.45rem var(--text);text-align:center;box-shadow:var(--e1)}
+
+/* the tally */
+.marks{position:relative;min-width:0}
+.mstick{position:sticky;top:calc(var(--bar) + .75rem);background:var(--card);
+  border:1px solid var(--line);border-radius:var(--r-s);padding:var(--sp-m);
+  box-shadow:var(--e2);display:grid;gap:var(--sp-s)}
+.mcount{margin:0;display:grid;gap:.15rem}
+.mcount b{font:700 var(--f-1)/1.15 var(--display);color:var(--ink)}
+.mcount span{font-size:var(--f--1);color:var(--muted)}
+.mlist{list-style:none;margin:0;padding:0;display:grid;gap:.5rem}
+.mlist li{display:grid;gap:.3rem;padding:.5rem .6rem;background:var(--bg2);border-radius:var(--r-s)}
+.mlist .mt{display:flex;gap:.5rem;align-items:baseline;justify-content:space-between}
+.mlist .mt b{font-size:var(--f--1);color:var(--ink);font-weight:600}
+.mlist .mx{appearance:none;background:none;border:0;cursor:pointer;color:var(--muted);
+  font-size:var(--f--2);text-decoration:underline;padding:.2rem;min-height:2rem}
+.mlist textarea,#mElseBox textarea{width:100%;font:400 max(16px,var(--f--1))/1.45 var(--text);
+  color:var(--body);background:var(--card);border:1px solid var(--line-strong);
+  border-radius:var(--r-s);padding:.45rem .55rem;resize:vertical}
+.mlist textarea:focus-visible,#mElseBox textarea:focus-visible{outline:2px solid var(--a);outline-offset:1px}
+#mElseBox{display:grid;gap:.3rem;margin-top:.5rem}
+#mElseBox label{font-size:var(--f--2);color:var(--muted)}
+.wfull{width:100%;justify-content:center}
+.mfoot{color:var(--muted)}
+
 </style>
 </head>
 <body>
@@ -482,7 +555,7 @@ footer .ic{width:16px;height:16px}
       <a href="#stack">The stack</a>
       <a href="#code">Our code</a>
       <a href="#slim">Your first job</a>
-      <a href="#test">The test</a>
+      <a href="#fix">The test</a>
     </nav>
     <a class="btn btn-1" href="#apply" style="margin-left:auto">Apply <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
   </div>
@@ -498,7 +571,7 @@ footer .ic{width:16px;height:16px}
         <h1 data-words>You already know how your office should run. <em>Nobody has given you the tools.</em></h1>
         <p class="hsub">Somewhere right now there is an administrator who can see exactly what should be fixed &mdash; and has a spreadsheet, a WhatsApp group and no permission. We are looking for that person. Not for the one who waits to be told.</p>
         <div class="ctas">
-          <a class="btn btn-1" href="#test">Is it you? Five questions <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-1" href="#fix">Fix our form <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
           <a class="btn btn-2" href="#real">What the job actually is</a>
         </div>
         <p class="hnote">
@@ -528,6 +601,134 @@ footer .ic{width:16px;height:16px}
     </div>
   </div>
 </section>
+
+<!-- ══════════════════ THE TEST IS THE AD ══════════════════
+     The interview for this seat has always been one question: find something
+     here that is clumsy, missing, or would save somebody an hour, and say how
+     you would fix it. So the page asks it on the way in, with a real branch
+     form, rather than describing it in a paragraph nobody reads.
+
+     Twelve things are wrong with the form below. The number is never shown
+     and the faults are never named on screen: the moment a candidate can see
+     the answers it stops being a judgement and becomes a puzzle hunt, and the
+     thing being measured is what they NOTICE, not what they can guess. The
+     explanations live in FIXES[] and travel to the Branch Manager only. -->
+<section id="fix" class="fixsec" aria-labelledby="fixh">
+  <div class="wrap">
+    <div class="rv">
+      <span class="eyebrow">No CV. No cover letter.</span>
+      <h2 id="fixh" data-words>This is the job you have now. <em>Fix it.</em></h2>
+      <p class="lede">Below is the kind of form a branch runs on &mdash; ours looked like this once. <strong>Tap anything that is wrong with it.</strong> You do not have to know how to fix it, and there is no list of right answers. We only want to see what you notice.</p>
+    </div>
+
+    <noscript><p class="fixns">This part needs a script to run, and your browser is blocking it. The application further down the page works without one &mdash; or write to us and say what you would have marked.</p></noscript>
+
+    <div class="fixgrid" id="fixgrid" hidden>
+      <!-- the sheet: a photocopied internal form, which is what makes the
+           person we want wince on sight -->
+      <div class="sheet" role="group" aria-label="A branch form with things wrong with it. Tap any part you think is wrong.">
+        <div class="shead">
+          <div><b>GL&nbsp;114</b> <span>Rev. 2014</span></div>
+          <div class="sttl">Petty Cash &amp; Document Transmittal Request</div>
+        </div>
+
+        <ol class="srows">
+          <li><span class="sn">1</span>
+            <span class="sl">Date</span>
+            <button type="button" class="spot" data-f="date" aria-pressed="false"><span class="rule"></span><em>e.g. 03/04/26</em></button>
+          </li>
+
+          <li><span class="sn">2</span>
+            <span class="sl">Client name</span>
+            <button type="button" class="spot" data-f="name3" aria-pressed="false"><span class="rule"></span></button>
+          </li>
+
+          <li><span class="sn">3</span>
+            <span class="sl">Policy No.</span>
+            <button type="button" class="spot" data-f="policy" aria-pressed="false"><span class="rule"></span><em>e.g. TTCPL0100001 or 100001</em></button>
+          </li>
+
+          <li><span class="sn">4</span>
+            <span class="sl">Department to receive</span>
+            <button type="button" class="spot" data-f="dept" aria-pressed="false"><span class="rule"></span></button>
+          </li>
+
+          <li><span class="sn">5</span>
+            <span class="sl">Document(s) enclosed</span>
+            <button type="button" class="spot" data-f="onefm" aria-pressed="false"><span class="rule"></span><em>one form per document</em></button>
+          </li>
+
+          <li><span class="sn">6</span>
+            <span class="sl">Amounts</span>
+            <button type="button" class="spot sums" data-f="total" aria-pressed="false">
+              <span class="sum"><i>Paid out</i> <b>$ 240.00</b></span>
+              <span class="sum"><i>Stamp duty</i> <b>$ 25.00</b></span>
+              <span class="sum"><i>Courier</i> <b>$ 60.00</b></span>
+              <span class="sum tot"><i>TOTAL &mdash; write in</i> <b>$ ________</b></span>
+            </button>
+          </li>
+
+          <li><span class="sn">7</span>
+            <span class="sl">Name of client <em>(as on policy)</em></span>
+            <button type="button" class="spot" data-f="name3b" aria-pressed="false"><span class="rule"></span></button>
+          </li>
+
+          <li><span class="sn">8</span>
+            <span class="sl">Reason</span>
+            <button type="button" class="spot tiny" data-f="reason" aria-pressed="false"><span class="rule"></span></button>
+          </li>
+
+          <li><span class="sn">9</span>
+            <span class="sl">Receipt attached?</span>
+            <button type="button" class="spot" data-f="receipt" aria-pressed="false"><b class="yn">YES</b> <span class="sl">/</span> <b class="yn">NO</b></button>
+          </li>
+
+          <li><span class="sn">10</span>
+            <span class="sl">Client</span>
+            <button type="button" class="spot" data-f="name3c" aria-pressed="false"><span class="rule"></span></button>
+          </li>
+
+          <li><span class="sn">11</span>
+            <span class="sl">Signature</span>
+            <button type="button" class="spot" data-f="print" aria-pressed="false"><span class="rule"></span><em>print, sign, scan and e-mail to the branch</em></button>
+          </li>
+        </ol>
+
+        <div class="sfoot">
+          <button type="button" class="spot line" data-f="mistake" aria-pressed="false">If you make a mistake, do not alter. Complete a new form.</button>
+          <button type="button" class="spot line" data-f="nocopy" aria-pressed="false">No copy of this form will be sent to you.</button>
+          <button type="button" class="spot office" data-f="office" aria-pressed="false">
+            <span class="ol">For office use only</span>
+            <span class="orow"><i>Received by</i><span class="rule"></span><i>Keyed by</i><span class="rule"></span><i>Batch</i><span class="rule"></span></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- what they found -->
+      <aside class="marks" aria-live="polite">
+        <div class="mstick">
+          <p class="mcount"><b id="mN">Nothing marked yet</b><span id="mHint">Tap any part of the form.</span></p>
+          <ul class="mlist" id="mList"></ul>
+
+          <div class="melse">
+            <button type="button" class="btn btn-2 wfull" id="mElse">Something else about it is wrong</button>
+            <div id="mElseBox" hidden>
+              <label for="mElseT">What else?</label>
+              <textarea id="mElseT" rows="3" maxlength="400" placeholder="Anything the form does not even ask about."></textarea>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-1 wfull" id="mSend" hidden>
+            Send what I found <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </button>
+          <p class="small mfoot" id="mFoot" hidden>It goes with your application, below. Mr Rampersad reads both.</p>
+        </div>
+      </aside>
+    </div>
+    <p id="mToast" role="status" aria-live="polite"></p>
+  </div>
+</section>
+
 
 <!-- ══════════════════ THE FILM ══════════════════ -->
 <section class="alt" id="film" style="padding-block:var(--sp-xl)">
@@ -776,29 +977,6 @@ footer .ic{width:16px;height:16px}
   </div>
 </section>
 
-<!-- ══════════════════ THE TEST ══════════════════ -->
-<section id="test">
-  <div class="wrap">
-    <div class="rv" style="text-align:center;max-width:46rem;margin-inline:auto">
-      <span class="eyebrow">Five questions &middot; about ninety seconds</span>
-      <h2 data-words>Is this actually your seat?</h2>
-      <p class="lede" style="margin-inline:auto">Answer honestly rather than well &mdash; a wrong answer here only saves us both a fortnight. Not knowing any code is <strong>not</strong> a disqualifier. There is one question where there genuinely is a wrong answer, and you will know which.</p>
-    </div>
-    <div class="quizwrap rv">
-      <div class="qcard">
-        <canvas id="confetti" aria-hidden="true"></canvas>
-        <div id="qpanel">
-          <div class="qmeter" id="meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-          <p class="qcount" id="qcount">Question 1 of 5</p>
-          <h3 class="qtext" id="qtext" aria-live="polite">&nbsp;</h3>
-          <div class="qopts" id="qopts"></div>
-          <button class="qback" type="button" id="qback" hidden>&larr; Back</button>
-        </div>
-        <div class="verdict" id="verdict" hidden aria-live="polite"></div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- ══════════════════ THE TWO GATES ══════════════════ -->
 <section class="alt" id="how">
@@ -810,7 +988,7 @@ footer .ic{width:16px;height:16px}
     </div>
     <ol class="gates">
       <li class="gate rv"><h3>The form below &mdash; about fifteen minutes</h3><p>Where you have worked, what you changed there, what you are earning now, and three questions in your own words. It is longer than most application forms on purpose. <strong>If fifteen minutes is too long to spend on this, then it is honestly not the job</strong> &mdash; and we would both rather know that now.</p><p>Write it yourself, plainly. Four honest lines about a spreadsheet you built beats a polished paragraph that says nothing.</p></li>
-      <li class="gate rv"><h3>Then: one thing you would fix here</h3><p>If the form reads like you, we ask you for one thing, and it is the whole interview. Look through what we have built, find something clumsy, missing, or that would save somebody an hour, and tell us about it &mdash; what is wrong, why it matters, and roughly how you would fix it.</p><p>A page, a form, a process on this very site. You do not have to write the fix and you do not have to be right. We are reading for whether you can walk into an unfamiliar system, find a real problem and explain it to somebody else. <strong>That is the job, so that is the test.</strong></p><p class="small" style="margin-top:.6rem"><strong>Send it however you like</strong> &mdash; an e-mail, a voice note, a page of writing. If you happen to use GitHub, you can post it there as an issue instead and we will see it. Most people do not, and it counts for nothing either way.</p></li>
+      <li class="gate rv"><h3>Then: one thing you would fix here</h3><p>You have already done the short version of this at the top of the page. If the form reads like you, we ask for the long one, and it is the whole interview. Look through what we have built, find something clumsy, missing, or that would save somebody an hour, and tell us about it &mdash; what is wrong, why it matters, and roughly how you would fix it.</p><p>A page, a form, a process on this very site. You do not have to write the fix and you do not have to be right. We are reading for whether you can walk into an unfamiliar system, find a real problem and explain it to somebody else. <strong>That is the job, so that is the test.</strong></p><p class="small" style="margin-top:.6rem"><strong>Send it however you like</strong> &mdash; an e-mail, a voice note, a page of writing. If you happen to use GitHub, you can post it there as an issue instead and we will see it. Most people do not, and it counts for nothing either way.</p></li>
       <li class="gate rv"><h3>Then a conversation, and a decision</h3><p>Twenty minutes with the Branch Manager about what you found and what you wrote. Terms and pay are discussed there, openly, against the figures you gave us. If it is not right for either of us, we say so and that is the end of it, with no hard feelings.</p></li>
     </ol>
   </div>
@@ -1126,111 +1304,170 @@ footer .ic{width:16px;height:16px}
     ta.addEventListener('input',up); up();
   });
 
-  /* ════════════════════ the five questions ════════════════════
-     Behavioural, not aspirational. Every option is defensible except one, and
-     that one is the care question: somebody who would send a wrong figure to
-     three hundred families is wrong for an insurance branch, whatever else
-     they can do. Not knowing code scores 1, never 0 — the person this seat is
-     for may never have been given the chance. */
-  var Q=[
-    {q:'The last time a job at work was dull and repetitive, what did you actually do?',
-     a:[['I built something — a sheet, a form, a template — so it took less time.',4],
-        ['I wrote the steps down so somebody else could do it too.',2],
-        ['I got faster at it.',1],
-        ['I raised it with my manager.',1]]},
-    {q:'Right now, is something you built or set up being used by somebody other than you?',
-     a:[['Yes — and I could show you it today.',4],
-        ['It was, until I left that job or it got replaced.',3],
-        ['I have built things, but only I ever used them.',2],
-        ['Not yet.',0]]},
-    {q:'You took an idea to your manager and were told it was not a priority. What happened next?',
-     a:[['I built a small version of it anyway and showed them.',4],
-        ['I kept raising it, and eventually got a yes.',3],
-        ['It has never happened — nobody has ever asked me for an idea.',2],
-        ['I let it go. They had their reasons.',1]]},
-    {q:'A letter is going out to three hundred clients in an hour. You notice one figure on it looks wrong.',
-     a:[['Hold it, check that figure against the record, and tell whoever is sending.',4],
-        ['Flag it and let the sender decide.',2],
-        ['Send it, and fix the figure for next time.',1],
-        ['Send it. One number on one letter is not worth missing the deadline.',0]]},
-    {q:'Formulas, scripts, code. Where are you honestly?',
-     a:[['I have written scripts or code of my own.',4],
-        ['I have changed somebody else&rsquo;s formula or script and got it working.',3],
-        ['I can read one and follow roughly what it does.',2],
-        ['None of it yet — but I want to learn.',1]]}
-  ];
+/* ── the form that is the interview ─────────────────────────────────────
+     Twelve faults are planted in the sheet. `where` is what the candidate is
+     told they marked — the PLACE, never the fault, because naming the fault
+     turns a judgement into a quiz with the answers printed. `why` is the
+     branch's own note and goes only to the Branch Manager, in the e-mail. */
   (function(){
-    var panel=d.getElementById('qpanel'), vd=d.getElementById('verdict'),
-        qt=d.getElementById('qtext'), qo=d.getElementById('qopts'), qc=d.getElementById('qcount'),
-        mt=d.getElementById('meter'), back=d.getElementById('qback');
-    if(!panel||!vd)return;
-    var i=0, picks=[];
-    function paint(){
-      qt.innerHTML=Q[i].q;
-      qc.textContent='Question '+(i+1)+' of '+Q.length;
-      [].slice.call(mt.children).forEach(function(b,k){b.classList.toggle('on',k<=i)});
-      qo.innerHTML='';
-      Q[i].a.forEach(function(opt,k){
-        var b=d.createElement('button');b.type='button';b.className='qopt';b.innerHTML=opt[0];
-        b.addEventListener('click',function(){picks[i]=k;next()});
-        qo.appendChild(b);
+    var FIXES={
+      date:   {where:'The date field',
+               why:'No format. 03/04/26 is two different dates depending on who is reading it.'},
+      name3:  {where:'Client name (line 2)',
+               why:'The client is asked for three times on one form (2, 7, 10).'},
+      name3b: {where:'Name of client (line 7)',
+               why:'The second of three times the same client is asked for.'},
+      name3c: {where:'Client (line 10)',
+               why:'The third of three times the same client is asked for.'},
+      policy: {where:'The policy number',
+               why:'Two different formats in its own example, and nothing checks either.'},
+      dept:   {where:'Department to receive',
+               why:'Free text. The branch had 25 departments typed about 90 ways before this was a list.'},
+      onefm:  {where:'Documents enclosed',
+               why:'One form per document. Six documents is six forms, six signatures, six scans.'},
+      total:  {where:'The amounts',
+               why:'The total is added up by hand and nothing checks it against the three lines above.'},
+      reason: {where:'The reason box',
+               why:'A line and a half to explain a payment, so nobody explains it.'},
+      receipt:{where:'Receipt attached? YES / NO',
+               why:'Asks whether a receipt is attached instead of taking the receipt.'},
+      print:  {where:'The signature line',
+               why:'Print, sign, scan, e-mail. A form that is digital until the one step that matters.'},
+      mistake:{where:'"Complete a new form"',
+               why:'A correction means starting again, so people overwrite it in pen instead.'},
+      nocopy: {where:'"No copy will be sent to you"',
+               why:'The person who filled it in has no record that they did.'},
+      office: {where:'The office-use block',
+               why:'"Office use only" on a sheet anybody can type into. It is not a control, it is a hope.'}
+    };
+    var TOTAL=12;  /* distinct faults; the three name fields count once */
+  
+    var grid=document.getElementById('fixgrid'); if(!grid) return;
+    grid.hidden=false;
+  
+    var listEl=document.getElementById('mList'), nEl=document.getElementById('mN'),
+        hintEl=document.getElementById('mHint'), sendBtn=document.getElementById('mSend'),
+        footEl=document.getElementById('mFoot'), elseBtn=document.getElementById('mElse'),
+        elseBox=document.getElementById('mElseBox'), elseT=document.getElementById('mElseT');
+    var spots=[].slice.call(grid.querySelectorAll('.spot'));
+    var toast=document.getElementById('mToast'), toastT=0;
+    function say(msg){
+      if(!toast)return;
+      toast.textContent=msg; toast.classList.add('on');
+      clearTimeout(toastT); toastT=setTimeout(function(){toast.classList.remove('on')},1700);
+    }
+    var order=[], notes={};
+  
+    function save(){
+      try{
+        sessionStorage.setItem('rrbFixFound',order.join(','));
+        sessionStorage.setItem('rrbFixNotes',JSON.stringify(notes));
+        sessionStorage.setItem('rrbFixElse',elseT?elseT.value:'');
+      }catch(x){}
+    }
+    function load(){
+      try{
+        var f=sessionStorage.getItem('rrbFixFound');
+        if(f)order=f.split(',').filter(Boolean);
+        var n=sessionStorage.getItem('rrbFixNotes'); if(n)notes=JSON.parse(n)||{};
+        var e=sessionStorage.getItem('rrbFixElse'); if(e&&elseT){elseT.value=e;elseBox.hidden=false}
+      }catch(x){}
+    }
+  
+    /* The three client-name fields are one fault. Marking any of them is the
+       insight; marking all three is not three times the insight. */
+    function distinct(keys){
+      var seen={},n=0;
+      keys.forEach(function(k){
+        var g=(k==='name3'||k==='name3b'||k==='name3c')?'name':k;
+        if(!seen[g]){seen[g]=1;n++}
       });
-      back.hidden=i===0;
+      return n;
     }
-    function next(){ if(i<Q.length-1){i++;paint()} else {done()} }
-    back.addEventListener('click',function(){if(i>0){i--;paint()}});
-    function done(){
-      var s=picks.reduce(function(t,k,n){return t+Q[n].a[k][1]},0);
-      var careless=picks[3]===3;
-      panel.hidden=true; vd.hidden=false;
-      var h,p,cta;
-      if(careless){
-        h='One answer stops us here, and it is worth being straight about.';
-        p='Everything here ends up in front of a real family. Sending a figure you already suspect is wrong is the one thing this branch cannot work around, however good the rest of your answers were. If you read that question too quickly, take it again &mdash; but if that is honestly how you would call it, this is not your seat, and that is better known now.';
-        cta='<button class="q-restart" type="button" id="rq">Take it again</button>';
-      } else if(s>=16){
-        h='That is the person this page was written for.';
-        p='You build without being asked, you finish, and you would stop a wrong figure. Fill the form in below &mdash; and in the written part, tell us about the thing you built. That is what he reads first.';
-        cta='<a class="btn btn-1" href="#apply">Apply &mdash; 10 minutes <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>';
-      } else if(s>=11){
-        h='Worth a conversation.';
-        p='There is real instinct in your answers. What we cannot tell from five taps is whether you finish things &mdash; so put most of your effort into the first written question below. One concrete thing you made, and who used it, beats anything else you could write.';
-        cta='<a class="btn btn-1" href="#apply">Apply &mdash; 10 minutes <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>';
-      } else {
-        h='Honestly? Probably not this seat.';
-        p='Nothing in your answers is a bad answer &mdash; they are the answers of someone who does their job properly and leaves the systems to somebody else. This particular seat needs the opposite instinct, so we would both be making a mistake. If you are drawn to the branch itself, our advisor careers page is a different door and a real one.';
-        cta='<a class="btn btn-2" href="/careers/">See the advisor careers page</a> <button class="q-restart" type="button" id="rq">Take it again</button>';
+  
+    function draw(){
+      spots.forEach(function(s){
+        var i=order.indexOf(s.dataset.f);
+        s.setAttribute('aria-pressed',i>=0?'true':'false');
+        if(i>=0)s.dataset.n=String(i+1); else s.removeAttribute('data-n');
+      });
+      listEl.innerHTML='';
+      order.forEach(function(k,i){
+        var f=FIXES[k]||{where:k};
+        var li=document.createElement('li');
+        var t=document.createElement('div'); t.className='mt';
+        var b=document.createElement('b'); b.textContent=(i+1)+'. '+f.where;
+        var x=document.createElement('button'); x.type='button'; x.className='mx';
+        x.textContent='remove'; x.setAttribute('aria-label','Remove the mark on '+f.where);
+        x.addEventListener('click',function(){
+          order=order.filter(function(j){return j!==k}); delete notes[k]; draw(); save();
+        });
+        t.appendChild(b); t.appendChild(x); li.appendChild(t);
+        var ta=document.createElement('textarea'); ta.rows=2; ta.maxLength=300;
+        ta.placeholder='What is wrong with it? (optional)';
+        ta.value=notes[k]||'';
+        ta.setAttribute('aria-label','What is wrong with '+f.where);
+        ta.addEventListener('input',function(){notes[k]=ta.value;save()});
+        li.appendChild(ta);
+        listEl.appendChild(li);
+      });
+  
+      var n=distinct(order);
+      if(!n){ nEl.textContent='Nothing marked yet'; hintEl.textContent='Tap any part of the form.'; }
+      else {
+        nEl.textContent='You have marked '+n+(n===1?' thing':' things');
+        /* never "n of 12": the count of what is there is the answer sheet */
+        hintEl.textContent=n<3?'Keep going. There is more than that.'
+              :n<6?'Good. Most people stop about here.'
+              :'That is more than most. Send it.';
       }
-      vd.innerHTML='<p class="vscore">'+s+'<small> / 20</small></p><h3>'+h+'</h3><p>'+p+'</p><div class="ctas">'+cta+'</div>';
-      var rq=d.getElementById('rq');
-      if(rq)rq.addEventListener('click',function(){i=0;picks=[];vd.hidden=true;panel.hidden=false;paint();
-        vd.closest('.qcard').scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'})});
-      try{ sessionStorage.setItem('rrbAdminScore',String(s)) }catch(e){}
-      window.__rrbScore=s;
-      if(s>=16&&!noMotion.matches)burst();
-      vd.closest('.qcard').scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
+      var any=order.length>0||(elseT&&elseT.value.trim());
+      sendBtn.hidden=!any; footEl.hidden=!any;
     }
-    paint();
-
-    /* confetti, in the page's own colours, and it clears itself */
-    function burst(){
-      var c=d.getElementById('confetti'); if(!c||!c.getContext)return;
-      var cx=c.getContext('2d'), r=Math.min(devicePixelRatio||1,2), W=0,H=0;
-      function size(){W=c.clientWidth;H=c.clientHeight;c.width=W*r;c.height=H*r;cx.setTransform(r,0,0,r,0,0)}
-      size();
-      var cols=['#00728d','#00CFEA','#0d3f5e','#7fe3f2','#22527f'], ps=[];
-      for(var k=0;k<90;k++)ps.push({x:W/2+(Math.random()-.5)*W*.5,y:H*.42,
-        vx:(Math.random()-.5)*7,vy:-Math.random()*9-3,s:4+Math.random()*5,
-        a:Math.random()*6.28,va:(Math.random()-.5)*.3,c:cols[k%cols.length],o:1});
-      var t0=0;
-      (function f(t){ if(!t0)t0=t; var e=(t-t0)/1000;
-        cx.clearRect(0,0,W,H);
-        ps.forEach(function(p){p.vy+=.22;p.x+=p.vx;p.y+=p.vy;p.a+=p.va;p.o=Math.max(0,1-e/2.6);
-          cx.save();cx.globalAlpha=p.o;cx.translate(p.x,p.y);cx.rotate(p.a);
-          cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);cx.restore()});
-        if(e<2.7)requestAnimationFrame(f); else cx.clearRect(0,0,W,H);
-      })(performance.now());
-    }
+  
+    spots.forEach(function(s){
+      s.addEventListener('click',function(){
+        var k=s.dataset.f, i=order.indexOf(k), had=distinct(order);
+        if(i>=0)order.splice(i,1); else order.push(k);
+        draw(); save();
+        var n=distinct(order);
+        say(i>=0 ? 'Unmarked' : (n>had ? 'Marked \u2014 '+n+(n===1?' thing':' things')
+                                       : 'Already marked on another line'));
+      });
+    });
+  
+    if(elseBtn)elseBtn.addEventListener('click',function(){
+      elseBox.hidden=!elseBox.hidden;
+      if(!elseBox.hidden&&elseT)elseT.focus();
+    });
+    if(elseT)elseT.addEventListener('input',function(){save();draw()});
+  
+    sendBtn.addEventListener('click',function(){
+      save();
+      var ap=document.getElementById('apply');
+      if(ap)ap.scrollIntoView({behavior:(window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'),block:'start'});
+    });
+  
+    /* what the Branch Manager reads: what they found, in their order, with the
+       branch's own note on each so he does not have to hold twelve faults in
+       his head, and anything they found that was never planted. */
+    window.__rrbFix=function(){
+      var found=order.map(function(k){
+        var f=FIXES[k]||{where:k,why:''};
+        return f.where+(notes[k]?' — "'+notes[k].trim()+'"':'')+'  ['+f.why+']';
+      });
+      var missed=Object.keys(FIXES).filter(function(k){
+        return order.indexOf(k)<0 && k!=='name3b' && k!=='name3c';
+      }).map(function(k){return FIXES[k].where});
+      return {
+        n:distinct(order), total:TOTAL,
+        found:found.join('\n'),
+        missed:missed.join('; '),
+        other:(elseT&&elseT.value.trim())||''
+      };
+    };
+  
+    load(); draw();
   })();
 
   /* ════════════════════ the form ════════════════════
@@ -1342,14 +1579,21 @@ footer .ic{width:16px;height:16px}
       f.dataset.sending='1'; var was=btn.innerHTML; btn.disabled=true; btn.textContent='Sending…';
       var when=val('when'), gh=val('gh'), link=val('link');
       var tools=[].slice.call(f.querySelectorAll('[name="tool"]:checked')).map(function(x){return x.value}).join(', ');
-      var score=''; try{score=sessionStorage.getItem('rrbAdminScore')||''}catch(x){}
-      if(!score&&typeof window.__rrbScore==='number')score=String(window.__rrbScore);
+      /* what they marked on the form at the top of the page. It travels
+         whether or not they pressed "send what I found": the marks are the
+         application, and a person who scrolled past the button has still
+         told us what they noticed. */
+      var fx=(typeof window.__rrbFix==='function')?window.__rrbFix():{n:0,total:12,found:'',missed:'',other:''};
+      var score=fx.n?(fx.n+' of '+fx.total+' found'):'did not mark the form';
       var body={action:'q.quote',form:'admin',code:'QB',line:'Build with us',
         title:'Administrator and branch builder',
         core:{name:name,email:email,phone:phone,reach:'call',when:when,agent:'',
               notes:w1,website:val('website')},
         fields:[
-          {section:'Them',k:'score',label:'The five questions, out of 20',value:score},
+          {section:'The form',k:'score',label:'What they found on the form',value:score},
+          {section:'The form',k:'fix_found',label:'In the order they found them',value:fx.found},
+          {section:'The form',k:'fix_other',label:'Something else they saw',value:fx.other},
+          {section:'The form',k:'fix_missed',label:'What they walked past',value:fx.missed},
           {section:'Them',k:'town',label:'Where they live',value:val('town')},
           {section:'Them',k:'travel',label:'Getting to Chaguanas',value:val('travel')},
           {section:'Them',k:'when_talk',label:'Best time for a call',value:when},

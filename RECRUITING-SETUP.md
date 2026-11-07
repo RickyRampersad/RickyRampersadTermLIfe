@@ -102,6 +102,70 @@ found out half the day is petty cash and licence renewals. The asset is real,
 so it stays — demoted from the hook to the proof, and in plain words: **"Most
 employers show you a job description. We will show you the whole workshop."**
 
+## The ad is the test — `/buildwithus` opens on a broken form
+
+Decided 7 November 2026, after five cuts of a recruiting film were turned
+down. The note on that is in `tools/film/beat/README.md`; the lesson that
+matters here is that the films were all *about* the job, and the strongest
+thing in this whole campaign was already written and had never been built:
+**the interview is one question — find something here that is clumsy, or
+missing, or would save somebody an hour, and say how you would fix it.**
+
+So the page asks it on the way in. The first thing after the hero is a form
+like the ones a branch runs on — `GL 114 (Rev. 2014)`, *Petty Cash &
+Document Transmittal Request*, photocopied-grey, monospace, dotted rules —
+under one line: **"This is the job you have now. Fix it."** Every part of it
+is tappable. What they mark is the application.
+
+**Twelve faults are planted, and the number is never shown.** Nor are the
+faults named on screen. The moment a candidate can see how many there are it
+stops being a judgement and becomes a puzzle hunt, and the thing being
+measured is what they *notice*, not what they can guess. The explanations
+live in `FIXES[]` in the page's script and travel to the Branch Manager only.
+
+| the fault | why it is one |
+|---|---|
+| the date | no format; `03/04/26` is two dates depending on the reader |
+| the client, three times | asked on lines 2, 7 and 10 of one sheet |
+| the policy number | two formats in its own example, nothing checks either |
+| the department | free text — the Log Book had 25 departments typed about 90 ways |
+| one form per document | six documents is six forms, six signatures, six scans |
+| the total | added by hand, nothing checks it against the three lines above it |
+| the reason box | a line and a half to explain a payment |
+| "receipt attached? YES / NO" | asks about the receipt instead of taking it |
+| the signature | print, sign, scan, e-mail: digital until the step that matters |
+| "complete a new form" | a correction means starting again, so people use a pen |
+| "no copy will be sent to you" | the person who filled it has no record that they did |
+| the office-use block | on a sheet anybody can type into: a hope, not a control |
+
+**The three client-name fields count as one find.** Marking any of them is
+the insight; marking all three is not three times the insight (`distinct()`).
+
+**What the Branch Manager receives**, in the e-mail's own section, is the
+score (`6 of 12 found`), what they marked **in the order they marked it**
+with their own words and the branch's note on each, anything they found that
+was never planted, and **what they walked past** — which is as informative as
+what they caught.
+
+**The five-question quiz it replaces is gone**, along with its stylesheet and
+its script: one mechanic, not two, and a page that asks a candidate to find
+dead weight should not be carrying forty lines of it.
+
+Two things that hold whatever else changes:
+
+- **The marks travel whether or not "Send what I found" is pressed.** They
+  are the application, and a person who scrolled past that button has still
+  told us what they noticed.
+- **With no script the marking is hidden, not broken.** A line says so and
+  the ordinary application below still works — the rule every branch form
+  keeps.
+
+Covered by `fixtest.js` in the session scratchpad (39 checks, Playwright, a
+laptop and a phone: the counter, the three-names rule, that the page never
+prints the answers or the total, that marks survive a reload, no sideways
+scroll at 390, and the no-JS fallback), and `fixsend.js`, which fills the
+whole application against a mocked backend and prints what he actually reads.
+
 ### 1 · LinkedIn (the flagship — this is where the person with a job is)
 
 > **You already know how your office should run. Nobody has given you the tools.**
