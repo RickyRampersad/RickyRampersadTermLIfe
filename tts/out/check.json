@@ -1,57 +1,12 @@
 {
- "tts/out/cmadmin/01.mp3": [
-  "en",
-  0.996,
-  "Somewhere right now there is someone who knows general insurance inside out and still spends the day retyping what the record already holds."
- ],
- "tts/out/cmadmin/02.mp3": [
-  "en",
-  0.998,
-  "you retype the proposal form, you wait three days for an endorsement, and the history you're advising on sits in four different places."
- ],
- "tts/out/cmadmin/03.mp3": [
-  "en",
-  0.996,
-  "The branch has opened its own general insurance agency, and it already has a book."
- ],
- "tts/out/cmadmin/04.mp3": [
-  "en",
-  0.999,
-  "You would not be building a book. We have one, 103 clients, 195 policies in force, and renewals in every single month of the year."
- ],
- "tts/out/cmadmin/05.mp3": [
-  "en",
-  0.999,
-  "Before you open a file, every term since the policy began is already on the screen. What was covered, what value, what was paid, and the claims that fell in each term."
- ],
- "tts/out/cmadmin/06.mp3": [
+ "tts/out/cmfix/01.mp3": [
   "en",
   0.997,
-  "The insurers notice is red for you, and every figure is checked against our own record. Where the two disagree, the desk says so."
+  "Here is the part most people in this work never get. A change you ask for is not a ticket that joins a queue somewhere else. It is written into the desk and it runs on every file that week."
  ],
- "tts/out/cmadmin/07.mp3": [
-  "en",
-  0.999,
-  "The job is the part a system cannot do, endorsements and extensions, the renewal conversation, telling a client plainly what the cover does and what it does not, and knowing when the act changes."
- ],
- "tts/out/cmadmin/08.mp3": [
-  "en",
-  0.998,
-  "Here is the part most people in this work never get. A change you ask for is not a ticket in a queue ahead office. It is written into the desk and it runs on every file that week."
- ],
- "tts/out/cmadmin/09.mp3": [
-  "en",
-  0.998,
-  "a renewal that goes out 30 days ahead with the claims history on it. An endorsement nobody has to retive. A flag when some insured has not moved in three years."
- ],
- "tts/out/cmadmin/10.mp3": [
-  "en",
-  0.997,
-  "The paperwork is finished. The advice is not. That is the job."
- ],
- "tts/out/cmadmin/11.mp3": [
+ "tts/out/cmfix/02.mp3": [
   "en",
   0.996,
-  "One seat for client manager. Chaguanas, come and look after the book."
+  "a renewal that goes out 30 days ahead with the claims history on it. An endorsement nobody types in twice. A flag when the sum insured has not moved in three years."
  ]
 }
