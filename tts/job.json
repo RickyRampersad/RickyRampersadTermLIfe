@@ -3,18 +3,9 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "cmadmin": [
-   "Somewhere right now there is someone who knows general insurance inside out, and still spends the day retyping what the record already holds.",
-   "You retype the proposal form. You wait three days for an endorsement. And the history you are advising on sits in four different places.",
-   "The branch has opened its own general insurance agency. And it already has a book.",
-   "You would not be building a book. We have one. A hundred and three clients, a hundred and ninety five policies in force, and renewals in every single month of the year.",
-   "Before you open a file, every term since the policy began is already on the screen. What was covered, at what value, what was paid, and the claims that fell in each term.",
-   "The insurer's notice is read for you, and every figure is checked against our own record. Where the two disagree, the desk says so.",
-   "The job is the part a system cannot do. Endorsements and extensions. The renewal conversation. Telling a client plainly what the cover does and what it does not. And knowing when the Act changes.",
-   "Here is the part most people in this work never get. A change you ask for is not a ticket in a queue at head office. It is written into the desk, and it runs on every file that week.",
-   "A renewal that goes out thirty days ahead with the claims history on it. An endorsement nobody has to retype. A flag when a sum insured has not moved in three years.",
-   "The paperwork is finished. The advice is not. That is the job.",
-   "One seat, for a client manager. Chaguanas. Come and look after the book."
+  "cmfix": [
+   "Here is the part most people in this work never get. A change you ask for is not a ticket that joins a queue somewhere else. It is written into the desk, and it runs on every file that week.",
+   "A renewal that goes out thirty days ahead with the claims history on it. An endorsement nobody types in twice. A flag when the sum insured has not moved in three years."
   ]
  }
 }
