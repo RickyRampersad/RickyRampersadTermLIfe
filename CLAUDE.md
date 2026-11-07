@@ -7446,6 +7446,77 @@ two pages. Both now carry `[hidden]{display:none!important}` at the top of the
 sheet. Reveal with `el.hidden = false`, never `style.display`, or that
 `!important` wins instead.
 
+### HELP 868 on the claims page — ask us, never file here — 7 November 2026
+
+Asked for in these words: *"Also would like respond I.on what's app on this
+site can it be , also"* — respond.io / HELP 868 on the claims page too.
+
+Yes, and it is live rather than pending. Checked before building: the
+**"HELP 868 Assistant."** agent is `active: true`, and the **Tap Menu**
+workflow is **published** (updated 6 November), while the two that were
+restricted to the branch manager's own test number — "AI Pilot Test" and
+"Client Routing" — are both **stopped**. So a real client messaging
++1 868 435 7868 right now gets the welcome, the tap menu and the assistant.
+The 3 November note above ("one published test workflow") is superseded.
+
+**The whole rule of this change: it says ASK US, never FILE HERE.** The tap
+menu's own claims branch ("Make a claim / Check on a claim / Health claim /
+Motor or home claim") logs a Query Pal ticket for a person to answer — the
+assistant says in its own words that it cannot see the client's records. It
+does **not** file a claim and it cannot give a reference. Only the form on
+this page does that. A client who believes a WhatsApp message filed their
+claim has not filed one, and would find that out weeks later, which is the
+one failure this page exists to prevent.
+
+So every entry point is worded as a question:
+
+| | |
+|---|---|
+| the floating button | no words at all; its accessible name is *"Ask HELP 868 a question on WhatsApp. A message reaches a person — your claim is filed by the form on this page."* |
+| beside the telephone number, at the foot of the wizard | "or **ask us on WhatsApp**. A message reaches a person — your claim is filed by this form." |
+| the footer's "The branch" list | "HELP 868 on WhatsApp", beside (868) 678-5921 |
+
+All three prefill the same plain-ASCII line, `Hi HELP 868, I am on the branch
+claims page and need a hand.` — no apostrophe and no em dash, so nothing is
+mangled through `wa.me`'s query string. It tells whoever picks it up that this
+person is mid-form rather than starting a claim, and because typed text always
+reaches the assistant it is answered in context rather than running the menu's
+"Make a claim" branch.
+
+**The green is the button; the words take the page's accent.** WhatsApp's
+`#128c7e` measures **4.14:1** against white — over the **3:1** floor for a
+non-text graphic (WCAG 1.4.11) and under the **4.5:1** for text. So the green
+carries only an icon and an `aria-label`, exactly as the homepage's own button
+does, and every WhatsApp link written as words is `--teal-600` (7.38:1 on the
+ground, 13.11:1 on the navy footer). Never put words on the green.
+
+**One glyph, three uses: `#ic-wa` in the sprite.** It is the homepage's own
+mark — a stroke bubble with a filled handset — so the one floating button a
+client meets on both pages is visibly the same button. That makes it a brand
+mark rather than a UI icon, so it does not follow the house 24×24 / 2px-stroke
+set; what it does do is drive **both** halves from `currentColor` through
+presentation attributes on the paths, so one symbol reads white on the green
+and teal on paper, and it does not matter what an ancestor sets `fill` to.
+
+**The inline link is underlined.** It sits beside the telephone number in the
+same sentence and the browser underlines that one; two links side by side, one
+underlined and one not, reads as a fault rather than as a choice.
+
+**The staff desk gets none of it**, and the test fails if one appears.
+HELP 868 is the client assistant; staff have the branch app. A client WhatsApp
+button on `claims/staff.html` would be a door pointing the wrong way.
+
+Measured after: 46 new checks, the existing 45-check audit still passing,
+16.7ms a frame over three passes, CLS 0.0012–0.0014, no sideways scroll at
+360/390/414, the button's own target 52px, and at all three phone widths it
+covers no control (checked with `elementsFromPoint`, not by eye).
+
+**One test-side bug, the recorded habit again.** The first cut measured every
+inline link against `document.body`'s background and failed the footer link at
+1.06:1 — the footer sits on deep navy. The page was right and the test was
+wrong; it walks up for the first opaque background now. Check which side holds
+the bug before changing anything.
+
 ### Right colours, wrong site — 7 November 2026
 
 Asked in these words: *"the claims is the same old site I did some changes on
