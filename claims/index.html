@@ -12,16 +12,45 @@
 
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Claims TT — File your insurance claim online | Ricky Rampersad Branch</title>
+<title>File your insurance claim online — Ricky Rampersad Branch</title>
 <meta name="description" content="File a motor, health, property or life insurance claim online in Trinidad &amp; Tobago. Photograph your documents with your phone, upload them securely, and track your claim with a reference number." />
 <meta name="theme-color" content="#0E2A47" />
-<meta property="og:title" content="Claims TT — File your insurance claim online" />
+<meta property="og:title" content="File your insurance claim online — Ricky Rampersad Branch" />
 <meta property="og:description" content="Motor, health, property and life claims. Photograph your documents, upload securely, get a claim reference in minutes." />
 <meta property="og:type" content="website" />
 <link rel="icon" type="image/svg+xml" href="/site-icon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Inter:wght@400;500;600;700;800&display=swap" />
+<!-- Inter Tight for display, Inter for copy — the branch site's own faces, not
+     a serif of this page's own. Until 7 November 2026 this page loaded
+     Newsreader, and a didone serif with an italic is the single loudest thing
+     that made /claims/ read as another company's site to a client arriving
+     from the homepage: "the claims is the same old site".
+
+     Loaded non-blocking, like the other 135 served pages. A plain stylesheet
+     link holds up first paint — measured at 650–1470ms on a phone, and
+     nothing at all on screen while Google is unreachable, which is a blank
+     screen for somebody opening a claim link from WhatsApp on mobile data.
+     Keep the noscript copy, or a visitor without JS is left in the fallback. -->
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+<style>
+/* rrb-font-fallbacks — metric-matched, so the swap does not move the page.
+   Non-blocking alone made things worse: paint got fast, then the webfont
+   swapped in and the text reflowed. Two weight buckets, because a size-adjust
+   taken from the regular weight does not fit an 800-weight heading. Face two
+   lists Roboto, which is what an Android phone actually ships — local('Arial')
+   does not resolve on Android at all, so without it a large share of Trinidad
+   visitors would match nothing. The stacks below name all three. */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:96.22%;ascent-override:100.68%;descent-override:25.07%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:95.31%;ascent-override:101.64%;descent-override:25.31%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:96.66%;ascent-override:100.22%;descent-override:24.95%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:101.60%;ascent-override:95.35%;descent-override:23.74%;line-gap-override:0.00%}
+</style>
 <style>
   :root{
     /* The branch's own light palette — the homepage's, sampled from Guardian
@@ -81,8 +110,11 @@
        black desaturates a warm surface and reads as grey haze */
     --shadow:0 16px 40px hsl(32deg 20% 42% / .16);
     --shadow-sm:0 4px 14px hsl(32deg 20% 42% / .10);
-    --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --display:"Newsreader","Iowan Old Style","Palatino Linotype",Georgia,"Times New Roman",serif;
+    /* The branch site's own two stacks, named exactly as the homepage and the
+       quote forms name them. A fallback the stack never names is a fallback
+       nobody uses, so both metric-matched faces are listed before system-ui. */
+    --font:'Inter','Inter Fallback','Inter Fallback R',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --display:'Inter Tight','Inter Tight Fallback','Inter Tight Fallback R','Inter','Inter Fallback','Inter Fallback R',system-ui,sans-serif;
   }
   *{margin:0;padding:0;box-sizing:border-box}
   /* An author display rule beats the UA sheet's [hidden]{display:none}, so a
@@ -102,8 +134,14 @@
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
   .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-600);background:var(--teal-50);border:1px solid var(--line-2);padding:7px 14px;border-radius:999px;margin-bottom:16px}
-  .h2{font-family:var(--display);font-size:clamp(1.8rem,3.8vw,2.7rem);font-weight:400;letter-spacing:-.018em;line-height:1.12;text-wrap:balance;margin-bottom:12px}
-  .h2 em{font-style:italic;color:var(--teal-600)}
+  /* Weight 700 and tighter tracking, not the 300/400 the serif carried: a
+     grotesque set at a serif's display weight reads thin and wide, which is
+     the trap in swapping one display face for another. These are the
+     homepage's own values. An <em> is upright and takes the accent, the way
+     "Protecting your family" does there — a synthesised oblique of Inter
+     Tight is not an italic and looks like a fault. */
+  .h2{font-family:var(--display);font-size:clamp(1.8rem,3.8vw,2.7rem);font-weight:700;letter-spacing:-.024em;line-height:1.12;text-wrap:balance;margin-bottom:12px}
+  .h2 em{font-style:normal;color:var(--teal-600)}
   .h3{font-size:1.12rem;font-weight:800;letter-spacing:-.01em;margin-bottom:6px}
   .lead{color:var(--muted);max-width:660px;font-size:1.02rem}
 
@@ -183,36 +221,123 @@
      prefers-reduced-motion: no-preference, so it can never strand the
      hero invisible. */
   .hero{position:relative;isolation:isolate;color:var(--body);overflow:clip;background:var(--bg);padding:0}
-  .hero::before{content:"";position:absolute;inset:-8%;z-index:0;pointer-events:none;
+  .hero::before{content:"";position:absolute;inset:-8%;z-index:0;pointer-events:none;will-change:transform;
     background:
       radial-gradient(44% 48% at 14% 0%, rgba(0,114,141,.22), transparent 62%),
       radial-gradient(40% 44% at 88% 6%, rgba(14,147,176,.20), transparent 64%),
       radial-gradient(36% 38% at 64% 100%, rgba(10,51,80,.10), transparent 68%)}
   @media(prefers-reduced-motion:no-preference){
     .hero::before{animation:heroDrift 28s ease-in-out infinite alternate}
+    /* One ambient motion per hero. From 62rem the ring is the movement, and
+       the drifting field behind it is both a second thing competing for the
+       eye and the single most expensive layer on the page — 1590x840 of
+       gradient, 3ms a frame even composited. Below 62rem the stage is hidden,
+       so the drift is what keeps the hero from being dead, and it stays. */
+    @media(min-width:62rem){ .hero::before{animation:none} }
   }
+  /* The scale is CONSTANT and only the translate moves. Animating the scale
+     of a layer this size (inset:-8%, three large radial gradients) re-
+     rasterises it every frame: measured at 23.4ms a frame, against 16.9 with
+     this one animation off — more than the whole hero stage costs. A pure
+     translation is composited, so the drift is free. */
   @keyframes heroDrift{
-    from{transform:translate3d(-2%,-1.2%,0) scale(1.02)}
-    to{transform:translate3d(2%,1.2%,0) scale(1.08)}
+    from{transform:translate3d(-2%,-1.2%,0) scale(1.06)}
+    to{transform:translate3d(2%,1.2%,0) scale(1.06)}
   }
   .hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;z-index:1;
     background:linear-gradient(90deg,transparent,rgba(0,114,141,.55) 22%,rgba(14,147,176,.42) 78%,transparent)}
   .hero-inner{position:relative;z-index:1;padding:clamp(44px,7vw,84px) 0 clamp(44px,6.5vw,76px)}
   .hero .wrap,#file .wrap{max-width:880px}
+  /* The two-column hero needs the full wrap; #file keeps the 880px above. */
+  .hero .wrap.hero-grid{max-width:1020px;display:grid;gap:clamp(24px,4vw,52px);align-items:center}
+
+  /* ── The hero stage ────────────────────────────────────────────────────
+     Shown from 62rem only. Below that the ring's labels cannot sit around a
+     circle this size without landing on each other or on the mark, and the
+     lede names all five lines in prose immediately above, so nothing is lost.
+
+     The stage is a CONTAINER and every radius is cqw, so the drawing is
+     identical at every width it is shown at. Its own width must be definite
+     or the whole thing collapses: `min(…, 100%)` inside an `auto` grid track
+     is circular and has rendered a stage at 0x0 before, which is why the
+     column is minmax(0,.92fr) rather than auto.
+
+     Rings and mesh are divs, not SVG, deliberately. An absolutely positioned
+     SVG with width:100% inside a grid sized by aspect-ratio has no percentage
+     basis to resolve against, and `svg:not([width])` outranks a bare class —
+     two traps this device has already cost a session each. A border-radius
+     and a background-image have neither. */
+  .stage{display:none}
+  .stage .mesh,.stage .orbit,.stage .ring,.stage .stage-mark{grid-area:1/1}
+  .mesh{width:100%;height:100%;border-radius:50%;
+    background-image:radial-gradient(circle, rgba(13,63,94,.20) 1.1px, transparent 1.2px);
+    background-size:15px 15px;
+    -webkit-mask-image:radial-gradient(circle at 50% 50%, #000 48%, transparent 73%);
+    mask-image:radial-gradient(circle at 50% 50%, #000 48%, transparent 73%)}
+  .orbit{width:76%;height:76%;border-radius:50%;border:1px dashed rgba(0,114,141,.34);place-self:center}
+  .orbit-in{width:52%;height:52%;border:1px solid rgba(0,114,141,.18);border-style:solid}
+  .ring{width:100%;height:100%;position:relative;rotate:0deg}
+  .stage-mark{width:27cqw;height:27cqw;place-self:center;display:block;
+    filter:drop-shadow(0 12px 28px hsl(32deg 20% 42% / .26))}
+  /* The classic place-on-a-circle one-liner. The chip holds a STATIC
+     transform; the ring animates the `rotate` PROPERTY and the inner span
+     counter-rotates on the same property at the same duration — separate
+     properties, so they compose instead of one overwriting the other. */
+  .chip{position:absolute;left:50%;top:50%;width:7.2rem;
+    transform:translate(-50%,-50%) rotate(var(--a)) translate(38cqw) rotate(calc(-1 * var(--a)))}
+  .chip > span{display:grid;justify-items:center;gap:5px;rotate:0deg}
+  .cic{width:19px;height:19px;flex:none;fill:none;stroke:var(--teal-600);stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round;
+    background:#fff;border-radius:999px;padding:9px;box-sizing:content-box;
+    box-shadow:0 3px 12px hsl(32deg 20% 42% / .16);border:1px solid var(--line)}
+  .chip b{font-size:.74rem;font-weight:600;color:var(--ink);letter-spacing:.01em;
+    text-align:center;line-height:1.2;text-wrap:balance}
+  @media(min-width:62rem){
+    .hero .wrap.hero-grid{grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr)}
+    .stage{display:grid;place-items:center;container-type:size;
+      width:min(26rem,100%);aspect-ratio:1;margin-inline:auto}
+  }
+  /* Motion is opt-in: with it off the ring simply stands still, all five
+     chips in place. Nothing is ever left invisible by a loop that never ran. */
+  @media(prefers-reduced-motion:no-preference){
+    .ring{animation:rrRing 64s linear infinite}
+    .chip > span{animation:rrRingRev 64s linear infinite}
+    .orbit{animation:rrRingRev 120s linear infinite}
+    .orbit-in{animation:rrRing 150s linear infinite}
+    /* The mark does NOT float. It carries a drop-shadow filter, and a filter
+       on a moving element is re-rasterised every frame — that alone took the
+       scene from 16.7ms to about 20. The ring is the movement here; a bobbing
+       shield on top of it was costing the frame budget for nothing. */
+  }
+  @keyframes rrRing{to{rotate:360deg}}
+  @keyframes rrRingRev{to{rotate:-360deg}}
   #file{padding-top:36px}
 
   .kicker{display:inline-flex;align-items:center;gap:10px;font-size:.75rem;font-weight:700;
     letter-spacing:.2em;text-transform:uppercase;color:var(--lime);margin-bottom:22px}
   .kicker::before{content:"";width:28px;height:1px;background:currentColor;opacity:.6}
-  .hero h1{font-family:var(--display);font-size:clamp(2.5rem,6.4vw,4.5rem);font-weight:300;
-    letter-spacing:-.022em;line-height:1.02;text-wrap:balance;margin-bottom:20px;color:var(--ink)}
-  .hero h1 em{font-style:italic;color:var(--lime)}
+  .hero h1{font-family:var(--display);font-size:clamp(2.5rem,6.4vw,4.5rem);font-weight:700;
+    letter-spacing:-.032em;line-height:1.05;text-wrap:balance;margin-bottom:20px;color:var(--ink)}
+  .hero h1 em{font-style:normal;color:var(--teal-500)}
   .lede{color:var(--body);max-width:53ch;font-size:clamp(1rem,1.6vw,1.16rem);line-height:1.65}
   .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:34px}
-  .assur{display:flex;gap:clamp(20px,4vw,44px);flex-wrap:wrap;margin-top:clamp(36px,6vw,56px);
+  /* Three across, and the min() is what keeps it there: an auto-fit track
+     without it overflows below ~360px, and a plain flex row broke to two rows
+     the moment the stage took half the hero. */
+  .assur{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9.2rem),1fr));
+    gap:20px clamp(16px,2.4vw,30px);margin-top:clamp(36px,6vw,56px);
     padding-top:26px;border-top:1px solid var(--line)}
-  .assur div{min-width:88px}
-  .assur dt{font-family:var(--display);font-size:1.7rem;font-weight:400;color:var(--lime);
+  /* Three across once the hero has split, even though the copy column is then
+     narrower. Left to auto-fit, a 1024px laptop — the width where the split
+     has just happened — put two on one row and one on the next, which reads
+     as a mistake. This rule has to come AFTER the auto-fit one above: both
+     are (0,1,0), so source order decides, and written up beside the stage it
+     silently did nothing. Same trap as the stage sizing itself. */
+  @media(min-width:62rem){
+    .assur{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 16px}
+  }
+  .assur div{min-width:0}
+  .assur dt{font-family:var(--display);font-size:1.7rem;font-weight:700;letter-spacing:-.02em;color:var(--teal-500);
     line-height:1;margin-bottom:6px;font-variant-numeric:tabular-nums}
   .assur dd{font-size:.82rem;color:var(--muted);letter-spacing:.02em;line-height:1.4}
   .hero-facts{display:flex;gap:26px;flex-wrap:wrap;margin-top:30px;padding-top:24px;border-top:1px solid var(--line)}
@@ -243,7 +368,7 @@
   .panel{padding:30px clamp(18px,4vw,38px) 34px}
   .panel[hidden]{display:none}
   .panel-head{margin-bottom:22px}
-  .panel-head h2{font-family:var(--display);font-size:clamp(1.5rem,2.8vw,1.95rem);font-weight:400;letter-spacing:-.015em;line-height:1.15;margin-bottom:7px}
+  .panel-head h2{font-family:var(--display);font-size:clamp(1.5rem,2.8vw,1.95rem);font-weight:700;letter-spacing:-.022em;line-height:1.15;margin-bottom:7px}
   .panel-head p{color:var(--muted);font-size:.95rem;max-width:620px}
   .panel-foot{display:flex;gap:12px;justify-content:space-between;align-items:center;margin-top:30px;padding-top:22px;border-top:1px solid var(--line);flex-wrap:wrap}
 
@@ -690,7 +815,11 @@
   <div class="wrap nav">
     <a class="logo" href="/">
       <span class="logo-badge" aria-hidden="true"><img src="/site-mark.svg" alt="" /></span>
-      <span>Claims&nbsp;TT<small>Ricky Rampersad Branch</small></span>
+      <!-- The branch leads and the section follows, the shape the homepage and
+           the quote forms both use. It read "Claims TT / Ricky Rampersad
+           Branch" until 7 November 2026, and a client arriving from the
+           homepage met a different company's name in the top left. -->
+      <span>Ricky&nbsp;Rampersad<small>Branch claims</small></span>
     </a>
     <div class="nav-actions">
       <a class="nav-tel" href="tel:+18686785921"><svg class="ic" aria-hidden="true"><use href="#ic-phone"/></svg> <span>(868) 678-5921</span></a>
@@ -702,7 +831,8 @@
 <!-- ══════════════ HERO ══════════════ -->
 <section class="hero" id="hero" aria-labelledby="hero-title">
   <div class="hero-inner">
-    <div class="wrap">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
       <p class="kicker">Ricky Rampersad · Trinidad &amp; Tobago</p>
       <h1 id="hero-title">A claim should feel like <em>cover</em>,<br />not paperwork.</h1>
       <p class="lede">Motor, health, property, life and pension — filed from your phone in about ten minutes. Sign in and your policy number comes to you. Photograph the documents. Keep the reference.</p>
@@ -715,6 +845,35 @@
         <div><dt>5</dt><dd>lines of business<br />under one front door</dd></div>
         <div><dt>0</dt><dd>passwords —<br />a code, and you're in</dd></div>
       </dl>
+      </div>
+
+      <!-- The branch's own hero device: the mark at the centre and the lines
+           of cover circling it, as the homepage and the quote forms carry. It
+           is a diagram of what this page is for, not decoration, and it is the
+           thing whose absence left this hero's right half empty while every
+           sibling page had one.
+
+           Five chips, seventy-two degrees apart, on one ring: no pairs and no
+           cycling, so every line is on screen whether motion is allowed or
+           not. The names are decorative here — the lede above says all five in
+           prose — so the whole stage is aria-hidden and a screen reader is not
+           walked around a circle.
+
+           Nothing is redrawn: the centre is /site-mark.svg itself, and the
+           five icons are this page's own sprite. -->
+      <div class="stage" aria-hidden="true">
+        <div class="mesh"></div>
+        <div class="orbit"></div>
+        <div class="orbit orbit-in"></div>
+        <div class="ring">
+          <span class="chip" style="--a:-90deg"><span><svg class="cic"><use href="#ic-motor"/></svg><b>Motor</b></span></span>
+          <span class="chip" style="--a:-18deg"><span><svg class="cic"><use href="#ic-health"/></svg><b>Health</b></span></span>
+          <span class="chip" style="--a:54deg"><span><svg class="cic"><use href="#ic-home"/></svg><b>Property</b></span></span>
+          <span class="chip" style="--a:126deg"><span><svg class="cic"><use href="#ic-life"/></svg><b>Life</b></span></span>
+          <span class="chip" style="--a:198deg"><span><svg class="cic"><use href="#ic-pension"/></svg><b>Pension</b></span></span>
+        </div>
+        <img class="stage-mark" src="/site-mark.svg" alt="" width="160" height="160" />
+      </div>
     </div>
   </div>
 </section>
@@ -1073,8 +1232,8 @@
   <div class="wrap">
     <div class="foot-grid">
       <div>
-        <h4>Claims TT</h4>
-        <p style="max-width:340px;line-height:1.7">The claims desk of the Ricky Rampersad Branch, Trinidad &amp; Tobago. Built so filing a claim takes ten minutes on your phone instead of an afternoon at a counter.</p>
+        <h4>Ricky Rampersad Branch</h4>
+        <p style="max-width:340px;line-height:1.7">The branch claims desk, Trinidad &amp; Tobago. Built so filing a claim takes ten minutes on your phone instead of an afternoon at a counter.</p>
       </div>
       <div>
         <h4>Emergency</h4>
@@ -1097,7 +1256,7 @@
     </div>
     <p class="disclaimer">
       Submitting a claim through this page is not an admission of liability by the insurer and does not guarantee payment. Cover, excesses and settlement are determined under your policy wording and schedule, which govern in all cases. Information given here is a plain-language summary for your convenience. Emergency numbers are for Trinidad &amp; Tobago.
-      <br /><br />Claims TT — a Ricky Rampersad project.
+      <br /><br />The claims desk of the Ricky Rampersad Branch, Guardian Life of the Caribbean.
     </p>
   </div>
 </footer>

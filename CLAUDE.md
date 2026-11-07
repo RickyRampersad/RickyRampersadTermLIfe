@@ -7446,6 +7446,95 @@ two pages. Both now carry `[hidden]{display:none!important}` at the top of the
 sheet. Reveal with `el.hidden = false`, never `style.display`, or that
 `!important` wins instead.
 
+### Right colours, wrong site — 7 November 2026
+
+Asked in these words: *"the claims is the same old site I did some changes on
+rickyrampersadbranch and should you now do a overhaul?"*
+
+He was right, and the premise was worth checking before agreeing: the homepage
+has had **no** look change since the 5 November repaint (only the HELP 868
+button and the view counter), and the repaint itself **is** on `main`. So this
+was not a missing merge and not homepage drift.
+
+**The 5 November work was a token-aliasing job, and the token block said so
+out loud:** *"the old token names still carry the accent, so every rule that
+already referenced them keeps working"*. `--violet`, `--lime`, `--gold` and
+`--copper` were all pointed at one teal. Every colour then measured correctly
+against the homepage — `#faf9f2`, `#00728d`, `#0d3f5e`, identical — and the
+page still read as another company's. **Matching the palette is not matching
+the site.** What actually said "different site", in order of loudness:
+
+- **the display face.** It loaded **Newsreader**, a didone-ish serif, set at
+  weight 300 with an italic, while the homepage and all five quote forms load
+  **Inter Tight**. Warm cream + serif display + one accent is also the named
+  machine-generated tell recorded for agentmgt;
+- **the lockup**: "Claims TT / Ricky Rampersad Branch" — a different brand in
+  the top left from the one the client just left. So did the tab, the footer
+  heading and the sign-off;
+- **an empty hero half** where the homepage carries the hovering shield and
+  every quote form carries the orbit stage;
+- **a blocking font link**, the only served client page still with one.
+
+**It is not an overhaul, and that distinction is the whole answer.** The flow
+underneath — five steps, the cover-term checks, the sign-in, the uploads, the
+Guardian form fill — is 582 Node checks and 169 browser checks of work. The
+house rule earned twice already applies: **change the thing that was named and
+keep the rest.** Nothing below the skin was touched.
+
+**The hero stage: five chips, one ring, 72° apart.** No pairs and no cycling,
+so every line of business is on screen whether motion is allowed or not — the
+agentmgt rule, and it is why this ring needs no static-spread fallback. The
+centre is `/site-mark.svg` itself and the five icons are the page's own
+sprite; nothing is redrawn. The whole stage is `aria-hidden`, which is only
+safe because the lede names all five lines in prose immediately beside it.
+
+**The rings and the dot mesh are divs, not SVG, deliberately.** Both recorded
+SVG traps apply here and a `border-radius` has neither: an absolutely
+positioned SVG at `width:100%` inside a grid sized by `aspect-ratio` has no
+percentage basis to resolve against, and `svg:not([width])` outranks a bare
+class. The stage's own width must be definite — `min(…, 100%)` inside an
+`auto` track is circular — so the column is `minmax(0,.92fr)`.
+
+**A grotesque at a serif's display weight reads thin and wide.** Swapping the
+face without swapping the weights is the trap: 300/400 became 700, and the
+tracking went to the homepage's own −.032em. An `<em>` becomes upright and
+takes the accent, as "Protecting your **family**" does there — a synthesised
+oblique of Inter Tight is not an italic and looks like a fault.
+
+**The specificity trap caught the same change twice in one session.** The
+`.assur` three-column override was written beside the stage CSS, which sits
+*above* the base `.assur` rule. Both are (0,1,0), source order decides, and it
+silently did nothing — a 1024px laptop kept showing two stats on one row and
+one on the next. **A rule that overrides another has to come after it.**
+
+**The most expensive thing on the page was already there.** Measured by
+switching one thing off at a time rather than guessing: the hero's own
+`heroDrift` cost **23.4ms a frame against 16.9 with it off** — more than the
+entire new stage. It animates `transform: translate3d(…) scale(…)` on a
+1590×840 layer of three radial gradients, and **animating a scale
+re-rasterises the layer every frame**. A constant scale plus `will-change`
+got it to 20ms; what fixed it was composition, not optimisation — **one
+ambient motion per hero.** From 62rem the ring is the movement and the drift
+is off; below 62rem the stage is hidden, so the drift is what keeps the hero
+alive and it stays. Now 16.7ms over three passes, CLS 0.0014.
+
+**Three test-side bugs, none in the page**, which is the recorded habit of
+checking which side holds the bug: `.logo span` returns the first matching
+element in document order, which is the `aria-hidden` badge, so the lockup
+read `""`; `/serif$/` matches `sans-serif`; and `.steps-strip` is the "do
+these four things first" band, not the five-step wizard (`.wizard .progress
+.pstep`).
+
+The staff desk got the same two faces and the same lockup shape, so one
+product is not set in two typefaces. Its own flow was not touched.
+
+Measured after: 45 checks, no sideways scroll at 360/375/390/414/768/1024/
+1280/1366/1536/1920 **by attempting the scroll and reading `scrollX`**, every
+new colour over its floor (hero 10.53:1, the accent 5.25:1, chip labels
+10.53:1), 16.7ms a frame over three passes, CLS 0.0014, nothing animating and
+nothing invisible with motion off, and all 582 Node and 169 browser checks of
+the existing suites still passing.
+
 ### The signed-in client's vehicles, and the claim record — 6 November 2026
 
 Asked for in these words: *"i am an existing client and it needs to put in my
