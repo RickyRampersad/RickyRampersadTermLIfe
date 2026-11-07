@@ -7618,7 +7618,7 @@ claim with no parent skipped), `terms-test.js` (145, which now covers the
 `signedin-page.js` (69, Playwright on a laptop and a phone: sign in, both
 vehicles and the health policy on screen, tapping the car fills chassis and
 permit, all three terms travel with it, a loss in an earlier year judged on
-that year). **570 Node checks across twelve suites and 169 browser checks
+that year). **582 Node checks across twelve suites and 169 browser checks
 across four, none failing.**
 
 **`?action=ping` reports `registers.vehiclePortfolioIds`** — `yes`, `not synced
@@ -7627,6 +7627,77 @@ policy-record id is answerable from a browser. `not synced yet` means re-run
 **Sync registers from Salesforce now** or a motor claim may find no parent. It
 is two cheap reads (the header and one row) on purpose: the endpoint needs no
 sign-in and must not invite a heavy scan.
+
+### A branch system is OWNED by the Workspace, not shared with it — 7 November 2026
+
+Asked for in these words: *"the work code claims is on my personal and would
+like to move to workspace"*. The Claims TT sheet ("CLAIMSTT — Claims Tracker",
+made 6 August 2026) is owned by the personal Gmail, and the same move has been
+made once before, for the motor quote on 21 October. The sentence recorded then
+is the whole of it and it is worth repeating here: **the sheet must be owned by
+support@, not shared with it.** An editor can run the script, and then Deploy
+refuses with *"You do not have permission to perform this action"* — which
+reads as a Google fault and is not. The fix is **File → Make a copy while
+signed in as support@ alone**.
+
+**Two reasons, and the second is the one that bites later.** A personal Google
+account allows about a hundred mail recipients a day, and every claim copies
+three addresses — the exact ceiling that made `MailRelay.gs` necessary for the
+tracker, where the afternoon's close-outs simply stopped going out. And every
+claim document lives in that account's Drive, so if the account is ever lost
+there is no admin anywhere who can recover a client's claim file.
+
+**What a copy does NOT carry, which is the step that gets missed:**
+
+| | |
+|---|---|
+| **Script Properties** | none of them. `SF_DOMAIN` / `SF_CLIENT_ID` / `SF_CLIENT_SECRET` (the **Connect Salesforce** menu item prompts for all three, so property names are never typed), `TEST_MODE`, `CLAIMS_TASK_OWNER`, `CLAIMS_TESTERS`. |
+| **Triggers** | none. `setupClaims` reinstalls `sweepAbandonedParts` and `claimsFollowUp`; **Connect Salesforce** installs `salesforceNightlySync`. |
+| **The deployment** | a new project means a new `/exec`, held in **two** files that must change together: `claims/index.html` and `claims/staff.html`. |
+| **The documents** | they stay in the old Drive, and the copied rows' links point at files the new owner cannot open. |
+
+**Two properties must deliberately NOT be carried.** `CLAIMS_ROOT_ID` points
+at a folder in the old Drive — it happens to be self-healing (`rootFolder_`
+tries the id, fails, and makes a fresh folder) but leaving it out is cleaner;
+and `CLAIM_SURVEY_SECRET` only signs feedback links, of which none is
+outstanding.
+
+**A fresh copy is LIVE, because no `TEST_MODE` property means live.** So the
+first thing done on a copy, before anything is deployed, is to turn test mode
+on. The menu does it and works today — every one of the three test claims'
+six e-mails carries `[TEST]` and "nothing was sent to the real recipients",
+so Guardian's health and motor desks got nothing — but the menu only exists
+once `onOpen` has run. `testModeOn_`'s trailing underscore makes it private to
+Apps Script and keeps it out of the editor's Run list, so on a fresh copy there
+was a window with no way to do it at all; `turnTestModeOn` and
+`turnTestModeOff` are reachable either way and the menu points at them now.
+
+**Two things change under the new owner, from one line of code.** `testInbox_`
+and `claimsTester_` both trust `Session.getEffectiveUser()`, so test-mode mail
+goes to support@ rather than the personal Gmail (set `TEST_INBOX` to keep it),
+and the personal Gmail **stops being a trusted tester** — which decides
+whether a sign-in code reaches you in test mode and whether the client door
+answers you plainly or with "if we have that on file".
+`Ricky.Rampersad@myguardiangroup.com` is on `MAIL_CC` and stays trusted.
+
+**`?action=ping` reports `runsAs` and `onWorkspace`**, so whether the move took
+is answerable from a browser. A bound script keeps its own `/exec`, so a moved
+project and an un-moved one are otherwise identical from outside — the failure
+this product has already paid for twice. Three answers: the branch domain;
+`gmail.com`, still on the personal account; and `""`, meaning the deployment is
+not *Execute as: Me* and nothing can be stored at all. **The domain only, never
+the address** — that endpoint needs no sign-in, support@ is published all over
+this repository and a personal address is not, and `ping-test.js` fails if the
+local part ever appears in the answer.
+
+**And the harness was thin again, for the fifth time in this product.**
+`claims-sandbox.js` stubbed `Session` with `getScriptTimeZone` alone, so
+`getEffectiveUser` threw, `testInbox_()` threw with it, and `runsAs` read `""`
+in every suite — a code fault's exact signature. It carries the account now, as
+`OWNER`, defaulting to the Workspace so every suite runs in the state the
+project is moving to, and a test sets it to see the old one. All 570 earlier
+checks still pass with the realistic stub, so nothing had been passing *because*
+of the throw.
 
 ## Standing rules
 

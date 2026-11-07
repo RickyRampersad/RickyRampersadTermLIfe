@@ -57,7 +57,7 @@ var CLAIMS = {
    * that was pasted and never deployed — from outside those look identical,
    * and so does a later paste of an older copy winning the same function
    * name. Change it with any change worth deploying. */
-  BUILD: '2026-11-06b',
+  BUILD: '2026-11-07a',
 
   /* ---- where notifications go ---------------------------- */
 
@@ -134,6 +134,22 @@ var CLAIMS = {
     'rickyrampersadsalessupport@myguardiangroup.com',    // sales support team
     'support@rickyrampersadbranch.com',                  // branch support inbox
   ],
+
+  /* The Workspace this project is meant to run under.
+   *
+   * Asked for on 7 November 2026: "the work code claims is on my personal and
+   * would like to move to workspace". It matters for more than tidiness. A
+   * script owned by the personal Gmail sends claims mail under that account's
+   * allowance — about a hundred recipients a day, and every claim copies three
+   * addresses — which is the ceiling that made MailRelay.gs necessary for the
+   * tracker. It also means every claim document lives in a personal Drive that
+   * nobody at the branch can reach if the account is ever lost.
+   *
+   * `?action=ping` reports the DOMAIN this deployment runs as, so whether a
+   * move actually took is answerable from a browser. The domain only, never
+   * the address: that endpoint needs no sign-in, support@ is already published
+   * all over this repository, and a personal address is not. */
+  OWNER_DOMAIN: 'rickyrampersadbranch.com',
 
   /* ---- the Salesforce task ------------------------------------------------
    * Asked for on 5 November 2026: "a claim is opened with a task". Until then a
@@ -445,6 +461,21 @@ function testModeOff_() {
   PropertiesService.getScriptProperties().deleteProperty('TEST_MODE');
   SpreadsheetApp.getUi().alert('Test mode is OFF — emails go to real recipients again.');
 }
+
+/* The same two, under names the editor's Run list will show.
+ *
+ * Added 7 November 2026, for the move to the Workspace. A fresh copy of the
+ * sheet has no TEST_MODE property, and no property means LIVE — so the very
+ * first step on a new copy is to turn test mode on, BEFORE anything is
+ * deployed, or the first claim through it e-mails Guardian's real health and
+ * motor desks. The menu does that, and does it today; but the menu only
+ * appears once onOpen has run, and a name ending in an underscore is private
+ * to Apps Script and is not offered in the Run list, so on a fresh copy there
+ * was a window with no way to do it at all. These two are reachable either
+ * way. The menu points at them now; the private pair stays for anything else
+ * that calls it. */
+function turnTestModeOn() { testModeOn_(); }
+function turnTestModeOff() { testModeOff_(); }
 
 /** Human labels for the claim types the site offers. */
 var CLAIM_TYPES = {
@@ -2261,10 +2292,26 @@ function claimPing_() {
      took an evening to find on 5 November 2026. */
   var staffCount = -1;
   try { staffCount = staffNames_().length; } catch (e) {}
+  /* Which account the web app runs as — the DOMAIN ONLY, for the reason in
+     CLAIMS.OWNER_DOMAIN. Three answers, each meaning something different:
+     the branch domain (it is on the Workspace); 'gmail.com' (still on the
+     personal account, so claims mail is under that account's ~100-recipient
+     day and the documents are in a personal Drive); and '' (the deployment
+     is not "Execute as: Me", or the permissions were never granted, in which
+     case nothing works at all). A bound script keeps its own /exec, so from
+     outside a moved project and an un-moved one are otherwise identical. */
+  var runsAs = '';
+  try {
+    var parts = String(Session.getEffectiveUser().getEmail() || '').split('@');
+    if (parts.length === 2) runsAs = parts[1].toLowerCase();
+  } catch (e) {}
+  var onWorkspace = runsAs === String(CLAIMS.OWNER_DOMAIN || '').toLowerCase();
   return {
     ok: true,
     service: 'claims-tt',
     build: CLAIMS.BUILD,
+    runsAs: runsAs,
+    onWorkspace: onWorkspace,
     testMode: test,
     live: !test,
     desks: lines,
@@ -2327,6 +2374,11 @@ function claimPing_() {
         : 'LIVE. Claims on ' + Object.keys(lines).filter(function (k) { return !lines[k]; }).join(', ') +
           ' are filed and acknowledged but NOT forwarded — someone must pass ' +
           'them on by hand until those desk addresses are set.')) +
+      (runsAs
+        ? ''
+        : ' This deployment is not running as the account that owns it — set ' +
+          'Deploy → Manage deployments → Execute as: Me, and grant the ' +
+          'permissions once. Until then no claim can be stored at all.') +
       (sfConnected_()
         ? ''
         : ' Salesforce is not connected, so a filed claim opens no task and ' +
@@ -2338,6 +2390,11 @@ function claimPing_() {
       (test && staffCount > 0
         ? ' A staff sign-in code still reaches the staff member in test mode, ' +
           'so the desk can be tested; a client\'s code does not.'
+        : '') +
+      (runsAs && !onWorkspace
+        ? ' This is still on a ' + runsAs + ' account, not the branch ' +
+          'Workspace: claims mail goes out under that account\'s daily ' +
+          'allowance and every claim document sits in its Drive.'
         : ''),
   };
 }
@@ -4813,8 +4870,8 @@ function onOpen() {
     .addItem('Sync registers from Salesforce now', 'syncSalesforceNow')
     .addItem('Sync vehicles only (fast)', 'syncVehiclesNow')
     .addSeparator()
-    .addItem('🧪 Turn test mode ON (emails only reach you)', 'testModeOn_')
-    .addItem('Turn test mode OFF (live emails)', 'testModeOff_')
+    .addItem('🧪 Turn test mode ON (emails only reach you)', 'turnTestModeOn')
+    .addItem('Turn test mode OFF (live emails)', 'turnTestModeOff')
     .addSeparator()
     .addItem('Run the follow-up sweep now (test)', 'runFollowUpNow')
     .addItem('Clean up abandoned uploads', 'cleanupNow')
