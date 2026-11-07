@@ -769,9 +769,9 @@
       <path pathLength="100" d="M5 16.3 9.7 11l3.4 3 6-7.3"/>
       <path pathLength="100" d="M15.3 6.3h3.8v3.8"/>
     </symbol>
-    <symbol id="ic-phone" viewBox="0 0 24 24">
-      <path pathLength="100" d="M8.4 4.5H6.2A2.2 2.2 0 0 0 4 6.8C4 14.1 9.9 20 17.2 20a2.2 2.2 0 0 0 2.3-2.3v-2.2l-4.1-1.5-1.9 2.1a14.6 14.6 0 0 1-5.9-5.9l2.1-1.9z"/>
-    </symbol>
+    <!-- #ic-phone was here and is gone with the number it labelled, 7 November
+         2026: it had one user, the nav link carrying the branch manager's own
+         telephone number, and he asked for that off the page. -->
     <!-- WhatsApp, the same glyph the homepage's floating button carries, so the
          one button a client meets on both pages is visibly the same button. It
          is a brand mark rather than a UI icon, so it is a bubble outline with a
@@ -874,7 +874,19 @@
       <span>Ricky&nbsp;Rampersad<small>Branch claims</small></span>
     </a>
     <div class="nav-actions">
-      <a class="nav-tel" href="tel:+18686785921"><svg class="ic" aria-hidden="true"><use href="#ic-phone"/></svg> <span>(868) 678-5921</span></a>
+      <!-- HELP 868 in the contact slot. The branch manager's own number sat
+           here until 7 November 2026 and came off the page at his word: "I
+           don't want my number, just the HELP 868." So HELP 868 is the one
+           route to a person this page offers, and nothing here may print his
+           number again — not in the markup, not from the backend's reply.
+           The class keeps its name: the 44px-target rule and the rule that
+           hides the words under 700px both name .nav-tel, so renaming it
+           buys nothing and breaks both. It carries an aria-label because
+           under 700px the words are display:none and the glyph is
+           aria-hidden, which left the old link with no accessible name at
+           all on every phone. -->
+      <a class="nav-tel" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20am%20on%20the%20branch%20claims%20page%20and%20need%20a%20hand." target="_blank" rel="noopener"
+         aria-label="Ask HELP 868 a question on WhatsApp"><svg class="ic" aria-hidden="true"><use href="#ic-wa"/></svg> <span>HELP&nbsp;868</span></a>
       <a class="btn btn-ghost btn-sm" href="#track">Track a claim</a>
     </div>
   </div>
@@ -1180,14 +1192,15 @@
       </div>
     </div>
 
-    <!-- Where somebody actually gets stuck, so both ways to a person sit here.
+    <!-- Where somebody actually gets stuck, so the way to a person sits here.
          WhatsApp is help with the form, never a way to file: the words say
-         "ask us", and the line after them says where the claim is filed. -->
+         "ask us", and the sentence after them says where the claim is filed.
+         His own number was beside it for a day and came off at his word on
+         7 November 2026, so this is HELP 868 alone. -->
     <p style="margin-top:18px;font-size:.85rem;color:var(--muted);text-align:center">
-      Rather talk it through? Call the branch on
-      <a href="tel:+18686785921" style="color:var(--teal-600);font-weight:700">(868) 678-5921</a>,
-      or <a class="wa-link" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20am%20on%20the%20branch%20claims%20page%20and%20need%20a%20hand." target="_blank" rel="noopener"><svg class="ic-wa" aria-hidden="true" focusable="false"><use href="#ic-wa"/></svg>ask us on WhatsApp</a>.
-      A message reaches a person — your claim is filed by this form.
+      Stuck on something, or would rather ask a person?
+      <a class="wa-link" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20am%20on%20the%20branch%20claims%20page%20and%20need%20a%20hand." target="_blank" rel="noopener"><svg class="ic-wa" aria-hidden="true" focusable="false"><use href="#ic-wa"/></svg>Ask us on WhatsApp</a>.
+      A message reaches somebody at the branch — your claim is filed by this form.
     </p>
   </div>
 </section>
@@ -1270,7 +1283,11 @@
   <div class="wrap">
     <span class="eyebrow">Straight answers</span>
     <h2 class="h2">The questions we get asked most</h2>
-    <p class="lead" style="margin-bottom:26px">If yours isn't here, call the branch — we would rather answer it than have you guess.</p>
+    <!-- "Call the branch" had no number to call once his came off the page,
+         so the invitation points where the page's own help points. -->
+    <p class="lead" style="margin-bottom:26px">If yours isn't here,
+      <a class="wa-link" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20am%20on%20the%20branch%20claims%20page%20and%20need%20a%20hand." target="_blank" rel="noopener"><svg class="ic-wa" aria-hidden="true" focusable="false"><use href="#ic-wa"/></svg>ask us on WhatsApp</a>
+      — we would rather answer it than have you guess.</p>
     <div class="faq">
       <details class="q"><summary>Can I file if I don't have the police report yet?</summary><div class="a">Yes, and you should. Tap <b>"I don't have this yet"</b> on the police report and file the rest now. The claim gets a reference and starts moving; you send the report when the station gives it to you. Waiting for one paper before filing anything is the most common reason a claim drags on for weeks.</div></details>
       <details class="q"><summary>Are phone photos good enough, or do I need scans?</summary><div class="a">Phone photos are fine for every document here. Lay the paper flat, use good light, get the whole page in the frame including the edges, and check the text is readable before you attach it. If a document runs to several pages, photograph each page and attach them all.</div></details>
@@ -1303,7 +1320,6 @@
       <div>
         <h4>The branch</h4>
         <ul>
-          <li><a href="tel:+18686785921">(868) 678-5921</a></li>
           <li><a href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20am%20on%20the%20branch%20claims%20page%20and%20need%20a%20hand." target="_blank" rel="noopener">HELP 868 on WhatsApp</a></li>
           <li><a href="/">Main site</a></li>
           <li><a href="/renewal/">Renewals portal</a></li>
@@ -1350,7 +1366,17 @@ const CONFIG = {
   SITE_KEY: "claims-tt-2026-rrb",
 
   AGENT_EMAIL: "ricky.rampersad@myguardiangroup.com",
-  AGENT_PHONE: "(868) 678-5921",
+
+  // HELP 868, the branch WhatsApp line — the one route to a person this page
+  // offers. The branch manager's own number came off the page on 7 November
+  // 2026, asked for in those words ("I don't want my number, just the HELP
+  // 868"), so nothing on this page may print it again: there is no
+  // AGENT_PHONE here any more, and the page refuses one the backend sends
+  // (see t-result below), because the live deployment is whatever was last
+  // pasted and this page cannot control what it sends.
+  // The same URL is on the five links in the markup. Change all six together
+  // — the test fails if they are not byte-identical.
+  WA_URL: "https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20am%20on%20the%20branch%20claims%20page%20and%20need%20a%20hand.",
 
   MAX_FILE_MB: 15,
   MAX_FILES: 30,
@@ -1358,6 +1384,13 @@ const CONFIG = {
   IMAGE_QUALITY: 0.75,
   CHUNK_CHARS: 1500000,   // base64 characters per request
 };
+
+/* One WhatsApp link for every message the script builds, so a wording change
+   lands in all of them and no message can print a telephone number. */
+function waLink(words) {
+  return '<a href="' + CONFIG.WA_URL + '" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline">' +
+    (words || "ask us on WhatsApp") + "</a>";
+}
 
 /* ══════════════════════════════════════════════════════════════
    CLAIM DEFINITIONS
@@ -3139,7 +3172,7 @@ async function trackClaim() {
     return;
   }
   if (!CONFIG.API_URL) {
-    $("t-err").innerHTML = "Claim tracking isn't connected yet — please call the branch on <b>" + CONFIG.AGENT_PHONE + "</b> and quote your reference.";
+    $("t-err").innerHTML = "Claim tracking isn't connected yet — " + waLink() + " and quote your reference.";
     $("t-err").hidden = false;
     return;
   }
@@ -3182,8 +3215,14 @@ function renderTrack(d) {
     (d.missing && d.missing.length
       ? '<div class="notice warn" style="margin:0"><b>We are waiting on:</b> ' + esc(d.missing.join(", ")) +
         ". Reply to your acknowledgement email with these attached and we will keep things moving.</div>"
-      : '<div class="notice info" style="margin:0">Nothing outstanding from you right now. We will call ' +
-        (d.agent && d.agent.phone ? "— or reach us on <b>" + esc(d.agent.phone) + "</b>" : "") + ".</div>");
+      // The backend sends d.agent.phone, and this used to print it — so the
+      // live script, whatever was last pasted into it, could put the branch
+      // manager's own number back on a page it had been taken off. The page
+      // ignores it now and offers HELP 868 instead. Do not read d.agent.phone
+      // here again. (It also read "We will call ." whenever no phone came
+      // back, which is the other reason this line needed rewriting.)
+      : '<div class="notice info" style="margin:0">Nothing outstanding from you right now. We will be in touch as soon as there is more to tell you — or ' +
+        waLink("ask us on WhatsApp") + " if anything has changed.</div>");
   $("t-result").hidden = false;
 }
 
@@ -3208,7 +3247,7 @@ function acctMsg(id, html) {
 async function acctSendCode() {
   const identity = $("a-id").value.trim();
   if (identity.length < 5) { acctMsg("a-err", "Enter the email address or mobile number you used on your claim."); return; }
-  if (!CONFIG.API_URL) { acctMsg("a-err", "Sign-in isn't connected yet — please call the branch on <b>" + CONFIG.AGENT_PHONE + "</b>."); return; }
+  if (!CONFIG.API_URL) { acctMsg("a-err", "Sign-in isn't connected yet — " + waLink() + " and we will look your claim up for you."); return; }
 
   const btn = $("a-send");
   btn.disabled = true; btn.textContent = "Sending…";

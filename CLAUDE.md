@@ -7472,16 +7472,19 @@ So every entry point is worded as a question:
 
 | | |
 |---|---|
+| the top bar | the glyph and **HELP 868**, with an `aria-label` because the words are `display:none` under 700px |
+| at the foot of the wizard | "Stuck on something, or would rather ask a person? **Ask us on WhatsApp**. A message reaches somebody at the branch — your claim is filed by this form." |
+| the FAQ lede | "If yours isn't here, **ask us on WhatsApp** — we would rather answer it than have you guess." |
+| the footer's "The branch" list | "HELP 868 on WhatsApp" |
 | the floating button | no words at all; its accessible name is *"Ask HELP 868 a question on WhatsApp. A message reaches a person — your claim is filed by the form on this page."* |
-| beside the telephone number, at the foot of the wizard | "or **ask us on WhatsApp**. A message reaches a person — your claim is filed by this form." |
-| the footer's "The branch" list | "HELP 868 on WhatsApp", beside (868) 678-5921 |
 
-All three prefill the same plain-ASCII line, `Hi HELP 868, I am on the branch
+All five prefill the same plain-ASCII line, `Hi HELP 868, I am on the branch
 claims page and need a hand.` — no apostrophe and no em dash, so nothing is
 mangled through `wa.me`'s query string. It tells whoever picks it up that this
 person is mid-form rather than starting a claim, and because typed text always
 reaches the assistant it is answered in context rather than running the menu's
-"Make a claim" branch.
+"Make a claim" branch. The same string is `CONFIG.WA_URL` for the three
+messages the script builds; the test fails if all six are not byte-identical.
 
 **The green is the button; the words take the page's accent.** WhatsApp's
 `#128c7e` measures **4.14:1** against white — over the **3:1** floor for a
@@ -7490,7 +7493,7 @@ carries only an icon and an `aria-label`, exactly as the homepage's own button
 does, and every WhatsApp link written as words is `--teal-600` (7.38:1 on the
 ground, 13.11:1 on the navy footer). Never put words on the green.
 
-**One glyph, three uses: `#ic-wa` in the sprite.** It is the homepage's own
+**One glyph, five uses: `#ic-wa` in the sprite.** It is the homepage's own
 mark — a stroke bubble with a filled handset — so the one floating button a
 client meets on both pages is visibly the same button. That makes it a brand
 mark rather than a UI icon, so it does not follow the house 24×24 / 2px-stroke
@@ -7498,9 +7501,11 @@ set; what it does do is drive **both** halves from `currentColor` through
 presentation attributes on the paths, so one symbol reads white on the green
 and teal on paper, and it does not matter what an ancestor sets `fill` to.
 
-**The inline link is underlined.** It sits beside the telephone number in the
-same sentence and the browser underlines that one; two links side by side, one
-underlined and one not, reads as a fault rather than as a choice.
+**The inline link is underlined.** It was written that way because it sat
+beside a `tel:` link in the same sentence, which the browser underlines — two
+links side by side, one underlined and one not, reads as a fault rather than
+as a choice. The `tel:` link has since gone (below) and the underline stays:
+it is a link in running prose, and prose is where an underline earns its keep.
 
 **The staff desk gets none of it**, and the test fails if one appears.
 HELP 868 is the client assistant; staff have the branch app. A client WhatsApp
@@ -7511,11 +7516,72 @@ Measured after: 46 new checks, the existing 45-check audit still passing,
 360/390/414, the button's own target 52px, and at all three phone widths it
 covers no control (checked with `elementsFromPoint`, not by eye).
 
-**One test-side bug, the recorded habit again.** The first cut measured every
-inline link against `document.body`'s background and failed the footer link at
-1.06:1 — the footer sits on deep navy. The page was right and the test was
-wrong; it walks up for the first opaque background now. Check which side holds
-the bug before changing anything.
+**Two test-side bugs, the recorded habit twice in one day.** The first cut
+measured every inline link against `document.body`'s background and failed the
+footer link at 1.06:1 — the footer sits on deep navy; it walks up for the first
+opaque background now. The second came with the check below that hands
+`renderTrack` a reply carrying a telephone number: rendering a result **adds a
+sixth WhatsApp link to the DOM**, which desynchronised the link list (captured
+before) from the background lookup (captured after) and failed the footer link
+again, this time at 1.13:1 against a track notice. A check that mutates the
+page runs on a page of its own, and colour and background are now read in one
+pass keyed by index. The page was right both times. **Check which side holds
+the bug before changing anything.**
+
+### His number comes off the claims page — 7 November 2026
+
+Asked for the same evening, in these words: *"No I don't want my number just
+the help868."* HELP 868 is the branch's own service line; **(868) 678-5921 is
+his**, and it was in the top bar of the claims page, beside the WhatsApp link
+at the foot of the wizard, and in the footer's "The branch" list.
+
+**It was in eight places, and four of them were not visible as a phone
+number.** Taking the three links out and calling it done would have left it on
+screen:
+
+- `CONFIG.AGENT_PHONE`, a constant in the page;
+- *"Claim tracking isn't connected yet — please call the branch on …"*, built
+  in script;
+- the same in the My-claims sign-in fallback;
+- **and the one that matters: `renderTrack` printed `d.agent.phone`, which the
+  BACKEND sends.** `Claims.gs` puts `agent: { name, phone }` in three replies,
+  so the live deployment — whatever was last pasted into it — could put his
+  number back on a page it had been taken off, and no change to this page's
+  markup would have stopped it.
+
+**So the page was fixed on the page's side, not the backend's.** It ignores
+`agent.phone` now. The live script is not in this repository's control and a
+paste is a human step; a page that cannot print the number whatever it is sent
+is the only version of this that stays true. `wa.js` hands `renderTrack` a
+reply carrying his number and fails if a digit of it reaches the screen.
+
+**What is left, and what replaced it:** five WhatsApp entry points (the table
+above), no `tel:` link except Police 999, Ambulance 811 and Fire 990, and
+`#ic-phone` deleted from the sprite — its one user was the number. Two lines
+that said *"call the branch"* with no number left to call became *"ask us on
+WhatsApp"*. The two in the wizard and the FAQ that say *"call us first"* about
+emergency work were **left alone**: they name no number, and a home that is
+unsafe is not a WhatsApp message to a line answered Monday to Friday.
+
+**The nav link gained an `aria-label` while it was being changed.** Under
+700px `.nav-tel span` is `display:none` and the glyph is `aria-hidden`, so the
+old link had no accessible name at all on every phone. The class keeps its
+name: the 44px-target rule and the hide-the-words rule both name `.nav-tel`,
+and renaming it buys nothing and breaks both.
+
+**Still carrying his number, and he has not been asked yet: the e-mails.**
+`CLAIMS.AGENT_PHONE` is in **twelve** places in `Claims.gs` — *"Any question
+at all, call me on …"* in the acknowledgement, the status note, the feedback
+request, the sign-in failure. No client has received one, because test mode
+has been on throughout. It is not a one-constant swap: HELP 868 is a WhatsApp
+line and nobody answers voice calls there, so *"call me on"* would become
+false. The branch's own precedent is **(868) 226-6461** — the call scripts
+replaced his with it for the orphan campaign — but which number goes in a
+claim acknowledgement is his to say.
+
+Measured after: 69 checks in `wa.js` (46 before this change), the 45-check
+audit, `claims-visible` 44, `signedin-page` 69, `terms-page` 32, `staff-page`
+24, all passing; 16.7ms a frame over three passes, CLS 0.001.
 
 ### Right colours, wrong site — 7 November 2026
 
