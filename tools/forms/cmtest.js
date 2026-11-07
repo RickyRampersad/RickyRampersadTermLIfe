@@ -72,6 +72,9 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   ok(await pg.$('input[name=uw_qstatus][required]'), vp.n + ' the qualification status is required');
   const lines = await pg.$$eval('#lines .lineg li b', e => e.map(x => x.textContent));
   ok(lines.length === 10 && lines.includes('Workers compensation'), vp.n + ' the classes are named, got ' + lines.length);
+  ok(await pg.$('.vac') && /hiring/i.test(await pg.$eval('.vac', e => e.textContent)), vp.n + ' the vacancy badge is there');
+  ok(await pg.$eval('.pull', e => e.textContent.trim().length > 40), vp.n + ' the attraction line is there');
+  ok(!/\b103\b|\b195\b/.test(await pg.$eval('body', e => e.innerText)), vp.n + ' no client or policy count on the page');
 
   await pg.close();
 }
@@ -101,6 +104,7 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   await put('#uMail', 'candidate@example.com'); await put('#uTown', 'Couva');
   await put('input[name=uw_years][value="6 to 10 years"]');
   await put('input[name=cls][value="Commercial property and fire"]');
+  await put('input[name=cls][value="Private motor"]');
   await put('input[name=cls][value="Engineering and machinery"]');
   await put('input[name=uw_auth][value="A limit I could bind within"]');
   await put('#uSys', 'Premia, and a lot of spreadsheets');
@@ -109,9 +113,13 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   await put('#uCo', 'A general insurer'); await put('#uRole', 'Senior underwriter');
   await put('#uPayNow'); await put('#uPayWant');
   await put('input[name=start]');
-  await put('#u1', 'A timber-frame warehouse with no hydrant within a kilometre.');
-  await put('#u2', 'A haulier with a bad year but a new fleet policy and telematics.');
+  await put('#u1', 'A timber-frame warehouse with no hydrant within a kilometre, and the client would not survey it.');
+  await put('#u2', 'A vehicle was added by e-mail and never endorsed; it ran uninsured for three weeks.');
+  await put('#u4', 'A client wanted to replace a policy that was better than the one being sold to him. I showed him both.');
+  await put('#u5', 'I asked twice for the renewal list to carry the claims history. It never happened.');
   await put('#u3', 'Send the renewal thirty days out with the claims history on it.');
+  await put('input[name=cmp][value="A formal client complaint"]');
+  await put('input[name=cmp][value="An underinsurance or average dispute"]');
   await pg.setInputFiles('#uCv', { name: 'cv.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 test') });
   await pg.click('#uSend');
   await pg.waitForFunction(() => document.getElementById('uDone').textContent.length > 0, { timeout: 15000 });
@@ -124,8 +132,17 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   ok(/valuation/.test(by('file_ask')), 'what they would ask reaches him');
   ok(/claims in the last term/.test(by('file_missed')), 'what they walked past reaches him');
   ok(by('uw_qstatus') === 'Diploma', 'the qualification status reaches him');
+  ok(body.fields[0].section === 'At a glance', 'the scan line is the first thing in the e-mail');
+  ok(/Diploma/.test(by('scan_fit')) && /motor and property both/.test(by('scan_fit')), 'the scan line says the fit: ' + by('scan_fit'));
+  ok(/2 ticked/.test(by('scan_file')) && /premium: Load it/.test(by('scan_file')), 'the scan line says what they did with the file: ' + by('scan_file'));
+  ok(/2 of 6/.test(by('scan_compliance')), 'the scan line counts the compliance situations: ' + by('scan_compliance'));
+  ok(/written answers/.test(by('scan_depth')), 'the scan line says how deep the answers are: ' + by('scan_depth'));
+  ok(/uninsured for three weeks/.test(by('uw_endorse')), 'the endorsement answer reaches him');
+  ok(/showed him both/.test(by('uw_right')), 'the compliance answer reaches him');
+  ok(/never happened/.test(by('uw_stopped')), 'what they could not change reaches him');
+  ok(/complaint/.test(by('uw_compliance')), 'the compliance ticks reach him');
   console.log('\n— what the Branch Manager reads —');
-  ['uw_qstatus','uw_quals','file_order','file_ask','file_prem','file_missed']
+  ['scan_fit','scan_file','scan_compliance','scan_depth','uw_qstatus','uw_quals','file_order','file_ask','file_prem','file_missed']
     .forEach(k => console.log('  ' + k + ': ' + String(by(k)).replace(/\n/g, '\n      ')));
   await pg.close();
 }

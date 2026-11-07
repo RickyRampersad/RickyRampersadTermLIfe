@@ -167,6 +167,25 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
 .term{min-width:0;max-width:100%}
 h1 em{font-style:normal;color:var(--a);display:block}
 .hsub{font-size:var(--f-1);max-width:42ch;color:var(--body)}
+/* ── the vacancy badge and the attraction line (7 November 2026) ──────────
+   The ad has to read as a hiring ad at a glance, then say the one thing that
+   makes the right person stop. The badge is a word as well as a colour; the
+   dot's pulse is opt-in motion only. */
+.vac{display:inline-flex;align-items:center;gap:.55rem;margin:0 0 var(--sp-s);
+  padding:.4rem .9rem .4rem .7rem;border-radius:999px;
+  font:700 var(--f--2)/1 var(--text);letter-spacing:.06em;text-transform:uppercase;
+  background:var(--a-tint);border:1px solid var(--a);color:var(--aD)}
+.vac i{width:.55rem;height:.55rem;border-radius:50%;background:var(--a);flex:none;
+  box-shadow:0 0 0 .28rem rgba(0,114,141,.18)}
+@media (prefers-reduced-motion:no-preference){
+  .vac i{animation:vacPulse 2.4s var(--ease) infinite}
+  @keyframes vacPulse{0%,100%{box-shadow:0 0 0 .22rem rgba(0,114,141,.22)}
+                      50%{box-shadow:0 0 0 .55rem rgba(0,114,141,0)}}
+}
+.pull{margin:var(--sp-m) 0 0;padding-left:var(--sp-m);max-width:46ch;
+  border-left:4px solid var(--a);color:var(--ink);
+  font:700 var(--f-1)/1.32 var(--display);letter-spacing:-.01em}
+
 .hnote{display:flex;flex-wrap:wrap;gap:.4rem 1rem;font:500 var(--f--1)/1.4 var(--text);color:var(--muted);
   margin-top:var(--sp-m)}
 .hnote span{display:inline-flex;align-items:center;gap:.4rem}
@@ -569,8 +588,10 @@ footer .ic{width:16px;height:16px}
   <div class="wrap">
     <div class="hgrid">
       <div>
-        <span class="eyebrow">One seat &middot; Chaguanas &middot; Guardian Life of the Caribbean</span>
+        <p class="vac"><i aria-hidden="true"></i>We are hiring &middot; one vacancy &middot; Chaguanas</p>
+        <span class="eyebrow">Administrator &amp; branch builder</span>
         <h1 data-words>You already know how your office should run. <em>Nobody has given you the tools.</em></h1>
+        <p class="pull">If you have ever fixed something at work on your own time, because waiting for somebody else to fix it was unbearable &mdash; this is the one to read.</p>
         <p class="hsub">Somewhere right now there is an administrator who has already written the script that fixes it &mdash; on their own time, with no permission and no credit, because it was the only way to get the job done. We are looking for that person. Not for the one who waits to be told.</p>
         <div class="ctas">
           <a class="btn btn-1" href="#fix">Fix our form <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>

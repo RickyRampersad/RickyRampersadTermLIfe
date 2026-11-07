@@ -604,6 +604,71 @@ Three things learned counting it, which the next person will hit too:
   before you quote it* is exactly a client manager's judgement. The nine
   findings are still ones `girInsights_` genuinely computes.
 
+## The filter: what he actually receives
+
+Asked on 7 November: *"have you filtered in the questions correctly so I will
+get who applies?"* Half the answer was no, and the half that was wrong is worth
+recording: **the written questions were still the underwriter's** after the
+seat had been reframed. They tested whether somebody could rate a risk, and
+nothing tested the job he had just described.
+
+Section 4 is now **four written questions plus a tick row**, and each one is
+there because it separates people:
+
+1. **A risk you turned away, or advised a client against, that you could have
+   placed.** Unchanged in substance: the one question nobody can prepare.
+2. **An endorsement or extension that went wrong where you worked — late,
+   missed, or written loosely.** The technical heart of the seat. Anybody who
+   has really carried a book has one of these, and the answer shows at once
+   whether they think in cover or in paperwork.
+3. **A time the right thing and the easy thing were different.** This is the
+   compliance question, and it is deliberately **not** "what does the Act say":
+   that tests memory, which anybody can look up, and a good candidate resents
+   it. A scenario shows the instinct.
+4. **Something you tried to change where you worked and could not. What
+   stopped it?** The literal test of *"fed up of implementing something"*. It
+   also tells him whether they push or give up, which matters more here than
+   anywhere, since the whole offer is that a change gets built.
+5. **What would you change about how a general agency handles renewals** —
+   kept.
+
+Plus a tick row, *which of these have you actually had to handle*: a
+replacement or cancellation, non-disclosure at claim, a formal complaint,
+underinsurance or average, a regulator or compliance query, client data or
+privacy, none yet. Cheap to answer, very revealing, and it cross-checks
+question 3.
+
+### The scan line, so a row can be triaged from the e-mail
+
+The e-mail printed the answers section by section and left him to read the
+whole thing. The page now sends an **At a glance** section first — Quotes.gs
+prints sections in the order it is given them, so this needed no backend
+change — computed from what the candidate actually did:
+
+| | |
+|---|---|
+| **Fit** | years · qualification status · how many classes · *and whether motor and property are both among them*, since that is where this book lives |
+| **The file** | how many findings they ticked, the first two in their order, and their premium decision |
+| **Compliance** | how many of the six situations they have handled |
+| **Depth** | how many of the five written answers are substantial rather than short |
+
+That is enough to sort an application without opening the row, and every part
+of it is the candidate's own work rather than a score we invented.
+
+### What does need a Quotes.gs paste
+
+The backend uses its own `line` and `title`, not the ones the page posts, so
+until it is pasted and a **New version** published:
+
+- the team e-mail is headed *"New Underwriter request"*;
+- **the candidate's own confirmation is headed "Underwriter, general
+  insurance"**, which is the one a stranger sees;
+- the highlighted summary band reads years · classes · authority rather than
+  years · qualification · classes.
+
+The form key stays `underwriter` and the reference stays `QU-` on purpose:
+renaming the key would strand the rows already on the tab for nothing.
+
 ## The film — `cmadmin`, 1:55, cut 7 November 2026
 
 Eleven scenes on the same engine, replacing `uwadmin` at the same path. Three
@@ -642,7 +707,11 @@ thing that catches a reveal landing on a word that is never said.
 
 ### 1 · LinkedIn (this is where this person is)
 
+> **WE ARE HIRING · ONE VACANCY · CHAGUANAS**
+>
 > **The book is already there. What it has never had is you.**
+>
+> *If you can run a general insurance book, and have never once been allowed to change how it is run — this is the one to read.*
 >
 > The Ricky Rampersad Branch has opened its own general insurance agency, and we need one Client Manager to look after it.
 >
@@ -666,7 +735,9 @@ thing that catches a reveal landing on a word that is never said.
 
 ### 2 · WhatsApp and one-to-one
 
-> *One seat: Client Manager, general insurance.*
+> *WE ARE HIRING — one seat: Client Manager, general insurance, Chaguanas.*
+>
+> *If you can run a general insurance book and have never once been allowed to change how it is run, read this one.*
 >
 > The branch has opened its own general insurance agency and it already has a book — seven lines of business, personal and commercial, renewals every month of the year.
 >
@@ -678,8 +749,8 @@ thing that catches a reveal landing on a word that is never said.
 
 ### 3 · Job board or classified
 
-> **CLIENT MANAGER — GENERAL INSURANCE** · Ricky Rampersad Branch · Chaguanas,
-> Central Trinidad.
+> **VACANCY · CLIENT MANAGER — GENERAL INSURANCE** · Ricky Rampersad Branch ·
+> Chaguanas, Central Trinidad.
 >
 > To look after an existing general insurance book across seven lines of
 > business: motor and fleet, household, commercial property, public liability,
@@ -697,6 +768,46 @@ thing that catches a reveal landing on a word that is never said.
 >
 > CV and application at **rickyrampersadbranch.com/clientmanager**. Read by the
 > Branch Manager personally and treated confidentially.
+
+## The ad reads as a hiring ad at a glance
+
+Asked for on 7 November 2026: *"the ad should have a powerful attraction line
+as a hiring. We know hiring. It must pop, so it must be somebody like we're
+looking for vacancy."*
+
+Every one of the three recruiting pages now opens with two things above the
+headline that were not there before:
+
+- **the vacancy badge** — a pill reading *We are hiring · one vacancy ·
+  Chaguanas* (*advisors* on `/joinourbranch/`), with a dot that pulses only
+  inside `prefers-reduced-motion: no-preference`. It says **hiring in words**,
+  never by colour alone;
+- **the attraction line** (`.pull`) — one sentence, large, against an accent
+  rule, naming the person rather than the job: *"If you can run a general
+  insurance book, and have never once been allowed to change how it is run —
+  this is the one to read."* The administrator's and the advisor's each have
+  their own.
+
+Measured, composited through translucency and up to the first opaque ancestor:
+badge 9.21:1 on the dark heroes, 6.89:1 on the light one; the attraction line
+17.37:1 and 10.53:1. **The dot is not tested as text** and must never become
+the only thing that says "vacancy".
+
+**And it turned up a real bug that predates all of this.** `strong,b{color:
+var(--ink)}` paints bold text the light ground's deep blue, so **every bold
+phrase inside the dark hero was rendering at 1.56:1** — present on the page
+since it was built and invisible to anyone reading it. `.hero strong` and
+`.dark strong` are white now. This is the **third** time that one rule has
+bitten this repository (the agentmgt tab labels were the first two): when a
+page has a dark section and a light ground, a global `strong` colour is a bug
+waiting for its first bold word.
+
+**Measure contrast composited, or the measurement lies in both directions.** A
+first pass compared the badge's text against its own `rgba(…, .14)` background
+and reported 1.33:1 — a failure that does not exist — while the light hero's
+own text came back at 1.82:1 because its background sits on an ancestor. The
+check in the session scratchpad walks up to the first opaque ancestor and
+flattens the stack; the same trap is already recorded for the homepage audit.
 
 ### Notes on the wording
 

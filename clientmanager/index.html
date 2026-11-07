@@ -129,6 +129,31 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
              radial-gradient(34rem 28rem at 86% 76%,rgba(0,114,141,.3),transparent 62%)}
 .hero .wrap{position:relative;z-index:2}
 .hsub{font-size:var(--f-1);max-width:44ch;color:var(--dT2)}
+/* ── the vacancy badge and the attraction line (7 November 2026) ──────────
+   Asked for in those words: the ad has to read as a hiring ad at a glance,
+   and then say the one thing that makes the right person stop. The badge is
+   a word as well as a colour; the dot's pulse is opt-in motion only. */
+.vac{display:inline-flex;align-items:center;gap:.55rem;margin:0 0 var(--sp-s);
+  padding:.4rem .9rem .4rem .7rem;border-radius:999px;
+  font:700 var(--f--2)/1 var(--text);letter-spacing:.06em;text-transform:uppercase;
+  background:rgba(0,207,234,.14);border:1px solid rgba(0,207,234,.4);color:#8ae6f6}
+.vac i{width:.55rem;height:.55rem;border-radius:50%;background:var(--aL);flex:none;
+  box-shadow:0 0 0 .28rem rgba(0,207,234,.22)}
+@media (prefers-reduced-motion:no-preference){
+  .vac i{animation:vacPulse 2.4s var(--ease) infinite}
+  @keyframes vacPulse{0%,100%{box-shadow:0 0 0 .22rem rgba(0,207,234,.26)}
+                      50%{box-shadow:0 0 0 .55rem rgba(0,207,234,0)}}
+}
+
+/* strong,b above paints bold text --ink, which is right on the light ground
+   and invisible on the dark hero: measured 1.56:1 there. Third time this rule
+   has bitten the repo (the agentmgt tab labels were the first two), so it is
+   fixed at the component rather than per phrase. */
+.hero strong,.hero b,.dark strong,.dark b{color:#fff}
+.pull{margin:var(--sp-m) 0 0;padding-left:var(--sp-m);max-width:46ch;
+  border-left:4px solid var(--aL);color:#fff;
+  font:700 var(--f-1)/1.32 var(--display);letter-spacing:-.01em}
+
 .hnote{display:flex;flex-wrap:wrap;gap:.4rem 1.1rem;font:600 var(--f--1)/1.4 var(--text);
   color:var(--dT3);margin-top:var(--sp-m)}
 .hnote span{display:inline-flex;align-items:center;gap:.4rem}
@@ -406,8 +431,10 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 <section class="hero" id="hero">
   <div class="field" aria-hidden="true"></div>
   <div class="wrap">
-    <span class="eyebrow">Client Manager &middot; General Insurance &middot; Chaguanas</span>
+    <p class="vac"><i aria-hidden="true"></i>We are hiring &middot; one vacancy &middot; Chaguanas</p>
+    <span class="eyebrow">Client Manager &middot; General Insurance</span>
     <h1 data-words>The book is already there. <em>What it has never had is you.</em></h1>
+    <p class="pull">If you can run a general insurance book, and have never once been allowed to change how it is run &mdash; this is the one to read.</p>
     <p class="hsub">The branch has opened its own general insurance agency, and it is not a start-up: the book comes with it, across <strong>seven lines of business</strong>, personal and commercial, renewing in every month of the year. We need one person to look after it. Two things make this seat different from the one you are in. Every piece of the re-keying is already built and running. And how this agency advises its clients &mdash; and how it stays compliant doing it &mdash; is <strong>not settled yet</strong>. The person in this seat settles it.</p>
     <div class="ctas">
       <a class="btn btn-1" href="#apply">Apply &mdash; CV and fifteen minutes <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
@@ -743,24 +770,45 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
           </div>
 
           <div class="fsec" data-sec>
-            <h3><b><i>4</i></b>Three questions only somebody who has carried a book can answer</h3>
-            <p class="hint">These decide it. Write them yourself, in plain words, and be specific about the risk rather than about yourself.</p>
+            <h3><b><i>4</i></b>Four questions only somebody who has carried a book can answer</h3>
+            <p class="hint">These decide it. Write them yourself, in plain words, and be specific about the case rather than about yourself. No client names.</p>
             <div class="grid">
               <div>
-                <label for="u1">A risk you declined that you could have written. What made you walk away?</label>
+                <label for="u1">A risk you turned away, or advised a client against, that you could have placed. What made you walk away?</label>
                 <textarea id="u1" name="uw_declined" maxlength="800" rows="4" required></textarea>
                 <p class="cc"><span>No client names, please &mdash; describe the risk.</span><span><b data-cc="u1">0</b>/800</span></p>
               </div>
               <div>
-                <label for="u2">And one you wrote that others would not have. What did you see that they missed?</label>
-                <textarea id="u2" name="uw_wrote" maxlength="800" rows="4" required></textarea>
-                <p class="cc"><span>How it ran afterwards, if you know.</span><span><b data-cc="u2">0</b>/800</span></p>
+                <label for="u2">An endorsement or extension that went wrong where you worked &mdash; late, missed, or written loosely. What happened, and what should have been done?</label>
+                <textarea id="u2" name="uw_endorse" maxlength="800" rows="4" required></textarea>
+                <p class="cc"><span>Anybody who has carried a book has one of these.</span><span><b data-cc="u2">0</b>/800</span></p>
               </div>
               <div>
-                <label for="u3">What would you change about how a general agency handles renewals?</label>
+                <label for="u4">A time the right thing and the easy thing were different. A replacement, a sum insured nobody wanted to revisit, a client who wanted something the cover would not do. What did you do?</label>
+                <textarea id="u4" name="uw_right" maxlength="800" rows="4" required></textarea>
+                <p class="cc"><span>This is the compliance question. We are not asking you to quote the Act.</span><span><b data-cc="u4">0</b>/800</span></p>
+              </div>
+              <div>
+                <label for="u5">Something you tried to change where you worked and could not. What stopped it?</label>
+                <textarea id="u5" name="uw_stopped" maxlength="700" rows="3" required></textarea>
+                <p class="cc"><span>We change things here. We would like to know what you would start with.</span><span><b data-cc="u5">0</b>/700</span></p>
+              </div>
+              <div>
+                <label for="u3">What would you change about how a general insurance agency handles renewals?</label>
                 <textarea id="u3" name="uw_renewals" maxlength="600" rows="3" required></textarea>
                 <p class="cc"><span>We are building ours now, so this is a real question.</span><span><b data-cc="u3">0</b>/600</span></p>
               </div>
+              <fieldset><legend>Which of these have you actually had to handle? <small>&middot; tick any</small></legend>
+                <div class="tools" id="compl">
+                  <label><input type="checkbox" name="cmp" value="Advising on a replacement or cancellation"><span>A replacement or cancellation</span></label>
+                  <label><input type="checkbox" name="cmp" value="A material non-disclosure at claim"><span>Non-disclosure at claim</span></label>
+                  <label><input type="checkbox" name="cmp" value="A formal client complaint"><span>A formal complaint</span></label>
+                  <label><input type="checkbox" name="cmp" value="An underinsurance or average dispute"><span>Underinsurance or average</span></label>
+                  <label><input type="checkbox" name="cmp" value="A regulator or compliance query"><span>A regulator or compliance query</span></label>
+                  <label><input type="checkbox" name="cmp" value="A client data or privacy question"><span>Client data or privacy</span></label>
+                  <label><input type="checkbox" name="cmp" value="None of these yet"><span>None of these yet</span></label>
+                </div>
+              </fieldset>
             </div>
           </div>
 
@@ -878,6 +926,31 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     return String(el.value||'').trim();
   }
   function classes(){return [].slice.call(f.querySelectorAll('[name="cls"]:checked')).map(function(x){return x.value})}
+  function compl(){return [].slice.call(f.querySelectorAll('[name="cmp"]:checked')).map(function(x){return x.value})}
+  /* The scan line Mr Rampersad reads first. Everything in it is computed from
+     what they actually did on this page, so a row can be triaged from the
+     e-mail without opening anything. Section 'At a glance' is sent first, and
+     Quotes.gs prints sections in the order it is given them. */
+  function scan(file_){
+    var cls=classes(), has=function(w){return cls.some(function(c){return c.toLowerCase().indexOf(w)>-1})};
+    var core=[has('motor')?'motor':'', (has('property')||has('household')||has('dwelling'))?'property':'']
+             .filter(Boolean);
+    var fit=[val('uw_years')||'years not given',
+             val('uw_qstatus')||'qualification not given',
+             cls.length+' class'+(cls.length===1?'':'es'),
+             core.length===2?'motor and property both':(core.length?'only '+core[0]:'neither motor nor property')]
+            .join(' \u00b7 ');
+    var first=(file_.picked||'').split('\n').slice(0,2)
+      .map(function(s){return s.replace(/^\d+\.\s*/,'')}).join(' \u2192 ');
+    var file=file_.n?(file_.n+' ticked \u00b7 opened on: '+first+' \u00b7 premium: '+(file_.prem||'not said'))
+                    :'did not read the file';
+    var c=compl();
+    var writ=['uw_declined','uw_endorse','uw_right','uw_stopped','uw_renewals'];
+    var thin=writ.filter(function(k){return val(k).length<120});
+    return [fit, file,
+            c.length?c.length+' of 6 compliance situations handled':'no compliance situations ticked',
+            thin.length?(thin.length===5?'all 5':thin.length+' of 5')+' written answers are short':'all 5 written answers are substantial'];
+  }
 
   var REQ=['name','phone','email','town','uw_years','uw_auth','uw_systems','uw_quals',
            'emp_co','emp_role','pay_now','pay_want','start','cv'];
@@ -889,9 +962,10 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
       railI=d.getElementById('railI'), railS=d.getElementById('railS');
   function tick(){
     var n=0; REQ.forEach(function(k){if(filled(k))n++});
-    // the three written answers count as one block, so the rail is honest
-    var w=['uw_declined','uw_wrote','uw_renewals'].filter(function(k){return val(k).length>=40}).length;
-    var total=REQ.length+3, got=n+w, pc=Math.round(got/total*100);
+    // the written answers count as their own block, so the rail is honest
+    var WRIT=['uw_declined','uw_endorse','uw_right','uw_stopped','uw_renewals'];
+    var w=WRIT.filter(function(k){return val(k).length>=40}).length;
+    var total=REQ.length+WRIT.length, got=n+w, pc=Math.round(got/total*100);
     if(railI)railI.style.width=pc+'%';
     if(railN)railN.textContent=got+' of '+total+' answered';
     if(rail){rail.setAttribute('aria-valuenow',String(pc));rail.classList.toggle('full',got===total)}
@@ -971,8 +1045,10 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
       :!val('pay_now')?'What you earn now. "Prefer not to say" is a real option.'
       :!val('pay_want')?'What you are looking for. "Open" is a real option.'
       :!val('start')?'What is your notice period?'
-      :val('uw_declined').length<40?'The risk you declined — a few honest lines.'
-      :val('uw_wrote').length<40?'And the one you wrote against the grain.'
+      :val('uw_declined').length<40?'The risk you turned away — a few honest lines.'
+      :val('uw_endorse').length<40?'The endorsement or extension that went wrong.'
+      :val('uw_right').length<40?'When the right thing and the easy thing were different.'
+      :val('uw_stopped').length<40?'Something you tried to change and could not.'
       :val('uw_renewals').length<30?'What would you change about renewals?'
       :!filled('cv')?'Please attach your CV — PDF or Word, up to 6 MB.':'';
     err.textContent=bad; err.classList.toggle('on',!!bad);
@@ -998,11 +1074,15 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
         :{n:0,picked:'',missed:'',ask:'',prem:''};
       if(!file_.picked)file_.picked='did not read the file';
       var body={action:'q.quote',form:'underwriter',code:'QU',line:'Client Manager',
-        title:'Underwriter, general insurance',
+        title:'Client Manager, general insurance',
         core:{name:name,email:email,phone:phone,reach:'call',when:val('when'),agent:'',
               notes:val('uw_declined'),website:val('website')},
         cv:cv,
-        fields:[
+        fields:(function(s){return [
+          {section:'At a glance',k:'scan_fit',label:'Fit',value:s[0]},
+          {section:'At a glance',k:'scan_file',label:'The file',value:s[1]},
+          {section:'At a glance',k:'scan_compliance',label:'Compliance',value:s[2]},
+          {section:'At a glance',k:'scan_depth',label:'Depth',value:s[3]},
           {section:'Them',k:'town',label:'Where they live',value:val('town')},
           {section:'Them',k:'when_talk',label:'Best time for a call',value:val('when')},
           {section:'Experience',k:'uw_years',label:'Years in general insurance',value:val('uw_years')},
@@ -1016,14 +1096,17 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
           {section:'Pay',k:'pay_now',label:'Earning now (monthly, TT$)',value:val('pay_now')},
           {section:'Pay',k:'pay_want',label:'Looking for (monthly, TT$)',value:val('pay_want')},
           {section:'Pay',k:'start',label:'Notice period',value:val('start')},
-          {section:'Judgement',k:'uw_declined',label:'A risk they declined, and why',value:val('uw_declined')},
-          {section:'Judgement',k:'uw_wrote',label:'One they wrote that others would not',value:val('uw_wrote')},
+          {section:'Judgement',k:'uw_declined',label:'A risk they turned away, and why',value:val('uw_declined')},
+          {section:'Judgement',k:'uw_endorse',label:'An endorsement or extension that went wrong',value:val('uw_endorse')},
+          {section:'Judgement',k:'uw_right',label:'When the right thing was not the easy thing',value:val('uw_right')},
+          {section:'Judgement',k:'uw_stopped',label:'Something they tried to change and could not',value:val('uw_stopped')},
+          {section:'Judgement',k:'uw_compliance',label:'Compliance situations handled',value:compl().join(', ')||'none ticked'},
           {section:'Judgement',k:'uw_renewals',label:'What they would change about renewals',value:val('uw_renewals')},
           {section:'The file',k:'file_order',label:'What they would act on, in their order',value:file_.picked},
           {section:'The file',k:'file_ask',label:'What they would ask the client for',value:file_.ask},
           {section:'The file',k:'file_prem',label:'What they would do about the premium',value:file_.prem},
           {section:'The file',k:'file_missed',label:'What they walked past',value:file_.missed}
-        ],
+        ]})(scan(file_)),
         page:location.pathname,
         ref_from:(new URLSearchParams(location.search)).get('from')||'',
         at:new Date().toISOString()};

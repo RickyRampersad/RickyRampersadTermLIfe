@@ -84,10 +84,13 @@ var QUOTE = {
        would be a breach of the discretion the page promises them. */
     'admin':            { code: 'QB', line: 'Build with us', title: 'Administrator and branch builder', to: 'manager',
                           client: 'Your answers are with Mr Rampersad himself. Nobody else in the branch sees them, and nothing reaches your current employer.' },
-    /* /underwriter/ — the general insurance agency's underwriting seat. To
-       the Branch Manager alone, like the other two recruiting forms, and the
-       only form that takes a file: the CV. */
-    'underwriter':      { code: 'QU', line: 'Underwriter', title: 'Underwriter, general insurance', to: 'manager', cv: true,
+    /* /clientmanager/ — the general insurance agency's one seat. The key
+       stays 'underwriter' and the reference stays QU- because the form was
+       built for that name on 7 November 2026 and renamed the same day; moving
+       it would strand the rows already on the tab for nothing. To the Branch
+       Manager alone, like the other two recruiting forms, and the only form
+       that takes a file: the CV. */
+    'underwriter':      { code: 'QU', line: 'Client Manager', title: 'Client Manager, general insurance', to: 'manager', cv: true,
                           client: 'Your application is with Mr Rampersad himself. Nobody else in the branch sees it, and nothing reaches your current employer.' }
   },
 
@@ -115,7 +118,9 @@ var QUOTE = {
     /* The score first, because it is the one thing that says whether to read
        the rest now or later; then where they are, and the thing they built. */
     'admin':            ['score', 'emp_role', 'pay_now'],
-    'underwriter':      ['uw_years', 'uw_classes', 'uw_auth']
+    /* Years, where they are with the papers, and the classes. The unclipped
+       scan line the page sends as its 'At a glance' section carries the rest. */
+    'underwriter':      ['uw_years', 'uw_qstatus', 'uw_classes']
   },
 
   /* A client who taps send twice, or whose connection retries, must not
