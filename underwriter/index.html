@@ -3,22 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>We are opening a general insurance agency. We need one underwriter. — Ricky Rampersad Branch</title>
-<meta name="description" content="An experienced underwriter for a new general insurance agency in Chaguanas, Trinidad. The quote, the proposal form and the customer checks fill themselves from the record, so your judgement goes on the risk and not on the paperwork.">
+<title>One underwriting seat. A new general insurance agency. — Ricky Rampersad Branch</title>
+<meta name="description" content="A qualified, experienced underwriter for a new general insurance agency in Chaguanas, Trinidad. Motor, property, liability, engineering, marine and bonds. The re-keying is already built — and the underwriting rules are not written yet. You write them.">
 <link rel="canonical" href="https://rickyrampersadbranch.com/underwriter/">
 <link rel="icon" type="image/svg+xml" href="/site-icon.svg">
 <meta name="theme-color" content="#0b1b2d">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Ricky Rampersad Branch">
-<meta property="og:title" content="Your judgement on the risk. Not on the paperwork.">
-<meta property="og:description" content="We are opening a general insurance agency and we need one experienced underwriter. The paperwork is already built. Chaguanas, Trinidad.">
+<meta property="og:title" content="You have the qualification. What you don’t have is room.">
+<meta property="og:description" content="One underwriting seat in a new general insurance agency. The paperwork is already built. How it underwrites is not settled — and the person in this seat settles it. Chaguanas, Trinidad.">
 <meta property="og:url" content="https://rickyrampersadbranch.com/underwriter/">
 <meta property="og:image" content="https://rickyrampersadbranch.com/underwriter/film-w.jpg">
 <meta property="og:image:width" content="1920">
 <meta property="og:image:height" content="1080">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Your judgement on the risk. Not on the paperwork.">
+<meta name="twitter:title" content="You have the qualification. What you don’t have is room.">
 <meta name="twitter:image" content="https://rickyrampersadbranch.com/underwriter/film-w.jpg">
 <meta name="geo.region" content="TT-CTT">
 <meta name="geo.placename" content="Chaguanas, Trinidad and Tobago">
@@ -81,6 +81,8 @@ strong,b{color:var(--ink);font-weight:600}
 .wrap{width:100%;max-width:var(--wrap);margin-inline:auto;padding-inline:1rem}
 @media (min-width:36rem){.wrap{padding-inline:1.5rem}}
 section{padding-block:var(--sp-2xl)}
+/* the bar is sticky, so an anchored heading would otherwise park under it */
+section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
 .dark{background:var(--d0);color:var(--dT2)}
 .dark h1,.dark h2,.dark h3,.dark strong,.dark b{color:#fff}
 .dark a{color:var(--aL)}
@@ -328,6 +330,49 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 .tools input{flex:none;width:1.15rem;height:1.15rem;margin:.1rem 0 0;accent-color:var(--a)}
 .tools label:has(input:checked){border-color:var(--a);background:var(--a-tint)}
 .tools label:has(input:focus-visible){outline:3px solid var(--a);outline-offset:2px}
+
+/* ── the lines of business ───────────────────────────────────────────── */
+.lineg{list-style:none;margin:var(--sp-l) 0 0;padding:0;display:grid;gap:.6rem;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))}
+.lineg li{background:var(--card);border:1px solid var(--line);border-radius:var(--r-s);
+  padding:.8rem .95rem;box-shadow:var(--e1)}
+.lineg b{display:block;font:700 var(--f--1)/1.25 var(--display);color:var(--ink);letter-spacing:-.015em}
+.lineg span{display:block;font-size:var(--f--2);color:var(--muted);margin-top:.15rem;line-height:1.4}
+
+/* ── the file: the interview, on the page ────────────────────────────── */
+.fileg{margin-top:var(--sp-l);background:var(--d1);border:1px solid var(--d3);
+  border-radius:var(--r);padding:var(--sp-m);box-shadow:var(--e3)}
+@media (min-width:46rem){.fileg{padding:var(--sp-l)}}
+.filehd{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));
+  padding-bottom:var(--sp-s);border-bottom:1px solid var(--d3)}
+.filehd .fk{display:block;font:700 var(--f--2)/1 var(--text);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--aL);margin-bottom:.25rem}
+.filehd b{display:block;color:#fff;font:600 var(--f--1)/1.3 var(--text)}
+.filen{margin:var(--sp-m) 0 var(--sp-s);color:var(--dT2);font-size:var(--f--1)}
+.filen em{color:#fff;font-style:normal;font-weight:600}
+.findings{list-style:none;margin:0;padding:0;display:grid;gap:.5rem}
+.fnd{display:flex;gap:.8rem;align-items:flex-start;width:100%;text-align:left;cursor:pointer;
+  background:rgba(255,255,255,.045);border:1.5px solid var(--d3);border-radius:var(--r-s);
+  padding:.75rem .9rem;color:var(--dT2);font:400 var(--f--1)/1.45 var(--text);
+  transition:border-color .16s,background .16s}
+.fnd:hover{border-color:var(--aL);background:rgba(255,255,255,.08)}
+.fnd b{display:block;color:#fff;font-weight:600}
+.fnd small{display:block;color:var(--dT3);font-size:var(--f--2);margin-top:.12rem;line-height:1.4}
+.fno{flex:none;width:1.65rem;height:1.65rem;border-radius:999px;border:1.5px solid var(--d3);
+  display:grid;place-items:center;font:700 var(--f--2)/1 var(--text);color:var(--dT3);margin-top:.1rem}
+.fnd[aria-pressed="true"]{border-color:var(--aL);background:rgba(0,207,234,.1)}
+.fnd[aria-pressed="true"] .fno{background:var(--aL);border-color:var(--aL);color:#06303a}
+.fnd[aria-pressed="true"] .fno::after{content:attr(data-n)}
+.filec{margin:var(--sp-m) 0 0;color:#fff;font:600 var(--f--1)/1.4 var(--text)}
+.fileq{display:grid;gap:var(--sp-m);margin-top:var(--sp-m)}
+.fileq label,.fileq legend{display:block;color:#fff;font:600 var(--f--1)/1.4 var(--text);margin-bottom:.4rem}
+.fileq fieldset{border:0;margin:0;padding:0}
+.fileq textarea{width:100%;background:rgba(255,255,255,.06);border:1.5px solid var(--d3);
+  border-radius:var(--r-s);color:#fff;padding:.7rem .85rem;font:400 max(16px,1rem)/1.5 var(--text);resize:vertical}
+.fileq textarea:focus{outline:3px solid var(--aL);outline-offset:2px}
+.fileq textarea::placeholder{color:var(--dT3)}
+.fileq .pills label span{border-color:var(--d3);color:var(--dT2)}
+.fileq .pills input:checked+span{background:var(--aL);border-color:var(--aL);color:#06303a}
 </style>
 </head>
 <body>
@@ -362,11 +407,11 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   <div class="field" aria-hidden="true"></div>
   <div class="wrap">
     <span class="eyebrow">General insurance &middot; one seat &middot; Chaguanas</span>
-    <h1 data-words>Your judgement on the risk. <em>Not on the paperwork.</em></h1>
-    <p class="hsub">We are opening a general insurance agency, and we need one experienced underwriter. Somebody who has carried a book and knows a bad risk when they see it. What is different here is that the paperwork around you is already built.</p>
+    <h1 data-words>You have the qualification. <em>What you don&rsquo;t have is room.</em></h1>
+    <p class="hsub">We are opening a general insurance agency and we need one underwriter: somebody who has rated real risks, said no to some, and has run out of ceiling where they are. Two things make this seat different. The re-keying is already built and running. And how this agency underwrites is <strong>not settled yet</strong> &mdash; the person in this seat settles it.</p>
     <div class="ctas">
       <a class="btn btn-1" href="#apply">Apply &mdash; CV and fifteen minutes <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-      <a class="btn btn-2" href="#film">Watch it first &middot; 51 sec</a>
+      <a class="btn btn-2" href="#file">Read a file first</a>
     </div>
     <p class="hnote">
       <span><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg>Chaguanas, Central Trinidad</span>
@@ -394,22 +439,64 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   </div>
 </section>
 
+<section class="alt" id="lines">
+  <div class="wrap">
+    <div class="rv" style="max-width:52rem">
+      <span class="eyebrow">The book</span>
+      <h2 data-words>What you would actually be underwriting.</h2>
+      <p class="lede">These are the record types our own renewal desk already reads out of the system every month. Personal lines pay the rent; the commercial book is where the seat grows.</p>
+    </div>
+    <ul class="lineg rv">
+      <li><b>Private motor</b><span>comprehensive and third party, the volume class</span></li>
+      <li><b>Commercial motor and fleet</b><span>where the rating actually has to be thought about</span></li>
+      <li><b>Household and private dwelling</b><span>buildings, contents, the average clause that nobody reads</span></li>
+      <li><b>Commercial property and fire</b><span>declared values, surveys, business interruption</span></li>
+      <li><b>Public and products liability</b><span>limits, indemnity, the wording that matters at claim</span></li>
+      <li><b>Workers compensation</b><span>wage declarations and the adjustment nobody chases</span></li>
+      <li><b>Engineering and machinery</b><span>plant, loaders, serials, item-by-item schedules</span></li>
+      <li><b>Marine and cargo</b><span>voyage and open cover</span></li>
+      <li><b>Bonds</b><span>performance and advance payment</span></li>
+      <li><b>Group health and group life</b><span>the employee benefits book, with its own claims experience</span></li>
+    </ul>
+    <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch">The underwriting authority sits with Guardian General; the agency places with them. What sits with you is the risk in front of the client: what we take, what we price up, what we refer, and what we are polite about and decline.</p>
+  </div>
+</section>
+
 <section id="different">
   <div class="wrap">
     <div class="rv">
       <span class="eyebrow">Why this seat is not like the others</span>
-      <h2 data-words>Most underwriting jobs are ninety per cent data entry.</h2>
-      <p class="lede">This branch wrote its own software, so the work that normally eats an underwriter's day has already been taken off the desk. Here is exactly what, and it is all running today.</p>
+      <h2 data-words>Most underwriting jobs are ninety per cent re-keying.</h2>
+      <p class="lede">This branch wrote its own software &mdash; thirty-nine files, about a hundred thousand lines, all in-branch. So the work that normally eats an underwriter&rsquo;s day has already been taken off the desk. Here is exactly what, named, and every one of these is running today.</p>
     </div>
     <ul class="cards">
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg>The quote fills itself</h3><p>Client, vehicle, cover history and no-claim record come out of the record. The driver's permit is photographed and read. Nobody retypes a policy number.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg>So do the forms</h3><p>The insurer's own proposal form and the customer checks are filled field by field from what we already hold, and come out as proper PDFs.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-board"/></svg>The renewal desk reads first</h3><p>Every term since the policy began &mdash; cover, premium, claims, what was paid and when &mdash; is on the screen before you open the file.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>The claim arrives checked</h3><p>A claim is matched to the cover that was in force on the day of the loss, not to this year's. Gaps and lapses are flagged before anybody looks at it.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>Duplicates are caught</h3><p>The same term entered twice, a mid-term change kept as its own record &mdash; the system finds them and says which record to correct.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-wall"/></svg>Nothing sits quietly</h3><p>Outstanding requirements, unpaid premiums and renewals due are on a desk that chases them, with the days counted.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-board"/></svg>Last year&rsquo;s file, before you open it</h3><p>Every term since the policy began: what was covered, at what value and premium, the change on the year before, what was billed, what was paid and how many days late, and the claims that fell in each term. You start reading at the risk, not at the filing.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg>The insurer&rsquo;s notice, read for you</h3><p>Guardian General&rsquo;s renewal notice is read on the device &mdash; period, premium, tax, every vehicle or location, every requirement &mdash; and each figure is checked against our own record. Where the two disagree, the desk says so instead of you finding out at claim.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg>Guardian&rsquo;s own forms, filled exactly</h3><p>Not a retyped version: the actual PDFs. The private motor proposal, Know Your Policy, the Motor Quotation Request, the company due-diligence checklist, EB0010 and GIO001 &mdash; filled field by field from what we hold, signed on a phone, and still editable at the other end.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>The claim is matched to the right term</h3><p>A loss from last March is assessed against last March&rsquo;s sum insured and last March&rsquo;s policy number, not against this year&rsquo;s cover. A loss that falls in a gap between two terms is flagged as a gap, in words the client can answer.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-wall"/></svg>Group health arrives with its experience</h3><p>The claims are aggregated by month and division on the device, the plan years are cut where the rate actually stepped up, and the loss ratio is worked per plan year. You argue a renewal with the numbers, not with an impression.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>The record is cleaned before you price it</h3><p>Salesforce holds duplicate terms, mid-term changes kept as their own policy, and vehicles carried under a changed policy number. The desk merges them only on a real identity &mdash; a registration, a chassis, a serial &mdash; and names the record to correct.</p></li>
     </ul>
-    <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch">We are not claiming this makes underwriting easy. It means the hours you spend go on the risk, the rate and the client, which is the part you are actually good at.</p>
+    <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch">None of this makes underwriting easy, and we are not going to pretend it does. What it does is give you back the hours that normally go on typing, so they can go on the risk, the rate and the client &mdash; which is the part you are actually good at and the part nobody is paying you for right now.</p>
+  </div>
+</section>
+
+<section id="build">
+  <div class="wrap">
+    <div class="rv" style="max-width:54rem">
+      <span class="eyebrow">The part most underwriters never get</span>
+      <h2 data-words>You will not be raising a ticket. You will be writing the rule.</h2>
+      <p class="lede">Everything on this page was built in this branch, by people who were not hired as developers. That has a consequence for whoever takes this seat: an underwriting rule here is not a request that joins a queue at head office. It is a decision you make, written into the desk, running on every file that week.</p>
+    </div>
+    <ul class="cards">
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>Your own referral rules</h3><p>Over a value you set. An unoccupied property. A driver under twenty-three on a commercial vehicle. A trade we have been bitten by. The desk stops the file and says which rule stopped it &mdash; so nobody binds it by accident on a Friday.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>An underinsurance flag that bites</h3><p>Declared value against the trend of the last five terms, and the average clause drawn to scale on the client&rsquo;s own letter: <em>on a hundred thousand dollar loss, this policy pays sixty-one.</em> We already draw it. You decide when it fires.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>A rating sanity check</h3><p>The premium against the sum insured and the claims that fell in the term. When the three do not agree, the desk raises it before the client does and before the renewal goes out.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-board"/></svg>An appetite list the whole branch can see</h3><p>What we want more of, what we quote politely high, what we do not write. On the agents&rsquo; screens, so they stop bringing you risks you were always going to decline.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-wall"/></svg>The evidence that you were right</h3><p>What you declined, what you loaded, what it earned and how it ran &mdash; by class and by month. Most underwriters never get to prove their judgement. Here it is a report.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg>And the agents in front of it</h3><p>Twenty-one advisors and two managers who will bring you the business, and a branch that answers a query the same day. Your rules reach them the morning you make them.</p></li>
+    </ul>
+    <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch">To be plain about the division of labour: you are not expected to write code, and nobody will ask you to. You are expected to know what the rule should be, to say it precisely, and to tell us when it is wrong once it is running. Somebody here builds it.</p>
   </div>
 </section>
 
@@ -417,21 +504,101 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   <div class="wrap">
     <div class="rv" style="max-width:52rem">
       <span class="eyebrow">Who we are looking for</span>
-      <h2 data-words>Someone with a book behind them, and no room left where they are.</h2>
-      <p class="lede" style="color:var(--dT2)">You have rated real risks and said no to some. You know what a surveyor's report is worth and what a broker leaves out. And you are somewhere that has stopped growing, or stopped listening.</p>
+      <h2 data-words>Qualified, experienced, and out of room.</h2>
+      <p class="lede" style="color:var(--dT2)">You have rated real risks and declined some. You know what a surveyor&rsquo;s report is worth and what a broker leaves out of a submission. And you are somewhere that has stopped growing, or stopped listening &mdash; where the only way up is waiting for somebody to retire.</p>
     </div>
     <ul class="cards">
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Experience, genuinely</h3><p>Motor, property, liability &mdash; whichever classes you have actually underwritten. We would rather depth in two than a list of eight.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-cap"/></svg>A qualification, and we do mean it</h3><p>ACII, the CII Diploma or Certificate, CPCU, LOMA, or part-qualified and still sitting papers. Tell us exactly where you are and what is left. This is the one seat on this site where we are not flexible about it: you will be the technical voice in the room with an insurer, a broker and a client.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Experience, genuinely</h3><p>Five years or more actually rating, not administering. Motor, property, liability, engineering &mdash; whichever you have underwritten yourself. We would far rather real depth in two classes than a list of eight.</p></li>
       <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Judgement you can explain</h3><p>The application asks you about a risk you declined and one you wrote against the grain. That is the interview.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Appetite to build</h3><p>This is a new agency. How it underwrites is not settled yet, and the person in this seat gets a real say in it.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>Appetite to build</h3><p>This is a new agency. How it underwrites is not settled, and the person in this seat settles it. If being handed a blank appetite statement frightens you rather than interests you, this is the wrong seat and we would both find that out slowly.</p></li>
       <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Service as a standard</h3><p>This branch is known for answering. An underwriter who leaves a broker waiting three days is the wrong fit, however sharp the rating.</p></li>
     </ul>
   </div>
 </section>
 
+<section class="dark" id="file">
+  <div class="wrap">
+    <div class="rv" style="max-width:54rem">
+      <span class="eyebrow">The interview, and it starts here</span>
+      <h2 data-words>Here is a file. What would you do with it?</h2>
+      <p class="lede" style="color:var(--dT2)">This is the shape our renewal desk puts in front of somebody every morning: the policy, every term since inception, and what the system itself has already flagged. The client is invented. The findings are the ones our desk genuinely computes.</p>
+    </div>
+
+    <div class="fileg rv" id="fileg" hidden>
+      <div class="filehd">
+        <div><span class="fk">Policy</span><b>Commercial property &amp; machinery</b></div>
+        <div><span class="fk">Renews in</span><b>23 days</b></div>
+        <div><span class="fk">With us</span><b>Since 2014 &middot; 11 terms</b></div>
+        <div><span class="fk">Broker</span><b>Direct</b></div>
+      </div>
+      <p class="filen">Tick what you would act on <em>before</em> you quote this renewal, in the order you would act on it. There is no score on this page and no right number &mdash; what tells us something is <em>which</em> ones, and what you would ask for.</p>
+      <ul class="findings">
+        <li><button type="button" class="fnd" data-f="sums" aria-pressed="false">
+          <span class="fno" aria-hidden="true"></span>
+          <span class="fnx"><b>The sums insured have not changed since 2019.</b><small>Buildings, contents and plant all carried at the values first declared.</small></span>
+        </button></li>
+        <li><button type="button" class="fnd" data-f="notice" aria-pressed="false">
+          <span class="fno" aria-hidden="true"></span>
+          <span class="fnx"><b>The insurer&rsquo;s notice and our record disagree on the sum insured.</b><small>The notice reads about forty per cent higher than the figure we hold.</small></span>
+        </button></li>
+        <li><button type="button" class="fnd" data-f="claims" aria-pressed="false">
+          <span class="fno" aria-hidden="true"></span>
+          <span class="fnx"><b>Two claims fell in the last term. One is still open.</b><small>Both on the machinery schedule. Nothing on the three terms before.</small></span>
+        </button></li>
+        <li><button type="button" class="fnd" data-f="prem" aria-pressed="false">
+          <span class="fno" aria-hidden="true"></span>
+          <span class="fnx"><b>The premium is within two per cent of last year&rsquo;s.</b><small>Same cover, same values, same rate.</small></span>
+        </button></li>
+        <li><button type="button" class="fnd" data-f="bank" aria-pressed="false">
+          <span class="fno" aria-hidden="true"></span>
+          <span class="fnx"><b>A bank is named on the policy.</b><small>The renewal certificate goes to them as well as to the client.</small></span>
+        </button></li>
+        <li><button type="button" class="fnd" data-f="paid" aria-pressed="false">
+          <span class="fno" aria-hidden="true"></span>
+          <span class="fnx"><b>Last year was paid forty-seven days after the renewal date.</b><small>Part of it is still outstanding on the account.</small></span>
+        </button></li>
+        <li><button type="button" class="fnd" data-f="decl" aria-pressed="false">
+          <span class="fno" aria-hidden="true"></span>
+          <span class="fnx"><b>The insurer asks for the sums to be reviewed and declarations signed.</b><small>Listed on the notice under requirements.</small></span>
+        </button></li>
+        <li><button type="button" class="fnd" data-f="item" aria-pressed="false">
+          <span class="fno" aria-hidden="true"></span>
+          <span class="fnx"><b>One machinery item has no end date in our record.</b><small>It has been carried forward on every schedule since 2021.</small></span>
+        </button></li>
+        <li><button type="button" class="fnd" data-f="dup" aria-pressed="false">
+          <span class="fno" aria-hidden="true"></span>
+          <span class="fnx"><b>The same term is on file twice.</b><small>One copy sits against last year&rsquo;s billing record, one does not.</small></span>
+        </button></li>
+      </ul>
+      <p class="filec" id="fileCount">Nothing ticked yet.</p>
+
+      <div class="fileq">
+        <div>
+          <label for="fAsk">Before you quote it, what would you ask the client for?</label>
+          <textarea id="fAsk" rows="3" maxlength="600" placeholder="In plain words. One line is a real answer."></textarea>
+        </div>
+        <fieldset><legend>And the premium?</legend>
+          <div class="pills" id="fPrem">
+            <label><input type="radio" name="uw_prem" value="Hold it"><span>Hold it</span></label>
+            <label><input type="radio" name="uw_prem" value="Load it"><span>Load it</span></label>
+            <label><input type="radio" name="uw_prem" value="Refer it"><span>Refer it</span></label>
+            <label><input type="radio" name="uw_prem" value="Decline"><span>Decline</span></label>
+            <label><input type="radio" name="uw_prem" value="Not until I have more"><span>Not until I have more</span></label>
+          </div>
+        </fieldset>
+      </div>
+      <p class="small" style="color:var(--dT3);margin:0">Whatever you tick travels with your application. You can send it and leave the rest of the form for later.</p>
+      <p style="margin:var(--sp-m) 0 0"><a class="btn btn-1" href="#apply">Send what I would do <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a></p>
+    </div>
+
+    <noscript><p class="lede" style="color:var(--dT2)">The file needs JavaScript to tick. The application below works without it &mdash; question four asks the same thing in your own words.</p></noscript>
+  </div>
+</section>
+
 <section class="statement">
   <div class="wrap">
-    <p>Unparalleled service is the standard. The tools are there so you can keep it.</p>
+    <p>The paperwork is finished. The underwriting is not. That is the job.</p>
   </div>
 </section>
 
@@ -500,7 +667,17 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
                 </div>
               </fieldset>
               <div><label for="uSys">Systems you have worked on <small>&middot; whichever they were</small></label><input id="uSys" name="uw_systems" type="text" required placeholder="the policy system, the rating tool, spreadsheets — be plain"></div>
-              <div><label for="uQual">Qualifications <small>&middot; ACII, Dip CII, CPCU, LOMA, part-qualified, none &mdash; all are real answers</small></label><input id="uQual" name="uw_quals" type="text" required></div>
+              <fieldset><legend>Where you are with a qualification</legend>
+                <div class="pills">
+                  <label><input type="radio" name="uw_qstatus" value="Fully qualified (ACII, CPCU or equivalent)" required><span>Fully qualified</span></label>
+                  <label><input type="radio" name="uw_qstatus" value="Diploma"><span>Diploma</span></label>
+                  <label><input type="radio" name="uw_qstatus" value="Certificate"><span>Certificate</span></label>
+                  <label><input type="radio" name="uw_qstatus" value="Part-qualified, still sitting papers"><span>Part-qualified, still sitting</span></label>
+                  <label><input type="radio" name="uw_qstatus" value="Studying, no papers yet"><span>Studying</span></label>
+                  <label><input type="radio" name="uw_qstatus" value="None — experience only"><span>None, experience only</span></label>
+                </div>
+              </fieldset>
+              <div><label for="uQual">Which one, and what is left <small>&middot; the body, the papers you hold, the papers outstanding</small></label><input id="uQual" name="uw_quals" type="text" required placeholder="e.g. CII Diploma, M92 and M93 outstanding"></div>
             </div>
           </div>
 
@@ -795,6 +972,10 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     f.dataset.sending='1'; var was=btn.innerHTML; btn.disabled=true; btn.textContent='Sending…';
 
     readCv().then(function(cv){
+      /* what they did with the file on this page; harmless if they skipped it */
+      var file_=(typeof window.__rrbFile==='function')?window.__rrbFile()
+        :{n:0,picked:'',missed:'',ask:'',prem:''};
+      if(!file_.picked)file_.picked='did not read the file';
       var body={action:'q.quote',form:'underwriter',code:'QU',line:'Underwriter',
         title:'Underwriter, general insurance',
         core:{name:name,email:email,phone:phone,reach:'call',when:val('when'),agent:'',
@@ -807,7 +988,8 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
           {section:'Underwriting',k:'uw_classes',label:'Classes underwritten',value:classes().join(', ')},
           {section:'Underwriting',k:'uw_auth',label:'Authority held',value:val('uw_auth')},
           {section:'Underwriting',k:'uw_systems',label:'Systems worked on',value:val('uw_systems')},
-          {section:'Underwriting',k:'uw_quals',label:'Qualifications',value:val('uw_quals')},
+          {section:'Underwriting',k:'uw_qstatus',label:'Qualification status',value:val('uw_qstatus')},
+          {section:'Underwriting',k:'uw_quals',label:'Which one, and what is left',value:val('uw_quals')},
           {section:'Where they are',k:'emp_co',label:'Current or most recent employer',value:val('emp_co')},
           {section:'Where they are',k:'emp_role',label:'Role there',value:val('emp_role')},
           {section:'Pay',k:'pay_now',label:'Earning now (monthly, TT$)',value:val('pay_now')},
@@ -815,7 +997,11 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
           {section:'Pay',k:'start',label:'Notice period',value:val('start')},
           {section:'Judgement',k:'uw_declined',label:'A risk they declined, and why',value:val('uw_declined')},
           {section:'Judgement',k:'uw_wrote',label:'One they wrote that others would not',value:val('uw_wrote')},
-          {section:'Judgement',k:'uw_renewals',label:'What they would change about renewals',value:val('uw_renewals')}
+          {section:'Judgement',k:'uw_renewals',label:'What they would change about renewals',value:val('uw_renewals')},
+          {section:'The file',k:'file_order',label:'What they would act on, in their order',value:file_.picked},
+          {section:'The file',k:'file_ask',label:'What they would ask the client for',value:file_.ask},
+          {section:'The file',k:'file_prem',label:'What they would do about the premium',value:file_.prem},
+          {section:'The file',k:'file_missed',label:'What they walked past',value:file_.missed}
         ],
         page:location.pathname,
         ref_from:(new URLSearchParams(location.search)).get('from')||'',
@@ -852,6 +1038,85 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 (function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
 (new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
 }catch(e){}})();
+</script>
+
+<script>
+/* ── the file ────────────────────────────────────────────────────────────
+   Nine findings, the ones the renewal desk really computes. The page shows
+   the candidate only WHICH they ticked and in what order, never a score and
+   never which ones we think matter: printing that turns a judgement into a
+   quiz with the answers at the bottom. The Branch Manager gets the order,
+   what they asked for, what they would do about the premium, and what they
+   walked past. */
+(function(){
+  var F = {
+    sums:  'Sums insured unchanged since 2019',
+    notice:'Notice and our record disagree on the sum insured',
+    claims:'Two claims in the last term, one open',
+    prem:  'Premium within two per cent of last year',
+    bank:  'A bank is named on the policy',
+    paid:  'Paid 47 days late last year, part still owed',
+    decl:  'Insurer asks for the sums to be reviewed',
+    item:  'A machinery item with no end date',
+    dup:   'The same term on file twice'
+  };
+  var box = document.getElementById('fileg');
+  if (!box) return;
+  box.hidden = false;                       /* without script the file stays out of the way */
+  var btns = [].slice.call(box.querySelectorAll('.fnd')),
+      out  = document.getElementById('fileCount'),
+      ask  = document.getElementById('fAsk');
+  var order = [];
+
+  function save(){
+    try{
+      sessionStorage.setItem('rrbUwFile', order.join(','));
+      sessionStorage.setItem('rrbUwAsk', ask ? ask.value : '');
+      var pr = box.querySelector('input[name=uw_prem]:checked');
+      sessionStorage.setItem('rrbUwPrem', pr ? pr.value : '');
+    }catch(e){}
+  }
+  function load(){
+    try{
+      var f = sessionStorage.getItem('rrbUwFile');
+      if (f) order = f.split(',').filter(Boolean);
+      var a = sessionStorage.getItem('rrbUwAsk'); if (a && ask) ask.value = a;
+      var p = sessionStorage.getItem('rrbUwPrem');
+      if (p) { var el = box.querySelector('input[name=uw_prem][value="' + p.replace(/"/g,'') + '"]'); if (el) el.checked = true; }
+    }catch(e){}
+  }
+  function draw(){
+    btns.forEach(function(b){
+      var i = order.indexOf(b.dataset.f);
+      b.setAttribute('aria-pressed', i >= 0 ? 'true' : 'false');
+      b.querySelector('.fno').setAttribute('data-n', i >= 0 ? String(i + 1) : '');
+    });
+    out.textContent = !order.length ? 'Nothing ticked yet.'
+      : 'You would act on ' + order.length + (order.length === 1 ? ' thing' : ' things') + ', in that order.';
+  }
+  btns.forEach(function(b){
+    b.addEventListener('click', function(){
+      var k = b.dataset.f, i = order.indexOf(k);
+      if (i >= 0) order.splice(i, 1); else order.push(k);
+      draw(); save();
+    });
+  });
+  if (ask) ask.addEventListener('input', save);
+  box.addEventListener('change', save);
+
+  window.__rrbFile = function(){
+    var pr = box.querySelector('input[name=uw_prem]:checked');
+    return {
+      n: order.length,
+      picked: order.map(function(k, i){ return (i + 1) + '. ' + F[k]; }).join('\n'),
+      missed: Object.keys(F).filter(function(k){ return order.indexOf(k) < 0; })
+                 .map(function(k){ return F[k]; }).join('; '),
+      ask: (ask && ask.value.trim()) || '',
+      prem: pr ? pr.value : ''
+    };
+  };
+  load(); draw();
+})();
 </script>
 </body>
 </html>

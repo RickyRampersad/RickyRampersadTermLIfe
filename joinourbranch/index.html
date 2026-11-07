@@ -81,6 +81,8 @@ strong,b{color:var(--ink);font-weight:600}
 .wrap{width:100%;max-width:var(--wrap);margin-inline:auto;padding-inline:1rem}
 @media (min-width:36rem){.wrap{padding-inline:1.5rem}}
 section{padding-block:var(--sp-2xl)}
+/* the bar is sticky, so an anchored heading would otherwise park under it */
+section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
 .dark{background:var(--d0);color:var(--dT2)}
 .dark h1,.dark h2,.dark h3,.dark strong,.dark b{color:#fff}
 .dark a{color:var(--aL)}

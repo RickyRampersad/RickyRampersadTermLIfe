@@ -858,3 +858,83 @@ the clips back onto their real indices — the runner numbers a job's lines from
 Everything else is in place. Each of the six pages carries its own share card —
 its film's wide poster — so a link pasted into WhatsApp previews with the
 film's own opening frame rather than the homepage's generic one.
+
+## The underwriter's seat — `/underwriter/`, rebuilt 7 November 2026
+
+Asked for as a deep dive: *"We're looking to hire somebody for the underwriting
+for the general insurance agency… the person must be qualified… they must have
+experience with insurance and have a qualification… but stuck where they
+currently are, they need to grow… let it spark what an underwriter and the
+tools that they'll be looking for and look to develop that we have."*
+
+**This is the one seat on the site where the bar is a qualification**, and the
+page says so in as many words. The administrator's page deliberately says *"you
+do not need to be a developer"*; this one says the opposite about insurance
+papers, because the person in the seat is the technical voice in front of an
+insurer, a broker and a client. The qualification is asked as a status
+(`uw_qstatus`: fully qualified, Diploma, Certificate, part-qualified, studying,
+none) **and** as "which one, and what is left" — a Diploma with M93
+outstanding is a different candidate from a Diploma finished, and only the
+second question separates them.
+
+**The spark is the tools, named.** An underwriter stuck re-keying will not be
+moved by adjectives. So the page names what is actually running: the renewal
+desk reading every term since inception with its claims and payment history,
+Guardian General's own notice read on the device and checked figure by figure
+against Salesforce, Guardian's own PDFs filled exactly (the private motor
+proposal, Know Your Policy, the Motor Quotation Request, the company CDD
+checklist, EB0010, GIO001), the claim matched to the term the loss fell in,
+group health arriving with its claims experience and loss ratio by plan year,
+and the duplicate-term merge that only ever merges on a real identity.
+
+**The growth is the part most underwriters never get, and it is a section of
+its own.** Because the branch writes its own software, an underwriting rule is
+not a ticket in a queue at head office: it is a decision, written into the desk,
+running that week. The page offers the five an underwriter actually wants — own
+referral rules, an underinsurance flag that fires on the trend, a rating sanity
+check, an appetite list the agents can see, and the evidence that the judgement
+was right. It also states the division of labour plainly: **you are not expected
+to write code and nobody will ask you to.**
+
+### The file is the interview, and it is on the page
+
+The administrator's page asks the candidate to find the faults in a broken form.
+The underwriter's asks the thing an underwriter actually does: **here is a
+renewal file, what would you act on before you quote it?** Nine findings, every
+one of them something `girInsights_` genuinely computes — sums unchanged since
+2019, the notice and the record disagreeing by forty per cent, two claims in
+the term with one open, the premium within two per cent all the same, a bank on
+the policy, forty-seven days late last year, declarations outstanding, an item
+with no end date, and the same term on file twice.
+
+- **The order is the answer.** Which ones, and in what order, is what separates
+  an underwriter from an administrator: a strong one opens on the values, the
+  disagreement and the claims; a weak one starts with the missing end date.
+- **The page never prints a score and never says which ones matter.** Same rule
+  as the broken form: printing the answers turns a judgement into a quiz.
+  `uwtest.js` fails the build if a verdict ever appears on the page.
+- Then two more: *what would you ask the client for before you quote it*, and
+  *what would you do about the premium* (hold / load / refer / decline / not
+  until I have more).
+- The Branch Manager receives the order, the ask, the premium decision **and
+  what they walked past**, which is as telling as what they ticked.
+- The ticks survive a reload, travel with the application, and with JavaScript
+  off the file is hidden rather than broken — question four asks the same thing
+  in words.
+
+### Two things only Mr Rampersad can settle
+
+- **Study support.** If the branch will fund CII papers, that is the single
+  strongest line that could go on this page for a part-qualified underwriter,
+  and it is not on it, because nothing in the record says it is true.
+- **The film.** `underwriter/film-*.mp4` is from the rejected set of 6–7
+  November. It should be re-cut in the board-film style now used for
+  `/buildwithus/` (`tools/film/CANVA-AND-THE-EIGHT-CUTS.md`), or taken off the
+  page.
+
+### The sticky bar ate every anchor
+
+`--bar` is 4rem and the topbar is sticky, so `#file`, `#apply` and every other
+anchored heading parked underneath it when tapped. None of the three recruiting
+pages had `scroll-margin-top`; all three do now. It is the same fault recorded
+for the claims page, and it is invisible until somebody taps a link.
