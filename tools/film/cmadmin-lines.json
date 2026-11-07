@@ -1,0 +1,292 @@
+{
+ "role": "branch",
+ "scenes": [
+  {
+   "visual": "bwopen",
+   "eyebrow": "The seat",
+   "headline": "You know the book.<br>And you <em>still retype it</em>",
+   "at": "knows",
+   "at2": "retyping",
+   "icon": "file",
+   "card": [
+    "Knows the cover better than the system does",
+    "and still types it in three times"
+   ],
+   "say": "Somewhere right now there is someone who knows general insurance inside out, and still spends the day retyping what the record already holds."
+  },
+  {
+   "visual": "bwnotools",
+   "eyebrow": "The old way",
+   "headline": "You retype it. You wait. / And the history is <em>in four places</em>",
+   "cards": [
+    {
+     "at": "proposal",
+     "icon": "file",
+     "title": "the proposal form",
+     "art": "sheet",
+     "flag": "retyped by hand"
+    },
+    {
+     "at": "endorsement",
+     "icon": "clock",
+     "title": "an endorsement",
+     "art": "lock",
+     "padicon": "clock",
+     "wait": "Day 3",
+     "flag": "still waiting"
+    },
+    {
+     "at": "history",
+     "icon": "msg",
+     "title": "last year&rsquo;s file",
+     "art": "chat",
+     "flag": "in four places",
+     "red": true
+    }
+   ],
+   "say": "You retype the proposal form. You wait three days for an endorsement. And the history you are advising on sits in four different places."
+  },
+  {
+   "visual": "bwturn",
+   "eyebrow": "The Ricky Rampersad Branch",
+   "headline": "Our own general insurance agency. / <em>Already running</em>",
+   "at": "agency",
+   "at2": "book",
+   "sub": "Chaguanas, Central Trinidad. One client manager.",
+   "say": "The branch has opened its own general insurance agency. And it already has a book."
+  },
+  {
+   "visual": "bwstack",
+   "eyebrow": "The book you would look after",
+   "headline": "You would not be building one. / <em>It is already there</em>",
+   "at": "hundred",
+   "at3": "every",
+   "files": [
+    "Motor",
+    "Home",
+    "Commercial property",
+    "Public liability",
+    "Workers&rsquo; compensation",
+    "Machinery and plant",
+    "Bonds"
+   ],
+   "n1": [
+    "three",
+    103,
+    "",
+    "clients"
+   ],
+   "n2": [
+    "five",
+    195,
+    "",
+    "policies in force"
+   ],
+   "line": "Renewals in every month of the year. The largest motor policy on it carries sixty-one vehicles.",
+   "say": "You would not be building a book. We have one. A hundred and three clients, a hundred and ninety five policies in force, and renewals in every single month of the year."
+  },
+  {
+   "visual": "bwdues",
+   "eyebrow": "Before you open the file",
+   "headline": "Every term since the policy began",
+   "rail": {
+    "at": "screen",
+    "at2": "covered",
+    "at3": "claims",
+    "icon": "file",
+    "mark": "",
+    "stops": [
+     [
+      "2014",
+      "first term"
+     ],
+     [
+      "2018",
+      "renewed"
+     ],
+     [
+      "2021",
+      "renewed"
+     ],
+     [
+      "2024",
+      "renewed"
+     ]
+    ],
+    "check": [
+     "Cover, value, premium, claims",
+     "already on the screen when you open it"
+    ]
+   },
+   "say": "Before you open a file, every term since the policy began is already on the screen. What was covered, at what value, what was paid, and the claims that fell in each term."
+  },
+  {
+   "visual": "bwbill",
+   "eyebrow": "The insurer&rsquo;s notice",
+   "headline": "Read for you, / and <em>checked against our record</em>",
+   "bill": {
+    "at": "notice",
+    "at2": "checked",
+    "at3": "record",
+    "at4": "disagree",
+    "left": "The insurer&rsquo;s notice",
+    "right": "Our own record",
+    "out": "The desk says so, before it reaches the client",
+    "rows": [
+     [
+      "Period",
+      1
+     ],
+     [
+      "Premium",
+      1
+     ],
+     [
+      "Sum insured",
+      0
+     ],
+     [
+      "Vehicles and locations",
+      1
+     ],
+     [
+      "Requirements",
+      1
+     ]
+    ]
+   },
+   "say": "The insurer's notice is read for you, and every figure is checked against our own record. Where the two disagree, the desk says so."
+  },
+  {
+   "visual": "bwgrid",
+   "eyebrow": "What the seat actually is",
+   "headline": "The part <em>a system cannot do</em>",
+   "at": "endorsements",
+   "cards": [
+    [
+     "file",
+     "Endorsements and extensions",
+     "mid-term changes, done properly"
+    ],
+    [
+     "clock",
+     "The renewal conversation",
+     "thirty days ahead, not three"
+    ],
+    [
+     "msg",
+     "Telling them plainly",
+     "what the cover does, and what it does not"
+    ],
+    [
+     "lock",
+     "The Act, and what changes in it",
+     "market conduct, in writing, on the file"
+    ],
+    [
+     "flag",
+     "The claim, from their side",
+     "the part they remember us for"
+    ],
+    [
+     "check",
+     "A record the next person can read",
+     "because one day it will not be you"
+    ]
+   ],
+   "say": "The job is the part a system cannot do. Endorsements and extensions. The renewal conversation. Telling a client plainly what the cover does and what it does not. And knowing when the Act changes."
+  },
+  {
+   "visual": "bwscript",
+   "eyebrow": "The part most people in this work never get",
+   "headline": "A change is not a ticket. / <em>It is a decision</em>",
+   "script": {
+    "at": "ticket",
+    "at2": "written",
+    "lhead": "Where you are now",
+    "ticks": false,
+    "rows": [
+     "Raise a ticket",
+     "Join the queue",
+     "Wait for the release"
+    ],
+    "rhead": "Here &middot; the rule, in the desk",
+    "code": [
+     "rule('sum not moved', r =>",
+     "  r.years_unchanged >= 3 &&",
+     "  r.class === 'property')",
+     "  .flag('before the renewal');"
+    ],
+    "badge": "Running"
+   },
+   "say": "Here is the part most people in this work never get. A change you ask for is not a ticket that joins a queue somewhere else. It is written into the desk, and it runs on every file that week."
+  },
+  {
+   "visual": "bwgrid",
+   "eyebrow": "Changes you would make in your first month",
+   "headline": "Yours, running on <em>every file</em>",
+   "at": "renewal",
+   "cards": [
+    [
+     "clock",
+     "A renewal thirty days ahead",
+     "with the claims history already on it"
+    ],
+    [
+     "file",
+     "An endorsement typed once",
+     "it fills from the record, as the quote does"
+    ],
+    [
+     "chart",
+     "A flag when a sum stops moving",
+     "three years unchanged, before the renewal"
+    ]
+   ],
+   "say": "A renewal that goes out thirty days ahead with the claims history on it. An endorsement nobody types in twice. A flag when the sum insured has not moved in three years."
+  },
+  {
+   "visual": "bwhalf",
+   "eyebrow": "The shape of the job",
+   "headline": "The paperwork is finished. / The advice <em>is not</em>",
+   "split": {
+    "at": "paperwork",
+    "at2": "advice",
+    "at3": "job",
+    "l": [
+     "The paperwork",
+     "already built, already running"
+    ],
+    "r": [
+     "The advice",
+     "not settled &mdash; and that is yours"
+    ],
+    "line": "How this agency looks after its clients is the part we want you for."
+   },
+   "say": "The paperwork is finished. The advice is not. That is the job."
+  },
+  {
+   "visual": "bwclose",
+   "eyebrow": "One seat &middot; Chaguanas",
+   "lines": [
+    [
+     "seat",
+     "One seat."
+    ],
+    [
+     "Chaguanas",
+     "Chaguanas."
+    ],
+    [
+     "after",
+     "Look after the book."
+    ]
+   ],
+   "url": "rickyrampersadbranch.com/clientmanager",
+   "qr": "qr-cmadmin.png",
+   "urlsub": "Your CV and fifteen minutes.<br>Read by the Branch Manager alone.",
+   "extra": 2.2,
+   "say": "One seat, for a client manager. Chaguanas. Come and look after the book."
+  }
+ ]
+}

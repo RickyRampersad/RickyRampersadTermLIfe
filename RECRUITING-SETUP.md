@@ -1,4 +1,4 @@
-# Three seats, three ads — `/buildwithus/`, `/joinourbranch/`, `/underwriter/`
+# Three seats, three ads — `/buildwithus/`, `/joinourbranch/`, `/clientmanager/`
 
 Asked for over 6 November 2026, in these words:
 
@@ -31,18 +31,18 @@ voice and the music.
 
 ## What was built
 
-| | administrator | advisor | underwriter |
+| | administrator | advisor | client manager |
 |---|---|---|---|
-| The page | `/buildwithus/` | `/joinourbranch/` | `/underwriter/` |
-| The film's page to post | `/buildwithusvideo/` | `/joinourbranchvideo/` | `/underwritervideo/` |
-| The films | `buildwithus/film-w.mp4` | `joinourbranch/film-{v,f,w}.mp4` | `underwriter/film-w.mp4` |
-| Length | 86.3 s | 45.60 s | 87.5 s |
+| The page | `/buildwithus/` | `/joinourbranch/` | `/clientmanager/` |
+| The film's page to post | `/buildwithusvideo/` | `/joinourbranchvideo/` | `/clientmanagervideo/` |
+| The films | `buildwithus/film-w.mp4` | `joinourbranch/film-{v,f,w}.mp4` | `clientmanager/film-w.mp4` |
+| Length | 86.3 s | 45.60 s | 110.7 s |
 | Where it applies | this branch, `Quotes.gs` | **TalentNest** | this branch, `Quotes.gs` |
-| Form key / reference | `admin` → **`QB-`** | — | `underwriter` → **`QU-`** |
+| Form key / reference | `admin` → **`QB-`** | — | `underwriter` → **`QU-`** (kept, see below) |
 | CV upload | no | no | **yes**, to Drive |
 | Who reads it | the Branch Manager | the Branch Manager and the Unit Manager | the Branch Manager |
 
-**The administrator's and the underwriter's films were re-cut on 7 November
+**The administrator's and the client manager's films were re-cut on 7 November
 2026** in the board-film look, after the first set was turned down eight times
 (`tools/film/CANVA-AND-THE-EIGHT-CUTS.md`). Each replaced its own `film-w.mp4`,
 so every page, poster and share card picked the new one up with no edit. The
@@ -74,7 +74,7 @@ only part a WhatsApp or Facebook preview reads.
    deployment*: that issues a fresh `/exec` and every front end has to be
    re-wired.
 3. Set the **`QUOTE_CV_FOLDER`** Script Property to the id of a Drive folder
-   that will hold the underwriter CVs. Make the folder somewhere **the Branch
+   that will hold the client manager CVs. Make the folder somewhere **the Branch
    Manager can already open**, and share it with the account the script runs
    as: the file is created by the script, so it inherits the folder's sharing,
    and a link to a file nobody but the script can open is no use in the e-mail.
@@ -505,82 +505,146 @@ Manager and the Unit Manager.
 
 ---
 
-# 3 · The underwriter — `/underwriter/`
+# 3 · The client manager — `/clientmanager/`
 
-Asked for as *"an experienced underwriter … we are launching our general
-insurance agency … stuck where you don't have any growth, come to us, use the
-tools, be creative … let's filter out areas for data upload the resumes, filter
-down so we can spot a good candidate."*
+**Renamed and reframed on 7 November 2026**, after the branch manager read the
+underwriter page back: *"it's not really an underwriter. It's somebody who has
+experience with general insurance… We already have our book… with having
+underwriting experience is important, but carefully the act changes and
+advising our clients properly, looking at the extension… they're fed up of
+implementing something, and here we're open to ideas and changes. We already
+have a book, and we're looking for someone to manage more or less that book."*
 
-## What is different about this one
+**An agency does not underwrite — the insurer does.** That is the whole reason
+the first version was wrong, and it was not a title problem. The page sold
+authority over risk acceptance that the seat will never have, which an
+experienced underwriter catches in the first line and then discounts
+everything after. It said "underwriter" thirty-two times.
 
-**The hook is the paperwork, because that is what an experienced underwriter
-actually resents.** The whole argument of the page is one sentence: *your
-judgement on the risk, not on the paperwork* — and the branch can say it
-because the paperwork genuinely is already built, and the page names each
-piece. The quote fills itself from the record. Guardian's own proposal form and
-the customer due-diligence checklist are filled by the system, field by field.
-The renewal desk reads every term since the policy began before anyone opens
-it. A claim is checked against the cover that was in force on the day of the
-loss, not against this year's.
+What the seat actually controls is everything on the client's side of that
+line: what we put up and how it is presented, the endorsement mid-term, the
+renewal conversation, the advice on what the cover does and does not do, and
+the Act. That is a **better** pitch to the person he described, because that
+person has probably never been given control of any of it.
 
-Everything in that list is in `CLAUDE.md` and running. **Nothing on that page
-was invented to make the ad better**, which matters more here than anywhere:
-this reader will check.
+**`/underwriter/` and `/underwritervideo/` are redirect stubs** and stay that
+way: the old address was in the setup doc and may have been shared. The form
+key stays `underwriter` and the reference stays `QU-`, so `Quotes.gs` needs no
+paste and no new deployment; `QC-` was not available anyway, since the critical
+illness quote owns it.
 
-**It takes a CV**, which the other two do not. He asked for it in those words.
-PDF, DOC or DOCX, up to 6 MB, straight into a Drive folder, with the link on
-the row and in the Branch Manager's e-mail. A CV that cannot be stored never
-loses the application: the row says why and the answers are all there.
+## The book is real, and the figures on the page are counted, not claimed
 
-## The filter
+Asked whether the ad could name the book's size, he chose *"name its size and
+classes"* and gave no figures — so they were **counted out of Salesforce on
+7 November 2026** rather than recalled, and the page says on what basis.
 
-Five sections, and the ones that do the work are the last two.
+In force that day (`Risk_Details__c`, the general record types the renewal desk
+reads, excluding `Vehicle_Status__c` = Sold):
 
-1. **You** — name, phone, e-mail, where they are.
-2. **Your underwriting** — years; **twelve classes to tick** (motor, property,
-   liability, marine, engineering, bonds, group health, group life, travel,
-   personal accident, commercial package, agriculture); their **authority
-   limit**, as a band; the systems they have worked in; their qualifications
-   (CII, ACII, local, none).
-3. **Where you are** — current employer and role, what they earn and what they
-   want as monthly TT$ bands with "prefer not to say" and "open" on each, and
-   when they could start. The bands are $8,000–30,000, set for an experienced
-   underwriter rather than an administrator, in `underwriter/index.html`.
-4. **Three judgement questions.** These are the filter:
-   - *A risk you declined that you would decline again, and one you accepted
-     that you would not accept now.* The second half is the whole question. An
-     underwriter who cannot name a decision they got wrong has either not
-     carried a book or will not tell you the truth.
-   - *Something about how a risk was written, rated or documented where you
-     worked that you thought was wrong — and what you did about it.* This is the
-     "stuck where there is no growth" question, asked without the self-pity.
-   - *What you want to be doing in two years that you cannot do where you are.*
-5. **Your CV and last things** — the upload, where they saw the ad, and the best
-   time to call.
+| | |
+|---|---|
+| Clients | **103** (105 accounts, so some households) |
+| Policies | **195**, across **336** separate pieces of cover |
+| Motor | 251 vehicles on cover |
+| Property | 71 — **45 private dwelling**, 25 commercial, 1 unclassified |
+| Workers' compensation | 7 |
+| Public liability | 5 |
+| Machinery, bonds | 1 each |
+| Marine | **none in force**, so the page does not claim it |
+| Fleets | the largest motor policy carries **61 vehicles**; six carry four or more |
+| Renewals | **11 to 30 policies a month**, every month, November the heaviest |
 
-**Read in this order:** the classes ticked against the authority band (an
-authority far above the classes is a flag either way); then the second
-judgement question, which is the only one that cannot be prepared; then the CV,
-last, and only to check the dates against what they said.
+**Quote the policy count, not the term count.** 336 terms against 195 policies
+is partly real (one motor policy carries many vehicles) and partly the
+duplicate-term problem `girDedupe_` exists to clean. The client count is the
+safest figure of the three.
+
+**No policy number and no client name leaves Salesforce.** The fleet line is a
+count; the policy numbers behind it are client-identifying and are not in this
+repository, the page or the film.
+
+## What the page says now
+
+- **The hero** leads on the book: *"The book is already there. What it has
+  never had is you."*
+- **`#lines`** is the book by its real numbers, with one paragraph making the
+  relationship exact: this is the **branch's own** general insurance agency,
+  the insurer carries the risk and holds the underwriting authority, and the
+  branch's group health and group life book sits beside this one with its own
+  team and is **not** part of this seat.
+- **`#work` is new** and is the thing he asked for: endorsements and
+  extensions, the renewal conversation, telling clients plainly what the cover
+  does and does not do, **the Act and what changes in it**, the claim from the
+  client's side, and a record the next person can read. The Act card carries
+  the one line that matters most here — nobody may cause a policyholder to
+  discontinue or replace a policy without first discussing the advantages
+  **and** the disadvantages — with no section number, by the house rule.
+- **`#build`** became *"You will not be raising a ticket. You will be making
+  the change,"* aimed squarely at *"fed up of implementing something"*: a
+  change asked for here is written into the desk and runs that week.
+- **`#you`** now requires **both** general insurance experience and
+  underwriting experience, at his explicit choice, with the papers asked as a
+  status and *which one and what is left*. That is a narrow field in a market
+  this size and he was told so; one line changes it back.
+- **`#file` is unchanged**, because a renewal file and *what would you act on
+  before you quote it* is exactly a client manager's judgement. The nine
+  findings are still ones `girInsights_` genuinely computes.
+
+## The film — `cmadmin`, 1:51, cut 7 November 2026
+
+Eleven scenes on the same engine, replacing `uwadmin` at the same path. Three
+things the reframe forced, all of them real faults in the cut before it:
+
+- **Scene 3's eyebrow read "Guardian Life of the Caribbean"** over a voice
+  saying *"we are opening a general insurance agency"* — which reads as
+  Guardian Life opening one, the exact thing he says it is not. It is **"The
+  Ricky Rampersad Branch"** now, and the insurer appears only where it belongs,
+  as the carrier whose notice the renewal desk reads.
+- **"Build the book"** was the closing line. We have a book. It is *"Look after
+  the book."*
+- **Scene 4 is the book by its numbers** (`bwstack`: the classes as chips, 103
+  and 195 as the counters), which is the strongest scene in it and did not
+  exist before.
+
+**Two lines came back slurred in ways that changed the meaning** and were
+re-worded off the shape rather than around it, which is the rule this voice
+keeps teaching: *"a ticket in a queue at head office"* was heard as **"a queue
+ahead office"**, and *"an endorsement nobody has to retype"* as **"nobody has
+to retive"**, with *"a sum insured"* as *"some insured"*. They are now *"a
+ticket that joins a queue somewhere else"* and *"an endorsement nobody types in
+twice… when the sum insured has not moved."*
+
+**`"ticks": false`** is on the rule scene for the reason recorded in
+`tools/film/CANVA-AND-THE-EIGHT-CUTS.md`: a green tick beside *"wait for the
+release"* reads as the wait being fine.
+
+A cue word in the lines file has to appear **in the spoken line, inflected the
+same way**: `at2: "retypes"` against a line that says *retyping* stops the
+build with `no word 'retypes'`. That guard is worth keeping — it is the only
+thing that catches a reveal landing on a word that is never said.
 
 ## The ad
 
 ### 1 · LinkedIn (this is where this person is)
 
-> **Your judgement on the risk. Not on the paperwork.**
+> **The book is already there. What it has never had is you.**
 >
-> We are opening a general insurance agency in Chaguanas and we need one experienced underwriter.
+> The Ricky Rampersad Branch has opened its own general insurance agency, and we need one Client Manager to look after it.
 >
-> Before you read any further, here is what you would actually be walking into. The quote fills itself from the client's own record. Guardian's proposal form and the customer due-diligence checklist are filled by the system, field by field, and attached. The renewal desk reads every term since the policy began — not just this year's — before anyone opens the file. A claim arrives already checked against the cover that was in force on the day of the loss.
+> It is not a start-up. The book comes with it: 103 clients and 195 policies in force — motor, household, commercial property, liability, workers' compensation, machinery and bonds — renewing in every month of the year. The largest motor policy on it carries 61 vehicles.
+>
+> Here is what you would be walking into. The quote fills itself from the client's own record. Guardian's proposal form and the customer due-diligence checklist are filled by the system, field by field, and attached. The renewal desk reads every term since the policy began — not just this year's — before anyone opens the file. The insurer's notice is read and checked figure by figure against our own record, and where the two disagree the desk says so.
 >
 > None of that is a plan. It is built and it is running, and you can see it before you apply.
 >
-> So the part of the day that is yours is the part only you can do: whether we write it, on what terms, and at what price.
+> So the part of the day that is yours is the part only a person can do: the endorsement done properly, the renewal conversation, telling a client plainly what the cover does and does not do, and knowing when the Act moves.
 >
-> If you are somewhere with no room to move — where the work is the same every year and nobody is building anything — that is exactly who this is for.
+> And one more thing, if you have spent years saying *this would work better if…* to somebody who wrote it down and did nothing: here, a change you ask for is not a ticket in a queue. It gets built that week.
 >
-> Send your CV and about fifteen minutes of honest answers: **rickyrampersadbranch.com/underwriter**
+> General insurance experience and underwriting experience both required.
+>
+> Send your CV and about fifteen minutes of honest answers: **rickyrampersadbranch.com/clientmanager**
 >
 > Read by me personally. If you are employed today, nobody there will hear of it.
 >
@@ -588,40 +652,51 @@ last, and only to check the dates against what they said.
 
 ### 2 · WhatsApp and one-to-one
 
-> *We need one experienced underwriter.*
+> *One seat: Client Manager, general insurance.*
 >
-> We are opening a general insurance agency, and the paperwork side of it is already built — the quote, the proposal form and the customer checks fill themselves from the record, and a claim is already matched to the cover that was in force on the day of the loss.
+> The branch has opened its own general insurance agency and it already has a book — 103 clients, 195 policies in force, renewals every month.
 >
-> So the job is the judgement, not the typing.
+> The paperwork side is built: the quote and the forms fill themselves from the record, and every term since the policy began is on the screen before you open the file.
 >
-> rickyrampersadbranch.com/underwriter — your CV and fifteen minutes. If you are somewhere with no room to grow, this is the one to look at.
+> So the job is the advice, the endorsements and the renewal conversation. And if you ask for a change here, it gets built that week.
+>
+> rickyrampersadbranch.com/clientmanager — your CV and fifteen minutes. If you are somewhere with no room to grow, this is the one to look at.
 
 ### 3 · Job board or classified
 
-> **UNDERWRITER — GENERAL INSURANCE** · Ricky Rampersad Branch, Guardian Life of
-> the Caribbean · Chaguanas, Central Trinidad.
+> **CLIENT MANAGER — GENERAL INSURANCE** · Ricky Rampersad Branch · Chaguanas,
+> Central Trinidad.
 >
-> An experienced underwriter for a new general insurance agency. Motor,
-> property, liability and commercial classes. You will carry real authority and
-> work in a branch where the quote, the proposal form and the customer
-> due-diligence checks are already automated, so the work is the risk
-> assessment and the pricing.
+> To look after an existing general insurance book of 103 clients and 195
+> policies in force: motor, household, commercial property, liability,
+> workers' compensation, machinery and bonds. Renewals, endorsements and
+> extensions, the advice that goes with them, and the market conduct
+> obligations under the Insurance Act.
 >
-> We are looking for somebody who has carried a book and can explain a decision
-> they got wrong. Professional qualifications welcome; a track record matters
-> more.
+> Required: general insurance experience on a real book, and time actually
+> spent underwriting. Professional qualifications (ACII, CII Diploma or
+> Certificate, or part-qualified) are asked for and count.
 >
-> CV and application at **rickyrampersadbranch.com/underwriter**. Read by the
+> The branch has written its own software, so the quote, the forms, the
+> renewal history and the claim checks are already automated — and a change
+> you ask for is built, not queued.
+>
+> CV and application at **rickyrampersadbranch.com/clientmanager**. Read by the
 > Branch Manager personally and treated confidentially.
 
 ### Notes on the wording
 
-- **Never say the agency is open.** It is being opened. Every cut says "we are
-  opening".
+- **The agency is the branch's own, and Guardian Life is not the employer in
+  this ad.** Said in those words on 7 November 2026: *"it has nothing to do
+  with Guardian Life, but the branch is opening their general insurance
+  agency."* Name the branch. The insurer appears only as the carrier whose
+  notices and forms the desk already handles. The job-board cut above no
+  longer carries "Guardian Life of the Caribbean" after the branch name.
+- **The book's figures are checkable, so do not round them up.** 103 and 195,
+  counted on 7 November 2026. Re-count before a later run rather than
+  reprinting these.
 - **Do not print the authority limit the seat will carry.** The form asks
   theirs; ours is agreed on the call.
-- **Do not name the systems by brand in a public ad** beyond what the page
-  already shows. The page's screens are the branch's own with sample data.
 - **Compliance.** A general insurance agency is a separate registration; show
   this wording to Guardian before it runs outside the branch.
 
@@ -860,128 +935,45 @@ the clips back onto their real indices — the runner numbers a job's lines from
 
 - **Clear the music licence**, or swap the bed for the branch theme. See above —
   this is the one thing standing between the films and being posted.
-- **Set `QUOTE_CV_FOLDER`** before the underwriter ad runs, or CVs are reported
-  as not stored (the applications still arrive in full).
-- **Compliance sight of the wording**, in particular the underwriter ad, which
-  names a general insurance agency that is not yet open.
+- **Set `QUOTE_CV_FOLDER`** before the client manager ad runs, or CVs are
+  reported as not stored (the applications still arrive in full).
+- **Compliance sight of the wording**, in particular the client manager ad,
+  which advertises the branch's own general insurance agency.
 
 Everything else is in place. Each of the six pages carries its own share card —
 its film's wide poster — so a link pasted into WhatsApp previews with the
 film's own opening frame rather than the homepage's generic one.
 
-## The underwriter's seat — `/underwriter/`, rebuilt 7 November 2026
+## What the 7 November reframe superseded
 
-Asked for as a deep dive: *"We're looking to hire somebody for the underwriting
-for the general insurance agency… the person must be qualified… they must have
-experience with insurance and have a qualification… but stuck where they
-currently are, they need to grow… let it spark what an underwriter and the
-tools that they'll be looking for and look to develop that we have."*
+The seat was built that morning as **the underwriter's**, and rebuilt the same
+afternoon as the client manager's after he read it back (see section 3). What
+is still true from the first build, and worth keeping:
 
-**This is the one seat on the site where the bar is a qualification**, and the
-page says so in as many words. The administrator's page deliberately says *"you
-do not need to be a developer"*; this one says the opposite about insurance
-papers, because the person in the seat is the technical voice in front of an
-insurer, a broker and a client. The qualification is asked as a status
-(`uw_qstatus`: fully qualified, Diploma, Certificate, part-qualified, studying,
-none) **and** as "which one, and what is left" — a Diploma with M93
-outstanding is a different candidate from a Diploma finished, and only the
-second question separates them.
-
-**The spark is the tools, named.** An underwriter stuck re-keying will not be
-moved by adjectives. So the page names what is actually running: the renewal
-desk reading every term since inception with its claims and payment history,
-Guardian General's own notice read on the device and checked figure by figure
-against Salesforce, Guardian's own PDFs filled exactly (the private motor
-proposal, Know Your Policy, the Motor Quotation Request, the company CDD
-checklist, EB0010, GIO001), the claim matched to the term the loss fell in,
-group health arriving with its claims experience and loss ratio by plan year,
-and the duplicate-term merge that only ever merges on a real identity.
-
-**The growth is the part most underwriters never get, and it is a section of
-its own.** Because the branch writes its own software, an underwriting rule is
-not a ticket in a queue at head office: it is a decision, written into the desk,
-running that week. The page offers the five an underwriter actually wants — own
-referral rules, an underinsurance flag that fires on the trend, a rating sanity
-check, an appetite list the agents can see, and the evidence that the judgement
-was right. It also states the division of labour plainly: **you are not expected
-to write code and nobody will ask you to.**
-
-### The file is the interview, and it is on the page
-
-The administrator's page asks the candidate to find the faults in a broken form.
-The underwriter's asks the thing an underwriter actually does: **here is a
-renewal file, what would you act on before you quote it?** Nine findings, every
-one of them something `girInsights_` genuinely computes — sums unchanged since
-2019, the notice and the record disagreeing by forty per cent, two claims in
-the term with one open, the premium within two per cent all the same, a bank on
-the policy, forty-seven days late last year, declarations outstanding, an item
-with no end date, and the same term on file twice.
-
-- **The order is the answer.** Which ones, and in what order, is what separates
-  an underwriter from an administrator: a strong one opens on the values, the
-  disagreement and the claims; a weak one starts with the missing end date.
-- **The page never prints a score and never says which ones matter.** Same rule
-  as the broken form: printing the answers turns a judgement into a quiz.
-  `uwtest.js` fails the build if a verdict ever appears on the page.
-- Then two more: *what would you ask the client for before you quote it*, and
-  *what would you do about the premium* (hold / load / refer / decline / not
-  until I have more).
-- The Branch Manager receives the order, the ask, the premium decision **and
-  what they walked past**, which is as telling as what they ticked.
-- The ticks survive a reload, travel with the application, and with JavaScript
-  off the file is hidden rather than broken — question four asks the same thing
-  in words.
-
-### The film — `uwadmin`, 87 seconds, cut 7 November 2026
-
-Built on the same engine as the administrator's ninth cut, which is the look he
-accepted: `tools/film/build-boardfilm.py uwadmin`, from
-`tools/film/uwadmin-lines.json`. Everything is drawn — no photographs, no
-faces, no stock — because that is what he asked for in those words after the
-eighth cut (`tools/film/CANVA-AND-THE-EIGHT-CUTS.md` has the whole history, and
-should be read before anything is re-cut).
-
-**The twelve administrator scenes are now data-driven, and the underwriter's
-ten are the same functions with different content.** A scene reads its cards,
-rails, rows and code from the lines file and falls back to the administrator's
-values, so there is one set of visuals to maintain rather than two drifting
-sets. The refactor is proved by rebuilding `bwadmin`: it comes back **byte for
-byte identical** to the committed film, which is the only test that means
-anything here.
-
-The ten scenes: the seat (priced in ten minutes, typed all day) · where you are
-now (the proposal form retyped, a referral on day three, the broker's e-mail as
-the only history) · the agency opening in Chaguanas · the book (motor, property,
-liability, engineering, marine, bonds) · every term since the policy began ·
-the insurer's notice read and checked against our record, with the one row that
-disagrees in amber · a rule is not a ticket (`rule('unoccupied', …)` typed into
-the desk, badge **Running**) · three rules you would write in your first month ·
-the paperwork is finished, the underwriting is not · the close with the QR.
-
-**Two things learned cutting it**, both now in the builder:
-
-- **`"ticks": false` on the rule scene.** The administrator's version ticks the
-  manual rows off once the rule is written, because there the rule *automates*
-  them. Here the left column is a queue the rule *replaces*, and a green tick
-  beside "wait for the release" reads as the wait being fine.
-- **The flag on a card lands after that card's own art, not on a fixed
-  offset.** Flattening the three offsets to one number while making the scene
-  data-driven moved the administrator's flags by up to 200ms — invisible on
-  screen, but it meant the committed `film.html` no longer reproduced the
-  committed MP4. A film's source has to rebuild to the film that shipped.
+- **The file exercise survived the reframe untouched**, which is the test of
+  whether it was ever an underwriter's question. It is not: *here is a renewal
+  file, what would you act on before you quote it* is what a client manager
+  does every day, and the nine findings are still ones `girInsights_` genuinely
+  computes. The order is the answer; the page never prints a score and never
+  says which ones matter, and `cmtest.js` fails the build if a verdict ever
+  appears.
+- **The twelve administrator scenes became data-driven** so the second and
+  third films reuse them rather than forking; proved by rebuilding `bwadmin`
+  byte for byte. The flag offsets and `"ticks": false` are recorded in
+  `tools/film/CANVA-AND-THE-EIGHT-CUTS.md`.
+- **The sticky bar ate every anchor.** `--bar` is 4rem and the topbar is
+  sticky, so `#file`, `#apply` and every other anchored heading parked
+  underneath it when tapped. None of the three recruiting pages had
+  `scroll-margin-top`; all three do now. Same fault as the claims page, and
+  invisible until somebody taps a link.
 
 ### Two things only Mr Rampersad can settle
 
 - **Study support.** If the branch will fund CII papers, that is the single
-  strongest line that could go on this page for a part-qualified underwriter,
-  and it is not on it, because nothing in the record says it is true.
+  strongest line that could go on this page for a part-qualified candidate,
+  and it is not on it, because nothing in the record says it is true. It
+  matters more now than it did, because the bar is both kinds of experience
+  *and* papers.
 - **The music licence.** The bed is his own recording, from a free site he has
   not yet named. Until it is written down the track is not committed — the
   repository root is published, so committing it redistributes it.
-
-### The sticky bar ate every anchor
-
-`--bar` is 4rem and the topbar is sticky, so `#file`, `#apply` and every other
-anchored heading parked underneath it when tapped. None of the three recruiting
-pages had `scroll-margin-top`; all three do now. It is the same fault recorded
-for the claims page, and it is invisible until somebody taps a link.

@@ -23,7 +23,7 @@ const br = await chromium.launch({ args: ['--no-sandbox'] });
 for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, height: 844, n: 'phone' }]) {
   const pg = await br.newPage({ viewport: vp });
   const errs = []; pg.on('pageerror', e => errs.push(String(e)));
-  await pg.goto(`http://localhost:${port}/underwriter/`, { waitUntil: 'domcontentloaded' });
+  await pg.goto(`http://localhost:${port}/clientmanager/`, { waitUntil: 'domcontentloaded' });
   await pg.waitForSelector('#fileg:not([hidden])', { timeout: 10000 });
   ok(errs.length === 0, vp.n + ' no page errors: ' + errs[0]);
 
@@ -84,7 +84,7 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
     body = JSON.parse(r.request().postData() || '{}');
     await r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, ref: 'QU-261107-001' }) });
   });
-  await pg.goto(`http://localhost:${port}/underwriter/`, { waitUntil: 'domcontentloaded' });
+  await pg.goto(`http://localhost:${port}/clientmanager/`, { waitUntil: 'domcontentloaded' });
   await pg.waitForSelector('#fileg:not([hidden])');
   const fs2 = await pg.$$('#file .fnd');
   await fs2[0].click(); await fs2[1].click();
@@ -134,7 +134,7 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
 {
   const ctx = await br.newContext({ javaScriptEnabled: false, viewport: { width: 1366, height: 900 } });
   const pg = await ctx.newPage();
-  await pg.goto(`http://localhost:${port}/underwriter/`, { waitUntil: 'domcontentloaded' });
+  await pg.goto(`http://localhost:${port}/clientmanager/`, { waitUntil: 'domcontentloaded' });
   ok(await pg.$eval('#fileg', e => e.hasAttribute('hidden')), 'no JS: the file is hidden, not broken');
   ok(await pg.$eval('#file noscript', e => /question four/.test(e.textContent)), 'no JS: it says where the same question lives');
   ok(await pg.$('#uf'), 'no JS: the application is still there');

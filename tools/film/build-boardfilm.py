@@ -52,15 +52,15 @@ SRC = ROOT / 'donthaveanagent' / 'client-film.html'
 KEY = sys.argv[1] if len(sys.argv) > 1 else 'boardmgr'
 PAGES = {'boardmgr': 'board-management.html', 'boardstaff': 'board-client-support.html', 'boardagent': 'board-agents.html',
          'boardflow': 'board-workflow.html', 'lbagent': 'film-agents.html', 'lbstaff': 'film-staff.html', 'dbstaff': 'film.html',
-         'bwadmin': 'film.html', 'uwadmin': 'film.html'}
+         'bwadmin': 'film.html', 'uwadmin': 'film.html', 'cmadmin': 'film.html'}
 TITLES = {'boardmgr': 'The board, for management', 'boardstaff': 'The board, for Client Support', 'boardagent': 'The board, for agents',
           'boardflow': 'The client transition, start to finish',
           'lbagent': 'The Log Book, for agents', 'lbstaff': 'The Log Book, for staff', 'dbstaff': 'The Delivery Book, for staff',
-          'bwadmin': 'Build with us', 'uwadmin': 'The underwriting seat'}
+          'bwadmin': 'Build with us', 'uwadmin': 'The underwriting seat', 'cmadmin': 'Client Manager, General Insurance'}
 LB = KEY.startswith('lb') or KEY.startswith('db')   # the Log Book films (17 October 2026) and the Delivery Book's (20 October): same look and machinery
 DBF = KEY.startswith('db')
-BW = KEY.startswith('bw') or KEY.startswith('uw')                           # the administrator's film (7 November 2026): same look, the branch's own systems
-OUT = (ROOT / ('underwriter' if KEY.startswith('uw') else 'buildwithus') if BW else
+BW = KEY.startswith('bw') or KEY.startswith('uw') or KEY.startswith('cm')                           # the administrator's film (7 November 2026): same look, the branch's own systems
+OUT = (ROOT / ('clientmanager' if KEY.startswith('cm') else 'underwriter' if KEY.startswith('uw') else 'buildwithus') if BW else
        ROOT / 'rroperations' / ('delivery-book' if DBF else 'logbook') if LB else ROOT / 'orphan-transition') / PAGES[KEY]
 TM = json.load(open(HERE / f'{KEY}-timing.json'))
 SCRIPT = json.load(open(HERE / f'{KEY}-lines.json'))
@@ -2694,7 +2694,7 @@ last = out.rindex('</style>')
 out = out[:last] + CSS.replace('__PLEX__', PLEX).replace('__LOGO__', LOGO) + (LB_CSS if LB else '') + (DB_CSS if DBF else '') + (BW_CSS if BW else '') + '\n' + out[last:]
 out = re.sub(r'<title>.*?</title>', '<title>' + TITLES[KEY] + ' — Ricky Rampersad Branch</title>', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="mark" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="mark mk"></i>', out, count=1, flags=re.S)
-out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>' + ('The underwriting seat' if KEY.startswith('uw') else 'Build with us' if BW else 'Delivery Book' if DBF else 'Log Book' if LB else 'Client transition board') + '</i></span>', out, count=1, flags=re.S)
+out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>' + ('General insurance' if KEY.startswith('cm') else 'The underwriting seat' if KEY.startswith('uw') else 'Build with us' if BW else 'Delivery Book' if DBF else 'Log Book' if LB else 'Client transition board') + '</i></span>', out, count=1, flags=re.S)
 out = re.sub(r'<span class="live">.*?</span>', '', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="biglogo" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="biglogo mk"></i>', out, count=1, flags=re.S)
 FAVICON = 'data:image/svg+xml,' + (ROOT / 'favicon.svg').read_text().replace('#', '%23').replace('<', '%3C').replace('>', '%3E').replace('"', "'").replace('\n', '')
@@ -2703,9 +2703,9 @@ out = re.sub(r'const cols = \[[^\]]*\]', 'const cols = ["#ffffff", "#00E5FF", "#
 out = re.sub(r'<h1>The launch of<br>donthaveanagent<em>\.com</em></h1>', '<h1>' + TITLES[KEY].replace(', ', ',<br><em>') + '</em></h1>', out, count=1)
 out = re.sub(r'<div class="eyebrow" style="margin-top:16px">[^<]*</div>', '<div class="eyebrow" style="margin-top:16px">A Ricky Rampersad Branch film</div>', out, count=1)
 out = re.sub(r'<button id="playBtn"><span class="tri"></span>[^<]*</button>', '<button id="playBtn"><span class="tri"></span>Watch — ' + ('under two minutes' if sum(DUR) < 120000 else 'two and a half minutes' if sum(DUR) < 160000 else f'{round(sum(DUR) / 60000)} minutes') + '</button>', out, count=1)
-out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', ('What you would actually be underwriting, and what you would build.' if KEY.startswith('uw') else 'What you would actually work on, and what you would build.' if BW else 'Handed over, recorded, and the client told: the same day.' if DBF else 'Log it, hand it in, see it sent: the same day.' if LB else 'One client, start to finish: what happens, who does it, and what counts.' if KEY == 'boardflow' else 'How the branch names agents, and how agents report back.'), out, count=1)
-MSG = ('const MSG = "' + TITLES[KEY] + ': ' + ('one underwriting seat in a new general insurance agency.' if KEY.startswith('uw') else 'one administrator\'s seat, and what the job actually is.' if BW else 'a short film on recording cheques and contracts.' if DBF else 'a short film on the new Log Book.' if LB else 'a short film on the client transition board.') + '\\n\\n" +\n'
-       '  "▶ https://rickyrampersadbranch.com/' + ('underwriter' if KEY.startswith('uw') else 'buildwithus' if BW else 'deliverybook-film' if DBF else 'logbook-films' if LB else 'orphan-transition/board-films.html') + '";')
+out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', ('The book you would look after, and what you would change.' if KEY.startswith('cm') else 'What you would actually be underwriting, and what you would build.' if KEY.startswith('uw') else 'What you would actually work on, and what you would build.' if BW else 'Handed over, recorded, and the client told: the same day.' if DBF else 'Log it, hand it in, see it sent: the same day.' if LB else 'One client, start to finish: what happens, who does it, and what counts.' if KEY == 'boardflow' else 'How the branch names agents, and how agents report back.'), out, count=1)
+MSG = ('const MSG = "' + TITLES[KEY] + ': ' + ('one seat, and a book of a hundred and three clients already on it.' if KEY.startswith('cm') else 'one underwriting seat in a new general insurance agency.' if KEY.startswith('uw') else 'one administrator\'s seat, and what the job actually is.' if BW else 'a short film on recording cheques and contracts.' if DBF else 'a short film on the new Log Book.' if LB else 'a short film on the client transition board.') + '\\n\\n" +\n'
+       '  "▶ https://rickyrampersadbranch.com/' + ('clientmanager' if KEY.startswith('cm') else 'underwriter' if KEY.startswith('uw') else 'buildwithus' if BW else 'deliverybook-film' if DBF else 'logbook-films' if LB else 'orphan-transition/board-films.html') + '";')
 out = re.sub(r'const MSG = ".*?";', lambda m: MSG, out, count=1, flags=re.S)
 out = out.replace('document.getElementById("waBtn").href =', 'if (document.getElementById("waBtn")) document.getElementById("waBtn").href =')
 # the narration and the bed are in the MP4; the page itself plays no music of its own

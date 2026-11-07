@@ -1385,5 +1385,41 @@
   "start": 0,
   "ticks": [],
   "hits": []
+ },
+ "cmadmin": {
+  "cap": "cap-cmadmin",
+  "vox": "vocmadmin",
+  "music": "bed-cmadmin.wav",
+  "mix": "uwadmin-mix.wav",
+  "ass": "captions-uwadmin.ass",
+  "dur": 110.7,
+  "durs": [
+   9.4,
+   10.2,
+   6.0,
+   11.2,
+   11.5,
+   9.4,
+   14.3,
+   13.0,
+   11.9,
+   5.7,
+   8.1
+  ],
+  "out": "film-w.mp4",
+  "musicgain": 0.46,
+  "duck": 0.3,
+  "dark": [
+   2,
+   9,
+   10
+  ],
+  "sfx": "sfx-cmadmin.wav",
+  "start": 0,
+  "ticks": [],
+  "hits": [
+   29.21,
+   31.13
+  ]
  }
 }
