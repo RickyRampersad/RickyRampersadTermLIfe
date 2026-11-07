@@ -51,13 +51,17 @@ ROOT = HERE.parent.parent
 SRC = ROOT / 'donthaveanagent' / 'client-film.html'
 KEY = sys.argv[1] if len(sys.argv) > 1 else 'boardmgr'
 PAGES = {'boardmgr': 'board-management.html', 'boardstaff': 'board-client-support.html', 'boardagent': 'board-agents.html',
-         'boardflow': 'board-workflow.html', 'lbagent': 'film-agents.html', 'lbstaff': 'film-staff.html', 'dbstaff': 'film.html'}
+         'boardflow': 'board-workflow.html', 'lbagent': 'film-agents.html', 'lbstaff': 'film-staff.html', 'dbstaff': 'film.html',
+         'bwadmin': 'film.html'}
 TITLES = {'boardmgr': 'The board, for management', 'boardstaff': 'The board, for Client Support', 'boardagent': 'The board, for agents',
           'boardflow': 'The client transition, start to finish',
-          'lbagent': 'The Log Book, for agents', 'lbstaff': 'The Log Book, for staff', 'dbstaff': 'The Delivery Book, for staff'}
+          'lbagent': 'The Log Book, for agents', 'lbstaff': 'The Log Book, for staff', 'dbstaff': 'The Delivery Book, for staff',
+          'bwadmin': 'Build with us'}
 LB = KEY.startswith('lb') or KEY.startswith('db')   # the Log Book films (17 October 2026) and the Delivery Book's (20 October): same look and machinery
 DBF = KEY.startswith('db')
-OUT = (ROOT / 'rroperations' / ('delivery-book' if DBF else 'logbook') if LB else ROOT / 'orphan-transition') / PAGES[KEY]
+BW = KEY.startswith('bw')                           # the administrator's film (7 November 2026): same look, the branch's own systems
+OUT = (ROOT / 'buildwithus' if BW else
+       ROOT / 'rroperations' / ('delivery-book' if DBF else 'logbook') if LB else ROOT / 'orphan-transition') / PAGES[KEY]
 TM = json.load(open(HERE / f'{KEY}-timing.json'))
 SCRIPT = json.load(open(HERE / f'{KEY}-lines.json'))
 LINES, ROLE = SCRIPT['scenes'], SCRIPT['role']
@@ -421,13 +425,13 @@ def keeps(rows, ts, ics, off=None):
 
 def s_named(i, sc, D):
     ts = rows_at(i, sc, ['brief', 'list', 'Salesforce'])
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc.get("headline", "What happens <em>next</em>"), 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc.get("headline", "What happens <em>next</em>"), 350, "c")}'
             f'{keeps(sc["rows"], ts, ["mail", "list", "sync"])}</div>')
 
 def s_counts(i, sc, D):
     ts = rows_at(i, sc, ['log', 'comment', 'Campaign', 'Chatter'])
     ics = ['x' if r.get('off') else 'check' for r in sc['rows']]
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc.get("headline", "Three ways it <em>counts</em>"), 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc.get("headline", "Three ways it <em>counts</em>"), 350, "c")}'
             f'{keeps(sc["rows"], ts, ics, off=True)}</div>')
 
 def s_list(i, sc, D):
@@ -511,7 +515,7 @@ def s_close(i, sc, D):
     three = sc['words3']
     ws = [(w(i, x.split()[0]), x, k == 2) for k, x in enumerate(three)]
     ln = ''.join(at(t, 'at up cl' + (' last' if g else ''), inner=x) for (t, x, g) in ws)
-    return (f'<div class="center" id="finale"><div class="lockup sm"><i class="halo"></i><i class="halo h2"></i>{mark("big")}</div>'
+    return (f'<div class="center" id="finale">'
             f'{at(150, "at up ebw", inner=sc["eyebrow"])}<div class="cls">{ln}</div>'
             f'{at(ws[-1][0] + 600, "at up furl", inner=ico("arrow", "ii") + " " + sc["url"])}</div>')
 
@@ -675,7 +679,7 @@ def s_clock(i, sc, D):
     days = [('Named', 'user', tD), ('Day 1', '', tD + 150), ('Called', 'phone', tCv), ('Day 3', '', tCv + 150), ('Day 4', '', tCv + 300), ('Day 5', '', tCv + 450), ('Met', 'cal', tM)]
     track = '<div class="dtrk"><i class="dln" style="--at:' + ms(tD) + ';--to:' + ms(tM + 300) + '"></i>' + ''.join(
         at(t, 'at pop dnode' + (' hit' if ic else ''), inner=(ico(ic) if ic else '') + f'<span>{lab}</span>') for (lab, ic, t) in days) + '</div>'
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'<div class="clockrow">{ring}<div class="sts">{stats}</div></div>{track}'
             f'{at(tF, "at up aim", inner=ico("target", "ii") + " The aim: a conversation in the first two days, a meeting soon after.")}</div>')
 
@@ -759,7 +763,7 @@ def s_claim(i, sc, D):
         if k: row += f'<div class="arw" style="--at:{ms(t - 450)}"><i class="ln"></i><i class="pkt"></i><i class="pkt q2"></i></div>'
         row += at(t, f'at pop cms {c}', inner=f'<span class="kic{" spin" if ic == "clock" else ""}">{ico(ic)}</span><b>{b}</b><small>{s}</small>')
     fld = at(tD - 150, 'at up cmd', inner=f'<small>Date Comm Paid</small><span class="fld">{typed(tD, "4 Nov 2026", 70)}</span>')
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'{at(tM - 200, "at pop cma", inner=cnt(tM, 200, "", "TT$") + "<span>to the agent, for a review after the naming</span>")}'
             f'<div class="cmr">{row}</div>{fld}</div>')
 
@@ -768,7 +772,7 @@ def s_outcomes(i, sc, D):
     its = sc['items']; ts = [w(i, x['at']) for x in its]
     cards = ''.join(at(t, 'at pop occ' + (' key' if k == len(its) - 1 else ''), inner=f'<span class="ocn">{k + 1}</span><div><b>{x["b"]}</b><small>{x["i"]}</small></div>')
                     for k, (t, x) in enumerate(zip(ts, its)))
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'<div class="ocg">{cards}</div></div>')
 
 def s_test(i, sc, D):
@@ -1075,7 +1079,7 @@ def s_lbbag(i, sc, D):
              + docs + late +
              f'<div class="bnx at up" style="left:{HX(15, 0, W):.0f}px;--at:{ms(tNx - 300)}">{ico("bag")}<span>Next working day&rsquo;s bag</span></div>'
              + ''.join(f'<small class="bhr" style="left:{HX(h, 0, W):.0f}px">{h if h <= 12 else h - 12}{"am" if h < 12 else "pm"}</small>' for h in (7, 9, 11, 12, 13, 15, 17)) + '</div>')
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'<div class="bagrow">{clock}{track}</div>'
             f'<div class="bchips">{at(tTw, "at up bchip ok", inner=ico("check", "ii") + " In the branch&rsquo;s hands by 12 noon: today")}'
             f'{at(tAf, "at up bchip am", inner=ico("clock", "ii") + " After 12: the next working day")}</div></div>')
@@ -1095,7 +1099,7 @@ def s_lbhistory(i, sc, D):
     stat = (f'<div class="hstat at pop" style="--at:{ms(tF - 200)}"><b>{cnt(tF, 57)}<sup>%</sup></b><span>came in after 12 noon</span>'
             f'{at(tW, "at up hchip", inner=ico("clock", "ii") + " and waited a day")}'
             f'{at(tMo, "at up hchip cy", inner=ico("bolt", "ii") + " 12 to 1: the morning&rsquo;s rush, just too late")}</div>')
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'<div class="hrow">{stat}{chart}</div></div>')
 
 def s_lbnudge(i, sc, D):
@@ -1135,7 +1139,7 @@ def s_lbbagday(i, sc, D):
     steps = [(400, 'file', 'Papers come in', 'until 12 noon'), (tCh, 'list', 'Checked', 'on their transmittals'), (tOne, 'bag', 'The bag comes in', '1 pm'),
              (tCl, 'users', 'Cleared', 'the mail given out'), (tBk, 'arrow', 'Back down', 'with the day&rsquo;s transmittals')]
     st = '<div class="bdst">' + ''.join(at(t, 'at up bdsi' + (' key' if k == 4 else ''), inner=f'<span>{ico(ic)}</span><b>{b}</b><i>{x_}</i>') for k, (t, ic, b, x_) in enumerate(steps)) + '</div>'
-    return f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}{tl}{st}</div>'
+    return f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}{tl}{st}</div>'
 
 def s_lbrota(i, sc, D):
     tWk, tS, tA, tL, tSt = w(i, 'week', 1), w(i, 'Sasha'), w(i, 'Azariah'), w(i, 'Liz'), w(i, 'still')
@@ -1153,7 +1157,7 @@ def s_lbrota(i, sc, D):
     day = (f'<div class="rday at up" style="--at:{ms(tSt)}"><div class="rdt"><i class="rdw"></i><i class="bmk bagm" style="left:{HX(13, 0, 640):.0f}px"><span>Bag done by 1 pm</span></i>'
            + ''.join(f'<i class="bmk home at pop" style="left:{HX(h, 0, 640):.0f}px;--at:{ms(tHome[k])}"><span>{h - 12} pm</span></i>' for k, (h, nm) in enumerate(((14, 'Sasha'), (15, 'Liz'), (16, 'Azariah'))))
            + f'</div><span class="rdl">{ico("home", "ii")} Sasha leaves at 2, Liz at 3, Azariah at 4</span></div>')
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}{style}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}{style}'
             f'<div class="rrow">{bag}{cards}</div>{day}<p class="rnote at" style="--at:{ms(tSt + 400)}">Azariah, Liz, Sasha, then round again. Kamla does not do transmittals.</p></div>')
 
 def s_lbprep(i, sc, D):
@@ -1590,12 +1594,408 @@ LB_CSS = r"""
 .bf .lbds.red{border-color:var(--red)} .bf .lbds.amb{border-color:#B54708} .bf .lbds.gry{border-color:#94A3B8}
 """
 
+# ── "Build with us": the administrator's film (7 November 2026) ─────────
+# Asked for in these words, after eight cuts had missed: "i asked for motion
+# and a qualification as to what the person will do as to what you all work
+# on and a person who is somewhere with no tools", then "i want you graphics,
+# motion and cards" and "i dont want read persons icone and etc".
+#
+# So: the branch's own systems, named, drawn as cards that move — the
+# qualification is the middle of the film, not a line at the end — opening on
+# the person who has the problem and none of the tools. Nothing photographic,
+# no faces, no avatars. Every name on a card is a real file or a real system
+# of this branch; every figure on screen is one this repository can stand up.
+
+BWFILES = ['Intelligence.gs', 'Transition.gs', 'GroupClients.gs', 'LogBook.gs', 'Claims.gs', 'GroupBilling.gs',
+           'PremiumDueDesk.gs', 'GIRenewals.gs', 'MotorQuote.gs', 'DeliveryBook.gs', 'Quotes.gs', 'KPI.gs']
+BWQR = base64.b64encode((HERE / 'qr-bwadmin.png').read_bytes()).decode()
+
+
+def s_bwopen(i, sc, D):
+    """A field of jobs nobody has fixed; one of them lifts, and you are the one who can see it."""
+    tA, tF = w(i, 'administrator'), w(i, 'fixed')
+    grid = ''.join(f'<i class="bwag" style="left:{2 + (k % 6) * 16.4}%;top:{2 + (k // 6) * 34}%;'
+                   f'--at:{ms(120 + k * 48)};--dl:{(k * 1.9) % 6:.1f}s"></i>' for k in range(18))
+    one = at(tA, 'at pop bwaone', inner=f'<span class="bwak">{ico("file")}</span>'
+             f'<div><b>Still done by hand</b><small>every week, by somebody</small></div>')
+    ring = f'<i class="bwaring" style="--at:{ms(tF - 300)}"></i>'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwafield">{grid}{one}{ring}</div></div>')
+
+
+def s_bwnotools(i, sc, D):
+    """What you have been given to fix it with: a spreadsheet, a group chat and a locked door."""
+    tS, tW, tP = w(i, 'spreadsheet'), w(i, 'WhatsApp'), w(i, 'permission')
+    rows = ''.join(f'<i class="bwsr" style="--at:{ms(tS + 150 + k * 60)};width:{[88,64,80,52,76,60,84][k]}%"></i>' for k in range(7))
+    sheet = at(tS - 200, 'at pop bwcard', inner=(
+        f'<div class="bwch"><span class="bwci">{ico("list")}</span><b>tracker final v7</b></div>'
+        f'<div class="bwsg">{rows}<i class="bwdup" style="--at:{ms(tS + 700)};top:32%"></i>'
+        f'<i class="bwdup" style="--at:{ms(tS + 900)};top:62%"></i></div>'
+        f'<span class="bwflag" style="--at:{ms(tS + 1020)}">typed twice</span>'))
+    bubs = ''.join(f'<i class="bwb" style="--at:{ms(tW + 180 + k * 185)};width:{[72,54,86,62][k]}%;'
+                   f'align-self:{"flex-end" if k % 2 else "flex-start"}"></i>' for k in range(4))
+    chat = at(tW - 200, 'at pop bwcard', inner=(
+        f'<div class="bwch"><span class="bwci">{ico("msg")}</span><b>the branch group</b></div>'
+        f'<div class="bwbs">{bubs}</div>'
+        f'<span class="bwflag" style="--at:{ms(tW + 940)}">the process lives here</span>'))
+    lock = at(tP - 200, 'at pop bwcard', inner=(
+        f'<div class="bwch"><span class="bwci">{ico("lock")}</span><b>request access</b></div>'
+        f'<div class="bwlk"><i class="bwpad" style="--at:{ms(tP + 240)}">{ico("lock")}</i><span>Pending</span></div>'
+        f'<span class="bwflag red" style="--at:{ms(tP + 760)}">no permission</span>'))
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwrow3">{sheet}{chat}{lock}</div></div>')
+
+
+def s_bwturn(i, sc, D):
+    """The turn: a branch that stopped waiting."""
+    tC, tW = w(i, 'Chaguanas'), w(i, 'waiting')
+    return (f'<div class="center"><div class="lockup"><i class="halo"></i><i class="halo h2"></i>{mark("big")}</div>'
+            f'{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], tC, "c")}'
+            f'{at(tW + 300, "at up bwasub", inner="An insurance branch that writes its own software.")}</div>')
+
+
+def s_bwstack(i, sc, D):
+    """Thirty-six files and a hundred thousand lines, by their real names."""
+    tS, tN, tL, tD = w(i, 'software'), w(i, 'six'), w(i, 'thousand'), w(i, 'developer')
+    files = ''.join(f'<i class="bwf" style="--at:{ms(tS + 150 + k * 95)};--i:{k}">{x}</i>'
+                    for k, x in enumerate(BWFILES))
+    nums = (at(tN - 150, 'at pop bwnum', inner=cnt(tN, 36, '') + '<span>files, in production</span>')
+            + at(tL - 150, 'at pop bwnum key', inner=cnt(tL, 100, 'k') + '<span>lines of Apps Script</span>'))
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwstk">{files}</div><div class="bwnums">{nums}</div>'
+            f'{at(tD - 200, "at up bwaline", inner="Nobody here was hired as a developer.")}</div>')
+
+
+BWSYS = [('bag', 'The Log Book', 'every document in and out, signed for'),
+         ('file', 'The Delivery Book', 'contracts delivered, the client rates it'),
+         ('clock', 'The Premium Due Desk', '45, 60, 75, 90 days before it lapses'),
+         ('chart', 'Group billing', 'an insurer&rsquo;s invoice, checked line by line'),
+         ('flag', 'The claims intake', 'five lines of business, forms filled for you'),
+         ('target', 'The client board', 'who looks after whom, and what was said')]
+
+
+def s_bwgrid(i, sc, D):
+    """Six systems, landing in turn: the qualification itself."""
+    tW = w(i, 'work')
+    cards = ''.join(at(tW - 400 + k * 230, 'at pop bwsys', inner=(
+        f'<span class="bwsi">{ico(ic)}</span><b>{n}</b><small>{s}</small>')) for k, (ic, n, s) in enumerate(BWSYS))
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwgrid">{cards}</div></div>')
+
+
+def s_bwlog(i, sc, D):
+    """The Log Book on a phone: the document, the department, the signature, sent."""
+    tD, tLg, tR, tS, tP = w(i, 'document'), w(i, 'logged'), w(i, 'routed'), w(i, 'signed'), w(i, 'phone')
+    steps = [(tD, 'file', 'Policy contract', 'chosen, never typed'),
+             (tLg, 'list', 'Logged 10:14', 'the agent, the client, the policy'),
+             (tR, 'swap', 'Records Management', 'routed from what it is'),
+             (tS, 'check', 'Signed for', 'by the staff member who took it')]
+    body = ''.join(at(t, 'at l bwst', inner=f'<span class="bwsk">{ico(ic)}</span><div><b>{b}</b><small>{s}</small></div>')
+                   for (t, ic, b, s) in steps)
+    body += at(tP, 'at pop bwsent', inner=f'{ico("mail", "ii")} Sent on today&rsquo;s bag &middot; 12:00')
+    extra = cursor([(tD - 500, 240, 300), (tD, '.bwst'), (tS, '.bwst:nth-of-type(4)')], kind='touch') + click(tS, '.bwst:nth-of-type(4)')
+    cues = [(tD, '3,634 documents a year', False), (tR, '25 departments, one list', False), (tP, 'On to Guardian the same day', True)]
+    return stage(side(i, sc, cues), phone(i, body, title='Log Book', who='staff', extra=extra))
+
+
+def s_bwdues(i, sc, D):
+    """45, 60, 75, 90: a letter before the policy lapses, and a person ticks every one."""
+    tL, tLe, tC = w(i, 'lapses'), w(i, 'letter'), w(i, 'checks')
+    stops = ''
+    for k, d in enumerate((45, 60, 75, 90)):
+        t = tLe - 500 + k * 260
+        stops += (f'<div class="bwstop" style="--at:{ms(t)}"><i class="bwdot"></i><b>{d}</b><small>days</small>'
+                  f'<i class="bwenv" style="--at:{ms(t + 220)}">{ico("mail")}</i></div>')
+    rail = f'<i class="bwrail" style="--at:{ms(tL - 200)}"></i>'
+    lapse = at(tL, 'at pop bwlapse', inner=f'{ico("x", "ii")} the policy lapses')
+    ticks = ''.join(f'<i class="bwtick" style="--at:{ms(tC + k * 150)}">{ico("check")}</i>' for k in range(4))
+    check = at(tC - 250, 'at up bwcheck', inner=f'<b>A person ticks every one</b>{ticks}<small>nothing goes out unchecked</small>')
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwtl">{rail}{stops}{lapse}</div>{check}</div>')
+
+
+def s_bwbill(i, sc, D):
+    """Their invoice against our records, line by line, before anybody pays."""
+    tI, tLn, tR, tP = w(i, 'invoice'), w(i, 'line'), w(i, 'records'), w(i, 'pays')
+    rows = [('Group health', True), ('Group life', True), ('Pension list bill', True), ('Adjustments', False), ('Arrears', True)]
+    left = ''.join(at(tI + 150 + k * 110, 'at l bwbr', inner=f'<span>{n}</span><i class="bwbv"></i>') for k, (n, _) in enumerate(rows))
+    right = ''.join(at(tR + 100 + k * 110, 'at l bwbr', inner=f'<span>{n}</span><i class="bwbv"></i>') for k, (n, _) in enumerate(rows))
+    links = ''.join(f'<i class="bwlink{"" if ok else " bad"}" style="--at:{ms(tLn + 120 + k * 150)};top:{14 + k * 19.6}%"></i>'
+                    for k, (_, ok) in enumerate(rows))
+    out = at(tP - 300, 'at pop bwpay', inner=f'{ico("check", "ii")} Reconciled, then sent')
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwbill"><div class="bwbc">{at(tI - 150, "at up bwbh", inner="Their invoice")}{left}</div>'
+            f'<div class="bwbm">{links}</div>'
+            f'<div class="bwbc">{at(tR - 150, "at up bwbh", inner="Our own records")}{right}</div></div>{out}</div>')
+
+
+def s_bwhalf(i, sc, D):
+    """The shape of the job: the admin, and making the admin smaller."""
+    tH, tO, tS = w(i, 'Half'), w(i, 'other'), w(i, 'smaller')
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwsplit" style="--at:{ms(tH - 200)};--sh:{ms(tS)}">'
+            f'<i class="bwhl"><b>The branch&rsquo;s admin</b><small>it has to be right</small></i>'
+            f'<i class="bwhr" style="--at:{ms(tO - 150)}"><b>Making it unnecessary</b><small>a form, a script, a page</small></i>'
+            f'</div>{at(tS + 300, "at up bwaline", inner="The first half gets smaller every month you are here.")}</div>')
+
+
+def s_bwscript(i, sc, D):
+    """By hand today, a script tomorrow — the editor, and the rows that then tick themselves."""
+    tH, tS = w(i, 'hand'), w(i, 'script')
+    by = ''.join(at(tH + 120 + k * 150, 'at l bwby', inner=f'<span>{x}</span><i class="bwclk">{ico("clock")}</i>')
+                 for k, x in enumerate(('Open the sheet', 'Copy the row', 'Type it again')))
+    code = ['function fileIt_(row) {', '  const t = tab_(\'Log Book\');', '  t.appendRow([now_(), row.doc,', '    dept_(row), who_()]);', '}']
+    ed = ''.join(f'<i class="bwcl" style="--at:{ms(tS + 150 + k * 260)}">{typed(tS + 150 + k * 260, H.escape(x), 26, "tyy bwtx")}</i>'
+                 for k, x in enumerate(code))
+    done = ''.join(f'<i class="bwdn" style="--at:{ms(tS + 1750 + k * 160)}">{ico("check")}</i>' for k in range(3))
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwsc"><div class="bwcard2">{at(tH - 200, "at up bwch2", inner="By hand, every week")}{by}'
+            f'<div class="bwdns">{done}</div></div>'
+            f'<div class="bwarr" style="--at:{ms(tS - 300)}"><i class="bwln"></i></div>'
+            f'<div class="bwcard2 ed">{at(tS - 200, "at up bwch2", inner="Apps Script &middot; the branch&rsquo;s own project")}{ed}'
+            f'<span class="bwdeploy" style="--at:{ms(tS + 1550)}">Deployed</span></div></div></div>')
+
+
+BWTOOLS = [('Apps', 'bolt', 'Apps Script', 'the branch&rsquo;s own 100,000 lines'),
+           ('Salesforce', 'sync', 'Salesforce', 'every client, every task'),
+           ('Workspace', 'mail', 'Google Workspace', 'Sheets, Drive, the mailbox'),
+           ('Claude', 'target', 'Claude', 'beside you, on the real work')]
+
+
+def s_bwkeys(i, sc, D):
+    """The tools, already paid for and already connected — and the request form, crossed out."""
+    tK, tR = w(i, 'keys'), w(i, 'request')
+    cards = ''
+    for (word, ic, n, s) in BWTOOLS:
+        t = w(i, word)
+        cards += at(t - 200, 'at pop bwtool', inner=(
+            f'<span class="bwti">{ico(ic)}</span><b>{n}</b><small>{s}</small>'
+            f'<i class="bwok" style="--at:{ms(t + 320)}">{ico("check")} connected</i>'))
+    keys = at(tK - 150, 'at pop bwkey', inner=f'<span class="bwki">{ico("bolt")}</span><b>You get the keys</b>')
+    form = at(tR - 150, 'at pop bwform', inner=f'<span class="bwfi">{ico("file")}</span><b>Request form</b>'
+             f'<i class="bwx" style="--at:{ms(tR + 260)}"></i>')
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwtools">{cards}</div><div class="bwvs">{keys}{form}</div></div>')
+
+
+def s_bwclose(i, sc, D):
+    """The ask. The camera does not move here: a QR under a moving camera does not decode."""
+    tS, tC, tB = w(i, 'seat'), w(i, 'Chaguanas'), w(i, 'build')
+    ln = (at(tS, 'at up cl', inner='One administrator&rsquo;s seat.')
+          + at(tC, 'at up cl', inner='Chaguanas.')
+          + at(tB, 'at up cl last', inner='Build with us.'))
+    # side by side, not stacked: the code needs height to stay scannable and a
+    # 16:9 frame has width to spare. The shield is in the chrome bar already.
+    return (f'<div class="center bwfin" id="finale">'
+            f'<div class="bwfl">{at(150, "at up ebw", inner=sc["eyebrow"])}<div class="cls">{ln}</div></div>'
+            f'<div class="bwend" style="--at:{ms(tS + 250)}"><img class="bwqr" src="data:image/png;base64,{BWQR}" alt="">'
+            f'<div class="bwurl"><b>{sc["url"]}</b><span>Fifteen minutes.<br>He reads every one himself.</span></div></div></div>')
+
+
+R_BW = {'bwopen': s_bwopen, 'bwnotools': s_bwnotools, 'bwturn': s_bwturn, 'bwstack': s_bwstack, 'bwgrid': s_bwgrid,
+        'bwlog': s_bwlog, 'bwdues': s_bwdues, 'bwbill': s_bwbill, 'bwhalf': s_bwhalf, 'bwscript': s_bwscript,
+        'bwkeys': s_bwkeys, 'bwclose': s_bwclose}
+
+BW_CSS = r"""
+/* ══ Build with us · the administrator's film (7 November 2026) ═══════════
+   Cards on the midnight ground, every one landing on the word that names it.
+   Class names all start bw-: the shell and the board sheet both style short
+   names, and a scene that borrows one by accident is the fault that drew a
+   toast as a second phone. */
+.bf .bwc h2{color:#fff}
+.bf .bwafield{position:relative;width:1000px;height:238px;margin-top:22px}
+.bf .bwag{position:absolute;width:13.6%;height:28%;border-radius:12px;background:rgba(255,255,255,.055);
+  border:1px solid rgba(191,211,247,.16);opacity:0}
+.scene.act .bwag{animation:bfIn .5s var(--at) both,bwDrift 7s ease-in-out var(--dl) infinite}
+@keyframes bwDrift{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.bf .bwaone{position:absolute;left:31%;top:34%;width:38%;display:flex;gap:12px;align-items:center;z-index:3;
+  background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 0 1px rgba(0,229,255,.4)}
+.bf .bwaone b{display:block;font:700 17px var(--head);color:var(--ink)}
+.bf .bwaone small{display:block;font:500 12.5px var(--body);color:var(--mute);margin-top:2px}
+.bf .bwak{width:36px;height:36px;border-radius:10px;background:var(--sky);color:var(--blue);display:grid;place-items:center;flex:none}
+.bf .bwak .ico{width:19px;height:19px}
+.bf .bwaring{position:absolute;left:29%;top:30%;width:42%;height:36%;border-radius:18px;z-index:2;
+  border:2px solid var(--cyan);box-shadow:0 0 34px rgba(0,229,255,.55);opacity:0}
+.scene.act .bwaring{animation:bwRing .9s cubic-bezier(.2,.9,.3,1) var(--at) both}
+@keyframes bwRing{0%{opacity:0;transform:scale(1.22)}60%{opacity:1}100%{opacity:1;transform:none}}
+.bf .bwasub{font:500 17px var(--body);color:var(--lav);margin-top:16px;text-align:center}
+.bf .bwaline{font:600 18px var(--head);color:#fff;margin-top:18px;text-align:center;
+  border-top:1px solid rgba(191,211,247,.3);padding-top:14px}
+
+/* where you are now */
+.bf .bwrow3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;width:100%;margin-top:22px}
+.bf .bwcard{background:#fff;border-radius:16px;padding:14px;box-shadow:0 20px 48px rgba(0,0,0,.5);position:relative}
+.bf .bwch{display:flex;gap:9px;align-items:center;margin-bottom:11px}
+.bf .bwch b{font:700 14.5px var(--head);color:var(--ink)}
+.bf .bwci{width:28px;height:28px;border-radius:8px;background:var(--sky);color:var(--blue);display:grid;place-items:center;flex:none}
+.bf .bwci .ico{width:15px;height:15px}
+.bf .bwsg{position:relative;display:flex;flex-direction:column;gap:7px;height:94px;background:#F4F7FB;border-radius:9px;padding:10px}
+.bf .bwsr{height:8px;border-radius:4px;background:#D7E0EC;opacity:0}
+.scene.act .bwsr{animation:bfInL .4s var(--at) both}
+.bf .bwdup{position:absolute;left:8%;width:46%;height:8px;border-radius:4px;background:var(--red);opacity:0}
+.scene.act .bwdup{animation:bwFlash .5s var(--at) both}
+@keyframes bwFlash{0%{opacity:0}30%{opacity:1}100%{opacity:.85}}
+.bf .bwbs{display:flex;flex-direction:column;gap:8px;height:94px;background:#F4F7FB;border-radius:9px;padding:10px}
+.bf .bwb{height:14px;border-radius:7px;background:#CFDDEE;opacity:0}
+.scene.act .bwb{animation:bfPop .4s var(--at) both}
+.bf .bwlk{height:94px;background:#F4F7FB;border-radius:9px;display:grid;place-items:center;gap:6px;align-content:center}
+.bf .bwlk span{font:600 12.5px var(--body);color:var(--mute)}
+.bf .bwpad{width:34px;height:34px;border-radius:50%;background:#FDE8E7;color:var(--red);display:grid;place-items:center;opacity:0}
+.scene.act .bwpad{animation:bfPop .4s var(--at) both,bwShake .5s calc(var(--at) + .4s) both}
+@keyframes bwShake{0%,100%{transform:none}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.bf .bwpad .ico{width:17px;height:17px}
+.bf .bwflag{position:absolute;right:10px;bottom:-11px;font:700 11px var(--head);letter-spacing:.04em;text-transform:uppercase;
+  background:var(--ambbg);color:var(--amb);border-radius:7px;padding:4px 9px;opacity:0}
+.scene.act .bwflag{animation:bfPop .4s var(--at) both}
+.bf .bwflag.red{background:var(--redbg);color:var(--red)}
+
+/* the stack of files */
+.bf .bwstk{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;width:860px;margin-top:20px}
+.bf .bwf{font:600 12.5px ui-monospace,monospace;color:#CFE0FB;background:rgba(29,91,196,.26);
+  border:1px solid rgba(0,229,255,.3);border-radius:8px;padding:6px 11px;opacity:0}
+.scene.act .bwf{animation:bwFly .55s cubic-bezier(.2,.9,.3,1) var(--at) both}
+@keyframes bwFly{from{opacity:0;transform:translateY(22px) scale(.86)}to{opacity:1;transform:none}}
+.bf .bwnums{display:flex;gap:16px;margin-top:20px}
+.bf .bwnum{background:#fff;border-radius:14px;padding:12px 22px;text-align:center;box-shadow:0 18px 44px rgba(0,0,0,.45)}
+.bf .bwnum b{display:block;font:700 34px var(--head);color:var(--blue);line-height:1}
+.bf .bwnum span{display:block;font:600 12px var(--body);color:var(--mute);margin-top:4px}
+.bf .bwnum.key{background:linear-gradient(135deg,#1D5BC4,#13408F);box-shadow:0 18px 48px rgba(47,111,232,.6),0 0 0 1px rgba(0,229,255,.5)}
+.bf .bwnum.key b,.bf .bwnum.key span{color:#fff}
+
+/* the six systems */
+.bf .bwgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:1000px;margin-top:24px}
+.bf .bwsys{background:#fff;border-radius:14px;padding:15px 16px;box-shadow:0 18px 44px rgba(0,0,0,.45);text-align:left}
+.bf .bwsys b{display:block;font:700 16px var(--head);color:var(--ink);margin-top:9px}
+.bf .bwsys small{display:block;font:500 12.5px var(--body);color:var(--mute);margin-top:3px;line-height:1.35}
+.bf .bwsi{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#1D5BC4,#13408F);color:#fff;display:grid;place-items:center}
+.bf .bwsi .ico{width:18px;height:18px}
+
+/* the Log Book, in the phone */
+.bf .bwst{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--rule);border-radius:11px;padding:9px 11px;margin-bottom:8px}
+.bf .bwst b{display:block;font:700 13.5px var(--head);color:var(--ink)}
+.bf .bwst small{display:block;font:500 11.5px var(--body);color:var(--mute);margin-top:1px}
+.bf .bwsk{width:28px;height:28px;border-radius:8px;background:var(--sky);color:var(--blue);display:grid;place-items:center;flex:none}
+.bf .bwsk .ico{width:15px;height:15px}
+.bf .bwsent{display:block;text-align:center;font:700 13px var(--head);color:#fff;background:linear-gradient(135deg,#1D5BC4,#13408F);
+  border-radius:10px;padding:10px;margin-top:4px}
+
+/* the premium due timeline */
+.bf .bwtl{position:relative;display:flex;justify-content:space-between;align-items:flex-end;width:900px;height:132px;margin-top:26px}
+.bf .bwrail{position:absolute;left:0;right:0;bottom:34px;height:3px;border-radius:2px;background:rgba(191,211,247,.3);transform-origin:left;opacity:0}
+.scene.act .bwrail{animation:bwGrow .8s cubic-bezier(.3,.9,.3,1) var(--at) both}
+@keyframes bwGrow{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:none}}
+.bf .bwstop{position:relative;display:grid;justify-items:center;gap:2px;width:120px;opacity:0}
+.scene.act .bwstop{animation:bfInU .5s var(--at) both}
+.bf .bwstop b{font:700 25px var(--head);color:#fff;order:2}
+.bf .bwstop small{font:600 11px var(--body);color:var(--lav);order:3;text-transform:uppercase;letter-spacing:.14em}
+.bf .bwdot{width:13px;height:13px;border-radius:50%;background:var(--cyan);box-shadow:0 0 18px rgba(0,229,255,.8);order:4;margin-top:8px}
+.bf .bwenv{width:34px;height:34px;border-radius:9px;background:#fff;color:var(--blue);display:grid;place-items:center;order:1;opacity:0}
+.scene.act .bwenv{animation:bwFly .5s var(--at) both}
+.bf .bwenv .ico{width:18px;height:18px}
+.bf .bwlapse{position:absolute;right:-96px;bottom:72px;font:700 13px var(--head);color:#fff;background:var(--red);
+  border-radius:9px;padding:7px 12px}
+.bf .bwcheck{margin-top:20px;background:#fff;border-radius:13px;padding:12px 20px;display:flex;gap:12px;align-items:center;
+  box-shadow:0 18px 44px rgba(0,0,0,.45)}
+.bf .bwcheck b{font:700 15px var(--head);color:var(--ink)}
+.bf .bwcheck small{font:500 12.5px var(--body);color:var(--mute)}
+.bf .bwtick{width:24px;height:24px;border-radius:7px;background:var(--grnbg);color:var(--grn);display:grid;place-items:center;opacity:0}
+.scene.act .bwtick{animation:bfPop .36s var(--at) both}
+.bf .bwtick .ico{width:14px;height:14px}
+
+/* group billing */
+.bf .bwbill{display:grid;grid-template-columns:1fr 88px 1fr;gap:10px;width:900px;margin-top:22px;align-items:start}
+.bf .bwbc{background:#fff;border-radius:14px;padding:12px;box-shadow:0 18px 44px rgba(0,0,0,.45)}
+.bf .bwbh{font:700 13px var(--head);color:var(--blue);text-transform:uppercase;letter-spacing:.12em;margin-bottom:9px}
+.bf .bwbr{display:flex;justify-content:space-between;align-items:center;padding:7px 2px;border-top:1px solid var(--rule);
+  font:600 13px var(--body);color:var(--ink)}
+.bf .bwbv{width:46px;height:8px;border-radius:4px;background:#DCE3ED}
+.bf .bwbm{position:relative;height:100%}
+.bf .bwlink{position:absolute;left:0;right:0;height:2px;background:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,.7);
+  transform-origin:left;opacity:0}
+.scene.act .bwlink{animation:bwGrow .45s var(--at) both}
+.bf .bwlink.bad{background:#F79009;box-shadow:0 0 12px rgba(247,144,9,.8);height:3px}
+.bf .bwpay{margin-top:18px;font:700 14px var(--head);color:#fff;background:linear-gradient(135deg,#1D5BC4,#13408F);
+  border-radius:10px;padding:10px 20px}
+
+/* half and half */
+.bf .bwsplit{position:relative;display:flex;width:900px;height:118px;margin-top:26px;border-radius:16px;overflow:hidden;
+  box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.bf .bwsplit i{display:grid;align-content:center;gap:4px;padding:0 24px}
+.bf .bwsplit b{font:700 19px var(--head)}
+.bf .bwsplit small{font:500 13px var(--body);opacity:.8}
+.bf .bwhl{background:#fff;color:var(--ink);width:50%;transform-origin:left}
+.scene.act .bwhl{animation:bwShrink 1.5s cubic-bezier(.4,0,.2,1) var(--sh) both}
+@keyframes bwShrink{to{width:28%}}
+.bf .bwhr{background:linear-gradient(135deg,#1D5BC4,#13408F);color:#fff;flex:1;opacity:0}
+.scene.act .bwhr{animation:bfIn .5s var(--at) both}
+
+/* by hand, then a script */
+.bf .bwsc{display:grid;grid-template-columns:1fr 70px 1fr;gap:10px;width:960px;margin-top:22px;align-items:center}
+.bf .bwcard2{position:relative;background:#fff;border-radius:14px;padding:14px 14px 40px;box-shadow:0 18px 44px rgba(0,0,0,.45);min-height:182px}
+.bf .bwcard2.ed{background:#0B1B33;box-shadow:0 18px 48px rgba(0,0,0,.6),0 0 0 1px rgba(0,229,255,.3)}
+.bf .bwch2{font:700 12px var(--head);color:var(--blue);text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px}
+.bf .bwcard2.ed .bwch2{color:var(--cyan)}
+.bf .bwby{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--rule);
+  font:600 13.5px var(--body);color:var(--ink)}
+.bf .bwclk{color:var(--amb);display:grid;place-items:center}
+.bf .bwclk .ico{width:15px;height:15px}
+.bf .bwdns{display:flex;gap:7px;position:absolute;right:14px;bottom:12px}
+.bf .bwdn{width:22px;height:22px;border-radius:6px;background:var(--grnbg);color:var(--grn);display:grid;place-items:center;opacity:0}
+.scene.act .bwdn{animation:bfPop .34s var(--at) both}
+.bf .bwdn .ico{width:13px;height:13px}
+.bf .bwarr{display:grid;place-items:center;opacity:0}
+.scene.act .bwarr{animation:bfIn .5s var(--at) both}
+.bf .bwln{width:56px;height:3px;border-radius:2px;background:var(--cyan);box-shadow:0 0 14px rgba(0,229,255,.8)}
+.bf .bwcl{display:block;font:600 12.5px ui-monospace,monospace;color:#9FE8F5;white-space:pre;margin-bottom:3px;opacity:0}
+.scene.act .bwcl{animation:bfIn .3s var(--at) both}
+.bf .bwtx{color:#9FE8F5}
+.bf .bwdeploy{position:absolute;right:14px;bottom:12px;font:700 11.5px var(--head);letter-spacing:.06em;text-transform:uppercase;
+  background:var(--cyan);color:#06243A;border-radius:7px;padding:5px 11px;opacity:0}
+.scene.act .bwdeploy{animation:bfPop .4s var(--at) both}
+
+/* the tools, and the request form */
+.bf .bwtools{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;width:980px;margin-top:22px}
+.bf .bwtool{position:relative;background:#fff;border-radius:14px;padding:14px;box-shadow:0 18px 44px rgba(0,0,0,.45);text-align:left}
+.bf .bwtool b{display:block;font:700 15.5px var(--head);color:var(--ink);margin-top:9px}
+.bf .bwtool small{display:block;font:500 12px var(--body);color:var(--mute);margin-top:3px;line-height:1.35}
+.bf .bwti{width:32px;height:32px;border-radius:9px;background:var(--sky);color:var(--blue);display:grid;place-items:center}
+.bf .bwti .ico{width:17px;height:17px}
+.bf .bwok{display:inline-flex;gap:4px;align-items:center;margin-top:9px;font:700 11px var(--head);text-transform:uppercase;
+  letter-spacing:.08em;color:var(--grn);background:var(--grnbg);border-radius:6px;padding:3px 8px;opacity:0}
+.scene.act .bwok{animation:bfPop .34s var(--at) both}
+.bf .bwok .ico{width:12px;height:12px}
+.bf .bwvs{display:flex;gap:16px;align-items:center;margin-top:20px}
+.bf .bwkey{display:flex;gap:11px;align-items:center;background:linear-gradient(135deg,#1D5BC4,#13408F);color:#fff;
+  border-radius:13px;padding:13px 22px;box-shadow:0 18px 48px rgba(47,111,232,.6),0 0 0 1px rgba(0,229,255,.5)}
+.bf .bwkey b{font:700 18px var(--head)}
+.bf .bwki{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center}
+.bf .bwki .ico{width:16px;height:16px}
+.bf .bwform{position:relative;display:flex;gap:10px;align-items:center;background:#fff;border-radius:13px;padding:13px 22px;opacity:.75}
+.bf .bwform b{font:700 16px var(--head);color:var(--mute)}
+.bf .bwfi{width:28px;height:28px;border-radius:8px;background:#EEF2F7;color:var(--mute);display:grid;place-items:center}
+.bf .bwfi .ico{width:15px;height:15px}
+.bf .bwx{position:absolute;left:10%;right:10%;top:50%;height:3px;border-radius:2px;background:var(--red);transform-origin:left;opacity:0}
+.scene.act .bwx{animation:bwGrow .4s var(--at) both}
+
+/* the ask: nothing here moves, so the code decodes */
+.bf .bwend{display:grid;justify-items:center;gap:14px;margin:0;background:rgba(255,255,255,.07);
+  border:1px solid rgba(191,211,247,.3);border-radius:16px;padding:14px 20px;opacity:0}
+.scene.act .bwend{animation:bfIn .5s var(--at) both}
+.bf .bwqr{width:272px;height:272px;background:#fff;padding:15px;border-radius:10px;display:block;image-rendering:pixelated}
+.bf .bwurl b{display:block;text-align:center;font:700 22px var(--head);color:#fff;letter-spacing:-.01em}
+.bf .bwurl span{display:block;text-align:center;font:500 13.5px var(--body);color:var(--lav);margin-top:6px;line-height:1.45}
+.bf .bwfin{flex-direction:row;gap:60px;align-items:center;justify-content:center}
+.bf .bwfin .ebw{text-align:left;margin-bottom:16px}
+.bf .bwfin .cls{text-align:left;justify-items:start;gap:10px}
+"""
+
 R = {'sftask': s_sftask, 'since': s_since, 'reassign': s_reassign, 'unit': s_unit, 'yourcalls': s_yourcalls, 'staffcall': s_staffcall, 'rules': s_counts,
      'yourwork': s_yourwork, 'clock': s_clock, 'title': s_title, 'flow': s_flow, 'signin': s_signin, 'urgent': s_urgent, 'agents': s_agents, 'table': s_table, 'batches': s_batches,
      'assign': s_assign, 'named': s_named, 'list': s_list, 'client': s_client, 'logcall': s_logcall, 'comment': s_comment, 'counts': s_counts,
      'sees': s_sees, 'close': s_close, 'letter': s_letter, 'family': s_family, 'record': s_record, 'claim': s_claim, 'outcomes': s_outcomes, 'test': s_test}
-R.update(R_LB); R.update(R_DB)
-BLUE = {'title', 'flow', 'named', 'counts', 'rules', 'clock', 'close', 'claim', 'outcomes', 'lbbag', 'lbhistory', 'lbbagday', 'lbrota'}
+R.update(R_LB); R.update(R_DB); R.update(R_BW)
+BLUE = {'title', 'flow', 'named', 'counts', 'rules', 'clock', 'close', 'claim', 'outcomes', 'lbbag', 'lbhistory', 'lbbagday', 'lbrota',
+        'bwopen', 'bwturn', 'bwhalf', 'bwclose'}
 
 def bgfx(i, blue):
     if blue:
@@ -2223,10 +2623,10 @@ chrome_end = s.index('</div>', s.index('<div id="chrome">')) + len('</div>')
 tap = s.index('<div class="tapzone" id="zL"')
 out = s[:chrome_end] + '\n' + SCENES + '\n\n' + s[tap:]
 last = out.rindex('</style>')
-out = out[:last] + CSS.replace('__PLEX__', PLEX).replace('__LOGO__', LOGO) + (LB_CSS if LB else '') + (DB_CSS if DBF else '') + '\n' + out[last:]
+out = out[:last] + CSS.replace('__PLEX__', PLEX).replace('__LOGO__', LOGO) + (LB_CSS if LB else '') + (DB_CSS if DBF else '') + (BW_CSS if BW else '') + '\n' + out[last:]
 out = re.sub(r'<title>.*?</title>', '<title>' + TITLES[KEY] + ' — Ricky Rampersad Branch</title>', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="mark" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="mark mk"></i>', out, count=1, flags=re.S)
-out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>' + ('Delivery Book' if DBF else 'Log Book' if LB else 'Client transition board') + '</i></span>', out, count=1, flags=re.S)
+out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>' + ('Build with us' if BW else 'Delivery Book' if DBF else 'Log Book' if LB else 'Client transition board') + '</i></span>', out, count=1, flags=re.S)
 out = re.sub(r'<span class="live">.*?</span>', '', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="biglogo" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="biglogo mk"></i>', out, count=1, flags=re.S)
 FAVICON = 'data:image/svg+xml,' + (ROOT / 'favicon.svg').read_text().replace('#', '%23').replace('<', '%3C').replace('>', '%3E').replace('"', "'").replace('\n', '')
@@ -2235,9 +2635,9 @@ out = re.sub(r'const cols = \[[^\]]*\]', 'const cols = ["#ffffff", "#00E5FF", "#
 out = re.sub(r'<h1>The launch of<br>donthaveanagent<em>\.com</em></h1>', '<h1>' + TITLES[KEY].replace(', ', ',<br><em>') + '</em></h1>', out, count=1)
 out = re.sub(r'<div class="eyebrow" style="margin-top:16px">[^<]*</div>', '<div class="eyebrow" style="margin-top:16px">A Ricky Rampersad Branch film</div>', out, count=1)
 out = re.sub(r'<button id="playBtn"><span class="tri"></span>[^<]*</button>', '<button id="playBtn"><span class="tri"></span>Watch — ' + ('under two minutes' if sum(DUR) < 120000 else 'two and a half minutes' if sum(DUR) < 160000 else f'{round(sum(DUR) / 60000)} minutes') + '</button>', out, count=1)
-out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', ('Handed over, recorded, and the client told: the same day.' if DBF else 'Log it, hand it in, see it sent: the same day.' if LB else 'One client, start to finish: what happens, who does it, and what counts.' if KEY == 'boardflow' else 'How the branch names agents, and how agents report back.'), out, count=1)
-MSG = ('const MSG = "' + TITLES[KEY] + ': ' + ('a short film on recording cheques and contracts.' if DBF else 'a short film on the new Log Book.' if LB else 'a short film on the client transition board.') + '\\n\\n" +\n'
-       '  "▶ https://rickyrampersadbranch.com/' + ('deliverybook-film' if DBF else 'logbook-films' if LB else 'orphan-transition/board-films.html') + '";')
+out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', ('What you would actually work on, and what you would build.' if BW else 'Handed over, recorded, and the client told: the same day.' if DBF else 'Log it, hand it in, see it sent: the same day.' if LB else 'One client, start to finish: what happens, who does it, and what counts.' if KEY == 'boardflow' else 'How the branch names agents, and how agents report back.'), out, count=1)
+MSG = ('const MSG = "' + TITLES[KEY] + ': ' + ('one administrator\'s seat, and what the job actually is.' if BW else 'a short film on recording cheques and contracts.' if DBF else 'a short film on the new Log Book.' if LB else 'a short film on the client transition board.') + '\\n\\n" +\n'
+       '  "▶ https://rickyrampersadbranch.com/' + ('buildwithus' if BW else 'deliverybook-film' if DBF else 'logbook-films' if LB else 'orphan-transition/board-films.html') + '";')
 out = re.sub(r'const MSG = ".*?";', lambda m: MSG, out, count=1, flags=re.S)
 out = out.replace('document.getElementById("waBtn").href =', 'if (document.getElementById("waBtn")) document.getElementById("waBtn").href =')
 # the narration and the bed are in the MP4; the page itself plays no music of its own

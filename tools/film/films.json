@@ -1316,5 +1316,42 @@
   "h": 1920,
   "capsize": 50,
   "capwrap": 26
+ },
+ "bwadmin": {
+  "cap": "cap-bwadmin",
+  "vox": "vobwadmin",
+  "music": "bed-bwadmin.wav",
+  "mix": "bwadmin-mix.wav",
+  "ass": "captions-bwadmin.ass",
+  "dur": 86.3,
+  "durs": [
+   6.4,
+   4.8,
+   5.7,
+   9.2,
+   3.4,
+   8.3,
+   8.7,
+   8.1,
+   5.9,
+   5.9,
+   12.1,
+   7.8
+  ],
+  "out": "buildwithus-film.mp4",
+  "musicgain": 0.46,
+  "duck": 0.3,
+  "dark": [
+   2,
+   8,
+   11
+  ],
+  "sfx": "sfx-bwadmin.wav",
+  "start": 0,
+  "ticks": [],
+  "hits": [
+   19.51,
+   21.41
+  ]
  }
 }

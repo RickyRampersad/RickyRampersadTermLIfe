@@ -1,0 +1,83 @@
+{
+ "role": "branch",
+ "scenes": [
+  {
+   "visual": "bwopen",
+   "eyebrow": "The seat",
+   "headline": "You can already see<br>what <em>should be fixed</em>",
+   "say": "Somewhere right now, there's an administrator who can see exactly what should be fixed."
+  },
+  {
+   "visual": "bwnotools",
+   "eyebrow": "Where you are now",
+   "headline": "A spreadsheet. A group chat. / And <em>no permission</em>",
+   "say": "You've got a spreadsheet, a WhatsApp group, and no permission."
+  },
+  {
+   "visual": "bwturn",
+   "eyebrow": "Guardian Life &middot; Chaguanas",
+   "headline": "We got tired of <em>waiting too</em>",
+   "say": "We're a Guardian Life branch in Chaguanas. We got tired of waiting too."
+  },
+  {
+   "visual": "bwstack",
+   "eyebrow": "What this branch built",
+   "headline": "Thirty-six files. / <em>A hundred thousand lines</em>",
+   "say": "So we wrote our own software. Thirty six files. About a hundred thousand lines. Nobody here was hired as a developer."
+  },
+  {
+   "visual": "bwgrid",
+   "eyebrow": "The qualification",
+   "headline": "What you would <em>actually work on</em>",
+   "say": "Here is what you would actually work on."
+  },
+  {
+   "visual": "bwlog",
+   "eyebrow": "One &middot; The Log Book",
+   "headline": "Logged, routed, / <em>signed for</em>",
+   "say": "The Log Book. Every document that leaves this branch, logged, routed, and signed for on a phone."
+  },
+  {
+   "visual": "bwdues",
+   "eyebrow": "Two &middot; The Premium Due Desk",
+   "headline": "A letter <em>before it lapses</em>",
+   "say": "The Premium Due Desk. Before a policy lapses, the client gets a letter, and a person checks every single one."
+  },
+  {
+   "visual": "bwbill",
+   "eyebrow": "Three &middot; Group billing",
+   "headline": "Line by line, / <em>before anybody pays</em>",
+   "say": "Group billing. An insurer's invoice, checked line by line against our own records, before anybody pays it."
+  },
+  {
+   "visual": "bwhalf",
+   "eyebrow": "The shape of the job",
+   "headline": "Half the work. / Half <em>making it smaller</em>",
+   "say": "Half of your day is that work. The other half is making it smaller."
+  },
+  {
+   "visual": "bwscript",
+   "eyebrow": "What you would build",
+   "headline": "By hand today. / <em>A script tomorrow</em>",
+   "say": "You take a job you do by hand, and you turn it into a script that does it for you."
+  },
+  {
+   "visual": "bwkeys",
+   "eyebrow": "The tools",
+   "headline": "You get the keys. / <em>Not a request form</em>",
+   "say": "You would be writing Apps Script, working in Salesforce and Google Workspace, with Claude beside you. Already paid for, already connected. You get the keys, not a request form."
+  },
+  {
+   "visual": "bwclose",
+   "eyebrow": "One administrator's seat &middot; Chaguanas",
+   "words3": [
+    "See what we built.",
+    "Tell us what you would fix.",
+    "Build with us."
+   ],
+   "url": "rickyrampersadbranch.com/buildwithus",
+   "say": "One administrator's seat. Chaguanas. Come and build with us.",
+   "extra": 2.2
+  }
+ ]
+}
