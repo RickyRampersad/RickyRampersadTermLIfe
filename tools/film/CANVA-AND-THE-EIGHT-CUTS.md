@@ -102,6 +102,27 @@ Export at 2160×3840 and crop `2160:2160:0:840` to recover the whole square.
   day" fixed it. `Claude` is still heard as "Claw", so the word is on screen in
   the same scene, the same mitigation `Akaash` → "of cash" took.
 
+## The twelve scenes are data-driven, and the underwriter's film reuses them
+
+Added 7 November 2026, cutting `uwadmin` for `/underwriter/`. Every `s_bw*`
+scene now reads its cards, rails, rows, code and labels out of the lines file
+and falls back to the administrator's values, so one set of visuals serves both
+films instead of two sets drifting apart. `R_BW` maps the names; `BW` is true
+for a key starting `bw` or `uw`, and `OUT` picks the folder from the prefix.
+
+**Prove a refactor like this by rebuilding the film that already shipped.**
+`build-boardfilm.py bwadmin` has to come back byte for byte identical to the
+committed `buildwithus/film.html`. It did not, the first time: flattening the
+three per-art flag offsets into one number moved three flags by up to 200ms.
+Invisible on screen, and still wrong — the committed source no longer
+reproduced the committed MP4. The offsets are back, with the reason in a
+comment.
+
+**`"ticks": false`** on the rule scene drops the green ticks that march down
+the left column. They mean *and then these do themselves*, which is right where
+a rule automates the manual steps and wrong where it replaces a queue: a tick
+beside "wait for the release" reads as the wait being fine.
+
 ## What is still open
 
 - **Only the 16:9 cut exists.** A 9:16 for Reels, Status and TikTok is a

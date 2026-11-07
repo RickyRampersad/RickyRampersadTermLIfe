@@ -1338,7 +1338,7 @@
    12.1,
    7.8
   ],
-  "out": "buildwithus-film.mp4",
+  "out": "film-w.mp4",
   "musicgain": 0.46,
   "duck": 0.3,
   "dark": [
@@ -1353,5 +1353,37 @@
    19.51,
    21.41
   ]
+ },
+ "uwadmin": {
+  "cap": "cap-uwadmin",
+  "vox": "vouwadmin",
+  "music": "bed-uwadmin.wav",
+  "mix": "uwadmin-mix.wav",
+  "ass": "captions-uwadmin.ass",
+  "dur": 87.5,
+  "durs": [
+   9.5,
+   8.7,
+   4.9,
+   7.7,
+   11.5,
+   9.4,
+   11.6,
+   9.8,
+   6.1,
+   8.3
+  ],
+  "out": "film-w.mp4",
+  "musicgain": 0.46,
+  "duck": 0.3,
+  "dark": [
+   2,
+   8,
+   9
+  ],
+  "sfx": "sfx-uwadmin.wav",
+  "start": 0,
+  "ticks": [],
+  "hits": []
  }
 }

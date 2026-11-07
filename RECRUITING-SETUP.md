@@ -35,12 +35,22 @@ voice and the music.
 |---|---|---|---|
 | The page | `/buildwithus/` | `/joinourbranch/` | `/underwriter/` |
 | The film's page to post | `/buildwithusvideo/` | `/joinourbranchvideo/` | `/underwritervideo/` |
-| The films | `buildwithus/film-{v,f,w}.mp4` | `joinourbranch/film-{v,f,w}.mp4` | `underwriter/film-{v,f,w}.mp4` |
-| Length | 51.68 s | 45.60 s | 51.07 s |
+| The films | `buildwithus/film-w.mp4` | `joinourbranch/film-{v,f,w}.mp4` | `underwriter/film-w.mp4` |
+| Length | 86.3 s | 45.60 s | 87.5 s |
 | Where it applies | this branch, `Quotes.gs` | **TalentNest** | this branch, `Quotes.gs` |
 | Form key / reference | `admin` → **`QB-`** | — | `underwriter` → **`QU-`** |
 | CV upload | no | no | **yes**, to Drive |
 | Who reads it | the Branch Manager | the Branch Manager and the Unit Manager | the Branch Manager |
+
+**The administrator's and the underwriter's films were re-cut on 7 November
+2026** in the board-film look, after the first set was turned down eight times
+(`tools/film/CANVA-AND-THE-EIGHT-CUTS.md`). Each replaced its own `film-w.mp4`,
+so every page, poster and share card picked the new one up with no edit. The
+upright (9:16) and feed (4:5) cuts on those two are **still the earlier look**
+and are no longer offered: both video pages now show the wide cut alone and say
+the other two are being re-laid out. Re-laying them out is a layout job, not a
+re-render — the scenes are built for a 1224×540 stage. The advisor's film is
+untouched and still has all three.
 
 All three are linked from the homepage's Careers section. The advisor ad sits
 beside `/careers/` rather than replacing it: `/careers/` is the whole selection
@@ -922,15 +932,52 @@ with no end date, and the same term on file twice.
   off the file is hidden rather than broken — question four asks the same thing
   in words.
 
+### The film — `uwadmin`, 87 seconds, cut 7 November 2026
+
+Built on the same engine as the administrator's ninth cut, which is the look he
+accepted: `tools/film/build-boardfilm.py uwadmin`, from
+`tools/film/uwadmin-lines.json`. Everything is drawn — no photographs, no
+faces, no stock — because that is what he asked for in those words after the
+eighth cut (`tools/film/CANVA-AND-THE-EIGHT-CUTS.md` has the whole history, and
+should be read before anything is re-cut).
+
+**The twelve administrator scenes are now data-driven, and the underwriter's
+ten are the same functions with different content.** A scene reads its cards,
+rails, rows and code from the lines file and falls back to the administrator's
+values, so there is one set of visuals to maintain rather than two drifting
+sets. The refactor is proved by rebuilding `bwadmin`: it comes back **byte for
+byte identical** to the committed film, which is the only test that means
+anything here.
+
+The ten scenes: the seat (priced in ten minutes, typed all day) · where you are
+now (the proposal form retyped, a referral on day three, the broker's e-mail as
+the only history) · the agency opening in Chaguanas · the book (motor, property,
+liability, engineering, marine, bonds) · every term since the policy began ·
+the insurer's notice read and checked against our record, with the one row that
+disagrees in amber · a rule is not a ticket (`rule('unoccupied', …)` typed into
+the desk, badge **Running**) · three rules you would write in your first month ·
+the paperwork is finished, the underwriting is not · the close with the QR.
+
+**Two things learned cutting it**, both now in the builder:
+
+- **`"ticks": false` on the rule scene.** The administrator's version ticks the
+  manual rows off once the rule is written, because there the rule *automates*
+  them. Here the left column is a queue the rule *replaces*, and a green tick
+  beside "wait for the release" reads as the wait being fine.
+- **The flag on a card lands after that card's own art, not on a fixed
+  offset.** Flattening the three offsets to one number while making the scene
+  data-driven moved the administrator's flags by up to 200ms — invisible on
+  screen, but it meant the committed `film.html` no longer reproduced the
+  committed MP4. A film's source has to rebuild to the film that shipped.
+
 ### Two things only Mr Rampersad can settle
 
 - **Study support.** If the branch will fund CII papers, that is the single
   strongest line that could go on this page for a part-qualified underwriter,
   and it is not on it, because nothing in the record says it is true.
-- **The film.** `underwriter/film-*.mp4` is from the rejected set of 6–7
-  November. It should be re-cut in the board-film style now used for
-  `/buildwithus/` (`tools/film/CANVA-AND-THE-EIGHT-CUTS.md`), or taken off the
-  page.
+- **The music licence.** The bed is his own recording, from a free site he has
+  not yet named. Until it is written down the track is not committed — the
+  repository root is published, so committing it redistributes it.
 
 ### The sticky bar ate every anchor
 

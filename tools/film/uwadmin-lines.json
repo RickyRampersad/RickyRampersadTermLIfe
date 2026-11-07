@@ -1,0 +1,262 @@
+{
+ "role": "branch",
+ "scenes": [
+  {
+   "visual": "bwopen",
+   "eyebrow": "The seat",
+   "headline": "You can price it in ten minutes.<br>Then <em>you type it all day</em>",
+   "at": "underwriter",
+   "at2": "typing",
+   "icon": "file",
+   "card": [
+    "Rated in ten minutes",
+    "retyped for the rest of the day"
+   ],
+   "say": "Somewhere right now there's an underwriter who can price a risk in ten minutes, and spends the day typing it into three different places."
+  },
+  {
+   "visual": "bwnotools",
+   "eyebrow": "Where you are now",
+   "headline": "You retype it. You wait. / And you rate it <em>blind</em>",
+   "cards": [
+    {
+     "at": "proposal",
+     "icon": "file",
+     "title": "the proposal form",
+     "art": "sheet",
+     "flag": "retyped by hand"
+    },
+    {
+     "at": "referral",
+     "icon": "clock",
+     "title": "a referral",
+     "art": "lock",
+     "padicon": "clock",
+     "wait": "Day 3",
+     "flag": "still waiting"
+    },
+    {
+     "at": "history",
+     "icon": "msg",
+     "title": "the broker&rsquo;s e-mail",
+     "art": "chat",
+     "flag": "the only history you get",
+     "red": true
+    }
+   ],
+   "say": "You retype the proposal form. You wait three days for a referral. And the file you are rating has no history on it."
+  },
+  {
+   "visual": "bwturn",
+   "eyebrow": "Guardian Life of the Caribbean",
+   "headline": "A general insurance agency. / <em>Opening now</em>",
+   "at": "agency",
+   "at2": "Chaguanas",
+   "sub": "Chaguanas, Central Trinidad. One underwriting seat.",
+   "say": "We are opening a general insurance agency, here in Chaguanas."
+  },
+  {
+   "visual": "bwgrid",
+   "eyebrow": "The book",
+   "headline": "Motor, property, liability. / <em>A real commercial book</em>",
+   "at": "Motor",
+   "cards": [
+    [
+     "target",
+     "Motor",
+     "private, commercial and fleet"
+    ],
+    [
+     "home",
+     "Property",
+     "dwelling, fire, business interruption"
+    ],
+    [
+     "users",
+     "Liability",
+     "public, products, employers"
+    ],
+    [
+     "bolt",
+     "Engineering",
+     "plant, machinery, item schedules"
+    ],
+    [
+     "pin",
+     "Marine",
+     "voyage and open cover"
+    ],
+    [
+     "lock",
+     "Bonds",
+     "performance and advance payment"
+    ]
+   ],
+   "say": "Motor, property, liability, engineering, marine and bonds. A real commercial book."
+  },
+  {
+   "visual": "bwdues",
+   "eyebrow": "Before you open the file",
+   "headline": "Every term since the policy began",
+   "rail": {
+    "at": "screen",
+    "at2": "covered",
+    "at3": "claims",
+    "icon": "file",
+    "mark": "",
+    "stops": [
+     [
+      "2014",
+      "first term"
+     ],
+     [
+      "2018",
+      "renewed"
+     ],
+     [
+      "2021",
+      "renewed"
+     ],
+     [
+      "2024",
+      "renewed"
+     ]
+    ],
+    "check": [
+     "Cover, value, premium, claims",
+     "already on the screen when you open it"
+    ]
+   },
+   "say": "Before you open a file, every term since the policy began is already on the screen. What was covered, at what value, what was paid, and the claims that fell in each term."
+  },
+  {
+   "visual": "bwbill",
+   "eyebrow": "The insurer&rsquo;s notice",
+   "headline": "Read for you, / and <em>checked against our record</em>",
+   "bill": {
+    "at": "notice",
+    "at2": "checked",
+    "at3": "record",
+    "at4": "disagree",
+    "left": "The insurer&rsquo;s notice",
+    "right": "Our own record",
+    "out": "The desk says so, before you quote",
+    "rows": [
+     [
+      "Period",
+      1
+     ],
+     [
+      "Premium",
+      1
+     ],
+     [
+      "Sum insured",
+      0
+     ],
+     [
+      "Vehicles and locations",
+      1
+     ],
+     [
+      "Requirements",
+      1
+     ]
+    ]
+   },
+   "say": "The insurer's notice is read for you, and every figure is checked against our own record. Where the two disagree, the desk says so."
+  },
+  {
+   "visual": "bwscript",
+   "eyebrow": "The part most underwriters never get",
+   "headline": "A rule is not a ticket. / <em>It is a decision</em>",
+   "script": {
+    "at": "ticket",
+    "at2": "written",
+    "lhead": "The usual way",
+    "ticks": false,
+    "rows": [
+     "Raise a ticket",
+     "Join the queue",
+     "Wait for the release"
+    ],
+    "rhead": "Here &middot; the rule, in the desk",
+    "code": [
+     "rule('unoccupied', r =>",
+     "  r.months_empty > 3 &&",
+     "  r.class === 'property')",
+     "  .refer('to me, always');"
+    ],
+    "badge": "Running"
+   },
+   "say": "Here is the part most underwriters never get. A rule you decide is not a ticket at head office. It is written into the desk, and it runs on every file that week."
+  },
+  {
+   "visual": "bwgrid",
+   "eyebrow": "Rules you would write in your first month",
+   "headline": "Yours, running on <em>every file</em>",
+   "at": "rules",
+   "cards": [
+    [
+     "lock",
+     "Your own referral rules",
+     "over a value you set, a trade you choose"
+    ],
+    [
+     "chart",
+     "An underinsurance flag",
+     "when the declared value stops moving"
+    ],
+    [
+     "check",
+     "A rating check",
+     "the premium against the claims in the term"
+    ]
+   ],
+   "say": "Your own referral rules. A flag that fires when the declared value stops moving. A rating check the client never has to ask for."
+  },
+  {
+   "visual": "bwhalf",
+   "eyebrow": "The shape of the job",
+   "headline": "The paperwork is finished. / The underwriting <em>is not</em>",
+   "split": {
+    "at": "paperwork",
+    "at2": "underwriting",
+    "at3": "job",
+    "l": [
+     "The paperwork",
+     "already built, already running"
+    ],
+    "r": [
+     "The underwriting",
+     "not settled &mdash; and that is yours"
+    ],
+    "line": "How this agency underwrites is the part we want you for."
+   },
+   "say": "The paperwork is finished. The underwriting is not. That is the job."
+  },
+  {
+   "visual": "bwclose",
+   "eyebrow": "One underwriting seat &middot; Chaguanas",
+   "lines": [
+    [
+     "seat",
+     "One underwriting seat."
+    ],
+    [
+     "Chaguanas",
+     "Chaguanas."
+    ],
+    [
+     "build",
+     "Build the book."
+    ]
+   ],
+   "url": "rickyrampersadbranch.com/underwriter",
+   "qr": "qr-uwadmin.png",
+   "urlsub": "Your CV and fifteen minutes.<br>Read by the Branch Manager alone.",
+   "extra": 2.2,
+   "say": "One seat, for an underwriter. Chaguanas. Come and build the book."
+  }
+ ]
+}

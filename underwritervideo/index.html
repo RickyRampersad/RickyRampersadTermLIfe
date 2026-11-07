@@ -72,49 +72,26 @@ footer a{color:var(--dT2)}
     <h1>Your judgement on the risk. <em>Not on the paperwork.</em></h1>
     <p>We are opening a general insurance agency and we need one underwriter. The quote, the proposal form and the customer checks fill themselves from the record, so the part of the day that is yours is the part only you can do.</p>
 
-    <div class="tabs" role="tablist" aria-label="Pick a cut">
-      <button class="tab" data-k="v" role="tab" aria-selected="false" aria-controls="fv">Upright &middot; Reels, TikTok, Status</button>
-      <button class="tab" data-k="f" role="tab" aria-selected="false" aria-controls="fv">Feed &middot; Facebook, Instagram</button>
-      <button class="tab" data-k="w" role="tab" aria-selected="true" aria-controls="fv">Wide &middot; YouTube, LinkedIn</button>
-    </div>
 
     <div class="vwrap" id="vw">
       <video id="fv" controls playsinline preload="metadata" poster="/underwriter/film-w.jpg">
         <source id="fs" src="/underwriter/film-w.mp4" type="video/mp4">
       </video>
     </div>
-    <p class="small">Narrated, with the branch's own music, and the words are on screen the whole way through &mdash; it reads with the sound off, which is how most of a feed is watched. Every screen in it is a real branch screen carrying sample data; no client appears anywhere.</p>
+    <p class="small">Narrated, with the branch's own music, and the words are on screen the whole way through &mdash; it reads with the sound off, which is how most of a feed is watched. Every figure in it is illustrative and no client appears anywhere.</p>
 
     <div class="ctas">
       <a class="btn b1" href="/underwriter/">See the seat and send your CV</a>
       <a class="btn b2" href="/underwriter/#apply">Three judgement questions</a>
       <a class="btn b2" href="/joinourbranch/">Looking to become an advisor instead?</a>
     </div>
-    <p class="dl">To post it: <a href="/underwriter/film-v.mp4" download>the upright cut (9:16)</a>
-      &middot; <a href="/underwriter/film-f.mp4" download>the feed cut (4:5)</a>
-      &middot; <a href="/underwriter/film-w.mp4" download>the wide cut (16:9)</a></p>
+    <p class="dl">To post it: <a href="/underwriter/film-w.mp4" download>download the film (16:9)</a><br><span class="small">Upright and feed cuts are being re-laid out for this version.</span></p>
   </main>
   <footer>
     A Ricky Rampersad initiative &middot; Guardian Life of the Caribbean &middot; Chaguanas Branch &middot; <a href="tel:+18686785821">678-5821</a>
   </footer>
 </div>
 
-<script>
-(function(){
-  var v=document.getElementById('fv'), s=document.getElementById('fs'), vw=document.getElementById('vw'),
-      tabs=[].slice.call(document.querySelectorAll('.tab')), P='/underwriter/film-';
-  var WIDE={v:'26rem',f:'34rem',w:''};
-  function pick(k){
-    tabs.forEach(function(t){t.setAttribute('aria-selected', t.dataset.k===k?'true':'false')});
-    v.pause(); s.src=P+k+'.mp4'; v.poster=P+k+'.jpg';
-    vw.style.maxWidth=WIDE[k]; vw.style.marginInline=WIDE[k]?'auto':'';
-    v.load();
-  }
-  tabs.forEach(function(t){t.addEventListener('click',function(){pick(t.dataset.k)})});
-  /* a phone held upright opens on the upright cut, which is what it is for */
-  if (matchMedia('(max-width: 34rem) and (orientation: portrait)').matches) pick('v');
-})();
-</script>
 
 <!-- rrb-views -->
 <script>

@@ -52,15 +52,15 @@ SRC = ROOT / 'donthaveanagent' / 'client-film.html'
 KEY = sys.argv[1] if len(sys.argv) > 1 else 'boardmgr'
 PAGES = {'boardmgr': 'board-management.html', 'boardstaff': 'board-client-support.html', 'boardagent': 'board-agents.html',
          'boardflow': 'board-workflow.html', 'lbagent': 'film-agents.html', 'lbstaff': 'film-staff.html', 'dbstaff': 'film.html',
-         'bwadmin': 'film.html'}
+         'bwadmin': 'film.html', 'uwadmin': 'film.html'}
 TITLES = {'boardmgr': 'The board, for management', 'boardstaff': 'The board, for Client Support', 'boardagent': 'The board, for agents',
           'boardflow': 'The client transition, start to finish',
           'lbagent': 'The Log Book, for agents', 'lbstaff': 'The Log Book, for staff', 'dbstaff': 'The Delivery Book, for staff',
-          'bwadmin': 'Build with us'}
+          'bwadmin': 'Build with us', 'uwadmin': 'The underwriting seat'}
 LB = KEY.startswith('lb') or KEY.startswith('db')   # the Log Book films (17 October 2026) and the Delivery Book's (20 October): same look and machinery
 DBF = KEY.startswith('db')
-BW = KEY.startswith('bw')                           # the administrator's film (7 November 2026): same look, the branch's own systems
-OUT = (ROOT / 'buildwithus' if BW else
+BW = KEY.startswith('bw') or KEY.startswith('uw')                           # the administrator's film (7 November 2026): same look, the branch's own systems
+OUT = (ROOT / ('underwriter' if KEY.startswith('uw') else 'buildwithus') if BW else
        ROOT / 'rroperations' / ('delivery-book' if DBF else 'logbook') if LB else ROOT / 'orphan-transition') / PAGES[KEY]
 TM = json.load(open(HERE / f'{KEY}-timing.json'))
 SCRIPT = json.load(open(HERE / f'{KEY}-lines.json'))
@@ -1594,10 +1594,10 @@ LB_CSS = r"""
 .bf .lbds.red{border-color:var(--red)} .bf .lbds.amb{border-color:#B54708} .bf .lbds.gry{border-color:#94A3B8}
 """
 
-# ── "Build with us": the administrator's film (7 November 2026) ─────────
-# Asked for in these words, after eight cuts had missed: "i asked for motion
-# and a qualification as to what the person will do as to what you all work
-# on and a person who is somewhere with no tools", then "i want you graphics,
+# ── "Build with us" / "The underwriting seat": the recruiting films ─────
+# Asked for on 7 November 2026, after eight cuts had missed: "i asked for motion
+# and a qualification as to what the person will do as to what you all work on
+# and a person who is somewheree with no tools", then "i want you graphics,
 # motion and cards" and "i dont want read persons icone and etc".
 #
 # So: the branch's own systems, named, drawn as cards that move — the
@@ -1605,65 +1605,93 @@ LB_CSS = r"""
 # the person who has the problem and none of the tools. Nothing photographic,
 # no faces, no avatars. Every name on a card is a real file or a real system
 # of this branch; every figure on screen is one this repository can stand up.
+#
+# Every scene takes its content from <key>-lines.json, so one engine serves
+# both the administrator's film (bwadmin) and the underwriter's (uwadmin).
+# The defaults below are the administrator's, which is what they were written
+# for; a scene that passes nothing still draws that film exactly as before.
 
 BWFILES = ['Intelligence.gs', 'Transition.gs', 'GroupClients.gs', 'LogBook.gs', 'Claims.gs', 'GroupBilling.gs',
            'PremiumDueDesk.gs', 'GIRenewals.gs', 'MotorQuote.gs', 'DeliveryBook.gs', 'Quotes.gs', 'KPI.gs']
-BWQR = base64.b64encode((HERE / 'qr-bwadmin.png').read_bytes()).decode()
+BWQR = {}
+
+
+def bwqr(sc):
+    """The code for this film, read off the scene (so each page has its own)."""
+    f = sc.get('qr', 'qr-bwadmin.png')
+    if f not in BWQR: BWQR[f] = base64.b64encode((HERE / f).read_bytes()).decode()
+    return BWQR[f]
 
 
 def s_bwopen(i, sc, D):
     """A field of jobs nobody has fixed; one of them lifts, and you are the one who can see it."""
-    tA, tF = w(i, 'administrator'), w(i, 'fixed')
+    tA, tF = w(i, sc.get('at', 'administrator')), w(i, sc.get('at2', 'fixed'))
+    card = sc.get('card', ['Still done by hand', 'every week, by somebody'])
     grid = ''.join(f'<i class="bwag" style="left:{2 + (k % 6) * 16.4}%;top:{2 + (k // 6) * 34}%;'
                    f'--at:{ms(120 + k * 48)};--dl:{(k * 1.9) % 6:.1f}s"></i>' for k in range(18))
-    one = at(tA, 'at pop bwaone', inner=f'<span class="bwak">{ico("file")}</span>'
-             f'<div><b>Still done by hand</b><small>every week, by somebody</small></div>')
+    one = at(tA, 'at pop bwaone', inner=f'<span class="bwak">{ico(sc.get("icon", "file"))}</span>'
+             f'<div><b>{card[0]}</b><small>{card[1]}</small></div>')
     ring = f'<i class="bwaring" style="--at:{ms(tF - 300)}"></i>'
     return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'<div class="bwafield">{grid}{one}{ring}</div></div>')
 
 
+BW_NOTOOLS = [{'at': 'spreadsheet', 'icon': 'list', 'title': 'tracker final v7', 'art': 'sheet', 'flag': 'typed twice'},
+              {'at': 'WhatsApp', 'icon': 'msg', 'title': 'the branch group', 'art': 'chat', 'flag': 'the process lives here'},
+              {'at': 'permission', 'icon': 'lock', 'title': 'request access', 'art': 'lock', 'flag': 'no permission', 'red': True}]
+
+
 def s_bwnotools(i, sc, D):
-    """What you have been given to fix it with: a spreadsheet, a group chat and a locked door."""
-    tS, tW, tP = w(i, 'spreadsheet'), w(i, 'WhatsApp'), w(i, 'permission')
-    rows = ''.join(f'<i class="bwsr" style="--at:{ms(tS + 150 + k * 60)};width:{[88,64,80,52,76,60,84][k]}%"></i>' for k in range(7))
-    sheet = at(tS - 200, 'at pop bwcard', inner=(
-        f'<div class="bwch"><span class="bwci">{ico("list")}</span><b>tracker final v7</b></div>'
-        f'<div class="bwsg">{rows}<i class="bwdup" style="--at:{ms(tS + 700)};top:32%"></i>'
-        f'<i class="bwdup" style="--at:{ms(tS + 900)};top:62%"></i></div>'
-        f'<span class="bwflag" style="--at:{ms(tS + 1020)}">typed twice</span>'))
-    bubs = ''.join(f'<i class="bwb" style="--at:{ms(tW + 180 + k * 185)};width:{[72,54,86,62][k]}%;'
-                   f'align-self:{"flex-end" if k % 2 else "flex-start"}"></i>' for k in range(4))
-    chat = at(tW - 200, 'at pop bwcard', inner=(
-        f'<div class="bwch"><span class="bwci">{ico("msg")}</span><b>the branch group</b></div>'
-        f'<div class="bwbs">{bubs}</div>'
-        f'<span class="bwflag" style="--at:{ms(tW + 940)}">the process lives here</span>'))
-    lock = at(tP - 200, 'at pop bwcard', inner=(
-        f'<div class="bwch"><span class="bwci">{ico("lock")}</span><b>request access</b></div>'
-        f'<div class="bwlk"><i class="bwpad" style="--at:{ms(tP + 240)}">{ico("lock")}</i><span>Pending</span></div>'
-        f'<span class="bwflag red" style="--at:{ms(tP + 760)}">no permission</span>'))
+    """What you have been given to work with. Three cards, each landing on its own word."""
+    out = ''
+    for c in sc.get('cards', BW_NOTOOLS):
+        t0 = w(i, c['at'])
+        art = c.get('art', 'sheet')
+        # The flag lands just after that card's own art has finished drawing, so
+        # the offset is per-art, not one number for all three.
+        if art == 'sheet':
+            rows = ''.join(f'<i class="bwsr" style="--at:{ms(t0 + 150 + k * 60)};width:{[88,64,80,52,76,60,84][k]}%"></i>'
+                           for k in range(7))
+            body = (f'<div class="bwsg">{rows}<i class="bwdup" style="--at:{ms(t0 + 700)};top:32%"></i>'
+                    f'<i class="bwdup" style="--at:{ms(t0 + 900)};top:62%"></i></div>')
+            flag = 1020
+        elif art == 'chat':
+            body = '<div class="bwbs">' + ''.join(
+                f'<i class="bwb" style="--at:{ms(t0 + 180 + k * 185)};width:{[72,54,86,62][k]}%;'
+                f'align-self:{"flex-end" if k % 2 else "flex-start"}"></i>' for k in range(4)) + '</div>'
+            flag = 940
+        else:
+            body = (f'<div class="bwlk"><i class="bwpad" style="--at:{ms(t0 + 240)}">{ico(c.get("padicon", "lock"))}</i>'
+                    f'<span>{c.get("wait", "Pending")}</span></div>')
+            flag = 760
+        out += at(t0 - 200, 'at pop bwcard', inner=(
+            f'<div class="bwch"><span class="bwci">{ico(c["icon"])}</span><b>{c["title"]}</b></div>{body}'
+            f'<span class="bwflag{" red" if c.get("red") else ""}" style="--at:{ms(t0 + flag)}">{c["flag"]}</span>'))
     return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
-            f'<div class="bwrow3">{sheet}{chat}{lock}</div></div>')
+            f'<div class="bwrow3">{out}</div></div>')
 
 
 def s_bwturn(i, sc, D):
     """The turn: a branch that stopped waiting."""
-    tC, tW = w(i, 'Chaguanas'), w(i, 'waiting')
+    tC, tW = w(i, sc.get('at', 'Chaguanas')), w(i, sc.get('at2', 'waiting'))
+    sub = sc.get('sub', 'An insurance branch that writes its own software.')
     return (f'<div class="center"><div class="lockup"><i class="halo"></i><i class="halo h2"></i>{mark("big")}</div>'
             f'{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], tC, "c")}'
-            f'{at(tW + 300, "at up bwasub", inner="An insurance branch that writes its own software.")}</div>')
+            f'{at(tW + 300, "at up bwasub", inner=sub)}</div>')
 
 
 def s_bwstack(i, sc, D):
     """Thirty-six files and a hundred thousand lines, by their real names."""
-    tS, tN, tL, tD = w(i, 'software'), w(i, 'six'), w(i, 'thousand'), w(i, 'developer')
+    tS, tD = w(i, sc.get('at', 'software')), w(i, sc.get('at3', 'developer'))
+    n1, n2 = sc.get('n1', ['six', 36, '', 'files, in production']), sc.get('n2', ['thousand', 100, 'k', 'lines of Apps Script'])
+    tN, tL = w(i, n1[0]), w(i, n2[0])
     files = ''.join(f'<i class="bwf" style="--at:{ms(tS + 150 + k * 95)};--i:{k}">{x}</i>'
-                    for k, x in enumerate(BWFILES))
-    nums = (at(tN - 150, 'at pop bwnum', inner=cnt(tN, 36, '') + '<span>files, in production</span>')
-            + at(tL - 150, 'at pop bwnum key', inner=cnt(tL, 100, 'k') + '<span>lines of Apps Script</span>'))
+                    for k, x in enumerate(sc.get('files', BWFILES)))
+    nums = (at(tN - 150, 'at pop bwnum', inner=cnt(tN, n1[1], n1[2]) + f'<span>{n1[3]}</span>')
+            + at(tL - 150, 'at pop bwnum key', inner=cnt(tL, n2[1], n2[2]) + f'<span>{n2[3]}</span>'))
     return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'<div class="bwstk">{files}</div><div class="bwnums">{nums}</div>'
-            f'{at(tD - 200, "at up bwaline", inner="Nobody here was hired as a developer.")}</div>')
+            f'{at(tD - 200, "at up bwaline", inner=sc.get("line", "Nobody here was hired as a developer."))}</div>')
 
 
 BWSYS = [('bag', 'The Log Book', 'every document in and out, signed for'),
@@ -1675,104 +1703,144 @@ BWSYS = [('bag', 'The Log Book', 'every document in and out, signed for'),
 
 
 def s_bwgrid(i, sc, D):
-    """Six systems, landing in turn: the qualification itself."""
-    tW = w(i, 'work')
-    cards = ''.join(at(tW - 400 + k * 230, 'at pop bwsys', inner=(
-        f'<span class="bwsi">{ico(ic)}</span><b>{n}</b><small>{s}</small>')) for k, (ic, n, s) in enumerate(BWSYS))
+    """Six cards, landing in turn: the qualification itself."""
+    tW = w(i, sc.get('at', 'work'))
+    cards = sc.get('cards', BWSYS)
+    out = ''.join(at(tW - 400 + k * 230, 'at pop bwsys', inner=(
+        f'<span class="bwsi">{ico(c[0])}</span><b>{c[1]}</b><small>{c[2]}</small>')) for k, c in enumerate(cards))
     return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
-            f'<div class="bwgrid">{cards}</div></div>')
+            f'<div class="bwgrid">{out}</div></div>')
+
+
+BW_LOG = {'steps': [['document', 'file', 'Policy contract', 'chosen, never typed'],
+                    ['logged', 'list', 'Logged 10:14', 'the agent, the client, the policy'],
+                    ['routed', 'swap', 'Records Management', 'routed from what it is'],
+                    ['signed', 'check', 'Signed for', 'by the staff member who took it']],
+          'sent': ['phone', 'Sent on today&rsquo;s bag &middot; 12:00'],
+          'cues': [[0, '3,634 documents a year'], [2, '25 departments, one list'], [-1, 'On to Guardian the same day']],
+          'title': 'Log Book', 'who': 'staff'}
 
 
 def s_bwlog(i, sc, D):
-    """The Log Book on a phone: the document, the department, the signature, sent."""
-    tD, tLg, tR, tS, tP = w(i, 'document'), w(i, 'logged'), w(i, 'routed'), w(i, 'signed'), w(i, 'phone')
-    steps = [(tD, 'file', 'Policy contract', 'chosen, never typed'),
-             (tLg, 'list', 'Logged 10:14', 'the agent, the client, the policy'),
-             (tR, 'swap', 'Records Management', 'routed from what it is'),
-             (tS, 'check', 'Signed for', 'by the staff member who took it')]
-    body = ''.join(at(t, 'at l bwst', inner=f'<span class="bwsk">{ico(ic)}</span><div><b>{b}</b><small>{s}</small></div>')
-                   for (t, ic, b, s) in steps)
-    body += at(tP, 'at pop bwsent', inner=f'{ico("mail", "ii")} Sent on today&rsquo;s bag &middot; 12:00')
-    extra = cursor([(tD - 500, 240, 300), (tD, '.bwst'), (tS, '.bwst:nth-of-type(4)')], kind='touch') + click(tS, '.bwst:nth-of-type(4)')
-    cues = [(tD, '3,634 documents a year', False), (tR, '25 departments, one list', False), (tP, 'On to Guardian the same day', True)]
-    return stage(side(i, sc, cues), phone(i, body, title='Log Book', who='staff', extra=extra))
+    """A phone, filling itself in: the document, the department, the signature, sent."""
+    cfg = sc.get('phone', BW_LOG)
+    ts = [w(i, s[0]) for s in cfg['steps']]
+    body = ''.join(at(t, 'at l bwst', inner=f'<span class="bwsk">{ico(s[1])}</span><div><b>{s[2]}</b><small>{s[3]}</small></div>')
+                   for t, s in zip(ts, cfg['steps']))
+    tP = w(i, cfg['sent'][0])
+    body += at(tP, 'at pop bwsent', inner=f'{ico("mail", "ii")} {cfg["sent"][1]}')
+    extra = (cursor([(ts[0] - 500, 240, 300), (ts[0], '.bwst'), (ts[-1], '.bwst:nth-of-type(%d)' % len(ts))], kind='touch')
+             + click(ts[-1], '.bwst:nth-of-type(%d)' % len(ts)))
+    cues = [(tP if c[0] == -1 else ts[c[0]], c[1], c[0] == -1) for c in cfg['cues']]
+    return stage(side(i, sc, cues), phone(i, body, title=cfg['title'], who=cfg['who'], extra=extra))
+
+
+BW_DUES = {'stops': [[45, 'days'], [60, 'days'], [75, 'days'], [90, 'days']],
+           'at': 'lapses', 'at2': 'letter', 'at3': 'checks', 'icon': 'mail',
+           'mark': 'the policy lapses',
+           'check': ['A person ticks every one', 'nothing goes out unchecked']}
 
 
 def s_bwdues(i, sc, D):
-    """45, 60, 75, 90: a letter before the policy lapses, and a person ticks every one."""
-    tL, tLe, tC = w(i, 'lapses'), w(i, 'letter'), w(i, 'checks')
+    """A rail with stops on it, each arriving on its own beat."""
+    cfg = sc.get('rail', BW_DUES)
+    tL, tLe, tC = w(i, cfg['at']), w(i, cfg['at2']), w(i, cfg['at3'])
     stops = ''
-    for k, d in enumerate((45, 60, 75, 90)):
+    for k, d in enumerate(cfg['stops']):
         t = tLe - 500 + k * 260
-        stops += (f'<div class="bwstop" style="--at:{ms(t)}"><i class="bwdot"></i><b>{d}</b><small>days</small>'
-                  f'<i class="bwenv" style="--at:{ms(t + 220)}">{ico("mail")}</i></div>')
+        stops += (f'<div class="bwstop" style="--at:{ms(t)}"><i class="bwdot"></i><b>{d[0]}</b><small>{d[1]}</small>'
+                  f'<i class="bwenv" style="--at:{ms(t + 220)}">{ico(cfg.get("icon", "mail"))}</i></div>')
     rail = f'<i class="bwrail" style="--at:{ms(tL - 200)}"></i>'
-    lapse = at(tL, 'at pop bwlapse', inner=f'{ico("x", "ii")} the policy lapses')
-    ticks = ''.join(f'<i class="bwtick" style="--at:{ms(tC + k * 150)}">{ico("check")}</i>' for k in range(4))
-    check = at(tC - 250, 'at up bwcheck', inner=f'<b>A person ticks every one</b>{ticks}<small>nothing goes out unchecked</small>')
+    mark = at(tL, 'at pop bwlapse', inner=f'{ico("x", "ii")} {cfg["mark"]}') if cfg.get('mark') else ''
+    ticks = ''.join(f'<i class="bwtick" style="--at:{ms(tC + k * 150)}">{ico("check")}</i>' for k in range(len(cfg['stops'])))
+    check = at(tC - 250, 'at up bwcheck', inner=f'<b>{cfg["check"][0]}</b>{ticks}<small>{cfg["check"][1]}</small>')
     return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
-            f'<div class="bwtl">{rail}{stops}{lapse}</div>{check}</div>')
+            f'<div class="bwtl">{rail}{stops}{mark}</div>{check}</div>')
+
+
+BW_BILL = {'at': 'invoice', 'at2': 'line', 'at3': 'records', 'at4': 'pays',
+           'left': 'Their invoice', 'right': 'Our own records', 'out': 'Reconciled, then sent',
+           'rows': [['Group health', 1], ['Group life', 1], ['Pension list bill', 1], ['Adjustments', 0], ['Arrears', 1]]}
 
 
 def s_bwbill(i, sc, D):
-    """Their invoice against our records, line by line, before anybody pays."""
-    tI, tLn, tR, tP = w(i, 'invoice'), w(i, 'line'), w(i, 'records'), w(i, 'pays')
-    rows = [('Group health', True), ('Group life', True), ('Pension list bill', True), ('Adjustments', False), ('Arrears', True)]
-    left = ''.join(at(tI + 150 + k * 110, 'at l bwbr', inner=f'<span>{n}</span><i class="bwbv"></i>') for k, (n, _) in enumerate(rows))
-    right = ''.join(at(tR + 100 + k * 110, 'at l bwbr', inner=f'<span>{n}</span><i class="bwbv"></i>') for k, (n, _) in enumerate(rows))
-    links = ''.join(f'<i class="bwlink{"" if ok else " bad"}" style="--at:{ms(tLn + 120 + k * 150)};top:{14 + k * 19.6}%"></i>'
-                    for k, (_, ok) in enumerate(rows))
-    out = at(tP - 300, 'at pop bwpay', inner=f'{ico("check", "ii")} Reconciled, then sent')
+    """Two columns reconciled line by line, with one line that does not agree."""
+    cfg = sc.get('bill', BW_BILL)
+    tI, tLn, tR, tP = w(i, cfg['at']), w(i, cfg['at2']), w(i, cfg['at3']), w(i, cfg['at4'])
+    rows = cfg['rows']
+    left = ''.join(at(tI + 150 + k * 110, 'at l bwbr', inner=f'<span>{r[0]}</span><i class="bwbv"></i>') for k, r in enumerate(rows))
+    right = ''.join(at(tR + 100 + k * 110, 'at l bwbr', inner=f'<span>{r[0]}</span><i class="bwbv"></i>') for k, r in enumerate(rows))
+    links = ''.join(f'<i class="bwlink{"" if r[1] else " bad"}" style="--at:{ms(tLn + 120 + k * 150)};top:{14 + k * 19.6}%"></i>'
+                    for k, r in enumerate(rows))
+    out = at(tP - 300, 'at pop bwpay', inner=f'{ico("check", "ii")} {cfg["out"]}')
     return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
-            f'<div class="bwbill"><div class="bwbc">{at(tI - 150, "at up bwbh", inner="Their invoice")}{left}</div>'
+            f'<div class="bwbill"><div class="bwbc">{at(tI - 150, "at up bwbh", inner=cfg["left"])}{left}</div>'
             f'<div class="bwbm">{links}</div>'
-            f'<div class="bwbc">{at(tR - 150, "at up bwbh", inner="Our own records")}{right}</div></div>{out}</div>')
+            f'<div class="bwbc">{at(tR - 150, "at up bwbh", inner=cfg["right"])}{right}</div></div>{out}</div>')
+
+
+BW_HALF = {'at': 'Half', 'at2': 'other', 'at3': 'smaller',
+           'l': ['The branch&rsquo;s admin', 'it has to be right'],
+           'r': ['Making it unnecessary', 'a form, a script, a page'],
+           'line': 'The first half gets smaller every month you are here.'}
 
 
 def s_bwhalf(i, sc, D):
-    """The shape of the job: the admin, and making the admin smaller."""
-    tH, tO, tS = w(i, 'Half'), w(i, 'other'), w(i, 'smaller')
+    """Two halves, and one of them shrinking."""
+    cfg = sc.get('split', BW_HALF)
+    tH, tO, tS = w(i, cfg['at']), w(i, cfg['at2']), w(i, cfg['at3'])
     return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'<div class="bwsplit" style="--at:{ms(tH - 200)};--sh:{ms(tS)}">'
-            f'<i class="bwhl"><b>The branch&rsquo;s admin</b><small>it has to be right</small></i>'
-            f'<i class="bwhr" style="--at:{ms(tO - 150)}"><b>Making it unnecessary</b><small>a form, a script, a page</small></i>'
-            f'</div>{at(tS + 300, "at up bwaline", inner="The first half gets smaller every month you are here.")}</div>')
+            f'<i class="bwhl"><b>{cfg["l"][0]}</b><small>{cfg["l"][1]}</small></i>'
+            f'<i class="bwhr" style="--at:{ms(tO - 150)}"><b>{cfg["r"][0]}</b><small>{cfg["r"][1]}</small></i>'
+            f'</div>{at(tS + 300, "at up bwaline", inner=cfg["line"])}</div>')
+
+
+BW_SCRIPT = {'at': 'hand', 'at2': 'script',
+             'lhead': 'By hand, every week', 'rhead': 'Apps Script &middot; the branch&rsquo;s own project',
+             'rows': ['Open the sheet', 'Copy the row', 'Type it again'],
+             'code': ['function fileIt_(row) {', "  const t = tab_('Log Book');", '  t.appendRow([now_(), row.doc,', '    dept_(row), who_()]);', '}'],
+             'badge': 'Deployed'}
 
 
 def s_bwscript(i, sc, D):
-    """By hand today, a script tomorrow — the editor, and the rows that then tick themselves."""
-    tH, tS = w(i, 'hand'), w(i, 'script')
+    """By hand today, a rule tomorrow — the editor, and the rows that then tick themselves."""
+    cfg = sc.get('script', BW_SCRIPT)
+    tH, tS = w(i, cfg['at']), w(i, cfg['at2'])
     by = ''.join(at(tH + 120 + k * 150, 'at l bwby', inner=f'<span>{x}</span><i class="bwclk">{ico("clock")}</i>')
-                 for k, x in enumerate(('Open the sheet', 'Copy the row', 'Type it again')))
-    code = ['function fileIt_(row) {', '  const t = tab_(\'Log Book\');', '  t.appendRow([now_(), row.doc,', '    dept_(row), who_()]);', '}']
+                 for k, x in enumerate(cfg['rows']))
     ed = ''.join(f'<i class="bwcl" style="--at:{ms(tS + 150 + k * 260)}">{typed(tS + 150 + k * 260, H.escape(x), 26, "tyy bwtx")}</i>'
-                 for k, x in enumerate(code))
-    done = ''.join(f'<i class="bwdn" style="--at:{ms(tS + 1750 + k * 160)}">{ico("check")}</i>' for k in range(3))
+                 for k, x in enumerate(cfg['code']))
+    # The ticks mean "and then these do themselves". Where the left column is a
+    # queue the rule REPLACES rather than automates, "ticks": false drops them —
+    # a green tick beside "wait for the release" reads as the wait being fine.
+    done = ('' if cfg.get('ticks') is False else
+            ''.join(f'<i class="bwdn" style="--at:{ms(tS + 1750 + k * 160)}">{ico("check")}</i>' for k in range(len(cfg['rows']))))
     return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
-            f'<div class="bwsc"><div class="bwcard2">{at(tH - 200, "at up bwch2", inner="By hand, every week")}{by}'
+            f'<div class="bwsc"><div class="bwcard2">{at(tH - 200, "at up bwch2", inner=cfg["lhead"])}{by}'
             f'<div class="bwdns">{done}</div></div>'
             f'<div class="bwarr" style="--at:{ms(tS - 300)}"><i class="bwln"></i></div>'
-            f'<div class="bwcard2 ed">{at(tS - 200, "at up bwch2", inner="Apps Script &middot; the branch&rsquo;s own project")}{ed}'
-            f'<span class="bwdeploy" style="--at:{ms(tS + 1550)}">Deployed</span></div></div></div>')
+            f'<div class="bwcard2 ed">{at(tS - 200, "at up bwch2", inner=cfg["rhead"])}{ed}'
+            f'<span class="bwdeploy" style="--at:{ms(tS + 1550)}">{cfg["badge"]}</span></div></div></div>')
 
 
-BWTOOLS = [('Apps', 'bolt', 'Apps Script', 'the branch&rsquo;s own 100,000 lines'),
-           ('Salesforce', 'sync', 'Salesforce', 'every client, every task'),
-           ('Workspace', 'mail', 'Google Workspace', 'Sheets, Drive, the mailbox'),
-           ('Claude', 'target', 'Claude', 'beside you, on the real work')]
+BWTOOLS = [['Apps', 'bolt', 'Apps Script', 'the branch&rsquo;s own 100,000 lines'],
+           ['Salesforce', 'sync', 'Salesforce', 'every client, every task'],
+           ['Workspace', 'mail', 'Google Workspace', 'Sheets, Drive, the mailbox'],
+           ['Claude', 'target', 'Claude', 'beside you, on the real work']]
 
 
 def s_bwkeys(i, sc, D):
     """The tools, already paid for and already connected — and the request form, crossed out."""
-    tK, tR = w(i, 'keys'), w(i, 'request')
+    tK, tR = w(i, sc.get('at', 'keys')), w(i, sc.get('at2', 'request'))
     cards = ''
-    for (word, ic, n, s) in BWTOOLS:
-        t = w(i, word)
+    for c in sc.get('tools', BWTOOLS):
+        t = w(i, c[0])
         cards += at(t - 200, 'at pop bwtool', inner=(
-            f'<span class="bwti">{ico(ic)}</span><b>{n}</b><small>{s}</small>'
-            f'<i class="bwok" style="--at:{ms(t + 320)}">{ico("check")} connected</i>'))
-    keys = at(tK - 150, 'at pop bwkey', inner=f'<span class="bwki">{ico("bolt")}</span><b>You get the keys</b>')
-    form = at(tR - 150, 'at pop bwform', inner=f'<span class="bwfi">{ico("file")}</span><b>Request form</b>'
+            f'<span class="bwti">{ico(c[1])}</span><b>{c[2]}</b><small>{c[3]}</small>'
+            f'<i class="bwok" style="--at:{ms(t + 320)}">{ico("check")} {sc.get("ok", "connected")}</i>'))
+    keys = at(tK - 150, 'at pop bwkey', inner=f'<span class="bwki">{ico("bolt")}</span><b>{sc.get("keys", "You get the keys")}</b>')
+    form = at(tR - 150, 'at pop bwform', inner=f'<span class="bwfi">{ico("file")}</span><b>{sc.get("form", "Request form")}</b>'
              f'<i class="bwx" style="--at:{ms(tR + 260)}"></i>')
     return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'<div class="bwtools">{cards}</div><div class="bwvs">{keys}{form}</div></div>')
@@ -1780,16 +1848,16 @@ def s_bwkeys(i, sc, D):
 
 def s_bwclose(i, sc, D):
     """The ask. The camera does not move here: a QR under a moving camera does not decode."""
-    tS, tC, tB = w(i, 'seat'), w(i, 'Chaguanas'), w(i, 'build')
-    ln = (at(tS, 'at up cl', inner='One administrator&rsquo;s seat.')
-          + at(tC, 'at up cl', inner='Chaguanas.')
-          + at(tB, 'at up cl last', inner='Build with us.'))
+    ws = sc.get('lines', [['seat', 'One administrator&rsquo;s seat.'], ['Chaguanas', 'Chaguanas.'], ['build', 'Build with us.']])
+    ts = [w(i, x[0]) for x in ws]
+    ln = ''.join(at(t, 'at up cl' + (' last' if k == len(ws) - 1 else ''), inner=x[1])
+                 for k, (t, x) in enumerate(zip(ts, ws)))
     # side by side, not stacked: the code needs height to stay scannable and a
     # 16:9 frame has width to spare. The shield is in the chrome bar already.
     return (f'<div class="center bwfin" id="finale">'
             f'<div class="bwfl">{at(150, "at up ebw", inner=sc["eyebrow"])}<div class="cls">{ln}</div></div>'
-            f'<div class="bwend" style="--at:{ms(tS + 250)}"><img class="bwqr" src="data:image/png;base64,{BWQR}" alt="">'
-            f'<div class="bwurl"><b>{sc["url"]}</b><span>Fifteen minutes.<br>He reads every one himself.</span></div></div></div>')
+            f'<div class="bwend" style="--at:{ms(ts[0] + 250)}"><img class="bwqr" src="data:image/png;base64,{bwqr(sc)}" alt="">'
+            f'<div class="bwurl"><b>{sc["url"]}</b><span>{sc.get("urlsub", "Fifteen minutes.<br>He reads every one himself.")}</span></div></div></div>')
 
 
 R_BW = {'bwopen': s_bwopen, 'bwnotools': s_bwnotools, 'bwturn': s_bwturn, 'bwstack': s_bwstack, 'bwgrid': s_bwgrid,
@@ -2626,7 +2694,7 @@ last = out.rindex('</style>')
 out = out[:last] + CSS.replace('__PLEX__', PLEX).replace('__LOGO__', LOGO) + (LB_CSS if LB else '') + (DB_CSS if DBF else '') + (BW_CSS if BW else '') + '\n' + out[last:]
 out = re.sub(r'<title>.*?</title>', '<title>' + TITLES[KEY] + ' — Ricky Rampersad Branch</title>', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="mark" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="mark mk"></i>', out, count=1, flags=re.S)
-out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>' + ('Build with us' if BW else 'Delivery Book' if DBF else 'Log Book' if LB else 'Client transition board') + '</i></span>', out, count=1, flags=re.S)
+out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>' + ('The underwriting seat' if KEY.startswith('uw') else 'Build with us' if BW else 'Delivery Book' if DBF else 'Log Book' if LB else 'Client transition board') + '</i></span>', out, count=1, flags=re.S)
 out = re.sub(r'<span class="live">.*?</span>', '', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="biglogo" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="biglogo mk"></i>', out, count=1, flags=re.S)
 FAVICON = 'data:image/svg+xml,' + (ROOT / 'favicon.svg').read_text().replace('#', '%23').replace('<', '%3C').replace('>', '%3E').replace('"', "'").replace('\n', '')
@@ -2635,9 +2703,9 @@ out = re.sub(r'const cols = \[[^\]]*\]', 'const cols = ["#ffffff", "#00E5FF", "#
 out = re.sub(r'<h1>The launch of<br>donthaveanagent<em>\.com</em></h1>', '<h1>' + TITLES[KEY].replace(', ', ',<br><em>') + '</em></h1>', out, count=1)
 out = re.sub(r'<div class="eyebrow" style="margin-top:16px">[^<]*</div>', '<div class="eyebrow" style="margin-top:16px">A Ricky Rampersad Branch film</div>', out, count=1)
 out = re.sub(r'<button id="playBtn"><span class="tri"></span>[^<]*</button>', '<button id="playBtn"><span class="tri"></span>Watch — ' + ('under two minutes' if sum(DUR) < 120000 else 'two and a half minutes' if sum(DUR) < 160000 else f'{round(sum(DUR) / 60000)} minutes') + '</button>', out, count=1)
-out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', ('What you would actually work on, and what you would build.' if BW else 'Handed over, recorded, and the client told: the same day.' if DBF else 'Log it, hand it in, see it sent: the same day.' if LB else 'One client, start to finish: what happens, who does it, and what counts.' if KEY == 'boardflow' else 'How the branch names agents, and how agents report back.'), out, count=1)
-MSG = ('const MSG = "' + TITLES[KEY] + ': ' + ('one administrator\'s seat, and what the job actually is.' if BW else 'a short film on recording cheques and contracts.' if DBF else 'a short film on the new Log Book.' if LB else 'a short film on the client transition board.') + '\\n\\n" +\n'
-       '  "▶ https://rickyrampersadbranch.com/' + ('buildwithus' if BW else 'deliverybook-film' if DBF else 'logbook-films' if LB else 'orphan-transition/board-films.html') + '";')
+out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', ('What you would actually be underwriting, and what you would build.' if KEY.startswith('uw') else 'What you would actually work on, and what you would build.' if BW else 'Handed over, recorded, and the client told: the same day.' if DBF else 'Log it, hand it in, see it sent: the same day.' if LB else 'One client, start to finish: what happens, who does it, and what counts.' if KEY == 'boardflow' else 'How the branch names agents, and how agents report back.'), out, count=1)
+MSG = ('const MSG = "' + TITLES[KEY] + ': ' + ('one underwriting seat in a new general insurance agency.' if KEY.startswith('uw') else 'one administrator\'s seat, and what the job actually is.' if BW else 'a short film on recording cheques and contracts.' if DBF else 'a short film on the new Log Book.' if LB else 'a short film on the client transition board.') + '\\n\\n" +\n'
+       '  "▶ https://rickyrampersadbranch.com/' + ('underwriter' if KEY.startswith('uw') else 'buildwithus' if BW else 'deliverybook-film' if DBF else 'logbook-films' if LB else 'orphan-transition/board-films.html') + '";')
 out = re.sub(r'const MSG = ".*?";', lambda m: MSG, out, count=1, flags=re.S)
 out = out.replace('document.getElementById("waBtn").href =', 'if (document.getElementById("waBtn")) document.getElementById("waBtn").href =')
 # the narration and the bed are in the MP4; the page itself plays no music of its own
