@@ -713,7 +713,36 @@ in it).
 
 **Each QR is checked, not assumed.** They encode the three page addresses, and
 each was decoded back out of the **finished, encoded video** — at full size and
-again from a 405×720 phone-sized preview — so they are known to scan.
+again from a 405 px phone-sized preview — so they are known to scan.
+
+**A QR is sized as a share of the frame's WIDTH, like the type, and the wide
+cut needs its own number.** At the same unit size as the other two shapes it
+came out 14% of a 1920-wide frame — 53 px once a feed plays it at ~405 px, and
+it decoded as nothing. It stacks over its caption in the wide cut now, at about
+a third of the width. The upright and feed cuts were never affected: the frame
+is 1080 wide, so the same units are already a much larger share of it.
+
+**The check samples five moments, not one, and that is what found the real
+fault.** `/joinourbranch` is the longest of the three addresses, so its code
+carries the most modules and is the first to fail — and at 405 px it decoded at
+four timestamps in the closing scene and not at the fifth, in several shapes.
+Making the code bigger did not fix that, because size was not the cause.
+
+**The camera was.** Every scene pushes in slowly, `scale(1.015)` to
+`scale(1.07)` across its length, which is what keeps a held frame alive. On a
+QR it is poison: a continuously changing, non-integer scale resamples the
+code's modules differently on every single frame, so one frame decodes and the
+next does not once a feed has shrunk the picture. **The closing scene now holds
+its camera at exactly 1**, and takes its motion from the moving ground, the
+scan line and the words instead; the code arrives on an opacity fade rather
+than the usual scale-up pop, and its width is rounded to whole pixels after the
+fit pass (490 u of a 1.315 px unit is 644.35, and a fractional size resamples
+every module edge). With nothing scaling it, every frame of that scene is
+identical in the code's region: it decodes at all of them or none, which is
+what makes the check meaningful rather than lucky.
+
+Every shape must decode at all five timestamps, at both sizes, or the run
+fails.
 
 ## Re-cutting one
 
