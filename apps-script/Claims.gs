@@ -57,7 +57,7 @@ var CLAIMS = {
    * that was pasted and never deployed — from outside those look identical,
    * and so does a later paste of an older copy winning the same function
    * name. Change it with any change worth deploying. */
-  BUILD: '2026-11-05g',
+  BUILD: '2026-11-07a',
 
   /* ---- where notifications go ---------------------------- */
 
@@ -135,6 +135,22 @@ var CLAIMS = {
     'support@rickyrampersadbranch.com',                  // branch support inbox
   ],
 
+  /* The Workspace this project is meant to run under.
+   *
+   * Asked for on 7 November 2026: "the work code claims is on my personal and
+   * would like to move to workspace". It matters for more than tidiness. A
+   * script owned by the personal Gmail sends claims mail under that account's
+   * allowance — about a hundred recipients a day, and every claim copies three
+   * addresses — which is the ceiling that made MailRelay.gs necessary for the
+   * tracker. It also means every claim document lives in a personal Drive that
+   * nobody at the branch can reach if the account is ever lost.
+   *
+   * `?action=ping` reports the DOMAIN this deployment runs as, so whether a
+   * move actually took is answerable from a browser. The domain only, never
+   * the address: that endpoint needs no sign-in, support@ is already published
+   * all over this repository, and a personal address is not. */
+  OWNER_DOMAIN: 'rickyrampersadbranch.com',
+
   /* ---- the Salesforce task ------------------------------------------------
    * Asked for on 5 November 2026: "a claim is opened with a task". Until then a
    * filed claim became a Claims__c row in the ledger and nothing else, so it
@@ -158,6 +174,72 @@ var CLAIMS = {
        refuses is dropped and the task files without it. */
     TYPE: 'Claims/ Mat',
     DUE_WORKING_DAYS: 2,
+  },
+
+  /* ---- the claim record in Salesforce ------------------------------------
+   * Asked for on 6 November 2026: "if its a claim it will create a claim on the
+   * claim object related to the risk".
+   *
+   * OBJECT is `Claims_Revised__c`, NOT `Claims__c`. Measured on the live org
+   * that day: Claims__c holds 3,509 records of which 994 are from 2015 and
+   * exactly ONE is from 2026 — the branch stopped using it around 2016.
+   * Claims_Revised__c is the live one: 21 this year, 34 in 2025, 59 in 2024,
+   * continuous since 2019, and it is what GIRenewals.gs already reads for a
+   * client's claims history. A ledger row written to the dead object is a row
+   * nobody will ever look at.
+   *
+   * THE VEHICLE OR THE TRANSACTION? Asked in those words on 6 November 2026.
+   * Neither, and the describe is the authority rather than the field list:
+   * Claims_Revised__c has exactly five lookups — Contact__c (master-detail,
+   * REQUIRED), CLIENT_PORTFOLIO__c (master-detail, REQUIRED), Claims_Officer__c
+   * (a Contact), Claims_Revis__c (an Account) and Requirement__c. No
+   * Risk_Details__c and no TRANSACTIONS__c, and its only custom child is
+   * Requirement_Claims__c. All 25 of the most recent records agree: every one
+   * hangs off a CLIENT_PORTFOLIO__c whose record type is the line (MOTOR,
+   * HEALTH, HEALTH (GROUP), PROPERTY, LIFE) plus the client's Contact.
+   *
+   * BUT THE CLAIM AND THE VEHICLE MEET AT THE POLICY RECORD, which is what
+   * makes "related to the risk" true without a new field. Risk_Details__c — the
+   * vehicle — has TWO required parents of its own: TRANSACTIONS__c (the billing
+   * record) and Client_Portfolio_Look_Up__c (the policy record). So a claim
+   * written on the client's MOTOR policy record sits on the same parent as
+   * every vehicle term of that policy, and from the vehicle the claim is one
+   * hop away. That is why the register now carries 'Portfolio Id' off the
+   * vehicle's own Client_Portfolio_Look_Up__c (see registerSheet_), and why
+   * sfClaimParents_ prefers it for a motor claim.
+   *
+   * RISK_FIELD would be the API name of a lookup from the claim to
+   * Risk_Details__c. It is EMPTY on purpose: the describe proves no such field
+   * exists, so sending one is a guaranteed failed insert on every claim — two
+   * Salesforce calls instead of one, on a page a client is waiting on, and an
+   * error in the log on every single claim, which hides the real ones. Set it
+   * to 'Risk_Details__c' (or whatever it is called) the day an admin adds the
+   * lookup; nothing else changes, and the attempt is dropped if the org still
+   * refuses it (gblSfwSave_'s rule in GroupBilling.gs).
+   *
+   * Meanwhile the vehicle is carried the way the branch's own 35 motor claims
+   * carry it: the plate in Vehicle__c (Text(7)), letters and digits only and no
+   * separator — 'TAA1234', not 'TAA 1234' — which is exactly what normKey_ and
+   * data/build-vehicle-register.py's norm_reg already produce. (The example is
+   * invented. This file is served from the repository root, so a real
+   * registration in a comment is a published one.) The TERM and the
+   * Risk_Details__c id are named in Notes__c, so which year of cover the claim
+   * attached to is on the record in words even without the lookup.
+   *
+   * Never Policy__c: it is a FORMULA field on both objects, and Salesforce
+   * rejects a write to one. Never Vehiclee__c: a duplicate field, null on every
+   * record the branch has ever made. */
+  SF_CLAIM: {
+    ON: true,
+    OBJECT: 'Claims_Revised__c',
+    RISK_FIELD: '',
+    /* Claim_Type__c picklist values the branch has actually used, counted on
+       the live org: Health 183, Motor 35, Property 14, Life 3, Critical Illness
+       1, Other 1. Pension has no value of its own, so it takes Other. */
+    TYPES: {
+      motor: 'Motor', health: 'Health', property: 'Property',
+      life: 'Life', pension: 'Other',
+    },
   },
 
   FROM_NAME: 'Ricky Rampersad — Claims TT',
@@ -379,6 +461,21 @@ function testModeOff_() {
   PropertiesService.getScriptProperties().deleteProperty('TEST_MODE');
   SpreadsheetApp.getUi().alert('Test mode is OFF — emails go to real recipients again.');
 }
+
+/* The same two, under names the editor's Run list will show.
+ *
+ * Added 7 November 2026, for the move to the Workspace. A fresh copy of the
+ * sheet has no TEST_MODE property, and no property means LIVE — so the very
+ * first step on a new copy is to turn test mode on, BEFORE anything is
+ * deployed, or the first claim through it e-mails Guardian's real health and
+ * motor desks. The menu does that, and does it today; but the menu only
+ * appears once onOpen has run, and a name ending in an underscore is private
+ * to Apps Script and is not offered in the Run list, so on a fresh copy there
+ * was a window with no way to do it at all. These two are reachable either
+ * way. The menu points at them now; the private pair stays for anything else
+ * that calls it. */
+function turnTestModeOn() { testModeOn_(); }
+function turnTestModeOff() { testModeOff_(); }
 
 /** Human labels for the claim types the site offers. */
 var CLAIM_TYPES = {
@@ -1001,10 +1098,17 @@ function syncVehicleRegister() {
     "SELECT Id, Policy__c, Vehicle__c, Vehicle_Make__c, Model__c, Year_of_Manufacture__c, " +
     "Chassis__c, Engine__c, Motor_Vehicle_Coverage_Type__c, Cover1__c, Windscreen__c, " +
     "Carrier__c, From__c, To__c, Vehicle_Status__c, Contact__c, Email__c, " +
+    "Client_Portfolio_Look_Up__c, " +
     "Insured__r.Name, Insured__r.Email, Insured__r.MobilePhone, Insured__c, " +
     "Insured__r.DP__c, Insured__r.Drivers_Permit_Issue_Date__c, Insured__r.Driver_s_Permit_Expiry__c " +
     "FROM Risk_Details__c WHERE Vehicle__c != null ORDER BY To__c NULLS FIRST");
 
+  /* Client_Portfolio_Look_Up__c is NOT in TERM_FIELDS, deliberately. A term's
+     other fields take the last row's value; its Risk Id takes the FIRST row's
+     (see the tie-break below). If the policy record followed TERM_FIELDS then a
+     duplicate pair could give the term a policy record belonging to a different
+     row than the Risk Id it names — and the claim would be parented on one
+     record while naming another. It is read off the same row as the Id. */
   var TERM_FIELDS = ['Motor_Vehicle_Coverage_Type__c', 'Cover1__c', 'Windscreen__c',
     'Carrier__c', 'From__c', 'To__c', 'Vehicle_Status__c', 'Policy__c'];
   var ID_FIELDS = ['Vehicle__c', 'Vehicle_Make__c', 'Model__c',
@@ -1043,7 +1147,15 @@ function syncVehicleRegister() {
        and the first row is the fuller one in every duplicate pair seen so far.
        This is the renewal desk's own tie-break (girDedupe_: "else the first
        entered"), which has no billing record to prefer here. */
-    if (!car.terms[tk].Id && r.Id) car.terms[tk].Id = r.Id;
+    if (!car.terms[tk].Id && r.Id) {
+      car.terms[tk].Id = r.Id;
+      car.terms[tk].portfolio = String(r.Client_Portfolio_Look_Up__c || '');
+    }
+    /* Only if the row that gave the Id had none. The lookup is required on
+       Risk_Details__c, so in practice the first branch always fills it. */
+    if (!car.terms[tk].portfolio && r.Client_Portfolio_Look_Up__c) {
+      car.terms[tk].portfolio = String(r.Client_Portfolio_Look_Up__c);
+    }
   });
 
   var out = [];
@@ -1065,7 +1177,8 @@ function syncVehicleRegister() {
         String(m.permit || ''), String(m.permitIssue || ''), String(m.permitExpiry || ''),
         String(m.insuredId || ''),
         (from || to) ? (from || '?') + ' → ' + (to || '?') : '',
-        String(t.Id || '')]);
+        String(t.Id || ''),
+        String(t.portfolio || '')]);
     });
   });
 
@@ -1146,37 +1259,202 @@ function sfFindPortfolio_(query) {
 
 /* ---- claim write-back ---- */
 
-/** Every filed claim becomes a Claims__c row in the branch ledger. */
-function sfLogClaim_(claim) {
-  if (!sfConnected_() || !sfProps_().writeClaims) return '';
-  if (testMode_()) { logClaim_(claim.ref, 'sf-writeback-skipped', 'system', 'test mode'); return ''; }
-  var typeMap = {
-    'Motor': { cat: 'General Insurance', type: 'General' },
-    'Home / Property': { cat: 'General Insurance', type: 'General' },
-    'Health / Medical': { cat: 'Health', type: 'Medical' },
-    'Life / Critical Illness': { cat: 'Life & Critical Illness', type: 'Life' },
-    'Pension / Annuity': { cat: 'Life & Critical Illness', type: 'Maturity' },
+/** The two parents a Claims_Revised__c record cannot be created without.
+ *
+ *  CLIENT_PORTFOLIO__c and Contact__c are both MASTER-DETAIL on that object,
+ *  so both are required on insert — there is no filing one with a policy
+ *  number alone. The registers hold the ids already, and a policy the sync has
+ *  not seen yet is resolved live.
+ *
+ *  THE VEHICLE COMES FIRST on a motor claim, and that is the whole of "related
+ *  to the risk" (see CLAIMS.SF_CLAIM). The matched term's own
+ *  Client_Portfolio_Look_Up__c is the policy record that term was written
+ *  under, so the claim lands on the same parent as the vehicle and on the right
+ *  YEAR of it. The policy register is second best here for two reasons: it is
+ *  built WHERE POLICY__c != null, and one of the branch's only two motor claims
+ *  hangs off a MOTOR policy record with a null policy number; and it is keyed
+ *  on the policy number, which changes between years while the vehicle does
+ *  not.
+ *
+ *  Returns {portfolio, contact, line} with '' for anything it could not find.
+ *  Never throws: the caller degrades to a note on the claim row. */
+function sfClaimParents_(claim) {
+  var out = { portfolio: '', contact: '', line: '' };
+  var policyNo = String((claim.extra && claim.extra._policy && claim.extra._policy.policy) ||
+    claim.policy || '').trim();
+
+  // The vehicle term knows both ids for its own year of cover.
+  var plate = String((claim.extra && claim.extra.vehicleReg) || '').trim();
+  if (plate) {
+    try {
+      /* vehicleForClaim_ answers {row, terms, matched}, NOT a row — reading it
+         as a row returns undefined for every field and says nothing about it,
+         which is how both of these quietly wrote no Contact and no Risk the
+         first time round. */
+      var vhit = vehicleForClaim_(plate, iso_(claim.incidentDate));
+      var vrow = (vhit && vhit.row) || findVehicle_(plate);
+      if (vrow) {
+        out.portfolio = String(vrow['Portfolio Id'] || '').trim();
+        out.contact = String(vrow['Contact Id'] || '').trim();
+      }
+    } catch (err) { /* fall through to the policy register */ }
+  }
+
+  // The policy register knows both ids outright: every non-motor claim, and a
+  // motor claim whose register row predates the 'Portfolio Id' column.
+  if (policyNo && (!out.portfolio || !out.contact || !out.line)) {
+    try {
+      var prow = findPolicyRecord_(policyNo);
+      if (prow) {
+        out.portfolio = out.portfolio || String(prow['Portfolio Id'] || '').trim();
+        out.contact = out.contact || String(prow['Contact Id'] || '').trim();
+        out.line = out.line || String(prow['Line'] || '').trim();
+      }
+    } catch (err) { /* fall through to the live read */ }
+  }
+
+  // Anything still missing, and Salesforce is connected: ask it.
+  if (policyNo && (!out.portfolio || !out.contact) && sfConnected_()) {
+    try {
+      var ids = sfPortfolioIds_(policyNo);
+      if (ids) {
+        out.portfolio = out.portfolio || ids.portfolio;
+        out.contact = out.contact || ids.contact;
+        out.line = out.line || ids.line;
+      }
+    } catch (err) { /* keep going */ }
+  }
+  return out;
+}
+
+/** Policy number -> {portfolio, contact, line} straight from Salesforce.
+ *
+ *  sfFindPortfolio_ next door selects neither Id nor Contact__c, because it
+ *  exists to PREFILL a form and a client is never shown an id. This one exists
+ *  to PARENT a record, so it asks for exactly the two ids and nothing else. */
+function sfPortfolioIds_(policyNo) {
+  var raw = String(policyNo || '').trim();
+  if (!raw) return null;
+  var variants = {};
+  [raw, raw.toUpperCase(), raw.replace(/\s+/g, ''), raw.toUpperCase().replace(/\s+/g, ''),
+   raw.toUpperCase().replace(/[^A-Z0-9]+/g, ' '), raw.toUpperCase().replace(/[^A-Z0-9]+/g, '-')]
+    .forEach(function (v) { if (v) variants[v.replace(/'/g, '')] = true; });
+  var list = Object.keys(variants).map(function (v) { return "'" + v + "'"; }).join(',');
+  var rows = sfQuery_('SELECT Id, POLICY__c, Contact__c, RecordType.Name ' +
+    'FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + list + ') LIMIT 2');
+  var key = normKey_(raw);
+  var hits = rows.filter(function (r) { return normKey_(r.POLICY__c) === key; });
+  if (hits.length !== 1) return null;
+  return {
+    portfolio: String(hits[0].Id || ''),
+    contact: String(hits[0].Contact__c || ''),
+    line: String((hits[0].RecordType || {}).Name || ''),
   };
-  var m = typeMap[claim.type] || { cat: 'General Insurance', type: 'General' };
+}
+
+/** The Risk_Details__c record this claim attached to: the exact term in force
+ *  on the date of loss, which is the register's own 'Risk Id'. '' when the
+ *  claim is not a motor claim or the plate matched nothing. */
+function sfClaimRiskId_(claim) {
+  var plate = String((claim.extra && claim.extra.vehicleReg) || '').trim();
+  if (!plate) return '';
+  try {
+    // {row, terms, matched} — see the note in sfClaimParents_.
+    var hit = vehicleForClaim_(plate, iso_(claim.incidentDate));
+    var row = (hit && hit.row) || findVehicle_(plate);
+    return row ? String(row['Risk Id'] || '').trim() : '';
+  } catch (err) { return ''; }
+}
+
+/** Every filed claim becomes a claim record in the branch ledger.
+ *
+ *  Claims_Revised__c, related to the policy and the client by their two
+ *  master-detail parents, carrying the plate and — once the org has a lookup
+ *  for it — the exact Risk_Details__c term. See CLAIMS.SF_CLAIM for why the
+ *  object changed, why Policy__c is never written, and what the branch's own
+ *  motor claims look like. */
+function sfLogClaim_(claim) {
+  if (!sfConnected_() || !sfProps_().writeClaims || !CLAIMS.SF_CLAIM.ON) return '';
+  if (testMode_()) { logClaim_(claim.ref, 'sf-writeback-skipped', 'system', 'test mode'); return ''; }
+
+  var parents = sfClaimParents_(claim);
+  if (!parents.portfolio || !parents.contact) {
+    /* Both are master-detail, so there is no record to create without them.
+       Said out loud on the claim rather than thrown: the claim is filed, the
+       desk has it, and this is a thing a person can put right. */
+    logClaim_(claim.ref, 'sf-claim-skipped', 'system',
+      'no ' + (!parents.portfolio ? 'CLIENT PORTFOLIO' : 'Contact') + ' id for policy ' +
+      (claim.policy || '(none given)') + ' — both are master-detail on ' +
+      CLAIMS.SF_CLAIM.OBJECT + ', so the record cannot be created. File it by hand.');
+    return '';
+  }
+
   var amount = Number(String(claim.amount).replace(/[^0-9.]/g, '')) || 0;
-  var id = sfCreate_('Claims__c', {
-    Name: claim.ref,
-    Policy__c: claim.policy || null,
-    Claim_Number__c: claim.ref,
-    Claim_Status__c: 'Opened',
-    Claim_Category__c: m.cat,
-    Type_Of_Claim__c: m.type,
-    Date_Submitted__c: Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'America/Port_of_Spain', 'yyyy-MM-dd'),
-    /* iso_ again, not a bare read: Date of Service was null on every claim
-       filed before this, because the raw Date the sheet hands back fails the
-       yyyy-MM-dd test and the test quietly answered null. */
-    Date_of_Service__c: iso_(claim.incidentDate) || null,
-    Patient_s_Name__c: String(claim.name).slice(0, 100),
-    Amount__c: amount,
-    Submitted_Charges__c: amount || null,
-  });
-  logClaim_(claim.ref, 'sf-claim-created', 'system', 'Claims__c/' + id);
+  var riskId = sfClaimRiskId_(claim);
+  var plate = normKey_((claim.extra && claim.extra.vehicleReg) || '');
+  var term = (claim.extra && claim.extra._policy) || {};
+
+  var notes = [];
+  notes.push('Filed on ' + CLAIMS.DRIVE_ROOT.split('—')[0].trim() + ' as ' + claim.ref + '.');
+  if (claim.subtype) notes.push('What happened: ' + claim.subtype + '.');
+  if (term.coverFrom || term.coverTo) {
+    notes.push('Assessed against the cover of ' + (term.coverFrom || '?') + ' to ' +
+      (term.coverTo || '?') + (term.policy ? ' on policy ' + term.policy : '') + '.');
+  }
+  if (riskId && !CLAIMS.SF_CLAIM.RISK_FIELD) notes.push('Risk Details record: ' + riskId + '.');
+  if (claim.flagged) notes.push('Flagged at filing: ' + claim.flagged);
+  if (claim.folder) notes.push('Documents: ' + claim.folder);
+
+  var fields = {};
+  fields.CLIENT_PORTFOLIO__c = parents.portfolio;
+  fields.Contact__c = parents.contact;
+  fields.Claim_Type__c = CLAIMS.SF_CLAIM.TYPES[claim.kind] || 'Other';
+  fields.Claim_Status__c = 'Opened';
+  fields.Claim_Reference__c = String(claim.ref).slice(0, 30);
+  fields.Date_Claim_Submitted__c = Utilities.formatDate(new Date(),
+    Session.getScriptTimeZone() || 'America/Port_of_Spain', 'yyyy-MM-dd');
+  /* iso_ again, not a bare read: the date the sheet hands back is a Date, and
+     the yyyy-MM-dd test it used to face answered null without saying so. */
+  if (iso_(claim.incidentDate)) fields.Service_Date__c = iso_(claim.incidentDate);
+  if (plate) fields.Vehicle__c = plate.slice(0, 7);
+  if (amount) fields.Submitted_Charges__c = amount;
+  if (notes.length) fields.Notes__c = notes.join('<br>').slice(0, 30000);
+  if (riskId && CLAIMS.SF_CLAIM.RISK_FIELD) fields[CLAIMS.SF_CLAIM.RISK_FIELD] = riskId;
+
+  var id = '', dropped = [];
+  try {
+    id = sfCreate_(CLAIMS.SF_CLAIM.OBJECT, fields);
+  } catch (err) {
+    /* A field the org has not got is dropped and the record is created without
+       it, never claimed as written — the Risk lookup is the one we expect to be
+       missing, because no claims object in this org has one yet. */
+    var bad = sfBadFields_(String(err && err.message ? err.message : err), fields);
+    if (!bad.length) throw err;
+    bad.forEach(function (f) { delete fields[f]; dropped.push(f); });
+    id = sfCreate_(CLAIMS.SF_CLAIM.OBJECT, fields);
+  }
+
+  logClaim_(claim.ref, 'sf-claim-created', 'system',
+    CLAIMS.SF_CLAIM.OBJECT + '/' + id +
+    ' · policy ' + parents.portfolio + ' · contact ' + parents.contact +
+    (plate ? ' · vehicle ' + plate : '') +
+    (riskId ? ' · risk ' + riskId : '') +
+    (dropped.length ? ' · the org refused: ' + dropped.join(', ') : ''));
   return id;
+}
+
+/** The field names in a Salesforce error, kept to the ones we actually sent.
+ *
+ *  Salesforce names them two ways and this reads both: INVALID_FIELD quotes
+ *  'No such column 'X' on sobject', and INVALID_FIELD_FOR_INSERT_UPDATE says
+ *  'Unable to create/update fields: X, Y'. */
+function sfBadFields_(message, sent) {
+  var msg = String(message || '');
+  var out = [];
+  Object.keys(sent).forEach(function (f) {
+    if (msg.indexOf(f) > -1) out.push(f);
+  });
+  return out;
 }
 
 
@@ -1673,6 +1951,177 @@ function apiMyClaims_(b) {
     agent: { name: CLAIMS.AGENT_NAME, phone: CLAIMS.AGENT_PHONE } };
 }
 
+
+/* ============================ the signed-in client ============================
+ *
+ * Asked for on 6 November 2026: "i am an existing client and it needs to put in
+ * my vehicle details when i log in ... its pulling in all the vehicles on the
+ * risk object".
+ *
+ * claims/index.html has called `myProfile` since it was written and the backend
+ * never had the action, so signing in answered "Unknown action", whoLoad()
+ * caught it and returned false, and a signed-in client saw NOTHING — no
+ * welcome, no claims, no policies, no vehicles. The page was built against an
+ * endpoint that did not exist, which is invisible from the outside because the
+ * failure is a silent catch.
+ *
+ * Every vehicle comes from the Vehicle Register, which since 5 November holds
+ * ONE ROW PER VEHICLE PER TERM straight off Risk_Details__c. So a client with
+ * one car insured for six years has one card and six terms behind it, and the
+ * claim is assessed against the term in force on the date of loss rather than
+ * whatever has been renewed since.
+ *
+ * WHAT A CLIENT IS NEVER SENT: the Contact id, the Risk id, another client's
+ * anything. The ids live in the register for the write-back's sake and are
+ * stripped here — vehicleTermList_ next door makes the same promise, for the
+ * same reason. */
+
+/** Rows of a register belonging to this identity — the same match
+ *  claimsForIdentity_ makes: an e-mail exactly, a mobile on its last seven
+ *  digits. Then widened by the Contact id, so a second car recorded under a
+ *  work e-mail still comes back when one of them matched. */
+function registerRowsFor_(sheet, identity) {
+  var id = normIdentity_(identity);
+  if (!id) return [];
+  var last = sheet.getLastRow();
+  if (last < 2) return [];
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(String);
+  var rows = sheet.getRange(2, 1, last - 1, sheet.getLastColumn()).getValues();
+  var obj = function (values) {
+    var o = {};
+    headers.forEach(function (h, i) { o[String(h).trim()] = values[i]; });
+    return o;
+  };
+  var mine = [], contacts = {};
+  rows.forEach(function (values) {
+    var r = obj(values);
+    var email = String(r['Email'] || '').trim().toLowerCase();
+    var mobile = String(r['Mobile'] || '').replace(/\D/g, '');
+    var hit = id.kind === 'email'
+      ? (email && email === id.value)
+      : (mobile && mobile.slice(-7) === id.value.slice(-7));
+    if (!hit) return;
+    mine.push(r);
+    var cid = String(r['Contact Id'] || '').trim();
+    if (cid) contacts[cid] = true;
+  });
+  if (Object.keys(contacts).length) {
+    rows.forEach(function (values) {
+      var r = obj(values);
+      var cid = String(r['Contact Id'] || '').trim();
+      if (!cid || !contacts[cid]) return;
+      if (mine.indexOf(r) > -1) return;
+      for (var i = 0; i < mine.length; i++) {
+        // Same row twice: the register is keyed by plate and term, or by policy.
+        if (String(mine[i]['Reg Key'] || mine[i]['Policy Key'] || '') ===
+            String(r['Reg Key'] || r['Policy Key'] || '') &&
+            String(mine[i]['Term'] || '') === String(r['Term'] || '')) return;
+      }
+      mine.push(r);
+    });
+  }
+  return mine;
+}
+
+/** What the signed-in client sees: who we think they are, their claims, and
+ *  every policy and vehicle we hold for them, each one a card they can file a
+ *  claim on with the details already filled in. */
+function apiMyProfile_(b) {
+  var sess = getSession_(b.token, 'client');
+  if (!sess) return { ok: false, error: 'signed-out' };
+
+  var mine = claimsForIdentity_(sess.id);
+  var views = mine.map(clientClaimView_).reverse();
+  var contact = { name: '', email: '', mobile: '' };
+
+  /* Their own details, newest claim first — what they filed with last is the
+     likeliest to be current. The registers fill any gap below. */
+  views.forEach(function (v, i) {
+    var hit = mine[mine.length - 1 - i];
+    if (!hit) return;
+    ['Client Name|name', 'Email|email', 'Mobile|mobile'].forEach(function (pair) {
+      var parts = pair.split('|');
+      var val = String(claimField_(hit, parts[0]) || '').trim();
+      if (val && !contact[parts[1]]) contact[parts[1]] = val;
+    });
+  });
+
+  var cards = [];
+
+  /* ---- the vehicles, every term, off Risk Details ---- */
+  var vrows = [];
+  try { vrows = registerRowsFor_(registerSheet_(), sess.id); } catch (err) { vrows = []; }
+  var byPlate = {}, plateOrder = [];
+  vrows.forEach(function (r) {
+    var key = String(r['Reg Key'] || normKey_(r['Vehicle Reg']) || '').trim();
+    if (!key) return;
+    if (!byPlate[key]) { byPlate[key] = []; plateOrder.push(key); }
+    byPlate[key].push(r);
+  });
+  plateOrder.forEach(function (key) {
+    /* The register is written newest term first, so the head of the list is
+       this year's cover — which is what the card shows and what a claim with no
+       date of loss yet is prefilled from. syncCoverTerm on the page re-picks
+       the right one the moment they type the date. */
+    var terms = byPlate[key];
+    var r = terms[0];
+    var v = function (f) { return String(r[f] === null || r[f] === undefined ? '' : r[f]).trim(); };
+    if (!contact.name && v('Client')) contact.name = v('Client');
+    if (!contact.email && v('Email')) contact.email = v('Email').toLowerCase();
+    if (!contact.mobile && v('Mobile')) contact.mobile = v('Mobile');
+    var descr = [v('Year'), v('Make'), v('Model')].filter(String).join(' ').trim();
+    cards.push({
+      line: 'Motor',
+      product: descr || 'Vehicle on file',
+      policy: v('Vehicle Reg') || v('Policy #'),
+      terms: termsFromRows_(terms),
+      prefill: {
+        vehicleReg: v('Vehicle Reg'),
+        vehicleMake: [v('Make'), v('Model')].filter(String).join(' '),
+        vehicleYear: v('Year'), chassis: v('Chassis #'), engine: v('Engine #'),
+        policy: v('Policy #'), coverage: v('Coverage Type'),
+        insuredValue: v('Insured Value (TT$)'), windscreen: v('Windscreen (TT$)'),
+        carrier: v('Carrier'),
+        coverFrom: iso_(r['Cover From']), coverTo: iso_(r['Cover To']),
+        name: v('Client'), email: v('Email'), mobile: v('Mobile'),
+        driverPermit: v('Permit #'),
+        permitIssue: iso_(r['Permit Issued']), permitExpiry: iso_(r['Permit Expires']),
+        permitOnFile: v('Permit #'),
+      },
+    });
+  });
+
+  /* ---- everything else: health, life, pension, property ---- */
+  var prows = [];
+  try { prows = registerRowsFor_(policyRegisterSheet_(), sess.id); } catch (err) { prows = []; }
+  prows.forEach(function (r) {
+    var v = function (f) { return String(r[f] === null || r[f] === undefined ? '' : r[f]).trim(); };
+    if (!contact.name && v('Client')) contact.name = v('Client');
+    if (!contact.email && v('Email')) contact.email = v('Email').toLowerCase();
+    if (!contact.mobile && v('Mobile')) contact.mobile = v('Mobile');
+    cards.push({
+      line: v('Line') || 'Policy',
+      product: v('Product') || v('Line') || 'Policy on file',
+      policy: v('Policy #'),
+      prefill: {
+        policy: v('Policy #'),
+        coverage: [v('Line'), v('Product')].filter(String).join(' — '),
+        name: v('Client'), email: v('Email').toLowerCase(), mobile: v('Mobile'),
+      },
+    });
+  });
+
+  logClaim_('(profile)', 'client-signed-in', 'client',
+    cards.length + ' policy card(s), ' + plateOrder.length + ' vehicle(s), ' +
+    views.length + ' claim(s) on file');
+
+  return { ok: true, contact: contact,
+    open: views.filter(function (v) { return !v.closed; }),
+    closed: views.filter(function (v) { return v.closed; }),
+    policies: cards,
+    agent: { name: CLAIMS.AGENT_NAME, phone: CLAIMS.AGENT_PHONE } };
+}
+
 /** May this request add files to this claim?
  *  - the filing session itself (uploadKey handed out by claimStart), or
  *  - a signed-in client who owns the claim, or
@@ -1843,10 +2292,26 @@ function claimPing_() {
      took an evening to find on 5 November 2026. */
   var staffCount = -1;
   try { staffCount = staffNames_().length; } catch (e) {}
+  /* Which account the web app runs as — the DOMAIN ONLY, for the reason in
+     CLAIMS.OWNER_DOMAIN. Three answers, each meaning something different:
+     the branch domain (it is on the Workspace); 'gmail.com' (still on the
+     personal account, so claims mail is under that account's ~100-recipient
+     day and the documents are in a personal Drive); and '' (the deployment
+     is not "Execute as: Me", or the permissions were never granted, in which
+     case nothing works at all). A bound script keeps its own /exec, so from
+     outside a moved project and an un-moved one are otherwise identical. */
+  var runsAs = '';
+  try {
+    var parts = String(Session.getEffectiveUser().getEmail() || '').split('@');
+    if (parts.length === 2) runsAs = parts[1].toLowerCase();
+  } catch (e) {}
+  var onWorkspace = runsAs === String(CLAIMS.OWNER_DOMAIN || '').toLowerCase();
   return {
     ok: true,
     service: 'claims-tt',
     build: CLAIMS.BUILD,
+    runsAs: runsAs,
+    onWorkspace: onWorkspace,
     testMode: test,
     live: !test,
     desks: lines,
@@ -1857,10 +2322,46 @@ function claimPing_() {
        answerable from a browser. `task` false with salesforce true means the
        switch is off, not that it failed. */
     writes: {
-      ledger: sfConnected_() && sfProps_().writeClaims,
+      ledger: sfConnected_() && sfProps_().writeClaims && CLAIMS.SF_CLAIM.ON,
+      /* Which object the claim record goes on. Claims__c is the one the branch
+         abandoned in 2016; Claims_Revised__c is the live one. Reported because
+         a row on the wrong object is a row nobody opens, and from outside the
+         two are indistinguishable. */
+      claimObject: CLAIMS.SF_CLAIM.OBJECT,
+      /* '' is correct and deliberate: no claims object in this org has a lookup
+         to Risk_Details__c. The claim reaches the vehicle through the policy
+         record both of them hang off. See CLAIMS.SF_CLAIM. */
+      riskField: CLAIMS.SF_CLAIM.RISK_FIELD || '',
       task: sfConnected_() && sfProps_().writeTasks && CLAIMS.TASK.ON,
       taskDueDays: CLAIMS.TASK.DUE_WORKING_DAYS,
     },
+    /* Whether a signed-in client gets their policies and vehicles back. The
+       page has called this action since it was written; the backend had no such
+       case until 6 November 2026, so signing in silently showed nothing. */
+    profile: true,
+    registers: (function () {
+      var out = { vehicleTerms: -1, policies: -1, vehiclePortfolioIds: 'unknown' };
+      try {
+        var vs = registerSheet_();
+        var last = vs.getLastRow();
+        out.vehicleTerms = Math.max(last - 1, 0);
+        /* Whether the vehicle register carries the policy-record id a motor
+           claim parents on. The sync rewrites the tab whole and the Salesforce
+           field is required, so the newest row having one means the sync has
+           run since 6 November 2026; 'not synced yet' means re-run "Sync
+           registers from Salesforce now" or a motor claim may find no parent.
+           Two cheap reads — the header and one row — because this endpoint
+           needs no sign-in and must not invite a heavy scan. */
+        var head = vs.getRange(1, 1, 1, vs.getLastColumn()).getValues()[0];
+        var col = head.indexOf('Portfolio Id') + 1;
+        if (!col) out.vehiclePortfolioIds = 'column missing';
+        else if (last < 2) out.vehiclePortfolioIds = 'register empty';
+        else out.vehiclePortfolioIds =
+          String(vs.getRange(last, col).getValue() || '').trim() ? 'yes' : 'not synced yet';
+      } catch (e) {}
+      try { out.policies = Math.max(policyRegisterSheet_().getLastRow() - 1, 0); } catch (e) {}
+      return out;
+    })(),
     maxFileMb: CLAIMS.MAX_FILE_MB,
     maxFiles: CLAIMS.MAX_FILES,
     /* One sentence a person can act on, so nobody has to read the flags. */
@@ -1873,6 +2374,11 @@ function claimPing_() {
         : 'LIVE. Claims on ' + Object.keys(lines).filter(function (k) { return !lines[k]; }).join(', ') +
           ' are filed and acknowledged but NOT forwarded — someone must pass ' +
           'them on by hand until those desk addresses are set.')) +
+      (runsAs
+        ? ''
+        : ' This deployment is not running as the account that owns it — set ' +
+          'Deploy → Manage deployments → Execute as: Me, and grant the ' +
+          'permissions once. Until then no claim can be stored at all.') +
       (sfConnected_()
         ? ''
         : ' Salesforce is not connected, so a filed claim opens no task and ' +
@@ -1884,6 +2390,11 @@ function claimPing_() {
       (test && staffCount > 0
         ? ' A staff sign-in code still reaches the staff member in test mode, ' +
           'so the desk can be tested; a client\'s code does not.'
+        : '') +
+      (runsAs && !onWorkspace
+        ? ' This is still on a ' + runsAs + ' account, not the branch ' +
+          'Workspace: claims mail goes out under that account\'s daily ' +
+          'allowance and every claim document sits in its Drive.'
         : ''),
   };
 }
@@ -1939,6 +2450,7 @@ function doPost(e) {
       case 'verifyCode':   out = apiVerifyCode_(body); break;
       case 'signOut':      out = apiSignOut_(body); break;
       case 'myClaims':     out = apiMyClaims_(body); break;
+      case 'myProfile':    out = apiMyProfile_(body); break;
       case 'staffData':    out = apiStaffData_(body); break;
       case 'staffAction':  out = apiStaffAction_(body); break;
       default:             out = { ok: false, error: 'Unknown action' };
@@ -2350,6 +2862,18 @@ function registerSheet_() {
        record itself, which is what lets the claim name the exact term it
        attached to. */
     'Term', 'Risk Id',
+    /* The TERM'S OWN policy record — Risk_Details__c.Client_Portfolio_Look_Up__c,
+       a REQUIRED lookup to CLIENT_PORTFOLIO__c, so every vehicle row has one.
+       Added 6 November 2026, and it is the answer to "is the claim on the
+       vehicle or the transaction": the claim's own required parent is the policy
+       record, so this is where the claim and the vehicle meet. See CLAIMS.SF_CLAIM.
+
+       It is not a convenience. The policy register is built WHERE POLICY__c !=
+       null, and one of the branch's only two motor claims hangs off a MOTOR
+       policy record with a null policy number — so that client is not in the
+       policy register at all, and without this column their claim could find no
+       parent and would be skipped. */
+    'Portfolio Id',
   ]);
 }
 
@@ -2696,7 +3220,18 @@ function apiVerifyPolicy_(b) {
  *  Only what the client is entitled to see about their own cover — no Contact
  *  id, no Risk id, no permit. Newest first, same order as the register. */
 function vehicleTermList_(query) {
-  return findVehicleTerms_(query).map(function (r) {
+  return termsFromRows_(findVehicleTerms_(query));
+}
+
+/** The same list from register rows already in hand.
+ *
+ *  registerRows_ reads the whole tab on every call and the register is one row
+ *  per vehicle per term, so a client with three cars signing in would otherwise
+ *  read several thousand rows three times over to answer a question the first
+ *  read had already answered. apiMyProfile_ has the rows; this is the mapper
+ *  without the lookup, so the two paths can never drift apart. */
+function termsFromRows_(rows) {
+  return (rows || []).map(function (r) {
     var v = function (f) { return String(r[f] === null || r[f] === undefined ? '' : r[f]).trim(); };
     return {
       coverFrom: iso_(r['Cover From']), coverTo: iso_(r['Cover To']),
@@ -4335,8 +4870,8 @@ function onOpen() {
     .addItem('Sync registers from Salesforce now', 'syncSalesforceNow')
     .addItem('Sync vehicles only (fast)', 'syncVehiclesNow')
     .addSeparator()
-    .addItem('🧪 Turn test mode ON (emails only reach you)', 'testModeOn_')
-    .addItem('Turn test mode OFF (live emails)', 'testModeOff_')
+    .addItem('🧪 Turn test mode ON (emails only reach you)', 'turnTestModeOn')
+    .addItem('Turn test mode OFF (live emails)', 'turnTestModeOff')
     .addSeparator()
     .addItem('Run the follow-up sweep now (test)', 'runFollowUpNow')
     .addItem('Clean up abandoned uploads', 'cleanupNow')

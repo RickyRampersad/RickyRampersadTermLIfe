@@ -49,7 +49,11 @@ CURRENT_WINS = {
 
 
 def norm_reg(value):
-    """PDJ-3899, PDJ 3899 and pdj3899 are the same vehicle."""
+    """TAA-1234, TAA 1234 and taa1234 are the same vehicle.
+
+    The example is invented. This file is served from the repository root,
+    so a real registration in a docstring is a published one.
+    """
     return re.sub(r"[^A-Z0-9]", "", (value or "").upper())
 
 

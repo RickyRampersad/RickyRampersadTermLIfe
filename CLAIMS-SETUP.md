@@ -20,6 +20,10 @@ steps, and only three of them are yours.
 claimant types their own policy number instead of it filling itself in, and
 nothing writes back to `Claims__c`. Everything else is unchanged.
 
+**Before step 2, read "Moving it on to the Workspace" below.** The sheet is on
+the personal Gmail today, and which account owns it decides the `/exec` — so
+doing the move first saves re-wiring the two pages twice.
+
 ### Re-paste `Claims.gs` — 4 November 2026 · **DONE, and verified live**
 
 Pasted and deployed on 4 November. The same `/exec` was kept, so nothing had
@@ -102,6 +106,120 @@ and publish a New version.** What it carries:
   labelled row above it. The sheet's Description column is untouched.
 
 Nothing to do on the site for this one; it is all backend.
+
+## Moving it on to the Workspace — 7 November 2026
+
+Asked for in these words: *"the work code claims is on my personal and would
+like to move to workspace"*. He is right, and it is the same move the motor
+quote made on 21 October — see `CLAUDE.md`, which has the one sentence that
+matters: **the sheet has to be OWNED by support@, not shared with it.** An
+editor can run the script, and then Deploy refuses with *"You do not have
+permission to perform this action"*, which looks like a Google fault and is
+not.
+
+**Where it is now.** "CLAIMSTT — Claims Tracker",
+`1taKGaSprdP_BCt4KCNQiQNcXt1ZRubC4CAtlrdxlKHo`, owned by the personal Gmail,
+made 6 August 2026. Three test claims on it and nothing real.
+
+**Why it is worth doing, beyond tidiness.** Two things, and the second is the
+one that bites later:
+
+- **The daily mail allowance.** A personal Google account allows about a
+  hundred recipients a day, and every claim copies three addresses, so about
+  thirty claims' notices in a day — before the acknowledgement, the chases and
+  the follow-up run. That exact ceiling is why `MailRelay.gs` had to be built
+  for the tracker. Under the Workspace it is roughly 1,500 and `MailApp` sends
+  as support@ by itself, so the `MS_*` Graph properties are never needed here.
+- **Every claim document lives in that account's Drive.** The folder is
+  "Claims TT — Ricky Rampersad Branch" and the claim rows link into it. On a
+  personal account nobody at the branch can reach a client's documents if the
+  account is ever lost, and there is no admin who can recover it.
+
+### First, thirty seconds that could save the whole job
+
+Open the sheet → **Share** → add `support@rickyrampersadbranch.com` as an
+editor → then the ⋮ beside that name and look for **Transfer ownership**.
+
+- **Offered?** Take it. The file id, the data, the Drive folder, the bound
+  script and every Script Property stay exactly as they are, and the `/exec`
+  URL does not change, so nothing on the site has to be re-wired. Then sign in
+  as support@, open Extensions → Apps Script, and publish **Deploy → Manage
+  deployments → ✏️ → New version** so the web app runs as the new owner.
+- **Not offered?** That is the likely answer — Google does not generally allow
+  an ownership transfer across the line between a personal account and a
+  Workspace in another organisation. Do the copy below instead.
+
+Either way, **check it took**: open
+`…/exec?action=ping` and read **`runsAs`**. It should say
+`rickyrampersadbranch.com`. `gmail.com` means the move has not happened, and
+`""` means the deployment is not *Execute as: Me* and nothing can be stored at
+all. That field is new in build `2026-11-07a` — a bound script keeps its own
+`/exec`, so until now a moved project and an un-moved one looked identical
+from outside, which is the failure this guide has already paid for twice.
+
+### The copy, if ownership will not transfer
+
+Sign in as **support@rickyrampersadbranch.com and nothing else** — not a
+second account in the same browser, which is what breaks Apps Script pages.
+Then:
+
+1. Open the sheet and **File → Make a copy**. Name it **Claims TT**. The copy
+   is owned by support@, and the bound script comes with it.
+2. **Delete the three test claims** on the copy (CLM-2611-6420, -6840, -9805)
+   and the two leftover tabs named *Untitled* and *Copy of Untitled*. Their
+   Drive links point into the old personal Drive anyway, so a copied test row
+   is a row whose documents support@ cannot open.
+3. **Set test mode before you deploy anything.** A fresh copy has no
+   `TEST_MODE` property, and no property means **live** — so the first claim
+   through it would e-mail Guardian's real health and motor desks. Claims TT
+   menu → **Turn test mode ON**; or, if the menu has not appeared yet,
+   Extensions → Apps Script → Run **`turnTestModeOn`**, which is new in this
+   build for exactly that gap.
+4. Run **1. Set up / repair everything** and grant the permissions. This is
+   where the new Drive folder is made in support@'s own Drive, the triggers are
+   installed, and support@ is added to the **Staff** tab.
+5. **Re-enter the Script Properties. A copy carries none of them.** This is
+   the step that gets missed:
+
+   | Property | How | If it is missing |
+   |---|---|---|
+   | `SF_DOMAIN`, `SF_CLIENT_ID`, `SF_CLIENT_SECRET` | Claims TT menu → **Connect Salesforce**, which prompts for all three — you never type the property names | No prefill, no ledger row, no task. The ping says so. |
+   | `TEST_MODE` | step 3 above | **Live on day one** |
+   | `CLAIMS_TASK_OWNER` | only if the task should not go to sales support | The task files on the default |
+   | `CLAIMS_TESTERS` | see the note below | Your Gmail stops being a trusted tester |
+
+   **Do not copy `CLAIMS_ROOT_ID`.** It points at a folder in the personal
+   Drive. It is the one property that is safe either way — `rootFolder_` tries
+   the id, fails, and makes a fresh folder — but leaving it out is cleaner.
+   **Do not copy `CLAIM_SURVEY_SECRET`** either: it only signs feedback links,
+   and no claim has been closed yet, so there is nothing to break.
+6. **Deploy → New deployment → Web app**, Execute as **Me**, Who has access
+   **Anyone**. Copy the new `/exec`.
+7. Send me that URL. It goes in **two** places —
+   `claims/index.html` line 1121 and `claims/staff.html` line 391 — and they
+   have to change together, or the client page and the staff desk talk to two
+   different backends.
+8. **Switch the old one off**: on the personal account, Deploy → Manage
+   deployments → archive the deployment, and turn test mode on there as a belt.
+   Otherwise the old `/exec` keeps answering and a client with an old link
+   files into a sheet nobody is watching — which is exactly the kind of failure
+   that looks like a handled claim until somebody asks why nothing happened.
+
+### Two things that change under support@, and are easy to miss
+
+Both come from the same line of code: the script trusts the account that owns
+it, and that account is about to be a different person.
+
+- **Test-mode mail goes to support@, not to your Gmail.** `TEST_INBOX` is
+  blank, so the test inbox falls back to the owner. If you would rather keep
+  reading the tests in Gmail, set `TEST_INBOX` to your own address.
+- **Your Gmail stops being a trusted tester.** `claimsTester_` trusts the
+  staff list, the three `MAIL_CC` addresses and the owner — so
+  `Ricky.Rampersad@myguardiangroup.com` is still trusted and
+  `rampersadricky@gmail.com` is not. That matters for two things only: a
+  sign-in code reaching you in test mode, and the client door answering you
+  plainly instead of "if we have that on file". Either test from your Guardian
+  address, or put the Gmail in `CLAIMS_TESTERS`.
 
 ### Testing the Salesforce link
 

@@ -6,6 +6,24 @@
 <title>Claims TT — Staff</title>
 <meta name="robots" content="noindex, nofollow" />
 <link rel="icon" type="image/svg+xml" href="/site-icon.svg" />
+<!-- The same two faces as the client page, so one product is not set in two
+     typefaces. Non-blocking with metric-matched fallbacks, as every other
+     served page: paint is immediate and the swap moves nothing. -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+<style>
+/* rrb-font-fallbacks */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:96.22%;ascent-override:100.68%;descent-override:25.07%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:95.31%;ascent-override:101.64%;descent-override:25.31%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:96.66%;ascent-override:100.22%;descent-override:24.95%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:101.60%;ascent-override:95.35%;descent-override:23.74%;line-gap-override:0.00%}
+</style>
 <style>
   :root{
     /* The branch's own light palette, the same block the client page carries.
@@ -21,7 +39,8 @@
     --red:#D1344F;--red-50:#FDECEF;--red-ink:#9B1B32;--green:#14B87A;--green-50:#E4F8F1;--green-ink:#0A6B46;
     --radius-lg:20px;--radius-md:14px;--radius-sm:10px;
     --shadow:0 14px 34px hsl(32deg 20% 42% / .16);--shadow-sm:0 4px 14px hsl(32deg 20% 42% / .10);
-    --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font:'Inter','Inter Fallback','Inter Fallback R',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --display:'Inter Tight','Inter Tight Fallback','Inter Tight Fallback R','Inter','Inter Fallback','Inter Fallback R',system-ui,sans-serif;
   }
   *{margin:0;padding:0;box-sizing:border-box}
   /* An author display rule beats the UA sheet's [hidden]{display:none}, so a
@@ -307,7 +326,7 @@
   <div class="wrap nav">
     <a class="logo" href="./">
       <span class="logo-badge" aria-hidden="true"><img src="/site-mark.svg" alt="" /></span>
-      <span>Claims&nbsp;TT<small>Staff dashboard</small></span>
+      <span>Ricky&nbsp;Rampersad<small>Claims desk</small></span>
     </a>
     <div class="who" id="who" hidden>
       <span id="who-name"></span>
