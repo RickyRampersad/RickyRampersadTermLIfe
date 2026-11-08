@@ -889,11 +889,11 @@ repository root and is therefore served on the open web. The house rule in
 `CLAUDE.md` already says per-book client counts are not published; this is that
 rule, applied to a recruiting page.
 
-What the ad says instead: **seven lines of business, personal and commercial,
-renewals falling in every month of the year**, the classes named, fleet called
-out as a capability rather than a number, and marine named as a class the
-system reads with nothing on it yet. Plus the specialty he asked to lead on —
-endorsements and extensions, written to the Act.
+What the ad says instead: **ten lines of business, personal and commercial,
+renewals falling in every month of the year**, the lines named, fleet called
+out as a capability rather than a number, and the classes with nothing on them
+named as room. Plus the specialty he asked to lead on — endorsements and
+extensions, written to the Act.
 
 **To re-derive the figures when somebody needs them internally** (an interview,
 a conversation with the insurer), this is the count, and it takes one query:
@@ -1184,7 +1184,7 @@ everything after it is for somebody who has already decided to keep reading.
 >
 > Running a general insurance book out of a filing cabinet and an inbox that never empties? Neither exists here.
 >
-> An established book: seven lines, personal and commercial, with renewals in every month. No system on a PC, no spreadsheet beside it: the branch writes its own software, it reaches into every system we deal with, and it changes every week. Every term since the policy began is on one screen before you open the file.
+> An established book: ten lines, personal and commercial, with renewals in every month. No system on a PC, no spreadsheet beside it: the branch writes its own software, it reaches into every system we deal with, and it changes every week. Every term since the policy began is on one screen before you open the file.
 >
 > So the day goes to the advice, the endorsements and the renewal conversation. Here a client is not a transaction. They are a journey.
 >
@@ -1850,11 +1850,11 @@ repository root and is therefore served on the open web. The house rule in
 `CLAUDE.md` already says per-book client counts are not published; this is that
 rule, applied to a recruiting page.
 
-What the ad says instead: **seven lines of business, personal and commercial,
-renewals falling in every month of the year**, the classes named, fleet called
-out as a capability rather than a number, and marine named as a class the
-system reads with nothing on it yet. Plus the specialty he asked to lead on —
-endorsements and extensions, written to the Act.
+What the ad says instead: **ten lines of business, personal and commercial,
+renewals falling in every month of the year**, the lines named, fleet called
+out as a capability rather than a number, and the classes with nothing on them
+named as room. Plus the specialty he asked to lead on — endorsements and
+extensions, written to the Act.
 
 **To re-derive the figures when somebody needs them internally** (an interview,
 a conversation with the insurer), this is the count, and it takes one query:
@@ -2141,7 +2141,7 @@ in the same scene.
 >
 > I have spent thirty-five years in this business, and the general insurance book at the Ricky Rampersad Branch is one I built myself. It has done well, and it has renewed year after year. But I am running a branch, and my time is needed across all of it.
 >
-> So this book needs somebody whose whole attention it is. Seven lines of business — motor and fleet, household, commercial property, public liability, workers' compensation, machinery and plant, bonds — personal and commercial, with renewals falling in every month of the year.
+> So this book needs somebody whose whole attention it is. Ten lines of business — motor and fleet, household, commercial property and fire, public and products liability, workers' compensation and employers' liability, machinery, plant and contract works, marine and cargo, money, burglary and bonds — personal and commercial, with renewals falling in every month of the year. All of it inside the seven classes of general insurance business the Insurance Act 2018 prescribes — and there are classes in that schedule with nothing on them yet. Marine carries two terms. Cyber carries none at all. That is room, and it would be yours.
 >
 > Here is what you would be walking into. No filing cabinet, no system on a PC in the corner, and no spreadsheet beside it for what the system will not do. The quote fills itself from the client's own record. Guardian's proposal form and the customer due-diligence checklist are filled by the system, field by field, and attached — the insurer's actual PDFs, not retyped versions. The renewal desk reads every term since the policy began — not just this year's — before anyone opens the file. The insurer's notice is read and checked figure by figure against our own record, and where the two disagree the desk says which and by how much.
 >
@@ -2175,7 +2175,7 @@ in the same scene.
 >
 > *If you can run a general insurance book and have never once been allowed to change how it is run, read this one.*
 >
-> Not a new book: one that has been written and renewed here year after year. Seven lines of business, personal and commercial, with renewals every month. The Branch Manager built it himself and his time is needed across the branch, so it needs its own person.
+> Not a new book: one that has been written and renewed here year after year. Ten lines of business, personal and commercial, with renewals every month — and classes in the Act with nothing on them yet, marine and cyber among them. The Branch Manager built it himself and his time is needed across the branch, so it needs its own person.
 >
 > No filing cabinet, no system on a PC, no spreadsheet beside it. The quote and Guardian's own forms fill themselves from the record, every term since the policy began is on the screen before you open the file, and the record is pulled from every place it lives and scrubbed before you see it — then the desk tells you what to raise first. The client is reminded at fourteen days and ten, a call opens itself at seven, and they sign in and read their own history.
 >
@@ -2191,8 +2191,11 @@ in the same scene.
 > Chaguanas, Central Trinidad.
 >
 > To take on an established general insurance book, written and renewed over
-> years, across seven lines of business: motor and fleet, household, commercial property, public liability,
-> workers' compensation, machinery and plant, and bonds. Renewals,
+> years, across ten lines of business: motor and fleet, household, commercial
+> property and fire, public and products liability, workers' compensation and
+> employers' liability, machinery, plant and contract works, marine and cargo,
+> money, burglary and bonds — inside the seven classes of general insurance
+> business prescribed by Schedule 1 of the Insurance Act, 2018. Renewals,
 > endorsements and extensions, the advice that goes with them, and the market
 > conduct obligations under the Insurance Act.
 >
@@ -2215,8 +2218,8 @@ Asked for on 8 November 2026: *"more graphics, more motions, something that'll
 pop across the screen, scaled properly on any devices."*
 
 **The hero is the stage, and it is the homepage's own composition in this
-page's dark palette.** The branch's mark at the centre with **the seven lines
-of business circling it** on two rings — three inside, four outside — over a
+page's dark palette.** The branch's mark at the centre with **the ten lines
+of business circling it** on two rings — four inside, six outside — over a
 dot mesh, two drawn rings, two arcs sweeping against the spin and three pings
 leaving the shield. The check strokes itself on when the page opens, and the
 whole scene tilts to the pointer on a mouse or trackpad, which is what reads
@@ -2829,6 +2832,110 @@ in a browser on a laptop and a phone.
 
 ---
 
+## Ten lines, not seven — and the Act's seven are a different seven, 8 November 2026
+
+Asked for in these words: *"review all the types of insurance. It's do not
+limit 7 lines. There's cyber risk, there's marine, there's, all the different
+lines of insurance that we really write, because what we do is try to ensure
+that all our corporate clients have the correct policies to them. So do deep
+dive and see the types of policies persons are allowed to write in Trinidad and
+Tobago."*
+
+He was right, and the page was wrong in two directions at once.
+
+**The book is wider than the page said.** The seven lines the page named were a
+product list, and it left two of the branch's own off it. Read off the
+`TRANSACTIONS__c` record types in Salesforce on 8 November 2026, the branch's
+general insurance taxonomy is **nine**: Motor, Property, Workmen's Compensation
+& Employers' Liability, Public Liability, Machinery, Bond, Marine, **Money** and
+**Burglary**. The page carried neither of the last two. The hero ring, the book
+list, the ticker and the posters now carry **ten** — those nine with household
+and commercial property counted apart, which is how the branch talks about them
+— and the machinery line names contract works (CAR and EAR) explicitly, which
+its own plan-code prefixes in `GIR_LINES` have always included.
+
+**Marine was described as empty and is not.** The page said marine *"sits in the
+system with nothing written on them yet"*. There are two terms on it. Two terms
+is not a line and it is still room, so it is now stated as what it is — which is
+a better recruiting line than a zero, because it is checkable.
+
+**The Act's count is seven, and they are not those seven.** Schedule 1, Type A
+of the **Insurance Act, 2018** prescribes exactly seven classes of general
+insurance business: Liability; Marine, Aviation and Transport; Motor Vehicle;
+Pecuniary Loss; Personal Accident Short-Term; Property; and Workers
+Compensation. Read from the Central Bank's own published PDF of the Act, not
+from memory. The payoff — and the reason the page now carries a section of its
+own for it — is that the two taxonomies do not line up:
+
+- **Property is far wider than a product list suggests.** Household, commercial
+  property and fire, machinery and plant, contract works, money and burglary are
+  all *one class* under the Act, and business interruption is expressly inside it.
+- **Bonds are Pecuniary Loss**, not property and not liability. Credit and trade
+  are in the same class, and the branch writes none of them.
+- **Cargo and goods in transit are Marine**, not Property — the class covers
+  transit *"by sea, inland water, land or air"*.
+- **Business interruption is expressly excluded from Pecuniary Loss**, which is
+  the trap in the schedule most likely to be got wrong.
+- **Cyber has no class of its own**: it is liability and pecuniary loss, with a
+  property and business-interruption component depending on the wording. Three
+  classes and a judgement, which is exactly why it gets missed.
+
+Two provisions of the schedule went on the page because they are judgement calls
+the seat would actually make: **incidental business** (a policy spanning classes
+may be classified by its predominant risk — the Act's own example is a home
+policy carrying legal liability, still property), and **market practice** (an
+insurer may classify by normal market practice as well as by the definitions, the
+Act naming major petroleum risks and some construction projects as business
+conventionally treated as marine, provided it is done consistently).
+
+And one compliance fact that belongs in a recruiting ad for this seat: **a sales
+representative cannot be registered for a class the insurer, agency or brokerage
+behind them is not itself registered to write.** Registration is per class and
+per type. The section says so without a section number, which is this
+repository's standing rule — compliance supplies numbers if they are ever wanted.
+
+**What is deliberately NOT claimed.** Guardian General launched a **CyberGuard**
+product in 2021; what is confirmed in public sources is availability in
+**Barbados**, and the Trinidad product page that search still indexes
+(`…/business-solutions/cyberguard-insurance`) now returns 404. So the page says
+cyber is an exposure every commercial client carries and that **this book has
+none written on it** — a fact about our own record — and says nothing about what
+Guardian General will place in Trinidad today. **If the branch does place cyber
+now, that is one line on the page to change, and it should be changed.**
+
+No policy counts are on the page. The statuses on the classes section describe
+our own book as the record stood on 8 November 2026; the counts behind them stay
+off a public page for the same reason the month-by-month shape of the book does.
+
+**The film's scene 3 was re-voiced** for it — one line, `cmadmin` scene 3, from
+*"seven lines"* to *"ten lines"*.
+
+### Three things it cost, worth not paying twice
+
+- **Ten labels do not fit a ring drawn for seven, and the cause was a unit
+  mismatch.** Every dimension on that stage is `cqw` — the radii, the chip, the
+  mark — except the label, which was a fixed `7rem`. The stage is at its
+  *narrowest* at 1024px, not on a phone, because that is where the hero's
+  `1.3fr/.7fr` split kicks in and the art column drops to 325px; a 112px label
+  around a 70px inner radius then overlapped its neighbour and landed on the
+  shield. The label is `min(7rem, 28cqw)` now, the four upper-half nodes carry
+  their label above the chip rather than below it, and the 3 and 9 o'clock nodes
+  are anchored inward because a centred label there ran past the stage's own
+  edge. Measured at eleven widths in both motion settings by `lines.js` in the
+  session scratchpad (139 checks: chips present, nothing hidden, nothing outside
+  the stage, no two labels touching, no label on the mark, plus CLS, sideways
+  scroll and the new section's contrast).
+- **`shoot-ad.js` writes to its own `out/` unless a destination is given**, and
+  it prints a cheerful `ok feed 1080x1350 · 554 KB` either way. The posters read
+  "Seven lines" for a full build cycle because of it. It is
+  `node shoot-ad.js clientmanager ../../clientmanager`, and the thing to check
+  is the published JPEG's own timestamp, not the tool's output.
+- **`importvox.py` and `build-boardfilm.py` disagree about the timing file.**
+  The first writes per-line word times in *seconds* under `lines`; the second
+  reads a top-level `words` of `[ms, word]` and dies with `KeyError: 'words'`.
+  The conversion is one line and it is needed after every re-voice:
+  `d['words'] = [[[int(round(t*1000)), w] for t, w in ln['words']] for ln in d['lines']]`.
+
 ## Still to do
 
 - **Clear the music licence for `bwadmin` and `jbadvisor`**, or swap their beds
@@ -2839,6 +2946,14 @@ in a browser on a laptop and a phone.
   reported as not stored (the applications still arrive in full).
 - **Compliance sight of the wording**, in particular the client manager ad,
   which advertises the branch's own general insurance agency.
+- **Confirm whether Guardian General places cyber in Trinidad today.** The page
+  names cyber as an exposure with nothing written on this book, and claims
+  nothing about the product shelf, because the only confirmable public source
+  puts **CyberGuard** in Barbados and the Trinidad product page now 404s. If it
+  is placeable here, say so and it becomes one line on
+  `clientmanager/index.html` — in the room list under the book — and one line in
+  the long post. Same question for aviation, which sits inside the Marine class
+  and is on neither the book nor the page.
 - **Paste `Quotes.gs` and publish a New version**, or the client manager's own
   confirmation is still headed *"Underwriter, general insurance"* — the one a
   stranger reads — and the team e-mail carries no bar line in its subject.

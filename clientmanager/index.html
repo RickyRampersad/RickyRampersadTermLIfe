@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Client Manager, General Insurance — Ricky Rampersad Branch</title>
-<meta name="description" content="Client Manager, General Insurance — Central Trinidad. An established book across seven lines of business: motor and fleet, household, commercial property, liability, workers’ compensation, machinery and bonds. The re-keying is already built. The advice, and the compliance that goes with it, is not — and that is the seat.">
+<meta name="description" content="Client Manager, General Insurance — Central Trinidad. An established book across ten lines of business — motor and fleet, household, commercial property, liability, workers’ compensation, machinery and contract works, marine and cargo, money, burglary and bonds — inside all seven classes the Insurance Act 2018 prescribes. The re-keying is already built. The advice, and the compliance that goes with it, is not — and that is the seat.">
 <link rel="canonical" href="https://rickyrampersadbranch.com/clientmanager/">
 <link rel="icon" type="image/svg+xml" href="/site-icon.svg">
 <meta name="theme-color" content="#0b1b2d">
@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Ricky Rampersad Branch">
 <meta property="og:title" content="The book is already there. What it has never had is you.">
-<meta property="og:description" content="Client Manager, General Insurance — Central Trinidad. An established book across seven lines, every piece of the paperwork already built, and you are judged on the book rather than on the clock. How this agency advises its clients is not settled — the person in this seat settles it.">
+<meta property="og:description" content="Client Manager, General Insurance — Central Trinidad. An established book across ten lines, every piece of the paperwork already built, and you are judged on the book rather than on the clock. How this agency advises its clients is not settled — the person in this seat settles it.">
 <meta property="og:url" content="https://rickyrampersadbranch.com/clientmanager/">
 <meta property="og:image" content="https://rickyrampersadbranch.com/clientmanager/film-w.jpg">
 <meta property="og:image:width" content="1920">
@@ -172,7 +172,7 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
 .hnote span{display:inline-flex;align-items:center;gap:.4rem}
 .hnote .ic{width:17px;height:17px;color:var(--aL)}
 
-/* ══ THE HERO STAGE — the seven lines circling the shield ══════════════════
+/* ══ THE HERO STAGE — the ten lines circling the shield ══════════════════
    8 November 2026: "more graphics, more motions, something that'll pop across
    the screen, scaled properly on any devices."
 
@@ -190,8 +190,13 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
      `transform`, so the two compose instead of one overwriting the other;
    · the stage is capped by the viewport too, or the outer ring goes under
      the hero's own overflow:clip.
-   Seven lines, seven slots: no pairs and no cycling, so every chip is in the
-   markup and visible whatever the motion setting. */
+   Ten lines, ten slots: no pairs and no cycling, so every chip is in the
+   markup and visible whatever the motion setting. Four inside at 45° steps
+   and six outside at 60°, deliberately sharing no angle, so no inner label
+   sits under an outer chip. 8 November 2026, asked for in these words: "do
+   not limit 7 lines". Re-measure with qa/lines.js if a chip is added: the
+   7rem label has 194px of arc each on the outer ring and 162px on the inner,
+   and a seventh outer chip takes the outer one under its own width. */
 .hero-grid{display:grid;gap:var(--sp-xl);align-items:center}
 .hero-grid > *{min-width:0}
 /* 1.3fr, and the number is measured rather than chosen. The headline sits
@@ -233,7 +238,13 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
 .ring-out{--r:clamp(8.1rem,35vw,12rem);--dur:78s}
 @supports (container-type:size){
   .stage{container-type:size}
-  .ring{--chip:8.4cqw}
+  /* The label scales with the stage too. It was a fixed 7rem while every
+     other dimension here is cqw, so at 1024px — where the hero's 1.3fr/.7fr
+     split makes the art column its NARROWEST, 325px, narrower than at 768 —
+     a 112px label around a 70px inner radius overlapped its neighbour and
+     reached the mark. 28cqw is the measured value: it clears the mark by 8px
+     and the stage edge by 19px at 325px, and matches 7rem at 370px. */
+  .ring{--chip:8.4cqw;--lab:min(7rem,28cqw)}
   .ring-in{--r:21.5cqw}
   .ring-out{--r:38.5cqw}
 }
@@ -246,9 +257,25 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
   box-shadow:0 .6rem 1.4rem rgba(0,0,0,.4)}
 .stage .chip-o svg{width:46%;height:46%;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
 .node b{position:absolute;top:100%;left:50%;translate:-50% .3rem;
-  width:7rem;text-align:center;line-height:1.25;color:var(--dT2);
+  width:var(--lab,7rem);text-align:center;line-height:1.25;color:var(--dT2);
   font-family:var(--display);font-weight:600;letter-spacing:.01em;
   font-size:clamp(.625rem,2.3cqw,.75rem)}
+/* Ten labels do not fit a ring that was drawn for seven, and these two rules
+   are what measurement forced. Both must stay AFTER `.node b`: they are
+   (0,2,1) against its (0,1,1), so source order is not what decides, but a
+   reader reaching for the base rule should find the exceptions under it.
+   · `.up` — the four nodes in the UPPER half (inner 225°/315°, outer
+     240°/300°) carry their label above the chip. Below it, the label hangs
+     down across the shield: at 1024px the inner 225° label landed squarely
+     on the mark, which is the one thing the stage may not do.
+   · `.e` / `.w` — the nodes at 3 and 9 o'clock put a centred label past the
+     stage's own edge (198px against a 185px half-width at 1366), so they are
+     anchored inward. Narrowing them to 6.5rem does not buy enough: 194px.
+   `rotate(a) translate(r)` runs clockwise from 3 o'clock, so 0°=E, 90°=S,
+   180°=W, 270°=N — read the angles that way before moving a chip. */
+.node.up b{top:auto;bottom:100%;translate:-50% -.3rem}
+.node.e b{translate:-80% .3rem}
+.node.w b{translate:-20% .3rem}
 /* Below 35rem the names cannot fit around a circle this size without landing
    on each other or on the mark. The ticker directly beneath carries them. */
 @media (max-width:35rem){
@@ -377,6 +404,37 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
 .bkboth li{display:flex;gap:.6rem;align-items:flex-start;font-size:var(--f--1);line-height:1.5}
 .bkboth li .ic{width:19px;height:19px;flex:none;margin-top:.2rem;color:var(--a)}
 .bkboth li span{min-width:0}
+
+/* ── Schedule 1, Type A: the seven classes the Act prescribes ──
+   8 November 2026, asked for in these words: "do a deep dive and see the
+   types of policies persons are allowed to write in Trinidad and Tobago."
+   The class names and definitions are quoted from Schedule 1 of the
+   Insurance Act, 2018 (Act No. 4 of 2018), Type A — General Insurance
+   Business, as published by the Central Bank. No section numbers: the Act's
+   own schedule is numbered (1) to (7) and that is what is printed.
+   A status is a fact about our own book, read off the record types in the
+   branch's Salesforce on 8 November 2026 — never a policy count, which is
+   the book's own business and belongs on no public page. */
+.cls7{list-style:none;margin:var(--sp-l) 0 0;padding:0;display:grid;gap:.75rem;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))}
+.cls7 > li{display:grid;grid-template-columns:auto 1fr;grid-template-rows:1fr auto;
+  gap:.55rem .85rem;align-items:start;padding:var(--sp-s) var(--sp-m) var(--sp-s) var(--sp-s);
+  border:1px solid var(--d3);border-radius:.7rem;background:var(--d2)}
+.cls7 .cn{display:grid;place-items:center;width:1.7rem;height:1.7rem;flex:none;
+  border-radius:50%;background:var(--d0);border:1px solid var(--d3);color:var(--aL);
+  font:700 .8125rem/1 var(--display);font-variant-numeric:tabular-nums}
+.cls7 .ct{min-width:0}
+.cls7 .ct b{display:block;color:var(--dT);font-family:var(--display);
+  font-weight:700;letter-spacing:-.01em;font-size:var(--f--1);line-height:1.3}
+.cls7 .ct p{margin:.3rem 0 0;font-size:var(--f--2);line-height:1.5;color:var(--dT3)}
+.cls7 .st{grid-column:2;margin-top:.45rem;display:inline-flex;align-items:center;
+  gap:.35rem;align-self:end;justify-self:start;padding:.17rem .5rem;border-radius:.3rem;
+  font:600 .6875rem/1.35 var(--display);letter-spacing:.02em;text-transform:uppercase}
+/* Status reads as a word as well as a colour — the house rule. */
+.cls7 .st.on{background:rgba(0,207,234,.14);color:var(--aL);border:1px solid rgba(0,207,234,.3)}
+.cls7 .st.thin{background:rgba(239,194,75,.13);color:#efc24b;border:1px solid rgba(239,194,75,.3)}
+.cls7 .st.no{background:rgba(177,195,213,.1);color:var(--dT3);border:1px solid var(--d3)}
+.cls7 .st .ic{width:13px;height:13px;flex:none}
 
 /* ── the pipeline: one renewal, end to end ── */
 .pipe{list-style:none;margin:var(--sp-l) 0 0;padding:0;display:grid;gap:0;counter-reset:none;position:relative}
@@ -839,6 +897,9 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 <symbol id="i-hard" viewBox="0 0 24 24"><path d="M3 16h18a1 1 0 0 0 1-1 9 9 0 0 0-5-8.1V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v1.9A9 9 0 0 0 2 15a1 1 0 0 0 1 1Z"/><path d="M10 6.2V10M14 6.2V10M4 20h16"/></symbol>
 <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.2M12 19.3v2.2M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6"/></symbol>
 <symbol id="i-bond" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="1.5"/><circle cx="12" cy="11" r="2.6"/><path d="M6.5 8.5h0M17.5 13.5h0M7 20h10"/></symbol>
+<symbol id="i-ship" viewBox="0 0 24 24"><path d="M3.5 13h17l-2.2 5.5a2 2 0 0 1-1.85 1.25H7.55A2 2 0 0 1 5.7 18.5Z"/><path d="M12 13V3.5l5.5 3.4-5.5 2.6"/><path d="M8 13V9.5h4"/></symbol>
+<symbol id="i-coins" viewBox="0 0 24 24"><ellipse cx="12" cy="6.5" rx="7" ry="3"/><path d="M5 6.5v5c0 1.66 3.13 3 7 3s7-1.34 7-3v-5"/><path d="M5 11.5v5c0 1.66 3.13 3 7 3s7-1.34 7-3v-5"/></symbol>
+<symbol id="i-cyber" viewBox="0 0 24 24"><path d="M12 3.2 19.5 6v6c0 4.2-3.1 7.1-7.5 8.8C7.6 19.1 4.5 16.2 4.5 12V6Z"/><circle cx="12" cy="11.5" r="2"/><path d="M12 3.2v6.3M12 13.5v3.6M10 11.5H6.2M17.8 11.5H14"/></symbol>
 <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M4.2 7.2l2.1 2.1M17.7 14.7l2.1 2.1M3 12h3M18 12h3M4.2 16.8l2.1-2.1M17.7 9.3l2.1-2.1"/><circle cx="12" cy="12" r="3"/></symbol>
 </defs></svg>
 
@@ -857,7 +918,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     <span class="eyebrow">Client Manager &middot; General Insurance</span>
     <h1 data-words>The book is already there. <em>What it has never had is you.</em></h1>
     <p class="pull">If you can run a general insurance book out of a filing cabinet and an inbox that never empties &mdash; and nobody has ever let you change any of it &mdash; this is the one to read.</p>
-    <p class="hsub">A general insurance book that has been written and renewed here year after year, across <strong>seven lines of business</strong>, personal and commercial, with renewals falling in every month. Until now the Branch Manager has looked after it himself, alongside everything else a branch asks of him &mdash; and <strong>it has outgrown that</strong>. What it needs is one person whose whole job it is. There is no filing cabinet in this seat: <strong>the re-keying, the chasing and the research are already built and running</strong>, the record is pulled from every source and scrubbed before you read it, <strong>you are judged on the book rather than on the clock</strong>, and the one thing nobody has settled &mdash; how this agency advises its clients, and how it stays compliant doing it &mdash; is left to the person in the seat.</p>
+    <p class="hsub">A general insurance book that has been written and renewed here year after year, across <strong>ten lines of business</strong>, personal and commercial, with renewals falling in every month. Until now the Branch Manager has looked after it himself, alongside everything else a branch asks of him &mdash; and <strong>it has outgrown that</strong>. What it needs is one person whose whole job it is. There is no filing cabinet in this seat: <strong>the re-keying, the chasing and the research are already built and running</strong>, the record is pulled from every source and scrubbed before you read it, <strong>you are judged on the book rather than on the clock</strong>, and the one thing nobody has settled &mdash; how this agency advises its clients, and how it stays compliant doing it &mdash; is left to the person in the seat.</p>
     <div class="ctas">
       <a class="btn btn-1" href="#apply">Apply &mdash; CV and fifteen minutes <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
       <a class="btn btn-2" href="#file">Read a file first</a>
@@ -869,7 +930,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     </p>
    </div>
 
-   <!-- The stage: the book, drawn. Seven lines on two rings around the
+   <!-- The stage: the book, drawn. Ten lines on two rings around the
         branch's own mark, each chip kept upright by an inner span that
         counters its ring. It is a diagram of what you would be looking
         after, not decoration — and nothing sits on the mark. -->
@@ -907,11 +968,11 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
            <path class="tick" d="M30 44L39.5 53.5L58 32.5" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
          </svg>
        </div>
-       <ul class="ring ring-in" aria-label="Personal and commercial lines on the book"><li class="node" style="--a:0deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><b>Motor and fleet</b></span></li><li class="node" style="--a:120deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-house"/></svg></span><b>Household</b></span></li><li class="node" style="--a:240deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-build"/></svg></span><b>Commercial property</b></span></li></ul>
-       <ul class="ring ring-out" aria-hidden="false"><li class="node" style="--a:45deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-scale"/></svg></span><b>Public and products liability</b></span></li><li class="node" style="--a:135deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-hard"/></svg></span><b>Workers&rsquo; compensation</b></span></li><li class="node" style="--a:225deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-gear"/></svg></span><b>Machinery and plant</b></span></li><li class="node" style="--a:315deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-bond"/></svg></span><b>Bonds</b></span></li></ul>
+       <ul class="ring ring-in" aria-label="Personal and commercial lines on the book"><li class="node" style="--a:45deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><b>Motor and fleet</b></span></li><li class="node" style="--a:135deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-house"/></svg></span><b>Household</b></span></li><li class="node up" style="--a:225deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-build"/></svg></span><b>Commercial property</b></span></li><li class="node up" style="--a:315deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-scale"/></svg></span><b>Liability</b></span></li></ul>
+       <ul class="ring ring-out" aria-hidden="false"><li class="node e" style="--a:0deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-hard"/></svg></span><b>Workers&rsquo; compensation</b></span></li><li class="node" style="--a:60deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-gear"/></svg></span><b>Machinery and contract works</b></span></li><li class="node" style="--a:120deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-ship"/></svg></span><b>Marine and cargo</b></span></li><li class="node w" style="--a:180deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-coins"/></svg></span><b>Money in transit</b></span></li><li class="node up" style="--a:240deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-lock"/></svg></span><b>Burglary</b></span></li><li class="node up" style="--a:300deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-bond"/></svg></span><b>Bonds</b></span></li></ul>
      </div>
      <p class="art-foot">
-       <span><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Seven lines, already written</span>
+       <span><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Ten lines, already written</span>
        <span><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>Renewals in all twelve months</span>
      </p>
    </div>
@@ -922,8 +983,8 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
      hidden from assistive tech; with motion off both wrap as a plain list. -->
 <div class="strip" aria-label="The lines this book covers">
   <div class="strip-in">
-    <ul><li>Motor, commercial and fleet</li><li>Household and private dwelling</li><li>Commercial property and fire</li><li>Public and products liability</li><li>Workers&rsquo; compensation</li><li>Machinery and plant</li><li>Bonds</li><li>Endorsements and extensions</li><li>Renewals, every month of the year</li><li>Marine and cargo, with nothing on them yet</li></ul>
-    <ul aria-hidden="true"><li>Motor, commercial and fleet</li><li>Household and private dwelling</li><li>Commercial property and fire</li><li>Public and products liability</li><li>Workers&rsquo; compensation</li><li>Machinery and plant</li><li>Bonds</li><li>Endorsements and extensions</li><li>Renewals, every month of the year</li><li>Marine and cargo, with nothing on them yet</li></ul>
+    <ul><li>Motor, commercial and fleet</li><li>Household and private dwelling</li><li>Commercial property and fire</li><li>Public and products liability</li><li>Workers&rsquo; compensation and employers&rsquo; liability</li><li>Machinery, plant and contract works</li><li>Marine and cargo</li><li>Money in transit</li><li>Burglary</li><li>Bonds</li><li>Endorsements and extensions</li><li>Renewals, every month of the year</li><li>Cyber risk, with nothing on it yet</li></ul>
+    <ul aria-hidden="true"><li>Motor, commercial and fleet</li><li>Household and private dwelling</li><li>Commercial property and fire</li><li>Public and products liability</li><li>Workers&rsquo; compensation and employers&rsquo; liability</li><li>Machinery, plant and contract works</li><li>Marine and cargo</li><li>Money in transit</li><li>Burglary</li><li>Bonds</li><li>Endorsements and extensions</li><li>Renewals, every month of the year</li><li>Cyber risk, with nothing on it yet</li></ul>
   </div>
 </div>
 
@@ -969,7 +1030,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
       <div>
         <span class="eyebrow">Just over two minutes</span>
         <h2 data-words>What we write, and what is already built around it.</h2>
-        <p>The seven lines, every term since the policy began, the insurer&rsquo;s notice checked against our own record, and a change written into the desk rather than raised as a ticket.</p>
+        <p>Every line, every term since the policy began, the insurer&rsquo;s notice checked against our own record, and a change written into the desk rather than raised as a ticket.</p>
         <p class="small">The words are on screen throughout, so it reads with the sound off. Every figure in it is illustrative and no client appears anywhere.</p>
       </div>
     </div>
@@ -981,7 +1042,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     <div class="rv" style="max-width:52rem">
       <span class="eyebrow">The book</span>
       <h2 data-words>A book with years behind it, and people in every line of it.</h2>
-      <p class="lede">Seven lines of business, personal and commercial, written and renewed here year after year, with renewals falling in every month. This is what our renewal desk already reads every month, and it is what you would be looking after from your first week.</p>
+      <p class="lede">Ten lines of business, personal and commercial, written and renewed here year after year, with renewals falling in every month. All of it sits inside the <strong>seven classes of general insurance business</strong> the Insurance Act 2018 prescribes &mdash; and there are classes in that schedule with nothing on them yet. This is what our renewal desk already reads every month, and it is what you would be looking after from your first week.</p>
     </div>
     <!-- The book drawn, rather than listed: the two sides it is written on,
          with a spine between them that draws itself. 8 November 2026, asked
@@ -992,7 +1053,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
          a guess on the one page where a guess is least affordable. -->
     <div class="bookg">
 <div class="bkside per rv"><p class="bkh"><b>Personal lines</b><span>the volume of the book</span></p><ul class="bklist"><li style="--i:0"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><span class="bkt"><b>Private motor</b><span>the cars, the renewals, the claims that follow</span></span></li><li style="--i:1"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-house"/></svg></span><span class="bkt"><b>Household and private dwelling</b><span>buildings, contents, and the average clause nobody reads</span></span></li></ul></div>      <div class="bkspine" aria-hidden="true"><span></span></div>
-<div class="bkside com rv"><p class="bkh"><b>Commercial lines</b><span>where the technical work lives</span></p><ul class="bklist"><li style="--i:0"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><span class="bkt"><b>Fleet, genuinely</b><span>one policy carrying dozens of vehicles</span></span></li><li style="--i:1"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-build"/></svg></span><span class="bkt"><b>Commercial property and fire</b><span>declared values, surveys, business interruption</span></span></li><li style="--i:2"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-scale"/></svg></span><span class="bkt"><b>Public and products liability</b><span>limits, indemnity, the wording that matters at claim</span></span></li><li style="--i:3"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-hard"/></svg></span><span class="bkt"><b>Workers&rsquo; compensation</b><span>wage declarations, and the adjustment nobody chases</span></span></li><li style="--i:4"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-gear"/></svg></span><span class="bkt"><b>Machinery and plant</b><span>item-by-item schedules, serials, loaders</span></span></li><li style="--i:5"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-bond"/></svg></span><span class="bkt"><b>Bonds</b><span>performance and advance payment</span></span></li></ul></div>    </div>
+<div class="bkside com rv"><p class="bkh"><b>Commercial lines</b><span>where the technical work lives</span></p><ul class="bklist"><li style="--i:0"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><span class="bkt"><b>Fleet, genuinely</b><span>one policy carrying dozens of vehicles</span></span></li><li style="--i:1"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-build"/></svg></span><span class="bkt"><b>Commercial property and fire</b><span>declared values, surveys, business interruption</span></span></li><li style="--i:2"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-scale"/></svg></span><span class="bkt"><b>Public and products liability</b><span>limits, indemnity, the wording that matters at claim</span></span></li><li style="--i:3"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-hard"/></svg></span><span class="bkt"><b>Workers&rsquo; compensation and employers&rsquo; liability</b><span>wage declarations, and the adjustment nobody chases</span></span></li><li style="--i:4"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-gear"/></svg></span><span class="bkt"><b>Machinery, plant and contract works</b><span>item-by-item schedules, serials, and the erection and contractors&rsquo; all-risks that run to a completion date</span></span></li><li style="--i:5"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-ship"/></svg></span><span class="bkt"><b>Marine and cargo</b><span>on the book, and barely: two terms. Open voyage, transit, hull</span></span></li><li style="--i:6"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-coins"/></svg></span><span class="bkt"><b>Money, and burglary</b><span>cash in transit and in the safe, and forcible entry</span></span></li><li style="--i:7"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-bond"/></svg></span><span class="bkt"><b>Bonds</b><span>performance and advance payment &mdash; pecuniary loss, under the Act</span></span></li></ul></div>    </div>
     <!-- Every month is lit, and no month is measured. The record does carry
          the month-by-month shape of the book, and it is not going on a public
          page: it tells a competitor exactly when to go at us. What is true
@@ -1003,9 +1064,43 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     </figure>
     <ul class="bkboth rv">
       <li><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg><span><b>Endorsements and extensions</b> run across both sides &mdash; our specialty, and the part we hold ourselves to.</span></li>
-      <li><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg><span><b>Marine and cargo</b> sit in the system with nothing written on them yet. That is room, and it would be yours.</span></li>
+      <li><svg class="ic" aria-hidden="true"><use href="#i-ship"/></svg><span><b>Marine and cargo</b> is a whole class of the Act &mdash; vessels, hull, cargo, transit, and aviation with it &mdash; and this book carries <b>two terms</b> in it. That is not a line. That is room.</span></li>
+      <li><svg class="ic" aria-hidden="true"><use href="#i-cyber"/></svg><span><b>Cyber risk</b> is on nobody&rsquo;s schedule here, and every commercial client on this book now carries the exposure &mdash; first-party, third-party and the regulator. Under the Act it is liability and pecuniary loss, so the class is already open to us.</span></li>
+      <li><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg><span><b>Pecuniary loss beyond bonds</b> &mdash; credit, trade, unforeseen expense &mdash; is written in the schedule and written nowhere in this book.</span></li>
     </ul>
     <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch">To be exact about the relationship: this is the <strong>branch&rsquo;s own general insurance agency</strong>. The risk is carried by the insurer and the agency places with them; the underwriting authority is theirs. What sits with you is everything on the client&rsquo;s side of that line &mdash; what we put up, how it is presented, the endorsement mid-term, the renewal conversation, the advice on what the cover does and does not do, and the compliance standard all of it is written to. The branch&rsquo;s group health and group life book sits beside this one with its own team; it is not part of this seat.</p>
+  </div>
+</section>
+
+<!-- The statute, not the product shelf. 8 November 2026: "review all the
+     types of insurance. It's do not limit 7 lines... do deep dive and see the
+     types of policies persons are allowed to write in Trinidad and Tobago."
+     Quoted from Schedule 1 of the Insurance Act, 2018, Type A. The point of
+     the section is the one a product list cannot make: our ten lines are not
+     ten classes, and a registration and a licence are granted per class. -->
+<section id="classes7">
+  <div class="wrap">
+    <div class="rv" style="max-width:54rem">
+      <span class="eyebrow">What may be written here</span>
+      <h2 data-words>Ten lines on the book. Seven classes in the Act. They are not the same list.</h2>
+      <p class="lede">A general insurance agency in Trinidad and Tobago writes inside <strong>Schedule 1, Type A of the Insurance Act, 2018</strong>, which prescribes seven classes of general insurance business. Our ten lines are products; these are the classes. Knowing which product sits in which class is not trivia &mdash; it is what a registration is granted for, and what a licence is granted for.</p>
+    </div>
+    <ul class="cls7">
+      <li class="rv"><span class="cn">1</span><span class="ct"><b>Liability Insurance Business</b><p>Third-party liability, other than liability arising out of the use of a motor vehicle, a vessel or an aircraft, and other than an employer&rsquo;s liability to its own workers. Public liability, products liability, professional indemnity, directors and officers.</p></span><span class="st on"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>On the book</span></li>
+      <li class="rv"><span class="cn">2</span><span class="ct"><b>Marine, Aviation and Transport Business</b><p>Vessels and aircraft and their machinery; goods on board; freight; third-party risks from their use; risks of building, repairing and docking a vessel; and <em>transit risks by sea, inland water, land or air</em> &mdash; so cargo and goods-in-transit live here, not in property.</p></span><span class="st thin"><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>Two terms &middot; room</span></li>
+      <li class="rv"><span class="cn">3</span><span class="ct"><b>Motor Vehicle Insurance Business</b><p>Loss of or damage to a motor vehicle, and loss or damage arising out of its use, third-party risk included and transit risks excluded. Private, commercial and fleet.</p></span><span class="st on"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>The bulk of it</span></li>
+      <li class="rv"><span class="cn">4</span><span class="ct"><b>Pecuniary Loss Insurance Business</b><p>Loss from a debtor&rsquo;s insolvency or failure to pay; loss from having to perform a guarantee you gave; and unforeseen expense. <em>Business interruption is expressly excluded</em> and sits in property. Bonds are here; so is credit and trade.</p></span><span class="st thin"><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>Bonds only</span></li>
+      <li class="rv"><span class="cn">5</span><span class="ct"><b>Personal Accident Short-Term Insurance Business</b><p>Accident and sickness cover, written only on the Act&rsquo;s own terms: a year at most, benefits payable no longer than five years, no guaranteed renewability, and as a rider it may not exceed a quarter of the premium of the general policy it hangs on.</p></span><span class="st no"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg>Not on this book</span></li>
+      <li class="rv"><span class="cn">6</span><span class="ct"><b>Property Insurance Business</b><p>Loss of or damage to real or personal property, and <em>business interruption with it</em>. Wider than it looks: household, commercial property and fire, machinery and plant, contract works, money and burglary are all <em>one class</em> under the Act, however many product lines they are on our shelf.</p></span><span class="st on"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>On the book, widely</span></li>
+      <li class="rv"><span class="cn">7</span><span class="ct"><b>Workers Compensation Insurance Business</b><p>An employer&rsquo;s liability to pay compensation to a worker, whether under statute or in negligence, for accident or injury related to the employment. Compulsory, and the wage declaration behind it is the part that gets missed.</p></span><span class="st on"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>On the book</span></li>
+    </ul>
+    <ul class="bkboth rv" style="max-width:66ch">
+      <li><svg class="ic" aria-hidden="true"><use href="#i-scale"/></svg><span><b>One policy, one class &mdash; usually.</b> Where a policy covers risks in more than one class the Act lets the insurer put the whole of it in the class of the predominant risk, the rest riding as incidental business. Its own example: a home policy carrying legal liability is still classified property. It also permits splitting a policy across classes where each part is significant, priced separately and claimable separately.</span></li>
+      <li><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg><span><b>Market practice is written into the schedule.</b> The Act allows an insurer to classify by normal market practice as well as by the definitions &mdash; naming major petroleum risks and certain construction projects as business conventionally treated as marine even where the definition would read property &mdash; provided it is done consistently. That is a judgement, and judgement is what this seat is for.</span></li>
+      <li><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg><span><b>Registration is per class and per type.</b> A sales representative cannot be registered for a class the insurer, agency or brokerage behind them is not itself registered to write. So which classes you may advise on is a fact about the paperwork, not an opinion &mdash; and getting that fact straight for every client on this book is part of the job.</span></li>
+      <li><svg class="ic" aria-hidden="true"><use href="#i-cyber"/></svg><span><b>Cyber has no class of its own</b>, which is exactly why it gets missed. A cyber policy is liability and pecuniary loss, with a property and business-interruption component depending on how it is written &mdash; three classes and a judgement, on an exposure every commercial client on this book now carries.</span></li>
+    </ul>
+    <p class="small rv" style="margin-top:var(--sp-m);max-width:66ch">Quoted from <strong>Schedule 1 of the Insurance Act, 2018</strong> (Act No. 4 of 2018), Type A &mdash; General Insurance Business, as published by the Central Bank of Trinidad and Tobago. Long-term business &mdash; life, annuities, health, pensions &mdash; is Type B of the same schedule and is a different registration; the branch writes it with a different team, and it is not this seat. A status above describes <em>our own book</em> as the record stood on 8 November 2026, not what the insurer is registered to write.</p>
   </div>
 </section>
 
@@ -1428,9 +1523,16 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
                   <label><input type="checkbox" name="cls" value="Commercial property and fire"><span>Commercial property, fire</span></label>
                   <label><input type="checkbox" name="cls" value="Public and products liability"><span>Public, products liability</span></label>
                   <label><input type="checkbox" name="cls" value="Employers liability and workmen"><span>Employers liability</span></label>
+                  <label><input type="checkbox" name="cls" value="Professional indemnity and D and O"><span>PI, D&amp;O</span></label>
                   <label><input type="checkbox" name="cls" value="Engineering and machinery"><span>Engineering, machinery</span></label>
+                  <label><input type="checkbox" name="cls" value="Contract works CAR and EAR"><span>Contract works, CAR/EAR</span></label>
                   <label><input type="checkbox" name="cls" value="Marine and cargo"><span>Marine, cargo</span></label>
+                  <label><input type="checkbox" name="cls" value="Aviation"><span>Aviation</span></label>
+                  <label><input type="checkbox" name="cls" value="Money and burglary"><span>Money, burglary</span></label>
                   <label><input type="checkbox" name="cls" value="Bonds"><span>Bonds</span></label>
+                  <label><input type="checkbox" name="cls" value="Credit and trade pecuniary loss"><span>Credit, trade</span></label>
+                  <label><input type="checkbox" name="cls" value="Cyber"><span>Cyber</span></label>
+                  <label><input type="checkbox" name="cls" value="Personal accident and travel"><span>Personal accident, travel</span></label>
                   <label><input type="checkbox" name="cls" value="Group health"><span>Group health</span></label>
                   <label><input type="checkbox" name="cls" value="Miscellaneous accident"><span>Misc. accident</span></label>
                   <label><input type="checkbox" name="cls" value="Treaty or facultative reinsurance"><span>Reinsurance</span></label>

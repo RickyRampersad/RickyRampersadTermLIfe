@@ -59,12 +59,15 @@
         "Commercial property",
         "Public liability",
         "Workers&rsquo; compensation",
-        "Machinery and plant",
+        "Machinery and contract works",
+        "Marine and cargo",
+        "Money",
+        "Burglary",
         "Bonds"
       ],
       "n1": [
-        "Seven",
-        7,
+        "Ten",
+        10,
         "",
         "lines of business"
       ],
@@ -75,7 +78,7 @@
         "months with renewals in them"
       ],
       "line": "Personal and commercial, fleets included. Every endorsement written to the Act &mdash; and we drive that ourselves.",
-      "say": "You would not be building a book. There is one: seven lines, personal and commercial, renewals in all twelve months, every endorsement written to the Act."
+      "say": "Nobody is asking you to build a book. There is one: ten lines, personal and commercial, renewals in all twelve months, every endorsement written to the Act."
     },
     {
       "visual": "bwdues",

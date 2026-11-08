@@ -1424,11 +1424,11 @@
   "music": "bed-cmadmin.wav",
   "mix": "uwadmin-mix.wav",
   "ass": "captions-uwadmin.ass",
-  "dur": 120.1,
+  "dur": 120.8,
   "durs": [
    8.7,
    14.8,
-   11.2,
+   11.9,
    10.0,
    11.1,
    15.9,
@@ -1441,14 +1441,14 @@
   "musicgain": 0.46,
   "duck": 0.3,
   "dark": [
-   2
+   9
   ],
   "sfx": "sfx-cmadmin.wav",
   "start": 0,
   "ticks": [],
   "hits": [
-   26.77,
-   30.49
+   27.84,
+   31.31
   ],
   "score": [
    0.55,
@@ -1463,8 +1463,8 @@
    1.18
   ],
   "risers": [
-   55.8,
-   110.2
+   56.5,
+   110.9
   ]
  }
 }
