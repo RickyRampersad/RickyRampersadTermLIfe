@@ -258,6 +258,72 @@ branch. Send this to one person rather than broadcasting it:
 > rickyrampersadbranch.com/buildwithus. Have a look and tell me honestly if it
 > is you.
 
+## Who the ad is for: the filing cabinet, 8 November 2026
+
+Asked for in these words: *"the traditional agency where a person cannot excel
+has the old way where filing cabinets, files, paper... you specifically want to
+target where the work has become overwhelming for persons with filing cabinets,
+manual, paper, and still depend on the emails. Where our process is that looking
+at the data and pulling and scrubbing the insights and allowing our proven
+systems to make and do the research for you."*
+
+The page already showed the machine, stop by stop, in `#tech`. What it had never
+done is **name the day the right person is living**. Nobody leaves a job because
+of a feature list; they leave because somebody described their own Tuesday back
+to them. So:
+
+- **A ledger section, `#old`**, between the book and the seven stops: six rows,
+  *Everywhere else* against *Here*. The drawer and last year's file in a
+  different drawer; re-keying the client into the insurer's proposal form; the
+  insight being whatever you happened to notice; chasing the client or losing
+  the renewal; what the client holds living in your head or an e-mail thread;
+  the data in four places that disagree. Each answered by the thing the branch
+  actually runs.
+- **The attraction line names it first and the autonomy second.** It was *"and
+  have never once been allowed to change how it is run"* alone; it now opens on
+  the cabinet and the inbox. Same line on the page and on all three posters,
+  which is the rule.
+- **The hero says there is no filing cabinet in this seat**, and that the record
+  is pulled from every source and scrubbed before you read it.
+
+**Honest about paper, which is what makes it believable.** Contracts and cheques
+still arrive from the insurer and clients still sign things. The claim is not
+that paper is gone — it is that **no record here can only be found on paper**:
+every document that arrives is logged, routed, signed for by name and tracked
+until it is answered. Claiming a paperless office to somebody who has worked in
+insurance for fifteen years loses them at the first sentence.
+
+### Three things it cost
+
+- **The longer pull reopened the layout-shift bug, in a second element.** Three
+  lines in Inter Tight and four in the metric-matched fallback at every width
+  from 768 up, so the hero column reflowed by a line when the font landed and
+  the buttons under it moved: **CLS 0.0127 → 0.0985 at 1366**. It is the h1's own
+  0.577 bug one element down, and the lesson there holds — no `size-adjust`
+  closes a gap that narrow. `.pull` now reserves `calc(4 * 1.32em)`, so the box
+  is four lines tall whichever face draws it; on a phone the line genuinely is
+  five and the `min-height` does nothing. **0.0985 → 0.0133.** The scan that
+  finds this (`scan.js` in the session scratchpad) prints the line count per
+  face per width; re-run it if these words change.
+- **The longer pull put 23px of the feed poster's foot outside the frame** — the
+  QR and the address simply gone. The frame gives, the copy does not: 24px came
+  out of three margins in `.feed`, and nothing came out of a line.
+- **The column header and every cell were both saying "Everywhere else".** The
+  header row says it on a desk, a `::before` label says it on a phone, and the
+  cell said it a third time in bold. Dropped from the cells, and the operative
+  phrase bolded on the right instead — the same cleanup the hiring board's cards
+  needed the day before.
+
+Measured after: no sideways scroll at 360/375/390/414/768/1024/1280/1366/1920,
+every row revealed with motion on **and** with `prefers-reduced-motion: reduce`,
+contrast composited through translucency (worst 5.09:1, the left column on its
+own tint), and each pair still stacking as a pair on a phone with its label.
+
+**The film does not say any of this yet.** `film-w.mp4` covers the machine but
+not the cabinet, and its lines are voiced — adding it means re-voicing one or
+two and re-rendering. Left until asked, and recorded here so the page and the
+film are known to be one beat apart rather than silently disagreeing.
+
 ### Notes on the wording
 
 - **Never "administrative assistant" in the headline.** The person we want has
@@ -1110,13 +1176,15 @@ in the same scene.
 >
 > **The book is already there. What it has never had is you.**
 >
-> *If you can run a general insurance book, and have never once been allowed to change how it is run — this is the one to read.*
+> *If you are running a general insurance book out of a filing cabinet and an inbox that never empties — and nobody has ever let you change any of it — this is the one to read.*
 >
 > I have spent thirty-five years in this business, and the general insurance book at the Ricky Rampersad Branch is one I built myself. It has done well, and it has renewed year after year. But I am running a branch, and my time is needed across all of it.
 >
 > So this book needs somebody whose whole attention it is. Seven lines of business — motor and fleet, household, commercial property, public liability, workers' compensation, machinery and plant, bonds — personal and commercial, with renewals falling in every month of the year.
 >
-> Here is what you would be walking into. The quote fills itself from the client's own record. Guardian's proposal form and the customer due-diligence checklist are filled by the system, field by field, and attached. The renewal desk reads every term since the policy began — not just this year's — before anyone opens the file. The insurer's notice is read and checked figure by figure against our own record, and where the two disagree the desk says so.
+> Here is what you would be walking into. There is no filing cabinet. The quote fills itself from the client's own record. Guardian's proposal form and the customer due-diligence checklist are filled by the system, field by field, and attached — the insurer's actual PDFs, not retyped versions. The renewal desk reads every term since the policy began — not just this year's — before anyone opens the file. The insurer's notice is read and checked figure by figure against our own record, and where the two disagree the desk says which and by how much.
+>
+> And it does the reading for you. The record is pulled out of every place it lives and scrubbed before you see it — duplicate terms, a mid-term change kept as its own policy, a vehicle carried under a changed number — and then the desk tells you what to raise first: the value carried unchanged two terms running, the sum insured that no longer means anything, the premium paid late last year, the claim still open. The client is reminded at fourteen days and again at ten, a call opens itself at seven, and the client signs in with a code to their own inbox and reads every year of their own history themselves.
 >
 > None of that is a plan. It is built and it is running, and you can see it before you apply.
 >
@@ -1146,7 +1214,7 @@ in the same scene.
 >
 > Not a new book: one that has been written and renewed here year after year. Seven lines of business, personal and commercial, with renewals every month. The Branch Manager built it himself and his time is needed across the branch, so it needs its own person.
 >
-> The paperwork side is built: the quote and the forms fill themselves from the record, and every term since the policy began is on the screen before you open the file.
+> There is no filing cabinet. The quote and Guardian's own forms fill themselves from the record, every term since the policy began is on the screen before you open the file, and the record is pulled from every place it lives and scrubbed before you see it — then the desk tells you what to raise first. The client is reminded at fourteen days and ten, a call opens itself at seven, and they sign in and read their own history.
 >
 > So the job is the advice, the endorsements and the renewal conversation. And if you ask for a change here, it gets built that week.
 >
@@ -1169,9 +1237,11 @@ in the same scene.
 > spent underwriting. Professional qualifications (ACII, CII Diploma or
 > Certificate, or part-qualified) are asked for and count.
 >
-> The branch has written its own software, so the quote, the forms, the
-> renewal history and the claim checks are already automated — and a change
-> you ask for is built, not queued.
+> No filing cabinet and no re-keying: the branch has written its own
+> software, so the quote, Guardian's own forms, the full renewal history
+> since inception and the claim checks are already automated, the record is
+> pulled from every source and scrubbed before you read it, and the system
+> says what to raise first — and a change you ask for is built, not queued.
 >
 > CV and application at **rickyrampersadbranch.com/clientmanager**. Read by the
 > Branch Manager personally and treated confidentially.

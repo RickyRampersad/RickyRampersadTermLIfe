@@ -50,12 +50,18 @@ ADS = {
         'role': 'Client Manager &middot; General Insurance',
         'head': ['The book is', 'already there.'],
         'em': ['What it has', 'never had is you.'],
-        'pull': 'If you can run a general insurance book, and have never once been '
-                'allowed to change how it is run &mdash; this is the one to read.',
+        # 8 November 2026: "target where the work has become overwhelming for
+        # persons with filing cabinets, manual, paper, and still depend on the
+        # emails." The pull names that day first and the autonomy second — a
+        # feature list moves nobody; a description of their own Tuesday does.
+        # It is the page's own pull, tightened for the frame.
+        'pull': 'If you are running a general insurance book out of a filing cabinet '
+                'and an inbox that never empties &mdash; and nobody has ever let you '
+                'change it &mdash; read this one.',
         'chips': ['Judged on the book, not on the clock',
                   'A change you ask for gets built that week',
                   'Every endorsement written to the Act',
-                  'Seven lines, written and renewed here for years'],
+                  'Seven lines, years of renewals, no filing cabinet'],
         'url': 'rickyrampersadbranch.com/clientmanager',
         'qr': 'qr-cmadmin.png',
         'foot': 'Your CV and fifteen minutes. Read by the Branch Manager alone.',
@@ -180,11 +186,15 @@ h1 .em{color:var(--cyan);display:block}
   --f-mast:26px; --f-mast-s:14px; --f-badge:21px; --f-h:82px; --f-role:22px;
   --f-pull:29px; --f-chip:21px; --f-url:29px; --f-foot:19px}
 .feed .in{padding:62px 70px 58px}
-.feed .mast{margin-bottom:44px}
-.feed .badge{margin-bottom:26px}
+/* 8 November 2026: the longer pull — the filing-cabinet line — put 23px of
+   the foot outside the 1350 frame, which is the QR and the address simply
+   gone. The frame gives, the copy does not: 24px came out of three margins
+   and nothing came out of a line. */
+.feed .mast{margin-bottom:32px}
+.feed .badge{margin-bottom:22px}
 .feed h1{margin-bottom:22px}
 .feed .role{margin-bottom:26px}
-.feed .pull{margin-bottom:34px}
+.feed .pull{margin-bottom:26px}
 
 /* ── story · 1080x1920 ────────────────────────────────────────────────────── */
 .story{width:1080px;height:1920px;--mk:66px;--qr:214px;
