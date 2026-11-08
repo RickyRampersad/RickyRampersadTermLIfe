@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-08c';
+var SCRIPT_VERSION = '2026-11-08d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -14980,12 +14980,16 @@ function agentRollupMail_(mgr, agents, day) {
 /** The Branch Manager's one e-mail at 6pm: what went out to the agents today, then each unit's close-offs, the opportunities, who
  *  asked for him, and the meeting ideas. Ricky, 8 Nov 2026: "one unified email ... so he can actually make decisions." */
 function agentBranchSummary_(groups, day) {
+  try { forgetHr_(AGDAY); } catch (e) {}
   var props = PropertiesService.getScriptProperties(), all = [], secs = '', tot = { closed: 0, n: 0, planned: 0, P: 0, D: 0 }, want = [], ideas = [];
   Object.keys(groups).forEach(function (k) {
     var g = groups[k], r = agentRollupMail_(g.email, g.agents, day); all = all.concat(g.agents);
     ['closed', 'n', 'planned', 'P', 'D'].forEach(function (f) { tot[f] += r[f] || 0; }); want = want.concat(r.wantMgr || []); ideas = ideas.concat(r.ideas || []);
-    var who = ''; try { var hit = Object.keys(SCHEDULE || {}).filter(function (sid) { return normEmail_(emailFor_(sid)) === k; })[0]; who = hit ? nameFor_(hit) : g.email; } catch (e) { who = g.email; }
-    secs += sectionLabel_(esc_(who) + '\'s agents (' + g.agents.length + ')') + r.inner;
+    var lbl = 'Agents (' + g.agents.length + ')';
+    if (k === normEmail_((managerEmails_() || [])[0] || '')) lbl = 'Your own agents (' + g.agents.length + ')';
+    else { var um = UM_DESKS.filter(function (sid) { try { return normEmail_(emailFor_(sid)) === k; } catch (e) { return false; } })[0];
+      var umn = ''; try { umn = um ? String(nameFor_(um)).split(' ')[0] : ''; } catch (e) {} if (umn) lbl = umn + '\'s unit (' + g.agents.length + ')'; }
+    secs += sectionLabel_(esc_(lbl)) + r.inner;
   });
   var sentAm = 0, sentPm = 0, fbn = 0;
   all.forEach(function (a) { if (props.getProperty('ag_am_' + a.key + '_' + day)) sentAm++; if (props.getProperty('ag_pm_' + a.key + '_' + day)) sentPm++;
