@@ -39,7 +39,7 @@ const am = sent.pop().html;
 ok('no performance letter', !/performance letter/i.test(am) && !/Q2 FY26/.test(am));
 const mine = (am.match(/href="([^"]*t=00TA1[^"]*)"/) || [])[1] || '';
 // 29 Oct 2026: each task's link opens it on My day; the full page (below) still opens on the task with i=.
-ok('each task: open & comment, and the link opens that task on My day', /open &amp; comment &rarr;/.test(am) && /myworkday\/\?p=a-darryl/.test(mine) && /go=agitems&(amp;)?t=00TA1/.test(mine), mine.slice(0, 160));
+ok('each task: open & comment, and the link opens that task on My day', /(open &amp; comment|open, read the notes and post) &rarr;/.test(am) && /myworkday\/\?p=a-darryl/.test(mine) && /go=agitems&(amp;)?t=00TA1/.test(mine), mine.slice(0, 160));
 const link = env.replyUrl_('a-darryl', DAY, 'ag') + '&i=00TA1';
 
 console.log('\nHis page, opened on the task:\n');

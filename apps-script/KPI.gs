@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-08b';
+var SCRIPT_VERSION = '2026-11-08c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -14351,6 +14351,10 @@ function agentBatchData_(list, day) {
   list.forEach(function (a) { who[nk(a.agentName)] = a.key; who[nk(a.name)] = a.key; out.open[a.key] = []; out.closed[a.key] = []; out.ff[a.key] = []; });
   if (!names.length) return out;
   var inList = names.map(soqlStr_).join(',');
+  // Their licence dates (8 Nov 2026): the brief mentions a licence only in the month it falls due.
+  out.lic = {};
+  try { sfkQuery_("SELECT Name, License_Date_Life__c, License_Date_General__c FROM Contact WHERE RecordType.Name = 'AGENT' AND Name IN (" + inList + ') LIMIT 200').forEach(function (r) {
+    var k = who[nk(r.Name)]; if (k) out.lic[k] = { life: r.License_Date_Life__c || '', gen: r.License_Date_General__c || '' }; }); } catch (e) {}
   try {
     sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, Owner.Name, Agent__r.Name, LastModifiedDate FROM Task' +
       ' WHERE IsClosed = false AND Agent__r.Name IN (' + inList + ') AND ActivityDate <= ' + day + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%')" +
@@ -14956,7 +14960,12 @@ function agentRollupMail_(mgr, agents, day) {
     (rates.length ? ' The day, in their words: <b>' + (Math.round(10 * rates.reduce(function (s, x) { return s + x; }, 0) / rates.length) / 10) + '/5</b> from ' + rates.length + '.' : '') +
     (wantMgr.length ? ' <b>Asked for time with you tomorrow: ' + esc_(wantMgr.join(', ')) + '.</b>' : '') + '</div>' +
     (ideas.length ? '<div style="font-size:13px;margin:0 0 10px;padding:8px 12px;background:#FFF9EC;border-radius:10px"><b>Ideas for Wednesday\'s meeting:</b> ' + esc_(ideas.join(' · ')) + '</div>' : '');
-  return {
+  var inner = lead + statTiles_([
+        { value: closed + '/' + agents.length, label: 'closed off', color: closed === agents.length ? MAIL.green : MAIL.amber },
+        { value: planned + '/' + agents.length, label: 'projected this morning' },
+        { value: P ? agBalText_(D - P) : '—', label: 'balance against projection', color: D - P < 0 ? MAIL.red : MAIL.green }
+      ]) + table;
+  return { closed: closed, planned: planned, n: agents.length, P: P, D: D, wantMgr: wantMgr, ideas: ideas, inner: inner,
     subject: 'Your agents today · ' + closed + ' of ' + agents.length + ' closed off · ' + shortDate_(day),
     html: shell_('Your agents today', prettyDate_(day) + ' · ' + hhmm_(new Date()),
       lead + statTiles_([
@@ -14968,13 +14977,52 @@ function agentRollupMail_(mgr, agents, day) {
   };
 }
 
+/** The Branch Manager's one e-mail at 6pm: what went out to the agents today, then each unit's close-offs, the opportunities, who
+ *  asked for him, and the meeting ideas. Ricky, 8 Nov 2026: "one unified email ... so he can actually make decisions." */
+function agentBranchSummary_(groups, day) {
+  var props = PropertiesService.getScriptProperties(), all = [], secs = '', tot = { closed: 0, n: 0, planned: 0, P: 0, D: 0 }, want = [], ideas = [];
+  Object.keys(groups).forEach(function (k) {
+    var g = groups[k], r = agentRollupMail_(g.email, g.agents, day); all = all.concat(g.agents);
+    ['closed', 'n', 'planned', 'P', 'D'].forEach(function (f) { tot[f] += r[f] || 0; }); want = want.concat(r.wantMgr || []); ideas = ideas.concat(r.ideas || []);
+    var who = ''; try { var hit = Object.keys(SCHEDULE || {}).filter(function (sid) { return normEmail_(emailFor_(sid)) === k; })[0]; who = hit ? nameFor_(hit) : g.email; } catch (e) { who = g.email; }
+    secs += sectionLabel_(esc_(who) + '\'s agents (' + g.agents.length + ')') + r.inner;
+  });
+  var sentAm = 0, sentPm = 0, fbn = 0;
+  all.forEach(function (a) { if (props.getProperty('ag_am_' + a.key + '_' + day)) sentAm++; if (props.getProperty('ag_pm_' + a.key + '_' + day)) sentPm++;
+    var f = agRows_(a.key, day, 'fb'); if (f.fb_day || f.fb_brief) fbn++; });
+  var opp = []; try { opp = agOppRows_(); } catch (e) {}
+  var oppNew = opp.filter(function (r) { return isoDay_(r.Opened) === day; }).length, oppOpen = opp.filter(function (r) { return String(r.Status) === 'open'; }).length;
+  var oppLate = opp.filter(function (r) { return String(r.Status) === 'open' && !r.AgentAt && isoDay_(r.Opened) < day; }).length;
+  var sent = '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:10px 14px;font-size:13px;line-height:1.7">' +
+    '<b>What went out to the agents today</b><br>' + sentAm + ' of ' + all.length + ' morning briefs (their managers and Mrs Dookran copied) · ' + sentPm + ' close-off e-mails · ' +
+    oppNew + ' new opportunities opened for support · ' + fbn + ' agents answered the feedback</div>';
+  var inner = '<div style="font-size:14px;line-height:1.55;margin:0 0 10px"><b>' + tot.closed + ' of ' + tot.n + '</b> agents closed off today' +
+      (tot.P ? ' · <b>' + tot.D + '</b> done of <b>' + tot.P + '</b> projected (' + agBalText_(tot.D - tot.P) + ')' : '') + '.' +
+      (want.length ? ' <b>Asked for time with their manager: ' + esc_(want.join(', ')) + '.</b>' : '') + '</div>' +
+    statTiles_([
+      { value: tot.closed + '/' + tot.n, label: 'closed off', color: tot.closed === tot.n ? MAIL.green : MAIL.amber },
+      { value: oppOpen, label: 'opportunities open' },
+      { value: oppLate, label: 'agent not answered', color: oppLate ? MAIL.red : MAIL.green }
+    ]) + sent +
+    (ideas.length ? '<div style="font-size:13px;margin:10px 0;padding:8px 12px;background:#FFF9EC;border-radius:10px"><b>Ideas for Wednesday\'s meeting:</b> ' + esc_(ideas.join(' · ')) + '</div>' : '') + secs +
+    '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:8px">One e-mail for the branch. Each unit manager gets their own unit; the opportunity report came at 10:00.</div>';
+  return { subject: 'The branch today · ' + tot.closed + ' of ' + tot.n + ' agents closed off · ' + shortDate_(day), html: shell_('The branch today', prettyDate_(day) + ' · 6:00pm', inner) };
+}
+
 /** 6:30pm, once a day per manager: the roll-up, Mrs Dookran copied. */
 function agentRollupTick_(day, mins) {
   var mode = agentMode_(); if (mode === 'off') return [];
   if (mins < AGENT_ROLL_AT || mins > AGENT_ROLL_AT + 90) return [];
   try { forgetHr_(AGDAY); } catch (e) {}   // read the close-offs fresh
-  var props = PropertiesService.getScriptProperties(), out = [], groups = agentsByManager_();
+  var props = PropertiesService.getScriptProperties(), out = [], groups = agentsByManager_(), bm = (managerEmails_() || [])[0] || '';
+  // The Branch Manager: one e-mail for the whole branch, unit by unit, with what went out to the agents today (8 Nov 2026).
+  if (bm && !props.getProperty('agroll_branch_' + day)) {
+    props.setProperty('agroll_branch_' + day, hhmm_(new Date()));
+    try { var bmail = agentBranchSummary_(groups, day); mailSend_({ to: bm, cc: agentBma_([bm]).join(','), subject: bmail.subject, htmlBody: bmail.html }); out.push('branch summary to the Branch Manager'); }
+    catch (e) { props.deleteProperty('agroll_branch_' + day); out.push('branch summary FAILED: ' + (e && e.message)); }
+  }
   Object.keys(groups).forEach(function (k) {
+    if (bm && k === normEmail_(bm)) return;   // his own agents are in the branch summary
     var mark = 'agroll_' + k.replace(/[^a-z0-9]/g, '') + '_' + day;
     if (props.getProperty(mark)) return;
     props.setProperty(mark, hhmm_(new Date()));
@@ -15242,6 +15290,56 @@ function agFbSave_(p) {
     : [{ Item: 'fb_day', Question: 'How was today?', Done: String(p.v || ''), Note: '' }, { Item: 'fb_help', Question: 'Help tomorrow', Done: String(p.help || ''), Note: String(p.note || '').slice(0, 1000) }];
   agWrite_(a, day, 'fb', rows);
   return agFbPage_(Object.assign({}, p, { help: p.help }), true);
+}
+
+/** "Who is working for you": the branch's open work for this agent, by the person who has it, each task with what it waits on, its
+ *  last note and a link that opens its Chatter on My day. What waits on the agent comes first. (Ricky, 8 Nov 2026: "group which
+ *  staff is working on for them ... what we are waiting on, the escalations".) */
+function agStaffWork_(a, day, open, queries) {
+  var out = { html: '', n: (open || []).length, waitingOnYou: 0 };
+  if (!open || !open.length) return out;
+  var first = String(a.name).split(' ')[0], notes = {};
+  try { notes = cmdChatter_(open.slice(0, 30).map(function (t) { return t.id; })); } catch (e) {}
+  var rows = open.map(function (t) {
+    var pb = {}; try { pb = playbookFor_({ subject: t.subject, ty: t.ty }, notes[t.id] || [], day); } catch (e) {}
+    var wait = String(pb.waiting || ''), lateD = t.late ? daysBetween_(t.due, day) : 0;
+    var onYou = wait === 'agent';
+    var esc8 = !onYou && (lateD >= 7 || (pb.quiet != null && pb.quiet >= 5));
+    if (onYou) out.waitingOnYou++;
+    return { t: t, who: String(t.owner || 'The branch').split(' ')[0], wait: wait, last: pb.last || '', quiet: pb.quiet, onYou: onYou, esc: esc8, lateD: lateD, label: pb.label || t.ty || 'Task' };
+  });
+  var by = {}; rows.forEach(function (r) { (by[r.who] = by[r.who] || []).push(r); });
+  var people = Object.keys(by).sort(function (x, y) {
+    var w = function (k) { return by[k].filter(function (r) { return r.onYou; }).length * 100 + by[k].filter(function (r) { return r.esc; }).length * 10 + by[k].length; };
+    return w(y) - w(x); });
+  out.html = people.map(function (who) {
+    var list = by[who].sort(function (x, y) { return (y.onYou - x.onYou) || (y.esc - x.esc) || (y.lateD - x.lateD); });
+    var late = list.filter(function (r) { return r.t.late; }).length;
+    return agCard_(list.some(function (r) { return r.onYou; }) ? MAIL.red : list.some(function (r) { return r.esc; }) ? MAIL.amber : MAIL.green,
+      '<div style="font:800 14px Segoe UI,Arial;color:' + MAIL.navy + ';padding:2px 0 6px">' + esc_(who) + ' <span style="font-weight:600;color:' + MAIL.muted + ';font-size:12.5px">· ' + list.length + ' for you' + (late ? ' · ' + late + ' overdue' : '') + '</span></div>' +
+      list.slice(0, 5).map(function (r) {
+        var tag = r.onYou ? '<span style="background:' + MAIL.red + ';color:#fff;border-radius:999px;padding:1px 7px;font-size:11px;font-weight:800">WAITING ON YOU</span> '
+          : r.esc ? '<span style="background:' + MAIL.amber + ';color:#fff;border-radius:999px;padding:1px 7px;font-size:11px;font-weight:800">NEEDS A PUSH</span> ' : '';
+        var state = r.wait && !r.onYou ? 'Waiting on ' + r.wait : r.last ? 'Last note' + (r.quiet != null ? ' (' + (r.quiet === 0 ? 'today' : r.quiet + 'd ago') + ')' : '') + ': ' + r.last : 'No note yet';
+        return agLine_(tag + '<b>' + esc_(r.t.subject) + '</b>' + (r.t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue ' + r.lateD + 'd</span>' : r.t.due === day ? ' <span style="color:' + MAIL.amber + '">· due today</span>' : '') +
+          '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin-top:2px">' + esc_(shorten_(state, 170)) + '</div>' +
+          '<a href="' + esc_(workGoUrl_(a.key, 'agitems', r.t.id)) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">' + (r.onYou ? 'answer ' + esc_(who) + ' &rarr;' : 'open, read the notes and post &rarr;') + '</a>');
+      }).join('') + (list.length > 5 ? agLine_('<span style="color:' + MAIL.muted + '">and ' + (list.length - 5) + ' more on My day</span>') : ''));
+  }).join('') + ((queries || []).length ? '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin:4px 0 0">Query Pal: ' + queries.length + ' of your clients\' queries open with the team.</div>' : '');
+  return out;
+}
+
+/** A licence line only in the month the licence date falls (8 Nov 2026). Salesforce holds the licence date, not an expiry, so the
+ *  anniversary is what is shown. A general licence dated before 1950 is a placeholder and never shown. */
+function agLicenceLine_(lic, day) {
+  if (!lic) return '';
+  var mon = day.slice(5, 7), parts = [];
+  [['life', 'Life'], ['gen', 'General']].forEach(function (x) {
+    var d = String(lic[x[0]] || ''); if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || d < '1950') return;
+    if (d.slice(5, 7) === mon) parts.push(x[1] + ' licence: ' + shortDate_(day.slice(0, 4) + d.slice(4)) + ' (licensed since ' + d.slice(0, 4) + ')');
+  });
+  return parts.length ? '<div style="margin:0 0 12px;padding:10px 14px;border-radius:10px;background:#FFF6E0;border-left:4px solid ' + MAIL.amber + ';font-size:13.5px"><b>Your licence falls due this month.</b> ' +
+    esc_(parts.join(' · ')) + '. If your renewal is due, get it to Mrs Dookran this week.</div>' : '';
 }
 
 /** For the managers' mail: each agent's day so far. Absent = no plan by 10:30; nothing done = no close-off. */
@@ -18634,8 +18732,8 @@ function agentMorningMail2_(a, day, data, cm) {
     (or.kinds.length ? line('Your notes say: ' + or.kinds.map(function (k) { return k.n + ' ' + esc_(k.l); }).join(' · ')) : '') : '';
   var pen = pd && pd.n ? line((pd.settle ? '<b style="color:' + MAIL.green + '">' + pd.settle + ' should settle now</b> · ' : '') + (pd.one ? '<b>' + pd.one + '</b> one step away · ' : '') + (pd.stuck ? '<b style="color:' + MAIL.red + '">' + pd.stuck + ' stuck</b> · ' : '') + pd.n + ' open') +
     pd.list.slice(0, 4).map(function (x) { return line('<b>' + esc_(x.c || x.pol) + '</b>' + (x.pol ? ' · ' + esc_(x.pol) : '') + ' · ' + esc_(x.need) + (x.o ? ' <span style="color:' + MAIL.muted + '">(' + esc_(x.o) + ' has it' + (x.note ? ': ' + esc_(x.note) : '') + ')</span>' : '')); }).join('') : '';
-  var work = open.length ? open.slice(0, 6).map(function (t) { return line('<b>' + esc_(String(t.owner).split(' ')[0] || '—') + '</b> · ' + esc_(t.subject) + (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>' : t.due === day ? ' <span style="color:' + MAIL.amber + '">· due today</span>' : '') +
-    ' <a href="' + esc_(workGoUrl_(a.key, 'agitems', t.id)) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &amp; comment &rarr;</a>'); }).join('') : '';
+  var work = agStaffWork_(a, day, open, (data && data.q && data.q[a.key]) || []);
+  var lic = agLicenceLine_((data && data.lic && data.lic[a.key]) || null, day);
   var calls = (cm.calls || []).slice(0, 6).map(function (c) { return line('<b>' + esc_(c.c) + '</b> · ' + esc_(c.why) + (c.tel ? ' · <a href="tel:' + esc_(c.tel.replace(/[^\d+]/g, '')) + '" style="color:' + MAIL.navy + '">' + esc_(c.tel) + '</a>' : '')); }).join('');
   var rise = ''; try { rise = agRiseHero_(agRiseData_(a, day, { g: g, f3: cm.f3, open: open, months: mo, att: cm.att, cases: cs, orp: or ? { callbacks: (or.waiting || []).length } : null, book: cm.book ? { urgent: { length: cm.book.urgent } } : null }), day, 'am'); } catch (e) {}
   // Simplified, 8 Nov 2026: the note, your opportunities, your calls; then the rest; then the meeting and one tap of feedback.
@@ -18657,13 +18755,15 @@ function agentMorningMail2_(a, day, data, cm) {
     'Bring one thing to Wednesday\'s meeting: a win, a question, or something the branch could do better. ' +
     '<a href="https://rickyrampersadbranch.com/meetings/" style="color:' + MAIL.navy + ';font-weight:700">Add it to the agenda &rarr;</a> <span style="color:' + MAIL.muted + '">(your agent number signs you in)</span>');
   var fb = '<div style="margin-top:16px;padding:12px 14px;background:#fff;border:1px solid ' + MAIL.line + ';border-radius:12px"><div style="font:800 13px Segoe UI,Arial;color:' + MAIL.navy + ';margin-bottom:6px">Was this brief useful?</div>' + agFbLinks_(a, day, 'brief') + '</div>';
-  var body = rise + '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Good morning, ' + esc_(first) + '. Three things matter today: the note below, your opportunities, and your calls.</div>' + note + btn +
+  var body = rise + lic + (work.waitingOnYou ? '<div style="margin:0 0 12px;padding:10px 14px;border-radius:10px;background:#FDECEC;border-left:4px solid ' + MAIL.red + ';font-size:13.5px"><b>' + work.waitingOnYou + ' waiting on you</b>: the team needs something from you before they can finish. They are first under "Who is working for you".</div>' : '') +
+    '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Good morning, ' + esc_(first) + '. Three things matter today: the note below, your opportunities, and your calls.</div>' + note + btn +
     (oppHtml ? sectionLabel_('Your opportunities (' + op.open.length + ')') + agCard_(AGM_GOLD, oppHtml) : '') +
     (calls ? sectionLabel_('Your calls today') + agCard_(AGM_GOLD, calls) : '') +
     sectionLabel_('Your goal') + agCard_(AGM_GOLD, goal) +
     sectionLabel_('Fact finds') + agCard_(MAIL.navy, ff) +
     (orp ? sectionLabel_('Orphan clients we gave you') + agCard_(MAIL.amber, orp) : '') +
-    (pen || work ? sectionLabel_('What the branch is doing for you') + agCard_(MAIL.green, pen + work) : '') +
+    (work.html ? sectionLabel_('Who is working for you (' + work.n + ')') + work.html : '') +
+    (pen ? sectionLabel_('Pendings: what should settle') + agCard_(MAIL.green, pen) : '') +
     sectionLabel_('Wednesday\'s meeting') + agCard_(MAIL.navy, meet) + btn + fb +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
   var subj = 'Your day · ' + a.name + ' · ' + shortDate_(day) + ' · ' + (co.title || 'good morning') + ((op.fresh || []).length ? ' · ' + op.fresh.length + ' new opportunit' + (op.fresh.length === 1 ? 'y' : 'ies') : '');

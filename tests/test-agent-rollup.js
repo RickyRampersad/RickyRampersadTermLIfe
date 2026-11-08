@@ -25,12 +25,12 @@ P.setProperty('AGENT_COACH', 'off'); ok('AGENT_COACH = off turns it off', env.ag
 ok('no midday run', env.agentTick_(DAY, 12 * 60 + 5).length === 0 && mails.length === 0);
 ok('nothing before 6pm', env.agentRollupTick_(DAY, 17 * 60 + 50).length === 0 && mails.length === 0);
 const out = env.agentRollupTick_(DAY, 18 * 60 + 5);
-ok('one e-mail per manager', mails.length === 2, mails.map(m => m.to).join(' | '));
+ok('Akaash his unit, Mr Rampersad one branch summary', mails.length === 2, mails.map(m => m.to).join(' | '));
 const ak = mails.find(m => m.to === 'akaash@example.com') || {}, ri = mails.find(m => m.to === 'ricky@example.com') || {};
 ok('Kamla copied on each', ak.cc === 'kamla@example.com' && ri.cc === 'kamla@example.com');
 ok('Akaash: 1 of 2 closed off, Joy named as not closed off', /1 of 2 closed off/.test(ak.subject) && /No close-off: Joy/.test(ak.htmlBody), ak.subject);
 ok('Neil: short of his projection, his own words', /Short of their own projection: Neil/.test(ak.htmlBody) && /Two appointments booked/.test(ak.htmlBody));
-ok('Mr Rampersad gets Felicia alone', /1 of 1/.test(ri.subject) && /Felicia/.test(ri.htmlBody) && !/Neil/.test(ri.htmlBody));
+ok('Mr Rampersad gets the whole branch, unit by unit, with what went out', /The branch today · 2 of 3/.test(ri.subject) && /Felicia/.test(ri.htmlBody) && /Neil/.test(ri.htmlBody) && /What went out to the agents today/.test(ri.htmlBody), ri.subject);
 const n = mails.length; env.agentRollupTick_(DAY, 18 * 60 + 40);
 ok('once a day', mails.length === n);
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall green');
