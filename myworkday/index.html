@@ -301,7 +301,18 @@
   /* The managers' screen (29 Oct 2026): the unit's work by agent, the day's notes, the manager's numbers. */
   .uchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
   details.ua{border-top:1px solid var(--line)}
-  #agitems details.agt{margin-left:10px} #agitems details.agt>summary .nm{font-size:13.5px} #agitems .tg{display:inline-block;border-radius:999px;padding:1px 7px;font:800 10.5px/1.5 var(--fb);color:#fff;vertical-align:1px} #agitems .tg.you{background:#C0392B} #agitems .tg.push{background:#C77700} #agitems b.dn{color:#C0392B} details.ua:first-of-type{border-top:0}
+  /* The agent's "Being worked for your clients" (8 Nov 2026): by staff, then by type. Its own class: .agt is the tile grid, .ua the unit card. */
+  #agitems details.agd{display:block;border-top:1px solid var(--line)} #agitems details.agd:first-of-type{border-top:0}
+  #agitems details.agd>summary{list-style:none;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:11px 0;cursor:pointer}
+  #agitems details.agd>summary::-webkit-details-marker{display:none}
+  #agitems details.agd>summary::after{content:"\25BE";color:var(--muted);grid-column:2;grid-row:1} #agitems details.agd[open]>summary::after{content:"\25B4"}
+  #agitems details.agd>summary .nm{grid-column:1;grid-row:1;min-width:0;font:800 15px/1.25 var(--fd);color:var(--navy);overflow-wrap:anywhere}
+  #agitems details.agd>summary .ct{grid-column:1/-1;font:700 12px/1.35 var(--fb);color:var(--muted)}
+  #agitems details.agd>summary .ty{grid-column:1/-1;font:600 11.5px/1.35 var(--fb);color:var(--muted)}
+  #agitems details.agd.ty2{margin-left:12px;border-top:1px dashed var(--line)} #agitems details.agd.ty2>summary{padding:8px 0} #agitems details.agd.ty2>summary .nm{font-size:13.5px}
+  #agitems details.agd ul.list{display:block;width:100%;margin:0 0 6px}
+  #agitems .tg{display:inline-block;border-radius:999px;padding:1px 7px;font:800 10.5px/1.5 var(--fb);color:#fff;vertical-align:1px} #agitems .tg.you{background:#C0392B} #agitems .tg.push{background:#C77700} #agitems b.dn{color:#C0392B}
+  details.ua:first-of-type{border-top:0}
   details.ua>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:11px 0;cursor:pointer}
   details.ua>summary::-webkit-details-marker{display:none}
   details.ua>summary .nm{flex:1;min-width:0;font:800 14.5px/1.25 var(--fd);color:var(--navy);overflow-wrap:anywhere}
@@ -709,7 +720,11 @@
     if (!it.length) return '<div class="card" id="agitems"><div class="ch"><h2>Being worked for your clients</h2></div><div class="empty">Nothing due for your clients today.</div></div>';
     // 8 Nov 2026: by the person who has it, then by type, each a drop-down. What waits on the agent opens by itself.
     var li = function (x, i) {
-      var notes = (x.notes || []).map(function (n) { return "<div>" + (n.reply ? "&#8627; " : "") + "<b>" + esc(n.who) + "</b>" + (n.day ? " · " + esc(n.day) : "") + ": " + esc(n.s) + "</div>"; }).join("");
+      var notes = (x.notes || []).map(function (n) {
+        // A note posted from a day page carries its own head ("Sales Support · Azariah Griffith · Fri:"): read the name from it, show the words alone.
+        var who = n.who || "", t = String(n.s || ""), h = t.match(/^\s*([A-Za-z' ]{3,40}) \u00b7 ([^\u00b7:]{2,60}) \u00b7 [^:]{0,30}:\s*/);
+        if (h) { if (!who) who = h[2].trim(); t = t.slice(h[0].length); }
+        return "<div>" + (n.reply ? "&#8627; " : "") + (who ? "<b>" + esc(who) + "</b>" + (n.day ? " · " : "") : "") + (n.day ? esc(n.day) : "") + (who || n.day ? ": " : "") + esc(t) + "</div>"; }).join("");
       var tag = x.tag === "you" ? '<span class="tg you">WAITING ON YOU</span> ' : x.tag === "push" ? '<span class="tg push">NEEDS A PUSH</span> ' : "";
       var wait = x.tag && x.tag.indexOf("w:") === 0 ? " · waiting on " + esc(x.tag.slice(2)) : "";
       return '<li class="tk" data-ag="' + esc(x.id) + '" style="animation-delay:' + Math.min(i, 12) * 0.04 + 's"><span class="ic ' + (x.done ? "" : x.late ? "late" : "due") + '">' + (x.done ? "&#10003;" : x.late ? "!" : "&#8226;") + "</span>" +
@@ -730,11 +745,11 @@
       gorder.sort(function (a, b) { return gs[b].length - gs[a].length; });
       var inner = gorder.map(function (g) {
         var gy = gs[g].some(function (x) { return x.tag === "you"; });
-        return '<details class="ua agt"' + (gy || gorder.length === 1 || gs[g].length <= 3 ? " open" : "") + '><summary><span class="nm">' + esc(g) + '</span><span class="ct">' + gs[g].length + "</span></summary><ul class=\"list\">" +
+        return '<details class="agd ty2"' + (gy || gorder.length === 1 || gs[g].length <= 3 ? " open" : "") + '><summary><span class="nm">' + esc(g) + ' · ' + gs[g].length + "</span></summary><ul class=\"list\">" +
           gs[g].map(function (x) { return li(x, n++); }).join("") + "</ul></details>";
       }).join("");
-      return '<details class="ua ags"' + (you || order.length === 1 || it.length <= 8 ? " open" : "") + '><summary><span class="nm">' + esc(o) + '</span><span class="ct">' + xs.length + " for you" + (late ? ' · <b class="dn">' + late + " overdue</b>" : "") + (you ? ' · <b class="dn">' + you + " waiting on you</b>" : "") +
-        '<br><span style="font-weight:600">' + esc(gorder.map(function (g) { return g + " " + gs[g].length; }).join(" · ")) + "</span></span></summary>" + inner + "</details>";
+      return '<details class="agd"' + (you || order.length === 1 || it.length <= 8 ? " open" : "") + '><summary><span class="nm">' + esc(o) + '</span><span class="ct">' + xs.length + " for you" + (late ? ' · <b class="dn">' + late + " overdue</b>" : "") + (you ? ' · <b class="dn">' + you + " waiting on you</b>" : "") +
+        "</span>" + (gorder.length > 1 ? '<span class="ty">' + esc(gorder.map(function (g) { return g + " " + gs[g].length; }).join(" · ")) + "</span>" : "") + "</summary>" + inner + "</details>";
     }).join("");
     return '<div class="card" id="agitems"><div class="ch"><h2>Being worked for your clients</h2><span class="n">' + it.length + '</span></div><div class="tip" style="margin-bottom:4px">By the person who has it, then by type. Tap a task: its last notes, and an update that goes straight on the task.</div>' + body + "</div>";
   }
