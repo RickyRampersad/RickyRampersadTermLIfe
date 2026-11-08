@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-08e';
+var SCRIPT_VERSION = '2026-11-08f';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -9190,7 +9190,7 @@ function wallAgents_(day, outside) {
   var f = { rows: [], total: { ff: 0, apps: 0, pickedUp: 0, pipeline: 0 }, known: false }; try { f = agentFunnel_(day) || f; } catch (e) {}
   var feed = null; try { feed = ff360Feed_(); } catch (e) {}
   var sum = {}; try { agentDaySummary_(day).forEach(function (x) { sum[bkNk_(x.name)] = x; }); } catch (e) {}
-  var times = {}; try { (hrRows_(AGDAY, false) || []).forEach(function (r) {
+  var times = {}; try { (agDayRecent_(2) || []).forEach(function (r) {
     if (isoDay_(r.Date) !== day) return; var k = String(r.Agent), m = wallMin_(r.At), o = times[k] = times[k] || {};
     if (m == null) return; var kind = String(r.Kind); if (kind === 'plan' || kind === 'close') { if (o[kind] == null || m < o[kind]) o[kind] = m; }
   }); } catch (e) {}
@@ -14352,24 +14352,32 @@ function agentBatchData_(list, day) {
   if (!names.length) return out;
   var inList = names.map(soqlStr_).join(',');
   // Their licence dates (8 Nov 2026): the brief mentions a licence only in the month it falls due.
-  out.lic = {};
-  try { sfkQuery_("SELECT Name, License_Date_Life__c, License_Date_General__c FROM Contact WHERE RecordType.Name = 'AGENT' AND Name IN (" + inList + ') LIMIT 200').forEach(function (r) {
-    var k = who[nk(r.Name)]; if (k) out.lic[k] = { life: r.License_Date_Life__c || '', gen: r.License_Date_General__c || '' }; }); } catch (e) {}
+  out.lic = {}; out.cid = {};
+  var cids = [], byCid = {};
+  try { sfkQuery_("SELECT Id, Name, License_Date_Life__c, License_Date_General__c FROM Contact WHERE RecordType.Name = 'AGENT' AND Name IN (" + inList + ') LIMIT 200').forEach(function (r) {
+    var k = who[nk(r.Name)]; if (!k) return; out.lic[k] = { life: r.License_Date_Life__c || '', gen: r.License_Date_General__c || '' };
+    out.cid[k] = r.Id; cids.push(r.Id); byCid[String(r.Id).slice(0, 15)] = k; }); } catch (e) {}
+  // Tasks are asked for by Agent__c, an indexed lookup, and only from the last year; the name match stays for anyone not found.
+  var nameOnly = list.filter(function (a) { return !out.cid[a.key]; }).reduce(function (acc, a) { [a.agentName, a.name].forEach(function (n) { if (n && acc.indexOf(n) === -1) acc.push(n); }); return acc; }, []);
+  var taskWhere = [];
+  if (cids.length) taskWhere.push('Agent__c IN (' + cids.map(soqlStr_).join(',') + ')');
+  if (nameOnly.length) taskWhere.push('Agent__r.Name IN (' + nameOnly.map(soqlStr_).join(',') + ')');
+  var keyOf = function (r) { return byCid[String(r.Agent__c || '').slice(0, 15)] || who[nk(r.Agent__r && r.Agent__r.Name)]; };
   try {
-    sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, Owner.Name, Agent__r.Name, LastModifiedDate FROM Task' +
-      ' WHERE IsClosed = false AND Agent__r.Name IN (' + inList + ') AND ActivityDate <= ' + day + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%')" +
+    taskWhere.forEach(function (w) { sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, Owner.Name, Agent__c, Agent__r.Name, LastModifiedDate FROM Task' +
+      ' WHERE IsClosed = false AND ' + w + ' AND ActivityDate <= ' + day + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%')" +
       ' ORDER BY ActivityDate ASC LIMIT 1500').forEach(function (r) {
-        var k = who[nk(r.Agent__r && r.Agent__r.Name)]; if (!k) return;
+        var k = keyOf(r); if (!k) return;
         out.open[k].push({ id: r.Id, subject: shorten_(r.Subject, 95), ty: r.Task_Type__c || '', due: r.ActivityDate || '',
           late: !!(r.ActivityDate && r.ActivityDate < day), owner: (r.Owner && r.Owner.Name) || '', status: r.Status || '' });
-      });
+      }); });
   } catch (e) {}
   try {
-    sfkQuery_('SELECT Id, Subject, Owner.Name, Agent__r.Name FROM Task WHERE IsClosed = true AND Agent__r.Name IN (' + inList +
-      ') AND CompletedDateTime >= ' + sfkUtcAt_(day, 0) + ' LIMIT 1000').forEach(function (r) {
-        var k = who[nk(r.Agent__r && r.Agent__r.Name)]; if (!k) return;
+    taskWhere.forEach(function (w) { sfkQuery_('SELECT Id, Subject, Owner.Name, Agent__c, Agent__r.Name FROM Task WHERE IsClosed = true AND ' + w +
+      ' AND CompletedDateTime >= ' + sfkUtcAt_(day, 0) + ' LIMIT 1000').forEach(function (r) {
+        var k = keyOf(r); if (!k) return;
         out.closed[k].push({ id: r.Id, subject: shorten_(r.Subject, 95), owner: (r.Owner && r.Owner.Name) || '' });
-      });
+      }); });
   } catch (e) {}
   try {
     var byEmail = {}; list.forEach(function (a) { byEmail[String(a.email).toLowerCase()] = a.key; });
@@ -14417,9 +14425,34 @@ function agentBook_(a, cache) {
   } catch (e) { return null; }
 }
 
+/* Fast reads, 8 Nov 2026 (Ricky: "apply the respective filters for fast access"). The Agent Day tab grows by hundreds of rows a
+ * day and was read whole on every tap. agDayRecent_ reads it from the bottom in blocks and stops at the first block older than it
+ * needs, once per request. */
+var _agDayMemo = {};
+function agDayRecent_(days) {
+  days = days || 7;
+  var cut = shiftDays_(todayISO_(), -days), memo = _agDayMemo;
+  if (memo.rows && memo.cut <= cut) return memo.rows.filter(function (r) { return isoDay_(r.Date) >= cut; });
+  var sh = hrTab_(AGDAY, true); if (!sh) return [];
+  var last = sh.getLastRow(), width = Math.max(1, sh.getLastColumn()), head = sh.getRange(1, 1, 1, width).getValues()[0].map(function (h) { return String(h || '').trim(); });
+  var di = head.indexOf('Date'), out = [], end = last, BLOCK = 1500;
+  while (end >= 2) {
+    var start = Math.max(2, end - BLOCK + 1), vals = sh.getRange(start, 1, end - start + 1, width).getValues(), older = false;
+    for (var i = vals.length - 1; i >= 0; i--) {
+      var o = {}; head.forEach(function (h, j) { if (h) o[h] = vals[i][j]; });
+      if (di > -1 && isoDay_(o.Date) < cut) { older = true; continue; }
+      out.push(o);
+    }
+    if (older) break;
+    end = start - 1;
+  }
+  out.reverse();
+  _agDayMemo = { cut: cut, rows: out };
+  return out;
+}
 function agRows_(key, day, kind) {
   var out = {};
-  (hrRows_(AGDAY, true) || []).forEach(function (r) {
+  (agDayRecent_(Math.max(2, daysBetween_(day, todayISO_()) + 2)) || []).forEach(function (r) {
     if (isoDay_(r.Date) !== day || String(r.Agent) !== key || String(r.Kind) !== kind) return;
     out[String(r.Item)] = r;
   });
@@ -14432,7 +14465,7 @@ function agWrite_(a, day, kind, rows) {
     o.Date = day; o.Agent = a.key; o.Email = a.email; o.Manager = mgr; o.Kind = kind; o.At = at;
     sh.appendRow(head.map(function (h) { return o[h] != null ? o[h] : ''; }));
   });
-  forgetHr_(AGDAY);
+  forgetHr_(AGDAY); _agDayMemo = {};
 }
 
 /** Send to the agent, or in preview to the Branch Manager marked with who it was for. */
@@ -14599,6 +14632,7 @@ function agentMorningMail_(a, day, data, cache) {
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
   var items = open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late, ty: t.ty || '' }; });
   // Today's opportunities on their book (8 Nov 2026): opened for support to research, on the agent's list to answer.
+  if (data.cid && data.cid[a.key]) a.cid = data.cid[a.key];   // the agent's Contact, so their book is asked for by an indexed lookup
   var newOpps = []; try { newOpps = agOppOpen_(a, day); } catch (e) { try { runlog_('opportunities for ' + a.name + ' FAILED: ' + (e && e.message)); } catch (e2) {} }
   newOpps.forEach(function (r) { if (!items.some(function (it) { return it.id === r.TaskId; })) items.unshift({ id: r.TaskId, s: 'Opportunity: ' + AGOPP.KINDS[r.Kind].l + ' · ' + r.Client, o: nameFor_(r.Support) || r.Support, due: nextWorkday_(day), late: false, ty: 'Opportunity' }); });
   data.opps = data.opps || {}; try { data.opps[a.key] = { fresh: newOpps, open: agOppRows_().filter(function (r) { return String(r.AgentKey) === a.key && String(r.Status) === 'open'; }) }; } catch (e) {}
@@ -15081,7 +15115,8 @@ function agOppFind_(a, day) {
   var code = String(a.code || a.agentId || '').trim().toUpperCase(); if (!code) return [];
   var recs = sfkQuery_('SELECT Id, POLICY__c, PLAN_NAME__c, RecordType.Name, Contact__c, Contact__r.Name, Contact__r.Birthdate, Date_Of_Birth__c, AGENT__c,' +
     ' Life_Coverage__c, Critical_Illness_Coverage__c, Life_Coverage_Expiry__c, Benificiary_1__c, Maturity_Date__c, ISSUE_DATE__c, Policy_Status_Description__c' +
-    ' FROM CLIENT_PORTFOLIO__c WHERE AGENT__r.Agent__c = ' + soqlStr_(code) + ' AND Contact__c != null LIMIT 2000') || [];
+    ' FROM CLIENT_PORTFOLIO__c WHERE ' + (a.cid ? 'AGENT__c = ' + soqlStr_(a.cid) : 'AGENT__r.Agent__c = ' + soqlStr_(code)) + ' AND Contact__c != null' +
+    " AND (Policy_Status_Description__c LIKE '%PREMIUM PAYING%' OR Policy_Status_Description__c LIKE 'Paid up%' OR Policy_Status_Description__c LIKE '%Waiver%' OR Policy_Status_Description__c LIKE '%Vested%') LIMIT 2000") || [];
   var by = {};
   recs.forEach(function (r) {
     if (!AGOPP.LIVE_RE.test(String(r.Policy_Status_Description__c || ''))) return;
@@ -15374,7 +15409,7 @@ function agLicenceLine_(lic, day) {
 
 /** For the managers' mail: each agent's day so far. Absent = no plan by 10:30; nothing done = no close-off. */
 function agentDaySummary_(day, filterNames) {
-  var people = agentPeople_(), rows = hrRows_(AGDAY, true) || [], nowM = minutesOf_(hhmm_(new Date()));
+  var people = agentPeople_(), rows = agDayRecent_(2) || [], nowM = minutesOf_(hhmm_(new Date()));
   var nk = function (s) { return typeof iNameKey_ === 'function' ? iNameKey_(s) : String(s || '').toLowerCase(); };
   var want = filterNames ? filterNames.map(nk) : null;
   return Object.keys(people).sort().map(function (k) {
@@ -18440,7 +18475,7 @@ function agMonths_(a, day, goal) {
 /** The agent's plans on the Agent Day tab: present days, the streak, how long since the last plan, the usual close-off. */
 function agAttendance_(a, day) {
   var rows = [], plans = {}, byDay = {};
-  try { rows = hrRows_(AGDAY, true) || []; } catch (e) {}
+  try { rows = agDayRecent_(120) || []; } catch (e) {}
   rows.forEach(function (r) {
     if (String(r.Agent) !== a.key) return; var d = isoDay_(r.Date), k = String(r.Kind || '');
     if (k === 'plan') plans[d] = plans[d] || String(r.At || '');
@@ -18643,7 +18678,7 @@ function agMonthReview_(a, day, mo) {
   if (!mo || !mo.prevTarget || mo.prev < agMonthKey_(BOOKS.FY_START)) return null;
   var wd = agWorkdays_(mo.key, day); if (wd.gone > AG_COACH.REVIEW_DAYS) return null;
   var said = null;
-  try { (hrRows_(AGDAY, true) || []).forEach(function (r) { if (String(r.Agent) === a.key && String(r.Kind) === 'month' && String(r.Item) === mo.prev) said = { reason: String(r.Question || ''), note: String(r.Note || ''), on: isoDay_(r.Date) }; }); } catch (e) {}
+  try { (agDayRecent_(70) || []).forEach(function (r) { if (String(r.Agent) === a.key && String(r.Kind) === 'month' && String(r.Item) === mo.prev) said = { reason: String(r.Question || ''), note: String(r.Note || ''), on: isoDay_(r.Date) }; }); } catch (e) {}
   return { key: mo.prev, name: mo.prevName, target: mo.prevTarget, api: Math.round(mo.prevApi), apps: mo.prevApps, short: Math.max(0, Math.round(mo.prevTarget - mo.prevApi)),
     below: mo.prevApi < mo.prevTarget, said: said, reasons: AG_COACH.REASONS };
 }
@@ -21043,7 +21078,7 @@ function hrRows_(spec, create) {
   var sh = hrTab_(spec, create);
   return (_hrMemo[k] = sh ? sheetObjects_(sh) : null);
 }
-function forgetHr_(spec) { delete _hrMemo[spec.name]; }
+function forgetHr_(spec) { delete _hrMemo[spec.name]; if (spec && spec.name === 'Agent Day') _agDayMemo = {}; }
 
 function goalsFor_(role) {
   var rows = hrRows_(HR.GOALS, false);
