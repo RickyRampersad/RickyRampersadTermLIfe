@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Hiring board · Ricky Rampersad Branch</title>
+<link rel="icon" href="/site-icon.svg">
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     THE HIRING BOARD — 8 November 2026
+
+     Every application for the branch's own seats, read off the Quote
+     Requests tab, which it shares with clients' quote requests. This page
+     shows the recruiting rows alone.
+
+     IT OPENS FOR THE BRANCH MANAGER AND NOBODY ELSE, and that is not
+     caution. The three ad pages tell every applicant, in their own words,
+     "Nobody else in the branch sees it, and nothing reaches your current
+     employer." A man applying for the client manager's seat is employed
+     somewhere today. The backend enforces it (quoteHireWho_ in Quotes.gs,
+     which refuses the branch code because the branch code is the wall's
+     code and is handed around the branch); this page only asks.
+
+     NOTHING IS KEPT ON THE DEVICE BUT THE SIGN-IN. No applicant's name,
+     answers or e-mail is written to localStorage: a phone left on a desk
+     must not carry somebody's application in it. The board is fetched
+     fresh every time, and signing out clears the sign-in and the screen.
+     ═══════════════════════════════════════════════════════════════════ -->
+
+<script src="/rroperations/sso.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+
+<style>
+/* ── the branch's light palette, the homepage's own tokens ───────────── */
+:root{
+  --ground:#faf9f2; --card:#fff; --ink:#0d3f5e; --body:#2b3b47; --muted:#5b6670;
+  --line:#e4e0d4; --line-strong:#7d8890; --action:#00728d; --action-d:#005a70;
+  --tint:#e8f3f6; --tint2:#cde8ee;
+  --navy:#0d1f33; --navy2:#14314f; --navy3:#22527f;
+  --ok:#0f7a52; --ok-bg:#e3f3ec; --warn:#9a5b00; --warn-bg:#fdf0db;
+  --stop:#a8321f; --stop-bg:#fbe9e5;
+  --sh:32deg 20% 42%;
+  --e1:0 1px 2px hsl(var(--sh)/.06),0 2px 6px hsl(var(--sh)/.05);
+  --e2:0 6px 20px hsl(var(--sh)/.09),0 1px 3px hsl(var(--sh)/.06);
+  --display:'Inter Tight','Inter Tight Fallback',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --text:'Inter','Inter Fallback',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --r:12px; --bar:0px;
+  color-scheme:light;
+}
+/* Metric-matched fallbacks, so the page does not reflow when the webfont
+   lands. Values measured for this stack; see RECRUITING-SETUP.md. */
+@font-face{font-family:'Inter Fallback';src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:106.20%;ascent-override:90%;descent-override:22.43%;line-gap-override:0%}
+@font-face{font-family:'Inter Tight Fallback';src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:101.51%;ascent-override:94%;descent-override:23.47%;line-gap-override:0%}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ground);color:var(--body);
+  font:400 16px/1.6 var(--text);-webkit-font-smoothing:antialiased;overflow-x:clip}
+h1,h2,h3{font-family:var(--display);color:var(--ink);letter-spacing:-.02em;line-height:1.2;margin:0}
+button,input,textarea,select{font:inherit;font-size:max(16px,1rem);color:inherit}
+a{color:var(--action)}
+
+.wrap{max-width:62rem;margin-inline:auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* ── the bar ─────────────────────────────────────────────────────────── */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--navy);color:#fff}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--navy);z-index:21}
+.topin{display:flex;align-items:center;gap:12px;padding-block:12px}
+.mk{width:30px;height:30px;flex:none;display:grid;place-items:center}
+.mk img{width:100%;height:100%;display:block}
+.tt{font:700 15px/1.2 var(--display);letter-spacing:-.01em}
+.ts{font:500 11px/1.3 var(--text);letter-spacing:.09em;text-transform:uppercase;color:#b9cadd}
+.spacer{margin-left:auto}
+.lnk{background:none;border:0;color:#b9cadd;font:600 13px/1 var(--text);cursor:pointer;
+  padding:9px 10px;border-radius:8px;min-height:40px}
+.lnk:hover{color:#fff;background:rgba(255,255,255,.08)}
+
+/* ── the promise clock ───────────────────────────────────────────────── */
+.clockbar{background:var(--navy2);color:#fff;padding-block:14px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr));gap:12px}
+.ct{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);padding:11px 13px}
+.ct b{display:block;font:800 clamp(1.5rem,1.2rem+1.1vw,2rem)/1 var(--display);font-variant-numeric:tabular-nums}
+.ct span{display:block;font:500 11.5px/1.35 var(--text);letter-spacing:.05em;text-transform:uppercase;color:#b9cadd;margin-top:5px}
+.ct.bad{background:rgba(168,50,31,.26);border-color:rgba(255,160,140,.4)}
+.ct.bad b,.ct.bad span{color:#ffd9d1}
+.ct.due{background:rgba(154,91,0,.3);border-color:rgba(255,205,130,.4)}
+.ct.due b,.ct.due span{color:#ffe6bd}
+.cnote{font:400 13px/1.5 var(--text);color:#b9cadd;margin:11px 0 0}
+
+/* ── seats ───────────────────────────────────────────────────────────── */
+.seats{display:flex;gap:8px;flex-wrap:wrap;padding-block:16px 4px}
+.seat{background:var(--card);border:1px solid var(--line);border-radius:999px;cursor:pointer;
+  padding:9px 15px;min-height:44px;font:600 14px/1.2 var(--text);color:var(--ink);
+  display:inline-flex;align-items:center;gap:8px}
+.seat:hover{border-color:var(--line-strong)}
+.seat[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.seat i{font-style:normal;font-variant-numeric:tabular-nums;font-weight:700;
+  background:var(--tint);color:var(--action-d);border-radius:999px;padding:1px 8px;font-size:12.5px}
+.seat[aria-selected=true] i{background:rgba(255,255,255,.2);color:#fff}
+.seat em{font-style:normal;background:var(--stop-bg);color:var(--stop);border-radius:999px;padding:1px 8px;font-size:12.5px;font-weight:700}
+
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding-block:12px;
+  border-bottom:1px solid var(--line);margin-bottom:4px}
+.tools label{font:600 13px/1 var(--text);color:var(--muted)}
+.sel{background:var(--card);border:1px solid var(--line-strong);border-radius:9px;
+  padding:9px 11px;min-height:44px;font-size:15px;color:var(--ink)}
+.cnt{margin-left:auto;font:500 13px/1.4 var(--text);color:var(--muted)}
+
+/* ── a card ──────────────────────────────────────────────────────────── */
+.list{display:grid;gap:14px;padding-block:18px 48px}
+.cd{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--e1);
+  overflow:hidden;min-width:0}
+.cd.late{border-left:4px solid var(--stop)}
+.cd.duetoday{border-left:4px solid var(--warn)}
+.cd.done{opacity:.68}
+.hd{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:16px;align-items:start;min-width:0}
+@media (max-width:30rem){.hd{grid-template-columns:1fr}}
+
+/* the score, drawn */
+.ring{width:72px;height:72px;flex:none;position:relative;display:grid;place-items:center}
+.ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.ring .tr{fill:none;stroke:var(--line);stroke-width:7}
+.ring .vl{fill:none;stroke:var(--action);stroke-width:7;stroke-linecap:round;
+  stroke-dasharray:var(--c);stroke-dashoffset:var(--o)}
+.ring.d2 .vl{stroke:var(--navy3)}
+.ring b{font:800 21px/1 var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
+.ring small{display:block;font:600 9.5px/1.2 var(--text);letter-spacing:.07em;
+  text-transform:uppercase;color:var(--muted);text-align:center;margin-top:2px}
+.noring{width:72px;height:72px;border:2px dashed var(--line);border-radius:50%;display:grid;
+  place-items:center;font:600 10px/1.3 var(--text);color:var(--muted);text-align:center;padding:6px}
+
+.who{min-width:0}
+.who h3{font-size:clamp(1.08rem,1rem+.4vw,1.3rem);font-weight:700;overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:5px;
+  font:400 13.5px/1.5 var(--text);color:var(--muted)}
+.meta span{overflow-wrap:anywhere}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.pill{font:600 12px/1 var(--text);border-radius:999px;padding:6px 10px;
+  background:var(--tint);color:var(--action-d);border:1px solid var(--tint2);white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok);border-color:#bfe3d3}
+.pill.due{background:var(--warn-bg);color:var(--warn);border-color:#f0d8aa}
+.pill.late{background:var(--stop-bg);color:var(--stop);border-color:#f1c4bb}
+.pill.grey{background:#eeece3;color:var(--muted);border-color:var(--line)}
+.sumline{font:500 14.5px/1.55 var(--text);color:var(--body);margin-top:10px;overflow-wrap:anywhere}
+
+/* the five parts */
+.parts{display:grid;gap:5px;padding:0 16px 14px}
+.pt{display:grid;grid-template-columns:minmax(4.6rem,auto) 1fr auto;gap:9px;align-items:center;
+  font:500 12.5px/1.3 var(--text);color:var(--muted)}
+.pt b{color:var(--ink);font-weight:600;text-transform:capitalize}
+.pt .t{height:6px;border-radius:3px;background:var(--line);overflow:hidden;min-width:0}
+.pt .t i{display:block;height:100%;border-radius:3px;background:var(--action)}
+.pt .t i.lowish{background:var(--warn)}
+.pt .t i.low{background:var(--stop)}
+.pt .n{font-variant-numeric:tabular-nums}
+
+.more{border-top:1px solid var(--line)}
+.more>summary{cursor:pointer;list-style:none;padding:13px 16px;min-height:44px;
+  font:600 14px/1.3 var(--text);color:var(--action);display:flex;align-items:center;gap:8px}
+.more>summary::-webkit-details-marker{display:none}
+.more>summary::after{content:"";width:8px;height:8px;border-right:2px solid currentColor;
+  border-bottom:2px solid currentColor;transform:rotate(45deg);margin-left:auto;transition:transform .18s}
+.more[open]>summary::after{transform:rotate(-135deg)}
+.body{padding:2px 16px 18px;border-top:1px solid var(--line)}
+
+.sec{font:700 11.5px/1.3 var(--text);letter-spacing:.09em;text-transform:uppercase;
+  color:var(--action);margin:18px 0 8px}
+.qa{margin:0 0 14px}
+.qa dt{font:600 14px/1.5 var(--text);color:var(--ink);margin-bottom:3px;overflow-wrap:anywhere}
+.qa dd{margin:0 0 2px;font:400 15px/1.65 var(--text);color:var(--body);
+  white-space:pre-wrap;overflow-wrap:anywhere}
+.clip{font:500 12.5px/1.5 var(--text);color:var(--warn);background:var(--warn-bg);
+  border:1px solid #f0d8aa;border-radius:9px;padding:9px 11px;margin:0 0 14px}
+
+.act{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:14px 16px;
+  border-top:1px solid var(--line);background:#fdfdfa}
+.btn{border:1px solid var(--line-strong);background:var(--card);color:var(--ink);
+  border-radius:10px;padding:10px 14px;min-height:44px;cursor:pointer;
+  font:600 14px/1.2 var(--text)}
+.btn:hover{border-color:var(--ink)}
+.btn-1{background:var(--action);border-color:var(--action);color:#fff}
+.btn-1:hover{background:var(--action-d);border-color:var(--action-d)}
+.btn[disabled]{opacity:.5;cursor:default}
+.txt{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:11px;
+  font:400 15px/1.55 var(--text);resize:vertical;min-height:4.5rem;background:var(--card)}
+.panel{padding:0 16px 16px;display:grid;gap:9px}
+.hint{font:400 13px/1.55 var(--text);color:var(--muted)}
+.notes{font:400 13.5px/1.6 var(--text);color:var(--muted);white-space:pre-wrap;
+  background:var(--tint);border:1px solid var(--tint2);border-radius:10px;padding:10px 12px;
+  margin:14px 0 0;overflow-wrap:anywhere}
+
+/* ── the gate ────────────────────────────────────────────────────────── */
+.gate{max-width:27rem;margin:clamp(2rem,6vh,4rem) auto;background:var(--card);
+  border:1px solid var(--line);border-radius:18px;box-shadow:var(--e2);padding:26px}
+.gate h2{font-size:1.4rem;margin-bottom:8px}
+.gate p{font:400 15px/1.6 var(--text);color:var(--muted);margin:0 0 18px}
+.fld{display:grid;gap:6px;margin-bottom:13px}
+.fld label{font:600 13.5px/1.3 var(--text);color:var(--ink)}
+.fld input{border:1px solid var(--line-strong);border-radius:10px;padding:12px;
+  min-height:46px;background:var(--card)}
+.fld input:focus-visible{outline:2px solid var(--action);outline-offset:1px}
+.err{background:var(--stop-bg);border:1px solid #f1c4bb;color:var(--stop);
+  border-radius:10px;padding:11px 13px;font:500 14px/1.55 var(--text);margin:0 0 14px}
+.note-sm{font:400 12.5px/1.55 var(--text);color:var(--muted);margin:16px 0 0;
+  padding-top:14px;border-top:1px solid var(--line)}
+
+.empty{text-align:center;padding:48px 16px;color:var(--muted)}
+.empty h3{color:var(--ink);margin-bottom:8px}
+.elsewhere{background:var(--tint);border:1px solid var(--tint2);border-radius:var(--r);
+  padding:13px 15px;font:400 14px/1.6 var(--text);color:var(--body);margin:0 0 4px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:40;
+  background:var(--navy);color:#fff;border-radius:11px;padding:12px 18px;
+  font:600 14px/1.4 var(--text);box-shadow:var(--e2);max-width:min(92vw,28rem)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+@media (prefers-reduced-motion:no-preference){
+  .cd{animation:up .42s cubic-bezier(.16,1,.3,1) both}
+  @keyframes up{from{opacity:0;transform:translateY(9px)}}
+  .pt .t i,.ring .vl{transition:none}
+  .toast{animation:tin .3s cubic-bezier(.16,1,.3,1) both}
+  @keyframes tin{from{opacity:0;transform:translateX(-50%) translateY(8px)}}
+}
+@media print{.top,.clockbar,.seats,.tools,.act,.panel,.toast{display:none!important}
+  .cd{break-inside:avoid;box-shadow:none}.more{display:block}.body{display:block!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topin">
+    <span class="mk"><img src="/orphan-transition/board-mark.svg" alt=""></span>
+    <span>
+      <span class="tt">Hiring board</span>
+      <span class="ts" id="whoLine">Ricky Rampersad Branch</span>
+    </span>
+    <span class="spacer"></span>
+    <button class="lnk" id="refreshBtn" hidden>Refresh</button>
+    <button class="lnk" id="outBtn" hidden>Sign out</button>
+  </div>
+</header>
+
+<!-- the gate -->
+<main id="gate" class="wrap">
+  <div class="gate">
+    <h2>Sign in</h2>
+    <p>Your agent number and the password you use for the fact find.</p>
+    <div class="err" id="gateErr" hidden></div>
+    <form id="gateForm" novalidate>
+      <div class="fld">
+        <label for="gWho">Agent number or your name</label>
+        <input id="gWho" name="who" autocomplete="username" autocapitalize="off" spellcheck="false" enterkeyhint="next">
+      </div>
+      <div class="fld">
+        <label for="gCode">Password</label>
+        <input id="gCode" name="code" type="password" autocomplete="current-password" enterkeyhint="go">
+      </div>
+      <button class="btn btn-1" style="width:100%" id="gBtn">Open the board</button>
+    </form>
+    <p class="note-sm">This board is yours alone. Every applicant was told that nobody else
+      in the branch sees their application &mdash; so it does not open on the branch code,
+      which is the wall&rsquo;s code, and it does not open for staff.</p>
+  </div>
+</main>
+
+<!-- the board -->
+<div id="board" hidden>
+  <section class="clockbar">
+    <div class="wrap">
+      <div class="cgrid" id="clock"></div>
+      <p class="cnote" id="clockNote"></p>
+    </div>
+  </section>
+  <div class="wrap">
+    <div class="seats" id="seats" role="tablist" aria-label="Seats"></div>
+    <div class="tools">
+      <label for="sortBy">Order</label>
+      <select class="sel" id="sortBy">
+        <option value="score">Strongest first</option>
+        <option value="clock">Closest to the promise</option>
+        <option value="new">Newest first</option>
+      </select>
+      <label for="showWhat" class="sr">Show</label>
+      <select class="sel" id="showWhat">
+        <option value="open">Still open</option>
+        <option value="all">Everyone</option>
+        <option value="done">Settled</option>
+      </select>
+      <span class="cnt" id="count"></span>
+    </div>
+    <div id="elsewhere"></div>
+    <div class="list" id="list"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var API = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+  var K_CODE = 'rrb-hire-code', K_WHO = 'rrb-hire-who';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) {
+    return String(s === undefined || s === null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  };
+  var ls = {
+    get: function (k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+
+  /* THE ONLY THING THIS PAGE KEEPS ON THE DEVICE IS THE SIGN-IN. The board
+     lives in this variable and nowhere else: no applicant's name, answers or
+     e-mail is written to storage, so a phone left on a desk carries none of
+     it and signing out leaves nothing behind. */
+  var DATA = null, SEAT = '', BUSY = false;
+
+  function toast(msg, ms) {
+    var t = $('toast');
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.hidden = true; }, ms || 3200);
+  }
+
+  function post(payload) {
+    return fetch(API, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    }).then(function (r) { return r.json(); });
+  }
+
+  /* ── sign in ─────────────────────────────────────────────────────── */
+
+  function creds() { return { code: ls.get(K_CODE), who: ls.get(K_WHO) }; }
+
+  function load(first) {
+    var c = creds();
+    if (!c.code) { showGate(); return Promise.resolve(); }
+    var q = API + '?action=q.board&code=' + encodeURIComponent(c.code) + '&who=' + encodeURIComponent(c.who);
+    $('refreshBtn').textContent = 'Reading…';
+    return fetch(q).then(function (r) { return r.json(); }).then(function (j) {
+      $('refreshBtn').textContent = 'Refresh';
+      if (!j || !j.ok) {
+        if (j && j.refused) { ls.del(K_CODE); ls.del(K_WHO); showGate((j && j.error) || ''); return; }
+        toast((j && j.error) || 'The board did not answer. Try again.', 4500);
+        return;
+      }
+      DATA = j;
+      show();
+    }).catch(function () {
+      $('refreshBtn').textContent = 'Refresh';
+      toast(first ? 'Could not reach the board. Check the signal and try again.' : 'Could not refresh just now.', 4500);
+    });
+  }
+
+  function showGate(err) {
+    DATA = null;
+    $('board').hidden = true; $('gate').hidden = false;
+    $('refreshBtn').hidden = true; $('outBtn').hidden = true;
+    $('whoLine').textContent = 'Ricky Rampersad Branch';
+    var e = $('gateErr');
+    if (err) { e.textContent = err; e.hidden = false; } else { e.hidden = true; }
+  }
+
+  $('gateForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var who = $('gWho').value.trim(), code = $('gCode').value.trim();
+    if (!who || !code) { $('gateErr').textContent = 'Both, please.'; $('gateErr').hidden = false; return; }
+    ls.set(K_CODE, code); ls.set(K_WHO, who);
+    $('gBtn').disabled = true; $('gBtn').textContent = 'Opening…';
+    load(true).then(function () { $('gBtn').disabled = false; $('gBtn').textContent = 'Open the board'; });
+  });
+
+  $('outBtn').addEventListener('click', function () {
+    ls.del(K_CODE); ls.del(K_WHO);
+    $('gWho').value = ''; $('gCode').value = '';
+    showGate();
+    toast('Signed out. Nothing is left on this device.');
+  });
+
+  $('refreshBtn').addEventListener('click', function () { load(); });
+  $('sortBy').addEventListener('change', draw);
+  $('showWhat').addEventListener('change', draw);
+
+  /* ── the board ───────────────────────────────────────────────────── */
+
+  function show() {
+    $('gate').hidden = true; $('board').hidden = false;
+    $('refreshBtn').hidden = false; $('outBtn').hidden = false;
+    $('whoLine').textContent = (DATA.me && DATA.me.name) || 'Branch Manager';
+    if (!SEAT || !DATA.seats.some(function (s) { return s.key === SEAT; })) {
+      /* Open on the seat that needs him: the one with someone past the
+         promise, else the one with the most still open, else the first. */
+      var late = DATA.seats.filter(function (s) { return s.late; })
+                           .sort(function (a, b) { return b.late - a.late; })[0];
+      var open = DATA.seats.slice().sort(function (a, b) { return b.open - a.open; })[0];
+      SEAT = (late && late.key) || (open && open.open ? open.key : '') || DATA.seats[0].key;
+    }
+    drawClock(); drawSeats(); draw();
+  }
+
+  function drawClock() {
+    var open = DATA.rows.filter(function (r) { return r.open; });
+    var late = open.filter(function (r) { return r.clock && r.clock.late; });
+    var today = open.filter(function (r) { return r.clock && !r.clock.late && r.clock.today; });
+    var cells = [
+      { n: DATA.rows.length, l: 'Applications', c: '' },
+      { n: open.length,      l: 'Still open',   c: '' },
+      { n: today.length,     l: 'Due today',    c: today.length ? 'due' : '' },
+      { n: late.length,      l: 'Past the two days', c: late.length ? 'bad' : '' }
+    ];
+    $('clock').innerHTML = cells.map(function (c) {
+      return '<div class="ct ' + c.c + '"><b>' + c.n + '</b><span>' + c.l + '</span></div>';
+    }).join('');
+    $('clockNote').textContent = late.length
+      ? 'Every one of them was told you reply within two working days to everyone you want to speak to. '
+        + late.length + (late.length === 1 ? ' is' : ' are') + ' past that now.'
+      : open.length
+        ? 'All inside the two working days the three pages promise.'
+        : 'Nothing waiting on you.';
+  }
+
+  function drawSeats() {
+    $('seats').innerHTML = DATA.seats.map(function (s) {
+      return '<button class="seat" role="tab" data-seat="' + esc(s.key) + '" '
+           + 'aria-selected="' + (s.key === SEAT) + '">' + esc(s.line)
+           + (s.count ? '<i>' + s.count + '</i>' : '')
+           + (s.late ? '<em>' + s.late + ' late</em>' : '') + '</button>';
+    }).join('');
+    Array.prototype.forEach.call($('seats').children, function (b) {
+      b.addEventListener('click', function () { SEAT = b.dataset.seat; drawSeats(); draw(); });
+    });
+  }
+
+  function rowsNow() {
+    var what = $('showWhat').value;
+    var rows = DATA.rows.filter(function (r) {
+      if (r.form !== SEAT) return false;
+      if (what === 'open') return r.open;
+      if (what === 'done') return !r.open;
+      return true;
+    });
+    var by = $('sortBy').value;
+    if (by === 'score') {
+      rows.sort(function (a, b) {
+        var x = (a.score && a.score.fit), y = (b.score && b.score.fit);
+        if (x == null && y == null) return (b.ms || 0) - (a.ms || 0);
+        if (x == null) return 1;
+        if (y == null) return -1;
+        return y - x || (b.ms || 0) - (a.ms || 0);
+      });
+    } else if (by === 'clock') {
+      rows.sort(function (a, b) {
+        var x = a.clock ? a.clock.hours : 1e9, y = b.clock ? b.clock.hours : 1e9;
+        return x - y;
+      });
+    } else {
+      rows.sort(function (a, b) { return (b.ms || 0) - (a.ms || 0); });
+    }
+    return rows;
+  }
+
+  function draw() {
+    if (!DATA) return;
+    var rows = rowsNow(), seat = DATA.seats.filter(function (s) { return s.key === SEAT; })[0] || {};
+    $('count').textContent = rows.length + ' of ' + (seat.count || 0)
+      + (seat.count === 1 ? ' application' : ' applications');
+
+    $('elsewhere').innerHTML = (SEAT === 'careers' && DATA.elsewhere)
+      ? '<p class="elsewhere">' + esc(DATA.elsewhere) + '</p>' : '';
+
+    if (!rows.length) {
+      $('list').innerHTML = '<div class="empty"><h3>Nothing here yet</h3><p>'
+        + ($('showWhat').value === 'open'
+            ? 'No one is waiting on you for this seat.'
+            : 'Nothing has come in for this seat.') + '</p></div>';
+      return;
+    }
+    $('list').innerHTML = rows.map(card).join('');
+    Array.prototype.forEach.call($('list').querySelectorAll('[data-act]'), function (b) {
+      b.addEventListener('click', onAct);
+    });
+  }
+
+  function card(r) {
+    var cls = 'cd' + (!r.open ? ' done' : r.clock && r.clock.late ? ' late'
+                    : r.clock && r.clock.today ? ' duetoday' : '');
+    return '<article class="' + cls + '" data-ref="' + esc(r.ref) + '">'
+      + '<div class="hd">' + ring(r) + '<div class="who">'
+      +   '<h3>' + esc(r.name || 'No name given') + '</h3>'
+      +   '<div class="meta">'
+      +     '<span>' + esc(r.ref) + '</span>'
+      +     '<span>Came in ' + esc(r.when) + '</span>'
+      +     (r.phone ? '<span><a href="tel:' + esc(r.phone.replace(/[^0-9+]/g, '')) + '">' + esc(r.phone) + '</a></span>' : '')
+      +     (r.email ? '<span><a href="mailto:' + esc(r.email) + '">' + esc(r.email) + '</a></span>' : '')
+      +   '</div>'
+      +   pills(r)
+      +   (r.summary ? '<p class="sumline">' + esc(r.summary) + '</p>' : '')
+      + '</div></div>'
+      + parts(r)
+      + '<details class="more"><summary>Read what they wrote</summary>'
+      +   '<div class="body">' + fullBody(r) + '</div></details>'
+      + actions(r)
+      + '</article>';
+  }
+
+  function ring(r) {
+    if (!r.score || r.score.fit == null) {
+      return '<div class="noring">no<br>score</div>';
+    }
+    var fit = r.score.fit, C = 201, o = C - C * Math.max(0, Math.min(100, fit)) / 100;
+    return '<div class="ring' + (r.score.door === 2 ? ' d2' : '') + '" '
+      + 'style="--c:' + C + ';--o:' + o.toFixed(1) + '" '
+      + 'role="img" aria-label="Fit ' + fit + ' out of 100">'
+      + '<svg viewBox="0 0 72 72" aria-hidden="true"><circle class="tr" cx="36" cy="36" r="32"/>'
+      + '<circle class="vl" cx="36" cy="36" r="32"/></svg>'
+      + '<span><b>' + fit + '</b><small>door ' + (r.score.door || '?') + '</small></span></div>';
+  }
+
+  function pills(r) {
+    var p = [];
+    p.push('<span class="pill' + (r.status === 'New' ? '' : ' grey') + '">' + esc(r.status) + '</span>');
+    if (r.open && r.clock) {
+      if (r.clock.late) p.push('<span class="pill late">Past the two days &middot; due ' + esc(r.clock.due) + '</span>');
+      else if (r.clock.today) p.push('<span class="pill due">Due today</span>');
+      else p.push('<span class="pill ok">Reply by ' + esc(r.clock.due) + '</span>');
+    }
+    if (r.bar) p.push('<span class="pill">' + esc(r.bar) + '</span>');
+    if (r.cv) p.push('<a class="pill" href="' + esc(r.cv) + '" target="_blank" rel="noopener">CV &rarr;</a>');
+    if (r.best) p.push('<span class="pill grey">Best time: ' + esc(r.best) + '</span>');
+    return '<div class="pills">' + p.join('') + '</div>';
+  }
+
+  function parts(r) {
+    if (!r.score || !r.score.parts || !r.score.parts.length) return '';
+    return '<div class="parts">' + r.score.parts.map(function (p) {
+      var pc = p.of ? Math.round(p.got / p.of * 100) : 0;
+      var k = pc >= 60 ? '' : pc >= 35 ? ' lowish' : ' low';
+      return '<div class="pt"><b>' + esc(p.label) + '</b>'
+        + '<span class="t"><i class="' + k.trim() + '" style="width:' + pc + '%"></i></span>'
+        + '<span class="n">' + p.got + '/' + p.of + '</span></div>';
+    }).join('') + '</div>';
+  }
+
+  function fullBody(r) {
+    var out = '';
+    if (r.fields && r.fields.length && r.fields[0].whole === false) {
+      out += '<p class="clip">This application was filed before the board kept the answers whole, '
+           + 'so each one below is cut at 600 characters and its paragraphs run together. '
+           + 'The full text is in the e-mail you were sent at the time.</p>';
+    }
+    if (r.file && (r.file.order || r.file.ask || r.file.premium)) {
+      out += '<p class="sec">The renewal file</p><dl class="qa">';
+      if (r.file.order) out += '<dt>What they acted on, in their order</dt><dd>' + esc(r.file.order) + '</dd>';
+      if (r.file.ask) out += '<dt>What they would ask the client for</dt><dd>' + esc(r.file.ask) + '</dd>';
+      if (r.file.premium) out += '<dt>The premium</dt><dd>' + esc(r.file.premium) + '</dd>';
+      out += '</dl>';
+    }
+    var sec = '';
+    (r.fields || []).forEach(function (f) {
+      /* The scan fields are the score, which is already drawn above. */
+      if (/^scan_/.test(f.k || '')) return;
+      if (f.s && f.s !== sec) { sec = f.s; out += '<p class="sec">' + esc(sec) + '</p><dl class="qa">'; }
+      else if (!out) { out += '<dl class="qa">'; }
+      out += '<dt>' + esc(f.l) + '</dt><dd>' + esc(f.v) + '</dd>';
+    });
+    if (out.indexOf('<dl') >= 0) out += '</dl>';
+    if (r.note) out += '<p class="notes">' + esc(r.note) + '</p>';
+    return out || '<p class="hint">Nothing was recorded against this one.</p>';
+  }
+
+  function actions(r) {
+    var opts = (DATA.status || []).map(function (s) {
+      return '<option value="' + esc(s) + '"' + (s === r.status ? ' selected' : '') + '>' + esc(s) + '</option>';
+    }).join('');
+    return '<div class="act">'
+      + (r.email ? '<button class="btn btn-1" data-act="open-invite">Invite to a conversation</button>' : '')
+      + '<label class="sr" for="st-' + esc(r.ref) + '">Where it stands</label>'
+      + '<select class="sel" id="st-' + esc(r.ref) + '" data-role="status">' + opts + '</select>'
+      + '<button class="btn" data-act="status">Save</button>'
+      + '<button class="btn" data-act="open-note">Add a note</button>'
+      + '</div>'
+      + '<div class="panel" data-role="invite" hidden>'
+      +   '<p class="hint">Goes to ' + esc(r.email) + ' from support@rickyrampersadbranch.com, in your name, '
+      +   'and promises nothing about the seat. Add a line of your own if you like.</p>'
+      +   '<textarea class="txt" data-role="inviteLine" placeholder="Optional — a line in your own words."></textarea>'
+      +   '<div><button class="btn btn-1" data-act="invite">Send it</button> '
+      +       '<button class="btn" data-act="cancel">Cancel</button></div>'
+      + '</div>'
+      + '<div class="panel" data-role="note" hidden>'
+      +   '<p class="hint">For the file. The applicant never sees it.</p>'
+      +   '<textarea class="txt" data-role="noteText" placeholder="What you want on the file."></textarea>'
+      +   '<div><button class="btn btn-1" data-act="note">Save the note</button> '
+      +       '<button class="btn" data-act="cancel">Cancel</button></div>'
+      + '</div>';
+  }
+
+  function onAct(ev) {
+    var btn = ev.currentTarget, art = btn.closest('article'), ref = art.dataset.ref;
+    var act = btn.dataset.act;
+    var pane = function (role) { return art.querySelector('[data-role=' + role + ']'); };
+
+    if (act === 'open-invite' || act === 'open-note') {
+      var want = act === 'open-invite' ? 'invite' : 'note';
+      ['invite', 'note'].forEach(function (k) { pane(k).hidden = (k !== want); });
+      var t = pane(want).querySelector('textarea'); if (t) t.focus();
+      return;
+    }
+    if (act === 'cancel') { ['invite', 'note'].forEach(function (k) { pane(k).hidden = true; }); return; }
+    if (BUSY) return;
+
+    var payload = { action: 'q.hire', ref: ref }, c = creds();
+    payload.code = c.code; payload.who = c.who;
+
+    if (act === 'status') {
+      payload.act = 'status';
+      payload.status = pane('status').value;
+    } else if (act === 'invite') {
+      payload.act = 'invite';
+      payload.line = pane('inviteLine').value.trim();
+    } else if (act === 'note') {
+      payload.act = 'note';
+      payload.note = pane('noteText').value.trim();
+      if (!payload.note) { toast('Nothing typed.'); return; }
+    } else return;
+
+    BUSY = true;
+    var was = btn.textContent;
+    btn.textContent = act === 'invite' ? 'Sending…' : 'Saving…';
+    btn.disabled = true;
+
+    post(payload).then(function (j) {
+      BUSY = false; btn.disabled = false; btn.textContent = was;
+      if (!j || !j.ok) { toast((j && j.error) || 'That did not save.', 5000); return; }
+      toast(act === 'invite' ? 'Invitation sent, and marked Call them.'
+          : act === 'note' ? 'On the file.' : 'Saved.');
+      ['invite', 'note'].forEach(function (k) { pane(k).hidden = true; });
+      load();
+    }).catch(function () {
+      BUSY = false; btn.disabled = false; btn.textContent = was;
+      toast('Could not reach the board. Nothing was saved.', 5000);
+    });
+  }
+
+  /* ── start ───────────────────────────────────────────────────────── */
+  /* sso.js has already written the branch app's token into our key when the
+     phone is signed in to the app, so most of the time this opens straight
+     onto the board. */
+  if (creds().code) load(true); else showGate();
+
+  /* The sticky bar's height, for nothing to hide under it. */
+  function bar() {
+    var h = document.querySelector('.top');
+    if (h) document.documentElement.style.setProperty('--bar', h.offsetHeight + 'px');
+  }
+  bar(); window.addEventListener('resize', bar);
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

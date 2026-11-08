@@ -159,7 +159,18 @@ var QUOTE = {
 
   BRANCH_TEL: '(868) 226-6461',
   HEADERS: ['When', 'Ref', 'Form', 'Line', 'Status', 'Assigned to', 'Name', 'E-mail',
-            'Phone', 'Reach', 'Best time', 'Agent named', 'Summary', 'Answers', 'Page', 'Note']
+            'Phone', 'Reach', 'Best time', 'Agent named', 'Summary', 'Answers', 'Page', 'Note',
+            /* Every answer exactly as it was typed, as JSON, for the hiring board
+               to read back. The Answers cell beside it stays what it always was —
+               one readable block with its newlines collapsed and each value cut at
+               600 characters — because that cell is what a person skims and what
+               the e-mail prints. On a quote form 600 is generous. On the three
+               recruiting forms the written answers ARE the decision and run to 800,
+               so reading the board off that cell would show less than the score was
+               computed on. quoteCols_ adds a missing header to a tab that predates
+               it, so this costs nothing on the rows already filed; they simply have
+               no Full, and the board falls back to their Answers cell. */
+            'Full']
 };
 
 
@@ -169,6 +180,7 @@ var QUOTE = {
 function quoteDoPost_(body) {
   var a = String((body && body.action) || '');
   if (a === 'q.quote') return quoteSubmit_(body);
+  if (a === 'q.hire')  return quoteHireAct_(body);
   return { ok: false, error: 'Unknown action' };
 }
 
@@ -178,8 +190,9 @@ function quoteDoGet_(p) {
     /* The pages do not need this — they post and read the answer. It is
        here so a person can check from a browser that the deployment
        carrying the forms is the live one. */
-    return { ok: true, forms: Object.keys(QUOTE.FORMS), quotes: 1 };
+    return { ok: true, forms: Object.keys(QUOTE.FORMS), quotes: 1, hiring: 1 };
   }
+  if (a === 'q.board') return quoteBoard_(p);
   return { ok: false, error: 'Unknown action' };
 }
 
@@ -234,6 +247,7 @@ function quoteSubmit_(body) {
   row['Agent named'] = quoteClean_(core.agent, 80);
   row['Summary']     = quoteSummary_(form, fields);
   row['Answers']     = answers.text;
+  row['Full']        = quoteFull_(fields);
   row['Page']        = quoteClean_(body.page, 120);
   row['Note']        = '';
 
@@ -431,6 +445,34 @@ function quoteAnswers_(fields) {
   return { text: text.replace(/\s+$/, ''), html: html };
 }
 
+/**
+ * Every answer as JSON, for the Full column: the key, the section, the label
+ * and the value with its own line breaks kept, cut at 4,000 characters rather
+ * than 600. Only what a person typed — nothing is derived here, so the board
+ * shows what was sent and not a second opinion about it.
+ *
+ * A row is a Sheets cell, which holds 50,000 characters; the longest form we
+ * have comes to about 6,000. If it ever did overflow, the cell would be
+ * refused and the whole application lost, so the write is bounded and the
+ * board falls back to the Answers cell when Full is absent or unreadable.
+ */
+function quoteFull_(fields) {
+  var out = [];
+  (fields || []).forEach(function (f) {
+    if (!f || !f.label) return;
+    var v = String(f.value === undefined || f.value === null ? '' : f.value)
+              .replace(/\r/g, '').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    if (!v) return;
+    out.push({ k: String(f.k || '').slice(0, 40),
+               s: quoteClean_(f.section, 60),
+               l: quoteClean_(f.label, 160),
+               v: v.slice(0, 4000) });
+  });
+  var s = '';
+  try { s = JSON.stringify(out); } catch (e) { return ''; }
+  return s.length > 45000 ? '' : s;
+}
+
 function quoteSummary_(form, fields) {
   var want = QUOTE.SUMMARY[form] || [];
   var by = {};
@@ -581,4 +623,362 @@ function quoteClientMail_(ref, def, form, row) {
     MailApp.sendEmail({ to: row['E-mail'], name: SVC.FROM_NAME, replyTo: SVC.SUPPORT_EMAIL,
                         subject: def.title + ' — your reference ' + ref, htmlBody: h });
   }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════
+ * THE HIRING BOARD — /hiring, 8 November 2026
+ *
+ * Asked for after the filter was weighted: "anything further we can
+ * enhance for the ultimate experience". The answer was that the thing
+ * receiving the applications had become the weakest part of it. Every
+ * one lands on the Quote Requests tab beside a client's property quote
+ * and an OAS enrolment, in the order it arrived, and is read in Gmail.
+ * Three seats, a weighted score nobody can sort on, no way to compare
+ * two people, no record of who was called, and nothing measuring the
+ * two-working-day promise the three pages make in writing.
+ *
+ * This reads that tab and shows the recruiting rows alone.
+ *
+ * ── WHO MAY OPEN IT: THE BRANCH MANAGER, SIGNED IN AS HIMSELF. ──
+ *
+ * Not staff, not a unit manager, not an agent, not the Assistant Branch
+ * Manager, and NOT THE BRANCH CODE. That is not caution, it is the
+ * promise the three pages make to every applicant in their own words:
+ *
+ *   "Your application is with Mr Rampersad himself. Nobody else in the
+ *    branch sees it, and nothing reaches your current employer."
+ *
+ * A man applying for this seat is employed somewhere today. The branch
+ * code is the wall's code and the dashboard's code; whoever switches the
+ * wall on in the morning has it. If this board opened on it, the page
+ * would be lying to the people it is asking to trust it, and the first
+ * person to find that out would be an applicant whose employer heard.
+ *
+ * So the test is tAs_'s own shape: user (a real person, not the bare
+ * code), not viaBranch (not the code with a name typed after it), and
+ * canTell, which tAs_ sets for 'bm' alone and never for 'abm'. Signing
+ * in through the branch app satisfies it; the branch code never does.
+ * Do not widen this without changing what the three pages promise.
+ *
+ * Service.gs already routes anything starting q. to this file, so the
+ * board needs no Service.gs change: paste Quotes.gs, publish a New
+ * version, and it is live with the confirmation wording.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+var HIRE = {
+  /* The recruiting forms, in the order the board shows them. A quote form
+     never appears here: separating the two is the point. */
+  SEATS: ['underwriter', 'admin', 'careers'],
+
+  /* What the three pages promise in writing, so the board can measure it.
+     Change the pages and change this, or the clock measures a promise
+     nobody made. */
+  PROMISE_DAYS: 2,
+
+  /* Where a row can stand. 'New' is what quoteSubmit_ writes. */
+  STATUS: ['New', 'Reading', 'Call them', 'Met', 'Hired', 'Not this time'],
+
+  /* The advisor seat is not on this tab and the board says so rather than
+     showing an empty column that reads as "nobody applied". Applications
+     for it go to Guardian's own TalentNest posting; only the "Talk first"
+     booking from /careers/#talk and /joinourbranch/ reaches us, as the
+     'careers' form. */
+  ELSEWHERE: 'The advisor seat takes applications through Guardian’s own TalentNest posting, not this board. '
+           + 'What reaches us from /joinourbranch/ and /careers/ is the confidential conversation booking, under Conversations.'
+};
+
+
+/** The Branch Manager, as himself, or null. See the block above for why. */
+function quoteHireWho_(p) {
+  if (typeof tWho_ !== 'function') return null;
+  var w;
+  try { w = tWho_((p && p.code) || '', (p && p.who) || ''); } catch (e) { return null; }
+  if (!w || !w.ok) return null;
+  if (w.user !== true || w.viaBranch === true || w.canTell !== true) return null;
+  return { name: (w.me && w.me.name) || 'Branch Manager', email: (w.me && w.me.email) || '' };
+}
+
+/** Why a sign-in was turned away, in the words the person needs. */
+function quoteHireRefuse_(p) {
+  var w = null;
+  if (typeof tWho_ === 'function') { try { w = tWho_((p && p.code) || '', (p && p.who) || ''); } catch (e) {} }
+  /* The branch code twice over: on its own, tWho_ answers with no `user` at
+     all; with a name typed after it, it answers viaBranch. Both are the code,
+     and both get the same words, because being told "this board is the Branch
+     Manager's alone" when you ARE the Branch Manager reads as a fault rather
+     than as an instruction. */
+  if (w && w.ok && (w.viaBranch === true || w.user !== true)) {
+    return 'The branch code does not open this board. Sign in with your agent number and your password, '
+         + 'or from the branch app — these applications are promised to you alone.';
+  }
+  if (w && w.ok) return 'This board is the Branch Manager’s alone. Every applicant was told nobody else in the branch sees their application.';
+  return (w && w.error) || 'Sign in with your agent number and your password.';
+}
+
+
+/* ──────────────────────── reading the tab ──────────────────────── */
+
+function quoteBoard_(p) {
+  var me = quoteHireWho_(p);
+  if (!me) return { ok: false, refused: true, error: quoteHireRefuse_(p) };
+
+  var sh = quoteSheet_(), map = quoteCols_(sh), rows = [];
+  var last = sh.getLastRow();
+  if (last > 1) {
+    var width = Math.max(sh.getLastColumn(), QUOTE.HEADERS.length);
+    var vals = sh.getRange(2, 1, last - 1, width).getValues();
+    var now = new Date();
+    vals.forEach(function (r) {
+      var form = String(r[map['Form']] || '').trim();
+      if (HIRE.SEATS.indexOf(form) < 0) return;          /* a quote request is not ours */
+      rows.push(quoteHireRow_(r, map, form, now));
+    });
+  }
+  /* Newest first within a seat; the page sorts by score when asked. The
+     order here is the order they arrived, which is the order the promise
+     runs in, so a board that fails to sort still shows the oldest first. */
+  rows.sort(function (a, b) { return (b.ms || 0) - (a.ms || 0); });
+
+  var seats = HIRE.SEATS.map(function (k) {
+    var def = QUOTE.FORMS[k] || {}, mine = rows.filter(function (r) { return r.form === k; });
+    return { key: k, line: def.line || k, title: def.title || k,
+             count: mine.length,
+             open: mine.filter(function (r) { return r.open; }).length,
+             late: mine.filter(function (r) { return r.open && r.clock && r.clock.late; }).length };
+  });
+
+  return { ok: true, me: me, rows: rows, seats: seats,
+           status: HIRE.STATUS, promiseDays: HIRE.PROMISE_DAYS, elsewhere: HIRE.ELSEWHERE,
+           cvFolder: !!QUOTE.CV.FOLDER(),
+           now: Utilities.formatDate(new Date(), quoteTz_(), "yyyy-MM-dd'T'HH:mm:ss") };
+}
+
+function quoteTz_() {
+  return SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone() || 'America/Port_of_Spain';
+}
+
+function quoteHireRow_(r, map, form, now) {
+  var get = function (h) { return map[h] === undefined ? '' : r[map[h]]; };
+  var when = get('When'), ms = (when instanceof Date) ? when.getTime() : Date.parse(String(when || '')) || 0;
+  var status = String(get('Status') || 'New').trim() || 'New';
+  var open = ['Met', 'Hired', 'Not this time'].indexOf(status) < 0;
+  var fields = quoteHireFields_(get('Full'), get('Answers'));
+  var by = {};
+  fields.forEach(function (f) { if (f.k) by[f.k] = f.v; });
+
+  var note = String(get('Note') || '');
+  var cv = (note.match(/CV:\s*(\S+)/) || [])[1] || '';
+
+  return {
+    ref: String(get('Ref') || ''), form: form, line: String(get('Line') || ''),
+    ms: ms, when: ms ? Utilities.formatDate(new Date(ms), quoteTz_(), 'd MMM, h:mm a') : '',
+    status: status, open: open,
+    name: String(get('Name') || ''), email: String(get('E-mail') || ''), phone: String(get('Phone') || ''),
+    reach: String(get('Reach') || ''), best: String(get('Best time') || ''),
+    summary: String(get('Summary') || ''), note: note, cv: cv,
+    score: quoteHireScore_(by), bar: String(by['scan_bar'] || ''),
+    file: quoteHireFile_(by), fields: fields,
+    clock: open ? quoteHireClock_(ms, now) : null
+  };
+}
+
+/**
+ * Every answer. Full is JSON and exact; Answers is the readable block, its
+ * newlines collapsed and each value cut at 600 characters, which is what a
+ * row filed before Full existed has. Falling back to it loses the paragraphs
+ * and the tail of a long answer, so the board says so on the card rather
+ * than showing a clipped answer as though it were whole.
+ */
+function quoteHireFields_(full, answers) {
+  var out = [];
+  if (full) {
+    try {
+      var j = JSON.parse(String(full));
+      if (j && j.length) {
+        j.forEach(function (f) { out.push({ k: String(f.k || ''), s: String(f.s || ''), l: String(f.l || ''), v: String(f.v || ''), whole: true }); });
+        return out;
+      }
+    } catch (e) {}
+  }
+  var sec = '';
+  String(answers || '').split('\n').forEach(function (ln) {
+    var m = ln.match(/^—\s*(.+?)\s*—$/);
+    if (m) { sec = m[1]; return; }
+    var i = ln.indexOf(': ');
+    if (i > 0) out.push({ k: '', s: sec, l: ln.slice(0, i), v: ln.slice(i + 2), whole: false });
+  });
+  return out;
+}
+
+/**
+ * The weighted score the page computed, taken apart for the card. The page
+ * is the only place it is worked out; nothing is recomputed here, so the
+ * board can never disagree with the e-mail about the same application.
+ * Its shape: "Fit 65/100 · door 1 · depth 27/30 · file 18/25 · ..."
+ */
+function quoteHireScore_(by) {
+  var s = String(by['scan_score'] || by['score'] || '');
+  if (!s) return null;
+  var fit = (s.match(/Fit\s+(\d+)\s*\/\s*100/i) || [])[1];
+  var door = (s.match(/door\s+(\d)/i) || [])[1];
+  var parts = [];
+  s.split('·').forEach(function (bit) {
+    var m = String(bit).trim().match(/^([a-z ]+?)\s+(\d+)\s*\/\s*(\d+)$/i);
+    if (m && !/^fit$/i.test(m[1].trim())) parts.push({ label: m[1].trim(), got: Number(m[2]), of: Number(m[3]) });
+  });
+  return { fit: fit ? Number(fit) : null, door: door ? Number(door) : null, parts: parts, line: s };
+}
+
+/** What they did with the renewal file: the ticks in their own order. */
+function quoteHireFile_(by) {
+  var order = String(by['file_order'] || by['file_ticks'] || '');
+  var ask = String(by['file_ask'] || '');
+  var prem = String(by['file_premium'] || '');
+  if (!order && !ask && !prem) return null;
+  return { order: order, ask: ask, premium: prem };
+}
+
+/**
+ * The promise clock. Two working days from the moment it arrived, which is
+ * what the three pages say in writing. Working days are counted the way the
+ * rest of the branch counts them, through GroupBilling's holiday list when
+ * that file is in the project; without it, Monday to Friday.
+ */
+function quoteHireClock_(ms, now) {
+  if (!ms) return null;
+  var hol = {};
+  if (typeof gblHolidays_ === 'function') { try { hol = gblHolidays_() || {}; } catch (e) {} }
+  var tz = quoteTz_();
+  var day = function (d) { return Utilities.formatDate(d, tz, 'yyyy-MM-dd'); };
+  var working = function (d) {
+    var dow = Number(Utilities.formatDate(d, tz, 'u'));          /* 1 Mon … 7 Sun */
+    return dow <= 5 && !hol[day(d)] && !hol[day(d).slice(5)];
+  };
+  var d = new Date(ms), used = 0, guard = 0;
+  /* The day it arrived counts once it is over, as every other clock in this
+     branch counts: an application on Friday morning is due Tuesday morning. */
+  while (used < HIRE.PROMISE_DAYS && guard++ < 40) {
+    d = new Date(d.getTime() + 86400000);
+    if (working(d)) used++;
+  }
+  var dueMs = d.getTime();
+  var left = Math.round((dueMs - now.getTime()) / 3600000);
+  return { due: Utilities.formatDate(new Date(dueMs), tz, 'EEE d MMM'),
+           hours: left, late: now.getTime() > dueMs,
+           today: day(new Date(dueMs)) === day(now) };
+}
+
+
+/* ──────────────────────── acting on one ──────────────────────── */
+
+function quoteHireAct_(body) {
+  var me = quoteHireWho_(body);
+  if (!me) return { ok: false, refused: true, error: quoteHireRefuse_(body) };
+
+  var ref = String((body && body.ref) || '').trim();
+  if (!ref) return { ok: false, error: 'Which application?' };
+
+  var sh = quoteSheet_(), map = quoteCols_(sh), last = sh.getLastRow();
+  if (last < 2) return { ok: false, error: 'Nothing on the tab yet.' };
+
+  /* Found by its reference, never by a row number: the tab is sorted by
+     hand often enough, and a stamp written to the wrong row is a stamp on
+     somebody else's application. Transition Send learned this on
+     30 September 2026 and the lesson is the same here. */
+  var width = Math.max(sh.getLastColumn(), QUOTE.HEADERS.length);
+  var vals = sh.getRange(2, 1, last - 1, width).getValues();
+  var at = -1;
+  for (var i = 0; i < vals.length; i++) {
+    if (String(vals[i][map['Ref']] || '').trim() === ref) { at = i; break; }
+  }
+  if (at < 0) return { ok: false, error: 'That application is not on the tab any more.' };
+  var row = vals[at], rowNo = at + 2;
+  if (HIRE.SEATS.indexOf(String(row[map['Form']] || '').trim()) < 0) {
+    return { ok: false, error: 'That reference is not an application.' };
+  }
+
+  var act = String((body && body.act) || '').trim();
+  var stamp = '[' + Utilities.formatDate(new Date(), quoteTz_(), 'd MMM') + ' · ' + me.name + ']';
+  var out = { ok: true, ref: ref };
+
+  if (act === 'status' || act === 'invite') {
+    var want = act === 'invite' ? 'Call them' : String((body && body.status) || '').trim();
+    if (HIRE.STATUS.indexOf(want) < 0) return { ok: false, error: 'Not a status this board knows.' };
+    sh.getRange(rowNo, map['Status'] + 1).setValue(want);
+    out.status = want;
+  }
+
+  if (act === 'invite') {
+    /* His press is his go, so the hold on automatic client e-mail does not
+       stop it, exactly as a manager's note from the assignment board is not
+       stopped: the hold is on what a machine sends by itself. */
+    var sent = quoteHireInvite_(row, map, me, String((body && body.line) || ''));
+    if (!sent.ok) return { ok: false, error: sent.error };
+    out.sent = true;
+  }
+
+  /* NOT THIS TIME SENDS NOTHING, and that is deliberate. The page told
+     every applicant, above the form and again in their confirmation, that
+     silence inside two working days is the answer and "there will be no
+     further letter". A rejection e-mail from here would contradict the
+     branch's own written word to somebody who has already understood it.
+     If that is ever to change, change the page first. */
+
+  var note = quoteClean_((body && body.note) || '', 400);
+  if (note || act === 'invite' || act === 'status') {
+    var was = String(row[map['Note']] || '');
+    var add = stamp + (act === 'invite' ? ' invited to a conversation' : act === 'status' ? ' ' + out.status : '')
+            + (note ? ': ' + note : '');
+    sh.getRange(rowNo, map['Note'] + 1).setValue(was ? was + '\n' + add : add);
+    out.note = add;
+  }
+  return out;
+}
+
+/**
+ * The invitation. From support@ through clientMail_, the same road the
+ * confirmation took, signed by him. It offers a conversation and promises
+ * nothing about the seat: a man who is employed somewhere today must not be
+ * able to read this as an offer, and nothing here may reach his employer.
+ */
+function quoteHireInvite_(row, map, me, line) {
+  var to = String(row[map['E-mail']] || '').trim();
+  if (!quoteEmailOk_(to)) return { ok: false, error: 'No usable e-mail on that application.' };
+  var who = String(row[map['Name']] || '').trim().split(/\s+/)[0] || 'there';
+  var def = QUOTE.FORMS[String(row[map['Form']] || '')] || {};
+  var own = quoteClean_(line, 600);
+
+  var h = '<div style="background:#faf9f2;padding:28px 0"><div style="max-width:560px;margin:0 auto;'
+        + 'background:#fff;border:1px solid #e4e0d4;border-radius:14px;overflow:hidden">'
+        + '<div style="background:#0d1f33;padding:20px 28px">'
+        +   '<div style="font:700 15px/1.3 Arial,sans-serif;color:#fff">Ricky Rampersad Branch</div>'
+        +   '<div style="font:400 12px/1.4 Arial,sans-serif;color:#b9cadd;letter-spacing:.06em;text-transform:uppercase">'
+        +   'Guardian Life of the Caribbean</div>'
+        + '</div>'
+        + '<div style="padding:28px">'
+        +   '<p style="margin:0 0 16px;font:400 16px/1.6 Arial,sans-serif;color:#2b3b47">' + quoteEsc_(who) + ',</p>'
+        +   '<p style="margin:0 0 16px;font:400 16px/1.6 Arial,sans-serif;color:#2b3b47">'
+        +   'Thank you for your application for the ' + quoteEsc_(def.line || 'seat') + '. I have read it myself, '
+        +   'and I would like twenty minutes with you.</p>'
+        + (own ? '<p style="margin:0 0 16px;font:400 16px/1.6 Arial,sans-serif;color:#2b3b47">' + quoteEsc_(own).replace(/\n/g, '<br>') + '</p>' : '')
+        +   '<p style="margin:0 0 16px;font:400 16px/1.6 Arial,sans-serif;color:#2b3b47">'
+        +   'Reply to this e-mail with a time that suits you, or call me on '
+        +   '<a href="tel:+18682266461" style="color:#00728d;font-weight:600">' + QUOTE.BRANCH_TEL + '</a>. '
+        +   'Early morning and evening both work, and so does a Saturday.</p>'
+        +   '<p style="margin:0 0 16px;font:400 15px/1.6 Arial,sans-serif;color:#5b6670">'
+        +   'This is a conversation and nothing more at this stage — no decision has been made, on either side. '
+        +   'It stays between us: nobody else in the branch sees your application, and nothing reaches your current employer.</p>'
+        +   '<p style="margin:22px 0 0;font:400 16px/1.6 Arial,sans-serif;color:#2b3b47">'
+        +   quoteEsc_(me.name) + '<br><span style="color:#5b6670;font-size:14px">Branch Manager</span></p>'
+        + '</div></div></div>';
+
+  var subj = 'Your application — can we talk?';
+  try {
+    if (typeof clientMail_ === 'function') clientMail_({ to: to, subject: subj, htmlBody: h, replyTo: me.email || undefined });
+    else MailApp.sendEmail({ to: to, name: SVC.FROM_NAME, replyTo: me.email || SVC.SUPPORT_EMAIL, subject: subj, htmlBody: h });
+  } catch (e) {
+    return { ok: false, error: 'The invitation did not send: ' + String(e).slice(0, 120) };
+  }
+  return { ok: true };
 }

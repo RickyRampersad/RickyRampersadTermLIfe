@@ -5854,6 +5854,70 @@ fills in from your record", so nobody meets the sign-in by surprise.
   forms** (petty cash, the gas log, licence renewals, the visitors log),
   already standing "each until it moves into the app". No link a *client*
   can reach opens a JotForm.
+
+### The hiring board — `hiring/`, 8 November 2026
+
+Asked for as *"anything further we can enhance for the ultimate
+experience"*. The answer was that the thing **receiving** the applications
+had become the weakest part: every one lands on the `Quote Requests` tab
+beside a client's property quote and an OAS enrolment, in the order it
+arrived, and is read in Gmail. `q.board` and `q.hire` in `Quotes.gs` read
+that tab and show the recruiting rows alone. **Service.gs already routes
+anything starting `q.` to `Quotes.gs`**, so the board needs no Service.gs
+change: it goes live with the paste he already owed.
+
+- **It opens for the Branch Manager, signed in as himself, and nobody
+  else — not the ABM, not staff, and NOT THE BRANCH CODE.** That is the
+  promise the three ad pages make in their own words: *"Nobody else in the
+  branch sees it, and nothing reaches your current employer."* A man
+  applying for the client manager's seat is employed somewhere today, and
+  the branch code is the wall's code, which whoever switches the wall on in
+  the morning has. The test is `tAs_`'s own shape — `user` (a real person,
+  not the bare code), not `viaBranch` (not the code with a name after it),
+  and `canTell`, which `tAs_` sets for `bm` alone and never for `abm`.
+  Signing in through the branch app satisfies it. **Do not widen this
+  without changing what the three pages promise.**
+- **"Not this time" sends the candidate nothing**, and that is deliberate.
+  The page told every applicant, above the form and again in their
+  confirmation, that silence inside two working days is the answer and
+  *"there will be no further letter"*. A rejection e-mail from the board
+  would contradict the branch's own written word to somebody who has
+  already understood it. Change the page first if that is ever to change.
+- **The promise clock is the point of the thing.** Two working days from
+  when it arrived, counted the way the branch counts them (through
+  `gblHolidays_` when GroupBilling.gs is in the project), with the day it
+  arrived counting once it is over. The board opens on the seat that has
+  somebody past it. Nothing else measures that promise.
+- **A new `Full` column holds every answer exactly as typed**, as JSON.
+  The `Answers` cell beside it stays what it always was — newlines
+  collapsed, each value cut at **600 characters** — because that cell is
+  what a person skims and what the e-mail prints. On a quote form 600 is
+  generous; on the three recruiting forms the written answers *are* the
+  decision and run to 800, so reading the board off that cell would show
+  less than the score was computed on. `quoteCols_` adds a missing header
+  to a tab that predates it, so rows already filed simply have no `Full`,
+  and the board falls back to `Answers` **and says on the card that those
+  answers are clipped** rather than passing them off as whole.
+- **The advisor seat is not on this board and the board says so.** Its
+  applications go to Guardian's own TalentNest posting; what reaches us
+  from `/joinourbranch/` and `/careers/#talk` is the conversation booking,
+  the `careers` form. An empty column would otherwise read as "nobody
+  applied".
+- **Nothing about a candidate is kept on the device.** Only the sign-in
+  goes in `localStorage` (`rrb-hire-code`, `rrb-hire-who`, which `sso.js`
+  fills from the branch app): no name, answers or e-mail, so a phone left
+  on a desk carries none of it and signing out leaves nothing.
+- **Every write finds its row by `Ref`, never by row number** — the tab is
+  sorted by hand often enough, and a stamp written to the wrong row is a
+  stamp on somebody else's application. Transition Send learned this on
+  30 September 2026.
+- The score is **never recomputed** here: the page that took the
+  application is the only place it is worked out, so the board can never
+  disagree with the e-mail about the same person.
+- `tests/test-hiring.js` covers it (119 checks: the backend in Node with
+  Sheets made of nothing — every role tried against the gate — then the
+  page in a browser on a laptop and a phone).
+
 ### The motion, added the same day
 
 Asked for as *"so review again enhance and more motion"*. What went in is
