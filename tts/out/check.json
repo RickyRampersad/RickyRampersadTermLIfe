@@ -1,52 +1,12 @@
 {
- "tts/out/cmnew/01.mp3": [
-  "en",
-  0.999,
-  "Somewhere right now there is someone who knows general insurance inside out and still runs the book out of filing cabinet."
- ],
- "tts/out/cmnew/02.mp3": [
-  "en",
-  0.995,
-  "The proposal form re-typed by hand, an endorsement waiting three days in somebody's inbox. Last year's file in a drawer, and the year before it in another."
- ],
- "tts/out/cmnew/03.mp3": [
-  "en",
-  0.997,
-  "You would not be building a book. There is one. Seven lines, personal and commercial, renewals in all 12 months, and every endorsement on it written to the act."
- ],
- "tts/out/cmnew/04.mp3": [
-  "en",
-  0.998,
-  "Before you open a file, every term since the policy began is on the screen. What was covered at what value, what was paid in the claims?"
- ],
- "tts/out/cmnew/05.mp3": [
+ "tts/out/cmnewfix/01.mp3": [
   "en",
   0.996,
-  "The insurers notice is red for you, and every figure checked against our own record. With a two-disagree, the desk says so before it reaches the client."
+  "The insurers notice is read for you and every figure checked against our own record. If the two disagree, the desk says so before it reaches the client."
  ],
- "tts/out/cmnew/06.mp3": [
+ "tts/out/cmnewfix/02.mp3": [
   "en",
-  0.998,
-  "and the client is never left waiting on somebody's memory. They are reminded at 14 days, then 10. If nobody has spoken to them, a call opens itself at 7. They sign in, read every year of their own cover, confirm it, and sign on their phone."
- ],
- "tts/out/cmnew/07.mp3": [
-  "en",
-  0.999,
-  "which leaves you the part no system can do, endorsements written properly, the renewal conversation, telling a client plainly what the cover does and what it does not. We drive compliance here and we do not wait to be told."
- ],
- "tts/out/cmnew/08.mp3": [
-  "en",
-  0.998,
-  "And a change you ask for is not a ticket and accuse somewhere else. It is written into the desk and runs on every file that week."
- ],
- "tts/out/cmnew/09.mp3": [
-  "en",
-  0.997,
-  "The paperwork is finished. The advice is not. That is the job."
- ],
- "tts/out/cmnew/10.mp3": [
-  "en",
-  0.999,
-  "client manager, general insurance. If you're good at this and you have stopped learning, come and look after the book."
+  0.996,
+  "And a change you ask for is not a ticket that goes somewhere else to wait. It is written into the desk and runs on every file that week."
  ]
 }
