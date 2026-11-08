@@ -769,6 +769,69 @@ thing that catches a reveal landing on a word that is never said.
 > CV and application at **rickyrampersadbranch.com/clientmanager**. Read by the
 > Branch Manager personally and treated confidentially.
 
+## The posters — `tools/ads/`, 8 November 2026
+
+Asked for in those words: *"want to see the ad with a more punch and impact."*
+He was right that there was nothing to see: the branch had three recruiting
+pages and three films and **no still ad**. A page is where somebody lands; a
+poster is what makes them land, and it is what actually gets posted.
+
+**Nine posters, three per seat**, written by `tools/ads/build-ad.py` and shot
+by `tools/ads/shoot-ad.js`:
+
+| shape | size | where it goes |
+|---|---|---|
+| `ad-feed.jpg` | 1080×1350 | Facebook, Instagram, LinkedIn |
+| `ad-story.jpg` | 1080×1920 | WhatsApp Status, Stories, a Reels cover |
+| `ad-wide.jpg` | 1200×630 | a link preview, and a slide in a room |
+
+They are built in **the board films' own midnight blue**, from the same
+embedded IBM Plex, the same blue shield and the same QR codes, so the poster,
+the film and the page read as one campaign. Everything is drawn: no
+photographs, no faces, no stock. Shot at `deviceScaleFactor: 2`, so the files
+are 2160 wide and survive being re-compressed by whatever posts them.
+
+**Every line on a poster is the page's own line.** A poster that promises
+something the page does not say is the fastest way to lose the candidate at
+the moment they arrive.
+
+To re-cut after a copy change:
+
+```bash
+cd tools/ads
+python3 build-ad.py clientmanager          # or buildwithus, joinourbranch
+node shoot-ad.js clientmanager ../../clientmanager
+```
+
+### Four things it taught
+
+- **The frame gives, the copy does not.** `shoot-ad.js` measures every element
+  against the poster's own box and fails the shot by name and by pixels. It
+  caught the foot 63px below the bottom of the feed frame — the QR and the
+  address simply gone — and 5px on the administrator's story, whose headline
+  is the longest of the three. Tighten the type and the padding; do not cut the
+  line.
+- **`<i>` is italic.** The chips were marked up as `<i class="chip">` and
+  rendered oblique, which reads as a mistake rather than a style. `font-style:
+  normal`.
+- **The masthead is the ad's own.** The first cut put *Guardian Life of the
+  Caribbean* under the branch name on all three. On the client manager's ad
+  that is the one thing it must not say — the general insurance agency is the
+  branch's own. It reads *General insurance · Chaguanas* there, and keeps
+  Guardian Life on the administrator's and the advisor's, which are the
+  branch's own seats.
+- **Decode the code, not the poster.** Scaling the whole 2400px poster down and
+  running a detector over it reported failures that are not real: the detector
+  struggles to *find* a 300px code inside a 2400px image, which is not how
+  anybody scans. `shoot-ad.js` now measures the code's own box in the page and
+  writes that crop, and all nine decode. The earlier "wide fails at 720" was
+  this, not the code — although the wide frame is still the tight one, so its
+  code is 152px against the feed's 176px and the story's 214px.
+
+The advisor's poster also had the town twice — *Advisors · Chaguanas ·
+Chaguanas* — because the template appends it and the copy carried it too.
+Worth a look at the rendered file rather than the data.
+
 ## The ad reads as a hiring ad at a glance
 
 Asked for on 7 November 2026: *"the ad should have a powerful attraction line
