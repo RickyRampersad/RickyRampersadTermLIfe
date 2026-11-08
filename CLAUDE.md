@@ -8246,6 +8246,93 @@ Measured after: 69 checks in `wa.js` (46 before this change), the 45-check
 audit, `claims-visible` 44, `signedin-page` 69, `terms-page` 32, `staff-page`
 24, all passing; 16.7ms a frame over three passes, CLS 0.001.
 
+### What the JotForms asked, and what the revised intake kept — 8 November 2026
+
+Asked for in these words: *"I believe the claims on claims TT was routed
+through jot forms, and we have since deactivated these forms. The spreadsheet is
+still there. So you can model from the forms … See the process, more or less,
+and what we've revised … So we don't duplicate and we are consistent with our
+processes."*
+
+**He is right, and there were FOUR claim forms, not one.** Read out of the
+branch's own mailbox rather than from JotForm, which is the method worth keeping:
+**a JotForm notification e-mail lists every question and its answer**, so the
+whole form is recoverable from `from:noreply@jotform.com` long after the form is
+switched off. The client-facing autoresponder carries only the thank-you; it is
+the *owner* notification ("We have received your response for …", or an approval
+mail) that carries the field table.
+
+| form | id | shape |
+|---|---|---|
+| **Claim - Motor** | `212164658692059` | 39 questions; e-mail verification code; a **JotForm Approval** gate, so a human approved before the client got their copy; **two drawn signatures** (driver and insured); a **Drawing Board** sketch; Guardian's own accident-report questions (direction of travel both vehicles, speed, road surface, anti-theft in operation, occupants, witnesses, who was at fault, did they admit responsibility) |
+| **PROPERTY CLAIM FORM** | `223064468090051` | Guardian's numbered Q2–Q7; an **itemised schedule of loss** (Item # · Description · Purchase Date · Est. Value at Loss Date · Est. Value of Salvage · Net Amount Claimed); other insurances on the same property; losses in the last 5 years; signature **plus company stamp** |
+| **Claim Health E Form** | `230135714666051` | short, and its substance was a four-point **Form Checklist**: signed the form? · **have 90 days passed?** · receipts included? · referral letter? Promised **10 working days** and pointed at a portal |
+| **Employer's Notice Of A Claim Made by An Employee**, GG-CEL-CWC-CLM-07 10 | — | workers' compensation, employer-facing. Employer and business activities; the employee's job titles and both addresses; right or left handed; alive or deceased, dependants; Q1–Q8 (date, how it happened with a guided prompt, nature of injury, on location by instruction, supervised, first aid, medical facility, in or out patient, how notice was received); Total Wages |
+
+**The spreadsheet he means is JotForm Tables** — a form's own submission table,
+which survives the form being deactivated. **The JotForm connector needs
+authorising from his claude.ai connector settings before it can be read; Claude
+cannot start that flow.** Nothing was lost by that here, because the e-mails are
+the better record anyway.
+
+**The two `Untitled` tabs on the Claims TT sheet are NOT a JotForm import.**
+Both are header-only and empty: `Submitted · Ref · Type · Status · Status Date ·
+Client Name · Email · Phone · Policy · Vehicle Reg · Vehicle · Loss Date ·
+Location · Description · Damage · Police Station · Matched Client · PDF Link ·
+Docs Link · Docs Count · Follow-ups · Last Follow-up · Note` — an abandoned
+design from the sheet's creation on 6 August 2026. There is nothing in them to
+migrate.
+
+**What carried over, deliberately:** the e-mail verification code (now the
+six-digit sign-in), the 90-day health question (now **computed** from the loss
+date, so a client cannot answer it wrong), the **ten working days**
+(`REVIEW_WORKING_DAYS`, the same promise the old health form made), the portal
+(now claim tracking on the client's own sign-in), and the human gate (the old
+JotForm Approval; now the branch's own staff desk plus the Salesforce task).
+
+**What the revised route does that the forms could not:** five lines behind one
+door; it knows the client, so the loss is judged against the cover **in force on
+the day** (one row per vehicle per term); it fills **Guardian's own** PDF rather
+than a JotForm one; the documents **travel with the e-mail** (the old health
+form's own footer read *"Because the total size is more than 5MB the uploads are
+not attached"*); auto-chase at 3/7/14/21/30 days and desk nudges at 10/25/45; a
+`Claims_Revised__c` ledger row and one `Claims/ Mat` task per claim; a closing
+survey. And the required-whole-or-refused rule: the 13 August 2026 JotForm motor
+claim arrived with the insured **and** the date of accident both blank.
+
+**Five things the old forms asked and the revised one does not. Do not add any
+of them without being asked — each was a choice, not an omission:**
+
+- **No workers' compensation / employer's notice line at all.** Zero hits for
+  *employee*, *workmen* or *compensation* in `claims/index.html` and
+  `Claims.gs`. GG-CEL-CWC-CLM-07 has no successor, and the group product keeps
+  claims off a group's page by design (`GCM_PRIVATE`), so **an employer with an
+  injured employee has no door today**. This is the one real gap, and it is on
+  the group side.
+- **No itemised schedule of loss on property** — one *Estimated value of the
+  loss* box where Guardian's form has the six-column table. A burglary or
+  all-risks claim essentially *is* that table.
+- **No signature, by design.** The page says so in as many words, and the
+  printed form carries *"Declared true and complete online on <stamp>"*. The old
+  motor form took two and the property form took one plus a company stamp. The
+  motor-quote product already has a signature pad on Guardian's own PDFs
+  (`trimSig`), so the capability is one product over.
+- **No accident sketch**, where the old motor form had its Drawing Board and
+  Guardian's accident report form has a sketch box we leave blank.
+- **Only the motor form is filled.** `claims/forms/` holds
+  `gg-motor-accident-report.pdf` alone; health asks for the client's own signed
+  form as an upload, and property and workers' comp are not reproduced.
+
+**Three turnaround numbers, and two of them are the same thing said twice.**
+The old health form promised **10 working days**; the revised route keeps it
+(`REVIEW_WORKING_DAYS`) and says first contact is *usually within one working
+day of filing*. Query Pal's own table gives **3 days** for `Claims Health -
+Submission` and `Claims Life&Pension - Submission`. That is a *ticket*
+turnaround, not a claim turnaround — but a client who taps **Make a claim** on
+WhatsApp is told three days and a client who files on the page is told ten. See
+the two-systems note above: the WhatsApp tap logs a Query Pal ticket and files
+no claim, and that is the one place the two routes contradict each other.
+
 ### Right colours, wrong site — 7 November 2026
 
 Asked in these words: *"the claims is the same old site I did some changes on
