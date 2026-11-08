@@ -3,8 +3,9 @@
   "rate": "+0%",
   "check": true,
   "films": {
-    "cmclose": [
-      "Client manager, general insurance. Chaguanas. Come and look after the book."
+    "cmfix2": [
+      "The book is not a new one. We have written it for years, and renewed it year after year. The Branch Manager built it himself, and his time is needed across the branch.",
+      "Client manager, general insurance. Chaguanas. If you are good at this, and you have stopped learning, come and look after the book."
     ]
   }
 }
