@@ -57,7 +57,7 @@ var CLAIMS = {
    * that was pasted and never deployed — from outside those look identical,
    * and so does a later paste of an older copy winning the same function
    * name. Change it with any change worth deploying. */
-  BUILD: '2026-11-07a',
+  BUILD: '2026-11-08a',
 
   /* ---- where notifications go ---------------------------- */
 
@@ -244,7 +244,20 @@ var CLAIMS = {
 
   FROM_NAME: 'Ricky Rampersad — Claims TT',
   AGENT_NAME: 'Ricky Rampersad',
-  AGENT_PHONE: '(868) 678-5921',
+
+  /* HELP 868 is the branch's ONE client contact line, decided 8 November 2026
+   * ("need to only have help868 as the contact number"). The branch manager's
+   * own number came off the claims page on 7 November and off these emails
+   * here; there is no AGENT_PHONE any more, on purpose.
+   *
+   * It is a WHATSAPP line, not a voice line: nobody answers voice on it. So
+   * nothing built from these may say "call" — say message, or send us a
+   * message. help868_() is the only way to render it; it keeps the wording
+   * and the prefill in one place and matches the claims page's own five
+   * WhatsApp entry points word for word.                                  */
+  HELP868: '(868) 435-7868',
+  HELP868_WA: 'https://wa.me/18684357868',
+  HELP868_SAY: 'Hi HELP 868, I have a question about my claim.',
   BRANCH_HOURS: 'Monday to Friday, 8:00am – 4:00pm',
 
   /* ---- storage ------------------------------------------- */
@@ -1869,7 +1882,7 @@ function apiRequestCode_(b) {
     if (!email) {
       // Real answer, not the generic one: they cannot receive a code at all.
       return { ok: true, sent: false,
-        message: 'We have no email address on your claims, so we cannot send a code. Use the quick check with your claim reference, or call us on ' + CLAIMS.AGENT_PHONE + '.' };
+        message: 'We have no email address on your claims, so we cannot send a code. Use the quick check with your claim reference, or message us on ' + help868Text_() + ' and we will take it from there.' };
     }
   }
 
@@ -1948,7 +1961,7 @@ function apiMyClaims_(b) {
   if (!sess) return { ok: false, error: 'signed-out' };
   var mine = claimsForIdentity_(sess.id);
   return { ok: true, claims: mine.map(clientClaimView_).reverse(),
-    agent: { name: CLAIMS.AGENT_NAME, phone: CLAIMS.AGENT_PHONE } };
+    agent: { name: CLAIMS.AGENT_NAME } };
 }
 
 
@@ -2119,7 +2132,7 @@ function apiMyProfile_(b) {
     open: views.filter(function (v) { return !v.closed; }),
     closed: views.filter(function (v) { return v.closed; }),
     policies: cards,
-    agent: { name: CLAIMS.AGENT_NAME, phone: CLAIMS.AGENT_PHONE } };
+    agent: { name: CLAIMS.AGENT_NAME } };
 }
 
 /** May this request add files to this claim?
@@ -2409,8 +2422,8 @@ function doGet(e) {
       return claimSurveyPage_(p);
     } catch (err) {
       Logger.log('survey page: ' + err);
-      return surveyHtml_('<h1>Something went wrong</h1><p>Please call <b>' +
-        esc_(CLAIMS.AGENT_PHONE) + '</b> and we will take your feedback that way.</p>', '');
+      return surveyHtml_('<h1>Something went wrong</h1><p>Please send us a message on ' +
+        help868_() + ' and we will take your feedback that way.</p>', '');
     }
   }
   var out;
@@ -3272,7 +3285,7 @@ function apiStatus_(ref, last4) {
       Session.getScriptTimeZone() || 'America/Port_of_Spain', 'dd MMM yyyy'),
     documents: files.map(function (f) { return f.doc; }),
     missing: missing,
-    agent: { name: CLAIMS.AGENT_NAME, phone: CLAIMS.AGENT_PHONE },
+    agent: { name: CLAIMS.AGENT_NAME },
   };
 }
 
@@ -3303,9 +3316,27 @@ function noteBox_(html) {
   return '<div style="background:#fdf6e9;border-left:4px solid ' + CBRAND.gold + ';padding:12px 16px;margin:14px 0">' + html + '</div>';
 }
 
+/** HELP 868 as one tappable WhatsApp link, for an email or the survey page.
+ *
+ *  The link text is always "HELP 868 on WhatsApp" — the same words the claims
+ *  page uses — and never the number, so nothing reads as a telephone call.
+ *  Pass the claim reference where there is one and it rides in the prefilled
+ *  message, so whoever picks it up has the reference without asking. */
+function help868_(ref) {
+  var say = CLAIMS.HELP868_SAY + (ref ? ' My claim reference is ' + ref + '.' : '');
+  var url = CLAIMS.HELP868_WA + '?text=' + encodeURIComponent(say);
+  return '<a href="' + esc_(url) + '" style="color:' + CBRAND.teal +
+    ';font-weight:700;text-decoration:underline">HELP 868 on WhatsApp</a>';
+}
+
+/** The same thing in words, for a plain-text reply the page prints as text. */
+function help868Text_() {
+  return 'HELP 868 on WhatsApp at ' + CLAIMS.HELP868;
+}
+
 function sig_() {
   return '<p>Warm regards,<br><b>' + esc_(CLAIMS.AGENT_NAME) + '</b><br>Ricky Rampersad Branch' +
-    (CLAIMS.AGENT_PHONE ? '<br>' + esc_(CLAIMS.AGENT_PHONE) : '') + '</p>';
+    (CLAIMS.HELP868 ? '<br>' + help868_() + ' · ' + esc_(CLAIMS.HELP868) : '') + '</p>';
 }
 
 function fileListHtml_(files) {
@@ -3710,7 +3741,9 @@ function ackClient_(claim, files, missing, form) {
           (form && forms ? 'them' : 'it') + ' for your records. You do not need to print, sign or return ' +
           (form && forms ? 'them' : 'it') + '; you completed and declared everything online.</p>'
         : '') +
-      '<p>Any question at all, call me on <b>' + esc_(CLAIMS.AGENT_PHONE) + '</b> (' + esc_(CLAIMS.BRANCH_HOURS) + ').</p>' +
+      '<p>Any question at all, send us a message on ' + help868_(claim.ref) +
+      ' — it is the one line for everything and a person at the branch reads it (' +
+      esc_(CLAIMS.BRANCH_HOURS) + ').</p>' +
       sig_(),
       'Claim acknowledgement'),
     attachments: pack.blobs,
@@ -4089,7 +4122,7 @@ function sendChase_(claim, missing, n, total) {
         'straight into your claim — or reply to this email with a photo of each one attached. ' +
         'A phone photo is fine — flat, good light, whole page in frame.') +
       closing +
-      '<p>Any question, call me on <b>' + esc_(CLAIMS.AGENT_PHONE) + '</b>.</p>' + sig_(),
+      '<p>Any question, send us a message on ' + help868_(claim.ref) + '.</p>' + sig_(),
       'Documents outstanding'),
   });
 }
@@ -4237,8 +4270,8 @@ function sendStatusEmail_(claim) {
       '<p style="background:' + CBRAND.light + ';border:1px solid #CBEAE8;border-radius:10px;padding:14px 18px;text-align:center">' +
       '<b style="font-size:19px;color:' + CBRAND.navy + '">' + esc_(claim.status) + '</b></p>' +
       '<p>Sign in on the claims page with your email address to see your full claim at any time. ' +
-      'We will be in touch as soon as there is more to tell you — or call me on <b>' + esc_(CLAIMS.AGENT_PHONE) +
-      '</b> if you would like to talk it through.</p>' + sig_(), 'Claim update'),
+      'We will be in touch as soon as there is more to tell you — or send us a message on ' +
+      help868_(claim.ref) + ' if you would like to talk it through.</p>' + sig_(), 'Claim update'),
   });
 }
 
@@ -4418,7 +4451,7 @@ function sendClaimSurvey_(claim, hit) {
       'The next screen asks two more questions if you have thirty seconds.</p>' +
       noteBox_('Every answer comes to me, not to a call centre. If something went wrong ' +
         'I would rather hear it from you than not hear it at all — ' +
-        '<b>' + esc_(CLAIMS.AGENT_PHONE) + '</b>.') +
+        help868_(claim.ref) + '.') +
       sig_(), declined ? 'Your feedback' : 'Claim closed'),
   });
   if (hit) markSent_(hit, 'survey');
@@ -4540,8 +4573,8 @@ function claimSurveyPage_(p) {
   if (!ok) return surveyHtml_(
     '<h1>This link has expired</h1>' +
     '<p>Feedback links are personal and stop working once the claim is archived. ' +
-    'If you would still like to tell us how it went, call <b>' + esc_(CLAIMS.AGENT_PHONE) +
-    '</b> — it is the same person who reads the surveys.</p>', '');
+    'If you would still like to tell us how it went, send us a message on ' + help868_() +
+    ' — it reaches the same person who reads the surveys.</p>', '');
 
   var score = Math.max(0, Math.min(5, Number(p.s) || 0));
   if (score) recordSurveyScore_(ref, score);

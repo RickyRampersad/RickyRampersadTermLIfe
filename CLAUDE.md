@@ -8126,15 +8126,60 @@ old link had no accessible name at all on every phone. The class keeps its
 name: the 44px-target rule and the hide-the-words rule both name `.nav-tel`,
 and renaming it buys nothing and breaks both.
 
-**Still carrying his number, and he has not been asked yet: the e-mails.**
-`CLAIMS.AGENT_PHONE` is in **twelve** places in `Claims.gs` — *"Any question
-at all, call me on …"* in the acknowledgement, the status note, the feedback
-request, the sign-in failure. No client has received one, because test mode
-has been on throughout. It is not a one-constant swap: HELP 868 is a WhatsApp
-line and nobody answers voice calls there, so *"call me on"* would become
-false. The branch's own precedent is **(868) 226-6461** — the call scripts
-replaced his with it for the orphan campaign — but which number goes in a
-claim acknowledgement is his to say.
+### HELP 868 is the one contact line — 8 November 2026
+
+Asked for in these words: *"need to only have help868 as the contact number."*
+That answers the question left open the night before, and it answers it the
+other way from the branch line I had offered.
+
+**`CLAIMS.AGENT_PHONE` is gone, not re-pointed.** It was in twelve places in
+`Claims.gs`, and a constant swap would have been wrong in nine of them,
+because **HELP 868 is a WhatsApp line and nobody answers voice on it** —
+*"Any question at all, call me on (868) 435-7868"* is a false sentence. So
+each one was reworded to *send us a message on*, and the key itself is gone,
+so nothing can quietly read it again.
+
+**`help868_(ref)` is the only way to render it**, and it holds three things in
+one place: the wording (*"HELP 868 on WhatsApp"*, the claims page's own words,
+never the number as link text, so nothing reads as a call), the number, and
+the prefilled message. Pass the claim reference and it rides in the prefill,
+so whoever picks the conversation up has the reference without asking.
+`help868Text_()` is the same thing in plain words, for the one reply the page
+prints as text rather than HTML. The signature carries the link *and* the
+number, because a client may want to save the contact.
+
+**Three of the twelve were the backend telling the page a contact**, which is
+how his number got onto the claims page in the first place. The page has
+ignored `d.agent.phone` since 7 November; the backend now sends **no contact
+at all** (`agent: { name }` only). The page has five HELP 868 entry points of
+its own and needs nothing from the server.
+
+**The HELP 868 page was telling clients to telephone him.**
+`help868/index.html` ended with *"Prefer a form? Quotes online · Call (868)
+678-5921"* — on the one page whose whole subject is the WhatsApp line. That is
+not a scope question, it is a page disagreeing with itself; the call link is
+now **File a claim**, a route that files the thing properly.
+
+**Still carrying it, and each needs a decision he has not made yet:** 58
+instances across 23 files, 13 of them `tel:` links a phone dials in one tap.
+**The branch site, 32 in 12 files**: the homepage (6, including
+**`"telephone"` in its JSON-LD**, which is what a search result offers to
+dial), `404.html`, `service/`, `your-policy/review.html`, the four renewal
+pages, two under `benefits/`, and `site.webmanifest`.
+**donthaveanagent.com, 18 in 6 files**, three of them `wa.me/18686785921` — a
+different brand with its own WhatsApp journey, and HELP 868's assistant knows
+nothing about the orphan flow, so swapping those would break a working path.
+**Apps Script, 8 in 5 files** (`Code.gs`, `Service.gs`, `Transition.gs`,
+`BranchEngine.gs`, `Staff.html`), each needing its own paste; `Transition.gs`
+is only `tBranchPhone_`'s fallback, since the orphan letters already carry the
+branch's own three lines. The homepage is the real decision in there: off the
+structured data, the branch publishes **no telephone number at all**.
+
+`help868-mail.js` in the session scratchpad covers it (56 checks: the four
+client e-mails rendered rather than grepped, the signature, both helpers, the
+reference in every prefill, no `tel:` link, nothing that says *call me/us on*,
+and that the page and the e-mails offer the same number). It throws on the
+previous build, which is how I know it exercises the new code.
 
 Measured after: 69 checks in `wa.js` (46 before this change), the 45-check
 audit, `claims-visible` 44, `signedin-page` 69, `terms-page` 32, `staff-page`
