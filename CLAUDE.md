@@ -7354,18 +7354,74 @@ to the wrong answer, which is the reason for this note.
   and a client taps "Ask us on WhatsApp" *because* it is gone. Changed on 8
   November: both sentences now point at the claims form, which works at any
   hour and files properly — see the HELP 868 contact-line note below.
-- **"Make a claim" on WhatsApp logs a ticket and files no claim**, and that is
-  the one place the two systems contradict each other. The tap menu's *Make a
-  claim* maps to `Claims Life&Pension - Submission` (or *Health claim* to
-  `Claims Health - Submission`), and the receipt card comes back with a
-  reference and a 3-working-day target — while nothing has been collected: no
-  date of loss, no documents, no Guardian accident report form, no desk notice
-  and no `Claims_Revised__c` row. The claims page's own rule is the opposite
-  ("it says ASK US, never FILE HERE"), and the two references look alike to a
-  client who holds one. The fix is wording, not plumbing: on a claim tap the
-  assistant sends `rickyrampersadbranch.com/claims` **first**, and the receipt
-  says the reference is for the team and not a filed claim. Put off to a
-  separate change on 8 November so the contact-line fix could go out alone.
+- **"Make a claim" on WhatsApp logged a ticket and filed no claim** — the one
+  place the two systems contradicted each other, fixed 8 November 2026. The tap
+  menu's *Make a claim* mapped to `Claims Life&Pension - Submission` (or *Health
+  claim* to `Claims Health - Submission`), and the receipt card came back with a
+  reference and a 3-working-day target while nothing had been collected: no date
+  of loss, no documents, no Guardian accident report form, no desk notice and no
+  `Claims_Revised__c` row. And the tap path proves it was never an oversight in
+  wording alone: pick a claim option → urgency → policy number → e-mail → hand
+  to the AI, with **no step anywhere that sends the form**.
+
+### A claim is a Claims Revised record. Everything else points at it.
+
+The one rule, decided 8 November 2026, after *"I don't want to have duplicate
+system. I'm in the process of cleaning up for one unified, not confusing
+experience."* Three systems, three jobs, and none of them is a copy of another:
+
+| | its one job | finished when |
+|---|---|---|
+| **Claims TT** (`claims/`) | **opens** a claim: the answers, the documents, Guardian's own form, the desk notice | the moment it is filed |
+| **`Claims_Revised__c`** | **is** the claim: Opened → Closed, Days Pending counting, head office sees it | the claim is settled |
+| **Query Pal** (WhatsApp) | **answers a question** about a claim | the question is answered |
+
+**The duplicate was real and it was in one place: Query Pal being used to log
+claims.** Measured that day — one closed Query Pal ticket, *"Death Claim
+Already Submitted"*, 43 comments, against the same client's `Claims_Revised__c`
+record **open at 137 days**; and a closed 2023 health ticket against health
+claims still open at 1,272 and 1,053 days. Five of Query Pal's 120 commented
+references are claim-shaped, three of them closed. **That is how a claim sits
+open for three and a half years without anyone noticing: the conversation gets
+closed and reads like the claim being closed.** Closing happens in
+`Claim_Status__c` and nowhere else.
+
+**The wording is the branch site's, everywhere.** Asked for in these words:
+*"the make a claim is consistent with claims.tt and the Ricky Rampersad branch
+with file a claim. So it needs to be consistent."* The site says **File a
+claim** in its nav, its FAQ, its footer and its tile ("File a Claim — Claims
+TT"), so WhatsApp says it too.
+
+**What changed in the live assistant** (`bundle.instruction`, 8 November 2026):
+a `# FILING A CLAIM` section — *"Filing any new claim: FIRST send \*File your
+claim: rickyrampersadbranch.com/claims\* — any hour, with your documents, and it
+gives a claim reference. Then log the ticket, whose reference is never a claim
+reference."*; the tap-menu bullet now ends *"(full name first; a new claim, the
+claims link first)"*, because the tap path is the live path and would otherwise
+contradict the rule; and both menus read **File a claim**. The ticket is still
+logged — a client who taps and never files would otherwise leave no trail — it
+is only never called a claim.
+
+**Two of the prompt's own sentences had to go to make room, and that is now the
+binding constraint: the prompt is at 9,988 of 10,000 characters.** The 3 November
+note here said 9,706; the 8 November contact-line edit grew it. So the next
+addition has to replace something, and anything written about this product has
+to measure before it drafts. What went: the duplicated *"An urgent claim can be
+filed any hour at…"* from `# WHAT YOU CAN SAY` (the new section carries it), and
+*"and our team has been alerted"* from the failed-request fallback, which the
+next sentence already promises.
+
+**The two tap buttons still read "Make or check a claim" and "Make a claim",
+and they are not to be changed through the API.** `update_workflow` is a **full
+replace** that needs the workflow stopped, and the live tap menu is **257
+steps**; its step schema is a subset of what `get_workflow` returns ("omitted
+keys get builder defaults"), so a round trip could silently change settings on
+the 255 steps nobody meant to touch — and a rollback through the same lossy
+schema would not restore them either. **A change that cannot be rolled back
+cleanly, on a live client-facing menu, for two words, is the wrong trade.**
+Change those two labels by hand in the respond.io Workflow Builder, which edits
+in place. The *behaviour* on the tap path is already right: the prompt's rule
+keys on "filing any new claim", not on what the button says.
 
 ## The claims intake — `claims/` and `apps-script/Claims.gs`
 
