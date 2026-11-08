@@ -297,6 +297,24 @@ section { padding-block: var(--sp-2xl); }   /* ONE token for every section.
    that a screen reader would read out as "north east arrow". */
 .ext::after { content: '↗'; font-size: .9em; opacity: .75; }
 
+/* divali-2026 */
+.divali{background:var(--ink-2);color:#fff;border-bottom:3px solid #f2b04a}
+.divali[hidden]{display:none}
+.divali-in{padding-block:.7rem}
+.divali-row{display:flex;align-items:center;gap:.9rem}
+.divali .diya{flex:none;color:#f2b04a}
+.divali .diya .flame{fill:#f2b04a;transform-origin:50% 90%}
+.divali p{margin:0;flex:1;font-size:max(.9375rem,1rem);line-height:1.45}
+.divali strong{font-weight:700}
+.divali-x{flex:none;min-height:44px;min-width:44px;padding:0 .9rem;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:999px;font:inherit;font-size:.9375rem;cursor:pointer}
+.divali-x:hover{background:rgba(255,255,255,.12)}
+.divali-x:focus-visible{outline:3px solid #f2b04a;outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){
+ .divali .flame{animation:diya 2.6s ease-in-out infinite}
+ @keyframes diya{0%,100%{transform:scale(1,1)}35%{transform:scale(.92,1.08) rotate(-2deg)}70%{transform:scale(1.04,.96) rotate(2deg)}}
+}
+@media (max-width:35rem){.divali-row{align-items:flex-start}.divali-x{align-self:center}}
+
 /* ═══ NAV ═══ */
 .nav {
   position: sticky; top: 0; z-index: 100;
@@ -1364,6 +1382,30 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 </svg>
 
 <!-- ═══ NAV ═══ -->
+<!-- divali-2026: one-day greeting. Shown 8 Nov 2026 until 10:00 pm Trinidad time (UTC-4), then gone.
+     Remove this block, its CSS (.divali) and nothing else is needed. -->
+<aside class="divali" id="divali" role="region" aria-label="Divali greeting" hidden>
+  <div class="divali-in layout"><div class="divali-row">
+    <svg class="diya" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <path class="flame" d="M12 3c2 2.2 3 3.9 3 5.4a3 3 0 0 1-6 0C9 6.9 10 5.2 12 3Z"/>
+      <path d="M3 13h18a9 9 0 0 1-9 6 9 9 0 0 1-9-6Z"/>
+      <path d="M8 21h8"/>
+    </svg>
+    <p><strong>Happy Divali, from all of us at the Ricky Rampersad Branch.</strong>
+       May the light of the diya bring you and your family peace, good health and every blessing.</p>
+    <button type="button" class="divali-x" aria-label="Close the Divali greeting">Close</button>
+  </div></div>
+</aside>
+<script>
+(function(){var e=document.getElementById('divali');if(!e)return;
+ var n=Date.now(),a=Date.UTC(2026,10,8,4,0),b=Date.UTC(2026,10,9,2,0); /* 8 Nov 00:00 → 22:00, UTC-4 */
+ if(n<a||n>=b){e.remove();return;}
+ try{if(sessionStorage.getItem('rrb-divali')){e.remove();return;}}catch(x){}
+ e.hidden=false;
+ e.querySelector('.divali-x').addEventListener('click',function(){e.remove();try{sessionStorage.setItem('rrb-divali','1');}catch(x){}});
+ setTimeout(function(){if(e.parentNode)e.remove();},Math.max(0,b-n));})();
+</script>
+
 <nav class="nav layout" id="nav" aria-label="Main">
   <div class="nav-in">
     <a class="brand" href="#top" aria-label="Ricky Rampersad Branch, home">
@@ -1394,7 +1436,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 <header class="hero layout" id="top">
   <div class="hero-grid">
     <div>
-      <span class="pill"><span class="dot" id="openDot"></span><span id="openTxt">Branch open now</span></span>
+      <span class="pill"><span class="dot" id="openDot"></span><span id="openTxt">Always here for you, day or night</span></span>
       <h1 data-words>Protecting your <em>family</em> and everything else that matters to you</h1>
       <p class="hero-sub">Life, critical illness, health, pensions, motor, property and employee benefits — with online quotes and applications you can start from your phone in minutes.</p>
       <div class="hero-cta">
@@ -1892,7 +1934,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
   <div class="g-2">
     <a class="card hov rise cc" href="tel:+18686785921">
       <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-phone"/></svg></span>
-      <span><span class="cc-k">Call the branch</span><span class="cc-v num">(868) 678-5921</span><span class="cc-n">Monday to Friday, 8:00am – 4:00pm</span></span>
+      <span><span class="cc-k">Call the branch</span><span class="cc-v num">(868) 678-5921</span><span class="cc-n">Or message us on WhatsApp, any time</span></span>
     </a>
     <a class="card hov rise cc" href="/help868/">
       <span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-chat"/></svg></span>
@@ -1909,9 +1951,9 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
   </div>
   <div class="hours">
     <span style="display:flex;align-items:center;gap:var(--sp-2xs);font-weight:600;color:var(--ink);font-family:var(--display)">
-      <svg aria-hidden="true" focusable="false" width="20" height="20" style="color:var(--action)"><use href="#i-clock"/></svg>Branch hours
+      <svg aria-hidden="true" focusable="false" width="20" height="20" style="color:var(--action)"><use href="#i-clock"/></svg>Always open
     </span>
-    <span>Monday to Friday, 8:00am – 4:00pm &middot; closed weekends and public holidays</span>
+    <span>We are never closed. Message us any time and we will get back to you.</span>
     <span style="color:var(--action);font-weight:600">Quotes, claims and applications are open 24/7.</span>
   </div>
 </section>
@@ -1985,41 +2027,6 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 (function () {
   'use strict';
   var noMotion = matchMedia('(prefers-reduced-motion: reduce)');
-
-  /* ── Is the branch open?  Trinidad & Tobago is UTC-4 all year with no
-        daylight saving, so the fallback arithmetic below is exact rather
-        than approximate. Mon–Fri, 8:00 to 16:00. ────────────────────── */
-  function branchNow() {
-    try {
-      var parts = new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'America/Port_of_Spain', hour12: false,
-        weekday: 'short', hour: '2-digit', minute: '2-digit'
-      }).formatToParts(new Date());
-      var g = {};
-      parts.forEach(function (x) { g[x.type] = x.value; });
-      var days = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-      if (g.weekday in days) {
-        return { day: days[g.weekday], mins: (+g.hour) * 60 + (+g.minute) };
-      }
-    } catch (err) { /* no Intl, or no tz data: fall through */ }
-    var t = new Date(Date.now() - 4 * 3600 * 1000);
-    return { day: t.getUTCDay(), mins: t.getUTCHours() * 60 + t.getUTCMinutes() };
-  }
-
-  var dot = document.getElementById('openDot');
-  var txt = document.getElementById('openTxt');
-  if (dot && txt) {
-    var n = branchNow();
-    var open = n.day >= 1 && n.day <= 5 && n.mins >= 480 && n.mins < 960;
-    if (open) {
-      txt.textContent = 'Branch open now';
-    } else {
-      dot.classList.add('off');
-      txt.textContent = (n.day === 0 || n.day === 6)
-        ? 'Closed — open Monday 8:00am'
-        : (n.mins < 480 ? 'Opens at 8:00am' : 'Closed — open 8:00am tomorrow');
-    }
-  }
 
   /* ── Nav: condense past the hero, and a reading line.
         One rAF-throttled listener, and no layout read per frame. ────── */
@@ -2256,11 +2263,6 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
         "addressCountry": "TT"
       },
       "areaServed": { "@type": "Country", "name": "Trinidad and Tobago" },
-      "openingHoursSpecification": [{
-        "@type": "OpeningHoursSpecification",
-        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
-        "opens": "08:00", "closes": "16:00"
-      }],
       "makesOffer": [
         { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Life insurance" } },
         { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Critical illness cover" } },
