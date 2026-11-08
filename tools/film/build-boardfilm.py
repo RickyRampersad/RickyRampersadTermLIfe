@@ -65,6 +65,10 @@ OUT = (ROOT / ('clientmanager' if KEY.startswith('cm') else 'underwriter' if KEY
 TM = json.load(open(HERE / f'{KEY}-timing.json'))
 SCRIPT = json.load(open(HERE / f'{KEY}-lines.json'))
 LINES, ROLE = SCRIPT['scenes'], SCRIPT['role']
+# "build more cinematic" (8 November 2026). Opt-in per film, because turning
+# it on changes every frame and each film has to be re-rendered to pick it up.
+CINE = bool(SCRIPT.get('cinematic'))
+GRAIN = (HERE / 'grain.b64').read_text().strip() if CINE else ''
 DUR = [int(round(d * 1000)) for d in TM['durs']]
 WORDS = TM['words']
 assert len(LINES) == len(DUR) == len(WORDS), 'script, timing and words disagree on the number of scenes'
@@ -2145,7 +2149,11 @@ for i, sc in enumerate(LINES):
     ROLE = sc.get('role', SCRIPT['role'])            # a scene may show another sign-in's board (the workflow film shows Client Support's calls)
     body = R[v](i, sc, D)
     html.append(f'<!-- {i + 1} · {v} -->\n<section class="scene bf{" blue" if blue else ""}" data-d="{D}" style="--D:{D}ms">'
-                f'<div class="wv">{bgfx(i, blue)}<div class="inner">{body}</div></div><i class="wband"></i></section>')
+                f'<div class="wv">{bgfx(i, blue)}<div class="inner">{body}</div>'
+                + ('<div class="cine"><i class="bfvig"></i><i class="bfgrain"></i></div>' if CINE else '')
+                + f'</div><i class="wband"></i>'
+                + ('<i class="cineopen"></i>' if CINE and i == 0 else '')
+                + '</section>')
 SCENES = '\n'.join(html)
 # every number that counts up is a punch in the sound, and every chapter scene opens on a sub impact (sfx.py)
 _starts = [sum(DUR[:k]) / 1000 for k in range(len(DUR))]
@@ -2194,7 +2202,33 @@ body{background:var(--ground)}
   background:linear-gradient(90deg,rgba(255,255,255,0) 0,rgba(0,229,255,.55) 40%,rgba(255,255,255,.95) 50%,rgba(47,111,232,.6) 60%,rgba(255,255,255,0) 100%)}
 .scene.act .wband{animation:bfStreak .72s cubic-bezier(.3,0,.2,1) both}
 @keyframes bfStreak{0%{left:-30%;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:110%;opacity:0}}
+.scene.act .bgfx{animation:bfPush var(--D) linear both}
+@keyframes bfPush{from{transform:scale(1.015)}to{transform:scale(1.075)}}
+.scene.act .bfgrain{animation:bfGrain .9s steps(1,end) infinite}
+@keyframes bfGrain{0%{background-position:0 0}12.5%{background-position:-37px 19px}25%{background-position:23px -41px}
+  37.5%{background-position:-19px -11px}50%{background-position:41px 29px}62.5%{background-position:-29px 43px}
+  75%{background-position:11px -23px}87.5%{background-position:-43px -31px}}
+.scene.act .cineopen{animation:bfOpen 1.35s cubic-bezier(.4,0,.2,1) both}
+@keyframes bfOpen{to{opacity:0}}
 .scene.bf .inner{max-width:none;width:1224px;text-align:left;zoom:var(--k,1);position:relative}
+
+/* ══ the cinematic layer ═══════════════════════════════════════════════════
+   Three things, and every one of them is an OVERLAY or a background: nothing
+   here moves, scales or clips the content, because bwfit.js has already
+   measured that content to sit inside the 1280x616 the mixer keeps.
+   · a slow push on the BACKGROUND only, so the frame breathes and the words
+     stay exactly where they were measured;
+   · a vignette, which is what makes a flat screen read as a lens;
+   · grain, one 96px tile stepped eight ways, at 3.5% — film grain is the
+     cheapest thing on this list and the one the eye reads as "shot".
+   A first frame fade-up from black opens the film.                        */
+.bf .cine{position:absolute;inset:0;z-index:21;pointer-events:none}
+.bf .cine i{position:absolute;inset:0;display:block}
+.bf .bfvig{background:radial-gradient(118% 94% at 50% 46%,transparent 52%,rgba(3,8,22,.30) 82%,rgba(3,8,22,.58) 100%)}
+.bf.blue .bfvig{background:radial-gradient(120% 96% at 50% 46%,transparent 48%,rgba(2,6,18,.26) 80%,rgba(2,6,18,.52) 100%)}
+.bf .bfgrain{background-image:url(data:image/png;base64,__GRAIN__);background-repeat:repeat;
+  opacity:.035;mix-blend-mode:overlay;background-size:96px 96px}
+.bf .cineopen{position:absolute;inset:0;z-index:40;background:#02050f;pointer-events:none}
 
 /* what moves behind: an aurora that drifts, a grid, soft light, an orbit; on the chapter scenes, rings, rays and motes */
 .bf .bgfx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -2758,7 +2792,7 @@ chrome_end = s.index('</div>', s.index('<div id="chrome">')) + len('</div>')
 tap = s.index('<div class="tapzone" id="zL"')
 out = s[:chrome_end] + '\n' + SCENES + '\n\n' + s[tap:]
 last = out.rindex('</style>')
-out = out[:last] + CSS.replace('__PLEX__', PLEX).replace('__LOGO__', LOGO) + (LB_CSS if LB else '') + (DB_CSS if DBF else '') + (BW_CSS if BW else '') + '\n' + out[last:]
+out = out[:last] + CSS.replace('__PLEX__', PLEX).replace('__LOGO__', LOGO).replace('__GRAIN__', GRAIN) + (LB_CSS if LB else '') + (DB_CSS if DBF else '') + (BW_CSS if BW else '') + '\n' + out[last:]
 out = re.sub(r'<title>.*?</title>', '<title>' + TITLES[KEY] + ' — Ricky Rampersad Branch</title>', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="mark" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="mark mk"></i>', out, count=1, flags=re.S)
 out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>' + ('General insurance' if KEY.startswith('cm') else 'The underwriting seat' if KEY.startswith('uw') else 'Build with us' if BW else 'Delivery Book' if DBF else 'Log Book' if LB else 'Client transition board') + '</i></span>', out, count=1, flags=re.S)
@@ -2769,7 +2803,7 @@ out = re.sub(r'(<link rel="icon" href=")[^"]*(")', lambda m: m.group(1) + FAVICO
 out = re.sub(r'const cols = \[[^\]]*\]', 'const cols = ["#ffffff", "#00E5FF", "#1D5BC4", "#BFD3F7", "#7FA6EE"]', out, count=1)
 out = re.sub(r'<h1>The launch of<br>donthaveanagent<em>\.com</em></h1>', '<h1>' + TITLES[KEY].replace(', ', ',<br><em>') + '</em></h1>', out, count=1)
 out = re.sub(r'<div class="eyebrow" style="margin-top:16px">[^<]*</div>', '<div class="eyebrow" style="margin-top:16px">A Ricky Rampersad Branch film</div>', out, count=1)
-out = re.sub(r'<button id="playBtn"><span class="tri"></span>[^<]*</button>', '<button id="playBtn"><span class="tri"></span>Watch — ' + ('under two minutes' if sum(DUR) < 120000 else 'two and a half minutes' if sum(DUR) < 160000 else f'{round(sum(DUR) / 60000)} minutes') + '</button>', out, count=1)
+out = re.sub(r'<button id="playBtn"><span class="tri"></span>[^<]*</button>', '<button id="playBtn"><span class="tri"></span>Watch — ' + ('under two minutes' if sum(DUR) < 118000 else 'just over two minutes' if sum(DUR) < 142000 else 'two and a half minutes' if sum(DUR) < 170000 else f'{round(sum(DUR) / 60000)} minutes') + '</button>', out, count=1)
 out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', ('The book you would look after, and what you would change.' if KEY.startswith('cm') else 'What you would actually be underwriting, and what you would build.' if KEY.startswith('uw') else 'What you would actually work on, and what you would build.' if BW else 'Handed over, recorded, and the client told: the same day.' if DBF else 'Log it, hand it in, see it sent: the same day.' if LB else 'One client, start to finish: what happens, who does it, and what counts.' if KEY == 'boardflow' else 'How the branch names agents, and how agents report back.'), out, count=1)
 MSG = ('const MSG = "' + TITLES[KEY] + ': ' + ('one seat, and a book of a hundred and three clients already on it.' if KEY.startswith('cm') else 'one underwriting seat in a new general insurance agency.' if KEY.startswith('uw') else 'one administrator\'s seat, and what the job actually is.' if BW else 'a short film on recording cheques and contracts.' if DBF else 'a short film on the new Log Book.' if LB else 'a short film on the client transition board.') + '\\n\\n" +\n'
        '  "▶ https://rickyrampersadbranch.com/' + ('clientmanager' if KEY.startswith('cm') else 'underwriter' if KEY.startswith('uw') else 'buildwithus' if BW else 'deliverybook-film' if DBF else 'logbook-films' if LB else 'orphan-transition/board-films.html') + '";')

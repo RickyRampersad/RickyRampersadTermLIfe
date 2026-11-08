@@ -1,5 +1,6 @@
 {
  "role": "branch",
+ "cinematic": true,
  "scenes": [
   {
    "visual": "bwopen",
@@ -52,7 +53,7 @@
    "headline": "A book we have written for years. / <em>And renewed, every year</em>",
    "at": "years",
    "at2": "renewed",
-   "sub": "Chaguanas, Central Trinidad. General insurance.",
+   "sub": "Central Trinidad. General insurance.",
    "say": "The book is not a new one. We have written it for years, and renewed it year after year. The Branch Manager built it himself, and his time is needed across the branch."
   },
   {
@@ -278,15 +279,15 @@
   },
   {
    "visual": "bwclose",
-   "eyebrow": "Client manager &middot; Chaguanas",
+   "eyebrow": "Client manager &middot; Central Trinidad",
    "lines": [
     [
      "manager",
      "Client manager."
     ],
     [
-     "Chaguanas",
-     "Chaguanas."
+     "Trinidad",
+     "Central Trinidad."
     ],
     [
      "after",
@@ -297,7 +298,7 @@
    "qr": "qr-cmadmin.png",
    "urlsub": "Your CV and fifteen minutes.<br>Read by the Branch Manager alone.",
    "extra": 2.2,
-   "say": "Client manager, general insurance. Chaguanas. If you are good at this, and you have stopped learning, come and look after the book."
+   "say": "Client manager, general insurance. Central Trinidad. If you are good at this, and you have stopped learning, come and look after the book."
   }
  ]
 }

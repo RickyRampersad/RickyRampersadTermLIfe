@@ -533,6 +533,82 @@ key stays `underwriter` and the reference stays `QU-`, so `Quotes.gs` needs no
 paste and no new deployment; `QC-` was not available anyway, since the critical
 illness quote owns it.
 
+## The soundtrack, and the cinematic pass
+
+### What the music actually is, per film
+
+*"What about the soundtrack?"* — 8 November 2026. The answer differs by film,
+and only one of the three is clear:
+
+| film | bed | licence |
+|---|---|---|
+| **`cmadmin`** (client manager) | **`rr-branch-theme.mp3`** | the branch's own, written for the branch. Nothing to clear. |
+| `bwadmin` (administrator) | the clip sent on 6 November 2026 | **unnamed**, and still the one thing standing between that film and being posted |
+| `jbadvisor` (advisor) | the same | **unnamed** |
+
+So the client manager film can go out today. The other two are one command
+each: rebuild the bed from the branch theme and re-mix — **no re-render**,
+because only the audio changes.
+
+### The score moves with the film now
+
+A bed held at one level for two minutes is wallpaper, and that is what it was.
+**`score` in `films.json` is one gain per scene**, and `usetrack.py` applies it
+as a ramped envelope — never stepped, because a step in a music bed reads as a
+mistake in the edit. The ramp is 1.6 s **centred on the cut**, so the lift has
+already begun as the picture changes.
+
+The shape for `cmadmin`, which is the shape of the argument: `0.55, 0.50`
+quiet under the problem; `0.86, 0.96` the turn as the book arrives; `0.80,
+0.80` the working middle; `1.00, 1.08, 1.00` the heart and the build; **`0.62`
+a deliberate drop** under the one-line statement, so that `1.18` at the close
+lands as a swell rather than more of the same.
+
+### Two risers, and the filter they needed
+
+`risers` in `films.json` is a list of seconds a riser **lands on**: noise
+climbing through the spectrum against a tone bending up, cut dead on the
+frame so the picture change is the release. One into the build, one into the
+close.
+
+It needed a filter `sfx.py` did not have. **`lp()` and `hp()` take a scalar
+cutoff**; handing either an array makes the coefficient an array and the
+filter's state a vector, and it dies deep inside the sample loop with
+*"setting an array element with a sequence"*. `lpv()` and `hpv()` take one
+cutoff per sample, which is what a sweep is.
+
+### The cinematic layer, and why it touches nothing
+
+Opt-in per film (`"cinematic": true` at the top of the lines file), because
+turning it on changes every frame and each film must be re-rendered to pick it
+up. `cmadmin` has it; the other two can take it whenever they are next cut.
+
+Everything in it is an **overlay or a background** — nothing moves, scales or
+clips the content, because `bwfit.js` has already measured that content to sit
+inside the 1280×616 the mixer keeps:
+
+- **a slow push on the background only** (`bfPush`, 1.015→1.075 over the
+  scene's own `--D`), so the frame breathes and the words stay exactly where
+  they were measured. Pushing `.inner` instead would have moved measured
+  content toward the crop;
+- **a vignette**, which is the thing that makes a flat screen read as a lens;
+- **grain** — one 96px noise tile written by the builder itself, stepped eight
+  ways at 0.9 s, 3.5% on `overlay`. It is the cheapest effect here and the one
+  the eye reads as *shot*;
+- **a fade up from black** on the first scene only.
+
+**No letterbox bars**, deliberately: the mixer already crops to 1280×616 and
+pads back with the caption strip, so bars inside that band would either double
+the letterbox or eat a scene's own top and bottom.
+
+**The class guard earned its keep again** — `.grain` and `.vig` are both
+styled by the film shell, so they are `.bfgrain` and `.bfvig`. That is the
+sixth time it has caught one.
+
+**And a copy bug the new length exposed:** the cover's "Watch — …" line banded
+at 120 s and 160 s, so a 2:03 film announced itself as *two and a half
+minutes*. There is a `just over two minutes` band now.
+
 ## Two doors, three charts, the town, and a section cut
 
 Asked for on 8 November 2026: *"a little more motions with percentages and a
@@ -1465,8 +1541,10 @@ into the film's config — so no scene change ever lands between beats, and no
 duration is typed by hand. The voice is ducked under the bed with
 `sidechaincompress`, and the whole track is normalised to −14 LUFS.
 
-**⚠ The music licence is still not cleared, and this is the one thing standing
-between the films and being posted.** The track is the clip sent on 6 November
+**⚠ The music licence is still not cleared for the administrator and advisor
+films, and it is the one thing standing between those two and being posted.**
+(The client manager film was moved to the branch's own `rr-branch-theme.mp3` on
+8 November 2026 and is clear.) The track is the clip sent on 6 November
 2026. **I do not know its licence.** Every other film in this repository uses
 either the branch's own `rr-branch-theme.mp3` or Kevin MacLeod's "Inspired"
 under CC BY with the credit attached, precisely because an MP4 at a public URL
@@ -1553,8 +1631,10 @@ the clips back onto their real indices — the runner numbers a job's lines from
 
 ## Still to do
 
-- **Clear the music licence**, or swap the bed for the branch theme. See above —
-  this is the one thing standing between the films and being posted.
+- **Clear the music licence for `bwadmin` and `jbadvisor`**, or swap their beds
+  for the branch theme. `cmadmin` is already on `rr-branch-theme.mp3` and needs
+  nothing. See the soundtrack section — for the other two it is one command each
+  and no re-render, since only the audio changes.
 - **Set `QUOTE_CV_FOLDER`** before the client manager ad runs, or CVs are
   reported as not stored (the applications still arrive in full).
 - **Compliance sight of the wording**, in particular the client manager ad,

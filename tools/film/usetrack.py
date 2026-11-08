@@ -64,6 +64,32 @@ for k, c in cfg.items():
         bed[ch] = bed[ch] - band*0.42
     m = bed.mean(axis=0); rms = np.sqrt((m**2).mean())
     bed *= 10**((-18.0 - (20*np.log10(max(rms,1e-9))-0.7))/20)
+    # ── the score moves with the film (8 November 2026) ──────────────────
+    # A bed held at one level for two minutes is wallpaper. `score` in
+    # films.json is one gain per scene — quiet under the problem, lifting on
+    # the turn, dropping before the close so the close can swell — and the
+    # boundaries are RAMPED, never stepped: a step in a music bed reads as a
+    # mistake in the edit. The ramp is centred on the cut, so the lift has
+    # already begun as the picture changes.
+    sc = c.get('score')
+    if sc:
+        durs = c['durs']
+        if len(sc) != len(durs):
+            raise SystemExit(f'{k}: score has {len(sc)} values for {len(durs)} scenes')
+        env = np.empty(n)
+        ends = np.cumsum(durs)
+        starts_s = np.concatenate([[0.0], ends[:-1]])
+        ramp = 1.6                                    # seconds, centred on the cut
+        for i, g in enumerate(sc):
+            a0 = int(max(0.0, starts_s[i]) * SR); b0 = int(min(c['dur'], ends[i]) * SR)
+            env[a0:b0] = g
+        for i in range(1, len(sc)):
+            at = starts_s[i]
+            s0 = int(max(0.0, at - ramp / 2) * SR); s1 = int(min(c['dur'], at + ramp / 2) * SR)
+            if s1 > s0:
+                env[s0:s1] = np.linspace(sc[i-1], sc[i], s1 - s0)
+        bed *= env
+        print(f'  score: {min(sc):.2f}–{max(sc):.2f} over {len(sc)} scenes')
     sfx = rd(c['sfx']); sfx = np.pad(sfx,((0,0),(0,max(0,n-sfx.shape[1]))))[:, :n]
     mix = bed + sfx*0.85
     pk = np.abs(mix).max()
