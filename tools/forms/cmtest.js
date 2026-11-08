@@ -75,8 +75,16 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
 
   // the qualification is asked for, and it is required
   ok(await pg.$('input[name=uw_qstatus][required]'), vp.n + ' the qualification status is required');
-  const lines = await pg.$$eval('#lines .lineg li b', e => e.map(x => x.textContent));
-  ok(lines.length === 10 && lines.includes('Workers compensation'), vp.n + ' the classes are named, got ' + lines.length);
+  // the book is drawn as its two sides now, so assert the CONTENT rather than
+  // the markup: both sides named, and every class on one of them
+  const sides = await pg.$$eval('#lines .bkh b', e => e.map(x => x.textContent.trim()));
+  ok(sides.join('|') === 'Personal lines|Commercial lines', vp.n + ' the book shows both sides, got ' + sides.join('|'));
+  const lines = await pg.$$eval('#lines .bkt b', e => e.map(x => x.textContent));
+  const want = ['Private motor', 'Household and private dwelling', 'Fleet, genuinely',
+                'Commercial property and fire', 'Public and products liability',
+                'Workers\u2019 compensation', 'Machinery and plant', 'Bonds'];
+  const miss = want.filter(w => !lines.includes(w));
+  ok(!miss.length, vp.n + ' every class is named, missing ' + (miss.join(', ') || 'none'));
   ok(await pg.$('.vac') && /hiring/i.test(await pg.$eval('.vac', e => e.textContent)), vp.n + ' the vacancy badge is there');
   ok(await pg.$eval('.pull', e => e.textContent.trim().length > 40), vp.n + ' the attraction line is there');
   ok(!/\b103\b|\b195\b/.test(await pg.$eval('body', e => e.innerText)), vp.n + ' no client or policy count on the page');

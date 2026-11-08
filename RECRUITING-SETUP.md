@@ -533,6 +533,63 @@ key stays `underwriter` and the reference stays `QU-`, so `Quotes.gs` needs no
 paste and no new deployment; `QC-` was not available anyway, since the critical
 illness quote owns it.
 
+## The book drawn, the renewal drawn, and the service with figures under it
+
+Asked for on 8 November 2026: *"a lot of graphics, building in the book in
+terms of commercial and personal, and with the focus of customer service and
+technology... we adopt all technologies. We are technology driven and looking
+to continue enhancing this book."*
+
+Three sections, and each one shows something instead of asserting it.
+
+**`#lines` — the book, drawn.** The flat ten-item list is now the two sides it
+is actually written on, with a spine between them that draws itself on scroll:
+*personal* (private motor, household and private dwelling) and *commercial*
+(fleet, commercial property and fire, public and products liability, workers'
+compensation, machinery and plant, bonds), then endorsements and extensions
+across both and marine and cargo as the room to grow.
+
+**No proportion is printed, and that is a decision rather than an omission.**
+`Cover_Type__c` is empty on every term, and the record types mix private and
+commercial inside both Motor and Property, so a personal/commercial split would
+be a guess on the one page where a guess is least affordable. What the record
+does carry, for choosing words only: 688 terms in force, Motor 525, Property
+140, Workers Compensation 15, Public Liability 6, Bond 1, Machinery 1, and no
+marine — which is why the page says marine sits in the system with nothing
+written on it.
+
+**`#tech` — one renewal, end to end, seven stops.** The notice found and read,
+every figure checked against our record, the whole history opened, **the call**,
+the forms filled, the client signing in, the file writing itself. Six are
+automatic and the fourth is marked *This one is yours*. It is technology shown
+rather than claimed, it is all running today, and the closing line is the
+offer: *the next stop on that line is the one you tell us about*.
+
+**`#service` — the service machinery, with measured figures.** 3,634 documents
+through the Log Book in twelve months and 72% on to Guardian inside one working
+day (both measured off the old book, Nov 2025 to Oct 2026); every delivery
+signed for by name and relationship and then rated; a 24-hour route for a
+client question tracked against a turnaround; the 45/60/75/90-day letters
+before a lapse; and one screen the whole branch can see. The copy says plainly
+that this is the **branch's** machinery and the general insurance book sits
+inside it — it is not claimed as the agency's own.
+
+**What is NOT claimed here, deliberately:** that clients rate us. The client
+rating e-mail in `Claims.gs` is built and **held** pending the branch manager's
+approval of its wording, so the page says deliveries are rated and stops there.
+
+### A capture artifact that reads exactly like missing content
+
+An element screenshot of a section taller than the viewport shows the lower
+part **blank**, because anything driven by `animation-timeline: view()` with a
+backwards fill is still at opacity 0 at that scroll position. Two stops of the
+pipeline and the whole foot of the book section "vanished" this way, and both
+were fine: measured in the browser, every one reaches opacity 1 when scrolled
+to, and with motion off or without `view()` support none of them animates at
+all. **Shoot at viewport size, scrolled to the part you want** (`cmlook/vp.js`
+in the session scratchpad) rather than taking an element screenshot of a tall
+section, or you will chase content that is not missing.
+
 ## The frame: an established book that has outgrown one man — not a new agency
 
 Corrected on 8 November 2026, and this is the one to read before touching any

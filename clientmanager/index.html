@@ -276,6 +276,84 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
   font-variant-numeric:tabular-nums}
 .figl p{margin:.35rem 0 0;font-size:var(--f--2);color:var(--muted);line-height:1.4}
 
+/* ── the book, drawn: the two sides and the spine between them ── */
+.bookg{display:grid;gap:var(--sp-m);margin-top:var(--sp-l);align-items:start}
+@media (min-width:56rem){.bookg{grid-template-columns:1fr auto 1fr;gap:var(--sp-l)}}
+.bookg > *{min-width:0}
+.bkside{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:var(--sp-m);box-shadow:var(--e1);position:relative;overflow:hidden}
+.bkside::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;
+  background:linear-gradient(var(--a),var(--aL))}
+.bkside.com::before{background:linear-gradient(var(--ink),var(--a))}
+.bkh{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .6rem;margin:0 0 var(--sp-s);
+  padding-bottom:var(--sp-s);border-bottom:1px solid var(--line)}
+.bkh b{font:700 var(--f-0)/1.2 var(--display);letter-spacing:-.02em;color:var(--ink)}
+.bkh span{font-size:var(--f--2);color:var(--muted)}
+.bklist{list-style:none;margin:0;padding:0;display:grid;gap:var(--sp-s)}
+.bklist li{display:flex;gap:.7rem;align-items:flex-start}
+.bkic{display:grid;place-items:center;width:2.1rem;height:2.1rem;flex:none;border-radius:50%;
+  background:var(--a-tint);color:var(--aD)}
+.bkic svg{width:1.05rem;height:1.05rem;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;fill:none}
+.bkt{min-width:0}
+.bkt b{display:block;font:700 var(--f--1)/1.3 var(--text);color:var(--ink)}
+.bkt > span{display:block;font-size:var(--f--2);color:var(--muted);line-height:1.45}
+.bkspine{display:none}
+@media (min-width:56rem){
+  .bkspine{display:block;align-self:stretch;width:2px;background:var(--line);
+    position:relative;border-radius:2px;min-height:6rem}
+  .bkspine span{position:absolute;inset:0 0 auto;height:0;border-radius:2px;
+    background:linear-gradient(var(--a),var(--aL))}
+}
+.bkboth{list-style:none;margin:var(--sp-m) 0 0;padding:0;display:grid;gap:.75rem;max-width:62ch}
+.bkboth li{display:flex;gap:.6rem;align-items:flex-start;font-size:var(--f--1);line-height:1.5}
+.bkboth li .ic{width:19px;height:19px;flex:none;margin-top:.2rem;color:var(--a)}
+.bkboth li span{min-width:0}
+
+/* ── the pipeline: one renewal, end to end ── */
+.pipe{list-style:none;margin:var(--sp-l) 0 0;padding:0;display:grid;gap:0;counter-reset:none;position:relative}
+.stop{display:grid;grid-template-columns:auto auto 1fr;gap:.7rem var(--sp-s);align-items:start;
+  padding:var(--sp-s) 0;position:relative}
+.stop::before{content:"";position:absolute;left:calc(1.45rem - 1px);top:0;bottom:0;width:2px;
+  background:var(--line)}
+.stop:first-child::before{top:50%}
+.stop:last-child::before{bottom:50%}
+.stnum{grid-row:1 / span 2;align-self:center;position:relative;z-index:1;
+  display:grid;place-items:center;width:2.9rem;height:2.9rem;border-radius:50%;flex:none;
+  background:var(--bg);border:2px solid var(--line-strong);color:var(--muted);
+  font:800 var(--f--1)/1 var(--display)}
+.stop.you .stnum{background:var(--a);border-color:var(--a);color:#fff;
+  box-shadow:0 0 0 .4rem rgba(0,114,141,.14)}
+.stic{display:none}
+@media (min-width:40rem){
+  .stic{display:grid;place-items:center;width:2.4rem;height:2.4rem;border-radius:var(--r-s);
+    background:var(--a-tint);color:var(--aD);align-self:center;grid-row:1 / span 2}
+  .stic svg{width:1.2rem;height:1.2rem;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round;fill:none}
+  .stop.you .stic{background:var(--ink);color:#fff}
+}
+.stt{min-width:0;grid-column:3}
+.stt b{display:block;font:700 var(--f-0)/1.25 var(--display);letter-spacing:-.02em;color:var(--ink)}
+.stt > span{display:block;font-size:var(--f--1);color:var(--body);line-height:1.5;margin-top:.15rem}
+.stop.you .stt b{color:var(--aD)}
+.stme{display:inline-block;margin-top:.45rem;padding:.25rem .6rem;border-radius:999px;
+  background:var(--ink);color:#fff;font:700 var(--f--2)/1.3 var(--text);
+  letter-spacing:.06em;text-transform:uppercase;font-style:normal}
+
+/* ── the service machine ── */
+.svcg{list-style:none;margin:var(--sp-l) 0 0;padding:0;display:grid;gap:var(--sp-m);
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr))}
+.svc{position:relative;background:var(--d1);border:1px solid var(--d2);border-radius:var(--r);
+  padding:var(--sp-m);min-width:0}
+.svic{display:grid;place-items:center;width:2.4rem;height:2.4rem;border-radius:var(--r-s);
+  background:var(--d2);color:var(--aL);margin-bottom:var(--sp-s)}
+.svic svg{width:1.2rem;height:1.2rem;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;fill:none}
+.svn{display:block;font-family:var(--display);font-weight:800;color:#fff;letter-spacing:-.035em;
+  font-size:clamp(1.8rem,1.3rem + 2vw,2.6rem);line-height:1;font-variant-numeric:tabular-nums}
+.svc p{margin:.4rem 0 0;font-size:var(--f--1);color:var(--dT2);line-height:1.5}
+.svc p b{color:#fff}
+
 /* ── why the seat exists, in his own words ── */
 .why{background:var(--d0);color:var(--dT2);border-block:1px solid var(--d2)}
 .whyw{max-width:50rem}
@@ -419,6 +497,27 @@ footer .ic{width:16px;height:16px}
   @keyframes pingOut{0%{opacity:.6;scale:.34}70%{opacity:0}100%{opacity:0;scale:1.5}}
   .chip-o{transition:translate .2s var(--ease),border-color .2s,background .2s}
   .node:hover .chip-o{translate:0 -3px;border-color:var(--aL);background:var(--d3)}
+  /* the book's two sides land in turn, and the spine draws between them */
+  .bklist li{animation:bkIn .5s var(--ease-out) both;animation-delay:calc(var(--i) * 80ms + 120ms);
+    animation-timeline:view();animation-range:entry 0% entry 42%}
+  @keyframes bkIn{from{opacity:0;translate:0 .7rem}}
+  @supports (animation-timeline:view()){
+    .bkspine span{animation:bkSpine linear both;animation-timeline:view();
+      animation-range:entry 6% cover 42%}
+    @keyframes bkSpine{to{height:100%}}
+    /* the pipeline draws itself, and a pulse travels the one line it is on */
+    .stop::before{transform-origin:50% 0;animation:bkSpine2 linear both;
+      animation-timeline:view();animation-range:entry 0% entry 62%}
+    @keyframes bkSpine2{from{scale:1 0}to{scale:1 1}}
+  }
+  .stop{animation:stIn .55s var(--ease-out) both;animation-delay:calc(var(--i) * 70ms);
+    animation-timeline:view();animation-range:entry 0% entry 48%}
+  @keyframes stIn{from{opacity:0;translate:-.8rem 0}}
+  .stop.you .stnum{animation:stMe 2.8s var(--ease) infinite}
+  @keyframes stMe{0%,100%{box-shadow:0 0 0 .34rem rgba(0,114,141,.18)}
+                  50%{box-shadow:0 0 0 .8rem rgba(0,114,141,0)}}
+  .svc{transition:translate .2s var(--ease),border-color .2s}
+  .svc:hover{translate:0 -3px;border-color:var(--d3)}
   /* the ticker */
   .hero.rest .orbit,.hero.rest .ring,.hero.rest .ring .spin,
   .hero.rest .o-arc,.hero.rest .ping,.hero.rest .halo,
@@ -750,19 +849,37 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
       <h2 data-words>A book with years behind it, and people in every line of it.</h2>
       <p class="lede">Seven lines of business, personal and commercial, written and renewed here year after year, with renewals falling in every month. This is what our renewal desk already reads every month, and it is what you would be looking after from your first week.</p>
     </div>
-    <ul class="lineg rv">
-      <li><b>Motor</b><span>private, commercial and fleet &mdash; the volume of the book</span></li>
-      <li><b>Fleet, genuinely</b><span>commercial policies carrying dozens of vehicles each</span></li>
-      <li><b>Household and private dwelling</b><span>buildings, contents, the average clause nobody reads</span></li>
-      <li><b>Commercial property and fire</b><span>declared values, surveys, business interruption</span></li>
-      <li><b>Public and products liability</b><span>limits, indemnity, the wording that matters at claim</span></li>
-      <li><b>Workers compensation</b><span>wage declarations and the adjustment nobody chases</span></li>
-      <li><b>Machinery and plant</b><span>item-by-item schedules, serials, loaders</span></li>
-      <li><b>Bonds</b><span>performance and advance payment</span></li>
-      <li><b>Endorsements and extensions</b><span>our specialty, and the part we hold ourselves to</span></li>
-      <li><b>Room to add classes</b><span>marine and cargo sit in the system with nothing on them yet</span></li>
+    <!-- The book drawn, rather than listed: the two sides it is written on,
+         with a spine between them that draws itself. 8 November 2026, asked
+         for as "building in the book in terms of commercial and personal".
+         No proportions are printed: Salesforce carries no personal/commercial
+         flag (Cover_Type__c is empty on every term) and the record types mix
+         private and commercial inside Motor and Property, so a split would be
+         a guess on the one page where a guess is least affordable. -->
+    <div class="bookg">
+<div class="bkside per rv"><p class="bkh"><b>Personal lines</b><span>the volume of the book</span></p><ul class="bklist"><li style="--i:0"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><span class="bkt"><b>Private motor</b><span>the cars, the renewals, the claims that follow</span></span></li><li style="--i:1"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-house"/></svg></span><span class="bkt"><b>Household and private dwelling</b><span>buildings, contents, and the average clause nobody reads</span></span></li></ul></div>      <div class="bkspine" aria-hidden="true"><span></span></div>
+<div class="bkside com rv"><p class="bkh"><b>Commercial lines</b><span>where the technical work lives</span></p><ul class="bklist"><li style="--i:0"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><span class="bkt"><b>Fleet, genuinely</b><span>one policy carrying dozens of vehicles</span></span></li><li style="--i:1"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-build"/></svg></span><span class="bkt"><b>Commercial property and fire</b><span>declared values, surveys, business interruption</span></span></li><li style="--i:2"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-scale"/></svg></span><span class="bkt"><b>Public and products liability</b><span>limits, indemnity, the wording that matters at claim</span></span></li><li style="--i:3"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-hard"/></svg></span><span class="bkt"><b>Workers&rsquo; compensation</b><span>wage declarations, and the adjustment nobody chases</span></span></li><li style="--i:4"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-gear"/></svg></span><span class="bkt"><b>Machinery and plant</b><span>item-by-item schedules, serials, loaders</span></span></li><li style="--i:5"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-bond"/></svg></span><span class="bkt"><b>Bonds</b><span>performance and advance payment</span></span></li></ul></div>    </div>
+    <ul class="bkboth rv">
+      <li><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg><span><b>Endorsements and extensions</b> run across both sides &mdash; our specialty, and the part we hold ourselves to.</span></li>
+      <li><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg><span><b>Marine and cargo</b> sit in the system with nothing written on them yet. That is room, and it would be yours.</span></li>
     </ul>
     <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch">To be exact about the relationship: this is the <strong>branch&rsquo;s own general insurance agency</strong>. The risk is carried by the insurer and the agency places with them; the underwriting authority is theirs. What sits with you is everything on the client&rsquo;s side of that line &mdash; what we put up, how it is presented, the endorsement mid-term, the renewal conversation, the advice on what the cover does and does not do, and the compliance standard all of it is written to. The branch&rsquo;s group health and group life book sits beside this one with its own team; it is not part of this seat.</p>
+  </div>
+</section>
+
+<!-- Technology shown rather than claimed. 8 November 2026: "we adopt all
+     technologies, we are technology driven and looking to continue enhancing
+     this book." One renewal, end to end, with the one stop a system cannot
+     take marked as his. Every stop below is running today. -->
+<section class="alt" id="tech">
+  <div class="wrap">
+    <div class="rv" style="max-width:54rem">
+      <span class="eyebrow">How a renewal actually moves here</span>
+      <h2 data-words>Seven stops. Six of them are already automatic.</h2>
+      <p class="lede">This is not a roadmap. It is what happens to a renewal in this branch today, in order. Read it for the one stop that is not automatic &mdash; because that stop is the job, and every other one exists so that you get to it with the file already understood.</p>
+    </div>
+    <ol class="pipe"><li class="stop sys" style="--i:0"><span class="stnum">1</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-mail"/></svg></span><span class="stt"><b>The notice arrives</b><span>Guardian General&rsquo;s renewal notice is found in the mailbox and read on the device &mdash; period, premium, tax, every vehicle or location, every requirement.</span></span></li><li class="stop sys" style="--i:1"><span class="stnum">2</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg></span><span class="stt"><b>Every figure checked</b><span>Each one against our own record. Where the two disagree, the desk says so instead of you finding out at claim.</span></span></li><li class="stop sys" style="--i:2"><span class="stnum">3</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-board"/></svg></span><span class="stt"><b>The whole history opens</b><span>Every term since the policy began: what was covered, at what value, what was paid, how late, and the claims that fell in each term.</span></span></li><li class="stop you" style="--i:3"><span class="stnum">4</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-chat"/></svg></span><span class="stt"><b>You read it, and you call</b><span>This is the stop a system cannot take. What changed in the year, what the claims say, whether the sums still mean anything, and what the client has not been told.</span><i class="stme">This one is yours</i></span></li><li class="stop sys" style="--i:4"><span class="stnum">5</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-file"/></svg></span><span class="stt"><b>The forms fill themselves</b><span>Guardian&rsquo;s own PDFs &mdash; the proposal, Know Your Policy, the due-diligence checklist &mdash; field by field from what we hold, signed on a phone, still editable at the other end.</span></span></li><li class="stop sys" style="--i:5"><span class="stnum">6</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-users"/></svg></span><span class="stt"><b>The client signs in</b><span>Their own record is already there. They confirm, they choose, they sign. No form to retype and nothing posted to anybody.</span></span></li><li class="stop sys" style="--i:6"><span class="stnum">7</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-lock"/></svg></span><span class="stt"><b>It files itself, and it is on record</b><span>The instruction goes, the task opens, the trail is written. What was advised and what was declined, for the ordinary reason that one day it will not be you opening that file.</span></span></li></ol>
+    <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch">We did not buy any of this. The branch wrote it &mdash; thirty-nine files of its own software, running every day &mdash; and it is still being written. The next stop on that line is the one you tell us about.</p>
   </div>
 </section>
 
@@ -848,6 +965,43 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
      thing that makes them leave, and it is what makes the right person feel
      recognised. The real filter is still the work: fifteen minutes, a file
      to read, four written answers, and a bar line that says who opened it. -->
+<!-- Customer service with figures behind it. Every one of these is the
+     branch's own machinery and every number is measured, not claimed: the Log
+     Book's own twelve months (3,634 documents, 72% on to Guardian inside one
+     working day), the Delivery Book, Query Pal, the Premium Due Desk. The
+     service is branch-wide and this desk sits inside it — said that way, not
+     claimed as the agency's own. -->
+<section class="dark" id="service">
+  <div class="wrap">
+    <div class="rv" style="max-width:54rem">
+      <span class="eyebrow">What the client gets, and how we know</span>
+      <h2 data-words>Service here is a machine, not a promise.</h2>
+      <p class="lede" style="color:var(--dT2)">Every branch says it answers. This one can show you. Each of these is a piece of software the branch wrote and runs every day, and the figures under them are measured off the record rather than claimed.</p>
+    </div>
+    <ul class="svcg">
+      <li class="svc rv"><span class="svic"><svg aria-hidden="true" focusable="false"><use href="#i-file"/></svg></span>
+        <b class="svn" data-count data-sep>3634</b>
+        <p><b>Documents through the Log Book</b> in twelve months. Every one logged, routed to the right department, signed for by name, and a transmittal built for it.</p></li>
+      <li class="svc rv"><span class="svic"><svg aria-hidden="true" focusable="false"><use href="#i-clock"/></svg></span>
+        <b class="svn"><span data-count>72</span>%</b>
+        <p><b>On to Guardian inside one working day.</b> The rest are chased by the system itself, and the reason a late one was late is on the record.</p></li>
+      <li class="svc rv"><span class="svic"><svg aria-hidden="true" focusable="false"><use href="#i-pin"/></svg></span>
+        <b class="svn"><span data-count>5</span>&#9733;</b>
+        <p><b>Every delivery signed for and rated.</b> Who collected it, their relationship to the client, where, and then the client is asked how it went.</p></li>
+      <li class="svc rv"><span class="svic"><svg aria-hidden="true" focusable="false"><use href="#i-chat"/></svg></span>
+        <b class="svn"><span data-count>24</span>/<span data-count>7</span></b>
+        <p><b>A client question has somewhere to go</b> at any hour, tracked against a turnaround rather than sitting in somebody&rsquo;s inbox.</p></li>
+      <li class="svc rv"><span class="svic"><svg aria-hidden="true" focusable="false"><use href="#i-spark"/></svg></span>
+        <b class="svn"><span data-count>45</span>&ndash;<span data-count>90</span></b>
+        <p><b>Days before a policy lapses</b>, the client has already heard from us &mdash; four times, each one different, each one checked by a person before it goes.</p></li>
+      <li class="svc rv"><span class="svic"><svg aria-hidden="true" focusable="false"><use href="#i-wall"/></svg></span>
+        <b class="svn"><span data-count>1</span></b>
+        <p><b>Screen the whole branch can see.</b> What is open, what is late, who has it. Nothing about this book is hidden in one person&rsquo;s head &mdash; including yours.</p></li>
+    </ul>
+    <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch;color:var(--dT3)">This is the branch&rsquo;s own service machinery and it covers everything the branch does; the general insurance book sits inside it. What it means for this seat is that you would not be building the service standard from nothing, and you would not be the only person who knows what is outstanding.</p>
+  </div>
+</section>
+
 <section id="fit">
   <div class="wrap">
     <div class="rv" style="max-width:54rem">
