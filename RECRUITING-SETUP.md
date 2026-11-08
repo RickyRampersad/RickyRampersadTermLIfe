@@ -2955,6 +2955,50 @@ off a public page for the same reason the month-by-month shape of the book does.
   The conversion is one line and it is needed after every re-voice:
   `d['words'] = [[[int(round(t*1000)), w] for t, w in ln['words']] for ln in d['lines']]`.
 
+### A layout-shift defect that predates all of this, found on 8 November 2026
+
+Measured on a free machine, with every shift attributed to the element that
+moved: **CLS 0.17 at 375px and 0.73 at 768px**, against a 0.1 budget. Both are
+entirely pre-scroll. Identical numbers on the 7 November commit, so this is not
+from the ten-lines work — it has been live on `/clientmanager/` all along, and
+the three recruiting pages share the hero, so it is likely on all of them.
+
+It was never caught because the existing harness measures CLS at **390 and 1366
+only**, and those two widths happen to pass (0.038 and 0.018).
+
+What it is **not**:
+
+- **Not the webfonts.** Blocking `fonts.g*` entirely gives the same numbers to
+  four decimal places, and `display=optional` changes nothing. A line-count scan
+  across both faces does show `.hsub` wrapping differently at 414 and 768 — that
+  is real, and it is not what drives the score.
+- **Not the reveal animations.** Every shift lands before any scroll.
+
+What it is: **the hero's text column loses about 28px between ~400ms and ~870ms
+and gets it back**, so everything below reflows twice — and `.field`, the
+decorative gradient behind the hero, is `position:absolute` with `height:130%`,
+so it is 2,239px tall at 768 and resizes with the hero. The layout-shift API
+counts an absolutely positioned element whose rect changes, so a soft gradient
+nobody perceives moving is most of the 0.73.
+
+The element that loses the line was not pinned down. `h1`, `.hsub`, `.pull`,
+`.art-foot` and `.stage` all hold their height through it, so it is a child of
+the hero's text column appearing or disappearing — which also changes the
+column's gap count. Start there, with `grow2.js` in the session scratchpad: it
+walks every element under `.hero` frame by frame and prints only the ones whose
+height ever changes. Watch out for the ring SVGs, which grow a pixel every
+30ms — that is a rotating element's bounding box, not a layout shift.
+
+**Two things worth fixing whatever the cause turns out to be:** the harness
+should measure CLS at 375 and 768 as well as 390 and 1366 (`cls2.js` in the
+scratchpad does, with attribution), and `.field` at `height:130%` of a box that
+can change height is a score amplifier on every page that copies this hero.
+
+**One thing today's work did do:** lengthening `.hsub` by one clause took 390
+from 0.038 to 0.181. The clause came back out — the in-force fact is carried by
+the hero foot, the book lede, the classes section, the ticker and the posters,
+so the hero paragraph did not need it.
+
 ## Still to do
 
 - **Clear the music licence for `bwadmin` and `jbadvisor`**, or swap their beds
