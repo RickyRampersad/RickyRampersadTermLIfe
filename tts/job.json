@@ -3,17 +3,9 @@
   "rate": "+0%",
   "check": true,
   "films": {
-    "cmnew": [
-      "Somewhere right now there is someone who knows general insurance inside out, and still runs the book out of a filing cabinet.",
-      "The proposal form retyped by hand. An endorsement waiting three days in somebody's inbox. Last year's file in a drawer, and the year before it in another.",
-      "You would not be building a book. There is one: seven lines, personal and commercial, renewals in all twelve months, and every endorsement on it written to the Act.",
-      "Before you open a file, every term since the policy began is on the screen. What was covered, at what value, what was paid, and the claims.",
-      "The insurer's notice is read for you, and every figure checked against our own record. Where the two disagree, the desk says so before it reaches the client.",
-      "And the client is never left waiting on somebody's memory. They are reminded at fourteen days, then ten. If nobody has spoken to them, a call opens itself at seven. They sign in, read every year of their own cover, confirm it and sign, on their phone.",
-      "Which leaves you the part no system can do. Endorsements written properly. The renewal conversation. Telling a client plainly what the cover does and what it does not. We drive compliance here, and we do not wait to be told.",
-      "And a change you ask for is not a ticket in a queue somewhere else. It is written into the desk, and runs on every file that week.",
-      "The paperwork is finished. The advice is not. That is the job.",
-      "Client manager, general insurance. If you are good at this and you have stopped learning, come and look after the book."
+    "cmnewfix": [
+      "The insurer's notice is read for you, and every figure checked against our own record. If the two disagree, the desk says so before it reaches the client.",
+      "And a change you ask for is not a ticket that goes somewhere else to wait. It is written into the desk, and runs on every file that week."
     ]
   }
 }
