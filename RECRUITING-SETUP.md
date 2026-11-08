@@ -655,6 +655,45 @@ change — computed from what the candidate actually did:
 That is enough to sort an application without opening the row, and every part
 of it is the candidate's own work rather than a score we invented.
 
+### Volume over scarcity, and the bar that takes its place
+
+Asked on 8 November 2026: *"we are opening our insurance agency in Chaguanas
+and looking for staff — the target is really persons who are in these agencies
+and want to move, as they are stuck."* Offered the choice between keeping *one
+vacancy* (scarcity, fewer but more serious applications) and dropping it
+(volume), he chose volume, in these words: **"leave a number out as you want as
+much application, and you need to ensure you have a proper filtering system as
+well the questions section."**
+
+So the seat count is gone from this ad everywhere — the page title, the
+`og:description`, the badge, the hero, the homepage card, the film's own page
+metas and all three posters — and the filter had to carry the weight the
+scarcity was carrying. Two things were added for it:
+
+- **A direct question that was never asked.** Underwriting experience is
+  *required* and nothing on the form asked for it: `uw_uwexp` (with an insurer
+  / under delegated authority at an agency / some, informally / no) and
+  `uw_uwwhere`. Answering **no** shows a note saying so plainly rather than
+  blocking the application — somebody strong without it is still worth a call,
+  and he should make that call himself.
+- **A bar line at the top of the e-mail.** `scan_bar` is the first field he
+  sees: *Meets the bar · 5 of 5*, or *Check · 3 of 5 · no underwriting
+  experience, did not read the file*. The five are: three years or more, a
+  qualification or studying, three classes or more, underwriting experience,
+  and having opened the file on the page. **It is never shown to the
+  candidate** — it is a sorting aid for one reader, and a page that tells
+  somebody they failed a bar they did not know existed is a page that gets
+  screenshotted.
+
+`scan_bar` is also the first value in `QUOTE.SUMMARY['underwriter']`, and the
+team e-mail's subject now appends that summary, so a phone's notification reads
+*New Client Manager request · QU-… · <name> · Meets the bar · 5 of 5* without
+the e-mail being opened.
+
+**Volume cuts both ways, and the bar is what pays for it.** Dropping the count
+will bring applications from people the seat is not for; the bar is the thing
+that stops those costing him an evening each.
+
 ### What does need a Quotes.gs paste
 
 The backend uses its own `line` and `title`, not the ones the page posts, so
@@ -664,10 +703,57 @@ until it is pasted and a **New version** published:
 - **the candidate's own confirmation is headed "Underwriter, general
   insurance"**, which is the one a stranger sees;
 - the highlighted summary band reads years · classes · authority rather than
-  years · qualification · classes.
+  the bar line · years · qualification, and the subject carries no summary at
+  all.
 
 The form key stays `underwriter` and the reference stays `QU-` on purpose:
 renaming the key would strand the rows already on the tab for nothing.
+
+## Why somebody would actually move
+
+The same message asked to *"introduce virtual etc, things that will make a
+person move — focus on the technology and show how this improves."* The
+technology was already most of the page, so what was missing was the part that
+is not technology at all.
+
+**Virtual needed splitting in two, and only one half is true.** Virtual *for
+the client* is live today — the quote, the forms, the renewal desk, the
+signature — and the page already said so. Virtual *for the staff* is not: the
+branch runs fixed hours per desk with an attendance register, marks a desk
+absent five minutes after its start and moves its work to a colleague at thirty
+(`SCHEDULE` and the cover rules in `KPI.gs`). Promising remote work to this
+seat would have been a promise the branch's own systems contradict on day one.
+
+Offered the four honest versions, he chose **fully flexible hours**: the seat
+sets its own, judged on the book rather than on the clock. That is now the
+badge on every poster (*We are hiring · hours that suit you · Chaguanas*), a
+line in the hero, and the first of the four cards in **`#move`** — the section
+written against the four sentences this person actually says about where they
+work now:
+
+| they say | the page answers |
+|---|---|
+| *I am measured by the clock* | judged on the book, hours yours to set |
+| *Nothing I suggest ever happens* | a change you ask for gets built that week |
+| *There is nowhere above me* | the person who runs this book from the start runs what it becomes |
+| *The systems fight me* | the paperwork side is already built, and you can see it before you apply |
+
+Two more decisions in the same breath, both in the page and in all three ad
+cuts:
+
+- **Pay is negotiable on experience.** Said rather than hinted; no figure, no
+  band, since the branch has not set one.
+- **"One thing we are not asking you for: your clients."** This matters more
+  than it looks. Everybody recruiting from an agency in this market is
+  assumed to be shopping for a book, and saying plainly that we are not
+  removes the one reason a good person would not reply. It is also the truth:
+  the book is already here.
+
+**The attendance register is the open question, and it is his.** A seat on
+fully flexible hours does not fit the register, the absent-at-start-plus-five
+rule or the automatic cover pass as they stand. Either this seat is marked
+exempt in `SCHEDULE`, or the promise quietly stops being true the first week.
+Nothing has been changed in `KPI.gs` for it.
 
 ## The film — `cmadmin`, 1:55, cut 7 November 2026
 
@@ -707,13 +793,13 @@ thing that catches a reveal landing on a word that is never said.
 
 ### 1 · LinkedIn (this is where this person is)
 
-> **WE ARE HIRING · ONE VACANCY · CHAGUANAS**
+> **WE ARE HIRING · HOURS THAT SUIT YOU · CHAGUANAS**
 >
 > **The book is already there. What it has never had is you.**
 >
 > *If you can run a general insurance book, and have never once been allowed to change how it is run — this is the one to read.*
 >
-> The Ricky Rampersad Branch has opened its own general insurance agency, and we need one Client Manager to look after it.
+> The Ricky Rampersad Branch has opened its own general insurance agency, and we are building the team that looks after it.
 >
 > It is not a start-up. The book comes with it, across seven lines of business — motor and fleet, household, commercial property, public liability, workers' compensation, machinery and plant, bonds — with renewals falling in every month of the year.
 >
@@ -727,6 +813,10 @@ thing that catches a reveal landing on a word that is never said.
 >
 > General insurance experience and underwriting experience both required.
 >
+> Hours are yours to set. Pay is negotiable on experience. The person who runs this book from the start runs what it becomes.
+>
+> One thing we are not asking you for: your clients.
+>
 > Send your CV and about fifteen minutes of honest answers: **rickyrampersadbranch.com/clientmanager**
 >
 > Read by me personally. If you are employed today, nobody there will hear of it.
@@ -735,7 +825,7 @@ thing that catches a reveal landing on a word that is never said.
 
 ### 2 · WhatsApp and one-to-one
 
-> *WE ARE HIRING — one seat: Client Manager, general insurance, Chaguanas.*
+> *WE ARE HIRING — Client Manager, general insurance, Chaguanas. Hours that suit you.*
 >
 > *If you can run a general insurance book and have never once been allowed to change how it is run, read this one.*
 >
@@ -744,6 +834,8 @@ thing that catches a reveal landing on a word that is never said.
 > The paperwork side is built: the quote and the forms fill themselves from the record, and every term since the policy began is on the screen before you open the file.
 >
 > So the job is the advice, the endorsements and the renewal conversation. And if you ask for a change here, it gets built that week.
+>
+> Hours are yours to set, pay is negotiable on experience, and we are not asking you to bring clients with you.
 >
 > rickyrampersadbranch.com/clientmanager — your CV and fifteen minutes. If you are somewhere with no room to grow, this is the one to look at.
 
@@ -842,7 +934,8 @@ Every one of the three recruiting pages now opens with two things above the
 headline that were not there before:
 
 - **the vacancy badge** — a pill reading *We are hiring · one vacancy ·
-  Chaguanas* (*advisors* on `/joinourbranch/`), with a dot that pulses only
+  Chaguanas* (*advisors* on `/joinourbranch/`; *hours that suit you* on
+  `/clientmanager/`, which carries no count — see below), with a dot that pulses only
   inside `prefers-reduced-motion: no-preference`. It says **hiring in words**,
   never by colour alone;
 - **the attraction line** (`.pull`) — one sentence, large, against an accent

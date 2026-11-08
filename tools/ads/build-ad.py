@@ -37,15 +37,20 @@ ADS = {
         'dir': 'clientmanager',
         'under': 'General insurance &middot; Chaguanas',
         'badge': 'We are hiring',
-        'vacancy': 'One vacancy',
+        # No seat count on this one: 8 November 2026, he chose as many
+        # applications as possible over the scarcity the other two keep. The
+        # slot carries the offer instead — and it may not repeat the masthead,
+        # which already says General insurance - Chaguanas.
+        'vacancy': 'Hours that suit you',
         'role': 'Client Manager &middot; General Insurance',
         'head': ['The book is', 'already there.'],
         'em': ['What it has', 'never had is you.'],
         'pull': 'If you can run a general insurance book, and have never once been '
                 'allowed to change how it is run &mdash; this is the one to read.',
-        'chips': ['Seven lines of business, personal and commercial',
+        'chips': ['Judged on the book, not on the clock',
+                  'A change you ask for gets built that week',
                   'Every endorsement written to the Act',
-                  'A change you ask for gets built that week'],
+                  'Seven lines of business, personal and commercial'],
         'url': 'rickyrampersadbranch.com/clientmanager',
         'qr': 'qr-cmadmin.png',
         'foot': 'Your CV and fifteen minutes. Read by the Branch Manager alone.',

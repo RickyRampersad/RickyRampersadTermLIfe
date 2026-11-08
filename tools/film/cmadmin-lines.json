@@ -278,11 +278,11 @@
   },
   {
    "visual": "bwclose",
-   "eyebrow": "One seat &middot; Chaguanas",
+   "eyebrow": "Client manager &middot; Chaguanas",
    "lines": [
     [
-     "seat",
-     "One seat."
+     "manager",
+     "Client manager."
     ],
     [
      "Chaguanas",
@@ -297,7 +297,7 @@
    "qr": "qr-cmadmin.png",
    "urlsub": "Your CV and fifteen minutes.<br>Read by the Branch Manager alone.",
    "extra": 2.2,
-   "say": "One seat, for a client manager. Chaguanas. Come and look after the book."
+   "say": "Client manager, general insurance. Chaguanas. Come and look after the book."
   }
  ]
 }

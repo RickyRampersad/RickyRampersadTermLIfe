@@ -118,9 +118,10 @@ var QUOTE = {
     /* The score first, because it is the one thing that says whether to read
        the rest now or later; then where they are, and the thing they built. */
     'admin':            ['score', 'emp_role', 'pay_now'],
-    /* Years, where they are with the papers, and the classes. The unclipped
-       scan line the page sends as its 'At a glance' section carries the rest. */
-    'underwriter':      ['uw_years', 'uw_qstatus', 'uw_classes']
+    /* Whether they clear the bar, their years and their papers. The unclipped
+       scan line the page sends as its 'At a glance' section carries the rest.
+       This also rides the subject line, so a full inbox sorts itself. */
+    'underwriter':      ['scan_bar', 'uw_years', 'uw_qstatus']
   },
 
   /* A client who taps send twice, or whose connection retries, must not
@@ -515,7 +516,11 @@ function quoteTeamMail_(ref, def, row, answers, now, cv) {
     cc: def.to === 'manager' ? '' : QUOTE.CC().join(','),
     name: SVC.FROM_NAME,
     replyTo: row['E-mail'],
-    subject: 'New ' + def.line + ' request · ' + ref + ' · ' + row['Name'],
+    /* The summary rides the subject too: with a recruiting ad running, the
+       inbox is a list of forty and the decision of which to open first should
+       not need any of them opened. */
+    subject: 'New ' + def.line + ' request · ' + ref + ' · ' + row['Name']
+           + (row['Summary'] ? ' · ' + quoteClean_(row['Summary'], 70) : ''),
     htmlBody: h
   });
 }

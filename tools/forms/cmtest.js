@@ -36,6 +36,11 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   // show which findings we think matter — that is the answer sheet
   const shown = await pg.$eval('#file', e => e.innerText);
   ok(!/\b(you (got|missed)|\d+ of 9|correct|incorrect)\b/i.test(shown), vp.n + ' no verdict on the page');
+  const all = await pg.$eval('body', e => e.innerText);
+  ok(!/meets the bar|below the bar|worth a call|\d of 5/i.test(all), vp.n + ' the bar is never shown to the candidate');
+  ok(/judged on the book/i.test(all), vp.n + ' the flexible-hours offer is on the page');
+  ok(/not asking you for: your clients|not asking you to/i.test(all), vp.n + ' it says we are not asking for their book');
+  ok(!/one vacancy|One seat:/i.test(all), vp.n + ' no seat count');
 
   await f[2].click(); await f[0].click(); await f[5].click();
   ok(await pg.$eval('#fileCount', e => /3 things, in that order/.test(e.innerText)), vp.n + ' counts what was ticked');
@@ -103,6 +108,8 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   await put('#uName', 'A Candidate'); await put('#uPhone', '868 555 0100');
   await put('#uMail', 'candidate@example.com'); await put('#uTown', 'Couva');
   await put('input[name=uw_years][value="6 to 10 years"]');
+  await put('input[name=uw_uwexp][value="Yes, with an insurer"]');
+  await put('#uUwWhere', 'Four years motor and property with an insurer, then agency side.');
   await put('input[name=cls][value="Commercial property and fire"]');
   await put('input[name=cls][value="Private motor"]');
   await put('input[name=cls][value="Engineering and machinery"]');
@@ -132,6 +139,9 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   ok(/valuation/.test(by('file_ask')), 'what they would ask reaches him');
   ok(/claims in the last term/.test(by('file_missed')), 'what they walked past reaches him');
   ok(by('uw_qstatus') === 'Diploma', 'the qualification status reaches him');
+  ok(by('uw_uwexp') === 'Yes, with an insurer', 'whether they have underwritten reaches him');
+  ok(/^Meets the bar/.test(by('scan_bar')), 'the bar is worked out: ' + by('scan_bar'));
+  ok(body.fields[0].k === 'scan_bar', 'the bar is the very first thing in the e-mail');
   ok(body.fields[0].section === 'At a glance', 'the scan line is the first thing in the e-mail');
   ok(/Diploma/.test(by('scan_fit')) && /motor and property both/.test(by('scan_fit')), 'the scan line says the fit: ' + by('scan_fit'));
   ok(/2 ticked/.test(by('scan_file')) && /premium: Load it/.test(by('scan_file')), 'the scan line says what they did with the file: ' + by('scan_file'));
@@ -142,7 +152,7 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   ok(/never happened/.test(by('uw_stopped')), 'what they could not change reaches him');
   ok(/complaint/.test(by('uw_compliance')), 'the compliance ticks reach him');
   console.log('\n— what the Branch Manager reads —');
-  ['scan_fit','scan_file','scan_compliance','scan_depth','uw_qstatus','uw_quals','file_order','file_ask','file_prem','file_missed']
+  ['scan_bar','scan_fit','scan_file','scan_compliance','scan_depth','uw_qstatus','uw_quals','file_order','file_ask','file_prem','file_missed']
     .forEach(k => console.log('  ' + k + ': ' + String(by(k)).replace(/\n/g, '\n      ')));
   await pg.close();
 }
