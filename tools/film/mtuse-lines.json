@@ -1,0 +1,17 @@
+{
+ "note": "How to use the Meeting Builder and bring something to the meeting. Voiced Andrew Expressive +0% on the tts-run runner. Line 1 re-voiced undated (key mtusefix) so the film outlives one Friday.",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
+ "scenes": [
+  { "say": "Every week, this branch meets. Here is how to bring something to it.", "extra": 0.5 },
+  { "say": "Go to Ricky Rampersad branch dot com, slash meetings. Type your agent number. Nothing else to remember.", "extra": 0.2 },
+  { "say": "Your day opens with a short list. Read the agenda, then press: put my item on the agenda.", "extra": 0.2 },
+  { "say": "Pick the item you want to talk about. Under it is the question to answer.", "extra": 0.2 },
+  { "say": "Then say what you are bringing. A commitment, a concern, something that works, or a question.", "extra": 0.2 },
+  { "say": "Press the button, and it is on the agenda before anybody sits down.", "extra": 0.3 },
+  { "say": "It does not mark you present. That is a different tap.", "extra": 0.4 },
+  { "say": "Everybody sees what the branch brought, grouped by what it is, by item, or by person.", "extra": 0.3 },
+  { "say": "At half past eleven, press the button that says I am here. That one is the register.", "extra": 0.3 },
+  { "say": "Bring one thing.", "extra": 1.2 }
+ ]
+}

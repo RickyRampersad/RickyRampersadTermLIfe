@@ -43,7 +43,11 @@ FIELDS = ["Policy Key", "Policy #", "Line", "Client", "Email", "Mobile",
 
 
 def norm_key(value):
-    """TQG0897-00014-00 and 'tqg 0897 00014 00' are the same policy."""
+    """TAA0001-00001-00 and 'taa 0001 00001 00' are the same policy.
+
+    The example is invented. This file is served from the repository root,
+    so a real policy number in a docstring is a published one.
+    """
     return re.sub(r"[^A-Z0-9]", "", (value or "").upper())
 
 

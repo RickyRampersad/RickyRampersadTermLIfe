@@ -9,6 +9,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
 const DAY = '2026-11-03';
 const env = makeEnv();
 env.todayISO_ = () => DAY;
+env.PropertiesService.getScriptProperties().setProperty('AGENT_COACH', 'off');   // the plain morning, which this test covers
 const row = (d, at) => [d, 'a-maya-sample', 'maya@example.com', '', 'plan', 'calls', 'Calls', '5', '', '', at];
 env.__mkSheet('Agent Day', 1, env.AGDAY.head, [row('2026-11-02', '07:05'), row('2026-11-03', '07:10')]);
 const mails = []; env.mailSend_ = o => { mails.push(o); return 'relay'; };

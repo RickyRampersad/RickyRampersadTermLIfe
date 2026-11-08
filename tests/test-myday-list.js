@@ -36,7 +36,7 @@ env.__mkSheet('Access', 1, ['Email', 'Name', 'Agent Number', 'Password', 'Role',
   ['support@example.com', 'PB001-Pawan Prabhu', 'PB001', '1', 'Staff', 'PAWAN PRABHU', 'Active']]);
 env.resetRequestMemo_ && env.resetRequestMemo_();
 m = env.workdayModel_('pawan', DAY);
-ok('Pawan\'s Close my day is his errands page, to close', /[?&]rs=pawan&d=2026-10-27&f=errand&k=[^&]+&c=leave/.test(m.close && m.close.url || ''), m.close && m.close.url);
+ok('Pawan\'s Close my day is his errands page, to close', /[?&]rs=pawan&d=2026-10-27&f=errand&k=[^&]+&cm=leave/.test(m.close && m.close.url || ''), m.close && m.close.url);
 m = env.workdayModel_('akaash', DAY);
 ok('a unit manager\'s My day has no staff list and no staff close-out', m.list === undefined && m.close === undefined);
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed');
