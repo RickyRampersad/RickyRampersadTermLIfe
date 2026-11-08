@@ -1,11 +1,10 @@
 {
- "voice": "en-US-AndrewMultilingualNeural",
- "rate": "+0%",
- "check": true,
- "films": {
-  "cmfix2": [
-   "You would not be building a book. We have one. Seven lines of business, personal and commercial, with renewals in all twelve months of the year. And every endorsement on it written to the Act.",
-   "The job is the part a system cannot do. Endorsements and extensions, written to the Act. The renewal conversation. Telling a client plainly what the cover does and what it does not. We drive compliance here. We do not wait to be told."
-  ]
- }
+  "voice": "en-US-AndrewMultilingualNeural",
+  "rate": "+0%",
+  "check": true,
+  "films": {
+    "cmclose": [
+      "Client manager, general insurance. Chaguanas. Come and look after the book."
+    ]
+  }
 }
