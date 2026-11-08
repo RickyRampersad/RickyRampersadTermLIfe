@@ -33,3 +33,18 @@ tools/film/captions-*.ass
 tools/letters/departed.txt
 tools/letters/exclude.txt
 tools/letters/*.csv
+
+# Film render intermediates. The pipeline in tools/film/ regenerates every one
+# of these from the lines, the timing file and the builder, so none belongs in
+# git — and the repository root is served by GitHub Pages, so a captured frame
+# directory would be published as well as cloned. 1.4 GB of them at the last
+# count. The finished MP4, its poster and the committed source track are
+# tracked as normal; these are the scaffolding.
+#   cap-<key>/      frame captures from render.js
+#   vo<key>/        the voice WAVs and VTT cues importvox.py writes
+#   *.wav           the beds, sound design and mixes
+#   captions-*.ass  the burned-in caption script
+tools/film/cap-*/
+tools/film/vo*/
+tools/film/*.wav
+tools/film/captions-*.ass
