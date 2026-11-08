@@ -760,6 +760,18 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 .fileq .pills label span{border-color:var(--d3);color:var(--dT2)}
 .fileq .pills input:checked+span{background:var(--aL);border-color:var(--aL);color:#06303a}
 
+/* The restored-draft notice. Teal rather than amber: nothing has gone wrong,
+   we are telling them what we did. */
+.draftbox{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;margin:0;
+  background:var(--a-tint);border:1px solid var(--a-tint2);border-left:4px solid var(--a);
+  border-radius:var(--r-s);padding:.8rem .95rem;font-size:var(--f--1);color:var(--body)}
+.draftbox span{flex:1 1 16rem;min-width:0}
+.draftbox b{color:var(--ink)}
+.draftbox button{flex:none;font:600 var(--f--2)/1 var(--text);color:var(--aD);
+  background:#fff;border:1px solid var(--line-strong);border-radius:999px;
+  padding:.55rem .9rem;min-height:40px;cursor:pointer}
+.draftbox button:hover{border-color:var(--a);color:var(--a)}
+
 /* ── the ledger: the day everywhere else, against the day here ──────────────
    8 November 2026, asked for in these words: "target where the work has
    become overwhelming for persons with filing cabinets, manual, paper, and
@@ -1347,8 +1359,17 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
              office is loses people who cannot judge the drive. -->
         <p class="small"><svg class="ic" aria-hidden="true" style="display:inline-block;vertical-align:-5px;width:18px;height:18px;color:var(--a)"><use href="#i-pin"/></svg> The office is in <strong>Chaguanas, Central Trinidad</strong>, and the hours are yours to set.</p>
         <p class="straight"><b>One thing said plainly, before you start.</b> Mr Rampersad reads every application himself and replies within two working days to everyone he wants to speak to. <strong>If you have not heard from him in that time, it has been read and it has not gone forward, and there will be no further letter.</strong> We would rather tell you that now than leave you watching an inbox.</p>
+        <!-- Two things an applicant has to know BEFORE the first box, both
+             found by walking the journey on a phone on 8 November 2026. The
+             CV is required and it is the 29th field of 31, so somebody can
+             write for twenty minutes and only then discover they need a file
+             they have not got on that device. And the written answers are
+             long: a tab evicted in the background on iOS used to take all of
+             it with it, because nothing was saved. -->
+        <p class="small"><svg class="ic" aria-hidden="true" style="display:inline-block;vertical-align:-5px;width:18px;height:18px;color:var(--a)"><use href="#i-file"/></svg> <strong>Have your CV on this device</strong> as a PDF or Word file &mdash; it is asked for at the end. Your answers are kept on this device as you go, so you can close the page and come back to them.</p>
 
         <form class="form" id="uf" novalidate autocomplete="on" style="background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-m);box-shadow:var(--e2);display:grid;gap:var(--sp-m);margin-top:var(--sp-l)">
+          <p class="draftbox" id="ufdraft" hidden></p>
           <div class="rail" id="rail" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="How much of the application is filled in">
             <p class="rail-top" aria-hidden="true"><b id="railN">0 of 14 answered</b><span id="railS">about 15 minutes</span></p>
             <div class="rail-bar"><i id="railI"></i></div>
@@ -1870,6 +1891,10 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 
   function show(ref,sent,first,cvOk){
+    /* Cleared on either road: filed, or handed to their mail app. The form is
+       hidden from here on, so a kept draft could only come back to confuse
+       them on a second visit. */
+    try{draftClear()}catch(e){}
     f.style.display='none';
     done.innerHTML='<span class="eyebrow">Sent</span><h3>Thank you, '+esc(first)+'. It is with Mr Rampersad.</h3>'
       +'<div class="ref" aria-label="'+esc(ref)+'">'+esc(ref)+'</div>'
@@ -1880,13 +1905,72 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     done.classList.add('on');
     done.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
   }
+  /* The seat was renamed from Underwriter to Client Manager, and this path —
+     the one every applicant takes while the backend is not deployed — was
+     still sending the e-mail under the old name, in its subject and its first
+     line. Found on 8 November 2026 by walking the journey on the live page. */
   function mailRoad(body,ref){
-    var t='UNDERWRITER — GENERAL INSURANCE\nReference: '+ref+'\n\n'
+    var t='CLIENT MANAGER — GENERAL INSURANCE\nReference: '+ref+'\n\n'
       +'Name: '+body.core.name+'\nPhone: '+body.core.phone+'\nE-mail: '+body.core.email+'\n\n';
     body.fields.forEach(function(x){if(x.value)t+=x.label+':\n'+x.value+'\n\n'});
     t+='(Please attach your CV to this e-mail.)\n';
-    location.href='mailto:'+TO+'?subject='+encodeURIComponent('Underwriter — '+ref)+'&body='+encodeURIComponent(t);
+    location.href='mailto:'+TO+'?subject='+encodeURIComponent('Client Manager — '+ref)+'&body='+encodeURIComponent(t);
   }
+
+  /* ── the draft, so twenty minutes of writing survives a phone call ──────
+     Six written answers, 600 to 800 characters each, and the CV required at
+     the very end. iOS evicts a backgrounded tab routinely, and until this
+     the whole application went with it. The house pattern from the quote
+     forms: only answered fields, a draft older than a fortnight dropped
+     rather than put back, and the restoration SAID rather than silent —
+     answers reappearing with no explanation read as somebody else's form.
+     The CV cannot be kept: a file input may not be set from script. */
+  var DRAFT='rrb-cm-apply', DRAFT_DAYS=14, dBox=document.getElementById('ufdraft'), dT=null;
+  function draftSave(){
+    try{
+      var d={_at:Date.now()};
+      new FormData(f).forEach(function(v,k){
+        if(k==='website'||k==='cv')return;          /* honeypot, and the file */
+        if(typeof v==='string'&&v.trim())d[k]=v;
+      });
+      localStorage.setItem(DRAFT,JSON.stringify(d));
+    }catch(e){/* private window or blocked storage: the form still works */}
+  }
+  function draftClear(){try{localStorage.removeItem(DRAFT)}catch(e){}}
+  function draftLoad(){
+    var d;try{d=JSON.parse(localStorage.getItem(DRAFT)||'null')}catch(e){return}
+    if(!d)return;
+    var at=+d._at||0;
+    if(at&&Date.now()-at>DRAFT_DAYS*864e5){draftClear();return}
+    var n=0;
+    Object.keys(d).forEach(function(k){
+      if(k==='_at')return;
+      var els=f.querySelectorAll('[name="'+k.replace(/"/g,'')+'"]');
+      if(!els.length)return;
+      if(els[0].type==='radio'||els[0].type==='checkbox'){
+        var hit=false;
+        [].forEach.call(els,function(e){if(e.value===d[k]){e.checked=true;hit=true}});
+        if(!hit)return;
+      }else{els[0].value=d[k]}
+      n++;
+    });
+    if(!n)return;
+    var mins=at?Math.round((Date.now()-at)/6e4):0;
+    var when=!at?'':mins<2?' just now':mins<60?' '+mins+' minutes ago'
+      :mins<2880?' '+Math.round(mins/60)+' hours ago':' on '+new Date(at).toLocaleDateString();
+    dBox.innerHTML='<span><b>We kept what you had started'+when+'.</b> '+n+
+      (n===1?' answer is':' answers are')+' filled in below. Your CV is the one thing we could not keep &mdash; attach it again at the end.</span>'+
+      '<button type="button">Start again, empty</button>';
+    dBox.hidden=false;
+    dBox.querySelector('button').addEventListener('click',function(){
+      draftClear();f.reset();dBox.hidden=true;
+      var first=f.querySelector('input:not([type=hidden]),select,textarea');
+      if(first)first.focus();
+    });
+  }
+  f.addEventListener('input',function(){clearTimeout(dT);dT=setTimeout(draftSave,500)});
+  f.addEventListener('change',function(){clearTimeout(dT);dT=setTimeout(draftSave,500)});
+  try{draftLoad()}catch(e){}
 
   f.addEventListener('submit',function(e){
     e.preventDefault();
