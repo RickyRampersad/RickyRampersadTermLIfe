@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-08d';
+var SCRIPT_VERSION = '2026-11-08e';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -14597,10 +14597,10 @@ function agentMorningMail_(a, day, data, cache) {
   var f3 = (data.f360 || {})[a.key] || null;
   var g = (data.goal || {})[a.key] || null, qs = (data.q || {})[a.key] || [], orp = (data.orphan || {})[a.key] || null;
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
-  var items = open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late }; });
+  var items = open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late, ty: t.ty || '' }; });
   // Today's opportunities on their book (8 Nov 2026): opened for support to research, on the agent's list to answer.
   var newOpps = []; try { newOpps = agOppOpen_(a, day); } catch (e) { try { runlog_('opportunities for ' + a.name + ' FAILED: ' + (e && e.message)); } catch (e2) {} }
-  newOpps.forEach(function (r) { if (!items.some(function (it) { return it.id === r.TaskId; })) items.unshift({ id: r.TaskId, s: 'Opportunity: ' + AGOPP.KINDS[r.Kind].l + ' · ' + r.Client, o: nameFor_(r.Support) || r.Support, due: nextWorkday_(day), late: false }); });
+  newOpps.forEach(function (r) { if (!items.some(function (it) { return it.id === r.TaskId; })) items.unshift({ id: r.TaskId, s: 'Opportunity: ' + AGOPP.KINDS[r.Kind].l + ' · ' + r.Client, o: nameFor_(r.Support) || r.Support, due: nextWorkday_(day), late: false, ty: 'Opportunity' }); });
   data.opps = data.opps || {}; try { data.opps[a.key] = { fresh: newOpps, open: agOppRows_().filter(function (r) { return String(r.AgentKey) === a.key && String(r.Status) === 'open'; }) }; } catch (e) {}
   try { bigPut_('ag_items_' + a.key + '_' + day, items); } catch (e) {}
   if (agCoachOn_(a)) {
@@ -14839,6 +14839,7 @@ function agSaveCore_(a, day, kind, p) {
     catch (e) { res = 'NOT SAVED: ' + String(e && e.message || e).slice(0, 140); }
     comments.push({ s: it.s, txt: txt, res: res });
   });
+  if (comments.length) agChatForget_(a, day);
   if (String(p.only || '') === '1') return { ok: comments.length > 0, only: true, rows: rows, comments: comments, error: comments.length ? '' : 'Nothing to post: write an update under a task first.' };
   var filled = rows.filter(function (r) { return (eve ? r.Done : r.Planned) !== ''; }).length;
   if (filled < AGENT_METRICS.length) return { ok: false, rows: rows, comments: comments, error: 'Put a number against every line, 0 where there is none. ' + (AGENT_METRICS.length - filled) + ' left blank.' };
@@ -15303,7 +15304,7 @@ function agStaffWork_(a, day, open, queries) {
   var out = { html: '', n: (open || []).length, waitingOnYou: 0 };
   if (!open || !open.length) return out;
   var first = String(a.name).split(' ')[0], notes = {};
-  try { notes = cmdChatter_(open.slice(0, 30).map(function (t) { return t.id; })); } catch (e) {}
+  try { notes = agChatCached_(a, day, open.slice(0, 30).map(function (t) { return t.id; })); } catch (e) {}
   var rows = open.map(function (t) {
     var pb = {}; try { pb = playbookFor_({ subject: t.subject, ty: t.ty }, notes[t.id] || [], day); } catch (e) {}
     var wait = String(pb.waiting || ''), lateD = t.late ? daysBetween_(t.due, day) : 0;
@@ -15320,7 +15321,9 @@ function agStaffWork_(a, day, open, queries) {
     var list = by[who].sort(function (x, y) { return (y.onYou - x.onYou) || (y.esc - x.esc) || (y.lateD - x.lateD); });
     var late = list.filter(function (r) { return r.t.late; }).length;
     return agCard_(list.some(function (r) { return r.onYou; }) ? MAIL.red : list.some(function (r) { return r.esc; }) ? MAIL.amber : MAIL.green,
-      '<div style="font:800 14px Segoe UI,Arial;color:' + MAIL.navy + ';padding:2px 0 6px">' + esc_(who) + ' <span style="font-weight:600;color:' + MAIL.muted + ';font-size:12.5px">· ' + list.length + ' for you' + (late ? ' · ' + late + ' overdue' : '') + '</span></div>' +
+      '<div style="font:800 14px Segoe UI,Arial;color:' + MAIL.navy + ';padding:2px 0 2px">' + esc_(who) + ' <span style="font-weight:600;color:' + MAIL.muted + ';font-size:12.5px">· ' + list.length + ' for you' + (late ? ' · ' + late + ' overdue' : '') + '</span></div>' +
+      '<div style="font-size:12px;color:' + MAIL.muted + ';padding:0 0 6px">' + esc_((function () { var g = {}; list.forEach(function (r) { var l = agTypeLabel_(r.t.ty, r.t.subject); g[l] = (g[l] || 0) + 1; });
+        return Object.keys(g).sort(function (x, y) { return g[y] - g[x]; }).map(function (l) { return l + ' ' + g[l]; }).join(' · '); })()) + '</div>' +
       list.slice(0, 5).map(function (r) {
         var tag = r.onYou ? '<span style="background:' + MAIL.red + ';color:#fff;border-radius:999px;padding:1px 7px;font-size:11px;font-weight:800">WAITING ON YOU</span> '
           : r.esc ? '<span style="background:' + MAIL.amber + ';color:#fff;border-radius:999px;padding:1px 7px;font-size:11px;font-weight:800">NEEDS A PUSH</span> ' : '';
@@ -15332,6 +15335,29 @@ function agStaffWork_(a, day, open, queries) {
   }).join('') + ((queries || []).length ? '<div style="font-size:12.5px;color:' + MAIL.muted + ';margin:4px 0 0">Query Pal: ' + queries.length + ' of your clients\' queries open with the team.</div>' : '');
   return out;
 }
+
+/** The task types, in the words the agents use (8 Nov 2026). */
+function agTypeLabel_(ty, subj) {
+  var t = String(ty || ''), s = String(subj || '');
+  if (/^Opportunity/i.test(t) || /^Opportunity:/i.test(s)) return 'Opportunities';
+  if (/Pendings/i.test(t) || /^UWPRO|pending/i.test(s)) return 'Pendings';
+  if (/Renewa|PDl|Bill/i.test(t)) return 'Premiums and billing';
+  if (/Claims/i.test(t)) return 'Claims and maturities';
+  if (/Servicing/i.test(t)) return 'Servicing';
+  if (/Scripts/i.test(t)) return 'Call-backs';
+  return t || 'Other';
+}
+/** The Chatter on an agent's tasks, kept 15 minutes: the 7:00 e-mail fills it, so the first tap on My day does not wait on
+ *  Salesforce. A post from My day clears it, so the agent sees their own post at once. */
+function agChatCached_(a, day, ids) {
+  var c = CacheService.getScriptCache(), k = 'agchat_' + a.key + '_' + day, have = {};
+  try { have = JSON.parse(c.get(k) || '{}') || {}; } catch (e) {}
+  var miss = ids.filter(function (id) { return !have.hasOwnProperty(id); });
+  if (miss.length) { var got = {}; try { got = cmdChatter_(miss) || {}; } catch (e) {} miss.forEach(function (id) { have[id] = got[id] || []; });
+    try { var js = JSON.stringify(have); if (js.length < 95000) c.put(k, js, 900); } catch (e) {} }
+  return have;
+}
+function agChatForget_(a, day) { try { CacheService.getScriptCache().remove('agchat_' + a.key + '_' + day); } catch (e) {} }
 
 /** A licence line only in the month the licence date falls (8 Nov 2026). Salesforce holds the licence date, not an expiry, so the
  *  anniversary is what is shown. A general licence dated before 1950 is a placeholder and never shown. */
@@ -18255,7 +18281,7 @@ function agentDayModel_(a, day, opt) {
   var items = null; try { items = bigGet_('ag_items_' + a.key + '_' + day, null); } catch (e) {}
   if (!items) {
     try { var data = agentBatchData_([a], day), open = (data.open[a.key] || []).slice().sort(function (x, y) { return (x.late === y.late ? 0 : x.late ? -1 : 1) || String(x.due).localeCompare(String(y.due)); });
-      bigPut_('ag_items_' + a.key + '_' + day, open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late }; })); } catch (e) {}
+      bigPut_('ag_items_' + a.key + '_' + day, open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late, ty: t.ty || '' }; })); } catch (e) {}
   }
   var plan = {}, close = {}; try { plan = agRows_(a.key, day, 'plan'); close = agRows_(a.key, day, 'close'); } catch (e) {}
   m.project = { url: replyUrl_(a.key, day, 'ag'), done: Object.keys(plan).length > 0, by: twelve_(mmText_(AGENT_ABSENT_AT)) };
@@ -18266,7 +18292,7 @@ function agentDayModel_(a, day, opt) {
   var list = []; try { list = bigGet_('ag_items_' + a.key + '_' + day, []) || []; } catch (e) {}
   var tk = { closed: [] }; try { tk = agDayTasks_(a, day); } catch (e) {}
   var shut = {}; (tk.closed || []).forEach(function (t) { shut[t.id] = 1; });
-  var chat = {}; try { chat = list.length ? cmdChatter_(list.map(function (it) { return it.id; })) || {} : {}; } catch (e) {}
+  var chat = {}; try { chat = list.length ? agChatCached_(a, day, list.map(function (it) { return it.id; })) : {}; } catch (e) {}
   var val = function (r, f) { var v = r && r[f]; return v === undefined || v === null ? '' : String(v); };
   m.metrics = AGENT_METRICS.map(function (x) { return { id: x.id, s: x.s, p: x.p, d: x.d, planned: val(plan[x.id], 'Planned'), pnote: val(plan[x.id], 'Note'), done: val(close[x.id], 'Done'), dnote: val(close[x.id], 'Note') }; });
   m.summary = { plan: val(plan.summary, 'Note'), close: val(close.summary, 'Note') };
@@ -18274,7 +18300,9 @@ function agentDayModel_(a, day, opt) {
     var notes = chat[it.id] || [];
     return { id: it.id, s: String(it.s || ''), o: String(it.o || 'the branch').split(' ')[0], due: it.due ? shortDate_(it.due) : '', late: !!it.late, done: !!shut[it.id],
       notes: notes.slice(0, 2).map(function (n) { var np = noteParts_(n.text); return { who: String(np.ours ? String(np.who).split(' · ').pop() : n.by || '').split(' ')[0], day: n.day ? shortDate_(n.day) : '', s: shorten_(np.body, 200), reply: !!n.reply }; }),
-      more: Math.max(0, notes.length - 2) };
+      more: Math.max(0, notes.length - 2), ty: it.ty || '', group: agTypeLabel_(it.ty, it.s), tag: (function () {
+        try { var pb = playbookFor_({ subject: it.s, ty: it.ty }, notes, day), lateD = it.late && it.due ? daysBetween_(it.due, day) : 0;
+          if (pb.waiting === 'agent') return 'you'; if (lateD >= 7 || (pb.quiet != null && pb.quiet >= 5)) return 'push'; return pb.waiting ? 'w:' + pb.waiting : ''; } catch (e) { return ''; } })() };
   });
   m.closedToday = (tk.closed || []).slice(0, AGENT_LIST_MAX).map(function (t) { return { s: t.s, o: t.o }; });
   m.tiles = { worked: list.filter(function (it) { return !shut[it.id]; }).length, late: list.filter(function (it) { return it.late && !shut[it.id]; }).length, closed: (tk.closed || []).length };
@@ -18325,7 +18353,7 @@ function agDayTasks_(a, day) {
  *  (Branch Intelligence), the Salesforce tasks and their Chatter, and the agent's own plans on the Agent Day tab.
  *  The month's goal is the quarter's API on the plan by the days in the month (the agent's goal page counts the same way).
  *  The new screen and e-mails show for an agent once AGENT_COACH = live; until then only on a manager's "see their day". */
-var AG_COACH = { REVIEW_DAYS: 5, QUIET_DAYS: 3, FF_QUIET: 14, PROSPECT_DAYS: 7, STUCK_DAYS: 30, SUSP_DAYS: 60, TTL: 600, PICK_TTL: 1800,
+var AG_COACH = { REVIEW_DAYS: 5, QUIET_DAYS: 3, FF_QUIET: 14, PROSPECT_DAYS: 7, STUCK_DAYS: 30, SUSP_DAYS: 60, TTL: 21600, PICK_TTL: 1800,   // TTL six hours (8 Nov 2026): built with the 7:00 e-mail, so a tap opens at once
   CALLS: 10, CASES: 5, PENDS: 6,
   REASONS: [{ id: 'appts', label: 'No appointments' }, { id: 'delay', label: 'Clients delayed' }, { id: 'uw', label: 'Waiting on underwriting' },
             { id: 'leave', label: 'Leave or sick' }, { id: 'other', label: 'Other' }],
