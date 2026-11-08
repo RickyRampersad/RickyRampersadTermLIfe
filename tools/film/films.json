@@ -1392,7 +1392,7 @@
   "music": "bed-cmadmin.wav",
   "mix": "uwadmin-mix.wav",
   "ass": "captions-uwadmin.ass",
-  "dur": 114.7,
+  "dur": 115.0,
   "durs": [
    9.4,
    10.2,
@@ -1404,7 +1404,7 @@
    13.0,
    11.9,
    5.7,
-   8.1
+   8.4
   ],
   "out": "film-w.mp4",
   "musicgain": 0.46,

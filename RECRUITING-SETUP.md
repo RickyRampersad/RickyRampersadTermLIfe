@@ -784,10 +784,31 @@ twice… when the sum insured has not moved."*
 `tools/film/CANVA-AND-THE-EIGHT-CUTS.md`: a green tick beside *"wait for the
 release"* reads as the wait being fine.
 
+**`importvox.py` leaves the timing file in a shape the builder cannot read.**
+It writes `lines[i].words` in **seconds**; `build-boardfilm.py` reads a
+top-level `words` in **milliseconds**. So after every re-voice the file needs
+one conversion pass before the build, and until that pass runs the committed
+timing file does not build — which is how `cmadmin-timing.json` sat in the
+repository for a day in the wrong shape. Convert it, and write the file back
+**compact**, the way it was: re-indenting turns a one-line change into a
+1,200-line diff nobody will read.
+
 A cue word in the lines file has to appear **in the spoken line, inflected the
 same way**: `at2: "retypes"` against a line that says *retyping* stops the
 build with `no word 'retypes'`. That guard is worth keeping — it is the only
 thing that catches a reveal landing on a word that is never said.
+
+**The close said "One seat." and does not any more.** When the ad dropped its
+seat count on 8 November, the film still ended on *"One seat, for a client
+manager"*, on screen and in the voice — a promise kept in one place and broken
+in the other, which is the rule this repository keeps relearning. One line
+re-voiced (`cmclose`), one scene's eyebrow and reveals changed, and the whole
+film re-rendered: it now closes on *"Client manager, general insurance.
+Chaguanas. Come and look after the book."* Scene 11 went from 8.1 s to 8.4 s,
+so the film is 115.0 s; nothing before it moved, so `hits` and `dark` in
+`films.json` are unchanged. Whisper hears *Chaguanas* as "Chagwanis" on every
+take — a transcription artifact, not a read fault, and the word is on screen
+in the same scene.
 
 ## The ad
 
@@ -1225,6 +1246,18 @@ the clips back onto their real indices — the runner numbers a job's lines from
   reported as not stored (the applications still arrive in full).
 - **Compliance sight of the wording**, in particular the client manager ad,
   which advertises the branch's own general insurance agency.
+- **Paste `Quotes.gs` and publish a New version**, or the client manager's own
+  confirmation is still headed *"Underwriter, general insurance"* — the one a
+  stranger reads — and the team e-mail carries no bar line in its subject.
+- **Decide what fully flexible hours means for the register.** The ad now
+  promises them; `SCHEDULE` in `KPI.gs` gives every desk fixed hours, marks it
+  absent five minutes after its start and moves its work at thirty. Either this
+  seat is exempt there or the promise stops being true in week one. Nothing was
+  changed in `KPI.gs` for it, deliberately: it is an operating decision, not a
+  build.
+- **Set a pay band, or keep saying negotiable.** The ad says *negotiable on
+  experience* because no band exists. That is honest and it works; a band would
+  work better, and it is his to set.
 
 Everything else is in place. Each of the six pages carries its own share card —
 its film's wide poster — so a link pasted into WhatsApp previews with the
