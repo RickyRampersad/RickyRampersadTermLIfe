@@ -7813,11 +7813,13 @@ Internal Notes.
   reference first because the point is that a reply finds the file. The **line**
   leads, not `submissionType_` alone, which gives "Collision" and says nothing
   about which desk; health keeps Guardian's own submission wording.
-- **Parents**: motor on the **Risk_Details__c term in force on the date of
-  loss** (not this year's), everything else on the `CLIENT_PORTFOLIO__c` policy
-  record, plus the client's Contact as `WhoId`. The policy register gained
-  `Contact Id` and `Portfolio Id` for it — `Portfolio` was the record's *name*,
-  which cannot be a parent.
+- **Parents**: the **`Claims_Revised__c` record itself** as `WhatId`, plus the
+  client's Contact as `WhoId`. Corrected 8 November 2026 — see the section below;
+  until then motor went on the **Risk_Details__c term in force on the date of
+  loss** and everything else on the `CLIENT_PORTFOLIO__c` policy record, and
+  those two are now the fall-back for a claim whose own record could not be
+  created. The policy register gained `Contact Id` and `Portfolio Id` for it —
+  `Portfolio` was the record's *name*, which cannot be a parent.
 - **A retry ladder, because what the org refuses must be dropped and never
   claimed as written** (`gblSfwSave_`'s rule): WhatId first (a custom object
   needs activities enabled), then `Task_Type__c` (`Claims/ Mat`, read off the
@@ -8332,6 +8334,156 @@ turnaround, not a claim turnaround — but a client who taps **Make a claim** on
 WhatsApp is told three days and a client who files on the page is told ten. See
 the two-systems note above: the WhatsApp tap logs a Query Pal ticket and files
 no claim, and that is the one place the two routes contradict each other.
+
+### The claim record named, and the task on it — 8 November 2026
+
+Asked in these words: *"It is the claims revised, not the claims maturity … So
+a claims revised is opened depending on the motor claim and the current year, so
+we could know it's a claim open this year and the task is more or less opened on
+it. So is this done? Does it need to revise? Because it needs to be consistent
+across all platforms."*
+
+Mostly done, and **two things were genuinely inconsistent.** Both were invisible
+from outside, which is why the ping now reports them.
+
+#### `Name` is plain text, so Salesforce generates nothing
+
+Every one of the 645 claim records the branch has made carries
+`CLAIM -YYYY-MM-NNN` — and the describe says `Name` is **`type: string`,
+length 80, label "Claims Revised Name"**: a plain Text field, **not an
+auto-number.** A continuously-running sequence that never resets by year
+(449 in Nov 2022, 508 in Jun 2023, 625 in Jan 2026, 645 in Nov 2026) looks
+exactly like an auto-number with the display format `CLAIM -{YYYY}-{MM}-{0}`,
+which is why it was worth checking rather than assuming: assume auto-number and
+you never set it, and the record lands **nameless** among 645 that are named.
+Nameless is how a claim stops being findable.
+
+**The year and month are the point**, which is what he was saying: the branch
+reads the name to see a claim was opened this year. They come from **today**, at
+creation — confirmed against the live data, where the oldest open claim is named
+for March 2025 and carries a `Date_Claim_Submitted__c` in May 2023, so the name
+tracks when the record was made, not when the claim came in.
+
+`sfClaimName_` reads the newest record's number and adds one. The sequence is
+monotonic with `CreatedDate` across all 21 of this year's records, so that is
+the next one. **If it cannot be read, Name is left unset and the log says a
+person must name it** — a nameless record is visible in a list view and
+fixable, where a wrongly numbered one silently corrupts a sequence the branch
+counts on. Two claims in the same moment would collide; at ~21 claims a year
+that is not worth a lock around a Salesforce round trip on a page a client is
+waiting on, and `Name` is not unique, so a collision is cosmetic.
+
+#### The task goes on the claim record, not the policy and not the vehicle
+
+**All 27 of the branch's own claim tasks have `WhatId` on the
+`Claims_Revised__c` record**, and `Task` is a child of that object by `WhatId`
+on the describe, so activities are enabled on it. Ours put a motor claim's task
+on the **vehicle** (the `Risk_Details__c` term) and every other claim's on the
+**policy record** — which is what "the task is more or less opened on it" was
+asking about. `claimsId` was already being passed into `sfClaimTask_` and used
+only for a line in the Description; now it is the first parent in the retry
+ladder, with the policy or vehicle kept one rung down for a claim whose own
+record could not be created (a missing master-detail parent): a task on the
+policy still reaches a person, where no task reaches nobody.
+
+**And that Description line named the wrong object** — `Claims__c`, which the
+branch abandoned in 2016. It now carries the **name**, because a person
+searches Salesforce for `CLAIM -2026-11-646`, never for a record id.
+
+`Task_Type__c` **`Claims/ Mat`** is right and is now pinned by a test so it is
+not "corrected" away: 24 of those 27 tasks carry it. "Claims revised, not claims
+maturity" is about the **object**, not the task type — two different fields, and
+the live data settles it.
+
+#### The ratios are in the Google Sheet because Salesforce has never held them
+
+He said the claims and the ratios are in a Google Sheet, and he is right. Why:
+of **599** `Claims_Revised__c` records, `Submitted_Charges__c` is filled on 235,
+**`Claims_Paid__c` on 1, and `Date_Closed__c` on 1.** A loss ratio cannot be
+computed in Salesforce at all. The sheet that holds it is **"Claims "** in his
+Drive (modified 7 November 2026): 633 rows of group health, one per claim —
+Claim #, Service Date, Patient Name, Status (PAID / PAYMENT PENDING / NIL
+PAYMENT), Charge, Patient Responsibility, Deductible, Paid, GROUP NAME. That is
+the same shape `gblClaims_`/`gblExperience_` reads out of Guardian's claims
+summary PDF for the group billing, at line level instead of monthly.
+
+**It holds patient names beside health claim amounts**, which is the most
+sensitive data in the whole operation, and it is in a personal Drive. It is his
+to move; `GCM_PRIVATE`'s rule ("never a member's health or a claim" reaches a
+group's page) is why none of it may be wired into anything client-facing.
+
+**"Claims Revised Status"** (2023) is the other half: the tracker sales support
+kept by hand — Days Pending, Agent, Policy #, Record Type, Claims revised name,
+Contact, Account, Claim Type, Date, Claim Ref No., Client portfolio, Claim
+status, NOTES. It is where the convention is written down, and it is 4 Closed
+against 7 Opened with 82 to 270 days pending, which is the same problem as
+today's.
+
+#### The close-out he is clamping down on, measured
+
+`Claim_Status__c` has **exactly two values, Opened and Closed**, so the
+discipline has one field to land in and nowhere to hide. On 8 November 2026,
+**36 claims read Opened** — 31 of them Health:
+
+| open for | claims |
+|---|---|
+| 1,000 days or more | 2 |
+| 700–999 | 4 |
+| 365–699 | 11 |
+| 180–364 | 9 |
+| 60–179 | 7 |
+| under 60 | 3 |
+
+**Seventeen have been open more than a year.** The oldest is 1,272 days, a
+health claim submitted in May 2023. Of the claims opened since January 2024,
+36 read Opened against 77 Closed, the open ones 415 days old on average.
+`Days_Pending__c` and `Days_Claim_O_S__c` compute themselves, so the list is
+one sort away in Salesforce.
+
+#### Three fields it now fills that nobody was filling
+
+`Claims_Revis__c` (the Account, off the Contact — filled on every record the
+branch makes, and neither register carries it, so it is one small read inside
+its own try), `Service_Date__c` and `Submitted_Charges__c`. The last one is half
+the ratio, so a claim filed this way is the first that can be measured in
+Salesforce at all.
+
+`Claim_Reference__c` keeps our own `CLM-` reference. It is not Guardian's claim
+number in practice: the live values read "Precert", "$700", "03102026PB 0044"
+and null — a free-text scratch field.
+
+**Never written**: `Policy__c`, `Record_Type__c`, `Client_Mobile__c`,
+`Owners_Name__c`, `Agent_Name__c`, `Agent_Email__c`,
+`Claims_Officer_First_Name__c`, `Gloc_Claims_Portal__c` — all **formula**
+fields, and the tell is that the describe reports every one of them as
+`length: 1300`, which is what a text formula reports. `Days_Pending__c` and
+`Days_Claim_O_S__c` compute themselves. `Vehiclee__c` is a dead duplicate.
+
+#### Two fixture gaps, each of which read as a fault in the code
+
+Sixth and seventh in this product. The harness's `fmtDate` had no `yyyy-MM`
+pattern and fell through to `toISOString()`, which would have named a claim
+`CLAIM -2026-11-08T...-646`; and a claim fixture with no `extra._policy` made
+the "assessed against the cover of" note legitimately not appear. **Fix the
+harness, not the code.**
+
+And three assertions in `terms-test.js` failed because they asserted the state
+this change deliberately replaced — the task on the cover term, and `Claims__c`
+in the body. That is the test's bug, for the third time here: **check which side
+holds the bug before changing anything.**
+
+`revised-test.js` in the session scratchpad covers it (58 checks; 19 of them
+fail on the build it replaces, which is how I know it exercises the change).
+609 Node checks across ten suites, none failing.
+
+#### Still true: it is built and has never run
+
+Salesforce is **not connected** on the claims project (`SF_DOMAIN`,
+`SF_CLIENT_ID`, `SF_CLIENT_SECRET` unset) and **test mode is on**, so not one
+claim record or task has ever been written. `?action=ping` now answers
+`writes.claimNaming` and `writes.taskParent` beside `claimObject`, because a
+task on the policy and a task on the claim record look identical from outside
+until somebody opens one.
 
 ### Right colours, wrong site — 7 November 2026
 

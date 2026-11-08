@@ -57,7 +57,7 @@ var CLAIMS = {
    * that was pasted and never deployed — from outside those look identical,
    * and so does a later paste of an older copy winning the same function
    * name. Change it with any change worth deploying. */
-  BUILD: '2026-11-08a',
+  BUILD: '2026-11-08b',
 
   /* ---- where notifications go ---------------------------- */
 
@@ -164,7 +164,20 @@ var CLAIMS = {
    * `CLAIMS_TASK_OWNER` Script Property overrides it without a paste, and a
    * per-line address wins over the default when one is set. Unresolved, the
    * task still files — it lands on the integration user, and the claim's own
-   * notes say so, which is recoverable. Not filing it would not be. */
+   * notes say so, which is recoverable. Not filing it would not be.
+   *
+   * THE TASK GOES ON THE CLAIM RECORD. Every one of the 27 claim tasks this
+   * branch holds in Salesforce has its WhatId on the Claims_Revised__c record,
+   * and Task is a child of that object by WhatId on the describe, so activities
+   * are enabled on it. Until 8 November 2026 this file put a motor claim's task
+   * on the VEHICLE (the Risk_Details__c term) and every other claim's on the
+   * POLICY record — a different shape from the branch's own, and the thing the
+   * branch manager asked about in these words: "a claims revised is opened
+   * depending on the motor claim and the current year ... and the task is more
+   * or less opened on it". The policy or vehicle record is kept as the next
+   * attempt down, for a claim whose own record could not be created at all
+   * (a missing master-detail parent): a task on the policy still reaches a
+   * person, where no task at all reaches nobody.                            */
   TASK: {
     ON: true,
     OWNER: { '': 'rickyrampersadsalessupport@myguardiangroup.com' },
@@ -233,6 +246,14 @@ var CLAIMS = {
     ON: true,
     OBJECT: 'Claims_Revised__c',
     RISK_FIELD: '',
+    /* The branch's own claim number, and the whole reason a claim is findable:
+       `CLAIM -2026-11-645`. Name on this object is a plain Text(80) field, NOT
+       an auto-number (the describe: type string, length 80, label 'Claims
+       Revised Name'), so Salesforce generates nothing and a record created
+       without it is the only nameless one among 645. THE YEAR AND MONTH ARE
+       THE POINT: the branch reads the name to see that a claim was opened this
+       year. See sfClaimName_ for how the next number is worked out. */
+    NAME_PREFIX: 'CLAIM -',
     /* Claim_Type__c picklist values the branch has actually used, counted on
        the live org: Health 183, Motor 35, Property 14, Life 3, Critical Illness
        1, Other 1. Pension has no value of its own, so it takes Other. */
@@ -793,9 +814,10 @@ function last4_(mobile) {
  *   2. LIVE FALLBACK: a policy the sync hasn't seen yet (sold this
  *      morning, fixed this morning) is looked up in Salesforce directly
  *      at claim time.
- *   3. WRITE-BACK: every filed claim becomes a Claims__c record —
- *      Opened, dated, policy-linked — so the branch ledger fills itself
- *      in instead of depending on someone remembering to type it.
+ *   3. WRITE-BACK: every filed claim becomes a Claims_Revised__c record —
+ *      named CLAIM -YYYY-MM-NNN, Opened, dated, policy-linked, with the
+ *      task on it — so the branch ledger fills itself in instead of
+ *      depending on someone remembering to type it.
  *
  * Credentials: a Connected App (client-credentials flow) that a
  * Salesforce admin creates once — see CLAIMS-SETUP.md. The consumer key
@@ -1379,6 +1401,53 @@ function sfClaimRiskId_(claim) {
   } catch (err) { return ''; }
 }
 
+/** The next number in the branch's own claim numbering: `CLAIM -YYYY-MM-NNN`.
+ *
+ *  Name is plain text here, so this is ours to work out. The YEAR AND MONTH
+ *  COME FROM TODAY, not from the record we read — that is what makes the name
+ *  say "opened this year" at a glance, which is the whole point of it.
+ *
+ *  The sequence is branch-wide and does not reset: 625 in January 2026, 645 in
+ *  November, 449 in November 2022, 508 in June 2023. It is monotonic with
+ *  CreatedDate across every one of this year's 21 records, so the newest
+ *  record's number plus one is the next one.
+ *
+ *  Two claims filed in the same moment would both read 645 and both become
+ *  646. At about 21 claims a year that is not worth a lock around a Salesforce
+ *  round trip on a page a client is waiting on, and Name is not unique, so a
+ *  collision is cosmetic rather than a lost claim.
+ *
+ *  Returns '' when the number cannot be read, and sfLogClaim_ then leaves Name
+ *  unset and says so in the claim's own log. That is deliberate: a nameless
+ *  record is visible in a list view and a person can name it, where a wrongly
+ *  numbered one silently corrupts a sequence the branch counts on. */
+function sfClaimName_() {
+  var pre = CLAIMS.SF_CLAIM.NAME_PREFIX;
+  try {
+    var rows = sfQuery_('SELECT Name FROM ' + CLAIMS.SF_CLAIM.OBJECT +
+      " WHERE Name LIKE '" + pre.replace(/'/g, '') + "%' ORDER BY CreatedDate DESC LIMIT 1");
+    var m = /-(\d{4})-(\d{2})-0*(\d+)\s*$/.exec(String((rows[0] || {}).Name || ''));
+    if (!m) return '';
+    var next = Number(m[3]) + 1;
+    if (!next || next < 2) return '';
+    return pre + Utilities.formatDate(new Date(), sheetTz_(), 'yyyy-MM') + '-' + next;
+  } catch (err) { return ''; }
+}
+
+/** The household or business Account behind a Contact, for Claims_Revis__c.
+ *
+ *  Filled on every record the branch has made, and neither register carries
+ *  it, so it is one small read. Inside its own try and never thrown: a claim
+ *  is not worth losing over a cosmetic parent. */
+function sfContactAccountId_(contactId) {
+  var id = String(contactId || '').replace(/'/g, '').trim();
+  if (!id) return '';
+  try {
+    var rows = sfQuery_("SELECT AccountId FROM Contact WHERE Id = '" + id + "' LIMIT 1");
+    return String((rows[0] || {}).AccountId || '');
+  } catch (err) { return ''; }
+}
+
 /** Every filed claim becomes a claim record in the branch ledger.
  *
  *  Claims_Revised__c, related to the policy and the client by their two
@@ -1418,12 +1487,29 @@ function sfLogClaim_(claim) {
   if (claim.flagged) notes.push('Flagged at filing: ' + claim.flagged);
   if (claim.folder) notes.push('Documents: ' + claim.folder);
 
+  /* The branch's own claim number. Without it this is the only nameless record
+     on the object — see sfClaimName_ and CLAIMS.SF_CLAIM.NAME_PREFIX. */
+  var claimName = sfClaimName_();
+
   var fields = {};
   fields.CLIENT_PORTFOLIO__c = parents.portfolio;
   fields.Contact__c = parents.contact;
+  if (claimName) fields.Name = claimName;
   fields.Claim_Type__c = CLAIMS.SF_CLAIM.TYPES[claim.kind] || 'Other';
+  /* Opened, and it stays Opened until a person closes it. The picklist has
+     exactly two values, Opened and Closed, so the close-out the branch manager
+     is clamping down on has one field to land in and nowhere to hide: on 8
+     November 2026, of the claims opened since January 2024, 36 read Opened
+     against 77 Closed, the open ones 415 days old on average and the oldest
+     1,272. Date_Closed__c and Days_Pending__c sit beside it. */
   fields.Claim_Status__c = 'Opened';
+  /* Claim_Reference__c is a free-text scratch field in practice, not Guardian's
+     own claim number: the live values read 'Precert', '$700', '03102026PB 0044'
+     and null. So ours goes in it, which at least makes every claim filed this
+     way traceable back to the page, the Drive folder and the client's receipt. */
   fields.Claim_Reference__c = String(claim.ref).slice(0, 30);
+  var acctId = sfContactAccountId_(parents.contact);
+  if (acctId) fields.Claims_Revis__c = acctId;
   fields.Date_Claim_Submitted__c = Utilities.formatDate(new Date(),
     Session.getScriptTimeZone() || 'America/Port_of_Spain', 'yyyy-MM-dd');
   /* iso_ again, not a bare read: the date the sheet hands back is a Date, and
@@ -1447,9 +1533,17 @@ function sfLogClaim_(claim) {
     id = sfCreate_(CLAIMS.SF_CLAIM.OBJECT, fields);
   }
 
+  /* The name travels with the claim so the task can carry it: a person searches
+     Salesforce for 'CLAIM -2026-11-646', never for a record id. */
+  claim._sfClaim = { id: id, name: claimName };
+
   logClaim_(claim.ref, 'sf-claim-created', 'system',
     CLAIMS.SF_CLAIM.OBJECT + '/' + id +
+    ' · ' + (claimName ? 'named ' + claimName
+      : 'NAMELESS: the next claim number could not be read, so a person must ' +
+        'name this record in the ' + CLAIMS.SF_CLAIM.NAME_PREFIX + 'YYYY-MM-NNN pattern') +
     ' · policy ' + parents.portfolio + ' · contact ' + parents.contact +
+    (acctId ? ' · account ' + acctId : '') +
     (plate ? ' · vehicle ' + plate : '') +
     (riskId ? ' · risk ' + riskId : '') +
     (dropped.length ? ' · the org refused: ' + dropped.join(', ') : ''));
@@ -1592,7 +1686,14 @@ function claimTaskBody_(claim, claimsId, ids, files, missing) {
   add('Documents', (files || []).length + ' uploaded');
   add('Still outstanding', (missing || []).join(', '));
   add('Checks to read', claim.flagged);
-  add('Ledger record', claimsId ? 'Claims__c ' + claimsId : '');
+  /* The NAME, not just the id: a person searches Salesforce for
+     'CLAIM -2026-11-646'. The object was named wrongly here until 8 November
+     2026 — it said Claims__c, which the branch abandoned in 2016. */
+  var sfc = claim._sfClaim || {};
+  add('Claim record', claimsId
+    ? (sfc.name ? sfc.name + ' (' + CLAIMS.SF_CLAIM.OBJECT + ' ' + claimsId + ')'
+      : CLAIMS.SF_CLAIM.OBJECT + ' ' + claimsId)
+    : '');
   add('Documents folder', claim.folder);
   L.push('');
   L.push('Review due ' + CLAIMS.TASK.DUE_WORKING_DAYS + ' working days from filing. ' +
@@ -1622,28 +1723,39 @@ function sfClaimTask_(claim, claimsId, files, missing) {
     var owner = sfTaskOwnerId_(claim.kind);
     if (owner) base.OwnerId = owner;
 
-    /* Each attempt drops one more thing the org might refuse, in the order
-       they are most likely to be refused: a custom object as a parent needs
-       activities enabled on it, a picklist value has to be on the picklist,
-       and a WhoId has to be a Contact that still exists. The first attempt
-       that lands wins, and what was dropped is recorded rather than passed
-       over — the same rule the group billing writes keep (gblSfwSave_): never
-       claim to have written something the org refused. */
+    /* THE CLAIM RECORD IS THE PARENT — see CLAIMS.TASK for why, and for what
+       this did until 8 November 2026.
+       Then each attempt below it drops one more thing the org might refuse, in
+       the order they are most likely to be refused: a custom object as a parent
+       needs activities enabled on it, a picklist value has to be on the
+       picklist, and a WhoId has to be a Contact that still exists. The first
+       attempt that lands wins, and what was dropped is recorded rather than
+       passed over — the same rule the group billing writes keep (gblSfwSave_):
+       never claim to have written something the org refused. */
+    var claimName = (claim._sfClaim || {}).name || '';
     var attempts = [];
-    if (ids.parent) attempts.push({ Task_Type__c: CLAIMS.TASK.TYPE, WhoId: ids.contact, WhatId: ids.parent });
-    attempts.push({ Task_Type__c: CLAIMS.TASK.TYPE, WhoId: ids.contact });
-    if (ids.contact) attempts.push({ WhoId: ids.contact });
-    attempts.push({});
+    if (claimsId) {
+      attempts.push({ on: 'the claim record' + (claimName ? ' ' + claimName : ''),
+        f: { Task_Type__c: CLAIMS.TASK.TYPE, WhoId: ids.contact, WhatId: claimsId } });
+    }
+    if (ids.parent) {
+      attempts.push({ on: ids.parentKind || 'the policy record',
+        f: { Task_Type__c: CLAIMS.TASK.TYPE, WhoId: ids.contact, WhatId: ids.parent } });
+    }
+    attempts.push({ on: '', f: { Task_Type__c: CLAIMS.TASK.TYPE, WhoId: ids.contact } });
+    if (ids.contact) attempts.push({ on: '', f: { WhoId: ids.contact } });
+    attempts.push({ on: '', f: {} });
 
     var last = '';
     for (var i = 0; i < attempts.length; i++) {
       var fields = {};
+      var add = attempts[i].f;
       Object.keys(base).forEach(function (k) { fields[k] = base[k]; });
-      Object.keys(attempts[i]).forEach(function (k) { if (attempts[i][k]) fields[k] = attempts[i][k]; });
+      Object.keys(add).forEach(function (k) { if (add[k]) fields[k] = add[k]; });
       try {
         var id = sfCreate_('Task', fields);
         var on = [];
-        if (fields.WhatId) on.push(ids.parentKind || 'the policy');
+        if (fields.WhatId) on.push(attempts[i].on || 'a related record');
         if (fields.WhoId) on.push("the client's record");
         if (!on.length) on.push('no record — the policy number matched nothing we hold');
         var note = 'Salesforce task opened on ' + on.join(' and ') +
@@ -2345,6 +2457,13 @@ function claimPing_() {
          to Risk_Details__c. The claim reaches the vehicle through the policy
          record both of them hang off. See CLAIMS.SF_CLAIM. */
       riskField: CLAIMS.SF_CLAIM.RISK_FIELD || '',
+      /* The convention the claim record is named in, and where the task's
+         WhatId lands. Both are what "is it consistent across all platforms?"
+         means in practice, and both are invisible from outside otherwise: a
+         task on the policy and a task on the claim record look identical until
+         somebody opens one. */
+      claimNaming: CLAIMS.SF_CLAIM.NAME_PREFIX + 'YYYY-MM-NNN',
+      taskParent: CLAIMS.SF_CLAIM.OBJECT,
       task: sfConnected_() && sfProps_().writeTasks && CLAIMS.TASK.ON,
       taskDueDays: CLAIMS.TASK.DUE_WORKING_DAYS,
     },
@@ -2741,7 +2860,8 @@ function apiClaimFinish_(b) {
   logClaim_(ref, 'claim-submitted', 'client',
     files.length + ' document(s)' + (missing.length ? ' · outstanding: ' + missing.join(', ') : ''));
 
-  // The branch ledger writes itself: one Claims__c row per filed claim.
+  // The branch ledger writes itself: one Claims_Revised__c record per filed
+  // claim, named in the branch's own CLAIM -YYYY-MM-NNN convention.
   var claimsId = '';
   try { claimsId = sfLogClaim_(claim); }
   catch (err) { logClaim_(ref, 'sf-writeback-failed', 'system', String(err)); }
