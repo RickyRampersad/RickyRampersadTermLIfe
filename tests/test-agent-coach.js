@@ -118,7 +118,7 @@ NOW = new realDate(DAY + 'T05:31:00'); mails.length = 0;
 env.agentMorningMail_(F, DAY, { open: { [F.key]: [] }, closed: { [F.key]: [] }, ff: { [F.key]: [] }, f360: {}, goal: {}, q: {}, orphan: {} }, null);
 const mm = mails[0] || {};
 ok('the coach\'s morning, its title in the subject', /^Your day · Felicia Rampersad · Mon 2 Nov · Your pipeline is ready to close/.test(mm.subject), mm.subject);
-ok('the note first, then the goal, fact finds, orphans, pendings, calls', ['Your pipeline is ready to close', '1 · Your goal', '2 · Fact finds', '3 · Orphan clients', '4 · Pendings', 'Your calls today'].every((t, i, all) => mm.htmlBody.indexOf(t) > -1 && (i === 0 || mm.htmlBody.indexOf(t) > mm.htmlBody.indexOf(all[i - 1]))), (mm.htmlBody || '').slice(0, 80));
+ok('the note first, then calls, the goal, fact finds, orphans, the branch, the meeting, feedback (8 Nov 2026)', ['Your pipeline is ready to close', 'Your calls today', 'Your goal', 'Fact finds', 'Orphan clients', 'What the branch is doing for you', 'Wednesday', 'Was this brief useful?'].every((t, i, all) => mm.htmlBody.indexOf(t) > -1 && (i === 0 || mm.htmlBody.indexOf(t) > mm.htmlBody.indexOf(all[i - 1]))), (mm.htmlBody || '').slice(0, 80));
 ok('copied to her manager and Kamla', mm.cc === 'ricky@example.com,kamla@example.com', mm.cc);
 ok('no cyan in the coach\'s note', (mm.htmlBody || '').indexOf('#E3B23C') > -1);
 P.setProperty('AGENT_COACH', 'off'); mails.length = 0;
