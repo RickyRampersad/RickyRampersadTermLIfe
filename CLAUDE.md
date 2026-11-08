@@ -7331,10 +7331,12 @@ to the wrong answer, which is the reason for this note.
   is assigned server-side, so a reference proves a row — the assistant is told
   never to invent one, and to send a plain "noted, a team member will message
   you" if the call returns none.
-- **52 query types across 11 categories**, each with its department and
+- **55 query types across 10 categories**, each with its department and
   turnaround, live in the assistant's instruction — Claims & Benefits, Health
   & Medical and My Car & Home among them, which is how a claims tap on the
-  claims page becomes a ticket.
+  claims page becomes a ticket. (Counted from the prompt itself: 2, 3, 2, 6, 6,
+  12, 8, 6, 2, 8. An earlier note here said 52 across 11 from memory, which is
+  why the transcription check below counts rows rather than trusting a recall.)
 - **But every ticket goes to RR Branch Sales Support**, whatever its type: the
   POST hard-codes that department, and the real one is named inside the
   description as "Intended department: X". That is deliberate — a WhatsApp
@@ -7347,11 +7349,23 @@ to the wrong answer, which is the reason for this note.
   assigns the conversation. On the one live ticket `h868_email_given` and the
   assignee are both empty, so that tail is not reliably completing — worth
   watching before the volume grows.
-- **The assistant still reads out the branch manager's own number** for an
-  urgent claim out of hours. It came off the claims page on 7 November at his
-  word, and a client taps "Ask us on WhatsApp" *because* it is gone. One line
-  in the agent instruction; a promise made in one place has to be kept in the
-  other.
+- **The assistant read out the branch manager's own number** for an urgent
+  claim out of hours. It came off the claims page on 7 November at his word,
+  and a client taps "Ask us on WhatsApp" *because* it is gone. Changed on 8
+  November: both sentences now point at the claims form, which works at any
+  hour and files properly — see the HELP 868 contact-line note below.
+- **"Make a claim" on WhatsApp logs a ticket and files no claim**, and that is
+  the one place the two systems contradict each other. The tap menu's *Make a
+  claim* maps to `Claims Life&Pension - Submission` (or *Health claim* to
+  `Claims Health - Submission`), and the receipt card comes back with a
+  reference and a 3-working-day target — while nothing has been collected: no
+  date of loss, no documents, no Guardian accident report form, no desk notice
+  and no `Claims_Revised__c` row. The claims page's own rule is the opposite
+  ("it says ASK US, never FILE HERE"), and the two references look alike to a
+  client who holds one. The fix is wording, not plumbing: on a claim tap the
+  assistant sends `rickyrampersadbranch.com/claims` **first**, and the receipt
+  says the reference is for the team and not a filed claim. Put off to a
+  separate change on 8 November so the contact-line fix could go out alone.
 
 ## The claims intake — `claims/` and `apps-script/Claims.gs`
 
@@ -8174,6 +8188,32 @@ nothing about the orphan flow, so swapping those would break a working path.
 is only `tBranchPhone_`'s fallback, since the orphan letters already carry the
 branch's own three lines. The homepage is the real decision in there: off the
 structured data, the branch publishes **no telephone number at all**.
+
+**The live WhatsApp assistant said it too, and that is changed.** Its prompt
+carried *"For an urgent claim outside those hours: call (868) 678-5921"* twice
+— in `# WHAT YOU CAN SAY` and in the fallback it sends when the ticket call
+returns no reference. Both now point at the claims form, which works at any
+hour and files properly, and the first adds *"Never give out a telephone
+number: HELP 868 on WhatsApp is the branch's only contact line"* so the
+assistant cannot volunteer one from elsewhere.
+
+**Three things about editing that prompt, each of which cost a run:**
+
+- **The ceiling is 10,000 characters and the prompt was at 9,706.** A first
+  edit came to 10,037 and the platform refused it outright (403), which is the
+  good failure — nothing changed. So a replacement has to be close in length
+  to what it replaces, not merely better worded; this one leaves 159 spare.
+- **`bundle.instruction` replaces only itself** — the four actions, the Query
+  Pal endpoint and its shared key are left alone — but **`knowledgeSourceIds`
+  is replaced on every update**, so omitting it would wipe them. This agent has
+  none, which is the only reason omitting it was safe.
+- **The whole prompt has to be re-sent, so it has to be transcribed.** Verify
+  the transcription by structure before sending, not by eye: 12 `#` sections,
+  10 `[headings]`, 55 query rows (2, 3, 2, 6, 6, 12, 8, 6, 2, 8), and the
+  distinctive characters — the en dash in *Statements – tax and csv*, the em
+  dash in *Urgent — client waiting*, `Claims Life&Pension` with no spaces,
+  `Change of Name-Life` with no space after the hyphen. Then diff the edited
+  copy against the transcription and read the two changed lines.
 
 `help868-mail.js` in the session scratchpad covers it (56 checks: the four
 client e-mails rendered rather than grepped, the signature, both helpers, the
