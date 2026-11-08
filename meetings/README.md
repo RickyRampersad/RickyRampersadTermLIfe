@@ -840,6 +840,108 @@ Points — not for distribution"* section, which staff should not see either.
 
 ---
 
+## Moving it to the Workspace — 8 November 2026
+
+Asked for in these words: *"Ok so this is suooosed to be moved to my workspace
+can you"*.
+
+The sheet is **`Branch Meetings — Ricky Rampersad Branch`**, and Drive says it
+is owned by **the personal Gmail**. That is why the mail arithmetic bites: the
+account allows about **100 recipients a day**, and on a Monday the daily note,
+the two time blocks and the Monday brief together commit up to **76** of them
+across nineteen people. Owned by **support@rickyrampersadbranch.com** it is
+about **1,500**, and every e-mail comes from the branch's own address rather
+than a personal Gmail — which is the real reason to move it, the allowance
+being only the arithmetic underneath.
+
+**It has to be OWNED by support@, not shared with it.** This is the sentence
+the claims intake and the motor quote each paid for: an editor can run the
+script, and then **Deploy** refuses with *"You do not have permission to
+perform this action"*, which reads as a Google fault and is not. Sharing the
+sheet with support@ does not help. The fix is **File → Make a copy while
+signed in as support@ alone**.
+
+### What a copy does NOT carry
+
+| | |
+|---|---|
+| **Script properties** | none of them |
+| **Triggers** | none of the eight |
+| **The deployment** | a new `/exec`, so the page must be re-pointed |
+| **The Drive folders** | the archive and every meeting's Materials folder stay in the old Drive |
+| **Revision history** | the tabs come across as values |
+
+The properties, and how each is set:
+
+| property | set by |
+|---|---|
+| `JOIN_CODE` | 🔑 Set the branch code |
+| `ROSTER_SHEET_ID` | 🪪 Pull the roster from the Agent Skill Bank |
+| `ARCHIVE_FOLDER_ID` | 📥 Import the meeting archive |
+| `PORTFOLIO_SHEET_ID` | 📊 Connect the Branch Portfolio |
+| `SERVICE_SHEET_IDS` | 🤝 Connect the service sheets |
+| `MAIL_RELAY_URL`, `MAIL_RELAY_KEY` | by hand — **optional once support@ owns it** |
+| `PROGRESS_TO`, `PROGRESS_HOUR`, `CONTENT_ASK_DAYS`, `CONTENT_ASK_HOUR` | by hand, optional |
+| `BRANCH_MAIL` | the menu, or `releaseBranchMail` — leave it unset until you are ready |
+
+`MAIL_RELAY_LAST` and `mm_relay_left` are written by the code. Do not copy them.
+
+The eight trigger functions: `dailyMeetingNote`, `activityMorning`,
+`activityAfternoon`, `mondayBrief`, `weekClose`, `buildWednesday`,
+`builderProgress`, `contentAsk`. The menu items install all of them.
+
+### A fresh copy starts HELD, and that is deliberate
+
+The claims note records that *"a fresh copy is LIVE, because no `TEST_MODE`
+property means live"*, and that the first thing done on a copy is to turn test
+mode on. **The Builder had no test mode to turn on** — `TEST_MODE` appears
+nowhere in `Meetings.gs` — and its sends go to the whole branch, so a copy
+deployed with its triggers installed would write to nineteen people from a
+deployment nobody had tested.
+
+So **unset means held here, not live.** While it holds, your own progress note
+and every preview still arrive, so you can read each e-mail exactly as the
+branch would get it before the branch gets one. Nothing about it is quiet: a
+held run says what it held in its own summary line, you are e-mailed once a day
+naming the release, the progress note leads its "To act on" list with it, and
+`mailRouteTest` says it outright. When you are ready:
+
+> **✉️ Release the mail to the branch** on the Meeting Builder menu, or
+> `releaseBranchMail` from the editor. `holdBranchMail` puts it back.
+
+### The order
+
+1. **Sign in as support@ alone** — a second Google account signed in to the
+   same browser is what makes Apps Script refuse to open a page at all.
+2. **File → Make a copy.** Name it the same.
+3. **Extensions → Apps Script**, paste `apps-script/Meetings.gs`, and leave
+   `BRANCH_MAIL` unset.
+4. **Deploy → New deployment → Web app**, *Execute as: Me*, *Who has access:
+   Anyone*. Copy the `/exec`.
+5. **Put the new `/exec` into `meetings/index.html`** — the `API_URL` line, and
+   **only** that line. The other `script.google.com` addresses under
+   `meetings/` are the **view counter's** beacon, a different `/exec`
+   altogether; a blunt find-and-replace breaks it. Then merge.
+6. **Re-enter the properties** from the table above, and press the menu items
+   — **the week cycle first**, without which there is no meeting at all and
+   nobody can sign in.
+7. **Check it from outside:** `?action=ping` now answers
+   `runsAs` (the domain only, never the address), `onWorkspace`, `branchMail`
+   and `version`. `runsAs: "rickyrampersadbranch.com"` means the move took;
+   `"gmail.com"` means it is still on the personal account; `""` means the
+   deployment is not *Execute as: Me* and nothing can be stored at all.
+8. **Read each e-mail while it still holds** — the progress note, a preview of
+   the daily note, a time-block check, the content ask.
+9. **Release the mail to the branch.**
+10. **Turn the old project off.** Its `/exec` keeps answering and its triggers
+    keep firing, so until its triggers are deleted both Builders send and the
+    branch gets everything twice.
+
+Afterwards the branch relay (`MAIL_RELAY_URL`, `MAIL_RELAY_KEY`) is no longer
+the fix for the allowance — `MailApp` sends from support@ by itself, under the
+Workspace's own allowance, as the motor quote does. Setting it anyway is
+harmless and keeps one From address across the tracker and the Builder.
+
 ## Setting it up — about ten minutes, once
 
 1. **Make a Google Sheet** called `Branch Meetings`, then

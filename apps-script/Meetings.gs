@@ -76,7 +76,7 @@ var MEET = {
   /*  Bumped whenever this file changes in a way a deployment has to
    *  carry. `?action=ping` reports it, so a browser can tell a live
    *  build from one pasted six weeks ago without anybody guessing. */
-  VERSION: '2026-10-28',
+  VERSION: '2026-11-08',
 
   /* Typed once, when someone sets their PIN for the first time. It
      stops a stranger who guesses a branch email address from claiming
@@ -6852,6 +6852,29 @@ function apiPing_() {
     }
   };
 
+  /*  WHICH ACCOUNT IS THIS RUNNING ON, and is its mail held?
+   *
+   *  A bound script keeps its own /exec when its sheet is copied, so a
+   *  project moved to the Workspace and one still on the personal Gmail
+   *  are indistinguishable from outside — the fault the claims intake paid
+   *  for twice, where the only honest answer was a guess. Three answers:
+   *  the branch domain, 'gmail.com' (still on the personal account), or
+   *  '' meaning the deployment is not Execute as: Me and nothing can be
+   *  stored at all.
+   *
+   *  The DOMAIN only, never the address. This endpoint needs no sign-in;
+   *  support@ is published all over this repository and a personal address
+   *  is not. */
+  try {
+    var who = str_(Session.getEffectiveUser().getEmail());
+    var at = who.indexOf('@');
+    out.runsAs = at < 0 ? '' : who.slice(at + 1).toLowerCase();
+    out.onWorkspace = (out.runsAs === 'rickyrampersadbranch.com');
+  } catch (e) { out.runsAs = ''; out.onWorkspace = false; }
+
+  try { out.branchMail = meetBranchMailLive_() ? 'live' : 'held'; }
+  catch (e) { out.branchMail = 'unknown'; }
+
   /* Is the one-off file in the project at all? */
   try { out.oneOff = (typeof seedFridayMeeting === 'function'); }
   catch (e) { out.oneOff = false; }
@@ -7170,6 +7193,10 @@ function onOpen() {
     .addItem('🗣  Turn on the content ask (' + contentAskDays_().map(dayName_).join(', ') + ')', 'installContentAskFromMenu')
     .addItem('👁  Send me the content ask to read', 'previewContentAsk')
     .addItem('✉️  Test the mail route', 'mailRouteTest')
+    .addItem(meetBranchMailLive_()
+      ? '🔒  Hold the mail to the branch'
+      : '✉️  Release the mail to the branch (held now)',
+      meetBranchMailLive_() ? 'holdBranchMail' : 'releaseBranchMail')
     .addSeparator()
     .addItem('📋  Turn on the Monday brief', 'installMondayBriefFromMenu')
     .addItem('🔄  Turn on the week cycle (Sunday close, ' + meetingDayName_() + ' build)', 'installWeekCycleFromMenu')
@@ -7527,13 +7554,82 @@ function mmLeft_() {
   try { return MailApp.getRemainingDailyQuota(); } catch (err) { return null; }
 }
 
+/*  BRANCH MAIL IS HELD UNTIL SOMEBODY RELEASES IT, and on a fresh copy
+ *  of this sheet that means held.
+ *
+ *  This is the one lesson the claims intake paid for when it moved to the
+ *  Workspace on 7 November: a copy carries no Script properties, and there
+ *  "no TEST_MODE property means live", so the first thing done on a copy
+ *  is to turn test mode on. The Builder had no test mode to turn on —
+ *  TEST_MODE appears nowhere in this file — and its sends go to the whole
+ *  branch. So a copy of this sheet, deployed and with its triggers
+ *  installed, would write to nineteen people from a deployment nobody had
+ *  tested. Unset therefore means HELD here, not live, which inverts that
+ *  trap rather than repeating it.
+ *
+ *  THE GATE DECIDES WHO QUALIFIES, NEVER THE CALLER. There is deliberately
+ *  no flag a send can carry to get itself out of the hold: the exemption
+ *  is read from progressTo_(), which is MEET.ADMIN_EMAIL plus the
+ *  PROGRESS_TO property — both set by a person in Script properties. So
+ *  the chair's own progress note and every preview still arrive while the
+ *  branch hears nothing, and no later caller can reach for a back door.
+ *
+ *  It is never silent. A held run is counted and reported in its own
+ *  summary line, mmHeldAlert_ e-mails the chair once a day naming the
+ *  release, the progress note carries it in "To act on", and
+ *  mailRouteTest says it outright. A quiet hold would be worse than no
+ *  hold at all.
+ */
+function meetBranchMailLive_() {
+  try {
+    return str_(mmProps_().getProperty('BRANCH_MAIL')).toLowerCase() === 'live';
+  } catch (e) { return false; }
+}
+
+/** True when this address must not be written to yet. */
+function meetHeld_(to) {
+  var a = str_(to).toLowerCase();
+  if (!a) return false;
+  if (meetBranchMailLive_()) return false;
+  var chair;
+  try { chair = progressTo_(); } catch (e) { chair = [str_(MEET.ADMIN_EMAIL).toLowerCase()]; }
+  /*  A comma list is held unless every address on it is the chair's. */
+  var parts = a.split(',');
+  for (var i = 0; i < parts.length; i++) {
+    if (chair.indexOf(str_(parts[i]).toLowerCase()) < 0) return true;
+  }
+  return false;
+}
+
+/** Release branch mail. Reachable from the editor's Run list on purpose:
+ *  a private name with a trailing underscore is not, and on the claims
+ *  copy that left a window with no way to turn the hold on at all. */
+function releaseBranchMail() {
+  mmProps_().setProperty('BRANCH_MAIL', 'live');
+  var msg = 'Branch mail is LIVE. The daily note, the time blocks, the Monday ' +
+    'brief and the content ask will now reach the branch.';
+  Logger.log(msg);
+  return msg;
+}
+
+/** Hold it again. */
+function holdBranchMail() {
+  mmProps_().deleteProperty('BRANCH_MAIL');
+  var msg = 'Branch mail is HELD. Your own progress note and every preview ' +
+    'still arrive; nobody else is written to.';
+  Logger.log(msg);
+  return msg;
+}
+
 /** Every send in this file goes through here.
  *
- *  Returns 'relay', 'gmail', or 'held' when the Gmail allowance is too
- *  near its end to start another round of the roll. A held send is not
- *  an error the caller should swallow: the counts a run reports are
- *  what tells the branch manager it happened. */
+ *  Returns 'relay', 'gmail', or 'held' — held either because branch mail
+ *  has not been released, or because the Gmail allowance is too near its
+ *  end to start another round of the roll. A held send is not an error the
+ *  caller should swallow: the counts a run reports are what tells the
+ *  branch manager it happened. */
 function meetMail_(o) {
+  if (meetHeld_(o && o.to)) return 'held';
   if (mmViaRelay_(o)) return 'relay';
   var left = mmLeft_();
   if (left !== null && left < MMAIL.FLOOR) return 'held';
@@ -7562,7 +7658,11 @@ function mailRouteTest() {
     ? 'Sent through the relay, from support@. Relay recipients left today: ' +
       (str_(mmProps_().getProperty('mm_relay_left')) || 'not reported')
     : via === 'held'
-      ? 'Held: the Gmail allowance is down to ' + mmLeft_() + ' recipients.'
+      ? (!meetBranchMailLive_()
+          ? 'Held: branch mail has not been released on this project. Run ' +
+            'releaseBranchMail when you are ready. (Your own address is exempt, ' +
+            'so a route test to you should not reach this.)'
+          : 'Held: the Gmail allowance is down to ' + mmLeft_() + ' recipients.')
       : (mmRelayReady_()
           ? 'Sent from Gmail: the relay refused or did not answer. ' +
             str_(mmProps_().getProperty('MAIL_RELAY_LAST'))
@@ -7585,6 +7685,36 @@ function mmHeldAlert_(what, held, sent) {
   var key = 'mm_held_' + dayKey_(new Date());
   try { if (cache.get(key)) return; cache.put(key, '1', 20 * 3600); } catch (e) { /* carry on */ }
   var left = mmLeft_();
+
+  /*  Two different holds reach this alert and the fix is different for
+   *  each, so it must never guess. */
+  if (!meetBranchMailLive_()) {
+    try {
+      MailApp.sendEmail({
+        to: to, name: MEET.BRANCH,
+        subject: 'The Meeting Builder is holding its mail to the branch',
+        htmlBody: '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;' +
+          'max-width:540px;color:#0b2238;line-height:1.6;font-size:14px">' +
+          '<p style="margin:0 0 10px"><b>' + esc_(what) + '</b> wrote to ' + sent +
+          ' and held <b>' + held + '</b>. Branch mail has not been released on ' +
+          'this project yet, so nobody but you is being written to.</p>' +
+          '<p style="margin:0 0 10px">That is the state a fresh copy of this sheet ' +
+          'starts in, on purpose. Your own progress note and every preview still ' +
+          'arrive, so you can read each e-mail as the branch would get it before ' +
+          'the branch gets one.</p>' +
+          '<p style="margin:0 0 10px">When you are ready, run ' +
+          '<b>releaseBranchMail</b> from the script editor, or press ' +
+          '<b>\u2709\ufe0f Release the mail to the branch</b> on the Meeting Builder menu. ' +
+          '<b>holdBranchMail</b> puts it back.</p>' +
+          '<p style="margin:14px 0 0;font-size:11px;color:#a8bccf">Internal \u2014 ' +
+          esc_(MEET.BRANCH) + '. Nobody else receives this.</p></div>'
+      });
+    } catch (err) {
+      Logger.log('Could not even send the held-mail alert: ' + err);
+    }
+    return;
+  }
+
   try {
     MailApp.sendEmail({
       to: to, name: MEET.BRANCH,
@@ -7787,6 +7917,7 @@ function progressModel_(now) {
     blocks: blocks, last: last,
     week: ctx.week, weekLabel: ctx.weekLabel,
     relay: mmRelayReady_(), mailLeft: mmLeft_(),
+    branchMail: meetBranchMailLive_(),
     appUrl: ctx.appUrl
   };
 }
@@ -7842,6 +7973,13 @@ function progressHtml_(o) {
 
   /* ---- what the chair has to act on ---- */
   var act = [];
+  /*  First, because while this holds nothing below it reaches anybody. */
+  if (!o.branchMail) {
+    act.push('<b>Branch mail is held on this project.</b> Your own note and every ' +
+      'preview still arrive; nobody else is written to. Run <b>releaseBranchMail</b>, ' +
+      'or press <b>\u2709\ufe0f Release the mail to the branch</b> on the menu, when you ' +
+      'are ready for the branch to start hearing from it.');
+  }
   o.items.filter(function (i) { return i.required && !i.ready; }).forEach(function (i) {
     act.push('Material for <b>' + esc_(i.title) + '</b> is not in' +
       (i.presenter ? ' — ' + esc_(firstName_(i.presenter)) : '') + '.');

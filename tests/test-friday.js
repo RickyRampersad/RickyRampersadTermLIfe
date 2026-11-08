@@ -278,7 +278,21 @@ Date.now = REAL_NOW;   // back to the real clock: ping reports today's state
 console.log('\nPING ANSWERS "IS IT WORKING?"');
 /* 28 October 2026: "can you check and see if it's working?" — and ping said the
    app's name whether or not anything had been pasted, deployed or seeded. */
+/*  8 November 2026. The ping now reports the DOMAIN of the account the script
+    runs on, so that a project moved to the Workspace and one still on the
+    personal Gmail can be told apart from outside. The harness's own script
+    owner is ricky@example.com and every person in this fixture is also
+    @example.com, so the two collide and the leak check below reads a real
+    reading as a leak. Give the owner a domain of its own: the guard keeps its
+    full force over the fixture's people, and runsAs is still checked. */
+env.Session = {
+  getEffectiveUser: () => ({ getEmail: () => 'owner@script.invalid' }),
+  getScriptTimeZone: () => 'America/Port_of_Spain'
+};
 const png = env.apiPing_();
+ok('the ping says which account it runs on, as a bare domain',
+  png.runsAs === 'script.invalid' && png.onWorkspace === false, png.runsAs);
+ok('and never the address itself', String(png.runsAs).indexOf('@') === -1);
 ok('it answers', png.ok === true);
 ok('it says which build is deployed', /^\d{4}-\d{2}-\d{2}$/.test(String(png.version)), png.version);
 ok('it says the one-off file is in the project', png.oneOff === true);

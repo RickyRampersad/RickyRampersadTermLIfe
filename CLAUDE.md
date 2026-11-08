@@ -8935,10 +8935,79 @@ is recorded for the branch backend elsewhere in this file.
 *Turn on the week cycle* (without which there is no meeting at all), *Turn on my
 daily Builder progress*, *Turn on the content ask*, and *Test the mail route*.
 
-`tests/test-builder-progress.js` covers it (56 checks, on the real script under the
+`tests/test-builder-progress.js` covers it (89 checks, on the real script under the
 harness: the relay and its fallbacks, the hold and its alert, the model's figures
 against seeded tabs, the no-meeting headline, who the ask skips, and the installs).
 `tests/test-friday.js`, `e2e-meetings-gate.js` and `e2e-friday.js` still pass.
+
+### Moving the Builder to the Workspace, and the hold a copy starts in — 8 November 2026
+
+Asked for the same evening: *"Ok so this is suooosed to be moved to my workspace
+can you"*. Drive confirms **`Branch Meetings — Ricky Rampersad Branch`** is owned
+by the personal Gmail, which is where the mail arithmetic above comes from. The
+runbook is in `meetings/README.md`; the standing rule is the one recorded for the
+claims intake a day earlier and for the motor quote on 21 October — **the sheet
+must be owned by support@, not shared with it**, and the fix is *File → Make a
+copy while signed in as support@ alone*. A copy carries no Script properties, none
+of the **eight** trigger functions, a new `/exec`, and not the Drive folders.
+
+**A fresh copy of THIS project would have been worse than the claims one, and that
+is what the change here is for.** The claims note reads *"a fresh copy is LIVE,
+because no `TEST_MODE` property means live"*, and the remedy was to turn test mode
+on first. The Builder **had no test mode to turn on** — `TEST_MODE` appears nowhere
+in `Meetings.gs` — and every one of its sends goes to the whole branch, so a copy
+deployed with its triggers installed would have written to nineteen people from a
+deployment nobody had read a single e-mail from.
+
+So **`BRANCH_MAIL` unset means HELD, not live**, which inverts that trap instead of
+repeating it. One check at the top of `meetMail_`, which is already the single choke
+point every send goes through, and `'held'` is already a value all three runners
+count and report — so the hold cost almost nothing to wire.
+
+- **The gate decides who qualifies, never the caller.** There is deliberately no
+  flag a send can carry to exempt itself (the test sends one carrying `chair`,
+  `signIn` and `preview` and it is still held). The exemption is read from
+  `progressTo_()` — `MEET.ADMIN_EMAIL` plus the `PROGRESS_TO` property, both set by
+  a person in Script properties — so the chair's own progress note and every
+  preview arrive while the branch hears nothing. Same rule as `claimsTester_`.
+- **It is never quiet**, which is the only thing that makes a safe default
+  acceptable on a project that may already be running: a held run says what it held
+  in its own summary line, `mmHeldAlert_` e-mails the chair once a day **naming the
+  release rather than the mail allowance** (two different holds reach that alert and
+  the fix differs, so it must not guess), the progress note leads its "To act on"
+  list with it, and `mailRouteTest` says it outright. `releaseBranchMail` and
+  `holdBranchMail` carry **no trailing underscore** on purpose: a private name is
+  not in the editor's Run list, and on the claims copy that left a window with no
+  way to turn the hold on at all.
+
+**The ping now says which account it runs on**, because a bound script keeps its own
+`/exec` when its sheet is copied, so a moved project and an un-moved one are
+indistinguishable from outside — the fault the claims intake paid for twice.
+`runsAs` is **the domain only, never the address**: that endpoint needs no sign-in,
+support@ is published all over this repository and a personal address is not. Three
+answers, as for claims: the branch domain, `gmail.com`, or `""` meaning the
+deployment is not *Execute as: Me*. `branchMail` reads `held` or `live` beside it,
+and **`MEET.VERSION` was bumped**, which the section above had already noted as
+overdue.
+
+**Two traps worth keeping:**
+
+- **`meetings/index.html` holds the Builder's `/exec` in exactly one place**, its
+  `API_URL` line. The other four `script.google.com` addresses under `meetings/` are
+  the **view counter's** beacon, a different `/exec` altogether — the inverse of the
+  26 October fault where the Intelligence URL was pasted into six pages' beacons. A
+  blunt find-and-replace on the new deployment URL breaks the counter.
+- **The old project keeps working after the move.** Its `/exec` still answers and
+  its triggers still fire, so until they are deleted both Builders send and the
+  branch gets everything twice.
+
+**A pre-existing test caught the ping change, and the test held the bug.**
+`test-friday.js` guards the ping against leaking any of the fixture's names, codes
+and e-mail domain, `example.com` among them — and the harness's own script owner is
+`ricky@example.com`, so a correct `runsAs` reading collided with the fixture's
+people and read as a leak. The fix is on the test side: give the owner a domain of
+its own, so the guard keeps its full force and `runsAs` is checked as well. Do not
+weaken that guard.
 
 ## `/branchmeet/` — the FY27 rise, and what the film may not say
 

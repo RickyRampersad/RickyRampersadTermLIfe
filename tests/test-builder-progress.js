@@ -16,6 +16,11 @@
 //                    brought something, never to a visitor, and silent when there
 //                    is no meeting to bring anything to.
 //
+// And, from the evening of 8 November — "this is suooosed to be moved to my
+// workspace" — the hold a fresh copy of the sheet starts in, and the ping that
+// says which account the project runs on. A copy carries no Script properties
+// and this project has no TEST_MODE to turn on, so unset must mean HELD.
+//
 // Run: node tests/test-builder-progress.js
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -31,7 +36,13 @@ const ok = (what, cond, extra) => {
 /* ── a branch, and a meeting on Wednesday ───────────────────────────── */
 function branch(opts) {
   opts = opts || {};
-  const env = makeEnv({ props: opts.props || {} });
+  /*  Branch mail is HELD until released, which is what a fresh copy of the
+      sheet starts in. Every test that asserts somebody was written to wants
+      the released state, so that is the fixture's default; opts.held gives
+      the copy's own state back. */
+  const props = Object.assign({}, opts.props || {});
+  if (!opts.held && props.BRANCH_MAIL === undefined) props.BRANCH_MAIL = 'live';
+  const env = makeEnv({ props });
   env.DriveApp = {
     createFolder: name => ({ getId: () => 'f1', getName: () => name,
                              setSharing: function () { return this; } }),
@@ -323,6 +334,144 @@ console.log('\nTurning it on');
   ok('the content ask installs one trigger per chosen day',
      env.installedTriggers.filter(f => f === 'contentAsk').length === 2);
   ok('and names the days in words', /Monday and Tuesday/.test(m2), m2);
+}
+
+/* ── the hold a fresh copy of the sheet starts in ───────────────────── */
+//
+// 8 November 2026: the sheet is owned by the personal Gmail and is being moved
+// to the Workspace. A copy carries no Script properties, and this project has
+// no TEST_MODE to turn on, so unset must mean HELD — not live, which is the
+// trap the claims intake fell into one day earlier.
+{
+  console.log('\nthe hold a fresh copy starts in');
+
+  /* A copy: no BRANCH_MAIL at all. */
+  const env = branch({ held: true });
+  ok('unset means held, not live', env.meetBranchMailLive_() === false);
+  ok('the branch is held', env.meetHeld_('sasha@b.com') === true);
+  ok('the chair is never held', env.meetHeld_('ricky@b.com') === false);
+  ok('nor is a second address he put in PROGRESS_TO',
+     branch({ held: true, props: { PROGRESS_TO: 'kamla@b.com' } })
+       .meetHeld_('kamla@b.com') === false);
+  ok('case does not matter', env.meetHeld_('RICKY@B.COM') === false);
+  ok('a comma list with one stranger on it is held',
+     env.meetHeld_('ricky@b.com, sasha@b.com') === true);
+  ok('an empty address is not held (nothing to hold)',
+     env.meetHeld_('') === false);
+
+  /*  THE GATE DECIDES, NEVER THE CALLER: there is no flag a send can carry
+      to get itself out of the hold. */
+  ok('a send cannot exempt itself with a flag',
+     env.meetMail_({ to: 'sasha@b.com', subject: 's', htmlBody: 'b',
+                     chair: true, signIn: true, preview: true }) === 'held');
+  ok('and nothing was sent', env.mail.length === 0);
+
+  ok('the chair still gets his own mail while it holds',
+     env.meetMail_({ to: 'ricky@b.com', subject: 's', htmlBody: 'b' }) === 'gmail');
+  ok('which is the one that arrived', env.mail.length === 1 &&
+     env.mail[0].to === 'ricky@b.com');
+
+  /* Released. */
+  const live = branch({});
+  ok('released, the branch is written to',
+     live.meetMail_({ to: 'sasha@b.com', subject: 's', htmlBody: 'b' }) === 'gmail');
+  ok('releaseBranchMail sets it', (() => {
+    const e = branch({ held: true });
+    e.releaseBranchMail();
+    return e.meetBranchMailLive_() === true &&
+           e.meetHeld_('sasha@b.com') === false;
+  })());
+  ok('holdBranchMail puts it back', (() => {
+    const e = branch({});
+    e.holdBranchMail();
+    return e.meetBranchMailLive_() === false;
+  })());
+  ok('and both are reachable from the editor Run list (no underscore)',
+     typeof env.releaseBranchMail === 'function' &&
+     typeof env.holdBranchMail === 'function');
+
+  /*  A HELD RUN IS NEVER SILENT. This is the whole reason unset may mean
+      held: the chair hears within a day, and it is one press. The runners
+      take no date and read the real clock, so the alert is driven directly
+      the way the allowance test above drives it. */
+  const run = branch({ held: true });
+  run.mmHeldAlert_('the daily note', 18, 1);
+  const alert = run.mail.filter(m => /holding its mail/i.test(m.subject));
+  ok('the chair is told, once', alert.length === 1);
+  run.mmHeldAlert_('the Monday brief', 18, 1);
+  ok('and only once a day',
+     run.mail.filter(m => /holding its mail/i.test(m.subject)).length === 1);
+  ok('the alert names the release, not the mail allowance',
+     alert.length === 1 && /releaseBranchMail/.test(alert[0].htmlBody) &&
+     !/100 recipients a day/.test(alert[0].htmlBody));
+  ok('the alert goes to the chair alone',
+     alert.length === 1 && alert[0].to === 'ricky@b.com');
+  ok('and the allowance alert still says the allowance', (() => {
+    const e = branch({ left: 3 });
+    e.mmHeldAlert_('the daily note', 7, 4);
+    const a = e.mail.filter(m => /run out of mail/i.test(m.subject));
+    return a.length === 1 && /MAIL_RELAY_URL/.test(a[0].htmlBody);
+  })());
+
+  /*  The progress note leads with the hold, because while that holds
+      nothing else in its list reaches anybody. */
+  const pr = branch({ held: true });
+  seedMeeting(pr, WED, [{ title: 'Production', detail: 'Where are we?', min: 20 }]);
+  const ph = pr.progressHtml_(pr.progressModel_(MON));
+  ok('the progress note says branch mail is held', /Branch mail is held/i.test(ph));
+  ok('and names the release', /releaseBranchMail/.test(ph));
+  ok('a released project says nothing about it', (() => {
+    const e = branch({});
+    seedMeeting(e, WED, [{ title: 'Production', detail: 'Where are we?', min: 20 }]);
+    return !/Branch mail is held/i.test(e.progressHtml_(e.progressModel_(MON)));
+  })());
+
+  /*  He can still test the route while it holds: his own address is exempt,
+      which is the point of the exemption. */
+  ok('the route test still works under the hold',
+     /Gmail|relay/i.test(String(branch({ held: true }).mailRouteTest())));
+}
+
+/* ── the ping says which account it runs on ─────────────────────────── */
+//
+// A bound script keeps its own /exec when its sheet is copied, so moved and
+// not-moved are indistinguishable from outside without this.
+{
+  console.log('\nthe ping says which account it runs on');
+
+  const env = branch({});
+  const p = env.apiPing_();
+  ok('the ping reports the domain it runs as', p.runsAs === 'example.com', p.runsAs);
+  ok('and that it is not on the Workspace yet', p.onWorkspace === false);
+  /*  Never an address, and the pattern is generic on purpose: the repository
+      root is published for the branch site, so a real local part written here
+      as the thing being guarded against would itself be on the open web. */
+  ok('it never carries an address, only the domain',
+     !/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/.test(JSON.stringify(p)),
+     JSON.stringify(p).slice(0, 160));
+  ok('it says whether branch mail is held', p.branchMail === 'live');
+  ok('the build marker moved past the work it covers',
+     /^\d{4}-\d{2}-\d{2}$/.test(p.version) && p.version >= '2026-11-08', p.version);
+
+  const moved = branch({});
+  moved.Session = {
+    getEffectiveUser: () => ({ getEmail: () => 'support@rickyrampersadbranch.com' }),
+    getScriptTimeZone: () => 'America/Port_of_Spain'
+  };
+  const p2 = moved.apiPing_();
+  ok('moved, it says so', p2.runsAs === 'rickyrampersadbranch.com' &&
+     p2.onWorkspace === true, p2.runsAs);
+  ok('and still never the address', !/support@/.test(JSON.stringify(p2)));
+
+  const broken = branch({});
+  broken.Session = { getEffectiveUser: () => { throw new Error('not Execute as: Me'); },
+                     getScriptTimeZone: () => 'America/Port_of_Spain' };
+  const p3 = broken.apiPing_();
+  ok('a deployment that cannot say reports empty, and does not throw',
+     p3.runsAs === '' && p3.onWorkspace === false && p3.ok === true);
+
+  const copy = branch({ held: true });
+  ok('a fresh copy reads held from outside', copy.apiPing_().branchMail === 'held');
 }
 
 console.log('\n' + (fails ? fails + ' FAILING' : 'all passing') + '\n');
