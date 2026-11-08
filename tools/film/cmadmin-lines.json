@@ -18,7 +18,7 @@
     {
       "visual": "bwnotools",
       "eyebrow": "The old way",
-      "headline": "You retype it. You wait. / And the history is <em>in a drawer</em>",
+      "headline": "A PC, a spreadsheet, / and the history <em>in a drawer</em>",
       "cards": [
         {
           "at": "proposal",
@@ -45,7 +45,7 @@
           "red": true
         }
       ],
-      "say": "The proposal form retyped by hand. An endorsement waiting three days in somebody's inbox. Last year's file in a drawer, and the year before it in another."
+      "say": "A system that runs on a PC in the corner, and a spreadsheet beside it. The proposal form retyped by hand. An endorsement waiting three days in somebody's inbox. And last year's file in a drawer."
     },
     {
       "visual": "bwstack",
@@ -75,7 +75,7 @@
         "months with renewals in them"
       ],
       "line": "Personal and commercial, fleets included. Every endorsement written to the Act &mdash; and we drive that ourselves.",
-      "say": "You would not be building a book. There is one: seven lines, personal and commercial, renewals in all twelve months, and every endorsement on it written to the Act."
+      "say": "You would not be building a book. There is one: seven lines, personal and commercial, renewals in all twelve months, every endorsement written to the Act."
     },
     {
       "visual": "bwdues",
@@ -148,6 +148,37 @@
         ]
       },
       "say": "The insurer's notice is read for you, and every figure checked against our own record. If the two disagree, the desk says so before it reaches the client."
+    },
+    {
+      "visual": "bwkeys",
+      "eyebrow": "What we run on",
+      "headline": "We did not buy this. / <em>We write it</em>",
+      "at": "journey",
+      "at2": "transaction",
+      "ok": "connected",
+      "keys": "A journey",
+      "form": "A transaction",
+      "tools": [
+        [
+          "write",
+          "file",
+          "Our own software",
+          "written here, not bought in"
+        ],
+        [
+          "week",
+          "clock",
+          "Changing every week",
+          "the change you ask for runs that week"
+        ],
+        [
+          "reaches",
+          "bolt",
+          "Every system we deal with",
+          "the insurer's, our records, the mailbox"
+        ]
+      ],
+      "say": "We did not buy this software. We write it ourselves, and it changes every week. It reaches into every system we deal with and pulls the client's whole file into one place. So a client here is not a transaction. They are a journey."
     },
     {
       "visual": "bwlog",
@@ -225,7 +256,7 @@
           "the Act and market conduct &mdash; we do not wait to be told"
         ]
       ],
-      "say": "Which leaves you the part no system can do. Endorsements written properly. The renewal conversation. Telling a client plainly what the cover does and what it does not. We drive compliance here, and we do not wait to be told."
+      "say": "Which leaves you the part no system can do. The renewal conversation. Telling a client plainly what the cover does and what it does not. We drive compliance here, and do not wait to be told."
     },
     {
       "visual": "bwscript",
@@ -250,38 +281,7 @@
         ],
         "badge": "Running"
       },
-      "say": "And a change you ask for is not a ticket that goes somewhere else to wait. It is written into the desk, and runs on every file that week."
-    },
-    {
-      "visual": "bwhalf",
-      "eyebrow": "The shape of the job",
-      "headline": "The paperwork is finished. / The advice <em>is not</em>",
-      "split": {
-        "at": "paperwork",
-        "at2": "advice",
-        "at3": "job",
-        "l": [
-          "The paperwork",
-          "already built, already running"
-        ],
-        "r": [
-          "The advice",
-          "not settled &mdash; and that is yours"
-        ],
-        "line": "How this agency looks after its clients is the part we want you for.",
-        "lchips": [
-          "the quote",
-          "the forms",
-          "the history"
-        ],
-        "rchips": [
-          "endorsements",
-          "the renewal call",
-          "what the cover does",
-          "the Act"
-        ]
-      },
-      "say": "The paperwork is finished. The advice is not. That is the job."
+      "say": "And a change you ask for is not a ticket that goes somewhere else to wait. It is written into the desk, and runs that week."
     },
     {
       "visual": "bwclose",

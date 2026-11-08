@@ -1184,9 +1184,9 @@ everything after it is for somebody who has already decided to keep reading.
 >
 > Running a general insurance book out of a filing cabinet and an inbox that never empties? Neither exists here.
 >
-> An established book: seven lines, personal and commercial, with renewals in every month. The quote and Guardian's own forms fill themselves from the client's record, and every term since the policy began is on one screen before you open the file.
+> An established book: seven lines, personal and commercial, with renewals in every month. No system on a PC, no spreadsheet beside it: the branch writes its own software, it reaches into every system we deal with, and it changes every week. Every term since the policy began is on one screen before you open the file.
 >
-> So the day goes to the advice, the endorsements and the renewal conversation.
+> So the day goes to the advice, the endorsements and the renewal conversation. Here a client is not a transaction. They are a journey.
 >
 > General insurance and underwriting experience both required. Hours are yours to set. Pay negotiable on experience. We are not asking you to bring clients.
 >
@@ -2143,11 +2143,13 @@ in the same scene.
 >
 > So this book needs somebody whose whole attention it is. Seven lines of business — motor and fleet, household, commercial property, public liability, workers' compensation, machinery and plant, bonds — personal and commercial, with renewals falling in every month of the year.
 >
-> Here is what you would be walking into. There is no filing cabinet. The quote fills itself from the client's own record. Guardian's proposal form and the customer due-diligence checklist are filled by the system, field by field, and attached — the insurer's actual PDFs, not retyped versions. The renewal desk reads every term since the policy began — not just this year's — before anyone opens the file. The insurer's notice is read and checked figure by figure against our own record, and where the two disagree the desk says which and by how much.
+> Here is what you would be walking into. No filing cabinet, no system on a PC in the corner, and no spreadsheet beside it for what the system will not do. The quote fills itself from the client's own record. Guardian's proposal form and the customer due-diligence checklist are filled by the system, field by field, and attached — the insurer's actual PDFs, not retyped versions. The renewal desk reads every term since the policy began — not just this year's — before anyone opens the file. The insurer's notice is read and checked figure by figure against our own record, and where the two disagree the desk says which and by how much.
 >
 > And it does the reading for you. The record is pulled out of every place it lives and scrubbed before you see it — duplicate terms, a mid-term change kept as its own policy, a vehicle carried under a changed number — and then the desk tells you what to raise first: the value carried unchanged two terms running, the sum insured that no longer means anything, the premium paid late last year, the claim still open. The client is reminded at fourteen days and again at ten, a call opens itself at seven, and the client signs in with a code to their own inbox and reads every year of their own history themselves.
 >
-> None of that is a plan. It is built and it is running, and you can see it before you apply.
+> None of that is a plan. It is built and it is running, and you can see it before you apply. We did not buy any of it: the branch writes its own software, it reaches into every system we deal with, and it changes every week.
+>
+> Which is the difference. Everywhere else a client is a transaction — a renewal keyed, a premium taken, a file closed until next year. Here a client is a journey, and the system is built to carry it.
 >
 > So the part of the day that is yours is the part only a person can do: the endorsement done properly, the renewal conversation, telling a client plainly what the cover does and does not do, and knowing when the Act moves.
 >
@@ -2175,9 +2177,9 @@ in the same scene.
 >
 > Not a new book: one that has been written and renewed here year after year. Seven lines of business, personal and commercial, with renewals every month. The Branch Manager built it himself and his time is needed across the branch, so it needs its own person.
 >
-> There is no filing cabinet. The quote and Guardian's own forms fill themselves from the record, every term since the policy began is on the screen before you open the file, and the record is pulled from every place it lives and scrubbed before you see it — then the desk tells you what to raise first. The client is reminded at fourteen days and ten, a call opens itself at seven, and they sign in and read their own history.
+> No filing cabinet, no system on a PC, no spreadsheet beside it. The quote and Guardian's own forms fill themselves from the record, every term since the policy began is on the screen before you open the file, and the record is pulled from every place it lives and scrubbed before you see it — then the desk tells you what to raise first. The client is reminded at fourteen days and ten, a call opens itself at seven, and they sign in and read their own history.
 >
-> So the job is the advice, the endorsements and the renewal conversation. And if you ask for a change here, it gets built that week.
+> We write the software ourselves and it changes every week. So the job is the advice, the endorsements and the renewal conversation — and here a client is not a transaction, they are a journey.
 >
 > Hours are yours to set, pay is negotiable on experience, and we are not asking you to bring clients with you. This is not an eight-to-four seat, and that is about the work rather than the hours: the process here is yours to argue with.
 >
