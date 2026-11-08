@@ -276,6 +276,11 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
   font-variant-numeric:tabular-nums}
 .figl p{margin:.35rem 0 0;font-size:var(--f--2);color:var(--muted);line-height:1.4}
 
+/* the plain-speaking note above the form */
+.straight{margin:var(--sp-m) 0 0;padding:var(--sp-m);border-radius:var(--r);
+  background:var(--a-tint);border:1px solid var(--a-tint2);font-size:var(--f--1);line-height:1.55}
+.straight b,.straight strong{color:var(--ink)}
+
 /* ── the two doors ── */
 .doors{display:grid;gap:var(--sp-m);margin-top:var(--sp-l)}
 @media (min-width:52rem){.doors{grid-template-columns:1fr 1fr;gap:var(--sp-l)}}
@@ -1239,6 +1244,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
              look for it, because a recruiting ad that never says where the
              office is loses people who cannot judge the drive. -->
         <p class="small"><svg class="ic" aria-hidden="true" style="display:inline-block;vertical-align:-5px;width:18px;height:18px;color:var(--a)"><use href="#i-pin"/></svg> The office is in <strong>Chaguanas, Central Trinidad</strong>, and the hours are yours to set.</p>
+        <p class="straight"><b>One thing said plainly, before you start.</b> Mr Rampersad reads every application himself and replies within two working days to everyone he wants to speak to. <strong>If you have not heard from him in that time, it has been read and it has not gone forward, and there will be no further letter.</strong> We would rather tell you that now than leave you watching an inbox.</p>
 
         <form class="form" id="uf" novalidate autocomplete="on" style="background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-m);box-shadow:var(--e2);display:grid;gap:var(--sp-m);margin-top:var(--sp-l)">
           <div class="rail" id="rail" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="How much of the application is filled in">
@@ -1369,7 +1375,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
           </div>
 
           <div class="fsec" data-sec>
-            <h3><b><i>4</i></b>Four questions only somebody who has carried a book can answer</h3>
+            <h3><b><i>4</i></b>The questions that decide it</h3>
             <p class="hint">These decide it. Write them yourself, in plain words, and be specific about the case rather than about yourself. No client names.</p>
             <div class="grid">
               <div>
@@ -1393,8 +1399,12 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
                 <p class="cc"><span>We change things here. We would like to know what you would start with.</span><span><b data-cc="u5">0</b>/700</span></p>
               </div>
               <div>
-                <label for="u3">What would you change about how a general insurance agency handles renewals?</label>
-                <textarea id="u3" name="uw_renewals" maxlength="600" rows="3" required></textarea>
+                <label for="u6">What have you taught yourself in the last two years &mdash; in this work or outside it &mdash; and what did it change about how you work? <small>&middot; a system, a qualification, a language, a trade, anything</small></label>
+                <textarea id="u6" name="uw_learned" maxlength="600" rows="3" required placeholder="What it was, roughly how long it took, and what you do differently because of it."></textarea>
+              </div>
+              <div>
+                <label for="u3">Further up this page there are seven stops a renewal goes through here. <strong>What would you change about it, and what would you leave exactly as it is?</strong> <small>&middot; there is no right answer; we want to see you think about a process</small></label>
+                <textarea id="u3" name="uw_renewals" maxlength="800" rows="4" required placeholder="Name the stop. Say what you would do to it and why. If you would leave something alone, say which and why that too."></textarea>
                 <p class="cc"><span>We are building ours now, so this is a real question.</span><span><b data-cc="u3">0</b>/600</span></p>
               </div>
               <fieldset><legend>Which of these have you actually had to handle? <small>&middot; tick any</small></legend>
@@ -1593,6 +1603,56 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
      never shown to the candidate: a page that prints its own verdict turns an
      application into a quiz. Every part of it is named, so a row can be
      disagreed with. */
+  /* ── the weighting ──────────────────────────────────────────────────────
+     8 November 2026: "weighing it properly, so I will ensure I got a correct
+     fit — somebody who doesn't study the hours, passionate about learning,
+     and can also understand all of these systems that we are building."
+
+     Five dimensions, weighted differently per door, out of 100. It scores
+     only what a machine can honestly see: what was ticked, how closely the
+     file was read, and how specific the writing is. It is a SORTING AID and
+     the e-mail says so — it cannot read judgement, and the four written
+     answers are still his to read. Never shown to the candidate. */
+  var WEIGHT={
+    '1':{depth:30,file:25,judge:20,learn:15,system:10},
+    '2':{learn:30,system:25,file:25,judge:15,depth:5}
+  };
+  function words(k){return val(k).replace(/\s+/g,' ').trim().split(' ').filter(Boolean).length}
+  function specific(k){
+    /* a specific answer names something: a figure, a date, a class, a party.
+       Generic enthusiasm has none of these. */
+    var s=val(k);
+    var marks=(s.match(/\b(\d[\d,.]*|%|\$|TT\$|motor|property|liability|fleet|bond|machinery|workers|endorsement|extension|survey|sum insured|excess|claim|renewal|broker|insurer|adjuster|client)\b/gi)||[]).length;
+    return Math.min(1, marks/4);
+  }
+  function weigh(file_){
+    var door=/^2/.test(val('uw_door'))?'2':'1', W=WEIGHT[door], cls=classes();
+    var y=val('uw_years'), uw=val('uw_uwexp');
+    var yScore=/Over 10/.test(y)?1:/6 to 10/.test(y)?.85:/3 to 6/.test(y)?.6:.25;
+    var uwScore=/with an insurer/.test(uw)?1:/delegated/.test(uw)?.8:/Some/.test(uw)?.4:0;
+    var qScore=/Qualified|ACII|Diploma/i.test(val('uw_qstatus'))?1
+              :/Part|Studying|sitting/i.test(val('uw_qstatus'))?.7
+              :val('uw_quals')?.4:0;
+    var parts={
+      depth:  (yScore*.35 + uwScore*.35 + Math.min(1,cls.length/4)*.15 + qScore*.15),
+      /* the file is the one part of the application that cannot be prepared */
+      file:   (file_.n?Math.min(1,file_.n/4)*.6:0) + (file_.ask?.2:0) + (file_.prem?.2:0),
+      judge:  ['uw_declined','uw_endorse','uw_right','uw_stopped'].reduce(function(s,k){
+                return s + (Math.min(1,words(k)/70)*.6 + specific(k)*.4)/4},0),
+      learn:  Math.min(1,words('uw_learned')/55)*.55 + specific('uw_learned')*.2
+              + (qScore>=.7?.25:qScore>0?.12:0),
+      system: Math.min(1,words('uw_renewals')/70)*.5 + specific('uw_renewals')*.25
+              + (val('uw_systems')?.25:0)
+    };
+    var tot=0, bits=[];
+    ['depth','file','judge','learn','system'].forEach(function(k){
+      var got=Math.round(parts[k]*W[k]); tot+=got;
+      bits.push(k+' '+got+'/'+W[k]);
+    });
+    return 'Fit '+tot+'/100 \u00b7 door '+door+' \u00b7 '+bits.join(' \u00b7 ')
+           +' \u00b7 a sorting aid, not a verdict: the four written answers are yours to read';
+  }
+
   function bar(file_){
     var door=val('uw_door'), y=val('uw_years'), uw=val('uw_uwexp'), cls=classes();
     var miss=[];
@@ -1634,14 +1694,14 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     var file=file_.n?(file_.n+' ticked \u00b7 opened on: '+first+' \u00b7 premium: '+(file_.prem||'not said'))
                     :'did not read the file';
     var c=compl();
-    var writ=['uw_declined','uw_endorse','uw_right','uw_stopped','uw_renewals'];
+    var writ=['uw_declined','uw_endorse','uw_right','uw_stopped','uw_renewals','uw_learned'];
     var thin=writ.filter(function(k){return val(k).length<120});
     return [fit, file,
             c.length?c.length+' of 6 compliance situations handled':'no compliance situations ticked',
             thin.length?(thin.length===5?'all 5':thin.length+' of 5')+' written answers are short':'all 5 written answers are substantial'];
   }
 
-  var REQ=['name','phone','email','town','uw_door','uw_years','uw_auth','uw_systems','uw_quals',
+  var REQ=['name','phone','email','town','uw_door','uw_years','uw_auth','uw_systems','uw_quals','uw_learned',
            'uw_uwexp','uw_uwwhere','emp_co','emp_role','pay_now','pay_want','start','cv'];
   // a "no" to underwriting is not a block, but the page says plainly what it costs
   f.addEventListener('change',function(e){
@@ -1661,7 +1721,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   function tick(){
     var n=0; REQ.forEach(function(k){if(filled(k))n++});
     // the written answers count as their own block, so the rail is honest
-    var WRIT=['uw_declined','uw_endorse','uw_right','uw_stopped','uw_renewals'];
+    var WRIT=['uw_declined','uw_endorse','uw_right','uw_stopped','uw_renewals','uw_learned'];
     var w=WRIT.filter(function(k){return val(k).length>=40}).length;
     var total=REQ.length+WRIT.length, got=n+w, pc=Math.round(got/total*100);
     if(railI)railI.style.width=pc+'%';
@@ -1750,7 +1810,8 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
       :val('uw_endorse').length<40?'The endorsement or extension that went wrong.'
       :val('uw_right').length<40?'When the right thing and the easy thing were different.'
       :val('uw_stopped').length<40?'Something you tried to change and could not.'
-      :val('uw_renewals').length<30?'What would you change about renewals?'
+      :val('uw_learned').length<30?'What have you taught yourself in the last two years?'
+      :val('uw_renewals').length<30?'What would you change about the seven stops?'
       :!filled('cv')?'Please attach your CV — PDF or Word, up to 6 MB.':'';
     err.textContent=bad; err.classList.toggle('on',!!bad);
     if(bad){
@@ -1780,6 +1841,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
               notes:val('uw_declined'),website:val('website')},
         cv:cv,
         fields:(function(s){return [
+          {section:'At a glance',k:'scan_score',label:'Weighted fit',value:weigh(file_)},
           {section:'At a glance',k:'scan_bar',label:'The bar',value:bar(file_)},
           {section:'At a glance',k:'scan_fit',label:'Fit',value:s[0]},
           {section:'At a glance',k:'scan_file',label:'The file',value:s[1]},
@@ -1806,7 +1868,8 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
           {section:'Judgement',k:'uw_right',label:'When the right thing was not the easy thing',value:val('uw_right')},
           {section:'Judgement',k:'uw_stopped',label:'Something they tried to change and could not',value:val('uw_stopped')},
           {section:'Judgement',k:'uw_compliance',label:'Compliance situations handled',value:compl().join(', ')||'none ticked'},
-          {section:'Judgement',k:'uw_renewals',label:'What they would change about renewals',value:val('uw_renewals')},
+          {section:'Judgement',k:'uw_learned',label:'What they taught themselves, and what it changed',value:val('uw_learned')},
+          {section:'Judgement',k:'uw_renewals',label:'What they would change about our seven stops, and leave alone',value:val('uw_renewals')},
           {section:'The file',k:'file_order',label:'What they would act on, in their order',value:file_.picked},
           {section:'The file',k:'file_ask',label:'What they would ask the client for',value:file_.ask},
           {section:'The file',k:'file_prem',label:'What they would do about the premium',value:file_.prem},

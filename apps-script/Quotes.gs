@@ -91,7 +91,8 @@ var QUOTE = {
        Manager alone, like the other two recruiting forms, and the only form
        that takes a file: the CV. */
     'underwriter':      { code: 'QU', line: 'Client Manager', title: 'Client Manager, general insurance', to: 'manager', cv: true,
-                          client: 'Your application is with Mr Rampersad himself. Nobody else in the branch sees it, and nothing reaches your current employer.' }
+                          client: 'Your application is with Mr Rampersad himself. Nobody else in the branch sees it, and nothing reaches your current employer. '
+                                + 'He replies within two working days to everyone he wants to speak to; if you do not hear from him in that time, it has been read and it has not gone forward on this occasion, and there will be no further letter.' }
   },
 
   /* The CV upload. Only a form whose def carries cv:true may send one.
@@ -121,7 +122,7 @@ var QUOTE = {
     /* Whether they clear the bar, their years and their papers. The unclipped
        scan line the page sends as its 'At a glance' section carries the rest.
        This also rides the subject line, so a full inbox sorts itself. */
-    'underwriter':      ['scan_bar', 'uw_years', 'uw_qstatus']
+    'underwriter':      ['scan_score', 'scan_bar', 'uw_years']
   },
 
   /* A client who taps send twice, or whose connection retries, must not

@@ -1629,6 +1629,107 @@ the clips back onto their real indices — the runner numbers a job's lines from
 
 ---
 
+## The filter: what the application asks, and how it is weighed
+
+Asked for on 8 November 2026, in these words: *"the kind of questions that you
+have really placed that will filter towards getting that correct candidate and
+weighing it properly, so I will ensure I got a correct fit, somebody who don't
+study the hours, passionate about learning, and can also understand all of
+these systems that we are building and what we're trying to achieve. Was that
+done, and can I see it? And a follow-up in terms of unsuitable applicants will
+not be acknowledged as well."*
+
+**Two of his three criteria were not being tested at all.** Reading the form
+against his own words found the gaps:
+
+- **Learning appetite** was never asked. The form asked about papers, which is
+  credentialing, not appetite: somebody can hold a Diploma from 2009 and have
+  learned nothing since. `uw_learned` is the fix — *"What have you taught
+  yourself in the last two years — in this work or outside it — and what did it
+  change about how you work?"* It works on both doors, and "outside it" is
+  deliberate: somebody who taught themselves a trade, a language or a piece of
+  software is telling you how they learn.
+- **Nothing tested whether they understood our system.** `uw_renewals` asked
+  *"what would you change about how a general insurance agency handles
+  renewals?"*, which can be answered without reading one word of the page. It
+  now reads *"Further up this page there are seven stops a renewal goes through
+  here. What would you change about it, and what would you leave exactly as it
+  is?"* — pointed at `#tech`, which is on the same page. One question tests
+  four things: did they read it, did they understand it, can they think about a
+  process, and have they a view worth hearing. And *"what would you leave
+  alone"* catches the person who changes things for the sake of it.
+
+**Mindset cannot be asked for, only paid for.** There is no question that
+separates the 8-to-4 candidate, because everybody writes that they are a
+self-starter. What separates them is the **cost of applying**: fifteen minutes,
+a live renewal file with nine faults in it, and six written answers. The person
+who watches the clock does not finish the form. Do not add a "are you a
+self-starter?" question; it would weaken the filter by giving that person an
+easy way to claim it.
+
+### The weighted score — `weigh()`, and it never reaches the candidate
+
+Five dimensions out of 100, with the weights flipped by door:
+
+| | door 1, has done this | door 2, has the head for it |
+|---|---|---|
+| Technical depth | 30 | 5 |
+| The file | 25 | 25 |
+| Judgement | 20 | 15 |
+| Learning | 15 | 30 |
+| The system | 10 | 25 |
+
+**The flip is the point.** Scored on door 1's weights, door 2 always loses and
+the second door is decoration.
+
+Each dimension reads only what a machine can honestly see: ticks, how closely
+the file was read, word counts against a 70-word mark, and a **specificity**
+count — whether an answer names a figure, a date, a class, a party. Generic
+enthusiasm names none of them.
+
+It lands **first** in the e-mail and in the subject line, as
+`scan_score`, so his phone sorts the row before he opens it:
+
+```
+Fit 65/100 · door 1 · depth 27/30 · file 18/25 · judge 5/20 · learn 9/15
+· system 6/10 · a sorting aid, not a verdict: the four written answers are
+  yours to read
+```
+
+**It carries its own caveat in every e-mail, and that line is not decoration.**
+A machine can see length and specificity; it cannot see judgement. Without the
+caveat a number at the top of the e-mail becomes the decision, and a strong
+candidate who writes briefly is lost to it.
+
+**The score and the bar line are never rendered on the page.** A candidate who
+can read the scoring writes to it, and the questions stop separating anybody.
+The same reason the renewal file never says which of its nine faults matter and
+never shows a score: printing that turns a judgement into a quiz with the
+answers at the bottom.
+
+### Unsuitable applicants are told before they start
+
+He asked for it, and it goes **above** the form rather than being left as
+silence afterwards (`.straight`):
+
+> Mr Rampersad reads every application himself and replies within two working
+> days to everyone he wants to speak to. **If you have not heard from him in
+> that time, it has been read and it has not gone forward, and there will be no
+> further letter.** We would rather tell you that now than leave you watching
+> an inbox.
+
+The same sentence is in `QUOTE.FORMS.underwriter.client` in `Quotes.gs`, so the
+confirmation e-mail says it too and nobody can say they were not told. Warning
+somebody is kinder than leaving them refreshing an inbox for a fortnight, and it
+protects the branch's name with every person he does not hire — which is most of
+them, and some of whom are clients.
+
+**The brief for him is a private Artifact, not a page in this repository**, for
+the reason above: the weighting must not be public, and the repository root is
+served. Nothing about the scoring goes in a served page, a film or an ad.
+
+---
+
 ## Still to do
 
 - **Clear the music licence for `bwadmin` and `jbadvisor`**, or swap their beds

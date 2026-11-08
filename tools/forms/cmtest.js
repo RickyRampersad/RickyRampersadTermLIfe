@@ -83,6 +83,9 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   ok(doors.length === 2 && /done this/.test(doors[0]) && /head for it/.test(doors[1]),
      vp.n + ' both doors are offered, got ' + doors.join('|'));
   ok(!/Chaguanas/.test(await pg.$eval('#hero', e => e.innerText)), vp.n + ' the hero does not lead with the town');
+  const body = await pg.$eval('body', e => e.innerText);
+  ok(!/Fit \d+\/100|sorting aid/.test(body), vp.n + ' the weighted score is never on the page');
+  ok(/no further letter/.test(body), vp.n + ' it says plainly that silence is the answer');
   const lines = await pg.$$eval('#lines .bkt b', e => e.map(x => x.textContent));
   const want = ['Private motor', 'Household and private dwelling', 'Fleet, genuinely',
                 'Commercial property and fire', 'Public and products liability',
@@ -137,7 +140,8 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   await put('#u2', 'A vehicle was added by e-mail and never endorsed; it ran uninsured for three weeks.');
   await put('#u4', 'A client wanted to replace a policy that was better than the one being sold to him. I showed him both.');
   await put('#u5', 'I asked twice for the renewal list to carry the claims history. It never happened.');
-  await put('#u3', 'Send the renewal thirty days out with the claims history on it.');
+  await put('#u6', 'I taught myself to read a policy schedule against the wording, over about six months, and I stopped trusting a sum insured I had not seen surveyed.');
+  await put('#u3', 'I would move stop four earlier: the call should happen before the forms fill, so a changed sum insured never has to be undone. I would leave the figure check at stop two exactly as it is.');
   await put('input[name=cmp][value="A formal client complaint"]');
   await put('input[name=cmp][value="An underinsurance or average dispute"]');
   await pg.setInputFiles('#uCv', { name: 'cv.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 test') });
@@ -154,8 +158,12 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   ok(by('uw_qstatus') === 'Diploma', 'the qualification status reaches him');
   ok(by('uw_uwexp') === 'Yes, with an insurer', 'whether they have underwritten reaches him');
   ok(by('uw_door') === '1 - I have done this', 'which door they came through reaches him');
+  ok(/^Fit \d+\/100 . door 1 . depth \d+\/30/.test(by('scan_score') || ''), 'the weighted fit leads the e-mail, got ' + by('scan_score'));
+  ok(/sorting aid, not a verdict/.test(by('scan_score') || ''), 'the score says what it is not');
+  ok(by('uw_learned') && by('uw_learned').length > 10, 'what they taught themselves reaches him');
   ok(/^Meets the bar/.test(by('scan_bar')), 'the bar is worked out: ' + by('scan_bar'));
-  ok(body.fields[0].k === 'scan_bar', 'the bar is the very first thing in the e-mail');
+  ok(body.fields[0].k === 'scan_score' && body.fields[1].k === 'scan_bar',
+     'the weighted fit leads and the bar is second, got ' + body.fields.slice(0, 2).map(f => f.k).join(','));
   ok(body.fields[0].section === 'At a glance', 'the scan line is the first thing in the e-mail');
   ok(/Diploma/.test(by('scan_fit')) && /motor and property both/.test(by('scan_fit')), 'the scan line says the fit: ' + by('scan_fit'));
   ok(/2 ticked/.test(by('scan_file')) && /premium: Load it/.test(by('scan_file')), 'the scan line says what they did with the file: ' + by('scan_file'));
@@ -166,7 +174,7 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   ok(/never happened/.test(by('uw_stopped')), 'what they could not change reaches him');
   ok(/complaint/.test(by('uw_compliance')), 'the compliance ticks reach him');
   console.log('\n— what the Branch Manager reads —');
-  ['scan_bar','scan_fit','scan_file','scan_compliance','scan_depth','uw_qstatus','uw_quals','file_order','file_ask','file_prem','file_missed']
+  ['scan_score','scan_bar','scan_fit','scan_file','scan_compliance','scan_depth','uw_qstatus','uw_quals','file_order','file_ask','file_prem','file_missed','uw_learned','uw_renewals']
     .forEach(k => console.log('  ' + k + ': ' + String(by(k)).replace(/\n/g, '\n      ')));
   await pg.close();
 }
