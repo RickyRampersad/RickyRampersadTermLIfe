@@ -5,20 +5,20 @@
   {
    "visual": "bwopen",
    "eyebrow": "The seat",
-   "headline": "You know the book.<br>And you <em>still retype it</em>",
+   "headline": "You know the book.<br>And it still lives <em>in a cabinet</em>",
    "at": "knows",
-   "at2": "retyping",
+   "at2": "cabinet",
    "icon": "file",
    "card": [
     "Knows the cover better than the system does",
-    "and still types it in three times"
+    "and still works out of a drawer"
    ],
-   "say": "Somewhere right now there is someone who knows general insurance inside out, and still spends the day retyping what the record already holds."
+   "say": "Somewhere right now there is someone who knows general insurance inside out, and still runs the book out of a filing cabinet."
   },
   {
    "visual": "bwnotools",
    "eyebrow": "The old way",
-   "headline": "You retype it. You wait. / And the history is <em>in four places</em>",
+   "headline": "You retype it. You wait. / And the history is <em>in a drawer</em>",
    "cards": [
     {
      "at": "proposal",
@@ -34,31 +34,22 @@
      "art": "lock",
      "padicon": "clock",
      "wait": "Day 3",
-     "flag": "still waiting"
+     "flag": "in somebody&rsquo;s inbox"
     },
     {
-     "at": "history",
+     "at": "drawer",
      "icon": "msg",
      "title": "last year&rsquo;s file",
      "art": "chat",
-     "flag": "in four places",
+     "flag": "in a drawer",
      "red": true
     }
    ],
-   "say": "You retype the proposal form. You wait three days for an endorsement. And the history you are advising on sits in four different places."
-  },
-  {
-   "visual": "bwturn",
-   "eyebrow": "The Ricky Rampersad Branch",
-   "headline": "A book we have written for years. / <em>And renewed, every year</em>",
-   "at": "years",
-   "at2": "renewed",
-   "sub": "Central Trinidad. General insurance.",
-   "say": "The book is not a new one. We have written it for years, and renewed it year after year. The Branch Manager built it himself, and his time is needed across the branch."
+   "say": "The proposal form retyped by hand. An endorsement waiting three days in somebody's inbox. Last year's file in a drawer, and the year before it in another."
   },
   {
    "visual": "bwstack",
-   "eyebrow": "What we write",
+   "eyebrow": "The book",
    "headline": "You would not be building one. / <em>It is already there</em>",
    "at": "one",
    "at3": "endorsement",
@@ -84,7 +75,7 @@
     "months with renewals in them"
    ],
    "line": "Personal and commercial, fleets included. Every endorsement written to the Act &mdash; and we drive that ourselves.",
-   "say": "You would not be building a book. We have one. Seven lines of business, personal and commercial, with renewals in all twelve months of the year. And every endorsement on it written to the Act."
+   "say": "You would not be building a book. There is one: seven lines, personal and commercial, renewals in all twelve months, and every endorsement on it written to the Act."
   },
   {
    "visual": "bwdues",
@@ -119,7 +110,7 @@
      "already on the screen when you open it"
     ]
    },
-   "say": "Before you open a file, every term since the policy began is already on the screen. What was covered, at what value, what was paid, and the claims that fell in each term."
+   "say": "Before you open a file, every term since the policy began is on the screen. What was covered, at what value, what was paid, and the claims."
   },
   {
    "visual": "bwbill",
@@ -156,19 +147,68 @@
      ]
     ]
    },
-   "say": "The insurer's notice is read for you, and every figure is checked against our own record. Where the two disagree, the desk says so."
+   "say": "The insurer's notice is read for you, and every figure checked against our own record. Where the two disagree, the desk says so before it reaches the client."
+  },
+  {
+   "visual": "bwlog",
+   "eyebrow": "The client&rsquo;s side",
+   "headline": "Nobody is left / <em>waiting on somebody&rsquo;s memory</em>",
+   "phone": {
+    "title": "Your renewal",
+    "who": "the client&rsquo;s own page",
+    "steps": [
+     [
+      "reminded",
+      "mail",
+      "A reminder goes",
+      "fourteen days out, then ten"
+     ],
+     [
+      "call",
+      "clock",
+      "A call opens itself",
+      "at seven, if nobody has spoken to them"
+     ],
+     [
+      "read",
+      "msg",
+      "They sign in and read it",
+      "every year of their own cover"
+     ],
+     [
+      "confirm",
+      "check",
+      "They confirm and sign",
+      "on their own phone"
+     ]
+    ],
+    "sent": [
+     "phone",
+     "Nothing waits on anybody&rsquo;s memory"
+    ],
+    "cues": [
+     [
+      0,
+      "Reminded before it matters"
+     ],
+     [
+      2,
+      "Their own history, in their hands"
+     ],
+     [
+      -1,
+      "Nobody chases from memory"
+     ]
+    ]
+   },
+   "say": "And the client is never left waiting on somebody's memory. They are reminded at fourteen days, then ten. If nobody has spoken to them, a call opens itself at seven. They sign in, read every year of their own cover, confirm it and sign, on their phone."
   },
   {
    "visual": "bwgrid",
    "eyebrow": "What the seat actually is",
    "headline": "The part <em>a system cannot do</em>",
-   "at": "endorsements",
+   "at": "conversation",
    "cards": [
-    [
-     "file",
-     "Endorsements and extensions",
-     "mid-term changes, done properly"
-    ],
     [
      "clock",
      "The renewal conversation",
@@ -183,19 +223,9 @@
      "lock",
      "Compliance, driven",
      "the Act and market conduct &mdash; we do not wait to be told"
-    ],
-    [
-     "flag",
-     "The claim, from their side",
-     "the part they remember us for"
-    ],
-    [
-     "check",
-     "A record the next person can read",
-     "because one day it will not be you"
     ]
    ],
-   "say": "The job is the part a system cannot do. Endorsements and extensions, written to the Act. The renewal conversation. Telling a client plainly what the cover does and what it does not. We drive compliance here. We do not wait to be told."
+   "say": "Which leaves you the part no system can do. Endorsements written properly. The renewal conversation. Telling a client plainly what the cover does and what it does not. We drive compliance here, and we do not wait to be told."
   },
   {
    "visual": "bwscript",
@@ -220,31 +250,7 @@
     ],
     "badge": "Running"
    },
-   "say": "Here is the part most people in this work never get. A change you ask for is not a ticket that joins a queue somewhere else. It is written into the desk, and it runs on every file that week."
-  },
-  {
-   "visual": "bwgrid",
-   "eyebrow": "Changes you would make in your first month",
-   "headline": "Yours, running on <em>every file</em>",
-   "at": "renewal",
-   "cards": [
-    [
-     "clock",
-     "A renewal thirty days ahead",
-     "with the claims history already on it"
-    ],
-    [
-     "file",
-     "An endorsement typed once",
-     "it fills from the record, as the quote does"
-    ],
-    [
-     "chart",
-     "A flag when a sum stops moving",
-     "three years unchanged, before the renewal"
-    ]
-   ],
-   "say": "A renewal that goes out thirty days ahead with the claims history on it. An endorsement nobody types in twice. A flag when the sum insured has not moved in three years."
+   "say": "And a change you ask for is not a ticket in a queue somewhere else. It is written into the desk, and runs on every file that week."
   },
   {
    "visual": "bwhalf",
@@ -279,15 +285,15 @@
   },
   {
    "visual": "bwclose",
-   "eyebrow": "Client manager &middot; Central Trinidad",
+   "eyebrow": "Client manager &middot; General insurance",
    "lines": [
     [
      "manager",
      "Client manager."
     ],
     [
-     "Trinidad",
-     "Central Trinidad."
+     "insurance",
+     "General insurance."
     ],
     [
      "after",
@@ -298,7 +304,7 @@
    "qr": "qr-cmadmin.png",
    "urlsub": "Your CV and fifteen minutes.<br>Read by the Branch Manager alone.",
    "extra": 2.2,
-   "say": "Client manager, general insurance. Central Trinidad. If you are good at this, and you have stopped learning, come and look after the book."
+   "say": "Client manager, general insurance. If you are good at this and you have stopped learning, come and look after the book."
   }
  ]
 }
