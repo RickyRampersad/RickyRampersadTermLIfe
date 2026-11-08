@@ -29,14 +29,14 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
 
 <style>
-@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0%}
-@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0%}
-@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0%}
-@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0%}
-@font-face{font-family:'Inter Tight Fallback';font-weight:100 500;src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:96.22%;ascent-override:100.68%;descent-override:25.07%;line-gap-override:0%}
-@font-face{font-family:'Inter Tight Fallback';font-weight:600 900;src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:95.31%;ascent-override:101.64%;descent-override:25.31%;line-gap-override:0%}
-@font-face{font-family:'Inter Tight Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:96.66%;ascent-override:100.22%;descent-override:24.95%;line-gap-override:0%}
-@font-face{font-family:'Inter Tight Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:101.60%;ascent-override:95.35%;descent-override:23.74%;line-gap-override:0%}
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:106.20%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:101.77%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:112.58%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:109.35%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:100 500;src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:101.51%;ascent-override:100.68%;descent-override:25.07%;line-gap-override:0%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:600 900;src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:99.57%;ascent-override:101.64%;descent-override:25.31%;line-gap-override:0%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.61%;ascent-override:100.22%;descent-override:24.95%;line-gap-override:0%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:106.99%;ascent-override:95.35%;descent-override:23.74%;line-gap-override:0%}
 
 /* ═══ the branch's own palette; the agent page runs darker and bolder than
        /careers/, which is the editorial one. No gold: 1.68:1 on this ground. ═══ */
@@ -150,6 +150,8 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
    has bitten the repo (the agentmgt tab labels were the first two), so it is
    fixed at the component rather than per phrase. */
 .hero strong,.hero b,.dark strong,.dark b{color:#fff}
+.ping{position:absolute;inset:0;margin:auto;width:8rem;height:8rem;
+  border-radius:50%;border:1px solid var(--aL);opacity:0;pointer-events:none;z-index:1}
 .pull{margin:var(--sp-m) 0 0;padding-left:var(--sp-m);max-width:46ch;
   border-left:4px solid var(--aL);color:#fff;
   font:700 var(--f-1)/1.32 var(--display);letter-spacing:-.01em}
@@ -158,6 +160,121 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
   color:var(--dT3);margin-top:var(--sp-m)}
 .hnote span{display:inline-flex;align-items:center;gap:.4rem}
 .hnote .ic{width:17px;height:17px;color:var(--aL)}
+
+/* ══ THE HERO STAGE — the seven lines circling the shield ══════════════════
+   8 November 2026: "more graphics, more motions, something that'll pop across
+   the screen, scaled properly on any devices."
+
+   This is the homepage's own hero composition, in this page's dark palette.
+   The rules it keeps, each of which cost a build on the homepage:
+
+   · the backdrop pieces are GRID ITEMS stacked in one cell, never absolutely
+     positioned — an abspos SVG at width:100% inside a grid sized by
+     aspect-ratio has no percentage basis and renders at 20px;
+   · `.stage .mesh`, not `.mesh`: a bare svg rule elsewhere outranks a bare
+     class and pins them small;
+   · the radii are cqw, so the drawing is identical at 320px and at 1920; the
+     vw clamps are the fallback where container queries are not supported;
+   · the ring animates the `rotate` PROPERTY while each node holds a static
+     `transform`, so the two compose instead of one overwriting the other;
+   · the stage is capped by the viewport too, or the outer ring goes under
+     the hero's own overflow:clip.
+   Seven lines, seven slots: no pairs and no cycling, so every chip is in the
+   markup and visible whatever the motion setting. */
+.hero-grid{display:grid;gap:var(--sp-xl);align-items:center}
+.hero-grid > *{min-width:0}
+/* 1.3fr, and the number is measured rather than chosen. The headline sits
+   exactly on a line-break boundary: at 1.06fr it fits four lines in the
+   fallback and five in Inter Tight, so the whole hero jumped 77px when the
+   font landed — cumulative layout shift 0.14, and no size-adjust can hold a
+   break that close. Widths from 360 to 1920 were scanned in both faces and
+   both fallbacks; 1.3fr is the first ratio where all three break the same
+   way at every one of them. Re-run that scan if the headline's words
+   change. */
+@media (min-width:64rem){.hero-grid{grid-template-columns:1.3fr .7fr;gap:var(--sp-xl)}}
+.hero-art{display:grid;justify-items:center;gap:var(--sp-m)}
+.stage{position:relative;width:min(30rem,100%,100vw - 2.5rem);aspect-ratio:1;
+  display:grid;place-items:center;perspective:900px}
+.halo,.stage .mesh,.stage .orbit,.smark{grid-area:1 / 1}
+.halo{place-self:stretch;margin:-6%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle closest-side,rgba(0,207,234,.17),rgba(0,114,141,.12) 46%,transparent 72%)}
+.stage .mesh,.stage .orbit{place-self:center;pointer-events:none;
+  width:100%;aspect-ratio:1;height:auto;flex:initial}
+.mesh{color:var(--d3);opacity:.55}
+.orbit{overflow:visible}
+.o-ring{fill:none;stroke:var(--d3);stroke-opacity:.85;stroke-width:1.1}
+.o-dash{stroke-dasharray:2 9;stroke-opacity:1}
+.o-arc{fill:none;stroke:var(--aL);stroke-width:2.6;stroke-linecap:round;
+  stroke-dasharray:130 435;stroke-opacity:.6;transform-box:view-box;transform-origin:50% 50%}
+.o-arc2{stroke-dasharray:115 878;stroke-opacity:.34;stroke-width:1.8}
+.o-sat{fill:var(--aL)}
+
+/* the mark, inlined so the check can stroke itself on rather than arrive
+   already drawn. Same artwork as /site-mark.svg, which the topbar carries —
+   nothing here is redrawn or invented. */
+.smark{position:relative;z-index:2;width:27%;filter:drop-shadow(0 1.1rem 2.4rem rgba(0,0,0,.45))}
+@media (max-width:35rem){.smark{width:25%}}
+.smark svg{width:100%;height:auto;display:block}
+.smark .tick{stroke-dasharray:46;stroke-dashoffset:0}
+
+.ring{position:absolute;inset:0;margin:0;padding:0;list-style:none;--chip:2.7rem}
+.ring-in{--r:clamp(5rem,20vw,6.8rem);--dur:54s}
+.ring-out{--r:clamp(8.1rem,35vw,12rem);--dur:78s}
+@supports (container-type:size){
+  .stage{container-type:size}
+  .ring{--chip:8.4cqw}
+  .ring-in{--r:21.5cqw}
+  .ring-out{--r:38.5cqw}
+}
+.node{position:absolute;top:50%;left:50%;width:var(--chip);height:var(--chip);
+  margin:calc(var(--chip) / -2) 0 0 calc(var(--chip) / -2);
+  transform:rotate(var(--a)) translate(var(--r)) rotate(calc(var(--a) * -1))}
+.spin{display:block;position:relative;width:100%;height:100%}
+.chip-o{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;
+  background:var(--d2);border:1px solid var(--d3);color:var(--aL);
+  box-shadow:0 .6rem 1.4rem rgba(0,0,0,.4)}
+.stage .chip-o svg{width:46%;height:46%;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.node b{position:absolute;top:100%;left:50%;translate:-50% .3rem;
+  width:7rem;text-align:center;line-height:1.25;color:var(--dT2);
+  font-family:var(--display);font-weight:600;letter-spacing:.01em;
+  font-size:clamp(.625rem,2.3cqw,.75rem)}
+/* Below 35rem the names cannot fit around a circle this size without landing
+   on each other or on the mark. The ticker directly beneath carries them. */
+@media (max-width:35rem){
+  .node b{display:none}
+  .ring-in{--r:clamp(4.7rem,22vw,6.8rem)}
+  .ring-out{--r:clamp(7.3rem,35vw,12rem)}
+}
+.art-foot{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;
+  gap:.3rem 1rem;font-size:var(--f--2);color:var(--dT3);text-align:center}
+.art-foot span{display:inline-flex;align-items:center;gap:.35rem}
+.art-foot .ic{width:15px;height:15px;color:var(--aL)}
+
+/* ══ the ticker — what the book covers, moving ══
+   Doubled, with the copy aria-hidden, so the loop has no seam. Paused on
+   hover and on focus-within, and it does not exist at all with motion off,
+   where it reads as a plain wrapped list. */
+.strip{background:var(--d1);border-block:1px solid var(--d2);overflow:hidden;
+  padding-block:.7rem;color:var(--dT2)}
+.strip-in{display:flex;width:max-content;gap:0}
+.strip ul{display:flex;align-items:center;gap:1.6rem;list-style:none;margin:0;padding:0 .8rem;
+  font:600 var(--f--1)/1 var(--text);white-space:nowrap}
+.strip li{display:inline-flex;align-items:center;gap:.5rem}
+.strip li::before{content:"";width:.36rem;height:.36rem;border-radius:50%;background:var(--aL);flex:none}
+@media (prefers-reduced-motion:reduce),(update:slow){
+  .strip-in{width:auto;flex-wrap:wrap}
+  .strip ul{flex-wrap:wrap;gap:.5rem 1.4rem;white-space:normal}
+  .strip-in > ul[aria-hidden]{display:none}
+}
+
+/* ══ the figures band ══ */
+.figs{background:var(--bg2);border-bottom:1px solid var(--line);padding-block:var(--sp-xl)}
+.figl{display:grid;gap:var(--sp-m);grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr))}
+.figl > div{padding-left:var(--sp-s);border-left:2px solid var(--a);min-width:0}
+.figv{display:block;font-family:var(--display);font-weight:800;color:var(--ink);
+  font-size:clamp(1.9rem,1.3rem + 2.4vw,3rem);line-height:1;letter-spacing:-.035em;
+  font-variant-numeric:tabular-nums}
+.figl p{margin:.35rem 0 0;font-size:var(--f--2);color:var(--muted);line-height:1.4}
 
 /* the strike ledger */
 .strike{display:grid;gap:var(--sp-m);margin-top:var(--sp-l)}
@@ -246,6 +363,64 @@ footer .ic{width:16px;height:16px}
 @media (prefers-reduced-motion:no-preference){
   .field{animation:drift 28s ease-in-out infinite alternate}
   @keyframes drift{to{transform:translate3d(2.5%,-2%,0) scale(1.07)}}
+
+  /* ── the stage, in motion ───────────────────────────────────────────────
+     Both rings animate the `rotate` property; each chip's inner span runs
+     the same duration in reverse, so a label never turns over. ring-out
+     reverses both its ring and its chips, which still cancels. */
+  .orbit{animation:oSpin 90s linear infinite}
+  @keyframes oSpin{to{rotate:360deg}}
+  .o-arc{animation:oSpin 26s linear infinite}
+  .o-arc2{animation:oSpin 38s linear infinite reverse}
+  /* TWO keyframes, both running forward, and the direction flipped on the
+     pair together. One keyframe with `reverse` in the chip's shorthand looks
+     identical on ring-in and does NOT cancel on ring-out, where the second
+     reverse lands on both: the outer four labels then turn over with the
+     ring. Caught on screen; it is the homepage's own pairing. */
+  .ring{animation:oSpin var(--dur) linear infinite}
+  .ring .spin{animation:oUnspin var(--dur) linear infinite}
+  .ring-out,.ring-out .spin{animation-direction:reverse}
+  @keyframes oUnspin{to{rotate:-360deg}}
+  .halo{animation:haloBreathe 7.5s ease-in-out infinite alternate}
+  @keyframes haloBreathe{to{opacity:.6;scale:1.06}}
+  /* the check draws itself on, once, when the page opens */
+  .smark .tick{animation:tickDraw 1.1s var(--ease-out) .35s both}
+  @keyframes tickDraw{from{stroke-dashoffset:46}to{stroke-dashoffset:0}}
+  /* three pings leaving the shield */
+  .ping{animation:pingOut 4.6s var(--ease-out) infinite;animation-delay:var(--pd)}
+  @keyframes pingOut{0%{opacity:.6;scale:.34}70%{opacity:0}100%{opacity:0;scale:1.5}}
+  .chip-o{transition:translate .2s var(--ease),border-color .2s,background .2s}
+  .node:hover .chip-o{translate:0 -3px;border-color:var(--aL);background:var(--d3)}
+  /* the ticker */
+  .hero.rest .orbit,.hero.rest .ring,.hero.rest .ring .spin,
+  .hero.rest .o-arc,.hero.rest .ping,.hero.rest .halo,
+  .hero.rest .field{animation-play-state:paused}
+  .strip-in{animation:tick 44s linear infinite}
+  @keyframes tick{to{translate:-50% 0}}
+  .strip:hover .strip-in,.strip:focus-within .strip-in{animation-play-state:paused}
+  /* a card lifts by moving an opacity, never a box-shadow: it is on
+     web.dev's do-not-animate list */
+  .card{transition:translate .2s var(--ease),border-color .2s}
+  .card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    opacity:0;transition:opacity .2s var(--ease);box-shadow:var(--e3)}
+  .card:hover{translate:0 -3px;border-color:var(--a)}
+  .card:hover::after{opacity:1}
+  .dark .card:hover{border-color:var(--d3)}
+  /* the statement grows as it crosses the screen, where the browser can do
+     it off the main thread */
+  @supports (animation-timeline:view()){
+    .statement p{animation:stGrow linear both;animation-timeline:view();
+      animation-range:entry 12% cover 56%}
+    @keyframes stGrow{from{opacity:.25;scale:.9}to{opacity:1;scale:1}}
+    .figv{animation:figUp .6s var(--ease-out) both;animation-timeline:view();
+      animation-range:entry 0% entry 55%}
+    @keyframes figUp{from{opacity:0;translate:0 .6rem}}
+    /* how far down the page you are, drawn in the top bar */
+    .topbar::after{content:"";position:absolute;left:0;bottom:-1px;height:2px;width:100%;
+      transform-origin:0 50%;background:linear-gradient(90deg,var(--a),var(--aL));
+      animation:barGrow linear both;animation-timeline:scroll(root);scale:0 1}
+    @keyframes barGrow{to{scale:1 1}}
+  }
   .rv{opacity:0;translate:0 1.4rem}
   html.js .rv{transition:opacity .6s var(--ease-out),translate .6s var(--ease-out)}
   html.js .rv.in,html:not(.js) .rv{opacity:1;translate:none}
@@ -263,6 +438,15 @@ input[type=text],input[type=tel],input[type=email],input[type=url],textarea,sele
   width:100%;padding:.75rem .85rem;border:1.5px solid var(--line-strong);border-radius:var(--r-s);
   background:#fff;color:var(--body);font:400 max(16px,1rem)/1.5 var(--text)}
 textarea{resize:vertical;min-height:5.5rem}
+/* the CV field is a real target and the browser's default is 21px tall,
+   under WCAG 2.2's 24px floor; measured at 390 before this */
+input[type=file]{width:100%;min-height:2.9rem;padding:.6rem .7rem;
+  border:1.5px dashed var(--line-strong);border-radius:var(--r-s);background:#fff;
+  color:var(--body);font:400 max(16px,1rem)/1.5 var(--text);cursor:pointer}
+input[type=file]::file-selector-button{margin-right:.7rem;padding:.42rem .8rem;border:0;
+  border-radius:999px;background:var(--a-tint);color:var(--aD);cursor:pointer;
+  font:700 var(--f--2)/1 var(--text)}
+input[type=file]:focus{border-color:var(--a);outline:2px solid var(--a-tint2);outline-offset:0}
 input:focus,textarea:focus,select:focus{border-color:var(--a);outline:2px solid var(--a-tint2);outline-offset:0}
 fieldset{border:0;padding:0;margin:0}
 legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem;padding:0}
@@ -324,37 +508,6 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   background:var(--a-tint);color:var(--aD);display:grid;place-items:center;
   font:600 var(--f--2)/1 var(--display);margin-top:.15rem}
 
-/* the progress rail — moves on input, never on scroll */
-.rail{position:sticky;top:var(--bar);z-index:20;background:var(--card);border:1px solid var(--line);
-  border-radius:var(--r-s);padding:.7rem .9rem;margin:0 0 var(--sp-s);box-shadow:var(--e1)}
-.rail-top{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;
-  font:600 var(--f--1)/1.3 var(--text);color:var(--ink);margin-bottom:.45rem}
-.rail-top span{font-weight:400;color:var(--muted);font-size:var(--f--2)}
-.rail-bar{height:6px;border-radius:4px;background:var(--line);overflow:hidden}
-.rail-bar i{display:block;height:100%;width:0;border-radius:4px;
-  background:linear-gradient(90deg,#007a95,var(--aD));transition:width .35s var(--ease)}
-.rail.full .rail-bar i{background:linear-gradient(90deg,#0f7a52,#0b5f40)}
-.rail.full .rail-top{color:var(--ok)}
-/* form sections */
-.fsec{border-top:1px solid var(--line);padding-top:var(--sp-m);margin-top:var(--sp-xs)}
-.fsec:first-of-type{border-top:0;padding-top:0;margin-top:0}
-.fsec > h3{display:flex;align-items:center;gap:.6rem;font-size:var(--f-0);margin-bottom:.2rem}
-.fsec > h3 b{flex:none;width:1.7rem;height:1.7rem;border-radius:50%;background:var(--a-tint);color:var(--aD);
-  display:grid;place-items:center;font:600 var(--f--2)/1 var(--display);transition:background .25s,color .25s}
-.fsec.secok > h3 b{background:var(--ok);color:#fff}
-.fsec.secok > h3 b::before{content:"\2713"}
-.fsec.secok > h3 b i{display:none}
-.fsec > .hint{margin:0 0 var(--sp-m);font-size:var(--f--1);color:var(--muted)}
-.fsec .grid{display:grid;gap:var(--sp-m)}
-/* the tool grid: checkboxes, none required */
-.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:.5rem}
-.tools label{display:flex;align-items:flex-start;gap:.55rem;margin:0;padding:.6rem .7rem;
-  border:1.5px solid var(--line);border-radius:var(--r-s);cursor:pointer;font-weight:400;
-  font-size:max(16px,.95rem);line-height:1.35;transition:border-color .18s,background .18s}
-.tools label:hover{border-color:var(--a)}
-.tools input{flex:none;width:1.15rem;height:1.15rem;margin:.1rem 0 0;accent-color:var(--a)}
-.tools label:has(input:checked){border-color:var(--a);background:var(--a-tint)}
-.tools label:has(input:focus-visible){outline:3px solid var(--a);outline-offset:2px}
 
 /* ── the lines of business ───────────────────────────────────────────── */
 .lineg{list-style:none;margin:var(--sp-l) 0 0;padding:0;display:grid;gap:.6rem;
@@ -418,6 +571,13 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 <symbol id="i-cap" viewBox="0 0 24 24"><path d="m3 9 9-4 9 4-9 4-9-4Z"/><path d="M7 11v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4M21 9v5"/></symbol>
 <symbol id="i-phone" viewBox="0 0 24 24"><path d="M15.5 21a13.5 13.5 0 0 1-12.5-12.5A2 2 0 0 1 5 6.3h2.6a1.5 1.5 0 0 1 1.5 1.2l.6 2.5a1.5 1.5 0 0 1-.6 1.6l-1.2.8a11 11 0 0 0 4 4l.8-1.2a1.5 1.5 0 0 1 1.6-.6l2.5.6a1.5 1.5 0 0 1 1.2 1.5V19a2 2 0 0 1-2.2 2Z"/></symbol>
 <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></symbol>
+<symbol id="i-car" viewBox="0 0 24 24"><path d="M5 17h14M3 13.5 4.8 8.6A2 2 0 0 1 6.7 7.3h10.6a2 2 0 0 1 1.9 1.3L21 13.5v3.9a1 1 0 0 1-1 1h-1.5a1 1 0 0 1-1-1V17H6.5v.4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/><circle cx="7.3" cy="14" r="1"/><circle cx="16.7" cy="14" r="1"/></symbol>
+<symbol id="i-house" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/><path d="M10 20v-5h4v5"/></symbol>
+<symbol id="i-build" viewBox="0 0 24 24"><path d="M4 20V6a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v14"/><path d="M14 10h5a1 1 0 0 1 1 1v9"/><path d="M3 20h18M7 8.5h3M7 12h3M7 15.5h3M17 13.5h0M17 17h0"/></symbol>
+<symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M12 6.5 5 9M12 6.5 19 9"/><path d="M2.5 14 5 9l2.5 5a2.6 2.6 0 0 1-5 0Z"/><path d="M16.5 14 19 9l2.5 5a2.6 2.6 0 0 1-5 0Z"/></symbol>
+<symbol id="i-hard" viewBox="0 0 24 24"><path d="M3 16h18a1 1 0 0 0 1-1 9 9 0 0 0-5-8.1V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v1.9A9 9 0 0 0 2 15a1 1 0 0 0 1 1Z"/><path d="M10 6.2V10M14 6.2V10M4 20h16"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.2M12 19.3v2.2M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6"/></symbol>
+<symbol id="i-bond" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="1.5"/><circle cx="12" cy="11" r="2.6"/><path d="M6.5 8.5h0M17.5 13.5h0M7 20h10"/></symbol>
 <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M4.2 7.2l2.1 2.1M17.7 14.7l2.1 2.1M3 12h3M18 12h3M4.2 16.8l2.1-2.1M17.7 9.3l2.1-2.1"/><circle cx="12" cy="12" r="3"/></symbol>
 </defs></svg>
 
@@ -430,8 +590,9 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 
 <section class="hero" id="hero">
   <div class="field" aria-hidden="true"></div>
-  <div class="wrap">
-    <p class="vac"><i aria-hidden="true"></i>We are hiring &middot; General insurance &middot; Chaguanas</p>
+  <div class="wrap hero-grid">
+   <div>
+    <p class="vac"><i aria-hidden="true"></i>We are hiring &middot; Hours that suit you &middot; Chaguanas</p>
     <span class="eyebrow">Client Manager &middot; General Insurance</span>
     <h1 data-words>The book is already there. <em>What it has never had is you.</em></h1>
     <p class="pull">If you can run a general insurance book, and have never once been allowed to change how it is run &mdash; this is the one to read.</p>
@@ -445,6 +606,75 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
       <span><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>Confidential, read by the Branch Manager</span>
       <span><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>Reviewed within 48 hours</span>
     </p>
+   </div>
+
+   <!-- The stage: the book, drawn. Seven lines on two rings around the
+        branch's own mark, each chip kept upright by an inner span that
+        counters its ring. It is a diagram of what you would be looking
+        after, not decoration — and nothing sits on the mark. -->
+   <div class="hero-art">
+     <div class="stage">
+       <div class="halo" aria-hidden="true"></div>
+       <svg class="mesh" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
+         <defs>
+           <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">
+             <circle cx="2" cy="2" r="1.15" fill="currentColor"/>
+           </pattern>
+           <radialGradient id="fade"><stop offset="52%" stop-color="#fff"/><stop offset="100%" stop-color="#000"/></radialGradient>
+           <mask id="mfade"><rect width="400" height="400" fill="url(#fade)"/></mask>
+         </defs>
+         <rect width="400" height="400" fill="url(#dots)" mask="url(#mfade)"/>
+       </svg>
+       <svg class="orbit" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
+         <circle class="o-ring" cx="200" cy="200" r="90"/>
+         <circle class="o-ring o-dash" cx="200" cy="200" r="154"/>
+         <circle class="o-arc" cx="200" cy="200" r="90"/>
+         <circle class="o-arc o-arc2" cx="200" cy="200" r="154"/>
+         <circle class="o-sat" cx="200" cy="110" r="3.4"/>
+         <circle class="o-sat" cx="354" cy="200" r="2.6"/>
+       </svg>
+       <span class="ping" style="--pd:0s" aria-hidden="true"></span>
+       <span class="ping" style="--pd:1.5s" aria-hidden="true"></span>
+       <span class="ping" style="--pd:3s" aria-hidden="true"></span>
+       <div class="smark" aria-hidden="true">
+         <svg viewBox="0 0 88 88" focusable="false">
+           <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1">
+             <stop offset="0%" stop-color="#0e93b0"/><stop offset="52%" stop-color="#00728d"/><stop offset="100%" stop-color="#0a3350"/>
+           </linearGradient></defs>
+           <path d="M44 9L73 21.5V41C73 60.5 60.5 72 44 78.5C27.5 72 15 60.5 15 41V21.5Z" fill="url(#sg)"/>
+           <path class="tick" d="M30 44L39.5 53.5L58 32.5" stroke="#0a3350" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+           <path class="tick" d="M30 44L39.5 53.5L58 32.5" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+         </svg>
+       </div>
+       <ul class="ring ring-in" aria-label="Personal and commercial lines on the book"><li class="node" style="--a:0deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><b>Motor and fleet</b></span></li><li class="node" style="--a:120deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-house"/></svg></span><b>Household</b></span></li><li class="node" style="--a:240deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-build"/></svg></span><b>Commercial property</b></span></li></ul>
+       <ul class="ring ring-out" aria-hidden="false"><li class="node" style="--a:45deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-scale"/></svg></span><b>Public and products liability</b></span></li><li class="node" style="--a:135deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-hard"/></svg></span><b>Workers&rsquo; compensation</b></span></li><li class="node" style="--a:225deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-gear"/></svg></span><b>Machinery and plant</b></span></li><li class="node" style="--a:315deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-bond"/></svg></span><b>Bonds</b></span></li></ul>
+     </div>
+     <p class="art-foot">
+       <span><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Seven lines, already written</span>
+       <span><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>Renewals in all twelve months</span>
+     </p>
+   </div>
+  </div>
+</section>
+
+<!-- what the book covers, moving. The second list is the loop's seam and is
+     hidden from assistive tech; with motion off both wrap as a plain list. -->
+<div class="strip" aria-label="The lines this book covers">
+  <div class="strip-in">
+    <ul><li>Motor, commercial and fleet</li><li>Household and private dwelling</li><li>Commercial property and fire</li><li>Public and products liability</li><li>Workers&rsquo; compensation</li><li>Machinery and plant</li><li>Bonds</li><li>Endorsements and extensions</li><li>Renewals, every month of the year</li><li>Marine and cargo, with nothing on them yet</li></ul>
+    <ul aria-hidden="true"><li>Motor, commercial and fleet</li><li>Household and private dwelling</li><li>Commercial property and fire</li><li>Public and products liability</li><li>Workers&rsquo; compensation</li><li>Machinery and plant</li><li>Bonds</li><li>Endorsements and extensions</li><li>Renewals, every month of the year</li><li>Marine and cargo, with nothing on them yet</li></ul>
+  </div>
+</div>
+
+<section class="figs">
+  <div class="wrap">
+    <div class="figl">
+      <div><b class="figv" data-count>7</b><p>lines of business on the book, personal and commercial</p></div>
+      <div><b class="figv" data-count>12</b><p>months of the year with renewals falling in them</p></div>
+      <div><b class="figv" data-count>39</b><p>files of software this branch wrote for itself</p></div>
+      <div><b class="figv" data-count data-sep>100000</b><p>lines of it or so, written in-branch and running today</p></div>
+      <div><b class="figv" data-count>48</b><p>hours, and you hear back &mdash; from the Branch Manager</p></div>
+    </div>
   </div>
 </section>
 
@@ -921,6 +1151,64 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
       h.appendChild(sr);
     });
   }
+
+  /* ── the figures count UP TO the number already in the markup ──
+     The true figure ships in the HTML. No script, a thrown error or motion
+     turned off all leave the right number on screen; shipping 0 and filling
+     it in by script is how a page ends up showing zeros. */
+  (function(){
+    var els=[].slice.call(d.querySelectorAll('[data-count]'));
+    if(!els.length)return;
+    var sep=function(n,on){return on?String(n).replace(/\B(?=(\d{3})+$)/g,','):String(n)};
+    /* the separator goes on whatever happens next: with motion off, or with
+       no observer, the figure still has to read as a figure */
+    els.forEach(function(e){
+      if(e.hasAttribute('data-sep'))e.textContent=sep(e.textContent.replace(/[^0-9]/g,''),true);
+    });
+    if(noMotion.matches||!('IntersectionObserver' in window))return;
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){
+      if(!e.isIntersecting)return; io.unobserve(e.target);
+      var el=e.target, on=el.hasAttribute('data-sep'),
+          end=parseInt(el.textContent.replace(/[^0-9]/g,''),10);
+      if(!isFinite(end))return;
+      var t0=0, ms=900;
+      (function step(ts){
+        if(!t0)t0=ts;
+        var k=Math.min(1,(ts-t0)/ms), e2=1-Math.pow(1-k,3);
+        el.textContent=sep(Math.round(end*e2),on);
+        if(k<1)requestAnimationFrame(step);
+      })(performance.now());
+    })},{threshold:.5});
+    els.forEach(function(e){io.observe(e)});
+  })();
+
+  /* ── the stage tilts to the pointer, which is what reads as hovering ──
+     Mouse and trackpad only: a tilt that sticks where a finger left it looks
+     broken. It parks when the hero leaves the screen, by a class added on
+     EXIT — the other polarity freezes every backwards-filled entrance at its
+     invisible first frame when the script does not run. */
+  (function(){
+    var stage=d.querySelector('.stage'), hero=d.getElementById('hero');
+    if(!stage)return;
+    if(!noMotion.matches&&matchMedia('(hover: hover) and (pointer: fine)').matches){
+      var raf=0,tx=0,ty=0;
+      hero.addEventListener('pointermove',function(ev){
+        if(ev.pointerType!=='mouse')return;
+        var r=stage.getBoundingClientRect();
+        tx=((ev.clientY-(r.top+r.height/2))/r.height)*-9;
+        ty=((ev.clientX-(r.left+r.width/2))/r.width)*9;
+        if(!raf)raf=requestAnimationFrame(function(){raf=0;
+          stage.style.transform='rotateX('+tx.toFixed(2)+'deg) rotateY('+ty.toFixed(2)+'deg)'});
+      });
+      hero.addEventListener('pointerleave',function(){stage.style.transform=''});
+      stage.style.transition='transform .25s cubic-bezier(.2,.7,.2,1)';
+    }
+    if('IntersectionObserver' in window&&hero){
+      new IntersectionObserver(function(es){
+        hero.classList.toggle('rest',!es[0].isIntersecting);
+      },{threshold:0}).observe(hero);
+    }
+  })();
 
   [].slice.call(d.querySelectorAll('[data-cc]')).forEach(function(out){
     var ta=d.getElementById(out.getAttribute('data-cc')); if(!ta)return;

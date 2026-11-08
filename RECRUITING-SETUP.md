@@ -882,6 +882,101 @@ in the same scene.
 > CV and application at **rickyrampersadbranch.com/clientmanager**. Read by the
 > Branch Manager personally and treated confidentially.
 
+## The page got its graphics — the stage, the ticker, the figures
+
+Asked for on 8 November 2026: *"more graphics, more motions, something that'll
+pop across the screen, scaled properly on any devices."*
+
+**The hero is the stage, and it is the homepage's own composition in this
+page's dark palette.** The branch's mark at the centre with **the seven lines
+of business circling it** on two rings — three inside, four outside — over a
+dot mesh, two drawn rings, two arcs sweeping against the spin and three pings
+leaving the shield. The check strokes itself on when the page opens, and the
+whole scene tilts to the pointer on a mouse or trackpad, which is what reads
+as hovering. It is a diagram of the book, not decoration, and **nothing sits
+on the mark**.
+
+Under it, a **ticker** of what the book covers, paused on hover and on
+focus-within; it is also what carries the names on a phone, where the ring is
+icons only because labels cannot fit around a circle that size. Then a band of
+five **figures that count up to the number already in the markup** — 7 lines,
+12 months, 39 files, 100,000 lines, 48 hours — so no script, a thrown error or
+motion turned off still leaves the right figure on screen. Cards lift on hover
+by moving an **opacity on a `::after`**, never a `box-shadow`; the statement
+grows as it crosses the screen on `animation-timeline: view()`; and the top bar
+draws how far down the page you are on `scroll(root)`. All of it lives inside
+`prefers-reduced-motion: no-preference`, and the loops park by a class added
+**on exit** (`.hero.rest`) rather than one added on entry, which would freeze
+every backwards-filled entrance at its invisible first frame if the script
+never ran.
+
+Measured after: no sideways scroll at 360/375/390/414/768/1024/1280/1366/1536/
+1920, every ring label upright at four points in the cycle, contrast composited
+through translucency (worst 5.09:1 on the figure captions), every real touch
+target 24px or more, no typed field under 16px, **16.7ms a frame over three
+passes with both rings spinning**, and the whole page readable with JavaScript
+off.
+
+### Two faults it turned up, both older than this change
+
+**The chips' counter-spin does not cancel on the outer ring if you use one
+keyframe.** `.ring{animation:oSpin}` with `.spin{animation:oSpin … reverse}`
+looks right on ring-in and is wrong on ring-out, where
+`.ring-out,.ring-out .spin{animation-direction:reverse}` lands on both and the
+two angles **add**: the outer four labels turn over with the ring. It needs
+**two keyframes**, `oSpin` to `360deg` and `oUnspin` to `-360deg`, both running
+forward, with the direction flipped on the pair together — which is what the
+homepage does. Caught by composing each label's matrices in the browser and
+reading the angle, not by eye.
+
+**The headline sat exactly on a line-break boundary, and the page's layout
+shift was 0.577.** The fallback fitted the h1 in four lines and Inter Tight in
+five, so the hero jumped a full 77px line when the font landed, moving
+everything below it. A sub-one-per-cent metric difference flips it, so **no
+`size-adjust` can hold a break that close** — the fallback was re-measured and
+corrected (below) and the headline still flipped. What fixed it was choosing a
+column width where both faces break the same way: widths from 360 to 1920 were
+scanned in Inter Tight and in both fallbacks, and `1.3fr .7fr` is the first
+ratio where all three agree at every one of them. **Cumulative layout shift
+0.577 → 0.02.** Re-run that scan (`cmlook/scan.js` in the session scratchpad)
+if the headline's words ever change.
+
+### The metric-matched fallbacks are several per cent too narrow, site-wide
+
+Measured in a browser on 8 November 2026 — the real face's average advance over
+an English-frequency-weighted sample against each fallback, per weight bucket.
+These are the values `size-adjust` should carry:
+
+| face | bucket | vs Arial / Liberation | vs Roboto |
+|---|---|---|---|
+| Inter | 100–500 | **106.20%** (is 106.88) | **112.58%** (is 107.37) |
+| Inter | 600–900 | **101.77%** (is 101.96) | **109.35%** (is 108.69) |
+| Inter Tight | 100–500 | **101.51%** (is 96.22) | **107.61%** (is 96.66) |
+| Inter Tight | 600–900 | **99.57%** (is 95.31) | **106.99%** (is 101.60) |
+
+The Inter (body) values against Arial are right, which is why body text has
+never shifted. **Every Inter Tight value is too low**, the Roboto one by eleven
+per cent — and Roboto is what an Android phone falls back to, which is most of
+this audience. `/clientmanager/` now carries the corrected eight; the other 139
+pages still carry the old ones and should be swept deliberately rather than by
+find-and-replace, because each page has its own copy of the block.
+
+**Two things about measuring this in a container.** `local('Arial')` does not
+resolve on Linux even though `font-family: Arial` does, so a fallback face can
+be inert here while working on a phone — check which face is really in use with
+CDP's `CSS.getPlatformFontsForNode` rather than assuming. And `document.fonts
+.check()` answers true for a family fontconfig merely aliases, so it is not
+evidence that `local()` matched.
+
+**One width is still not stable:** at exactly 600px the Roboto fallback breaks
+the headline differently from Inter Tight. Phones (360–414) and tablets (768)
+all agree, so it is left.
+
+### One pre-existing thing removed
+
+The form CSS had been pasted in from `/buildwithus/` **twice** — 31 identical
+lines, `.rail` through `.rail-bar i`. Dropped the second copy.
+
 ## The posters — `tools/ads/`, 8 November 2026
 
 Asked for in those words: *"want to see the ad with a more punch and impact."*
