@@ -533,6 +533,81 @@ key stays `underwriter` and the reference stays `QU-`, so `Quotes.gs` needs no
 paste and no new deployment; `QC-` was not available anyway, since the critical
 illness quote owns it.
 
+## The frame: an established book that has outgrown one man — not a new agency
+
+Corrected on 8 November 2026, and this is the one to read before touching any
+word of this ad. The page had said *"The branch has opened its own general
+insurance agency, and it is not a start-up."* He struck it out:
+
+> *"Don't focus on opening an agency... I'm in the business for 35 years and
+> I've built a substantial general insurance book. My time is needed
+> elsewhere, but focusing on the reliable person of advising what we have
+> built, the tools that we use, with the goal of attracting the right
+> candidates for us to continue. So it's not that we're now doing this. We've
+> always had very great successes."*
+
+He is right, and the fault was worse than tone. **"We have opened our own
+agency" tells a candidate who already has a job that he would be the
+experiment**, and *"it is not a start-up"* is the giveaway — a sentence written
+only because the doubt is already there, which plants it. The strongest thing
+this ad has is the opposite of novelty: the book exists, it has renewed year
+after year, the clients and the income are already in it. That removes the risk
+of moving, which is the single biggest reason a stuck person stays stuck.
+
+**The reason the seat exists is now the ad's best paragraph.** It is in his own
+words, signed, in the `#why` section straight under the hero: he built the book
+himself, it has done well, he is running a branch and his time is needed across
+all of it, and the book deserves somebody whose whole attention it is. **It
+must never read as a book being handed over neglected** — it is a book being
+promoted. That distinction is the whole difference between an attractive seat
+and a suspicious one, and every rewrite has to keep it.
+
+**What the record supports, and what it does not.** `Risk_Details__c` holds
+general insurance terms from October 2013, but only a handful before 2018; it
+is substantial from 2020 and runs to 2,661 terms. So the *record* is about six
+years deep, which is not the same as the book's age, and **no figure is printed
+for how old the book is**. The ad says *"written and renewed here year after
+year"*, which the record does support, and the thirty-five years are stated as
+**his own years in the business, in the first person**. Salesforce has his hire
+date as December 1993 — thirty-two years with Guardian — and the two are not
+the same claim; that was put to him.
+
+Phrases that are now wrong everywhere and must not come back: *opened its own
+general insurance agency*, *it is not a start-up*, *we are building the team*,
+*this agency is being built now*, *there is no queue yet*.
+
+## The mindset filter, and why it cannot be adjectives
+
+Asked for in the same message:
+
+> *"I don't want the 8 to 4 person. I want persons who are creative, who will
+> look at the processes, and that's the challenge I'm having — the mindset of
+> the persons coming into work today... they have the general insurance
+> experience, but they're stuck, they're not going anywhere, and they want to
+> learn and excel."*
+
+**You cannot filter mindset with adjectives.** Every applicant writes that they
+are a self-starter who thrives on change; the word costs nothing to type, so it
+sorts nobody. Two things do work, and both are now on the page:
+
+- **Naming the wrong person plainly.** `#fit` is two lists — *probably not you*
+  and *probably you* — in the candidate's own sentences, not ours: *you would
+  rather be told the rule than be the one who decides it*; *you have been
+  saying this would work better if… for years, to people who wrote it down and
+  did nothing*. Naming the wrong person is the one thing that makes them leave,
+  and it is what makes the right person feel recognised. Its headline states
+  the rule outright: **this is not an eight-to-four job, and that is not about
+  hours** — the hours are genuinely his to set; what is not optional is that
+  the process is never finished being improved.
+- **The work itself.** The real filter was already built: fifteen minutes, a
+  real renewal file to read, four written answers, and the bar line that says
+  who actually opened the file. `uw_renewals` (*what would you change about how
+  a general agency handles renewals*) and `uw_stopped` (*something you tried to
+  change and could not — what stopped it?*) are the two that separate this
+  person, and they were already there. **No new question was added**: the form
+  is already at fifteen minutes and lengthening it costs more applications than
+  the extra question would sort.
+
 ## The book: how to count it, and what may be published
 
 Asked on 7 November whether the ad could name the book's size, he chose *"name
@@ -755,7 +830,7 @@ rule or the automatic cover pass as they stand. Either this seat is marked
 exempt in `SCHEDULE`, or the promise quietly stops being true the first week.
 Nothing has been changed in `KPI.gs` for it.
 
-## The film — `cmadmin`, 1:55, cut 7 November 2026
+## The film — `cmadmin`, 2:03, cut 7 November 2026 and re-framed on the 8th
 
 Eleven scenes on the same engine, replacing `uwadmin` at the same path. Three
 things the reframe forced, all of them real faults in the cut before it:
@@ -798,6 +873,21 @@ same way**: `at2: "retypes"` against a line that says *retyping* stops the
 build with `no word 'retypes'`. That guard is worth keeping — it is the only
 thing that catches a reveal landing on a word that is never said.
 
+**Two lines were re-voiced for the 8 November reframe.** Scene 3 was the only
+one in the film that carried the wrong claim — *"The branch has opened its own
+general insurance agency. And it already has a book."* It now reads *"The book
+is not a new one. We have written it for years, and renewed it year after year.
+The Branch Manager built it himself, and his time is needed across the
+branch."* And the close picked up the mindset filter: *"...If you are good at
+this, and you have stopped learning, come and look after the book."* Scene 3
+went 6.0s → 11.6s and scene 11 8.4s → 11.2s, so the film is **2:03**.
+
+**Every `hits` value moves when any scene's length changes**, because they are
+seconds into the film while `dark` is scene indices. Derive them from the built
+page rather than guessing: each counter carries `data-at` in milliseconds from
+the start of its scene, and the scene starts come from `durs`. Here both are in
+scene 4, so [28.65, 33.61] became **[34.15, 39.11]**.
+
 **The close said "One seat." and does not any more.** When the ad dropped its
 seat count on 8 November, the film still ended on *"One seat, for a client
 manager"*, on screen and in the voice — a promise kept in one place and broken
@@ -820,9 +910,9 @@ in the same scene.
 >
 > *If you can run a general insurance book, and have never once been allowed to change how it is run — this is the one to read.*
 >
-> The Ricky Rampersad Branch has opened its own general insurance agency, and we are building the team that looks after it.
+> I have spent thirty-five years in this business, and the general insurance book at the Ricky Rampersad Branch is one I built myself. It has done well, and it has renewed year after year. But I am running a branch, and my time is needed across all of it.
 >
-> It is not a start-up. The book comes with it, across seven lines of business — motor and fleet, household, commercial property, public liability, workers' compensation, machinery and plant, bonds — with renewals falling in every month of the year.
+> So this book needs somebody whose whole attention it is. Seven lines of business — motor and fleet, household, commercial property, public liability, workers' compensation, machinery and plant, bonds — personal and commercial, with renewals falling in every month of the year.
 >
 > Here is what you would be walking into. The quote fills itself from the client's own record. Guardian's proposal form and the customer due-diligence checklist are filled by the system, field by field, and attached. The renewal desk reads every term since the policy began — not just this year's — before anyone opens the file. The insurer's notice is read and checked figure by figure against our own record, and where the two disagree the desk says so.
 >
@@ -834,7 +924,9 @@ in the same scene.
 >
 > General insurance experience and underwriting experience both required.
 >
-> Hours are yours to set. Pay is negotiable on experience. The person who runs this book from the start runs what it becomes.
+> Hours are yours to set. Pay is negotiable on experience. The book is established; how it is run is not, and the person who takes it on decides that.
+>
+> One thing to be plain about: this is not an eight-to-four seat. The hours genuinely are yours. What is not optional is that the process here is never finished being improved, and in this seat you are the one who answers what should change.
 >
 > One thing we are not asking you for: your clients.
 >
@@ -850,13 +942,13 @@ in the same scene.
 >
 > *If you can run a general insurance book and have never once been allowed to change how it is run, read this one.*
 >
-> The branch has opened its own general insurance agency and it already has a book — seven lines of business, personal and commercial, renewals every month of the year.
+> Not a new book: one that has been written and renewed here year after year. Seven lines of business, personal and commercial, with renewals every month. The Branch Manager built it himself and his time is needed across the branch, so it needs its own person.
 >
 > The paperwork side is built: the quote and the forms fill themselves from the record, and every term since the policy began is on the screen before you open the file.
 >
 > So the job is the advice, the endorsements and the renewal conversation. And if you ask for a change here, it gets built that week.
 >
-> Hours are yours to set, pay is negotiable on experience, and we are not asking you to bring clients with you.
+> Hours are yours to set, pay is negotiable on experience, and we are not asking you to bring clients with you. This is not an eight-to-four seat, and that is about the work rather than the hours: the process here is yours to argue with.
 >
 > rickyrampersadbranch.com/clientmanager — your CV and fifteen minutes. If you are somewhere with no room to grow, this is the one to look at.
 
@@ -865,8 +957,8 @@ in the same scene.
 > **VACANCY · CLIENT MANAGER — GENERAL INSURANCE** · Ricky Rampersad Branch ·
 > Chaguanas, Central Trinidad.
 >
-> To look after an existing general insurance book across seven lines of
-> business: motor and fleet, household, commercial property, public liability,
+> To take on an established general insurance book, written and renewed over
+> years, across seven lines of business: motor and fleet, household, commercial property, public liability,
 > workers' compensation, machinery and plant, and bonds. Renewals,
 > endorsements and extensions, the advice that goes with them, and the market
 > conduct obligations under the Insurance Act.

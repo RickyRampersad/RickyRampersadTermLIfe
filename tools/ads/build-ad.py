@@ -50,7 +50,7 @@ ADS = {
         'chips': ['Judged on the book, not on the clock',
                   'A change you ask for gets built that week',
                   'Every endorsement written to the Act',
-                  'Seven lines of business, personal and commercial'],
+                  'Seven lines, written and renewed here for years'],
         'url': 'rickyrampersadbranch.com/clientmanager',
         'qr': 'qr-cmadmin.png',
         'foot': 'Your CV and fifteen minutes. Read by the Branch Manager alone.',

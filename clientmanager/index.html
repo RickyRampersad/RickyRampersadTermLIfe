@@ -276,6 +276,34 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
   font-variant-numeric:tabular-nums}
 .figl p{margin:.35rem 0 0;font-size:var(--f--2);color:var(--muted);line-height:1.4}
 
+/* ── why the seat exists, in his own words ── */
+.why{background:var(--d0);color:var(--dT2);border-block:1px solid var(--d2)}
+.whyw{max-width:50rem}
+.why blockquote{margin:var(--sp-s) 0 0;padding-left:var(--sp-m);border-left:4px solid var(--aL)}
+.why blockquote p{color:#fff;font:600 var(--f-1)/1.45 var(--display);letter-spacing:-.012em;margin:0 0 var(--sp-s)}
+.why blockquote p:last-child{margin-bottom:0;color:var(--dT2);font-weight:500}
+.whyby{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .6rem;margin:var(--sp-m) 0 0;
+  padding-left:calc(var(--sp-m) + 4px);font-size:var(--f--1)}
+.whyby b{color:#fff}
+.whyby span{color:var(--dT3)}
+
+/* ── the two lists: who this is not for, and who it is ── */
+.fitg{display:grid;gap:var(--sp-m);margin-top:var(--sp-l)}
+@media (min-width:48rem){.fitg{grid-template-columns:1fr 1fr}}
+.fitg > *{min-width:0}
+.fitbox{border-radius:var(--r);padding:var(--sp-m);border:1px solid var(--line);background:var(--card);box-shadow:var(--e1)}
+.fitbox.not{background:transparent;border-style:dashed;box-shadow:none}
+.fitbox > b{display:block;font:700 var(--f--2)/1.3 var(--text);letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:var(--sp-s);padding-bottom:var(--sp-s);border-bottom:1px solid var(--line)}
+.fitbox.yes > b{color:var(--a)}
+.fitbox ul{list-style:none;margin:0;padding:0;display:grid;gap:.75rem}
+.fitbox li{display:flex;gap:.6rem;align-items:flex-start;font-size:var(--f--1);line-height:1.5}
+.fitbox li .ic{width:19px;height:19px;flex:none;margin-top:.2rem}
+.fitbox li span{min-width:0}
+.fitbox.not li{color:var(--muted)}
+.fitbox.not li .ic{color:var(--line-strong)}
+.fitbox.yes li .ic{color:var(--ok)}
+
 /* the strike ledger */
 .strike{display:grid;gap:var(--sp-m);margin-top:var(--sp-l)}
 @media (min-width:48rem){.strike{grid-template-columns:1fr 1fr}}
@@ -596,7 +624,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     <span class="eyebrow">Client Manager &middot; General Insurance</span>
     <h1 data-words>The book is already there. <em>What it has never had is you.</em></h1>
     <p class="pull">If you can run a general insurance book, and have never once been allowed to change how it is run &mdash; this is the one to read.</p>
-    <p class="hsub">The branch has opened its own general insurance agency, and it is not a start-up: the book comes with it, across <strong>seven lines of business</strong>, personal and commercial, renewing in every month of the year. We are building the team that looks after it. Three things make this different from the agency you are in now. Every piece of the re-keying is already built and running. <strong>You are judged on the book, not on the clock.</strong> And how this agency advises its clients &mdash; and how it stays compliant doing it &mdash; is <strong>not settled yet</strong>. The person in this seat settles it.</p>
+    <p class="hsub">A general insurance book that has been written and renewed here year after year, across <strong>seven lines of business</strong>, personal and commercial, with renewals falling in every month. Until now the Branch Manager has looked after it himself, alongside everything else a branch asks of him &mdash; and <strong>it has outgrown that</strong>. What it needs is one person whose whole job it is. Every piece of the re-keying is already built and running, <strong>you are judged on the book rather than on the clock</strong>, and the one thing nobody has settled &mdash; how this agency advises its clients, and how it stays compliant doing it &mdash; is left to the person in the seat.</p>
     <div class="ctas">
       <a class="btn btn-1" href="#apply">Apply &mdash; CV and fifteen minutes <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
       <a class="btn btn-2" href="#file">Read a file first</a>
@@ -678,17 +706,35 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   </div>
 </section>
 
+<!-- Why the seat exists, in his own words. 8 November 2026: "I'm in the
+     business for 35 years and I've built a substantial general insurance
+     book. My time is needed elsewhere." It reads as the book being promoted,
+     never as the book being handed over neglected — that distinction is the
+     whole difference between an attractive seat and a suspicious one. -->
+<section class="why" id="why">
+  <div class="wrap">
+    <div class="rv whyw">
+      <span class="eyebrow">Why this seat exists</span>
+      <blockquote>
+        <p>I have spent thirty-five years in this business, and the general insurance book is one I built myself. It has done well, and it has renewed year after year. But I am running a branch, and my time is needed across all of it.</p>
+        <p>This book deserves somebody whose whole attention it is. Somebody who will take what we have built, use the tools we built for it, and make it better than I have had the hours to.</p>
+      </blockquote>
+      <p class="whyby"><b>Ricky Rampersad</b><span>Branch Manager</span></p>
+    </div>
+  </div>
+</section>
+
 <section class="alt" id="film" style="padding-block:var(--sp-xl)">
   <div class="wrap">
     <div class="filmgrid rv">
       <div class="vwrap">
         <video playsinline preload="metadata" poster="film-w.jpg" controls controlslist="nodownload"
-               aria-label="Just under two minutes on the client manager’s seat">
+               aria-label="Just over two minutes on the client manager’s seat">
           <source src="film-w.mp4" type="video/mp4">
         </video>
       </div>
       <div>
-        <span class="eyebrow">Just under two minutes</span>
+        <span class="eyebrow">Just over two minutes</span>
         <h2 data-words>What we write, and what is already built around it.</h2>
         <p>The seven lines, every term since the policy began, the insurer&rsquo;s notice checked against our own record, and a change written into the desk rather than raised as a ticket.</p>
         <p class="small">The words are on screen throughout, so it reads with the sound off. Every figure in it is illustrative and no client appears anywhere.</p>
@@ -701,8 +747,8 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   <div class="wrap">
     <div class="rv" style="max-width:52rem">
       <span class="eyebrow">The book</span>
-      <h2 data-words>Not a start-up. A book, with people in it.</h2>
-      <p class="lede">Seven lines of business, personal and commercial, with renewals falling in every month of the year. This is what our renewal desk already reads every month, and it is what you would be looking after from your first week.</p>
+      <h2 data-words>A book with years behind it, and people in every line of it.</h2>
+      <p class="lede">Seven lines of business, personal and commercial, written and renewed here year after year, with renewals falling in every month. This is what our renewal desk already reads every month, and it is what you would be looking after from your first week.</p>
     </div>
     <ul class="lineg rv">
       <li><b>Motor</b><span>private, commercial and fleet &mdash; the volume of the book</span></li>
@@ -787,10 +833,51 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     <ul class="cards">
       <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>&ldquo;I am measured by the clock&rdquo;</h3><p><strong>Here you are judged on the book.</strong> On the renewals that stay, the endorsements done properly, the clients who still answer the phone in three years. Not on when you arrived. Work the hours the work needs, where the work is best done &mdash; every tool on this page already runs on a phone, because it was built that way for the branch&rsquo;s own agents.</p></li>
       <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-wall"/></svg>&ldquo;Nothing I suggest ever happens&rdquo;</h3><p><strong>A change you ask for here is built that week.</strong> Not a ticket, not a queue at head office, not a form that goes to somebody who leaves. The branch wrote its own software and the person who writes it sits in the same building. That is the whole offer, and it is the one nobody else in this market can make.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-board"/></svg>&ldquo;There is nowhere above me&rdquo;</h3><p><strong>This agency is being built now.</strong> The person who runs the book from the start is the person who runs what it becomes &mdash; the team, the classes we add, the appetite. There is no queue of people ahead of you, because there is no queue yet.</p></li>
+      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-board"/></svg>&ldquo;There is nowhere above me&rdquo;</h3><p><strong>The book is established. How it is run is not.</strong> The person who takes it on decides how the advice is given, what we check before anything goes out, which classes we add and, in time, who else works on it. And there is nobody between you and the Branch Manager &mdash; no regional office, no committee, no queue.</p></li>
       <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>&ldquo;The systems fight me&rdquo;</h3><p><strong>Read the next two sections before you decide anything.</strong> Every one of them is running today and you can watch it work before you apply. If you have spent years doing by hand what a system should have done, that is the part of this page to read twice.</p></li>
     </ul>
     <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch"><strong>One thing we are not asking you for: your clients.</strong> Come for the work and the conditions, not because you can bring a book with you. We are not asking you to, we would rather you did not, and nothing on the application asks about it. Your own employer&rsquo;s clients are your own employer&rsquo;s.</p>
+  </div>
+</section>
+
+<!-- The mindset filter. 8 November 2026: "I don't want the 8 to 4 person. I
+     want persons who are creative, who will look at the processes... the
+     challenge I'm having is the mindset of the persons coming into work
+     today." You cannot filter mindset with adjectives — everybody writes
+     that they are a self-starter. Naming the wrong person plainly is the one
+     thing that makes them leave, and it is what makes the right person feel
+     recognised. The real filter is still the work: fifteen minutes, a file
+     to read, four written answers, and a bar line that says who opened it. -->
+<section id="fit">
+  <div class="wrap">
+    <div class="rv" style="max-width:54rem">
+      <span class="eyebrow">Before you spend fifteen minutes on this</span>
+      <h2 data-words>This is not an eight-to-four job, and that is not about hours.</h2>
+      <p class="lede">The hours are genuinely yours &mdash; that part is settled. What is not optional is that the work here is never finished being improved. Every month somebody asks what should change, and in this seat you are the one who answers. Read the two lists before you start, and be honest about which one you are on.</p>
+    </div>
+    <div class="fitg">
+      <div class="fitbox not rv">
+        <b>Probably not you</b>
+        <ul>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg><span>You want the day handed to you, the same way, every day.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg><span>You would rather be told the rule than be the one who decides it.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg><span>A change to the process reads to you as more work, not less.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg><span>You have stopped reading what the Act does, because nobody asks.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg><span>You are counting the years to the next step rather than doing anything about it.</span></li>
+        </ul>
+      </div>
+      <div class="fitbox yes rv">
+        <b>Probably you</b>
+        <ul>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>You already catch what the system misses and have nowhere to put it.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>You have been saying <em>this would work better if&hellip;</em> for years, to people who wrote it down and did nothing.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>You are genuinely good at this, and you have stopped learning.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>You would rather be measured on what the book does than on when you arrived.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>You want the client to hear the uncomfortable thing from you, early.</span></li>
+        </ul>
+      </div>
+    </div>
+    <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch">We are not asking you to work longer. Several people here do their best thinking at six in the morning and are gone by two, and that is fine. What we are asking is that the process is yours to argue with.</p>
   </div>
 </section>
 
