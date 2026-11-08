@@ -14941,6 +14941,7 @@ function agentRollupMail_(mgr, agents, day) {
 function agentRollupTick_(day, mins) {
   var mode = agentMode_(); if (mode === 'off') return [];
   if (mins < AGENT_ROLL_AT || mins > AGENT_ROLL_AT + 90) return [];
+  try { forgetHr_(AGDAY); } catch (e) {}   // read the close-offs fresh
   var props = PropertiesService.getScriptProperties(), out = [], groups = agentsByManager_();
   Object.keys(groups).forEach(function (k) {
     var mark = 'agroll_' + k.replace(/[^a-z0-9]/g, '') + '_' + day;
