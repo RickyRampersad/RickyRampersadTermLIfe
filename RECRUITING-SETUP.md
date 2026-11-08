@@ -533,6 +533,75 @@ key stays `underwriter` and the reference stays `QU-`, so `Quotes.gs` needs no
 paste and no new deployment; `QC-` was not available anyway, since the critical
 illness quote owns it.
 
+## Two doors, three charts, the town, and a section cut
+
+Asked for on 8 November 2026: *"a little more motions with percentages and a
+little more graphics and a little more charts and a little more tightening up,
+condense a little more shorter. Don't say Chaguanas... it will prompt someone
+with the experience to apply, as well as somebody without the experience, but
+they do possess the skill set that they can learn fast because it's a
+tech-driven environment."*
+
+### Two doors, and why they have to be separate
+
+He wants the career-changer as well as the experienced hand. **An ad that says
+"experience required" and then "apply anyway" collapses its own filter**: it
+buys a flood with no way to sort it. So `#you` is now two labelled doors —
+*1 · You have done this* (years on a book, time actually underwriting, papers,
+judgement) and *2 · You have the head for it* (something you taught yourself
+and then used, systems instinct, people under pressure, and you will sit the
+exams, which we pay for). Door 2 says plainly that the first year is harder and
+that the tools carry a great deal of what experience used to carry — **not all
+of it**.
+
+The filter follows the door all the way to his inbox:
+
+- the form asks **`uw_door`** first, before anything else in section 2;
+- **`bar()` scores each door on its own terms.** Door 2 is not marked down for
+  the experience the door exists to let past; it is scored on systems named,
+  depth in the written answers, whether they read the file and how closely,
+  papers or papers in progress, and any insurance exposure at all. It reads
+  *"Door 2 · 4 of 5 · read the file lightly"*;
+- `scan_bar` is still the first line of the e-mail and still **never shown to
+  the candidate**, so the door never reads as a rejection on the page.
+
+### Three charts, and one that is deliberately not a chart
+
+- **86% ring** on `#tech`: six of the seven stops take themselves. It is the
+  measured version of the "ninety per cent re-keying" claim, and it draws
+  itself on `animation-timeline: view()`.
+- **72% bar** under the Log Book figure in `#service`.
+- **The twelve months, lit and not measured.** The record does carry the
+  month-by-month shape of the book — and it is not going on a public page,
+  because it tells a competitor exactly when to go at us. Every month is lit
+  at the same height; the caption carries the true and safe claim, that
+  renewals fall in all twelve and there is no quiet season.
+
+### The town
+
+*"Don't say Chaguanas."* It had been in the badge, the hero's practical line,
+both meta descriptions and the footer. It now appears **once**, in the apply
+section, where somebody actually deciding will look for it — because **a
+recruiting ad that never says where the office is loses people who cannot
+judge the drive**. Everywhere it used to lead, it reads *Central Trinidad*, and
+the posters' mastheads changed with it (`where` in `tools/ads/build-ad.py`).
+
+### What was cut
+
+**`#different` is gone**, six cards and 3,502 bytes of it. `#tech`'s seven
+stops tell the same story better and in order; the two facts it carried that
+the pipeline does not — Guardian's actual PDFs rather than retyped versions,
+and the record cleaned before you quote it — folded into the pipeline's own
+small print.
+
+### A third instance of one bug
+
+`.ring86 figcaption span{display:block}` caught the counter's own span inside
+`.r-pct` and put *86* and *%* on two lines. That is the same fault as the
+`<em>` that became a third flex column in `#fit`: **a descendant selector on a
+generic tag inside a component catches the inline elements the copy uses**.
+Scope to the direct child (`figcaption > span`), or wrap the text.
+
 ## The book drawn, the renewal drawn, and the service with figures under it
 
 Asked for on 8 November 2026: *"a lot of graphics, building in the book in

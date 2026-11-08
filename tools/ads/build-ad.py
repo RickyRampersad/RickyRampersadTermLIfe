@@ -35,13 +35,18 @@ SHAPES = {'feed': (1080, 1350), 'story': (1080, 1920), 'wide': (1200, 630)}
 ADS = {
     'clientmanager': {
         'dir': 'clientmanager',
-        'under': 'General insurance &middot; Chaguanas',
+        'under': 'General insurance &middot; Central Trinidad',
         'badge': 'We are hiring',
         # No seat count on this one: 8 November 2026, he chose as many
         # applications as possible over the scarcity the other two keep. The
         # slot carries the offer instead — and it may not repeat the masthead,
-        # which already says General insurance - Chaguanas.
+        # which already says General insurance - Central Trinidad.
         'vacancy': 'Hours that suit you',
+        # 8 November 2026: "don't say Chaguanas". A recruiting ad still has to
+        # say where the office is or people cannot judge the drive, so the
+        # town stays in the page's practical line and the posters lead with
+        # the region.
+        'where': 'Central Trinidad',
         'role': 'Client Manager &middot; General Insurance',
         'head': ['The book is', 'already there.'],
         'em': ['What it has', 'never had is you.'],
@@ -233,7 +238,7 @@ def html(key, shape):
             f'<div class="mast"><i class="mk"></i><div><b>Ricky Rampersad Branch</b>'
             f'<span>{a["under"]}</span></div></div>'
             f'<div class="badge"><span class="pill"><i></i>{a["badge"]}</span>'
-            f'<span class="vac">{a["vacancy"]} &middot; Chaguanas</span></div>'
+            f'<span class="vac">{a["vacancy"]} &middot; {a.get("where", "Chaguanas")}</span></div>'
             f'{body}'
             f'<div class="foot"><span class="qr"><img src="data:image/png;base64,{qr}" alt=""></span>'
             f'<div><div class="u">{a["url"]}</div><div class="s">{a["foot"]}</div></div></div>'

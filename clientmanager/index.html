@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Client Manager, General Insurance — Ricky Rampersad Branch</title>
-<meta name="description" content="Client Manager, General Insurance — Chaguanas, Trinidad. An existing book across seven lines of business: motor and fleet, household, commercial property, liability, workers’ compensation, machinery and bonds. The re-keying is already built. The advice, and the compliance that goes with it, is not — and that is the seat.">
+<meta name="description" content="Client Manager, General Insurance — Central Trinidad. An established book across seven lines of business: motor and fleet, household, commercial property, liability, workers’ compensation, machinery and bonds. The re-keying is already built. The advice, and the compliance that goes with it, is not — and that is the seat.">
 <link rel="canonical" href="https://rickyrampersadbranch.com/clientmanager/">
 <link rel="icon" type="image/svg+xml" href="/site-icon.svg">
 <meta name="theme-color" content="#0b1b2d">
@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Ricky Rampersad Branch">
 <meta property="og:title" content="The book is already there. What it has never had is you.">
-<meta property="og:description" content="Client Manager, General Insurance — Chaguanas. An existing book across seven lines, every piece of the paperwork already built, and you are judged on the book rather than on the clock. How this agency advises its clients is not settled — the person in this seat settles it.">
+<meta property="og:description" content="Client Manager, General Insurance — Central Trinidad. An established book across seven lines, every piece of the paperwork already built, and you are judged on the book rather than on the clock. How this agency advises its clients is not settled — the person in this seat settles it.">
 <meta property="og:url" content="https://rickyrampersadbranch.com/clientmanager/">
 <meta property="og:image" content="https://rickyrampersadbranch.com/clientmanager/film-w.jpg">
 <meta property="og:image:width" content="1920">
@@ -276,6 +276,58 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
   font-variant-numeric:tabular-nums}
 .figl p{margin:.35rem 0 0;font-size:var(--f--2);color:var(--muted);line-height:1.4}
 
+/* ── the two doors ── */
+.doors{display:grid;gap:var(--sp-m);margin-top:var(--sp-l)}
+@media (min-width:52rem){.doors{grid-template-columns:1fr 1fr;gap:var(--sp-l)}}
+.doors > *{min-width:0}
+.door{background:var(--d1);border:1px solid var(--d2);border-radius:var(--r);padding:var(--sp-m);
+  position:relative;overflow:hidden}
+.door::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:var(--aL)}
+.door.b::before{background:linear-gradient(90deg,var(--d3),var(--aL))}
+.dh{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .6rem;margin:0 0 var(--sp-s);
+  padding-bottom:var(--sp-s);border-bottom:1px solid var(--d2)}
+.dnum{display:grid;place-items:center;width:1.8rem;height:1.8rem;border-radius:50%;flex:none;
+  background:var(--aL);color:var(--d0);font:800 var(--f--1)/1 var(--display);align-self:center}
+.door.b .dnum{background:var(--d3);color:#fff}
+.dh b{font:700 var(--f-0)/1.2 var(--display);letter-spacing:-.02em;color:#fff}
+.dh > span:last-child{font-size:var(--f--2);color:var(--dT3)}
+.door ul{list-style:none;margin:0;padding:0;display:grid;gap:.8rem}
+.door li{display:flex;gap:.6rem;align-items:flex-start;font-size:var(--f--1);line-height:1.5;color:var(--dT2)}
+.door li .ic{width:19px;height:19px;flex:none;margin-top:.2rem;color:var(--aL)}
+.door li span{min-width:0}
+.door li b{color:#fff}
+.dfoot{margin:var(--sp-m) 0 0;padding-top:var(--sp-s);border-top:1px solid var(--d2);
+  font-size:var(--f--2);color:var(--dT3);line-height:1.5}
+
+/* ── the ring: how much of a renewal takes itself ── */
+.ring86{display:flex;align-items:center;gap:var(--sp-m);margin:var(--sp-l) 0 0;padding:0;
+  max-width:26rem}
+.ring86 svg{width:6.5rem;height:6.5rem;flex:none;transform:rotate(-90deg)}
+.r-bg{fill:none;stroke:var(--line);stroke-width:9}
+.r-fg{fill:none;stroke:var(--a);stroke-width:9;stroke-linecap:round;
+  stroke-dasharray:327;stroke-dashoffset:45.8}
+.ring86 figcaption{min-width:0}
+.r-pct{display:block;font:800 var(--f-2)/1 var(--display);letter-spacing:-.035em;color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.ring86 figcaption > span{display:block;font-size:var(--f--1);color:var(--muted);line-height:1.35;margin-top:.2rem}
+
+/* ── the twelve months ── */
+.months{margin:var(--sp-l) 0 0;padding:0}
+.months ul{list-style:none;margin:0;padding:0;display:grid;gap:.35rem;
+  grid-template-columns:repeat(6,1fr)}
+@media (min-width:40rem){.months ul{grid-template-columns:repeat(12,1fr)}}
+.months li{display:grid;gap:.3rem;justify-items:center;min-width:0}
+.months li span{display:block;width:100%;height:2.6rem;border-radius:var(--r-s);
+  background:linear-gradient(var(--a),var(--aD));opacity:.9}
+.months li b{font:700 var(--f--2)/1 var(--text);color:var(--muted);letter-spacing:.03em}
+.months figcaption{margin-top:var(--sp-s);font-size:var(--f--1);color:var(--body);max-width:60ch}
+.months figcaption b{color:var(--ink)}
+
+/* the service bar */
+.svbar{display:block;height:6px;border-radius:3px;background:var(--d2);margin:.5rem 0 .1rem;overflow:hidden}
+.svbar i{display:block;height:100%;width:var(--w);border-radius:3px;
+  background:linear-gradient(90deg,var(--a),var(--aL))}
+
 /* ── the book, drawn: the two sides and the spine between them ── */
 .bookg{display:grid;gap:var(--sp-m);margin-top:var(--sp-l);align-items:start}
 @media (min-width:56rem){.bookg{grid-template-columns:1fr auto 1fr;gap:var(--sp-l)}}
@@ -497,6 +549,19 @@ footer .ic{width:16px;height:16px}
   @keyframes pingOut{0%{opacity:.6;scale:.34}70%{opacity:0}100%{opacity:0;scale:1.5}}
   .chip-o{transition:translate .2s var(--ease),border-color .2s,background .2s}
   .node:hover .chip-o{translate:0 -3px;border-color:var(--aL);background:var(--d3)}
+  /* the charts draw themselves as they come into view */
+  @supports (animation-timeline:view()){
+    .r-fg{animation:ringDraw linear both;animation-timeline:view();animation-range:entry 10% cover 40%}
+    @keyframes ringDraw{from{stroke-dashoffset:327}to{stroke-dashoffset:45.8}}
+    .svbar i{animation:barGrowX linear both;animation-timeline:view();animation-range:entry 0% entry 55%}
+    @keyframes barGrowX{from{scale:0 1}}
+    .svbar i{transform-origin:0 50%}
+  }
+  .months li span{animation:monIn .5s var(--ease-out) both;
+    animation-delay:calc(var(--i) * 55ms);animation-timeline:view();animation-range:entry 0% entry 45%}
+  @keyframes monIn{from{opacity:0;scale:1 .25}}
+  .door{transition:translate .2s var(--ease),border-color .2s}
+  .door:hover{translate:0 -3px;border-color:var(--d3)}
   /* the book's two sides land in turn, and the spine draws between them */
   .bklist li{animation:bkIn .5s var(--ease-out) both;animation-delay:calc(var(--i) * 80ms + 120ms);
     animation-timeline:view();animation-range:entry 0% entry 42%}
@@ -719,7 +784,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   <div class="field" aria-hidden="true"></div>
   <div class="wrap hero-grid">
    <div>
-    <p class="vac"><i aria-hidden="true"></i>We are hiring &middot; Hours that suit you &middot; Chaguanas</p>
+    <p class="vac"><i aria-hidden="true"></i>We are hiring &middot; General insurance &middot; Hours that suit you</p>
     <span class="eyebrow">Client Manager &middot; General Insurance</span>
     <h1 data-words>The book is already there. <em>What it has never had is you.</em></h1>
     <p class="pull">If you can run a general insurance book, and have never once been allowed to change how it is run &mdash; this is the one to read.</p>
@@ -729,7 +794,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
       <a class="btn btn-2" href="#file">Read a file first</a>
     </div>
     <p class="hnote">
-      <span><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg>Chaguanas, Central Trinidad</span>
+      <span><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg>Central Trinidad</span>
       <span><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>Confidential, read by the Branch Manager</span>
       <span><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>Reviewed within 48 hours</span>
     </p>
@@ -859,6 +924,14 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     <div class="bookg">
 <div class="bkside per rv"><p class="bkh"><b>Personal lines</b><span>the volume of the book</span></p><ul class="bklist"><li style="--i:0"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><span class="bkt"><b>Private motor</b><span>the cars, the renewals, the claims that follow</span></span></li><li style="--i:1"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-house"/></svg></span><span class="bkt"><b>Household and private dwelling</b><span>buildings, contents, and the average clause nobody reads</span></span></li></ul></div>      <div class="bkspine" aria-hidden="true"><span></span></div>
 <div class="bkside com rv"><p class="bkh"><b>Commercial lines</b><span>where the technical work lives</span></p><ul class="bklist"><li style="--i:0"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><span class="bkt"><b>Fleet, genuinely</b><span>one policy carrying dozens of vehicles</span></span></li><li style="--i:1"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-build"/></svg></span><span class="bkt"><b>Commercial property and fire</b><span>declared values, surveys, business interruption</span></span></li><li style="--i:2"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-scale"/></svg></span><span class="bkt"><b>Public and products liability</b><span>limits, indemnity, the wording that matters at claim</span></span></li><li style="--i:3"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-hard"/></svg></span><span class="bkt"><b>Workers&rsquo; compensation</b><span>wage declarations, and the adjustment nobody chases</span></span></li><li style="--i:4"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-gear"/></svg></span><span class="bkt"><b>Machinery and plant</b><span>item-by-item schedules, serials, loaders</span></span></li><li style="--i:5"><span class="bkic"><svg aria-hidden="true" focusable="false"><use href="#i-bond"/></svg></span><span class="bkt"><b>Bonds</b><span>performance and advance payment</span></span></li></ul></div>    </div>
+    <!-- Every month is lit, and no month is measured. The record does carry
+         the month-by-month shape of the book, and it is not going on a public
+         page: it tells a competitor exactly when to go at us. What is true
+         and safe is that renewals fall in all twelve. -->
+    <figure class="months rv" aria-label="Renewals fall in every month of the year">
+      <ul><li style="--i:0"><span></span><b>Jan</b></li><li style="--i:1"><span></span><b>Feb</b></li><li style="--i:2"><span></span><b>Mar</b></li><li style="--i:3"><span></span><b>Apr</b></li><li style="--i:4"><span></span><b>May</b></li><li style="--i:5"><span></span><b>Jun</b></li><li style="--i:6"><span></span><b>Jul</b></li><li style="--i:7"><span></span><b>Aug</b></li><li style="--i:8"><span></span><b>Sep</b></li><li style="--i:9"><span></span><b>Oct</b></li><li style="--i:10"><span></span><b>Nov</b></li><li style="--i:11"><span></span><b>Dec</b></li></ul>
+      <figcaption>Renewals fall in <b>all twelve months</b>. There is no quiet season to hide in, and no month where the book looks after itself.</figcaption>
+    </figure>
     <ul class="bkboth rv">
       <li><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg><span><b>Endorsements and extensions</b> run across both sides &mdash; our specialty, and the part we hold ourselves to.</span></li>
       <li><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg><span><b>Marine and cargo</b> sit in the system with nothing written on them yet. That is room, and it would be yours.</span></li>
@@ -878,8 +951,15 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
       <h2 data-words>Seven stops. Six of them are already automatic.</h2>
       <p class="lede">This is not a roadmap. It is what happens to a renewal in this branch today, in order. Read it for the one stop that is not automatic &mdash; because that stop is the job, and every other one exists so that you get to it with the file already understood.</p>
     </div>
+    <figure class="ring86 rv" aria-hidden="true">
+      <svg viewBox="0 0 120 120" focusable="false">
+        <circle class="r-bg" cx="60" cy="60" r="52"/>
+        <circle class="r-fg" cx="60" cy="60" r="52"/>
+      </svg>
+      <figcaption><b class="r-pct"><span data-count>86</span>%</b><span>of the stops take<br>themselves</span></figcaption>
+    </figure>
     <ol class="pipe"><li class="stop sys" style="--i:0"><span class="stnum">1</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-mail"/></svg></span><span class="stt"><b>The notice arrives</b><span>Guardian General&rsquo;s renewal notice is found in the mailbox and read on the device &mdash; period, premium, tax, every vehicle or location, every requirement.</span></span></li><li class="stop sys" style="--i:1"><span class="stnum">2</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg></span><span class="stt"><b>Every figure checked</b><span>Each one against our own record. Where the two disagree, the desk says so instead of you finding out at claim.</span></span></li><li class="stop sys" style="--i:2"><span class="stnum">3</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-board"/></svg></span><span class="stt"><b>The whole history opens</b><span>Every term since the policy began: what was covered, at what value, what was paid, how late, and the claims that fell in each term.</span></span></li><li class="stop you" style="--i:3"><span class="stnum">4</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-chat"/></svg></span><span class="stt"><b>You read it, and you call</b><span>This is the stop a system cannot take. What changed in the year, what the claims say, whether the sums still mean anything, and what the client has not been told.</span><i class="stme">This one is yours</i></span></li><li class="stop sys" style="--i:4"><span class="stnum">5</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-file"/></svg></span><span class="stt"><b>The forms fill themselves</b><span>Guardian&rsquo;s own PDFs &mdash; the proposal, Know Your Policy, the due-diligence checklist &mdash; field by field from what we hold, signed on a phone, still editable at the other end.</span></span></li><li class="stop sys" style="--i:5"><span class="stnum">6</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-users"/></svg></span><span class="stt"><b>The client signs in</b><span>Their own record is already there. They confirm, they choose, they sign. No form to retype and nothing posted to anybody.</span></span></li><li class="stop sys" style="--i:6"><span class="stnum">7</span><span class="stic"><svg aria-hidden="true" focusable="false"><use href="#i-lock"/></svg></span><span class="stt"><b>It files itself, and it is on record</b><span>The instruction goes, the task opens, the trail is written. What was advised and what was declined, for the ordinary reason that one day it will not be you opening that file.</span></span></li></ol>
-    <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch">We did not buy any of this. The branch wrote it &mdash; thirty-nine files of its own software, running every day &mdash; and it is still being written. The next stop on that line is the one you tell us about.</p>
+    <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch">We did not buy any of this. The branch wrote it &mdash; thirty-nine files of its own software, running every day. The forms are Guardian&rsquo;s actual PDFs rather than retyped versions, and the record is cleaned before you quote it: duplicate terms, mid-term changes kept as their own policy, a vehicle carried under a changed number. And it is still being written. <strong>The next stop on that line is the one you tell us about.</strong></p>
   </div>
 </section>
 
@@ -899,25 +979,6 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
       <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>A record the next person can read</h3><p>What was advised, what was declined, what the client said and when. Not for an audit &mdash; for the ordinary reason that one day it will not be you opening that file.</p></li>
     </ul>
     <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch">Underwriting experience is required for this seat and we will ask about it in detail. Not because you will be accepting risk &mdash; the insurer does that &mdash; but because somebody who has sat on the other side of a submission knows what a surveyor&rsquo;s report is worth, what a broker leaves out, and when a sum insured is a number somebody made up.</p>
-  </div>
-</section>
-
-<section id="different">
-  <div class="wrap">
-    <div class="rv">
-      <span class="eyebrow">Why this seat is not like the one you are in</span>
-      <h2 data-words>Most general insurance jobs are ninety per cent re-keying.</h2>
-      <p class="lede">This branch wrote its own software &mdash; thirty-nine files, about a hundred thousand lines, all in-branch. So the work that normally eats the day has already been taken off the desk. Here is exactly what, named, and every one of these is running today.</p>
-    </div>
-    <ul class="cards">
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-board"/></svg>Last year&rsquo;s file, before you open it</h3><p>Every term since the policy began: what was covered, at what value and premium, the change on the year before, what was billed, what was paid and how many days late, and the claims that fell in each term. You start reading at the risk, not at the filing.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg>The insurer&rsquo;s notice, read for you</h3><p>Guardian General&rsquo;s renewal notice is read on the device &mdash; period, premium, tax, every vehicle or location, every requirement &mdash; and each figure is checked against our own record. Where the two disagree, the desk says so instead of you finding out at claim.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg>Guardian&rsquo;s own forms, filled exactly</h3><p>Not a retyped version: the actual PDFs. The private motor proposal, Know Your Policy, the Motor Quotation Request, the company due-diligence checklist, EB0010 and GIO001 &mdash; filled field by field from what we hold, signed on a phone, and still editable at the other end.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>The claim is matched to the right term</h3><p>A loss from last March is assessed against last March&rsquo;s sum insured and last March&rsquo;s policy number, not against this year&rsquo;s cover. A loss that falls in a gap between two terms is flagged as a gap, in words the client can answer.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-wall"/></svg>New business starts already filled in</h3><p>The client signs in with a code to their own inbox and their Contact, their motor policies and their vehicles fill themselves in from the record. The permit is photographed on the phone. It reaches the quotes desk with the documents attached and a task already open. You are reading a submission, not assembling one.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>The record is cleaned before you quote it</h3><p>Salesforce holds duplicate terms, mid-term changes kept as their own policy, and vehicles carried under a changed policy number. The desk merges them only on a real identity &mdash; a registration, a chassis, a serial &mdash; and names the record to correct rather than quietly fixing it.</p></li>
-    </ul>
-    <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch">None of this makes the work easy, and we are not going to pretend it does. What it does is give you back the hours that normally go on typing, so they can go on the risk, the cover and the client &mdash; which is the part you are actually good at and the part nobody is paying you for right now.</p>
   </div>
 </section>
 
@@ -984,6 +1045,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
         <p><b>Documents through the Log Book</b> in twelve months. Every one logged, routed to the right department, signed for by name, and a transmittal built for it.</p></li>
       <li class="svc rv"><span class="svic"><svg aria-hidden="true" focusable="false"><use href="#i-clock"/></svg></span>
         <b class="svn"><span data-count>72</span>%</b>
+        <span class="svbar" aria-hidden="true"><i style="--w:72%"></i></span>
         <p><b>On to Guardian inside one working day.</b> The rest are chased by the system itself, and the reason a late one was late is on the record.</p></li>
       <li class="svc rv"><span class="svic"><svg aria-hidden="true" focusable="false"><use href="#i-pin"/></svg></span>
         <b class="svn"><span data-count>5</span>&#9733;</b>
@@ -1035,21 +1097,46 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   </div>
 </section>
 
+<!-- Two doors. 8 November 2026: "it will prompt someone with the experience
+     to apply, as well as somebody without the experience, but they do possess
+     the skill set that they can learn fast because it's a tech-driven
+     environment."
+
+     They have to be SEPARATE, labelled, and asked different questions. An ad
+     that says "experience required" and then "apply anyway" collapses its own
+     filter and buys a flood with no way to sort it. Each door carries its own
+     bar, the form asks which one they came through, and the scan line at the
+     top of his e-mail says so before he opens the row. -->
 <section class="dark" id="you">
   <div class="wrap">
     <div class="rv" style="max-width:52rem">
       <span class="eyebrow">Who we are looking for</span>
-      <h2 data-words>Experienced, qualified, and out of room.</h2>
-      <p class="lede" style="color:var(--dT2)">Somebody who has done this the old way and is tired of it. You have worked a general insurance book, you have sat on the underwriting side of a submission, and you are somewhere that has stopped growing, or stopped listening &mdash; where the only way up is waiting for somebody to retire, and every good idea you have had went into a note nobody read.</p>
+      <h2 data-words>Two ways in. Pick yours honestly.</h2>
+      <p class="lede" style="color:var(--dT2)">Most of this seat is judgement you can only get by doing it, so the first door is the shorter one. But this is a branch that writes its own software, and somebody who learns technical things fast is worth more here than almost anywhere. So there is a second door, and it is real &mdash; it is just steeper.</p>
     </div>
-    <ul class="cards">
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>General insurance experience, required</h3><p>Years on a real book: renewals, endorsements, extensions, the claims that followed. Motor and property at minimum, because that is where this book lives. We would far rather real depth in two classes than a list of eight.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-board"/></svg>Underwriting experience, also required</h3><p>Time actually spent underwriting, not only administering around it. You will not be accepting risk here &mdash; the insurer does that &mdash; but you will be the person who knows what a submission is missing before it goes, and what a sum insured is worth when nobody has surveyed it in six years.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-cap"/></svg>Papers, and where you are with them</h3><p>ACII, the CII Diploma or Certificate, CPCU, LOMA, a local qualification, or part-qualified and still sitting. Tell us exactly which and what is left. You will be the technical voice in the room with an insurer and a client, and it shows.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Judgement you can explain</h3><p>The application asks you about a risk you declined and one you wrote against the grain. Then it puts a renewal file in front of you and asks what you would act on first. That is the interview.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>Ideas, and the nerve to say them</h3><p>We are open to being told we have got something wrong, and we change things the same week. That is worth nothing if the person in the seat has learned not to bother. If you have a list of things you would fix, bring the list.</p></li>
-      <li class="card rv"><h3><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>Service as a standard</h3><p>This branch is known for answering. Somebody who leaves a client waiting three days is the wrong fit here, however good the technical work.</p></li>
-    </ul>
+    <div class="doors">
+      <div class="door a rv">
+        <p class="dh"><span class="dnum">1</span><b>You have done this</b><span>the shorter door</span></p>
+        <ul>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span><b>Years on a real book.</b> Renewals, endorsements, extensions, the claims that followed. Motor and property at minimum &mdash; real depth in two beats a list of eight.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span><b>Time actually underwriting.</b> Not administering around it. You will not accept risk here, but you will be the one who knows what a submission is missing before it goes.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span><b>Papers, and where you are with them.</b> ACII, CII Diploma or Certificate, CPCU, LOMA, a local qualification &mdash; or part-qualified and still sitting. Say exactly which and what is left.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span><b>Judgement you can explain.</b> A risk you declined, one you wrote against the grain, and a live renewal file we put in front of you. That is the interview.</span></li>
+        </ul>
+        <p class="dfoot">If this is you, the file on this page is the whole test.</p>
+      </div>
+      <div class="door b rv">
+        <p class="dh"><span class="dnum">2</span><b>You have the head for it</b><span>steeper, and open</span></p>
+        <ul>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg><span><b>You learn technical things fast, and can prove it.</b> Something you taught yourself and then used &mdash; a system, a language, a qualification, a trade. We will ask what it was and how long it took.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-board"/></svg><span><b>Systems come naturally to you.</b> You are the person others ask when the software will not do the thing. Here that is not a side skill; it is half the job.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg><span><b>You are good with people under pressure.</b> Most of this work is a difficult conversation handled early. That part cannot be taught quickly, and we will not try.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-cap"/></svg><span><b>You will sit the exams.</b> We will put you through them and pay for them. You have to want them.</span></li>
+        </ul>
+        <p class="dfoot">Be straight about this: your first year is harder than theirs, and you will be learning in public. We are open to it because the tools here carry a great deal of what experience used to carry &mdash; not all of it.</p>
+      </div>
+    </div>
+    <p class="small rv" style="margin-top:var(--sp-m);max-width:62ch;color:var(--dT3)">Either way the application asks the same last question, and it is the one that decides: a live renewal file, nine things wrong with it, and what you would act on first. Experience makes that quicker. It does not make it automatic.</p>
   </div>
 </section>
 
@@ -1145,7 +1232,13 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
         <span class="eyebrow">Apply</span>
         <h2 data-words>Your CV, and about fifteen minutes.</h2>
         <p>It goes to Mr Rampersad alone &mdash; not a shared branch inbox and not an agency. If you are employed today, nobody there will hear of it.</p>
-        <p class="small">The questions below are the ones somebody who has actually carried a book can answer and nobody else can. They matter more than the CV, so give them the time.</p>
+        <p class="small">The questions below are the ones that separate people, whichever door you are coming through. They matter more than the CV, so give them the time.</p>
+        <!-- The one precise mention of the town. 8 November 2026: "don't say
+             Chaguanas" — so it does not lead the badge, the hero or the
+             posters. It stays here, where somebody actually deciding will
+             look for it, because a recruiting ad that never says where the
+             office is loses people who cannot judge the drive. -->
+        <p class="small"><svg class="ic" aria-hidden="true" style="display:inline-block;vertical-align:-5px;width:18px;height:18px;color:var(--a)"><use href="#i-pin"/></svg> The office is in <strong>Chaguanas, Central Trinidad</strong>, and the hours are yours to set.</p>
 
         <form class="form" id="uf" novalidate autocomplete="on" style="background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-m);box-shadow:var(--e2);display:grid;gap:var(--sp-m);margin-top:var(--sp-l)">
           <div class="rail" id="rail" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="How much of the application is filled in">
@@ -1168,8 +1261,15 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
           </div>
 
           <div class="fsec" data-sec>
-            <h3><b><i>2</i></b>Your general insurance experience</h3>
+            <h3><b><i>2</i></b>Your experience</h3>
             <div class="grid">
+              <fieldset><legend>Which door are you coming through? <small>&middot; be straight; it decides which questions matter</small></legend>
+                <div class="pills">
+                  <label><input type="radio" name="uw_door" value="1 - I have done this" required><span>1 &mdash; I have done this</span></label>
+                  <label><input type="radio" name="uw_door" value="2 - I have the head for it" ><span>2 &mdash; I have the head for it</span></label>
+                </div>
+                <p class="hint" id="doorNote" hidden>Door 2 is real and it is steeper. We will weigh what you have taught yourself and how fast, your instinct with systems, and how you handle people &mdash; and we will put you through the exams. Answer every question below as honestly as the first door would; &ldquo;none yet&rdquo; is a perfectly good answer and far better than a guess.</p>
+              </fieldset>
               <fieldset><legend>How long have you worked in general insurance?</legend>
                 <div class="pills">
                   <label><input type="radio" name="uw_years" value="Under 3 years" required><span>Under 3 years</span></label>
@@ -1494,8 +1594,21 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
      application into a quiz. Every part of it is named, so a row can be
      disagreed with. */
   function bar(file_){
-    var y=val('uw_years'), uw=val('uw_uwexp'), cls=classes();
+    var door=val('uw_door'), y=val('uw_years'), uw=val('uw_uwexp'), cls=classes();
     var miss=[];
+    if(/^2/.test(door)){
+      /* Door 2 is scored on what door 2 claims, not on the experience it says
+         it does not have. Marking a career-changer down for the thing the
+         door exists to let past would make the second door decoration. */
+      var learn=val('uw_stopped')+' '+val('uw_renewals')+' '+val('uw_declined');
+      if(!val('uw_systems')) miss.push('no systems named');
+      if(learn.replace(/\s+/g,' ').trim().length<400) miss.push('thin on what they have taught themselves');
+      if(!file_.n) miss.push('did not read the file');
+      else if(file_.n<3) miss.push('read the file lightly');
+      if(!val('uw_quals')&&(!val('uw_qstatus')||/^None/.test(val('uw_qstatus')))) miss.push('no papers and none in progress');
+      if(!/^(Yes|Some)/.test(uw)&&!cls.length) miss.push('no insurance exposure at all');
+      return 'Door 2 \u00b7 '+(5-miss.length)+' of 5'+(miss.length?' \u00b7 '+miss.join(', '):' \u00b7 strong on every one');
+    }
     if(/Under 3/.test(y)||!y) miss.push('under 3 years in general insurance');
     if(uw==='No') miss.push('no underwriting experience');
     else if(uw==='Some, informally') miss.push('underwriting only informally');
@@ -1528,10 +1641,13 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
             thin.length?(thin.length===5?'all 5':thin.length+' of 5')+' written answers are short':'all 5 written answers are substantial'];
   }
 
-  var REQ=['name','phone','email','town','uw_years','uw_auth','uw_systems','uw_quals',
+  var REQ=['name','phone','email','town','uw_door','uw_years','uw_auth','uw_systems','uw_quals',
            'uw_uwexp','uw_uwwhere','emp_co','emp_role','pay_now','pay_want','start','cv'];
   // a "no" to underwriting is not a block, but the page says plainly what it costs
   f.addEventListener('change',function(e){
+    if(e.target&&e.target.name==='uw_door'){
+      var dn=d.getElementById('doorNote'); if(dn)dn.hidden=!/^2/.test(e.target.value);
+    }
     if(e.target&&e.target.name==='uw_uwexp'){
       var n=d.getElementById('uwNote'); if(n)n.hidden=(e.target.value!=='No');
     }
@@ -1617,6 +1733,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
       :!/^[+\d][\d\s().-]{6,}$/.test(phone)?'We need a phone number he can call.'
       :!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)?'That e-mail address does not look right.'
       :!val('town')?'Which town or area do you live in?'
+      :!val('uw_door')?'Which door are you coming through?'
       :!val('uw_years')?'How long have you worked in general insurance?'
       :classes().length===0?'Tick at least one class you have actually handled.'
       :!val('uw_auth')?'What authority have you held?'
@@ -1670,6 +1787,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
           {section:'At a glance',k:'scan_depth',label:'Depth',value:s[3]},
           {section:'Them',k:'town',label:'Where they live',value:val('town')},
           {section:'Them',k:'when_talk',label:'Best time for a call',value:val('when')},
+          {section:'Experience',k:'uw_door',label:'Door',value:val('uw_door')},
           {section:'Experience',k:'uw_years',label:'Years in general insurance',value:val('uw_years')},
           {section:'Experience',k:'uw_classes',label:'Classes handled',value:classes().join(', ')},
           {section:'Experience',k:'uw_auth',label:'Authority held',value:val('uw_auth')},

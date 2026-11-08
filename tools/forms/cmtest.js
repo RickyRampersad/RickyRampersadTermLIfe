@@ -79,6 +79,10 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   // the markup: both sides named, and every class on one of them
   const sides = await pg.$$eval('#lines .bkh b', e => e.map(x => x.textContent.trim()));
   ok(sides.join('|') === 'Personal lines|Commercial lines', vp.n + ' the book shows both sides, got ' + sides.join('|'));
+  const doors = await pg.$$eval('#you .dh b', e => e.map(x => x.textContent.trim()));
+  ok(doors.length === 2 && /done this/.test(doors[0]) && /head for it/.test(doors[1]),
+     vp.n + ' both doors are offered, got ' + doors.join('|'));
+  ok(!/Chaguanas/.test(await pg.$eval('#hero', e => e.innerText)), vp.n + ' the hero does not lead with the town');
   const lines = await pg.$$eval('#lines .bkt b', e => e.map(x => x.textContent));
   const want = ['Private motor', 'Household and private dwelling', 'Fleet, genuinely',
                 'Commercial property and fire', 'Public and products liability',
@@ -115,6 +119,7 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
     else await e.fill(v || ''); };
   await put('#uName', 'A Candidate'); await put('#uPhone', '868 555 0100');
   await put('#uMail', 'candidate@example.com'); await put('#uTown', 'Couva');
+  await put('input[name=uw_door][value="1 - I have done this"]');
   await put('input[name=uw_years][value="6 to 10 years"]');
   await put('input[name=uw_uwexp][value="Yes, with an insurer"]');
   await put('#uUwWhere', 'Four years motor and property with an insurer, then agency side.');
@@ -148,6 +153,7 @@ for (const vp of [{ width: 1366, height: 900, n: 'laptop' }, { width: 390, heigh
   ok(/claims in the last term/.test(by('file_missed')), 'what they walked past reaches him');
   ok(by('uw_qstatus') === 'Diploma', 'the qualification status reaches him');
   ok(by('uw_uwexp') === 'Yes, with an insurer', 'whether they have underwritten reaches him');
+  ok(by('uw_door') === '1 - I have done this', 'which door they came through reaches him');
   ok(/^Meets the bar/.test(by('scan_bar')), 'the bar is worked out: ' + by('scan_bar'));
   ok(body.fields[0].k === 'scan_bar', 'the bar is the very first thing in the e-mail');
   ok(body.fields[0].section === 'At a glance', 'the scan line is the first thing in the e-mail');
