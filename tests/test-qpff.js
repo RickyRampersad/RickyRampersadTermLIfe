@@ -61,7 +61,8 @@ const readTabs = env => (k, tab) => {
   env.todayISO_ = () => TODAY;
   env.__mkSheet('Access', 1, ['Name', 'StaffId', 'Email', 'Password', 'Role', 'Unit', 'Active'],
     [['Ricky Rampersad', 'ricky', 'ricky@example.com', '1', 'Branch Manager', 'Branch', 'Yes'],
-     ['Akaash Kalladeen', 'akaash', 'akaash@example.com', '1', 'Unit Manager', 'Unit', 'Yes']]);
+     ['Akaash Kalladeen', 'akaash', 'akaash@example.com', '1', 'Unit Manager', 'Unit', 'Yes'],
+     ['Kamla Dookran', 'kamla', 'kamla@example.com', '1', 'BMA', 'Branch', 'Yes']]);
   env.bookRows_ = readTabs(env);
   const AG = { 'a-ann': { key: 'a-ann', name: 'Ann Agent', agentName: 'Ann Agent', email: 'ann@example.com', code: 'A1' },
                'a-bob': { key: 'a-bob', name: 'Bob Agent', agentName: 'Bob Agent', email: 'bob@example.com', code: 'A2' },
@@ -96,7 +97,8 @@ const readTabs = env => (k, tab) => {
   ok('before seven, nothing', env.ffChaseTick_(TODAY, 6 * 60 + 50).length === 0 && !mails.length);
   let out = env.ffChaseTick_(TODAY, 7 * 60 + 10);
   ok('the two with none are asked', mails.length === 2 && mails.map(m => m.to).sort().join() === 'ann@example.com,dee@example.com', JSON.stringify(mails.map(m => m.to)));
-  ok('sales support copied', mails.every(m => /rickyrampersadsalessupport@myguardiangroup\.com/.test(m.cc)));
+  // 2 Nov 2026: "Support is not copied at all, only the BMA, which is Kamla Dookran" (and the direct manager)
+  ok('the BMA copied, not sales support', mails.every(m => /kamla@example\.com/.test(m.cc) && !/salessupport/.test(m.cc)), mails.map(m => m.cc).join(' | '));
   const ann = mails.find(m => m.to === 'ann@example.com');
   ok('it says when the last one was, and asks for a response', /Fact finds: your response is required · Ann Agent/.test(ann.subject) && /Tue 15 Sep/.test(ann.htmlBody) && /34 days ago/.test(ann.htmlBody));
   ok('the button is a week link to the response page', /f=agff/.test(ann.htmlBody) && /d=2026-10-19/.test(ann.htmlBody));
@@ -121,7 +123,7 @@ const readTabs = env => (k, tab) => {
   const R = env.__sheets['Fact Find Responses'];
   ok('the answer is kept', R && R._grid.length === 2 && R._grid[1][1] === 'a-ann' && R._grid[1][6] === 'leads' && R._grid[1][7] === 2, R && JSON.stringify(R._grid[1]));
   ok('help asked becomes the manager\'s task', tasks.length === 1 && tasks[0][1].OwnerId === '005A' && /\[Fact finds\] Ann Agent: need names to call · commits 2 by Friday/.test(tasks[0][1].Subject), JSON.stringify(tasks[0] && tasks[0][1].Subject));
-  ok('the agent gets it back, the manager and sales support copied', mails.length === 1 && mails[0].to === 'ann@example.com' && /akaash@example\.com/.test(mails[0].cc) && /salessupport/.test(mails[0].cc));
+  ok('the agent gets it back, the manager and the BMA copied, not sales support', mails.length === 1 && mails[0].to === 'ann@example.com' && /akaash@example\.com/.test(mails[0].cc) && /kamla@example\.com/.test(mails[0].cc) && !/salessupport/.test(mails[0].cc), mails[0] && mails[0].cc);
   ok('and the page thanks them', /Thank you · your response is in/.test(page) && /Your manager has it as a task/.test(page));
 
   console.log('\nWednesday, the silent are reminded:\n');

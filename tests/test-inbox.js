@@ -16,6 +16,12 @@
 // with the check-in, then urgent, drafts, inbox, important, today so far; a
 // drafted note posts only with its tick; everything he does is logged under its
 // task type; the 5:00 mail has one button; the 11:00 mail says what is dealt with.
+//
+// EVERY CLIENT, POLICY NUMBER, REGISTRATION AND ADDRESS HERE IS INVENTED,
+// and has to stay that way: GitHub Pages serves this repository from its
+// root, so `tests/` is on the open web. Real ones were in this file until
+// 5 November 2026. When adding a case, invent the client — the fixture is
+// about the arithmetic, and a real name adds nothing to it.
 const { makeEnv } = require('./harness');
 const env = makeEnv();
 let fails = 0;
@@ -37,7 +43,7 @@ env.openQueries_ = () => []; env.ff360Feed_ = () => null; env.goalFor_ = () => n
 let SIGNED = ''; env.signedInAt_ = () => SIGNED; env.signInFromPage_ = () => { const first = !SIGNED; SIGNED = SIGNED || '05:42'; return { at: SIGNED, first }; };
 env.unitBook_ = () => ({ agents: env.unitAgents_('ricky'), closedYday: 0, closedToday: [], open: [] });
 env.bmWaiting_ = () => ({ mine: [], byOwner: {},
-  ask: [{ id: '00TA1', subject: 'Bond letter for RPM Express', by: 'Kamla Dookran', said: 'Mr Rampersad, can I send the revised bond letter to the client?', at: DAY + 'T09:00:00.000Z' }],
+  ask: [{ id: '00TA1', subject: 'Bond letter for Harbour Point Logistics', by: 'Kamla Dookran', said: 'Mr Rampersad, can I send the revised bond letter to the client?', at: DAY + 'T09:00:00.000Z' }],
   ignored: [{ id: '00TI1', subject: 'Call the Soodeen family', owner: 'Azariah Griffith', due: '2026-10-16' }] });
 const T = (id, subj, ty, due) => ({ Id: id, Subject: subj, Task_Type__c: ty, ActivityDate: due, Status: 'In Progress', CreatedDate: '2026-10-01T12:00:00.000+0000', LastModifiedDate: '2026-10-10T12:00:00.000+0000', What: { Name: '' }, Who: { Name: '' }, Agent__r: null });
 const MINE = [T('00TM1', 'Investment Discussions - Neal Balroop', 'Opportunity', '2026-09-18'), T('00TM2', 'Refund of premium receipt for Tanya', 'Servicing', '2026-10-15'), T('00TM3', 'Staff appraisal for Liz', 'Lic/Staffing/SA/HR', '2026-10-30')];
@@ -57,10 +63,10 @@ const msg = (id, from, subject, body, at, star) => ({ getId: () => id, getFrom: 
 const mirror = (from, text, quotedSubject) => 'querymypolicy.com has received a new message.\n----------\n\n    From ' + from + ':\n\n' + text + '\n\n________________________________\n\nFrom: Someone\n\nSent: Monday\n\nSubject: ' + quotedSubject + '\n\nEarlier text\n\n----------\n\nOpen Conversations: https://conversations.godaddy.com/x';
 const GD = 'notifications@mail.conversations.godaddy.com';
 let INBOX = [
-  { getMessages: () => [msg('m1', GD, 'New message for querymypolicy.com', mirror('licorish1@hotmail.com', 'Good evening Mr. Rampersad, I would like to cancel my policy. Please call me.', 'Re: Reminder: Anthony has resigned and is no longer with Guardian Life.'), ago(5))] },
-  { getMessages: () => [msg('m2', 'Kamla Dookran <Kamla.Dookran@myguardiangroup.com>', 'Revised bond letter for RPM Express', 'Mr Rampersad, please approve the revised bond letter today?', ago(4))] },
-  { getMessages: () => [msg('m3', GD, 'New message for querymypolicy.com', mirror('crmssalsupport@myguardiangroup.com', 'Please see responses highlighted below.', 'RE: Premium Payment Reminder - TT FHO 1285531 - Kheron Khan'), ago(6)),
-                        msg('m4', GD, 'Re: New message for querymypolicy.com', mirror('ricky.rampersad@myguardiangroup.com', 'Ayanna, thank you for the answers. Pawan has this for collection.', 'RE: Premium Payment Reminder - TT FHO 1285531 - Kheron Khan'), ago(3))] },
+  { getMessages: () => [msg('m1', GD, 'New message for querymypolicy.com', mirror('pretend.client@example.com', 'Good evening Mr. Rampersad, I would like to cancel my policy. Please call me.', 'Re: Reminder: Marlon has resigned and is no longer with Guardian Life.'), ago(5))] },
+  { getMessages: () => [msg('m2', 'Kamla Dookran <Kamla.Dookran@myguardiangroup.com>', 'Revised bond letter for Harbour Point Logistics', 'Mr Rampersad, please approve the revised bond letter today?', ago(4))] },
+  { getMessages: () => [msg('m3', GD, 'New message for querymypolicy.com', mirror('crmssalsupport@myguardiangroup.com', 'Please see responses highlighted below.', 'RE: Premium Payment Reminder - TT FHO 0000001 - Sample Client'), ago(6)),
+                        msg('m4', GD, 'Re: New message for querymypolicy.com', mirror('ricky.rampersad@myguardiangroup.com', 'Ayanna, thank you for the answers. Pawan has this for collection.', 'RE: Premium Payment Reminder - TT FHO 0000001 - Sample Client'), ago(3))] },
   { getMessages: () => [msg('m5', 'no-reply@alliedsecurityglobal.com', 'Alarm armed', 'Your alarm was armed.', ago(4))] },
   { getMessages: () => [msg('m6', 'rampersadricky@gmail.com', 'Your day · Branch Manager · Tue 20 Oct', 'Good morning, Mr Rampersad.', ago(4))] },
   { getMessages: () => [msg('m7', 'Kamla Dookran <Kamla.Dookran@myguardiangroup.com>', 'Automatic reply: Renewal Due', 'I am out of office.', ago(4))] },
@@ -75,14 +81,14 @@ console.log('\nThe scrub:\n');
 let r = env.inboxScrub_(DAY, 'am');
 ok('reads the inbox, not promotions or social', /in:inbox after:\d+ -category:promotions -category:social/.test(searches[0]), searches[0]);
 let R = rows();
-ok('two to act on: the client asking to cancel, and Kamla\'s approval', R.length === 2 && R.some(x => x.Email === 'licorish1@hotmail.com') && R.some(x => /bond letter/.test(x.Subject)), JSON.stringify(R.map(x => x.Email + ' ' + x.Subject)));
-const pearl = R.find(x => x.Email === 'licorish1@hotmail.com'), bond = R.find(x => /bond letter/.test(x.Subject));
-ok('a branch-mailbox copy is unwrapped to its real sender and subject', pearl.Source === 'Branch mailbox' && /^Re: Reminder: Anthony has resigned/.test(pearl.Subject), pearl.Subject);
+ok('two to act on: the client asking to cancel, and Kamla\'s approval', R.length === 2 && R.some(x => x.Email === 'pretend.client@example.com') && R.some(x => /bond letter/.test(x.Subject)), JSON.stringify(R.map(x => x.Email + ' ' + x.Subject)));
+const pearl = R.find(x => x.Email === 'pretend.client@example.com'), bond = R.find(x => /bond letter/.test(x.Subject));
+ok('a branch-mailbox copy is unwrapped to its real sender and subject', pearl.Source === 'Branch mailbox' && /^Re: Reminder: Marlon has resigned/.test(pearl.Subject), pearl.Subject);
 ok('a client wanting to cancel is to act on now; a request for approval, today', pearl.Urgency === 'now' && bond.Urgency === 'today', pearl.Urgency + ' ' + bond.Urgency);
 ok('no automated mail, auto-reply, newsletter or the tracker\'s own mail', !R.some(x => /alarm|automatic reply|five stocks|your day/i.test(x.Subject)));
-ok('a conversation he answered last is not listed', !R.some(x => /Kheron Khan/.test(x.Subject)));
+ok('a conversation he answered last is not listed', !R.some(x => /Sample Client/.test(x.Subject)));
 const LOG = () => { const t = env.SpreadsheetApp.getActive().getSheetByName('My Day Log'); return t ? t._grid.slice(1) : []; };
-ok('his Guardian reply is on his day\'s log as an e-mail, under its task type', LOG().some(x => x[2] === 'email' && /^Replied: Premium Payment Reminder - TT FHO 1285531/.test(x[4]) && x[3] === 'Renewals & billing'), JSON.stringify(LOG()));
+ok('his Guardian reply is on his day\'s log as an e-mail, under its task type', LOG().some(x => x[2] === 'email' && /^Replied: Premium Payment Reminder - TT FHO 0000001/.test(x[4]) && x[3] === 'Renewals & billing'), JSON.stringify(LOG()));
 ok('the tracker\'s own mail is not counted as his', !LOG().some(x => /Your day/.test(x[4])));
 r = env.inboxScrub_(DAY, 'hour');
 ok('read again, nothing is added twice', rows().length === 2 && r.added === 0, JSON.stringify(r));
@@ -109,7 +115,7 @@ const day = page.slice(page.indexOf('data-sec="day"'), page.indexOf('data-sec="r
 const at = id => day.indexOf('id="' + id + '"');
 ok('in his order: urgent, drafts, inbox, important, today so far', at('md-urgent') > -1 && at('md-urgent') < at('md-drafts') && at('md-drafts') < at('u-inbox') && at('u-inbox') < at('md-imp') && at('md-imp') < at('md-log'));
 const urg = day.slice(at('md-urgent'), at('md-drafts'));
-ok('urgent: the inbox to act on now, and Kamla waiting on him', /Inbox · licorish1@hotmail\.com/.test(urg) && /Kamla is waiting on you · Bond letter for RPM Express/.test(urg) && /data-go="d00TA1"/.test(urg));
+ok('urgent: the inbox to act on now, and Kamla waiting on him', /Inbox · pretend\.client@example\.com/.test(urg) && /Kamla is waiting on you · Bond letter for Harbour Point Logistics/.test(urg) && /data-go="d00TA1"/.test(urg));
 ok('and the long-overdue task of his', /Investment Discussions - Neal Balroop/.test(urg) && /data-go="m00TM1"/.test(urg));
 const dr = day.slice(at('md-drafts'), at('u-inbox'));
 ok('drafts: the e-mail waiting in Gmail, with a link to send it', /Your renewal notice/.test(dr) && /#drafts\?compose=r1/.test(dr));

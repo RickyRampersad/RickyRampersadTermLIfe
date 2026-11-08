@@ -5845,6 +5845,28 @@ function tSfHouseholdTasks_(clients, agent, at, by, hhOf, sfw) {
       var lead = T_SUPPORT.SUBJECT + agent.name;
       var exists = tSfQuery_("SELECT Id FROM Task WHERE IsClosed = false AND WhatId = '" + svcSoqlLit_(head.p.account) + "' AND Subject LIKE '" + svcSoqlLit_(lead) + "%' LIMIT 1");
       if (exists.length) { out.skipped++; return; }
+      /* Ricky, 4 Nov 2026: when a client already has an open orphan task, the naming goes on that task's Chatter and no
+         new task is opened. On 3 Nov this routine opened 65 second tasks beside open ones. A new task, when one is needed,
+         sits on the client's policy record (CLIENT_PORTFOLIO__c), never on the household account. */
+      var whos = [], whats = [];
+      m.forEach(function (x) { if (x.p.contact) whos.push(x.p.contact); (x.p.recs || []).forEach(function (r) { if (r.id) whats.push(r.id); }); });
+      var lit = function (a) { return a.map(function (v) { return "'" + svcSoqlLit_(v) + "'"; }).join(','); };
+      var openQ = [];
+      if (whos.length) openQ.push('WhoId IN (' + lit(whos) + ')');
+      if (whats.length) openQ.push('WhatId IN (' + lit(whats) + ')');
+      var open = openQ.length ? tSfQuery_("SELECT Id, Subject FROM Task WHERE IsClosed = false AND Subject LIKE '%Orphan%' AND (" + openQ.join(' OR ') +
+        ") ORDER BY LastModifiedDate DESC LIMIT 1") : [];
+      if (open.length) {
+        var note = 'AGENT NAMED: ' + agent.name + ', ' + on + ' (by ' + tNiceName_(by) + '). ' + supFirst + ': follow up with ' + agFirst +
+          ' on contact made with the client and the outcome, and log ' + agFirst + '’s feedback here. Keep this task open until the service questionnaire is signed.';
+        try {
+          var today = tSfQuery_("SELECT Id FROM FeedItem WHERE ParentId = '" + svcSoqlLit_(open[0].Id) + "' AND CreatedDate = TODAY ORDER BY CreatedDate DESC LIMIT 1");
+          if (today.length) tSfSend_('post', '/sobjects/FeedComment', { FeedItemId: today[0].Id, CommentBody: note });
+          else tSfSend_('post', '/sobjects/FeedItem', { ParentId: open[0].Id, Body: note });
+          out.noted = (out.noted || 0) + 1; out.tasks.push({ id: open[0].Id, subject: open[0].Subject, noted: true });
+        } catch (e) { out.why = 'note on the open task failed: ' + String(e && e.message ? e.message : e).slice(0, 150); }
+        return;
+      }
       var names = m.map(function (x) { return x.c.client; });
       var subject = (lead + ' re ' + (names.length > 2 ? names[0] + ' and ' + (names.length - 1) + ' family members' : names.join(' and ')) + ' (assigned ' + on + ')').slice(0, 255);
       var lines = ['Orphan Project. Agent ' + agent.name + ' assigned ' + on + ' by ' + tNiceName_(by) + '.'];
@@ -5859,7 +5881,8 @@ function tSfHouseholdTasks_(clients, agent, at, by, hhOf, sfw) {
       });
       lines.push('');
       lines.push(supFirst + ': follow up with ' + agFirst + ' on contact made with the client and the outcome. Log ' + agFirst + '’s feedback in the task trail. Keep this task open until the service questionnaire is signed.');
-      var rec = { Subject: subject, Status: 'Not Started', Priority: 'High', ActivityDate: day, WhatId: head.p.account, Description: lines.join('\n') };
+      var pols = head.p.recs || [], pol = pols.filter(function (r) { return r.id && /premium paying|in force|paid up|waiver/i.test(r.st); })[0] || pols.filter(function (r) { return r.id; })[0];
+      var rec = { Subject: subject, Status: 'Not Started', Priority: 'High', ActivityDate: day, WhatId: pol ? pol.id : head.p.account, Description: lines.join('\n') };
       if (head.p.contact) rec.WhoId = head.p.contact;
       if (owner) rec.OwnerId = owner;
       var made = null;
@@ -6233,10 +6256,32 @@ function tSfNoteTasks_(tok, cno, ha, body) {
     var x = tSfOpenTasks_(tok, cno, ha);
     if (!x.recs.length) return { posted: 0, note: 'Salesforce has none of this client’s policies' };
     if (!x.open.length) return { posted: 0, note: 'no open task' };
-    var n = 0, fails = [];
-    x.open.forEach(function (t) { try { tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.Id, Body: body }); n++; } catch (e) { fails.push(String(e && e.message ? e.message : e).slice(0, 80)); } });
-    return { posted: n, note: n ? 'posted to ' + tN_(n, 'open task', 'open tasks') : 'not posted: ' + fails[0] };
+    // One task, on its trail (3 Nov 2026, "chatter on the trails"): the same line on every open task of a client
+    // doubled the noise, and a new post beside a live thread read as a fresh ask.
+    var t1 = tSfOneTask_(x.open), n = 0, fails = [];
+    try { tSfTrailPost_(t1.Id, body); n = 1; } catch (e) { fails.push(String(e && e.message ? e.message : e).slice(0, 80)); }
+    return { posted: n, note: n ? 'posted to 1 open task (' + tTaskSubject_(t1.Subject) + ')' : 'not posted: ' + fails[0] };
   } catch (e) { return { posted: 0, note: 'not posted: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
+}
+/** Of a client's open tasks, the one the board's lines go on: the orphan assignment task, else the newest (the list
+ *  comes newest first). */
+function tSfOneTask_(open) {
+  return open.filter(function (t) { return /^Orphan assignment/i.test(String(t.Subject || '')); })[0] || open[0];
+}
+/** THE TRAIL RULE for the board (Ricky, 3 Nov 2026): a reply in the task's live thread, under the latest
+ *  "Branch Manager · Ricky Rampersad" post, else the latest post; a new post only when the task has no Chatter or the
+ *  latest post is more than 14 days old, or the reply is refused. Throws when even the post is refused. */
+function tSfTrailPost_(taskId, body) {
+  var rows = [];
+  try { rows = tSfQuery_("SELECT Id, CreatedDate, Body FROM FeedItem WHERE ParentId = '" + String(taskId).replace(/'/g, '') +
+    "' AND Type IN ('TextPost','ContentPost','LinkPost') ORDER BY CreatedDate DESC LIMIT 25") || []; } catch (e) { rows = []; }
+  var fresh = rows.length && (Date.now() - new Date(String(rows[0].CreatedDate).replace(/\+0000$/, 'Z')).getTime()) <= 14 * 86400000;
+  if (fresh) {
+    var pick = rows.filter(function (r) { return /^\s*Branch Manager · Ricky Rampersad/.test(String(r.Body || '')); })[0] || rows[0];
+    try { tSfSend_('post', '/sobjects/FeedComment', { FeedItemId: pick.Id, CommentBody: body }); return 'comment'; } catch (e) {}
+  }
+  tSfSend_('post', '/sobjects/FeedItem', { ParentId: taskId, Body: body });
+  return 'post';
 }
 /** A person's name as a line in Salesforce reads it: the Agent Skill Bank's capitals ("SASHA LALLA") in title case, any other spelling as it is. */
 function tNiceName_(name) {
@@ -6261,7 +6306,7 @@ function tSfLogCall_(tok, cno, client, who, roleWord, outcome, extra, back, at) 
     var body = 'From the assignment board · ' + who + (roleWord ? ' (' + roleWord + ')' : '') + ', ' + when + ': ' + outcome + (extra ? ' · ' + extra : '') +
       (back ? ' · call-back: ' + (back === 'agent' ? 'a licensed agent should call' : back === 'branch' ? 'the branch should call' : back === 'dnc' ? 'do not call again' : 'cleared') : '');
     var n = 0, fails = [];
-    x.open.forEach(function (t) { try { tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.Id, Body: body }); n++; } catch (e) { fails.push(String(e && e.message ? e.message : e).slice(0, 80)); } });
+    if (x.open.length) { var t1 = tSfOneTask_(x.open); try { tSfTrailPost_(t1.Id, body); n = 1; } catch (e) { fails.push(String(e && e.message ? e.message : e).slice(0, 80)); } }
     var seen = x.open.map(function (t) { return { id: t.Id, subject: tTaskSubject_(t.Subject), owner: t.Owner ? t.Owner.Name : '', due: t.ActivityDate ? tDmy_(String(t.ActivityDate)) : '', status: String(t.Status || '') }; });
     if (x.open.length) return { on: true, posted: n, opened: '', tasks: seen, note: n ? 'logged on ' + tN_(n, 'open task', 'open tasks') : 'not logged: ' + fails[0] };
     if (!T_SFTASK.OPEN_ON_LOG) return { on: true, posted: 0, opened: '', tasks: [], note: 'no open task' };

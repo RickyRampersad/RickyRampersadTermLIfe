@@ -97,6 +97,10 @@
   .hint{font-size:12px;color:var(--muted);margin-top:6px}
   .err{color:var(--bad);font-size:13px;font-weight:700;margin-top:10px}
   .search{display:flex;gap:8px}
+  .oftno{font-family:ui-monospace,Menlo,monospace;letter-spacing:.02em;margin-left:6px}
+  .oftdone{margin:14px auto;max-width:420px;text-align:center}
+  .oftbig{font:700 26px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.04em;padding:10px;margin-top:8px;border:2px dashed var(--gold);border-radius:12px}
+  .oftbig small{display:block;font:500 12px/1.4 inherit;opacity:.75;letter-spacing:0}
   .search input{flex:1}
   .chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--text);font-weight:500;margin-top:12px;cursor:pointer}
   .chk input{width:20px;height:20px;accent-color:var(--gold);flex:none;margin-top:1px}
@@ -401,6 +405,9 @@
   <section id="tab-trans" hidden>
     <div class="card"><h2>Build a transmittal</h2><p class="hint" style="margin-top:-6px">Receive the papers on the Queue, then press <b>Build transmittal</b> on a department: it is numbered, stamped sent and printed.</p>
       <button class="btn gold" type="button" id="goQueue" style="margin-top:10px">Go to the Queue</button></div>
+    <div class="card"><h2>Find an OFT kit</h2><p class="hint" style="margin-top:-6px">Type the kit's tracking number (RRB-OFT-…), the policy number or the client's name.</p>
+      <div class="search"><input id="oftQ" type="search" placeholder="e.g. RRB-OFT-26-11-05-004" autocomplete="off" enterkeyhint="search"><button class="btn gold" type="button" id="oftGo">Find</button></div>
+      <div id="oftOut"></div></div>
     <div class="card"><h2>Who is sending them</h2><div id="transWho"></div></div>
     <div class="card"><h2>Transmittals<span class="sp"></span>
       <select id="transDays" style="width:auto;min-height:34px;padding:5px 8px;font-size:12px"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option></select></h2>
@@ -678,6 +685,9 @@
     if (forced) return forced;
     return d && d.to.length ? d.to[0][0] : '';
   }
+  /* A document as shown in any list: an OFT kit carries its tracking number. */
+  function docName(l) { return esc(l.document) + (l.oftNo ? ' <span class="tag info oftno">' + esc(l.oftNo) + '</span>' : ''); }
+  function isOft(name) { return S.cfg && S.cfg.oftDoc && name === S.cfg.oftDoc; }
   function addItem(name) {
     var d = DOC[name] || { noPolicy: false };
     var pol = S.policies.length === 1 ? S.policies[0] : null;
@@ -685,7 +695,7 @@
       var last = S.items[S.items.length - 1];
       if (last.policy) pol = { policy: last.policy, portfolioId: last.portfolioId, type: last.type };
     }
-    S.items.push({ document: name, department: suggestFor(name), policy: d.noPolicy ? '' : (pol ? pol.policy : ''),
+    S.items.push({ document: name, department: isOft(name) ? S.cfg.oft : suggestFor(name), policy: d.noPolicy ? '' : (pol ? pol.policy : ''),
                    portfolioId: d.noPolicy || !pol ? '' : pol.portfolioId, type: pol ? pol.type : '', quantity: 1, note: '' });
     renderItems(); gateSteps();
   }
@@ -711,6 +721,12 @@
         : '<div class="sugg off">Changed by you. It usually goes to ' + esc(usual[0]) + ' (' + usual[2] + '% of ' + d.n.toLocaleString() + ')</div>') :
         '<div class="sugg off">New document for the branch: choose where it goes</div>';
       var withs = (d.with || []).filter(function (w) { return !have[w[0]]; });
+      if (isOft(it.document)) {
+        return '<div class="item oft" data-i="' + i + '"><div class="head"><b>' + esc(it.document) + '</b>' +
+          '<button type="button" class="x" data-rm="' + i + '" aria-label="Remove">×</button></div>' +
+          '<div class="grid"><div><label>Policy</label><select data-f="policy">' + polOptions(it.policy) + '</select></div></div>' +
+          '<div class="sugg">✓ One kit per line. Its tracking number (' + esc((S.cfg.oftPrefix || 'RRB-OFT-') ) + '…) is made when you log it: write it on the kit.</div></div>';
+      }
       return '<div class="item" data-i="' + i + '"><div class="head"><b>' + esc(it.document) + '</b>' +
         '<button type="button" class="x" data-rm="' + i + '" aria-label="Remove">×</button></div>' +
         '<div class="grid">' +
@@ -867,6 +883,8 @@
     $('result').hidden = false;
     $('result').innerHTML = '<div style="font-size:40px">✓</div><h2 style="justify-content:center">' + (contract ? 'Contract logged' : 'Logged') + '</h2>' +
       '<div class="ref">' + esc(r.ref) + '</div>' +
+      (r.oftNos && r.oftNos.length ? '<div class="oftdone"><b>Write ' + (r.oftNos.length > 1 ? 'these tracking numbers on the kits' : 'this tracking number on the kit') + '</b>' +
+        r.oftNos.map(function (o) { return '<div class="oftbig">' + esc(o.no) + '<small>' + esc(o.policy || '') + '</small></div>'; }).join('') + '</div>' : '') +
       '<p class="hint" style="font-size:14px">' + (contract
         ? 'Deliver it to the client by <b>' + esc(r.due) + '</b> and record the handover in the Delivery Book.'
         : r.handedTo
@@ -941,7 +959,7 @@
             '<select data-handsel="' + esc(a.ref) + '" style="flex:1;min-width:180px" aria-label="Who you handed them to">' + handOptions(false) + '</select>' +
             '<button class="btn gold sm" data-hand="' + esc(a.ref) + '">Handed in</button></div>' : '') +
           ls.map(function (l) {
-            return '<div class="ln" style="grid-template-columns:1fr auto"><div class="t">' + esc(l.document) + (l.quantity > 1 ? ' × ' + l.quantity : '') +
+            return '<div class="ln" style="grid-template-columns:1fr auto"><div class="t">' + docName(l) + (l.quantity > 1 ? ' × ' + l.quantity : '') +
               '<small>' + esc(l.policy || 'no policy') + ' · ' + esc(l.type === S.cfg.types[1] ? 'to deliver to the client' : l.department) + '</small>' + stampsOf(l) + '</div>' +
               '<div style="text-align:right">' + statusTag(l) + (l.bag ? '<br>' + bagTag(l) : '') + '</div></div>';
           }).join('') + '</div>';
@@ -1001,7 +1019,7 @@
 
     $('qLate').hidden = !late.length;
     $('qLateList').innerHTML = late.map(function (l) {
-      return '<div class="ln late" style="grid-template-columns:1fr auto"><div class="t"><b>' + esc(l.document) + '</b> · ' + esc(l.client) +
+      return '<div class="ln late" style="grid-template-columns:1fr auto"><div class="t"><b>' + docName(l) + '</b> · ' + esc(l.client) +
         '<small>' + esc(l.department) + ' · received ' + esc(fmt(l.receivedAt, true)) + ' by ' + esc(l.receivedBy) + ' · ' + plural(l.daysHeld, 'working day') + '</small>' +
         (l.reason ? '<div class="stamps">Reason: ' + esc(l.reason) + (l.reasonFresh ? '' : ' <span class="tag warn">stale</span>') + '</div>' : '') + '</div>' +
         '<div><button class="btn ghost sm" data-why="' + esc(l.id) + '">Give reason</button></div></div>';
@@ -1019,7 +1037,7 @@
         '<span class="sp"></span><button class="btn gold sm" data-build>Build transmittal</button></div>' +
         ls.map(function (l) {
           return '<div class="ln' + (l.late ? ' late' : '') + '"><input type="checkbox" checked data-id="' + esc(l.id) + '">' +
-            '<div class="t"><b>' + esc(l.document) + '</b>' + (l.quantity > 1 ? ' × ' + l.quantity : '') + ' · ' + esc(l.client) +
+            '<div class="t"><b>' + docName(l) + '</b>' + (l.quantity > 1 ? ' × ' + l.quantity : '') + ' · ' + esc(l.client) +
             '<small>' + esc(l.policy || 'no policy') + ' · ' + esc(l.agent) + ' · received ' + esc(fmt(l.receivedAt, true)) + ' by ' + esc(l.receivedBy) + '</small>' +
             (l.routingChanged ? '<div class="stamps">Routing corrected: ' + esc(l.routingChanged) + '</div>' : '') +
             (l.reason ? '<div class="stamps">Reason: ' + esc(l.reason) + '</div>' : '') + '</div>' +
@@ -1049,7 +1067,7 @@
         '<span class="sp"></span>' + (toMe ? '<button class="btn ghost sm" data-nwm>Not with me</button>' : '') +
         '<button class="btn ghost sm" data-ret>Return</button><button class="btn gold sm" data-recv>' + (toMe ? 'Accept &amp; sign' : 'Receive &amp; sign') + '</button></div>' +
         ls.map(function (l) {
-          return '<div class="ln"><input type="checkbox" checked data-id="' + esc(l.id) + '"><div class="t"><b>' + esc(l.document) + '</b>' +
+          return '<div class="ln"><input type="checkbox" checked data-id="' + esc(l.id) + '"><div class="t"><b>' + docName(l) + '</b>' +
             (l.quantity > 1 ? ' × ' + l.quantity : '') + (l.itemNote ? ' (' + esc(l.itemNote) + ')' : '') +
             '<small>' + esc(l.policy || 'no policy') + ' · logged ' + esc(fmt(l.loggedAt, true)) + (l.loggedBy !== l.agent ? ' by ' + esc(l.loggedBy) : '') + '</small>' +
             (l.flags ? '<div>' + l.flags.split('; ').map(function (f) { return '<span class="tag warn">' + esc(f) + '</span>'; }).join('') + '</div>' : '') +
@@ -1099,7 +1117,7 @@
     wireTrans($('qToday'), true);
     $('qRetCard').hidden = !returned.length;
     $('qRet').innerHTML = returned.map(function (l) {
-      return '<div class="ln" style="grid-template-columns:1fr"><div class="t"><b>' + esc(l.document) + '</b> · ' + esc(l.client) +
+      return '<div class="ln" style="grid-template-columns:1fr"><div class="t"><b>' + docName(l) + '</b> · ' + esc(l.client) +
         '<small>' + esc(l.agent) + ' · ' + esc(fmt(l.returnedAt)) + ': ' + esc(l.returnReason) + '</small></div></div>';
     }).join('');
   }
@@ -1165,13 +1183,25 @@
   function build(dept, ids, reasons, tracking) {
     var oft = dept === S.cfg.oft;
     if (oft && !tracking) {
-      modal('<h3>FedEx tracking number</h3><label for="tTrack">Tracking #</label><input id="tTrack" type="text" placeholder="80 1285 0000">' +
+      var ob = S.cfg.oftBranches || { list: [], current: '' };
+      modal('<h3>Which collation branch?</h3><p class="hint">The OFT kits go to this quarter\'s collation branch. It prints on the transmittal.</p>' +
+        '<label for="tColl">Collation branch</label><select id="tColl">' +
+        ob.list.map(function (n) { return '<option' + (n === ob.current ? ' selected' : '') + '>' + esc(n) + '</option>'; }).join('') +
+        '<option value="__new"' + (ob.list.length ? '' : ' selected') + '>Another branch…</option></select>' +
+        '<div id="tCollNew"' + (ob.list.length ? ' hidden' : '') + '><label for="tCollName">Branch name</label><input id="tCollName" type="text" maxlength="80" placeholder="e.g. San Fernando Branch"></div>' +
         '<div class="err" id="mErr" hidden></div><div class="acts"><button class="btn ghost" id="mNo">Cancel</button><button class="btn gold" id="mYes">Continue</button></div>');
+      $('tColl').onchange = function () { $('tCollNew').hidden = $('tColl').value !== '__new'; };
       $('mNo').onclick = closeModal;
-      $('mYes').onclick = function () { var t = $('tTrack').value.trim(); if (!t) return showErr($('mErr'), 'Enter the tracking number.'); closeModal(); build(dept, ids, reasons, t); };
+      $('mYes').onclick = function () {
+        var t = $('tColl').value === '__new' ? $('tCollName').value.trim() : $('tColl').value;
+        if (!t) return showErr($('mErr'), 'Choose or type the collation branch.');
+        closeModal(); build(dept, ids, reasons, t);
+      };
       return;
     }
-    api('lb.transmittal', { ids: ids, reasons: reasons, tracking: tracking || '' }).then(function (r) {
+    api('lb.transmittal', { ids: ids, reasons: reasons, tracking: oft ? '' : (tracking || ''), collation: oft ? tracking : '' }).then(function (r) {
+      if (r.transmittal && oft) { var ob2 = S.cfg.oftBranches = S.cfg.oftBranches || { list: [], current: '' };
+        if (ob2.list.indexOf(tracking) < 0) ob2.list.unshift(tracking); ob2.current = tracking; }
       if (r.needsReasons) {
         modal('<h3>Reasons first</h3><p class="hint">These were received before today, or today after ' + S.queue.cutoff + ':00. ' +
           'The reason prints on the transmittal beside the two dates.</p>' +
@@ -1205,7 +1235,7 @@
       '<table><thead><tr><th>#</th><th>CLIENT</th><th>POLICY #</th><th>DOCUMENT</th><th>QTY</th><th>AGENT</th><th>LOG REF</th><th>DATE COLLECTED</th><th>DATE SENT</th><th>REASON IF NOT SAME DAY</th></tr></thead><tbody>' +
       L.map(function (l, i) {
         var lateRow = l.sameDay === false;
-        return '<tr class="' + (lateRow ? 'late' : '') + '"><td>' + (i + 1) + '</td><td>' + esc(l.client) + '</td><td>' + esc(l.policy) + '</td><td>' + esc(l.document) +
+        return '<tr class="' + (lateRow ? 'late' : '') + '"><td>' + (i + 1) + '</td><td>' + esc(l.client) + '</td><td>' + esc(l.policy) + '</td><td>' + docName(l) +
           (l.itemNote ? ' (' + esc(l.itemNote) + ')' : '') + '</td><td>' + (l.quantity || 1) + '</td><td>' + esc(l.agent) + '</td><td>' + esc(l.ref) + '</td>' +
           '<td>' + esc(fmtDay(l.receivedAt)) + '</td><td>' + esc(fmtDay(l.sentAt || t.sentAt)) + '</td><td class="why">' + (lateRow ? esc(lastReason(l.reason)) : '') + '</td></tr>';
       }).join('') + '</tbody></table>' +
@@ -1246,6 +1276,22 @@
       });
     });
   }
+  function findOft() {
+    var q = $('oftQ').value.trim();
+    if (!q) return;
+    $('oftOut').innerHTML = '<div class="empty">Looking…</div>';
+    api('lb.oft', { q: q }).then(function (r) {
+      $('oftOut').innerHTML = r.kits.length ? r.kits.map(function (l) {
+        var steps = [['Logged', l.loggedAt, l.loggedBy], ['Received', l.receivedAt, l.receivedBy],
+                     ['Sent', l.sentAt, l.sentBy ? l.sentBy + (l.transmittal ? ' · ' + l.transmittal : '') : '']];
+        return '<div class="ln" style="grid-template-columns:1fr auto"><div class="t"><b>' + esc(l.oftNo) + '</b> · ' + esc(l.client) +
+          '<small>' + esc(l.policy) + ' · ' + esc(l.agent) + (l.collation ? ' · to ' + esc(l.collation) : '') + '</small>' +
+          '<div class="stamps">' + steps.filter(function (x) { return x[1]; }).map(function (x) { return esc(x[0]) + ' ' + esc(fmt(x[1], true)) + (x[2] ? ' · ' + esc(x[2]) : ''); }).join(' → ') + '</div></div>' +
+          '<div style="text-align:right">' + statusTag(l) + '</div></div>';
+      }).join('') : '<div class="empty">No OFT kit matches that.</div>';
+    }).catch(function (e) { $('oftOut').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
+  }
+  if ($('oftGo')) { $('oftGo').addEventListener('click', findOft); $('oftQ').addEventListener('keydown', function (e) { if (e.key === 'Enter') findOft(); }); }
   function loadTrans() {
     $('transList').innerHTML = '<div class="empty">Loading…</div>';
     api('lb.transmittals', { days: $('transDays').value }).then(function (r) {
@@ -1390,7 +1436,7 @@
 
 <!-- rrb-views -->
 <script>
-(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{
 (new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
 }catch(e){}})();
 </script>

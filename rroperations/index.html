@@ -241,9 +241,27 @@
     { sec: 'Clients and queries', id: 'motorquote', name: 'Motor quote', ic: 'shield', to: 'alsm', href: '/motor-quote/', si: 'code',
       tags: 'motor quote car vehicle dealer invoice renewal producer jotform new platform',
       blurb: { a: 'Place a motor quote for your client: you are the producer', l: 'Motor quotes for your clients and your team\'s', s: 'A motor quote; renewals go to the renewal portal', m: 'The new motor quote, with Salesforce filled in' } },
+    /* Claims TT, the branch's own intake: the client's page and the desk behind it.
+       Added 5 November 2026 — "I am not seeing claims in my site!". The two pages
+       had been live for days and nothing in the app or the homepage nav pointed at
+       them, so the desk page in particular was unreachable for the people who work
+       it. The desk signs in with a work e-mail and a six-digit code, like the motor
+       quote; the client's page asks for no sign-in at all, because somebody filing
+       a claim is often not a client of ours yet. */
+    { sec: 'Clients and queries', id: 'claim', name: 'File a claim', ic: 'send', to: 'alsm', href: '/claims/', si: 'open',
+      tags: 'claim claims claimstt claims tt file a claim motor health property life pension accident loss death hospital receipt track jotform',
+      blurb: { a: 'File a claim for a client from your phone, documents photographed', l: 'File a claim, and track one for your team', s: 'File a claim for a client: photograph the documents, send it to the desk', m: 'The claim page clients use, and what it asks for' } },
+    { sec: 'Clients and queries', id: 'claimdesk', name: 'Claims desk', ic: 'list', to: 'sm', href: '/claims/staff.html', si: 'code',
+      tags: 'claims desk claims tt staff claims register outstanding documents chase settle guardian claims assessor',
+      blurb: { s: 'Every claim filed, what it is waiting on, and the documents', m: 'Every claim, its reference, its documents and where it stands' } },
     { sec: 'Clients and queries', id: 'factfind', name: 'Fact Find', ic: 'form', to: 'alm', href: 'https://factfind360.com/ffproject', si: 'ff',
       tags: 'fact find factfind360 ff client needs',
       blurb: 'Complete a client fact find' },
+    /* HELP 868 (2 Nov 2026): the branch's WhatsApp assistant, opened from the app. Pilot: shown to the branch manager only until the
+       respond.io workflow answers more than the test number. Widen to 'alsm' then; an agent who taps it before that gets no reply. */
+    { sec: 'Clients and queries', id: 'help868', name: 'HELP 868 on WhatsApp', ic: 'chat', to: 'alsm', href: '/help868/', si: 'open',
+      tags: 'help 868 help868 whatsapp chat clients queries claims updates quotes motor life pension',
+      blurb: { a: 'The branch\'s WhatsApp line for clients: share the HELP 868 page with a client', l: 'The branch\'s WhatsApp line for clients: share the HELP 868 page with a client', s: 'Client WhatsApp line: queries, claims, updates and quotes land here for the team', m: 'Client WhatsApp line: queries, claims, updates and quotes, answered by the team' } },
     { sec: 'Clients and queries', id: 'querypal', name: 'Query Pal', ic: 'chat', to: 'alsm', href: 'https://querymypolicies.netlify.app', si: 'open',
       tags: 'query queries query pal querymypolicy client question complaint',
       blurb: { a: 'Where your clients log a query online: send them the link', l: 'Where clients log a query online', s: 'Where clients log a query; each one lands in your notes to close', m: 'Where clients log a query online' } },
@@ -354,10 +372,10 @@
 
   /* Old names, and where each one is now: the first thing a returning person looks for. */
   var MOVED = {
-    a: [['JotForm quote forms', 'Quote & apply'], ['Orphan app', 'My clients board'], ['JotForm Log Book', 'Log Book'], ['Agent Portal forms', 'Forms, below']],
-    l: [['JotForm quote forms', 'Quote & apply'], ['Orphan app', 'My clients board'], ['JotForm Log Book', 'Log Book'], ['Agent Portal forms', 'Forms, below']],
-    s: [['JotForm quote forms', 'Quote & apply'], ['Orphan app', 'My clients board'], ['JotForm Log Book', 'Log Book'], ['JotForm Delivery Book', 'Delivery Book'], ['Staff Portal forms', 'Forms, below']],
-    m: [['JotForm quote forms', 'Quote & apply'], ['Orphan app', 'My clients board'], ['JotForm Log Book', 'Log Book'], ['JotForm Delivery Book', 'Delivery Book'], ['Portal forms', 'Forms, below']]
+    a: [['JotForm quote forms', 'Quote & apply'], ['JotForm claim forms', 'File a claim'], ['Orphan app', 'My clients board'], ['JotForm Log Book', 'Log Book'], ['Agent Portal forms', 'Forms, below']],
+    l: [['JotForm quote forms', 'Quote & apply'], ['JotForm claim forms', 'File a claim'], ['Orphan app', 'My clients board'], ['JotForm Log Book', 'Log Book'], ['Agent Portal forms', 'Forms, below']],
+    s: [['JotForm quote forms', 'Quote & apply'], ['JotForm claim forms', 'File a claim'], ['Orphan app', 'My clients board'], ['JotForm Log Book', 'Log Book'], ['JotForm Delivery Book', 'Delivery Book'], ['Staff Portal forms', 'Forms, below']],
+    m: [['JotForm quote forms', 'Quote & apply'], ['JotForm claim forms', 'File a claim'], ['Orphan app', 'My clients board'], ['JotForm Log Book', 'Log Book'], ['JotForm Delivery Book', 'Delivery Book'], ['Portal forms', 'Forms, below']]
   };
 
   /* Each role's day, in plain words: the first thing on the screen after signing in (18 October 2026: "a proper layout
@@ -520,7 +538,7 @@
 
 <!-- rrb-views -->
 <script>
-(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{
 (new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
 }catch(e){}})();
 </script>

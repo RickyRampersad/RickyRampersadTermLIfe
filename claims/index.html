@@ -12,41 +12,116 @@
 
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Claims TT — File your insurance claim online | Ricky Rampersad Branch</title>
+<title>File your insurance claim online — Ricky Rampersad Branch</title>
 <meta name="description" content="File a motor, health, property or life insurance claim online in Trinidad &amp; Tobago. Photograph your documents with your phone, upload them securely, and track your claim with a reference number." />
 <meta name="theme-color" content="#0E2A47" />
-<meta property="og:title" content="Claims TT — File your insurance claim online" />
+<meta property="og:title" content="File your insurance claim online — Ricky Rampersad Branch" />
 <meta property="og:description" content="Motor, health, property and life claims. Photograph your documents, upload securely, get a claim reference in minutes." />
 <meta property="og:type" content="website" />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230E2A47'/%3E%3Ctext y='70' x='50' text-anchor='middle' font-size='58'%3E🛡%3C/text%3E%3C/svg%3E" />
+<link rel="icon" type="image/svg+xml" href="/site-icon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<!-- Inter Tight for display, Inter for copy — the branch site's own faces, not
+     a serif of this page's own. Until 7 November 2026 this page loaded
+     Newsreader, and a didone serif with an italic is the single loudest thing
+     that made /claims/ read as another company's site to a client arriving
+     from the homepage: "the claims is the same old site".
+
+     Loaded non-blocking, like the other 135 served pages. A plain stylesheet
+     link holds up first paint — measured at 650–1470ms on a phone, and
+     nothing at all on screen while Google is unreachable, which is a blank
+     screen for somebody opening a claim link from WhatsApp on mobile data.
+     Keep the noscript copy, or a visitor without JS is left in the fallback. -->
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+<style>
+/* rrb-font-fallbacks — metric-matched, so the swap does not move the page.
+   Non-blocking alone made things worse: paint got fast, then the webfont
+   swapped in and the text reflowed. Two weight buckets, because a size-adjust
+   taken from the regular weight does not fit an 800-weight heading. Face two
+   lists Roboto, which is what an Android phone actually ships — local('Arial')
+   does not resolve on Android at all, so without it a large share of Trinidad
+   visitors would match nothing. The stacks below name all three. */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:96.22%;ascent-override:100.68%;descent-override:25.07%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:600 900;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:95.31%;ascent-override:101.64%;descent-override:25.31%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:96.66%;ascent-override:100.22%;descent-override:24.95%;line-gap-override:0.00%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:101.60%;ascent-override:95.35%;descent-override:23.74%;line-gap-override:0.00%}
+</style>
 <style>
   :root{
-    --navy-900:#0E2A47;
-    --navy-800:#14395F;
-    --navy-700:#1C4E80;
-    --teal-600:#0E8C8C;
-    --teal-500:#12A5A0;
-    --teal-50:#E9F7F6;
-    --gold:#F2B33D;
-    --gold-ink:#5C3D00;
-    --gold-50:#FDF6E9;
-    --ink:#152435;
-    --muted:#5B7186;
-    --bg:#F4F8FB;
+    /* The branch's own light palette — the homepage's, sampled from Guardian
+       Life of the Caribbean's own stylesheet on 21 October 2026, with its
+       measured ratios. The claims pages carried graphite and copper until
+       5 November 2026: "i dint like the dark website". The page is light now
+       and its accent is the branch teal, so a client who comes here from
+       rickyrampersadbranch.com is plainly still on the same site.
+
+       Gold and copper can never come back as an accent HERE: on this ground
+       #efc24b measures 1.68:1 and #c9942c 2.71:1, both under the 3:1 floor
+       for a non-text mark, let alone a button. That is arithmetic, not taste.
+       The gold shield stays on the e-mails, where the ground is navy. */
+    --navy-900:#0a3350;   /* deep fill · white on it 13.11:1 */
+    --navy-800:#0d3f5e;   /* raised fill · white on it 10.57:1 */
+    --navy-700:#164a68;
+    --copper:#00728d;     /* the accent · 5.25:1 on the ground */
+    --copper-2:#005a70;   /* hover */
+    --copper-deep:#005a70;/* a fill that carries white text: 7.18:1 */
+    --copper-ink:#005a70; /* the accent as text on paper: 6.92:1 */
+    --copper-50:#e8f3f6;
+    /* the old token names still carry the accent, so every rule that
+       already referenced them keeps working and means the new thing */
+    --violet:#00728d;
+    --violet-2:#005a70;
+    --violet-50:#e8f3f6;
+    --lime:#00728d;
+    --lime-ink:#005a70;
+    --teal-600:#005a70;   /* text-safe accent on paper */
+    --teal-500:#00728d;
+    --teal-vivid:#0e93b0;
+    --teal-ink:#005a70;
+    --teal-50:#e8f3f6;
+    --gold:#00728d;
+    --gold-2:#005a70;
+    --gold-ink:#005a70;
+    --gold-50:#e8f3f6;
+    --ink:#0d3f5e;        /* headings · 10.53:1 */
+    --body:#2b3b47;       /* body copy · 10.94:1 */
+    --muted:#5b6670;      /* secondary · 5.56:1 (NOT #64748d, which is 4.50) */
+    --bg:#faf9f2;
+    --bg-2:#f4f2e8;       /* recessed band */
     --white:#ffffff;
-    --line:#DCE7F0;
-    --red:#D64545;
-    --red-50:#FCEDED;
-    --green:#2F9E62;
-    --green-50:#EAF7F0;
+    --line:#e4e0d4;        /* decorative only · 1.25:1 */
+    --line-strong:#7d8890; /* controls and focus · 3.43:1 */
+    --line-2:#cfe4ea;      /* a border on a tinted surface */
+    --red:#D1344F;
+    --red-ink:#9B1B32;   /* the accent is a fill; small type on paper needs this */
+    --red-50:#FDECEF;
+    --green:#14B87A;
+    --green-50:#E4F8F1;
+    --green-ink:#0A6B46;  /* the ring can be the bright green; a glyph on the tint cannot */
     --radius-lg:24px;
     --radius-md:16px;
     --radius-sm:12px;
-    --shadow:0 16px 40px rgba(14,42,71,.12);
-    --shadow-sm:0 4px 14px rgba(14,42,71,.08);
-    --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    /* a shadow takes its hue from the ground, never from black: transparent
+       black desaturates a warm surface and reads as grey haze */
+    --shadow:0 16px 40px hsl(32deg 20% 42% / .16);
+    --shadow-sm:0 4px 14px hsl(32deg 20% 42% / .10);
+    /* The branch site's own two stacks, named exactly as the homepage and the
+       quote forms name them. A fallback the stack never names is a fallback
+       nobody uses, so both metric-matched faces are listed before system-ui. */
+    --font:'Inter','Inter Fallback','Inter Fallback R',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --display:'Inter Tight','Inter Tight Fallback','Inter Tight Fallback R','Inter','Inter Fallback','Inter Fallback R',system-ui,sans-serif;
   }
   *{margin:0;padding:0;box-sizing:border-box}
+  /* An author display rule beats the UA sheet's [hidden]{display:none}, so a
+     .who or a .row with display:flex/grid on it renders while it is still
+     marked hidden. That is why "Sign out" and the 6-digit code box were on
+     screen before anybody had asked for a code. Found 5 November 2026. */
+  [hidden]{display:none!important}
   html{scroll-behavior:smooth}
   body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
   img,svg{max-width:100%;display:block}
@@ -58,47 +133,222 @@
   :focus-visible{outline:3px solid var(--teal-500);outline-offset:2px;border-radius:6px}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
-  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-600);background:var(--teal-50);border:1px solid #CBEAE8;padding:7px 14px;border-radius:999px;margin-bottom:16px}
-  .h2{font-size:clamp(1.6rem,3.4vw,2.3rem);font-weight:800;letter-spacing:-.02em;line-height:1.18;margin-bottom:12px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-600);background:var(--teal-50);border:1px solid var(--line-2);padding:7px 14px;border-radius:999px;margin-bottom:16px}
+  /* Weight 700 and tighter tracking, not the 300/400 the serif carried: a
+     grotesque set at a serif's display weight reads thin and wide, which is
+     the trap in swapping one display face for another. These are the
+     homepage's own values. An <em> is upright and takes the accent, the way
+     "Protecting your family" does there — a synthesised oblique of Inter
+     Tight is not an italic and looks like a fault. */
+  .h2{font-family:var(--display);font-size:clamp(1.8rem,3.8vw,2.7rem);font-weight:700;letter-spacing:-.024em;line-height:1.12;text-wrap:balance;margin-bottom:12px}
+  .h2 em{font-style:normal;color:var(--teal-600)}
   .h3{font-size:1.12rem;font-weight:800;letter-spacing:-.01em;margin-bottom:6px}
   .lead{color:var(--muted);max-width:660px;font-size:1.02rem}
 
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:700;border-radius:999px;padding:14px 26px;border:none;cursor:pointer;font-size:1rem;white-space:nowrap;transition:transform .18s ease,box-shadow .18s ease,background .18s ease;text-decoration:none}
   .btn:hover:not(:disabled){transform:translateY(-2px)}
   .btn:disabled{opacity:.5;cursor:not-allowed}
-  .btn-primary{background:var(--navy-800);color:#fff;box-shadow:0 12px 26px rgba(20,57,95,.32)}
-  .btn-teal{background:var(--teal-500);color:#fff;box-shadow:0 12px 26px rgba(18,165,160,.32)}
-  .btn-gold{background:var(--gold);color:var(--gold-ink);box-shadow:0 12px 26px rgba(242,179,61,.32)}
-  .btn-ghost{background:#fff;color:var(--navy-900);border:1.5px solid var(--line)}
+  .btn-primary{background:var(--navy-800);color:#fff;box-shadow:0 12px 26px hsl(32deg 20% 42% / .26)}
+  .btn-teal{background:var(--teal-500);color:#fff;box-shadow:0 12px 26px rgba(0,114,141,.26)}
+  .btn-gold{background:linear-gradient(135deg,#007a95,#00728d 46%,#005a70);color:#fff;
+    box-shadow:0 10px 26px rgba(0,114,141,.34),inset 0 1px 0 rgba(255,255,255,.22)}
+  .btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line-strong)}
   .btn-sm{padding:9px 18px;font-size:.88rem}
 
   /* ── header ── */
-  header{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);background:rgba(244,248,251,.9);border-bottom:1px solid rgba(20,57,95,.08)}
+  header{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);background:rgba(250,249,242,.9);border-bottom:1px solid var(--line)}
   .nav{display:flex;align-items:center;justify-content:space-between;height:68px;gap:14px}
   .logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:1.02rem;letter-spacing:-.01em;color:var(--navy-900);text-decoration:none}
-  .logo-badge{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--navy-800),var(--teal-600));display:grid;place-items:center;color:#fff;flex:none;font-size:19px}
-  .logo small{display:block;font-size:.71rem;font-weight:600;color:var(--muted);letter-spacing:0;white-space:nowrap}
-  @media(max-width:420px){.logo span{font-size:.95rem}.logo small{font-size:.66rem}}
+  /* No tile. Decided 21 October 2026 — "i dont like the blacks" — the rounded
+     #07131f square the mark sat on read as a black chip against the page, so
+     web screens carry the untiled SVG and the shield sits on whatever colour
+     the page is. */
+  .logo-badge{width:40px;height:40px;display:grid;place-items:center;flex:none}
+  .logo-badge img{width:100%;height:100%;display:block}
+  .logo small{display:block;font-size:.75rem;font-weight:600;color:var(--muted);letter-spacing:0;white-space:nowrap}
+  @media(max-width:420px){.logo span{font-size:.95rem}.logo small{font-size:.75rem}}
   .nav-actions{display:flex;align-items:center;gap:10px}
   .nav-tel{font-weight:700;font-size:.9rem;color:var(--navy-900);text-decoration:none;padding:9px 14px;border-radius:999px}
-  .nav-tel:hover{background:rgba(20,57,95,.07)}
-  @media(max-width:620px){.nav-tel span{display:none}}
+  .nav-tel:hover{background:rgba(0,114,141,.08)}
+  @media(max-width:700px){.nav-tel span{display:none}}
 
-  /* ── hero ── */
-  .hero{background:linear-gradient(160deg,var(--navy-900) 0%,var(--navy-700) 62%,var(--teal-600) 132%);color:#fff;padding:54px 0 60px}
-  .hero .eyebrow{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:var(--gold)}
-  .hero h1{font-size:clamp(1.9rem,5vw,3rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:14px}
-  .hero p{color:#CFE0EE;max-width:620px;font-size:1.05rem}
-  .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
-  .hero-facts{display:flex;gap:26px;flex-wrap:wrap;margin-top:30px;padding-top:24px;border-top:1px solid rgba(255,255,255,.16)}
+
+  /* ── the drawn icon set ──
+     One 24px grid, one stroke weight, currentColor throughout, so an icon
+     takes the colour of whatever it sits in. <use> hides symbol content in
+     a shadow tree the page's CSS cannot select into — but stroke-dasharray
+     and stroke-dashoffset are inherited properties, so setting them on the
+     host <svg> reaches every path inside. Paired with pathLength="100" on
+     each drawable, one rule draws any icon in the same beat regardless of
+     its true length. */
+  .ic{width:1.15em;height:1.15em;flex:none;vertical-align:-.18em;fill:none;
+      stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;
+      /* the base sheet sets svg{display:block}; icons sit in running text */
+      display:inline-block}
+  .tico .ic,.lk-ico .ic{display:block}
+  .ic-lg{width:32px;height:32px;stroke-width:1.45}
+  @keyframes ic-draw{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+  .ic-draw{stroke-dasharray:100;stroke-dashoffset:100;
+           animation:ic-draw .9s cubic-bezier(.33,1,.68,1) forwards}
+  .type-card:nth-child(2) .ic-draw{animation-delay:.07s}
+  .type-card:nth-child(3) .ic-draw{animation-delay:.14s}
+  .type-card:nth-child(4) .ic-draw{animation-delay:.21s}
+  .type-card:nth-child(5) .ic-draw{animation-delay:.28s}
+  .type-card .tico{color:var(--teal-ink);transition:color .22s,transform .35s cubic-bezier(.34,1.56,.64,1)}
+  .type-card:hover .tico{transform:translateY(-2px)}
+  .type-card[aria-pressed="true"] .tico{color:var(--gold-2)}
+  @media(prefers-reduced-motion:reduce){
+    .ic-draw{animation:none;stroke-dashoffset:0}
+    .type-card:hover .tico{transform:none}
+  }
+
+
+
+  /* ── hero ──
+     Light, as of 5 November 2026: "i dint like the dark website". It was
+     graphite with a copper WebGL caustic field over it, and the whole of
+     that went — the canvas, its two shaders and the scrim that had to be
+     laid over them to keep white type legible. On a light ground none of
+     it has anything to do: the type sits on paper and reads at 10:1
+     without help.
+
+     What replaces it is the homepage's own device, so the two pages move
+     the same way: two soft colour fields drifting behind the column, with
+     a long transparent falloff. Gradients, not filter:blur() on a moving
+     layer — that has to be re-rasterised every frame and is what took an
+     earlier build on the homepage to about 5fps. Motion is opt-IN: the
+     finished state is the plain CSS default and the drift lives inside
+     prefers-reduced-motion: no-preference, so it can never strand the
+     hero invisible. */
+  .hero{position:relative;isolation:isolate;color:var(--body);overflow:clip;background:var(--bg);padding:0}
+  .hero::before{content:"";position:absolute;inset:-8%;z-index:0;pointer-events:none;will-change:transform;
+    background:
+      radial-gradient(44% 48% at 14% 0%, rgba(0,114,141,.22), transparent 62%),
+      radial-gradient(40% 44% at 88% 6%, rgba(14,147,176,.20), transparent 64%),
+      radial-gradient(36% 38% at 64% 100%, rgba(10,51,80,.10), transparent 68%)}
+  @media(prefers-reduced-motion:no-preference){
+    .hero::before{animation:heroDrift 28s ease-in-out infinite alternate}
+    /* One ambient motion per hero. From 62rem the ring is the movement, and
+       the drifting field behind it is both a second thing competing for the
+       eye and the single most expensive layer on the page — 1590x840 of
+       gradient, 3ms a frame even composited. Below 62rem the stage is hidden,
+       so the drift is what keeps the hero from being dead, and it stays. */
+    @media(min-width:62rem){ .hero::before{animation:none} }
+  }
+  /* The scale is CONSTANT and only the translate moves. Animating the scale
+     of a layer this size (inset:-8%, three large radial gradients) re-
+     rasterises it every frame: measured at 23.4ms a frame, against 16.9 with
+     this one animation off — more than the whole hero stage costs. A pure
+     translation is composited, so the drift is free. */
+  @keyframes heroDrift{
+    from{transform:translate3d(-2%,-1.2%,0) scale(1.06)}
+    to{transform:translate3d(2%,1.2%,0) scale(1.06)}
+  }
+  .hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;z-index:1;
+    background:linear-gradient(90deg,transparent,rgba(0,114,141,.55) 22%,rgba(14,147,176,.42) 78%,transparent)}
+  .hero-inner{position:relative;z-index:1;padding:clamp(44px,7vw,84px) 0 clamp(44px,6.5vw,76px)}
+  .hero .wrap,#file .wrap{max-width:880px}
+  /* The two-column hero needs the full wrap; #file keeps the 880px above. */
+  .hero .wrap.hero-grid{max-width:1020px;display:grid;gap:clamp(24px,4vw,52px);align-items:center}
+
+  /* ── The hero stage ────────────────────────────────────────────────────
+     Shown from 62rem only. Below that the ring's labels cannot sit around a
+     circle this size without landing on each other or on the mark, and the
+     lede names all five lines in prose immediately above, so nothing is lost.
+
+     The stage is a CONTAINER and every radius is cqw, so the drawing is
+     identical at every width it is shown at. Its own width must be definite
+     or the whole thing collapses: `min(…, 100%)` inside an `auto` grid track
+     is circular and has rendered a stage at 0x0 before, which is why the
+     column is minmax(0,.92fr) rather than auto.
+
+     Rings and mesh are divs, not SVG, deliberately. An absolutely positioned
+     SVG with width:100% inside a grid sized by aspect-ratio has no percentage
+     basis to resolve against, and `svg:not([width])` outranks a bare class —
+     two traps this device has already cost a session each. A border-radius
+     and a background-image have neither. */
+  .stage{display:none}
+  .stage .mesh,.stage .orbit,.stage .ring,.stage .stage-mark{grid-area:1/1}
+  .mesh{width:100%;height:100%;border-radius:50%;
+    background-image:radial-gradient(circle, rgba(13,63,94,.20) 1.1px, transparent 1.2px);
+    background-size:15px 15px;
+    -webkit-mask-image:radial-gradient(circle at 50% 50%, #000 48%, transparent 73%);
+    mask-image:radial-gradient(circle at 50% 50%, #000 48%, transparent 73%)}
+  .orbit{width:76%;height:76%;border-radius:50%;border:1px dashed rgba(0,114,141,.34);place-self:center}
+  .orbit-in{width:52%;height:52%;border:1px solid rgba(0,114,141,.18);border-style:solid}
+  .ring{width:100%;height:100%;position:relative;rotate:0deg}
+  .stage-mark{width:27cqw;height:27cqw;place-self:center;display:block;
+    filter:drop-shadow(0 12px 28px hsl(32deg 20% 42% / .26))}
+  /* The classic place-on-a-circle one-liner. The chip holds a STATIC
+     transform; the ring animates the `rotate` PROPERTY and the inner span
+     counter-rotates on the same property at the same duration — separate
+     properties, so they compose instead of one overwriting the other. */
+  .chip{position:absolute;left:50%;top:50%;width:7.2rem;
+    transform:translate(-50%,-50%) rotate(var(--a)) translate(38cqw) rotate(calc(-1 * var(--a)))}
+  .chip > span{display:grid;justify-items:center;gap:5px;rotate:0deg}
+  .cic{width:19px;height:19px;flex:none;fill:none;stroke:var(--teal-600);stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round;
+    background:#fff;border-radius:999px;padding:9px;box-sizing:content-box;
+    box-shadow:0 3px 12px hsl(32deg 20% 42% / .16);border:1px solid var(--line)}
+  .chip b{font-size:.74rem;font-weight:600;color:var(--ink);letter-spacing:.01em;
+    text-align:center;line-height:1.2;text-wrap:balance}
+  @media(min-width:62rem){
+    .hero .wrap.hero-grid{grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr)}
+    .stage{display:grid;place-items:center;container-type:size;
+      width:min(26rem,100%);aspect-ratio:1;margin-inline:auto}
+  }
+  /* Motion is opt-in: with it off the ring simply stands still, all five
+     chips in place. Nothing is ever left invisible by a loop that never ran. */
+  @media(prefers-reduced-motion:no-preference){
+    .ring{animation:rrRing 64s linear infinite}
+    .chip > span{animation:rrRingRev 64s linear infinite}
+    .orbit{animation:rrRingRev 120s linear infinite}
+    .orbit-in{animation:rrRing 150s linear infinite}
+    /* The mark does NOT float. It carries a drop-shadow filter, and a filter
+       on a moving element is re-rasterised every frame — that alone took the
+       scene from 16.7ms to about 20. The ring is the movement here; a bobbing
+       shield on top of it was costing the frame budget for nothing. */
+  }
+  @keyframes rrRing{to{rotate:360deg}}
+  @keyframes rrRingRev{to{rotate:-360deg}}
+  #file{padding-top:36px}
+
+  .kicker{display:inline-flex;align-items:center;gap:10px;font-size:.75rem;font-weight:700;
+    letter-spacing:.2em;text-transform:uppercase;color:var(--lime);margin-bottom:22px}
+  .kicker::before{content:"";width:28px;height:1px;background:currentColor;opacity:.6}
+  .hero h1{font-family:var(--display);font-size:clamp(2.5rem,6.4vw,4.5rem);font-weight:700;
+    letter-spacing:-.032em;line-height:1.05;text-wrap:balance;margin-bottom:20px;color:var(--ink)}
+  .hero h1 em{font-style:normal;color:var(--teal-500)}
+  .lede{color:var(--body);max-width:53ch;font-size:clamp(1rem,1.6vw,1.16rem);line-height:1.65}
+  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:34px}
+  /* Three across, and the min() is what keeps it there: an auto-fit track
+     without it overflows below ~360px, and a plain flex row broke to two rows
+     the moment the stage took half the hero. */
+  .assur{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9.2rem),1fr));
+    gap:20px clamp(16px,2.4vw,30px);margin-top:clamp(36px,6vw,56px);
+    padding-top:26px;border-top:1px solid var(--line)}
+  /* Three across once the hero has split, even though the copy column is then
+     narrower. Left to auto-fit, a 1024px laptop — the width where the split
+     has just happened — put two on one row and one on the next, which reads
+     as a mistake. This rule has to come AFTER the auto-fit one above: both
+     are (0,1,0), so source order decides, and written up beside the stage it
+     silently did nothing. Same trap as the stage sizing itself. */
+  @media(min-width:62rem){
+    .assur{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 16px}
+  }
+  .assur div{min-width:0}
+  .assur dt{font-family:var(--display);font-size:1.7rem;font-weight:700;letter-spacing:-.02em;color:var(--teal-500);
+    line-height:1;margin-bottom:6px;font-variant-numeric:tabular-nums}
+  .assur dd{font-size:.82rem;color:var(--muted);letter-spacing:.02em;line-height:1.4}
+  .hero-facts{display:flex;gap:26px;flex-wrap:wrap;margin-top:30px;padding-top:24px;border-top:1px solid var(--line)}
   .fact b{display:block;font-size:1.3rem;font-weight:800;color:var(--gold)}
-  .fact span{font-size:.82rem;color:#B9CFE2}
+  .fact span{font-size:.82rem;color:var(--muted)}
 
   /* ── first steps strip ── */
-  .steps-strip{background:var(--gold-50);border-block:1px solid #F2E3C4;padding:26px 0}
+  .steps-strip{background:var(--gold-50);border-block:1px solid var(--line-2);padding:26px 0}
   .steps-strip h2{font-size:1.05rem;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:9px}
   .first-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}
-  .fs{background:#fff;border:1px solid #F0E0BE;border-radius:var(--radius-sm);padding:14px 16px}
+  .fs{background:#fff;border:1px solid var(--line-2);border-radius:var(--radius-sm);padding:14px 16px}
   .fs b{display:block;font-size:.92rem;margin-bottom:3px}
   .fs span{font-size:.85rem;color:var(--muted);line-height:1.5}
 
@@ -106,17 +356,19 @@
   .wizard{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
   .progress{display:flex;background:var(--navy-900);color:#fff;padding:0;overflow-x:auto;scrollbar-width:none}
   .progress::-webkit-scrollbar{display:none}
-  .pstep{flex:1;min-width:118px;padding:14px 10px;text-align:center;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#93AFC7;border-bottom:3px solid transparent;position:relative;transition:color .2s,border-color .2s;background:none;border-top:none;border-inline:none;cursor:default}
-  .pstep .pnum{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:50%;background:rgba(255,255,255,.13);font-size:.72rem;margin-right:6px;vertical-align:-4px}
+  .pstep{flex:1;min-width:118px;padding:14px 10px;text-align:center;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.74);border-bottom:3px solid transparent;position:relative;transition:color .2s,border-color .2s;background:none;border-top:none;border-inline:none;cursor:default}
+  .pstep .pnum{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:50%;background:rgba(255,255,255,.18);font-size:.75rem;margin-right:6px;vertical-align:-4px}
   .pstep.active{color:#fff;border-bottom-color:var(--gold)}
-  .pstep.active .pnum{background:var(--gold);color:var(--navy-900)}
+  .pstep.done{cursor:pointer}
+  .pstep.done:hover{color:#fff}
+  .pstep.active .pnum{background:#fff;color:var(--navy-900)}
   .pstep.done{color:var(--teal-50);cursor:pointer}
   .pstep.done .pnum{background:var(--teal-500);color:#fff}
   .pstep.done:hover{color:#fff}
   .panel{padding:30px clamp(18px,4vw,38px) 34px}
   .panel[hidden]{display:none}
   .panel-head{margin-bottom:22px}
-  .panel-head h2{font-size:1.42rem;font-weight:800;letter-spacing:-.02em;margin-bottom:5px}
+  .panel-head h2{font-family:var(--display);font-size:clamp(1.5rem,2.8vw,1.95rem);font-weight:700;letter-spacing:-.022em;line-height:1.15;margin-bottom:7px}
   .panel-head p{color:var(--muted);font-size:.95rem;max-width:620px}
   .panel-foot{display:flex;gap:12px;justify-content:space-between;align-items:center;margin-top:30px;padding-top:22px;border-top:1px solid var(--line);flex-wrap:wrap}
 
@@ -124,10 +376,10 @@
   .type-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}
   .type-card{position:relative;text-align:left;background:#fff;border:2px solid var(--line);border-radius:var(--radius-md);padding:20px 18px;cursor:pointer;transition:border-color .18s,box-shadow .18s,transform .18s}
   .type-card:hover{border-color:var(--teal-500);transform:translateY(-3px);box-shadow:var(--shadow-sm)}
-  .type-card[aria-pressed="true"]{border-color:var(--teal-600);background:var(--teal-50);box-shadow:0 0 0 4px rgba(18,165,160,.12)}
-  /* Emoji glyphs have wildly different intrinsic heights — fix the box so
-     every card's title lands on the same baseline. */
-  .type-card .tico{font-size:1.9rem;line-height:1;height:34px;display:flex;align-items:center;margin-bottom:10px}
+  .type-card[aria-pressed="true"]{border-color:var(--teal-600);background:var(--teal-50);box-shadow:0 0 0 4px rgba(0,114,141,.16)}
+  /* Fixed box, so every card's title lands on the same baseline whatever
+     the glyph draws. */
+  .type-card .tico{height:34px;display:flex;align-items:center;margin-bottom:10px}
   .type-card b{display:block;font-size:1.05rem;font-weight:800;margin-bottom:4px}
   .type-card span{font-size:.87rem;color:var(--muted);line-height:1.5;display:block}
   .type-card[aria-pressed="true"]::after{content:"✓";position:absolute;top:14px;right:14px;width:24px;height:24px;border-radius:50%;background:var(--teal-600);color:#fff;display:grid;place-items:center;font-size:.8rem;font-weight:800}
@@ -147,30 +399,58 @@
   .field.full{grid-column:1/-1}
   @media(max-width:660px){.fields{grid-template-columns:1fr}.field{grid-column:1/-1!important}}
   .field label{display:block;font-weight:700;font-size:.88rem;margin-bottom:6px}
-  .field .req{color:var(--red);margin-left:2px}
+  .field .req{color:var(--red-ink);margin-left:2px}
   .field .hint{display:block;font-weight:500;color:var(--muted);font-size:.8rem;margin-top:3px}
-  .field input,.field select,.field textarea{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--radius-sm);font-size:.97rem;font-family:inherit;background:#fff;color:var(--ink);transition:border-color .16s,box-shadow .16s}
-  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(18,165,160,.13)}
+  /* max(16px,1rem), never .97rem: iOS zooms the whole page in on any control
+     whose COMPUTED size is under 16, which is most of what "not mobile
+     friendly" turns out to mean in practice. It still scales with the user's
+     own text size, because 1rem wins once they raise it. */
+  .field input,.field select,.field textarea{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--radius-sm);font-size:max(16px,1rem);font-family:inherit;background:#fff;color:var(--ink);transition:border-color .16s,box-shadow .16s}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(0,114,141,.18)}
   .field textarea{min-height:120px;resize:vertical;line-height:1.6}
   .field.bad input,.field.bad select,.field.bad textarea{border-color:var(--red);background:var(--red-50)}
-  .err{display:none;color:var(--red);font-size:.82rem;font-weight:600;margin-top:5px}
+  .err{display:none;color:var(--red-ink);font-size:.82rem;font-weight:600;margin-top:5px}
   .field.bad .err{display:block}
 
   .fieldset-title{grid-column:1/-1;font-weight:800;font-size:.78rem;letter-spacing:.11em;text-transform:uppercase;color:var(--teal-600);margin-top:10px;padding-top:18px;border-top:1px solid var(--line)}
   .fieldset-title:first-child{margin-top:0;padding-top:0;border-top:none}
   .fieldset-note{grid-column:1/-1;color:var(--muted);font-size:.87rem;margin-top:-6px}
 
+  /* ── who's claiming (identity first) ── */
+  .who{background:linear-gradient(150deg,var(--teal-50),var(--white));border:1.5px solid var(--line-2);border-radius:var(--radius-md);padding:20px;margin-bottom:26px}
+  .who h3{font-size:1.05rem;font-weight:800;margin-bottom:4px}
+  .who>p{color:var(--muted);font-size:.9rem;margin-bottom:14px}
+  .who-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
+  @media(max-width:560px){.who-row{grid-template-columns:1fr}}
+  .who .field input{background:#fff}
+  .who-skip{margin-top:12px}
+  .task-chips{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 16px}
+  .task-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 16px;font-size:.87rem;font-weight:700;text-decoration:none;color:var(--ink)}
+  .task-chip.open{border-color:var(--line-2);background:var(--gold-50)}
+  .task-chip .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+  .task-chip.open .dot{background:var(--gold)}
+  .pol-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .pol-card{text-align:left;background:#fff;border:2px solid var(--line);border-radius:var(--radius-md);padding:16px;cursor:pointer;transition:border-color .15s,transform .15s}
+  .pol-card:hover{border-color:var(--teal-500);transform:translateY(-2px)}
+  .pol-card .pl{font-size:.7rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--teal-600);margin-bottom:4px}
+  .pol-card b{display:block;font-size:.98rem;margin-bottom:2px}
+  .pol-card span{font-size:.85rem;color:var(--muted);display:block}
+  .pol-card .go2{display:inline-block;margin-top:8px;font-size:.82rem;font-weight:800;color:var(--teal-600)}
+  .who-hello{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .who-hello b{font-size:1.02rem}
+  .change-type{background:none;border:none;color:var(--teal-600);font-weight:700;font-size:.88rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:6px 0}
+
   /* ── policy prefill ── */
-  .lookup{background:linear-gradient(150deg,var(--teal-50),#F4FBFA);border:1.5px solid #CBEAE8;border-radius:var(--radius-md);padding:18px 20px;margin-bottom:26px}
+  .lookup{background:linear-gradient(150deg,var(--teal-50),var(--white));border:1.5px solid var(--line-2);border-radius:var(--radius-md);padding:18px 20px;margin-bottom:26px}
   .lookup[hidden]{display:none}
   .lookup-head{display:flex;gap:13px;align-items:flex-start;margin-bottom:16px}
-  .lk-ico{font-size:1.4rem;line-height:1.2;flex:none}
+  .lk-ico{flex:none;display:flex;align-items:center}
   .lookup-head b{display:block;font-size:1rem;font-weight:800;margin-bottom:2px}
   .lookup-head span{font-size:.88rem;color:var(--muted);line-height:1.55;display:block}
   .lookup-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
   @media(max-width:560px){.lookup-row{grid-template-columns:1fr}}
   .lookup .field input{background:#fff}
-  .lk-found{font-size:1rem;margin-bottom:14px;padding:12px 16px;background:#fff;border:1px solid #CBEAE8;border-radius:var(--radius-sm)}
+  .lk-found{font-size:1rem;margin-bottom:14px;padding:12px 16px;background:#fff;border:1px solid var(--line-2);border-radius:var(--radius-sm)}
   .lk-found b{color:var(--navy-900)}
   .lk-found span{color:var(--muted);font-size:.88rem;display:block;margin-top:2px}
   .lk-alt{margin-top:10px;display:flex;gap:14px;flex-wrap:wrap}
@@ -178,18 +458,18 @@
   .lookup-confirm[hidden]{display:none}
   #lk-step-find[hidden]{display:none}
   .prefilled{position:relative}
-  .prefilled input,.prefilled select,.prefilled textarea{border-color:#9AD5D0;background:#F7FDFC}
-  .prefilled label::after{content:"from your policy";font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--teal-600);background:var(--teal-50);border:1px solid #CBEAE8;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:1px}
+  .prefilled input,.prefilled select,.prefilled textarea{border-color:var(--teal-500);background:var(--teal-50)}
+  .prefilled label::after{content:"from your policy";font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--teal-600);background:var(--teal-50);border:1px solid var(--line-2);padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:1px}
 
   /* ── documents ── */
-  .doc-intro{background:var(--teal-50);border:1px solid #CBEAE8;border-radius:var(--radius-md);padding:16px 18px;margin-bottom:22px;font-size:.92rem}
+  .doc-intro{background:var(--teal-50);border:1px solid var(--line-2);border-radius:var(--radius-md);padding:16px 18px;margin-bottom:22px;font-size:.92rem}
   .doc-intro b{color:var(--teal-600)}
   .docs{display:grid;gap:14px}
   .doc{border:1.5px solid var(--line);border-radius:var(--radius-md);padding:16px 18px;transition:border-color .18s,background .18s}
   .doc.has{border-color:var(--green);background:var(--green-50)}
-  .doc.skipped{border-color:#E5CFA3;background:var(--gold-50)}
+  .doc.skipped{border-color:var(--line-strong);background:var(--gold-50)}
   .doc-top{display:flex;gap:12px;align-items:flex-start}
-  .doc-mark{width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:.82rem;font-weight:800;background:#EDF3F8;color:var(--muted);border:1.5px solid var(--line);margin-top:1px}
+  .doc-mark{width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:.82rem;font-weight:800;background:var(--bg-2);color:var(--muted);border:1.5px solid var(--line);margin-top:1px}
   .doc.has .doc-mark{background:var(--green);border-color:var(--green);color:#fff}
   .doc.skipped .doc-mark{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}
   .doc-meta{flex:1;min-width:0}
@@ -197,45 +477,91 @@
   .doc-meta .hint{color:var(--muted);font-size:.85rem;line-height:1.5;display:block;margin-top:2px}
   .pill{display:inline-block;font-size:.68rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:3px 9px;border-radius:999px;vertical-align:2px;margin-left:8px}
   .pill.need{background:var(--red-50);color:var(--red)}
-  .pill.opt{background:#EDF3F8;color:var(--muted)}
+  .pill.opt{background:var(--bg-2);color:var(--muted)}
   .doc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
   .drop{border:2px dashed var(--line);border-radius:var(--radius-sm);padding:11px 16px;font-size:.88rem;font-weight:700;color:var(--navy-800);background:#fff;cursor:pointer;transition:all .16s;display:inline-flex;align-items:center;gap:8px}
   .drop:hover{border-color:var(--teal-500);background:var(--teal-50)}
   .drop.over{border-color:var(--teal-600);background:var(--teal-50);border-style:solid}
   .skip-btn{background:none;border:none;color:var(--muted);font-size:.84rem;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:6px}
+  .skip-btn.who-skip{padding:10px 6px;min-height:42px}
   .skip-btn:hover{color:var(--navy-900)}
   .skip-btn[aria-pressed="true"]{color:var(--gold-ink);font-weight:700}
 
   .thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
   .thumb{position:relative;width:104px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
   .thumb img{width:100%;height:70px;object-fit:cover;display:block}
-  .thumb .fileico{height:70px;display:grid;place-items:center;font-size:1.7rem;background:#EDF3F8}
+  .thumb .fileico{height:70px;display:grid;place-items:center;font-size:1.7rem;background:var(--bg-2)}
   .thumb .tname{font-size:.68rem;padding:5px 6px;color:var(--muted);word-break:break-all;line-height:1.35;max-height:38px;overflow:hidden}
   .thumb .rm{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(21,36,53,.78);color:#fff;font-size:.8rem;line-height:1;cursor:pointer;display:grid;place-items:center}
   .thumb .rm:hover{background:var(--red)}
   .thumb.bad{border-color:var(--red)}
-  .thumb .warn{font-size:.68rem;color:var(--red);padding:0 6px 5px;font-weight:700}
+  .thumb .warn{font-size:.68rem;color:var(--red-ink);padding:0 6px 5px;font-weight:700}
+  .scan-tip{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--teal-50);border:1px solid var(--line-2);border-radius:var(--radius-sm);padding:10px 14px;margin-top:12px;font-size:.88rem}
+  .scan-tip b{color:var(--teal-600)}
+  .scan-tip .vals{flex:1;min-width:180px}
+  .scan-tip button{background:var(--teal-500);color:#fff;border:none;border-radius:999px;padding:8px 16px;font-weight:700;font-size:.84rem;cursor:pointer}
+  .scan-tip.applied{background:var(--green-50);border-color:#BFE5CF}
+  .scan-tip.applied b{color:var(--green-ink)}
 
   /* ── review ── */
   .review{border:1.5px solid var(--line);border-radius:var(--radius-md);overflow:hidden}
-  .review h3{background:#F7FAFC;padding:12px 18px;font-size:.79rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
-  .rrow{display:grid;grid-template-columns:190px 1fr;gap:14px;padding:11px 18px;border-bottom:1px solid #EEF3F8;font-size:.93rem}
+  .review h3{background:var(--bg-2);padding:12px 18px;font-size:.79rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+  .rrow{display:grid;grid-template-columns:190px 1fr;gap:14px;padding:11px 18px;border-bottom:1px solid var(--line);font-size:.93rem}
   .rrow:last-child{border-bottom:none}
   .rrow dt{color:var(--muted);font-weight:600}
   .rrow dd{font-weight:600;word-break:break-word;white-space:pre-wrap}
   @media(max-width:600px){.rrow{grid-template-columns:1fr;gap:2px}.rrow dt{font-size:.8rem}}
   .review + .review{margin-top:16px}
 
-  .declare{background:#F7FAFC;border:1.5px solid var(--line);border-radius:var(--radius-md);padding:18px;margin-top:20px}
+  /* ── what we noticed ──
+     Checked against the policy itself, so these can be specific. A "stop" is
+     never a locked door: the client corrects it or says why it is right, and
+     their answer travels with the claim. Our register can be stale, and a real
+     claim must never be turned away by us. */
+  .checks{border-radius:var(--radius-md);padding:18px 20px;margin-top:20px;border:1.5px solid var(--line);background:#fff}
+  .checks > h3{font-size:1.02rem;font-weight:800;margin-bottom:4px}
+  .checks > p.lede-sm{color:var(--muted);font-size:.88rem;margin-bottom:14px}
+  .ck{border-left:4px solid var(--line);padding:12px 0 12px 14px;margin-top:12px}
+  .ck:first-of-type{margin-top:0}
+  .ck b{display:block;font-size:.96rem;margin-bottom:3px}
+  .ck span{font-size:.89rem;color:var(--muted);line-height:1.55;display:block}
+  .ck.stop{border-left-color:var(--red)}
+  .ck.stop b{color:var(--red-ink)}
+  .ck.check{border-left-color:var(--gold-2)}
+  .ck.check b{color:var(--gold-ink)}
+  .ck-fix{display:inline-block;margin-top:9px;background:none;border:none;color:var(--teal-600);font-weight:700;
+    font-size:.86rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:8px 0;min-height:40px}
+  .ck-say{margin-top:10px}
+  .ck-say label{display:block;font-weight:700;font-size:.84rem;margin-bottom:5px}
+  .ck-say input{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);
+    font-size:max(16px,1rem);font-family:inherit;background:#fff;color:var(--ink)}
+  .ck-say input:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(0,114,141,.18)}
+  .checks.all-clear{background:var(--green-50);border-color:#BFE5CF}
+  .checks.all-clear h3{color:var(--green-ink)}
+  /* Guardian's own accident report form, filled and shown before it goes.
+     A claimant who can read the form that reaches the assessor catches the
+     wrong plate or the wrong date here, where it costs nothing. */
+  .gg{border-radius:var(--radius-md);padding:18px 20px;margin-top:20px;border:1.5px solid var(--line);background:#fff}
+  .gg > h3{font-size:1.02rem;font-weight:800;margin-bottom:4px}
+  .gg > p{color:var(--muted);font-size:.88rem;line-height:1.55;margin-bottom:14px}
+  .gg-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .gg-note{font-size:.84rem;color:var(--muted);margin-top:10px;line-height:1.5}
+  .gg-pages{margin-top:16px;display:grid;gap:14px}
+  .gg-pages canvas{width:100%;height:auto;display:block;border:1px solid var(--line);
+    border-radius:var(--radius-sm);background:#fff;box-shadow:0 2px 10px rgba(32,26,18,.07)}
+  .gg-pg{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+  .declare{background:var(--bg-2);border:1.5px solid var(--line);border-radius:var(--radius-md);padding:18px;margin-top:20px}
   .check{display:flex;gap:12px;align-items:flex-start;cursor:pointer;font-size:.92rem;line-height:1.55}
-  .check input{width:20px;height:20px;flex:none;margin-top:2px;accent-color:var(--teal-600);cursor:pointer}
+  /* 24, not 20: WCAG 2.2 2.5.8 AA, and these three are the declaration boxes
+     a claim cannot be filed without. */
+  .check input{width:24px;height:24px;flex:none;margin-top:1px;accent-color:var(--teal-600);cursor:pointer;font-size:max(16px,1rem)}
   .check + .check{margin-top:14px}
   .declare.bad{border-color:var(--red);background:var(--red-50)}
 
   /* ── notices ── */
   .notice{border-radius:var(--radius-md);padding:14px 18px;font-size:.91rem;line-height:1.55;margin-bottom:18px}
   .notice.warn{background:var(--gold-50);border-left:4px solid var(--gold)}
-  .notice.bad{background:var(--red-50);border-left:4px solid var(--red);color:#8A2626}
+  .notice.bad{background:var(--red-50);border-left:4px solid var(--red);color:#9B1B32}
   .notice.info{background:var(--teal-50);border-left:4px solid var(--teal-500)}
   .notice b{font-weight:800}
   .notice[hidden]{display:none}
@@ -244,20 +570,20 @@
   .uploading{text-align:center;padding:34px 20px}
   .uploading .ring{width:64px;height:64px;border-radius:50%;border:5px solid var(--line);border-top-color:var(--teal-500);margin:0 auto 20px;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .bar{height:9px;background:#E7EEF5;border-radius:999px;overflow:hidden;max-width:420px;margin:16px auto 8px}
+  .bar{height:9px;background:var(--line);border-radius:999px;overflow:hidden;max-width:420px;margin:16px auto 8px}
   .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal-500),var(--teal-600));width:0;transition:width .3s ease;border-radius:999px}
   .uploading .what{font-size:.9rem;color:var(--muted);min-height:22px}
   @media (prefers-reduced-motion:reduce){.ring{animation-duration:2.4s}.btn:hover{transform:none}.type-card:hover{transform:none}}
 
   /* ── success ── */
   .done-head{text-align:center;padding:8px 0 22px}
-  .done-head .tick{width:74px;height:74px;border-radius:50%;background:var(--green-50);border:2px solid var(--green);color:var(--green);display:grid;place-items:center;font-size:2.1rem;margin:0 auto 18px}
+  .done-head .tick{width:74px;height:74px;border-radius:50%;background:var(--green-50);border:2px solid var(--green);color:var(--green-ink);display:grid;place-items:center;font-size:2.1rem;margin:0 auto 18px}
   .refbox{background:var(--navy-900);color:#fff;border-radius:var(--radius-md);padding:22px;text-align:center;margin:22px 0}
-  .refbox span{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:#93AFC7;font-weight:700}
+  .refbox span{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.70);font-weight:700}
   .refbox b{display:block;font-size:clamp(1.6rem,5vw,2.1rem);font-weight:800;letter-spacing:.06em;color:var(--gold);margin:6px 0 12px}
   .next-list{counter-reset:n;margin:6px 0}
-  .next-list li{counter-increment:n;position:relative;padding-left:44px;margin-bottom:14px;font-size:.95rem;color:#3C4A5C}
-  .next-list li::before{content:counter(n);position:absolute;left:0;top:-1px;width:30px;height:30px;border-radius:50%;background:var(--teal-50);border:1.5px solid #CBEAE8;color:var(--teal-600);font-weight:800;font-size:.88rem;display:grid;place-items:center}
+  .next-list li{counter-increment:n;position:relative;padding-left:44px;margin-bottom:14px;font-size:.95rem;color:#4A4844}
+  .next-list li::before{content:counter(n);position:absolute;left:0;top:-1px;width:30px;height:30px;border-radius:50%;background:var(--teal-50);border:1.5px solid var(--line-2);color:var(--teal-600);font-weight:800;font-size:.88rem;display:grid;place-items:center}
   .next-list li b{display:block;color:var(--ink)}
 
   /* ── status lookup ── */
@@ -282,17 +608,17 @@
   .claim-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:clamp(18px,3.5vw,26px);margin-bottom:16px}
   .claim-head{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:baseline;margin-bottom:6px}
   .claim-head b{font-size:1.08rem;letter-spacing:.02em}
-  .status-pill{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:5px 12px;border-radius:999px;background:var(--teal-50);color:var(--teal-600);border:1px solid #CBEAE8}
-  .status-pill.closed{background:#EDF3F8;color:var(--muted);border-color:var(--line)}
+  .status-pill{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:5px 12px;border-radius:999px;background:var(--teal-50);color:var(--teal-600);border:1px solid var(--line-2)}
+  .status-pill.closed{background:var(--bg-2);color:var(--muted);border-color:var(--line)}
   .claim-meta{color:var(--muted);font-size:.9rem;margin-bottom:10px}
-  .owe{background:var(--gold-50);border:1px solid #F0E0BE;border-radius:var(--radius-md);padding:14px 16px;margin-top:12px}
+  .owe{background:var(--gold-50);border:1px solid var(--line-2);border-radius:var(--radius-md);padding:14px 16px;margin-top:12px}
   .owe b{display:block;margin-bottom:8px;font-size:.93rem}
-  .owe-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-top:1px solid #F0E0BE;flex-wrap:wrap}
+  .owe-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line-2);flex-wrap:wrap}
   .owe-row:first-of-type{border-top:none}
   .owe-row span{font-size:.92rem;font-weight:600}
   .owe-row .drop{padding:8px 14px;font-size:.84rem}
   .owe-note{font-size:.8rem;color:var(--muted);margin-top:8px}
-  .up-ok{color:var(--green);font-weight:700;font-size:.9rem}
+  .up-ok{color:var(--green-ink);font-weight:700;font-size:.9rem}
 
   /* ── faq ── */
   .faq{display:grid;gap:12px}
@@ -305,14 +631,17 @@
   details.q .a b{color:var(--ink)}
 
   /* ── footer ── */
-  footer{background:var(--navy-900);color:#B9CFE2;padding:44px 0 32px;font-size:.9rem}
+  footer{background:var(--navy-900);color:rgba(255,255,255,.78);padding:44px 0 32px;font-size:.9rem}
   footer a{color:#fff;text-decoration:none;font-weight:600}
+  /* a link alone in a list item has no sentence around it, so 2.5.8's inline
+     exemption does not apply and it has to carry its own target height */
+  footer li a{display:inline-block;padding:6px 0;line-height:22px;min-height:34px}
   footer a:hover{text-decoration:underline}
   .foot-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:28px;margin-bottom:26px}
   @media(max-width:720px){.foot-grid{grid-template-columns:1fr}}
   .foot-grid h4{color:#fff;font-size:.79rem;letter-spacing:.11em;text-transform:uppercase;margin-bottom:12px}
   .foot-grid li{margin-bottom:7px}
-  .disclaimer{border-top:1px solid rgba(255,255,255,.13);padding-top:18px;font-size:.79rem;color:#7E9AB0;line-height:1.65}
+  .disclaimer{border-top:1px solid rgba(255,255,255,.13);padding-top:18px;font-size:.79rem;color:rgba(255,255,255,.64);line-height:1.65}
 
   /* ── print: the claim summary only ── */
   @media print{
@@ -322,53 +651,297 @@
     .refbox{background:#fff;color:#000;border:2px solid #000}
     .refbox b,.refbox span{color:#000}
   }
+
+  /* ── phones ──
+     Measured at 360 and 390, not guessed. Three things were wrong: the nav
+     overflowed the viewport by 13px, the five-step rail needed sideways
+     scrolling to see the step you were on, and a dozen tap targets sat
+     under Apple's 44px floor. */
+  @media (max-width:640px){
+    /* The rail keeps all five steps, but only the one you are on is
+       spelled out. A progress indicator you have to scroll is not one. */
+    .progress{overflow:visible}
+    .pstep{flex:0 0 auto;min-width:0;padding:13px 7px;font-size:0;border-bottom-width:3px}
+    .pstep .pnum{margin-right:0;width:23px;height:23px;font-size:.75rem}
+    .pstep.active{flex:1 1 auto;font-size:.75rem;padding-inline:11px}
+    .pstep.active .pnum{margin-right:7px}
+
+    /* Nothing tappable falls below the 44px floor. */
+    .nav-tel{padding:12px 10px;min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center}
+    footer li a{padding:7px 0;min-height:40px;line-height:26px}
+    .skip-btn{padding:11px 4px;min-height:44px}
+    .lk-alt button,.change-type{padding:11px 0;min-height:44px}
+    .btn{padding:15px 24px}
+    .btn-sm{padding:11px 18px}
+
+    /* Nothing drops below 12px. */
+    .logo small{font-size:12px}
+    .kicker{font-size:12px;letter-spacing:.16em}
+    .section-label,.eyebrow{font-size:12px}
+
+    /* The header is the one row that cannot wrap, so everything in it
+       gives ground: the wordmark may shrink, the button loses its padding,
+       and the phone keeps only its icon. */
+    .nav{gap:10px}
+    .logo{min-width:0;flex:0 1 auto;font-size:.95rem}
+    .logo span{min-width:0;white-space:nowrap}
+    .nav-actions{flex:0 0 auto;gap:4px}
+    .nav-actions .btn{padding:11px 15px;font-size:.85rem}
+
+    /* One column, edge to edge, nothing clipped. */
+    .type-grid,.pol-grid,.first-steps{grid-template-columns:1fr}
+    .status-form{grid-template-columns:1fr}
+    .hero-actions .btn{flex:1 1 100%}
+    .assur{gap:18px}
+    .assur div{min-width:calc(50% - 9px)}
+  }
+  @media (max-width:440px){
+    /* The header cannot hold the branch line as well as the product name
+       and an action, and a clipped wordmark is worse than an absent one.
+       The hero says RICKY RAMPERSAD in lime caps two inches below. */
+    .logo small{display:none}
+    .nav-inner,.nav{gap:8px}
+    .nav-actions{gap:6px}
+  }
+
+  /* ══ HELP 868 on WhatsApp · 7 November 2026 ══
+     The branch's own WhatsApp line, (868) 435-7868 — HELP-868 on a keypad —
+     answered by the respond.io assistant and handed to a person. The same
+     floating button the homepage carries, so a claimant stuck mid-form can
+     reach somebody without leaving the page or scrolling to find a number.
+
+     IT SAYS "ASK US", NEVER "FILE HERE", and that is the whole rule of it.
+     A WhatsApp message opens a ticket for a person to answer; it does not
+     file a claim and it cannot give a reference. Only the form on this page
+     does that. A client who believes a WhatsApp message filed their claim
+     has not filed one, and would find that out weeks later.
+
+     Colour: WhatsApp's green is 4.14:1 against white, which clears the 3:1
+     floor for a non-text graphic and NOT the 4.5:1 for text. So the green is
+     the button, which carries an icon and an aria-label and no words, and
+     every WhatsApp link written as words takes the page's own accent. */
+  .wa-fab{position:fixed;right:18px;z-index:90;
+    bottom:calc(18px + env(safe-area-inset-bottom,0px));
+    display:grid;place-items:center;width:3.25rem;height:3.25rem;
+    background:#128c7e;color:#fff;border:none;border-radius:50%;
+    box-shadow:0 10px 26px hsl(32deg 20% 42% / .34);text-decoration:none;
+    transition:background .18s ease,transform .18s ease}
+  .wa-fab:hover{background:#0d6e63;transform:translateY(-2px)}
+  .wa-fab:focus-visible{outline:3px solid var(--line-strong);outline-offset:3px}
+  .wa-fab svg{width:1.9rem;height:1.9rem;display:block}
+  @media (prefers-reduced-motion:reduce){.wa-fab:hover{transform:none}}
+  /* An inline WhatsApp link, in the page's accent and not the brand green. It
+     is underlined, because it sits beside the telephone number in the same
+     sentence and the browser underlines that one: two links side by side, one
+     underlined and one not, reads as a fault rather than as a choice. */
+  .wa-link{color:var(--teal-600);font-weight:700;text-decoration:underline;
+    text-underline-offset:2px;display:inline-flex;align-items:center;gap:5px}
+  .wa-link:hover{text-decoration-thickness:2px}
+  .ic-wa{width:1.15em;height:1.15em;flex:none;vertical-align:-.18em;
+    display:inline-block}
 </style>
 </head>
 <body>
 
+<svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="ic-motor" viewBox="0 0 24 24">
+      <path pathLength="100" d="M3 15.6v-2.3c0-.6.3-1.1.8-1.3l2.3-.9 1.9-3.2c.3-.5.8-.8 1.4-.8h5.2c.6 0 1.1.3 1.4.8l1.9 3.2 2.3.9c.5.2.8.7.8 1.3v2.3"/>
+      <path pathLength="100" d="M6.4 11.1h11.2"/>
+      <circle pathLength="100" cx="7.5" cy="16.4" r="1.9"/>
+      <circle pathLength="100" cx="16.5" cy="16.4" r="1.9"/>
+    </symbol>
+    <symbol id="ic-health" viewBox="0 0 24 24">
+      <rect pathLength="100" x="3" y="4.6" width="18" height="14.8" rx="3.4"/>
+      <path pathLength="100" d="M6.4 12.1h2.9l1.7-3.5 2.6 6.6 1.6-3.1h3.4"/>
+    </symbol>
+    <symbol id="ic-home" viewBox="0 0 24 24">
+      <path pathLength="100" d="M3.4 10.4 12 4l8.6 6.4"/>
+      <path pathLength="100" d="M5.4 11.7v7.1c0 .6.5 1.1 1.1 1.1h11c.6 0 1.1-.5 1.1-1.1v-7.1"/>
+      <path pathLength="100" d="M10 20v-4.7h4V20"/>
+    </symbol>
+    <symbol id="ic-life" viewBox="0 0 24 24">
+      <path pathLength="100" d="M12 3.4 5 6.1v5.4c0 4.2 2.9 7.6 7 9.2 4.1-1.6 7-5 7-9.2V6.1z"/>
+      <path pathLength="100" d="M12 15.8c-1.8-1.2-3.1-2.3-3.1-3.8a1.9 1.9 0 0 1 3.1-1.3 1.9 1.9 0 0 1 3.1 1.3c0 1.5-1.3 2.6-3.1 3.8z"/>
+    </symbol>
+    <symbol id="ic-pension" viewBox="0 0 24 24">
+      <path pathLength="100" d="M3.5 19.6h17"/>
+      <path pathLength="100" d="M5 16.3 9.7 11l3.4 3 6-7.3"/>
+      <path pathLength="100" d="M15.3 6.3h3.8v3.8"/>
+    </symbol>
+    <!-- #ic-phone was here and is gone with the number it labelled, 7 November
+         2026: it had one user, the nav link carrying the branch manager's own
+         telephone number, and he asked for that off the page. -->
+    <!-- WhatsApp, the same glyph the homepage's floating button carries, so the
+         one button a client meets on both pages is visibly the same button. It
+         is a brand mark rather than a UI icon, so it is a bubble outline with a
+         filled handset instead of the house 2px stroke set — but both halves are
+         driven by currentColor, so one symbol reads white on the green button
+         and in the page's own accent as an inline link. Added 7 November 2026.
+         Every value is a presentation attribute, not inherited, so it does not
+         matter whether an ancestor sets fill or stroke. -->
+    <symbol id="ic-wa" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
+            d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.25A9.5 9.5 0 1 0 12 2.5z"/>
+      <g transform="translate(6.3 6.3) scale(.5)">
+        <path fill="currentColor" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"
+              d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+      </g>
+    </symbol>
+    <symbol id="ic-key" viewBox="0 0 24 24">
+      <circle pathLength="100" cx="8.2" cy="8.2" r="3.7"/>
+      <path pathLength="100" d="m10.8 10.8 9 9"/>
+      <path pathLength="100" d="m14.6 14.6 2-2M17.3 17.3l2-2"/>
+    </symbol>
+    <symbol id="ic-bolt" viewBox="0 0 24 24">
+      <path pathLength="100" d="M13.3 3 5 13.7h5.6L10.7 21 19 10.3h-5.6z"/>
+    </symbol>
+    <symbol id="ic-shield" viewBox="0 0 24 24">
+      <path pathLength="100" d="M12 3.4 5 6.1v5.4c0 4.2 2.9 7.6 7 9.2 4.1-1.6 7-5 7-9.2V6.1z"/>
+      <path pathLength="100" d="m8.9 11.9 2.2 2.2 4-4.3"/>
+    </symbol>
+    <symbol id="ic-printer" viewBox="0 0 24 24">
+      <path pathLength="100" d="M7 9.2V4.6h10v4.6"/>
+      <path pathLength="100" d="M7 17.6H5.6A1.6 1.6 0 0 1 4 16v-4.3a2.6 2.6 0 0 1 2.6-2.6h10.8A2.6 2.6 0 0 1 20 11.7V16a1.6 1.6 0 0 1-1.6 1.6H17"/>
+      <rect pathLength="100" x="7" y="14.6" width="10" height="4.9" rx="1"/>
+    </symbol>
+    <symbol id="ic-mail" viewBox="0 0 24 24">
+      <rect pathLength="100" x="3" y="5.5" width="18" height="13" rx="2.4"/>
+      <path pathLength="100" d="m3.9 7.3 7 5.1c.7.5 1.5.5 2.2 0l7-5.1"/>
+    </symbol>
+    <symbol id="ic-clock" viewBox="0 0 24 24">
+      <circle pathLength="100" cx="12" cy="12" r="8.4"/>
+      <path pathLength="100" d="M12 7v5.3l3.4 2"/>
+    </symbol>
+    <symbol id="ic-clip" viewBox="0 0 24 24">
+      <path pathLength="100" d="M18.6 11.3 12 17.9a4.2 4.2 0 0 1-6-6l7.1-7.1a2.8 2.8 0 0 1 4 4l-7.1 7.1a1.4 1.4 0 0 1-2-2l6.4-6.4"/>
+    </symbol>
+    <symbol id="ic-doc" viewBox="0 0 24 24">
+      <path pathLength="100" d="M13.5 3.6H7.4A2.4 2.4 0 0 0 5 6v12.1a2.4 2.4 0 0 0 2.4 2.4h9.2a2.4 2.4 0 0 0 2.4-2.4V9.1z"/>
+      <path pathLength="100" d="M13.5 3.6v5.5H19"/>
+    </symbol>
+    <symbol id="ic-scan" viewBox="0 0 24 24">
+      <path pathLength="100" d="M4 8.2V6.3A2.3 2.3 0 0 1 6.3 4H8.2M15.8 4h1.9A2.3 2.3 0 0 1 20 6.3v1.9M20 15.8v1.9a2.3 2.3 0 0 1-2.3 2.3h-1.9M8.2 20H6.3A2.3 2.3 0 0 1 4 17.7v-1.9"/>
+      <path pathLength="100" d="M4.6 12h14.8"/>
+    </symbol>
+    <symbol id="ic-check" viewBox="0 0 24 24">
+      <circle pathLength="100" cx="12" cy="12" r="8.4"/>
+      <path pathLength="100" d="m8.3 12.2 2.6 2.6 4.8-5.3"/>
+    </symbol>
+    <symbol id="ic-hourglass" viewBox="0 0 24 24">
+      <path pathLength="100" d="M7 3.9h10M7 20.1h10"/>
+      <path pathLength="100" d="M8.1 3.9v3c0 1.9 1.4 3.4 2.9 5.1-1.5 1.7-2.9 3.2-2.9 5.1v3"/>
+      <path pathLength="100" d="M15.9 3.9v3c0 1.9-1.4 3.4-2.9 5.1 1.5 1.7 2.9 3.2 2.9 5.1v3"/>
+    </symbol>
+    <symbol id="ic-chart" viewBox="0 0 24 24">
+      <path pathLength="100" d="M4 19.6h16"/>
+      <rect pathLength="100" x="6.1" y="10.8" width="3.5" height="8.8" rx="1.1"/>
+      <rect pathLength="100" x="14.4" y="6.4" width="3.5" height="13.2" rx="1.1"/>
+    </symbol>
+    <symbol id="ic-archive" viewBox="0 0 24 24">
+      <rect pathLength="100" x="3.5" y="4.5" width="17" height="4.2" rx="1.4"/>
+      <path pathLength="100" d="M5.3 8.7v9.3a2.2 2.2 0 0 0 2.2 2.2h9a2.2 2.2 0 0 0 2.2-2.2V8.7"/>
+      <path pathLength="100" d="M10 12.4h4"/>
+    </symbol>
+    <symbol id="ic-flag" viewBox="0 0 24 24">
+      <path pathLength="100" d="M6 21V3.6"/>
+      <path pathLength="100" d="M6 4.6h10.9c.9 0 1.4 1 .9 1.7l-2 2.8 2 2.8c.5.7 0 1.7-.9 1.7H6"/>
+    </symbol>
+    <symbol id="ic-folder" viewBox="0 0 24 24">
+      <path pathLength="100" d="M3.6 7.4a2.2 2.2 0 0 1 2.2-2.2h3.4l2.2 2.4h6.8a2.2 2.2 0 0 1 2.2 2.2v7.2a2.2 2.2 0 0 1-2.2 2.2H5.8a2.2 2.2 0 0 1-2.2-2.2z"/>
+    </symbol>
+    <symbol id="ic-send" viewBox="0 0 24 24">
+      <path pathLength="100" d="M20.6 3.4 10.8 13.2"/>
+      <path pathLength="100" d="M20.6 3.4 14.4 20.5l-3.6-7.3-7.3-3.6z"/>
+    </symbol>
+    <!-- Lucide's download: 24x24, 2px stroke, round joins, 1px of padding. -->
+    <symbol id="ic-down" viewBox="0 0 24 24">
+      <path pathLength="100" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <path pathLength="100" d="M7 10l5 5 5-5"/>
+      <path pathLength="100" d="M12 15V3"/>
+    </symbol>
+  </defs>
+</svg>
+
 <header>
   <div class="wrap nav">
     <a class="logo" href="/">
-      <span class="logo-badge" aria-hidden="true">🛡</span>
-      <span>Claims&nbsp;TT<small>Ricky Rampersad Branch</small></span>
+      <span class="logo-badge" aria-hidden="true"><img src="/site-mark.svg" alt="" /></span>
+      <!-- The branch leads and the section follows, the shape the homepage and
+           the quote forms both use. It read "Claims TT / Ricky Rampersad
+           Branch" until 7 November 2026, and a client arriving from the
+           homepage met a different company's name in the top left. -->
+      <span>Ricky&nbsp;Rampersad<small>Branch claims</small></span>
     </a>
     <div class="nav-actions">
-      <a class="nav-tel" href="tel:+18686785921">📞 <span>(868) 678-5921</span></a>
+      <!-- HELP 868 in the contact slot. The branch manager's own number sat
+           here until 7 November 2026 and came off the page at his word: "I
+           don't want my number, just the HELP 868." So HELP 868 is the one
+           route to a person this page offers, and nothing here may print his
+           number again — not in the markup, not from the backend's reply.
+           The class keeps its name: the 44px-target rule and the rule that
+           hides the words under 700px both name .nav-tel, so renaming it
+           buys nothing and breaks both. It carries an aria-label because
+           under 700px the words are display:none and the glyph is
+           aria-hidden, which left the old link with no accessible name at
+           all on every phone. -->
+      <a class="nav-tel" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20am%20on%20the%20branch%20claims%20page%20and%20need%20a%20hand." target="_blank" rel="noopener"
+         aria-label="Ask HELP 868 a question on WhatsApp"><svg class="ic" aria-hidden="true"><use href="#ic-wa"/></svg> <span>HELP&nbsp;868</span></a>
       <a class="btn btn-ghost btn-sm" href="#track">Track a claim</a>
     </div>
   </div>
 </header>
 
 <!-- ══════════════ HERO ══════════════ -->
-<div class="hero">
-  <div class="wrap">
-    <span class="eyebrow">Trinidad &amp; Tobago · Motor · Health · Property · Life</span>
-    <h1>Something happened.<br />Let's get your claim moving.</h1>
-    <p>File your claim from your phone in about ten minutes. Photograph your documents, upload them straight to our claims file, and walk away with a reference number — no queue, no folder of paper, no trip to the branch.</p>
-    <div class="hero-actions">
-      <a class="btn btn-gold" href="#file">Start my claim</a>
-      <a class="btn btn-ghost" href="#track">Check an existing claim</a>
-    </div>
-    <div class="hero-facts">
-      <div class="fact"><b>4 lines</b><span>Motor, health, property &amp; life</span></div>
-      <div class="fact"><b>~10 min</b><span>Typical time to file</span></div>
-      <div class="fact"><b>Phone photos</b><span>Accepted for every document</span></div>
-      <div class="fact"><b>Instant ref</b><span>Quote it on any call</span></div>
-    </div>
-  </div>
-</div>
+<section class="hero" id="hero" aria-labelledby="hero-title">
+  <div class="hero-inner">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+      <p class="kicker">Ricky Rampersad · Trinidad &amp; Tobago</p>
+      <h1 id="hero-title">A claim should feel like <em>cover</em>,<br />not paperwork.</h1>
+      <p class="lede">Motor, health, property, life and pension — filed from your phone in about ten minutes. Sign in and your policy number comes to you. Photograph the documents. Keep the reference.</p>
+      <nav class="hero-actions" aria-label="Claim actions">
+        <a class="btn btn-gold" href="#file">Start my claim</a>
+        <a class="btn btn-ghost" href="#track">My claims</a>
+      </nav>
+      <dl class="assur">
+        <div><dt>10</dt><dd>working days to review,<br />and we hold ourselves to it</dd></div>
+        <div><dt>5</dt><dd>lines of business<br />under one front door</dd></div>
+        <div><dt>0</dt><dd>passwords —<br />a code, and you're in</dd></div>
+      </dl>
+      </div>
 
-<!-- ══════════════ FIRST STEPS ══════════════ -->
-<div class="steps-strip">
-  <div class="wrap">
-    <h2>⏱️ Just happened? Do these four things first.</h2>
-    <div class="first-steps">
-      <div class="fs"><b>1. Make everyone safe</b><span>Injuries first. Ambulance 811, Police 999, Fire 990. Nothing on this page matters more than that.</span></div>
-      <div class="fs"><b>2. Report it to the police</b><span>For any motor accident, theft, burglary or malicious damage — report at the nearest station and ask for the report or station diary extract number.</span></div>
-      <div class="fs"><b>3. Photograph everything</b><span>Damage, the whole scene, both vehicles, number plates, the road, and the other driver's permit and insurance certificate. Take more than you think you need.</span></div>
-      <div class="fs"><b>4. Admit nothing, repair nothing</b><span>Never accept blame at the scene, and don't start repairs until the claim is inspected or approved in writing.</span></div>
+      <!-- The branch's own hero device: the mark at the centre and the lines
+           of cover circling it, as the homepage and the quote forms carry. It
+           is a diagram of what this page is for, not decoration, and it is the
+           thing whose absence left this hero's right half empty while every
+           sibling page had one.
+
+           Five chips, seventy-two degrees apart, on one ring: no pairs and no
+           cycling, so every line is on screen whether motion is allowed or
+           not. The names are decorative here — the lede above says all five in
+           prose — so the whole stage is aria-hidden and a screen reader is not
+           walked around a circle.
+
+           Nothing is redrawn: the centre is /site-mark.svg itself, and the
+           five icons are this page's own sprite. -->
+      <div class="stage" aria-hidden="true">
+        <div class="mesh"></div>
+        <div class="orbit"></div>
+        <div class="orbit orbit-in"></div>
+        <div class="ring">
+          <span class="chip" style="--a:-90deg"><span><svg class="cic"><use href="#ic-motor"/></svg><b>Motor</b></span></span>
+          <span class="chip" style="--a:-18deg"><span><svg class="cic"><use href="#ic-health"/></svg><b>Health</b></span></span>
+          <span class="chip" style="--a:54deg"><span><svg class="cic"><use href="#ic-home"/></svg><b>Property</b></span></span>
+          <span class="chip" style="--a:126deg"><span><svg class="cic"><use href="#ic-life"/></svg><b>Life</b></span></span>
+          <span class="chip" style="--a:198deg"><span><svg class="cic"><use href="#ic-pension"/></svg><b>Pension</b></span></span>
+        </div>
+        <img class="stage-mark" src="/site-mark.svg" alt="" width="160" height="160" />
+      </div>
     </div>
   </div>
+</section>
+
 </div>
 
 <!-- ══════════════ THE WIZARD ══════════════ -->
@@ -397,8 +970,49 @@
       <!-- STEP 1 — type -->
       <div class="panel" id="step-0" role="tabpanel">
         <div class="panel-head">
-          <h2>What kind of claim is this?</h2>
-          <p>Pick the policy you are claiming against. We will only ask for the documents that actually apply to it.</p>
+          <h2>Let's start with you</h2>
+          <p>Existing clients: sign in and your policy numbers and open claims come to you — no typing, no hunting for paper.</p>
+        </div>
+
+        <!-- existing client, identity first -->
+        <div class="who" id="who-box">
+          <div id="who-out">
+            <h3><svg class="ic" aria-hidden="true"><use href="#ic-key"/></svg> Already our client?</h3>
+            <p>Enter your email or mobile — we email you a 6-digit code, and your policies appear with their numbers filled in.</p>
+            <div class="who-row" id="who-step-id">
+              <div class="field">
+                <label for="w-id">Your email or mobile number</label>
+                <input id="w-id" type="text" placeholder="you@example.com or 868 555 1234" autocomplete="email" />
+              </div>
+              <button class="btn btn-teal" type="button" id="w-send">Email me a code</button>
+            </div>
+            <div class="who-row" id="who-step-code" hidden>
+              <div class="field">
+                <label for="w-code">The 6-digit code from your email</label>
+                <input id="w-code" type="text" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="one-time-code" />
+              </div>
+              <button class="btn btn-teal" type="button" id="w-verify">Sign in</button>
+            </div>
+            <div class="notice bad" id="w-err" hidden style="margin:14px 0 0"></div>
+            <div class="notice info" id="w-msg" hidden style="margin:14px 0 0"></div>
+            <button class="skip-btn who-skip" type="button" id="w-skip">I'm new here — continue without signing in</button>
+          </div>
+
+          <div id="who-in" hidden>
+            <div class="who-hello">
+              <b id="w-hello">Welcome back</b>
+              <button class="skip-btn" type="button" id="w-signout">Not you? Sign out</button>
+            </div>
+            <div class="task-chips" id="w-tasks"></div>
+            <p style="color:var(--muted);font-size:.9rem;margin-bottom:12px" id="w-pol-lead">Which policy are you claiming on? Tap it — the number and your details fill themselves in.</p>
+            <div class="pol-grid" id="w-policies"></div>
+            <button class="skip-btn who-skip" type="button" id="w-not-these" hidden>My claim isn't on one of these policies</button>
+          </div>
+        </div>
+
+        <div id="type-head" style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+          <h3 class="h3" style="margin:0" id="type-head-label">Or pick the kind of claim</h3>
+          <button class="change-type" type="button" id="change-type" hidden>Change claim type</button>
         </div>
         <div class="type-grid" id="type-grid"></div>
         <div class="subwrap" id="subwrap" hidden>
@@ -423,7 +1037,7 @@
         <!-- policy prefill — motor & property only -->
         <div class="lookup" id="lookup" hidden>
           <div class="lookup-head">
-            <span class="lk-ico" aria-hidden="true">⚡</span>
+            <span class="lk-ico" aria-hidden="true"><svg class="ic ic-lg" aria-hidden="true"><use href="#ic-bolt"/></svg></span>
             <div>
               <b>Save yourself the typing</b>
               <span id="lk-blurb">Enter your number plate or policy number and we'll fill in your vehicle and contact details from our records — chassis and engine numbers included.</span>
@@ -433,7 +1047,7 @@
           <div class="lookup-row" id="lk-step-find">
             <div class="field">
               <label for="lk-q" id="lk-q-label">Number plate or policy number</label>
-              <input id="lk-q" type="text" placeholder="PDL 4471" autocomplete="off" spellcheck="false" />
+              <input id="lk-q" type="text" placeholder="TAA 1234" autocomplete="off" spellcheck="false" />
             </div>
             <button class="btn btn-teal" type="button" id="lk-find">Find my policy</button>
           </div>
@@ -502,6 +1116,8 @@
           <p>Read this the way an assessor will. Anything wrong? Tap back and fix it — it is far quicker now than after filing.</p>
         </div>
         <div id="review-body"></div>
+        <div id="checks"></div>
+        <div id="ggform"></div>
         <div class="declare" id="declare">
           <label class="check">
             <input type="checkbox" id="dec-true" />
@@ -509,7 +1125,7 @@
           </label>
           <label class="check">
             <input type="checkbox" id="dec-share" />
-            <span>I authorise Guardian Group, its adjusters, assessors and appointed medical or repair professionals to <b>obtain and share the information</b> reasonably needed to assess this claim.</span>
+            <span>I authorise <b>my insurer</b>, its adjusters, assessors and appointed medical or repair professionals to <b>obtain and share the information</b> reasonably needed to assess this claim.</span>
           </label>
           <label class="check">
             <input type="checkbox" id="dec-contact" />
@@ -519,7 +1135,7 @@
         <div class="notice bad" id="err-4" hidden></div>
         <div class="panel-foot">
           <button class="btn btn-ghost" type="button" data-back="4">← Back</button>
-          <button class="btn btn-teal" type="button" id="submit-btn">🛡 Submit my claim</button>
+          <button class="btn btn-teal" type="button" id="submit-btn"><svg class="ic" aria-hidden="true"><use href="#ic-shield"/></svg> Submit my claim</button>
         </div>
       </div>
 
@@ -556,7 +1172,7 @@
         </ol>
         <div class="notice warn"><b>Please don't start repairs yet.</b> Work done before an inspection or written approval may not be reimbursed. If your vehicle is undrivable or your home is unsafe, call us first — we can authorise emergency work.</div>
         <div class="panel-foot no-print">
-          <button class="btn btn-ghost" type="button" onclick="window.print()">🖨 Print / save as PDF</button>
+          <button class="btn btn-ghost" type="button" onclick="window.print()"><svg class="ic" aria-hidden="true"><use href="#ic-printer"/></svg> Print / save as PDF</button>
           <a class="btn btn-primary" href="#track">Track this claim →</a>
         </div>
       </div>
@@ -571,17 +1187,35 @@
         <div id="fallback-summary" style="margin:20px 0"></div>
         <div class="panel-foot">
           <button class="btn btn-ghost" type="button" id="fb-retry">↻ Try sending again</button>
-          <button class="btn btn-primary" type="button" id="fb-mail">✉ Re-open the email</button>
+          <button class="btn btn-primary" type="button" id="fb-mail"><svg class="ic" aria-hidden="true"><use href="#ic-mail"/></svg> Re-open the email</button>
         </div>
       </div>
     </div>
 
+    <!-- Where somebody actually gets stuck, so the way to a person sits here.
+         WhatsApp is help with the form, never a way to file: the words say
+         "ask us", and the sentence after them says where the claim is filed.
+         His own number was beside it for a day and came off at his word on
+         7 November 2026, so this is HELP 868 alone. -->
     <p style="margin-top:18px;font-size:.85rem;color:var(--muted);text-align:center">
-      Rather talk it through? Call the branch on
-      <a href="tel:+18686785921" style="color:var(--teal-600);font-weight:700">(868) 678-5921</a>.
+      Stuck on something, or would rather ask a person?
+      <a class="wa-link" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20am%20on%20the%20branch%20claims%20page%20and%20need%20a%20hand." target="_blank" rel="noopener"><svg class="ic-wa" aria-hidden="true" focusable="false"><use href="#ic-wa"/></svg>Ask us on WhatsApp</a>.
+      A message reaches somebody at the branch — your claim is filed by this form.
     </p>
   </div>
 </section>
+
+<!-- ══════════════ FIRST STEPS ══════════════ -->
+<div class="steps-strip">
+  <div class="wrap">
+    <h2><svg class="ic" aria-hidden="true"><use href="#ic-clock"/></svg> Just happened? Do these four things first.</h2>
+    <div class="first-steps">
+      <div class="fs"><b>1. Make everyone safe</b><span>Injuries first. Ambulance 811, Police 999, Fire 990. Nothing on this page matters more than that.</span></div>
+      <div class="fs"><b>2. Report it to the police</b><span>For any motor accident, theft, burglary or malicious damage — report at the nearest station and ask for the report or station diary extract number.</span></div>
+      <div class="fs"><b>3. Photograph everything</b><span>Damage, the whole scene, both vehicles, number plates, the road, and the other driver's permit and insurance certificate. Take more than you think you need.</span></div>
+      <div class="fs"><b>4. Admit nothing, repair nothing</b><span>Never accept blame at the scene, and don't start repairs until the claim is inspected or approved in writing.</span></div>
+    </div>
+  </div>
 
 <!-- ══════════════ TRACK / MY CLAIMS ══════════════ -->
 <section id="track" style="background:#fff;border-block:1px solid var(--line)">
@@ -593,7 +1227,7 @@
     <!-- signed-out: the two ways in -->
     <div id="acct-out">
       <div class="status-card" style="margin-bottom:18px">
-        <h3 class="h3">🔑 Sign in — see all my claims</h3>
+        <h3 class="h3"><svg class="ic" aria-hidden="true"><use href="#ic-key"/></svg> Sign in — see all my claims</h3>
         <p style="color:var(--muted);font-size:.92rem;margin-bottom:16px">No password. We email you a 6-digit code, you type it in, done.</p>
         <div class="status-form" id="acct-step-id">
           <div class="field" style="grid-column:1/-2">
@@ -615,7 +1249,7 @@
       </div>
 
       <div class="status-card">
-        <h3 class="h3">⚡ Quick check — one claim, no sign-in</h3>
+        <h3 class="h3"><svg class="ic" aria-hidden="true"><use href="#ic-bolt"/></svg> Quick check — one claim, no sign-in</h3>
         <p style="color:var(--muted);font-size:.92rem;margin-bottom:16px">For anyone without an email on file: your reference plus the last four digits of the mobile you filed with.</p>
         <div class="status-form">
           <div class="field">
@@ -649,13 +1283,17 @@
   <div class="wrap">
     <span class="eyebrow">Straight answers</span>
     <h2 class="h2">The questions we get asked most</h2>
-    <p class="lead" style="margin-bottom:26px">If yours isn't here, call the branch — we would rather answer it than have you guess.</p>
+    <!-- "Call the branch" had no number to call once his came off the page,
+         so the invitation points where the page's own help points. -->
+    <p class="lead" style="margin-bottom:26px">If yours isn't here,
+      <a class="wa-link" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20am%20on%20the%20branch%20claims%20page%20and%20need%20a%20hand." target="_blank" rel="noopener"><svg class="ic-wa" aria-hidden="true" focusable="false"><use href="#ic-wa"/></svg>ask us on WhatsApp</a>
+      — we would rather answer it than have you guess.</p>
     <div class="faq">
       <details class="q"><summary>Can I file if I don't have the police report yet?</summary><div class="a">Yes, and you should. Tap <b>"I don't have this yet"</b> on the police report and file the rest now. The claim gets a reference and starts moving; you send the report when the station gives it to you. Waiting for one paper before filing anything is the most common reason a claim drags on for weeks.</div></details>
       <details class="q"><summary>Are phone photos good enough, or do I need scans?</summary><div class="a">Phone photos are fine for every document here. Lay the paper flat, use good light, get the whole page in the frame including the edges, and check the text is readable before you attach it. If a document runs to several pages, photograph each page and attach them all.</div></details>
       <details class="q"><summary>What does my excess mean for the payout?</summary><div class="a">The excess is the first portion of every claim that you carry yourself — it is deducted from the settlement, not billed to you. If your repair is assessed at $18,000 and your excess is $2,500, the insurer pays $15,500. For very small losses it is worth asking whether claiming is worth it at all, because a claim can also affect your <b>No Claim Discount</b> at renewal.</div></details>
-      <details class="q"><summary>Will claiming cost me my No Claim Discount?</summary><div class="a">Usually a claim reduces it, but not always to zero. Guardian's motor step-back protection means that once you have reached the third-year discount a single claim steps you back rather than wiping you out — 50% steps back to 30%, 60% to 40%. And after two or more years at the maximum 60%, one claim doesn't touch it at all. Glass-only claims under the windscreen benefit (OEB 2) don't affect it either.</div></details>
-      <details class="q"><summary>Is flood damage covered?</summary><div class="a">Only if you carry <b>OEB 1 — Special Perils</b>. The standard motor and property policies exclude flood, hurricane, windstorm and earthquake. In Trinidad &amp; Tobago that add-on has saved more vehicles than any other. File anyway if you are unsure — we will check your schedule and tell you plainly where you stand.</div></details>
+      <details class="q"><summary>Will claiming cost me my No Claim Discount?</summary><div class="a">Usually a claim reduces it, but not always to zero. Most motor policies we place carry <b>step-back protection</b>: once you have reached the third-year discount a single claim steps you back rather than wiping you out — 50% steps back to 30%, 60% to 40% — and after two or more years at the maximum 60%, one claim doesn't touch it at all. Glass-only claims under a windscreen benefit don't affect it either. The exact terms depend on your insurer and your schedule, so ask us before you decide.</div></details>
+      <details class="q"><summary>Is flood damage covered?</summary><div class="a">Only if you carry the <b>special perils</b> extension (on many schedules it appears as OEB 1). A standard motor or property policy excludes flood, hurricane, windstorm and earthquake. In Trinidad &amp; Tobago that one add-on has saved more vehicles than any other. File anyway if you are unsure — we will check your schedule and tell you plainly where you stand.</div></details>
       <details class="q"><summary>Can I start repairs while I wait?</summary><div class="a">No — not until the loss has been inspected or you have written approval. Repairs done beforehand may not be reimbursed, because nobody independent has seen the damage. If the vehicle is undrivable or your home is unsafe, call us first and we can authorise emergency work to secure things.</div></details>
       <details class="q"><summary>How long does a claim take?</summary><div class="a">A straightforward motor or health claim with complete documents typically settles in a few weeks. Claims involving a third party, a police investigation, an overseas provider or a total loss take longer. The single biggest factor is document completeness — that is exactly what this page is built to fix.</div></details>
       <details class="q"><summary>Who can see what I upload?</summary><div class="a">Your documents go into a private folder for your claim only, reachable by the claims team handling it and by your agent. They are not published anywhere and are never shared outside the assessment of your claim.</div></details>
@@ -668,8 +1306,8 @@
   <div class="wrap">
     <div class="foot-grid">
       <div>
-        <h4>Claims TT</h4>
-        <p style="max-width:340px;line-height:1.7">The claims desk of the Ricky Rampersad Branch — Guardian Group, Trinidad &amp; Tobago. Built so filing a claim takes ten minutes on your phone instead of an afternoon at a counter.</p>
+        <h4>Ricky Rampersad Branch</h4>
+        <p style="max-width:340px;line-height:1.7">The branch claims desk, Trinidad &amp; Tobago. Built so filing a claim takes ten minutes on your phone instead of an afternoon at a counter.</p>
       </div>
       <div>
         <h4>Emergency</h4>
@@ -682,7 +1320,7 @@
       <div>
         <h4>The branch</h4>
         <ul>
-          <li><a href="tel:+18686785921">(868) 678-5921</a></li>
+          <li><a href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20am%20on%20the%20branch%20claims%20page%20and%20need%20a%20hand." target="_blank" rel="noopener">HELP 868 on WhatsApp</a></li>
           <li><a href="/">Main site</a></li>
           <li><a href="/renewal/">Renewals portal</a></li>
           <li><a href="#track">My claims / track</a></li>
@@ -692,10 +1330,27 @@
     </div>
     <p class="disclaimer">
       Submitting a claim through this page is not an admission of liability by the insurer and does not guarantee payment. Cover, excesses and settlement are determined under your policy wording and schedule, which govern in all cases. Information given here is a plain-language summary for your convenience. Emergency numbers are for Trinidad &amp; Tobago.
-      <br /><br />Claims TT · Ricky Rampersad, Guardian Group.
+      <br /><br />The claims desk of the Ricky Rampersad Branch, Guardian Life of the Caribbean.
     </p>
   </div>
 </footer>
+
+<!-- HELP 868, on every screen of the page. The accessible name is the whole
+     promise: ask a question, not file a claim. -->
+<a class="wa-fab" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20am%20on%20the%20branch%20claims%20page%20and%20need%20a%20hand."
+   target="_blank" rel="noopener"
+   aria-label="Ask HELP 868 a question on WhatsApp. A message reaches a person — your claim is filed by the form on this page.">
+  <svg aria-hidden="true" focusable="false"><use href="#ic-wa"/></svg>
+</a>
+
+<!-- The claim checked against the policy we already hold. Loaded before the app,
+     and the app runs without it if it fails: a broken validator must never be
+     the reason a claim cannot be filed. -->
+<script src="/claims/claim-checks.js"></script>
+<!-- Where every answer sits on Guardian's own accident report form. Small, and
+     loaded with the page; pdf-lib is 500KB and fetched only when a motor
+     claimant actually asks to see the form. -->
+<script src="/claims/claim-forms.js"></script>
 
 <script>
 /* ══════════════════════════════════════════════════════════════
@@ -704,14 +1359,24 @@
 const CONFIG = {
   // Apps Script web-app /exec URL from apps-script/Claims.gs.
   // Leave "" to run the page in preview mode (email fallback).
-  API_URL: "",
+  API_URL: "https://script.google.com/macros/s/AKfycbyGFQCxQMcmnQDDjTXJgUsbeffNplcKbLmUwpMszGj72Y4D7o1s7q4CBssxeZMTncUA/exec",
 
   // Must match CLAIMS.SITE_KEY in Claims.gs. Not a secret — it only
   // stops bots that never loaded this page from posting.
   SITE_KEY: "claims-tt-2026-rrb",
 
   AGENT_EMAIL: "ricky.rampersad@myguardiangroup.com",
-  AGENT_PHONE: "(868) 678-5921",
+
+  // HELP 868, the branch WhatsApp line — the one route to a person this page
+  // offers. The branch manager's own number came off the page on 7 November
+  // 2026, asked for in those words ("I don't want my number, just the HELP
+  // 868"), so nothing on this page may print it again: there is no
+  // AGENT_PHONE here any more, and the page refuses one the backend sends
+  // (see t-result below), because the live deployment is whatever was last
+  // pasted and this page cannot control what it sends.
+  // The same URL is on the five links in the markup. Change all six together
+  // — the test fails if they are not byte-identical.
+  WA_URL: "https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20am%20on%20the%20branch%20claims%20page%20and%20need%20a%20hand.",
 
   MAX_FILE_MB: 15,
   MAX_FILES: 30,
@@ -719,6 +1384,13 @@ const CONFIG = {
   IMAGE_QUALITY: 0.75,
   CHUNK_CHARS: 1500000,   // base64 characters per request
 };
+
+/* One WhatsApp link for every message the script builds, so a wording change
+   lands in all of them and no message can print a telephone number. */
+function waLink(words) {
+  return '<a href="' + CONFIG.WA_URL + '" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline">' +
+    (words || "ask us on WhatsApp") + "</a>";
+}
 
 /* ══════════════════════════════════════════════════════════════
    CLAIM DEFINITIONS
@@ -731,7 +1403,7 @@ const CONFIG = {
    ══════════════════════════════════════════════════════════════ */
 const TYPES = {
   motor: {
-    label: "Motor", icon: "🚗",
+    label: "Motor", icon: "motor",
     blurb: "Accident, theft, windscreen, fire or flood damage involving your vehicle.",
     subtypes: [
       { id: "accident",   label: "Accident / collision" },
@@ -745,7 +1417,7 @@ const TYPES = {
     ],
     fields: [
       { sec: "The vehicle" },
-      { id: "vehicleReg", label: "Registration number", type: "text", ph: "PBX 1234", req: true, half: true },
+      { id: "vehicleReg", label: "Registration number", type: "text", ph: "TAA 1234", req: true, half: true },
       { id: "vehicleMake", label: "Make &amp; model", type: "text", ph: "Nissan Almera", half: true },
       { id: "vehicleYear", label: "Year", type: "text", ph: "2019", half: true },
       { id: "coverage", label: "Type of cover", type: "text", ph: "Private Comprehensive", half: true },
@@ -755,6 +1427,16 @@ const TYPES = {
       { id: "driverName", label: "Who was driving?", type: "text", ph: "Your name, or the driver's full name", req: true, half: true,
         hint: "The named driver at the time — this is checked against your policy." },
       { id: "driverPermit", label: "Driver's permit number", type: "text", half: true },
+      /* Guardian's accident report form asks for all three (section 3.(b): the
+         number, the date of first issue and the date of expiry), and the expiry
+         against the date of loss is the single most material thing on a motor
+         claim. We hold a permit number for about one client in sixteen and an
+         issue date for one in three hundred, so most people are filling a blank
+         — which is how the record ever gets populated. */
+      { id: "permitIssue", label: "Permit first issued", type: "date", half: true,
+        hint: "On the permit itself. Leave it if you are not sure." },
+      { id: "permitExpiry", label: "Permit expires", type: "date", half: true,
+        hint: "We check this against the date of the accident." },
 
       { sec: "The incident" },
       { id: "incidentDate", label: "Date it happened", type: "date", req: true, half: true },
@@ -779,7 +1461,7 @@ const TYPES = {
       { sec: "The other party", show: ["accident", "thirdparty"] },
       { note: "If more than one other vehicle was involved, put the rest in the description above.", show: ["accident", "thirdparty"] },
       { id: "tpName", label: "Other driver's name", type: "text", half: true, show: ["accident", "thirdparty"] },
-      { id: "tpVehicle", label: "Their vehicle &amp; registration", type: "text", ph: "Silver Toyota Hilux, PCX 5678", half: true, show: ["accident", "thirdparty"] },
+      { id: "tpVehicle", label: "Their vehicle &amp; registration", type: "text", ph: "Silver Toyota Hilux, TBB 5678", half: true, show: ["accident", "thirdparty"] },
       { id: "tpInsurer", label: "Their insurance company", type: "text", half: true, show: ["accident", "thirdparty"] },
       { id: "tpContact", label: "Their phone number", type: "tel", half: true, show: ["accident", "thirdparty"] },
     ],
@@ -801,7 +1483,7 @@ const TYPES = {
   },
 
   health: {
-    label: "Health / Medical", icon: "🏥",
+    label: "Health / Medical", icon: "health",
     blurb: "Doctor visits, prescriptions, lab work, dental, optical or hospital treatment.",
     subtypes: [
       { id: "visit",     label: "Doctor visit / consultation" },
@@ -853,7 +1535,7 @@ const TYPES = {
   },
 
   property: {
-    label: "Home / Property", icon: "🏠",
+    label: "Home / Property", icon: "home",
     blurb: "Fire, burglary, storm, flood or water damage to a home, contents or business premises.",
     subtypes: [
       { id: "fire",      label: "Fire" },
@@ -906,7 +1588,7 @@ const TYPES = {
   },
 
   life: {
-    label: "Life / Critical Illness", icon: "🕊️",
+    label: "Life / Critical Illness", icon: "life",
     blurb: "Death, critical illness, disability or personal accident benefits under a life policy.",
     subtypes: [
       { id: "death",      label: "Death claim" },
@@ -951,7 +1633,7 @@ const TYPES = {
 };
 
 TYPES.pension = {
-  label: "Pension / Annuity", icon: "📈",
+  label: "Pension / Annuity", icon: "pension",
   blurb: "A pension or annuity reaching maturity, a withdrawal, a transfer, or a benefit after a death.",
   subtypes: [
     { id: "maturity",   label: "Plan reaching maturity" },
@@ -1031,12 +1713,30 @@ const state = {
   type: "",
   subtype: "",
   answers: {},      // fieldId -> value
+  policy: {},       // what the policy itself says — see POLICY_FACTS
   files: {},        // docId -> [{file, name, size, url, error}]
   skipped: {},      // docId -> true when "I don't have this yet"
   step: 0,
   ref: "",
   uploadKey: "",
 };
+
+/* The lookup has always fetched these from Salesforce and the page has always
+   thrown them away, because they are not questions — they are what the policy
+   says. They are exactly what the checks need: whether the loss falls inside
+   the cover period is the first thing any claims desk looks at, and we were
+   discarding the dates that answer it. Kept apart from state.answers so they
+   can never be rendered as a field or edited by the client. */
+const POLICY_FACTS = ["coverFrom", "coverTo", "carrier", "insuredValue", "windscreen", "permitOnFile"];
+
+/* Every year of cover on this vehicle, newest first, as the lookup returned
+   them. A vehicle renewed five times has five terms, each with its own period,
+   policy number and sum insured, and a claim is assessed against the one that
+   was in force on the date of loss — not against whatever has been renewed
+   since. Until 5 November 2026 only the current term was held, so a claim for
+   an accident in last year's term came back "the loss is before this policy
+   started", which was our record's fault and read as the client's. */
+let coverTerms = [];
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, html) => {
@@ -1045,6 +1745,7 @@ const el = (tag, cls, html) => {
   if (html !== undefined) n.innerHTML = html;
   return n;
 };
+const ICON = (n, c) => '<svg class="' + (c || "ic") + '" aria-hidden="true"><use href="#ic-' + n + '"/></svg>';
 const esc = (s) => String(s == null ? "" : s)
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const rid = () => Math.random().toString(36).slice(2, 10);
@@ -1072,7 +1773,9 @@ function saveDraft() {
   try {
     localStorage.setItem(DRAFT_KEY, JSON.stringify({
       type: state.type, subtype: state.subtype, answers: state.answers,
-      skipped: state.skipped, at: Date.now(),
+      skipped: state.skipped, said: checkSaid, at: Date.now(),
+      // state.policy is deliberately NOT here. It is the policy's own facts,
+      // not the client's answers, and a shared phone should not keep them.
     }));
   } catch (err) { /* private browsing — carry on without a draft */ }
 }
@@ -1088,6 +1791,8 @@ function loadDraft() {
     state.subtype = d.subtype || "";
     state.answers = d.answers || {};
     state.skipped = d.skipped || {};
+    // their own words about anything we flagged, so a reload does not lose them
+    Object.keys(d.said || {}).forEach((k) => { checkSaid[k] = d.said[k]; });
     return true;
   } catch (err) { return false; }
 }
@@ -1096,16 +1801,23 @@ function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (err) 
 /* ══════════════════════════════════════════════════════════════
    STEP 1 — type & sub-type
    ══════════════════════════════════════════════════════════════ */
+let typePickerOpen = false;   // once a line is chosen, the others get out of the way
+
 function renderTypes() {
   const grid = $("type-grid");
   grid.innerHTML = "";
+  const collapsed = state.type && !typePickerOpen;
+  $("change-type").hidden = !collapsed;
+  $("type-head-label").textContent = collapsed ? "Your claim" : "Or pick the kind of claim";
+
   Object.keys(TYPES).forEach((key) => {
+    if (collapsed && key !== state.type) return;   // health chosen → only health remains
     const t = TYPES[key];
     const card = el("button", "type-card");
     card.type = "button";
     card.setAttribute("aria-pressed", state.type === key ? "true" : "false");
     card.innerHTML =
-      '<div class="tico" aria-hidden="true">' + t.icon + "</div>" +
+      '<div class="tico" aria-hidden="true"><svg class="ic ic-lg ic-draw"><use href="#ic-' + t.icon + '"/></svg></div>' +
       "<b>" + t.label + "</b><span>" + t.blurb + "</span>";
     card.addEventListener("click", () => {
       if (state.type !== key) {
@@ -1114,6 +1826,8 @@ function renderTypes() {
         state.files = {};
         state.skipped = {};
       }
+      typePickerOpen = false;
+      autoPolicyForType();   // signed in, and we hold one policy on this line
       renderTypes();
       renderSubtypes();
       saveDraft();
@@ -1122,6 +1836,11 @@ function renderTypes() {
     grid.appendChild(card);
   });
 }
+
+$("change-type").addEventListener("click", () => {
+  typePickerOpen = true;
+  renderTypes();
+});
 
 function renderSubtypes() {
   const wrap = $("subwrap");
@@ -1246,7 +1965,8 @@ function docCard(d) {
   input.className = "sr-only";
   input.id = "file-" + d.id;
 
-  const drop = el("button", "drop", "📎 " + (d.multi !== false ? "Add photos or files" : "Add file"));
+  const drop = el("button", "drop",
+    ICON("clip") + (d.multi !== false ? " Add photos or files" : " Add file"));
   drop.type = "button";
   drop.addEventListener("click", () => input.click());
   input.addEventListener("change", () => {
@@ -1276,6 +1996,8 @@ function docCard(d) {
   actions.appendChild(input);
   actions.appendChild(skip);
   renderThumbs(card, d);
+  // A read that was offered earlier survives the step being re-rendered.
+  (state.files[d.id] || []).forEach((entry) => renderScanTip(card, entry));
   return card;
 }
 
@@ -1286,7 +2008,7 @@ function renderThumbs(card, d) {
     const t = el("div", "thumb" + (entry.error ? " bad" : ""));
     const isImg = /^image\//.test(entry.file.type) && entry.url;
     t.innerHTML =
-      (isImg ? '<img src="' + entry.url + '" alt="" />' : '<div class="fileico" aria-hidden="true">📄</div>') +
+      (isImg ? '<img src="' + entry.url + '" alt="" />' : '<div class="fileico" aria-hidden="true">' + ICON("doc", "ic ic-lg") + "</div>") +
       '<div class="tname">' + esc(entry.name) + "<br>" + kb(entry.size) + "</div>" +
       (entry.error ? '<div class="warn">' + esc(entry.error) + "</div>" : "");
     const rm = el("button", "rm", "✕");
@@ -1340,8 +2062,73 @@ async function addFiles(d, incoming) {
     }
     renderThumbs(card, d);
     updateDocStates();
+    scanAttachment(d, entry, card);   // fire-and-forget: offers what the photo says
   }
   updateDocStates();
+}
+
+/* ── reading the photo itself ──
+   Some documents carry their own answers. When one of these is attached,
+   the (already compressed) photo goes to the backend, which reads it and
+   sends back what it found. The client taps "Use these" — nothing is ever
+   filled in silently, and nothing already typed is touched. */
+const SCAN_TARGETS = {
+  permit:        { fields: ["driverName", "driverPermit", "permitIssue", "permitExpiry"] },
+  police:        { fields: ["policeReport", "policeStation"] },
+  certinsurance: { fields: ["policy", "vehicleReg", "chassis"] },
+  receipt:       { fields: ["amount", "provider", "incidentDate"] },
+};
+const SCAN_LABELS = {
+  driverName: "Driver", driverPermit: "Permit #", policeReport: "Report #",
+  policeStation: "Station", policy: "Policy #", vehicleReg: "Reg",
+  chassis: "Chassis", amount: "Total TT$", provider: "Provider", incidentDate: "Date",
+  permitIssue: "Issued", permitExpiry: "Expires",
+};
+
+async function scanAttachment(d, entry, card) {
+  const target = SCAN_TARGETS[d.id];
+  if (!target || !CONFIG.API_URL || entry.error) return;
+  if (card.querySelector(".scan-tip")) return;                       // one read per document
+  if (!target.fields.some((f) => !String(state.answers[f] || "").trim())) return;  // nothing left to fill
+
+  try {
+    const b64 = await toBase64(entry.file);
+    if (b64.length > 2000000) return;
+    const res = await api({ action: "scanDoc", doc: d.id,
+      mime: entry.file.type || "image/jpeg", data: b64 });
+    const found = res.fields || {};
+    const usable = target.fields.filter((f) =>
+      found[f] && !String(state.answers[f] || "").trim());
+    if (!usable.length) return;
+
+    entry.scan = { found: found, usable: usable, applied: false };
+    renderScanTip(card, entry);
+  } catch (err) { /* a failed read costs nothing */ }
+}
+
+function renderScanTip(card, entry) {
+  if (!card || !entry.scan || entry.scan.applied || card.querySelector(".scan-tip")) return;
+  const s = entry.scan;
+  const tip = el("div", "scan-tip");
+  tip.innerHTML =
+    '<span class="vals"><b>' + ICON("scan") + " Read from your photo:</b> " +
+    s.usable.map((f) => SCAN_LABELS[f] + " " + esc(s.found[f])).join(" · ") + "</span>";
+  const use = el("button", null, "Use these");
+  use.type = "button";
+  use.addEventListener("click", () => {
+    s.usable.forEach((f) => {
+      if (!String(state.answers[f] || "").trim()) {
+        state.answers[f] = s.found[f];
+        if (!lookup.filled.includes(f)) lookup.filled.push(f);
+      }
+    });
+    s.applied = true;
+    saveDraft();
+    tip.classList.add("applied");
+    tip.innerHTML = "<span class=\"vals\"><b>✓ Filled in.</b> Check them on the Details step — correct anything we misread.</span>";
+  });
+  tip.appendChild(use);
+  card.appendChild(tip);
 }
 
 /**
@@ -1423,21 +2210,48 @@ const PREFILL_MAP = {
   vehicleReg: "vehicleReg", vehicleMake: "vehicleMake", vehicleYear: "vehicleYear",
   chassis: "chassis", engine: "engine", coverage: "coverage",
   policy: "policy", name: "name", email: "email", mobile: "mobile",
+  /* The permit. Asked for on 3 November 2026: "we do have the driver's permit,
+     so the data driver's permit should pull in". We hold a number for about one
+     client in sixteen and an issue date for one in three hundred, so most of
+     these arrive blank and the client is populating the record rather than
+     reading it back. permitOnFile stays out of this map on purpose: it is the
+     policy's own value, kept for the mismatch check to compare against, and
+     prefilling from it as well would make that check unable to fire. */
+  driverPermit: "driverPermit", permitIssue: "permitIssue", permitExpiry: "permitExpiry",
 };
+
+// Motor and property answer to a plate; everything else to a policy or plan
+// number. One source of truth, so the label, the blurb and the error agree.
+function lookupNoun() {
+  return (state.type === "motor" || state.type === "property")
+    ? "number plate or policy number"
+    : "policy or plan number";
+}
+
+// ...and the same for the confirm line. "Is that your vehicle?" was being
+// asked on every line, so a family health plan came back as a vehicle.
+function lookupThing() {
+  return state.type === "motor" ? "vehicle"
+       : state.type === "property" ? "property"
+       : "policy";
+}
 
 function showLookup() {
   const box = $("lookup");
   box.hidden = lookup.dismissed || !CONFIG.API_URL || !state.type;
   if (box.hidden) return;
-  // Motor and property answer to a plate; everything else to a policy/plan number.
   if (state.type === "motor" || state.type === "property") {
     $("lk-blurb").textContent = "Enter your number plate or policy number and we'll fill in your vehicle and contact details from our records — chassis and engine numbers included.";
     $("lk-q-label").textContent = "Number plate or policy number";
-    $("lk-q").placeholder = "PDL 4471";
+    /* Invented, and it has to stay invented: this page is served from the
+       repository root, so a placeholder is published. Two real ones were in
+       here until 5 November 2026 — a client's registration and a client's
+       plan number — which is the same rule the films and these notes keep. */
+    $("lk-q").placeholder = "TAA 1234";
   } else {
     $("lk-blurb").textContent = "Enter your policy or plan number and we'll fill in your details from our records — after you confirm it's yours.";
     $("lk-q-label").textContent = "Policy or plan number";
-    $("lk-q").placeholder = "TQG0897-00014-00";
+    $("lk-q").placeholder = "TAA0001-00001-00";
   }
 }
 
@@ -1450,7 +2264,9 @@ function lkMessage(id, html) {
 
 async function findPolicy() {
   const q = $("lk-q").value.trim();
-  if (q.length < 4) { lkMessage("lk-err", "Enter your number plate or policy number."); return; }
+  // Same wording the panel above it is using — a health claim must not be
+  // told to enter a number plate.
+  if (q.length < 4) { lkMessage("lk-err", "Enter your " + lookupNoun() + "."); return; }
 
   const btn = $("lk-find");
   btn.disabled = true;
@@ -1470,7 +2286,9 @@ async function findPolicy() {
     lookup.method = lookup.methods.length ? lookup.methods[0].id : "";
 
     $("lk-vehicle").textContent = data.vehicle;
-    $("lk-coverage").textContent = data.coverage ? data.coverage + " — is that your vehicle?" : "Is that your vehicle?";
+    $("lk-coverage").textContent = data.coverage
+      ? data.coverage + " — is that your " + lookupThing() + "?"
+      : "Is that your " + lookupThing() + "?";
     $("lk-step-find").hidden = true;
     $("lk-step-verify").hidden = false;
     renderVerifyMethod();
@@ -1517,6 +2335,8 @@ async function verifyPolicy() {
       action: "verifyPolicy", query: lookup.query,
       method: lookup.method, answer: answer,
     });
+    /* Every year of cover, before the prefill, so syncCoverTerm has them. */
+    coverTerms = Array.isArray(data.terms) ? data.terms : [];
     applyPrefill(data.prefill || {});
   } catch (err) {
     lkMessage("lk-err", esc(err && err.message ? err.message : "That didn't match. Try again, or type your details in below."));
@@ -1541,7 +2361,16 @@ function applyPrefill(prefill) {
   // The insured value is worth carrying across as context, not as the claim amount.
   if (prefill.insuredValue) state.answers.insuredValueNote = prefill.insuredValue;
 
-  lookup.filled = filled;
+  // Keep what the policy itself says, so the checks have something to check against.
+  POLICY_FACTS.forEach((k) => { if (prefill[k]) state.policy[k] = prefill[k]; });
+  if (prefill.policy) state.policy.policy = prefill.policy;
+  if (prefill.vehicleReg) state.policy.vehicleReg = prefill.vehicleReg;
+  if (prefill.name) state.policy.name = prefill.name;
+  syncCoverTerm();
+
+  // Add to what is already marked rather than replacing it — signing in fills
+  // the contact fields before a policy is ever chosen, and those marks stay.
+  lookup.filled = Array.from(new Set((lookup.filled || []).concat(filled)));
   saveDraft();
   renderFields($("detail-fields"), currentType().fields);
   markPrefilled(filled);
@@ -1584,7 +2413,7 @@ function showStep(n) {
     if (n === 1) { renderFields($("detail-fields"), currentType().fields); showLookup(); markPrefilled(lookup.filled); }
     if (n === 2) renderDocs();
     if (n === 3) { renderFields($("you-fields"), YOU_FIELDS); markPrefilled(lookup.filled); }
-    if (n === 4) renderReview();
+    if (n === 4) { renderReview(); renderChecks(); renderGGForm(); }
   } else {
     $(n).hidden = false;
   }
@@ -1672,12 +2501,376 @@ function validateStep(n) {
     return true;
   }
   if (n === 4) {
+    // A stop has to be answered — corrected above, or explained here. It is never
+    // a locked door: our register can be stale and a real claim must not be
+    // turned away by us. The explanation travels with the claim.
+    const unanswered = checkFindings.filter((f) =>
+      f.level === "stop" && !String(checkSaid[f.id] || "").trim());
+    if (unanswered.length) {
+      renderChecks();
+      showError(4, "Please answer what we flagged above — fix it, or tell us in a line why it is right. " +
+        "We will file it either way.");
+      const box = $("ck-say-" + unanswered[0].id);
+      if (box) { box.focus(); box.scrollIntoView({ behavior: "smooth", block: "center" }); }
+      return false;
+    }
     const all = $("dec-true").checked && $("dec-share").checked && $("dec-contact").checked;
     $("declare").classList.toggle("bad", !all);
     if (!all) { showError(4, "Please tick all three declarations — we cannot file the claim without them."); return false; }
     return true;
   }
   return true;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   What we noticed — the claim against the policy we hold
+   ══════════════════════════════════════════════════════════════ */
+let checkFindings = [];      // the last run
+const checkSaid = {};        // finding id -> what the client said about it
+
+/* The cover the claim is assessed against, re-picked whenever the date of loss
+   changes.
+ *
+ * state.policy is not a field the client can edit — it is what the policy says
+ * — so these are overwritten rather than protected. What the client typed is
+ * never touched. The matched facts travel with the claim as policyFacts, so the
+ * desk notice, the claim form and the ledger all carry the right year's sum
+ * insured and policy number instead of this year's.
+ *
+ * termAt comes from ClaimChecks, so the fields and the findings can never
+ * disagree about which term it is. */
+function termsNow() {
+  /* coverTerms is set by the lookup; state.policy.terms is where syncCoverTerm
+     parked them, which is what the two profile call sites read when they apply
+     a prefill without having gone through the lookup again.
+   *
+   * Neither survives a reload, and that is on purpose: saveDraft deliberately
+   * keeps state.policy out of localStorage, because a cover period, a sum
+   * insured and a policy number are the policy's facts and should not be left
+   * on a borrowed phone. A reloaded draft therefore has no terms and no cover
+   * dates, so the cover checks stand down — which is right. They must never
+   * come back half-informed and tell a client the loss is before their policy
+   * started on the strength of one term. */
+  if (coverTerms.length) return coverTerms;
+  return Array.isArray(state.policy.terms) ? state.policy.terms : [];
+}
+
+function syncCoverTerm() {
+  const terms = termsNow();
+  if (!terms.length || typeof ClaimChecks === "undefined") return;
+  coverTerms = terms;
+  state.policy.terms = terms;
+  const loss = ClaimChecks._day(state.answers.incidentDate);
+  const t = ClaimChecks.termAt(terms, loss) || terms[0];
+  const matched = !!ClaimChecks.termAt(terms, loss);
+  ["coverFrom", "coverTo", "carrier", "insuredValue", "windscreen"].forEach((k) => {
+    if (t[k]) state.policy[k] = t[k];
+  });
+  if (t.policy) state.policy.policy = t.policy;
+  state.policy.termMatched = matched;
+  state.policy.termCurrent = t === terms[0];
+}
+
+/* One plain line on the review step saying which year of cover this is being
+   assessed against. Shown when there is more than one term — with one, there
+   is nothing to choose and saying so is noise. */
+function coverTermLine() {
+  if (termsNow().length < 2 || !state.policy.termMatched) return "";
+  const d = (v) => { const m = ClaimChecks._day(v); return m === null ? "" : new Date(m).toUTCString().slice(5, 16); };
+  const span = d(state.policy.coverFrom) + " to " + d(state.policy.coverTo);
+  return '<p class="lede-sm" style="margin:10px 0 0">' +
+    (state.policy.termCurrent
+      ? "Assessed against your current cover, " + esc(span) + "."
+      : "Your loss falls in an earlier year of cover, " + esc(span) +
+        (state.policy.policy ? " (policy " + esc(state.policy.policy) + ")" : "") +
+        ". That is the cover we will assess it against, and it is the right one.") +
+    "</p>";
+}
+
+function runChecks() {
+  syncCoverTerm();
+  if (typeof ClaimChecks === "undefined") { checkFindings = []; return checkFindings; }
+  /* the line of business too, so a check can be one line's own — the
+     ninety-day rule is Guardian's for health and nobody else's */
+  const a = Object.assign({}, state.answers,
+    { name: state.answers.name || state.policy.name, type: state.type, subtype: state.subtype });
+  try { checkFindings = ClaimChecks.run(a, state.policy) || []; }
+  catch (err) { checkFindings = []; }          // a broken check must never block a claim
+  return checkFindings;
+}
+
+function renderChecks() {
+  const box = $("checks");
+  if (!box) return;
+  runChecks();
+  // Notes are for the assessor, never for the client.
+  const shown = checkFindings.filter((f) => f.level !== "note");
+  if (!shown.length) {
+    box.className = "checks all-clear";
+    box.innerHTML = "<h3>" + ICON("check") + " We checked this against your policy</h3>" +
+      '<p class="lede-sm" style="margin:0">Your dates sit inside your cover, the vehicle matches the policy, ' +
+      "and nothing contradicts itself. Nothing for you to fix.</p>" + coverTermLine();
+    return;
+  }
+  const stops = shown.filter((f) => f.level === "stop").length;
+  box.className = "checks";
+  box.innerHTML =
+    "<h3>Before you send — " + shown.length + (shown.length === 1 ? " thing" : " things") + " to look at</h3>" +
+    '<p class="lede-sm">We checked what you typed against your policy. ' +
+    (stops ? "Fix what you can, and for anything that is right as it stands, tell us why in a line — we file it either way."
+           : "None of these stops the claim; they are worth a second look.") + "</p>" +
+    shown.map((f) => {
+      const fix = f.fields && f.fields.length
+        ? '<button type="button" class="ck-fix" data-fix="' + esc(f.fields[0]) + '">Take me to it</button>' : "";
+      const say = f.level === "stop"
+        ? '<div class="ck-say"><label for="ck-say-' + esc(f.id) + '">If that is right, tell us why</label>' +
+          '<input id="ck-say-' + esc(f.id) + '" type="text" data-said="' + esc(f.id) + '" ' +
+          'value="' + esc(checkSaid[f.id] || "") + '" placeholder="e.g. the policy was renewed on 16 January" /></div>'
+        : "";
+      return '<div class="ck ' + f.level + '"><b>' + esc(f.title) + "</b><span>" + esc(f.detail) + "</span>" + fix + say + "</div>";
+    }).join("") + coverTermLine();
+
+  box.querySelectorAll("[data-said]").forEach((input) => {
+    input.addEventListener("input", () => { checkSaid[input.dataset.said] = input.value; saveDraft(); });
+  });
+  box.querySelectorAll("[data-fix]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.fix;
+      showStep("step-1");                       // the detail step, where these fields live
+      setTimeout(() => {
+        const el = $("f-" + id);
+        if (el) { el.focus(); el.closest(".field").scrollIntoView({ behavior: "smooth", block: "center" }); }
+      }, 80);
+    });
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GUARDIAN'S OWN FORM — filled here, read here, sent with the claim
+
+   Asked for on 3 November 2026: "the data has to be uploaded into Guardian
+   Life's claim form, and they can preview the claim form."
+
+   It is filled in the browser, not on the server, for three reasons. The
+   preview comes free — the same bytes that go to the desk are the bytes on
+   screen. pdf-lib and pdf.js already live here and the motor quote already
+   does exactly this. And Apps Script has no await, so filling a PDF there
+   needs a synchronous-Promise shim (see GroupBilling's gblPdfFill_), which is
+   a thing to maintain for no gain when the client's own phone can do it.
+
+   The blank is Guardian's, unflattened, so the desk can still correct a box.
+   Guardian asks for a good deal this branch never collects — sex, date of
+   birth, occupation, class of vehicle, convictions, the third party's insurer.
+   Those blanks are left empty on purpose: a form that invents them is worse
+   than one with gaps.
+   ══════════════════════════════════════════════════════════════ */
+const GG = {
+  PDF: "/claims/forms/gg-motor-accident-report.pdf",
+  LIB: "/motor-quote/vendor/pdf-lib-1.17.1.min.js",
+  PDFJS: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+  WORKER: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
+};
+let ggBytes = null;        // the filled form, once built — this is what is uploaded
+let ggBusy = false;
+
+/* The subtype the client chose, in the words Guardian's "Cause of Loss" blank
+   expects. Short, because the blank is about 90pt wide. "Someone is claiming
+   against me" is not a cause of loss at all — it is who is claiming — so that
+   one is left for a person. */
+const GG_CAUSE = {
+  accident: "Collision", theft: "Theft", breakin: "Break-in",
+  glass: "Glass damage", fire: "Fire", flood: "Flood / storm",
+  hitrun: "Hit and run",
+};
+
+function ggApplies() { return state.type === "motor"; }
+
+/* Our answers onto Guardian's blanks. Only what we actually hold; a name split
+   on the last space, because the form asks first name and surname separately
+   and the branch records one field. */
+function ggValues() {
+  const a = state.answers, p = state.policy || {};
+  const split = (full) => {
+    const w = String(full || "").trim().split(/\s+/).filter(Boolean);
+    if (!w.length) return ["", ""];
+    if (w.length === 1) return [w[0], ""];
+    return [w.slice(0, -1).join(" "), w[w.length - 1]];
+  };
+  const dmy = (iso) => {
+    const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? m[3] + "/" + m[2] + "/" + m[1] : String(iso || "");
+  };
+  const ins = split(a.name || p.name);
+  const same = /^(y|yes)/i.test(String(a.driverSame || ""));
+  const drv = split(same ? (a.name || p.name) : (a.driverName || ""));
+
+  return {
+    claimRef: state.ref || "",
+    vehicleReg: a.vehicleReg || p.vehicleReg || "",
+    insFirst: ins[0], insSurname: ins[1],
+    insMobile: a.mobile || "", insEmail: a.email || "",
+    driverSame: a.driverSame ? (same ? "Yes" : "No") : "",
+    driverRel: same ? "Self" : (a.driverRel || ""),
+    driverFirst: drv[0], driverSurname: drv[1],
+    driverMobile: same ? (a.mobile || "") : "",
+    driverEmail: same ? (a.email || "") : "",
+    permitNo: a.driverPermit || "",
+    permitIssue: dmy(a.permitIssue), permitExpiry: dmy(a.permitExpiry),
+    lossDate: dmy(a.incidentDate), lossTime: a.incidentTime || "",
+    lossLocation: a.location || "",
+    /* Cause of Loss is one of Guardian's starred fields, and the claim already
+       knows it: it is what the client picked on the first screen. "Accident /
+       collision", "Fire", "Flood or storm damage" are causes of loss in the
+       form's own sense. The blank is a short one, so the longer labels are cut
+       to the part that names the cause. */
+    lossCause: GG_CAUSE[state.subtype] || "",
+    policeStation: a.policeStation || "",
+    description: ggDescription(),
+    damageDetails: a.damage || "",
+    garageEstimate: a.amount || "",
+    anyoneInjured: a.injuries ? (/^(y|yes)/i.test(String(a.injuries)) ? "Yes" : "No") : "",
+    reportDate: dmy(todayISO()),
+  };
+}
+
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+}
+
+/* Guardian's "Description of Accident" box, which asks for the client's own
+   account of what happened.
+   NOT buildDescription(): that one appends every extra answer as "Label:
+   value", which is right for the branch's own summary and wrong here. The
+   first cut used it, and the box came out reading "Registration number: PDL
+   4471  Driver's permit number: TT-1184772  Permit first issued: …" — every
+   one of which has its own printed blank earlier in the same form. It filled
+   the one box on the form that is for the client's own words with a machine's
+   restatement of the boxes above it.
+   So: their account, and after it only an answer this form has nowhere else
+   to put. GG_HAS is the list of answers that already have a blank. */
+const GG_HAS = [
+  "description", "vehicleReg", "driverPermit", "permitIssue", "permitExpiry",
+  "incidentDate", "incidentTime", "location", "amount", "policeReport", "policeStation",
+  "driverName", "driverSame", "driverRel", "damage", "injuries",
+  "tpName", "tpVehicle", "tpInsurer", "tpContact",
+];
+function ggDescription() {
+  const t = currentType();
+  const spare = t.fields.filter(applies)
+    .filter((f) => f.sec === undefined && f.note === undefined && GG_HAS.indexOf(f.id) < 0)
+    .map((f) => {
+      const v = String(state.answers[f.id] || "").trim();
+      return v ? f.label.replace(/&amp;/g, "&") + ": " + v : "";
+    }).filter(Boolean);
+  const own = String(state.answers.description || "").trim();
+  return (own + (spare.length ? (own ? "  " : "") + spare.join(". ") : "")).trim();
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if ([...document.scripts].some((s) => s.src === src || s.src.endsWith(src))) return resolve();
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error("could not load " + src));
+    document.head.appendChild(s);
+  });
+}
+
+/* Build it. Returns the bytes, or throws with something a person can read. */
+async function ggBuild() {
+  await loadScript(GG.LIB);
+  if (typeof PDFLib === "undefined") throw new Error("the PDF library did not load");
+  if (typeof ClaimForms === "undefined") throw new Error("the form positions did not load");
+  const res = await fetch(GG.PDF);
+  if (!res.ok) throw new Error("Guardian's blank form could not be fetched");
+  const blank = await res.arrayBuffer();
+  ggBytes = await ClaimForms.fillAccident(blank, ggValues(), PDFLib);
+  return ggBytes;
+}
+
+function renderGGForm() {
+  const box = $("ggform");
+  if (!box) return;
+  if (!ggApplies()) { box.innerHTML = ""; box.className = ""; return; }
+  box.className = "gg";
+  box.innerHTML =
+    "<h3>Guardian's accident report form</h3>" +
+    "<p>We fill Guardian General's own form (GG-MOT-CLM-02/2025) from what you have " +
+    "told us, and it goes to the claims desk with your documents. Read it before you " +
+    "send — this is the page an assessor opens. Anything Guardian asks that we do not " +
+    "hold is left blank for a person to complete with you.</p>" +
+    '<div class="gg-row">' +
+      '<button class="btn btn-ghost" type="button" id="gg-show">' + ICON("doc") +
+      " Show me the filled form</button>" +
+      '<a class="btn btn-ghost" id="gg-dl" hidden download="guardian-accident-report.pdf">' +
+      ICON("down") + " Download it</a>" +
+    "</div>" +
+    '<div class="gg-note" id="gg-note"></div>' +
+    '<div class="gg-pages" id="gg-pages"></div>';
+
+  $("gg-show").addEventListener("click", ggShow);
+}
+
+async function ggShow() {
+  if (ggBusy) return;
+  ggBusy = true;
+  const btn = $("gg-show"), note = $("gg-note"), pages = $("gg-pages");
+  btn.disabled = true;
+  btn.textContent = "Filling it in…";
+  note.textContent = "";
+  pages.innerHTML = "";
+  try {
+    const bytes = await ggBuild();
+
+    // Download works whether or not pdf.js is reachable.
+    const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+    const dl = $("gg-dl");
+    dl.href = url;
+    dl.hidden = false;
+
+    await loadScript(GG.PDFJS);
+    if (typeof pdfjsLib === "undefined") throw new Error("preview");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = GG.WORKER;
+    // A copy, because pdf.js takes ownership of the buffer it is handed and
+    // the same bytes still have to be uploaded afterwards.
+    const doc = await pdfjsLib.getDocument({ data: bytes.slice(0) }).promise;
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await doc.getPage(n);
+      const vp = page.getViewport({ scale: 1.6 });
+      const wrap = document.createElement("div");
+      const label = document.createElement("div");
+      label.className = "gg-pg";
+      label.textContent = "Page " + n + " of " + doc.numPages;
+      const canvas = document.createElement("canvas");
+      canvas.width = vp.width;
+      canvas.height = vp.height;
+      wrap.appendChild(label);
+      wrap.appendChild(canvas);
+      pages.appendChild(wrap);
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
+    }
+    note.innerHTML = "Filled from your answers. The claim number fills itself in when you " +
+      "send, and your signature is not on it — the branch takes that when the claim is " +
+      "reviewed with you.";
+    btn.textContent = "Filled in";
+  } catch (err) {
+    // Two different failures, and the client should be told which.
+    if (String(err && err.message) === "preview" && ggBytes) {
+      note.textContent = "The form is filled in and will be sent with your claim, but this " +
+        "browser could not display it here. Use Download it to read it.";
+      btn.textContent = "Filled in";
+    } else {
+      note.textContent = "We could not build the form just now. It makes no difference to your " +
+        "claim — the branch fills it from your answers at this end. " +
+        (err && err.message ? "(" + err.message + ")" : "");
+      btn.disabled = false;
+      btn.textContent = "Try again";
+    }
+  } finally {
+    ggBusy = false;
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1701,11 +2894,11 @@ function renderReview() {
   const docRows = docs.map((d) => {
     const files = state.files[d.id] || [];
     if (files.length) {
-      return '<div class="rrow"><dt>' + d.label + "</dt><dd>✅ " + files.length +
+      return '<div class="rrow"><dt>' + d.label + "</dt><dd>" + ICON("check") + " " + files.length +
         (files.length === 1 ? " file" : " files") + " — " + esc(files.map((f) => f.name).join(", ")) + "</dd></div>";
     }
     if (isRequired(d)) {
-      return '<div class="rrow"><dt>' + d.label + '</dt><dd style="color:#A05E03">⏳ Not available yet — we will expect it</dd></div>';
+      return '<div class="rrow"><dt>' + d.label + '</dt><dd style="color:var(--teal-600)">⏳ Not available yet — we will expect it</dd></div>';
     }
     return "";
   }).join("");
@@ -1714,7 +2907,7 @@ function renderReview() {
 
   body.innerHTML =
     '<dl class="review"><h3>The claim</h3>' +
-      '<div class="rrow"><dt>Claim type</dt><dd>' + t.icon + " " + t.label +
+      '<div class="rrow"><dt>Claim type</dt><dd>' + t.label +
         (subtypeLabel() ? " — " + esc(subtypeLabel()) : "") + "</dd></div>" +
       reviewRows(t.fields) +
     "</dl>" +
@@ -1792,6 +2985,23 @@ function claimPayload() {
     bankName: a.bankName || "", bankBranch: a.bankBranch || "",
     bankAccount: a.bankAccount || "", bankType: a.bankType || "",
     page: location.href,
+
+    /* What the policy itself says, and what checking the claim against it
+       turned up. The desk should never have to re-derive this, and a stop the
+       client explained has to reach a person with the explanation attached. */
+    policyFacts: Object.assign({}, state.policy),
+    checks: (checkFindings || []).map((f) => ({
+      id: f.id, level: f.level, title: f.title, detail: f.detail,
+      said: String(checkSaid[f.id] || "").trim(),
+    })),
+
+    /* Everything else the claim answered, in one key. The permit and its two
+       dates, who was driving, the vehicle off the register — Guardian's form
+       asks for all of it and the named fields above carry none of it.
+       Deliberately the whole map rather than another hand-written list: two
+       lists of field names drift apart, and the backend has its own allowlist
+       (EXTRA_KEYS) deciding what it keeps, so nothing arrives by surprise. */
+    answers: Object.assign({}, a),
   };
 }
 
@@ -1833,6 +3043,20 @@ async function submitClaim() {
     const started = await api(Object.assign({ action: "claimStart" }, claimPayload()));
     state.ref = started.ref;
     state.uploadKey = started.uploadKey || "";
+
+    /* Guardian's own form goes with the documents. Built here, after the
+       reference exists, so the form carries it in its own claim-number box —
+       which is why it is not simply the bytes the preview made. If it cannot
+       be built, the claim still files and the desk fills the form at its end;
+       that is a note on the claim, never a failure. */
+    if (ggApplies()) {
+      try {
+        say("Filling Guardian's accident report form…");
+        const bytes = await ggBuild();
+        const file = new File([bytes], "guardian-accident-report.pdf", { type: "application/pdf" });
+        queue.push({ label: "Guardian accident report form", entry: { file: file, name: file.name } });
+      } catch (err) { /* the claim matters more than the attachment */ }
+    }
 
     const failed = [];
     for (let i = 0; i < queue.length; i++) {
@@ -1948,7 +3172,7 @@ async function trackClaim() {
     return;
   }
   if (!CONFIG.API_URL) {
-    $("t-err").innerHTML = "Claim tracking isn't connected yet — please call the branch on <b>" + CONFIG.AGENT_PHONE + "</b> and quote your reference.";
+    $("t-err").innerHTML = "Claim tracking isn't connected yet — " + waLink() + " and quote your reference.";
     $("t-err").hidden = false;
     return;
   }
@@ -1991,8 +3215,14 @@ function renderTrack(d) {
     (d.missing && d.missing.length
       ? '<div class="notice warn" style="margin:0"><b>We are waiting on:</b> ' + esc(d.missing.join(", ")) +
         ". Reply to your acknowledgement email with these attached and we will keep things moving.</div>"
-      : '<div class="notice info" style="margin:0">Nothing outstanding from you right now. We will call ' +
-        (d.agent && d.agent.phone ? "— or reach us on <b>" + esc(d.agent.phone) + "</b>" : "") + ".</div>");
+      // The backend sends d.agent.phone, and this used to print it — so the
+      // live script, whatever was last pasted into it, could put the branch
+      // manager's own number back on a page it had been taken off. The page
+      // ignores it now and offers HELP 868 instead. Do not read d.agent.phone
+      // here again. (It also read "We will call ." whenever no phone came
+      // back, which is the other reason this line needed rewriting.)
+      : '<div class="notice info" style="margin:0">Nothing outstanding from you right now. We will be in touch as soon as there is more to tell you — or ' +
+        waLink("ask us on WhatsApp") + " if anything has changed.</div>");
   $("t-result").hidden = false;
 }
 
@@ -2017,7 +3247,7 @@ function acctMsg(id, html) {
 async function acctSendCode() {
   const identity = $("a-id").value.trim();
   if (identity.length < 5) { acctMsg("a-err", "Enter the email address or mobile number you used on your claim."); return; }
-  if (!CONFIG.API_URL) { acctMsg("a-err", "Sign-in isn't connected yet — please call the branch on <b>" + CONFIG.AGENT_PHONE + "</b>."); return; }
+  if (!CONFIG.API_URL) { acctMsg("a-err", "Sign-in isn't connected yet — " + waLink() + " and we will look your claim up for you."); return; }
 
   const btn = $("a-send");
   btn.disabled = true; btn.textContent = "Sending…";
@@ -2074,11 +3304,14 @@ function acctSignOut(silent) {
     api({ action: "signOut", token: acct.token }).catch(() => {});
   }
   acct.token = "";
+  profile = null;        // their policies leave with them
+  state.policy = {};     // and so do the policy's own facts — a shared phone
   try { localStorage.removeItem(TOKEN_KEY); } catch (err) {}
   $("acct-in").hidden = true;
   $("acct-out").hidden = false;
   $("acct-step-id").hidden = false;
   $("acct-step-code").hidden = true;
+  whoReset();   // the greeting box at the top signs out with it
 }
 
 function renderMyClaims(claims) {
@@ -2107,7 +3340,7 @@ function renderMyClaims(claims) {
       "</div>" + line;
 
     if (c.missing.length && !c.closed) {
-      const owe = el("div", "owe", "<b>⏳ We are waiting on you for:</b>");
+      const owe = el("div", "owe", "<b>" + ICON("hourglass") + " We are waiting on you for:</b>");
       c.missing.forEach((m) => {
         const row = el("div", "owe-row");
         row.innerHTML = "<span>" + esc(m) + "</span>";
@@ -2116,7 +3349,7 @@ function renderMyClaims(claims) {
         input.multiple = true;
         input.accept = "image/*,application/pdf,.pdf,.heic,.heif";
         input.className = "sr-only";
-        const pick = el("button", "drop", "📎 Upload now");
+        const pick = el("button", "drop", ICON("clip") + " Upload now");
         pick.type = "button";
         pick.addEventListener("click", () => input.click());
         input.addEventListener("change", () => acctUpload(c, m, Array.from(input.files || []), row, pick));
@@ -2154,10 +3387,224 @@ async function acctUpload(claim, docLabel, files, row, pick) {
     setTimeout(() => acctLoad(), 900);
   } catch (err) {
     pick.disabled = false;
-    pick.textContent = "📎 Try again";
+    pick.innerHTML = ICON("clip") + " Try again";
     alert((err && err.message) ? err.message : "That upload failed — please try again.");
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   WHO'S CLAIMING — identity before anything else
+
+   An existing client signs in with email or mobile, proves it with
+   the emailed code, and the branch's side of the conversation opens:
+   their policies with the numbers already on them, their open claims,
+   their closed ones. Tap the policy — line, number and contact details
+   fill in, and every other line of business gets out of the way.
+   ══════════════════════════════════════════════════════════════ */
+function whoMsg(id, html) {
+  ["w-err", "w-msg"].forEach((k) => { $(k).hidden = true; });
+  if (!id) return;
+  $(id).innerHTML = html;
+  $(id).hidden = false;
+}
+
+async function whoSend() {
+  const identity = $("w-id").value.trim();
+  if (identity.length < 5) { whoMsg("w-err", "Enter the email or mobile number we have on file for you."); return; }
+  if (!CONFIG.API_URL) { whoMsg("w-err", "Sign-in isn't connected yet — pick your claim type below instead."); return; }
+  const btn = $("w-send");
+  btn.disabled = true; btn.textContent = "Sending…";
+  try {
+    const data = await api({ action: "requestCode", kind: "client", identity: identity });
+    acct.identity = identity;
+    if (data.sent === false) { whoMsg("w-err", esc(data.message)); return; }
+    whoMsg("w-msg", esc(data.message || "Code sent — check your inbox."));
+    $("who-step-id").hidden = true;
+    $("who-step-code").hidden = false;
+    $("w-code").focus();
+  } catch (err) {
+    whoMsg("w-err", "We couldn't send a code just now — pick your claim type below and carry on.");
+  } finally {
+    btn.disabled = false; btn.textContent = "Email me a code";
+  }
+}
+
+async function whoVerify() {
+  const code = $("w-code").value.trim();
+  if (code.length !== 6) { whoMsg("w-err", "The code is 6 digits — it's in the email we just sent."); return; }
+  const btn = $("w-verify");
+  btn.disabled = true; btn.textContent = "Checking…";
+  try {
+    const data = await api({ action: "verifyCode", kind: "client", identity: acct.identity, code: code });
+    acct.token = data.token;
+    try { localStorage.setItem(TOKEN_KEY, data.token); } catch (err) {}
+    whoMsg(null);
+    await whoLoad();
+    acctLoad();   // the "Your claims" section further down signs in too
+  } catch (err) {
+    whoMsg("w-err", esc(err && err.message ? err.message : "That code did not match."));
+  } finally {
+    btn.disabled = false; btn.textContent = "Sign in";
+  }
+}
+
+/* The signed-in client's profile, kept in memory only — never written to the
+   draft in localStorage, which is a shared device risk on a phone. */
+let profile = null;
+
+/* Signing in already told us who they are. Their own name, e-mail and mobile
+   should never have to be typed again, whether or not they go on to pick one
+   of their policy cards. */
+function applyContact(contact) {
+  if (!contact) return [];
+  const filled = [];
+  ["name", "email", "mobile"].forEach((k) => {
+    const v = String(contact[k] || "").trim();
+    if (v && !String(state.answers[k] || "").trim()) { state.answers[k] = v; filled.push(k); }
+  });
+  if (filled.length) {
+    lookup.filled = Array.from(new Set((lookup.filled || []).concat(filled)));
+    saveDraft();
+  }
+  return filled;
+}
+
+/* And a client who picks a claim type should not then be asked to type a
+   policy number we are already holding. Exactly one policy on that line:
+   apply it. Several: their cards are on screen to choose from. None: the
+   lookup stays, as the fallback it was always meant to be. */
+function autoPolicyForType() {
+  if (!profile || !state.type || lookup.dismissed) return;
+  const hits = (profile.policies || []).filter((p) => lineToType(p.line) === state.type);
+  if (hits.length !== 1) return;
+  lookup.dismissed = true;
+  applyPrefill(hits[0].prefill || {});
+}
+
+async function whoLoad() {
+  if (!acct.token || !CONFIG.API_URL) return false;
+  let data;
+  try {
+    data = await api({ action: "myProfile", token: acct.token });
+  } catch (err) { return false; }
+  profile = data;
+  applyContact(data.contact);
+  autoPolicyForType();   // they may have chosen the type before signing in
+
+  $("who-out").hidden = true;
+  $("who-in").hidden = false;
+  const first = String((data.contact || {}).name || "").split(" ")[0];
+  $("w-hello").textContent = first ? "Welcome back, " + first : "Welcome back";
+
+  const tasks = $("w-tasks");
+  tasks.innerHTML = "";
+  (data.open || []).forEach((c) => {
+    const chip = el("a", "task-chip open");
+    chip.href = "#track";
+    chip.innerHTML = '<span class="dot"></span>' + esc(c.ref) + " — " + esc(c.status) +
+      (c.missing && c.missing.length ? " · " + c.missing.length + " document" + (c.missing.length === 1 ? "" : "s") + " needed" : "");
+    tasks.appendChild(chip);
+  });
+  if ((data.closed || []).length) {
+    const done = el("a", "task-chip");
+    done.href = "#track";
+    done.innerHTML = '<span class="dot"></span>' + data.closed.length +
+      " closed claim" + (data.closed.length === 1 ? "" : "s");
+    tasks.appendChild(done);
+  }
+  if (!tasks.children.length) {
+    tasks.appendChild(el("span", "task-chip", '<span class="dot"></span>No claims on file — this would be your first'));
+  }
+
+  const box = $("w-policies");
+  box.innerHTML = "";
+  (data.policies || []).forEach((p) => {
+    const card = el("button", "pol-card");
+    card.type = "button";
+    card.innerHTML =
+      '<div class="pl">' + esc(p.line || "Policy") + "</div>" +
+      "<b>" + esc(p.product || "Policy on file") + "</b>" +
+      "<span>" + esc(p.policy || "number on request") + "</span>" +
+      '<span class="go2">Claim on this policy →</span>';
+    card.addEventListener("click", () => chooseProfilePolicy(p));
+    box.appendChild(card);
+  });
+  const hasPolicies = (data.policies || []).length > 0;
+  $("w-pol-lead").hidden = !hasPolicies;
+  $("w-not-these").hidden = !hasPolicies;
+  if (!hasPolicies) {
+    box.appendChild(el("div", "notice info",
+      "You're signed in, but no policy matched this email or mobile in our records. Pick your claim type below — we'll match the policy at our end."));
+  }
+  // With their policies on screen, the generic picker is noise — tuck it away.
+  setPickerVisible(!hasPolicies || !!state.type);
+  return true;
+}
+
+function setPickerVisible(v) {
+  $("type-head").style.display = v ? "" : "none";
+  $("type-grid").style.display = v ? "" : "none";
+}
+
+function lineToType(line) {
+  const l = String(line || "").toLowerCase();
+  if (/motor/.test(l)) return "motor";
+  if (/health/.test(l)) return "health";
+  if (/life|critical|accident/.test(l)) return "life";
+  if (/pension|annuit|invest/.test(l)) return "pension";
+  if (/propert|fire|home|burglary/.test(l)) return "property";
+  return "";
+}
+
+function chooseProfilePolicy(p) {
+  /* Every year of cover on the vehicle they just tapped, so the claim is
+     assessed against the term in force on the date of loss and not against
+     whatever has been renewed since. The lookup path sets coverTerms itself;
+     this path never went through the lookup, so it has to set them here —
+     syncCoverTerm (called by applyPrefill below) then parks them in
+     state.policy.terms and picks the one that matches. Without this a vehicle
+     chosen from the profile would be judged on its newest term alone, which is
+     the exact bug the one-row-per-term register was built to kill. */
+  if (Array.isArray(p.terms) && p.terms.length) coverTerms = p.terms;
+  const t = lineToType(p.line);
+  if (t && TYPES[t]) {
+    if (state.type !== t) { state.subtype = ""; state.files = {}; state.skipped = {}; }
+    state.type = t;
+    typePickerOpen = false;
+  } else {
+    typePickerOpen = true;   // odd line — let them pick, but keep the prefill
+  }
+  lookup.dismissed = true;   // the plate/policy lookup would only repeat this
+  applyPrefill(p.prefill || {});
+  setPickerVisible(true);    // back, but collapsed to the one chosen line
+  renderTypes();
+  renderSubtypes();
+  saveDraft();
+  const target = t ? $("subwrap") : $("type-grid");
+  if (target) target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function whoReset() {
+  $("who-out").hidden = false;
+  $("who-in").hidden = true;
+  $("who-step-id").hidden = false;
+  $("who-step-code").hidden = true;
+  whoMsg(null);
+  setPickerVisible(true);
+}
+
+$("w-send").addEventListener("click", whoSend);
+$("w-verify").addEventListener("click", whoVerify);
+$("w-id").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); whoSend(); } });
+$("w-code").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); whoVerify(); } });
+$("w-skip").addEventListener("click", () => { $("who-box").hidden = true; });
+$("w-not-these").addEventListener("click", () => {
+  typePickerOpen = true;
+  setPickerVisible(true);
+  renderTypes();
+  $("type-grid").scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
+$("w-signout").addEventListener("click", () => { whoReset(); acctSignOut(false); });
 
 $("a-send").addEventListener("click", acctSendCode);
 $("a-resend").addEventListener("click", () => { $("acct-step-id").hidden = false; $("acct-step-code").hidden = true; acctSendCode(); });
@@ -2226,9 +3673,9 @@ if (loadDraft()) $("draft-banner").hidden = false;
 renderTypes();
 if (state.type) renderSubtypes();
 
-// A returning client with a live session goes straight to their claims.
+// A returning client with a live session is greeted by name, policies ready.
 try { acct.token = localStorage.getItem(TOKEN_KEY) || ""; } catch (err) {}
-if (acct.token) acctLoad();
+if (acct.token) { whoLoad(); acctLoad(); }
 
 // Deep link: /claims/?type=motor&sub=accident
 const params = new URLSearchParams(location.search);
@@ -2243,7 +3690,7 @@ if (TYPES[wanted]) {
 </script>
 <!-- rrb-views -->
 <script>
-(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{
 (new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
 }catch(e){}})();
 </script>

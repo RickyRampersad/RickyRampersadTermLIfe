@@ -318,7 +318,42 @@
   .uck .q{font:600 14px/1.35 var(--fb);margin-top:10px} .uck .row{display:flex;gap:8px} .uck .row input[type=number]{flex:none;width:76px;font:700 16px var(--fd)}
   .more[hidden]{display:none}
   .showmore{width:100%;margin-top:6px;background:transparent;color:var(--ink);border:1.5px solid var(--line)}
-  @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation:none!important;transition:none!important} .card,ul.list li{opacity:1;transform:none} }
+  /* The agent's coach (2 Nov 2026): one note and one thing first, check in is the plan, the goal and the rest in Ricky's order. */
+  .cxh{display:flex;gap:14px;align-items:center;border-left:4px solid var(--gold)}
+  .cxhr{flex:none;text-align:center} .cxhr small{display:block;font:600 11px/1.35 var(--fb);color:var(--muted);margin-top:2px} .cxhr small b{color:var(--ink)}
+  .cxht{flex:1;min-width:0} .cxht h2{font:800 17px/1.25 var(--fd);color:var(--navy);margin:0 0 4px} .cxht p{margin:0 0 5px;font-size:14px;line-height:1.5}
+  .cxht .cxt{color:var(--muted);font-size:13px} .cxht .cxo{margin:6px 0 0;padding-top:6px;border-top:1px solid var(--line)}
+  .cxgo{margin-top:0;font-size:16px;min-height:54px}
+  .cxsub{font-size:12.5px;color:var(--muted);text-align:center;margin:6px 0 2px} .cxsub.bad{color:var(--bad);font-weight:700}
+  .cxok{background:color-mix(in srgb,var(--good) 14%,var(--card));border-radius:12px;padding:11px 12px;font-size:14px;line-height:1.45}
+  .cxd{display:flex;gap:5px;margin-top:10px} .cxd span{flex:1;text-align:center;font:700 11px/1 var(--fb);padding:7px 0;border-radius:8px;background:var(--soft);color:var(--muted)}
+  .cxd span.y{background:color-mix(in srgb,var(--good) 18%,var(--card));color:var(--good)} .cxd span.t{outline:1.5px solid var(--navy)}
+  .cxd span.pre{opacity:.45}
+  .cxedit{width:100%;margin-top:10px;min-height:42px}
+  .cxsheet{margin-top:12px;padding-top:4px}
+  .cxq{font-size:14px;line-height:1.5;margin:4px 0 6px} .cxq small{color:var(--muted);font-weight:500}
+  .cxrv{background:color-mix(in srgb,var(--gold) 12%,var(--card));border-radius:12px;padding:10px 12px;margin-bottom:10px}
+  .cxch{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px} .cxch .chip{cursor:pointer;font:600 12.5px/1 var(--fb);padding:9px 11px;min-height:36px}
+  .cxch .chip.on{background:var(--navy);color:var(--bg);border-color:var(--navy)}
+  .cxs{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+  .cxs small{display:block;font-size:11.5px;color:var(--muted);font-weight:500} .cxb{display:flex;align-items:center;gap:10px;flex:none}
+  .cxb button{width:40px;height:40px;min-height:40px;border-radius:50%;padding:0;border:1.5px solid var(--line);background:var(--soft);color:var(--ink);font:700 20px/1 var(--fd)}
+  .cxb b{min-width:26px;text-align:center;font:800 18px/1 var(--fd);color:var(--navy)}
+  .cxi{width:100%;min-height:44px;border:1.5px solid var(--line);border-radius:10px;padding:0 11px;font:500 14px var(--fb);background:var(--card);color:var(--ink);margin-top:4px}
+  .cxsheet textarea,.cxmid textarea{width:100%;min-height:60px;margin-top:8px;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:15px/1.45 var(--fb);color:var(--ink);background:var(--card)}
+  .cxhr2{display:flex;gap:12px;align-items:center;margin:2px 0 8px} .cxhr2 p{margin:0;font-size:14px;line-height:1.45}
+  .cxsum2{cursor:pointer;font:700 13.5px/1.3 var(--fb);color:var(--navy);padding:6px 0}
+  .cxl{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:13.5px;padding:7px 0;border-top:1px solid var(--line)} .cxl:first-of-type{border-top:0}
+  .cxl b{font-weight:700;text-align:right} .cxl .r,.cxm .r{color:var(--bad)} .cxl .g{color:var(--good)} .cxm .a{color:var(--warn);font-weight:700}
+  .cxm{font-size:12.5px;line-height:1.5;color:var(--muted);padding:2px 0}
+  .cxbar{position:relative;height:9px;border-radius:6px;background:var(--track);margin:4px 0 4px;overflow:visible} .cxbar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--good),var(--good2))}
+  .cxbar em{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--navy);opacity:.6}
+  .cxask{margin-top:8px;background:color-mix(in srgb,var(--warn) 10%,var(--card));border-radius:12px;padding:10px 12px}
+  .cxp{padding:6px 0;border-top:1px solid var(--line)} .cxp:first-of-type{border-top:0} .cxp .cxl{border-top:0;padding:2px 0}
+  .cxtag{flex:none;font:800 10.5px/1 var(--fb);letter-spacing:.03em;padding:5px 7px;border-radius:6px;background:var(--soft);color:var(--muted);text-transform:uppercase}
+  .cxtag.g{color:var(--good)} .cxtag.a{color:var(--warn)} .cxtag.r{color:var(--bad)}
+  .cxtel{flex:none;font:800 12px/1 var(--fb);padding:8px 12px;border-radius:999px;background:var(--navy);color:var(--bg);text-decoration:none}
+  @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation:none!important;transition:none!important} .card,ul.list li,.coach li,.agt div{opacity:1;transform:none} }
 </style>
 </head>
 <body>
@@ -362,7 +397,7 @@
 (function () {
   "use strict";
   // The tracker's web app: the same one the walls read. ?api= points it elsewhere for a test.
-  var TRACKER = "https://script.google.com/macros/s/AKfycbzb9gzh3TldhLCQA7MCz3vdyWLAWTHpR9X7M3uvPNtqJbnnYRMcDSkm0D1C8SgENvn44g/exec";
+  var TRACKER = "https://script.google.com/macros/s/AKfycbympAk9o8Ns8un0UXKY1PHkS__nYa-Hx6Q3TzbCRSMyezkFhRtFFrz56qOCuSug1-34OQ/exec";
   var Q = new URLSearchParams(location.search);
   if (Q.get("api") && /^https:\/\/script\.google\.com\/|^http:\/\/(localhost|127\.0\.0\.1)[:/]/.test(Q.get("api"))) TRACKER = Q.get("api");
   var store = {
@@ -379,8 +414,9 @@
   if (P && K) store.set("wd_link", { p: P, k: K });
   else if (fromApp && appTok) OPS = appTok;
   else { var last = store.get("wd_link"); if (last) { P = last.p; K = last.k; } else if (appTok) OPS = appTok; }
-  var WHO = OPS ? "app_" + String(ses.agentNo || ses.name || "") : P;
-  function auth(body) { if (OPS) { body.set("wd", "app"); body.set("ops", OPS); } else { body.set("wd", P); body.set("k", K); } return body; }
+  var AS = String(Q.get("as") || "").replace(/[^a-z0-9-]/g, "");
+  var WHO = (OPS ? "app_" + String(ses.agentNo || ses.name || "") : P) + (AS ? "_as_" + AS : "");
+  function auth(body) { if (OPS) { body.set("wd", "app"); body.set("ops", OPS); } else { body.set("wd", P); body.set("k", K); } if (AS) body.set("as", AS); return body; }
   if (OPS || fromApp) { var ta = document.getElementById("toapp"); if (ta) ta.hidden = false; }
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
@@ -690,6 +726,7 @@
       '<div class="card"><div class="tip">If this screen will not open on your phone, the same pages: <a href="' + esc(m.project.url) + '" target="_blank" rel="noopener">projection</a> · <a href="' + esc(m.close.url) + '" target="_blank" rel="noopener">close-off</a>. <a href="' + esc(m.film) + '">Watch the 2-minute film &rarr;</a></div></div>';
   }
   function agSave(btn) {
+    if (M && M.viewAs) { toast("Only " + (M.first || "the agent") + " can save this."); return; }
     var card = btn.closest(".card"), st = card.querySelector("[data-st]"), kind = btn.getAttribute("data-agsave"), q = { act: kind === "close" ? "agclose" : "agplan" }, blank = 0;
     Array.prototype.forEach.call(card.querySelectorAll("[data-m]"), function (i) { var v = (i.value || "").trim(); if (v === "") blank++; q["m_" + i.getAttribute("data-m")] = v; });
     Array.prototype.forEach.call(card.querySelectorAll("[data-n]"), function (i) { q["n_" + i.getAttribute("data-n")] = (i.value || "").trim(); });
@@ -703,6 +740,7 @@
     }).catch(function () { btn.disabled = false; btn.textContent = was; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
   }
   function agNote(btn) {
+    if (M && M.viewAs) { toast("Only " + (M.first || "the agent") + " can post from here; use your own screen."); return; }
     var li = btn.closest("li"), ta = li.querySelector("[data-agtext]"), st = li.querySelector(".tc .cst"), text = (ta.value || "").trim();
     if (!text) { st.className = "cst bad"; st.textContent = "Write your update first."; ta.focus(); return; }
     btn.disabled = true; btn.textContent = "Posting…";
@@ -725,6 +763,157 @@
     var b = i.parentNode.querySelector("[data-bal]"); if (!b) return;
     if (i.value === "") { b.textContent = ""; b.className = "bal"; return; }
     var d = Number(i.value) - Number(i.getAttribute("data-proj")); b.textContent = balText(d); b.className = "bal " + (d < 0 ? "dn" : "up");
+  });
+  /* THE AGENT'S COACH (2 Nov 2026, 2026-10-29h). Ricky, 7:43am: "the objective is to motivate the agents to really get up and do
+     what they have to do ... different persons work differently, and we do have the data ... don't make it too AI, but adding that
+     personalized touch into this every morning." One note and one thing first; check in is the plan (the month just gone first,
+     on its first working days); the midday check-in; the close-off; then the goal, fact finds, orphans, pendings, what the branch
+     is working on and the calls, in his order. A manager sees the same screen, with what they should know, and cannot save. */
+  var CX_PLAN = [["calls", "Calls"], ["appts", "Appointments"], ["ff", "Fact finds"], ["close", "Closing interviews"], ["apps", "Applications"], ["dues", "Premium and arrears calls"], ["pend", "Pendings to move"]];
+  function cxMoney(v) { v = Math.round(Number(v || 0)); return v >= 1000 ? "$" + (Math.round(v / 100) / 10).toString().replace(/\.0$/, "") + "k" : "$" + v; }
+  function cxRing(p, c) {
+    var r = 30, L = 2 * Math.PI * r, d = Math.max(0, Math.min(1, p)) * L;
+    return '<svg class="cxr" width="78" height="78" viewBox="0 0 78 78" aria-hidden="true"><circle cx="39" cy="39" r="' + r + '" fill="none" stroke="var(--track)" stroke-width="8"/>' +
+      '<circle cx="39" cy="39" r="' + r + '" fill="none" stroke="' + (c || "var(--good)") + '" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + d.toFixed(1) + " " + L.toFixed(1) + '" transform="rotate(-90 39 39)"/>' +
+      '<text x="39" y="44" text-anchor="middle" font-size="16" font-weight="800" fill="var(--navy)">' + Math.round(Math.max(0, p) * 100) + "%</text></svg>";
+  }
+  function cxStep(kind, id, label, v, sub) {
+    return '<div class="cxs"><span>' + esc(label) + (sub ? "<small>" + esc(sub) + "</small>" : "") + '</span><span class="cxb"><button type="button" data-cxstep="-1" aria-label="Less ' + esc(label) + '">−</button>' +
+      '<b data-cx' + kind + '="' + esc(id) + '">' + esc(v) + '</b><button type="button" data-cxstep="1" aria-label="More ' + esc(label) + '">+</button></span></div>';
+  }
+  function cxHero(m) {
+    var c = m.coach || {}, co = c.coach || {}, mo = c.months, p = mo && mo.target ? mo.mtd / mo.target : 0;
+    return '<div class="card cxh" id="cxhero">' + (mo && mo.target ? '<div class="cxhr">' + cxRing(p) + '<small>' + esc(mo.name) + " so far<br><b>" + cxMoney(mo.mtd) + "</b> of " + cxMoney(mo.target) + "</small></div>" : "") +
+      '<div class="cxht"><h2>' + esc(co.title || "Good to see you") + "</h2><p>" + esc(co.note || "") + "</p>" + (co.touch ? '<p class="cxt">' + esc(co.touch) + "</p>" : "") +
+      (co.one ? '<p class="cxo"><b>First:</b> ' + esc(co.one) + "</p>" : "") + "</div></div>";
+  }
+  function cxStrip(att) {
+    return '<div class="cxd">' + (att.strip || []).map(function (d) { return '<span class="' + (d.on ? "y" : d.before ? "pre" : "") + (d.today ? " t" : "") + '"' + (d.before ? ' title="before you started"' : "") + '>' + esc(d.d) + "</span>"; }).join("") + "</div>";
+  }
+  function cxCheckin(m) {
+    var c = m.coach || {}, att = c.att || {}, rv = c.review, s = c.suggest || {}, vw = !!m.viewAs;
+    if (att.today) return '<div class="card cxin" id="agplan"><div class="cxok"><b>Present · checked in ' + esc(att.at) + ".</b> " +
+      (att.streak >= 2 ? att.streak + " working days in a row. " : "") + "Your plan is with " + esc(c.mgrName || "your manager") + ' and Mrs Dookran.</div>' + cxStrip(att) +
+      '<button type="button" class="ghost cxedit" data-cxopen="plan">Change my plan</button><div class="cxsheet" data-cxsheet="plan" hidden>' + cxPlanSteps(m, s, true) + "</div></div>";
+    var late = m.lateForPlan;
+    return '<div class="card cxin" id="agplan"><button type="button" class="go cxgo" data-cxopen="plan">Check in and plan my day</button>' +
+      '<div class="cxsub' + (late ? " bad" : "") + '">' + (late ? "It is past " + esc(m.absentAt) + ": until you check in, today reads as not working." : "Plan by " + esc(m.absentAt || "10:30am") + " and you are marked present.") + "</div>" + cxStrip(att) +
+      '<div class="cxsheet" data-cxsheet="plan" hidden>' + (rv && !rv.said ? cxReview(rv) : "") + cxPlanSteps(m, s, false) + "</div></div>";
+  }
+  function cxReview(rv) {
+    return '<div class="cxrv" data-cxrv="' + (rv.below ? "1" : "0") + '"><div class="cxq"><b>' + esc(rv.name) + " closed.</b> Your goal was <b>" + cxMoney(rv.target) + "</b>; Salesforce shows <b>" + cxMoney(rv.api) + "</b> picked up on " + rv.apps + " app" + (rv.apps === 1 ? "" : "s") + "." +
+      (rv.below ? " What held it back?" : " Well done. Anything to note?") + '</div><div class="cxch">' + (rv.reasons || []).map(function (r) { return '<button type="button" class="chip" data-cxr="' + esc(r.id) + '">' + esc(r.label) + "</button>"; }).join("") + "</div>" +
+      '<input type="text" class="cxi" data-cxrnote placeholder="One line: what changes this month"></div>';
+  }
+  function cxPlanSteps(m, s, have) {
+    var by = {}; (m.metrics || []).forEach(function (x) { by[x.id] = x.planned; });
+    var sub = { calls: (m.coach && m.coach.orphans && m.coach.orphans.waiting.length) ? m.coach.orphans.waiting.length + (m.coach.orphans.waiting.length === 1 ? " orphan client is waiting" : " orphan clients are waiting") : "", dues: (m.coach && m.coach.book) ? (m.coach.book.urgent || 0) + " premiums past 60 days" : "" };
+    return '<div class="cxq" style="margin-top:6px"><b>Plan today</b> <small>' + (have ? "your numbers from this morning" : "filled in from your goal; change any number") + "</small></div>" +
+      CX_PLAN.map(function (x) { var v = have && by[x[0]] !== "" && by[x[0]] != null ? by[x[0]] : (s[x[0]] != null ? s[x[0]] : 0); return cxStep("p", x[0], x[1], v, sub[x[0]]); }).join("") +
+      '<textarea data-cxsum placeholder="Who you are seeing, what you are closing (optional)">' + esc(m.summary ? m.summary.plan : "") + "</textarea>" +
+      '<button type="button" class="go" data-cxsave="plan">' + (have ? "Save my changes" : "I am in · save my plan") + '</button><div class="cst" data-st></div>';
+  }
+  function cxMid(m) {
+    var md = m.midday || {}, c = m.coach || {};
+    if (!(c.att && c.att.today) || !md.open || (m.close && m.close.done)) return "";
+    var plan = {}; (m.metrics || []).forEach(function (x) { plan[x.id] = Number(x.planned || 0); });
+    var got = {}; (md.rows || []).forEach(function (r) { got[r.id] = r.v; });
+    var tp = 0, td = 0; CX_PLAN.forEach(function (x) { tp += plan[x[0]] || 0; td += Number(got[x[0]] || 0); });
+    return '<div class="card cxmid" id="agmid"><div class="ch"><h2>Midday check-in' + (md.done ? '<span class="done">IN</span>' : "") + '</h2><span class="n">' + (md.done ? "at " + esc(md.at) : "how is it going?") + "</span></div>" +
+      (md.done ? '<div class="cxhr2">' + cxRing(tp ? td / tp : 0) + "<p><b>" + td + " of " + tp + "</b> done so far" + (md.mood ? " · " + esc(md.mood) : "") + ". " + (tp && td >= tp / 2 ? "Past halfway: keep the calls going." : "The afternoon is yours: the waiting clients are the quickest wins.") + "</p></div>" : "") +
+      '<details' + (md.done ? "" : " open") + '><summary class="cxsum2">' + (md.done ? "Update it" : "Put in what is done so far") + "</summary>" +
+      CX_PLAN.map(function (x) { return cxStep("d", x[0], x[1], got[x[0]] || 0, plan[x[0]] ? "planned " + plan[x[0]] : ""); }).join("") +
+      '<div class="cxch">' + ["On track", "A bit behind", "Need help"].map(function (t) { return '<button type="button" class="chip' + (md.mood && md.mood.indexOf(t) === 0 ? " on" : "") + '" data-cxmood="' + esc(t) + '">' + esc(t) + "</button>"; }).join("") + "</div>" +
+      '<input type="text" class="cxi" data-cxmnote placeholder="Anything we can help with? (optional)"><button type="button" class="go" data-cxsave="mid">Save my midday check-in</button><div class="cst" data-st></div></details></div>';
+  }
+  function cxGoal(m) {
+    var c = m.coach || {}, mo = c.months, g = c.goal, rv = c.review, h = "";
+    if (rv) h += '<div class="cxl"><span>' + esc(rv.name) + '</span><b class="' + (rv.below ? "r" : "g") + '">' + cxMoney(rv.api) + " of " + cxMoney(rv.target) + " · " + rv.apps + " apps</b></div>" + (rv.said ? '<div class="cxm">You said: ' + esc(rv.said.reason) + (rv.said.note ? ". " + esc(rv.said.note) : "") + "</div>" : "");
+    if (mo && mo.target) h += '<div class="cxl"><span>' + esc(mo.name) + ' so far</span><b>' + cxMoney(mo.mtd) + " of " + cxMoney(mo.target) + '</b></div><div class="cxbar"><i style="width:' + Math.min(100, Math.max(2, Math.round(100 * mo.mtd / mo.target))) + '%"></i><em style="left:' + Math.round(100 * mo.exp / mo.target) + '%"></em></div>' +
+      '<div class="cxm">Working day ' + mo.wd.gone + " of " + mo.wd.all + (mo.exp ? " · by today: " + cxMoney(mo.exp) : "") + (mo.usual ? " · your usual month: " + cxMoney(mo.usual) : "") + "</div>";
+    if (g) h += '<div class="cxl"><span>Your week</span><b>' + g.contactsWk + " contacts · " + g.apptsWk + " appts · " + g.ffWk + " fact finds · " + g.appsWk + " apps</b></div>" +
+      (g.checkin ? "" : '<div class="cxm"><span class="a">No weekly check-in yet.</span> Two minutes on factfind360.com.</div>');
+    else h += '<div class="cxm"><b>No FY27 goal plan on record.</b> Ten minutes on factfind360.com and everything here starts from it.</div>';
+    return '<div class="card" id="cxgoal"><div class="ch"><h2>1 · Your goal</h2><span class="n">' + (g ? cxMoney(g.api) + (g.title ? " · " + esc(g.title) : "") : "") + "</span></div>" + h + "</div>";
+  }
+  function cxFF(m) {
+    var c = m.coach || {}, f = c.f3 || {}, cs = c.cases, h = '<div class="cxl"><span>This week · month · year</span><b>' + (f.week || 0) + " · " + (f.month || 0) + " · " + (f.year || 0) + "</b></div>" +
+      (f.pipeline ? '<div class="cxl"><span>Pipeline</span><b>' + cxMoney(f.pipeline) + "</b></div>" : "");
+    if (cs && cs.open && cs.open.length) h += '<div class="cxm" style="margin-top:6px">Open cases waiting on an answer (' + (cs.openN || cs.open.length) + "):</div>" + cs.open.map(function (x) {
+      var d = x.sub ? Math.round((Date.parse(m.day) - Date.parse(x.sub)) / 864e5) : null;
+      return '<div class="cxl"><span>' + esc(x.c || "A case") + '</span><span class="cxm">' + (d != null ? d + " days" : "") + (x.n ? " · asked " + x.n + "×" : "") + (x.out ? " · " + esc(x.out) : "") + "</span></div>"; }).join("");
+    if (c.ffResp) h += '<div class="cxm">This week you said: ' + esc(c.ffResp.reason) + (c.ffResp.commit !== "" ? " · " + esc(c.ffResp.commit) + " by Friday" : "") + "</div>";
+    else if (c.ffAsk) h += '<div class="cxask" id="cxff"><div class="cxq"><b>' + (c.ffDays == null ? "No fact find on record yet." : "No fact find in " + c.ffDays + " days.") + "</b> What is in the way?</div>" +
+      '<div class="cxch">' + (c.ffReasons || []).map(function (r) { return '<button type="button" class="chip" data-cxff="' + esc(r.id) + '">' + esc(r.label) + "</button>"; }).join("") + "</div>" +
+      '<div class="cxs"><span>How many by Friday?</span><span class="cxb"><button type="button" data-cxstep="-1" aria-label="Fewer">−</button><b data-cxcommit>2</b><button type="button" data-cxstep="1" aria-label="More">+</button></span></div>' +
+      '<input type="text" class="cxi" data-cxffwho placeholder="Who and when, or a line about it"><button type="button" class="go" data-cxsave="ff">Send my answer</button><div class="cst" data-st></div></div>';
+    return '<div class="card" id="cxfactfinds"><div class="ch"><h2>2 · Fact finds</h2><span class="n">names, leads, calls</span></div>' + h + "</div>";
+  }
+  function cxOrphans(m) {
+    var o = (m.coach || {}).orphans; if (!o || (!o.clients && !o.waiting.length)) return "";
+    return '<div class="card" id="cxorphans"><div class="ch"><h2>3 · Orphan clients we gave you</h2><span class="n">' + o.clients + "</span></div>" +
+      '<div class="cxl"><span>' + (o.households ? o.households + " households" : "Clients") + (o.oldest ? " · first given " + o.oldest + " days ago" : "") + '</span><b>' + o.noted + " of " + o.clients + " with your notes</b></div>" +
+      (o.waiting.length ? '<div class="cxl"><span class="r">Asked for a call, still waiting</span><b class="r">' + o.waiting.length + "</b></div>" + o.waiting.slice(0, 4).map(function (w) { return '<div class="cxm">· ' + esc(w.c) + (w.need ? ": " + esc(w.need) : "") + (w.days != null ? " (" + w.days + " days)" : "") + "</div>"; }).join("") : "") +
+      (o.kinds.length ? '<div class="cxm" style="margin-top:6px">Your notes say: ' + o.kinds.map(function (k) { return k.n + " " + esc(k.l); }).join(" · ") + "</div>" : '<div class="cxm" style="margin-top:6px">No notes yet. A line on each call keeps the client with you.</div>') + "</div>";
+  }
+  function cxPend(m) {
+    var p = (m.coach || {}).pend; if (!p || !p.n) return "";
+    var lab = { settle: "should settle", one: "one step", stuck: "stuck", reqts: "items out", uw: "underwriting", task: "pending" }, cls = { settle: "g", one: "a", stuck: "r" };
+    return '<div class="card" id="cxpend"><div class="ch"><h2>4 · Pendings: what should settle</h2><span class="n">' + p.n + "</span></div>" +
+      '<div class="uchips">' + (p.settle ? '<span class="chip good"><b>' + p.settle + "</b>should settle now</span>" : "") + (p.one ? '<span class="chip"><b>' + p.one + "</b>one step away</span>" : "") + (p.stuck ? '<span class="chip bad"><b>' + p.stuck + "</b>stuck</span>" : "") + "</div>" +
+      p.list.map(function (x) { return '<div class="cxp"><div class="cxl"><span><b>' + esc(x.c || x.pol) + "</b>" + (x.pol ? " · " + esc(x.pol) : "") + '</span><span class="cxtag ' + (cls[x.kind] || "") + '">' + esc(lab[x.kind] || x.kind) + "</span></div>" +
+        '<div class="cxm">' + esc(x.need) + (x.o ? " " + esc(x.o) + " has it" + (x.note ? ": " + esc(x.note) : ".") : "") + "</div></div>"; }).join("") + "</div>";
+  }
+  function cxCalls(m) {
+    var cl = (m.coach || {}).calls || []; if (!cl.length) return "";
+    return '<div class="card" id="cxcalls"><div class="ch"><h2>Your calls today</h2><span class="n">' + cl.length + "</span></div>" + cl.map(function (x) {
+      return '<div class="cxl"><span><b>' + esc(x.c) + "</b> · " + esc(x.why) + "</span>" + (x.tel ? '<a class="cxtel" href="tel:' + esc(String(x.tel).replace(/[^\d+]/g, "")) + '">Call</a>' : '<span class="cxtag ' + (x.k === "orphan" ? "a" : "r") + '">' + esc(x.k) + "</span>") + "</div>"; }).join("") + "</div>";
+  }
+  function agentNative2(m) {
+    var va = m.viewAs, co = (m.coach || {}).coach || {};
+    return (va ? '<div class="agpv"><a href="#" data-myown style="float:right;font-weight:800">&larr; My day</a><b>You are seeing ' + esc(m.first) + "'s day as " + esc(m.first) + " sees it.</b> For you: " + esc(co.mgr || "") +
+      ' <button type="button" class="ghost" data-cxmailme style="margin-top:8px;width:100%">Send me ' + esc(m.first) + "'s morning e-mail</button></div>" : "") +
+      (m.coachError ? '<div class="agpv">Some of your day did not load: ' + esc(m.coachError) + "</div>" : "") +
+      cxHero(m) + cxCheckin(m) + cxMid(m) + (m.close && m.close.open ? agCloseCard(m) : "") +
+      cxGoal(m) + cxFF(m) + cxOrphans(m) + cxPend(m) + agItemsCard(m).replace("<h2>Being worked for your clients</h2>", "<h2>5 · The branch is working on</h2>") + cxCalls(m) + agDoneCard(m) +
+      '<div class="card"><div class="tip">If this screen will not open on your phone: <a href="' + esc(m.project.url) + '" target="_blank" rel="noopener">your plan</a> · <a href="' + esc(m.close.url) + '" target="_blank" rel="noopener">close-off</a>.</div></div>';
+  }
+  function cxSave(btn) {
+    if (M && M.viewAs) { toast("This is " + (M.first || "the agent") + "'s screen: only " + (M.first || "the agent") + " can save it."); return; }
+    var kind = btn.getAttribute("data-cxsave"), box = btn.closest(".cxsheet, details, .cxask, .card"), st = box.querySelector("[data-st]"), q = {};
+    if (kind === "plan") {
+      q.act = "agplan";
+      Array.prototype.forEach.call(box.querySelectorAll("[data-cxp]"), function (b) { q["m_" + b.getAttribute("data-cxp")] = b.textContent.trim(); q["n_" + b.getAttribute("data-cxp")] = ""; });
+      q.summary = ((box.querySelector("[data-cxsum]") || {}).value || "").trim();
+      var rv = box.querySelector("[data-cxrv]");
+      if (rv) { var on = rv.querySelector("[data-cxr].on"); q.mreason = on ? on.getAttribute("data-cxr") : ""; q.mnote = ((rv.querySelector("[data-cxrnote]") || {}).value || "").trim();
+        if (rv.getAttribute("data-cxrv") === "1" && !q.mreason) { st.className = "cst bad"; st.textContent = "Tap what held last month back first."; rv.scrollIntoView({ behavior: "smooth", block: "center" }); return; } }
+    } else if (kind === "mid") {
+      q.act = "agmid";
+      Array.prototype.forEach.call(box.querySelectorAll("[data-cxd]"), function (b) { q["m_" + b.getAttribute("data-cxd")] = b.textContent.trim(); });
+      var md = box.querySelector("[data-cxmood].on"); q.mood = md ? md.getAttribute("data-cxmood") : ""; q.mnote = ((box.querySelector("[data-cxmnote]") || {}).value || "").trim();
+    } else if (kind === "ff") {
+      q.act = "agff"; var fr = box.querySelector("[data-cxff].on"); q.reason = fr ? fr.getAttribute("data-cxff") : ""; q.commit = ((box.querySelector("[data-cxcommit]") || {}).textContent || "0").trim();
+      var w = ((box.querySelector("[data-cxffwho]") || {}).value || "").trim(); q.who = w; q.note = w;
+      if (!q.reason) { st.className = "cst bad"; st.textContent = "Tap what is in the way first."; return; }
+    }
+    btn.disabled = true; var was = btn.textContent; btn.textContent = "Saving…"; st.className = "cst"; st.textContent = "";
+    api(q).then(function (m) {
+      if (!m || !m.ok) { btn.disabled = false; btn.textContent = was; st.className = "cst bad"; st.textContent = (m && m.error) || "That did not save. Try again."; return; }
+      m._t = Date.now(); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false);
+      toast(kind === "plan" ? "You are in. Present, and your plan is with your manager." : kind === "mid" ? "Midday check-in saved. Keep going." : "Thank you. Your answer is with your manager.");
+      var h = $(kind === "plan" ? "agplan" : kind === "mid" ? "agmid" : "cxfactfinds"); if (h) h.scrollIntoView({ behavior: "smooth", block: "start" });
+    }).catch(function () { btn.disabled = false; btn.textContent = was; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest ? e.target : null; if (!t) return; var b;
+    if ((b = t.closest("[data-cxstep]"))) { var v = b.parentNode.querySelector("b"); if (v) v.textContent = String(Math.max(0, Math.min(99, Number(v.textContent || 0) + Number(b.getAttribute("data-cxstep"))))); return; }
+    if ((b = t.closest("[data-cxopen]"))) { var sh = b.parentNode.querySelector('[data-cxsheet="' + b.getAttribute("data-cxopen") + '"]'); if (sh) { sh.hidden = false; b.hidden = true; sh.scrollIntoView({ behavior: "smooth", block: "start" }); } return; }
+    if ((b = t.closest("[data-cxr],[data-cxmood],[data-cxff]"))) { Array.prototype.forEach.call(b.parentNode.querySelectorAll(".chip"), function (c) { c.classList.toggle("on", c === b); }); var s2 = b.closest(".card").querySelector(".cst.bad"); if (s2) { s2.textContent = ""; s2.className = "cst"; } return; }
+    if ((b = t.closest("[data-cxsave]"))) { cxSave(b); return; }
+    if ((b = t.closest("[data-myown]"))) { e.preventDefault(); try { var u2 = new URL(location.href); u2.searchParams.delete("as"); location.href = u2.toString(); } catch (x) {} return; }
+    if ((b = t.closest("[data-seeday]"))) { try { var u = new URL(location.href); u.searchParams.set("as", b.getAttribute("data-seeday")); u.searchParams.delete("go"); u.searchParams.delete("t"); location.href = u.toString(); } catch (x) {} return; }
+    if ((b = t.closest("[data-cxmailme]"))) { b.disabled = true; b.textContent = "Sending…"; api({ act: "agmailme" }).then(function (r) { b.textContent = r && r.ok ? "✓ " + (r.msg || "Sent.") : (r && r.error) || "That did not send."; }).catch(function () { b.disabled = false; b.textContent = "That did not send. Try again."; }); return; }
   });
   /* THE MANAGERS' SCREEN (29 Oct 2026). Ricky, 6:45am, on Akaash: "look at grouping so he can see. And if he needs to comment in
      the black screen on a pending for his agents, the task that's open, he can chatter on the fly ... If there is no task open, he
@@ -749,7 +938,8 @@
         '<div class="li"><div class="s" data-uopen role="button" tabindex="0">' + esc(x.s) + "</div><small>with " + esc(x.o || "the branch") + (x.late ? " · overdue since " + esc(x.due) : x.due ? " · due " + esc(x.due) : "") +
         (x.ty && x.ty !== "Untyped" ? " · " + esc(tyName(x.ty)) : "") + (x.stale ? " · untouched " + x.stale + " days" : "") + '</small></div><div class="tc" hidden></div></li>';
     }).join("") + "</ul>" : '<div class="empty">Nothing open for ' + esc(String(g.a).split(" ")[0]) + ".</div>") +
-      '<button type="button" class="unew" data-unew="' + i + '">+ Open a task for ' + esc(String(g.a).split(" ")[0]) + '</button><div class="unfw"></div>';
+      '<button type="button" class="unew" data-unew="' + i + '">+ Open a task for ' + esc(String(g.a).split(" ")[0]) + '</button><div class="unfw"></div>' +
+      (g.k ? '<button type="button" class="unew" data-seeday="' + esc(g.k) + '">See ' + esc(String(g.a).split(" ")[0]) + '\'s day as they see it &rarr;</button>' : "");
   }
   function unitNewForm(i) {
     var g = M.unit.agents[i], ut = M.utypes || [], ty = ut.filter(function (t) { return t.k === "Pendings"; })[0] || ut[0] || { k: "Pendings", to: "azariah" };
@@ -926,7 +1116,7 @@
     $("when").textContent = (m.date || "") + " · agent";
     $("hours").textContent = "";
     $("prog").style.display = "none";
-    $("main").innerHTML = m.on && m.native ? agentNative(m) : agentCards(m);
+    $("main").innerHTML = m.on && m.v2 ? agentNative2(m) : m.on && m.native ? agentNative(m) : agentCards(m);
     $("asat").textContent = (cached ? "As at " : "Updated ") + (m.at || "") + (cached ? " · updating…" : "");
     var cl = $("cline"); if (cl) cl.hidden = true;
   }
@@ -1005,8 +1195,9 @@
       var al = t ? document.querySelector('li[data-ag="' + t + '"]') : null;
       if (al) { al.scrollIntoView({ behavior: "smooth", block: "center" }); agOpen(al); return; }
       if (g === "close" && $("closecard")) { closeOpen(); return; }
+      if (g === "agplan") { var cxo = document.querySelector('#agplan [data-cxopen="plan"]'); if (cxo && !cxo.classList.contains("cxedit")) { cxo.click(); return; } }
       if (t && unitGo(t)) return;
-      var el = $({ update: "coach", news: "news", waiting: "waiting", list: "list", close: "closecard", agplan: "agplan", agclose: "agclose", agitems: "agitems", unit: "unit", timeline: "timeline", mychecks: "mychecks" }[g] || "");
+      var el = $({ update: "coach", news: "news", waiting: "waiting", list: "list", close: "closecard", agplan: "agplan", agclose: "agclose", agitems: "agitems", agmid: "agmid", unit: "unit", timeline: "timeline", mychecks: "mychecks" }[g] || "");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 400);
   }

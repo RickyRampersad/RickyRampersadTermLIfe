@@ -166,7 +166,7 @@ original Salesforce date is in the `SF Last Renewal` column) — please sanity-c
 them, and note most property rows have no email yet (16 of 44 were matched from
 your motor book).
 
-## Corporate fleet portal (RPM, NU-IRON, …)
+## Corporate fleet portal (the branch's three commercial fleet accounts)
 
 Corporate clients with multiple vehicles sign in at
 `https://YOUR-SITE.netlify.app/renewal/corporate.html` with their **company access
@@ -176,14 +176,20 @@ a print/PDF button, and a fleet instruction form that flows to Guardian like
 everything else.
 
 1. In the Google Sheet, create a tab named exactly **`Fleet`**.
-2. Import [`data/fleet-register.csv`](data/fleet-register.csv) into it
-   (File → Import → Upload → Insert new sheet, then rename to `Fleet`) — 400 rows
-   covering RPM Technical Services, RPM Express Couriers and NU-IRON, including
-   multi-year history from Salesforce.
+2. Import your fleet register CSV into it (File → Import → Upload → Insert new
+   sheet, then rename to `Fleet`) — about 400 rows covering the branch's three
+   commercial fleet accounts, with multi-year history from Salesforce.
+
+   **Build that CSV outside this repository and never commit it.** It is a
+   client register, and this repository serves the public site. The named
+   clients were in this step until 5 November 2026; the file itself was never
+   committed, which is the only reason that was a smaller problem than it
+   looked. `data/build-vehicle-register.py` writes it — run it into your
+   scratch directory.
 3. Paste the Apps Script `/exec` URL into `renewal/corporate.html`'s `CONFIG.API_URL`
    (same URL as `index.html`).
-4. Their access codes are in the schedule's Token column — e.g. give RPM and
-   NU-IRON their codes by email or phone.
+4. Each account's access code is in the schedule's Token column — give each
+   client theirs by e-mail or phone.
 
 Keeping it current: when the fleet changes, just edit the `Fleet` tab — add a row
 per vehicle per renewal cycle. The portal groups history by renewal date
