@@ -451,7 +451,7 @@ console.log('\nTurning it on');
      JSON.stringify(p).slice(0, 160));
   ok('it says whether branch mail is held', p.branchMail === 'live');
   ok('the build marker moved past the work it covers',
-     /^\d{4}-\d{2}-\d{2}$/.test(p.version) && p.version >= '2026-11-08', p.version);
+     /^\d{4}-\d{2}-\d{2}[a-z]?$/.test(p.version) && p.version >= '2026-11-08', p.version);
 
   const moved = branch({});
   moved.Session = {

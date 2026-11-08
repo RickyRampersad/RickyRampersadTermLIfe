@@ -9009,6 +9009,63 @@ people and read as a leak. The fix is on the test side: give the owner a domain 
 its own, so the guard keeps its full force and `runsAs` is checked as well. Do not
 weaken that guard.
 
+### The branch signed in as guests, so the register has been empty — 8 November 2026
+
+Read out of the live book while answering "are the ideas coming in". It is the
+worst kind of fault: everything worked exactly as designed and the record came
+out blank.
+
+**Four of the branch's own staff are in the visitors' book**, having signed in
+with `0000` — the BMA, two of Sales Support and one more, two on 30 October and
+one at 9:04 on the morning of 4 November, two minutes after the chair opened
+the session. **A VISITOR IS NEVER ON THE REGISTER**, by design: `roster_()` is
+the denominator and it filters `role === 'guest'` out, so three executives
+looking in cannot push the branch past 100%. The cost of that is the other
+direction, which nobody had looked at — somebody who **is** on the roll and
+comes through the guest door is recorded as a visitor and **marked absent for a
+meeting they attended**. Their own rows were on the roll the whole time.
+
+The 4 November transcript catches the confusion in the room: *"It doesn't log
+in and send that, so which means have you log that afterwards."*
+
+**So the guest door turns a branch member round rather than letting them
+through it.** `guestOnRoll_` matches the typed name against the roll through
+`agentKey_`, which drops the `A07347 - ` the roster pull writes in front of
+every name; on a hit, `apiLogin_` refuses with their own route and **writes
+nothing** — no People row, no visitors' book line, no token — so they arrive at
+the number box with the register still correct. The page reads the new `onRoll`
+flag, puts the visitor form away and sends them back to the number: leaving the
+name boxes up reads as "try that again", which is the one thing not to do.
+
+- **An executive is not on the roll**, so the standing visitor is untouched.
+  That is the whole point of `0000` and the test pins it.
+- **Ambiguity is refused too.** Two people answering to one name on the roll
+  and only their own number can say which, so that is where they are sent.
+- **A first name alone matches nobody** (`agentKey_` needs both halves), so a
+  visitor called Pat is never turned away by a Pat on the roll.
+- **Inactive is not on the roll**, so somebody who has left may look in.
+
+**What the live book also shows, and it is the bigger finding:** Contributions,
+Uploads, Actions, Minutes and Chases are **all empty, header row only** — not
+one contribution has ever been made. Attendance holds five rows, all agents,
+all from 30 October. The Agenda's 18 rows belong to the 23 and 30 October
+meetings; the 4 November meeting has a **session opened at 9:02 and never
+closed, no agenda, no attendance, no minutes**, because `buildWednesday` only
+fires if the week cycle was installed and it was not. A meeting ran for two
+hours and eighteen minutes outside the Builder entirely.
+
+**And the move has not happened.** Drive holds exactly one copy of
+`Branch Meetings — Ricky Rampersad Branch`, owner the personal Gmail, modified
+6 November; the live `/exec` answers `version: 2026-10-28`, which predates the
+`runsAs` field, so nothing about the account is visible from outside yet. That
+is precisely the fault `runsAs` was added for: **a bound script keeps its own
+`/exec` when its sheet is copied**, so a moved project and an un-moved one are
+indistinguishable without it. Once `Meetings.gs` is pasted and a New version
+published, `?action=ping` settles it in seconds.
+
+`tests/test-guest-signin.js` covers it (16 new checks, 40 in all; run with
+`SHEETS_PARSE=1`).
+
 ## `/branchmeet/` — the FY27 rise, and what the film may not say
 
 Asked for on 28 October 2026, the evening before the branch group sees it:

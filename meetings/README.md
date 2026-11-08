@@ -840,6 +840,22 @@ Points — not for distribution"* section, which staff should not see either.
 
 ---
 
+## Signing in as a guest when you are on the roll
+
+`0000` is for someone who is **not** branch. A visitor is deliberately never on
+the register — that is what keeps three executives looking in from pushing the
+branch past 100% — so a branch member who comes through the guest door is
+recorded as a visitor and **marked absent for a meeting they were at**.
+
+Since 8 November 2026 the guest door checks the name typed against the roll and
+turns a branch member round, naming their own way in and writing nothing. If
+you are on the roll, **your agent number is the whole sign-in**: no password,
+no `0000`. And the number is only the door — the **"I am here"** button on the
+meeting card is the register.
+
+If your own number is refused, tell the branch: your row has not been pulled
+across from the Agent Skill Bank yet. Run **Pull the roster** from the menu.
+
 ## Moving it to the Workspace — 8 November 2026
 
 Asked for in these words: *"Ok so this is suooosed to be moved to my workspace

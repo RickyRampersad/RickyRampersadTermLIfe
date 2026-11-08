@@ -76,7 +76,7 @@ var MEET = {
   /*  Bumped whenever this file changes in a way a deployment has to
    *  carry. `?action=ping` reports it, so a browser can tell a live
    *  build from one pasted six weeks ago without anybody guessing. */
-  VERSION: '2026-11-08',
+  VERSION: '2026-11-08b',
 
   /* Typed once, when someone sets their PIN for the first time. It
      stops a stranger who guesses a branch email address from claiming
@@ -1136,6 +1136,33 @@ function guestPerson_(name, job) {
   return made;
 }
 
+/** Is the name a visitor typed the name of somebody already on the roll?
+ *
+ *  A VISITOR IS NEVER ON THE REGISTER, by design: roster_() is the
+ *  denominator the register is measured against and it filters role
+ *  'guest' out, so three executives looking in cannot push the branch
+ *  past 100%. The cost of that, found in the live book on 8 November
+ *  2026, is that somebody who IS on the roll and signs in with 0000 is
+ *  recorded as a visitor and marked ABSENT for the meeting they attended:
+ *  four of the branch's own staff are in the visitors' book that way, one
+ *  of them on the morning of a meeting that ran. Their own rows were
+ *  sitting on the roll the whole time.
+ *
+ *  So the guest door turns a branch member round rather than letting them
+ *  through it. An executive looking in is not on the roll, so the
+ *  standing visitor is untouched.
+ *
+ *  Matched on first and last name through agentKey_, which drops the
+ *  "A07347 - " the roster pull writes in front of every name. Ambiguity
+ *  is refused too: if two people on the roll answer to the name, their
+ *  own number is the only thing that can say which. */
+function guestOnRoll_(name) {
+  var k = agentKey_(name);
+  if (!k || k.indexOf('|') < 1) return null;
+  var hits = roster_().filter(function (p) { return agentKey_(p.name) === k; });
+  return hits.length ? hits[0] : null;
+}
+
 /** One line in the visitors' book, once per visitor per meeting.
  *
  *  This, not the Attendance tab, is where a visit is recorded: a guest in
@@ -1240,6 +1267,19 @@ function apiLogin_(body) {
     if (!gJob) {
       return { ok: false, needGuest: true, haveName: gName,
                error: 'And your role, so we know who we had with us.' };
+    }
+
+    //  Turned round rather than let in: see guestOnRoll_ for why a branch
+    //  member signing in with 0000 is marked absent for a meeting they
+    //  were at. Nothing is written — no visitor row, no token — so they
+    //  arrive at their own sign-in with the register still correct.
+    var onRoll = guestOnRoll_(gName);
+    if (onRoll) {
+      return { ok: false, onRoll: true, haveName: gName,
+               error: firstName_(gName) + ', you are on the branch roll, so 0000 is not '
+                 + 'your way in: a guest is never on the register, and it would mark you '
+                 + 'absent from a meeting you were at. Sign in with your agent number '
+                 + 'instead \u2014 it is the whole sign-in, and there is no password to type.' };
     }
 
     var g = guestPerson_(gName, gJob);
