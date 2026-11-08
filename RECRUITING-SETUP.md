@@ -1730,6 +1730,72 @@ served. Nothing about the scoring goes in a served page, a film or an ad.
 
 ---
 
+## The hiring board — `/hiring`, 8 November 2026
+
+Asked for as *"anything further we can enhance for the ultimate
+experience"*. The honest answer was that the filter had become better than
+the thing receiving it: every application lands on the `Quote Requests` tab
+beside a client's property quote and an OAS enrolment, in the order it
+arrived, and is read in Gmail. Three seats, a weighted score nothing can
+sort on, no way to compare two people, no record of who was called, and
+nothing at all measuring the two working days the three pages promise in
+writing.
+
+`q.board` and `q.hire` in `Quotes.gs` read that tab and show the recruiting
+rows alone. **Service.gs already routes anything starting `q.` to
+`Quotes.gs`**, so the board carries no Service.gs change of its own: it goes
+live with the paste he already owed for the confirmation wording.
+
+**It opens for the Branch Manager signed in as himself and nobody else.**
+Not the ABM, not staff, and **not the branch code**, which is the wall's
+code and is handed around the branch. That is the promise the three pages
+make — *"Nobody else in the branch sees it, and nothing reaches your current
+employer"* — and a man applying for the client manager's seat is employed
+somewhere today. The test is `tAs_`'s own shape: `user` (a real person, not
+the bare code), not `viaBranch` (not the code with a name typed after it),
+and `canTell`, which `tAs_` sets for `bm` alone. Signing in through the
+branch app satisfies it. Do not widen it without changing the pages first.
+
+**What it shows:** the promise clock across the top (applications, still
+open, due today, past the two days) and it opens on whichever seat has
+somebody past it; then a card each, strongest first — the weighted score
+drawn as a ring with its five parts as bars, the bar line, what they did
+with the renewal file *in their order*, every written answer in full, the
+CV, and their number as a tap. One press invites them to a conversation, in
+his name from support@, with a line of his own if he wants one.
+
+Three things it deliberately does not do:
+
+- **"Not this time" sends nothing.** The page promised silence inside two
+  working days and *"no further letter"*. A rejection e-mail would
+  contradict the branch's own written word to somebody who has already
+  understood it.
+- **It never recomputes the score.** The page that took the application is
+  the only place it is worked out, so the board and the e-mail can never
+  disagree about the same person.
+- **It keeps nothing about a candidate on the device.** Only the sign-in is
+  in `localStorage`.
+
+Two things found while building it, both now fixed in `Quotes.gs`:
+
+- **Every answer was cut at 600 characters**, in the cell and in the e-mail
+  both, while `weigh()` scored the whole thing. So the score could say
+  "long and specific" above an answer that stopped mid-sentence. A new
+  `Full` column keeps every answer exactly as typed; `Answers` stays as it
+  was, because that is what a person skims and what the e-mail prints. Rows
+  filed before it have no `Full`, and the card **says their answers are
+  clipped** rather than passing them off as whole.
+- **The advisor seat is not on this tab at all.** `/joinourbranch/` sends
+  applications to Guardian's own TalentNest posting; only the "Talk first"
+  booking reaches us. The board says so, because an empty column reads as
+  "nobody applied".
+
+`tests/test-hiring.js` covers it: 119 checks, the backend in Node against a
+Sheets made of nothing with every role tried against the gate, then the page
+in a browser on a laptop and a phone.
+
+---
+
 ## Still to do
 
 - **Clear the music licence for `bwadmin` and `jbadvisor`**, or swap their beds

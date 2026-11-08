@@ -78,10 +78,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .mk{width:30px;height:30px;flex:none;display:grid;place-items:center}
 .mk img{width:100%;height:100%;display:block}
 .tt{font:700 15px/1.2 var(--display);letter-spacing:-.01em}
+/* His name sits beside the title on one line and gives way rather than
+   wrapping: on a phone a two-line name pushed Sign out onto two lines too. */
+.tt,.ts{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .ts{font:500 11px/1.3 var(--text);letter-spacing:.09em;text-transform:uppercase;color:#b9cadd}
+.topin>span:nth-child(2){min-width:0}
 .spacer{margin-left:auto}
 .lnk{background:none;border:0;color:#b9cadd;font:600 13px/1 var(--text);cursor:pointer;
-  padding:9px 10px;border-radius:8px;min-height:40px}
+  padding:9px 10px;border-radius:8px;min-height:40px;white-space:nowrap;flex:none}
 .lnk:hover{color:#fff;background:rgba(255,255,255,.08)}
 
 /* ── the promise clock ───────────────────────────────────────────────── */
@@ -510,13 +514,29 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       +     (r.email ? '<span><a href="mailto:' + esc(r.email) + '">' + esc(r.email) + '</a></span>' : '')
       +   '</div>'
       +   pills(r)
-      +   (r.summary ? '<p class="sumline">' + esc(r.summary) + '</p>' : '')
+      +   (sumLeft(r) ? '<p class="sumline">' + esc(sumLeft(r)) + '</p>' : '')
       + '</div></div>'
       + parts(r)
       + '<details class="more"><summary>Read what they wrote</summary>'
       +   '<div class="body">' + fullBody(r) + '</div></details>'
       + actions(r)
       + '</article>';
+  }
+
+  /* The summary cell leads with the score and the bar, because it is written
+     for the e-mail's subject line where nothing else is drawn. Here the ring
+     and a pill already carry both, and printing them a third time pushes the
+     one thing they do not carry — the years — to the end of a line nobody
+     reads twice. So the duplicates come out and what is left stands alone. */
+  function sumLeft(r) {
+    var bar = (r.bar || '').trim();
+    return String(r.summary || '').split('·').map(function (b) { return b.trim(); })
+      .filter(function (b) {
+        if (!b) return false;
+        if (/^Fit\s+\d+\s*\/\s*100$/i.test(b)) return false;
+        if (bar && (b === bar || bar.indexOf(b) === 0)) return false;
+        return true;
+      }).join(' · ');
   }
 
   function ring(r) {
