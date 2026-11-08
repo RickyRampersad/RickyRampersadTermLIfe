@@ -8848,6 +8848,98 @@ Playwright against a mocked backend: an agent before and after check-in opens,
 an agent already on the register, and staff on a laptop; no sideways scroll at
 390, no page errors).
 
+### The daily Builder progress, the content ask, and the mail arithmetic under both — 8 November 2026
+
+Asked for in these words: *"Can I have a daily builder progress? I need to also in
+certain days ask for content from all in the workday can this be done and remind me
+on the process and any refinements??"*
+
+**The Builder had been running on nothing since 30 October.** The live deployment
+answered `version: 2026-10-28`, its only meeting was `MD-2026-10-30` — the one-off
+Friday — and there was none after it. `buildWednesday` writes the meeting and seeds
+the agenda from the standing rota at 6:00 on the meeting day, and it only fires if
+the week cycle has been installed. It had not been. So for nine days nobody could
+sign in, nobody could bring anything, and the register had nothing to measure, and
+**nothing anywhere said so.** That is why the progress note's first line, when there
+is no meeting, is loud rather than a footnote.
+
+**The daily note stays what it is.** `dailyMeetingNote` is each person's own — their
+item, their actions, their own measures, the one ask — with no league table and
+nobody else's figures, on the Chung, Narayandas and Chang evidence already recorded
+in `Meetings.gs`. That did not change. `builderProgress` is the other half and goes
+to **one person**: `MEET.ADMIN_EMAIL`, plus whoever the `PROGRESS_TO` property names.
+
+What it carries, all of it off tabs that already held it: the countdown, or that
+there is no meeting; items and whether the running order fits the room (read off the
+meeting row's own Start and End, not a constant, so a one-off at another time is
+judged against its own length); material promised and not in; **items with nothing
+in the `Detail` field**, because that is the question an agent reads under an item
+and the how-to film teaches them to look for it; who has brought something and who
+has not, by first name; open and overdue actions; the Monday brief answered; the two
+time blocks answered; last meeting's register and whether its minutes are published.
+Quiet at weekends, and quiet when the meeting is `PROGRESS.QUIET_FROM_DAYS` (4) or
+more working days off — **never** quiet when there is no meeting.
+
+**The content ask is a separate e-mail on purpose.** The ask already existed inside
+the 7:00 daily note, and already knew who had contributed; but it arrives with eight
+other things around it, and only inside two working days of the meeting, which on a
+Wednesday cadence means the last of those three days is the meeting morning itself.
+`contentAsk` is one question and one button, at `CONTENT_ASK_HOUR` (11:00) on the
+days `CONTENT_ASK_DAYS` names (Monday and Tuesday by default, `0` = Sunday). It
+**skips anybody who has already brought something to that meeting**, which is what
+stops an ask becoming the thing people filter, and it says nothing at all when there
+is no meeting or the meeting is more than three working days off.
+
+It is deliberately **not** bolted onto the 10:00 and 15:00 time-block checks. Those
+ask what a person did; this asks what they will bring. Putting the second inside the
+first lowers the answer rate of both, and a run that fails then takes two jobs down
+instead of one.
+
+**The floor it has to fit through:** `floorSection` draws the contribution box only
+while `!live && !m.past && !m.checkInOpen`, so the box shuts when check-in opens,
+half an hour before the start. An ask sent on the meeting morning is asking for
+something the branch has two hours left to do. Hence the two days before.
+
+**The mail arithmetic, which is the real refinement and was a hidden fault.** This
+project sends on the personal Google account that owns it: about **100 recipients a
+day**. With 19 on the roll it was already committing, on a Monday, up to 19 daily
+notes + 38 time-block checks + 19 Monday briefs = **76**. Adding the content ask
+would have taken a Monday past 90. And **every send in the file sat in a try/catch
+that only wrote to the log**, so the day the allowance ran out the notes would simply
+have stopped, to some people and not others, with nobody told — the quiet failure
+this branch has been bitten by before.
+
+So every send now goes through `meetMail_`, which tries the **branch relay**
+(`apps-script/MailRelay.gs`, under support@rickyrampersadbranch.com, a Workspace
+account, about 1,500 a day) that the KPI tracker has used since 20 October, and
+falls back to Gmail exactly as before. Until `MAIL_RELAY_URL` and `MAIL_RELAY_KEY`
+are both in this project's Script properties, nothing the branch receives changes.
+`MMAIL.FLOOR` (12) stops a run with a margin rather than at zero, because a run that
+reaches half the roll reads as favouritism; the margin exists so `mmHeldAlert_` can
+still tell the chair, once a day, naming the fix. The progress note nags about it
+until the relay is set.
+
+**Three Script properties read garbage as a valid answer**, and the test caught it:
+`num_()` answers `0` for anything it cannot read, and `0` passes a 0-to-6 or 0-to-23
+range check — so a mistyped `CONTENT_ASK_DAYS` became **Sunday** and a mistyped hour
+became **midnight**. `mmWhole_` reads them strictly: whole digits inside the range,
+or the default.
+
+**The version string was not bumped on 29 October**, when the guest sign-in fixes
+went in, so `?action=ping` cannot tell anybody which build is live — the ping says
+`2026-10-28` either way. Bump `MEET.VERSION` with every paste; a build marker that
+does not move is worse than none, because it is read as reassurance. The same lesson
+is recorded for the branch backend elsewhere in this file.
+
+**None of it runs until he pastes `Meetings.gs` and presses the menu items**:
+*Turn on the week cycle* (without which there is no meeting at all), *Turn on my
+daily Builder progress*, *Turn on the content ask*, and *Test the mail route*.
+
+`tests/test-builder-progress.js` covers it (56 checks, on the real script under the
+harness: the relay and its fallbacks, the hold and its alert, the model's figures
+against seeded tabs, the no-meeting headline, who the ask skips, and the installs).
+`tests/test-friday.js`, `e2e-meetings-gate.js` and `e2e-friday.js` still pass.
+
 ## `/branchmeet/` — the FY27 rise, and what the film may not say
 
 Asked for on 28 October 2026, the evening before the branch group sees it:

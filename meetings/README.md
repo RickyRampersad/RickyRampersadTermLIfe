@@ -593,6 +593,60 @@ the meeting is more than two working days off, and none to a person who owes
 nothing, has no open actions and no measures. A note that arrives every morning
 regardless is a note people filter.
 
+### The chair's own note — the Builder filling up, or not
+
+The daily note above goes to every person and carries their own figures. This is the
+other half, and it goes to **you alone**: *Branch Meetings → Turn on my daily Builder
+progress*, read it now with *Send me the progress note now*.
+
+- **No meeting on the books** is the first line, and it is loud. The Builder sat with
+  no meeting after 30 October while the week cycle was off, and nothing said so.
+- The agenda, and whether the running order fits the room.
+- **Material promised and not in**, and who owes it.
+- **Items with nothing in the Detail field** — the question an agent reads under an
+  item. An item without one leaves them nothing to answer.
+- Who has brought something, and who has not, by first name.
+- Open and overdue actions; the Monday brief answered; the two time blocks answered;
+  last meeting's register, and whether its minutes are published.
+
+It is quiet at weekends and when the meeting is four or more working days off — never
+when there is no meeting. Add a second reader with the `PROGRESS_TO` Script property
+and move the hour with `PROGRESS_HOUR`.
+
+### The content ask — the whole branch, on the days you choose
+
+*Branch Meetings → Turn on the content ask.* One short e-mail, one question, one
+button, at **11:00 on Monday and Tuesday** by default: *what are you bringing to
+Wednesday?* It offers the agenda's own questions to answer, because an agent who
+cannot think of anything in the abstract can answer a question.
+
+- It **skips anybody who has already brought something** to that meeting. Nagging the
+  people who are doing the thing you asked for is how an ask becomes noise.
+- It says nothing when there is no meeting, or the meeting is more than three working
+  days off.
+- The days are yours: `CONTENT_ASK_DAYS`, comma-separated, `0` = Sunday — so `1,2` is
+  Monday and Tuesday and `2` is Tuesday alone. The hour is `CONTENT_ASK_HOUR`. Change
+  either and run the menu item again.
+
+Why two days before and not the morning of: the contribution box shuts when check-in
+opens, half an hour before the meeting starts. An ask on the day is asking for
+something the branch has two hours left to do.
+
+### The mail allowance, and the relay
+
+This project sends on the Google account that owns it, which allows about **100
+recipients a day**. With 19 on the roll a Monday already commits up to 76 — 19 daily
+notes, 38 time-block checks, 19 Monday briefs. Every send used to sit in a try/catch
+that only wrote to the log, so the day the allowance ran out the notes would have
+stopped for some people and not others with nobody told.
+
+Every send now goes through the **branch relay** the KPI tracker uses
+(support@rickyrampersadbranch.com, about 1,500 a day), falling back to the Gmail
+account exactly as before. Put `MAIL_RELAY_URL` and `MAIL_RELAY_KEY` into this
+project's Script properties — the same two values the tracker holds — and run
+*Branch Meetings → Test the mail route*, which says which way it went. A run stopped
+by the allowance e-mails you once a day rather than going quiet.
+
 ### Why it is not a daily production chase
 
 This was decided against the evidence rather than by preference. Chung,
