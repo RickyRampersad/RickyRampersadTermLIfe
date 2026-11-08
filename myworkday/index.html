@@ -300,7 +300,8 @@
   .agpv{background:rgba(227,178,60,.14);border:1.5px solid var(--gold);border-radius:12px;padding:9px 12px;font:700 13px/1.4 var(--fb);margin:0 0 12px}
   /* The managers' screen (29 Oct 2026): the unit's work by agent, the day's notes, the manager's numbers. */
   .uchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
-  details.ua{border-top:1px solid var(--line)} details.ua:first-of-type{border-top:0}
+  details.ua{border-top:1px solid var(--line)}
+  #agitems details.agt{margin-left:10px} #agitems details.agt>summary .nm{font-size:13.5px} #agitems .tg{display:inline-block;border-radius:999px;padding:1px 7px;font:800 10.5px/1.5 var(--fb);color:#fff;vertical-align:1px} #agitems .tg.you{background:#C0392B} #agitems .tg.push{background:#C77700} #agitems b.dn{color:#C0392B} details.ua:first-of-type{border-top:0}
   details.ua>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:11px 0;cursor:pointer}
   details.ua>summary::-webkit-details-marker{display:none}
   details.ua>summary .nm{flex:1;min-width:0;font:800 14.5px/1.25 var(--fd);color:var(--navy);overflow-wrap:anywhere}
@@ -706,14 +707,36 @@
   function agItemsCard(m) {
     var it = m.items || [];
     if (!it.length) return '<div class="card" id="agitems"><div class="ch"><h2>Being worked for your clients</h2></div><div class="empty">Nothing due for your clients today.</div></div>';
-    return '<div class="card" id="agitems"><div class="ch"><h2>Being worked for your clients</h2><span class="n">' + it.length + '</span></div><div class="tip" style="margin-bottom:4px">Tap one: its last notes, and an update that goes straight on the task for the person working it.</div><ul class="list">' + it.map(function (x, i) {
+    // 8 Nov 2026: by the person who has it, then by type, each a drop-down. What waits on the agent opens by itself.
+    var li = function (x, i) {
       var notes = (x.notes || []).map(function (n) { return "<div>" + (n.reply ? "&#8627; " : "") + "<b>" + esc(n.who) + "</b>" + (n.day ? " · " + esc(n.day) : "") + ": " + esc(n.s) + "</div>"; }).join("");
+      var tag = x.tag === "you" ? '<span class="tg you">WAITING ON YOU</span> ' : x.tag === "push" ? '<span class="tg push">NEEDS A PUSH</span> ' : "";
+      var wait = x.tag && x.tag.indexOf("w:") === 0 ? " · waiting on " + esc(x.tag.slice(2)) : "";
       return '<li class="tk" data-ag="' + esc(x.id) + '" style="animation-delay:' + Math.min(i, 12) * 0.04 + 's"><span class="ic ' + (x.done ? "" : x.late ? "late" : "due") + '">' + (x.done ? "&#10003;" : x.late ? "!" : "&#8226;") + "</span>" +
-        '<div class="li"><div class="s' + (x.done ? " done" : "") + '" data-agopen role="button" tabindex="0">' + esc(x.s) + "</div><small>with " + esc(x.o) + (x.done ? " · closed today" : x.due ? " · " + (x.late ? "overdue since " : "due ") + esc(x.due) : "") + "</small></div>" +
+        '<div class="li"><div class="s' + (x.done ? " done" : "") + '" data-agopen role="button" tabindex="0">' + tag + esc(x.s) + "</div><small>" + (x.done ? "closed today" : x.due ? (x.late ? "overdue since " : "due ") + esc(x.due) : "") + wait + "</small></div>" +
         '<div class="tc" hidden><div class="notes">' + (notes || "No notes on Chatter yet.") + (x.more ? "<div>and " + x.more + " earlier</div>" : "") + "</div>" +
         '<textarea data-agtext placeholder="Your update: what you did or know, in the client\'s words. It goes on the task."></textarea>' +
         '<div class="cbt" style="grid-template-columns:1fr"><button type="button" class="c" data-agnote>Post my update</button></div><div class="cst"></div></div></li>';
-    }).join("") + "</ul></div>";
+    };
+    var by = {}, order = [];
+    it.forEach(function (x) { var o = x.o || "The branch"; if (!by[o]) { by[o] = []; order.push(o); } by[o].push(x); });
+    var score = function (o) { return by[o].filter(function (x) { return x.tag === "you"; }).length * 100 + by[o].filter(function (x) { return x.tag === "push" || x.late; }).length * 10 + by[o].length; };
+    order.sort(function (a, b) { return score(b) - score(a); });
+    var n = 0;
+    var body = order.map(function (o) {
+      var xs = by[o], you = xs.filter(function (x) { return x.tag === "you"; }).length, late = xs.filter(function (x) { return x.late && !x.done; }).length;
+      var gs = {}, gorder = [];
+      xs.forEach(function (x) { var g = x.group || "Other"; if (!gs[g]) { gs[g] = []; gorder.push(g); } gs[g].push(x); });
+      gorder.sort(function (a, b) { return gs[b].length - gs[a].length; });
+      var inner = gorder.map(function (g) {
+        var gy = gs[g].some(function (x) { return x.tag === "you"; });
+        return '<details class="ua agt"' + (gy || gorder.length === 1 || gs[g].length <= 3 ? " open" : "") + '><summary><span class="nm">' + esc(g) + '</span><span class="ct">' + gs[g].length + "</span></summary><ul class=\"list\">" +
+          gs[g].map(function (x) { return li(x, n++); }).join("") + "</ul></details>";
+      }).join("");
+      return '<details class="ua ags"' + (you || order.length === 1 || it.length <= 8 ? " open" : "") + '><summary><span class="nm">' + esc(o) + '</span><span class="ct">' + xs.length + " for you" + (late ? ' · <b class="dn">' + late + " overdue</b>" : "") + (you ? ' · <b class="dn">' + you + " waiting on you</b>" : "") +
+        '<br><span style="font-weight:600">' + esc(gorder.map(function (g) { return g + " " + gs[g].length; }).join(" · ")) + "</span></span></summary>" + inner + "</details>";
+    }).join("");
+    return '<div class="card" id="agitems"><div class="ch"><h2>Being worked for your clients</h2><span class="n">' + it.length + '</span></div><div class="tip" style="margin-bottom:4px">By the person who has it, then by type. Tap a task: its last notes, and an update that goes straight on the task.</div>' + body + "</div>";
   }
   function agDoneCard(m) {
     var c = m.closedToday || []; if (!c.length) return "";
@@ -1193,7 +1216,7 @@
       var li = t ? document.querySelector('li.tk[data-id="' + t + '"]') : null;
       if (li) { li.scrollIntoView({ behavior: "smooth", block: "center" }); openCard(li); return; }
       var al = t ? document.querySelector('li[data-ag="' + t + '"]') : null;
-      if (al) { al.scrollIntoView({ behavior: "smooth", block: "center" }); agOpen(al); return; }
+      if (al) { var dp = al.parentNode; while (dp && dp !== document) { if (dp.tagName === "DETAILS") dp.open = true; dp = dp.parentNode; } al.scrollIntoView({ behavior: "smooth", block: "center" }); agOpen(al); return; }
       if (g === "close" && $("closecard")) { closeOpen(); return; }
       if (g === "agplan") { var cxo = document.querySelector('#agplan [data-cxopen="plan"]'); if (cxo && !cxo.classList.contains("cxedit")) { cxo.click(); return; } }
       if (t && unitGo(t)) return;

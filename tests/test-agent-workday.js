@@ -61,7 +61,7 @@ ok('a projection with lines left blank is refused, and says how many', !r.ok && 
 const full = (kind, nums) => Object.assign({ act: kind, summary: kind === 'agplan' ? 'Seeing the Alis at 2' : 'Good day' }, ...['calls', 'appts', 'ff', 'close', 'apps', 'dues', 'pend'].map((k, i) => ({ ['m_' + k]: String(nums[i]), ['n_' + k]: '' })));
 r = post('a-neil-ramnanan', full('agplan', [10, 3, 2, 1, 1, 5, 2]));
 ok('the projection saves: rows written, the day comes back with it set', r.ok && r.saved.act === 'agplan' && r.project.done && r.metrics[0].planned === '10' && r.summary.plan === 'Seeing the Alis at 2', JSON.stringify(r.saved));
-ok('his manager gets the copy, as from the page', mails.some(x => /^Projection received · Neil Ramnanan/.test(x.subject) && /akaash@example.com/.test(x.to)), mails.map(x => x.subject).join(' | '));
+ok('no copy per save since 8 Nov 2026 (the 6:30 roll-up carries it)', !mails.some(x => /^Projection received/.test(x.subject)), mails.map(x => x.subject).join(' | '));
 r = post('a-neil-ramnanan', full('agclose', [12, 2, 2, 1, 0, 5, 2]));
 ok('the close-off saves, and the balance comes back: 24 projected, 24 done', r.ok && r.close.done && r.balance && r.balance.proj === 24 && r.balance.done === 24 && r.balance.text === 'even' && r.metrics[0].done === '12', JSON.stringify(r.balance));
 const pn = posts.length;
