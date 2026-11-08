@@ -4068,7 +4068,9 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 - **A group signs in with its list bill and its code, both.** The list bill is
   printed on every bill and known to the employees, so it is the name, never
   the password. List bills live on the policy records (`List_Bill__c` on
-  `CLIENT_PORTFOLIO__c`), typed several ways ("TGM 1099", "TGM1099"):
+  `CLIENT_PORTFOLIO__c`), typed several ways ("TGM 4417", "TGM4417" — an
+  invented example; 231 records carry a TGM list bill and the one first
+  written here was a real employer's, see the scan note below):
   compared as letters and digits only. The account fields `List_Bill_Life__c`
   and `List_Bill_Pension__c` are empty on all but one account.
   **A letter O counts as a zero** (`gcmSignKey_`, 27 October 2026), on both
@@ -7298,6 +7300,59 @@ HELP 868 code and `tests/test-help868.js` fails if it ever does.
   in the session scratchpad, never in the repository.
 - Test: `tests/test-help868.js` (69 checks).
 
+### TWO systems wear the HELP 868 name, and only one of them is in this repo
+
+Checked end to end on 8 November 2026, because "is a Query Pal ticket logged?"
+cannot be answered from this file alone — and reading only `Help868.gs` leads
+to the wrong answer, which is the reason for this note.
+
+| | the agent side | the client side |
+|---|---|---|
+| code | `apps-script/Help868.gs`, routed from `Service.gs` | **not in this repository** |
+| who | an agent, verified by number **and** an e-mailed code | anyone on WhatsApp |
+| actions | `code`, `verify`, `pendings`, `case`, `increases`, `groups`, `enquiry` | one POST, from respond.io |
+| logs to | a **HELP868 Enquiries** tab, four categories, none of them claims | a **Query Pal** ticket, `RRB/2026/NNN/…` |
+| live? | **no** | **yes** |
+
+- **The agent side answers nothing today.** `?action=help868.ping` on the
+  Service Questionnaire `/exec` behaves exactly like a nonsense action — an
+  HTML page — while `gcm.ping` beside it answers JSON. So `Help868.gs` has
+  never been pasted into the live project. Its own gate (`HELP868_KEY`) is
+  moot until it is.
+- **The client side is live and has fired.** The published "HELP 868
+  Assistant." carries a `makeHttpRequest` action, *Log Query Pal ticket*, to
+  **Query Pal's own Apps Script** — a different deployment from every `/exec`
+  in this repository, which answers `RRB Query Pal logger is live.
+  v10.3-HARDENED`. Its shared key sits in that action's body in respond.io,
+  which is where it has to be; **it must never be copied into this
+  repository**, which is public and served.
+- **It logs a real ticket, with a real reference.** One client has been
+  through it (5 November 2026, run 118, still Open on the 8th). The run number
+  is assigned server-side, so a reference proves a row — the assistant is told
+  never to invent one, and to send a plain "noted, a team member will message
+  you" if the call returns none.
+- **52 query types across 11 categories**, each with its department and
+  turnaround, live in the assistant's instruction — Claims & Benefits, Health
+  & Medical and My Car & Home among them, which is how a claims tap on the
+  claims page becomes a ticket.
+- **But every ticket goes to RR Branch Sales Support**, whatever its type: the
+  POST hard-codes that department, and the real one is named inside the
+  description as "Intended department: X". That is deliberate — a WhatsApp
+  message is from nobody verified and must not land straight on Guardian's
+  claims desk — and it is the difference between *a ticket is logged* and *it
+  reached the claims desk*. Do not "fix" it without being asked.
+- **After the ticket** the assistant writes five contact fields (`h868_ref`,
+  `h868_case`, `h868_opened`, `h868_email_given`, `h868_status`; all seven
+  exist, with `h868_rating` and `h868_handler`), adds an internal comment, and
+  assigns the conversation. On the one live ticket `h868_email_given` and the
+  assignee are both empty, so that tail is not reliably completing — worth
+  watching before the volume grows.
+- **The assistant still reads out the branch manager's own number** for an
+  urgent claim out of hours. It came off the claims page on 7 November at his
+  word, and a client taps "Ask us on WhatsApp" *because* it is gone. One line
+  in the agent instruction; a promise made in one place has to be kept in the
+  other.
+
 ## The claims intake — `claims/` and `apps-script/Claims.gs`
 
 The custom claims intake at rickyrampersadbranch.com/claims, with its own
@@ -7776,6 +7831,22 @@ every served directory, not only the page you were looking at.** The scan that
 finds these is `\b[A-Z]{3} ?[0-9]{4}\b` for a plate and `[A-Z]{3}[0-9]{4}-` for
 a policy number, run over `*.md`, `*.html`, `*.gs`, `*.js` **and `*.py`** — the
 pass that cleaned the page searched the first four and missed a docstring.
+
+**And the scan is for a client-shaped value, not for a plate, 8 November
+2026.** That pass printed a `TGM`-prefixed value in the group section above,
+and it was waved off as "not a plate" — which it is not. It is a real
+employer's **list bill**, carried by 66 policy records, and it had been on the
+open web in this file for weeks. It is the group's own sign-in *name* rather
+than its code, so nothing was exposed that its own employees do not read off
+every bill, but the standing rule is that an example in a note is published
+and must be invented. The lesson is the question to ask of a hit: not "is this
+a registration?" but **"is this a real anything?"** — one `COUNT(Id)` settles
+it, and one more proves the replacement is not real either. The shapes this
+branch actually uses, all worth scanning for:
+`\b(TPG|TGM) ?[0-9]{4}(-[0-9]{5}-[0-9]{2})?\b` for a list bill or a group
+policy, `\b[58][0-9]{9}\b` and `\b1000[0-9]{6}\b` for a policy number,
+`\b[A-Z]{3} ?[0-9]{4}\b` for a registration. `A#####` agent numbers are staff
+and are on the Central Bank's own public register, so they stay.
 
 Tests in the session scratchpad: `terms-test.js` (138 checks, Node, Salesforce
 and the sheet made up) and `terms-page.js` (32, Playwright, the real page
