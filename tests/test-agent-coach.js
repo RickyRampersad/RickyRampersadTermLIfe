@@ -77,10 +77,11 @@ ok('pendings: Flora Sarran from Salesforce, with Azariah', cm.pend.n === 1 && /F
 ok('her calls: the orphan client first, then premiums by age, each client once', cm.calls[0].c === 'Omar Ali' && cm.calls[1].c === 'Shivani Pancham' && cm.calls.filter(c => c.c === 'Alex John').length === 1, JSON.stringify(cm.calls.map(c => c.c)));
 ok('the plan suggested from her goal: 6 calls, 2 appointments, 2 fact finds, 1 app', cm.suggest.calls === 6 && cm.suggest.appts === 2 && cm.suggest.ff === 2 && cm.suggest.apps === 1, JSON.stringify(cm.suggest));
 
-console.log('\nOff until AGENT_COACH = live; a manager may look:\n');
+console.log('\nOn by default since 8 Nov 2026; AGENT_COACH = off keeps the old screen:\n');
+P.setProperty('AGENT_COACH', 'off');
 const link = a => ({ wd: a.key, k: env.workSig_(a.key) });
 let m = env.workdayGet_(link(F));
-ok('unset: Felicia\'s screen is as it was', m.ok && m.native && !m.v2);
+ok('off: Felicia\'s screen is as it was', m.ok && m.native && !m.v2);
 const mgrLink = sid => ({ wd: sid, k: env.workSig_(sid) });
 m = env.workdayGet_(Object.assign(mgrLink('ricky'), { as: F.key }));
 ok('Mr Rampersad sees Felicia\'s day as she will, with what he should know', m.ok && m.v2 && m.viewAs && m.viewAs.by === 'Ricky' && /pipeline/.test(m.coach.coach.mgr), JSON.stringify(m.viewAs));
@@ -120,9 +121,9 @@ ok('the coach\'s morning, its title in the subject', /^Your day · Felicia Rampe
 ok('the note first, then the goal, fact finds, orphans, pendings, calls', ['Your pipeline is ready to close', '1 · Your goal', '2 · Fact finds', '3 · Orphan clients', '4 · Pendings', 'Your calls today'].every((t, i, all) => mm.htmlBody.indexOf(t) > -1 && (i === 0 || mm.htmlBody.indexOf(t) > mm.htmlBody.indexOf(all[i - 1]))), (mm.htmlBody || '').slice(0, 80));
 ok('copied to her manager and Kamla', mm.cc === 'ricky@example.com,kamla@example.com', mm.cc);
 ok('no cyan in the coach\'s note', (mm.htmlBody || '').indexOf('#E3B23C') > -1);
-P.deleteProperty('AGENT_COACH'); mails.length = 0;
+P.setProperty('AGENT_COACH', 'off'); mails.length = 0;
 env.agentMorningMail_(F, DAY, { open: { [F.key]: [] }, closed: { [F.key]: [] }, ff: { [F.key]: [] }, f360: {}, goal: {}, q: {}, orphan: {} }, null);
-ok('unset: the morning e-mail as before', mails[0] && /being worked for you/.test(mails[0].subject), mails[0] && mails[0].subject);
+ok('off: the morning e-mail as before', mails[0] && /being worked for you/.test(mails[0].subject), mails[0] && mails[0].subject);
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall green');
 process.exit(fails ? 1 : 0);

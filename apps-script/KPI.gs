@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-06b';
+var SCRIPT_VERSION = '2026-11-08a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4001,6 +4001,7 @@ function housekeepingTick_() {
   // The agents: 7:00 their day, 17:30 the close-off (done by 6pm), eight a run, never in a
   // run that is already carrying staff morning mail.
   if (!morningSent) { try { agentTick_(day, mins).forEach(function (s) { sent.push(s); }); } catch (e) {} }
+  if (!morningSent) { try { agentRollupTick_(day, mins).forEach(function (s) { sent.push(s); }); } catch (e) {} }
   // The fact-find chase: Monday ask, Wednesday reminder, Friday the week.
   if (!morningSent) { try { ffChaseTick_(day, mins).forEach(function (s) { sent.push(s); }); } catch (e) {} }
 
@@ -10359,7 +10360,8 @@ function checkUnitAgents() { var out = UM_DESKS.map(function (s) { return s + ':
    e-mail half an hour before, a progress report at midday, and the evening
    sign-off half an hour before six. */
 var AGENT_AM_AT = 7 * 60;          // 7:00am: Ricky, 2 Nov 2026, "the dashboard the agent gets at 7 o'clock in the morning" (was 5:30am)
-var AGENT_MD_AT = 12 * 60;         // midday progress
+var AGENT_MD_AT = 12 * 60;         // midday progress: not e-mailed since 8 Nov 2026 unless AGENT_MIDDAY = on
+var AGENT_ROLL_AT = 18 * 60 + 30;  // 6:30pm: one e-mail to each manager with their agents' close-offs (8 Nov 2026)
 var AGENT_PM_AT = 17 * 60 + 30;    // 5:30pm
 var AGENT_PER_RUN = 8;             // agents a ten-minute run; the rest follow
 var AGENT_PREVIEW_MAX = 3;         // in preview, three samples a day to the Branch Manager
@@ -14586,7 +14588,7 @@ function agentMorningMail_(a, day, data, cache) {
   var rise = ''; try { rise = agRiseHero_(agRiseData_(a, day, { g: g, f3: f3, open: open, book: book, notes: mgrNotes, orp: orp }), day, 'am'); } catch (e) { Logger.log('rise hero for ' + a.name + ': ' + e); }
   var body = rise +
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">Good morning, ' + esc_(first) + '. Your day starts at 7:00am and closes off by 6pm. Here is what the branch is working on for your clients today, what your book says, and where your fact finds stand. ' +
-      'Project your day from the button: no projection by ' + esc_(twelve_(mmText_(AGENT_ABSENT_AT))) + ' reads as not working today. At midday you get your progress so far, and at 5:30 you close the day off against your projection.</div>' +
+      'Project your day from the button: no projection by ' + esc_(twelve_(mmText_(AGENT_ABSENT_AT))) + ' reads as not working today. At 5:30 you close the day off against your projection.</div>' +
     statTiles_([
       { value: open.length, label: 'being worked for you', color: MAIL.navy },
       { value: book ? book.urgent.length : '—', label: 'premiums 60+ days', color: book && book.urgent.length ? MAIL.red : MAIL.navy },
@@ -14679,7 +14681,7 @@ function agentEveningMail_(a, day, data) {
   var rise = ''; try { rise = agRiseHero_(agRiseData_(a, day, { g: (data.goal || {})[a.key] || null, f3: (data.f360 || {})[a.key] || null, open: open, closed: closed, orp: (data.orphan || {})[a.key] || null }), day, 'pm'); } catch (e) {}
   var body = coachEve + rise +
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', it is half past five. Close off your day by 6pm' +
-      (planned ? ': give what was done, and it balances against what you projected this morning' : ' (no projection was set this morning)') + '. It goes to your manager and Mrs Dookran.</div>' +
+      (planned ? ': give what was done, and it balances against what you projected this morning' : ' (no projection was set this morning)') + '. Your manager and Mrs Dookran see it at 6:30.</div>' +
     statTiles_([
       { value: closed.length, label: 'the branch closed for you', color: MAIL.green },
       { value: open.length, label: 'still open, due', color: open.length ? MAIL.amber : MAIL.navy },
@@ -14689,7 +14691,8 @@ function agentEveningMail_(a, day, data) {
       return agLine_('&#10003; <b>' + esc_(String(t.owner).split(' ')[0]) + '</b> · ' + esc_(t.subject)); }).join('')) : '') +
     (planned ? sectionLabel_('What you projected this morning') + agCard_(MAIL.gold, AGENT_METRICS.filter(function (m) { return plan[m.id]; }).map(function (m) {
       return '<div style="font-size:13px;padding:2px 0">' + esc_(m.p) + ': <b>' + esc_(plan[m.id].Planned || '—') + '</b></div>'; }).join('')) : '') + btn;
-  return agSend_(a, 'Close off your day · ' + a.name + ' · ' + shortDate_(day), agRiseShell_('Close off your day, ' + first, prettyDate_(day), body), agentCopies_(a));
+  // To the agent alone (8 Nov 2026): the manager and Mrs Dookran get every agent's close-off together at 6:30 (agentRollupTick_).
+  return agSend_(a, 'Close off your day · ' + a.name + ' · ' + shortDate_(day), agRiseShell_('Close off your day, ' + first, prettyDate_(day), body), []);
 }
 
 /** Runs from the day tick: the morning check from 5:30, the midday progress from 12:00, the sign-off from 17:30. */
@@ -14701,6 +14704,8 @@ function agentTick_(day, mins) {
            : (mins >= AGENT_MD_AT && mins <= AGENT_MD_AT + 90 ? 'md'
            : (mins >= AGENT_PM_AT && mins <= 19 * 60 ? 'pm' : ''));
   if (!kind) return [];
+  // No midday e-mail since 8 Nov 2026 (Ricky: "Will drop midday"); My day still has the midday check-in.
+  if (kind === 'md' && agMiddayMode_() !== 'on') return [];
   var people = agentPeople_(), keys = Object.keys(people).sort();
   // A preview's mark (agp_) never stops the agent's own mail (ag_) once live; the pilot's mail is live (27 Oct 2026).
   var preOf = function (k) { return agentLiveFor_(people[k]) ? 'ag_' : 'agp_'; };
@@ -14813,7 +14818,8 @@ function agSaveCore_(a, day, kind, p) {
   var summary = String(p.summary || '').trim();
   if (summary) rows.push({ Item: 'summary', Question: eve ? 'The day' : 'The projection', Note: summary });
   agWrite_(a, day, eve ? 'close' : 'plan', rows);
-  try { agCopy_(a, day, eve, rows, comments); } catch (e) {}
+  // The per-save copy to the manager stopped on 8 Nov 2026; the 6:30 roll-up carries it. AGENT_SAVE_COPY = on brings it back.
+  if (agSaveCopyOn_()) { try { agCopy_(a, day, eve, rows, comments); } catch (e) {} }
   return { ok: true, rows: rows, comments: comments };
 }
 function agReplySave_(person, day, kind, p) {
@@ -14826,7 +14832,7 @@ function agReplySave_(person, day, kind, p) {
   if (!r.ok) return agReplyPage_(person, day, kind, r.error, { keep: p, posted: comments.length ? '<b>Your update' + (comments.length === 1 ? ' is' : 's are') + ' posted</b>' + postedHtml : '' });
   var bal = '';
   if (eve) { var cl = {}; rows.forEach(function (r) { cl[r.Item] = r; }); try { bal = agBalanceCard_(agBalance_(agRows_(a.key, day, 'plan'), cl)); } catch (e) {} }
-  return replyPage_(eve ? 'Your day is closed off' : 'Your projection is in', 'Your manager and Mrs Dookran have a copy. Thank you.',
+  return replyPage_(eve ? 'Your day is closed off' : 'Your projection is in', (eve ? 'Your manager and Mrs Dookran see it at 6:30. Thank you.' : 'Saved. Your manager sees it with your close-off. Thank you.'),
     bal + '<div class="card ok">' + rows.map(function (r) { return '<div class="ln">' + esc_(r.Question) + ': <b>' + esc_(eve ? (r.Done || '') : (r.Planned || '')) + '</b>' + (r.Note ? ' · ' + esc_(r.Note) : '') + '</div>'; }).join('') +
     comments.map(function (c) { return '<div class="ln">' + (/^NOT/.test(c.res) ? '&#9888; ' : '&#10003; ') + esc_(c.s) + ' · ' + esc_(c.res) + '</div>'; }).join('') + '</div>');
 }
@@ -14867,6 +14873,86 @@ function agSendCopy_(to, cc, subject, html, a) {
     return;
   }
   mailSend_({ to: to.join(','), cc: cc.join(','), subject: subject, htmlBody: html });
+}
+
+/* ---- Fewer e-mails (8 Nov 2026) -------------------------------------------------------------------------------------------
+ * Ricky: "trying to condense the amount of emails that are going out", then "Will drop midday". An agent gets two e-mails a day:
+ * the morning brief (the coach's deep read, copied to their manager and Mrs Dookran) and the 5:30 close-off (to them alone). Each
+ * manager gets ONE e-mail at 6:30 with all their agents' close-offs, Mrs Dookran copied, instead of a copy per agent per save. */
+function agFlag_(name) { var v = ''; try { v = String(PropertiesService.getScriptProperties().getProperty(name) || '').trim().toLowerCase(); } catch (e) {} return v; }
+function agMiddayMode_() { return agFlag_('AGENT_MIDDAY'); }
+function agSaveCopyOn_() { return agFlag_('AGENT_SAVE_COPY') === 'on'; }
+
+/** The agents each manager looks after, among those mailed today: { email: [agent, …] }. */
+function agentsByManager_() {
+  var people = agentPeople_(), out = {};
+  Object.keys(people).sort().forEach(function (k) {
+    var a = people[k]; if (!agentLiveFor_(a)) return;
+    var m = agentManagerEmail_(a) || (managerEmails_() || [])[0] || ''; if (!m) return;
+    var key = normEmail_(m); (out[key] = out[key] || { email: m, agents: [] }).agents.push(a);
+  });
+  return out;
+}
+
+/** One manager's evening e-mail: every agent, projected against done, the day in their words, and who has not closed off. */
+function agentRollupMail_(mgr, agents, day) {
+  var td = 'padding:6px;font-size:12.5px;border-top:1px solid ' + MAIL.line + ';vertical-align:top;';
+  var th = 'padding:6px;font-size:10px;font-weight:800;text-transform:uppercase;color:' + MAIL.navy + ';text-align:right';
+  var rows = [], closed = 0, planned = 0, behind = [], none = [], P = 0, D = 0;
+  agents.forEach(function (a) {
+    var plan = agRows_(a.key, day, 'plan'), close = agRows_(a.key, day, 'close');
+    var hasP = AGENT_METRICS.some(function (m) { return plan[m.id]; }), hasC = AGENT_METRICS.some(function (m) { return close[m.id]; });
+    if (hasP) planned++; if (hasC) closed++;
+    var bl = hasC ? agBalance_(plan, close) : null;
+    if (bl && bl.proj) { P += bl.proj; D += bl.done; if (bl.bal < 0) behind.push(a.name.split(' ')[0]); }
+    if (!hasC) none.push(a.name.split(' ')[0] + (hasP ? '' : ' (no projection either)'));
+    var say = (close.summary || {}).Note || '', ff = Number((close.ff || {}).Done || 0), apps = Number((close.apps || {}).Done || 0);
+    var status = hasC ? 'closed off' : hasP ? 'no close-off' : 'no projection';
+    rows.push({ a: a, status: status, bl: bl, say: say, ff: ff, apps: apps, hasC: hasC, sort: hasC ? (bl && bl.bal < 0 ? 1 : 2) : 0 });
+  });
+  rows.sort(function (x, y) { return x.sort - y.sort || x.a.name.localeCompare(y.a.name); });
+  var table = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:4px 8px">' +
+    '<tr><td style="' + th + ';text-align:left">Agent</td><td style="' + th + '">Projected · done</td><td style="' + th + '">Balance</td><td style="' + th + '">FF · apps</td></tr>' +
+    rows.map(function (r) {
+      var b = r.bl && r.bl.proj ? r.bl.bal : null;
+      return '<tr><td style="' + td + '"><b>' + esc_(r.a.name) + '</b><div style="font-size:11.5px;color:' + (r.hasC ? MAIL.muted : MAIL.red) + '">' + esc_(r.status) + '</div>' +
+          (r.say ? '<div style="font-size:12px;margin-top:3px">"' + esc_(String(r.say).slice(0, 220)) + '"</div>' : '') + '</td>' +
+        '<td style="' + td + 'text-align:right">' + (r.bl ? esc_(String(r.bl.proj)) + ' · <b>' + esc_(String(r.bl.done)) + '</b>' : '—') + '</td>' +
+        '<td style="' + td + 'text-align:right;font-weight:700;color:' + (b == null ? MAIL.muted : b < 0 ? MAIL.red : MAIL.green) + '">' + (b == null ? '—' : agBalText_(b)) + '</td>' +
+        '<td style="' + td + 'text-align:right">' + (r.hasC ? r.ff + ' · ' + r.apps : '—') + '</td></tr>';
+    }).join('') + '</table>';
+  var lead = '<div style="font-size:14px;line-height:1.55;margin:0 0 10px"><b>' + closed + ' of ' + agents.length + '</b> closed off today' +
+    (P ? ' · <b>' + D + '</b> done of <b>' + P + '</b> projected (' + agBalText_(D - P) + ')' : '') + '.' +
+    (none.length ? ' <span style="color:' + MAIL.red + '">No close-off: ' + esc_(none.join(', ')) + '.</span>' : '') +
+    (behind.length ? ' Short of their own projection: ' + esc_(behind.join(', ')) + '.' : '') + '</div>';
+  return {
+    subject: 'Your agents today · ' + closed + ' of ' + agents.length + ' closed off · ' + shortDate_(day),
+    html: shell_('Your agents today', prettyDate_(day) + ' · ' + hhmm_(new Date()),
+      lead + statTiles_([
+        { value: closed + '/' + agents.length, label: 'closed off', color: closed === agents.length ? MAIL.green : MAIL.amber },
+        { value: planned + '/' + agents.length, label: 'projected this morning' },
+        { value: P ? agBalText_(D - P) : '—', label: 'balance against projection', color: D - P < 0 ? MAIL.red : MAIL.green }
+      ]) + table +
+      '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:8px">One e-mail for all your agents, in place of a copy for each. Their morning brief came to you at 7:00.</div>')
+  };
+}
+
+/** 6:30pm, once a day per manager: the roll-up, Mrs Dookran copied. */
+function agentRollupTick_(day, mins) {
+  var mode = agentMode_(); if (mode === 'off') return [];
+  if (mins < AGENT_ROLL_AT || mins > AGENT_ROLL_AT + 90) return [];
+  var props = PropertiesService.getScriptProperties(), out = [], groups = agentsByManager_();
+  Object.keys(groups).forEach(function (k) {
+    var mark = 'agroll_' + k.replace(/[^a-z0-9]/g, '') + '_' + day;
+    if (props.getProperty(mark)) return;
+    props.setProperty(mark, hhmm_(new Date()));
+    try {
+      var g = groups[k], mail = agentRollupMail_(g.email, g.agents, day);
+      mailSend_({ to: g.email, cc: agentBma_([g.email]).join(','), subject: mail.subject, htmlBody: mail.html });
+      out.push('agents roll-up to ' + g.email + ' (' + g.agents.length + ')');
+    } catch (e) { props.deleteProperty(mark); out.push('agents roll-up FAILED for ' + k + ': ' + (e && e.message)); }
+  });
+  return out;
 }
 
 /** For the managers' mail: each agent's day so far. Absent = no plan by 10:30; nothing done = no close-off. */
@@ -17863,7 +17949,9 @@ var AG_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
 
 /** AGENT_COACH: 'live' shows the new screen and e-mails to every agent; anything else keeps them for a manager's view. */
 function agCoachMode_() { var v = ''; try { v = String(PropertiesService.getScriptProperties().getProperty('AGENT_COACH') || '').trim().toLowerCase(); } catch (e) {} return v; }
-function agCoachOn_(a, opt) { return !!(opt && opt.viewAs) || agCoachMode_() === 'live'; }
+/* The coach's deep read is the agents' morning brief from 8 Nov 2026 (Ricky: "include this in their morning brief ... condense the
+ * amount of emails"). On unless AGENT_COACH = off. */
+function agCoachOn_(a, opt) { return !!(opt && opt.viewAs) || agCoachMode_() !== 'off'; }
 
 function agMonthKey_(iso) { return String(iso).slice(0, 7); }
 function agPrevMonth_(key) { var y = +key.slice(0, 4), m = +key.slice(5, 7) - 1; if (m < 1) { m = 12; y--; } return y + '-' + ('0' + m).slice(-2); }
@@ -18276,7 +18364,7 @@ function agentMorningMail2_(a, day, data, cm) {
 function agCoachMailSample_(a, day, to) {
   if (!to) throw new Error('no e-mail on the register for you');
   var data = agentBatchData_([a], day), mail = agentMorningMail2_(a, day, data, agCoachModel_(a, day, { fresh: true }));
-  mailSend_({ to: to, subject: '[Sample] ' + mail.subject, htmlBody: '<div style="background:#FFF9EC;border:1px solid ' + AGM_GOLD + ';padding:10px 14px;font:600 13px Segoe UI,Arial;margin:0 0 8px">Sample: what ' + esc_(String(a.name).split(' ')[0]) + ' gets once AGENT_COACH = live. Nothing was sent to the agent.</div>' + mail.html });
+  mailSend_({ to: to, subject: '[Sample] ' + mail.subject, htmlBody: '<div style="background:#FFF9EC;border:1px solid ' + AGM_GOLD + ';padding:10px 14px;font:600 13px Segoe UI,Arial;margin:0 0 8px">Sample: what ' + esc_(String(a.name).split(' ')[0]) + ' gets each morning. Nothing was sent to the agent.</div>' + mail.html });
   return to;
 }
 /** The coach's line at the top of the midday and 5:30 e-mails. */
