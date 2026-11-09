@@ -1022,7 +1022,7 @@ S.append(scene(32, 's-cta', f'''
 <div class="split cta">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Start here</p>
-    <h2 class="h url">{words("agentmgt.com", 400, 60)}</h2>
+    <h2 class="h url">{words("rickyrampersadbranch.com/careers", 400, 60)}</h2>
     <div class="btns">
       <span class="btn b1 in" style="--t0:{at(32,"Book")}ms">Book a confidential conversation →</span>
       <span class="btn b2 in" style="--t0:{at(32,"Take")}ms">Take the 60-second test first</span>
@@ -1038,7 +1038,7 @@ S.append(scene(33, 's-close dark', f'''
 <div class="full center">
   <div class="mark big in" style="--t0:200ms"><span class="ping"></span><span class="ping p2"></span><span class="ping p3"></span>{MARK}</div>
   <h1 class="h xl">{words("The environment decides.", 500, 110)}<br><em class="wine">{words("We select the driven.", at(33,"We") - 200, 110)}</em></h1>
-  <p class="foot in" style="--t0:{at(33,"driven")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>agentmgt.com</b></p>
+  <p class="foot in" style="--t0:{at(33,"driven")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>rickyrampersadbranch.com/careers</b></p>
 </div>'''))
 
 
@@ -1088,7 +1088,7 @@ if TLINES and MODE != 'ad':
 <div class="split cta tr-cta">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Start here</p>
-    <h2 class="h url">{words("agentmgt.com", 400, 60)}</h2>
+    <h2 class="h url">{words("rickyrampersadbranch.com/careers", 400, 60)}</h2>
     <div class="btns">
       <span class="btn b1 in" style="--t0:{tb}ms">Book a confidential conversation →</span>
       <span class="btn b2 in" style="--t0:{tat(7,"Take")}ms">Take the 60-second test first</span>
@@ -1111,7 +1111,7 @@ if TLINES and MODE != 'ad':
 <div class="full center">
   {blk_stage('closeS')}
   <h1 class="h xl">{words("The environment decides.", 500, 110)}<br><em class="wine">{words("We select the driven.", tat(8,"We") - 200, 110)}</em></h1>
-  <p class="foot in" style="--t0:{tat(8,"driven")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>agentmgt.com</b></p>
+  <p class="foot in" style="--t0:{tat(8,"driven")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>rickyrampersadbranch.com/careers</b></p>
 </div>'''))
 
 # ── the feed cut: five scenes, 35 seconds, one variant per audience ────────────
@@ -1223,7 +1223,7 @@ if MODE == 'ad':
       <div class="fig in" style="--t0:{tat(5,"One")}ms"><b><em class="cnt" data-to="1" data-at="{tat(5,"One")}">1</em></b><span>confidential conversation</span></div>
       <div class="fig in" style="--t0:{tat(5,"Twenty")}ms"><b><em class="cnt" data-to="20" data-at="{tat(5,"Twenty")}">20</em> min</b><span>this week</span></div>
     </div>
-    <h2 class="h url">{words("agentmgt.com", tat(5,"Agent") - 200, 60)}</h2>
+    <h2 class="h url">{words("rickyrampersadbranch.com/careers", tat(5,"Agent") - 200, 60)}</h2>
     <div class="btns">
       <span class="btn b1 in" style="--t0:{tat(5,"Agent") + 500}ms">Book a confidential conversation →</span>
     </div>
