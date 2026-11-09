@@ -3,15 +3,10 @@
   "rate": "+0%",
   "check": true,
   "films": {
-    "ffnew": [
-      "There's something new at the Ricky Rampersad Branch. Your month, closed out, against your own plan.",
-      "On the second working day of every month, you get one e-mail. What you submitted, and what settled, measured against the flight plan you wrote yourself.",
-      "It shows what each month of the quarter now needs, where you stand in the branch, and the branch's honours. If one of them is yours, it says so.",
-      "Then tap Close out. In three minutes, you rate the month, name your win, and commit to next month. Your manager sees it.",
-      "On the wall, slide thirteen is now a production board in eight scenes. Are we winning? You'll know in five seconds.",
-      "And when a month closes, the whole branch sees who carried it.",
-      "Every film we share now has the branch's WhatsApp on it, so a client can talk to us in one tap. And every e-mail comes from one address: support at Ricky Rampersad Branch dot com.",
-      "Your October close-out is in your inbox. Open it, close out the month, and set your November. Everything new is at factfind three sixty dot com, slash new."
+    "ffnew2": [
+      "On the second working day of every month, you get one email. What you submitted, and what settled, measured against the flight plan you wrote yourself.",
+      "Then you tap Close out. In three minutes, you rate the month, you name your win, and you commit to next month. Your manager sees it.",
+      "Every film we share now carries the branch's WhatsApp, so a client can talk to us in one tap. And every email comes from one address: support at Ricky Rampersad Branch dot com."
     ]
   }
 }
