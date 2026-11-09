@@ -855,46 +855,29 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   padding:.55rem .9rem;min-height:40px;cursor:pointer}
 .draftbox button:hover{border-color:var(--a);color:var(--a)}
 
-/* ── the ledger: the reader's week now, against their week here ─────────────
-   8 November 2026, asked for in these words: "target where the work has
-   become overwhelming for persons with filing cabinets, manual, paper, and
-   still depend on the emails." A ledger rather than prose, because the
-   contrast has to be READ, not argued: the left column is their Tuesday, the
-   right is ours, row by row. Two columns on a desk and one on a phone, where
-   each pair still reads as a pair.
-   No line through the left column. It reads as cancelled, and on a long row
-   of real sentences it is simply hard to read — the mark and the header
-   carry it. And the mark is never the only thing that says which column is
-   which: the header row says it in words. */
-.onwh{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));
-  gap:var(--sp-s);margin-top:var(--sp-l);font-family:var(--display);font-weight:700;
-  font-size:var(--f--2);letter-spacing:.09em;text-transform:uppercase}
-.onwh span{padding:0 1.1rem;min-width:0}
-.onwh .ha{color:var(--muted)}
-.onwh .hb{color:var(--aD)}
-.onw{display:grid;gap:var(--sp-s);margin:var(--sp-s) 0 0;padding:0;list-style:none}
-.onw>li{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));
-  gap:0;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-  overflow:hidden;box-shadow:var(--e1)}
-.onw .o,.onw .n{display:flex;gap:.7rem;padding:1rem 1.1rem;min-width:0}
-.onw .o{background:var(--bg2)}
-.onw .mk{flex:none;width:1.4rem;height:1.4rem;border-radius:50%;display:grid;
-  place-items:center;font-size:.78rem;font-weight:700;margin-top:.12rem;font-style:normal}
-.onw .o .mk{background:#e3dccb;color:#5f553f}
-.onw .n .mk{background:var(--a-tint2);color:var(--aD)}
-.onw p{margin:0;font-size:var(--f--1);line-height:1.5;min-width:0;overflow-wrap:anywhere}
-.onw .o p{color:var(--muted)}
-.onw .n p{color:var(--body)}
-.onw .n b{color:var(--ink)}
-@media (max-width:34rem){
-  .onwh{display:none}
-  .onw .o,.onw .n{position:relative}
-  .onw .o::before,.onw .n::before{content:"Your week now";position:absolute;
-    top:.3rem;left:3.2rem;font-family:var(--display);font-size:.62rem;font-weight:700;
-    letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-  .onw .n::before{content:"Your week here";color:var(--aD)}
-  .onw .o,.onw .n{padding-top:1.6rem}
-}
+/* ── the desk: seven things already running, numbered ───────────────────
+   9 November 2026. This was a two-column ledger: the reader's week on the
+   left, ours on the right, row by row. The names and the headers came off
+   that morning and it STILL read as bashing — "why are you saying still
+   lives in a cabinet, I asked for creativity and not bash". He was right.
+   A misery-then-rescue ledger is a verdict on the reader's employer however
+   politely the columns are headed, and it is the laziest shape an ad has.
+   So the left column is gone. What is left is the half that was always
+   doing the work: seven things the desk has already done before anybody
+   sits down, numbered, in our own voice, claiming nothing about anybody
+   else. Do not reintroduce a "before" column. */
+.onw{display:grid;gap:var(--sp-s);margin:var(--sp-l) 0 0;padding:0;list-style:none;
+  counter-reset:dsk}
+.onw>li{counter-increment:dsk;display:flex;gap:1rem;align-items:flex-start;
+  padding:1.05rem 1.2rem;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r);box-shadow:var(--e1);min-width:0}
+.onw .mk{flex:none;width:2.1rem;height:2.1rem;border-radius:.6rem;display:grid;
+  place-items:center;font-family:var(--display);font-size:var(--f--1);font-weight:800;
+  font-style:normal;background:var(--a-tint2);color:var(--aD);font-variant-numeric:tabular-nums}
+.onw .mk::before{content:counter(dsk,decimal-leading-zero)}
+.onw p{margin:0;font-size:var(--f--1);line-height:1.55;min-width:0;
+  overflow-wrap:anywhere;color:var(--body)}
+.onw b{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -964,8 +947,8 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
    </div>
 
    <div class="hero-rest">
-    <p class="pull">If you can run a general insurance book out of a filing cabinet and an inbox that never empties &mdash; and nobody has ever let you change any of it &mdash; this is the one to read.</p>
-    <p class="hsub">A general insurance book that has been written and renewed here year after year, across <strong>ten lines of business</strong>, personal and commercial, with renewals falling in every month. Until now the Branch Manager has looked after it himself, alongside everything else a branch asks of him &mdash; and <strong>it has outgrown that</strong>. What it needs is one person whose whole job it is. There is no filing cabinet in this seat: <strong>the re-keying, the chasing and the research are already built and running</strong>, the record is pulled from every source and scrubbed before you read it, <strong>you are judged on the book rather than on the clock</strong>, and the one thing nobody has settled &mdash; how this agency advises its clients, and how it stays compliant doing it &mdash; is left to the person in the seat.</p>
+    <p class="pull">If you know general insurance well enough to look at a book this size, across ten lines, and see exactly what it has been missing &mdash; this is the one to read.</p>
+    <p class="hsub">A general insurance book that has been written and renewed here year after year, across <strong>ten lines of business</strong>, personal and commercial, with renewals falling in every month. Until now the Branch Manager has looked after it himself, alongside everything else a branch asks of him &mdash; and <strong>it has outgrown that</strong>. What it needs is one person whose whole job it is. <strong>The re-keying, the chasing and the research are already built and running</strong>, the record is pulled from every source and scrubbed before you read it, <strong>you are judged on the book rather than on the clock</strong>, and the one thing nobody has settled &mdash; how this agency advises its clients, and how it stays compliant doing it &mdash; is left to the person in the seat.</p>
     <div class="ctas">
       <a class="btn btn-1" href="#apply">Apply &mdash; CV and fifteen minutes <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
       <a class="btn btn-2" href="#file">Read a file first</a>
@@ -1145,27 +1128,31 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   </div>
 </section>
 
-<!-- Who the ad is actually for. 8 November 2026, in these words: "you
-     specifically want to target where the work has become overwhelming for
-     persons with filing cabinets, manual, paper, and still depend on the
-     emails." (He also characterised the agencies themselves; that half is in
-     the branch's own notes and is deliberately not written here, by the same
-     rule as the product names below.)
-     The page already showed the machine, in #tech. What it never did was
-     name the day the right person is living, and nobody moves job because
-     of a feature list — they move because somebody described their Tuesday.
-     Every line in the right-hand column is running in the branch today and
-     is shown working further down this page. Honest about paper: contracts
-     and cheques still arrive on paper from the insurer. What does not exist
-     here is a record that can only be found on paper. -->
-<section id="old">
+<!-- What the desk has already done. Built 8 November 2026 from a brief about
+     who the ad is for; that brief described the reader's current employer,
+     and both halves of it are in the branch's own notes rather than here.
+
+     9 November 2026 this was a two-column ledger — their week against ours,
+     row by row — and it survived the morning's de-bashing pass with only
+     its headers changed. It should not have: "why are you saying still
+     lives in a cabinet, I asked for creativity and not bash." A ledger that
+     opens on seven rows of somebody's misery is a verdict on their employer
+     whatever the column is called, and it is the most tired shape an ad has.
+     The half that was doing the work is what is left: seven things that are
+     already running in the branch, numbered, in our own voice, each shown
+     working further down this page. Nothing here claims anything about
+     anybody else, and no "before" column comes back.
+
+     Honest about paper: contracts and cheques still arrive on paper from the
+     insurer. What does not exist here is a record that can only be found on
+     paper — which is a fact about this desk, not a dig at another one. -->
+<section id="desk">
   <div class="wrap">
     <div class="rv" style="max-width:54rem">
-      <span class="eyebrow">If this is your Tuesday</span>
-      <h2 data-words>The filing cabinet, the re-keying, the chasing. None of that is the job here.</h2>
-      <p class="lede">This is the part of the page that is really about you rather than about the book. If the left column is your week &mdash; the drawer, the duplicate file, the inbox you never reach the bottom of &mdash; then read the right one twice. Every line of it is running in this branch today, and you can watch it work before you apply.</p>
+      <span class="eyebrow">Before you sit down</span>
+      <h2 data-words>Seven things this desk has already done by the time you open the file.</h2>
+      <p class="lede">This is the part of the page about the day rather than about the book. None of it is a plan or a roadmap &mdash; every line is running in the branch today, you can watch each one work before you apply, and together they are the reason this seat is about advice rather than about typing.</p>
     </div>
-    <div class="onwh rv" aria-hidden="true"><span class="ha">Your week now</span><span class="hb">Your week here</span></div>
     <ul class="onw">
       <!-- The system itself leads, because it is the first thing the right
            person will recognise. 8 November 2026, in these words: "most of
@@ -1187,32 +1174,25 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
            the three was doing work the facts were not already doing.
            Do not put a competitor's product name back on this page. -->
       <li class="rv">
-        <div class="o"><i class="mk" aria-hidden="true">&#10005;</i><p>the system is on one PC, and the spreadsheet beside it holds everything the system will not do.</p></div>
-        <div class="n"><i class="mk" aria-hidden="true">&#10003;</i><p><b>Software the branch wrote itself</b>, running on anything with a browser, reaching into every system we deal with &mdash; the insurer&rsquo;s, our own records, the mailbox &mdash; and pulling the whole file into one place. <b>It changes every week</b>, and the change is usually somebody&rsquo;s in this building.</p></div>
+        <i class="mk" aria-hidden="true"></i><p><b>Software the branch wrote itself</b>, running on anything with a browser, reaching into every system we deal with &mdash; the insurer&rsquo;s, our own records, the mailbox &mdash; and pulling the whole file into one place. <b>It changes every week</b>, and the change is usually somebody&rsquo;s in this building.</p>
       </li>
       <li class="rv">
-        <div class="o"><i class="mk" aria-hidden="true">&#10005;</i><p>the renewal file comes out of a drawer, and last year&rsquo;s is in a different drawer, and the year before that is in storage.</p></div>
-        <div class="n"><i class="mk" aria-hidden="true">&#10003;</i><p><b>Every term since the policy began</b> opens on one screen &mdash; what was covered, at what value, what was paid and how late, and the claims that fell in each term &mdash; before you touch the file.</p></div>
+        <i class="mk" aria-hidden="true"></i><p><b>Every term since the policy began</b> opens on one screen &mdash; what was covered, at what value, what was paid and how late, and the claims that fell in each term &mdash; before you touch the file.</p>
       </li>
       <li class="rv">
-        <div class="o"><i class="mk" aria-hidden="true">&#10005;</i><p>you type the client&rsquo;s details into the insurer&rsquo;s proposal form again, from a file you already have open.</p></div>
-        <div class="n"><i class="mk" aria-hidden="true">&#10003;</i><p><b>Guardian&rsquo;s own PDFs fill themselves field by field</b> from what we hold &mdash; the proposal, Know Your Policy, the due-diligence checklist &mdash; and attach themselves. Not a retyped copy: the insurer&rsquo;s actual form, still editable at the other end.</p></div>
+        <i class="mk" aria-hidden="true"></i><p><b>Guardian&rsquo;s own PDFs fill themselves field by field</b> from what we hold &mdash; the proposal, Know Your Policy, the due-diligence checklist &mdash; and attach themselves. Not a retyped copy: the insurer&rsquo;s actual form, still editable at the other end.</p>
       </li>
       <li class="rv">
-        <div class="o"><i class="mk" aria-hidden="true">&#10005;</i><p>the insight is whatever you happened to notice while the client was on the phone.</p></div>
-        <div class="n"><i class="mk" aria-hidden="true">&#10003;</i><p><b>The desk has already read the record</b> and tells you what to raise first &mdash; the value carried unchanged for two terms running, the sum insured that no longer means anything, the premium paid late last year, the bank on the policy, the claim still open.</p></div>
+        <i class="mk" aria-hidden="true"></i><p><b>The desk has already read the record</b> and tells you what to raise first &mdash; the value carried unchanged for two terms running, the sum insured that no longer means anything, the premium paid late last year, the bank on the policy, the claim still open.</p>
       </li>
       <li class="rv">
-        <div class="o"><i class="mk" aria-hidden="true">&#10005;</i><p>you chase the client, or the renewal quietly goes, and the first anyone knows is the lapse.</p></div>
-        <div class="n"><i class="mk" aria-hidden="true">&#10003;</i><p><b>The client is reminded at fourteen days and again at ten</b>, a call opens itself at seven, and when the insurer answers late the desk chases that too, on the record. Nothing lapses because a person was busy.</p></div>
+        <i class="mk" aria-hidden="true"></i><p><b>The client is reminded at fourteen days and again at ten</b>, a call opens itself at seven, and when the insurer answers late the desk chases that too, on the record. Nothing lapses because a person was busy.</p>
       </li>
       <li class="rv">
-        <div class="o"><i class="mk" aria-hidden="true">&#10005;</i><p>what the client holds is in your head, or in an e-mail thread you have to go and find.</p></div>
-        <div class="n"><i class="mk" aria-hidden="true">&#10003;</i><p><b>The client signs in with a code to their own inbox</b> and reads it themselves &mdash; every year since inception, what it covered, what was billed and paid, and the claims &mdash; then confirms and signs on their phone.</p></div>
+        <i class="mk" aria-hidden="true"></i><p><b>The client signs in with a code to their own inbox</b> and reads it themselves &mdash; every year since inception, what it covered, what was billed and paid, and the claims &mdash; then confirms and signs on their phone.</p>
       </li>
       <li class="rv">
-        <div class="o"><i class="mk" aria-hidden="true">&#10005;</i><p>the data lives in four places that disagree, and reconciling them is somebody&rsquo;s evening.</p></div>
-        <div class="n"><i class="mk" aria-hidden="true">&#10003;</i><p><b>It is pulled from all of them and scrubbed before you see it</b> &mdash; duplicate terms, a mid-term change kept as its own policy, a vehicle carried under a changed number &mdash; and where the insurer&rsquo;s figure and ours disagree, the desk says which and by how much.</p></div>
+        <i class="mk" aria-hidden="true"></i><p><b>It is pulled from all of them and scrubbed before you see it</b> &mdash; duplicate terms, a mid-term change kept as its own policy, a vehicle carried under a changed number &mdash; and where the insurer&rsquo;s figure and ours disagree, the desk says which and by how much.</p>
       </li>
     </ul>
     <p class="rv" style="margin-top:var(--sp-m);max-width:62ch;font-size:var(--f-0)"><strong>Which is the difference, said in one line.</strong> A client here is not a transaction &mdash; a renewal keyed, a premium taken, a file closed until next year. A client here is a journey, and the system is built to carry it &mdash; what they hold, what they were told, what we did about it, and what happens next, in one place that every one of us can see. That is what this branch is actually good at, and it is what you would be given to work with.</p>

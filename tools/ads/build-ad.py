@@ -50,18 +50,21 @@ ADS = {
         'role': 'Client Manager &middot; General Insurance',
         'head': ['The book is', 'already there.'],
         'em': ['What it has', 'never had is you.'],
-        # 8 November 2026: "target where the work has become overwhelming for
-        # persons with filing cabinets, manual, paper, and still depend on the
-        # emails." The pull names that day first and the autonomy second — a
-        # feature list moves nobody; a description of their own Tuesday does.
-        # It is the page's own pull, tightened for the frame.
-        'pull': 'If you are running a general insurance book out of a filing cabinet '
-                'and an inbox that never empties &mdash; and nobody has ever let you '
-                'change it &mdash; read this one.',
+        # 9 November 2026. The pull used to open on the reader's filing cabinet
+        # and his inbox that never empties: "why are you saying still lives in a
+        # cabinet, I asked for creativity and not bash." A poster that opens by
+        # telling a man his desk is primitive is an insult he reads in public,
+        # and it is beaten anyway by the one true thing this ad has — the book
+        # exists, it is big, and it has never had one person. So the pull flatters
+        # his expertise instead of pitying his week, and claims nothing about
+        # where he works now. It is the page's own pull, tightened for the frame.
+        'pull': 'If you know general insurance well enough to look at a book this '
+                'size, across ten lines, and see exactly what it has been missing '
+                '&mdash; read this one.',
         'chips': ['Judged on the book, not on the clock',
                   'A change you ask for gets built that week',
                   'Every endorsement written to the Act',
-                  'Seven lines in force, ten written, no filing cabinet'],
+                  'Ten lines written here, seven in force today'],
         'url': 'rickyrampersadbranch.com/clientmanager',
         'qr': 'qr-cmadmin.png',
         'foot': 'Your CV and fifteen minutes. Read by the Branch Manager alone.',
