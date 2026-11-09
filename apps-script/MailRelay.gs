@@ -17,7 +17,43 @@
  *   5. In the KPI project, run mailRouteTest: one test e-mail to you, and the log says which way it went.
  *  The key is a password: it stays in the two projects' Script properties and nowhere else.
  */
-var RELAY = { MAX_PER_DAY: 1400, SKEW_MS: 10 * 60 * 1000, NAME: 'Ricky Rampersad Branch' };
+var RELAY = { MAX_PER_DAY: 1400, SKEW_MS: 10 * 60 * 1000, NAME: 'Ricky Rampersad Branch',
+              FROM: 'support@rickyrampersadbranch.com' };
+
+/* SENDING AS support@ (9 November 2026: "i dont want my name i want to show
+   support@rickyrampersadbranch.com"). This project belongs to
+   ricky.rampersad@rickyrampersadbranch.com; support@ is the branch's Microsoft
+   365 mailbox, not a Google account. Once support@ is added to that Gmail as a
+   "Send mail as" address (Gmail > Settings > Accounts), every e-mail goes out
+   From: support@, with replies to support@ unless the sender set its own.
+   Until the address is added, e-mail still goes, from the account itself, so
+   nothing stops. relayCheckFrom says which it is. */
+function relayFrom_() {
+  try {
+    var want = String(RELAY.FROM).toLowerCase();
+    var ok = GmailApp.getAliases().some(function (a) { return String(a).toLowerCase() === want; });
+    return ok ? RELAY.FROM : '';
+  } catch (e) { return ''; }
+}
+
+function relaySend_(o) {
+  var from = relayFrom_();
+  if (!from) { MailApp.sendEmail(o); return 'account'; }
+  var opt = { name: o.name, from: from, replyTo: o.replyTo || from };
+  ['cc', 'bcc', 'htmlBody'].forEach(function (k) { if (o[k]) opt[k] = o[k]; });
+  GmailApp.sendEmail(o.to, o.subject, o.body || ' ', opt);
+  return 'support';
+}
+
+/** From the editor: which address the relay sends from, and a test e-mail to you. */
+function relayCheckFrom() {
+  var me = Session.getEffectiveUser().getEmail(), from = relayFrom_();
+  var via = relaySend_({ to: me, subject: 'Mail Relay test', name: RELAY.NAME,
+    htmlBody: '<p style="font:15px Arial">This test came through the Mail Relay. Look at the From line.</p>' });
+  var m = via === 'support' ? 'Sending as ' + RELAY.FROM + '. A test e-mail went to ' + me + '.'
+    : 'Sending as ' + me + ': ' + RELAY.FROM + ' is not yet a "Send mail as" address in this account\'s Gmail (Settings > Accounts). A test went to ' + me + '.';
+  Logger.log(m); return m;
+}
 
 function relayOut_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function relaySign_(text, key) {
@@ -43,7 +79,7 @@ function doPost(e) {
     var o = { to: String(m.to), subject: String(m.subject), name: String(m.name || RELAY.NAME) };
     ['cc', 'bcc', 'replyTo', 'htmlBody', 'body'].forEach(function (k) { if (m[k]) o[k] = String(m[k]); });
     if (!o.body) o.body = ' ';
-    MailApp.sendEmail(o);
+    relaySend_(o);
     cache.put(seen, '1', 1800);
     props.setProperty(dk, String(n + 1));
     var left = null; try { left = MailApp.getRemainingDailyQuota(); } catch (err) {}
