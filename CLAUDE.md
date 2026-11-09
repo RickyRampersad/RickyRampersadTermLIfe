@@ -628,15 +628,27 @@ server was being hit. They are back on the placeholder. The Intelligence URL
 belongs in the 23 pages that genuinely use it (`intelligence/`, `kpi/`,
 `premium-due/`, `myworkday/`, `wall/`) and nowhere else.
 
-**It has never recorded a view.** The "RRB Site View Counter" sheet was
-created 7 September 2026 and has not been written to since; there is no
-"RRB Views" script project in Drive, so `gs/views-counter.gs` has never been
-deployed. Until it is, all 157 beacons are inert — the guard
-`if(u.indexOf('http')!==0)return` makes an un-wired beacon cost the visitor
-nothing, which is why this has been invisible. Deploying needs a browser
-(Apps Script's API is not reachable from a session), so it is the branch
-manager's to do: **Deploy → New deployment → Web app, Execute as: Me, Who
-has access: Anyone**, then hand over the `/exec` URL.
+**It records views now.** The counter went live in the first days of November
+2026 (`/exec` wired by `tools/wire-views.py`, 169 beacon pages). Real traffic
+runs a few hundred views a day on a normal weekday (357 on Saturday 7 November)
+and was thin on the Divali Sunday. When reading the "RRB Site View Counter"
+sheet, drop test rows (`/__wire-test__`, `/home/user/...`, `/tmp/...`,
+localhost): they are mine, not visitors. The sheet is far over a hundred
+thousand characters, so read it by saving the CSV and filtering, never inline.
+
+## The homepage carries no hours, and no festival banner stays
+
+Decided 8 November 2026: *"Remember we are never closed, why do you keep having
+opening and closing numbers."* The homepage states no opening or closing times
+anywhere: not in the hero chip ("Always here for you, day or night"), not in the
+hours box ("We are never closed. Message us any time"), not in the call card,
+and not in the LocalBusiness JSON-LD. Do not reintroduce an open/closed chip or
+`openingHoursSpecification`. Hours on other pages have not been audited.
+
+A festival greeting is a one-day banner that removes itself and is then deleted
+from the source the next day. The Divali one (8 Nov 2026, until 10 pm Trinidad
+time) was saffron and maroon with diyas, lotus, rangoli and a marigold garland,
+symbols only: no deity is drawn in SVG. It was removed on 9 November.
 
 ---
 ---
