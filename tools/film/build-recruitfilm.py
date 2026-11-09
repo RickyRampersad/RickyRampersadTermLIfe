@@ -1022,7 +1022,7 @@ S.append(scene(32, 's-cta', f'''
 <div class="split cta">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Start here</p>
-    <h2 class="h url">{words("rickyrampersadbranch.com/careers", 400, 60)}</h2>
+    <h2 class="h url">{words("rickyrampersadbranch.com", 400, 60)}<br><em class="wine">{words("/careers", 760, 60)}</em></h2>
     <div class="btns">
       <span class="btn b1 in" style="--t0:{at(32,"Book")}ms">Book a confidential conversation →</span>
       <span class="btn b2 in" style="--t0:{at(32,"Take")}ms">Take the 60-second test first</span>
@@ -1091,18 +1091,18 @@ if TLINES and MODE != 'ad':
     # reading. The assets are the GROUP's (Guardian Holdings), audited to
     # 31 Dec 2025 and filed on the TT Stock Exchange — not the subsidiary's.
     CRED = f'''
-<div class="credbar in" style="--t0:{tat(6,"sound")}ms">
+<div class="full center credwrap"><div class="credbar in" style="--t0:{tat(6,"sound")}ms">
   <span class="cred in" style="--t0:{tat(6,"rated")}ms"><b>A&minus;</b><small>Excellent &middot; AM&nbsp;Best<br>affirmed May 2026 &middot; stable</small></span>
   <span class="cred in" style="--t0:{tat(6,"billion")}ms"><b>TT$39.8bn</b><small>group assets<br>audited, 31 Dec 2025</small></span>
   <span class="cred in" style="--t0:{tat(6,"group")}ms"><b>32 yrs</b><small>this branch<br>in Trinidad</small></span>
-</div>'''
+</div></div>'''
     T.append(tscene(6, 's-door tr', CRED + blk_gate(6, tat, TLINES)))
     tb = tat(7, "Book")
     T.append(tscene(7, 's-cta tr', f'''
 <div class="split cta tr-cta">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Start here</p>
-    <h2 class="h url">{words("rickyrampersadbranch.com/careers", 400, 60)}</h2>
+    <h2 class="h url">{words("rickyrampersadbranch.com", 400, 60)}<br><em class="wine">{words("/careers", 760, 60)}</em></h2>
     <div class="btns">
       <span class="btn b1 in" style="--t0:{tb}ms">Book a confidential conversation →</span>
       <span class="btn b2 in" style="--t0:{tat(7,"Take")}ms">Take the 60-second test first</span>
@@ -1305,7 +1305,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .h.xl{font-size:calc(var(--u)*10.5)}
 .h.l{font-size:calc(var(--u)*7)}
 .h.m{font-size:calc(var(--u)*5.2)}
-.h.url{font-size:calc(var(--u)*10);letter-spacing:-.03em;color:#fff;font-weight:700}
+.h.url{font-size:calc(var(--u)*6);letter-spacing:-.03em;color:#fff;font-weight:700;line-height:1.02}
 .h em,.wine{font-style:italic;font-weight:700;color:var(--aL)}
 .h.wine2{color:var(--aL);font-weight:700}
 .h.duo{margin-top:calc(var(--u)*2);font-weight:600}
@@ -2013,7 +2013,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .scene{padding:calc(var(--u)*14) calc(var(--u)*7) calc(var(--u)*36)}
   .split,.split.wide{grid-template-columns:1fr;grid-template-rows:auto auto;gap:calc(var(--u)*6);align-content:center}
   .split .col:first-child{order:0}.split .col:last-child{order:1}
-  .h.xxl{font-size:calc(var(--u)*15)}.h.xl{font-size:calc(var(--u)*12.5)}.h.l{font-size:calc(var(--u)*8.6)}.h.m{font-size:calc(var(--u)*6)}.h.url{font-size:calc(var(--u)*12)}
+  .h.xxl{font-size:calc(var(--u)*15)}.h.xl{font-size:calc(var(--u)*12.5)}.h.l{font-size:calc(var(--u)*8.6)}.h.m{font-size:calc(var(--u)*6)}.h.url{font-size:calc(var(--u)*6.6)}
   .sub{font-size:calc(var(--u)*3.6)}.sub.big{font-size:calc(var(--u)*3.6)}
   .eye{font-size:calc(var(--u)*2.5)}
   .bars{height:calc(var(--u)*50)}
@@ -2057,7 +2057,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 @media (aspect-ratio:1/1){
   :root{--u:.84vw}
   .scene{padding:calc(var(--u)*6) calc(var(--u)*7) calc(var(--u)*30)}
-  .h.xl{font-size:calc(var(--u)*11.5)}.h.l{font-size:calc(var(--u)*7.6)}.h.url{font-size:calc(var(--u)*11)}
+  .h.xl{font-size:calc(var(--u)*11.5)}.h.l{font-size:calc(var(--u)*7.6)}.h.url{font-size:calc(var(--u)*6.2)}
   .split{gap:calc(var(--u)*3.5)}
   .ghost{font-size:calc(var(--u)*58);top:-8%}
   .qr svg{width:calc(var(--u)*24);height:calc(var(--u)*24)}
@@ -2079,10 +2079,11 @@ body.paused #bars i.run::after{animation-play-state:paused}
 .tr-ceil span{position:absolute;left:0;top:calc(var(--u)*-3.4);font:600 calc(var(--u)*2)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aT)}
 .tr-lab{position:absolute;right:calc(var(--u)*12);top:calc(var(--u)*-1);font:800 calc(var(--u)*3.6)/1 var(--display);color:var(--aL);opacity:0;font-style:normal;z-index:4}
 .scene.act .tr-lab{animation:pop .6s var(--pop) both;animation-delay:var(--t0)}
-.credbar{display:flex;gap:1.4vw;justify-content:center;flex-wrap:wrap;margin:0 0 2.2vh}
-.cred{display:flex;align-items:center;gap:.7vw;padding:.9vh 1.5vw;border-radius:.8vw;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
-.cred b{font-size:2.6vh;font-weight:800;letter-spacing:-.01em;line-height:1}
-.cred small{font-size:1.15vh;line-height:1.3;opacity:.82;text-align:left}
+.credwrap{margin:0 0 2.4vh}
+.credbar{display:flex;gap:1.6vw;justify-content:center;align-items:stretch;flex-wrap:wrap}
+.cred{display:flex;align-items:center;gap:1vw;padding:1.3vh 1.9vw;border-radius:.8vw;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
+.cred b{font-size:4.2vh;font-weight:800;letter-spacing:-.01em;line-height:1}
+.cred small{font-size:1.5vh;line-height:1.3;opacity:.82;text-align:left}
 .tr-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*3.2);width:100%;max-width:calc(var(--u)*172);margin:calc(var(--u)*2) auto 0}
 .tr-card{position:relative;background:#fff;color:#0d3f5e;border-radius:calc(var(--u)*2.4);padding:calc(var(--u)*3.2) calc(var(--u)*3.4);display:grid;gap:calc(var(--u)*1.5);text-align:left;box-shadow:0 calc(var(--u)*3) calc(var(--u)*9) rgba(4,6,10,.5);align-content:start}
 .tr-card small{font:600 calc(var(--u)*1.9)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--aD)}
