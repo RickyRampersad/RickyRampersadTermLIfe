@@ -1,7 +1,12 @@
 {
- "tts/out/cmfix2pr/01.mp3": [
+ "tts/out/cmfix3/01.mp3": [
   "en",
   0.998,
-  "the system on one PC and a spreadsheet beside it, the proposal form re-typed by hand, an endorsement waiting three days in somebody's inbox, and last year's file in a drawer."
+  "Somewhere right now there is someone who knows general insurance inside out someone who can read a schedule and see exactly what is missing. This is for them."
+ ],
+ "tts/out/cmfix3/02.mp3": [
+  "en",
+  0.999,
+  "client manager general insurance if you're good at this and you want to book big enough to put it into come and look after this one"
  ]
 }
