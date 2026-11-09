@@ -43,6 +43,11 @@
     '.rc-it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;border:1px solid #E6EDF7;border-radius:14px;padding:10px 12px;margin:0 0 8px}' +
     '.rc-it .lb{font-weight:700;color:#1B2A44;overflow-wrap:anywhere}.rc-it .sm{font-size:.84rem;color:#5E6E8A}' +
     '.rc-it .v{text-align:right;font-weight:800;color:#1B2A44;font-variant-numeric:tabular-nums}' +
+    /* what it is covered for, and — on a third party — why there is nothing
+       to type. The note is a word as well as an absence: a row with no box
+       and no reason reads as something broken. */
+    '.rc-it .cov{font-weight:700;color:#3A7BD5}' +
+    '.rc-it .tpnote{grid-column:1/-1;margin:2px 0 0;font-size:.84rem;color:#5E6E8A;line-height:1.5}' +
     '.rc-it label{grid-column:1/-1;font-size:.84rem;font-weight:700;color:#1B2A44;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}' +
     '.rc-it input{font:inherit;font-size:max(16px,1rem);width:min(100%,11rem);min-height:44px;border:1.5px solid #8A99B3;border-radius:10px;padding:8px 10px;color:#1B2A44}' +
     '.rc-hist{display:grid;gap:7px}' +
@@ -118,9 +123,23 @@
       (v.opening ? '<p style="margin:0">' + esc(v.opening) + '</p>' : '') +
       '<div class="rc-sec"><h4>' + ICON.doc + 'What renews</h4>' + (v.items || []).map(function (x) {
         var nv = a && a.values && a.values[x.id];
-        return '<div class="rc-it"><div><div class="lb">' + esc(x.label) + '</div>' + (x.bank ? '<div class="sm">A copy of the certificate goes to ' + esc(x.bank) + '</div>' : '') + (x.lastValue && x.value && x.lastValue !== x.value ? '<div class="sm">Last year ' + whole(x.lastValue) + '</div>' : '') + '</div>' +
-          '<div class="v">' + (x.value ? whole(nv || x.value) : '') + '</div>' +
-          (open && x.value ? '<label>' + (x.kind === 'vehicle' ? 'If the vehicle\'s value is different, type it' : 'If the sum insured should change, type it') + ' <input inputmode="decimal" data-rcv="' + esc(x.id) + '" placeholder="' + esc(String(Math.round(x.value))) + '" value="' + (nv ? Math.round(nv) : '') + '" aria-label="New value for ' + esc(x.label) + '"></label>' : '') + '</div>';
+        /* Whether there is a figure of theirs to change. The backend decides
+           (girAdjustable_) and sends `adjust`; a letter sent before that
+           existed has no flag, and keeps the old behaviour. Only a
+           comprehensive vehicle or a sum insured is adjustable — on third
+           party nothing of the client's own is insured, so a value box there
+           asks for a figure that means nothing and cannot be used. */
+        var may = x.adjust === undefined ? !!x.value : !!x.adjust;
+        var tp = /third\s*party/i.test(x.coverage || '');
+        return '<div class="rc-it"><div><div class="lb">' + esc(x.label) + '</div>' +
+          /* Say what it is covered for, so a third party is visibly third
+             party rather than a row with no box and no reason given. */
+          (x.coverage ? '<div class="sm cov">' + esc(x.coverage) + '</div>' : '') +
+          (x.bank ? '<div class="sm">A copy of the certificate goes to ' + esc(x.bank) + '</div>' : '') +
+          (x.lastValue && x.value && x.lastValue !== x.value ? '<div class="sm">Last year ' + whole(x.lastValue) + '</div>' : '') + '</div>' +
+          '<div class="v">' + (x.value && may ? whole(nv || x.value) : '') + '</div>' +
+          (open && may && x.value ? '<label>' + (x.kind === 'vehicle' ? 'If the vehicle\'s value is different, type it' : 'If the sum insured should change, type it') + ' <input inputmode="decimal" data-rcv="' + esc(x.id) + '" placeholder="' + esc(String(Math.round(x.value))) + '" value="' + (nv ? Math.round(nv) : '') + '" aria-label="New value for ' + esc(x.label) + '"></label>'
+            : open && tp ? '<p class="sm tpnote">Third party covers damage to other people and their property, not this vehicle, so there is no value to set. Tell us below if the vehicle itself has changed.</p>' : '') + '</div>';
       }).join('') + '</div>' +
       (years.length ? '<div class="rc-sec"><h4>' + ICON.shield + 'Your history with us since ' + esc((v.since || years[0].year || '').slice(0, 4)) + '</h4>' + summaryLine(v) + '<div class="rc-hist">' + years.map(function (y) {
         return '<div class="rc-hb' + (y.now ? ' now' : '') + '"><b>' + esc(String(y.year).slice(0, 4)) + '</b><div class="tr"><i style="width:' + Math.max(3, Math.round((y.premium || 0) / max * 100)) + '%"></i></div><div class="v">' + money(y.premium) + '</div></div>'; }).join('') + '</div>' +

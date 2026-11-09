@@ -965,6 +965,31 @@ function girLetterHtml_(r, st, o) {
     '</div><div style="padding:14px 22px;background:#f7f8fb;font:11px/1.5 Arial,sans-serif;color:#6b7785">' + tLegal_(null) + '</div></div>';
   return { subject: 'Your ' + r.lineLabel.toLowerCase() + ' renewal, ' + tDmy_(r.ren) + ' · policy ' + r.policy, html: html };
 }
+/**
+ * Whether a client may type a new figure against this risk.
+ *
+ * Only a COMPREHENSIVE vehicle has a value of the client's own to adjust: it
+ * is what we would pay if the vehicle were written off, and it falls every
+ * year. On THIRD PARTY nothing of theirs is insured — the cover is for what
+ * they do to someone else — so there is no sum insured to put up or down, and
+ * asking for one invites a figure that means nothing and cannot be used.
+ *
+ * It is not hypothetical. On the book renewing to February, one Commercial
+ * Third Party line carries Cover1__c of TT$404,595 on a fleet, which is a
+ * fleet-level figure that has landed on a vehicle row. The page would have
+ * shown it as that vehicle's value with a box beside it.
+ *
+ * A property or plant item carries a real sum insured and is adjustable. A
+ * motor risk that is neither (Special Type, or a blank cover type) is shown
+ * and not offered, because the record does not say it is comprehensive.
+ */
+function girAdjustable_(x) {
+  var cov = String(x.coverage || '').toLowerCase();
+  if (/third\s*party/.test(cov)) return false;
+  if (x.vehicle) return /comprehensive/.test(cov);
+  return true;
+}
+
 /** What the client's page shows, kept on the row when the letter goes, so the page never waits on Salesforce. */
 function girClientView_(r, notice, letter, hist, claims, values) {
   var RISKS = 12;
@@ -972,7 +997,12 @@ function girClientView_(r, notice, letter, hist, claims, values) {
     premium: notice ? notice.premium : 0, tax: notice ? notice.tax : 0, total: notice ? notice.total : 0, from: notice ? notice.from : '', to: notice ? notice.to : '',
     items: r.items.map(function (x) { var nn = (notice && notice.items || []).filter(function (n) { return n.reg && x.vehicle && n.reg.replace(/\W/g, '') === x.vehicle.replace(/\W/g, ''); })[0];
       return { id: x.id, label: girItemLabel_(x), vehicle: x.vehicle, value: (values && values[x.id] && values[x.id].value) || (nn && nn.value) || x.value || x.cover || 0, lastValue: x.value || x.cover || 0,
-        kind: x.vehicle ? 'vehicle' : x.location ? 'location' : 'item', bank: x.assignee || '' }; }),
+        kind: x.vehicle ? 'vehicle' : x.location ? 'location' : 'item', bank: x.assignee || '',
+        // What this risk is covered for, in the client's words, and whether
+        // there is a figure of theirs to adjust. The page reads `adjust`; it
+        // never works it out for itself, so a third party can never be
+        // offered a value box whatever the record happens to carry.
+        coverage: x.coverage || '', adjust: girAdjustable_(x) }; }),
     /* the client's own history: every term since the policy began, what it covered, what was billed and paid, and the claims.
        Never a task, a note or anything internal. */
     years: (hist && hist.years || []).map(function (y) {
@@ -1794,7 +1824,20 @@ function girTakeAnswer_(st, b, name, via) {
   if (decision !== 'approve' && comment.length < 3) return { ok: false, error: decision === 'changes' ? 'Tell us what has changed.' : 'Write your question.' };
   var vals = {}, got = girJ_(b.values, null) || b.values || {};
   var view = girJ_(st['Client view'], {}) || {};
-  (view.items || []).forEach(function (x) { var n = girNum_(got[x.id]); if (n > 0 && Math.abs(n - (x.value || 0)) >= 1) vals[x.id] = n; });
+  /* A new figure is taken only where there is one of the client's own to
+     change — a comprehensive vehicle or a sum insured, never a third party.
+     The page hides the box; this is the rule behind it, because a page can be
+     made to post anything.
+
+     A letter sent before this existed has neither flag on its stored view, so
+     it keeps the old behaviour rather than silently dropping a value a client
+     is typing in good faith today. */
+  (view.items || []).forEach(function (x) {
+    var may = x.adjust !== undefined ? !!x.adjust : (x.coverage ? girAdjustable_(x) : true);
+    if (!may) return;
+    var n = girNum_(got[x.id]);
+    if (n > 0 && Math.abs(n - (x.value || 0)) >= 1) vals[x.id] = n;
+  });
   var old = girJ_(st['Client answer'], null), hist = old ? (old.history || []).concat(old.comment ? [{ at: old.at, text: old.comment, name: old.name, decision: old.decision }] : []) : [];
   /* a question leaves the decision where it was */
   var ans = { decision: decision === 'question' ? (old ? old.decision : '') : decision, at: gcmWhen_(new Date()), name: String(name || '').slice(0, 80), comment: comment,
