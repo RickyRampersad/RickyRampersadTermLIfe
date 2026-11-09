@@ -1185,7 +1185,7 @@ everything after it is for somebody who has already decided to keep reading.
 
 > WE ARE HIRING — Client Manager, General Insurance. Central Trinidad.
 >
-> Running a general insurance book out of a filing cabinet and an inbox that never empties? Neither exists here.
+> A general insurance book across ten lines, written and renewed here year after year. It has never had one person whose whole job it is.
 >
 > An established book: seven lines in force, three more written here, personal and commercial, with renewals in every month. No system on a PC, no spreadsheet beside it: the branch writes its own software, it reaches into every system we deal with, and it changes every week. Every term since the policy began is on one screen before you open the file.
 >
@@ -1205,7 +1205,7 @@ to the page autoplays in the feed; a link to the film's own page does not.
 
 | field | text |
 |---|---|
-| Primary text | Running a general insurance book out of a filing cabinet and an inbox that never empties? Neither exists here. |
+| Primary text | A general insurance book across ten lines, written and renewed here year after year. It has never had one person whose whole job it is. |
 | Headline | Client Manager — General Insurance |
 | Description | Your CV and fifteen minutes. |
 | Website | https://rickyrampersadbranch.com/clientmanager |
@@ -2143,13 +2143,13 @@ in the same scene.
 >
 > **The book is already there. What it has never had is you.**
 >
-> *If you are running a general insurance book out of a filing cabinet and an inbox that never empties — and nobody has ever let you change any of it — this is the one to read.*
+> *If you know general insurance well enough to look at a book this size, across ten lines, and see exactly what it has been missing — this is the one to read.*
 >
 > I have spent thirty-five years in this business, and the general insurance book at the Ricky Rampersad Branch is one I built myself. It has done well, and it has renewed year after year. But I am running a branch, and my time is needed across all of it.
 >
 > So this book needs somebody whose whole attention it is. Seven lines in force — motor and fleet, household, commercial property and fire, public and products liability, workers' compensation and employers' liability, machinery, plant and contract works, and bonds — personal and commercial, with renewals falling in every month of the year. Three more have been written here and have nothing current on them: marine and cargo, money, burglary. Cyber has never been written here at all. All of it sits inside the seven classes of general insurance business the Insurance Act 2018 prescribes, and that is room — it would be yours.
 >
-> Here is what you would be walking into. No filing cabinet, no re-keying, and no spreadsheet holding what the system will not do. The quote fills itself from the client's own record. Guardian's proposal form and the customer due-diligence checklist are filled by the system, field by field, and attached — the insurer's actual PDFs, not retyped versions. The renewal desk reads every term since the policy began — not just this year's — before anyone opens the file. The insurer's notice is read and checked figure by figure against our own record, and where the two disagree the desk says which and by how much.
+> Here is what you would be walking into. The quote fills itself from the client's own record. Guardian's proposal form and the customer due-diligence checklist are filled by the system, field by field, and attached — the insurer's actual PDFs, not retyped versions. The renewal desk reads every term since the policy began — not just this year's — before anyone opens the file. The insurer's notice is read and checked figure by figure against our own record, and where the two disagree the desk says which and by how much.
 >
 > And it does the reading for you. The record is pulled out of every place it lives and scrubbed before you see it — duplicate terms, a mid-term change kept as its own policy, a vehicle carried under a changed number — and then the desk tells you what to raise first: the value carried unchanged two terms running, the sum insured that no longer means anything, the premium paid late last year, the claim still open. The client is reminded at fourteen days and again at ten, a call opens itself at seven, and the client signs in with a code to their own inbox and reads every year of their own history themselves.
 >
@@ -2183,7 +2183,7 @@ in the same scene.
 >
 > Not a new book: one that has been written and renewed here year after year. Seven lines in force, personal and commercial, with renewals every month — and three more written here with nothing current on them, marine among them, with cyber never written at all. That is room. The Branch Manager built it himself and his time is needed across the branch, so it needs its own person.
 >
-> No filing cabinet, no re-keying, no spreadsheet holding what the system will not do. The quote and Guardian's own forms fill themselves from the record, every term since the policy began is on the screen before you open the file, and the record is pulled from every place it lives and scrubbed before you see it — then the desk tells you what to raise first. The client is reminded at fourteen days and ten, a call opens itself at seven, and they sign in and read their own history.
+> The quote and Guardian's own forms fill themselves from the record, every term since the policy began is on the screen before you open the file, and the record is pulled from every place it lives and scrubbed before you see it — then the desk tells you what to raise first. The client is reminded at fourteen days and ten, a call opens itself at seven, and they sign in and read their own history.
 >
 > We write the software ourselves and it changes every week. So the job is the advice, the endorsements and the renewal conversation — and a client here is not a transaction, they are a journey.
 >
@@ -2210,7 +2210,7 @@ in the same scene.
 > spent underwriting. Professional qualifications (ACII, CII Diploma or
 > Certificate, or part-qualified) are asked for and count.
 >
-> No filing cabinet and no re-keying: the branch has written its own
+> The branch has written its own
 > software, so the quote, Guardian's own forms, the full renewal history
 > since inception and the claim checks are already automated, the record is
 > pulled from every source and scrubbed before you read it, and the system
@@ -3042,6 +3042,112 @@ calls rather than oversights:**
 
 If either is to go, both are cheap: the first is one line of HTML, the second
 is one line to re-voice.
+
+## Describing the misery IS the bashing — 9 November 2026, the same day
+
+The pass above took the product names and the *Everywhere else* headers off,
+and left the structure standing. He came straight back:
+
+> *"why are you saying still lives in a cabinet, I asked for creativity and
+> not bash"*
+
+He was right, and the correction is the more useful of the two.
+
+**A ledger whose left column is the reader's own miserable week is a verdict
+on his employer however politely the column is headed.** Renaming the header
+to *Your week now* changed who the sentence pointed at and not what it said:
+seven rows of drawer, duplicate file, retyping and an inbox he never reaches
+the bottom of. Taking the nouns out of a bashing ad leaves a bashing ad.
+
+Three things were wrong with it, and only the first is about tone:
+
+- **It still insults the employer**, by description rather than by name.
+- **It insults the reader.** He has given those years to that desk. A page
+  that opens by telling him his working life is primitive is asking him to
+  agree that he has wasted it, and nobody applies to the company that just
+  said so.
+- **It is not creative, which is what he actually asked for.**
+  Misery-then-rescue is the oldest shape an advertisement has. It also loses
+  to the one true thing this ad already owned — *the book is already there,
+  and it has never had one person.*
+
+**So the misery came out whole, not reworded.** What was left was the half
+that had been doing the work all along:
+
+| | was | is |
+|---|---|---|
+| section | `#old`, *If this is your Tuesday* | `#desk`, *Before you sit down* |
+| headline | "The filing cabinet, the re-keying, the chasing. None of that is the job here." | "Seven things this desk has already done by the time you open the file." |
+| body | seven ✕/✓ rows, their week against ours | the same seven capabilities, numbered 01–07, in our own voice |
+| hero hook | "If you can run a general insurance book out of a filing cabinet and an inbox that never empties — and nobody has ever let you change any of it" | "If you know general insurance well enough to look at a book this size, across ten lines, and see exactly what it has been missing" |
+| poster chip | "Seven lines in force, ten written, no filing cabinet" | "Ten lines written here, seven in force today" |
+
+**The headline rule that falls out of it: say what the job IS, never what it
+is not.** "None of that is the job here" needs the reader to picture the bad
+thing first. "Seven things this desk has already done" needs nothing.
+`cmcheck.js` now fails a headline containing *not*, *none of* or *cabinet*.
+
+**Watch for the negation in our own copy too.** Four post cuts opened
+"No filing cabinet, no re-keying, no spreadsheet holding what the system
+will not do" — describing our own desk by what it lacks, which plants the
+cabinet in the reader's head just as firmly and is weaker besides. They
+state what the desk does.
+
+### The film lost a scene, and that made it better
+
+Scene 2 was the ledger in motion: a PC, a spreadsheet, a retyped proposal
+form, an endorsement on day three, last year's file in a drawer with a red
+flag on it. With the misery gone it had no content left, so it was **cut
+whole** rather than rewritten, and scene 1 was reframed from *"knows general
+insurance inside out, and still runs the book out of a filing cabinet"* to
+*"knows general insurance inside out — who can read a schedule and see
+exactly what is missing."* The film opens on the reader's expertise and goes
+straight to the book. Ten scenes became nine, 2:01 became 1:50, and nothing
+of value was lost.
+
+**The closing line was carrying a grievance nobody had noticed**: *"if you
+are good at this and you have stopped learning, come and look after the
+book."* It is a dig at his employer, and read aloud it is ambiguous enough
+to land as a dig at him. It is now *"if you are good at this, there is a
+book here big enough for it."*
+
+**Cutting a scene means rebuilding every cue list, and they are in different
+units.** `durs` and `dur` are the obvious ones; `risers` are absolute scene
+*starts*, `hits` are absolute *seconds* inside a scene, `dark` is a 0-based
+*index* into the scene-start array, and `score` is one value per scene. All
+four move when a scene is removed, none of them complains, and a stale
+`hits` lands a punch in the wrong place with nothing on screen. Derive them
+from the new scene starts rather than nudging the old numbers:
+
+```
+old starts [0, 8.7, 22.5, 35.7, 45.7, 56.8, 72.7, 90.1, 102.5, 111.2]
+new starts [0, 10.5, 23.7, 33.7, 44.8, 60.7, 78.1, 90.5, 99.2]
+hits  27.21/31.7  (4.71s and 9.2s into the book scene)  ->  15.21/19.7
+risers 56.8/111.2 (starts of scenes 6 and 10)           ->  44.8/99.2
+dark  [9]         (index of the closing scene)          ->  [8]
+score 10 values   (drop the cut scene's)                ->  9
+```
+
+**Build the staging vox directory from scratch, never by shifting.** Walk
+the new scene list and copy each unchanged clip from its old index: new 1 is
+the re-voice, new 2–8 are old 3–9, new 9 is the re-voice. `importvox.py`
+then returned 13.2, 10.0, 11.1, 15.9, 17.4, 12.4, 8.7 for the untouched
+scenes — identical to their old durations, which is how the mapping was
+checked.
+
+**"a book" came back as "to book".** The closing line's first take was
+*"you want a book big enough to put it into"* and Whisper heard *"you want
+to book big enough"* — this voice swallows an unstressed article after a
+verb, the same fault as *into* after *know* on the rise film. Re-worded off
+the shape, not around it: *"there is a book here big enough for it."*
+
+**A test pinned to the old markup throws instead of failing.** `cmcheck.js`
+asserted *"every row has both columns"* and *"the headline names the
+cabinet"*, so it died on a missing element rather than reporting a clean
+failure — the second time in one day a test of mine made a deliberate fix
+look like a regression. It now guards the rule: seven numbered rows, **no
+`.o` column anywhere in the section**, no verdict on anyone in the section's
+text, and a headline that does not define the job by what it is not.
 
 ## The film is the hero now, 9 November 2026
 

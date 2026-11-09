@@ -1424,10 +1424,9 @@
   "music": "bed-cmadmin.wav",
   "mix": "uwadmin-mix.wav",
   "ass": "captions-uwadmin.ass",
-  "dur": 121.1,
+  "dur": 109.7,
   "durs": [
-   8.7,
-   13.8,
+   10.5,
    13.2,
    10.0,
    11.1,
@@ -1435,24 +1434,23 @@
    17.4,
    12.4,
    8.7,
-   9.9
+   10.5
   ],
   "out": "film-w.mp4",
   "musicgain": 0.46,
   "duck": 0.3,
   "dark": [
-   9
+   8
   ],
   "sfx": "sfx-cmadmin.wav",
   "start": 0,
   "ticks": [],
   "hits": [
-   27.21,
-   31.7
+   15.21,
+   19.7
   ],
   "score": [
    0.55,
-   0.5,
    0.96,
    0.8,
    0.8,
@@ -1463,8 +1461,8 @@
    1.18
   ],
   "risers": [
-   56.8,
-   111.2
+   44.8,
+   99.2
   ]
  }
 }
