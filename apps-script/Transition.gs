@@ -9137,7 +9137,14 @@ function tSfBriefs_(opts) {
       var m = tBriefMail_(agent, clients, b, opts.test ? { via: 'Salesforce', on: g.on, test: true, to: T_CLAIM.COPY || SVC.AGENT_EMAIL } : { via: 'Salesforce', on: g.on });
       out.sent++; out.clients += clients.length; out.agents.push(agent.name + ' (' + clients.length + ')');
       if (opts.test) out.to = m.to;
-      else clients.forEach(function (c) { log.push({ tok: c.token, client: c.client, agent: agent.name, on: g.on, source: 'Salesforce', status: 'sent' }); });
+      else {
+        /* Recorded at once, and under the name Salesforce gave (9 November 2026). tSfBriefsDue_ looks a brief up by the
+           Salesforce name; recording it under the Agent Skill Bank's spelling meant an agent whose two names differ (matched
+           by first name) was never seen as briefed, and was sent the same brief on every run, 54 times to one agent. And a
+           run stopped by the six-minute limit during the Salesforce writes below lost the whole run's record. */
+        var sent = clients.map(function (c) { return { tok: c.token, client: c.client, agent: g.name, on: g.on, source: 'Salesforce', status: 'sent' + (tNameKey_(agent.name) !== k ? ' to ' + agent.name : '') }; });
+        tBriefLog_(sent);
+      }
       /* the rest of what a naming writes (22 October 2026): Campaign Orphan and the date on every policy record of the client,
          not only the ones named by hand, and the household task for the agent's support person */
       if (!opts.test && tSfOn_()) {
