@@ -273,7 +273,10 @@ of a feature list; they leave because somebody described their own Tuesday back
 to them. So:
 
 - **A ledger section, `#old`**, between the book and the seven stops: six rows,
-  *Everywhere else* against *Here*. The drawer and last year's file in a
+  *Everywhere else* against *Here*. (**Superseded 9 November 2026** — the
+  headers are *Your week now* / *Your week here*; see “Describe the work,
+  never the workplace” below. Do not restore the old pair.) The drawer and
+  last year's file in a
   different drawer; re-keying the client into the insurer's proposal form; the
   insight being whatever you happened to notice; chasing the client or losing
   the renewal; what the client holds living in your head or an e-mail thread;
@@ -1234,7 +1237,10 @@ of a feature list; they leave because somebody described their own Tuesday back
 to them. So:
 
 - **A ledger section, `#old`**, between the book and the seven stops: six rows,
-  *Everywhere else* against *Here*. The drawer and last year's file in a
+  *Everywhere else* against *Here*. (**Superseded 9 November 2026** — the
+  headers are *Your week now* / *Your week here*; see “Describe the work,
+  never the workplace” below. Do not restore the old pair.) The drawer and
+  last year's file in a
   different drawer; re-keying the client into the insurer's proposal form; the
   insight being whatever you happened to notice; chasing the client or losing
   the renewal; what the client holds living in your head or an e-mail thread;
@@ -2143,13 +2149,13 @@ in the same scene.
 >
 > So this book needs somebody whose whole attention it is. Seven lines in force — motor and fleet, household, commercial property and fire, public and products liability, workers' compensation and employers' liability, machinery, plant and contract works, and bonds — personal and commercial, with renewals falling in every month of the year. Three more have been written here and have nothing current on them: marine and cargo, money, burglary. Cyber has never been written here at all. All of it sits inside the seven classes of general insurance business the Insurance Act 2018 prescribes, and that is room — it would be yours.
 >
-> Here is what you would be walking into. No filing cabinet, no system on a PC in the corner, and no spreadsheet beside it for what the system will not do. The quote fills itself from the client's own record. Guardian's proposal form and the customer due-diligence checklist are filled by the system, field by field, and attached — the insurer's actual PDFs, not retyped versions. The renewal desk reads every term since the policy began — not just this year's — before anyone opens the file. The insurer's notice is read and checked figure by figure against our own record, and where the two disagree the desk says which and by how much.
+> Here is what you would be walking into. No filing cabinet, no re-keying, and no spreadsheet holding what the system will not do. The quote fills itself from the client's own record. Guardian's proposal form and the customer due-diligence checklist are filled by the system, field by field, and attached — the insurer's actual PDFs, not retyped versions. The renewal desk reads every term since the policy began — not just this year's — before anyone opens the file. The insurer's notice is read and checked figure by figure against our own record, and where the two disagree the desk says which and by how much.
 >
 > And it does the reading for you. The record is pulled out of every place it lives and scrubbed before you see it — duplicate terms, a mid-term change kept as its own policy, a vehicle carried under a changed number — and then the desk tells you what to raise first: the value carried unchanged two terms running, the sum insured that no longer means anything, the premium paid late last year, the claim still open. The client is reminded at fourteen days and again at ten, a call opens itself at seven, and the client signs in with a code to their own inbox and reads every year of their own history themselves.
 >
 > None of that is a plan. It is built and it is running, and you can see it before you apply. We did not buy any of it: the branch writes its own software, it reaches into every system we deal with, and it changes every week.
 >
-> Which is the difference. Everywhere else a client is a transaction — a renewal keyed, a premium taken, a file closed until next year. Here a client is a journey, and the system is built to carry it.
+> Which is the difference. A client here is not a transaction — a renewal keyed, a premium taken, a file closed until next year. A client here is a journey, and the system is built to carry it.
 >
 > So the part of the day that is yours is the part only a person can do: the endorsement done properly, the renewal conversation, telling a client plainly what the cover does and does not do, and knowing when the Act moves.
 >
@@ -2177,9 +2183,9 @@ in the same scene.
 >
 > Not a new book: one that has been written and renewed here year after year. Seven lines in force, personal and commercial, with renewals every month — and three more written here with nothing current on them, marine among them, with cyber never written at all. That is room. The Branch Manager built it himself and his time is needed across the branch, so it needs its own person.
 >
-> No filing cabinet, no system on a PC, no spreadsheet beside it. The quote and Guardian's own forms fill themselves from the record, every term since the policy began is on the screen before you open the file, and the record is pulled from every place it lives and scrubbed before you see it — then the desk tells you what to raise first. The client is reminded at fourteen days and ten, a call opens itself at seven, and they sign in and read their own history.
+> No filing cabinet, no re-keying, no spreadsheet holding what the system will not do. The quote and Guardian's own forms fill themselves from the record, every term since the policy began is on the screen before you open the file, and the record is pulled from every place it lives and scrubbed before you see it — then the desk tells you what to raise first. The client is reminded at fourteen days and ten, a call opens itself at seven, and they sign in and read their own history.
 >
-> We write the software ourselves and it changes every week. So the job is the advice, the endorsements and the renewal conversation — and here a client is not a transaction, they are a journey.
+> We write the software ourselves and it changes every week. So the job is the advice, the endorsements and the renewal conversation — and a client here is not a transaction, they are a journey.
 >
 > Hours are yours to set, pay is negotiable on experience, and we are not asking you to bring clients with you. This is not an eight-to-four seat, and that is about the work rather than the hours: the process here is yours to argue with.
 >
@@ -2954,6 +2960,88 @@ off a public page for the same reason the month-by-month shape of the book does.
   reads a top-level `words` of `[ms, word]` and dies with `KeyError: 'words'`.
   The conversion is one line and it is needed after every re-voice:
   `d['words'] = [[[int(round(t*1000)), w] for t, w in ln['words']] for ln in d['lines']]`.
+
+## Describe the work, never the workplace — 9 November 2026
+
+Asked for in these words: *"Ok so should we bash an old system, I need to
+study my PR and you need to guide me as I should not be bashing!!"*
+
+He was right, and it was the sharper of the two risks on that page. The ad had
+drifted from describing a job into reviewing other people's.
+
+**The rule, and it governs every recruiting page from here:**
+
+> **Describe the work, never the workplace. Claim only what is ours.**
+
+Three tests for any line:
+
+1. **Does it name, or point at, somebody else?** A named third-party product is
+   a factual claim about a company we would have to stand behind. *"Everywhere
+   else"* is a claim about an entire market we cannot evidence — and it is not
+   even true; some agencies here are well run and well systemised.
+2. **Could the reader's own employer recognise themselves being insulted?**
+   Then reframe it as the reader's week. *"Everywhere else it is a PC in the
+   corner"* is a verdict on them. *"The system is on one PC, and the
+   spreadsheet beside it holds everything the system will not do"* is a
+   description of his Tuesday, which he owns and will nod at. Same facts, and
+   the second one actually recruits.
+3. **Does it make the reader feel stupid for the years he has already given?**
+   *"Neither has changed since you arrived"* tells a man with fifteen good
+   years that he wasted them. Nobody applies to the company that just
+   insulted their CV.
+
+**Why it matters more here than it would for most advertisers:**
+
+- **It is a regulated entity's advertising.** The page carries Guardian's
+  branch name, and the CBTT Market Conduct Guideline governs how a registrant
+  presents itself. Disparaging a named third-party product in that context is
+  the kind of thing Compliance stops — and Compliance had not yet seen this
+  wording when it went live.
+- **It is a small market.** The agencies running those systems refer business
+  to this branch, sit on the same TTAIFA panels, and some of them are
+  Guardian's own. A screenshot of a branch mocking their software travels
+  further than the advertisement does.
+- **The branch already had the right principle written down** and broke it.
+  The transition letters state Guardian Life's notice and nothing else —
+  *nothing characterises anyone, the facts answer them.* That is the same rule.
+
+**What came off, and none of it was doing any work:**
+
+| was | is |
+|---|---|
+| three competitor products named in the ledger's first row | the row describes the desk, and names nobody |
+| column headers *Everywhere else* / *Here* | *Your week now* / *Your week here* |
+| *"Neither has changed since you arrived"* | cut |
+| *"Everywhere else a client is a transaction"* | *"A client here is not a transaction"* |
+| the film's scene 2 eyebrow, *The old way* | *If this is your week* |
+| the film's spoken *"A system that runs on a PC in the corner"* | *"The system on one PC"* — three words, and the sneer was all of it |
+
+The positive claims were never the problem and all of them stayed: we write our
+own software, it changes every week, every term opens on one screen, Guardian's
+own PDFs fill themselves, the client reads their own history. Those are ours,
+they are checkable, and they are what actually sells the seat. The comparison
+was doing nothing the facts were not already doing.
+
+**The product names were also in an HTML comment**, quoting his own words, in a
+file the site serves — so view-source published them just as surely as the page
+did. They are elided there too. This is the same lesson the registration plates
+taught in `CLAUDE.md`: *redact the value from the note that records the
+redaction, and grep every served directory, not only the page you were looking
+at.* `RECRUITING-SETUP.md` is served from the repository root as well, which is
+why no product is named anywhere above.
+
+**Two lines were left in deliberately, and he should know they are judgement
+calls rather than oversights:**
+
+- **The hero's own hook** — *"and nobody has ever let you change any of it"*.
+  It characterises an employer as not listening. It is also the truest line on
+  the page for this audience and the single strongest reason the right person
+  applies. It names nobody and it describes what was done *to the reader*. Kept.
+- **The film's scene 9** — *"a change you ask for is not a ticket that goes
+  somewhere else to wait"*. That is about a process, not about people. Kept.
+
+If either is to go, both are cheap: the first is one line of HTML, the second
+is one line to re-voice.
 
 ## The film is the hero now, 9 November 2026
 
