@@ -211,6 +211,7 @@ section,.layout{padding-block:var(--sp-2xl)}
 .vcover .pl{position:relative;z-index:2;display:flex;align-items:center;gap:.7rem;background:#fff;color:var(--ink);border-radius:999px;padding:.85rem 1.4rem;font:600 var(--f-0)/1 var(--text);box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .vcover .pl svg{width:1.1rem;height:1.1rem}
 .film-sec .lede{text-align:center;margin-inline:auto}
+.fgrid .lede{text-align:left;margin-inline:0}
 .film-sec .vwrap+.film-note{text-align:center;margin:var(--sp-l) auto var(--sp-s);color:var(--muted)}
 
 /* ═══ FIGURES BAND ═══ */
@@ -923,6 +924,50 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 .bsay small{display:block;font-size:var(--f--2);letter-spacing:.12em;text-transform:uppercase;color:var(--dT3);margin-bottom:.3rem;font-weight:700}
 .bfoot{margin:0;font-size:var(--f--2);color:var(--dT3)}
 @media (max-width:56rem){.lgrid{grid-template-columns:1fr;gap:var(--sp-l)}}
+/* ═══ THE HERO'S SUPPORT STRIP — fills the column under the film (9 November 2026) ═══ */
+.hsupp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem;margin-top:var(--sp-s)}
+.hsupp div{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:var(--r-s);padding:.75rem .85rem;display:grid;gap:.15rem;min-width:0}
+.hsupp b{font:800 var(--f-1)/1 var(--display);color:#fff;font-variant-numeric:tabular-nums}
+.hsupp span{font-size:var(--f--2);line-height:1.3;color:var(--dT3)}
+@media (max-width:30rem){.hsupp{grid-template-columns:1fr 1fr}.hsupp div:last-child{grid-column:span 2}}
+/* ═══ THE FULL FILM'S CHAPTER INDEX — fills the column beside its lede ═══ */
+.fgrid{display:grid;grid-template-columns:1.02fr .98fr;gap:var(--sp-xl);align-items:start}
+.chaps{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:.1rem .9rem;align-content:start}
+.chaps li{min-width:0}
+.chaps button{width:100%;display:flex;gap:.6rem;align-items:baseline;background:none;border:0;padding:.3rem .45rem;border-radius:.4rem;font:inherit;font-size:var(--f--2);line-height:1.4;color:var(--body);text-align:left;cursor:pointer;min-width:0}
+.chaps button:hover,.chaps button:focus-visible{background:var(--a-tint);color:var(--ink)}
+.chaps time{flex:none;font-variant-numeric:tabular-nums;color:var(--aD);font-weight:600}
+.chaps i{font-style:normal;min-width:0;overflow-wrap:anywhere}
+.chapn{margin:0 0 var(--sp-s);font:700 var(--f--2)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aD)}
+@media (max-width:58rem){.fgrid{grid-template-columns:1fr;gap:var(--sp-l)}}
+@media (max-width:34rem){.chaps{grid-template-columns:1fr}}
+/* ═══ THE BRANCH MANAGER'S DAY (9 November 2026) ═══ */
+.rk{background:radial-gradient(95% 75% at 88% 4%,var(--d3),transparent 58%),linear-gradient(165deg,var(--d1),var(--d0) 74%);color:var(--dT2);overflow:clip}
+.rk .eyebrow{color:var(--aT)}.rk h2{color:var(--dT)}.rk .lede p{color:var(--dT2)}
+.rkg{display:grid;grid-template-columns:minmax(0,.84fr) minmax(0,1.16fr);gap:var(--sp-xl);align-items:center}
+.rkclock{position:relative;display:grid;place-items:center;max-width:min(26rem,100%);margin-inline:auto;width:100%}
+.rkclock svg{width:100%;height:auto;display:block;overflow:visible}
+.rkc-track{fill:none;stroke:rgba(255,255,255,.12);stroke-width:9}
+.rkc-band{fill:none;stroke:url(#rkgrad);stroke-width:9;stroke-linecap:round}
+.rkc-tick{stroke:rgba(255,255,255,.26);stroke-width:1.4}
+.rkc-dot{fill:var(--aL);stroke:var(--d0);stroke-width:2.5}
+.rkc-lab{fill:var(--dT3);font:600 7px/1 var(--text);letter-spacing:.06em}
+.rkc-mid{fill:#fff;font:800 20px/1 var(--display);text-anchor:middle}
+.rkc-sub{fill:var(--aT);font:600 7.5px/1 var(--text);text-anchor:middle;letter-spacing:.1em;text-transform:uppercase}
+.rkday{margin:0;padding:0;list-style:none;display:grid;gap:.55rem}
+.rkday li{display:grid;grid-template-columns:4.1rem 1fr;gap:1rem;align-items:baseline;padding:.65rem .9rem;border-radius:.6rem;background:rgba(255,255,255,.045);border-left:2px solid rgba(0,207,234,.5);min-width:0}
+.rkday time{font:800 var(--f--1)/1.3 var(--display);color:var(--aT);font-variant-numeric:tabular-nums}
+.rkday b{display:block;font:700 var(--f-0)/1.25 var(--display);color:#fff;margin-bottom:.1rem}
+.rkday span{font-size:var(--f--1);line-height:1.45;color:var(--dT2)}
+.rkfour{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));gap:var(--sp-m);margin-top:var(--sp-l)}
+.rkf{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:var(--r);padding:var(--sp-m) var(--sp-l);display:grid;gap:.35rem;align-content:start;min-width:0}
+.rkf b{font:700 var(--f-1)/1.2 var(--display);color:#fff}
+.rkf p{margin:0;font-size:var(--f--1);line-height:1.5;color:var(--dT2)}
+.rkf p em{font-style:normal;color:var(--aT)}
+.rkq{margin:var(--sp-l) 0 0;padding:var(--sp-m) var(--sp-l);border-left:3px solid var(--aT);background:rgba(0,207,234,.07);border-radius:0 var(--r-s) var(--r-s) 0}
+.rkq p{margin:0 0 .4rem;font:500 var(--f-1)/1.45 var(--display);color:#fff}
+.rkq cite{font-style:normal;font-size:var(--f--2);color:var(--dT3)}
+@media (max-width:58rem){.rkg{grid-template-columns:1fr;gap:var(--sp-l)}}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 @media (max-width:40rem){.chrt{padding:var(--sp-m)}}
 /* ═══ OUR OWN FACT FIND, BY THE NUMBERS (29 October 2026). Finished states are the defaults. ═══ */
@@ -1052,6 +1097,14 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   .lsteps.in li{animation:up .55s var(--ease-out) both;animation-delay:calc(var(--i,0)*110ms)}
   .brief.in .bins li{animation:up .5s var(--ease-out) both;animation-delay:calc(.5s + var(--i,0)*140ms)}
   .brief.in .bsay{animation:up .55s var(--ease-out) both .25s}
+  /* the Branch Manager's day: the band sweeps, then the hours land */
+  .rkclock.in .rkc-band{stroke-dashoffset:100;animation:rkband 1.5s var(--ease-out) .2s forwards}
+  @keyframes rkband{to{stroke-dashoffset:0}}
+  .rkclock.in .rkc-dot{animation:rkdot .5s var(--ease-out) both;animation-delay:calc(.75s + var(--j,0)*.16s)}
+  @keyframes rkdot{from{opacity:0;transform:scale(.2);transform-box:fill-box;transform-origin:50% 50%}to{opacity:1}}
+  .rkclock.in .rkc-mid,.rkclock.in .rkc-sub{animation:fadein .7s var(--ease-out) both 1.5s}
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
+  .rkday.in li{animation:up .55s var(--ease-out) both;animation-delay:calc(var(--i,0)*120ms + .3s)}
   /* the career timeline draws itself, and a rider travels it, when it comes into view */
   .ctlw.in .rail.main{stroke-dasharray:100;stroke-dashoffset:100;animation:rdraw 1.6s var(--ease-out) forwards}
   .ctlw.in .rail.a,.ctlw.in .rail.b{stroke-dasharray:100;stroke-dashoffset:100;animation:rdraw 1.4s var(--ease-out) 1.6s forwards}
@@ -1140,6 +1193,11 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
         <div class="vcover" style="background-image:url(trailer.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#0d3f5e" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch · 2:19</div></div>
       </div>
         <p class="vnote"><b>Two minutes and nineteen seconds.</b> What this branch puts around an advisor, and what that is worth on a Tuesday. The words are on screen throughout, so it reads with the sound off.</p>
+        <div class="hsupp">
+          <div><b>39</b><span>things the branch runs for you</span></div>
+          <div><b>7</b><span>people behind the advisors</span></div>
+          <div><b>24h</b><span>clock on a client&rsquo;s query</span></div>
+        </div>
       </div>
     </div>
       <div class="hero-rest">
@@ -1215,12 +1273,19 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 <!-- ═══ THE FILM ═══ -->
 <section class="film-sec" id="film">
   <div class="wrap">
+    <div class="fgrid">
+    <div>
     <div class="lede rv">
       <span class="eyebrow">The films</span>
       <h2 data-words>The whole journey, end to end.</h2>
-      <p>The short film at the top of this page says what is different here in under two minutes. This one walks you through it from the day you apply: the call, the Branch Manager, the orientation, the market survey, POP7, the Discovery, the onboarding, and then every day, every week and every month after.</p>
+      <p>The short film at the top of this page says what is different here in two minutes and nineteen seconds. This one walks you through it from the day you apply: the call, the Branch Manager, the orientation, the market survey, POP7, the Discovery, the onboarding, and then every day, every week and every month after.</p>
     </div>
-    <p class="small film-note rv">Eight minutes forty-nine, with a chapter for every stop &mdash; tap the rail to jump.</p>
+    </div>
+    <div>
+    <p class="chapn rv">Thirty-three chapters &middot; tap one to jump</p>
+    <ol class="chaps rv"><li><button type="button" data-at="0"><time>0:00</time><i>A question</i></button></li><li><button type="button" data-at="8"><time>0:08</time><i>Seven places</i></button></li><li><button type="button" data-at="30"><time>0:30</time><i>Digital, human</i></button></li><li><button type="button" data-at="36"><time>0:36</time><i>The part nobody tells you</i></button></li><li><button type="button" data-at="47"><time>0:47</time><i>From the day you apply</i></button></li><li><button type="button" data-at="69"><time>1:09</time><i>Before you start</i></button></li><li><button type="button" data-at="87"><time>1:27</time><i>The science</i></button></li><li><button type="button" data-at="105"><time>1:45</time><i>The selection</i></button></li><li><button type="button" data-at="120"><time>2:00</time><i>Selected</i></button></li><li><button type="button" data-at="140"><time>2:20</time><i>Afraid you&rsquo;d start from zero?</i></button></li><li><button type="button" data-at="152"><time>2:32</time><i>Two more things</i></button></li><li><button type="button" data-at="170"><time>2:50</time><i>Leads</i></button></li><li><button type="button" data-at="183"><time>3:03</time><i>The Lead Desk</i></button></li><li><button type="button" data-at="193"><time>3:13</time><i>FY27 Flight Plan</i></button></li><li><button type="button" data-at="205"><time>3:25</time><i>Every morning</i></button></li><li><button type="button" data-at="219"><time>3:39</time><i>factfind360</i></button></li><li><button type="button" data-at="237"><time>3:57</time><i>By the numbers</i></button></li><li><button type="button" data-at="275"><time>4:35</time><i>Query Pal</i></button></li><li><button type="button" data-at="290"><time>4:50</time><i>The wall, 24/7</i></button></li><li><button type="button" data-at="306"><time>5:06</time><i>Branch Intelligence</i></button></li><li><button type="button" data-at="319"><time>5:19</time><i>The screens</i></button></li><li><button type="button" data-at="348"><time>5:48</time><i>The human part</i></button></li><li><button type="button" data-at="362"><time>6:02</time><i>Every week</i></button></li><li><button type="button" data-at="378"><time>6:18</time><i>Wednesday &middot; 9:00</i></button></li><li><button type="button" data-at="400"><time>6:40</time><i>Recognition</i></button></li><li><button type="button" data-at="419"><time>6:59</time><i>After the sale</i></button></li><li><button type="button" data-at="451"><time>7:31</time><i>Every month</i></button></li><li><button type="button" data-at="468"><time>7:48</time><i>The career path</i></button></li><li><button type="button" data-at="481"><time>8:01</time><i>The income</i></button></li><li><button type="button" data-at="493"><time>8:13</time><i>Already contracted elsewhere?</i></button></li><li><button type="button" data-at="499"><time>8:19</time><i>One conversation</i></button></li><li><button type="button" data-at="514"><time>8:34</time><i>Start here</i></button></li><li><button type="button" data-at="525"><time>8:45</time><i>The environment decides</i></button></li></ol>
+    </div>
+    </div>
     <div class="vwrap rv">
       <video playsinline preload="none" poster="recruit.jpg" data-scenes="8.9,21.3,6.0,10.9,22.8,17.6,17.8,15.1,20.2,12.1,18.2,12.9,10.2,12.0,13.6,18.3,37.3,15.0,16.3,12.5,29.1,14.4,15.8,21.7,19.5,31.6,17.3,12.6,12.3,6.2,15.3,10.2,4.3" data-chapters="A question|Seven places|Digital, human|The part nobody tells you|From the day you apply|Before you start|The science|The selection|Selected|Afraid you'd start from zero?|Two more things|Leads|The Lead Desk|FY27 Flight Plan|Every morning|factfind360|By the numbers|Query Pal|The wall, 24/7|Branch Intelligence|The screens|The human part|Every week|Wednesday · 9:00|Recognition|After the sale|Every month|The career path|The income|Already contracted somewhere else?|One conversation|Start here|The environment decides">
         <source src="recruit.mp4" type="video/mp4">
@@ -1319,6 +1384,60 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ═══ THE BRANCH MANAGER'S OWN DAY, 9 November 2026 ═══
+     Every fixed point here is the branch's own operating rhythm, not a claim. ═══ -->
+<section class="rk" id="ricky" data-g="ricky">
+  <div class="wrap">
+    <div class="lede rv">
+      <span class="eyebrow">The man at the top of it</span>
+      <h2 data-words>His day starts at five. On the same board as yours.</h2>
+      <p>You can tell what a branch really thinks of its advisors by what its Branch Manager does before anybody else is awake. Ricky Rampersad is on the same attendance register as every person in this branch, plans his day on the same system, and accounts for it at three o&rsquo;clock like everyone else. Thirty-two years in, that is still the arrangement.</p>
+    </div>
+
+    <div class="rkg">
+      <div class="rkclock rv" role="img" aria-label="A twenty-four hour clock face with the Branch Manager's working band marked from five in the morning to three in the afternoon, and five fixed points on it: five, seven, nine, eleven and three.">
+        <svg viewBox="0 0 200 200">
+          <defs><linearGradient id="rkgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00CFEA"/><stop offset="1" stop-color="#0e93b0"/></linearGradient></defs>
+          <circle class="rkc-track" cx="100" cy="100" r="78"/>
+          <path class="rkc-band" d="M175.33 79.81 A78 78 0 0 1 44.85 155.15" pathLength="100" stroke-dasharray="100" stroke-dashoffset="0"/>
+          <g class="rkc-tick"><line x1="100" y1="14" x2="100" y2="22"/><line x1="186" y1="100" x2="178" y2="100"/><line x1="100" y1="186" x2="100" y2="178"/><line x1="14" y1="100" x2="22" y2="100"/></g>
+          <circle class="rkc-dot" cx="175.3" cy="79.8" r="6" style="--j:0"/>
+          <circle class="rkc-dot" cx="175.3" cy="120.2" r="5" style="--j:1"/>
+          <circle class="rkc-dot" cx="155.2" cy="155.2" r="5" style="--j:2"/>
+          <circle class="rkc-dot" cx="120.2" cy="175.3" r="5" style="--j:3"/>
+          <circle class="rkc-dot" cx="44.8" cy="155.2" r="6" style="--j:4"/>
+          <text class="rkc-lab" x="100" y="8" text-anchor="middle">12am</text>
+          <text class="rkc-lab" x="200" y="103" text-anchor="end">6am</text>
+          <text class="rkc-lab" x="100" y="198" text-anchor="middle">12pm</text>
+          <text class="rkc-lab" x="0" y="103" text-anchor="start">6pm</text>
+          <text class="rkc-mid" x="100" y="96">5am&ndash;3pm</text>
+          <text class="rkc-sub" x="100" y="112">every working day</text>
+        </svg>
+      </div>
+
+      <ol class="rkday rv">
+        <li style="--i:0"><time>5:00</time><div><b>Reads the branch before it wakes</b><span>Every client who is waiting on him, every mail that came in overnight, sorted and drafted so nothing sits.</span></div></li>
+        <li style="--i:1"><time>7:00</time><div><b>The branch checks in; so does he</b><span>His own day is planned on the same board, and whether he planned it is on the record like anyone else&rsquo;s.</span></div></li>
+        <li style="--i:2"><time>9:00</time><div><b>Wednesday: the room, and your name in it</b><span>The whole branch, the week&rsquo;s wins read out, and an agenda anybody could add to from their phone the night before.</span></div></li>
+        <li style="--i:3"><time>11:00</time><div><b>Who is behind, while it can still be fixed</b><span>Not a month-end post-mortem. A look at the day while there is still a day left to use.</span></div></li>
+        <li style="--i:4"><time>3:00</time><div><b>Accounts for his own day</b><span>Against the plan he set that morning, in writing. If he did not do what he said he would, that is on the record too.</span></div></li>
+      </ol>
+    </div>
+
+    <div class="rkfour">
+      <div class="rkf rv"><b>He interviews every single one</b><p>Not a screening call with somebody else. LIMRA measured first-year retention rising from 44% to <em>55%</em> on who recruited the advisor. Here it is always the head of the office.</p></div>
+      <div class="rkf rv"><b>He signs your large cases himself</b><p>Four written attestations on the recommendation before it reaches your client. <em>Nobody here is left to carry a big case alone.</em></p></div>
+      <div class="rkf rv"><b>He built what you will use</b><p>The board, the Log Book, the fact find, the desks that chase your premiums &mdash; written here because the branch needed them, not bought because a brochure said so.</p></div>
+      <div class="rkf rv"><b>And he coaches you after</b><p>The interview is not the last conversation. <em>Thirty-two years of this market</em>, applied to your book, your cases and your next move.</p></div>
+    </div>
+
+    <blockquote class="rkq rv">
+      <p>&ldquo;The decades of research are clear: showing people the job honestly, before they commit, raises how long they stay, how satisfied they are and how well they do. The best version of it is a conversation with somebody already doing the work.&rdquo;</p>
+      <cite>That is why your Discovery session puts you in a room with our current advisors and qualifiers &mdash; and why the Branch Manager leaves it. Ask them anything.</cite>
+    </blockquote>
   </div>
 </section>
 
@@ -1971,6 +2090,15 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   }
 
   /* the swapping word: driven, hungry, proven, disciplined, unstoppable */
+  // the full film's chapter index jumps the player and starts it
+  var chapList=d.querySelector('.chaps');
+  if(chapList){ chapList.addEventListener('click',function(e){
+    var b=e.target.closest('button[data-at]'); if(!b) return;
+    var sec=d.querySelector('#film'), v=sec&&sec.querySelector('video'); if(!v) return;
+    var cov=sec.querySelector('.vcover'); if(cov) cov.hidden=true;
+    v.controls=true; try{ v.currentTime=+b.getAttribute('data-at'); v.play(); }catch(err){}
+    v.scrollIntoView({block:'center',behavior:'smooth'});
+  }); }
   var sws=d.querySelectorAll('.sw'), swi=0, swTimer=null;
   function swapWord(){sws[swi].classList.remove('on');swi=(swi+1)%sws.length;sws[swi].classList.add('on')}
   if(sws.length>1 && !noMotion.matches) swTimer=setInterval(swapWord,2600);
@@ -2133,7 +2261,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   /* ── the coach stage and the career timeline start their motion when they come into view (the page's .rv reveal is
         scroll-driven where view() is supported, so nothing else adds .in there) ── */
   (function(){
-    var els=[].slice.call(d.querySelectorAll('.cstage,.ctlw,.ffnw,.mwk,.hb,.lsteps,.brief')); if(!els.length) return;
+    var els=[].slice.call(d.querySelectorAll('.cstage,.ctlw,.ffnw,.mwk,.hb,.lsteps,.brief,.rkclock,.rkday')); if(!els.length) return;
     if(noMotion.matches||!('IntersectionObserver' in window)){ els.forEach(function(e){e.classList.add('in')}); return; }
     var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -12% 0px'});
     els.forEach(function(e){io.observe(e)});
