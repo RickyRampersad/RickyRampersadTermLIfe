@@ -158,6 +158,30 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
     radial-gradient(30rem 26rem at 88% 70%,rgba(0,207,234,.12),transparent 62%)}
 .hgrid{display:grid;gap:var(--sp-xl);align-items:center}
 @media (min-width:60rem){.hgrid{grid-template-columns:1.08fr .92fr;gap:var(--sp-2xl)}}
+
+/* ── the hero: the film is the hero, 9 November 2026 ────────────────────────
+   Measured before the change: the film started 2581–3400px down and was 0%
+   visible in the first screen at every one of eight real sizes — 2.4 to 5
+   whole screens of scrolling. "A person should not scroll, I want to see the
+   video." Same shape the client manager page proved: lead and rest stack in
+   the left column, the film spans both rows on the right, one column on a
+   phone with the film straight after the headline. The terminal that used to
+   sit here is not lost — it is #runs, directly below, where proof belongs. */
+.hgrid{align-items:center}
+.hero-film{display:grid;gap:var(--sp-s);align-content:start}
+/* --dT3 is the dark-theme token: on this light hero it measures 1.71:1.
+   The client manager carries the same rule correctly, because ITS hero is
+   dark (9.63:1 there). Never copy a colour between pages without measuring
+   it against the ground it lands on. */
+.vnote{margin:0;font-size:var(--f--2);line-height:1.5;color:var(--muted)}
+.vnote b{color:var(--ink)}
+@media (min-width:60rem){
+  .hgrid{grid-template-columns:1.22fr .78fr;column-gap:var(--sp-2xl);
+    row-gap:var(--sp-m);align-items:start}
+  .hero-lead{grid-column:1;grid-row:1}
+  .hero-rest{grid-column:1;grid-row:2}
+  .hero-film{grid-column:2;grid-row:1 / span 2;align-self:start}
+}
 /* A grid item's default min-width is auto, so the terminal's `white-space:pre`
    lines set the column's min-content width and dragged every sibling 62px past
    a 390px viewport — clipped by .hero, so it caused no sideways scroll and the
@@ -587,12 +611,23 @@ footer .ic{width:16px;height:16px}
   <div class="field" aria-hidden="true"></div>
   <div class="wrap">
     <div class="hgrid">
-      <div>
+      <div class="hero-lead">
         <p class="vac"><i aria-hidden="true"></i>We are hiring &middot; one vacancy &middot; Chaguanas</p>
         <span class="eyebrow">Administrator &amp; branch builder</span>
-        <h1 data-words>You already know how your office should run. <em>Nobody has given you the tools.</em></h1>
+        <h1 data-words>You already know how your office should run. <em>Here you get to build it.</em></h1>
+      </div>
+      <div class="hero-film">
+        <div class="vwrap">
+          <video id="fv" playsinline preload="metadata" poster="film-w.jpg"
+                 controls controlslist="nodownload" aria-label="A minute and a half on the seat, the tools and what we stand for">
+            <source src="film-w.mp4" type="video/mp4">
+          </video>
+        </div>
+        <p class="vnote"><b>A minute and a half.</b> The seat, the tools, and the one thing we are looking for. The words are on screen the whole way through, so it reads with the sound off. Every file name in it is a real file in the branch&rsquo;s backend; every figure is illustrative and no client appears.</p>
+      </div>
+      <div class="hero-rest">
         <p class="pull">If you have ever fixed something at work on your own time, because waiting for somebody else to fix it was unbearable &mdash; this is the one to read.</p>
-        <p class="hsub">Somewhere right now there is an administrator who has already written the script that fixes it &mdash; on their own time, with no permission and no credit, because it was the only way to get the job done. We are looking for that person. Not for the one who waits to be told.</p>
+        <p class="hsub">Somewhere right now there is an administrator who has already written the script that fixes it &mdash; on their own time, with no permission and no credit, because it was the only way to get the job done. We are looking for that person.</p>
         <div class="ctas">
           <a class="btn btn-1" href="#fix">Fix our form <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
           <a class="btn btn-2" href="#real">What the job actually is</a>
@@ -603,23 +638,35 @@ footer .ic{width:16px;height:16px}
           <span><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>Read by the Branch Manager alone</span>
         </p>
       </div>
-      <div class="rv">
-        <div class="term" role="img" aria-label="The branch's own stack: Google Apps Script, Salesforce, respond.io on WhatsApp, the Claude API, Microsoft Graph, Google Sheets and Drive, GitHub Pages, Playwright. Thirty-six backend files, about one hundred thousand lines.">
-          <div class="term-bar"><i></i><i></i><i></i><b>rickyrampersadbranch.com &mdash; what runs here</b></div>
-          <div class="term-body" aria-hidden="true">
-<div style="--l:0"><span class="c"># the backend, written in-branch</span></div>
-<div style="--l:1"><span class="p">&rsaquo;</span> <span class="k">Google Apps Script</span>   <span class="s">36 files &middot; ~100,000 lines</span></div>
-<div style="--l:2"><span class="p">&rsaquo;</span> <span class="k">Salesforce</span>           <span class="s">OAuth &middot; SOQL &middot; composite &middot; Chatter</span></div>
-<div style="--l:3"><span class="p">&rsaquo;</span> <span class="k">respond.io</span>           <span class="s">a WhatsApp agent, live</span></div>
-<div style="--l:4"><span class="p">&rsaquo;</span> <span class="k">Claude API</span>           <span class="s">structured output &middot; guardrails</span></div>
-<div style="--l:5"><span class="p">&rsaquo;</span> <span class="k">Microsoft Graph</span>      <span class="s">the branch mailbox</span></div>
-<div style="--l:6"><span class="p">&rsaquo;</span> <span class="k">Sheets &middot; Drive</span>       <span class="s">the datastore</span></div>
-<div style="--l:7"><span class="p">&rsaquo;</span> <span class="k">pdf-lib &middot; pdf.js</span>    <span class="s">forms filled and read</span></div>
-<div style="--l:8"><span class="p">&rsaquo;</span> <span class="k">Playwright</span>           <span class="s">175 test files</span></div>
-<div style="--l:9"><span class="c"># and the front: 338 pages, 593 commits so far</span></div>
-<div style="--l:10"><span class="p">&rsaquo;</span> <span class="s">all of it public. github.com &rarr; read it.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ WHAT RUNS HERE — the stack, promoted out of the hero 9 Nov 2026 ════ -->
+<section class="alt" id="runs">
+  <div class="wrap">
+    <div class="filmgrid rv">
+          <div class="term" role="img" aria-label="The branch's own stack: Google Apps Script, Salesforce, respond.io on WhatsApp, the Claude API, Microsoft Graph, Google Sheets and Drive, GitHub Pages, Playwright. Thirty-six backend files, about one hundred thousand lines.">
+            <div class="term-bar"><i></i><i></i><i></i><b>rickyrampersadbranch.com &mdash; what runs here</b></div>
+            <div class="term-body" aria-hidden="true">
+  <div style="--l:0"><span class="c"># the backend, written in-branch</span></div>
+  <div style="--l:1"><span class="p">&rsaquo;</span> <span class="k">Google Apps Script</span>   <span class="s">36 files &middot; ~100,000 lines</span></div>
+  <div style="--l:2"><span class="p">&rsaquo;</span> <span class="k">Salesforce</span>           <span class="s">OAuth &middot; SOQL &middot; composite &middot; Chatter</span></div>
+  <div style="--l:3"><span class="p">&rsaquo;</span> <span class="k">respond.io</span>           <span class="s">a WhatsApp agent, live</span></div>
+  <div style="--l:4"><span class="p">&rsaquo;</span> <span class="k">Claude API</span>           <span class="s">structured output &middot; guardrails</span></div>
+  <div style="--l:5"><span class="p">&rsaquo;</span> <span class="k">Microsoft Graph</span>      <span class="s">the branch mailbox</span></div>
+  <div style="--l:6"><span class="p">&rsaquo;</span> <span class="k">Sheets &middot; Drive</span>       <span class="s">the datastore</span></div>
+  <div style="--l:7"><span class="p">&rsaquo;</span> <span class="k">pdf-lib &middot; pdf.js</span>    <span class="s">forms filled and read</span></div>
+  <div style="--l:8"><span class="p">&rsaquo;</span> <span class="k">Playwright</span>           <span class="s">175 test files</span></div>
+  <div style="--l:9"><span class="c"># and the front: 338 pages, 593 commits so far</span></div>
+  <div style="--l:10"><span class="p">&rsaquo;</span> <span class="s">all of it public. github.com &rarr; read it.</span></div>
+            </div>
           </div>
-        </div>
+      <div>
+        <span class="eyebrow">What runs here</span>
+        <h2 data-words>What the branch runs on, this morning.</h2>
+        <p>Every line of that is in production today, carrying real client work. The person in this seat writes in all of it &mdash; and on the first day, in the part of it they choose.</p>
+        <p class="small">All of it public: the repository is open, and you can read the code before you apply.</p>
       </div>
     </div>
   </div>
@@ -753,25 +800,6 @@ footer .ic{width:16px;height:16px}
 </section>
 
 
-<!-- ══════════════════ THE FILM ══════════════════ -->
-<section class="alt" id="film" style="padding-block:var(--sp-xl)">
-  <div class="wrap">
-    <div class="filmgrid rv">
-      <div class="vwrap">
-        <video id="fv" playsinline preload="metadata" poster="film-w.jpg"
-               controls controlslist="nodownload" aria-label="A minute and a half on the seat, the tools and what we stand for">
-          <source src="film-w.mp4" type="video/mp4">
-        </video>
-      </div>
-      <div>
-        <span class="eyebrow">A minute and a half</span>
-        <h2 data-words>If you would rather just watch it.</h2>
-        <p>The seat, the tools, what we stand for, and the one thing we are looking for. The words are on screen the whole way through, so it reads fine with the sound off &mdash; which is how you are probably watching.</p>
-        <p class="small">Every file name on screen is a real file in the branch&rsquo;s own backend. Every figure in it is illustrative and no client appears anywhere.</p>
-      </div>
-    </div>
-  </div>
-</section>
 
 <div class="band">
   <div class="wrap">
@@ -883,8 +911,8 @@ footer .ic{width:16px;height:16px}
   <div class="wrap">
     <div class="rv">
       <span class="eyebrow">Proof, not adjectives</span>
-      <h2 data-words>Most employers show you a job description. <em>We will show you the whole workshop.</em></h2>
-      <p class="lede">Every advertisement claims a great environment, and almost none can be checked. Ours can. Everything this branch has built is out in the open &mdash; you can look through all of it, today, before you decide whether to spend fifteen minutes applying.</p>
+      <h2 data-words>A job description tells you very little. <em>So here is the whole workshop.</em></h2>
+      <p class="lede">A good environment is easy to claim and hard to check, so here is ours to check. Everything this branch has built is out in the open &mdash; you can look through all of it, today, before you decide whether to spend fifteen minutes applying.</p>
       <p class="small" style="max-width:58ch">It lives on a site called GitHub, which is where people keep the things they build. <strong>You do not need an account and you do not need to understand all of it.</strong> Open it, scroll, and see whether this looks like somewhere you would want to be.</p>
     </div>
     <div class="rv" style="margin-top:var(--sp-l)">
@@ -1254,7 +1282,7 @@ footer .ic{width:16px;height:16px}
   </div>
 </footer>
 
-<div class="sticky"><a class="btn btn-1" href="#apply">Apply &mdash; 10 minutes</a></div>
+<div class="sticky"><a class="btn btn-1" href="#apply">Apply &mdash; 15 minutes</a></div>
 
 <script>
 (function(){
