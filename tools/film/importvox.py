@@ -25,7 +25,12 @@ timing_out = sys.argv[sys.argv.index('--timing') + 1] if '--timing' in sys.argv 
 lines_in = sys.argv[sys.argv.index('--lines') + 1] if '--lines' in sys.argv else None
 SAID, EXTRA = [], []
 if lines_in:
-    _L = json.load(open(lines_in))['scenes']
+    _L = json.load(open(lines_in))
+    # the board films carry scene objects; the recruiting films carry a plain
+    # list of spoken lines. Take either, so --lines works for both and the
+    # captions keep their punctuation.
+    if isinstance(_L, dict): _L = _L['scenes']
+    if _L and isinstance(_L[0], str): _L = [{'say': x} for x in _L]
     SAID = [x.get('say', '') for x in _L]
     EXTRA = [float(x.get('extra', 0) or 0) for x in _L]
 os.makedirs(dst, exist_ok=True)

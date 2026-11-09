@@ -1082,7 +1082,21 @@ if TLINES and MODE != 'ad':
         f'<p class="sub in" style="--t0:{tat(4,"admin")}ms">The system does the admin. He does the sitting with you.</p><p class="sub in" style="--t0:{tat(4,"alone")}ms"><em>Nobody here is left to figure it out alone.</em></p>',
         dict(strike="clock", coach="sitting", week="week", friday="Friday", note="e-mail", person="person"))))
     T.append(tscene(5, 's-seats tr', blk_seats(5, tat, TLINES)))
-    T.append(tscene(6, 's-door tr', blk_gate(6, tat, TLINES)))
+    # 9 November 2026: the one objection an agent who jumped ship still has is
+    # "is the company sound?". A rating is a factual claim about a regulated
+    # insurer, so it is on screen as well as spoken, and it is stated EXACTLY:
+    # A- (Excellent) for Guardian Life of the Caribbean, AM Best, affirmed
+    # 6 May 2026, stable. Never "A-rated": Guardian Life Insurance Company of
+    # America is a different company rated A++, and a loose word invites that
+    # reading. The assets are the GROUP's (Guardian Holdings), audited to
+    # 31 Dec 2025 and filed on the TT Stock Exchange — not the subsidiary's.
+    CRED = f'''
+<div class="credbar in" style="--t0:{tat(6,"sound")}ms">
+  <span class="cred in" style="--t0:{tat(6,"rated")}ms"><b>A&minus;</b><small>Excellent &middot; AM&nbsp;Best<br>affirmed May 2026 &middot; stable</small></span>
+  <span class="cred in" style="--t0:{tat(6,"billion")}ms"><b>TT$39.8bn</b><small>group assets<br>audited, 31 Dec 2025</small></span>
+  <span class="cred in" style="--t0:{tat(6,"group")}ms"><b>32 yrs</b><small>this branch<br>in Trinidad</small></span>
+</div>'''
+    T.append(tscene(6, 's-door tr', CRED + blk_gate(6, tat, TLINES)))
     tb = tat(7, "Book")
     T.append(tscene(7, 's-cta tr', f'''
 <div class="split cta tr-cta">
@@ -2065,6 +2079,10 @@ body.paused #bars i.run::after{animation-play-state:paused}
 .tr-ceil span{position:absolute;left:0;top:calc(var(--u)*-3.4);font:600 calc(var(--u)*2)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aT)}
 .tr-lab{position:absolute;right:calc(var(--u)*12);top:calc(var(--u)*-1);font:800 calc(var(--u)*3.6)/1 var(--display);color:var(--aL);opacity:0;font-style:normal;z-index:4}
 .scene.act .tr-lab{animation:pop .6s var(--pop) both;animation-delay:var(--t0)}
+.credbar{display:flex;gap:1.4vw;justify-content:center;flex-wrap:wrap;margin:0 0 2.2vh}
+.cred{display:flex;align-items:center;gap:.7vw;padding:.9vh 1.5vw;border-radius:.8vw;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
+.cred b{font-size:2.6vh;font-weight:800;letter-spacing:-.01em;line-height:1}
+.cred small{font-size:1.15vh;line-height:1.3;opacity:.82;text-align:left}
 .tr-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*3.2);width:100%;max-width:calc(var(--u)*172);margin:calc(var(--u)*2) auto 0}
 .tr-card{position:relative;background:#fff;color:#0d3f5e;border-radius:calc(var(--u)*2.4);padding:calc(var(--u)*3.2) calc(var(--u)*3.4);display:grid;gap:calc(var(--u)*1.5);text-align:left;box-shadow:0 calc(var(--u)*3) calc(var(--u)*9) rgba(4,6,10,.5);align-content:start}
 .tr-card small{font:600 calc(var(--u)*1.9)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--aD)}
