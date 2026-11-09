@@ -829,6 +829,101 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 .cchip .ic{color:var(--aL)}.cchip b{font:700 var(--f-0)/1.25 var(--display);color:#fff}
 .csample{margin:0;font-size:var(--f--2);color:var(--dT3)}
 @media (max-width:48rem){.cstage{grid-template-columns:1fr;gap:var(--sp-l)}.cs-row{grid-template-columns:1fr}.clockcard .clk{width:min(13rem,60%)}}
+/* ═══ WHAT YOUR MANAGER DOES — the week, and the three people (9 November 2026) ═══ */
+.mw{display:grid;gap:var(--sp-l)}
+.mwk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-m);counter-reset:mwd}
+@media (max-width:62rem){.mwk{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:38rem){.mwk{grid-template-columns:1fr}}
+.mwd{counter-increment:mwd;position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-m);box-shadow:var(--e1);display:grid;gap:.5rem;align-content:start;min-width:0}
+.mwd::before{content:"";position:absolute;inset:0 0 auto;height:3px;border-radius:var(--r) var(--r) 0 0;background:linear-gradient(90deg,var(--a),var(--aL))}
+.mwd small{font:700 var(--f--2)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aD)}
+.mwd h3{margin:0;font:700 var(--f-0)/1.25 var(--display);color:var(--ink)}
+.mwd p{margin:0;font-size:var(--f--1);line-height:1.5;color:var(--body)}
+.mwd .src{font-size:var(--f--2);color:var(--muted)}
+.mrg{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:var(--sp-m)}
+.mrc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-l);box-shadow:var(--e1);display:grid;gap:var(--sp-s);align-content:start;min-width:0}
+.mrc .who{display:flex;align-items:center;gap:.8rem}
+.mrc .who>div{min-width:0}
+.mrc .who span{flex:none;width:2.6rem;height:2.6rem;border-radius:.75rem;display:grid;place-items:center;background:var(--a-tint2);color:var(--aD)}
+.mrc .who b{display:block;font:700 var(--f-1)/1.15 var(--display);color:var(--ink)}
+.mrc .who em{display:block;font-style:normal;font-size:var(--f--2);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.mrc ul{margin:0;padding:0;list-style:none;display:grid;gap:.55rem}
+.mrc li{display:flex;gap:.6rem;font-size:var(--f--1);line-height:1.5;color:var(--body)}
+.mrc li svg{flex:none;width:1.15rem;height:1.15rem;margin-top:.15rem;color:var(--aD);fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mdesk{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:var(--sp-s);margin:0;padding:0;list-style:none}
+.mdesk li{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-s);padding:.9rem 1rem;display:grid;gap:.2rem;min-width:0}
+.mdesk b{font:800 var(--f-1)/1 var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
+.mdesk span{font-size:var(--f--2);line-height:1.4;color:var(--muted)}
+/* ═══ THE INDUSTRY'S OWN NUMBERS — dark band, single-series charts (9 November 2026) ═══ */
+.ev{background:radial-gradient(110% 80% at 85% 0%,var(--d3),transparent 62%),linear-gradient(170deg,var(--d1),var(--d0) 72%);color:var(--dT2);overflow:clip}
+.ev .eyebrow{color:var(--aT)}
+.ev h2{color:var(--dT)}
+.ev .lede p{color:var(--dT2)}
+.evk{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:var(--sp-m);margin-block:var(--sp-l)}
+.evt{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.14);border-radius:var(--r);padding:var(--sp-m) var(--sp-l);display:grid;gap:.3rem;align-content:start;min-width:0}
+.evt b{font:800 var(--f-3)/1 var(--display);color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.evt span{font-size:var(--f--1);line-height:1.4;color:var(--dT2)}
+.evt cite{font-style:normal;font-size:var(--f--2);color:var(--dT3)}
+.evg{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,21rem),1fr));gap:var(--sp-m)}
+.chrt{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.14);border-radius:var(--r);padding:var(--sp-l);display:grid;gap:var(--sp-m);align-content:start;min-width:0}
+.chrt h3{margin:0;font:700 var(--f-1)/1.2 var(--display);color:#fff}
+.chrt .ctx{margin:0;font-size:var(--f--1);line-height:1.5;color:var(--dT2)}
+.hb{display:grid;gap:.9rem;margin:0}
+.hb .row{display:grid;grid-template-columns:1fr;gap:.3rem;min-width:0}
+.hb .lab{display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;font-size:var(--f--1);color:var(--dT2);min-width:0}
+.hb .lab i{font-style:normal;min-width:0}
+.hb .lab b{font:800 var(--f-0)/1 var(--display);color:#fff;font-variant-numeric:tabular-nums;flex:none}
+.hb .trk{position:relative;height:.9rem;border-radius:.45rem;background:rgba(255,255,255,.1);overflow:hidden}
+.hb .fil{position:absolute;inset:0 auto 0 0;width:var(--w);border-radius:.45rem;background:linear-gradient(90deg,#0e93b0,var(--aL));transform-origin:0 50%}
+.hb .row.ref .trk{background:transparent;border:2px dashed var(--dT3);height:.9rem;border-radius:.45rem}
+.hb .row.ref .lab,.hb .row.ref .lab b{color:var(--dT3)}
+.hb .row.ref .lab b{font-weight:700}
+.hb .row:hover .fil,.hb .row:focus-visible .fil{filter:brightness(1.12)}
+.hb .row:focus-visible{outline:3px solid var(--aT);outline-offset:4px;border-radius:.5rem}
+.hb .tip{font-size:var(--f--2);color:var(--dT3);line-height:1.4}
+.ckey{display:flex;flex-wrap:wrap;gap:.4rem 1.1rem;margin:0;font-size:var(--f--2);color:var(--dT3)}
+.ckey span{display:inline-flex;align-items:center;gap:.4rem}
+.ckey i{flex:none;width:1.1rem;height:.6rem;border-radius:.3rem;background:linear-gradient(90deg,#0e93b0,var(--aL))}
+.ckey i.r{background:transparent;border:2px dashed var(--dT3)}
+.chrt details{font-size:var(--f--2);color:var(--dT3)}
+.chrt summary{cursor:pointer;color:var(--aT);font-weight:600}
+.chrt table{width:100%;border-collapse:collapse;margin-top:.6rem;font-variant-numeric:tabular-nums}
+.chrt th,.chrt td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid rgba(255,255,255,.12);color:var(--dT2)}
+.chrt th{color:var(--dT3);font-weight:600}
+.chrt td:last-child,.chrt th:last-child{text-align:right}
+.evsrc{margin:var(--sp-l) 0 0;font-size:var(--f--2);line-height:1.6;color:var(--dT3)}
+.evsrc b{color:var(--dT2)}
+/* ═══ WHERE YOUR NEXT CLIENT COMES FROM — dark band (9 November 2026) ═══ */
+.lds{background:radial-gradient(100% 70% at 12% 0%,var(--d2),transparent 60%),linear-gradient(190deg,var(--d1),var(--d0) 75%);color:var(--dT2);overflow:clip}
+.lds .eyebrow{color:var(--aT)}.lds h2{color:var(--dT)}.lds .lede p{color:var(--dT2)}
+.lpain{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:var(--sp-m);margin-block:var(--sp-l)}
+.lpn{border:1px solid rgba(255,255,255,.14);border-radius:var(--r);padding:var(--sp-m) var(--sp-l);display:grid;gap:.45rem;align-content:start;min-width:0;background:rgba(255,255,255,.04)}
+.lpn small{font:700 var(--f--2)/1 var(--text);letter-spacing:.13em;text-transform:uppercase;color:var(--dT3)}
+.lpn b{font:700 var(--f-1)/1.2 var(--display);color:#fff}
+.lpn p{margin:0;font-size:var(--f--1);line-height:1.5;color:var(--dT2)}
+.lpn p.us{padding-top:.55rem;border-top:1px solid rgba(255,255,255,.14);color:var(--aT)}
+.lpn p.us b{display:inline;font:inherit;font-weight:700;color:var(--aT)}
+.lgrid{display:grid;grid-template-columns:1.08fr .92fr;gap:var(--sp-xl);align-items:start}
+.lsteps{margin:0;padding:0;list-style:none;display:grid;gap:var(--sp-m);counter-reset:lst}
+.lsteps li{counter-increment:lst;display:grid;grid-template-columns:auto 1fr;gap:1rem;align-items:start;min-width:0}
+.lsteps li::before{content:counter(lst,decimal-leading-zero);font:800 var(--f--1)/2.1rem var(--display);width:2.1rem;height:2.1rem;text-align:center;border-radius:.6rem;background:rgba(0,207,234,.14);color:var(--aT);font-variant-numeric:tabular-nums}
+.lsteps h3{margin:0 0 .25rem;font:700 var(--f-0)/1.25 var(--display);color:#fff}
+.lsteps p{margin:0;font-size:var(--f--1);line-height:1.55;color:var(--dT2)}
+.brief{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.16);border-radius:var(--r);padding:var(--sp-l);display:grid;gap:var(--sp-s);min-width:0;box-shadow:0 20px 50px rgba(4,14,26,.45)}
+.brief .bh{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;padding-bottom:.7rem;border-bottom:1px solid rgba(255,255,255,.14)}
+.brief .bh b{font:700 var(--f-0)/1.2 var(--display);color:#fff}
+.brief .bh span{font-size:var(--f--2);letter-spacing:.12em;text-transform:uppercase;color:var(--aT);font-weight:700}
+.brow{display:grid;grid-template-columns:auto 1fr;gap:.35rem .9rem;font-size:var(--f--1);line-height:1.5}
+.brow dt{color:var(--dT3);white-space:nowrap}.brow dd{margin:0;color:#fff;min-width:0}
+.bins{margin:0;padding:0;list-style:none;display:grid;gap:.45rem}
+.bins li{display:block;font-size:var(--f--1);line-height:1.45;color:var(--dT2);padding:.5rem .7rem;border-radius:.5rem;background:rgba(0,207,234,.09);border-left:2px solid var(--aT)}
+.bins li b{color:#fff;font-weight:600}
+.bsay{margin:0;padding:.75rem .9rem;border-radius:.6rem;background:rgba(255,255,255,.07);font-size:var(--f--1);line-height:1.5;color:#fff}
+.bsay small{display:block;font-size:var(--f--2);letter-spacing:.12em;text-transform:uppercase;color:var(--dT3);margin-bottom:.3rem;font-weight:700}
+.bfoot{margin:0;font-size:var(--f--2);color:var(--dT3)}
+@media (max-width:56rem){.lgrid{grid-template-columns:1fr;gap:var(--sp-l)}}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+@media (max-width:40rem){.chrt{padding:var(--sp-m)}}
 /* ═══ OUR OWN FACT FIND, BY THE NUMBERS (29 October 2026). Finished states are the defaults. ═══ */
 .ffnw{display:grid;gap:var(--sp-l)}
 .fnk{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:var(--sp-m)}
@@ -946,6 +1041,16 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   .cstage.in .cweek .fri{animation:friday .5s var(--ease-out) 2.8s both}
   @keyframes friday{from{background:var(--d2)}}
   .coach.rest .clockcard,.coach.rest .cill .ring{animation-play-state:paused}
+  /* the manager's week lands a day at a time */
+  .mwk.in .mwd{animation:up .6s var(--ease-out) both;animation-delay:calc(var(--i,0)*90ms)}
+  .mwk.in .mwd::before{transform:scaleX(0);transform-origin:0 50%;animation:grow .7s var(--ease-out) both;animation-delay:calc(var(--i,0)*90ms + .25s)}
+  /* the bars draw themselves; the reference dash stays put */
+  .hb.in .fil{transform:scaleX(0);animation:grow .85s var(--ease-out) both;animation-delay:calc(var(--i,0)*120ms + .15s)}
+  .hb.in .lab b{animation:up .5s var(--ease-out) both;animation-delay:calc(var(--i,0)*120ms + .5s)}
+  /* the steps arrive in order; the brief's findings land one at a time */
+  .lsteps.in li{animation:up .55s var(--ease-out) both;animation-delay:calc(var(--i,0)*110ms)}
+  .brief.in .bins li{animation:up .5s var(--ease-out) both;animation-delay:calc(.5s + var(--i,0)*140ms)}
+  .brief.in .bsay{animation:up .55s var(--ease-out) both .25s}
   /* the career timeline draws itself, and a rider travels it, when it comes into view */
   .ctlw.in .rail.main{stroke-dasharray:100;stroke-dashoffset:100;animation:rdraw 1.6s var(--ease-out) forwards}
   .ctlw.in .rail.a,.ctlw.in .rail.b{stroke-dasharray:100;stroke-dashoffset:100;animation:rdraw 1.4s var(--ease-out) 1.6s forwards}
@@ -1221,7 +1326,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
     <div class="lede rv">
       <span class="eyebrow">The Selection</span>
       <h2 data-words>Five gates. The same ones for everyone.</h2>
-      <p>A fifteen-year producer and a newcomer walk the same road: the LIMRA selection process the branch has run for years, with a person at every step. It is rigorous because the room stays strong only if the door is.</p>
+      <p>A fifteen-year producer and a newcomer walk the same road: the LIMRA selection process the branch has run for years, with a person at every step. It is rigorous because the room stays strong only if the door is &mdash; and it is <strong>joint</strong>. Every gate is a thing you find out too. We take the time because a wrong yes costs you a year of your life, and that matters more to us than filling a seat.</p>
     </div>
     <div class="hero-art gates-art rv">
       <div class="stage" id="stage" aria-label="The selection and the career path, around the branch mark" role="img">
@@ -1329,12 +1434,89 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 </section>
 
 <!-- ═══ THE ENVIRONMENT ═══ -->
+<!-- ═══ THE INDUSTRY'S OWN NUMBERS, 9 November 2026 ═══
+     Every figure here is sourced on the page itself. Single-series charts with a
+     labelled reference marker — never two hues from one family, which cannot be
+     told apart (checked with the palette validator: ΔE 8.2 normal vision). ═══ -->
+<section class="ev" id="evidence" data-g="evidence">
+  <div class="wrap">
+    <div class="lede rv">
+      <span class="eyebrow">Before you decide</span>
+      <h2 data-words>You are not the first person to think about this.</h2>
+      <p>Thousands of advisors move every year, and the industry has measured why, how it went for them, and what actually decides whether somebody lasts. We would rather you read those numbers than our adjectives. Three of them are about you. The fourth is about us.</p>
+    </div>
+
+    <div class="evk rv">
+      <div class="evt"><b data-to="79" data-suffix="%">79%</b><span>of advisors who moved firms said <strong style="color:#fff">technology</strong> was a key factor in the decision</span><cite>Advisor360&deg; Connected Wealth Report, 2025 &middot; 155 recent switchers</cite></div>
+      <div class="evt"><b data-to="83" data-suffix="%">83%</b><span>of advisors who moved in the past three years are satisfied they did</span><cite>Advisor360&deg;, 2025</cite></div>
+      <div class="evt"><b data-to="35" data-suffix="%">35%</b><span>wish they had moved <strong style="color:#fff">sooner</strong></span><cite>Advisor360&deg;, 2025</cite></div>
+    </div>
+
+    <div class="evg">
+      <article class="chrt rv">
+        <h3>What decides whether you last</h3>
+        <p class="ctx">LIMRA measured first-year retention against one variable: who brought the advisor in and what surrounded them afterwards. Same industry, same product, same market. Eleven points of difference on the room alone.</p>
+        <div class="hb in" role="img" aria-label="First-year retention by who recruited the advisor: brought in by a recruiter 44 per cent, by a sales manager 50 per cent, by an office head 55 per cent.">
+          <div class="row" style="--i:0" tabindex="0">
+            <span class="lab"><i>Brought in by a recruiter</i><b>44%</b></span>
+            <span class="trk"><span class="fil" style="--w:80%"></span></span>
+          </div>
+          <div class="row" style="--i:1" tabindex="0">
+            <span class="lab"><i>Brought in by a sales manager</i><b>50%</b></span>
+            <span class="trk"><span class="fil" style="--w:91%"></span></span>
+          </div>
+          <div class="row" style="--i:2" tabindex="0">
+            <span class="lab"><i>Brought in by the head of the office</i><b>55%</b></span>
+            <span class="trk"><span class="fil" style="--w:100%"></span></span>
+          </div>
+        </div>
+        <p class="tip"><strong style="color:#fff">Here, it is the third one.</strong> The Branch Manager interviews and selects every advisor in this branch himself.</p>
+        <details><summary>See the figures</summary>
+          <table><caption class="sr-only">First-year retention by who recruited the advisor</caption><thead><tr><th scope="col">Brought in by</th><th scope="col">Still there after a year</th></tr></thead>
+          <tbody><tr><td>A recruiter</td><td>44%</td></tr><tr><td>A sales manager</td><td>50%</td></tr><tr><td>The head of the office</td><td>55%</td></tr></tbody></table>
+        </details>
+      </article>
+
+      <article class="chrt rv">
+        <h3>And then the fourth number</h3>
+        <p class="ctx">This one is ours, measured on our own roll, against the industry&rsquo;s published figure. The dashed bar is the industry. The solid bar is this branch.</p>
+        <div class="hb in" role="img" aria-label="Advisors still in the business: after one year, the industry 55 to 60 per cent and this branch 67 per cent; after four years, the industry about 15 per cent and this branch 31 per cent.">
+          <div class="row ref" style="--i:0">
+            <span class="lab"><i>After 1 year &middot; the industry</i><b>55&ndash;60%</b></span>
+            <span class="trk" style="width:86%"></span>
+          </div>
+          <div class="row" style="--i:1" tabindex="0">
+            <span class="lab"><i>After 1 year &middot; this branch</i><b>67%</b></span>
+            <span class="trk" style="width:100%"><span class="fil" style="--w:100%"></span></span>
+          </div>
+          <div class="row ref" style="--i:2">
+            <span class="lab"><i>After 4 years &middot; the industry</i><b>~15%</b></span>
+            <span class="trk" style="width:22%"></span>
+          </div>
+          <div class="row" style="--i:3" tabindex="0">
+            <span class="lab"><i>After 4 years &middot; this branch</i><b>31%</b></span>
+            <span class="trk" style="width:46%"><span class="fil" style="--w:100%"></span></span>
+          </div>
+        </div>
+        <p class="ckey"><span><i></i>This branch</span><span><i class="r"></i>The industry, published</span></p>
+        <p class="tip">All four bars are to one scale. Four-year survival of about 15% is LIMRA&rsquo;s figure for agency systems built on recruiting the inexperienced &mdash; which is exactly the system this branch stopped running.</p>
+        <details><summary>See the figures</summary>
+          <table><caption class="sr-only">Advisors still in the business, this branch against the industry</caption><thead><tr><th scope="col">Still in the business</th><th scope="col">The industry</th><th scope="col">This branch</th></tr></thead>
+          <tbody><tr><td>After 1 year</td><td>55&ndash;60%</td><td>67%</td></tr><tr><td>After 4 years</td><td>~15%</td><td>31%</td></tr></tbody></table>
+        </details>
+      </article>
+    </div>
+
+    <p class="evsrc rv"><b>Where these come from.</b> Advisor360&deg; Connected Wealth Report 2025, a survey of 155 advisors who had recently changed firms, fielded September&ndash;October 2024 &mdash; a small, mostly enterprise sample, and we say so rather than rounding it up. The retention and survival figures are LIMRA&rsquo;s own published research on agency distribution. The branch&rsquo;s two figures are from its own roll and are ours to stand behind. None of this is about any other branch or any other company: it is the industry measuring itself, and us measuring ourselves against it.</p>
+  </div>
+</section>
+
 <section class="env" id="environment" data-g="env">
   <div class="wrap">
     <div class="lede rv">
       <span class="eyebrow">The Environment</span>
       <h2 data-words>The same advisor, in a different room, is a different advisor.</h2>
-      <p>That is not our opinion. It is the industry&rsquo;s own finding: LIMRA puts four-year survival at about <strong>15%</strong> across agency systems built on recruiting the inexperienced, and measured first-year retention moving from <strong>44% to 55%</strong> on nothing but who brought the person in and what surrounded them after. <strong>The variable is the room.</strong> So here is ours, in full &mdash; every part of it built here, on purpose, and running today.</p>
+      <p>Those are the industry&rsquo;s numbers, and every one of them points at the same variable: <strong>the room</strong>. Not the product, not the market, not how hard the person was willing to work. So here is ours, in full &mdash; every part of it built here, on purpose, and running today.</p>
     </div>
     <div class="g g-4">
       <div class="card rv"><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg></span><h3>A culture that produces qualifiers</h3><p>Qualifiers here aren’t luck; they’re a system. The road to the top of this profession is mapped, coached and expected, and the people who have walked it sit in this room.</p></div>
@@ -1371,6 +1553,174 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
         <p class="cchip"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><b>And in person. He sits with you on it.</b></p>
         <p class="csample">Priya and her week are made up. The Weekly Manager Pulse and the morning note are real.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ WHAT YOUR MANAGER ACTUALLY DOES, 9 November 2026 ═══ -->
+<section class="mgr" id="mgr" data-g="mgr">
+  <div class="wrap">
+    <div class="lede rv">
+      <span class="eyebrow">What that looks like</span>
+      <h2 data-words>&ldquo;Support&rdquo; is a word. This is a diary.</h2>
+      <p>Every branch advertisement promises support. Almost none of them can tell you what day it happens on. Here is the week as it is actually run &mdash; each of these is a named thing in a system you will be signed into on your first morning, not a promise somebody makes at interview.</p>
+    </div>
+    <div class="mw">
+      <div class="mwk rv">
+        <article class="mwd" style="--i:0">
+          <small>Every morning</small>
+          <h3>A note from your manager, before you start</h3>
+          <p>Your day is already set when you check in &mdash; and a line from your unit manager about <em>your</em> week sits on top of it.</p>
+          <p class="src">Manager Notes &middot; your morning e-mail</p>
+        </article>
+        <article class="mwd" style="--i:1">
+          <small>Every day, 10&nbsp;am</small>
+          <h3>Someone else is chasing your money</h3>
+          <p>A premium going quiet on your book is not your problem to notice. The desk writes to the client at 45, 60, 75 and 90 days, and a person ticks every letter before it goes.</p>
+          <p class="src">Premium Due Desk</p>
+        </article>
+        <article class="mwd" style="--i:2">
+          <small>Every case</small>
+          <h3>Your plan is read before your client sees it</h3>
+          <p>No fact find reaches a client until a manager has read the recommendation and signed it off. If it is wrong, it comes back to you &mdash; not to the client.</p>
+          <p class="src">factfind360 &middot; manager review</p>
+        </article>
+        <article class="mwd" style="--i:3">
+          <small>Every week</small>
+          <h3>Off pace is picked up on Tuesday, not in January</h3>
+          <p>Leads, fact finds and closing interviews, per advisor, with what was done about each. Your manager files it. You are coached on it.</p>
+          <p class="src">Weekly Manager Pulse</p>
+        </article>
+        <article class="mwd" style="--i:4">
+          <small>Every Wednesday</small>
+          <h3>The room hears your name</h3>
+          <p>Nine o&rsquo;clock, the whole branch, and the week&rsquo;s wins read out. Yours included. You can put an item on the agenda from your phone the night before.</p>
+          <p class="src">Branch meeting &middot; Meeting Builder</p>
+        </article>
+        <article class="mwd" style="--i:5">
+          <small>Every month</small>
+          <h3>Your income, looked at properly</h3>
+          <p>Not a scolding about a number. A sit-down on what the year is actually going to pay you, and what has to change for it to.</p>
+          <p class="src">Monthly income review</p>
+        </article>
+      </div>
+
+      <div class="mrg">
+        <article class="mrc rv">
+          <div class="who"><span><svg class="ic" aria-hidden="true"><use href="#i-pulse"/></svg></span><div><b>Your unit manager</b><em>week to week</em></div></div>
+          <ul>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Sits with you on your week, in person, before Friday</li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Role-plays the fact find and books closing interviews with you</li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Closes a task on your behalf when you are in front of a client</li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Is accountable on the same register you are &mdash; his ten measures are planned and accounted for daily</li>
+          </ul>
+        </article>
+        <article class="mrc rv">
+          <div class="who"><span><svg class="ic" aria-hidden="true"><use href="#i-target"/></svg></span><div><b>The Branch Manager</b><em>32 years, this market</em></div></div>
+          <ul>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Interviews and selects every advisor here himself &mdash; and coaches them after</li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Signs off the large cases, personally, with four written attestations</li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Starts at five in the morning, on the same board you are on</li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Built the systems on this page because the branch needed them</li>
+          </ul>
+        </article>
+        <article class="mrc rv">
+          <div class="who"><span><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg></span><div><b>The support desks</b><em>so the admin is not yours</em></div></div>
+          <ul>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Your documents logged, routed and signed for the day you hand them in</li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Your client&rsquo;s query answered on a 24-hour clock, by a person, with a reference</li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>Your contracts delivered and receipted, with a photograph and a signature</li>
+            <li><svg aria-hidden="true"><use href="#i-check"/></svg>And you rate them on it &mdash; five stars, every closed task</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="rv">
+        <p style="margin:0 0 var(--sp-s);font-size:var(--f-0);line-height:1.5;color:var(--body)"><strong style="color:var(--ink)">No lost documents. No paper fact find.</strong> That is not a slogan here, it is a measured thing &mdash; and it is why your hours go to clients instead of to chasing your own paperwork.</p>
+        <ul class="mdesk">
+          <li><b>3,634</b><span>documents through the digital Log Book, each one signed for</span></li>
+          <li><b>72%</b><span>on to Guardian Life within one working day</span></li>
+          <li><b>Zero</b><span>paper fact finds &mdash; every one of them digital since 2026</span></li>
+          <li><b>12&nbsp;noon</b><span>the bag leaves; you are told by eleven if yours will catch it</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ WHERE YOUR NEXT CLIENT COMES FROM, 9 November 2026 ═══
+     The worked brief is a made-up client with made-up figures, and says so on its face.
+     Never a real client, a real client count or a real figure in anything published. ═══ -->
+<section class="lds" id="leads" data-g="leads">
+  <div class="wrap">
+    <div class="lede rv">
+      <span class="eyebrow">The part nobody advertises</span>
+      <h2 data-words>Nobody here is told to go and sell to their friends.</h2>
+      <p>This is the thing that actually breaks advisors, and almost no recruitment advertisement will say it out loud. So we will. Here is what most people are handed, what it costs them, and what happens instead in this branch.</p>
+    </div>
+
+    <div class="lpain rv">
+      <div class="lpn">
+        <small>What most are handed</small>
+        <b>Your own phone contacts</b>
+        <p>Your warm market, worked until it is cold. In one study of 103 advisors who left the business, roughly a quarter named <strong style="color:#fff">the cost of leads</strong> as a reason they went.</p>
+        <p class="us"><b>Here:</b> leads come to you from people who asked to be called, on a branch board, before you have spent a dollar.</p>
+      </div>
+      <div class="lpn">
+        <small>What most are handed</small>
+        <b>A name and a number</b>
+        <p>No history, no cover on file, nothing about the household. You find out what they hold by asking them, in front of them, which is where credibility goes.</p>
+        <p class="us"><b>Here:</b> you get the file first &mdash; every policy, the household, and what the records already say needs looking at.</p>
+      </div>
+      <div class="lpn">
+        <small>What most are handed</small>
+        <b>&ldquo;Go and prospect&rdquo;</b>
+        <p>LIMRA found <strong style="color:#fff">48%</strong> of people who joined this business for the income say the expectation was never met. Activity with no market behind it is how that happens.</p>
+        <p class="us"><b>Here:</b> your own market is mapped and scored out of a hundred <em>before</em> you are contracted, so both of us can see whether the first ninety days have a market in them.</p>
+      </div>
+    </div>
+
+    <div class="lgrid">
+      <ol class="lsteps rv">
+        <li style="--i:0">
+          <div><h3>A lead arrives that asked for you</h3>
+          <p>A prospect taps what is actually on their mind on the branch&rsquo;s own board, and it lands on your list with their own words attached. A lead your link produced stays yours, even if it is forwarded on &mdash; that is a written rule here, not a courtesy.</p></div>
+        </li>
+        <li style="--i:1">
+          <div><h3>The call script writes itself from their words</h3>
+          <p>The Lead Desk builds the opening from what that prospect said they wanted. It never prices and never recommends &mdash; the job of the call is an appointment, not a pitch.</p></div>
+        </li>
+        <li style="--i:2">
+          <div><h3>A household is matched to you, with the file</h3>
+          <p>Clients whose advisor has left are not handed out at random. They are matched &mdash; by family, by town, by what is at stake &mdash; and the whole household goes to one advisor, never a policy at a time.</p></div>
+        </li>
+        <li style="--i:3">
+          <div><h3>The portfolio is analysed before you call</h3>
+          <p>Every policy they hold, in force and lapsed, the years with us, the household around them, and what the records already say is worth raising. You walk in knowing. They notice.</p></div>
+        </li>
+        <li style="--i:4">
+          <div><h3>And a service questionnaire pays you TT$200</h3>
+          <p>Filed after the match, chased by the system until the Retention unit has paid it. Not a bonus somebody remembers &mdash; a claim with a reference and a follow-up on a clock.</p></div>
+        </li>
+      </ol>
+
+      <aside class="brief rv" aria-label="A sample advisor brief, with made-up details">
+        <div class="bh"><b>Your brief</b><span>Sample</span></div>
+        <dl class="brow">
+          <dt>Client</dt><dd>Anand P. &middot; 47 &middot; Couva</dd>
+          <dt>Work</dt><dd>Supervisor, manufacturing &middot; pays by salary deduction</dd>
+          <dt>With us</dt><dd>Since 2011 &middot; 3 policies, 1 lapsed</dd>
+          <dt>Household</dt><dd>4 on our books &middot; 2 matched to you</dd>
+        </dl>
+        <p class="bsay"><small>What they told us</small>&ldquo;I am not sure what my policy actually pays if something happens to me.&rdquo;</p>
+        <ul class="bins">
+          <li style="--i:0"><b>Cover ends in 3 years</b> on the policy he pays most for</li>
+          <li style="--i:1"><b>One policy pays his estate</b>, not a named person</li>
+          <li style="--i:2"><b>His wife holds nothing in force</b> with us</li>
+          <li style="--i:3"><b>Birthday in 19 days</b> &mdash; a reason to call that is not a sale</li>
+        </ul>
+        <p class="bfoot">Anand and every figure here are invented. The brief itself is real: this is the shape your branch sends you, the morning a household is matched to you.</p>
+      </aside>
     </div>
   </div>
 </section>
@@ -1782,7 +2132,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   /* ── the coach stage and the career timeline start their motion when they come into view (the page's .rv reveal is
         scroll-driven where view() is supported, so nothing else adds .in there) ── */
   (function(){
-    var els=[].slice.call(d.querySelectorAll('.cstage,.ctlw,.ffnw')); if(!els.length) return;
+    var els=[].slice.call(d.querySelectorAll('.cstage,.ctlw,.ffnw,.mwk,.hb,.lsteps,.brief')); if(!els.length) return;
     if(noMotion.matches||!('IntersectionObserver' in window)){ els.forEach(function(e){e.classList.add('in')}); return; }
     var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -12% 0px'});
     els.forEach(function(e){io.observe(e)});
