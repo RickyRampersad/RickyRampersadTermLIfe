@@ -1,47 +1,47 @@
 {
- "tts/out/ffnew3/01.mp3": [
-  "en",
-  0.996,
-  "Here's what's new at the Riki Rampersad Branch this week. Your pipeline, your check-in, and your year end."
- ],
- "tts/out/ffnew3/02.mp3": [
-  "en",
-  0.999,
-  "Sign in and your dashboard now opens on your pipeline. Every fact find from done to approved to sent to the clients yes. And your success rate right there."
- ],
- "tts/out/ffnew3/03.mp3": [
+ "tts/out/andrewreads/01.mp3": [
   "en",
   0.997,
-  "Below it, who's waiting on you? A plan approved, but not sent. A case sent back to fix. A client who hasn't answered in three days. Tap one and it opens."
+  "Here's a first at the Ricky Rampersad branch. Andrew now reads your client their plan."
  ],
- "tts/out/ffnew3/04.mp3": [
+ "tts/out/andrewreads/02.mp3": [
   "en",
-  0.999,
-  "From this Friday, your check-in fills itself in. Your fact finds, your apps, and your API come straight from the records. You check them, add a rest, and you're done."
+  0.998,
+  "A few minutes after your client gets their summary, a second email arrives from you. Andrew will read you your plan."
  ],
- "tts/out/ffnew3/05.mp3": [
+ "tts/out/andrewreads/03.mp3": [
+  "en",
+  0.997,
+  "It's private. They enter their date of birth and their own plan opens."
+ ],
+ "tts/out/andrewreads/04.mp3": [
+  "en",
+  0.995,
+  "They press play and Andrew reads it to them in about three minutes. It keeps playing with the phone locked so they can listen on the drive home."
+ ],
+ "tts/out/andrewreads/05.mp3": [
   "en",
   0.993,
-  "on the second working day of every month your clothes out arrives the month against your own flight plan three minutes to close it out and set the next one"
+  "Hello Jordan and Alicia. This is your family plan prepared for you by Sam Reyes from the Ricky Rampersat Branch of Guardian Life."
  ],
- "tts/out/ffnew3/06.mp3": [
+ "tts/out/andrewreads/06.mp3": [
   "en",
-  0.998,
-  "It's year end. Clients can still use the $60,000 deduction for pensions and annuities before the 31st of December. The working is at FactFind360.com. Slash annuity."
+  0.996,
+  "Every recommendation is yours. Your plans, your amounts, and your reasons in plain words."
  ],
- "tts/out/ffnew3/07.mp3": [
-  "en",
-  0.998,
-  "Every film we share carries the branches WhatsApp. And every email comes from support at rickierampersadbranch.com"
- ],
- "tts/out/ffnew3/08.mp3": [
-  "en",
-  0.999,
-  "and coming next, a brand new fact find built around your meeting with a client. Fewer questions, less typing, and a screen to show your client. A few of you will try it first."
- ],
- "tts/out/ffnew3/09.mp3": [
+ "tts/out/andrewreads/07.mp3": [
   "en",
   0.997,
-  "Open your dashboard today and see your pipeline. Everything new is at FactFind360.com slash new."
+  "In a moment they've heard it all, you get an email. They just listened. Call now."
+ ],
+ "tts/out/andrewreads/08.mp3": [
+  "en",
+  0.995,
+  "On your dashboard, you see who opened it, how much they heard, where they stopped, and who confirmed."
+ ],
+ "tts/out/andrewreads/09.mp3": [
+  "en",
+  0.998,
+  "Your advice, heard in your client's car, starting this week, see it at FactFind360.com. Slash Andrew."
  ]
 }
