@@ -1,27 +1,17 @@
 {
- "tts/out/ffnew/01.mp3": [
+ "tts/out/ffnew2/01.mp3": [
   "en",
   0.998,
-  "There's something new at the Rikki Rampersad Branch. Your month, closed out against your own plan."
+  "On the second working day of every month, you get one email. What you submitted and what settled, measured against the flight plan you wrote yourself."
  ],
- "tts/out/ffnew/03.mp3": [
+ "tts/out/ffnew2/02.mp3": [
   "en",
   0.998,
-  "It shows what each month of the quarter now needs, where you stand in the branch and the branch's honors. If one of them is yours, it says so."
+  "Then you tap close out. In three minutes, you rate the month, you name your win, and you commit to next month. You manage or seize it."
  ],
- "tts/out/ffnew/05.mp3": [
+ "tts/out/ffnew2/03.mp3": [
   "en",
-  0.994,
-  "On the wall, slide 13 is now a production board in 8 scenes. Are we winning? You'll know in 5 seconds."
- ],
- "tts/out/ffnew/06.mp3": [
-  "en",
-  0.997,
-  "And when a month closes, the whole branch sees who carried it."
- ],
- "tts/out/ffnew/08.mp3": [
-  "en",
-  0.999,
-  "Your October closeout is in your inbox. Open it, close out the month, and set you November. Everything new is at FactFind360.com. Slash new."
+  0.996,
+  "Every film we share now carries the branches WhatsApp, so a client could talk to us in one tab. And every email comes from one address. Support at rickierampersadbranch.com"
  ]
 }
