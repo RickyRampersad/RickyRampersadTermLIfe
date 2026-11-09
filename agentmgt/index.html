@@ -2203,7 +2203,10 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
     v.scrollIntoView({block:'center',behavior:'smooth'});
   }); }
   var sws=d.querySelectorAll('.sw'), swi=0, swTimer=null;
-  function swapWord(){sws[swi].classList.remove('on');swi=(swi+1)%sws.length;sws[swi].classList.add('on')}
+  /* Guard the function, not just the caller: the hero's visibility handler below restarts
+     this timer and never checked the length, so with the swap gone from the headline it
+     threw on every tick. A guard on one call site is not a guard. */
+  function swapWord(){if(sws.length<2)return;sws[swi].classList.remove('on');swi=(swi+1)%sws.length;sws[swi].classList.add('on')}
   if(sws.length>1 && !noMotion.matches) swTimer=setInterval(swapWord,2600);
 
   /* counters count UP TO the figure already in the markup */
