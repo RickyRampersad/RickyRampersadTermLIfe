@@ -1,17 +1,47 @@
 {
- "tts/out/ffnew2/01.mp3": [
-  "en",
-  0.998,
-  "On the second working day of every month, you get one email. What you submitted and what settled, measured against the flight plan you wrote yourself."
- ],
- "tts/out/ffnew2/02.mp3": [
-  "en",
-  0.998,
-  "Then you tap close out. In three minutes, you rate the month, you name your win, and you commit to next month. You manage or seize it."
- ],
- "tts/out/ffnew2/03.mp3": [
+ "tts/out/ffnew3/01.mp3": [
   "en",
   0.996,
-  "Every film we share now carries the branches WhatsApp, so a client could talk to us in one tab. And every email comes from one address. Support at rickierampersadbranch.com"
+  "Here's what's new at the Riki Rampersad Branch this week. Your pipeline, your check-in, and your year end."
+ ],
+ "tts/out/ffnew3/02.mp3": [
+  "en",
+  0.999,
+  "Sign in and your dashboard now opens on your pipeline. Every fact find from done to approved to sent to the clients yes. And your success rate right there."
+ ],
+ "tts/out/ffnew3/03.mp3": [
+  "en",
+  0.997,
+  "Below it, who's waiting on you? A plan approved, but not sent. A case sent back to fix. A client who hasn't answered in three days. Tap one and it opens."
+ ],
+ "tts/out/ffnew3/04.mp3": [
+  "en",
+  0.999,
+  "From this Friday, your check-in fills itself in. Your fact finds, your apps, and your API come straight from the records. You check them, add a rest, and you're done."
+ ],
+ "tts/out/ffnew3/05.mp3": [
+  "en",
+  0.993,
+  "on the second working day of every month your clothes out arrives the month against your own flight plan three minutes to close it out and set the next one"
+ ],
+ "tts/out/ffnew3/06.mp3": [
+  "en",
+  0.998,
+  "It's year end. Clients can still use the $60,000 deduction for pensions and annuities before the 31st of December. The working is at FactFind360.com. Slash annuity."
+ ],
+ "tts/out/ffnew3/07.mp3": [
+  "en",
+  0.998,
+  "Every film we share carries the branches WhatsApp. And every email comes from support at rickierampersadbranch.com"
+ ],
+ "tts/out/ffnew3/08.mp3": [
+  "en",
+  0.999,
+  "and coming next, a brand new fact find built around your meeting with a client. Fewer questions, less typing, and a screen to show your client. A few of you will try it first."
+ ],
+ "tts/out/ffnew3/09.mp3": [
+  "en",
+  0.997,
+  "Open your dashboard today and see your pipeline. Everything new is at FactFind360.com slash new."
  ]
 }
