@@ -47,6 +47,12 @@
   --ink:#0d3f5e; --body:#2b3b47; --muted:#5b6670; --line:#e4e0d4; --line-strong:#7d8890;
   --a:#00728d; --aD:#005a70; --aL:#00CFEA; --aT:#7fe3f2; --a-tint:#e8f3f6; --a-tint2:#cde8ee;
   --d0:#0d1f33; --d1:#14314f; --d2:#1b4268; --d3:#22527f;
+  /* The second accent, for the DARK bands only. Against the teal it measures ΔE 24.5 normal
+     vision, 17.3 protan, 26.1 tritan on #0d1f33 — a real categorical pair, which no two
+     colours in this brand could ever be on the light ground (8.2 there, far under the floor
+     of 15). So "the industry" and "this branch" are two colours now, not solid-vs-dashed.
+     It is never used on a light surface and never as a link, button or focus ring. */
+  --amb:#F5A25D; --ambD:#c9763a;
   --dT:#f3f6fa; --dT2:#b9cadd; --dT3:#b1c3d5;
   --display:'Playfair Display','Playfair Fallback','Playfair Fallback N',Georgia,serif;
   --text:'Inter','Inter Fallback','Inter Fallback R',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -136,10 +142,14 @@ section,.layout{padding-block:var(--sp-2xl)}
   .hero .wrap{align-items:start;row-gap:var(--sp-m)}
   .hero-lead{grid-column:1;grid-row:1}
   .hero-rest{grid-column:1;grid-row:2}
-  .hero-art{grid-column:2;grid-row:1 / span 2;align-self:center}
+  /* start, not center: with two cards in it the column fills from the top, which is what
+     closed the 600×400 void above the film card. */
+  .hero-art{grid-column:2;grid-row:1 / span 2;align-self:start}
 }
 .hero .eyebrow{color:var(--aT)}
-.hero h1{font-size:clamp(2.4rem,1.6rem + 3.6vw,4.6rem);color:#fff;margin:.9rem 0 1.1rem;font-weight:800;letter-spacing:-.02em;line-height:1.02}
+/* Stepped down from a 4.6rem cap on 9 Nov: at that size this headline ran to five lines
+   and pushed the sub, the CTAs and the whole right column below the fold. */
+.hero h1{font-size:clamp(2.05rem,1.35rem + 2.5vw,3.5rem);color:#fff;margin:.8rem 0 .9rem;font-weight:800;letter-spacing:-.02em;line-height:1.05;text-wrap:balance}
 .hero h1 em{color:var(--aL);font-weight:700}
 .swap{display:inline-grid;text-align:left;vertical-align:top}
 .sw{grid-area:1/1;color:var(--aL);white-space:nowrap}
@@ -152,7 +162,7 @@ section,.layout{padding-block:var(--sp-2xl)}
 .trust .ic{width:1rem;height:1rem;color:var(--aT)}
 
 /* the stage: the mark at the centre, the five gates and the five rungs circling it */
-.hero-art{position:relative;display:grid;justify-items:center;gap:var(--sp-m)}
+.hero-art{position:relative;display:grid;justify-items:stretch;gap:var(--sp-m)}
 .stage{position:relative;width:min(30rem,100%,100vw - 2.5rem);aspect-ratio:1;display:grid;place-items:center}
 .halo,.mesh,.orbit,.mark{grid-area:1/1}
 .halo{place-self:stretch;margin:-6%;border-radius:50%;pointer-events:none;background:radial-gradient(circle closest-side,rgba(0,114,141,.30),rgba(0,114,141,.10) 46%,transparent 70%)}
@@ -930,6 +940,62 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 .hsupp b{font:800 var(--f-1)/1 var(--display);color:#fff;font-variant-numeric:tabular-nums}
 .hsupp span{font-size:var(--f--2);line-height:1.3;color:var(--dT3)}
 @media (max-width:30rem){.hsupp{grid-template-columns:1fr 1fr}.hsupp div:last-child{grid-column:span 2}}
+/* ═══ WHAT THIS IS, AND THE STANDARD IT IS MEASURED AGAINST (9 November 2026) ═══
+   The hero said nothing about insurance for 5,502px, and the top-right quadrant was
+   600×400 of dead navy. .hero-what names the industry in the first screen; .hstd fills
+   the void with the one number that makes the branch's own record mean something. */
+.hero-what{margin:var(--sp-s) 0 0;max-width:34ch;font-size:var(--f-0);line-height:1.5;color:var(--dT2)}
+.hero-what strong{color:#fff;font-weight:700}
+.hero-what .tag{display:inline-block;background:rgba(0,207,234,.15);border:1px solid rgba(0,207,234,.3);color:var(--aT);border-radius:.4rem;padding:.08rem .4rem;font-size:var(--f--1);font-weight:700;white-space:nowrap}
+.hstd{background:linear-gradient(165deg,rgba(255,255,255,.08),rgba(255,255,255,.028));border:1px solid rgba(255,255,255,.16);border-radius:var(--r);padding:1.05rem 1.1rem;display:grid;gap:.75rem;margin-bottom:var(--sp-s)}
+.hstd h3{margin:0;font:800 var(--f--1)/1.25 var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--aT)}
+.hstd .hrow{display:grid;gap:.3rem}
+/* Exactly two flex children: the sentence in its own span, and the figure. A <strong>
+   left loose in here becomes a third flex item and the gap splits the sentence. */
+.hstd .hlab{display:flex;justify-content:space-between;align-items:baseline;gap:.7rem;font-size:var(--f--1);line-height:1.35;color:var(--dT2);min-width:0}
+.hstd .hlab>span{min-width:0}
+.hstd .hlab strong{color:#fff;font-weight:700}
+.hstd .hlab b{font:800 var(--f-1)/1 var(--display);font-variant-numeric:tabular-nums;color:#fff;flex:none}
+.hstd .htrk{height:.6rem;border-radius:.3rem;background:rgba(255,255,255,.1);overflow:hidden}
+.hstd .hfil{display:block;height:100%;border-radius:.3rem;width:var(--w);transform-origin:0 50%}
+.hstd .ind .hfil{background:linear-gradient(90deg,var(--ambD),var(--amb))}
+.hstd .us .hfil{background:linear-gradient(90deg,#0e93b0,var(--aL))}
+.hstd .hsrc{margin:0;font-size:var(--f--2);line-height:1.45;color:var(--dT3)}
+@media (max-width:58rem){.hero-what{max-width:none}}
+/* ═══ THE SALES MANAGER SEAT (9 November 2026) ═══
+   Was a single card 463px tall. The research is consistent that a manager moves for a
+   visible path and for development, and that pay only gets the first meeting — so the
+   section leads on the one number a manager is actually judged on. Two real colours,
+   validated on this ground; each bar is directly labelled as well, so identity is never
+   colour alone. */
+.mgx{background:radial-gradient(105% 78% at 10% 0%,var(--d3),transparent 60%),linear-gradient(185deg,var(--d1),var(--d0) 76%);color:var(--dT2);overflow:clip}
+.mgx .lede h2,.mgx h3{color:#fff}
+.mgx .lede .eyebrow{color:var(--aT)}
+.mgx .lede p{color:var(--dT2)}
+.mgx .lede strong{color:#fff}
+.mgg{display:grid;grid-template-columns:1.04fr .96fr;gap:var(--sp-xl);align-items:start;margin-top:var(--sp-l)}
+@media (max-width:58rem){.mgg{grid-template-columns:1fr;gap:var(--sp-l)}}
+.mgbars{background:linear-gradient(165deg,rgba(255,255,255,.07),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.15);border-radius:var(--r);padding:1.3rem 1.35rem;display:grid;gap:.9rem;min-width:0}
+.mgbars h3{margin:0 0 .2rem;font:800 var(--f-0)/1.3 var(--display)}
+.mgb{display:grid;gap:.32rem;min-width:0}
+.mgl{display:flex;justify-content:space-between;align-items:baseline;gap:.7rem;font-size:var(--f--1);line-height:1.35;color:var(--dT2);min-width:0}
+.mgl b{font:800 var(--f-1)/1 var(--display);font-variant-numeric:tabular-nums;color:#fff;flex:none}
+.mgt{display:block;height:.7rem;border-radius:.35rem;background:rgba(255,255,255,.1);overflow:hidden}
+.mgf{display:block;height:100%;border-radius:.35rem;width:var(--w);transform-origin:0 50%}
+.mgf.ind{background:linear-gradient(90deg,var(--ambD),var(--amb))}
+.mgf.us{background:linear-gradient(90deg,#0e93b0,var(--aL))}
+.mgk{display:flex;flex-wrap:wrap;gap:.3rem 1.1rem;margin:.1rem 0 0;font-size:var(--f--2);color:var(--dT3)}
+.mgk span{display:flex;align-items:center;gap:.4rem}
+.mgk i{width:.75rem;height:.75rem;border-radius:.2rem;flex:none}
+.sw-ind{background:var(--amb)} .sw-us{background:var(--aL)}
+.mgsrc{margin:0;font-size:var(--f--2);line-height:1.5;color:var(--dT3)}
+.mgwhat{display:grid;gap:var(--sp-s);min-width:0}
+.mgwhat h3{margin:0;font:800 var(--f-1)/1.25 var(--display)}
+.mglist{margin:0;padding:0;list-style:none;display:grid;gap:.6rem}
+.mglist li{position:relative;padding-left:1.6rem;font-size:var(--f--1);line-height:1.5;color:var(--dT2)}
+.mglist li::before{content:"";position:absolute;left:0;top:.52em;width:.62rem;height:.62rem;border-radius:.18rem;background:var(--aL)}
+.mglist b{color:#fff;font-weight:700}
+.mgnote{margin:0;font-size:var(--f--1);line-height:1.55;color:var(--dT3);border-left:2px solid var(--amb);padding-left:.9rem}
 /* ═══ THE FULL FILM'S CHAPTER INDEX — fills the column beside its lede ═══ */
 .fgrid{display:grid;grid-template-columns:1.02fr .98fr;gap:var(--sp-xl);align-items:start}
 .chaps{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:.1rem .9rem;align-content:start}
@@ -1092,6 +1158,10 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   .mwk.in .mwd::before{transform:scaleX(0);transform-origin:0 50%;animation:grow .7s var(--ease-out) both;animation-delay:calc(var(--i,0)*90ms + .25s)}
   /* the bars draw themselves; the reference dash stays put */
   .hb.in .fil{transform:scaleX(0);animation:grow .85s var(--ease-out) both;animation-delay:calc(var(--i,0)*120ms + .15s)}
+  /* The hero's standard card draws itself on load, not on scroll: it is already on screen. */
+  .hstd .hfil{transform:scaleX(0);animation:grow .95s var(--ease-out) both}
+  .hstd .ind .hfil{animation-delay:.55s} .hstd .us .hfil{animation-delay:.95s}
+  .mgbars.in .mgf{transform:scaleX(0);animation:grow .9s var(--ease-out) both;animation-delay:calc(var(--i,0)*130ms + .2s)}
   .hb.in .lab b{animation:up .5s var(--ease-out) both;animation-delay:calc(var(--i,0)*120ms + .5s)}
   /* the steps arrive in order; the brief's findings land one at a time */
   .lsteps.in li{animation:up .55s var(--ease-out) both;animation-delay:calc(var(--i,0)*110ms)}
@@ -1181,10 +1251,23 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 <section class="hero" id="hero" data-g="hero">
   <div class="wrap">
       <div class="hero-lead">
-      <span class="eyebrow">Now selecting · Chaguanas, Trinidad</span>
-      <h1 data-words aria-label="Good at what you do, but stuck? Move without starting from zero.">Good at what you do, <em>but stuck?</em><br>Move without starting from <span class="swap" aria-hidden="true"><span class="sw on">zero.</span><span class="sw">a cold list.</span><span class="sw">nobody.</span><span class="sw">scratch.</span><span class="sw">nothing.</span></span></h1>
+      <span class="eyebrow">Guardian Life of the Caribbean &middot; Chaguanas, Trinidad &middot; Now selecting</span>
+      <h1 data-words aria-label="The same advisor, in a different room, is a different advisor.">The same advisor, in a different room, <em>is a different advisor.</em></h1>
+      <p class="hero-what"><span class="tag">Life &amp; general insurance</span> Two seats in a Chaguanas practice: an <strong>insurance advisor</strong>, whether you hold a licence already or have never sold a policy, and one <strong>sales manager</strong> building a unit. Thirty-two years in Trinidad.</p>
       </div>
     <div class="hero-art">
+      <div class="hstd rv">
+        <h3>Why the room decides</h3>
+        <div class="hrow ind">
+          <span class="hlab"><span>Hire 100 advisors. Under contract at <strong>three</strong> years, industry-wide</span><b>22</b></span>
+          <span class="htrk"><i class="hfil" style="--w:22%"></i></span>
+        </div>
+        <div class="hrow us">
+          <span class="hlab"><span>Still here at <strong>four</strong> years, in this branch</span><b>31</b></span>
+          <span class="htrk"><i class="hfil" style="--w:31%"></i></span>
+        </div>
+        <p class="hsrc">The industry figure is LIMRA&rsquo;s, and it costs about US$102,600 a head to find that out. Ours is a year longer and still higher. Same work, same country, same product.</p>
+      </div>
       <div class="hero-film">
       <div class="vwrap rv">
         <video playsinline preload="metadata" poster="trailer.jpg" data-scenes="8.9,13.3,21.0,14.5,30.3,15.3,10.2,4.3" data-chapters="A question|Not alone|Never from zero|Your rhythm|No ceiling|One conversation|Book it|The environment decides">
@@ -1201,7 +1284,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       </div>
     </div>
       <div class="hero-rest">
-      <p class="sub"><strong>Already contracted?</strong> Leads on your own board, households matched to you, and a conversation nobody will know you had. <strong>New to this?</strong> The full build, and a day the system sets. <strong>32 years in Trinidad. Seven places in the first class of FY27, selected now, and one seat for a sales manager.</strong></p>
+      <p class="sub"><strong>Already licensed?</strong> Leads on your own board, households matched to you, and a conversation nobody will know you had. <strong>Never sold insurance?</strong> You are trained and licensed before you are contracted, then the full build and a day the system sets. <strong>Seven places in FY27&rsquo;s first class.</strong></p>
       <div class="hero-cta">
         <a class="btn btn-1" href="#talk" data-talk>Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
         <a class="btn btn-2" href="#quiz">Take the 60-second test</a>
@@ -1371,17 +1454,37 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 </section>
 
 
-<section class="people mgrdoor" id="manager" data-g="manager">
+<section class="mgx" id="manager" data-g="manager">
   <div class="wrap">
-    <div class="pgrid">
-      <div style="--i:0" class="person lead rv">
-        <div class="face" aria-hidden="true"><svg class="ic" aria-hidden="true" style="width:2rem;height:2rem"><use href="#i-users"/></svg></div>
-        <div>
-          <span class="role">One more seat · Sales Manager</span>
-          <h3>Leading a team already? Come and build a unit here.</h3>
-          <p>Alongside the seven places in the class, the branch is selecting one sales manager for FY27. The system does the unit's admin: every agent's day is set each morning, the Weekly Manager Pulse shows who is off pace on leads, fact finds and closing interviews, and your own page carries the unit's ten KPIs, planned and accounted for. Your hours go to coaching, and the Branch Manager coaches you. The same confidential conversation, and nothing said to anyone until you say so.</p>
-          <div class="hero-cta" style="margin-top:.4rem"><a class="btn btn-1" href="#talk" data-talk data-who="Leading a team already (the sales manager seat)">Talk about the manager seat <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
-        </div>
+    <div class="lede rv">
+      <span class="eyebrow">One more seat &middot; Sales Manager &middot; FY27</span>
+      <h2>A manager is judged on retention. Here, that is the branch&rsquo;s best number.</h2>
+      <p>Alongside the seven places, the branch is selecting <strong>one sales manager</strong>. The hardest part of the job &mdash; keeping the people you recruit &mdash; is the thing this branch already does better than the market, and you inherit it rather than having to build it.</p>
+    </div>
+
+    <div class="mgg">
+      <div class="mgbars rv">
+        <h3>Of every 100 advisors hired, how many are still there</h3>
+        <div class="mgb" style="--i:0"><span class="mgl">The industry, at one year <b>55&ndash;60</b></span><span class="mgt"><i class="mgf ind" style="--w:58%"></i></span></div>
+        <div class="mgb" style="--i:1"><span class="mgl">This branch, at one year <b>67</b></span><span class="mgt"><i class="mgf us" style="--w:67%"></i></span></div>
+        <div class="mgb" style="--i:2"><span class="mgl">The industry, at four years <b>15</b></span><span class="mgt"><i class="mgf ind" style="--w:15%"></i></span></div>
+        <div class="mgb" style="--i:3"><span class="mgl">This branch, at four years <b>31</b></span><span class="mgt"><i class="mgf us" style="--w:31%"></i></span></div>
+        <p class="mgk"><span><i class="sw-ind"></i>The market</span><span><i class="sw-us"></i>This branch</span></p>
+        <p class="mgsrc">Industry figures: LIMRA. Branch figures: our own roll, measured to 31 August. Four years against the market&rsquo;s four, and one year against its one &mdash; not a horizon chosen to flatter.</p>
+      </div>
+
+      <div class="mgwhat">
+        <h3 class="rv">What you would actually run &mdash; and what runs itself</h3>
+        <ul class="mglist rv">
+          <li><b>Your unit&rsquo;s ten KPIs, planned and accounted for</b>, on your own page. You set the week; the system reconciles it.</li>
+          <li><b>Every agent&rsquo;s day is set each morning</b> by the system, not by you. Nobody waits on a manager to tell them what to work.</li>
+          <li><b>The Weekly Manager Pulse</b> names who is off pace on leads, fact finds and closing interviews &mdash; before the month is lost, not after.</li>
+          <li><b>A coaching sheet, not a report card.</b> Your note lands in the agent&rsquo;s morning e-mail; they read it before they start.</li>
+          <li><b>Admin is the branch&rsquo;s, not yours.</b> Seven people behind the advisors, documents logged and tracked to the hour, no paper fact finds to chase.</li>
+          <li><b>The Branch Manager coaches you.</b> Thirty-two years in this market, and his own day is on the same system yours is.</li>
+        </ul>
+        <p class="mgnote rv">The ladder above you is real and it is published: Executive Agent, Senior Sales Consultant, and the management track beyond. This branch has grown managers who went on to run their own.</p>
+        <div class="hero-cta rv" style="margin-top:.2rem"><a class="btn btn-1" href="#talk" data-talk data-who="Leading a team already (the sales manager seat)">Talk about the manager seat <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
       </div>
     </div>
   </div>
@@ -2261,7 +2364,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   /* ── the coach stage and the career timeline start their motion when they come into view (the page's .rv reveal is
         scroll-driven where view() is supported, so nothing else adds .in there) ── */
   (function(){
-    var els=[].slice.call(d.querySelectorAll('.cstage,.ctlw,.ffnw,.mwk,.hb,.lsteps,.brief,.rkclock,.rkday')); if(!els.length) return;
+    var els=[].slice.call(d.querySelectorAll('.cstage,.ctlw,.ffnw,.mwk,.hb,.lsteps,.brief,.rkclock,.rkday,.mgbars')); if(!els.length) return;
     if(noMotion.matches||!('IntersectionObserver' in window)){ els.forEach(function(e){e.classList.add('in')}); return; }
     var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -12% 0px'});
     els.forEach(function(e){io.observe(e)});
