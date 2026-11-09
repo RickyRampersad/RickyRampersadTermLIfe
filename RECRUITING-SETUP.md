@@ -2955,49 +2955,119 @@ off a public page for the same reason the month-by-month shape of the book does.
   The conversion is one line and it is needed after every re-voice:
   `d['words'] = [[[int(round(t*1000)), w] for t, w in ln['words']] for ln in d['lines']]`.
 
-### A layout-shift defect that predates all of this, found on 8 November 2026
+## The film is the hero now, 9 November 2026
 
-Measured on a free machine, with every shift attributed to the element that
-moved: **CLS 0.17 at 375px and 0.73 at 768px**, against a 0.1 budget. Both are
-entirely pre-scroll. Identical numbers on the 7 November commit, so this is not
-from the ten-lines work — it has been live on `/clientmanager/` all along, and
-the three recruiting pages share the hero, so it is likely on all of them.
+Asked for in these words: *"fix the career page ti have the film on top! A
+person should nit scroll, what do you think and I want to see the video!"*
 
-It was never caught because the existing harness measures CLS at **390 and 1366
-only**, and those two widths happen to pass (0.038 and 0.018).
+He was right, and it was true of all four recruiting pages: the film sat
+**44% to 61% down** the page on `/clientmanager/`, `/buildwithus/`,
+`/joinourbranch/` and `/careers/`. The strongest asset on the page was below
+two screenfuls of copy.
 
-What it is **not**:
+**What I think, since he asked.** The film goes high, but the headline has to
+survive it — a video is what convinces, a headline is what stops the scroll,
+and giving up the second to get the first is a bad trade. So the hero is now
+three blocks instead of two:
 
-- **Not the webfonts.** Blocking `fonts.g*` entirely gives the same numbers to
-  four decimal places, and `display=optional` changes nothing. A line-count scan
-  across both faces does show `.hsub` wrapping differently at 414 and 768 — that
-  is real, and it is not what drives the score.
-- **Not the reveal animations.** Every shift lands before any scroll.
+| | |
+|---|---|
+| `.hero-lead` | the vacancy pill, the eyebrow, the headline |
+| `.hero-film` | the player, and one line on what it is |
+| `.hero-rest` | the qualifying line, the long copy, the buttons, the trust row |
 
-What it is: **the hero's text column loses about 28px between ~400ms and ~870ms
-and gets it back**, so everything below reflows twice — and `.field`, the
-decorative gradient behind the hero, is `position:absolute` with `height:130%`,
-so it is 2,239px tall at 768 and resizes with the hero. The layout-shift API
-counts an absolutely positioned element whose rect changes, so a soft gradient
-nobody perceives moving is most of the 0.73.
+On a phone they fall in that order, so the film is on screen under the
+headline before any scrolling. On a laptop `.hero-film` takes the right column
+and spans both rows beside them. **Measured at eight real device sizes** —
+360×640 through 1920×1080 — and the whole player is above the fold at every
+one of them, with the headline fully visible at every one too (`fold.js` in
+the session scratchpad).
 
-The element that loses the line was not pinned down. `h1`, `.hsub`, `.pull`,
-`.art-foot` and `.stage` all hold their height through it, so it is a child of
-the hero's text column appearing or disappearing — which also changes the
-column's gap count. Start there, with `grow2.js` in the session scratchpad: it
-walks every element under `.hero` frame by frame and prints only the ones whose
-height ever changes. Watch out for the ring SVGs, which grow a pixel every
-30ms — that is a rotating element's bounding box, not a layout shift.
+**Two measurements changed the design.** `align-self:center` on the film put
+it at y=673 on a 1366×768 laptop, less than half of it above the fold, because
+it was centring against a tall left column: it is `align-self:start`. And the
+qualifying line (`.pull`) sitting above the film pushed it to y=563 on a
+375×667 phone, 54% visible: it moved below the film, so the order reads
+headline, film, then who it is for. That lifted it to y=425 and 100%.
 
-**Two things worth fixing whatever the cause turns out to be:** the harness
-should measure CLS at 375 and 768 as well as 390 and 1366 (`cls2.js` in the
-scratchpad does, with attribution), and `.field` at `height:130%` of a box that
-can change height is a score amplifier on every page that copies this hero.
+**The ring did not die, it moved — and it reads better where it is.** It was
+the hero's right column; it now has its own dark band, `#drawn`, where the
+`#film` section used to be. It could not simply drop into `#lines`, which is
+`.alt` and light: the ring is drawn for a dark ground — navy chips, cyan
+icons, light labels — so on `--bg2` it would have been close to invisible.
+In its own band it is wider than it ever was in the hero, and all ten labels
+are legible at a glance.
 
-**One thing today's work did do:** lengthening `.hsub` by one clause took 390
-from 0.038 to 0.181. The clause came back out — the in-force fact is carried by
-the hero foot, the book lede, the classes section, the ticker and the posters,
-so the hero paragraph did not need it.
+**Three things moved with it, and each would have broken silently:**
+
+- **The pause rules were scoped `.hero.rest`.** `.rest` is put on whichever
+  section has left the screen, and there are two of them now — the hero still
+  owns its colour field, `#drawn` owns the ring — so the selector is `.rest X`.
+  The polarity is unchanged and must stay: the loops park by a class added on
+  **exit**, never removed on entry, or every backwards-filled entrance freezes
+  at its invisible first frame when the script does not run.
+- **The tilt listened on `#hero`.** It listens on `stage.closest('section')`
+  now, so it follows the ring wherever it lives.
+- **The IntersectionObserver watched `#hero` alone.** It watches the stage's
+  host *and* the hero, de-duplicated, so a page where they are still the same
+  element gets one observer rather than two.
+
+**The second player is gone.** The `#film` section carried the same MP4
+halfway down the page; one page, one player. Nothing linked to `#film`, so no
+anchor broke — checked before removing it.
+
+**Not yet mirrored** to `/buildwithus/`, `/joinourbranch/` or `/careers/`.
+They have the same defect and the same hero pattern; `/careers/` is generated,
+so that one is an edit to `agentmgt/index.html` plus `tools/careers/sync.py`.
+
+### The layout-shift defect, found 8 November and fixed by the 9 November hero
+
+**Found.** Measured on a free machine with every shift attributed to the
+element that moved: **CLS 0.17 at 375px and 0.73 at 768px**, against a 0.1
+budget, all of it before any scroll. Identical numbers on the 7 November
+commit, so it was not from the ten-lines work — it had been live all along.
+It was never caught because the harness measured CLS at **390 and 1366 only**,
+and both of those happened to pass.
+
+**What it was not.** Not the webfonts: blocking `fonts.g*` entirely gave the
+same numbers to four decimal places, and `display=optional` changed nothing,
+which retired the font-swap theory I had been working from. Not the reveal
+animations: every shift landed before any scroll. A line-count scan does show
+`.hsub` wrapping differently between the two faces at 414 and 768 — real, and
+not what drove the score.
+
+**What it was.** The hero's text column lost about 28px between ~400ms and
+~870ms and got it back, so everything below reflowed twice — and `.field`, the
+decorative gradient, is `position:absolute` with `height:130%`, so it was
+2,239px tall at 768 and resized with the hero. The layout-shift API counts an
+absolutely positioned element whose rect changes, so most of the 0.73 was a
+soft gradient nobody perceives moving.
+
+**Fixed, as a side effect of putting the film on top.** Splitting the hero into
+three grid blocks — so the long copy sits in its own row rather than above
+everything — and moving the ring out of the hero removed the reflow entirely.
+Measured across nine widths after:
+
+| | before | after |
+|---|---|---|
+| 360 | — | 0.0043 |
+| 375 | **0.1746** | **0.0037** |
+| 390 | 0.0383 | 0.0122 |
+| 414 | 0.0316 | 0.0299 |
+| 768 | **0.7306** | **0.0266** |
+| 1024 | — | 0.0067 |
+| 1280 | — | 0.0050 |
+| 1366 | 0.0176 | 0.0177 |
+| 1920 | — | 0.0017 |
+
+**Two things to keep.** Measure CLS at **375 and 768** as well as 390 and 1366
+— those two widths are where this hid, and `cls2.js` in the session scratchpad
+measures with attribution rather than returning a bare number. And remember
+that `.field` at `height:130%` of a box that can change height is a score
+amplifier on every page that copies this hero: `/buildwithus/`,
+`/joinourbranch/` and `/careers/` all still have the two-block hero and have
+not been measured.
+
 
 ## Still to do
 

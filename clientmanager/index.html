@@ -197,8 +197,15 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
    not limit 7 lines". Re-measure with qa/lines.js if a chip is added: the
    7rem label has 194px of arc each on the outer ring and 162px on the inner,
    and a seventh outer chip takes the outer one under its own width. */
-.hero-grid{display:grid;gap:var(--sp-xl);align-items:center}
+.hero-grid{display:grid;gap:var(--sp-l);align-items:center}
 .hero-grid > *{min-width:0}
+/* Three blocks since 9 November 2026, not two: the hook, the film, and the
+   long copy. On a phone they fall in that order, which is the whole point —
+   the film is on screen under the headline before any scrolling. On a laptop
+   the film takes the right column and spans both rows beside them. */
+.hero-film{display:grid;gap:var(--sp-s);align-content:start}
+.vnote{margin:0;font-size:var(--f--2);line-height:1.5;color:var(--dT3)}
+.vnote b{color:var(--dT2)}
 /* 1.3fr, and the number is measured rather than chosen. The headline sits
    exactly on a line-break boundary: at 1.06fr it fits four lines in the
    fallback and five in Inter Tight, so the whole hero jumped 77px when the
@@ -207,7 +214,13 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
    both fallbacks; 1.3fr is the first ratio where all three break the same
    way at every one of them. Re-run that scan if the headline's words
    change. */
-@media (min-width:64rem){.hero-grid{grid-template-columns:1.3fr .7fr;gap:var(--sp-xl)}}
+@media (min-width:64rem){
+  .hero-grid{grid-template-columns:1.3fr .7fr;column-gap:var(--sp-xl);row-gap:var(--sp-m);
+    align-items:start}
+  .hero-lead{grid-column:1;grid-row:1}
+  .hero-rest{grid-column:1;grid-row:2}
+  .hero-film{grid-column:2;grid-row:1 / span 2;align-self:start}
+}
 .hero-art{display:grid;justify-items:center;gap:var(--sp-m)}
 .stage{position:relative;width:min(30rem,100%,100vw - 2.5rem);aspect-ratio:1;
   display:grid;place-items:center;perspective:900px}
@@ -577,6 +590,13 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
   aspect-ratio:16/9;box-shadow:var(--e3)}
 .vwrap video{width:100%;height:100%;display:block;object-fit:contain;background:var(--d0)}
 
+/* the ring's own band, where the hero's right column used to be */
+.drawn-grid{display:grid;gap:var(--sp-l);align-items:center}
+@media (min-width:52rem){.drawn-grid{grid-template-columns:.9fr 1.1fr;gap:var(--sp-xl)}}
+.drawn-grid > *{min-width:0}
+#drawn h2{color:#fff}
+#drawn p{color:var(--dT2);max-width:46ch}
+
 /* statement */
 .statement{background:var(--d0);color:#fff;text-align:center}
 .statement p{font:800 var(--f-3)/1.1 var(--display);letter-spacing:-.035em;max-width:30ch;margin:0 auto;color:#fff}
@@ -658,9 +678,14 @@ footer .ic{width:16px;height:16px}
   .svc{transition:translate .2s var(--ease),border-color .2s}
   .svc:hover{translate:0 -3px;border-color:var(--d3)}
   /* the ticker */
-  .hero.rest .orbit,.hero.rest .ring,.hero.rest .ring .spin,
-  .hero.rest .o-arc,.hero.rest .ping,.hero.rest .halo,
-  .hero.rest .field{animation-play-state:paused}
+  /* `.rest` is put on whichever section has left the screen — the hero for
+     its colour field, #drawn for the ring — so the selector can no longer be
+     scoped to .hero. The loops park by a class added on EXIT, never removed
+     on entry: the other polarity freezes every backwards-filled entrance at
+     its invisible first frame when the script does not run. */
+  .rest .orbit,.rest .ring,.rest .ring .spin,
+  .rest .o-arc,.rest .ping,.rest .halo,
+  .rest .field{animation-play-state:paused}
   .strip-in{animation:tick 44s linear infinite}
   @keyframes tick{to{translate:-50% 0}}
   .strip:hover .strip-in,.strip:focus-within .strip-in{animation-play-state:paused}
@@ -913,10 +938,32 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 <section class="hero" id="hero">
   <div class="field" aria-hidden="true"></div>
   <div class="wrap hero-grid">
-   <div>
+   <div class="hero-lead">
     <p class="vac"><i aria-hidden="true"></i>We are hiring &middot; General insurance &middot; Hours that suit you</p>
     <span class="eyebrow">Client Manager &middot; General Insurance</span>
     <h1 data-words>The book is already there. <em>What it has never had is you.</em></h1>
+   </div>
+
+   <!-- The film is the hero's picture now. 9 November 2026, asked for in
+        these words: "fix the career page to have the film on top! A person
+        should not scroll." On a laptop it takes the right column beside the
+        headline; on a phone it sits directly under the headline and the
+        qualifying line, ahead of the long copy, so it is on screen without a
+        scroll. The ring moved down to a dark band of its own, where it is a
+        diagram of the lines rather than the hero's decoration — it is drawn
+        for a dark ground and #lines is light, which is why it did not simply
+        go inside that section. -->
+   <div class="hero-film">
+     <div class="vwrap">
+       <video playsinline preload="metadata" poster="film-w.jpg" controls controlslist="nodownload"
+              aria-label="Just over two minutes on the client manager&rsquo;s seat">
+         <source src="film-w.mp4" type="video/mp4">
+       </video>
+     </div>
+     <p class="vnote"><b>Just over two minutes.</b> The words are on screen throughout, so it reads with the sound off. Every figure in it is illustrative and no client appears anywhere.</p>
+   </div>
+
+   <div class="hero-rest">
     <p class="pull">If you can run a general insurance book out of a filing cabinet and an inbox that never empties &mdash; and nobody has ever let you change any of it &mdash; this is the one to read.</p>
     <p class="hsub">A general insurance book that has been written and renewed here year after year, across <strong>ten lines of business</strong>, personal and commercial, with renewals falling in every month. Until now the Branch Manager has looked after it himself, alongside everything else a branch asks of him &mdash; and <strong>it has outgrown that</strong>. What it needs is one person whose whole job it is. There is no filing cabinet in this seat: <strong>the re-keying, the chasing and the research are already built and running</strong>, the record is pulled from every source and scrubbed before you read it, <strong>you are judged on the book rather than on the clock</strong>, and the one thing nobody has settled &mdash; how this agency advises its clients, and how it stays compliant doing it &mdash; is left to the person in the seat.</p>
     <div class="ctas">
@@ -930,52 +977,6 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     </p>
    </div>
 
-   <!-- The stage: the book, drawn. Ten lines on two rings around the
-        branch's own mark, each chip kept upright by an inner span that
-        counters its ring. It is a diagram of what you would be looking
-        after, not decoration — and nothing sits on the mark. -->
-   <div class="hero-art">
-     <div class="stage">
-       <div class="halo" aria-hidden="true"></div>
-       <svg class="mesh" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
-         <defs>
-           <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">
-             <circle cx="2" cy="2" r="1.15" fill="currentColor"/>
-           </pattern>
-           <radialGradient id="fade"><stop offset="52%" stop-color="#fff"/><stop offset="100%" stop-color="#000"/></radialGradient>
-           <mask id="mfade"><rect width="400" height="400" fill="url(#fade)"/></mask>
-         </defs>
-         <rect width="400" height="400" fill="url(#dots)" mask="url(#mfade)"/>
-       </svg>
-       <svg class="orbit" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
-         <circle class="o-ring" cx="200" cy="200" r="90"/>
-         <circle class="o-ring o-dash" cx="200" cy="200" r="154"/>
-         <circle class="o-arc" cx="200" cy="200" r="90"/>
-         <circle class="o-arc o-arc2" cx="200" cy="200" r="154"/>
-         <circle class="o-sat" cx="200" cy="110" r="3.4"/>
-         <circle class="o-sat" cx="354" cy="200" r="2.6"/>
-       </svg>
-       <span class="ping" style="--pd:0s" aria-hidden="true"></span>
-       <span class="ping" style="--pd:1.5s" aria-hidden="true"></span>
-       <span class="ping" style="--pd:3s" aria-hidden="true"></span>
-       <div class="smark" aria-hidden="true">
-         <svg viewBox="0 0 88 88" focusable="false">
-           <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1">
-             <stop offset="0%" stop-color="#0e93b0"/><stop offset="52%" stop-color="#00728d"/><stop offset="100%" stop-color="#0a3350"/>
-           </linearGradient></defs>
-           <path d="M44 9L73 21.5V41C73 60.5 60.5 72 44 78.5C27.5 72 15 60.5 15 41V21.5Z" fill="url(#sg)"/>
-           <path class="tick" d="M30 44L39.5 53.5L58 32.5" stroke="#0a3350" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-           <path class="tick" d="M30 44L39.5 53.5L58 32.5" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-         </svg>
-       </div>
-       <ul class="ring ring-in" aria-label="The lines this book has been written across"><li class="node" style="--a:45deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><b>Motor and fleet</b></span></li><li class="node" style="--a:135deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-house"/></svg></span><b>Household</b></span></li><li class="node up" style="--a:225deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-build"/></svg></span><b>Commercial property</b></span></li><li class="node up" style="--a:315deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-scale"/></svg></span><b>Liability</b></span></li></ul>
-       <ul class="ring ring-out" aria-hidden="false"><li class="node e" style="--a:0deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-hard"/></svg></span><b>Workers&rsquo; compensation</b></span></li><li class="node" style="--a:60deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-gear"/></svg></span><b>Machinery and contract works</b></span></li><li class="node" style="--a:120deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-ship"/></svg></span><b>Marine and cargo</b></span></li><li class="node w" style="--a:180deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-coins"/></svg></span><b>Money in transit</b></span></li><li class="node up" style="--a:240deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-lock"/></svg></span><b>Burglary</b></span></li><li class="node up" style="--a:300deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-bond"/></svg></span><b>Bonds</b></span></li></ul>
-     </div>
-     <p class="art-foot">
-       <span><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Seven lines in force, ten written</span>
-       <span><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>Renewals in all twelve months</span>
-     </p>
-   </div>
   </div>
 </section>
 
@@ -1018,20 +1019,59 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   </div>
 </section>
 
-<section class="alt" id="film" style="padding-block:var(--sp-xl)">
+<!-- The ring's new home. It used to be the hero's right column; the film
+     took that on 9 November 2026. It is drawn for a dark ground — navy chips,
+     cyan icons, light labels — so it could not simply drop into #lines, which
+     is .alt and light. Its own dark band leads into the book instead. -->
+<section class="dark" id="drawn" style="padding-block:var(--sp-xl)">
   <div class="wrap">
-    <div class="filmgrid rv">
-      <div class="vwrap">
-        <video playsinline preload="metadata" poster="film-w.jpg" controls controlslist="nodownload"
-               aria-label="Just over two minutes on the client manager’s seat">
-          <source src="film-w.mp4" type="video/mp4">
-        </video>
+    <div class="drawn-grid">
+      <div class="rv">
+        <span class="eyebrow">The book, drawn</span>
+        <h2 data-words>Ten lines on two rings, around the branch&rsquo;s own mark.</h2>
+        <p>Every chip is a line this book has been written across, each kept upright by a span that counters its ring. It is a diagram of what you would be looking after rather than decoration &mdash; and nothing sits on the mark.</p>
       </div>
-      <div>
-        <span class="eyebrow">Just over two minutes</span>
-        <h2 data-words>What we write, and what is already built around it.</h2>
-        <p>Every line, every term since the policy began, the insurer&rsquo;s notice checked against our own record, and a change written into the desk rather than raised as a ticket.</p>
-        <p class="small">The words are on screen throughout, so it reads with the sound off. Every figure in it is illustrative and no client appears anywhere.</p>
+      <div class="hero-art">
+     <div class="stage">
+       <div class="halo" aria-hidden="true"></div>
+       <svg class="mesh" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
+         <defs>
+           <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">
+             <circle cx="2" cy="2" r="1.15" fill="currentColor"/>
+           </pattern>
+           <radialGradient id="fade"><stop offset="52%" stop-color="#fff"/><stop offset="100%" stop-color="#000"/></radialGradient>
+           <mask id="mfade"><rect width="400" height="400" fill="url(#fade)"/></mask>
+         </defs>
+         <rect width="400" height="400" fill="url(#dots)" mask="url(#mfade)"/>
+       </svg>
+       <svg class="orbit" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
+         <circle class="o-ring" cx="200" cy="200" r="90"/>
+         <circle class="o-ring o-dash" cx="200" cy="200" r="154"/>
+         <circle class="o-arc" cx="200" cy="200" r="90"/>
+         <circle class="o-arc o-arc2" cx="200" cy="200" r="154"/>
+         <circle class="o-sat" cx="200" cy="110" r="3.4"/>
+         <circle class="o-sat" cx="354" cy="200" r="2.6"/>
+       </svg>
+       <span class="ping" style="--pd:0s" aria-hidden="true"></span>
+       <span class="ping" style="--pd:1.5s" aria-hidden="true"></span>
+       <span class="ping" style="--pd:3s" aria-hidden="true"></span>
+       <div class="smark" aria-hidden="true">
+         <svg viewBox="0 0 88 88" focusable="false">
+           <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1">
+             <stop offset="0%" stop-color="#0e93b0"/><stop offset="52%" stop-color="#00728d"/><stop offset="100%" stop-color="#0a3350"/>
+           </linearGradient></defs>
+           <path d="M44 9L73 21.5V41C73 60.5 60.5 72 44 78.5C27.5 72 15 60.5 15 41V21.5Z" fill="url(#sg)"/>
+           <path class="tick" d="M30 44L39.5 53.5L58 32.5" stroke="#0a3350" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+           <path class="tick" d="M30 44L39.5 53.5L58 32.5" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+         </svg>
+       </div>
+       <ul class="ring ring-in" aria-label="The lines this book has been written across"><li class="node" style="--a:45deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-car"/></svg></span><b>Motor and fleet</b></span></li><li class="node" style="--a:135deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-house"/></svg></span><b>Household</b></span></li><li class="node up" style="--a:225deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-build"/></svg></span><b>Commercial property</b></span></li><li class="node up" style="--a:315deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-scale"/></svg></span><b>Liability</b></span></li></ul>
+       <ul class="ring ring-out" aria-hidden="false"><li class="node e" style="--a:0deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-hard"/></svg></span><b>Workers&rsquo; compensation</b></span></li><li class="node" style="--a:60deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-gear"/></svg></span><b>Machinery and contract works</b></span></li><li class="node" style="--a:120deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-ship"/></svg></span><b>Marine and cargo</b></span></li><li class="node w" style="--a:180deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-coins"/></svg></span><b>Money in transit</b></span></li><li class="node up" style="--a:240deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-lock"/></svg></span><b>Burglary</b></span></li><li class="node up" style="--a:300deg"><span class="spin"><span class="chip-o"><svg aria-hidden="true" focusable="false"><use href="#i-bond"/></svg></span><b>Bonds</b></span></li></ul>
+     </div>
+     <p class="art-foot">
+       <span><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Seven lines in force, ten written</span>
+       <span><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>Renewals in all twelve months</span>
+     </p>
       </div>
     </div>
   </div>
@@ -1778,11 +1818,16 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
      EXIT — the other polarity freezes every backwards-filled entrance at its
      invisible first frame when the script does not run. */
   (function(){
+    /* The stage left the hero on 9 November 2026 and now lives in #drawn, so
+       the tilt listens on whichever section holds it, and `rest` is toggled
+       on that section AND on the hero — the hero still owns the colour
+       field, which pauses on its own. */
     var stage=d.querySelector('.stage'), hero=d.getElementById('hero');
-    if(!stage)return;
+    var host=stage?stage.closest('section'):null;
+    if(!stage||!host)return;
     if(!noMotion.matches&&matchMedia('(hover: hover) and (pointer: fine)').matches){
       var raf=0,tx=0,ty=0;
-      hero.addEventListener('pointermove',function(ev){
+      host.addEventListener('pointermove',function(ev){
         if(ev.pointerType!=='mouse')return;
         var r=stage.getBoundingClientRect();
         tx=((ev.clientY-(r.top+r.height/2))/r.height)*-9;
@@ -1790,13 +1835,17 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
         if(!raf)raf=requestAnimationFrame(function(){raf=0;
           stage.style.transform='rotateX('+tx.toFixed(2)+'deg) rotateY('+ty.toFixed(2)+'deg)'});
       });
-      hero.addEventListener('pointerleave',function(){stage.style.transform=''});
+      host.addEventListener('pointerleave',function(){stage.style.transform=''});
       stage.style.transition='transform .25s cubic-bezier(.2,.7,.2,1)';
     }
-    if('IntersectionObserver' in window&&hero){
-      new IntersectionObserver(function(es){
-        hero.classList.toggle('rest',!es[0].isIntersecting);
-      },{threshold:0}).observe(hero);
+    if('IntersectionObserver' in window){
+      var seen=[];
+      [host,hero].forEach(function(el){
+        if(!el||seen.indexOf(el)>-1)return; seen.push(el);
+        new IntersectionObserver(function(es){
+          el.classList.toggle('rest',!es[0].isIntersecting);
+        },{threshold:0}).observe(el);
+      });
     }
   })();
 
