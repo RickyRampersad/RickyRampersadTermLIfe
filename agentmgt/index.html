@@ -136,7 +136,7 @@ section,.layout{padding-block:var(--sp-2xl)}
   .hero .wrap{align-items:start;row-gap:var(--sp-m)}
   .hero-lead{grid-column:1;grid-row:1}
   .hero-rest{grid-column:1;grid-row:2}
-  .hero-art{grid-column:2;grid-row:1 / span 2;align-self:start}
+  .hero-art{grid-column:2;grid-row:1 / span 2;align-self:center}
 }
 .hero .eyebrow{color:var(--aT)}
 .hero h1{font-size:clamp(2.4rem,1.6rem + 3.6vw,4.6rem);color:#fff;margin:.9rem 0 1.1rem;font-weight:800;letter-spacing:-.02em;line-height:1.02}
@@ -481,7 +481,8 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   @keyframes word-in{from{opacity:0;transform:translateY(105%) rotate(2deg)}to{opacity:1;transform:none}}
   .hero .w i{animation-delay:calc(.15s + var(--wi,0) * 85ms)}
   /* the swapping word */
-  .sw{transition:opacity .45s var(--ease),translate .55s var(--ease-out)}
+  .sw{transition:opacity .16s var(--ease),translate .5s var(--ease-out)}
+  .sw.on{transition:opacity .34s var(--ease) .16s,translate .5s var(--ease-out) .16s}
   .sw:not(.on){translate:0 .4em}
   /* the eyebrow dot breathes */
   .eyebrow::before{animation:dot 2.4s ease-out infinite}
@@ -1136,9 +1137,9 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
         <video playsinline preload="metadata" poster="trailer.jpg" data-scenes="8.9,13.3,21.0,14.5,30.3,15.3,10.2,4.3" data-chapters="A question|Not alone|Never from zero|Your rhythm|No ceiling|One conversation|Book it|The environment decides">
           <source src="trailer.mp4" type="video/mp4">
         </video>
-        <div class="vcover" style="background-image:url(trailer.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#0d3f5e" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch · 1:58</div></div>
+        <div class="vcover" style="background-image:url(trailer.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#0d3f5e" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch · 2:19</div></div>
       </div>
-        <p class="vnote"><b>Just under two minutes.</b> What this branch puts around an advisor, and what that is worth on a Tuesday. The words are on screen throughout, so it reads with the sound off.</p>
+        <p class="vnote"><b>Two minutes and nineteen seconds.</b> What this branch puts around an advisor, and what that is worth on a Tuesday. The words are on screen throughout, so it reads with the sound off.</p>
       </div>
     </div>
       <div class="hero-rest">
