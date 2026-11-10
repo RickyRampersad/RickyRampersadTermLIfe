@@ -1813,7 +1813,14 @@ function girCode_(b) {
   var email = String(b.email || '').trim().toLowerCase(), said = 'If we have a renewal for that address, a code is on its way. It is good for ' + GIR.CODE_MIN + ' minutes.';
   if (!gcmEmailOk_(email)) return { ok: false, error: 'Enter the e-mail address our letter came to.' };
   var cache = CacheService.getScriptCache(), k = 'gir-c-' + girHash_(email);
-  if (!girRowsFor_(email).length) return { ok: true, said: said };
+  if (!girRowsFor_(email).length) {
+    /* A stranger gets the same answer either way, so the page cannot be used to find out who we hold. One of our own
+       addresses is told plainly: on 10 Nov 2026 the branch manager tested with his own address, no letter had gone to
+       it, and the page said a code was on its way. */
+    if (girTester_(email)) return { ok: false, error: 'No renewal letter has gone to ' + email + ' yet, so there is no code. The letter goes from the renewal desk once it is approved' +
+      (girLive_() ? '.' : '. The desk is in test mode, so the practice letter goes to ' + girTestTo_(null).join(', ') + ' and to whoever approved it: sign in here with one of those.') };
+    return { ok: true, said: said };
+  }
   var have = girJ_(cache.get(k), null);
   if (have && Date.now() - have.ts < 60000) return { ok: true, said: said };
   var code = String(100000 + Math.floor(Math.random() * 900000));
@@ -1968,6 +1975,14 @@ function girOurAddress_(em) {
   if (GIR_OURS.test(em) || GIR.TEST_TO.some(function (a) { return a.toLowerCase() === em; })) return true;
   try { return tTeam_().people.some(function (p) { return String(p.email || '').toLowerCase() === em; }); } catch (e) { return false; }
 }
+/** One of ours, the account the script runs as, or a test address: told why no code went, where a stranger is not. */
+function girTester_(em) {
+  em = String(em || '').trim().toLowerCase();
+  if (!em) return false;
+  if (girOurAddress_(em)) return true;
+  try { if (String(Session.getEffectiveUser().getEmail() || '').toLowerCase() === em) return true; } catch (e) {}
+  try { return girTestTo_(null).some(function (a) { return a.toLowerCase() === em; }); } catch (e) { return false; }
+}
 /** Whether this person can start this renewal again: { can, why }. */
 function girPracticeFor_(who, st) {
   if (!st) return { can: false, why: 'Nothing has been done on this renewal yet.' };
@@ -2013,9 +2028,11 @@ function girPreview_(p) {
     email: gcmText_(st['E-mail']) || r.contact.email, holder: girTitle_(gcmText_(st.Holder) || who.name) }, { banner: '<b>PREVIEW</b> · this is the letter as the client will read it. Nothing has been sent.' });
   return { ok: true, subject: m.subject, html: m.html };
 }
+/* Which copy is pasted: ?action=gcm.ping answers it under renewals.build. Change it with any change worth deploying. */
+var GIR_BUILD = '2026-11-10a';
 function girPing_() {
   var n = 0; try { n = girRows_(GIR.TAB).length; } catch (e) {}
-  return { live: girLive_(), rows: n, mail: !!tMsCreds_(), ai: !!gcmAiKey_(), salesforce: tSfOn_() };
+  return { build: GIR_BUILD, live: girLive_(), rows: n, mail: !!tMsCreds_(), ai: !!gcmAiKey_(), salesforce: tSfOn_() };
 }
 /** The editor's Run button: the letters, reminders and instructions go to clients and Guardian General from now on. */
 function girGoLive() {
