@@ -768,6 +768,43 @@ The tab is long and thin — one row per person per block per day, about 280 row
 a week for a branch of 28 — because the categories will change and a column per
 activity is a shape nobody maintains.
 
+## What the agents bring, from their own day — the tracker's bridge (10 November 2026)
+
+Asked for in these words: *"everything comes towards a meeting ... persons commit to what's working and a case
+that they're going to actually share, or some idea for the branch meeting or skill set ... and also identifying the
+training and development plan in terms of building into the meeting what we're observing."*
+
+The agents' day lives in the KPI tracker, not here. Each morning its coach reads every agent's record and names what
+it sees: ahead of plan, business waiting to close, no fact finds, premiums slipping, quiet, asked for help. That read
+is now kept (Agent Day, kind `obs`) and turned into one ask in the morning brief and on My day: **bring a case that
+worked, a point you can teach, a question for the room, an idea, or (privately) the help you need**. One tap and a
+line.
+
+Each commitment arrives here at once as a contribution **brought in beforehand** (offset −1, exactly as one made
+before the register opens), under the item it belongs to:
+
+| They bring | Lands under | Seen by |
+| --- | --- | --- |
+| A case that worked | What worked for me | everyone |
+| A point I can teach | Training | everyone |
+| A question for the room | Open floor | everyone |
+| An idea for the branch | Open floor | everyone |
+| Help I need | Open floor | staff and the manager only (and their manager is e-mailed the same minute) |
+
+Changing it on the phone rewrites the same row; it never doubles. Each evening the tracker also writes **one
+staff-only note under Training**: the development areas it saw that week and who each is for (with how many mornings),
+who is ahead of plan and could teach, a suggested training point, what the agents are bringing, and who has not
+committed. The chair walks in with the development plan drafted.
+
+**The door is signed.** `apiBridge_` answers only a call signed with `MEET_BRIDGE_KEY` and under ten minutes old. Put
+the same value in this project's Script Properties and in the tracker's, with the tracker's `MEET_URL` set to this
+project's `/exec`. Without them nothing is lost: commitments are kept in the tracker, shown to the managers at 6pm,
+and go across on the first evening the bridge answers. `?action=ping` reports `bridge: true` once the key is set.
+
+The meeting must exist for anything to land: an agent's commitment for a meeting not yet built is kept and sent the
+evening it is. Items are matched by title (*What worked for me*, *Training*, *Open floor*), so a meeting built from
+the standing rota takes them as they are.
+
 ## Attendance, from 6 October 2026
 
 The JotForm register is disbanded. There is one register and it is this app.
