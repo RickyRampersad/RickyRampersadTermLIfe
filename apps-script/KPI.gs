@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-10a';
+var SCRIPT_VERSION = '2026-11-10b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -10318,7 +10318,7 @@ function sendBranchManagerProgress_(day, which) {
       { value: sfOk ? me.notes : '—', label: 'your Chatter today' },
       { value: sfOk ? w.mine.length : '—', label: 'yours still due', color: w.mine.length ? MAIL.amber : MAIL.navy },
       { value: sfOk ? w.ask.length : '—', label: 'notes asking you', color: w.ask.length ? MAIL.red : MAIL.navy }
-    ]) + replyButton_(unitUrl_('ricky'), 'Open my day', 'Urgent, drafts, your inbox and what is important, with today so far. The same link every day.') + sofar + inboxMailSection_(inbox, which, day) + selfHtml +
+    ]) + replyButton_(workGoUrl_('ricky', 'waiting'), 'Open my day', 'What waits on you, your inbox and your tasks, with today so far. On My workday, the same link every day.') + wdMgrOldLine_(unitUrl_('ricky')) + sofar + inboxMailSection_(inbox, which, day) + selfHtml +
     sectionLabel_('The team today') + table +
     '<div style="font-size:11.5px;color:' + MAIL.muted + ';margin-top:5px">Closed today against the morning\'s suggested target; closed with the owner\'s own note. ' + (moves ? moves + ' task' + (moves === 1 ? '' : 's') + ' moved between desks today.' : '') + '</div>' +
     (um ? sectionLabel_('Unit Managers') + '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:6px 15px">' + um + '</div>' : '') +
@@ -11579,7 +11579,7 @@ function unitUrl_(sid) { return execBase_() + '?rs=' + encodeURIComponent(sid) +
 function unitViewSig_(sid) { return replySig_(sid, 'always', 'unitv'); }
 function unitViewUrl_(sid) { return execBase_() + '?rs=' + encodeURIComponent(sid) + '&f=unitv&k=' + encodeURIComponent(unitViewSig_(sid)); }
 function unitButton_(sid) {
-  return replyButton_(unitUrl_(sid), 'My unit', 'Everything in one place: what to do first, your unit\'s work and who holds it, your agents against their goals, and your own day and week. The same link every day: save it to your home screen.');
+  return replyButton_(workGoUrl_(sid, 'unit'), 'My unit', 'Everything in one place: what to do first, your unit\'s work and who holds it, your agents against their goals, and your own day and week. The same link every day: save it to your home screen.') + wdMgrOldLine_(unitUrl_(sid));
 }
 /** From the editor: a Unit Manager's My unit link, to save on his phone. */
 function showUnitLink(sid) { var u = unitUrl_(sid || UM_DESKS[0]); Logger.log(u); return u; }
@@ -13612,7 +13612,7 @@ function ffAskMail_(s, week, kind) {
       { value: s.f3 && s.f3.known ? s.f3.year : '—', label: 'this year' },
       { value: s.goalWk || '—', label: 'your own weekly goal' }
     ]) +
-    replyButton_(replyUrl_(a.key, week, 'agff'), 'Give my response', 'One page, two minutes, no sign-in. The link is good all week.') +
+    replyButton_(workGoUrl_(a.key, 'agff'), 'Give my response', 'On My day, two minutes. The fact-find card asks what is in the way.') + agOldLine_(replyUrl_(a.key, week, 'agff')) +
     '<div style="font-size:13px;color:' + MAIL.muted + ';line-height:1.55;margin-top:10px">Your answer goes to your manager and Mrs Dookran. If you need help (appointments, names to call, or the fact find itself), say so and your manager gets it as a task.' +
       (kind === 'remind' ? ' No response by Friday goes to Mr Rampersad.' : '') + '</div>' +
     '<div style="font-size:13px;line-height:1.55;margin-top:18px;border-top:1px solid ' + MAIL.line + ';padding-top:12px">Ricky Rampersad<br><span style="color:' + MAIL.muted + '">Branch Manager · Ricky Rampersad Branch</span></div>';
@@ -13820,7 +13820,10 @@ function meNudgeTimes_() {
     .filter(function (m) { return m != null && m >= 0 && m < 1440; });
 }
 function meButton_(sid) {
-  return replyButton_(meUrl_(sid), 'My day', 'Your plan, what is next, capture on the fly, and your day so far. The same link every day: save it to your home screen.');
+  // 10 Nov 2026: the check-in opened the tracker's own page, which Google refuses on a phone signed in to two Google accounts
+  // ("Sorry, unable to open the file at this time"). It opens My workday on the branch site now; the old page is a small link.
+  return replyButton_(workGoUrl_(sid, 'waiting'), 'Open My workday', 'What waits on you, your tasks, and your day so far. The same link every day: save it to your home screen.') +
+    wdMgrOldLine_(meUrl_(sid));
 }
 
 /** What the page and the check-ins read: the plan, what is next, the day so far. */
@@ -13957,7 +13960,7 @@ function sendMeNudge_(sid, day, at) {
       (!m.planned ? '<b style="color:' + MAIL.red + '">Your day is not planned yet.</b> Plan it first: two minutes.' : (next.length ? 'Here is what is next.' : 'Nothing is waiting on you in Salesforce. Work your plan.')) + '</div>' +
     (missed.length ? '<div style="font-size:13.5px;line-height:1.5;margin:-4px 0 12px;color:' + MAIL.red + ';font-weight:700">Nothing was logged after the ' + esc_(missed.map(function (c) { return twelve_(mmText_(c.at)); }).join(' or the ')) + ' check-in. Log what you did on My day: "Done already" counts it.</div>' : '') +
     (self && self.items.length ? '<div style="font-size:13px;color:' + MAIL.muted + ';margin:-4px 0 12px">Your plan so far: ' + esc_(self.items.map(function (x) { return x.q + ' ' + x.done + ' of ' + x.planned; }).join(' · ')) + '</div>' : '') +
-    (!m.planned ? replyButton_(replyUrl_(sid, day, 'um'), 'Plan my day now', '') : '') +
+    (!m.planned ? replyButton_(workGoUrl_(sid), 'Check in and plan my day', 'On My workday, on the branch site.') : '') +
     statTiles_([
       { value: m.today.closed || 0, label: 'closed today', color: MAIL.green },
       { value: m.w.ask.length, label: 'notes asking you', color: m.w.ask.length ? MAIL.red : MAIL.navy },
