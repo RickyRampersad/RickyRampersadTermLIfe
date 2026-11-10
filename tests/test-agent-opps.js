@@ -65,7 +65,7 @@ mails.length = 0; DAY = TUE;
 const m2 = env.agentMorningMail2_(N, TUE, { open: { [N.key]: [] }, opps: { [N.key]: { fresh: [], open: env.agOppRows_().filter(r => r.AgentKey === N.key && r.Status === 'open') } } },
   { coach: { title: 'Good morning', note: 'n' }, months: null, goal: null, f3: {}, cases: null, orphans: null, pend: null, review: null, calls: [] });
 ok('Your opportunities (3), with Liz researching and Neil\'s answer due', /Your opportunities \(3\)/.test(m2.html) && /Elizabeth is researching it/.test(m2.html) && /Your answer by 10am/.test(m2.html));
-ok('the meeting and the feedback taps', /Add it to the agenda/.test(m2.html) && /Was this brief useful\?/.test(m2.html) && /agfb=a-neil/.test(m2.html));
+ok('the meeting and the feedback taps', /Commit one thing for/.test(m2.html) && /Was this brief useful\?/.test(m2.html) && /agfb=a-neil/.test(m2.html));
 
 console.log('\nFeedback: a tap opens a page; Send records it:\n');
 const sig = env.replySig_(N.key, TUE, 'agfb');
