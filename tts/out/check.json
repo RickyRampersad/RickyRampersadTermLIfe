@@ -1,27 +1,47 @@
 {
- "tts/out/smpA/01.mp3": [
-  "en",
-  0.997,
-  "Hey everyone, the logbook has a new look. It's lighter, it's clearer, and it's so much easier to read on your phone."
- ],
- "tts/out/smpB/01.mp3": [
-  "en",
-  0.997,
-  "Hey, everyone. The logbook has a new look. It's lighter, it's clearer, and it's so much easier to read on your phone."
- ],
- "tts/out/smpC/01.mp3": [
+ "tts/out/lbnewlook3/01.mp3": [
   "en",
   0.998,
-  "Hey everyone, the logbook has a new look. It's lighter, it's clearer, and it's so much easier to read on your phone."
+  "Hey, everyone. The logbook has a new look."
  ],
- "tts/out/smpD/01.mp3": [
-  "en",
-  0.997,
-  "Hey everyone, the logbook has a new look. It's lighter, it's clearer, and it's so much easier to read on your phone."
- ],
- "tts/out/smpE/01.mp3": [
+ "tts/out/lbnewlook3/02.mp3": [
   "en",
   0.994,
-  "Hey everyone! The logbook has a new look. It's lighter, it's clearer and it's so much easier to read on your phone."
+  "before it was dark and honestly pretty hard to read on a phone."
+ ],
+ "tts/out/lbnewlook3/03.mp3": [
+  "en",
+  0.996,
+  "Now it's lighter, it's clearer, and it's so much easier on the eyes."
+ ],
+ "tts/out/lbnewlook3/04.mp3": [
+  "en",
+  0.998,
+  "The text is bigger and the buttons are bigger too, so works nicely on your phone."
+ ],
+ "tts/out/lbnewlook3/05.mp3": [
+  "en",
+  0.999,
+  "You find your client in one search and the department fills itself in for you."
+ ],
+ "tts/out/lbnewlook3/06.mp3": [
+  "en",
+  0.998,
+  "then you log it and hand it straight to sale support."
+ ],
+ "tts/out/lbnewlook3/07.mp3": [
+  "en",
+  0.996,
+  "And for staff, the Q and the Insights are easy to read at a glance."
+ ],
+ "tts/out/lbnewlook3/08.mp3": [
+  "en",
+  0.996,
+  "One more thing, East Gates is now in the department list."
+ ],
+ "tts/out/lbnewlook3/09.mp3": [
+  "en",
+  0.994,
+  "Same log book you know. Just a lot easier on the eyes."
  ]
 }
