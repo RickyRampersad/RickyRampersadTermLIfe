@@ -1,11 +1,36 @@
 {
  "voice": "en-US-AndrewMultilingualNeural",
- "rate": "-5%",
+ "rate": "+0%",
  "check": true,
  "films": {
-  "lbnewlook2": [
-   "Bigger text, and bigger buttons. Built for your phone.",
-   "For staff, the queue and the insights are easy to read."
+  "smpA": [
+   "Hey everyone. The Log Book has a new look. It's lighter, it's clearer, and it's so much easier to read on your phone."
+  ],
+  "smpB": [
+   "Hey everyone. The Log Book has a new look. It's lighter, it's clearer, and it's so much easier to read on your phone."
+  ],
+  "smpC": [
+   "Hey everyone. The Log Book has a new look. It's lighter, it's clearer, and it's so much easier to read on your phone."
+  ],
+  "smpD": [
+   "Hey everyone. The Log Book has a new look. It's lighter, it's clearer, and it's so much easier to read on your phone."
+  ],
+  "smpE": [
+   "Hey everyone. The Log Book has a new look. It's lighter, it's clearer, and it's so much easier to read on your phone."
   ]
+ },
+ "voices": {
+  "smpA": "en-US-BrianMultilingualNeural",
+  "smpB": "en-US-AvaMultilingualNeural",
+  "smpC": "en-US-AndrewMultilingualNeural",
+  "smpD": "en-US-EmmaMultilingualNeural",
+  "smpE": "en-GB-RyanNeural"
+ },
+ "rates": {
+  "smpA": "+0%",
+  "smpB": "+0%",
+  "smpC": "+0%",
+  "smpD": "+0%",
+  "smpE": "+0%"
  }
 }
