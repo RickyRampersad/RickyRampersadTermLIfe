@@ -28,6 +28,9 @@
  * test mode only when they tick that the renewal is really going ahead.
  */
 
+/* The reconciliation. SLACK is what counts as the same figure: Guardian General round to the
+   cent and we hold the same, so a dollar is generous and still catches a real difference. */
+var GIR_RECON = { SLACK: 1 };
 var GIR = {
   TAB: 'GI Renewals',
   LOG: 'GI Renewal Log',
@@ -60,7 +63,7 @@ var GIR_HEAD = {
   'GI Renewals': ['Key', 'Policy', 'Line', 'Client', 'Account', 'Contact', 'E-mail', 'Renewal', 'Stage', 'Holder', 'Holder e-mail',
     'Last trans', 'Notice', 'Values', 'Letter', 'Submitted by', 'Approved by', 'Approved at', 'Sent at', 'Sent to', 'Test', 'Task',
     'Client view', 'Client answer', 'Reminders', 'Proceed by', 'Proceed at', 'GG to', 'GG subject', 'GG sent at', 'GG mail',
-    'New trans', 'New risks', 'Follow task', 'Event', 'Chases', 'GG reply', 'Delivered', 'Paid', 'Outcome', 'Updated', 'Req task'],
+    'New trans', 'New risks', 'Follow task', 'Event', 'Chases', 'GG reply', 'Delivered', 'Paid', 'Outcome', 'Updated', 'Req task', 'Recon'],
   'GI Renewal Log': ['When', 'Key', 'Policy', 'Client', 'Step', 'By', 'Detail']
 };
 /* The lines, in the order the desk shows them. pre: the policy number's middle letters; rt: Salesforce's cover-term
@@ -504,7 +507,8 @@ function girOne_(p) {
     proceed: s && s['Proceed at'] ? { by: gcmText_(s['Proceed by']), at: gcmWhen_(s['Proceed at']), to: gcmText_(s['GG to']), subject: gcmText_(s['GG subject']),
       trans: gcmText_(s['New trans']), risks: girJ_(s['New risks'], []), follow: gcmText_(s['Follow task']), event: gcmText_(s.Event) } : null,
     chases: s ? girJ_(s.Chases, []) : [], ggReply: s ? girJ_(s['GG reply'], null) : null, delivered: s ? gcmText_(s.Delivered) : '', paid: s ? gcmText_(s.Paid) : '',
-    outcome: s ? gcmText_(s.Outcome) : '', log: log, sfUrl: girSfBase_(), practice: girPracticeFor_(who, s), req: girReqInfo_(r, s, notice) };
+    outcome: s ? gcmText_(s.Outcome) : '', log: log, sfUrl: girSfBase_(), practice: girPracticeFor_(who, s), req: girReqInfo_(r, s, notice),
+    recon: girRecon_(r, s, notice) };
 }
 function girSfBase_() { try { return svcSfToken_().instance_url + '/'; } catch (e) { return ''; } }
 /** The renewal without Salesforce's raw shape: what the pages and the letter need. */
@@ -1417,6 +1421,8 @@ function girAct_(b) {
         girLog_(key, r, 'values', who.name, Object.keys(got).length + ' value(s) confirmed');
         return { ok: true, said: 'Values saved.' };
       }
+      case 'recon': return girReconSave_(who, r, st, b, save, key);
+      case 'reconAsk': return girReconAsk_(who, r, st, b, save, key);
       case 'draft': {
         var notice = girJ_(st && st.Notice, null);
         var claims = girClaims_(r), hist = girHistory_(r, { claims: claims }), bills = girBills_(r), ins = girInsights_(r, hist, claims, bills, notice, gcmToday_());
@@ -1679,6 +1685,88 @@ function girProceed_(who, r, st, b, save) {
   return { ok: true, sf: out, said: (test ? 'TEST: the instruction went to ' + to.join(', ') + '. ' : 'Instructed: ' + to.join(', ') + ', copied ' + GIR.CC.join(', ') + '. ') +
     (out.trans ? 'Salesforce: a new billing record, ' + out.risks.length + ' cover term(s), a follow-up task' + (out.event ? ' and the delivery in ' + out.deliverer + '\'s calendar' : '') + '.' : 'Salesforce was not written.') };
 }
+/* ── The reconciliation: our record against Guardian General's notice ──────────────────────
+   "Recon" is the branch's own word for it — Pawan asks CRMS for the printout "so we can do
+   our Recon". On a fleet it is the whole job: sixty-odd registrations on each side, and the
+   only way to find the one that moved is to set them beside each other.
+
+   A MOTOR NOTICE GIVES THE PREMIUM PER VEHICLE, NOT THE SUM INSURED (girread's vehicle item
+   carries `premium`; only a property item carries `value`). So the figure that reconciles on
+   a fleet is the premium, and the sum insured is ours alone until the client confirms it. */
+function girReconKey_(s) { return String(s || '').replace(/\W/g, '').toUpperCase(); }
+function girRecon_(r, st, notice) {
+  var saved = girJ_(st && st.Recon, {}) || {}, nitems = (notice && notice.items) || [];
+  var used = {}, rows = [], ourP = 0, theirP = 0;
+  var cell = function (id, o) { var s = saved[id] || {}; o.id = id; o.ok = !!s.ok; o.q = s.q || ''; o.by = s.by || ''; o.at = s.at || ''; o.asked = s.asked || ''; return o; };
+  r.items.forEach(function (x) {
+    var k = girReconKey_(x.vehicle), n = null;
+    if (k) for (var i = 0; i < nitems.length; i++) if (!used[i] && girReconKey_(nitems[i].reg) === k) { n = nitems[i]; used[i] = 1; break; }
+    var ours = girR_(x.total), theirs = n ? girR_(n.premium || n.value) : 0;
+    ourP += ours; theirP += theirs;
+    rows.push(cell(x.id, { label: girItemLabel_(x), vehicle: x.vehicle || '', coverage: x.coverage || '', cover: girR_(x.value || x.cover),
+      ours: ours, theirs: theirs, diff: n ? girR_(theirs - ours) : 0,
+      state: !n ? 'ours' : (ours && theirs && Math.abs(theirs - ours) >= GIR_RECON.SLACK) ? 'differs' : 'same' }));
+  });
+  /* on the notice and not on our record: a vehicle added mid-year that never reached Salesforce */
+  nitems.forEach(function (n, i) {
+    if (used[i] || !n.reg) return;
+    var theirs = girR_(n.premium || n.value); theirP += theirs;
+    rows.push(cell('n:' + girReconKey_(n.reg), { label: [n.year || '', n.desc || '', '(' + n.reg + ')'].filter(String).join(' '), vehicle: n.reg,
+      coverage: '', cover: 0, ours: 0, theirs: theirs, diff: theirs, state: 'theirs' }));
+  });
+  var counts = { same: 0, differs: 0, ours: 0, theirs: 0, ok: 0, q: 0 };
+  rows.forEach(function (x) { counts[x.state]++; if (x.ok) counts.ok++; if (x.q) counts.q++; });
+  var nTotal = girR_(notice ? notice.premium || notice.total : 0);
+  return { rows: rows, counts: counts, risks: rows.length,
+    ourPremium: girR_(ourP), theirPremium: girR_(theirP), noticeTotal: nTotal,
+    /* the notice's own items against the notice's own total: girread warns on this too, and
+       it is the first thing to query, because nothing else can be trusted until it ties */
+    itemsTie: !nTotal || !theirP || Math.abs(theirP - nTotal) < GIR_RECON.SLACK,
+    done: rows.length > 0 && rows.every(function (x) { return x.ok || x.q; }),
+    open: rows.filter(function (x) { return !x.ok && !x.q; }).length,
+    asked: girJ_(st && st.Recon, {})._asked || null };
+}
+/** A reconciliation note saved on a row: ticked as right, or queried with a question. */
+function girReconSave_(who, r, st, b, save, key) {
+  var saved = girJ_(st && st.Recon, {}) || {}, got = girJ_(b.rows, null) || b.rows || {}, n = 0;
+  Object.keys(got).forEach(function (id) {
+    var g = got[id] || {}, q = String(g.q || '').trim().slice(0, 500);
+    if (!g.ok && !q) { delete saved[id]; return; }
+    saved[id] = { ok: !!g.ok && !q, q: q, by: who.name, at: gcmWhen_(new Date()), asked: (saved[id] || {}).asked || '' };
+    n++;
+  });
+  save({ Recon: saved });
+  girLog_(key, r, 'reconciled', who.name, n + ' risk(s) checked');
+  return { ok: true, said: n + ' risk' + (n === 1 ? '' : 's') + ' saved.' };
+}
+/** The clarification: every query on the reconciliation, to Guardian General. */
+function girReconAsk_(who, r, st, b, save, key) {
+  var notice = girJ_(st && st.Notice, null), rec = girRecon_(r, st, notice);
+  var qs = rec.rows.filter(function (x) { return x.q; });
+  var extra = String(b.text || '').trim().slice(0, 2000);
+  if (!qs.length && !extra) return { ok: false, error: 'Nothing to ask yet. Query a risk, or write a question below.' };
+  var live = girLive_(), to = live ? girGgTo_(r.line) : girTestTo_(who, []);
+  var subj = 'Renewal query: ' + r.client + ' · ' + r.policy + ' · renewal ' + girMdy_(r.ren);
+  var html = '<p>Good day,</p><p>We are reconciling the renewal notice for <b>' + tEsc_(r.client) + '</b>, policy <b>' + tEsc_(r.policy) +
+    '</b>, renewing ' + tEsc_(tDmy_(r.ren)) + ', and would be grateful for clarification on the following.</p>' +
+    (rec.itemsTie ? '' : '<p>First, the notice\'s own items add to ' + girMoney_(rec.theirPremium) + ' against a notice total of ' + girMoney_(rec.noticeTotal) + '.</p>') +
+    (qs.length ? '<ol>' + qs.map(function (x) {
+      var was = x.state === 'theirs' ? 'not on our records' : x.state === 'ours' ? 'not on the notice' :
+        x.state === 'differs' ? 'our record ' + girMoney_(x.ours) + ', the notice ' + girMoney_(x.theirs) : '';
+      return '<li><b>' + tEsc_(x.label) + '</b>' + (was ? ' — ' + tEsc_(was) : '') + '<br>' + tEsc_(x.q) + '</li>';
+    }).join('') + '</ol>' : '') +
+    (extra ? '<p>' + tEsc_(extra).replace(/\n/g, '<br>') + '</p>' : '') +
+    '<p>Thank you.</p><p>Regards,<br>' + tEsc_(who.name) + '<br>Ricky Rampersad Branch</p>';
+  var sent = girMail_(to[0], (live ? '' : '[TEST] ') + subj, html, { cc: live ? to.slice(1).concat(GCM.COPY) : to.slice(1) });
+  if (!sent) return { ok: false, error: 'The query did not send. Try again, or send it from Outlook.' };
+  var saved = girJ_(st && st.Recon, {}) || {}, when = gcmWhen_(new Date());
+  qs.forEach(function (x) { if (saved[x.id]) saved[x.id].asked = when; });
+  saved._asked = { at: when, by: who.name, n: qs.length, to: to.join(', '), test: !live };
+  save({ Recon: saved });
+  girLog_(key, r, 'query sent', who.name, qs.length + ' query/queries to ' + to.join(', ') + (live ? '' : ' (test)'));
+  return { ok: true, said: (live ? 'Sent to ' : 'Test copy sent to ') + to.join(', ') + '.' };
+}
+
 function girGgTo_(line) {
   var o = null;
   try { o = JSON.parse(PropertiesService.getScriptProperties().getProperty('GIR_GG_TO') || 'null'); } catch (e) {}

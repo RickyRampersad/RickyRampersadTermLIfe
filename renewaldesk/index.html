@@ -133,6 +133,24 @@ table.t td.n,table.t th.n{text-align:right;font-variant-numeric:tabular-nums}
 .panel .lead{color:var(--dim);margin:0 0 12px;max-width:72ch}
 .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .found{display:grid;gap:8px;margin:10px 0}
+/* Reconcile: our record beside Guardian General's notice. The table is the point, so it
+   scrolls sideways on a narrow screen rather than wrapping into something unreadable. */
+.banner.warn{background:var(--warnbg);border-color:#E9C46A;color:#4A3200}
+.rtiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,7rem),1fr));gap:8px;margin:0 0 14px}
+.rtile{background:var(--sky);border-radius:12px;padding:9px 12px;text-align:center}
+.rtile b{display:block;font-size:1.35rem;line-height:1.1;color:var(--ink);font-variant-numeric:tabular-nums}
+.rtile span{font-size:.76rem;color:var(--dim)}
+.rwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:14px;margin:0 0 12px}
+.rtab{border-collapse:collapse;width:100%;min-width:52rem;font-size:.92rem}
+.rtab th,.rtab td{padding:8px 10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+.rtab thead th{position:sticky;top:0;background:#F4F8FD;font-size:.8rem;color:var(--dim);z-index:1}
+.rtab .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rtab .up{color:var(--bad)}.rtab .down{color:var(--ok)}
+.rtab tbody tr:last-child td{border-bottom:0}
+.rtab .rtick label{display:flex;gap:6px;align-items:center;font-weight:700;white-space:nowrap}
+.rtab .rtick input{width:20px;height:20px;min-height:20px}
+.rtab .field.small{font-size:.9rem;padding:6px 8px;min-height:38px;min-width:11rem}
+.rrow.isok{background:var(--okbg)}.rrow.isq{background:var(--warnbg)}
 .fd{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:12px;padding:10px 12px;flex-wrap:wrap}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr));gap:4px 12px}
 .pt{border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;background:var(--soft)}
