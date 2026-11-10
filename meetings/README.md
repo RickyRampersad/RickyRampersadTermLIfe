@@ -949,14 +949,23 @@ The properties, and how each is set:
 
 | property | set by |
 |---|---|
-| `JOIN_CODE` | 🔑 Set the branch code |
-| `ROSTER_SHEET_ID` | 🪪 Pull the roster from the Agent Skill Bank |
-| `ARCHIVE_FOLDER_ID` | 📥 Import the meeting archive |
+| `JOIN_CODE` | 🔑 Set the branch code — **without it nobody signs in** |
+| `ROSTER_SHEET_ID` | 🪪 Pull the roster from the Agent Skill Bank — **without it nobody is on the roll** |
+| `TRACKER_URL` | by hand: the tracker's `/exec`, for the branch's own numbers on the screen |
+| `MEET_BRIDGE_KEY` | by hand: the same secret the tracker holds, both ways |
 | `PORTFOLIO_SHEET_ID` | 📊 Connect the Branch Portfolio |
 | `SERVICE_SHEET_IDS` | 🤝 Connect the service sheets |
+| `FACTFIND_WALL_URL`, `FACTFIND_WALL_KEY`, `FACTFIND_GOAL_TOKEN` | by hand, for the fact-find figures |
 | `MAIL_RELAY_URL`, `MAIL_RELAY_KEY` | by hand — **optional once support@ owns it** |
 | `PROGRESS_TO`, `PROGRESS_HOUR`, `CONTENT_ASK_DAYS`, `CONTENT_ASK_HOUR` | by hand, optional |
 | `BRANCH_MAIL` | the menu, or `releaseBranchMail` — leave it unset until you are ready |
+
+**Two properties must NOT be carried across by hand: `MEETINGS_FOLDER_ID` and
+`ARCHIVE_FOLDER_ID`.** They point at folders in whichever Drive wrote them, so
+a copied value files the minutes and the archive back into the old account's
+Drive — where support@ may not be able to open them at all. Blank is correct on
+a fresh copy: the materials folder makes itself, and 📥 Import the meeting
+archive writes the archive one. Same trap as the claims intake's root folder.
 
 `MAIL_RELAY_LAST` and `mm_relay_left` are written by the code. Do not copy them.
 
@@ -999,11 +1008,26 @@ naming the release, the progress note leads its "To act on" list with it, and
 6. **Re-enter the properties** from the table above, and press the menu items
    — **the week cycle first**, without which there is no meeting at all and
    nobody can sign in.
-7. **Check it from outside:** `?action=ping` now answers
-   `runsAs` (the domain only, never the address), `onWorkspace`, `branchMail`
-   and `version`. `runsAs: "rickyrampersadbranch.com"` means the move took;
-   `"gmail.com"` means it is still on the personal account; `""` means the
-   deployment is not *Execute as: Me* and nothing can be stored at all.
+7. **Check it from outside, from a browser, with no sign-in:**
+   `?action=ping` answers the whole state of the move.
+   - `runsAs` — the domain only, never the address.
+     `"rickyrampersadbranch.com"` means the move took; `"gmail.com"` means it
+     is still on the personal account; `""` means the deployment is not
+     *Execute as: Me* and nothing can be stored at all.
+   - `version` — which build is live. If it is not the one you just pasted,
+     the New version was never published.
+   - `settings` — **which of the properties above are filled in**, as plain
+     true or false. Never a value: this answer is public and one of them is
+     the branch code. `branchCode: false` or `rosterSheet: false` is the
+     state in which every agent is correctly told they are not on the roll,
+     and nothing else says why.
+   - `jobs` — **which of the timed jobs are installed.**
+     `buildWednesday: false` is the state that cost nine days in October:
+     no meeting is created, so nobody can sign in, and the only trace was a
+     ping reporting one meeting from a fortnight before.
+   - `branchMail` — `held` or `live`.
+   - `roster.onTheRoll` — against the branch's real headcount. **1 is never
+     right**; it means the roster pull has not been run.
 8. **Read each e-mail while it still holds** — the progress note, a preview of
    the daily note, a time-block check, the content ask.
 9. **Release the mail to the branch.**

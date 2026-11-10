@@ -9455,6 +9455,55 @@ people and read as a leak. The fix is on the test side: give the owner a domain 
 its own, so the guard keeps its full force and `runsAs` is checked as well. Do not
 weaken that guard.
 
+### The ping says what a copy did not carry — 10 November 2026
+
+Asked for in one word, **"Move the Builder to support@"**, choosing it over the
+claims intake. Drive confirms one copy of `Branch Meetings — Ricky Rampersad
+Branch`, owner the personal Gmail, modified 9 November; the live `/exec` still
+answers `version: 2026-10-28` with one meeting, `MD-2026-10-30`. So the move is
+his to make in Drive — but **what a copy silently lacks was still invisible from
+outside**, and that is the half worth fixing in code.
+
+**File → Make a copy carries the tabs and the code and nothing else: not one
+Script property, not one trigger.** Both have already cost this branch days
+nobody could see going wrong, and both failures read as somebody else's fault:
+
+- **a blank `JOIN_CODE` locks every person out**, and the refusal reads to the
+  agent as *their* number being wrong;
+- **the week cycle left uninstalled meant nine days with no meeting at all** —
+  `buildWednesday` never fired, so nobody could sign in, and the only trace was
+  a ping reporting one meeting from a fortnight before.
+
+So `?action=ping` now answers **`settings`** (which of the properties it needs
+are filled in) and **`jobs`** (which of the eight timed handlers are installed).
+Both are **names and booleans only, never a value** — the endpoint needs no
+sign-in, the `/exec` is in this public repository, and one of those settings is
+the branch code. `test-move-ready.js` plants a real-looking value in all eleven
+properties and fails if any one of them appears anywhere in the answer.
+
+**Two properties must never be carried across by hand: `MEETINGS_FOLDER_ID` and
+`ARCHIVE_FOLDER_ID`.** They point at folders in whichever Drive wrote them, so a
+copied value files the minutes and the archive back into the old account's Drive,
+where support@ may not be able to open them at all. **Blank is correct on a fresh
+copy** — the materials folder makes itself and the archive import writes the
+other. Same trap as the claims intake's `CLAIMS_ROOT_ID`, and the reason the ping
+reports those two: a value carried over is then visible rather than silent.
+
+**`TRACKER_URL`, `MEET_BRIDGE_KEY` and the three fact-find properties were
+missing from the README's own table**, so a move that followed it to the letter
+would have come up with the meeting screen's figures and the Wednesday bridge
+dead. They are in it now.
+
+**Nothing in the ping may throw**, which is the rule it was written under: a ping
+that fails is indistinguishable from a backend that is down, and that is the one
+thing it exists to tell apart. Both new blocks read inside their own try and
+answer `null` rather than a half-truth; the suite takes the properties store and
+the trigger list away in turn and checks the ping still answers.
+
+**And the suite was checked against the build it replaces** rather than trusted
+because it went green first time: on `2026-11-10a` both fields come back
+`undefined`.
+
 ### The branch signed in as guests, so the register has been empty — 8 November 2026
 
 Read out of the live book while answering "are the ideas coming in". It is the

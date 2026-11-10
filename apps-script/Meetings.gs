@@ -76,7 +76,7 @@ var MEET = {
   /*  Bumped whenever this file changes in a way a deployment has to
    *  carry. `?action=ping` reports it, so a browser can tell a live
    *  build from one pasted six weeks ago without anybody guessing. */
-  VERSION: '2026-11-10a',
+  VERSION: '2026-11-10b',
 
   /* Typed once, when someone sets their PIN for the first time. It
      stops a stranger who guesses a branch email address from claiming
@@ -7147,6 +7147,61 @@ function apiPing_() {
 
   try { out.branchMail = meetBranchMailLive_() ? 'live' : 'held'; }
   catch (e) { out.branchMail = 'unknown'; }
+
+  /*  WHAT A COPY DOES NOT CARRY — so the move is checkable from here.
+   *
+   *  File > Make a copy carries the tabs and the code and NOTHING
+   *  else: not one Script property, not one trigger. Both are
+   *  invisible from outside, and both have already cost this branch
+   *  real days. A blank branch code locks every person out of the
+   *  page. The week cycle left uninstalled meant NINE DAYS with no
+   *  meeting at all, and nothing anywhere said so.
+   *
+   *  So: which settings are filled in, and which timed jobs are
+   *  installed. NAMES AND BOOLEANS ONLY, never a value — this answer
+   *  is public, and one of these settings is the branch code.      */
+  try {
+    var pr = PropertiesService.getScriptProperties();
+    var has = function (k) { return !!str_(pr.getProperty(k)); };
+    out.settings = {
+      /* Without these two nobody signs in and nobody is on the roll. */
+      branchCode: has('JOIN_CODE'),
+      rosterSheet: has('ROSTER_SHEET_ID'),
+      /* The branch's own numbers on the meeting screen. */
+      trackerUrl: has('TRACKER_URL'),
+      bridgeKey: has('MEET_BRIDGE_KEY'),
+      /* The mail route. Without the relay every send falls to Gmail. */
+      relayUrl: has('MAIL_RELAY_URL'),
+      relayKey: has('MAIL_RELAY_KEY'),
+      /* The Monday brief's own sources. */
+      portfolioSheet: has('PORTFOLIO_SHEET_ID'),
+      serviceSheets: has('SERVICE_SHEET_IDS'),
+      factFindWall: has('FACTFIND_WALL_URL'),
+      /*  THESE TWO MUST NOT BE CARRIED OVER BY HAND. They point at
+       *  folders in whichever Drive wrote them, so a copied value
+       *  files the minutes and the archive back into the old
+       *  account's Drive. Blank is CORRECT on a fresh copy: the
+       *  folders make themselves in the new one. Same trap as the
+       *  claims intake's root folder.                              */
+      meetingsFolder: has('MEETINGS_FOLDER_ID'),
+      archiveFolder: has('ARCHIVE_FOLDER_ID')
+    };
+  } catch (e) { out.settings = null; }
+
+  /*  The timed jobs. A fresh copy has none, and the week cycle is the
+   *  one that decides whether there is a meeting at all: without
+   *  buildWednesday nobody has anything to sign in to.             */
+  try {
+    var want = ['buildWednesday', 'weekClose', 'dailyMeetingNote',
+                'mondayBrief', 'builderProgress', 'contentAsk',
+                'activityMorning', 'activityAfternoon'];
+    var on = {}, i;
+    ScriptApp.getProjectTriggers().forEach(function (t) {
+      on[str_(t.getHandlerFunction())] = true;
+    });
+    out.jobs = {};
+    for (i = 0; i < want.length; i++) out.jobs[want[i]] = !!on[want[i]];
+  } catch (e) { out.jobs = null; }
 
   /* Is the one-off file in the project at all? */
   try { out.oneOff = (typeof seedFridayMeeting === 'function'); }
