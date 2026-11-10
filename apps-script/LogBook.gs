@@ -204,7 +204,13 @@ var LB_DEPTS = [  // [name, documents routed there in the history, alias pattern
   ["DISPATCH QUERIES", 1, "DISPATCH"],
   ["OFT (FEDEX)", 4, "^OFT$|FEDEX"],
   ["OFT KITS (COLLATION BRANCH)", 0, "^OFT KITS"],
+  ["EAST GATES", 0, "EAST ?GATES?"],
 ];
+
+/* Departments added in code after the Departments tab was set up. Each joins
+   the list when the tab does not name it; once a row names it, the tab's
+   Active decides. East Gates was asked for on 10 November 2026. */
+var LB_DEPTS_ADDED = ["OFT KITS (COLLATION BRANCH)", "EAST GATES"];
 
 var LB_DOCS = [  // [name, times in the history, [[department, times]...], [[sent with, % of visits]...], alias pattern]
   ["OFT Kit", 0, [["OFT KITS (COLLATION BRANCH)", 1]], [], "^OFT KITS?$"],
@@ -312,17 +318,21 @@ function lbCanonDoc_(s) {
 function lbDeptRows_() {
   var ss = SpreadsheetApp.getActive();
   var sh = ss.getSheetByName(LB.TABS.DEPTS);
-  var out = [];
+  var out = [], named = {};
   if (sh && sh.getLastRow() > 1) {
     var hm = dbHeaderMap_(sh);
     sh.getRange(2, 1, sh.getLastRow() - 1, hm.head.length).getValues().forEach(function (r) {
       var name = String(r[hm.map['Department']] || '').trim();
+      if (name) named[lbUpper_(name)] = 1;
       var act = String('Active' in hm.map ? r[hm.map['Active']] : 'Yes').trim().toLowerCase();
       if (name && act !== 'no' && act !== 'false') out.push({ name: name, attn: 'Attention' in hm.map ? String(r[hm.map['Attention']] || '').trim() : '',
                                                              email: 'Email' in hm.map ? String(r[hm.map['Email']] || '').trim() : '' });
     });
   }
   if (!out.length) out = LB_DEPTS.map(function (d) { return { name: d[0], attn: '', email: '' }; });
+  else {
+    LB_DEPTS_ADDED.forEach(function (n) { if (!named[lbUpper_(n)]) out.push({ name: n, attn: '', email: '' }); });
+  }
   return out;
 }
 function lbDeptNames_() { return lbDeptRows_().map(function (d) { return d.name; }); }
