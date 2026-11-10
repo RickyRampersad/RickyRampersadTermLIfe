@@ -218,6 +218,28 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     .owed-row .sd{grid-column:2 / -1}
   }
 
+  .drl{display:flex;flex-direction:column;gap:2px}
+  .drl-row{display:flex;gap:12px;align-items:center;padding:9px 10px;border-radius:9px}
+  .drl-row:nth-child(odd){background:var(--tint)}
+  .drl-row.top{background:var(--tint2);box-shadow:inset 3px 0 0 var(--accent)}
+  .drl-row .n{flex:0 0 3.2rem;font:800 20px/1 var(--ui);color:var(--ink);text-align:center}
+  .drl-row .n i{display:block;font:600 9.5px/1.4 var(--ui);font-style:normal;letter-spacing:.6px;
+    text-transform:uppercase;color:var(--muted);margin-top:3px}
+  .drl-row .pt{font-size:14px;color:var(--text);line-height:1.45}
+  .obs{display:flex;flex-direction:column;gap:2px}
+  .obs-row{display:grid;grid-template-columns:minmax(7rem,12rem) 1fr;gap:10px;align-items:start;
+    padding:9px 10px;border-radius:9px}
+  .obs-row:nth-child(odd){background:var(--tint)}
+  .obs-row .nm{font-weight:700;color:var(--ink);font-size:13.5px;overflow-wrap:anywhere}
+  .obs-row .bd{display:flex;flex-direction:column;gap:3px;font-size:12.5px;line-height:1.45}
+  .obs-row .good{color:var(--green)}
+  .obs-row .watch{color:var(--red)}
+  .obs-row .quiet{color:var(--muted)}
+  .obs-row .trn{color:var(--text);font-weight:600}
+  @media(max-width:620px){
+    .obs-row{grid-template-columns:1fr;gap:4px}
+    .drl-row{gap:9px}.drl-row .n{flex-basis:2.6rem;font-size:17px}
+  }
   .rail2{display:flex;flex-wrap:wrap;gap:3px 4px;margin:2px 0 14px;align-items:stretch}
   /*  As wide as its minutes, but never narrower than its own time can be
       read: a two-minute desk report squeezed to "9:…" names nobody, which
@@ -1643,6 +1665,9 @@ function drawMeeting() {
   //  the branch's own numbers, then who owes what: the two things read first
   out += numbersBlock(d);
   out += owedBlock(d);
+  //  what the record says to drill, and who has not been heard from
+  out += drillBlock(d);
+  out += heardBlock(d);
 
   // ---- the floor ----
   out += floorSection(d);
@@ -4397,6 +4422,89 @@ function numbersBlock(d) {
       ". The rest is as at " + esc(k.asOf || "") + ".</div>";
   }
   return out + "</section>";
+}
+
+/* =====================================================================
+ *  WHAT THE RECORD SHOWS ABOUT HOW WE WORK  (10 November 2026)
+ *
+ *  "Calling out the agents, observing the strengths, the weakness ... we will
+ *  look at how persons operate and how they work and how they apply themselves.
+ *  And that's the only way we can actually look at how we train and skills and
+ *  drills."
+ *
+ *  THE DRILLS ARE FOR THE ROOM; THE PEOPLE ARE FOR THEIR MANAGERS. The backend
+ *  sends the per-person read only to staff and managers (packFor_), so an agent
+ *  opening this page sees what the branch needs to train and not a reading of
+ *  anybody. Nobody is ranked here and nobody is scored: each person is read
+ *  against their OWN projection and their OWN normal.
+ * ===================================================================== */
+function drillBlock(d) {
+  var o = (d.pack || {}).observed;
+  if (!o) return "";
+  var out = '<section><div class="section-label">What to drill, from how we actually worked</div>';
+
+  if (o.train && o.train.length) {
+    out += '<div class="card"><div class="dsk-head"><b>Skills and drills</b> · ' +
+      "read off " + o.days + " working days, not asked for</div>" +
+      '<div class="drl">' + o.train.map(function (t, i) {
+        return '<div class="drl-row' + (i === 0 ? " top" : "") + '">' +
+          '<span class="n">' + t.n + "<i>" + (t.n === 1 ? "person" : "people") + "</i></span>" +
+          '<span class="pt">' + esc(t.point) + "</span></div>";
+      }).join("") + "</div>" +
+      '<div class="hint" style="margin-top:10px">Counts only. Who is who is their own ' +
+      "manager’s to read, and it is on their own page.</div></div>";
+  } else if (o.agents || o.desks) {
+    out += '<div class="card flat"><div class="hint" style="margin:0">Nothing to drill this ' +
+      "fortnight: everybody is landing what they project.</div></div>";
+  }
+
+  /*  Staff and managers only — the backend does not send this to anybody else. */
+  if (o.agents && o.agents.length) {
+    out += '<div class="card"><div class="dsk-head"><b>The agents</b> · each against their own projection</div>' +
+      '<div class="obs">' + o.agents.map(obsRow).join("") + "</div></div>";
+  }
+  if (o.desks && o.desks.length) {
+    out += '<div class="card"><div class="dsk-head"><b>The desks</b> · each against their own normal</div>' +
+      '<div class="obs">' + o.desks.map(obsRow).join("") + "</div></div>";
+  }
+  return out + "</section>";
+}
+
+function obsRow(x) {
+  return '<div class="obs-row">' +
+    '<span class="nm">' + esc(x.name) + "</span>" +
+    '<span class="bd">' +
+      (x.strength ? '<span class="good">✓ ' + esc(x.strength) + "</span>" : "") +
+      (x.watch ? '<span class="watch">• ' + esc(x.watch) + "</span>" : "") +
+      (!x.strength && !x.watch ? '<span class="quiet">Steady</span>' : "") +
+      (x.train ? '<span class="trn">Drill: ' + esc(x.train) + "</span>" : "") +
+    "</span></div>";
+}
+
+/*  THE FRONT LINE. A run of quiet meetings, which one week's panel cannot show.
+ *  Staff and managers only, deliberately: a count of today is a nudge, where a
+ *  run of weeks read out in front of everybody is a reprimand. */
+function heardBlock(d) {
+  var h = d.heard;
+  if (!h || !h.meetings) return "";
+  var fl = (h.frontLine || []);
+  if (!fl.length) return "";
+  var quiet = fl.filter(function (x) { return !x.spoke && x.meetings; });
+  return '<section><div class="section-label">The front line</div><div class="card">' +
+    '<div class="dsk-head"><b>' + (fl.length - quiet.length) + " of " + fl.length +
+      "</b> of the staff have spoken in the last " + h.meetings + " meetings" +
+      (quiet.length ? ' <span class="owed-out">' + quiet.length + " have not</span>" : "") + "</div>" +
+    '<div class="obs">' + fl.map(function (x) {
+      var no = !x.spoke;
+      return '<div class="obs-row' + (no ? " no" : "") + '">' +
+        '<span class="nm">' + esc(x.name) + "</span>" +
+        '<span class="bd"><span class="' + (no ? "watch" : "good") + '">' +
+          (no ? "Nothing in " + x.meetings + " meetings" : x.spoke + " of " + x.meetings + " meetings") +
+          "</span>" + (x.now ? '<span class="quiet">Something in for this one</span>' : "") +
+        "</span></div>";
+    }).join("") + "</div>" +
+    '<div class="hint" style="margin-top:10px">Staff and managers only. Being away is not ' +
+    "silence: a meeting somebody apologised for is not counted against them.</div></div></section>";
 }
 
 /* =====================================================================

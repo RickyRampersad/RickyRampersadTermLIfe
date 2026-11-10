@@ -8889,6 +8889,65 @@ mtuse-lines.json`, `build-mtusefilm.py`, `sfx.py`,
 `render.js ../../meetings/usefilm.html cap-mtuse 30 ../../meetings/usefilm.jpg`,
 `mixany.py`. Re-shoot first with `node mtuseshots/shots.js` if the page changed.
 
+### Strengths, weaknesses and what to drill, read off how people actually worked — 10 November 2026
+
+Asked for in these words: *"agents are logging calls onto the dashboard that have
+been assigned to them. They are logging their day, and you are also observing the
+trends. So calling out the agents, observing the strengths, the weakness, and
+because training was an ongoing thing we asked, but we will look at how persons
+operate and how they work and how they apply themselves. And that's the only way we
+can actually look at how we train and skills and drills. It's important ... And
+remember, it's daily."*
+
+**The point is the drill, not the verdict.** Training has been decided by whoever
+was willing to teach. `meetObserved_` in `KPI.gs` reads **ten working days** off the
+Agent Day tab and `peopleNormal_` and turns them into one thing to practise — per
+person for their own manager, and rolled up by how many share it for the room. It
+costs **one read** of that tab and no Salesforce.
+
+**Everybody is read against their own projection and their own normal.** An agent's
+strength and watch come from what *they* projected against what *they* did, line by
+line; a desk's from its own normal, its own overdue and its own untouched tasks.
+Nothing is ranked and nothing is scored, which is the rule every other screen in
+this branch already keeps. The words are from a fixed list (`OBS_DRILL`), so a bad
+fortnight can never write something nobody would say out loud, and **thin evidence
+says it is thin** rather than reading as a verdict: under three days on the record
+and the watch is "little on the record", with no claim about the work.
+
+**The drills are for the room; the people are for their managers.** `packFor_` in
+`Meetings.gs` strips `observed.agents` and `observed.desks` for anybody who is not
+staff, so an agent opening the page sees what the branch needs to train and not a
+reading of any person, **including themselves**. The roll-up carries the drill and
+a count and no names, which is what makes it safe on the screen.
+
+**The front line, and why it is not on the screen.** *"I've observed the staff
+continues to come sit down, put up their laptops, and don't make the contribution,
+and this has to stop ... between me and you, the staff needs to empower themselves
+more as they are on the front line."* The owed panel already names anybody with
+nothing in **today**; what he is describing is a run of weeks, which one week's
+panel cannot show. `heardHistory_` counts the last four meetings. It goes to staff
+and managers and into his own daily note, **and no further**, because he said so and
+because he is right: a count of today is a nudge, where a run of weeks read out in
+front of everybody is a reprimand, and it lands on the person least able to answer
+back. **A meeting somebody apologised for is not counted as silence** — being away
+is not refusing to speak.
+
+**It is daily, so it is in the daily note.** The branch manager's own Builder
+progress carries the front line and the drills every working day, not only on a
+Wednesday.
+
+**The test held the bug, for the seventh time.** A check that nobody is compared
+with anybody matched the bare word *than* and failed on "Does more **than is
+projected**" — which compares a person with their own projection, the rule itself.
+It names the words that would mean somebody else. And `.obs-row` is used by both the
+drill section and the front line, so a page check counted all twelve rows and failed
+on a front-line row that legitimately reads "3 of 4 meetings": scope a row check to
+its own section.
+
+`tests/test-observed.js` covers the read and who may see it (22 checks: each rule,
+thin evidence, no comparison and no other name in a read, and an agent sent nothing
+about any person). `tests/e2e-owed.js` covers the page (49).
+
 ### Every item has a name on it, and the Wednesday builder does the two steps nobody was pressing — 10 November 2026
 
 Asked for in these words: *"I'm not seeing the staff being held accountable ...

@@ -24514,7 +24514,227 @@ function meetPack_(day) {
     out.parts.push('agents');
   } catch (e) { out.agentsNote = mpWhy_(e); }
 
+  /*  How people actually work, over ten working days, turned into the one thing
+      to drill. Its own try: a read of the Agent Day tab must never be the reason
+      the meeting screen has no figures on it. */
+  try { out.observed = meetObserved_(day); out.parts.push('observed'); }
+  catch (e) { out.observedNote = mpWhy_(e); }
+
   try { if (c) c.put(key, JSON.stringify(out), MEETPACK.CACHE_SEC); } catch (e) {}
+  return out;
+}
+
+/* ============================ WHAT THE RECORD SHOWS ABOUT HOW WE WORK =========
+ *
+ *  10 November 2026, the branch manager: "agents are logging calls onto the
+ *  dashboard ... they are logging their day, and you are also observing the
+ *  trends. So calling out the agents, observing the strengths, the weakness,
+ *  and because training was an ongoing thing we asked, but we will look at how
+ *  persons operate and how they work and how they apply themselves. And that's
+ *  the only way we can actually look at how we train and skills and drills."
+ *
+ *  THE POINT IS THE DRILL, NOT THE VERDICT. Training has been decided by
+ *  whoever was willing to teach. This reads what people actually did for ten
+ *  working days and turns it into the one thing to drill — per person for their
+ *  own manager, and rolled up by how many people share it for the room.
+ *
+ *  WHAT IT MAY NOT BECOME. Nobody is ranked and nobody is scored: each person
+ *  is read against their OWN projection and their OWN normal, which is the rule
+ *  every other screen in this branch already keeps. A watch is the next thing
+ *  to work on, never a verdict on a person, and the words are from a fixed list
+ *  so no run of a bad week can write something nobody would say out loud.
+ *
+ *  It costs one read of the Agent Day tab and whatever peopleNormal_ already
+ *  cost. No Salesforce, no per-agent loop.                                  */
+var OBS = {
+  DAYS: 10,            /* working days read */
+  MIN_DAYS: 3,         /* fewer than this on the record and we say so instead */
+  THIN: 0.4,           /* under this share of days is "not being done" */
+  GOOD: 0.8,           /* at or over this share is a strength */
+  LAND: 90,            /* per cent of the projection met that reads as landed */
+  SHORT: 60,           /* under this per cent is the thing to drill */
+  MIN_PROJ: 5          /* a metric needs this much projected before it is judged */
+};
+
+/*  ONE DRILL PER ACTIVITY. The words are the branch's own vocabulary, and they
+ *  are deliberately a thing to practise rather than a thing to be told. */
+var OBS_DRILL = {
+  calls: 'Call reluctance — the first ten minutes of the day, and the words that get the appointment',
+  appts: 'Setting the appointment on the call, not after it',
+  ff:    'The fact find — the questions that open the need, not the ones that fill a form',
+  close: 'The closing interview — putting the need in dollars in front of the client',
+  apps:  'Interview to application in the same sitting',
+  dues:  'The premium-due conversation — what the client actually loses',
+  pend:  'Chasing a requirement to the person who holds it, not to the file',
+  plan:  'Projecting the day — what the number is for, and how it is chosen',
+  close_off: 'Closing the day off — the balance is the point, not the paperwork',
+  desk_overdue: 'Working the overdue first — why the oldest one costs the most',
+  desk_note: 'A note on every task the same day, in words the next person can act on'
+};
+
+/** Working days, newest first, ending on `day`. */
+function obsDays_(day, n) {
+  var out = [], d = day;
+  for (var i = 0; i < n * 2 && out.length < n; i++) {
+    var dt = new Date(d + 'T12:00:00'), w = dt.getDay();
+    if (w !== 0 && w !== 6) out.push(d);
+    d = shiftDays_(d, -1);
+  }
+  return out;
+}
+
+/*  One agent read over the window. Everything here is their own projection
+ *  against their own done; nothing is compared with anybody else.         */
+function obsAgent_(name, byDay, days) {
+  var planned = 0, closed = 0, proj = 0, done = 0, hit = 0, per = {};
+  AGENT_METRICS.forEach(function (m) { per[m.id] = { p: 0, d: 0 }; });
+  days.forEach(function (d) {
+    var k = byDay[d] || {};
+    if (k.plan) planned++;
+    if (k.close) closed++;
+    var b = agBalance_(k.plan || {}, k.close || {});
+    proj += b.proj; done += b.done;
+    b.rows.forEach(function (r) {
+      if (!per[r.id]) per[r.id] = { p: 0, d: 0 };
+      per[r.id].p += r.p; per[r.id].d += r.d;
+      hit += Math.min(r.d, r.p);
+    });
+  });
+  var n = days.length || 1;
+  var o = { name: name, days: n, planned: planned, closed: closed,
+            proj: proj, done: done, pct: proj ? Math.round(100 * hit / proj) : null,
+            onRecord: planned + closed };
+
+  /*  The weakest activity it is fair to judge: enough projected to mean
+      something, and the furthest short of it. */
+  var worst = null;
+  Object.keys(per).forEach(function (id) {
+    var x = per[id]; if (x.p < OBS.MIN_PROJ) return;
+    var r = x.d / x.p;
+    if (!worst || r < worst.r) worst = { id: id, r: r, p: x.p, d: x.d };
+  });
+  var best = null;
+  Object.keys(per).forEach(function (id) {
+    var x = per[id]; if (x.p < OBS.MIN_PROJ) return;
+    var r = x.d / x.p;
+    if (!best || r > best.r) best = { id: id, r: r, p: x.p, d: x.d };
+  });
+  var sOf = function (id) {
+    var m = AGENT_METRICS.filter(function (x) { return x.id === id; })[0];
+    return m ? m.s.toLowerCase() : id;
+  };
+
+  if (o.onRecord < OBS.MIN_DAYS) {
+    o.thin = true;
+    o.watch = 'Little on the record — ' + o.onRecord + ' of ' + (n * 2) + ' chances in ' + n + ' working days';
+    o.train = OBS_DRILL.plan;
+    return o;
+  }
+
+  if (planned / n >= OBS.GOOD && closed / n >= OBS.GOOD && o.pct !== null && o.pct >= OBS.LAND) {
+    o.strength = 'Plans the day and lands it — ' + o.pct + '% of what was projected';
+  } else if (o.pct !== null && o.pct >= 100) {
+    o.strength = 'Does more than is projected';
+  } else if (planned / n >= OBS.GOOD) {
+    o.strength = 'Projects the day, every day';
+  } else if (closed / n >= OBS.GOOD) {
+    o.strength = 'Accounts for the day, every day';
+  } else if (best && best.r >= 1) {
+    o.strength = 'Strong on ' + sOf(best.id) + ' — ' + best.d + ' against ' + best.p + ' projected';
+  }
+
+  if (planned / n < OBS.THIN) {
+    o.watch = 'The day is projected ' + planned + ' of ' + n + ' days';
+    o.train = OBS_DRILL.plan;
+  } else if (closed / n < OBS.THIN) {
+    o.watch = 'Projects the day, accounts for it ' + closed + ' of ' + n;
+    o.train = OBS_DRILL.close_off;
+  } else if (worst && worst.d === 0 && worst.p >= OBS.MIN_PROJ) {
+    o.watch = sOf(worst.id).charAt(0).toUpperCase() + sOf(worst.id).slice(1) +
+              ' projected ' + worst.p + ', none done';
+    o.train = OBS_DRILL[worst.id] || OBS_DRILL.plan;
+  } else if (o.pct !== null && o.pct < OBS.SHORT && worst) {
+    o.watch = sOf(worst.id).charAt(0).toUpperCase() + sOf(worst.id).slice(1) +
+              ' — ' + worst.d + ' done of ' + worst.p + ' projected';
+    o.train = OBS_DRILL[worst.id] || OBS_DRILL.plan;
+  }
+  return o;
+}
+
+/*  A desk is read the same way: its own normal, its own book.  */
+function obsDesk_(p) {
+  var o = { name: p.name, today: p.today || 0, normal: p.normal || 0, recent: p.recent || 0,
+            overdue: p.overdue || 0, stale: p.stale || 0, absent: !!p.absent };
+  var r = o.normal ? o.recent / o.normal : null;
+  if (r !== null && r >= 1.1) o.strength = 'Ahead of their own normal — ' + o.recent + ' a day against ' + o.normal;
+  else if (r !== null && r >= 0.9) o.strength = 'Steady at their own normal';
+  else if (!o.overdue && !o.stale) o.strength = 'Nothing overdue and nothing left untouched';
+
+  if (o.stale >= 5) {
+    o.watch = o.stale + ' tasks with nothing written on them';
+    o.train = OBS_DRILL.desk_note;
+  } else if (o.overdue >= 10) {
+    o.watch = o.overdue + ' past their date';
+    o.train = OBS_DRILL.desk_overdue;
+  } else if (r !== null && r < 0.7) {
+    o.watch = 'Closing ' + o.recent + ' a day against their own ' + o.normal;
+    o.train = OBS_DRILL.desk_note;
+  }
+  return o;
+}
+
+/*  The whole read: people for their managers, and the drills rolled up by how
+ *  many share them for the room. The roll-up carries counts and the drill, and
+ *  NO NAMES, so it can be shown to everybody. */
+function meetObserved_(day) {
+  day = day || todayISO_();
+  var days = obsDays_(day, OBS.DAYS);
+  var out = { days: days.length, from: days[days.length - 1] || day, to: days[0] || day,
+              agents: [], desks: [], train: [] };
+
+  /*  One read of the Agent Day tab for the whole window. */
+  var byAgent = {};
+  try {
+    var span = Math.max(2, (daysBetween_(out.from, todayISO_()) || OBS.DAYS) + 2);
+    (agDayRecent_(span) || []).forEach(function (r) {
+      var d = isoDay_(r.Date), k = String(r.Agent || ''), kind = String(r.Kind || '');
+      if (!k || days.indexOf(d) < 0) return;
+      if (kind !== 'plan' && kind !== 'close') return;
+      if (!byAgent[k]) byAgent[k] = {};
+      if (!byAgent[k][d]) byAgent[k][d] = {};
+      var slot = kind === 'plan' ? 'plan' : 'close';
+      if (!byAgent[k][d][slot]) byAgent[k][d][slot] = {};
+      byAgent[k][d][slot][String(r.Item)] = r;
+    });
+  } catch (e) { out.agentsNote = mpWhy_(e); }
+
+  try {
+    var ppl = agentPeople_();
+    Object.keys(ppl).forEach(function (k) {
+      var a = ppl[k];
+      out.agents.push(obsAgent_(a.name || k, byAgent[k] || {}, days));
+    });
+    out.agents.sort(function (x, y) { return (y.onRecord || 0) - (x.onRecord || 0); });
+  } catch (e) { out.agentsNote = out.agentsNote || mpWhy_(e); }
+
+  try {
+    (peopleNormal_(day) || []).forEach(function (p) { out.desks.push(obsDesk_(p)); });
+  } catch (e) { out.desksNote = mpWhy_(e); }
+
+  /*  What to train next: the drills people actually need, commonest first.
+      Counts and the drill only — never who. */
+  var tally = {};
+  out.agents.concat(out.desks).forEach(function (x) {
+    if (!x.train) return;
+    if (!tally[x.train]) tally[x.train] = { point: x.train, n: 0 };
+    tally[x.train].n++;
+  });
+  out.train = Object.keys(tally).map(function (k) { return tally[k]; })
+    .sort(function (a, b) { return b.n - a.n; }).slice(0, 4);
+
+  out.plannedShare = out.agents.length
+    ? Math.round(100 * out.agents.filter(function (a) { return a.planned / a.days >= OBS.GOOD; }).length / out.agents.length)
+    : null;
   return out;
 }
 

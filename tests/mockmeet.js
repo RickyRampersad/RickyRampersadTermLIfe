@@ -82,7 +82,7 @@ const ROSTER = [
     no client, no client count, no money. These are invented. */
 const PACK = {
   ok: true, asOf: '7:02', day: '2026-11-11',
-  parts: ['production', 'work', 'factfind', 'people', 'agents'],
+  parts: ['production', 'work', 'factfind', 'people', 'agents', 'observed'],
   production: { since: '2026-10-01', policies: 72, apps: 60, week: 9 },
   work: { pendings: 32, renewals: 121, servicing: 352, claims: 11, closed7: 267, orphanOpen: 318 },
   factfind: { year: 157, month: 11, monthLabel: 'November', week: 0, lastWeek: 11 },
@@ -94,11 +94,69 @@ const PACK = {
   ],
   agents: { total: 19, planned: 11, closed: 7 }
 };
+/*  How people actually worked over ten working days, turned into the one thing
+    to drill. Invented, like everything else here. The per-person read reaches
+    staff and managers only (packFor_ in Meetings.gs); the drills carry no names
+    and are for the room. */
+const OBSERVED = {
+  days: 10, from: '2026-10-28', to: '2026-11-10', plannedShare: 58,
+  train: [
+    { point: 'The closing interview \u2014 putting the need in dollars in front of the client', n: 4 },
+    { point: 'Call reluctance \u2014 the first ten minutes of the day, and the words that get the appointment', n: 3 },
+    { point: 'Projecting the day \u2014 what the number is for, and how it is chosen', n: 2 },
+    { point: 'A note on every task the same day, in words the next person can act on', n: 1 }
+  ],
+  agents: [
+    { name: 'Agent One', days: 10, planned: 10, closed: 9, proj: 180, done: 176, pct: 94, onRecord: 19,
+      strength: 'Plans the day and lands it \u2014 94% of what was projected' },
+    { name: 'Agent Two', days: 10, planned: 9, closed: 8, proj: 150, done: 120, pct: 71, onRecord: 17,
+      strength: 'Projects the day, every day',
+      watch: 'Closing interviews \u2014 3 done of 14 projected',
+      train: 'The closing interview \u2014 putting the need in dollars in front of the client' },
+    { name: 'Agent Three', days: 10, planned: 3, closed: 2, proj: 40, done: 31, pct: 78, onRecord: 5,
+      watch: 'The day is projected 3 of 10 days',
+      train: 'Projecting the day \u2014 what the number is for, and how it is chosen' },
+    { name: 'Agent Four', days: 10, planned: 8, closed: 7, proj: 120, done: 64, pct: 53, onRecord: 15,
+      strength: 'Projects the day, every day',
+      watch: 'Calls \u2014 22 done of 60 projected',
+      train: 'Call reluctance \u2014 the first ten minutes of the day, and the words that get the appointment' },
+    { name: 'Agent Five', days: 10, planned: 1, closed: 0, proj: 0, done: 0, pct: null, onRecord: 1, thin: true,
+      watch: 'Little on the record \u2014 1 of 20 chances in 10 working days',
+      train: 'Projecting the day \u2014 what the number is for, and how it is chosen' }
+  ],
+  desks: [
+    { name: 'Support One', today: 7, normal: 9, recent: 10, overdue: 3, stale: 0,
+      strength: 'Ahead of their own normal \u2014 10 a day against 9' },
+    { name: 'Support Two', today: 4, normal: 11, recent: 8, overdue: 14, stale: 2,
+      watch: '14 past their date',
+      train: 'Working the overdue first \u2014 why the oldest one costs the most' },
+    { name: 'Support Three Surname', today: 0, normal: 8, recent: 7, overdue: 2, stale: 6, absent: true,
+      watch: '6 tasks with nothing written on them',
+      train: 'A note on every task the same day, in words the next person can act on' }
+  ]
+};
+
+/*  A run of quiet meetings. Staff and managers only. */
+PACK.observed = OBSERVED;
+
+const HEARD = {
+  meetings: 4,
+  labels: ['RRB-2026-11-04', 'RRB-2026-10-28', 'RRB-2026-10-21', 'RRB-2026-10-14'],
+  people: [],
+  quiet: ['Support Two', 'Support Three Surname'],
+  frontLine: [
+    { name: "The Branch Manager's Assistant", spoke: 1, meetings: 4, now: false },
+    { name: 'Support One', spoke: 3, meetings: 4, now: false },
+    { name: 'Support Two', spoke: 0, meetings: 4, now: false },
+    { name: 'Support Three Surname', spoke: 0, meetings: 3, now: false }
+  ]
+};
+
 
 exports.pack = PACK;
 
 exports.detail = (role = 'agent', over = {}) => Object.assign({
-  roster: ROSTER, pack: PACK,
+  roster: ROSTER, pack: PACK, heard: HEARD,
   ok: true, user: USER(role), meeting: MEETING, agenda: AGENDA, actions: ACTIONS,
   minutes: [], contributions: CONTRIB, minutesPublished: false,
   sections: ['Opening & Mission Statement', 'Performance & Community Management', 'Reports Reviewed', 'Training & Development', 'Other Items', 'Closing'],

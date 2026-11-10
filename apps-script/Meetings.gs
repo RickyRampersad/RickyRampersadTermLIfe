@@ -1743,7 +1743,17 @@ function apiMeeting_(token, id) {
     // need in order to be shown their own part of the framework.
     myRole: roleInMeeting_(m, me, agenda),
     //  The branch's own numbers, when the tracker is linked. Absent is fine.
-    pack: meetNumbers_()
+    //  The per-person read of how people work goes to staff and managers; the
+    //  drills it rolls up to carry no names and are for the room.
+    pack: packFor_(meetNumbers_(), me),
+    //  The whole branch, so the accountability panel can name anybody with
+    //  nothing in, not only the people who own an agenda item.
+    roster: rosterFor_(m).map(function (p) {
+      return { name: p.name, role: p.role, unit: p.unit || '' };
+    }),
+    //  A RUN of quiet meetings, which one week's panel cannot show. Staff and
+    //  managers only, deliberately: see the note on heardHistory_.
+    heard: isStaff_(me) ? heardHistory_(m) : null
   };
 
   // The register itself is staff material. An agent sees that they
@@ -4122,6 +4132,102 @@ function contributionsFor_(m, person) {
       return (da ? da.getTime() : 0) - (db ? db.getTime() : 0);
     })
     .map(contribCard_);
+}
+
+/* ===================== WHO HAS BEEN HEARD FROM, AND WHO HAS NOT ==============
+ *
+ *  10 November 2026, the branch manager: "I've observed the staff continues to
+ *  come sit down, put up their laptops, and don't make the contribution, and
+ *  this has to stop ... the staff needs to empower themselves more as they are
+ *  on the front line."
+ *
+ *  WHO OWES THIS MEETING WHAT already names anybody with nothing in TODAY. The
+ *  thing he is describing is not one quiet week, it is a run of them, and one
+ *  week's panel cannot show a run. This counts the last few meetings and names
+ *  the people who have put nothing into any of them.
+ *
+ *  IT IS NOT FOR THE ROOM. He said it in those words — "between me and you" —
+ *  and he is right that it should not be: a count of today is a nudge, where a
+ *  run of weeks read out in front of everybody is a reprimand, and the person
+ *  it lands on is usually the one least able to answer back. It goes to staff
+ *  and managers, and into the branch manager's own daily note.
+ *
+ *  A person who apologised for a meeting is not counted absent from it: being
+ *  away is not refusing to speak.                                           */
+var HEARD = { MEETINGS: 4, QUIET: 3 };
+
+/*  The pack a person may see. Everyone gets the branch's figures and the drills
+ *  the branch needs, which carry counts and no names. The per-person read —
+ *  who is strong at what, and what each one has to work on — is a manager's
+ *  reading of their own people, so it goes to staff and managers only. */
+function packFor_(pk, me) {
+  if (!pk || isStaff_(me)) return pk || null;
+  var out = {}, k;
+  for (k in pk) if (Object.prototype.hasOwnProperty.call(pk, k)) out[k] = pk[k];
+  if (out.observed) {
+    var o = out.observed;
+    out.observed = { days: o.days, from: o.from, to: o.to,
+                     train: o.train || [], plannedShare: o.plannedShare };
+  }
+  return out;
+}
+
+function heardHistory_(m) {
+  var here = str_(m && m['ID']);
+  /*  The last few meetings before this one, newest first: branch meetings that
+      actually happened, never a cancelled one and never this one. */
+  var past = meetingRows_().filter(function (r) {
+    if (str_(r['ID']) === here) return false;
+    if (low_(r['Status']) === 'cancelled' || low_(r['Status']) === 'draft') return false;
+    var d = asDate_(r['Date']); if (!d) return false;
+    return d.getTime() <= Date.now();
+  }).sort(function (a, b) {
+    return (asDate_(b['Date']) || 0) - (asDate_(a['Date']) || 0);
+  }).slice(0, HEARD.MEETINGS);
+
+  var ids = {}; past.forEach(function (r) { ids[str_(r['ID'])] = str_(r['Ref']) || fmtDate_(r['Date']); });
+  ids[here] = 'now';
+
+  var said = {};          /* email -> { meetingId: true } */
+  readTab_(MEET.TAB_CONTRIB).forEach(function (c) {
+    var mid = str_(c['Meeting ID']); if (!ids[mid]) return;
+    var k = low_(c['Email']) || low_(c['Name']); if (!k) return;
+    if (!said[k]) said[k] = {};
+    said[k][mid] = true;
+  });
+
+  var away = {};          /* email -> { meetingId: true }, apologies and absences */
+  readTab_(MEET.TAB_ATTENDANCE).forEach(function (a) {
+    var mid = str_(a['Meeting ID']); if (!ids[mid]) return;
+    if (!/^(apolog|absent|excus)/i.test(str_(a['Status']))) return;
+    var k = low_(a['Email']); if (!k) return;
+    if (!away[k]) away[k] = {};
+    away[k][mid] = true;
+  });
+
+  var rows = rosterFor_(m).map(function (p) {
+    var mine = said[p.email] || {}, out = away[p.email] || {};
+    var chances = 0, spoke = 0, run = 0, running = true;
+    past.forEach(function (r) {
+      var id = str_(r['ID']);
+      if (out[id]) return;                 /* away is not silence */
+      chances++;
+      if (mine[id]) { spoke++; running = false; }
+      else if (running) run++;
+    });
+    return { name: p.name, role: p.role, unit: p.unit || '',
+             meetings: chances, spoke: spoke, run: run,
+             now: !!mine[here], quiet: chances >= HEARD.QUIET && spoke === 0 };
+  });
+
+  return {
+    meetings: past.length,
+    labels: past.map(function (r) { return str_(r['Ref']) || fmtDate_(r['Date']); }),
+    people: rows,
+    quiet: rows.filter(function (r) { return r.quiet; }).map(function (r) { return r.name; }),
+    frontLine: rows.filter(function (r) { return /staff|support/i.test(String(r.role)); })
+                   .map(function (r) { return { name: r.name, spoke: r.spoke, meetings: r.meetings, now: r.now }; })
+  };
 }
 
 /** Who actually said something, and how much. Silence is visible too. */
@@ -8218,7 +8324,16 @@ function progressModel_(now) {
     week: ctx.week, weekLabel: ctx.weekLabel,
     relay: mmRelayReady_(), mailLeft: mmLeft_(),
     branchMail: meetBranchMailLive_(),
-    appUrl: ctx.appUrl
+    appUrl: ctx.appUrl,
+    /*  DAILY, not weekly: "remember, it's daily". The run of quiet meetings and
+     *  the drills the record is asking for both go in the branch manager's own
+     *  note, which is the one place this belongs before it is anybody else's
+     *  business. Each in its own try: a tracker that will not answer must never
+     *  stop the note. */
+    heard: (function () { try { return m ? heardHistory_(m) : null; } catch (e) { return null; } })(),
+    drill: (function () {
+      try { var k = meetNumbers_(); return (k && k.observed) || null; } catch (e) { return null; }
+    })()
   };
 }
 
@@ -8350,6 +8465,43 @@ function progressHtml_(o) {
       '<b>Nothing yet:</b> ' + o.silent.map(function (p) {
         return esc_(firstName_(p.name));
       }).join(', ') + '.</p>';
+  }
+
+  /* ---- the front line, over a run of meetings ----
+     One quiet week is nothing; four is a pattern, and the pattern is the thing
+     he described. This is in HIS note and nowhere else: a count of today is a
+     nudge, a run of weeks in front of the room is a reprimand. */
+  if (o.heard && o.heard.meetings) {
+    var fl = (o.heard.frontLine || []), mute = fl.filter(function (x) { return !x.spoke; });
+    if (fl.length) {
+      h += '<p style="margin:16px 0 4px;font-size:11px;letter-spacing:.12em;' +
+        'text-transform:uppercase;color:#8aa3bb">The front line · last ' + o.heard.meetings +
+        ' meetings</p>' +
+        '<p style="margin:0 0 4px;font-size:13.5px"><b>' + (fl.length - mute.length) + ' of ' +
+        fl.length + '</b> of the staff have spoken in the room.</p>';
+      if (mute.length) {
+        h += '<p style="margin:0 0 14px;font-size:13.5px;color:#b3261e"><b>Nothing at all:</b> ' +
+          mute.map(function (x) { return esc_(firstName_(x.name)) + ' (' + x.meetings + ')'; }).join(', ') +
+          '. Being away is not counted against anybody.</p>';
+      }
+    }
+  }
+
+  /* ---- what the record is asking us to train ----
+     Not what anybody volunteered to teach: the drills the last fortnight's own
+     work says people need, commonest first, with no names in the count. */
+  if (o.drill && o.drill.train && o.drill.train.length) {
+    h += '<p style="margin:16px 0 4px;font-size:11px;letter-spacing:.12em;' +
+      'text-transform:uppercase;color:#8aa3bb">Skills and drills · from ' + o.drill.days +
+      ' working days</p><table style="border-collapse:collapse;width:100%;font-size:13.5px">' +
+      o.drill.train.map(function (t) {
+        return '<tr><td style="padding:4px 10px 4px 0;font-weight:800;color:#14284b;' +
+          'white-space:nowrap">' + t.n + '</td><td style="padding:4px 0">' + esc_(t.point) +
+          '</td></tr>';
+      }).join('') + '</table>' +
+      '<p style="margin:4px 0 14px;font-size:12px;color:#8aa3bb">Read off how people actually ' +
+      'worked, not asked for. Who is who is in the Builder, under ' +
+      '\u201cWhat to drill\u201d.</p>';
   }
 
   /* ---- the rest of the week's machinery ---- */

@@ -146,6 +146,43 @@ const server = http.createServer((q, r) => {
   ok('each is against their own normal, not each other',
     /a day, against 9/.test(dsk[0]) && /a day, against 11/.test(dsk[1]), dsk.slice(0, 2).join(' | '));
 
+  // ---- what to drill, and who may see it -----------------------------------
+  const drill = await p.locator('section:has(.drl)').innerText();
+  ok('the drills are on the screen, commonest first',
+    /Skills and drills/.test(drill) && /closing interview/i.test(drill), drill.slice(0, 90));
+  ok('and they carry counts, never who',
+    !/Agent (One|Two|Three|Four|Five)|Support (One|Two|Three)/.test(
+      drill.split('The agents')[0]), drill.split('The agents')[0].slice(0, 200));
+  /*  The front line uses .obs-row too, so read only the rows in the drill
+      section — the first cut counted all twelve and failed on a front-line row
+      that legitimately says "3 of 4 meetings". */
+  const obs = await p.$$eval('section:has(.drl) .obs-row',
+    es => es.map(e => e.innerText.replace(/\s+/g, ' ').trim()));
+  ok('every person carries a strength or a watch, in their own words',
+    obs.length >= 8 && obs.every(t => /✓|•|Steady/.test(t)), String(obs.length));
+  ok('and a watch comes with the drill for it',
+    obs.filter(t => /•/.test(t)).every(t => /Drill:/.test(t) || /Steady/.test(t)),
+    obs.filter(t => /•/.test(t) && !/Drill:/.test(t)).join(' | '));
+
+  const front = await p.locator('section:has(.obs-row)').last().innerText();
+  ok('the front line shows the run, not one quiet week',
+    /2 of 4[\s\S]*last 4 meetings/.test(front), front.slice(0, 90));
+  ok('and says plainly that being away is not silence', /away is not silence/.test(front));
+
+  /*  THE HALF HE SAID IS BETWEEN HIM AND ME: an agent is sent none of it. */
+  await p.evaluate(() => {
+    S.detail.heard = null;
+    S.detail.pack = Object.assign({}, S.detail.pack, { observed: {
+      days: 10, train: S.detail.pack.observed.train } });
+    drawMeeting();
+  });
+  await p.waitForTimeout(250);
+  const asAgent = await p.locator('#view').innerText();
+  ok('an agent still sees what the branch needs to train', /Skills and drills/.test(asAgent));
+  ok('AND NOTHING ABOUT ANY PERSON', !/Drill:|past their date|nothing written on them/.test(asAgent) &&
+    !/of the staff have spoken/.test(asAgent),
+    (asAgent.match(/Drill:[^\n]*/) || [''])[0]);
+
   //  the whole point of the fallback: a tracker that is not linked says so
   await p.evaluate(() => { delete S.detail.pack; drawMeeting(); });
   await p.waitForTimeout(250);
