@@ -5625,7 +5625,10 @@ is separate and untouched.
   goes onto the renewal task's Chatter with the task's owner mentioned, and the person working it and the approvers are
   e-mailed. A yes taken on the phone is recorded on the desk with who, how and when. The client's page
   (`/myrenewal/`, `gcm.renCode` and `gcm.renIn`: a six-digit code, five tries, fifteen minutes, a six-hour sign-in; an
-  unknown address gets the same answer and no code) and a group's **Your renewals** tab (`gcm.renGroup`, its list bill and
+  unknown address gets the same answer and no code; one of our own addresses, the account the script runs as or a
+  `GIR_TEST_TO` address is told plainly that no letter has gone to it yet and where a practice letter goes, `girTester_`,
+  10 Nov 2026, after the branch manager tested with his own address and was told a code was on its way; `gcm.ping`
+  answers `renewals.build`) and a group's **Your renewals** tab (`gcm.renGroup`, its list bill and
   code, a name required) draw the same card, `myrenewal/renewal-card.js`. A group never sees a letter sent in test mode.
 - **Proceed to renew** (`girProceed_`, only on the client's yes and a read notice): a new `TRANSACTIONS__c` (the line's
   record type, the shell, account, contact, the renewal date, the holder as Owner), a `Risk_Details__c` per item copying
