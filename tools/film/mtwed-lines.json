@@ -1,17 +1,63 @@
 {
- "note": "What happens at tomorrow's meeting (10 Nov 2026, for Wednesday 11 November). Dated to one Wednesday on purpose: re-cut or retire it afterwards. Voiced Andrew Expressive +0% on the tts-run runner. Line 7 re-voiced twice (mtwedfix, mtwedfix2): \"Training, taught by one of us\" came back as \"top by\", and a line of comma-separated fragments came back with its function words wrong, so it is whole sentences now. Line 9 re-voiced once: \"the minutes, and every action\" came back as \"the minutes in every action\".",
+ "note": "Tomorrow's meeting, from the live data (10 Nov 2026, for Wednesday 11 November). Ricky: \"it's a polygon of all the things ... show a sample of tomorrow what is going to happen with the live data.\" Every figure was read that morning: Salesforce for the production picked up since 1 October, the open work by task type and the orphan files, and FactFind360's own wall feed for the fact finds. COUNTS ONLY, no money and no client: the file sits at a public URL. Re-read them and re-voice the lines that carry them before any re-cut; a stale figure on a public film is worse than none. Voiced Andrew Expressive +0% on the tts-run runner.",
  "voice": "en-US-AndrewMultilingualNeural",
  "rate": "+0%",
  "scenes": [
-  { "say": "Tomorrow morning, the branch meets. This is the first meeting the Builder runs.", "extra": 0.5 },
-  { "say": "Before you sleep tonight, go to Ricky Rampersad branch dot com, slash meetings. Type your agent number. There is no password.", "extra": 0.3 },
-  { "say": "Read tomorrow's agenda, and put your item on it. It goes on before anybody sits down.", "extra": 0.3 },
-  { "say": "At half past eight, a button appears that says I am here. Press it. That one is the register.", "extra": 0.4 },
-  { "say": "We begin at nine o'clock. The screen carries the numbers, so only the exceptions are spoken.", "extra": 0.3 },
-  { "say": "Production. The call list. Maturities. The campaign. What we promised last week, and what came back.", "extra": 0.4 },
-  { "say": "Then the room has it. An agent shows what worked. One of us teaches. The floor is open.", "extra": 0.3 },
-  { "say": "Each unit closes with its own number. That is what next week opens on.", "extra": 0.3 },
-  { "say": "Afterwards, the minutes. Every action carries a name.", "extra": 0.3 },
-  { "say": "Bring one thing.", "extra": 1.2 }
+  {
+   "say": "Tomorrow at nine, the branch meets. This is what will already be on the screen.",
+   "extra": 0.5
+  },
+  {
+   "say": "None of it gets typed up in the morning. It has been building all week, by itself.",
+   "extra": 0.35
+  },
+  {
+   "say": "Your day arrives every morning with your goal, and the one thing to do first.",
+   "extra": 0.3
+  },
+  {
+   "say": "Tomorrow's ask is on it. Bring a case that worked. A point you can teach. A question. Or say where you need help.",
+   "extra": 0.35
+  },
+  {
+   "say": "You tap it once, and it lands on the agenda under the right item, before anybody sits down.",
+   "extra": 0.35
+  },
+  {
+   "say": "At half past eight, press the button that says I am here. That tap is the register.",
+   "extra": 0.4
+  },
+  {
+   "say": "First on the board. Since the first of October, 60 applications, and 72 policies picked up.",
+   "extra": 0.4
+  },
+  {
+   "say": "Fact finds. 157 so far this year. 11 of them this month.",
+   "extra": 0.4
+  },
+  {
+   "say": "Then what we are about to lose. 121 renewals and premiums due. 32 pendings. 352 service requests open.",
+   "extra": 0.4
+  },
+  {
+   "say": "And we closed 267 of them in the last seven days.",
+   "extra": 0.4
+  },
+  {
+   "say": "The campaign. 318 orphan files still open, every one of them with a name against it.",
+   "extra": 0.4
+  },
+  {
+   "say": "Then the room has it. An agent shows what worked. One of us teaches. The floor is open.",
+   "extra": 0.35
+  },
+  {
+   "say": "Each unit closes with its own number. Every action carries a name, and next week opens on it.",
+   "extra": 0.35
+  },
+  {
+   "say": "Nineteen of us, at nine o'clock. Everything else is already there.",
+   "extra": 1.2
+  }
  ]
 }

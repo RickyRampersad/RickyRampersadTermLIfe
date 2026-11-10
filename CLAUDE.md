@@ -8891,43 +8891,66 @@ mtuse-lines.json`, `build-mtusefilm.py`, `sfx.py`,
 
 ### Tomorrow's meeting on film — 10 November 2026
 
-Asked for in these words: *"I would need to already have a video as to what's
-going to happen tomorrow."* `meetings/wed.mp4` (1:10), its page to post at
-**`/meetingtomorrow/`**, source `meetings/wed.html`, built by
-`tools/film/build-mtwedfilm.py` from `mtwed-lines.json` and `mtwed-timing.json`.
+Asked for first as *"I would need to already have a video as to what's going to
+happen tomorrow"*, then re-cut the same morning: *"the video should not be
+tonight post one thing. It's a polygon of all the things ... you do have access
+to all the data in the meetings and all the daily reminders ... show a sample of
+tomorrow what is going to happen with the live data."*
 
-**It is deliberately not the sign-in film or the how-to film again.** Those two
-teach the taps. This one is the **shape of the ninety minutes**, so a person
-knows what they are walking into: what to do tonight, the register at 8:30, the
-screen doing the reporting at 9:00, what the agenda carries, the room's own
-three items, each unit's closing number, and the minutes afterwards.
+`meetings/wed.mp4` (1:45, 14 scenes), its page at **`/meetingtomorrow/`**, source
+`meetings/wed.html`, built by `tools/film/build-mtwedfilm.py` from
+`mtwed-lines.json` and `mtwed-timing.json`.
 
-**The agenda on screen is the Builder's own Rota**, by its own words and its own
-minutes, so the film cannot drift from the page. Change the Rota and re-cut.
+**The first cut was wrong and the correction is worth keeping.** It ended on
+*"bring one thing"* and taught the taps — which the sign-in film and the how-to
+film already do. What he wanted is the **whole machine**: nobody types the
+meeting up in the morning, it has been building all week by itself. So the film
+runs the chain — the agent's own day, the ask on it, one tap onto the agenda,
+the register — and then **the figures that will already be on the screen**.
 
-**It is dated to one Wednesday on purpose** — the opposite of the how-to film's
-rule, and for the opposite reason: this one is about one meeting. Re-cut it or
-retire it afterwards rather than leave a stale date at a public URL.
+**Every figure was read that morning, and the sources are named here so a re-cut
+can read them again:**
 
-**Scene 4 is why it exists.** Four branch staff were in the visitors' book
+| on screen | read from |
+|---|---|
+| 60 applications, 72 policies picked up since 1 Oct | Salesforce `CLIENT_PORTFOLIO__c` on `Production_Picked_up_Date__c` |
+| 157 fact finds this year, 11 this month | FactFind360's own wall feed (`FF360` in `KPI.gs`) |
+| 121 renewals and premiums due, 32 pendings, 352 service requests | open `Task` by `Task_Type__c` |
+| 267 closed in seven days | closed `Task`, logged e-mails excluded |
+| 318 orphan files open | open `Task` with subject `Orphan%` |
+
+**Counts, never money, and never a client.** The fact-find feed hands back API,
+premium, cover and the protection gap in the same object, and all of it stays
+off: this file sits at a public URL and what the branch writes is nobody else's
+business. The same rule took the dollar figures out of `/branchmeet/`. A figures
+cut is possible, but it would have to live behind the meeting sign-in, not here.
+
+**A figure in a film goes stale.** Re-read the five sources and re-voice the
+lines that carry them before any re-cut; this one is dated to one Wednesday on
+purpose.
+
+**Scene 6 is why it exists at all.** Four branch staff were in the visitors' book
 instead of on the register, one of them two minutes after the chair opened the
-4 November session, because signing in is not the attendance mark. The scene
-puts the button and the refusal side by side.
+4 November session, because signing in is not the attendance mark.
+
+**Two traps caught by looking at the frames rather than the markup**: a counter
+with no label (`60` on its own said nothing), and scene 3 showing the **meetings
+gate** while the line is about the agent's own day — a screen that contradicts
+the narration is worse than no screen, so it is drawn now.
 
 **Two voice lessons, both the same family as the ones already recorded.**
-*"Training, taught by one of us"* came back as **"top by"**; re-worded to
-*"Training, from one of us"* inside a line of comma-separated fragments, and
-then the fragments' own function words came back wrong (*Then*→"than",
-*What*→"but", *And*→"in"). **A line of short fragments is as risky as a
-two-word opening clause**: it is whole sentences now. And *"the minutes, and
-every action"* came back as *"the minutes in every action"*, which changes the
-meaning — *"Afterwards, the minutes. Every action carries a name."*
+*"Training, taught by one of us"* came back as **"top by"**; re-worded inside a
+line of comma-separated fragments, the fragments' own function words then came
+back wrong (*Then*→"than", *What*→"but", *And*→"in"). **A line of short fragments
+is as risky as a two-word opening clause** — whole sentences fixed it. And *"the
+minutes, and every action"* came back as *"the minutes in every action"*, which
+changes the meaning. Homophones Whisper writes differently (*will*/"we'll",
+*due*/"do") are transcription artifacts and were kept.
 
-**A tall card is scaled, not cropped.** The composer shot (`mtuseshots/c-form.jpg`)
-is 940px tall and `.cardshot`'s `overflow:hidden` took the *Put it on the agenda*
-button off the bottom — the one thing the scene is about. `.cardshot.fit` sizes
-by height instead. The builder's own class-collision and reserved-class guards
-are `build-mtfilm.py`'s, unchanged.
+**A tall card is scaled, not cropped.** The composer shot
+(`mtuseshots/c-form.jpg`) is 940px tall and `.cardshot`'s `overflow:hidden` took
+the *Put it on the agenda* button off the bottom — the one thing that scene is
+about. `.cardshot.fit` sizes by height instead.
 
 ### The home screen says what to do, by role — 30 October 2026
 

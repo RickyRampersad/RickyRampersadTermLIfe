@@ -45,7 +45,7 @@ PLEX = b64(HERE / 'fonts' / 'IBMPlexSans-latin.woff2', 'font/woff2')
 T = json.loads(TIMING.read_text()) if TIMING.exists() else {}
 #  importvox writes SECONDS; data-d is MILLISECONDS. Mixing them builds a
 #  twelve-scene film a tenth of a second long and nothing complains.
-DURS = [int(round(d * 1000)) for d in (T.get('durs') or [5.0] * 10)]
+DURS = [int(round(d * 1000)) for d in (T.get('durs') or [5.0] * 14)]
 #  Each word is [seconds, word], in that order.
 WORDS = [l.get('words', []) for l in T.get('lines', [])]
 
@@ -84,46 +84,79 @@ def kin(text, d=0.0):
 def build():
     sc = []
 
+    def num(n, to, word, k=0, lab=''):
+        return ('<div class="nm" style="--kd:%.2fs"><b class="cnt" data-to="%d" data-at="%d">0</b>'
+                '<span>%s</span></div>' % (at(n, word, k), to, int(at(n, word, k) * 1000), lab))
+
     # 1 ----------------------------------------------------------- the title
     sc.append(S(1,
         '<div class="mid">'
         '<img class="mk" src="%s" alt="">'
         '<div class="eyebrow" style="--kd:.5s">Wednesday 11 November &middot; 9:00 to 10:30</div>'
         '<h1>%s</h1>'
-        '<div class="sub" style="--kd:%.2fs">The first meeting the Builder runs.</div>'
-        '</div>' % (MARK, kin("Tomorrow, the branch meets.", 0.9), at(1, 'first')),
+        '<div class="sub" style="--kd:%.2fs">Every figure here was read this morning.</div>'
+        '</div>' % (MARK, kin('Tomorrow, on the screen.', 0.9), at(1, 'screen')),
         'title'))
 
-    # 2 ------------------------------------------------- tonight, the sign-in
+    # 2 ------------------------------------------------- it builds all week
     sc.append(S(2,
-        '<div class="split">'
-        '<div class="L">'
-        '<div class="eyebrow">Tonight</div>'
-        '<div class="url" style="--kd:%.2fs">rickyrampersadbranch.com<br><b>/meetings</b></div>'
-        '<div class="chips">'
-        '<span class="chip" style="--kd:%.2fs">Your agent number</span>'
-        '<span class="chip no" style="--kd:%.2fs">No password</span>'
-        '</div></div>'
-        '<div class="R">%s</div></div>'
-        % (at(2, 'slash'), at(2, 'number'), at(2, 'password'), phone(SHOT['01-gate'])),
-        'url'))
-
-    # 3 ------------------------------------------------ put your item on it
-    sc.append(S(3,
-        '<div class="split">'
-        '<div class="L">'
-        '<div class="eyebrow">Before you sit down</div>'
+        '<div class="mid">'
+        '<div class="eyebrow">Nobody types this up</div>'
         '<h2>%s</h2>'
-        '<div class="note" style="--kd:%.2fs">A commitment, a concern, something that '
-        'works, or a question. It is on the agenda before the room fills.</div>'
+        '<div class="rail">'
+        '<div class="tk" style="--kd:%.2fs"><b>Every day</b><span>your day, the desks, the board</span></div>'
+        '<div class="ln"></div>'
+        '<div class="tk" style="--kd:%.2fs"><b>All week</b><span>it collects itself</span></div>'
+        '<div class="ln"></div>'
+        '<div class="tk hi" style="--kd:%.2fs"><b>9:00</b><span>it is already there</span></div>'
+        '</div></div>'
+        % (kin('It has been building all week.', 0.3), at(2, 'typed'),
+           at(2, 'building'), at(2, 'itself')),
+        'builds'))
+
+    # 3 ----------------------------------------------------- your day arrives
+    #  No screenshot here on purpose: the only phone shots to hand are the
+    #  meetings gate, and a screen that contradicts the line is worse than none.
+    sc.append(S(3,
+        '<div class="mid">'
+        '<div class="eyebrow">Every morning, before you are up</div>'
+        '<h2>%s</h2>'
+        '<div class="chips ctr">'
+        '<span class="chip" style="--kd:%.2fs">Your goal</span>'
+        '<span class="chip" style="--kd:%.2fs">Where you are against it</span>'
+        '<span class="chip say2" style="--kd:%.2fs">The one thing to do first</span>'
+        '</div></div>'
+        % (kin('Your day is already set.', 0.3), at(3, 'goal'),
+           at(3, 'goal') + 0.35, at(3, 'first')),
+        'yourday'))
+
+    # 4 ---------------------------------------------------------- the ask
+    sc.append(S(4,
+        '<div class="mid">'
+        '<div class="eyebrow">And tomorrow&rsquo;s ask is on it</div>'
+        '<div class="cards">'
+        '<div class="cd" style="--kd:%.2fs"><div class="v sm">A CASE<br>THAT WORKED</div></div>'
+        '<div class="cd" style="--kd:%.2fs"><div class="v sm">A POINT YOU<br>CAN TEACH</div></div>'
+        '<div class="cd" style="--kd:%.2fs"><div class="v sm">A<br>QUESTION</div></div>'
+        '<div class="cd say" style="--kd:%.2fs"><div class="v sm">WHERE YOU<br>NEED HELP</div></div>'
+        '</div></div>'
+        % (at(4, 'case'), at(4, 'teach'), at(4, 'question'), at(4, 'help')),
+        'ask four'))
+
+    # 5 ------------------------------------------------ one tap, on the agenda
+    sc.append(S(5,
+        '<div class="split">'
+        '<div class="L">'
+        '<div class="eyebrow">One tap</div>'
+        '<h2>%s</h2>'
+        '<div class="note" style="--kd:%.2fs">Under the right item, before anybody sits down.</div>'
         '</div>'
         '<div class="R">%s</div></div>'
-        % (kin('Read the agenda. Put your item on it.', 0.3), at(3, 'goes'),
-           card(SHOT['c-bring'], 'fit')),
+        % (kin('It is on the agenda.', 0.3), at(5, 'sits'), card(SHOT['c-bring'], 'fit')),
         'bring wide'))
 
-    # 4 ------------------------------- the register, which is the other tap
-    sc.append(S(4,
+    # 6 ------------------------------------------------------- the register
+    sc.append(S(6,
         '<div class="split">'
         '<div class="L">'
         '<div class="eyebrow">Half past eight</div>'
@@ -134,45 +167,61 @@ def build():
         '<div class="row good" style="--kd:%.2fs"><b>&#10003;</b><span>This button is</span></div>'
         '</div></div>'
         '<div class="R">%s<div class="ring" style="--kd:%.2fs"></div></div></div>'
-        % (at(4, 'button'), at(4, 'Press'), at(4, 'register'),
-           card(SHOT['c-here']), at(4, 'Press')),
+        % (at(6, 'button'), at(6, 'Press'), at(6, 'register'),
+           card(SHOT['c-here'], 'notime'), at(6, 'Press')),
         'press wide'))
 
-    # 5 ------------------------------------------------ nine o'clock, we start
-    sc.append(S(5,
-        '<div class="mid">'
-        '<div class="eyebrow">Nine o\'clock</div>'
-        '<h2>%s</h2>'
-        '<div class="cards">'
-        '<div class="cd ok" style="--kd:%.2fs"><div class="t">On the screen</div>'
-        '<div class="v">THE NUMBERS</div><div class="m">read, not recited</div></div>'
-        '<div class="cd say" style="--kd:%.2fs"><div class="t">Out loud</div>'
-        '<div class="v">THE EXCEPTIONS</div><div class="m">and nothing else</div></div>'
-        '</div></div>'
-        % (kin('The screen does the reporting.', 0.3), at(5, 'numbers'),
-           at(5, 'exceptions')),
-        'start'))
-
-    # 6 ------------------------------------------- what the agenda carries
-    sc.append(S(6,
-        '<div class="mid">'
-        '<div class="eyebrow">What it carries</div>'
-        '<div class="agl">'
-        '<div class="agr" style="--kd:%.2fs"><span>The production board</span><i>7</i></div>'
-        '<div class="agr" style="--kd:%.2fs"><span>This week\'s call list</span><i>12</i></div>'
-        '<div class="agr" style="--kd:%.2fs"><span>Maturities &mdash; money in motion</span><i>10</i></div>'
-        '<div class="agr" style="--kd:%.2fs"><span>The campaign &mdash; the orphan book</span><i>9</i></div>'
-        '<div class="agr" style="--kd:%.2fs"><span>Last week\'s brief, and what came back</span><i>10</i></div>'
-        '<div class="agr" style="--kd:%.2fs"><span>Conservation and exceptions</span><i>8</i></div>'
-        '</div>'
-        '<div class="note" style="--kd:%.2fs">Minutes, from the Builder\'s own agenda.</div>'
-        '</div>'
-        % (at(6, 'Production'), at(6, 'call'), at(6, 'maturities'), at(6, 'campaign'),
-           at(6, 'promised'), at(6, 'back'), at(6, 'back') + 0.3),
-        'agenda'))
-
-    # 7 -------------------------------------------------------- and the room
+    # 7 ------------------------------------------------- the production board
     sc.append(S(7,
+        '<div class="mid">'
+        '<div class="eyebrow">The production board &middot; since 1 October</div>'
+        '<div class="nums">%s%s</div>'
+        '<div class="note" style="--kd:%.2fs">Written this week against target, by unit. '
+        'Only the exceptions are spoken.</div>'
+        '</div>' % (num(7, 60, '60', 0, 'applications'), num(7, 72, '72', 0, 'policies picked up'),
+                    at(7, 'up') + 0.3),
+        'board'))
+
+    # 8 ------------------------------------------------------- the fact finds
+    sc.append(S(8,
+        '<div class="mid">'
+        '<div class="eyebrow">Fact finds</div>'
+        '<div class="nums">%s%s</div>'
+        '<div class="note" style="--kd:%.2fs">This week&rsquo;s is on the screen as at nine o&rsquo;clock.</div>'
+        '</div>' % (num(8, 157, '157', 0, 'so far this year'),
+                    num(8, 11, '11', 0, 'this month'), at(8, 'month') + 0.3),
+        'ff'))
+
+    # 9 ------------------------------------------- what we are about to lose
+    sc.append(S(9,
+        '<div class="mid">'
+        '<div class="eyebrow">Conservation and exceptions &middot; open now</div>'
+        '<div class="nums three">%s%s%s</div>'
+        '</div>' % (num(9, 121, '121', 0, 'renewals and premiums due'),
+                    num(9, 32, '32', 0, 'pendings'),
+                    num(9, 352, '352', 0, 'service requests')),
+        'lose'))
+
+    # 10 ------------------------------------------------------- and we closed
+    sc.append(S(10,
+        '<div class="mid">'
+        '<div class="eyebrow">In the last seven days</div>'
+        '<h2 class="big"><span class="cnt" data-to="267" data-at="%d">0</span> closed</h2>'
+        '<div class="note" style="--kd:%.2fs">By the desks, with a note on every one.</div>'
+        '</div>' % (int(at(10, '267') * 1000), at(10, 'days') + 0.2),
+        'closed'))
+
+    # 11 ---------------------------------------------------------- the campaign
+    sc.append(S(11,
+        '<div class="mid">'
+        '<div class="eyebrow">The campaign &middot; the orphan book</div>'
+        '<h2 class="big"><span class="cnt" data-to="318" data-at="%d">0</span> still open</h2>'
+        '<div class="note" style="--kd:%.2fs">Every one of them with a name against it.</div>'
+        '</div>' % (int(at(11, '318') * 1000), at(11, 'name')),
+        'camp'))
+
+    # 12 -------------------------------------------------------- and the room
+    sc.append(S(12,
         '<div class="mid">'
         '<div class="eyebrow">Then it is the room</div>'
         '<div class="cards">'
@@ -183,42 +232,30 @@ def build():
         '<div class="cd" style="--kd:%.2fs"><div class="t">Anything not on it</div>'
         '<div class="v sm">THE OPEN<br>FLOOR</div><div class="m">8 minutes</div></div>'
         '</div></div>'
-        % (at(7, 'worked'), at(7, 'Training'), at(7, 'floor')),
+        % (at(12, 'worked'), at(12, 'teaches'), at(12, 'floor')),
         'room'))
 
-    # 8 --------------------------------------------- each unit, its own number
-    sc.append(S(8,
+    # 13 ----------------------------------------------------------- the close
+    sc.append(S(13,
         '<div class="mid">'
         '<div class="eyebrow">The close</div>'
-        '<h2>%s</h2>'
-        '<div class="note" style="--kd:%.2fs">That is what next week opens on.</div>'
-        '</div>' % (kin('Each unit says what it will have written by next Wednesday.', 0.3),
-                    at(8, 'opens')),
-        'commit'))
-
-    # 9 ------------------------------------------------- the minutes and actions
-    sc.append(S(9,
-        '<div class="mid">'
-        '<div class="eyebrow">Afterwards</div>'
         '<h2>%s</h2>'
         '<div class="acts">'
         '<div class="ah"><span>What was agreed</span><span>Who</span><span>By when</span></div>'
         '<div class="ar" style="--kd:%.2fs"><span>Every action, on the page</span>'
         '<span class="w">A name</span><span class="w">A date</span></div>'
-        '</div>'
-        '<div class="note">Carried to next week until it is done.</div>'
-        '</div>' % (kin('The minutes, on the page by the afternoon.', 0.3), at(9, 'action')),
-        'named'))
+        '</div></div>' % (kin('Each unit says its own number.', 0.3), at(13, 'action')),
+        'commit'))
 
-    # 10 ----------------------------------------------------------- the close
-    sc.append(S(10,
+    # 14 ------------------------------------------------------------ the end
+    sc.append(S(14,
         '<div class="mid">'
         '<img class="mk sm" src="%s" alt="">'
         '<h1>%s</h1>'
         '<div class="url close" style="--kd:%.2fs">rickyrampersadbranch.com<b>/meetings</b></div>'
-        '<div class="note" style="--kd:%.2fs">Tonight, not tomorrow morning.</div>'
-        '</div>' % (MARK, kin('Bring one thing.', 0.4), at(10, 'thing'),
-                    at(10, 'thing') + 0.4),
+        '<div class="note" style="--kd:%.2fs">Everything else is already there.</div>'
+        '</div>' % (MARK, kin('19 of us. Nine o\'clock.', 0.4), at(14, 'nine'),
+                    at(14, 'already')),
         'close'))
 
     return '\n'.join(sc)
@@ -345,6 +382,21 @@ h2.big{font-size:74px;margin-bottom:26px}
   border-radius:14px;background:linear-gradient(180deg,#43d9a3,#2bb886);color:#06281d;
   font-size:30px;font-weight:700;animation:pop .5s cubic-bezier(.2,1.5,.4,1) both;
   animation-delay:var(--kd);box-shadow:0 14px 34px rgba(43,184,134,.3)}
+
+.chips.ctr{justify-content:center}
+.chip.say2{background:rgba(0,229,255,.16);border-color:rgba(0,229,255,.5)}
+
+.nums{display:flex;justify-content:center;gap:70px;margin-top:30px}
+.nums.three{gap:52px}
+.nm{animation:wup .5s both;animation-delay:var(--kd)}
+.nm b{display:block;font-size:92px;font-weight:700;line-height:1;letter-spacing:-2px;color:#00E5FF}
+.nums.three .nm b{font-size:74px}
+.nm span{display:block;font-size:19px;color:#BFD3F7;margin-top:12px;max-width:260px}
+
+.sc.four .cards{gap:18px}
+.sc.four .cd{flex:0 0 250px;padding:30px 18px;text-align:center}
+
+.cardshot.notime{max-height:352px}
 
 .cardshot.fit{width:auto;max-width:430px;height:470px;display:flex}
 .cardshot.fit img{width:auto;height:100%}
