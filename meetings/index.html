@@ -218,8 +218,14 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     .owed-row .sd{grid-column:2 / -1}
   }
 
-  .rail2{display:flex;gap:3px;margin:2px 0 14px;align-items:stretch}
-  .rail2 .seg{flex:var(--m) 1 0;min-width:0;display:flex;flex-direction:column;gap:3px}
+  .rail2{display:flex;flex-wrap:wrap;gap:3px 4px;margin:2px 0 14px;align-items:stretch}
+  /*  As wide as its minutes, but never narrower than its own time can be
+      read: a two-minute desk report squeezed to "9:…" names nobody, which
+      is the one thing the rail is for. The times stay exact either way,
+      because each segment prints its own, and the row wraps rather than
+      shrinking past it. */
+  .rail2 .seg{flex:var(--m) 1 0;min-width:5.2rem;display:flex;flex-direction:column;gap:3px}
+  .rail2.sm .seg{min-width:2.4rem}
   .rail2 .seg .bar{display:block;height:9px;border-radius:5px;background:var(--line);overflow:hidden}
   .rail2 .seg .bar i{display:block;height:100%;width:0;border-radius:5px;background:var(--accent)}
   .rail2 .seg.done .bar{background:var(--accent)}
@@ -235,7 +241,8 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .rail2 .seg.done .ti,.rail2 .seg.done .ow,.rail2 .seg.done .tm{opacity:.55}
   .rail2.sm .ti,.rail2.sm .ow{display:none}
   .rail2.sm .seg .bar{height:7px}
-  @media(max-width:760px){.rail2 .ti,.rail2 .ow{display:none}.rail2 .tm{font-size:9.5px}}
+  @media(max-width:760px){.rail2 .ti,.rail2 .ow{display:none}.rail2 .tm{font-size:9.5px}
+    .rail2 .seg{min-width:2.2rem}}
   @keyframes railfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
   @media(prefers-reduced-motion:reduce){.rail2 .seg.on .bar i{animation:none;width:100%}}
 
@@ -4425,7 +4432,19 @@ function owedIsRoom(who) {
  *  "Lalla-Jagassar" into one word that "Lalla" can never match.  A first name
  *  alone matches nobody: it has to be the same first name and every other part
  *  of the shorter name found in the longer, a part of a double-barrelled name
- *  counting as found. */
+ *  counting as found because the hyphen has already become a space.
+ *
+ *  TWO GUARDS, BOTH EARNED BY ONE COLLISION. "The Branch Manager" folded into
+ *  "The Branch Manager's Assistant" and took her items with it, so the BMA
+ *  vanished from the one panel built to name her — the same collision a test
+ *  here hit on /^The Branch Manager\b/, one layer down. A part must match
+ *  WHOLE, never by prefix (manager against managers), and one name may carry
+ *  AT MOST ONE PART the other does not: a married surname, a middle name, a
+ *  surname the rota left off. Two extra parts is a different label, not the
+ *  same person, and the apostrophe-s the possessive leaves behind counts as
+ *  one of them. It errs towards keeping people apart, which is the safe
+ *  direction here: a wrong merge hides somebody, where a wrong split shows
+ *  them twice with their own items and is fixed by typing the full name. */
 function owedSame(a, b) {
   var norm = function (v) {
     return String(v || "").toLowerCase().replace(/[-'\u2019]/g, " ")
@@ -4436,8 +4455,9 @@ function owedSame(a, b) {
   if (x.join(" ") === y.join(" ")) return true;
   var sh = x.length <= y.length ? x : y, lo = x.length <= y.length ? y : x;
   if (sh[0] !== lo[0]) return false;
+  if (lo.length - sh.length > 1) return false;
   return sh.every(function (w) {
-    return lo.some(function (z) { return z === w || z.indexOf(w) === 0 || w.indexOf(z) === 0; });
+    return lo.some(function (z) { return z === w; });
   });
 }
 
@@ -4449,9 +4469,24 @@ function owedSame(a, b) {
  *  else on the roster who owes the room one thing. */
 function owedList(d) {
   var cons = d.contributions || [], order = [], by = {};
+  /*  ONE PERSON IS ONE ROW EVEN WRITTEN TWO WAYS. The rota carries the
+   *  owner the branch typed ("Elizabeth", "Sasha Lalla") and the roster
+   *  carries the Agent Skill Bank's ("ELIZABETH ...", "SASHA LALLA"), so
+   *  keying on the spelling alone put the same person on the screen
+   *  twice and counted her as owing two things. An existing row whose
+   *  name owedSame-matches wins, and the fuller spelling is the one
+   *  shown. */
   var add = function (name, role, item) {
     var k = String(name || "").toLowerCase().trim(); if (!k) return;
+    if (!by[k]) {
+      for (var i = 0; i < order.length; i++) {
+        if (owedSame(name, by[order[i]].who)) { k = order[i]; break; }
+      }
+    }
     if (!by[k]) { by[k] = { who: name, role: role || "", items: [], n: 0, said: "" }; order.push(k); }
+    else if (String(name).trim().split(/\s+/).length > String(by[k].who).trim().split(/\s+/).length) {
+      by[k].who = name;
+    }
     if (item && by[k].items.indexOf(item) < 0) by[k].items.push(item);
     if (role && !by[k].role) by[k].role = role;
   };
@@ -4520,7 +4555,8 @@ function railBlock(d, compact) {
         '<span class="bar"><i></i></span>' +
         '<span class="tm">' + esc(a.clock || (run >= 0 ? hhmm(run + ag.slice(0, i).reduce(function (n, x) { return n + x.minutes; }, 0)) : "")) + "</span>" +
         '<span class="ti">' + esc(a.title) + "</span>" +
-        '<span class="ow">' + esc(owedIsRoom(a.presenter) ? "The room" : a.presenter) + " · " + a.minutes + "m</span>" +
+        '<span class="ow">' + esc(!String(a.presenter || "").trim() ? "Nobody yet"
+            : owedIsRoom(a.presenter) ? "The room" : a.presenter) + " · " + a.minutes + "m</span>" +
         "</div>";
     }).join("") + "</div>";
 }

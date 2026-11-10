@@ -2947,7 +2947,8 @@ function seedRota() {
     Logger.log(msg);
     return msg;
   }
-  /*  ELEVEN ITEMS IN NINETY MINUTES, 9:00 to 10:30.
+  /*  FOURTEEN ITEMS IN NINETY MINUTES, 9:00 to 10:30, AND EVERY ONE OF
+   *  THEM HAS A NAME ON IT.
    *
    *  The shape this replaced ran fifteen items over 101 minutes and spent
    *  forty-one of them having five separate reports read out — outstanding
@@ -2961,54 +2962,107 @@ function seedRota() {
    *  breaching. The time bought back went to the thing that did not exist —
    *  asking, by name, who answered Monday's brief and who did not.
    *
+   *  WHY THE OWNERS ARE SEEDED AND NOT LEFT BLANK, decided 10 November
+   *  2026. The branch manager: "I'm not seeing the staff being held
+   *  accountable ... Kamla is the BMA, she's responsible for training, what
+   *  the staff is being trained on ... Also the three staff, Azariah, Liz,
+   *  every morning we send things ... Akaash is the manager for his unit,
+   *  and he makes a contribution. Things must change and hold the persons
+   *  accountable."
+   *
+   *  Every owner was seeded blank, and the whole accountability mechanism —
+   *  who owes this meeting something, and whether anything is in — reads
+   *  the agenda's owners. Blank owners meant it had nobody to name. So the
+   *  names go in here, and they are the branch's OWN desk split rather than
+   *  anybody's guess: the tracker already routes a new task by its type
+   *  (pendings to Azariah, premium dues to Sasha, servicing and new
+   *  applications to Elizabeth, anything else to the BMA), and the cover
+   *  rule already keeps staffing, licensing, training, RR Operations and
+   *  innovation with the BMA when she is out. A name here is changed on the
+   *  tab in a second; a blank one is nobody's, for ever.
+   *
+   *  THE ONE STAFF REPORT BECAME THREE, for the same eight minutes. "What
+   *  is breaching" with one owner is one person speaking for three desks,
+   *  and the morning e-mail that goes to each of them asks each of them
+   *  separately. Three items of two and three minutes put each desk's own
+   *  book in front of the room under its own name, and cost the meeting
+   *  nothing.
+   *
+   *  WHERE THE BMA'S FIVE MINUTES CAME FROM: the chair's own share. The
+   *  production board was seven minutes of reading out a screen that is
+   *  now on the wall before anybody sits down, and the opening's three
+   *  included marking a register the app now keeps. Both shrank, by the
+   *  rule the rota is built on. The chair holds twenty of the ninety.
+   *
    *  The arithmetic is deliberate and the template on the wall depends on
-   *  it: ninety minutes exactly, fifteen of them the chair's, sixteen
-   *  belonging to the room, two items rotating so they come round rather
-   *  than landing on whoever is willing.                                */
+   *  it: ninety minutes exactly, twenty of them the chair's, eighteen
+   *  rotating so they come round the room rather than landing on whoever
+   *  is willing, eight the room's own.
+   *
+   *  Owner Email is deliberately left blank — addresses are not written
+   *  into this repository, and the file is published. The branch puts each
+   *  one in once, on the tab; until then the name alone is enough for the
+   *  agenda, the load check and the accountability panel.               */
   var rows = [
-    [0, 'Open | Mission Statement | Moment of Silence', 3, 'all', 'chair',
-     'Three minutes. The register is the app; nobody is marked in from the front.'],
+    [0, 'Open | Mission Statement | Moment of Silence', 2, 'all', 'chair', '',
+     'Two minutes. The register is the app; nobody is marked in from the front.'],
 
-    /*  PRODUCTION LEADS. Items two to five are thirty-eight of the ninety
-     *  minutes and they are the first thing after the door closes. The
-     *  branch does not open on admin and work its way towards selling;
-     *  it opens on what was written and what is there to write.       */
-    [3, 'The production board', 7, 'all', 'chair',
-     'Written this week against target, by unit. The screen is up \u2014 only the exceptions are spoken aloud.'],
-    [3, 'This week\u2019s call list', 12, 'all', 'fixed',
+    /*  PRODUCTION LEADS. The branch does not open on admin and work its
+     *  way towards selling; it opens on what was written and what is
+     *  there to write.                                                */
+    [3, 'The production board', 3, 'all', 'chair', '',
+     'Written this week against target, by unit. The board is on the screen before anybody sits down \u2014 only the exceptions are spoken aloud.'],
+    [3, 'This week\u2019s call list', 12, 'all', 'fixed', 'Akaash Kalladeen',
      'The cross-sell band the sheet scored "call this week" \u2014 the gap named and the question already written for each one. Who called, what was asked, what closed.'],
-    [3, 'Maturities \u2014 money in motion', 10, 'all', 'fixed',
+    [3, 'Maturities \u2014 money in motion', 10, 'all', 'fixed', '',
      'Every policy reaching maturity is a conversation about where the money goes next. Nothing converts better than money already moving.'],
-    [3, 'The campaign \u2014 the orphan book', 9, 'all', 'fixed',
+    [3, 'The campaign \u2014 the orphan book', 9, 'all', 'fixed', '',
      'Against target, with the pace needed to finish on time. A review filed is the unit measured.'],
 
-    [3, 'Accountability \u2014 Monday\u2019s brief and last week\u2019s actions', 10, 'all', 'fixed',
-     'Answered against sent, contact made against answered, the names who sent nothing back, and every action carried forward with its owner.'],
-    [2, 'Conservation and exceptions', 8, 'staff', 'fixed',
-     'What we are about to lose, and what is breaching its standard \u2014 dues, lapses, requirements, persistency, contracts, 85-day. Only the breaches.'],
+    /*  THE THREE DESKS, EACH FOR ITS OWN BOOK. Eight minutes between
+     *  them, which is what the single staff report cost.             */
+    [2, 'Premiums due and lapses \u2014 what we are about to lose', 3, 'staff', 'fixed', 'Sasha Lalla',
+     'Her own book: what is overdue, what lapses next, and what came back from this week\u2019s letters. Only what is breaching.'],
+    [2, 'Pendings and requirements \u2014 what is holding business up', 3, 'staff', 'fixed', 'Azariah',
+     'Her own book: requirements outstanding, first premiums not paid, and whose application is waiting on whom. Only what is breaching.'],
+    [2, 'Service, contracts and the 85-day', 2, 'staff', 'fixed', 'Elizabeth',
+     'Her own book: contracts undelivered, service requests past their standard, and the 85-day. Only what is breaching.'],
 
-    [3, 'What worked for me', 8, 'all', 'rotate',
+    [3, 'Accountability \u2014 Monday\u2019s brief and last week\u2019s actions', 10, 'all', 'chair', '',
+     'Answered against sent, contact made against answered, the names who sent nothing back, and every action carried forward with its owner and its date.'],
+
+    [5, 'Training and staffing \u2014 the BMA\u2019s report', 5, 'all', 'fixed', 'Kamla Dookran',
+     'What the staff were trained on this week, what came of it, what is next, and where licensing and staffing stand. Five minutes, every week, in her own name.'],
+
+    [3, 'What worked for me', 8, 'all', 'rotate', '',
      'One agent, one case, what they actually did. Comes round the room.'],
-    [5, 'Training \u2014 one point, taught by one of us', 10, 'all', 'rotate',
-     'Not the manager. A product, an objection, a system.'],
-    [6, 'Open floor', 8, 'all', 'fixed',
+    [5, 'Training \u2014 one point, taught by one of us', 10, 'all', 'rotate', '',
+     'Not the manager, and not the BMA. A product, an objection, a system.'],
+    [6, 'Open floor', 8, 'all', 'fixed', 'Everyone',
      'The room\u2019s time. Anything not on the agenda.'],
-    [7, 'Close \u2014 each unit commits its number', 5, 'all', 'chair',
+    [7, 'Close \u2014 each unit commits its number', 5, 'all', 'chair', '',
      'Every unit says what it will have written by next ' + meetingDayName_() + '. That is what next week opens on.']
   ];
   appendRows_(MEET.TAB_ROTA, rows.map(function (r, i) {
     return {
       'Order': (i + 1) * 10, 'Section': SECTIONS[r[0]], 'Item': r[1],
-      'Detail': r[5], 'Minutes': r[2], 'Visibility': r[3], 'Cadence': r[4],
-      'Owner': '', 'Owner Email': '', 'Backup': '', 'Backup Email': '',
+      'Detail': r[6], 'Minutes': r[2], 'Visibility': r[3], 'Cadence': r[4],
+      'Owner': r[5], 'Owner Email': '', 'Backup': '', 'Backup Email': '',
       'Active': 'Y', 'Notes': ''
     };
   }));
-  var out = rows.length + ' standing items written to the Rota tab.\n\n' +
-    'Put an Owner Email against each one. Two items rotate by themselves and ' +
-    'need no owner. Only the opening and the closing are the chair’s.\n\n' +
-    'Any item left without an owner is seeded unowned, and the meeting will ' +
-    'say so when it is opened.';
+  var mins = rows.reduce(function (t, r) { return t + r[2]; }, 0);
+  var out = rows.length + ' standing items written to the Rota tab, ' + mins + ' minutes in all.\n\n' +
+    'Nine of them arrive with a name on them, taken from the branch\u2019s own desk ' +
+    'split: the call list is the unit manager\u2019s, premiums and lapses Sasha\u2019s, ' +
+    'pendings Azariah\u2019s, service and contracts Elizabeth\u2019s, training and ' +
+    'staffing the BMA\u2019s, and four are the chair\u2019s. Change any of them on the ' +
+    'tab \u2014 what matters is that no item is nobody\u2019s.\n\n' +
+    'Put an Owner Email against each named one, so what they bring attaches to ' +
+    'their own slot. Two items rotate by themselves and need no owner, and the ' +
+    'open floor belongs to the room.\n\n' +
+    'Maturities and the campaign are seeded unowned on purpose: the branch ' +
+    'decides those two, and the meeting says so when it is opened.';
   Logger.log(out);
   return out;
 }
@@ -3047,10 +3101,21 @@ function seedAgendaInto_(m, byEmail) {
    *  already owned by other people. The hard-coded list that used to
    *  live here gave six of twelve items to the chair by default and
    *  left the rest blank, which in practice meant the chair again. */
+  /*  THE ROTA WRITES ITSELF IF THERE IS NONE. Until 10 November 2026 this
+   *  returned an error naming a menu item, which meant the Wednesday
+   *  builder could create the meeting and leave it with no agenda at all,
+   *  waiting on a press nobody had been told about — the exact fault the
+   *  note above this function records. The standing order is the branch's
+   *  own and is seeded with its owners, so a meeting built at six in the
+   *  morning arrives named. */
   var rota = rotaRows_();
   if (!rota.length) {
-    return { ok: false, error: 'There is no rota yet. Run "Set up the standing rota" from the ' +
-                               'Branch Meetings menu, then put an owner against each item.' };
+    try { seedRota(); } catch (e) {}
+    rota = rotaRows_();
+  }
+  if (!rota.length) {
+    return { ok: false, error: 'There is no rota yet and one could not be written. Run ' +
+                               '"Set up the standing rota" from the Branch Meetings menu.' };
   }
 
   // One rotating slot per person per meeting: handed to presenterFor_
@@ -3346,13 +3411,19 @@ function apiDeleteAction_(body) {
   return { ok: true };
 }
 
-/** Bring every still-open item from an earlier meeting onto this one,
- *  keeping the meeting it was first raised in. */
-function apiCarryForward_(body) {
-  var me = requireStaff_(body.token);
-  var to = findMeeting_(body.meetingId);
-  if (!to) return { ok: false, error: 'That meeting no longer exists.' };
-
+/*  BRING EVERY STILL-OPEN ITEM FROM AN EARLIER MEETING ONTO THIS ONE,
+ *  keeping the meeting it was first raised in.
+ *
+ *  Pulled out of the button on 10 November 2026, because the button was
+ *  the whole of it: nothing carried an action forward unless a staff
+ *  member pressed "carry forward" on the day, and in the meantime a
+ *  meeting opened with last week's agreed actions nowhere on it. The
+ *  branch manager, 10 November: "I'm not seeing go back, deep dive into
+ *  what we agreed on." So the Wednesday builder now calls this itself,
+ *  before anybody is awake, and the button still works for a meeting
+ *  built by hand. Same lesson as the agenda seed above: a step the branch
+ *  is told happens by itself must not in fact be somebody remembering. */
+function carryForwardInto_(to) {
   var already = {};
   readTab_(MEET.TAB_ACTIONS).forEach(function (x) {
     if (str_(x['Meeting ID']) === str_(to['ID'])) already[str_(x['Item']).toLowerCase()] = 1;
@@ -3376,8 +3447,16 @@ function apiCarryForward_(body) {
     carried++;
   });
 
-  log_('carry-forward', me.name, me.role, str_(to['Ref']), carried + ' open items carried forward');
   return { ok: true, carried: carried };
+}
+
+function apiCarryForward_(body) {
+  var me = requireStaff_(body.token);
+  var to = findMeeting_(body.meetingId);
+  if (!to) return { ok: false, error: 'That meeting no longer exists.' };
+  var out = carryForwardInto_(to);
+  log_('carry-forward', me.name, me.role, str_(to['Ref']), out.carried + ' open items carried forward');
+  return out;
 }
 
 /* ======================== minutes ======================== */
@@ -7338,8 +7417,22 @@ function buildWednesday() {
   }
 
   var out = seedAgendaInto_(m, MEET.ADMIN_EMAIL);
+
+  /*  LAST WEEK'S AGREED ACTIONS ARE PART OF BUILDING THE MEETING, not a
+   *  button somebody presses on the day. Until 10 November 2026 nothing
+   *  carried them over unless a staff member pressed "carry forward",
+   *  so a meeting could open with every action agreed the week before
+   *  nowhere on the screen, and the accountability item had nothing to
+   *  read. It runs in its own try: an action that will not copy must
+   *  never be the reason the branch has no meeting to sign in to. */
+  var carried = 0, carryWhy = '';
+  try { carried = carryForwardInto_(m).carried; }
+  catch (e) { carryWhy = String(e && e.message || e).slice(0, 80); }
+
   var note = (made ? 'meeting created; ' : 'meeting already there; ') +
-             (out.ok ? out.added + ' items written from the rota' : str_(out.error));
+             (out.ok ? out.added + ' items written from the rota' : str_(out.error)) +
+             '; ' + (carryWhy ? 'open actions did not carry (' + carryWhy + ')'
+                              : carried + ' open action' + (carried === 1 ? '' : 's') + ' carried forward');
   log_('build-wednesday', 'system', 'manager', str_(m['Ref']), note);
   Logger.log(note);
   return note;

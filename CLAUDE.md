@@ -8889,6 +8889,79 @@ mtuse-lines.json`, `build-mtusefilm.py`, `sfx.py`,
 `render.js ../../meetings/usefilm.html cap-mtuse 30 ../../meetings/usefilm.jpg`,
 `mixany.py`. Re-shoot first with `node mtuseshots/shots.js` if the page changed.
 
+### Every item has a name on it, and the Wednesday builder does the two steps nobody was pressing — 10 November 2026
+
+Asked for in these words: *"I'm not seeing the staff being held accountable ...
+Kamla is the BMA, she's responsible for training, what the staff is being trained
+on, what happened, what is going to happen ... Also the three staff, Azariah, Liz,
+every morning we send things, and here is the meeting ... Akaash is the manager for
+his unit, and he makes a contribution. Things must change and hold the persons
+accountable"*, and *"I'm not seeing go back, deep dive into what we agreed on."*
+
+**The accountability panel had nobody to name.** It reads the agenda's owners, and
+`seedRota` wrote every owner blank — so the mechanism was right and its input was
+empty. The names go in the seed now, and they are **the branch's own desk split**
+rather than anybody's guess: the tracker already routes a new task by its type
+(pendings Azariah, premium dues Sasha, servicing and new applications Elizabeth,
+anything else the BMA), and the cover rule already keeps staffing, licensing,
+training, RR Operations and innovation with the BMA when she is out. A name on the
+tab is changed in a second; a blank one is nobody's for ever.
+
+**The one staff report became three, for the same eight minutes.** "What is
+breaching" with one owner is one person speaking for three desks, and the morning
+e-mail that goes to each of them asks each of them separately. Three items of three,
+three and two minutes put each desk's own book in front of the room under its own
+name and cost the meeting nothing.
+
+**The BMA's five minutes came out of the chair's own share**, by the rule the rota
+is built on: the production board was seven minutes of reading out a screen that is
+now on the wall before anybody sits down (7 → 3), and the opening included marking a
+register the app keeps (3 → 2). Fourteen items, **ninety minutes exactly**, the
+chair twenty of them. Her slot is deliberately *not* the rotating lesson, which
+still reads "not the manager, and not the BMA".
+
+**Owner Email stays blank, on purpose.** Addresses are not written into this
+repository and the file is published. A name alone is enough for the agenda, the
+load check and the panel; the branch puts the address in once, on the tab, and then
+what a person brings attaches to their own slot.
+
+**Two steps were a press nobody made**, which is the fault this product has now paid
+for three times:
+
+- **the rota.** `seedAgendaInto_` returned an error naming a menu item when there was
+  no rota, so the Wednesday builder could create the meeting and leave it with no
+  agenda. It seeds the rota itself now.
+- **last week's agreed actions.** `apiCarryForward_` was a staff button; nothing
+  carried an action over unless somebody pressed it on the day, so a meeting could
+  open with everything agreed the week before nowhere on the screen and the
+  accountability item nothing to read. `carryForwardInto_` is the body, the builder
+  calls it in its own try, and the run's log line says how many came over — or that
+  they did not, rather than going quiet.
+
+**`owedSame` folded the BMA into the Branch Manager**, which is the recorded
+`/^The Branch Manager\b/` collision one layer down, and it hid the one person the
+panel was rebuilt to name. Two guards: a part matches **whole**, never by prefix
+(manager against managers), and one name may carry **at most one part** the other
+does not — a married surname, a middle name, a surname the rota left off. Two extra
+parts is a different label, and the apostrophe-s a possessive leaves behind counts
+as one of them. It errs towards keeping people apart, which is the safe direction: a
+wrong merge hides somebody, where a wrong split shows them twice with their own
+items and is fixed by typing the full name. `owedList` also merges a person the
+roster writes more fully than the rota does, so "Sasha" and "SASHA LALLA" are one
+row with the fuller name shown.
+
+**A two-minute segment squeezed to "9:…" names nobody**, which is the one thing the
+rail is for. Each segment has a minimum width and the row wraps rather than shrinking
+past it; the times stay exact either way, because each segment prints its own. An
+item nobody owns reads **"Nobody yet"**, never "The room" — maturities and the
+campaign are seeded unowned on purpose, and a default that looks deliberate is worse
+than a blank.
+
+`tests/test-standing-order.js` covers the rota and the builder (28 checks: the
+arithmetic, the load, each named owner, no address in a published file, the agenda
+seeding its own rota, the actions carried once and not twice, and a meeting still
+built when they will not copy). `tests/e2e-owed.js` covers the page (40).
+
 ### The branch's own numbers on the meeting screen — 10 November 2026
 
 Asked for in these words: *"so much we do daily, so much intelligence we drive ...

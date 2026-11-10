@@ -58,8 +58,22 @@ const server = http.createServer((q, r) => {
   const bm = rows.filter(r => /^The Branch Manager\s+MANAGER$/i.test(r.who.replace(/\s+/g, ' ')));
   ok('the chair is on the list once, not once per item', bm.length === 1, JSON.stringify(bm.map(r => r.who)));
   ok('and that one line carries every item they own',
-    /production board/.test(bm[0].what) && /orphan book/.test(bm[0].what), bm[0].what);
+    /production board/.test(bm[0].what) && /Accountability/.test(bm[0].what), bm[0].what);
   ok('nobody is listed twice', new Set(rows.map(r => r.who)).size === rows.length);
+
+  // ---- the people he named, each with their own item ---------------------------
+  const bma = rows.find(r => /Branch Manager.s Assistant/i.test(r.who));
+  ok('the BMA is her own line, never folded into the chair\'s',
+    bma && bm[0].who !== bma.who, JSON.stringify(bma && bma.who));
+  ok('and her item is the training and staffing report',
+    bma && /Training and staffing/.test(bma.what), bma && bma.what);
+  const desks = ['Support One', 'Support Two', 'Support Three'].map(n =>
+    rows.find(r => new RegExp('^' + n).test(r.who)));
+  ok('each of the three desks owns its own book, not one report between them',
+    desks.every(Boolean) && new Set(desks.map(d => d.what)).size === 3,
+    JSON.stringify(desks.map(d => d && d.what)));
+  const um = rows.find(r => /^A Unit Manager/.test(r.who));
+  ok('the unit manager owns the call list', um && /call list/.test(um.what), um && um.what);
 
   // ---- in, or not, with the name on it ---------------------------------------
   const two = rows.find(r => /^Agent Two/.test(r.who));
@@ -68,7 +82,7 @@ const server = http.createServer((q, r) => {
   ok('somebody who brought nothing reads nothing in', five && five.no && /nothing in/i.test(five.st), JSON.stringify(five));
   ok('what they said is on the line',
     /took a fact find/.test(await p.locator('.owed-row.yes .sd').first().innerText()));
-  ok('the head counts them', /3 of 12/.test(await p.locator('.owed-head').innerText()),
+  ok('the head counts them', /3 of 11/.test(await p.locator('.owed-head').innerText()),
     await p.locator('.owed-head').innerText());
 
   // ---- an item the room owns asks nobody ---------------------------------------
@@ -80,28 +94,38 @@ const server = http.createServer((q, r) => {
   // ---- a first name answers for a full name ------------------------------------
   const same = await p.evaluate(() => [
     owedSame('Liz', 'Liz'), owedSame('Sasha Lalla', 'Sasha Lalla-Jagassar'),
-    owedSame('Agent Two', 'Agent Three'), owedSame('', 'Agent Two'), owedSame('A Unit Manager', 'A Unit Manager')
+    owedSame('Agent Two', 'Agent Three'), owedSame('', 'Agent Two'), owedSame('A Unit Manager', 'A Unit Manager'),
+    owedSame('Elizabeth', 'Elizabeth Khan'),
+    owedSame('The Branch Manager', "The Branch Manager's Assistant")
   ]);
   ok('the same person matches', same[0] === true && same[1] === true && same[4] === true, JSON.stringify(same));
+  ok('a first name answers for a fuller one', same[5] === true, JSON.stringify(same));
   ok('a different person does not', same[2] === false && same[3] === false, JSON.stringify(same));
+  ok('and a title that contains another is not that person', same[6] === false, JSON.stringify(same));
+  ok('a name written two ways is one row',
+    rows.filter(r => /^Support Three/.test(r.who)).length === 1 &&
+    /Surname/.test(rows.find(r => /^Support Three/.test(r.who)).who),
+    JSON.stringify(rows.filter(r => /Support Three/.test(r.who)).map(r => r.who)));
 
   // ---- the rail, with times worked out from the start ---------------------------
   const segs = await p.$$eval('.rail2 .seg', es => es.map(e => ({
     t: e.querySelector('.tm').textContent.trim(), o: e.querySelector('.ow').textContent.trim(),
     m: +getComputedStyle(e).getPropertyValue('--m') })));
-  ok('one segment per timed item', segs.length === 11, String(segs.length));
+  ok('one segment per timed item', segs.length === 14, String(segs.length));
   ok('the first starts at the meeting start', segs[0].t === '9:00', segs[0].t);
-  ok('and each one follows the last', segs[1].t === '9:03' && segs[2].t === '9:10', segs.map(x => x.t).join(' '));
+  ok('and each one follows the last', segs[1].t === '9:02' && segs[2].t === '9:05', segs.map(x => x.t).join(' '));
   ok('the last starts before the end', segs[segs.length - 1].t === '10:25', segs[segs.length - 1].t);
   ok('every segment names who is responsible', segs.every(x => x.o && /·/.test(x.o)));
-  ok('and is as wide as its minutes', segs[2].m === 12 && segs[0].m === 3, segs[0].m + '/' + segs[2].m);
+  ok('and is as wide as its minutes', segs[2].m === 12 && segs[0].m === 2, segs[0].m + '/' + segs[2].m);
+  ok('the running order fits the ninety minutes exactly',
+    segs.reduce((t, x) => t + x.m, 0) === 90, String(segs.reduce((t, x) => t + x.m, 0)));
 
   // ---- the working view carries both --------------------------------------------
   await p.evaluate(() => scrOpen());
   await p.waitForTimeout(500);
   ok('the clock rail is on the screen the room watches', await p.locator('#scr .rail2').count() === 1);
   const owed = await p.locator('#scr .scr-owed').innerText();
-  ok('so is who has put something in', /3 of 12 have put something in/.test(owed), owed.slice(0, 60));
+  ok('so is who has put something in', /3 of 11 have put something in/.test(owed), owed.slice(0, 60));
   ok('with the names of whoever has not', /Nothing in yet/.test(owed) && /Agent Five/.test(owed), owed.slice(0, 160));
   ok('no page errors anywhere', errs.length === 0, errs.join(' | '));
 
@@ -116,11 +140,11 @@ const server = http.createServer((q, r) => {
     /Read at 7:02 from Salesforce and the fact find/.test(nums));
   ok('no money reaches the page', !/\$|TT\$|premium of|API/.test(nums), nums.slice(0, 200));
 
-  const desks = await p.$$eval('.dsk-row', es => es.map(e => e.innerText.replace(/\s+/g, ' ').trim()));
-  ok('every desk is there by name', desks.length === 4, String(desks.length));
-  ok('a desk who is not in is said to be absent', /Support Three absent/.test(desks[2]), desks[2]);
+  const dsk = await p.$$eval('.dsk-row', es => es.map(e => e.innerText.replace(/\s+/g, ' ').trim()));
+  ok('every desk is there by name', dsk.length === 4, String(dsk.length));
+  ok('a desk who is not in is said to be absent', /Support Three absent/.test(dsk[2]), dsk[2]);
   ok('each is against their own normal, not each other',
-    /a day, against 9/.test(desks[0]) && /a day, against 11/.test(desks[1]), desks.slice(0, 2).join(' | '));
+    /a day, against 9/.test(dsk[0]) && /a day, against 11/.test(dsk[1]), dsk.slice(0, 2).join(' | '));
 
   //  the whole point of the fallback: a tracker that is not linked says so
   await p.evaluate(() => { delete S.detail.pack; drawMeeting(); });

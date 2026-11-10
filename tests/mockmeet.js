@@ -2,20 +2,23 @@
     anything else that needs the page drawn without the live sheet. Nothing
     here is a real person, a real client or a real figure.  */
 const AGENDA = [
-  ['Opening & Mission Statement', 'Open | Mission Statement | Moment of Silence', 3, 'Three minutes. The register is the app; nobody is marked in from the front.', 'The Branch Manager'],
-  ['Performance & Community Management', 'The production board', 7, 'Written this week against target, by unit. The screen is up — only the exceptions are spoken aloud.', 'The Branch Manager'],
-  ['Performance & Community Management', "This week's call list", 12, 'The cross-sell band the sheet scored "call this week" — the gap named and the question already written for each one.', 'Sales Support'],
-  ['Performance & Community Management', 'Maturities — money in motion', 10, 'Every policy reaching maturity is a conversation about where the money goes next.', 'Sales Support'],
-  ['Performance & Community Management', 'The campaign — the orphan book', 9, 'Against target, with the pace needed to finish on time. A review filed is the unit measured.', 'The Branch Manager'],
-  ['Performance & Community Management', "Accountability — Monday's brief and last week's actions", 10, 'Answered against sent, contact made against answered, and every action carried forward with its owner.', 'The Branch Manager'],
-  ['Reports Reviewed', 'Conservation and exceptions', 8, 'What we are about to lose, and what is breaching its standard. Only the breaches.', 'A Unit Manager'],
+  ['Opening & Mission Statement', 'Open | Mission Statement | Moment of Silence', 2, 'Two minutes. The register is the app; nobody is marked in from the front.', 'The Branch Manager'],
+  ['Performance & Community Management', 'The production board', 3, 'Written this week against target, by unit. The board is on the screen before anybody sits down \u2014 only the exceptions are spoken aloud.', 'The Branch Manager'],
+  ['Performance & Community Management', "This week's call list", 12, 'The cross-sell band the sheet scored "call this week" \u2014 the gap named and the question already written for each one.', 'A Unit Manager'],
+  ['Performance & Community Management', 'Maturities \u2014 money in motion', 10, 'Every policy reaching maturity is a conversation about where the money goes next.', ''],
+  ['Performance & Community Management', 'The campaign \u2014 the orphan book', 9, 'Against target, with the pace needed to finish on time. A review filed is the unit measured.', ''],
+  ['Reports Reviewed', 'Premiums due and lapses \u2014 what we are about to lose', 3, 'Her own book: what is overdue, what lapses next, and what came back from this week\u2019s letters. Only what is breaching.', 'Support One'],
+  ['Reports Reviewed', 'Pendings and requirements \u2014 what is holding business up', 3, 'Her own book: requirements outstanding, first premiums not paid, and whose application is waiting on whom.', 'Support Two'],
+  ['Reports Reviewed', 'Service, contracts and the 85-day', 2, 'Her own book: contracts undelivered, service requests past their standard, and the 85-day.', 'Support Three'],
+  ['Performance & Community Management', "Accountability \u2014 Monday's brief and last week's actions", 10, 'Answered against sent, contact made against answered, and every action carried forward with its owner and its date.', 'The Branch Manager'],
+  ['Training & Development', "Training and staffing \u2014 the BMA's report", 5, 'What the staff were trained on this week, what came of it, what is next, and where licensing and staffing stand.', "The Branch Manager's Assistant"],
   ['Performance & Community Management', 'What worked for me', 8, 'One agent, one case, what they actually did. Comes round the room.', 'Everyone'],
-  ['Training & Development', 'Training — one point, taught by one of us', 10, 'Not the manager. A product, an objection, a system.', 'Everyone'],
+  ['Training & Development', 'Training \u2014 one point, taught by one of us', 10, 'Not the manager, and not the BMA. A product, an objection, a system.', 'Everyone'],
   ['Other Items', 'Open floor', 8, "The room's time. Anything not on the agenda.", 'Everyone'],
-  ['Closing', 'Close — each unit commits its number', 5, 'Every unit says what it will have written by next Wednesday.', 'The Branch Manager']
+  ['Closing', 'Close \u2014 each unit commits its number', 5, 'Every unit says what it will have written by next Wednesday.', 'The Branch Manager']
 ].map((a, i) => ({
   id: 'AGD' + (i + 1), order: i + 1, clock: '', section: a[0], title: a[1], detail: a[3],
-  presenter: a[4], presenterEmail: '', mine: i === 7, minutes: a[2], visibility: 'all',
+  presenter: a[4], presenterEmail: '', mine: i === 10, minutes: a[2], visibility: 'all',
   materialsRequired: false, ready: i < 6, readyAt: '', topics: '', reviewedBy: '',
   status: 'Scheduled', materials: []
 }));
@@ -67,7 +70,7 @@ const ROSTER = [
   { name: "The Branch Manager's Assistant", role: 'staff', unit: '' },
   { name: 'Support One', role: 'staff', unit: '' },
   { name: 'Support Two', role: 'staff', unit: '' },
-  { name: 'Support Three', role: 'staff', unit: '' },
+  { name: 'Support Three Surname', role: 'staff', unit: '' },
   { name: 'Agent One', role: 'agent', unit: 'Unit One' },
   { name: 'Agent Two', role: 'agent', unit: 'Unit One' },
   { name: 'Agent Three', role: 'agent', unit: 'Unit Two' },
