@@ -318,6 +318,39 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     transition:width .9s linear,background .3s}
   .tick-bar i.warn{background:var(--amber)}
   .tick-bar i.over{background:var(--red)}
+
+  /*  THE SCREEN (10 Nov 2026). Ricky: "the meeting is a working meeting, so it moves along the slides ... it's going to be
+   *  appearing on the screen". One item at a time, full screen, for the TV: whose item it is, the question they answer, the
+   *  facts behind it, the clock, and what the room has put on the record against it, live. Nobody reads the screen aloud:
+   *  the owner speaks to it. It follows the item the chair marks as On now, and before the meeting starts it steps through
+   *  the agenda with the arrow keys. */
+  #scr{position:fixed;inset:0;z-index:200;background:var(--bg);color:var(--text);display:grid;grid-template-rows:auto 1fr auto;
+    padding:max(18px,env(safe-area-inset-top,0px)) max(28px,env(safe-area-inset-right,0px)) max(18px,env(safe-area-inset-bottom,0px)) max(28px,env(safe-area-inset-left,0px));gap:18px}
+  #scr[hidden]{display:none}
+  .scr-top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+  .scr-top b{color:var(--text)} .scr-top .sp{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .scr-dots{display:flex;gap:5px;flex-wrap:wrap} .scr-dots i{width:22px;height:5px;border-radius:3px;background:var(--card2)} .scr-dots i.on{background:var(--accent)} .scr-dots i.done{background:var(--dim)}
+  .scr-main{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:28px;min-height:0}
+  .scr-item{display:flex;flex-direction:column;gap:14px;min-width:0;overflow:auto}
+  .scr-eyebrow{font:700 clamp(12px,1.1vw,16px)/1 'Montserrat','Montserrat Fallback',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .scr-title{font:900 clamp(30px,3.6vw,62px)/1.06 'Montserrat','Montserrat Fallback',sans-serif;letter-spacing:-.02em;margin:0;text-wrap:balance}
+  .scr-owner{font-size:clamp(16px,1.5vw,24px);color:var(--muted)} .scr-owner b{color:var(--text)}
+  .scr-det{font-size:clamp(17px,1.55vw,27px);line-height:1.5;color:var(--text);max-width:62ch}
+  .scr-det .q{display:block;margin-top:14px;padding:14px 18px;border-left:5px solid var(--accent);background:var(--card);border-radius:0 12px 12px 0}
+  .scr-side{display:flex;flex-direction:column;gap:14px;min-width:0;min-height:0}
+  .scr-clock{background:var(--card);border-radius:16px;padding:16px 20px}
+  .scr-clock .n{font:900 clamp(44px,5vw,88px)/1 'Montserrat','Montserrat Fallback',sans-serif;font-variant-numeric:tabular-nums;color:var(--green)}
+  .scr-clock .n.warn{color:var(--amber)} .scr-clock .n.over{color:var(--red)}
+  .scr-clock small{display:block;color:var(--muted);font-size:14px;margin-top:6px}
+  .scr-rec{background:var(--card);border-radius:16px;padding:14px 18px;flex:1;min-height:0;overflow:auto}
+  .scr-rec h3{margin:0 0 8px;font:800 13px/1 'Montserrat','Montserrat Fallback',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .scr-rec .c{padding:9px 0;border-top:1px solid var(--card2);font-size:clamp(14px,1.15vw,19px);line-height:1.45} .scr-rec .c:first-of-type{border-top:0}
+  .scr-rec .c b{color:var(--accent)} .scr-rec .none{color:var(--dim);font-size:15px}
+  .scr-foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:15px;color:var(--muted)}
+  .scr-foot b{color:var(--text)} .scr-foot .rule{margin-left:auto;font-size:13px;color:var(--dim)}
+  .scr-list{display:grid;gap:6px;font-size:clamp(15px,1.3vw,22px)} .scr-list div{display:grid;grid-template-columns:5.5em 1fr auto;gap:14px;padding:8px 0;border-top:1px solid var(--card2)}
+  .scr-list .t{color:var(--muted);font-variant-numeric:tabular-nums} .scr-list .o{color:var(--muted);text-align:right}
+  @media (max-width:820px){.scr-main{grid-template-columns:1fr}}
   .tick-next{margin-top:10px;font-size:12px;color:var(--dim);
     border-top:1px solid var(--line);padding-top:9px}
   .tick-next b{color:var(--muted);font-weight:600}
@@ -1453,6 +1486,7 @@ function drawMeeting() {
   out += "</div>";
 
   // The clock, then check-in. Both belong above everything else.
+  out += '<div style="display:flex;justify-content:flex-end;margin:0 0 8px"><button class="btn ghost auto sm" id="scr-open" type="button">Put it on the screen</button></div>';
   out += liveBlock(d);
   if (m.status !== "closed" && !m.archiveLink) out += checkinBlock(m);
 
@@ -4102,6 +4136,95 @@ function resume() {
     say("li-msg", "Could not reach the branch system. Sign in again when you have a connection.");
   });
 }
+
+/* ---------------- the screen (10 Nov 2026) ---------------- */
+var SCR = { idx: 0, follow: true, timer: null, tick: null };
+function scrSlides(d) { return [{ overview: true }].concat(d.agenda || []); }
+function scrDet(det) {
+  var t = String(det || ""), k = t.search(/\bQuestion:/);
+  if (k < 0) return escLines(t);
+  return escLines(t.slice(0, k).trim()) + '<span class="q">' + escLines(t.slice(k).replace(/^Question:\s*/, "")) + "</span>";
+}
+function scrDraw() {
+  var d = S.detail, box = $("scr"); if (!d || !box || box.hidden) return;
+  var m = d.meeting, sn = d.session || {}, sl = scrSlides(d), live = !!sn.running;
+  if (live && SCR.follow && sn.currentAgendaId) { for (var i = 1; i < sl.length; i++) if (sl[i].id === sn.currentAgendaId) SCR.idx = i; }
+  SCR.idx = Math.max(0, Math.min(sl.length - 1, SCR.idx));
+  var a = sl[SCR.idx], cur = live && a && a.id === sn.currentAgendaId;
+  var dots = sl.slice(1).map(function (x, k) { return '<i class="' + (k + 1 === SCR.idx ? "on" : k + 1 < SCR.idx ? "done" : "") + '"></i>'; }).join("");
+  var head = '<div class="scr-top"><b>' + esc(m.title) + "</b><span>" + esc(m.date || "") + (m.start ? " · " + esc(m.start) : "") + "</span>" +
+    (live ? '<span style="color:var(--green)">● Live · ' + esc(clockText(sn.elapsed)) + "</span>" : "") + '<span class="scr-dots">' + dots + "</span>" +
+    '<span class="sp"><button class="btn ghost sm" type="button" data-scr="prev">◀</button><button class="btn ghost sm" type="button" data-scr="next">▶</button>' +
+    (live && d.canRun && sn.nextAgendaId ? '<button class="btn teal sm" type="button" data-scr="move">Move on</button>' : "") +
+    '<button class="btn ghost sm" type="button" data-scr="close">Close</button></span></div>';
+  var main, side;
+  if (a.overview) {
+    var tot = (d.agenda || []).reduce(function (n, x) { return n + (x.minutes || 0); }, 0);
+    main = '<div class="scr-item"><div class="scr-eyebrow">The agenda · ' + tot + ' minutes</div><h1 class="scr-title">' + esc(m.title) + "</h1>" +
+      (m.subtitle ? '<div class="scr-owner">' + esc(m.subtitle) + "</div>" : "") +
+      '<div class="scr-list">' + (d.agenda || []).map(function (x) { return '<div><span class="t">' + esc(x.clock || "") + "</span><span>" + esc(x.title) + '</span><span class="o">' + esc(x.presenter || "Everyone") + " · " + (x.minutes || 0) + "</span></div>"; }).join("") + "</div></div>";
+    var pre = (d.contributions || []).filter(function (c) { return (c.offset || 0) < 0; });
+    side = '<div class="scr-side"><div class="scr-rec"><h3>Brought in before the meeting · ' + pre.length + "</h3>" +
+      (pre.length ? pre.slice(0, 14).map(function (c) { return '<div class="c"><b>' + esc(c.name) + "</b> · " + esc(c.body) + "</div>"; }).join("") : '<div class="none">Nothing yet. Anything posted on the meeting page before 9:00 shows here.</div>') + "</div></div>";
+  } else {
+    var on = (d.contributions || []).filter(function (c) { return c.agendaId === a.id; }).slice().reverse();
+    main = '<div class="scr-item"><div class="scr-eyebrow">' + esc(a.section || "") + " · " + SCR.idx + " of " + (sl.length - 1) + (cur ? " · on now" : "") + "</div>" +
+      '<h1 class="scr-title">' + esc(a.title) + "</h1>" +
+      '<div class="scr-owner">' + (a.presenter ? "Owned by <b>" + esc(a.presenter) + "</b>" : "<b>The room</b>") + " · " + (a.minutes || 0) + " minutes" + (a.clock ? " · " + esc(a.clock) : "") + "</div>" +
+      '<div class="scr-det">' + scrDet(a.detail) + "</div></div>";
+    side = '<div class="scr-side">' + (cur ? '<div class="scr-clock"><div class="n" id="scr-n">—</div><small id="scr-s"></small></div>' : "") +
+      '<div class="scr-rec"><h3>On the record for this item · ' + on.length + "</h3>" +
+      (on.length ? on.slice(0, 16).map(function (c) { return '<div class="c"><b>' + esc(c.name) + "</b>" + (c.kind && c.kind !== "Point" ? " · " + esc(c.kind) : "") + "<br>" + esc(c.body) + "</div>"; }).join("")
+        : '<div class="none">Nothing yet. Post from your phone on the meeting page: it appears here.</div>') + "</div></div>";
+  }
+  var nx = sl[SCR.idx + 1];
+  var foot = '<div class="scr-foot">' + (nx && !nx.overview ? "Next: <b>" + esc(nx.title) + "</b>" + (nx.presenter ? " · " + esc(nx.presenter) : "") : "Last item.") +
+    '<span class="rule">Nobody reads the screen. The owner speaks to it. Every item ends with a name and a date.</span></div>';
+  box.innerHTML = head + '<div class="scr-main">' + main + side + "</div>" + foot;
+  if (SCR.tick) { clearInterval(SCR.tick); SCR.tick = null; }
+  if (cur && sn.itemStartedISO) {
+    var t0 = Date.parse(sn.itemStartedISO), cap = (sn.currentAllotted || 0) * 60;
+    var run = function () { var n = $("scr-n"); if (!n) { clearInterval(SCR.tick); SCR.tick = null; return; }
+      var t = tickState(Math.max(0, Math.floor((Date.now() - t0) / 1000)), cap, sn.currentAllotted); n.textContent = t.text; n.className = "n" + (t.cls ? " " + t.cls : ""); $("scr-s").textContent = t.sub; };
+    run(); SCR.tick = setInterval(run, 1000);
+  }
+}
+function scrRefresh() {
+  if (!S.meetingId || $("scr").hidden) return;
+  apiGet("meeting", { token: S.token, id: S.meetingId }).then(function (res) { if (res && res.ok) { S.detail = res; scrDraw(); } }).catch(function () {});
+}
+function scrOpen() {
+  var box = $("scr"); if (!box) { box = document.createElement("div"); box.id = "scr"; box.setAttribute("role", "dialog"); box.setAttribute("aria-label", "The meeting on the screen"); document.body.appendChild(box); }
+  box.hidden = false; SCR.follow = true; SCR.idx = 0; scrDraw();
+  try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {}); } catch (e) {}
+  if (SCR.timer) clearInterval(SCR.timer); SCR.timer = setInterval(scrRefresh, 15000);
+}
+function scrClose() {
+  var box = $("scr"); if (box) box.hidden = true;
+  if (SCR.timer) { clearInterval(SCR.timer); SCR.timer = null; } if (SCR.tick) { clearInterval(SCR.tick); SCR.tick = null; }
+  try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {}); } catch (e) {}
+  if (S.detail) drawMeeting();
+}
+function scrMove() {
+  var d = S.detail, sn = d && d.session; if (!sn || !sn.nextAgendaId || !d.canRun) return;
+  post("currentItem", { meetingId: S.meetingId, agendaId: sn.nextAgendaId }).then(function () { SCR.follow = true; scrRefresh(); });
+}
+document.addEventListener("click", function (e) {
+  var t = e.target && e.target.closest ? e.target : null; if (!t) return;
+  if (t.closest("#scr-open")) { scrOpen(); return; }
+  var b = t.closest("[data-scr]"); if (!b) return;
+  var k = b.getAttribute("data-scr");
+  if (k === "close") scrClose(); else if (k === "move") scrMove();
+  else { SCR.follow = false; SCR.idx += k === "next" ? 1 : -1; scrDraw(); }
+});
+document.addEventListener("keydown", function (e) {
+  var box = $("scr"); if (!box || box.hidden) return;
+  if (e.key === "Escape") { scrClose(); return; }
+  if (e.key === "ArrowRight" || e.key === "PageDown") { SCR.follow = false; SCR.idx++; scrDraw(); e.preventDefault(); }
+  else if (e.key === "ArrowLeft" || e.key === "PageUp") { SCR.follow = false; SCR.idx--; scrDraw(); e.preventDefault(); }
+  else if (e.key === " " || e.key === "Enter") { var d = S.detail; if (d && d.session && d.session.running && d.canRun) { scrMove(); e.preventDefault(); } }
+  else if (e.key === "f" || e.key === "F") { SCR.follow = true; scrDraw(); }
+});
 
 boot();
 </script>
