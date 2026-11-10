@@ -1470,11 +1470,20 @@ function girAct_(b) {
       case 'phoneYes': {
         var how = String(b.text || '').trim();
         if (how.length < 10) return { ok: false, error: 'Say who said yes, how (call, e-mail, in person) and when.' };
-        var ans = { decision: 'approve', name: 'recorded by ' + who.name, at: gcmWhen_(new Date()), comment: how, via: 'staff' };
+        /* Carry forward what the client already told us on their own page. Without this a yes
+           taken on the telephone REPLACED their answer, so the values they typed and the risks
+           they ticked off were lost — and Proceed then renewed a vehicle they had removed, at
+           last year's figure. A yes is a yes to what they asked for, not a wiping of it. */
+        var pv = girJ_(st && st['Client answer'], null) || {};
+        var phist = (pv.history || []).concat(pv.comment ? [{ at: pv.at, text: pv.comment, name: pv.name, decision: pv.decision }] : []);
+        var ans = { decision: 'approve', name: 'recorded by ' + who.name, at: gcmWhen_(new Date()), comment: how, via: 'staff',
+          values: pv.values || {}, off: pv.off || [], history: phist.slice(-12) };
+        var kept = [Object.keys(ans.values).length ? Object.keys(ans.values).length + ' value(s) they set' : '', ans.off.length ? ans.off.length + ' risk(s) they took off' : ''].filter(String);
         save({ 'Client answer': ans, Stage: 'approved' });
-        girLog_(key, r, 'client said yes (recorded by staff)', who.name, how);
-        if (st && gcmText_(st.Task)) girFeed_(gcmText_(st.Task), 'Renewal desk · the client\'s yes, recorded by ' + who.name + ': ' + how);
-        return { ok: true, said: 'The client\'s yes is recorded. You can proceed to renew.' };
+        girLog_(key, r, 'client said yes (recorded by staff)', who.name, how + (kept.length ? ' [kept from their page: ' + kept.join(', ') + ']' : ''));
+        if (st && gcmText_(st.Task)) girFeed_(gcmText_(st.Task), 'Renewal desk · the client\'s yes, recorded by ' + who.name + ': ' + how +
+          (kept.length ? '\nStill standing from their own page: ' + kept.join(', ') + '.' : ''));
+        return { ok: true, said: 'The client\'s yes is recorded.' + (kept.length ? ' Still standing from their page: ' + kept.join(', ') + '.' : '') + ' You can proceed to renew.' };
       }
       case 'comment': {
         var tx = String(b.text || '').trim();
@@ -1594,34 +1603,44 @@ function girProceed_(who, r, st, b, save) {
   var values = Object.assign({}, girJ_(st && st.Values, {}));
   Object.keys(answer.values || {}).forEach(function (id) { var v = girNum_(answer.values[id]); if (v > 0) values[id] = { value: v, by: 'the client', src: 'client' }; });
   var today = gcmToday_(), holderEmail = gcmText_(st && st['Holder e-mail']), holder = girTitle_(gcmText_(st && st.Holder) || who.name);
+  /* A risk the client took off is NOT renewed: no new cover term is made for it, which is
+     exactly how a vehicle leaves cover — last year's term stays as the record of last year.
+     Everything below works off `keep`, never off every item. */
+  /* true, never the label: a removal with no label on it would read as falsy and the risk
+     would be quietly renewed — the whole point of the list is that it cannot be missed. */
+  var offIds = {}; (answer.off || []).forEach(function (o) { if (o && o.id) offIds[o.id] = true; });
+  var keep = r.items.filter(function (x) { return !offIds[x.id]; });
+  var taken = r.items.filter(function (x) { return offIds[x.id]; });
+  if (!keep.length) return { ok: false, error: 'The client has taken every risk on this policy off. That is a cancellation, not a renewal: speak to them and record what they want.' };
   var match = function (x) {
     var ni = notice.items || [];
     if (x.vehicle) return ni.filter(function (n) { return n.reg && n.reg.replace(/\W/g, '') === x.vehicle.replace(/\W/g, ''); })[0] || null;
-    if (r.items.length === 1 && ni.length === 1) return ni[0];
+    if (keep.length === 1 && ni.length === 1) return ni[0];
     return null;
   };
   var changes = [];
-  r.items.forEach(function (x) { var v = values[x.id] ? values[x.id].value : 0; if (v && x.value && Math.abs(v - x.value) >= 1) changes.push({ x: x, from: x.value, to: v, by: values[x.id].src }); });
-  var out = { trans: '', risks: [], follow: '', event: '', dropped: [], deliverer: '' };
+  keep.forEach(function (x) { var v = values[x.id] ? values[x.id].value : 0; if (v && x.value && Math.abs(v - x.value) >= 1) changes.push({ x: x, from: x.value, to: v, by: values[x.id].src }); });
+  var out = { trans: '', risks: [], follow: '', event: '', dropped: [], deliverer: '', took: taken.length };
   if (writeSf) {
     var raw = {};
-    try { gcmQuery_('SELECT Id, ' + GIR_COPY.join(', ') + ' FROM Risk_Details__c WHERE Id IN (' + gcmIn_(r.items.map(function (x) { return x.id; })) + ')').forEach(function (x) { raw[gcmId15_(x.Id)] = x; }); } catch (e) {}
+    try { gcmQuery_('SELECT Id, ' + GIR_COPY.join(', ') + ' FROM Risk_Details__c WHERE Id IN (' + gcmIn_(keep.map(function (x) { return x.id; })) + ')').forEach(function (x) { raw[gcmId15_(x.Id)] = x; }); } catch (e) {}
     var ownerId = girUserId_(holderEmail) || (r.owner.active ? r.owner.id : '') || girUserId_(who.email);
-    var tr = { RecordTypeId: girRtId_('TRANSACTIONS__c', GIR_LINES[r.line].trt), INSURANCE_PORTFOLIO__c: r.items[0].shell, Account__c: r.account, Renewal_Date__c: notice.from || r.ren };
+    var tr = { RecordTypeId: girRtId_('TRANSACTIONS__c', GIR_LINES[r.line].trt), INSURANCE_PORTFOLIO__c: keep[0].shell, Account__c: r.account, Renewal_Date__c: notice.from || r.ren };
     if (r.contact.id) tr.Contact__c = r.contact.id;
     if (ownerId) tr.Owner__c = ownerId;
     if (!tr.RecordTypeId) delete tr.RecordTypeId;
     var tres = gblSfwSave_('post', '/sobjects/TRANSACTIONS__c', tr);
     out.trans = String(tres.res.id || ''); out.dropped = out.dropped.concat(tres.dropped);
-    var perItem = r.items.some(function (x) { return match(x) && match(x).premium; }), first = true;
-    r.items.forEach(function (x) {
+    var perItem = keep.some(function (x) { return match(x) && match(x).premium; }), first = true;
+    keep.forEach(function (x) {
       var n = match(x), rw = raw[gcmId15_(x.id)] || {}, body = {};
       GIR_COPY.forEach(function (f) { if (rw[f] !== undefined && rw[f] !== null && rw[f] !== '') body[f] = rw[f]; });
       var prem = n && n.premium ? n.premium : perItem ? 0 : (first ? notice.premium : 0);
       Object.assign(body, { RecordTypeId: x.rtId, TRANSACTIONS__c: out.trans, Client_Portfolio_Look_Up__c: x.shell, Account_Relation__c: r.account, Policy__c: notice.policy || x.policy,
         Carrier__c: 'Guardian General', From__c: notice.from, To__c: notice.to, Premium_01_Cover_01__c: girR_(prem), Risk_Classification__c: 'Renewal',
         Asset_Description__c: 'Renewed through the renewal desk on ' + tDmy_(today) + ' by ' + who.name + ', on the client\'s yes (' + (answer.via === 'staff' ? answer.comment : 'their renewal page, ' + answer.at) + '). ' +
-          'Guardian General notice' + (notice.tranId ? ' Tran Id ' + notice.tranId : '') + ': ' + girMoney_(notice.total) + ' tax included.' + (!perItem && r.items.length > 1 ? ' The notice gives one premium for the policy: it is on the first item.' : '') });
+          'Guardian General notice' + (notice.tranId ? ' Tran Id ' + notice.tranId : '') + ': ' + girMoney_(notice.total) + ' tax included.' + (!perItem && keep.length > 1 ? ' The notice gives one premium for the policy: it is on the first item.' : '') +
+          (taken.length ? ' The client took ' + taken.length + ' risk(s) off at this renewal: ' + taken.map(function (t) { return girItemLabel_(t); }).join('; ') + '.' : '') });
       if (r.contact.id) body.Insured__c = r.contact.id;
       var v = values[x.id] ? values[x.id].value : (n && n.value ? n.value : 0);
       if (v) body.Cover1__c = v;
@@ -1659,13 +1678,15 @@ function girProceed_(who, r, st, b, save) {
     }
   }
   /* the instruction */
-  var regs = r.items.map(function (x) { return x.vehicle; }).filter(String);
+  var regs = keep.map(function (x) { return x.vehicle; }).filter(String);
   var subject = r.line === 'motor' ? 'Renewal Due -' + girMdy_(r.ren) + ' Policy #' + (notice.policy || r.policy) + '- Vehicle # - ' + (regs.length > 3 ? regs.length + ' vehicles' : regs.join(', ')) + ' - Insured - ' + r.client
     : 'Proceed to Renew: ' + r.client + ' ' + r.lineLabel + ' Policy # ' + (notice.policy || r.policy) + ' due ' + girMdy_(r.ren);
   var lines = ['<p>Dear Team,</p>',
     '<p>Please proceed to renew <b>' + tEsc_(notice.policy || r.policy) + '</b> for <b>' + tEsc_(r.client) + '</b>, due <b>' + tEsc_(tDmy_(r.ren)) + '</b>, on the terms of your renewal notice' +
       (notice.preparedOn ? ' of ' + tEsc_(tDmy_(notice.preparedOn)) : '') + (notice.tranId ? ' (Tran Id ' + tEsc_(notice.tranId) + ')' : '') + ': ' + tEsc_(girMoney_(notice.total)) + ', tax included.</p>',
-    changes.length ? '<p><b>With these changes, confirmed by the client:</b></p><ul>' + changes.map(function (c) { return '<li>' + tEsc_(girItemLabel_(c.x)) + ': value ' + tEsc_(girWhole_(c.to)) + ' (was ' + tEsc_(girWhole_(c.from)) + ')</li>'; }).join('') + '</ul>' : '<p>No changes.</p>',
+    taken.length ? '<p><b>Please take these off cover at renewal — the client says they are no longer theirs:</b></p><ul>' +
+      taken.map(function (t) { return '<li>' + tEsc_(girItemLabel_(t)) + '</li>'; }).join('') + '</ul><p>' + tEsc_(String(keep.length)) + ' risk' + (keep.length === 1 ? '' : 's') + ' to renew.</p>' : '',
+    changes.length ? '<p><b>With these changes, confirmed by the client:</b></p><ul>' + changes.map(function (c) { return '<li>' + tEsc_(girItemLabel_(c.x)) + ': value ' + tEsc_(girWhole_(c.to)) + ' (was ' + tEsc_(girWhole_(c.from)) + ')</li>'; }).join('') + '</ul>' : (taken.length ? '' : '<p>No changes.</p>'),
     answer.comment && answer.via !== 'staff' ? '<p>The client noted: “' + tEsc_(answer.comment) + '”</p>' : '',
     notice.reqs && notice.reqs.length ? '<p>Documents you asked for:</p><ul>' + notice.reqs.map(function (q) { return '<li>' + tEsc_(q) + '</li>'; }).join('') + '</ul><p>We will send any not already with you as the client provides them.</p>' : '',
     r.assignees.length ? '<p>' + tEsc_(r.assignees.join(', ')) + ' is noted on the policy: please issue its copy of the certificate.</p>' : '',
@@ -1681,9 +1702,11 @@ function girProceed_(who, r, st, b, save) {
   save({ Stage: 'instructed', 'Proceed by': who.name, 'Proceed at': new Date(), 'GG to': to.join(', '), 'GG subject': subject, 'GG sent at': new Date(), 'GG mail': html,
     'New trans': out.trans, 'New risks': out.risks, 'Follow task': out.follow, Event: out.event, Chases: [] });
   girLog_(r.key, r, test ? 'proceed to renew (TEST)' : 'proceed to renew', who.name, to.join(', ') + (out.trans ? '; Salesforce: ' + out.trans + ', ' + out.risks.length + ' term(s), task ' + out.follow + (out.event ? ', delivery ' + out.event : '') : '; Salesforce not written') +
+    (taken.length ? '; not renewed (the client took them off): ' + taken.map(function (t) { return girItemLabel_(t); }).join('; ') : '') +
     (out.dropped.length ? '; left out: ' + out.dropped.join(', ') : ''));
   return { ok: true, sf: out, said: (test ? 'TEST: the instruction went to ' + to.join(', ') + '. ' : 'Instructed: ' + to.join(', ') + ', copied ' + GIR.CC.join(', ') + '. ') +
-    (out.trans ? 'Salesforce: a new billing record, ' + out.risks.length + ' cover term(s), a follow-up task' + (out.event ? ' and the delivery in ' + out.deliverer + '\'s calendar' : '') + '.' : 'Salesforce was not written.') };
+    (out.trans ? 'Salesforce: a new billing record, ' + out.risks.length + ' cover term(s), a follow-up task' + (out.event ? ' and the delivery in ' + out.deliverer + '\'s calendar' : '') + '.' : 'Salesforce was not written.') +
+    (taken.length ? ' ' + taken.length + ' risk' + (taken.length === 1 ? ' the client took off was' : 's the client took off were') + ' not renewed, and Guardian General is told to take ' + (taken.length === 1 ? 'it' : 'them') + ' off cover.' : '') };
 }
 /* ── The reconciliation: our record against Guardian General's notice ──────────────────────
    "Recon" is the branch's own word for it — Pawan asks CRMS for the printout "so we can do
