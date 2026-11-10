@@ -1,21 +1,18 @@
 {
-  "voice": "en-US-AndrewMultilingualNeural",
-  "rate": "+0%",
-  "check": true,
-  "films": {
-    "agnew": [
-      "This morning, your day e-mail looked different. Here's what changed, and why.",
-      "Before, you got three e-mails a day. Morning, midday, and half past five. Long lists, and you had to dig for what mattered.",
-      "We looked at how you were answering them. Three was too many. The midday one got lost.",
-      "So now it's two. One at seven in the morning, and one at half past five. That's it.",
-      "Here's Rajiv's, from this morning. It opens with one button to check in, and then who in the branch is working on his files.",
-      "One tap opens My day. No Google page, and no password. He checks in, and sets his numbers before half past ten.",
-      "Sixteen files for him this morning. Nine with Sasha, five with Liz, and two with Mrs Dookran. Grouped by person, overdue first.",
-      "He opens a file and posts what happened. One client signed his transfer forms. Another set a meeting for Thursday. It's on the file the same day.",
-      "Then he commits one thing for Wednesday's meeting. A case, a skill, a question, or the help he needs. It lands on the agenda by itself.",
-      "At half past five, he closes off. What he did, against what he planned. His manager sees it, and so do we.",
-      "Your part is simple. Check in, post on your files, and close off your day. Our part is to work every file for you, and answer when you ask for help.",
-      "Use it every day. That's how the branch knows what you need."
-    ]
-  }
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "-5%",
+ "check": true,
+ "films": {
+  "lbnewlook": [
+   "The Log Book has a new look.",
+   "Before, it was dark, and hard to read on a phone.",
+   "Now it's light, clear, and easy on the eyes.",
+   "Bigger text, and bigger buttons. Made for your phone.",
+   "Find your client in one search. The department fills itself in.",
+   "Log it, and hand it straight to Sales Support.",
+   "For staff, the queue and the insights are clear at a glance.",
+   "And East Gates is now in the department list.",
+   "Same Log Book. Just easier on the eyes."
+  ]
+ }
 }
