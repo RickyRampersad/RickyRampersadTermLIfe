@@ -72,6 +72,9 @@ label.l{display:block;font-weight:700;color:var(--ink);font-size:.92rem;margin:1
 .tile span{font-size:.82rem}
 .tile.on{border-color:var(--blue);background:var(--sky)}
 .tile.alert b{color:var(--bad)}.tile.good b{color:var(--ok)}.tile.vio b{color:var(--vio)}
+.tile.fit{container-type:inline-size}
+.tile.fit b{white-space:nowrap;overflow-wrap:normal;font-size:1.3rem}
+@supports (width:1cqi){.tile.fit b{font-size:min(1.7rem,calc(100cqi / (var(--ch) * .66)))}}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
 .chip{border:1.5px solid #B9CCE8;background:#fff;color:var(--deep);border-radius:99px;padding:7px 14px;font-weight:700;font-size:.9rem;cursor:pointer;min-height:40px}
 .chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
@@ -209,7 +212,7 @@ h4.sub{margin:14px 0 4px;font-size:.95rem;color:var(--ink)}
   </div>
 </dialog>
 <script src="girread.js?v=2026-10-29"></script>
-<script src="desk.js?v=2026-10-29"></script>
+<script src="desk.js?v=2026-11-10"></script>
 <!-- rrb-views -->
 <script>
 (function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{

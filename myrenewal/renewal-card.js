@@ -141,7 +141,11 @@
     var tp = /third\s*party/i.test(x.coverage || '');
     var gone = a && (a.off || []).some(function (z) { return z.id === x.id; });
     var hist = (x.hist || []).filter(function (y) { return y.v; });
-    return '<div class="rc-it' + (gone ? ' gone' : '') + '" data-rcit="' + esc(x.id) + '"><div><div class="lb">' + esc(x.label) + '</div>' +
+    /* The item's name can already end with its cover ("…, Comprehensive"); the line
+       under it says the cover, so the name drops it rather than say it twice. */
+    var lab = String(x.label || ''), cov = String(x.coverage || '').trim();
+    if (cov && lab.toLowerCase().slice(-(cov.length + 2)) === (', ' + cov).toLowerCase()) lab = lab.slice(0, -(cov.length + 2));
+    return '<div class="rc-it' + (gone ? ' gone' : '') + '" data-rcit="' + esc(x.id) + '"><div><div class="lb">' + esc(lab) + '</div>' +
       /* Say what it is covered for, so a third party is visibly third party
          rather than a row with no box and no reason given. */
       (x.coverage ? '<div class="sm cov">' + esc(x.coverage) + '</div>' : '') +
@@ -193,7 +197,7 @@
     var a = v.answer, open = v.open;
     var h = '<article class="rc" id="rc-' + esc(v.key) + '" data-key="' + esc(v.key) + '">' +
       '<div class="rc-band"><div class="k">' + icon + esc(v.line) + ' · policy ' + esc(v.policy) + '</div><h3>Your renewal on ' + esc(dmy(v.ren)) + '</h3>' +
-      '<div class="when">' + (d === null ? '' : d > 0 ? 'In ' + d + ' day' + (d === 1 ? '' : 's') : d === 0 ? 'Today' : Math.abs(d) + ' days ago') + (v.from ? ' · cover ' + esc(dmy(v.from)) + ' to ' + esc(dmy(v.to)) : '') + '</div>' +
+      '<div class="when">' + (d === null ? '' : d > 0 ? 'In ' + d + ' day' + (d === 1 ? '' : 's') : d === 0 ? 'Today' : Math.abs(d) + (d === -1 ? ' day' : ' days') + ' ago') + (v.from ? ' · cover ' + esc(dmy(v.from)) + ' to ' + esc(dmy(v.to)) : '') + '</div>' +
       (v.total ? '<div class="rc-fig"><div><b>' + money(v.total) + '</b><span>this year, tax included</span></div>' + (v.lastPremium ? '<div><span>last year ' + money(v.lastPremium) + '</span>' + (change !== null ? '<span class="rc-chg">' + (change > 0 ? 'up ' : change < 0 ? 'down ' : '') + Math.abs(change) + '%</span>' : '') + '</div>' : '') + '</div>' : '') + '</div>' +
       '<div class="rc-body">' + (v.practice ? '<p class="rc-prac"><b>Practice letter.</b> Sent while the renewal desk is in test mode, to the team only. Your answer stays on the desk: nothing goes to Guardian General or Salesforce.</p>' : '') + '<ol class="rc-track" aria-label="Where your renewal stands">' + (v.steps || []).map(function (s) { return '<li class="' + (s.done ? 'on' : '') + '"><i></i>' + esc(s.label) + '</li>'; }).join('') + '</ol>' +
       (v.opening ? '<p style="margin:0">' + esc(v.opening) + '</p>' : '') +

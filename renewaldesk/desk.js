@@ -14,6 +14,8 @@ const MONL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'A
 const dmy = s => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? (+m[3]) + ' ' + MON[+m[2] - 1] + ' ' + m[1] : ''; };
 const money = n => 'TT$' + (Math.round((Number(n) || 0) * 100) / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 const whole = n => 'TT$' + Math.round(Number(n) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+/* "1 day", never "1 days". */
+const nDays = n => n + (Math.abs(n) === 1 ? ' day' : ' days');
 const STAGE_N = { due: 1, notice: 2, drafted: 3, approval: 4, sent: 5, changes: 6, approved: 7, instructed: 8, confirmed: 9, delivered: 10, done: 11, renewed: 11, lost: 12 };
 const STAGE_TONE = { due: 'dim', notice: '', drafted: '', approval: 'vio', sent: 'warn', changes: 'bad', approved: 'ok', instructed: 'vio', confirmed: 'ok', delivered: 'ok', done: 'ok', renewed: 'ok', lost: 'dim' };
 let AUTH = { code: '', who: '' }, LIST = null, ONE = null, STEP = 0, NOTICE_DRAFT = null;
@@ -119,7 +121,7 @@ function rowHtml(r) {
     '<div class="rt"><h3>' + esc(r.client) + '</h3><div class="sub">' + esc(r.lineLabel) + ' · ' + esc(r.policy) + ' · ' + esc(r.what) + '</div>' +
     '<div class="flags"><span class="pill ' + (STAGE_TONE[r.stage] || '') + '">' + esc(r.stageLabel) + '</span>' + flags + '</div><div class="bar"><i style="width:' + pctDone + '%"></i></div></div>' +
     '<div class="rr"><div class="p">' + (r.newTotal ? money(r.newTotal) : money(r.lastPremium)) + '</div><div class="muted">' + (r.newTotal ? 'was ' + money(r.lastPremium) : 'last year') + '</div>' +
-    '<div class="muted">' + (r.days === null ? '' : r.days < 0 ? Math.abs(r.days) + ' days ago' : r.days === 0 ? 'today' : 'in ' + r.days + ' days') + '</div><div class="muted">' + esc(r.holder || 'Nobody yet') + '</div></div></button>';
+    '<div class="muted">' + (r.days === null ? '' : r.days < 0 ? nDays(Math.abs(r.days)) + ' ago' : r.days === 0 ? 'today' : 'in ' + nDays(r.days)) + '</div><div class="muted">' + esc(r.holder || 'Nobody yet') + '</div></div></button>';
 }
 
 /* ── one renewal ── */
@@ -151,7 +153,7 @@ async function openOne(key, keepStep) {
 async function backToList() { if (!LIST || LIST.month !== F.month) await loadMonth(F.month); else drawList(); }
 function drawOne() {
   const d = ONE, r = d.r;
-  const days = d.days === null ? '' : d.days < 0 ? 'renewed ' + Math.abs(d.days) + ' days ago' : d.days === 0 ? 'renews today' : 'renews in ' + d.days + ' days';
+  const days = d.days === null ? '' : d.days < 0 ? 'renewed ' + nDays(Math.abs(d.days)) + ' ago' : d.days === 0 ? 'renews today' : 'renews in ' + nDays(d.days);
   const take = d.holder ? '<span class="pill">' + esc(d.holder) + ' has it</span>' + (d.holder !== d.me.name ? ' <button class="btn ghost sm" type="button" onclick="doAct(\'take\')">Take it over</button>' : '') : '<button class="btn sm" type="button" onclick="doAct(\'take\')">Take it</button>';
   $('main').innerHTML = testBanner(d) +
     '<p><button class="btn ghost sm" type="button" onclick="backToList()">‹ ' + esc(ymLabel(F.month)) + '</button></p>' +
@@ -279,7 +281,7 @@ function historyHtml(d, max) {
     tileH(dmy(S.since).replace(/^\d+ /, ''), 'with us since') + tileH(S.terms, S.terms === 1 ? 'term' : 'terms') +
     tileH(whole(S.paid), 'paid since ' + (S.since || '').slice(0, 4)) +
     tileH(S.claims, (S.claims === 1 ? 'claim' : 'claims') + ' · ' + S.clean + ' of ' + S.terms + ' years with none') +
-    (S.payDays !== null ? tileH(S.payDays + ' days', 'usual time to pay after the renewal' + (S.paidLate ? ' · late ' + S.paidLate + ' time' + (S.paidLate === 1 ? '' : 's') : '')) : '') +
+    (S.payDays !== null ? tileH(nDays(S.payDays), 'usual time to pay after the renewal' + (S.paidLate ? ' · late ' + S.paidLate + ' time' + (S.paidLate === 1 ? '' : 's') : '')) : '') +
     (S.owed > 1 ? tileH(whole(S.owed), 'still owed on the record', 'bad') : '') + '</div>' : '';
   const gaps = (H.gaps || []).length ? '<p class="muted small">Salesforce did not give the ' + esc(H.gaps.join(', ')) + ' this time; the rest is complete.</p>' : '';
   return '<h3 style="margin:16px 0 4px;font-size:1rem">Since the policy began</h3>' + tiles +
@@ -287,7 +289,8 @@ function historyHtml(d, max) {
     (H.vehicles.length ? '<h4 class="sub">Each vehicle\'s value over the years</h4><div class="tw"><table class="t"><thead><tr><th>Vehicle</th>' + yearsHead() + '</tr></thead><tbody>' + H.vehicles.map(v => '<tr><td><b>' + esc(v.reg) + '</b> <span class="muted">' + esc(v.desc) + '</span></td>' + yearsCells(v) + '</tr>').join('') + '</tbody></table></div>' : '') +
     '<h4 class="sub">Every year, newest first</h4>' + ys.slice().reverse().map((y, i) => yearFold(d, y, i === 0)).join('') + gaps + claimsAll(d);
 }
-function tileH(v, label, tone) { return '<div class="tile' + (tone ? ' ' + tone : '') + '" style="cursor:default"><b>' + esc(String(v)) + '</b><span>' + esc(label) + '</span></div>'; }
+/* A figure stays on one line: --ch lets the stylesheet shrink a long one ("TT$20,162") to its tile. */
+function tileH(v, label, tone) { return '<div class="tile fit' + (tone ? ' ' + tone : '') + '" style="cursor:default;--ch:' + Math.max(4, String(v).length) + '"><b>' + esc(String(v)) + '</b><span>' + esc(label) + '</span></div>'; }
 function yearFold(d, y, open) {
   const billed = sum(y.bills, 'billed'), paid = sum(y.bills, 'paid'), owed = sum(y.bills, 'owed'), first = y.bills.map(b => b.firstPaid).filter(Boolean).sort()[0];
   const chips = [];
@@ -304,7 +307,7 @@ function yearFold(d, y, open) {
     '<div><h4>What was insured</h4><div class="tw"><table class="t"><thead><tr><th>Item</th><th class="n">Value or sum</th><th class="n">Premium</th></tr></thead><tbody>' +
       y.risks.map(k => '<tr><td>' + esc(k.label) + '</td><td class="n">' + (k.value ? whole(k.value) : '–') + '</td><td class="n">' + money(k.premium) + '</td></tr>').join('') + '</tbody></table></div></div>' +
     '<div><h4>Billed and paid</h4>' + (y.bills.length ? y.bills.map(b => '<p class="small" style="margin:2px 0">' + sf(b.id) + esc(b.name || 'Billing record') + sfe() + (b.ren ? ' · renewal ' + esc(dmy(b.ren)) : '') + ' · billed <b>' + money(b.billed) + '</b> · paid <b>' + money(b.paid) + '</b>' + (b.owed > 1 ? ' · <b style="color:var(--bad)">owed ' + money(b.owed) + '</b>' : '') + '</p>' +
-      (b.pays.length ? '<ul class="small" style="margin:2px 0 6px;padding-left:18px">' + b.pays.map(p => '<li>' + esc(dmy(p.on)) + ' · ' + money(p.amount) + (p.how ? ' · ' + esc(p.how) : '') + '</li>').join('') + '</ul>' + (b.lateDays !== null ? '<p class="muted small" style="margin:0 0 6px">First payment ' + b.lateDays + ' days ' + (b.lateDays < 0 ? 'before' : 'after') + ' the renewal.</p>' : '') : '<p class="muted small" style="margin:0 0 6px">No payment recorded on it.</p>')).join('') : '<p class="muted small">No billing record linked to this term.</p>') + '</div>' +
+      (b.pays.length ? '<ul class="small" style="margin:2px 0 6px;padding-left:18px">' + b.pays.map(p => '<li>' + esc(dmy(p.on)) + ' · ' + money(p.amount) + (p.how ? ' · ' + esc(p.how) : '') + '</li>').join('') + '</ul>' + (b.lateDays !== null ? '<p class="muted small" style="margin:0 0 6px">First payment ' + nDays(Math.abs(b.lateDays)) + ' ' + (b.lateDays < 0 ? 'before' : 'after') + ' the renewal.</p>' : '') : '<p class="muted small" style="margin:0 0 6px">No payment recorded on it.</p>')).join('') : '<p class="muted small">No billing record linked to this term.</p>') + '</div>' +
     '<div><h4>Claims in this term</h4>' + (y.claims.length ? '<ul class="small" style="margin:0;padding-left:18px">' + y.claims.map(c => '<li>' + esc(dmy(c.on)) + ' · ' + esc(c.type) + (c.vehicle ? ' · ' + esc(c.vehicle) : '') + ' · ' + esc(c.status) + (c.paid ? ' · paid ' + money(c.paid) : '') + '</li>').join('') + '</ul>' : '<p class="muted small">None.</p>') + '</div>' +
     ((y.tasks || []).length ? '<div><h4>Tasks on this year\'s billing</h4>' + y.tasks.map(t => '<div class="tk"><p class="small" style="margin:0"><b>' + sf(t.id) + esc(t.subject) + sfe() + '</b><br><span class="muted">' + esc(t.owner) + ' · opened ' + esc(dmy(t.opened)) + (t.closed ? ' · closed ' + esc(dmy(t.closedOn)) : ' · ' + esc(t.status) + (t.due ? ', due ' + esc(dmy(t.due)) : '')) + ' · ' + t.notes + ' note' + (t.notes === 1 ? '' : 's') + '</span></p>' +
       t.last.map(n => '<div class="nt"><i>' + esc(n.by) + ', ' + esc(dmy(n.on)) + '</i>' + esc(n.text) + '</div>').join('') + '</div>').join('') + '</div>' : '') +
