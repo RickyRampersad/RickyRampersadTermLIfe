@@ -1,47 +1,12 @@
 {
- "tts/out/lbnewlook/01.mp3": [
-  "en",
-  0.996,
-  "The logbook has a new look."
- ],
- "tts/out/lbnewlook/02.mp3": [
-  "en",
-  0.981,
-  "Before, it was dark and hard to read on a phone."
- ],
- "tts/out/lbnewlook/03.mp3": [
-  "en",
-  0.992,
-  "Now it's light, clear and easy on the eyes."
- ],
- "tts/out/lbnewlook/04.mp3": [
+ "tts/out/lbnewlook2/01.mp3": [
   "en",
   0.99,
-  "bigger text and bigger buttons. May for your phone."
+  "Bigger text and bigger buttons. Build for your phone."
  ],
- "tts/out/lbnewlook/05.mp3": [
+ "tts/out/lbnewlook2/02.mp3": [
   "en",
-  0.997,
-  "Find your client in one search. The department fills itself in."
- ],
- "tts/out/lbnewlook/06.mp3": [
-  "en",
-  0.994,
-  "Log it and hand it straight to sale support."
- ],
- "tts/out/lbnewlook/07.mp3": [
-  "en",
-  0.989,
-  "For staff, the queue and the insights are clear to glance."
- ],
- "tts/out/lbnewlook/08.mp3": [
-  "en",
-  0.993,
-  "And East Gates is now in the department list."
- ],
- "tts/out/lbnewlook/09.mp3": [
-  "en",
-  0.991,
-  "Same logbook, just easier on the eyes."
+  0.996,
+  "For staff, the Q and the Insights are easy to read."
  ]
 }
