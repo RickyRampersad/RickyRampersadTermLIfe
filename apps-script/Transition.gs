@@ -9132,8 +9132,63 @@ function tBriefLog_(list) {
     var now = new Date();
     var rows = list.map(function (x) { return [now, x.tok, x.client || '', x.agent || '', x.on ? (x.on instanceof Date ? x.on : tHaDate_(x.on) || '') : '', x.source || '', x.status || '']; });
     sh.getRange(sh.getLastRow() + 1, 1, rows.length, T_SFBRIEF.HEAD.length).setValues(rows);
-  } catch (e) { log_('transition', 'agent-briefs-log-failed', String(e && e.message ? e.message : e)); }
+  } catch (e) {
+    /*  Not quiet: this is the once-guard. The day mark bounds the damage to one
+        brief a client a day, and the branch is told the tab needs putting right. */
+    try { PropertiesService.getScriptProperties().setProperty('brief_log_broken', tBriefDay_(0) + ': ' + String(e && e.message ? e.message : e).slice(0, 180)); } catch (e2) {}
+    log_('transition', 'agent-briefs-log-failed', 'THE ONCE-GUARD IS BROKEN, so a brief can repeat each day until this is fixed: ' + String(e && e.message ? e.message : e));
+  }
 }
+/*  A SECOND RECORD, BECAUSE THE TAB CAN FAIL TO BE MADE.
+ *  Found live on 10 November 2026: one agent had the same brief 55 times
+ *  between 8 and 9 November, every fifteen to twenty minutes, and it was
+ *  eating the account's daily mail allowance — which is why the agents'
+ *  own morning reports stopped going out after 5 November.
+ *
+ *  The once-guard is the Agent Briefs tab, and tBriefLog_ swallows its own
+ *  failure: if the tab cannot be made or written (a sheet at Google's cell
+ *  ceiling, a refused insertSheet), nothing is recorded, every run reads an
+ *  empty log, and every run sends again. A record that is the only thing
+ *  standing between a trigger and the branch's inbox may not be able to
+ *  fail quietly.
+ *
+ *  So each brief is also marked in a Script Property for the day. The tab
+ *  stays the record — it is what a person reads — and this only bounds the
+ *  damage: with the tab broken, a client is briefed at most once a day
+ *  instead of thirty-three times. Properties are kept for T_BRIEF_DAY.KEEP
+ *  days and pruned here, so the store cannot fill (the 26 October lesson). */
+var T_BRIEF_DAY = { PREFIX: 'briefday_', KEEP: 4 };
+
+/** yyyy-MM-dd in branch time, n days from today. */
+function tBriefDay_(n) { return Utilities.formatDate(new Date(Date.now() + (n || 0) * 86400000), tTz_(), 'yyyy-MM-dd'); }
+
+function tBriefDayKey_(day) { return T_BRIEF_DAY.PREFIX + (day || tBriefDay_(0)); }
+
+/** Today's marks as { 'token|agentkey': 1 }. Never throws. */
+function tBriefDayRead_(day) {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty(tBriefDayKey_(day)) || '{}') || {}; }
+  catch (e) { return {}; }
+}
+
+/** Marks these 'token|agentkey' pairs as briefed today, and prunes the old days. Never throws. */
+function tBriefDayMark_(keys, day) {
+  if (!keys || !keys.length) return;
+  try {
+    var props = PropertiesService.getScriptProperties(), k = tBriefDayKey_(day), had = tBriefDayRead_(day);
+    keys.forEach(function (x) { if (x) had[x] = 1; });
+    props.setProperty(k, JSON.stringify(had));
+    /*  The old days go, so this can never be what fills the store. In its own try:
+        the mark is already written, and a prune that fails must not read as a mark
+        that failed. */
+    try {
+      var cut = tBriefDayKey_(tBriefDay_(-T_BRIEF_DAY.KEEP));
+      props.getKeys().forEach(function (key) {
+        if (key.indexOf(T_BRIEF_DAY.PREFIX) === 0 && key < cut) { try { props.deleteProperty(key); } catch (e) {} }
+      });
+    } catch (e) {}
+  } catch (e) { log_('transition', 'agent-briefs-day-mark-failed', String(e && e.message ? e.message : e)); }
+}
+
 /** The Agent Briefs tab as { 'token|agentkey': status }. Empty when there is no tab yet. */
 function tBriefLogRead_() {
   var by = {};
@@ -9152,13 +9207,13 @@ function tBriefLogRead_() {
 function tSfBriefsDue_() {
   var ha = tHaRead_();
   if (!ha) return {};
-  var done = tBriefLogRead_(), alog = tAlogRead_(), due = {}, n = 0;
+  var done = tBriefLogRead_(), today = tBriefDayRead_(), alog = tAlogRead_(), due = {}, n = 0;
   ha.rows.forEach(function (r) {
     if (r.source !== 'Salesforce' || !r.agent || !r.token || n >= T_SFBRIEF.MAX) return;
     var day = tDay_(r.date);
     if (!day || day < T_SFBRIEF.FROM) return;
     var k = tNameKey_(r.agent);
-    if (!k || done[r.token + '|' + k]) return;
+    if (!k || done[r.token + '|' + k] || today[r.token + '|' + k]) return;   // the tab, then today's mark (see T_BRIEF_DAY)
     if ((alog[r.token] || []).some(function (x) { return /^board$/i.test(x.via) && tNameKey_(x.agent) === k; })) return;   // the board named and briefed
     var g = due[k] = due[k] || { name: r.agent, rows: [], on: '' };
     g.rows.push(r);
@@ -9214,7 +9269,12 @@ function tSfBriefs_(opts) {
       var m = tBriefMail_(agent, clients, b, opts.test ? { via: 'Salesforce', on: g.on, test: true, to: T_CLAIM.COPY || SVC.AGENT_EMAIL } : { via: 'Salesforce', on: g.on });
       out.sent++; out.clients += clients.length; out.agents.push(agent.name + ' (' + clients.length + ')');
       if (opts.test) out.to = m.to;
-      else clients.forEach(function (c) { log.push({ tok: c.token, client: c.client, agent: agent.name, on: g.on, source: 'Salesforce', status: 'sent' }); });
+      else {
+        clients.forEach(function (c) { log.push({ tok: c.token, client: c.client, agent: agent.name, on: g.on, source: 'Salesforce', status: 'sent' }); });
+        /*  marked the moment it has gone, so a throw below, or a tab that cannot be
+            written, cannot make the next run send it again */
+        tBriefDayMark_(clients.map(function (c) { return c.token + '|' + tNameKey_(agent.name); }));
+      }
       /* the rest of what a naming writes (22 October 2026): Campaign Orphan and the date on every policy record of the client,
          not only the ones named by hand, and the household task for the agent's support person */
       if (!opts.test && tSfOn_()) {

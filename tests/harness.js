@@ -139,7 +139,10 @@ function makeEnv(opts = {}) {
       const api = { getProperty: k => (k in store ? store[k] : null),
                     setProperty: (k, v) => { store[k] = String(v); return api; },
                     deleteProperty: k => { delete store[k]; return api; },
-                    getProperties: () => Object.assign({}, store) };
+                    getProperties: () => Object.assign({}, store),
+                    /*  Apps Script's own Properties has getKeys; the fake did not, so code
+                        that prunes its own old keys threw here and read as a code fault. */
+                    getKeys: () => Object.keys(store) };
       return { getScriptProperties: () => api }; })(),
     Session: { getEffectiveUser: () => ({ getEmail: () => 'ricky@example.com' }),
                getScriptTimeZone: () => 'America/Port_of_Spain' },

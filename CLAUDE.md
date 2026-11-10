@@ -3254,6 +3254,29 @@ voice under the new timing and the caption gives it away.
       the manager this week's form as it stands, marked TEST, and writes nothing. `transitionTransmittalNow` sends it at
       once.
     - `sq23/tx-test.js` in the scratchpad covers it (44 checks), and `sq16/sq-test.js` still passes with `TX.ON` false.
+- **A brief goes once, and the once-guard may not fail quietly** (10 November 2026). Found live while checking why the
+  agents' daily reports had stopped: one agent had had **the same Salesforce brief 55 times** between 8 and 9 November
+  (22 on the Sunday, 33 on the Monday), every fifteen to twenty minutes, each one naming four clients in its subject.
+  The agents' own morning reports from the tracker had gone out for the last time on **5 November**, eight of them in one
+  run and nothing since: the two are almost certainly one fault, because every e-mail in both projects is sent by the
+  same consumer Google account, whose allowance is about a hundred recipients a day.
+  - **Why it repeated.** The once-guard is the **Agent Briefs** tab, and `tBriefLog_` swallows its own failure. If the
+    tab cannot be made or written — a workbook at Google's ten-million-cell ceiling, a refused `insertSheet` — nothing
+    is recorded, `tBriefLogRead_` reads an empty log, and every run sends again. Nothing said so: the only trace was one
+    line in the log.
+  - **A record that is the only thing between a trigger and the branch's inbox may not be able to fail quietly.** So
+    each brief is also marked in a Script Property for the day (`T_BRIEF_DAY`, `tBriefDayRead_`, `tBriefDayMark_`),
+    written **the moment the brief has gone**, before the Salesforce write that follows it, so a throw after the send
+    cannot undo it. The tab stays the record, because it is what a person reads; the mark only bounds the damage, to
+    **one brief a client a day** instead of thirty-three. The marks are pruned after `KEEP` days in their own try (the
+    26 October store lesson), so this can never be what fills the store.
+  - **A broken tab is no longer quiet**: the log line says the once-guard is broken, and `brief_log_broken` carries the
+    day and the reason for a person to read.
+  - **The hand-stop, with no paste:** change the **Source** cell on those Household Assignments rows from `Salesforce`
+    to anything else. `tSfBriefsDue_` reads only `Source` = Salesforce, and `tHaSync_` rewrites only a row it wrote
+    itself, so the row is left alone and the briefs stop at once.
+  - `tests/test-brief-once.js` covers it (16 checks). The fake Properties in `tests/harness.js` had no `getKeys`, so
+    code that prunes its own old keys threw there and read as a code fault; it has one now.
 - **One client in full on the board: the history, their Salesforce tasks,
   and the team's comments** (3 October 2026, the same request: "so the agent
   can see the email and history and tasks opened on salesforce assigned to
