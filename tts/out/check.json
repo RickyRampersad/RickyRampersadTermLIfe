@@ -1,62 +1,47 @@
 {
- "tts/out/agnew/01.mp3": [
+ "tts/out/lbnewlook/01.mp3": [
+  "en",
+  0.996,
+  "The logbook has a new look."
+ ],
+ "tts/out/lbnewlook/02.mp3": [
+  "en",
+  0.981,
+  "Before, it was dark and hard to read on a phone."
+ ],
+ "tts/out/lbnewlook/03.mp3": [
+  "en",
+  0.992,
+  "Now it's light, clear and easy on the eyes."
+ ],
+ "tts/out/lbnewlook/04.mp3": [
+  "en",
+  0.99,
+  "bigger text and bigger buttons. May for your phone."
+ ],
+ "tts/out/lbnewlook/05.mp3": [
   "en",
   0.997,
-  "This morning, your day email looked different. Here's what changed and why."
+  "Find your client in one search. The department fills itself in."
  ],
- "tts/out/agnew/02.mp3": [
-  "en",
-  0.998,
-  "before you got three emails a day morning midday and half past five long lists and you had a dig for what mattered."
- ],
- "tts/out/agnew/03.mp3": [
+ "tts/out/lbnewlook/06.mp3": [
   "en",
   0.994,
-  "We looked at how you were answering them. Three was too many. The midday one got lost."
+  "Log it and hand it straight to sale support."
  ],
- "tts/out/agnew/04.mp3": [
+ "tts/out/lbnewlook/07.mp3": [
   "en",
-  0.995,
-  "So now it's two, one at seven in the morning, and one at half past five. That's it."
+  0.989,
+  "For staff, the queue and the insights are clear to glance."
  ],
- "tts/out/agnew/05.mp3": [
+ "tts/out/lbnewlook/08.mp3": [
   "en",
-  0.992,
-  "Here's Rajeeves from this morning. It opens with one button to check in, and then who in the branch is working on his files."
+  0.993,
+  "And East Gates is now in the department list."
  ],
- "tts/out/agnew/06.mp3": [
+ "tts/out/lbnewlook/09.mp3": [
   "en",
-  0.998,
-  "One tap opens my day, no Google page, and no password. He checks in and sets his numbers before half past 10."
- ],
- "tts/out/agnew/07.mp3": [
-  "en",
-  0.992,
-  "16 files for him this morning, 9 with Sasha, 5 with Liz, and 2 with Mrs. Dukeran, grouped by person, overdue first."
- ],
- "tts/out/agnew/08.mp3": [
-  "en",
-  0.998,
-  "He opens a file and posts what happened. One client signed his transfer forms. Another set of meeting for Thursday. It's on a file the same day."
- ],
- "tts/out/agnew/09.mp3": [
-  "en",
-  0.996,
-  "Then he commits one thing for Wednesday's meeting. A case, a skill, a question, or the helping needs. It lands on the agenda by itself."
- ],
- "tts/out/agnew/10.mp3": [
-  "en",
-  0.996,
-  "At half past five, he closes off. What he did against what he planned. His manager sees it, and so do we."
- ],
- "tts/out/agnew/11.mp3": [
-  "en",
-  0.999,
-  "Your part is simple. Check in, post on your files, and close off your day. Our part is to work every file for you, and answer when you ask for help."
- ],
- "tts/out/agnew/12.mp3": [
-  "en",
-  0.994,
-  "Use it every day. That's how the branch knows what you need."
+  0.991,
+  "Same logbook, just easier on the eyes."
  ]
 }
