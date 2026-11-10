@@ -76,7 +76,7 @@ var MEET = {
   /*  Bumped whenever this file changes in a way a deployment has to
    *  carry. `?action=ping` reports it, so a browser can tell a live
    *  build from one pasted six weeks ago without anybody guessing. */
-  VERSION: '2026-11-08b',
+  VERSION: '2026-11-10a',
 
   /* Typed once, when someone sets their PIN for the first time. It
      stops a stranger who guesses a branch email address from claiming
@@ -6884,6 +6884,7 @@ function apiPing_() {
     app: 'Branch Meeting Builder',
     branch: MEET.BRANCH,
     version: MEET.VERSION,
+    bridge: !!bridgeKey_(),
     /* The register has three states a person can put themselves in,
        and only three. See apiExcuse_. */
     register: {
@@ -6971,6 +6972,124 @@ function apiPing_() {
   return out;
 }
 
+/* ======================== the tracker's bridge (10 November 2026) ========================
+ *
+ *  Ricky: "everything comes towards a meeting ... persons commit to what's working and a case that they're going to
+ *  actually share, or some idea for the branch meeting or skill set ... and also identifying the training and
+ *  development plan ... building into the meeting what we're observing."
+ *
+ *  The agents' day lives in the KPI tracker (another Apps Script project): the morning brief reads each agent's record
+ *  and says what it sees; the close-off is where they answer. What an agent commits to bring arrives here as a
+ *  contribution BROUGHT IN BEFOREHAND (offset -1, exactly as apiAddContribution_ takes one before the register opens),
+ *  against the agenda item it belongs to:
+ *
+ *    case      a case that worked            -> What worked for me
+ *    skill     a point I can teach           -> Training
+ *    question  a question for the room       -> Open floor
+ *    idea      an idea for the branch        -> Open floor
+ *    help      help I need (staff only)      -> Open floor, visible to staff and the manager alone
+ *
+ *  and what the tracker OBSERVES across the agents (who is short of fact finds, whose pipeline is stuck, who is ahead
+ *  and could teach it) is one staff-only note against the Training item, rewritten each evening, so the chair walks in
+ *  with the development plan already drafted.
+ *
+ *  Only the tracker can use this door: every call is signed with MEET_BRIDGE_KEY (the same value set in both projects'
+ *  Script Properties), carries the time, and is refused after ten minutes. No key set, no door. Nothing here can sign
+ *  anybody in, read a meeting, or reach the register.                                                              */
+var BRIDGE = {
+  PROP: 'MEET_BRIDGE_KEY', MAX_AGE_MS: 10 * 60 * 1000,
+  KINDS: {
+    'case':     { slot: /^what worked/i, kind: 'Commitment', vis: 'all',   label: 'A case that worked' },
+    'skill':    { slot: /^training/i,    kind: 'Commitment', vis: 'all',   label: 'A point I can teach' },
+    'question': { slot: /^open floor/i,  kind: 'Question',   vis: 'all',   label: 'A question for the room' },
+    'idea':     { slot: /^open floor/i,  kind: 'Point',      vis: 'all',   label: 'An idea for the branch' },
+    'help':     { slot: /^open floor/i,  kind: 'Concern',    vis: 'staff', label: 'Help I need' }
+  },
+  OBS_SLOT: /^training/i, TAG: 'tracker:'
+};
+
+function bridgeKey_() { try { return str_(PropertiesService.getScriptProperties().getProperty(BRIDGE.PROP)); } catch (e) { return ''; } }
+function bridgeSign_(text, key) {
+  return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(String(text), String(key))).replace(/=+$/, '');
+}
+
+/** The branch meeting on that date (yyyy-MM-dd), else the next branch meeting from today; null when none is built. */
+function bridgeMeeting_(iso) {
+  var tz = tz_(), rows = meetingRows_().filter(function (m) {
+    var st = low_(m['Status']);
+    return st !== 'cancelled' && st !== 'closed' && cleanScope_(m['Scope']) === 'branch' && asDate_(m['Date']);
+  });
+  if (iso) {
+    var on = rows.filter(function (m) { return Utilities.formatDate(asDate_(m['Date']), tz, 'yyyy-MM-dd') === iso; })[0];
+    if (on) return on;
+  }
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  return rows.filter(function (m) { return asDate_(m['Date']).getTime() >= today.getTime(); })
+    .sort(function (a, b) { return asDate_(a['Date']).getTime() - asDate_(b['Date']).getTime(); })[0] || null;
+}
+
+/** The agenda item on that meeting whose title matches; '' when the meeting has no such item. */
+function bridgeSlot_(meetingId, re) {
+  var it = readTab_(MEET.TAB_AGENDA).filter(function (a) { return str_(a['Meeting ID']) === meetingId && re.test(str_(a['Title'])); })
+    .sort(function (a, b) { return Number(a['Order'] || 0) - Number(b['Order'] || 0); })[0];
+  return it ? { id: str_(it['ID']), title: str_(it['Title']) } : { id: '', title: '' };
+}
+
+/** Write a contribution, or rewrite the one already carrying this tag, so a commitment changed on the phone is one row. */
+function bridgeUpsert_(tag, row) {
+  var have = readTab_(MEET.TAB_CONTRIB).filter(function (c) { return str_(c['Topics']).indexOf(tag) > -1; })[0];
+  if (have) {
+    ['Meeting ID', 'Agenda ID', 'Kind', 'Body', 'Visibility', 'Name', 'Role', 'Email'].forEach(function (h) { setCell_(MEET.TAB_CONTRIB, have._row, h, row[h]); });
+    setCell_(MEET.TAB_CONTRIB, have._row, 'Edited', new Date());
+    return { id: str_(have['ID']), updated: true };
+  }
+  var id = uid_('CON');
+  row['ID'] = id; row['When'] = new Date(); row['Offset (min)'] = -1; row['Topics'] = tag;
+  appendRow_(MEET.TAB_CONTRIB, row);
+  return { id: id, updated: false };
+}
+
+function apiBridge_(body) {
+  var key = bridgeKey_();
+  if (!key) return { ok: false, error: 'The bridge is not set up: put MEET_BRIDGE_KEY in Script Properties.' };
+  var ts = Number(body.ts || 0), payload = body.payload || {}, op = str_(body.op);
+  if (!ts || Math.abs(Date.now() - ts) > BRIDGE.MAX_AGE_MS) return { ok: false, error: 'Too old.' };
+  if (str_(body.sig) !== bridgeSign_(op + '|' + ts + '|' + JSON.stringify(payload), key)) return { ok: false, error: 'Not signed.' };
+
+  if (op === 'ping') return { ok: true, meeting: (function (m) { return m ? { id: str_(m['ID']), date: Utilities.formatDate(asDate_(m['Date']), tz_(), 'yyyy-MM-dd'), title: str_(m['Title']) } : null; })(bridgeMeeting_(str_(payload.date))) };
+
+  var m = bridgeMeeting_(str_(payload.date));
+  if (!m) return { ok: true, held: 'No branch meeting is built for ' + (str_(payload.date) || 'the coming week') + ' yet. It goes on the moment it is.' };
+  var mid = str_(m['ID']), mdate = Utilities.formatDate(asDate_(m['Date']), tz_(), 'yyyy-MM-dd');
+
+  if (op === 'commit') {
+    var k = BRIDGE.KINDS[str_(payload.kind)], text = str_(payload.text).slice(0, 1500), ref = str_(payload.ref).replace(/[^A-Za-z0-9_.:-]/g, '');
+    if (!k || text.length < 5 || !ref) return { ok: false, error: 'Nothing to bring.' };
+    var who = findPersonByEmail_(low_(payload.email)) || (payload.agentNo ? findPersonByAgentNo_(payload.agentNo) : null);
+    var slot = bridgeSlot_(mid, k.slot);
+    var res = bridgeUpsert_(BRIDGE.TAG + ref, {
+      'Meeting ID': mid, 'Agenda ID': slot.id, 'Kind': k.kind,
+      'Body': k.label + ': ' + text, 'Visibility': k.vis,
+      'Email': who ? who.email : low_(payload.email), 'Name': who ? who.name : str_(payload.name), 'Role': who ? who.role : 'agent'
+    });
+    log_('bridge commit', who ? who.name : str_(payload.name), 'tracker', str_(m['Ref']) || mid, str_(payload.kind) + ': ' + text.slice(0, 60));
+    return { ok: true, id: res.id, updated: res.updated, meeting: mdate, item: slot.title || '(the meeting has no matching item: it sits on the floor)' };
+  }
+
+  if (op === 'observe') {
+    var obs = str_(payload.text).slice(0, 6000);
+    if (!obs) return { ok: false, error: 'Nothing observed.' };
+    var ts2 = bridgeSlot_(mid, BRIDGE.OBS_SLOT);
+    var r2 = bridgeUpsert_(BRIDGE.TAG + 'obs:' + mid, {
+      'Meeting ID': mid, 'Agenda ID': ts2.id, 'Kind': 'Point', 'Body': obs, 'Visibility': 'staff',
+      'Email': '', 'Name': 'Branch Intelligence', 'Role': 'manager'
+    });
+    return { ok: true, id: r2.id, updated: r2.updated, meeting: mdate, item: ts2.title };
+  }
+  return { ok: false, error: 'Unknown bridge op.' };
+}
+
+
 function doPost(e) {
   var body = {};
   try { body = JSON.parse((e && e.postData && e.postData.contents) || '{}'); }
@@ -7022,6 +7141,7 @@ function doPost(e) {
       case 'attachRecording':   out = apiAttachRecording_(body); break;
 
       case 'contribute':        out = apiAddContribution_(body); break;
+      case 'bridge':            out = apiBridge_(body); break;
       case 'editContribution':  out = apiEditContribution_(body); break;
       case 'uploadClip':        out = apiUploadClip_(body); break;
 

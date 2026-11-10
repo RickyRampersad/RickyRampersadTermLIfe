@@ -349,6 +349,12 @@
   .cxm{font-size:12.5px;line-height:1.5;color:var(--muted);padding:2px 0}
   .cxbar{position:relative;height:9px;border-radius:6px;background:var(--track);margin:4px 0 4px;overflow:visible} .cxbar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--good),var(--good2))}
   .cxbar em{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--navy);opacity:.6}
+  /* Wednesday (10 Nov 2026): what the agent brings to the branch meeting. */
+  #agwed .wm{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)} #agwed .wm:first-of-type{border-top:0}
+  #agwed .wm b{color:var(--navy)} #agwed .wm small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  #agwed .ws{border-left:4px solid var(--gold);background:color-mix(in srgb,var(--gold) 12%,var(--card));border-radius:0 12px 12px 0;padding:9px 12px;font-size:14px;line-height:1.5;margin:0 0 8px}
+  #agwed textarea{width:100%;min-height:76px;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font:500 max(16px,1rem)/1.45 var(--fb);background:var(--card);color:var(--ink)}
+  #agwed .wh{font-size:12.5px;color:var(--muted);margin:2px 0 6px}
   .cxask{margin-top:8px;background:color-mix(in srgb,var(--warn) 10%,var(--card));border-radius:12px;padding:10px 12px}
   .cxp{padding:6px 0;border-top:1px solid var(--line)} .cxp:first-of-type{border-top:0} .cxp .cxl{border-top:0;padding:2px 0}
   .cxtag{flex:none;font:800 10.5px/1 var(--fb);letter-spacing:.03em;padding:5px 7px;border-radius:6px;background:var(--soft);color:var(--muted);text-transform:uppercase}
@@ -892,12 +898,26 @@
     return '<div class="card" id="cxcalls"><div class="ch"><h2>Your calls today</h2><span class="n">' + cl.length + "</span></div>" + cl.map(function (x) {
       return '<div class="cxl"><span><b>' + esc(x.c) + "</b> · " + esc(x.why) + "</span>" + (x.tel ? '<a class="cxtel" href="tel:' + esc(String(x.tel).replace(/[^\d+]/g, "")) + '">Call</a>' : '<span class="cxtag ' + (x.k === "orphan" ? "a" : "r") + '">' + esc(x.k) + "</span>") + "</div>"; }).join("") + "</div>";
   }
+  function cxWed(m) {
+    var w = m.wed; if (!w) return "";
+    var mine = (w.mine || []).map(function (c) {
+      return '<div class="wm"><span class="ic">&#10003;</span><div><b>' + esc(c.label) + "</b>" + (c.kind === "help" ? " <small>Only your manager and the staff see this.</small>" : "<div>" + esc(c.text) + "</div>") +
+        "<small>" + (/^on the agenda/.test(c.status) ? "On the agenda: " + esc(c.status.replace(/^on the agenda:\s*/, "")) : "Kept here; it goes on the agenda as soon as the meeting is built.") + "</small></div></div>"; }).join("");
+    var pick = (w.mine || []).length ? "" : (w.suggest || {}).kind;
+    return '<div class="card" id="agwed"><div class="ch"><h2>Wednesday\'s meeting, ' + esc(String(w.label).replace(/^\w+ /, "")) + '</h2><span class="n">' + (w.today ? "today at 9:00" : (w.mine || []).length ? "you are bringing " + w.mine.length : "commit one thing") + "</span></div>" +
+      ((w.mine || []).length ? mine : '<div class="ws">' + esc((w.suggest || {}).line || "") + "</div>") +
+      "<details" + ((w.mine || []).length ? "" : " open") + '><summary class="cxsum2">' + ((w.mine || []).length ? "Bring something else, or change it" : "What will you bring?") + "</summary>" +
+      '<div class="cxch">' + (w.kinds || []).map(function (k) { return '<button type="button" class="chip' + (k.id === pick ? " on" : "") + '" data-wedk="' + esc(k.id) + '" data-wedh="' + esc(k.h) + '">' + esc(k.l) + "</button>"; }).join("") + "</div>" +
+      '<div class="wh" data-wedhint>' + esc(((w.kinds || []).filter(function (k) { return k.id === pick; })[0] || {}).h || "Tap one, then say it in a line.") + "</div>" +
+      '<textarea data-wedtext maxlength="600" placeholder="In a line: what, and why it matters. No client names."></textarea>' +
+      '<button type="button" class="go" data-cxsave="wed">Put it on Wednesday\'s agenda</button><div class="cst" data-st></div></details></div>';
+  }
   function agentNative2(m) {
     var va = m.viewAs, co = (m.coach || {}).coach || {};
     return (va ? '<div class="agpv"><a href="#" data-myown style="float:right;font-weight:800">&larr; My day</a><b>You are seeing ' + esc(m.first) + "'s day as " + esc(m.first) + " sees it.</b> For you: " + esc(co.mgr || "") +
       ' <button type="button" class="ghost" data-cxmailme style="margin-top:8px;width:100%">Send me ' + esc(m.first) + "'s morning e-mail</button></div>" : "") +
       (m.coachError ? '<div class="agpv">Some of your day did not load: ' + esc(m.coachError) + "</div>" : "") +
-      cxHero(m) + cxCheckin(m) + cxMid(m) + (m.close && m.close.open ? agCloseCard(m) : "") +
+      cxHero(m) + cxCheckin(m) + cxMid(m) + (m.close && m.close.open ? agCloseCard(m) : "") + cxWed(m) +
       cxGoal(m) + cxFF(m) + cxOrphans(m) + cxPend(m) + agItemsCard(m).replace("<h2>Being worked for your clients</h2>", "<h2>5 · The branch is working on</h2>") + cxCalls(m) + agDoneCard(m) +
       '<div class="card"><div class="tip">If this screen will not open on your phone: <a href="' + esc(m.project.url) + '" target="_blank" rel="noopener">your plan</a> · <a href="' + esc(m.close.url) + '" target="_blank" rel="noopener">close-off</a>.</div></div>';
   }
@@ -915,6 +935,10 @@
       q.act = "agmid";
       Array.prototype.forEach.call(box.querySelectorAll("[data-cxd]"), function (b) { q["m_" + b.getAttribute("data-cxd")] = b.textContent.trim(); });
       var md = box.querySelector("[data-cxmood].on"); q.mood = md ? md.getAttribute("data-cxmood") : ""; q.mnote = ((box.querySelector("[data-cxmnote]") || {}).value || "").trim();
+    } else if (kind === "wed") {
+      q.act = "agwed"; var wk = box.querySelector("[data-wedk].on"); q.kind = wk ? wk.getAttribute("data-wedk") : ""; q.text = ((box.querySelector("[data-wedtext]") || {}).value || "").trim();
+      if (!q.kind) { st.className = "cst bad"; st.textContent = "Tap what you are bringing first."; return; }
+      if (q.text.length < 12) { st.className = "cst bad"; st.textContent = "Say it in a line: what, and why it matters."; return; }
     } else if (kind === "ff") {
       q.act = "agff"; var fr = box.querySelector("[data-cxff].on"); q.reason = fr ? fr.getAttribute("data-cxff") : ""; q.commit = ((box.querySelector("[data-cxcommit]") || {}).textContent || "0").trim();
       var w = ((box.querySelector("[data-cxffwho]") || {}).value || "").trim(); q.who = w; q.note = w;
@@ -924,14 +948,15 @@
     api(q).then(function (m) {
       if (!m || !m.ok) { btn.disabled = false; btn.textContent = was; st.className = "cst bad"; st.textContent = (m && m.error) || "That did not save. Try again."; return; }
       m._t = Date.now(); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false);
-      toast(kind === "plan" ? "You are in. Present, and your plan is with your manager." : kind === "mid" ? "Midday check-in saved. Keep going." : "Thank you. Your answer is with your manager.");
-      var h = $(kind === "plan" ? "agplan" : kind === "mid" ? "agmid" : "cxfactfinds"); if (h) h.scrollIntoView({ behavior: "smooth", block: "start" });
+      toast(kind === "plan" ? "You are in. Present, and your plan is with your manager." : kind === "mid" ? "Midday check-in saved. Keep going." : kind === "wed" ? ((m.saved && m.saved.sent) ? "On Wednesday's agenda. Thank you." : "Saved. It goes on the agenda as soon as the meeting is built.") : "Thank you. Your answer is with your manager.");
+      var h = $(kind === "plan" ? "agplan" : kind === "mid" ? "agmid" : kind === "wed" ? "agwed" : "cxfactfinds"); if (h) h.scrollIntoView({ behavior: "smooth", block: "start" });
     }).catch(function () { btn.disabled = false; btn.textContent = was; st.className = "cst bad"; st.textContent = "That did not reach the tracker. Try again."; });
   }
   document.addEventListener("click", function (e) {
     var t = e.target.closest ? e.target : null; if (!t) return; var b;
     if ((b = t.closest("[data-cxstep]"))) { var v = b.parentNode.querySelector("b"); if (v) v.textContent = String(Math.max(0, Math.min(99, Number(v.textContent || 0) + Number(b.getAttribute("data-cxstep"))))); return; }
     if ((b = t.closest("[data-cxopen]"))) { var sh = b.parentNode.querySelector('[data-cxsheet="' + b.getAttribute("data-cxopen") + '"]'); if (sh) { sh.hidden = false; b.hidden = true; sh.scrollIntoView({ behavior: "smooth", block: "start" }); } return; }
+    if ((b = t.closest("[data-wedk]"))) { Array.prototype.forEach.call(b.parentNode.querySelectorAll(".chip"), function (c) { c.classList.toggle("on", c === b); }); var hh = b.closest(".card").querySelector("[data-wedhint]"); if (hh) hh.textContent = b.getAttribute("data-wedh") || ""; var tx = b.closest(".card").querySelector("[data-wedtext]"); if (tx) tx.focus(); return; }
     if ((b = t.closest("[data-cxr],[data-cxmood],[data-cxff]"))) { Array.prototype.forEach.call(b.parentNode.querySelectorAll(".chip"), function (c) { c.classList.toggle("on", c === b); }); var s2 = b.closest(".card").querySelector(".cst.bad"); if (s2) { s2.textContent = ""; s2.className = "cst"; } return; }
     if ((b = t.closest("[data-cxsave]"))) { cxSave(b); return; }
     if ((b = t.closest("[data-myown]"))) { e.preventDefault(); try { var u2 = new URL(location.href); u2.searchParams.delete("as"); location.href = u2.toString(); } catch (x) {} return; }
@@ -1220,7 +1245,7 @@
       if (g === "close" && $("closecard")) { closeOpen(); return; }
       if (g === "agplan") { var cxo = document.querySelector('#agplan [data-cxopen="plan"]'); if (cxo && !cxo.classList.contains("cxedit")) { cxo.click(); return; } }
       if (t && unitGo(t)) return;
-      var el = $({ update: "coach", news: "news", waiting: "waiting", list: "list", close: "closecard", agplan: "agplan", agclose: "agclose", agitems: "agitems", agmid: "agmid", unit: "unit", timeline: "timeline", mychecks: "mychecks" }[g] || "");
+      var el = $({ update: "coach", news: "news", waiting: "waiting", list: "list", close: "closecard", agplan: "agplan", agclose: "agclose", agwed: "agwed", agitems: "agitems", agmid: "agmid", unit: "unit", timeline: "timeline", mychecks: "mychecks" }[g] || "");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 400);
   }

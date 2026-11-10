@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-08f';
+var SCRIPT_VERSION = '2026-11-10a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2234,6 +2234,7 @@ function handle_(action, data, token) {
                     intel:   typeof intelRoute_ === 'function',
                     salesforce: sfkConfigured_(),
                     mailRelay: typeof mailRelayReady_ === 'function' && mailRelayReady_(),
+                    meetBridge: !!(mailRelayProp_('MEET_URL') && mailRelayProp_('MEET_BRIDGE_KEY')),
                     // 22 Oct 2026: whether Claude is switched on (never the key), which models, and how many of his items are written at full depth today.
                     claude: (function () { try { return !!String(PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '').trim(); } catch (e) { return false; } })() },
              // 27 Oct 2026: the agents' mail, so a check needs no editor: the mode (preview runs the pilot) and how many agents were mailed today, by run.
@@ -14738,6 +14739,10 @@ function agentEveningMail_(a, day, data) {
   var btn = replyButton_(workGoUrl_(a.key, 'agclose'), 'Close off my day', 'On My day: what you did, in numbers, balanced against what you projected. No answer reads as nothing done today.') + agOldLine_(replyUrl_(a.key, day, 'agc'));
   var coachEve = ''; if (agCoachOn_(a)) { try { coachEve = agCoachLine_(a, day, true); } catch (e) {} }
   var rise = ''; try { rise = agRiseHero_(agRiseData_(a, day, { g: (data.goal || {})[a.key] || null, f3: (data.f360 || {})[a.key] || null, open: open, closed: closed, orp: (data.orphan || {})[a.key] || null }), day, 'pm'); } catch (e) {}
+  var wedEve = ''; try { var wmE = wedModel_(a, day, null); wedEve = '<div style="margin-top:14px;padding:10px 14px;border-radius:12px;background:' + (wmE.mine.length ? '#EEF7F0' : '#FFF9EC') + ';font-size:13.5px;line-height:1.5">' +
+    (wmE.mine.length ? '<b>Wednesday, ' + esc_(wmE.label) + ':</b> you are bringing ' + esc_(wmE.mine.map(function (c) { return c.label; }).join(' and ')) + '. It is on the agenda.'
+      : '<b>Wednesday, ' + esc_(wmE.label) + ':</b> what is one thing from today worth sharing? A case, a point you could teach, a question or an idea. ' +
+        '<a href="' + esc_(workGoUrl_(a.key, 'agwed')) + '" style="color:' + MAIL.navy + ';font-weight:700">Commit it &rarr;</a>') + '</div>'; } catch (e) {}
   var body = coachEve + rise +
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', it is half past five. Close off your day by 6pm' +
       (planned ? ': give what was done, and it balances against what you projected this morning' : ' (no projection was set this morning)') + '. Your manager and Mrs Dookran see it at 6:30.</div>' +
@@ -14750,6 +14755,7 @@ function agentEveningMail_(a, day, data) {
       return agLine_('&#10003; <b>' + esc_(String(t.owner).split(' ')[0]) + '</b> · ' + esc_(t.subject)); }).join('')) : '') +
     (planned ? sectionLabel_('What you projected this morning') + agCard_(MAIL.gold, AGENT_METRICS.filter(function (m) { return plan[m.id]; }).map(function (m) {
       return '<div style="font-size:13px;padding:2px 0">' + esc_(m.p) + ': <b>' + esc_(plan[m.id].Planned || '—') + '</b></div>'; }).join('')) : '') + btn +
+    wedEve +
     '<div style="margin-top:16px;padding:12px 14px;background:#fff;border:1px solid ' + MAIL.line + ';border-radius:12px"><div style="font:800 14px Segoe UI,Arial;color:' + MAIL.navy + ';margin-bottom:6px">How was today? One tap.</div>' +
       agFbLinks_(a, day, 'day') + '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:6px">Then say what would help most tomorrow, or a meeting idea. Your manager sees it with your close-off.</div></div>';
   // To the agent alone (8 Nov 2026): the manager and Mrs Dookran get every agent's close-off together at 6:30 (agentRollupTick_).
@@ -14995,6 +15001,7 @@ function agentRollupMail_(mgr, agents, day) {
     (rates.length ? ' The day, in their words: <b>' + (Math.round(10 * rates.reduce(function (s, x) { return s + x; }, 0) / rates.length) / 10) + '/5</b> from ' + rates.length + '.' : '') +
     (wantMgr.length ? ' <b>Asked for time with you tomorrow: ' + esc_(wantMgr.join(', ')) + '.</b>' : '') + '</div>' +
     (ideas.length ? '<div style="font-size:13px;margin:0 0 10px;padding:8px 12px;background:#FFF9EC;border-radius:10px"><b>Ideas for Wednesday\'s meeting:</b> ' + esc_(ideas.join(' · ')) + '</div>' : '');
+  try { lead += wedObserve_(agents, day).html; } catch (e) {}
   var inner = lead + statTiles_([
         { value: closed + '/' + agents.length, label: 'closed off', color: closed === agents.length ? MAIL.green : MAIL.amber },
         { value: planned + '/' + agents.length, label: 'projected this morning' },
@@ -15054,6 +15061,7 @@ function agentRollupTick_(day, mins) {
   if (mins < AGENT_ROLL_AT || mins > AGENT_ROLL_AT + 90) return [];
   try { forgetHr_(AGDAY); } catch (e) {}   // read the close-offs fresh
   var props = PropertiesService.getScriptProperties(), out = [], groups = agentsByManager_(), bm = (managerEmails_() || [])[0] || '';
+  try { out = out.concat(wedTick_(day)); } catch (e) { out.push('wed FAILED: ' + (e && e.message)); }   // Wednesday's commitments and observations (10 Nov 2026)
   // The Branch Manager: one e-mail for the whole branch, unit by unit, with what went out to the agents today (8 Nov 2026).
   if (bm && !props.getProperty('agroll_branch_' + day)) {
     props.setProperty('agroll_branch_' + day, hhmm_(new Date()));
@@ -15072,6 +15080,189 @@ function agentRollupTick_(day, mins) {
     } catch (e) { props.deleteProperty(mark); out.push('agents roll-up FAILED for ' + k + ': ' + (e && e.message)); }
   });
   return out;
+}
+
+/* ---- Wednesday: what each agent brings, and what we are observing (10 Nov 2026) -----------------------------------------
+ * Ricky: "everything comes towards a meeting ... persons commit to what's working and a case that they're going to actually
+ * share, or some idea for the branch meeting or skill set or whatever KPI that it's observing that's happening with that
+ * agent, and also identifying the training and development plan in terms of building into the meeting what we're observing."
+ *
+ * Three moves, one loop:
+ *  1. OBSERVE. Every morning the coach reads each agent's record and names what it sees (agCoach_: ahead of plan, pipeline
+ *     waiting to close, no fact finds, premiums slipping, quiet, asked for help). That read is kept as an 'obs' row on Agent
+ *     Day, so the week has a pattern rather than a mood.
+ *  2. COMMIT. The morning brief and My day turn the read into one ask: bring a case that worked, a point you can teach, a
+ *     question for the room, an idea, or (privately) the help you need. One tap and a line, kept as a 'wed' row.
+ *  3. BUILD IT IN. Each commitment goes straight onto the meeting builder (Meetings.gs apiBridge_) as a contribution brought in
+ *     beforehand, under the agenda item it belongs to; and each evening the week's observations go on as one staff-only note
+ *     under Training: the development areas, who they are for, who could teach the point, and what the agents are bringing.
+ *
+ * The meeting builder's /exec goes in MEET_URL and the shared secret in MEET_BRIDGE_KEY (the same value in the meeting
+ * builder's own Script Properties). Without them nothing is lost: commitments are kept here, shown to the managers, and go
+ * across on the first evening the bridge answers. */
+var WED = {
+  DOW: 3, STARTS: 9 * 60,                 // the branch meeting: Wednesday 9:00
+  MIN_TEXT: 12, MAX_TEXT: 600,
+  KINDS: [
+    { id: 'case',     l: 'A case that worked',     h: 'What you did, step by step. No client names.', slot: 'What worked for me' },
+    { id: 'skill',    l: 'A point I can teach',    h: 'A product, an objection, a system. Five minutes.', slot: 'Training' },
+    { id: 'question', l: 'A question for the room', h: 'What you want the branch to help you answer.', slot: 'Open floor' },
+    { id: 'idea',     l: 'An idea for the branch', h: 'Something we could do better or start doing.', slot: 'Open floor' },
+    { id: 'help',     l: 'Help I need',            h: 'Only your manager and the staff see this.', slot: 'Open floor (staff only)' }
+  ],
+  // What the morning read says, turned into the ask and into the branch's development plan.
+  READS: {
+    onpace:   { ask: 'case',     line: 'You are ahead of your plan this month. The room learns most from what you actually did: bring one case.', strength: 'Ahead of plan this month' },
+    pipeline: { ask: 'case',     line: 'You have business sitting in your fact finds. Bring the closing you won, or the one that is stuck, and the room will work it with you.', need: 'Closing interviews: turning fact finds into applications', teach: 'How I run the closing interview' },
+    prospect: { ask: 'question', line: 'Fact finds have been slow. Bring the question you most want the room to answer about getting them booked.', need: 'Booking fact finds: names, leads and the first call', teach: 'How I book a fact find from a cold name' },
+    service:  { ask: 'case',     line: 'You are carrying premiums and pendings. Bring how you saved one: it is the point most of the branch needs.', need: 'Conservation: premiums past 60 days and pendings', teach: 'How I save a premium before it lapses' },
+    quiet:    { ask: 'help',     line: 'Tell your manager the one thing that would get your week moving. Only staff see it.', need: 'Rhythm: planning the day and showing up', teach: 'How I plan a week that writes business' },
+    help:     { ask: 'help',     line: 'You asked for help. Say it in a line here too, so it is on Wednesday\'s list for your manager.', need: 'Asked for help', teach: '' },
+    start:    { ask: 'case',     line: 'Bring one thing: a case that worked, a point you can teach, or an idea for the branch.' }
+  }
+};
+function wedKind_(id) { return WED.KINDS.filter(function (k) { return k.id === id; })[0] || null; }
+
+/** The branch meeting a commitment made today is for: today until 9:00 on the meeting day, else the next one. */
+function wedMeetingFor_(day, mins) {
+  var d = new Date(day + 'T12:00:00Z'), dow = d.getUTCDay();
+  if (dow === WED.DOW && (mins == null ? minutesOf_(hhmm_(new Date())) : mins) < WED.STARTS) return day;
+  var add = (WED.DOW - dow + 7) % 7 || 7; d.setUTCDate(d.getUTCDate() + add);
+  return d.toISOString().slice(0, 10);
+}
+/** The day after the previous meeting: where this meeting's week of observations starts. */
+function wedWeekFrom_(meet) { var d = new Date(meet + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - 7); return d.toISOString().slice(0, 10); }
+
+/** An agent's commitments for one meeting: the latest of each kind. */
+function wedMine_(a, meet) {
+  var out = {};
+  (agDayRecent_(14) || []).forEach(function (r) {
+    if (String(r.Kind) !== 'wed' || String(r.Agent) !== a.key || isoDay_(r.Item) !== meet && String(r.Item) !== meet) return;
+    out[String(r.Question)] = { kind: String(r.Question), text: String(r.Note || ''), status: String(r.Done || ''), on: isoDay_(r.Date), at: String(r.At || '') };
+  });
+  return WED.KINDS.filter(function (k) { return out[k.id] && out[k.id].text; }).map(function (k) { var x = out[k.id]; x.label = k.l; x.slot = k.slot; return x; });
+}
+
+/** The morning read for the week of a meeting: the kind seen on most mornings (newest wins a tie) and on how many. */
+function wedReadOf_(a, meet, rows) {
+  var from = wedWeekFrom_(meet), n = {}, last = '';
+  (rows || agDayRecent_(14) || []).forEach(function (r) {
+    if (String(r.Kind) !== 'obs' || String(r.Agent) !== a.key) return;
+    var d = isoDay_(r.Date); if (d <= from || d > meet) return;
+    var k = String(r.Item); n[k] = (n[k] || 0) + 1; last = k;
+  });
+  var best = '', bn = 0; Object.keys(n).forEach(function (k) { if (n[k] > bn || (n[k] === bn && k === last)) { best = k; bn = n[k]; } });
+  return { kind: best, days: bn, of: Object.keys(n).reduce(function (s, k) { return s + n[k]; }, 0) };
+}
+
+/** Keep this morning's read (once a day): the pattern across the week is what the development plan is built from. */
+function wedNoteRead_(a, day, coach) {
+  if (!coach || !coach.kind) return;
+  try { if (Object.keys(agRows_(a.key, day, 'obs')).length) return; } catch (e) {}
+  try { agWrite_(a, day, 'obs', [{ Item: coach.kind, Question: coach.title || '', Note: String(coach.mgr || '').slice(0, 300) }]); } catch (e) {}
+}
+
+/** Everything the morning brief and My day show for Wednesday. */
+function wedModel_(a, day, coach) {
+  var meet = wedMeetingFor_(day), mine = [], read = WED.READS[(coach && coach.kind) || 'start'] || WED.READS.start;
+  try { mine = wedMine_(a, meet); } catch (e) {}
+  var d = new Date(meet + 'T12:00:00Z');
+  return { meet: meet, label: Utilities.formatDate(d, 'UTC', 'EEE d MMM'), today: meet === day, mine: mine,
+    suggest: { kind: read.ask, line: read.line }, kinds: WED.KINDS.map(function (k) { return { id: k.id, l: k.l, h: k.h, slot: k.slot }; }) };
+}
+
+/** Sign and send one call across to the meeting builder. */
+function wedBridge_(op, payload) {
+  var url = mailRelayProp_('MEET_URL'), key = mailRelayProp_('MEET_BRIDGE_KEY');
+  if (!url || !key) return { ok: false, held: 'the meeting builder link is not set (MEET_URL, MEET_BRIDGE_KEY)' };
+  var ts = Date.now(), body = { action: 'bridge', op: op, ts: ts, payload: payload, sig: mailRelaySign_(op + '|' + ts + '|' + JSON.stringify(payload), key) };
+  try {
+    var r = UrlFetchApp.fetch(url, { method: 'post', contentType: 'text/plain', payload: JSON.stringify(body), muteHttpExceptions: true, followRedirects: true });
+    var j = JSON.parse(r.getContentText() || '{}');
+    if (j.ok && j.held) return { ok: false, held: j.held };
+    return j.ok ? j : { ok: false, held: j.error || 'the meeting builder said no' };
+  } catch (e) { return { ok: false, held: 'the meeting builder did not answer' }; }
+}
+function wedStatus_(r) { return r.ok ? 'on the agenda: ' + (r.item || 'the floor') : 'waiting: ' + (r.held || 'not sent'); }
+
+/** One commitment from the agent: kept here first, then across to the meeting. */
+function wedSave_(a, day, p) {
+  var k = wedKind_(String(p.kind || '')), text = String(p.text || '').replace(/\s+/g, ' ').trim().slice(0, WED.MAX_TEXT);
+  if (!k) return { ok: false, error: 'Tap what you are bringing first.' };
+  if (text.length < WED.MIN_TEXT) return { ok: false, error: 'Say it in a line: what, and why it matters.' };
+  var meet = wedMeetingFor_(day);
+  var r = wedBridge_('commit', { date: meet, kind: k.id, text: text, ref: (a.key + '.' + meet + '.' + k.id).replace(/[^A-Za-z0-9_.:-]/g, ''),
+    email: a.email, agentNo: a.code || a.agentId || '', name: a.name });
+  agWrite_(a, day, 'wed', [{ Item: meet, Question: k.id, Note: text, Done: wedStatus_(r) }]);
+  if (k.id === 'help') {   // help goes to the manager now, not on Wednesday
+    try { var to = [agentManagerEmail_(a) || (managerEmails_() || [])[0]].filter(String);
+      if (to.length) mailSend_({ to: to.join(','), cc: agentBma_(to).join(','), subject: String(a.name).split(' ')[0] + ' asked for help · ' + a.name,
+        htmlBody: shell_('Help asked for', a.name + ' · ' + prettyDate_(day), srcCard_('In their words', MAIL.amber, [esc_(text)], 'It is on Wednesday\'s list for staff only. A call today will be better than the meeting.')) }); } catch (e) {}
+  }
+  return { ok: true, meet: meet, kind: k.id, sent: !!r.ok, status: wedStatus_(r) };
+}
+
+/** Each evening: anything still waiting goes across, then the week's observations as one staff-only note under Training. */
+function wedTick_(day) {
+  var props = PropertiesService.getScriptProperties(), mark = 'wedobs_' + day;
+  if (props.getProperty(mark)) return [];
+  props.setProperty(mark, hhmm_(new Date()));
+  var out = [], meet = wedMeetingFor_(day, 23 * 60), rows = agDayRecent_(14) || [], people = agentPeople_();
+  Object.keys(people).forEach(function (k) {
+    var a = people[k]; if (!agentLiveFor_(a)) return;
+    wedMine_(a, meet).forEach(function (c) {
+      if (/^on the agenda/.test(c.status)) return;
+      var r = wedBridge_('commit', { date: meet, kind: c.kind, text: c.text, ref: (a.key + '.' + meet + '.' + c.kind).replace(/[^A-Za-z0-9_.:-]/g, ''), email: a.email, agentNo: a.code || a.agentId || '', name: a.name });
+      if (r.ok) { agWrite_(a, day, 'wed', [{ Item: meet, Question: c.kind, Note: c.text, Done: wedStatus_(r) }]); out.push('wed: ' + a.name + ' ' + c.kind + ' across'); }
+    });
+  });
+  try {
+    var obs = wedObserve_(Object.keys(people).map(function (k) { return people[k]; }).filter(agentLiveFor_), day, rows);
+    if (obs.text) { var r2 = wedBridge_('observe', { date: meet, text: obs.text }); out.push('wed observations: ' + (r2.ok ? 'on the meeting under ' + (r2.item || 'the floor') : (r2.held || 'held'))); }
+  } catch (e) { out.push('wed observations FAILED: ' + (e && e.message)); }
+  return out;
+}
+
+/** The week before a meeting, across a set of agents: who is bringing what, who has not, and the development plan. */
+function wedObserve_(agents, day, rows) {
+  var meet = wedMeetingFor_(day, 23 * 60), needs = {}, strong = [], bring = [], silent = [], helpers = [];
+  rows = rows || agDayRecent_(14) || [];
+  agents.forEach(function (a) {
+    var first = String(a.name).split(' ')[0], rd = wedReadOf_(a, meet, rows), R = WED.READS[rd.kind];
+    if (R && R.need) { var nd = (needs[R.need] = needs[R.need] || { teach: R.teach, who: [], days: 0 }); nd.who.push(first + (rd.of > 1 ? ' (' + rd.days + ' of ' + rd.of + ' mornings)' : '')); nd.days += rd.days; }
+    if (R && R.strength) strong.push(first);
+    var mine = wedMine_(a, meet);
+    if (mine.length) mine.forEach(function (c) { bring.push({ who: first, c: c }); if (c.kind === 'skill') helpers.push(first + ': ' + c.text); });
+    else silent.push(first);
+  });
+  var order = Object.keys(needs).sort(function (x, y) { return needs[y].who.length - needs[x].who.length || needs[y].days - needs[x].days; });
+  var top = order[0], d = new Date(meet + 'T12:00:00Z'), label = Utilities.formatDate(d, 'UTC', 'EEE d MMM');
+  var teacher = helpers.length ? helpers[0] : strong.length ? strong[0] + ' (ahead of plan: ask them to teach it)' : '';
+  var lines = ['What the tracker observed before ' + label + ' (the morning reads since the last meeting).', ''];
+  if (order.length) { lines.push('DEVELOPMENT'); order.forEach(function (k) { lines.push('· ' + k + ' (' + needs[k].who.length + '): ' + needs[k].who.join(', ')); }); lines.push(''); }
+  if (strong.length) lines.push('STRENGTHS THE ROOM CAN USE: ahead of plan: ' + strong.join(', '), '');
+  if (top) lines.push('SUGGESTED TRAINING POINT: ' + (needs[top].teach || top) + (teacher ? '. Who could teach it: ' + teacher : '') + '.', '');
+  lines.push('BROUGHT IN BY THE AGENTS: ' + (bring.length ? bring.map(function (b) { return b.who + ' · ' + b.c.label + (b.c.kind === 'help' ? '' : ': ' + b.c.text.slice(0, 120)); }).join(' | ') : 'nothing yet'));
+  if (silent.length) lines.push('NOT YET COMMITTED: ' + silent.join(', '));
+  var html = '<div style="font-size:13px;margin:0 0 10px;padding:10px 12px;background:#F4F6FA;border-radius:10px;line-height:1.5">' +
+    '<b style="color:' + MAIL.navy + '">For Wednesday, ' + esc_(label) + '</b>' +
+    (bring.length ? '<div style="margin-top:4px"><b>Bringing:</b> ' + bring.map(function (b) { return esc_(b.who) + ' · ' + esc_(b.c.label) + (b.c.kind === 'help' ? '' : ' (“' + esc_(b.c.text.slice(0, 90)) + '”)'); }).join(' · ') + '</div>' : '') +
+    (silent.length ? '<div style="margin-top:4px;color:' + MAIL.red + '"><b>Not yet committed:</b> ' + esc_(silent.join(', ')) + '</div>' : '') +
+    (order.length ? '<div style="margin-top:6px"><b>What we are observing:</b> ' + order.map(function (k) { return esc_(k) + ' (' + esc_(needs[k].who.map(function (w) { return w.split(' (')[0]; }).join(', ')) + ')'; }).join(' · ') + '</div>' : '') +
+    (strong.length ? '<div style="margin-top:4px"><b>Ahead of plan:</b> ' + esc_(strong.join(', ')) + '</div>' : '') +
+    (top ? '<div style="margin-top:4px"><b>Suggested training point:</b> ' + esc_(needs[top].teach || top) + (teacher ? ' · could be taught by ' + esc_(teacher.split(':')[0]) : '') + '</div>' : '') + '</div>';
+  return { meet: meet, label: label, needs: needs, order: order, strong: strong, bring: bring, silent: silent, text: agents.length ? lines.join('\n') : '', html: agents.length ? html : '' };
+}
+
+/** The morning brief's Wednesday card. */
+function wedMailCard_(a, day, wm) {
+  var go = workGoUrl_(a.key, 'agwed'), today = wm.today;
+  var head = today ? '<b>The branch meets today at 9:00.</b> ' : '';
+  var body = wm.mine.length
+    ? head + 'You are bringing to ' + esc_(wm.label) + ': ' + wm.mine.map(function (c) { return '<b>' + esc_(c.label) + '</b>' + (c.kind === 'help' ? '' : ' (“' + esc_(c.text.slice(0, 80)) + '”)'); }).join(' · ') +
+      '. <a href="' + esc_(go) + '" style="color:' + MAIL.navy + ';font-weight:700">Change or add &rarr;</a>'
+    : head + esc_(wm.suggest.line) + ' <a href="' + esc_(go) + '" style="color:' + MAIL.navy + ';font-weight:700">Commit one thing for ' + esc_(wm.label) + ' &rarr;</a> <span style="color:' + MAIL.muted + '">(one tap and a line; it goes straight on the agenda)</span>';
+  return agLine_(body);
 }
 
 /* ---- Opportunities on the agent's own book (8 Nov 2026) ------------------------------------------------------------------
@@ -15329,6 +15520,7 @@ function agFbSave_(p) {
   var rows = q === 'brief' ? [{ Item: 'fb_brief', Question: 'Morning brief useful?', Done: String(p.v || ''), Note: String(p.note || '').slice(0, 1000) }]
     : [{ Item: 'fb_day', Question: 'How was today?', Done: String(p.v || ''), Note: '' }, { Item: 'fb_help', Question: 'Help tomorrow', Done: String(p.help || ''), Note: String(p.note || '').slice(0, 1000) }];
   agWrite_(a, day, 'fb', rows);
+  if (q === 'day' && String(p.help || '') === 'idea' && String(p.note || '').trim().length >= WED.MIN_TEXT) { try { wedSave_(a, day, { kind: 'idea', text: p.note }); } catch (e) {} }
   return agFbPage_(Object.assign({}, p, { help: p.help }), true);
 }
 
@@ -18346,6 +18538,7 @@ function agentDayModel_(a, day, opt) {
   // The coach (2 Nov 2026, 2026-10-29h): goals first, what to do first, the midday check-in; a manager may look, not save.
   if (agCoachOn_(a, opt)) {
     try { m.coach = agCoachModel_(a, day, opt); m.v2 = true; } catch (e) { m.coachError = String(e && e.message || e).slice(0, 140); }
+    try { m.wed = wedModel_(a, day, m.coach && m.coach.coach); } catch (e) {}
     var mid = {}; try { mid = agRows_(a.key, day, 'mid'); } catch (e) {}
     m.midday = { open: nowM >= AGENT_MD_AT, done: Object.keys(mid).length > 0, at: (mid.mood && mid.mood.At) ? twelve_(String(mid.mood.At)) : '',
       mood: mid.mood ? String(mid.mood.Note || '') : '', rows: AGENT_METRICS.map(function (x) { return { id: x.id, v: val(mid[x.id], 'Done') }; }) };
@@ -18817,10 +19010,8 @@ function agentMorningMail2_(a, day, data, cm) {
         ' <a href="' + esc_(workGoUrl_(a.key, 'agitems', r.TaskId)) + '" style="color:' + MAIL.navy + ';font-weight:700">answer on the task &rarr;</a></div>');
     }).join('') + (oo.length > 6 ? line('<span style="color:' + MAIL.muted + '">and ' + (oo.length - 6) + ' more on My day</span>') : '');
   }
-  var dowN = new Date(day + 'T12:00:00Z').getUTCDay();
-  var meet = line((dowN === 3 ? '<b>The branch meets today at 9:00.</b> ' : dowN === 2 ? '<b>The branch meets tomorrow at 9:00.</b> ' : '') +
-    'Bring one thing to Wednesday\'s meeting: a win, a question, or something the branch could do better. ' +
-    '<a href="https://rickyrampersadbranch.com/meetings/" style="color:' + MAIL.navy + ';font-weight:700">Add it to the agenda &rarr;</a> <span style="color:' + MAIL.muted + '">(your agent number signs you in)</span>');
+  wedNoteRead_(a, day, co);
+  var meet = ''; try { meet = wedMailCard_(a, day, wedModel_(a, day, co)); } catch (e) {}
   var fb = '<div style="margin-top:16px;padding:12px 14px;background:#fff;border:1px solid ' + MAIL.line + ';border-radius:12px"><div style="font:800 13px Segoe UI,Arial;color:' + MAIL.navy + ';margin-bottom:6px">Was this brief useful?</div>' + agFbLinks_(a, day, 'brief') + '</div>';
   var body = rise + lic + (work.waitingOnYou ? '<div style="margin:0 0 12px;padding:10px 14px;border-radius:10px;background:#FDECEC;border-left:4px solid ' + MAIL.red + ';font-size:13.5px"><b>' + work.waitingOnYou + ' waiting on you</b>: the team needs something from you before they can finish. They are first under "Who is working for you".</div>' : '') +
     '<div style="font-size:14px;line-height:1.55;margin-bottom:12px">Good morning, ' + esc_(first) + '. Three things matter today: the note below, your opportunities, and your calls.</div>' + note + btn +
@@ -18859,7 +19050,13 @@ function workdayPost_(p) {
   if (a.error) return { ok: false, error: a.error };
   if (a.agent) {   // the agent's projection, close-off and updates on the tasks, from this screen (29 Oct 2026)
     var aact = String(p.act || ''), pv = !!a.link && !agentLiveFor_(a.agent);
-    if (['agplan', 'agclose', 'agnote', 'agmid', 'agff'].indexOf(aact) < 0 || !(agentLiveFor_(a.agent) || pv)) return { ok: false, error: 'Nothing to do here.' };
+    if (['agplan', 'agclose', 'agnote', 'agmid', 'agff', 'agwed'].indexOf(aact) < 0 || !(agentLiveFor_(a.agent) || pv)) return { ok: false, error: 'Nothing to do here.' };
+    if (aact === 'agwed') {
+      if (pv) return { ok: false, error: 'This is a preview: only the agent can commit.' };
+      try { var wr = wedSave_(a.agent, day, p); if (!wr.ok) return { ok: false, error: wr.error };
+        var wmod = agentDayModel_(a.agent, day, {}); wmod.saved = { act: aact, sent: wr.sent, status: wr.status }; return wmod; }
+      catch (e) { return { ok: false, error: 'That did not save: ' + String(e && e.message || e).slice(0, 140) }; }
+    }
     if (aact === 'agmid' || aact === 'agff') { try { return agCoachAct_(a.agent, day, aact, p, pv); } catch (e) { return { ok: false, error: 'That did not save: ' + String(e && e.message || e).slice(0, 140) }; } }
     if (aact === 'agplan' && agCoachOn_(a.agent)) { var mr = agMonthSave_(a.agent, day, p); if (mr.error) return { ok: false, error: mr.error }; }
     try {
