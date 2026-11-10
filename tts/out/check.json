@@ -1,47 +1,52 @@
 {
- "tts/out/andrewreads/01.mp3": [
+ "tts/out/mtwed/01.mp3": [
   "en",
-  0.997,
-  "Here's a first at the Ricky Rampersad branch. Andrew now reads your client their plan."
+  0.99,
+  "Tomorrow morning, the branch meets. This is the first meeting the builder runs."
  ],
- "tts/out/andrewreads/02.mp3": [
-  "en",
-  0.998,
-  "A few minutes after your client gets their summary, a second email arrives from you. Andrew will read you your plan."
- ],
- "tts/out/andrewreads/03.mp3": [
-  "en",
-  0.997,
-  "It's private. They enter their date of birth and their own plan opens."
- ],
- "tts/out/andrewreads/04.mp3": [
-  "en",
-  0.995,
-  "They press play and Andrew reads it to them in about three minutes. It keeps playing with the phone locked so they can listen on the drive home."
- ],
- "tts/out/andrewreads/05.mp3": [
-  "en",
-  0.993,
-  "Hello Jordan and Alicia. This is your family plan prepared for you by Sam Reyes from the Ricky Rampersat Branch of Guardian Life."
- ],
- "tts/out/andrewreads/06.mp3": [
+ "tts/out/mtwed/02.mp3": [
   "en",
   0.996,
-  "Every recommendation is yours. Your plans, your amounts, and your reasons in plain words."
+  "Before you sleep tonight, go to rickyrampersadbranch.com slash meetings. Type your agent number. There is no password."
  ],
- "tts/out/andrewreads/07.mp3": [
-  "en",
-  0.997,
-  "In a moment they've heard it all, you get an email. They just listened. Call now."
- ],
- "tts/out/andrewreads/08.mp3": [
+ "tts/out/mtwed/03.mp3": [
   "en",
   0.995,
-  "On your dashboard, you see who opened it, how much they heard, where they stopped, and who confirmed."
+  "Read tomorrow's agenda and put your item on it. It goes on before anybody sits down."
  ],
- "tts/out/andrewreads/09.mp3": [
+ "tts/out/mtwed/04.mp3": [
+  "en",
+  0.999,
+  "At half past eight, a button appears that says I am here. Press it. That one is the register."
+ ],
+ "tts/out/mtwed/05.mp3": [
   "en",
   0.998,
-  "Your advice, heard in your client's car, starting this week, see it at FactFind360.com. Slash Andrew."
+  "We begin at 9 o'clock. The screen carries the numbers, so only the exceptions are spoken."
+ ],
+ "tts/out/mtwed/06.mp3": [
+  "en",
+  0.991,
+  "production, the call list, maturities, the campaign, what we promised last week, and what came back."
+ ],
+ "tts/out/mtwed/07.mp3": [
+  "en",
+  0.993,
+  "Then it is the room, what worked for me, training top by one of us, and the open floor."
+ ],
+ "tts/out/mtwed/08.mp3": [
+  "en",
+  0.998,
+  "Each unit closes with its own number. That is what next week opens on."
+ ],
+ "tts/out/mtwed/09.mp3": [
+  "en",
+  0.997,
+  "Afterwards, the minutes in every action with a name on it."
+ ],
+ "tts/out/mtwed/10.mp3": [
+  "en",
+  0.945,
+  "Bring one thing."
  ]
 }
