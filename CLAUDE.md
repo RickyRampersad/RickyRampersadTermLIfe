@@ -8889,6 +8889,65 @@ mtuse-lines.json`, `build-mtusefilm.py`, `sfx.py`,
 `render.js ../../meetings/usefilm.html cap-mtuse 30 ../../meetings/usefilm.jpg`,
 `mixany.py`. Re-shoot first with `node mtuseshots/shots.js` if the page changed.
 
+### The meeting page is light, and the meeting shows once — 10 November 2026
+
+Asked for in these words: *"I need to ensure it's not a black background that
+hurts everybody's eyes and they cannot see it. It's a proper, nice, clean
+dashboard where persons can see a proper visual layout and the meeting flows.
+It was very confusing over the last couple of days ... it must hold persons
+accountable and take the respective notes."*
+
+**The seventh dark ground turned down in this repository**, and the page was
+running on `#121820` — near-black. `meetings/index.html` now carries the
+**homepage's own tokens**, sampled from Guardian Life of the Caribbean's live
+stylesheet: ground `#faf9f2`, white cards, ink `#0d3f5e`, body `#2b3b47`, muted
+`#5b6670`, action `#00728d`, `--line` `#e4e0d4` for separators and
+`--line-strong` `#7d8890` for anything that outlines a control. **The token
+names are the old ones**, so every rule that already referenced them keeps
+working.
+
+**Gold and the old cyan cannot come back here, and it is arithmetic.** On this
+ground `#efc24b` measures 1.68:1 and `#00CFEA` 1.89:1, both under the 3:1 floor
+for a non-text mark. The page carries **`site-mark.svg`**; the gold shield stays
+in the e-mails, where the ground is navy.
+
+**`--dim` was the fault the contrast pass caught**, and it is worth writing
+down: it was `#7d8890`, which is the **control** floor (3.43:1), and the page
+used it as *text* in a dozen places — the minutes column on every agenda row,
+the time on every contribution, "Carried forward", the footer. A token whose
+value is right for a border is not thereby right for words. It is `#667079`
+now, and the 3.43 value lives on as `--line-strong`.
+
+**"Very confusing" was literal: the same meeting was on the home screen four
+times** — the banner, a card repeating the banner, the register card, and again
+under *Coming up*. The duplicate card went, *Coming up* leaves out the meeting
+the banner is about (and reads *After that* when there is one), and what is left
+is one block per thing a person has to do: what it is, the register, the run-up.
+
+**A default is not news.** Every agenda row carried an `EVERYONE` badge — eleven
+identical chips down one screen saying only "this one is not staff-only", so the
+one row that *is* staff-only disappeared among them. The badge is drawn when it
+is the exception. The presenter lost its "Presented by" line and is one line.
+
+**Accountability, from the list that was already there.** `accountabilityStrip`
+sits above the action table: still open, past the date, closed off, carried
+forward, then a chip per owner with what is open against them, the late ones in
+the stop colour. No new backend call — it is read from `d.actions`. **A name
+with what is open against it, never a league table:** the point is that nothing
+leaves the room without a name and a date.
+
+**Measured after:** WCAG AA on every text node on three views (agent home, agent
+meeting, manager meeting), composited through translucency; no sideways scroll
+and no page errors at 360/375/390/414/768/1280/1536 on both views; the four
+existing suites still green.
+
+**`tests/mockmeet.js`** is the page's fake backend — one agenda, three
+contributions, three action items, no real person and no real figure. It is what
+let these faults be *seen*: the first pass of it used invented field names, and
+every contribution and action rendered blank, which reads exactly like a page
+bug and is not. **Check which side holds the bug** — that is the fifth time in
+this repository.
+
 ### Tomorrow's meeting on film — 10 November 2026
 
 Asked for first as *"I would need to already have a video as to what's going to
