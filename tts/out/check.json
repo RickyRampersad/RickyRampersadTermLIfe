@@ -1,72 +1,62 @@
 {
- "tts/out/mtwed2/01.mp3": [
-  "en",
-  0.99,
-  "Tomorrow at 9, the branch meets. This is what we'll already be on the screen."
- ],
- "tts/out/mtwed2/02.mp3": [
-  "en",
-  0.988,
-  "None of it gets typed up in the morning. It has been building all week by itself."
- ],
- "tts/out/mtwed2/03.mp3": [
-  "en",
-  0.992,
-  "Your day arrives every morning with your goal, and the one thing to do first."
- ],
- "tts/out/mtwed2/04.mp3": [
+ "tts/out/agnew/01.mp3": [
   "en",
   0.997,
-  "Tomorrow's ask is on it, bring a case that worked, a point you can teach, a question, or say where you need help."
+  "This morning, your day email looked different. Here's what changed and why."
  ],
- "tts/out/mtwed2/05.mp3": [
-  "en",
-  0.997,
-  "You tap it once and it lands on the agenda under the right item before anybody sits down."
- ],
- "tts/out/mtwed2/06.mp3": [
+ "tts/out/agnew/02.mp3": [
   "en",
   0.998,
-  "At half past eight, press the button that says I am here. That tap is the register."
+  "before you got three emails a day morning midday and half past five long lists and you had a dig for what mattered."
  ],
- "tts/out/mtwed2/07.mp3": [
+ "tts/out/agnew/03.mp3": [
+  "en",
+  0.994,
+  "We looked at how you were answering them. Three was too many. The midday one got lost."
+ ],
+ "tts/out/agnew/04.mp3": [
   "en",
   0.995,
-  "First on the board, since the first of October 60 applications and 72 policies picked up."
+  "So now it's two, one at seven in the morning, and one at half past five. That's it."
  ],
- "tts/out/mtwed2/08.mp3": [
+ "tts/out/agnew/05.mp3": [
   "en",
-  0.995,
-  "Fact finds, 157 so far this year, 11 of them this month."
+  0.992,
+  "Here's Rajeeves from this morning. It opens with one button to check in, and then who in the branch is working on his files."
  ],
- "tts/out/mtwed2/09.mp3": [
+ "tts/out/agnew/06.mp3": [
+  "en",
+  0.998,
+  "One tap opens my day, no Google page, and no password. He checks in and sets his numbers before half past 10."
+ ],
+ "tts/out/agnew/07.mp3": [
+  "en",
+  0.992,
+  "16 files for him this morning, 9 with Sasha, 5 with Liz, and 2 with Mrs. Dukeran, grouped by person, overdue first."
+ ],
+ "tts/out/agnew/08.mp3": [
+  "en",
+  0.998,
+  "He opens a file and posts what happened. One client signed his transfer forms. Another set of meeting for Thursday. It's on a file the same day."
+ ],
+ "tts/out/agnew/09.mp3": [
   "en",
   0.996,
-  "Then what we are about to lose, 121 renewals and premiums do, 32 pendings, 352 service requests open."
+  "Then he commits one thing for Wednesday's meeting. A case, a skill, a question, or the helping needs. It lands on the agenda by itself."
  ],
- "tts/out/mtwed2/10.mp3": [
+ "tts/out/agnew/10.mp3": [
   "en",
-  0.992,
-  "and we closed 267 of them in the last seven days."
+  0.996,
+  "At half past five, he closes off. What he did against what he planned. His manager sees it, and so do we."
  ],
- "tts/out/mtwed2/11.mp3": [
+ "tts/out/agnew/11.mp3": [
   "en",
-  0.993,
-  "The campaign, 318 orphan files still open, every one of them with a name against it."
+  0.999,
+  "Your part is simple. Check in, post on your files, and close off your day. Our part is to work every file for you, and answer when you ask for help."
  ],
- "tts/out/mtwed2/12.mp3": [
+ "tts/out/agnew/12.mp3": [
   "en",
-  0.991,
-  "Then the room has it, an agent shows what worked. One of us teaches, the floor is open."
- ],
- "tts/out/mtwed2/13.mp3": [
-  "en",
-  0.998,
-  "Each unit closes with its own number. Every action carries a name and next week opens on it."
- ],
- "tts/out/mtwed2/14.mp3": [
-  "en",
-  0.995,
-  "19 of us at 9 o'clock. Everything else is already there."
+  0.994,
+  "Use it every day. That's how the branch knows what you need."
  ]
 }
