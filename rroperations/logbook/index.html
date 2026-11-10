@@ -235,6 +235,27 @@
   .track .now i:after{content:'';position:absolute;left:-4px;top:-5px;width:10px;height:10px;border-radius:50%;background:var(--ink);animation:pulse 1.6s infinite}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(20,40,75,.45)}100%{box-shadow:0 0 0 12px rgba(20,40,75,0)}}
   @media (prefers-reduced-motion:reduce){.track .now i:after{animation:none}}
+  /* The fade, 10 November 2026: the page arrives rather than appears. Motion
+     only when the device allows it; with it off every finished state is the
+     plain default, so nothing can be stranded invisible. */
+  @keyframes lbIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes lbFade{from{opacity:0}to{opacity:1}}
+  @media (prefers-reduced-motion:no-preference){
+    .lock-card{animation:lbIn .5s cubic-bezier(.2,.7,.2,1) both}
+    header:not([hidden]){animation:lbFade .4s ease both}
+    .bag{animation:lbIn .45s cubic-bezier(.2,.7,.2,1) both}
+    main section > .card,main section > .tiles,main section > .kp{animation:lbIn .45s cubic-bezier(.2,.7,.2,1) both}
+    main section > :nth-child(2){animation-delay:.06s} main section > :nth-child(3){animation-delay:.12s}
+    main section > :nth-child(4){animation-delay:.18s} main section > :nth-child(5){animation-delay:.24s}
+    main section > :nth-child(n+6){animation-delay:.3s}
+    .item,.client,.done,.oftdone{animation:lbIn .35s cubic-bezier(.2,.7,.2,1) both}
+    .modal:not([hidden]){animation:lbFade .25s ease both}
+    .modal:not([hidden]) .sheet{animation:lbIn .35s cubic-bezier(.2,.7,.2,1) both}
+    .tabs button{transition:color .2s,border-color .25s}
+    .btn{transition:background-color .2s,border-color .2s,transform .1s}
+    .btn:active{transform:scale(.98)}
+    .card,.tile,.client{transition:border-color .2s}
+  }
   .bag .duty{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:14px;color:var(--muted)}
   .bag .duty b{color:var(--ink)}
   .bag .acts2{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
