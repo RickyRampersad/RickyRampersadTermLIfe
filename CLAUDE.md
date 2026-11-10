@@ -5637,6 +5637,25 @@ is separate and untouched.
   10:00. A field Salesforce refuses is left out and said (`gblSfwSave_`). The instruction goes from support@ to CRMS
   Renewals with CRMS SAL Support (personal motor and home) or CRMS Commercial, support@ and sales support copied; motor in
   Pawan's subject pattern ("Renewal Due -m/d/yyyy Policy #… - Vehicle # - … - Insured - …").
+- **A risk the client took off is not renewed, and a telephoned yes does not wipe what they said**
+  (10 November 2026). Two faults on one path, found on the question "when they confirm the value, only then is the
+  risk created with last year's details copied — is that correct?" It is, except that neither half honoured the
+  removals the client's own page had just been given the power to record.
+  - **`girProceed_` iterated every item**, so a vehicle the client had ticked off was renewed anyway, at last
+    year's figure. Everything now works off `keep` (the items with no entry in `answer.off`): the terms created,
+    the per-item-premium test, the billing record's `INSURANCE_PORTFOLIO__c` (the first item being **kept**, never
+    one taken off), the registrations in the motor subject line. Not creating a term IS how a risk leaves cover —
+    last year's term stays as the record of last year. The instruction tells Guardian General which to take off
+    cover and how many remain, each new term's `Asset_Description__c` names them, and the desk log records it.
+    Every risk taken off is refused outright: that is a cancellation, not a renewal.
+  - **`phoneYes` built a fresh `Client answer`**, so recording a yes on the telephone — the only way past the
+    `decision !== 'approve'` gate once a removal has turned the answer into `changes` — threw away the client's
+    own values, their removals and their words. It now carries `values`, `off` and the history forward and says
+    in the toast, the log and the Chatter what is still standing.
+  - **A removal is keyed `true`, never its label.** The first cut wrote `offIds[o.id] = o.label || ''`, and an
+    entry with no label is falsy, so the risk was quietly renewed. The test caught it; the code was wrong.
+  - `chk/proceed.js` in the session scratchpad covers it (43 checks, the real `girProceed_` and the real
+    `phoneYes` block in a VM, Salesforce and the mailer made of nothing).
 - **The hourly run** (`girTick_`, from `gcmRefreshTick`, working days 8 to 17, once an hour): Guardian General's reply read
   from support@ (a Guardian address not ours, after the instruction); "ready for collection" moves the delivery to the
   next working day; no reply in 2 working days, a follow-up with the trail, every 2 working days, on the follow-up task's

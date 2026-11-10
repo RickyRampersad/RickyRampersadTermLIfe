@@ -61,13 +61,18 @@
     '.rc-grp[open]>summary{border-bottom:1px solid #E6EDF7}' +
     '.rc-gb{padding:10px 11px 2px}.rc-gb .rc-it{background:#fff}' +
     '.rc-shape{margin:0 0 10px;font-size:.92rem;color:#5E6E8A}.rc-shape b{color:#1B2A44}' +
-    /* this vehicle's own value with us, year by year */
-    '.rc-vh{grid-column:1/-1;margin:4px 0 0}' +
-    '.rc-vh>summary{cursor:pointer;font-size:.84rem;font-weight:700;color:#3A7BD5;list-style:none}' +
-    '.rc-vh>summary::-webkit-details-marker{display:none}' +
-    '.rc-vh table{width:100%;border-collapse:collapse;margin:6px 0 2px;font-size:.86rem}' +
-    '.rc-vh th{text-align:left;color:#5E6E8A;font-weight:700;padding:2px 0}' +
-    '.rc-vh td{padding:2px 0;font-variant-numeric:tabular-nums}.rc-vh td+td,.rc-vh th+th{text-align:right}' +
+    /* what a group is, said once above its rows instead of on every one of them */
+    '.rc-gn{margin:0 0 10px;font-size:.88rem;color:#5E6E8A;line-height:1.55}' +
+    /* a risk with no figure and nothing else to say: one line, not a card */
+    '.rc-it.lean{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;justify-content:space-between;padding:7px 11px;margin:0 0 5px}' +
+    '.rc-it.lean .lb{font-weight:600}.rc-it.lean .rc-off{grid-column:auto;margin:0!important;flex:none}' +
+    '.rc-it .bank b{color:#1B2A44}' +
+    /* this vehicle's own value with us, year by year, on screen rather than behind a fold */
+    '.rc-yrs{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px;margin:7px 0 0}' +
+    '.rc-yrs span{flex:1 1 4.6rem;min-width:4.6rem;background:#F1F6FD;border-radius:9px;padding:5px 8px;font-size:.84rem;font-variant-numeric:tabular-nums;color:#1B2A44}' +
+    '.rc-yrs b{display:block;font-size:.72rem;color:#5E6E8A;letter-spacing:.03em}' +
+    '.rc-yrs .now{background:#E6F7EF;color:#0F7A54}.rc-yrs .now b{color:#0F7A54}' +
+    '.rc-rate{grid-column:1/-1;margin:5px 0 0;font-size:.84rem;color:#5E6E8A}' +
     /* "no longer ours" — a fleet loses vehicles every year */
     '.rc-off{grid-column:1/-1;margin:6px 0 0;font-weight:400!important;font-size:.86rem!important;color:#5E6E8A!important;gap:8px!important}' +
     '.rc-off input{width:22px!important;min-height:22px!important;height:22px;flex:none;accent-color:#B3261E}' +
@@ -120,14 +125,14 @@
     return '<p class="rc-sum">' + S.terms + ' year' + (S.terms === 1 ? '' : 's') + ' with us' + (S.claims ? ', ' + S.claims + ' claim' + (S.claims === 1 ? '' : 's') + ' in that time, ' + S.clean + ' year' + (S.clean === 1 ? '' : 's') + ' without one.' : ', and not one claim in that time.') + '</p>';
   }
   /* one year of the client's own history: the term, what it covered, what was billed and paid, and any claim. Never a task or a note. */
-  function yearFold(y, i) {
+  function yearFold(y, i, shut) {
     var chips = [];
     if (y.hasBill) chips.push(y.owed > 1 ? '<span class="rc-chip c-bad">' + money(y.owed) + ' still owed</span>' : y.paid ? '<span class="rc-chip c-ok">Paid' + (y.paidOn ? ' ' + esc(dmy(y.paidOn)) : '') + '</span>' : '<span class="rc-chip">No payment on our records</span>');
     chips.push((y.claims || []).length ? '<span class="rc-chip c-warn">' + y.claims.length + ' claim' + (y.claims.length === 1 ? '' : 's') + '</span>' : '<span class="rc-chip">No claims</span>');
     var body = ((y.risks || []).length ? '<p class="rc-yt">What it covered</p>' + y.risks.map(function (k) { return '<div class="rc-yr-it"><span>' + esc(k.label) + '</span><b>' + (k.value ? whole(k.value) : '') + '</b></div>'; }).join('') + (y.more ? '<p class="rc-sm">and ' + y.more + ' more</p>' : '') : '') +
       (y.hasBill ? '<p class="rc-yt">Billed and paid</p><div class="rc-yr-it"><span>Billed</span><b>' + money(y.billed) + '</b></div><div class="rc-yr-it"><span>Paid' + (y.paidOn ? ', first on ' + esc(dmy(y.paidOn)) : '') + '</span><b>' + money(y.paid) + '</b></div>' + (y.owed > 1 ? '<div class="rc-yr-it"><span>Still owed</span><b>' + money(y.owed) + '</b></div>' : '') : '') +
       ((y.claims || []).length ? '<p class="rc-yt">Claims</p><ul style="margin:0;padding-left:20px">' + y.claims.map(function (c) { return '<li>' + esc(dmy(c.on)) + ' · ' + esc(c.type) + (c.status ? ' · ' + esc(c.status) : '') + '</li>'; }).join('') + '</ul>' : '');
-    return '<details class="rc-yr"' + (i === 0 ? ' open' : '') + '><summary><b>' + esc(y.year) + '</b><span class="rc-sm">' + esc(dmy(y.from)) + ' to ' + esc(dmy(y.to)) + ((y.policies || []).length ? ' · policy ' + esc(y.policies.join(', ')) : '') + '</span>' +
+    return '<details class="rc-yr"' + (i === 0 && !shut ? ' open' : '') + '><summary><b>' + esc(y.year) + '</b><span class="rc-sm">' + esc(dmy(y.from)) + ' to ' + esc(dmy(y.to)) + ((y.policies || []).length ? ' · policy ' + esc(y.policies.join(', ')) : '') + '</span>' +
       '<span class="rc-yp">' + money(y.premium) + (y.change !== null && y.change !== undefined ? ' <span class="rc-sm">' + (y.change > 0 ? '+' : '') + y.change + '%</span>' : '') + '</span><span class="rc-chips">' + chips.join(' ') + '</span></summary><div class="rc-yb">' + body + '</div></details>';
   }
   /* One risk. Whether there is a figure of theirs to change is the backend's call
@@ -135,23 +140,64 @@
      and keeps the old behaviour. Only a comprehensive vehicle or a sum insured is
      adjustable — on third party nothing of the client's own is insured, so a value box
      there asks for a figure that means nothing and cannot be used. */
-  function itemHtml(x, a, open) {
+  /* The lender an assignee names, for a line a person reads. Salesforce holds the whole
+     branch address and spells one lender several ways on one fleet ("CFC - 17-19 …",
+     "CFC 17-19 …", "… Raoad …"), so printing it raw gives fifty rows of noise. The full
+     string stays on the element's title, since that is what the certificate carries. */
+  var LENDERS = ['JMMB', 'CFC', 'Massy Finance', 'Massy', 'NCBJ', 'Republic Bank', 'Republic',
+    'Scotiabank', 'Scotia', 'First Citizens', 'RBC', 'Term Finance', 'Island Finance', 'Unit Trust', 'ANSA'];
+  function lender(s) {
+    s = String(s || '').trim(); if (!s) return '';
+    for (var i = 0; i < LENDERS.length; i++) if (new RegExp('(^|\\W)' + LENDERS[i].replace(/\s+/g, '\\s+') + '(\\W|$)', 'i').test(s)) return LENDERS[i];
+    /* no lender we know: the words before the first number, which is where the address starts */
+    var m = /^([^0-9]{2,40}?)(?:\s*[-,]|\s+\d)/.exec(s);
+    return (m ? m[1] : s.slice(0, 40)).replace(/[\s,.-]+$/, '');
+  }
+  /* A vehicle's own value with us, year by year, always on screen rather than behind a
+     fold: on a fleet it is the thing that tells the client whether this year's figure
+     is right, and it is the reason the depreciation is visible at all. */
+  function yearStrip(hist, now) {
+    if (hist.length < 2) return '';
+    var first = hist[0], last = hist[hist.length - 1], yrs = Number(last.y) - Number(first.y);
+    var rate = yrs > 0 && first.v ? Math.round((Math.pow(last.v / first.v, 1 / yrs) - 1) * 1000) / 10 : null;
+    return '<div class="rc-yrs" role="group" aria-label="Its value with us, year by year">' +
+      hist.map(function (y) { return '<span><b>' + esc(y.y) + '</b>' + whole(y.v) + '</span>'; }).join('') +
+      (now ? '<span class="now"><b>Now</b>' + whole(now) + '</span>' : '') + '</div>' +
+      (rate !== null && Math.abs(rate) >= 1 ? '<p class="rc-rate">' + (rate < 0 ? 'Down' : 'Up') + ' about ' + Math.abs(rate) + '% a year with us.</p>' : '');
+  }
+  /* One risk. Whether there is a figure of theirs to change is the backend's call
+     (girAdjustable_, sent as `adjust`); a letter sent before that existed has no flag
+     and keeps the old behaviour. Only a comprehensive vehicle or a sum insured is
+     adjustable — on third party nothing of the client's own is insured, so a value box
+     there asks for a figure that means nothing and cannot be used.
+
+     `g` is the group it sits in, when it is in one. Inside a group the cover type is the
+     group's heading and the third-party note is said once above the list, so neither is
+     repeated down the rows — on this fleet that was the same sentence forty-nine times. */
+  function itemHtml(x, a, open, g) {
     var nv = a && a.values && a.values[x.id];
     var may = x.adjust === undefined ? !!x.value : !!x.adjust;
     var tp = /third\s*party/i.test(x.coverage || '');
     var gone = a && (a.off || []).some(function (z) { return z.id === x.id; });
     var hist = (x.hist || []).filter(function (y) { return y.v; });
+    var bank = lender(x.bank);
+    /* A risk with no figure of the client's own and nothing else to say is one line, not
+       a card: forty-nine third-party vehicles are a list to read down, not fifty cards. */
+    var lean = !!g && !may && !hist.length;
+    if (lean) return '<div class="rc-it lean' + (gone ? ' gone' : '') + '" data-rcit="' + esc(x.id) + '">' +
+      '<div class="lb">' + esc(x.label) + (bank ? ' <span class="sm bank" title="' + esc(x.bank) + '">cert. to ' + esc(bank) + '</span>' : '') + '</div>' +
+      (open ? '<label class="rc-off"><input type="checkbox" data-rco="' + esc(x.id) + '"' + (gone ? ' checked' : '') + ' aria-label="' + esc(x.label) + ' is no longer ours">Gone</label>' : '') +
+      '</div>';
     return '<div class="rc-it' + (gone ? ' gone' : '') + '" data-rcit="' + esc(x.id) + '"><div><div class="lb">' + esc(x.label) + '</div>' +
       /* Say what it is covered for, so a third party is visibly third party
          rather than a row with no box and no reason given. */
-      (x.coverage ? '<div class="sm cov">' + esc(x.coverage) + '</div>' : '') +
-      (x.bank ? '<div class="sm">A copy of the certificate goes to ' + esc(x.bank) + '</div>' : '') +
-      (x.lastValue && x.value && x.lastValue !== x.value ? '<div class="sm">Last year ' + whole(x.lastValue) + '</div>' : '') + '</div>' +
+      (x.coverage && !g ? '<div class="sm cov">' + esc(x.coverage) + '</div>' : '') +
+      (bank ? '<div class="sm bank" title="' + esc(x.bank) + '">A copy of the certificate goes to <b>' + esc(bank) + '</b></div>' : '') +
+      (x.lastValue && x.value && x.lastValue !== x.value && !hist.length ? '<div class="sm">Last year ' + whole(x.lastValue) + '</div>' : '') + '</div>' +
       '<div class="v">' + (x.value && may ? whole(nv || x.value) : '') + '</div>' +
-      (hist.length > 1 ? '<details class="rc-vh"><summary>Its value with us, year by year</summary><table><tr><th>Year</th><th>Value</th><th>Premium</th></tr>' +
-        hist.map(function (y) { return '<tr><td>' + esc(y.y) + '</td><td>' + whole(y.v) + '</td><td>' + (y.p ? money(y.p) : '') + '</td></tr>'; }).join('') + '</table></details>' : '') +
+      yearStrip(hist, x.value && may ? x.value : 0) +
       (open && may && x.value ? '<label>' + (x.kind === 'vehicle' ? 'If the vehicle\'s value is different, type it' : 'If the sum insured should change, type it') + ' <input inputmode="decimal" data-rcv="' + esc(x.id) + '" placeholder="' + esc(String(Math.round(x.value))) + '" value="' + (nv ? Math.round(nv) : '') + '" aria-label="New value for ' + esc(x.label) + '"></label>'
-        : open && tp ? '<p class="sm tpnote">Third party covers damage to other people and their property, not this vehicle, so there is no value to set.</p>' : '') +
+        : open && tp && !g ? '<p class="sm tpnote">Third party covers damage to other people and their property, not this vehicle, so there is no value to set.</p>' : '') +
       (open ? '<label class="rc-off"><input type="checkbox" data-rco="' + esc(x.id) + '"' + (gone ? ' checked' : '') + ' aria-label="' + esc(x.label) + ' is no longer ours">' +
         (x.kind === 'vehicle' ? 'Sold, written off or no longer ours — take it off' : 'No longer ours — take it off') + '</label>' : '') +
       '</div>';
@@ -176,10 +222,34 @@
     return '<div class="rc-sec"><h4>' + ICON.doc + 'What renews · ' + items.length + ' risks</h4>' +
       '<p class="rc-shape">' + shape + '</p>' + note +
       groups.map(function (g, i) {
+        var banks = g.list.filter(function (x) { return x.bank; }).length;
+        /* Said once, above the list, rather than on every row. */
+        var lead = g.key === 'tp'
+          ? '<p class="rc-gn">Third party covers damage to other people and their property, not these vehicles, so none of them carries a value for you to set'
+            + (banks ? ', and ' + (banks === g.list.length ? 'each' : banks === 1 ? 'one' : banks) + ' names a financier on the certificate' : ' or a financier on the certificate')
+            + '. Tick any that are no longer yours.</p>'
+          : g.may === g.list.length && g.may > 1
+            ? '<p class="rc-gn">Each of these carries a value we would pay if it were a total loss, with what we have carried it at in past years. Type a new figure wherever it has changed.</p>'
+            : '';
         return '<details class="rc-grp"' + (i === 0 ? ' open' : '') + '><summary><b>' + esc(g.name) + '</b><span class="n">' + g.list.length + '</span>' +
-          '<span class="sm">' + (g.may ? g.may + ' with a value you can set' + (g.value ? ', ' + whole(g.value) + ' in all' : '') : 'Nothing here has a value for you to set') + '</span></summary>' +
-          '<div class="rc-gb">' + g.list.map(function (x) { return itemHtml(x, a, open); }).join('') + '</div></details>';
+          '<span class="sm">' + (g.may ? g.may + ' with a value you can set' + (g.value ? ', ' + whole(g.value) + ' in all' : '') : 'No value to set')
+          + (banks ? ' · ' + banks + ' with a financier' : '') + '</span></summary>' +
+          '<div class="rc-gb">' + lead + g.list.map(function (x) { return itemHtml(x, a, open, g.key); }).join('') + '</div></details>';
       }).join('') + '</div>';
+  }
+  /* The client's own history with us. On a corporate account it comes BEFORE what renews:
+     sixty-three risks sit between the top of the card and the record, and the record is
+     what a person wants first. On a small policy the order is unchanged. */
+  function historySection(v, years, max, lead) {
+    if (!years.length) return '';
+    return '<div class="rc-sec"><h4>' + ICON.shield + 'Your history with us since ' + esc((v.since || years[0].year || '').slice(0, 4)) + '</h4>' + summaryLine(v) +
+      '<div class="rc-hist">' + years.map(function (y) {
+        return '<div class="rc-hb' + (y.now ? ' now' : '') + '"><b>' + esc(String(y.year).slice(0, 4)) + '</b><div class="tr"><i style="width:' + Math.max(3, Math.round((y.premium || 0) / max * 100)) + '%"></i></div><div class="v">' + money(y.premium) + '</div></div>'; }).join('') + '</div>' +
+      /* When the history leads, every year starts closed: an open fold of 12 risks would
+         put what renews another screen down, which is the scrolling this is meant to end. */
+      ((v.years || []).some(function (y) { return y.risks; }) ? '<p class="rc-yh">Every year in full</p>' +
+        v.years.slice().reverse().map(function (y, i) { return yearFold(y, i, lead); }).join('') : '') +
+      (v.since ? '<p style="margin:10px 0 0;font-size:.9rem">With us since ' + esc(dmy(v.since)) + '. Thank you.</p>' : '') + '</div>';
   }
   function html(v, o) {
     o = o || {};
@@ -190,18 +260,17 @@
     var years = (v.years || []).slice();
     if (v.total) years.push({ year: (v.from || v.ren || '').slice(0, 4) + ' renewal', premium: v.total, now: true });
     var max = Math.max.apply(null, [1].concat(years.map(function (y) { return y.premium || 0; })));
-    var a = v.answer, open = v.open;
+    var a = v.answer, open = v.open, big = (v.items || []).length >= 8;
     var h = '<article class="rc" id="rc-' + esc(v.key) + '" data-key="' + esc(v.key) + '">' +
       '<div class="rc-band"><div class="k">' + icon + esc(v.line) + ' · policy ' + esc(v.policy) + '</div><h3>Your renewal on ' + esc(dmy(v.ren)) + '</h3>' +
       '<div class="when">' + (d === null ? '' : d > 0 ? 'In ' + d + ' day' + (d === 1 ? '' : 's') : d === 0 ? 'Today' : Math.abs(d) + ' days ago') + (v.from ? ' · cover ' + esc(dmy(v.from)) + ' to ' + esc(dmy(v.to)) : '') + '</div>' +
       (v.total ? '<div class="rc-fig"><div><b>' + money(v.total) + '</b><span>this year, tax included</span></div>' + (v.lastPremium ? '<div><span>last year ' + money(v.lastPremium) + '</span>' + (change !== null ? '<span class="rc-chg">' + (change > 0 ? 'up ' : change < 0 ? 'down ' : '') + Math.abs(change) + '%</span>' : '') + '</div>' : '') + '</div>' : '') + '</div>' +
       '<div class="rc-body">' + (v.practice ? '<p class="rc-prac"><b>Practice letter.</b> Sent while the renewal desk is in test mode, to the team only. Your answer stays on the desk: nothing goes to Guardian General or Salesforce.</p>' : '') + '<ol class="rc-track" aria-label="Where your renewal stands">' + (v.steps || []).map(function (s) { return '<li class="' + (s.done ? 'on' : '') + '"><i></i>' + esc(s.label) + '</li>'; }).join('') + '</ol>' +
       (v.opening ? '<p style="margin:0">' + esc(v.opening) + '</p>' : '') +
-      risksSection(v, a, open) +
-      (years.length ? '<div class="rc-sec"><h4>' + ICON.shield + 'Your history with us since ' + esc((v.since || years[0].year || '').slice(0, 4)) + '</h4>' + summaryLine(v) + '<div class="rc-hist">' + years.map(function (y) {
-        return '<div class="rc-hb' + (y.now ? ' now' : '') + '"><b>' + esc(String(y.year).slice(0, 4)) + '</b><div class="tr"><i style="width:' + Math.max(3, Math.round((y.premium || 0) / max * 100)) + '%"></i></div><div class="v">' + money(y.premium) + '</div></div>'; }).join('') + '</div>' +
-        ((v.years || []).some(function (y) { return y.risks; }) ? '<p class="rc-yh">Every year in full</p>' + v.years.slice().reverse().map(yearFold).join('') : '') +
-        (v.since ? '<p style="margin:10px 0 0;font-size:.9rem">With us since ' + esc(dmy(v.since)) + '. Thank you.</p>' : '') + '</div>' : '') +
+      /* On a corporate account the history leads: the risks are the long part, and nobody
+         should scroll past sixty-three of them to reach their own record. */
+      (big ? historySection(v, years, max, true) + risksSection(v, a, open)
+           : risksSection(v, a, open) + historySection(v, years, max, false)) +
       '<div class="rc-sec"><h4>' + ICON.check + 'Every claim on our records</h4>' + ((v.claims || []).length ? '<ul style="margin:0;padding-left:20px">' + v.claims.map(function (c) { return '<li>' + esc(dmy(c.on)) + ' · ' + esc(c.type) + (c.status ? ' · ' + esc(c.status) : '') + '</li>'; }).join('') + '</ul>' : '<p style="margin:0">None on our records.</p>') + '</div>' +
       ((v.points || []).length ? '<div class="rc-sec"><h4>' + ICON.doc + 'Worth a look before you approve</h4>' + v.points.map(function (p) { return '<div class="rc-pt"><b>' + esc(p.title) + '</b>' + esc(p.text) + '</div>'; }).join('') + '</div>' : '') +
       ((v.reqs || []).length ? '<div class="rc-sec"><h4>' + ICON.doc + 'Guardian General needs these with your renewal</h4><ul style="margin:0;padding-left:20px">' + v.reqs.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ul></div>' : '') +
