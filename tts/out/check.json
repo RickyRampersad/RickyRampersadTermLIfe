@@ -1,12 +1,27 @@
 {
- "tts/out/lbnewlook2/01.mp3": [
+ "tts/out/smpA/01.mp3": [
   "en",
-  0.99,
-  "Bigger text and bigger buttons. Build for your phone."
+  0.997,
+  "Hey everyone, the logbook has a new look. It's lighter, it's clearer, and it's so much easier to read on your phone."
  ],
- "tts/out/lbnewlook2/02.mp3": [
+ "tts/out/smpB/01.mp3": [
   "en",
-  0.996,
-  "For staff, the Q and the Insights are easy to read."
+  0.997,
+  "Hey, everyone. The logbook has a new look. It's lighter, it's clearer, and it's so much easier to read on your phone."
+ ],
+ "tts/out/smpC/01.mp3": [
+  "en",
+  0.998,
+  "Hey everyone, the logbook has a new look. It's lighter, it's clearer, and it's so much easier to read on your phone."
+ ],
+ "tts/out/smpD/01.mp3": [
+  "en",
+  0.997,
+  "Hey everyone, the logbook has a new look. It's lighter, it's clearer, and it's so much easier to read on your phone."
+ ],
+ "tts/out/smpE/01.mp3": [
+  "en",
+  0.994,
+  "Hey everyone! The logbook has a new look. It's lighter, it's clearer and it's so much easier to read on your phone."
  ]
 }
