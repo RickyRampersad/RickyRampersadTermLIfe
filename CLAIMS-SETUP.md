@@ -494,18 +494,46 @@ hosting moves to Netlify — GitHub Pages cannot do redirects.)
 
 ### Pointing claimstt.com at it
 
-`claimstt.com` is currently a GoDaddy placeholder. Two options:
+**claimstt.com is not a placeholder, and since the JotForms were switched off
+it is a dead end for clients.** Found 10 November 2026, when the branch
+manager opened it expecting the new page: it serves a **GoDaddy** site (DNS
+resolves to GoDaddy's IPs, not GitHub's `185.199.108-111.153`) with one of the
+retired JotForms embedded in it, so the page now shows JotForm's own
+*"Form not found. This form is disabled."* card. Anybody who goes to
+claimstt.com cannot file a claim, and nothing on the page says where to go
+instead.
+
+**This repository has never served that domain and cannot fix it from here.**
+The GoDaddy site is outside the repository and outside Apps Script; the fix is
+in the GoDaddy account.
+
+**The two-minute fix: GoDaddy domain forwarding.** My Products → claimstt.com
+→ Manage → **Forwarding** → forward to `https://rickyrampersadbranch.com/claims`,
+**Permanent (301)**, and **Forward only — never "Forward with masking"**.
+Masking serves the page inside a frame under the old address, which breaks the
+sign-in (the six-digit code), the uploads and the claim reference, and leaves
+every link pointing at a domain the page does not know. If GoDaddy refuses
+because a Websites + Marketing site is published on the domain, unpublish that
+site first — it is the thing showing the dead form.
+
+**Or keep the GoDaddy page** and edit it: delete the JotForm section and put a
+button to `https://rickyrampersadbranch.com/claims` in its place. Slower to
+maintain, and it leaves two pages telling clients two things.
+
+**The end state, when there is time:**
 
 - **Stay on GitHub Pages:** GoDaddy DNS → CNAME `claimstt.com` (and `www`) to
-  `rickyrampersad.github.io`. But note a GitHub Pages site takes **one**
-  custom domain, and this one already uses rickyrampersadbranch.com — so
-  claimstt.com would redirect there rather than stand alone.
+  `rickyrampersad.github.io`. But a GitHub Pages site takes **one** custom
+  domain, and this one already uses rickyrampersadbranch.com — so claimstt.com
+  redirects to the branch **homepage**, not to `/claims/`. That is worse than
+  forwarding, which lands on the exact page.
 - **Move hosting to Netlify** (free, imports this repo directly): both
   domains can then point at the same site, the `netlify.toml` short links
   and `/data/*` blocking come alive, and the repo could go private without
   taking the site down. This is the better end state.
 
-Until then everything works at `rickyrampersadbranch.com/claims/`.
+Until then everything works at `rickyrampersadbranch.com/claims/`, which is
+live and current — check the live page before assuming otherwise.
 
 ---
 
@@ -1005,7 +1033,9 @@ now* to receive one yourself.
       with it, so send the team the new one.
 - [ ] **Git history**: purge the client-data commits, or make the repo
       private and move hosting to Netlify — see *Read this first*
-- [ ] **claimstt.com DNS** repointed from the GoDaddy placeholder
+- [ ] **claimstt.com forwarded** — it is a live GoDaddy site serving a retired
+      JotForm, so it tells every client the form is disabled. Two minutes in
+      the GoDaddy account; see *Pointing claimstt.com at it*
 - [ ] **Guardian compliance sign-off** before the site takes live client data
 
 That last one is not a formality. The system holds names, addresses, policy
