@@ -593,6 +593,60 @@ the meeting is more than two working days off, and none to a person who owes
 nothing, has no open actions and no measures. A note that arrives every morning
 regardless is a note people filter.
 
+### The chair's own note — the Builder filling up, or not
+
+The daily note above goes to every person and carries their own figures. This is the
+other half, and it goes to **you alone**: *Branch Meetings → Turn on my daily Builder
+progress*, read it now with *Send me the progress note now*.
+
+- **No meeting on the books** is the first line, and it is loud. The Builder sat with
+  no meeting after 30 October while the week cycle was off, and nothing said so.
+- The agenda, and whether the running order fits the room.
+- **Material promised and not in**, and who owes it.
+- **Items with nothing in the Detail field** — the question an agent reads under an
+  item. An item without one leaves them nothing to answer.
+- Who has brought something, and who has not, by first name.
+- Open and overdue actions; the Monday brief answered; the two time blocks answered;
+  last meeting's register, and whether its minutes are published.
+
+It is quiet at weekends and when the meeting is four or more working days off — never
+when there is no meeting. Add a second reader with the `PROGRESS_TO` Script property
+and move the hour with `PROGRESS_HOUR`.
+
+### The content ask — the whole branch, on the days you choose
+
+*Branch Meetings → Turn on the content ask.* One short e-mail, one question, one
+button, at **11:00 on Monday and Tuesday** by default: *what are you bringing to
+Wednesday?* It offers the agenda's own questions to answer, because an agent who
+cannot think of anything in the abstract can answer a question.
+
+- It **skips anybody who has already brought something** to that meeting. Nagging the
+  people who are doing the thing you asked for is how an ask becomes noise.
+- It says nothing when there is no meeting, or the meeting is more than three working
+  days off.
+- The days are yours: `CONTENT_ASK_DAYS`, comma-separated, `0` = Sunday — so `1,2` is
+  Monday and Tuesday and `2` is Tuesday alone. The hour is `CONTENT_ASK_HOUR`. Change
+  either and run the menu item again.
+
+Why two days before and not the morning of: the contribution box shuts when check-in
+opens, half an hour before the meeting starts. An ask on the day is asking for
+something the branch has two hours left to do.
+
+### The mail allowance, and the relay
+
+This project sends on the Google account that owns it, which allows about **100
+recipients a day**. With 19 on the roll a Monday already commits up to 76 — 19 daily
+notes, 38 time-block checks, 19 Monday briefs. Every send used to sit in a try/catch
+that only wrote to the log, so the day the allowance ran out the notes would have
+stopped for some people and not others with nobody told.
+
+Every send now goes through the **branch relay** the KPI tracker uses
+(support@rickyrampersadbranch.com, about 1,500 a day), falling back to the Gmail
+account exactly as before. Put `MAIL_RELAY_URL` and `MAIL_RELAY_KEY` into this
+project's Script properties — the same two values the tracker holds — and run
+*Branch Meetings → Test the mail route*, which says which way it went. A run stopped
+by the allowance e-mails you once a day rather than going quiet.
+
 ### Why it is not a daily production chase
 
 This was decided against the evidence rather than by preference. Chung,
@@ -785,6 +839,124 @@ both a *"CONFIDENTIAL — BM EYES ONLY"* footer and a *"Branch Manager's Talking
 Points — not for distribution"* section, which staff should not see either.
 
 ---
+
+## Signing in as a guest when you are on the roll
+
+`0000` is for someone who is **not** branch. A visitor is deliberately never on
+the register — that is what keeps three executives looking in from pushing the
+branch past 100% — so a branch member who comes through the guest door is
+recorded as a visitor and **marked absent for a meeting they were at**.
+
+Since 8 November 2026 the guest door checks the name typed against the roll and
+turns a branch member round, naming their own way in and writing nothing. If
+you are on the roll, **your agent number is the whole sign-in**: no password,
+no `0000`. And the number is only the door — the **"I am here"** button on the
+meeting card is the register.
+
+If your own number is refused, tell the branch: your row has not been pulled
+across from the Agent Skill Bank yet. Run **Pull the roster** from the menu.
+
+## Moving it to the Workspace — 8 November 2026
+
+Asked for in these words: *"Ok so this is suooosed to be moved to my workspace
+can you"*.
+
+The sheet is **`Branch Meetings — Ricky Rampersad Branch`**, and Drive says it
+is owned by **the personal Gmail**. That is why the mail arithmetic bites: the
+account allows about **100 recipients a day**, and on a Monday the daily note,
+the two time blocks and the Monday brief together commit up to **76** of them
+across nineteen people. Owned by **support@rickyrampersadbranch.com** it is
+about **1,500**, and every e-mail comes from the branch's own address rather
+than a personal Gmail — which is the real reason to move it, the allowance
+being only the arithmetic underneath.
+
+**It has to be OWNED by support@, not shared with it.** This is the sentence
+the claims intake and the motor quote each paid for: an editor can run the
+script, and then **Deploy** refuses with *"You do not have permission to
+perform this action"*, which reads as a Google fault and is not. Sharing the
+sheet with support@ does not help. The fix is **File → Make a copy while
+signed in as support@ alone**.
+
+### What a copy does NOT carry
+
+| | |
+|---|---|
+| **Script properties** | none of them |
+| **Triggers** | none of the eight |
+| **The deployment** | a new `/exec`, so the page must be re-pointed |
+| **The Drive folders** | the archive and every meeting's Materials folder stay in the old Drive |
+| **Revision history** | the tabs come across as values |
+
+The properties, and how each is set:
+
+| property | set by |
+|---|---|
+| `JOIN_CODE` | 🔑 Set the branch code |
+| `ROSTER_SHEET_ID` | 🪪 Pull the roster from the Agent Skill Bank |
+| `ARCHIVE_FOLDER_ID` | 📥 Import the meeting archive |
+| `PORTFOLIO_SHEET_ID` | 📊 Connect the Branch Portfolio |
+| `SERVICE_SHEET_IDS` | 🤝 Connect the service sheets |
+| `MAIL_RELAY_URL`, `MAIL_RELAY_KEY` | by hand — **optional once support@ owns it** |
+| `PROGRESS_TO`, `PROGRESS_HOUR`, `CONTENT_ASK_DAYS`, `CONTENT_ASK_HOUR` | by hand, optional |
+| `BRANCH_MAIL` | the menu, or `releaseBranchMail` — leave it unset until you are ready |
+
+`MAIL_RELAY_LAST` and `mm_relay_left` are written by the code. Do not copy them.
+
+The eight trigger functions: `dailyMeetingNote`, `activityMorning`,
+`activityAfternoon`, `mondayBrief`, `weekClose`, `buildWednesday`,
+`builderProgress`, `contentAsk`. The menu items install all of them.
+
+### A fresh copy starts HELD, and that is deliberate
+
+The claims note records that *"a fresh copy is LIVE, because no `TEST_MODE`
+property means live"*, and that the first thing done on a copy is to turn test
+mode on. **The Builder had no test mode to turn on** — `TEST_MODE` appears
+nowhere in `Meetings.gs` — and its sends go to the whole branch, so a copy
+deployed with its triggers installed would write to nineteen people from a
+deployment nobody had tested.
+
+So **unset means held here, not live.** While it holds, your own progress note
+and every preview still arrive, so you can read each e-mail exactly as the
+branch would get it before the branch gets one. Nothing about it is quiet: a
+held run says what it held in its own summary line, you are e-mailed once a day
+naming the release, the progress note leads its "To act on" list with it, and
+`mailRouteTest` says it outright. When you are ready:
+
+> **✉️ Release the mail to the branch** on the Meeting Builder menu, or
+> `releaseBranchMail` from the editor. `holdBranchMail` puts it back.
+
+### The order
+
+1. **Sign in as support@ alone** — a second Google account signed in to the
+   same browser is what makes Apps Script refuse to open a page at all.
+2. **File → Make a copy.** Name it the same.
+3. **Extensions → Apps Script**, paste `apps-script/Meetings.gs`, and leave
+   `BRANCH_MAIL` unset.
+4. **Deploy → New deployment → Web app**, *Execute as: Me*, *Who has access:
+   Anyone*. Copy the `/exec`.
+5. **Put the new `/exec` into `meetings/index.html`** — the `API_URL` line, and
+   **only** that line. The other `script.google.com` addresses under
+   `meetings/` are the **view counter's** beacon, a different `/exec`
+   altogether; a blunt find-and-replace breaks it. Then merge.
+6. **Re-enter the properties** from the table above, and press the menu items
+   — **the week cycle first**, without which there is no meeting at all and
+   nobody can sign in.
+7. **Check it from outside:** `?action=ping` now answers
+   `runsAs` (the domain only, never the address), `onWorkspace`, `branchMail`
+   and `version`. `runsAs: "rickyrampersadbranch.com"` means the move took;
+   `"gmail.com"` means it is still on the personal account; `""` means the
+   deployment is not *Execute as: Me* and nothing can be stored at all.
+8. **Read each e-mail while it still holds** — the progress note, a preview of
+   the daily note, a time-block check, the content ask.
+9. **Release the mail to the branch.**
+10. **Turn the old project off.** Its `/exec` keeps answering and its triggers
+    keep firing, so until its triggers are deleted both Builders send and the
+    branch gets everything twice.
+
+Afterwards the branch relay (`MAIL_RELAY_URL`, `MAIL_RELAY_KEY`) is no longer
+the fix for the allowance — `MailApp` sends from support@ by itself, under the
+Workspace's own allowance, as the motor quote does. Setting it anyway is
+harmless and keeps one From address across the tracker and the Builder.
 
 ## Setting it up — about ten minutes, once
 

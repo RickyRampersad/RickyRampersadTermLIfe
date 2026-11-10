@@ -8924,6 +8924,224 @@ Playwright against a mocked backend: an agent before and after check-in opens,
 an agent already on the register, and staff on a laptop; no sideways scroll at
 390, no page errors).
 
+### The daily Builder progress, the content ask, and the mail arithmetic under both — 8 November 2026
+
+Asked for in these words: *"Can I have a daily builder progress? I need to also in
+certain days ask for content from all in the workday can this be done and remind me
+on the process and any refinements??"*
+
+**The Builder had been running on nothing since 30 October.** The live deployment
+answered `version: 2026-10-28`, its only meeting was `MD-2026-10-30` — the one-off
+Friday — and there was none after it. `buildWednesday` writes the meeting and seeds
+the agenda from the standing rota at 6:00 on the meeting day, and it only fires if
+the week cycle has been installed. It had not been. So for nine days nobody could
+sign in, nobody could bring anything, and the register had nothing to measure, and
+**nothing anywhere said so.** That is why the progress note's first line, when there
+is no meeting, is loud rather than a footnote.
+
+**The daily note stays what it is.** `dailyMeetingNote` is each person's own — their
+item, their actions, their own measures, the one ask — with no league table and
+nobody else's figures, on the Chung, Narayandas and Chang evidence already recorded
+in `Meetings.gs`. That did not change. `builderProgress` is the other half and goes
+to **one person**: `MEET.ADMIN_EMAIL`, plus whoever the `PROGRESS_TO` property names.
+
+What it carries, all of it off tabs that already held it: the countdown, or that
+there is no meeting; items and whether the running order fits the room (read off the
+meeting row's own Start and End, not a constant, so a one-off at another time is
+judged against its own length); material promised and not in; **items with nothing
+in the `Detail` field**, because that is the question an agent reads under an item
+and the how-to film teaches them to look for it; who has brought something and who
+has not, by first name; open and overdue actions; the Monday brief answered; the two
+time blocks answered; last meeting's register and whether its minutes are published.
+Quiet at weekends, and quiet when the meeting is `PROGRESS.QUIET_FROM_DAYS` (4) or
+more working days off — **never** quiet when there is no meeting.
+
+**The content ask is a separate e-mail on purpose.** The ask already existed inside
+the 7:00 daily note, and already knew who had contributed; but it arrives with eight
+other things around it, and only inside two working days of the meeting, which on a
+Wednesday cadence means the last of those three days is the meeting morning itself.
+`contentAsk` is one question and one button, at `CONTENT_ASK_HOUR` (11:00) on the
+days `CONTENT_ASK_DAYS` names (Monday and Tuesday by default, `0` = Sunday). It
+**skips anybody who has already brought something to that meeting**, which is what
+stops an ask becoming the thing people filter, and it says nothing at all when there
+is no meeting or the meeting is more than three working days off.
+
+It is deliberately **not** bolted onto the 10:00 and 15:00 time-block checks. Those
+ask what a person did; this asks what they will bring. Putting the second inside the
+first lowers the answer rate of both, and a run that fails then takes two jobs down
+instead of one.
+
+**The floor it has to fit through:** `floorSection` draws the contribution box only
+while `!live && !m.past && !m.checkInOpen`, so the box shuts when check-in opens,
+half an hour before the start. An ask sent on the meeting morning is asking for
+something the branch has two hours left to do. Hence the two days before.
+
+**The mail arithmetic, which is the real refinement and was a hidden fault.** This
+project sends on the personal Google account that owns it: about **100 recipients a
+day**. With 19 on the roll it was already committing, on a Monday, up to 19 daily
+notes + 38 time-block checks + 19 Monday briefs = **76**. Adding the content ask
+would have taken a Monday past 90. And **every send in the file sat in a try/catch
+that only wrote to the log**, so the day the allowance ran out the notes would simply
+have stopped, to some people and not others, with nobody told — the quiet failure
+this branch has been bitten by before.
+
+So every send now goes through `meetMail_`, which tries the **branch relay**
+(`apps-script/MailRelay.gs`, under support@rickyrampersadbranch.com, a Workspace
+account, about 1,500 a day) that the KPI tracker has used since 20 October, and
+falls back to Gmail exactly as before. Until `MAIL_RELAY_URL` and `MAIL_RELAY_KEY`
+are both in this project's Script properties, nothing the branch receives changes.
+`MMAIL.FLOOR` (12) stops a run with a margin rather than at zero, because a run that
+reaches half the roll reads as favouritism; the margin exists so `mmHeldAlert_` can
+still tell the chair, once a day, naming the fix. The progress note nags about it
+until the relay is set.
+
+**Three Script properties read garbage as a valid answer**, and the test caught it:
+`num_()` answers `0` for anything it cannot read, and `0` passes a 0-to-6 or 0-to-23
+range check — so a mistyped `CONTENT_ASK_DAYS` became **Sunday** and a mistyped hour
+became **midnight**. `mmWhole_` reads them strictly: whole digits inside the range,
+or the default.
+
+**The version string was not bumped on 29 October**, when the guest sign-in fixes
+went in, so `?action=ping` cannot tell anybody which build is live — the ping says
+`2026-10-28` either way. Bump `MEET.VERSION` with every paste; a build marker that
+does not move is worse than none, because it is read as reassurance. The same lesson
+is recorded for the branch backend elsewhere in this file.
+
+**None of it runs until he pastes `Meetings.gs` and presses the menu items**:
+*Turn on the week cycle* (without which there is no meeting at all), *Turn on my
+daily Builder progress*, *Turn on the content ask*, and *Test the mail route*.
+
+`tests/test-builder-progress.js` covers it (89 checks, on the real script under the
+harness: the relay and its fallbacks, the hold and its alert, the model's figures
+against seeded tabs, the no-meeting headline, who the ask skips, and the installs).
+`tests/test-friday.js`, `e2e-meetings-gate.js` and `e2e-friday.js` still pass.
+
+### Moving the Builder to the Workspace, and the hold a copy starts in — 8 November 2026
+
+Asked for the same evening: *"Ok so this is suooosed to be moved to my workspace
+can you"*. Drive confirms **`Branch Meetings — Ricky Rampersad Branch`** is owned
+by the personal Gmail, which is where the mail arithmetic above comes from. The
+runbook is in `meetings/README.md`; the standing rule is the one recorded for the
+claims intake a day earlier and for the motor quote on 21 October — **the sheet
+must be owned by support@, not shared with it**, and the fix is *File → Make a
+copy while signed in as support@ alone*. A copy carries no Script properties, none
+of the **eight** trigger functions, a new `/exec`, and not the Drive folders.
+
+**A fresh copy of THIS project would have been worse than the claims one, and that
+is what the change here is for.** The claims note reads *"a fresh copy is LIVE,
+because no `TEST_MODE` property means live"*, and the remedy was to turn test mode
+on first. The Builder **had no test mode to turn on** — `TEST_MODE` appears nowhere
+in `Meetings.gs` — and every one of its sends goes to the whole branch, so a copy
+deployed with its triggers installed would have written to nineteen people from a
+deployment nobody had read a single e-mail from.
+
+So **`BRANCH_MAIL` unset means HELD, not live**, which inverts that trap instead of
+repeating it. One check at the top of `meetMail_`, which is already the single choke
+point every send goes through, and `'held'` is already a value all three runners
+count and report — so the hold cost almost nothing to wire.
+
+- **The gate decides who qualifies, never the caller.** There is deliberately no
+  flag a send can carry to exempt itself (the test sends one carrying `chair`,
+  `signIn` and `preview` and it is still held). The exemption is read from
+  `progressTo_()` — `MEET.ADMIN_EMAIL` plus the `PROGRESS_TO` property, both set by
+  a person in Script properties — so the chair's own progress note and every
+  preview arrive while the branch hears nothing. Same rule as `claimsTester_`.
+- **It is never quiet**, which is the only thing that makes a safe default
+  acceptable on a project that may already be running: a held run says what it held
+  in its own summary line, `mmHeldAlert_` e-mails the chair once a day **naming the
+  release rather than the mail allowance** (two different holds reach that alert and
+  the fix differs, so it must not guess), the progress note leads its "To act on"
+  list with it, and `mailRouteTest` says it outright. `releaseBranchMail` and
+  `holdBranchMail` carry **no trailing underscore** on purpose: a private name is
+  not in the editor's Run list, and on the claims copy that left a window with no
+  way to turn the hold on at all.
+
+**The ping now says which account it runs on**, because a bound script keeps its own
+`/exec` when its sheet is copied, so a moved project and an un-moved one are
+indistinguishable from outside — the fault the claims intake paid for twice.
+`runsAs` is **the domain only, never the address**: that endpoint needs no sign-in,
+support@ is published all over this repository and a personal address is not. Three
+answers, as for claims: the branch domain, `gmail.com`, or `""` meaning the
+deployment is not *Execute as: Me*. `branchMail` reads `held` or `live` beside it,
+and **`MEET.VERSION` was bumped**, which the section above had already noted as
+overdue.
+
+**Two traps worth keeping:**
+
+- **`meetings/index.html` holds the Builder's `/exec` in exactly one place**, its
+  `API_URL` line. The other four `script.google.com` addresses under `meetings/` are
+  the **view counter's** beacon, a different `/exec` altogether — the inverse of the
+  26 October fault where the Intelligence URL was pasted into six pages' beacons. A
+  blunt find-and-replace on the new deployment URL breaks the counter.
+- **The old project keeps working after the move.** Its `/exec` still answers and
+  its triggers still fire, so until they are deleted both Builders send and the
+  branch gets everything twice.
+
+**A pre-existing test caught the ping change, and the test held the bug.**
+`test-friday.js` guards the ping against leaking any of the fixture's names, codes
+and e-mail domain, `example.com` among them — and the harness's own script owner is
+`ricky@example.com`, so a correct `runsAs` reading collided with the fixture's
+people and read as a leak. The fix is on the test side: give the owner a domain of
+its own, so the guard keeps its full force and `runsAs` is checked as well. Do not
+weaken that guard.
+
+### The branch signed in as guests, so the register has been empty — 8 November 2026
+
+Read out of the live book while answering "are the ideas coming in". It is the
+worst kind of fault: everything worked exactly as designed and the record came
+out blank.
+
+**Four of the branch's own staff are in the visitors' book**, having signed in
+with `0000` — the BMA, two of Sales Support and one more, two on 30 October and
+one at 9:04 on the morning of 4 November, two minutes after the chair opened
+the session. **A VISITOR IS NEVER ON THE REGISTER**, by design: `roster_()` is
+the denominator and it filters `role === 'guest'` out, so three executives
+looking in cannot push the branch past 100%. The cost of that is the other
+direction, which nobody had looked at — somebody who **is** on the roll and
+comes through the guest door is recorded as a visitor and **marked absent for a
+meeting they attended**. Their own rows were on the roll the whole time.
+
+The 4 November transcript catches the confusion in the room: *"It doesn't log
+in and send that, so which means have you log that afterwards."*
+
+**So the guest door turns a branch member round rather than letting them
+through it.** `guestOnRoll_` matches the typed name against the roll through
+`agentKey_`, which drops the `A07347 - ` the roster pull writes in front of
+every name; on a hit, `apiLogin_` refuses with their own route and **writes
+nothing** — no People row, no visitors' book line, no token — so they arrive at
+the number box with the register still correct. The page reads the new `onRoll`
+flag, puts the visitor form away and sends them back to the number: leaving the
+name boxes up reads as "try that again", which is the one thing not to do.
+
+- **An executive is not on the roll**, so the standing visitor is untouched.
+  That is the whole point of `0000` and the test pins it.
+- **Ambiguity is refused too.** Two people answering to one name on the roll
+  and only their own number can say which, so that is where they are sent.
+- **A first name alone matches nobody** (`agentKey_` needs both halves), so a
+  visitor called Pat is never turned away by a Pat on the roll.
+- **Inactive is not on the roll**, so somebody who has left may look in.
+
+**What the live book also shows, and it is the bigger finding:** Contributions,
+Uploads, Actions, Minutes and Chases are **all empty, header row only** — not
+one contribution has ever been made. Attendance holds five rows, all agents,
+all from 30 October. The Agenda's 18 rows belong to the 23 and 30 October
+meetings; the 4 November meeting has a **session opened at 9:02 and never
+closed, no agenda, no attendance, no minutes**, because `buildWednesday` only
+fires if the week cycle was installed and it was not. A meeting ran for two
+hours and eighteen minutes outside the Builder entirely.
+
+**And the move has not happened.** Drive holds exactly one copy of
+`Branch Meetings — Ricky Rampersad Branch`, owner the personal Gmail, modified
+6 November; the live `/exec` answers `version: 2026-10-28`, which predates the
+`runsAs` field, so nothing about the account is visible from outside yet. That
+is precisely the fault `runsAs` was added for: **a bound script keeps its own
+`/exec` when its sheet is copied**, so a moved project and an un-moved one are
+indistinguishable without it. Once `Meetings.gs` is pasted and a New version
+published, `?action=ping` settles it in seconds.
+
+`tests/test-guest-signin.js` covers it (16 new checks, 40 in all; run with
+`SHEETS_PARSE=1`).
+
 ## `/branchmeet/` — the FY27 rise, and what the film may not say
 
 Asked for on 28 October 2026, the evening before the branch group sees it:

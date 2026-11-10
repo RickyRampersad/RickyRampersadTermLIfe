@@ -822,6 +822,19 @@ function doLogin() {
         }
         return say("li-msg", res.error || "Tell us your name and your role.", "info");
       }
+      //  On the roll, so turned round at the guest door rather than
+      //  recorded as a visitor and marked absent (see guestOnRoll_). Put
+      //  the visitor form away and send them back to the number box: the
+      //  message tells them what to type, and leaving the name boxes up
+      //  reads as "try that again", which is the one thing not to do.
+      if (res.onRoll) {
+        $("li-guest").style.display = "none";
+        if ($("li-help")) $("li-help").style.display = "";
+        $("li-go").textContent = "Sign in";
+        $("li-email").value = "";
+        $("li-email").focus();
+        return say("li-msg", res.error || "You are on the branch roll — sign in with your agent number.");
+      }
       if (!res.ok) {
         //  NO PASSWORD BOX HERE, EVER AGAIN. One used to appear the first
         //  time a number alone was turned away — a bridge for the window
