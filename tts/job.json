@@ -3,21 +3,19 @@
   "rate": "+0%",
   "check": true,
   "films": {
-    "mtwed2": [
-      "Tomorrow at nine, the branch meets. This is what will already be on the screen.",
-      "None of it gets typed up in the morning. It has been building all week, by itself.",
-      "Your day arrives every morning with your goal, and the one thing to do first.",
-      "Tomorrow's ask is on it. Bring a case that worked. A point you can teach. A question. Or say where you need help.",
-      "You tap it once, and it lands on the agenda under the right item, before anybody sits down.",
-      "At half past eight, press the button that says I am here. That tap is the register.",
-      "First on the board. Since the first of October, 60 applications, and 72 policies picked up.",
-      "Fact finds. 157 so far this year. 11 of them this month.",
-      "Then what we are about to lose. 121 renewals and premiums due. 32 pendings. 352 service requests open.",
-      "And we closed 267 of them in the last seven days.",
-      "The campaign. 318 orphan files still open, every one of them with a name against it.",
-      "Then the room has it. An agent shows what worked. One of us teaches. The floor is open.",
-      "Each unit closes with its own number. Every action carries a name, and next week opens on it.",
-      "Nineteen of us, at nine o'clock. Everything else is already there."
+    "agnew": [
+      "This morning, your day e-mail looked different. Here's what changed, and why.",
+      "Before, you got three e-mails a day. Morning, midday, and half past five. Long lists, and you had to dig for what mattered.",
+      "We looked at how you were answering them. Three was too many. The midday one got lost.",
+      "So now it's two. One at seven in the morning, and one at half past five. That's it.",
+      "Here's Rajiv's, from this morning. His day opens with one thing to do first, and his plan, filled in from his goal.",
+      "One tap opens My day. No Google page, and no password. He checks in, and sets his numbers before half past ten.",
+      "Under that is everything the branch is working on for him. Sixteen files this morning. Ten with Sasha, four with Liz, and two with Mrs Dookran.",
+      "He opens a file and posts what happened. One client signed his transfer forms. Another set a meeting for Thursday. It's on the file the same day.",
+      "Then he commits one thing for Wednesday's meeting. A case, a skill, a question, or the help he needs. It lands on the agenda by itself.",
+      "At half past five, he closes off. What he did, against what he planned. His manager sees it, and so do we.",
+      "Your part is simple. Check in, post on your files, and close off your day. Our part is to work every file for you, and answer when you ask for help.",
+      "Use it every day. That's how the branch knows what you need."
     ]
   }
 }
