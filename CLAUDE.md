@@ -8889,6 +8889,46 @@ mtuse-lines.json`, `build-mtusefilm.py`, `sfx.py`,
 `render.js ../../meetings/usefilm.html cap-mtuse 30 ../../meetings/usefilm.jpg`,
 `mixany.py`. Re-shoot first with `node mtuseshots/shots.js` if the page changed.
 
+### Tomorrow's meeting on film — 10 November 2026
+
+Asked for in these words: *"I would need to already have a video as to what's
+going to happen tomorrow."* `meetings/wed.mp4` (1:10), its page to post at
+**`/meetingtomorrow/`**, source `meetings/wed.html`, built by
+`tools/film/build-mtwedfilm.py` from `mtwed-lines.json` and `mtwed-timing.json`.
+
+**It is deliberately not the sign-in film or the how-to film again.** Those two
+teach the taps. This one is the **shape of the ninety minutes**, so a person
+knows what they are walking into: what to do tonight, the register at 8:30, the
+screen doing the reporting at 9:00, what the agenda carries, the room's own
+three items, each unit's closing number, and the minutes afterwards.
+
+**The agenda on screen is the Builder's own Rota**, by its own words and its own
+minutes, so the film cannot drift from the page. Change the Rota and re-cut.
+
+**It is dated to one Wednesday on purpose** — the opposite of the how-to film's
+rule, and for the opposite reason: this one is about one meeting. Re-cut it or
+retire it afterwards rather than leave a stale date at a public URL.
+
+**Scene 4 is why it exists.** Four branch staff were in the visitors' book
+instead of on the register, one of them two minutes after the chair opened the
+4 November session, because signing in is not the attendance mark. The scene
+puts the button and the refusal side by side.
+
+**Two voice lessons, both the same family as the ones already recorded.**
+*"Training, taught by one of us"* came back as **"top by"**; re-worded to
+*"Training, from one of us"* inside a line of comma-separated fragments, and
+then the fragments' own function words came back wrong (*Then*→"than",
+*What*→"but", *And*→"in"). **A line of short fragments is as risky as a
+two-word opening clause**: it is whole sentences now. And *"the minutes, and
+every action"* came back as *"the minutes in every action"*, which changes the
+meaning — *"Afterwards, the minutes. Every action carries a name."*
+
+**A tall card is scaled, not cropped.** The composer shot (`mtuseshots/c-form.jpg`)
+is 940px tall and `.cardshot`'s `overflow:hidden` took the *Put it on the agenda*
+button off the bottom — the one thing the scene is about. `.cardshot.fit` sizes
+by height instead. The builder's own class-collision and reserved-class guards
+are `build-mtfilm.py`'s, unchanged.
+
 ### The home screen says what to do, by role — 30 October 2026
 
 Asked for in these words, after he signed in as one of the agents the morning
