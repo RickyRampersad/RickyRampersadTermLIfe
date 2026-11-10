@@ -9526,6 +9526,54 @@ the trigger list away in turn and checks the ping still answers.
 because it went green first time: on `2026-11-10a` both fields come back
 `undefined`.
 
+### "Build Wednesday's agenda now" on a Tuesday — 10 November 2026
+
+Asked for in four words, **"build wednesday agenda now"**, the evening before the
+meeting. He could not, and nothing about the screen said why: `buildWednesday`
+is the 6:00 Wednesday trigger and the menu item **both**, and its first line is
+`if (now.getDay() !== MEET.MEETING_DAY) return 'Not the meeting day.'` So the
+button answered that and built nothing, and tomorrow's agenda could not exist
+until tomorrow.
+
+**The cost is not the button; it is that nobody can bring anything.**
+`floorSection` draws the contribution box only while the meeting is upcoming and
+check-in has not opened, and check-in opens **half an hour before the start**. An
+agenda that first appears at 6:00 on the morning gives the branch about two
+hours to put something on it — which is the same squeeze the content ask was
+moved off the meeting morning to avoid.
+
+**So the trigger keeps its guard and a person's press does not.**
+`buildWednesday(opts)` takes `{ ahead: true }`, which `buildWednesdayFromMenu`
+passes and the trigger never does. The guard has to stay for the trigger: a
+trigger left behind on an old day fires, and without it would write a meeting
+for the wrong date — which is exactly why `installWeekCycle` already derives the
+day from `MEET.MEETING_DAY` rather than a fixed `WeekDay`.
+
+**Everything on the row is dated from the day it is built FOR, never from
+today**, and that is the part that would have been quietly wrong. `when` was a
+local `var` inside the create branch, built from `now`; it is now
+`nextMeetingDay_(now)` computed before the guard, and the duplicate check, the
+`Ref`, the `Week` and `chaseWeek_` for the subtitle all read it. Miss one and a
+press on Tuesday writes a Wednesday meeting with Tuesday's week stamp, or two
+rows a week apart that each look right on their own.
+
+**The alert names the day.** Pressed the day before, "meeting created" alone
+leaves the chair to guess which meeting that was, so the message opens `for
+Wednesday 11 Nov 2026: …`.
+
+Two things it does **not** change: the 6:00 build, so turning on the week cycle
+is still the thing that makes next week happen without anybody remembering; and
+the rule that **a one-off is never built by moving `MEET.MEETING_DAY`**, since
+that one number is where every sentence a person reads takes the day from.
+
+`tests/test-build-ahead.js` covers it (18 checks: the trigger still refusing and
+writing no row, the press building the upcoming day with the agenda and the
+carried actions in one run, every date field off that day and not today, and a
+second press finding the meeting rather than making another). Checked against
+`2026-11-10b`, where thirteen of them fail. The harness has no clock, so the
+suite moves `MEET.MEETING_DAY` to tomorrow instead of moving the date — the
+inverse of the trick `test-standing-order.js` already uses.
+
 ### The branch signed in as guests, so the register has been empty — 8 November 2026
 
 Read out of the live book while answering "are the ideas coming in". It is the

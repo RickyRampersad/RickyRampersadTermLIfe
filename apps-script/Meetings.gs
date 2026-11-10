@@ -76,7 +76,7 @@ var MEET = {
   /*  Bumped whenever this file changes in a way a deployment has to
    *  carry. `?action=ping` reports it, so a browser can tell a live
    *  build from one pasted six weeks ago without anybody guessing. */
-  VERSION: '2026-11-10b',
+  VERSION: '2026-11-10c',
 
   /* Typed once, when someone sets their PIN for the first time. It
      stops a stranger who guesses a branch email address from claiming
@@ -7530,6 +7530,18 @@ function weekClose() {
   return msg;
 }
 
+/*  THE DAY THE MEETING IS BUILT FOR.
+ *
+ *  Today when today is the meeting day, otherwise the next one. Midnight
+ *  local, because every other date on the row is derived from it. */
+function nextMeetingDay_(from) {
+  var d = new Date((from || new Date()).getTime());
+  d.setHours(0, 0, 0, 0);
+  var ahead = (MEET.MEETING_DAY - d.getDay() + 7) % 7;
+  if (ahead) d.setDate(d.getDate() + ahead);
+  return d;
+}
+
 /*  WEDNESDAY MORNING. The meeting row first, then the agenda off the rota,
  *  so the chair opens something already owned, timed and sequenced.
  *
@@ -7539,16 +7551,30 @@ function weekClose() {
  *  It builds the meeting on MEET.MEETING_DAY, and whatever that day is,
  *  the name stays: the installed trigger calls this function by name, so
  *  renaming it would stop the build without a word.                      */
-function buildWednesday() {
+function buildWednesday(opts) {
   var now = new Date();
-  if (now.getDay() !== MEET.MEETING_DAY) {
+  var ahead = !!(opts && opts.ahead);
+
+  /*  THE TRIGGER KEEPS ITS GUARD; A PERSON'S PRESS DOES NOT.
+   *
+   *  The 6:00 trigger fires on the meeting day and must build nothing on
+   *  any other, or a trigger left behind on an old day writes a meeting
+   *  for the wrong date. A press of "Build <day>'s agenda now" is a
+   *  person asking for the upcoming meeting, and asking for it the day
+   *  before is the ordinary case: asked for in those words on Tuesday 10
+   *  November 2026, when the button answered "Not the meeting day" and
+   *  the branch therefore could not have an agenda — or bring anything
+   *  to it — before the Wednesday morning itself. Everything on the row
+   *  is derived from the day it is built FOR, never from today. */
+  var when = nextMeetingDay_(now);
+  if (now.getDay() !== MEET.MEETING_DAY && !ahead) {
     Logger.log('Not the meeting day — nothing built.');
     return 'Not the meeting day.';
   }
 
   var m = meetingRows_().filter(function (r) {
     var st = low_(r['Status']);
-    return st !== 'cancelled' && sameDay_(r['Date'], now);
+    return st !== 'cancelled' && sameDay_(r['Date'], when);
   })[0] || null;
 
   var made = false;
@@ -7556,12 +7582,11 @@ function buildWednesday() {
     /*  Nobody created it. The branch meets every Wednesday whether or not
      *  somebody remembered to open the app, so the row is written here
      *  rather than leaving the morning with no meeting to sign in to. */
-    var when = new Date(now.getTime()); when.setHours(0, 0, 0, 0);
     var id = uid_('MTG');
     appendRow_(MEET.TAB_MEETINGS, {
       'ID': id, 'Ref': 'RRB-' + Utilities.formatDate(when, tz_(), 'yyyy-MM-dd'),
       'Type': 'Branch Meeting', 'Title': 'Branch Meeting',
-      'Subtitle': 'Week of ' + weekLabel_(chaseWeek_(now)),
+      'Subtitle': 'Week of ' + weekLabel_(chaseWeek_(when)),
       'Week': weekOf_(when), 'Date': when,
       'Start': CYCLE.START, 'End': CYCLE.END,
       'Format': 'In-person', 'Location': MEET.BRANCH,
@@ -7590,7 +7615,12 @@ function buildWednesday() {
   try { carried = carryForwardInto_(m).carried; }
   catch (e) { carryWhy = String(e && e.message || e).slice(0, 80); }
 
-  var note = (made ? 'meeting created; ' : 'meeting already there; ') +
+  /*  THE ALERT SAYS WHICH DAY IT BUILT FOR.  Pressed on a Tuesday it
+   *  builds tomorrow's, and a message that said only "meeting created"
+   *  would leave the chair to guess which meeting that was. */
+  var forDay = dayName_(when.getDay()) + ' ' + fmtDate_(when);
+  var note = 'for ' + forDay + ': ' +
+             (made ? 'meeting created; ' : 'meeting already there; ') +
              (out.ok ? out.added + ' items written from the rota' : str_(out.error)) +
              '; ' + (carryWhy ? 'open actions did not carry (' + carryWhy + ')'
                               : carried + ' open action' + (carried === 1 ? '' : 's') + ' carried forward');
@@ -7628,7 +7658,10 @@ function weekCloseFromMenu() {
 }
 
 function buildWednesdayFromMenu() {
-  SpreadsheetApp.getUi().alert(buildWednesday());
+  /*  A person pressing the button means the upcoming meeting, whatever
+   *  day they press it on. The trigger calls buildWednesday() with no
+   *  argument and keeps its own guard. */
+  SpreadsheetApp.getUi().alert(buildWednesday({ ahead: true }));
 }
 
 function onOpen() {
