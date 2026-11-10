@@ -1260,7 +1260,7 @@
       if (g === "close" && $("closecard")) { closeOpen(); return; }
       if (g === "agplan") { var cxo = document.querySelector('#agplan [data-cxopen="plan"]'); if (cxo && !cxo.classList.contains("cxedit")) { cxo.click(); return; } }
       if (t && unitGo(t)) return;
-      var el = $({ update: "coach", news: "news", waiting: "waiting", list: "list", close: "closecard", agplan: "agplan", agclose: "agclose", agwed: "agwed", agitems: "agitems", agmid: "agmid", unit: "unit", timeline: "timeline", mychecks: "mychecks" }[g] || "");
+      var el = $({ update: "coach", news: "news", waiting: "waiting", list: "list", close: "closecard", agplan: "agplan", agclose: "agclose", agwed: "agwed", agff: "cxfactfinds", agitems: "agitems", agmid: "agmid", unit: "unit", timeline: "timeline", mychecks: "mychecks" }[g] || "");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 400);
   }

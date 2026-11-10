@@ -805,6 +805,27 @@ The meeting must exist for anything to land: an agent's commitment for a meeting
 evening it is. Items are matched by title (*What worked for me*, *Training*, *Open floor*), so a meeting built from
 the standing rota takes them as they are.
 
+## On the screen, and a meeting built from a spec (10 November 2026)
+
+Asked for in these words: *"the meeting is a working meeting, so it moves along the slides ... it's going to be appearing
+on the screen"*, and *"too many times staff comes in, flip up their laptops and sit down and does nothing"*.
+
+**Put it on the screen** (a button on every meeting page) opens a full-screen view for the TV. Before the meeting it
+shows the agenda, each item with its owner and minutes, and what was brought in beforehand; the arrow keys step through
+the items. Once the meeting is started it follows the item marked *On now*: the item's section, title and owner, the
+facts in its Detail, the **question set apart** (everything after `Question:` in the Detail), the item's own countdown,
+and **what the room has posted against that item, live** (it re-reads the meeting every fifteen seconds). Space or
+**Move on** advances it for whoever runs the meeting; Escape closes it. It needs nothing new from the backend.
+
+That is where people post their notes: on their phone, on the meeting page, against the item. A laptop in the room is
+for the owner of the item on now and for the person taking the record.
+
+**`MeetingSeed.gs`** builds a meeting from a spec: `seedMeetingFrom_(spec)` finds it by Ref, or takes over the branch
+meeting already on that date, publishes it, sets the register for the day and rebuilds its agenda, with presenters
+resolved by first name from the People tab. A spec holds names and the branch's figures, so **it is never committed**:
+it goes into the project as its own private file defining one function (for example `seedWednesday11Nov`) that calls
+`seedMeetingFrom_`. Tests: `tests/test-meeting-seed.js`, `tests/e2e-meeting-screen.js`.
+
 ## Attendance, from 6 October 2026
 
 The JotForm register is disbanded. There is one register and it is this app.
