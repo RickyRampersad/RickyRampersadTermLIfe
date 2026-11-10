@@ -35,13 +35,13 @@ const MEETING = {
 };
 
 const CONTRIB = [
-  { id: 'C1', name: 'Agent Two', email: 'two@example.com', role: 'agent', item: 'What worked for me',
+  { id: 'C1', name: 'Agent Two', email: 'two@example.com', role: 'agent', agendaId: 'AGD8',
     kind: 'Point', body: 'A client who would not take a call took a fact find, and it closed on the second visit.',
     time: 'Mon 9 Nov', offset: -1, visibility: 'all', topics: '', clipId: '' },
-  { id: 'C2', name: 'Agent Three', email: 'three@example.com', role: 'agent', item: 'Training — one point, taught by one of us',
+  { id: 'C2', name: 'Agent Three', email: 'three@example.com', role: 'agent', agendaId: 'AGD9',
     kind: 'Commitment', body: 'I can teach the objection that comes up on critical illness.',
     time: 'Mon 9 Nov', offset: -1, visibility: 'all', topics: '', clipId: '' },
-  { id: 'C3', name: 'Agent Four', email: 'four@example.com', role: 'agent', item: 'Open floor',
+  { id: 'C3', name: 'Agent Four', email: 'four@example.com', role: 'agent', agendaId: 'AGD10',
     kind: 'Question', body: 'Can we see the call list a day earlier?',
     time: 'Tue 10 Nov', offset: -1, visibility: 'all', topics: '', clipId: '' }
 ];
@@ -61,7 +61,22 @@ const ACTIONS = [
 const USER = r => ({ email: 'one@example.com', name: r === 'manager' ? 'The Branch Manager' : 'Agent One',
   role: r, unit: 'Unit One', agentNo: 'A00003' });
 
+const ROSTER = [
+  { name: 'The Branch Manager', role: 'manager', unit: '' },
+  { name: 'A Unit Manager', role: 'unit manager', unit: 'Unit Two' },
+  { name: "The Branch Manager's Assistant", role: 'staff', unit: '' },
+  { name: 'Support One', role: 'staff', unit: '' },
+  { name: 'Support Two', role: 'staff', unit: '' },
+  { name: 'Support Three', role: 'staff', unit: '' },
+  { name: 'Agent One', role: 'agent', unit: 'Unit One' },
+  { name: 'Agent Two', role: 'agent', unit: 'Unit One' },
+  { name: 'Agent Three', role: 'agent', unit: 'Unit Two' },
+  { name: 'Agent Four', role: 'agent', unit: 'Unit Two' },
+  { name: 'Agent Five', role: 'agent', unit: 'Unit One' }
+];
+
 exports.detail = (role = 'agent', over = {}) => Object.assign({
+  roster: ROSTER,
   ok: true, user: USER(role), meeting: MEETING, agenda: AGENDA, actions: ACTIONS,
   minutes: [], contributions: CONTRIB, minutesPublished: false,
   sections: ['Opening & Mission Statement', 'Performance & Community Management', 'Reports Reviewed', 'Training & Development', 'Other Items', 'Closing'],

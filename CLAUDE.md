@@ -8889,6 +8889,57 @@ mtuse-lines.json`, `build-mtusefilm.py`, `sfx.py`,
 `render.js ../../meetings/usefilm.html cap-mtuse 30 ../../meetings/usefilm.jpg`,
 `mixany.py`. Re-shoot first with `node mtuseshots/shots.js` if the page changed.
 
+### Who owes this meeting what, and the running order as a clock — 10 November 2026
+
+Asked for in these words: *"I'm not seeing the staff being held accountable ...
+our meeting could have a timeline as it goes, reminding us the times and who is
+responsible ... [she] continues to sit in our meetings and get away with
+craziness. Things must change and hold the persons accountable. Please help
+me."*
+
+**The mechanism is a named, visible, EMPTY slot.** Every agenda row already
+carries an owner — the Rota's own Owner column — and every contribution already
+carries a name. Put the two together and the screen says, in front of the room,
+which named person owes the meeting something and whether anything is in. It is
+computed from what `action=meeting` already returns: **no new call, no paste,
+nothing new from the backend**, so it works the first morning a meeting exists.
+`d.roster`, when the backend sends one, adds the people who own no item and
+still owe the room one thing.
+
+**ONE PERSON, ONE LINE, and the first cut got this wrong.** Listing one row per
+agenda *item* put the chair on the screen five times and painted fifteen of
+eighteen rows red — and a wall of red says nothing at all. A person owes the
+meeting something; the items they own are what they owe it *for*. Grouped, the
+same data reads "3 of 12 have put something in · 9 have not".
+
+**Nobody is ranked and nothing is scored.** It is in or it is not, with the name
+on it. An item the room owns ("Everyone", "The room") asks nobody for anything.
+
+**A hyphen is a space in `owedSame`.** The branch's own lists disagree with each
+other — the Agent Skill Bank writes "SASHA LALLA" where Salesforce writes "Sasha
+Lalla-Jagassar" — and *stripping* the hyphen glues the surname into one word
+that "Lalla" can never match. Same family as `gcmSameName_`, and the test caught
+it. A first name alone still matches nobody.
+
+**The running order is a clock** (`railBlock`): one segment per item, as wide as
+its minutes, carrying the time it starts and the name against it. **The times are
+worked out from the meeting's own start** plus the running total, because the
+Rota has no clock column and a clock the backend does send wins. During the
+meeting the item on now fills in real time and an over-run turns red, so the room
+sees the clock without anybody policing it. The fill carries a **negative
+animation delay of the elapsed seconds**, or the working view's fifteen-second
+refresh restarts it and the bar walks backwards in front of the room. Motion
+lives in `prefers-reduced-motion: no-preference` and the finished state is the
+plain default.
+
+**Both are on the full-screen working view too**, which is the screen the room
+actually watches: the rail under the top bar, and on the first slide "N of M
+have put something in · Nothing in yet: <names>".
+
+`tests/e2e-owed.js` covers it (21 checks). Its own first run failed on
+`/^The Branch Manager\b/`, which also matches *The Branch Manager's Assistant* —
+**the test held the bug**, for the sixth time in this repository.
+
 ### The meeting page is light, and the meeting shows once — 10 November 2026
 
 Asked for in these words: *"I need to ensure it's not a black background that

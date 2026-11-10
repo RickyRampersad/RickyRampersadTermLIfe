@@ -193,6 +193,52 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .acct-chip.late{background:rgba(179,38,30,.07);border-color:rgba(179,38,30,.32);color:var(--red)}
   .acct-chip.late b{color:var(--red)}
 
+  /* ---------- who owes what, and the running order as a clock ---------- */
+  .owed .owed-head{font-size:14px;color:var(--muted);margin-bottom:12px}
+  .owed .owed-head b{font-family:'Montserrat','Montserrat Fallback',sans-serif;font-size:20px;color:var(--ink);font-weight:900}
+  .owed-out{display:inline-block;margin-left:8px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;
+    background:rgba(179,38,30,.08);border:1px solid rgba(179,38,30,.32);color:var(--red)}
+  .owed-rows{display:flex;flex-direction:column;gap:2px}
+  .owed-row{display:grid;grid-template-columns:22px minmax(8.5rem,1.1fr) minmax(0,2fr) auto;
+    gap:4px 12px;align-items:baseline;padding:9px 10px;border-radius:10px}
+  .owed-row:nth-child(odd){background:var(--tint)}
+  .owed-row .mk{font-weight:900;color:var(--green)}
+  .owed-row.no .mk{color:var(--red)}
+  .owed-row .nm{font-family:'Montserrat','Montserrat Fallback',sans-serif;font-weight:700;font-size:13px;color:var(--ink)}
+  .owed-row .wt{font-size:13px;color:var(--muted)}
+  .owed-row .nm .rl{display:inline-block;margin-left:6px;font-size:10px;font-weight:700;letter-spacing:.8px;
+    text-transform:uppercase;color:var(--muted);font-family:'DM Sans','DM Sans Fallback',sans-serif}
+  .owed-row .st{font-size:11.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--green);text-align:right}
+  .owed-row.no .st{color:var(--red)}
+  .owed-row.no .nm{color:var(--red)}
+  .owed-row .sd{grid-column:2 / -1;font-size:12.5px;color:var(--muted);line-height:1.55}
+  @media(max-width:620px){
+    .owed-row{grid-template-columns:20px 1fr auto}
+    .owed-row .wt{grid-column:2 / -1;font-size:12px}
+    .owed-row .sd{grid-column:2 / -1}
+  }
+
+  .rail2{display:flex;gap:3px;margin:2px 0 14px;align-items:stretch}
+  .rail2 .seg{flex:var(--m) 1 0;min-width:0;display:flex;flex-direction:column;gap:3px}
+  .rail2 .seg .bar{display:block;height:9px;border-radius:5px;background:var(--line);overflow:hidden}
+  .rail2 .seg .bar i{display:block;height:100%;width:0;border-radius:5px;background:var(--accent)}
+  .rail2 .seg.done .bar{background:var(--accent)}
+  .rail2 .seg.on .bar{background:rgba(0,114,141,.22)}
+  .rail2 .seg.on .bar i{width:100%;background:var(--accent);
+    transform-origin:left center;animation:railfill linear forwards;
+    animation-duration:calc(var(--m) * 60s);animation-delay:calc(var(--el,0) * -1s)}
+  .rail2 .seg .tm{font-size:10.5px;font-weight:700;letter-spacing:.6px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rail2 .seg .ti{font-size:11.5px;color:var(--ink);line-height:1.3;overflow:hidden;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .rail2 .seg .ow{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rail2 .seg.on .tm,.rail2 .seg.on .ti{color:var(--accent)}
+  .rail2 .seg.done .ti,.rail2 .seg.done .ow,.rail2 .seg.done .tm{opacity:.55}
+  .rail2.sm .ti,.rail2.sm .ow{display:none}
+  .rail2.sm .seg .bar{height:7px}
+  @media(max-width:760px){.rail2 .ti,.rail2 .ow{display:none}.rail2 .tm{font-size:9.5px}}
+  @keyframes railfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  @media(prefers-reduced-motion:reduce){.rail2 .seg.on .bar i{animation:none;width:100%}}
+
   .empty{text-align:center;padding:44px 20px;color:var(--dim);font-size:13.5px;line-height:1.7}
   .empty .big{font-size:32px;display:block;margin-bottom:12px;opacity:.55}
 
@@ -368,6 +414,12 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .scr-det{font-size:clamp(17px,1.55vw,27px);line-height:1.5;color:var(--text);max-width:62ch}
   .scr-det .q{display:block;margin-top:14px;padding:14px 18px;border-left:5px solid var(--accent);background:var(--card);border-radius:0 12px 12px 0}
   .scr-side{display:flex;flex-direction:column;gap:14px;min-width:0;min-height:0}
+  .scr-owed{background:var(--card);border-radius:16px;padding:16px 20px;margin-bottom:14px}
+  .scr-owed h3{font:800 clamp(14px,1.15vw,19px)/1.3 'Montserrat','Montserrat Fallback',sans-serif;color:var(--ink);margin-bottom:8px}
+  .scr-owed .no{font-size:clamp(13px,1.05vw,17px);line-height:1.6;color:var(--red)}
+  .scr-owed .no b{color:var(--red)}
+  .scr-owed .yes{font-size:clamp(13px,1.05vw,17px);color:var(--green);font-weight:700}
+
   .scr-clock{background:var(--card);border-radius:16px;padding:16px 20px}
   .scr-clock .n{font:900 clamp(44px,5vw,88px)/1 'Montserrat','Montserrat Fallback',sans-serif;font-variant-numeric:tabular-nums;color:var(--green)}
   .scr-clock .n.warn{color:var(--amber)} .scr-clock .n.over{color:var(--red)}
@@ -1543,9 +1595,16 @@ function drawMeeting() {
       (isStaff() ? "<br>Open <b>Edit the agenda</b> to build one, or start from the branch's standing order." : "") +
       "</div>";
   } else {
+    /*  The ninety minutes as a clock, above the rows: the time each item
+        starts and the name against it, so the room can see where it is
+        without anybody policing it. */
+    out += railBlock(d);
     out += '<div class="card">' + d.agenda.map(agendaRow).join("") + "</div>";
   }
   out += "</section>";
+
+  //  who owes what, before the floor: it is the first thing read out
+  out += owedBlock(d);
 
   // ---- the floor ----
   out += floorSection(d);
@@ -4219,6 +4278,139 @@ function resume() {
 
 /* ---------------- the screen (10 Nov 2026) ---------------- */
 var SCR = { idx: 0, follow: true, timer: null, tick: null };
+/* =====================================================================
+ *  WHO OWES THIS MEETING WHAT, AND THE RUNNING ORDER AS A CLOCK
+ *  (10 November 2026)
+ *
+ *  Ricky: "I'm not seeing the staff being held accountable ... our meeting
+ *  could have a timeline as it goes, reminding us the times and who is
+ *  responsible ... [she] continues to sit in our meetings and get away with
+ *  craziness.  Things must change and hold the persons accountable."
+ *
+ *  THE MECHANISM IS A NAMED, VISIBLE, EMPTY SLOT.  Every agenda row already
+ *  carries an owner — the Rota's own Owner column — and every contribution
+ *  already carries a name.  Put the two together and the screen can say, in
+ *  front of the room, which named person owes which item and whether anything
+ *  is in.  Nobody is ranked and nothing is scored: it is either in or it is
+ *  not, with the name on it.
+ *
+ *  It is computed from what action=meeting ALREADY returns.  No new call, no
+ *  paste, nothing new from the backend — so it works the first morning the
+ *  meeting exists.  d.roster, when the backend sends one, adds the people who
+ *  own no item but are expected to bring one thing.
+ * ===================================================================== */
+
+/** "Everyone", "The room", blank: an item the whole room owns, not a person. */
+function owedIsRoom(who) {
+  return !who || /^(everyone|the room|all|the branch|branch)$/i.test(String(who).trim());
+}
+/*  The same person, written two ways.  The branch's own lists do not agree
+ *  with each other: the Agent Skill Bank writes "SASHA LALLA" where Salesforce
+ *  writes "Sasha Lalla-Jagassar", and a married name is the ordinary case, not
+ *  the exception.  A HYPHEN IS A SPACE here — stripping it instead glues
+ *  "Lalla-Jagassar" into one word that "Lalla" can never match.  A first name
+ *  alone matches nobody: it has to be the same first name and every other part
+ *  of the shorter name found in the longer, a part of a double-barrelled name
+ *  counting as found. */
+function owedSame(a, b) {
+  var norm = function (v) {
+    return String(v || "").toLowerCase().replace(/[-'\u2019]/g, " ")
+      .replace(/[^a-z ]/g, "").trim().split(/\s+/).filter(Boolean);
+  };
+  var x = norm(a), y = norm(b);
+  if (!x[0] || !y[0]) return false;
+  if (x.join(" ") === y.join(" ")) return true;
+  var sh = x.length <= y.length ? x : y, lo = x.length <= y.length ? y : x;
+  if (sh[0] !== lo[0]) return false;
+  return sh.every(function (w) {
+    return lo.some(function (z) { return z === w || z.indexOf(w) === 0 || w.indexOf(z) === 0; });
+  });
+}
+
+/*  ONE PERSON, ONE LINE.  The first cut listed one row per agenda ITEM, which
+ *  put the Branch Manager on the screen five times and painted fifteen of
+ *  eighteen rows red — and a wall of red says nothing at all.  A person owes
+ *  this meeting something; the items they own are what they owe it FOR.
+ *  Returns [{who, role, items[], in, n, said}], owners first, then everyone
+ *  else on the roster who owes the room one thing. */
+function owedList(d) {
+  var cons = d.contributions || [], order = [], by = {};
+  var add = function (name, role, item) {
+    var k = String(name || "").toLowerCase().trim(); if (!k) return;
+    if (!by[k]) { by[k] = { who: name, role: role || "", items: [], n: 0, said: "" }; order.push(k); }
+    if (item && by[k].items.indexOf(item) < 0) by[k].items.push(item);
+    if (role && !by[k].role) by[k].role = role;
+  };
+  (d.agenda || []).forEach(function (a) { if (!owedIsRoom(a.presenter)) add(a.presenter, "", a.title); });
+  (d.roster || []).forEach(function (p) { add(p.name, p.role, ""); });
+  cons.forEach(function (c) {
+    order.forEach(function (k) {
+      if (!owedSame(c.name, by[k].who)) return;
+      by[k].n++; if (!by[k].said) by[k].said = c.body;
+    });
+  });
+  return order.map(function (k) { var r = by[k]; r["in"] = r.n > 0; return r; });
+}
+
+function owedBlock(d) {
+  var rows = owedList(d);
+  if (!rows.length) return "";
+  var inN = rows.filter(function (r) { return r["in"]; }).length;
+  var out = rows.length - inN;
+  return '<section><div class="section-label">Who owes this meeting what</div>' +
+    '<div class="card owed">' +
+    '<div class="owed-head"><b>' + inN + " of " + rows.length + "</b> have put something in" +
+    (out ? ' <span class="owed-out">' + out + " have not</span>" : " \u2014 all of them") + "</div>" +
+    '<div class="owed-rows">' + rows.map(function (r) {
+      var what = r.items.length ? r.items.join(" \u00b7 ")
+        : (r.role ? "One thing for the room" : "One thing for the room");
+      return '<div class="owed-row' + (r["in"] ? " yes" : " no") + '">' +
+        '<span class="mk" aria-hidden="true">' + (r["in"] ? "\u2713" : "\u2014") + "</span>" +
+        '<span class="nm">' + esc(r.who) + (r.role ? ' <span class="rl">' + esc(r.role) + "</span>" : "") + "</span>" +
+        '<span class="wt">' + esc(what) + "</span>" +
+        '<span class="st">' + (r["in"] ? (r.n > 1 ? r.n + " in" : "in") : "nothing in") + "</span>" +
+        (r["in"] && r.said ? '<span class="sd">' + esc(String(r.said).slice(0, 130)) + "</span>" : "") +
+        "</div>";
+    }).join("") + "</div>" +
+    '<div class="hint" style="margin-top:12px">The owners come off the Rota\u2019s own Owner column. ' +
+    "An empty line is read out with the name on it.</div></div></section>";
+}
+
+/*  THE RUNNING ORDER AS A CLOCK.  One segment per item, as wide as its
+ *  minutes, with the time it starts and who owns it.  Before the meeting it is
+ *  the shape of the ninety minutes; during it, the item on now fills in real
+ *  time and an over-run turns red, so the room can see the clock without
+ *  anybody policing it.  Motion lives inside prefers-reduced-motion:
+ *  no-preference, and the finished state is the plain default. */
+function railBlock(d, compact) {
+  var ag = (d.agenda || []).filter(function (a) { return a.minutes; });
+  if (!ag.length) return "";
+  var sn = d.session || {}, tot = ag.reduce(function (n, a) { return n + a.minutes; }, 0);
+  var el = sn.itemStartedISO ? Math.max(0, Math.floor((Date.now() - Date.parse(sn.itemStartedISO)) / 1000)) : 0;
+  /*  "Reminding us the times": the Rota has no clock column, so the times are
+      worked out from the meeting's own start and each item's minutes. A clock
+      the backend does send wins. */
+  var mk = /^(\d{1,2}):(\d{2})\s*([ap])/i.exec(String((d.meeting || {}).start || ""));
+  var run = mk ? ((+mk[1] % 12) + (/p/i.test(mk[3]) ? 12 : 0)) * 60 + (+mk[2]) : -1;
+  var hhmm = function (n) {
+    var h = Math.floor(n / 60) % 24, m2 = n % 60;
+    return ((h % 12) || 12) + ":" + (m2 < 10 ? "0" : "") + m2;
+  };
+  var at = -1;
+  ag.forEach(function (a, i) { if (sn.currentAgendaId && a.id === sn.currentAgendaId) at = i; });
+  return '<div class="rail2' + (compact ? " sm" : "") + '" style="--n:' + tot + '">' +
+    ag.map(function (a, i) {
+      var st = at < 0 ? "" : i < at ? " done" : i === at ? " on" : "";
+      return '<div class="seg' + st + '" style="--m:' + a.minutes +
+        (st === " on" ? ";--el:" + el : "") + '" title="' + esc(a.title) + '">' +
+        '<span class="bar"><i></i></span>' +
+        '<span class="tm">' + esc(a.clock || (run >= 0 ? hhmm(run + ag.slice(0, i).reduce(function (n, x) { return n + x.minutes; }, 0)) : "")) + "</span>" +
+        '<span class="ti">' + esc(a.title) + "</span>" +
+        '<span class="ow">' + esc(owedIsRoom(a.presenter) ? "The room" : a.presenter) + " · " + a.minutes + "m</span>" +
+        "</div>";
+    }).join("") + "</div>";
+}
+
 function scrSlides(d) { return [{ overview: true }].concat(d.agenda || []); }
 function scrDet(det) {
   var t = String(det || ""), k = t.search(/\bQuestion:/);
@@ -4236,7 +4428,8 @@ function scrDraw() {
     (live ? '<span style="color:var(--green)">● Live · ' + esc(clockText(sn.elapsed)) + "</span>" : "") + '<span class="scr-dots">' + dots + "</span>" +
     '<span class="sp"><button class="btn ghost sm" type="button" data-scr="prev">◀</button><button class="btn ghost sm" type="button" data-scr="next">▶</button>' +
     (live && d.canRun && sn.nextAgendaId ? '<button class="btn teal sm" type="button" data-scr="move">Move on</button>' : "") +
-    '<button class="btn ghost sm" type="button" data-scr="close">Close</button></span></div>';
+    '<button class="btn ghost sm" type="button" data-scr="close">Close</button></span></div>' +
+    railBlock(d, true);
   var main, side;
   if (a.overview) {
     var tot = (d.agenda || []).reduce(function (n, x) { return n + (x.minutes || 0); }, 0);
@@ -4244,8 +4437,18 @@ function scrDraw() {
       (m.subtitle ? '<div class="scr-owner">' + esc(m.subtitle) + "</div>" : "") +
       '<div class="scr-list">' + (d.agenda || []).map(function (x) { return '<div><span class="t">' + esc(x.clock || "") + "</span><span>" + esc(x.title) + '</span><span class="o">' + esc(x.presenter || "Everyone") + " · " + (x.minutes || 0) + "</span></div>"; }).join("") + "</div></div>";
     var pre = (d.contributions || []).filter(function (c) { return (c.offset || 0) < 0; });
-    side = '<div class="scr-side"><div class="scr-rec"><h3>Brought in before the meeting · ' + pre.length + "</h3>" +
-      (pre.length ? pre.slice(0, 14).map(function (c) { return '<div class="c"><b>' + esc(c.name) + "</b> · " + esc(c.body) + "</div>"; }).join("") : '<div class="none">Nothing yet. Anything posted on the meeting page before 9:00 shows here.</div>') + "</div></div>";
+    /*  The room sees, on the first slide, who has put something in and who has
+        not. The names are the Rota's own owners and the roster — nobody is
+        ranked and nothing is scored; it is in or it is not. */
+    var ow = owedList(d), owIn = ow.filter(function (r) { return r["in"]; }).length;
+    var owOut = ow.filter(function (r) { return !r["in"]; });
+    side = '<div class="scr-side">' +
+      (ow.length ? '<div class="scr-owed"><h3>' + owIn + " of " + ow.length + " have put something in</h3>" +
+        (owOut.length ? '<div class="no">Nothing in yet: <b>' +
+          owOut.map(function (r) { return esc(r.who); }).join("</b>, <b>") + "</b></div>"
+          : '<div class="yes">All of them.</div>') + "</div>" : "") +
+      '<div class="scr-rec"><h3>Brought in before the meeting · ' + pre.length + "</h3>" +
+      (pre.length ? pre.slice(0, 12).map(function (c) { return '<div class="c"><b>' + esc(c.name) + "</b> · " + esc(c.body) + "</div>"; }).join("") : '<div class="none">Nothing yet. Anything posted on the meeting page before 9:00 shows here.</div>') + "</div></div>";
   } else {
     var on = (d.contributions || []).filter(function (c) { return c.agendaId === a.id; }).slice().reverse();
     main = '<div class="scr-item"><div class="scr-eyebrow">' + esc(a.section || "") + " · " + SCR.idx + " of " + (sl.length - 1) + (cur ? " · on now" : "") + "</div>" +
