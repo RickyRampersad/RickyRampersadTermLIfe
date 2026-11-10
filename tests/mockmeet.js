@@ -75,8 +75,27 @@ const ROSTER = [
   { name: 'Agent Five', role: 'agent', unit: 'Unit One' }
 ];
 
+/*  The pack the tracker answers with (see meetPack_ in KPI.gs). Counts only:
+    no client, no client count, no money. These are invented. */
+const PACK = {
+  ok: true, asOf: '7:02', day: '2026-11-11',
+  parts: ['production', 'work', 'factfind', 'people', 'agents'],
+  production: { since: '2026-10-01', policies: 72, apps: 60, week: 9 },
+  work: { pendings: 32, renewals: 121, servicing: 352, claims: 11, closed7: 267, orphanOpen: 318 },
+  factfind: { year: 157, month: 11, monthLabel: 'November', week: 0, lastWeek: 11 },
+  people: [
+    { name: 'Support One', hours: '7am \u2013 3pm', at: '6:58', late: 0, absent: false, today: 4, normal: 9, recent: 7, overdue: 6, stale: 1 },
+    { name: 'Support Two', hours: '8am \u2013 4pm', at: '8:12', late: 12, absent: false, today: 2, normal: 11, recent: 5, overdue: 14, stale: 3 },
+    { name: 'Support Three', hours: '8am \u2013 4pm', at: '', late: 0, absent: true, today: 0, normal: 8, recent: 6, overdue: 9, stale: 0 },
+    { name: 'Kay', hours: '8am \u2013 5pm', at: '7:49', late: 0, absent: false, today: 1, normal: 5, recent: 5, overdue: 21, stale: 6 }
+  ],
+  agents: { total: 19, planned: 11, closed: 7 }
+};
+
+exports.pack = PACK;
+
 exports.detail = (role = 'agent', over = {}) => Object.assign({
-  roster: ROSTER,
+  roster: ROSTER, pack: PACK,
   ok: true, user: USER(role), meeting: MEETING, agenda: AGENDA, actions: ACTIONS,
   minutes: [], contributions: CONTRIB, minutesPublished: false,
   sections: ['Opening & Mission Statement', 'Performance & Community Management', 'Reports Reviewed', 'Training & Development', 'Other Items', 'Closing'],

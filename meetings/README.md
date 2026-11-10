@@ -1436,3 +1436,33 @@ the branch manager rather than recovered.
   no entry, and a rate.
 - **A printed copy.** Every screen prints clean to PDF — the register, the
   minutes, the action tracker.
+
+## The branch's own numbers on the meeting screen — 10 November 2026
+
+Asked for in these words: *"so much we do daily, so much intelligence we drive ... I'm not
+seeing the numbers ... this pulls together daily actual live data."*
+
+This project has its own sheet and cannot see Salesforce, FactFind360 or the register. The
+**tracker** can see all three, so it answers **one signed call** — `action=meetpack`, signed
+with `MEET_BRIDGE_KEY`, the same secret the Wednesday bridge already uses in the other
+direction. There is no new secret.
+
+**To switch it on:** set **`TRACKER_URL`** in this project's Script Properties to the
+tracker's `/exec`, and make sure **`MEET_BRIDGE_KEY`** holds the same value in both projects.
+Then paste `KPI.gs` into the tracker and `Meetings.gs` here, and publish a New version of
+each.
+
+What comes across, and nothing else: the production board on the **picked-up** date
+(applications, policies, this week), the fact finds (year, month), the open book by kind, what
+the desks closed in seven days, the orphan files open, each desk by name with their check-in,
+what they closed today, what they close a day **against their own normal**, what they hold
+overdue, and how many agents projected and closed off their day.
+
+**Counts, days and first names only.** No client, no client count and no money figure: the
+page is served from the open web, and the fact-find feed hands back API, premium and cover in
+the same object, all of which stays behind.
+
+**Nothing depends on it.** No URL, no key, the tracker down or slow: the pack is left out, the
+meeting opens exactly as before, and the screen says what to set rather than showing a blank.
+A tracker that fails is left alone for five minutes, so a page the room is waiting on never
+waits on a dead one twice.

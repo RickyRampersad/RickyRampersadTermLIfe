@@ -8889,6 +8889,47 @@ mtuse-lines.json`, `build-mtusefilm.py`, `sfx.py`,
 `render.js ../../meetings/usefilm.html cap-mtuse 30 ../../meetings/usefilm.jpg`,
 `mixany.py`. Re-shoot first with `node mtuseshots/shots.js` if the page changed.
 
+### The branch's own numbers on the meeting screen — 10 November 2026
+
+Asked for in these words: *"so much we do daily, so much intelligence we drive ...
+I'm not seeing the numbers ... this pulls together daily actual live data."*
+
+**One signed call, no new secret.** The Builder is its own project with its own
+sheet and cannot see Salesforce, FactFind360 or the register. `meetPack_` in
+`KPI.gs` answers `action=meetpack`, signed with **`MEET_BRIDGE_KEY`** — the
+secret the Wednesday bridge already uses in the other direction — and
+`meetNumbers_` in `Meetings.gs` fetches it with **`TRACKER_URL`** and hangs it
+on the meeting payload as `pack`.
+
+**What goes through it:** the production board on the **picked-up** date, the
+fact finds, the open book by task type, what the desks closed in seven days, the
+orphan files open, **each desk by name** (check-in, closed today, a day against
+their own normal, overdue), and how many agents projected and closed off.
+
+**Counts, days and first names. No client, no client count, no money.** The
+fact-find feed hands back API, premium, cover and the protection gap in the same
+object and none of it travels: the meeting page is served from the open web.
+
+**Each desk against their own normal, never against each other.** `peopleNormal_`
+already measures it that way and the screen says so in as many words. Nobody is
+ranked.
+
+**Nothing depends on it.** No URL, no key, the tracker down or slow: the pack is
+left out, the meeting opens exactly as before, and the screen **names what to
+set** instead of showing a blank — a silently empty panel reads as a broken one.
+A tracker that fails is left alone for five minutes, so a page the room is
+waiting on never waits on a dead one twice. Every block inside the pack is read
+in its own try, so Salesforce being down costs that block and no other.
+
+**`.owed-head` was reused for the desks card** and the test caught it at once
+(two elements for one selector). Same family as the film builders' class guard:
+**grep the page's own stylesheet before naming a class**, even one you wrote an
+hour ago.
+
+`tests/e2e-owed.js` covers it (31 checks): the figures on screen, no money
+anywhere in the section, every desk by name, the absent one said to be absent,
+each against their own normal, and the no-pack state naming `TRACKER_URL`.
+
 ### Who owes this meeting what, and the running order as a clock — 10 November 2026
 
 Asked for in these words: *"I'm not seeing the staff being held accountable ...

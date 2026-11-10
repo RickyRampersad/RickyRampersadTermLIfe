@@ -239,6 +239,36 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   @keyframes railfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
   @media(prefers-reduced-motion:reduce){.rail2 .seg.on .bar i{animation:none;width:100%}}
 
+  /* ---------- the branch's numbers ---------- */
+  .nmrow{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr))}
+  .nmrow.sm{margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,7.5rem),1fr))}
+  .nmt{background:var(--tint);border:1px solid var(--line);border-radius:12px;padding:13px 14px;text-align:center}
+  .nmt b{display:block;font-family:'Montserrat','Montserrat Fallback',sans-serif;font-size:27px;font-weight:900;
+    line-height:1.05;color:var(--ink)}
+  .nmrow.sm .nmt b{font-size:22px}
+  .nmt span{display:block;font-size:11px;color:var(--muted);margin-top:5px;line-height:1.35}
+  .nmt.good b{color:var(--green)} .nmt.warn b{color:var(--amber)}
+
+  .dsk-head{font-size:14px;color:var(--muted);margin-bottom:12px}
+  .dsk-head b{font-family:'Montserrat','Montserrat Fallback',sans-serif;font-size:17px;color:var(--ink);font-weight:900}
+  .dsk{display:flex;flex-direction:column;gap:2px}
+  .dsk-row{display:grid;grid-template-columns:minmax(5rem,1fr) minmax(6rem,1.2fr) repeat(3,minmax(4.5rem,.9fr));
+    gap:10px;align-items:baseline;padding:9px 10px;border-radius:10px}
+  .dsk-row:nth-child(odd){background:var(--tint)}
+  .dsk-row.no{background:rgba(179,38,30,.06)}
+  .dsk-row .nm{font-family:'Montserrat','Montserrat Fallback',sans-serif;font-weight:700;font-size:13px;color:var(--ink)}
+  .dsk-row .st{font-size:12px;color:var(--muted)}
+  .dsk-row.no .st{color:var(--red);font-weight:700}
+  .dsk-row .n{font-family:'Montserrat','Montserrat Fallback',sans-serif;font-weight:800;font-size:17px;color:var(--ink);text-align:right}
+  .dsk-row .n.bad{color:var(--red)}
+  .dsk-row .n i{display:block;font-style:normal;font-family:'DM Sans','DM Sans Fallback',sans-serif;
+    font-weight:400;font-size:10.5px;color:var(--muted);margin-top:2px}
+  @media(max-width:700px){
+    .dsk-row{grid-template-columns:1fr 1fr 1fr;gap:6px 10px}
+    .dsk-row .nm,.dsk-row .st{grid-column:span 3}
+    .dsk-row .n{text-align:left}
+  }
+
   .empty{text-align:center;padding:44px 20px;color:var(--dim);font-size:13.5px;line-height:1.7}
   .empty .big{font-size:32px;display:block;margin-bottom:12px;opacity:.55}
 
@@ -1603,7 +1633,8 @@ function drawMeeting() {
   }
   out += "</section>";
 
-  //  who owes what, before the floor: it is the first thing read out
+  //  the branch's own numbers, then who owes what: the two things read first
+  out += numbersBlock(d);
   out += owedBlock(d);
 
   // ---- the floor ----
@@ -4278,6 +4309,89 @@ function resume() {
 
 /* ---------------- the screen (10 Nov 2026) ---------------- */
 var SCR = { idx: 0, follow: true, timer: null, tick: null };
+/* =====================================================================
+ *  THE BRANCH'S OWN NUMBERS, ON THE MEETING SCREEN (10 November 2026)
+ *
+ *  Ricky: "so much we do daily, so much intelligence we drive ... I'm not
+ *  seeing the numbers ... this pulls together daily actual live data."
+ *
+ *  d.pack comes from the tracker through one signed call (see meetNumbers_
+ *  in Meetings.gs). Every block is drawn only if its part arrived, so
+ *  Salesforce being down costs that block and nothing else — and when no
+ *  pack arrives at all the section says where the numbers come from rather
+ *  than showing a blank, because a screen that is silently empty reads as a
+ *  screen that is broken.
+ *
+ *  COUNTS AND FIRST NAMES. No client, no client count, no money: the page is
+ *  served from the open web.
+ * ===================================================================== */
+function numTile(n, label, cls) {
+  return '<div class="nmt' + (cls ? " " + cls : "") + '"><b>' + esc(String(n)) + "</b><span>" + esc(label) + "</span></div>";
+}
+
+function numbersBlock(d) {
+  var k = d.pack;
+  if (!k) {
+    return '<section><div class="section-label">The branch, this morning</div>' +
+      '<div class="card flat"><div class="hint" style="margin:0">The live figures come from the ' +
+      "tracker. Set <b>TRACKER_URL</b> on this project and <b>MEET_BRIDGE_KEY</b> on both, and they " +
+      "are on this screen at nine o’clock: the production board, the fact finds, the open book, " +
+      "the campaign and every desk’s day.</div></div></section>";
+  }
+  var out = '<section><div class="section-label">The branch, this morning</div>';
+  var p = k.production, w = k.work, f = k.factfind;
+
+  if (p || w || f) {
+    out += '<div class="card"><div class="nmrow">' +
+      (p ? numTile(p.apps, "applications since 1 Oct") + numTile(p.policies, "policies picked up") +
+           numTile(p.week, "this week") : "") +
+      (f ? numTile(f.year, "fact finds this year") + numTile(f.month, "this month") : "") +
+      (w ? numTile(w.closed7, "closed in 7 days", "good") : "") +
+      "</div>";
+    if (w) {
+      out += '<div class="nmrow sm">' +
+        numTile(w.renewals, "renewals and premiums due", "warn") +
+        numTile(w.pendings, "pendings", "warn") +
+        numTile(w.servicing, "service requests") +
+        numTile(w.claims, "claims and maturities") +
+        numTile(w.orphanOpen, "orphan files open") + "</div>";
+    }
+    out += '<div class="hint" style="margin-top:10px">Read at ' + esc(k.asOf || "") +
+      " from Salesforce and the fact find. Counts, not money.</div></div>";
+  }
+
+  /*  THE DESKS, BY NAME. Each against their own normal, never each other's. */
+  if (k.people && k.people.length) {
+    out += '<div class="card"><div class="dsk-head"><b>The desks</b> · today</div>' +
+      '<div class="dsk">' + k.people.map(function (x) {
+        var state = x.absent ? "absent" : x.at ? (x.late ? "in, " + x.late + " min late" : "in at " + x.at) : "not in yet";
+        return '<div class="dsk-row' + (x.absent ? " no" : "") + '">' +
+          '<span class="nm">' + esc(x.name) + "</span>" +
+          '<span class="st">' + esc(state) + "</span>" +
+          '<span class="n">' + x.today + "<i>closed today</i></span>" +
+          '<span class="n">' + x.recent + "<i>a day, against " + x.normal + "</i></span>" +
+          '<span class="n' + (x.overdue >= 10 ? " bad" : "") + '">' + x.overdue + "<i>overdue</i></span>" +
+          "</div>";
+      }).join("") + "</div>" +
+      '<div class="hint" style="margin-top:10px">Each against their own normal, never against each other.</div></div>';
+  }
+
+  if (k.agents && k.agents.total) {
+    out += '<div class="card flat"><div class="nmrow sm">' +
+      numTile(k.agents.planned + " of " + k.agents.total, "agents projected today") +
+      numTile(k.agents.closed + " of " + k.agents.total, "closed the day off") + "</div></div>";
+  }
+
+  var gaps = ["production", "work", "factfind", "people", "agents"].filter(function (x) {
+    return (k.parts || []).indexOf(x) < 0;
+  });
+  if (gaps.length) {
+    out += '<div class="hint">Not read this time: ' + esc(gaps.join(", ")) +
+      ". The rest is as at " + esc(k.asOf || "") + ".</div>";
+  }
+  return out + "</section>";
+}
+
 /* =====================================================================
  *  WHO OWES THIS MEETING WHAT, AND THE RUNNING ORDER AS A CLOCK
  *  (10 November 2026)

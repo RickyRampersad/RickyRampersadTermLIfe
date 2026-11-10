@@ -105,6 +105,30 @@ const server = http.createServer((q, r) => {
   ok('with the names of whoever has not', /Nothing in yet/.test(owed) && /Agent Five/.test(owed), owed.slice(0, 160));
   ok('no page errors anywhere', errs.length === 0, errs.join(' | '));
 
+  // ---- the branch's own numbers ------------------------------------------------
+  await p.evaluate(() => scrClose());
+  await p.waitForTimeout(300);
+  const nums = await p.locator('section:has(.nmrow)').innerText();
+  ok('the production board is on the screen', /60[\s\S]*applications since 1 Oct/.test(nums), nums.slice(0, 80));
+  ok('so are the fact finds and the open book',
+    /157[\s\S]*fact finds this year/.test(nums) && /121[\s\S]*renewals and premiums due/.test(nums));
+  ok('and it says where they were read and when',
+    /Read at 7:02 from Salesforce and the fact find/.test(nums));
+  ok('no money reaches the page', !/\$|TT\$|premium of|API/.test(nums), nums.slice(0, 200));
+
+  const desks = await p.$$eval('.dsk-row', es => es.map(e => e.innerText.replace(/\s+/g, ' ').trim()));
+  ok('every desk is there by name', desks.length === 4, String(desks.length));
+  ok('a desk who is not in is said to be absent', /Support Three absent/.test(desks[2]), desks[2]);
+  ok('each is against their own normal, not each other',
+    /a day, against 9/.test(desks[0]) && /a day, against 11/.test(desks[1]), desks.slice(0, 2).join(' | '));
+
+  //  the whole point of the fallback: a tracker that is not linked says so
+  await p.evaluate(() => { delete S.detail.pack; drawMeeting(); });
+  await p.waitForTimeout(250);
+  const none = await p.locator('section:has(.hint)').first().innerText();
+  ok('with no pack it names what to set, never a blank',
+    /TRACKER_URL/.test(await p.locator('#view').innerText()), none.slice(0, 80));
+
   await b.close(); server.close();
   console.log(fails ? '\n' + fails + ' FAILED' : '\nall passing');
   process.exit(fails ? 1 : 0);

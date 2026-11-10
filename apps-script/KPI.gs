@@ -2222,6 +2222,11 @@ function doPost(e) {
 }
 
 function handle_(action, data, token) {
+  /*  The meeting builder's one door into this project's numbers. It is signed
+      with MEET_BRIDGE_KEY and carries no token, because there is nobody to sign
+      in: it answers counts and first names and nothing else. See meetPack_. */
+  if (action === 'meetpack') { try { return meetPackServe_(data || {}); } catch (e) { return { ok: false, error: String(e && e.message || e).slice(0, 120) }; } }
+
   /* Which files this project actually has in it. The tracker runs with any of
      the three missing, and each absence shows up somewhere else entirely —
      "Editing tasks is not switched on" under a Close button, a wall that says
@@ -24400,4 +24405,136 @@ function sfLoginCheck() {
   var msg = out.join('\n');
   Logger.log(msg);
   return msg;
+}
+
+/* ---- THE MEETING PACK: the branch's own numbers, for the meeting screen -----------------
+ *  Ricky, 10 November 2026: "so much we do daily, so much intelligence we drive ... I'm not
+ *  seeing the numbers ... this pulls together daily actual live data."
+ *
+ *  The meeting builder is its own Apps Script project with its own sheet; it cannot see
+ *  Salesforce, the fact find or the register. This is the one door through which it reads
+ *  them, signed with MEET_BRIDGE_KEY — the same secret the Wednesday bridge already uses in
+ *  the other direction, so there is no new secret to set on this side.
+ *
+ *  WHAT MAY GO THROUGH IT: counts, days and first names. No client, no client count, no
+ *  money figure of an agent's, nothing a person could be ranked by. The branch's own
+ *  totals are the branch's own business and the meeting screen is in the branch's own room,
+ *  but the pack travels to a page served from the open web, so it carries what the FY27
+ *  wall already carries and nothing more.
+ *
+ *  Every part is read in its own try: Salesforce down, or the fact find feed down, leaves
+ *  that block out and the rest arrives.                                                   */
+var MEETPACK = { CACHE_SEC: 300, MAX_AGE_MS: 10 * 60 * 1000 };
+
+function meetPackSign_(text, key) {
+  return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(String(text), String(key))).replace(/=+$/, '');
+}
+
+/** The branch's numbers for the meeting screen. Never throws. */
+function meetPack_(day) {
+  day = day || todayISO_();
+  var c = null, key = 'meetpack_' + day;
+  try { c = CacheService.getScriptCache(); var hit = c.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
+  var out = { ok: true, asOf: hhmm_(new Date()), day: day, parts: [] };
+
+  /*  Production, on the PICKED-UP date — the day the branch is credited, never the
+      effective date or the day a fact find was sent (see the production note in CLAUDE.md).
+      New business and increases are two objects with two different field spellings. */
+  try {
+    var fy = BOOKS.FY_START;
+    var q = function (s) { return sfkQuery_(s); };
+    var nb = q("SELECT COUNT(Id) n, SUM(App_Count__c) a FROM CLIENT_PORTFOLIO__c " +
+      "WHERE Production_Picked_up_Date__c >= " + fy + " AND Production_Picked_up_Date__c <= " + day)[0] || {};
+    var wk = q("SELECT COUNT(Id) n FROM CLIENT_PORTFOLIO__c " +
+      "WHERE Production_Picked_up_Date__c >= " + mpWeekStart_(day) + " AND Production_Picked_up_Date__c <= " + day)[0] || {};
+    out.production = { since: fy, policies: Number(nb.n || 0), apps: Number(nb.a || 0), week: Number(wk.n || 0) };
+    out.parts.push('production');
+  } catch (e) { out.productionNote = mpWhy_(e); }
+
+  /*  The open book by kind, and what the desks closed in seven days. */
+  try {
+    var rows = sfkQuery_("SELECT Task_Type__c t, COUNT(Id) n FROM Task WHERE IsClosed = false " +
+      "AND Task_Type__c != null GROUP BY Task_Type__c");
+    var byKind = {}; rows.forEach(function (r) { byKind[String(r.t)] = Number(r.n || 0); });
+    var shut = sfkQuery_("SELECT COUNT(Id) n FROM Task WHERE IsClosed = true " +
+      "AND CompletedDateTime >= LAST_N_DAYS:7 AND Task_Type__c != null AND (NOT Subject LIKE 'Email:%')")[0] || {};
+    var orph = sfkQuery_("SELECT COUNT(Id) n FROM Task WHERE Subject LIKE 'Orphan%' AND IsClosed = false")[0] || {};
+    out.work = {
+      pendings: byKind['Pendings'] || 0,
+      renewals: byKind['Renewa/PDl/Bill'] || 0,
+      servicing: byKind['Servicing'] || 0,
+      claims: byKind['Claims/ Mat'] || 0,
+      closed7: Number(shut.n || 0),
+      orphanOpen: Number(orph.n || 0)
+    };
+    out.parts.push('work');
+  } catch (e) { out.workNote = mpWhy_(e); }
+
+  /*  The fact find, from FactFind360's own wall feed. COUNTS ONLY: the same feed hands back
+      API, premium, cover and the protection gap, and none of that goes on this screen. */
+  try {
+    var f = ff360Feed_() || {};
+    out.factfind = {
+      year: Number((f.year || {}).submitted || 0),
+      month: Number((f.month || {}).submitted || 0),
+      monthLabel: String((f.month || {}).label || ''),
+      week: Number((f.week || {}).submitted || 0),
+      lastWeek: Number((f.week || {}).lastWeek || 0)
+    };
+    out.parts.push('factfind');
+  } catch (e) { out.factfindNote = mpWhy_(e); }
+
+  /*  THE DESKS, BY NAME. Ricky: "I'm not seeing the staff being held accountable."
+      This is what the branch already measures them on — closed today, closed a day this
+      week against their own normal, what they hold overdue, and whether they checked in.
+      Their own normal, never each other's: nobody is ranked here. */
+  try {
+    var norm = {}; try { (peopleNormal_(day) || []).forEach(function (p) { norm[p.sid] = p; }); } catch (e) {}
+    var team = [];
+    try { team = workdayTeam_(day) || []; } catch (e) {}
+    out.people = team.map(function (t) {
+      var p = norm[t.sid] || {};
+      return { name: t.name, hours: t.hours || '', at: t.at || '', late: t.late || 0, absent: !!t.absent,
+               today: p.today || 0, normal: p.normal || 0, recent: p.recent || 0,
+               overdue: p.overdue || 0, stale: p.stale || 0 };
+    });
+    if (out.people.length) out.parts.push('people');
+  } catch (e) { out.peopleNote = mpWhy_(e); }
+
+  /*  The agents: how many have projected their day, and how many closed it off. */
+  try {
+    var ppl = agentPeople_(), keys = Object.keys(ppl), planned = 0, closed = 0;
+    keys.forEach(function (k) {
+      try {
+        if (Object.keys(agRows_(k, day, 'plan') || {}).length) planned++;
+        if (Object.keys(agRows_(k, day, 'close') || {}).length) closed++;
+      } catch (e) {}
+    });
+    out.agents = { total: keys.length, planned: planned, closed: closed };
+    out.parts.push('agents');
+  } catch (e) { out.agentsNote = mpWhy_(e); }
+
+  try { if (c) c.put(key, JSON.stringify(out), MEETPACK.CACHE_SEC); } catch (e) {}
+  return out;
+}
+
+/** Monday of the week the day falls in, yyyy-MM-dd. */
+function mpWeekStart_(iso) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || '')); if (!m) return iso;
+  var d = new Date(+m[1], +m[2] - 1, +m[3]);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return Utilities.formatDate(d, CONFIG.TZ, 'yyyy-MM-dd');
+}
+/** A reason short enough for a screen, never a stack. */
+function mpWhy_(e) { return String(e && e.message ? e.message : e).slice(0, 120); }
+
+/** The signed door. ?action=meetpack&t=<ms>&s=<sig over "pack|t">  */
+function meetPackServe_(p) {
+  var key = mailRelayProp_('MEET_BRIDGE_KEY');
+  if (!key) return { ok: false, error: 'MEET_BRIDGE_KEY is not set on the tracker.' };
+  var t = String((p && p.t) || ''), sig = String((p && p.s) || '');
+  if (!t || !sig) return { ok: false, error: 'unsigned' };
+  if (Math.abs(Date.now() - Number(t)) > MEETPACK.MAX_AGE_MS) return { ok: false, error: 'stale' };
+  if (meetPackSign_('pack|' + t, key) !== sig) return { ok: false, error: 'refused' };
+  return meetPack_(p && p.d ? String(p.d) : todayISO_());
 }

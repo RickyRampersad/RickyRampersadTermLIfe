@@ -1552,6 +1552,51 @@ function apiMeetings_(token) {
 
 /** One meeting in full — agenda, materials, actions, minutes — with
  *  everything the person may not see removed on the server. */
+/* ---- THE BRANCH'S NUMBERS, FROM THE TRACKER (10 November 2026) ----------------------------
+ *  Ricky: "so much we do daily, so much intelligence we drive ... I'm not seeing the numbers
+ *  ... this pulls together daily actual live data."
+ *
+ *  This project has its own sheet and cannot see Salesforce, the fact find or the register.
+ *  The tracker can see all three, so it answers one signed call — action=meetpack, signed
+ *  with MEET_BRIDGE_KEY, the same secret the Wednesday bridge already uses in the other
+ *  direction. TRACKER_URL is the tracker's /exec.
+ *
+ *  NOTHING DEPENDS ON IT. No URL, no key, the tracker down, the tracker slow: the pack is
+ *  left out, the meeting opens exactly as it did, and the screen says where the numbers come
+ *  from rather than showing a blank. A meeting that will not open because a figure did not
+ *  arrive is worse than a meeting with no figures.                                        */
+var MPACK = { PROP_URL: 'TRACKER_URL', CACHE_SEC: 240, TIMEOUT_NOTE: 'the tracker did not answer' };
+
+function mpackProp_(k) { try { return str_(PropertiesService.getScriptProperties().getProperty(k)); } catch (e) { return ''; } }
+
+/** The branch's numbers, or null. Never throws, never waits twice on a tracker that is down. */
+function meetNumbers_() {
+  var url = mpackProp_(MPACK.PROP_URL), key = bridgeKey_();
+  if (!url || !key) return null;
+  var c = null;
+  try {
+    c = CacheService.getScriptCache();
+    if (c.get('mpack_down')) return null;
+    var hit = c.get('mpack'); if (hit) return JSON.parse(hit);
+  } catch (e) {}
+  try {
+    var t = String(Date.now());
+    var res = UrlFetchApp.fetch(url + '?action=meetpack&t=' + t +
+      '&s=' + encodeURIComponent(bridgeSign_('pack|' + t, key)),
+      { muteHttpExceptions: true, followRedirects: true });
+    if (res.getResponseCode() !== 200) throw new Error('HTTP ' + res.getResponseCode());
+    var out = JSON.parse(res.getContentText());
+    if (!out || out.ok !== true) throw new Error(str_(out && out.error) || 'refused');
+    try { if (c) c.put('mpack', JSON.stringify(out), MPACK.CACHE_SEC); } catch (e) {}
+    return out;
+  } catch (e) {
+    /*  Down for five minutes rather than on every request: a meeting page that
+        waits on a dead tracker opens slowly for everybody in the room. */
+    try { if (c) c.put('mpack_down', '1', 300); } catch (e2) {}
+    return null;
+  }
+}
+
 function apiMeeting_(token, id) {
   var me = requireUser_(token);
   var m = findMeeting_(id);
@@ -1696,7 +1741,9 @@ function apiMeeting_(token, id) {
     apologyOther: APOLOGY_OTHER,
     // The role held for THIS meeting, which the chair and a presenter
     // need in order to be shown their own part of the framework.
-    myRole: roleInMeeting_(m, me, agenda)
+    myRole: roleInMeeting_(m, me, agenda),
+    //  The branch's own numbers, when the tracker is linked. Absent is fine.
+    pack: meetNumbers_()
   };
 
   // The register itself is staff material. An agent sees that they
