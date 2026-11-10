@@ -294,7 +294,10 @@ ok('the ping says which account it runs on, as a bare domain',
   png.runsAs === 'script.invalid' && png.onWorkspace === false, png.runsAs);
 ok('and never the address itself', String(png.runsAs).indexOf('@') === -1);
 ok('it answers', png.ok === true);
-ok('it says which build is deployed', /^\d{4}-\d{2}-\d{2}$/.test(String(png.version)), png.version);
+/*  A letter suffix is this repository's own convention for a second
+    paste on one day (2026-11-08b), so the shape allows one: the first
+    such bump failed this assertion, and the test held the bug. */
+ok('it says which build is deployed', /^\d{4}-\d{2}-\d{2}[a-z]?$/.test(String(png.version)), png.version);
 ok('it says the one-off file is in the project', png.oneOff === true);
 ok('it says the meeting is seeded', png.meeting && png.meeting.seeded === true, JSON.stringify(png.meeting));
 ok('and published, so an agent can open it',
