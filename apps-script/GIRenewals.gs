@@ -965,14 +965,85 @@ function girLetterHtml_(r, st, o) {
     '</div><div style="padding:14px 22px;background:#f7f8fb;font:11px/1.5 Arial,sans-serif;color:#6b7785">' + tLegal_(null) + '</div></div>';
   return { subject: 'Your ' + r.lineLabel.toLowerCase() + ' renewal, ' + tDmy_(r.ren) + ' · policy ' + r.policy, html: html };
 }
+/**
+ * Whether a client may type a new figure against this risk.
+ *
+ * Only a COMPREHENSIVE vehicle has a value of the client's own to adjust: it
+ * is what we would pay if the vehicle were written off, and it falls every
+ * year. On THIRD PARTY nothing of theirs is insured — the cover is for what
+ * they do to someone else — so there is no sum insured to put up or down, and
+ * asking for one invites a figure that means nothing and cannot be used.
+ *
+ * It is not hypothetical. On the book renewing to February, one Commercial
+ * Third Party line carries Cover1__c of TT$404,595 on a fleet, which is a
+ * fleet-level figure that has landed on a vehicle row. The page would have
+ * shown it as that vehicle's value with a box beside it.
+ *
+ * A property or plant item carries a real sum insured and is adjustable. A
+ * motor risk that is neither (Special Type, or a blank cover type) is shown
+ * and not offered, because the record does not say it is comprehensive.
+ */
+function girAdjustable_(x) {
+  var cov = String(x.coverage || '').toLowerCase();
+  if (/third\s*party/.test(cov)) return false;
+  if (x.vehicle) return /comprehensive/.test(cov);
+  return true;
+}
+
 /** What the client's page shows, kept on the row when the letter goes, so the page never waits on Salesforce. */
 function girClientView_(r, notice, letter, hist, claims, values) {
-  var RISKS = 12;
+  return girFitView_(girViewOf_(r, notice, letter, hist, claims, values));
+}
+/** The view shrunk until it fits its cell, because a cell that overflows is truncated mid-JSON
+    and the client's whole page then reads as empty. A fleet is what gets near it: 63 risks and
+    five years of history. What goes first is what the client can most do without. */
+function girFitView_(v) {
+  /* Under the cell's own 49,000, with room for the note about what was dropped, which is
+     written after the measuring and would otherwise push a just-fitting view back over. */
+  var LIMIT = 44500, trimmed = [];
+  var size = function () { return JSON.stringify(v).length; };
+  if (size() <= LIMIT) return v;
+  /* 1. each vehicle's own year-by-year value */
+  v.items.forEach(function (x) { delete x.hist; });
+  trimmed.push('each vehicle\'s own history');
+  if (size() <= LIMIT) { v.trimmed = trimmed; return v; }
+  /* 2. what each past year covered, risk by risk */
+  (v.years || []).forEach(function (y) { y.more = (y.more || 0) + (y.risks || []).length; y.risks = []; });
+  trimmed.push('what each past year covered');
+  if (size() <= LIMIT) { v.trimmed = trimmed; return v; }
+  /* 3. the oldest years, newest kept */
+  while ((v.years || []).length > 1 && size() > LIMIT) v.years.shift();
+  trimmed.push('the oldest years');
+  if (size() <= LIMIT) { v.trimmed = trimmed; return v; }
+  /* 4. last of all, risks — the one thing the client is answering about, so it is never silently cut:
+        what is dropped is counted and said on the page. */
+  var all = v.items.length;
+  while (v.items.length > 1 && size() > LIMIT) v.items.pop();
+  v.moreItems = all - v.items.length;
+  trimmed.push(v.moreItems + ' of ' + all + ' risks');
+  v.trimmed = trimmed;
+  return v;
+}
+function girViewOf_(r, notice, letter, hist, claims, values) {
+  var RISKS = 12, HYEARS = 5;
+  /* each vehicle's own value and premium, year by year, from the history we already read.
+     Only where there is a figure of the client's own to compare — a third party has none. */
+  var vh = {};
+  (hist && hist.vehicles || []).forEach(function (x) { if (x.reg) vh[String(x.reg).replace(/\W/g, '')] = x.years || []; });
   return { key: r.key, policy: r.policy, line: r.lineLabel, client: r.client, ren: r.ren, lastPremium: r.lastPremium,
     premium: notice ? notice.premium : 0, tax: notice ? notice.tax : 0, total: notice ? notice.total : 0, from: notice ? notice.from : '', to: notice ? notice.to : '',
     items: r.items.map(function (x) { var nn = (notice && notice.items || []).filter(function (n) { return n.reg && x.vehicle && n.reg.replace(/\W/g, '') === x.vehicle.replace(/\W/g, ''); })[0];
       return { id: x.id, label: girItemLabel_(x), vehicle: x.vehicle, value: (values && values[x.id] && values[x.id].value) || (nn && nn.value) || x.value || x.cover || 0, lastValue: x.value || x.cover || 0,
-        kind: x.vehicle ? 'vehicle' : x.location ? 'location' : 'item', bank: x.assignee || '' }; }),
+        kind: x.vehicle ? 'vehicle' : x.location ? 'location' : 'item', bank: x.assignee || '',
+        // What this risk is covered for, in the client's words, and whether
+        // there is a figure of theirs to adjust. The page reads `adjust`; it
+        // never works it out for itself, so a third party can never be
+        // offered a value box whatever the record happens to carry.
+        coverage: x.coverage || '', adjust: girAdjustable_(x),
+        // This vehicle's own value with us, year by year, so a fleet owner can
+        // see how one truck has been carried before deciding this year's figure.
+        hist: girAdjustable_(x) && x.vehicle ? (vh[String(x.vehicle).replace(/\W/g, '')] || []).slice(-HYEARS)
+          .map(function (y) { return { y: y.year, v: girR_(y.value), p: girR_(y.premium) }; }) : [] }; }),
     /* the client's own history: every term since the policy began, what it covered, what was billed and paid, and the claims.
        Never a task, a note or anything internal. */
     years: (hist && hist.years || []).map(function (y) {
@@ -1791,19 +1862,47 @@ function girTakeAnswer_(st, b, name, via) {
   if (['approve', 'changes', 'question'].indexOf(decision) < 0) return { ok: false, error: 'Choose approve, changes or a question.' };
   if (['sent', 'changes', 'approved'].indexOf(stage) < 0 && decision !== 'question') return { ok: false, error: 'This renewal is already with Guardian General. Send us a question instead.' };
   var comment = String(b.comment || '').trim().slice(0, 1500);
-  if (decision !== 'approve' && comment.length < 3) return { ok: false, error: decision === 'changes' ? 'Tell us what has changed.' : 'Write your question.' };
   var vals = {}, got = girJ_(b.values, null) || b.values || {};
   var view = girJ_(st['Client view'], {}) || {};
-  (view.items || []).forEach(function (x) { var n = girNum_(got[x.id]); if (n > 0 && Math.abs(n - (x.value || 0)) >= 1) vals[x.id] = n; });
+  /* Risks the client says are no longer theirs. A fleet loses and gains vehicles every year, and
+     before this the only way to say so was a sentence in the comment box that nobody could act on
+     risk by risk. Only an id on their own letter counts, so a page cannot name a risk of anyone else's. */
+  var offIn = girJ_(b.off, null) || b.off || {}, off = [];
+  (view.items || []).forEach(function (x) { if (offIn[x.id]) off.push({ id: x.id, label: x.label }); });
+  /* Taking a risk off is a change, whatever was ticked: it is never a plain approval. Ticking them
+     IS telling us what has changed, so it answers the comment the page would otherwise insist on. */
+  if (off.length && decision === 'approve') decision = 'changes';
+  if (decision !== 'approve' && !off.length && comment.length < 3) return { ok: false, error: decision === 'changes' ? 'Tell us what has changed.' : 'Write your question.' };
+  if (off.length && comment.length < 3) comment = off.length + ' risk' + (off.length === 1 ? '' : 's') + ' no longer ours: ' + off.map(function (x) { return x.label; }).join('; ');
+  /* A new figure is taken only where there is one of the client's own to
+     change — a comprehensive vehicle or a sum insured, never a third party.
+     The page hides the box; this is the rule behind it, because a page can be
+     made to post anything.
+
+     A letter sent before this existed has neither flag on its stored view, so
+     it keeps the old behaviour rather than silently dropping a value a client
+     is typing in good faith today. */
+  (view.items || []).forEach(function (x) {
+    var may = x.adjust !== undefined ? !!x.adjust : (x.coverage ? girAdjustable_(x) : true);
+    if (!may) return;
+    var n = girNum_(got[x.id]);
+    if (n > 0 && Math.abs(n - (x.value || 0)) >= 1) vals[x.id] = n;
+  });
   var old = girJ_(st['Client answer'], null), hist = old ? (old.history || []).concat(old.comment ? [{ at: old.at, text: old.comment, name: old.name, decision: old.decision }] : []) : [];
   /* a question leaves the decision where it was */
   var ans = { decision: decision === 'question' ? (old ? old.decision : '') : decision, at: gcmWhen_(new Date()), name: String(name || '').slice(0, 80), comment: comment,
-    values: Object.keys(vals).length ? vals : (old && old.values) || {}, via: via, history: hist.slice(-12) };
+    values: Object.keys(vals).length ? vals : (old && old.values) || {}, off: off.length ? off : (old && old.off) || [], via: via, history: hist.slice(-12) };
   var next = decision === 'approve' ? 'approved' : decision === 'changes' ? 'changes' : stage;
   girSave_(key, { 'Client answer': ans, Stage: next });
   var r = { key: key, policy: gcmText_(st.Policy), client: gcmText_(st.Client) };
-  var said = decision === 'approve' ? 'APPROVED the renewal' + (Object.keys(vals).length ? ' with new values: ' + (view.items || []).filter(function (x) { return vals[x.id]; }).map(function (x) { return x.label + ' ' + girWhole_(vals[x.id]); }).join('; ') : '') :
-    decision === 'changes' ? 'asked for changes' : 'asked a question';
+  /* Name every figure they changed and every risk they took off, on a change as well as on an
+     approval: on a fleet "asked for changes" alone sends whoever reads it hunting through a
+     comment box for which of sixty vehicles moved. */
+  var newVals = (view.items || []).filter(function (x) { return vals[x.id]; }).map(function (x) { return x.label + ' ' + girWhole_(vals[x.id]) + (x.value ? ' (was ' + girWhole_(x.value) + ')' : ''); });
+  var detail = (newVals.length ? '\nNew values (' + newVals.length + '): ' + newVals.join('; ') : '') +
+    (off.length ? '\nNo longer theirs (' + off.length + '): ' + off.map(function (x) { return x.label; }).join('; ') : '');
+  var verb = decision === 'approve' ? 'APPROVED the renewal' : decision === 'changes' ? 'asked for changes' : 'asked a question';
+  var said = verb + detail;
   girLog_(key, r, 'client ' + (decision === 'approve' ? 'approved' : decision === 'changes' ? 'asked for changes' : 'asked a question'), name || 'the client', comment);
   var task = gcmText_(st.Task), owner = '';
   /* no task recorded (a letter sent in test mode): the renewal task already open on last year's record, if there is one */
@@ -1819,7 +1918,8 @@ function girTakeAnswer_(st, b, name, via) {
   if (task) girFeed_(task, 'From the client on their renewal page' + (name ? ' (' + name + ')' : '') + ' · ' + via + ': ' + said + (comment ? '\n"' + comment + '"' : '') + '\n', owner);
   var tell = [gcmText_(st['Holder e-mail'])].concat(girApprovers_().map(function (a) { return a.email; })).filter(function (e, i, arr) { return e && arr.indexOf(e) === i; });
   tell.forEach(function (e) { girInternal_(e, (test ? '[TEST] ' : '') + (decision === 'approve' ? 'Approved' : decision === 'changes' ? 'Changes asked' : 'Question') + ' · renewal · ' + r.client + ' · ' + r.policy,
-    '<p><b>' + tEsc_(r.client) + '</b> ' + tEsc_(said) + ' on their renewal page' + (name ? ' (' + tEsc_(name) + ')' : '') + '.</p>' + (comment ? '<blockquote>' + tEsc_(comment) + '</blockquote>' : '') +
+    '<p><b>' + tEsc_(r.client) + '</b> ' + tEsc_(verb) + ' on their renewal page' + (name ? ' (' + tEsc_(name) + ')' : '') + '.</p>' +
+    (detail ? '<p>' + tEsc_(detail.replace(/^\n/, '')).replace(/\n/g, '<br>') + '</p>' : '') + (comment ? '<blockquote>' + tEsc_(comment) + '</blockquote>' : '') +
     '<p>' + (decision === 'approve' ? 'Next: proceed to renew on the desk.' : 'Next: answer them, and adjust before proceeding.') + ' <a href="' + GIR.DESK + '#' + encodeURIComponent(key) + '">Open it on the renewal desk</a></p>'); });
   return { ok: true, said: decision === 'approve' ? 'Thank you. We will instruct Guardian General and let you know when your documents are ready.' : decision === 'changes' ? 'Thank you. We will look at the changes and come back to you before anything is renewed.' : 'Thank you. We will answer you shortly.' };
 }

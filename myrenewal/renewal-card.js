@@ -43,6 +43,36 @@
     '.rc-it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;border:1px solid #E6EDF7;border-radius:14px;padding:10px 12px;margin:0 0 8px}' +
     '.rc-it .lb{font-weight:700;color:#1B2A44;overflow-wrap:anywhere}.rc-it .sm{font-size:.84rem;color:#5E6E8A}' +
     '.rc-it .v{text-align:right;font-weight:800;color:#1B2A44;font-variant-numeric:tabular-nums}' +
+    /* what it is covered for, and — on a third party — why there is nothing
+       to type. The note is a word as well as an absence: a row with no box
+       and no reason reads as something broken. */
+    '.rc-it .cov{font-weight:700;color:#3A7BD5}' +
+    '.rc-it .tpnote{grid-column:1/-1;margin:2px 0 0;font-size:.84rem;color:#5E6E8A;line-height:1.5}' +
+    /* a fleet: the risks in groups, so the handful that carry a value a client
+       can set are together at the top instead of scattered among the rest */
+    '.rc-grp{border:1px solid #E6EDF7;border-radius:14px;margin:0 0 10px;background:#FBFDFF}' +
+    '.rc-grp>summary{cursor:pointer;list-style:none;padding:11px 13px;display:flex;flex-wrap:wrap;gap:3px 10px;align-items:baseline}' +
+    '.rc-grp>summary::-webkit-details-marker{display:none}' +
+    '.rc-grp>summary b{color:#1B2A44}.rc-grp>summary .n{background:#EEF1F6;border-radius:99px;padding:1px 9px;font-size:.8rem;font-weight:700;color:#5E6E8A}' +
+    /* the count line wraps under, and "Show" keeps its place on the first line beside the name */
+    '.rc-grp>summary .sm{font-size:.84rem;color:#5E6E8A;flex:1 1 100%;order:2}' +
+    '.rc-grp>summary::after{content:"Show";font-size:.82rem;font-weight:700;color:#3A7BD5;margin-left:auto;order:1}' +
+    '.rc-grp[open]>summary::after{content:"Hide"}' +
+    '.rc-grp[open]>summary{border-bottom:1px solid #E6EDF7}' +
+    '.rc-gb{padding:10px 11px 2px}.rc-gb .rc-it{background:#fff}' +
+    '.rc-shape{margin:0 0 10px;font-size:.92rem;color:#5E6E8A}.rc-shape b{color:#1B2A44}' +
+    /* this vehicle's own value with us, year by year */
+    '.rc-vh{grid-column:1/-1;margin:4px 0 0}' +
+    '.rc-vh>summary{cursor:pointer;font-size:.84rem;font-weight:700;color:#3A7BD5;list-style:none}' +
+    '.rc-vh>summary::-webkit-details-marker{display:none}' +
+    '.rc-vh table{width:100%;border-collapse:collapse;margin:6px 0 2px;font-size:.86rem}' +
+    '.rc-vh th{text-align:left;color:#5E6E8A;font-weight:700;padding:2px 0}' +
+    '.rc-vh td{padding:2px 0;font-variant-numeric:tabular-nums}.rc-vh td+td,.rc-vh th+th{text-align:right}' +
+    /* "no longer ours" — a fleet loses vehicles every year */
+    '.rc-off{grid-column:1/-1;margin:6px 0 0;font-weight:400!important;font-size:.86rem!important;color:#5E6E8A!important;gap:8px!important}' +
+    '.rc-off input{width:22px!important;min-height:22px!important;height:22px;flex:none;accent-color:#B3261E}' +
+    '.rc-it.gone{background:#FDF3F2;border-color:#E8B4AE}.rc-it.gone .lb{text-decoration:line-through}' +
+    '.rc-it.gone .v,.rc-it.gone .rc-vh{opacity:.45}' +
     '.rc-it label{grid-column:1/-1;font-size:.84rem;font-weight:700;color:#1B2A44;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}' +
     '.rc-it input{font:inherit;font-size:max(16px,1rem);width:min(100%,11rem);min-height:44px;border:1.5px solid #8A99B3;border-radius:10px;padding:8px 10px;color:#1B2A44}' +
     '.rc-hist{display:grid;gap:7px}' +
@@ -100,6 +130,57 @@
     return '<details class="rc-yr"' + (i === 0 ? ' open' : '') + '><summary><b>' + esc(y.year) + '</b><span class="rc-sm">' + esc(dmy(y.from)) + ' to ' + esc(dmy(y.to)) + ((y.policies || []).length ? ' · policy ' + esc(y.policies.join(', ')) : '') + '</span>' +
       '<span class="rc-yp">' + money(y.premium) + (y.change !== null && y.change !== undefined ? ' <span class="rc-sm">' + (y.change > 0 ? '+' : '') + y.change + '%</span>' : '') + '</span><span class="rc-chips">' + chips.join(' ') + '</span></summary><div class="rc-yb">' + body + '</div></details>';
   }
+  /* One risk. Whether there is a figure of theirs to change is the backend's call
+     (girAdjustable_, sent as `adjust`); a letter sent before that existed has no flag
+     and keeps the old behaviour. Only a comprehensive vehicle or a sum insured is
+     adjustable — on third party nothing of the client's own is insured, so a value box
+     there asks for a figure that means nothing and cannot be used. */
+  function itemHtml(x, a, open) {
+    var nv = a && a.values && a.values[x.id];
+    var may = x.adjust === undefined ? !!x.value : !!x.adjust;
+    var tp = /third\s*party/i.test(x.coverage || '');
+    var gone = a && (a.off || []).some(function (z) { return z.id === x.id; });
+    var hist = (x.hist || []).filter(function (y) { return y.v; });
+    return '<div class="rc-it' + (gone ? ' gone' : '') + '" data-rcit="' + esc(x.id) + '"><div><div class="lb">' + esc(x.label) + '</div>' +
+      /* Say what it is covered for, so a third party is visibly third party
+         rather than a row with no box and no reason given. */
+      (x.coverage ? '<div class="sm cov">' + esc(x.coverage) + '</div>' : '') +
+      (x.bank ? '<div class="sm">A copy of the certificate goes to ' + esc(x.bank) + '</div>' : '') +
+      (x.lastValue && x.value && x.lastValue !== x.value ? '<div class="sm">Last year ' + whole(x.lastValue) + '</div>' : '') + '</div>' +
+      '<div class="v">' + (x.value && may ? whole(nv || x.value) : '') + '</div>' +
+      (hist.length > 1 ? '<details class="rc-vh"><summary>Its value with us, year by year</summary><table><tr><th>Year</th><th>Value</th><th>Premium</th></tr>' +
+        hist.map(function (y) { return '<tr><td>' + esc(y.y) + '</td><td>' + whole(y.v) + '</td><td>' + (y.p ? money(y.p) : '') + '</td></tr>'; }).join('') + '</table></details>' : '') +
+      (open && may && x.value ? '<label>' + (x.kind === 'vehicle' ? 'If the vehicle\'s value is different, type it' : 'If the sum insured should change, type it') + ' <input inputmode="decimal" data-rcv="' + esc(x.id) + '" placeholder="' + esc(String(Math.round(x.value))) + '" value="' + (nv ? Math.round(nv) : '') + '" aria-label="New value for ' + esc(x.label) + '"></label>'
+        : open && tp ? '<p class="sm tpnote">Third party covers damage to other people and their property, not this vehicle, so there is no value to set.</p>' : '') +
+      (open ? '<label class="rc-off"><input type="checkbox" data-rco="' + esc(x.id) + '"' + (gone ? ' checked' : '') + ' aria-label="' + esc(x.label) + ' is no longer ours">' +
+        (x.kind === 'vehicle' ? 'Sold, written off or no longer ours — take it off' : 'No longer ours — take it off') + '</label>' : '') +
+      '</div>';
+  }
+  /* What renews. A handful of risks reads best as a list; a fleet does not, so from
+     GROUP_AT up they are grouped by what they are covered for, with the ones that carry
+     a value the client can set open at the top and the rest a tap away. */
+  function risksSection(v, a, open) {
+    var GROUP_AT = 8, items = v.items || [];
+    var note = v.moreItems ? '<p class="rc-shape">' + v.moreItems + ' further risks are on your policy but too many to list here. Ask us for the full schedule.</p>' : '';
+    if (items.length < GROUP_AT) return '<div class="rc-sec"><h4>' + ICON.doc + 'What renews</h4>' + items.map(function (x) { return itemHtml(x, a, open); }).join('') + note + '</div>';
+    var order = [], by = {};
+    items.forEach(function (x) {
+      var c = String(x.coverage || '').trim();
+      var k = /third\s*party/i.test(c) ? 'tp' : /comprehensive/i.test(c) ? 'comp' : (c || 'other');
+      if (!by[k]) { by[k] = { key: k, name: c || 'Other cover', list: [], may: 0, value: 0 }; order.push(k); }
+      by[k].list.push(x);
+      if (x.adjust === undefined ? !!x.value : !!x.adjust) { by[k].may++; by[k].value += Number(x.value) || 0; }
+    });
+    var groups = order.map(function (k) { return by[k]; }).sort(function (p, q) { return (q.may > 0) - (p.may > 0) || q.list.length - p.list.length; });
+    var shape = groups.map(function (g) { return '<b>' + g.list.length + '</b> ' + esc(g.name.toLowerCase()); }).join(' · ');
+    return '<div class="rc-sec"><h4>' + ICON.doc + 'What renews · ' + items.length + ' risks</h4>' +
+      '<p class="rc-shape">' + shape + '</p>' + note +
+      groups.map(function (g, i) {
+        return '<details class="rc-grp"' + (i === 0 ? ' open' : '') + '><summary><b>' + esc(g.name) + '</b><span class="n">' + g.list.length + '</span>' +
+          '<span class="sm">' + (g.may ? g.may + ' with a value you can set' + (g.value ? ', ' + whole(g.value) + ' in all' : '') : 'Nothing here has a value for you to set') + '</span></summary>' +
+          '<div class="rc-gb">' + g.list.map(function (x) { return itemHtml(x, a, open); }).join('') + '</div></details>';
+      }).join('') + '</div>';
+  }
   function html(v, o) {
     o = o || {};
     style();
@@ -116,12 +197,7 @@
       (v.total ? '<div class="rc-fig"><div><b>' + money(v.total) + '</b><span>this year, tax included</span></div>' + (v.lastPremium ? '<div><span>last year ' + money(v.lastPremium) + '</span>' + (change !== null ? '<span class="rc-chg">' + (change > 0 ? 'up ' : change < 0 ? 'down ' : '') + Math.abs(change) + '%</span>' : '') + '</div>' : '') + '</div>' : '') + '</div>' +
       '<div class="rc-body">' + (v.practice ? '<p class="rc-prac"><b>Practice letter.</b> Sent while the renewal desk is in test mode, to the team only. Your answer stays on the desk: nothing goes to Guardian General or Salesforce.</p>' : '') + '<ol class="rc-track" aria-label="Where your renewal stands">' + (v.steps || []).map(function (s) { return '<li class="' + (s.done ? 'on' : '') + '"><i></i>' + esc(s.label) + '</li>'; }).join('') + '</ol>' +
       (v.opening ? '<p style="margin:0">' + esc(v.opening) + '</p>' : '') +
-      '<div class="rc-sec"><h4>' + ICON.doc + 'What renews</h4>' + (v.items || []).map(function (x) {
-        var nv = a && a.values && a.values[x.id];
-        return '<div class="rc-it"><div><div class="lb">' + esc(x.label) + '</div>' + (x.bank ? '<div class="sm">A copy of the certificate goes to ' + esc(x.bank) + '</div>' : '') + (x.lastValue && x.value && x.lastValue !== x.value ? '<div class="sm">Last year ' + whole(x.lastValue) + '</div>' : '') + '</div>' +
-          '<div class="v">' + (x.value ? whole(nv || x.value) : '') + '</div>' +
-          (open && x.value ? '<label>' + (x.kind === 'vehicle' ? 'If the vehicle\'s value is different, type it' : 'If the sum insured should change, type it') + ' <input inputmode="decimal" data-rcv="' + esc(x.id) + '" placeholder="' + esc(String(Math.round(x.value))) + '" value="' + (nv ? Math.round(nv) : '') + '" aria-label="New value for ' + esc(x.label) + '"></label>' : '') + '</div>';
-      }).join('') + '</div>' +
+      risksSection(v, a, open) +
       (years.length ? '<div class="rc-sec"><h4>' + ICON.shield + 'Your history with us since ' + esc((v.since || years[0].year || '').slice(0, 4)) + '</h4>' + summaryLine(v) + '<div class="rc-hist">' + years.map(function (y) {
         return '<div class="rc-hb' + (y.now ? ' now' : '') + '"><b>' + esc(String(y.year).slice(0, 4)) + '</b><div class="tr"><i style="width:' + Math.max(3, Math.round((y.premium || 0) / max * 100)) + '%"></i></div><div class="v">' + money(y.premium) + '</div></div>'; }).join('') + '</div>' +
         ((v.years || []).some(function (y) { return y.risks; }) ? '<p class="rc-yh">Every year in full</p>' + v.years.slice().reverse().map(yearFold).join('') : '') +
@@ -129,7 +205,8 @@
       '<div class="rc-sec"><h4>' + ICON.check + 'Every claim on our records</h4>' + ((v.claims || []).length ? '<ul style="margin:0;padding-left:20px">' + v.claims.map(function (c) { return '<li>' + esc(dmy(c.on)) + ' · ' + esc(c.type) + (c.status ? ' · ' + esc(c.status) : '') + '</li>'; }).join('') + '</ul>' : '<p style="margin:0">None on our records.</p>') + '</div>' +
       ((v.points || []).length ? '<div class="rc-sec"><h4>' + ICON.doc + 'Worth a look before you approve</h4>' + v.points.map(function (p) { return '<div class="rc-pt"><b>' + esc(p.title) + '</b>' + esc(p.text) + '</div>'; }).join('') + '</div>' : '') +
       ((v.reqs || []).length ? '<div class="rc-sec"><h4>' + ICON.doc + 'Guardian General needs these with your renewal</h4><ul style="margin:0;padding-left:20px">' + v.reqs.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ul></div>' : '') +
-      (a && a.decision ? '<div class="rc-ans' + (a.decision === 'changes' ? ' chg' : '') + '">' + ICON.check + '<div><b>' + (a.decision === 'approve' ? 'You approved your renewal' : 'You asked for changes') + '</b> · ' + esc(a.at) + (a.name ? ' · ' + esc(a.name) : '') + '<br>' + esc(v.stageLabel || '') + '</div></div>' : '') +
+      (a && a.decision ? '<div class="rc-ans' + (a.decision === 'changes' ? ' chg' : '') + '">' + ICON.check + '<div><b>' + (a.decision === 'approve' ? 'You approved your renewal' : 'You asked for changes') + '</b> · ' + esc(a.at) + (a.name ? ' · ' + esc(a.name) : '') + '<br>' + esc(v.stageLabel || '') +
+        ((a.off || []).length ? '<br>You told us ' + a.off.length + ' ' + (a.off.length === 1 ? 'risk is' : 'risks are') + ' no longer yours.' : '') + '</div></div>' : '') +
       ((v.comments || []).length ? '<div class="rc-sec"><h4>What you told us</h4>' + v.comments.map(function (c) { return '<div class="rc-cm"><b>' + esc(c.at || '') + '</b>' + (c.name ? ' · ' + esc(c.name) : '') + '<br>' + esc(c.text || '') + '</div>'; }).join('') + '</div>' : '') +
       (open ? '<form class="rc-q" data-rcform="' + esc(v.key) + '"><h4 style="font-size:1.08rem">Your answer</h4><p style="margin:4px 0 0;font-size:.92rem">Nothing is renewed until you say yes. ' + esc(v.holder ? v.holder + ' reads every answer.' : 'A person reads every answer.') + '</p>' +
         '<div class="rc-opts" role="radiogroup" aria-label="Your answer">' +
@@ -151,8 +228,12 @@
         var pick = f.querySelector('input[type=radio]:checked');
         err.textContent = '';
         if (!pick) { err.textContent = 'Choose yes, a change or a question.'; return; }
-        var body = { key: key, decision: pick.value, comment: (f.querySelector('[data-rcc]').value || '').trim(), values: {} };
-        if (body.decision !== 'approve' && body.comment.length < 3) { err.textContent = body.decision === 'changes' ? 'Tell us what has changed.' : 'Write your question.'; return; }
+        var body = { key: key, decision: pick.value, comment: (f.querySelector('[data-rcc]').value || '').trim(), values: {}, off: {} };
+        /* Risks ticked as no longer theirs. Ticking them is itself telling us what has
+           changed, so it answers the comment this form would otherwise insist on. */
+        card.querySelectorAll('[data-rco]:checked').forEach(function (i) { body.off[i.getAttribute('data-rco')] = 1; });
+        var nOff = Object.keys(body.off).length;
+        if (body.decision !== 'approve' && !nOff && body.comment.length < 3) { err.textContent = body.decision === 'changes' ? 'Tell us what has changed.' : 'Write your question.'; return; }
         card.querySelectorAll('[data-rcv]').forEach(function (i) { var n = Number(String(i.value).replace(/[^0-9.]/g, '')); if (n > 0) body.values[i.getAttribute('data-rcv')] = n; });
         var nm = f.querySelector('[data-rcn]'), rl = f.querySelector('[data-rcr]');
         if (nm) { body.name = nm.value.trim(); body.role = rl ? rl.value.trim() : ''; if (body.name.length < 2) { err.textContent = 'Give your name, so we know who answered.'; return; } }
@@ -160,6 +241,17 @@
         Promise.resolve(send(key, body)).then(function (r) {
           if (!r || !r.ok) { err.textContent = (r && r.error) || 'Not sent. Please try again.'; btn.disabled = false; btn.lastChild.textContent = 'Send my answer'; return; }
         }, function () { err.textContent = 'Not sent. Please try again.'; btn.disabled = false; btn.lastChild.textContent = 'Send my answer'; });
+      });
+    });
+    /* Taking a risk off the policy is a change, so ticking one answers the question
+       above rather than leaving the client to notice they must also pick a radio. */
+    (rootEl || document).querySelectorAll('[data-rco]').forEach(function (b) {
+      b.addEventListener('change', function () {
+        var it = b.closest('.rc-it'), card = b.closest('.rc');
+        if (it) it.classList.toggle('gone', b.checked);
+        if (!b.checked || !card) return;
+        var chg = card.querySelector('input[type=radio][value="changes"]');
+        if (chg && !chg.checked) { chg.checked = true; chg.dispatchEvent(new Event('change', { bubbles: true })); }
       });
     });
   }
