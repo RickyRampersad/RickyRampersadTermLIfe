@@ -76,7 +76,7 @@ var MEET = {
   /*  Bumped whenever this file changes in a way a deployment has to
    *  carry. `?action=ping` reports it, so a browser can tell a live
    *  build from one pasted six weeks ago without anybody guessing. */
-  VERSION: '2026-11-10c',
+  VERSION: '2026-11-10d',
 
   /* Typed once, when someone sets their PIN for the first time. It
      stops a stranger who guesses a branch email address from claiming
@@ -2950,13 +2950,25 @@ function loadOf_(m, agenda) {
  *  and the cadence — in particular WHICH items are the chair's, which
  *  is now three of fourteen rather than six of twelve, and which come
  *  round the room.                                                   */
-function seedRota() {
+function seedRota(opts) {
   var sh = tab_(MEET.TAB_ROTA);
-  if (sh.getLastRow() > 1) {
-    var msg = 'The Rota tab already has rows — left alone. Clear it first to re-seed.';
+  var had = Math.max(0, sh.getLastRow() - 1);
+
+  /*  IT WILL NOT WRITE OVER A ROTA SOMEBODY HAS EDITED, and `{ replace:
+   *  true }` is the only way past that — passed by the menu, after a
+   *  person has read what goes. Found on the live sheet, 10 November
+   *  2026: eleven items from an earlier seeding, every Owner cell blank.
+   *  So the refusal was doing its job and the branch still had a rota
+   *  with nobody's name on it, which is the whole of the accountability
+   *  panel's input. */
+  if (had && !(opts && opts.replace)) {
+    var msg = 'The Rota tab already has ' + had + ' row' + (had === 1 ? '' : 's') +
+              ' — left alone. Press the menu item again and say yes to replace it, ' +
+              'or type the owners in by hand.';
     Logger.log(msg);
     return msg;
   }
+  if (had) sh.getRange(2, 1, had, sh.getMaxColumns()).clearContent();
   /*  FOURTEEN ITEMS IN NINETY MINUTES, 9:00 to 10:30, AND EVERY ONE OF
    *  THEM HAS A NAME ON IT.
    *
@@ -3079,7 +3091,23 @@ function seedRota() {
 
 function seedRotaFromMenu() {
   var ui = SpreadsheetApp.getUi();
-  ui.alert('The rota', seedRota(), ui.ButtonSet.OK);
+  var had = Math.max(0, tab_(MEET.TAB_ROTA).getLastRow() - 1);
+
+  /*  A rota already there is replaced only on a yes, and the question
+   *  says what goes: the tab is the one place a person edits the
+   *  standing order, so it is never overwritten behind their back. */
+  if (had) {
+    var ask = ui.alert('Replace the standing rota?',
+      'The Rota tab has ' + had + ' item' + (had === 1 ? '' : 's') + ' on it.\n\n' +
+      'Replacing it writes the standing order afresh \u2014 the items, the minutes, ' +
+      'and a name against each one. Anything you have typed into Owner, Owner ' +
+      'E-mail, Backup or Notes goes with it.\n\n' +
+      'Meetings already built keep the agenda they have: this is the template ' +
+      'the next one is built from.',
+      ui.ButtonSet.YES_NO);
+    if (ask !== ui.Button.YES) { ui.alert('The rota', 'Left as it is.', ui.ButtonSet.OK); return; }
+  }
+  ui.alert('The rota', seedRota({ replace: true }), ui.ButtonSet.OK);
 }
 
 function apiSeedAgenda_(body) {

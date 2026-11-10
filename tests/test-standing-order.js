@@ -77,7 +77,27 @@ ok('every item is somebody\'s, rotates, or is the room\'s, except the two the br
     String(r['Cadence']) === 'fixed').map(r => r['Item'])));
 ok('NO E-MAIL ADDRESS IS WRITTEN INTO A PUBLISHED FILE',
   rota.every(r => !String(r['Owner Email']).trim() && !String(r['Backup Email']).trim()));
-ok('running it again leaves the tab alone', /already has rows/.test(env.seedRota()));
+/*  The refusal names how many rows it found, so match on what it means
+    rather than on its wording — and check the tab really is untouched,
+    which is the thing being guarded. */
+(() => {
+  const before = JSON.stringify(env.readTab_(env.MEET.TAB_ROTA));
+  const said = env.seedRota();
+  ok('running it again leaves the tab alone',
+    /already has .*row/.test(said) &&
+    JSON.stringify(env.readTab_(env.MEET.TAB_ROTA)) === before, said);
+  /*  Only a replace asked for in so many words gets past it, and it
+      replaces rather than appending: found on the live sheet on 10
+      November 2026 with eleven items from an earlier seeding and every
+      Owner cell blank, which is the accountability panel's whole input. */
+  env.seedRota({ replace: true });
+  const after = env.readTab_(env.MEET.TAB_ROTA);
+  ok('a replace writes the rota afresh instead of appending',
+    after.length === rota.length, after.length + ' vs ' + rota.length);
+  ok('and the owners are there again',
+    after.filter(r => String(r['Owner']).trim()).length ===
+      rota.filter(r => String(r['Owner']).trim()).length);
+})();
 
 /* ── the agenda writes the rota itself ─────────────────────────────────── */
 console.log('\nthe agenda, with no rota');

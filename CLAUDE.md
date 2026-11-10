@@ -9566,6 +9566,26 @@ is still the thing that makes next week happen without anybody remembering; and
 the rule that **a one-off is never built by moving `MEET.MEETING_DAY`**, since
 that one number is where every sentence a person reads takes the day from.
 
+**The rota on the live sheet was the reason this mattered tonight, and it took
+reading the sheet to see it.** Eleven items from an earlier seeding, every Owner
+cell blank — so `seedRota`'s refusal ("already has rows, left alone") was doing
+its job and the branch still had a standing order with nobody's name on it,
+which is the whole of the accountability panel's input. It was the old eleven-item
+shape too, not today's fourteen in ninety minutes. Nothing on that tab had been
+hand-edited: every Detail matched the seeded text and Owner, Backup and Notes were
+empty, so replacing it lost nothing. **`seedRota({ replace: true })` is the only
+way past the refusal**, the menu passes it after a yes/no that says what goes, and
+the refusal now names how many rows it found and points at the menu. Code calling
+`seedRota()` still cannot overwrite a tab somebody edited.
+
+**Clearing a range is not the same as deleting rows**, and the fake sheet had no
+`clearContent` at all — the sixth harness gap in this repository. Worse than
+missing: `getLastRow()` returned `grid.length`, where Sheets returns the last row
+**with content**, so a cleared block still read as occupied and the next append
+would have landed below eleven blank rows. Both are fixed in `tests/harness.js`,
+and `getLastRow` ignoring trailing blanks is the faithful model rather than a
+patch for this one case.
+
 `tests/test-build-ahead.js` covers it (18 checks: the trigger still refusing and
 writing no row, the press building the upcoming day with the agenda and the
 carried actions in one run, every date field off that day and not today, and a

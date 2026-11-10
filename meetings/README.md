@@ -1200,6 +1200,16 @@ the row into line with the spec and rebuilds the agenda, so editing `FRIDAY`
 at the top of the file is one Run from being live. Attendance, contributions
 and actions already recorded are never touched.
 
+**Set up the standing rota, before the first build.** *Branch Meetings → Set up
+the standing rota* writes the fourteen items, the minutes and a name against each.
+It will not touch a tab that already has rows — the rota is the one place a person
+edits the standing order — so pressing it again asks whether to replace what is
+there, and says plainly that anything typed into Owner, Owner E-mail, Backup or
+Notes goes with it. Meetings already built keep the agenda they have: the rota is
+the template the next one is built from. A rota with blank owners is the one state
+to look out for: **the accountability panel reads the agenda's owners, so blank
+owners leave it nobody to name.**
+
 **The button builds the UPCOMING meeting day, whatever day you press it on.**
 *Branch Meetings → Build Wednesday's agenda now* is a person asking for the next
 meeting, so pressed on a Tuesday evening it writes tomorrow's: the meeting row,
