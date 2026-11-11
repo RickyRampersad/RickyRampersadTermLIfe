@@ -130,11 +130,11 @@
   }
   /* ONE VEHICLE, AND THE NOTICE COMES IN TWO LAYOUTS (11 November 2026).
      Private motor runs it together and puts the premium LAST:
-       "2023 Kia Sportage Crossover/ SUV Eng#:G4FP… Chassis#:USYP… Reg#:PEE6927 Coverage:Comprehensive
+       "2023 Kia Sportage Crossover/ SUV Eng#:G4FP… Chassis#:USYP… Reg#:XBA2000 Coverage:Comprehensive
         Sum Insured:$ 221,730 CC:1591 Windscreen: $ 8,000.00 No Claim Discount: 60.00% … $ 5,625.87"
      A COMMERCIAL FLEET puts the premium on the DESCRIPTION line and the rest beneath it:
        "2019 Volvo Concrete/Water/Tractor Truck                $ 15,905.05
-        Eng#:    Chassis#: Reg#:TDX5323
+        Eng#:    Chassis#: Reg#:XAA1000
         Coverage: Comprehensive Sum Insured:$ 510,300 HP: 127.00
         Windscreen: $ 10,000.00"
 
