@@ -5656,6 +5656,33 @@ is separate and untouched.
     entry with no label is falsy, so the risk was quietly renewed. The test caught it; the code was wrong.
   - `chk/proceed.js` in the session scratchpad covers it (43 checks, the real `girProceed_` and the real
     `phoneYes` block in a VM, Salesforce and the mailer made of nothing).
+- **The cover the insured agrees, and comprehensive → third party** (11 November 2026: *"on the only
+  Comprehensive need to show the Assignee and the cover whats was last year and the proposed cover that has
+  to be agreed by the insured, make easy allow the choice of % from 5 to 25%"*, then *"ok 20% anything over
+  20 is a valuation needed"*).
+  - **On a comprehensive risk only**: the financier, last year's cover and the proposed cover side by side,
+    then the percentages that set it — **5, 10, 15, 20, 25, with 20 marked as the suggestion**. A third party
+    carries no figure of the client's own, so it is offered none of this, and neither is a property sum
+    insured offered the cover swap.
+  - **20% is both the suggestion and the limit.** A figure more than `VALUATION` (20) away from last year's,
+    **up or down**, says so on the card the moment it is chosen: *"Anything more than 20% needs a valuation."*
+    Exactly 20% does not — the rule is "more than". It is on the client's page rather than in somebody's head
+    at the desk so the client learns it while choosing, not after the letter has gone.
+  - **Moving to third party is a MOVE, never a removal.** The vehicle stays on the policy and a term **is**
+    created for it; what goes is the figure. `girThirdParty_` swaps only the cover word and keeps the class
+    the org uses in front of it (Private, Commercial), because that half is not ours to invent. `GIR_COPY`
+    brings last year's `Cover1__c`, `Windscreen__c`, `NCD__c` and cover type across, so all four are taken
+    **off** the body — leaving one would write a sum insured onto a term that insures nothing of theirs.
+  - **Taken off beats moved**, in the backend as well as the page: a risk ticked off is not renewed at all,
+    so a move ticked on the same risk counts for nothing.
+  - The answer carries `cover: {id: 'tp'}` beside `values` and `off`; only an id on the client's own stored
+    view counts, and only a risk that HAS a figure to give up. A move makes the answer a **change**, never a
+    plain approval, and writes the comment the page would otherwise insist on. Guardian General's instruction
+    gets its own block ("Please move these to third party at renewal"), as the removals do.
+  - `chk/tp.js` in the scratchpad covers it (44 checks: the swap, what the client may ask for, the term that
+    is actually created, and the card's percentages and valuation rule). Every registration in it is invented.
+  - **The test held the bug, again** — `card.html()` takes one renewal, not a list, so sixteen card checks
+    failed against a page that was right. Fifth time in this product: **check which side holds the bug.**
 - **The hourly run** (`girTick_`, from `gcmRefreshTick`, working days 8 to 17, once an hour): Guardian General's reply read
   from support@ (a Guardian address not ours, after the instruction); "ready for collection" moves the delivery to the
   next working day; no reply in 2 working days, a follow-up with the trail, every 2 working days, on the follow-up task's

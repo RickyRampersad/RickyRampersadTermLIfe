@@ -80,6 +80,21 @@
     '.rc-it.gone .v,.rc-it.gone .rc-vh{opacity:.45}' +
     '.rc-it label{grid-column:1/-1;font-size:.84rem;font-weight:700;color:#1B2A44;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}' +
     '.rc-it input{font:inherit;font-size:max(16px,1rem);width:min(100%,11rem);min-height:44px;border:1.5px solid #8A99B3;border-radius:10px;padding:8px 10px;color:#1B2A44}' +
+    /* the cover to agree: last year beside what we propose, and the percentage that sets it */
+    '.rc-cv{grid-column:1/-1;margin:8px 0 0;padding:10px 12px;background:#F6F9FF;border:1px solid #DCE7F7;border-radius:12px}' +
+    '.rc-cv .cvr{display:flex;flex-wrap:wrap;gap:4px 18px;align-items:baseline;margin:0 0 8px}' +
+    '.rc-cv .cvr span{font-size:.84rem;color:#5E6E8A}.rc-cv .cvr b{font-size:1.05rem;color:#1B2A44;font-variant-numeric:tabular-nums}' +
+    '.rc-cv .cvr .prop b{color:#2C5FA8;font-size:1.22rem;display:block}' +
+    '.rc-cv p.q{margin:0 0 6px;font-size:.86rem;font-weight:700;color:#1B2A44}' +
+    '.rc-pct{display:flex;flex-wrap:wrap;gap:6px;margin:0}' +
+    '.rc-pct button{font:inherit;font-weight:700;font-size:.9rem;min-height:44px;padding:0 13px;border:1.5px solid #8A99B3;border-radius:999px;background:#fff;color:#1B2A44;cursor:pointer}' +
+    '.rc-pct button[aria-pressed=true]{background:#2C5FA8;border-color:#2C5FA8;color:#fff}' +
+    '.rc-pct .sug{font-weight:600;font-size:.72rem;opacity:.8;margin-left:5px}' +
+    '.rc-vn{grid-column:1/-1;margin:6px 0 0;padding:8px 11px;background:#FFF6E6;border:1px solid #E8C98A;border-radius:10px;font-size:.86rem;color:#6B4E00;line-height:1.5}' +
+    '.rc-tp{grid-column:1/-1;margin:6px 0 0;font-weight:400!important;font-size:.86rem!important;color:#5E6E8A!important;gap:8px!important}' +
+    '.rc-tp input{width:22px!important;min-height:22px!important;height:22px;flex:none;accent-color:#2C5FA8}' +
+    '.rc-it.totp .rc-cv,.rc-it.totp .rc-yrs,.rc-it.totp .rc-rate{opacity:.4}' +
+    '.rc-it.totp .v{text-decoration:line-through;opacity:.5}' +
     '.rc-hist{display:grid;gap:7px}' +
     '.rc-hb{display:grid;grid-template-columns:3rem minmax(0,1fr) 6.5rem;gap:10px;align-items:center;font-size:.9rem}' +
     '.rc-hb .tr{height:12px;border-radius:6px;background:#E6EDF7;overflow:hidden}.rc-hb .tr i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#3A7BD5,#4C94E6);transform-origin:left}' +
@@ -165,6 +180,44 @@
       (now ? '<span class="now"><b>Now</b>' + whole(now) + '</span>' : '') + '</div>' +
       (rate !== null && Math.abs(rate) >= 1 ? '<p class="rc-rate">' + (rate < 0 ? 'Down' : 'Up') + ' about ' + Math.abs(rate) + '% a year with us.</p>' : '');
   }
+  /* THE COVER THE INSURED HAS TO AGREE, on a comprehensive risk only: last year's figure
+     beside the one we propose, and the percentages that set it. Asked for on 11 November
+     2026 — "on the only Comprehensive need to show the Assignee and the cover whats was
+     last year and the proposed cover that has to be agreed by the insured, make easy
+     allow the choice of % from 5 to 25%", then "ok 20% anything over 20 is a valuation
+     needed".
+
+     SO 20% IS BOTH THE SUGGESTION AND THE LIMIT. A figure more than VALUATION off last
+     year's needs a valuation, and the client is told that at the moment they choose it,
+     not after the letter has gone — which is the whole reason the rule is on this page
+     rather than in somebody's head at the desk. A third party carries no figure of the
+     client's own, so it gets none of this. */
+  var PCTS = [5, 10, 15, 20, 25], SUGGEST = 20, VALUATION = 20;
+  function pctOff(base, v) { return base && v ? Math.round(Math.abs(v - base) / base * 1000) / 10 : 0; }
+  function needsValuation(base, v) { return pctOff(base, v) > VALUATION; }
+  function valuationNote(base, v) {
+    return needsValuation(base, v)
+      ? 'That is <b>' + pctOff(base, v) + '%</b> away from last year’s figure. Anything more than ' + VALUATION +
+        '% needs a valuation, so Guardian General will ask for one before this is agreed.'
+      : '';
+  }
+  function coverBlock(x, nv, open) {
+    var last = Number(x.lastValue) || 0, now = Number(nv || x.value) || 0, base = last || now;
+    if (!base) return '';
+    return '<div class="rc-cv">' +
+      '<div class="cvr">' +
+        (last ? '<span>Last year’s cover<b>' + whole(last) + '</b></span>' : '') +
+        '<span class="prop">Proposed for this year<b data-rcprop="' + esc(x.id) + '">' + whole(now || base) + '</b></span>' +
+      '</div>' +
+      (open ? '<p class="q">What should it be covered for this year? Tap a figure, or type your own below.</p>' +
+        '<div class="rc-pct" role="group" aria-label="Set this year’s cover">' +
+        PCTS.map(function (p) {
+          var v = Math.round(base * (1 - p / 100));
+          return '<button type="button" data-rcpct="' + esc(x.id) + '" data-v="' + v + '" data-base="' + base + '"' +
+            ' aria-pressed="' + (now && v === Math.round(now) ? 'true' : 'false') + '">−' + p + '%' +
+            (p === SUGGEST ? '<span class="sug">suggested</span>' : '') + '</button>';
+        }).join('') + '</div>' : '') + '</div>';
+  }
   /* One risk. Whether there is a figure of theirs to change is the backend's call
      (girAdjustable_, sent as `adjust`); a letter sent before that existed has no flag
      and keeps the old behaviour. Only a comprehensive vehicle or a sum insured is
@@ -179,6 +232,7 @@
     var may = x.adjust === undefined ? !!x.value : !!x.adjust;
     var tp = /third\s*party/i.test(x.coverage || '');
     var gone = a && (a.off || []).some(function (z) { return z.id === x.id; });
+    var totp = !!(a && a.cover && a.cover[x.id] === 'tp');
     var hist = (x.hist || []).filter(function (y) { return y.v; });
     var bank = lender(x.bank);
     /* A risk with no figure of the client's own and nothing else to say is one line, not
@@ -188,16 +242,24 @@
       '<div class="lb">' + esc(x.label) + (bank ? ' <span class="sm bank" title="' + esc(x.bank) + '">cert. to ' + esc(bank) + '</span>' : '') + '</div>' +
       (open ? '<label class="rc-off"><input type="checkbox" data-rco="' + esc(x.id) + '"' + (gone ? ' checked' : '') + ' aria-label="' + esc(x.label) + ' is no longer ours">Gone</label>' : '') +
       '</div>';
-    return '<div class="rc-it' + (gone ? ' gone' : '') + '" data-rcit="' + esc(x.id) + '"><div><div class="lb">' + esc(x.label) + '</div>' +
+    return '<div class="rc-it' + (gone ? ' gone' : '') + (totp ? ' totp' : '') + '" data-rcit="' + esc(x.id) + '"><div><div class="lb">' + esc(x.label) + '</div>' +
       /* Say what it is covered for, so a third party is visibly third party
          rather than a row with no box and no reason given. */
       (x.coverage && !g ? '<div class="sm cov">' + esc(x.coverage) + '</div>' : '') +
       (bank ? '<div class="sm bank" title="' + esc(x.bank) + '">A copy of the certificate goes to <b>' + esc(bank) + '</b></div>' : '') +
-      (x.lastValue && x.value && x.lastValue !== x.value && !hist.length ? '<div class="sm">Last year ' + whole(x.lastValue) + '</div>' : '') + '</div>' +
+      '</div>' +
       '<div class="v">' + (x.value && may ? whole(nv || x.value) : '') + '</div>' +
       yearStrip(hist, x.value && may ? x.value : 0) +
-      (open && may && x.value ? '<label>' + (x.kind === 'vehicle' ? 'If the vehicle\'s value is different, type it' : 'If the sum insured should change, type it') + ' <input inputmode="decimal" data-rcv="' + esc(x.id) + '" placeholder="' + esc(String(Math.round(x.value))) + '" value="' + (nv ? Math.round(nv) : '') + '" aria-label="New value for ' + esc(x.label) + '"></label>'
+      (may && x.value ? coverBlock(x, nv, open) : '') +
+      (open && may && x.value ? '<label>' + (x.kind === 'vehicle' ? 'Or type the figure you want' : 'Or type the sum insured you want') + ' <input inputmode="decimal" data-rcv="' + esc(x.id) + '" data-base="' + (Number(x.lastValue) || Number(x.value) || 0) + '" placeholder="' + esc(String(Math.round(x.value))) + '" value="' + (nv ? Math.round(nv) : '') + '" aria-label="Cover for ' + esc(x.label) + '"></label>'
         : open && tp && !g ? '<p class="sm tpnote">Third party covers damage to other people and their property, not this vehicle, so there is no value to set.</p>' : '') +
+      (may && x.value ? '<p class="rc-vn" data-rcvn="' + esc(x.id) + '"' + (needsValuation(Number(x.lastValue) || 0, Number(nv || x.value) || 0) ? '' : ' hidden') + '>' +
+        valuationNote(Number(x.lastValue) || 0, Number(nv || x.value) || 0) + '</p>' : '') +
+      /* COMPREHENSIVE → THIRD PARTY is a choice, not a removal: the vehicle stays on the
+         policy and a term is still created for it, with no figure of the client's own.
+         Ticking "take it off" would end the cover instead, which is a different thing. */
+      (open && may && !tp && x.kind === 'vehicle' ? '<label class="rc-tp"><input type="checkbox" data-rctp="' + esc(x.id) + '"' + (totp ? ' checked' : '') +
+        ' aria-label="Move ' + esc(x.label) + ' to third party">Move it to third party for the coming year — no cover for this vehicle’s own damage</label>' : '') +
       (open ? '<label class="rc-off"><input type="checkbox" data-rco="' + esc(x.id) + '"' + (gone ? ' checked' : '') + ' aria-label="' + esc(x.label) + ' is no longer ours">' +
         (x.kind === 'vehicle' ? 'Sold, written off or no longer ours — take it off' : 'No longer ours — take it off') + '</label>' : '') +
       '</div>';
@@ -297,19 +359,69 @@
         var pick = f.querySelector('input[type=radio]:checked');
         err.textContent = '';
         if (!pick) { err.textContent = 'Choose yes, a change or a question.'; return; }
-        var body = { key: key, decision: pick.value, comment: (f.querySelector('[data-rcc]').value || '').trim(), values: {}, off: {} };
+        var body = { key: key, decision: pick.value, comment: (f.querySelector('[data-rcc]').value || '').trim(), values: {}, off: {}, cover: {} };
+        /* Moved to third party: the vehicle is still renewed, so this is not an `off`. */
+        card.querySelectorAll('[data-rctp]:checked').forEach(function (i) { body.cover[i.getAttribute('data-rctp')] = 'tp'; });
         /* Risks ticked as no longer theirs. Ticking them is itself telling us what has
            changed, so it answers the comment this form would otherwise insist on. */
         card.querySelectorAll('[data-rco]:checked').forEach(function (i) { body.off[i.getAttribute('data-rco')] = 1; });
-        var nOff = Object.keys(body.off).length;
+        var nOff = Object.keys(body.off).length + Object.keys(body.cover).length;
         if (body.decision !== 'approve' && !nOff && body.comment.length < 3) { err.textContent = body.decision === 'changes' ? 'Tell us what has changed.' : 'Write your question.'; return; }
-        card.querySelectorAll('[data-rcv]').forEach(function (i) { var n = Number(String(i.value).replace(/[^0-9.]/g, '')); if (n > 0) body.values[i.getAttribute('data-rcv')] = n; });
+        /* A vehicle moved to third party carries no figure of the client's own, so its
+           value is not sent: sending one would write a sum insured onto a third-party term. */
+        card.querySelectorAll('[data-rcv]').forEach(function (i) {
+          var id = i.getAttribute('data-rcv'), n = Number(String(i.value).replace(/[^0-9.]/g, ''));
+          if (n > 0 && body.cover[id] !== 'tp') body.values[id] = n;
+        });
         var nm = f.querySelector('[data-rcn]'), rl = f.querySelector('[data-rcr]');
         if (nm) { body.name = nm.value.trim(); body.role = rl ? rl.value.trim() : ''; if (body.name.length < 2) { err.textContent = 'Give your name, so we know who answered.'; return; } }
         btn.disabled = true; btn.lastChild.textContent = 'Sending…';
         Promise.resolve(send(key, body)).then(function (r) {
           if (!r || !r.ok) { err.textContent = (r && r.error) || 'Not sent. Please try again.'; btn.disabled = false; btn.lastChild.textContent = 'Send my answer'; return; }
         }, function () { err.textContent = 'Not sent. Please try again.'; btn.disabled = false; btn.lastChild.textContent = 'Send my answer'; });
+      });
+    });
+    /* The cover to agree: a percentage fills the box, and the proposed figure and the
+       valuation warning follow whatever is in it — typed or tapped — so the client sees
+       the consequence of the figure while they are choosing it. */
+    function sayCover(it) {
+      if (!it) return;
+      var inp = it.querySelector('[data-rcv]'); if (!inp) return;
+      var base = Number(inp.getAttribute('data-base')) || 0;
+      var v = Number(String(inp.value).replace(/[^0-9.]/g, '')) || Number(inp.getAttribute('placeholder')) || 0;
+      var prop = it.querySelector('[data-rcprop]'), note = it.querySelector('[data-rcvn]');
+      if (prop) prop.textContent = whole(v);
+      if (note) {
+        var txt = valuationNote(base, v);
+        note.innerHTML = txt; if (txt) note.removeAttribute('hidden'); else note.setAttribute('hidden', '');
+      }
+      it.querySelectorAll('[data-rcpct]').forEach(function (btn) {
+        btn.setAttribute('aria-pressed', Number(btn.getAttribute('data-v')) === Math.round(v) ? 'true' : 'false');
+      });
+    }
+    function markChanged(el) {
+      var card = el.closest('.rc'); if (!card) return;
+      var chg = card.querySelector('input[type=radio][value="changes"]');
+      if (chg && !chg.checked) { chg.checked = true; chg.dispatchEvent(new Event('change', { bubbles: true })); }
+    }
+    (rootEl || document).querySelectorAll('[data-rcpct]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var it = btn.closest('.rc-it'), inp = it && it.querySelector('[data-rcv]');
+        if (!inp) return;
+        inp.value = btn.getAttribute('data-v');
+        sayCover(it); markChanged(btn);
+      });
+    });
+    (rootEl || document).querySelectorAll('[data-rcv]').forEach(function (inp) {
+      inp.addEventListener('input', function () { sayCover(inp.closest('.rc-it')); });
+    });
+    /* Moving to third party is a change like any other, and the figure stops applying,
+       so the cover block dims rather than silently staying on screen as if it still held. */
+    (rootEl || document).querySelectorAll('[data-rctp]').forEach(function (b) {
+      b.addEventListener('change', function () {
+        var it = b.closest('.rc-it');
+        if (it) it.classList.toggle('totp', b.checked);
+        if (b.checked) markChanged(b);
       });
     });
     /* Taking a risk off the policy is a change, so ticking one answers the question
