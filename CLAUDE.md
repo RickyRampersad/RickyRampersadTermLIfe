@@ -5683,6 +5683,50 @@ is separate and untouched.
   - `chk/read.js` in the scratchpad covers it (32 checks, both layouts, invented registrations throughout,
     and both again with the newlines removed — which is the shape `pdf.js` actually hands over, since
     `GirRead.text()` joins rows with two spaces and emits none).
+- **The notice prints BEFORE tax; everything else here is AFTER it** (11 November 2026: *"the premiums are
+  tax exclusive and showed reflect the tax inclusive so ned to add the 6% to get the premiums on
+  salesfroce"*).
+  - **The notice says so itself**, at the foot: `Total Premium 196,457.00`, `Government Tax 11,787.50`,
+    `Total 208,244.50` — and that Total is the Renewal Amount. Every figure in the DETAILS column is
+    tax-exclusive. `Risk_Details__c` carries the same pair: `Premium_01_Cover_01__c` before tax,
+    `Total_Premiums_Gov_t_Inclusive__c` with it, and on the real fleet the two sum to 186,333.20 and
+    197,513.21 — 6% apart, to the cent, on every row.
+  - **So Salesforce was already right and the SCREEN was comparing unlike things.** `girRecon_` set our
+    inclusive figure (`x.total`) against their exclusive one (`n.premium`), so all sixty-odd rows
+    differed by the tax — which reads exactly like the no-match fault it looks like it is reporting.
+    Everything else in the product was already on the inclusive basis: the history and `lastPremium`
+    (`Total_Premiums_Gov_t_Inclusive__c`), the letter, the premium-rise insight, the client's page
+    ("this year, tax included"). The reconciliation was the one screen out of step.
+  - **`girProceed_` never wrote the inclusive field at all**, so a renewal the desk filed would have read
+    as a 6% fall on the year. It writes both now.
+  - **The rate comes from the notice, never from the code.** `taxItems` in `girread.js` reads it as
+    `tax ÷ premium`; `GIR_TAX.RATE`/`TAX_RATE` 6% is only the fallback for a notice that prints no
+    Government Tax line, and a notice at some other rate is followed **and** flagged.
+  - **The tax is APPORTIONED across the items, not rounded on each.** Guardian General's own per-item
+    rounding cannot be reproduced from the figures they print: on the 63-vehicle fleet, 6% rounded to
+    the nearest cent on each item gives 11,787.44 against their 11,787.50, and rounding up gives
+    11,787.54 — their internal premiums carry more decimals than the notice shows. Rounding each item
+    independently would leave every row a cent or two out, and on a screen built to compare our figure
+    against theirs, cents of noise on 63 rows is the same fault as no match. Largest remainder: each
+    item within a cent of the true rate (worst case measured, ¾ of a cent) and the items tie to the
+    notice's own Government Tax **exactly**, so the notice goes on checking itself.
+  - **A notice saved before this is grossed up** (`girIncl_`), so an old stored notice reconciles with no
+    re-read. A row of ours with no inclusive figure is compared **before** tax on both sides and says so,
+    rather than being grossed up: our own record is not a thing to guess at on a screen whose job is to
+    show what the record says.
+  - **Matched on the registration first, then the chassis or engine number.** A notice leaves `Reg#` blank
+    on plant and trailers carrying no plate — four of the sixty-three — and our record then holds the
+    chassis or serial in `Vehicle__c`. Reg-only matching left those unmatched on both sides at once,
+    which reads as seven risks gone astray when nothing has moved. Every registration is matched across
+    the whole notice before a chassis is tried, each match is one-to-one, and the row says which number
+    it matched on. A notice item with no registration is now **listed** rather than dropped: it was
+    skipped by `if (used[i] || !n.reg) return`, so the notice's own items no longer added to its total.
+  - **A figure against nothing is not a tie.** The state test read `ours && theirs && …`, so a risk the
+    notice charges for and our record carries no premium on came out as **Ties** — one live row on the
+    fleet the day before the renewal, waiting to be ticked.
+  - Measured on the real notice and the real rows: **51 tie, 5 differ, 2 ours, 7 theirs**, the notice
+    ties to itself at 208,244.50, where before every single row differed. `chk/tax.js` (56 checks) covers
+    it, `notice/real.js` runs it on the real pair (scratchpad only, client data).
 - **The cover the insured agrees, and comprehensive → third party** (11 November 2026: *"on the only
   Comprehensive need to show the Assignee and the cover whats was last year and the proposed cover that has
   to be agreed by the insured, make easy allow the choice of % from 5 to 25%"*, then *"ok 20% anything over

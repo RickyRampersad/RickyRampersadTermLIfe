@@ -7,8 +7,10 @@
  * (risk locations with their sums insured) and motor (one block a vehicle, a fleet many).
  *
  * GirRead.text(arrayBuffer)  the PDF's text, one string (pdf.js, loaded by the page from cdnjs)
- * GirRead.parse(text)        { policy, replaces, title, insured, amount, from, to, premium, tax, total, items, reqs,
- *                              tranId, preparedBy, preparedOn, warnings }
+ * GirRead.parse(text)        { policy, replaces, title, insured, amount, from, to, premium, tax, total, taxRate,
+ *                              taxRead, items, reqs, tranId, preparedBy, preparedOn, warnings }
+ *                            each item: { premium, tax, total } — premium BEFORE tax, as the notice prints it;
+ *                            total WITH tax, which is how Salesforce holds it (see taxItems below).
  */
 (function (root) {
   'use strict';
@@ -103,6 +105,7 @@
     else if (/Risk Location:/i.test(block)) out.items = locations(block);
     else if (/Limit:/i.test(block)) out.items = limits(block);
     else if (block) out.items = generic(block);
+    taxItems(out);
 
     /* what Guardian General needs before it renews */
     m = /subject to the submission of the (?:below|following)[^:]*:\s*(.+?)(?=\s+(?:Material facts|OCCUPANCY|ADEQUACY|Consent|Thank you|Head Office|Please advise|If any of the above)\b|$)/i.exec(t);
@@ -124,6 +127,65 @@
     if (out.items.length && sum && out.premium && Math.abs(sum - out.premium) > 1) out.warnings.push('The items add to ' + sum.toFixed(2) + ', the notice says ' + out.premium.toFixed(2) + ': check the items.');
     out.key = polKey(out.policy);
     return out;
+  }
+  /* ── THE PREMIUMS ON A NOTICE ARE BEFORE TAX; SALESFORCE HOLDS BOTH ───────────────────────
+     Every figure in the DETAILS column is tax-exclusive, and the notice adds the government
+     premium tax once at the foot:
+
+       Total Premium   $ 196,457.00      ← the items add to exactly this
+       Government Tax  $  11,787.50      ← 6%
+       Total           $ 208,244.50      ← and this is the Renewal Amount
+
+     Risk_Details__c carries the same pair: Premium_01_Cover_01__c before tax and
+     Total_Premiums_Gov_t_Inclusive__c with it. Everything else in this product already works
+     on the inclusive figure — the history, last year's premium, the letter, the premium-rise
+     insight — so the reconciliation has to as well, and that needs a tax figure PER ITEM.
+
+     THE RATE COMES FROM THE NOTICE, NOT FROM HERE. It prints its own Government Tax, so the
+     rate is read (tax ÷ premium) and 6% is only the fallback for a notice that prints none.
+     A change in the tax then follows by itself, and a notice at some other rate is flagged
+     rather than quietly overridden.
+
+     AND THE ITEMS ARE APPORTIONED, NOT EACH ROUNDED. Guardian General's own per-item rounding
+     cannot be reproduced from the figures they print: on the 63-vehicle fleet, 6% rounded to
+     the nearest cent on each item comes to 11,787.44 against their 11,787.50, and rounding up
+     gives 11,787.54. Their internal premiums evidently carry more decimals than the notice
+     shows. Rounding each item independently would therefore leave every row a cent or two out
+     — and on a screen built to compare our figure against theirs, cents of noise on 63 rows is
+     the same fault as no match at all. So the tax is split by largest remainder: each item is
+     within a cent of the true rate, and the items add to the notice's own Government Tax
+     EXACTLY, which means the notice goes on checking itself. */
+  var TAX_RATE = 0.06;
+  function taxItems(out) {
+    var items = out.items || [];
+    var read = !!(out.premium && out.tax);
+    var rate = read ? out.tax / out.premium : TAX_RATE;
+    out.taxRate = Math.round(rate * 1e6) / 1e6;
+    out.taxRead = read;
+    if (read && Math.abs(rate - TAX_RATE) > 0.0005) {
+      out.warnings.push('The notice charges tax at ' + (Math.round(rate * 10000) / 100) + '%, not ' +
+        (TAX_RATE * 100) + '%: check it before you file anything.');
+    }
+    var sub = items.reduce(function (s, x) { return s + (x.premium || 0); }, 0);
+    if (!items.length || !sub) return;
+    /* the notice's own tax when its items tie to its own Total Premium (the normal case, and
+       the 63-vehicle fleet does tie to the cent); otherwise the rate on what we actually read,
+       because apportioning a tax the items do not account for would spread the error */
+    var want = read && Math.abs(sub - out.premium) < 1 ? out.tax : Math.round(sub * rate * 100) / 100;
+    var cents = items.map(function (x) { return (x.premium || 0) * rate * 100; });
+    var part = cents.map(function (c) { return Math.floor(c); });
+    var left = Math.round(want * 100) - part.reduce(function (s, c) { return s + c; }, 0);
+    /* biggest fraction first, then the biggest premium, so the spread is stable run to run */
+    var order = items.map(function (x, i) { return i; }).sort(function (a, b) {
+      return (cents[b] - Math.floor(cents[b])) - (cents[a] - Math.floor(cents[a])) ||
+        (items[b].premium || 0) - (items[a].premium || 0) || a - b;
+    });
+    for (var i = 0; left > 0 && i < order.length; i++, left--) part[order[i]]++;
+    for (var j = order.length - 1; left < 0 && j >= 0; j--) if (part[order[j]] > 0) { part[order[j]]--; left++; }
+    items.forEach(function (x, k) {
+      x.tax = Math.round(part[k]) / 100;
+      x.total = Math.round(((x.premium || 0) + x.tax) * 100) / 100;
+    });
   }
   function splitReqs(s) {
     return String(s).split(/\s*\([a-z]\)\s*/i).map(function (x) { return x.replace(/\s+/g, ' ').trim(); }).filter(function (x) { return x.length > 2; });
@@ -195,7 +257,8 @@
     /* a year on its own, with no figure and nothing to identify it, is not a vehicle */
     return (v.premium || v.reg || v.chassis || v.engine) ? v : null;
   }
-  /* one location: "Risk Location: LP 451 Southern Main Road, …, CHAGUANAS Stock $ 500,000 Plant,Machinery & Equipment $ 10,000 … $ 3,025.00" */
+  /* one location: "Risk Location: LP 12 Sample Road, …, SOMEWHERE Stock $ 500,000 Plant,Machinery & Equipment $ 10,000 … $ 3,025.00"
+     (invented: the first cut of this comment carried a real client's risk location, and this file is published) */
   function locations(block) {
     return block.split(/Risk Location:\s*/i).slice(1).map(function (seg) {
       var sums = [], first = -1, m;
