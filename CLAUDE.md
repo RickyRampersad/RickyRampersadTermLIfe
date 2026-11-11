@@ -9135,6 +9135,81 @@ have put something in · Nothing in yet: <names>".
 `/^The Branch Manager\b/`, which also matches *The Branch Manager's Assistant* —
 **the test held the bug**, for the sixth time in this repository.
 
+### 1899 on the home screen, and three stale rows — 11 November 2026
+
+Read off the live sheet at 7:20 on the morning of a 9:00 branch meeting, with
+`?action=ping` and the staff API, after he asked "is this ready to happen this
+morning?".
+
+**The banner would have said `starts Sat Dec 30 1899 09:00:00 GMT-0400
+(Atlantic Standard Time)`**, in front of the whole branch. `Start` and `End` are
+**time-only cells**, and Sheets keeps a time with no date on **30 December
+1899** — old enough to carry a local-mean-time offset, since Port of Spain ran
+at −04:06:04 until 1912. `publicMeeting_` hands the page `str_(m['Start'])`, so
+the page printed the whole date. **Every meeting on the sheet reads back this
+way, script-written ones included**, so it was not one bad row.
+
+**The fourth instance of the recorded Sheets-parsing trap**, after the claims
+intake's time of loss, the group billing month and the guest number stored as
+`0`. The rule those three arrived at is the fix here: **normalise at the one
+place the field is read, and never key anything on its spelling.**
+
+**It was fixed on the PAGE, not the backend**, and that choice is the point:
+`meetings/index.html` is served from GitHub Pages, so a push is live in a
+minute, where a backend fix waits on a paste and a New version. `timeMin` is
+the one parser; `timeWords` is for a person to read and `time24` for an
+`<input type="time">`, which takes 24-hour `HH:MM` and nothing else. The
+backend's own e-mails were already clean (`fmtTime_(atTime_(…))`); only
+`publicMeeting_` was raw, and the page now absorbs it.
+
+**It broke the timeline too**, which is the part he had asked for by name.
+`railBlock`'s fallback matched `/^(\d{1,2}):(\d{2})\s*([ap])/i` — anchored, and
+needing AM/PM — so the 1899 string gave `run = -1` and **every segment's time
+label came out blank**. On the previous page the test reads `["","","",""]`.
+
+**`clockText` was already taken.** It is the live session clock's minutes
+formatter, defined *later* in the file, so it won every one of my call sites and
+they all read `NaN min`. The page's one duplicate function name was the one I
+had just added. So: **grep the page's own script before naming a function** —
+the same lesson as the film builders' class guard, a third time — and
+`e2e-clock.js` now fails if any function on the page is defined twice.
+
+**Three stale rows, none of which the ping shows:**
+
+| | |
+|---|---|
+| `RRB-BM-W45-2026-11-03` | **still `live`** |
+| `RRB-BM-W46-2026-11-10` | an empty `draft` dated yesterday |
+| `MD-2026-10-30` | the one-off the ping reports as "the meeting" |
+
+**The `live` one is the one that matters: `apiHome_` returns `live || next`**, so
+a meeting left live on 3 November holds the home screen for everybody, however
+good today's agenda is. Closing it is one cell on the Meetings tab and needs no
+paste. A meeting is never left `live`.
+
+**The support team are not on the roll at all.** It holds 19 agents and
+managers; Kamla, Sasha, Elizabeth and Azariah exist **only as guest rows**
+(`@guest.invalid`), from signing in with `0000`. **Four of the fourteen rota
+items are theirs**, and `pullRoster` skips a row with neither an agent number
+nor an e-mail — so re-running it will not bring them in until the Agent Skill
+Bank carries one of the two for them. Their addresses were read off their active
+Salesforce user records rather than guessed, which is how the hyphen in
+`sasha.lalla-jagassar@` came out right where the guest row had derived
+`sasha.lalla.jagassar@`.
+
+**`apiSavePerson_` writes no Agent No**, so somebody added that way signs in
+with their e-mail until the Skill Bank is right.
+
+**What a cloud session cannot do.** Every write to the live sheet — adding the
+four staff, closing the 3 November meeting, creating the agenda — is refused by
+the sandbox as a shared resource, whatever route it is sent by. The reads are
+free. So this is a diagnose-and-hand-over job: the presses stay his.
+
+**The eighth test to hold the bug**, and the first to do it by the calendar:
+`test-standing-order.js` set `MEET.MEETING_DAY` to today, so on a **Wednesday**
+an earlier block had already built today's meeting and "meeting created" could
+never hold. It points at tomorrow and builds ahead.
+
 ### The meeting page is light, and the meeting shows once — 10 November 2026
 
 Asked for in these words: *"I need to ensure it's not a black background that
