@@ -5656,6 +5656,33 @@ is separate and untouched.
     entry with no label is falsy, so the risk was quietly renewed. The test caught it; the code was wrong.
   - `chk/proceed.js` in the session scratchpad covers it (43 checks, the real `girProceed_` and the real
     `phoneYes` block in a VM, Salesforce and the mailer made of nothing).
+- **A motor notice comes in TWO layouts, and the second one read as an empty notice** (11 November 2026,
+  on the live desk: *"Still showing not on notice"* — Reconcile said 60 risks, **0 tie, 0 differ, 60 not on
+  notice**, and the notice total **TT$0.00**).
+  - Nothing was wrong with the fleet. `girread.js`'s `vehicles()` knew only the **private motor** layout,
+    which runs everything together and puts the premium **last**. A **commercial fleet** puts the premium on
+    the **description line** and the rest beneath it. The old pattern demanded the premium *after* `Reg#:`,
+    so on a fleet it matched nothing at all: the notice read as empty, and every one of our own risks
+    reported "not on notice" — which reads to a person as **the client's record being wrong when the fault
+    is entirely ours.** Same family as the Group Life seven-figure / ten-figure bill.
+  - The block is now cut into one segment per vehicle at the year that starts its description, and each
+    field is read wherever it falls. **The premium is the first UNLABELLED amount**: the labelled ones (sum
+    insured, windscreen, limit, excess) are stripped first, which lands on the description line's figure for
+    a fleet and on the trailing figure for a private motor — one rule, not two.
+  - **Three things on a real fleet that the old pattern could not survive**, each of which silently dropped
+    a vehicle: `Reg#:` **blank** (four trailers and plant items carry no registration — they are kept and
+    identified by chassis or engine); `Eng#:`/`Chassis#:` blank, where the value must never be allowed to be
+    the *label that follows it*; and **ten vehicles with no description at all** — the notice prints the year,
+    then the price, and the make and model are simply blank, so a year followed straight by the figure starts
+    a vehicle too and an item with no words to its name is kept.
+  - `Coverage:` is read with or without a space after the colon and stops at `HP:` as well, and is normalised
+    to **Third Party** or **Comprehensive**; anything else is kept as written rather than guessed at.
+  - **The proof is the notice checking itself:** on the real 63-vehicle fleet the reader now returns 63 items,
+    59 registrations, 4 blank, and the premiums add to **196,457.00 against the notice's own 196,457** — no
+    warnings. Before the fix it returned **nothing**.
+  - `chk/read.js` in the scratchpad covers it (32 checks, both layouts, invented registrations throughout,
+    and both again with the newlines removed — which is the shape `pdf.js` actually hands over, since
+    `GirRead.text()` joins rows with two spaces and emits none).
 - **The cover the insured agrees, and comprehensive → third party** (11 November 2026: *"on the only
   Comprehensive need to show the Assignee and the cover whats was last year and the proposed cover that has
   to be agreed by the insured, make easy allow the choice of % from 5 to 25%"*, then *"ok 20% anything over
