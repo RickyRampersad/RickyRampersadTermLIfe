@@ -13,6 +13,8 @@ let fails = 0;
 const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (x ? '  ' + x : '')); if (!c) fails++; };
 
 const env = makeEnv();
+// Written on Kamla's 8 to 5 day; she is 7:30 to 5 from 12 Nov 2026 (tests/test-kamla-730.js).
+env.SCHEDULE.kamla = Object.assign({}, env.SCHEDULE.kamla, { hours: '8am – 5pm' });
 let TODAY = '2026-10-27';
 env.todayISO_ = () => TODAY;
 const t = m => m == null ? null : env.twelve_(env.mmText_(m));
