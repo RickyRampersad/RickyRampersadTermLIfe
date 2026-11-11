@@ -132,7 +132,13 @@ const STEPS = ['Last year', 'Notice', 'Reconcile', 'Letter', 'Approve', 'Client'
    the only way to find the one that moved is to set them side by side.
 
    A motor notice gives the PREMIUM per vehicle, not the sum insured, so the premium is
-   what reconciles. The sum insured is ours until the client confirms it on their page. */
+   what reconciles. The sum insured is ours until the client confirms it on their page.
+
+   BOTH SIDES ARE TAX-INCLUSIVE. The notice prints its premiums before tax and adds the
+   government tax once at the foot; Salesforce holds both figures. Every row shows the
+   inclusive figure, which is what the client pays and what the rest of this product reads,
+   with the notice's own before-tax figure under it — so a person checking against the paper
+   in their hand sees the number that is actually printed on it. */
 const RSTATE = {
   same:    { word: 'Ties',          cls: 'ok'   },
   differs: { word: 'Differs',       cls: 'bad'  },
@@ -143,9 +149,11 @@ function reconRow(x, n) {
   const s = RSTATE[x.state] || RSTATE.same; n = n || {};
   return '<tr class="rrow' + (x.ok ? ' isok' : '') + (x.q ? ' isq' : '') + '" data-rid="' + esc(x.id) + '">' +
     '<td><b>' + esc(x.label) + '</b>' + (x.coverage ? '<br><span class="muted small">' + esc(x.coverage) + '</span>' : '') +
+      (x.on ? '<br><span class="muted small">Matched on the ' + esc(x.on) + ' number: the notice leaves the registration blank</span>' : '') +
+      (x.ex ? '<br><span class="small" style="color:var(--warn)">Compared before tax: our record carries no tax-inclusive figure</span>' : '') +
       (x.asked ? '<br><span class="small" style="color:#0F7A54">Queried with them ' + esc(x.asked) + '</span>' : '') + '</td>' +
-    '<td class="num">' + (x.ours ? money(x.ours) : '–') + '</td>' +
-    '<td class="num">' + (x.theirs ? money(x.theirs) : '–') + '</td>' +
+    '<td class="num">' + (x.ours ? money(x.ours) + (!x.ex && x.oursEx ? '<br><span class="muted small">' + money(x.oursEx) + ' + tax</span>' : '') : '–') + '</td>' +
+    '<td class="num">' + (x.theirs ? money(x.theirs) + (!x.ex && x.theirsEx ? '<br><span class="muted small">' + money(x.theirsEx) + ' + tax</span>' : '') : '–') + '</td>' +
     '<td class="num">' + (x.diff ? '<b class="' + (x.diff > 0 ? 'up' : 'down') + '">' + (x.diff > 0 ? '+' : '') + money(x.diff) + '</b>' : '') + '</td>' +
     '<td><span class="pill ' + s.cls + '">' + s.word + '</span></td>' +
     '<td class="rtick"><label><input type="checkbox" data-rok="' + esc(x.id) + '"' + (x.ok ? ' checked' : '') + '> OK</label></td>' +
@@ -167,13 +175,20 @@ function reconStep(d, r) {
   ].map(t => '<div class="rtile"><b>' + t[1] + '</b><span>' + t[0] + '</span></div>').join('');
   const gap = Math.abs((k.theirPremium || 0) - (k.ourPremium || 0)) >= 1;
   const vals = (k.rows || []).some(x => x.cover);
-  return '<h2>Reconcile</h2><p class="lead">Our record beside Guardian General\'s notice, risk by risk. Tick what ties; write a query on what does not, then send the queries to them as one clarification. A motor notice gives the premium per vehicle, not the sum insured: the client confirms values on their own page.</p>' +
+  const pct = Math.round((k.taxRate || 0) * 10000) / 100;
+  return '<h2>Reconcile</h2><p class="lead">Our record beside Guardian General\'s notice, risk by risk, <b>tax included on both sides</b> — the notice prints its premiums before tax, and the figure under each one is what it prints. Tick what ties; write a query on what does not, then send the queries to them as one clarification. A motor notice gives the premium per vehicle, not the sum insured: the client confirms values on their own page.</p>' +
     '<div class="rtiles">' + tiles + '</div>' +
-    (k.itemsTie ? '' : '<div class="banner warn"><b>The notice does not add up.</b> Its own items come to ' + money(k.theirPremium) +
+    (k.itemsTie ? '' : '<div class="banner warn"><b>The notice does not add up.</b> Its own items come to ' + money(k.noticeItems) +
       ' against a notice total of ' + money(k.noticeTotal) + '. Query that first: nothing else can be trusted until it ties.</div>') +
-    '<div class="banner ' + (gap ? 'warn' : 'info') + '"><b>Premium:</b> our record ' + money(k.ourPremium) + ' · the notice ' + money(k.theirPremium) +
-      (gap ? ' · <b>' + money(Math.abs(k.theirPremium - k.ourPremium)) + ' apart</b>' : ' · they tie') + '.</div>' +
-    '<div class="rwrap"><table class="rtab"><thead><tr><th>Risk</th><th class="num">Our record</th><th class="num">The notice</th><th class="num">Difference</th><th>Where it stands</th><th>Right</th><th>Clarification</th>' +
+    '<div class="banner ' + (gap ? 'warn' : 'info') + '"><b>Premium, tax included:</b> our record ' + money(k.ourPremium) + ' · the notice ' + money(k.theirPremium) +
+      (gap ? ' · <b>' + money(Math.abs(k.theirPremium - k.ourPremium)) + ' apart</b>' : ' · they tie') + '.' +
+      (k.noticeTax ? '<br><span class="small">The notice prints ' + money(k.noticeBeforeTax) + ' before tax and adds ' + money(k.noticeTax) +
+        ' government tax (' + pct + '%), for ' + money(k.noticeTotal) + '.</span>'
+        : '<br><span class="small">The notice prints no tax line, so ' + pct + '% government tax is added here, which is how Salesforce holds it.</span>') +
+      '</div>' +
+    (k.exRows ? '<div class="banner warn"><b>' + k.exRows + ' risk' + (k.exRows === 1 ? ' has' : 's have') + ' no tax-inclusive premium on our record.</b> ' +
+      (k.exRows === 1 ? 'It is' : 'They are') + ' compared before tax instead, on both sides, and marked in the table. Put the figure on the risk in Salesforce so the whole policy reads on one basis.</div>' : '') +
+    '<div class="rwrap"><table class="rtab"><thead><tr><th>Risk</th><th class="num">Our record<br><span class="muted small">tax incl.</span></th><th class="num">The notice<br><span class="muted small">tax incl.</span></th><th class="num">Difference</th><th>Where it stands</th><th>Right</th><th>Clarification</th>' +
     (vals ? '<th>Value to insure</th>' : '') + '</tr></thead>' +
     '<tbody>' + k.rows.map(x => reconRow(x, { values: vals, set: d.values || {} })).join('') + '</tbody></table></div>' +
     (vals ? '<p class="small muted">The premium is what reconciles against the notice. <b>Value to insure</b> is the sum insured, which is ours until the client confirms it: type it here if they telephone it in, or leave it and they set it on their own renewal page.</p>' : '') +

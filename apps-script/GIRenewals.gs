@@ -31,6 +31,22 @@
 /* The reconciliation. SLACK is what counts as the same figure: Guardian General round to the
    cent and we hold the same, so a dollar is generous and still catches a real difference. */
 var GIR_RECON = { SLACK: 1 };
+/* The government premium tax. Guardian General's notice prints its premiums BEFORE tax and adds
+   the tax once at the foot; Risk_Details__c carries both (Premium_01_Cover_01__c before tax,
+   Total_Premiums_Gov_t_Inclusive__c with it), and every other figure in this product — the
+   history, last year's premium, the letter, the premium-rise insight — is the inclusive one.
+   RATE is only a fallback: girread apportions the notice's OWN stated tax across the items, so
+   a change in the tax follows from the notice itself. This copy exists because the reader runs
+   in the browser and this file runs in Apps Script; keep the two in step. */
+var GIR_TAX = { RATE: 0.06 };
+/** A tax-inclusive figure from a tax-exclusive one, for a notice read before girread gave each item its own. */
+function girIncl_(ex, notice) {
+  var v = girNum_(ex);
+  if (!v) return 0;
+  var rate = notice && notice.taxRate ? Number(notice.taxRate) : GIR_TAX.RATE;
+  if (!(rate >= 0) || rate > 0.5) rate = GIR_TAX.RATE;
+  return girR_(v * (1 + rate));
+}
 var GIR = {
   TAB: 'GI Renewals',
   LOG: 'GI Renewal Log',
@@ -461,7 +477,9 @@ function girList_(p) {
   return { ok: true, month: ym, monthLabel: girMonthLabel_(ym), today: today, rows: rows, lines: GIR_LINE_ORDER.map(function (k) { return { k: k, label: GIR_LINES[k].label, n: lines[k] || 0 }; }),
     tiles: tiles, me: { name: who.name, role: who.role, title: who.title, approver: who.approver }, live: girLive_(), mail: !!tMsCreds_(), ai: !!gcmAiKey_() };
 }
-/** What renews, in a few words: "PEE6927 Kia Sportage", "3 vehicles", "LP 451 Southern Main Road". */
+/** What renews, in a few words: "XBA2000 Kia Sportage", "3 vehicles", "LP 12 Sample Road".
+ *  (Both examples are invented. The first cut of this comment carried a real registration — on four
+ *  cover terms — and a real risk location, in a file the repository root serves on the open web.) */
 function girWhatShort_(r) {
   var x = r.items[0] || {};
   if (r.items.length > 1) return r.items.length + (r.line === 'motor' ? ' vehicles' : r.line === 'home' || r.line === 'property' ? ' locations or items' : ' items');
@@ -1649,7 +1667,15 @@ function girProceed_(who, r, st, b, save) {
     keep.forEach(function (x) {
       var n = match(x), rw = raw[gcmId15_(x.id)] || {}, body = {};
       GIR_COPY.forEach(function (f) { if (rw[f] !== undefined && rw[f] !== null && rw[f] !== '') body[f] = rw[f]; });
+      /* BOTH PREMIUM FIGURES, as Salesforce holds them: the notice's own before-tax premium in
+         Premium_01_Cover_01__c, and with the tax in Total_Premiums_Gov_t_Inclusive__c, which is
+         the figure the history, last year's premium, the letter and the reconciliation all read.
+         Until this the inclusive field was left empty on every term the desk created, so the
+         renewal it filed read as a 6% fall on the year. girread gives each item its own
+         inclusive total; girIncl_ covers a notice read before it did. */
       var prem = n && n.premium ? n.premium : perItem ? 0 : (first ? notice.premium : 0);
+      var incl = n && n.total ? girR_(n.total) : perItem ? 0 : (first ? girR_(notice.total) : 0);
+      if (prem && !incl) incl = girIncl_(prem, notice);
       Object.assign(body, { RecordTypeId: x.rtId, TRANSACTIONS__c: out.trans, Client_Portfolio_Look_Up__c: x.shell, Account_Relation__c: r.account, Policy__c: notice.policy || x.policy,
         Carrier__c: 'Guardian General', From__c: notice.from, To__c: notice.to, Premium_01_Cover_01__c: girR_(prem), Risk_Classification__c: 'Renewal',
         Asset_Description__c: 'Renewed through the renewal desk on ' + tDmy_(today) + ' by ' + who.name + ', on the client\'s yes (' + (answer.via === 'staff' ? answer.comment : 'their renewal page, ' + answer.at) + '). ' +
@@ -1665,8 +1691,11 @@ function girProceed_(who, r, st, b, save) {
         body.Motor_Vehicle_Coverage_Type__c = girThirdParty_(rw.Motor_Vehicle_Coverage_Type__c || x.coverage);
         delete body.Cover1__c; delete body.Total_Cover__c; delete body.Windscreen__c; delete body.NCD__c;
         body.Asset_Description__c += ' The client moved this vehicle to third party at this renewal (it was ' +
-          String(rw.Motor_Vehicle_Coverage_Type__c || x.coverage || 'comprehensive') + ').';
+          String(rw.Motor_Vehicle_Coverage_Type__c || x.coverage || 'comprehensive') + '). The premium here is still' +
+          ' Guardian General\'s comprehensive figure: they re-rate it as third party, and the schedule they send back' +
+          ' carries the premium to hold.';
       }
+      if (incl) body.Total_Premiums_Gov_t_Inclusive__c = incl;
       var v = toTp[x.id] ? 0 : (values[x.id] ? values[x.id].value : (n && n.value ? n.value : 0));
       if (v) body.Cover1__c = v;
       if (!toTp[x.id] && n && n.windscreen) body.Windscreen__c = n.windscreen;
@@ -1744,36 +1773,85 @@ function girProceed_(who, r, st, b, save) {
 
    A MOTOR NOTICE GIVES THE PREMIUM PER VEHICLE, NOT THE SUM INSURED (girread's vehicle item
    carries `premium`; only a property item carries `value`). So the figure that reconciles on
-   a fleet is the premium, and the sum insured is ours alone until the client confirms it. */
+   a fleet is the premium, and the sum insured is ours alone until the client confirms it.
+
+   AND IT COMPARES TAX-INCLUSIVE AGAINST TAX-INCLUSIVE. The notice prints its premiums BEFORE
+   tax; Salesforce holds both, and Total_Premiums_Gov_t_Inclusive__c is the one every other
+   figure in this product uses. Setting our inclusive figure beside their exclusive one made
+   every single row differ by the tax — on the 63-vehicle fleet that reads exactly like no
+   match at all, which is the fault it looks like it is reporting. girread now gives each item
+   its own tax and inclusive total (apportioned from the notice's own Government Tax, so the
+   items tie to the notice to the cent); a notice read before that is grossed up by girIncl_.
+
+   A ROW OF OURS WITH NO INCLUSIVE FIGURE is compared before tax instead, on both sides, and
+   says so (`ex: true`) rather than being grossed up: our own record is not a thing to guess
+   at on a screen whose whole job is to show what the record says. */
 function girReconKey_(s) { return String(s || '').replace(/\W/g, '').toUpperCase(); }
 function girRecon_(r, st, notice) {
   var saved = girJ_(st && st.Recon, {}) || {}, nitems = (notice && notice.items) || [];
-  var used = {}, rows = [], ourP = 0, theirP = 0;
+  var used = {}, pick = {}, how = {}, rows = [], ourP = 0, theirP = 0, exRows = 0;
   var cell = function (id, o) { var s = saved[id] || {}; o.id = id; o.ok = !!s.ok; o.q = s.q || ''; o.by = s.by || ''; o.at = s.at || ''; o.asked = s.asked || ''; return o; };
-  r.items.forEach(function (x) {
-    var k = girReconKey_(x.vehicle), n = null;
-    if (k) for (var i = 0; i < nitems.length; i++) if (!used[i] && girReconKey_(nitems[i].reg) === k) { n = nitems[i]; used[i] = 1; break; }
-    var ours = girR_(x.total), theirs = n ? girR_(n.premium || n.value) : 0;
+  /* their figure both ways: a notice girread has taxed carries item.total, an older one does not */
+  var theirIn = function (n) { return n ? girR_(n.total || girIncl_(n.premium || n.value, notice)) : 0; };
+  var theirEx = function (n) { return n ? girR_(n.premium || n.value) : 0; };
+  /* MATCHED ON THE REGISTRATION FIRST, AND ONLY THEN ON THE CHASSIS OR ENGINE NUMBER. A notice
+     leaves Reg# blank on plant and trailers that carry no plate — four of the sixty-three on
+     the fleet — and our own record then holds the chassis or the serial in Vehicle__c. Matching
+     only on the registration left those on screen as "not on notice" on both sides at once,
+     which reads as seven risks gone astray when nothing has moved at all. A registration must
+     never lose its match to somebody else's chassis, so every registration is matched across
+     the whole notice before a chassis is tried, and each match is one-to-one. */
+  var passBy = function (mine, theirs, label) {
+    r.items.forEach(function (x, j) {
+      if (pick[j] !== undefined) return;
+      var k = girReconKey_(mine(x)); if (!k) return;
+      for (var i = 0; i < nitems.length; i++) if (!used[i] && girReconKey_(theirs(nitems[i])) === k) { pick[j] = i; used[i] = 1; how[j] = label; return; }
+    });
+  };
+  passBy(function (x) { return x.vehicle; }, function (n) { return n.reg; }, '');
+  passBy(function (x) { return x.vehicle; }, function (n) { return n.chassis; }, 'chassis');
+  passBy(function (x) { return x.chassis; }, function (n) { return n.chassis; }, 'chassis');
+  passBy(function (x) { return x.vehicle; }, function (n) { return n.engine; }, 'engine');
+  passBy(function (x) { return x.engine; }, function (n) { return n.engine; }, 'engine');
+  r.items.forEach(function (x, j) {
+    var n = pick[j] === undefined ? null : nitems[pick[j]];
+    var ourIn = girR_(x.total), ourEx = girR_(x.premium), ex = !ourIn && !!ourEx;
+    if (ex) exRows++;
+    var ours = ex ? ourEx : ourIn, theirs = ex ? theirEx(n) : theirIn(n);
     ourP += ours; theirP += theirs;
     rows.push(cell(x.id, { label: girItemLabel_(x), vehicle: x.vehicle || '', coverage: x.coverage || '', cover: girR_(x.value || x.cover),
-      ours: ours, theirs: theirs, diff: n ? girR_(theirs - ours) : 0,
-      state: !n ? 'ours' : (ours && theirs && Math.abs(theirs - ours) >= GIR_RECON.SLACK) ? 'differs' : 'same' }));
+      ours: ours, theirs: theirs, diff: n ? girR_(theirs - ours) : 0, ex: ex, on: how[j] || '',
+      oursEx: ourEx, theirsEx: theirEx(n),
+      /* A FIGURE AGAINST NOTHING IS NOT A TIE. This read `ours && theirs && …`, so a risk the
+         notice charges for and our record carries no premium on came out as "Ties" — on the
+         fleet that was one live row the day before the renewal, waiting to be ticked. */
+      state: !n ? 'ours' : Math.abs(theirs - ours) >= GIR_RECON.SLACK ? 'differs' : 'same' }));
   });
-  /* on the notice and not on our record: a vehicle added mid-year that never reached Salesforce */
+  /* on the notice and not on our record: a vehicle added mid-year that never reached Salesforce.
+     An item with no registration at all is listed too, by its chassis or engine number — the
+     notice charges for it either way, and a row left off the screen is a figure nobody checks. */
   nitems.forEach(function (n, i) {
-    if (used[i] || !n.reg) return;
-    var theirs = girR_(n.premium || n.value); theirP += theirs;
-    rows.push(cell('n:' + girReconKey_(n.reg), { label: [n.year || '', n.desc || '', '(' + n.reg + ')'].filter(String).join(' '), vehicle: n.reg,
-      coverage: '', cover: 0, ours: 0, theirs: theirs, diff: theirs, state: 'theirs' }));
+    if (used[i]) return;
+    var id = String(n.reg || n.chassis || n.engine || '').trim();
+    var theirs = theirIn(n); theirP += theirs;
+    rows.push(cell('n:' + (girReconKey_(id) || 'x' + i), { label: [n.year || '', n.desc || '', id ? '(' + id + ')' : '(no registration on the notice)'].filter(String).join(' '),
+      vehicle: n.reg || '', coverage: n.coverage || '', cover: girR_(n.value || 0), ours: 0, oursEx: 0,
+      theirs: theirs, theirsEx: theirEx(n), ex: false, on: '', diff: theirs, state: 'theirs' }));
   });
   var counts = { same: 0, differs: 0, ours: 0, theirs: 0, ok: 0, q: 0 };
   rows.forEach(function (x) { counts[x.state]++; if (x.ok) counts.ok++; if (x.q) counts.q++; });
-  var nTotal = girR_(notice ? notice.premium || notice.total : 0);
+  var nTotal = girR_(notice ? notice.total || girIncl_(notice.premium, notice) : 0);
+  /* the notice against itself, on every item it carries, whatever our own rows hold */
+  var nItemsIn = girR_(nitems.reduce(function (s, n) { return s + theirIn(n); }, 0));
   return { rows: rows, counts: counts, risks: rows.length,
     ourPremium: girR_(ourP), theirPremium: girR_(theirP), noticeTotal: nTotal,
+    taxRate: notice && notice.taxRate ? Number(notice.taxRate) : GIR_TAX.RATE,
+    taxRead: !!(notice && notice.taxRead), exRows: exRows,
+    noticeBeforeTax: girR_(notice ? notice.premium : 0), noticeTax: girR_(notice ? notice.tax : 0),
     /* the notice's own items against the notice's own total: girread warns on this too, and
        it is the first thing to query, because nothing else can be trusted until it ties */
-    itemsTie: !nTotal || !theirP || Math.abs(theirP - nTotal) < GIR_RECON.SLACK,
+    itemsTie: !nTotal || !nItemsIn || Math.abs(nItemsIn - nTotal) < GIR_RECON.SLACK,
+    noticeItems: nItemsIn,
     done: rows.length > 0 && rows.every(function (x) { return x.ok || x.q; }),
     open: rows.filter(function (x) { return !x.ok && !x.q; }).length,
     asked: girJ_(st && st.Recon, {})._asked || null };
@@ -2192,7 +2270,7 @@ function girPreview_(p) {
   return { ok: true, subject: m.subject, html: m.html };
 }
 /* Which copy is pasted: ?action=gcm.ping answers it under renewals.build. Change it with any change worth deploying. */
-var GIR_BUILD = '2026-11-11a';
+var GIR_BUILD = '2026-11-11b';
 function girPing_() {
   var n = 0; try { n = girRows_(GIR.TAB).length; } catch (e) {}
   return { build: GIR_BUILD, live: girLive_(), rows: n, mail: !!tMsCreds_(), ai: !!gcmAiKey_(), salesforce: tSfOn_() };
