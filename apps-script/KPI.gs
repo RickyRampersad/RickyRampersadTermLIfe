@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-10b';
+var SCRIPT_VERSION = '2026-11-11a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3873,7 +3873,7 @@ function housekeepingTick_() {
   var morningSent = 0;
   people.forEach(function (p) {
     var sid = String(p.staffId), sp = parseSpan_(scheduleFor_(sid).hours || '');
-    if (!sp || mins < sp.start - STAFF_MAIL_LEAD || mins > sp.start + 20 || morningSent >= MORNING_MAIL_PER_RUN) return;
+    if (!sp || mins < sp.start - staffMailLead_(sid) || mins > sp.start + 20 || morningSent >= MORNING_MAIL_PER_RUN) return;
     if (dsMarkHolds_(props.getProperty('daystart_first_' + sid + '_' + day))) return;
     // Past the budget a second build waits ten minutes for the next run rather than be stopped part-way (21 Oct 2026).
     if (morningSent && late()) return;
@@ -4182,6 +4182,11 @@ function sendMorningNow() {
 
 var MORNING_MAIL_AT = 5 * 60;          // the day's first run: 5:00am
 var STAFF_MAIL_LEAD = 30;              // a desk's morning e-mail, half an hour before its start
+// A desk that wants it earlier (11 Nov 2026, Kamla: "change my time for the start trigger at 7:30am"). Her
+// e-mail was due at 7:30 but four 8am desks share the window three a run, so it landed about 7:45. Sent from
+// 7:00 it is in her inbox by 7:30. Minutes before the desk's start.
+var STAFF_MAIL_LEAD_BY = { kamla: 60 };
+function staffMailLead_(sid) { return STAFF_MAIL_LEAD_BY[sid] || STAFF_MAIL_LEAD; }
 var MORNING_MAIL_PER_RUN = 3;
 var BM_MAIL_AT = 5 * 60;               // 5:00am, the Branch Manager's operations review
 var ABSENT_AFTER_MIN = 5;              // no sign-in by start + 5 is absent (Ricky, 20 Oct 2026); the work moves at start + COVER.AFTER_MIN
