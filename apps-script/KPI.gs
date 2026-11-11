@@ -560,11 +560,11 @@ var SCHEDULE = {
     blocks: { KPI1: { time: '8am – 4pm', focus: 'Pendings, increases and group apps, reinstatements and lapses, Query Pal and surveys, reports', kpi: 'Pendings' } }
   },
   kamla: {
-    // The BMA: 8 to 5 (Ricky, 17 October 2026). She manages Sales Support 1, 2
-    // and 3 and is in charge of agents, licensing, training and branch
-    // operations; her plan goes out at 7:30.
-    hours: '8am – 5pm', lunch: '12:00 – 1:00pm',
-    blocks: { KPI1: { time: '8am – 5pm', focus: 'Sales support, agents, licensing, training and branch operations; escalations and reporting', kpi: 'Lic/Staffing/SA/HR' } }
+    // The BMA: 7:30 to 5 from 12 November 2026 (Ricky, 11 Nov: "check Kamla in at 7:30am and check out at
+    // 5pm"; 8 to 5 from 17 October). She manages Sales Support 1, 2 and 3 and is in charge of agents,
+    // licensing, training and branch operations; her day e-mail goes at 7:00.
+    hours: '7:30am – 5pm', lunch: '12:00 – 1:00pm',
+    blocks: { KPI1: { time: '7:30am – 5pm', focus: 'Sales support, agents, licensing, training and branch operations; escalations and reporting', kpi: 'Lic/Staffing/SA/HR' } }
   },
   // The Branch Manager's personal assistant: the mail run, contracts to agents,
   // deliveries and the diary. He closes off at 5pm (Ricky, 19 October 2026),
@@ -4182,10 +4182,9 @@ function sendMorningNow() {
 
 var MORNING_MAIL_AT = 5 * 60;          // the day's first run: 5:00am
 var STAFF_MAIL_LEAD = 30;              // a desk's morning e-mail, half an hour before its start
-// A desk that wants it earlier (11 Nov 2026, Kamla: "change my time for the start trigger at 7:30am"). Her
-// e-mail was due at 7:30 but four 8am desks share the window three a run, so it landed about 7:45. Sent from
-// 7:00 it is in her inbox by 7:30. Minutes before the desk's start.
-var STAFF_MAIL_LEAD_BY = { kamla: 60 };
+// A desk may set its own lead (minutes before its start). None does: Kamla's request of 11 Nov 2026 for her
+// e-mail by 7:30 was met by moving her day to 7:30 (see SCHEDULE.kamla), so hers goes at 7:00 like everyone's.
+var STAFF_MAIL_LEAD_BY = {};
 function staffMailLead_(sid) { return STAFF_MAIL_LEAD_BY[sid] || STAFF_MAIL_LEAD; }
 var MORNING_MAIL_PER_RUN = 3;
 var BM_MAIL_AT = 5 * 60;               // 5:00am, the Branch Manager's operations review
@@ -22246,7 +22245,8 @@ var ATT_GRACE_MIN = 5;   // late after five minutes (Ricky, 20 Oct 2026)
    last day on those hours ('until') and the hours. Today's hours are always
    SCHEDULE's; only a day before an 'until' reads from here. */
 var SCHEDULE_WAS = {
-  elizabeth: [{ until: '2026-10-22', hours: '7am – 3pm' }]
+  elizabeth: [{ until: '2026-10-22', hours: '7am – 3pm' }],
+  kamla: [{ until: '2026-11-11', hours: '8am – 5pm' }]
 };
 
 /** The hours string this desk kept on that day ("2026-10-12"); today's when no day is given. */

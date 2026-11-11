@@ -20,6 +20,8 @@ let fails = 0;
 const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (x && !c ? '  ' + x : '')); if (!c) fails++; };
 const DAY = '2026-10-29';                 // a Thursday
 const env = makeEnv();
+// Written on Kamla's 8 to 5 day; she is 7:30 to 5 from 12 Nov 2026 (tests/test-kamla-730.js).
+env.SCHEDULE.kamla = Object.assign({}, env.SCHEDULE.kamla, { hours: '8am – 5pm' });
 env.todayISO_ = () => DAY;
 let NOW = new Date(DAY + 'T07:40:00');
 const realDate = env.Date;
