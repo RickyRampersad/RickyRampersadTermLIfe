@@ -40,7 +40,7 @@ function relaySend_(o) {
   var from = relayFrom_();
   if (!from) { MailApp.sendEmail(o); return 'account'; }
   var opt = { name: o.name, from: from, replyTo: o.replyTo || from };
-  ['cc', 'bcc', 'htmlBody'].forEach(function (k) { if (o[k]) opt[k] = o[k]; });
+  ['cc', 'bcc', 'htmlBody', 'attachments'].forEach(function (k) { if (o[k]) opt[k] = o[k]; });
   GmailApp.sendEmail(o.to, o.subject, o.body || ' ', opt);
   return 'support';
 }
@@ -79,11 +79,21 @@ function doPost(e) {
     var o = { to: String(m.to), subject: String(m.subject), name: String(m.name || RELAY.NAME) };
     ['cc', 'bcc', 'replyTo', 'htmlBody', 'body'].forEach(function (k) { if (m[k]) o[k] = String(m[k]); });
     if (!o.body) o.body = ' ';
+    /* Attachments travel as {name, type, b64} (11 November 2026: the fact find's PDFs, which until then had to go
+       from the sender's own Gmail and its 100-a-day limit). At most ten, 20 MB together. */
+    if (m.att && m.att.length) {
+      var size = 0;
+      o.attachments = m.att.slice(0, 10).map(function (a) {
+        var bytes = Utilities.base64Decode(String(a.b64 || '')); size += bytes.length;
+        return Utilities.newBlob(bytes, String(a.type || 'application/octet-stream'), String(a.name || 'attachment'));
+      });
+      if (size > 20 * 1024 * 1024) return relayOut_({ ok: false, error: 'attachments over 20 MB' });
+    }
     relaySend_(o);
     cache.put(seen, '1', 1800);
     props.setProperty(dk, String(n + 1));
     var left = null; try { left = MailApp.getRemainingDailyQuota(); } catch (err) {}
-    return relayOut_({ ok: true, left: left });
+    return relayOut_({ ok: true, left: left, att: true });
   } catch (err) {
     return relayOut_({ ok: false, error: String(err && err.message || err).slice(0, 200) });
   }
@@ -92,7 +102,7 @@ function doPost(e) {
 /** Opening the URL in a browser: is it up, and how much is left today. Nothing secret. */
 function doGet() {
   var left = null; try { left = MailApp.getRemainingDailyQuota(); } catch (err) {}
-  return relayOut_({ ok: true, service: 'Ricky Rampersad Branch mail relay', ready: !!PropertiesService.getScriptProperties().getProperty('RELAY_KEY'), left: left });
+  return relayOut_({ ok: true, service: 'Ricky Rampersad Branch mail relay', att: true, ready: !!PropertiesService.getScriptProperties().getProperty('RELAY_KEY'), left: left });
 }
 
 /** Run once: makes the key (or shows the one already made) for the tracker's MAIL_RELAY_KEY. */
