@@ -7545,6 +7545,18 @@ sheet. Reveal with `el.hidden = false`, never `style.display`, or that
   to their own insurer.
 - **Branch:** develop and push to `claude/service-questioner-automation-6ihjzn`.
   No pull request unless asked for one.
+- **Chatter continues on the trail; it never starts a new one** (Ricky, 4 and 11 Nov
+  2026). On any task that already has Chatter, every note, follow-up and reminder is
+  a comment under the most relevant existing post, never a new post. A new post only
+  on a task with no Chatter at all.
+- **An orphan task is not closed until a conversation is had** (Ricky, 11 Nov 2026:
+  "The objective of the orphan is not to close a task, but it's to make contact to
+  understand the reason and the rationale behind it. Everyone has a different
+  story"). An orphan task closed with no agent named is reopened, on its own trail,
+  asking the staff member who closed it for the reason.
+- **Everything for Ricky to send goes into Outlook Drafts without asking** (10 Nov
+  2026). Client letters, staff messages and WhatsApp texts are drafted in support@,
+  never sent, and never put to him as a question first.
 - **Two marks, two products, on purpose.** The branch site
   (rickyrampersadbranch.com) carries the gold shield in `logo-mark.png` — the
   house rule above. donthaveanagent.com carries **The Knot** in Ink & Coral,
