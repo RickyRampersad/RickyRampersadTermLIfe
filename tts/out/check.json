@@ -1,7 +1,52 @@
 {
- "tts/out/adAfix2/01.mp3": [
+ "tts/out/adA3/01.mp3": [
   "en",
-  0.995,
-  "Seven places this year. Most advisors are gone by year 3. Here, a third are still with us at 4."
+  0.996,
+  "You are an insurance advisor, you're good at it, and the support stopped."
+ ],
+ "tts/out/adA3/02.mp3": [
+  "en",
+  0.996,
+  "The industry has a name for your second year, the cliff, agents left on their own, without the support they had in year one."
+ ],
+ "tts/out/adA3/03.mp3": [
+  "en",
+  0.992,
+  "For years in, 14 and 100 are still standing. In this branch, it is 31."
+ ],
+ "tts/out/adA3/04.mp3": [
+  "en",
+  0.998,
+  "Because here nothing stops. 39 things this branch does for an advisor. Clients match to you, household by household. A coach, not a clock, and nobody will know you asked."
+ ],
+ "tts/out/adA3/05.mp3": [
+  "en",
+  0.916,
+  "seven places this year. One confidential conversation, 20 minutes this week. Hiki Humpir Saad, Brinche Dauticol, is Leshika Hears."
+ ],
+ "tts/out/adB3/01.mp3": [
+  "en",
+  0.994,
+  "You want a career with no ceiling. You are afraid of the first year. Both are fair."
+ ],
+ "tts/out/adB3/02.mp3": [
+  "en",
+  0.998,
+  "This is a sales career, and a year that breaks people is not the first. It is the second when the names run out."
+ ],
+ "tts/out/adB3/03.mp3": [
+  "en",
+  0.998,
+  "Here, the leads come to you from people who asked to be called. You're trained before you're contracted. And your manager is a coach, not a clock."
+ ],
+ "tts/out/adB3/04.mp3": [
+  "en",
+  0.996,
+  "For years in, the industry keeps 14 and 100. This branch keeps 31."
+ ],
+ "tts/out/adB3/05.mp3": [
+  "en",
+  0.885,
+  "Seven places this year. One conversation, 20 minutes this week. Hiki Humpir Saad, Brain Chidochikon, is Leshika Hears."
  ]
 }
