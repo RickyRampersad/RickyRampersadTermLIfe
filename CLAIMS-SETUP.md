@@ -128,13 +128,32 @@ has never been connected, so the registers have never synced. There is nothing
 on this sheet to carry. That makes **starting fresh** better than copying
 (below), and it makes this the cheapest moment the move will ever have.
 
-**It is `support@`, not `support002@`.** On 12 November the browser doing this
-was signed in as `support002@rickyrampersadbranch.com`, a second account in the
-same Workspace, and Google answered the sheet with "You need access" — which
-reads as a broken link and is not. The owning account decides two things in code
-(`Session.getEffectiveUser()`): where test mail lands, and who counts as a
-trusted tester. Land it on support002@ and the test claims go to an inbox nobody
-reads. **Use the same account that owns the motor quote project.**
+**It landed on `support002@`, and that is settled.** On 12 November the browser
+doing this was signed in as `support002@rickyrampersadbranch.com`, a second
+account in the same Workspace, and Google answered the sheet with "You need
+access" — which reads as a broken link and is not. It then turned out to be the
+only account in the domain that can be signed in to, so **support002@ owns the
+project**. What that costs, and what was done about it:
+
+- **The ping still reads `onWorkspace: true`.** It compares the *domain* against
+  `CLAIMS.OWNER_DOMAIN`, not the mailbox, so the move registers either way — and
+  the daily mail allowance and the Drive recoverability, which are the two
+  reasons for the move, belong to the Workspace whichever account holds it.
+- **Test mail goes to support002@**, because `TEST_INBOX` is blank and falls
+  back to the owner. Fine as long as somebody reads that inbox; set `TEST_INBOX`
+  to send it elsewhere.
+- **`MailApp` sends as the owner, so a client's acknowledgement would come From
+  support002@** — an address no client has ever seen, and a reply to it would
+  land in a mailbox nobody watches. **Fixed in build `2026-11-12a`:** `sendMail_`
+  puts `CLAIMS.REPLY_TO` (`support@rickyrampersadbranch.com`, which is read
+  every five minutes) on every e-mail that does not already name one. The desk
+  notice *does* name one — the client's own address, so that a Guardian claims
+  desk replying reaches the person who filed — and an explicit `replyTo` wins.
+- **Worth asking a Workspace admin for, if it is ever easy:** add
+  `support@rickyrampersadbranch.com` as a verified *Send mail as* alias on
+  support002@. The From would then read support@ as well, which is the Log
+  Book's own pattern (`lbGmailFrom_` reads `GmailApp.getAliases()`). The
+  reply-to above makes that a nicety rather than a blocker.
 
 **Why it is worth doing, beyond tidiness.** Two things, and the second is the
 one that bites later:

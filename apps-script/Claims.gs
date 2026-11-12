@@ -57,7 +57,7 @@ var CLAIMS = {
    * that was pasted and never deployed — from outside those look identical,
    * and so does a later paste of an older copy winning the same function
    * name. Change it with any change worth deploying. */
-  BUILD: '2026-11-08b',
+  BUILD: '2026-11-12a',
 
   /* ---- where notifications go ---------------------------- */
 
@@ -134,6 +134,20 @@ var CLAIMS = {
     'rickyrampersadsalessupport@myguardiangroup.com',    // sales support team
     'support@rickyrampersadbranch.com',                  // branch support inbox
   ],
+
+  /* Where a reply goes, whoever owns the script.
+   *
+   * MailApp sends as the account that owns the project, and on 12 November
+   * 2026 the move to the Workspace had to land on a SECOND account in the
+   * domain — support002@, the only one that can be signed in to. Without this,
+   * a client answering their own claim acknowledgement would be writing to a
+   * mailbox nobody watches. The branch inbox is read every five minutes, so
+   * replies go there and the From address stops mattering.
+   *
+   * An explicit replyTo always wins, and one call depends on that: the desk
+   * notice sets the CLIENT'S own address, so a Guardian claims desk replying
+   * reaches the person who filed. Blank this to fall back to the owner. */
+  REPLY_TO: 'support@rickyrampersadbranch.com',
 
   /* The Workspace this project is meant to run under.
    *
@@ -458,6 +472,10 @@ function sendMail_(opts) {
   var o = {};
   for (var k in opts) o[k] = opts[k];
   delete o.signIn;
+
+  /* Replies go to the branch inbox, not to whichever account owns the script.
+     An explicit replyTo wins — see CLAIMS.REPLY_TO. */
+  if (!o.replyTo && CLAIMS.REPLY_TO) o.replyTo = CLAIMS.REPLY_TO;
 
   if (!testMode_()) { MailApp.sendEmail(o); return; }
 
