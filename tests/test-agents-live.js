@@ -14,6 +14,7 @@ let DAY = '2026-11-02';
 const env = makeEnv();
 env.todayISO_ = () => DAY;
 const P = env.PropertiesService.getScriptProperties();
+P.setProperty('AGENT_DAY_OFF', 'none'); // these tests use agents who were taken off on 12 Nov 2026
 P.setProperty('MANAGER_EMAIL', 'ricky@example.com');
 
 console.log('\nWho is an agent here, from the Skill Bank:\n');

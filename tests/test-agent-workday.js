@@ -19,6 +19,7 @@ const realDate = env.Date; let NOW = new Date(DAY + 'T12:41:00');
 env.Date = new Proxy(realDate, { construct(t, a) { return a.length ? new realDate(...a) : new realDate(NOW.getTime()); }, get(t, k) { return k === 'now' ? () => NOW.getTime() : t[k]; } });
 env.__mkSheet('Agent Day', 1, env.AGDAY.head, []);
 const P = env.PropertiesService.getScriptProperties();
+P.setProperty('AGENT_DAY_OFF', 'none'); // these tests use agents who were taken off on 12 Nov 2026
 P.setProperty('MANAGER_EMAIL', 'ricky@example.com');
 const mails = []; env.MailApp = { sendEmail: m => mails.push(m), getRemainingDailyQuota: () => 90 };
 const AG = {

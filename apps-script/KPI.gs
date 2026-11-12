@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-11a';
+var SCRIPT_VERSION = '2026-11-12a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -10542,8 +10542,25 @@ function agentInPilot_(a) {
   var code = String(a.code || a.agentId || '').toUpperCase().replace(/[^A-Z0-9]/g, ''), nk = bkNk_(a.agentName || a.name || '');
   return agentPilotList_().some(function (x) { var c = String(x).toUpperCase().replace(/[^A-Z0-9]/g, ''); return (code && c === code) || (nk && bkNk_(x) === nk); });
 }
+/** Taken off the platform (12 Nov 2026, agreed at the 11 Nov branch meeting): agents who
+ *  never used My workday get no morning, midday or 5:30 e-mail and no My workday page, and
+ *  submit the weekly Time & Income Control by hand instead, as their contract requires.
+ *  Everything else from the branch is unchanged. Script Property AGENT_DAY_OFF (names or
+ *  agent numbers, comma separated) replaces the list; "none" clears it. */
+var AGENT_DAY_OFF = ['Darryl Manick', 'Malcolm Sooknanan', 'Stephanie Rajkumar', 'Daniel Bhagwandas',
+                     'Faizal Mohammed', 'Felicia Rampersad', 'Varun Seegolam'];
+function agentDayOffList_() {
+  var p = ''; try { p = PropertiesService.getScriptProperties().getProperty('AGENT_DAY_OFF') || ''; } catch (e) {}
+  if (/^\s*none\s*$/i.test(p)) return [];
+  return p ? p.split(',').map(function (x) { return x.trim(); }).filter(String) : AGENT_DAY_OFF;
+}
+function agentDayOff_(a) {
+  if (!a) return false;
+  var code = String(a.code || a.agentId || '').toUpperCase().replace(/[^A-Z0-9]/g, ''), nk = bkNk_(a.agentName || a.name || '');
+  return agentDayOffList_().some(function (x) { var c = String(x).toUpperCase().replace(/[^A-Z0-9]/g, ''); return (code && c === code) || (nk && bkNk_(x) === nk); });
+}
 /** This agent's mail goes to them: every agent when live, the pilot's in preview. */
-function agentLiveFor_(a) { var m = agentMode_(); return m === 'live' || (m === 'preview' && agentInPilot_(a)); }
+function agentLiveFor_(a) { if (agentDayOff_(a)) return false; var m = agentMode_(); return m === 'live' || (m === 'preview' && agentInPilot_(a)); }
 
 function agSlug_(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
 
@@ -14785,7 +14802,7 @@ function agentTick_(day, mins) {
   if (!kind) return [];
   // No midday e-mail since 8 Nov 2026 (Ricky: "Will drop midday"); My day still has the midday check-in.
   if (kind === 'md' && agMiddayMode_() !== 'on') return [];
-  var people = agentPeople_(), keys = Object.keys(people).sort();
+  var people = agentPeople_(), keys = Object.keys(people).sort().filter(function (k) { return !agentDayOff_(people[k]); });
   // A preview's mark (agp_) never stops the agent's own mail (ag_) once live; the pilot's mail is live (27 Oct 2026).
   var preOf = function (k) { return agentLiveFor_(people[k]) ? 'ag_' : 'agp_'; };
   var done = function (k) { return props.getProperty(preOf(k) + kind + '_' + k + '_' + day); };
@@ -18514,6 +18531,7 @@ function agentDayModel_(a, day, opt) {
   var first = String(a.name || '').split(' ')[0], nowM = minutesOf_(hhmm_(new Date()));
   var m = { ok: true, v: SCRIPT_VERSION, agent: true, first: first, name: a.name, day: day, date: prettyDate_(day), at: twelve_(hhmm_(new Date())),
             on: agentLiveFor_(a) || !!opt.preview, film: 'https://rickyrampersadbranch.com/agentworkday/' };
+  if (agentDayOff_(a)) { m.on = false; m.off = 'You submit the weekly Time & Income Control by hand to your unit manager, by Monday 12 noon.'; return m; }
   if (!m.on) return m;
   var props = PropertiesService.getScriptProperties(), mark = function (k) { return props.getProperty('ag_' + k + '_' + a.key + '_' + day) || ''; };
   // No 5:30 e-mail, no list: make today's now, as the e-mail would have, so the page has the clients on it.

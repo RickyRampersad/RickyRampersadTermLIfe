@@ -26,6 +26,7 @@ env.__mkSheet('Access', 1, ['Name', 'StaffId', 'Email', 'Password', 'Role', 'Uni
    ['Kamla Dookran', 'kamla', 'kamla@example.com', '1', 'BMA', 'Branch', 'Yes']]);
 env.__mkSheet('Agent Day', 1, env.AGDAY.head, []);
 const P = env.PropertiesService.getScriptProperties();
+P.setProperty('AGENT_DAY_OFF', 'none'); // Felicia was taken off on 12 Nov 2026
 P.setProperty('MANAGER_EMAIL', 'ricky@example.com');
 const mails = []; env.mailSend_ = o => { mails.push(o); return 'relay'; };
 const F = { key: 'a-felicia-rampersad', name: 'Felicia Rampersad', agentName: 'Felicia Rampersad', agentId: 'A13710', code: 'A13710', email: 'felicia@example.com', manager: '' };
