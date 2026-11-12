@@ -3,16 +3,19 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "lbnewlook3": [
-   "Hey everyone. The Log Book has a new look.",
-   "Before, it was dark, and honestly, pretty hard to read on a phone.",
-   "Now it's lighter, it's clearer, and it's so much easier on the eyes.",
-   "The text is bigger, and the buttons are bigger too, so it works nicely on your phone.",
-   "You find your client in one search, and the department fills itself in for you.",
-   "Then you log it, and hand it straight to Sales Support.",
-   "And for staff, the queue and the insights are easy to read at a glance.",
-   "One more thing. East Gates is now in the department list.",
-   "Same Log Book you know. Just a lot easier on the eyes."
+  "adA": [
+   "You are an insurance advisor. You are good at it. Why are you still doing it alone?",
+   "You get no leads. No clients handed to you. Nobody asking how your week went. Here, clients come to you household by household, with the file and the first thing to say.",
+   "Your manager is a coach, not a clock. And nobody will know you asked.",
+   "Seven places this year. Most advisors are gone by year three. And a third of ours are still here at four.",
+   "One confidential conversation. Twenty minutes, this week. Go to Ricky Rampersad Branch dot com, slash careers."
+  ],
+  "adB": [
+   "You want a career with no ceiling. You are afraid of the first year. Both are fair.",
+   "This is a sales career. What stops most people is being told to call their friends. And here, the leads come to you, from people who asked to be called.",
+   "You are trained before you are contracted. Your manager is a coach, not a clock.",
+   "Seven places this year. Most advisors are gone by year three. And a third of ours are still here at four.",
+   "One conversation. Twenty minutes, this week. Go to Ricky Rampersad Branch dot com, slash careers."
   ]
  }
 }
