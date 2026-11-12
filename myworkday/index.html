@@ -1117,7 +1117,7 @@
   document.addEventListener("change", function (e) { var s0 = e.target; if (s0 && s0.hasAttribute && s0.hasAttribute("data-unt")) { var to = s0.options[s0.selectedIndex].getAttribute("data-to"), d = s0.closest(".unf").querySelector("[data-und]"); if (to && d) d.value = to; } });
   // The agents' My day (27 Oct 2026): Project my day and Close off my day, the same pages the e-mails open.
   function agentCards(m) {
-    if (!m.on && m.off) return '<div class="card"><div class="ch"><h2>Your weekly Time &amp; Income Control</h2></div><div class="tip">' + esc(m.off) + ' Ask your unit manager to put you back on the agents\' day.</div></div>';
+    if (!m.on && m.off) return '<div class="card"><div class="ch"><h2>Your weekly Time &amp; Income Control</h2></div><div class="tip">' + esc(m.off) + ' To come back onto the digital workflow, tell Mr Rampersad or your unit manager.</div></div>';
     if (!m.on) return '<div class="card"><div class="ch"><h2>Your day, from the branch</h2></div><div class="tip">Your daily e-mails and this page start when the branch adds you to the agents\' day. Until then, carry on as you are. <a href="' + esc(m.film) + '">See how it works &rarr;</a></div></div>';
     var p = m.project || {}, c = m.close || {}, ml = m.mailed || {};
     return '<div class="card ag"><div class="step"><div class="num">1</div><div><div class="t">Project my day' + (p.done ? '<span class="ok">DONE</span>' : '') + '</div>' +

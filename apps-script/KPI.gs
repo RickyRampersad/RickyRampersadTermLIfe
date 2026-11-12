@@ -18531,7 +18531,7 @@ function agentDayModel_(a, day, opt) {
   var first = String(a.name || '').split(' ')[0], nowM = minutesOf_(hhmm_(new Date()));
   var m = { ok: true, v: SCRIPT_VERSION, agent: true, first: first, name: a.name, day: day, date: prettyDate_(day), at: twelve_(hhmm_(new Date())),
             on: agentLiveFor_(a) || !!opt.preview, film: 'https://rickyrampersadbranch.com/agentworkday/' };
-  if (agentDayOff_(a)) { m.on = false; m.off = 'You submit the weekly Time & Income Control by hand to your unit manager, by Monday 12 noon.'; return m; }
+  if (agentDayOff_(a)) { m.on = false; m.off = 'You hand your weekly Time & Income Control to Mrs Dookran, our BMA, on Monday morning. The forms are at the front, where the admin forms are kept.'; return m; }
   if (!m.on) return m;
   var props = PropertiesService.getScriptProperties(), mark = function (k) { return props.getProperty('ag_' + k + '_' + a.key + '_' + day) || ''; };
   // No 5:30 e-mail, no list: make today's now, as the e-mail would have, so the page has the clients on it.
