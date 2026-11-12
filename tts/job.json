@@ -3,12 +3,8 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "adAfix": [
-   "You get no leads. No clients handed to you. Nobody asking about your week. Here, clients come to you household by household, with the file and the first thing to say.",
-   "Seven places this year. Most advisors are gone by year three. In this branch, a third are still here at four."
-  ],
-  "adBfix": [
-   "Seven places this year. Most advisors are gone by year three. In this branch, a third are still here at four."
+  "adAfix2": [
+   "Seven places this year. Most advisors are gone by year three. Here, a third are still with us at four."
   ]
  }
 }
