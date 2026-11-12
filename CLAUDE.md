@@ -5697,10 +5697,19 @@ caption band on the square cut, which three passes over a contact sheet had not.
 **A CAPTURE DIRECTORY KEEPS ITS `rendered.mp4` BETWEEN RUNS, and that is a silent-wrong-film hazard.** `mixany.py`
 reads `rendered.json` and `rendered.mp4` out of `cap-<key>/`; if a render is skipped or fails quietly, it pairs
 **last session's video with this session's audio** and says nothing — the same family as the 9 November fault where
-a lines file changed and the render never followed. `verify.py` in the scratchpad checks each capture's mtime
-against the page it was rendered from **before** trusting any mix, then reads the finished MP4s rather than the
-source: duration, dimensions, that an audio stream exists at all, and the QR decoded off a real frame near the end
-with `cv2.QRCodeDetector`. Run it after every re-cut; mid-render it correctly reported `adBv: STALE by 34 min`.
+a lines file changed and the render never followed. `verify.py` in the scratchpad reads the finished MP4s rather
+than the source: duration, dimensions, that an audio stream exists at all, and the QR decoded off a real frame near
+the end with `cv2.QRCodeDetector`. Run it after every re-cut; mid-render it correctly reported `adBv: STALE by 34 min`.
+
+**CHECK EVERY LINK OF THE CHAIN, OR THE CHECK MANUFACTURES FALSE CONFIDENCE.** The chain is
+**page → capture → mix → mp4**, and the first cut of `verify.py` checked `page → capture` only. Minutes later
+`mixany.py` died outright on its own command line — **it takes the config JSON *and* the output path, and the
+re-cut script passed one argument** — so no mix ran at all, and `verify.py` printed **ALL CLEAR over four stale
+MP4s**. Every capture was genuinely newer than its page; the published files were from the previous cut. A
+verification that covers part of a chain and reports success on the whole is worse than no verification, because
+it is believed. It now checks `mp4 → capture` as well, and asserts each finished file's **duration against
+`films.json`** — the loudest signal of all, since the length is the one thing the built page decides, and
+39.4s against a page built for 40.4s cannot be explained away.
 
 ## The renewal desk — general insurance, from last year to delivery
 
