@@ -290,13 +290,56 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .adlab{font:600 calc(var(--u)*2.6)/1 var(--text);color:var(--mute);letter-spacing:.02em;font-variant-numeric:tabular-nums}
 .adlab b{font:800 calc(var(--u)*6.4)/1 var(--display);color:#fff;letter-spacing:-.03em;margin-right:.18em}
 .adtrack{display:block;height:calc(var(--u)*3);border-radius:99px;background:rgba(255,255,255,.1);position:relative;overflow:hidden}
-.adtrack i{position:absolute;left:0;top:0;bottom:0;width:var(--w);border-radius:99px;transform:scaleX(0);transform-origin:0 50%}
+.adtrack i{position:absolute;left:0;top:0;bottom:0;width:var(--w);border-radius:99px;transform:scaleX(0);transform-origin:0 50%;overflow:hidden}  /* the fill clips its own sheen: without this the light escapes the bar and runs along the empty
+     track, which reads as the bar being longer than it is — the one thing a 0-100 chart must not do */
 .adtrack i.ind{background:linear-gradient(90deg,#C97A3A,#a86230)}
 .adtrack i.us{background:linear-gradient(90deg,#0E93B0,#00CFEA);box-shadow:0 0 calc(var(--u)*2.6) rgba(0,207,234,.5)}
 .scene.act .adtrack i{animation:growx 1.1s var(--out) both;animation-delay:var(--t0)}
 .adleg{font:500 calc(var(--u)*2.3)/1.3 var(--text);color:var(--mute2);letter-spacing:.02em}
 .adleg b{color:var(--ink);font-weight:700}
 .adsrc{margin-top:calc(var(--u)*2.4);font:500 calc(var(--u)*2)/1.4 var(--text);color:var(--mute2)}
+
+/* ── The ad's motion, 12 Nov 2026 ("a lot more motion … things that will make persons share the ad").
+   A rendered film is an MP4, so motion costs render minutes and nothing on the viewer's device; what it
+   must not cost is meaning. Each of these is tied to the thing it is about. New names are prefixed `ad`
+   because this file already defines @keyframes grow three times and slidein, ride, press and clkaway
+   twice each — the later one silently wins, and that has cost a shot before. ────────────────────── */
+
+/* 1. The absence is FELT. As the rule crosses it the line flinches, flashes the industry amber and
+      settles dimmer than it began, so the eye reads the thing and then its removal. The text sits in
+      its own <i> because `.in` already owns the span's single animation slot. */
+.miss span i{display:inline-block;font-style:normal;will-change:transform}
+.scene.act .miss span i{animation:adhit .62s var(--out) both;animation-delay:calc(var(--t0) + 400ms)}
+@keyframes adhit{
+  0%{transform:none;color:var(--mute2)}
+  30%{transform:translateX(calc(var(--u)*-.5)) scale(.982);color:#C97A3A}
+  60%{transform:translateX(calc(var(--u)*.12)) scale(1.004)}
+  100%{transform:none;color:#6d7f94}
+}
+
+/* 2. Each figure lands with a ring off it, so the proof arrives rather than appears. */
+.adlab b{position:relative}
+.adlab b::after{content:"";position:absolute;left:50%;top:50%;width:calc(var(--u)*7);height:calc(var(--u)*7);
+  margin:calc(var(--u)*-3.5) 0 0 calc(var(--u)*-3.5);border-radius:50%;border:2px solid currentColor;opacity:0;pointer-events:none}
+.scene.act .adbar.in .adlab b::after{animation:adring .95s var(--out) both;animation-delay:calc(var(--t0) + 260ms)}
+@keyframes adring{0%{opacity:.55;transform:scale(.45)}70%{opacity:.18}100%{opacity:0;transform:scale(2.6)}}
+
+/* 3. A light runs along each bar as it fills, in the direction it grows. */
+.adtrack i::after{content:"";position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.55) 50%,transparent 80%);
+  transform:translateX(-120%)}
+.scene.act .adtrack i::after{animation:adsheen 1.5s var(--out) both;animation-delay:calc(var(--t0) + 260ms)}
+@keyframes adsheen{to{transform:translateX(220%)}}
+
+/* 4. The screen is never quite still: the evidence card breathes on a long, slow cycle. Transform only,
+      never a shadow — box-shadow is on web.dev's do-not-animate list and this renders 1,182 frames. */
+.s-match .list{will-change:transform}
+.scene.act .s-match .list{animation:up .8s var(--out) both,adfloat 9s ease-in-out 1.1s infinite;animation-delay:var(--t0,0ms),1.1s}
+@keyframes adfloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(calc(var(--u)*-.9)) rotate(.22deg)}}
+
+/* 5. The open: the mark arrives with a punch, because the first second is the whole of a feed ad. */
+.scene.act .s-hook .mark.top{animation:up .8s var(--out) both,adpunch .7s var(--pop) .25s both}
+@keyframes adpunch{0%{transform:scale(.7)}55%{transform:scale(1.09)}100%{transform:scale(1)}}
 .jr.five{grid-template-columns:repeat(5,1fr);max-width:calc(var(--u)*120);margin-inline:auto}
 .jr.five .jline{left:10%;right:10%}
 /* scene 17: the wins */
@@ -1308,9 +1351,9 @@ body.paused #bars i.run::after{animation-play-state:paused}
   <div class="col">
     <p class="eye in" style="--t0:575ms">What you are not getting</p>
     <div class="miss">
-      <span class="in" style="--t0:875ms">Leads</span>
-      <span class="in" style="--t0:2013ms">Clients handed to you</span>
-      <span class="in" style="--t0:3625ms">Anyone asking how your week went</span>
+      <span class="in" style="--t0:875ms"><i>Leads</i></span>
+      <span class="in" style="--t0:2013ms"><i>Clients handed to you</i></span>
+      <span class="in" style="--t0:3625ms"><i>Anyone asking how your week went</i></span>
     </div>
     <h2 class="h l wine2"><span aria-label="Here, all three."><span class="w"><i style="--i:0;--t0:5262ms">Here,</i></span> <span class="w"><i style="--i:1;--t0:5262ms">all</i></span> <span class="w"><i style="--i:2;--t0:5262ms">three.</i></span></span></h2>
   </div>
