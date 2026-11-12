@@ -1140,41 +1140,110 @@ if TLINES and MODE != 'ad':
 if MODE == 'ad':
     assert len(TLINES) == 5, len(TLINES)
     LEADS = [('Retiring properly', 'asked to be called · 9:12'), ('Cover for the children', 'asked to be called · 9:40'), ('Starting a business', 'asked to be called · 10:05')]
+    # 12 Nov 2026, on LIMRA's own 2025 Annual Conference deck (session 16, public PDF): "The second year,
+    # commonly referred to as the 'cliff' ... Agents are on their own, without much of the support provided
+    # during the first year", and "We have been sitting at an industry-wide 4-year retention of rate of 14%
+    # for years" (sourced there to The Path to Improving Retention, LIMRA and FINSECA, 2022). The same deck
+    # gives one-year retention by who recruited: Recruiter 44%, Sales Manager 50%, Office Head 55%. So both
+    # ads now lead on the cliff — the thing a practising advisor has LIVED and a newcomer is walking into —
+    # rather than on a guess at what they are missing.
+    #
+    # THE CHART PLOTS ONLY POINTS THAT HAVE A SOURCE. LIMRA gives year one and year four and names year two;
+    # it does not publish a year-two or year-three figure, and the branch has two points of its own. So this
+    # is a SLOPE chart of two sourced endpoints per series, with year two ANNOTATED on the time axis and no
+    # marker pretending to be a reading. Drawing a four-point curve would have meant inventing half of it.
+    # Amber #C97A3A (industry) against teal #0E93B0 (ours) on this ground passes all six of the palette
+    # validator's checks (CVD dE 16.1 protan, 25.2 tritan; normal 23.5); each line carries its own numbers
+    # and label, so identity is never colour alone, and the text wears text tokens, never the series colour.
+    SL = {'ind': (55, 14), 'us': (67, 31)}
+
+    def _y(v):
+        return round(50 - (v / 70.0) * 42, 2)
+
+    def slope(t_ind, t_cliff=None, t_quote=None, t_us=None, t_n=None):
+        """The retention slope. t_us None draws the industry alone (scene 2 of A); giving it lands ours on
+        the same geometry, so two consecutive scenes read as one continuous graphic."""
+        x1, x2 = 17, 83
+        i1, i2 = (_y(v) for v in SL['ind'])
+        u1, u2 = (_y(v) for v in SL['us'])
+        us = '' if t_us is None else f"""
+      <path class="sl-us" pathLength="100" d="M{x1} {u1} L{x2} {u2}" style="--t0:{t_us}ms"/>
+      <circle class="sl-d us" cx="{x1}" cy="{u1}" r="1.5" style="--t0:{t_us}ms"/>
+      <circle class="sl-d us" cx="{x2}" cy="{u2}" r="1.5" style="--t0:{t_us + 700}ms"/>"""
+        # The label hangs ABOVE THE LINE'S OWN HEIGHT AT x=40, not above the midpoint of the two
+        # endpoints: those are the same number only for a flat line. The first cut used the endpoint
+        # mean, which put the words level with the year-one dot and read as a label on that reading
+        # rather than an annotation of the descent. Caught by looking at the rendered frame.
+        cx = 40
+        cy = round(i1 + (cx - x1) / (x2 - x1) * (i2 - i1), 2)
+        if t_us is not None:   # with ours drawn too, hang it above the HIGHER of the two, or it lands on the teal
+            cy = min(cy, round(u1 + (cx - x1) / (x2 - x1) * (u2 - u1), 2))
+        cliff = '' if t_cliff is None else f"""
+      <path class="sl-lead" d="M{cx} {round(cy - 11.5, 2)} L{cx} {round(cy - 2.4, 2)}" style="--t0:{t_cliff}ms"/>
+      <text class="sl-cliff" x="{cx}" y="{round(cy - 13.6, 2)}" style="--t0:{t_cliff}ms">YEAR TWO &middot; THE CLIFF</text>"""
+        quote = '' if t_quote is None else f"""
+  <p class="sl-q in" style="--t0:{t_quote}ms">&ldquo;Agents are on their own, without much of the support provided during the first year.&rdquo;<em>LIMRA, 2025</em></p>"""
+        nums = '' if t_n is None else f"""
+      <text class="sl-n ind" x="{x2 + 3}" y="{i2 + 1.4}"><tspan class="cnt" data-to="14" data-at="{t_n}">14</tspan></text>
+      <text class="sl-n us" x="{x2 + 3}" y="{u2 + 1.4}"><tspan class="cnt" data-to="31" data-at="{t_n + 600}">31</tspan></text>"""
+        return f"""
+  <div class="slope">
+    <svg viewBox="0 0 100 58" role="img" aria-label="Of every hundred advisors, 55 are still contracted after one year and 14 after four across the industry; in this branch, 67 after one year and 31 after four.">
+      <path class="sl-ax" d="M{x1} 52 L{x2} 52"/>
+      <text class="sl-x" x="{x1}" y="56.5">YEAR 1</text>
+      <text class="sl-x r" x="{x2}" y="56.5">YEAR 4</text>
+      <path class="sl-ind" pathLength="100" d="M{x1} {i1} L{x2} {i2}" style="--t0:{t_ind}ms"/>
+      <circle class="sl-d ind" cx="{x1}" cy="{i1}" r="1.5" style="--t0:{t_ind}ms"/>
+      <circle class="sl-d ind" cx="{x2}" cy="{i2}" r="1.5" style="--t0:{t_ind + 700}ms"/>{us}{cliff}{nums}
+    </svg>
+    <div class="sl-key">
+      <span class="in" style="--t0:{t_ind}ms"><i class="ind"></i>Across the industry</span>
+      {'' if t_us is None else f'<span class="in" style="--t0:{t_us}ms"><i class="us"></i>In this branch</span>'}
+    </div>
+    <p class="adsrc in" style="--t0:{(t_us or t_ind) + 700}ms">Of every 100 advisors still contracted. Industry: LIMRA and Finseca, 2022. Branch: our own record.</p>{quote}
+  </div>"""
+
+    # The 39 things, as the six moments the careers page itself groups them into, counted out as the line
+    # is spoken. The counts are read off the live page (before you join 7, first 90 days 5, every day 10,
+    # every week 6, every month 6, your managers too 5), so the ad cannot drift from what it links to.
+    MOMENTS = [('Before you join', 7), ('Your first 90 days', 5), ('Every day', 10), ('Every week', 6), ('Every month', 6), ('Your managers, too', 5)]
+
     if AD == 'A':
-        # 12 Nov 2026 ("it must be advisors and it's a sales career ... it's what they're not getting"):
-        # the hook names the job, and scene 2 leads on the three things a practising advisor does NOT get
-        # where they are, struck through, before the branch answers them.
         T.append(tscene(1, 's-hook', f"""
 <div class="full center">
   <span class="ghost" aria-hidden="true">?</span>
-  <span class="spot" style="--t0:{tat(1,"alone")}ms"></span>
+  <span class="spot" style="--t0:{tat(1,"support")}ms"></span>
   <div class="mark top in" style="--t0:100ms">{MARK}</div>
   <p class="eye in" style="--t0:{max(200, tat(1,"advisor") - 300)}ms">For a practising insurance advisor</p>
-  <h1 class="h xl">{words("Good at this.", 400)}<br><em class="wine">{words("Still doing it alone?", max(600, tat(1,"alone") - 900))}</em></h1>
-  <div class="ceil-line" style="--t0:{tat(1,"alone")}ms"></div>
-</div>""", 'data-ch="Still doing it alone?"'))
-        T.append(tscene(2, 's-match', f"""
-<div class="split">
-  <div class="col">
-    <p class="eye in" style="--t0:{max(200, tat(2,"leads") - 300)}ms">What you are not getting</p>
-    <div class="miss">
-      <span class="in" style="--t0:{tat(2,"leads")}ms"><i>Leads</i></span>
-      <span class="in" style="--t0:{tat(2,"clients")}ms"><i>Clients handed to you</i></span>
-      <span class="in" style="--t0:{tat(2,"Nobody")}ms"><i>Anyone asking how your week went</i></span>
-    </div>
-    <h2 class="h l wine2">{words("Here, all three.", tat(2,"Here") - 200, 120)}</h2>
+  <h1 class="h xl">{words("Good at this.", 400)}<br><em class="wine">{words("And the support stopped.", max(600, tat(1,"support") - 700))}</em></h1>
+  <div class="suppline" style="--t0:{tat(1,"good")}ms;--tc:{tat(1,"stopped")}ms"><i></i><b></b></div>
+</div>""", 'data-ch="And the support stopped"'))
+        # Scene 2 draws the industry line alone and names the cliff; scene 3 lands ours on the same
+        # geometry. Two beats on one picture, which is what the eleven seconds are for.
+        T.append(tscene(2, 's-cliff', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:{max(200, tat(2,"industry") - 300)}ms">The industry's own word for it</p>
+  <h2 class="h l">{words("The cliff.", tat(2,"cliff") - 250, 130)}</h2>
+  {slope(tat(2,"second"), t_cliff=tat(2,"cliff") + 200, t_quote=tat(2,"own"))}
+</div>""", 'data-ch="The cliff"'))
+        T.append(tscene(3, 's-cliff', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">By year four</p>
+  <h2 class="h l"><span class="cnt" data-to="14" data-at="{tat(3,"fourteen")}">14</span> {words("of a hundred left.", tat(3,"fourteen"), 110)} <em class="wine">{words("Here, 31.", tat(3,"branch") - 150, 130)}</em></h2>
+  {slope(0, t_us=tat(3,"branch"), t_n=tat(3,"fourteen"))}
+</div>""", 'data-ch="Fourteen of a hundred, and ours"'))
+        # Line 4 is the longest in the ad, so it carries three timed bands: the 39, the households, the coach.
+        T.append(tscene(4, 's-all', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:{max(200, tat(4,"nothing") - 300)}ms">{words("Here, nothing stops.", max(200, tat(4,"nothing") - 300), 110)}</p>
+  <h2 class="h xl"><span class="cnt" data-to="39" data-at="{tat(4,"Thirty-nine")}">39</span> {words("things this branch does for you.", tat(4,"Thirty-nine"), 90)}</h2>
+  <div class="mgrid">{''.join(f'<div class="mcol in" style="--t0:{tat(4,"Thirty-nine") + 150 + k*260}ms"><span class="mdots">{"".join(f"<i style=--t0:{tat(4,"Thirty-nine") + 250 + k*260 + d*42}ms></i>" for d in range(n))}</span><b>{n}</b><span class="mlab">{lab}</span></div>' for k, (lab, n) in enumerate(MOMENTS))}</div>
+  <div class="hrow">{''.join(f'<span class="in fl" style="--t0:{tat(4,"Clients") + i*230}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><em>named to you</em></span>' for i, (n, d) in enumerate(HH))}</div>
+  <div class="pill-row mid">
+    <span class="ypill in" style="--t0:{tat(4,"coach")}ms">A coach, not a clock</span>
+    <span class="ypill lk in" style="--t0:{tat(4,"nobody")}ms"><svg class="ic"><use href="#i-lock"/></svg>Nobody will know you asked</span>
   </div>
-  <div class="col">
-    <div class="list in fl" style="--t0:{tat(2,"Here") - 300}ms">
-      <div class="bd-h"><b>Your list</b><span>named to you</span></div>
-      {''.join(f'<div class="hh" style="--t0:{tat(2,"household") + i*340}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><span>{d}</span><em>named</em></div>' for i, (n, d) in enumerate(HH))}
-      <div class="lead-in" style="--t0:{tat(2,"first")}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>The file, and the first thing to say</b><span>read before you call · not a cold name on a list</span></div>
-      {SAMPLE}
-    </div>
-  </div>
-</div>""", 'data-ch="What you are not getting"'))
-        coach_sub = f'<p class="sub in" style="--t0:{tat(3,"nobody")}ms"><em>And nobody will know you asked.</em></p>'
-        coach_chip = f'<div class="chip in fl" style="--t0:{tat(3,"asked")}ms"><svg class="ic"><use href="#i-lock"/></svg><b>Confidential. Nobody will know you asked.</b></div>'
+</div>""", 'data-ch="Thirty-nine things"'))
     else:
         T.append(tscene(1, 's-hook', f"""
 <div class="full center">
@@ -1185,73 +1254,55 @@ if MODE == 'ad':
   <h1 class="h xl">{words("A career with no ceiling?", 400)}<br><em class="wine">{words("Afraid of the first year?", tat(1,"afraid") - 200)}</em></h1>
   <div class="ceil-line" style="--t0:{tat(1,"ceiling")}ms"></div>
 </div>""", 'data-ch="No ceiling, and the first year"'))
-        # B says it is a sales career in as many words, because the honest sentence is the filter:
-        # what stops most newcomers is being handed a contract and told to call their friends.
-        T.append(tscene(2, 's-match', f"""
+        # LIMRA names the CAUSE of the cliff as well as the cliff: new agents exhaust the friends-and-family
+        # market and have no prospecting system behind it. That is the newcomer's real fear, so B shows the
+        # personal list emptying — and the very next scene shows the board filling instead.
+        NAMES = ['Your cousin', 'Your old boss', 'A neighbour', 'Someone from church', 'A friend from school']
+        T.append(tscene(2, 's-names', f"""
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:{max(200, tat(2,"sales") - 300)}ms">Straight with you</p>
     <h2 class="h l">{words("This is a sales career.", tat(2,"sales") - 200, 110)}</h2>
-    <div class="miss">
-      <span class="in" style="--t0:{tat(2,"friends")}ms"><i>Handed a contract and told to call your friends</i></span>
+    <p class="sub in" style="--t0:{tat(2,"breaks")}ms">The year that breaks people is not the first.</p>
+    <h2 class="h xl"><em class="wine">{words("It is the second.", tat(2,"second") - 200, 120)}</em></h2>
+    <p class="sub in" style="--t0:{tat(2,"names")}ms">When the names run out.</p>
+  </div>
+  <div class="col">
+    <div class="list in fl" style="--t0:{tat(2,"breaks") - 200}ms">
+      <div class="bd-h"><b>Everyone you know</b><span>your own list</span></div>
+      <div class="miss nmlist">{''.join(f'<span class="in" style="--t0:{tat(2,"breaks") + i*200}ms"><i>{n}</i></span>' for i, n in enumerate(NAMES))}</div>
+      <div class="empt in" style="--t0:{tat(2,"names")}ms">Nobody left to call</div>
     </div>
-    <h2 class="h l wine2">{words("Not here.", tat(2,"here") - 150, 140)}</h2>
+  </div>
+</div>""", 'data-ch="The year that breaks people"'))
+        T.append(tscene(3, 's-fill', f"""
+<div class="split">
+  <div class="col">
+    <h2 class="h l wine2">{words("Here, the leads come to you.", tat(3,"leads") - 250, 95)}</h2>
+    <p class="sub in" style="--t0:{tat(3,"asked")}ms">From people who asked to be called.</p>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:{tat(2,"leads")}ms">The leads come to you</span>
-      <span class="ypill in" style="--t0:{tat(2,"asked")}ms">From people who asked to be called</span>
+      <span class="ypill in" style="--t0:{tat(3,"trained")}ms">Trained before you are contracted</span>
+      <span class="ypill in" style="--t0:{tat(3,"coach")}ms">A coach, not a clock</span>
+    </div>
+    <div class="note in" style="--t0:{tat(3,"asked")}ms">
+      <small>From your manager · in your morning e-mail</small>
+      <p>{typed("Two fact finds this week, Priya. Let's book your Thursday calls together at eight.", tat(3,"trained"), 22)}</p>
     </div>
   </div>
   <div class="col">
-    <div class="list in fl" style="--t0:{tat(2,"leads") - 200}ms">
+    <div class="list in fl" style="--t0:{tat(3,"leads") - 200}ms">
       <div class="bd-h"><b>Your board</b><span>this morning</span></div>
-      {''.join(f'<div class="lead-in" style="--t0:{tat(2,"asked") + i*340}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>{n}</b><span>{d}</span></div>' for i, (n, d) in enumerate(LEADS))}
+      {''.join(f'<div class="lead-in" style="--t0:{tat(3,"asked") + i*300}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>{n}</b><span>{d}</span></div>' for i, (n, d) in enumerate(LEADS))}
       {SAMPLE}
     </div>
   </div>
-</div>""", 'data-ch="It is a sales career"'))
-        coach_sub = f'<p class="sub in" style="--t0:{tat(3,"trained")}ms"><em>Trained, and in the field, before you are contracted.</em></p>'
-        coach_chip = f'<div class="chip in fl" style="--t0:{tat(3,"contracted")}ms"><svg class="ic"><use href="#i-chat"/></svg><b>The Branch Manager sits with you on it.</b></div>'
-    T.append(tscene(3, 's-coach2', f"""
-<div class="split">
-  <div class="col">
-    <p class="eye in" style="--t0:200ms">Your manager</p>
-    <h2 class="h xl">{words("A coach,", tat(3,"coach") - 200, 120)} <em class="wine">{words("not a clock.", tat(3,"clock") - 150, 120)}</em></h2>
-    <p class="sub in" style="--t0:{tat(3,"clock") + 500}ms">The system does the admin. He does the sitting with you.</p>
-    {coach_sub}
-  </div>
-  <div class="col">
-    <div class="week in" style="--t0:{tat(3,"coach")}ms">{''.join(f'<span class="{"fri" if d == "Fri" else ""}" style="--t0:{tat(3,"clock") if d == "Fri" else 0}ms">{d}</span>' for d in ['Mon','Tue','Wed','Thu','Fri'])}</div>
-    <div class="note in" style="--t0:{tat(3,"clock") + 300}ms">
-      <small>From your manager · in your morning e-mail</small>
-      <p>{typed("Two fact finds this week, Priya. Let's book your Thursday calls together at eight.", tat(3,"clock") + 600, 24)}</p>
-    </div>
-    <div class="chips3">{coach_chip}</div>
-  </div>
-</div>""", 'data-ch="A coach, not a clock"'))
-    # The seats, then the one number that sells to either reader: how few advisors are still contracted
-    # anywhere, against this branch's own figure a year further out. Two bars on a 0-100 track, so the
-    # shortness of BOTH is the honest point. Amber #C97A3A against teal #0E93B0 on this ground passes
-    # all six of the palette validator's checks (CVD dE 16.1 protan, 25.2 tritan; normal 23.5), and each
-    # bar carries its own number and label, so identity is never colour alone.
-    T.append(tscene(4, 's-seats', f"""
+</div>""", 'data-ch="The leads come to you"'))
+        T.append(tscene(4, 's-cliff', f"""
 <div class="full center">
-  <p class="eye in" style="--t0:200ms">FY27 · the first class</p>
-  <h2 class="h xl"><span class="cnt" data-to="7" data-at="{tat(4,"Seven")}">7</span> {words("places.", tat(4,"Seven"), 120)}</h2>
-  <div class="seatrow">{''.join(f'<i style="--t0:{tat(4,"Seven") + 200 + k*120}ms"><svg class="ic"><use href="#i-users"/></svg></i>' for k in range(7))}</div>
-  <div class="adbars">
-    <div class="adbar in" style="--t0:{tat(4,"Most") - 200}ms">
-      <span class="adlab"><b class="cnt" data-to="22" data-at="{tat(4,"Most")}">22</b> of 100</span>
-      <span class="adtrack"><i class="ind" style="--w:22%;--t0:{tat(4,"Most")}ms"></i></span>
-      <span class="adleg">still contracted at <b>three</b> years &middot; across the industry</span>
-    </div>
-    <div class="adbar in" style="--t0:{tat(4,"third") - 200}ms">
-      <span class="adlab"><b class="cnt" data-to="31" data-at="{tat(4,"third")}">31</b> of 100</span>
-      <span class="adtrack"><i class="us" style="--w:31%;--t0:{tat(4,"third")}ms"></i></span>
-      <span class="adleg">still here at <b>four</b> years &middot; in this branch</span>
-    </div>
-  </div>
-  <p class="adsrc in" style="--t0:{tat(4,"third") + 700}ms">Industry figure: LIMRA. Ours is measured a year further out.</p>
-</div>""", 'data-ch="Seven places, and who is left at four"'))
+  <p class="eye in" style="--t0:200ms">{words("By year four.", 200, 120)}</p>
+  <h2 class="h l">{words("The industry keeps 14.", tat(4,"industry") - 200, 95)} <em class="wine">{words("This branch keeps 31.", tat(4,"branch") - 150, 95)}</em></h2>
+  {slope(tat(4,"industry"), t_us=tat(4,"branch"), t_n=tat(4,"fourteen"))}
+</div>""", 'data-ch="Fourteen against thirty-one"'))
     # The address goes on two lines, as the full film's close already does. The old "agentmgt.com" was
     # twelve characters and sat happily in this column; "rickyrampersadbranch.com/careers" is thirty-two,
     # and on one line it ran under the QR card with "/careers" hidden behind it. Caught by looking at the
@@ -1259,22 +1310,24 @@ if MODE == 'ad':
     T.append(tscene(5, 's-cta', f"""
 <div class="split cta">
   <div class="col">
-    <p class="eye in" style="--t0:200ms">Start here</p>
+    <p class="eye in" style="--t0:200ms">FY27 &middot; the first class</p>
+    <h2 class="h l"><span class="cnt" data-to="7" data-at="{tat(5,"Seven")}">7</span> {words("places.", tat(5,"Seven"), 110)}</h2>
+    <div class="seatrow">{''.join(f'<i style="--t0:{tat(5,"Seven") + 150 + k*110}ms"><svg class="ic"><use href="#i-users"/></svg></i>' for k in range(7))}</div>
     <div class="figs">
-      <div class="fig in" style="--t0:{tat(5,"One")}ms"><b><em class="cnt" data-to="1" data-at="{tat(5,"One")}">1</em></b><span>confidential conversation</span></div>
-      <div class="fig in" style="--t0:{tat(5,"Twenty")}ms"><b><em class="cnt" data-to="20" data-at="{tat(5,"Twenty")}">20</em> min</b><span>this week</span></div>
+      <div class="fig in" style="--t0:{tat(5,"One")}ms"><b><em class="cnt" data-to="1" data-at="{tat(5,"One")}">1</em></b><span>conversation</span></div>
+      <div class="fig in" style="--t0:{tat(5,"twenty")}ms"><b><em class="cnt" data-to="20" data-at="{tat(5,"twenty")}">20</em> min</b><span>this week</span></div>
     </div>
-    <h2 class="h url">{words("rickyrampersadbranch.com", tat(5,"Go") - 200, 55)}<br><em class="wine">{words("/careers", tat(5,"Go") + 240, 55)}</em></h2>
+    <h2 class="h url">{words("rickyrampersadbranch.com", tat(5,"Ricky") - 200, 55)}<br><em class="wine">{words("/careers", tat(5,"Ricky") + 240, 55)}</em></h2>
     <div class="btns">
-      <span class="btn b1 in" style="--t0:{tat(5,"Go") + 500}ms">Book a confidential conversation →</span>
+      <span class="btn b1 in" style="--t0:{tat(5,"Ricky") + 500}ms">Book a confidential conversation →</span>
     </div>
-    <p class="foot in" style="--t0:{tat(5,"week")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas</p>
+    <p class="foot in" style="--t0:{tat(5,"slash")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas</p>
   </div>
   <div class="col">
     <div class="mark top in" style="--t0:200ms">{MARK}</div>
-    <div class="qr in" style="--t0:{tat(5,"Go")}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
+    <div class="qr in" style="--t0:{tat(5,"Ricky")}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
   </div>
-</div>""", 'data-ch="Book the conversation"'))
+</div>""", 'data-ch="Seven places. Book the conversation"'))
 
 HTML = r'''<!DOCTYPE html>
 <html lang="en">
@@ -1574,6 +1627,84 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .adleg{font:500 calc(var(--u)*2.3)/1.3 var(--text);color:var(--mute2);letter-spacing:.02em}
 .adleg b{color:var(--ink);font-weight:700}
 .adsrc{margin-top:calc(var(--u)*2.4);font:500 calc(var(--u)*2)/1.4 var(--text);color:var(--mute2)}
+
+/* ── The cliff, 12 Nov 2026. A SLOPE chart, because LIMRA publishes year one and year four and names
+   year two without giving a figure for it: two sourced endpoints a series, year two annotated on the
+   time axis, and no marker pretending to be a reading. Amber #C97A3A (industry) against teal #0E93B0
+   (ours) on this ground passes all six of the palette validator's checks. Every number and label wears
+   a text token, never the series colour, and each line is labelled in the key as well as coloured.
+   The lines draw on pathLength="100" with a dash of 100: with the real length they stay invisible until
+   the offset falls under it, which has cost a shot in another film. ─────────────────────────────── */
+.slope{width:min(100%,calc(var(--u)*86));margin:calc(var(--u)*1.5) auto 0}
+.slope svg{display:block;width:100%;height:auto;max-width:100%;overflow:visible}
+.sl-ax{stroke:rgba(255,255,255,.14);stroke-width:.35}
+.sl-x{fill:var(--mute2);font:700 3.1px var(--text);letter-spacing:.14em;text-anchor:start}
+.sl-x.r{text-anchor:end}
+.sl-ind,.sl-us{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
+.sl-ind{stroke:#C97A3A}
+.sl-us{stroke:#0E93B0;stroke-width:1.9;filter:drop-shadow(0 0 1.6px rgba(14,147,176,.75))}
+.scene.act .sl-ind,.scene.act .sl-us{animation:sldraw 1.15s var(--out) both;animation-delay:var(--t0)}
+.sl-d{opacity:0}
+.sl-d.ind{fill:#C97A3A}
+.sl-d.us{fill:#0E93B0}
+.scene.act .sl-d{animation:sldot .5s var(--pop) both;animation-delay:calc(var(--t0) + 120ms)}
+.sl-n{font:800 7px var(--display);letter-spacing:-.03em;text-anchor:start;font-variant-numeric:tabular-nums}
+.sl-n.ind{fill:#e3a86f}
+.sl-n.us{fill:#7fe2f4}
+.sl-lead{stroke:var(--mute2);stroke-width:.3;stroke-dasharray:1 1.2;opacity:0}
+.sl-cliff{fill:var(--mute);font:800 3.2px var(--text);letter-spacing:.1em;text-anchor:middle;opacity:0}
+.scene.act .sl-lead,.scene.act .sl-cliff{animation:slcl .6s var(--out) both;animation-delay:var(--t0)}
+.sl-key{display:flex;justify-content:center;gap:calc(var(--u)*3.4);margin-top:calc(var(--u)*1)}
+.sl-key span{display:inline-flex;align-items:center;gap:calc(var(--u)*1);font:600 calc(var(--u)*2.2)/1 var(--text);color:var(--mute)}
+.sl-key i{width:calc(var(--u)*2.6);height:calc(var(--u)*.7);border-radius:99px;flex:none}
+.sl-key i.ind{background:#C97A3A}
+.sl-key i.us{background:#0E93B0}
+.sl-q{width:min(100%,calc(var(--u)*72));margin:calc(var(--u)*1.6) auto 0;padding-left:calc(var(--u)*2);border-left:calc(var(--u)*.4) solid #C97A3A;text-align:left;font:500 italic calc(var(--u)*2.3)/1.35 var(--text);color:var(--mute)}
+.sl-q em{display:block;margin-top:.45em;font:700 calc(var(--u)*1.9)/1 var(--text);font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:var(--mute2)}
+@keyframes sldraw{to{stroke-dashoffset:0}}
+@keyframes sldot{to{opacity:1}}
+@keyframes slcl{to{opacity:1}}
+
+/* The support that simply ends: the line draws across, then the right half drops away and a gap opens
+   where it used to be. The break lands on the word "stopped". */
+.suppline{position:relative;width:min(100%,calc(var(--u)*60));height:calc(var(--u)*.5);margin:calc(var(--u)*3) auto 0}
+.suppline i,.suppline b{position:absolute;top:0;height:100%;border-radius:99px;background:linear-gradient(90deg,rgba(0,207,234,.1),var(--aL));transform-origin:0 50%}
+.suppline i{left:0;width:52%;transform:scaleX(0)}
+.suppline b{left:56%;width:44%;background:linear-gradient(90deg,#C97A3A,rgba(201,122,58,.1));transform:scaleX(0)}
+.scene.act .suppline i{animation:growx .7s var(--out) both;animation-delay:var(--t0)}
+.scene.act .suppline b{animation:suppbrk 1.1s var(--out) both;animation-delay:var(--tc)}
+@keyframes suppbrk{0%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1) translateY(calc(var(--u)*3));opacity:0}}
+
+/* The thirty-nine, as the six moments the careers page itself groups them into, counting out as the
+   line is spoken. The counts are read off the live page, so the ad cannot drift from what it links to. */
+.mgrid{display:flex;justify-content:center;gap:calc(var(--u)*2.2);margin:calc(var(--u)*2.4) auto 0;width:min(100%,calc(var(--u)*92));flex-wrap:wrap}
+.mcol{flex:1 1 calc(var(--u)*12);min-width:0;display:grid;gap:calc(var(--u)*.8);justify-items:center;padding:calc(var(--u)*1.4) calc(var(--u)*.6);border-radius:calc(var(--u)*1.4);background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1)}
+.mcol>b{font:800 calc(var(--u)*3.4)/1 var(--display);color:var(--aL);letter-spacing:-.02em}
+.mdots{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(var(--u)*.52);max-width:calc(var(--u)*9)}
+.mdots i{width:calc(var(--u)*1.05);height:calc(var(--u)*1.05);border-radius:50%;background:var(--aL);opacity:0;transform:scale(.3)}
+.scene.act .mdots i{animation:mgdot .34s var(--pop) both;animation-delay:var(--t0)}
+.mlab{font:600 calc(var(--u)*1.75)/1.2 var(--text);color:var(--mute2);text-align:center;letter-spacing:.02em}
+@keyframes mgdot{to{opacity:1;transform:scale(1)}}
+
+/* The households, as a row rather than a panel: scene 4 of A has three bands to get through. */
+.hrow{display:flex;justify-content:center;gap:calc(var(--u)*1.6);margin:calc(var(--u)*2.2) auto 0;flex-wrap:wrap}
+.hrow span{display:inline-flex;align-items:center;gap:calc(var(--u)*1.1);padding:calc(var(--u)*1.1) calc(var(--u)*1.9);border-radius:99px;background:rgba(14,147,176,.14);border:1px solid rgba(0,207,234,.3)}
+.hrow .ic{width:calc(var(--u)*2.4);height:calc(var(--u)*2.4);color:var(--aL);flex:none}
+.hrow b{font:700 calc(var(--u)*2.3)/1 var(--text);color:#fff}
+.hrow em{font:600 calc(var(--u)*1.9)/1 var(--text);font-style:normal;color:var(--aT)}
+.pill-row.mid{justify-content:center;margin-top:calc(var(--u)*2.4)}
+.ypill.lk{display:inline-flex;align-items:center;gap:calc(var(--u)*1)}
+.ypill.lk .ic{width:calc(var(--u)*2.2);height:calc(var(--u)*2.2);flex:none}
+
+/* B's emptying list: the names a newcomer is told to call, struck off one by one — LIMRA's own stated
+   cause of the cliff — ending on nobody left. Tighter than the standard `.miss`, because there are five. */
+.miss.nmlist{gap:calc(var(--u)*.7);margin:calc(var(--u)*1.2) 0 calc(var(--u)*1.4)}
+.miss.nmlist span{font-size:calc(var(--u)*2.5)}
+.empt{align-self:start;padding:calc(var(--u)*1) calc(var(--u)*1.8);border-radius:99px;background:rgba(201,122,58,.16);border:1px solid rgba(201,122,58,.42);font:700 calc(var(--u)*2.1)/1 var(--text);letter-spacing:.04em;color:#e3a86f;opacity:0}
+/* NOT `adpunch`: it animates transform alone, so anything starting at opacity 0 stays invisible for ever.
+   Third element in this repository to be bitten by that — see the note on `numPop` in the branch film. */
+.scene.act .empt{animation:emptin .6s var(--pop) both;animation-delay:var(--t0)}
+@keyframes emptin{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.09)}100%{opacity:1;transform:scale(1)}}
 
 /* ── The ad's motion, 12 Nov 2026 ("a lot more motion … things that will make persons share the ad").
    A rendered film is an MP4, so motion costs render minutes and nothing on the viewer's device; what it
@@ -2578,6 +2709,49 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .ffn-thumbs{display:none}
   .fbadge b{font-size:calc(var(--u)*2.9)}.fbadge span{font-size:calc(var(--u)*2)}
   .frail{padding-top:calc(var(--u)*.6)}
+}
+
+/* ── The re-cut feed ads in their two frames, 12 Nov 2026. Both are 1080 wide (square 1080x1080, tall
+   1080x1920), so six moment columns across one row leaves about 160px each and the longest label
+   ("Your managers, too") will not sit in it: three to a row in both. A SQUARE IS "PORTRAIT" to the media
+   query — its height is not less than its width — so the square rules come after the portrait block and
+   only shrink what a square cannot hold. The captions are burned OVER the frame on these cuts, from 16%
+   of the height up, so the bottom fifth has to stay clear. ───────────────────────────────────────── */
+@media (orientation:portrait){
+  .s-cliff .h.l{font-size:calc(var(--u)*5.6)}
+  .slope{width:100%;margin-top:calc(var(--u)*2.4)}
+  .sl-key{gap:calc(var(--u)*2.6);margin-top:calc(var(--u)*1.6)}
+  .sl-key span{font-size:calc(var(--u)*2.6)}
+  .sl-q{font-size:calc(var(--u)*2.7);width:100%}
+  .sl-q em{font-size:calc(var(--u)*2.1)}
+  .adsrc{font-size:calc(var(--u)*2.1)}
+  .mgrid{gap:calc(var(--u)*1.8);margin-top:calc(var(--u)*2.8)}
+  .mcol{flex:0 1 calc((100% - var(--u)*3.6)/3);padding:calc(var(--u)*1.8) calc(var(--u)*1)}
+  .mcol>b{font-size:calc(var(--u)*4)}
+  .mdots{max-width:calc(var(--u)*14)}
+  .mdots i{width:calc(var(--u)*1.3);height:calc(var(--u)*1.3)}
+  .mlab{font-size:calc(var(--u)*2.1)}
+  .hrow{gap:calc(var(--u)*1.2);margin-top:calc(var(--u)*2.6)}
+  .hrow span{padding:calc(var(--u)*1.2) calc(var(--u)*2)}
+  .hrow b{font-size:calc(var(--u)*2.6)}.hrow em{font-size:calc(var(--u)*2.1)}
+  .miss.nmlist span{font-size:calc(var(--u)*3)}
+  .empt{font-size:calc(var(--u)*2.5)}
+  .suppline{width:100%}
+}
+/* The square is the tight one: scene 4 of A stacks a headline, six columns, three chips and two pills,
+   and scene 5 now carries the seven places as well as the figures, the address and the QR. */
+@media (aspect-ratio:1/1){
+  .s-all .h.xl{font-size:calc(var(--u)*6.4)}
+  .mgrid{zoom:.9;margin-top:calc(var(--u)*2)}
+  .hrow{zoom:.92;margin-top:calc(var(--u)*1.8)}
+  .pill-row.mid{margin-top:calc(var(--u)*1.8)}
+  /* The captions burn into the bottom 16%, and the chart's source line was landing inside it. */
+  .s-cliff .slope{zoom:.86;margin-top:calc(var(--u)*1)}
+  .s-cliff .h.l{font-size:calc(var(--u)*5)}
+  .s-cliff .sl-q{font-size:calc(var(--u)*2.4)}
+  .s-cta .seatrow i{width:calc(var(--u)*5.4);height:calc(var(--u)*5.4);font-size:calc(var(--u)*2.4)}
+  .s-cta .seatrow{gap:calc(var(--u)*1.4)}
+  .s-cta .h.url{font-size:calc(var(--u)*4.6)}
 }
 </style>
 </head>

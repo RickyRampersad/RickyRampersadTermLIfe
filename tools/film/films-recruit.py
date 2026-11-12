@@ -27,13 +27,18 @@ entries('recruit', 'recruit-timing.json', 'vorecruit', 'recruit',
 if os.path.exists('recruit-trailer-timing.json'):
     entries('trailer', 'recruit-trailer-timing.json', 'votrailer', 'trailer',
             [(2, 'income'), (3, 'zero'), (4, 'coach'), (5, 'Seven'), (5, 'Thirty'), (5, 'Seven', 1), (6, 'open'), (6, 'Twenty')], [8], ticks=((4, 5, 0.5),))
-# The 35-second feed cuts: square for the LinkedIn and Facebook feed, tall for Reels and Stories; no landscape.
-# The punch in scene 2 lands on the turn: the word where the ad stops naming the absence and starts
-# answering it. Both variants turn on "here" — A's "Here, clients come to you", B's "And here, the leads
-# come to you". B's on-screen "Not here." has no spoken "Not" behind it, which is what caught this: a cue
-# word that is not in the line exits before films.json is written, so a stale entry is never left behind.
+# The 40-second feed cuts: square for the LinkedIn and Facebook feed, tall for Reels and Stories; no landscape.
+# A cue word that is not in the line exits before films.json is written, so a stale entry is never left
+# behind — which is what caught the old (2, 'here') and (4, 'third') on the 12 Nov re-cut. The two ads used
+# to share one cue list, which forced every punch word to appear in BOTH lines for that scene; after the
+# re-cut on the cliff research they have no word in common at scene 4 ("Thirty-nine things" against "This
+# branch keeps thirty-one"), so each variant now names its own beats: A punches on the cliff, on its own
+# figure landing beside the industry's, and on the thirty-nine; B on the second year, on the leads arriving,
+# and on the same comparison. Both close on the seats.
+AD_HITS = {'A': [(2, 'cliff'), (3, 'thirty'), (4, 'Thirty-nine'), (5, 'Seven')],
+           'B': [(2, 'second'), (3, 'leads'), (4, 'thirty'), (5, 'Seven')]}
 for v in 'AB':
     if os.path.exists(f'recruit-ad{v}-timing.json'):
         entries(f'ad{v}', f'recruit-ad{v}-timing.json', f'voad{v}', f'ad-{v.lower()}',
-                [(2, 'here'), (4, 'Seven'), (4, 'third'), (5, 'One'), (5, 'Twenty')], [], shapes=('q', 'v'))
+                AD_HITS[v], [], shapes=('q', 'v'))
 json.dump(f, open('films.json', 'w'), indent=1)

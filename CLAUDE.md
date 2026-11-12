@@ -5552,6 +5552,11 @@ section links it.
 
 ### The two feed ads, re-cut for the advisor — 12 November 2026
 
+**Superseded the same evening by the cut on the LIMRA cliff research, in the section below.** The scene content
+described here (A's three struck "not getting" lines, the 22-against-31 bar pair, the 39.4s/38.1s lengths) is no
+longer what the MP4s carry. Everything else — the palette arithmetic, the voice lessons, the cue-word guard,
+chapters.py and the agentmgt.com redirect — still stands and is not repeated below.
+
 Asked for in these words: *"remember we moved away from agentmanagement.com and it's ricky_branch/careers. And it
 must be advisors and it's a sales career… it's what they're not getting, and you need to firm up something that is
 catchy because you want to really post this."*
@@ -5611,6 +5616,83 @@ reads the scene's `h2`, which on scene 5 is the bare URL and on scene 1 the whol
 
 **agentmgt.com is a redirect now, and the ads no longer name it.** It serves a meta refresh to `/careers/`, so the
 bare address still works for anyone holding it, but `agentmgt.com/anything` 404s: never link a path on that domain.
+
+### Both ads re-cut on the second-year cliff — 12 November 2026, the same evening
+
+Asked for in these words: *"I personally find this can be more impactful in the short time. You have memories, we do
+so much for persons because we want to make sure everyone succeeds. So attracting the insurance advisors who are with
+someone who's not getting the support and the new persons. So see deep research limera, what appeals to person, have
+the motions, have the graphics, and make it a wow, so when person click, they apply."*
+
+**The research changed the argument, which is why this is a re-cut and not a polish.** The morning's ads led on three
+things a practising advisor *is not getting* — leads, clients handed to you, anyone asking how your week went. That
+was a reasonable guess. LIMRA publishes something sharper and more universal, and it is the thing a practising
+advisor has actually lived:
+
+| finding | source |
+|---|---|
+| **"The second year, commonly referred to as the 'cliff' … Agents are on their own, without much of the support provided during the first year."** | LIMRA 2025 Annual Conference, session 16 — a public PDF, quoted on screen |
+| **"We have been sitting at an industry-wide 4-year retention of rate of 14% for years."** | same deck, sourced there to *The Path to Improving Retention*, LIMRA and FINSECA, 2022 |
+| One-year retention by who recruited: **Recruiter 44%, Sales Manager 50%, Office Head 55%** | same |
+| The cause of the cliff: new agents exhaust the friends-and-family market with no prospecting system behind it | LIMRA MarketFacts, 2025 |
+| Growth opportunities outweigh pay **2×** in choice of firm; only 2% would "absolutely" leave over a 2% pay cut | LIMRA-McKinsey, ~2,000 advisors with 3+ years' tenure (2012, dated — treat as background) |
+| Top two retention factors: early sales activity, and a strong selection process before hiring | LIMRA / FINSECA |
+
+So **A leads on the cliff** ("The industry has a name for your second year"), and **B leads on its cause** — the
+personal list emptying, name by name, which is the newcomer's real fear. That pay is *not* the lever is why neither
+ad leads on money, and the branch's own 67%-at-one-year / 31%-at-four sits exactly where LIMRA says a structured
+process puts you.
+
+**THE CHART PLOTS ONLY POINTS THAT HAVE A SOURCE.** LIMRA gives year one and year four and *names* year two without
+publishing a figure for it; the branch has two points of its own. A four-point curve would have meant inventing half
+of it, so it is a **slope chart** of two sourced endpoints per series, with year two annotated on the time axis and
+no marker pretending to be a reading. The footnote carries both sources. Amber `#C97A3A` against teal `#0E93B0` on
+`#0d1f33` is the pair already validated in the section above; each line is labelled in the key as well as coloured,
+and every number wears a text token, never the series colour.
+
+**The thirty-nine is read off the live page**, grouped as the careers page itself groups it (before you join 7,
+first 90 days 5, every day 10, every week 6, every month 6, your managers too 5), so the ad cannot drift from what
+it links to. That is "we do so much for persons" as a countable thing rather than an adjective.
+
+**40.4s and 40.6s**, a few tenths over the 40-second mark and carrying noticeably more than the 39.4s/38.1s cuts
+they replace. The air between scenes dropped from **1.15s to 0.95s** — five scenes at 1.15 spend nearly six seconds
+of a forty-second ad on silence, and a feed cut wants pace.
+
+**A PROPER-NOUN URL NEEDS A RUN-UP, and this is the new voice lesson.** Dropping "Go to" from the close — so the
+sentence began on *"Ricky Rampersad Branch dot com"* — collapsed the whole address into **"Hiki Humpir Saad, Brinche
+Dauticol, is Leshika Hears"** at 0.885–0.916 confidence, in both ads. With "Go to" restored it came back as
+`rickyrampersadbranch.com slash careers`, spelled exactly, at 0.993. The run-up is load-bearing: never start a
+spoken line on the address.
+
+**And a number opening a sentence before a noun.** *"Four years in"* came back as **"For years in"** in both ads —
+the same family as *"Four retired"* → *"for a tired"*. The fix is the same one that worked before: put the number
+last in its phrase. **"By year four"** voiced clean first time, which is unsurprising, since *"in year one"* in the
+very next line had always transcribed correctly.
+
+**`adpunch` never touches opacity** — it is `scale(.7)` → `1.09` → `1`. Anything set `opacity: 0` and animated with
+it stays invisible for ever, which is what happened to B's "Nobody left to call" chip. **Third element in this
+repository bitten by that**, after the journey ring and the AI badge. An entrance that has to fade in gets its own
+keyframe; `adpunch` is for something already visible.
+
+**The cliff label hangs above the line's own height at x=40, not above the mean of the two endpoints** — those are
+the same number only for a flat line. The first cut used the endpoint mean, which put the words level with the
+year-one dot and read as a label on *that reading* rather than an annotation of the descent. And when both lines are
+drawn it must clear the **higher** of the two, or it lands across the teal: B's scene 4 does not carry the label at
+all, because B never says "cliff" out loud.
+
+**The two ads no longer share a cue list.** `entries()` took one hitlist for both, which forced every punch word to
+appear in A's *and* B's line for that scene; after this re-cut they have no word in common at scene 4 ("Thirty-nine
+things" against "This branch keeps thirty-one"). `AD_HITS` in films-recruit.py now names each variant's own beats.
+
+**`build-recruitfilm.py` needs python3.13**, not the `python3` on the path: it uses nested same-type quotes inside
+f-strings (PEP 701, 3.12+), and on 3.11 it dies with `SyntaxError: f-string expression part cannot include a
+backslash` pointing at an unrelated line 400 lines away. The repo's own notes already run `sfx.py`, `usetrack.py`
+and `mixany.py` on 3.13; the builder belongs with them.
+
+**`adcheck.js` in the scratchpad measures the frames instead of eyeballing them**: it settles every animation at its
+end, then fails any scene with content in the bottom 16% — where the mixer burns the captions in on `over` mode —
+or running off the side, in all four frame combinations. It caught the chart's own source line sitting inside the
+caption band on the square cut, which three passes over a contact sheet had not.
 
 ## The renewal desk — general insurance, from last year to delivery
 

@@ -121,29 +121,55 @@ did both on 26 October.
 
 The 7:34 film is what a candidate watches after the call, and the 1:27 trailer is for the page. Neither is what a
 feed shows: LinkedIn and Facebook stop paying out after about thirty seconds, and most of the audience watches
-muted. So the ad itself is 35 seconds, in two variants, one per reader, each five scenes: the question, the fear
-answered (A: never from zero, clients matched and leads on your board; B: leads from people who asked to be
-called, the day set every morning, trained before you are contracted), a coach not a clock, seven places in the first class of FY27 and one seat for a sales manager, and
-agentmgt.com with the QR. Post the **square** cut in the feed and the **tall** cut as a Reel or Story; the first
-frame carries the shield and the question, which is what shows before anyone taps.
+muted. So the ad itself is about forty seconds, in two variants, one per reader.
+
+**Both are built on LIMRA's own finding about the second year** (2025 Annual Conference, session 16): *"The second
+year, commonly referred to as the 'cliff' … Agents are on their own, without much of the support provided during
+the first year"*, and an industry four-year retention stuck at 14%. The cause LIMRA gives is that new agents
+exhaust the friends-and-family market with no prospecting system behind it.
+
+| | A — 40.4s | B — 40.6s |
+|---|---|---|
+| for | an advisor already contracted somewhere | somebody new to the work |
+| 1 | "You are good at it. And the support stopped." | "No ceiling? Afraid of the first year?" |
+| 2 | the cliff, with LIMRA quoted on screen | the names running out, struck off one by one |
+| 3 | 14 of a hundred left — here, 31 | the leads come to you; trained before contracted |
+| 4 | 39 things, the households, a coach not a clock | the industry keeps 14, this branch keeps 31 |
+| 5 | seven places, the conversation, the address and QR | the same |
+
+Post the **square** cut in the feed and the **tall** cut as a Reel or Story; the first frame carries the shield and
+the question, which is what shows before anyone taps.
+
+**The retention chart plots only points that have a source.** LIMRA gives year one and year four and *names* year
+two without publishing a figure for it, so it is a slope chart of two sourced endpoints a series with year two
+annotated on the axis — never a four-point curve, half of which would be invented. The footnote names both sources.
 
 To re-cut one: the lines are `tools/film/recruit-adA-lines.json` and `recruit-adB-lines.json`, voiced on the
-runner under the keys `adA` and `adB`, then in `tools/film/`:
+runner, then in `tools/film/` — **on python3.13, not `python3`**: the builder uses nested same-type quotes inside
+f-strings (3.12+) and on 3.11 dies with a `SyntaxError` pointing hundreds of lines away from the real cause.
 
 ```
-python3 importvox.py <tts/out/adA> voadA --timing recruit-adA-timing.json      # and adB
-python3 films-recruit.py
-RECRUIT_MODE=ad RECRUIT_AD=A python3 build-recruitfilm.py                        # and B
-for k in adAq adAv; do python3 sfx.py "$(python3 -c "import json;print(json.dumps(json.load(open('films.json'))['$k']))")" sfx-$k.wav; done
-python3 usetrack.py ../../rr-branch-theme.mp3 adAq adAv
-RENDER_W=1080 RENDER_H=1080 node render.js ../../agentmgt/ad-a.html cap-adAq 30 ../../agentmgt/ad-a-square.jpg
-RENDER_W=1080 RENDER_H=1920 node render.js ../../agentmgt/ad-a.html cap-adAv 30 ../../agentmgt/ad-a-story.jpg
-for k in adAq adAv; do python3 mixany.py "$(python3 -c "import json;print(json.dumps(json.load(open('films.json'))['$k']))")" "$(python3 -c "import json;print(json.load(open('films.json'))['$k']['out'])")"; done
+python3.13 importvox.py <staged vox> voadA 0.95 --timing recruit-adA-timing.json --lines recruit-adA-lines.json
+python3.13 films-recruit.py
+RECRUIT_MODE=ad RECRUIT_AD=A python3.13 build-recruitfilm.py                      # and B
+node <scratch>/adcheck.js ../../agentmgt/ad-a.html 1080 1080                      # and 1080x1920, and ad-b
+for k in adA adB; do python3.13 sfx.py "$(…films.json ${k}q…)" sfx-$k.wav; python3.13 usetrack.py ../../rr-branch-theme.mp3 ${k}q; done
+RENDER_W=1080 RENDER_H=1080 node render.js ../../agentmgt/ad-a.html cap-adAq 30   # ×4, both pages, both shapes
+for k in adAq adAv adBq adBv; do python3.13 mixany.py "$(…films.json $k…)"; done
 ```
+
+The **0.95** is the air between scenes, not the films' usual 1.15: five scenes at 1.15 spend nearly six seconds of
+a forty-second ad on silence, and a feed cut wants pace.
 
 A square frame is "portrait" to the page's media query (height is not less than width), so the square block in
 the stylesheet comes after the portrait rules and only resizes what a square cannot hold. The bottom fifth of every
-frame stays clear: the mixer burns the captions there.
+frame stays clear: the mixer burns the captions there — **measure that with `adcheck.js` rather than eyeball it**,
+which is how the chart's own source line was caught sitting inside the band on the square cut.
+
+**Never start the closing line on the address.** Dropping "Go to" so the sentence began on *"Ricky Rampersad Branch
+dot com"* collapsed it into gibberish at 0.885 confidence in both ads; with "Go to" restored it transcribes exactly,
+at 0.993. And a number opening a sentence before a noun slurs: *"Four years in"* comes back as *"For years in"*,
+where **"By year four"** is clean.
 
 ## What a candidate actually meets when they apply — read 12 November 2026
 
@@ -211,20 +237,20 @@ Two posts, one film, by the 27 October research (CLAUDE.md, "The reframe"): each
 line, because the ad platforms limit the targeting and the copy has to do the selecting; each leads with the
 reader's own fear, then the specific answer, then one low-commitment ask. Under 120 words, WhatsApp bold.
 
-Rewritten 12 November 2026 ("it must be advisors and it's a sales career ... it's what they're not getting").
-Each post now names the job in its first line, states the pay model rather than implying it, and opens on the
-absence rather than on the offer — because what moves a producing advisor is not a better promise, it is
-recognising the three things nobody where they are is giving them.
+Rewritten 12 November 2026 on the LIMRA cliff research, to match the ads: each post names the job in its first
+line, states the pay model rather than implying it, and leads on **the support stopping** — because what moves a
+producing advisor is not a better promise, it is recognising something they have lived. The one figure both posts
+carry is LIMRA's own, and ours beside it.
 
 **For practising advisors** (LinkedIn, the agents' WhatsApp groups, Facebook):
 
-> *You are an insurance advisor, and you are good at it. So why are you still doing it alone?*
+> *You are an insurance advisor. You are good at it. And at some point the support stopped.*
 >
-> No leads. No clients handed to you. Nobody asking how your week went. That is not you — that is the room you are in.
+> The industry has a name for your second year. It calls it the cliff — agents left on their own, without the support they had in year one. Four years in, fourteen of every hundred are still with the company that hired them.
 >
-> Here, clients come to you household by household, with the file and the first thing to say. Leads land on your own board, in the prospect's own words. The fact find does the arithmetic while you talk. Your manager is a coach, not a clock.
+> In this branch it is thirty-one, and the reason is countable: thirty-nine things we do for an advisor, every week of your career. Clients matched to you household by household, with the file and the first thing to say. Leads on your own board. A coach, not a clock.
 >
-> Most advisors are gone by year three. A third of ours are still with us at four. Seven places in the first class of FY27, and one seat for a sales manager.
+> Seven places in the first class of FY27, and one seat for a sales manager.
 >
 > One confidential conversation. Twenty minutes, this week. Nobody will know you asked.
 >
@@ -238,19 +264,24 @@ Post it with `ad-a-square.mp4` attached (the feed plays the video; the link is f
 
 > *A career with no ceiling, and afraid of the first year? Both are fair.*
 >
-> Straight with you: this is a sales career. What stops most people is being handed a contract and told to call their friends.
+> Straight with you: this is a sales career. But the year that breaks people is not the first. It is the second, when the names run out — your cousin, your old boss, the neighbour from church.
 >
-> Not here. The leads come to you, from people who asked to be called. Your day is set every morning. You are trained, and in the field, before you are contracted. The Branch Manager interviews and coaches you himself.
+> Not here. The leads come to you, from people who asked to be called. You are trained, and in the field, before you are contracted. Thirty-nine things this branch does for an advisor, every week of your career, and a manager who is a coach, not a clock.
 >
-> Most advisors are gone by year three. A third of ours are still with us at four. Seven places in the first class of FY27, and one seat for a sales manager.
+> Four years in, the industry keeps fourteen of every hundred. We keep thirty-one.
 >
-> One conversation, twenty minutes this week. Bring your questions: we show you the branch's own figures, not an adjective.
+> Seven places in the first class of FY27. One conversation, twenty minutes this week — bring your questions.
 >
 > https://rickyrampersadbranch.com/careers
 >
 > Reply *TALK* and I'll call you.
 
 Post it with `ad-b-square.mp4` attached.
+
+**Where the figures come from, if anyone asks.** The 14 is LIMRA's published industry four-year retention
+(2025 Annual Conference, sourced there to LIMRA and FINSECA, 2022); the cliff quote is that deck's own words; the
+31 and the 39 are the branch's own record and the live careers page's own count. Nothing in either post is an
+adjective standing in for a number.
 
 **Every "Book a confidential conversation" button opens `/careers/#talk`, a form on the page** — not WhatsApp,
 and not another app. That changed on 28 October 2026 and the paragraph that used to sit here still described the
