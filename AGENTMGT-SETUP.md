@@ -278,6 +278,27 @@ Post it with `ad-a-square.mp4` attached (the feed plays the video; the link is f
 
 Post it with `ad-b-square.mp4` attached.
 
+### The link is never in the video. It goes in the post.
+
+**Nothing inside an MP4 is tappable.** The address on the closing frame and the QR beside it are both pictures.
+A viewer on a phone cannot touch either one. So the link has to be in the post text every single time, and where
+it goes differs by platform:
+
+| | where the link goes | clickable? |
+|---|---|---|
+| **WhatsApp** (the agents' groups) | in the message, on its own line | yes — and it previews the page |
+| **LinkedIn** | in the post text, last line before the sign-off | yes |
+| **Facebook** | in the post text | yes |
+| **Instagram feed** | **captions are not clickable at all** | no — put it in the bio and say "link in bio", or post it as a Story with a link sticker |
+
+Instagram is the one that catches people out: a caption full of `https://` does nothing there. Ad B is the cut
+aimed at Instagram's audience, so for that platform either run it as a Story with the sticker, or change the
+bio link to `/careers` for the week it is up.
+
+**The QR is for a screen the viewer is not holding** — a laptop feed, the branch's own wall, a printed flyer at
+an event. On a phone it is decoration. It costs nothing and earns its place in the other cases, so it stays, but
+do not count on it in a feed.
+
 **Where the figures come from, if anyone asks.** The 14 is LIMRA's published industry four-year retention
 (2025 Annual Conference, sourced there to LIMRA and FINSECA, 2022); the cliff quote is that deck's own words; the
 31 and the 39 are the branch's own record and the live careers page's own count. Nothing in either post is an
