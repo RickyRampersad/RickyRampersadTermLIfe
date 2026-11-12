@@ -1,47 +1,52 @@
 {
- "tts/out/lbnewlook3/01.mp3": [
+ "tts/out/adA/01.mp3": [
+  "en",
+  0.995,
+  "You are an insurance advisor. You're good at it. Why are you still doing it alone?"
+ ],
+ "tts/out/adA/02.mp3": [
   "en",
   0.998,
-  "Hey, everyone. The logbook has a new look."
+  "You get no leads. No clients handed to you. Nobody asking how you're weak went. Here, clients come to you household by household, with a file and the first thing to say."
  ],
- "tts/out/lbnewlook3/02.mp3": [
+ "tts/out/adA/03.mp3": [
+  "en",
+  0.998,
+  "Your manager is a coach, not a clock, and nobody will know you asked."
+ ],
+ "tts/out/adA/04.mp3": [
+  "en",
+  0.993,
+  "Seven places this year. Most advisors are gone by year 3 and a third of hours are still here at 4."
+ ],
+ "tts/out/adA/05.mp3": [
   "en",
   0.994,
-  "before it was dark and honestly pretty hard to read on a phone."
+  "One confidential conversation. 20 minutes this week. Go to rickyrampersetbranch.com. Slash careers."
  ],
- "tts/out/lbnewlook3/03.mp3": [
+ "tts/out/adB/01.mp3": [
   "en",
-  0.996,
-  "Now it's lighter, it's clearer, and it's so much easier on the eyes."
+  0.986,
+  "You want a career with no ceiling. You are afraid of the first year. Both are fair."
  ],
- "tts/out/lbnewlook3/04.mp3": [
+ "tts/out/adB/02.mp3": [
   "en",
-  0.998,
-  "The text is bigger and the buttons are bigger too, so works nicely on your phone."
+  0.997,
+  "This is a sales career. What stops most people is being told to call their friends. And here, the leads come to you from people who ask to be called."
  ],
- "tts/out/lbnewlook3/05.mp3": [
+ "tts/out/adB/03.mp3": [
   "en",
-  0.999,
-  "You find your client in one search and the department fills itself in for you."
+  0.997,
+  "You're trained before you're contracted. Your manager is a coach, not a clock."
  ],
- "tts/out/lbnewlook3/06.mp3": [
-  "en",
-  0.998,
-  "then you log it and hand it straight to sale support."
- ],
- "tts/out/lbnewlook3/07.mp3": [
-  "en",
-  0.996,
-  "And for staff, the Q and the Insights are easy to read at a glance."
- ],
- "tts/out/lbnewlook3/08.mp3": [
-  "en",
-  0.996,
-  "One more thing, East Gates is now in the department list."
- ],
- "tts/out/lbnewlook3/09.mp3": [
+ "tts/out/adB/04.mp3": [
   "en",
   0.994,
-  "Same log book you know. Just a lot easier on the eyes."
+  "Seven places this year. Most advisors are gone by year 3 and a third of hours are still here at 4."
+ ],
+ "tts/out/adB/05.mp3": [
+  "en",
+  0.994,
+  "One conversation, 20 minutes this week, go to rickierampersadbranch.com. Slash careers."
  ]
 }
