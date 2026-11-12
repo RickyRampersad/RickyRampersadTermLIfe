@@ -1,52 +1,7 @@
 {
- "tts/out/adA/01.mp3": [
-  "en",
-  0.995,
-  "You are an insurance advisor. You're good at it. Why are you still doing it alone?"
- ],
- "tts/out/adA/02.mp3": [
+ "tts/out/adAfix/01.mp3": [
   "en",
   0.998,
-  "You get no leads. No clients handed to you. Nobody asking how you're weak went. Here, clients come to you household by household, with a file and the first thing to say."
- ],
- "tts/out/adA/03.mp3": [
-  "en",
-  0.998,
-  "Your manager is a coach, not a clock, and nobody will know you asked."
- ],
- "tts/out/adA/04.mp3": [
-  "en",
-  0.993,
-  "Seven places this year. Most advisors are gone by year 3 and a third of hours are still here at 4."
- ],
- "tts/out/adA/05.mp3": [
-  "en",
-  0.994,
-  "One confidential conversation. 20 minutes this week. Go to rickyrampersetbranch.com. Slash careers."
- ],
- "tts/out/adB/01.mp3": [
-  "en",
-  0.986,
-  "You want a career with no ceiling. You are afraid of the first year. Both are fair."
- ],
- "tts/out/adB/02.mp3": [
-  "en",
-  0.997,
-  "This is a sales career. What stops most people is being told to call their friends. And here, the leads come to you from people who ask to be called."
- ],
- "tts/out/adB/03.mp3": [
-  "en",
-  0.997,
-  "You're trained before you're contracted. Your manager is a coach, not a clock."
- ],
- "tts/out/adB/04.mp3": [
-  "en",
-  0.994,
-  "Seven places this year. Most advisors are gone by year 3 and a third of hours are still here at 4."
- ],
- "tts/out/adB/05.mp3": [
-  "en",
-  0.994,
-  "One conversation, 20 minutes this week, go to rickierampersadbranch.com. Slash careers."
+  "You get no leads. No clients handed to you. Nobody asking about your weak. Here, clients come to you household by household, with a file and the first thing to say."
  ]
 }
