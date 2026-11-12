@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-12a';
+var SCRIPT_VERSION = '2026-11-12b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3079,11 +3079,20 @@ function dayStates_(day, people) {
   return out;
 }
 
+/* Agents are never nudged here (12 Nov 2026, 2026-11-12b). Rajiv Soodoo projected his day and was told at 1:13pm
+ * "You have not checked in today": an agent's check-in is the projection on the Agent Day tab, which dayStates_ never
+ * reads, and agents have had no midday mail since 8 Nov. The noon and 3pm nudges are for the desks whose day is the
+ * register and the plan: the staff desks and the unit managers. */
+function nudgeDesk_(sid) {
+  sid = String(sid || '');
+  return DAY_MAIL_DESKS.indexOf(sid) >= 0 || UM_DESKS.indexOf(sid) >= 0;
+}
+
 /** Noon. Somebody with no sign-in, no plan and nothing done hears about it while the afternoon can still be used. */
 function remindMidday(e) {
   if (nothingToReport_(e)) return 'Nobody signed in and nothing was filed — nobody nudged.';
   var date = todayISO_();
-  var people = publicRoster_();
+  var people = publicRoster_().filter(function (p) { return nudgeDesk_(p.staffId); });
   var st = dayStates_(date, people);
   var sent = [], working = [];
 
@@ -3110,7 +3119,7 @@ function remindMidday(e) {
 function remindCheckpoint(e) {
   if (nothingToReport_(e)) return 'Nobody signed in and nothing was filed — nobody nudged.';
   var date = todayISO_();
-  var people = publicRoster_();
+  var people = publicRoster_().filter(function (p) { return nudgeDesk_(p.staffId); });
   var st = dayStates_(date, people);
   var nowM = minutesOf_(hhmm_(new Date()));
   var sent = [];

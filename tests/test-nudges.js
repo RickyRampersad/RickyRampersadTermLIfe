@@ -60,5 +60,13 @@ ok('when Salesforce does not answer, nobody is chased', sent.length === 0, sent.
 reset(); ATT.push({ Date: '2026-10-28', StaffId: 'sasha', FirstSignIn: '07:00', Status: 'in' }); SF.sasha = { closed: 0, notes: 0 }; HOURS.sasha = '7am – 12pm'; env.remindCheckpoint();
 ok('nor somebody whose day has already ended', !sent.some(x => /^sasha/.test(x)), sent.join());
 
+console.log('\nAn agent (12 Nov 2026, Rajiv projected his day and was told he had not checked in):\n');
+reset(); people.push({ staffId: 'a-rajiv', name: 'Rajiv' }); SF['a-rajiv'] = { closed: 0, notes: 0 };
+env.remindMidday();
+ok('an agent is never sent the noon "You have not checked in today"', !sent.some(x => /^a-rajiv/.test(x)), sent.join());
+reset(); ATT.push({ Date: '2026-10-28', StaffId: 'a-rajiv', FirstSignIn: '07:10', Status: 'in' }); env.remindCheckpoint();
+ok('nor the 3pm "Your day is not logged"', !sent.some(x => /^a-rajiv/.test(x)), sent.join());
+people.pop();
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall green');
 process.exit(fails ? 1 : 0);
