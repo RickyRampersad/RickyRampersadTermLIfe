@@ -56,7 +56,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .h.xl{font-size:calc(var(--u)*10.5)}
 .h.l{font-size:calc(var(--u)*7)}
 .h.m{font-size:calc(var(--u)*5.2)}
-.h.url{font-size:calc(var(--u)*10);letter-spacing:-.03em;color:#fff;font-weight:700}
+.h.url{font-size:calc(var(--u)*6);letter-spacing:-.03em;color:#fff;font-weight:700;line-height:1.02}
 .h em,.wine{font-style:italic;font-weight:700;color:var(--aL)}
 .h.wine2{color:var(--aL);font-weight:700}
 .h.duo{margin-top:calc(var(--u)*2);font-weight:600}
@@ -277,6 +277,26 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .seatrow i{width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:calc(var(--u)*1.6);display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:var(--mute2);font-size:calc(var(--u)*3);opacity:0;transform:scale(.6)}
 .scene.act .seatrow i{animation:seat-on .55s var(--pop) both;animation-delay:var(--t0)}
 @keyframes seat-on{to{opacity:1;transform:scale(1);background:linear-gradient(145deg,var(--a),var(--aD));color:#fff;border-color:rgba(255,255,255,.3);box-shadow:0 0 calc(var(--u)*3) rgba(0,207,234,.5)}}
+
+/* The ad's own blocks, 12 Nov 2026. `.miss` is what the reader is NOT getting: it enters, then the rule
+   strikes across it, so the eye reads the thing and then the absence. The bars below are scaleX on `growx`,
+   never `grow`, because this file defines @keyframes grow TWICE and the later scaleY one wins. */
+.miss{display:grid;gap:calc(var(--u)*1.4);margin:calc(var(--u)*1.6) 0 calc(var(--u)*2.4)}
+.miss span{position:relative;align-self:start;justify-self:start;font:600 calc(var(--u)*3.1)/1.25 var(--text);color:var(--mute2);padding-right:.2em}
+.miss span::after{content:'';position:absolute;left:0;right:0;top:52%;height:calc(var(--u)*.38);background:#C97A3A;border-radius:2px;transform:scaleX(0);transform-origin:0 50%;box-shadow:0 0 calc(var(--u)*1.6) rgba(201,122,58,.55)}
+.scene.act .miss span::after{animation:growx .5s var(--out) both;animation-delay:calc(var(--t0) + 420ms)}
+.adbars{display:grid;gap:calc(var(--u)*3);width:min(100%,calc(var(--u)*82));margin:calc(var(--u)*3) auto 0;text-align:left}
+.adbar{display:grid;gap:calc(var(--u)*1)}
+.adlab{font:600 calc(var(--u)*2.6)/1 var(--text);color:var(--mute);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.adlab b{font:800 calc(var(--u)*6.4)/1 var(--display);color:#fff;letter-spacing:-.03em;margin-right:.18em}
+.adtrack{display:block;height:calc(var(--u)*3);border-radius:99px;background:rgba(255,255,255,.1);position:relative;overflow:hidden}
+.adtrack i{position:absolute;left:0;top:0;bottom:0;width:var(--w);border-radius:99px;transform:scaleX(0);transform-origin:0 50%}
+.adtrack i.ind{background:linear-gradient(90deg,#C97A3A,#a86230)}
+.adtrack i.us{background:linear-gradient(90deg,#0E93B0,#00CFEA);box-shadow:0 0 calc(var(--u)*2.6) rgba(0,207,234,.5)}
+.scene.act .adtrack i{animation:growx 1.1s var(--out) both;animation-delay:var(--t0)}
+.adleg{font:500 calc(var(--u)*2.3)/1.3 var(--text);color:var(--mute2);letter-spacing:.02em}
+.adleg b{color:var(--ink);font-weight:700}
+.adsrc{margin-top:calc(var(--u)*2.4);font:500 calc(var(--u)*2)/1.4 var(--text);color:var(--mute2)}
 .jr.five{grid-template-columns:repeat(5,1fr);max-width:calc(var(--u)*120);margin-inline:auto}
 .jr.five .jline{left:10%;right:10%}
 /* scene 17: the wins */
@@ -764,7 +784,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .scene{padding:calc(var(--u)*14) calc(var(--u)*7) calc(var(--u)*36)}
   .split,.split.wide{grid-template-columns:1fr;grid-template-rows:auto auto;gap:calc(var(--u)*6);align-content:center}
   .split .col:first-child{order:0}.split .col:last-child{order:1}
-  .h.xxl{font-size:calc(var(--u)*15)}.h.xl{font-size:calc(var(--u)*12.5)}.h.l{font-size:calc(var(--u)*8.6)}.h.m{font-size:calc(var(--u)*6)}.h.url{font-size:calc(var(--u)*12)}
+  .h.xxl{font-size:calc(var(--u)*15)}.h.xl{font-size:calc(var(--u)*12.5)}.h.l{font-size:calc(var(--u)*8.6)}.h.m{font-size:calc(var(--u)*6)}.h.url{font-size:calc(var(--u)*6.6)}
   .sub{font-size:calc(var(--u)*3.6)}.sub.big{font-size:calc(var(--u)*3.6)}
   .eye{font-size:calc(var(--u)*2.5)}
   .bars{height:calc(var(--u)*50)}
@@ -808,7 +828,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 @media (aspect-ratio:1/1){
   :root{--u:.84vw}
   .scene{padding:calc(var(--u)*6) calc(var(--u)*7) calc(var(--u)*30)}
-  .h.xl{font-size:calc(var(--u)*11.5)}.h.l{font-size:calc(var(--u)*7.6)}.h.url{font-size:calc(var(--u)*11)}
+  .h.xl{font-size:calc(var(--u)*11.5)}.h.l{font-size:calc(var(--u)*7.6)}.h.url{font-size:calc(var(--u)*6.2)}
   .split{gap:calc(var(--u)*3.5)}
   .ghost{font-size:calc(var(--u)*58);top:-8%}
   .qr svg{width:calc(var(--u)*24);height:calc(var(--u)*24)}
@@ -817,6 +837,8 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .seatrow i{width:calc(var(--u)*6);height:calc(var(--u)*6)}
   .s-match .h.l{font-size:calc(var(--u)*6.2)}.s-match .list{zoom:.76}.s-match .ypill{font-size:calc(var(--u)*2.2)}
   .cta{grid-template-columns:1.25fr .75fr;gap:calc(var(--u)*3)}.s-cta .qr svg{width:calc(var(--u)*21);height:calc(var(--u)*21)}.s-cta .mark.top{width:calc(var(--u)*6.5)}
+  /* the address is 32 characters now, on two lines; it still has to fit the narrower column */
+  .s-cta .h.url{font-size:calc(var(--u)*5)}
 }
 
 /* ── the trailer's blocks, 28 October 2026: drawn larger, each with its own graphic ── */
@@ -830,6 +852,11 @@ body.paused #bars i.run::after{animation-play-state:paused}
 .tr-ceil span{position:absolute;left:0;top:calc(var(--u)*-3.4);font:600 calc(var(--u)*2)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aT)}
 .tr-lab{position:absolute;right:calc(var(--u)*12);top:calc(var(--u)*-1);font:800 calc(var(--u)*3.6)/1 var(--display);color:var(--aL);opacity:0;font-style:normal;z-index:4}
 .scene.act .tr-lab{animation:pop .6s var(--pop) both;animation-delay:var(--t0)}
+.credwrap{margin:0 0 2.4vh}
+.credbar{display:flex;gap:1.6vw;justify-content:center;align-items:stretch;flex-wrap:wrap}
+.cred{display:flex;align-items:center;gap:1vw;padding:1.3vh 1.9vw;border-radius:.8vw;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
+.cred b{font-size:4.2vh;font-weight:800;letter-spacing:-.01em;line-height:1}
+.cred small{font-size:1.5vh;line-height:1.3;opacity:.82;text-align:left}
 .tr-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*3.2);width:100%;max-width:calc(var(--u)*172);margin:calc(var(--u)*2) auto 0}
 .tr-card{position:relative;background:#fff;color:#0d3f5e;border-radius:calc(var(--u)*2.4);padding:calc(var(--u)*3.2) calc(var(--u)*3.4);display:grid;gap:calc(var(--u)*1.5);text-align:left;box-shadow:0 calc(var(--u)*3) calc(var(--u)*9) rgba(4,6,10,.5);align-content:start}
 .tr-card small{font:600 calc(var(--u)*1.9)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--aD)}
@@ -872,8 +899,8 @@ body.paused #bars i.run::after{animation-play-state:paused}
 .tr-av b{display:block;font:700 calc(var(--u)*2.8)/1.1 var(--display);color:#fff}
 .tr-av span{display:block;margin-top:.3em;font:500 calc(var(--u)*2)/1.2 var(--text);color:var(--mute)}
 .tr-av em{font:700 calc(var(--u)*1.8)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aT);border:1px solid rgba(0,207,234,.5);border-radius:99px;padding:.6em 1em;font-style:normal}
-.s-coach2.tr .note p{font-size:calc(var(--u)*2.8)}
-.s-coach2.tr .week span{font-size:calc(var(--u)*2.5);padding:calc(var(--u)*1.8) 0}
+.s-coach2.tr .note p{font-size:calc(var(--u)*2.5)}
+.s-coach2.tr .week span{font-size:calc(var(--u)*2.3);padding:calc(var(--u)*1.3) 0}
 .tr-rail{position:relative;width:100%;max-width:calc(var(--u)*150);height:calc(var(--u)*.5);margin:calc(var(--u)*1) auto calc(var(--u)*-1);border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
 .tr-rail::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--aD),var(--aL));transform:scaleX(0);transform-origin:0 50%}
 .scene.act .tr-rail::after{animation:growx linear both;animation-duration:var(--d);animation-delay:var(--t0)}
@@ -964,6 +991,275 @@ body.paused #bars i.run::after{animation-play-state:paused}
 .who.mgr b{font-size:calc(var(--u)*3.4)}.who.mgr span{font-size:calc(var(--u)*2.5);margin-top:.3em;max-width:70ch}.who.mgr .lock-s{grid-column:2;grid-row:1/3;margin:0;white-space:nowrap}
 .gate-row .who.mgr b{font-size:calc(var(--u)*3.4)}.gate-row .who.mgr span{font-size:calc(var(--u)*2.5)}
 @media (orientation:portrait){.who.mgr{grid-template-columns:1fr}.who.mgr .lock-s{grid-column:1;grid-row:auto;margin-top:calc(var(--u)*1.2)}.tr-mgr{grid-column:1/-1}}
+
+/* caption-safe, 29 October 2026: the bottom fifth of every frame is the burned captions' band, and the seats, door, booking
+   and close scenes ran into it in one frame or both (measured by the scratchpad's measure.js). Scene-scoped sizes, after
+   every other rule so they win. */
+.s-seats .full{gap:calc(var(--u)*1.4)}
+.s-seats .tr-seat{min-height:calc(var(--u)*21);padding:calc(var(--u)*2.2) calc(var(--u)*1.6) calc(var(--u)*1.8)}
+.s-seats .tr-seats{margin:calc(var(--u)*.6) auto}
+.s-seats .fig b{font-size:calc(var(--u)*7)}
+.s-seats .figs.row{margin-top:calc(var(--u)*.4);align-items:center}
+.s-seats .tr-mgr{padding:calc(var(--u)*1.4) calc(var(--u)*2.4)}
+.s-door .full{gap:calc(var(--u)*1.4)}
+.s-door .h.xl{font-size:calc(var(--u)*8.2)}
+.s-door .gate-row .stage{width:calc(var(--u)*36)}
+.s-door .gate-row .who{padding:calc(var(--u)*2.4) calc(var(--u)*3)}
+.s-door .who.mgr{display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*3);padding:calc(var(--u)*1.4) calc(var(--u)*3)}
+.s-door .who.mgr b{font-size:calc(var(--u)*2.9);white-space:nowrap}
+.s-door .who.mgr span{margin:0;max-width:none;font-size:calc(var(--u)*2.3)}
+.s-door .who.mgr .lock-s{margin:0}
+.s-cta .tr-book{zoom:.87}
+@media (orientation:portrait){
+  .s-door{padding-top:calc(var(--u)*8)}
+  .s-door .h.xl{font-size:calc(var(--u)*10)}
+  .s-door .gate-row .stage{width:calc(var(--u)*50)}
+  .s-door .gate-row .who{padding:calc(var(--u)*2.2) calc(var(--u)*2.6)}
+  .s-door .gate-row .who b{font-size:calc(var(--u)*3.8)}
+  .s-door .who.mgr{display:grid;grid-template-columns:1fr auto;gap:calc(var(--u)*.6) calc(var(--u)*3);justify-content:stretch;text-align:left;padding:calc(var(--u)*2) calc(var(--u)*2.8)}
+  .s-door .who.mgr b{white-space:normal;font-size:calc(var(--u)*3.4)}
+  .s-door .who.mgr span{font-size:calc(var(--u)*2.4)}
+  .s-door .who.mgr .lock-s{grid-column:2;grid-row:1/3;white-space:nowrap}
+  .s-door .tr-line{font-size:calc(var(--u)*2.5)}.s-door .tr-line em{font-size:calc(var(--u)*4.2)}
+  .s-cta .tr-book{zoom:1}
+  .s-cta .qr{zoom:.84}
+  .s-close .stage.closeS{width:calc(var(--u)*40)}
+}
+
+/* ── 29 October 2026: the coach and the clock, the slides, the wall 24/7, the servicing rail, the career timeline ── */
+.cstage{position:relative;display:grid;width:100%}
+.clockc,.coachc{grid-area:1/1}
+.clockc{justify-self:center;display:grid;justify-items:center;gap:calc(var(--u)*1.6);opacity:0;position:relative;transform-origin:50% 50%}
+.scene.act .clockc{animation:up .8s var(--out) both,clkaway 1s var(--out) forwards;animation-delay:var(--t0),var(--t1)}
+@keyframes clkaway{to{transform:translate(-56%,-30%) scale(.36);opacity:.25;filter:grayscale(1)}}
+.clockc{align-self:start}
+.clk{width:calc(var(--u)*36);height:calc(var(--u)*36);filter:drop-shadow(0 calc(var(--u)*2) calc(var(--u)*6) rgba(4,14,26,.55))}
+.clk-f{fill:var(--bg3);stroke:rgba(255,255,255,.28);stroke-width:3}
+.clk-t{stroke:rgba(255,255,255,.45);stroke-width:2.5;stroke-linecap:round}.clk-t.q{stroke:#fff;stroke-width:4}
+.clk-h,.clk-m{stroke:#fff;stroke-width:6;stroke-linecap:round}.clk-m{stroke-width:4.5}
+.clk-s{stroke:var(--aL);stroke-width:2.5;stroke-linecap:round;transform-origin:100px 100px;animation:tickhand 60s steps(60,end) infinite}
+@keyframes tickhand{to{transform:rotate(360deg)}}
+.clk-c{fill:var(--aL)}
+.clk-sees{display:flex;gap:calc(var(--u)*1);align-items:center;flex-wrap:wrap;justify-content:center;max-width:calc(var(--u)*50)}
+.clk-sees small{width:100%;text-align:center;font:600 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--mute2)}
+.clk-sees span{font:600 calc(var(--u)*2.2)/1 var(--text);color:var(--mute);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:.5em .9em}
+.clockc .slash{position:absolute;left:-4%;top:-4%;width:108%;height:108%;pointer-events:none;overflow:visible}
+.slash line{stroke:var(--aL);stroke-width:5;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-dasharray:100;stroke-dashoffset:100;opacity:0}
+.scene.act .slash line{animation:slashdraw .45s ease-out forwards;animation-delay:var(--t1)}
+@keyframes slashdraw{from{opacity:1;stroke-dashoffset:100}to{opacity:1;stroke-dashoffset:0}}
+.coachc{display:grid;gap:calc(var(--u)*1.2);opacity:0;width:100%;align-content:start}
+.scene.act .coachc{animation:up .8s var(--out) both;animation-delay:var(--t0)}
+.cill{width:100%;max-width:calc(var(--u)*44);justify-self:center;height:auto;overflow:visible}
+.cill .fig{fill:none;stroke:var(--aL);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.cill .fig circle{fill:var(--bg3)}
+.scene.act .cill .fl-l{animation:figl .8s var(--out) forwards;animation-delay:calc(var(--t0) + .2s)}
+.scene.act .cill .fl-r{animation:figr .8s var(--out) forwards;animation-delay:calc(var(--t0) + .35s)}
+@keyframes figl{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:none}}
+@keyframes figr{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+.cill .tbl{fill:rgba(255,255,255,.18)}
+.cill .tab{fill:var(--a);opacity:0}
+.scene.act .cill .tab{animation:fade .5s both;animation-delay:calc(var(--t0) + .7s)}
+.cill .ring{fill:none;stroke:var(--aL);stroke-width:2;opacity:0;transform-origin:170px 118px}
+.scene.act .cill .ring{animation:ringout 2.2s ease-out infinite;animation-delay:calc(var(--t0) + .9s)}
+@keyframes ringout{0%{opacity:.7;transform:scale(.3)}100%{opacity:0;transform:scale(1.7)}}
+.cill .lbl{font:600 12px var(--text);fill:var(--mute);text-anchor:middle;letter-spacing:.12em;text-transform:uppercase}
+.cs-row{display:grid;grid-template-columns:1fr 1.1fr;gap:calc(var(--u)*2.4);align-items:start}
+.cs-row>div{display:grid;gap:calc(var(--u)*.8)}
+.cs-meters{display:grid;gap:calc(var(--u)*.6)}
+.cs-sees{font:600 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aT)}
+.cs-week span{padding:calc(var(--u)*1.4) 0}
+.cst .note p{font-size:calc(var(--u)*2.4)}
+.slides{position:relative;width:100%;height:calc(var(--u)*42);margin-top:calc(var(--u)*.6)}
+.slide{position:absolute;inset:0;margin:0;display:grid;grid-template-rows:minmax(0,1fr) auto;justify-items:center;align-items:center;gap:calc(var(--u)*1.4);opacity:0}
+.scene.act .slide{animation:slin .7s var(--out) forwards,slout .55s ease-in forwards;animation-delay:var(--t0),var(--t1)}
+@keyframes slin{from{opacity:0;transform:translateX(12%) scale(.94)}to{opacity:1;transform:none}}
+@keyframes slout{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-10%) scale(.94)}}
+.dev{position:relative;overflow:hidden;background:#fff;border:calc(var(--u)*.55) solid #22527f;box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,14,26,.55);min-height:0}
+.dev.ph{height:100%;aspect-ratio:9/17.5;border-radius:calc(var(--u)*3)}
+.dev.lap{aspect-ratio:16/10;border-radius:calc(var(--u)*1.6);width:min(100%,calc(var(--u)*82))}
+.dev.card{aspect-ratio:1/1;border-radius:calc(var(--u)*1.4);width:min(100%,calc(var(--u)*22))}
+.dev img{width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block}
+.scene.act .slide .dev.ph img{animation:pan 9s linear forwards;animation-delay:calc(var(--t0) + .8s)}
+.slide figcaption{font:600 calc(var(--u)*2.3)/1.25 var(--text);color:#fff;text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:.5em 1.2em}
+.sdots{position:absolute;left:50%;bottom:calc(var(--u)*-2.6);transform:translateX(-50%);display:flex;gap:calc(var(--u)*.9)}
+.sdots i{width:calc(var(--u)*1.1);height:calc(var(--u)*1.1);border-radius:50%;background:rgba(255,255,255,.22)}
+.scene.act .sdots i{animation:dotfill .3s forwards;animation-delay:var(--t0)}
+@keyframes dotfill{to{background:var(--aL);transform:scale(1.35)}}
+.s20 .built{margin-top:calc(var(--u)*2.4)}.s20 .gal-s{margin-top:calc(var(--u)*-.6)}
+.wdev{width:100%}
+.live24{position:absolute;top:4%;right:3%;display:inline-flex;align-items:center;gap:.5em;font:700 calc(var(--u)*1.9)/1 var(--text);color:#fff;background:rgba(13,31,51,.86);border:1px solid rgba(0,207,234,.5);border-radius:99px;padding:.45em .9em;opacity:0;letter-spacing:.06em}
+.scene.act .live24{animation:up .5s both;animation-delay:var(--t0)}
+.live24 i{width:calc(var(--u)*.9);height:calc(var(--u)*.9);border-radius:50%;background:var(--aL);animation:blink 1.2s infinite}
+.wchips{display:flex;gap:calc(var(--u)*1);margin-top:calc(var(--u)*1.4);justify-content:center}
+.wchip{opacity:0;font:600 calc(var(--u)*2.1)/1 var(--text);color:var(--mute);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:.5em 1em}
+.scene.act .wchip{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.s-wall .phone.small{bottom:4%}
+.proc{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:calc(var(--u)*1.6);width:100%;margin-top:calc(var(--u)*2);padding-top:calc(var(--u)*5)}
+.prail{position:absolute;left:8%;right:8%;top:calc(var(--u)*2.2);height:calc(var(--u)*.4);background:rgba(255,255,255,.16);border-radius:99px;transform:scaleX(0);transform-origin:0 50%}
+.scene.act .prail{animation:grow 1.2s var(--out) forwards;animation-delay:var(--t0)}
+.prider{position:absolute;left:8%;top:calc(var(--u)*2.2);width:calc(var(--u)*1.8);height:calc(var(--u)*1.8);margin:calc(var(--u)*-.7) 0 0 calc(var(--u)*-.9);border-radius:50%;background:var(--aL);box-shadow:0 0 0 calc(var(--u)*.6) rgba(0,207,234,.3);opacity:0}
+.scene.act .prider{animation:ride var(--dur) linear forwards,fade .3s forwards;animation-delay:var(--t0),var(--t0)}
+@keyframes ride{to{left:92%}}
+.pstop{position:relative;display:grid;gap:calc(var(--u)*1);justify-items:center;opacity:0}
+.scene.act .pstop{animation:up .7s var(--out) both;animation-delay:var(--t0)}
+.pn{position:absolute;top:calc(var(--u)*-5 + var(--u)*2.2);left:50%;width:calc(var(--u)*1.6);height:calc(var(--u)*1.6);margin:calc(var(--u)*-.6) 0 0 calc(var(--u)*-.8);border-radius:50%;background:var(--bg);border:calc(var(--u)*.35) solid var(--aL)}
+.pcard{width:100%;min-height:calc(var(--u)*28);display:grid;align-content:center;justify-items:center;gap:calc(var(--u)*1);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*1.8);padding:calc(var(--u)*1.4)}
+.pcard .dev.ph{height:calc(var(--u)*19)}
+.pcard .dev.lap{width:100%}
+.pcard .dev.card{width:calc(var(--u)*14)}
+.plbl{font:700 calc(var(--u)*2.1)/1.2 var(--display);color:#fff;text-align:center;text-wrap:balance}
+.pline{font:500 calc(var(--u)*1.7)/1.3 var(--text);color:var(--mute);text-align:center}
+.pdays{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*.8)}
+.pdays b{opacity:0;font:800 calc(var(--u)*3.4)/1 var(--display);color:#fff;background:linear-gradient(135deg,var(--a),var(--aD));border-radius:calc(var(--u)*1);padding:.35em .2em;text-align:center;font-variant-numeric:tabular-nums}
+.scene.act .pdays b{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.prev{display:grid;gap:calc(var(--u)*.8)}
+.pchip{opacity:0;font:600 calc(var(--u)*2)/1.2 var(--text);color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(0,207,234,.45);border-radius:99px;padding:.6em 1em;text-align:center}
+.scene.act .pchip{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.pstars{display:flex;gap:calc(var(--u)*.4)}
+.pstars svg{width:calc(var(--u)*3);height:calc(var(--u)*3);fill:#efc24b;opacity:0;transform:scale(.4)}
+.pstars.big svg{width:calc(var(--u)*4.4);height:calc(var(--u)*4.4)}
+.scene.act .pstars svg{animation:pop .45s var(--pop) forwards;animation-delay:var(--t0)}
+.s25 .sample{position:static;margin-top:calc(var(--u)*1)}
+.s27{gap:calc(var(--u)*1)}
+.s27-h{display:grid;grid-template-columns:1.2fr .8fr;gap:calc(var(--u)*4);align-items:end}
+.s27-r{display:grid;gap:calc(var(--u)*1.4);justify-items:start}
+.ctl{width:100%;height:auto;overflow:visible;display:block}.ctl-l{width:min(100%,calc(var(--u)*134));justify-self:center}
+.ctl-v{display:none}
+.ctl .rail{fill:none;stroke:rgba(255,255,255,.22);stroke-width:4;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
+.ctl .rail.a{stroke:rgba(0,207,234,.55)}.ctl .rail.b{stroke:rgba(0,207,234,.55)}
+.scene.act .ctl .rail{animation:trdraw 1.6s var(--out) forwards;animation-delay:var(--t0)}
+.ctl .node{fill:var(--bg3);stroke:#fff;stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:center}
+.ctl .node.fork{fill:var(--a);stroke:var(--aL);stroke-width:4}
+.ctl .node.a,.ctl .node.b{fill:var(--a);stroke:#fff}
+.scene.act .ctl .node{animation:pop .5s var(--pop) forwards;animation-delay:var(--t0)}
+.ctl .lbl{opacity:0}
+.scene.act .ctl .lbl{animation:fade .5s forwards;animation-delay:var(--t0)}
+.ctl text{font-family:var(--text)}
+.ctl .nm{font-weight:700;font-size:15px;fill:#fff}
+.ctl .dt{font-weight:500;font-size:11.5px;fill:var(--mute)}
+.ctl .rd{font:800 20px var(--display);fill:var(--aL);opacity:0;letter-spacing:-.01em}
+.scene.act .ctl .rd{animation:fade .5s forwards;animation-delay:var(--t0)}
+.ctl .rider{fill:var(--aL);opacity:0;offset-distance:0%;offset-rotate:0deg;filter:drop-shadow(0 0 6px rgba(0,207,234,.8))}
+.scene.act .ctl .rider{animation:riderun var(--d) linear forwards;animation-delay:var(--t0)}
+@keyframes riderun{0%{opacity:1;offset-distance:0%}90%{opacity:1}100%{opacity:0;offset-distance:100%}}
+@media (orientation:portrait){
+  .cs-row{grid-template-columns:1fr 1fr}
+  .clk{width:calc(var(--u)*40);height:calc(var(--u)*40)}
+  .cill{max-width:calc(var(--u)*42)}
+  .coachc{gap:calc(var(--u)*1.2)}
+  .cst .chip{padding:calc(var(--u)*1.6) calc(var(--u)*2.2)}
+  .cst .note p{font-size:calc(var(--u)*2.7)}
+  .cs-week span{padding:calc(var(--u)*1.6) 0;font-size:calc(var(--u)*2.3)}
+  @keyframes clkaway{to{transform:translate(58%,-22%) scale(.34);opacity:.22;filter:grayscale(1)}}
+  .slides{height:calc(var(--u)*88)}
+  .dev.lap{width:100%}
+  .proc{grid-template-columns:1fr 1fr 1fr;gap:calc(var(--u)*2);padding-top:0}
+  .prail,.prider,.pn{display:none}
+  .pcard{min-height:calc(var(--u)*30);padding:calc(var(--u)*1.2)}
+  .pcard .dev.ph{height:calc(var(--u)*21)}
+  .pcard .dev.card{width:calc(var(--u)*17)}
+  .plbl{font-size:calc(var(--u)*2.5)}.pline{font-size:calc(var(--u)*2)}.pchip{font-size:calc(var(--u)*2.2);padding:.5em .7em}.pdays b{font-size:calc(var(--u)*3.8)}
+  .s27-h{grid-template-columns:1fr}
+  .ctl-l{display:none}.ctl-v{display:block}
+  .ctl .nm{font-size:17px}.ctl .dt{font-size:13px}.ctl .rd{font-size:22px}
+  .s-wall .phone.small{width:30%;right:0;bottom:16%}
+}
+
+/* ── 17 · our own fact find, by the numbers (29 October 2026). Compact: the header row, four columns, a foot row;
+      every figure counts up on its word, the bars grow, the ring draws, the roles light along the rail. ── */
+.ffn{gap:calc(var(--u)*2.2);align-content:start}
+.ffn-top{display:flex;justify-content:space-between;align-items:flex-end;gap:calc(var(--u)*3)}
+.ffn .h.m{font-size:calc(var(--u)*5.6);margin-top:calc(var(--u)*.6)}
+.asat{font:600 calc(var(--u)*1.7)/1.3 var(--text);letter-spacing:.1em;text-transform:uppercase;color:var(--aT);text-align:right;max-width:30ch;padding-bottom:calc(var(--u)*.6)}
+.ffn-grid{display:grid;grid-template-columns:.9fr 1fr 1.05fr 1.05fr;gap:calc(var(--u)*1.8);align-items:stretch}
+.ffn-kpis{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*1.2)}
+.kpi{background:linear-gradient(160deg,rgba(255,255,255,.1),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*1.4);padding:calc(var(--u)*1.6) calc(var(--u)*1.4);display:grid;align-content:center;gap:.25em}
+.kpi b{font:800 calc(var(--u)*4.6)/1 var(--display);color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kpi b .cnt{color:var(--aL)}
+.kpi span{font:600 calc(var(--u)*1.55)/1.2 var(--text);letter-spacing:.08em;text-transform:uppercase;color:var(--mute2)}
+.ffn-card{position:relative;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:calc(var(--u)*1.6);padding:calc(var(--u)*1.6) calc(var(--u)*1.8) calc(var(--u)*1.4);display:grid;grid-template-rows:auto 1fr;gap:calc(var(--u)*1)}
+.ffn-card small{font:600 calc(var(--u)*1.6)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aT)}
+.fbars{display:grid;grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*1.4);align-items:end;height:calc(var(--u)*21);padding-top:calc(var(--u)*4.6)}
+.fb{position:relative;display:grid;grid-template-rows:1fr auto;height:100%;align-items:end;gap:calc(var(--u)*.6);text-align:center}
+.fb i{display:block;height:var(--h);border-radius:calc(var(--u)*.8) calc(var(--u)*.8) 0 0;background:linear-gradient(180deg,var(--aL),var(--a) 60%,#0a3350);transform:scaleY(0);transform-origin:50% 100%;align-self:end;box-shadow:0 0 calc(var(--u)*3) rgba(0,207,234,.35)}
+.fb em{position:absolute;left:0;right:0;bottom:calc(var(--h) + var(--u)*3.2);font:800 calc(var(--u)*2.6)/1 var(--display);font-style:normal;color:#fff;opacity:0}
+.fb span{font:600 calc(var(--u)*1.6)/1 var(--text);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.scene.act .fb i{animation:grow .9s var(--out) both;animation-delay:var(--t0)}
+.scene.act .fb em{animation:up .5s var(--out) both;animation-delay:calc(var(--t0) + .6s)}
+.fring{position:relative;width:calc(var(--u)*17);aspect-ratio:1;justify-self:center}
+.fring svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.fring .bg{fill:none;stroke:rgba(255,255,255,.12);stroke-width:9}
+.fring .fg{fill:none;stroke:var(--aL);stroke-width:9;stroke-linecap:round;stroke-dasharray:var(--c);stroke-dashoffset:var(--c);filter:drop-shadow(0 0 calc(var(--u)*1) rgba(0,207,234,.6))}
+.scene.act .fring .fg{animation:fring 1.4s var(--out) both;animation-delay:var(--t0)}
+@keyframes fring{to{stroke-dashoffset:calc(var(--c) * (1 - var(--p) / 100))}}
+.fring-c{position:absolute;inset:0;display:grid;place-content:center;text-align:center;gap:.1em}
+.fring-c b{font:800 calc(var(--u)*4.4)/1 var(--display);color:#fff}
+.fring-c span{font:600 calc(var(--u)*1.4)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--mute2)}
+.fleg{list-style:none;display:grid;gap:calc(var(--u)*.7);margin-top:calc(var(--u)*.4)}
+.fleg li{display:flex;align-items:center;gap:.6em;font:500 calc(var(--u)*2)/1.2 var(--text);color:var(--mute)}
+.fleg li b{color:#fff;font-weight:800}
+.fleg i{width:calc(var(--u)*1.3);height:calc(var(--u)*1.3);border-radius:50%;background:var(--aL)}.fleg i.rt{background:rgba(255,255,255,.3)}
+.fleg .days{color:var(--aT)}.fleg .days .ic{width:calc(var(--u)*2.4);height:calc(var(--u)*2.4);color:var(--aL)}
+.foct{display:grid;grid-template-columns:auto 1fr auto 1fr;align-items:baseline;gap:0 .5em;margin:calc(var(--u)*.4) 0 calc(var(--u)*1)}
+.foct b{font:800 calc(var(--u)*5.2)/1 var(--display);color:#fff}.foct b .cnt{color:var(--aL)}.foct b.two{margin-left:.3em}
+.foct span{font:600 calc(var(--u)*1.5)/1.1 var(--text);letter-spacing:.1em;text-transform:uppercase;color:var(--mute2)}
+.fprods{display:grid;gap:calc(var(--u)*.7)}
+.fp{display:grid;grid-template-columns:calc(var(--u)*17) 1fr auto;align-items:center;gap:.7em;font:500 calc(var(--u)*1.8)/1.1 var(--text);color:var(--mute)}
+.fp i{display:block;height:calc(var(--u)*1.5);width:var(--w);border-radius:99px;background:linear-gradient(90deg,var(--aD),var(--aL));transform:scaleX(0);transform-origin:0 50%}
+.fp b{color:#fff;font-weight:800;font-variant-numeric:tabular-nums;opacity:0}
+.scene.act .fp i{animation:growx .8s var(--out) both;animation-delay:var(--t0)}
+.scene.act .fp b{animation:up .4s var(--out) both;animation-delay:calc(var(--t0) + .5s)}
+.ffn-foot{display:grid;grid-template-columns:1.25fr 1.3fr .7fr;gap:calc(var(--u)*2);align-items:center}
+.frail{position:relative;list-style:none;display:grid;grid-template-columns:repeat(4,1fr) auto;gap:calc(var(--u)*.6);align-items:center;padding-top:calc(var(--u)*1.2)}
+.frail::before{content:'';position:absolute;left:5%;right:22%;top:calc(var(--u)*2.95);height:2px;background:rgba(255,255,255,.18)}
+.frail::after{content:'';position:absolute;left:5%;top:calc(var(--u)*2.95 - var(--u)*.55);width:calc(var(--u)*1.3);height:calc(var(--u)*1.3);border-radius:50%;background:var(--aL);box-shadow:0 0 calc(var(--u)*2) var(--aL);opacity:0}
+.scene.act .frail::after{animation:frider 1s linear both;animation-delay:var(--t0);animation-duration:calc(var(--t1) - var(--t0))}
+@keyframes frider{from{opacity:1;left:5%}to{opacity:1;left:73%}}
+.frail li{display:grid;justify-items:center;gap:calc(var(--u)*.8);opacity:.45;transition:none}
+.frail li i{width:calc(var(--u)*2.4);height:calc(var(--u)*2.4);border-radius:50%;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.3);position:relative;z-index:1}
+.frail li b{font:700 calc(var(--u)*1.8)/1 var(--text);color:#fff;letter-spacing:.06em;text-transform:uppercase}
+.scene.act .frail li{animation:frlit .5s var(--pop) both;animation-delay:var(--t0)}
+@keyframes frlit{from{opacity:.45}to{opacity:1}}
+.scene.act .frail li i{animation:frdot .6s var(--pop) both;animation-delay:var(--t0)}
+@keyframes frdot{to{background:var(--aL);border-color:#fff;box-shadow:0 0 0 calc(var(--u)*.9) rgba(0,207,234,.25)}}
+.frail .one{opacity:0;align-self:center;padding-top:0}
+.frail .one b{font:800 calc(var(--u)*2.4)/1 var(--display);text-transform:none;letter-spacing:0;color:var(--aL);background:rgba(0,207,234,.12);border:1px solid rgba(0,207,234,.5);border-radius:99px;padding:.4em .8em}
+.scene.act .frail .one{animation:pop .6s var(--pop) both;animation-delay:var(--t0)}
+.fbadges{display:grid;gap:calc(var(--u)*1)}
+.fbadge{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:.2em .8em;padding:calc(var(--u)*1.1) calc(var(--u)*1.6);border-radius:calc(var(--u)*1.2);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}
+.fbadge b{font:800 calc(var(--u)*2.7)/1.05 var(--display);color:#fff;letter-spacing:-.01em}
+.fbadge span{font:500 calc(var(--u)*1.75)/1.2 var(--text);color:var(--aT);grid-column:1/-1}
+.fbadge.big{background:linear-gradient(135deg,var(--a),var(--aD));border-color:transparent}.fbadge.big span{color:#fff;opacity:.9}
+.fbadge.law{grid-template-columns:auto 1fr}.fbadge.law .ic{width:calc(var(--u)*3);height:calc(var(--u)*3);color:var(--aL)}.fbadge.law span{grid-column:2}
+.ffn-thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*.8);align-items:end}
+.ffn-th{height:calc(var(--u)*14);aspect-ratio:9/16;border-radius:calc(var(--u)*1.2);overflow:hidden;border:calc(var(--u)*.35) solid #22527f;background:#fff;opacity:0;justify-self:center;box-shadow:0 calc(var(--u)*2) calc(var(--u)*5) rgba(4,14,26,.5)}
+.ffn-th img{width:100%;height:100%;object-fit:cover;object-position:50% 0}
+.scene.act .ffn-th{animation:up .7s var(--out) both;animation-delay:var(--t0)}
+.ffn-thumbs small{grid-column:1/-1;text-align:center;font:600 calc(var(--u)*1.3)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--mute2)}
+@media (orientation:portrait){
+  .ffn{gap:calc(var(--u)*2.2)}
+  .ffn-top{flex-direction:column;align-items:flex-start;gap:calc(var(--u)*1)}
+  .ffn .eye{font-size:calc(var(--u)*2.1)}
+  .ffn .h.m{font-size:calc(var(--u)*6.8);margin-top:0}
+  .asat{text-align:left;font-size:calc(var(--u)*1.9);max-width:none;padding-bottom:0}
+  .ffn-grid{grid-template-columns:1fr 1fr;gap:calc(var(--u)*2.4)}
+  .ffn-kpis{grid-column:1/-1;grid-template-columns:repeat(4,1fr)}
+  .kpi b{font-size:calc(var(--u)*5.2)}.kpi span{font-size:calc(var(--u)*1.7)}
+  .ffn-card:nth-child(2){grid-column:1/-1}
+  .fbars{height:calc(var(--u)*15);padding-top:calc(var(--u)*4.4)}
+  .fring{width:calc(var(--u)*16)}
+  .fleg li{font-size:calc(var(--u)*2.1)}
+  .ffn-card{padding:calc(var(--u)*1.4) calc(var(--u)*1.6) calc(var(--u)*1.2)}
+  .foct b{font-size:calc(var(--u)*6)}.fp{font-size:calc(var(--u)*2.1);grid-template-columns:calc(var(--u)*18) 1fr auto}
+  .ffn-foot{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
+  .fbadges{grid-template-columns:1fr 1fr}
+  .fbadge{align-content:start}
+  .frail{grid-template-columns:repeat(4,1fr) auto}
+  .frail li b{font-size:calc(var(--u)*2.1)}
+  .ffn-thumbs{display:none}
+  .fbadge b{font-size:calc(var(--u)*2.9)}.fbadge span{font-size:calc(var(--u)*2)}
+  .frail{padding-top:calc(var(--u)*.6)}
+}
 </style>
 </head>
 <body>
@@ -975,6 +1271,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
       <path class="tick-u" d="M30 44L39.5 53.5L58 32.5" stroke="#0a3350" stroke-width="6.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       <path class="tick-o" d="M30 44L39.5 53.5L58 32.5" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     </symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3.2 8.6-7 10-3.8-1.4-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
     <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
     <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
@@ -993,95 +1290,103 @@ body.paused #bars i.run::after{animation-play-state:paused}
 <div id="film">
   <div class="aura a1"></div><div class="aura a2"></div>
   <div class="motes"><i style="--x:11%;--d:14s;--dl:0.0s"></i><i style="--x:48%;--d:21s;--dl:12.1s"></i><i style="--x:85%;--d:19s;--dl:10.2s"></i><i style="--x:25%;--d:17s;--dl:8.3s"></i><i style="--x:62%;--d:15s;--dl:6.4s"></i><i style="--x:2%;--d:22s;--dl:4.5s"></i><i style="--x:39%;--d:20s;--dl:2.6s"></i><i style="--x:76%;--d:18s;--dl:0.7s"></i><i style="--x:16%;--d:16s;--dl:12.8s"></i><i style="--x:53%;--d:14s;--dl:10.9s"></i><i style="--x:90%;--d:21s;--dl:9.0s"></i><i style="--x:30%;--d:19s;--dl:7.1s"></i><i style="--x:67%;--d:17s;--dl:5.2s"></i><i style="--x:7%;--d:15s;--dl:3.3s"></i><i style="--x:44%;--d:22s;--dl:1.4s"></i><i style="--x:81%;--d:20s;--dl:13.5s"></i><i style="--x:21%;--d:18s;--dl:11.6s"></i><i style="--x:58%;--d:16s;--dl:9.7s"></i></div>
-<section class="scene s-hook" data-d="4900" data-n="1" style="--kb:4900ms" >
+<section class="scene s-hook" data-d="6000" data-n="1" style="--kb:6000ms" data-ch="No ceiling, and the first year">
 
 <div class="full center">
   <span class="ghost" aria-hidden="true">?</span>
-  <span class="spot" style="--t0:2612ms"></span>
+  <span class="spot" style="--t0:2712ms"></span>
   <div class="mark top in" style="--t0:100ms"><svg viewBox="6 3 76 82" class="mk" aria-hidden="true"><use href="#shield"/></svg></div>
   <p class="eye in" style="--t0:300ms">A question</p>
-  <h1 class="h xl"><span aria-label="A career with no ceiling?"><span class="w"><i style="--i:0;--t0:400ms">A</i></span> <span class="w"><i style="--i:1;--t0:400ms">career</i></span> <span class="w"><i style="--i:2;--t0:400ms">with</i></span> <span class="w"><i style="--i:3;--t0:400ms">no</i></span> <span class="w"><i style="--i:4;--t0:400ms">ceiling?</i></span></span><br><em class="wine"><span aria-label="Afraid of the first year?"><span class="w"><i style="--i:0;--t0:2412ms">Afraid</i></span> <span class="w"><i style="--i:1;--t0:2412ms">of</i></span> <span class="w"><i style="--i:2;--t0:2412ms">the</i></span> <span class="w"><i style="--i:3;--t0:2412ms">first</i></span> <span class="w"><i style="--i:4;--t0:2412ms">year?</i></span></span></em></h1>
-  <div class="ceil-line" style="--t0:1625ms"></div>
+  <h1 class="h xl"><span aria-label="A career with no ceiling?"><span class="w"><i style="--i:0;--t0:400ms">A</i></span> <span class="w"><i style="--i:1;--t0:400ms">career</i></span> <span class="w"><i style="--i:2;--t0:400ms">with</i></span> <span class="w"><i style="--i:3;--t0:400ms">no</i></span> <span class="w"><i style="--i:4;--t0:400ms">ceiling?</i></span></span><br><em class="wine"><span aria-label="Afraid of the first year?"><span class="w"><i style="--i:0;--t0:2512ms">Afraid</i></span> <span class="w"><i style="--i:1;--t0:2512ms">of</i></span> <span class="w"><i style="--i:2;--t0:2512ms">the</i></span> <span class="w"><i style="--i:3;--t0:2512ms">first</i></span> <span class="w"><i style="--i:4;--t0:2512ms">year?</i></span></span></em></h1>
+  <div class="ceil-line" style="--t0:1588ms"></div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-match" data-d="14000" data-n="2" style="--kb:14000ms" >
+<section class="scene s-match" data-d="9900" data-n="2" style="--kb:9900ms" data-ch="It is a sales career">
 
 <div class="split">
   <div class="col">
-    <p class="eye in" style="--t0:500ms">New to this?</p>
-    <h2 class="h l"><span aria-label="Months with nothing coming in?"><span class="w"><i style="--i:0;--t0:1888ms">Months</i></span> <span class="w"><i style="--i:1;--t0:1888ms">with</i></span> <span class="w"><i style="--i:2;--t0:1888ms">nothing</i></span> <span class="w"><i style="--i:3;--t0:1888ms">coming</i></span> <span class="w"><i style="--i:4;--t0:1888ms">in?</i></span></span></h2>
-    <h2 class="h l wine2"><span aria-label="Not here."><span class="w"><i style="--i:0;--t0:3375ms">Not</i></span> <span class="w"><i style="--i:1;--t0:3375ms">here.</i></span></span></h2>
+    <p class="eye in" style="--t0:412ms">Straight with you</p>
+    <h2 class="h l"><span aria-label="This is a sales career."><span class="w"><i style="--i:0;--t0:512ms">This</i></span> <span class="w"><i style="--i:1;--t0:512ms">is</i></span> <span class="w"><i style="--i:2;--t0:512ms">a</i></span> <span class="w"><i style="--i:3;--t0:512ms">sales</i></span> <span class="w"><i style="--i:4;--t0:512ms">career.</i></span></span></h2>
+    <div class="miss">
+      <span class="in" style="--t0:3875ms">Handed a contract and told to call your friends</span>
+    </div>
+    <h2 class="h l wine2"><span aria-label="Not here."><span class="w"><i style="--i:0;--t0:4825ms">Not</i></span> <span class="w"><i style="--i:1;--t0:4825ms">here.</i></span></span></h2>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:5725ms">Leads from people who asked to be called</span>
-      <span class="ypill in" style="--t0:8937ms">Your day, set every morning</span>
-      <span class="ypill in" style="--t0:11338ms">Trained before you're contracted</span>
+      <span class="ypill in" style="--t0:5900ms">The leads come to you</span>
+      <span class="ypill in" style="--t0:7875ms">From people who asked to be called</span>
     </div>
   </div>
   <div class="col">
-    <div class="list in fl" style="--t0:5525ms">
+    <div class="list in fl" style="--t0:5700ms">
       <div class="bd-h"><b>Your board</b><span>this morning</span></div>
-      <div class="lead-in" style="--t0:7025ms"><svg class="ic"><use href="#i-bolt"/></svg><b>Retiring properly</b><span>asked to be called · 9:12</span></div><div class="lead-in" style="--t0:7405ms"><svg class="ic"><use href="#i-bolt"/></svg><b>Cover for the children</b><span>asked to be called · 9:40</span></div><div class="lead-in" style="--t0:7785ms"><svg class="ic"><use href="#i-bolt"/></svg><b>Starting a business</b><span>asked to be called · 10:05</span></div>
-      <div class="hh" style="--t0:8937ms"><svg class="ic"><use href="#i-grid"/></svg><b>Your day</b><span>set at 6:00 · four calls, two fact finds</span><em>today</em></div>
-      <div class="hh" style="--t0:11338ms"><svg class="ic"><use href="#i-spark"/></svg><b>Boot camp</b><span>training · induction · field work</span><em>first</em></div>
+      <div class="lead-in" style="--t0:7875ms"><svg class="ic"><use href="#i-bolt"/></svg><b>Retiring properly</b><span>asked to be called · 9:12</span></div><div class="lead-in" style="--t0:8215ms"><svg class="ic"><use href="#i-bolt"/></svg><b>Cover for the children</b><span>asked to be called · 9:40</span></div><div class="lead-in" style="--t0:8555ms"><svg class="ic"><use href="#i-bolt"/></svg><b>Starting a business</b><span>asked to be called · 10:05</span></div>
       <span class="sample">sample figures</span>
     </div>
   </div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-coach2" data-d="6700" data-n="3" style="--kb:6700ms" >
+<section class="scene s-coach2" data-d="6100" data-n="3" style="--kb:6100ms" data-ch="A coach, not a clock">
 
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Your manager</p>
-    <h2 class="h xl"><span aria-label="A coach,"><span class="w"><i style="--i:0;--t0:1063ms">A</i></span> <span class="w"><i style="--i:1;--t0:1063ms">coach,</i></span></span> <em class="wine"><span aria-label="not a clock."><span class="w"><i style="--i:0;--t0:2200ms">not</i></span> <span class="w"><i style="--i:1;--t0:2200ms">a</i></span> <span class="w"><i style="--i:2;--t0:2200ms">clock.</i></span></span></em></h2>
-    <p class="sub in" style="--t0:2850ms">The system does the admin. He does the sitting with you.</p>
-    <p class="sub in" style="--t0:3225ms"><em>Nobody here is left to figure it out alone.</em></p>
+    <h2 class="h xl"><span aria-label="A coach,"><span class="w"><i style="--i:0;--t0:3225ms">A</i></span> <span class="w"><i style="--i:1;--t0:3225ms">coach,</i></span></span> <em class="wine"><span aria-label="not a clock."><span class="w"><i style="--i:0;--t0:4362ms">not</i></span> <span class="w"><i style="--i:1;--t0:4362ms">a</i></span> <span class="w"><i style="--i:2;--t0:4362ms">clock.</i></span></span></em></h2>
+    <p class="sub in" style="--t0:5012ms">The system does the admin. He does the sitting with you.</p>
+    <p class="sub in" style="--t0:663ms"><em>Trained, and in the field, before you are contracted.</em></p>
   </div>
   <div class="col">
-    <div class="week in" style="--t0:1263ms"><span class="" style="--t0:0ms">Mon</span><span class="" style="--t0:0ms">Tue</span><span class="" style="--t0:0ms">Wed</span><span class="" style="--t0:0ms">Thu</span><span class="fri" style="--t0:2350ms">Fri</span></div>
-    <div class="note in" style="--t0:2650ms">
+    <div class="week in" style="--t0:3425ms"><span class="" style="--t0:0ms">Mon</span><span class="" style="--t0:0ms">Tue</span><span class="" style="--t0:0ms">Wed</span><span class="" style="--t0:0ms">Thu</span><span class="fri" style="--t0:4512ms">Fri</span></div>
+    <div class="note in" style="--t0:4812ms">
       <small>From your manager · in your morning e-mail</small>
-      <p><span class="ty" aria-label="Two fact finds this week, Priya. Let's book your Thursday calls together at eight."><span class="tw"><i style="--t:2950ms">T</i><i style="--t:2974ms">w</i><i style="--t:2998ms">o</i></span> <span class="tw"><i style="--t:3046ms">f</i><i style="--t:3070ms">a</i><i style="--t:3094ms">c</i><i style="--t:3118ms">t</i></span> <span class="tw"><i style="--t:3166ms">f</i><i style="--t:3190ms">i</i><i style="--t:3214ms">n</i><i style="--t:3238ms">d</i><i style="--t:3262ms">s</i></span> <span class="tw"><i style="--t:3310ms">t</i><i style="--t:3334ms">h</i><i style="--t:3358ms">i</i><i style="--t:3382ms">s</i></span> <span class="tw"><i style="--t:3430ms">w</i><i style="--t:3454ms">e</i><i style="--t:3478ms">e</i><i style="--t:3502ms">k</i><i style="--t:3526ms">,</i></span> <span class="tw"><i style="--t:3574ms">P</i><i style="--t:3598ms">r</i><i style="--t:3622ms">i</i><i style="--t:3646ms">y</i><i style="--t:3670ms">a</i><i style="--t:3694ms">.</i></span> <span class="tw"><i style="--t:3742ms">L</i><i style="--t:3766ms">e</i><i style="--t:3790ms">t</i><i style="--t:3814ms">'</i><i style="--t:3838ms">s</i></span> <span class="tw"><i style="--t:3886ms">b</i><i style="--t:3910ms">o</i><i style="--t:3934ms">o</i><i style="--t:3958ms">k</i></span> <span class="tw"><i style="--t:4006ms">y</i><i style="--t:4030ms">o</i><i style="--t:4054ms">u</i><i style="--t:4078ms">r</i></span> <span class="tw"><i style="--t:4126ms">T</i><i style="--t:4150ms">h</i><i style="--t:4174ms">u</i><i style="--t:4198ms">r</i><i style="--t:4222ms">s</i><i style="--t:4246ms">d</i><i style="--t:4270ms">a</i><i style="--t:4294ms">y</i></span> <span class="tw"><i style="--t:4342ms">c</i><i style="--t:4366ms">a</i><i style="--t:4390ms">l</i><i style="--t:4414ms">l</i><i style="--t:4438ms">s</i></span> <span class="tw"><i style="--t:4486ms">t</i><i style="--t:4510ms">o</i><i style="--t:4534ms">g</i><i style="--t:4558ms">e</i><i style="--t:4582ms">t</i><i style="--t:4606ms">h</i><i style="--t:4630ms">e</i><i style="--t:4654ms">r</i></span> <span class="tw"><i style="--t:4702ms">a</i><i style="--t:4726ms">t</i></span> <span class="tw"><i style="--t:4774ms">e</i><i style="--t:4798ms">i</i><i style="--t:4822ms">g</i><i style="--t:4846ms">h</i><i style="--t:4870ms">t</i><i style="--t:4894ms">.</i></span></span></p>
+      <p><span class="ty" aria-label="Two fact finds this week, Priya. Let's book your Thursday calls together at eight."><span class="tw"><i style="--t:5112ms">T</i><i style="--t:5136ms">w</i><i style="--t:5160ms">o</i></span> <span class="tw"><i style="--t:5208ms">f</i><i style="--t:5232ms">a</i><i style="--t:5256ms">c</i><i style="--t:5280ms">t</i></span> <span class="tw"><i style="--t:5328ms">f</i><i style="--t:5352ms">i</i><i style="--t:5376ms">n</i><i style="--t:5400ms">d</i><i style="--t:5424ms">s</i></span> <span class="tw"><i style="--t:5472ms">t</i><i style="--t:5496ms">h</i><i style="--t:5520ms">i</i><i style="--t:5544ms">s</i></span> <span class="tw"><i style="--t:5592ms">w</i><i style="--t:5616ms">e</i><i style="--t:5640ms">e</i><i style="--t:5664ms">k</i><i style="--t:5688ms">,</i></span> <span class="tw"><i style="--t:5736ms">P</i><i style="--t:5760ms">r</i><i style="--t:5784ms">i</i><i style="--t:5808ms">y</i><i style="--t:5832ms">a</i><i style="--t:5856ms">.</i></span> <span class="tw"><i style="--t:5904ms">L</i><i style="--t:5928ms">e</i><i style="--t:5952ms">t</i><i style="--t:5976ms">'</i><i style="--t:6000ms">s</i></span> <span class="tw"><i style="--t:6048ms">b</i><i style="--t:6072ms">o</i><i style="--t:6096ms">o</i><i style="--t:6120ms">k</i></span> <span class="tw"><i style="--t:6168ms">y</i><i style="--t:6192ms">o</i><i style="--t:6216ms">u</i><i style="--t:6240ms">r</i></span> <span class="tw"><i style="--t:6288ms">T</i><i style="--t:6312ms">h</i><i style="--t:6336ms">u</i><i style="--t:6360ms">r</i><i style="--t:6384ms">s</i><i style="--t:6408ms">d</i><i style="--t:6432ms">a</i><i style="--t:6456ms">y</i></span> <span class="tw"><i style="--t:6504ms">c</i><i style="--t:6528ms">a</i><i style="--t:6552ms">l</i><i style="--t:6576ms">l</i><i style="--t:6600ms">s</i></span> <span class="tw"><i style="--t:6648ms">t</i><i style="--t:6672ms">o</i><i style="--t:6696ms">g</i><i style="--t:6720ms">e</i><i style="--t:6744ms">t</i><i style="--t:6768ms">h</i><i style="--t:6792ms">e</i><i style="--t:6816ms">r</i></span> <span class="tw"><i style="--t:6864ms">a</i><i style="--t:6888ms">t</i></span> <span class="tw"><i style="--t:6936ms">e</i><i style="--t:6960ms">i</i><i style="--t:6984ms">g</i><i style="--t:7008ms">h</i><i style="--t:7032ms">t</i><i style="--t:7056ms">.</i></span></span></p>
     </div>
-    <div class="chips3"><div class="chip in fl" style="--t0:5275ms"><svg class="ic"><use href="#i-chat"/></svg><b>And in person. He sits with you on it.</b></div></div>
+    <div class="chips3"><div class="chip in fl" style="--t0:1513ms"><svg class="ic"><use href="#i-chat"/></svg><b>The Branch Manager sits with you on it.</b></div></div>
   </div>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-seats" data-d="8100" data-n="4" style="--kb:8100ms" >
+<section class="scene s-seats" data-d="7900" data-n="4" style="--kb:7900ms" data-ch="Seven places, and who is left at four">
 
 <div class="full center">
   <p class="eye in" style="--t0:200ms">FY27 · the first class</p>
   <h2 class="h xl"><span class="cnt" data-to="7" data-at="500" style="--at:500ms">7</span> <span aria-label="places."><span class="w"><i style="--i:0;--t0:500ms">places.</i></span></span></h2>
   <div class="seatrow"><i style="--t0:700ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:820ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:940ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:1060ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:1180ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:1300ms"><svg class="ic"><use href="#i-users"/></svg></i><i style="--t0:1420ms"><svg class="ic"><use href="#i-users"/></svg></i></div>
-  <p class="sub in" style="--t0:3425ms">Every one gets <em>the full build</em>.</p>
-  <div class="figs row">
-    <div class="fig in" style="--t0:5187ms"><b class="cnt" data-to="32" data-at="5187" style="--at:5187ms">32</b><span>years in Trinidad</span></div>
-    <div class="fig in" style="--t0:2425ms"><b class="cnt" data-to="7" data-at="2425" style="--at:2425ms">7</b><span>places · one class</span></div>
+  <div class="adbars">
+    <div class="adbar in" style="--t0:1938ms">
+      <span class="adlab"><b class="cnt" data-to="22" data-at="2138" style="--at:2138ms">22</b> of 100</span>
+      <span class="adtrack"><i class="ind" style="--w:22%;--t0:2138ms"></i></span>
+      <span class="adleg">still contracted at <b>three</b> years &middot; across the industry</span>
+    </div>
+    <div class="adbar in" style="--t0:4950ms">
+      <span class="adlab"><b class="cnt" data-to="31" data-at="5150" style="--at:5150ms">31</b> of 100</span>
+      <span class="adtrack"><i class="us" style="--w:31%;--t0:5150ms"></i></span>
+      <span class="adleg">still here at <b>four</b> years &middot; in this branch</span>
+    </div>
   </div>
+  <p class="adsrc in" style="--t0:5850ms">Industry figure: LIMRA. Ours is measured a year further out.</p>
 </div>
 <div class="streak"></div>
 </section>
-<section class="scene s-cta" data-d="7400" data-n="5" style="--kb:7400ms" >
+<section class="scene s-cta" data-d="8200" data-n="5" style="--kb:8200ms" data-ch="Book the conversation">
 
 <div class="split cta">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Start here</p>
     <div class="figs">
       <div class="fig in" style="--t0:500ms"><b><em class="cnt" data-to="1" data-at="500" style="--at:500ms">1</em></b><span>confidential conversation</span></div>
-      <div class="fig in" style="--t0:2500ms"><b><em class="cnt" data-to="20" data-at="2500" style="--at:2500ms">20</em> min</b><span>this week</span></div>
+      <div class="fig in" style="--t0:1775ms"><b><em class="cnt" data-to="20" data-at="1775" style="--at:1775ms">20</em> min</b><span>this week</span></div>
     </div>
-    <h2 class="h url"><span aria-label="agentmgt.com"><span class="w"><i style="--i:0;--t0:4000ms">agentmgt.com</i></span></span></h2>
+    <h2 class="h url"><span aria-label="rickyrampersadbranch.com"><span class="w"><i style="--i:0;--t0:3225ms">rickyrampersadbranch.com</i></span></span><br><em class="wine"><span aria-label="/careers"><span class="w"><i style="--i:0;--t0:3665ms">/careers</i></span></span></em></h2>
     <div class="btns">
-      <span class="btn b1 in" style="--t0:4700ms">Book a confidential conversation →</span>
+      <span class="btn b1 in" style="--t0:3925ms">Book a confidential conversation →</span>
     </div>
-    <p class="foot in" style="--t0:3425ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas</p>
+    <p class="foot in" style="--t0:2650ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas</p>
   </div>
   <div class="col">
     <div class="mark top in" style="--t0:200ms"><svg viewBox="6 3 76 82" class="mk" aria-hidden="true"><use href="#shield"/></svg></div>
-    <div class="qr in" style="--t0:4200ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="M2,2H3V3H2zM3,2H4V3H3zM4,2H5V3H4zM5,2H6V3H5zM6,2H7V3H6zM7,2H8V3H7zM8,2H9V3H8zM10,2H11V3H10zM11,2H12V3H11zM13,2H14V3H13zM14,2H15V3H14zM16,2H17V3H16zM18,2H19V3H18zM19,2H20V3H19zM20,2H21V3H20zM21,2H22V3H21zM23,2H24V3H23zM25,2H26V3H25zM26,2H27V3H26zM27,2H28V3H27zM30,2H31V3H30zM32,2H33V3H32zM33,2H34V3H33zM34,2H35V3H34zM35,2H36V3H35zM36,2H37V3H36zM37,2H38V3H37zM38,2H39V3H38zM2,3H3V4H2zM8,3H9V4H8zM10,3H11V4H10zM12,3H13V4H12zM17,3H18V4H17zM18,3H19V4H18zM20,3H21V4H20zM22,3H23V4H22zM24,3H25V4H24zM25,3H26V4H25zM26,3H27V4H26zM27,3H28V4H27zM30,3H31V4H30zM32,3H33V4H32zM38,3H39V4H38zM2,4H3V5H2zM4,4H5V5H4zM5,4H6V5H5zM6,4H7V5H6zM8,4H9V5H8zM12,4H13V5H12zM14,4H15V5H14zM16,4H17V5H16zM17,4H18V5H17zM22,4H23V5H22zM27,4H28V5H27zM30,4H31V5H30zM32,4H33V5H32zM34,4H35V5H34zM35,4H36V5H35zM36,4H37V5H36zM38,4H39V5H38zM2,5H3V6H2zM4,5H5V6H4zM5,5H6V6H5zM6,5H7V6H6zM8,5H9V6H8zM10,5H11V6H10zM11,5H12V6H11zM12,5H13V6H12zM14,5H15V6H14zM16,5H17V6H16zM17,5H18V6H17zM18,5H19V6H18zM19,5H20V6H19zM20,5H21V6H20zM21,5H22V6H21zM24,5H25V6H24zM26,5H27V6H26zM27,5H28V6H27zM28,5H29V6H28zM32,5H33V6H32zM34,5H35V6H34zM35,5H36V6H35zM36,5H37V6H36zM38,5H39V6H38zM2,6H3V7H2zM4,6H5V7H4zM5,6H6V7H5zM6,6H7V7H6zM8,6H9V7H8zM13,6H14V7H13zM14,6H15V7H14zM15,6H16V7H15zM16,6H17V7H16zM18,6H19V7H18zM21,6H22V7H21zM23,6H24V7H23zM26,6H27V7H26zM27,6H28V7H27zM28,6H29V7H28zM29,6H30V7H29zM30,6H31V7H30zM32,6H33V7H32zM34,6H35V7H34zM35,6H36V7H35zM36,6H37V7H36zM38,6H39V7H38zM2,7H3V8H2zM8,7H9V8H8zM11,7H12V8H11zM12,7H13V8H12zM13,7H14V8H13zM16,7H17V8H16zM19,7H20V8H19zM20,7H21V8H20zM21,7H22V8H21zM22,7H23V8H22zM23,7H24V8H23zM28,7H29V8H28zM32,7H33V8H32zM38,7H39V8H38zM2,8H3V9H2zM3,8H4V9H3zM4,8H5V9H4zM5,8H6V9H5zM6,8H7V9H6zM7,8H8V9H7zM8,8H9V9H8zM10,8H11V9H10zM12,8H13V9H12zM14,8H15V9H14zM16,8H17V9H16zM18,8H19V9H18zM20,8H21V9H20zM22,8H23V9H22zM24,8H25V9H24zM26,8H27V9H26zM28,8H29V9H28zM30,8H31V9H30zM32,8H33V9H32zM33,8H34V9H33zM34,8H35V9H34zM35,8H36V9H35zM36,8H37V9H36zM37,8H38V9H37zM38,8H39V9H38zM10,9H11V10H10zM11,9H12V10H11zM14,9H15V10H14zM15,9H16V10H15zM16,9H17V10H16zM19,9H20V10H19zM20,9H21V10H20zM22,9H23V10H22zM24,9H25V10H24zM25,9H26V10H25zM28,9H29V10H28zM2,10H3V11H2zM4,10H5V11H4zM5,10H6V11H5zM7,10H8V11H7zM8,10H9V11H8zM9,10H10V11H9zM13,10H14V11H13zM17,10H18V11H17zM18,10H19V11H18zM19,10H20V11H19zM21,10H22V11H21zM23,10H24V11H23zM25,10H26V11H25zM26,10H27V11H26zM28,10H29V11H28zM30,10H31V11H30zM32,10H33V11H32zM35,10H36V11H35zM37,10H38V11H37zM38,10H39V11H38zM3,11H4V12H3zM5,11H6V12H5zM6,11H7V12H6zM7,11H8V12H7zM9,11H10V12H9zM10,11H11V12H10zM11,11H12V12H11zM14,11H15V12H14zM15,11H16V12H15zM17,11H18V12H17zM18,11H19V12H18zM19,11H20V12H19zM21,11H22V12H21zM22,11H23V12H22zM23,11H24V12H23zM25,11H26V12H25zM26,11H27V12H26zM27,11H28V12H27zM30,11H31V12H30zM33,11H34V12H33zM37,11H38V12H37zM3,12H4V13H3zM4,12H5V13H4zM6,12H7V13H6zM7,12H8V13H7zM8,12H9V13H8zM10,12H11V13H10zM11,12H12V13H11zM12,12H13V13H12zM13,12H14V13H13zM17,12H18V13H17zM20,12H21V13H20zM23,12H24V13H23zM25,12H26V13H25zM26,12H27V13H26zM33,12H34V13H33zM34,12H35V13H34zM4,13H5V14H4zM5,13H6V14H5zM6,13H7V14H6zM9,13H10V14H9zM13,13H14V14H13zM17,13H18V14H17zM22,13H23V14H22zM27,13H28V14H27zM31,13H32V14H31zM32,13H33V14H32zM36,13H37V14H36zM3,14H4V15H3zM7,14H8V15H7zM8,14H9V15H8zM10,14H11V15H10zM14,14H15V15H14zM19,14H20V15H19zM21,14H22V15H21zM24,14H25V15H24zM25,14H26V15H25zM26,14H27V15H26zM27,14H28V15H27zM28,14H29V15H28zM29,14H30V15H29zM31,14H32V15H31zM32,14H33V15H32zM34,14H35V15H34zM35,14H36V15H35zM36,14H37V15H36zM37,14H38V15H37zM38,14H39V15H38zM6,15H7V16H6zM7,15H8V16H7zM11,15H12V16H11zM13,15H14V16H13zM15,15H16V16H15zM17,15H18V16H17zM18,15H19V16H18zM19,15H20V16H19zM20,15H21V16H20zM21,15H22V16H21zM23,15H24V16H23zM26,15H27V16H26zM28,15H29V16H28zM29,15H30V16H29zM30,15H31V16H30zM32,15H33V16H32zM33,15H34V16H33zM34,15H35V16H34zM35,15H36V16H35zM38,15H39V16H38zM3,16H4V17H3zM4,16H5V17H4zM5,16H6V17H5zM6,16H7V17H6zM8,16H9V17H8zM14,16H15V17H14zM16,16H17V17H16zM18,16H19V17H18zM19,16H20V17H19zM21,16H22V17H21zM22,16H23V17H22zM28,16H29V17H28zM31,16H32V17H31zM32,16H33V17H32zM34,16H35V17H34zM36,16H37V17H36zM37,16H38V17H37zM4,17H5V18H4zM6,17H7V18H6zM9,17H10V18H9zM10,17H11V18H10zM12,17H13V18H12zM13,17H14V18H13zM17,17H18V18H17zM18,17H19V18H18zM20,17H21V18H20zM22,17H23V18H22zM23,17H24V18H23zM28,17H29V18H28zM29,17H30V18H29zM33,17H34V18H33zM34,17H35V18H34zM37,17H38V18H37zM4,18H5V19H4zM5,18H6V19H5zM7,18H8V19H7zM8,18H9V19H8zM9,18H10V19H9zM12,18H13V19H12zM13,18H14V19H13zM15,18H16V19H15zM16,18H17V19H16zM22,18H23V19H22zM23,18H24V19H23zM24,18H25V19H24zM25,18H26V19H25zM26,18H27V19H26zM27,18H28V19H27zM28,18H29V19H28zM29,18H30V19H29zM30,18H31V19H30zM31,18H32V19H31zM35,18H36V19H35zM36,18H37V19H36zM37,18H38V19H37zM2,19H3V20H2zM3,19H4V20H3zM4,19H5V20H4zM5,19H6V20H5zM10,19H11V20H10zM11,19H12V20H11zM12,19H13V20H12zM13,19H14V20H13zM18,19H19V20H18zM20,19H21V20H20zM22,19H23V20H22zM24,19H25V20H24zM25,19H26V20H25zM29,19H30V20H29zM32,19H33V20H32zM35,19H36V20H35zM37,19H38V20H37zM38,19H39V20H38zM2,20H3V21H2zM8,20H9V21H8zM9,20H10V21H9zM10,20H11V21H10zM12,20H13V21H12zM13,20H14V21H13zM14,20H15V21H14zM15,20H16V21H15zM17,20H18V21H17zM18,20H19V21H18zM22,20H23V21H22zM23,20H24V21H23zM26,20H27V21H26zM29,20H30V21H29zM30,20H31V21H30zM31,20H32V21H31zM32,20H33V21H32zM33,20H34V21H33zM34,20H35V21H34zM35,20H36V21H35zM36,20H37V21H36zM37,20H38V21H37zM38,20H39V21H38zM2,21H3V22H2zM5,21H6V22H5zM9,21H10V22H9zM10,21H11V22H10zM12,21H13V22H12zM15,21H16V22H15zM16,21H17V22H16zM18,21H19V22H18zM19,21H20V22H19zM22,21H23V22H22zM24,21H25V22H24zM29,21H30V22H29zM33,21H34V22H33zM35,21H36V22H35zM37,21H38V22H37zM3,22H4V23H3zM5,22H6V23H5zM6,22H7V23H6zM7,22H8V23H7zM8,22H9V23H8zM9,22H10V23H9zM12,22H13V23H12zM13,22H14V23H13zM14,22H15V23H14zM16,22H17V23H16zM19,22H20V23H19zM20,22H21V23H20zM23,22H24V23H23zM26,22H27V23H26zM28,22H29V23H28zM30,22H31V23H30zM31,22H32V23H31zM33,22H34V23H33zM34,22H35V23H34zM38,22H39V23H38zM2,23H3V24H2zM4,23H5V24H4zM7,23H8V24H7zM9,23H10V24H9zM18,23H19V24H18zM19,23H20V24H19zM20,23H21V24H20zM21,23H22V24H21zM22,23H23V24H22zM24,23H25V24H24zM25,23H26V24H25zM27,23H28V24H27zM30,23H31V24H30zM35,23H36V24H35zM37,23H38V24H37zM2,24H3V25H2zM4,24H5V25H4zM6,24H7V25H6zM7,24H8V25H7zM8,24H9V25H8zM10,24H11V25H10zM11,24H12V25H11zM12,24H13V25H12zM15,24H16V25H15zM16,24H17V25H16zM19,24H20V25H19zM22,24H23V25H22zM23,24H24V25H23zM24,24H25V25H24zM25,24H26V25H25zM27,24H28V25H27zM32,24H33V25H32zM33,24H34V25H33zM2,25H3V26H2zM4,25H5V26H4zM9,25H10V26H9zM10,25H11V26H10zM11,25H12V26H11zM12,25H13V26H12zM17,25H18V26H17zM25,25H26V26H25zM26,25H27V26H26zM27,25H28V26H27zM28,25H29V26H28zM31,25H32V26H31zM32,25H33V26H32zM34,25H35V26H34zM35,25H36V26H35zM36,25H37V26H36zM37,25H38V26H37zM5,26H6V27H5zM7,26H8V27H7zM8,26H9V27H8zM15,26H16V27H15zM16,26H17V27H16zM18,26H19V27H18zM19,26H20V27H19zM20,26H21V27H20zM24,26H25V27H24zM27,26H28V27H27zM29,26H30V27H29zM30,26H31V27H30zM31,26H32V27H31zM32,26H33V27H32zM34,26H35V27H34zM36,26H37V27H36zM37,26H38V27H37zM38,26H39V27H38zM4,27H5V28H4zM6,27H7V28H6zM7,27H8V28H7zM11,27H12V28H11zM13,27H14V28H13zM16,27H17V28H16zM17,27H18V28H17zM19,27H20V28H19zM20,27H21V28H20zM21,27H22V28H21zM29,27H30V28H29zM30,27H31V28H30zM32,27H33V28H32zM34,27H35V28H34zM37,27H38V28H37zM38,27H39V28H38zM3,28H4V29H3zM8,28H9V29H8zM14,28H15V29H14zM21,28H22V29H21zM23,28H24V29H23zM24,28H25V29H24zM26,28H27V29H26zM28,28H29V29H28zM35,28H36V29H35zM37,28H38V29H37zM2,29H3V30H2zM4,29H5V30H4zM5,29H6V30H5zM6,29H7V30H6zM7,29H8V30H7zM9,29H10V30H9zM12,29H13V30H12zM13,29H14V30H13zM14,29H15V30H14zM15,29H16V30H15zM18,29H19V30H18zM22,29H23V30H22zM23,29H24V30H23zM30,29H31V30H30zM31,29H32V30H31zM32,29H33V30H32zM33,29H34V30H33zM34,29H35V30H34zM37,29H38V30H37zM4,30H5V31H4zM8,30H9V31H8zM9,30H10V31H9zM11,30H12V31H11zM12,30H13V31H12zM14,30H15V31H14zM20,30H21V31H20zM22,30H23V31H22zM23,30H24V31H23zM24,30H25V31H24zM25,30H26V31H25zM27,30H28V31H27zM29,30H30V31H29zM30,30H31V31H30zM31,30H32V31H31zM32,30H33V31H32zM33,30H34V31H33zM34,30H35V31H34zM36,30H37V31H36zM37,30H38V31H37zM10,31H11V32H10zM11,31H12V32H11zM14,31H15V32H14zM15,31H16V32H15zM16,31H17V32H16zM17,31H18V32H17zM22,31H23V32H22zM24,31H25V32H24zM25,31H26V32H25zM26,31H27V32H26zM27,31H28V32H27zM30,31H31V32H30zM34,31H35V32H34zM36,31H37V32H36zM38,31H39V32H38zM2,32H3V33H2zM3,32H4V33H3zM4,32H5V33H4zM5,32H6V33H5zM6,32H7V33H6zM7,32H8V33H7zM8,32H9V33H8zM10,32H11V33H10zM11,32H12V33H11zM12,32H13V33H12zM14,32H15V33H14zM16,32H17V33H16zM17,32H18V33H17zM18,32H19V33H18zM19,32H20V33H19zM27,32H28V33H27zM30,32H31V33H30zM32,32H33V33H32zM34,32H35V33H34zM36,32H37V33H36zM37,32H38V33H37zM38,32H39V33H38zM2,33H3V34H2zM8,33H9V34H8zM10,33H11V34H10zM11,33H12V34H11zM13,33H14V34H13zM14,33H15V34H14zM16,33H17V34H16zM18,33H19V34H18zM19,33H20V34H19zM20,33H21V34H20zM21,33H22V34H21zM22,33H23V34H22zM24,33H25V34H24zM26,33H27V34H26zM28,33H29V34H28zM29,33H30V34H29zM30,33H31V34H30zM34,33H35V34H34zM37,33H38V34H37zM38,33H39V34H38zM2,34H3V35H2zM4,34H5V35H4zM5,34H6V35H5zM6,34H7V35H6zM8,34H9V35H8zM11,34H12V35H11zM12,34H13V35H12zM14,34H15V35H14zM16,34H17V35H16zM19,34H20V35H19zM21,34H22V35H21zM22,34H23V35H22zM23,34H24V35H23zM25,34H26V35H25zM26,34H27V35H26zM30,34H31V35H30zM31,34H32V35H31zM32,34H33V35H32zM33,34H34V35H33zM34,34H35V35H34zM35,34H36V35H35zM37,34H38V35H37zM38,34H39V35H38zM2,35H3V36H2zM4,35H5V36H4zM5,35H6V36H5zM6,35H7V36H6zM8,35H9V36H8zM10,35H11V36H10zM11,35H12V36H11zM12,35H13V36H12zM14,35H15V36H14zM15,35H16V36H15zM19,35H20V36H19zM21,35H22V36H21zM22,35H23V36H22zM25,35H26V36H25zM26,35H27V36H26zM28,35H29V36H28zM29,35H30V36H29zM30,35H31V36H30zM31,35H32V36H31zM32,35H33V36H32zM34,35H35V36H34zM36,35H37V36H36zM37,35H38V36H37zM38,35H39V36H38zM2,36H3V37H2zM4,36H5V37H4zM5,36H6V37H5zM6,36H7V37H6zM8,36H9V37H8zM10,36H11V37H10zM11,36H12V37H11zM13,36H14V37H13zM14,36H15V37H14zM19,36H20V37H19zM20,36H21V37H20zM25,36H26V37H25zM26,36H27V37H26zM32,36H33V37H32zM34,36H35V37H34zM35,36H36V37H35zM36,36H37V37H36zM2,37H3V38H2zM8,37H9V38H8zM11,37H12V38H11zM14,37H15V38H14zM15,37H16V38H15zM16,37H17V38H16zM17,37H18V38H17zM18,37H19V38H18zM21,37H22V38H21zM27,37H28V38H27zM28,37H29V38H28zM33,37H34V38H33zM34,37H35V38H34zM35,37H36V38H35zM36,37H37V38H36zM2,38H3V39H2zM3,38H4V39H3zM4,38H5V39H4zM5,38H6V39H5zM6,38H7V39H6zM7,38H8V39H7zM8,38H9V39H8zM10,38H11V39H10zM12,38H13V39H12zM16,38H17V39H16zM17,38H18V39H17zM19,38H20V39H19zM24,38H25V39H24zM26,38H27V39H26zM27,38H28V39H27zM28,38H29V39H28zM32,38H33V39H32zM34,38H35V39H34zM35,38H36V39H35zM36,38H37V39H36zM37,38H38V39H37zM38,38H39V39H38z"/></svg><i class="scanl"></i><span>Scan to book</span></div>
+    <div class="qr in" style="--t0:3425ms"><svg viewBox="0 0 29 29" aria-hidden="true"><path d="M0 0h1v1h-1zM1 0h1v1h-1zM2 0h1v1h-1zM3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM6 0h1v1h-1zM8 0h1v1h-1zM9 0h1v1h-1zM11 0h1v1h-1zM12 0h1v1h-1zM13 0h1v1h-1zM14 0h1v1h-1zM17 0h1v1h-1zM18 0h1v1h-1zM22 0h1v1h-1zM23 0h1v1h-1zM24 0h1v1h-1zM25 0h1v1h-1zM26 0h1v1h-1zM27 0h1v1h-1zM28 0h1v1h-1zM0 1h1v1h-1zM6 1h1v1h-1zM8 1h1v1h-1zM9 1h1v1h-1zM12 1h1v1h-1zM13 1h1v1h-1zM17 1h1v1h-1zM18 1h1v1h-1zM19 1h1v1h-1zM20 1h1v1h-1zM22 1h1v1h-1zM28 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM8 2h1v1h-1zM9 2h1v1h-1zM10 2h1v1h-1zM11 2h1v1h-1zM13 2h1v1h-1zM14 2h1v1h-1zM16 2h1v1h-1zM18 2h1v1h-1zM19 2h1v1h-1zM20 2h1v1h-1zM22 2h1v1h-1zM24 2h1v1h-1zM25 2h1v1h-1zM26 2h1v1h-1zM28 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM6 3h1v1h-1zM9 3h1v1h-1zM10 3h1v1h-1zM13 3h1v1h-1zM17 3h1v1h-1zM20 3h1v1h-1zM22 3h1v1h-1zM24 3h1v1h-1zM25 3h1v1h-1zM26 3h1v1h-1zM28 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM6 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM10 4h1v1h-1zM12 4h1v1h-1zM14 4h1v1h-1zM16 4h1v1h-1zM17 4h1v1h-1zM19 4h1v1h-1zM22 4h1v1h-1zM24 4h1v1h-1zM25 4h1v1h-1zM26 4h1v1h-1zM28 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM11 5h1v1h-1zM14 5h1v1h-1zM18 5h1v1h-1zM20 5h1v1h-1zM22 5h1v1h-1zM28 5h1v1h-1zM0 6h1v1h-1zM1 6h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h1v1h-1zM23 6h1v1h-1zM24 6h1v1h-1zM25 6h1v1h-1zM26 6h1v1h-1zM27 6h1v1h-1zM28 6h1v1h-1zM9 7h1v1h-1zM10 7h1v1h-1zM11 7h1v1h-1zM13 7h1v1h-1zM18 7h1v1h-1zM19 7h1v1h-1zM20 7h1v1h-1zM0 8h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM5 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM11 8h1v1h-1zM14 8h1v1h-1zM15 8h1v1h-1zM16 8h1v1h-1zM17 8h1v1h-1zM19 8h1v1h-1zM21 8h1v1h-1zM24 8h1v1h-1zM26 8h1v1h-1zM27 8h1v1h-1zM28 8h1v1h-1zM0 9h1v1h-1zM2 9h1v1h-1zM8 9h1v1h-1zM11 9h1v1h-1zM15 9h1v1h-1zM18 9h1v1h-1zM19 9h1v1h-1zM21 9h1v1h-1zM23 9h1v1h-1zM24 9h1v1h-1zM26 9h1v1h-1zM27 9h1v1h-1zM0 10h1v1h-1zM3 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM11 10h1v1h-1zM13 10h1v1h-1zM14 10h1v1h-1zM15 10h1v1h-1zM16 10h1v1h-1zM17 10h1v1h-1zM18 10h1v1h-1zM21 10h1v1h-1zM22 10h1v1h-1zM26 10h1v1h-1zM1 11h1v1h-1zM3 11h1v1h-1zM4 11h1v1h-1zM7 11h1v1h-1zM9 11h1v1h-1zM10 11h1v1h-1zM12 11h1v1h-1zM15 11h1v1h-1zM16 11h1v1h-1zM17 11h1v1h-1zM19 11h1v1h-1zM21 11h1v1h-1zM22 11h1v1h-1zM23 11h1v1h-1zM25 11h1v1h-1zM28 11h1v1h-1zM1 12h1v1h-1zM5 12h1v1h-1zM6 12h1v1h-1zM7 12h1v1h-1zM8 12h1v1h-1zM9 12h1v1h-1zM12 12h1v1h-1zM15 12h1v1h-1zM16 12h1v1h-1zM19 12h1v1h-1zM22 12h1v1h-1zM23 12h1v1h-1zM28 12h1v1h-1zM0 13h1v1h-1zM5 13h1v1h-1zM8 13h1v1h-1zM9 13h1v1h-1zM10 13h1v1h-1zM13 13h1v1h-1zM15 13h1v1h-1zM16 13h1v1h-1zM17 13h1v1h-1zM18 13h1v1h-1zM21 13h1v1h-1zM22 13h1v1h-1zM23 13h1v1h-1zM24 13h1v1h-1zM25 13h1v1h-1zM26 13h1v1h-1zM27 13h1v1h-1zM28 13h1v1h-1zM1 14h1v1h-1zM2 14h1v1h-1zM3 14h1v1h-1zM5 14h1v1h-1zM6 14h1v1h-1zM7 14h1v1h-1zM8 14h1v1h-1zM9 14h1v1h-1zM11 14h1v1h-1zM12 14h1v1h-1zM15 14h1v1h-1zM17 14h1v1h-1zM19 14h1v1h-1zM21 14h1v1h-1zM22 14h1v1h-1zM23 14h1v1h-1zM26 14h1v1h-1zM28 14h1v1h-1zM1 15h1v1h-1zM2 15h1v1h-1zM3 15h1v1h-1zM7 15h1v1h-1zM8 15h1v1h-1zM11 15h1v1h-1zM15 15h1v1h-1zM18 15h1v1h-1zM19 15h1v1h-1zM20 15h1v1h-1zM24 15h1v1h-1zM26 15h1v1h-1zM28 15h1v1h-1zM2 16h1v1h-1zM3 16h1v1h-1zM6 16h1v1h-1zM7 16h1v1h-1zM13 16h1v1h-1zM14 16h1v1h-1zM23 16h1v1h-1zM25 16h1v1h-1zM0 17h1v1h-1zM2 17h1v1h-1zM5 17h1v1h-1zM7 17h1v1h-1zM9 17h1v1h-1zM10 17h1v1h-1zM11 17h1v1h-1zM12 17h1v1h-1zM13 17h1v1h-1zM15 17h1v1h-1zM16 17h1v1h-1zM17 17h1v1h-1zM18 17h1v1h-1zM19 17h1v1h-1zM20 17h1v1h-1zM24 17h1v1h-1zM26 17h1v1h-1zM27 17h1v1h-1zM0 18h1v1h-1zM1 18h1v1h-1zM3 18h1v1h-1zM4 18h1v1h-1zM6 18h1v1h-1zM7 18h1v1h-1zM10 18h1v1h-1zM11 18h1v1h-1zM15 18h1v1h-1zM18 18h1v1h-1zM19 18h1v1h-1zM21 18h1v1h-1zM22 18h1v1h-1zM24 18h1v1h-1zM25 18h1v1h-1zM28 18h1v1h-1zM0 19h1v1h-1zM1 19h1v1h-1zM2 19h1v1h-1zM9 19h1v1h-1zM13 19h1v1h-1zM16 19h1v1h-1zM19 19h1v1h-1zM21 19h1v1h-1zM25 19h1v1h-1zM26 19h1v1h-1zM0 20h1v1h-1zM1 20h1v1h-1zM2 20h1v1h-1zM3 20h1v1h-1zM4 20h1v1h-1zM6 20h1v1h-1zM7 20h1v1h-1zM9 20h1v1h-1zM11 20h1v1h-1zM13 20h1v1h-1zM16 20h1v1h-1zM17 20h1v1h-1zM19 20h1v1h-1zM20 20h1v1h-1zM21 20h1v1h-1zM22 20h1v1h-1zM23 20h1v1h-1zM24 20h1v1h-1zM25 20h1v1h-1zM26 20h1v1h-1zM27 20h1v1h-1zM8 21h1v1h-1zM10 21h1v1h-1zM13 21h1v1h-1zM14 21h1v1h-1zM15 21h1v1h-1zM17 21h1v1h-1zM18 21h1v1h-1zM20 21h1v1h-1zM24 21h1v1h-1zM25 21h1v1h-1zM0 22h1v1h-1zM1 22h1v1h-1zM2 22h1v1h-1zM3 22h1v1h-1zM4 22h1v1h-1zM5 22h1v1h-1zM6 22h1v1h-1zM8 22h1v1h-1zM11 22h1v1h-1zM13 22h1v1h-1zM15 22h1v1h-1zM16 22h1v1h-1zM17 22h1v1h-1zM18 22h1v1h-1zM19 22h1v1h-1zM20 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM25 22h1v1h-1zM0 23h1v1h-1zM6 23h1v1h-1zM8 23h1v1h-1zM9 23h1v1h-1zM12 23h1v1h-1zM13 23h1v1h-1zM15 23h1v1h-1zM17 23h1v1h-1zM18 23h1v1h-1zM19 23h1v1h-1zM20 23h1v1h-1zM24 23h1v1h-1zM27 23h1v1h-1zM28 23h1v1h-1zM0 24h1v1h-1zM2 24h1v1h-1zM3 24h1v1h-1zM4 24h1v1h-1zM6 24h1v1h-1zM8 24h1v1h-1zM10 24h1v1h-1zM11 24h1v1h-1zM13 24h1v1h-1zM16 24h1v1h-1zM18 24h1v1h-1zM19 24h1v1h-1zM20 24h1v1h-1zM21 24h1v1h-1zM22 24h1v1h-1zM23 24h1v1h-1zM24 24h1v1h-1zM25 24h1v1h-1zM27 24h1v1h-1zM0 25h1v1h-1zM2 25h1v1h-1zM3 25h1v1h-1zM4 25h1v1h-1zM6 25h1v1h-1zM8 25h1v1h-1zM14 25h1v1h-1zM15 25h1v1h-1zM16 25h1v1h-1zM17 25h1v1h-1zM18 25h1v1h-1zM19 25h1v1h-1zM20 25h1v1h-1zM21 25h1v1h-1zM28 25h1v1h-1zM0 26h1v1h-1zM2 26h1v1h-1zM3 26h1v1h-1zM4 26h1v1h-1zM6 26h1v1h-1zM10 26h1v1h-1zM13 26h1v1h-1zM15 26h1v1h-1zM17 26h1v1h-1zM19 26h1v1h-1zM21 26h1v1h-1zM23 26h1v1h-1zM24 26h1v1h-1zM26 26h1v1h-1zM27 26h1v1h-1zM28 26h1v1h-1zM0 27h1v1h-1zM6 27h1v1h-1zM9 27h1v1h-1zM12 27h1v1h-1zM15 27h1v1h-1zM16 27h1v1h-1zM18 27h1v1h-1zM19 27h1v1h-1zM21 27h1v1h-1zM25 27h1v1h-1zM26 27h1v1h-1zM28 27h1v1h-1zM0 28h1v1h-1zM1 28h1v1h-1zM2 28h1v1h-1zM3 28h1v1h-1zM4 28h1v1h-1zM5 28h1v1h-1zM6 28h1v1h-1zM8 28h1v1h-1zM12 28h1v1h-1zM14 28h1v1h-1zM15 28h1v1h-1zM19 28h1v1h-1zM20 28h1v1h-1zM23 28h1v1h-1zM24 28h1v1h-1zM25 28h1v1h-1z"/></svg><i class="scanl"></i><span>Scan to book</span></div>
   </div>
 </div>
 <div class="streak"></div>
@@ -1113,9 +1418,9 @@ function go(n){
 }
 function counters(sc){
   sc.querySelectorAll('.cnt').forEach(el=>{
-    const at=+(el.dataset.at||0), to=+el.dataset.to, suf=el.dataset.suf||'', pre=el.dataset.pre||'';
+    const at=+(el.dataset.at||0), to=+el.dataset.to, suf=el.dataset.suf||'', pre=el.dataset.pre||'', dec=+(el.dataset.dec||0);
     el.textContent = pre+'0'+suf; let t0=null;
-    setTimeout(()=>{ (function f(ts){ if(!t0)t0=ts; const k=Math.min(1,(ts-t0)/1000); el.textContent=pre+Math.round(to*(1-Math.pow(1-k,3)))+suf; if(k<1&&sc.classList.contains('act')) requestAnimationFrame(f); })(performance.now()); }, at);
+    setTimeout(()=>{ (function f(ts){ if(!t0)t0=ts; const k=Math.min(1,(ts-t0)/1000); el.textContent=pre+(to*(1-Math.pow(1-k,3))).toFixed(dec)+suf; if(k<1&&sc.classList.contains('act')) requestAnimationFrame(f); })(performance.now()); }, at);
   });
 }
 function pauseToggle(force){ paused = force!==undefined?force:!paused; document.body.classList.toggle('paused',paused); document.getElementById('pauseBtn').textContent = paused?'▶':'⏸'; clearTimeout(timer); if(!paused && cur<SC.length-1) go(cur); }

@@ -27,9 +27,13 @@ entries('recruit', 'recruit-timing.json', 'vorecruit', 'recruit',
 if os.path.exists('recruit-trailer-timing.json'):
     entries('trailer', 'recruit-trailer-timing.json', 'votrailer', 'trailer',
             [(2, 'income'), (3, 'zero'), (4, 'coach'), (5, 'Seven'), (5, 'Thirty'), (5, 'Seven', 1), (6, 'open'), (6, 'Twenty')], [8], ticks=((4, 5, 0.5),))
-# the 35-second feed cuts: square for the LinkedIn and Facebook feed, tall for Reels and Stories; no landscape
+# The 35-second feed cuts: square for the LinkedIn and Facebook feed, tall for Reels and Stories; no landscape.
+# The punch in scene 2 lands on the turn: the word where the ad stops naming the absence and starts
+# answering it. Both variants turn on "here" — A's "Here, clients come to you", B's "And here, the leads
+# come to you". B's on-screen "Not here." has no spoken "Not" behind it, which is what caught this: a cue
+# word that is not in the line exits before films.json is written, so a stale entry is never left behind.
 for v in 'AB':
     if os.path.exists(f'recruit-ad{v}-timing.json'):
         entries(f'ad{v}', f'recruit-ad{v}-timing.json', f'voad{v}', f'ad-{v.lower()}',
-                [(2, 'Not'), (4, 'Seven'), (4, 'Thirty'), (5, 'One'), (5, 'Twenty')], [], shapes=('q', 'v'))
+                [(2, 'here'), (4, 'Seven'), (4, 'third'), (5, 'One'), (5, 'Twenty')], [], shapes=('q', 'v'))
 json.dump(f, open('films.json', 'w'), indent=1)

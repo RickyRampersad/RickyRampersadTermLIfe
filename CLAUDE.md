@@ -5550,6 +5550,68 @@ section links it.
 - `scenes.js` in the session scratchpad shoots every scene at a fraction of its length in either frame (the same
   seek render.js uses) and tiles them, which is how the layouts were checked before the voice came back.
 
+### The two feed ads, re-cut for the advisor — 12 November 2026
+
+Asked for in these words: *"remember we moved away from agentmanagement.com and it's ricky_branch/careers. And it
+must be advisors and it's a sales career… it's what they're not getting, and you need to firm up something that is
+catchy because you want to really post this."*
+
+**The address was fixed in the source on 9 November and the render never followed.** The lines files and the
+builder's five on-screen addresses were all changed that day; the MP4s were not re-rendered, so the files sitting at
+the public URL still said and printed `agentmgt.com` three days later. **A lines file and a builder changed without a
+render is a change nobody can see.** Check the MP4 — grab a frame — not the source.
+
+**Each ad now names the job in its first line and states the pay model rather than implying it.** A opens *"You are
+an insurance advisor. You are good at it. Why are you still doing it alone?"*; B says in as many words *"This is a
+sales career."* That sentence is the filter, not a disclosure: a person who wants a salary band reads it and leaves,
+which is the whole point, and it is LIMRA's own retention finding (honest expectations at recruitment).
+
+**The absence leads, because that is what he asked for.** Scene 2 of A is the three things a practising advisor does
+*not* get where they are — no leads, no clients handed to you, nobody asking how your week went — each entering and
+then struck through, before the branch answers all three. B's is *"what stops most people is being handed a contract
+and told to call their friends"*, struck, then *"Not here."* The struck list is `.miss`; the rule animates on `growx`,
+**never `grow`**, because this file defines `@keyframes grow` twice and the later scaleY one wins.
+
+**Scene 4 is the one number that sells to either reader**, and it replaced "Thirty-two years in Trinidad": 22 of 100
+still contracted at three years across the industry, against 31 of 100 still here at four in this branch. Two bars on
+an honest 0–100 track, so the shortness of *both* is the point rather than hidden by a clipped axis. Amber `#C97A3A`
+against teal `#0E93B0` on the film's own `#0d1f33` ground **passes all six of the validator's checks** (CVD ΔE 16.1
+protan and 25.2 tritan, normal-vision 23.5, both inside the dark band L 0.48–0.67), and each bar carries its own
+number and label, so identity is never colour alone. **The page's own `--amb #F5A25D` is not used here**: it measures
+L 0.78 against a dark band of 0.48–0.67, so it fails the lightness check on this surface even though its separation
+from the teal is excellent. The band is per-surface; a pair validated for one ground is not thereby validated for
+another.
+
+**39.4s and 38.1s**, both under the 40 seconds where the feeds stop paying out.
+
+**Three voice lessons, and the middle one is new.**
+- *"how your week went"* came back as *"you're weak went"* and *"a third of ours"* as *"a third of hours"*. Both
+  change the meaning, so both were re-worded. "ours"/"hours" was fixable; **"week"/"weak" is not** — they are the
+  same phonemes, no voice can distinguish them, the sentence parses only one way, and the screen spells it out. It
+  is accepted like "will"/"we'll". Knowing which homophones are worth chasing saves a runner job.
+- **edge-tts returned `NoAudioReceived` four times running** on *"In this branch, a third are still here at four"*
+  while the other line in the same job voiced clean — a deterministic refusal of one text, not an outage. *"Here, a
+  third are still with us at four"* voiced first time. **When a line will not voice, re-word it; do not retry it.**
+- The runner numbers a job's lines from 01, so the three fix jobs landed as `adAfix/01`, `adAfix2/01` and had to be
+  mapped back onto scenes 2 and 4. `stagevox.sh` in the scratchpad builds each vox directory **from scratch** by
+  walking the scene list — never by shifting, which cannot express "line 2 and line 4 changed, the rest stand".
+
+**Three cue words had gone stale and each one stopped the build, which is the guard working.** `tat(5,"Agent")` was
+keyed to the old spoken address and is now `"Go"`; films-recruit.py's `(2,'Not')` no longer existed in A's line (and
+in fact no longer exists in B's spoken line either — only in B's on-screen headline — so both now turn on `"here"`);
+and `(4,'Thirty')` went with the years line. A cue word that is not in the line exits **before** films.json is
+written, so a stale entry is never silently left behind.
+
+**chapters.py did not know these pages at all**, so the ads' chapter rails on the homepage, `/careersvideo/` and
+`/careers/` had been typed by hand and went stale at every re-cut — precisely what that tool exists to prevent. It
+now walks `agentmgt/`, `careersvideo/`, `careers/` and the repository root, knows the eight recruiting keys, and
+**keys its lookup on the basename**: every other film's `out` is a bare file name while the recruiting cuts carry a
+relative path, so the map and the lookup disagreed. Each ad scene now carries its own `data-ch`, because the fallback
+reads the scene's `h2`, which on scene 5 is the bare URL and on scene 1 the whole kinetic headline.
+
+**agentmgt.com is a redirect now, and the ads no longer name it.** It serves a meta refresh to `/careers/`, so the
+bare address still works for anyone holding it, but `agentmgt.com/anything` 404s: never link a path on that domain.
+
 ## The renewal desk — general insurance, from last year to delivery
 
 `renewaldesk/` (staff), `myrenewal/` (the client) and `apps-script/GIRenewals.gs`, a sixth file in the Service
@@ -11098,3 +11160,19 @@ built in the browser by `wall.html` when the Spreadsheet button is pressed. Six
 tabs, of which only `Submitted` is live — the other five read the hardcoded
 `PROD` literal, frozen at its `asOf` date, because `PROD_ENDPOINT` is blank.
 Searching Drive for that workbook finds nothing; it has to be computed.
+
+**The QR was drawn in the wrong box, in all four recruiting cuts.** `qr.svg` was regenerated on 9 November for
+the careers address and came back a **29-module** grid where the agentmgt.com one had been **41**; the builder
+hardcoded `viewBox="0 0 41 41"` in four places, so the code drew at 71% in the top-left of its card with no quiet
+zone on two sides. It still scanned at square size and **did not scan at all in the tall cut** — which is the whole
+point of putting a QR on a Reel. The viewBox is read from `qr.svg` now, so a QR regenerated for a different address
+(a different version, a different module count) can never drift from its box again. Decode the rendered frame to
+check it (`cv2.QRCodeDetector`), never the markup: the markup looked right in both cases.
+
+**Where that leaves the longer cuts, as at 12 November 2026.** The two ads are re-rendered and both decode to
+`https://rickyrampersadbranch.com/careers/`. The **trailer** carries the right address but was rendered between the
+new QR and this fix, so its QR does not scan. The **full film** was never re-rendered after 9 November at all: it
+still says and prints `agentmgt.com`, and its QR is the old 41-module one, which **still works** because the domain
+now forwards. So the full film is dated but functional, and the trailer is the one with a dead QR. Re-cutting the
+trailer needs only a render (`votrailer` is on disk); re-cutting the full film needs all 33 lines re-voiced on the
+runner first, because `vorecruit` lives only in a deleted session scratchpad.

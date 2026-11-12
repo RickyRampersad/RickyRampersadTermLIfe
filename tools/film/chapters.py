@@ -21,7 +21,14 @@ VID = ROOT / 'vid'                       # rickyrampersadbranch.com/vid — the 
 TEAM = ROOT / 'orphan-transition'        # the branch's own pages that embed it
 TPL = ROOT / 'templates'                 # the team's one page: film, letter, openings, verdict
 BLAST = ROOT / 'branchmeet'              # rickyrampersadbranch.com/branchmeet — the FY27 rise film
-SITES = [DHAA, BRANCH, VID, TEAM, TPL, BLAST]
+# The recruiting films, 12 Nov 2026. These were outside this tool until today, so their rails were typed by
+# hand and went stale the moment an ad was re-cut — which is the one thing this file exists to prevent.
+# The pages that EMBED them are the homepage's careers section, /careersvideo/ and /careers/ (generated from
+# agentmgt/index.html by tools/careers/sync.py, so run that first and this after).
+AGENT = ROOT / 'agentmgt'                # the ad and film sources, and the pages that play them
+CVID = ROOT / 'careersvideo'             # rickyrampersadbranch.com/careersvideo
+CAREERS = ROOT / 'careers'               # rickyrampersadbranch.com/careers
+SITES = [DHAA, BRANCH, VID, TEAM, TPL, BLAST, AGENT, CVID, CAREERS, ROOT]
 films = json.load(open(HERE / 'films.json'))
 
 # which page each MP4 was rendered from, and which site it belongs to
@@ -36,7 +43,12 @@ PAGE = {'client': (DHAA, 'client-film.html'), 'process': (DHAA, 'process-film.ht
         # the workflow for everyone, start to finish (16 October 2026): board-films.html and the training page
         'boardflow': (TEAM, 'board-workflow.html'),
         # the FY27 rise, for the meeting of 30 October 2026
-        'rise': (BLAST, 'film.html')}
+        'rise': (BLAST, 'film.html'),
+        # the recruiting cuts: the full film, the trailer, and the two 35-second feed ads, square and tall
+        'recruit': (AGENT, 'film.html'), 'recruitv': (AGENT, 'film.html'),
+        'trailer': (AGENT, 'trailer.html'), 'trailerv': (AGENT, 'trailer.html'),
+        'adAq': (AGENT, 'ad-a.html'), 'adAv': (AGENT, 'ad-a.html'),
+        'adBq': (AGENT, 'ad-b.html'), 'adBv': (AGENT, 'ad-b.html')}
 
 def names_of(site, page):
     s = (site / page).read_text(encoding='utf-8')
@@ -69,7 +81,9 @@ for key, cfg in films.items():
     durs = [round(d, 2) for d in cfg['durs']]
     # the last scene in the page is the finale; it holds for the rest of the film
     names = names[:len(durs)]
-    meta[cfg['out']] = (','.join(f'{d:g}' for d in durs), '|'.join(names))
+    # the film is matched by its file name below, but the recruiting cuts carry a relative path in
+    # `out` where every other film carries a bare name, so key on the basename either way
+    meta[cfg['out'].rsplit('/', 1)[-1]] = (','.join(f'{d:g}' for d in durs), '|'.join(names))
 
 changed = 0
 for page in [q for site in SITES if site.is_dir() for q in site.glob('*.html')]:

@@ -60,7 +60,13 @@ FONTS = '\n'.join([
     face('InterF', 'Inter-var.woff2', '100 900'),
 ])
 
-QR = re.search(r'd="([^"]+)"', open(os.path.join(ROOT, 'agentmgt', 'qr.svg')).read()).group(1)
+_qr = open(os.path.join(ROOT, 'agentmgt', 'qr.svg')).read()
+QR = re.search(r'd="([^"]+)"', _qr).group(1)
+# The viewBox comes from the file, never a literal. It was hardcoded "0 0 41 41" against a path whose own
+# grid is 29 modules, so the code drew at 71% in the top-left of its box with no quiet zone on two sides —
+# still scannable at square size, not at the tall cut's. A QR regenerated for a different address changes
+# version, and so changes this number; reading it keeps the two from drifting apart again.
+QRBOX = (re.search(r'viewBox="([^"]+)"', _qr) or [None, '0 0 29 29'])[1]
 
 def dur(n, T=None, L=None):
     T = T or timing; L = L or LINES
@@ -677,7 +683,7 @@ S.append(scene(12, 's-leads', f'''
     <p class="eye in" style="--t0:200ms">Leads</p>
     <h2 class="h l">{words("Leads land on your board.", at(12,"Leads") - 200)}</h2>
     <p class="sub in" style="--t0:{at(12,"link")}ms">Your own link. Your own QR code. A prospect taps what is on their mind.</p>
-    <div class="qr mini in" style="--t0:{at(12,"QR")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><span>Your code</span></div>
+    <div class="qr mini in" style="--t0:{at(12,"QR")}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><span>Your code</span></div>
   </div>
   <div class="col">
     <div class="lead-wrap">
@@ -1029,7 +1035,7 @@ S.append(scene(32, 's-cta', f'''
     </div>
   </div>
   <div class="col">
-    <div class="qr in" style="--t0:{at(32,"Go")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
+    <div class="qr in" style="--t0:{at(32,"Go")}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
   </div>
 </div>'''))
 
@@ -1118,7 +1124,7 @@ if TLINES and MODE != 'ad':
     </div>
   </div>
   <div class="col">
-    <div class="qr in" style="--t0:{tat(7,"Go")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
+    <div class="qr in" style="--t0:{tat(7,"Go")}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
   </div>
 </div>'''))
     T.append(tscene(8, 's-close dark tr', f'''
@@ -1135,36 +1141,38 @@ if MODE == 'ad':
     assert len(TLINES) == 5, len(TLINES)
     LEADS = [('Retiring properly', 'asked to be called · 9:12'), ('Cover for the children', 'asked to be called · 9:40'), ('Starting a business', 'asked to be called · 10:05')]
     if AD == 'A':
+        # 12 Nov 2026 ("it must be advisors and it's a sales career ... it's what they're not getting"):
+        # the hook names the job, and scene 2 leads on the three things a practising advisor does NOT get
+        # where they are, struck through, before the branch answers them.
         T.append(tscene(1, 's-hook', f"""
 <div class="full center">
   <span class="ghost" aria-hidden="true">?</span>
-  <span class="spot" style="--t0:{tat(1,"stuck")}ms"></span>
+  <span class="spot" style="--t0:{tat(1,"alone")}ms"></span>
   <div class="mark top in" style="--t0:100ms">{MARK}</div>
-  <p class="eye in" style="--t0:300ms">A question</p>
-  <h1 class="h xl">{words("Good at what you do?", 400)}<br><em class="wine">{words("Stuck where you are?", tat(1,"stuck") - 200)}</em></h1>
-  <div class="ceil-line" style="--t0:{tat(1,"stuck")}ms"></div>
-</div>"""))
+  <p class="eye in" style="--t0:{max(200, tat(1,"advisor") - 300)}ms">For a practising insurance advisor</p>
+  <h1 class="h xl">{words("Good at this.", 400)}<br><em class="wine">{words("Still doing it alone?", max(600, tat(1,"alone") - 900))}</em></h1>
+  <div class="ceil-line" style="--t0:{tat(1,"alone")}ms"></div>
+</div>""", 'data-ch="Still doing it alone?"'))
         T.append(tscene(2, 's-match', f"""
 <div class="split">
   <div class="col">
-    <p class="eye in" style="--t0:{tat(2,"Already")}ms">Already contracted?</p>
-    <h2 class="h l">{words("Move, and start from zero?", tat(2,"fear") - 200, 110)}</h2>
-    <h2 class="h l wine2">{words("Not here.", tat(2,"Not") - 150, 140)}</h2>
-    <div class="pill-row">
-      <span class="ypill in" style="--t0:{tat(2,"matched")}ms">Clients matched to you</span>
-      <span class="ypill in" style="--t0:{tat(2,"household")}ms">Household by household</span>
-      <span class="ypill in" style="--t0:{tat(2,"Leads")}ms">Leads on your own board</span>
+    <p class="eye in" style="--t0:{max(200, tat(2,"leads") - 300)}ms">What you are not getting</p>
+    <div class="miss">
+      <span class="in" style="--t0:{tat(2,"leads")}ms">Leads</span>
+      <span class="in" style="--t0:{tat(2,"clients")}ms">Clients handed to you</span>
+      <span class="in" style="--t0:{tat(2,"Nobody")}ms">Anyone asking how your week went</span>
     </div>
+    <h2 class="h l wine2">{words("Here, all three.", tat(2,"Here") - 200, 120)}</h2>
   </div>
   <div class="col">
-    <div class="list in fl" style="--t0:{tat(2,"Clients") - 200}ms">
+    <div class="list in fl" style="--t0:{tat(2,"Here") - 300}ms">
       <div class="bd-h"><b>Your list</b><span>named to you</span></div>
-      {''.join(f'<div class="hh" style="--t0:{tat(2,"matched") + i*380}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><span>{d}</span><em>named</em></div>' for i, (n, d) in enumerate(HH))}
-      <div class="lead-in" style="--t0:{tat(2,"Leads")}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>New lead</b><span>"Retiring properly" · landed on your board</span></div>
+      {''.join(f'<div class="hh" style="--t0:{tat(2,"household") + i*340}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><span>{d}</span><em>named</em></div>' for i, (n, d) in enumerate(HH))}
+      <div class="lead-in" style="--t0:{tat(2,"first")}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>The file, and the first thing to say</b><span>read before you call · not a cold name on a list</span></div>
       {SAMPLE}
     </div>
   </div>
-</div>"""))
+</div>""", 'data-ch="What you are not getting"'))
         coach_sub = f'<p class="sub in" style="--t0:{tat(3,"nobody")}ms"><em>And nobody will know you asked.</em></p>'
         coach_chip = f'<div class="chip in fl" style="--t0:{tat(3,"asked")}ms"><svg class="ic"><use href="#i-lock"/></svg><b>Confidential. Nobody will know you asked.</b></div>'
     else:
@@ -1176,31 +1184,33 @@ if MODE == 'ad':
   <p class="eye in" style="--t0:300ms">A question</p>
   <h1 class="h xl">{words("A career with no ceiling?", 400)}<br><em class="wine">{words("Afraid of the first year?", tat(1,"afraid") - 200)}</em></h1>
   <div class="ceil-line" style="--t0:{tat(1,"ceiling")}ms"></div>
-</div>"""))
+</div>""", 'data-ch="No ceiling, and the first year"'))
+        # B says it is a sales career in as many words, because the honest sentence is the filter:
+        # what stops most newcomers is being handed a contract and told to call their friends.
         T.append(tscene(2, 's-match', f"""
 <div class="split">
   <div class="col">
-    <p class="eye in" style="--t0:{tat(2,"New")}ms">New to this?</p>
-    <h2 class="h l">{words("Months with nothing coming in?", tat(2,"fear") - 200, 110)}</h2>
-    <h2 class="h l wine2">{words("Not here.", tat(2,"Not") - 150, 140)}</h2>
+    <p class="eye in" style="--t0:{max(200, tat(2,"sales") - 300)}ms">Straight with you</p>
+    <h2 class="h l">{words("This is a sales career.", tat(2,"sales") - 200, 110)}</h2>
+    <div class="miss">
+      <span class="in" style="--t0:{tat(2,"friends")}ms">Handed a contract and told to call your friends</span>
+    </div>
+    <h2 class="h l wine2">{words("Not here.", tat(2,"here") - 150, 140)}</h2>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:{tat(2,"Leads")}ms">Leads from people who asked to be called</span>
-      <span class="ypill in" style="--t0:{tat(2,"day")}ms">Your day, set every morning</span>
-      <span class="ypill in" style="--t0:{tat(2,"trained")}ms">Trained before you're contracted</span>
+      <span class="ypill in" style="--t0:{tat(2,"leads")}ms">The leads come to you</span>
+      <span class="ypill in" style="--t0:{tat(2,"asked")}ms">From people who asked to be called</span>
     </div>
   </div>
   <div class="col">
-    <div class="list in fl" style="--t0:{tat(2,"Leads") - 200}ms">
+    <div class="list in fl" style="--t0:{tat(2,"leads") - 200}ms">
       <div class="bd-h"><b>Your board</b><span>this morning</span></div>
-      {''.join(f'<div class="lead-in" style="--t0:{tat(2,"people") + i*380}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>{n}</b><span>{d}</span></div>' for i, (n, d) in enumerate(LEADS))}
-      <div class="hh" style="--t0:{tat(2,"day")}ms"><svg class="ic"><use href="#i-grid"/></svg><b>Your day</b><span>set at 6:00 · four calls, two fact finds</span><em>today</em></div>
-      <div class="hh" style="--t0:{tat(2,"trained")}ms"><svg class="ic"><use href="#i-spark"/></svg><b>Boot camp</b><span>training · induction · field work</span><em>first</em></div>
+      {''.join(f'<div class="lead-in" style="--t0:{tat(2,"asked") + i*340}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>{n}</b><span>{d}</span></div>' for i, (n, d) in enumerate(LEADS))}
       {SAMPLE}
     </div>
   </div>
-</div>"""))
-        coach_sub = f'<p class="sub in" style="--t0:{tat(3,"Nobody")}ms"><em>Nobody here is left to figure it out alone.</em></p>'
-        coach_chip = f'<div class="chip in fl" style="--t0:{tat(3,"alone")}ms"><svg class="ic"><use href="#i-chat"/></svg><b>And in person. He sits with you on it.</b></div>'
+</div>""", 'data-ch="It is a sales career"'))
+        coach_sub = f'<p class="sub in" style="--t0:{tat(3,"trained")}ms"><em>Trained, and in the field, before you are contracted.</em></p>'
+        coach_chip = f'<div class="chip in fl" style="--t0:{tat(3,"contracted")}ms"><svg class="ic"><use href="#i-chat"/></svg><b>The Branch Manager sits with you on it.</b></div>'
     T.append(tscene(3, 's-coach2', f"""
 <div class="split">
   <div class="col">
@@ -1217,18 +1227,35 @@ if MODE == 'ad':
     </div>
     <div class="chips3">{coach_chip}</div>
   </div>
-</div>"""))
+</div>""", 'data-ch="A coach, not a clock"'))
+    # The seats, then the one number that sells to either reader: how few advisors are still contracted
+    # anywhere, against this branch's own figure a year further out. Two bars on a 0-100 track, so the
+    # shortness of BOTH is the honest point. Amber #C97A3A against teal #0E93B0 on this ground passes
+    # all six of the palette validator's checks (CVD dE 16.1 protan, 25.2 tritan; normal 23.5), and each
+    # bar carries its own number and label, so identity is never colour alone.
     T.append(tscene(4, 's-seats', f"""
 <div class="full center">
   <p class="eye in" style="--t0:200ms">FY27 · the first class</p>
   <h2 class="h xl"><span class="cnt" data-to="7" data-at="{tat(4,"Seven")}">7</span> {words("places.", tat(4,"Seven"), 120)}</h2>
   <div class="seatrow">{''.join(f'<i style="--t0:{tat(4,"Seven") + 200 + k*120}ms"><svg class="ic"><use href="#i-users"/></svg></i>' for k in range(7))}</div>
-  <p class="sub in" style="--t0:{tat(4,"Every")}ms">Every one gets <em>the full build</em>.</p>
-  <div class="figs row">
-    <div class="fig in" style="--t0:{tat(4,"Thirty")}ms"><b class="cnt" data-to="32" data-at="{tat(4,"Thirty")}">32</b><span>years in Trinidad</span></div>
-    <div class="fig in" style="--t0:{tat(4,"class")}ms"><b class="cnt" data-to="7" data-at="{tat(4,"class")}">7</b><span>places · one class</span></div>
+  <div class="adbars">
+    <div class="adbar in" style="--t0:{tat(4,"Most") - 200}ms">
+      <span class="adlab"><b class="cnt" data-to="22" data-at="{tat(4,"Most")}">22</b> of 100</span>
+      <span class="adtrack"><i class="ind" style="--w:22%;--t0:{tat(4,"Most")}ms"></i></span>
+      <span class="adleg">still contracted at <b>three</b> years &middot; across the industry</span>
+    </div>
+    <div class="adbar in" style="--t0:{tat(4,"third") - 200}ms">
+      <span class="adlab"><b class="cnt" data-to="31" data-at="{tat(4,"third")}">31</b> of 100</span>
+      <span class="adtrack"><i class="us" style="--w:31%;--t0:{tat(4,"third")}ms"></i></span>
+      <span class="adleg">still here at <b>four</b> years &middot; in this branch</span>
+    </div>
   </div>
-</div>"""))
+  <p class="adsrc in" style="--t0:{tat(4,"third") + 700}ms">Industry figure: LIMRA. Ours is measured a year further out.</p>
+</div>""", 'data-ch="Seven places, and who is left at four"'))
+    # The address goes on two lines, as the full film's close already does. The old "agentmgt.com" was
+    # twelve characters and sat happily in this column; "rickyrampersadbranch.com/careers" is thirty-two,
+    # and on one line it ran under the QR card with "/careers" hidden behind it. Caught by looking at the
+    # rendered frame: the page reported no overflow, because the column simply overlapped the one beside it.
     T.append(tscene(5, 's-cta', f"""
 <div class="split cta">
   <div class="col">
@@ -1237,17 +1264,17 @@ if MODE == 'ad':
       <div class="fig in" style="--t0:{tat(5,"One")}ms"><b><em class="cnt" data-to="1" data-at="{tat(5,"One")}">1</em></b><span>confidential conversation</span></div>
       <div class="fig in" style="--t0:{tat(5,"Twenty")}ms"><b><em class="cnt" data-to="20" data-at="{tat(5,"Twenty")}">20</em> min</b><span>this week</span></div>
     </div>
-    <h2 class="h url">{words("rickyrampersadbranch.com/careers", tat(5,"Agent") - 200, 60)}</h2>
+    <h2 class="h url">{words("rickyrampersadbranch.com", tat(5,"Go") - 200, 55)}<br><em class="wine">{words("/careers", tat(5,"Go") + 240, 55)}</em></h2>
     <div class="btns">
-      <span class="btn b1 in" style="--t0:{tat(5,"Agent") + 500}ms">Book a confidential conversation →</span>
+      <span class="btn b1 in" style="--t0:{tat(5,"Go") + 500}ms">Book a confidential conversation →</span>
     </div>
     <p class="foot in" style="--t0:{tat(5,"week")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas</p>
   </div>
   <div class="col">
     <div class="mark top in" style="--t0:200ms">{MARK}</div>
-    <div class="qr in" style="--t0:{tat(5,"Agent")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
+    <div class="qr in" style="--t0:{tat(5,"Go")}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
   </div>
-</div>"""))
+</div>""", 'data-ch="Book the conversation"'))
 
 HTML = r'''<!DOCTYPE html>
 <html lang="en">
@@ -1526,6 +1553,26 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .seatrow i{width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:calc(var(--u)*1.6);display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:var(--mute2);font-size:calc(var(--u)*3);opacity:0;transform:scale(.6)}
 .scene.act .seatrow i{animation:seat-on .55s var(--pop) both;animation-delay:var(--t0)}
 @keyframes seat-on{to{opacity:1;transform:scale(1);background:linear-gradient(145deg,var(--a),var(--aD));color:#fff;border-color:rgba(255,255,255,.3);box-shadow:0 0 calc(var(--u)*3) rgba(0,207,234,.5)}}
+
+/* The ad's own blocks, 12 Nov 2026. `.miss` is what the reader is NOT getting: it enters, then the rule
+   strikes across it, so the eye reads the thing and then the absence. The bars below are scaleX on `growx`,
+   never `grow`, because this file defines @keyframes grow TWICE and the later scaleY one wins. */
+.miss{display:grid;gap:calc(var(--u)*1.4);margin:calc(var(--u)*1.6) 0 calc(var(--u)*2.4)}
+.miss span{position:relative;align-self:start;justify-self:start;font:600 calc(var(--u)*3.1)/1.25 var(--text);color:var(--mute2);padding-right:.2em}
+.miss span::after{content:'';position:absolute;left:0;right:0;top:52%;height:calc(var(--u)*.38);background:#C97A3A;border-radius:2px;transform:scaleX(0);transform-origin:0 50%;box-shadow:0 0 calc(var(--u)*1.6) rgba(201,122,58,.55)}
+.scene.act .miss span::after{animation:growx .5s var(--out) both;animation-delay:calc(var(--t0) + 420ms)}
+.adbars{display:grid;gap:calc(var(--u)*3);width:min(100%,calc(var(--u)*82));margin:calc(var(--u)*3) auto 0;text-align:left}
+.adbar{display:grid;gap:calc(var(--u)*1)}
+.adlab{font:600 calc(var(--u)*2.6)/1 var(--text);color:var(--mute);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.adlab b{font:800 calc(var(--u)*6.4)/1 var(--display);color:#fff;letter-spacing:-.03em;margin-right:.18em}
+.adtrack{display:block;height:calc(var(--u)*3);border-radius:99px;background:rgba(255,255,255,.1);position:relative;overflow:hidden}
+.adtrack i{position:absolute;left:0;top:0;bottom:0;width:var(--w);border-radius:99px;transform:scaleX(0);transform-origin:0 50%}
+.adtrack i.ind{background:linear-gradient(90deg,#C97A3A,#a86230)}
+.adtrack i.us{background:linear-gradient(90deg,#0E93B0,#00CFEA);box-shadow:0 0 calc(var(--u)*2.6) rgba(0,207,234,.5)}
+.scene.act .adtrack i{animation:growx 1.1s var(--out) both;animation-delay:var(--t0)}
+.adleg{font:500 calc(var(--u)*2.3)/1.3 var(--text);color:var(--mute2);letter-spacing:.02em}
+.adleg b{color:var(--ink);font-weight:700}
+.adsrc{margin-top:calc(var(--u)*2.4);font:500 calc(var(--u)*2)/1.4 var(--text);color:var(--mute2)}
 .jr.five{grid-template-columns:repeat(5,1fr);max-width:calc(var(--u)*120);margin-inline:auto}
 .jr.five .jline{left:10%;right:10%}
 /* scene 17: the wins */
@@ -2066,6 +2113,8 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .seatrow i{width:calc(var(--u)*6);height:calc(var(--u)*6)}
   .s-match .h.l{font-size:calc(var(--u)*6.2)}.s-match .list{zoom:.76}.s-match .ypill{font-size:calc(var(--u)*2.2)}
   .cta{grid-template-columns:1.25fr .75fr;gap:calc(var(--u)*3)}.s-cta .qr svg{width:calc(var(--u)*21);height:calc(var(--u)*21)}.s-cta .mark.top{width:calc(var(--u)*6.5)}
+  /* the address is 32 characters now, on two lines; it still has to fit the narrower column */
+  .s-cta .h.url{font-size:calc(var(--u)*5)}
 }
 
 /* ── the trailer's blocks, 28 October 2026: drawn larger, each with its own graphic ── */

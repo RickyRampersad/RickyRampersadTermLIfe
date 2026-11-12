@@ -167,15 +167,24 @@ Two posts, one film, by the 27 October research (CLAUDE.md, "The reframe"): each
 line, because the ad platforms limit the targeting and the copy has to do the selecting; each leads with the
 reader's own fear, then the specific answer, then one low-commitment ask. Under 120 words, WhatsApp bold.
 
+Rewritten 12 November 2026 ("it must be advisors and it's a sales career ... it's what they're not getting").
+Each post now names the job in its first line, states the pay model rather than implying it, and opens on the
+absence rather than on the offer — because what moves a producing advisor is not a better promise, it is
+recognising the three things nobody where they are is giving them.
+
 **For practising advisors** (LinkedIn, the agents' WhatsApp groups, Facebook):
 
-> *Good at what you do, but stuck where you are?*
+> *You are an insurance advisor, and you are good at it. So why are you still doing it alone?*
 >
-> The thing that keeps a good advisor where they are is the fear of starting from zero. At our branch you don't: clients whose agent has moved on are matched to you, household by household, with the file and the first thing to say. Leads land on your own board, in the prospect's words. The fact find does the arithmetic while you talk. Your name goes up every Wednesday. Your manager is a coach, not a clock. Thirty-two years in Trinidad. Seven places in the first class of FY27, and one seat for a sales manager.
+> No leads. No clients handed to you. Nobody asking how your week went. That is not you — that is the room you are in.
+>
+> Here, clients come to you household by household, with the file and the first thing to say. Leads land on your own board, in the prospect's own words. The fact find does the arithmetic while you talk. Your manager is a coach, not a clock.
+>
+> Most advisors are gone by year three. A third of ours are still with us at four. Seven places in the first class of FY27, and one seat for a sales manager.
 >
 > One confidential conversation. Twenty minutes, this week. Nobody will know you asked.
 >
-> Watch (35 seconds, 90 seconds, or the whole journey): https://rickyrampersadbranch.com/careersvideo/
+> https://rickyrampersadbranch.com/careers
 >
 > Reply *TALK* and I'll call you.
 
@@ -183,19 +192,24 @@ Post it with `ad-a-square.mp4` attached (the feed plays the video; the link is f
 
 **For people new to insurance** (Facebook, Instagram, the branch's own circles):
 
-> *Want a career with no ceiling, but afraid of the first year?*
+> *A career with no ceiling, and afraid of the first year? Both are fair.*
 >
-> Fair fear. Here is what is different: the leads come to you, so you are not selling to your friends and family. Every morning the system sets your day. You get training, boot camp and one-on-one coaching, and the Branch Manager interviews and coaches you personally. No salary band, no ceiling, and the ladder written down rung by rung. Thirty-two years in Trinidad. Seven places in the first class of FY27, and one seat for a sales manager.
+> Straight with you: this is a sales career. What stops most people is being handed a contract and told to call their friends.
 >
-> One 20-minute conversation. Bring your questions; we show you the branch's own figures, not an adjective.
+> Not here. The leads come to you, from people who asked to be called. Your day is set every morning. You are trained, and in the field, before you are contracted. The Branch Manager interviews and coaches you himself.
 >
-> Watch (35 seconds, 90 seconds, or the whole journey): https://rickyrampersadbranch.com/careersvideo/
+> Most advisors are gone by year three. A third of ours are still with us at four. Seven places in the first class of FY27, and one seat for a sales manager.
+>
+> One conversation, twenty minutes this week. Bring your questions: we show you the branch's own figures, not an adjective.
+>
+> https://rickyrampersadbranch.com/careers
 >
 > Reply *TALK* and I'll call you.
 
 Post it with `ad-b-square.mp4` attached.
 
-The "Book a confidential conversation" buttons on agentmgt.com and on `/careersvideo/` open WhatsApp to
-**678-5821** (the number on the page's own footer) with the first line typed; `tel:` is the fallback in the
-footer. If the conversations should go to another number, change the `wa.me/1868…` links in `agentmgt/index.html`
-(five, `data-talk`) and `careersvideo/index.html` (one).
+**Every "Book a confidential conversation" button opens `/careers/#talk`, a form on the page** — not WhatsApp,
+and not another app. That changed on 28 October 2026 and the paragraph that used to sit here still described the
+old WhatsApp road, which is the sort of stale instruction somebody follows. There is no `wa.me` link left in
+`agentmgt/index.html`, `careers/index.html` or `careersvideo/index.html`; the booking posts `q.quote` with the
+form key `careers` and e-mails the Branch Manager alone. See "The conversation is booked on the page" above.
