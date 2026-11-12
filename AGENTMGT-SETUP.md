@@ -145,6 +145,50 @@ A square frame is "portrait" to the page's media query (height is not less than 
 the stylesheet comes after the portrait rules and only resizes what a square cannot hold. The bottom fifth of every
 frame stays clear: the mixer burns the captions there.
 
+## What a candidate actually meets when they apply — read 12 November 2026
+
+Traced end to end against the live posting. **The application half is Guardian's, not ours**, and these are
+the facts rather than an impression:
+
+1. `/careers/` &rarr; **Start the official application** opens
+   `guardianlifeofthecaribbean.talentnest.com/en/posting/215291/location/287275` — title **Sales
+   Representative**, location **Ricky Rampersad &mdash; Chaguanas Regional Centre, Saint Charles**. So the
+   posting is branch-specific, and it says **Full-time / Commission-Based** in its own words, which agrees
+   with the ad.
+2. Pressing **Apply** there does not open a form. It redirects to
+   `/en/candidate/account/new?apply_posting_id=215291`, **"Enter Your Information"**: e-mail, first name,
+   last name, telephone, address, and *are you currently an employee of Guardian Life of the Caribbean*.
+   **An account comes before the application.**
+3. Only then the application itself. What it asks cannot be checked from outside without creating a real
+   candidate record in the branch's live ATS, which is not something to do for a test.
+
+**Our page used to promise "two minutes to apply", in five places.** That was a promise about somebody
+else's form, and the candidate met an account wall instead — at the exact moment they are most likely to
+abandon. Every one of those claims is now what the journey really is, and the apply section carries a
+four-step strip (`.applyflow`) naming the account step **before** the button, so nothing is a surprise.
+Apply also opens in its own tab now: it used to replace our page, so a candidate who balked at the account
+wall had nothing to go back to, and the conversation door went with it.
+
+**Two things in the posting work against our own ads, and both are HR's to change, not ours:**
+
+- **"Persons between the ages of 25 and 45 years old."** Ad A is aimed at advisors who already hold a
+  licence and a book — a good number of whom are over 45. They tap our ad, read the branch's own posting,
+  and are told they are out of range. Worth a word with HR on two counts: the commercial one above, and
+  because the ad platforms have their own rules about age in employment advertising, which is a question
+  for Compliance rather than an assertion from me.
+- **"Should be currently earning a minimum of $6,000 monthly."** Ad B is aimed at people new to the work
+  who want a career with no ceiling. A current-income floor turns away exactly that reader at the last step.
+
+Neither is in our control. Both are worth raising, because the ad spend pays for the clicks either way.
+
+**The funnel is now countable.** The apply click fires a second ping on the existing view beacon, from
+inside the `<!-- rrb-views -->` block so `tools/wire-views.py` still governs the address (it rewrites the
+first `var u=` after that comment — keep it the first declaration or the tool stops finding the page).
+It records a path and nothing else, as the beacon always has. In the "RRB Site View Counter" sheet the
+apply clicks land as `rickyrampersadbranch.com/careers/apply` against the page's own
+`rickyrampersadbranch.com/careers`, so views-to-apply is readable for the first time. Past Guardian's site
+we can see nothing at all, which is the honest limit.
+
 ## The conversation is booked on the page, never in another app
 
 Since 28 October 2026 ("book a call opens WhatsApp so remove this") every "Book a confidential conversation" button
