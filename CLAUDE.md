@@ -5694,6 +5694,14 @@ end, then fails any scene with content in the bottom 16% — where the mixer bur
 or running off the side, in all four frame combinations. It caught the chart's own source line sitting inside the
 caption band on the square cut, which three passes over a contact sheet had not.
 
+**A CAPTURE DIRECTORY KEEPS ITS `rendered.mp4` BETWEEN RUNS, and that is a silent-wrong-film hazard.** `mixany.py`
+reads `rendered.json` and `rendered.mp4` out of `cap-<key>/`; if a render is skipped or fails quietly, it pairs
+**last session's video with this session's audio** and says nothing — the same family as the 9 November fault where
+a lines file changed and the render never followed. `verify.py` in the scratchpad checks each capture's mtime
+against the page it was rendered from **before** trusting any mix, then reads the finished MP4s rather than the
+source: duration, dimensions, that an audio stream exists at all, and the QR decoded off a real frame near the end
+with `cv2.QRCodeDetector`. Run it after every re-cut; mid-render it correctly reported `adBv: STALE by 34 min`.
+
 ## The renewal desk — general insurance, from last year to delivery
 
 `renewaldesk/` (staff), `myrenewal/` (the client) and `apps-script/GIRenewals.gs`, a sixth file in the Service
