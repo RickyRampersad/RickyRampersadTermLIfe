@@ -121,6 +121,21 @@ not.
 `1taKGaSprdP_BCt4KCNQiQNcXt1ZRubC4CAtlrdxlKHo`, owned by the personal Gmail,
 made 6 August 2026. Three test claims on it and nothing real.
 
+**Re-measured 12 November 2026, and it changes the route.** Every tab was read:
+three test claims, seven test document rows, eight log lines, one Staff row —
+and **Vehicle Register and Policy Register are header-only**, because Salesforce
+has never been connected, so the registers have never synced. There is nothing
+on this sheet to carry. That makes **starting fresh** better than copying
+(below), and it makes this the cheapest moment the move will ever have.
+
+**It is `support@`, not `support002@`.** On 12 November the browser doing this
+was signed in as `support002@rickyrampersadbranch.com`, a second account in the
+same Workspace, and Google answered the sheet with "You need access" — which
+reads as a broken link and is not. The owning account decides two things in code
+(`Session.getEffectiveUser()`): where test mail lands, and who counts as a
+trusted tester. Land it on support002@ and the test claims go to an inbox nobody
+reads. **Use the same account that owns the motor quote project.**
+
 **Why it is worth doing, beyond tidiness.** Two things, and the second is the
 one that bites later:
 
@@ -145,6 +160,16 @@ editor → then the ⋮ beside that name and look for **Transfer ownership**.
   URL does not change, so nothing on the site has to be re-wired. Then sign in
   as support@, open Extensions → Apps Script, and publish **Deploy → Manage
   deployments → ✏️ → New version** so the web app runs as the new owner.
+
+  **Then deal with the triggers, which a transfer does not move.** An Apps
+  Script trigger belongs to the person who installed it, not to the file, so a
+  transferred sheet goes on firing under the Gmail account and goes on spending
+  its mail allowance — the very thing this move exists to escape. Delete all
+  three on the old account (⏰ **Triggers**) and run **1. Set up / repair
+  everything** as support@ to install them again. Measure both halves rather
+  than assume: the ping's `runsAs` says whether the web app moved, and the
+  Triggers screen, opened as each account in turn, says whether the triggers
+  did.
 - **Not offered?** That is the likely answer — Google does not generally allow
   an ownership transfer across the line between a personal account and a
   Workspace in another organisation. Do the copy below instead.
@@ -157,19 +182,29 @@ all. That field is new in build `2026-11-07a` — a bound script keeps its own
 `/exec`, so until now a moved project and an un-moved one looked identical
 from outside, which is the failure this guide has already paid for twice.
 
-### The copy, if ownership will not transfer
+### Start fresh — the route to take while the sheet is empty
 
 Sign in as **support@rickyrampersadbranch.com and nothing else** — not a
 second account in the same browser, which is what breaks Apps Script pages.
 Then:
 
-1. Open the sheet and **File → Make a copy**. Name it **Claims TT**. The copy
-   is owned by support@, and the bound script comes with it.
-2. **Delete the three test claims** on the copy (CLM-2611-6420, -6840, -9805)
-   and the two leftover tabs named *Untitled* and *Copy of Untitled*. Their
-   Drive links point into the old personal Drive anyway, so a copied test row
-   is a row whose documents support@ cannot open.
-3. **Set test mode before you deploy anything.** A fresh copy has no
+1. **A new blank Google Sheet**, named **Claims TT**. Extensions → Apps Script,
+   name the project **Claims TT**, select everything in the default `Code.gs`
+   and paste the current `apps-script/Claims.gs` over it. Save.
+
+   Not **File → Make a copy**. A copy brings the three test claims, the two junk
+   tabs named *Untitled* and *Copy of Untitled*, and — worse — rows whose Drive
+   links point into the personal Drive, so support@ opens a claim and cannot
+   read its own documents. `setupClaims` builds all seven tabs out of nothing,
+   so the copy buys you only the rubbish; and the script has to be pasted either
+   way, because the live one is four pastes behind. Copy instead of starting
+   fresh **only if real claims are on the sheet by then**, and delete those rows
+   and both junk tabs on the copy before anything else.
+2. **Reload the sheet tab in the browser.** `onOpen` has never run on a sheet
+   this new, so the **Claims TT** menu is not there yet. One reload and it
+   appears. (Everything below can also be run from the Apps Script editor's own
+   Run button, which is the way through if the menu still does not show.)
+3. **Set test mode before you deploy anything.** A new project has no
    `TEST_MODE` property, and no property means **live** — so the first claim
    through it would e-mail Guardian's real health and motor desks. Claims TT
    menu → **Turn test mode ON**; or, if the menu has not appeared yet,
@@ -178,8 +213,8 @@ Then:
 4. Run **1. Set up / repair everything** and grant the permissions. This is
    where the new Drive folder is made in support@'s own Drive, the triggers are
    installed, and support@ is added to the **Staff** tab.
-5. **Re-enter the Script Properties. A copy carries none of them.** This is
-   the step that gets missed:
+5. **Enter the Script Properties. A new project has none of them, and neither
+   would a copy.** This is the step that gets missed:
 
    | Property | How | If it is missing |
    |---|---|---|
@@ -195,15 +230,33 @@ Then:
    and no claim has been closed yet, so there is nothing to break.
 6. **Deploy → New deployment → Web app**, Execute as **Me**, Who has access
    **Anyone**. Copy the new `/exec`.
-7. Send me that URL. It goes in **two** places —
-   `claims/index.html` line 1121 and `claims/staff.html` line 391 — and they
-   have to change together, or the client page and the staff desk talk to two
-   different backends.
-8. **Switch the old one off**: on the personal account, Deploy → Manage
-   deployments → archive the deployment, and turn test mode on there as a belt.
-   Otherwise the old `/exec` keeps answering and a client with an old link
-   files into a sheet nobody is watching — which is exactly the kind of failure
-   that looks like a handled claim until somebody asks why nothing happened.
+7. Send me that URL. It goes in **two** places — the `API_URL` near the top of
+   `claims/index.html` and of `claims/staff.html` (lines 1362 and 410 as this is
+   written; find them by searching for `API_URL`, never by line number) — and
+   they have to change together, or the client page and the staff desk talk to
+   two different backends.
+
+   **Each of those two files holds a second `/exec` further down**
+   (`claims/index.html` line 3693, `claims/staff.html` line 789). That one is
+   the view-counter beacon, a different Apps Script entirely; overwrite it and
+   every visitor fires an unauthenticated request at the claims backend, which
+   is the fault six other pages already carried for weeks. Change `API_URL`
+   only.
+8. **Switch the old one off, and that means its triggers too.** On the personal
+   account: Extensions → Apps Script → ⏰ **Triggers**, and delete all three —
+   `sweepAbandonedParts` (every 6 hours), `claimsFollowUp` (daily at 9) and
+   `salesforceNightlySync` if it is there. Then Deploy → Manage deployments →
+   archive the deployment, and turn test mode on as a belt.
+
+   **Archiving alone is not enough, and the sheet proves it.** The Claim Log
+   shows `auto-chase · Reminder 2` firing on **12 November**, eight days after a
+   test claim was filed and four days after Reminder 1 — still running, still
+   spending the personal account's mail allowance on a claim marked *TEST CLAIM
+   — please delete*. A trigger left behind chases for ever out of an inbox
+   nobody reads, against the exact quota this move exists to escape. And the old
+   `/exec` keeps answering, so a client holding an old link files into a sheet
+   nobody is watching — the kind of failure that looks like a handled claim
+   until somebody asks why nothing happened.
 
 ### Two things that change under support@, and are easy to miss
 
