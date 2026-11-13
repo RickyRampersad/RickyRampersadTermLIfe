@@ -3,14 +3,10 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "adC": [
-   "You are good at your job. And you can already see the top of it.",
-   "This is an insurance sales career. You are paid on what you write, with no ceiling and no salary.",
-   "The work is solving a problem. Most families have never seen their own numbers written down. That is the job of our fact find, and it does the arithmetic while you talk.",
-   "You will not start from a cold list. The leads come to you, from people who asked to be called, and your manager is a coach, not a clock.",
-   "Before you are contracted, a LIMRA profile is read, your market is mapped, and you are trained. You will know whether this fits before you give anything up.",
-   "This branch does thirty-nine things for an advisor, all of it digital, and all of it running today. By year four the industry keeps fourteen in a hundred. This branch keeps thirty-one.",
-   "Seven places. One conversation, twenty minutes, this week. Go to Ricky Rampersad Branch dot com, slash careers."
+  "adCfix": [
+   "This is a career in insurance sales. You are paid on what you write. There is no ceiling, and there is no salary.",
+   "Before you are contracted, a scientific profile is read, your market is mapped, and you are trained. You will know whether this fits before you give anything up.",
+   "The branch does thirty-nine things for an advisor. All of it is digital, and all of it runs today. By year four, the industry keeps fourteen in a hundred. We keep thirty-one."
   ]
  }
 }
