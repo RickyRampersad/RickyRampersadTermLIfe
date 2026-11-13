@@ -1480,6 +1480,16 @@ body.paused #bars i.run::after{animation-play-state:paused}
      blocks, so a `now` element lands exactly where it would have. This rule sits last on purpose: it
      ties on specificity with `.scene.act .in`, so source order is what makes it win. */
   .scene.act .now,.scene.act .w.now i{animation:none;opacity:1;transform:none}
+  /* ...and the SCENE ITSELF has to skip its entrance, or none of that shows. `scene-in` runs
+     from opacity:0 / scale(1.05) / blur(10px) over .9s, so the container was still invisible at t=0
+     however many children were painted. The first scene has nothing to come in FROM — there is no
+     outgoing scene at t=0 — so the fade is pure cost there anyway.
+
+     THIS IS WHY THE BROWSER CHECK PASSED AND THE FILM WAS STILL BLANK: frame0.js measured the
+     children's computed opacity and found them at 1, which was true, while their ancestor sat at 0.
+     Only reading the rendered MP4 caught it. Measure the artifact, not the page that makes it.
+     `nofade` is on the ads' hook scenes alone (the film's scene 1 is also s-hook and is untouched). */
+  .scene.nofade.act{animation:none;opacity:1}
 }
 /* The square is the tight one: scene 4 of A stacks a headline, six columns, three chips and two pills,
    and scene 5 now carries the seven places as well as the figures, the address and the QR. */
@@ -1559,7 +1569,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 <div id="film">
   <div class="aura a1"></div><div class="aura a2"></div>
   <div class="motes"><i style="--x:11%;--d:14s;--dl:0.0s"></i><i style="--x:48%;--d:21s;--dl:12.1s"></i><i style="--x:85%;--d:19s;--dl:10.2s"></i><i style="--x:25%;--d:17s;--dl:8.3s"></i><i style="--x:62%;--d:15s;--dl:6.4s"></i><i style="--x:2%;--d:22s;--dl:4.5s"></i><i style="--x:39%;--d:20s;--dl:2.6s"></i><i style="--x:76%;--d:18s;--dl:0.7s"></i><i style="--x:16%;--d:16s;--dl:12.8s"></i><i style="--x:53%;--d:14s;--dl:10.9s"></i><i style="--x:90%;--d:21s;--dl:9.0s"></i><i style="--x:30%;--d:19s;--dl:7.1s"></i><i style="--x:67%;--d:17s;--dl:5.2s"></i><i style="--x:7%;--d:15s;--dl:3.3s"></i><i style="--x:44%;--d:22s;--dl:1.4s"></i><i style="--x:81%;--d:20s;--dl:13.5s"></i><i style="--x:21%;--d:18s;--dl:11.6s"></i><i style="--x:58%;--d:16s;--dl:9.7s"></i></div>
-<section class="scene s-hook" data-d="5800" data-n="1" style="--kb:5800ms" data-ch="No ceiling, and the first year">
+<section class="scene s-hook nofade" data-d="5800" data-n="1" style="--kb:5800ms" data-ch="No ceiling, and the first year">
 
 <div class="full center">
   <span class="ghost" aria-hidden="true">?</span>

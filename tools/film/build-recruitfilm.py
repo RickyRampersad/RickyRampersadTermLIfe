@@ -1269,7 +1269,7 @@ if MODE == 'ad':
     MOMENTS = [('Before you join', 7), ('Your first 90 days', 5), ('Every day', 10), ('Every week', 6), ('Every month', 6), ('Your managers, too', 5)]
 
     if AD == 'A':
-        T.append(tscene(1, 's-hook', f"""
+        T.append(tscene(1, 's-hook nofade', f"""
 <div class="full center">
   <span class="ghost" aria-hidden="true">?</span>
   <span class="spot" style="--t0:{tat(1,"support")}ms"></span>
@@ -1305,7 +1305,7 @@ if MODE == 'ad':
   </div>
 </div>""", 'data-ch="Thirty-nine things"'))
     else:
-        T.append(tscene(1, 's-hook', f"""
+        T.append(tscene(1, 's-hook nofade', f"""
 <div class="full center">
   <span class="ghost" aria-hidden="true">?</span>
   <span class="spot" style="--t0:{tat(1,"afraid")}ms"></span>
@@ -2873,6 +2873,16 @@ body.paused #bars i.run::after{animation-play-state:paused}
      blocks, so a `now` element lands exactly where it would have. This rule sits last on purpose: it
      ties on specificity with `.scene.act .in`, so source order is what makes it win. */
   .scene.act .now,.scene.act .w.now i{animation:none;opacity:1;transform:none}
+  /* ...and the SCENE ITSELF has to skip its entrance, or none of that shows. `scene-in` runs
+     from opacity:0 / scale(1.05) / blur(10px) over .9s, so the container was still invisible at t=0
+     however many children were painted. The first scene has nothing to come in FROM — there is no
+     outgoing scene at t=0 — so the fade is pure cost there anyway.
+
+     THIS IS WHY THE BROWSER CHECK PASSED AND THE FILM WAS STILL BLANK: frame0.js measured the
+     children's computed opacity and found them at 1, which was true, while their ancestor sat at 0.
+     Only reading the rendered MP4 caught it. Measure the artifact, not the page that makes it.
+     `nofade` is on the ads' hook scenes alone (the film's scene 1 is also s-hook and is untouched). */
+  .scene.nofade.act{animation:none;opacity:1}
 }
 /* The square is the tight one: scene 4 of A stacks a headline, six columns, three chips and two pills,
    and scene 5 now carries the seven places as well as the figures, the address and the QR. */
