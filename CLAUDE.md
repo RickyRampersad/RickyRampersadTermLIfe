@@ -5713,6 +5713,38 @@ it is believed. It now checks `mp4 → capture` as well, and asserts each finish
 `films.json`** — the loudest signal of all, since the length is the one thing the built page decides, and
 39.4s against a page built for 40.4s cannot be explained away.
 
+### Which ad brought them — 13 November 2026
+
+Asked for in these words: *"where is the link to click and when they scan what happens how is it profiled?"*
+
+**Only the conversation booking is ours to profile. The apply click is not.** `/careers/` has two doors and they
+behave completely differently, which is the whole of the answer:
+
+| | |
+|---|---|
+| **Book a confidential conversation** (`#talk`) | posts `q.quote` with `form: 'careers'` to the Service Questionnaire `/exec` → one row on **Quote Requests**, reference `QT-yyMMdd-nnn`, one e-mail to the **Branch Manager alone** (`to: 'manager'`, so `QUOTE.CC` is not copied: the person asking may be contracted elsewhere today), a receipt to them through `clientMail_`, and a card on **`/hiring/`** under Conversations (`HIRE.SEATS` carries `'careers'`) |
+| **Start the Selection** (`#apply`) | leaves the site for Guardian's TalentNest posting 215291. **Nothing about it reaches the branch** — the candidate creates an account in Guardian's own ATS and we learn of them when HR says so. No tag, no referrer and no reference survives that hop |
+
+**The tag rides the FIELDS array, so it needs no Apps Script paste.** Every post link carries `?from=<tag>`; the
+page maps it to readable words through `SRCW` and sends it as the **first** field, `k: 'src'`, label *Came from*.
+The fields table is what the Branch Manager's own e-mail prints and what the hiring board's card shows, so the
+source is the first line he reads on both. It goes on `page` too, for the sheet's own column. `ref_from` was
+already being sent by the page and **dropped by the backend** — `Quotes.gs` has no column for it — which is why the
+value travels as a field instead. The tags: `ad-a-li`, `ad-a-wa`, `ad-a-fb`, `ad-b-fb`, `ad-b-ig`, `ad-b-wa`,
+`film`, `careersvideo`, `qr`, `post`.
+
+**The tag is clamped on the page**, to `[a-z0-9-]` and 24 characters, because it is a URL parameter that ends up
+printed in an e-mail he reads.
+
+**An untagged visit says "Direct, or a QR scan" rather than arriving blank.** The QR baked into the four MP4s
+encodes `https://rickyrampersadbranch.com/careers/` with nothing after it, so **a scan cannot be told from a direct
+visit** — and tagging it would mean re-rendering all four ads. A blank field reads as a fault; the sentence reads
+as the fact it is.
+
+`srccheck.js` in the session scratchpad covers it (49 checks: the real page on a phone against a mocked backend,
+each tag, an untagged visit, a tag in capitals, a junk tag clamped, the three human answers still present, the
+`Page` value, the backend's own reference on screen, and that the QR carries no tag).
+
 ## The renewal desk — general insurance, from last year to delivery
 
 `renewaldesk/` (staff), `myrenewal/` (the client) and `apps-script/GIRenewals.gs`, a sixth file in the Service

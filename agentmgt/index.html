@@ -2340,10 +2340,21 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       err.textContent=bad;err.classList.toggle('on',!!bad);if(bad){(bad.indexOf('name')>-1?f.name:bad.indexOf('phone')>-1?f.phone:f.email).focus();return}
       if(f.dataset.sending)return;f.dataset.sending='1';var was=btn.innerHTML;btn.disabled=true;btn.textContent='Sending\u2026';
       var who=val('who'),when=val('when'),note=val('note');
+      /* Which ad brought them. Every post link carries ?from=<tag>; a QR scan
+         arrives untagged, because the code baked into the four MP4s points at
+         /careers/ with nothing after it, so an untagged row says so plainly
+         rather than being left blank. The tag rides the FIELDS array, which the
+         Branch Manager's own e-mail and the hiring board both print, so this
+         needs no Apps Script paste; it goes on `page` too, for the sheet's own
+         column. Clamped to a short slug: it is a URL parameter that ends up
+         printed in an e-mail. */
+      var SRCW={'ad-b-fb':'Ad B, the second-year cliff — Facebook','ad-b-ig':'Ad B — Instagram Story','ad-b-wa':'Ad B — WhatsApp','ad-a-li':'Ad A, the contracted advisor — LinkedIn','ad-a-wa':'Ad A — WhatsApp, the agents’ groups','ad-a-fb':'Ad A — Facebook','film':'The recruiting film','careersvideo':'The film page','qr':'A QR scan','post':'A branch-page post'};
+      var from=String((new URLSearchParams(location.search)).get('from')||'').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,24);
+      var src=SRCW[from]||(from?'Tagged “'+from+'”':'Direct, or a QR scan');
       var body={action:'q.quote',form:'careers',code:'QT',line:'Careers',title:'Confidential conversation',
         core:{name:name,email:email,phone:phone,reach:'call',when:when,agent:'',notes:note,website:val('website')},
-        fields:[{section:'The conversation',k:'who',label:'Where they are now',value:who},{section:'The conversation',k:'when_talk',label:'Best time for the call',value:when},{section:'The conversation',k:'note',label:'One line he should know first',value:note}],
-        page:location.pathname,ref_from:(new URLSearchParams(location.search)).get('from')||'',at:new Date().toISOString()};
+        fields:[{section:'The conversation',k:'src',label:'Came from',value:src},{section:'The conversation',k:'who',label:'Where they are now',value:who},{section:'The conversation',k:'when_talk',label:'Best time for the call',value:when},{section:'The conversation',k:'note',label:'One line he should know first',value:note}],
+        page:location.pathname+(from?'?from='+from:''),ref_from:from,at:new Date().toISOString()};
       var ref='',sent=false,first=name.split(' ')[0];
       function finish(){f.dataset.sending='';btn.disabled=false;btn.innerHTML=was;if(!ref)ref=localRef();show(ref,sent,first,when);if(!sent)setTimeout(function(){mailRoad(body,ref)},60)}
       var ac=('AbortController' in window)?new AbortController():null,to=setTimeout(function(){if(ac)ac.abort()},12000);

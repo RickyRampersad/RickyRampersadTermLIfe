@@ -254,11 +254,15 @@ carry is LIMRA's own, and ours beside it.
 >
 > One confidential conversation. Twenty minutes, this week. Nobody will know you asked.
 >
-> https://rickyrampersadbranch.com/careers
+> https://rickyrampersadbranch.com/careers/?from=ad-a-li
 >
 > Reply *TALK* and I'll call you.
 
 Post it with `ad-a-square.mp4` attached (the feed plays the video; the link is for the rest).
+
+**Change the tag at the end of the link to match where you are posting it** — `ad-a-li` on LinkedIn, `ad-a-wa`
+in the agents' WhatsApp groups, `ad-a-fb` on Facebook. See "Which ad brought them" below; the tag is the only
+thing that tells you afterwards which post produced the booking.
 
 **For people new to insurance** (Facebook, Instagram, the branch's own circles):
 
@@ -272,11 +276,12 @@ Post it with `ad-a-square.mp4` attached (the feed plays the video; the link is f
 >
 > Seven places in the first class of FY27. One conversation, twenty minutes this week — bring your questions.
 >
-> https://rickyrampersadbranch.com/careers
+> https://rickyrampersadbranch.com/careers/?from=ad-b-fb
 >
 > Reply *TALK* and I'll call you.
 
-Post it with `ad-b-square.mp4` attached.
+Post it with `ad-b-square.mp4` attached. Change the tag per platform: `ad-b-fb` on Facebook, `ad-b-ig` on the
+Instagram Story's link sticker, `ad-b-wa` on WhatsApp.
 
 ### The link is never in the video. It goes in the post.
 
@@ -309,3 +314,30 @@ and not another app. That changed on 28 October 2026 and the paragraph that used
 old WhatsApp road, which is the sort of stale instruction somebody follows. There is no `wa.me` link left in
 `agentmgt/index.html`, `careers/index.html` or `careersvideo/index.html`; the booking posts `q.quote` with the
 form key `careers` and e-mails the Branch Manager alone. See "The conversation is booked on the page" above.
+
+### Which ad brought them
+
+The link in every post ends in `?from=<tag>`. Whoever books a conversation off that link arrives with the tag,
+and **"Came from" is the first line of the Branch Manager's own e-mail** and the first line on the card at
+`/hiring/`. Without it, forty bookings look identical and nothing says which post paid for them.
+
+| where you post it | the link to paste |
+|---|---|
+| **LinkedIn** (ad A) | `https://rickyrampersadbranch.com/careers/?from=ad-a-li` |
+| **The agents' WhatsApp groups** (ad A) | `https://rickyrampersadbranch.com/careers/?from=ad-a-wa` |
+| **Facebook** (ad A) | `https://rickyrampersadbranch.com/careers/?from=ad-a-fb` |
+| **Facebook** (ad B) | `https://rickyrampersadbranch.com/careers/?from=ad-b-fb` |
+| **Instagram Story's link sticker** (ad B) | `https://rickyrampersadbranch.com/careers/?from=ad-b-ig` |
+| **WhatsApp** (ad B) | `https://rickyrampersadbranch.com/careers/?from=ad-b-wa` |
+| the film page | `https://rickyrampersadbranch.com/careers/?from=careersvideo` |
+| anything else | `?from=post`, or any short tag of your own — it prints as `Tagged "yourword"` |
+
+**A QR scan cannot be tagged, and the row says so.** The code baked into the four MP4s encodes
+`https://rickyrampersadbranch.com/careers/` with nothing after it, so a scan and somebody typing the address in
+look the same; those rows read **"Direct, or a QR scan"** rather than arriving blank. Tagging scans would mean
+re-rendering all four ads, which is an hour's work and worth it only if the QR turns out to carry real traffic.
+
+**Nothing profiles the apply click.** "Start the Selection" leaves the site for Guardian's TalentNest posting;
+the candidate makes an account in Guardian's own system and the tag, the referrer and any reference are all lost
+at that hop. So the conversation booking is the only door that reports back, which is the other reason to lead
+with it in the posts.
