@@ -1156,6 +1156,19 @@ if MODE == 'ad':
     # validator's checks (CVD dE 16.1 protan, 25.2 tritan; normal 23.5); each line carries its own numbers
     # and label, so identity is never colour alone, and the text wears text tokens, never the series colour.
     SL = {'ind': (55, 14), 'us': (67, 31)}
+    # 13 Nov 2026 — "the lines can be refined and professional as its looking like a novice did this".
+    # He was right and it was measurable. The slope is 780px wide on the square, so a viewBox unit is
+    # 7.8px: stroke-width 1.5 and 1.9 were drawing 12px and 15px lines, with a glow on ours and r=1.5
+    # dots rendering as 23px blobs, under 55px serif numbers. That is a marker-pen chart. The published
+    # discipline is thin marks, ~2px lines, >=8px markers and a recessive grid; these are 0.72/0.86
+    # units (5.6px and 6.7px, about 3px in a feed tile) with no glow and r=0.85 dots.
+    #
+    # The bigger fault was that the two lines FLOATED: no y-axis, no gridlines, and a value printed at
+    # one end only, so a reader could not see what either line fell FROM or where it sat on the scale.
+    # The grid is the context — it is what shows both series living in the bottom third of a 0-100
+    # scale, which is the real story and is the thing that reads as considered rather than decorative.
+    GY = [0, 20, 40, 60]
+    X1, X2 = 22, 78
 
     def _y(v):
         return round(50 - (v / 70.0) * 42, 2)
@@ -1163,13 +1176,19 @@ if MODE == 'ad':
     def slope(t_ind, t_cliff=None, t_quote=None, t_us=None, t_n=None):
         """The retention slope. t_us None draws the industry alone (scene 2 of A); giving it lands ours on
         the same geometry, so two consecutive scenes read as one continuous graphic."""
-        x1, x2 = 17, 83
+        x1, x2 = X1, X2
+        grid = ''.join(
+            f'<line class="sl-g{" base" if g == 0 else ""}" x1="{x1 - 2.5}" y1="{_y(g)}" x2="{x2 + 2}" y2="{_y(g)}"/>'
+            f'<text class="sl-gy" x="{x1 - 4}" y="{_y(g) + 1.05}">{g}</text>' for g in GY)
+        # No value printed at the left end on purpose: with the grid there, a reader sees 55 sitting just
+        # under the 60 line and 67 just over it. A number on every point is the thing that makes a chart
+        # look busy; the two that are the POINT are called out, and the rest is read off the scale.
         i1, i2 = (_y(v) for v in SL['ind'])
         u1, u2 = (_y(v) for v in SL['us'])
         us = '' if t_us is None else f"""
       <path class="sl-us" pathLength="100" d="M{x1} {u1} L{x2} {u2}" style="--t0:{t_us}ms"/>
-      <circle class="sl-d us" cx="{x1}" cy="{u1}" r="1.5" style="--t0:{t_us}ms"/>
-      <circle class="sl-d us" cx="{x2}" cy="{u2}" r="1.5" style="--t0:{t_us + 700}ms"/>"""
+      <circle class="sl-d us" cx="{x1}" cy="{u1}" r=".85" style="--t0:{t_us}ms"/>
+      <circle class="sl-d us" cx="{x2}" cy="{u2}" r=".85" style="--t0:{t_us + 700}ms"/>"""
         # The label hangs ABOVE THE LINE'S OWN HEIGHT AT x=40, not above the midpoint of the two
         # endpoints: those are the same number only for a flat line. The first cut used the endpoint
         # mean, which put the words level with the year-one dot and read as a label on that reading
@@ -1183,24 +1202,65 @@ if MODE == 'ad':
       <text class="sl-cliff" x="{cx}" y="{round(cy - 13.6, 2)}" style="--t0:{t_cliff}ms">YEAR TWO &middot; THE CLIFF</text>"""
         quote = '' if t_quote is None else f"""
   <p class="sl-q in" style="--t0:{t_quote}ms">&ldquo;Agents are on their own, without much of the support provided during the first year.&rdquo;<em>LIMRA, 2025</em></p>"""
+        # The value sits clear of its own dot, not jammed against it, and is set in a tabular face at a
+        # data label's size rather than a 55px serif: a number touching the mark it labels is the other
+        # thing that reads as unconsidered.
         nums = '' if t_n is None else f"""
-      <text class="sl-n ind" x="{x2 + 3}" y="{i2 + 1.4}"><tspan class="cnt" data-to="14" data-at="{t_n}">14</tspan></text>
-      <text class="sl-n us" x="{x2 + 3}" y="{u2 + 1.4}"><tspan class="cnt" data-to="31" data-at="{t_n + 600}">31</tspan></text>"""
+      <text class="sl-n ind" x="{x2 + 4.5}" y="{i2 + 1.5}"><tspan class="cnt" data-to="14" data-at="{t_n}">14</tspan></text>
+      <text class="sl-n us" x="{x2 + 4.5}" y="{u2 + 1.5}"><tspan class="cnt" data-to="31" data-at="{t_n + 600}">31</tspan></text>"""
         return f"""
   <div class="slope">
     <svg viewBox="0 0 100 58" role="img" aria-label="Of every hundred advisors, 55 are still contracted after one year and 14 after four across the industry; in this branch, 67 after one year and 31 after four.">
-      <path class="sl-ax" d="M{x1} 52 L{x2} 52"/>
-      <text class="sl-x" x="{x1}" y="56.5">YEAR 1</text>
-      <text class="sl-x r" x="{x2}" y="56.5">YEAR 4</text>
+      <g class="sl-grid">{grid}</g>
+      <text class="sl-x" x="{x1}" y="56">YEAR 1</text>
+      <text class="sl-x r" x="{x2}" y="56">YEAR 4</text>
       <path class="sl-ind" pathLength="100" d="M{x1} {i1} L{x2} {i2}" style="--t0:{t_ind}ms"/>
-      <circle class="sl-d ind" cx="{x1}" cy="{i1}" r="1.5" style="--t0:{t_ind}ms"/>
-      <circle class="sl-d ind" cx="{x2}" cy="{i2}" r="1.5" style="--t0:{t_ind + 700}ms"/>{us}{cliff}{nums}
+      <circle class="sl-d ind" cx="{x1}" cy="{i1}" r=".85" style="--t0:{t_ind}ms"/>
+      <circle class="sl-d ind" cx="{x2}" cy="{i2}" r=".85" style="--t0:{t_ind + 700}ms"/>{us}{cliff}{nums}
     </svg>
     <div class="sl-key">
       <span class="in" style="--t0:{t_ind}ms"><i class="ind"></i>Across the industry</span>
       {'' if t_us is None else f'<span class="in" style="--t0:{t_us}ms"><i class="us"></i>In this branch</span>'}
     </div>
+    {'' if t_us is None else f'<p class="sl-ratio in" style="--t0:{t_us + 900}ms"><b>More than twice as many</b> still here at year four.</p>'}
     <p class="adsrc in" style="--t0:{(t_us or t_ind) + 700}ms">Of every 100 advisors still contracted. Industry: LIMRA and Finseca, 2022. Branch: our own record.</p>{quote}
+  </div>"""
+
+    def unit100(t_ind, t_us, t_n, t_gap=None):
+        """Two hundreds, side by side: every advisor who starts, and the ones still there at year four.
+
+        13 Nov 2026 — "can you have some more impactful charts and motion that impacts!! professionally
+        done!!". The refined slope was correct and quiet: at feed-tile size two thin lines carrying 31
+        and 14 ask a reader to measure a gap, which nobody does while scrolling. The spoken line is
+        "the industry keeps FOURTEEN IN A HUNDRED", so the honest and far stronger form is the one the
+        words already describe — a unit chart, 100 squares per series, the kept ones lit. It is a named
+        editorial form (the Guardian, the FT and the NYT all run it for exactly this), it needs no axis
+        and no scale to read, and the comparison is done by the eye in one glance instead of by
+        arithmetic. Each square is one advisor in a hundred, so nothing is abstracted or rounded.
+
+        The motion is the message rather than decoration: the squares light one at a time at the same
+        pace in both blocks, so a viewer WATCHES ours keep going after the industry's has stopped. Then
+        the seventeen past the industry's fourteen pulse once together — that is the branch's whole
+        claim, drawn, and it is the only flourish on the frame."""
+        def block(key, n, t0, label):
+            step = 42
+            cells = ''.join(
+                f'<i class="{"on" + (" xt" if key == "us" and i >= SL["ind"][1] else "") if i < n else ""}"'
+                f' style="--t0:{t0 + i * step}ms"></i>' for i in range(100))
+            return f"""
+    <div class="u1c">
+      <span class="u1h in" style="--t0:{max(0, t0 - 400)}ms"><i class="{key}"></i>{label}</span>
+      <div class="u1g {key}" style="--xt:{t0 + n * step}ms">{cells}</div>
+      <b class="u1n {key} in" style="--t0:{t0 + n * step}ms"><span class="cnt" data-to="{n}" data-at="{t_n if key == "ind" else t_n + 900}">{n}</span><em>of every 100</em></b>
+    </div>"""
+        gap = '' if t_gap is None else (
+            f'<p class="u1gap in" style="--t0:{t_gap}ms">'
+            f'<b>{SL["us"][1] - SL["ind"][1]} more in every hundred</b> still here at year four.</p>')
+        return f"""
+  <div class="unit100" role="img" aria-label="Of every 100 advisors contracted, 14 are still there after four years across the industry, and 31 in this branch.">
+    <div class="u1row">{block('ind', SL['ind'][1], t_ind, 'Across the industry')}{block('us', SL['us'][1], t_us, 'In this branch')}</div>
+    {gap}
+    <p class="adsrc in" style="--t0:{t_us + 1400}ms">Still contracted at year four. LIMRA and Finseca, 2022; our own record.</p>
   </div>"""
 
     # The 39 things, as the six moments the careers page itself groups them into, counted out as the line
@@ -1213,9 +1273,9 @@ if MODE == 'ad':
 <div class="full center">
   <span class="ghost" aria-hidden="true">?</span>
   <span class="spot" style="--t0:{tat(1,"support")}ms"></span>
-  <div class="mark top in" style="--t0:100ms">{MARK}</div>
-  <p class="eye in" style="--t0:{max(200, tat(1,"advisor") - 300)}ms">For a practising insurance advisor</p>
-  <h1 class="h xl">{words("Good at this.", 400)}<br><em class="wine">{words("And the support stopped.", max(600, tat(1,"support") - 700))}</em></h1>
+  <div class="mark top in now">{MARK}</div>
+  <p class="eye in now">For a practising insurance advisor</p>
+  <h1 class="h xl">{words("Good at this.", 400, cls='now')}<br><em class="wine">{words("And the support stopped.", max(600, tat(1,"support") - 700))}</em></h1>
   <div class="suppline" style="--t0:{tat(1,"good")}ms;--tc:{tat(1,"stopped")}ms"><i></i><b></b></div>
 </div>""", 'data-ch="And the support stopped"'))
         # Scene 2 draws the industry line alone and names the cliff; scene 3 lands ours on the same
@@ -1249,9 +1309,9 @@ if MODE == 'ad':
 <div class="full center">
   <span class="ghost" aria-hidden="true">?</span>
   <span class="spot" style="--t0:{tat(1,"afraid")}ms"></span>
-  <div class="mark top in" style="--t0:100ms">{MARK}</div>
-  <p class="eye in" style="--t0:300ms">A question</p>
-  <h1 class="h xl">{words("A career with no ceiling?", 400)}<br><em class="wine">{words("Afraid of the first year?", tat(1,"afraid") - 200)}</em></h1>
+  <div class="mark top in now">{MARK}</div>
+  <p class="eye in now">A question</p>
+  <h1 class="h xl">{words("A career with no ceiling?", 400, cls='now')}<br><em class="wine">{words("Afraid of the first year?", tat(1,"afraid") - 200)}</em></h1>
   <div class="ceil-line" style="--t0:{tat(1,"ceiling")}ms"></div>
 </div>""", 'data-ch="No ceiling, and the first year"'))
         # LIMRA names the CAUSE of the cliff as well as the cliff: new agents exhaust the friends-and-family
@@ -1297,11 +1357,15 @@ if MODE == 'ad':
     </div>
   </div>
 </div>""", 'data-ch="The leads come to you"'))
-        T.append(tscene(4, 's-cliff', f"""
+        # B's scene 4 is the only one in either ad that is purely "14 against 31 of a hundred" with no
+        # time story in the line, so it takes the unit chart. A keeps the slope, because its scenes 2
+        # and 3 ARE a time story — the fall, and the cliff named at year two — and a unit chart has no
+        # time axis to hang that on. Two forms, each on the words it actually fits.
+        T.append(tscene(4, 's-hund', f"""
 <div class="full center">
   <p class="eye in" style="--t0:200ms">{words("By year four.", 200, 120)}</p>
   <h2 class="h l">{words("The industry keeps 14.", tat(4,"industry") - 200, 95)} <em class="wine">{words("This branch keeps 31.", tat(4,"branch") - 150, 95)}</em></h2>
-  {slope(tat(4,"industry"), t_us=tat(4,"branch"), t_n=tat(4,"fourteen"))}
+  {unit100(tat(4,"industry"), tat(4,"branch"), tat(4,"fourteen"), t_gap=tat(4,"branch") + 2400)}
 </div>""", 'data-ch="Fourteen against thirty-one"'))
     # The address goes on two lines, as the full film's close already does. The old "agentmgt.com" was
     # twelve characters and sat happily in this column; "rickyrampersadbranch.com/careers" is thirty-two,
@@ -1600,6 +1664,15 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .lead-in .ic{grid-row:span 2;font-size:calc(var(--u)*3.2)}
 .lead-in b{font:700 calc(var(--u)*2.2)/1.1 var(--text)}
 .lead-in span{font:500 calc(var(--u)*1.9)/1.2 var(--text);opacity:.9}
+/* ONE of these is a notification landing — a solid teal slab is right for that, and the film keeps it.
+   THREE stacked inside a board card are rows of a list, and three solid slabs read as three buttons
+   rather than as a product. So on the ad's board they take a surface tint with a teal rule down the
+   left edge and the bolt in teal: the hierarchy then runs card > row > icon instead of everything
+   shouting at one volume. Scoped to .s-fill so the film's single notification is untouched. */
+.s-fill .lead-in{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-left:calc(var(--u)*.45) solid var(--a);border-radius:calc(var(--u)*.5) calc(var(--u)*1.2) calc(var(--u)*1.2) calc(var(--u)*.5)}
+.s-fill .lead-in .ic{color:var(--aL)}
+.s-fill .lead-in span{color:var(--mute);opacity:1}
 .scene.act .lead-in{animation:slidein .6s var(--out) both;animation-delay:var(--t0)}
 @keyframes slidein{to{opacity:1;transform:none}}
 .seatrow{display:flex;justify-content:center;gap:calc(var(--u)*2);margin:calc(var(--u)*1) 0}
@@ -1637,19 +1710,28 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
    the offset falls under it, which has cost a shot in another film. ─────────────────────────────── */
 .slope{width:min(100%,calc(var(--u)*86));margin:calc(var(--u)*1.5) auto 0}
 .slope svg{display:block;width:100%;height:auto;max-width:100%;overflow:visible}
-.sl-ax{stroke:rgba(255,255,255,.14);stroke-width:.35}
-.sl-x{fill:var(--mute2);font:700 3.1px var(--text);letter-spacing:.14em;text-anchor:start}
+/* The grid is the context, so it is recessive: a hairline, the baseline a touch stronger, and the scale
+   labels small enough that the two series are what the eye lands on. */
+.sl-g{stroke:rgba(255,255,255,.09);stroke-width:.18}
+.sl-g.base{stroke:rgba(255,255,255,.26);stroke-width:.3}
+.sl-gy{fill:var(--mute2);opacity:.75;font:600 2.5px var(--text);text-anchor:end;font-variant-numeric:tabular-nums}
+.sl-x{fill:var(--mute2);font:700 2.9px var(--text);letter-spacing:.14em;text-anchor:start}
 .sl-x.r{text-anchor:end}
-.sl-ind,.sl-us{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
-.sl-ind{stroke:#C97A3A}
-.sl-us{stroke:#0E93B0;stroke-width:1.9;filter:drop-shadow(0 0 1.6px rgba(14,147,176,.75))}
+/* 0.72 and 0.86 units = 5.6px and 6.7px at the square's 780px plot, about 3px in a feed tile: a drawn
+   line rather than a marker stroke. Ours is the heavier of the two and the only one at full opacity,
+   which is what makes it the subject — no glow, which was the single most amateur thing on the frame. */
+.sl-ind,.sl-us{fill:none;stroke-width:.72;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
+.sl-ind{stroke:#C97A3A;opacity:.82}
+.sl-us{stroke:#0E93B0;stroke-width:.86}
 .scene.act .sl-ind,.scene.act .sl-us{animation:sldraw 1.15s var(--out) both;animation-delay:var(--t0)}
-.sl-d{opacity:0}
+/* A 2px ring in the ground colour, so the dot reads as a data point sitting ON the line rather than a
+   blob swelling out of it — the published rule for a mark that overlaps another. */
+.sl-d{opacity:0;stroke:var(--bg);stroke-width:.26}
 .sl-d.ind{fill:#C97A3A}
 .sl-d.us{fill:#0E93B0}
 .scene.act .sl-d{animation:sldot .5s var(--pop) both;animation-delay:calc(var(--t0) + 120ms)}
-.sl-n{font:800 7px var(--display);letter-spacing:-.03em;text-anchor:start;font-variant-numeric:tabular-nums}
-.sl-n.ind{fill:#e3a86f}
+.sl-n{font:800 4.8px var(--text);letter-spacing:-.01em;text-anchor:start;font-variant-numeric:tabular-nums}
+.sl-n.ind{fill:#e3a86f;opacity:.86}
 .sl-n.us{fill:#7fe2f4}
 .sl-lead{stroke:var(--mute2);stroke-width:.3;stroke-dasharray:1 1.2;opacity:0}
 .sl-cliff{fill:var(--mute);font:800 3.2px var(--text);letter-spacing:.1em;text-anchor:middle;opacity:0}
@@ -1659,6 +1741,52 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .sl-key i{width:calc(var(--u)*2.6);height:calc(var(--u)*.7);border-radius:99px;flex:none}
 .sl-key i.ind{background:#C97A3A}
 .sl-key i.us{background:#0E93B0}
+/* 13 Nov 2026. The y-axis here is zero-based (_y(0) lands on the axis), which is right and is also why
+   the two lines come out near-parallel: the gap grows only from 7.2 to 10.2 viewBox units. So the eye
+   reads "a bit better" off a picture whose whole point is "more than twice as many" — 31 against 14 is
+   2.2x. The honest fix is NOT to break the baseline to dramatise the gap; it is to state the ratio in
+   words, which the eye cannot compute off two sloping lines at feed-tile size. */
+.sl-ratio{margin-top:calc(var(--u)*1.6);text-align:center;font:500 calc(var(--u)*2.4)/1.35 var(--text);color:var(--mute)}
+.sl-ratio b{color:#5fd0e6;font-weight:800}
+/* ── the hundred (B's scene 4). One square = one advisor in a hundred. ─────────────────────────────── */
+.unit100{width:min(100%,calc(var(--u)*88));margin:calc(var(--u)*2.2) auto 0}
+.u1row{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*5);align-items:start}
+.u1c{display:grid;gap:calc(var(--u)*1.4);justify-items:center}
+.u1h{display:inline-flex;align-items:center;gap:calc(var(--u)*1);font:700 calc(var(--u)*2.3)/1 var(--text);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.u1h i{width:calc(var(--u)*2.4);height:calc(var(--u)*.65);border-radius:99px;flex:none}
+.u1h i.ind{background:#C97A3A}.u1h i.us{background:#0E93B0}
+/* 10 x 10. gap is a RATIO of the cell, so the block stays square and the grid reads as one object at
+   any width; aspect-ratio on the cell is what keeps the squares square without a fixed size. */
+.u1g{display:grid;grid-template-columns:repeat(10,1fr);gap:calc(var(--u)*.52);width:100%}
+.u1g i{aspect-ratio:1;border-radius:calc(var(--u)*.35);background:rgba(255,255,255,.07);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+/* The count sits on ONE line with its unit, not stacked over it: stacked cost 55px of height that the
+   grid needs, and a figure reads perfectly well beside its label when the label is small enough. */
+.u1n{display:flex;align-items:baseline;justify-content:center;gap:.4em;font:800 calc(var(--u)*6.2)/1 var(--display);
+  letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.u1n.ind{color:#e3a86f}.u1n.us{color:#7fe2f4}
+.u1n em{font:600 calc(var(--u)*2.1)/1 var(--text);font-style:normal;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--mute2)}
+.u1gap{margin-top:calc(var(--u)*2);text-align:center;font:500 calc(var(--u)*2.7)/1.35 var(--text);color:var(--mute)}
+.u1gap b{color:#7fe2f4;font-weight:800}
+/* The squares light one at a time at the SAME pace in both blocks, so the viewer watches ours keep
+   going after the industry's has stopped — the motion is the comparison. `both` fill means a square
+   that has not had its turn yet is at the keyframe's 0%, which is the unlit surface, so nothing is
+   ever stranded if the script does not run. */
+@keyframes u1on{from{background:rgba(255,255,255,.07);transform:scale(.55)}
+  55%{transform:scale(1.14)}to{background:var(--c);transform:none}}
+.u1g i{--c:#C97A3A}.u1g.us i{--c:#0E93B0}
+.scene.act .u1g i.on{animation:u1on .36s var(--pop) both;animation-delay:var(--t0)}
+/* The seventeen past the industry's fourteen pulse once, together, when the block is full: the branch's
+   whole claim, drawn. One flourish on the frame and it carries a meaning — not decoration.
+   The ring is a ::after whose OPACITY animates. Animating box-shadow itself is on web.dev's
+   do-not-animate list and this repository already keeps that rule for the homepage's hover lift;
+   seventeen squares re-painting their shadow every frame is exactly the case it exists for. */
+.u1g i.xt{position:relative}
+.u1g i.xt::after{content:"";position:absolute;inset:calc(var(--u)*-.42);border-radius:calc(var(--u)*.6);
+  box-shadow:0 0 0 calc(var(--u)*.24) rgba(127,226,244,.55);opacity:0;pointer-events:none}
+@keyframes u1pulse{0%,100%{opacity:0}45%{opacity:1}}
+.scene.act .u1g i.on.xt::after{animation:u1pulse 1.05s var(--ease) 2;animation-delay:calc(var(--xt) + 1.3s)}
 .sl-q{width:min(100%,calc(var(--u)*72));margin:calc(var(--u)*1.6) auto 0;padding-left:calc(var(--u)*2);border-left:calc(var(--u)*.4) solid #C97A3A;text-align:left;font:500 italic calc(var(--u)*2.3)/1.35 var(--text);color:var(--mute)}
 .sl-q em{display:block;margin-top:.45em;font:700 calc(var(--u)*1.9)/1 var(--text);font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:var(--mute2)}
 @keyframes sldraw{to{stroke-dashoffset:0}}
@@ -2737,6 +2865,14 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .miss.nmlist span{font-size:calc(var(--u)*3)}
   .empt{font-size:calc(var(--u)*2.5)}
   .suppline{width:100%}
+  /* THE FIRST FRAME IS THE THUMBNAIL. Measured 13 Nov 2026 on the rendered MP4: frame 0 of every ad cut
+     carried 0.00% ink — an empty navy square. In a feed that frame is what a person sees before autoplay
+     reaches the first keyframe, and on any surface where autoplay is off or slow it is the whole of the
+     first impression. Anything carrying `now` is painted at t=0 with no entrance; the rest of the scene
+     still builds as before. The resting state is copied from the `word` and `up` keyframes' own `to`
+     blocks, so a `now` element lands exactly where it would have. This rule sits last on purpose: it
+     ties on specificity with `.scene.act .in`, so source order is what makes it win. */
+  .scene.act .now,.scene.act .w.now i{animation:none;opacity:1;transform:none}
 }
 /* The square is the tight one: scene 4 of A stacks a headline, six columns, three chips and two pills,
    and scene 5 now carries the seven places as well as the figures, the address and the QR. */
@@ -2749,9 +2885,42 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .s-cliff .slope{zoom:.86;margin-top:calc(var(--u)*1)}
   .s-cliff .h.l{font-size:calc(var(--u)*5)}
   .s-cliff .sl-q{font-size:calc(var(--u)*2.4)}
-  .s-cta .seatrow i{width:calc(var(--u)*5.4);height:calc(var(--u)*5.4);font-size:calc(var(--u)*2.4)}
+  /* The hundred is a SQUARE block, so its height follows its width: on the 1:1 frame the two blocks are
+     narrowed until the whole thing — eyebrow, two-line headline, headings, grids, counts, the gap line
+     and the source — clears the burned caption band. adcheck.js failed it at 972 of 1080 first time. */
+  .s-hund .unit100{width:min(100%,calc(var(--u)*74));margin-top:calc(var(--u)*1.4)}
+  .s-hund .u1row{gap:calc(var(--u)*5)}
+  .s-hund .h.l{font-size:calc(var(--u)*7.4)}
+  .s-hund .u1h{font-size:calc(var(--u)*2.1)}
+  .s-hund .u1n{font-size:calc(var(--u)*5.4)}
+  .s-cta .seatrow i{width:calc(var(--u)*6.2);height:calc(var(--u)*6.2);font-size:calc(var(--u)*2.8)}
   .s-cta .seatrow{gap:calc(var(--u)*1.4)}
   .s-cta .h.url{font-size:calc(var(--u)*4.6)}
+  /* The close was two columns of very different length: the left ran 640px and the right held a mark and
+     a QR card inside 330px, each centred in its own column, so the right half read as a floating badge
+     over 400px of nothing. On the square the QR earns its own side — it is the one thing on the frame a
+     person acts on with their phone — so it takes a third of the width and the card grows with it. */
+  .cta{grid-template-columns:1.1fr .9fr;gap:calc(var(--u)*3)}
+  .s-cta .qr svg{width:calc(var(--u)*34);height:calc(var(--u)*34)}
+  .s-cta .qr{padding:calc(var(--u)*2.8)}
+  .s-cta .qr span{font-size:calc(var(--u)*2.4)}
+  /* 13 Nov 2026. The square was a 16:9 composition sitting in a 1:1 box: the padding was already right
+     (754px of usable height) but the type was sized for a 1280-wide page, so a short scene left 190px
+     of empty navy above AND below it. Measured on the rendered MP4: the lower 45% of the picture was
+     essentially empty in 9 of 81 samples. A square tile renders about 500px wide in a feed, so this is
+     the frame that needs the LARGEST type, not the smallest. The chart and scene 4 of A keep their own
+     sizes below — those rules are (0,2,0) and win over these whatever the order. */
+  .s-hook .h.xl{font-size:calc(var(--u)*15)}
+  .h.xl{font-size:calc(var(--u)*13.4)}.h.l{font-size:calc(var(--u)*9)}
+  .sub{font-size:calc(var(--u)*4)}
+  .eye{font-size:calc(var(--u)*2.9)}
+  /* The HEADLINES take the recovered room; the cards beside them do NOT. A first cut bumped the list and
+     board type too and adcheck.js failed scenes 2 and 3 of B at once — "Nobody left to call" at 920 of
+     1080 and the board's last lead at 927, both inside the burned caption band. A column that already
+     fills its box has no room to give, so on the square the scenes that are a headline ALONE grow and
+     the scenes built round a card keep the portrait sizes. */
+  .s-names .h.xl,.s-names .h.l,.s-fill .h.l{font-size:calc(var(--u)*7.8)}
+  .s-names .sub,.s-fill .sub{font-size:calc(var(--u)*3.4)}
 }
 </style>
 </head>
