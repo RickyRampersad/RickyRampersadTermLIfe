@@ -411,11 +411,14 @@ Once an answer is in: put the address in `CLAIMS.DESK`, add the key to
 
 ### Where claimstt.com fits
 
-Nowhere, yet — and it is not in the way. GitHub Pages takes **one** custom
-domain per site and this one is `rickyrampersadbranch.com`, so claimstt.com
-can only redirect there until hosting moves. Go live on
-`rickyrampersadbranch.com/claims/` and treat the domain as a separate job;
-see *Pointing claimstt.com at it* below.
+GitHub Pages takes **one** custom domain per repository and the root `CNAME`
+holds `rickyrampersadbranch.com`, so claimstt.com cannot be a second Pages
+domain. Two routes, both presses in the GoDaddy account: **forward** it to
+`rickyrampersadbranch.com/claims` (two minutes, recommended, and what
+agentmgt.com does), or give it **its own Netlify site** from the `claims`
+folder so the address persists — `claims/netlify.toml` holds everything that
+needs. See *Pointing claimstt.com at it* below. Go live on
+`rickyrampersadbranch.com/claims/` either way; the domain is a separate job.
 
 ---
 
@@ -440,8 +443,10 @@ other end:
 - **automatic follow-up** that chases the client for missing documents and
   nudges the desk on stalled claims, and stops the moment the claim closes.
 
-Everything runs on free tiers: Netlify (hosting) + Google Apps Script
-(storage, email, PDF). No servers, no monthly cost.
+Everything runs on free tiers: GitHub Pages at
+`rickyrampersadbranch.com/claims` (and Netlify too, if claimstt.com takes
+Route B below) + Google Apps Script for storage, email and PDF. No servers,
+no monthly cost.
 
 ---
 
@@ -594,45 +599,83 @@ hosting moves to Netlify — GitHub Pages cannot do redirects.)
 
 ### Pointing claimstt.com at it
 
-**claimstt.com is not a placeholder, and since the JotForms were switched off
-it is a dead end for clients.** Found 10 November 2026, when the branch
-manager opened it expecting the new page: it serves a **GoDaddy** site (DNS
-resolves to GoDaddy's IPs, not GitHub's `185.199.108-111.153`) with one of the
-retired JotForms embedded in it, so the page now shows JotForm's own
-*"Form not found. This form is disabled."* card. Anybody who goes to
-claimstt.com cannot file a claim, and nothing on the page says where to go
-instead.
+**claimstt.com is not a placeholder, and it is a dead end for clients.** Found
+10 November 2026, when the branch manager opened it expecting the new page: it
+serves a **GoDaddy** site (DNS resolves to GoDaddy's IPs, not GitHub's
+`185.199.108-111.153`), at that point with one of the retired JotForms
+embedded, showing JotForm's own *"Form not found. This form is disabled."*
+card. Anybody who goes to claimstt.com cannot file a claim, and nothing on the
+page says where to go instead.
 
-**This repository has never served that domain and cannot fix it from here.**
-The GoDaddy site is outside the repository and outside Apps Script; the fix is
-in the GoDaddy account.
+**Re-measured 13 November 2026, when the branch manager hit a timeout on it.**
+The retired JotForm is gone; what is there now is a **GoDaddy Website Builder
+shell** with none of the branch's content on it — a template with Home /
+Contact / Services, `Copyright © 2025`, a sign-in still showing
+`filler@godaddy.com` as its placeholder, and a "Claim Submission" menu item
+whose page is a **404**. **And it is genuinely broken**: each page tried three
+times gave `200 200 000`, `000 200 000`, `000 200 000`. It fails about two
+requests in three, so a client is as likely to get a timeout as a page.
 
-**The two-minute fix: GoDaddy domain forwarding.** My Products → claimstt.com
-→ Manage → **Forwarding** → forward to `https://rickyrampersadbranch.com/claims`,
-**Permanent (301)**, and **Forward only — never "Forward with masking"**.
-Masking serves the page inside a frame under the old address, which breaks the
-sign-in (the six-digit code), the uploads and the claim reference, and leaves
-every link pointing at a domain the page does not know. If GoDaddy refuses
-because a Websites + Marketing site is published on the domain, unpublish that
-site first — it is the thing showing the dead form.
+**This repository has never served that domain.** The GoDaddy site is outside
+the repository and outside Apps Script, and the GoDaddy connector available in
+a session reads domain availability only — it cannot change DNS. Both routes
+below are presses in the GoDaddy account.
 
-**Or keep the GoDaddy page** and edit it: delete the JotForm section and put a
-button to `https://rickyrampersadbranch.com/claims` in its place. Slower to
-maintain, and it leaves two pages telling clients two things.
+### Route A — forward it (two minutes, nothing to maintain)
 
-**The end state, when there is time:**
+My Products → claimstt.com → Manage → **Forwarding** → forward to
+`https://rickyrampersadbranch.com/claims`, **Permanent (301)**, **Forward only
+— never "Forward with masking"**. Masking serves the page inside a frame under
+the old address, which breaks the six-digit sign-in, the uploads and the claim
+reference, and `claims/netlify.toml` sets `X-Frame-Options: SAMEORIGIN` partly
+to make sure it cannot work. If GoDaddy refuses because a Websites + Marketing
+site is published on the domain, **unpublish that site first** — it is the
+shell described above, and it holds the DNS.
 
-- **Stay on GitHub Pages:** GoDaddy DNS → CNAME `claimstt.com` (and `www`) to
-  `rickyrampersad.github.io`. But a GitHub Pages site takes **one** custom
-  domain, and this one already uses rickyrampersadbranch.com — so claimstt.com
-  redirects to the branch **homepage**, not to `/claims/`. That is worse than
-  forwarding, which lands on the exact page.
-- **Move hosting to Netlify** (free, imports this repo directly): both
-  domains can then point at the same site, the `netlify.toml` short links
-  and `/data/*` blocking come alive, and the repo could go private without
-  taking the site down. This is the better end state.
+The client types claimstt.com and lands on the claims page; the address bar
+reads `rickyrampersadbranch.com/claims`. This is what **agentmgt.com** does
+today, and it is the recommended route.
 
-Until then everything works at `rickyrampersadbranch.com/claims/`, which is
+### Route B — serve it, keeping claimstt.com in the address bar
+
+GitHub Pages takes **one** custom domain per repository and the root `CNAME`
+holds `rickyrampersadbranch.com`, so claimstt.com cannot be a second Pages
+domain. It gets its own host, which is the arrangement donthaveanagent.com and
+agentmgt.com already use:
+
+Netlify → **Add new site → Import an existing project** → this repository →
+**base directory `claims`**, publish directory `.` → Deploy. Then **Domain
+management → Add a domain → claimstt.com** and follow its DNS instructions.
+Unpublish the GoDaddy builder site first, or it keeps the DNS.
+
+**Import from Git. NEVER Netlify Drop.** A dragged folder is a snapshot that
+replaces every file and then rots: on 23 August 2026 a manual deploy of
+another branch site silently deleted four pages and a 22 MB video, two of them
+not linked from a home page, so nothing on screen showed they were gone. A
+linked repository redeploys on every push, which is the only way the two
+addresses can be guaranteed to serve the same files.
+
+**`claims/netlify.toml` already holds everything that route needs**, and it is
+**inert on GitHub Pages** (Pages ignores it, exactly as the root one is
+ignored), so adding it changed nothing about the live site. It covers the four
+paths that would otherwise 404 from another domain, and the two that matter are
+not cosmetic: `claim-checks.js` does the cover-term checks and
+`claim-forms.js` fills Guardian's own PDF, so a naive deploy gives a page that
+looks perfect and silently cannot do either.
+
+Both layouts are checked in a real browser — the branch site with the page at
+`/claims/`, and a claimstt-style site with the folder as the web root, the
+`netlify.toml` rewrites parsed out of the real file and applied. Thirteen
+checks: both scripts loading and their APIs present, the wizard rendering, no
+404 on a script or the mark, no page errors, and no bare `/` link left to 404.
+
+**What Route B costs:** the same page is then served by two hosts. One folder,
+so the files cannot drift — but the view counter and the referrer log now have
+two possible answers to "where did this come from", and anything that ever
+hard-codes an absolute path in `claims/` breaks one host silently. Route A has
+none of that.
+
+Either way everything works at `rickyrampersadbranch.com/claims/`, which is
 live and current — check the live page before assuming otherwise.
 
 ---
@@ -647,9 +690,10 @@ Apps Script project may only have one `doGet` and one `doPost`, and `Code.gs`
 2. **Extensions → Apps Script**, delete the placeholder, paste all of
    [`apps-script/Claims.gs`](apps-script/Claims.gs).
 3. Edit the `CLAIMS` config at the top:
-   - `DESK` — the claims address for each line of business. **Check these
-     before going live**; the health, life and pension addresses are best
-     guesses and the motor/property one is the general claims desk.
+   - `DESK` — the claims address for each line of business. Motor, health and
+     life are confirmed off the branch's own claim threads; **property and
+     pension are blank** and a claim on those two is passed on by hand until
+     Guardian confirms an inbox.
    - `MAIL_CC` — already set to you, sales support and the branch inbox.
    - `SITE_KEY` — change it, and change it to match in `claims/index.html`.
 4. **Run → setupClaims**, and approve the permissions (Sheets, Drive, Gmail).
@@ -1140,9 +1184,11 @@ now* to receive one yourself.
       with it, so send the team the new one.
 - [ ] **Git history**: purge the client-data commits, or make the repo
       private and move hosting to Netlify — see *Read this first*
-- [ ] **claimstt.com forwarded** — it is a live GoDaddy site serving a retired
-      JotForm, so it tells every client the form is disabled. Two minutes in
-      the GoDaddy account; see *Pointing claimstt.com at it*
+- [ ] **claimstt.com pointed at the claims page** — it serves a GoDaddy
+      Website Builder shell with none of our content on it, and it times out
+      about two requests in three, so a client is as likely to get nothing as
+      a page. Either forward it (two minutes) or give it its own Netlify site
+      from the `claims` folder; see *Pointing claimstt.com at it*
 - [ ] **Guardian compliance sign-off** before the site takes live client data
 
 That last one is not a formality. The system holds names, addresses, policy

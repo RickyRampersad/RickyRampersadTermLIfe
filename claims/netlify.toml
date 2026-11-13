@@ -1,0 +1,78 @@
+# claimstt.com — this folder, served by Netlify at its own domain.
+#
+# WHY NETLIFY AND NOT GITHUB PAGES: Pages takes ONE custom domain per
+# repository, and the root CNAME file holds rickyrampersadbranch.com. So
+# claimstt.com cannot be a second Pages domain; it needs its own host, which
+# is the same arrangement donthaveanagent.com and agentmgt.com already use.
+#
+# THIS FILE IS INERT ON GITHUB PAGES. Pages ignores it, exactly as the root
+# netlify.toml is ignored (see the hosting note in CLAUDE.md), so nothing here
+# can change what rickyrampersadbranch.com/claims serves. The same files are
+# served by both hosts from one folder, so the two can never drift.
+#
+# TO SET IT UP: Netlify → Add new site → Import from Git → this repository,
+# base directory "claims", publish directory ".". Then Domain management →
+# add claimstt.com. Remove or disable the GoDaddy Website Builder site on that
+# domain first, or it keeps the DNS and nothing here is reached.
+#
+# NEVER deploy this by dragging the folder onto Netlify Drop. A manual deploy
+# replaces every file, and on 23 August 2026 that silently deleted four pages
+# and a 22 MB video from another branch site. Link it to the repository.
+
+[build]
+  publish = "."
+
+# The branch shield and the tab icon live at the repository root, which is
+# above this publish directory. Proxied from the branch site rather than
+# copied, so there is one mark file and it cannot drift from the homepage's.
+[[redirects]]
+  from = "/site-mark.svg"
+  to = "https://rickyrampersadbranch.com/site-mark.svg"
+  status = 200
+
+[[redirects]]
+  from = "/site-icon.svg"
+  to = "https://rickyrampersadbranch.com/site-icon.svg"
+  status = 200
+
+# A safety net, not a requirement: anything still written /claims/<file> — an
+# old bookmark, a link in a letter already sent, or a path that creeps back
+# into the page — resolves to the file itself rather than 404ing. 200 is a
+# rewrite, so the address the client sees does not change.
+[[redirects]]
+  from = "/claims/*"
+  to = "/:splat"
+  status = 200
+
+# The short addresses the branch already hands out for the main site.
+[[redirects]]
+  from = "/claim"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/file-a-claim"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/staff"
+  to = "/staff.html"
+  status = 301
+
+# Matches the headers agentmgt.com serves. SAMEORIGIN matters here beyond the
+# usual: the claims page signs a client in and keeps their token in
+# localStorage, so it must never run inside somebody else's frame — which is
+# also why GoDaddy's "forward with masking" is the one option to refuse.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

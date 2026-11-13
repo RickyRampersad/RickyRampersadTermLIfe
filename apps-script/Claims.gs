@@ -1758,7 +1758,12 @@ function claimTaskSubject_(claim) {
 function claimTaskBody_(claim, claimsId, ids, files, missing) {
   var L = [];
   var add = function (label, value) { if (value) L.push(label + ': ' + value); };
-  L.push('Filed on claimstt.com and forwarded to the claims desk.');
+  /* The site is rickyrampersadbranch.com/claims. NOT claimstt.com, which this
+     line named until 13 November 2026: that domain is a GoDaddy Website
+     Builder shell with none of our content on it, and it times out about two
+     requests in three. Whoever opens this task may follow the address, so it
+     has to be the one that works. */
+  L.push('Filed on rickyrampersadbranch.com/claims and forwarded to the claims desk.');
   L.push('');
   add('Reference', claim.ref);
   add('Line', submissionType_(claim));
