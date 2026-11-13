@@ -41,7 +41,8 @@
  *        Execute as: Me
  *        Who has access: Anyone
  *      Copy the /exec URL.
- *   6. Paste that URL into CONFIG.API_URL in claims/index.html
+ *   6. Paste that URL into CONFIG.API_URL in BOTH claims/index.html and
+ *      claims/staff.html — they must always point at the same backend
  *      and set CONFIG.SITE_KEY there to the same SITE_KEY.
  *
  *  NOTE ON doGet / doPost: an Apps Script project may only have
@@ -57,7 +58,7 @@ var CLAIMS = {
    * that was pasted and never deployed — from outside those look identical,
    * and so does a later paste of an older copy winning the same function
    * name. Change it with any change worth deploying. */
-  BUILD: '2026-11-13a',
+  BUILD: '2026-11-13b',
 
   /* ---- where notifications go ---------------------------- */
 
@@ -512,6 +513,47 @@ function testModeOn_() {
 function testModeOff_() {
   PropertiesService.getScriptProperties().deleteProperty('TEST_MODE');
   return claimsSetupSay_('Test mode is OFF — emails go to real recipients again.');
+}
+
+/* This web app's own /exec address, which the feedback link in a closed
+ * claim's e-mail is built from.
+ *
+ * It used to be CLAIMS.SURVEY_URL alone: a constant somebody had to paste the
+ * deployment URL into, by hand, after every deploy. Nobody ever did, so client
+ * feedback was quietly OFF from the day it was built until 13 November 2026 —
+ * found only because a setup log happened to print the reason out loud. **A
+ * setting that has to be hand-edited after a deploy is a setting that will be
+ * wrong**, and the failure is silent: a closed claim just logs
+ * "survey-skipped" and nobody is ever asked how it went.
+ *
+ * So, in order: the constant if somebody has set it deliberately; then the
+ * address noted from any real request; then the runtime's own answer. The
+ * middle one is what makes it self-healing, and it is there because
+ * ScriptApp.getService().getUrl() is dependable inside a web-app request and
+ * NOT dependable from a time trigger — and the survey is sent by
+ * claimsFollowUp, which is a trigger. The Premium Due Desk learned that the
+ * same way and keeps the address in a property for the same reason. */
+function surveyUrl_() {
+  if (CLAIMS.SURVEY_URL) return String(CLAIMS.SURVEY_URL);
+  try {
+    var noted = PropertiesService.getScriptProperties().getProperty('CLAIMS_EXEC_URL');
+    if (noted) return String(noted);
+  } catch (err) { /* fall through to the runtime */ }
+  try {
+    var u = ScriptApp.getService().getUrl();
+    if (u) return String(u);
+  } catch (err) { /* not a web-app context */ }
+  return '';
+}
+
+/** Remember where we are served from, so a trigger can build a link later. */
+function noteExecUrl_() {
+  try {
+    var u = ScriptApp.getService().getUrl();
+    if (!u) return;
+    var p = PropertiesService.getScriptProperties();
+    if (p.getProperty('CLAIMS_EXEC_URL') !== String(u)) p.setProperty('CLAIMS_EXEC_URL', String(u));
+  } catch (err) { /* never let this break a client's request */ }
 }
 
 /* The same two, under names the editor's Run list will show.
@@ -2569,6 +2611,7 @@ function claimPing_() {
 }
 
 function doGet(e) {
+  noteExecUrl_();
   var p = (e && e.parameter) || {};
   /*  The feedback page is HTML, not JSON, so it is answered before the
    *  action switch. A bad token and an unknown reference get the same
@@ -2597,6 +2640,7 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  noteExecUrl_();
   var body = {};
   try {
     body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
@@ -4547,7 +4591,7 @@ function surveyTokenOk_(ref, token) {
 }
 
 function surveyLink_(ref, score) {
-  var url = String(CLAIMS.SURVEY_URL || '');
+  var url = surveyUrl_();
   if (!url) return '';
   return url + (url.indexOf('?') > -1 ? '&' : '?') +
     'survey=' + encodeURIComponent(ref) +
@@ -4564,9 +4608,9 @@ function surveySent_(hit) {
 
 function sendClaimSurvey_(claim, hit) {
   if (!claim.email) return false;
-  if (!CLAIMS.SURVEY_URL) {
+  if (!surveyUrl_()) {
     logClaim_(claim.ref, 'survey-skipped', 'system',
-      'CLAIMS.SURVEY_URL is not set — no link to send');
+      'no /exec address known yet — open the web app once and it notes its own');
     return false;
   }
   var declined = /declin/i.test(claim.status);
@@ -4879,12 +4923,13 @@ function claimSurveyStats_() {
 /** Shows the branch exactly what a client would get, without sending it. */
 function previewClaimSurvey() {
   var ui = SpreadsheetApp.getUi();
-  if (!CLAIMS.SURVEY_URL) {
-    ui.alert('No survey URL is set.\n\n' +
-      'The feedback link has to point at this web app. Deploy it, then put the\n' +
-      '/exec URL into CLAIMS.SURVEY_URL at the top of Claims.gs.\n\n' +
-      'Until it is set, a closed claim logs "survey-skipped" instead of mailing\n' +
-      'a link that goes nowhere.');
+  if (!surveyUrl_()) {
+    ui.alert('No /exec address is known yet.\n\n' +
+      'The feedback link points at this web app, and the address is noted the\n' +
+      'first time anyone opens it. Deploy the web app and open its /exec URL\n' +
+      'once in a browser, then try this again.\n\n' +
+      'Until then a closed claim logs "survey-skipped" instead of mailing a\n' +
+      'link that goes nowhere.');
     return;
   }
   var sh = claimsSheet_();
@@ -5051,15 +5096,18 @@ function setupClaims() {
     'Drive folder: ' + root.getUrl() + '\n' +
     'Automatic follow-up: installed, runs daily ~9am (incl. the ' +
       CLAIMS.REVIEW_WORKING_DAYS + '-working-day review)\n' +
-    'Client feedback: ' + (CLAIMS.SURVEY_URL
+    'Client feedback: ' + (surveyUrl_()
       ? 'on — every closed claim is asked for a rating'
-      : 'OFF until CLAIMS.SURVEY_URL holds this web app\'s /exec URL') + '\n' +
+      : 'OFF until the web app is deployed and opened once, which is when it '
+        + 'notes its own /exec address') + '\n' +
     'Vehicle register: ' + vehicles + ' vehicle(s)' +
       (vehicles ? '' : ' — import vehicle-register.csv to switch on motor prefill') + '\n' +
     'Policy register: ' + (Math.max(policyRegisterSheet_().getLastRow() - 1, 0)) + ' policy(ies)' +
       ' — import policy-register.csv for health/life prefill\n\n' +
     'Next: Deploy → New deployment → Web app (execute as Me, access Anyone), ' +
-    'then paste the /exec URL into CONFIG.API_URL in claims/index.html.');
+    'then paste the /exec URL into CONFIG.API_URL in BOTH claims/index.html '
+    + 'and claims/staff.html — the client page and the staff desk must never '
+    + 'talk to two different backends.');
 }
 
 function onOpen() {
