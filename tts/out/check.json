@@ -1,27 +1,17 @@
 {
- "tts/out/adC/01.mp3": [
+ "tts/out/adCfix/01.mp3": [
   "en",
-  0.992,
-  "You're good at your job, and you can already see the top of it."
+  0.991,
+  "This is a career in insurance sales. You're paid on what you write. There's no ceiling and there's"
  ],
- "tts/out/adC/03.mp3": [
-  "en",
-  0.998,
-  "The work is solving a problem. Most families have never seen their own numbers written down. That is the job of our fact find, and it does the arithmetic while you talk."
- ],
- "tts/out/adC/04.mp3": [
+ "tts/out/adCfix/02.mp3": [
   "en",
   0.997,
-  "You will not start from a cold list. The leads come to you from people who ask to be called, and your manager is a coach, not a clock."
+  "Before you are contracted, a scientific profile is read. Your market is mapped and you are trained. You will know whether this fits before you give anything up."
  ],
- "tts/out/adC/05.mp3": [
+ "tts/out/adCfix/03.mp3": [
   "en",
-  0.998,
-  "Before you're contracted, a limer profile is read. Your market is mapped, and you are trained. You will know whether this fits before you give anything up."
- ],
- "tts/out/adC/07.mp3": [
-  "en",
-  0.992,
-  "seven places, one conversation, 20 minutes this week. Go to rickierampersadbranch.com, slash careers."
+  0.993,
+  "The branch does 39 things for an advisor. All of it is digital and all of it runs today. By year four, the industry keeps 14 and 100. We keep 31."
  ]
 }
