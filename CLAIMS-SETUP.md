@@ -498,6 +498,21 @@ has three forms: test mode; live with lines that have no desk, which it names;
 and live with every line routed, plus a sentence each for Salesforce not being
 connected and for nobody being on the staff list.
 
+**Probe with GET and the ping; do NOT read a POST's refusal as a verdict on the
+build.** `doPost` rejects any body whose `siteKey` does not match
+`CLAIMS.SITE_KEY`, and the wording it uses is *"This form is out of date.
+Please refresh the page and try again."* — which is right for a client holding
+a stale page, and badly misleading for anyone probing with `curl`, because a
+hand-made POST never carries the key. On 8 November 2026 two such probes were
+read as proof that client and staff sign-in were dead on the live deployment.
+They were not: the same two probes return the same message against a
+brand-new, correctly deployed backend. The ping's `build` field had already
+dated that deployment independently and honestly; the POST added nothing but a
+wrong conclusion. If a POST must be probed, send `siteKey` (it is in
+`claims/index.html`, so it is public by construction — an anti-abuse token, not
+a credential), and note that a `requestCode` probe really does send, so in test
+mode a `[TEST]` copy lands in the test inbox.
+
 **`staffCanSignIn` is a count, never the addresses** — this endpoint needs no
 sign-in. **Zero is the state to look for**: the staff sign-in then answers
 every address with "a code is on its way" and sends nothing, which is exactly
