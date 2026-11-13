@@ -1,17 +1,27 @@
 {
- "tts/out/adA5/01.mp3": [
+ "tts/out/adC/01.mp3": [
+  "en",
+  0.992,
+  "You're good at your job, and you can already see the top of it."
+ ],
+ "tts/out/adC/03.mp3": [
+  "en",
+  0.998,
+  "The work is solving a problem. Most families have never seen their own numbers written down. That is the job of our fact find, and it does the arithmetic while you talk."
+ ],
+ "tts/out/adC/04.mp3": [
   "en",
   0.997,
-  "Here, nothing stops. 39 things. Every week of your career. Clients match to you. A coach, not a clock. And nobody will know you asked."
+  "You will not start from a cold list. The leads come to you from people who ask to be called, and your manager is a coach, not a clock."
  ],
- "tts/out/adA5/02.mp3": [
+ "tts/out/adC/05.mp3": [
   "en",
-  0.995,
-  "7 places. One conversation, 20 minutes this week. Go to rickierampersadbranch.com slash careers."
+  0.998,
+  "Before you're contracted, a limer profile is read. Your market is mapped, and you are trained. You will know whether this fits before you give anything up."
  ],
- "tts/out/adB5/01.mp3": [
+ "tts/out/adC/07.mp3": [
   "en",
-  0.994,
-  "7 places. One conversation, 20 minutes this week. Go to rickierampersadbranch.com. Slash careers."
+  0.992,
+  "seven places, one conversation, 20 minutes this week. Go to rickierampersadbranch.com, slash careers."
  ]
 }
