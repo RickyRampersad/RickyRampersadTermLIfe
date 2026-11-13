@@ -6074,6 +6074,67 @@ about a second. The forms code is left as it was.
 **Needs, once:** Mail.ReadWrite (application) with admin consent on the Entra app, because a draft is changed, not
 sent. A 403 from Graph names it. The letter books themselves are client data and stay in Drive, never here.
 
+## One claims page, one address: claimstt.com forwards in — 13 November 2026
+
+Asked in these words, with the GoDaddy shell open: *"shall this point to my
+branch or when someone goes and clicks in my branch claims it routs to this
+site?"*
+
+**`rickyrampersadbranch.com/claims` is home. claimstt.com is a GoDaddy 301
+into it, Forward only.** The arrow points in, never out.
+
+**The binding reason is storage scope, not preference.** Both claims pages
+carry `localStorage.setItem(TOKEN_KEY, data.token)`, and `claims/index.html`
+also keeps a half-finished claim under `DRAFT_KEY`. **localStorage is per
+origin.** A second address for this page is two separate sign-in states for
+one person: a client who signed in on claimstt.com arrives at the branch
+address **signed out**, with nothing on screen to explain it, and their
+half-filled claim invisible. The staff desk splits identically. Nothing in the
+page can paper over it.
+
+So a second host for `claims/` was offered as a trade-off and **withdrawn as a
+fault**. `claims/netlify.toml` stays — inert on Pages, and what it is for is
+the day the whole site moves to Netlify — and its header says so, because a
+config file sitting in a folder reads as an endorsement of the thing it
+configures.
+
+The rest lines up behind it, and each piece is its own reason not to move home:
+
+- the homepage links `claims/` **six times, relatively**, plus the FAQ, the
+  footer, `404.html`, the `/claim` stub, `help868/`, and two branch-app tiles;
+- **every client e-mail, the staff notice and the Salesforce task body name
+  `rickyrampersadbranch.com/claims`** — and `Claims.gs` is pasted by hand, so
+  a half-done move leaves clients holding two addresses;
+- **HELP 868's prompt names it too**, at 9,988 of 10,000 characters, so
+  changing it means first finding room;
+- **a domain swap mid-journey is the shape of phishing**: a client who got a
+  letter from support@rickyrampersadbranch.com and is then sent to a domain
+  with no branch name in it cannot tell it is us, and the campaign's own rules
+  already ban "verify your details" wording for reading that way;
+- **the precedent, twice**: agentmgt.com asked the identical question and
+  forwards to `/careers/`.
+
+**Never "Forward with masking"**, which frames the page under the old address
+and breaks the six-digit sign-in, the uploads and the reference. `claims/`
+sets `X-Frame-Options: SAMEORIGIN` partly so it cannot work.
+
+**claimstt.com today serves a GoDaddy Website Builder shell** with none of the
+branch's content on it — Home / Contact / Services, `filler@godaddy.com` still
+showing as its sign-in placeholder, a "Claim Submission" item whose page is a
+404 — **and it is broken**: each page tried three times gave `200 200 000`,
+`000 200 000`, `000 200 000`. It fails about two requests in three. Unpublish
+that site before forwarding, or it keeps the DNS.
+
+**The page was made portable while this was settled, and that part is kept**:
+the two script tags are relative (resolving to the same files on the branch
+site) and the links off the page name the branch site, which is what a link
+labelled "Main site" should say from anywhere. **Those two scripts are not
+cosmetic** — `claim-checks.js` does the cover-term checks and
+`claim-forms.js` fills Guardian's own PDF — so a path that resolves to a
+wrong-but-existing file gives a page that looks perfect and silently cannot do
+either. Verified in a real browser on the live site at laptop and phone width
+by reading the APIs off `window`, never by a 200 on the file.
+
 ## The branch's own forms — no client link opens a JotForm
 
 `quote/`, `enrol/oas/`, `apply/xpress-life/`, the shared `forms/form.css`

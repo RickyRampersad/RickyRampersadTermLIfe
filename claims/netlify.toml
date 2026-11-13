@@ -1,19 +1,30 @@
-# claimstt.com — this folder, served by Netlify at its own domain.
+# This folder, served by Netlify — IF the whole site ever moves there.
 #
-# WHY NETLIFY AND NOT GITHUB PAGES: Pages takes ONE custom domain per
-# repository, and the root CNAME file holds rickyrampersadbranch.com. So
-# claimstt.com cannot be a second Pages domain; it needs its own host, which
-# is the same arrangement donthaveanagent.com and agentmgt.com already use.
+# DO NOT USE THIS TO PUT claimstt.com ON A SECOND HOST. Decided 13 November
+# 2026, and it is a correctness rule rather than a preference: both pages here
+# keep the sign-in on the device with localStorage.setItem(TOKEN_KEY, ...),
+# and localStorage is PER ORIGIN. Two addresses for this page means two
+# separate sign-in states for the same person — a client who signed in on one
+# arrives at the other signed out, with no explanation and no way to tell why,
+# and the half-finished claim under DRAFT_KEY is invisible from the other side.
+# The staff desk has the same split. claimstt.com FORWARDS to
+# rickyrampersadbranch.com/claims (GoDaddy 301, forward only); the arrow points
+# in, never out. See "Pointing claimstt.com at it" in CLAIMS-SETUP.md.
+#
+# WHAT THIS FILE IS STILL FOR: the day the whole branch site moves off GitHub
+# Pages to Netlify — which the setup notes already float as the better end
+# state, because it would let the repository go private without taking the site
+# down. Then this folder's rewrites and headers are the ones it needs. Pages
+# takes ONE custom domain per repository and the root CNAME holds
+# rickyrampersadbranch.com, which is the constraint behind all of this.
 #
 # THIS FILE IS INERT ON GITHUB PAGES. Pages ignores it, exactly as the root
 # netlify.toml is ignored (see the hosting note in CLAUDE.md), so nothing here
 # can change what rickyrampersadbranch.com/claims serves. The same files are
 # served by both hosts from one folder, so the two can never drift.
 #
-# TO SET IT UP: Netlify → Add new site → Import from Git → this repository,
-# base directory "claims", publish directory ".". Then Domain management →
-# add claimstt.com. Remove or disable the GoDaddy Website Builder site on that
-# domain first, or it keeps the DNS and nothing here is reached.
+# IF THAT DAY COMES: Netlify → Add new site → Import from Git → this
+# repository, base directory "claims", publish directory ".".
 #
 # NEVER deploy this by dragging the folder onto Netlify Drop. A manual deploy
 # replaces every file, and on 23 August 2026 that silently deleted four pages
