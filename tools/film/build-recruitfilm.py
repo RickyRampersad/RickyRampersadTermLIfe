@@ -1243,7 +1243,11 @@ if MODE == 'ad':
         the seventeen past the industry's fourteen pulse once together — that is the branch's whole
         claim, drawn, and it is the only flourish on the frame."""
         def block(key, n, t0, label):
-            step = 42
+            # 34ms a square, not 42: the teal block is 31 of them, and at 42 it finished at 5927ms of a
+            # 7300ms scene, which left no room for the two beats that follow it. Read off the built page
+            # against its own data-d rather than guessed — adcheck.js now fails any cue that lands after
+            # its scene ends, because a beat scheduled past the cut simply never plays and nothing says so.
+            step = 34
             cells = ''.join(
                 f'<i class="{"on" + (" xt" if key == "us" and i >= SL["ind"][1] else "") if i < n else ""}"'
                 f' style="--t0:{t0 + i * step}ms"></i>' for i in range(100))
@@ -1365,7 +1369,7 @@ if MODE == 'ad':
 <div class="full center">
   <p class="eye in" style="--t0:200ms">{words("By year four.", 200, 120)}</p>
   <h2 class="h l">{words("The industry keeps 14.", tat(4,"industry") - 200, 95)} <em class="wine">{words("This branch keeps 31.", tat(4,"branch") - 150, 95)}</em></h2>
-  {unit100(tat(4,"industry"), tat(4,"branch"), tat(4,"fourteen"), t_gap=tat(4,"branch") + 2400)}
+  {unit100(tat(4,"industry"), tat(4,"branch"), tat(4,"fourteen"), t_gap=tat(4,"branch") + 1300)}
 </div>""", 'data-ch="Fourteen against thirty-one"'))
     # The address goes on two lines, as the full film's close already does. The old "agentmgt.com" was
     # twelve characters and sat happily in this column; "rickyrampersadbranch.com/careers" is thirty-two,
@@ -1786,7 +1790,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .u1g i.xt::after{content:"";position:absolute;inset:calc(var(--u)*-.42);border-radius:calc(var(--u)*.6);
   box-shadow:0 0 0 calc(var(--u)*.24) rgba(127,226,244,.55);opacity:0;pointer-events:none}
 @keyframes u1pulse{0%,100%{opacity:0}45%{opacity:1}}
-.scene.act .u1g i.on.xt::after{animation:u1pulse 1.05s var(--ease) 2;animation-delay:calc(var(--xt) + 1.3s)}
+.scene.act .u1g i.on.xt::after{animation:u1pulse .6s var(--ease) 2;animation-delay:calc(var(--xt) + .3s)}
 .sl-q{width:min(100%,calc(var(--u)*72));margin:calc(var(--u)*1.6) auto 0;padding-left:calc(var(--u)*2);border-left:calc(var(--u)*.4) solid #C97A3A;text-align:left;font:500 italic calc(var(--u)*2.3)/1.35 var(--text);color:var(--mute)}
 .sl-q em{display:block;margin-top:.45em;font:700 calc(var(--u)*1.9)/1 var(--text);font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:var(--mute2)}
 @keyframes sldraw{to{stroke-dashoffset:0}}
