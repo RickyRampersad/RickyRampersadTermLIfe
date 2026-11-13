@@ -5713,6 +5713,87 @@ it is believed. It now checks `mp4 → capture` as well, and asserts each finish
 `films.json`** — the loudest signal of all, since the length is the one thing the built page decides, and
 39.4s against a page built for 40.4s cannot be explained away.
 
+### The branch's own first post: ad C — 13 November 2026
+
+Asked for in these words: *"forget about the service questionnaire, and it's your first ad you're going
+to post ... persons must know it's an insurance sales career ... more time, the way they work is not
+allowing them to grow, like solving problems ... you do have access to our POP7 ... deep dive and look
+at the memories and see the amount of things that we do ... What are they applying for? What will
+attract somebody to apply? And what our environment, which is unique, will be able to help someone
+with ... everything in the branch, it is digital."*
+
+**It answers those three questions in that order, and that order is the whole design.** A and B are
+40-second feed cuts aimed at a fear each; C is the branch's own announcement and has a different job.
+`agentmgt/ad-c.html`, seven scenes, **63.9s**, square (`ad-c-square.mp4`) and tall (`ad-c-story.mp4`).
+
+**Every fact is read off the live careers page, so the ad cannot drift from what it links to.** The 39
+things and their six moments (before you join 7, first 90 days 5, every day 10, every week 6, every
+month 6, your managers too 5) come from the page's own "Everything around you" inventory; the five
+gates and their wording come from its stepper; 14 against 31 by year four is already sourced in the
+section above.
+
+**The strongest thing the branch has is NOT the tools, and the ad is built on that.** Scene 5 is the
+argument: *you are profiled, market-mapped and trained BEFORE you are contracted, so you know whether
+it fits before you give anything up.* For somebody leaving a salaried job that is worth more than any
+list of systems, and almost nobody else in this market does it. The 39 things and "all of it digital"
+are the second argument, in scene 6, not the first.
+
+**Three things are deliberately absent:**
+
+- **No money figure.** The first-year numbers are still outstanding from him, and an invented average
+  is the one thing the pay panel itself promises not to print.
+- **No Guardian Group claim.** He asked for "the strength of Guardian" and there is no sourced figure
+  for its size, rating, years or policyholders in any record here. The name is on the card and the
+  branch's own thirty-two years are on the page; a figure in an MP4 at a public URL needs his source.
+- **No TT$200 per questionnaire** — "forget about the service questionnaire". It is an internal
+  orphan-campaign mechanic, not a reason anybody joins.
+
+**64 seconds is a decision, not a drift.** Everything he asked for does not fit in forty. This is the
+pinned post on the branch page, LinkedIn and WhatsApp; the paid-feed version drops scene 3 and runs
+about 45.
+
+#### Two lines would not voice at all, and one word is unsayable
+
+**edge-tts refused lines 2 and 6 outright**, four attempts each, `NoAudioReceived` — the deterministic
+per-text refusal already recorded for ad A. Re-worded, both voiced first time. **Never retry a
+refusal.** And check `words.json`'s count against the line before concluding anything: Whisper's
+transcript of line 2 displayed truncated and the audio was complete.
+
+**"LIMRA" came back as "a limer profile is read".** An acronym this voice cannot say is not fixed by
+re-wording around it — the voice carries the meaning (*"a scientific profile is read"*, which is the
+page's own phrase) and the **screen carries the name** (`POP7 · LIMRA's Career Profile+`). Same
+mitigation `Rampersad` → "Ramperset" already takes.
+
+#### The square-is-portrait trap, again, and it is worse than a size
+
+A square is "portrait" to `(orientation:portrait)`, so the tall cut's whole block applies to it. The
+portrait rule turned `.cgrail` into a one-column list with `.cgstep` as a two-column row and the
+connector hidden; the square block only *resized* the steps, so the gates rail rendered as a strip of
+tiny left-aligned type in the bottom-left corner — and `adcheck.js` passed it, because nothing was in
+the caption band and nothing overflowed. **Everything the portrait block CHANGES has to be changed
+BACK in the square block, not merely resized**: the columns, the connector's `display`, and the step's
+own layout. Caught by looking at the contact sheet, not by the measurement.
+
+The other square fault was geometric: `.dev.lap` is `aspect-ratio:16/10`, which is tall in a square
+box, and it pushed its own caption into the bottom 16% the mixer burns subtitles into.
+
+#### Re-cutting it
+
+```bash
+cd tools/film
+python3.13 importvox.py <staged vox> voadC 0.95 --timing recruit-adC-timing.json --lines recruit-adC-lines.json
+RECRUIT_MODE=ad RECRUIT_AD=C python3.13 build-recruitfilm.py && python3 films-recruit.py
+python3.13 sfx.py "$(…films.json adCq…)" sfx-adCq.wav     # and adCv
+python3.13 usetrack.py ../../rr-branch-theme.mp3 adCq adCv
+RENDER_W=1080 RENDER_H=1080 node render.js ../../agentmgt/ad-c.html cap-adCq 30   # and 1080x1920 → cap-adCv
+python3.13 mixany.py "$(…films.json adCq…)" ../../agentmgt/ad-c-square.mp4
+```
+
+Stage the vox directory **from scratch by walking the scene list** — this cut re-voiced 2, 5 and 6
+only, and the runner numbers every job's lines from 01, so `adCfix/01..03` are really scenes 2, 5 and
+6 and map back by hand. A shift cannot express that. `AD_HITS['C']` in `films-recruit.py` names its
+own punch words; a cue word that is not in the line exits before `films.json` is written.
+
 ### Which ad brought them — 13 November 2026
 
 Asked for in these words: *"where is the link to click and when they scan what happens how is it profiled?"*

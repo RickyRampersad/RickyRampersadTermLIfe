@@ -35,9 +35,13 @@ if os.path.exists('recruit-trailer-timing.json'):
 # branch keeps thirty-one"), so each variant now names its own beats: A punches on the cliff, on its own
 # figure landing beside the industry's, and on the thirty-nine; B on the second year, on the leads arriving,
 # and on the same comparison. Both close on the seats.
+# C is the branch's own first post and runs seven scenes, so its punches are spread over the whole
+# argument rather than the feed cut's four: the career named, the work named, the gates, and the two
+# figures landing beside each other in scene 6.
 AD_HITS = {'A': [(2, 'cliff'), (3, 'thirty'), (4, 'Thirty-nine'), (5, 'Seven')],
-           'B': [(2, 'second'), (3, 'leads'), (4, 'thirty'), (5, 'Seven')]}
-for v in 'AB':
+           'B': [(2, 'second'), (3, 'leads'), (4, 'thirty'), (5, 'Seven')],
+           'C': [(2, 'insurance'), (3, 'solving'), (5, 'contracted'), (6, 'thirty-nine'), (6, 'thirty-one'), (7, 'Seven')]}
+for v in 'ABC':
     if os.path.exists(f'recruit-ad{v}-timing.json'):
         entries(f'ad{v}', f'recruit-ad{v}-timing.json', f'voad{v}', f'ad-{v.lower()}',
                 AD_HITS[v], [], shapes=('q', 'v'))
