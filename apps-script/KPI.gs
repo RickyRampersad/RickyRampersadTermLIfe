@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-13a';
+var SCRIPT_VERSION = '2026-11-13b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -14431,7 +14431,99 @@ function agentBatchData_(list, day) {
         out.ff[k].push({ name: nm, occ: r.Occupation__c || '', on: on });
       });
   } catch (e) {}
+  // The agent's own comments on their cases, and what the branch did after each (13 Nov 2026).
+  try { out.said = agSaid_(list, day, taskWhere, keyOf, out.open); } catch (e) { out.said = {}; }
   return out;
+}
+
+/* ── What we did with what you told us (13 Nov 2026) ──
+ *  Ricky: "Cases that they have been commented on, have that at the top to say what we've done for you ... It is unfair to the
+ *  agents to be posting ... and there is no responses." For each agent, every comment they put on one of their cases in the last
+ *  AG_SAID.DAYS days (from My day, "Agent · Name · …", or the assignment board, "From the assignment board · Name (Agent), …"), and
+ *  the first word from the branch on that task after it: a person's post or reply, or the task closed. The tracker's own notes
+ *  (Branch Intelligence, MOVED, the follow-ups) and the agent's own later posts are not an answer. */
+var AG_SAID = { DAYS: 7, MAX: 8 };
+function agSaidClock_(at) {
+  var l = sfLocal_(at); if (!l) return '';
+  var h = Math.floor(l.min / 60), m = l.min % 60;
+  return shortDate_(l.day) + ' ' + ((h % 12) || 12) + ':' + (m < 10 ? '0' : '') + m + (h < 12 ? 'am' : 'pm');
+}
+/** Who wrote a post on an agent's case: { agent: true } for the agent, { sys: true } for the tracker, else { by: first name }. */
+function agSaidWho_(text, byName, agentNames) {
+  var t = String(text || '').trim(), isAgent = function (nm) {
+    var k = String(nm || '').toLowerCase().replace(/\s+/g, ' ').trim(); if (!k) return false;
+    return agentNames.some(function (n) { n = String(n || '').toLowerCase(); return n && (n === k || n.split(' ')[0] === k.split(' ')[0] && k.split(' ').slice(-1)[0] === n.split(' ').slice(-1)[0]); });
+  };
+  var b = /^From the assignment board · ([^,(]+?)\s*(\([^)]*\))?,/.exec(t);
+  if (b) {
+    if (/Named to\b/.test(b[1])) return { sys: true };
+    return isAgent(b[1]) ? { agent: true } : { by: b[1].trim().split(/\s+/)[0] };
+  }
+  var np = noteParts_(t);
+  if (np.ours) {
+    var parts = String(np.who || '').split(' · ');
+    if (/^Agent/.test(parts[0])) return isAgent(parts[1]) ? { agent: true } : { sys: true };
+    if (/^Branch Intelligence/.test(parts[0])) return { sys: true };
+    return { by: String(parts[1] || parts[0] || '').trim().split(/\s+/)[0] };
+  }
+  if (SYS_POST_RE.test(t)) return { sys: true };
+  if (isAgent(byName)) return { agent: true };
+  return { by: String(byName || 'The branch').split(/\s+/)[0] };
+}
+function agSaid_(list, day, taskWhere, keyOf, open) {
+  var out = {}, names = {}, tasks = {};
+  list.forEach(function (a) { out[a.key] = []; names[a.key] = [a.agentName, a.name].filter(Boolean); });
+  var since = shiftDays_(day, -AG_SAID.DAYS);
+  Object.keys(open || {}).forEach(function (k) { (open[k] || []).forEach(function (t) { tasks[t.id] = { k: k, s: t.subject, owner: t.owner, closedAt: '' }; }); });
+  taskWhere.forEach(function (w) {
+    sfkQuery_('SELECT Id, Subject, Owner.Name, Agent__c, Agent__r.Name, CompletedDateTime FROM Task WHERE IsClosed = true AND ' + w +
+      ' AND CompletedDateTime >= ' + sfkUtcAt_(since, 0) + ' LIMIT 1000').forEach(function (r) {
+        var k = keyOf(r); if (!k) return;
+        tasks[r.Id] = { k: k, s: shorten_(r.Subject, 95), owner: (r.Owner && r.Owner.Name) || '', closedAt: String(r.CompletedDateTime || '') };
+      });
+  });
+  var ids = Object.keys(tasks); if (!ids.length) return out;
+  var posts = {}, userName = {};
+  try { var u = sfkUsers_() || {}; Object.keys(u).forEach(function (s) { userName[u[s].id] = nameFor_(s); }); } catch (e) {}
+  for (var i = 0; i < ids.length; i += 150) {
+    var inList = ids.slice(i, i + 150).map(soqlStr_).join(','), at = sfkUtcAt_(since, 0);
+    try { sfkQuery_("SELECT ParentId, CreatedById, CreatedBy.Name, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND ParentId IN (" + inList + ') AND CreatedDate >= ' + at + ' LIMIT 2000')
+      .forEach(function (r) { (posts[r.ParentId] = posts[r.ParentId] || []).push({ at: String(r.CreatedDate), by: userName[r.CreatedById] || (r.CreatedBy && r.CreatedBy.Name) || '', text: postPlain_(r.Body) }); }); } catch (e) {}
+    try { sfkQuery_('SELECT ParentId, CreatedById, CreatedBy.Name, CreatedDate, CommentBody FROM FeedComment WHERE ParentId IN (' + inList + ') AND CreatedDate >= ' + at + ' LIMIT 2000')
+      .forEach(function (r) { (posts[r.ParentId] = posts[r.ParentId] || []).push({ at: String(r.CreatedDate), by: userName[r.CreatedById] || (r.CreatedBy && r.CreatedBy.Name) || '', text: postPlain_(r.CommentBody) }); }); } catch (e) {}
+  }
+  ids.forEach(function (id) {
+    var t = tasks[id], ps = (posts[id] || []).sort(function (a, b) { return a.at.localeCompare(b.at); });
+    if (!ps.length) return;
+    ps.forEach(function (p) { p.w = agSaidWho_(p.text, p.by, names[t.k]); });
+    var mine = ps.filter(function (p) { return p.w.agent; }); if (!mine.length) return;
+    var last = mine[mine.length - 1];
+    var resp = ps.filter(function (p) { return p.at > last.at && p.w.by; })[0] || null;
+    var said = noteParts_(last.text).ours ? noteParts_(last.text).body : last.text.replace(/^From the assignment board · [\s\S]*?\d{1,2}:\d{2}:\s*/, '');
+    var x = { id: id, s: t.s, owner: String(t.owner || '').split(' ')[0], at: last.at, said: shorten_(String(said).replace(/\s+/g, ' '), 160), n: mine.length };
+    if (resp) x.resp = { by: resp.w.by, at: resp.at, text: shorten_(String(noteParts_(resp.text).ours ? noteParts_(resp.text).body : resp.text.replace(/^From the assignment board · [\s\S]*?\d{1,2}:\d{2}:\s*/, '')).replace(/\s+/g, ' '), 160) };
+    else if (t.closedAt && t.closedAt > last.at) x.closed = t.closedAt;
+    out[t.k].push(x);
+  });
+  Object.keys(out).forEach(function (k) {
+    out[k].sort(function (a, b) { return (a.resp || a.closed ? 1 : 0) - (b.resp || b.closed ? 1 : 0) || b.at.localeCompare(a.at); });
+  });
+  return out;
+}
+/** The midday e-mail's first section: each comment the agent made, and what we did. Empty when there is none. */
+function agSaidHtml_(said) {
+  said = said || []; if (!said.length) return '';
+  var done = said.filter(function (x) { return x.resp || x.closed; }).length, wait = said.length - done;
+  var rows = said.slice(0, AG_SAID.MAX).map(function (x) {
+    var ans = x.resp ? '<div style="margin-top:3px;color:' + MAIL.green + '">&#10003; <b>' + esc_(x.resp.by) + '</b> answered ' + esc_(agSaidClock_(x.resp.at)) + ': ' + esc_(x.resp.text) + '</div>'
+      : x.closed ? '<div style="margin-top:3px;color:' + MAIL.green + '">&#10003; Closed by <b>' + esc_(x.owner || 'the branch') + '</b> ' + esc_(agSaidClock_(x.closed)) + '</div>'
+      : '<div style="margin-top:3px;color:' + MAIL.red + ';font-weight:700">No reply yet · with ' + esc_(x.owner || 'the branch') + '. Your manager and Mrs Dookran see this e-mail.</div>';
+    return agLine_('<b>' + esc_(x.s) + '</b><div style="color:' + MAIL.muted + ';margin-top:2px">You wrote ' + esc_(agSaidClock_(x.at)) + ': &ldquo;' + esc_(x.said) + '&rdquo;</div>' + ans);
+  }).join('');
+  return sectionLabel_('What we have done with what you told us') +
+    '<div style="font-size:13px;line-height:1.5;margin:-4px 0 8px">' + said.length + ' of your cases you commented on in the last ' + AG_SAID.DAYS + ' days: ' +
+      '<b style="color:' + MAIL.green + '">' + done + ' answered</b>' + (wait ? ', <b style="color:' + MAIL.red + '">' + wait + ' waiting on us</b>' : '') + '.</div>' +
+    agCard_(wait ? MAIL.red : MAIL.green, rows) + (said.length > AG_SAID.MAX ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (said.length - AG_SAID.MAX) + ' more on My day.</div>' : '');
 }
 
 /** One line per client, not per policy (2 Nov 2026: "Jabraele Talleh, Jabraele Talleh"): "Shivani Pancham (2 policies, 1829d)". */
@@ -14751,7 +14843,8 @@ function agentMiddayMail_(a, day, data) {
     planned ? 'On My day: your projection from this morning, to change if the day has moved, and what is being worked for you.' : 'No projection is in yet. On My day, a number against each line.') + agOldLine_(replyUrl_(a.key, day, 'ag'));
   var coachTop = ''; if (agCoachOn_(a)) { try { coachTop = agCoachLine_(a, day, false) + replyButton_(workGoUrl_(a.key, planned ? 'agmid' : 'agplan'), planned ? 'How is it going? Check in' : 'Check in now', planned ? 'Thirty seconds: what is done so far.' : 'Your plan is filled in from your goal; change any number.'); } catch (e) {} }
   var rise = ''; try { rise = agRiseHero_(agRiseData_(a, day, { g: (data.goal || {})[a.key] || null, f3: (data.f360 || {})[a.key] || null, open: open, closed: closed, orp: (data.orphan || {})[a.key] || null }), day, 'md'); } catch (e) {}
-  var body = coachTop + rise +
+  var said = ''; try { said = agSaidHtml_((data.said || {})[a.key]); } catch (e) {}
+  var body = said + coachTop + rise +
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', it is midday. Here is your progress so far' +
       (planned ? ', against what you projected this morning' : ': <b style="color:' + MAIL.red + '">no projection was set this morning</b>') + '. At 5:30 you close the day off and it balances against your projection.</div>' +
     statTiles_([
