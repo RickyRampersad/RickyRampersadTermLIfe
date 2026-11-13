@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-12b';
+var SCRIPT_VERSION = '2026-11-13a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -10396,7 +10396,7 @@ function checkUnitAgents() { var out = UM_DESKS.map(function (s) { return s + ':
    e-mail half an hour before, a progress report at midday, and the evening
    sign-off half an hour before six. */
 var AGENT_AM_AT = 7 * 60;          // 7:00am: Ricky, 2 Nov 2026, "the dashboard the agent gets at 7 o'clock in the morning" (was 5:30am)
-var AGENT_MD_AT = 12 * 60;         // midday progress: not e-mailed since 8 Nov 2026 unless AGENT_MIDDAY = on
+var AGENT_MD_AT = 12 * 60;         // midday progress: on again from 13 Nov 2026; AGENT_MIDDAY = off stops it
 var AGENT_ROLL_AT = 18 * 60;       // 6:00pm: one e-mail to each manager with their agents' close-offs (8 Nov 2026)
 var AGENT_PM_AT = 17 * 60 + 30;    // 5:30pm
 var AGENT_PER_RUN = 8;             // agents a ten-minute run; the rest follow
@@ -10556,7 +10556,7 @@ function agentInPilot_(a) {
  *  submit the weekly Time & Income Control by hand instead, as their contract requires.
  *  Everything else from the branch is unchanged. Script Property AGENT_DAY_OFF (names or
  *  agent numbers, comma separated) replaces the list; "none" clears it. */
-var AGENT_DAY_OFF = ['Darryl Manick', 'Malcolm Sooknanan', 'Stephanie Rajkumar', 'Daniel Bhagwandas',
+var AGENT_DAY_OFF = ['Darryl Manick', 'Stephanie Rajkumar', 'Daniel Bhagwandas',
                      'Faizal Mohammed', 'Felicia Rampersad', 'Varun Seegolam'];
 function agentDayOffList_() {
   var p = ''; try { p = PropertiesService.getScriptProperties().getProperty('AGENT_DAY_OFF') || ''; } catch (e) {}
@@ -14986,7 +14986,8 @@ function agSendCopy_(to, cc, subject, html, a) {
  * the morning brief (the coach's deep read, copied to their manager and Mrs Dookran) and the 5:30 close-off (to them alone). Each
  * manager gets ONE e-mail at 6:30 with all their agents' close-offs, Mrs Dookran copied, instead of a copy per agent per save. */
 function agFlag_(name) { var v = ''; try { v = String(PropertiesService.getScriptProperties().getProperty(name) || '').trim().toLowerCase(); } catch (e) {} return v; }
-function agMiddayMode_() { return agFlag_('AGENT_MIDDAY'); }
+// On by default since 13 Nov 2026 (morning, lunchtime, end of day). AGENT_MIDDAY = off stops it.
+function agMiddayMode_() { return agFlag_('AGENT_MIDDAY') === 'off' ? 'off' : 'on'; }
 function agSaveCopyOn_() { return agFlag_('AGENT_SAVE_COPY') === 'on'; }
 
 /** The agents each manager looks after, among those mailed today: { email: [agent, …] }. */

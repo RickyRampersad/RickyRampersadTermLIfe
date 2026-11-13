@@ -46,7 +46,7 @@ ok('a later run sends nothing again', mails.length === before);
 
 console.log('\nThe midday and the close-off:\n');
 run(12 * 60 + 5); run(17 * 60 + 35);
-ok('the five get the 5:30 close-off, no midday (8 Nov 2026)', five.every(n => to(n).length === 2), five.map(n => n.split(' ')[0] + ':' + to(n).length).join(' '));
+ok('the five get the midday and the 5:30 close-off (on again 13 Nov 2026)', five.every(n => to(n).length === 3), five.map(n => n.split(' ')[0] + ':' + to(n).length).join(' '));
 ok('still nobody else', ['Narissa Mohammed', 'Varun Seegolam'].every(n => to(n).length === 0));
 
 console.log('\nThe switches:\n');

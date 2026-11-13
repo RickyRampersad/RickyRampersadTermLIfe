@@ -134,9 +134,13 @@ ok('Felicia gets hers', to(people['a-felicia-rampersad']).length === 1);
 ok('Neil is not sent a second', to(people['a-neil-ramnanan']).length === 0);
 ok('no [Preview] samples to Mr Rampersad', !mails.some(m => /\[Preview\]/.test(m.subject)));
 run(12 * 60 + 5); run(17 * 60 + 35);
-ok('no midday e-mail since 8 Nov; the 5:30 goes to all three', Object.keys(people).every(k => to(people[k]).filter(m => /^md /.test(m.subject)).length === 0 && to(people[k]).filter(m => /^pm /.test(m.subject)).length === 1));
+ok('the midday (on again 13 Nov) and the 5:30 go to all three, once each', Object.keys(people).every(k => to(people[k]).filter(m => /^md /.test(m.subject)).length === 1 && to(people[k]).filter(m => /^pm /.test(m.subject)).length === 1));
 const n = mails.length; run(17 * 60 + 50);
 ok('and once only', mails.length === n);
+env.PropertiesService.getScriptProperties().setProperty('AGENT_MIDDAY', 'off');
+ok('AGENT_MIDDAY = off stops the midday', env.agMiddayMode_() === 'off');
+env.PropertiesService.getScriptProperties().deleteProperty('AGENT_MIDDAY');
+ok('unset, the midday is on', env.agMiddayMode_() === 'on');
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall green');
 process.exit(fails ? 1 : 0);
