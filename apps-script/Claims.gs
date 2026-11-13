@@ -58,7 +58,7 @@ var CLAIMS = {
    * that was pasted and never deployed — from outside those look identical,
    * and so does a later paste of an older copy winning the same function
    * name. Change it with any change worth deploying. */
-  BUILD: '2026-11-13b',
+  BUILD: '2026-11-13c',
 
   /* ---- where notifications go ---------------------------- */
 
@@ -82,14 +82,17 @@ var CLAIMS = {
    * exactly like a claim that was handled, to us and to the client, until the
    * day somebody asks why nothing happened.
    *
-   * Four of the five addresses below were guesses, and the branch's own record
-   * contradicts them. Measured on 3,634 Log Book lines (LB_DEPTS in
-   * LogBook.gs), a Health Claim Form goes to EBD HEALTH CLAIMS or EBD CUSTOMER
-   * CARE, and a Claim Submission Form - Life & CI goes to GLOC CLAIMS -
-   * CUSTOMER SUPPORT. Motor is a different company altogether: Guardian
-   * General's Motor Claims Department. So the names are right here and the
-   * addresses have to come from the Log Book's own Departments tab, which is
-   * private and holds the ones the branch really uses.
+   * Every address below was found the same way, and it is the only way that
+   * has worked: READ THE ADDRESSES ON THE BRANCH'S OWN CLAIM THREADS. Not the
+   * Log Book's Departments tab, which gives the department's NAME and not its
+   * mailbox; and never a search for the name you expect. On 8 November 2026
+   * this mailbox was searched for `lifeclaims`, `LifeClaimsTT` and
+   * `GLOCClaims`, all three came back empty, and the conclusion recorded was
+   * that no life claims desk existed. It is GLOC.IndividualLifeClaims@, which
+   * none of those three terms matches, and it was on the branch's own death
+   * and critical-illness threads the whole time. Searching for a guess at the
+   * name proves nothing when it misses; open a real claim thread and read the
+   * To line.
    *
    * To switch a line on: put the real address in DESK, add the key to DESK_OK,
    * and file one claim in test mode to see it arrive. */
@@ -109,19 +112,31 @@ var CLAIMS = {
        way round. EBCustomercare@ is the right desk for a change of cover or
        a billing question, which is what the renewal desk uses it for. */
     health:   'healthclaimstt@myguardiangroup.com',
-    // GLOC Claims — Customer Support, the Log Book's own route for a
-    // life/CI claim submission. Address to be read off the Departments tab.
-    life:     '',
+    /* GLOC Individual Life Claims. Confirmed 13 November 2026 by the branch
+       manager — "yes that is the life claims" — and by the branch's own
+       record, where it both sends and receives on death and
+       critical-illness claim threads. It covers life and CI.
+       NOT GLOC.AnnuityPaymentsQueries@, which turned up in the same search:
+       that is a payments queries desk, not a claims one. */
+    life:     'GLOC.IndividualLifeClaims@myguardiangroup.com',
+    /* Pension is still open. A death-and-pension claim ran over some twenty
+       messages in August 2026 and every one of them is addressed to named
+       people in Guardian's claims and pension teams — not one department
+       inbox in To or Cc anywhere on it. "Individual Life" is not pension, so
+       the life desk above is not assumed to cover it. */
     pension:  '',
   },
-  DESK_OK: ['health', 'motor'],
+  DESK_OK: ['health', 'life', 'motor'],
   DESK_DEFAULT: '',
 
   /* Copied on one line's claims only, beside MAIL_CC. EB Customer Care is on
      every health claim the branch files by hand, so it stays on ours; CRMS
      Claims is on every motor claim the branch has filed, so it stays on ours.
      Only department inboxes go here, never the individual representative
-     handling one claim — they change, and a desk is what gets read. */
+     handling one claim — they change, and a desk is what gets read.
+     Life has no entry on purpose: no second department inbox appears on the
+     branch's life or CI claim threads, and a Cc added on a hunch is a
+     mailbox nobody has agreed to read. */
   DESK_CC: {
     health: ['EBCustomercare@myguardiangroup.com'],
     motor:  ['CRMSClaims@myguardiangroup.com'],

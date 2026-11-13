@@ -7726,26 +7726,36 @@ about the department, not evidence of a shared inbox, and property stays blank.
 The question to put to the desk is narrow: which inbox a property first
 notification of loss should go to.
 
-**Life and pension are the same, re-measured 8 November 2026.** Searched
-support@ for the branch's own convention (`RRB CLAIMS SUBMISSION` returns one
-thread, the health one `healthclaimstt@` was found on) and for every death
-claim of the past two years: a death and pension claim ran from 10 to 25
-August 2026 over some twenty messages, and **every one is addressed to named
-people** in Guardian's claims and pension teams — no department inbox in To or
-Cc anywhere on it. Searching the mailbox for `lifeclaims`, `LifeClaimsTT`,
-`GLOCClaims`, `pcclaims` and `propertyclaims` returns **nothing**. Query Pal's
-own department labels ("Individual Life Claims", "GLOC Claims", "GGIL P&C
-Claims") are labels in its routing table, not addresses, and only one of them
-— Health Claims TT — has a known mailbox behind it.
+**Life is `GLOC.IndividualLifeClaims@myguardiangroup.com`** (confirmed by the
+branch manager on 13 November 2026 — *"yes that is the life claims"*). It both
+sends and receives on the branch's own death and critical-illness claim
+threads, and it covers life and CI. `GLOC.AnnuityPaymentsQueries@` turned up in
+the same search and is **not** it: a payments queries desk, not a claims one.
 
-So **three of the five lines have no desk and cannot get one from the record**:
-life, pension and property. It is two questions to Guardian, not three, because
-property is P&C and `GGILPCClaims@` is already confirmed as the P&C claims desk
-from the motor work — so ask whether that inbox takes a property first
-notification of loss, and separately what inbox takes a life or pension one.
-Until each answer is in, that line stays off `DESK_OK` and the client gets the
-red "pass this on by hand" banner, which is the right failure: a claim nobody
-routed is better than a claim sent to a mailbox that may not be read.
+**On 8 November this note said no life claims desk existed in the record, and
+that was wrong.** The search terms were `lifeclaims`, `LifeClaimsTT` and
+`GLOCClaims`; all three came back empty, and the emptiness was recorded as a
+finding. None of them matches `GLOC.IndividualLifeClaims`, which was on those
+threads the whole time. **A search for a guess at the name proves nothing when
+it misses.** The method that has worked for all three confirmed desks is the
+same one: open a real claim thread of the branch's own and read the To line.
+Not the Log Book's Departments tab either, which gives a department's *name*
+and not its mailbox — and not Query Pal's routing labels ("Individual Life
+Claims", "GLOC Claims", "GGIL P&C Claims"), which are labels, not addresses.
+
+**Two lines still have no desk: property and pension.** Both for the same
+measured reason, which is a finding rather than an absence of looking: a
+property claim ran three months in mid-2026, and a death-and-pension claim ran
+from 10 to 25 August 2026 over some twenty messages, and **every message on
+both is addressed to named people** — not one department inbox in To or Cc
+anywhere on either. "Individual Life" is not pension, so the life desk is not
+assumed to cover it; and "P&C covers property too" is an argument about the
+department, not evidence of a shared inbox. So it is **two questions to
+Guardian**: whether `GGILPCClaims@` takes a property first notification of
+loss, and what inbox takes a pension one. Until each answer is in, that line
+stays off `DESK_OK` and the client gets the red "pass this on by hand" banner,
+which is the right failure: a claim nobody routed is better than a claim sent
+to a mailbox that may not be read.
 
 **The pattern behind that: a first notification goes to a department inbox,
 and everything after it goes to the representative assigned.** Both motor

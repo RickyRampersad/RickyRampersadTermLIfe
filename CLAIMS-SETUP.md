@@ -332,8 +332,8 @@ A synced register answers with the vehicle and a way to confirm it is yours.
 ### Before you turn test mode off: the desk addresses
 
 A claim is only forwarded to a line's claims desk when that line is listed in
-`CLAIMS.DESK_OK`. **`health` and `motor` are**, because only those two
-addresses are confirmed.
+`CLAIMS.DESK_OK`. **`health`, `life` and `motor` are**, because only those
+three addresses are confirmed.
 
 **Health** is `healthclaimstt@myguardiangroup.com`, with
 `EBCustomercare@myguardiangroup.com` copied. That ordering is the branch's own
@@ -352,6 +352,15 @@ representative who handled it. The branch's own first notification of loss went
 to the same desk. Only department inboxes are configured, never the individual
 representative on one claim — people move, and a desk is what gets read.
 
+**Life** is `GLOC.IndividualLifeClaims@myguardiangroup.com`, with **nothing
+copied beside it**. Confirmed 13 November 2026 by the branch manager — *"yes
+that is the life claims"* — and by the branch's own record, where that inbox
+both sends and receives on death and critical-illness threads. It covers life
+and CI. `GLOC.AnnuityPaymentsQueries@` turned up in the same search and is not
+it: a payments queries desk, not a claims one. No second department inbox
+appears on those threads, so none is configured — a Cc added on a hunch is a
+mailbox nobody has agreed to read.
+
 **A motor claim's subject is Guardian General's own, not ours.** Their desk has
 filed this branch's claims under `Vehicle # - <plate> Insured - <name> Date of
 Accident - <date>` for years, and every reply quotes it, so a thread that does
@@ -360,32 +369,36 @@ shape with our reference on the end; health and the rest keep
 `RRB CLAIMS SUBMISSION - <type> - <client> - <ref>`, the form sales support has
 always used. One format for all five would be wrong on four of them.
 
-The other three shipped as guesses and the branch's own record contradicts
-them, so they are now blank. A claim on an unconfirmed line still files, still
+**Property and pension are blank**, and a claim on either still files, still
 goes into Drive, still acknowledges the client, and still e-mails you and
 sales support — with a red banner saying **"Pass this on by hand"** and which
 address to set. Nothing is ever sent to an address nobody has confirmed: a
 claim landing in an unwatched mailbox reads as handled, to us and to the
 client, until somebody asks why nothing happened.
 
-The addresses are in the **Log Book's own Departments tab**, which is where
-the branch really keeps them. `LB_DEPTS` in `LogBook.gs` says which department
-each document goes to, measured over 3,634 real lines:
+**Both are blank because the record has no desk inbox for them**, not because
+nobody looked. A property claim ran three months in mid-2026, and a
+death-and-pension claim ran from 10 to 25 August 2026 over some twenty
+messages, and every message on both went to **named representatives** — no
+department inbox in To or Cc on any of them. P&C does mean Property &
+Casualty, so for property the department is right and the inbox is the open
+question; and "Individual Life" is not pension, so the life desk above is not
+assumed to cover it.
 
-| Line | Department the Log Book uses |
-|---|---|
-| health | **EBD HEALTH CLAIMS** (19 of 31) or **EBD CUSTOMER CARE** (12) — *settled: Health Claims TT* |
-| life | **GLOC CLAIMS - CUSTOMER SUPPORT** (17 of 23 Claim Submission Forms) |
-| motor, property | **Guardian General — Motor Claims Department** (a different company from Guardian Life) — *motor settled: GGIL PC Claims* |
-| pension | not yet seen in the Log Book — ask sales support |
+**So it is two questions to Guardian**, and the whole of it:
 
-**Property is blank because the record has no desk inbox for it**, not because
-nobody looked. A property claim ran three months in mid-2026 and every message
-on it went to **named representatives** of Guardian General's own P&C Claims
-Solutions Department — no department inbox on any of them. P&C does mean
-Property & Casualty, so the department is right; the inbox is the open
-question. Ask the desk which inbox a **property first notification of loss**
-should go to, and that is the whole of it.
+1. Does `GGILPCClaims@` take a **property first notification of loss**?
+2. Which inbox takes a **pension** one?
+
+**Find the answer the way all three confirmed desks were found: open a real
+claim thread of the branch's own and read the To line.** Not the Log Book's
+Departments tab — it gives a department's *name* and not its mailbox — and not
+Query Pal's routing labels, which are labels in a table. And never a search
+for a guess at the name: on 8 November this mailbox was searched for
+`lifeclaims`, `LifeClaimsTT` and `GLOCClaims`, all three came back empty, and
+"life has no claims desk" was written down as a finding. It is
+`GLOC.IndividualLifeClaims@`, which none of those three matches, and it was on
+the branch's own threads the whole time. A search that misses proves nothing.
 
 That is the pattern on both motor claims in the record too: the first
 notification goes to a department inbox, and the thread after it runs with the
@@ -393,7 +406,7 @@ one representative assigned. The intake only ever sends a first notification,
 so a department inbox is the right target — and an individual, who moves, is
 the wrong one.
 
-Copy each address off that tab into `CLAIMS.DESK`, add the key to
+Once an answer is in: put the address in `CLAIMS.DESK`, add the key to
 `CLAIMS.DESK_OK`, and file one test claim on that line to watch it arrive.
 
 ### Where claimstt.com fits
@@ -1096,22 +1109,29 @@ now* to receive one yourself.
 
 ## Still to plug in
 
-- [ ] **Apps Script `/exec` URL** → `CONFIG.API_URL` in `claims/index.html`.
-      Until this is set the site is in preview mode: nothing is filed, nothing
-      is chased, the ten-working-day clock never starts, and the page tells
-      every visitor so. The whole of `Claims.gs` is idle behind this one line.
-- [ ] **The same `/exec` URL** → `CLAIMS.SURVEY_URL` in `Claims.gs`, which is
-      where the feedback link in a closing email points. Left blank, a closed
-      claim logs `survey-skipped` rather than mailing a dead link.
+- [x] **Apps Script `/exec` URL** → `CONFIG.API_URL` in **both**
+      `claims/index.html` **and** `claims/staff.html`. Set 13 November 2026 to
+      the Workspace project. Until it is set the site is in preview mode:
+      nothing is filed, nothing is chased, the ten-working-day clock never
+      starts, and the page tells every visitor so.
+- [x] **The feedback link finds its own address** — `surveyUrl_()` reads the
+      running web app's own `/exec` and notes it in the `CLAIMS_EXEC_URL`
+      Script Property, so `CLAIMS.SURVEY_URL` no longer has to be pasted after
+      every deploy. It never was, which is why client feedback had been off
+      from the day it was built. Needs build `2026-11-13b` or later.
 - [ ] **`SITE_KEY`** changed from the default, in both files
-- [ ] **Claims desk addresses** confirmed for health, life and pension
+- [ ] **Claims desk addresses** — health, life and motor are confirmed;
+      **property and pension** are the two still open
 - [ ] **Staff emails** added to the `Staff` tab (Active=Y) so the team can
       sign in at `/claims/staff.html`
 - [ ] **Salesforce Connected App** created by an admin (see *Connect
       Salesforce* above) and its key/secret entered via the Claims TT menu —
-      this switches on nightly register sync, live policy lookup, and
-      automatic `Claims__c` write-back. Until then, the register CSVs
-      delivered privately in the Claude session work as a manual fallback.
+      this switches on nightly register sync, live policy lookup, and the
+      `Claims_Revised__c` record and its task. (**Not `Claims__c`** — that
+      object was abandoned in 2016 and holds one record from this year; the
+      live one is `Claims_Revised__c`.) Until then the registers stay empty,
+      so a signed-in client sees no vehicles and a motor claim cannot be
+      judged against the cover in force on the day of loss.
 - [ ] **Moveable T&T holidays** topped up in `CLAIMS.HOLIDAYS` each January
 - [x] **Rotate `STAFF_KEY`** — now read from Script Properties
       (`RENEWAL_STAFF_KEY`) rather than from `Code.gs`, and the published
