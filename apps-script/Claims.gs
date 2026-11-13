@@ -57,7 +57,7 @@ var CLAIMS = {
    * that was pasted and never deployed — from outside those look identical,
    * and so does a later paste of an older copy winning the same function
    * name. Change it with any change worth deploying. */
-  BUILD: '2026-11-12a',
+  BUILD: '2026-11-13a',
 
   /* ---- where notifications go ---------------------------- */
 
@@ -505,13 +505,13 @@ function sendMail_(opts) {
 
 function testModeOn_() {
   PropertiesService.getScriptProperties().setProperty('TEST_MODE', 'on');
-  SpreadsheetApp.getUi().alert('🧪 Test mode is ON.\n\nEvery email now goes to ' + testInbox_() +
+  return claimsSetupSay_('🧪 Test mode is ON.\n\nEvery email now goes to ' + testInbox_() +
     ' with a [TEST] banner. Nothing can reach a client or a claims desk until you turn it off.');
 }
 
 function testModeOff_() {
   PropertiesService.getScriptProperties().deleteProperty('TEST_MODE');
-  SpreadsheetApp.getUi().alert('Test mode is OFF — emails go to real recipients again.');
+  return claimsSetupSay_('Test mode is OFF — emails go to real recipients again.');
 }
 
 /* The same two, under names the editor's Run list will show.
@@ -526,8 +526,27 @@ function testModeOff_() {
  * was a window with no way to do it at all. These two are reachable either
  * way. The menu points at them now; the private pair stays for anything else
  * that calls it. */
-function turnTestModeOn() { testModeOn_(); }
-function turnTestModeOff() { testModeOff_(); }
+/* Safe from the Apps Script editor's Run button — the summary goes to the
+   execution log, where the editor already has you looking, and no blocking
+   dialog is posted into a spreadsheet tab you are not watching. The setup
+   order insists these two are run before anything is deployed, and the
+   runbook sends you to the editor to do it, so these are exactly the two
+   that must never hang. See claimsSetupSay_ for the whole story: the same
+   bug cost the first live setup on 4 November 2026 and was fixed for
+   setupClaims alone, so it was waiting here on 13 November. */
+function turnTestModeOn() { return testModeOn_(); }
+function turnTestModeOff() { return testModeOff_(); }
+
+/* The menu's own versions: somebody is looking at the sheet, so they get the
+   dialog as well as the log. */
+function turnTestModeOnFromMenu() {
+  claimsFromMenu_ = true;
+  try { return testModeOn_(); } finally { claimsFromMenu_ = false; }
+}
+function turnTestModeOffFromMenu() {
+  claimsFromMenu_ = true;
+  try { return testModeOff_(); } finally { claimsFromMenu_ = false; }
+}
 
 /** Human labels for the claim types the site offers. */
 var CLAIM_TYPES = {
@@ -4935,7 +4954,24 @@ function claimSurveySweep_() {
  *
  * So the summary always goes to the execution log, which is where the editor
  * already has you looking, and the dialog is only shown from the menu, where
- * somebody is looking at the sheet and will click it. */
+ * somebody is looking at the sheet and will click it.
+ *
+ * 13 NOVEMBER 2026 — IT HAPPENED AGAIN, and that is the lesson worth keeping.
+ * The 4 November fix was applied to setupClaims and to nothing else, so the
+ * bug simply waited on the next function the runbook tells you to run from
+ * the editor: turnTestModeOn, which the setup order insists comes FIRST,
+ * before anything is deployed. Reported as "it's still running".
+ *
+ * The four setup functions are routed through here now. **Fifteen other
+ * alert() calls in this file are still unguarded**, and the rule that covers
+ * them is: ANYTHING ELSE IS RUN FROM THE CLAIMS TT MENU, NEVER FROM THE
+ * EDITOR. That is true anyway — they are operational tools (chase, notify,
+ * sync, preview) that want a selected row or a prompt, so the menu is their
+ * only sensible home. If one of them ever has to be run from the editor,
+ * give it a FromMenu wrapper like turnTestModeOnFromMenu and route its
+ * message through here; do not just wrap the alert in try/catch, because
+ * from the editor it does not throw — it BLOCKS, which is the whole
+ * problem. */
 function claimsSetupSay_(summary) {
   Logger.log(summary);
   if (claimsFromMenu_) {
@@ -5041,8 +5077,8 @@ function onOpen() {
     .addItem('Sync registers from Salesforce now', 'syncSalesforceNow')
     .addItem('Sync vehicles only (fast)', 'syncVehiclesNow')
     .addSeparator()
-    .addItem('🧪 Turn test mode ON (emails only reach you)', 'turnTestModeOn')
-    .addItem('Turn test mode OFF (live emails)', 'turnTestModeOff')
+    .addItem('🧪 Turn test mode ON (emails only reach you)', 'turnTestModeOnFromMenu')
+    .addItem('Turn test mode OFF (live emails)', 'turnTestModeOffFromMenu')
     .addSeparator()
     .addItem('Run the follow-up sweep now (test)', 'runFollowUpNow')
     .addItem('Clean up abandoned uploads', 'cleanupNow')
