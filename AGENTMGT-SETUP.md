@@ -283,6 +283,42 @@ thing that tells you afterwards which post produced the booking.
 Post it with `ad-b-square.mp4` attached. Change the tag per platform: `ad-b-fb` on Facebook, `ad-b-ig` on the
 Instagram Story's link sticker, `ad-b-wa` on WhatsApp.
 
+**The branch's own post** (ad C, 13 November 2026 — the pinned one, for every platform). A and B each name one
+reader and lead on that reader's fear. This one is the branch speaking for itself, so it answers the three
+questions in the order the film asks them: what is this, what is the work, and what does this branch do that
+nothing else here does. It is the only post that carries its sources, because it is the one that makes a claim
+about the branch rather than about the reader.
+
+> *A career in insurance sales. Paid on what you write. No ceiling, and no salary.*
+>
+> That sentence is the filter. If you want a salary band, this is not for you, and we would rather you knew now.
+>
+> The work is solving a problem: most families here have never seen their own numbers written down. Our fact find does the arithmetic while you talk, your client confirms it from their own inbox, and a manager reviews and signs it after they have.
+>
+> You will not start from a cold list. The leads come to you, from people who asked to be called.
+>
+> And before you are contracted, you are profiled, your market is mapped, and you are trained — so you know whether this fits before you give anything up. Almost nobody in this market does that.
+>
+> Thirty-nine things this branch does for an advisor, every week of your career, and all of it digital.
+>
+> By year four the industry keeps fourteen of every hundred it contracts *(LIMRA and Finseca, 2022)*. We keep thirty-one, on our own roll — and the method is on the page, so you can check it.
+>
+> Seven places in the first class of FY27, and one seat for a sales manager.
+>
+> One conversation. Twenty minutes, this week.
+>
+> https://rickyrampersadbranch.com/careers/?from=ad-c-fb
+>
+> Reply *TALK* and I'll call you.
+
+Post it with `ad-c-square.mp4` on Facebook and LinkedIn, `ad-c-story.mp4` on Reels, Stories and WhatsApp Status.
+Change the tag per platform: `ad-c-fb`, `ad-c-li`, `ad-c-wa`, `ad-c-ig`.
+
+**The bracketed source stays in.** It is six words and it is the reason the rest of the post is believed: every
+other figure in it is the branch's own, and a reader who can check one assumes the others were checked too. The
+same line is burned into the film under the chart, and the method behind our 31 — the cohort, the exclusions,
+and that 31 is the low end of our own range — is under "See the figures, and how they are counted" on the page.
+
 ### The link is never in the video. It goes in the post.
 
 **Nothing inside an MP4 is tappable.** The address on the closing frame and the QR beside it are both pictures.

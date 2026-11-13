@@ -522,12 +522,25 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
   background:var(--a);color:#06121d;font:800 calc(var(--u)*1.8)/1 var(--text);font-style:normal;position:relative;z-index:1}
 .cgstep b{display:block;font:800 calc(var(--u)*2)/1.15 var(--text);color:var(--ink)}
 .cgstep span{display:block;margin-top:calc(var(--u)*.4);font:500 calc(var(--u)*1.55)/1.3 var(--text);color:var(--mute)}
-.cvsrow{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*2.2);width:min(100%,calc(var(--u)*56));margin:calc(var(--u)*2.4) auto 0}
-.cvs{display:flex;align-items:baseline;gap:calc(var(--u)*1);justify-content:center;padding:calc(var(--u)*1) calc(var(--u)*1.2);
-  border-radius:calc(var(--u)*.8);background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-left:calc(var(--u)*.4) solid #C97A3A}
-.cvs.us{border-left-color:#0E93B0;background:rgba(14,147,176,.1)}
-.cvs b{font:800 calc(var(--u)*5.4)/1 var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
-.cvs span{font:600 calc(var(--u)*1.75)/1.25 var(--text);color:var(--mute);text-align:left}
+/* ── Ad C scene 6: the retention comparison, 13 Nov 2026. Two flat number cards became ONE 0-100
+   track, so 14 and 31 are read against the same hundred and the source line under them says what
+   that hundred is. Deliberately NOT a hundred-square grid: on ad B that drew 69 dark squares,
+   which reads as a win to a practising advisor and as "two in three fail" to somebody deciding
+   whether to leave a salaried job — and this post is aimed at both. Drawing only what is KEPT
+   says the same thing without drawing anybody's failure.
+   The bar fills with `barfill` (scaleX). NEVER `grow`: this file defines @keyframes grow three
+   times and the later scaleY one wins, so a bar on it renders at zero width for the whole scene.
+   Text wears text tokens, never the series colour; each row is named as well as coloured. */
+.cfig{width:min(100%,calc(var(--u)*72));margin:calc(var(--u)*2.4) auto 0;display:grid;gap:calc(var(--u)*1.15)}
+.cfrow{display:grid;grid-template-columns:calc(var(--u)*15) 1fr calc(var(--u)*6.4);align-items:center;gap:calc(var(--u)*1.3)}
+.cflab{font:600 calc(var(--u)*1.8)/1.2 var(--text);color:var(--mute);text-align:right}
+.cftrack{position:relative;height:calc(var(--u)*2.1);border-radius:calc(var(--u)*1.05);background:rgba(255,255,255,.07);overflow:hidden}
+.cfbar{position:absolute;inset:0 auto 0 0;width:var(--w);border-radius:inherit;background:#C97A3A;
+  transform:scaleX(0);transform-origin:left center;animation:barfill .95s var(--out) both;animation-delay:var(--t0)}
+.cfrow.us .cfbar{background:#0E93B0}
+.cfrow>b{font:800 calc(var(--u)*4)/1 var(--display);color:var(--mute);font-variant-numeric:tabular-nums;text-align:left}
+.cfrow.us>b{color:var(--ink)}
+.cfx{margin-top:calc(var(--u)*.5);font:700 calc(var(--u)*2.05)/1.3 var(--display);color:var(--ink);text-align:center}
 .ceil-line{position:absolute;left:10%;right:10%;top:62%;height:2px;background:linear-gradient(90deg,transparent,var(--aL),transparent);transform:scaleX(0)}
 .scene.act .ceil-line{animation:rule 1.1s var(--out) both;animation-delay:var(--t0)}
 .card{position:relative;background:var(--bg3);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,6,10,.5)}
@@ -1505,8 +1518,12 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .cgstep i{width:calc(var(--u)*4.4);height:calc(var(--u)*4.4);margin:0;font-size:calc(var(--u)*2.4);grid-row:1/3}
   .cgstep b{font-size:calc(var(--u)*2.9);align-self:end}
   .cgstep span{font-size:calc(var(--u)*2.2);margin-top:calc(var(--u)*.2);align-self:start}
-  .cvsrow{width:100%;gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*3)}
-  .cvs b{font-size:calc(var(--u)*7)}.cvs span{font-size:calc(var(--u)*2.2)}
+  .cfig{width:100%;gap:calc(var(--u)*1.5);margin-top:calc(var(--u)*2.8)}
+  .cfrow{grid-template-columns:calc(var(--u)*19) 1fr calc(var(--u)*8);gap:calc(var(--u)*1.6)}
+  .cflab{font-size:calc(var(--u)*2.3)}
+  .cftrack{height:calc(var(--u)*2.8);border-radius:calc(var(--u)*1.4)}
+  .cfrow>b{font-size:calc(var(--u)*5.2)}
+  .cfx{font-size:calc(var(--u)*2.7)}
   .cshot{width:100%}
   /* THE FIRST FRAME IS THE THUMBNAIL. Measured 13 Nov 2026 on the rendered MP4: frame 0 of every ad cut
      carried 0.00% ink — an empty navy square. In a feed that frame is what a person sees before autoplay
@@ -1552,7 +1569,9 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .cgstep{display:block;text-align:center}
   .cgstep i{width:calc(var(--u)*3.4);height:calc(var(--u)*3.4);margin:0 auto calc(var(--u)*1);font-size:calc(var(--u)*1.9);grid-row:auto}
   .cgstep b{font-size:calc(var(--u)*2.05)}.cgstep span{font-size:calc(var(--u)*1.55);margin-top:calc(var(--u)*.4)}
-  .cvsrow{zoom:.88;margin-top:calc(var(--u)*1.8)}
+  /* The square inherits the portrait block above, and for the comparison that is right — it is a row
+     either way, never a stack — so this only brings it down to fit the burned caption band. */
+  .cfig{zoom:.9;margin-top:calc(var(--u)*1.6);width:min(100%,calc(var(--u)*90))}
   .s-all .h.xl{font-size:calc(var(--u)*6.4)}
   .mgrid{zoom:.9;margin-top:calc(var(--u)*2)}
   .hrow{zoom:.92;margin-top:calc(var(--u)*1.8)}
@@ -1710,10 +1729,16 @@ body.paused #bars i.run::after{animation-play-state:paused}
   <p class="eye in" style="--t0:2613ms">Nobody here works alone</p>
   <h2 class="h xl"><span class="cnt" data-to="39" data-at="1125" style="--at:1125ms">39</span> <span aria-label="things, and all of it digital."><span class="w"><i style="--i:0;--t0:1125ms">things,</i></span> <span class="w"><i style="--i:1;--t0:1125ms">and</i></span> <span class="w"><i style="--i:2;--t0:1125ms">all</i></span> <span class="w"><i style="--i:3;--t0:1125ms">of</i></span> <span class="w"><i style="--i:4;--t0:1125ms">it</i></span> <span class="w"><i style="--i:5;--t0:1125ms">digital.</i></span></span></h2>
   <div class="mgrid"><div class="mcol in" style="--t0:1275ms"><span class="mdots"><i style=--t0:1375ms></i><i style=--t0:1413ms></i><i style=--t0:1451ms></i><i style=--t0:1489ms></i><i style=--t0:1527ms></i><i style=--t0:1565ms></i><i style=--t0:1603ms></i></span><b>7</b><span class="mlab">Before you join</span></div><div class="mcol in" style="--t0:1495ms"><span class="mdots"><i style=--t0:1595ms></i><i style=--t0:1633ms></i><i style=--t0:1671ms></i><i style=--t0:1709ms></i><i style=--t0:1747ms></i></span><b>5</b><span class="mlab">Your first 90 days</span></div><div class="mcol in" style="--t0:1715ms"><span class="mdots"><i style=--t0:1815ms></i><i style=--t0:1853ms></i><i style=--t0:1891ms></i><i style=--t0:1929ms></i><i style=--t0:1967ms></i><i style=--t0:2005ms></i><i style=--t0:2043ms></i><i style=--t0:2081ms></i><i style=--t0:2119ms></i><i style=--t0:2157ms></i></span><b>10</b><span class="mlab">Every day</span></div><div class="mcol in" style="--t0:1935ms"><span class="mdots"><i style=--t0:2035ms></i><i style=--t0:2073ms></i><i style=--t0:2111ms></i><i style=--t0:2149ms></i><i style=--t0:2187ms></i><i style=--t0:2225ms></i></span><b>6</b><span class="mlab">Every week</span></div><div class="mcol in" style="--t0:2155ms"><span class="mdots"><i style=--t0:2255ms></i><i style=--t0:2293ms></i><i style=--t0:2331ms></i><i style=--t0:2369ms></i><i style=--t0:2407ms></i><i style=--t0:2445ms></i></span><b>6</b><span class="mlab">Every month</span></div><div class="mcol in" style="--t0:2375ms"><span class="mdots"><i style=--t0:2475ms></i><i style=--t0:2513ms></i><i style=--t0:2551ms></i><i style=--t0:2589ms></i><i style=--t0:2627ms></i></span><b>5</b><span class="mlab">Your managers, too</span></div></div>
-  <div class="cvsrow">
-    <div class="cvs in" style="--t0:7088ms"><b class="cnt" data-to="14" data-at="8412" style="--at:8412ms">14</b><span>the industry keeps, by year four</span></div>
-    <div class="cvs us in" style="--t0:10025ms"><b class="cnt" data-to="31" data-at="10525" style="--at:10525ms">31</b><span>this branch keeps</span></div>
+  <div class="cfig">
+    <div class="cfrow in" style="--t0:6988ms"><span class="cflab">The industry</span><span class="cftrack"><i class="cfbar" style="--w:14%;--t0:8412ms"></i></span><b class="cnt" data-to="14" data-at="8412" style="--at:8412ms">14</b></div>
+    <div class="cfrow us in" style="--t0:9725ms"><span class="cflab">This branch</span><span class="cftrack"><i class="cfbar" style="--w:31%;--t0:10525ms"></i></span><b class="cnt" data-to="31" data-at="10525" style="--at:10525ms">31</b></div>
+    <p class="cfx in" style="--t0:10875ms">More than twice as many</p>
   </div>
+  <!-- The source lands WITH the chart, not after it. Cued off the last word it would have followed, it
+       entered 175ms before the scene ended — a flash nobody can read, which is worse than no source at
+       all, because it looks like a cite and cannot be checked. Footnote furniture belongs under the
+       chart from the moment the chart is there; this gives it about five seconds on screen. -->
+  <p class="adsrc in" style="--t0:7188ms">Of every 100 contracted, still contracted at year four. Industry: LIMRA and Finseca, 2022. Branch: our own roll.</p>
 </div>
 <div class="streak"></div>
 </section>

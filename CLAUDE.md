@@ -5794,6 +5794,76 @@ only, and the runner numbers every job's lines from 01, so `adCfix/01..03` are r
 6 and map back by hand. A shift cannot express that. `AD_HITS['C']` in `films-recruit.py` names its
 own punch words; a cue word that is not in the line exits before `films.json` is written.
 
+### Where the 31 comes from, and the ad and the page agreeing — 13 November 2026
+
+Asked in these words: *"how did you get the 31 we keep?"*, then *"so how we got so a bot of the data
+source so persons will not see we aremaking this up"*.
+
+**THE 31 IS THE BRANCH'S OWN FIGURE, NOT ONE COMPUTED HERE.** It came out of the four papers of 29
+October — the Three-Year Plan executive summary and the Production and Manpower Record 2014–2026 —
+which give 67% at one year and 31% at four against "about 16%". It went into the film and the ads on
+that authority and had never been checked against anything.
+
+**Checked now, and it is the conservative end of its own range.** Ninety-four agent Contacts on the
+branch's four units carrying a life licence date, measured from the earlier of licence and hire to
+the termination date, or to today while still on the books:
+
+| | cohort | still there | |
+|---|---|---|---|
+| 1 year | 84 | 67 | 80% |
+| **4 years** | **68** | **36** | **53%** |
+| 5 years | 65 | 30 | 46% |
+
+The gap to 31 is the **cohort, not the arithmetic**: everyone who ever sat on those units includes
+the 1993–2006 intake, all of whom passed four years. Narrowed to recent recruiting it lands on the
+published figure — 2016 onward 37%, **2017 onward 33%**, 2018 onward 36%. So every cut is at or above
+31, and 31 is the right one to publish: it is the figure in his own board papers, which is what an
+executive can be handed.
+
+**Ten records cannot be reconciled and are excluded from all of it** — two whose termination date is
+before their start date, eight off the books with no termination date at all. That is a real data job,
+not a rounding note: it is the difference between a number defensible line by line and one resting on
+exclusions nobody has seen. Names are in the session reply, never here.
+
+**The damaging fault was not a missing source — it was two numbers for one claim.** The ad said the
+industry keeps **14**; the page said **~15**, in four places. Somebody who watches the ad and taps
+through sees both, which is exactly what reads as invented. Settled on **14**, because it is the one
+with a traceable public citation (LIMRA and Finseca, *The Path to Improving Retention*, 2022, quoted
+verbatim in LIMRA's 2025 Annual Conference) where "~15% for agency systems built on recruiting the
+inexperienced" was a gloss with no source in the record. **A figure that appears in both an MP4 and
+the page it links to has to be the same figure, and the one to keep is the one that can be looked
+up.** The second chart's bars are on a 0–67 scale, so its width moved 22% → 21% with the number.
+
+**The method is published, under "See the figures, and how they are counted"**: the cohort, the
+exclusions, 53 across the whole roll, 33 across recent recruiting, and that the 31 on the page is the
+low end and is the one we print. Showing the working — including that our own data gives a better
+number than we claim — is worth more than any wording.
+
+**Ad C scene 6 carried no source at all**, where A and B both do. The two flat number cards became one
+0–100 track with its footnote under it. Deliberately **not** a hundred-square grid: on ad B that drew
+69 dark squares, which reads as a win to a practising advisor and as "two in three fail" to somebody
+deciding whether to leave a salaried job — and this post is aimed at both. Drawing only what is kept
+says the same thing without drawing anybody's failure.
+
+#### Two traps, and the first is invisible by design
+
+- **`var(--ease-out)` DOES NOT EXIST IN THIS BUILDER — the tokens are `--ease`, `--out` and `--pop`.**
+  An undefined custom property makes the whole `animation` shorthand invalid, so it is dropped
+  entirely and the element keeps its `transform: scaleX(0)` **for the life of the scene**. Both bars
+  rendered as empty grey tracks and nothing anywhere complained. It presents as a layout fault, not an
+  animation one. Check the token exists before using it in a shorthand; a typo in a longhand costs one
+  property, a typo in a shorthand costs all of them.
+- **A footnote cued off the last word of its own line lands after the line has finished.** `tat(6,
+  "thirty-one") + 1400` put the source on screen at 11,925ms of a 12,100ms scene — **175ms**, a flash
+  that looks like a cite and cannot be read, which is worse than no cite at all. Chart furniture is
+  cued off the word the chart ENTERS on, not the word it ends on: it now runs about five seconds.
+
+**And `.hb .tip` is not the chart's tip.** This page has two different components whose footnote is
+`.tip`, and the new `.meth` rule was written against the first one found by grep, so the method block
+rendered unstyled. Then `page.$('.chrt')` returned the *other* chart card, because it is first in
+document order — the recorded `page.$` lesson, twice in one hour. Scope from the element you mean:
+`document.querySelector('.meth').closest('.chrt')`.
+
 ### Which ad brought them — 13 November 2026
 
 Asked for in these words: *"where is the link to click and when they scan what happens how is it profiled?"*

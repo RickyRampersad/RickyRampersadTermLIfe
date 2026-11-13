@@ -921,6 +921,13 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 .chrt details{font-size:var(--f--2);color:var(--dT3)}
 .chrt summary{cursor:pointer;color:var(--aT);font-weight:600}
 .chrt table{width:100%;border-collapse:collapse;margin-top:.6rem;font-variant-numeric:tabular-nums}
+/* The method, 13 Nov 2026, asked for so a reader can check the numbers rather than take them: it gives
+   our own cohort, our own exclusions, and says that the figure we publish is the LOW end of the range.
+   It goes on `.chrt`, NOT `.hb` — this page has two different components whose footnote is `.tip`, and
+   the first cut styled the wrong one, so the block rendered unstyled and the test could not find it. */
+.chrt .meth{margin:.9rem 0 0;font-size:var(--f--2);color:var(--dT3);line-height:1.55}
+.chrt .meth b{color:var(--dT2)}
+.chrt .meth em{font-style:italic}
 .chrt th,.chrt td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid rgba(255,255,255,.12);color:var(--dT2)}
 .chrt th{color:var(--dT3);font-weight:600}
 .chrt td:last-child,.chrt th:last-child{text-align:right}
@@ -1488,10 +1495,10 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
         <h3>Of every 100 advisors hired, how many are still there</h3>
         <div class="mgb" style="--i:0"><span class="mgl">The industry, at one year <b>55&ndash;60</b></span><span class="mgt"><i class="mgf ind" style="--w:58%"></i></span></div>
         <div class="mgb" style="--i:1"><span class="mgl">This branch, at one year <b>67</b></span><span class="mgt"><i class="mgf us" style="--w:67%"></i></span></div>
-        <div class="mgb" style="--i:2"><span class="mgl">The industry, at four years <b>15</b></span><span class="mgt"><i class="mgf ind" style="--w:15%"></i></span></div>
+        <div class="mgb" style="--i:2"><span class="mgl">The industry, at four years <b>14</b></span><span class="mgt"><i class="mgf ind" style="--w:14%"></i></span></div>
         <div class="mgb" style="--i:3"><span class="mgl">This branch, at four years <b>31</b></span><span class="mgt"><i class="mgf us" style="--w:31%"></i></span></div>
         <p class="mgk"><span><i class="sw-ind"></i>The market</span><span><i class="sw-us"></i>This branch</span></p>
-        <p class="mgsrc">Industry figures: LIMRA. Branch figures: our own roll, measured to 31 August. Four years against the market&rsquo;s four, and one year against its one &mdash; not a horizon chosen to flatter.</p>
+        <p class="mgsrc">Industry: LIMRA and Finseca, <em>The Path to Improving Retention</em>, 2022, quoted in LIMRA&rsquo;s 2025 Annual Conference. Branch: our own roll, measured to 31 August. Four years against the market&rsquo;s four, and one year against its one &mdash; not a horizon chosen to flatter.</p>
       </div>
 
       <div class="mgwhat">
@@ -1734,8 +1741,8 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
             <span class="trk" style="width:100%"><span class="fil" style="--w:100%"></span></span>
           </div>
           <div class="row ref" style="--i:2">
-            <span class="lab"><i>After 4 years &middot; the industry</i><b>~15%</b></span>
-            <span class="trk" style="width:22%"></span>
+            <span class="lab"><i>After 4 years &middot; the industry</i><b>14%</b></span>
+            <span class="trk" style="width:21%"></span>
           </div>
           <div class="row" style="--i:3" tabindex="0">
             <span class="lab"><i>After 4 years &middot; this branch</i><b>31%</b></span>
@@ -1743,10 +1750,12 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
           </div>
         </div>
         <p class="ckey"><span><i></i>This branch</span><span><i class="r"></i>The industry, published</span></p>
-        <p class="tip">All four bars are to one scale. Four-year survival of about 15% is LIMRA&rsquo;s figure for agency systems built on recruiting the inexperienced &mdash; which is exactly the system this branch stopped running.</p>
-        <details><summary>See the figures</summary>
+        <p class="tip">All four bars are to one scale. The industry&rsquo;s 14 in a hundred still contracted at year four is LIMRA and Finseca&rsquo;s own published figure. Ours is counted the same way, on our own roll, and the method is below.</p>
+        <details><summary>See the figures, and how they are counted</summary>
           <table><caption class="sr-only">Advisors still in the business, this branch against the industry</caption><thead><tr><th scope="col">Still in the business</th><th scope="col">The industry</th><th scope="col">This branch</th></tr></thead>
-          <tbody><tr><td>After 1 year</td><td>55&ndash;60%</td><td>67%</td></tr><tr><td>After 4 years</td><td>~15%</td><td>31%</td></tr></tbody></table>
+          <tbody><tr><td>After 1 year</td><td>55&ndash;60%</td><td>67%</td></tr><tr><td>After 4 years</td><td>14%</td><td>31%</td></tr></tbody></table>
+          <p class="meth"><b>Where the industry&rsquo;s figures come from.</b> One year, 55&ndash;60%: LIMRA, first-year retention by who recruited the advisor. Four years, 14%: LIMRA and Finseca, <em>The Path to Improving Retention</em>, 2022, quoted in LIMRA&rsquo;s 2025 Annual Conference &mdash; &ldquo;we have been sitting at an industry-wide 4-year retention rate of 14% for years.&rdquo;</p>
+          <p class="meth"><b>How ours is counted.</b> Every agent ever contracted to this branch&rsquo;s four units, measured on our own Salesforce records from the earlier of their licence and hire date to their termination date, or to today if they are still on the books. Ten records whose dates cannot be reconciled are excluded and counted as neither. On that basis: across the whole roll, 53 in a hundred reach four years; across recent recruiting &mdash; everyone who started from 2017 &mdash; 33. <b>The 31 published here is from the branch&rsquo;s own Production and Manpower Record, and it is the conservative end of that range.</b> We publish the lower one.</p>
         </details>
       </article>
     </div>
@@ -2348,7 +2357,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
          needs no Apps Script paste; it goes on `page` too, for the sheet's own
          column. Clamped to a short slug: it is a URL parameter that ends up
          printed in an e-mail. */
-      var SRCW={'ad-b-fb':'Ad B, the second-year cliff — Facebook','ad-b-ig':'Ad B — Instagram Story','ad-b-wa':'Ad B — WhatsApp','ad-a-li':'Ad A, the contracted advisor — LinkedIn','ad-a-wa':'Ad A — WhatsApp, the agents’ groups','ad-a-fb':'Ad A — Facebook','film':'The recruiting film','careersvideo':'The film page','qr':'A QR scan','post':'A branch-page post'};
+      var SRCW={'ad-b-fb':'Ad B, the second-year cliff — Facebook','ad-b-ig':'Ad B — Instagram Story','ad-b-wa':'Ad B — WhatsApp','ad-a-li':'Ad A, the contracted advisor — LinkedIn','ad-a-wa':'Ad A — WhatsApp, the agents’ groups','ad-a-fb':'Ad A — Facebook','ad-c-fb':'Ad C, the branch’s own post — Facebook','ad-c-li':'Ad C — LinkedIn','ad-c-wa':'Ad C — WhatsApp','ad-c-ig':'Ad C — Instagram Story','film':'The recruiting film','careersvideo':'The film page','qr':'A QR scan','post':'A branch-page post'};
       var from=String((new URLSearchParams(location.search)).get('from')||'').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,24);
       var src=SRCW[from]||(from?'Tagged “'+from+'”':'Direct, or a QR scan');
       var body={action:'q.quote',form:'careers',code:'QT',line:'Careers',title:'Confidential conversation',
