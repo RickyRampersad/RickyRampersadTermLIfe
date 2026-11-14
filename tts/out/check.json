@@ -1,7 +1,12 @@
 {
- "tts/out/adCj3/01.mp3": [
+ "tts/out/adCh/01.mp3": [
+  "en",
+  0.999,
+  "Most people have this backwards. It starts with a conversation, not a laptop, paper, questions, and the time to listen. You type it up afterwards in your own time on a Guardian's own approved form."
+ ],
+ "tts/out/adCh/02.mp3": [
   "en",
   0.998,
-  "The work is solving a problem. Most families have never seen their own numbers written down. That is the job of our fact find. And it does the arithmetic while you talk. Your client approves it from their own inbox, a manager signs it, and they rate you. They hear from us at every stage after. A journey, not a transaction."
+  "Your client reads the draft and agrees with it, then your manager signs it and adds a comment, and then it never stops, a check-in every six months, a full review in their birthday month for life."
  ]
 }
