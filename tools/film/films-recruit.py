@@ -39,7 +39,9 @@ if os.path.exists('recruit-trailer-timing.json'):
 # argument rather than the feed cut's four: the career named, the work named, the gates, and the two
 # figures landing beside each other in scene 6.
 AD_HITS = {'A': [(2, 'cliff'), (3, 'thirty'), (4, 'Thirty-nine'), (5, 'Seven')],
-           'B': [(2, 'second'), (3, 'leads'), (4, 'thirty'), (5, 'Seven')],
+           # (3,'leads') went with "Here, the leads come to you" on 14 November 2026: the advisor's own
+           # market comes first and the branch keeps it full, so the punch lands on 'full'.
+           'B': [(2, 'second'), (3, 'full'), (4, 'thirty'), (5, 'Seven')],
            # (6,'thirty-nine') went with the 39-things claim on 14 November 2026 — the journey scene shows six
            # of them now. Its punch moves to (3,'journey'), the line the scene is built to land on.
            'C': [(2, 'insurance'), (3, 'conversation'), (4, 'stops'), (6, 'contracted'), (7, 'thirty-one'), (8, 'Seven')]}

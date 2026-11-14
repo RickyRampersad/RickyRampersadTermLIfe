@@ -1461,8 +1461,22 @@ if MODE == 'ad':
 </div>""", 'data-ch="No ceiling, and the first year"'))
         # LIMRA names the CAUSE of the cliff as well as the cliff: new agents exhaust the friends-and-family
         # market and have no prospecting system behind it. That is the newcomer's real fear, so B shows the
-        # personal list emptying — and the very next scene shows the board filling instead.
+        # personal list emptying — and the very next scene shows it being kept full.
         NAMES = ['Your cousin', 'Your old boss', 'A neighbour', 'Someone from church', 'A friend from school']
+        # 14 Nov 2026, Ricky: "the leads don't come to them as they do market surveys and access their
+        # natural market they come into, what we do is ensure the leads does not run out". So scene 3 no
+        # longer says "Here, the leads come to you" — that was a promise the branch does not make. The
+        # advisor's own market comes FIRST, mapped and scored out of a hundred by the market survey before
+        # they are contracted, and the three rows under it are what refills it when it thins. LIMRA's 2026
+        # catalogue names the manager's half of this "expand their reach within their natural market" and
+        # "recognize signs of prospecting failure", which is the note on the left. (icon, cue word, ms after
+        # it, title, line) — every cue word must be in line 3, or tat() stops the build.
+        # THREE rows, not four. A fourth ("Your week · worked back from your income") pushed the panel to
+        # 82% of the square frame, and a two-line burned caption climbs to about 77%: the last caption sat
+        # straight across it. The bottom-16% rule is the caption's baseline, not its top.
+        REFILL = [('users', 'mapped', 0, 'Your own market', 'mapped and scored · 72 of 100'),
+                  ('bolt', 'thin', 250, 'Asked to be called', '“Retiring properly” · on the board'),
+                  ('home', 'keeping', 150, 'A household matched to you', 'with the file already read')]
         T.append(tscene(2, 's-names', f"""
 <div class="split">
   <div class="col">
@@ -1483,25 +1497,25 @@ if MODE == 'ad':
         T.append(tscene(3, 's-fill', f"""
 <div class="split">
   <div class="col">
-    <h2 class="h l wine2">{words("Here, the leads come to you.", tat(3,"leads") - 250, 95)}</h2>
-    <p class="sub in" style="--t0:{tat(3,"asked")}ms">From people who asked to be called.</p>
+    <h2 class="h l wine2">{words("Here, the names don’t run out.", max(200, tat(3,"market") - 250), 95)}</h2>
+    <p class="sub in" style="--t0:{tat(3,"mapped")}ms">Your own market comes first, mapped before you are contracted.</p>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:{tat(3,"trained")}ms">Trained before you are contracted</span>
+      <span class="ypill in" style="--t0:{tat(3,"full")}ms">Keeping your week full is our job</span>
       <span class="ypill in" style="--t0:{tat(3,"coach")}ms">A coach, not a clock</span>
     </div>
-    <div class="note in" style="--t0:{tat(3,"asked")}ms">
+    <div class="note in" style="--t0:{tat(3,"thin")}ms">
       <small>From your manager · in your morning e-mail</small>
-      <p>{typed("Two fact finds this week, Priya. Let's book your Thursday calls together at eight.", tat(3,"trained"), 22)}</p>
+      <p>{typed("Your list is getting thin, Priya. Let's work Thursday's calls together at eight.", tat(3,"keeping"), 22)}</p>
     </div>
   </div>
   <div class="col">
-    <div class="list in fl" style="--t0:{tat(3,"leads") - 200}ms">
-      <div class="bd-h"><b>Your board</b><span>this morning</span></div>
-      {''.join(f'<div class="lead-in" style="--t0:{tat(3,"asked") + i*300}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>{n}</b><span>{d}</span></div>' for i, (n, d) in enumerate(LEADS))}
+    <div class="list in fl" style="--t0:{tat(3,"market") - 200}ms">
+      <div class="bd-h"><b>Your list</b><span>kept full</span></div>
+      {''.join(f'<div class="lead-in" style="--t0:{tat(3,w) + o}ms"><svg class="ic"><use href="#i-{ic}"/></svg><b>{n}</b><span>{d}</span></div>' for ic, w, o, n, d in REFILL)}
       {SAMPLE}
     </div>
   </div>
-</div>""", 'data-ch="The leads come to you"'))
+</div>""", 'data-ch="The names don’t run out"'))
         # B's scene 4 is the only one in either ad that is purely "14 against 31 of a hundred" with no
         # time story in the line, so it takes the unit chart. A keeps the slope, because its scenes 2
         # and 3 ARE a time story — the fall, and the cliff named at year two — and a unit chart has no
