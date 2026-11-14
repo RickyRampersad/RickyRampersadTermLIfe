@@ -3,9 +3,11 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "adBnm2": [
-   "Here, you start with your own market, mapped before you are contracted. When it runs thin, keeping your week full is our job. And your manager is a coach, not a clock.",
-   "Here, your own market comes first, and it is mapped before you are contracted. When it runs thin, keeping your week full is our job. Your manager is a coach, not a clock.",
+  "fixCT": [
+   "You start with the people who know you. When that list runs thin, keeping your week full is our job, and your manager is a coach, not a clock.",
+   "Everyone starts with the people they know. When that list runs thin, keeping your week full is our job. And your manager is a coach, not a clock.",
+   "And here is this room, in full. You are never stuck for an answer at the table: the fact find does the arithmetic, Branch Intelligence reads the file, and the branch team answers your query the same day. And you never start from zero. Clients matched to you, household by household, and when your own list runs thin, the branch keeps your week full.",
+   "And here is this room, in full. You are never stuck for an answer at the table: the fact find does the arithmetic, Branch Intelligence reads the file, and the branch team answers your query the same day. And you never start from zero. Clients are matched to you, household by household, and when your own list runs thin, the branch keeps your week full.",
    "By year four, the industry keeps fourteen in a hundred. This branch keeps thirty-one."
   ]
  }
