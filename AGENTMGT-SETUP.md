@@ -133,7 +133,7 @@ exhaust the friends-and-family market with no prospecting system behind it.
 | for | an advisor already contracted somewhere | somebody new to the work |
 | 1 | "You are good at it. And the support stopped." | "No ceiling? Afraid of the first year?" |
 | 2 | the cliff, with LIMRA quoted on screen | the names running out, struck off one by one |
-| 3 | 14 of a hundred left — here, 31 | the leads come to you; trained before contracted |
+| 3 | 14 of a hundred left — here, 31 | your own market mapped before you are contracted, and kept full when it thins |
 | 4 | 39 things, the households, a coach not a clock | the industry keeps 14, this branch keeps 31 |
 | 5 | seven places, the conversation, the address and QR | the same |
 
@@ -270,7 +270,7 @@ thing that tells you afterwards which post produced the booking.
 >
 > Straight with you: this is a sales career. But the year that breaks people is not the first. It is the second, when the names run out — your cousin, your old boss, the neighbour from church.
 >
-> Not here. The leads come to you, from people who asked to be called. You are trained, and in the field, before you are contracted. Thirty-nine things this branch does for an advisor, every week of your career, and a manager who is a coach, not a clock.
+> Not here. Your own market comes first — mapped and scored before you are contracted — and when it runs thin, keeping your week full is the branch’s job. You are trained, and in the field, before you sign. Thirty-nine things this branch does for an advisor, every week of your career, and a manager who is a coach, not a clock.
 >
 > Four years in, the industry keeps fourteen of every hundred. We keep thirty-one.
 >
@@ -299,7 +299,7 @@ about the branch rather than about the reader.
 >
 > And then it never stops: a check-in every six months, a full review in their birthday month, for life. When something is outstanding, the branch chases it and tells you what was done. A journey, not a transaction — and it is the part most advisors never get.
 >
-> You will not start from a cold list. The leads come to you, from people who asked to be called.
+> You start with the people who know you, mapped before you are contracted, and when that list runs thin the branch keeps your week full.
 >
 > And before you are contracted, you are profiled, your market is mapped, and you are trained — so you know whether this fits before you give anything up. Almost nobody in this market does that.
 >

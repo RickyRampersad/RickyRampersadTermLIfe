@@ -79,6 +79,9 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-x:clip}
+/* The sticky bar is 70px at every width. With nothing here, a link to /careers/#book (or any of the
+   eight "Book a conversation" buttons, which go to #talk) parked the heading 13–27px under it. */
+section[id]{scroll-margin-top:4.5rem}
 body{font-family:var(--text);font-size:var(--f-0);line-height:1.6;color:var(--body);background:var(--bg);overflow-x:clip;-webkit-font-smoothing:antialiased}
 img,svg{display:block;max-width:100%}
 svg:not([width]){width:1.5rem;height:1.5rem}
@@ -962,6 +965,37 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 .bsay small{display:block;font-size:var(--f--2);letter-spacing:.12em;text-transform:uppercase;color:var(--dT3);margin-bottom:.3rem;font-weight:700}
 .bfoot{margin:0;font-size:var(--f--2);color:var(--dT3)}
 @media (max-width:56rem){.lgrid{grid-template-columns:1fr;gap:var(--sp-l)}}
+/* ═══ THE BOOK — for the advisor who already has one (14 November 2026) ═══
+   Ricky: "on existing agents, they don't manage their book properly, they don't build it, they don't
+   have the tools, the system to really help them grow. So you need to have that differentiation."
+   #leads answers the newcomer (the names run out in year two); this answers the practising advisor.
+   ONLY what reaches an advisor's whole book is claimed here: the Premium Due Desk (it reads the whole
+   branch dues extract and copies the agent on every letter), the work done on their clients each day and
+   shown in their morning e-mail, the service desks, matched households and the fact find. Match and the
+   per-client read run on the orphan books and for staff, and the six-month review trigger is built but
+   switched off — so none of the three is promised. A light section with the proof in a dark card: #leads
+   before it is dark and #path after it is bg2, so the grounds still alternate. */
+.bk{background:var(--bg)}
+.bkgrid{display:grid;grid-template-columns:.85fr 1.15fr;gap:var(--sp-xl);align-items:start}
+.bkproof{background:radial-gradient(110% 80% at 85% 0%,var(--d3),transparent 62%),linear-gradient(170deg,var(--d1),var(--d0) 72%);color:var(--dT2);border-radius:var(--r);padding:var(--sp-l);display:grid;gap:var(--sp-m);min-width:0;box-shadow:0 22px 50px hsl(var(--sh) / .28)}
+.bkproof small{font:700 var(--f--2)/1.2 var(--text);letter-spacing:.13em;text-transform:uppercase;color:var(--aT)}
+.bkproof h3{margin:0;font:700 var(--f-2)/1.15 var(--display);color:#fff;text-wrap:balance}
+.bkproof .bkfoot{margin:0;font-size:var(--f--1);line-height:1.55;color:var(--dT2)}
+.bkproof .bkfoot b{color:#fff;font-weight:600}
+.bkways{margin:0;padding:0;list-style:none;display:grid;gap:var(--sp-m)}
+.bkways li{display:grid;grid-template-columns:auto 1fr;gap:1rem;align-items:start;min-width:0;padding:var(--sp-m) var(--sp-l);background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.bkways li>div{min-width:0}
+.bkways h3{margin:0 0 .3rem;font:700 var(--f-0)/1.25 var(--display);color:var(--ink)}
+.bkways p{margin:0;font-size:var(--f--1);line-height:1.55;color:var(--body)}
+.bknot{margin-top:var(--sp-xl);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--sp-l);align-items:end;padding:var(--sp-l);border:1px solid var(--line);border-radius:var(--r);background:var(--a-tint)}
+.bknot h3{margin:0 0 .7rem;font:700 var(--f-1)/1.2 var(--display);color:var(--ink)}
+.bknot ul{margin:0;padding:0;list-style:none;display:grid;gap:.7rem}
+.bknot li{font-size:var(--f--1);line-height:1.55;color:var(--body);padding-left:1rem;border-left:2px solid var(--a)}
+.bknot li b{color:var(--ink)}
+@media (max-width:56rem){.bkgrid,.bknot{grid-template-columns:1fr}.bknot .btn{justify-self:start}}
+/* .btn is nowrap everywhere, and "Book a confidential conversation" is 333px — 11px past this box at
+   390 and 39px off the screen at 360. Only this one is allowed to wrap; every other button keeps its line. */
+@media (max-width:30rem){.bknot .btn{max-width:100%;white-space:normal;text-align:left}}
 /* ═══ THE HERO'S SUPPORT STRIP — fills the column under the film (9 November 2026) ═══ */
 .hsupp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem;margin-top:var(--sp-s)}
 .hsupp div{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:var(--r-s);padding:.75rem .85rem;display:grid;gap:.15rem;min-width:0}
@@ -1312,7 +1346,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       </div>
     </div>
       <div class="hero-rest">
-      <p class="sub"><strong>Already licensed?</strong> Your own market, kept from running dry &mdash; households matched to you, and a conversation nobody will know you had. <strong>Never sold insurance?</strong> You are trained and licensed before you are contracted, then the full build and a day the system sets. <strong>Seven places in FY27&rsquo;s first class.</strong></p>
+      <p class="sub"><strong>Already licensed?</strong> A branch that keeps your book with you, households matched to you, and a conversation nobody will know you had. <strong>Never sold insurance?</strong> You are trained and licensed before you are contracted, then the full build and a day the system sets. <strong>Seven places in FY27&rsquo;s first class.</strong></p>
       <div class="hero-cta">
         <a class="btn btn-1" href="#talk" data-talk>Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
         <a class="btn btn-2" href="#quiz">Take the 60-second test</a>
@@ -1417,7 +1451,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       <article class="ledger rv">
         <header><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span><div><small>Already contracted elsewhere</small><h3>Move without starting over.</h3></div></header>
         <div class="lhead" aria-hidden="true"><span>What you’ve heard</span><span>What is true here</span></div>
-        <ul><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“If I move, I start from zero.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Clients whose agent has moved on are matched to you, household by household, with the file and the first thing to say. TT$200 for each one whose questionnaire comes in after your naming.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I’d be buying my own leads again.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Your own link and QR code. A prospect taps what is on their mind and the lead lands on your board, in their words. A lead forwarded to you stays yours.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“The tools are from another decade.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>A fact find that does the arithmetic while you talk. A live production wall on the screen and on your phone. Branch Intelligence that reads the file before you do.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“Nobody would notice if I doubled my year.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Wins are announced every Wednesday, at Blastoff in January and at Mid-Year in July. Your name, out loud.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“Word gets back.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>The conversation stays confidential. At your Discovery you question our qualifiers with the Branch Manager out of the room.</span></li></ul>
+        <ul><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I built my book, and I keep it on my own.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Here the branch keeps it with you: a premium caught at 45 days, your clients’ work done and shown to you each morning, the paperwork off your evenings. <a href="#book">How the book is kept</a></span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“If I move, I start from zero.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Clients whose agent has moved on are matched to you, household by household, with the file and the first thing to say. TT$200 for each one whose questionnaire comes in after your naming.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I’d be buying my own leads again.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Your own link and QR code. A prospect taps what is on their mind and the lead lands on your board, in their words. A lead forwarded to you stays yours.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“The tools are from another decade.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>A fact find that does the arithmetic while you talk. A live production wall on the screen and on your phone. Branch Intelligence that reads the file before you do.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“Nobody would notice if I doubled my year.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Wins are announced every Wednesday, at Blastoff in January and at Mid-Year in July. Your name, out loud.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“Word gets back.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>The conversation stays confidential. At your Discovery you question our qualifiers with the Branch Manager out of the room.</span></li></ul>
         <a class="btn btn-1" href="#talk" data-talk>Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
       </article>
       <article class="ledger rv">
@@ -1908,8 +1942,8 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   <div class="wrap">
     <div class="lede rv">
       <span class="eyebrow">The part nobody advertises</span>
-      <h2 data-words>Nobody here is told to go and sell to their friends.</h2>
-      <p>This is the thing that actually breaks advisors, and almost no recruitment advertisement will say it out loud. So we will. Here is what most people are handed, what it costs them, and what happens instead in this branch.</p>
+      <h2 data-words>Everyone starts with the people they know. Nobody here is left there.</h2>
+      <p>This is the thing that actually breaks advisors, and almost no recruitment advertisement will say it out loud. So we will. Your own market is where you begin &mdash; it is where everyone begins &mdash; and the year it runs out is the year most people leave. Here is what most are handed when it does, what it costs them, and what happens instead in this branch.</p>
     </div>
 
     <div class="lpain rv">
@@ -1974,6 +2008,51 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
         </ul>
         <p class="bfoot">Anand and every figure here are invented. The brief itself is real: this is the shape your branch sends you, the morning a household is matched to you.</p>
       </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ THE BOOK — the practising advisor's half (14 November 2026). See the CSS block of the same name
+     for what may and may not be claimed here, and why. ═══ -->
+<section class="bk" id="book" data-g="book">
+  <div class="wrap">
+    <div class="lede rv">
+      <span class="eyebrow">Already have a book?</span>
+      <h2 data-words>A book is either looked after, or it leaks.</h2>
+      <p>If you have been at this for years, the first year is not your problem. The book is. You built it one client at a time, and most branches leave you to keep it, chase it and grow it on your own. Here, the branch keeps it with you.</p>
+    </div>
+    <div class="bkgrid">
+      <article class="bkproof rv">
+        <small>The book that stays</small>
+        <h3>A lapse is income you already earned, walking out.</h3>
+        <div class="hb in" role="img" aria-label="Lapse rate to 31 August 2026, where lower is better: this branch 4.96 per cent, the main branches 8.82 per cent.">
+          <div class="row" style="--i:0" tabindex="0">
+            <span class="lab"><i>This branch</i><b>4.96%</b></span>
+            <span class="trk" style="width:49.6%"><span class="fil" style="--w:100%"></span></span>
+          </div>
+          <div class="row ref" style="--i:1">
+            <span class="lab"><i>The main branches</i><b>8.82%</b></span>
+            <span class="trk" style="width:88.2%"></span>
+          </div>
+        </div>
+        <p class="bkfoot">Lapse rate to 31 August 2026, from the branch&rsquo;s own record: the share of the book that stopped paying. Both bars are to one scale, and <b>shorter is better.</b> Not one case written on our digital fact find has lapsed since it launched.</p>
+      </article>
+      <ol class="bkways">
+        <li class="rv" style="--i:0"><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg></span><div><h3>Caught at 45 days, not at the lapse</h3><p>A premium falling behind gets a letter at 45, 60, 75 and 90 days, each one read by a person before it goes, and you are copied on every one. Your client hears from the branch long before the cover stops.</p></div></li>
+        <li class="rv" style="--i:1"><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span><div><h3>Your clients&rsquo; work, done and shown to you</h3><p>Pending applications, requirements and client requests are worked by the branch team every day. Each morning you see what is open for your clients and the last thing done on it, without having to ask.</p></div></li>
+        <li class="rv" style="--i:2"><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg></span><div><h3>The paperwork is not your evening</h3><p>Documents logged on your phone and signed for by the team, then on their way to Guardian, with a reason on file for anything late. Contracts delivered and signed for. Client questions answered on a clock.</p></div></li>
+        <li class="rv" style="--i:3"><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg></span><div><h3>Growth from inside, not only from strangers</h3><p>Households whose advisor has moved on are matched to you with the file already read. Your fact find does the arithmetic and is reviewed by a manager before your client signs, so what you write stays written.</p></div></li>
+      </ol>
+    </div>
+    <div class="bknot rv">
+      <div>
+        <h3>Two things we will not tell you</h3>
+        <ul>
+          <li><b>What is in your book today.</b> It sits in another company&rsquo;s system, and it is yours. We will not pretend to have read it.</li>
+          <li><b>To move a client.</b> No agent or broker may cause a policyholder to discontinue or replace a policy without first discussing the advantages and the disadvantages. We hold ourselves to that before we ask it of anyone. What happens to your current book is for the twenty minutes, in confidence.</li>
+        </ul>
+      </div>
+      <a class="btn btn-1" href="#talk" data-talk data-who="Already contracted elsewhere">Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
     </div>
   </div>
 </section>
@@ -2469,7 +2548,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   })();
   var guide=d.getElementById('guide'),bub=d.getElementById('gbubble'),bubTimer=null,lastMsg='';
   function say(msg,ms){ms=ms||4200;if(msg===lastMsg&&bub.classList.contains('on'))return;lastMsg=msg;bub.innerHTML=msg;bub.classList.add('on');guide.classList.remove('hop');void guide.offsetWidth;guide.classList.add('hop');clearTimeout(bubTimer);bubTimer=setTimeout(function(){bub.classList.remove('on')},ms)}
-  var lines={screens:"Not a mock-up. <b>Tap a screen; they turn by themselves.</b>",factfind:"Our own fact find. <b>141 fact finds since July, every one read by a manager.</b>",coach:"A coach, not a clock. <b>Your week, before Friday.</b>",manager:"One seat for a sales manager. <b>The system does the unit's admin; you coach.</b>",people:"Real names. <b>You will know them by their first names within a week.</b>",why:"His words, not mine. <b>The room decides.</b>",talk:"Twenty minutes, your questions, his own figures. <b>He reads this himself.</b>",hero:"I’m <b>RAI</b> — the branch AI. Already contracted? Nobody will know you asked. New to this? You get the full build. Either way: <b>one 20-minute conversation.</b>",you:"Two kinds of people. Different fears. <b>Same five gates.</b>",env:"This is the room. <b>The room decides.</b>",path:"Two roads up — overrides, offices, management. All written.",quiz:"Answer honestly. Especially question five.",wins:"Don’t take our word. <b>Come meet the qualifiers.</b>",gates:"Five gates, LIMRA’s process. <b>Evidence, not vibes.</b> Tap a gate.",sys:"Thirty-nine things that run for you. <b>Nobody here works alone.</b>",faq:"Practising advisors: your enquiry stays confidential.",apply:"Seven places, and one for a sales manager. <b>One conversation, twenty minutes.</b> Tap, or scan to apply."};
+  var lines={screens:"Not a mock-up. <b>Tap a screen; they turn by themselves.</b>",factfind:"Our own fact find. <b>141 fact finds since July, every one read by a manager.</b>",coach:"A coach, not a clock. <b>Your week, before Friday.</b>",manager:"One seat for a sales manager. <b>The system does the unit's admin; you coach.</b>",people:"Real names. <b>You will know them by their first names within a week.</b>",why:"His words, not mine. <b>The room decides.</b>",talk:"Twenty minutes, your questions, his own figures. <b>He reads this himself.</b>",hero:"I’m <b>RAI</b> — the branch AI. Already contracted? Nobody will know you asked. New to this? You get the full build. Either way: <b>one 20-minute conversation.</b>",you:"Two kinds of people. Different fears. <b>Same five gates.</b>",book:"Already have a book? <b>Here, the branch keeps it with you.</b>",leads:"Everyone starts with the people they know. <b>Nobody is left there alone.</b>",env:"This is the room. <b>The room decides.</b>",path:"Two roads up — overrides, offices, management. All written.",quiz:"Answer honestly. Especially question five.",wins:"Don’t take our word. <b>Come meet the qualifiers.</b>",gates:"Five gates, LIMRA’s process. <b>Evidence, not vibes.</b> Tap a gate.",sys:"Thirty-nine things that run for you. <b>Nobody here works alone.</b>",faq:"Practising advisors: your enquiry stays confidential.",apply:"Seven places, and one for a sales manager. <b>One conversation, twenty minutes.</b> Tap, or scan to apply."};
   if('IntersectionObserver' in window){
     var secIO=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&lines[e.target.dataset.g])say(lines[e.target.dataset.g])})},{threshold:.3});
     d.querySelectorAll('[data-g]').forEach(function(s){secIO.observe(s)});

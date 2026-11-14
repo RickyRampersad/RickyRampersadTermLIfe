@@ -6092,6 +6092,51 @@ as the fact it is.
 each tag, an untagged visit, a tag in capitals, a junk tag clamped, the three human answers still present, the
 `Page` value, the backend's own reference on screen, and that the QR carries no tag).
 
+### The leads do NOT come to them, and the experienced advisor has a door of their own — 14 November 2026
+
+Asked for in these words: *"a correction on the salesperson the leads don't not come to them as they do market
+surveys and acess their natural market they come into, what we do is ensure the leads does not run out"*, and then:
+*"on existing agents, they don't manage their book properly, they don't build it, they don't have the tools, the
+system to really help them grow. So you need to have that differentiation."*
+
+**Never write "the leads come to you", "leads from a board" as the pipeline, "not your phone contacts" or "a list of
+friends — not here" again.** A new advisor starts in their own market: the market survey maps it and scores it out of
+a hundred before they are contracted. What the branch promises is that it does not run dry — prospects who asked to
+be called, households matched with the file read, and a manager who sees a thinning week. That is also the stronger
+claim, because it lands on what LIMRA names as the cause of the second-year cliff (2025 MarketFacts: new agents
+"stop prospecting because they have not earned personal introductions to new people"), and LIMRA's own 2026
+catalogue teaches managers to help agents "expand their reach within their natural market" and "recognize signs of
+prospecting failure". The claim was on `/careers/` (four passages and the #leads heading), `/joinourbranch/` (title,
+share card, headline and five passages), `/joinourbranchvideo/`, the `/joinourbranch/` posters, the post copy in
+`AGENTMGT-SETUP.md` and `RECRUITING-SETUP.md`, and ad B's line 3, which was re-voiced and re-cut (43.5s now).
+
+**The experienced advisor's section is `/careers/#book`**: "A book is either looked after, or it leaks." It claims
+ONLY what reaches an advisor's whole book: the Premium Due Desk (whole dues extract, agent copied), their clients'
+work done daily and shown in their morning e-mail, the service desks, matched households and the fact find, with the
+branch's lapse rate (4.96% against 8.82% for the main branches, to 31 August) as the proof. **Not claimed, and not
+to be:** Match (never shown to an agent), the per-client read (it runs on the orphan books), and the six-month and
+birthday review (the `dailyServiceFollowUp` trigger is built and switched off). Nor "you'll keep what you move": after
+the September departures the branch cannot be seen inviting the same, and the Act's replacement rule applies — the
+section says instead that we will never ask anyone to move a client. The 4% named-beneficiary figure stays off the
+public page: the only books it was measured on are the departed agents', and nothing may characterise them.
+
+**Still saying it:** the `/joinourbranch/` film (`film-w/v/f.mp4`) opens "a list of your friends and good luck. That
+is not how it works here. Your leads come from a board." It is the cut series turned down on 6–7 November and
+`tools/film/beat/README.md` says not to rebuild that design, so it was left and flagged. The full 8:49 film's line 29
+and ad C's line 5 also still say it; both need a re-voice. Ad A does not.
+
+Three traps from doing it:
+- **`tools/adpages/build-adpages.py` is out of sync with two of its three pages and writes the inert beacon.** It
+  regresses `/underwritervideo/` (hand-changed for the Client Manager seat on 7 November) and `/buildwithusvideo/`,
+  and puts `RRB_VIEWS_URL` back in every page it writes. Run it, `git checkout` the pages you did not mean to change,
+  then `tools/wire-views.py <exec>` and `--check`. Edit `adpages.json` with string replacement: a `json.dump` round
+  trip reformats the whole file.
+- **The runner refused a line that had voiced cleanly before** (`NoAudioReceived` on ad B's old line 4, used as a
+  control). So a refusal is not always the text: send two wordings and a control in one job and take what comes back.
+- **A two-line burned caption climbs to about 77% of a square frame**, not the 84% the bottom-16% rule implies: that
+  rule is its baseline. A fourth row in ad B's scene 3 reached 82% and the last caption sat across it. Measure content
+  against 76% of the height.
+
 ## The renewal desk — general insurance, from last year to delivery
 
 `renewaldesk/` (staff), `myrenewal/` (the client) and `apps-script/GIRenewals.gs`, a sixth file in the Service

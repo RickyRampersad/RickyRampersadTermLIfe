@@ -596,9 +596,9 @@ Manager and the Unit Manager.
 
 ### 1 · Facebook and Instagram (the main cut — feed, sound off)
 
-> **Most people start this career with a list of their friends. Not here.**
+> **Everyone starts this career with the people they know. Nobody here is left there.**
 >
-> Your leads come from a board — people who asked to hear from somebody.
+> Your own market is mapped with you before you are contracted. When it runs thin, the branch keeps your week full: people who asked to hear from somebody, and households matched to you.
 >
 > Your clients are matched to you household by household, with the whole file already read.
 >
@@ -614,7 +614,7 @@ Manager and the Unit Manager.
 
 > You are good at this. The question is what you are being given to work with.
 >
-> Leads from a board, not from your own phone contacts. Clients matched to you household by household with the file already read. A fact find that does the arithmetic, a client who confirms it, and a manager who signs it before anything is placed. Your numbers on the wall daily.
+> Your own market, mapped and kept full when it runs thin. Clients matched to you household by household with the file already read. A fact find that does the arithmetic, a client who confirms it, and a manager who signs it before anything is placed. Your numbers on the wall daily.
 >
 > Have a look before you decide anything: rickyrampersadbranch.com/joinourbranch
 >
@@ -1560,9 +1560,9 @@ Manager and the Unit Manager.
 
 ### 1 · Facebook and Instagram (the main cut — feed, sound off)
 
-> **Most people start this career with a list of their friends. Not here.**
+> **Everyone starts this career with the people they know. Nobody here is left there.**
 >
-> Your leads come from a board — people who asked to hear from somebody.
+> Your own market is mapped with you before you are contracted. When it runs thin, the branch keeps your week full: people who asked to hear from somebody, and households matched to you.
 >
 > Your clients are matched to you household by household, with the whole file already read.
 >
@@ -1578,7 +1578,7 @@ Manager and the Unit Manager.
 
 > You are good at this. The question is what you are being given to work with.
 >
-> Leads from a board, not from your own phone contacts. Clients matched to you household by household with the file already read. A fact find that does the arithmetic, a client who confirms it, and a manager who signs it before anything is placed. Your numbers on the wall daily.
+> Your own market, mapped and kept full when it runs thin. Clients matched to you household by household with the file already read. A fact find that does the arithmetic, a client who confirms it, and a manager who signs it before anything is placed. Your numbers on the wall daily.
 >
 > Have a look before you decide anything: rickyrampersadbranch.com/joinourbranch
 >

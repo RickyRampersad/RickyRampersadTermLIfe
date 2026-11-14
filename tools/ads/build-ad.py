@@ -92,11 +92,14 @@ ADS = {
         'badge': 'We are hiring',
         'vacancy': 'Advisors',
         'role': 'Financial advisor &middot; full training',
-        'head': ['Most people start', 'this career with a', 'list of their friends.'],
-        'em': ['Not here.'],
-        'pull': 'If you are good with people and have always been told the only way in '
-                'is to sell to everyone you know &mdash; that is not how we do it.',
-        'chips': ['The branch brings you the clients',
+        # 14 Nov 2026: "the leads don't come to them as they do market surveys and access their natural
+        # market" — so the poster no longer says 'a list of friends. Not here.' or 'The branch brings you
+        # the clients'. Everyone starts in their own market; the branch is what keeps it from running dry.
+        'head': ['Everyone starts', 'with the people', 'they know.'],
+        'em': ['Nobody is left there.'],
+        'pull': 'Your own market is where you begin. What most branches never give you is anything '
+                'for the month it runs thin &mdash; that is what this branch is built for.',
+        'chips': ['Your market, kept full when it runs thin',
                   'A digital fact find, checked by a manager',
                   'Paid training while you qualify'],
         'url': 'rickyrampersadbranch.com/joinourbranch',
