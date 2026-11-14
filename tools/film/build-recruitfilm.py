@@ -105,10 +105,16 @@ def typed(text, t0, per=38):
 
 MARK = '''<svg viewBox="6 3 76 82" class="mk" aria-hidden="true"><use href="#shield"/></svg>'''
 SAMPLE = '<span class="sample">sample figures</span>'
-def img64(rel, w=420, q=72):
-    """A wall screenshot (sample data, already public on /wall/) as a data URI, resized so the film stays light."""
+def img64(rel, w=420, q=72, base=('wall', 'img')):
+    """A wall screenshot (sample data, already public on /wall/) as a data URI, resized so the film stays light.
+
+    `base` points elsewhere for a screen this film crops for itself: agentmgt/img holds two, cropped because
+    the full screens cannot go in a forwardable MP4. ff-draft.jpg stops above "your fact find is now being
+    reviewed ... No action is needed from you yet", which is the order corrected on 29 October 2026 (the
+    client approves FIRST, then a manager signs) and would contradict the very line this scene narrates.
+    ff-branch.jpg stops above the AGENTS table, which names real colleagues beside ratios and TT$ figures."""
     from PIL import Image; import io
-    im = Image.open(os.path.join(ROOT, 'wall', 'img', rel)).convert('RGB')
+    im = Image.open(os.path.join(ROOT, *base, rel)).convert('RGB')
     im = im.resize((w, int(im.height * w / im.width)), Image.LANCZOS)
     b = io.BytesIO(); im.save(b, 'JPEG', quality=q, optimize=True)
     return 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()
@@ -1310,21 +1316,36 @@ if MODE == 'ad':
   </div>
   <p class="foot in" style="--t0:{tat(2,"salary") + 600}ms">Guardian Life of the Caribbean &middot; Ricky Rampersad Branch, Chaguanas</p>
 </div>""", 'data-ch="An insurance sales career"'))
+        # 14 November 2026, asked for in these words: "in the fact find, you can snap very quick what our digital
+        # fact find ... it doesn't stop with the fact find ... different stages ... so it's a journey, not a
+        # transaction". Six of the branch's own screens, in the order a client meets them, each landing on the
+        # word that names it. Two are cropped — see img64's note. The one step with NO screen here is the
+        # manager's sign-off: ff/02 asserts the pre-29-October order on its face, so the line carries that step
+        # and a pill names it. A screen that contradicts the narration is worse than no screen.
+        W = ('wall', 'img')
+        CJ = [('ff-draft.jpg', ('agentmgt', 'img'), 'The plan reaches them', 'What you recommended, and why'),
+              ('ff/04-client-approval-page.jpg', W, 'They approve it', 'Nothing goes ahead until it is right'),
+              ('ff/05-client-sign-and-rate.jpg', W, 'They sign, and rate you', 'The rating goes to the branch'),
+              ('jr/4-delivered.jpg', W, 'Delivered, and confirmed', 'In writing, the day it reaches them'),
+              ('jr/5-question.jpg', W, 'Behind you, all the way', 'Support chases it and reports back'),
+              ('ff-branch.jpg', ('agentmgt', 'img'), 'Your manager sees it all', 'Every case, every day')]
+        # The first three land on their own words; the last three cascade on "every stage after", because the
+        # cascade IS what that clause means. Cued one-per-word they would pile into the closing two seconds.
+        _cj = [max(300, tat(3,"find") - 500), tat(3,"approves"), tat(3,"rate"),
+               tat(3,"stage"), tat(3,"stage") + 520, tat(3,"stage") + 1040]
         T.append(tscene(3, 's-prob', f"""
-<div class="split">
-  <div class="col">
-    <p class="eye in" style="--t0:200ms">What the work actually is</p>
-    <h2 class="h l">{words("You solve a problem.", max(300, tat(3,"solving") - 600), 100)}</h2>
-    <p class="sub in" style="--t0:{tat(3,"numbers") - 400}ms">Most families have never seen their own numbers written down.</p>
-    <div class="pill-row">
-      <span class="ypill in" style="--t0:{tat(3,"arithmetic")}ms">The arithmetic happens while you talk</span>
-    </div>
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">Thirty-nine things. All digital. The part most advisors never get.</p>
+  <h2 class="h l">{words("Most families have never seen", 300, 95)} <em class="wine">{words("their own numbers.", max(600, tat(3,"numbers") - 800), 95)}</em></h2>
+  <div class="cjwrap">
+    {''.join(f'<div class="cjstop in" style="--t0:{_cj[k]}ms"><div class="cjshot"><span class="cjn">{k+1}</span><img src="{img64(rel, 480, 72, base=b)}" alt=""></div><b class="cjt">{t}</b><span class="cjd">{d}</span></div>' for k, (rel, b, t, d) in enumerate(CJ))}
   </div>
-  <div class="col">
-    <div class="dev lap cshot in fl" style="--t0:{max(300, tat(3,"find") - 900)}ms"><img src="{img64('ff/01-client-draft.jpg', 820, 74)}" alt=""></div>
-    <small class="pline in" style="--t0:{tat(3,"find")}ms">factfind360 &middot; the client's own draft, on their phone &middot; sample figures</small>
+  <div class="cjfoot">
+    <div class="cjpills"><span class="ypill in" style="--t0:{tat(3,"signs")}ms">A manager signs every plan before it goes anywhere</span><span class="ypill in" style="--t0:{tat(3,"signs") + 450}ms">Market conduct, built into every step</span></div>
+    <p class="cjx in" style="--t0:{tat(3,"journey")}ms">A journey, not a transaction.</p>
+    <small class="cjs in" style="--t0:{tat(3,"approves") + 400}ms">Our own screens, built in this branch over fifteen years &middot; sample names and figures</small>
   </div>
-</div>""", 'data-ch="You solve a problem"'))
+</div>""", 'data-ch="A journey, not a transaction"'))
         T.append(tscene(4, 's-fill', f"""
 <div class="split">
   <div class="col">
@@ -1353,11 +1374,13 @@ if MODE == 'ad':
     {''.join(f'<div class="cgstep in" style="--t0:{_g0 + 200 + k*_gs}ms"><i>{k+1}</i><b>{nm}</b><span>{sub}</span></div>' for k, (nm, sub) in enumerate(GATES))}
   </div>
 </div>""", 'data-ch="Before you are contracted"'))
+        # The "thirty-nine things, all digital" claim moved into the journey scene on 14 November 2026, where six
+        # of those thirty-nine are now shown rather than counted. Scene 6 keeps the one thing it can only state:
+        # the retention record, with its source. The MOMENTS grid stays in the file for the trailer's scene 4.
         T.append(tscene(6, 's-all', f"""
 <div class="full center">
-  <p class="eye in" style="--t0:{max(200, tat(6,"digital") - 1200)}ms">Nobody here works alone</p>
-  <h2 class="h xl"><span class="cnt" data-to="39" data-at="{tat(6,"thirty-nine")}">39</span> {words("things, and all of it digital.", tat(6,"thirty-nine"), 90)}</h2>
-  <div class="mgrid">{''.join(f'<div class="mcol in" style="--t0:{tat(6,"thirty-nine") + 150 + k*220}ms"><span class="mdots">{"".join(f"<i style=--t0:{tat(6,"thirty-nine") + 250 + k*220 + d*38}ms></i>" for d in range(n))}</span><b>{n}</b><span class="mlab">{lab}</span></div>' for k, (lab, n) in enumerate(MOMENTS))}</div>
+  <p class="eye in" style="--t0:200ms">The record</p>
+  <h2 class="h l">{words("Who is still here,", 400, 95)} <em class="wine">{words("four years in.", max(700, tat(6,"industry") - 1000), 95)}</em></h2>
   <div class="cfig">
     <div class="cfrow in" style="--t0:{max(400, tat(6,"industry") - 500)}ms"><span class="cflab">The industry</span><span class="cftrack"><i class="cfbar" style="--w:14%;--t0:{tat(6,"fourteen")}ms"></i></span><b class="cnt" data-to="14" data-at="{tat(6,"fourteen")}">14</b></div>
     <div class="cfrow us in" style="--t0:{max(600, tat(6,"thirty-one") - 800)}ms"><span class="cflab">This branch</span><span class="cftrack"><i class="cfbar" style="--w:31%;--t0:{tat(6,"thirty-one")}ms"></i></span><b class="cnt" data-to="31" data-at="{tat(6,"thirty-one")}">31</b></div>
@@ -2036,6 +2059,20 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .cfrow>b{font:800 calc(var(--u)*4)/1 var(--display);color:var(--mute);font-variant-numeric:tabular-nums;text-align:left}
 .cfrow.us>b{color:var(--ink)}
 .cfx{margin-top:calc(var(--u)*.5);font:700 calc(var(--u)*2.05)/1.3 var(--display);color:var(--ink);text-align:center}
+/* The journey: six of the branch's own screens, 3x2 here, 2x3 portrait. Each frame shows the TOP of its
+   screen (object-position:top) — these are tall pages, and centring them would crop away the headline that
+   says what the screen is. The step number sits ON the screen in --a, where white measures 5.54:1. */
+.cjwrap{width:min(100%,calc(var(--u)*96));margin:calc(var(--u)*2) auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.5) calc(var(--u)*1.6)}
+.cjstop{display:grid;gap:calc(var(--u)*.5);align-content:start;min-width:0}
+.cjshot{position:relative;aspect-ratio:4/3;border-radius:calc(var(--u)*.9);overflow:hidden;background:#fff;border:calc(var(--u)*.26) solid #22527f;box-shadow:0 calc(var(--u)*1.2) calc(var(--u)*3) rgba(4,14,26,.5)}
+.cjshot img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.cjn{position:absolute;left:calc(var(--u)*.55);top:calc(var(--u)*.55);z-index:2;width:calc(var(--u)*2.1);height:calc(var(--u)*2.1);border-radius:50%;background:var(--a);color:#fff;font:800 calc(var(--u)*1.2)/calc(var(--u)*2.1) var(--display);text-align:center}
+.cjt{font:800 calc(var(--u)*1.7)/1.2 var(--display);color:var(--ink)}
+.cjd{font:500 calc(var(--u)*1.45)/1.3 var(--text);color:var(--mute)}
+.cjfoot{display:grid;justify-items:center;gap:calc(var(--u)*.75);margin-top:calc(var(--u)*1.9)}
+.cjpills{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(var(--u)*.8)}
+.cjx{font:800 calc(var(--u)*2.5)/1.2 var(--display);color:var(--ink);text-align:center}
+.cjs{font:500 calc(var(--u)*1.5)/1.3 var(--text);color:var(--mute2);text-align:center}
 .ceil-line{position:absolute;left:10%;right:10%;top:62%;height:2px;background:linear-gradient(90deg,transparent,var(--aL),transparent);transform:scaleX(0)}
 .scene.act .ceil-line{animation:rule 1.1s var(--out) both;animation-delay:var(--t0)}
 .card{position:relative;background:var(--bg3);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,6,10,.5)}
@@ -3019,6 +3056,20 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .cftrack{height:calc(var(--u)*2.8);border-radius:calc(var(--u)*1.4)}
   .cfrow>b{font-size:calc(var(--u)*5.2)}
   .cfx{font-size:calc(var(--u)*2.7)}
+  /* Three columns here too, NOT two. Two columns with the frames square makes each row ~490px, and three
+     rows of that puts stops 5 and 6 into the burned caption band and off the bottom of a 1080x1920. */
+  .cjwrap{width:100%;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.5) calc(var(--u)*1.3);margin-top:calc(var(--u)*2.2)}
+  /* Square frames here, where the extra height is going spare — these screens ARE the scene, so the
+     room buys more of each one rather than more empty ground. */
+  .cjshot{aspect-ratio:1/1;border-radius:calc(var(--u)*1)}
+  .cjn{width:calc(var(--u)*2.4);height:calc(var(--u)*2.4);font-size:calc(var(--u)*1.35);line-height:calc(var(--u)*2.4)}
+  .cjt{font-size:calc(var(--u)*1.95)}
+  .cjd{font-size:calc(var(--u)*1.65)}
+  .cjx{font-size:calc(var(--u)*3)}
+  .cjs{font-size:calc(var(--u)*1.7)}
+  .cjfoot{margin-top:calc(var(--u)*2.2);gap:calc(var(--u)*.9)}
+  .s-prob .h.l{font-size:calc(var(--u)*5.2)}
+  .s-prob .eye{font-size:calc(var(--u)*1.8)}
   .cshot{width:100%}
   /* THE FIRST FRAME IS THE THUMBNAIL. Measured 13 Nov 2026 on the rendered MP4: frame 0 of every ad cut
      carried 0.00% ink — an empty navy square. In a feed that frame is what a person sees before autoplay
@@ -3067,6 +3118,19 @@ body.paused #bars i.run::after{animation-play-state:paused}
   /* The square inherits the portrait block above, and for the comparison that is right — it is a row
      either way, never a stack — so this only brings it down to fit the burned caption band. */
   .cfig{zoom:.9;margin-top:calc(var(--u)*1.6);width:min(100%,calc(var(--u)*90))}
+  /* The square keeps the portrait block's three columns and only has to buy the foot its room: the pill,
+     the closing line and the sample note were landing INSIDE the burned caption band. Shorter frames
+     (3/2, not 4/3) and tighter gaps lift the whole foot clear of it. */
+  .cjwrap{gap:calc(var(--u)*1.1) calc(var(--u)*1.3);margin-top:calc(var(--u)*1.3);width:min(100%,calc(var(--u)*100))}
+  .cjshot{aspect-ratio:3/2;border-radius:calc(var(--u)*.9)}
+  .cjn{width:calc(var(--u)*2.1);height:calc(var(--u)*2.1);font-size:calc(var(--u)*1.2);line-height:calc(var(--u)*2.1);left:calc(var(--u)*.55);top:calc(var(--u)*.55)}
+  .cjt{font-size:calc(var(--u)*1.75)}
+  .cjd{font-size:calc(var(--u)*1.45)}
+  .cjx{font-size:calc(var(--u)*2.4)}
+  .cjs{font-size:calc(var(--u)*1.45)}
+  .cjfoot{margin-top:calc(var(--u)*1.1);gap:calc(var(--u)*.55)}
+  .s-prob .h.l{font-size:calc(var(--u)*4.5)}
+  .s-prob .eye{font-size:calc(var(--u)*1.6)}
   .s-all .h.xl{font-size:calc(var(--u)*6.4)}
   .mgrid{zoom:.9;margin-top:calc(var(--u)*2)}
   .hrow{zoom:.92;margin-top:calc(var(--u)*1.8)}

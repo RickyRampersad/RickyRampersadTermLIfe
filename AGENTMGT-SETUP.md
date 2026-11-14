@@ -295,6 +295,8 @@ about the branch rather than about the reader.
 >
 > The work is solving a problem: most families here have never seen their own numbers written down. Our fact find does the arithmetic while you talk, your client confirms it from their own inbox, and a manager reviews and signs it after they have.
 >
+> And it does not stop at the fact find. They sign, they rate you, and they hear from us when the policy is delivered and every year after. When something is outstanding, the branch chases it and tells you what was done. A journey, not a transaction — that is the part most advisors never get.
+>
 > You will not start from a cold list. The leads come to you, from people who asked to be called.
 >
 > And before you are contracted, you are profiled, your market is mapped, and you are trained — so you know whether this fits before you give anything up. Almost nobody in this market does that.

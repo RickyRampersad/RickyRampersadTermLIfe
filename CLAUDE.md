@@ -5724,7 +5724,9 @@ with ... everything in the branch, it is digital."*
 
 **It answers those three questions in that order, and that order is the whole design.** A and B are
 40-second feed cuts aimed at a fear each; C is the branch's own announcement and has a different job.
-`agentmgt/ad-c.html`, seven scenes, **63.9s**, square (`ad-c-square.mp4`) and tall (`ad-c-story.mp4`).
+`agentmgt/ad-c.html`, seven scenes, square (`ad-c-square.mp4`) and tall (`ad-c-story.mp4`). It ran
+**63.9s** until 14 November 2026, when scene 3 became the journey and scene 6 shed the 39-things claim;
+it is **68.9s** now. The section below carries that cut.
 
 **Every fact is read off the live careers page, so the ad cannot drift from what it links to.** The 39
 things and their six moments (before you join 7, first 90 days 5, every day 10, every week 6, every
@@ -5750,7 +5752,7 @@ are the second argument, in scene 6, not the first.
 
 **64 seconds is a decision, not a drift.** Everything he asked for does not fit in forty. This is the
 pinned post on the branch page, LinkedIn and WhatsApp; the paid-feed version drops scene 3 and runs
-about 45.
+about 45. (It is 69 seconds since 14 November; the paid-feed cut would now drop scene 3 and run ~48.)
 
 #### Two lines would not voice at all, and one word is unsayable
 
@@ -5863,6 +5865,100 @@ says the same thing without drawing anybody's failure.
 rendered unstyled. Then `page.$('.chrt')` returned the *other* chart card, because it is first in
 document order — the recorded `page.$` lesson, twice in one hour. Scope from the element you mean:
 `document.querySelector('.meth').closest('.chrt')`.
+
+### The journey, not the transaction: ad C's scene 3 — 14 November 2026
+
+Asked for in these words: *"in the fact find, you can snap very quick what our digital fact find …
+it's built in-house in the branch … but it doesn't stop with the fact find. Our digital process …
+supports the agent from the very inception to the communication. So in that process, this is a flaw
+that most agents don't get support with … Clients need communication … Then it goes to the person to
+approve if this is what the agent said, and bring in market conduct guidelines. And for when the fact
+find is closed, what sends out to the client, sends out when the policy is received … So it's a
+journey, not a transaction … Agents want to see the screen."*
+
+**It cost five seconds, not fourteen, and that is the whole shape of the change.** He wants it short
+and he wants six more subjects in it. The way to have both was not to add scenes: scene 3 was rewritten
+from one line about the fact find into the whole journey (10.3s → 21.0s), and **scene 6 gave up the
+"thirty-nine things, all digital" half** (12.1s → 6.4s), because the journey now *shows* six of those
+thirty-nine rather than counting them. The count survives as the scene's eyebrow, which is free.
+63.9s → 68.9s.
+
+**Six of the branch's own screens, in the order a client meets them**, each landing on the word that
+names it — `CJ` in `build-recruitfilm.py`: the plan in their inbox, they approve it, they sign and rate
+you, delivered and confirmed, the branch chasing it for you, what the manager sees. The first three are
+cued to their own words; **the last three cascade on "every stage after", because the cascade is what
+that clause means** — cued one per word they would pile into the closing two seconds.
+
+**Two screens are cropped, and both crops are the point rather than housekeeping:**
+
+- `ff/01-client-draft.jpg` ends on *"your fact find is now being reviewed by Akaash … **No action is
+  needed from you yet**"* — the order corrected on 29 October 2026, where the client approves FIRST and
+  a manager signs after. It was on screen for ten seconds in the live cut, and the new scene narrates
+  that order, so the screen would have contradicted the line. `agentmgt/img/ff-draft.jpg` stops above
+  that paragraph, on *"Is this right? … Nothing goes ahead until it is right"*, which is the correct
+  order in the client's own words.
+- `ff/08-manager-insights.jpg` carries an AGENTS table naming real colleagues beside ratios and TT$
+  figures, and a header reading *"Akaash · 60 fact finds in scope"*. `agentmgt/img/ff-branch.jpg` keeps
+  only the band between them — the four tiles and the adoption chart, no name at all. Same rule as
+  cropping `goals.jpg` above the per-agent rings: **crop the panel, don't trust the sample badge** — at
+  ad size that badge is four pixels tall.
+
+  **The line that rule actually draws**, applied across all six screens: a **comparative or negative**
+  figure beside a real name is out (Stephanie at 50%, Daniel at 58% — visible underperformance); a
+  **positive or neutral** one that is already published is fine. So Daniel's five stars on `ff/05`,
+  Elizabeth closing a task well on `jr/5` and Daniel's name on the draft all stay — each is a colleague
+  doing well, on sample data, already on `/wall/`, the careers page and `/howweworkvid/`. Asking "is
+  there a figure here anyone could read as a verdict on a named person?" settles it faster than
+  counting names.
+
+**Three of his asks are carried by text, not by voice, and cost nothing**: the eyebrow names the
+thirty-nine and the flaw ("The part most advisors never get"), two pills carry the sign-off and name
+**market conduct** outright, and the sample line says the screens were "built in this branch over
+fifteen years" — in-house, and the 2011 Salesforce date already verified for the full film. Changing
+text on a built scene needs only a rebuild; changing a spoken line costs a runner round trip, so look
+for the text answer first.
+
+**The one step with NO screen is the manager's sign-off**, and the line carries it with a pill instead.
+`ff/02-manager-signoff.jpg` contradicts itself on its face: its banner says *"Waiting on the client —
+they have not confirmed the draft yet. Agree is held until they do"* (correct) while its button reads
+*"Approve & sign — signs the fact find and releases it to the client"* (the old order). **That is a
+fact-find-analyzer fix, not a film one**, and a screen that argues with itself does not go in an MP4.
+
+**The page was running the old order too, and that is the ad-and-page rule again.** `#screens` on
+`agentmgt/index.html` ran draft → manager sign-off → client approves. The two tabs are swapped, the
+draft tab points at the cropped copy, and the sign-off caption now states the order ("Held until your
+client confirms the draft. Then a manager reads and signs it."). Re-run `tools/careers/sync.py` after.
+
+**What is still not in it**, all of it asked for: no money figure (the first-year numbers are still
+outstanding), no Guardian Group claim (no sourced figure in the record), and no client anything. "Fifteen
+years" is the 2011 Salesforce date already verified in the full film's section.
+
+#### The voice, and a note here that was wrong
+
+**"our fact find" → "our fact-fine" for the fourth time, and the recorded fix is what caused it.**
+The 29 October note says to end the clause on the word. Ending the *sentence* on it is exactly what
+breaks it; the clause that ships clean keeps going with a comma. Corrected in place at that note.
+
+**And the opening of a clip is rushed, not just a short opening clause.** With the line reordered so
+it began *"Most families have never seen their own numbers written down"*, that came back **"numbers
+run down"** — a phrase that has shipped clean twice when it sat second. Restoring the original opening
+sentence in front of it fixed it on the next take. The existing "a two-word opening clause gets
+slurred" note generalises: **give anything load-bearing a run-up**, the same lesson as the spoken URL.
+
+Three takes, and the third had every word right. "the industry keeps **14 and 100**" is the numerals
+artifact already accepted, and the chart on screen disambiguates it completely.
+
+#### A square is portrait, for the third time — in both directions
+
+The portrait block restacked the grid to two columns with square frames, which put stops 5 and 6 into
+the burned caption band and off the bottom of a 1080×1920. **Three columns is right in both frames**,
+so the portrait block only resizes and the square block undoes the two things a square cannot take
+(shorter 3/2 frames, tighter gaps) to lift the foot clear of the band. The rule stands and is easy to
+get backwards: whatever the portrait block *changes*, the square block must change back, not shrink.
+
+`adcheck.js` all clear in both frames; `scrtabs.js` drives the page's section **over HTTP, not
+`file://`** — the page's absolute `/wall/…` paths resolve to the filesystem root under `file://` and
+every image reads 0×0, which looks exactly like a broken page and is not.
 
 ### Which ad brought them — 13 November 2026
 
@@ -11247,6 +11343,12 @@ scratchpad; it normalises numerals both ways so only real differences show.
 - **"A proper fact find catches it early"** → *"a proper fact **fine**"*, the
   same fault as the 28 October cut. The fix that works is to end the clause on
   the word: "Early detection is the job of a proper fact find."
+  **This is wrong and cost a runner round trip on 14 November 2026.** Ending the
+  sentence on it is what BREAKS it: "That is the job of our fact find." came
+  back "fact-fine", while the near-identical "...of our fact find, and it does
+  the arithmetic while you talk" — a comma, the clause running on — has shipped
+  clean twice. The voice softens the final consonant when it releases a sentence.
+  **Carry it on with a comma; never end a sentence on "fact find".**
 
 Accepted as transcription artifacts rather than read faults, because the voice
 says them correctly and a listener has the context: `pendings`→"pinnings",
