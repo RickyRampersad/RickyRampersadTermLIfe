@@ -469,6 +469,95 @@ Naming real undone work rather than inventing an exercise is deliberate: it is
 honest about the state of the branch, and it tells the right candidate
 immediately that there is room to do something that matters.
 
+
+## The form would not send — 14 November 2026
+
+Reported in these words: *"when persons applying for the admin it's sticking
+and not allowing it to click submit ... it [goes] in red and not going
+through."* He was describing it exactly, and it was three faults with one
+cause.
+
+**A form has three things that each decide whether an answer is good enough,
+and they had drifted apart:** the **gate** that refuses the send, the
+**progress rail** that tells the person how far along they are, and the
+**scroll** that is supposed to take them to the field at fault — which works
+by asking the RAIL which field is unfilled.
+
+So on the administrator's page:
+
+| | the gate wanted | the rail counted it at |
+|---|---|---|
+| `w_cv` — what you want on your CV | **10 characters** | **any single character** |
+| `w_built`, `w_slim` | 40 | 40, agreed |
+| `emp_changed` | 20 | 20, agreed |
+| phone, e-mail | a valid format | any text at all |
+
+**Type "IT skills" — nine characters — and this is what happens.** The rail
+says **"18 of 18 answered · ready to send"**. The gate refuses. The red line
+reads *"What do you want on your CV in two years?"*, which is the question
+they have just answered, so it reads as the page being broken. And the scroll
+asks the rail which field is empty, the rail says none, **so the page does not
+move.** Press again and it does the same thing for ever. That is the
+"sticking".
+
+The phone and e-mail did it too: both are "filled", so a letter in the phone
+box refused with no movement and the rail still said ready to send.
+
+And a third, quieter one: **nothing on the page ever said a minimum
+existed.** The counter under each box counts up to the *maximum* — `20/700` —
+so "A petty cash tracker", a perfectly good answer, was turned away by *"a few
+honest lines is plenty, but we do need them"*.
+
+### What it is now
+
+- **One table, `MIN`, at the top of the script**, with `FMT` beside it for the
+  phone and e-mail patterns. The gate, the rail, the section ticks, the scroll
+  and the counters all read it. It is at the top because the counter block runs
+  before the form block, and a `var` read above its own line is `undefined`.
+- **Every check carries the name of its own field**, in the order the questions
+  are asked. The gate returns `[field, message]`, so whatever refuses the form
+  is what gets focused — there is no "find something that looks empty" step left
+  to get this wrong.
+- **A too-short answer is told it is too short:** *"Just a little more on this
+  one — about 40 characters, and you have 20."* Restating the question to
+  somebody who has just answered it is what made a working refusal read as a
+  broken page.
+- **The counter says what is still needed while they type** — "about 40
+  characters" when empty, "20 more" in red, and nothing once it is met. This is
+  the fix that prevents the whole class: a minimum nobody is told about is a
+  minimum that reads as the page refusing for no reason.
+
+### The client manager had the same fault, one step milder
+
+`/clientmanager/` kept **three** different numbers — the gate wanted 40 on four
+written answers and 30 on two, the rail counted all six at 40, and `filled`
+counted any single character. Its scroll had a fallback,
+`querySelector('textarea')`, so instead of freezing it sent the person to the
+**first** written question rather than the one at fault — which is its own kind
+of wrong. Same `MIN`/`FMT` treatment. `uw_learned` also had a 30-character
+minimum and **no counter at all**, so its minimum was invisible; it has one now.
+
+**Every field in `MIN` must have a counter row.** The test checks it, because
+that is the half that is easy to forget when a question is added.
+
+### Two things worth keeping
+
+- **`novalidate` is on both forms, deliberately.** The browser's own validation
+  cannot be reasoned with and shows a bubble the page has no say over; worse, a
+  `required` control inside a collapsed or hidden section makes Chrome refuse
+  the submit with a console error and **no visible message at all** — the same
+  "the button does nothing" symptom from a different cause. Keep `novalidate`,
+  and keep the gate as the only authority.
+- **The red line is `.err` / `#jErr` (`#uErr` on the client manager).** If a
+  check is ever added, add it to `checks[]` with its field name. A check that
+  returns only a sentence is a check that can refuse without moving.
+
+`tests/e2e-recruit-forms.js` covers both pages (111 checks: every stuck case,
+the field each one focuses, the rail never claiming "ready to send" about
+something the gate will refuse, a complete application filing on each, every
+minimum stated while typing, and no sideways scroll at six widths with the
+counters showing). The POST is intercepted, so running it files nothing.
+
 ---
 
 # 2 · The advisor — `/joinourbranch/`

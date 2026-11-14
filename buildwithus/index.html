@@ -380,7 +380,11 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 .pills span:hover{border-color:var(--a)}
 .pills input:checked + span{background:var(--a);border-color:var(--a);color:#fff}
 .pills input:focus-visible + span{outline:3px solid var(--a);outline-offset:3px}
-.cc{display:flex;justify-content:space-between;gap:.5rem;font-size:var(--f--2);color:var(--muted);margin-top:.3rem}
+.cc{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.2rem .5rem;font-size:var(--f--2);color:var(--muted);margin-top:.3rem}
+/* what is still needed, while they type: a minimum nobody is told about is
+   one that reads as the page refusing for no reason */
+.cc .need{color:var(--muted)}
+.cc .need.on{color:#a3301f;font-weight:600}
 /* the progress rail — moves on input, never on scroll */
 .rail{position:sticky;top:var(--bar);z-index:20;background:var(--card);border:1px solid var(--line);
   border-radius:var(--r-s);padding:.7rem .9rem;margin:0 0 var(--sp-s);box-shadow:var(--e1)}
@@ -1321,6 +1325,37 @@ footer .ic{width:16px;height:16px}
   'use strict';
   var d=document, noMotion=matchMedia('(prefers-reduced-motion: reduce)');
 
+  /* ── the one table of minimum lengths ────────────────────────────────────
+     The gate, the progress rail and the character counters all read THIS,
+     and that is the whole point of it being here.
+
+     Reported on 14 November 2026: the form would not send and showed a red
+     line. Three separate faults, all of them from the gate and the rail
+     keeping their own idea of what counts as answered:
+
+     1. `w_cv` needed 10 characters at the gate and any single character on
+        the rail. So "IT skills" gave "18 of 18 answered · ready to send",
+        the gate refused, and the scroll-to-the-field loop — which asks the
+        RAIL which field is unfilled — found nothing wrong and did not move.
+        A page that says it is complete, refuses, restates a question the
+        person has just answered and then sits still reads as broken, and it
+        is: pressing the button again does the same thing for ever.
+     2. A badly formed phone or e-mail refused the same way. Both are
+        "filled", so again nothing moved.
+     3. Nothing on the page ever said a minimum existed. The counter counts
+        up to the MAXIMUM, so "A petty cash tracker" — a perfectly good
+        answer — was turned away by "we do need them".
+
+     So: one table, every check carries the name of the field it is about,
+     and the counter says what is still needed while they are typing. Add a
+     new minimum here and nothing else has to know. ── */
+  var MIN={emp_changed:20,w_built:40,w_slim:40,w_cv:10};
+  /* and the two format rules, for the same reason: with these in the gate
+     alone, "call me" in the phone box still read as 18 of 18 · ready to
+     send. One rule, no exceptions — if the gate will refuse it, the rail
+     must not call it answered. */
+  var FMT={phone:/^[+\d][\d\s().-]{6,}$/,email:/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/};
+
   /* ── reveals: the finished state is the CSS default, so nothing can be stranded ── */
   (function(){
     var els=[].slice.call(d.querySelectorAll('.rv'));
@@ -1385,7 +1420,17 @@ footer .ic{width:16px;height:16px}
   /* ── character counters ── */
   [].slice.call(d.querySelectorAll('[data-cc]')).forEach(function(out){
     var ta=d.getElementById(out.getAttribute('data-cc')); if(!ta)return;
-    function up(){out.textContent=String(ta.value.length)}
+    /* the counter also says what is still NEEDED, because a minimum nobody
+       is told about is a minimum that reads as the page being broken */
+    var m=MIN[ta.name]||0, need=null, cnt=out.parentNode, row=cnt&&cnt.parentNode;
+    if(m&&row){need=d.createElement('span');need.className='need';row.insertBefore(need,cnt)}
+    function up(){
+      var n=ta.value.length; out.textContent=String(n);
+      if(need){
+        need.textContent=n>=m?'':(n?(m-n)+' more':'about '+m+' characters');
+        need.classList.toggle('on',n<m&&n>0);
+      }
+    }
     ta.addEventListener('input',up); up();
   });
 
@@ -1606,7 +1651,10 @@ footer .ic{width:16px;height:16px}
              'emp_changed','edu','pay_now','pay_want','start','w_built','w_slim','w_cv','when'];
     var rail=d.getElementById('rail'), railN=d.getElementById('railN'),
         railI=d.getElementById('railI'), railS=d.getElementById('railS');
-    function filled(n){var v=val(n);return n==='w_built'||n==='w_slim'?v.length>=40:n==='emp_changed'?v.length>=20:!!v}
+    /* reads MIN and FMT, so the rail can never say "ready to send" about an
+       answer the gate is going to refuse. That disagreement was the bug. */
+    function filled(n){var v=val(n);
+      return MIN[n]?v.length>=MIN[n]:FMT[n]?FMT[n].test(v):!!v}
     function tick(){
       var n=0; REQ.forEach(function(k){if(filled(k))n++});
       var pc=Math.round(n/REQ.length*100);
@@ -1630,29 +1678,49 @@ footer .ic{width:16px;height:16px}
 
     f.addEventListener('submit',function(e){
       e.preventDefault();
-      var name=val('name'), phone=val('phone'), email=val('email'),
-          w1=val('w_built'), w2=val('w_slim'), w3=val('w_cv');
-      var bad=!name?'We need your name.'
-        :!/^[+\d][\d\s().-]{6,}$/.test(phone)?'We need a phone number he can call.'
-        :!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)?'That e-mail address does not look right.'
-        :!val('town')?'Which town or area do you live in?'
-        :!val('travel')?'How would you get to Chaguanas?'
-        :!val('exp')?'How long have you been working?'
-        :!val('emp_co')?'Who do you work for now, or last?'
-        :!val('emp_role')?'What is, or was, your role there?'
-        :!val('emp_dates')?'Roughly when were you there?'
-        :val('emp_changed').length<20?'What is different at that job because you were there? One honest line.'
-        :!val('edu')?'Your highest qualification or training — whatever it is.'
-        :!val('pay_now')?'What you earn now. "Prefer not to say" is a real option.'
-        :!val('pay_want')?'What you are looking for. "Open" is a real option.'
-        :!val('start')?'When could you start?'
-        :w1.length<40?'Tell us about one thing you built — a few honest lines is plenty, but we do need them.'
-        :w2.length<40?'The slim-down answer is the one he reads most carefully. A few lines.'
-        :w3.length<10?'What do you want on your CV in two years?':'';
+      var name=val('name'), phone=val('phone'), email=val('email');
+
+      /* Every check names the field it is about, in the order the questions
+         are asked, so whatever refuses the form can always be scrolled to.
+         Before this the gate returned a sentence and the scroll asked the
+         RAIL which field was empty — and for a too-short answer, a letter in
+         the phone or a malformed e-mail the rail had no complaint, so the
+         page refused and did not move. See MIN at the top of this script.
+
+         A length rule says what is wrong rather than repeating the question:
+         somebody who has just written a line reads the question again as the
+         page being broken. */
+      function tooShort(n,ask){
+        var v=val(n), m=MIN[n];
+        if(v.length>=m)return '';
+        return v?'Just a little more on this one — about '+m+' characters, and you have '+v.length+'.':ask;
+      }
+      var checks=[
+        ['name',  !name?'We need your name.':''],
+        ['phone', !FMT.phone.test(phone)?'We need a phone number he can call.':''],
+        ['email', !FMT.email.test(email)?'That e-mail address does not look right.':''],
+        ['town',  !val('town')?'Which town or area do you live in?':''],
+        ['travel',!val('travel')?'How would you get to Chaguanas?':''],
+        ['exp',   !val('exp')?'How long have you been working?':''],
+        ['emp_co',  !val('emp_co')?'Who do you work for now, or last?':''],
+        ['emp_role',!val('emp_role')?'What is, or was, your role there?':''],
+        ['emp_dates',!val('emp_dates')?'Roughly when were you there?':''],
+        ['emp_changed',tooShort('emp_changed','What is different at that job because you were there? One honest line.')],
+        ['edu',   !val('edu')?'Your highest qualification or training — whatever it is.':''],
+        ['pay_now', !val('pay_now')?'What you earn now. "Prefer not to say" is a real option.':''],
+        ['pay_want',!val('pay_want')?'What you are looking for. "Open" is a real option.':''],
+        ['start', !val('start')?'When could you start?':''],
+        ['w_built',tooShort('w_built','Tell us about one thing you built — a few honest lines is plenty, but we do need them.')],
+        ['w_slim', tooShort('w_slim','The slim-down answer is the one he reads most carefully. A few lines.')],
+        ['w_cv',   tooShort('w_cv','What do you want on your CV in two years?')]
+      ];
+      var bad='', badField='';
+      for(var ci=0;ci<checks.length;ci++){
+        if(checks[ci][1]){badField=checks[ci][0];bad=checks[ci][1];break}
+      }
       err.textContent=bad; err.classList.toggle('on',!!bad);
       if(bad){
-        var first=null;
-        for(var i=0;i<REQ.length;i++){if(!filled(REQ[i])){first=f.querySelector('[name="'+REQ[i]+'"]');break}}
+        var first=f.querySelector('[name="'+badField+'"]');
         if(first){
           var sec=first.closest('[data-sec]')||first;
           sec.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
@@ -1662,6 +1730,7 @@ footer .ic{width:16px;height:16px}
       }
       if(f.dataset.sending)return;
       f.dataset.sending='1'; var was=btn.innerHTML; btn.disabled=true; btn.textContent='Sending…';
+      var w1=val('w_built'), w2=val('w_slim'), w3=val('w_cv');
       var when=val('when'), gh=val('gh'), link=val('link');
       var tools=[].slice.call(f.querySelectorAll('[name="tool"]:checked')).map(function(x){return x.value}).join(', ');
       /* what they marked on the form at the top of the page. It travels

@@ -6565,6 +6565,30 @@ fills in from your record", so nobody meets the sign-in by surprise.
   blank. A full-page screenshot caught it; the audit, which only tested with
   motion off, did not. Everything finishes inside half a second, and
   `@media print` forces the finished state.
+- **One table of what counts as answered, read by the gate, the rail and the
+  scroll alike.** Found on 14 November 2026 on `/buildwithus/`, reported as
+  *"sticking and not allowing it to click submit ... in red and not going
+  through"*: the gate wanted 10 characters in one box and the progress rail
+  counted it at one, so the page said **"18 of 18 answered · ready to send"**,
+  refused, restated the question the person had just answered, and **did not
+  move** — because the scroll asks the rail which field is empty and the rail
+  had no complaint. A badly formed phone or e-mail did the same. **A check
+  that returns only a sentence is a check that can refuse without moving**, so
+  each one now carries the name of its own field (`[field, message]`), and the
+  minimums and formats live in one `MIN`/`FMT` pair that everything reads. A
+  too-short answer is told it is too short rather than asked the question
+  again, and **the character counter states the minimum while they type** —
+  counting up to the *maximum* alone is what made a working refusal read as a
+  broken page. Every field with a minimum needs that counter row.
+  `/clientmanager/` had the same drift with a `querySelector('textarea')`
+  fallback, which sent people to the wrong question instead of freezing. The
+  full note is in `RECRUITING-SETUP.md` under the administrator;
+  `tests/e2e-recruit-forms.js` covers both (111 checks, nothing filed).
+- **`novalidate` stays on every branch form.** The browser's own validation
+  shows a bubble the page has no say over, and a `required` control inside a
+  collapsed or hidden section makes Chrome refuse the submit with a console
+  error and **no visible message at all** — the same "the button does nothing"
+  symptom from a different cause. The page's own gate is the only authority.
 - **A conditional field is hidden from everything**: out of the layout *and*
   `disabled`, so a stale answer can never travel with the form.
 - **A radio group's label is its `<legend class="q">`**, and it has to be

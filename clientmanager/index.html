@@ -750,7 +750,10 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 .pills span:hover{border-color:var(--a)}
 .pills input:checked + span{background:var(--a);border-color:var(--a);color:#fff}
 .pills input:focus-visible + span{outline:3px solid var(--a);outline-offset:3px}
-.cc{display:flex;justify-content:space-between;gap:.5rem;font-size:var(--f--2);color:var(--muted);margin-top:.3rem}
+.cc{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.2rem .5rem;font-size:var(--f--2);color:var(--muted);margin-top:.3rem}
+/* what is still needed, while they type */
+.cc .need{color:var(--muted)}
+.cc .need.on{color:#a3301f;font-weight:600}
 /* the progress rail — moves on input, never on scroll */
 .rail{position:sticky;top:var(--bar);z-index:20;background:var(--card);border:1px solid var(--line);
   border-radius:var(--r-s);padding:.7rem .9rem;margin:0 0 var(--sp-s);box-shadow:var(--e1)}
@@ -1672,6 +1675,9 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
               <div>
                 <label for="u6">What have you taught yourself in the last two years &mdash; in this work or outside it &mdash; and what did it change about how you work? <small>&middot; a system, a qualification, a language, a trade, anything</small></label>
                 <textarea id="u6" name="uw_learned" maxlength="600" rows="3" required placeholder="What it was, roughly how long it took, and what you do differently because of it."></textarea>
+                <!-- this one had a 30-character minimum and no counter, so the
+                     minimum was invisible: every field in MIN needs its row -->
+                <p class="cc"><span>Outside this work counts, and often reads better.</span><span><b data-cc="u6">0</b>/600</span></p>
               </div>
               <div>
                 <label for="u3">Further up this page there are seven stops a renewal goes through here. <strong>What would you change about it, and what would you leave exactly as it is?</strong> <small>&middot; there is no right answer; we want to see you think about a process</small></label>
@@ -1740,6 +1746,26 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 (function(){
   'use strict';
   var d=document, noMotion=matchMedia('(prefers-reduced-motion: reduce)');
+
+  /* ── the one table of minimum lengths ──────────────────────────────────
+     The gate, the progress rail, the section ticks, the scroll-to-the-field
+     and the character counters all read THIS, which is why it is up here
+     rather than beside the form: the counter block runs before the form
+     block, and a `var` read before its line is undefined.
+
+     Until 14 November 2026 each of them had its own idea. The gate wanted
+     40 characters on four written answers and 30 on two; the rail counted
+     all six at 40; `filled` counted any single character. So a short answer
+     was refused by the gate while the rail called the section done, and the
+     scroll — which asks the rail which field is empty — found nothing and
+     fell through to `querySelector('textarea')`, sending the person to the
+     FIRST written question instead of the one at fault. The administrator's
+     page had no such fallback and simply sat there, which is what was
+     reported. One table; every check names its own field. ── */
+  var MIN={uw_declined:40,uw_endorse:40,uw_right:40,uw_stopped:40,uw_learned:30,uw_renewals:30};
+  /* and the two format rules, for the same reason: with these in the gate
+     alone, "call me" in the phone box still counted on the rail. */
+  var FMT={phone:/^[+\d][\d\s().-]{6,}$/,email:/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/};
 
   (function(){
     var els=[].slice.call(d.querySelectorAll('.rv'));
@@ -1843,7 +1869,17 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 
   [].slice.call(d.querySelectorAll('[data-cc]')).forEach(function(out){
     var ta=d.getElementById(out.getAttribute('data-cc')); if(!ta)return;
-    function up(){out.textContent=String(ta.value.length)}
+    /* and what is still NEEDED: a minimum nobody is told about reads as the
+       page refusing for no reason */
+    var m=MIN[ta.name]||0, need=null, cnt=out.parentNode, row=cnt&&cnt.parentNode;
+    if(m&&row){need=d.createElement('span');need.className='need';row.insertBefore(need,cnt)}
+    function up(){
+      var n=ta.value.length; out.textContent=String(n);
+      if(need){
+        need.textContent=n>=m?'':(n?(m-n)+' more':'about '+m+' characters');
+        need.classList.toggle('on',n<m&&n>0);
+      }
+    }
     ta.addEventListener('input',up); up();
   });
 
@@ -1994,6 +2030,8 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   });
   function filled(n){
     if(n==='cv')return !!(cvIn&&cvIn.files&&cvIn.files.length);
+    if(MIN[n])return val(n).length>=MIN[n];
+    if(FMT[n])return FMT[n].test(val(n));
     return !!val(n);
   }
   var rail=d.getElementById('rail'), railN=d.getElementById('railN'),
@@ -2002,7 +2040,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     var n=0; REQ.forEach(function(k){if(filled(k))n++});
     // the written answers count as their own block, so the rail is honest
     var WRIT=['uw_declined','uw_endorse','uw_right','uw_stopped','uw_renewals','uw_learned'];
-    var w=WRIT.filter(function(k){return val(k).length>=40}).length;
+    var w=WRIT.filter(filled).length;   /* MIN, not a second 40 of its own */
     var total=REQ.length+WRIT.length, got=n+w, pc=Math.round(got/total*100);
     if(railI)railI.style.width=pc+'%';
     if(railN)railN.textContent=got+' of '+total+' answered';
@@ -2013,9 +2051,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
         .map(function(e){return e.name}).filter(function(v,i,a){return a.indexOf(v)===i});
       var ok=need.every(function(k){
         if(k==='cv')return filled('cv');
-        var el=f.querySelector('[name="'+k+'"]');
-        if(el&&el.tagName==='TEXTAREA')return val(k).length>=40;
-        return !!val(k);
+        return filled(k);
       });
       var any=[].slice.call(s.querySelectorAll('input,select,textarea')).some(function(e){
         return (e.type==='checkbox'||e.type==='radio')?e.checked:(e.type==='file'?e.files.length:String(e.value||'').trim()!=='')});
@@ -2132,37 +2168,49 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
   f.addEventListener('submit',function(e){
     e.preventDefault();
     var name=val('name'), phone=val('phone'), email=val('email');
-    var bad=!name?'We need your name.'
-      :!/^[+\d][\d\s().-]{6,}$/.test(phone)?'We need a phone number he can call.'
-      :!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)?'That e-mail address does not look right.'
-      :!val('town')?'Which town or area do you live in?'
-      :!val('uw_door')?'Which door are you coming through?'
-      :!val('uw_years')?'How long have you worked in general insurance?'
-      :classes().length===0?'Tick at least one class you have actually handled.'
-      :!val('uw_auth')?'What authority have you held?'
-      :!val('uw_systems')?'Which systems have you worked on?'
-      :!val('uw_uwexp')?'Have you worked on the underwriting side?'
-      :!val('uw_uwwhere')?'Where you underwrote, and for how long.'
-      :!val('uw_quals')?'Your qualifications — "none" is a real answer.'
-      :!val('emp_co')?'Who do you work for now, or last?'
-      :!val('emp_role')?'What is, or was, your role there?'
-      :!val('pay_now')?'What you earn now. "Prefer not to say" is a real option.'
-      :!val('pay_want')?'What you are looking for. "Open" is a real option.'
-      :!val('start')?'What is your notice period?'
-      :val('uw_declined').length<40?'The risk you turned away — a few honest lines.'
-      :val('uw_endorse').length<40?'The endorsement or extension that went wrong.'
-      :val('uw_right').length<40?'When the right thing and the easy thing were different.'
-      :val('uw_stopped').length<40?'Something you tried to change and could not.'
-      :val('uw_learned').length<30?'What have you taught yourself in the last two years?'
-      :val('uw_renewals').length<30?'What would you change about the seven stops?'
-      :!filled('cv')?'Please attach your CV — PDF or Word, up to 6 MB.':'';
+    /* Each check names its own field, in the order the questions are asked,
+       so whatever refuses the form is what gets scrolled to. Matching on the
+       message, and falling through to the first textarea on the page, sent a
+       person with one short answer to the wrong question. A length rule says
+       what is wrong rather than repeating the question. See MIN above. */
+    function tooShort(n,ask){
+      var v=val(n), m=MIN[n];
+      if(v.length>=m)return '';
+      return v?'Just a little more on this one — about '+m+' characters, and you have '+v.length+'.':ask;
+    }
+    var checks=[
+      ['name',  !name?'We need your name.':''],
+      ['phone', !FMT.phone.test(phone)?'We need a phone number he can call.':''],
+      ['email', !FMT.email.test(email)?'That e-mail address does not look right.':''],
+      ['town',  !val('town')?'Which town or area do you live in?':''],
+      ['uw_door', !val('uw_door')?'Which door are you coming through?':''],
+      ['uw_years',!val('uw_years')?'How long have you worked in general insurance?':''],
+      ['cls',   classes().length===0?'Tick at least one class you have actually handled.':''],
+      ['uw_auth',   !val('uw_auth')?'What authority have you held?':''],
+      ['uw_systems',!val('uw_systems')?'Which systems have you worked on?':''],
+      ['uw_uwexp',  !val('uw_uwexp')?'Have you worked on the underwriting side?':''],
+      ['uw_uwwhere',!val('uw_uwwhere')?'Where you underwrote, and for how long.':''],
+      ['uw_quals',  !val('uw_quals')?'Your qualifications — "none" is a real answer.':''],
+      ['emp_co',  !val('emp_co')?'Who do you work for now, or last?':''],
+      ['emp_role',!val('emp_role')?'What is, or was, your role there?':''],
+      ['pay_now', !val('pay_now')?'What you earn now. "Prefer not to say" is a real option.':''],
+      ['pay_want',!val('pay_want')?'What you are looking for. "Open" is a real option.':''],
+      ['start',   !val('start')?'What is your notice period?':''],
+      ['uw_declined',tooShort('uw_declined','The risk you turned away — a few honest lines.')],
+      ['uw_endorse', tooShort('uw_endorse','The endorsement or extension that went wrong.')],
+      ['uw_right',   tooShort('uw_right','When the right thing and the easy thing were different.')],
+      ['uw_stopped', tooShort('uw_stopped','Something you tried to change and could not.')],
+      ['uw_learned', tooShort('uw_learned','What have you taught yourself in the last two years?')],
+      ['uw_renewals',tooShort('uw_renewals','What would you change about the seven stops?')],
+      ['cv',    !filled('cv')?'Please attach your CV — PDF or Word, up to 6 MB.':'']
+    ];
+    var bad='', badField='';
+    for(var ci=0;ci<checks.length;ci++){
+      if(checks[ci][1]){badField=checks[ci][0];bad=checks[ci][1];break}
+    }
     err.textContent=bad; err.classList.toggle('on',!!bad);
     if(bad){
-      var first=null;
-      if(/class/i.test(bad)) first=f.querySelector('[name="cls"]');
-      else if(/CV/.test(bad)) first=cvIn;
-      else for(var i=0;i<REQ.length;i++){if(!filled(REQ[i])){first=f.querySelector('[name="'+REQ[i]+'"]');break}}
-      if(!first) first=f.querySelector('textarea');
+      var first=(badField==='cv')?cvIn:f.querySelector('[name="'+badField+'"]');
       if(first){
         var sec=first.closest('[data-sec]')||first;
         sec.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
