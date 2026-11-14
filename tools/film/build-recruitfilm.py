@@ -1084,7 +1084,7 @@ if TLINES and MODE != 'ad':
     <div class="list in fl" style="--t0:{tat(3,"matched") - 200}ms">
       <div class="bd-h"><b>Your list</b><span>named to you</span></div>
       {''.join(f'<div class="hh" style="--t0:{tat(3,"matched") + i*380}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><span>{s}</span><em>named</em></div>' for i, (n, s) in enumerate(HH))}
-      <div class="lead-in" style="--t0:{tat(3,"Leads")}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>New lead</b><span>"Retiring properly" · landed on your board</span></div>
+      <div class="lead-in" style="--t0:{tat(3,"thin")}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>Your list runs thin</b><span>the branch keeps your week full</span></div>
       {SAMPLE}
     </div>
   </div>
@@ -1367,23 +1367,29 @@ if MODE == 'ad':
     <small class="cjs in" style="--t0:{tat(4,"agrees") + 400}ms">Our own screens, built in this branch over fifteen years &middot; sample names and figures</small>
   </div>
 </div>""", 'data-ch="And then it never stops"'))
+        # 14 Nov 2026: "the leads don't come to them ... what we do is ensure the leads does not run out".
+        # The line no longer says "The leads come to you": the advisor's own market comes first, and
+        # the rows are what keep it full. Every cue word must be in line 5, or tat() stops the build.
+        REFILL_C = [('users', 'people', 0, 'Your own market', 'mapped and scored · 72 of 100'),
+                    ('bolt', 'thin', 250, 'Asked to be called', '“Retiring properly” · on the board'),
+                    ('home', 'keeping', 150, 'A household matched to you', 'with the file already read')]
         T.append(tscene(5, 's-fill', f"""
 <div class="split">
   <div class="col">
-    <h2 class="h l">{words("You will not start from", max(300, tat(5,"cold") - 900), 95)} <em class="wine">{words("a cold list.", tat(5,"cold") - 150, 95)}</em></h2>
-    <p class="sub in" style="--t0:{tat(5,"asked")}ms">The leads come to you, from people who asked to be called.</p>
+    <h2 class="h l">{words("You start with", max(300, tat(5,"start") - 300), 95)} <em class="wine">{words("the people who know you.", tat(5,"people") - 150, 95)}</em></h2>
+    <p class="sub in" style="--t0:{tat(5,"thin")}ms">When that list runs thin, keeping your week full is our job.</p>
     <div class="pill-row">
       <span class="ypill in" style="--t0:{tat(5,"coach")}ms">A coach, not a clock</span>
     </div>
   </div>
   <div class="col">
-    <div class="list in fl" style="--t0:{max(300, tat(5,"leads") - 300)}ms">
-      <div class="bd-h"><b>Your board</b><span>this morning</span></div>
-      {''.join(f'<div class="lead-in" style="--t0:{tat(5,"asked") + i*300}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>{n}</b><span>{d}</span></div>' for i, (n, d) in enumerate(LEADS))}
+    <div class="list in fl" style="--t0:{max(300, tat(5,"people") - 300)}ms">
+      <div class="bd-h"><b>Your list</b><span>kept full</span></div>
+      {''.join(f'<div class="lead-in" style="--t0:{tat(5,w) + o}ms"><svg class="ic"><use href="#i-{ic}"/></svg><b>{n}</b><span>{d}</span></div>' for ic, w, o, n, d in REFILL_C)}
       {SAMPLE}
     </div>
   </div>
-</div>""", 'data-ch="The leads come to you"'))
+</div>""", 'data-ch="Your list, kept full"'))
         _g0, _g1 = tat(6, "contracted"), tat(6, "trained")
         _gs = max(400, (_g1 - _g0) // len(GATES))
         T.append(tscene(6, 's-gates', f"""
@@ -2828,6 +2834,12 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .s-door .who.mgr span{font-size:calc(var(--u)*2.4)}
   .s-door .who.mgr .lock-s{grid-column:2;grid-row:1/3;white-space:nowrap}
   .s-door .tr-line{font-size:calc(var(--u)*2.5)}.s-door .tr-line em{font-size:calc(var(--u)*4.2)}
+  /* the trailer's door carries the three credential cards above it, so in the tall frame the third door
+     (a sales manager) ran 200px into the burned caption band. Smaller stage, less air: 14 Nov 2026. */
+  .s-door.tr{padding-top:calc(var(--u)*3)}
+  .s-door.tr .h.xl{font-size:calc(var(--u)*8.6)}
+  .s-door.tr .gate-row .stage{width:calc(var(--u)*34)}
+  .s-door.tr .full{gap:calc(var(--u)*1)}
   .s-cta .tr-book{zoom:1}
   .s-cta .qr{zoom:.84}
   .s-close .stage.closeS{width:calc(var(--u)*40)}
