@@ -636,6 +636,36 @@ sheet, drop test rows (`/__wire-test__`, `/home/user/...`, `/tmp/...`,
 localhost): they are mine, not visitors. The sheet is far over a hundred
 thousand characters, so read it by saving the CSV and filtering, never inline.
 
+**A zero in the counter means NOT MEASURED until the beacon is proved wired**
+(14 November 2026, asked in these words: *"You need to see a counter on the
+sheet did you"*). Read for how many people had met the broken administrator
+form, the sheet held **not one row** for `/buildwithus/`, `/clientmanager/`,
+`/joinourbranch/`, their three film pages or `/hiring/` — and the reason was
+that all seven still carried the inert `RRB_VIEWS_URL` placeholder. Every one
+of them was built after the wiring run of early November and nothing re-ran it,
+so the beacon was armed and silent. Ten pages were on the placeholder in all
+(those seven plus `career-path.html`, `meetinghowto/` and `xpresslife/`), out
+of 181; `tools/wire-views.py <the live /exec>` put every one right in one run,
+one line changed per page.
+
+**So answer "how many came?" with `tools/wire-views.py --check` first, never
+with a count off the sheet.** A page with no beacon and a page nobody visited
+read exactly alike, and the second reading is the one that gets acted on —
+here it would have said the ad had failed when the ad had never been measured.
+Hunting the beacon's URL with a bare `grep AKfycb` is also wrong: these pages
+carry the **Service Questionnaire** `/exec` as their own form backend, so the
+first match is the form's, not the beacon's. Read the block that follows
+`<!-- rrb-views -->`.
+
+**It is a test now**, for the two application pages that matter most:
+`tests/e2e-recruit-forms.js` fails if either carries the placeholder or does
+not ping on load. Its request probe keys on the **method** — the beacon is an
+`Image()` src, so a GET, while filing an application is a POST — because
+counting any request to `script.google.com` as "filed" failed nine checks on a
+page that was behaving correctly, the morning the beacons were wired. Never key
+it on the `/exec` URL: that deployment id changes whenever the counter is
+re-wired.
+
 ## The homepage carries no hours, and no festival banner stays
 
 Decided 8 November 2026: *"Remember we are never closed, why do you keep having

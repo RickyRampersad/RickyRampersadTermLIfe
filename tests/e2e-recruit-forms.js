@@ -40,12 +40,26 @@ let B = '';
 /* the browser, with the Apps Script POST answered here so nothing is ever filed */
 async function open(br, url, w = 390) {
   const p = await br.newPage({ viewport: { width: w, height: 860 } });
-  const state = { posted: false, errs: [] };
+  const state = { posted: false, pings: 0, errs: [] };
   p.on('pageerror', e => state.errs.push(e.message));
   p.on('console', m => { if (m.type() === 'error') state.errs.push(m.text()); });
   await p.route('**/script.google.com/**', async r => {
-    state.posted = true;
-    await r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"ref":"TEST-0001"}' });
+    /* Two different things on these pages talk to script.google.com, and only
+       one of them is an application being filed. The view-counter beacon pings
+       its own /exec on every page load — an Image() src, so a GET — while the
+       form sends a POST. Counting any request to the host as "filed" made nine
+       checks fail on a page that was behaving correctly (14 Nov 2026, the
+       morning the beacons were wired), so the probe keys on the METHOD. Never
+       key it on the /exec URL: the counter's deployment id changes whenever
+       tools/wire-views.py is re-run. */
+    if (r.request().method() === 'POST') {
+      state.posted = true;
+      await r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"ref":"TEST-0001"}' });
+      return;
+    }
+    state.pings++;
+    await r.fulfill({ status: 200, contentType: 'image/gif',
+      body: Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64') });
   });
   await p.goto(B + url, { waitUntil: 'domcontentloaded' });
   await p.waitForTimeout(800);
@@ -184,6 +198,26 @@ async function noSideways(br, key) {
   }
 }
 
+/* the view counter has to be able to SEE these pages. On 14 November 2026 the
+   sheet held not one row for /buildwithus/, /clientmanager/ or /joinourbranch/,
+   and the reason was that all three still carried the inert RRB_VIEWS_URL
+   placeholder: a zero that read as "nobody came" when it meant "never
+   measured". That is the worst kind of silence on a page a hiring push depends
+   on, so it is a test now. Re-wire with tools/wire-views.py, never by hand. */
+async function beacon(br, key) {
+  const form = FORMS[key];
+  const { p, state } = await open(br, form.url);
+  console.log('· ' + form.url + ' — the view counter can see this page');
+  const src = await p.evaluate(() => {
+    const s = [...document.querySelectorAll('script')].map(x => x.textContent || '').find(t => t.includes('/exec'));
+    return s || '';
+  });
+  ok('  the beacon is wired, not the placeholder', !src.includes('RRB_VIEWS_URL') && /https:\/\/script\.google\.com\/macros\/s\/[\w-]{20,}\/exec/.test(src));
+  ok('  it pinged on load', state.pings >= 1, 'pings ' + state.pings);
+  ok('  no script errors', state.errs.length === 0, state.errs[0] || '');
+  await p.close();
+}
+
 (async () => {
   await new Promise(r => server.listen(0, r));
   B = 'http://localhost:' + server.address().port;
@@ -203,6 +237,7 @@ async function noSideways(br, key) {
   await sends(br, 'admin', 'a complete application');
   await counters(br, 'admin');
   await noSideways(br, 'admin');
+  await beacon(br, 'admin');
 
   console.log('\n══ the client manager — /clientmanager/ ══');
   await refuses(br, 'cm', 'a short written answer goes to THAT question, not the first one',
@@ -213,6 +248,7 @@ async function noSideways(br, key) {
   await sends(br, 'cm', 'a complete application');
   await counters(br, 'cm');
   await noSideways(br, 'cm');
+  await beacon(br, 'cm');
 
   await br.close();
   server.close();
