@@ -35,6 +35,15 @@ if lines_in:
     EXTRA = [float(x.get('extra', 0) or 0) for x in _L]
 os.makedirs(dst, exist_ok=True)
 
+def caption_address(t):
+    """A spoken address back into a written one, for the burned-in caption.
+       'Ricky Rampersad Branch dot com, slash careers' -> 'rickyrampersadbranch.com/careers'."""
+    t = re.sub(r'[Aa]gent M\s*G\s*T dot com', 'agentmgt.com', t)
+    t = re.sub(r'Ricky\s+Rampersad\s+Branch\s+dot\s+com(?:,?\s+slash\s+([A-Za-z0-9-]+))?',
+               lambda m: 'rickyrampersadbranch.com' + ('/' + m.group(1).lower() if m.group(1) else ''), t)
+    return t
+
+
 def hms(ms):
     s = ms / 1000
     return f'{int(s // 3600):02d}:{int(s % 3600 // 60):02d}:{s % 60:06.3f}'
@@ -79,6 +88,14 @@ def repunct(bare, said):
         end = i
         while end < n and low[end] in '.,;:!?\u2019\'")\u2014':
             end += 1
+        # A SPACED dash ("not a laptop \u2014 paper") belongs to the word before it. Without this the dash
+        # never reached the caption, so ad C burned "And then it never stops a check-in every six
+        # months" onto the screen, which reads as a typo (14 November 2026).
+        k = end
+        while k < n and low[k] == ' ':
+            k += 1
+        if k > end and k < n and low[k] in '\u2014\u2013':
+            end = k + 1
         out.append(said[start:end])
         cur = end
     return out
@@ -118,8 +135,11 @@ for mp3 in sorted(glob.glob(os.path.join(src, '[0-9][0-9].mp3'))):
             cues.append((a, b, ' '.join(t for _, _, t in chunk)))
     with open(os.path.join(dst, n + '.vtt'), 'w', encoding='utf-8') as f:
         f.write('WEBVTT\n\n')
-        # the voice is told to say the address letter by letter; the caption reads it as written
-        cues = [(a, b, re.sub(r'[Aa]gent M\s*G\s*T dot com', 'agentmgt.com', t)) for a, b, t in cues]
+        # the voice is told to SAY an address ("Ricky Rampersad Branch dot com, slash careers"); the caption
+        # must READ as the address. Until 14 November 2026 only agentmgt.com was rewritten, so four films
+        # burned "Go to Ricky Rampersad Branch dot com, slash careers." onto the screen, which reads as a
+        # typo to everyone who sees it with the sound off — most of the people the ads are for.
+        cues = [(a, b, caption_address(t)) for a, b, t in cues]
         for a, b, t in cues:
             f.write(f'{hms(a)} --> {hms(b)}\n{t}\n\n')
     d = round(length + air + (EXTRA[idx] if EXTRA and idx < len(EXTRA) else 0), 1)
