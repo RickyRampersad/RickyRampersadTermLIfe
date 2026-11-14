@@ -5725,8 +5725,9 @@ with ... everything in the branch, it is digital."*
 **It answers those three questions in that order, and that order is the whole design.** A and B are
 40-second feed cuts aimed at a fear each; C is the branch's own announcement and has a different job.
 `agentmgt/ad-c.html`, seven scenes, square (`ad-c-square.mp4`) and tall (`ad-c-story.mp4`). It ran
-**63.9s** until 14 November 2026, when scene 3 became the journey and scene 6 shed the 39-things claim;
-it is **68.9s** now. The section below carries that cut.
+**63.9s** until 14 November 2026. That day scene 3 became the journey and scene 6 shed the 39-things
+claim, and then the process itself was corrected: the conversation that produces the fact find is now
+its own scene. It is **eight scenes and 75.2s**. The two sections below carry those cuts, in order.
 
 **Every fact is read off the live careers page, so the ad cannot drift from what it links to.** The 39
 things and their six moments (before you join 7, first 90 days 5, every day 10, every week 6, every
@@ -5752,7 +5753,9 @@ are the second argument, in scene 6, not the first.
 
 **64 seconds is a decision, not a drift.** Everything he asked for does not fit in forty. This is the
 pinned post on the branch page, LinkedIn and WhatsApp; the paid-feed version drops scene 3 and runs
-about 45. (It is 69 seconds since 14 November; the paid-feed cut would now drop scene 3 and run ~48.)
+about 45. (It is 75 seconds since 14 November, over eight scenes. A paid-feed cut would drop the
+journey scene, 4, and run about 61 — not scene 3, which is now the human-process scene and is the
+one thing in the ad nothing else in this market says.)
 
 #### Two lines would not voice at all, and one word is unsayable
 
@@ -5878,16 +5881,16 @@ journey, not a transaction … Agents want to see the screen."*
 
 **It cost five seconds, not fourteen, and that is the whole shape of the change.** He wants it short
 and he wants six more subjects in it. The way to have both was not to add scenes: scene 3 was rewritten
-from one line about the fact find into the whole journey (10.3s → 21.0s), and **scene 6 gave up the
-"thirty-nine things, all digital" half** (12.1s → 6.4s), because the journey now *shows* six of those
-thirty-nine rather than counting them. The count survives as the scene's eyebrow, which is free.
-63.9s → 68.9s.
+from one line about the fact find into the whole journey, and **scene 6 gave up the "thirty-nine
+things, all digital" half** (12.1s → 6.4s), because the journey now *shows* six of those thirty-nine
+rather than counting them. The count survives as an eyebrow, which is free. 63.9s → 68.9s. **He then
+corrected the process itself the same afternoon — see the section below — and the ad is eight scenes
+and 75.2s; what follows describes the cut that produced it.**
 
 **Six of the branch's own screens, in the order a client meets them**, each landing on the word that
-names it — `CJ` in `build-recruitfilm.py`: the plan in their inbox, they approve it, they sign and rate
-you, delivered and confirmed, the branch chasing it for you, what the manager sees. The first three are
-cued to their own words; **the last three cascade on "every stage after", because the cascade is what
-that clause means** — cued one per word they would pile into the closing two seconds.
+names it — `CJ` in `build-recruitfilm.py`. The first three are cued to their own words; **the last
+three cascade, because the cascade is what "every stage after" means** — cued one per word they would
+pile into the closing two seconds.
 
 **Two screens are cropped, and both crops are the point rather than housekeeping:**
 
@@ -5959,6 +5962,73 @@ get backwards: whatever the portrait block *changes*, the square block must chan
 `adcheck.js` all clear in both frames; `scrtabs.js` drives the page's section **over HTTP, not
 `file://`** — the page's absolute `/wall/…` paths resolve to the filesystem root under `file://` and
 every image reads 0×0, which looks exactly like a broken page and is not.
+
+### The conversation comes before the laptop — 14 November 2026
+
+Asked for, two hours after the cut above, and it corrects the process itself rather than the film:
+*"most people have this mixed up … the agent meets with the client … The objective is to build a
+relationship, not to flash a screen. Even we are technical and digital, we believe in that human
+interaction … That should be done in the agent's quiet time, where time is taken to think about what
+the data that he's gathered, not typing in front of a client. That's never. Agents fail miserably and
+clients fall out … Ask the client the question, build the relationship, especially if it's a husband
+and a wife … Then in the quiet time, the agent prepares, types the document in our digital fact find …
+also placed on Guardian's approved form."* And: *"every 6 months, a check-in … And every year, a
+service review when they change age."*
+
+**So in an ad made of screens, scene 3 now has NO screen, and that is the argument.** Paper, questions,
+the time to listen, a husband and a wife who are never the same client, and a struck-through chip
+reading *"Typing in front of your client"*. The laptop appears only in the next scene, alone, in the
+agent's own time. **Do not "improve" that scene by putting a device in it** — its emptiness is the
+point, and the builder's comment says so.
+
+**The order, as he states it, end to end**: the meeting (paper, no screen) → quiet time, typed up onto
+Guardian's own approved form → the client reads the draft and agrees → **then** the manager reads,
+signs and comments → and then it never stops. The last step is the branch's own standing promise, so
+the cadence is in the branch's own words: a check-in every six months, a full review in the birthday
+month, for life.
+
+**That promotes `ff/02-manager-signoff.jpg` into the film**, which the cut above had deliberately kept
+out. It is safe here for a reason worth knowing: the manager now comes *after* the client, and a
+**top-anchored crop** of that screen shows the sign-off request and leaves its one self-contradicting
+line — the button reading *"releases it to the client"*, the pre-29-October order — off the frame. The
+banner that contradicts the button (*"Waiting on the client … Agree is held until they do"*) is the
+correct one. **Both sentences are still live in fact-find-analyzer**; that is a one-line product fix in
+another repository, not a film one.
+
+**The cadence is the foot, not a seventh screen.** There is no screenshot of a thing that happens every
+six months for the rest of someone's life, and inventing one would be the worst kind of mock-up.
+
+**Eight scenes, 75.2s.** He asks for compact and keeps adding subjects; this is the honest number, and
+it is still short for a pinned post. The builder's `assert len(TLINES) in (5, 7, 8)` is what caught the
+new line — keep that guard, it exists so a lines file out of step with the scene block stops the build.
+`CTA = len(TLINES)` renumbers the close by itself, which is why only the middle scenes needed shifting.
+
+**What he asked for and did NOT get, and why.** He asked to be framed as *"a top of the table FDRT
+member who have now dedicated their time to build and give back to the industry"*. **There is no source
+in this record for him personally holding Top of the Table.** The only Top of the Table reference tied
+to a person here is Akaash's two-time claim, which is itself marked unconfirmed and kept off the page
+until he or Akaash confirms it; the careers page's own MDRT / Court / Top of the Table card is about
+*the advisors you sit beside*, not about the Branch Manager. A professional credential in an MP4 at a
+public URL needs his word first. What did go in is **"Thirty-five years of doing it this way"** as the
+scene's eyebrow — his own figure from his own board papers, and a claim about *method*, not a title.
+
+**That reopened the 32-vs-35 question, and it is settled rather than ducked.** The careers page said
+*"Thirty-two years in"* (Salesforce gives his hire date as December 1993) while the ad now says
+thirty-five (his own figure, in the business, from the Three-Year Plan papers). Both are true and both
+are sourced, but one tap apart they read as two numbers for one man — the same ad-and-page fault as
+14-vs-15 the day before. The page now reconciles them explicitly: **"Thirty-two years at Guardian,
+thirty-five in the business."** It also gained the one sentence that carries the half of his framing
+that *is* sourced — that the tools on the page exist because he had them built here — since the whole
+of this repository is the evidence for it, and no credential is needed to say it.
+
+#### The near-miss: a chain backgrounded with `&` truncates itself
+
+`sfx … && usetrack … && nohup render &` backgrounds **the whole chain**, and `usetrack.py adCq adCv`
+was cut off after the first key: every other asset was 75.2s and **`bed-adCv.wav` was still 68.9s**,
+six seconds short, waiting for a mix ten minutes away. Caught by reading the four durations back rather
+than trusting that the command had run. Two rules: **rebuild the assets in the foreground, background
+only the render**, and **after rebuilding a timed asset, read its duration — not the exit code.** Same
+family as the stale `rendered.mp4`, one stage earlier in the chain.
 
 ### Which ad brought them — 13 November 2026
 

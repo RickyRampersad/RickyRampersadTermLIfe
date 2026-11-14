@@ -1151,7 +1151,11 @@ if MODE == 'ad':
     # scenes, not five, and it answers those three questions in that order: the career stated plainly, the
     # work as problem-solving, and the thing nothing else in this market offers — you are profiled, mapped
     # and trained BEFORE you are contracted, so you know whether it fits before you give anything up.
-    assert len(TLINES) in (5, 7), len(TLINES)
+    # 14 November 2026: C grew to eight. The conversation that produces the fact find is now its own scene
+    # ("the agent meets with the client ... not typing in front of a client. That's never"), and the journey
+    # that follows is another. The guard stays — a lines file out of step with this block is the fault it
+    # catches — it just knows the third shape now. A and B are still five.
+    assert len(TLINES) in (5, 7, 8), len(TLINES)
     LEADS = [('Retiring properly', 'asked to be called · 9:12'), ('Cover for the children', 'asked to be called · 9:40'), ('Starting a business', 'asked to be called · 10:05')]
     # 12 Nov 2026, on LIMRA's own 2025 Annual Conference deck (session 16, public PDF): "The second year,
     # commonly referred to as the 'cliff' ... Agents are on their own, without much of the support provided
@@ -1316,60 +1320,77 @@ if MODE == 'ad':
   </div>
   <p class="foot in" style="--t0:{tat(2,"salary") + 600}ms">Guardian Life of the Caribbean &middot; Ricky Rampersad Branch, Chaguanas</p>
 </div>""", 'data-ch="An insurance sales career"'))
-        # 14 November 2026, asked for in these words: "in the fact find, you can snap very quick what our digital
-        # fact find ... it doesn't stop with the fact find ... different stages ... so it's a journey, not a
-        # transaction". Six of the branch's own screens, in the order a client meets them, each landing on the
-        # word that names it. Two are cropped — see img64's note. The one step with NO screen here is the
-        # manager's sign-off: ff/02 asserts the pre-29-October order on its face, so the line carries that step
-        # and a pill names it. A screen that contradicts the narration is worse than no screen.
-        W = ('wall', 'img')
-        CJ = [('ff-draft.jpg', ('agentmgt', 'img'), 'The plan reaches them', 'What you recommended, and why'),
-              ('ff/04-client-approval-page.jpg', W, 'They approve it', 'Nothing goes ahead until it is right'),
-              ('ff/05-client-sign-and-rate.jpg', W, 'They sign, and rate you', 'The rating goes to the branch'),
-              ('jr/4-delivered.jpg', W, 'Delivered, and confirmed', 'In writing, the day it reaches them'),
-              ('jr/5-question.jpg', W, 'Behind you, all the way', 'Support chases it and reports back'),
-              ('ff-branch.jpg', ('agentmgt', 'img'), 'Your manager sees it all', 'Every case, every day')]
-        # The first three land on their own words; the last three cascade on "every stage after", because the
-        # cascade IS what that clause means. Cued one-per-word they would pile into the closing two seconds.
-        _cj = [max(300, tat(3,"find") - 500), tat(3,"approves"), tat(3,"rate"),
-               tat(3,"stage"), tat(3,"stage") + 520, tat(3,"stage") + 1040]
-        T.append(tscene(3, 's-prob', f"""
+        # 14 November 2026, and this is the correction that matters most in the whole ad: "most people have
+        # this mixed up ... the agent meets with the client. The objective is to build a relationship, not to
+        # flash a screen. Even we are technical and digital, we believe in that human interaction ... That
+        # should be done in the agent's quiet time ... not typing in front of a client. That's never. Agents
+        # fail miserably and clients fall out." So in an ad made of screens, THIS SCENE HAS NO SCREEN. The
+        # meeting is paper and a conversation; the laptop appears only afterwards, alone, in scene 4. Do not
+        # "improve" this by adding a device to it — its emptiness is the argument.
+        HUMAN = [('chat', 'paper', 'At the table', 'Paper, questions, and the time to listen.'),
+                 ('users', 'listen', 'Everyone is different', 'A husband and a wife are never the same client.'),
+                 ('doc', 'afterwards', 'Afterwards, in your own time', "You type it up, onto Guardian's own approved form.")]
+        T.append(tscene(3, 's-human', f"""
 <div class="full center">
-  <p class="eye in" style="--t0:200ms">Thirty-nine things. All digital. The part most advisors never get.</p>
-  <h2 class="h l">{words("Most families have never seen", 300, 95)} <em class="wine">{words("their own numbers.", max(600, tat(3,"numbers") - 800), 95)}</em></h2>
+  <p class="eye in" style="--t0:200ms">Thirty-five years of doing it this way</p>
+  <h2 class="h l">{words("It starts with a conversation,", max(300, tat(3,"conversation") - 1400), 95)} <em class="wine">{words("not a laptop.", max(800, tat(3,"laptop") - 450), 95)}</em></h2>
+  <p class="hustrike in" style="--t0:{tat(3,"laptop") + 400}ms"><span>Typing in front of your client</span></p>
+  <div class="hu3">
+    {''.join(f'<div class="hucard in" style="--t0:{tat(3,w)}ms"><span class="huic"><svg class="ic"><use href="#i-{ic}"/></svg></span><b>{t}</b><span class="hud">{d}</span></div>' for ic, w, t, d in HUMAN)}
+  </div>
+  <p class="cjx in" style="--t0:{tat(3,"form")}ms">Then, and only then, the system starts.</p>
+</div>""", 'data-ch="It starts with a conversation"'))
+        # Scene 4: the journey, six of the branch's own screens in the order a client meets them, each landing
+        # on the word that names it. Two are cropped — see img64's note. ff/02 earns its place here now that
+        # the manager comes AFTER the client: a top-anchored crop shows the sign-off request and leaves its
+        # one self-contradicting line ("releases it to the client", the pre-29-October order) off the frame.
+        W = ('wall', 'img')
+        CJ = [('ff-draft.jpg', ('agentmgt', 'img'), 'draft', 0, 'The draft, in their own time', 'What you recommended, and why'),
+              ('ff/04-client-approval-page.jpg', W, 'agrees', 0, 'They read it and agree', 'Nothing goes ahead until it is right'),
+              ('ff/02-manager-signoff.jpg', W, 'signs', 0, 'Then your manager signs', 'Reads it, signs it, adds a comment'),
+              ('ff/05-client-sign-and-rate.jpg', W, 'comment', 500, 'They sign, and rate you', 'The rating goes to the branch'),
+              ('jr/4-delivered.jpg', W, 'never', 0, 'Delivered, and confirmed', 'In writing, the day it reaches them'),
+              ('jr/5-question.jpg', W, 'never', 520, 'Behind you, all the way', 'Support chases it and reports back')]
+        # The cadence is the foot, not a seventh screen: the promise is a sentence, and there is no screenshot
+        # of a thing that happens every six months for the rest of someone's life.
+        CUD = [('six', 'Every six months', 'a check-in'), ('birthday', 'Every birthday month', 'a full review'),
+               ('life', 'For life', 'it does not stop')]
+        T.append(tscene(4, 's-jrny', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">A journey, not a transaction</p>
+  <h2 class="h l">{words("And then", 300, 95)} <em class="wine">{words("it never stops.", 500, 95)}</em></h2>
   <div class="cjwrap">
-    {''.join(f'<div class="cjstop in" style="--t0:{_cj[k]}ms"><div class="cjshot"><span class="cjn">{k+1}</span><img src="{img64(rel, 480, 72, base=b)}" alt=""></div><b class="cjt">{t}</b><span class="cjd">{d}</span></div>' for k, (rel, b, t, d) in enumerate(CJ))}
+    {''.join(f'<div class="cjstop in" style="--t0:{tat(4,w) + o}ms"><div class="cjshot"><span class="cjn">{k+1}</span><img src="{img64(rel, 480, 72, base=b)}" alt=""></div><b class="cjt">{t}</b><span class="cjd">{d}</span></div>' for k, (rel, b, w, o, t, d) in enumerate(CJ))}
   </div>
   <div class="cjfoot">
-    <div class="cjpills"><span class="ypill in" style="--t0:{tat(3,"signs")}ms">A manager signs every plan before it goes anywhere</span><span class="ypill in" style="--t0:{tat(3,"signs") + 450}ms">Market conduct, built into every step</span></div>
-    <p class="cjx in" style="--t0:{tat(3,"journey")}ms">A journey, not a transaction.</p>
-    <small class="cjs in" style="--t0:{tat(3,"approves") + 400}ms">Our own screens, built in this branch over fifteen years &middot; sample names and figures</small>
+    <div class="curail">{''.join(f'<span class="cum in" style="--t0:{tat(4,w)}ms"><b>{t}</b><span>{d}</span></span>' for w, t, d in CUD)}</div>
+    <small class="cjs in" style="--t0:{tat(4,"agrees") + 400}ms">Our own screens, built in this branch over fifteen years &middot; sample names and figures</small>
   </div>
-</div>""", 'data-ch="A journey, not a transaction"'))
-        T.append(tscene(4, 's-fill', f"""
+</div>""", 'data-ch="And then it never stops"'))
+        T.append(tscene(5, 's-fill', f"""
 <div class="split">
   <div class="col">
-    <h2 class="h l">{words("You will not start from", max(300, tat(4,"cold") - 900), 95)} <em class="wine">{words("a cold list.", tat(4,"cold") - 150, 95)}</em></h2>
-    <p class="sub in" style="--t0:{tat(4,"asked")}ms">The leads come to you, from people who asked to be called.</p>
+    <h2 class="h l">{words("You will not start from", max(300, tat(5,"cold") - 900), 95)} <em class="wine">{words("a cold list.", tat(5,"cold") - 150, 95)}</em></h2>
+    <p class="sub in" style="--t0:{tat(5,"asked")}ms">The leads come to you, from people who asked to be called.</p>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:{tat(4,"coach")}ms">A coach, not a clock</span>
+      <span class="ypill in" style="--t0:{tat(5,"coach")}ms">A coach, not a clock</span>
     </div>
   </div>
   <div class="col">
-    <div class="list in fl" style="--t0:{max(300, tat(4,"leads") - 300)}ms">
+    <div class="list in fl" style="--t0:{max(300, tat(5,"leads") - 300)}ms">
       <div class="bd-h"><b>Your board</b><span>this morning</span></div>
-      {''.join(f'<div class="lead-in" style="--t0:{tat(4,"asked") + i*300}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>{n}</b><span>{d}</span></div>' for i, (n, d) in enumerate(LEADS))}
+      {''.join(f'<div class="lead-in" style="--t0:{tat(5,"asked") + i*300}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>{n}</b><span>{d}</span></div>' for i, (n, d) in enumerate(LEADS))}
       {SAMPLE}
     </div>
   </div>
 </div>""", 'data-ch="The leads come to you"'))
-        _g0, _g1 = tat(5, "contracted"), tat(5, "trained")
+        _g0, _g1 = tat(6, "contracted"), tat(6, "trained")
         _gs = max(400, (_g1 - _g0) // len(GATES))
-        T.append(tscene(5, 's-gates', f"""
+        T.append(tscene(6, 's-gates', f"""
 <div class="full center">
   <p class="eye in" style="--t0:200ms">{words("Before you are contracted.", 200, 110)}</p>
-  <h2 class="h l"><em class="wine">{words("You know whether it fits.", max(600, tat(5,"fits") - 900), 95)}</em></h2>
-  <p class="sub in" style="--t0:{tat(5,"fits") + 400}ms">Before you give anything up.</p>
+  <h2 class="h l"><em class="wine">{words("You know whether it fits.", max(600, tat(6,"fits") - 900), 95)}</em></h2>
+  <p class="sub in" style="--t0:{tat(6,"fits") + 400}ms">Before you give anything up.</p>
   <div class="cgrail">
     {''.join(f'<div class="cgstep in" style="--t0:{_g0 + 200 + k*_gs}ms"><i>{k+1}</i><b>{nm}</b><span>{sub}</span></div>' for k, (nm, sub) in enumerate(GATES))}
   </div>
@@ -1377,20 +1398,20 @@ if MODE == 'ad':
         # The "thirty-nine things, all digital" claim moved into the journey scene on 14 November 2026, where six
         # of those thirty-nine are now shown rather than counted. Scene 6 keeps the one thing it can only state:
         # the retention record, with its source. The MOMENTS grid stays in the file for the trailer's scene 4.
-        T.append(tscene(6, 's-all', f"""
+        T.append(tscene(7, 's-all', f"""
 <div class="full center">
   <p class="eye in" style="--t0:200ms">The record</p>
-  <h2 class="h l">{words("Who is still here,", 400, 95)} <em class="wine">{words("four years in.", max(700, tat(6,"industry") - 1000), 95)}</em></h2>
+  <h2 class="h l">{words("Who is still here,", 400, 95)} <em class="wine">{words("four years in.", max(700, tat(7,"industry") - 1000), 95)}</em></h2>
   <div class="cfig">
-    <div class="cfrow in" style="--t0:{max(400, tat(6,"industry") - 500)}ms"><span class="cflab">The industry</span><span class="cftrack"><i class="cfbar" style="--w:14%;--t0:{tat(6,"fourteen")}ms"></i></span><b class="cnt" data-to="14" data-at="{tat(6,"fourteen")}">14</b></div>
-    <div class="cfrow us in" style="--t0:{max(600, tat(6,"thirty-one") - 800)}ms"><span class="cflab">This branch</span><span class="cftrack"><i class="cfbar" style="--w:31%;--t0:{tat(6,"thirty-one")}ms"></i></span><b class="cnt" data-to="31" data-at="{tat(6,"thirty-one")}">31</b></div>
-    <p class="cfx in" style="--t0:{tat(6,"thirty-one") + 350}ms">More than twice as many</p>
+    <div class="cfrow in" style="--t0:{max(400, tat(7,"industry") - 500)}ms"><span class="cflab">The industry</span><span class="cftrack"><i class="cfbar" style="--w:14%;--t0:{tat(7,"fourteen")}ms"></i></span><b class="cnt" data-to="14" data-at="{tat(7,"fourteen")}">14</b></div>
+    <div class="cfrow us in" style="--t0:{max(600, tat(7,"thirty-one") - 800)}ms"><span class="cflab">This branch</span><span class="cftrack"><i class="cfbar" style="--w:31%;--t0:{tat(7,"thirty-one")}ms"></i></span><b class="cnt" data-to="31" data-at="{tat(7,"thirty-one")}">31</b></div>
+    <p class="cfx in" style="--t0:{tat(7,"thirty-one") + 350}ms">More than twice as many</p>
   </div>
   <!-- The source lands WITH the chart, not after it. Cued off the last word it would have followed, it
        entered 175ms before the scene ended — a flash nobody can read, which is worse than no source at
        all, because it looks like a cite and cannot be checked. Footnote furniture belongs under the
        chart from the moment the chart is there; this gives it about five seconds on screen. -->
-  <p class="adsrc in" style="--t0:{max(500, tat(6,"industry") - 300)}ms">Of every 100 contracted, still contracted at year four. Industry: LIMRA and Finseca, 2022. Branch: our own roll.</p>
+  <p class="adsrc in" style="--t0:{max(500, tat(7,"industry") - 300)}ms">Of every 100 contracted, still contracted at year four. Industry: LIMRA and Finseca, 2022. Branch: our own roll.</p>
 </div>""", 'data-ch="Thirty-nine things, and the record"'))
     elif AD == 'A':
         T.append(tscene(1, 's-hook nofade', f"""
@@ -2071,6 +2092,27 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .cjd{font:500 calc(var(--u)*1.45)/1.3 var(--text);color:var(--mute)}
 .cjfoot{display:grid;justify-items:center;gap:calc(var(--u)*.75);margin-top:calc(var(--u)*1.9)}
 .cjpills{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(var(--u)*.8)}
+/* the cadence, as the foot of the journey: three marks on one rule, not a seventh screen */
+.curail{display:flex;flex-wrap:wrap;justify-content:center;align-items:stretch;gap:calc(var(--u)*1.6);
+  padding-top:calc(var(--u)*1.2);border-top:2px solid rgba(255,255,255,.14);width:min(100%,calc(var(--u)*82))}
+.cum{display:grid;gap:calc(var(--u)*.25);text-align:center;min-width:0}
+.cum>b{font:800 calc(var(--u)*2)/1.15 var(--display);color:var(--aL)}
+.cum>span{font:500 calc(var(--u)*1.5)/1.25 var(--text);color:var(--mute)}
+/* THE SCENE WITH NO SCREEN. Three drawn cards and a struck-through chip; nothing here is a device. */
+.hu3{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.6);width:min(100%,calc(var(--u)*88));margin:calc(var(--u)*2.2) auto 0}
+.hucard{display:grid;gap:calc(var(--u)*.7);justify-items:center;align-content:start;min-width:0;
+  padding:calc(var(--u)*2) calc(var(--u)*1.3);border-radius:calc(var(--u)*1.5);
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
+.huic{display:grid;place-items:center;width:calc(var(--u)*5);height:calc(var(--u)*5);border-radius:50%;
+  background:var(--a);color:#fff}
+.huic .ic{width:calc(var(--u)*2.6);height:calc(var(--u)*2.6)}
+.hucard>b{font:800 calc(var(--u)*2.1)/1.2 var(--display);color:var(--ink);text-align:center}
+.hud{font:500 calc(var(--u)*1.6)/1.35 var(--text);color:var(--mute);text-align:center}
+.hustrike{margin-top:calc(var(--u)*2.1);font:600 calc(var(--u)*2)/1.3 var(--text);color:var(--mute2)}
+.hustrike span{position:relative;display:inline-block}
+.hustrike span::after{content:"";position:absolute;left:calc(var(--u)*-.4);right:calc(var(--u)*-.4);top:52%;
+  height:3px;border-radius:2px;background:#C97A3A;transform:scaleX(0);transform-origin:left center;
+  animation:growx .5s var(--out) both;animation-delay:calc(var(--t0) + 320ms)}
 .cjx{font:800 calc(var(--u)*2.5)/1.2 var(--display);color:var(--ink);text-align:center}
 .cjs{font:500 calc(var(--u)*1.5)/1.3 var(--text);color:var(--mute2);text-align:center}
 .ceil-line{position:absolute;left:10%;right:10%;top:62%;height:2px;background:linear-gradient(90deg,transparent,var(--aL),transparent);transform:scaleX(0)}
@@ -3068,8 +3110,17 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .cjx{font-size:calc(var(--u)*3)}
   .cjs{font-size:calc(var(--u)*1.7)}
   .cjfoot{margin-top:calc(var(--u)*2.2);gap:calc(var(--u)*.9)}
-  .s-prob .h.l{font-size:calc(var(--u)*5.2)}
-  .s-prob .eye{font-size:calc(var(--u)*1.8)}
+  .s-jrny .h.l{font-size:calc(var(--u)*5.2)}
+  .s-jrny .eye{font-size:calc(var(--u)*1.8)}
+  .cum>b{font-size:calc(var(--u)*2.3)}
+  .cum>span{font-size:calc(var(--u)*1.8)}
+  .hu3{gap:calc(var(--u)*1.8);margin-top:calc(var(--u)*3)}
+  .hucard{padding:calc(var(--u)*2.6) calc(var(--u)*1.5)}
+  .huic{width:calc(var(--u)*6.2);height:calc(var(--u)*6.2)}
+  .huic .ic{width:calc(var(--u)*3.2);height:calc(var(--u)*3.2)}
+  .hucard>b{font-size:calc(var(--u)*2.5)}
+  .hud{font-size:calc(var(--u)*1.9)}
+  .hustrike{font-size:calc(var(--u)*2.3);margin-top:calc(var(--u)*2.6)}
   .cshot{width:100%}
   /* THE FIRST FRAME IS THE THUMBNAIL. Measured 13 Nov 2026 on the rendered MP4: frame 0 of every ad cut
      carried 0.00% ink — an empty navy square. In a feed that frame is what a person sees before autoplay
@@ -3099,11 +3150,6 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .c3row{width:min(100%,calc(var(--u)*76));gap:calc(var(--u)*1.2);margin-top:calc(var(--u)*2.2)}
   .c3card{padding:calc(var(--u)*1.4) calc(var(--u)*1.1)}
   .c3card b{font-size:calc(var(--u)*3)}.c3card span{font-size:calc(var(--u)*1.8)}
-  /* the 16:10 laptop frame is tall in a square box, and it pushed its own caption into the band the
-     mixer burns the subtitles into. Caught by measuring the settled frame, not by eye. */
-  .s-prob .dev.lap{width:min(100%,calc(var(--u)*58))}
-  .s-prob .pline{font-size:calc(var(--u)*1.45)}
-  .s-prob .h.l{font-size:calc(var(--u)*6.6)}
   .s-gates .h.l{font-size:calc(var(--u)*6.4)}
   /* A SQUARE IS "PORTRAIT" TO THE MEDIA QUERY, so the whole of the portrait block above applies here
      too and the rail had collapsed to the tall cut's one-column list — a narrow strip of 1.4vw type in
@@ -3129,8 +3175,18 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .cjx{font-size:calc(var(--u)*2.4)}
   .cjs{font-size:calc(var(--u)*1.45)}
   .cjfoot{margin-top:calc(var(--u)*1.1);gap:calc(var(--u)*.55)}
-  .s-prob .h.l{font-size:calc(var(--u)*4.5)}
-  .s-prob .eye{font-size:calc(var(--u)*1.6)}
+  .s-jrny .h.l{font-size:calc(var(--u)*4.5)}
+  .s-jrny .eye{font-size:calc(var(--u)*1.6)}
+  .s-human .h.l{font-size:calc(var(--u)*5)}
+  .cum>b{font-size:calc(var(--u)*1.9)}
+  .cum>span{font-size:calc(var(--u)*1.45)}
+  .hu3{gap:calc(var(--u)*1.4);margin-top:calc(var(--u)*2)}
+  .hucard{padding:calc(var(--u)*1.9) calc(var(--u)*1.2)}
+  .huic{width:calc(var(--u)*4.6);height:calc(var(--u)*4.6)}
+  .huic .ic{width:calc(var(--u)*2.4);height:calc(var(--u)*2.4)}
+  .hucard>b{font-size:calc(var(--u)*2)}
+  .hud{font-size:calc(var(--u)*1.55)}
+  .hustrike{font-size:calc(var(--u)*1.9);margin-top:calc(var(--u)*1.9)}
   .s-all .h.xl{font-size:calc(var(--u)*6.4)}
   .mgrid{zoom:.9;margin-top:calc(var(--u)*2)}
   .hrow{zoom:.92;margin-top:calc(var(--u)*1.8)}

@@ -42,7 +42,7 @@ AD_HITS = {'A': [(2, 'cliff'), (3, 'thirty'), (4, 'Thirty-nine'), (5, 'Seven')],
            'B': [(2, 'second'), (3, 'leads'), (4, 'thirty'), (5, 'Seven')],
            # (6,'thirty-nine') went with the 39-things claim on 14 November 2026 — the journey scene shows six
            # of them now. Its punch moves to (3,'journey'), the line the scene is built to land on.
-           'C': [(2, 'insurance'), (3, 'solving'), (3, 'journey'), (5, 'contracted'), (6, 'thirty-one'), (7, 'Seven')]}
+           'C': [(2, 'insurance'), (3, 'conversation'), (4, 'stops'), (6, 'contracted'), (7, 'thirty-one'), (8, 'Seven')]}
 for v in 'ABC':
     if os.path.exists(f'recruit-ad{v}-timing.json'):
         entries(f'ad{v}', f'recruit-ad{v}-timing.json', f'voad{v}', f'ad-{v.lower()}',

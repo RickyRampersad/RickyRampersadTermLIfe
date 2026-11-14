@@ -293,9 +293,11 @@ about the branch rather than about the reader.
 >
 > That sentence is the filter. If you want a salary band, this is not for you, and we would rather you knew now.
 >
-> The work is solving a problem: most families here have never seen their own numbers written down. Our fact find does the arithmetic while you talk, your client confirms it from their own inbox, and a manager reviews and signs it after they have.
+> Most people have this backwards. It starts with a conversation, not a laptop — paper, questions, and the time to listen, because a husband and a wife are never the same client. You type it up afterwards, in your own time, onto Guardian's own approved form.
 >
-> And it does not stop at the fact find. They sign, they rate you, and they hear from us when the policy is delivered and every year after. When something is outstanding, the branch chases it and tells you what was done. A journey, not a transaction — that is the part most advisors never get.
+> Then your client reads the draft and agrees with it. Then your manager reads it, signs it and adds a comment. Then they sign, and they rate you.
+>
+> And then it never stops: a check-in every six months, a full review in their birthday month, for life. When something is outstanding, the branch chases it and tells you what was done. A journey, not a transaction — and it is the part most advisors never get.
 >
 > You will not start from a cold list. The leads come to you, from people who asked to be called.
 >
