@@ -1,7 +1,22 @@
 {
- "tts/out/adBnm2/02.mp3": [
+ "tts/out/fixCT/01.mp3": [
   "en",
   0.999,
-  "Here, your own market comes first, and it is mapped before you are contracted. When it runs thin, keeping your week full is our job. Your manager is a coach, not a clock."
+  "You start with the people who know you when that list runs thin keeping your week full is our job and your manager is a coach, not a clock."
+ ],
+ "tts/out/fixCT/03.mp3": [
+  "en",
+  0.998,
+  "And here is this room in full. You are never stuck for an answer at the table. The fact find does the arithmetic, branch intelligence reads the file, and the branch team answers your query the same day. And you never start from zero. Clients match to you, household by household, and when your own list runs thin, the branch keeps your week full."
+ ],
+ "tts/out/fixCT/04.mp3": [
+  "en",
+  0.998,
+  "And here's this room in full. You are never stuck for an answer at the table. The fact find does the arithmetic, branch intelligence reads the file, and the branch team answers your query the same day. And you never start from zero. Clients are matched to you, household by household. And when your own list runs thin, the branch keeps your week full."
+ ],
+ "tts/out/fixCT/05.mp3": [
+  "en",
+  0.992,
+  "By year 4, the industry keeps 14 and 100. This branch keeps 31."
  ]
 }
