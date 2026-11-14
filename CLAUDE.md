@@ -6123,7 +6123,16 @@ public page: the only books it was measured on are the departed agents', and not
 **Still saying it:** the `/joinourbranch/` film (`film-w/v/f.mp4`) opens "a list of your friends and good luck. That
 is not how it works here. Your leads come from a board." It is the cut series turned down on 6–7 November and
 `tools/film/beat/README.md` says not to rebuild that design, so it was left and flagged. The full 8:49 film's line 29
-and ad C's line 5 also still say it; both need a re-voice. Ad A does not.
+still says it and needs a re-voice (its vox is gone with an old scratchpad, so all 33 lines go to the runner). Ad A
+never did; ad B, ad C (line 5) and the trailer (line 3) were re-voiced and re-cut the same day, and the re-cut also
+fixed the trailer's dead QR and its tall-cut door scene, whose third door ran into the caption band.
+
+**The captions spelled the spoken address**, "Go to Ricky Rampersad Branch dot com, slash careers.", on every
+recruiting cut, and dropped spaced em dashes, so ad C read "And then it never stops a check-in every six months".
+Both read as typos to the muted viewer the ads are for. `importvox.py`'s `caption_address()` writes the address as an
+address, and `repunct` keeps a spaced dash. **Splicing one line:** stage only that clip, renamed to its real index,
+run `importvox.py` with `--timing` to a scratch file, then merge that line's entry and `d` into the real timing
+file: run against the real one, it writes a timing file holding the single line.
 
 Three traps from doing it:
 - **`tools/adpages/build-adpages.py` is out of sync with two of its three pages and writes the inert beacon.** It
