@@ -1,22 +1,72 @@
 {
- "tts/out/fixCT/01.mp3": [
+ "tts/out/vA/02.mp3": [
   "en",
-  0.999,
-  "You start with the people who know you when that list runs thin keeping your week full is our job and your manager is a coach, not a clock."
+  0.993,
+  "This is a career in insurance sales. You're paid on what you write. There's no ceiling and there's no salary."
  ],
- "tts/out/fixCT/03.mp3": [
-  "en",
-  0.998,
-  "And here is this room in full. You are never stuck for an answer at the table. The fact find does the arithmetic, branch intelligence reads the file, and the branch team answers your query the same day. And you never start from zero. Clients match to you, household by household, and when your own list runs thin, the branch keeps your week full."
- ],
- "tts/out/fixCT/04.mp3": [
-  "en",
-  0.998,
-  "And here's this room in full. You are never stuck for an answer at the table. The fact find does the arithmetic, branch intelligence reads the file, and the branch team answers your query the same day. And you never start from zero. Clients are matched to you, household by household. And when your own list runs thin, the branch keeps your week full."
- ],
- "tts/out/fixCT/05.mp3": [
+ "tts/out/vA/03.mp3": [
   "en",
   0.992,
   "By year 4, the industry keeps 14 and 100. This branch keeps 31."
+ ],
+ "tts/out/vB/01.mp3": [
+  "en",
+  0.991,
+  "You're good at your job and you can already see the top of it."
+ ],
+ "tts/out/vB/02.mp3": [
+  "en",
+  0.99,
+  "This is a career in insurance sales. You're paid on what you write. There's no ceiling and there's no salary."
+ ],
+ "tts/out/vB/03.mp3": [
+  "en",
+  0.991,
+  "By year 4, the industry keeps 14 and 100. This branch keeps 31."
+ ],
+ "tts/out/vC/01.mp3": [
+  "en",
+  0.991,
+  "You're good at your job, and you can already see the top of it."
+ ],
+ "tts/out/vC/02.mp3": [
+  "en",
+  0.992,
+  "This is a career in insurance sales. You're paid on what you write. There's no ceiling and there's no salary."
+ ],
+ "tts/out/vC/03.mp3": [
+  "en",
+  0.994,
+  "By year 4, the industry keeps 14 in 100. This branch keeps 31."
+ ],
+ "tts/out/vD/01.mp3": [
+  "en",
+  0.989,
+  "You're good at your job, and you can already see the top of it."
+ ],
+ "tts/out/vD/02.mp3": [
+  "en",
+  0.99,
+  "This is a career in insurance sales. You're paid on what you write. There's no ceiling and there's no salary."
+ ],
+ "tts/out/vD/03.mp3": [
+  "en",
+  0.993,
+  "By year 4, the industry keeps 14 in 100. This branch keeps 31."
+ ],
+ "tts/out/vE/01.mp3": [
+  "en",
+  0.985,
+  "You're good at your job. And you can already see the top of it."
+ ],
+ "tts/out/vE/02.mp3": [
+  "en",
+  0.992,
+  "This is a career in insurance sales. You're paid on what you write. There's no ceiling, and there's no salary."
+ ],
+ "tts/out/vE/03.mp3": [
+  "en",
+  0.985,
+  "By year 4, the industry keeps 14 in 100. This branch keeps 31."
  ]
 }
