@@ -3,49 +3,23 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "avA": [
-   "You're an insurance advisor. You're good at it. And then the support stopped.",
-   "The industry even has a name for your second year. The cliff. It's when agents are left on their own, without the support they had in year one.",
-   "By year four, only fourteen out of every hundred are still standing. In this branch, it's thirty-one.",
-   "Here, nothing stops. Thirty-nine things, every single week of your career. Clients matched to you. A coach, not a clock. And nobody will ever know you asked.",
-   "There are seven places, and it all starts with one conversation. Twenty minutes, this week. Go to the link on your screen."
-  ],
-  "avB": [
-   "You want a career with no ceiling. And you're afraid of the first year. Honestly, both of those are fair.",
-   "This is a sales career. And the year that breaks people isn't the first one. It's the second, when the names run out.",
-   "Here, your own market comes first, and it's mapped before you're even contracted. When it runs thin, keeping your week full is our job. And your manager is a coach, not a clock.",
-   "By year four, the industry keeps fourteen out of every hundred. This branch keeps thirty-one.",
-   "There are seven places, and it all starts with one conversation. Twenty minutes, this week. Go to the link on your screen."
-  ],
-  "avC": [
-   "You're good at your job. And you can already see the top of it.",
-   "This is a career in insurance sales. You're paid on what you write. There's no ceiling, and there's no salary.",
-   "Most people have this backwards. It starts with a conversation, not a laptop. Paper, good questions, and the time to listen. You type it up afterwards, in your own time, on Guardian's own approved form.",
-   "Your client reads the draft and agrees with it. Then your manager signs it off and adds a comment. And then it never stops. A check-in every six months, and a full review in their birthday month, for life.",
-   "You start with the people who already know you. When that list runs thin, keeping your week full is our job. And your manager is a coach, not a clock.",
-   "Before you're contracted, a scientific profile is read, your market is mapped, and you're trained. So you'll know whether this fits before you give anything up.",
-   "By year four, the industry keeps fourteen out of every hundred. We keep thirty-one.",
-   "There are seven places, and it all starts with one conversation. Twenty minutes, this week. Go to the link on your screen."
-  ],
-  "avT": [
+  "avR": [
+   "Here, nothing stops. Thirty-nine things, every single week of your career. Clients are matched to you. A coach, not a clock. And nobody will ever know you asked.",
+   "Here, nothing stops. Thirty-nine things, every week of your career. Your clients are matched to you. A coach, not a clock. And nobody will ever know you asked.",
    "Let me ask you something. Are you good at what you do, but stuck where you are? Or do you want a career with no ceiling, but you're afraid of the first year?",
-   "The industry has measured this. The same advisor, in a different room, is a different advisor. So here's what this career gives you that a job can't. Your income is decided by your work, not by a salary band. Your week is shaped by you. And the work matters, because it's a family covered before the worst day comes.",
-   "And here's this room, in full. You're never stuck for an answer at the table. The fact find does the arithmetic, Branch Intelligence reads the file, and the branch team answers your query the same day. And you never start from zero. Clients are matched to you, household by household, and when your own list runs thin, the branch keeps your week full.",
-   "Your manager is a coach, not a clock. The system does the admin. He does the sitting with you. Your week, before Friday, in your morning e-mail and in person. Nobody here is left to figure it out alone.",
-   "Our new year began on the first of October, and its first class is being selected right now. There are seven places. Not because we can't take more, but because every one of them gets the full build. A call within forty-eight hours, the Branch Manager himself, an orientation, a profile, and a Discovery with the people already doing it. And there's one more seat, for a sales manager to build a unit here. Thirty-two years in Trinidad. One class. Seven places.",
-   "And the company behind it is sound. Guardian Life of the Caribbean is rated Excellent by A.M. Best, affirmed this May, with nearly forty billion dollars of assets in the group. The door's open now. Already contracted? Nobody will know you asked. New to this? You get the full build. Already leading a team? Come and build a unit here. It's one confidential conversation, twenty minutes, this week.",
+   "Let me ask you something. Are you good at what you do, but stuck where you are? Or are you wanting a career with no ceiling, and you're afraid of the first year?",
    "Go to the link on your screen, and book your confidential conversation. Or take the sixty-second test first, and start the selection.",
-   "The environment decides. We select the driven."
-  ],
-  "avW": [
-   "You already know how your office should run. Nobody's given you the tools.",
-   "We're a branch that writes its own software.",
+   "So go to the link on your screen, and book your confidential conversation. Or take the sixty-second test first, and start the selection.",
+   "The environment decides. We select the driven.",
+   "The environment decides, and we select the driven.",
+   "You already know how your office should run. And nobody has given you the tools.",
+   "You already know how your office should run. Nobody has ever given you the tools.",
    "Thirty-six files, about a hundred thousand lines, and every line of it written right here.",
+   "We've got thirty-six files and about a hundred thousand lines, and every line of it was written right here.",
    "You'd have the keys to all of it from your first month, with an AI assistant working right beside you.",
-   "Half your day is the branch's admin. The other half is making that admin unnecessary.",
-   "You don't need to arrive knowing how. Nobody here was hired as a developer.",
+   "From your first month, you'd have the keys to all of it, and an AI assistant working right beside you.",
    "We're looking for one person who just can't leave a bad process alone.",
-   "Point your camera at the code. It takes fifteen minutes, and the Branch Manager reads every one himself."
+   "We're looking for one person who can't leave a bad process alone."
   ]
  }
 }
