@@ -1651,5 +1651,75 @@
   "h": 1920,
   "capsize": 46,
   "capwrap": 30
+ },
+ "adGq": {
+  "durs": [
+   9.5,
+   8.0,
+   7.5,
+   7.4,
+   8.2,
+   6.6
+  ],
+  "dur": 47.2,
+  "vox": "voadG",
+  "start": 18,
+  "musicgain": 0.5,
+  "duck": 0.5,
+  "dark": [],
+  "ticks": [],
+  "hits": [
+   3.01,
+   15.51,
+   21.59,
+   39.1,
+   41.25
+  ],
+  "capmode": "over",
+  "cap": "cap-adGq",
+  "out": "../../agentmgt/ad-g-square.mp4",
+  "mix": "adGq-mix.wav",
+  "music": "bed-adGq.wav",
+  "sfx": "sfx-adGq.wav",
+  "ass": "captions-adGq.ass",
+  "w": 1080,
+  "h": 1080,
+  "capsize": 40,
+  "capwrap": 34
+ },
+ "adGv": {
+  "durs": [
+   9.5,
+   8.0,
+   7.5,
+   7.4,
+   8.2,
+   6.6
+  ],
+  "dur": 47.2,
+  "vox": "voadG",
+  "start": 18,
+  "musicgain": 0.5,
+  "duck": 0.5,
+  "dark": [],
+  "ticks": [],
+  "hits": [
+   3.01,
+   15.51,
+   21.59,
+   39.1,
+   41.25
+  ],
+  "capmode": "over",
+  "cap": "cap-adGv",
+  "out": "../../agentmgt/ad-g-story.mp4",
+  "mix": "adGv-mix.wav",
+  "music": "bed-adGv.wav",
+  "sfx": "sfx-adGv.wav",
+  "ass": "captions-adGv.ass",
+  "w": 1080,
+  "h": 1920,
+  "capsize": 46,
+  "capwrap": 30
  }
 }

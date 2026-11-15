@@ -47,8 +47,11 @@ AD_HITS = {'A': [(2, 'cliff'), (3, 'thirty'), (4, 'Thirty-nine'), (5, 'Seven')],
            'C': [(2, 'insurance'), (3, 'conversation'), (4, 'stops'), (6, 'contracted'), (7, 'thirty-one'), (8, 'Seven')],
            # F, 15 November 2026: the fact find film, followed with Rajiv. Punches on the total need, the
            # manager's sign-off, "protects", the thirty-five years and the seven places.
-           'F': [(2, 'arithmetic'), (3, 'calculate'), (6, 'signs'), (8, 'protects'), (9, 'thirty-five'), (10, 'Seven')]}
-for v in 'ABCF':
+           'F': [(2, 'arithmetic'), (3, 'calculate'), (6, 'signs'), (8, 'protects'), (9, 'thirty-five'), (10, 'Seven')],
+           # G, 15 November 2026: the feed post. Punches on "Not here", the tools, the leads, "thirty-one" and
+           # the seven places.
+           'G': [(1, 'Not'), (2, 'tools'), (3, 'dry'), (5, 'thirty-one'), (6, 'seven')]}
+for v in 'ABCFG':
     if os.path.exists(f'recruit-ad{v}-timing.json'):
         entries(f'ad{v}', f'recruit-ad{v}-timing.json', f'voad{v}', f'ad-{v.lower()}',
                 AD_HITS[v], [], shapes=('q', 'v'))

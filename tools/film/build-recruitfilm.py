@@ -1155,7 +1155,7 @@ if MODE == 'ad':
     # ("the agent meets with the client ... not typing in front of a client. That's never"), and the journey
     # that follows is another. The guard stays — a lines file out of step with this block is the fault it
     # catches — it just knows the third shape now. A and B are still five.
-    assert len(TLINES) in (5, 7, 8, 9, 10), len(TLINES)
+    assert len(TLINES) in (5, 6, 7, 8, 9, 10), len(TLINES)
     LEADS = [('Retiring properly', 'asked to be called · 9:12'), ('Cover for the children', 'asked to be called · 9:40'), ('Starting a business', 'asked to be called · 10:05')]
     # 12 Nov 2026, on LIMRA's own 2025 Annual Conference deck (session 16, public PDF): "The second year,
     # commonly referred to as the 'cliff' ... Agents are on their own, without much of the support provided
@@ -1569,6 +1569,139 @@ if MODE == 'ad':
     </div>
   </div>
 </div>""", 'data-ch="Who built it"'))
+    elif AD == 'G':
+        # 15 November 2026 — the feed post, asked for in these words: "I'm posting this on LinkedIn, on Facebook. So
+        # how does it say to apply? ... it must state insurance, sales, career, and target for a new person want to
+        # enter unlimited cap earning what appeals to them ... include what we do for the experience ... you can't
+        # just only focus on that. So it needs to be very compact, precise, what somebody's looking for, the
+        # environment ... much more motion, graphics, and things and charts". Six scenes, in the order a reader in a
+        # feed asks: what is it and what does it pay (1), is it for me (2), will I have work (3), what is it like (4),
+        # does it last (5), how do I apply (6). The income chart is an ILLUSTRATION of a capped salary against
+        # commission and says so on screen: no figure is put on anyone's pay. The leads line keeps the 14 Nov rule:
+        # their own market first, and the branch keeps it from running dry, never "the leads come to you".
+        T.append(tscene(1, 's-gcap nofade', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in now">A career in insurance sales</p>
+    <h1 class="h xl">{words("Is your income capped?", 300, cls='now')}<br><em class="wine">{words("Not here.", max(700, tat(1,"Not") - 250), 120)}</em></h1>
+    <p class="sub in" style="--t0:{tat(1,"insurance")}ms">What you earn is decided by <em>the work you do</em>.</p>
+    <div class="gxpills">
+      <span class="ypill in" style="--t0:{tat(1,"insurance") + 300}ms">Insurance sales</span>
+      <span class="gxpill in" style="--t0:{tat(1,"insurance") + 550}ms">Guardian Life of the Caribbean</span>
+      <span class="gxpill in" style="--t0:{tat(1,"insurance") + 800}ms">Chaguanas</span>
+    </div>
+  </div>
+  <div class="col">
+    <div class="gxchart in fl" style="--t0:400ms">
+      <div class="gxch-h"><b>What you can earn</b><span>over the years</span></div>
+      <svg viewBox="0 0 400 250" aria-hidden="true">
+        <defs><linearGradient id="gxa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00CFEA" stop-opacity=".38"/><stop offset="1" stop-color="#00CFEA" stop-opacity="0"/></linearGradient></defs>
+        <g class="gxgrid">{''.join(f'<line x1="30" y1="{y}" x2="390" y2="{y}"/>' for y in (40, 90, 140, 190))}</g>
+        <line class="gxcap" x1="30" y1="128" x2="390" y2="128" style="--t0:{max(300, tat(1,"deciding") - 200)}ms"/>
+        <path class="gxsal" pathLength="100" d="M30 214 L130 160 L170 132 L390 132" style="--t0:{max(400, tat(1,"deciding"))}ms"/>
+        <path class="gxarea" d="M30 222 C150 214 250 160 390 26 L390 230 L30 230Z" style="--t0:{tat(1,"Not") + 900}ms"/>
+        <path class="gxinc" pathLength="100" d="M30 222 C150 214 250 160 390 26" style="--t0:{tat(1,"Not")}ms"/>
+        <circle class="gxend" cx="390" cy="26" r="7" style="--t0:{tat(1,"Not") + 1500}ms"/>
+        <circle class="gxboom" cx="300" cy="128" r="10" style="--t0:{tat(1,"Not") + 950}ms"/>
+        <g class="gxax">{''.join(f'<text x="{30 + i*90}" y="246">Year {i + 1}</text>' for i in range(5))}</g>
+      </svg>
+      <span class="gxlab cap in" style="--t0:{max(400, tat(1,"deciding"))}ms">a salary, capped</span>
+      <span class="gxlab inc in" style="--t0:{tat(1,"Not") + 1400}ms">your income here · no cap</span>
+      <span class="gxill">An illustration, not a promise</span>
+    </div>
+  </div>
+</div>""", 'data-ch="No cap on what you earn"'))
+        STEPS = [('Orientation', 'chat'), ('Market survey', 'target'), ('POP7 profile', 'chart'), ('Training', 'spark')]
+        TOOLS = [('Digital fact find', 'doc'), ('Branch Intelligence', 'bolt'), ('Live production wall', 'chart'), ('Delivery and service, tracked', 'shield')]
+        _tr, _ct = tat(2, "trained"), tat(2, "contracted")
+        _step = max(260, (_ct - _tr) // len(STEPS))
+        T.append(tscene(2, 's-gtwo', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">Who it&rsquo;s for</p>
+  <h2 class="h l">{words("Two ways in.", 300, 120)}</h2>
+  <div class="gxtwo">
+    <div class="gxcard in fl" style="--t0:{max(300, tat(2,"New") - 200)}ms">
+      <div class="gxch"><i><svg class="ic"><use href="#i-spark"/></svg></i><span><b>New to sales?</b><small>Trained and coached before you&rsquo;re contracted</small></span></div>
+      <div class="gxrail" style="--t0:{_tr}ms;--d:{_step * len(STEPS)}ms">{''.join(f'<span style="--t0:{_tr + k*_step}ms"><i><svg class="ic"><use href="#i-{ic}"/></svg></i><em>{n}</em></span>' for k, (n, ic) in enumerate(STEPS))}</div>
+      <div class="gxstamp" style="--t0:{_ct + 200}ms">Then contracted</div>
+    </div>
+    <div class="gxcard in fl" style="--t0:{max(300, tat(2,"Already") - 200)}ms">
+      <div class="gxch"><i><svg class="ic"><use href="#i-users"/></svg></i><span><b>Already an advisor?</b><small>The tools you never had</small></span></div>
+      <div class="gxtools">{''.join(f'<span style="--t0:{tat(2,"tools") + k*220}ms"><i><svg class="ic"><use href="#i-{ic}"/></svg></i>{n}</span>' for k, (n, ic) in enumerate(TOOLS))}</div>
+    </div>
+  </div>
+</div>""", 'data-ch="New to sales, or already an advisor"'))
+        LEADS2 = [('users', 'Your own market', 'mapped and scored', tat(3, "market")), ('bolt', 'Asked to be called', 'people who want a call', tat(3, "leads")),
+                  ('home', 'A household matched to you', 'the file already read', tat(3, "dry") - 200), ('fwd', 'Referrals', 'from clients you served', tat(3, "dry") + 200)]
+        T.append(tscene(3, 's-glead', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Will you have people to see?</p>
+    <h2 class="h l">{words("Your leads", max(300, tat(3,"leads") - 300), 110)} <em class="wine">{words("never run dry.", tat(3,"never") - 150, 110)}</em></h2>
+    <p class="sub in" style="--t0:{tat(3,"market")}ms">Your own market comes first. Keeping your week full is our job.</p>
+    <div class="gxclock in" style="--t0:{tat(3,"coach") - 200}ms">
+      <svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="25"/><line class="h1" x1="30" y1="30" x2="30" y2="14"/><line class="h2" x1="30" y1="30" x2="41" y2="30"/><line class="x" pathLength="100" x1="8" y1="52" x2="52" y2="8" style="--t0:{tat(3,"clock")}ms"/></svg>
+      <span><b>A coach, not a clock</b><small>Your manager works your week with you</small></span>
+    </div>
+  </div>
+  <div class="col">
+    <div class="gxgauge in fl" style="--t0:{max(300, tat(3,"market") - 300)}ms">
+      <div class="gxring">
+        <svg viewBox="0 0 200 200" aria-hidden="true"><circle class="bg" cx="100" cy="100" r="82"/><circle class="fg" pathLength="100" cx="100" cy="100" r="82" style="--t0:{tat(3,"market")}ms;--d:{max(1200, tat(3,"dry") - tat(3,"market") + 600)}ms"/></svg>
+        <div class="gxrc"><b>Full</b><span>your week</span></div>
+      </div>
+      <div class="gxleads">{''.join(f'<div style="--t0:{t}ms"><svg class="ic"><use href="#i-{ic}"/></svg><b>{n}</b><span>{d}</span></div>' for ic, n, d, t in LEADS2)}</div>
+    </div>
+  </div>
+</div>""", 'data-ch="Your leads never run dry"'))
+        NEED2 = [('Income, replaced', 1200000), ('The mortgage', 650000), ('Education', 250000), ('Final expenses', 50000)]
+        FLOW = ['First meeting', 'Fact find', 'Client approves', 'Delivered', 'Reviewed every 6 months']
+        _ar, _pw, _rm, _cl = tat(4, "arithmetic"), tat(4, "paperwork"), tat(4, "reminders"), tat(4, "clients")
+        T.append(tscene(4, 's-gdig', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">All digital</p>
+  <h2 class="h l">{words("Done for you.", 300, 120)} <em class="wine">{words("Your time goes to clients.", _cl - 300, 90)}</em></h2>
+  <div class="gxtri">
+    <div class="gxt in fl" style="--t0:{_ar - 200}ms"><small>The arithmetic</small>
+      <div class="gxbars">{''.join(f'<div style="--t0:{_ar + k*160}ms"><span>{n}</span><i style="--w:{round(v/12000)}%"></i></div>' for k, (n, v) in enumerate(NEED2))}</div>
+      <b class="gxtot">TT$<em class="cnt" data-to="2150000" data-sep data-at="{_ar}">2,150,000</em></b>{SAMPLE}
+    </div>
+    <div class="gxt in fl" style="--t0:{_pw - 200}ms"><small>The paperwork</small>
+      <ul class="gxchk">{''.join(f'<li style="--t0:{_pw + k*240}ms"><i></i>{n}</li>' for k, n in enumerate(['Draft written', 'Client approves', 'Manager signs', 'On file']))}</ul>
+    </div>
+    <div class="gxt in fl" style="--t0:{_rm - 200}ms"><small>The reminders</small>
+      <div class="gxbell"><svg class="ic"><use href="#i-bolt"/></svg><em class="cnt" data-to="4" data-at="{_rm}">4</em></div>
+      <div class="gxdays">{''.join(f'<span style="--t0:{_rm + 300 + k*200}ms">{d} days</span>' for k, d in enumerate((45, 60, 75, 90)))}</div>
+    </div>
+  </div>
+  <div class="gxflow in" style="--t0:{_cl - 400}ms;--d:{max(1500, dur(4, ttiming, TLINES) - _cl)}ms"><i class="gxrid"></i>{''.join(f'<span style="--t0:{_cl - 300 + k*260}ms"><b></b>{n}</span>' for k, n in enumerate(FLOW))}</div>
+</div>""", 'data-ch="Done for you"'))
+        T.append(tscene(5, 's-hund', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">{words("Does it last?", 200, 120)}</p>
+  <h2 class="h l">{words("The industry keeps 14.", tat(5,"industry") - 200, 95)} <em class="wine">{words("This branch keeps 31.", tat(5,"Here") - 150, 95)}</em></h2>
+  {unit100(tat(5,"industry"), tat(5,"Here"), tat(5,"fourteen"), t_gap=tat(5,"Here") + 1300)}
+</div>""", 'data-ch="Fourteen against thirty-one"'))
+        _go = tat(6, "Go"); _ap = tat(6, "Applying"); _q = max(300, _go - 1500)
+        T.append(tscene(6, 's-cta s-gcta', f"""
+<div class="split cta">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">How to apply</p>
+    <h2 class="h l"><span class="cnt" data-to="7" data-at="{tat(6,"seven")}">7</span> {words("places this year.", tat(6,"seven"), 110)}</h2>
+    <ol class="gxsteps">
+      <li class="in" style="--t0:{_go}ms"><b>1</b><span>Scan the code, or tap the link</span></li>
+      <li class="in" style="--t0:{_ap}ms"><b>2</b><span>Apply in <em>2 minutes</em></span></li>
+      <li class="in" style="--t0:{_ap + 700}ms"><b>3</b><span>We reply within <em>48 hours</em></span></li>
+    </ol>
+    <h2 class="h url">{words("rickyrampersadbranch.com", _q - 200, 55)}<br><em class="wine">{words("/careers", _q + 240, 55)}</em></h2>
+    <div class="btns"><span class="btn b1 in" style="--t0:{_q + 500}ms">Apply now →</span><span class="gxor in" style="--t0:{_q + 800}ms">or book a confidential conversation</span></div>
+  </div>
+  <div class="col">
+    <div class="mark top in" style="--t0:200ms">{MARK}</div>
+    <div class="qr in" style="--t0:{_q}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to apply</span></div>
+    <p class="foot in" style="--t0:{_q + 400}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas</p>
+  </div>
+</div>""", 'data-ch="How to apply"'))
     elif AD == 'A':
         T.append(tscene(1, 's-hook nofade', f"""
 <div class="full center">
@@ -1687,7 +1820,7 @@ if MODE == 'ad':
     # and on one line it ran under the QR card with "/careers" hidden behind it. Caught by looking at the
     # rendered frame: the page reported no overflow, because the column simply overlapped the one beside it.
     CTA = len(TLINES)   # 5 for the A and B feed cuts, 7 for the branch's own first post
-    T.append(tscene(CTA, 's-cta', f"""
+    _cta = None if AD == 'G' else (tscene(CTA, 's-cta', f"""
 <div class="split cta">
   <div class="col">
     <p class="eye in" style="--t0:200ms">FY27 &middot; the first class</p>
@@ -1708,6 +1841,7 @@ if MODE == 'ad':
     <div class="qr in" style="--t0:{max(300, tat(CTA,"Go") - 2400)}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
   </div>
 </div>""", 'data-ch="Seven places. Book the conversation"'))
+    if _cta: T.append(_cta)
 
 HTML = r'''<!DOCTYPE html>
 <html lang="en">
@@ -3533,6 +3667,151 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .ffin{font-size:calc(var(--u)*1.75);padding:.5em .8em}.ffout{padding:.55em .85em}
   .ffout b,.ffout em{font-size:calc(var(--u)*1.95)}.ffout span{font-size:calc(var(--u)*1.5)}
   .s-ffblitz .h.l{font-size:calc(var(--u)*5.2)}
+}
+
+/* ── the feed post (ad G), 15 November 2026 ── */
+.gxpills{display:flex;flex-wrap:wrap;gap:calc(var(--u)*1.2)}
+.gxpill{display:inline-flex;align-items:center;font:600 calc(var(--u)*2.1)/1 var(--text);color:var(--ink);padding:.7em 1.1em;border-radius:99px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16)}
+.gxchart{position:relative;background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2.2);padding:calc(var(--u)*2.6) calc(var(--u)*2.6) calc(var(--u)*4.2);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,14,26,.5)}
+.gxch-h{display:flex;justify-content:space-between;align-items:baseline;gap:1em;margin-bottom:calc(var(--u)*1)}
+.gxch-h b{font:700 calc(var(--u)*2.5)/1.1 var(--text)}.gxch-h span{font:500 calc(var(--u)*1.9)/1 var(--text);color:var(--mute)}
+.gxchart svg{display:block;width:100%;height:auto;overflow:visible}
+.gxgrid line{stroke:rgba(255,255,255,.08);stroke-width:1}
+.gxax text{fill:#8fa3b8;font:500 11px var(--text);text-anchor:middle}
+.gxcap{stroke:#C97A3A;stroke-width:2;stroke-dasharray:6 6;opacity:0}
+.scene.act .gxcap{animation:fade .6s ease both;animation-delay:var(--t0)}
+.gxsal{fill:none;stroke:#9aa8b8;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100;stroke-dashoffset:100}
+.gxinc{fill:none;stroke:#00CFEA;stroke-width:3.5;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;filter:drop-shadow(0 0 6px rgba(0,207,234,.6))}
+.scene.act .gxsal{animation:draw 1.4s var(--out) both;animation-delay:var(--t0)}
+.scene.act .gxinc{animation:draw 1.6s var(--ease) both;animation-delay:var(--t0)}
+.gxarea{fill:url(#gxa);opacity:0}
+.scene.act .gxarea{animation:fade 1s ease both;animation-delay:var(--t0)}
+.gxend{fill:#00CFEA;opacity:0;transform-box:fill-box;transform-origin:center}
+.scene.act .gxend{animation:pop .5s var(--pop) both,gxpulse 1.6s ease-in-out infinite;animation-delay:var(--t0),calc(var(--t0) + .5s)}
+@keyframes gxpulse{50%{transform:scale(1.5);opacity:.6}}
+.gxboom{fill:none;stroke:#fff;stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center}
+.scene.act .gxboom{animation:gxboom 1s var(--out) both;animation-delay:var(--t0)}
+@keyframes gxboom{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(4)}}
+.gxlab{position:absolute;font:700 calc(var(--u)*1.9)/1.1 var(--text);padding:.45em .8em;border-radius:99px;white-space:nowrap}
+.gxlab.cap{left:40%;top:38%;color:#f3d9c4;background:rgba(201,122,58,.22);border:1px solid rgba(201,122,58,.55)}
+.gxlab.inc{right:4%;top:20%;color:#08202f;background:#00CFEA}
+.gxill{position:absolute;left:calc(var(--u)*2.6);bottom:calc(var(--u)*1.4);font:500 calc(var(--u)*1.55)/1 var(--text);color:#8fa3b8;letter-spacing:.04em}
+.gxtwo{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*3);width:min(100%,calc(var(--u)*120));margin-top:calc(var(--u)*1.6);text-align:left}
+.gxcard{position:relative;background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2.2);padding:calc(var(--u)*2.8);display:grid;gap:calc(var(--u)*2.2);align-content:start}
+.gxch{display:grid;grid-template-columns:auto 1fr;gap:calc(var(--u)*1.6);align-items:center}
+.gxch>i{display:grid;place-items:center;width:calc(var(--u)*6.4);height:calc(var(--u)*6.4);border-radius:calc(var(--u)*1.6);background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;font-size:calc(var(--u)*3.2)}
+.gxch b{display:block;font:800 calc(var(--u)*3.3)/1.1 var(--display);color:#fff}
+.gxch small{display:block;margin-top:.3em;font:500 calc(var(--u)*2)/1.3 var(--text);color:var(--mute)}
+.gxrail{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*1)}
+.gxrail::before{content:'';position:absolute;left:12%;right:12%;top:calc(var(--u)*3);height:3px;background:rgba(255,255,255,.12)}
+.gxrail::after{content:'';position:absolute;left:12%;right:12%;top:calc(var(--u)*3);height:3px;background:linear-gradient(90deg,var(--aL),var(--a));transform:scaleX(0);transform-origin:left}
+.scene.act .gxrail::after{animation:growx var(--d) linear both;animation-delay:var(--t0)}
+.gxrail span{position:relative;z-index:1;display:grid;justify-items:center;gap:calc(var(--u)*.9);text-align:center}
+.gxrail i{display:grid;place-items:center;width:calc(var(--u)*6);height:calc(var(--u)*6);border-radius:50%;background:#14314f;border:2px solid rgba(255,255,255,.18);color:#8fa3b8;font-size:calc(var(--u)*2.6)}
+.scene.act .gxrail i{animation:gxlit .5s var(--pop) both;animation-delay:var(--t0)}
+@keyframes gxlit{to{background:var(--a);border-color:var(--aL);color:#fff;transform:scale(1.08)}}
+.gxrail em{font:600 calc(var(--u)*1.75)/1.2 var(--text);font-style:normal;color:var(--ink)}
+.gxstamp{justify-self:start;font:800 calc(var(--u)*2.2)/1 var(--text);letter-spacing:.08em;text-transform:uppercase;color:#08202f;background:var(--aL);padding:.55em 1em;border-radius:calc(var(--u)*1);opacity:0}
+.scene.act .gxstamp{animation:stamp .6s var(--pop) both;animation-delay:var(--t0)}
+.gxtools{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*1.2)}
+.gxtools span{display:grid;grid-template-columns:auto 1fr;gap:.6em;align-items:center;font:600 calc(var(--u)*2)/1.2 var(--text);color:var(--ink);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:calc(var(--u)*1.2);padding:.75em .9em;opacity:0;transform:scale(.7)}
+.gxtools i{color:var(--aL);font-size:1.3em;display:grid}
+.scene.act .gxtools span{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.gxclock{display:grid;grid-template-columns:auto 1fr;gap:calc(var(--u)*1.6);align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:calc(var(--u)*1.6);padding:calc(var(--u)*1.4) calc(var(--u)*2)}
+.gxclock svg{width:calc(var(--u)*7);height:calc(var(--u)*7);overflow:visible}
+.gxclock circle{fill:none;stroke:#9aa8b8;stroke-width:3}
+.gxclock .h1,.gxclock .h2{stroke:#9aa8b8;stroke-width:3;stroke-linecap:round;transform-origin:30px 30px}
+.scene.act .gxclock .h1{animation:spin 3s linear infinite}
+.scene.act .gxclock .h2{animation:spin 12s linear infinite}
+.gxclock .x{stroke:#e8735a;stroke-width:4;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
+.scene.act .gxclock .x{animation:draw .5s var(--out) both;animation-delay:var(--t0)}
+.gxclock b{display:block;font:700 calc(var(--u)*2.5)/1.2 var(--text)}.gxclock small{display:block;font:500 calc(var(--u)*1.9)/1.3 var(--text);color:var(--mute)}
+.gxgauge{position:relative;display:grid;grid-template-columns:auto 1fr;gap:calc(var(--u)*2.6);align-items:center;background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2.2);padding:calc(var(--u)*2.8) calc(var(--u)*2.8) calc(var(--u)*4)}
+.gxring{position:relative;width:calc(var(--u)*24);height:calc(var(--u)*24);display:grid;place-items:center}
+.gxring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.gxring .bg{fill:none;stroke:rgba(255,255,255,.1);stroke-width:14}
+.gxring .fg{fill:none;stroke:#00CFEA;stroke-width:14;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;filter:drop-shadow(0 0 8px rgba(0,207,234,.5))}
+.scene.act .gxring .fg{animation:gxfill var(--d) var(--ease) both;animation-delay:var(--t0)}
+@keyframes gxfill{to{stroke-dashoffset:2}}
+.gxrc{text-align:center}.gxrc b{display:block;font:800 calc(var(--u)*5)/1 var(--display);color:#fff}.gxrc span{font:500 calc(var(--u)*1.9)/1 var(--text);color:var(--mute)}
+.gxleads{display:grid;gap:calc(var(--u)*1.1)}
+.gxleads div{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:.7em;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:calc(var(--u)*1.2);padding:.7em .9em;opacity:0}
+.gxleads .ic{grid-row:1/3;color:var(--aL);font-size:calc(var(--u)*3)}
+.gxleads b{font:700 calc(var(--u)*2.1)/1.2 var(--text)}.gxleads span{font:500 calc(var(--u)*1.75)/1.2 var(--text);color:var(--mute)}
+.scene.act .gxleads div{animation:fly .7s var(--out) both;animation-delay:var(--t0)}
+.gxgauge .sample,.gxt .sample{position:absolute;right:calc(var(--u)*2);bottom:calc(var(--u)*1.2);font:500 calc(var(--u)*1.5)/1 var(--text);color:#8fa3b8}
+.gxtri{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.4);width:min(100%,calc(var(--u)*128));margin-top:calc(var(--u)*1.4);text-align:left}
+.gxt{position:relative;background:#fff;color:#0d3f5e;border-radius:calc(var(--u)*2);padding:calc(var(--u)*2.4) calc(var(--u)*2.4) calc(var(--u)*3.6);display:grid;gap:calc(var(--u)*1.2);align-content:start;box-shadow:0 calc(var(--u)*2.4) calc(var(--u)*6) rgba(4,14,26,.5)}
+.gxt>small{font:700 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:#00728d}
+.gxbars{display:grid;gap:calc(var(--u)*.8)}
+.gxbars div{display:grid;gap:.25em;opacity:0}
+.scene.act .gxbars div{animation:fade .4s ease both;animation-delay:var(--t0)}
+.gxbars span{font:600 calc(var(--u)*1.65)/1.1 var(--text);color:#2b3b47}
+.gxbars i{display:block;height:calc(var(--u)*1.2);width:var(--w);border-radius:99px;background:linear-gradient(90deg,#0e93b0,#00728d);transform:scaleX(0);transform-origin:left}
+.scene.act .gxbars i{animation:growx .8s var(--out) both;animation-delay:calc(var(--t0) + 120ms)}
+.gxtot{font:800 calc(var(--u)*3)/1 var(--display);color:#0a3350;font-variant-numeric:tabular-nums}.gxtot em{font-style:normal}
+.gxchk{list-style:none;display:grid;gap:calc(var(--u)*1.1)}
+.gxchk li{display:grid;grid-template-columns:auto 1fr;gap:.6em;align-items:center;font:600 calc(var(--u)*2)/1.2 var(--text);color:#2b3b47}
+.gxchk i{width:calc(var(--u)*3.2);height:calc(var(--u)*3.2);border-radius:50%;border:2px solid #b9c4cc;position:relative}
+.gxchk i::after{content:'';position:absolute;left:30%;top:16%;width:30%;height:50%;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg) scale(0)}
+.scene.act .gxchk i{animation:gxck .4s var(--pop) both;animation-delay:var(--t0)}
+.scene.act .gxchk i::after{animation:gxtick .35s var(--pop) both;animation-delay:calc(var(--t0) + 120ms)}
+@keyframes gxck{to{background:#1E7A4F;border-color:#1E7A4F}}
+@keyframes gxtick{to{transform:rotate(45deg) scale(1)}}
+.gxbell{display:flex;align-items:center;gap:calc(var(--u)*1.4);font-size:calc(var(--u)*6);color:#00728d}
+.scene.act .gxbell .ic{animation:sweep 1.2s ease-in-out infinite;animation-delay:calc(var(--t0,0ms) + 1s)}
+.gxbell em{font:800 calc(var(--u)*5)/1 var(--display);font-style:normal;color:#0a3350}
+.gxdays{display:flex;flex-wrap:wrap;gap:calc(var(--u)*.8)}
+.gxdays span{font:700 calc(var(--u)*1.75)/1 var(--text);color:#fff;background:#00728d;padding:.5em .75em;border-radius:99px;opacity:0;transform:scale(.6)}
+.scene.act .gxdays span{animation:pop .45s var(--pop) both;animation-delay:var(--t0)}
+.gxflow{position:relative;display:grid;grid-template-columns:repeat(5,1fr);width:min(100%,calc(var(--u)*128));margin-top:calc(var(--u)*2.4)}
+.gxflow::before{content:'';position:absolute;left:10%;right:10%;top:calc(var(--u)*1.1);height:2px;background:rgba(255,255,255,.18)}
+.gxflow span{position:relative;display:grid;justify-items:center;gap:calc(var(--u)*.9);font:600 calc(var(--u)*1.8)/1.2 var(--text);color:var(--mute);text-align:center;opacity:0}
+.scene.act .gxflow span{animation:up .6s var(--out) both;animation-delay:var(--t0)}
+.gxflow span b{width:calc(var(--u)*2.2);height:calc(var(--u)*2.2);border-radius:50%;background:var(--aL);box-shadow:0 0 0 calc(var(--u)*.6) rgba(0,207,234,.18)}
+.gxrid{position:absolute;top:calc(var(--u)*.4);left:10%;width:calc(var(--u)*1.6);height:calc(var(--u)*1.6);border-radius:50%;background:#fff;box-shadow:0 0 calc(var(--u)*2) #00CFEA;z-index:2;opacity:0}
+.scene.act .gxrid{animation:gxride var(--d) linear both;animation-delay:var(--t0)}
+@keyframes gxride{0%{opacity:0;left:10%}8%{opacity:1}92%{opacity:1}100%{opacity:1;left:89%}}
+.gxsteps{list-style:none;display:grid;gap:calc(var(--u)*1.2)}
+.gxsteps li{display:grid;grid-template-columns:auto 1fr;gap:calc(var(--u)*1.4);align-items:center;font:600 calc(var(--u)*2.6)/1.2 var(--text);color:var(--ink)}
+.gxsteps b{display:grid;place-items:center;width:calc(var(--u)*5);height:calc(var(--u)*5);border-radius:50%;background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;font:800 calc(var(--u)*2.4)/1 var(--display)}
+.gxsteps em{font-style:normal;color:var(--aL)}
+.gxor{display:block;margin-top:calc(var(--u)*1);font:500 calc(var(--u)*2)/1.3 var(--text);color:var(--mute)}
+.s-gcta .btns{display:grid;justify-items:start}
+.s-gcta .foot{text-align:center;font-size:calc(var(--u)*1.8)}
+@media (orientation:portrait){
+  .gxtwo,.gxtri{grid-template-columns:1fr;width:100%;gap:calc(var(--u)*2.4)}
+  .gxchart,.gxgauge{width:100%}
+  .gxpill{font-size:calc(var(--u)*2.6)}
+  .gxch b{font-size:calc(var(--u)*4)}.gxch small{font-size:calc(var(--u)*2.5)}
+  .gxrail em,.gxtools span{font-size:calc(var(--u)*2.3)}
+  .gxleads b{font-size:calc(var(--u)*2.6)}.gxleads span{font-size:calc(var(--u)*2.2)}
+  .gxflow span{font-size:calc(var(--u)*2.2)}
+  .gxsteps li{font-size:calc(var(--u)*3.4)}
+  .s-gcap .h.xl{font-size:calc(var(--u)*10.6)}
+  .s-gcap .split{gap:calc(var(--u)*3.6)}
+  .s-gcap .gxchart svg{max-height:calc(var(--u)*40)}
+  .s-gtwo .gxstamp,.gxstamp{margin-top:calc(var(--u)*.6)}
+  .gxtri .gxt{grid-template-columns:1fr}
+  .gxlab{font-size:calc(var(--u)*2.4)}
+}
+@media (aspect-ratio:1/1){
+  .gxtwo,.gxtri{grid-template-columns:repeat(2,1fr);gap:calc(var(--u)*1.8)}
+  .gxtri{grid-template-columns:repeat(3,1fr)}
+  .gxtri .gxt{grid-template-columns:1fr}
+  .gxtri .gxt>small{grid-column:auto}
+  .gxch b{font-size:calc(var(--u)*3)}.gxch small{font-size:calc(var(--u)*1.9)}
+  .gxrail em,.gxtools span{font-size:calc(var(--u)*1.8)}
+  .gxpill{font-size:calc(var(--u)*2)}
+  .gxlab{font-size:calc(var(--u)*1.8)}
+  .gxsteps li{font-size:calc(var(--u)*2.5)}
+  .gxring{width:calc(var(--u)*20);height:calc(var(--u)*20)}
+  .s-gcap .split{grid-template-columns:1.02fr .98fr;gap:calc(var(--u)*3)}
+  .s-gcap .h.xl{font-size:calc(var(--u)*8.4)}
+  .s-gcap .sub{font-size:calc(var(--u)*2.7)}
+  .s-gcap .gxpill,.s-gcap .ypill{font-size:calc(var(--u)*1.85)}
+  .s-gtwo .gxtwo{zoom:1.2;width:calc(var(--u)*84)}
+  .s-gtwo .h.l{font-size:calc(var(--u)*8.6)}
 }
 </style>
 </head>
