@@ -3,12 +3,51 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "fixCT": [
-   "You start with the people who know you. When that list runs thin, keeping your week full is our job, and your manager is a coach, not a clock.",
-   "Everyone starts with the people they know. When that list runs thin, keeping your week full is our job. And your manager is a coach, not a clock.",
-   "And here is this room, in full. You are never stuck for an answer at the table: the fact find does the arithmetic, Branch Intelligence reads the file, and the branch team answers your query the same day. And you never start from zero. Clients matched to you, household by household, and when your own list runs thin, the branch keeps your week full.",
-   "And here is this room, in full. You are never stuck for an answer at the table: the fact find does the arithmetic, Branch Intelligence reads the file, and the branch team answers your query the same day. And you never start from zero. Clients are matched to you, household by household, and when your own list runs thin, the branch keeps your week full.",
+  "vA": [
+   "You're good at your job. And you can already see the top of it.",
+   "This is a career in insurance sales. You're paid on what you write. There's no ceiling, and there's no salary.",
+   "By year four, the industry keeps fourteen in a hundred. This branch keeps thirty-one."
+  ],
+  "vB": [
+   "You're good at your job. And you can already see the top of it.",
+   "This is a career in insurance sales. You're paid on what you write. There's no ceiling, and there's no salary.",
+   "By year four, the industry keeps fourteen in a hundred. This branch keeps thirty-one."
+  ],
+  "vC": [
+   "You're good at your job. And you can already see the top of it.",
+   "This is a career in insurance sales. You're paid on what you write. There's no ceiling, and there's no salary.",
+   "By year four, the industry keeps fourteen in a hundred. This branch keeps thirty-one."
+  ],
+  "vD": [
+   "You're good at your job. And you can already see the top of it.",
+   "This is a career in insurance sales. You're paid on what you write. There's no ceiling, and there's no salary.",
+   "By year four, the industry keeps fourteen in a hundred. This branch keeps thirty-one."
+  ],
+  "vE": [
+   "You're good at your job. And you can already see the top of it.",
+   "This is a career in insurance sales. You're paid on what you write. There's no ceiling, and there's no salary.",
    "By year four, the industry keeps fourteen in a hundred. This branch keeps thirty-one."
   ]
+ },
+ "voices": {
+  "vA": "en-US-AndrewMultilingualNeural",
+  "vB": "en-US-AndrewMultilingualNeural",
+  "vC": "en-US-AndrewNeural",
+  "vD": "en-US-BrianMultilingualNeural",
+  "vE": "en-US-ChristopherNeural"
+ },
+ "rates": {
+  "vA": "+0%",
+  "vB": "-8%",
+  "vC": "-4%",
+  "vD": "-4%",
+  "vE": "-6%"
+ },
+ "pitches": {
+  "vA": "+0Hz",
+  "vB": "-2Hz",
+  "vC": "+0Hz",
+  "vD": "+0Hz",
+  "vE": "+0Hz"
  }
 }
