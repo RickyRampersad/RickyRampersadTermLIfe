@@ -23,7 +23,13 @@
    "visual": "bwstack",
    "eyebrow": "What this branch built",
    "headline": "Thirty-six files. / <em>A hundred thousand lines</em>",
-   "say": "So we wrote our own software. Thirty-six files, about a hundred thousand lines. And nobody here was hired as a developer."
+   "say": "So we wrote our own software. Thirty-six files, about a hundred thousand lines. And nobody here was hired as a developer.",
+   "n1": [
+    "Thirty-six",
+    36,
+    "",
+    "files, in production"
+   ]
   },
   {
    "visual": "bwgrid",
@@ -47,7 +53,7 @@
    "visual": "bwbill",
    "eyebrow": "Three &middot; Group billing",
    "headline": "Line by line, / <em>before anybody pays</em>",
-   "say": "Group billing. An insurer's invoice is checked line by line against our own records, before anybody pays it."
+   "say": "Group billing. Every invoice from the insurer is checked line by line against our own records, before anybody pays it."
   },
   {
    "visual": "bwhalf",
@@ -65,7 +71,33 @@
    "visual": "bwkeys",
    "eyebrow": "The tools",
    "headline": "You get the keys. / <em>Not a request form</em>",
-   "say": "You'd be building with Google's own tools and Salesforce, with an AI assistant right beside you. It's all paid for, and it's already connected. You get the keys, not a request form."
+   "say": "You'd be building with Google's own tools and Salesforce, with an AI assistant right beside you. It's all paid for, and it's already connected. You get the keys, not a request form.",
+   "tools": [
+    [
+     "building",
+     "bolt",
+     "Apps Script",
+     "the branch&rsquo;s own 100,000 lines"
+    ],
+    [
+     "Google's",
+     "mail",
+     "Google Workspace",
+     "Sheets, Drive, the mailbox"
+    ],
+    [
+     "Salesforce",
+     "sync",
+     "Salesforce",
+     "every client, every task"
+    ],
+    [
+     "assistant",
+     "target",
+     "Claude",
+     "beside you, on the real work"
+    ]
+   ]
   },
   {
    "visual": "bwclose",

@@ -1547,15 +1547,15 @@ if MODE == 'ad':
       <div class="fig in" style="--t0:{tat(CTA,"One")}ms"><b><em class="cnt" data-to="1" data-at="{tat(CTA,"One")}">1</em></b><span>conversation</span></div>
       <div class="fig in" style="--t0:{tat(CTA,"twenty")}ms"><b><em class="cnt" data-to="20" data-at="{tat(CTA,"twenty")}">20</em> min</b><span>this week</span></div>
     </div>
-    <h2 class="h url">{words("rickyrampersadbranch.com", tat(CTA,"link") - 200, 55)}<br><em class="wine">{words("/careers", tat(CTA,"link") + 240, 55)}</em></h2>
+    <h2 class="h url">{words("rickyrampersadbranch.com", max(300, tat(CTA,"Go") - 2400) - 200, 55)}<br><em class="wine">{words("/careers", max(300, tat(CTA,"Go") - 2400) + 240, 55)}</em></h2>
     <div class="btns">
-      <span class="btn b1 in" style="--t0:{tat(CTA,"link") + 500}ms">Book a confidential conversation →</span>
+      <span class="btn b1 in" style="--t0:{max(300, tat(CTA,"Go") - 2400) + 500}ms">Book a confidential conversation →</span>
     </div>
     <p class="foot in" style="--t0:{tat(CTA,"screen")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas</p>
   </div>
   <div class="col">
     <div class="mark top in" style="--t0:200ms">{MARK}</div>
-    <div class="qr in" style="--t0:{tat(CTA,"link")}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
+    <div class="qr in" style="--t0:{max(300, tat(CTA,"Go") - 2400)}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
   </div>
 </div>""", 'data-ch="Seven places. Book the conversation"'))
 
