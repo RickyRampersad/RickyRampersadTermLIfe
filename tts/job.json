@@ -3,9 +3,17 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "bwH2": [
-   "And the next big thing is our new WhatsApp line, Help eight six eight. It works with Claude, and with Salesforce, and it needs one person to make it brilliant.",
-   "And the next big thing is our new WhatsApp line, Help eight six eight. Claude is behind it, Salesforce is behind it, and it needs one person to make it brilliant."
+  "adG": [
+   "Is your income capped by somebody else? Here, it isn't. This is a career in insurance sales, and what you earn is decided by the work you do.",
+   "New to sales? You're trained and coached before you're contracted. Already an advisor? You get the tools you never had.",
+   "Your own market comes first, and we make sure your leads never run dry. You get a coach, not a clock.",
+   "Our digital tools do the arithmetic, the paperwork and the reminders, so your time goes to your clients.",
+   "Across the industry, fourteen out of every hundred advisors are still there at year four. Here, it's thirty-one.",
+   "There are seven places this year. Go to the link on your screen. Applying takes two minutes."
+  ],
+  "adGalt": [
+   "Is your pay capped by somebody else? Here, it isn't. This is a career in insurance sales, and what you earn is decided by the work you do.",
+   "Across the industry, fourteen out of every hundred advisors are still there at year four. In this branch, the number is thirty-one."
   ]
  }
 }
