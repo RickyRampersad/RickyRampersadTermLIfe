@@ -2621,7 +2621,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
          needs no Apps Script paste; it goes on `page` too, for the sheet's own
          column. Clamped to a short slug: it is a URL parameter that ends up
          printed in an e-mail. */
-      var SRCW={'ad-b-fb':'Ad B, the second-year cliff — Facebook','ad-b-ig':'Ad B — Instagram Story','ad-b-wa':'Ad B — WhatsApp','ad-a-li':'Ad A, the contracted advisor — LinkedIn','ad-a-wa':'Ad A — WhatsApp, the agents’ groups','ad-a-fb':'Ad A — Facebook','ad-c-fb':'Ad C, the branch’s own post — Facebook','ad-c-li':'Ad C — LinkedIn','ad-c-wa':'Ad C — WhatsApp','ad-c-ig':'Ad C — Instagram Story','film':'The recruiting film','careersvideo':'The film page','qr':'A QR scan','post':'A branch-page post'};
+      var SRCW={'ad-b-fb':'Ad B, the second-year cliff — Facebook','ad-b-ig':'Ad B — Instagram Story','ad-b-wa':'Ad B — WhatsApp','ad-a-li':'Ad A, the contracted advisor — LinkedIn','ad-a-wa':'Ad A — WhatsApp, the agents’ groups','ad-a-fb':'Ad A — Facebook','ad-c-fb':'Ad C, the branch’s own post — Facebook','ad-c-li':'Ad C — LinkedIn','ad-c-wa':'Ad C — WhatsApp','ad-c-ig':'Ad C — Instagram Story','ad-g-li':'Ad G, the feed post — LinkedIn','ad-g-fb':'Ad G, the feed post — Facebook','ad-g-ig':'Ad G — Instagram Story','ad-g-wa':'Ad G — WhatsApp','film':'The recruiting film','careersvideo':'The film page','qr':'A QR scan','post':'A branch-page post'};
       var from=String((new URLSearchParams(location.search)).get('from')||'').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,24);
       var src=SRCW[from]||(from?'Tagged “'+from+'”':'Direct, or a QR scan');
       var body={action:'q.quote',form:'careers',code:'QT',line:'Careers',title:'Confidential conversation',
