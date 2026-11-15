@@ -1,82 +1,57 @@
 {
- "tts/out/avR/01.mp3": [
-  "en",
-  0.998,
-  "Here, nothing stops. 39 things, every single week of your career. Clients are matched to you. A coach, not a clock. And nobody will ever know you asked."
- ],
- "tts/out/avR/02.mp3": [
-  "en",
-  0.998,
-  "Here, nothing stops. 39 things. Every week of your career. Your clients are matched to you. A coach, not a clock. And nobody will ever know you asked."
- ],
- "tts/out/avR/03.mp3": [
-  "en",
-  0.996,
-  "Let me ask you something. Are you good at what you do, but stuck where you are? Where do you want a career with no ceiling? But you're afraid of the first year?"
- ],
- "tts/out/avR/04.mp3": [
-  "en",
-  0.996,
-  "Let me ask you something. Are you good at what you do, but stuck where you are, or are you wanting a career with no ceiling? And you're afraid of the first year?"
- ],
- "tts/out/avR/05.mp3": [
+ "tts/out/avBW/01.mp3": [
   "en",
   0.999,
-  "Go to the link on your screen and book your confidential conversation, or we'll take this 60-second test first and start the selection."
+  "Somewhere right now, there's an administrator who can see exactly what should be fixed."
  ],
- "tts/out/avR/06.mp3": [
-  "en",
-  0.999,
-  "So go to the link on your screen and book your confidential conversation or take the 62nd test first and start the selection."
- ],
- "tts/out/avR/07.mp3": [
-  "en",
-  0.979,
-  "The environment decides. We select the driven."
- ],
- "tts/out/avR/08.mp3": [
-  "en",
-  0.961,
-  "The environment decides and we select the driven."
- ],
- "tts/out/avR/09.mp3": [
-  "en",
-  0.998,
-  "You already know how your office should run, and nobody has given you the tools."
- ],
- "tts/out/avR/10.mp3": [
-  "en",
-  0.998,
-  "You already know how your office should run. Nobody has ever given you the tools."
- ],
- "tts/out/avR/11.mp3": [
-  "en",
-  0.993,
-  "36 files, about 100,000 lines, and every line of it written right here."
- ],
- "tts/out/avR/12.mp3": [
-  "en",
-  0.997,
-  "We got 36 files and about 100,000 lines and every line of it was written right here."
- ],
- "tts/out/avR/13.mp3": [
-  "en",
-  0.998,
-  "You'd have the keys to all of it from your first month with an AI assistant working right beside you."
- ],
- "tts/out/avR/14.mp3": [
-  "en",
-  0.997,
-  "From the first month, you'd have the keys to all of it and an AI assistant working right beside you."
- ],
- "tts/out/avR/15.mp3": [
+ "tts/out/avBW/02.mp3": [
   "en",
   0.996,
-  "We're looking for one person who just can't leave a bad process alone."
+  "You've got a spreadsheet, a WhatsApp group, and no permission."
  ],
- "tts/out/avR/16.mp3": [
+ "tts/out/avBW/03.mp3": [
+  "en",
+  0.996,
+  "We're a guardian life branch in Chibuanas. We got tired of waiting too."
+ ],
+ "tts/out/avBW/04.mp3": [
+  "en",
+  0.997,
+  "So, we wrote our own software, 36 files, about 100,000 lines, and nobody here was hired as a developer."
+ ],
+ "tts/out/avBW/05.mp3": [
+  "en",
+  0.997,
+  "Here's what you'd actually work on."
+ ],
+ "tts/out/avBW/06.mp3": [
+  "en",
+  0.999,
+  "The log book, every document that leaves this branch is logged, routed, and signed for on a phone."
+ ],
+ "tts/out/avBW/07.mp3": [
+  "en",
+  0.997,
+  "The premium do desk before a policy lapses, the client gets a letter and a person checks every single one."
+ ],
+ "tts/out/avBW/08.mp3": [
+  "en",
+  0.989,
+  "group billing and ensures invoice is checked line by line against our own records before anybody pays it"
+ ],
+ "tts/out/avBW/09.mp3": [
+  "en",
+  0.996,
+  "Half your day is that work. The other half is making it smaller."
+ ],
+ "tts/out/avBW/10.mp3": [
+  "en",
+  0.997,
+  "You take a job you do by hand and you turn it into a script that does it for you."
+ ],
+ "tts/out/avBW/11.mp3": [
   "en",
   0.998,
-  "We're looking for one person who can't leave a bad process alone."
+  "You'll be building with Google's own tools and sales force with an AI assistant right beside you. It's all paid for and it's already connected. You get the keys, not a request form."
  ]
 }
