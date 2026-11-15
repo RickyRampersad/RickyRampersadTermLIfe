@@ -3,10 +3,17 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "adG1": [
-   "Let me ask you something. Does somebody else put a cap on what you earn? Not here. This is a career in insurance sales, and what you earn is decided by the work you do.",
-   "Here's an honest question for you. Is your income capped by somebody else? With us, it isn't. This is a career in insurance sales, and what you earn is decided by the work you do.",
-   "Is somebody else deciding how much you can earn? Not here. This is a career in insurance sales, and your income is decided by the work you do."
+  "bwS": [
+   "Every time something in this branch gets stuck, everybody calls the Branch Manager to fix it.",
+   "That's the seat we're hiring for, here in Chaguanas: one person to keep everything we've built up and running.",
+   "Everything we've built runs across five platforms, and you'd learn how they fit together: the workflow, and the rules behind every one.",
+   "And when something's stuck on the server, you find out why, you fix it, and you write the amendment, so it doesn't happen again.",
+   "The branch pays for every tool, with Claude right beside you. You use them every day, they're skills worth putting on your CV, and you get the keys, not a request form.",
+   "We're hiring one personal assistant, here in Chaguanas. If you're the one who makes it happen, come and build with us."
+  ],
+  "bwSalt": [
+   "Whenever something in this branch gets stuck on a server, everybody calls the Branch Manager to fix it.",
+   "And when something gets stuck on a server, you find out why, you fix it, and you write the amendment so it doesn't happen again."
   ]
  }
 }
