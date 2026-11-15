@@ -1,37 +1,27 @@
 {
- "tts/out/adFr/01.mp3": [
-  "en",
-  0.999,
-  "Here's what most advisors never get where they are. Let's follow Rajeev through a fact-find start to finish. He went digital and he hasn't looked back."
- ],
- "tts/out/adFr/02.mp3": [
-  "en",
-  0.999,
-  "Here's what most advisors never get where they are. Let's follow one fact find with Rajeev. He went digital, and he hasn't looked back."
- ],
- "tts/out/adFr/03.mp3": [
-  "en",
-  0.996,
-  "Rajeev sits with the client and listens. Later, in his own time, he types it up and the needs analysis does the arithmetic as he goes."
- ],
- "tts/out/adFr/04.mp3": [
-  "en",
-  0.996,
-  "Rajeev sits with the client and listens. Later, in his own time, he types it up and the needs analysis adds it all up as he goes."
- ],
- "tts/out/adFr/05.mp3": [
-  "en",
-  0.996,
-  "Only then does it go back to the manager, who signs it off with a comment. The branch manager and the team see every single one."
- ],
- "tts/out/adFr/07.mp3": [
+ "tts/out/adFb/01.mp3": [
   "en",
   0.997,
-  "It was built by a branch manager with 35 years in the business. He's qualified for the court of the table and for top of the table. Then he's stepped back to build all of this so every advisor here can succeed."
+  "When a confidential fact find is complete, everything lines up. What Rajeev puts it on one side, what the client gets on the other, and nothing for him to calculate. The intelligence is built in."
  ],
- "tts/out/adFr/08.mp3": [
+ "tts/out/adFb/02.mp3": [
   "en",
-  0.998,
-  "It was built by a branch manager with 35 years in the business, a core of the table and top of the table qualifier, who stepped back to build all of this, so every advisor here can succeed."
+  0.996,
+  "When a confidential fact find is done, everything lines up. What Rajeev puts it on one side, what the client gets on the other, and nothing for him to calculate. The intelligence is built in."
+ ],
+ "tts/out/bwPA/01.mp3": [
+  "en",
+  0.994,
+  "This is our branch in Chaguanas, and we got tired of waiting too."
+ ],
+ "tts/out/bwPA/02.mp3": [
+  "en",
+  0.997,
+  "You'll be building with Google's own tools and sales force with an AI assistant right beside you. There's skills worth putting on your CV and you get the keys, not a request form."
+ ],
+ "tts/out/bwPA/03.mp3": [
+  "en",
+  0.994,
+  "We're hiring one personal assistant here in Chaguanas. Come and build with us."
  ]
 }
