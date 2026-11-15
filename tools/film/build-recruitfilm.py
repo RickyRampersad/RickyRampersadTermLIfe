@@ -1471,7 +1471,7 @@ if MODE == 'ad':
                ('Cover now', 'TT$500,000, through work'), ('Goals', 'university for both, retire at 60')]
         OUT_ = [('Term Life', 'TT$1,500,000', 'replaces her income'), ('Education Plan', 'TT$250,000', 'the children&rsquo;s university'),
                 ('Critical Illness', 'TT$300,000', 'if she is seriously ill')]
-        _bi, _bo = tat(3, "puts"), tat(3, "client")
+        _bi, _bo = tat(3, "enters"), tat(3, "client")
         T.append(tscene(3, 's-ffblitz', f"""
 <div class="full center">
   <p class="eye in" style="--t0:200ms">The confidential fact find, complete</p>
