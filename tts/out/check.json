@@ -1,152 +1,82 @@
 {
- "tts/out/avA/01.mp3": [
-  "en",
-  0.997,
-  "You're an insurance advisor, you're good at it, and then the support stopped."
- ],
- "tts/out/avA/02.mp3": [
+ "tts/out/avR/01.mp3": [
   "en",
   0.998,
-  "The industry even has a name for your second year, the cliff. It's when agents are left on their own without the support they had in year one."
+  "Here, nothing stops. 39 things, every single week of your career. Clients are matched to you. A coach, not a clock. And nobody will ever know you asked."
  ],
- "tts/out/avA/03.mp3": [
-  "en",
-  0.994,
-  "By year 4, only 14 out of every 100 are still standing. In this branch, it's 31."
- ],
- "tts/out/avA/04.mp3": [
+ "tts/out/avR/02.mp3": [
   "en",
   0.998,
-  "Here, nothing stops. 39 things. Every single week of your career. Clients match to you. A coach, not a clock, and nobody will ever know you asked."
+  "Here, nothing stops. 39 things. Every week of your career. Your clients are matched to you. A coach, not a clock. And nobody will ever know you asked."
  ],
- "tts/out/avA/05.mp3": [
-  "en",
-  0.992,
-  "There are seven places and it all starts with one conversation. 20 minutes this week. Go to the link on your screen."
- ],
- "tts/out/avB/01.mp3": [
-  "en",
-  0.994,
-  "You want a career with no ceiling, and you're afraid of the first year. Honestly, both of those are fair."
- ],
- "tts/out/avB/02.mp3": [
-  "en",
-  0.999,
-  "This is a sales career, and a year that breaks people isn't the first one. It's the second when the names run out."
- ],
- "tts/out/avB/03.mp3": [
-  "en",
-  0.999,
-  "Here, your own market comes first, and it's mapped before you're even contracted. When it runs thin, keeping your week full is our job. And your manager is a coach, not clock."
- ],
- "tts/out/avB/04.mp3": [
-  "en",
-  0.995,
-  "By year 4, the industry keeps 14 out of every 100. This branch keeps 31."
- ],
- "tts/out/avB/05.mp3": [
-  "en",
-  0.992,
-  "There are seven places and it all starts with one conversation. 20 minutes this week. Go to the link on your screen."
- ],
- "tts/out/avC/01.mp3": [
-  "en",
-  0.995,
-  "You're good at your job, and you can already see the top of it."
- ],
- "tts/out/avC/02.mp3": [
-  "en",
-  0.995,
-  "This is a career in insurance sales. You're paid on what you write. There's no ceiling and there's no salary."
- ],
- "tts/out/avC/03.mp3": [
-  "en",
-  0.999,
-  "Most people have this backwards. It starts with the conversation, not a laptop, paper, good questions, and the time to listen. You type it up afterwards in your own time on Guardian's own approved form."
- ],
- "tts/out/avC/04.mp3": [
-  "en",
-  0.999,
-  "your client reads the draft and agrees with it, then your manager signs it off and adds comment and then it never stops. A check-in every six months and a full review in their birthday month for life."
- ],
- "tts/out/avC/05.mp3": [
-  "en",
-  1.0,
-  "You start with the people who already know you. When that list runs thin, keeping your week full is our job. And your manager is a coach, not a clock."
- ],
- "tts/out/avC/06.mp3": [
-  "en",
-  0.999,
-  "Before you're contracted, a scientific profile is read. Your market is mapped and you're trained. So you'll know whether this fits before you give anything up."
- ],
- "tts/out/avC/07.mp3": [
-  "en",
-  0.987,
-  "By year 4, the industry keeps 14 out of every 100. We keep 31."
- ],
- "tts/out/avC/08.mp3": [
-  "en",
-  0.992,
-  "There are seven places and it all starts with one conversation. 20 minutes this week. Go to the link on your screen."
- ],
- "tts/out/avT/01.mp3": [
+ "tts/out/avR/03.mp3": [
   "en",
   0.996,
   "Let me ask you something. Are you good at what you do, but stuck where you are? Where do you want a career with no ceiling? But you're afraid of the first year?"
  ],
- "tts/out/avT/02.mp3": [
+ "tts/out/avR/04.mp3": [
   "en",
-  0.999,
-  "The industry has measured this. The same advisor in a different room is a different advisor. So here's what this career gives you that a job can't. Your income is decided by your work not by a salary band. Your week is shaped by you and the work matters because it's a family covered before the worst day comes."
+  0.996,
+  "Let me ask you something. Are you good at what you do, but stuck where you are, or are you wanting a career with no ceiling? And you're afraid of the first year?"
  ],
- "tts/out/avT/03.mp3": [
-  "en",
-  0.999,
-  "And here's this room in full. You're never stuck for an answer at the table. The fact find does the arithmetic, branch intelligence reads the file, and the branch team answers your query the same day. And you never start from zero. Clients are matched to you household by household. And when your own list runs thin, the branch keeps your week full."
- ],
- "tts/out/avT/04.mp3": [
-  "en",
-  0.999,
-  "Your manager is a coach, not a clock. The system does the admin. He does the sitting with you, your week before Friday, in your morning email and in person. Nobody here is left to figure it out alone."
- ],
- "tts/out/avT/05.mp3": [
-  "en",
-  0.998,
-  "Our new year began on the first of October and its first class is being selected right now. There's seven places, not because we can't take more, but because every one of them gets the full build. A call within 48 hours, the branch manager himself, an orientation, a profile, and a discovery with the people already doing it. And there's one more seat for a sales manager to build a unit here. 32 years in Trinidad, one class, seven places."
- ],
- "tts/out/avT/06.mp3": [
-  "en",
-  0.997,
-  "and the company behind it is sound. Guardian Life of the Caribbean is rated excellent by AM. Best affirmed this May with nearly 40 billion dollars of assets in the group. The doors open now. Already contracted? Nobody will know you asked. New to this? You get the full build. Already leading a team? Come and build a unit here. It's one confidential conversation 20 minutes this week."
- ],
- "tts/out/avT/07.mp3": [
+ "tts/out/avR/05.mp3": [
   "en",
   0.999,
   "Go to the link on your screen and book your confidential conversation, or we'll take this 60-second test first and start the selection."
  ],
- "tts/out/avW/01.mp3": [
+ "tts/out/avR/06.mp3": [
+  "en",
+  0.999,
+  "So go to the link on your screen and book your confidential conversation or take the 62nd test first and start the selection."
+ ],
+ "tts/out/avR/07.mp3": [
+  "en",
+  0.979,
+  "The environment decides. We select the driven."
+ ],
+ "tts/out/avR/08.mp3": [
+  "en",
+  0.961,
+  "The environment decides and we select the driven."
+ ],
+ "tts/out/avR/09.mp3": [
   "en",
   0.998,
-  "You already know how your office should run. Nobody's giving you the tools."
+  "You already know how your office should run, and nobody has given you the tools."
  ],
- "tts/out/avW/02.mp3": [
+ "tts/out/avR/10.mp3": [
+  "en",
+  0.998,
+  "You already know how your office should run. Nobody has ever given you the tools."
+ ],
+ "tts/out/avR/11.mp3": [
+  "en",
+  0.993,
+  "36 files, about 100,000 lines, and every line of it written right here."
+ ],
+ "tts/out/avR/12.mp3": [
   "en",
   0.997,
-  "We're a branch that writes its own software."
+  "We got 36 files and about 100,000 lines and every line of it was written right here."
  ],
- "tts/out/avW/05.mp3": [
+ "tts/out/avR/13.mp3": [
   "en",
   0.998,
-  "Half your day is the branches admin the other half is making that admin unnecessary"
+  "You'd have the keys to all of it from your first month with an AI assistant working right beside you."
  ],
- "tts/out/avW/06.mp3": [
+ "tts/out/avR/14.mp3": [
+  "en",
+  0.997,
+  "From the first month, you'd have the keys to all of it and an AI assistant working right beside you."
+ ],
+ "tts/out/avR/15.mp3": [
+  "en",
+  0.996,
+  "We're looking for one person who just can't leave a bad process alone."
+ ],
+ "tts/out/avR/16.mp3": [
   "en",
   0.998,
-  "You don't need to arrive knowing how. Nobody here was hired as a developer."
- ],
- "tts/out/avW/08.mp3": [
-  "en",
-  0.998,
-  "Point your camera at the code. It takes 15 minutes and the branch manager reads everyone himself."
+  "We're looking for one person who can't leave a bad process alone."
  ]
 }
