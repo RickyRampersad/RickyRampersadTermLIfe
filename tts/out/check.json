@@ -1,57 +1,22 @@
 {
- "tts/out/avBW/01.mp3": [
+ "tts/out/avBW2/01.mp3": [
   "en",
-  0.999,
-  "Somewhere right now, there's an administrator who can see exactly what should be fixed."
+  0.991,
+  "Group billing every invoice from the insurer is checked line by line against our own records before anybody pays it"
  ],
- "tts/out/avBW/02.mp3": [
+ "tts/out/avBW2/02.mp3": [
   "en",
-  0.996,
-  "You've got a spreadsheet, a WhatsApp group, and no permission."
+  0.977,
+  "Group billing, each invoice the insurer sends us is checked line by line against our own records before anybody pays it."
  ],
- "tts/out/avBW/03.mp3": [
+ "tts/out/avBW2/03.mp3": [
   "en",
-  0.996,
-  "We're a guardian life branch in Chibuanas. We got tired of waiting too."
+  0.988,
+  "one administrator's seat in Chaguanas. Come and build with us."
  ],
- "tts/out/avBW/04.mp3": [
+ "tts/out/avBW2/04.mp3": [
   "en",
-  0.997,
-  "So, we wrote our own software, 36 files, about 100,000 lines, and nobody here was hired as a developer."
- ],
- "tts/out/avBW/05.mp3": [
-  "en",
-  0.997,
-  "Here's what you'd actually work on."
- ],
- "tts/out/avBW/06.mp3": [
-  "en",
-  0.999,
-  "The log book, every document that leaves this branch is logged, routed, and signed for on a phone."
- ],
- "tts/out/avBW/07.mp3": [
-  "en",
-  0.997,
-  "The premium do desk before a policy lapses, the client gets a letter and a person checks every single one."
- ],
- "tts/out/avBW/08.mp3": [
-  "en",
-  0.989,
-  "group billing and ensures invoice is checked line by line against our own records before anybody pays it"
- ],
- "tts/out/avBW/09.mp3": [
-  "en",
-  0.996,
-  "Half your day is that work. The other half is making it smaller."
- ],
- "tts/out/avBW/10.mp3": [
-  "en",
-  0.997,
-  "You take a job you do by hand and you turn it into a script that does it for you."
- ],
- "tts/out/avBW/11.mp3": [
-  "en",
-  0.998,
-  "You'll be building with Google's own tools and sales force with an AI assistant right beside you. It's all paid for and it's already connected. You get the keys, not a request form."
+  0.99,
+  "There's one administrator's seat here in Chaguanas. Come and build with us."
  ]
 }
