@@ -3,15 +3,15 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "adFr": [
-   "Here's what most advisors never get where they are. Let's follow Rajiv through a fact find, start to finish. He went digital, and he hasn't looked back.",
-   "Here's what most advisors never get where they are. Let's follow one fact find, with Rajiv. He went digital, and he hasn't looked back.",
-   "Rajiv sits with the client and listens. Later, in his own time, he types it up, and the needs analysis does the arithmetic as he goes.",
-   "Rajiv sits with the client and listens. Later, in his own time, he types it up, and the needs analysis adds it all up as he goes.",
-   "Only then does it go back to the manager, who signs it off with a comment. The Branch Manager and the team see every single one.",
-   "Only then does it go back to the manager, who signs it off and writes a comment. The Branch Manager and the team see every single one.",
-   "It was built by a Branch Manager with thirty-five years in the business. He's qualified for the Court of the Table, and for Top of the Table. Then he stepped back to build all of this, so every advisor here can succeed.",
-   "It was built by a Branch Manager with thirty-five years in the business, a Court of the Table and Top of the Table qualifier, who stepped back to build all of this, so every advisor here can succeed."
+  "adFb": [
+   "When the confidential fact find is complete, everything lines up. What Rajiv puts in on one side, what the client gets on the other, and nothing for him to calculate. The intelligence is built in.",
+   "When the confidential fact find is done, everything lines up. What Rajiv puts in on one side, what the client gets on the other, and nothing for him to calculate. The intelligence is built in."
+  ],
+  "bwPA": [
+   "This is our branch, in Chaguanas. And we got tired of waiting too.",
+   "You'd be building with Google's own tools and Salesforce, with an AI assistant right beside you. They're skills worth putting on your CV. And you get the keys, not a request form.",
+   "We're hiring one personal assistant, here in Chaguanas. Come and build with us.",
+   "We're hiring one personal assistant, right here in Chaguanas. Come and build with us."
   ]
  }
 }
