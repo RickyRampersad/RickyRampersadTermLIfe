@@ -1155,7 +1155,7 @@ if MODE == 'ad':
     # ("the agent meets with the client ... not typing in front of a client. That's never"), and the journey
     # that follows is another. The guard stays — a lines file out of step with this block is the fault it
     # catches — it just knows the third shape now. A and B are still five.
-    assert len(TLINES) in (5, 7, 8), len(TLINES)
+    assert len(TLINES) in (5, 7, 8, 9), len(TLINES)
     LEADS = [('Retiring properly', 'asked to be called · 9:12'), ('Cover for the children', 'asked to be called · 9:40'), ('Starting a business', 'asked to be called · 10:05')]
     # 12 Nov 2026, on LIMRA's own 2025 Annual Conference deck (session 16, public PDF): "The second year,
     # commonly referred to as the 'cliff' ... Agents are on their own, without much of the support provided
@@ -1419,6 +1419,127 @@ if MODE == 'ad':
        chart from the moment the chart is there; this gives it about five seconds on screen. -->
   <p class="adsrc in" style="--t0:{max(500, tat(7,"industry") - 300)}ms">Of every 100 contracted, still contracted at year four. Industry: LIMRA and Finseca, 2022. Branch: our own roll.</p>
 </div>""", 'data-ch="Thirty-nine things, and the record"'))
+    elif AD == 'F':
+        # 15 November 2026 — the fact find film, asked for in these words: "expand on the FactFind 360 ... this is
+        # the heart and soul of our operation. The support agents don't get, but they do get it in our branch ...
+        # show the draft ... the automatic motion of the needs analysis ... what goes to the client ... when the
+        # client approves and they scroll down ... when it goes back to the manager, and the email that's
+        # triggered ... the automated reminder ... what triggers out to the client". Followed with Rajiv, by name
+        # at the Branch Manager's word; every client, figure and screen is sample data. The screens are cropped
+        # (agentmgt/img/ffr-*.jpg) so no e-mail header carries another advisor's name, and nothing negative sits
+        # beside a real colleague's. The order is the corrected one: the client approves FIRST, then the manager.
+        A = ('agentmgt', 'img'); W = ('wall', 'img')
+        def card(rel, base, t0, cap, cls='', w=560):
+            return (f'<figure class="ffcard {cls} in" style="--t0:{t0}ms"><div class="ffscr"><img src="{img64(rel, w, 74, base=base)}" alt=""></div>'
+                    f'<figcaption>{cap}</figcaption></figure>')
+        T.append(tscene(1, 's-hook nofade', f"""
+<div class="full center">
+  <span class="spot" style="--t0:{tat(1,"never")}ms"></span>
+  <div class="mark top in now">{MARK}</div>
+  <p class="eye in now">The heart of how we work</p>
+  <h1 class="h xl">{words("What most advisors", 400, cls='now')}<br><em class="wine">{words("never get.", max(700, tat(1,"never") - 300))}</em></h1>
+  <div class="ffwho in" style="--t0:{tat(1,"Rajiv")}ms"><span class="ffav">R</span><span class="ffwt"><b>Follow one fact find with Rajiv</b><span>He went digital, and hasn&rsquo;t looked back</span></span></div>
+</div>""", 'data-ch="What most advisors never get"'))
+        NEED = [('Income, replaced', 600000, 'listens'), ('Debts and the mortgage', 300000, 'types'),
+                ('The children&rsquo;s education', 200000, 'needs'), ('Final expenses', 50000, 'arithmetic')]
+        _nt = tat(2, "arithmetic")
+        T.append(tscene(2, 's-ffneed', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Step one &middot; the needs analysis</p>
+    <h2 class="h l">{words("He listens.", max(300, tat(2,"listens") - 500), 95)} <em class="wine">{words("The maths does itself.", max(700, tat(2,"needs") - 700), 95)}</em></h2>
+    <div class="ffchips">
+      <span class="ffchip in" style="--t0:{tat(2,"sits")}ms"><svg class="ic"><use href="#i-chat"/></svg>At the table: paper, questions, time</span>
+      <span class="ffchip in" style="--t0:{tat(2,"types")}ms"><svg class="ic"><use href="#i-doc"/></svg>Typed up later, in his own time</span>
+    </div>
+  </div>
+  <div class="col">
+    <div class="ffneed in fl" style="--t0:{max(300, tat(2,"listens") - 300)}ms">
+      <div class="ffnh"><b>Needs analysis</b><span>worked out as he types</span></div>
+      {''.join(f'<div class="ffrow" style="--t0:{tat(2,w) + k*120}ms"><span>{n}</span><i class="ffbar" style="--w:{round(v/6000)}%"></i><b>TT$<em class="cnt" data-to="{v}" data-sep data-at="{tat(2,w) + k*120}">{v:,}</em></b></div>' for k, (n, v, w) in enumerate(NEED))}
+      <div class="fftot in" style="--t0:{_nt + 400}ms"><span>The need, worked out</span><b>TT$<em class="cnt" data-to="1150000" data-sep data-at="{_nt + 400}">1,150,000</em></b></div>
+      {SAMPLE}
+    </div>
+  </div>
+</div>""", 'data-ch="The needs analysis"'))
+        T.append(tscene(3, 's-ffcopy', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Step two &middot; finished</p>
+    <h2 class="h l">{words("His own copy.", max(300, tat(3,"copy") - 600), 95)} <em class="wine">{words("His manager, told at once.", max(700, tat(3,"manager") - 500), 95)}</em></h2>
+    <div class="pill-row"><span class="ypill in" style="--t0:{tat(3,"alone")}ms">Nobody here works alone</span></div>
+  </div>
+  <div class="col">{card('ffr-copy.jpg', A, max(300, tat(3,"finished") - 200), 'In Rajiv&rsquo;s inbox the moment he submits', 'tall pan')}</div>
+</div>""", 'data-ch="His copy, his manager told"'))
+        T.append(tscene(4, 's-ffclient', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">Step three &middot; the client</p>
+  <h2 class="h l">{words("Is this right?", max(300, tat(4,"right") - 600), 95)} <em class="wine">{words("They read it, and agree.", max(700, tat(4,"agree") - 900), 95)}</em></h2>
+  <div class="ffphones">
+    {card('ffr-draft.jpg', A, tat(4,"draft"), 'A draft, in plain words', 'ph pan', 480)}
+    {card('ff/04-client-approval-page.jpg', W, tat(4,"scroll"), 'They scroll through, and agree', 'ph pan', 480)}
+    {card('ffr-sign.jpg', A, tat(4,"sign"), 'Signed, and the advice rated', 'ph', 480)}
+  </div>
+</div>""", 'data-ch="The client reads it, and agrees"'))
+        T.append(tscene(5, 's-ffmgr', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Step four &middot; only then</p>
+    <h2 class="h l">{words("Then the manager", max(300, tat(5,"manager") - 700), 95)} <em class="wine">{words("signs it off.", max(700, tat(5,"signs") - 300), 95)}</em></h2>
+    <div class="ffchips">
+      <span class="ffchip in" style="--t0:{tat(5,"comment")}ms"><svg class="ic"><use href="#i-chat"/></svg>Signed off, with a comment</span>
+      <span class="ffchip in" style="--t0:{tat(5,"team")}ms"><svg class="ic"><use href="#i-users"/></svg>The Branch Manager and the team see every one</span>
+    </div>
+  </div>
+  <div class="col ffstack">
+    {card('ffr-manager.jpg', A, max(300, tat(5,"manager") - 200), 'The manager&rsquo;s sign-off, held until the client agrees')}
+    {card('ff-branch.jpg', A, tat(5,"team"), 'What the branch sees, every fact find')}
+  </div>
+</div>""", 'data-ch="The manager signs it off"'))
+        T.append(tscene(6, 's-ffnudge', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">The reminders</p>
+  <h2 class="h l"><em class="wine">{words("Nothing slips.", 300, 95)}</em></h2>
+  <div class="ff3">
+    {card('ffr-close.jpg', A, tat(6,"reminder"), 'To Rajiv: did they close?')}
+    {card('ffr-unsent.jpg', A, tat(6,"inbox"), 'To Rajiv: started, never sent')}
+    {card('jr/4-delivered.jpg', W, tat(6,"client"), 'To the client: confirmed in writing')}
+  </div>
+  <small class="cjs in" style="--t0:{tat(6,"client") + 500}ms">Our own screens, built in this branch &middot; sample names and figures</small>
+</div>""", 'data-ch="Nothing slips"'))
+        REC = [('Advice explained', 'in plain words'), ('Client confirmed', 'read, agreed, signed'), ('Manager signed', 'with a comment'),
+               ('On file', 'every step, dated'), ('Reviewed for life', 'six months and birthdays')]
+        _r0, _r1 = tat(7, "step"), tat(7, "conduct")
+        _rs = max(350, (_r1 - _r0) // len(REC))
+        T.append(tscene(7, 's-ffrec', f"""
+<div class="full center">
+  <div class="ffshield in" style="--t0:{tat(7,"protects")}ms"><svg class="ic"><use href="#i-shield"/></svg></div>
+  <p class="eye in" style="--t0:200ms">Market conduct, built in</p>
+  <h2 class="h l">{words("On the record.", max(300, tat(7,"record") - 500), 95)} <em class="wine">{words("Protected.", tat(7,"protects"), 95)}</em></h2>
+  <div class="cgrail">
+    {''.join(f'<div class="cgstep in" style="--t0:{_r0 + 200 + k*_rs}ms"><i>{k+1}</i><b>{nm}</b><span>{sub}</span></div>' for k, (nm, sub) in enumerate(REC))}
+  </div>
+  <p class="sub in" style="--t0:{tat(7,"protects", 1)}ms">It protects your client. And it protects you.</p>
+</div>""", 'data-ch="On the record, protected"'))
+        T.append(tscene(8, 's-ffbuild', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Who built it</p>
+    <h2 class="h l"><span class="cnt" data-to="35" data-at="{tat(8,"thirty-five")}">35</span> {words("years in.", tat(8,"thirty-five"), 95)} <em class="wine">{words("Then he built the system.", max(700, tat(8,"stepped") - 700), 95)}</em></h2>
+    <div class="pill-row">
+      <span class="ypill in" style="--t0:{tat(8,"Court")}ms">Court of the Table</span>
+      <span class="ypill in" style="--t0:{tat(8,"Top")}ms">Top of the Table</span>
+    </div>
+  </div>
+  <div class="col">
+    <div class="ffbio in fl" style="--t0:{max(300, tat(8,"Branch") - 200)}ms">
+      <div class="ffbh"><span class="ffav big">RR</span><span><b>Ricky Rampersad</b><span>Branch Manager &middot; Guardian Life of the Caribbean</span></span></div>
+      <div class="ffbl in" style="--t0:{tat(8,"stepped")}ms"><svg class="ic"><use href="#i-grid"/></svg><span><b>For the administration</b>the desks, the Log Book, the transmittal</span></div>
+      <div class="ffbl in" style="--t0:{tat(8,"stepped") + 600}ms"><svg class="ic"><use href="#i-target"/></svg><span><b>For every advisor</b>the fact find, the reminders, the coaching</span></div>
+      <div class="ffbl hi in" style="--t0:{tat(8,"succeed")}ms"><svg class="ic"><use href="#i-up"/></svg><span><b>So every advisor here can succeed</b></span></div>
+    </div>
+  </div>
+</div>""", 'data-ch="Who built it"'))
     elif AD == 'A':
         T.append(tscene(1, 's-hook nofade', f"""
 <div class="full center">
@@ -3257,6 +3378,96 @@ body.paused #bars i.run::after{animation-play-state:paused}
      the scenes built round a card keep the portrait sizes. */
   .s-names .h.xl,.s-names .h.l,.s-fill .h.l{font-size:calc(var(--u)*7.8)}
   .s-names .sub,.s-fill .sub{font-size:calc(var(--u)*3.4)}
+}
+
+/* ── the fact find film (ad F), 15 November 2026 ── */
+.ffwho{display:inline-flex;align-items:center;gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*3);padding:calc(var(--u)*1.2) calc(var(--u)*2.4) calc(var(--u)*1.2) calc(var(--u)*1.2);border-radius:99px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
+.ffav{display:grid;place-items:center;width:calc(var(--u)*6);height:calc(var(--u)*6);border-radius:50%;background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;font:800 calc(var(--u)*2.6)/1 var(--display);flex:none}
+.ffav.big{width:calc(var(--u)*7.4);height:calc(var(--u)*7.4);font-size:calc(var(--u)*2.8)}
+.ffwt{display:grid;text-align:left;gap:.2em}
+.ffwt b{font:700 calc(var(--u)*2.5)/1.15 var(--text);color:var(--ink)}
+.ffwt span{font:500 calc(var(--u)*1.9)/1.2 var(--text);color:var(--mute)}
+.ffchips{display:flex;flex-direction:column;gap:calc(var(--u)*1.1);align-items:flex-start}
+.ffchip{display:inline-flex;align-items:center;gap:.6em;font:600 calc(var(--u)*2.1)/1.25 var(--text);color:var(--ink);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:calc(var(--u)*1.2);padding:.65em 1em}
+.ffchip .ic{color:var(--aL);font-size:1.2em;flex:none}
+.ffneed{position:relative;background:#fff;color:#0d3f5e;border-radius:calc(var(--u)*1.8);padding:calc(var(--u)*2.6) calc(var(--u)*2.8) calc(var(--u)*4.4);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,14,26,.55);display:grid;gap:calc(var(--u)*1.35)}
+.ffnh{display:flex;justify-content:space-between;align-items:baseline;gap:1em;padding-bottom:calc(var(--u)*1.1);border-bottom:1px solid #e4e0d4}
+.ffnh b{font:800 calc(var(--u)*2.6)/1 var(--display)}
+.ffnh span{font:500 calc(var(--u)*1.7)/1 var(--text);color:#5b6670}
+.ffrow{display:grid;grid-template-columns:1fr 1fr auto;gap:calc(var(--u)*1.6);align-items:center;font:500 calc(var(--u)*1.95)/1.2 var(--text);opacity:0}
+.scene.act .ffrow{animation:up .6s var(--out) both;animation-delay:var(--t0)}
+.ffrow b{font:800 calc(var(--u)*2.2)/1 var(--display);font-variant-numeric:tabular-nums;text-align:right;min-width:7ch}
+.ffrow b em{font-style:normal}
+.ffbar{display:block;height:calc(var(--u)*1.3);border-radius:99px;background:linear-gradient(90deg,#0e93b0,#00728d);width:var(--w);transform:scaleX(0);transform-origin:left}
+.scene.act .ffrow .ffbar{animation:ffgrow .9s var(--out) both;animation-delay:calc(var(--t0) + 150ms)}
+@keyframes ffgrow{to{transform:scaleX(1)}}
+.fftot{display:flex;justify-content:space-between;align-items:baseline;gap:1em;margin-top:calc(var(--u)*.6);padding-top:calc(var(--u)*1.3);border-top:2px solid #0d3f5e}
+.fftot span{font:700 calc(var(--u)*2.1)/1 var(--text)}
+.fftot b{font:800 calc(var(--u)*3.6)/1 var(--display);color:#00728d;font-variant-numeric:tabular-nums}
+.fftot b em{font-style:normal}
+.ffneed .sample{color:#5b6670}
+.ffcard{margin:0;display:grid;gap:calc(var(--u)*.9);min-width:0}
+.ffscr{position:relative;border-radius:calc(var(--u)*1.2);overflow:hidden;background:#fff;border:calc(var(--u)*.3) solid #22527f;box-shadow:0 calc(var(--u)*2) calc(var(--u)*5) rgba(4,14,26,.55);aspect-ratio:16/10}
+.ffscr img{width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block}
+.ffcard.tall .ffscr{aspect-ratio:4/3.4}
+.ffcard.ph .ffscr{aspect-ratio:9/13;border-radius:calc(var(--u)*2);border-width:calc(var(--u)*.45)}
+.scene.act .ffcard.pan img{animation:ffpan 6s ease-in-out both;animation-delay:calc(var(--t0) + 900ms)}
+@keyframes ffpan{to{object-position:50% 100%}}
+.ffcard figcaption{font:600 calc(var(--u)*1.85)/1.25 var(--text);color:var(--mute);text-align:center}
+.ffphones{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.6);width:min(100%,calc(var(--u)*92));margin:calc(var(--u)*2.4) auto 0}
+.ffstack{gap:calc(var(--u)*2)}
+.ff3{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.2);width:min(100%,calc(var(--u)*100));margin:calc(var(--u)*2.6) auto calc(var(--u)*1.4)}
+.ff3 .ffscr{aspect-ratio:4/3.3}
+.ff3 .ffscr img{object-position:0 0}
+.ffshield{display:grid;place-items:center;width:calc(var(--u)*9);height:calc(var(--u)*9);margin:0 auto calc(var(--u)*1.2);border-radius:50%;background:radial-gradient(circle,rgba(0,207,234,.22),rgba(0,207,234,0) 70%);color:var(--aL);font-size:calc(var(--u)*6)}
+.ffbio{position:relative;background:var(--bg3);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2);padding:calc(var(--u)*2.8);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,14,26,.5);display:grid;gap:calc(var(--u)*1.5)}
+.ffbh{display:flex;align-items:center;gap:calc(var(--u)*1.8);padding-bottom:calc(var(--u)*1.4);border-bottom:1px solid rgba(255,255,255,.12)}
+.ffbh b{display:block;font:800 calc(var(--u)*3)/1.1 var(--display);color:var(--ink)}
+.ffbh span span{display:block;font:500 calc(var(--u)*1.8)/1.3 var(--text);color:var(--mute)}
+.ffbl{display:grid;grid-template-columns:auto 1fr;gap:calc(var(--u)*1.4);align-items:start;font:500 calc(var(--u)*1.95)/1.35 var(--text);color:var(--mute)}
+.ffbl .ic{color:var(--aL);font-size:calc(var(--u)*3);margin-top:.1em}
+.ffbl b{display:block;color:var(--ink);font:700 calc(var(--u)*2.15)/1.2 var(--text);margin-bottom:.15em}
+.ffbl.hi b{color:var(--aL);margin:0;font-size:calc(var(--u)*2.4)}
+@media (orientation:portrait){
+  .ffphones{width:100%;gap:calc(var(--u)*1.6)}
+  .ffcard figcaption{font-size:calc(var(--u)*2.3)}
+  .ff3{grid-template-columns:1fr;width:100%;gap:calc(var(--u)*2)}
+  .ff3 .ffcard{grid-template-columns:1.2fr 1fr;align-items:center}
+  .ff3 .ffcard figcaption{text-align:left;font-size:calc(var(--u)*2.8)}
+  .ffchip{font-size:calc(var(--u)*2.7)}
+  .ffstack{grid-template-columns:1fr;gap:calc(var(--u)*1.8)}
+  .ffstack .ffscr{aspect-ratio:16/7.2}
+  .ffstack .ffscr img{object-position:0 0}
+  .s-ffnudge .ff3{gap:calc(var(--u)*1.4);margin-bottom:calc(var(--u)*.8)}
+  .s-ffnudge .ff3 .ffscr{aspect-ratio:16/10.5}
+  .ffcard.ph .ffscr{aspect-ratio:9/17}
+  .ffstack .ffscr{aspect-ratio:16/7.2}
+  .ffneed,.ffbio{zoom:1.22}
+  .s-ffcopy .ffcard.tall .ffscr{aspect-ratio:800/680}
+  .ffwt b{font-size:calc(var(--u)*3)}.ffwt span{font-size:calc(var(--u)*2.4)}
+  .ffrow{font-size:calc(var(--u)*2.5)}.ffrow b{font-size:calc(var(--u)*2.7)}
+  .ffbl{font-size:calc(var(--u)*2.4)}.ffbl b{font-size:calc(var(--u)*2.7)}
+}
+@media (aspect-ratio:1/1){
+  .ff3{grid-template-columns:repeat(3,1fr);width:100%;gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*1.8)}
+  .ff3 .ffcard{grid-template-columns:1fr}
+  .ff3 .ffcard figcaption{text-align:center;font-size:calc(var(--u)*1.9)}
+  .ff3 .ffscr{aspect-ratio:4/3.6}
+  .ff3 .ffscr img,.ffstack .ffscr img{object-position:0 0}
+  .ffphones{width:100%}
+  .s-ffcopy .ffcard.tall .ffscr{aspect-ratio:16/6.6}
+  .s-ffcopy .h.l,.s-ffmgr .h.l{font-size:calc(var(--u)*5.4)}
+  .s-ffmgr .ffchips{flex-direction:row;flex-wrap:wrap}
+  .s-ffcopy .split,.s-ffmgr .split{gap:calc(var(--u)*3)}
+  .ffstack{grid-template-columns:1fr 1fr;gap:calc(var(--u)*1.6)}
+  .ffstack .ffscr{aspect-ratio:4/2.9}
+  .ffneed,.ffbio{zoom:1}
+  .ffcard.ph .ffscr{aspect-ratio:9/12}
+  .ffcard figcaption{font-size:calc(var(--u)*1.9)}
+  .ffchip{font-size:calc(var(--u)*2.1)}
+  .ffwt b{font-size:calc(var(--u)*2.5)}.ffwt span{font-size:calc(var(--u)*1.9)}
+  .ffrow{font-size:calc(var(--u)*1.95)}.ffrow b{font-size:calc(var(--u)*2.2)}
+  .ffbl{font-size:calc(var(--u)*1.95)}.ffbl b{font-size:calc(var(--u)*2.15)}
 }
 </style>
 </head>

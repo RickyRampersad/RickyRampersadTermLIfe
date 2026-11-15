@@ -44,8 +44,11 @@ AD_HITS = {'A': [(2, 'cliff'), (3, 'thirty'), (4, 'Thirty-nine'), (5, 'Seven')],
            'B': [(2, 'second'), (3, 'full'), (4, 'thirty'), (5, 'Seven')],
            # (6,'thirty-nine') went with the 39-things claim on 14 November 2026 — the journey scene shows six
            # of them now. Its punch moves to (3,'journey'), the line the scene is built to land on.
-           'C': [(2, 'insurance'), (3, 'conversation'), (4, 'stops'), (6, 'contracted'), (7, 'thirty-one'), (8, 'Seven')]}
-for v in 'ABC':
+           'C': [(2, 'insurance'), (3, 'conversation'), (4, 'stops'), (6, 'contracted'), (7, 'thirty-one'), (8, 'Seven')],
+           # F, 15 November 2026: the fact find film, followed with Rajiv. Punches on the total need, the
+           # manager's sign-off, "protects", the thirty-five years and the seven places.
+           'F': [(2, 'arithmetic'), (5, 'signs'), (7, 'protects'), (8, 'thirty-five'), (9, 'Seven')]}
+for v in 'ABCF':
     if os.path.exists(f'recruit-ad{v}-timing.json'):
         entries(f'ad{v}', f'recruit-ad{v}-timing.json', f'voad{v}', f'ad-{v.lower()}',
                 AD_HITS[v], [], shapes=('q', 'v'))
