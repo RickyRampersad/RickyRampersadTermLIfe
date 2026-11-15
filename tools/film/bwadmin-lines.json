@@ -2,22 +2,19 @@
  "role": "branch",
  "scenes": [
   {
-   "visual": "bwopen",
+   "visual": "bwcalls",
    "eyebrow": "The seat",
-   "headline": "You can already see<br>what <em>should be fixed</em>",
-   "say": "Somewhere right now, there's an administrator who can see exactly what should be fixed."
-  },
-  {
-   "visual": "bwnotools",
-   "eyebrow": "Where you are now",
-   "headline": "A spreadsheet. A group chat. / And <em>no permission</em>",
-   "say": "You've got a spreadsheet, a WhatsApp group, and no permission."
+   "headline": "Something&rsquo;s stuck. / <em>Everyone calls me</em>",
+   "say": "Every time something in this branch gets stuck, everybody calls the Branch Manager to fix it."
   },
   {
    "visual": "bwturn",
    "eyebrow": "Ricky Rampersad Branch &middot; Chaguanas",
-   "headline": "We got tired of <em>waiting too</em>",
-   "say": "This is our branch, in Chaguanas. And we got tired of waiting too."
+   "headline": "One person to keep it / <em>all running</em>",
+   "say": "That's the seat we're hiring for, here in Chaguanas: one person to keep everything we've built up and running.",
+   "at": "Chaguanas",
+   "at2": "running",
+   "sub": "The Branch Manager&rsquo;s own hire: his personal assistant, for the systems."
   },
   {
    "visual": "bwstack",
@@ -32,10 +29,10 @@
    ]
   },
   {
-   "visual": "bwgrid",
-   "eyebrow": "The qualification",
-   "headline": "What you would <em>actually work on</em>",
-   "say": "Here's what you'd actually work on."
+   "visual": "bwplat",
+   "eyebrow": "The platforms",
+   "headline": "Five platforms. / <em>How they fit together</em>",
+   "say": "Everything we've built runs across five platforms, and you'd learn how they fit together: the workflow, and the rules behind every one."
   },
   {
    "visual": "bwlog",
@@ -56,48 +53,43 @@
    "say": "Group billing. Every invoice from the insurer is checked line by line against our own records, before anybody pays it."
   },
   {
-   "visual": "bwhalf",
-   "eyebrow": "The shape of the job",
-   "headline": "Half the work. / Half <em>making it smaller</em>",
-   "say": "Half your day is that work. The other half is making it smaller."
-  },
-  {
-   "visual": "bwscript",
-   "eyebrow": "What you would build",
-   "headline": "By hand today. / <em>A script tomorrow</em>",
-   "say": "You take a job you do by hand, and you turn it into a script that does it for you."
+   "visual": "bwfix",
+   "eyebrow": "When it&rsquo;s stuck",
+   "headline": "Stuck on the server? / <em>You sort it out</em>",
+   "say": "And when something's stuck on the server, you find out why, you fix it, and you write the amendment, so it doesn't happen again."
   },
   {
    "visual": "bwkeys",
    "eyebrow": "The tools",
    "headline": "Skills worth a line on your CV. / <em>The keys, not a request form</em>",
-   "say": "You'd be building with Google's own tools and Salesforce, with an AI assistant right beside you. They're skills worth putting on your CV. And you get the keys, not a request form.",
+   "say": "The branch pays for every tool, with Claude right beside you. You use them every day, they're skills worth putting on your CV, and you get the keys, not a request form.",
    "tools": [
     [
-     "building",
+     "pays",
      "bolt",
      "Apps Script",
      "the branch&rsquo;s own 100,000 lines"
     ],
     [
-     "Google's",
-     "mail",
-     "Google Workspace",
-     "Sheets, Drive, the mailbox"
-    ],
-    [
-     "Salesforce",
+     "tool",
      "sync",
      "Salesforce",
      "every client, every task"
     ],
     [
-     "assistant",
+     "Claude",
      "target",
      "Claude",
      "beside you, on the real work"
+    ],
+    [
+     "day",
+     "mail",
+     "Microsoft 365",
+     "the support mailbox, Graph, Entra"
     ]
-   ]
+   ],
+   "ok": "paid for"
   },
   {
    "visual": "bwhelp",
@@ -114,7 +106,7 @@
     "Build with us."
    ],
    "url": "rickyrampersadbranch.com/buildwithus",
-   "say": "We're hiring one personal assistant, here in Chaguanas. Come and build with us.",
+   "say": "We're hiring one personal assistant, here in Chaguanas. If you're the one who makes it happen, come and build with us.",
    "extra": 2.2,
    "lines": [
     [
@@ -124,6 +116,10 @@
     [
      "Chaguanas",
      "Chaguanas."
+    ],
+    [
+     "happen",
+     "You make it happen."
     ],
     [
      "build",
