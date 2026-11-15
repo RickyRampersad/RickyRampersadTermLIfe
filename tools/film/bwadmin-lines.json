@@ -23,19 +23,19 @@
    "visual": "bwstack",
    "eyebrow": "What this branch built",
    "headline": "Thirty-six files. / <em>A hundred thousand lines</em>",
-   "say": "So we wrote our own software. Thirty six files. About a hundred thousand lines. Nobody here was hired as a developer."
+   "say": "So we wrote our own software. Thirty-six files, about a hundred thousand lines. And nobody here was hired as a developer."
   },
   {
    "visual": "bwgrid",
    "eyebrow": "The qualification",
    "headline": "What you would <em>actually work on</em>",
-   "say": "Here is what you would actually work on."
+   "say": "Here's what you'd actually work on."
   },
   {
    "visual": "bwlog",
    "eyebrow": "One &middot; The Log Book",
    "headline": "Logged, routed, / <em>signed for</em>",
-   "say": "The Log Book. Every document that leaves this branch, logged, routed, and signed for on a phone."
+   "say": "The Log Book. Every document that leaves this branch is logged, routed, and signed for on a phone."
   },
   {
    "visual": "bwdues",
@@ -47,13 +47,13 @@
    "visual": "bwbill",
    "eyebrow": "Three &middot; Group billing",
    "headline": "Line by line, / <em>before anybody pays</em>",
-   "say": "Group billing. An insurer's invoice, checked line by line against our own records, before anybody pays it."
+   "say": "Group billing. An insurer's invoice is checked line by line against our own records, before anybody pays it."
   },
   {
    "visual": "bwhalf",
    "eyebrow": "The shape of the job",
    "headline": "Half the work. / Half <em>making it smaller</em>",
-   "say": "Half of your day is that work. The other half is making it smaller."
+   "say": "Half your day is that work. The other half is making it smaller."
   },
   {
    "visual": "bwscript",
@@ -76,7 +76,7 @@
     "Build with us."
    ],
    "url": "rickyrampersadbranch.com/buildwithus",
-   "say": "One administrator's seat. Chaguanas. Come and build with us.",
+   "say": "One administrator's seat, in Chaguanas. Come and build with us.",
    "extra": 2.2
   }
  ]
