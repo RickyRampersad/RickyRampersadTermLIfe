@@ -1878,9 +1878,32 @@ def s_bwclose(i, sc, D):
             f'<div class="bwurl"><b>{sc["url"]}</b><span>{sc.get("urlsub", "Fifteen minutes.<br>He reads every one himself.")}</span></div></div></div>')
 
 
+def s_bwhelp(i, sc, D):
+    """HELP 868, the branch's WhatsApp line (15 November 2026: "we've just launched our branches WhatsApp, 868 help, and
+    need a dedicated person to really work on this, as it's MCP, it connects to Claude, it connects to our Salesforce
+    environment ... the next big thing"). A phone with the conversation, and the line drawn out to Claude and
+    Salesforce. The chat is sample: no client, and the reference is made up."""
+    tN, tW, tC, tS, tP = (w(i, sc.get(k, d)) for k, d in
+                          (('at', 'next'), ('at2', 'WhatsApp'), ('at3', 'Claude'), ('at4', 'Salesforce'), ('at5', 'person')))
+    msgs = [('in', 'Hi, can you check on my policy?'), ('out', 'Hi! I&rsquo;m HELP 868, the branch&rsquo;s assistant. What would you like to check?'),
+            ('in', 'A claim I sent last week'), ('out', 'Noted. Our team will message you today. Your reference is RRB/2026/042.')]
+    chat = ''.join(f'<i class="bwhm {d}" style="--at:{ms(tW + 200 + k * 420)}">{t}</i>' for k, (d, t) in enumerate(msgs))
+    phone = (f'<div class="bwhph at pop" style="--at:{ms(tN)}"><div class="bwhtop"><span class="bwhav">868</span>'
+             f'<span><b>HELP 868</b><small>Ricky Rampersad Branch</small></span></div><div class="bwhbody">{chat}</div></div>')
+    nodes = [(tW, 'msg', 'WhatsApp', 'where clients already are'), (tC, 'bolt', 'Claude', 'reads it and answers'),
+             (tS, 'sync', 'Salesforce', 'the client&rsquo;s record')]
+    net = ''.join(
+        (f'<i class="bwhln" style="--at:{ms(t - 250)}"><span>MCP</span></i>' if k else '') +
+        at(t, 'at pop bwhnd', inner=f'<span class="bwti">{ico(icn)}</span><b>{nm}</b><small>{sub}</small>')
+        for k, (t, icn, nm, sub) in enumerate(nodes))
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwhrow">{phone}<div class="bwhnet">{net}'
+            f'{at(tP, "at pop bwhyou", inner=ico("user") + "<b>" + sc.get("you", "One person to make it brilliant") + "</b>")}</div></div></div>')
+
+
 R_BW = {'bwopen': s_bwopen, 'bwnotools': s_bwnotools, 'bwturn': s_bwturn, 'bwstack': s_bwstack, 'bwgrid': s_bwgrid,
         'bwlog': s_bwlog, 'bwdues': s_bwdues, 'bwbill': s_bwbill, 'bwhalf': s_bwhalf, 'bwscript': s_bwscript,
-        'bwkeys': s_bwkeys, 'bwclose': s_bwclose}
+        'bwkeys': s_bwkeys, 'bwhelp': s_bwhelp, 'bwclose': s_bwclose}
 
 BW_CSS = r"""
 /* ══ Build with us · the administrator's film (7 November 2026) ═══════════
@@ -2126,6 +2149,31 @@ BW_CSS = r"""
 .bf .bwfin{flex-direction:row;gap:60px;align-items:center;justify-content:center}
 .bf .bwfin .ebw{text-align:left;margin-bottom:16px}
 .bf .bwfin .cls{text-align:left;justify-items:start;gap:10px}
+
+/* HELP 868: the phone, and the line out to Claude and Salesforce */
+.bf .bwhrow{display:flex;gap:46px;align-items:center;justify-content:center;margin-top:22px}
+.bf .bwhph{width:300px;border-radius:30px;background:#0b141a;border:6px solid #22527f;box-shadow:0 24px 60px rgba(0,0,0,.55);overflow:hidden;text-align:left}
+.bf .bwhtop{display:flex;gap:10px;align-items:center;background:#075E54;padding:11px 13px;color:#fff}
+.bf .bwhtop b{display:block;font:700 15px var(--head)}
+.bf .bwhtop small{display:block;font:500 11px var(--body);opacity:.85}
+.bf .bwhav{width:34px;height:34px;border-radius:50%;background:#25D366;color:#06243A;display:grid;place-items:center;font:800 11px var(--head)}
+.bf .bwhbody{display:flex;flex-direction:column;gap:8px;padding:13px 11px 16px;min-height:250px;background:#0b141a}
+.bf .bwhm{font:500 13px/1.35 var(--body);font-style:normal;padding:8px 11px;border-radius:11px;max-width:82%;opacity:0;transform:translateY(8px)}
+.bf .bwhm.in{align-self:flex-end;background:#005C4B;color:#E9FBF3;border-bottom-right-radius:3px}
+.bf .bwhm.out{align-self:flex-start;background:#202C33;color:#E9EDEF;border-bottom-left-radius:3px}
+.scene.act .bwhm{animation:bfPop .38s var(--at) both}
+.bf .bwhnet{display:flex;flex-direction:column;align-items:center;gap:0}
+.bf .bwhnd{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:11px;align-items:center;width:330px;background:#fff;border-radius:14px;padding:12px 15px;box-shadow:0 18px 44px rgba(0,0,0,.45);text-align:left}
+.bf .bwhnd .bwti{grid-row:1/3}
+.bf .bwhnd b{font:700 16px var(--head);color:var(--ink)}
+.bf .bwhnd small{font:500 12px var(--body);color:var(--mute)}
+.bf .bwhln{position:relative;display:block;width:3px;height:34px;background:linear-gradient(var(--cyan),#2A6DE0);transform:scaleY(0);transform-origin:top}
+.scene.act .bwhln{animation:bfGrowY .4s var(--at) both}
+@keyframes bfGrowY{to{transform:scaleY(1)}}
+.bf .bwhln span{position:absolute;left:12px;top:50%;transform:translateY(-50%);font:800 10.5px var(--head);letter-spacing:.12em;color:var(--cyan)}
+.bf .bwhyou{display:flex;gap:9px;align-items:center;margin-top:18px;background:linear-gradient(135deg,#1D5BC4,#13408F);color:#fff;border-radius:12px;padding:11px 18px;box-shadow:0 18px 48px rgba(47,111,232,.6),0 0 0 1px rgba(0,229,255,.5)}
+.bf .bwhyou b{font:700 16px var(--head)}
+.bf .bwhyou .ico{width:17px;height:17px}
 """
 
 R = {'sftask': s_sftask, 'since': s_since, 'reassign': s_reassign, 'unit': s_unit, 'yourcalls': s_yourcalls, 'staffcall': s_staffcall, 'rules': s_counts,
