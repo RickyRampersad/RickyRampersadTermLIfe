@@ -3421,3 +3421,603 @@ vC 1 attempt 1: Traceback (most recent call last):
     )
 edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
 
+avA 1 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avA 2 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avA 3 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avA 3 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avA 4 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avA 5 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avA 5 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avB 3 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avC 1 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avC 1 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avC 1 attempt 2: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avC 4 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avC 4 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avC 4 attempt 2: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avC 5 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avC 6 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avC 7 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avC 7 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avT 2 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avT 2 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avT 4 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avT 4 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avT 5 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avT 5 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avT 5 attempt 2: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avT 7 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avT 7 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avT 8 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avT 8 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avT 8 attempt 2: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avT 8 attempt 3: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 3 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 3 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 3 attempt 2: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 3 attempt 3: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 4 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 4 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 4 attempt 2: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 4 attempt 3: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 5 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 5 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 5 attempt 2: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 6 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 6 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 6 attempt 2: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 7 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 7 attempt 1: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 7 attempt 2: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 7 attempt 3: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
+avW 8 attempt 0: Traceback (most recent call last):
+  File "<stdin>", line 18, in main
+  File "<stdin>", line 7, in one
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 588, in stream
+    async for message in self.__stream():
+        yield message
+  File "/home/runner/.local/lib/python3.14/site-packages/edge_tts/communicate.py", line 562, in __stream
+    raise NoAudioReceived(
+        "No audio was received. Please verify that your parameters are correct."
+    )
+edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.
+
