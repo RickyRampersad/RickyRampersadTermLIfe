@@ -1,47 +1,37 @@
 {
- "tts/out/adF/01.mp3": [
+ "tts/out/adFr/01.mp3": [
   "en",
-  1.0,
-  "Here's what most advisors never get where they are. Let's follow one fact fine with Rajiv, who went digital and hasn't looked back."
+  0.999,
+  "Here's what most advisors never get where they are. Let's follow Rajeev through a fact-find start to finish. He went digital and he hasn't looked back."
  ],
- "tts/out/adF/02.mp3": [
+ "tts/out/adFr/02.mp3": [
+  "en",
+  0.999,
+  "Here's what most advisors never get where they are. Let's follow one fact find with Rajeev. He went digital, and he hasn't looked back."
+ ],
+ "tts/out/adFr/03.mp3": [
   "en",
   0.996,
-  "Rajiv sits with the client and listens. Later, in his own time, he types it up and the needs analysis worse itself out as he goes."
+  "Rajeev sits with the client and listens. Later, in his own time, he types it up and the needs analysis does the arithmetic as he goes."
  ],
- "tts/out/adF/03.mp3": [
+ "tts/out/adFr/04.mp3": [
   "en",
-  0.995,
-  "The moment he's finished, he gets his own copy and his manager is told straight away. Nobody here works alone."
+  0.996,
+  "Rajeev sits with the client and listens. Later, in his own time, he types it up and the needs analysis adds it all up as he goes."
  ],
- "tts/out/adF/04.mp3": [
+ "tts/out/adFr/05.mp3": [
   "en",
-  0.997,
-  "The client gets a draft in plain words with one simple question. Is this right? They scroll right through it, agree, sign, and rate the advice."
+  0.996,
+  "Only then does it go back to the manager, who signs it off with a comment. The branch manager and the team see every single one."
  ],
- "tts/out/adF/05.mp3": [
-  "en",
-  0.997,
-  "only then does it go back to the manager who signs it off and add to comment the branch manager and the team see everyone."
- ],
- "tts/out/adF/06.mp3": [
+ "tts/out/adFr/07.mp3": [
   "en",
   0.997,
-  "and nothing slips. When a case goes quiet, a reminder lands in Rajiv's inbox, and the client hears from us as well."
+  "It was built by a branch manager with 35 years in the business. He's qualified for the court of the table and for top of the table. Then he's stepped back to build all of this so every advisor here can succeed."
  ],
- "tts/out/adF/07.mp3": [
+ "tts/out/adFr/08.mp3": [
   "en",
   0.998,
-  "Every step is on the record, the way market conduct now expects, that protects your client and it protects you."
- ],
- "tts/out/adF/08.mp3": [
-  "en",
-  0.996,
-  "It was built by a branch manager with 35 years in the business, who qualified for quarter the table and top of the table, then stepped back to build all of this, so every advisor here can succeed."
- ],
- "tts/out/adF/09.mp3": [
-  "en",
-  0.991,
-  "There are seven places and it all starts with one conversation. 20 minutes this week. Go to the link on your screen."
+  "It was built by a branch manager with 35 years in the business, a core of the table and top of the table qualifier, who stepped back to build all of this, so every advisor here can succeed."
  ]
 }
