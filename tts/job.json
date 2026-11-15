@@ -3,9 +3,9 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "bwH": [
-   "And the next big thing is Help, eight six eight, our new WhatsApp line. It connects to Claude and to Salesforce, and it needs one person to make it brilliant.",
-   "And the next big thing is our new WhatsApp line, Help eight six eight. It connects to Claude and to Salesforce, and it needs one person to make it brilliant."
+  "bwH2": [
+   "And the next big thing is our new WhatsApp line, Help eight six eight. It works with Claude, and with Salesforce, and it needs one person to make it brilliant.",
+   "And the next big thing is our new WhatsApp line, Help eight six eight. Claude is behind it, Salesforce is behind it, and it needs one person to make it brilliant."
   ]
  }
 }
