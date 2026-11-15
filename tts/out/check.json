@@ -1,17 +1,37 @@
 {
- "tts/out/adG1/01.mp3": [
+ "tts/out/bwS/01.mp3": [
   "en",
-  0.998,
-  "Let me ask you something. Does somebody else put a cap on what you earn? Not here. This is a career in insurance sales. And what you earn is decided by the work you do."
+  0.997,
+  "Every time something in this branch gets stuck, everybody calls the branch manager to fix it."
  ],
- "tts/out/adG1/02.mp3": [
+ "tts/out/bwS/02.mp3": [
   "en",
-  0.998,
-  "Here's an honest question for you. Is your income capped by somebody else? With us, it isn't. This is a career in insurance sales and what you earn is decided by the work you do."
+  0.995,
+  "That's the seat we're hiring for, here in Chiguanas. One person to keep everything we've built up and running."
  ],
- "tts/out/adG1/03.mp3": [
+ "tts/out/bwS/03.mp3": [
+  "en",
+  0.999,
+  "Everything we've built runs across five platforms and you'd learn how they fit together, the workflow and the rules behind everyone."
+ ],
+ "tts/out/bwS/04.mp3": [
+  "en",
+  0.999,
+  "And when something stuck on the server, you find out why, you fix it and you write the amendment so it doesn't happen again."
+ ],
+ "tts/out/bwS/05.mp3": [
   "en",
   0.998,
-  "Is somebody else deciding how much you can earn? Not here. This is a career in insurance sales, and your income is decided by the work you do."
+  "The branch pays for every tool with clawed right beside you. You use them every day, their skills worth putting on your CV, and you get the keys, not a request form."
+ ],
+ "tts/out/bwS/06.mp3": [
+  "en",
+  0.996,
+  "We're hiring one personal assistant here in Chiguanas. If you're the one who makes it happen, come and build with us."
+ ],
+ "tts/out/bwSalt/01.mp3": [
+  "en",
+  0.997,
+  "Whenever something in this branch gets stuck on a server, everybody calls the branch manager to fix it."
  ]
 }
