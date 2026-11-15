@@ -15,9 +15,9 @@
   },
   {
    "visual": "bwturn",
-   "eyebrow": "Guardian Life &middot; Chaguanas",
+   "eyebrow": "Ricky Rampersad Branch &middot; Chaguanas",
    "headline": "We got tired of <em>waiting too</em>",
-   "say": "We're a Guardian Life branch in Chaguanas. We got tired of waiting too."
+   "say": "This is our branch, in Chaguanas. And we got tired of waiting too."
   },
   {
    "visual": "bwstack",
@@ -70,8 +70,8 @@
   {
    "visual": "bwkeys",
    "eyebrow": "The tools",
-   "headline": "You get the keys. / <em>Not a request form</em>",
-   "say": "You'd be building with Google's own tools and Salesforce, with an AI assistant right beside you. It's all paid for, and it's already connected. You get the keys, not a request form.",
+   "headline": "Skills worth a line on your CV. / <em>The keys, not a request form</em>",
+   "say": "You'd be building with Google's own tools and Salesforce, with an AI assistant right beside you. They're skills worth putting on your CV. And you get the keys, not a request form.",
    "tools": [
     [
      "building",
@@ -101,15 +101,29 @@
   },
   {
    "visual": "bwclose",
-   "eyebrow": "One administrator's seat &middot; Chaguanas",
+   "eyebrow": "Personal assistant &middot; Ricky Rampersad Branch",
    "words3": [
     "See what we built.",
     "Tell us what you would fix.",
     "Build with us."
    ],
    "url": "rickyrampersadbranch.com/buildwithus",
-   "say": "One administrator's seat, in Chaguanas. Come and build with us.",
-   "extra": 2.2
+   "say": "We're hiring one personal assistant, here in Chaguanas. Come and build with us.",
+   "extra": 2.2,
+   "lines": [
+    [
+     "personal",
+     "One personal assistant."
+    ],
+    [
+     "Chaguanas",
+     "Chaguanas."
+    ],
+    [
+     "build",
+     "Build with us."
+    ]
+   ]
   }
  ]
 }

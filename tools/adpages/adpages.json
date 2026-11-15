@@ -20,9 +20,9 @@
       "title": "You already know how your office should run",
       "h1": "You already know how your office should run.",
       "h1em": "Nobody has given you the tools.",
-      "lede": "One administrator&rsquo;s seat, in a branch that writes and runs its own software. Half the day is the branch&rsquo;s admin. The other half is making that admin unnecessary.",
-      "desc": "One administrator's seat in a branch that writes its own software — Apps Script, Salesforce, AI. Half admin, half making the admin unnecessary. Fifty seconds.",
-      "metaDesc": "Fifty seconds on one administrator's seat in a branch that writes its own software. Chaguanas, Trinidad. Apply in fifteen minutes.",
+      "lede": "Ricky Rampersad is hiring a personal assistant, in a branch that writes and runs its own software. Half the day is the branch&rsquo;s admin. The other half is making that admin unnecessary.",
+      "desc": "Ricky Rampersad is hiring a personal assistant, in a branch that writes its own software: Apps Script, Salesforce, AI. Half admin, half making the admin unnecessary, with skills worth putting on your CV.",
+      "metaDesc": "A minute and a half on the personal assistant's seat in the Ricky Rampersad Branch, which writes its own software. Chaguanas, Trinidad. Apply in fifteen minutes.",
       "ctas": [
         { "href": "/buildwithus/", "text": "See the seat and apply &mdash; 15 min", "primary": true },
         { "href": "/buildwithus/#test", "text": "Five questions first" },
@@ -42,7 +42,7 @@
       "ctas": [
         { "href": "/joinourbranch/", "text": "See what you would be given", "primary": true },
         { "href": "/joinourbranch/#build", "text": "Tell us what is in your way" },
-        { "href": "/buildwithus/", "text": "Not a sales role? The administrator&rsquo;s seat" }
+        { "href": "/buildwithus/", "text": "Not a sales role? The personal assistant&rsquo;s seat" }
       ]
     },
     {

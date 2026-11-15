@@ -1155,7 +1155,7 @@ if MODE == 'ad':
     # ("the agent meets with the client ... not typing in front of a client. That's never"), and the journey
     # that follows is another. The guard stays — a lines file out of step with this block is the fault it
     # catches — it just knows the third shape now. A and B are still five.
-    assert len(TLINES) in (5, 7, 8, 9), len(TLINES)
+    assert len(TLINES) in (5, 7, 8, 9, 10), len(TLINES)
     LEADS = [('Retiring properly', 'asked to be called · 9:12'), ('Cover for the children', 'asked to be called · 9:40'), ('Starting a business', 'asked to be called · 10:05')]
     # 12 Nov 2026, on LIMRA's own 2025 Annual Conference deck (session 16, public PDF): "The second year,
     # commonly referred to as the 'cliff' ... Agents are on their own, without much of the support provided
@@ -1440,8 +1440,10 @@ if MODE == 'ad':
   <h1 class="h xl">{words("What most advisors", 400, cls='now')}<br><em class="wine">{words("never get.", max(700, tat(1,"never") - 300))}</em></h1>
   <div class="ffwho in" style="--t0:{tat(1,"Rajiv")}ms"><span class="ffav">R</span><span class="ffwt"><b>Follow one fact find with Rajiv</b><span>He went digital, and hasn&rsquo;t looked back</span></span></div>
 </div>""", 'data-ch="What most advisors never get"'))
-        NEED = [('Income, replaced', 600000, 'listens'), ('Debts and the mortgage', 300000, 'types'),
-                ('The children&rsquo;s education', 200000, 'needs'), ('Final expenses', 50000, 'arithmetic')]
+        # The sample figures agree across the whole film: the need adds up to the TT$2,150,000 shortfall on the
+        # manager's own screen (ffr-manager.jpg), and the plan is the draft's (ffr-draft.jpg).
+        NEED = [('Income, replaced', 1200000, 'listens'), ('Debts and the mortgage', 650000, 'types'),
+                ('The children&rsquo;s education', 250000, 'needs'), ('Final expenses', 50000, 'arithmetic')]
         _nt = tat(2, "arithmetic")
         T.append(tscene(2, 's-ffneed', f"""
 <div class="split">
@@ -1456,87 +1458,114 @@ if MODE == 'ad':
   <div class="col">
     <div class="ffneed in fl" style="--t0:{max(300, tat(2,"listens") - 300)}ms">
       <div class="ffnh"><b>Needs analysis</b><span>worked out as he types</span></div>
-      {''.join(f'<div class="ffrow" style="--t0:{tat(2,w) + k*120}ms"><span>{n}</span><i class="ffbar" style="--w:{round(v/6000)}%"></i><b>TT$<em class="cnt" data-to="{v}" data-sep data-at="{tat(2,w) + k*120}">{v:,}</em></b></div>' for k, (n, v, w) in enumerate(NEED))}
-      <div class="fftot in" style="--t0:{_nt + 400}ms"><span>The need, worked out</span><b>TT$<em class="cnt" data-to="1150000" data-sep data-at="{_nt + 400}">1,150,000</em></b></div>
+      {''.join(f'<div class="ffrow" style="--t0:{tat(2,w) + k*120}ms"><span>{n}</span><i class="ffbar" style="--w:{round(v/12000)}%"></i><b>TT$<em class="cnt" data-to="{v}" data-sep data-at="{tat(2,w) + k*120}">{v:,}</em></b></div>' for k, (n, v, w) in enumerate(NEED))}
+      <div class="fftot in" style="--t0:{_nt + 400}ms"><span>The need, worked out</span><b>TT$<em class="cnt" data-to="2150000" data-sep data-at="{_nt + 400}">2,150,000</em></b></div>
       {SAMPLE}
     </div>
   </div>
 </div>""", 'data-ch="The needs analysis"'))
-        T.append(tscene(3, 's-ffcopy', f"""
+        # 15 November 2026: "the confidential fact find when it's completed, how everything lines up. So our agent
+        # don't have to spend time to calculate. Our intelligence is built in ... a blitz when the agents input what
+        # comes and what goes to the client." What he types on one side, what the client receives on the other.
+        IN_ = [('Maya, 38', 'married, two children'), ('Income', 'TT$18,000 a month'), ('Mortgage', 'TT$650,000 left'),
+               ('Cover now', 'TT$500,000, through work'), ('Goals', 'university for both, retire at 60')]
+        OUT_ = [('Term Life', 'TT$1,500,000', 'replaces her income'), ('Education Plan', 'TT$250,000', 'the children&rsquo;s university'),
+                ('Critical Illness', 'TT$300,000', 'if she is seriously ill')]
+        _bi, _bo = tat(3, "puts"), tat(3, "client")
+        T.append(tscene(3, 's-ffblitz', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">The confidential fact find, complete</p>
+  <h2 class="h l">{words("Everything lines up.", max(300, tat(3,"lines") - 600), 95)} <em class="wine">{words("Nothing to calculate.", max(800, tat(3,"calculate") - 700), 95)}</em></h2>
+  <div class="ffbz">
+    <div class="ffbzc">
+      <p class="ffbzh in" style="--t0:{_bi - 300}ms">What Rajiv puts in</p>
+      {''.join(f'<div class="ffin" style="--t0:{_bi + k*170}ms"><b>{n}</b><span>{v}</span></div>' for k, (n, v) in enumerate(IN_))}
+    </div>
+    <div class="ffbzm in" style="--t0:{_bi + 500}ms"><i></i><i></i><i></i><span>calculated<br>for him</span></div>
+    <div class="ffbzc">
+      <p class="ffbzh in" style="--t0:{_bo - 300}ms">What the client gets</p>
+      {''.join(f'<div class="ffout" style="--t0:{_bo + k*260}ms"><b>{n}</b><em>{v}</em><span>{d}</span></div>' for k, (n, v, d) in enumerate(OUT_))}
+      <div class="ffout tot" style="--t0:{_bo + 900}ms"><b>Premium</b><em>TT$835 a month</em><span>21% of her monthly surplus</span></div>
+    </div>
+  </div>
+  <div class="pill-row ffbzp"><span class="ypill in" style="--t0:{tat(3,"intelligence")}ms"><svg class="ic"><use href="#i-spark"/></svg>The intelligence is built in</span></div>
+  {SAMPLE}
+</div>""", 'data-ch="Everything lines up"'))
+        T.append(tscene(4, 's-ffcopy', f"""
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Step two &middot; finished</p>
-    <h2 class="h l">{words("His own copy.", max(300, tat(3,"copy") - 600), 95)} <em class="wine">{words("His manager, told at once.", max(700, tat(3,"manager") - 500), 95)}</em></h2>
-    <div class="pill-row"><span class="ypill in" style="--t0:{tat(3,"alone")}ms">Nobody here works alone</span></div>
+    <h2 class="h l">{words("His own copy.", max(300, tat(4,"copy") - 600), 95)} <em class="wine">{words("His manager, told at once.", max(700, tat(4,"manager") - 500), 95)}</em></h2>
+    <div class="pill-row"><span class="ypill in" style="--t0:{tat(4,"alone")}ms">Nobody here works alone</span></div>
   </div>
-  <div class="col">{card('ffr-copy.jpg', A, max(300, tat(3,"finished") - 200), 'In Rajiv&rsquo;s inbox the moment he submits', 'tall pan')}</div>
+  <div class="col">{card('ffr-copy.jpg', A, max(300, tat(4,"finished") - 200), 'In Rajiv&rsquo;s inbox the moment he submits', 'tall pan')}</div>
 </div>""", 'data-ch="His copy, his manager told"'))
-        T.append(tscene(4, 's-ffclient', f"""
+        T.append(tscene(5, 's-ffclient', f"""
 <div class="full center">
   <p class="eye in" style="--t0:200ms">Step three &middot; the client</p>
-  <h2 class="h l">{words("Is this right?", max(300, tat(4,"right") - 600), 95)} <em class="wine">{words("They read it, and agree.", max(700, tat(4,"agree") - 900), 95)}</em></h2>
+  <h2 class="h l">{words("Is this right?", max(300, tat(5,"right") - 600), 95)} <em class="wine">{words("They read it, and agree.", max(700, tat(5,"agree") - 900), 95)}</em></h2>
   <div class="ffphones">
-    {card('ffr-draft.jpg', A, tat(4,"draft"), 'A draft, in plain words', 'ph pan', 480)}
-    {card('ff/04-client-approval-page.jpg', W, tat(4,"scroll"), 'They scroll through, and agree', 'ph pan', 480)}
-    {card('ffr-sign.jpg', A, tat(4,"sign"), 'Signed, and the advice rated', 'ph', 480)}
+    {card('ffr-draft.jpg', A, tat(5,"draft"), 'A draft, in plain words', 'ph pan', 480)}
+    {card('ff/04-client-approval-page.jpg', W, tat(5,"scroll"), 'They scroll through, and agree', 'ph pan', 480)}
+    {card('ffr-sign.jpg', A, tat(5,"sign"), 'Signed, and the advice rated', 'ph', 480)}
   </div>
 </div>""", 'data-ch="The client reads it, and agrees"'))
-        T.append(tscene(5, 's-ffmgr', f"""
+        T.append(tscene(6, 's-ffmgr', f"""
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Step four &middot; only then</p>
-    <h2 class="h l">{words("Then the manager", max(300, tat(5,"manager") - 700), 95)} <em class="wine">{words("signs it off.", max(700, tat(5,"signs") - 300), 95)}</em></h2>
+    <h2 class="h l">{words("Then the manager", max(300, tat(6,"manager") - 700), 95)} <em class="wine">{words("signs it off.", max(700, tat(6,"signs") - 300), 95)}</em></h2>
     <div class="ffchips">
-      <span class="ffchip in" style="--t0:{tat(5,"comment")}ms"><svg class="ic"><use href="#i-chat"/></svg>Signed off, with a comment</span>
-      <span class="ffchip in" style="--t0:{tat(5,"team")}ms"><svg class="ic"><use href="#i-users"/></svg>The Branch Manager and the team see every one</span>
+      <span class="ffchip in" style="--t0:{tat(6,"comment")}ms"><svg class="ic"><use href="#i-chat"/></svg>Signed off, with a comment</span>
+      <span class="ffchip in" style="--t0:{tat(6,"team")}ms"><svg class="ic"><use href="#i-users"/></svg>The Branch Manager and the team see every one</span>
     </div>
   </div>
   <div class="col ffstack">
-    {card('ffr-manager.jpg', A, max(300, tat(5,"manager") - 200), 'The manager&rsquo;s sign-off, held until the client agrees')}
-    {card('ff-branch.jpg', A, tat(5,"team"), 'What the branch sees, every fact find')}
+    {card('ffr-manager.jpg', A, max(300, tat(6,"manager") - 200), 'The manager&rsquo;s sign-off, held until the client agrees')}
+    {card('ff-branch.jpg', A, tat(6,"team"), 'What the branch sees, every fact find')}
   </div>
 </div>""", 'data-ch="The manager signs it off"'))
-        T.append(tscene(6, 's-ffnudge', f"""
+        T.append(tscene(7, 's-ffnudge', f"""
 <div class="full center">
   <p class="eye in" style="--t0:200ms">The reminders</p>
   <h2 class="h l"><em class="wine">{words("Nothing slips.", 300, 95)}</em></h2>
   <div class="ff3">
-    {card('ffr-close.jpg', A, tat(6,"reminder"), 'To Rajiv: did they close?')}
-    {card('ffr-unsent.jpg', A, tat(6,"inbox"), 'To Rajiv: started, never sent')}
-    {card('jr/4-delivered.jpg', W, tat(6,"client"), 'To the client: confirmed in writing')}
+    {card('ffr-close.jpg', A, tat(7,"reminder"), 'To Rajiv: did they close?')}
+    {card('ffr-unsent.jpg', A, tat(7,"inbox"), 'To Rajiv: started, never sent')}
+    {card('jr/4-delivered.jpg', W, tat(7,"client"), 'To the client: confirmed in writing')}
   </div>
-  <small class="cjs in" style="--t0:{tat(6,"client") + 500}ms">Our own screens, built in this branch &middot; sample names and figures</small>
+  <small class="cjs in" style="--t0:{tat(7,"client") + 500}ms">Our own screens, built in this branch &middot; sample names and figures</small>
 </div>""", 'data-ch="Nothing slips"'))
         REC = [('Advice explained', 'in plain words'), ('Client confirmed', 'read, agreed, signed'), ('Manager signed', 'with a comment'),
                ('On file', 'every step, dated'), ('Reviewed for life', 'six months and birthdays')]
-        _r0, _r1 = tat(7, "step"), tat(7, "conduct")
+        _r0, _r1 = tat(8, "step"), tat(8, "conduct")
         _rs = max(350, (_r1 - _r0) // len(REC))
-        T.append(tscene(7, 's-ffrec', f"""
+        T.append(tscene(8, 's-ffrec', f"""
 <div class="full center">
-  <div class="ffshield in" style="--t0:{tat(7,"protects")}ms"><svg class="ic"><use href="#i-shield"/></svg></div>
+  <div class="ffshield in" style="--t0:{tat(8,"protects")}ms"><svg class="ic"><use href="#i-shield"/></svg></div>
   <p class="eye in" style="--t0:200ms">Market conduct, built in</p>
-  <h2 class="h l">{words("On the record.", max(300, tat(7,"record") - 500), 95)} <em class="wine">{words("Protected.", tat(7,"protects"), 95)}</em></h2>
+  <h2 class="h l">{words("On the record.", max(300, tat(8,"record") - 500), 95)} <em class="wine">{words("Protected.", tat(8,"protects"), 95)}</em></h2>
   <div class="cgrail">
     {''.join(f'<div class="cgstep in" style="--t0:{_r0 + 200 + k*_rs}ms"><i>{k+1}</i><b>{nm}</b><span>{sub}</span></div>' for k, (nm, sub) in enumerate(REC))}
   </div>
-  <p class="sub in" style="--t0:{tat(7,"protects", 1)}ms">It protects your client. And it protects you.</p>
+  <p class="sub in" style="--t0:{tat(8,"protects", 1)}ms">It protects your client. And it protects you.</p>
 </div>""", 'data-ch="On the record, protected"'))
-        T.append(tscene(8, 's-ffbuild', f"""
+        T.append(tscene(9, 's-ffbuild', f"""
 <div class="split">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Who built it</p>
-    <h2 class="h l"><span class="cnt" data-to="35" data-at="{tat(8,"thirty-five")}">35</span> {words("years in.", tat(8,"thirty-five"), 95)} <em class="wine">{words("Then he built the system.", max(700, tat(8,"stepped") - 700), 95)}</em></h2>
+    <h2 class="h l"><span class="cnt" data-to="35" data-at="{tat(9,"thirty-five")}">35</span> {words("years in.", tat(9,"thirty-five"), 95)} <em class="wine">{words("Then he built the system.", max(700, tat(9,"stepped") - 700), 95)}</em></h2>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:{tat(8,"Court")}ms">Court of the Table</span>
-      <span class="ypill in" style="--t0:{tat(8,"Top")}ms">Top of the Table</span>
+      <span class="ypill in" style="--t0:{tat(9,"Court")}ms">Court of the Table</span>
+      <span class="ypill in" style="--t0:{tat(9,"Top")}ms">Top of the Table</span>
     </div>
   </div>
   <div class="col">
-    <div class="ffbio in fl" style="--t0:{max(300, tat(8,"Branch") - 200)}ms">
+    <div class="ffbio in fl" style="--t0:{max(300, tat(9,"Branch") - 200)}ms">
       <div class="ffbh"><span class="ffav big">RR</span><span><b>Ricky Rampersad</b><span>Branch Manager &middot; Guardian Life of the Caribbean</span></span></div>
-      <div class="ffbl in" style="--t0:{tat(8,"stepped")}ms"><svg class="ic"><use href="#i-grid"/></svg><span><b>For the administration</b>the desks, the Log Book, the transmittal</span></div>
-      <div class="ffbl in" style="--t0:{tat(8,"stepped") + 600}ms"><svg class="ic"><use href="#i-target"/></svg><span><b>For every advisor</b>the fact find, the reminders, the coaching</span></div>
-      <div class="ffbl hi in" style="--t0:{tat(8,"succeed")}ms"><svg class="ic"><use href="#i-up"/></svg><span><b>So every advisor here can succeed</b></span></div>
+      <div class="ffbl in" style="--t0:{tat(9,"stepped")}ms"><svg class="ic"><use href="#i-grid"/></svg><span><b>For the administration</b>the desks, the Log Book, the transmittal</span></div>
+      <div class="ffbl in" style="--t0:{tat(9,"stepped") + 600}ms"><svg class="ic"><use href="#i-target"/></svg><span><b>For every advisor</b>the fact find, the reminders, the coaching</span></div>
+      <div class="ffbl hi in" style="--t0:{tat(9,"succeed")}ms"><svg class="ic"><use href="#i-up"/></svg><span><b>So every advisor here can succeed</b></span></div>
     </div>
   </div>
 </div>""", 'data-ch="Who built it"'))
@@ -3468,6 +3497,42 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .ffwt b{font-size:calc(var(--u)*2.5)}.ffwt span{font-size:calc(var(--u)*1.9)}
   .ffrow{font-size:calc(var(--u)*1.95)}.ffrow b{font-size:calc(var(--u)*2.2)}
   .ffbl{font-size:calc(var(--u)*1.95)}.ffbl b{font-size:calc(var(--u)*2.15)}
+}
+
+/* the blitz: what goes in, what the client gets */
+.ffbz{display:grid;grid-template-columns:1fr auto 1fr;gap:calc(var(--u)*2.4);align-items:center;width:min(100%,calc(var(--u)*104));margin:calc(var(--u)*2.4) auto 0;text-align:left}
+.ffbzc{display:grid;gap:calc(var(--u)*.9);min-width:0}
+.ffbzh{font:700 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aL)}
+.ffin{display:flex;justify-content:space-between;gap:1em;align-items:baseline;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:calc(var(--u)*1);padding:.6em .9em;font:500 calc(var(--u)*1.9)/1.2 var(--text);color:var(--mute);opacity:0;transform:translateX(calc(var(--u)*-6))}
+.ffin b{color:var(--ink);font-weight:700}
+.scene.act .ffin{animation:ffzip .45s var(--out) both;animation-delay:var(--t0)}
+@keyframes ffzip{60%{opacity:1}to{opacity:1;transform:none}}
+.ffout{display:grid;grid-template-columns:1fr auto;gap:.15em 1em;background:#fff;color:#0d3f5e;border-radius:calc(var(--u)*1.1);padding:.7em 1em;box-shadow:0 calc(var(--u)*1.2) calc(var(--u)*3) rgba(4,14,26,.45);opacity:0;transform:scale(.8)}
+.ffout b{font:800 calc(var(--u)*2.1)/1.1 var(--display)}
+.ffout em{font:800 calc(var(--u)*2.1)/1.1 var(--display);font-style:normal;color:#00728d;text-align:right;font-variant-numeric:tabular-nums}
+.ffout span{grid-column:1/-1;font:500 calc(var(--u)*1.6)/1.2 var(--text);color:#5b6670}
+.ffout.tot{background:linear-gradient(135deg,var(--a),var(--aD));color:#fff}
+.ffout.tot em{color:#fff}.ffout.tot span{color:rgba(255,255,255,.85)}
+.scene.act .ffout{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.ffbzm{display:grid;justify-items:center;gap:calc(var(--u)*.8);color:var(--aL);font:700 calc(var(--u)*1.6)/1.2 var(--text);text-align:center;letter-spacing:.06em;text-transform:uppercase}
+.ffbzm i{display:block;width:calc(var(--u)*7);height:2px;background:linear-gradient(90deg,transparent,var(--aL),transparent);opacity:.35}
+.scene.act .ffbzm i{animation:ffflow 1.1s linear infinite;animation-delay:calc(var(--t0) + var(--d,0ms))}
+.ffbzm i:nth-child(2){--d:180ms}.ffbzm i:nth-child(3){--d:360ms}
+@keyframes ffflow{0%{opacity:.2;transform:translateX(-30%)}50%{opacity:1}100%{opacity:.2;transform:translateX(30%)}}
+.ffbzp{justify-content:center;margin-top:calc(var(--u)*2)}
+@media (orientation:portrait){
+  .ffbz{grid-template-columns:1fr;gap:calc(var(--u)*1.6);width:100%}
+  .ffbzm{grid-auto-flow:column;align-items:center}
+  .ffbzm i{width:calc(var(--u)*4)}
+  .ffin{font-size:calc(var(--u)*2.5)}.ffout b,.ffout em{font-size:calc(var(--u)*2.7)}.ffout span{font-size:calc(var(--u)*2.1)}
+  .ffbzh{font-size:calc(var(--u)*2.2)}
+}
+@media (aspect-ratio:1/1){
+  .ffbz{grid-template-columns:1fr auto 1fr;gap:calc(var(--u)*1.6);width:100%}
+  .ffbzm{grid-auto-flow:row}.ffbzm i{width:calc(var(--u)*5)}
+  .ffin{font-size:calc(var(--u)*1.75);padding:.5em .8em}.ffout{padding:.55em .85em}
+  .ffout b,.ffout em{font-size:calc(var(--u)*1.95)}.ffout span{font-size:calc(var(--u)*1.5)}
+  .s-ffblitz .h.l{font-size:calc(var(--u)*5.2)}
 }
 </style>
 </head>
