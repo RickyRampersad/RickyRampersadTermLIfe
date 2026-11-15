@@ -3,15 +3,9 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "adFb": [
-   "When the confidential fact find is complete, everything lines up. What Rajiv puts in on one side, what the client gets on the other, and nothing for him to calculate. The intelligence is built in.",
-   "When the confidential fact find is done, everything lines up. What Rajiv puts in on one side, what the client gets on the other, and nothing for him to calculate. The intelligence is built in."
-  ],
-  "bwPA": [
-   "This is our branch, in Chaguanas. And we got tired of waiting too.",
-   "You'd be building with Google's own tools and Salesforce, with an AI assistant right beside you. They're skills worth putting on your CV. And you get the keys, not a request form.",
-   "We're hiring one personal assistant, here in Chaguanas. Come and build with us.",
-   "We're hiring one personal assistant, right here in Chaguanas. Come and build with us."
+  "adFb2": [
+   "When the confidential fact find is complete, everything lines up. Everything Rajiv enters on one side, what the client gets on the other, and nothing for him to calculate. The intelligence is built in.",
+   "When the confidential fact find is complete, everything lines up. What Rajiv types in on one side, what the client gets on the other, and nothing for him to calculate. The intelligence is built in."
   ]
  }
 }
