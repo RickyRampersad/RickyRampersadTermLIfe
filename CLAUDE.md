@@ -6060,6 +6060,40 @@ than trusting that the command had run. Two rules: **rebuild the assets in the f
 only the render**, and **after rebuilding a timed asset, read its duration — not the exit code.** Same
 family as the stale `rendered.mp4`, one stage earlier in the chain.
 
+### Every recruiting film re-voiced in one session, and the fact find film — 15 November 2026
+
+Asked for in these words: *"Horrible with Andrew voice you are fucking it up!!!"*, then *"He is not he saying.
+Google app script like a fucking robot"*, then, shown five voices, *"I like Andrew and we need to fix it"*.
+
+**Keep Andrew Expressive (`en-US-AndrewMultilingualNeural`, +0%). Fix the script, not the voice.** He turned down
+plain Andrew on 21 October and Christopher on 15 November; the robotic quality came from what was read:
+- **a list of product names** ("Google Apps Script. Salesforce. An AI agent on WhatsApp.") — never voice one; the
+  names go on screen, the voice says "Google's own tools and Salesforce, with an AI assistant beside you";
+- **"You are", "There is", "it is"** — contractions throughout;
+- **"fourteen in a hundred"** comes back "14 and 100" — say "fourteen out of every hundred";
+- **the spoken address** mangles "Rampersad" — the close now says "Go to the link on your screen", and the
+  closing card (address, button, QR) cues **2.4 s before "Go"** (`max(300, tat(CTA,"Go") - 2400)`), so the QR is
+  up for several seconds rather than the last one;
+- **a line spliced in from another session sounds different** — re-voice a whole film in one job, never one line.
+
+Words this voice still gets wrong, each fixed by re-wording, never retried: "an insurer's invoice" → "and ensures"
+("every invoice from the insurer"); "works itself out" → "worse" ("does the arithmetic"); "adds a comment" →
+"add to comment"; "Court of the Table" → "quarter table" (only "He's qualified for the Court of the Table" read
+clean); "fact find with" → "fact fine" (carry on with a comma). "Rajiv" transcribes as "Rajeev": same sound.
+
+**The administrator film on the site is the 86-second board-look cut** (`tools/film/bwadmin-lines.json`, 12 lines,
+`build-boardfilm.py bwadmin`), not the 8-line engine cut in the scratchpad's `film/`. Its `film-f`/`film-v` are the
+older look and are not offered. After `importvox.py`, add the top-level ms `words` key before the build.
+
+**The fact find film** (`agentmgt/ad-f.html`, `ad-f-square.mp4`, `ad-f-story.mp4`, 86.7 s, `RECRUIT_AD=F`): *"the
+heart and soul of our operation ... show the draft ... the automatic motion of the needs analysis ... when the client
+approves ... when it goes back to the manager ... the automated reminder"*. Followed with **Rajiv by name, at the
+Branch Manager's word** (check with Rajiv before it is public); the client (Maya) and every figure are sample data.
+The screens are **cropped copies** in `agentmgt/img/ffr-*.jpg`, so no e-mail header names another advisor and nothing
+negative sits beside a real colleague's name. **His credentials are named here at his own word** (Court of the Table
+and Top of the Table, thirty-five years in the business): that reverses the 28 October "remove MDRT" for this film
+only, and the other recruiting films still carry no title.
+
 ### Which ad brought them — 13 November 2026
 
 Asked for in these words: *"where is the link to click and when they scan what happens how is it profiled?"*
