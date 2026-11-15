@@ -1,12 +1,37 @@
 {
- "tts/out/bwH2/01.mp3": [
+ "tts/out/adG/02.mp3": [
   "en",
-  0.997,
-  "And the next big thing is our new WhatsApp line, help 868. It works with Clawed and with Sales Force, and it needs one person to make it brilliant."
+  0.995,
+  "New to sales, you're trained and coached before you're contracted. Already an advisor, you get the tools you never had."
  ],
- "tts/out/bwH2/02.mp3": [
+ "tts/out/adG/03.mp3": [
   "en",
   0.997,
-  "And the next big thing is our new WhatsApp line, help 868. Clawed is behind it, Salesforce is behind it, and it needs one person to make it brilliant."
+  "Your own market comes first and we make sure your leads never run dry. You get a coach, not a clock."
+ ],
+ "tts/out/adG/04.mp3": [
+  "en",
+  0.998,
+  "Our digital tools do the arithmetic, the paperwork and the reminders, so your time goes to your clients."
+ ],
+ "tts/out/adG/05.mp3": [
+  "en",
+  0.996,
+  "Across the industry, 14 out of every 100 advisors are still there at year 4. Here, it's 31."
+ ],
+ "tts/out/adG/06.mp3": [
+  "en",
+  0.995,
+  "There are seven places this year. Go to the link on your screen. Applying takes two minutes."
+ ],
+ "tts/out/adGalt/01.mp3": [
+  "en",
+  0.996,
+  "Is it paid cap by somebody else? Here it isn't. This is a career in insurance sales, and what you earn is decided by the work you do."
+ ],
+ "tts/out/adGalt/02.mp3": [
+  "en",
+  0.997,
+  "Across the industry, 14 out of every 100 advisors are still there at year 4. In this branch, the number is 31."
  ]
 }
