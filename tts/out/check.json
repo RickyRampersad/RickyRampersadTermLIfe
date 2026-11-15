@@ -1,27 +1,12 @@
 {
- "tts/out/adFb/01.mp3": [
-  "en",
-  0.997,
-  "When a confidential fact find is complete, everything lines up. What Rajeev puts it on one side, what the client gets on the other, and nothing for him to calculate. The intelligence is built in."
- ],
- "tts/out/adFb/02.mp3": [
+ "tts/out/adFb2/01.mp3": [
   "en",
   0.996,
-  "When a confidential fact find is done, everything lines up. What Rajeev puts it on one side, what the client gets on the other, and nothing for him to calculate. The intelligence is built in."
+  "When the confidential fact find is complete, everything lines up. Everything Rajeev enters on one side. What the client gets on the other and nothing for him to calculate. The intelligence is built in."
  ],
- "tts/out/bwPA/01.mp3": [
+ "tts/out/adFb2/02.mp3": [
   "en",
-  0.994,
-  "This is our branch in Chaguanas, and we got tired of waiting too."
- ],
- "tts/out/bwPA/02.mp3": [
-  "en",
-  0.997,
-  "You'll be building with Google's own tools and sales force with an AI assistant right beside you. There's skills worth putting on your CV and you get the keys, not a request form."
- ],
- "tts/out/bwPA/03.mp3": [
-  "en",
-  0.994,
-  "We're hiring one personal assistant here in Chaguanas. Come and build with us."
+  0.996,
+  "When the confidential fact find is complete, everything lines up. What Rajiv types it on one side, what the client gets on the other, and nothing for him to calculate. The intelligence is built in."
  ]
 }
