@@ -3,35 +3,29 @@
  "rate": "+0%",
  "check": true,
  "voices": {
-  "jolly_andrew": "en-US-AndrewMultilingualNeural",
-  "jolly_brian": "en-US-BrianMultilingualNeural",
-  "jolly_guy": "en-US-GuyNeural",
-  "jolly_william": "en-AU-WilliamMultilingualNeural"
+  "jolly2_andrew": "en-US-AndrewMultilingualNeural",
+  "jolly2_brian": "en-US-BrianMultilingualNeural",
+  "jolly2_william": "en-AU-WilliamMultilingualNeural"
  },
  "rates": {
-  "jolly_andrew": "+8%",
-  "jolly_brian": "+10%",
-  "jolly_guy": "+6%",
-  "jolly_william": "+8%"
+  "jolly2_andrew": "+8%",
+  "jolly2_brian": "+10%",
+  "jolly2_william": "+8%"
  },
  "pitches": {
-  "jolly_andrew": "-4Hz",
-  "jolly_brian": "-4Hz",
-  "jolly_guy": "-2Hz",
-  "jolly_william": "-4Hz"
+  "jolly2_andrew": "-4Hz",
+  "jolly2_brian": "-4Hz",
+  "jolly2_william": "-4Hz"
  },
  "films": {
-  "jolly_andrew": [
-   "Ho! Ho! Ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
+  "jolly2_andrew": [
+   "Ho, ho, ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
   ],
-  "jolly_brian": [
-   "Ho! Ho! Ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
+  "jolly2_brian": [
+   "Ho, ho, ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
   ],
-  "jolly_guy": [
-   "Ho! Ho! Ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
-  ],
-  "jolly_william": [
-   "Ho! Ho! Ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
+  "jolly2_william": [
+   "Ho, ho, ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
   ]
  }
 }
