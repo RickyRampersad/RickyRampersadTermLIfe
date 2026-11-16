@@ -42,15 +42,20 @@ TIMING = HERE / (KEY + '-timing.json')
 def b64(p, mime):
     return 'data:%s;base64,%s' % (mime, base64.b64encode(pathlib.Path(p).read_bytes()).decode())
 
+def _path(name):
+    """A screen by its shooter's PNG name; the repository keeps it as a JPEG of the same name."""
+    for p in (SHOTS / name, (SHOTS / name).with_suffix('.jpg')):
+        if p.exists():
+            return p
+    sys.exit('MISSING SCREEN: %s (looked in %s)' % (name, SHOTS))
+
 _cache = {}
 def img(name):
     """A screen, as a JPEG data URI no wider than it is ever drawn (a 1688px phone shot is shown 300px wide at
        1.5x zoom), so the page stays small enough to render quickly."""
     if name in _cache:
         return _cache[name]
-    p = SHOTS / name
-    if not p.exists():
-        sys.exit('MISSING SCREEN: %s (looked in %s)' % (name, SHOTS))
+    p = _path(name)
     from PIL import Image
     im = Image.open(p).convert('RGB')
     cap = 1500 if name.startswith('s') else 900
@@ -100,7 +105,7 @@ def _size(name):
     if b and b.get('w'):
         return b['w'], b['h']
     from PIL import Image
-    return Image.open(SHOTS / name).size
+    return Image.open(_path(name)).size
 
 def _box(name, label):
     els = (BOXES.get(name) or {}).get('els') or {}
@@ -148,7 +153,7 @@ def cam(name, n, vw, vh, moves=(), taps=(), marks=()):
     return ('<div class="vp" style="width:%dpx;height:%dpx"><div class="zl" style="width:%dpx;%s">'
             '<img src="%s" alt="" style="width:%dpx">%s</div></div>' % (vw, vh, vw, anim, img(name), vw, inner))
 
-def phone(name, cls='', d=0.0, n=0, moves=(), taps=(), marks=(), w=268):
+def phone(name, cls='', d=0.0, n=0, moves=(), taps=(), marks=(), w=232):
     iw, ih = _size(name)
     vh = min(round(w * ih / iw), round(w * 2.165))
     return '<div class="phone %s" style="--kd:%.2fs">%s%s</div>' % (cls, d, cam(name, n, w, vh, moves, taps, marks), TAG)
@@ -241,7 +246,8 @@ def client():
         '<div class="pair">' + chip('All in one place', at(2, 'place')) + chip('Always up to date', at(2, 'date')) + '</div>'
         '<div class="strike" style="--kd:%.2fs">No more <s style="--kd:%.2fs">chasing us</s> for answers.</div>'
         % (at(2, 'No'), at(2, 'chasing')),
-        phone('c02-items.png', d=.3)))
+        phone('c02-items.png', d=.3, n=2, moves=((at(2, 'place'), 'hero', 1.22), (at(2, 'chasing'), 'pending', 1.2))),
+        'ph'))
     # 3 ------------------------------------------------------------------------------------- the Monday report
     sc.append(split(3,
         eb('Every Monday') +
@@ -264,7 +270,11 @@ def client():
         chip('Your service items', at(4, 'service'), 'tab') + chip('Your billing', at(4, 'billing'), 'tab') +
         chip('Your people', at(4, 'people'), 'tab') + '</div>'
         '<div class="note" style="--kd:%.2fs">Sign in with your list bill and the code in our letter.</div>' % at(4, 'secure'),
-        '<div class="duo">%s%s</div>' % (phone('c01-signin.png', 'back', .2, n=4, w=236), phone('c02-items.png', 'front', at(4, 'service'))),
+        '<div class="duo">%s%s</div>' % (
+            phone('c01-signin.png', 'back', .2, n=4, w=200, taps=((at(4, 'secure'), 'signin'),)),
+            phone('c02-items.png', 'front', at(4, 'service', lead=.4), n=4,
+                  moves=((at(4, 'service', lead=.3), 'tab-billing', 1.35),),
+                  taps=((at(4, 'service'), 'tab-items'), (at(4, 'billing'), 'tab-billing'), (at(4, 'people'), 'tab-people')))),
         'wide2'))
     # 5 --------------------------------------------------------------------------------------------- billing
     sc.append(split(5,
@@ -272,7 +282,9 @@ def client():
         '<div class="big" style="--kd:%.2fs">26<sup>th</sup></div>' % at(5, 'twenty') +
         row('check', 'Checked against our records', at(5, 'checked'), '', 'ok') +
         row('doc', 'One clear statement of what&rsquo;s due', at(5, 'statement'), 'and any earlier bill still unpaid'),
-        phone('c06-billing.png', d=.3)))
+        phone('c06-billing.png', d=.3, n=5, moves=((at(5, 'checked'), 'total', 1.3), (at(5, 'statement'), 'grand', 1.3)),
+              marks=((at(5, 'statement') + .4, 'grand'),)),
+        'ph'))
     # 6 ---------------------------------------------------------------------------------------------- people
     sc.append(split(6,
         eb('Your people') +
@@ -283,7 +295,10 @@ def client():
         '<div class="note" style="--kd:%.2fs">%s and with who has it on our team.</div>'
         % (at(6, 'plans'), ICON['users'], at(6, 'came'), ICON['user'], at(6, 'pending'), ICON['clock'],
            at(6, 'team'), ICON['shield'].replace('<svg', '<svg class="ni"')),
-        phone('c08-people.png', d=.3)))
+        phone('c08-people.png', d=.3, n=6, taps=((at(6, 'plans'), 'dropdown'),),
+              moves=((at(6, 'pending'), 'first-card', 1.15), (at(6, 'team', lead=.3), 'who-has-it', 1.35)),
+              marks=((at(6, 'team'), 'who-has-it'),)),
+        'ph'))
     # 7 ------------------------------------------------------------------------------------------- coming up
     sc.append(split(7,
         eb('Coming up for your people') +
@@ -291,21 +306,30 @@ def client():
         row('cake', 'Turning sixty-five', at(7, 'sixty'), 'the group cover ends: we help them convert') +
         row('grad', 'A dependent comes of age', at(7, 'dependent'), 'and moves off the family plan') +
         row('sun', 'Close to retiring', at(7, 'retiring'), 'on your company pension'),
-        card('c04-coming-up-card.png', d=.4), 'wide'))
+        card('c04-coming-up-card.png', d=.4, n=7,
+             moves=((at(7, 'sixty'), 'row-65', 1.15), (at(7, 'dependent'), 'row-dependent', 1.15), (at(7, 'retiring'), 'row-retire', 1.15)),
+             marks=((at(7, 'sixty') + .5, 'row-65'), (at(7, 'dependent') + .5, 'row-dependent'), (at(7, 'retiring') + .5, 'row-retire'))),
+        'wide'))
     # 8 -------------------------------------------------------------------------------------- joining or leaving
     sc.append(split(8,
         eb('Someone joining or leaving?') +
         '<h2>%s</h2>' % kin('Tell us right there.', at(8, 'Tell')) +
         row('doc', 'The form fills itself in', at(8, 'fills'), 'Guardian&rsquo;s own form, from our records', 'ok') +
         row('check', 'We follow it through to the end', at(8, 'end'), 'and you see where it stands', 'ok'),
-        '<div class="duo">%s%s</div>' % (phone('c09-person-msg.png', 'back', .2, n=8, w=236), phone('c10-form.png', 'front', at(8, 'form'))),
+        '<div class="duo">%s%s</div>' % (
+            phone('c09-person-msg.png', 'back', .2, n=8, w=200, taps=((at(8, 'there'), 'send'),)),
+            phone('c10b-form-pdf.png', 'front', at(8, 'form', lead=.5), n=8, moves=((at(8, 'fills'), 'pdf-page1', 1.15),))),
         'wide2'))
     # 9 ---------------------------------------------------------------------------------------------- the stars
     sc.append(split(9,
         eb('Rate us') + stars(at(9, 'five')) +
         '<div class="note big2" style="--kd:%.2fs">Every week, on your service page.</div>' % at(9, 'week') +
         '<div class="callout" style="--kd:%.2fs">And on every bill, rate <b>the person who looks after your account</b>.</div>' % at(9, 'bill'),
-        card('c07-billing-rate-card.png', d=at(9, 'bill', lead=.3)), 'wide'))
+        '<div class="duo">%s%s</div>' % (
+            phone('c05-rate.png', 'back', .2, n=9, w=200, taps=((at(9, 'five'), 'star5'),)),
+            phone('c07-billing-rate.png', 'front', at(9, 'bill', lead=.3), n=9,
+                  moves=((at(9, 'person'), 'manager-name', 1.3),), taps=((at(9, 'account'), 'star5'),))),
+        'wide2'))
     # 10 --------------------------------------------------------------------------------------- the named team
     nodes = (('Your account manager', 'looks after your group', 'a', at(10, 'named')),
              ('Branch Manager&rsquo;s Assistant', 'oversees every task', 'b', at(10, 'named') + .25),
@@ -512,10 +536,10 @@ h2{font-size:38px;font-weight:600;line-height:1.16;letter-spacing:-.5px;margin-b
 @keyframes bob{from{translate:0 0}to{translate:0 -10px}}
 .tag{position:absolute;right:8px;bottom:8px;font-size:9px;font-weight:600;color:#fff;background:rgba(20,32,51,.78);
   padding:3px 8px;border-radius:99px;letter-spacing:.2px}
-.duo{position:relative;width:470px;height:560px}
+.duo{position:relative;width:470px;height:520px}
 .duo .phone{position:absolute}
 .duo .back{left:0;top:0;opacity:.9}
-.duo .front{right:0;bottom:-6px}
+.duo .front{right:0;bottom:0}
 .duo .back .vp{filter:saturate(.8)}
 .duo.l{width:560px;height:440px}
 .duo.l .lap{position:absolute}
@@ -683,14 +707,14 @@ body.port,body.port html{width:720px;height:1280px}
 body.port #stage{width:720px;height:1280px}
 body.port #strip{display:none}
 body.port .sc,body.port .in{width:720px;height:1280px}
-body.port .in{padding:110px 44px 300px;align-items:flex-start}
-body.port .mid{margin-top:150px}
+body.port .in{padding:96px 44px 420px;align-items:flex-start}
+body.port .mid{margin-top:120px}
 body.port .split{flex-direction:column;gap:26px;align-items:stretch}
 body.port .split .R,body.port .sc.wide .R,body.port .sc.wide2 .R{flex:none}
 body.port h1{font-size:50px}body.port h2{font-size:36px}
-body.port .phone{zoom:1.12}
-body.port .duo{width:520px;height:600px;margin:0 auto}
-body.port .cardshot{zoom:1.03}
+body.port .phone{zoom:.92}
+body.port .duo{width:470px;height:520px;margin:0 auto;zoom:.92}
+body.port .cardshot{zoom:.9}
 body.port .mail{width:560px}
 body.port .net{transform:scale(.72);transform-origin:top center;width:900px;margin-left:-134px}
 body.port .clock{font-size:76px}body.port .big{font-size:110px}
