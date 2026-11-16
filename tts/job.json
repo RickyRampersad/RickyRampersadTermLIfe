@@ -3,29 +3,35 @@
  "rate": "+0%",
  "check": true,
  "voices": {
-  "jolly2_andrew": "en-US-AndrewMultilingualNeural",
-  "jolly2_brian": "en-US-BrianMultilingualNeural",
-  "jolly2_william": "en-AU-WilliamMultilingualNeural"
+  "up_andrew": "en-US-AndrewMultilingualNeural",
+  "up_brian": "en-US-BrianMultilingualNeural",
+  "up_guy": "en-US-GuyNeural",
+  "up_william": "en-AU-WilliamMultilingualNeural"
  },
  "rates": {
-  "jolly2_andrew": "+8%",
-  "jolly2_brian": "+10%",
-  "jolly2_william": "+8%"
+  "up_andrew": "+15%",
+  "up_brian": "+15%",
+  "up_guy": "+14%",
+  "up_william": "+15%"
  },
  "pitches": {
-  "jolly2_andrew": "-4Hz",
-  "jolly2_brian": "-4Hz",
-  "jolly2_william": "-4Hz"
+  "up_andrew": "+2Hz",
+  "up_brian": "+2Hz",
+  "up_guy": "+0Hz",
+  "up_william": "+2Hz"
  },
  "films": {
-  "jolly2_andrew": [
-   "Ho, ho, ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
+  "up_andrew": [
+   "Merry Christmas, everyone! Guess what time it is? Yes! It's Christmas time! And this year, the whole branch is coming together!"
   ],
-  "jolly2_brian": [
-   "Ho, ho, ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
+  "up_brian": [
+   "Merry Christmas, everyone! Guess what time it is? Yes! It's Christmas time! And this year, the whole branch is coming together!"
   ],
-  "jolly2_william": [
-   "Ho, ho, ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
+  "up_guy": [
+   "Merry Christmas, everyone! Guess what time it is? Yes! It's Christmas time! And this year, the whole branch is coming together!"
+  ],
+  "up_william": [
+   "Merry Christmas, everyone! Guess what time it is? Yes! It's Christmas time! And this year, the whole branch is coming together!"
   ]
  }
 }
