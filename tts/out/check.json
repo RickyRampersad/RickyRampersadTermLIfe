@@ -1,12 +1,147 @@
 {
- "tts/out/ava2/01.mp3": [
+ "tts/out/gcmc2/01.mp3": [
+  "en",
+  0.991,
+  "This is our branch's new way of looking after your group."
+ ],
+ "tts/out/gcmc2/02.mp3": [
+  "en",
+  0.989,
+  "your group life, health and pension plans with guardian life, all in one place, and always up to date. No more chasing us for answers."
+ ],
+ "tts/out/gcmc2/03.mp3": [
   "en",
   0.997,
-  "Step 1. Join in. Just open the page and sign in. Agents. Use your agent number. Staff. Just type your name. Easy."
+  "Every Monday at 10, you get one short report, what we finished, what's still open, and what we need from you."
  ],
- "tts/out/ava2/02.mp3": [
+ "tts/out/gcmc2/04.mp3": [
+  "en",
+  0.998,
+  "Tap through to your own secure page. Your service items, your billing, and your people each have their own tab."
+ ],
+ "tts/out/gcmc2/05.mp3": [
+  "en",
+  0.988,
+  "On the 26th, your bills arrive, check against our records, with one clear statement of what's do."
+ ],
+ "tts/out/gcmc2/06.mp3": [
+  "en",
+  0.993,
+  "You'll see who's on your plans, who came off this year, and every application's still pending with who has it on our team."
+ ],
+ "tts/out/gcmc2/07.mp3": [
+  "en",
+  0.997,
+  "We'll tell you ahead of time when someone's turning 65 when a dependent comes of age or when someone's close to retiring."
+ ],
+ "tts/out/gcmc2/08.mp3": [
+  "en",
+  0.998,
+  "Someone joining or leaving. Tell us right there, the form fills itself in and we follow it through to the end."
+ ],
+ "tts/out/gcmc2/09.mp3": [
+  "en",
+  0.995,
+  "Rate us every week from one of five stars, and on every bill rate the person who looks after your account."
+ ],
+ "tts/out/gcmc2/10.mp3": [
+  "en",
+  0.997,
+  "A real person reads every answer and acts on it. Behind it all is a named team, and every step is recorded. Nothing slips through."
+ ],
+ "tts/out/gcmc2/11.mp3": [
+  "en",
+  0.998,
+  "Want this for your company? Call our branch on the number on your screen. Let's look after your people together."
+ ],
+ "tts/out/gcms2/01.mp3": [
+  "en",
+  0.998,
+  "Group client management the new way. Here's how it works and who does what?"
+ ],
+ "tts/out/gcms2/02.mp3": [
+  "en",
+  0.997,
+  "There are four parts. Our branch manager sets the standard and owns the result. Camila, our branch manager's assistant, oversees the tasks. The support team looks after their own groups, and the system keeps time and keeps the record."
+ ],
+ "tts/out/gcms2/03.mp3": [
   "en",
   0.999,
-  "Pick out a gift up to $300, wrap it up nicely, and put your earthlings name on the label."
+  "You sign in with your own number and password, so everything you do is recorded in your name."
+ ],
+ "tts/out/gcms2/04.mp3": [
+  "en",
+  0.996,
+  "Every week, you run the six checks and approve each group by Friday. At 10 on Monday, the letters go by themselves."
+ ],
+ "tts/out/gcms2/05.mp3": [
+  "en",
+  0.999,
+  "at 1030 groups that haven't rated us get a reminder. If one of your ready groups had no letter, you're asked why and a task opens in your name. Reply by noon and close it with a reason."
+ ],
+ "tts/out/gcms2/07.mp3": [
+  "en",
+  0.998,
+  "Every month, the bills come in on the 25th. You upload them, check them, answer the questions, reconcile and approve. At 1 o'clock, the branch manager gets the report."
+ ],
+ "tts/out/gcms2/08.mp3": [
+  "en",
+  0.994,
+  "On the 26th at 10, every approved bill goes by itself with its statement. That's the deadline."
+ ],
+ "tts/out/gcms2/09.mp3": [
+  "en",
+  0.994,
+  "Open Billing, and 8 Steps Guide you. Upload a bill, and every check against Salesforce comes back as a finding. Fix, check, note, or okay."
+ ],
+ "tts/out/gcms2/10.mp3": [
+  "en",
+  0.998,
+  "The upload does the typing for you too. It brings the months billing record and sales force in a line with the bill and opens a task for everyone who left or changed here and want to query the adjustments."
+ ],
+ "tts/out/gcms2/11.mp3": [
+  "en",
+  0.998,
+  "Answer each question with a tap. Your answer goes on chatter in your name. Then update last month's tasks against this month's bill."
+ ],
+ "tts/out/gcms2/12.mp3": [
+  "en",
+  0.996,
+  "Joiners and levers go on Guardians' own forms, fill from Salesforce, and they're chased every three working days. The people step flags who's turning 65 or coming of age."
+ ],
+ "tts/out/gcms2/13.mp3": [
+  "en",
+  0.997,
+  "The statement shows what's due and what's still unpaid. Tick reconciled only when you've checked it yourself. Then approve it for the billing day."
+ ],
+ "tts/out/gcms2/14.mp3": [
+  "en",
+  0.996,
+  "The bill's email greets the contact by name and asks them to rate the person who looks after their account. Those stars count on your record."
+ ],
+ "tts/out/gcms2/15.mp3": [
+  "en",
+  0.995,
+  "Miss the deadline, approve and send now will ask why. Give the real reason. It goes on the bill on chatter and straight to the branch manager."
+ ],
+ "tts/out/gcms2/16.mp3": [
+  "en",
+  0.995,
+  "Every press is recorded. Who, when, and why. So head office, the branch manager, or the group can see exactly what happened."
+ ],
+ "tts/out/gcms2/17.mp3": [
+  "en",
+  0.995,
+  "Kamla checks the team dashboard every day, chases what's late, and steps in when someone's away. Shear the branch manager can put one group or every group on hold with a reason and nobody's chased for a group on hold."
+ ],
+ "tts/out/gcms2/18.mp3": [
+  "en",
+  0.995,
+  "until we go live. Every bill comes to you, mark test. But Salesforce is real and the upload rights to it. So check before you press."
+ ],
+ "tts/out/gcms2/19.mp3": [
+  "en",
+  0.99,
+  "Read the training program, take the test, and let's make every group feel looked after. This is our new way."
  ]
 }
