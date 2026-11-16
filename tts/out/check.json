@@ -1,72 +1,62 @@
 {
- "tts/out/fava/01.mp3": [
-  "en",
-  0.987,
-  "Hi everyone! So, it's that time of year again, and this Christmas, we're all coming together as one branch."
+ "tts/out/wnia/01.mp3": [
+  "la",
+  0.956,
+  "Hi, e verone! So! It's such a me lo vei aragain, and this christmas, where I as coming together as one branch."
  ],
- "tts/out/fava/02.mp3": [
+ "tts/out/wnia/02.mp3": [
+  "la",
+  0.979,
+  "Okai, somark oir calendars. Vritai, dekem perthea l'eventi is oir christmas linkion. Andes, fatusu henwe do oir eir fling andang el givtet hange. Th\u00e9venie. Weshare, fat with why you very so on."
+ ],
+ "tts/out/wemily/01.mp3": [
+  "en",
+  0.972,
+  "Hi, everyone! So, it's that time of year again, and this Christmas, we're all coming together as one branch."
+ ],
+ "tts/out/wemily/02.mp3": [
   "en",
   0.995,
   "Okay, so mark your calendars. Friday, December 11th, is our Christmas luncheon. And yes, that's when we do our earthling and angel gift exchange. The venue? We'll share that with you very soon."
  ],
- "tts/out/femma/01.mp3": [
+ "tts/out/wneerja/01.mp3": [
   "en",
-  0.984,
-  "Hi everyone! So, it's that time of year again and this Christmas, we're all coming together as one branch."
+  0.93,
+  "Hi, everyone. So, it's that time of year again. And this Christmas, we're all coming together as one branch."
  ],
- "tts/out/femma/02.mp3": [
+ "tts/out/wneerja/02.mp3": [
   "en",
-  0.987,
-  "Okay, so mark your calendars. Friday, December 11th, is our Christmas luncheon. And yes, that's when we do our earthling and angel gift exchange. The venue? We'll share that with you very soon."
+  0.921,
+  "Ok, so mark your calendars. Friday, December 11th, is a Christmas luncheon. And yes, that's when we do our earthling and angel gift exchange. The venue, we'll share that with you very soon."
  ],
- "tts/out/fjenny/01.mp3": [
+ "tts/out/wlibby/01.mp3": [
   "en",
   0.986,
-  "Hi, everyone. So, it's that time of year again, and this Christmas, we're all coming together as one branch."
+  "Hi, everyone. So it's that time of year again, and this Christmas, we're all coming together as one branch."
  ],
- "tts/out/fjenny/02.mp3": [
+ "tts/out/wlibby/02.mp3": [
   "en",
-  0.991,
-  "Okay, so mark your calendars. Friday, December 11th, is our Christmas luncheon. And yes, that's when we do our earthling and angel gift exchange. The venue? We'll share that with you very soon."
- ],
- "tts/out/faria/01.mp3": [
-  "en",
-  0.978,
-  "Hi, everyone! So, it's that time of year again, and this Christmas, we're all coming together as one branch."
- ],
- "tts/out/faria/02.mp3": [
-  "en",
-  0.99,
-  "Okay, so mark your calendars. Friday, December 11th, is our Christmas luncheon. And yes, that's when we do our Earthling and Angel Gift Exchange. The venue? We'll share that with you very soon."
- ],
- "tts/out/fsonia/01.mp3": [
-  "en",
-  0.99,
-  "Hi, everyone. So, it's that time of year again, and this Christmas, we're all coming together as one branch."
- ],
- "tts/out/fsonia/02.mp3": [
-  "en",
-  0.997,
-  "Okay, so mark your calendars. Friday, December 11th, is our Christmas luncheon. And yes, that's when we do our Earthling and Angel Gift Exchange. The venue. We'll share that with you very soon."
- ],
- "tts/out/fnatasha/01.mp3": [
-  "en",
-  0.994,
-  "Hi everyone. So if it's that time of year again, and this Christmas, we are all coming together as one branch."
- ],
- "tts/out/fnatasha/02.mp3": [
-  "en",
-  0.992,
+  0.998,
   "Okay, so mark your calendars. Friday, December the 11th, is our Christmas luncheon. And yes, that's when we do our earthling and angel gift exchange. The venue. We'll share that with you very soon."
  ],
- "tts/out/fleah/01.mp3": [
+ "tts/out/wmaisie/01.mp3": [
   "en",
-  0.941,
-  "Hi everyone. So it's their time of year again, and this Christmas, we all coming together as one branch."
+  0.951,
+  "Hi everyone. So it's that time of year again and this Christmas we're all coming together as one branch."
  ],
- "tts/out/fleah/02.mp3": [
+ "tts/out/wmaisie/02.mp3": [
   "en",
-  0.934,
-  "Okay, so mark your calendars. Friday, December the 11th, is our Christmas luncheon. And yes, that's when we do our earthling and angel gift exchange. The venue. We'll share that with you very soon."
+  0.958,
+  "Okay, so mark your calendars. Friday December the 11th is our Christmas luncheon. And yes, that's when we do our earthling and angel gift exchange. The venue. We'll share that with you very soon."
+ ],
+ "tts/out/wezinne/01.mp3": [
+  "sw",
+  0.416,
+  "Hello everyone. So, it's that time of year again. And this Christmas, we are all coming together as one branch."
+ ],
+ "tts/out/wezinne/02.mp3": [
+  "en",
+  0.514,
+  "Okay, so mark your calendars. Friday, December 11th, is our Christmas luncheon. And yes, that's when we do our atling and angel gift exchange. The venue. We'll share that with you very soon."
  ]
 }
