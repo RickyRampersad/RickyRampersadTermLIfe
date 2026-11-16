@@ -88,16 +88,79 @@ def at(n, word, k=0, lead=0.0):
 
 TAG = '<span class="tag">Sample group &middot; made-up figures</span>'
 
-def phone(name, cls='', d=0.0, pos=''):
-    return '<div class="phone %s" style="--kd:%.2fs;%s"><img src="%s" alt="">%s</div>' % (cls, d, pos, img(name), TAG)
+#  Where the key buttons and panels sit on each screen, in that PNG's own pixels, written by the shooters.
+BOXES = {}
+for _b in ('boxes.json', 'boxes-client.json', 'boxes-staff.json'):
+    if (SHOTS / _b).exists():
+        BOXES.update(json.loads((SHOTS / _b).read_text()))
+EXTRA = []                         # one @keyframes per camera, appended to the stylesheet
 
-def card(name, cls='', d=0.0):
-    return '<div class="cardshot %s" style="--kd:%.2fs"><img src="%s" alt="">%s</div>' % (cls, d, img(name), TAG)
+def _size(name):
+    b = BOXES.get(name)
+    if b and b.get('w'):
+        return b['w'], b['h']
+    from PIL import Image
+    return Image.open(SHOTS / name).size
 
-def lap(name, cls='', d=0.0, pos='0% 0%'):
-    """A staff screen in a laptop window. pos picks which part of a tall capture shows."""
-    return ('<div class="lap %s" style="--kd:%.2fs"><div class="bar3"><i></i><i></i><i></i></div>'
-            '<div class="lw"><img src="%s" alt="" style="object-position:%s"></div>%s</div>' % (cls, d, img(name), pos, TAG))
+def _box(name, label):
+    els = (BOXES.get(name) or {}).get('els') or {}
+    if label not in els:
+        sys.exit('NO BOX: "%s" on %s (have: %s)' % (label, name, ', '.join(sorted(els)) or 'none'))
+    return els[label]
+
+def cam(name, n, vw, vh, moves=(), taps=(), marks=()):
+    """The screen inside its frame, with a camera: at each (seconds, label, zoom) it eases to that element, and at
+       each (seconds, label) a tap ring lands on it, and each (seconds, label) in marks outlines it. The frame is vw x vh
+       CSS px; the image is drawn vw wide. Everything is a CSS animation inside the scene, so render.js sets it to the
+       frame's own moment and the zoom cannot drift from the voice."""
+    iw, ih = _size(name); s0 = vw / iw; dh = ih * s0
+    D = DURS[n - 1] / 1000.0
+    pct = lambda t: max(0.0, min(100.0, t / D * 100.0))
+    def focus(label, z):
+        x, y, w, h = _box(name, label)
+        cx, cy = (x + w / 2) * s0, (y + h / 2) * s0
+        tx = min(0.0, max(vw - vw * z, vw / 2 - cx * z))
+        ty = min(0.0, max(vh - dh * z, vh / 2 - cy * z))
+        return tx, ty, z
+    inner = ''
+    if moves:
+        kf, st, last = [], (0.0, 0.0, 1.0), 0.0
+        kf.append('0%%{transform:translate(0,0) scale(1)}')
+        for t, label, z in moves:
+            new = (0.0, 0.0, 1.0) if label is None else focus(label, z)
+            a, b = pct(max(last, t - 0.05)), pct(t + 0.75)
+            kf.append('%.3f%%{transform:translate(%.1fpx,%.1fpx) scale(%.3f);animation-timing-function:cubic-bezier(.45,0,.2,1)}' % ((a,) + st))
+            kf.append('%.3f%%{transform:translate(%.1fpx,%.1fpx) scale(%.3f)}' % ((b,) + new))
+            st, last = new, t + 0.75
+        kf.append('100%%{transform:translate(%.1fpx,%.1fpx) scale(%.3f)}' % st)
+        nm = 'cam%d' % len(EXTRA)
+        EXTRA.append('@keyframes %s{%s}' % (nm, ''.join(kf)))
+        anim = 'animation:%s %dms linear both' % (nm, DURS[n - 1])
+    else:
+        anim = ''
+    for t, label in taps:
+        x, y, w, h = _box(name, label)
+        inner += '<i class="tap" style="left:%.1fpx;top:%.1fpx;--kd:%.2fs"></i>' % ((x + w / 2) * s0, (y + h / 2) * s0, t)
+    for t, label in marks:
+        x, y, w, h = _box(name, label)
+        inner += '<b class="mark" style="left:%.1fpx;top:%.1fpx;width:%.1fpx;height:%.1fpx;--kd:%.2fs"></b>' % (
+            x * s0 - 4, y * s0 - 4, w * s0 + 8, h * s0 + 8, t)
+    return ('<div class="vp" style="width:%dpx;height:%dpx"><div class="zl" style="width:%dpx;%s">'
+            '<img src="%s" alt="" style="width:%dpx">%s</div></div>' % (vw, vh, vw, anim, img(name), vw, inner))
+
+def phone(name, cls='', d=0.0, n=0, moves=(), taps=(), marks=(), w=268):
+    iw, ih = _size(name)
+    vh = min(round(w * ih / iw), round(w * 2.165))
+    return '<div class="phone %s" style="--kd:%.2fs">%s%s</div>' % (cls, d, cam(name, n, w, vh, moves, taps, marks), TAG)
+
+def card(name, cls='', d=0.0, n=0, moves=(), taps=(), marks=(), w=540, maxh=470):
+    iw, ih = _size(name)
+    return '<div class="cardshot %s" style="--kd:%.2fs">%s%s</div>' % (cls, d, cam(name, n, w, min(maxh, round(w * ih / iw)), moves, taps, marks), TAG)
+
+def lap(name, cls='', d=0.0, n=0, moves=(), taps=(), marks=(), w=558, h=330):
+    """A staff screen in a laptop window; a tall capture is panned by the camera, never squeezed."""
+    return ('<div class="lap %s" style="--kd:%.2fs"><div class="bar3"><i></i><i></i><i></i></div>%s%s</div>'
+            % (cls, d, cam(name, n, w, h, moves, taps, marks), TAG))
 
 def kin(text, d=0.0, hi=()):
     out = []
@@ -143,7 +206,9 @@ def stars(d, n=5, gap=0.14):
         '<i style="--kd:%.2fs">%s</i>' % (d + i * gap, ICON['star']) for i in range(n))
 
 def S(n, body, cls=''):
-    return '<section class="sc %s" data-d="%d"><div class="in">%s</div></section>' % (cls, DURS[n - 1], body)
+    """A scene: a slow push-in on everything, two soft shapes drifting behind, and a streak of light across the cut."""
+    return ('<section class="sc %s" data-d="%d" style="--sd:%dms"><i class="orb o1"></i><i class="orb o2"></i>'
+            '<div class="cam"><div class="in">%s</div></div><i class="streak"></i></section>' % (cls, DURS[n - 1], DURS[n - 1], body))
 
 def split(n, left, right, cls=''):
     return S(n, '<div class="split"><div class="L">%s</div><div class="R">%s</div></div>' % (left, right), cls)
@@ -199,7 +264,7 @@ def client():
         chip('Your service items', at(4, 'service'), 'tab') + chip('Your billing', at(4, 'billing'), 'tab') +
         chip('Your people', at(4, 'people'), 'tab') + '</div>'
         '<div class="note" style="--kd:%.2fs">Sign in with your list bill and the code in our letter.</div>' % at(4, 'secure'),
-        '<div class="duo">%s%s</div>' % (phone('c01-signin.png', 'back', .2), phone('c02-items.png', 'front', at(4, 'service'))),
+        '<div class="duo">%s%s</div>' % (phone('c01-signin.png', 'back', .2, n=4, w=236), phone('c02-items.png', 'front', at(4, 'service'))),
         'wide2'))
     # 5 --------------------------------------------------------------------------------------------- billing
     sc.append(split(5,
@@ -233,7 +298,7 @@ def client():
         '<h2>%s</h2>' % kin('Tell us right there.', at(8, 'Tell')) +
         row('doc', 'The form fills itself in', at(8, 'fills'), 'Guardian&rsquo;s own form, from our records', 'ok') +
         row('check', 'We follow it through to the end', at(8, 'end'), 'and you see where it stands', 'ok'),
-        '<div class="duo">%s%s</div>' % (phone('c09-person-msg.png', 'back', .2), phone('c10-form.png', 'front', at(8, 'form'))),
+        '<div class="duo">%s%s</div>' % (phone('c09-person-msg.png', 'back', .2, n=8, w=236), phone('c10-form.png', 'front', at(8, 'form'))),
         'wide2'))
     # 9 ---------------------------------------------------------------------------------------------- the stars
     sc.append(split(9,
@@ -341,13 +406,13 @@ def staff():
     sc.append(split(11,
         eb('Answer, and update') + '<h2>%s</h2>' % kin('One tap. On Chatter, in your name.', at(11, 'Answer')) +
         row('chat', 'Last month&rsquo;s tasks, against this month&rsquo;s bill', at(11, 'update'), '', 'ok'),
-        '<div class="duo l">%s%s</div>' % (lap('s07-questions.png', 'back', .2), lap('s08-tasks.png', 'front', at(11, 'update'))),
+        '<div class="duo l">%s%s</div>' % (lap('s07-questions.png', 'back', .2, w=468, h=270), lap('s08-tasks.png', 'front', at(11, 'update'), w=468, h=270)),
         'wide'))
     sc.append(split(12,
         eb('Joiners, leavers and the people') +
         row('doc', 'Guardian&rsquo;s own forms, filled from Salesforce', at(12, 'forms'), 'chased every three working days', 'ok') +
         row('cake', 'Who&rsquo;s turning sixty-five, or coming of age', at(12, 'sixty'), 'flagged at the people step'),
-        '<div class="duo l">%s%s</div>' % (lap('s09-forms.png', 'back', .2), lap('s10-people.png', 'front', at(12, 'people'))),
+        '<div class="duo l">%s%s</div>' % (lap('s09-forms.png', 'back', .2, w=468, h=270), lap('s10-people.png', 'front', at(12, 'people'), w=468, h=270)),
         'wide'))
     sc.append(split(13,
         eb('The statement') + '<h2>%s</h2>' % kin('What&rsquo;s due, and what&rsquo;s still unpaid.', .3) +
@@ -376,7 +441,7 @@ def staff():
         row('list', 'Checks the team dashboard and chases what&rsquo;s late', at(17, 'chases')) +
         row('users', 'Steps in when someone&rsquo;s away', at(17, 'away'), '', 'ok') +
         row('pause', 'One group, or every group, on hold', at(17, 'hold'), 'with the reason, and nobody&rsquo;s chased for it', 'warn'),
-        '<div class="duo l">%s%s</div>' % (lap('s01-team.png', 'back', .2), lap('s02-hold.png', 'front', at(17, 'hold'))),
+        '<div class="duo l">%s%s</div>' % (lap('s01-team.png', 'back', .2, w=468, h=270), lap('s02-hold.png', 'front', at(17, 'hold'), w=468, h=270)),
         'wide'))
     sc.append(S(18,
         '<div class="mid">' + eb('Until we go live', .2) +
@@ -397,7 +462,7 @@ html,body{width:1280px;height:720px;overflow:hidden;background:#0F2A5E}
 body{font-family:Plex,system-ui,sans-serif;color:#142033;-webkit-font-smoothing:antialiased}
 #stage{position:relative;width:1280px;height:616px;overflow:hidden;
   background:radial-gradient(900px 600px at 82% 12%,#DCE8FB 0%,#EEF3FA 50%,#E9EEF5 100%)}
-.grain{position:absolute;inset:-60px;pointer-events:none;opacity:.55;
+.dots{position:absolute;inset:-60px;pointer-events:none;opacity:.55;
   background-image:radial-gradient(rgba(29,91,196,.16) 1.2px,transparent 1.3px);background-size:26px 26px;
   animation:drift 40s linear infinite}
 @keyframes drift{from{transform:translate(0,0)}to{transform:translate(26px,52px)}}
@@ -426,7 +491,9 @@ body{font-family:Plex,system-ui,sans-serif;color:#142033;-webkit-font-smoothing:
 @keyframes pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
 h1{font-size:54px;font-weight:600;line-height:1.12;letter-spacing:-.8px}
 h2{font-size:38px;font-weight:600;line-height:1.16;letter-spacing:-.5px;margin-bottom:14px}
-.kw{display:inline-block;animation:wup .5s cubic-bezier(.2,.9,.3,1) both;animation-delay:var(--kd)}
+.kw{display:inline-block;animation:wpop .62s cubic-bezier(.2,.9,.3,1) both;animation-delay:var(--kd)}
+@keyframes wpop{0%{opacity:0;transform:translateY(26px) scale(.55);filter:blur(5px)}
+  60%{opacity:1;transform:translateY(-5px) scale(1.07);filter:none}100%{opacity:1;transform:none}}
 .kw.hi{color:#1D5BC4}.blue .kw.hi{color:#FFD36B}
 @keyframes wup{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .eyebrow{font-size:14px;font-weight:600;letter-spacing:2.6px;text-transform:uppercase;color:#1D5BC4;margin-bottom:14px;
@@ -437,35 +504,33 @@ h2{font-size:38px;font-weight:600;line-height:1.16;letter-spacing:-.5px;margin-b
 .note.big2{font-size:24px;color:#142033;font-weight:600}
 .ni{width:22px;height:22px;vertical-align:-4px;margin-right:6px;color:#1D5BC4}
 
-.phone{position:relative;width:282px;border-radius:30px;overflow:hidden;border:7px solid #142033;background:#fff;
+.phone{position:relative;display:inline-block;border-radius:30px;overflow:hidden;border:7px solid #142033;background:#fff;
   box-shadow:0 30px 60px rgba(15,42,94,.35);animation:ph .8s cubic-bezier(.2,.8,.25,1) both,bob 6s ease-in-out .8s infinite alternate;
   animation-delay:var(--kd),calc(var(--kd) + .8s)}
-.phone img{width:100%;display:block}
+.phone .vp{border-radius:22px}
 @keyframes ph{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
 @keyframes bob{from{translate:0 0}to{translate:0 -10px}}
 .tag{position:absolute;right:8px;bottom:8px;font-size:9px;font-weight:600;color:#fff;background:rgba(20,32,51,.78);
   padding:3px 8px;border-radius:99px;letter-spacing:.2px}
 .duo{position:relative;width:470px;height:560px}
 .duo .phone{position:absolute}
-.duo .back{left:0;top:0;width:250px;opacity:.9}
+.duo .back{left:0;top:0;opacity:.9}
 .duo .front{right:0;bottom:-6px}
-.duo .back img{filter:saturate(.8)}
+.duo .back .vp{filter:saturate(.8)}
 .duo.l{width:560px;height:440px}
 .duo.l .lap{position:absolute}
-.duo.l .back{left:0;top:0;width:470px}
-.duo.l .front{right:0;bottom:0;width:470px}
+.duo.l .back{left:0;top:0}
+.duo.l .front{right:0;bottom:0}
 
-.cardshot{position:relative;width:540px;max-height:470px;border-radius:18px;overflow:hidden;border:1px solid #D5DEEA;background:#fff;
+.cardshot{position:relative;display:inline-block;border-radius:18px;overflow:hidden;border:1px solid #D5DEEA;background:#fff;
   box-shadow:0 26px 54px rgba(15,42,94,.22);animation:ph .8s cubic-bezier(.2,.8,.25,1) both;animation-delay:var(--kd)}
-.cardshot img{width:100%;display:block}
 
-.lap{position:relative;width:560px;border-radius:12px;overflow:hidden;background:#fff;border:1px solid #C9D4E5;
+
+.lap{position:relative;display:inline-block;border-radius:12px;overflow:hidden;background:#fff;border:1px solid #C9D4E5;
   box-shadow:0 28px 60px rgba(15,42,94,.28);animation:ph .8s cubic-bezier(.2,.8,.25,1) both;animation-delay:var(--kd)}
 .lap .bar3{height:22px;background:#E3E9F2;display:flex;gap:6px;align-items:center;padding:0 10px}
 .lap .bar3 i{width:9px;height:9px;border-radius:50%;background:#B9C4D6}
-.lap .lw{height:330px;overflow:hidden}
-.lap .lw img{width:100%;height:100%;object-fit:cover;display:block}
-.duo.l .lap .lw{height:270px}
+
 
 .row{display:flex;align-items:center;gap:16px;margin:12px 0;padding:12px 16px;border-radius:14px;background:#fff;
   border:1px solid #DCE3EE;box-shadow:0 8px 20px rgba(15,42,94,.06);animation:wup .5s both;animation-delay:var(--kd)}
@@ -583,6 +648,34 @@ h2{font-size:38px;font-weight:600;line-height:1.16;letter-spacing:-.5px;margin-b
 @keyframes stp{from{transform:rotate(-6deg) scale(2.2);opacity:0}to{transform:rotate(-6deg);opacity:1}}
 
 #strip{position:absolute;left:0;top:616px;width:1280px;height:104px;background:#0F2A5E}
+#prog{position:absolute;left:0;bottom:0;height:5px;width:100%;transform-origin:left center;
+  background:linear-gradient(90deg,#2A6FD8,#5FA0FF 60%,#FFD36B);animation:prog var(--total) linear both;z-index:20}
+@keyframes prog{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.cam{position:absolute;inset:0;animation:push var(--sd) linear both}
+@keyframes push{from{transform:scale(1)}to{transform:scale(1.045)}}
+.streak{position:absolute;top:-20%;left:-30%;width:22%;height:140%;pointer-events:none;z-index:9;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-18deg);
+  animation:streak .95s cubic-bezier(.3,.6,.3,1) both}
+@keyframes streak{from{translate:0 0;opacity:1}to{translate:620% 0;opacity:0}}
+.orb{position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(42,111,216,.20),rgba(42,111,216,0) 68%)}
+.orb.o1{width:520px;height:520px;left:-140px;top:-160px;animation:orb1 var(--sd) ease-in-out both}
+.orb.o2{width:620px;height:620px;right:-220px;bottom:-280px;animation:orb2 var(--sd) ease-in-out both}
+.blue .orb{background:radial-gradient(circle,rgba(255,255,255,.16),rgba(255,255,255,0) 68%)}
+@keyframes orb1{from{transform:translate(0,0) scale(1)}to{transform:translate(140px,70px) scale(1.15)}}
+@keyframes orb2{from{transform:translate(0,0) scale(1.1)}to{transform:translate(-120px,-60px) scale(.95)}}
+.vp{position:relative;overflow:hidden}
+.zl{position:relative;transform-origin:0 0}
+.zl img{display:block}
+.tap{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:rgba(29,91,196,.9);
+  box-shadow:0 0 0 3px #fff;opacity:0;animation:tap 1.1s ease-out both;animation-delay:var(--kd)}
+.tap:after{content:'';position:absolute;inset:-4px;border-radius:50%;border:3px solid #1D5BC4;animation:tapr 1.1s ease-out both;
+  animation-delay:var(--kd)}
+@keyframes tap{0%{opacity:0;transform:scale(1.8)}15%{opacity:1;transform:scale(.8)}35%{transform:scale(1)}80%{opacity:1}100%{opacity:0}}
+@keyframes tapr{0%{transform:scale(.6);opacity:0}20%{opacity:1}100%{transform:scale(3.2);opacity:0}}
+.mark{position:absolute;border:3px solid #FFB020;border-radius:10px;box-shadow:0 0 0 6px rgba(255,176,32,.22);opacity:0;
+  animation:mk .5s cubic-bezier(.2,1.5,.4,1) both;animation-delay:var(--kd)}
+@keyframes mk{from{opacity:0;transform:scale(1.25)}to{opacity:1;transform:none}}
 body.rolling #ctrl,body.rolling #poster{display:none!important}
 
 /* the upright cut: 720x1280, captions over the picture, so the lower fifth stays clear */
@@ -595,10 +688,9 @@ body.port .mid{margin-top:150px}
 body.port .split{flex-direction:column;gap:26px;align-items:stretch}
 body.port .split .R,body.port .sc.wide .R,body.port .sc.wide2 .R{flex:none}
 body.port h1{font-size:50px}body.port h2{font-size:36px}
-body.port .phone{width:300px}
+body.port .phone{zoom:1.12}
 body.port .duo{width:520px;height:600px;margin:0 auto}
-body.port .duo .back{width:260px}
-body.port .cardshot{width:560px;max-height:560px}
+body.port .cardshot{zoom:1.03}
 body.port .mail{width:560px}
 body.port .net{transform:scale(.72);transform-origin:top center;width:900px;margin-left:-134px}
 body.port .clock{font-size:76px}body.port .big{font-size:110px}
@@ -611,8 +703,8 @@ def main():
     title = {'client': 'Our new way of looking after your group', 'staff': 'Group client management, the new way'}[FILM]
     page = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex">'
             '<title>%s</title><style>' % title + CSS.replace('__PLEX__', PLEX) + '</style></head><body>'
-            '<div id="stage"><div class="grain"></div><div class="glow g1"></div><div class="glow g2"></div>'
-            + '\n'.join(sc) + '</div><div id="strip"></div>'
+            '<div id="stage" style="--total:%dms"><div class="dots grain"></div><div class="glow g1"></div><div class="glow g2"></div><i id="prog" class="grain"></i>' % sum(DURS)
+            + '\n'.join(sc) + '</div><div id="strip"></div><style>' + ''.join(EXTRA) + '</style>'
             '<script>'
             # one design, two frames: a wide 1280x720 layout or an upright 720x1280 one, scaled to the window
             '(function(){var p=innerHeight>innerWidth;document.body.classList.toggle("port",p);'
