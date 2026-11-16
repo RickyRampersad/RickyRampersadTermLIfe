@@ -1,37 +1,37 @@
 {
- "voice": "en-US-AndrewMultilingualNeural",
+ "voice": "en-US-AvaMultilingualNeural",
  "rate": "+0%",
  "check": true,
  "voices": {
-  "up_andrew": "en-US-AndrewMultilingualNeural",
-  "up_brian": "en-US-BrianMultilingualNeural",
-  "up_guy": "en-US-GuyNeural",
-  "up_william": "en-AU-WilliamMultilingualNeural"
+  "f_ava": "en-US-AvaMultilingualNeural",
+  "f_emma": "en-US-EmmaMultilingualNeural",
+  "f_jenny": "en-US-JennyNeural",
+  "f_aria": "en-US-AriaNeural"
  },
  "rates": {
-  "up_andrew": "+15%",
-  "up_brian": "+15%",
-  "up_guy": "+14%",
-  "up_william": "+15%"
+  "f_ava": "+12%",
+  "f_emma": "+12%",
+  "f_jenny": "+12%",
+  "f_aria": "+12%"
  },
  "pitches": {
-  "up_andrew": "+2Hz",
-  "up_brian": "+2Hz",
-  "up_guy": "+0Hz",
-  "up_william": "+2Hz"
+  "f_ava": "+2Hz",
+  "f_emma": "+2Hz",
+  "f_jenny": "+2Hz",
+  "f_aria": "+2Hz"
  },
  "films": {
-  "up_andrew": [
-   "Merry Christmas, everyone! Guess what time it is? Yes! It's Christmas time! And this year, the whole branch is coming together!"
+  "f_ava": [
+   "Merry Christmas everyone! Guess what time it is? It's Christmas time, and this year the whole branch is coming together!"
   ],
-  "up_brian": [
-   "Merry Christmas, everyone! Guess what time it is? Yes! It's Christmas time! And this year, the whole branch is coming together!"
+  "f_emma": [
+   "Merry Christmas everyone! Guess what time it is? It's Christmas time, and this year the whole branch is coming together!"
   ],
-  "up_guy": [
-   "Merry Christmas, everyone! Guess what time it is? Yes! It's Christmas time! And this year, the whole branch is coming together!"
+  "f_jenny": [
+   "Merry Christmas everyone! Guess what time it is? It's Christmas time, and this year the whole branch is coming together!"
   ],
-  "up_william": [
-   "Merry Christmas, everyone! Guess what time it is? Yes! It's Christmas time! And this year, the whole branch is coming together!"
+  "f_aria": [
+   "Merry Christmas everyone! Guess what time it is? It's Christmas time, and this year the whole branch is coming together!"
   ]
  }
 }
