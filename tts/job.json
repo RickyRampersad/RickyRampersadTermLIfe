@@ -1,60 +1,53 @@
 {
- "voice": "en-US-AvaMultilingualNeural",
+ "voice": "en-GB-LibbyNeural",
  "rate": "+6%",
  "check": true,
  "voices": {
-  "fava": "en-US-AvaMultilingualNeural",
-  "femma": "en-US-EmmaMultilingualNeural",
-  "fjenny": "en-US-JennyNeural",
-  "faria": "en-US-AriaNeural",
-  "fsonia": "en-GB-SoniaNeural",
-  "fnatasha": "en-AU-NatashaNeural",
-  "fleah": "en-ZA-LeahNeural"
+  "wnia": "cy-GB-NiaNeural",
+  "wemily": "en-IE-EmilyNeural",
+  "wneerja": "en-IN-NeerjaExpressiveNeural",
+  "wlibby": "en-GB-LibbyNeural",
+  "wmaisie": "en-GB-MaisieNeural",
+  "wezinne": "en-NG-EzinneNeural"
  },
  "rates": {
-  "fava": "+6%",
-  "femma": "+6%",
-  "fjenny": "+8%",
-  "faria": "+8%",
-  "fsonia": "+6%",
-  "fnatasha": "+6%",
-  "fleah": "+6%"
+  "wnia": "+6%",
+  "wemily": "+6%",
+  "wneerja": "+6%",
+  "wlibby": "+6%",
+  "wmaisie": "+6%",
+  "wezinne": "+6%"
  },
  "pitches": {
-  "fava": "+1Hz",
-  "femma": "+1Hz",
-  "fjenny": "+1Hz",
-  "faria": "+1Hz",
-  "fsonia": "+1Hz",
-  "fnatasha": "+1Hz",
-  "fleah": "+1Hz"
+  "wnia": "+1Hz",
+  "wemily": "+1Hz",
+  "wneerja": "+1Hz",
+  "wlibby": "+1Hz",
+  "wmaisie": "+1Hz",
+  "wezinne": "+1Hz"
  },
  "films": {
-  "fava": [
+  "wnia": [
    "Hi, everyone! So... it's that time of year again, and this Christmas, we're all coming together as one branch!",
    "Okay, so mark your calendars. Friday, December the eleventh, is our Christmas luncheon! And yes, that's when we do our Earthling and Angel gift exchange. The venue? We'll share that with you very soon."
   ],
-  "femma": [
+  "wemily": [
    "Hi, everyone! So... it's that time of year again, and this Christmas, we're all coming together as one branch!",
    "Okay, so mark your calendars. Friday, December the eleventh, is our Christmas luncheon! And yes, that's when we do our Earthling and Angel gift exchange. The venue? We'll share that with you very soon."
   ],
-  "fjenny": [
+  "wneerja": [
    "Hi, everyone! So... it's that time of year again, and this Christmas, we're all coming together as one branch!",
    "Okay, so mark your calendars. Friday, December the eleventh, is our Christmas luncheon! And yes, that's when we do our Earthling and Angel gift exchange. The venue? We'll share that with you very soon."
   ],
-  "faria": [
+  "wlibby": [
    "Hi, everyone! So... it's that time of year again, and this Christmas, we're all coming together as one branch!",
    "Okay, so mark your calendars. Friday, December the eleventh, is our Christmas luncheon! And yes, that's when we do our Earthling and Angel gift exchange. The venue? We'll share that with you very soon."
   ],
-  "fsonia": [
+  "wmaisie": [
    "Hi, everyone! So... it's that time of year again, and this Christmas, we're all coming together as one branch!",
    "Okay, so mark your calendars. Friday, December the eleventh, is our Christmas luncheon! And yes, that's when we do our Earthling and Angel gift exchange. The venue? We'll share that with you very soon."
   ],
-  "fnatasha": [
-   "Hi, everyone! So... it's that time of year again, and this Christmas, we're all coming together as one branch!",
-   "Okay, so mark your calendars. Friday, December the eleventh, is our Christmas luncheon! And yes, that's when we do our Earthling and Angel gift exchange. The venue? We'll share that with you very soon."
-  ],
-  "fleah": [
+  "wezinne": [
    "Hi, everyone! So... it's that time of year again, and this Christmas, we're all coming together as one branch!",
    "Okay, so mark your calendars. Friday, December the eleventh, is our Christmas luncheon! And yes, that's when we do our Earthling and Angel gift exchange. The venue? We'll share that with you very soon."
   ]
