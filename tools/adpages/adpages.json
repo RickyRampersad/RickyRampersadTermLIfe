@@ -17,12 +17,12 @@
       "key": "bwadmin",
       "dir": "buildwithusvideo",
       "page": "buildwithus",
-      "title": "You already know how your office should run",
-      "h1": "You already know how your office should run.",
-      "h1em": "Nobody has given you the tools.",
-      "lede": "One administrator&rsquo;s seat, in a branch that writes and runs its own software. Half the day is the branch&rsquo;s admin. The other half is making that admin unnecessary.",
-      "desc": "One administrator's seat in a branch that writes its own software — Apps Script, Salesforce, AI. Half admin, half making the admin unnecessary. Fifty seconds.",
-      "metaDesc": "Fifty seconds on one administrator's seat in a branch that writes its own software. Chaguanas, Trinidad. Apply in fifteen minutes.",
+      "title": "Everyone calls me to fix it",
+      "h1": "When something gets stuck, everyone calls the Branch Manager.",
+      "h1em": "This seat is the person who fixes it.",
+      "lede": "Ricky Rampersad is hiring a personal assistant to keep the branch&rsquo;s own systems running: Salesforce, Apps Script, Microsoft 365, HELP 868 and Claude. Learn the workflows and the rules, sort out what gets stuck, write the amendments. The branch pays for the tools, you use them every day, and they go on your CV.",
+      "desc": "Ricky Rampersad is hiring a personal assistant to keep the branch&rsquo;s own systems running: Salesforce, Apps Script, Microsoft 365, HELP 868 and Claude. The tools are paid for, you use them every day, and they go on your CV.",
+      "metaDesc": "A minute and forty seconds on the personal assistant's seat in the Ricky Rampersad Branch: the person who keeps the branch's own systems running. Chaguanas, Trinidad. Apply in fifteen minutes.",
       "ctas": [
         { "href": "/buildwithus/", "text": "See the seat and apply &mdash; 15 min", "primary": true },
         { "href": "/buildwithus/#test", "text": "Five questions first" },
@@ -33,16 +33,16 @@
       "key": "bwagent",
       "dir": "joinourbranchvideo",
       "page": "joinourbranch",
-      "title": "Most people start this career with a list of their friends",
-      "h1": "Most people start this career with a list of their friends.",
-      "h1em": "Not here.",
-      "lede": "Leads from a board of people who asked to hear from somebody. Clients matched to you household by household, with the whole file already read. A fact find that does the arithmetic, a client who confirms the plan in their own inbox, and a manager who signs it before anything is placed.",
-      "desc": "Leads from a board. Clients matched to you household by household. A fact find that does the arithmetic. Forty-six seconds on what this branch gives an advisor.",
-      "metaDesc": "Forty-six seconds on what a Guardian Life advisor gets in this branch: leads, matched households, a fact find that does the arithmetic, numbers on the wall. Chaguanas, Trinidad.",
+      "title": "Everyone starts with the people they know",
+      "h1": "Everyone starts this career with the people they know.",
+      "h1em": "Nobody here is left there.",
+      "lede": "Your own market, mapped before you are contracted, and kept full when it runs thin. Clients matched to you household by household, with the whole file already read. A fact find that does the arithmetic, a client who confirms the plan in their own inbox, and a manager who signs it before anything is placed.",
+      "desc": "Your own market, mapped and kept full. Clients matched to you household by household. A fact find that does the arithmetic. Forty-six seconds on what this branch gives an advisor.",
+      "metaDesc": "Forty-six seconds on what a Guardian Life advisor gets in this branch: a market mapped and kept full, matched households, a fact find that does the arithmetic, numbers on the wall. Chaguanas, Trinidad.",
       "ctas": [
         { "href": "/joinourbranch/", "text": "See what you would be given", "primary": true },
         { "href": "/joinourbranch/#build", "text": "Tell us what is in your way" },
-        { "href": "/buildwithus/", "text": "Not a sales role? The administrator&rsquo;s seat" }
+        { "href": "/buildwithus/", "text": "Not a sales role? The personal assistant&rsquo;s seat" }
       ]
     },
     {
