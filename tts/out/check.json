@@ -1,22 +1,17 @@
 {
- "tts/out/jolly_andrew/01.mp3": [
+ "tts/out/jolly2_andrew/01.mp3": [
   "en",
-  0.987,
-  "Oh, oh, oh. Merry Christmas, my friends. Guess what time it is? Yes, it's Christmas time. And this year, the whole branch is coming together. Ho, ho, ho."
+  0.994,
+  "Ho, ho, ho. Merry Christmas, my friends. Guess what time it is? Yes, it's Christmas time. And this year, the whole branch is coming together. Ho, ho, ho."
  ],
- "tts/out/jolly_brian/01.mp3": [
+ "tts/out/jolly2_brian/01.mp3": [
   "en",
-  0.986,
-  "Oh, oh, oh. Merry Christmas, my friends. Guess what time it is? Yes, it's Christmas time, and this year, the whole branch is coming together."
+  0.984,
+  "Ho, ho, ho. Merry Christmas, my friends. Guess what time it is? Yes, it's Christmas time. And this year, the whole branch is coming together. Ho, ho, ho."
  ],
- "tts/out/jolly_guy/01.mp3": [
+ "tts/out/jolly2_william/01.mp3": [
   "en",
-  0.988,
-  "Ho! Ho! Ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year, the whole branch is coming together. Ho! Ho! Ho!"
- ],
- "tts/out/jolly_william/01.mp3": [
-  "en",
-  0.992,
-  "Oh, oh, oh. Merry Christmas, my friends. Guess what time it is. Yes, it's Christmas time. And this year, the whole branch is coming together. Ho, ho, ho."
+  0.993,
+  "Ho! Ho! Ho! Merry Christmas, my friends! Guess what time it is? Yes, it's Christmas time. And this year, the whole branch is coming together. Ho! Ho! Ho!"
  ]
 }
