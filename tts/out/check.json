@@ -1,22 +1,22 @@
 {
- "tts/out/up_andrew/01.mp3": [
+ "tts/out/f_ava/01.mp3": [
   "en",
   0.994,
-  "Merry Christmas, everyone. Guess what time it is? Yes, it's Christmas time, and this year the whole branch is coming together."
+  "Merry Christmas everyone. Guess what time it is? It's Christmas time, and this year the whole branch is coming together."
  ],
- "tts/out/up_brian/01.mp3": [
+ "tts/out/f_emma/01.mp3": [
+  "en",
+  0.994,
+  "Merry Christmas, everyone. Guess what time it is? It's Christmas time, and this year the whole branch is coming together."
+ ],
+ "tts/out/f_jenny/01.mp3": [
   "en",
   0.992,
-  "Merry Christmas. Everyone, guess what time it is? Yes, it's Christmas time, and this year the whole branch is coming together."
+  "Merry Christmas everyone. Guess what time it is? It's Christmas time, and this year the whole branch is coming together."
  ],
- "tts/out/up_guy/01.mp3": [
+ "tts/out/f_aria/01.mp3": [
   "en",
-  0.994,
-  "Merry Christmas, everyone. Guess what time it is? Yes. It's Christmas time. And this year, the whole branch is coming together."
- ],
- "tts/out/up_william/01.mp3": [
-  "en",
-  0.99,
-  "Merry Christmas everyone guess what time it is yes, it's Christmas time and this year the whole branch is coming together"
+  0.991,
+  "Merry Christmas everyone. Guess what time it is? It's Christmas time, and this year the whole branch is coming together."
  ]
 }
