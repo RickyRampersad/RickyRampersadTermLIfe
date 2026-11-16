@@ -1,55 +1,48 @@
 {
- "voice": "en-GB-LibbyNeural",
- "rate": "+6%",
+ "voice": "en-US-AvaMultilingualNeural",
+ "rate": "+12%",
  "check": true,
  "voices": {
-  "wnia": "cy-GB-NiaNeural",
-  "wemily": "en-IE-EmilyNeural",
-  "wneerja": "en-IN-NeerjaExpressiveNeural",
-  "wlibby": "en-GB-LibbyNeural",
-  "wmaisie": "en-GB-MaisieNeural",
-  "wezinne": "en-NG-EzinneNeural"
+  "pava": "en-US-AvaMultilingualNeural",
+  "pemma": "en-US-EmmaMultilingualNeural",
+  "pviv": "fr-FR-VivienneMultilingualNeural",
+  "psera": "de-DE-SeraphinaMultilingualNeural",
+  "pthal": "pt-BR-ThalitaMultilingualNeural"
  },
  "rates": {
-  "wnia": "+6%",
-  "wemily": "+6%",
-  "wneerja": "+6%",
-  "wlibby": "+6%",
-  "wmaisie": "+6%",
-  "wezinne": "+6%"
+  "pava": "+12%",
+  "pemma": "+12%",
+  "pviv": "+12%",
+  "psera": "+12%",
+  "pthal": "+12%"
  },
  "pitches": {
-  "wnia": "+1Hz",
-  "wemily": "+1Hz",
-  "wneerja": "+1Hz",
-  "wlibby": "+1Hz",
-  "wmaisie": "+1Hz",
-  "wezinne": "+1Hz"
+  "pava": "+5Hz",
+  "pemma": "+5Hz",
+  "pviv": "+5Hz",
+  "psera": "+5Hz",
+  "pthal": "+5Hz"
  },
  "films": {
-  "wnia": [
-   "Hi, everyone! So... it's that time of year again, and this Christmas, we're all coming together as one branch!",
-   "Okay, so mark your calendars. Friday, December the eleventh, is our Christmas luncheon! And yes, that's when we do our Earthling and Angel gift exchange. The venue? We'll share that with you very soon."
+  "pava": [
+   "Hey, hey, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!",
+   "So grab your calendars! Friday, December the eleventh. That's our Christmas luncheon! And guess what else? It's our Earthling and Angel gift exchange! Where's it happening? Stay tuned... we'll tell you very soon!"
   ],
-  "wemily": [
-   "Hi, everyone! So... it's that time of year again, and this Christmas, we're all coming together as one branch!",
-   "Okay, so mark your calendars. Friday, December the eleventh, is our Christmas luncheon! And yes, that's when we do our Earthling and Angel gift exchange. The venue? We'll share that with you very soon."
+  "pemma": [
+   "Hey, hey, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!",
+   "So grab your calendars! Friday, December the eleventh. That's our Christmas luncheon! And guess what else? It's our Earthling and Angel gift exchange! Where's it happening? Stay tuned... we'll tell you very soon!"
   ],
-  "wneerja": [
-   "Hi, everyone! So... it's that time of year again, and this Christmas, we're all coming together as one branch!",
-   "Okay, so mark your calendars. Friday, December the eleventh, is our Christmas luncheon! And yes, that's when we do our Earthling and Angel gift exchange. The venue? We'll share that with you very soon."
+  "pviv": [
+   "Hey, hey, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!",
+   "So grab your calendars! Friday, December the eleventh. That's our Christmas luncheon! And guess what else? It's our Earthling and Angel gift exchange! Where's it happening? Stay tuned... we'll tell you very soon!"
   ],
-  "wlibby": [
-   "Hi, everyone! So... it's that time of year again, and this Christmas, we're all coming together as one branch!",
-   "Okay, so mark your calendars. Friday, December the eleventh, is our Christmas luncheon! And yes, that's when we do our Earthling and Angel gift exchange. The venue? We'll share that with you very soon."
+  "psera": [
+   "Hey, hey, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!",
+   "So grab your calendars! Friday, December the eleventh. That's our Christmas luncheon! And guess what else? It's our Earthling and Angel gift exchange! Where's it happening? Stay tuned... we'll tell you very soon!"
   ],
-  "wmaisie": [
-   "Hi, everyone! So... it's that time of year again, and this Christmas, we're all coming together as one branch!",
-   "Okay, so mark your calendars. Friday, December the eleventh, is our Christmas luncheon! And yes, that's when we do our Earthling and Angel gift exchange. The venue? We'll share that with you very soon."
-  ],
-  "wezinne": [
-   "Hi, everyone! So... it's that time of year again, and this Christmas, we're all coming together as one branch!",
-   "Okay, so mark your calendars. Friday, December the eleventh, is our Christmas luncheon! And yes, that's when we do our Earthling and Angel gift exchange. The venue? We'll share that with you very soon."
+  "pthal": [
+   "Hey, hey, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!",
+   "So grab your calendars! Friday, December the eleventh. That's our Christmas luncheon! And guess what else? It's our Earthling and Angel gift exchange! Where's it happening? Stay tuned... we'll tell you very soon!"
   ]
  }
 }
