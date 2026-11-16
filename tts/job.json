@@ -3,28 +3,18 @@
  "rate": "+12%",
  "check": true,
  "voices": {
-  "ava": "en-US-AvaMultilingualNeural"
+  "ava2": "en-US-AvaMultilingualNeural"
  },
  "rates": {
-  "ava": "+12%"
+  "ava2": "+12%"
  },
  "pitches": {
-  "ava": "+2Hz"
+  "ava2": "+2Hz"
  },
  "films": {
-  "ava": [
-   "Hey everyone, guess what time it is? It's Christmas time, and this year the whole branch is coming together!",
-   "Grab your calendars for Friday, December the eleventh. That's our Christmas luncheon, and it's also our Earthling and Angel gift exchange! Where is it happening? Stay tuned, we'll tell you very soon!",
-   "So here's how it works. Every one of us is someone's Angel, and every one of us is someone's Earthling!",
-   "Step one, join in! Just open the page and sign in with your agent number, and staff, simply type your name. Easy!",
-   "Next, list three gifts you'd absolutely love to get, and anything your Angel should stay away from.",
-   "Now don't miss it! Sign up closes at twelve noon on Friday the twentieth of November, and that same afternoon at two o'clock, we do the draw!",
-   "Then you'll get a private email telling you who your Earthling is, with their wish list. But shh, keep it a secret!",
-   "And here's the fun part! Between now and the luncheon, send your Earthling a few anonymous notes from the page. They'll never guess it's you!",
-   "Pick out a gift up to three hundred dollars, wrap it up nicely, and label it with your Earthling's name.",
-   "Then bring it along to the luncheon, where we exchange the gifts and every Angel is finally revealed!",
-   "Every member of staff and every active agent is invited! So don't wait, join today using the link on your screen!",
-   "From all of us at the branch, Merry Christmas, and we'll see you at the luncheon!"
+  "ava2": [
+   "Step one, join in! Just open the page and sign in. Agents, use your agent number. Staff, just type your name. Easy!",
+   "Pick out a gift up to three hundred dollars, wrap it up nicely, and put your Earthling's name on the label."
   ]
  }
 }
