@@ -66,6 +66,24 @@ def burst(n, x, y, t, spread=260):
         p.append(f'<i class="cf" style="left:{x}%;top:{y}%;width:{w}px;height:{h}px;background:{cols[i % 5]};--tx:{tx:.0f}px;--ty:{ty:.0f}px;--r:{rot:.0f}deg;--t:{t + R.uniform(0, .15):.2f}s"></i>')
     return ''.join(p)
 
+
+def blobs(dark):
+    """Two soft colour fields drifting behind the scene, on the film's own clock."""
+    c1, c2 = ('#a4243b55', '#1f5f4a66') if dark else ('#a4243b1f', '#6fb3d233')
+    return (f'<i class="blob grain" style="left:-8%;top:-12%;background:radial-gradient({c1},transparent 65%);--d:19s"></i>'
+            f'<i class="blob grain" style="right:-10%;bottom:-18%;background:radial-gradient({c2},transparent 65%);--d:23s;--dl:-7s"></i>')
+
+def sparkles(n, dark):
+    col = '#ffffff' if dark else '#a4243b'
+    out = []
+    for i in range(n):
+        x, y, s, dl = R.uniform(4, 96), R.uniform(10, 74), R.uniform(10, 22), R.uniform(0, 3)
+        out.append(f'<svg class="spk grain" viewBox="0 0 20 20" style="left:{x:.1f}%;top:{y:.1f}%;width:{s:.0f}px;--dl:-{dl:.2f}s"><path d="M10 0C11 7 13 9 20 10C13 11 11 13 10 20C9 13 7 11 0 10C7 9 9 7 10 0Z" fill="{col}"/></svg>')
+    return ''.join(out)
+
+def dots(k, n):
+    return '<div class="dots">' + ''.join(f'<i class="{"on" if j == k else ("done" if j < k else "")}"></i>' for j in range(n)) + '</div>'
+
 WIPE = '<div class="wipe"><i></i><i></i><i></i></div>'
 STAR = '<svg viewBox="0 0 100 100" class="star"><path class="sp" d="M50 4l13 33 36 2-28 23 9 35-30-19-30 19 9-35L1 39l36-2z"/></svg>'
 PIN = '<svg viewBox="0 0 24 24" class="ic"><path d="M12 22s7-7.2 7-12a7 7 0 1 0-14 0c0 4.8 7 12 7 12z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.6" fill="currentColor"/></svg>'
@@ -127,7 +145,7 @@ S.append(('light', f'''<div class="split"><div><div class="eb up" style="--t:.1s
 S.append(('light', f'''<div class="split"><div><div class="eb up" style="--t:.1s">Step 5 · The gift</div>
 <h2>{kw("Up to *TT$300.*|Wrapped and labelled.", .3, .1)}</h2><p class="up" style="--t:1.4s">With your Earthling's name on it.</p></div>
 <div class="gift"><div class="glow"></div><div class="box"><div class="rib"></div></div><div class="lid"><div class="bow"><i></i><i></i></div></div>
-<div class="tagg">To: my Earthling</div><div class="price pop" style="--t:2.4s">TT$300</div>{burst(26, 50, 30, 2.0, 230)}</div></div>'''))
+<div class="tagg">To: my Earthling</div><div class="price pop" style="--t:2.4s"><span class="cnt" data-to="300" data-pre="TT$" data-at="2400">TT$300</span></div>{burst(26, 50, 30, 2.0, 230)}</div></div>'''))
 # 10 · the reveal
 S.append(('navy', f'''<div class="spot"></div><div class="c"><div class="eb up lt" style="--t:.1s">Friday 11 December · the luncheon</div>
 <h2 class="lt">{kw("Gifts exchanged.|Every Angel revealed.", .3, .1)}</h2>
@@ -286,6 +304,16 @@ h2.lt{color:#fff}p{font-size:24px;color:#2b3b47;margin-top:14px}p.lt{color:#d6e4
 .merry{font:italic 600 34px Georgia,serif;color:#ff8fa3}.sign{color:#b9cadd;font-size:18px}
 #cap{position:absolute;left:0;right:0;bottom:0;min-height:110px;padding-top:48px!important;background:linear-gradient(transparent,rgba(13,63,94,.92) 35%);display:flex;align-items:flex-end;justify-content:center;padding:0 120px 26px;z-index:9}
 #cap span{color:#fff;font:600 25px/1.3 Inter;text-align:center;text-shadow:0 2px 6px rgba(0,0,0,.4)}
+.blob{position:absolute;width:620px;height:620px;border-radius:50%;z-index:0;animation:drift var(--d) ease-in-out var(--dl,0s) infinite alternate}
+@keyframes drift{0%{transform:translate(0,0) scale(1)}50%{transform:translate(160px,90px) scale(1.18)}100%{transform:translate(-60px,160px) scale(.92)}}
+.spk{position:absolute;z-index:1;opacity:0;animation:twk 3s ease-in-out var(--dl) infinite}
+@keyframes twk{0%,100%{opacity:0;transform:scale(.3) rotate(0)}50%{opacity:.9;transform:scale(1) rotate(90deg)}}
+.dots{position:absolute;right:34px;top:86px;z-index:7;display:flex;gap:7px}.dots i{width:9px;height:9px;border-radius:50%;background:#7d889055}
+.dots i.done{background:#1f5f4a}.dots i.on{background:#a4243b;width:26px;border-radius:5px;animation:dpulse 1.2s ease-in-out infinite}
+@keyframes dpulse{50%{box-shadow:0 0 0 5px #a4243b33}}
+.navy .dots i{background:#ffffff40}.navy .dots i.done{background:#9fd3b8}
+h1 .w,h2 .w{animation:wd .6s cubic-bezier(.2,1.3,.4,1) var(--t) both,wglow 2.6s ease-in-out calc(var(--t) + 1.2s) 2}
+@keyframes wglow{50%{text-shadow:0 0 18px #ff8fa399}}
 #bars{position:absolute;left:0;right:0;bottom:0;height:4px;z-index:10;background:#ffffff22}#bars i{display:block;height:100%;background:#a4243b;width:0}
 '''
 
@@ -293,7 +321,7 @@ sec = []
 for i, ((cls, body), d) in enumerate(zip(S, D)):
     dark = cls == 'navy'
     sec.append(f'<section class="scene {cls}" data-d="{d}" data-cap="{html.escape(LINES[i])}" style="--dur:{d}ms">'
-               f'{snow(30 if dark else 18, dark)}{lights()}<div class="kb">{body}</div>{WIPE if i else ""}</section>')
+               f'{blobs(dark)}{sparkles(12 if dark else 9, dark)}{snow(30 if dark else 18, dark)}{lights()}<div class="kb">{body}</div>{dots(i, len(S)) if 0 < i < len(S) - 1 else ""}{WIPE if i else ""}</section>')
 page = f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Earthling and Angel 2026 · launch film</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800&display=swap" rel="stylesheet">
 <style>{CSS}</style></head><body>{''.join(sec)}<div id="cap"><span></span></div>
