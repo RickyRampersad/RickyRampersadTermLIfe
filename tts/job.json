@@ -1,20 +1,49 @@
 {
- "voice": "en-US-AvaMultilingualNeural",
- "rate": "+12%",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
  "check": true,
  "voices": {
-  "ava2": "en-US-AvaMultilingualNeural"
+  "gcmc2": "en-US-AndrewMultilingualNeural",
+  "gcms2": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "ava2": "+12%"
- },
- "pitches": {
-  "ava2": "+2Hz"
+  "gcmc2": "+0%",
+  "gcms2": "+0%"
  },
  "films": {
-  "ava2": [
-   "Step one, join in! Just open the page and sign in. Agents, use your agent number. Staff, just type your name. Easy!",
-   "Pick out a gift up to three hundred dollars, wrap it up nicely, and put your Earthling's name on the label."
+  "gcmc2": [
+   "This is our branch's new way of looking after your group.",
+   "Your group life, health and pension plans with Guardian Life, all in one place, and always up to date. No more chasing us for answers.",
+   "Every Monday at ten, you get one short report: what we finished, what's still open, and what we need from you.",
+   "Tap through to your own secure page. Your service items, your billing and your people each have their own tab.",
+   "On the twenty-sixth, your bills arrive, checked against our records, with one clear statement of what's due.",
+   "You'll see who's on your plans, who came off this year, and every application still pending, with who has it on our team.",
+   "We'll tell you ahead of time when someone's turning sixty-five, when a dependent comes of age, or when someone's close to retiring.",
+   "Someone joining or leaving? Tell us right there. The form fills itself in, and we follow it through to the end.",
+   "Rate us every week, from one to five stars. And on every bill, rate the person who looks after your account.",
+   "A real person reads every answer, and acts on it. Behind it all is a named team, and every step is recorded. Nothing slips through.",
+   "Want this for your company? Call our branch on the number on your screen. Let's look after your people together."
+  ],
+  "gcms2": [
+   "Group client management, the new way. Here's how it works, and who does what.",
+   "There are four parts. Our Branch Manager sets the standard and owns the result. Kamla, our Branch Manager's Assistant, oversees the tasks. The support team looks after their own groups. And the system keeps time, and keeps the record.",
+   "You sign in with your own number and password, so everything you do is recorded in your name.",
+   "Every week, you run the six checks and approve each group by Friday. At ten on Monday, the letters go by themselves.",
+   "At ten thirty, groups that haven't rated us get a reminder. If one of your ready groups had no letter, you're asked why, and a task opens in your name. Reply by noon, and close it with the reason.",
+   "At eleven, if any group still has no letter, the whole team gets one note, naming each group and who's responsible.",
+   "Every month, the bills come in on the twenty-fifth. You upload them, check them, answer the questions, reconcile and approve. At one o'clock, the Branch Manager gets the report.",
+   "On the twenty-sixth at ten, every approved bill goes by itself, with its statement. That's the deadline.",
+   "Open Billing, and eight steps guide you. Upload a bill, and every check against Salesforce comes back as a finding: fix, check, note or okay.",
+   "The upload does the typing for you, too. It brings the month's billing record in Salesforce into line with the bill, and opens a task for everyone who left or changed tier, and one to query the adjustments.",
+   "Answer each question with a tap. Your answer goes on Chatter in your name. Then update last month's tasks against this month's bill.",
+   "Joiners and leavers go on Guardian's own forms, filled from Salesforce, and they're chased every three working days. The people step flags who's turning sixty-five, or coming of age.",
+   "The statement shows what's due and what's still unpaid. Tick reconciled only when you've checked it yourself, then approve it for the billing day.",
+   "The bill's e-mail greets the contact by name, and asks them to rate the person who looks after their account. Those stars count on your record.",
+   "Missed the deadline? Approve and Send now will ask why. Give the real reason. It goes on the bill, on Chatter, and straight to the Branch Manager.",
+   "Every press is recorded: who, when, and why. So Head Office, the Branch Manager, or the group can see exactly what happened.",
+   "Kamla checks the team dashboard every day, chases what's late, and steps in when someone's away. She or the Branch Manager can put one group, or every group, on hold, with the reason, and nobody's chased for a group on hold.",
+   "Until we go live, every bill comes to you marked test. But Salesforce is real, and the upload writes to it, so check before you press.",
+   "Read the training programme, take the test, and let's make every group feel looked after. This is our new way."
   ]
  }
 }
