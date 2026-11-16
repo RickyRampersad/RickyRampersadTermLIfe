@@ -1,12 +1,34 @@
 {
- "voice": "en-US-AndrewMultilingualNeural",
+ "voice": "en-US-BrianMultilingualNeural",
  "rate": "+0%",
  "check": true,
+ "voices": {
+  "vbrian": "en-US-BrianMultilingualNeural",
+  "vava": "en-US-AvaMultilingualNeural",
+  "vemma": "en-US-EmmaMultilingualNeural",
+  "vryan": "en-GB-RyanNeural",
+  "vsonia": "en-GB-SoniaNeural"
+ },
  "films": {
-  "angels4": [
-   "So mark your calendars for Friday, December the eleventh. That's our Christmas luncheon, and with it, our Earthling and Angel gift exchange! As for the venue, we'll let you know very soon.",
-   "Then pick out a gift, up to three hundred dollars. Wrap it up nicely, and label it with your Earthling's name.",
-   "Every member of staff, and every active agent, is invited. So don't wait. Join today, using the link on your screen."
+  "vbrian": [
+   "Hey, everyone! It's that time of year again... and this Christmas, the whole branch is coming together.",
+   "So mark your calendars for Friday, December the eleventh. That's our Christmas luncheon, and with it, our Earthling and Angel gift exchange! As for the venue, we'll let you know very soon."
+  ],
+  "vava": [
+   "Hey, everyone! It's that time of year again... and this Christmas, the whole branch is coming together.",
+   "So mark your calendars for Friday, December the eleventh. That's our Christmas luncheon, and with it, our Earthling and Angel gift exchange! As for the venue, we'll let you know very soon."
+  ],
+  "vemma": [
+   "Hey, everyone! It's that time of year again... and this Christmas, the whole branch is coming together.",
+   "So mark your calendars for Friday, December the eleventh. That's our Christmas luncheon, and with it, our Earthling and Angel gift exchange! As for the venue, we'll let you know very soon."
+  ],
+  "vryan": [
+   "Hey, everyone! It's that time of year again... and this Christmas, the whole branch is coming together.",
+   "So mark your calendars for Friday, December the eleventh. That's our Christmas luncheon, and with it, our Earthling and Angel gift exchange! As for the venue, we'll let you know very soon."
+  ],
+  "vsonia": [
+   "Hey, everyone! It's that time of year again... and this Christmas, the whole branch is coming together.",
+   "So mark your calendars for Friday, December the eleventh. That's our Christmas luncheon, and with it, our Earthling and Angel gift exchange! As for the venue, we'll let you know very soon."
   ]
  }
 }
