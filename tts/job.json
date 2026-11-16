@@ -1,30 +1,37 @@
 {
- "voice": "pt-BR-ThalitaMultilingualNeural",
- "rate": "+12%",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
  "check": true,
  "voices": {
-  "thalita": "pt-BR-ThalitaMultilingualNeural"
+  "santa_andrew": "en-US-AndrewMultilingualNeural",
+  "santa_guy": "en-US-GuyNeural",
+  "santa_ryan": "en-GB-RyanNeural",
+  "santa_chris": "en-US-ChristopherNeural"
  },
  "rates": {
-  "thalita": "+12%"
+  "santa_andrew": "-8%",
+  "santa_guy": "-10%",
+  "santa_ryan": "-8%",
+  "santa_chris": "-8%"
  },
  "pitches": {
-  "thalita": "+5Hz"
+  "santa_andrew": "-14Hz",
+  "santa_guy": "-12Hz",
+  "santa_ryan": "-10Hz",
+  "santa_chris": "-10Hz"
  },
  "films": {
-  "thalita": [
-   "Hey, hey, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!",
-   "So grab your calendars! Friday, December the eleventh. That's our Christmas luncheon! And guess what else? It's our Earthling and Angel gift exchange! Where's it happening? Stay tuned... we'll tell you very soon!",
-   "Okay, so here's how it works. Every one of us is someone's Angel... and every one of us is someone's Earthling!",
-   "Step one? Join in! Just open the page and sign in with your agent number. And staff, simply type your name. Easy!",
-   "Next, list three gifts you'd absolutely love to get... and anything your Angel should stay away from.",
-   "Now, don't miss it! Sign up closes at twelve noon, on Friday the twentieth of November. And that very same afternoon, at two o'clock, we do the draw!",
-   "Then, you'll get a private email telling you who your Earthling is, with their wish list. But shh... keep it a secret!",
-   "And here's the fun part! Between now and the luncheon, send your Earthling a few anonymous notes from the page. They'll never guess it's you!",
-   "Pick out a gift, up to three hundred dollars. Wrap it up nicely, and label it with your Earthling's name.",
-   "Then bring it along to the luncheon, where we exchange the gifts, and every Angel is finally revealed!",
-   "Every member of staff, and every active agent, is invited! So don't wait. Join today, using the link on your screen!",
-   "From all of us at the branch, Merry Christmas... and we'll see you at the luncheon!"
+  "santa_andrew": [
+   "Ho, ho, ho! Merry Christmas, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!"
+  ],
+  "santa_guy": [
+   "Ho, ho, ho! Merry Christmas, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!"
+  ],
+  "santa_ryan": [
+   "Ho, ho, ho! Merry Christmas, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!"
+  ],
+  "santa_chris": [
+   "Ho, ho, ho! Merry Christmas, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!"
   ]
  }
 }
