@@ -1,52 +1,52 @@
 {
- "tts/out/vbrian/01.mp3": [
+ "tts/out/uandrew/01.mp3": [
   "en",
   0.994,
-  "Hey, everyone, it's that time of year again, and this Christmas, the whole branch is coming together."
+  "Hey everyone, guess what? It's that time of year again, and this Christmas, the whole branch is coming together."
  ],
- "tts/out/vbrian/02.mp3": [
+ "tts/out/uandrew/02.mp3": [
   "en",
-  0.995,
-  "So mark your calendars for Friday, December the 11th. That's our Christmas luncheon, and with it, our Earthling and Angel Gift Exchange. As for the venue, we'll let you know very soon."
+  0.991,
+  "So mark your calendars for Friday, December the 11th. It's our Christmas luncheon, and with it, our very own Earthling and Angel Gift Exchange. The venue will tell you very soon."
  ],
- "tts/out/vava/01.mp3": [
+ "tts/out/ubrian/01.mp3": [
+  "en",
+  0.992,
+  "Hey, everyone. Guess what? It's that time of year again. And this Christmas, the whole branch is coming together."
+ ],
+ "tts/out/ubrian/02.mp3": [
+  "en",
+  0.989,
+  "So mark your calendars for Friday, December the 11th. It's our Christmas luncheon, and with it, our very own earthling and angel gift exchange. The venue will tell you very soon."
+ ],
+ "tts/out/uava/01.mp3": [
+  "en",
+  0.991,
+  "Hey, everyone. Guess what? It's that time of year again. And this Christmas, the whole branch is coming together."
+ ],
+ "tts/out/uava/02.mp3": [
   "en",
   0.994,
-  "Hey everyone, it's that time of year again, and this Christmas, the whole branch is coming together."
+  "So mark your calendars for Friday, December 11th. It's our Christmas luncheon, and with it, our very own Earthling and Angel Gift Exchange. The venue will tell you very soon."
  ],
- "tts/out/vava/02.mp3": [
+ "tts/out/uemma/01.mp3": [
   "en",
-  0.995,
-  "So mark your calendars for Friday, December 11th. That's our Christmas luncheon, and with it, our Earthling and Angel Gift Exchange. As for the venue, we'll let you know very soon."
+  0.99,
+  "Hey everyone. Guess what? It's that time of year again. And this Christmas, the whole branch is coming together."
  ],
- "tts/out/vemma/01.mp3": [
-  "en",
-  0.993,
-  "Hey everyone, it's that time of year again. And this Christmas, the whole branch is coming together."
- ],
- "tts/out/vemma/02.mp3": [
-  "en",
-  0.993,
-  "So mark your calendars for Friday, December the 11th. That's our Christmas luncheon, and with it, are earthling an angel gift exchange. As for the venue, we'll let you know very soon."
- ],
- "tts/out/vryan/01.mp3": [
-  "en",
-  0.991,
-  "Hey, everyone, it's that time of year again, and this Christmas, the whole branch is coming together."
- ],
- "tts/out/vryan/02.mp3": [
-  "en",
-  0.991,
-  "So mark your calendars for Friday, December the 11th. That's our Christmas luncheon, and with it, our earthling and angel gift exchange. As for the venue, we'll let you know very soon."
- ],
- "tts/out/vsonia/01.mp3": [
+ "tts/out/uemma/02.mp3": [
   "en",
   0.988,
-  "Hey, everyone. It's that time of year again, and this Christmas, the whole branch is coming together."
+  "So mark your calendars for Friday, December the 11th. It's our Christmas luncheon and with it are very unearthling and angel-gift exchange. The venue will tell you very soon."
  ],
- "tts/out/vsonia/02.mp3": [
+ "tts/out/uryan/01.mp3": [
   "en",
-  0.998,
-  "So mark your calendars for Friday, December the 11th. That's our Christmas luncheon, and with it, our earthling and angel gift exchange. As for the venue, we'll let you know very soon."
+  0.993,
+  "Hey, everyone. Guess what? It's that time of year again. And this Christmas, the whole branch is coming together."
+ ],
+ "tts/out/uryan/02.mp3": [
+  "en",
+  0.988,
+  "So mark your calendars for Friday, December the 11th. It's our Christmas luncheon, and with it, our very own earthling and angel gift exchange. The venue? We'll tell you very soon."
  ]
 }
