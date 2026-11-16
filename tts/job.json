@@ -3,35 +3,35 @@
  "rate": "+0%",
  "check": true,
  "voices": {
-  "santa_andrew": "en-US-AndrewMultilingualNeural",
-  "santa_guy": "en-US-GuyNeural",
-  "santa_ryan": "en-GB-RyanNeural",
-  "santa_chris": "en-US-ChristopherNeural"
+  "jolly_andrew": "en-US-AndrewMultilingualNeural",
+  "jolly_brian": "en-US-BrianMultilingualNeural",
+  "jolly_guy": "en-US-GuyNeural",
+  "jolly_william": "en-AU-WilliamMultilingualNeural"
  },
  "rates": {
-  "santa_andrew": "-8%",
-  "santa_guy": "-10%",
-  "santa_ryan": "-8%",
-  "santa_chris": "-8%"
+  "jolly_andrew": "+8%",
+  "jolly_brian": "+10%",
+  "jolly_guy": "+6%",
+  "jolly_william": "+8%"
  },
  "pitches": {
-  "santa_andrew": "-14Hz",
-  "santa_guy": "-12Hz",
-  "santa_ryan": "-10Hz",
-  "santa_chris": "-10Hz"
+  "jolly_andrew": "-4Hz",
+  "jolly_brian": "-4Hz",
+  "jolly_guy": "-2Hz",
+  "jolly_william": "-4Hz"
  },
  "films": {
-  "santa_andrew": [
-   "Ho, ho, ho! Merry Christmas, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!"
+  "jolly_andrew": [
+   "Ho! Ho! Ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
   ],
-  "santa_guy": [
-   "Ho, ho, ho! Merry Christmas, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!"
+  "jolly_brian": [
+   "Ho! Ho! Ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
   ],
-  "santa_ryan": [
-   "Ho, ho, ho! Merry Christmas, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!"
+  "jolly_guy": [
+   "Ho! Ho! Ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
   ],
-  "santa_chris": [
-   "Ho, ho, ho! Merry Christmas, everyone! Guess what time it is? That's right... it's Christmas time! And this year, the whole branch is coming together!"
+  "jolly_william": [
+   "Ho! Ho! Ho! Merry Christmas, my friends! Guess what time it is? Yes! It's Christmas time! And this year... the whole branch is coming together! Ho, ho, ho!"
   ]
  }
 }
