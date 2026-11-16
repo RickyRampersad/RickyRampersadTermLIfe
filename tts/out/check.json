@@ -1,37 +1,47 @@
 {
- "tts/out/bwS/01.mp3": [
+ "tts/out/angels/01.mp3": [
   "en",
-  0.997,
-  "Every time something in this branch gets stuck, everybody calls the branch manager to fix it."
+  0.994,
+  "It's that time of year again, and this Christmas the whole branch is coming together."
  ],
- "tts/out/bwS/02.mp3": [
-  "en",
-  0.995,
-  "That's the seat we're hiring for, here in Chiguanas. One person to keep everything we've built up and running."
- ],
- "tts/out/bwS/03.mp3": [
-  "en",
-  0.999,
-  "Everything we've built runs across five platforms and you'd learn how they fit together, the workflow and the rules behind everyone."
- ],
- "tts/out/bwS/04.mp3": [
-  "en",
-  0.999,
-  "And when something stuck on the server, you find out why, you fix it and you write the amendment so it doesn't happen again."
- ],
- "tts/out/bwS/05.mp3": [
-  "en",
-  0.998,
-  "The branch pays for every tool with clawed right beside you. You use them every day, their skills worth putting on your CV, and you get the keys, not a request form."
- ],
- "tts/out/bwS/06.mp3": [
+ "tts/out/angels/02.mp3": [
   "en",
   0.996,
-  "We're hiring one personal assistant here in Chiguanas. If you're the one who makes it happen, come and build with us."
+  "on Friday the 11th of December, we're holding our Christmas luncheon and with it our earthling and angel gift exchange"
  ],
- "tts/out/bwSalt/01.mp3": [
+ "tts/out/angels/04.mp3": [
   "en",
-  0.997,
-  "Whenever something in this branch gets stuck on a server, everybody calls the branch manager to fix it."
+  0.998,
+  "First, you join. Open the page, sign in with your agent number, and staff. Just type your name."
+ ],
+ "tts/out/angels/05.mp3": [
+  "en",
+  0.994,
+  "Then list three gifts you'd love to receive and anything your angel should avoid."
+ ],
+ "tts/out/angels/06.mp3": [
+  "en",
+  0.996,
+  "Sign up closes at 12 noon on Friday the 20th of November. The draw happens that same afternoon at 2."
+ ],
+ "tts/out/angels/09.mp3": [
+  "en",
+  0.998,
+  "Choose a gift up to $300, wrap it, and label it with your Earthlings name."
+ ],
+ "tts/out/angels/10.mp3": [
+  "en",
+  0.992,
+  "Then bring it to the luncheon where the gifts are exchanged and every angel is revealed."
+ ],
+ "tts/out/angels/11.mp3": [
+  "en",
+  0.992,
+  "Every member of staff and every active agent is invited. So join today at rickerempersadbranch.com slash angels."
+ ],
+ "tts/out/angels/12.mp3": [
+  "en",
+  0.979,
+  "From all of us at the Ricky Rampers ad branch, we'll see you at the luncheon."
  ]
 }
