@@ -34,7 +34,7 @@ import base64, io, json, os, pathlib, re, sys
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 FILM = sys.argv[1] if len(sys.argv) > 1 else 'client'
-KEY = {'client': 'gcmc2', 'staff': 'gcms2'}[FILM]
+KEY = {'client': 'gcmc3', 'staff': 'gcms3'}[FILM]
 SHOTS = pathlib.Path(os.environ.get('GCM_SHOTS', HERE / 'gcmshots'))
 OUT = ROOT / 'groupclientmanagement' / ({'client': 'new-way-film.html', 'staff': 'staff-new-way-film.html'}[FILM])
 TIMING = HERE / (KEY + '-timing.json')
@@ -412,7 +412,7 @@ def staff():
         eb('Joiners, leavers and the people') +
         row('doc', 'Guardian&rsquo;s own forms, filled from Salesforce', at(12, 'forms'), 'chased every three working days', 'ok') +
         row('cake', 'Who&rsquo;s turning sixty-five, or coming of age', at(12, 'sixty'), 'flagged at the people step'),
-        '<div class="duo l">%s%s</div>' % (lap('s09-forms.png', 'back', .2, w=468, h=270), lap('s10-people.png', 'front', at(12, 'people'), w=468, h=270)),
+        '<div class="duo l">%s%s</div>' % (lap('s09-forms.png', 'back', .2, w=468, h=270), lap('s10-people.png', 'front', at(12, 'people', 1), w=468, h=270)),
         'wide'))
     sc.append(split(13,
         eb('The statement') + '<h2>%s</h2>' % kin('What&rsquo;s due, and what&rsquo;s still unpaid.', .3) +

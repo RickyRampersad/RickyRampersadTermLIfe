@@ -27,8 +27,8 @@ def entries(key, tfile, out, hitlist, shapes):
                     music=f'bed-{k}.wav', sfx=f'sfx-{k}.wav', ass=f'captions-{k}.ass')
     print(f'films.json: {key} {t["dur"]} s · hits {hits}')
 
-entries('gcmc2', 'gcmc2-timing.json', {'': 'new-way.mp4', 'v': 'new-way-phone.mp4'},
+entries('gcmc3', 'gcmc3-timing.json', {'': 'new-way.mp4', 'v': 'new-way-phone.mp4'},
         [(3, 'ten'), (5, 'twenty'), (9, 'five'), (10, 'Nothing')], (('', WIDE), ('v', TALL)))
-entries('gcms2', 'gcms2-timing.json', {'': 'staff-new-way.mp4'},
+entries('gcms3', 'gcms3-timing.json', {'': 'staff-new-way.mp4'},
         [(4, 'ten'), (7, 'twenty'), (8, 'twenty'), (18, 'test')], (('', WIDE),))
 json.dump(f, open('films.json', 'w'), indent=1)
