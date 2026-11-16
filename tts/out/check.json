@@ -1,62 +1,22 @@
 {
- "tts/out/thalita/01.mp3": [
-  "en",
-  0.991,
-  "Hey, hey, everyone. Guess what time it is? That's right. It's Christmas time. And this year, the whole branch is coming together."
- ],
- "tts/out/thalita/02.mp3": [
-  "en",
-  0.995,
-  "So grab your calendars. Friday, December the 11th. That's our Christmas luncheon. And guess what else? It's our earthling and angel gift exchange. Where's it happening? Stay tuned. We'll tell you very soon."
- ],
- "tts/out/thalita/03.mp3": [
-  "en",
-  0.994,
-  "Okay, so here's how it works. Every one of us is someone's angel, and every one of us is someone's earthling."
- ],
- "tts/out/thalita/04.mp3": [
-  "en",
-  0.998,
-  "Step 1. Join in. Just open the page and sign in with your agent number. And staff, simply type your name. Easy."
- ],
- "tts/out/thalita/05.mp3": [
-  "en",
-  0.994,
-  "Next, list three gifts you'd absolutely love to get, and anything your angel should stay away from."
- ],
- "tts/out/thalita/06.mp3": [
-  "en",
-  0.996,
-  "Now, don't miss it. Sign up closes at 12 noon on Friday the 20th of November. And that very same afternoon, at 2 o'clock, we do the draw."
- ],
- "tts/out/thalita/07.mp3": [
-  "en",
-  0.995,
-  "Then you'll get a private email telling you who your Earthling is with their wish list. But sure, keep it a secret."
- ],
- "tts/out/thalita/08.mp3": [
+ "tts/out/santa_andrew/01.mp3": [
   "en",
   0.992,
-  "And here's the fun part, between now and the luncheon. Send your Earthling a few anonymous notes from the page. They'll never guess it's you."
+  "Ho, ho, ho. Merry Christmas, everyone. Guess what time it is? That's right, it's Christmas time. And this year, the whole branch is coming together."
  ],
- "tts/out/thalita/09.mp3": [
+ "tts/out/santa_guy/01.mp3": [
   "en",
-  0.997,
-  "Pick out a gift, up to $300. Wrap it up nicely and label it with your Earthlings name."
+  0.992,
+  "Ho! Ho! Ho! Merry Christmas, everyone! Guess what time it is? That's right, it's Christmas time. And this year, the whole branch is coming together."
  ],
- "tts/out/thalita/10.mp3": [
+ "tts/out/santa_ryan/01.mp3": [
   "en",
-  0.993,
-  "Then bring it along to the luncheon, where we exchange the gifts, and every angel is finally revealed."
+  0.994,
+  "Ho, ho, ho! Merry Christmas, everyone! Guess what time it is? That's right, it's Christmas time. And this year, the whole branch is coming together."
  ],
- "tts/out/thalita/11.mp3": [
+ "tts/out/santa_chris/01.mp3": [
   "en",
-  0.995,
-  "Every member of staff and every active agent is invited. So don't wait. Join today using the link on your screen."
- ],
- "tts/out/thalita/12.mp3": [
-  "en",
-  0.975,
-  "From all of us at the branch, Merry Christmas, and we'll see you at the luncheon."
+  0.986,
+  "Ho, Ho, Ho. Merry Christmas, everyone. Guess what time it is? That's right, it's Christmas time. And this year, the whole branch is coming together."
  ]
 }
