@@ -35,6 +35,7 @@ var ANG = {
   DRAW: '2026-11-20T14:00:00-04:00',    // the draw
   LUNCH: '2026-12-11',                  // Friday, Christmas luncheon
   LUNCH_WORDS: 'Friday 11 December 2026',
+  VENUE: 'The venue is to be advised.',   // replace with the venue once it is booked
   PAGE: 'https://rickyrampersadbranch.com/angels/',
   LOGO: 'https://rickyrampersadbranch.com/logo-mark.png',
   TABS: {
@@ -168,7 +169,7 @@ function angDrawMails_() {
         htmlBody: angMail_('Your Earthling is ' + angEsc_(them.name),
           '<p>Dear ' + angEsc_(angFirst_(me.name)) + ',</p><p>The draw is done. You are the Angel for <b>' + angEsc_(them.name) + '</b>. Keep it to yourself until the luncheon.</p>' +
           angWishHtml_(wishes[them.key]) +
-          '<p>Gift limit: <b>' + ANG.LIMIT + '</b>. Bring it, wrapped and labelled with your Earthling\'s name, to the Christmas luncheon on <b>' + ANG.LUNCH_WORDS + '</b>.</p>' +
+          '<p>Gift limit: <b>' + ANG.LIMIT + '</b>. Bring it, wrapped and labelled with your Earthling\'s name, to the Christmas luncheon on <b>' + ANG.LUNCH_WORDS + '</b>. ' + ANG.VENUE + '</p>' +
           '<p>Between now and then you can send ' + angEsc_(angFirst_(them.name)) + ' anonymous notes from the page. They will not know it is you.</p>',
           'Open my page', ANG.PAGE) });
       sh.getRange(r._row, 6).setValue(new Date()); n++;
@@ -318,7 +319,7 @@ function angRemind_(me) {
     var e = entries[p.key]; if ((e && /^y/i.test(e.Joined)) || !p.email) return;
     try {
       MailApp.sendEmail({ to: p.email, subject: 'Earthling and Angel ' + ANG.YEAR + ': join by 12 noon on Friday', name: 'Ricky Rampersad Branch',
-        htmlBody: angMail_('Join the Earthling and Angel exchange', '<p>Dear ' + angEsc_(angFirst_(p.name)) + ',</p><p>Our Christmas luncheon is on <b>' + ANG.LUNCH_WORDS + '</b>, with the Earthling and Angel gift exchange. Sign-up closes at <b>12 noon on Friday 20 November</b>, and the draw is at 2:00 pm.</p><p>It takes a minute: sign in with your agent number (staff: your name) and list three gift ideas. Gift limit ' + ANG.LIMIT + '.</p>', 'Join now', ANG.PAGE) });
+        htmlBody: angMail_('Join the Earthling and Angel exchange', '<p>Dear ' + angEsc_(angFirst_(p.name)) + ',</p><p>Our Christmas luncheon is on <b>' + ANG.LUNCH_WORDS + '</b>, with the Earthling and Angel gift exchange. ' + ANG.VENUE + ' Sign-up closes at <b>12 noon on Friday 20 November</b>, and the draw is at 2:00 pm.</p><p>It takes a minute: sign in with your agent number (staff: your name) and list three gift ideas. Gift limit ' + ANG.LIMIT + '.</p>', 'Join now', ANG.PAGE) });
       n++;
     } catch (x) {}
   });
