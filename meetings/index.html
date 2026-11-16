@@ -1252,7 +1252,7 @@ function meetingBanner(m) {
     '<div class="lbl">' + esc(when) + " \u00b7 " + esc(m.type || "Branch meeting") + "</div>" +
     '<div class="big">' + esc(m.title) + "</div>" +
     '<div class="sub">' + esc(m.date) +
-    (m.start ? " \u00b7 starts <b>" + esc(m.start) + "</b>" : "") +
+    (timeWords(m.start) ? " \u00b7 starts <b>" + esc(timeWords(m.start)) + "</b>" : "") +
     (m.location ? " \u00b7 " + esc(m.location) : "") +
     (m.format && !m.location ? " \u00b7 " + esc(m.format) : "") + "</div>" +
     (m.checkInOpensAt
@@ -1277,9 +1277,60 @@ function meetingBanner(m) {
  *  "I am here" writes the attendance row. The branch read the sign-in
  *  as the register, so the stop that matters says it outright.
  */
+/*  A MEETING TIME IS NOT WHAT WAS TYPED INTO IT.
+ *
+ *  Start and End are time-only cells, and Google Sheets stores a time with
+ *  no date on 30 December 1899 — a date old enough to carry a local-mean-time
+ *  offset, since Port of Spain ran at -04:06:04 until 1912. So the backend
+ *  hands this page back "Sat Dec 30 1899 09:00:00 GMT-0400 (Atlantic Standard
+ *  Time)" where a person typed 9:00, and printing it raw put that whole string
+ *  on the home screen under "starts". Found on the live sheet, 11 November
+ *  2026, on every meeting it holds, script-written ones included.
+ *
+ *  The same trap has bitten the claims intake, the group billing month and the
+ *  guest number, so the rule is the one those three arrived at: normalise at
+ *  the ONE place the field is read, and never key anything on its spelling.
+ *
+ *  timeMin is that one place. timeWords is for a person to read and clock24 is
+ *  for an <input type="time">, which takes 24-hour HH:MM and nothing else. */
+function timeMin(v) {
+  var s = String(v == null ? "" : v);
+  if (!s) return -1;
+  var h, mi;
+  //  "9:00 AM", and a stamp that carries one, such as "11 Nov 2026, 9:00 AM".
+  var m = /(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp])\.?[Mm]?/.exec(s);
+  if (m) {
+    h = Number(m[1]) % 12;
+    if (/[Pp]/.test(m[3])) h += 12;
+    mi = Number(m[2]);
+  } else {
+    //  "09:00" on the 24-hour clock, and the 1899 date above, whose first
+    //  clock reading is the time somebody meant.
+    m = /(\d{1,2}):(\d{2})/.exec(s);
+    if (!m) return -1;
+    h = Number(m[1]);
+    mi = Number(m[2]);
+  }
+  if (!(h >= 0 && h <= 23) || !(mi >= 0 && mi <= 59)) return -1;
+  return h * 60 + mi;
+}
+
+function timeWords(v) {
+  var n = timeMin(v);
+  if (n < 0) return "";
+  var h = Math.floor(n / 60) % 24, mi = n % 60;
+  return ((h % 12) || 12) + ":" + (mi < 10 ? "0" : "") + mi + " " + (h < 12 ? "AM" : "PM");
+}
+
+function time24(v) {
+  var n = timeMin(v);
+  if (n < 0) return "";
+  var h = Math.floor(n / 60) % 24, mi = n % 60;
+  return (h < 10 ? "0" : "") + h + ":" + (mi < 10 ? "0" : "") + mi;
+}
+
 function justTime(stamp) {
-  var m = /(\d{1,2}:\d{2}\s*(?:AM|PM|am|pm))/.exec(String(stamp || ""));
-  return m ? m[1].toUpperCase() : "";
+  return timeWords(stamp);
 }
 
 function runUpBlock(m) {
@@ -1483,7 +1534,7 @@ function meetingRow(m) {
     '<div class="when"><b>' + d.d + "</b><span>" + d.m + "</span></div>" +
     '<div class="body"><b>' + esc(m.title) + "</b>" +
     '<div class="meta">' + esc(m.type) +
-    (m.start ? " · " + esc(m.start) : "") +
+    (timeWords(m.start) ? " · " + esc(timeWords(m.start)) : "") +
     (m.format ? " · " + esc(m.format) : "") +
     (m.location ? "<br>" + esc(m.location) : "") + "</div>" +
     '<div class="tags">' + tags + "</div></div></button>";
@@ -1617,7 +1668,8 @@ function drawMeeting() {
   // The facts of the meeting, laid out the way the branch's own
   // agendas head their first table.
   var facts = [
-    ["Date", m.date + (m.start ? " · " + m.start + (m.end ? "–" + m.end : "") : "")],
+    ["Date", m.date + (timeWords(m.start) ? " · " + timeWords(m.start) +
+       (timeWords(m.end) ? "–" + timeWords(m.end) : "") : "")],
     ["Format", m.format], ["Location", m.location], ["Chair", m.chair],
     ["Guest", m.guest], ["Pre-read", m.preRead], ["Anchor document", m.anchor]
   ].filter(function (r) { return r[1]; });
@@ -2169,7 +2221,7 @@ function builtHtml(d) {
   var nItems = Object.keys(items).length;
 
   var out = '<div class="page-head"><div class="kicker">' + esc(m.date) +
-    (m.start ? " \u00b7 " + esc(m.start) : "") + "</div>" +
+    (timeWords(m.start) ? " \u00b7 " + esc(timeWords(m.start)) : "") + "</div>" +
     "<h1>The agenda, as the branch built it</h1>" +
     "<p>Everything brought in before anybody sat down. It is read in the room before " +
     "anybody speaks.</p></div>";
@@ -3444,8 +3496,8 @@ function buildForm(d) {
     '<div class="row3">' +
     '<div class="field"><label for="b-date">Date</label><input id="b-date" type="date" value="' +
       esc((m.dateISO || "").slice(0, 10)) + '"/></div>' +
-    '<div class="field"><label for="b-start">Starts</label><input id="b-start" type="time" value="' + esc(m.start || "09:00") + '"/></div>' +
-    '<div class="field"><label for="b-end">Ends</label><input id="b-end" type="time" value="' + esc(m.end || "") + '"/></div></div>' +
+    '<div class="field"><label for="b-start">Starts</label><input id="b-start" type="time" value="' + esc(time24(m.start) || "09:00") + '"/></div>' +
+    '<div class="field"><label for="b-end">Ends</label><input id="b-end" type="time" value="' + esc(time24(m.end)) + '"/></div></div>' +
 
     '<div class="row3">' +
     '<div class="field"><label for="b-format">Format</label><select id="b-format">' +
@@ -3519,7 +3571,7 @@ function buildForm(d) {
       var total = d.agenda.reduce(function (n, a) { return n + (a.minutes || 0); }, 0);
       out += '<div class="card"><div style="font-size:12px;color:var(--muted);margin-bottom:10px">' +
         d.agenda.length + " items · " + total + " minutes allotted" +
-        (m.start ? " · runs " + esc(d.agenda[0].clock) + " to " + esc(endClock(m.start, total)) : "") + "</div>" +
+        (m.start ? " · runs " + esc(d.agenda[0].clock) + " to " + esc(endClock(time24(m.start), total)) : "") + "</div>" +
         '<div class="tbl-scroll"><table><thead><tr><th>Time</th><th>Item</th><th>Presenter</th>' +
         "<th>Min</th><th>Seen by</th><th></th></tr></thead><tbody>" +
         d.agenda.map(function (a, i) {
@@ -4647,8 +4699,7 @@ function railBlock(d, compact) {
   /*  "Reminding us the times": the Rota has no clock column, so the times are
       worked out from the meeting's own start and each item's minutes. A clock
       the backend does send wins. */
-  var mk = /^(\d{1,2}):(\d{2})\s*([ap])/i.exec(String((d.meeting || {}).start || ""));
-  var run = mk ? ((+mk[1] % 12) + (/p/i.test(mk[3]) ? 12 : 0)) * 60 + (+mk[2]) : -1;
+  var run = timeMin((d.meeting || {}).start);
   var hhmm = function (n) {
     var h = Math.floor(n / 60) % 24, m2 = n % 60;
     return ((h % 12) || 12) + ":" + (m2 < 10 ? "0" : "") + m2;
@@ -4682,7 +4733,7 @@ function scrDraw() {
   SCR.idx = Math.max(0, Math.min(sl.length - 1, SCR.idx));
   var a = sl[SCR.idx], cur = live && a && a.id === sn.currentAgendaId;
   var dots = sl.slice(1).map(function (x, k) { return '<i class="' + (k + 1 === SCR.idx ? "on" : k + 1 < SCR.idx ? "done" : "") + '"></i>'; }).join("");
-  var head = '<div class="scr-top"><b>' + esc(m.title) + "</b><span>" + esc(m.date || "") + (m.start ? " · " + esc(m.start) : "") + "</span>" +
+  var head = '<div class="scr-top"><b>' + esc(m.title) + "</b><span>" + esc(m.date || "") + (timeWords(m.start) ? " · " + esc(timeWords(m.start)) : "") + "</span>" +
     (live ? '<span style="color:var(--green)">● Live · ' + esc(clockText(sn.elapsed)) + "</span>" : "") + '<span class="scr-dots">' + dots + "</span>" +
     '<span class="sp"><button class="btn ghost sm" type="button" data-scr="prev">◀</button><button class="btn ghost sm" type="button" data-scr="next">▶</button>' +
     (live && d.canRun && sn.nextAgendaId ? '<button class="btn teal sm" type="button" data-scr="move">Move on</button>' : "") +

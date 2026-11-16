@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>You have the ideas. We have the tools. — Ricky Rampersad Branch</title>
-<meta name="description" content="An administrator's seat in a branch that writes its own software. Half the day is the branch's admin; the other half is making that admin unnecessary. Apps Script, Google Workspace, Salesforce, AI. Not a developer’s job, but you have written something. One seat, Chaguanas, Trinidad.">
+<title>Personal Assistant — Apps Script, Salesforce, AI — Ricky Rampersad Branch</title>
+<meta name="description" content="Ricky Rampersad is hiring a personal assistant: an automation and systems seat in a Trinidad insurance branch that writes its own software: 101,000 lines of Google Apps Script across 36 files, 44 scheduled triggers, 261 Salesforce fields and the Claude API in production. You would own and extend it. Contract title is Administrative Assistant; the work is automation, workflow and process. One seat, Chaguanas, Trinidad.">
 <link rel="canonical" href="https://rickyrampersadbranch.com/buildwithus/">
 <link rel="icon" type="image/svg+xml" href="/site-icon.svg">
 <link rel="icon" href="/favicon.ico" sizes="32x32">
@@ -13,14 +13,14 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Ricky Rampersad Branch">
 <meta property="og:title" content="You have the ideas. We have the tools.">
-<meta property="og:description" content="One administrator's seat in a branch that writes its own software. Half admin, half making the admin unnecessary. We show you the whole workshop before you apply — then ask you one thing you would fix.">
+<meta property="og:description" content="Ricky Rampersad is hiring a personal assistant to keep the branch’s own systems running: Salesforce, Apps Script, Microsoft 365, HELP 868 and Claude. The tools are paid for, you use them every day, and they go on your CV.">
 <meta property="og:url" content="https://rickyrampersadbranch.com/buildwithus/">
 <meta property="og:image" content="https://rickyrampersadbranch.com/buildwithus/film-w.jpg">
 <meta property="og:image:width" content="1920">
 <meta property="og:image:height" content="1080">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="You have the ideas. We have the tools.">
-<meta name="twitter:description" content="One administrator's seat in a branch that writes its own software. Half admin, half making the admin unnecessary. Not a developer’s job, but you have written something.">
+<meta name="twitter:description" content="Ricky Rampersad is hiring a personal assistant to keep the branch’s own systems running. Everyone calls him to fix it; this seat fixes it. The tools are paid for, and they go on your CV.">
 <meta name="twitter:image" content="https://rickyrampersadbranch.com/buildwithus/film-w.jpg">
 <meta name="geo.region" content="TT-CTT">
 <meta name="geo.placename" content="Chaguanas, Trinidad and Tobago">
@@ -188,6 +188,31 @@ section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
    copy was simply cut off. min-width:0 lets the panel scroll inside itself
    instead. The same guard belongs on every grid with explicit columns. */
 .hgrid > *,.fgrid > *,.jobs > *,.ledger > *,.talk-grid > *{min-width:0}
+/* ═══ THE STACK, IN THE FIRST SCREEN (10 November 2026) ═══
+   The seat was advertised as "Administrator & branch builder", which neither reaches
+   nor selects the person it is actually for. Somebody who writes Apps Script and
+   Salesforce automation does not search "administrative assistant", and a generic
+   office-efficiency headline tells them nothing. The real estate they would inherit —
+   measured from the repository, not claimed — is the whole pitch, so it leads. */
+/* This page is LIGHT. The first cut of this block used --dT/--dT2/--dT3 and white
+   borders — the dark-band tokens — so the whole thing rendered near-invisible on
+   #faf9f2. Light ground, light tokens. */
+/* This headline is longer than the one it replaced, so it takes a step down from
+   --f-4 or it runs to five lines and pushes the stack and the stat tiles off the
+   first screen — which is the whole point of putting them there. */
+.hero h1{font-size:clamp(1.95rem,1.3rem + 2.3vw,3.15rem);line-height:1.08;text-wrap:balance}
+.hero-stack{margin:var(--sp-s) 0 0;max-width:56ch;font-size:var(--f-0);line-height:1.55;color:var(--body)}
+.hero-stack strong{color:var(--ink);font-weight:700}
+.hstats{list-style:none;margin:var(--sp-m) 0 0;padding:0;display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));gap:.55rem}
+.hstats li{min-width:0;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-s,.6rem);padding:.65rem .75rem;display:grid;gap:.1rem}
+.hstats b{font:800 var(--f-1)/1.05 var(--display);color:var(--a);font-variant-numeric:tabular-nums}
+.hstats span{font-size:var(--f--2);line-height:1.3;color:var(--muted)}
+.dark .hero-stack{color:var(--dT2)} .dark .hero-stack strong{color:var(--dT)}
+.dark .hstats li{background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.14)}
+.dark .hstats b{color:var(--aL)} .dark .hstats span{color:var(--dT3)}
+@media (max-width:46rem){.hstats{grid-template-columns:1fr 1fr}}
 .term{min-width:0;max-width:100%}
 h1 em{font-style:normal;color:var(--a);display:block}
 .hsub{font-size:var(--f-1);max-width:42ch;color:var(--body)}
@@ -355,7 +380,11 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 .pills span:hover{border-color:var(--a)}
 .pills input:checked + span{background:var(--a);border-color:var(--a);color:#fff}
 .pills input:focus-visible + span{outline:3px solid var(--a);outline-offset:3px}
-.cc{display:flex;justify-content:space-between;gap:.5rem;font-size:var(--f--2);color:var(--muted);margin-top:.3rem}
+.cc{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.2rem .5rem;font-size:var(--f--2);color:var(--muted);margin-top:.3rem}
+/* what is still needed, while they type: a minimum nobody is told about is
+   one that reads as the page refusing for no reason */
+.cc .need{color:var(--muted)}
+.cc .need.on{color:#a3301f;font-weight:600}
 /* the progress rail — moves on input, never on scroll */
 .rail{position:sticky;top:var(--bar);z-index:20;background:var(--card);border:1px solid var(--line);
   border-radius:var(--r-s);padding:.7rem .9rem;margin:0 0 var(--sp-s);box-shadow:var(--e1)}
@@ -612,25 +641,34 @@ footer .ic{width:16px;height:16px}
   <div class="wrap">
     <div class="hgrid">
       <div class="hero-lead">
-        <p class="vac"><i aria-hidden="true"></i>We are hiring &middot; one vacancy &middot; Chaguanas</p>
-        <span class="eyebrow">Administrator &amp; branch builder</span>
-        <h1 data-words>You already know how your office should run. <em>Here you get to build it.</em></h1>
+        <p class="vac"><i aria-hidden="true"></i>The Ricky Rampersad Branch is hiring &middot; one personal assistant &middot; Chaguanas</p>
+        <span class="eyebrow">Personal assistant to Ricky Rampersad &middot; Apps Script &middot; Salesforce &middot; AI in production</span>
+        <h1 data-words>A hundred thousand lines of Apps Script already run this branch. <em>Come and own them.</em></h1>
+        <p class="hero-stack">Thirty-six server-side files. Forty-four scheduled triggers firing every working day. Two hundred and sixty-one Salesforce fields read and written. The Claude API drafting, marking and reading notes in production. <strong>Nobody maintains it full time. That is the job.</strong></p>
+        <ul class="hstats" aria-label="Running in the branch today">
+          <li><b>101,508</b><span>lines of Apps&nbsp;Script</span></li>
+          <li><b>44</b><span>scheduled triggers</span></li>
+          <li><b>261</b><span>Salesforce fields</span></li>
+          <li><b>347</b><span>pages served</span></li>
+        </ul>
       </div>
       <div class="hero-film">
         <div class="vwrap">
           <video id="fv" playsinline preload="metadata" poster="film-w.jpg"
-                 controls controlslist="nodownload" aria-label="A minute and a half on the seat, the tools and what we stand for">
+                 controls controlslist="nodownload" aria-label="A minute and forty seconds on the seat, the platforms, the tools and what we stand for">
             <source src="film-w.mp4" type="video/mp4">
           </video>
         </div>
-        <p class="vnote"><b>A minute and a half.</b> The seat, the tools, and the one thing we are looking for. The words are on screen the whole way through, so it reads with the sound off. Every file name in it is a real file in the branch&rsquo;s backend; every figure is illustrative and no client appears.</p>
+        <p class="vnote"><b>A minute and forty seconds.</b> The problem this seat solves, the platforms, the tools, and the one thing we are looking for. The words are on screen the whole way through, so it reads with the sound off. Every file name in it is a real file in the branch&rsquo;s backend; every figure is illustrative and no client appears.</p>
       </div>
       <div class="hero-rest">
         <p class="pull">If you have ever fixed something at work on your own time, because waiting for somebody else to fix it was unbearable &mdash; this is the one to read.</p>
-        <p class="hsub">Somewhere right now there is an administrator who has already written the script that fixes it &mdash; on their own time, with no permission and no credit, because it was the only way to get the job done. We are looking for that person.</p>
+        <p class="hsub"><strong>&ldquo;Everyone calls me to fix it.&rdquo;</strong> Right now, when a script stalls, a trigger stops or something is stuck on a server, the whole branch rings the Branch Manager. This seat is the person who keeps every system we have built up and running, so that call comes to you, and gets answered.</p>
+        <p class="hsub"><strong>The next big thing:</strong> HELP 868, the branch&rsquo;s new WhatsApp line, connected to Claude and to Salesforce. It needs one dedicated person to make it brilliant.</p>
         <div class="ctas">
           <a class="btn btn-1" href="#fix">Fix our form <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
           <a class="btn btn-2" href="#real">What the job actually is</a>
+          <a class="btn btn-2" href="#cv">What goes on your CV</a>
         </div>
         <p class="hnote">
           <span><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg>Chaguanas, Central Trinidad</span>
@@ -819,7 +857,7 @@ footer .ic{width:16px;height:16px}
   <div class="wrap">
     <div class="rv">
       <span class="eyebrow">Straight, before anything else</span>
-      <h2 data-words>The title says Administrative Assistant. <em>Read what the job is.</em></h2>
+      <h2 data-words>The title says Personal Assistant. <em>Read what the job is.</em></h2>
       <p class="lede">We are not going to dress this up, because the one thing that wastes both our time is you arriving to find a different job than the one you were sold.</p>
     </div>
     <div class="jobs">
@@ -840,6 +878,8 @@ footer .ic{width:16px;height:16px}
         <h3>Making that admin not need doing next month</h3>
         <p class="small">This is the half nobody else will offer you, and the reason this page exists.</p>
         <ul>
+          <li>Keep it running: when a script stalls or something is stuck on a server, find out why, fix it, and write the amendment so it does not happen again</li>
+          <li>Learn the workflow and the rules behind each platform we work on: Salesforce, Apps Script, Microsoft 365, HELP 868 and Claude, and the new ones as they arrive</li>
           <li>Take a job you do by hand and turn it into a form, a script, a page</li>
           <li>Write the Apps Script that files it, e-mails it and logs it</li>
           <li>Wire it to Salesforce so nobody types the same thing twice</li>
@@ -874,7 +914,7 @@ footer .ic{width:16px;height:16px}
         <b>What changes here</b>
         <ul>
           <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>You see something broken, you say so, and the answer is usually &ldquo;go on then&rdquo;. The branch runs on things somebody decided to fix.</span></li>
-          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>The tools are already paid for and already connected: Apps Script, Salesforce, respond.io, Claude, Graph. You get the keys, not a request form.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>The branch pays for the tools and you use them every day: Apps Script, Salesforce, Microsoft 365, respond.io, Claude. You get the keys, not a request form.</span></li>
           <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>When it breaks, it breaks in front of the whole branch and you fix it. That is how everyone here learned.</span></li>
           <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>Typing the same thing twice is treated as a defect, not as the job.</span></li>
           <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>In a year your CV names systems in production, with public commits anybody can read. That is yours to keep wherever you go next.</span></li>
@@ -896,7 +936,7 @@ footer .ic{width:16px;height:16px}
     <ul class="cards">
       <li class="card rv" style="--i:0"><h3><svg class="ic" aria-hidden="true"><use href="#i-code"/></svg>Google Apps Script</h3><p>36 files and about 100,000 lines run the branch: the letters, the reminders, the boards, the claims, the renewals, the billing checks. Deployed as web apps on triggers. This is the single most useful thing you will learn here, and it is plain JavaScript.</p></li>
       <li class="card rv" style="--i:1"><h3><svg class="ic" aria-hidden="true"><use href="#i-db"/></svg>Salesforce</h3><p>We read and write it from our own code &mdash; OAuth, SOQL, composite requests, tasks, Chatter posts. Not clicking through screens: querying it, reconciling it, and writing back what the record should say.</p></li>
-      <li class="card rv" style="--i:2"><h3><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg>respond.io, on WhatsApp</h3><p>An agent on the branch's WhatsApp line answers staff questions about pending business &mdash; signed in, scoped, and never guessing. You would be the person who widens what it can answer.</p></li>
+      <li class="card rv" style="--i:2"><h3><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg>HELP 868, the branch&rsquo;s WhatsApp line</h3><p>Just launched, and the next big thing here. Built on respond.io, connected to Claude over MCP and to Salesforce: it answers on WhatsApp, logs every query with a reference, and hands over to a person. It needs one person to make it brilliant, and that would be you.</p></li>
       <li class="card rv" style="--i:3"><h3><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>The Claude API</h3><p>Used all over the branch to read a long history and draft a reply, with structured output and hard rules about what it may never say. You will learn to put guardrails on a model, which is a skill the market is paying for right now.</p></li>
       <li class="card rv" style="--i:4"><h3><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>Microsoft Graph</h3><p>The branch mailbox sends and reads through Graph, with the application permissions to match. Every client letter the branch sends goes out this way.</p></li>
       <li class="card rv" style="--i:5"><h3><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg>pdf-lib and pdf.js</h3><p>Guardian's own forms are read in the browser and filled, field by field, from the record &mdash; so nobody retypes a policy number. Including a scanned form that needed its pages rotated to make it work.</p></li>
@@ -1014,7 +1054,7 @@ footer .ic{width:16px;height:16px}
       <li class="card rv" style="--i:0"><h3><svg class="ic" aria-hidden="true"><use href="#i-code"/></svg>Automation at production scale</h3><p>Google Apps Script running a real business every day, on triggers, against live data &mdash; not a course project.</p></li>
       <li class="card rv" style="--i:1"><h3><svg class="ic" aria-hidden="true"><use href="#i-db"/></svg>A CRM integration you wrote</h3><p>Reading and writing Salesforce from your own code. On a CV in this market, that sentence opens doors by itself.</p></li>
       <li class="card rv" style="--i:2"><h3><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>AI in production, with guardrails</h3><p>Not &ldquo;I use ChatGPT&rdquo;. Structured output, rules a model may not break, and a human check before anything reaches a client.</p></li>
-      <li class="card rv" style="--i:3"><h3><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg>A WhatsApp workflow, live</h3><p>respond.io in the hands of real staff on a real line, with an audit trail. Very few people have actually shipped one.</p></li>
+      <li class="card rv" style="--i:3"><h3><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg>A WhatsApp assistant you grew</h3><p>HELP 868: respond.io, Claude and Salesforce, on a real line with real clients and an audit trail. Very few people have actually shipped one.</p></li>
       <li class="card rv" style="--i:4"><h3><svg class="ic" aria-hidden="true"><use href="#i-git"/></svg>A public commit history</h3><p>Your work, in the open, with your name on it. The single most persuasive thing you can hand a future employer.</p></li>
       <li class="card rv" style="--i:5"><h3><svg class="ic" aria-hidden="true"><use href="#i-rocket"/></svg>And the one that matters most</h3><p>That you took a process and made it take half the time, and can say by how much. Everything else is a tool. That is the skill.</p></li>
     </ul>
@@ -1059,7 +1099,7 @@ footer .ic{width:16px;height:16px}
           <li>If it reads like you, he asks you for one thing you would fix here.</li>
           <li>Then twenty minutes on the phone, and a straight answer either way.</li>
         </ol>
-        <p class="small" style="margin-top:var(--sp-l)">A branch appointment with Guardian Life of the Caribbean, at the Chaguanas branch. Terms and pay are discussed on the call. Prefer to write instead? <a href="mailto:Ricky.Rampersad@myguardiangroup.com?subject=Build%20with%20us%20%E2%80%94%20the%20administrator%27s%20seat">E-mail him directly</a> or call <a href="tel:+18686785821">678-5821</a>.</p>
+        <p class="small" style="margin-top:var(--sp-l)">Ricky Rampersad is making this hire himself, for his own branch in Chaguanas. Terms and pay are discussed on the call. Prefer to write instead? <a href="mailto:Ricky.Rampersad@myguardiangroup.com?subject=Build%20with%20us%20%E2%80%94%20the%20personal%20assistant%27s%20seat">E-mail him directly</a> or call <a href="tel:+18686785821">678-5821</a>.</p>
       </div>
       <div class="rv">
         <form class="form" id="jf" novalidate autocomplete="on">
@@ -1261,7 +1301,7 @@ footer .ic{width:16px;height:16px}
     <div class="rv" style="margin-top:var(--sp-l);max-width:52rem">
       <details><summary>I am not a developer. Am I wasting my time?</summary><p>No. Nobody in this branch was hired as a developer and none of us would pass a developer's interview. But you do need to arrive having written <em>something</em> &mdash; an Apps Script, a formula that got away from you, a Zap, a page, something you got an AI to help you finish. That is the bar: low enough for somebody entirely self-taught, high enough that you are building in your first month instead of watching. What cannot be taught is the instinct for a bad process, and that is what we are really reading for.</p></details>
       <details><summary>I have never touched Apps Script, or Salesforce.</summary><p>Neither had anybody here. They are learnable in weeks if you have already written anything at all, and you would be learning them on real work with AI beside you rather than on a course. What we would ask at the interview is not whether you know them &mdash; it is what you have built with whatever you did have.</p></details>
-      <details><summary>Is this really an administrator's job, or a developer's job with a cheaper title?</summary><p>It is genuinely an administrator's job. There is real admin every day and it has to be right, because an agent cannot work and a client waits if it is not. The difference from every other admin job is that the second half of your time is spent making the first half smaller, and you are given the tools and the authority to do that. If you only want to build, this is the wrong seat.</p></details>
+      <details><summary>Is this really a personal assistant's job, or a developer's job with a cheaper title?</summary><p>It is genuinely a personal assistant's job. There is real admin every day and it has to be right, because an agent cannot work and a client waits if it is not. The difference from every other admin job is that the second half of your time is spent making the first half smaller, and you are given the tools and the authority to do that. If you only want to build, this is the wrong seat.</p></details>
       <details><summary>Why is your code public? Is that not a risk?</summary><p>The website is served straight from the repository, so the pages are public by necessity. Client data is the opposite &mdash; it never goes near the code, it lives in a private sheet behind per-client tokens, and the rule is written into the repository's own notes. Keeping those two things apart is one of the first disciplines you would learn.</p></details>
       <details><summary>I am employed. Will my current employer find out?</summary><p>No. The form goes to the Branch Manager's own address, not to a shared branch inbox, and he is the only person who reads it. We take that seriously because we ask for the same discretion from practising advisors on our other recruiting page.</p></details>
       <details><summary>What about pay?</summary><p>Discussed openly on the call, once we both know the job is the right one. We will not print a figure here and we will not haggle at the end &mdash; you will hear it plainly before you ever have to decide anything.</p></details>
@@ -1273,7 +1313,7 @@ footer .ic{width:16px;height:16px}
 
 <footer>
   <div class="wrap">
-    <span>A Ricky Rampersad initiative &middot; Guardian Life of the Caribbean &middot; Chaguanas Branch</span>
+    <span>Ricky Rampersad Branch &middot; Chaguanas &middot; hiring personally</span>
     <span style="display:flex;flex-wrap:wrap;gap:0 1.25rem">
       <a href="https://github.com/RickyRampersad/RickyRampersadTermLIfe" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-git"/></svg>Our code</a>
       <a href="mailto:Ricky.Rampersad@myguardiangroup.com"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>Ricky.Rampersad@myguardiangroup.com</a>
@@ -1288,6 +1328,37 @@ footer .ic{width:16px;height:16px}
 (function(){
   'use strict';
   var d=document, noMotion=matchMedia('(prefers-reduced-motion: reduce)');
+
+  /* ── the one table of minimum lengths ────────────────────────────────────
+     The gate, the progress rail and the character counters all read THIS,
+     and that is the whole point of it being here.
+
+     Reported on 14 November 2026: the form would not send and showed a red
+     line. Three separate faults, all of them from the gate and the rail
+     keeping their own idea of what counts as answered:
+
+     1. `w_cv` needed 10 characters at the gate and any single character on
+        the rail. So "IT skills" gave "18 of 18 answered · ready to send",
+        the gate refused, and the scroll-to-the-field loop — which asks the
+        RAIL which field is unfilled — found nothing wrong and did not move.
+        A page that says it is complete, refuses, restates a question the
+        person has just answered and then sits still reads as broken, and it
+        is: pressing the button again does the same thing for ever.
+     2. A badly formed phone or e-mail refused the same way. Both are
+        "filled", so again nothing moved.
+     3. Nothing on the page ever said a minimum existed. The counter counts
+        up to the MAXIMUM, so "A petty cash tracker" — a perfectly good
+        answer — was turned away by "we do need them".
+
+     So: one table, every check carries the name of the field it is about,
+     and the counter says what is still needed while they are typing. Add a
+     new minimum here and nothing else has to know. ── */
+  var MIN={emp_changed:20,w_built:40,w_slim:40,w_cv:10};
+  /* and the two format rules, for the same reason: with these in the gate
+     alone, "call me" in the phone box still read as 18 of 18 · ready to
+     send. One rule, no exceptions — if the gate will refuse it, the rail
+     must not call it answered. */
+  var FMT={phone:/^[+\d][\d\s().-]{6,}$/,email:/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/};
 
   /* ── reveals: the finished state is the CSS default, so nothing can be stranded ── */
   (function(){
@@ -1353,7 +1424,17 @@ footer .ic{width:16px;height:16px}
   /* ── character counters ── */
   [].slice.call(d.querySelectorAll('[data-cc]')).forEach(function(out){
     var ta=d.getElementById(out.getAttribute('data-cc')); if(!ta)return;
-    function up(){out.textContent=String(ta.value.length)}
+    /* the counter also says what is still NEEDED, because a minimum nobody
+       is told about is a minimum that reads as the page being broken */
+    var m=MIN[ta.name]||0, need=null, cnt=out.parentNode, row=cnt&&cnt.parentNode;
+    if(m&&row){need=d.createElement('span');need.className='need';row.insertBefore(need,cnt)}
+    function up(){
+      var n=ta.value.length; out.textContent=String(n);
+      if(need){
+        need.textContent=n>=m?'':(n?(m-n)+' more':'about '+m+' characters');
+        need.classList.toggle('on',n<m&&n>0);
+      }
+    }
     ta.addEventListener('input',up); up();
   });
 
@@ -1563,7 +1644,7 @@ footer .ic{width:16px;height:16px}
       done.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
     }
     function mailRoad(body,ref){
-      var t='BUILD WITH US — THE ADMINISTRATOR\'S SEAT\nReference: '+ref+'\n\n'
+      var t='BUILD WITH US — THE PERSONAL ASSISTANT\'S SEAT\nReference: '+ref+'\n\n'
         +'Name: '+body.core.name+'\nPhone: '+body.core.phone+'\nE-mail: '+body.core.email+'\n\n';
       body.fields.forEach(function(x){if(x.value)t+=x.label+':\n'+x.value+'\n\n'});
       location.href='mailto:'+TO+'?subject='+encodeURIComponent('Build with us — '+ref)+'&body='+encodeURIComponent(t);
@@ -1574,7 +1655,10 @@ footer .ic{width:16px;height:16px}
              'emp_changed','edu','pay_now','pay_want','start','w_built','w_slim','w_cv','when'];
     var rail=d.getElementById('rail'), railN=d.getElementById('railN'),
         railI=d.getElementById('railI'), railS=d.getElementById('railS');
-    function filled(n){var v=val(n);return n==='w_built'||n==='w_slim'?v.length>=40:n==='emp_changed'?v.length>=20:!!v}
+    /* reads MIN and FMT, so the rail can never say "ready to send" about an
+       answer the gate is going to refuse. That disagreement was the bug. */
+    function filled(n){var v=val(n);
+      return MIN[n]?v.length>=MIN[n]:FMT[n]?FMT[n].test(v):!!v}
     function tick(){
       var n=0; REQ.forEach(function(k){if(filled(k))n++});
       var pc=Math.round(n/REQ.length*100);
@@ -1598,29 +1682,49 @@ footer .ic{width:16px;height:16px}
 
     f.addEventListener('submit',function(e){
       e.preventDefault();
-      var name=val('name'), phone=val('phone'), email=val('email'),
-          w1=val('w_built'), w2=val('w_slim'), w3=val('w_cv');
-      var bad=!name?'We need your name.'
-        :!/^[+\d][\d\s().-]{6,}$/.test(phone)?'We need a phone number he can call.'
-        :!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)?'That e-mail address does not look right.'
-        :!val('town')?'Which town or area do you live in?'
-        :!val('travel')?'How would you get to Chaguanas?'
-        :!val('exp')?'How long have you been working?'
-        :!val('emp_co')?'Who do you work for now, or last?'
-        :!val('emp_role')?'What is, or was, your role there?'
-        :!val('emp_dates')?'Roughly when were you there?'
-        :val('emp_changed').length<20?'What is different at that job because you were there? One honest line.'
-        :!val('edu')?'Your highest qualification or training — whatever it is.'
-        :!val('pay_now')?'What you earn now. "Prefer not to say" is a real option.'
-        :!val('pay_want')?'What you are looking for. "Open" is a real option.'
-        :!val('start')?'When could you start?'
-        :w1.length<40?'Tell us about one thing you built — a few honest lines is plenty, but we do need them.'
-        :w2.length<40?'The slim-down answer is the one he reads most carefully. A few lines.'
-        :w3.length<10?'What do you want on your CV in two years?':'';
+      var name=val('name'), phone=val('phone'), email=val('email');
+
+      /* Every check names the field it is about, in the order the questions
+         are asked, so whatever refuses the form can always be scrolled to.
+         Before this the gate returned a sentence and the scroll asked the
+         RAIL which field was empty — and for a too-short answer, a letter in
+         the phone or a malformed e-mail the rail had no complaint, so the
+         page refused and did not move. See MIN at the top of this script.
+
+         A length rule says what is wrong rather than repeating the question:
+         somebody who has just written a line reads the question again as the
+         page being broken. */
+      function tooShort(n,ask){
+        var v=val(n), m=MIN[n];
+        if(v.length>=m)return '';
+        return v?'Just a little more on this one — about '+m+' characters, and you have '+v.length+'.':ask;
+      }
+      var checks=[
+        ['name',  !name?'We need your name.':''],
+        ['phone', !FMT.phone.test(phone)?'We need a phone number he can call.':''],
+        ['email', !FMT.email.test(email)?'That e-mail address does not look right.':''],
+        ['town',  !val('town')?'Which town or area do you live in?':''],
+        ['travel',!val('travel')?'How would you get to Chaguanas?':''],
+        ['exp',   !val('exp')?'How long have you been working?':''],
+        ['emp_co',  !val('emp_co')?'Who do you work for now, or last?':''],
+        ['emp_role',!val('emp_role')?'What is, or was, your role there?':''],
+        ['emp_dates',!val('emp_dates')?'Roughly when were you there?':''],
+        ['emp_changed',tooShort('emp_changed','What is different at that job because you were there? One honest line.')],
+        ['edu',   !val('edu')?'Your highest qualification or training — whatever it is.':''],
+        ['pay_now', !val('pay_now')?'What you earn now. "Prefer not to say" is a real option.':''],
+        ['pay_want',!val('pay_want')?'What you are looking for. "Open" is a real option.':''],
+        ['start', !val('start')?'When could you start?':''],
+        ['w_built',tooShort('w_built','Tell us about one thing you built — a few honest lines is plenty, but we do need them.')],
+        ['w_slim', tooShort('w_slim','The slim-down answer is the one he reads most carefully. A few lines.')],
+        ['w_cv',   tooShort('w_cv','What do you want on your CV in two years?')]
+      ];
+      var bad='', badField='';
+      for(var ci=0;ci<checks.length;ci++){
+        if(checks[ci][1]){badField=checks[ci][0];bad=checks[ci][1];break}
+      }
       err.textContent=bad; err.classList.toggle('on',!!bad);
       if(bad){
-        var first=null;
-        for(var i=0;i<REQ.length;i++){if(!filled(REQ[i])){first=f.querySelector('[name="'+REQ[i]+'"]');break}}
+        var first=f.querySelector('[name="'+badField+'"]');
         if(first){
           var sec=first.closest('[data-sec]')||first;
           sec.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
@@ -1630,6 +1734,7 @@ footer .ic{width:16px;height:16px}
       }
       if(f.dataset.sending)return;
       f.dataset.sending='1'; var was=btn.innerHTML; btn.disabled=true; btn.textContent='Sending…';
+      var w1=val('w_built'), w2=val('w_slim'), w3=val('w_cv');
       var when=val('when'), gh=val('gh'), link=val('link');
       var tools=[].slice.call(f.querySelectorAll('[name="tool"]:checked')).map(function(x){return x.value}).join(', ');
       /* what they marked on the form at the top of the page. It travels
@@ -1639,7 +1744,7 @@ footer .ic{width:16px;height:16px}
       var fx=(typeof window.__rrbFix==='function')?window.__rrbFix():{n:0,total:12,found:'',missed:'',other:''};
       var score=fx.n?(fx.n+' of '+fx.total+' found'):'did not mark the form';
       var body={action:'q.quote',form:'admin',code:'QB',line:'Build with us',
-        title:'Administrator and branch builder',
+        title:'Personal assistant',
         core:{name:name,email:email,phone:phone,reach:'call',when:when,agent:'',
               notes:w1,website:val('website')},
         fields:[
@@ -1701,7 +1806,7 @@ footer .ic{width:16px;height:16px}
 
 <!-- rrb-views -->
 <script>
-(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{
 (new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
 }catch(e){}})();
 </script>

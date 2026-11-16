@@ -28,6 +28,25 @@
  * test mode only when they tick that the renewal is really going ahead.
  */
 
+/* The reconciliation. SLACK is what counts as the same figure: Guardian General round to the
+   cent and we hold the same, so a dollar is generous and still catches a real difference. */
+var GIR_RECON = { SLACK: 1 };
+/* The government premium tax. Guardian General's notice prints its premiums BEFORE tax and adds
+   the tax once at the foot; Risk_Details__c carries both (Premium_01_Cover_01__c before tax,
+   Total_Premiums_Gov_t_Inclusive__c with it), and every other figure in this product — the
+   history, last year's premium, the letter, the premium-rise insight — is the inclusive one.
+   RATE is only a fallback: girread apportions the notice's OWN stated tax across the items, so
+   a change in the tax follows from the notice itself. This copy exists because the reader runs
+   in the browser and this file runs in Apps Script; keep the two in step. */
+var GIR_TAX = { RATE: 0.06 };
+/** A tax-inclusive figure from a tax-exclusive one, for a notice read before girread gave each item its own. */
+function girIncl_(ex, notice) {
+  var v = girNum_(ex);
+  if (!v) return 0;
+  var rate = notice && notice.taxRate ? Number(notice.taxRate) : GIR_TAX.RATE;
+  if (!(rate >= 0) || rate > 0.5) rate = GIR_TAX.RATE;
+  return girR_(v * (1 + rate));
+}
 var GIR = {
   TAB: 'GI Renewals',
   LOG: 'GI Renewal Log',
@@ -60,7 +79,7 @@ var GIR_HEAD = {
   'GI Renewals': ['Key', 'Policy', 'Line', 'Client', 'Account', 'Contact', 'E-mail', 'Renewal', 'Stage', 'Holder', 'Holder e-mail',
     'Last trans', 'Notice', 'Values', 'Letter', 'Submitted by', 'Approved by', 'Approved at', 'Sent at', 'Sent to', 'Test', 'Task',
     'Client view', 'Client answer', 'Reminders', 'Proceed by', 'Proceed at', 'GG to', 'GG subject', 'GG sent at', 'GG mail',
-    'New trans', 'New risks', 'Follow task', 'Event', 'Chases', 'GG reply', 'Delivered', 'Paid', 'Outcome', 'Updated', 'Req task'],
+    'New trans', 'New risks', 'Follow task', 'Event', 'Chases', 'GG reply', 'Delivered', 'Paid', 'Outcome', 'Updated', 'Req task', 'Recon'],
   'GI Renewal Log': ['When', 'Key', 'Policy', 'Client', 'Step', 'By', 'Detail']
 };
 /* The lines, in the order the desk shows them. pre: the policy number's middle letters; rt: Salesforce's cover-term
@@ -458,7 +477,9 @@ function girList_(p) {
   return { ok: true, month: ym, monthLabel: girMonthLabel_(ym), today: today, rows: rows, lines: GIR_LINE_ORDER.map(function (k) { return { k: k, label: GIR_LINES[k].label, n: lines[k] || 0 }; }),
     tiles: tiles, me: { name: who.name, role: who.role, title: who.title, approver: who.approver }, live: girLive_(), mail: !!tMsCreds_(), ai: !!gcmAiKey_() };
 }
-/** What renews, in a few words: "PEE6927 Kia Sportage", "3 vehicles", "LP 451 Southern Main Road". */
+/** What renews, in a few words: "XBA2000 Kia Sportage", "3 vehicles", "LP 12 Sample Road".
+ *  (Both examples are invented. The first cut of this comment carried a real registration — on four
+ *  cover terms — and a real risk location, in a file the repository root serves on the open web.) */
 function girWhatShort_(r) {
   var x = r.items[0] || {};
   if (r.items.length > 1) return r.items.length + (r.line === 'motor' ? ' vehicles' : r.line === 'home' || r.line === 'property' ? ' locations or items' : ' items');
@@ -504,7 +525,8 @@ function girOne_(p) {
     proceed: s && s['Proceed at'] ? { by: gcmText_(s['Proceed by']), at: gcmWhen_(s['Proceed at']), to: gcmText_(s['GG to']), subject: gcmText_(s['GG subject']),
       trans: gcmText_(s['New trans']), risks: girJ_(s['New risks'], []), follow: gcmText_(s['Follow task']), event: gcmText_(s.Event) } : null,
     chases: s ? girJ_(s.Chases, []) : [], ggReply: s ? girJ_(s['GG reply'], null) : null, delivered: s ? gcmText_(s.Delivered) : '', paid: s ? gcmText_(s.Paid) : '',
-    outcome: s ? gcmText_(s.Outcome) : '', log: log, sfUrl: girSfBase_(), practice: girPracticeFor_(who, s), req: girReqInfo_(r, s, notice) };
+    outcome: s ? gcmText_(s.Outcome) : '', log: log, sfUrl: girSfBase_(), practice: girPracticeFor_(who, s), req: girReqInfo_(r, s, notice),
+    recon: girRecon_(r, s, notice) };
 }
 function girSfBase_() { try { return svcSfToken_().instance_url + '/'; } catch (e) { return ''; } }
 /** The renewal without Salesforce's raw shape: what the pages and the letter need. */
@@ -1417,6 +1439,8 @@ function girAct_(b) {
         girLog_(key, r, 'values', who.name, Object.keys(got).length + ' value(s) confirmed');
         return { ok: true, said: 'Values saved.' };
       }
+      case 'recon': return girReconSave_(who, r, st, b, save, key);
+      case 'reconAsk': return girReconAsk_(who, r, st, b, save, key);
       case 'draft': {
         var notice = girJ_(st && st.Notice, null);
         var claims = girClaims_(r), hist = girHistory_(r, { claims: claims }), bills = girBills_(r), ins = girInsights_(r, hist, claims, bills, notice, gcmToday_());
@@ -1464,11 +1488,20 @@ function girAct_(b) {
       case 'phoneYes': {
         var how = String(b.text || '').trim();
         if (how.length < 10) return { ok: false, error: 'Say who said yes, how (call, e-mail, in person) and when.' };
-        var ans = { decision: 'approve', name: 'recorded by ' + who.name, at: gcmWhen_(new Date()), comment: how, via: 'staff' };
+        /* Carry forward what the client already told us on their own page. Without this a yes
+           taken on the telephone REPLACED their answer, so the values they typed and the risks
+           they ticked off were lost — and Proceed then renewed a vehicle they had removed, at
+           last year's figure. A yes is a yes to what they asked for, not a wiping of it. */
+        var pv = girJ_(st && st['Client answer'], null) || {};
+        var phist = (pv.history || []).concat(pv.comment ? [{ at: pv.at, text: pv.comment, name: pv.name, decision: pv.decision }] : []);
+        var ans = { decision: 'approve', name: 'recorded by ' + who.name, at: gcmWhen_(new Date()), comment: how, via: 'staff',
+          values: pv.values || {}, off: pv.off || [], history: phist.slice(-12) };
+        var kept = [Object.keys(ans.values).length ? Object.keys(ans.values).length + ' value(s) they set' : '', ans.off.length ? ans.off.length + ' risk(s) they took off' : ''].filter(String);
         save({ 'Client answer': ans, Stage: 'approved' });
-        girLog_(key, r, 'client said yes (recorded by staff)', who.name, how);
-        if (st && gcmText_(st.Task)) girFeed_(gcmText_(st.Task), 'Renewal desk · the client\'s yes, recorded by ' + who.name + ': ' + how);
-        return { ok: true, said: 'The client\'s yes is recorded. You can proceed to renew.' };
+        girLog_(key, r, 'client said yes (recorded by staff)', who.name, how + (kept.length ? ' [kept from their page: ' + kept.join(', ') + ']' : ''));
+        if (st && gcmText_(st.Task)) girFeed_(gcmText_(st.Task), 'Renewal desk · the client\'s yes, recorded by ' + who.name + ': ' + how +
+          (kept.length ? '\nStill standing from their own page: ' + kept.join(', ') + '.' : ''));
+        return { ok: true, said: 'The client\'s yes is recorded.' + (kept.length ? ' Still standing from their page: ' + kept.join(', ') + '.' : '') + ' You can proceed to renew.' };
       }
       case 'comment': {
         var tx = String(b.text || '').trim();
@@ -1578,6 +1611,15 @@ function girApproveSend_(who, r, st, b, save) {
  *  follow-up task opens on the new record, the instruction goes to Guardian General's renewals desk with support@ and
  *  sales support copied, and the delivery is put in the deliverer's calendar. Test mode: the instruction goes to the
  *  person and the test inbox, and Salesforce is written only when they tick that this renewal is really going ahead. */
+/* "Commercial Comprehensive" → "Commercial Third Party", keeping whatever the org calls the
+   class in front of it (Private, Commercial), because that half is not ours to change. With
+   nothing recognisable to swap, the plain words — never a guess at the org's picklist. */
+function girThirdParty_(cov) {
+  var s = String(cov || '').trim();
+  if (/third\s*party/i.test(s)) return s;
+  if (/comprehensive/i.test(s)) return s.replace(/comprehensive/i, 'Third Party');
+  return /private/i.test(s) ? 'Private Third Party' : 'Commercial Third Party';
+}
 function girProceed_(who, r, st, b, save) {
   var stage = girStageOf_(r, st), notice = girJ_(st && st.Notice, null), answer = girJ_(st && st['Client answer'], null);
   if (['instructed', 'confirmed', 'delivered', 'done'].indexOf(stage) >= 0) return { ok: false, error: 'This renewal was already instructed on ' + gcmWhen_(st['Proceed at']) + '.' };
@@ -1588,38 +1630,75 @@ function girProceed_(who, r, st, b, save) {
   var values = Object.assign({}, girJ_(st && st.Values, {}));
   Object.keys(answer.values || {}).forEach(function (id) { var v = girNum_(answer.values[id]); if (v > 0) values[id] = { value: v, by: 'the client', src: 'client' }; });
   var today = gcmToday_(), holderEmail = gcmText_(st && st['Holder e-mail']), holder = girTitle_(gcmText_(st && st.Holder) || who.name);
+  /* A risk the client took off is NOT renewed: no new cover term is made for it, which is
+     exactly how a vehicle leaves cover — last year's term stays as the record of last year.
+     Everything below works off `keep`, never off every item. */
+  /* true, never the label: a removal with no label on it would read as falsy and the risk
+     would be quietly renewed — the whole point of the list is that it cannot be missed. */
+  var offIds = {}; (answer.off || []).forEach(function (o) { if (o && o.id) offIds[o.id] = true; });
+  var keep = r.items.filter(function (x) { return !offIds[x.id]; });
+  var taken = r.items.filter(function (x) { return offIds[x.id]; });
+  /* Vehicles the client moved from comprehensive to third party. A move, not a removal: they stay
+     in `keep` and a term is created for each, without a figure of their own. */
+  var toTp = {}; Object.keys(answer.cover || {}).forEach(function (id) { if (String(answer.cover[id]).toLowerCase() === 'tp' && !offIds[id]) toTp[id] = true; });
+  var moved = keep.filter(function (x) { return toTp[x.id]; });
+  if (!keep.length) return { ok: false, error: 'The client has taken every risk on this policy off. That is a cancellation, not a renewal: speak to them and record what they want.' };
   var match = function (x) {
     var ni = notice.items || [];
     if (x.vehicle) return ni.filter(function (n) { return n.reg && n.reg.replace(/\W/g, '') === x.vehicle.replace(/\W/g, ''); })[0] || null;
-    if (r.items.length === 1 && ni.length === 1) return ni[0];
+    if (keep.length === 1 && ni.length === 1) return ni[0];
     return null;
   };
   var changes = [];
-  r.items.forEach(function (x) { var v = values[x.id] ? values[x.id].value : 0; if (v && x.value && Math.abs(v - x.value) >= 1) changes.push({ x: x, from: x.value, to: v, by: values[x.id].src }); });
-  var out = { trans: '', risks: [], follow: '', event: '', dropped: [], deliverer: '' };
+  /* a vehicle moved to third party has no value any more, so it is not also a value change */
+  keep.forEach(function (x) { if (toTp[x.id]) return; var v = values[x.id] ? values[x.id].value : 0; if (v && x.value && Math.abs(v - x.value) >= 1) changes.push({ x: x, from: x.value, to: v, by: values[x.id].src }); });
+  var out = { trans: '', risks: [], follow: '', event: '', dropped: [], deliverer: '', took: taken.length };
   if (writeSf) {
     var raw = {};
-    try { gcmQuery_('SELECT Id, ' + GIR_COPY.join(', ') + ' FROM Risk_Details__c WHERE Id IN (' + gcmIn_(r.items.map(function (x) { return x.id; })) + ')').forEach(function (x) { raw[gcmId15_(x.Id)] = x; }); } catch (e) {}
+    try { gcmQuery_('SELECT Id, ' + GIR_COPY.join(', ') + ' FROM Risk_Details__c WHERE Id IN (' + gcmIn_(keep.map(function (x) { return x.id; })) + ')').forEach(function (x) { raw[gcmId15_(x.Id)] = x; }); } catch (e) {}
     var ownerId = girUserId_(holderEmail) || (r.owner.active ? r.owner.id : '') || girUserId_(who.email);
-    var tr = { RecordTypeId: girRtId_('TRANSACTIONS__c', GIR_LINES[r.line].trt), INSURANCE_PORTFOLIO__c: r.items[0].shell, Account__c: r.account, Renewal_Date__c: notice.from || r.ren };
+    var tr = { RecordTypeId: girRtId_('TRANSACTIONS__c', GIR_LINES[r.line].trt), INSURANCE_PORTFOLIO__c: keep[0].shell, Account__c: r.account, Renewal_Date__c: notice.from || r.ren };
     if (r.contact.id) tr.Contact__c = r.contact.id;
     if (ownerId) tr.Owner__c = ownerId;
     if (!tr.RecordTypeId) delete tr.RecordTypeId;
     var tres = gblSfwSave_('post', '/sobjects/TRANSACTIONS__c', tr);
     out.trans = String(tres.res.id || ''); out.dropped = out.dropped.concat(tres.dropped);
-    var perItem = r.items.some(function (x) { return match(x) && match(x).premium; }), first = true;
-    r.items.forEach(function (x) {
+    var perItem = keep.some(function (x) { return match(x) && match(x).premium; }), first = true;
+    keep.forEach(function (x) {
       var n = match(x), rw = raw[gcmId15_(x.id)] || {}, body = {};
       GIR_COPY.forEach(function (f) { if (rw[f] !== undefined && rw[f] !== null && rw[f] !== '') body[f] = rw[f]; });
+      /* BOTH PREMIUM FIGURES, as Salesforce holds them: the notice's own before-tax premium in
+         Premium_01_Cover_01__c, and with the tax in Total_Premiums_Gov_t_Inclusive__c, which is
+         the figure the history, last year's premium, the letter and the reconciliation all read.
+         Until this the inclusive field was left empty on every term the desk created, so the
+         renewal it filed read as a 6% fall on the year. girread gives each item its own
+         inclusive total; girIncl_ covers a notice read before it did. */
       var prem = n && n.premium ? n.premium : perItem ? 0 : (first ? notice.premium : 0);
+      var incl = n && n.total ? girR_(n.total) : perItem ? 0 : (first ? girR_(notice.total) : 0);
+      if (prem && !incl) incl = girIncl_(prem, notice);
       Object.assign(body, { RecordTypeId: x.rtId, TRANSACTIONS__c: out.trans, Client_Portfolio_Look_Up__c: x.shell, Account_Relation__c: r.account, Policy__c: notice.policy || x.policy,
         Carrier__c: 'Guardian General', From__c: notice.from, To__c: notice.to, Premium_01_Cover_01__c: girR_(prem), Risk_Classification__c: 'Renewal',
         Asset_Description__c: 'Renewed through the renewal desk on ' + tDmy_(today) + ' by ' + who.name + ', on the client\'s yes (' + (answer.via === 'staff' ? answer.comment : 'their renewal page, ' + answer.at) + '). ' +
-          'Guardian General notice' + (notice.tranId ? ' Tran Id ' + notice.tranId : '') + ': ' + girMoney_(notice.total) + ' tax included.' + (!perItem && r.items.length > 1 ? ' The notice gives one premium for the policy: it is on the first item.' : '') });
+          'Guardian General notice' + (notice.tranId ? ' Tran Id ' + notice.tranId : '') + ': ' + girMoney_(notice.total) + ' tax included.' + (!perItem && keep.length > 1 ? ' The notice gives one premium for the policy: it is on the first item.' : '') +
+          (taken.length ? ' The client took ' + taken.length + ' risk(s) off at this renewal: ' + taken.map(function (t) { return girItemLabel_(t); }).join('; ') + '.' : '') });
       if (r.contact.id) body.Insured__c = r.contact.id;
-      var v = values[x.id] ? values[x.id].value : (n && n.value ? n.value : 0);
+      /* MOVED TO THIRD PARTY by the client. The vehicle is renewed — a term IS created — but
+         nothing of theirs is insured any more, so the cover type is swapped and every figure of
+         their own goes with it. GIR_COPY brought last year's Cover1__c, Windscreen__c and cover
+         type across, so they have to be taken OFF the body: leaving one would write a sum insured
+         onto a third-party term, which reads as cover the client has not got. */
+      if (toTp[x.id]) {
+        body.Motor_Vehicle_Coverage_Type__c = girThirdParty_(rw.Motor_Vehicle_Coverage_Type__c || x.coverage);
+        delete body.Cover1__c; delete body.Total_Cover__c; delete body.Windscreen__c; delete body.NCD__c;
+        body.Asset_Description__c += ' The client moved this vehicle to third party at this renewal (it was ' +
+          String(rw.Motor_Vehicle_Coverage_Type__c || x.coverage || 'comprehensive') + '). The premium here is still' +
+          ' Guardian General\'s comprehensive figure: they re-rate it as third party, and the schedule they send back' +
+          ' carries the premium to hold.';
+      }
+      if (incl) body.Total_Premiums_Gov_t_Inclusive__c = incl;
+      var v = toTp[x.id] ? 0 : (values[x.id] ? values[x.id].value : (n && n.value ? n.value : 0));
       if (v) body.Cover1__c = v;
-      if (n && n.windscreen) body.Windscreen__c = n.windscreen;
+      if (!toTp[x.id] && n && n.windscreen) body.Windscreen__c = n.windscreen;
       if (!body.RecordTypeId) delete body.RecordTypeId;
       var rr = gblSfwSave_('post', '/sobjects/Risk_Details__c', body);
       out.risks.push(String(rr.res.id || '')); out.dropped = out.dropped.concat(rr.dropped);
@@ -1653,13 +1732,17 @@ function girProceed_(who, r, st, b, save) {
     }
   }
   /* the instruction */
-  var regs = r.items.map(function (x) { return x.vehicle; }).filter(String);
+  var regs = keep.map(function (x) { return x.vehicle; }).filter(String);
   var subject = r.line === 'motor' ? 'Renewal Due -' + girMdy_(r.ren) + ' Policy #' + (notice.policy || r.policy) + '- Vehicle # - ' + (regs.length > 3 ? regs.length + ' vehicles' : regs.join(', ')) + ' - Insured - ' + r.client
     : 'Proceed to Renew: ' + r.client + ' ' + r.lineLabel + ' Policy # ' + (notice.policy || r.policy) + ' due ' + girMdy_(r.ren);
   var lines = ['<p>Dear Team,</p>',
     '<p>Please proceed to renew <b>' + tEsc_(notice.policy || r.policy) + '</b> for <b>' + tEsc_(r.client) + '</b>, due <b>' + tEsc_(tDmy_(r.ren)) + '</b>, on the terms of your renewal notice' +
       (notice.preparedOn ? ' of ' + tEsc_(tDmy_(notice.preparedOn)) : '') + (notice.tranId ? ' (Tran Id ' + tEsc_(notice.tranId) + ')' : '') + ': ' + tEsc_(girMoney_(notice.total)) + ', tax included.</p>',
-    changes.length ? '<p><b>With these changes, confirmed by the client:</b></p><ul>' + changes.map(function (c) { return '<li>' + tEsc_(girItemLabel_(c.x)) + ': value ' + tEsc_(girWhole_(c.to)) + ' (was ' + tEsc_(girWhole_(c.from)) + ')</li>'; }).join('') + '</ul>' : '<p>No changes.</p>',
+    taken.length ? '<p><b>Please take these off cover at renewal — the client says they are no longer theirs:</b></p><ul>' +
+      taken.map(function (t) { return '<li>' + tEsc_(girItemLabel_(t)) + '</li>'; }).join('') + '</ul><p>' + tEsc_(String(keep.length)) + ' risk' + (keep.length === 1 ? '' : 's') + ' to renew.</p>' : '',
+    moved.length ? '<p><b>Please move these to third party at renewal — the client has given up their own cover on them:</b></p><ul>' +
+      moved.map(function (t) { return '<li>' + tEsc_(girItemLabel_(t)) + ' (was ' + tEsc_(String(t.coverage || 'comprehensive')) + ')</li>'; }).join('') + '</ul>' : '',
+    changes.length ? '<p><b>With these changes, confirmed by the client:</b></p><ul>' + changes.map(function (c) { return '<li>' + tEsc_(girItemLabel_(c.x)) + ': value ' + tEsc_(girWhole_(c.to)) + ' (was ' + tEsc_(girWhole_(c.from)) + ')</li>'; }).join('') + '</ul>' : (taken.length || moved.length ? '' : '<p>No changes.</p>'),
     answer.comment && answer.via !== 'staff' ? '<p>The client noted: “' + tEsc_(answer.comment) + '”</p>' : '',
     notice.reqs && notice.reqs.length ? '<p>Documents you asked for:</p><ul>' + notice.reqs.map(function (q) { return '<li>' + tEsc_(q) + '</li>'; }).join('') + '</ul><p>We will send any not already with you as the client provides them.</p>' : '',
     r.assignees.length ? '<p>' + tEsc_(r.assignees.join(', ')) + ' is noted on the policy: please issue its copy of the certificate.</p>' : '',
@@ -1675,10 +1758,145 @@ function girProceed_(who, r, st, b, save) {
   save({ Stage: 'instructed', 'Proceed by': who.name, 'Proceed at': new Date(), 'GG to': to.join(', '), 'GG subject': subject, 'GG sent at': new Date(), 'GG mail': html,
     'New trans': out.trans, 'New risks': out.risks, 'Follow task': out.follow, Event: out.event, Chases: [] });
   girLog_(r.key, r, test ? 'proceed to renew (TEST)' : 'proceed to renew', who.name, to.join(', ') + (out.trans ? '; Salesforce: ' + out.trans + ', ' + out.risks.length + ' term(s), task ' + out.follow + (out.event ? ', delivery ' + out.event : '') : '; Salesforce not written') +
+    (moved.length ? '; moved to third party: ' + moved.map(function (t) { return girItemLabel_(t); }).join('; ') : '') +
+    (taken.length ? '; not renewed (the client took them off): ' + taken.map(function (t) { return girItemLabel_(t); }).join('; ') : '') +
     (out.dropped.length ? '; left out: ' + out.dropped.join(', ') : ''));
   return { ok: true, sf: out, said: (test ? 'TEST: the instruction went to ' + to.join(', ') + '. ' : 'Instructed: ' + to.join(', ') + ', copied ' + GIR.CC.join(', ') + '. ') +
-    (out.trans ? 'Salesforce: a new billing record, ' + out.risks.length + ' cover term(s), a follow-up task' + (out.event ? ' and the delivery in ' + out.deliverer + '\'s calendar' : '') + '.' : 'Salesforce was not written.') };
+    (out.trans ? 'Salesforce: a new billing record, ' + out.risks.length + ' cover term(s), a follow-up task' + (out.event ? ' and the delivery in ' + out.deliverer + '\'s calendar' : '') + '.' : 'Salesforce was not written.') +
+    (taken.length ? ' ' + taken.length + ' risk' + (taken.length === 1 ? ' the client took off was' : 's the client took off were') + ' not renewed, and Guardian General is told to take ' + (taken.length === 1 ? 'it' : 'them') + ' off cover.' : '') +
+    (moved.length ? ' ' + moved.length + ' moved to third party at the client\'s choice, with no sum insured carried over.' : '') };
 }
+/* ── The reconciliation: our record against Guardian General's notice ──────────────────────
+   "Recon" is the branch's own word for it — Pawan asks CRMS for the printout "so we can do
+   our Recon". On a fleet it is the whole job: sixty-odd registrations on each side, and the
+   only way to find the one that moved is to set them beside each other.
+
+   A MOTOR NOTICE GIVES THE PREMIUM PER VEHICLE, NOT THE SUM INSURED (girread's vehicle item
+   carries `premium`; only a property item carries `value`). So the figure that reconciles on
+   a fleet is the premium, and the sum insured is ours alone until the client confirms it.
+
+   AND IT COMPARES TAX-INCLUSIVE AGAINST TAX-INCLUSIVE. The notice prints its premiums BEFORE
+   tax; Salesforce holds both, and Total_Premiums_Gov_t_Inclusive__c is the one every other
+   figure in this product uses. Setting our inclusive figure beside their exclusive one made
+   every single row differ by the tax — on the 63-vehicle fleet that reads exactly like no
+   match at all, which is the fault it looks like it is reporting. girread now gives each item
+   its own tax and inclusive total (apportioned from the notice's own Government Tax, so the
+   items tie to the notice to the cent); a notice read before that is grossed up by girIncl_.
+
+   A ROW OF OURS WITH NO INCLUSIVE FIGURE is compared before tax instead, on both sides, and
+   says so (`ex: true`) rather than being grossed up: our own record is not a thing to guess
+   at on a screen whose whole job is to show what the record says. */
+function girReconKey_(s) { return String(s || '').replace(/\W/g, '').toUpperCase(); }
+function girRecon_(r, st, notice) {
+  var saved = girJ_(st && st.Recon, {}) || {}, nitems = (notice && notice.items) || [];
+  var used = {}, pick = {}, how = {}, rows = [], ourP = 0, theirP = 0, exRows = 0;
+  var cell = function (id, o) { var s = saved[id] || {}; o.id = id; o.ok = !!s.ok; o.q = s.q || ''; o.by = s.by || ''; o.at = s.at || ''; o.asked = s.asked || ''; return o; };
+  /* their figure both ways: a notice girread has taxed carries item.total, an older one does not */
+  var theirIn = function (n) { return n ? girR_(n.total || girIncl_(n.premium || n.value, notice)) : 0; };
+  var theirEx = function (n) { return n ? girR_(n.premium || n.value) : 0; };
+  /* MATCHED ON THE REGISTRATION FIRST, AND ONLY THEN ON THE CHASSIS OR ENGINE NUMBER. A notice
+     leaves Reg# blank on plant and trailers that carry no plate — four of the sixty-three on
+     the fleet — and our own record then holds the chassis or the serial in Vehicle__c. Matching
+     only on the registration left those on screen as "not on notice" on both sides at once,
+     which reads as seven risks gone astray when nothing has moved at all. A registration must
+     never lose its match to somebody else's chassis, so every registration is matched across
+     the whole notice before a chassis is tried, and each match is one-to-one. */
+  var passBy = function (mine, theirs, label) {
+    r.items.forEach(function (x, j) {
+      if (pick[j] !== undefined) return;
+      var k = girReconKey_(mine(x)); if (!k) return;
+      for (var i = 0; i < nitems.length; i++) if (!used[i] && girReconKey_(theirs(nitems[i])) === k) { pick[j] = i; used[i] = 1; how[j] = label; return; }
+    });
+  };
+  passBy(function (x) { return x.vehicle; }, function (n) { return n.reg; }, '');
+  passBy(function (x) { return x.vehicle; }, function (n) { return n.chassis; }, 'chassis');
+  passBy(function (x) { return x.chassis; }, function (n) { return n.chassis; }, 'chassis');
+  passBy(function (x) { return x.vehicle; }, function (n) { return n.engine; }, 'engine');
+  passBy(function (x) { return x.engine; }, function (n) { return n.engine; }, 'engine');
+  r.items.forEach(function (x, j) {
+    var n = pick[j] === undefined ? null : nitems[pick[j]];
+    var ourIn = girR_(x.total), ourEx = girR_(x.premium), ex = !ourIn && !!ourEx;
+    if (ex) exRows++;
+    var ours = ex ? ourEx : ourIn, theirs = ex ? theirEx(n) : theirIn(n);
+    ourP += ours; theirP += theirs;
+    rows.push(cell(x.id, { label: girItemLabel_(x), vehicle: x.vehicle || '', coverage: x.coverage || '', cover: girR_(x.value || x.cover),
+      ours: ours, theirs: theirs, diff: n ? girR_(theirs - ours) : 0, ex: ex, on: how[j] || '',
+      oursEx: ourEx, theirsEx: theirEx(n),
+      /* A FIGURE AGAINST NOTHING IS NOT A TIE. This read `ours && theirs && …`, so a risk the
+         notice charges for and our record carries no premium on came out as "Ties" — on the
+         fleet that was one live row the day before the renewal, waiting to be ticked. */
+      state: !n ? 'ours' : Math.abs(theirs - ours) >= GIR_RECON.SLACK ? 'differs' : 'same' }));
+  });
+  /* on the notice and not on our record: a vehicle added mid-year that never reached Salesforce.
+     An item with no registration at all is listed too, by its chassis or engine number — the
+     notice charges for it either way, and a row left off the screen is a figure nobody checks. */
+  nitems.forEach(function (n, i) {
+    if (used[i]) return;
+    var id = String(n.reg || n.chassis || n.engine || '').trim();
+    var theirs = theirIn(n); theirP += theirs;
+    rows.push(cell('n:' + (girReconKey_(id) || 'x' + i), { label: [n.year || '', n.desc || '', id ? '(' + id + ')' : '(no registration on the notice)'].filter(String).join(' '),
+      vehicle: n.reg || '', coverage: n.coverage || '', cover: girR_(n.value || 0), ours: 0, oursEx: 0,
+      theirs: theirs, theirsEx: theirEx(n), ex: false, on: '', diff: theirs, state: 'theirs' }));
+  });
+  var counts = { same: 0, differs: 0, ours: 0, theirs: 0, ok: 0, q: 0 };
+  rows.forEach(function (x) { counts[x.state]++; if (x.ok) counts.ok++; if (x.q) counts.q++; });
+  var nTotal = girR_(notice ? notice.total || girIncl_(notice.premium, notice) : 0);
+  /* the notice against itself, on every item it carries, whatever our own rows hold */
+  var nItemsIn = girR_(nitems.reduce(function (s, n) { return s + theirIn(n); }, 0));
+  return { rows: rows, counts: counts, risks: rows.length,
+    ourPremium: girR_(ourP), theirPremium: girR_(theirP), noticeTotal: nTotal,
+    taxRate: notice && notice.taxRate ? Number(notice.taxRate) : GIR_TAX.RATE,
+    taxRead: !!(notice && notice.taxRead), exRows: exRows,
+    noticeBeforeTax: girR_(notice ? notice.premium : 0), noticeTax: girR_(notice ? notice.tax : 0),
+    /* the notice's own items against the notice's own total: girread warns on this too, and
+       it is the first thing to query, because nothing else can be trusted until it ties */
+    itemsTie: !nTotal || !nItemsIn || Math.abs(nItemsIn - nTotal) < GIR_RECON.SLACK,
+    noticeItems: nItemsIn,
+    done: rows.length > 0 && rows.every(function (x) { return x.ok || x.q; }),
+    open: rows.filter(function (x) { return !x.ok && !x.q; }).length,
+    asked: girJ_(st && st.Recon, {})._asked || null };
+}
+/** A reconciliation note saved on a row: ticked as right, or queried with a question. */
+function girReconSave_(who, r, st, b, save, key) {
+  var saved = girJ_(st && st.Recon, {}) || {}, got = girJ_(b.rows, null) || b.rows || {}, n = 0;
+  Object.keys(got).forEach(function (id) {
+    var g = got[id] || {}, q = String(g.q || '').trim().slice(0, 500);
+    if (!g.ok && !q) { delete saved[id]; return; }
+    saved[id] = { ok: !!g.ok && !q, q: q, by: who.name, at: gcmWhen_(new Date()), asked: (saved[id] || {}).asked || '' };
+    n++;
+  });
+  save({ Recon: saved });
+  girLog_(key, r, 'reconciled', who.name, n + ' risk(s) checked');
+  return { ok: true, said: n + ' risk' + (n === 1 ? '' : 's') + ' saved.' };
+}
+/** The clarification: every query on the reconciliation, to Guardian General. */
+function girReconAsk_(who, r, st, b, save, key) {
+  var notice = girJ_(st && st.Notice, null), rec = girRecon_(r, st, notice);
+  var qs = rec.rows.filter(function (x) { return x.q; });
+  var extra = String(b.text || '').trim().slice(0, 2000);
+  if (!qs.length && !extra) return { ok: false, error: 'Nothing to ask yet. Query a risk, or write a question below.' };
+  var live = girLive_(), to = live ? girGgTo_(r.line) : girTestTo_(who, []);
+  var subj = 'Renewal query: ' + r.client + ' · ' + r.policy + ' · renewal ' + girMdy_(r.ren);
+  var html = '<p>Good day,</p><p>We are reconciling the renewal notice for <b>' + tEsc_(r.client) + '</b>, policy <b>' + tEsc_(r.policy) +
+    '</b>, renewing ' + tEsc_(tDmy_(r.ren)) + ', and would be grateful for clarification on the following.</p>' +
+    (rec.itemsTie ? '' : '<p>First, the notice\'s own items add to ' + girMoney_(rec.theirPremium) + ' against a notice total of ' + girMoney_(rec.noticeTotal) + '.</p>') +
+    (qs.length ? '<ol>' + qs.map(function (x) {
+      var was = x.state === 'theirs' ? 'not on our records' : x.state === 'ours' ? 'not on the notice' :
+        x.state === 'differs' ? 'our record ' + girMoney_(x.ours) + ', the notice ' + girMoney_(x.theirs) : '';
+      return '<li><b>' + tEsc_(x.label) + '</b>' + (was ? ' — ' + tEsc_(was) : '') + '<br>' + tEsc_(x.q) + '</li>';
+    }).join('') + '</ol>' : '') +
+    (extra ? '<p>' + tEsc_(extra).replace(/\n/g, '<br>') + '</p>' : '') +
+    '<p>Thank you.</p><p>Regards,<br>' + tEsc_(who.name) + '<br>Ricky Rampersad Branch</p>';
+  var sent = girMail_(to[0], (live ? '' : '[TEST] ') + subj, html, { cc: live ? to.slice(1).concat(GCM.COPY) : to.slice(1) });
+  if (!sent) return { ok: false, error: 'The query did not send. Try again, or send it from Outlook.' };
+  var saved = girJ_(st && st.Recon, {}) || {}, when = gcmWhen_(new Date());
+  qs.forEach(function (x) { if (saved[x.id]) saved[x.id].asked = when; });
+  saved._asked = { at: when, by: who.name, n: qs.length, to: to.join(', '), test: !live };
+  save({ Recon: saved });
+  girLog_(key, r, 'query sent', who.name, qs.length + ' query/queries to ' + to.join(', ') + (live ? '' : ' (test)'));
+  return { ok: true, said: (live ? 'Sent to ' : 'Test copy sent to ') + to.join(', ') + '.' };
+}
+
 function girGgTo_(line) {
   var o = null;
   try { o = JSON.parse(PropertiesService.getScriptProperties().getProperty('GIR_GG_TO') || 'null'); } catch (e) {}
@@ -1876,11 +2094,29 @@ function girTakeAnswer_(st, b, name, via) {
      risk by risk. Only an id on their own letter counts, so a page cannot name a risk of anyone else's. */
   var offIn = girJ_(b.off, null) || b.off || {}, off = [];
   (view.items || []).forEach(function (x) { if (offIn[x.id]) off.push({ id: x.id, label: x.label }); });
-  /* Taking a risk off is a change, whatever was ticked: it is never a plain approval. Ticking them
-     IS telling us what has changed, so it answers the comment the page would otherwise insist on. */
-  if (off.length && decision === 'approve') decision = 'changes';
-  if (decision !== 'approve' && !off.length && comment.length < 3) return { ok: false, error: decision === 'changes' ? 'Tell us what has changed.' : 'Write your question.' };
-  if (off.length && comment.length < 3) comment = off.length + ' risk' + (off.length === 1 ? '' : 's') + ' no longer ours: ' + off.map(function (x) { return x.label; }).join('; ');
+  /* COMPREHENSIVE → THIRD PARTY (11 November 2026). A move, never a removal: the vehicle is
+     still renewed and a term is still created for it, with no figure of the client's own. Only
+     an id on their own stored view counts, and only a risk that HAS a figure to give up — a
+     third party cannot be moved to third party, and a property sum insured is not a cover type
+     to swap. The page enforces it too; this is the rule behind it, because a page can be made
+     to post anything. */
+  var covIn = girJ_(b.cover, null) || b.cover || {}, cover = {}, covList = [];
+  (view.items || []).forEach(function (x) {
+    if (String(covIn[x.id] || '').toLowerCase() !== 'tp') return;
+    var may = x.adjust !== undefined ? !!x.adjust : (x.coverage ? girAdjustable_(x) : true);
+    if (!may || x.kind !== 'vehicle' || /third\s*party/i.test(String(x.coverage || ''))) return;
+    if (offIn[x.id]) return;                       /* taken off wins: it is not renewed at all */
+    cover[x.id] = 'tp'; covList.push({ id: x.id, label: x.label });
+  });
+  /* Taking a risk off, or moving one to third party, is a change whatever was ticked: it is never
+     a plain approval. Ticking them IS telling us what has changed, so it answers the comment the
+     page would otherwise insist on. */
+  if ((off.length || covList.length) && decision === 'approve') decision = 'changes';
+  if (decision !== 'approve' && !off.length && !covList.length && comment.length < 3) return { ok: false, error: decision === 'changes' ? 'Tell us what has changed.' : 'Write your question.' };
+  if ((off.length || covList.length) && comment.length < 3) {
+    comment = [off.length ? off.length + ' risk' + (off.length === 1 ? '' : 's') + ' no longer ours: ' + off.map(function (x) { return x.label; }).join('; ') : '',
+      covList.length ? covList.length + ' to third party: ' + covList.map(function (x) { return x.label; }).join('; ') : ''].filter(String).join('. ');
+  }
   /* A new figure is taken only where there is one of the client's own to
      change — a comprehensive vehicle or a sum insured, never a third party.
      The page hides the box; this is the rule behind it, because a page can be
@@ -1892,13 +2128,17 @@ function girTakeAnswer_(st, b, name, via) {
   (view.items || []).forEach(function (x) {
     var may = x.adjust !== undefined ? !!x.adjust : (x.coverage ? girAdjustable_(x) : true);
     if (!may) return;
+    /* a vehicle moved to third party gives its figure up: keeping one would write a sum
+       insured onto a term that insures nothing of the client's own */
+    if (cover[x.id] === 'tp') return;
     var n = girNum_(got[x.id]);
     if (n > 0 && Math.abs(n - (x.value || 0)) >= 1) vals[x.id] = n;
   });
   var old = girJ_(st['Client answer'], null), hist = old ? (old.history || []).concat(old.comment ? [{ at: old.at, text: old.comment, name: old.name, decision: old.decision }] : []) : [];
   /* a question leaves the decision where it was */
   var ans = { decision: decision === 'question' ? (old ? old.decision : '') : decision, at: gcmWhen_(new Date()), name: String(name || '').slice(0, 80), comment: comment,
-    values: Object.keys(vals).length ? vals : (old && old.values) || {}, off: off.length ? off : (old && old.off) || [], via: via, history: hist.slice(-12) };
+    values: Object.keys(vals).length ? vals : (old && old.values) || {}, off: off.length ? off : (old && old.off) || [],
+    cover: Object.keys(cover).length ? cover : (old && old.cover) || {}, via: via, history: hist.slice(-12) };
   var next = decision === 'approve' ? 'approved' : decision === 'changes' ? 'changes' : stage;
   girSave_(key, { 'Client answer': ans, Stage: next });
   var r = { key: key, policy: gcmText_(st.Policy), client: gcmText_(st.Client) };
@@ -1907,6 +2147,7 @@ function girTakeAnswer_(st, b, name, via) {
      comment box for which of sixty vehicles moved. */
   var newVals = (view.items || []).filter(function (x) { return vals[x.id]; }).map(function (x) { return x.label + ' ' + girWhole_(vals[x.id]) + (x.value ? ' (was ' + girWhole_(x.value) + ')' : ''); });
   var detail = (newVals.length ? '\nNew values (' + newVals.length + '): ' + newVals.join('; ') : '') +
+    (covList.length ? '\nTo third party (' + covList.length + '): ' + covList.map(function (x) { return x.label; }).join('; ') : '') +
     (off.length ? '\nNo longer theirs (' + off.length + '): ' + off.map(function (x) { return x.label; }).join('; ') : '');
   var verb = decision === 'approve' ? 'APPROVED the renewal' : decision === 'changes' ? 'asked for changes' : 'asked a question';
   var said = verb + detail;
@@ -2029,7 +2270,7 @@ function girPreview_(p) {
   return { ok: true, subject: m.subject, html: m.html };
 }
 /* Which copy is pasted: ?action=gcm.ping answers it under renewals.build. Change it with any change worth deploying. */
-var GIR_BUILD = '2026-11-10a';
+var GIR_BUILD = '2026-11-11b';
 function girPing_() {
   var n = 0; try { n = girRows_(GIR.TAB).length; } catch (e) {}
   return { build: GIR_BUILD, live: girLive_(), rows: n, mail: !!tMsCreds_(), ai: !!gcmAiKey_(), salesforce: tSfOn_() };

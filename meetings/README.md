@@ -1200,6 +1200,32 @@ the row into line with the spec and rebuilds the agenda, so editing `FRIDAY`
 at the top of the file is one Run from being live. Attendance, contributions
 and actions already recorded are never touched.
 
+**Set up the standing rota, before the first build.** *Branch Meetings → Set up
+the standing rota* writes the fourteen items, the minutes and a name against each.
+It will not touch a tab that already has rows — the rota is the one place a person
+edits the standing order — so pressing it again asks whether to replace what is
+there, and says plainly that anything typed into Owner, Owner E-mail, Backup or
+Notes goes with it. Meetings already built keep the agenda they have: the rota is
+the template the next one is built from. A rota with blank owners is the one state
+to look out for: **the accountability panel reads the agenda's owners, so blank
+owners leave it nobody to name.**
+
+**The button builds the UPCOMING meeting day, whatever day you press it on.**
+*Branch Meetings → Build Wednesday's agenda now* is a person asking for the next
+meeting, so pressed on a Tuesday evening it writes tomorrow's: the meeting row,
+the agenda off the standing rota, and last week's still-open actions carried
+forward, all in one press. The alert names the day it built for. Press it twice
+and the second press finds the meeting rather than making another.
+
+The **6:00 trigger** keeps its own guard and builds nothing on a day that is not
+the meeting day — otherwise a trigger left behind on an old day would write a
+meeting for the wrong date. So *Turn on the week cycle* and the button do
+different jobs, and both are worth having: the cycle means next week happens
+without anybody remembering, the button means tonight's agenda exists tonight,
+and agents can bring something to it before the morning. The contribution box
+shuts when check-in opens, half an hour before the start, so an agenda that only
+appears at 6:00 on the day gives them two hours.
+
 **A one-off is never built by moving `MEET.MEETING_DAY`.** The branch meets on
 a Wednesday, that one number is where every sentence a person reads takes the
 day from, and moving it to a Friday renames the standing rhythm, the daily

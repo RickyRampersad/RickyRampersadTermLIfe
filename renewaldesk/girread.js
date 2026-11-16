@@ -7,8 +7,10 @@
  * (risk locations with their sums insured) and motor (one block a vehicle, a fleet many).
  *
  * GirRead.text(arrayBuffer)  the PDF's text, one string (pdf.js, loaded by the page from cdnjs)
- * GirRead.parse(text)        { policy, replaces, title, insured, amount, from, to, premium, tax, total, items, reqs,
- *                              tranId, preparedBy, preparedOn, warnings }
+ * GirRead.parse(text)        { policy, replaces, title, insured, amount, from, to, premium, tax, total, taxRate,
+ *                              taxRead, items, reqs, tranId, preparedBy, preparedOn, warnings }
+ *                            each item: { premium, tax, total } — premium BEFORE tax, as the notice prints it;
+ *                            total WITH tax, which is how Salesforce holds it (see taxItems below).
  */
 (function (root) {
   'use strict';
@@ -103,6 +105,7 @@
     else if (/Risk Location:/i.test(block)) out.items = locations(block);
     else if (/Limit:/i.test(block)) out.items = limits(block);
     else if (block) out.items = generic(block);
+    taxItems(out);
 
     /* what Guardian General needs before it renews */
     m = /subject to the submission of the (?:below|following)[^:]*:\s*(.+?)(?=\s+(?:Material facts|OCCUPANCY|ADEQUACY|Consent|Thank you|Head Office|Please advise|If any of the above)\b|$)/i.exec(t);
@@ -125,26 +128,137 @@
     out.key = polKey(out.policy);
     return out;
   }
+  /* ── THE PREMIUMS ON A NOTICE ARE BEFORE TAX; SALESFORCE HOLDS BOTH ───────────────────────
+     Every figure in the DETAILS column is tax-exclusive, and the notice adds the government
+     premium tax once at the foot:
+
+       Total Premium   $ 196,457.00      ← the items add to exactly this
+       Government Tax  $  11,787.50      ← 6%
+       Total           $ 208,244.50      ← and this is the Renewal Amount
+
+     Risk_Details__c carries the same pair: Premium_01_Cover_01__c before tax and
+     Total_Premiums_Gov_t_Inclusive__c with it. Everything else in this product already works
+     on the inclusive figure — the history, last year's premium, the letter, the premium-rise
+     insight — so the reconciliation has to as well, and that needs a tax figure PER ITEM.
+
+     THE RATE COMES FROM THE NOTICE, NOT FROM HERE. It prints its own Government Tax, so the
+     rate is read (tax ÷ premium) and 6% is only the fallback for a notice that prints none.
+     A change in the tax then follows by itself, and a notice at some other rate is flagged
+     rather than quietly overridden.
+
+     AND THE ITEMS ARE APPORTIONED, NOT EACH ROUNDED. Guardian General's own per-item rounding
+     cannot be reproduced from the figures they print: on the 63-vehicle fleet, 6% rounded to
+     the nearest cent on each item comes to 11,787.44 against their 11,787.50, and rounding up
+     gives 11,787.54. Their internal premiums evidently carry more decimals than the notice
+     shows. Rounding each item independently would therefore leave every row a cent or two out
+     — and on a screen built to compare our figure against theirs, cents of noise on 63 rows is
+     the same fault as no match at all. So the tax is split by largest remainder: each item is
+     within a cent of the true rate, and the items add to the notice's own Government Tax
+     EXACTLY, which means the notice goes on checking itself. */
+  var TAX_RATE = 0.06;
+  function taxItems(out) {
+    var items = out.items || [];
+    var read = !!(out.premium && out.tax);
+    var rate = read ? out.tax / out.premium : TAX_RATE;
+    out.taxRate = Math.round(rate * 1e6) / 1e6;
+    out.taxRead = read;
+    if (read && Math.abs(rate - TAX_RATE) > 0.0005) {
+      out.warnings.push('The notice charges tax at ' + (Math.round(rate * 10000) / 100) + '%, not ' +
+        (TAX_RATE * 100) + '%: check it before you file anything.');
+    }
+    var sub = items.reduce(function (s, x) { return s + (x.premium || 0); }, 0);
+    if (!items.length || !sub) return;
+    /* the notice's own tax when its items tie to its own Total Premium (the normal case, and
+       the 63-vehicle fleet does tie to the cent); otherwise the rate on what we actually read,
+       because apportioning a tax the items do not account for would spread the error */
+    var want = read && Math.abs(sub - out.premium) < 1 ? out.tax : Math.round(sub * rate * 100) / 100;
+    var cents = items.map(function (x) { return (x.premium || 0) * rate * 100; });
+    var part = cents.map(function (c) { return Math.floor(c); });
+    var left = Math.round(want * 100) - part.reduce(function (s, c) { return s + c; }, 0);
+    /* biggest fraction first, then the biggest premium, so the spread is stable run to run */
+    var order = items.map(function (x, i) { return i; }).sort(function (a, b) {
+      return (cents[b] - Math.floor(cents[b])) - (cents[a] - Math.floor(cents[a])) ||
+        (items[b].premium || 0) - (items[a].premium || 0) || a - b;
+    });
+    for (var i = 0; left > 0 && i < order.length; i++, left--) part[order[i]]++;
+    for (var j = order.length - 1; left < 0 && j >= 0; j--) if (part[order[j]] > 0) { part[order[j]]--; left++; }
+    items.forEach(function (x, k) {
+      x.tax = Math.round(part[k]) / 100;
+      x.total = Math.round(((x.premium || 0) + x.tax) * 100) / 100;
+    });
+  }
   function splitReqs(s) {
     return String(s).split(/\s*\([a-z]\)\s*/i).map(function (x) { return x.replace(/\s+/g, ' ').trim(); }).filter(function (x) { return x.length > 2; });
   }
-  /* one vehicle: "2023 Kia Sportage Crossover/ SUV Eng#:G4FP… Chassis#:USYP… Reg#:PEE6927 Coverage:Comprehensive
-     Sum Insured:$ 221,730 CC:1591 Windscreen: $ 8,000.00 No Claim Discount: 60.00% … $ 5,625.87" */
+  /* ONE VEHICLE, AND THE NOTICE COMES IN TWO LAYOUTS (11 November 2026).
+     Private motor runs it together and puts the premium LAST:
+       "2023 Kia Sportage Crossover/ SUV Eng#:G4FP… Chassis#:USYP… Reg#:XBA2000 Coverage:Comprehensive
+        Sum Insured:$ 221,730 CC:1591 Windscreen: $ 8,000.00 No Claim Discount: 60.00% … $ 5,625.87"
+     A COMMERCIAL FLEET puts the premium on the DESCRIPTION line and the rest beneath it:
+       "2019 Volvo Concrete/Water/Tractor Truck                $ 15,905.05
+        Eng#:    Chassis#: Reg#:XAA1000
+        Coverage: Comprehensive Sum Insured:$ 510,300 HP: 127.00
+        Windscreen: $ 10,000.00"
+
+     The old pattern demanded the premium AFTER Reg#, and demanded a registration. On a fleet it
+     therefore matched NOTHING: the desk read the notice as empty, the notice total showed nil,
+     and every one of our own sixty risks reported "not on notice" — which reads as the client's
+     fleet being wrong when the fault is entirely ours. It would also have dropped the trailers
+     and plant that carry no registration at all.
+
+     So the block is cut into one segment per vehicle at the year that starts its description, and
+     each field is read wherever it falls. THE PREMIUM IS THE FIRST UNLABELLED AMOUNT: the labelled
+     ones are taken out first, which lands on the description line's figure for a fleet and on the
+     trailing figure for a private motor, with one rule rather than two. */
+  var MONEY_LABEL = /(Sum\s*Insured|Windscreen|Limit[^:$]{0,30}|Excess|Value)\s*:?\s*\$\s*[\d,]+(?:\.\d{2})?/gi;
+  function clean(s) { s = String(s == null ? '' : s).trim().replace(/[.,;]+$/, ''); return s === '.' ? '' : s; }
+  /* "Third Party" or "Comprehensive", however the notice spaces or cases it ("Coverage:Third
+     Party", "Coverage: Comprehensive"). Anything else is kept as written rather than guessed at. */
+  function cover(s) {
+    s = String(s || '').replace(/\s+/g, ' ').trim();
+    if (/third\s*party/i.test(s)) return 'Third Party';
+    if (/comprehensive/i.test(s)) return 'Comprehensive';
+    return s;
+  }
   function vehicles(block) {
-    var out = [], re = /((?:19|20)\d{2})\s+(.+?)\s+Eng#:\s*(\S*)\s+Chassis#:\s*(\S*)\s+Reg#:\s*([A-Z0-9-]+)\s*(.*?)\$\s*([\d,]+\.\d{2})(?=\s*$|\s+(?:19|20)\d{2}\s)/g, m;
-    while ((m = re.exec(block))) {
-      var rest = m[6], x;
-      var v = { kind: 'vehicle', year: Number(m[1]), desc: m[2].replace(/\s+/g, ' ').trim(), engine: m[3], chassis: m[4], reg: m[5].toUpperCase(), premium: num(m[7]) };
-      x = /Coverage:\s*([A-Za-z ]+?)(?=\s+(?:Sum Insured|CC:|Windscreen|No Claim|$))/.exec(rest); if (x) v.coverage = x[1].trim();
-      x = /Sum Insured:\s*\$\s*([\d,]+)/.exec(rest); if (x) v.value = num(x[1]);
-      x = /Windscreen:\s*\$\s*([\d,]+(?:\.\d{2})?)/.exec(rest); if (x) v.windscreen = num(x[1]);
-      x = /No Claim Discount:\s*([\d.]+)%/.exec(rest); if (x) v.ncd = Number(x[1]);
-      x = /CC:\s*(\d+)/.exec(rest); if (x) v.cc = x[1];
-      out.push(v);
-    }
+    var s = String(block || ''), out = [], starts = [], m;
+    /* A vehicle starts at the year of its description. TEN ON ONE FLEET HAVE NO DESCRIPTION —
+       the notice prints the year, then the premium, and the make and model are simply blank
+       (they are trailers). So a year followed straight by the figure starts a vehicle too, and
+       an item with no words to its name is kept rather than dropped: the registration and the
+       premium are what the reconciliation needs, and the description is not. */
+    var re = /(^|\s)((?:19|20)\d{2})(\s+)(?=[A-Z][A-Za-z]|\$)/g;
+    while ((m = re.exec(s))) { starts.push({ i: m.index + m[1].length, y: m[2] }); re.lastIndex = m.index + m[0].length; }
+    starts.forEach(function (st, k) {
+      var v = vehicle(s.slice(st.i, k + 1 < starts.length ? starts[k + 1].i : s.length), st.y);
+      if (v) out.push(v);
+    });
     return out;
   }
-  /* one location: "Risk Location: LP 451 Southern Main Road, …, CHAGUANAS Stock $ 500,000 Plant,Machinery & Equipment $ 10,000 … $ 3,025.00" */
+  function vehicle(seg, year) {
+    var body = seg.replace(/^(?:19|20)\d{2}\s+/, ''), x;
+    var d = /^([\s\S]*?)(?=\s*\$|\s*Eng#:|$)/.exec(body);
+    var desc = (d ? d[1] : body).replace(/\s+/g, ' ').trim();
+    var p = /\$\s*([\d,]+\.\d{2})/.exec(seg.replace(MONEY_LABEL, ' '));
+    var v = { kind: 'vehicle', year: Number(year), desc: desc, premium: p ? num(p[1]) : 0 };
+    /* Eng#:, Chassis#: and Reg#: can each be EMPTY, and an empty one is followed straight by the
+       next label — so the value must never be allowed to BE a label. A blank is a blank, not the
+       word after it, and a trailer or a plant item carries no registration at all. */
+    x = /Eng#:\s*(?!Chassis#|Reg#|Coverage)([A-Za-z0-9\-/.]*)/i.exec(seg); v.engine = x ? clean(x[1]) : '';
+    x = /Chassis#:\s*(?!Reg#|Coverage|Eng#)([A-Za-z0-9\-/.]*)/i.exec(seg); v.chassis = x ? clean(x[1]) : '';
+    x = /Reg#:\s*(?!Coverage|Eng#|Chassis#)([A-Za-z0-9-]*)/i.exec(seg); v.reg = x ? clean(x[1]).toUpperCase() : '';
+    x = /Coverage:\s*([A-Za-z /]+?)(?=\s*(?:Sum\s*Insured|CC:|Windscreen|No\s*Claim|HP:|Excess|Underwriter|Eng#|Chassis#|Reg#|\$|$))/i.exec(seg);
+    if (x) v.coverage = cover(x[1]);
+    x = /Sum\s*Insured\s*:?\s*\$\s*([\d,]+(?:\.\d{2})?)/i.exec(seg); if (x) v.value = num(x[1]);
+    x = /Windscreen\s*:?\s*\$\s*([\d,]+(?:\.\d{2})?)/i.exec(seg); if (x) v.windscreen = num(x[1]);
+    x = /No\s*Claim\s*Discount\s*:?\s*([\d.]+)\s*%/i.exec(seg); if (x) v.ncd = Number(x[1]);
+    x = /CC\s*:\s*(\d+)/i.exec(seg); if (x) v.cc = x[1];
+    x = /HP\s*:\s*([\d.]+)/i.exec(seg); if (x) v.hp = Number(x[1]);
+    /* a year on its own, with no figure and nothing to identify it, is not a vehicle */
+    return (v.premium || v.reg || v.chassis || v.engine) ? v : null;
+  }
+  /* one location: "Risk Location: LP 12 Sample Road, …, SOMEWHERE Stock $ 500,000 Plant,Machinery & Equipment $ 10,000 … $ 3,025.00"
+     (invented: the first cut of this comment carried a real client's risk location, and this file is published) */
   function locations(block) {
     return block.split(/Risk Location:\s*/i).slice(1).map(function (seg) {
       var sums = [], first = -1, m;

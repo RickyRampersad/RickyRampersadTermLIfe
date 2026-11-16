@@ -77,7 +77,27 @@ ok('every item is somebody\'s, rotates, or is the room\'s, except the two the br
     String(r['Cadence']) === 'fixed').map(r => r['Item'])));
 ok('NO E-MAIL ADDRESS IS WRITTEN INTO A PUBLISHED FILE',
   rota.every(r => !String(r['Owner Email']).trim() && !String(r['Backup Email']).trim()));
-ok('running it again leaves the tab alone', /already has rows/.test(env.seedRota()));
+/*  The refusal names how many rows it found, so match on what it means
+    rather than on its wording — and check the tab really is untouched,
+    which is the thing being guarded. */
+(() => {
+  const before = JSON.stringify(env.readTab_(env.MEET.TAB_ROTA));
+  const said = env.seedRota();
+  ok('running it again leaves the tab alone',
+    /already has .*row/.test(said) &&
+    JSON.stringify(env.readTab_(env.MEET.TAB_ROTA)) === before, said);
+  /*  Only a replace asked for in so many words gets past it, and it
+      replaces rather than appending: found on the live sheet on 10
+      November 2026 with eleven items from an earlier seeding and every
+      Owner cell blank, which is the accountability panel's whole input. */
+  env.seedRota({ replace: true });
+  const after = env.readTab_(env.MEET.TAB_ROTA);
+  ok('a replace writes the rota afresh instead of appending',
+    after.length === rota.length, after.length + ' vs ' + rota.length);
+  ok('and the owners are there again',
+    after.filter(r => String(r['Owner']).trim()).length ===
+      rota.filter(r => String(r['Owner']).trim()).length);
+})();
 
 /* ── the agenda writes the rota itself ─────────────────────────────────── */
 console.log('\nthe agenda, with no rota');
@@ -130,22 +150,25 @@ console.log('\nthe Wednesday builder');
 (() => {
   /*  A carry-forward that throws must never be the reason the branch has no
       meeting to sign in to. */
-  /*  Today is whatever day it is, so the builder is told that today is the
-      meeting day — otherwise this whole block passes by not running. */
+  /*  Pointed at TOMORROW, and built ahead. Telling the builder that today is
+      the meeting day makes the block depend on the day the suite is run: on a
+      Wednesday an earlier block has already built today's meeting, so "meeting
+      created" could never hold and the suite failed on the calendar rather
+      than on the code. */
   const day = env.MEET.MEETING_DAY;
-  env.MEET.MEETING_DAY = new Date().getDay();
+  env.MEET.MEETING_DAY = (new Date().getDay() + 1) % 7;
   env.appendRow_(env.MEET.TAB_ACTIONS, {
     'ID': 'ACT-3', 'Meeting ID': 'MTG-OLD', 'Item': 'Still open from last week',
     'Owner': 'Support Two', 'Status': 'Open', 'Origin Meeting': 'MTG-OLD'
   });
-  const good = env.buildWednesday();
+  const good = env.buildWednesday({ ahead: true });
   ok('it writes the meeting, the agenda and the open actions in one run',
     /meeting created/.test(good) && /items written from the rota/.test(good) &&
     /carried forward/.test(good), good);
 
   const real = env.carryForwardInto_;
   env.carryForwardInto_ = () => { throw new Error('the tab is at its cell limit'); };
-  const bad = env.buildWednesday();
+  const bad = env.buildWednesday({ ahead: true });
   env.carryForwardInto_ = real;
   env.MEET.MEETING_DAY = day;
   ok('a meeting is still there when the actions will not copy', /meeting/.test(bad), bad);

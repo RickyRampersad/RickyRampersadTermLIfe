@@ -26,7 +26,12 @@ const AGENDA = [
 const MEETING = {
   id: 'MTG1', ref: 'MD-2026-11-11', type: 'Branch meeting',
   title: 'Branch meeting', subtitle: 'Wednesday, 9:00 to 10:30',
-  week: '', date: '11 Nov 2026', dateISO: '2026-11-11', start: '9:00 AM', end: '10:30 AM',
+  week: '', date: '11 Nov 2026', dateISO: '2026-11-11', // What the backend really hands back. Start and End are time-only cells,
+  // and Sheets keeps a time with no date on 30 December 1899, so the page is
+  // given a whole date string where somebody typed 9:00. The mock used to send
+  // the tidy form, which is why no test ever caught it printing raw.
+  start: 'Sat Dec 30 1899 09:00:00 GMT-0400 (Atlantic Standard Time)',
+  end: 'Sat Dec 30 1899 10:30:00 GMT-0400 (Atlantic Standard Time)',
   format: 'In-person', location: '', chair: 'The Branch Manager', guest: '',
   status: 'published', scope: 'branch', participants: '', clientRef: '', topics: '',
   minutesStatus: 'none', lateAfter: 10, materialsDue: '', anchor: '', archiveLink: '',

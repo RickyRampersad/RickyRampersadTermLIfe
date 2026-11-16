@@ -33,7 +33,7 @@ ok('the Branch Manager is owed one plan for the day', env.blocksOwed_('ricky') =
 ok('his day starts at five', /^5am\s*[–-]\s*3pm$/.test(env.SCHEDULE.ricky.blocks.KPI1.time),
    env.SCHEDULE.ricky.blocks.KPI1.time);
 ok('and runs to three', env.SCHEDULE.ricky.hours === '5am – 3pm', env.SCHEDULE.ricky.hours);
-ok('the BMA works eight to five', env.SCHEDULE.kamla.hours === '8am – 5pm', env.SCHEDULE.kamla.hours);
+ok('the BMA works half past seven to five', env.SCHEDULE.kamla.hours === '7:30am – 5pm', env.SCHEDULE.kamla.hours);
 ok('support staff are owed one plan', env.blocksOwed_('sasha') === 1, String(env.blocksOwed_('sasha')));
 ok('and no desk is scheduled into a time block', Object.keys(env.SCHEDULE).every(s => Object.keys(env.SCHEDULE[s].blocks).join() === 'KPI1'));
 ok('each day spans the desk\'s own hours', Object.keys(env.SCHEDULE).every(s => env.SCHEDULE[s].blocks.KPI1.time === env.SCHEDULE[s].hours));

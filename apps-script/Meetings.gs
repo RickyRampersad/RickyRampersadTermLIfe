@@ -76,7 +76,7 @@ var MEET = {
   /*  Bumped whenever this file changes in a way a deployment has to
    *  carry. `?action=ping` reports it, so a browser can tell a live
    *  build from one pasted six weeks ago without anybody guessing. */
-  VERSION: '2026-11-10b',
+  VERSION: '2026-11-10d',
 
   /* Typed once, when someone sets their PIN for the first time. It
      stops a stranger who guesses a branch email address from claiming
@@ -2950,13 +2950,25 @@ function loadOf_(m, agenda) {
  *  and the cadence — in particular WHICH items are the chair's, which
  *  is now three of fourteen rather than six of twelve, and which come
  *  round the room.                                                   */
-function seedRota() {
+function seedRota(opts) {
   var sh = tab_(MEET.TAB_ROTA);
-  if (sh.getLastRow() > 1) {
-    var msg = 'The Rota tab already has rows — left alone. Clear it first to re-seed.';
+  var had = Math.max(0, sh.getLastRow() - 1);
+
+  /*  IT WILL NOT WRITE OVER A ROTA SOMEBODY HAS EDITED, and `{ replace:
+   *  true }` is the only way past that — passed by the menu, after a
+   *  person has read what goes. Found on the live sheet, 10 November
+   *  2026: eleven items from an earlier seeding, every Owner cell blank.
+   *  So the refusal was doing its job and the branch still had a rota
+   *  with nobody's name on it, which is the whole of the accountability
+   *  panel's input. */
+  if (had && !(opts && opts.replace)) {
+    var msg = 'The Rota tab already has ' + had + ' row' + (had === 1 ? '' : 's') +
+              ' — left alone. Press the menu item again and say yes to replace it, ' +
+              'or type the owners in by hand.';
     Logger.log(msg);
     return msg;
   }
+  if (had) sh.getRange(2, 1, had, sh.getMaxColumns()).clearContent();
   /*  FOURTEEN ITEMS IN NINETY MINUTES, 9:00 to 10:30, AND EVERY ONE OF
    *  THEM HAS A NAME ON IT.
    *
@@ -3079,7 +3091,23 @@ function seedRota() {
 
 function seedRotaFromMenu() {
   var ui = SpreadsheetApp.getUi();
-  ui.alert('The rota', seedRota(), ui.ButtonSet.OK);
+  var had = Math.max(0, tab_(MEET.TAB_ROTA).getLastRow() - 1);
+
+  /*  A rota already there is replaced only on a yes, and the question
+   *  says what goes: the tab is the one place a person edits the
+   *  standing order, so it is never overwritten behind their back. */
+  if (had) {
+    var ask = ui.alert('Replace the standing rota?',
+      'The Rota tab has ' + had + ' item' + (had === 1 ? '' : 's') + ' on it.\n\n' +
+      'Replacing it writes the standing order afresh \u2014 the items, the minutes, ' +
+      'and a name against each one. Anything you have typed into Owner, Owner ' +
+      'E-mail, Backup or Notes goes with it.\n\n' +
+      'Meetings already built keep the agenda they have: this is the template ' +
+      'the next one is built from.',
+      ui.ButtonSet.YES_NO);
+    if (ask !== ui.Button.YES) { ui.alert('The rota', 'Left as it is.', ui.ButtonSet.OK); return; }
+  }
+  ui.alert('The rota', seedRota({ replace: true }), ui.ButtonSet.OK);
 }
 
 function apiSeedAgenda_(body) {
@@ -7530,6 +7558,18 @@ function weekClose() {
   return msg;
 }
 
+/*  THE DAY THE MEETING IS BUILT FOR.
+ *
+ *  Today when today is the meeting day, otherwise the next one. Midnight
+ *  local, because every other date on the row is derived from it. */
+function nextMeetingDay_(from) {
+  var d = new Date((from || new Date()).getTime());
+  d.setHours(0, 0, 0, 0);
+  var ahead = (MEET.MEETING_DAY - d.getDay() + 7) % 7;
+  if (ahead) d.setDate(d.getDate() + ahead);
+  return d;
+}
+
 /*  WEDNESDAY MORNING. The meeting row first, then the agenda off the rota,
  *  so the chair opens something already owned, timed and sequenced.
  *
@@ -7539,16 +7579,30 @@ function weekClose() {
  *  It builds the meeting on MEET.MEETING_DAY, and whatever that day is,
  *  the name stays: the installed trigger calls this function by name, so
  *  renaming it would stop the build without a word.                      */
-function buildWednesday() {
+function buildWednesday(opts) {
   var now = new Date();
-  if (now.getDay() !== MEET.MEETING_DAY) {
+  var ahead = !!(opts && opts.ahead);
+
+  /*  THE TRIGGER KEEPS ITS GUARD; A PERSON'S PRESS DOES NOT.
+   *
+   *  The 6:00 trigger fires on the meeting day and must build nothing on
+   *  any other, or a trigger left behind on an old day writes a meeting
+   *  for the wrong date. A press of "Build <day>'s agenda now" is a
+   *  person asking for the upcoming meeting, and asking for it the day
+   *  before is the ordinary case: asked for in those words on Tuesday 10
+   *  November 2026, when the button answered "Not the meeting day" and
+   *  the branch therefore could not have an agenda — or bring anything
+   *  to it — before the Wednesday morning itself. Everything on the row
+   *  is derived from the day it is built FOR, never from today. */
+  var when = nextMeetingDay_(now);
+  if (now.getDay() !== MEET.MEETING_DAY && !ahead) {
     Logger.log('Not the meeting day — nothing built.');
     return 'Not the meeting day.';
   }
 
   var m = meetingRows_().filter(function (r) {
     var st = low_(r['Status']);
-    return st !== 'cancelled' && sameDay_(r['Date'], now);
+    return st !== 'cancelled' && sameDay_(r['Date'], when);
   })[0] || null;
 
   var made = false;
@@ -7556,12 +7610,11 @@ function buildWednesday() {
     /*  Nobody created it. The branch meets every Wednesday whether or not
      *  somebody remembered to open the app, so the row is written here
      *  rather than leaving the morning with no meeting to sign in to. */
-    var when = new Date(now.getTime()); when.setHours(0, 0, 0, 0);
     var id = uid_('MTG');
     appendRow_(MEET.TAB_MEETINGS, {
       'ID': id, 'Ref': 'RRB-' + Utilities.formatDate(when, tz_(), 'yyyy-MM-dd'),
       'Type': 'Branch Meeting', 'Title': 'Branch Meeting',
-      'Subtitle': 'Week of ' + weekLabel_(chaseWeek_(now)),
+      'Subtitle': 'Week of ' + weekLabel_(chaseWeek_(when)),
       'Week': weekOf_(when), 'Date': when,
       'Start': CYCLE.START, 'End': CYCLE.END,
       'Format': 'In-person', 'Location': MEET.BRANCH,
@@ -7590,7 +7643,12 @@ function buildWednesday() {
   try { carried = carryForwardInto_(m).carried; }
   catch (e) { carryWhy = String(e && e.message || e).slice(0, 80); }
 
-  var note = (made ? 'meeting created; ' : 'meeting already there; ') +
+  /*  THE ALERT SAYS WHICH DAY IT BUILT FOR.  Pressed on a Tuesday it
+   *  builds tomorrow's, and a message that said only "meeting created"
+   *  would leave the chair to guess which meeting that was. */
+  var forDay = dayName_(when.getDay()) + ' ' + fmtDate_(when);
+  var note = 'for ' + forDay + ': ' +
+             (made ? 'meeting created; ' : 'meeting already there; ') +
              (out.ok ? out.added + ' items written from the rota' : str_(out.error)) +
              '; ' + (carryWhy ? 'open actions did not carry (' + carryWhy + ')'
                               : carried + ' open action' + (carried === 1 ? '' : 's') + ' carried forward');
@@ -7628,7 +7686,10 @@ function weekCloseFromMenu() {
 }
 
 function buildWednesdayFromMenu() {
-  SpreadsheetApp.getUi().alert(buildWednesday());
+  /*  A person pressing the button means the upcoming meeting, whatever
+   *  day they press it on. The trigger calls buildWednesday() with no
+   *  argument and keeps its own guard. */
+  SpreadsheetApp.getUi().alert(buildWednesday({ ahead: true }));
 }
 
 function onOpen() {

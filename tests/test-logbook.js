@@ -479,6 +479,11 @@ console.log('three working days on');
   env = world({ DB_MODE: 'live' });
   env.__mkSheet('Departments', 7, ['Department', 'Attention', 'Email', 'Active'], [
     ['GLOC CS RSC - CHAGUANAS', 'The CS Team', 'rsc@example.com', 'Yes'], ['RECORDS MANAGEMENT DEPT', '', '', 'Yes']]);
+  { const dn = env.lbDeptNames_();
+    ok('East Gates is a department though the tab does not name it', dn.indexOf('EAST GATES') >= 0 && dn.indexOf('RECORDS MANAGEMENT DEPT') >= 0, dn.join('|'));
+    tab(env, 'Departments').push(['East Gates', '', '', 'No']);
+    ok('once the tab names East Gates, its Active decides', env.lbDeptNames_().join('|').toUpperCase().indexOf('EAST GATES') < 0);
+    tab(env, 'Departments').pop(); }
   tab(env, 'Agents').push(['A20000', 'Uma Unit', 'uma@example.com', '', '9', 'Yes']);
   tab(env, 'Agents')[0].push('Role'); tab(env, 'Agents').forEach((r, i) => { if (i) r[6] = r[1] === 'Uma Unit' ? 'Unit Manager' : 'Agent'; });
   tab(env, 'Agents')[1][3] = 'Uma Unit';

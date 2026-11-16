@@ -81,6 +81,9 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-x:clip}
+/* The sticky bar is 70px at every width. With nothing here, a link to /careers/#book (or any of the
+   eight "Book a conversation" buttons, which go to #talk) parked the heading 13–27px under it. */
+section[id]{scroll-margin-top:4.5rem}
 body{font-family:var(--text);font-size:var(--f-0);line-height:1.6;color:var(--body);background:var(--bg);overflow-x:clip;-webkit-font-smoothing:antialiased}
 img,svg{display:block;max-width:100%}
 svg:not([width]){width:1.5rem;height:1.5rem}
@@ -162,6 +165,24 @@ section,.layout{padding-block:var(--sp-2xl)}
 .hero .sub{font-size:var(--f-1);color:var(--dT2);max-width:34rem}
 .hero .sub strong{color:#fff}
 .hero-cta{display:flex;flex-wrap:wrap;gap:var(--sp-s);margin:var(--sp-l) 0 var(--sp-m)}
+/* The four steps of the official application. Numbers in the page's own action colour, the rail drawn
+   between them, and on a phone it stacks. Motion is opt-in, as everywhere on this page: the finished
+   state is the plain default and only the draw-in lives inside the no-preference query. */
+.applyflow{list-style:none;margin:var(--sp-l) 0 var(--sp-m);padding:0;display:grid;gap:var(--sp-s);max-width:46rem}
+.applyflow li{display:grid;grid-template-columns:auto 1fr;gap:var(--sp-s);align-items:start;position:relative}
+.applyflow b{display:grid;place-items:center;width:1.9rem;height:1.9rem;border-radius:50%;background:var(--a);color:#fff;font:700 var(--f--1)/1 var(--body-font,inherit);font-variant-numeric:tabular-nums}
+.applyflow li::after{content:"";position:absolute;left:.95rem;top:1.9rem;bottom:calc(var(--sp-s) * -1);width:2px;background:var(--line);transform:scaleY(0);transform-origin:50% 0}
+.applyflow li:last-child::after{display:none}
+.applyflow span{font-size:var(--f--1);line-height:1.5;color:var(--body);padding-top:.18rem}
+.applyflow em{font-style:normal;font-weight:700;color:var(--ink)}
+.applynote{font-size:var(--f--1);color:var(--muted);margin:0 0 var(--sp-m)}
+.applynote a{color:var(--a);font-weight:600}
+@media (prefers-reduced-motion: no-preference){
+  .applyflow li::after{transition:transform .5s var(--ease,ease)}
+  .applyflow.in li::after,.rv.in .applyflow li::after{transform:scaleY(1)}
+  .applyflow li{opacity:0;translate:0 .5rem;transition:opacity .45s ease,translate .45s ease;transition-delay:calc(var(--i,0) * 90ms)}
+  .applyflow.in li{opacity:1;translate:none}
+}
 .trust{display:flex;flex-wrap:wrap;gap:.35rem 1rem;font-size:var(--f--1);color:var(--dT3)}
 .trust span{display:inline-flex;align-items:center;gap:.4rem}
 .trust .ic{width:1rem;height:1rem;color:var(--aT)}
@@ -905,6 +926,13 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 .chrt details{font-size:var(--f--2);color:var(--dT3)}
 .chrt summary{cursor:pointer;color:var(--aT);font-weight:600}
 .chrt table{width:100%;border-collapse:collapse;margin-top:.6rem;font-variant-numeric:tabular-nums}
+/* The method, 13 Nov 2026, asked for so a reader can check the numbers rather than take them: it gives
+   our own cohort, our own exclusions, and says that the figure we publish is the LOW end of the range.
+   It goes on `.chrt`, NOT `.hb` — this page has two different components whose footnote is `.tip`, and
+   the first cut styled the wrong one, so the block rendered unstyled and the test could not find it. */
+.chrt .meth{margin:.9rem 0 0;font-size:var(--f--2);color:var(--dT3);line-height:1.55}
+.chrt .meth b{color:var(--dT2)}
+.chrt .meth em{font-style:italic}
 .chrt th,.chrt td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid rgba(255,255,255,.12);color:var(--dT2)}
 .chrt th{color:var(--dT3);font-weight:600}
 .chrt td:last-child,.chrt th:last-child{text-align:right}
@@ -939,6 +967,126 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 .bsay small{display:block;font-size:var(--f--2);letter-spacing:.12em;text-transform:uppercase;color:var(--dT3);margin-bottom:.3rem;font-weight:700}
 .bfoot{margin:0;font-size:var(--f--2);color:var(--dT3)}
 @media (max-width:56rem){.lgrid{grid-template-columns:1fr;gap:var(--sp-l)}}
+/* ═══ THE BOOK — for the advisor who already has one (14 November 2026) ═══
+   Ricky: "on existing agents, they don't manage their book properly, they don't build it, they don't
+   have the tools, the system to really help them grow. So you need to have that differentiation."
+   #leads answers the newcomer (the names run out in year two); this answers the practising advisor.
+   ONLY what reaches an advisor's whole book is claimed here: the Premium Due Desk (it reads the whole
+   branch dues extract and copies the agent on every letter), the work done on their clients each day and
+   shown in their morning e-mail, the service desks, matched households and the fact find. Match and the
+   per-client read run on the orphan books and for staff, and the six-month review trigger is built but
+   switched off — so none of the three is promised. A light section with the proof in a dark card: #leads
+   before it is dark and #path after it is bg2, so the grounds still alternate. */
+.bk{background:var(--bg)}
+.bkgrid{display:grid;grid-template-columns:.85fr 1.15fr;gap:var(--sp-xl);align-items:start}
+.bkproof{background:radial-gradient(110% 80% at 85% 0%,var(--d3),transparent 62%),linear-gradient(170deg,var(--d1),var(--d0) 72%);color:var(--dT2);border-radius:var(--r);padding:var(--sp-l);display:grid;gap:var(--sp-m);min-width:0;box-shadow:0 22px 50px hsl(var(--sh) / .28)}
+.bkproof small{font:700 var(--f--2)/1.2 var(--text);letter-spacing:.13em;text-transform:uppercase;color:var(--aT)}
+.bkproof h3{margin:0;font:700 var(--f-2)/1.15 var(--display);color:#fff;text-wrap:balance}
+.bkproof .bkfoot{margin:0;font-size:var(--f--1);line-height:1.55;color:var(--dT2)}
+.bkproof .bkfoot b{color:#fff;font-weight:600}
+.bkways{margin:0;padding:0;list-style:none;display:grid;gap:var(--sp-m)}
+.bkways li{display:grid;grid-template-columns:auto 1fr;gap:1rem;align-items:start;min-width:0;padding:var(--sp-m) var(--sp-l);background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.bkways li>div{min-width:0}
+.bkways h3{margin:0 0 .3rem;font:700 var(--f-0)/1.25 var(--display);color:var(--ink)}
+.bkways p{margin:0;font-size:var(--f--1);line-height:1.55;color:var(--body)}
+.bknot{margin-top:var(--sp-xl);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--sp-l);align-items:end;padding:var(--sp-l);border:1px solid var(--line);border-radius:var(--r);background:var(--a-tint)}
+.bknot h3{margin:0 0 .7rem;font:700 var(--f-1)/1.2 var(--display);color:var(--ink)}
+.bknot ul{margin:0;padding:0;list-style:none;display:grid;gap:.7rem}
+.bknot li{font-size:var(--f--1);line-height:1.55;color:var(--body);padding-left:1rem;border-left:2px solid var(--a)}
+.bknot li b{color:var(--ink)}
+@media (max-width:56rem){.bkgrid,.bknot{grid-template-columns:1fr}.bknot .btn{justify-self:start}}
+/* .btn is nowrap everywhere, and "Book a confidential conversation" is 333px — 11px past this box at
+   390 and 39px off the screen at 360. Only this one is allowed to wrap; every other button keeps its line. */
+@media (max-width:30rem){.bknot .btn{max-width:100%;white-space:normal;text-align:left}}
+/* ═══ COMPLIANT BY DESIGN — market conduct, and the record (14 November 2026) ═══
+   Ricky: "bring in now market conduct and keeping records etc etc we are a compliant branch so many
+   innovations", and "an impressive motion and graphics and charts and cards that really pop".
+   The clause wording is the FY27 wall's own (w23): the Central Bank's Market Conduct Guideline (July 2023),
+   issued under the Insurance Act, 2018, clause by clause. The fold is the wall's Log Book scene (w26): six
+   spellings of one department in the old paper book, and 90 → 25 departments and 237 → 70 documents off its
+   3,634 lines. Only what the records hold is claimed: the delivery line says what is RECORDED, never that the
+   client is e-mailed, because the Delivery Book's mail follows its own test mode. Dark, between #book (light)
+   and #path (bg2). Every finished state is the plain default; motion runs only on .in under no-preference. */
+.cd{background:radial-gradient(90% 70% at 88% 0%,var(--d3),transparent 60%),radial-gradient(70% 60% at 0% 100%,rgba(0,114,141,.3),transparent 62%),linear-gradient(175deg,var(--d1),var(--d0) 70%);color:var(--dT2);overflow:clip}
+.cd .eyebrow{color:var(--aT)}.cd h2{color:var(--dT)}.cd .lede p{color:var(--dT2)}
+.cdrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--sp-xl);align-items:start}
+.cdrow+.cdrow,.cdrow+.cdi{margin-top:var(--sp-xl)}
+.cdp{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.14);border-radius:var(--r);padding:var(--sp-l);min-width:0;display:grid;gap:var(--sp-m);align-content:start;box-shadow:0 22px 50px rgba(4,14,26,.4)}
+.cdh{display:flex;justify-content:space-between;align-items:baseline;gap:.4rem .75rem;flex-wrap:wrap;padding-bottom:.7rem;border-bottom:1px solid rgba(255,255,255,.14)}
+.cdh b{font:700 var(--f-1)/1.2 var(--display);color:#fff}
+.cdh span{font-size:var(--f--2);letter-spacing:.12em;text-transform:uppercase;color:var(--aT);font-weight:700}
+.cdfoot{margin:0;font-size:var(--f--2);line-height:1.5;color:var(--dT3)}
+/* the trail: one case, as the record sees it */
+.cdtl{margin:0;padding:0;list-style:none;display:grid;gap:.5rem;position:relative}
+.cdtl::before{content:"";position:absolute;left:calc(1rem - 1px);top:1rem;bottom:1rem;width:2px;border-radius:2px;background:linear-gradient(var(--aL),rgba(0,207,234,.18));transform-origin:50% 0}
+.cdtl li{position:relative;display:grid;grid-template-columns:2rem minmax(0,1fr) auto;gap:.75rem;align-items:center}
+.cdtl li::before{content:"";width:.95rem;height:.95rem;border-radius:50%;background:var(--d0);border:2px solid var(--aL);justify-self:center;box-shadow:0 0 0 5px rgba(0,207,234,.12);position:relative;z-index:1}
+.cdtl li>div{min-width:0;display:grid;gap:.12rem;padding:.6rem .8rem;border-radius:.75rem;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1)}
+.cdtl time{font:700 var(--f--2)/1.2 var(--text);letter-spacing:.1em;text-transform:uppercase;color:var(--aT);font-variant-numeric:tabular-nums}
+.cdtl b{font:700 var(--f-0)/1.25 var(--display);color:#fff}
+.cdtl span{font-size:var(--f--1);line-height:1.45;color:var(--dT2)}
+.cdtl em{font:800 var(--f--2)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;font-style:normal;color:var(--aT);border:2px solid currentColor;border-radius:.35rem;padding:.32rem .45rem;rotate:-6deg;white-space:nowrap}
+/* clause by clause */
+.cdk{margin:0;padding:0;list-style:none;display:grid;gap:.5rem}
+.cdk li{position:relative;overflow:hidden;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.8rem;align-items:center;padding:.65rem .8rem;border-radius:.8rem;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1)}
+.cdk li>div{min-width:0}
+.cdk em{font:800 var(--f--1)/1 var(--text);font-style:normal;font-variant-numeric:tabular-nums;color:var(--d0);background:var(--aL);padding:.38rem .5rem;border-radius:.45rem;min-width:3.3rem;text-align:center}
+.cdk b{display:block;font:700 var(--f-0)/1.25 var(--display);color:#fff}
+.cdk span{display:block;margin-top:.12rem;font-size:var(--f--1);line-height:1.45;color:var(--dT2)}
+.cdk i{display:grid;place-items:center;width:1.95rem;height:1.95rem;border-radius:50%;background:rgba(0,207,234,.16);color:var(--aT)}
+.cdk i .ic{width:1rem;height:1rem}
+.cdk li::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.1) 50%,transparent 65%);translate:-110% 0;pointer-events:none}
+/* the fold: one department, six spellings */
+.cdfv{display:flex;flex-wrap:wrap;gap:.45rem;justify-content:center;align-items:center;padding:var(--sp-s) 0}
+.cdfv .v{font:600 var(--f--2)/1 var(--text);letter-spacing:.06em;color:var(--dT3);padding:.42rem .6rem;border-radius:.45rem;background:rgba(255,255,255,.06);border:1px dashed rgba(255,255,255,.22);text-decoration:line-through;text-decoration-color:rgba(255,120,120,.75);text-decoration-thickness:2px}
+.cdfv .one{flex-basis:100%;display:flex;justify-content:center;margin-top:.5rem}
+.cdfv .one b{font:800 var(--f-1)/1.1 var(--text);letter-spacing:.04em;color:var(--d0);background:linear-gradient(90deg,var(--aL),#7fe3f2);padding:.75rem 1.1rem;border-radius:.7rem;box-shadow:0 10px 30px rgba(0,207,234,.28);text-align:center}
+/* the counted record: two pairs of bars, each pair to one scale */
+.cdbars{display:grid;gap:var(--sp-m)}
+.cdpair{display:grid;gap:.4rem}
+.cdpair small{font:700 var(--f--2)/1.2 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--dT3)}
+.cdbl{display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;font-size:var(--f--1);color:var(--dT2)}
+.cdbl b{font:800 var(--f-1)/1 var(--display);color:#fff;font-variant-numeric:tabular-nums}
+.cdbl.now b{color:var(--aT)}
+.cdtrk{height:.8rem;border-radius:.4rem;background:rgba(255,255,255,.08);overflow:hidden}
+.cdtrk i{display:block;height:100%;width:var(--w);border-radius:.4rem;background:rgba(255,255,255,.3);transform-origin:0 50%}
+.cdtrk i.now{background:linear-gradient(90deg,#0e93b0,var(--aL))}
+.cdcount{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;padding-top:.7rem;border-top:1px solid rgba(255,255,255,.14)}
+.cdcount b{font:800 var(--f-3)/1 var(--display);color:#fff;font-variant-numeric:tabular-nums}
+.cdcount span{font-size:var(--f--1);line-height:1.45;color:var(--dT2);flex:1 1 12rem;min-width:0}
+/* built here */
+.cdi{display:grid;gap:var(--sp-s)}
+.cdi p{margin:0;font:700 var(--f--2)/1.2 var(--text);letter-spacing:.13em;text-transform:uppercase;color:var(--aT)}
+.cdi ul{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:.5rem}
+.cdi li{display:inline-flex;align-items:center;gap:.45rem;padding:.5rem .8rem;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);font-size:var(--f--1);color:#fff}
+.cdi li .ic{width:1rem;height:1rem;color:var(--aT)}
+@media (max-width:56rem){.cdrow{grid-template-columns:1fr;gap:var(--sp-l)}}
+@media (max-width:30rem){.cdtl li{grid-template-columns:1.6rem minmax(0,1fr)}.cdtl em{grid-column:2;justify-self:start;margin-top:-.15rem}.cdtl::before{left:calc(.8rem - 1px)}.cdk li{grid-template-columns:auto minmax(0,1fr)}.cdk i{display:none}}
+@media (prefers-reduced-motion:no-preference){
+  .cdt.in .cdtl::before{animation:cddraw 1.7s var(--ease-out) both}
+  .cdt.in .cdtl li>div{animation:rise .6s var(--ease-out) both;animation-delay:calc(var(--i)*.2s + .1s)}
+  .cdt.in .cdtl li::before{animation:cdnode .55s var(--ease-out) both;animation-delay:calc(var(--i)*.2s + .15s)}
+  .cdt.in .cdtl em{animation:cdstamp .45s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i)*.2s + .6s)}
+  .cdg.in .cdk li{animation:rise .55s var(--ease-out) both;animation-delay:calc(var(--i)*.12s + .15s)}
+  .cdg.in .cdk li::after{animation:cdsheen 1.1s ease-in-out both;animation-delay:calc(var(--i)*.12s + .55s)}
+  .cdg.in .cdk i{animation:cdpop .45s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i)*.12s + .5s)}
+  .cdf.in .cdfv .v{animation:cdfold 1s var(--ease-out) both;animation-delay:calc(var(--i)*.13s + .2s)}
+  .cdf.in .cdfv .one b{animation:cdstamp .55s cubic-bezier(.3,1.6,.5,1) both;animation-delay:1.35s}
+  .cdc.in .cdtrk i{animation:cdgrow 1.05s var(--ease-out) both;animation-delay:calc(var(--i,0)*.16s + .25s)}
+  .cdi.in li{animation:up .5s var(--ease-out) both;animation-delay:calc(var(--i)*.06s + .1s)}
+  .bkgrid.in .bkproof{animation:rise .7s var(--ease-out) both}
+  .bkgrid.in .bkways li{animation:rise .6s var(--ease-out) both;animation-delay:calc(var(--i)*.13s + .15s)}
+  .bkgrid.in .bkways .chip{animation:cdpop .5s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i)*.13s + .4s)}
+  .bkways li,.cdk li,.cdtl li>div{transition:translate var(--t-mid) var(--ease)}
+  .bkways li:hover,.cdk li:hover,.cdtl li>div:hover{translate:0 -3px}
+}
+@keyframes cddraw{from{transform:scaleY(0)}to{transform:none}}
+@keyframes cdnode{from{scale:0}60%{scale:1.4}to{scale:1}}
+@keyframes cdstamp{from{opacity:0;scale:1.9;rotate:-16deg}to{opacity:1;scale:1}}
+@keyframes cdpop{from{scale:0;rotate:-24deg}to{scale:1;rotate:0deg}}
+@keyframes cdsheen{from{translate:-110% 0}to{translate:110% 0}}
+@keyframes cdfold{from{opacity:0;translate:var(--x) var(--y);rotate:var(--r);scale:1.12}to{opacity:1;translate:0 0;rotate:0deg;scale:1}}
+@keyframes cdgrow{from{transform:scaleX(0)}to{transform:none}}
 /* ═══ THE HERO'S SUPPORT STRIP — fills the column under the film (9 November 2026) ═══ */
 .hsupp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem;margin-top:var(--sp-s)}
 .hsupp div{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:var(--r-s);padding:.75rem .85rem;display:grid;gap:.15rem;min-width:0}
@@ -1275,7 +1423,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       </div>
       <div class="hero-film">
       <div class="vwrap rv">
-        <video playsinline preload="metadata" poster="/agentmgt/trailer.jpg" data-scenes="8.9,13.3,21.0,14.5,30.3,15.3,10.2,4.3" data-chapters="A question|Not alone|Never from zero|Your rhythm|No ceiling|One conversation|Book it|The environment decides">
+        <video playsinline preload="metadata" poster="/agentmgt/trailer.jpg" data-scenes="9.2,20.7,22.1,14.3,30.7,26.8,9.1,4.4" data-chapters="Good at what you do? Stuck where you are?|What your job can&#x27;t|Never stuck for an answer|A coach, not a clock|7 places|The door is open|rickyrampersadbranch.com /careers|The environment decides. We select the drive">
           <source src="/agentmgt/trailer.mp4" type="video/mp4">
         </video>
         <div class="vcover" style="background-image:url(/agentmgt/trailer.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#0d3f5e" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch · 2:19</div></div>
@@ -1289,7 +1437,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       </div>
     </div>
       <div class="hero-rest">
-      <p class="sub"><strong>Already licensed?</strong> Leads on your own board, households matched to you, and a conversation nobody will know you had. <strong>Never sold insurance?</strong> You are trained and licensed before you are contracted, then the full build and a day the system sets. <strong>Seven places in FY27&rsquo;s first class.</strong></p>
+      <p class="sub"><strong>Already licensed?</strong> A branch that keeps your book with you, households matched to you, and a conversation nobody will know you had. <strong>Never sold insurance?</strong> You are trained and licensed before you are contracted, then the full build and a day the system sets. <strong>Seven places in FY27&rsquo;s first class.</strong></p>
       <div class="hero-cta">
         <a class="btn btn-1" href="#talk" data-talk>Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
         <a class="btn btn-2" href="#quiz">Take the 60-second test</a>
@@ -1300,7 +1448,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
         <span><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>20 minutes, this week</span>
         <span><svg class="ic" aria-hidden="true"><use href="#i-cap"/></svg>Newcomers fully trained</span>
       </p>
-      <p class="small alt">Would rather apply first? <a href="https://guardianlifeofthecaribbean.talentnest.com/en/posting/215291/location/287275" data-apply>Start the official application</a>, two minutes, reviewed within 48 hours.</p>
+      <p class="small alt">Would rather apply first? <a href="https://guardianlifeofthecaribbean.talentnest.com/en/posting/215291/location/287275" data-apply>Start the official application</a> on Guardian&rsquo;s careers site &mdash; it asks you to make an account first. Read by a person here within 48 hours.</p>
       </div>
 
   </div>
@@ -1348,11 +1496,11 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
     <div class="lede rv">
       <span class="eyebrow">Not a mock-up</span>
       <h2 data-words>These are the screens. Built here, for this branch.</h2>
-      <p>Every tool in the film runs today, in Chaguanas; the names and figures on these screens are made up. Tap one, or let them turn.</p>
+      <p><strong>None of this happens in front of your client.</strong> You sit, you listen, and you take it down on paper — a husband and a wife are never the same client. You type it up afterwards, in your own time, onto Guardian&rsquo;s own approved form. Every tool here runs today, in Chaguanas; the names and figures on these screens are made up. Tap one, or let them turn.</p>
     </div>
     <div class="scrg rv">
-      <div class="scrl" role="tablist" aria-label="The screens"><button class="sct" type="button" role="tab" id="sct-ff" aria-controls="scp-ff" aria-selected="true" data-k="ff"><b>factfind360 · the client's draft</b><small>The arithmetic while you talk. The client gets a draft to approve, on their phone.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-sign" aria-controls="scp-sign" aria-selected="false" data-k="sign"><b>factfind360 · your manager's sign-off</b><small>Every plan is read by a manager before it goes anywhere.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-rate" aria-controls="scp-rate" aria-selected="false" data-k="rate"><b>The client approves, and rates you</b><small>Signed on their phone, with five stars for you. Not one case has lapsed since launch.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-ask" aria-controls="scp-ask" aria-selected="false" data-k="ask"><b>Fact Find Insights · the reminders</b><small>Started and never sent, or never closed: the system asks every morning until it is.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-log" aria-controls="scp-log" aria-selected="false" data-k="log"><b>The Log Book, in your hand</b><small>Your papers logged in a minute, routed to the right department, on the 12 noon bag.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-tx" aria-controls="scp-tx" aria-selected="false" data-k="tx"><b>The transmittal it builds</b><small>Built for the staff, printed, signed for by the department, confirmed three working days on.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-app" aria-controls="scp-app" aria-selected="false" data-k="app"><b>The branch app</b><small>Every tool behind one sign-in, and your day already set when you open it.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-wall" aria-controls="scp-wall" aria-selected="false" data-k="wall"><b>The production wall · 24/7</b><small>Your week, your month, your year, picked up for production: on the screen in the branch and on your phone.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-db" aria-controls="scp-db" aria-selected="false" data-k="db"><b>The Delivery Book</b><small>Delivered and signed for; the client e-mailed the same day, with five stars to rate the delivery.</small><i class="scbar"></i></button></div>
-      <div class="scrs"><div class="scp" role="tabpanel" id="scp-ff" aria-labelledby="sct-ff" data-k="ff"><div class="dev ph"><img src="/wall/img/ff/01-client-draft.jpg" alt="factfind360 · the client's draft: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>factfind360 · the client's draft</b><span>The arithmetic while you talk. The client gets a draft to approve, on their phone.</span></p></div><div class="scp" role="tabpanel" id="scp-sign" aria-labelledby="sct-sign" data-k="sign" hidden><div class="dev ph"><img src="/wall/img/ff/02-manager-signoff.jpg" alt="factfind360 · your manager's sign-off: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>factfind360 · your manager's sign-off</b><span>Every plan is read by a manager before it goes anywhere.</span></p></div><div class="scp" role="tabpanel" id="scp-rate" aria-labelledby="sct-rate" data-k="rate" hidden><div class="dev ph"><img src="/wall/img/ff/05-client-sign-and-rate.jpg" alt="The client approves, and rates you: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The client approves, and rates you</b><span>Signed on their phone, with five stars for you. Not one case has lapsed since launch.</span></p></div><div class="scp" role="tabpanel" id="scp-ask" aria-labelledby="sct-ask" data-k="ask" hidden><div class="dev ph"><img src="/wall/img/ff/06-did-this-close.jpg" alt="Fact Find Insights · the reminders: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>Fact Find Insights · the reminders</b><span>Started and never sent, or never closed: the system asks every morning until it is.</span></p></div><div class="scp" role="tabpanel" id="scp-log" aria-labelledby="sct-log" data-k="log" hidden><div class="dev ph"><img src="/wall/img/lb/logged-ph.jpg" alt="The Log Book, in your hand: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The Log Book, in your hand</b><span>Your papers logged in a minute, routed to the right department, on the 12 noon bag.</span></p></div><div class="scp" role="tabpanel" id="scp-tx" aria-labelledby="sct-tx" data-k="tx" hidden><div class="dev lap"><img src="/wall/img/lb/transmittal-lap.jpg" alt="The transmittal it builds: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The transmittal it builds</b><span>Built for the staff, printed, signed for by the department, confirmed three working days on.</span></p></div><div class="scp" role="tabpanel" id="scp-app" aria-labelledby="sct-app" data-k="app" hidden><div class="dev ph"><img src="/wall/img/app/home-ph.jpg" alt="The branch app: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The branch app</b><span>Every tool behind one sign-in, and your day already set when you open it.</span></p></div><div class="scp" role="tabpanel" id="scp-wall" aria-labelledby="sct-wall" data-k="wall" hidden><div class="dev lap"><img src="/wall/img/wi/production-month.jpg" alt="The production wall · 24/7: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The production wall · 24/7</b><span>Your week, your month, your year, picked up for production: on the screen in the branch and on your phone.</span></p></div><div class="scp" role="tabpanel" id="scp-db" aria-labelledby="sct-db" data-k="db" hidden><div class="dev ph"><img src="/wall/img/db/recorded-ph.jpg" alt="The Delivery Book: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The Delivery Book</b><span>Delivered and signed for; the client e-mailed the same day, with five stars to rate the delivery.</span></p></div><span class="scrn">sample data on every screen</span></div>
+      <div class="scrl" role="tablist" aria-label="The screens"><button class="sct" type="button" role="tab" id="sct-ff" aria-controls="scp-ff" aria-selected="true" data-k="ff"><b>factfind360 · the client's draft</b><small>The arithmetic while you talk. The client gets a draft to approve, on their phone.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-rate" aria-controls="scp-rate" aria-selected="false" data-k="rate"><b>The client approves, and rates you</b><small>Signed on their phone, with five stars for you. Not one case has lapsed since launch.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-sign" aria-controls="scp-sign" aria-selected="false" data-k="sign"><b>factfind360 · your manager's sign-off</b><small>Held until your client confirms the draft. Then a manager reads and signs it.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-ask" aria-controls="scp-ask" aria-selected="false" data-k="ask"><b>Fact Find Insights · the reminders</b><small>Started and never sent, or never closed: the system asks every morning until it is.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-log" aria-controls="scp-log" aria-selected="false" data-k="log"><b>The Log Book, in your hand</b><small>Your papers logged in a minute, routed to the right department, on the 12 noon bag.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-tx" aria-controls="scp-tx" aria-selected="false" data-k="tx"><b>The transmittal it builds</b><small>Built for the staff, printed, signed for by the department, confirmed three working days on.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-app" aria-controls="scp-app" aria-selected="false" data-k="app"><b>The branch app</b><small>Every tool behind one sign-in, and your day already set when you open it.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-wall" aria-controls="scp-wall" aria-selected="false" data-k="wall"><b>The production wall · 24/7</b><small>Your week, your month, your year, picked up for production: on the screen in the branch and on your phone.</small><i class="scbar"></i></button><button class="sct" type="button" role="tab" id="sct-db" aria-controls="scp-db" aria-selected="false" data-k="db"><b>The Delivery Book</b><small>Delivered and signed for; the client e-mailed the same day, with five stars to rate the delivery.</small><i class="scbar"></i></button></div>
+      <div class="scrs"><div class="scp" role="tabpanel" id="scp-ff" aria-labelledby="sct-ff" data-k="ff"><div class="dev ph"><img src="/agentmgt/img/ff-draft.jpg" alt="factfind360 · the client's draft: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>factfind360 · the client's draft</b><span>The arithmetic while you talk. The client gets a draft to approve, on their phone.</span></p></div><div class="scp" role="tabpanel" id="scp-rate" aria-labelledby="sct-rate" data-k="rate" hidden><div class="dev ph"><img src="/wall/img/ff/05-client-sign-and-rate.jpg" alt="The client approves, and rates you: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The client approves, and rates you</b><span>Signed on their phone, with five stars for you. Not one case has lapsed since launch.</span></p></div><div class="scp" role="tabpanel" id="scp-sign" aria-labelledby="sct-sign" data-k="sign" hidden><div class="dev ph"><img src="/wall/img/ff/02-manager-signoff.jpg" alt="factfind360 · your manager's sign-off: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>factfind360 · your manager's sign-off</b><span>Held until your client confirms the draft. Then a manager reads and signs it.</span></p></div><div class="scp" role="tabpanel" id="scp-ask" aria-labelledby="sct-ask" data-k="ask" hidden><div class="dev ph"><img src="/wall/img/ff/06-did-this-close.jpg" alt="Fact Find Insights · the reminders: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>Fact Find Insights · the reminders</b><span>Started and never sent, or never closed: the system asks every morning until it is.</span></p></div><div class="scp" role="tabpanel" id="scp-log" aria-labelledby="sct-log" data-k="log" hidden><div class="dev ph"><img src="/wall/img/lb/logged-ph.jpg" alt="The Log Book, in your hand: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The Log Book, in your hand</b><span>Your papers logged in a minute, routed to the right department, on the 12 noon bag.</span></p></div><div class="scp" role="tabpanel" id="scp-tx" aria-labelledby="sct-tx" data-k="tx" hidden><div class="dev lap"><img src="/wall/img/lb/transmittal-lap.jpg" alt="The transmittal it builds: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The transmittal it builds</b><span>Built for the staff, printed, signed for by the department, confirmed three working days on.</span></p></div><div class="scp" role="tabpanel" id="scp-app" aria-labelledby="sct-app" data-k="app" hidden><div class="dev ph"><img src="/wall/img/app/home-ph.jpg" alt="The branch app: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The branch app</b><span>Every tool behind one sign-in, and your day already set when you open it.</span></p></div><div class="scp" role="tabpanel" id="scp-wall" aria-labelledby="sct-wall" data-k="wall" hidden><div class="dev lap"><img src="/wall/img/wi/production-month.jpg" alt="The production wall · 24/7: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The production wall · 24/7</b><span>Your week, your month, your year, picked up for production: on the screen in the branch and on your phone.</span></p></div><div class="scp" role="tabpanel" id="scp-db" aria-labelledby="sct-db" data-k="db" hidden><div class="dev ph"><img src="/wall/img/db/recorded-ph.jpg" alt="The Delivery Book: a screen with sample data" loading="lazy" decoding="async"></div><p class="scrc"><b>The Delivery Book</b><span>Delivered and signed for; the client e-mailed the same day, with five stars to rate the delivery.</span></p></div><span class="scrn">sample data on every screen</span></div>
     </div>
   </div>
 </section>
@@ -1375,7 +1523,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
     </div>
     </div>
     <div class="vwrap rv">
-      <video playsinline preload="none" poster="/agentmgt/recruit.jpg" data-scenes="8.9,21.3,6.0,10.9,22.8,17.6,17.8,15.1,20.2,12.1,18.2,12.9,10.2,12.0,13.6,18.3,37.3,15.0,16.3,12.5,29.1,14.4,15.8,21.7,19.5,31.6,17.3,12.6,12.3,6.2,15.3,10.2,4.3" data-chapters="A question|Seven places|Digital, human|The part nobody tells you|From the day you apply|Before you start|The science|The selection|Selected|Afraid you'd start from zero?|Two more things|Leads|The Lead Desk|FY27 Flight Plan|Every morning|factfind360|By the numbers|Query Pal|The wall, 24/7|Branch Intelligence|The screens|The human part|Every week|Wednesday · 9:00|Recognition|After the sale|Every month|The career path|The income|Already contracted somewhere else?|One conversation|Start here|The environment decides">
+      <video playsinline preload="none" poster="/agentmgt/recruit.jpg" data-scenes="8.9,21.3,6,10.9,22.8,17.6,17.8,15.1,20.2,12.1,18.2,12.9,10.2,12,13.6,18.3,37.3,15,16.3,12.5,29.1,14.4,15.8,21.7,19.5,31.6,17.3,12.6,12.3,6.2,15.3,10.2,4.3" data-chapters="Good at what you do? Stuck where you are?|The Ricky Rampersad Branch|We do things differently|What happens to you after you apply|Eight steps. A person at every one|Your market, mapped|POP7|We don’t fill seats. We select|Built properly|You won&#x27;t|TT$200|Leads land on your board|Your opening, written from their words|Your year has a flight plan|Your day, already laid out|The arithmetic, while you talk|Our own fact find. By the numbers|Ask once. Tracked till answered|The production wall. Twenty-four seven|One tap. The whole file, read|These are the screens|The digital carries|A coaching sheet, not a report card|Your call list, written for you|Your name, said out loud|The system keeps serving|Your income, reviewed|Where you go is your call|Uncapped|Already contracted somewhere else?|The door is open|agentmgt.com|The environment decides. We select the drive">
         <source src="/agentmgt/recruit.mp4" type="video/mp4">
       </video>
       <div class="vcover" style="background-image:url(/agentmgt/recruit.jpg)"><div class="pl"><svg viewBox="0 0 24 24" fill="#0d3f5e" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch the full film · 8:49</div></div>
@@ -1394,13 +1542,13 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       <article class="ledger rv">
         <header><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span><div><small>Already contracted elsewhere</small><h3>Move without starting over.</h3></div></header>
         <div class="lhead" aria-hidden="true"><span>What you’ve heard</span><span>What is true here</span></div>
-        <ul><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“If I move, I start from zero.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Clients whose agent has moved on are matched to you, household by household, with the file and the first thing to say. TT$200 for each one whose questionnaire comes in after your naming.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I’d be buying my own leads again.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Your own link and QR code. A prospect taps what is on their mind and the lead lands on your board, in their words. A lead forwarded to you stays yours.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“The tools are from another decade.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>A fact find that does the arithmetic while you talk. A live production wall on the screen and on your phone. Branch Intelligence that reads the file before you do.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“Nobody would notice if I doubled my year.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Wins are announced every Wednesday, at Blastoff in January and at Mid-Year in July. Your name, out loud.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“Word gets back.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>The conversation stays confidential. At your Discovery you question our qualifiers with the Branch Manager out of the room.</span></li></ul>
+        <ul><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I built my book, and I keep it on my own.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Here the branch keeps it with you: a premium caught at 45 days, your clients’ work done and shown to you each morning, the paperwork off your evenings. <a href="#book">How the book is kept</a></span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“If I move, I start from zero.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Clients whose agent has moved on are matched to you, household by household, with the file and the first thing to say. TT$200 for each one whose questionnaire comes in after your naming.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I’d be buying my own leads again.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Your own link and QR code. A prospect taps what is on their mind and the lead lands on your board, in their words. A lead forwarded to you stays yours.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“The tools are from another decade.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>A fact find that does the arithmetic while you talk. A live production wall on the screen and on your phone. Branch Intelligence that reads the file before you do.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“Nobody would notice if I doubled my year.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Wins are announced every Wednesday, at Blastoff in January and at Mid-Year in July. Your name, out loud.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“Word gets back.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>The conversation stays confidential. At your Discovery you question our qualifiers with the Branch Manager out of the room.</span></li></ul>
         <a class="btn btn-1" href="#talk" data-talk>Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
       </article>
       <article class="ledger rv">
         <header><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-cap"/></svg></span><div><small>New to insurance</small><h3>The full build, not a phone book.</h3></div></header>
         <div class="lhead" aria-hidden="true"><span>What you fear</span><span>What is true here</span></div>
-        <ul><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I can’t go months with nothing coming in.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>It is commission-based and we will not dress that up. What shortens the start is here from day one: leads, matched households, a day the system sets, and a manager who sees your week before Friday.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I’d have to sell to my friends and family.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>You don’t live off your phone contacts. The leads come to you, from people who asked to be called.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“They promise training, then you’re on your own.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Training, induction, boot camp and one-on-one coaching. The Branch Manager interviews every advisor personally and coaches you after.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I wouldn’t know what to do each morning.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Every morning the system sets your day: your projection, your next calls, your pending cases with the history on them. Check in, and your workday page keeps score.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I’m leaving a salary for a ceiling I can’t see.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>No salary band and no ceiling. The ladder is written down, rung by rung, and you choose which one you climb.</span></li></ul>
+        <ul><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I can’t go months with nothing coming in.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>It is commission-based and we will not dress that up. What shortens the start is here from day one: your market mapped before you are contracted, prospects who asked to be called, matched households, a day the system sets, and a manager who sees your week before Friday.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I’d have to sell to my friends and family.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>You start where everyone starts: the people who already know you. We map that market and score it out of a hundred before you are contracted, so it is a plan and not a phone list — and when it runs thin, which it does for everyone, keeping your week full is the branch’s job.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“They promise training, then you’re on your own.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Training, induction, boot camp and one-on-one coaching. The Branch Manager interviews every advisor personally and coaches you after.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I wouldn’t know what to do each morning.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>Every morning the system sets your day: your projection, your next calls, your pending cases with the history on them. Check in, and your workday page keeps score.</span></li><li><span class="lf"><i class="lx" aria-hidden="true"><svg class="ic"><use href="#i-x"/></svg></i>“I’m leaving a salary for a ceiling I can’t see.”</span><span class="lt"><i class="lk" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i>No salary band and no ceiling. The ladder is written down, rung by rung, and you choose which one you climb.</span></li></ul>
         <a class="btn btn-1" href="#talk" data-talk>Book a 20-minute conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
       </article>
     </div>
@@ -1472,10 +1620,10 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
         <h3>Of every 100 advisors hired, how many are still there</h3>
         <div class="mgb" style="--i:0"><span class="mgl">The industry, at one year <b>55&ndash;60</b></span><span class="mgt"><i class="mgf ind" style="--w:58%"></i></span></div>
         <div class="mgb" style="--i:1"><span class="mgl">This branch, at one year <b>67</b></span><span class="mgt"><i class="mgf us" style="--w:67%"></i></span></div>
-        <div class="mgb" style="--i:2"><span class="mgl">The industry, at four years <b>15</b></span><span class="mgt"><i class="mgf ind" style="--w:15%"></i></span></div>
+        <div class="mgb" style="--i:2"><span class="mgl">The industry, at four years <b>14</b></span><span class="mgt"><i class="mgf ind" style="--w:14%"></i></span></div>
         <div class="mgb" style="--i:3"><span class="mgl">This branch, at four years <b>31</b></span><span class="mgt"><i class="mgf us" style="--w:31%"></i></span></div>
         <p class="mgk"><span><i class="sw-ind"></i>The market</span><span><i class="sw-us"></i>This branch</span></p>
-        <p class="mgsrc">Industry figures: LIMRA. Branch figures: our own roll, measured to 31 August. Four years against the market&rsquo;s four, and one year against its one &mdash; not a horizon chosen to flatter.</p>
+        <p class="mgsrc">Industry: LIMRA and Finseca, <em>The Path to Improving Retention</em>, 2022, quoted in LIMRA&rsquo;s 2025 Annual Conference. Branch: our own roll, measured to 31 August. Four years against the market&rsquo;s four, and one year against its one &mdash; not a horizon chosen to flatter.</p>
       </div>
 
       <div class="mgwhat">
@@ -1502,7 +1650,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
     <div class="lede rv">
       <span class="eyebrow">The man at the top of it</span>
       <h2 data-words>His day starts at five. On the same board as yours.</h2>
-      <p>You can tell what a branch really thinks of its advisors by what its Branch Manager does before anybody else is awake. Ricky Rampersad is on the same attendance register as every person in this branch, plans his day on the same system, and accounts for it at three o&rsquo;clock like everyone else. Thirty-two years in, that is still the arrangement.</p>
+      <p>You can tell what a branch really thinks of its advisors by what its Branch Manager does before anybody else is awake. Ricky Rampersad is on the same attendance register as every person in this branch, plans his day on the same system, and accounts for it at three o&rsquo;clock like everyone else. Thirty-two years at Guardian, thirty-five in the business, and that is still the arrangement. Most of the tools on this page exist because he had them built here, rather than waiting for someone else to.</p>
     </div>
 
     <div class="rkg">
@@ -1614,8 +1762,8 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       <p class="art-foot"><span><i class="k1"></i>The five gates of the selection</span><span><i class="k2"></i>The career path, rung by rung</span></p>
     </div>
     <div class="selg rv">
-      <div class="sgs" role="tablist" aria-label="The five gates"><button class="sg" type="button" role="tab" id="sg-apply" aria-controls="sp-apply" aria-selected="false" data-k="apply"><span class="sgn">1</span><span class="sgt"><b>Apply & screen</b><small>Two minutes · 48 hours</small></span><i class="sgbar" aria-hidden="true"></i></button><button class="sg" type="button" role="tab" id="sg-bm" aria-controls="sp-bm" aria-selected="false" data-k="bm"><span class="sgn">2</span><span class="sgt"><b>The Branch Manager, then orientation</b><small>A real conversation · the career, the branch, the numbers</small></span><i class="sgbar" aria-hidden="true"></i></button><button class="sg" type="button" role="tab" id="sg-disc" aria-controls="sp-disc" aria-selected="false" data-k="disc"><span class="sgn">3</span><span class="sgt"><b>Discovery</b><small>Your own digital market survey · job sampling with the qualifiers</small></span><i class="sgbar" aria-hidden="true"></i></button><button class="sg" type="button" role="tab" id="sg-pop" aria-controls="sp-pop" aria-selected="false" data-k="pop"><span class="sgn">4</span><span class="sgt"><b>POP7: the scientific profile</b><small>LIMRA’s Career Profile+ · evidence, not vibes</small></span><i class="sgbar" aria-hidden="true"></i></button><button class="sg" type="button" role="tab" id="sg-sel" aria-controls="sp-sel" aria-selected="false" data-k="sel"><span class="sgn">5</span><span class="sgt"><b>Selection, then the build</b><small>Executive review · training, induction, boot camp, the licence</small></span><i class="sgbar" aria-hidden="true"></i></button></div>
-      <div class="sps"><div class="sp" role="tabpanel" id="sp-apply" aria-labelledby="sg-apply" data-k="apply" hidden><div class="spg"><div class="gx gx-apply" aria-hidden="true"><div class="ph"><div class="phb"><b>Application</b><i class="fld f1"></i><i class="fld f2"></i><i class="fld f3"></i><i class="fld f4"></i><span class="sendb">Send</span></div></div><div class="stamp st1">Received</div><div class="stamp st2">Reviewed · 48 h</div><div class="ring r1"></div></div></div><div class="spt"><span class="eyebrow">Gate 1</span><h3>Apply & screen</h3><p>Two minutes online, a few smart screening questions, and your application is read by a person within forty-eight hours. Then a call. Confidential for anyone already contracted elsewhere.</p><div class="facts"><div><b>2 min</b><span>to apply</span></div><div><b>48 h</b><span>to a review</span></div><div><b>1</b><span>call back</span></div></div></div></div><div class="sp" role="tabpanel" id="sp-bm" aria-labelledby="sg-bm" data-k="bm" hidden><div class="spg"><div class="gx gx-bm" aria-hidden="true"><div class="av a1"><b>RR</b></div><div class="av a2"><b>You</b></div><div class="bub b1"></div><div class="bub b2"></div><div class="bub b3"></div><ul class="ckl"><li>The career</li><li>The branch</li><li>The numbers</li></ul></div></div><div class="spt"><span class="eyebrow">Gate 2</span><h3>The Branch Manager, then orientation</h3><p>A real conversation with Ricky Rampersad himself. Every advisor here started with it. Then orientation: the career, the branch and the numbers, laid out before you commit to anything. No gloss.</p><div class="facts"><div><b>32</b><span>years in this market</span></div><div><b>3</b><span>things laid out plainly</span></div><div><b>0</b><span>commitments asked of you</span></div></div></div></div><div class="sp" role="tabpanel" id="sp-disc" aria-labelledby="sg-disc" data-k="disc" hidden><div class="spg"><div class="gx gx-disc" aria-hidden="true"><div class="sv"><b>Market survey</b><div class="svr"><span>How well known</span><i class="mtr" style="--v:.82"></i></div><div class="svr"><span>Could approach on business</span><i class="mtr" style="--v:.68"></i></div><div class="svr"><span>Would refer you</span><i class="mtr" style="--v:.74"></i></div><div class="svr"><span>Saving for</span><em class="typed">a house</em></div></div><div class="score"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9"/><circle class="arc" cx="18" cy="18" r="15.9"/></svg><b><span class="cnt" data-to="86">0</span></b><small>of 100</small></div></div></div><div class="spt"><span class="eyebrow">Gate 3</span><h3>Discovery</h3><p>You map your own market, prospect by prospect, on the branch’s digital survey: how well you know them, how often you see them, whether you could approach them on business, whether they would refer you, and what they are saving for. Your unit manager scores it out of a hundred, so both of you see whether the first ninety days have a market in them. Then structured job sampling, and the room with our qualifiers: ask them anything, with the Branch Manager out of it.</p><div class="facts"><div><b>/100</b><span>your market, scored</span></div><div><b>5</b><span>things asked of every prospect</span></div><div><b>0</b><span>managers in the room</span></div></div></div></div><div class="sp" role="tabpanel" id="sp-pop" aria-labelledby="sg-pop" data-k="pop" hidden><div class="spg"><div class="gx gx-pop" aria-hidden="true"><div class="bars"><div class="br" style="--v:.78"><span>Enterprising</span><i></i></div><div class="br" style="--v:.66"><span>Achievement</span><i></i></div><div class="br" style="--v:.58"><span>Independence</span><i></i></div><div class="br" style="--v:.72"><span>Self-direction</span><i></i></div><div class="br" style="--v:.69"><span>Lifestyle mgmt</span><i></i></div><div class="br" style="--v:.61"><span>Call courage</span><i></i></div><div class="br" style="--v:.75"><span>Listening</span><i></i></div><div class="br" style="--v:.7"><span>People</span><i></i></div></div><div class="vdt"><small>Career Profile+ rating</small><b>Proceed</b><span class="smp">sample profile</span></div></div></div><div class="spt"><span class="eyebrow">Gate 4</span><h3>POP7: the scientific profile</h3><p>The industry’s predictor of two things: whether a person survives the first year, and how much they produce in it. It reads enterprising, achievement and independence potential, self-direction, lifestyle management, call reluctance, listening style and people orientation, and gives a probability of success. The result is one of three words: proceed, proceed with caution, or redirect. We select on evidence, which protects you as much as it protects the room.</p><div class="facts"><div><b>2</b><span>things it predicts</span></div><div><b>8</b><span>dimensions read</span></div><div><b>3</b><span>possible verdicts</span></div></div></div></div><div class="sp" role="tabpanel" id="sp-sel" aria-labelledby="sg-sel" data-k="sel" hidden><div class="spg"><div class="gx gx-sel" aria-hidden="true"><div class="file"><i></i><i></i><i></i></div><div class="seal">Selected</div><ol class="bld"><li>Training</li><li>Induction</li><li>Boot camp</li><li>Licence</li><li>Field work</li></ol></div></div><div class="spt"><span class="eyebrow">Gate 5</span><h3>Selection, then the build</h3><p>Your file goes to executive review. Pass it and you have not found a job; you have been chosen for a career. Then the build begins: training, induction and boot camp before you are contracted, the licence with the branch beside you, and field work with your unit manager, watched by name, not assumed.</p><div class="facts"><div><b>5</b><span>gates, one standard</span></div><div><b>3</b><span>stages before contracting</span></div><div><b>1</b><span>manager beside you</span></div></div></div></div></div>
+      <div class="sgs" role="tablist" aria-label="The five gates"><button class="sg" type="button" role="tab" id="sg-apply" aria-controls="sp-apply" aria-selected="false" data-k="apply"><span class="sgn">1</span><span class="sgt"><b>Apply & screen</b><small>On Guardian&rsquo;s site &middot; 48 hours</small></span><i class="sgbar" aria-hidden="true"></i></button><button class="sg" type="button" role="tab" id="sg-bm" aria-controls="sp-bm" aria-selected="false" data-k="bm"><span class="sgn">2</span><span class="sgt"><b>The Branch Manager, then orientation</b><small>A real conversation · the career, the branch, the numbers</small></span><i class="sgbar" aria-hidden="true"></i></button><button class="sg" type="button" role="tab" id="sg-disc" aria-controls="sp-disc" aria-selected="false" data-k="disc"><span class="sgn">3</span><span class="sgt"><b>Discovery</b><small>Your own digital market survey · job sampling with the qualifiers</small></span><i class="sgbar" aria-hidden="true"></i></button><button class="sg" type="button" role="tab" id="sg-pop" aria-controls="sp-pop" aria-selected="false" data-k="pop"><span class="sgn">4</span><span class="sgt"><b>POP7: the scientific profile</b><small>LIMRA’s Career Profile+ · evidence, not vibes</small></span><i class="sgbar" aria-hidden="true"></i></button><button class="sg" type="button" role="tab" id="sg-sel" aria-controls="sp-sel" aria-selected="false" data-k="sel"><span class="sgn">5</span><span class="sgt"><b>Selection, then the build</b><small>Executive review · training, induction, boot camp, the licence</small></span><i class="sgbar" aria-hidden="true"></i></button></div>
+      <div class="sps"><div class="sp" role="tabpanel" id="sp-apply" aria-labelledby="sg-apply" data-k="apply" hidden><div class="spg"><div class="gx gx-apply" aria-hidden="true"><div class="ph"><div class="phb"><b>Application</b><i class="fld f1"></i><i class="fld f2"></i><i class="fld f3"></i><i class="fld f4"></i><span class="sendb">Send</span></div></div><div class="stamp st1">Received</div><div class="stamp st2">Reviewed · 48 h</div><div class="ring r1"></div></div></div><div class="spt"><span class="eyebrow">Gate 1</span><h3>Apply & screen</h3><p>The official application is on Guardian&rsquo;s own careers site. You make an account first &mdash; name, e-mail, telephone, address &mdash; and then apply. Your application is read by a person here within forty-eight hours, and then you get a call. If you would rather not be in a system yet, book the conversation instead: that is confidential, and it reaches the Branch Manager alone.</p><div class="facts"><div><b>48 h</b><span>to a person here</span></div><div><b>48 h</b><span>to a review</span></div><div><b>1</b><span>call back</span></div></div></div></div><div class="sp" role="tabpanel" id="sp-bm" aria-labelledby="sg-bm" data-k="bm" hidden><div class="spg"><div class="gx gx-bm" aria-hidden="true"><div class="av a1"><b>RR</b></div><div class="av a2"><b>You</b></div><div class="bub b1"></div><div class="bub b2"></div><div class="bub b3"></div><ul class="ckl"><li>The career</li><li>The branch</li><li>The numbers</li></ul></div></div><div class="spt"><span class="eyebrow">Gate 2</span><h3>The Branch Manager, then orientation</h3><p>A real conversation with Ricky Rampersad himself. Every advisor here started with it. Then orientation: the career, the branch and the numbers, laid out before you commit to anything. No gloss.</p><div class="facts"><div><b>32</b><span>years in this market</span></div><div><b>3</b><span>things laid out plainly</span></div><div><b>0</b><span>commitments asked of you</span></div></div></div></div><div class="sp" role="tabpanel" id="sp-disc" aria-labelledby="sg-disc" data-k="disc" hidden><div class="spg"><div class="gx gx-disc" aria-hidden="true"><div class="sv"><b>Market survey</b><div class="svr"><span>How well known</span><i class="mtr" style="--v:.82"></i></div><div class="svr"><span>Could approach on business</span><i class="mtr" style="--v:.68"></i></div><div class="svr"><span>Would refer you</span><i class="mtr" style="--v:.74"></i></div><div class="svr"><span>Saving for</span><em class="typed">a house</em></div></div><div class="score"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9"/><circle class="arc" cx="18" cy="18" r="15.9"/></svg><b><span class="cnt" data-to="86">0</span></b><small>of 100</small></div></div></div><div class="spt"><span class="eyebrow">Gate 3</span><h3>Discovery</h3><p>You map your own market, prospect by prospect, on the branch’s digital survey: how well you know them, how often you see them, whether you could approach them on business, whether they would refer you, and what they are saving for. Your unit manager scores it out of a hundred, so both of you see whether the first ninety days have a market in them. Then structured job sampling, and the room with our qualifiers: ask them anything, with the Branch Manager out of it.</p><div class="facts"><div><b>/100</b><span>your market, scored</span></div><div><b>5</b><span>things asked of every prospect</span></div><div><b>0</b><span>managers in the room</span></div></div></div></div><div class="sp" role="tabpanel" id="sp-pop" aria-labelledby="sg-pop" data-k="pop" hidden><div class="spg"><div class="gx gx-pop" aria-hidden="true"><div class="bars"><div class="br" style="--v:.78"><span>Enterprising</span><i></i></div><div class="br" style="--v:.66"><span>Achievement</span><i></i></div><div class="br" style="--v:.58"><span>Independence</span><i></i></div><div class="br" style="--v:.72"><span>Self-direction</span><i></i></div><div class="br" style="--v:.69"><span>Lifestyle mgmt</span><i></i></div><div class="br" style="--v:.61"><span>Call courage</span><i></i></div><div class="br" style="--v:.75"><span>Listening</span><i></i></div><div class="br" style="--v:.7"><span>People</span><i></i></div></div><div class="vdt"><small>Career Profile+ rating</small><b>Proceed</b><span class="smp">sample profile</span></div></div></div><div class="spt"><span class="eyebrow">Gate 4</span><h3>POP7: the scientific profile</h3><p>The industry’s predictor of two things: whether a person survives the first year, and how much they produce in it. It reads enterprising, achievement and independence potential, self-direction, lifestyle management, call reluctance, listening style and people orientation, and gives a probability of success. The result is one of three words: proceed, proceed with caution, or redirect. We select on evidence, which protects you as much as it protects the room.</p><div class="facts"><div><b>2</b><span>things it predicts</span></div><div><b>8</b><span>dimensions read</span></div><div><b>3</b><span>possible verdicts</span></div></div></div></div><div class="sp" role="tabpanel" id="sp-sel" aria-labelledby="sg-sel" data-k="sel" hidden><div class="spg"><div class="gx gx-sel" aria-hidden="true"><div class="file"><i></i><i></i><i></i></div><div class="seal">Selected</div><ol class="bld"><li>Training</li><li>Induction</li><li>Boot camp</li><li>Licence</li><li>Field work</li></ol></div></div><div class="spt"><span class="eyebrow">Gate 5</span><h3>Selection, then the build</h3><p>Your file goes to executive review. Pass it and you have not found a job; you have been chosen for a career. Then the build begins: training, induction and boot camp before you are contracted, the licence with the branch beside you, and field work with your unit manager, watched by name, not assumed.</p><div class="facts"><div><b>5</b><span>gates, one standard</span></div><div><b>3</b><span>stages before contracting</span></div><div><b>1</b><span>manager beside you</span></div></div></div></div></div>
     </div>
     <p class="note rv"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>Rigorous on purpose: an offer from this branch means something. The advisors beside you earned their seat the same way you will, and the written criteria for every rung are shared openly at your Discovery.</p>
   </div>
@@ -1718,8 +1866,8 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
             <span class="trk" style="width:100%"><span class="fil" style="--w:100%"></span></span>
           </div>
           <div class="row ref" style="--i:2">
-            <span class="lab"><i>After 4 years &middot; the industry</i><b>~15%</b></span>
-            <span class="trk" style="width:22%"></span>
+            <span class="lab"><i>After 4 years &middot; the industry</i><b>14%</b></span>
+            <span class="trk" style="width:21%"></span>
           </div>
           <div class="row" style="--i:3" tabindex="0">
             <span class="lab"><i>After 4 years &middot; this branch</i><b>31%</b></span>
@@ -1727,10 +1875,12 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
           </div>
         </div>
         <p class="ckey"><span><i></i>This branch</span><span><i class="r"></i>The industry, published</span></p>
-        <p class="tip">All four bars are to one scale. Four-year survival of about 15% is LIMRA&rsquo;s figure for agency systems built on recruiting the inexperienced &mdash; which is exactly the system this branch stopped running.</p>
-        <details><summary>See the figures</summary>
+        <p class="tip">All four bars are to one scale. The industry&rsquo;s 14 in a hundred still contracted at year four is LIMRA and Finseca&rsquo;s own published figure. Ours is counted the same way, on our own roll, and the method is below.</p>
+        <details><summary>See the figures, and how they are counted</summary>
           <table><caption class="sr-only">Advisors still in the business, this branch against the industry</caption><thead><tr><th scope="col">Still in the business</th><th scope="col">The industry</th><th scope="col">This branch</th></tr></thead>
-          <tbody><tr><td>After 1 year</td><td>55&ndash;60%</td><td>67%</td></tr><tr><td>After 4 years</td><td>~15%</td><td>31%</td></tr></tbody></table>
+          <tbody><tr><td>After 1 year</td><td>55&ndash;60%</td><td>67%</td></tr><tr><td>After 4 years</td><td>14%</td><td>31%</td></tr></tbody></table>
+          <p class="meth"><b>Where the industry&rsquo;s figures come from.</b> One year, 55&ndash;60%: LIMRA, first-year retention by who recruited the advisor. Four years, 14%: LIMRA and Finseca, <em>The Path to Improving Retention</em>, 2022, quoted in LIMRA&rsquo;s 2025 Annual Conference &mdash; &ldquo;we have been sitting at an industry-wide 4-year retention rate of 14% for years.&rdquo;</p>
+          <p class="meth"><b>How ours is counted.</b> Every agent ever contracted to this branch&rsquo;s four units, measured on our own Salesforce records from the earlier of their licence and hire date to their termination date, or to today if they are still on the books. Ten records whose dates cannot be reconciled are excluded and counted as neither. On that basis: across the whole roll, 53 in a hundred reach four years; across recent recruiting &mdash; everyone who started from 2017 &mdash; 33. <b>The 31 published here is from the branch&rsquo;s own Production and Manpower Record, and it is the conservative end of that range.</b> We publish the lower one.</p>
         </details>
       </article>
     </div>
@@ -1883,8 +2033,8 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   <div class="wrap">
     <div class="lede rv">
       <span class="eyebrow">The part nobody advertises</span>
-      <h2 data-words>Nobody here is told to go and sell to their friends.</h2>
-      <p>This is the thing that actually breaks advisors, and almost no recruitment advertisement will say it out loud. So we will. Here is what most people are handed, what it costs them, and what happens instead in this branch.</p>
+      <h2 data-words>Everyone starts with the people they know. Nobody here is left there.</h2>
+      <p>This is the thing that actually breaks advisors, and almost no recruitment advertisement will say it out loud. So we will. Your own market is where you begin &mdash; it is where everyone begins &mdash; and the year it runs out is the year most people leave. Here is what most are handed when it does, what it costs them, and what happens instead in this branch.</p>
     </div>
 
     <div class="lpain rv">
@@ -1892,7 +2042,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
         <small>What most are handed</small>
         <b>Your own phone contacts</b>
         <p>Your warm market, worked until it is cold. In one study of 103 advisors who left the business, roughly a quarter named <strong style="color:#fff">the cost of leads</strong> as a reason they went.</p>
-        <p class="us"><b>Here:</b> leads come to you from people who asked to be called, on a branch board, before you have spent a dollar.</p>
+        <p class="us"><b>Here:</b> your own market is where everyone starts. What this branch is built for is the month it runs thin &mdash; prospects who asked to be called, households matched to you, and a manager who sees a thinning week before you feel it.</p>
       </div>
       <div class="lpn">
         <small>What most are handed</small>
@@ -1953,6 +2103,147 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   </div>
 </section>
 
+<!-- ═══ THE BOOK — the practising advisor's half (14 November 2026). See the CSS block of the same name
+     for what may and may not be claimed here, and why. ═══ -->
+<section class="bk" id="book" data-g="book">
+  <div class="wrap">
+    <div class="lede rv">
+      <span class="eyebrow">Already have a book?</span>
+      <h2 data-words>A book is either looked after, or it leaks.</h2>
+      <p>If you have been at this for years, the first year is not your problem. The book is. You built it one client at a time, and most branches leave you to keep it, chase it and grow it on your own. Here, the branch keeps it with you.</p>
+    </div>
+    <div class="bkgrid">
+      <article class="bkproof">
+        <small>The book that stays</small>
+        <h3>A lapse is income you already earned, walking out.</h3>
+        <div class="hb in" role="img" aria-label="Lapse rate to 31 August 2026, where lower is better: this branch 4.96 per cent, the main branches 8.82 per cent.">
+          <div class="row" style="--i:0" tabindex="0">
+            <span class="lab"><i>This branch</i><b data-to="4.96" data-dec="2" data-suffix="%">4.96%</b></span>
+            <span class="trk" style="width:49.6%"><span class="fil" style="--w:100%"></span></span>
+          </div>
+          <div class="row ref" style="--i:1">
+            <span class="lab"><i>The main branches</i><b data-to="8.82" data-dec="2" data-suffix="%">8.82%</b></span>
+            <span class="trk" style="width:88.2%"></span>
+          </div>
+        </div>
+        <p class="bkfoot">Lapse rate to 31 August 2026, from the branch&rsquo;s own record: the share of the book that stopped paying. Both bars are to one scale, and <b>shorter is better.</b> Not one case written on our digital fact find has lapsed since it launched.</p>
+      </article>
+      <ol class="bkways">
+        <li style="--i:0"><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg></span><div><h3>Caught at 45 days, not at the lapse</h3><p>A premium falling behind gets a letter at 45, 60, 75 and 90 days, each one read by a person before it goes, and you are copied on every one. Your client hears from the branch long before the cover stops.</p></div></li>
+        <li style="--i:1"><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span><div><h3>Your clients&rsquo; work, done and shown to you</h3><p>Pending applications, requirements and client requests are worked by the branch team every day. Each morning you see what is open for your clients and the last thing done on it, without having to ask.</p></div></li>
+        <li style="--i:2"><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg></span><div><h3>The paperwork is not your evening</h3><p>Documents logged on your phone and signed for by the team, then on their way to Guardian, with a reason on file for anything late. Contracts delivered and signed for. Client questions answered on a clock.</p></div></li>
+        <li style="--i:3"><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg></span><div><h3>Growth from inside, not only from strangers</h3><p>Households whose advisor has moved on are matched to you with the file already read. Your fact find does the arithmetic and is reviewed by a manager before your client signs, so what you write stays written.</p></div></li>
+      </ol>
+    </div>
+    <div class="bknot rv">
+      <div>
+        <h3>Two things we will not tell you</h3>
+        <ul>
+          <li><b>What is in your book today.</b> It sits in another company&rsquo;s system, and it is yours. We will not pretend to have read it.</li>
+          <li><b>To move a client.</b> No agent or broker may cause a policyholder to discontinue or replace a policy without first discussing the advantages and the disadvantages. We hold ourselves to that before we ask it of anyone. What happens to your current book is for the twenty minutes, in confidence.</li>
+        </ul>
+      </div>
+      <a class="btn btn-1" href="#talk" data-talk data-who="Already contracted elsewhere">Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ COMPLIANT BY DESIGN (14 November 2026). See the CSS block of the same name for where every line
+     comes from and what may not be claimed. ═══ -->
+<section class="cd" id="conduct" data-g="conduct">
+  <div class="wrap">
+    <div class="lede rv">
+      <span class="eyebrow">Compliant by design</span>
+      <h2 data-words>Every step leaves a record. That record protects you.</h2>
+      <p>An advisor&rsquo;s worst week is a complaint about advice nobody can show. Here, the record is written as the work happens &mdash; the fact find, your client&rsquo;s own approval, the manager&rsquo;s signature, every document and every delivery &mdash; and all of it is built to the Central Bank&rsquo;s Market Conduct Guideline, issued under the Insurance Act, 2018.</p>
+    </div>
+
+    <div class="cdrow">
+      <article class="cdp cdt">
+        <div class="cdh"><b>One case, as the record sees it</b><span>Sample times</span></div>
+        <ol class="cdtl">
+          <li style="--i:0"><div><time>Mon 09:14</time><b>Fact find written</b><span>Needs, dependants, what they can afford, and their duty to disclose</span></div><em>On file</em></li>
+          <li style="--i:1"><div><time>Mon 18:02</time><b>Your client agrees the draft</b><span>From their own inbox, before anything goes further</span></div><em>On file</em></li>
+          <li style="--i:2"><div><time>Tue 09:30</time><b>A manager reviews and signs</b><span>With a comment, before anything is placed</span></div><em>On file</em></li>
+          <li style="--i:3"><div><time>Tue 10:05</time><b>Your client signs, and rates the advice</b><span>Their words and their stars, kept with the case</span></div><em>On file</em></li>
+          <li style="--i:4"><div><time>Tue 10:41</time><b>The application is logged</b><span>On your phone, time-stamped, then signed for at the desk</span></div><em>On file</em></li>
+          <li style="--i:5"><div><time>Tue 11:32</time><b>Sent to Guardian</b><span>On the day&rsquo;s transmittal, with a reason on file for anything late</span></div><em>On file</em></li>
+          <li style="--i:6"><div><time>Day 9</time><b>The contract is delivered</b><span>Signed for: who collected it, their relationship to the client, and where</span></div><em>On file</em></li>
+        </ol>
+        <p class="cdfoot">The times are a sample. The record is real: each of these lines is written by the branch&rsquo;s own systems as it happens, with who did it and when.</p>
+      </article>
+
+      <article class="cdp cdg">
+        <div class="cdh"><b>Clause by clause</b><span>Market Conduct Guideline</span></div>
+        <ul class="cdk">
+          <li style="--i:0"><em>5.2</em><div><b>Needs before a recommendation</b><span>Every sale starts with the fact find: needs, dependants, what the client can afford, and their duty to disclose.</span></div><i aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i></li>
+          <li style="--i:1"><em>5.2.2</em><div><b>Advice in writing, in plain words</b><span>The client gets their plan in writing, and a copy is kept on file.</span></div><i aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i></li>
+          <li style="--i:2"><em>5.3.1</em><div><b>Intermediaries monitored</b><span>Every fact find reviewed and signed off by a manager, and every outcome followed.</span></div><i aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i></li>
+          <li style="--i:3"><em>5.4.2</em><div><b>Policies delivered within 20 business days</b><span>Every contract tracked from collection to the client&rsquo;s signature, and chased before the deadline.</span></div><i aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i></li>
+          <li style="--i:4"><em>5.4.3</em><div><b>Kept informed after the sale</b><span>A premium falling behind is written about at 45, 60, 75 and 90 days, before the cover stops.</span></div><i aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i></li>
+          <li style="--i:5"><em>5.6</em><div><b>Their information kept private</b><span>Agents see only their own clients, and no client is ever named on a wall.</span></div><i aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i></li>
+          <li style="--i:6"><em>5.7</em><div><b>Complaints handled promptly</b><span>Every query logged, owned, and answered on time and in writing.</span></div><i aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></i></li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="cdrow">
+      <article class="cdp cdf">
+        <div class="cdh"><b>One department, spelled six ways</b><span>The old paper book</span></div>
+        <div class="cdfv" role="img" aria-label="Six different spellings of one department in the old paper book, replaced by one name picked from a list: GLOC CS RSC - CHAGUANAS.">
+          <span class="v" aria-hidden="true" style="--x:-7rem;--y:-2.2rem;--r:-9deg;--i:0">CHAGUANAS RSC</span>
+          <span class="v" aria-hidden="true" style="--x:6rem;--y:-3rem;--r:7deg;--i:1">CHAG RSC</span>
+          <span class="v" aria-hidden="true" style="--x:-5rem;--y:2.6rem;--r:6deg;--i:2">CUSTOMER SERVICEE</span>
+          <span class="v" aria-hidden="true" style="--x:7rem;--y:1.4rem;--r:-6deg;--i:3">GLOC CUSTOMER SERVICE</span>
+          <span class="v" aria-hidden="true" style="--x:-3rem;--y:-3.6rem;--r:4deg;--i:4">CS RSC - CHAGUANA</span>
+          <span class="v" aria-hidden="true" style="--x:3rem;--y:3.4rem;--r:-4deg;--i:5">CUSTOMER SERVICE RSC CHAGUANAS</span>
+          <span class="one" aria-hidden="true"><b>GLOC CS RSC - CHAGUANAS</b></span>
+        </div>
+        <p class="cdfoot">Six ways the old book typed one department. Now it is picked from a list, never typed, so every record of it says the same thing.</p>
+      </article>
+
+      <article class="cdp cdc">
+        <div class="cdh"><b>A clean record, counted</b><span>The old book, folded</span></div>
+        <div class="cdbars" role="img" aria-label="In the old paper book, departments were typed 90 different ways and are now one list of 25; documents were typed 237 ways and are now one list of 70.">
+          <div class="cdpair" aria-hidden="true">
+            <small>Departments</small>
+            <div class="cdbl"><span>Ways it was typed</span><b data-to="90">90</b></div>
+            <div class="cdtrk"><i style="--w:100%;--i:0"></i></div>
+            <div class="cdbl now"><span>One list, now</span><b data-to="25">25</b></div>
+            <div class="cdtrk"><i class="now" style="--w:27.8%;--i:1"></i></div>
+          </div>
+          <div class="cdpair" aria-hidden="true">
+            <small>Documents</small>
+            <div class="cdbl"><span>Ways it was typed</span><b data-to="237">237</b></div>
+            <div class="cdtrk"><i style="--w:100%;--i:2"></i></div>
+            <div class="cdbl now"><span>One list, now</span><b data-to="70">70</b></div>
+            <div class="cdtrk"><i class="now" style="--w:29.5%;--i:3"></i></div>
+          </div>
+        </div>
+        <div class="cdcount"><b data-to="3634" data-sep>3,634</b><span>lines of the old paper book read, November 2025 to October 2026. Every line the new Log Book writes carries who logged it, who signed for it, when it went and where.</span></div>
+        <p class="cdfoot">Each pair of bars is drawn to its own scale.</p>
+      </article>
+    </div>
+
+    <div class="cdi">
+      <p>Built in this branch, and every one keeps its own record</p>
+      <ul>
+        <li style="--i:0"><svg class="ic" aria-hidden="true"><use href="#i-calc"/></svg>Digital fact find</li>
+        <li style="--i:1"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg>Log Book</li>
+        <li style="--i:2"><svg class="ic" aria-hidden="true"><use href="#i-box"/></svg>Delivery Book</li>
+        <li style="--i:3"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>Premium Due Desk</li>
+        <li style="--i:4"><svg class="ic" aria-hidden="true"><use href="#i-msg"/></svg>Query Pal</li>
+        <li style="--i:5"><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>Branch Intelligence</li>
+        <li style="--i:6"><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>Claims intake</li>
+        <li style="--i:7"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg>Motor quote</li>
+        <li style="--i:8"><svg class="ic" aria-hidden="true"><use href="#i-flag"/></svg>Renewal desk</li>
+        <li style="--i:9"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg>Assignment board</li>
+        <li style="--i:10"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg>Meeting minutes and actions</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
 <section id="path" data-g="path" style="background:var(--bg2);border-block:1px solid var(--line)">
   <div class="wrap">
     <div class="lede rv">
@@ -1960,7 +2251,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       <h2 data-words>One road in. Two roads up. All mapped.</h2>
       <p>This is Guardian Life’s official Sales Career Path — not a poster on a wall. Every rung has written criteria, real benefits, and people in this branch who’ve climbed it.</p>
     </div>
-    <div class="ctlw rv" role="img" aria-label="The career path as a timeline: apply, a call within 48 hours, the Discovery, selected, the build, the first 90 days, Career Sales Representative; then two roads: Executive Agent to Senior Sales Consultant, or Emerging Leaders to Unit Manager to Branch Manager"><svg class="ctl ctl-l" viewBox="0 0 1000 362" aria-hidden="true"><path class="rail main" pathLength="100" d="M40.0 190 L560.2 190"/><path class="rail a" pathLength="100" d="M560.2 190 C640 190 660 92 740 92 L980 92"/><path class="rail b" pathLength="100" d="M560.2 190 C640 190 660 290 740 290 L980 290"/><circle class="node" cx="40.0" cy="190" r="8" style="--i:0"/><g class="lbl " style="--i:0"><text class="nm" x="40.0" y="160" text-anchor="middle">Apply</text><text class="dt" x="40.0" y="177" text-anchor="middle">two minutes</text></g><circle class="node" cx="126.7" cy="190" r="8" style="--i:1"/><g class="lbl " style="--i:1"><text class="nm" x="126.7" y="234" text-anchor="middle">A call</text><text class="dt" x="126.7" y="251" text-anchor="middle">within 48 h</text></g><circle class="node" cx="213.4" cy="190" r="8" style="--i:2"/><g class="lbl " style="--i:2"><text class="nm" x="213.4" y="160" text-anchor="middle">Discovery</text><text class="dt" x="213.4" y="177" text-anchor="middle">with the people doing it</text></g><circle class="node" cx="300.1" cy="190" r="8" style="--i:3"/><g class="lbl " style="--i:3"><text class="nm" x="300.1" y="234" text-anchor="middle">Selected</text><text class="dt" x="300.1" y="251" text-anchor="middle">five gates</text></g><circle class="node" cx="386.8" cy="190" r="8" style="--i:4"/><g class="lbl " style="--i:4"><text class="nm" x="386.8" y="160" text-anchor="middle">The build</text><text class="dt" x="386.8" y="177" text-anchor="middle">training · licence · boot camp</text></g><circle class="node" cx="473.5" cy="190" r="8" style="--i:5"/><g class="lbl " style="--i:5"><text class="nm" x="473.5" y="234" text-anchor="middle">First 90 days</text><text class="dt" x="473.5" y="251" text-anchor="middle">matched households · leads</text></g><circle class="node fork" cx="560.2" cy="190" r="11" style="--i:6"/><g class="lbl " style="--i:6"><text class="nm" x="560.2" y="160" text-anchor="middle">Career Sales Rep</text><text class="dt" x="560.2" y="177" text-anchor="middle">contracted, in the field</text></g><circle class="node a" cx="740" cy="92" r="9" style="--i:8"/><g class="lbl a" style="--i:8"><text class="nm" x="740" y="62" text-anchor="middle">Executive Agent</text><text class="dt" x="740" y="79" text-anchor="middle">overrides · a private office</text></g><circle class="node a" cx="960" cy="92" r="9" style="--i:9"/><g class="lbl a" style="--i:9"><text class="nm" x="960" y="122" text-anchor="end">Senior Sales Consultant</text><text class="dt" x="960" y="139" text-anchor="end">the top of the road</text></g><circle class="node b" cx="700" cy="290" r="9" style="--i:8"/><g class="lbl b" style="--i:8"><text class="nm" x="700" y="320" text-anchor="middle">Emerging Leaders</text><text class="dt" x="700" y="337" text-anchor="middle">by recommendation</text></g><circle class="node b" cx="830" cy="290" r="9" style="--i:9"/><g class="lbl b" style="--i:9"><text class="nm" x="830" y="258" text-anchor="middle">Unit Manager</text><text class="dt" x="830" y="275" text-anchor="middle">a unit of your own</text></g><circle class="node b" cx="960" cy="290" r="9" style="--i:10"/><g class="lbl b" style="--i:10"><text class="nm" x="960" y="320" text-anchor="end">Branch Manager</text><text class="dt" x="960" y="337" text-anchor="end">a branch of your own</text></g><circle class="rider m" r="9" style="offset-path:path('M40.0 190 L560.2 190')"/><circle class="rider a" r="9" style="offset-path:path('M560.2 190 C640 190 660 92 740 92 L980 92')"/><circle class="rider b" r="9" style="offset-path:path('M560.2 190 C640 190 660 290 740 290 L980 290')"/><text class="rd a" x="980" y="36" text-anchor="end">Build a book</text><text class="rd b" x="980" y="354" text-anchor="end">Or lead</text></svg><svg class="ctl ctl-v" viewBox="0 0 800 620" aria-hidden="true"><path class="rail main" pathLength="100" d="M60 40 L60 556"/><path class="rail a" pathLength="100" d="M60 556 C60 604 280 604 280 556 L280 170"/><path class="rail b" pathLength="100" d="M60 556 C60 612 520 612 520 556 L520 120"/><circle class="node" cx="60" cy="40" r="8" style="--i:0"/><g class="lbl " style="--i:0"><text class="nm" x="86" y="38" text-anchor="start">Apply</text><text class="dt" x="86" y="55" text-anchor="start">two minutes</text></g><circle class="node" cx="60" cy="126" r="8" style="--i:1"/><g class="lbl " style="--i:1"><text class="nm" x="86" y="124" text-anchor="start">A call</text><text class="dt" x="86" y="141" text-anchor="start">within 48 h</text></g><circle class="node" cx="60" cy="212" r="8" style="--i:2"/><g class="lbl " style="--i:2"><text class="nm" x="86" y="210" text-anchor="start">Discovery</text><text class="dt" x="86" y="227" text-anchor="start">with the people doing it</text></g><circle class="node" cx="60" cy="298" r="8" style="--i:3"/><g class="lbl " style="--i:3"><text class="nm" x="86" y="296" text-anchor="start">Selected</text><text class="dt" x="86" y="313" text-anchor="start">five gates</text></g><circle class="node" cx="60" cy="384" r="8" style="--i:4"/><g class="lbl " style="--i:4"><text class="nm" x="86" y="382" text-anchor="start">The build</text><text class="dt" x="86" y="399" text-anchor="start">training · licence · boot camp</text></g><circle class="node" cx="60" cy="470" r="8" style="--i:5"/><g class="lbl " style="--i:5"><text class="nm" x="86" y="468" text-anchor="start">First 90 days</text><text class="dt" x="86" y="485" text-anchor="start">matched households · leads</text></g><circle class="node fork" cx="60" cy="556" r="11" style="--i:6"/><g class="lbl " style="--i:6"><text class="nm" x="86" y="554" text-anchor="start">Career Sales Rep</text><text class="dt" x="86" y="571" text-anchor="start">contracted, in the field</text></g><circle class="node a" cx="280" cy="420" r="9" style="--i:8"/><g class="lbl a" style="--i:8"><text class="nm" x="306" y="418" text-anchor="start">Executive Agent</text><text class="dt" x="306" y="435" text-anchor="start">overrides · a private office</text></g><circle class="node a" cx="280" cy="240" r="9" style="--i:9"/><g class="lbl a" style="--i:9"><text class="nm" x="306" y="238" text-anchor="start">Senior Sales Consultant</text><text class="dt" x="306" y="255" text-anchor="start">the top of the road</text></g><circle class="node b" cx="520" cy="450" r="9" style="--i:8"/><g class="lbl b" style="--i:8"><text class="nm" x="546" y="448" text-anchor="start">Emerging Leaders</text><text class="dt" x="546" y="465" text-anchor="start">by recommendation</text></g><circle class="node b" cx="520" cy="310" r="9" style="--i:9"/><g class="lbl b" style="--i:9"><text class="nm" x="546" y="308" text-anchor="start">Unit Manager</text><text class="dt" x="546" y="325" text-anchor="start">a unit of your own</text></g><circle class="node b" cx="520" cy="170" r="9" style="--i:10"/><g class="lbl b" style="--i:10"><text class="nm" x="546" y="168" text-anchor="start">Branch Manager</text><text class="dt" x="546" y="185" text-anchor="start">a branch of your own</text></g><circle class="rider m" r="9" style="offset-path:path('M60 40 L60 556')"/><circle class="rider a" r="9" style="offset-path:path('M60 556 C60 604 280 604 280 556 L280 170')"/><circle class="rider b" r="9" style="offset-path:path('M60 556 C60 612 520 612 520 556 L520 120')"/><text class="rd a" x="306" y="150" text-anchor="start">Build a book</text><text class="rd b" x="546" y="100" text-anchor="start">Or lead</text></svg></div>
+    <div class="ctlw rv" role="img" aria-label="The career path as a timeline: apply, a call within 48 hours, the Discovery, selected, the build, the first 90 days, Career Sales Representative; then two roads: Executive Agent to Senior Sales Consultant, or Emerging Leaders to Unit Manager to Branch Manager"><svg class="ctl ctl-l" viewBox="0 0 1000 362" aria-hidden="true"><path class="rail main" pathLength="100" d="M40.0 190 L560.2 190"/><path class="rail a" pathLength="100" d="M560.2 190 C640 190 660 92 740 92 L980 92"/><path class="rail b" pathLength="100" d="M560.2 190 C640 190 660 290 740 290 L980 290"/><circle class="node" cx="40.0" cy="190" r="8" style="--i:0"/><g class="lbl " style="--i:0"><text class="nm" x="40.0" y="160" text-anchor="middle">Apply</text><text class="dt" x="40.0" y="177" text-anchor="middle">Guardian&#8217;s site</text></g><circle class="node" cx="126.7" cy="190" r="8" style="--i:1"/><g class="lbl " style="--i:1"><text class="nm" x="126.7" y="234" text-anchor="middle">A call</text><text class="dt" x="126.7" y="251" text-anchor="middle">within 48 h</text></g><circle class="node" cx="213.4" cy="190" r="8" style="--i:2"/><g class="lbl " style="--i:2"><text class="nm" x="213.4" y="160" text-anchor="middle">Discovery</text><text class="dt" x="213.4" y="177" text-anchor="middle">with the people doing it</text></g><circle class="node" cx="300.1" cy="190" r="8" style="--i:3"/><g class="lbl " style="--i:3"><text class="nm" x="300.1" y="234" text-anchor="middle">Selected</text><text class="dt" x="300.1" y="251" text-anchor="middle">five gates</text></g><circle class="node" cx="386.8" cy="190" r="8" style="--i:4"/><g class="lbl " style="--i:4"><text class="nm" x="386.8" y="160" text-anchor="middle">The build</text><text class="dt" x="386.8" y="177" text-anchor="middle">training · licence · boot camp</text></g><circle class="node" cx="473.5" cy="190" r="8" style="--i:5"/><g class="lbl " style="--i:5"><text class="nm" x="473.5" y="234" text-anchor="middle">First 90 days</text><text class="dt" x="473.5" y="251" text-anchor="middle">matched households · leads</text></g><circle class="node fork" cx="560.2" cy="190" r="11" style="--i:6"/><g class="lbl " style="--i:6"><text class="nm" x="560.2" y="160" text-anchor="middle">Career Sales Rep</text><text class="dt" x="560.2" y="177" text-anchor="middle">contracted, in the field</text></g><circle class="node a" cx="740" cy="92" r="9" style="--i:8"/><g class="lbl a" style="--i:8"><text class="nm" x="740" y="62" text-anchor="middle">Executive Agent</text><text class="dt" x="740" y="79" text-anchor="middle">overrides · a private office</text></g><circle class="node a" cx="960" cy="92" r="9" style="--i:9"/><g class="lbl a" style="--i:9"><text class="nm" x="960" y="122" text-anchor="end">Senior Sales Consultant</text><text class="dt" x="960" y="139" text-anchor="end">the top of the road</text></g><circle class="node b" cx="700" cy="290" r="9" style="--i:8"/><g class="lbl b" style="--i:8"><text class="nm" x="700" y="320" text-anchor="middle">Emerging Leaders</text><text class="dt" x="700" y="337" text-anchor="middle">by recommendation</text></g><circle class="node b" cx="830" cy="290" r="9" style="--i:9"/><g class="lbl b" style="--i:9"><text class="nm" x="830" y="258" text-anchor="middle">Unit Manager</text><text class="dt" x="830" y="275" text-anchor="middle">a unit of your own</text></g><circle class="node b" cx="960" cy="290" r="9" style="--i:10"/><g class="lbl b" style="--i:10"><text class="nm" x="960" y="320" text-anchor="end">Branch Manager</text><text class="dt" x="960" y="337" text-anchor="end">a branch of your own</text></g><circle class="rider m" r="9" style="offset-path:path('M40.0 190 L560.2 190')"/><circle class="rider a" r="9" style="offset-path:path('M560.2 190 C640 190 660 92 740 92 L980 92')"/><circle class="rider b" r="9" style="offset-path:path('M560.2 190 C640 190 660 290 740 290 L980 290')"/><text class="rd a" x="980" y="36" text-anchor="end">Build a book</text><text class="rd b" x="980" y="354" text-anchor="end">Or lead</text></svg><svg class="ctl ctl-v" viewBox="0 0 800 620" aria-hidden="true"><path class="rail main" pathLength="100" d="M60 40 L60 556"/><path class="rail a" pathLength="100" d="M60 556 C60 604 280 604 280 556 L280 170"/><path class="rail b" pathLength="100" d="M60 556 C60 612 520 612 520 556 L520 120"/><circle class="node" cx="60" cy="40" r="8" style="--i:0"/><g class="lbl " style="--i:0"><text class="nm" x="86" y="38" text-anchor="start">Apply</text><text class="dt" x="86" y="55" text-anchor="start">Guardian&#8217;s site</text></g><circle class="node" cx="60" cy="126" r="8" style="--i:1"/><g class="lbl " style="--i:1"><text class="nm" x="86" y="124" text-anchor="start">A call</text><text class="dt" x="86" y="141" text-anchor="start">within 48 h</text></g><circle class="node" cx="60" cy="212" r="8" style="--i:2"/><g class="lbl " style="--i:2"><text class="nm" x="86" y="210" text-anchor="start">Discovery</text><text class="dt" x="86" y="227" text-anchor="start">with the people doing it</text></g><circle class="node" cx="60" cy="298" r="8" style="--i:3"/><g class="lbl " style="--i:3"><text class="nm" x="86" y="296" text-anchor="start">Selected</text><text class="dt" x="86" y="313" text-anchor="start">five gates</text></g><circle class="node" cx="60" cy="384" r="8" style="--i:4"/><g class="lbl " style="--i:4"><text class="nm" x="86" y="382" text-anchor="start">The build</text><text class="dt" x="86" y="399" text-anchor="start">training · licence · boot camp</text></g><circle class="node" cx="60" cy="470" r="8" style="--i:5"/><g class="lbl " style="--i:5"><text class="nm" x="86" y="468" text-anchor="start">First 90 days</text><text class="dt" x="86" y="485" text-anchor="start">matched households · leads</text></g><circle class="node fork" cx="60" cy="556" r="11" style="--i:6"/><g class="lbl " style="--i:6"><text class="nm" x="86" y="554" text-anchor="start">Career Sales Rep</text><text class="dt" x="86" y="571" text-anchor="start">contracted, in the field</text></g><circle class="node a" cx="280" cy="420" r="9" style="--i:8"/><g class="lbl a" style="--i:8"><text class="nm" x="306" y="418" text-anchor="start">Executive Agent</text><text class="dt" x="306" y="435" text-anchor="start">overrides · a private office</text></g><circle class="node a" cx="280" cy="240" r="9" style="--i:9"/><g class="lbl a" style="--i:9"><text class="nm" x="306" y="238" text-anchor="start">Senior Sales Consultant</text><text class="dt" x="306" y="255" text-anchor="start">the top of the road</text></g><circle class="node b" cx="520" cy="450" r="9" style="--i:8"/><g class="lbl b" style="--i:8"><text class="nm" x="546" y="448" text-anchor="start">Emerging Leaders</text><text class="dt" x="546" y="465" text-anchor="start">by recommendation</text></g><circle class="node b" cx="520" cy="310" r="9" style="--i:9"/><g class="lbl b" style="--i:9"><text class="nm" x="546" y="308" text-anchor="start">Unit Manager</text><text class="dt" x="546" y="325" text-anchor="start">a unit of your own</text></g><circle class="node b" cx="520" cy="170" r="9" style="--i:10"/><g class="lbl b" style="--i:10"><text class="nm" x="546" y="168" text-anchor="start">Branch Manager</text><text class="dt" x="546" y="185" text-anchor="start">a branch of your own</text></g><circle class="rider m" r="9" style="offset-path:path('M60 40 L60 556')"/><circle class="rider a" r="9" style="offset-path:path('M60 556 C60 604 280 604 280 556 L280 170')"/><circle class="rider b" r="9" style="offset-path:path('M60 556 C60 612 520 612 520 556 L520 120')"/><text class="rd a" x="306" y="150" text-anchor="start">Build a book</text><text class="rd b" x="546" y="100" text-anchor="start">Or lead</text></svg></div>
     <div class="roads">
       <article class="road rv">
         <div class="road-h"><span class="chip"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg></span><h3><small>Professional</small>Master the craft</h3></div>
@@ -2064,7 +2355,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
             <details class="faq-i"><summary>I have no insurance experience. Is that a problem?<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>No — it’s normal. Newcomers get the full build: training, induction, boot camp, one-on-one coaching, and mentors who are required by their own appointments to develop you. What we can’t teach is drive, resilience and trustworthiness — that’s what the selection tests.</p></details>
       <details class="faq-i"><summary>Is the income really uncapped?<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>Yes. Earnings are commission-based, so they scale with your activity and skill — no salary band, no ceiling, and at senior ranks, overriding commissions on top. It also means the first months take real work while you build. We’re upfront about both sides.</p></details>
       <details class="faq-i"><summary>What’s the catch?<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>The standard. We select — we don’t fill seats. Five gates, including a scientific assessment and a personal interview with the Branch Manager, for newcomers and veterans alike. Most applicants don’t make it. The ones who do get a career, a coach, and a room that pulls them upward.</p></details>
-      <details class="faq-i"><summary>How fast does this move?<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>The application takes about 2 minutes and is reviewed within 48 hours. Clear the screen and you’ll meet the Branch Manager, then move into Discovery — weeks, not months, driven mostly by your own pace.</p></details>
+      <details class="faq-i"><summary>How fast does this move?<svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></summary><p>The official application sits on Guardian&rsquo;s careers site and asks you to make an account before you fill it in. It is read by a person here within 48 hours. Clear the screen and you’ll meet the Branch Manager, then move into Discovery — weeks, not months, driven mostly by your own pace. Prefer to talk first? The twenty-minute conversation needs no account and no CV.</p></details>
     </div>
   </div>
 </section>
@@ -2124,13 +2415,24 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       <ul class="seats" aria-label="Seven places in the first class of FY27, one of them yours, and one seat for a sales manager">
         <li><svg class="ic" aria-hidden="true"><use href="#i-seat"/></svg></li><li><svg class="ic" aria-hidden="true"><use href="#i-seat"/></svg></li><li><svg class="ic" aria-hidden="true"><use href="#i-seat"/></svg></li><li><svg class="ic" aria-hidden="true"><use href="#i-seat"/></svg></li><li><svg class="ic" aria-hidden="true"><use href="#i-seat"/></svg></li><li><svg class="ic" aria-hidden="true"><use href="#i-seat"/></svg></li><li class="you" aria-label="You">You</li><li class="mgr" aria-label="One seat for a sales manager"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg></li>
       </ul>
-      <p>FY27 began on 1 October, and its first class is being selected now: seven places, and every one of them gets the full build. One more seat, for a sales manager to build a unit here. One confidential conversation, twenty minutes, this week. Or two minutes to apply. A career that caps out only where you do — which is nowhere.</p>
+      <p>FY27 began on 1 October, and its first class is being selected now: seven places, and every one of them gets the full build. One more seat, for a sales manager to build a unit here. One confidential conversation, twenty minutes, this week. Or go straight to the official application. A career that caps out only where you do — which is nowhere.</p>
+      <!-- What the official application really is, measured on the live posting 12 Nov 2026: it sits on
+           Guardian's own careers site and asks for an account (name, e-mail, telephone, address) BEFORE the
+           form. The page used to promise "two minutes"; a candidate met an account wall instead, which is the
+           worst moment to surprise somebody. Say it here, where they can still choose the other door. -->
+      <ol class="applyflow rv" aria-label="What happens when you apply">
+        <li style="--i:0"><b>1</b><span>You open Guardian&rsquo;s careers site &mdash; the posting for this branch, in Chaguanas.</span></li>
+        <li style="--i:1"><b>2</b><span>You make an account there: name, e-mail, telephone, address. That part is Guardian&rsquo;s, not ours.</span></li>
+        <li style="--i:2"><b>3</b><span>You fill in the application and send it.</span></li>
+        <li style="--i:3"><b>4</b><span>A person <em>here</em> reads it within 48 hours, and you get a call.</span></li>
+      </ol>
+      <p class="applynote">Not ready to be in a system? <a href="#talk" data-talk>Book the conversation</a> instead &mdash; no account, no CV, and it reaches the Branch Manager alone.</p>
       <div class="hero-cta"><a class="btn btn-1" href="#talk" data-talk>Book a confidential conversation <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a><a class="btn btn-2" href="https://guardianlifeofthecaribbean.talentnest.com/en/posting/215291/location/287275" data-apply>Start the Selection</a></div>
       <p class="small">The environment decides. We select the driven. · Reviewed within 48 hours · Chaguanas · Central Trinidad</p>
     </div>
     <div class="qrcard rv">
       <img src="/agentmgt/qr.svg" alt="QR code that opens the official application" width="164" height="164">
-      <div><h3>On another device?</h3><p>Scan to apply in 2 minutes — straight to the official application.</p></div>
+      <div><h3>On another device?</h3><p>Scan to open the official application on Guardian&rsquo;s own careers site.</p></div>
     </div>
   </div>
 </section>
@@ -2219,8 +2521,8 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   if(nums.length && !noMotion.matches && 'IntersectionObserver' in window){
     var cio=new IntersectionObserver(function(es){es.forEach(function(e){
       if(!e.isIntersecting)return;cio.unobserve(e.target);
-      var el=e.target,to=parseFloat(el.getAttribute('data-to'))||0,suf=el.getAttribute('data-suffix')||'',dec=+(el.getAttribute('data-dec')||0),t0=0,dur=1200;
-      function frame(t){if(!t0)t0=t;var k=Math.min(1,(t-t0)/dur);el.textContent=(to*(1-Math.pow(1-k,3))).toFixed(dec)+suf;if(k<1)requestAnimationFrame(frame)}
+      var el=e.target,to=parseFloat(el.getAttribute('data-to'))||0,suf=el.getAttribute('data-suffix')||'',dec=+(el.getAttribute('data-dec')||0),sep=el.hasAttribute('data-sep'),t0=0,dur=1200;
+      function frame(t){if(!t0)t0=t;var k=Math.min(1,(t-t0)/dur);var v=to*(1-Math.pow(1-k,3));el.textContent=(sep?Math.round(v).toLocaleString('en-GB'):v.toFixed(dec))+suf;if(k<1)requestAnimationFrame(frame)}
       el.textContent='0'+suf;requestAnimationFrame(frame);
     })},{threshold:.4});
     nums.forEach(function(el){cio.observe(el)});
@@ -2313,10 +2615,21 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
       err.textContent=bad;err.classList.toggle('on',!!bad);if(bad){(bad.indexOf('name')>-1?f.name:bad.indexOf('phone')>-1?f.phone:f.email).focus();return}
       if(f.dataset.sending)return;f.dataset.sending='1';var was=btn.innerHTML;btn.disabled=true;btn.textContent='Sending\u2026';
       var who=val('who'),when=val('when'),note=val('note');
+      /* Which ad brought them. Every post link carries ?from=<tag>; a QR scan
+         arrives untagged, because the code baked into the four MP4s points at
+         /careers/ with nothing after it, so an untagged row says so plainly
+         rather than being left blank. The tag rides the FIELDS array, which the
+         Branch Manager's own e-mail and the hiring board both print, so this
+         needs no Apps Script paste; it goes on `page` too, for the sheet's own
+         column. Clamped to a short slug: it is a URL parameter that ends up
+         printed in an e-mail. */
+      var SRCW={'ad-b-fb':'Ad B, the second-year cliff — Facebook','ad-b-ig':'Ad B — Instagram Story','ad-b-wa':'Ad B — WhatsApp','ad-a-li':'Ad A, the contracted advisor — LinkedIn','ad-a-wa':'Ad A — WhatsApp, the agents’ groups','ad-a-fb':'Ad A — Facebook','ad-c-fb':'Ad C, the branch’s own post — Facebook','ad-c-li':'Ad C — LinkedIn','ad-c-wa':'Ad C — WhatsApp','ad-c-ig':'Ad C — Instagram Story','ad-g-li':'Ad G, the feed post — LinkedIn','ad-g-fb':'Ad G, the feed post — Facebook','ad-g-ig':'Ad G — Instagram Story','ad-g-wa':'Ad G — WhatsApp','film':'The recruiting film','careersvideo':'The film page','qr':'A QR scan','post':'A branch-page post'};
+      var from=String((new URLSearchParams(location.search)).get('from')||'').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,24);
+      var src=SRCW[from]||(from?'Tagged “'+from+'”':'Direct, or a QR scan');
       var body={action:'q.quote',form:'careers',code:'QT',line:'Careers',title:'Confidential conversation',
         core:{name:name,email:email,phone:phone,reach:'call',when:when,agent:'',notes:note,website:val('website')},
-        fields:[{section:'The conversation',k:'who',label:'Where they are now',value:who},{section:'The conversation',k:'when_talk',label:'Best time for the call',value:when},{section:'The conversation',k:'note',label:'One line he should know first',value:note}],
-        page:location.pathname,ref_from:(new URLSearchParams(location.search)).get('from')||'',at:new Date().toISOString()};
+        fields:[{section:'The conversation',k:'src',label:'Came from',value:src},{section:'The conversation',k:'who',label:'Where they are now',value:who},{section:'The conversation',k:'when_talk',label:'Best time for the call',value:when},{section:'The conversation',k:'note',label:'One line he should know first',value:note}],
+        page:location.pathname+(from?'?from='+from:''),ref_from:from,at:new Date().toISOString()};
       var ref='',sent=false,first=name.split(' ')[0];
       function finish(){f.dataset.sending='';btn.disabled=false;btn.innerHTML=was;if(!ref)ref=localRef();show(ref,sent,first,when);if(!sent)setTimeout(function(){mailRoad(body,ref)},60)}
       var ac=('AbortController' in window)?new AbortController():null,to=setTimeout(function(){if(ac)ac.abort()},12000);
@@ -2372,7 +2685,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   /* ── the coach stage and the career timeline start their motion when they come into view (the page's .rv reveal is
         scroll-driven where view() is supported, so nothing else adds .in there) ── */
   (function(){
-    var els=[].slice.call(d.querySelectorAll('.cstage,.ctlw,.ffnw,.mwk,.hb,.lsteps,.brief,.rkclock,.rkday,.mgbars')); if(!els.length) return;
+    var els=[].slice.call(d.querySelectorAll('.cstage,.ctlw,.ffnw,.mwk,.hb,.lsteps,.brief,.rkclock,.rkday,.mgbars,.cdt,.cdg,.cdf,.cdc,.cdi,.bkgrid')); if(!els.length) return;
     if(noMotion.matches||!('IntersectionObserver' in window)){ els.forEach(function(e){e.classList.add('in')}); return; }
     var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -12% 0px'});
     els.forEach(function(e){io.observe(e)});
@@ -2422,7 +2735,7 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
   })();
   var guide=d.getElementById('guide'),bub=d.getElementById('gbubble'),bubTimer=null,lastMsg='';
   function say(msg,ms){ms=ms||4200;if(msg===lastMsg&&bub.classList.contains('on'))return;lastMsg=msg;bub.innerHTML=msg;bub.classList.add('on');guide.classList.remove('hop');void guide.offsetWidth;guide.classList.add('hop');clearTimeout(bubTimer);bubTimer=setTimeout(function(){bub.classList.remove('on')},ms)}
-  var lines={screens:"Not a mock-up. <b>Tap a screen; they turn by themselves.</b>",factfind:"Our own fact find. <b>141 fact finds since July, every one read by a manager.</b>",coach:"A coach, not a clock. <b>Your week, before Friday.</b>",manager:"One seat for a sales manager. <b>The system does the unit's admin; you coach.</b>",people:"Real names. <b>You will know them by their first names within a week.</b>",why:"His words, not mine. <b>The room decides.</b>",talk:"Twenty minutes, your questions, his own figures. <b>He reads this himself.</b>",hero:"I’m <b>RAI</b> — the branch AI. Already contracted? Nobody will know you asked. New to this? You get the full build. Either way: <b>one 20-minute conversation.</b>",you:"Two kinds of people. Different fears. <b>Same five gates.</b>",env:"This is the room. <b>The room decides.</b>",path:"Two roads up — overrides, offices, management. All written.",quiz:"Answer honestly. Especially question five.",wins:"Don’t take our word. <b>Come meet the qualifiers.</b>",gates:"Five gates, LIMRA’s process. <b>Evidence, not vibes.</b> Tap a gate.",sys:"Thirty-nine things that run for you. <b>Nobody here works alone.</b>",faq:"Practising advisors: your enquiry stays confidential.",apply:"Seven places, and one for a sales manager. <b>One conversation, twenty minutes.</b> Tap, or scan to apply."};
+  var lines={screens:"Not a mock-up. <b>Tap a screen; they turn by themselves.</b>",factfind:"Our own fact find. <b>141 fact finds since July, every one read by a manager.</b>",coach:"A coach, not a clock. <b>Your week, before Friday.</b>",manager:"One seat for a sales manager. <b>The system does the unit's admin; you coach.</b>",people:"Real names. <b>You will know them by their first names within a week.</b>",why:"His words, not mine. <b>The room decides.</b>",talk:"Twenty minutes, your questions, his own figures. <b>He reads this himself.</b>",hero:"I’m <b>RAI</b> — the branch AI. Already contracted? Nobody will know you asked. New to this? You get the full build. Either way: <b>one 20-minute conversation.</b>",you:"Two kinds of people. Different fears. <b>Same five gates.</b>",book:"Already have a book? <b>Here, the branch keeps it with you.</b>",conduct:"Every step leaves a record. <b>That record protects you.</b>",leads:"Everyone starts with the people they know. <b>Nobody is left there alone.</b>",env:"This is the room. <b>The room decides.</b>",path:"Two roads up — overrides, offices, management. All written.",quiz:"Answer honestly. Especially question five.",wins:"Don’t take our word. <b>Come meet the qualifiers.</b>",gates:"Five gates, LIMRA’s process. <b>Evidence, not vibes.</b> Tap a gate.",sys:"Thirty-nine things that run for you. <b>Nobody here works alone.</b>",faq:"Practising advisors: your enquiry stays confidential.",apply:"Seven places, and one for a sales manager. <b>One conversation, twenty minutes.</b> Tap, or scan to apply."};
   if('IntersectionObserver' in window){
     var secIO=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&lines[e.target.dataset.g])say(lines[e.target.dataset.g])})},{threshold:.3});
     d.querySelectorAll('[data-g]').forEach(function(s){secIO.observe(s)});
@@ -2436,8 +2749,18 @@ footer .ic{width:1rem;height:1rem;color:var(--aL)}
 <script>(function(){document.querySelectorAll('[data-who]').forEach(function(a){a.addEventListener('click',function(){var r=document.querySelector('input[name="who"][value="'+a.getAttribute('data-who')+'"]');if(r){r.checked=true;r.dispatchEvent(new Event('change',{bubbles:true}))}})})})();</script>
 <!-- rrb-views -->
 <script>
-(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{
+(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;var d=document;try{
 (new Image()).src=u+'?p='+encodeURIComponent(location.hostname+location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+/* The apply click, counted on the SAME counter and from INSIDE this block on purpose: tools/wire-views.py
+   rewrites the first var u after the <!-- rrb-views --> comment, so this ping follows it automatically and a
+   re-wire can never leave a stale address behind here. Path only, as the beacon has always been: no name, no
+   e-mail, nothing the person typed. It is what makes the funnel readable — views of /careers against clicks
+   on apply — because once they reach Guardian's site we can see nothing at all. */
+d.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('[data-apply]');if(!a)return;
+/* Apply opens in its own tab. Until now it replaced this page, so a candidate who met Guardian's account
+   wall had nothing to come back to — and the conversation door, which needs no account, was gone with it. */
+try{a.target='_blank';a.rel='noopener';}catch(_){}
+try{(new Image()).src=u+'?p='+encodeURIComponent(location.hostname+location.pathname.replace(/\/$/,'')+'/apply')+'&r='+encodeURIComponent(location.pathname)+'&z='+Date.now();}catch(_){}},true);
 }catch(e){}})();
 </script>
 </body>

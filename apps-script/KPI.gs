@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-10b';
+var SCRIPT_VERSION = '2026-11-16a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -560,11 +560,11 @@ var SCHEDULE = {
     blocks: { KPI1: { time: '8am – 4pm', focus: 'Pendings, increases and group apps, reinstatements and lapses, Query Pal and surveys, reports', kpi: 'Pendings' } }
   },
   kamla: {
-    // The BMA: 8 to 5 (Ricky, 17 October 2026). She manages Sales Support 1, 2
-    // and 3 and is in charge of agents, licensing, training and branch
-    // operations; her plan goes out at 7:30.
-    hours: '8am – 5pm', lunch: '12:00 – 1:00pm',
-    blocks: { KPI1: { time: '8am – 5pm', focus: 'Sales support, agents, licensing, training and branch operations; escalations and reporting', kpi: 'Lic/Staffing/SA/HR' } }
+    // The BMA: 7:30 to 5 from 12 November 2026 (Ricky, 11 Nov: "check Kamla in at 7:30am and check out at
+    // 5pm"; 8 to 5 from 17 October). She manages Sales Support 1, 2 and 3 and is in charge of agents,
+    // licensing, training and branch operations; her day e-mail goes at 7:00.
+    hours: '7:30am – 5pm', lunch: '12:00 – 1:00pm',
+    blocks: { KPI1: { time: '7:30am – 5pm', focus: 'Sales support, agents, licensing, training and branch operations; escalations and reporting', kpi: 'Lic/Staffing/SA/HR' } }
   },
   // The Branch Manager's personal assistant: the mail run, contracts to agents,
   // deliveries and the diary. He closes off at 5pm (Ricky, 19 October 2026),
@@ -3079,11 +3079,20 @@ function dayStates_(day, people) {
   return out;
 }
 
+/* Agents are never nudged here (12 Nov 2026, 2026-11-12b). Rajiv Soodoo projected his day and was told at 1:13pm
+ * "You have not checked in today": an agent's check-in is the projection on the Agent Day tab, which dayStates_ never
+ * reads, and agents have had no midday mail since 8 Nov. The noon and 3pm nudges are for the desks whose day is the
+ * register and the plan: the staff desks and the unit managers. */
+function nudgeDesk_(sid) {
+  sid = String(sid || '');
+  return DAY_MAIL_DESKS.indexOf(sid) >= 0 || UM_DESKS.indexOf(sid) >= 0;
+}
+
 /** Noon. Somebody with no sign-in, no plan and nothing done hears about it while the afternoon can still be used. */
 function remindMidday(e) {
   if (nothingToReport_(e)) return 'Nobody signed in and nothing was filed — nobody nudged.';
   var date = todayISO_();
-  var people = publicRoster_();
+  var people = publicRoster_().filter(function (p) { return nudgeDesk_(p.staffId); });
   var st = dayStates_(date, people);
   var sent = [], working = [];
 
@@ -3110,7 +3119,7 @@ function remindMidday(e) {
 function remindCheckpoint(e) {
   if (nothingToReport_(e)) return 'Nobody signed in and nothing was filed — nobody nudged.';
   var date = todayISO_();
-  var people = publicRoster_();
+  var people = publicRoster_().filter(function (p) { return nudgeDesk_(p.staffId); });
   var st = dayStates_(date, people);
   var nowM = minutesOf_(hhmm_(new Date()));
   var sent = [];
@@ -3873,7 +3882,7 @@ function housekeepingTick_() {
   var morningSent = 0;
   people.forEach(function (p) {
     var sid = String(p.staffId), sp = parseSpan_(scheduleFor_(sid).hours || '');
-    if (!sp || mins < sp.start - STAFF_MAIL_LEAD || mins > sp.start + 20 || morningSent >= MORNING_MAIL_PER_RUN) return;
+    if (!sp || mins < sp.start - staffMailLead_(sid) || mins > sp.start + 20 || morningSent >= MORNING_MAIL_PER_RUN) return;
     if (dsMarkHolds_(props.getProperty('daystart_first_' + sid + '_' + day))) return;
     // Past the budget a second build waits ten minutes for the next run rather than be stopped part-way (21 Oct 2026).
     if (morningSent && late()) return;
@@ -4182,6 +4191,10 @@ function sendMorningNow() {
 
 var MORNING_MAIL_AT = 5 * 60;          // the day's first run: 5:00am
 var STAFF_MAIL_LEAD = 30;              // a desk's morning e-mail, half an hour before its start
+// A desk may set its own lead (minutes before its start). None does: Kamla's request of 11 Nov 2026 for her
+// e-mail by 7:30 was met by moving her day to 7:30 (see SCHEDULE.kamla), so hers goes at 7:00 like everyone's.
+var STAFF_MAIL_LEAD_BY = {};
+function staffMailLead_(sid) { return STAFF_MAIL_LEAD_BY[sid] || STAFF_MAIL_LEAD; }
 var MORNING_MAIL_PER_RUN = 3;
 var BM_MAIL_AT = 5 * 60;               // 5:00am, the Branch Manager's operations review
 var ABSENT_AFTER_MIN = 5;              // no sign-in by start + 5 is absent (Ricky, 20 Oct 2026); the work moves at start + COVER.AFTER_MIN
@@ -10383,7 +10396,7 @@ function checkUnitAgents() { var out = UM_DESKS.map(function (s) { return s + ':
    e-mail half an hour before, a progress report at midday, and the evening
    sign-off half an hour before six. */
 var AGENT_AM_AT = 7 * 60;          // 7:00am: Ricky, 2 Nov 2026, "the dashboard the agent gets at 7 o'clock in the morning" (was 5:30am)
-var AGENT_MD_AT = 12 * 60;         // midday progress: not e-mailed since 8 Nov 2026 unless AGENT_MIDDAY = on
+var AGENT_MD_AT = 12 * 60;         // midday progress: on again from 13 Nov 2026; AGENT_MIDDAY = off stops it
 var AGENT_ROLL_AT = 18 * 60;       // 6:00pm: one e-mail to each manager with their agents' close-offs (8 Nov 2026)
 var AGENT_PM_AT = 17 * 60 + 30;    // 5:30pm
 var AGENT_PER_RUN = 8;             // agents a ten-minute run; the rest follow
@@ -10538,8 +10551,25 @@ function agentInPilot_(a) {
   var code = String(a.code || a.agentId || '').toUpperCase().replace(/[^A-Z0-9]/g, ''), nk = bkNk_(a.agentName || a.name || '');
   return agentPilotList_().some(function (x) { var c = String(x).toUpperCase().replace(/[^A-Z0-9]/g, ''); return (code && c === code) || (nk && bkNk_(x) === nk); });
 }
+/** Taken off the platform (12 Nov 2026, agreed at the 11 Nov branch meeting): agents who
+ *  never used My workday get no morning, midday or 5:30 e-mail and no My workday page, and
+ *  submit the weekly Time & Income Control by hand instead, as their contract requires.
+ *  Everything else from the branch is unchanged. Script Property AGENT_DAY_OFF (names or
+ *  agent numbers, comma separated) replaces the list; "none" clears it. */
+var AGENT_DAY_OFF = ['Darryl Manick', 'Stephanie Rajkumar', 'Daniel Bhagwandas',
+                     'Faizal Mohammed', 'Felicia Rampersad', 'Varun Seegolam'];
+function agentDayOffList_() {
+  var p = ''; try { p = PropertiesService.getScriptProperties().getProperty('AGENT_DAY_OFF') || ''; } catch (e) {}
+  if (/^\s*none\s*$/i.test(p)) return [];
+  return p ? p.split(',').map(function (x) { return x.trim(); }).filter(String) : AGENT_DAY_OFF;
+}
+function agentDayOff_(a) {
+  if (!a) return false;
+  var code = String(a.code || a.agentId || '').toUpperCase().replace(/[^A-Z0-9]/g, ''), nk = bkNk_(a.agentName || a.name || '');
+  return agentDayOffList_().some(function (x) { var c = String(x).toUpperCase().replace(/[^A-Z0-9]/g, ''); return (code && c === code) || (nk && bkNk_(x) === nk); });
+}
 /** This agent's mail goes to them: every agent when live, the pilot's in preview. */
-function agentLiveFor_(a) { var m = agentMode_(); return m === 'live' || (m === 'preview' && agentInPilot_(a)); }
+function agentLiveFor_(a) { if (agentDayOff_(a)) return false; var m = agentMode_(); return m === 'live' || (m === 'preview' && agentInPilot_(a)); }
 
 function agSlug_(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
 
@@ -14344,7 +14374,7 @@ function agentBatchData_(list, day) {
     [a.agentName, a.name].forEach(function (n) { if (n && names.indexOf(n) === -1) names.push(n); });
     emails.push(String(a.email).toLowerCase());
   });
-  var out = { open: {}, closed: {}, ff: {}, f360: {}, feed: null };
+  var out = { open: {}, ahead: {}, closed: {}, ff: {}, f360: {}, feed: null };
   var nk = function (s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); };
   try { out.feed = ff360Feed_(); } catch (e) {}
   list.forEach(function (a) { out.f360[a.key] = ff360Agent_(out.feed, [a.agentName, a.name]); });
@@ -14357,7 +14387,7 @@ function agentBatchData_(list, day) {
     try { out.orphan[a.key] = orphanFor_(a.agentName); } catch (e) { out.orphan[a.key] = null; }
   });
   var who = {};
-  list.forEach(function (a) { who[nk(a.agentName)] = a.key; who[nk(a.name)] = a.key; out.open[a.key] = []; out.closed[a.key] = []; out.ff[a.key] = []; });
+  list.forEach(function (a) { who[nk(a.agentName)] = a.key; who[nk(a.name)] = a.key; out.open[a.key] = []; out.ahead[a.key] = []; out.closed[a.key] = []; out.ff[a.key] = []; });
   if (!names.length) return out;
   var inList = names.map(soqlStr_).join(',');
   // Their licence dates (8 Nov 2026): the brief mentions a licence only in the month it falls due.
@@ -14374,11 +14404,15 @@ function agentBatchData_(list, day) {
   var keyOf = function (r) { return byCid[String(r.Agent__c || '').slice(0, 15)] || who[nk(r.Agent__r && r.Agent__r.Name)]; };
   try {
     taskWhere.forEach(function (w) { sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, Owner.Name, Agent__c, Agent__r.Name, LastModifiedDate FROM Task' +
-      ' WHERE IsClosed = false AND ' + w + ' AND ActivityDate <= ' + day + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%')" +
+      // 16 Nov 2026 (Randolph: "not seeing the staff has any tasks open for my pending cases"): every open task is read, not only
+      // those due by today. Due today or overdue stays in out.open, as before; the rest, dated later or undated, is out.ahead,
+      // "being worked for your clients", so a settlement Azariah has dated for Wednesday reaches the agent on Monday.
+      ' WHERE IsClosed = false AND ' + w + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%')" +
       ' ORDER BY ActivityDate ASC LIMIT 1500').forEach(function (r) {
         var k = keyOf(r); if (!k) return;
-        out.open[k].push({ id: r.Id, subject: shorten_(r.Subject, 95), ty: r.Task_Type__c || '', due: r.ActivityDate || '',
-          late: !!(r.ActivityDate && r.ActivityDate < day), owner: (r.Owner && r.Owner.Name) || '', status: r.Status || '' });
+        var t = { id: r.Id, subject: shorten_(r.Subject, 95), ty: r.Task_Type__c || '', due: r.ActivityDate || '',
+          late: !!(r.ActivityDate && r.ActivityDate < day), owner: (r.Owner && r.Owner.Name) || '', status: r.Status || '' };
+        if (r.ActivityDate && r.ActivityDate <= day) out.open[k].push(t); else { t.ahead = true; out.ahead[k].push(t); }
       }); });
   } catch (e) {}
   try {
@@ -14401,7 +14435,99 @@ function agentBatchData_(list, day) {
         out.ff[k].push({ name: nm, occ: r.Occupation__c || '', on: on });
       });
   } catch (e) {}
+  // The agent's own comments on their cases, and what the branch did after each (13 Nov 2026).
+  try { out.said = agSaid_(list, day, taskWhere, keyOf, out.open); } catch (e) { out.said = {}; }
   return out;
+}
+
+/* ── What we did with what you told us (13 Nov 2026) ──
+ *  Ricky: "Cases that they have been commented on, have that at the top to say what we've done for you ... It is unfair to the
+ *  agents to be posting ... and there is no responses." For each agent, every comment they put on one of their cases in the last
+ *  AG_SAID.DAYS days (from My day, "Agent · Name · …", or the assignment board, "From the assignment board · Name (Agent), …"), and
+ *  the first word from the branch on that task after it: a person's post or reply, or the task closed. The tracker's own notes
+ *  (Branch Intelligence, MOVED, the follow-ups) and the agent's own later posts are not an answer. */
+var AG_SAID = { DAYS: 7, MAX: 8 };
+function agSaidClock_(at) {
+  var l = sfLocal_(at); if (!l) return '';
+  var h = Math.floor(l.min / 60), m = l.min % 60;
+  return shortDate_(l.day) + ' ' + ((h % 12) || 12) + ':' + (m < 10 ? '0' : '') + m + (h < 12 ? 'am' : 'pm');
+}
+/** Who wrote a post on an agent's case: { agent: true } for the agent, { sys: true } for the tracker, else { by: first name }. */
+function agSaidWho_(text, byName, agentNames) {
+  var t = String(text || '').trim(), isAgent = function (nm) {
+    var k = String(nm || '').toLowerCase().replace(/\s+/g, ' ').trim(); if (!k) return false;
+    return agentNames.some(function (n) { n = String(n || '').toLowerCase(); return n && (n === k || n.split(' ')[0] === k.split(' ')[0] && k.split(' ').slice(-1)[0] === n.split(' ').slice(-1)[0]); });
+  };
+  var b = /^From the assignment board · ([^,(]+?)\s*(\([^)]*\))?,/.exec(t);
+  if (b) {
+    if (/Named to\b/.test(b[1])) return { sys: true };
+    return isAgent(b[1]) ? { agent: true } : { by: b[1].trim().split(/\s+/)[0] };
+  }
+  var np = noteParts_(t);
+  if (np.ours) {
+    var parts = String(np.who || '').split(' · ');
+    if (/^Agent/.test(parts[0])) return isAgent(parts[1]) ? { agent: true } : { sys: true };
+    if (/^Branch Intelligence/.test(parts[0])) return { sys: true };
+    return { by: String(parts[1] || parts[0] || '').trim().split(/\s+/)[0] };
+  }
+  if (SYS_POST_RE.test(t)) return { sys: true };
+  if (isAgent(byName)) return { agent: true };
+  return { by: String(byName || 'The branch').split(/\s+/)[0] };
+}
+function agSaid_(list, day, taskWhere, keyOf, open) {
+  var out = {}, names = {}, tasks = {};
+  list.forEach(function (a) { out[a.key] = []; names[a.key] = [a.agentName, a.name].filter(Boolean); });
+  var since = shiftDays_(day, -AG_SAID.DAYS);
+  Object.keys(open || {}).forEach(function (k) { (open[k] || []).forEach(function (t) { tasks[t.id] = { k: k, s: t.subject, owner: t.owner, closedAt: '' }; }); });
+  taskWhere.forEach(function (w) {
+    sfkQuery_('SELECT Id, Subject, Owner.Name, Agent__c, Agent__r.Name, CompletedDateTime FROM Task WHERE IsClosed = true AND ' + w +
+      ' AND CompletedDateTime >= ' + sfkUtcAt_(since, 0) + ' LIMIT 1000').forEach(function (r) {
+        var k = keyOf(r); if (!k) return;
+        tasks[r.Id] = { k: k, s: shorten_(r.Subject, 95), owner: (r.Owner && r.Owner.Name) || '', closedAt: String(r.CompletedDateTime || '') };
+      });
+  });
+  var ids = Object.keys(tasks); if (!ids.length) return out;
+  var posts = {}, userName = {};
+  try { var u = sfkUsers_() || {}; Object.keys(u).forEach(function (s) { userName[u[s].id] = nameFor_(s); }); } catch (e) {}
+  for (var i = 0; i < ids.length; i += 150) {
+    var inList = ids.slice(i, i + 150).map(soqlStr_).join(','), at = sfkUtcAt_(since, 0);
+    try { sfkQuery_("SELECT ParentId, CreatedById, CreatedBy.Name, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND ParentId IN (" + inList + ') AND CreatedDate >= ' + at + ' LIMIT 2000')
+      .forEach(function (r) { (posts[r.ParentId] = posts[r.ParentId] || []).push({ at: String(r.CreatedDate), by: userName[r.CreatedById] || (r.CreatedBy && r.CreatedBy.Name) || '', text: postPlain_(r.Body) }); }); } catch (e) {}
+    try { sfkQuery_('SELECT ParentId, CreatedById, CreatedBy.Name, CreatedDate, CommentBody FROM FeedComment WHERE ParentId IN (' + inList + ') AND CreatedDate >= ' + at + ' LIMIT 2000')
+      .forEach(function (r) { (posts[r.ParentId] = posts[r.ParentId] || []).push({ at: String(r.CreatedDate), by: userName[r.CreatedById] || (r.CreatedBy && r.CreatedBy.Name) || '', text: postPlain_(r.CommentBody) }); }); } catch (e) {}
+  }
+  ids.forEach(function (id) {
+    var t = tasks[id], ps = (posts[id] || []).sort(function (a, b) { return a.at.localeCompare(b.at); });
+    if (!ps.length) return;
+    ps.forEach(function (p) { p.w = agSaidWho_(p.text, p.by, names[t.k]); });
+    var mine = ps.filter(function (p) { return p.w.agent; }); if (!mine.length) return;
+    var last = mine[mine.length - 1];
+    var resp = ps.filter(function (p) { return p.at > last.at && p.w.by; })[0] || null;
+    var said = noteParts_(last.text).ours ? noteParts_(last.text).body : last.text.replace(/^From the assignment board · [\s\S]*?\d{1,2}:\d{2}:\s*/, '');
+    var x = { id: id, s: t.s, owner: String(t.owner || '').split(' ')[0], at: last.at, said: shorten_(String(said).replace(/\s+/g, ' '), 160), n: mine.length };
+    if (resp) x.resp = { by: resp.w.by, at: resp.at, text: shorten_(String(noteParts_(resp.text).ours ? noteParts_(resp.text).body : resp.text.replace(/^From the assignment board · [\s\S]*?\d{1,2}:\d{2}:\s*/, '')).replace(/\s+/g, ' '), 160) };
+    else if (t.closedAt && t.closedAt > last.at) x.closed = t.closedAt;
+    out[t.k].push(x);
+  });
+  Object.keys(out).forEach(function (k) {
+    out[k].sort(function (a, b) { return (a.resp || a.closed ? 1 : 0) - (b.resp || b.closed ? 1 : 0) || b.at.localeCompare(a.at); });
+  });
+  return out;
+}
+/** The midday e-mail's first section: each comment the agent made, and what we did. Empty when there is none. */
+function agSaidHtml_(said) {
+  said = said || []; if (!said.length) return '';
+  var done = said.filter(function (x) { return x.resp || x.closed; }).length, wait = said.length - done;
+  var rows = said.slice(0, AG_SAID.MAX).map(function (x) {
+    var ans = x.resp ? '<div style="margin-top:3px;color:' + MAIL.green + '">&#10003; <b>' + esc_(x.resp.by) + '</b> answered ' + esc_(agSaidClock_(x.resp.at)) + ': ' + esc_(x.resp.text) + '</div>'
+      : x.closed ? '<div style="margin-top:3px;color:' + MAIL.green + '">&#10003; Closed by <b>' + esc_(x.owner || 'the branch') + '</b> ' + esc_(agSaidClock_(x.closed)) + '</div>'
+      : '<div style="margin-top:3px;color:' + MAIL.red + ';font-weight:700">No reply yet · with ' + esc_(x.owner || 'the branch') + '. Your manager and Mrs Dookran see this e-mail.</div>';
+    return agLine_('<b>' + esc_(x.s) + '</b><div style="color:' + MAIL.muted + ';margin-top:2px">You wrote ' + esc_(agSaidClock_(x.at)) + ': &ldquo;' + esc_(x.said) + '&rdquo;</div>' + ans);
+  }).join('');
+  return sectionLabel_('What we have done with what you told us') +
+    '<div style="font-size:13px;line-height:1.5;margin:-4px 0 8px">' + said.length + ' of your cases you commented on in the last ' + AG_SAID.DAYS + ' days: ' +
+      '<b style="color:' + MAIL.green + '">' + done + ' answered</b>' + (wait ? ', <b style="color:' + MAIL.red + '">' + wait + ' waiting on us</b>' : '') + '.</div>' +
+    agCard_(wait ? MAIL.red : MAIL.green, rows) + (said.length > AG_SAID.MAX ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (said.length - AG_SAID.MAX) + ' more on My day.</div>' : '');
 }
 
 /** One line per client, not per policy (2 Nov 2026: "Jabraele Talleh, Jabraele Talleh"): "Shivani Pancham (2 policies, 1829d)". */
@@ -14628,6 +14754,29 @@ function agRiseHero_(r, day, kind) {
   return out;
 }
 
+/** Open tasks dated after today (or undated): pendings and settlements first, then by date. */
+function agAheadSort_(list) {
+  var rank = function (t) { return /^pending/i.test(t.ty || '') || /settle|pending|requirement|underwrit|application/i.test(t.subject || '') ? 0 : 1; };
+  return (list || []).slice().sort(function (x, y) { return rank(x) - rank(y) || String(x.due || '9').localeCompare(String(y.due || '9')); });
+}
+
+/** The day's list for My day: what is due by today first, then what is being worked later in the week. */
+function agItemsOf_(open, ahead) {
+  var m = function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late, ty: t.ty || '', ahead: !!t.ahead }; };
+  return (open || []).slice(0, AGENT_LIST_MAX * 2).map(m).concat((ahead || []).slice(0, AGENT_LIST_MAX * 2).map(m));
+}
+
+/** "Also being worked for your clients": open, dated later this week or undated, with who has it. */
+function agAheadHtml_(a, ahead) {
+  if (!ahead || !ahead.length) return '';
+  return sectionLabel_('Also being worked for your clients (' + ahead.length + ')') +
+    agCard_(MAIL.green, ahead.slice(0, AGENT_LIST_MAX).map(function (t) {
+      return agLine_('<b>' + esc_(String(t.owner).split(' ')[0] || '—') + '</b> · ' + esc_(t.subject) +
+        ' <span style="color:' + MAIL.muted + '">· ' + (t.due ? 'next step ' + esc_(shortDate_(t.due)) : 'open') + '</span>' +
+        ' <a href="' + esc_(workGoUrl_(a.key, 'agitems', t.id)) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &amp; comment &rarr;</a>');
+    }).join('') + (ahead.length > AGENT_LIST_MAX ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (ahead.length - AGENT_LIST_MAX) + ' more on My day.</div>' : ''));
+}
+
 function agentMorningMail_(a, day, data, cache) {
   var first = String(a.name).split(' ')[0];
   var open = (data.open[a.key] || []).slice().sort(function (x, y) { return (x.late === y.late ? 0 : x.late ? -1 : 1) || String(x.due).localeCompare(String(y.due)); });
@@ -14639,7 +14788,8 @@ function agentMorningMail_(a, day, data, cache) {
   var f3 = (data.f360 || {})[a.key] || null;
   var g = (data.goal || {})[a.key] || null, qs = (data.q || {})[a.key] || [], orp = (data.orphan || {})[a.key] || null;
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
-  var items = open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late, ty: t.ty || '' }; });
+  var ahead = agAheadSort_((data.ahead || {})[a.key]);
+  var items = agItemsOf_(open, ahead);
   // Today's opportunities on their book (8 Nov 2026): opened for support to research, on the agent's list to answer.
   if (data.cid && data.cid[a.key]) a.cid = data.cid[a.key];   // the agent's Contact, so their book is asked for by an indexed lookup
   var newOpps = []; try { newOpps = agOppOpen_(a, day); } catch (e) { try { runlog_('opportunities for ' + a.name + ' FAILED: ' + (e && e.message)); } catch (e2) {} }
@@ -14676,6 +14826,7 @@ function agentMorningMail_(a, day, data, cache) {
         ' <a href="' + esc_(workGoUrl_(a.key, 'agitems', t.id)) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &amp; comment &rarr;</a>');
     }).join('') + (open.length > AGENT_LIST_MAX ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (open.length - AGENT_LIST_MAX) + ' more on the page.</div>' : ''))
       : '<div style="font-size:13px;color:' + MAIL.muted + '">Nothing due for your clients today.</div>') +
+    agAheadHtml_(a, ahead) +
     (book ? sectionLabel_('Your book') + agCard_(MAIL.red,
         (book.lapsed.length ? agLine_('<b style="color:' + MAIL.red + '">Lapsed last night: ' + book.lapsed.length + '</b> · ' + esc_(agByClient_(book.lapsed, false).slice(0, 4).join(', '))) : '') +
         (book.slipped.length ? agLine_('<b style="color:' + MAIL.amber + '">Slipped into arrears: ' + book.slipped.length + '</b> · ' + esc_(agByClient_(book.slipped, false).slice(0, 4).join(', '))) : '') +
@@ -14721,7 +14872,8 @@ function agentMiddayMail_(a, day, data) {
     planned ? 'On My day: your projection from this morning, to change if the day has moved, and what is being worked for you.' : 'No projection is in yet. On My day, a number against each line.') + agOldLine_(replyUrl_(a.key, day, 'ag'));
   var coachTop = ''; if (agCoachOn_(a)) { try { coachTop = agCoachLine_(a, day, false) + replyButton_(workGoUrl_(a.key, planned ? 'agmid' : 'agplan'), planned ? 'How is it going? Check in' : 'Check in now', planned ? 'Thirty seconds: what is done so far.' : 'Your plan is filled in from your goal; change any number.'); } catch (e) {} }
   var rise = ''; try { rise = agRiseHero_(agRiseData_(a, day, { g: (data.goal || {})[a.key] || null, f3: (data.f360 || {})[a.key] || null, open: open, closed: closed, orp: (data.orphan || {})[a.key] || null }), day, 'md'); } catch (e) {}
-  var body = coachTop + rise +
+  var said = ''; try { said = agSaidHtml_((data.said || {})[a.key]); } catch (e) {}
+  var body = said + coachTop + rise +
     '<div style="font-size:14px;line-height:1.55;margin-bottom:14px">' + esc_(first) + ', it is midday. Here is your progress so far' +
       (planned ? ', against what you projected this morning' : ': <b style="color:' + MAIL.red + '">no projection was set this morning</b>') + '. At 5:30 you close the day off and it balances against your projection.</div>' +
     statTiles_([
@@ -14736,7 +14888,8 @@ function agentMiddayMail_(a, day, data) {
       return agLine_('&#10003; <b>' + esc_(String(t.owner).split(' ')[0]) + '</b> · ' + esc_(t.subject)); }).join('')) : '') +
     (open.length ? sectionLabel_('Still open for your clients (' + open.length + ')') + agCard_(MAIL.amber, open.slice(0, AGENT_LIST_MAX).map(function (t) {
       return agLine_('<b>' + esc_(String(t.owner).split(' ')[0] || '—') + '</b> · ' + esc_(t.subject) +
-        (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>' : '')); }).join('')) : '');
+        (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>' : '')); }).join('')) : '') +
+    agAheadHtml_(a, agAheadSort_((data.ahead || {})[a.key]));
   return agSend_(a, 'Midday progress · ' + a.name + ' · ' + shortDate_(day) + ' · ' + closed.length + ' closed, ' + open.length + ' open',
     agRiseShell_('Midday · ' + first, prettyDate_(day), body), agentCopies_(a));
 }
@@ -14781,7 +14934,7 @@ function agentTick_(day, mins) {
   if (!kind) return [];
   // No midday e-mail since 8 Nov 2026 (Ricky: "Will drop midday"); My day still has the midday check-in.
   if (kind === 'md' && agMiddayMode_() !== 'on') return [];
-  var people = agentPeople_(), keys = Object.keys(people).sort();
+  var people = agentPeople_(), keys = Object.keys(people).sort().filter(function (k) { return !agentDayOff_(people[k]); });
   // A preview's mark (agp_) never stops the agent's own mail (ag_) once live; the pilot's mail is live (27 Oct 2026).
   var preOf = function (k) { return agentLiveFor_(people[k]) ? 'ag_' : 'agp_'; };
   var done = function (k) { return props.getProperty(preOf(k) + kind + '_' + k + '_' + day); };
@@ -14956,7 +15109,8 @@ function agSendCopy_(to, cc, subject, html, a) {
  * the morning brief (the coach's deep read, copied to their manager and Mrs Dookran) and the 5:30 close-off (to them alone). Each
  * manager gets ONE e-mail at 6:30 with all their agents' close-offs, Mrs Dookran copied, instead of a copy per agent per save. */
 function agFlag_(name) { var v = ''; try { v = String(PropertiesService.getScriptProperties().getProperty(name) || '').trim().toLowerCase(); } catch (e) {} return v; }
-function agMiddayMode_() { return agFlag_('AGENT_MIDDAY'); }
+// On by default since 13 Nov 2026 (morning, lunchtime, end of day). AGENT_MIDDAY = off stops it.
+function agMiddayMode_() { return agFlag_('AGENT_MIDDAY') === 'off' ? 'off' : 'on'; }
 function agSaveCopyOn_() { return agFlag_('AGENT_SAVE_COPY') === 'on'; }
 
 /** The agents each manager looks after, among those mailed today: { email: [agent, …] }. */
@@ -18510,13 +18664,14 @@ function agentDayModel_(a, day, opt) {
   var first = String(a.name || '').split(' ')[0], nowM = minutesOf_(hhmm_(new Date()));
   var m = { ok: true, v: SCRIPT_VERSION, agent: true, first: first, name: a.name, day: day, date: prettyDate_(day), at: twelve_(hhmm_(new Date())),
             on: agentLiveFor_(a) || !!opt.preview, film: 'https://rickyrampersadbranch.com/agentworkday/' };
+  if (agentDayOff_(a)) { m.on = false; m.off = 'You hand your weekly Time & Income Control to Mrs Dookran, our BMA, on Monday morning. The forms are at the front, where the admin forms are kept.'; return m; }
   if (!m.on) return m;
   var props = PropertiesService.getScriptProperties(), mark = function (k) { return props.getProperty('ag_' + k + '_' + a.key + '_' + day) || ''; };
   // No 5:30 e-mail, no list: make today's now, as the e-mail would have, so the page has the clients on it.
   var items = null; try { items = bigGet_('ag_items_' + a.key + '_' + day, null); } catch (e) {}
   if (!items) {
     try { var data = agentBatchData_([a], day), open = (data.open[a.key] || []).slice().sort(function (x, y) { return (x.late === y.late ? 0 : x.late ? -1 : 1) || String(x.due).localeCompare(String(y.due)); });
-      bigPut_('ag_items_' + a.key + '_' + day, open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late, ty: t.ty || '' }; })); } catch (e) {}
+      bigPut_('ag_items_' + a.key + '_' + day, agItemsOf_(open, agAheadSort_((data.ahead || {})[a.key]))); } catch (e) {}
   }
   var plan = {}, close = {}; try { plan = agRows_(a.key, day, 'plan'); close = agRows_(a.key, day, 'close'); } catch (e) {}
   m.project = { url: replyUrl_(a.key, day, 'ag'), done: Object.keys(plan).length > 0, by: twelve_(mmText_(AGENT_ABSENT_AT)) };
@@ -19000,7 +19155,7 @@ function agentMorningMail2_(a, day, data, cm) {
     (or.kinds.length ? line('Your notes say: ' + or.kinds.map(function (k) { return k.n + ' ' + esc_(k.l); }).join(' · ')) : '') : '';
   var pen = pd && pd.n ? line((pd.settle ? '<b style="color:' + MAIL.green + '">' + pd.settle + ' should settle now</b> · ' : '') + (pd.one ? '<b>' + pd.one + '</b> one step away · ' : '') + (pd.stuck ? '<b style="color:' + MAIL.red + '">' + pd.stuck + ' stuck</b> · ' : '') + pd.n + ' open') +
     pd.list.slice(0, 4).map(function (x) { return line('<b>' + esc_(x.c || x.pol) + '</b>' + (x.pol ? ' · ' + esc_(x.pol) : '') + ' · ' + esc_(x.need) + (x.o ? ' <span style="color:' + MAIL.muted + '">(' + esc_(x.o) + ' has it' + (x.note ? ': ' + esc_(x.note) : '') + ')</span>' : '')); }).join('') : '';
-  var work = agStaffWork_(a, day, open, (data && data.q && data.q[a.key]) || []);
+  var work = agStaffWork_(a, day, open.concat(agAheadSort_((data && data.ahead && data.ahead[a.key]) || [])), (data && data.q && data.q[a.key]) || []);
   var lic = agLicenceLine_((data && data.lic && data.lic[a.key]) || null, day);
   var calls = (cm.calls || []).slice(0, 6).map(function (c) { return line('<b>' + esc_(c.c) + '</b> · ' + esc_(c.why) + (c.tel ? ' · <a href="tel:' + esc_(c.tel.replace(/[^\d+]/g, '')) + '" style="color:' + MAIL.navy + '">' + esc_(c.tel) + '</a>' : '')); }).join('');
   var rise = ''; try { rise = agRiseHero_(agRiseData_(a, day, { g: g, f3: cm.f3, open: open, months: mo, att: cm.att, cases: cs, orp: or ? { callbacks: (or.waiting || []).length } : null, book: cm.book ? { urgent: { length: cm.book.urgent } } : null }), day, 'am'); } catch (e) {}
@@ -22241,7 +22396,8 @@ var ATT_GRACE_MIN = 5;   // late after five minutes (Ricky, 20 Oct 2026)
    last day on those hours ('until') and the hours. Today's hours are always
    SCHEDULE's; only a day before an 'until' reads from here. */
 var SCHEDULE_WAS = {
-  elizabeth: [{ until: '2026-10-22', hours: '7am – 3pm' }]
+  elizabeth: [{ until: '2026-10-22', hours: '7am – 3pm' }],
+  kamla: [{ until: '2026-11-11', hours: '8am – 5pm' }]
 };
 
 /** The hours string this desk kept on that day ("2026-10-12"); today's when no day is given. */
