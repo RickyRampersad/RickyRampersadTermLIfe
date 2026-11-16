@@ -4272,7 +4272,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 - **The new-way films** (26 October 2026: "a video that will go to the clients on our new process moving forward, a
   video for the staff on the new process forward … very short … a new initiative of the Ricky Rampersad branch … this
   will go viral … motions and graphics … sample data").
-  - **For groups: `/groupmgt/client/`** (`groupmgt/client/index.html`; `/groupnewway/` and `/groupmgt/` forward to it), "Our new way of looking after your group", 1 min 23 s:
+  - **For groups: `/groupmgt/client/`** (`groupmgt/client/index.html`; `/groupnewway/` and `/groupmgt/` forward to it), "Our new way of looking after your group", 1 min 30 s since the 16 November re-cut (1 min 23 s before):
     `groupclientmanagement/new-way.mp4` (wide, 1920x1080) and `new-way-phone.mp4` (upright, 1080x1920, for Reels,
     Status and Stories), with posters `new-way.jpg` and `new-way-phone.jpg` and the share card `new-way-card.jpg` for the
     Open Graph preview. A phone held upright opens on the phone cut; buttons switch. Ten scenes: the promise, the Monday
@@ -4293,6 +4293,31 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     cropped to the dialog with the attached file's name painted out, because that name was a real group's.
   - Re-cut when the pages change: re-run `shots.js`, then `render.js` and `mix.py`. The figures, people and groups on
     screen are all invented.
+  - **Re-cut 16 November 2026, and kept in the repository this time** (the `films26/` scratchpad was gone). Asked
+    for as "shall the group video be enhanced with the changes we made and the background music changed", then the
+    branch manager's own track ("Cooperate tech presentation music", sent in the chat) and "a lot more motion, graphic,
+    scaling and a pop". `tools/film/build-gcmfilm.py client|staff` writes `new-way-film.html` (1:30, the group's film,
+    wide and upright) and `staff-new-way-film.html` (3:25); `films-gcm.py` writes their films.json entries.
+    - **What changed in the words:** the group's film names Guardian Life group life, health and pension, adds the
+      people coming up (65, coming of age, retiring) and the rating of the account manager on every bill, and never says
+      "Rampersad" aloud (the name is on screen). The staff film adds the Monday 11:00 team note, the upload that updates
+      the billing record in Salesforce and opens the tasks, the bill e-mail's stars on the staff member's record, and holds.
+    - **Voice:** Andrew Expressive, both films voiced whole in one job (keys `gcmc3`, `gcms3`). The first pass (`gcmc2`,
+      `gcms2`) dropped one line and was heard wrong on four ("tier" → "here", "She or" → "Shear", "leavers" →
+      "levers", "one to five" → "one of five"); those were re-worded, not retried. "Kamla" transcribes as "Camila";
+      her name is on screen.
+    - **Music:** his track is 60 s at 125.28 bpm with four-bar phrases, so `loopbars.py` repeats bars 8 to 24 on the
+      beat and lands the track's own ending on the film's last seconds. The track is not in the repository (licence
+      unknown, and the repository is the public site); a re-cut needs it again.
+    - **Screens:** `tools/film/gcmshots/` (JPEG, with `boxes-client.json` and `boxes-staff.json`: each key element's
+      box in its PNG's pixels). The camera (`cam()`) eases to the element the voice names, a tap ring lands on a
+      button, an outline marks a panel. Shot on an invented branch (Harbour Point Logistics Ltd and seven others);
+      the shooters and mocks were in the scratchpad.
+    - The shots found two faults on the live pages, fixed with the films: the statement's figure tiles ran 19px past
+      the panel on a phone (`client.html`), and the hold banner's rule drew the small "On hold" tag as a grey block
+      (`gcm.css`, now `.hold:not(.chip)`).
+    - The group's film says bills come on the 26th and ask the group to rate their account manager: true only once
+      `gblGoLive` has been run.
 - **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
   forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
   training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
