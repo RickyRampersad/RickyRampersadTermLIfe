@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-13b';
+var SCRIPT_VERSION = '2026-11-16a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -14374,7 +14374,7 @@ function agentBatchData_(list, day) {
     [a.agentName, a.name].forEach(function (n) { if (n && names.indexOf(n) === -1) names.push(n); });
     emails.push(String(a.email).toLowerCase());
   });
-  var out = { open: {}, closed: {}, ff: {}, f360: {}, feed: null };
+  var out = { open: {}, ahead: {}, closed: {}, ff: {}, f360: {}, feed: null };
   var nk = function (s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); };
   try { out.feed = ff360Feed_(); } catch (e) {}
   list.forEach(function (a) { out.f360[a.key] = ff360Agent_(out.feed, [a.agentName, a.name]); });
@@ -14387,7 +14387,7 @@ function agentBatchData_(list, day) {
     try { out.orphan[a.key] = orphanFor_(a.agentName); } catch (e) { out.orphan[a.key] = null; }
   });
   var who = {};
-  list.forEach(function (a) { who[nk(a.agentName)] = a.key; who[nk(a.name)] = a.key; out.open[a.key] = []; out.closed[a.key] = []; out.ff[a.key] = []; });
+  list.forEach(function (a) { who[nk(a.agentName)] = a.key; who[nk(a.name)] = a.key; out.open[a.key] = []; out.ahead[a.key] = []; out.closed[a.key] = []; out.ff[a.key] = []; });
   if (!names.length) return out;
   var inList = names.map(soqlStr_).join(',');
   // Their licence dates (8 Nov 2026): the brief mentions a licence only in the month it falls due.
@@ -14404,11 +14404,15 @@ function agentBatchData_(list, day) {
   var keyOf = function (r) { return byCid[String(r.Agent__c || '').slice(0, 15)] || who[nk(r.Agent__r && r.Agent__r.Name)]; };
   try {
     taskWhere.forEach(function (w) { sfkQuery_('SELECT Id, Subject, Task_Type__c, ActivityDate, Status, Owner.Name, Agent__c, Agent__r.Name, LastModifiedDate FROM Task' +
-      ' WHERE IsClosed = false AND ' + w + ' AND ActivityDate <= ' + day + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%')" +
+      // 16 Nov 2026 (Randolph: "not seeing the staff has any tasks open for my pending cases"): every open task is read, not only
+      // those due by today. Due today or overdue stays in out.open, as before; the rest, dated later or undated, is out.ahead,
+      // "being worked for your clients", so a settlement Azariah has dated for Wednesday reaches the agent on Monday.
+      ' WHERE IsClosed = false AND ' + w + " AND (NOT Subject LIKE 'Email:%') AND (NOT Subject LIKE '%Email: Happy Birthday%')" +
       ' ORDER BY ActivityDate ASC LIMIT 1500').forEach(function (r) {
         var k = keyOf(r); if (!k) return;
-        out.open[k].push({ id: r.Id, subject: shorten_(r.Subject, 95), ty: r.Task_Type__c || '', due: r.ActivityDate || '',
-          late: !!(r.ActivityDate && r.ActivityDate < day), owner: (r.Owner && r.Owner.Name) || '', status: r.Status || '' });
+        var t = { id: r.Id, subject: shorten_(r.Subject, 95), ty: r.Task_Type__c || '', due: r.ActivityDate || '',
+          late: !!(r.ActivityDate && r.ActivityDate < day), owner: (r.Owner && r.Owner.Name) || '', status: r.Status || '' };
+        if (r.ActivityDate && r.ActivityDate <= day) out.open[k].push(t); else { t.ahead = true; out.ahead[k].push(t); }
       }); });
   } catch (e) {}
   try {
@@ -14750,6 +14754,29 @@ function agRiseHero_(r, day, kind) {
   return out;
 }
 
+/** Open tasks dated after today (or undated): pendings and settlements first, then by date. */
+function agAheadSort_(list) {
+  var rank = function (t) { return /^pending/i.test(t.ty || '') || /settle|pending|requirement|underwrit|application/i.test(t.subject || '') ? 0 : 1; };
+  return (list || []).slice().sort(function (x, y) { return rank(x) - rank(y) || String(x.due || '9').localeCompare(String(y.due || '9')); });
+}
+
+/** The day's list for My day: what is due by today first, then what is being worked later in the week. */
+function agItemsOf_(open, ahead) {
+  var m = function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late, ty: t.ty || '', ahead: !!t.ahead }; };
+  return (open || []).slice(0, AGENT_LIST_MAX * 2).map(m).concat((ahead || []).slice(0, AGENT_LIST_MAX * 2).map(m));
+}
+
+/** "Also being worked for your clients": open, dated later this week or undated, with who has it. */
+function agAheadHtml_(a, ahead) {
+  if (!ahead || !ahead.length) return '';
+  return sectionLabel_('Also being worked for your clients (' + ahead.length + ')') +
+    agCard_(MAIL.green, ahead.slice(0, AGENT_LIST_MAX).map(function (t) {
+      return agLine_('<b>' + esc_(String(t.owner).split(' ')[0] || '—') + '</b> · ' + esc_(t.subject) +
+        ' <span style="color:' + MAIL.muted + '">· ' + (t.due ? 'next step ' + esc_(shortDate_(t.due)) : 'open') + '</span>' +
+        ' <a href="' + esc_(workGoUrl_(a.key, 'agitems', t.id)) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &amp; comment &rarr;</a>');
+    }).join('') + (ahead.length > AGENT_LIST_MAX ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (ahead.length - AGENT_LIST_MAX) + ' more on My day.</div>' : ''));
+}
+
 function agentMorningMail_(a, day, data, cache) {
   var first = String(a.name).split(' ')[0];
   var open = (data.open[a.key] || []).slice().sort(function (x, y) { return (x.late === y.late ? 0 : x.late ? -1 : 1) || String(x.due).localeCompare(String(y.due)); });
@@ -14761,7 +14788,8 @@ function agentMorningMail_(a, day, data, cache) {
   var f3 = (data.f360 || {})[a.key] || null;
   var g = (data.goal || {})[a.key] || null, qs = (data.q || {})[a.key] || [], orp = (data.orphan || {})[a.key] || null;
   var base = ''; try { base = sfkToken_().instance_url + '/'; } catch (e) {}
-  var items = open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late, ty: t.ty || '' }; });
+  var ahead = agAheadSort_((data.ahead || {})[a.key]);
+  var items = agItemsOf_(open, ahead);
   // Today's opportunities on their book (8 Nov 2026): opened for support to research, on the agent's list to answer.
   if (data.cid && data.cid[a.key]) a.cid = data.cid[a.key];   // the agent's Contact, so their book is asked for by an indexed lookup
   var newOpps = []; try { newOpps = agOppOpen_(a, day); } catch (e) { try { runlog_('opportunities for ' + a.name + ' FAILED: ' + (e && e.message)); } catch (e2) {} }
@@ -14798,6 +14826,7 @@ function agentMorningMail_(a, day, data, cache) {
         ' <a href="' + esc_(workGoUrl_(a.key, 'agitems', t.id)) + '" style="color:' + MAIL.navy + ';font-weight:700;font-size:12px">open &amp; comment &rarr;</a>');
     }).join('') + (open.length > AGENT_LIST_MAX ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:4px">and ' + (open.length - AGENT_LIST_MAX) + ' more on the page.</div>' : ''))
       : '<div style="font-size:13px;color:' + MAIL.muted + '">Nothing due for your clients today.</div>') +
+    agAheadHtml_(a, ahead) +
     (book ? sectionLabel_('Your book') + agCard_(MAIL.red,
         (book.lapsed.length ? agLine_('<b style="color:' + MAIL.red + '">Lapsed last night: ' + book.lapsed.length + '</b> · ' + esc_(agByClient_(book.lapsed, false).slice(0, 4).join(', '))) : '') +
         (book.slipped.length ? agLine_('<b style="color:' + MAIL.amber + '">Slipped into arrears: ' + book.slipped.length + '</b> · ' + esc_(agByClient_(book.slipped, false).slice(0, 4).join(', '))) : '') +
@@ -14859,7 +14888,8 @@ function agentMiddayMail_(a, day, data) {
       return agLine_('&#10003; <b>' + esc_(String(t.owner).split(' ')[0]) + '</b> · ' + esc_(t.subject)); }).join('')) : '') +
     (open.length ? sectionLabel_('Still open for your clients (' + open.length + ')') + agCard_(MAIL.amber, open.slice(0, AGENT_LIST_MAX).map(function (t) {
       return agLine_('<b>' + esc_(String(t.owner).split(' ')[0] || '—') + '</b> · ' + esc_(t.subject) +
-        (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>' : '')); }).join('')) : '');
+        (t.late ? ' <span style="color:' + MAIL.red + ';font-weight:700">· overdue since ' + esc_(shortDate_(t.due)) + '</span>' : '')); }).join('')) : '') +
+    agAheadHtml_(a, agAheadSort_((data.ahead || {})[a.key]));
   return agSend_(a, 'Midday progress · ' + a.name + ' · ' + shortDate_(day) + ' · ' + closed.length + ' closed, ' + open.length + ' open',
     agRiseShell_('Midday · ' + first, prettyDate_(day), body), agentCopies_(a));
 }
@@ -18641,7 +18671,7 @@ function agentDayModel_(a, day, opt) {
   var items = null; try { items = bigGet_('ag_items_' + a.key + '_' + day, null); } catch (e) {}
   if (!items) {
     try { var data = agentBatchData_([a], day), open = (data.open[a.key] || []).slice().sort(function (x, y) { return (x.late === y.late ? 0 : x.late ? -1 : 1) || String(x.due).localeCompare(String(y.due)); });
-      bigPut_('ag_items_' + a.key + '_' + day, open.slice(0, AGENT_LIST_MAX * 2).map(function (t) { return { id: t.id, s: t.subject, o: t.owner, due: t.due, late: t.late, ty: t.ty || '' }; })); } catch (e) {}
+      bigPut_('ag_items_' + a.key + '_' + day, agItemsOf_(open, agAheadSort_((data.ahead || {})[a.key]))); } catch (e) {}
   }
   var plan = {}, close = {}; try { plan = agRows_(a.key, day, 'plan'); close = agRows_(a.key, day, 'close'); } catch (e) {}
   m.project = { url: replyUrl_(a.key, day, 'ag'), done: Object.keys(plan).length > 0, by: twelve_(mmText_(AGENT_ABSENT_AT)) };
@@ -19125,7 +19155,7 @@ function agentMorningMail2_(a, day, data, cm) {
     (or.kinds.length ? line('Your notes say: ' + or.kinds.map(function (k) { return k.n + ' ' + esc_(k.l); }).join(' · ')) : '') : '';
   var pen = pd && pd.n ? line((pd.settle ? '<b style="color:' + MAIL.green + '">' + pd.settle + ' should settle now</b> · ' : '') + (pd.one ? '<b>' + pd.one + '</b> one step away · ' : '') + (pd.stuck ? '<b style="color:' + MAIL.red + '">' + pd.stuck + ' stuck</b> · ' : '') + pd.n + ' open') +
     pd.list.slice(0, 4).map(function (x) { return line('<b>' + esc_(x.c || x.pol) + '</b>' + (x.pol ? ' · ' + esc_(x.pol) : '') + ' · ' + esc_(x.need) + (x.o ? ' <span style="color:' + MAIL.muted + '">(' + esc_(x.o) + ' has it' + (x.note ? ': ' + esc_(x.note) : '') + ')</span>' : '')); }).join('') : '';
-  var work = agStaffWork_(a, day, open, (data && data.q && data.q[a.key]) || []);
+  var work = agStaffWork_(a, day, open.concat(agAheadSort_((data && data.ahead && data.ahead[a.key]) || [])), (data && data.q && data.q[a.key]) || []);
   var lic = agLicenceLine_((data && data.lic && data.lic[a.key]) || null, day);
   var calls = (cm.calls || []).slice(0, 6).map(function (c) { return line('<b>' + esc_(c.c) + '</b> · ' + esc_(c.why) + (c.tel ? ' · <a href="tel:' + esc_(c.tel.replace(/[^\d+]/g, '')) + '" style="color:' + MAIL.navy + '">' + esc_(c.tel) + '</a>' : '')); }).join('');
   var rise = ''; try { rise = agRiseHero_(agRiseData_(a, day, { g: g, f3: cm.f3, open: open, months: mo, att: cm.att, cases: cs, orp: or ? { callbacks: (or.waiting || []).length } : null, book: cm.book ? { urgent: { length: cm.book.urgent } } : null }), day, 'am'); } catch (e) {}
