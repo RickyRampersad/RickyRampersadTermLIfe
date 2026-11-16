@@ -360,6 +360,8 @@ def client():
 # ---------------------------------------------------------------------------------------------- the staff film
 def staff():
     sc = []
+    L1 = dict(w=650, h=406)                 # one laptop screen
+    L2 = dict(w=520, h=325)                 # two, overlapped
     sc.append(S(1,
         '<div class="mid"><img class="mk" src="%s" alt="">%s<h1>%s</h1>'
         '<div class="sub" style="--kd:%.2fs">How it works, and who does what</div></div>'
@@ -386,7 +388,8 @@ def staff():
     sc.append(split(4,
         eb('Every week') + '<div class="rail3">' + ''.join(
             '<div class="tk" style="--kd:%.2fs"><b>%s</b><span>%s</span></div>' % (d, a, b) for a, b, d in week) + '</div>',
-        lap('s03-group.png', d=.3), 'wide'))
+        lap('s03c-preview.png', d=.3, n=4, moves=((at(4, 'six'), 'preview', 1.45), (at(4, 'Friday'), 'approve', 2.0)),
+            taps=((at(4, 'Friday') + .7, 'approve'),), **L1), 'wide3'))
     sc.append(split(5,
         eb('Monday 10:30') +
         row('star', 'Groups that haven&rsquo;t rated us get a reminder', at(5, 'reminder')) +
@@ -397,12 +400,12 @@ def staff():
                  '<p class="t">Salesforce task: <b>GROUP LETTER NOT SENT &middot; reason needed</b></p>', at(5, 'why'))))
     sc.append(split(6,
         eb('Monday 11:00') + '<h2>%s</h2>' % kin('One note to the whole team.', .3) +
-        row('users', 'Every group still without its letter', at(6, 'group'), '') +
+        row('users', 'Every group still without its letter', at(6, 'names'), '') +
         row('user', 'And who&rsquo;s responsible for it', at(6, 'responsible'), '', 'warn'),
-        mailcard('Group letters this week: 14 of 17 out', '3 not out &middot; who is responsible',
-                 '<div class="lst"><div><b>Coral Bay Foods Ltd</b><span>not approved &middot; Dana</span></div>'
-                 '<div><b>Northgate Engineering Ltd</b><span>held at the run &middot; Ravi</span></div>'
-                 '<div><b>Sunrise Bakery Ltd</b><span>no contact in Salesforce &middot; Dana</span></div></div>', at(6, 'note'))))
+        mailcard('Group letters this week: 7 of 8 out', '1 not out &middot; who is responsible',
+                 '<div class="lst"><div><b>Coral Bay Foods Ltd</b><span>not approved &middot; Dana</span></div></div>'
+                 '<p class="t" style="margin-top:12px">To every account owner, the Branch Manager&rsquo;s Assistant, the Branch Manager and sales support.</p>',
+                 at(6, 'note'))))
     flow = (('upload', 'Upload'), ('check', 'Check'), ('answer', 'Answer'), ('reconcile', 'Reconcile'), ('approve', 'Approve'))
     sc.append(S(7,
         '<div class="mid">' + eb('Every month', .2) +
@@ -420,39 +423,56 @@ def staff():
         eb('Billing &middot; eight steps') + '<h2>%s</h2>' % kin('Every check comes back as a finding.', at(9, 'Upload')) +
         '<div class="pair">' + chip('Fix', at(9, 'fix'), 'bad') + chip('Check', at(9, 'check', 1), 'warn') +
         chip('Note', at(9, 'note'), 'info') + chip('Okay', at(9, 'okay'), 'ok') + '</div>',
-        lap('s05-steps.png', d=.3), 'wide'))
+        lap('s05-steps.png', d=.3, n=9, moves=((at(9, 'eight'), 'strip', 1.55), (at(9, 'finding'), 'panel', 1.35)),
+            taps=((at(9, 'Upload'), 'step1'),), marks=((at(9, 'eight') + .5, 'strip'),), **L1), 'wide3'))
     sc.append(split(10,
         eb('The upload does the typing') +
-        row('cash', 'The month&rsquo;s billing record, brought into line', at(10, 'record'), 'in Salesforce, field by field', 'ok') +
-        row('user', 'A task for everyone who left or changed tier', at(10, 'left'), 'for the account owner') +
-        row('doc', 'One to query the adjustments', at(10, 'adjustments'), 'with Head Office', 'warn'),
-        lap('s06-found.png', d=.3, pos='0% 55%'), 'wide'))
+        row('cash', 'The month&rsquo;s billing record, updated to match', at(10, 'record'), 'in Salesforce, field by field', 'ok') +
+        row('user', 'A task for everyone who left or changed their cover', at(10, 'left'), 'for the account owner') +
+        row('doc', 'One more to query the adjustments', at(10, 'adjustments'), 'with Head Office', 'warn'),
+        lap('s06b-salesforce.png', d=.3, n=10, moves=((at(10, 'record'), 'sf-fields', 1.7), (at(10, 'left'), 'sf-tasks', 1.7)),
+            marks=((at(10, 'left') + .6, 'sf-tasks'),), **L1), 'wide3'))
     sc.append(split(11,
         eb('Answer, and update') + '<h2>%s</h2>' % kin('One tap. On Chatter, in your name.', at(11, 'Answer')) +
         row('chat', 'Last month&rsquo;s tasks, against this month&rsquo;s bill', at(11, 'update'), '', 'ok'),
-        '<div class="duo l">%s%s</div>' % (lap('s07-questions.png', 'back', .2, w=468, h=270), lap('s08-tasks.png', 'front', at(11, 'update'), w=468, h=270)),
-        'wide'))
+        '<div class="duo l">%s%s</div>' % (
+            lap('s07-questions.png', 'back', .2, n=11, moves=((at(11, 'tap', lead=.4), 'question', 1.6),), taps=((at(11, 'tap'), 'tap1'),), **L2),
+            lap('s08b-update.png', 'front', at(11, 'update', lead=.4), n=11, moves=((at(11, 'update'), 'update', 1.6),),
+                taps=((at(11, 'bill'), 'post'),), **L2)),
+        'wide3'))
     sc.append(split(12,
         eb('Joiners, leavers and the people') +
-        row('doc', 'Guardian&rsquo;s own forms, filled from Salesforce', at(12, 'forms'), 'chased every three working days', 'ok') +
-        row('cake', 'Who&rsquo;s turning sixty-five, or coming of age', at(12, 'sixty'), 'flagged at the people step'),
-        '<div class="duo l">%s%s</div>' % (lap('s09-forms.png', 'back', .2, w=468, h=270), lap('s10-people.png', 'front', at(12, 'people', 1), w=468, h=270)),
-        'wide'))
+        row('doc', 'Guardian&rsquo;s own forms, filled in from Salesforce', at(12, 'forms'), 'chased every three working days', 'ok') +
+        row('cake', 'Who&rsquo;s turning sixty-five, or coming of age', at(12, 'sixty'), 'shown at the people step'),
+        '<div class="duo l">%s%s</div>' % (
+            lap('s09-forms.png', 'back', .2, n=12, taps=((at(12, 'forms'), 'form-eb0010'),), **L2),
+            lap('s10b-flags.png', 'front', at(12, 'people', 1, lead=.4), n=12, moves=((at(12, 'sixty'), 'turning-65', 1.8),), **L2)),
+        'wide3'))
     sc.append(split(13,
         eb('The statement') + '<h2>%s</h2>' % kin('What&rsquo;s due, and what&rsquo;s still unpaid.', .3) +
         row('tick2', 'Tick reconciled only when you&rsquo;ve checked it yourself', at(13, 'reconciled'), '', 'ok') +
         row('check', 'Then approve it for the billing day', at(13, 'approve'), '', 'ok'),
-        lap('s11-statement.png', d=.3), 'wide'))
+        '<div class="duo l">%s%s</div>' % (
+            lap('s11-statement.png', 'back', .2, n=13, moves=((at(13, 'due'), 'tiles', 1.5),), **L2),
+            lap('s12-approve.png', 'front', at(13, 'reconciled', lead=.5), n=13,
+                moves=((at(13, 'reconciled'), 'reconciled', 1.9), (at(13, 'approve'), 'approve', 1.9)),
+                taps=((at(13, 'reconciled') + .4, 'reconciled'), (at(13, 'approve') + .4, 'approve')), **L2)),
+        'wide3'))
     sc.append(split(14,
         eb('The bill&rsquo;s e-mail') + '<h2>%s</h2>' % kin('It greets the contact by name.', .3) +
         stars(at(14, 'rate'), gap=.1) +
         '<div class="callout" style="--kd:%.2fs">Those stars count on <b>your</b> record.</div>' % at(14, 'stars'),
-        lap('s12-approve.png', d=.3, pos='0% 60%'), 'wide'))
+        '<div class="duo l">%s%s</div>' % (
+            lap('s12c-email.png', 'back', .2, n=14, moves=((at(14, 'greets'), 'greeting', 2.0),), **L2),
+            lap('s12e-stars.png', 'front', at(14, 'rate', lead=.5), n=14, moves=((at(14, 'rate'), 'stars', 1.9),),
+                taps=((at(14, 'stars'), 'star5'),), **L2)),
+        'wide3'))
     sc.append(split(15,
         eb('Missed the deadline?') + '<h2>%s</h2>' % kin('Give the real reason.', at(15, 'Give')) +
         '<div class="pair">' + chip('On the bill', at(15, 'bill')) + chip('On Chatter', at(15, 'Chatter')) +
         chip('To the Branch Manager', at(15, 'straight')) + '</div>',
-        lap('s13-late.png', d=.3), 'wide'))
+        lap('s13-late.png', d=.3, n=15, moves=((at(15, 'why'), 'dialog', 1.3), (at(15, 'Give'), 'reason', 1.8)),
+            taps=((at(15, 'straight'), 'send'),), **L1), 'wide3'))
     sc.append(S(16,
         '<div class="mid">' + eb('Every press is recorded', .2) +
         '<div class="www">' + ''.join('<div style="--kd:%.2fs"><b>%s</b></div>' % (at(16, w), t)
@@ -465,18 +485,23 @@ def staff():
         row('list', 'Checks the team dashboard and chases what&rsquo;s late', at(17, 'chases')) +
         row('users', 'Steps in when someone&rsquo;s away', at(17, 'away'), '', 'ok') +
         row('pause', 'One group, or every group, on hold', at(17, 'hold'), 'with the reason, and nobody&rsquo;s chased for it', 'warn'),
-        '<div class="duo l">%s%s</div>' % (lap('s01-team.png', 'back', .2, w=468, h=270), lap('s02-hold.png', 'front', at(17, 'hold'), w=468, h=270)),
-        'wide'))
-    sc.append(S(18,
-        '<div class="mid">' + eb('Until we go live', .2) +
+        '<div class="duo l">%s%s</div>' % (
+            lap('s01b-team-bma.png', 'back', .2, n=17, moves=((at(17, 'chases'), 'meters', 1.6),), **L2),
+            lap('s02-hold.png', 'front', at(17, 'hold', lead=.5), n=17, moves=((at(17, 'hold'), 'dialog', 1.4), (at(17, 'reason'), 'reason', 1.9)),
+                taps=((at(17, 'Nobody'), 'confirm'),), **L2)),
+        'wide3'))
+    sc.append(split(18,
+        eb('Until we go live') +
         '<div class="stamp" style="--kd:%.2fs">TEST</div>' % at(18, 'test') +
         '<div class="note" style="--kd:%.2fs">Every bill comes to you marked test.</div>' % at(18, 'bill') +
-        '<div class="punch" style="--kd:%.2fs">But Salesforce is real. Check before you press.</div></div>' % at(18, 'Salesforce'),
-        'test'))
+        '<div class="punch" style="--kd:%.2fs">But Salesforce is real. Check before you press.</div>' % at(18, 'Salesforce'),
+        lap('s04-door-list.png', d=.3, n=18, moves=((at(18, 'test'), 'test-mode', 2.2),), marks=((at(18, 'test') + .6, 'test-mode'),), **L1),
+        'wide3'))
     sc.append(split(19,
         eb('The training programme') + '<h1>%s</h1>' % kin('This is our new way.', at(19, 'This'), hi=('new',)) +
         '<div class="pair">' + chip('Read the programme', at(19, 'Read')) + chip('Take the test', at(19, 'test')) + '</div>',
-        lap('s14-training.png', d=.3), 'wide'))
+        lap('s14-training.png', d=.3, n=19, moves=((at(19, 'Read'), 'sections', 1.4), (at(19, 'test'), 'take-test', 2.0)),
+            taps=((at(19, 'test') + .6, 'take-test'),), **L1), 'wide3'))
     return sc
 
 CSS = """
@@ -508,6 +533,7 @@ body{font-family:Plex,system-ui,sans-serif;color:#142033;-webkit-font-smoothing:
 .split .R{position:relative;flex:0 0 300px;display:flex;justify-content:center}
 .sc.wide .R{flex:0 0 560px}
 .sc.wide2 .R{flex:0 0 470px}
+.sc.wide3 .split{gap:40px}.sc.wide3 .R{flex:0 0 662px}
 
 .mk{width:96px;height:96px;border-radius:22px;display:block;margin:0 auto 22px;box-shadow:0 16px 40px rgba(5,20,60,.35);
   animation:pop .7s cubic-bezier(.2,1.5,.4,1) both}
@@ -541,7 +567,7 @@ h2{font-size:38px;font-weight:600;line-height:1.16;letter-spacing:-.5px;margin-b
 .duo .back{left:0;top:0;opacity:.9}
 .duo .front{right:0;bottom:0}
 .duo .back .vp{filter:saturate(.8)}
-.duo.l{width:560px;height:440px}
+.duo.l{width:662px;height:500px}
 .duo.l .lap{position:absolute}
 .duo.l .back{left:0;top:0}
 .duo.l .front{right:0;bottom:0}
