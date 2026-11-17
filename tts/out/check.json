@@ -1,12 +1,7 @@
 {
- "tts/out/h868ia/01.mp3": [
+ "tts/out/h868ic/01.mp3": [
   "en",
   0.999,
-  "and it's built right into query pal. The moment the questions are done, our assistant creates the ticket for you. Nothing to retype and nothing to lose in an inbox."
- ],
- "tts/out/h868ia/02.mp3": [
-  "en",
-  0.998,
-  "Watch it happen. The chat on top, the ticket below, in the same second. The reference, the department, and the target time, all filled in."
+  "We used to chase queries by email, back and forth, and some got lost. Now that there's one green button on our website and one number, tap it and your query is logged with a reference."
  ]
 }
