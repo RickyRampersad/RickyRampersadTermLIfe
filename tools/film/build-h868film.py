@@ -64,6 +64,9 @@ ICON = {
     'doc': '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
     'share': '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/>',
     'clock': '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    'chat': '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
+    'bot': '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M9 16.5h6"/>',
+    'mail': '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
     'lock': '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
 }
 
@@ -103,8 +106,39 @@ scenes.append(f"""
   <div class="pill live" style="animation-delay:{at(n, 'any')}ms"><i></i>Here any hour of the day</div>
 </div>""")
 
-# 2 ─ one tap
+
+# 2 ─ how we evolved: from email to one tap (HELP 868 is now built into the branch website)
 n = 1
+MAILS = [('Re: Re: Re: my policy query', 'Back and forth, again', at(n, 'email')),
+         ('Fw: any update, please?', 'No reply yet', at(n, 'back')),
+         ('Re: any news?', 'Never answered', at(n, 'forth'))]
+mrows = ''.join(f'<div class="mrow" style="animation-delay:{t}ms">{ico("mail")}<span><b>{a}</b><small>{b}</small></span></div>' for a, b, t in MAILS)
+scenes.append(f"""
+<div class="center" style="justify-content:flex-start;padding-top:6px">
+  <p class="kick" style="animation-delay:150ms">How we have evolved</p>
+  <h1 style="font-size:78px">{words('From email to one tap.', 260, 130)}</h1>
+  <div class="evo">
+    <div class="old" style="animation-delay:{at(n, 'today') - 250}ms">
+      {mrows}
+      <div class="lost" style="animation-delay:{at(n, 'lost')}ms">LOST</div>
+    </div>
+    <div class="newp" style="animation-delay:{at(n, 'today')}ms">
+      <div class="site ev fl">
+        <div class="sbar"><i></i><i></i><i></i><span>rickyrampersadbranch.com</span></div>
+        <div class="sbody"><b>Protecting your family</b><i></i><i class="s"></i><i></i><i class="s"></i></div>
+        <div class="fab" style="animation-delay:{at(n, 'green') - 200}ms">{WA}<u class="tapx" style="animation-delay:{at(n, 'tap')}ms"></u></div>
+      </div>
+      <div class="phone chatpop" style="animation-delay:{at(n, 'tap') + 300}ms">
+        <div class="topbar">{WA}<span><b>HELP 868</b><small>Ricky Rampersad Branch</small></span></div>
+        <div class="chat">{bub('in', '<b>Hello and welcome to Ricky Rampersad Branch!</b>', at(n, 'tap') + 700) +
+                           bub('in', '✅ <b>Request logged</b><br>🎫 Reference: <b>RRB/2026/127</b>', at(n, 'logged'), 'rcpt')}</div>
+      </div>
+    </div>
+  </div>
+</div>""")
+
+# 2 ─ one tap
+n = 2
 scenes.append(f"""
 <div class="center">
   {head('For your clients', 'One tap and the chat opens.')}
@@ -120,7 +154,7 @@ scenes.append(f"""
 </div>""")
 
 # 3 ─ the welcome and the tap menu
-n = 2
+n = 3
 menu = ''.join(f'<li class="btn" style="animation-delay:{at(n, w) + 100}ms">{t}</li>' for w, t in
     [('question', 'A question about my policy'), ('claim', 'Make or check a claim'), ('update', 'Update my details'),
      ('payment', 'Pay or check a premium'), ('quote', 'Get a quote')])
@@ -132,7 +166,7 @@ scenes.append(f"""
 </div>""")
 
 # 4 ─ every question is a tap
-n = 3
+n = 4
 scenes.append(f"""
 <div class="center">
   {head('The easy part', 'Every question is a tap.')}
@@ -147,7 +181,7 @@ scenes.append(f"""
 </div>""")
 
 # 5 ─ privacy
-n = 4
+n = 5
 scenes.append(f"""
 <div class="center">
   {head('Safe by design', 'Only what we need.')}
@@ -166,7 +200,7 @@ scenes.append(f"""
 </div>""")
 
 # 6 ─ lands on Query Pal
-n = 5
+n = 6
 scenes.append(f"""
 <div class="center">
   {head('Logged, not lost', 'It lands on Query Pal.')}
@@ -179,8 +213,55 @@ scenes.append(f"""
   <div class="dept" style="animation-delay:{at(n, 'right')}ms">{ico('desk')}<span><b>The right department</b><small>Routed automatically</small></span></div>
 </div>""")
 
+
+# 7 ─ integrated: message in, ticket out (the assistant creates the Query Pal ticket itself)
+n = 7
+FLOW = [('chat', 'WhatsApp', 'You message HELP 868', at(n, 'questions')),
+        ('bot', 'Assistant', 'Asks, with options', at(n, 'assistant')),
+        ('doc', 'Query Pal', 'Ticket created automatically', at(n, 'ticket')),
+        ('desk', 'Our team', 'Routed to the right department', at(n, 'retype')),
+        ('ok', 'Back to you', 'Reference, reminders, rating', at(n, 'inbox'))]
+fnodes = ''.join(
+    f'<div class="fn" style="top:{i * 190}px;animation-delay:{t}ms"><span class="fi" style="animation-delay:{t}ms">{ico(k)}</span>'
+    f'<span class="ft"><b>{a}</b><small>{b}</small></span></div>' for i, (k, a, b, t) in enumerate(FLOW))
+scenes.append(f"""
+<div class="center">
+  <p class="kick" style="animation-delay:{at(n, 'built') - 200}ms">Built right in</p>
+  <h1 style="font-size:78px">{words('Message in. Ticket out.', at(n, 'query') - 100, 150)}</h1>
+  <div class="flow">
+    <div class="fline"><i class="fd" style="animation-delay:{at(n, 'questions')}ms"></i><i class="fd" style="animation-delay:{at(n, 'questions') + 1300}ms"></i></div>
+    {fnodes}
+  </div>
+</div>""")
+
+# 8 ─ watch it happen: the chat on top, the Query Pal ticket below, in the same second
+n = 8
+chat = (bub('out', 'Hi', at(n, 'watch')) +
+        bub('in', '<b>What can we help you with today?</b>', at(n, 'happen') + 100) +
+        bub('out', 'Pay or check a premium', at(n, 'chat')) +
+        bub('in', '<b>May I have your full name, please?</b>', at(n, 'top')) +
+        bub('out', 'Jane Doe', at(n, 'below')) +
+        bub('in', '✅ <b>Request logged</b><br>🎫 Reference: <b>RRB/2026/127</b><br>📌 Request: Premium Overdue<br>⏱ Target: 1 working day', at(n, 'same')))
+QR = [('Reference', 'RRB/2026/127', at(n, 'same') + 150), ('Source', 'HELP 868 WhatsApp', at(n, 'same') + 450),
+      ('Category', 'Payments and Premiums', at(n, 'reference')), ('Type', 'Premium Overdue', at(n, 'reference') + 350),
+      ('Department', 'Sales Support', at(n, 'department')), ('Turnaround', '1 working day', at(n, 'target')),
+      ('Status', 'Open', at(n, 'filled'))]
+qrows = ''.join(f'<div class="qrow"><span>{a}</span><b style="animation-delay:{t}ms"{" class=st" if a == "Status" else ""}>{b}</b></div>' for a, b, t in QR)
+scenes.append(f"""
+<div class="center" style="justify-content:flex-start;padding-top:6px">
+  <p class="kick" style="animation-delay:150ms">Sample · made-up client</p>
+  <h1 style="font-size:84px">{words('Watch it happen.', 260, 150)}</h1>
+  <div class="dz">
+    {chatwin(chat)}
+    <div class="qpc" style="animation-delay:{at(n, 'ticket')}ms">
+      <div class="qph"><b>Query Pal</b><span>New ticket · created automatically</span><em>Sample</em></div>
+      {qrows}
+    </div>
+  </div>
+</div>""")
+
 # 7 ─ receipt card + email
-n = 6
+n = 9
 scenes.append(f"""
 <div class="center">
   {head('Right in their hand', 'A receipt card, and an email.')}
@@ -189,7 +270,7 @@ scenes.append(f"""
 </div>""")
 
 # 8 ─ team sees it + pal
-n = 7
+n = 10
 scenes.append(f"""
 <div class="center">
   {head('Behind the scenes', 'Our team has the whole story.')}
@@ -202,7 +283,7 @@ scenes.append(f"""
 </div>""")
 
 # 9 ─ close and rate
-n = 8
+n = 11
 stars = ''.join(f'<span class="star" style="animation-delay:{at(n, "star") + 120 * i}ms">★</span>' for i in range(5))
 scenes.append(f"""
 <div class="center">
@@ -213,7 +294,7 @@ scenes.append(f"""
 </div>""")
 
 # 10 ─ reminders
-n = 9
+n = 12
 dots = ''.join(f'<div class="rem" style="animation-delay:{at(n, "every") + 450 * i}ms"><b>{i * 3 + 3}</b><small>working days</small><span>Update sent</span></div>' for i in range(3))
 scenes.append(f"""
 <div class="center">
@@ -223,7 +304,7 @@ scenes.append(f"""
 </div>""")
 
 # 11 ─ for agents + first client
-n = 10
+n = 13
 scenes.append(f"""
 <div class="center">
   {head('For agents', 'Share the link.')}
@@ -235,7 +316,7 @@ scenes.append(f"""
 </div>""")
 
 # 12 ─ close
-n = 11
+n = 14
 import qrcode
 q = qrcode.QRCode(border=0, error_correction=qrcode.constants.ERROR_CORRECT_M)
 q.add_data('https://rickyrampersadbranch.com/help868/')
@@ -401,6 +482,63 @@ h1.huge{font-size:150px;line-height:1}
 .rem{width:290px;padding:34px 20px;border-radius:34px;background:var(--card);border:3px solid var(--g);opacity:0}
 .act .rem{animation:pop .6s var(--e) both}
 .rem b{display:block;font-size:110px;line-height:1;font-weight:900}.rem small{display:block;font-size:28px;color:var(--mut);font-weight:700;margin-bottom:14px}.rem span{font-size:30px;font-weight:800;color:var(--g)}
+
+/* integration flow (scene 7) */
+.flow{position:relative;width:860px;height:900px;margin-top:56px}
+.fline{position:absolute;left:59px;top:62px;width:6px;height:760px;border-radius:3px;background:linear-gradient(#25D366,#00CFEA);opacity:.4}
+.fd{position:absolute;left:-9px;top:-10px;width:24px;height:24px;border-radius:50%;background:#25D366;box-shadow:0 0 26px 8px rgba(37,211,102,.7);opacity:0}
+.act .fd{animation:fdrop 2.6s linear infinite both}
+@keyframes fdrop{0%{transform:translateY(0);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateY(780px);opacity:0}}
+.fn{position:absolute;left:0;display:flex;align-items:center;gap:30px;text-align:left;opacity:.22}
+.act .fn{animation:fnlit .7s var(--e) both}
+@keyframes fnlit{from{opacity:.22;transform:translateX(-30px)}to{opacity:1;transform:none}}
+.fi{width:124px;height:124px;border-radius:36px;display:grid;place-items:center;background:#1b4268;border:4px solid #3d6a99;color:#fff;flex:none}
+.act .fi{animation:filit .7s var(--e) both}
+@keyframes filit{from{background:#1b4268;border-color:#3d6a99;color:#fff;transform:scale(.9)}60%{transform:scale(1.12)}to{background:#25D366;border-color:#25D366;color:#0d1f33;box-shadow:0 0 44px rgba(37,211,102,.6);transform:scale(1)}}
+.fi .ic{width:64px;height:64px}
+.ft b{display:block;font-size:50px;line-height:1.1}.ft small{display:block;font-size:30px;color:var(--mut);font-weight:600;margin-top:6px}
+/* watch it happen (scene 8) */
+.dz{zoom:.78;display:flex;flex-direction:column;align-items:center;margin-top:10px}
+.dz .phone{margin-top:20px}
+.qpc{margin-top:28px;width:820px;border-radius:36px;background:#fff;color:#0d1f33;overflow:hidden;box-shadow:0 36px 80px rgba(4,14,26,.5);opacity:0;text-align:left}
+.act .qpc{animation:qin .7s var(--e) both}
+@keyframes qin{from{opacity:0;transform:translateY(140px) scale(.94)}to{opacity:1;transform:none}}
+.qph{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 30px;background:#0d1f33;color:#fff;font-size:30px}
+.qph span{font-size:24px;color:#b9cadd;font-weight:600}
+.qph em{font-style:normal;font-size:22px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;background:#25D366;color:#0d1f33;padding:4px 14px;border-radius:999px}
+.qrow{display:flex;justify-content:space-between;padding:13px 30px;border-top:2px solid #e6eef0;font-size:31px}
+.qrow span{color:#5b6670;font-weight:600}.qrow b{opacity:0;font-weight:800}
+.act .qrow b{animation:rise .5s var(--e) both}
+.qrow b.st{color:#12643d}
+/* more motion on the existing scenes */
+@keyframes pop{from{opacity:0;transform:translateY(40px) scale(.8)}60%{opacity:1;transform:translateY(-8px) scale(1.06)}to{opacity:1;transform:none}}
+@keyframes glowp{0%,100%{box-shadow:0 30px 70px rgba(4,14,26,.5),0 0 0 0 rgba(37,211,102,0)}50%{box-shadow:0 30px 70px rgba(4,14,26,.5),0 0 64px 10px rgba(37,211,102,.5)}}
+.act .ticket{animation:rise .6s var(--e) both,glowp 2.4s ease-in-out infinite}
+.act .dept{animation:rise .6s var(--e) both,glowp 2.4s ease-in-out infinite}
+.act .url{animation:rise .6s var(--e) both,glowp 2.8s ease-in-out infinite}
+.act .rem{animation:pop .6s var(--e) both,glowp 2.6s ease-in-out infinite}
+.act .irow{animation:pop .6s var(--e) both,glowp 2.6s ease-in-out infinite}
+
+/* from email to one tap (scene 2) */
+.evo{position:relative;width:960px;height:1040px;margin-top:30px}
+.old{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;gap:24px;padding-top:40px}
+.act .old{animation:oldout .7s ease both}
+@keyframes oldout{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-140px) scale(.92)}}
+.mrow{position:relative;width:860px;display:flex;align-items:center;gap:26px;padding:28px 34px;border-radius:28px;background:#fff;color:#0d1f33;text-align:left;opacity:0}
+.act .mrow{animation:pop .6s var(--e) both}
+.mrow .ic{width:62px;height:62px;color:#5b6670}
+.mrow b{display:block;font-size:36px}.mrow small{display:block;font-size:28px;color:#5b6670;font-weight:600;margin-top:4px}
+.lost{position:absolute;right:50px;top:346px;font-size:76px;font-weight:900;letter-spacing:.1em;color:#ff6b5e;border:10px solid #ff6b5e;padding:6px 34px;border-radius:18px;background:rgba(13,31,51,.78);transform:rotate(-10deg);opacity:0}
+.act .lost{animation:stamp .5s var(--e) both}
+@keyframes stamp{from{opacity:0;transform:rotate(-10deg) scale(2.6)}to{opacity:1;transform:rotate(-10deg) scale(1)}}
+.newp{position:absolute;inset:0;opacity:0}
+.act .newp{animation:rise .7s var(--e) both}
+.site.ev{position:absolute;left:170px;top:10px;margin:0}
+.chatpop{position:absolute;left:90px;top:540px;width:780px;margin-top:0;opacity:0}
+.act .chatpop{animation:openup .7s var(--e) both}
+@keyframes openup{from{opacity:0;transform:translateY(140px) scale(.7)}to{opacity:1;transform:none}}
+.chatpop .chat{min-height:0}
+.b.rcpt{background:#fff;border:3px solid #25D366}
 #ctrl{position:fixed;left:12px;bottom:12px;z-index:9;font:13px system-ui;display:flex;gap:6px}
 '''.replace('__FONT__', FONT)
 
