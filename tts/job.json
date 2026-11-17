@@ -3,47 +3,28 @@
  "rate": "+0%",
  "check": true,
  "voices": {
-  "gcmc3": "en-US-AndrewMultilingualNeural",
-  "gcms3": "en-US-AndrewMultilingualNeural"
+  "gcmw": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "gcmc3": "+0%",
-  "gcms3": "+0%"
+  "gcmw": "+0%"
  },
  "films": {
-  "gcmc3": [
-   "This is our branch's new way of looking after your group.",
-   "Your group life, health and pension plans with Guardian Life, all in one place, and always up to date. No more chasing us for answers.",
-   "Every Monday at ten, you get one short report: what we finished, what's still open, and what we need from you.",
-   "Tap through to your own secure page. Your service items, your billing and your people each have their own tab.",
-   "On the twenty-sixth, your bills arrive, checked against our records, with one clear statement of what's due.",
-   "You'll see who's on your plans, who came off this year, and every application still pending, with who has it on our team.",
-   "We'll tell you ahead of time when someone's turning sixty-five, when a dependent comes of age, or when someone's close to retiring.",
-   "Someone joining or leaving? Tell us right there. The form fills itself in, and we follow it through to the end.",
-   "Give us up to five stars every week. And on every bill, rate the person who looks after your account.",
-   "A real person reads every answer, and acts on it. Behind it all is a named team, and every step is recorded. Nothing slips through.",
-   "Want this for your company? Call our branch on the number on your screen. Let's look after your people together."
-  ],
-  "gcms3": [
-   "Group client management, the new way. Here's how it works, and who does what.",
-   "There are four parts. Our Branch Manager sets the standard and owns the result. Kamla, our Branch Manager's Assistant, oversees the tasks. The support team looks after their own groups. And the system keeps time, and keeps the record.",
-   "You sign in with your own number and password, so everything you do is recorded in your name.",
-   "Every week, you run the six checks and approve each group by Friday. At ten on Monday, the letters go by themselves.",
-   "At ten thirty, groups that haven't rated us get a reminder. If one of your ready groups had no letter, you're asked why, and a task opens in your name. Reply by noon, and close it with the reason.",
-   "At eleven, if a group still has no letter, the whole team gets one note. It names each group, and who's responsible.",
-   "Every month, the bills come in on the twenty-fifth. You upload them, check them, answer the questions, reconcile and approve. At one o'clock, the Branch Manager gets the report.",
-   "On the twenty-sixth at ten, every approved bill goes by itself, with its statement. That's the deadline.",
-   "Open Billing, and eight steps guide you. Upload a bill, and every check against Salesforce comes back as a finding: fix, check, note or okay.",
-   "The upload does the typing for you, too. It updates the month's billing record in Salesforce to match the bill. Then it opens a task for everyone who left or changed their cover, and one more to query the adjustments.",
-   "Answer each question with a tap. Your answer goes on Chatter in your name. Then update last month's tasks against this month's bill.",
-   "People joining or leaving go on Guardian's own forms, filled in from Salesforce, and they're chased every three working days. The people step shows who's turning sixty-five, or coming of age.",
-   "The statement shows what's due and what's still unpaid. Tick reconciled only when you've checked it yourself, then approve it for the billing day.",
-   "The bill's e-mail greets the contact by name, and asks them to rate the person who looks after their account. Those stars count on your record.",
-   "Missed the deadline? Approve and Send now will ask why. Give the real reason. It goes on the bill, on Chatter, and straight to the Branch Manager.",
-   "Every press is recorded: who, when, and why. So Head Office, the Branch Manager, or the group can see exactly what happened.",
-   "Kamla checks the team dashboard every day, chases what's late, and steps in when someone's away. Kamla and the Branch Manager can put one group, or every group, on hold, with the reason. Nobody's chased for a group on hold.",
-   "Until we go live, every bill comes to you marked test. But Salesforce is real, and the upload writes to it, so check before you press.",
-   "Read the training programme, take the test, and let's make every group feel looked after. This is our new way."
+  "gcmw": [
+   "Here's what you'll see when you sign in to your group's service page, from the first screen to the last.",
+   "Every Monday at ten, our report lands in your inbox. The button in it takes you straight to your page.",
+   "To sign in, type the list bill number from your bill, and the access code in our e-mail. That's all it takes.",
+   "At the top, you'll see who looks after your account, and three tabs: your service items, your billing and your people.",
+   "First come the applications and increases still pending, with how long each has waited, and who on our team has it.",
+   "Below them is every open item. Open one to read its history, then tell us if it's correct, if it needs a change, or if it isn't yours.",
+   "Coming up shows who's turning sixty five, which dependents are coming of age, and who's close to retiring, so nothing takes you by surprise.",
+   "Before you leave this tab, give us up to five stars for the week, and add a word if you'd like.",
+   "Your billing tab opens on one clear statement: this month's bills, anything still unpaid, and the total to bring you up to date.",
+   "Each plan has its own line, with every month billed and received. And on every bill, you can rate the person who looks after your account.",
+   "Your people shows everyone on your plans, who came off this year, and who's still pending. Write to us about anyone, and it goes straight to the person handling it.",
+   "Someone joining or leaving your group life or health plan? Search their name, and Guardian's own form fills itself in from our records.",
+   "For a pension or a life plan paid from salary, tell us who's joining. We'll call them, and prepare a projection from their salary.",
+   "When someone leaves, their policy is still theirs. Tell us the last salary deduction, and we'll help them keep it going.",
+   "Every answer you send reaches a real person on our team, and you'll see where it stands the next time you sign in."
   ]
  }
 }
