@@ -8880,6 +8880,20 @@ function transitionSyncAssignments() {
 /** Brings the agent columns of the Household Assignments tab up to date from Salesforce and the board. Inside the
  *  five-minute receipts run, which holds the script lock; at most every EVERY_MIN minutes unless forced.
  *  Never writes when the tab was sorted while it read (the tokens are checked again first). */
+/** Salesforce's name for an agent, written the way the Agent Skill Bank writes it (17 November 2026: Salesforce names
+ *  "Jamil Sean Khan", the Skill Bank "Jamil Khan", and the board matches names letter for letter, so every client named
+ *  to him in Salesforce was missing from his list). The same letters first, else the one person tProfSame_ finds;
+ *  two or none, and Salesforce's name stands. */
+function tRosterName_(name) {
+  if (!name) return name;
+  var people = [];
+  try { people = tTeam_().people || []; } catch (e) { return name; }
+  var k = tNameKey_(name);
+  for (var i = 0; i < people.length; i++) if (tNameKey_(people[i].name) === k) return people[i].name;
+  var hits = people.filter(function (p) { return tProfSame_(p.name, name); });
+  return hits.length === 1 ? hits[0].name : name;
+}
+
 function tHaSync_(force) {
   var props = PropertiesService.getScriptProperties();
   var last = Number(props.getProperty(T_HA.PROP) || 0);
@@ -8905,6 +8919,7 @@ function tHaSync_(force) {
     });
     sf.forEach(function (rec) {
       var agent = rec.Assigned_Agent__r && rec.Assigned_Agent__r.Name ? String(rec.Assigned_Agent__r.Name).replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim() : '';
+      agent = tRosterName_(agent);
       var day = tDay_(rec.Date_Assigned_to_Agent__c);
       if (!agent || !day) return;
       var hit = byPol[tPolNo_(rec.POLICY__c)] || byCno[tCno_(rec.Client_Number__c)];
