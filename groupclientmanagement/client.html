@@ -563,6 +563,9 @@ function cfFresh(form) { return { form: form || 'change', q: '', results: null, 
 let CF = cfFresh('change');
 const CF_FORMS = [['change', 'Change or terminate', 'EB0010'], ['enrol', 'Enrol a new member', 'GIO001'], ['easi', 'Claim payment account', 'EASI Collect'], ['payroll', 'Pension or a plan from salary', 'Join or leave']];
 /* pensions and life plans paid through your payroll (17 November 2026): the employee's own policies on your list bill */
+/* the walkthrough of this page (17 November 2026), in place of the welcome film the backend names: every tab, the
+   forms, and pensions and life insurance paid from salary */
+const PAGE_FILM = { href: '/groupmgt/yourpage/', length: '2 min 14 s' };
 const PAY_PLANS = [['personal', 'Personal Pension Plan'], ['ipi', 'Company pension (IPI)'], ['life', 'Life plan through payroll']];
 const CF_EASI = [['change', 'Change the account'], ['enrol', 'Enrol an account'], ['terminate', 'End the arrangement']];
 /* GIO001, Guardian's application form: what the group types, section by section */
@@ -930,7 +933,7 @@ function render() {
     (D.staff ? '<p>Your account is looked after by <b>' + esc(D.staff) + '</b> and our branch team.</p>' : '<p>Your account is looked after by our branch team.</p>') +
     '<p class="muted">' + (D.lastAnswer ? 'You last answered us on ' + esc(D.lastAnswer.at) + (D.lastAnswer.name ? ' (' + esc(D.lastAnswer.name) + ')' : '') + '. ' : '') +
     (D.nextLetter ? 'Your next letter comes ' + esc(D.nextLetter) + '.' : '') + '</p></div>' +
-    '<div class="links">' + (D.film ? '<a class="pill" href="' + esc(D.film) + '" target="_blank" rel="noopener"><span class="play" aria-hidden="true">▶</span>How this page works · ' + esc(D.filmLength || '') + '</a>' : '') +
+    '<div class="links"><a class="pill" href="' + PAGE_FILM.href + '" target="_blank" rel="noopener"><span class="play" aria-hidden="true">▶</span>How this page works · ' + PAGE_FILM.length + '</a>' +
     '<a class="pill plain" href="' + (CT === 'billing' ? '#brate' : '#rate') + '">Rate our service</a></div></div>' +
     ctabsHtml(hasBill, items.length) + (CT === 'renewals' && renOn() ? renewalsHtml() : CT === 'billing' ? billingHtml() : CT === 'people' ? peopleHtml() : pendHtml() + comingHtml() +
     '<div class="tiles"><div class="tile"><b>' + items.length + '</b><span>open items</span></div><div class="tile' + (waiting ? ' alert' : '') + '"><b>' + waiting + '</b><span>waiting on you</span></div>' +

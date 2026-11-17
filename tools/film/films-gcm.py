@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write the two group films' entries into films.json from their timing files (16 November 2026 re-cut).
+"""Write the group films' entries into films.json from their timing files (16 November 2026 re-cut).
 
   gcmc2   the group's film, wide 1920x1080, captions in a strip under the picture
   gcmc2v  the group's film, upright 1080x1920 for Reels, Status and Stories, captions over the picture
@@ -31,4 +31,6 @@ entries('gcmc3', 'gcmc3-timing.json', {'': 'new-way.mp4', 'v': 'new-way-phone.mp
         [(3, 'ten'), (5, 'twenty'), (9, 'five'), (10, 'Nothing')], (('', WIDE), ('v', TALL)))
 entries('gcms3', 'gcms3-timing.json', {'': 'staff-new-way.mp4'},
         [(4, 'ten'), (7, 'twenty'), (8, 'twenty'), (18, 'test')], (('', WIDE),))
+entries('gcmw', 'gcmw-timing.json', {'': 'what-you-see.mp4'},          # what the group sees when it signs in (17 Nov 2026)
+        [(2, 'ten'), (8, 'five'), (12, 'fills'), (14, 'keep')], (('', WIDE),))
 json.dump(f, open('films.json', 'w'), indent=1)

@@ -34,9 +34,9 @@ import base64, io, json, os, pathlib, re, sys
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 FILM = sys.argv[1] if len(sys.argv) > 1 else 'client'
-KEY = {'client': 'gcmc3', 'staff': 'gcms3'}[FILM]
-SHOTS = pathlib.Path(os.environ.get('GCM_SHOTS', HERE / 'gcmshots'))
-OUT = ROOT / 'groupclientmanagement' / ({'client': 'new-way-film.html', 'staff': 'staff-new-way-film.html'}[FILM])
+KEY = {'client': 'gcmc3', 'staff': 'gcms3', 'walk': 'gcmw'}[FILM]
+SHOTS = pathlib.Path(os.environ.get('GCM_SHOTS', HERE / ('gcmshots-walk' if FILM == 'walk' else 'gcmshots')))
+OUT = ROOT / 'groupclientmanagement' / ({'client': 'new-way-film.html', 'staff': 'staff-new-way-film.html', 'walk': 'what-you-see-film.html'}[FILM])
 TIMING = HERE / (KEY + '-timing.json')
 
 def b64(p, mime):
@@ -69,7 +69,7 @@ MARK = b64(ROOT / 'groupclientmanagement' / 'gcm-mark.png', 'image/png')
 PLEX = b64(HERE / 'fonts' / 'IBMPlexSans-latin.woff2', 'font/woff2')
 
 T = json.loads(TIMING.read_text()) if TIMING.exists() else {}
-N_LINES = {'client': 11, 'staff': 19}[FILM]
+N_LINES = {'client': 11, 'staff': 19, 'walk': 15}[FILM]
 #  importvox writes SECONDS; data-d is MILLISECONDS.
 DURS = [int(round(d * 1000)) for d in (T.get('durs') or [6.0] * N_LINES)]
 WORDS = [l.get('words', []) for l in T.get('lines', [])]
@@ -355,6 +355,152 @@ def client():
         '</div>' % (MARK, kin('Want this for your company?', .3, hi=('your', 'company?')), at(11, 'Call', lead=.2),
                     ICON['phone'], at(11, 'number'), at(11, 'together')),
         'blue close'))
+    return sc
+
+# ---------------------------------------------------------------------------------- what the group sees (17 Nov 2026)
+def walk():
+    """Asked for as "what does the client see I need a video": the group's own service page, screen by screen, in the
+       order the person who looks after the plans meets it. Fifteen lines; every screen is client.html on the made-up
+       group in tools/film/gcmshots-walk (shot by the scratchpad's shoot.js against a mocked backend)."""
+    sc = []
+    # 1 the title
+    sc.append(S(1,
+        '<div class="mid"><img class="mk" src="%s" alt="">%s<h1>%s</h1>'
+        '<div class="sub" style="--kd:%.2fs">Group Life &middot; Group Health &middot; Pension</div></div>'
+        % (MARK, eb('Your group&rsquo;s service page', .4), kin('What you see when you sign in', .7, hi=('see',)), at(1, 'first')),
+        'blue title'))
+    # 2 the Monday report, and its button
+    sc.append(split(2,
+        eb('Every Monday') +
+        '<div class="clock" style="--kd:%.2fs">10:00<span>our report, in your inbox</span></div>' % at(2, 'ten') +
+        row('mail', 'One short report on everything we&rsquo;re doing', at(2, 'report'), '', 'ok') +
+        row('check', 'One button opens your page', at(2, 'button'), 'no new password to remember', 'ok'),
+        mailcard('Your weekly service report', 'Harbour Point Logistics Ltd &middot; Monday 16 November',
+                 '<p>Good morning, Pat. Here is where everything we are doing for your group stands.</p>'
+                 '<div class="cnts"><div><b>6</b><span>finished</span></div><div><b>4</b><span>still open</span></div>'
+                 '<div class="w"><b>2</b><span>need you</span></div></div>'
+                 '<div class="btnish sm" style="--kd:%.2fs">Open your service page</div>' % at(2, 'button'), .5)))
+    # 3 signing in
+    sc.append(split(3,
+        eb('Signing in') +
+        row('doc', 'Your list bill number', at(3, 'list'), 'printed on every bill') +
+        row('lock', 'Your access code', at(3, 'access'), 'in our e-mail') +
+        '<div class="punch" style="--kd:%.2fs">That&rsquo;s all it takes.</div>' % at(3, 'all'),
+        phone('c01-signin.png', d=.3, n=3, taps=((at(3, 'list') + .2, 'listbill'), (at(3, 'access') + .2, 'code'), (at(3, 'all'), 'signin'))),
+        'ph'))
+    # 4 the top: who looks after you, three tabs
+    sc.append(split(4,
+        eb('At the top') +
+        row('user', 'Who looks after your account', at(4, 'looks'), 'by name') +
+        '<div class="tabs3">' + chip('Your service items', at(4, 'service'), 'tab') + chip('Your billing', at(4, 'billing'), 'tab') +
+        chip('Your people', at(4, 'people'), 'tab') + '</div>',
+        phone('c02-items.png', d=.3, n=4, moves=((at(4, 'looks'), 'hero', 1.25), (at(4, 'three'), 'tab-billing', 1.4)),
+              taps=((at(4, 'service'), 'tab-items'), (at(4, 'billing'), 'tab-billing'), (at(4, 'people'), 'tab-people'))),
+        'ph'))
+    # 5 pending applications and increases
+    sc.append(split(5,
+        eb('First, what&rsquo;s pending') +
+        row('clock', 'Applications and increases still pending', at(5, 'applications'), 'for Group Life, Group Health and Pension') +
+        row('alert', 'How long each has been waiting', at(5, 'waiting'), 'past our target, in red', 'warn') +
+        row('users', 'Who on our team has it', at(5, 'team'), 'and who they are waiting on'),
+        phone('c02-items.png', d=.3, n=5, moves=((at(5, 'applications'), 'pending', 1.3),), marks=((at(5, 'waiting'), 'pending'),)),
+        'ph'))
+    # 6 an open item: its history, and your answer
+    sc.append(split(6,
+        eb('Your open items') +
+        row('list', 'Read each item&rsquo;s history', at(6, 'history'), 'what was done, by whom, and when') +
+        '<div class="tabs3">' + chip('Correct', at(6, 'correct'), 'ok') + chip('Needs a change', at(6, 'change'), 'tab') +
+        chip('Not ours', at(6, 'yours'), 'tab') + '</div>',
+        '<div class="duo">%s%s</div>' % (
+            phone('c03b-item-top.png', 'back', .2, n=6, w=200, marks=((at(6, 'history'), 'history'),)),
+            phone('c03-item-open.png', 'front', at(6, 'correct', lead=.6), n=6, moves=((at(6, 'correct', lead=.3), 'ans-change', 1.3),),
+                  taps=((at(6, 'correct'), 'ans-correct'), (at(6, 'change'), 'ans-change'), (at(6, 'yours'), 'ans-notours')))),
+        'wide2'))
+    # 7 coming up for your people
+    sc.append(split(7,
+        eb('Coming up for your people') +
+        row('cake', 'Turning sixty-five', at(7, 'sixty'), 'the group cover ends: we help them convert') +
+        row('grad', 'Dependents coming of age', at(7, 'dependents'), 'and moving off the family plan') +
+        row('sun', 'Close to retiring', at(7, 'retiring'), 'on your company pension') +
+        '<div class="note" style="--kd:%.2fs">No surprises.</div>' % at(7, 'surprise'),
+        phone('c04-coming-up.png', d=.3, n=7, moves=((at(7, 'sixty'), 'row-65', 1.2), (at(7, 'dependents'), 'row-dependent', 1.2), (at(7, 'retiring'), 'row-retire', 1.2)),
+              marks=((at(7, 'sixty') + .5, 'row-65'), (at(7, 'dependents') + .5, 'row-dependent'), (at(7, 'retiring') + .5, 'row-retire'))),
+        'ph'))
+    # 8 the week's stars
+    sc.append(split(8,
+        eb('Rate the week') + stars(at(8, 'five')) +
+        '<div class="note big2" style="--kd:%.2fs">Add a word if you&rsquo;d like.</div>' % at(8, 'word'),
+        phone('c05-rate.png', d=.3, n=8, taps=((at(8, 'five'), 'star5'),), marks=((at(8, 'word'), 'comment'),)),
+        'ph'))
+    # 9 your billing: the statement
+    sc.append(split(9,
+        eb('Your billing') +
+        row('doc', 'This month&rsquo;s bills', at(9, 'month'), 'Group Health, Group Life, and your payroll plans') +
+        row('alert', 'Anything still unpaid', at(9, 'unpaid'), 'from earlier months', 'warn') +
+        row('cash', 'The total to bring you up to date', at(9, 'total'), '', 'ok'),
+        phone('c06-billing.png', d=.3, n=9, moves=((at(9, 'month'), 'total', 1.3), (at(9, 'unpaid'), 'open-earlier', 1.3), (at(9, 'total'), 'grand', 1.3)),
+              marks=((at(9, 'total') + .4, 'grand'),)),
+        'ph'))
+    # 10 each plan's line, and rating the person who looks after you
+    sc.append(split(10,
+        eb('Each plan, month by month') +
+        row('list', 'Every month&rsquo;s bill and every payment', at(10, 'payment'), '') +
+        '<div class="callout" style="--kd:%.2fs">On every bill, rate <b>the person who looks after your account</b>.</div>' % at(10, 'rate'),
+        '<div class="duo">%s%s</div>' % (
+            phone('c06b-billing-lines.png', 'back', .2, n=10, w=200, taps=((at(10, 'plan'), 'btab-life'),), marks=((at(10, 'payment'), 'history'),)),
+            phone('c07-billing-rate.png', 'front', at(10, 'bill', 1, lead=.4), n=10, moves=((at(10, 'person'), 'manager-name', 1.3),), taps=((at(10, 'account'), 'star5'),))),
+        'wide2'))
+    # 11 your people
+    sc.append(split(11,
+        eb('Your people') +
+        '<div class="tiles">'
+        '<div class="tl" style="--kd:%.2fs"><b>%s</b><span>Everyone on your plans</span></div>'
+        '<div class="tl" style="--kd:%.2fs"><b>%s</b><span>Who came off this year</span></div>'
+        '<div class="tl w" style="--kd:%.2fs"><b>%s</b><span>Who&rsquo;s still pending</span></div></div>'
+        '<div class="note" style="--kd:%.2fs">Send us a note about anyone: it goes straight to the person handling it.</div>'
+        % (at(11, 'everyone'), ICON['users'], at(11, 'came'), ICON['user'], at(11, 'pending'), ICON['clock'], at(11, 'note')),
+        '<div class="duo">%s%s</div>' % (
+            phone('c08-people.png', 'back', .2, n=11, w=200, taps=((at(11, 'everyone'), 'dropdown'),)),
+            phone('c09-person-msg.png', 'front', at(11, 'note', lead=.4), n=11, moves=((at(11, 'note'), 'message', 1.2),), taps=((at(11, 'straight'), 'send'),))),
+        'wide2'))
+    # 12 group life and health: Guardian's own forms
+    sc.append(split(12,
+        eb('Group Life and Group Health') +
+        '<h2>%s</h2>' % kin('Joining or leaving?', at(12, 'joining')) +
+        row('users', 'Search their name', at(12, 'Search'), 'everyone on your plan, from our records') +
+        row('doc', 'Guardian&rsquo;s own form fills itself in', at(12, 'fills'), 'to enrol, terminate or change a member', 'ok'),
+        '<div class="duo">%s%s</div>' % (
+            phone('c10-form-search.png', 'back', .2, n=12, w=200, taps=((at(12, 'Search') + .3, 'result1'),)),
+            phone('c10b-form-pdf.png', 'front', at(12, 'form', lead=.5), n=12, moves=((at(12, 'fills'), 'pdf-page1', 1.15),))),
+        'wide2'))
+    # 13 a pension or life plan from salary: someone joining
+    sc.append(split(13,
+        eb('A pension or life insurance from salary') +
+        row('user', 'Tell us who&rsquo;s joining', at(13, 'joining'), 'and the first salary deduction') +
+        row('phone', 'We call them', at(13, 'call'), 'within two working days', 'ok') +
+        row('doc', 'And prepare their projection', at(13, 'projection'), 'from their salary', 'ok'),
+        '<div class="duo">%s%s</div>' % (
+            phone('c13-pay-join.png', 'back', .2, n=13, w=200, taps=((at(13, 'pension'), 'pay-pill'),), marks=((at(13, 'joining'), 'join'),)),
+            phone('c13b-pay-join-2.png', 'front', at(13, 'joining', lead=.3), n=13, marks=((at(13, 'joining') + .6, 'plans'), (at(13, 'salary', 1), 'start')),
+                  taps=((at(13, 'call'), 'send'),))),
+        'wide2'))
+    # 14 someone leaving
+    sc.append(split(14,
+        eb('When someone leaves') +
+        '<h2>%s</h2>' % kin('Their policy is still theirs.', at(14, 'policy'), hi=('theirs.',)) +
+        row('cash', 'Tell us the last salary deduction', at(14, 'deduction'), 'we take it off your list bill after that') +
+        row('shield', 'We help them keep it going', at(14, 'keep'), 'another way to pay, set up with them', 'ok'),
+        '<div class="duo">%s%s</div>' % (
+            phone('c14-pay-leave.png', 'back', .2, n=14, w=200, marks=((at(14, 'leaves'), 'result1'),)),
+            phone('c14b-pay-leave-2.png', 'front', at(14, 'Tell', lead=.4), n=14, marks=((at(14, 'deduction'), 'last'),), taps=((at(14, 'keep'), 'send'),))),
+        'wide2'))
+    # 15 a real person
+    sc.append(split(15,
+        '<img class="mk sm" src="%s" alt="" style="margin:0 0 14px">' % MARK +
+        '<h2>%s</h2>' % kin('A real person reads every answer.', .3, hi=('person',)) +
+        '<div class="note" style="--kd:%.2fs">And you&rsquo;ll see where it stands the next time you sign in.</div>' % at(15, 'see'),
+        phone('c11-thanks.png', d=.3, n=15, marks=((at(15, 'answer'), 'heading'),)),
+        'ph'))
     return sc
 
 # ---------------------------------------------------------------------------------------------- the staff film
@@ -747,10 +893,10 @@ body.port .clock{font-size:76px}body.port .big{font-size:110px}
 """
 
 def main():
-    sc = client() if FILM == 'client' else staff()
+    sc = client() if FILM == 'client' else walk() if FILM == 'walk' else staff()
     if len(sc) != N_LINES:
         sys.exit('SCENES: %d scenes for %d lines' % (len(sc), N_LINES))
-    title = {'client': 'Our new way of looking after your group', 'staff': 'Group client management, the new way'}[FILM]
+    title = {'client': 'Our new way of looking after your group', 'staff': 'Group client management, the new way', 'walk': 'What you see when you sign in'}[FILM]
     page = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex">'
             '<title>%s</title><style>' % title + CSS.replace('__PLEX__', PLEX) + '</style></head><body>'
             '<div id="stage" style="--total:%dms"><div class="dots grain"></div><div class="glow g1"></div><div class="glow g2"></div><i id="prog" class="grain"></i>' % sum(DURS)

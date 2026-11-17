@@ -4318,6 +4318,18 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       (`gcm.css`, now `.hold:not(.chip)`).
     - The group's film says bills come on the 26th and ask the group to rate their account manager: true only once
       `gblGoLive` has been run.
+  - **What the group sees when it signs in** (17 November 2026: "and what does the client see I need a video"), 2 min
+    14 s: the group's own page screen by screen, the Monday report and its button, signing in, the top and the three
+    tabs, what is pending, an open item and the three answers, coming up, the week's stars, the statement, each plan's
+    line and rating the account manager, Your people, Guardian's forms, and pensions and life insurance from salary,
+    joining and leaving. `groupclientmanagement/what-you-see.mp4` (wide), poster `what-you-see.jpg`, page
+    **`/groupmgt/yourpage/`** with chapters. The group page's "How this page works" pill now opens it (`PAGE_FILM` in
+    `client.html`, over the welcome film the backend still names; the welcome e-mail still links `welcome.html`).
+    Built by `build-gcmfilm.py walk` from `gcmw-lines.json` and `gcmw-timing.json` (Andrew Expressive, key `gcmw2`;
+    four lines re-worded after the first pass: "billed" was heard "build", "Write to us" "right to us", "life plan" "live
+    plan", "each has waited" "each is waited"); screens in `tools/film/gcmshots-walk/` (re-shot from the live
+    `client.html` on the made-up group, `gcmwalk/shoot.js` in the scratchpad). Music: his corporate tech track,
+    `loopbars.py` to 134 s.
 - **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
   forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
   training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
@@ -5176,6 +5188,31 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - Tests in the scratchpad: `people/people-test.js` (30, Node, the made-up branch with an invented application, a
     medical requirement, a leaver and a private claim item) and `people/page-test.js` (29, Playwright, a desk and a
     phone, with screenshots).
+- **Pensions and life insurance paid from salary: someone joining, someone leaving** (17 November 2026: "what about
+  termination and enrollment for health and pension and life?"). Group Health and Group Life already had Guardian's own
+  forms (GIO001 to enrol, EB0010 to terminate or change). A pension, or a life plan, paid through the employer's payroll
+  is the employee's **own** policy on the group's list bill (on 17 November about 426 pension and 230 personal life
+  policies carried a list bill), and the group's page had nothing for it but a line of free text.
+  - **On the group's page**, a fourth choice beside the Guardian forms, "Pension or a plan from salary" (`payForm` in
+    `client.html`, `form=payroll` on `gcm.clientForm` / `gcm.clientFormSend`, so `GroupClients.gs` needs no paste):
+    *Someone is joining* (name, e-mail or mobile, which plan: Personal Pension, Company pension (IPI), life plan; the
+    first salary deduction; date employed and the contribution in mind, optional) or *Someone is leaving* (search the
+    people on the list bill, `gblPayroll_`, then the last salary deduction and the leaving date). No PDF goes: the
+    salary deduction form is signed on paper.
+  - **The steps are the branch's own**, read off the Servus case of October 2026 (`GBL_PAY.JOIN_STEPS`): call the
+    employee, a projection from the salary, the payslip and date of employment from HR, ID, a utility bill and the
+    beneficiary's ID from the employee, key the policies, send HR the policy numbers and the salary deduction form.
+    Leaving (`LEAVE_STEPS`): the policy is theirs and does not end; contact them about another way to pay (a mode
+    change), take it off the list bill from the month after the last deduction. A company-paid pension (Ownership, else
+    a commercial account) gets a line that it follows the plan's own rules for leavers. Never advice.
+  - **Each send** (`gblPayrollSend_`): one Salesforce task for the account owner (`Pension Enrolment – <name> – <group> –
+    first deduction <Month>`, or `Pension Leaver – … – last deduction <Month>`; `Payroll Life …` when only life),
+    Servicing, due in two working days, on the account (joining) or the person's policy with their Contact (leaving);
+    a line on the list bill's billing task; a Group Changes row (Line `listbill`); the owner e-mailed. **Your people**
+    now shows who pays through payroll ("Pension through payroll") and a reported leaver.
+  - `tests/test-payroll.js` (45 checks, the file in a sandbox with Salesforce made up) and `gcmwalk/paycheck.js` in the
+    scratchpad (30, Playwright, a phone and a laptop, the mock world) cover it. `gcm.ping`'s `bills` carries `payroll: 1`
+    once GroupBilling.gs is pasted.
 
 ## agentmgt.com — the recruiting page, rebuilt in this repository
 

@@ -1,0 +1,54 @@
+{
+ "note": "What the group sees when it signs in, 17 Nov 2026. Andrew Expressive (en-US-AndrewMultilingualNeural, +0%) on tts-run, key gcmw2.",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
+ "scenes": [
+  {
+   "say": "Here's what you'll see when you sign in to your group's service page, from the first screen to the last.",
+   "extra": 0.5
+  },
+  {
+   "say": "Every Monday at ten, our report lands in your inbox. The button in it takes you straight to your page."
+  },
+  {
+   "say": "To sign in, type the list bill number from your bill, and the access code in our e-mail. That's all it takes."
+  },
+  {
+   "say": "At the top, you'll see who looks after your account, and three tabs: your service items, your billing and your people."
+  },
+  {
+   "say": "First come the applications and increases still pending, with how long each one has been waiting, and who on our team has it."
+  },
+  {
+   "say": "Below them is every open item. Open one to read its history, then tell us if it's correct, if it needs a change, or if it isn't yours."
+  },
+  {
+   "say": "Coming up shows who's turning sixty five, which dependents are coming of age, and who's close to retiring, so nothing takes you by surprise."
+  },
+  {
+   "say": "Before you leave this tab, give us up to five stars for the week, and add a word if you'd like."
+  },
+  {
+   "say": "Your billing tab opens on one clear statement: this month's bills, anything still unpaid, and the total to bring you up to date."
+  },
+  {
+   "say": "Each plan has its own line, with every month's bill and every payment. And on every bill, you can rate the person who looks after your account."
+  },
+  {
+   "say": "Your people shows everyone on your plans, who came off this year, and who's still pending. Send us a note about anyone, and it goes straight to the person handling it."
+  },
+  {
+   "say": "Someone joining or leaving your group life or health plan? Search their name, and Guardian's own form fills itself in from our records."
+  },
+  {
+   "say": "For a pension, or life insurance paid from salary, tell us who's joining. We'll call them, and prepare a projection from their salary."
+  },
+  {
+   "say": "When someone leaves, their policy is still theirs. Tell us the last salary deduction, and we'll help them keep it going."
+  },
+  {
+   "say": "Every answer you send reaches a real person on our team, and you'll see where it stands the next time you sign in.",
+   "extra": 1.8
+  }
+ ]
+}
