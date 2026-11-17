@@ -17,6 +17,7 @@ env.todayISO_ = () => DAY;
 env.__mkSheet('Access', 1, ['Email', 'Name', 'Agent Number', 'Password', 'Role', 'Unit', 'Active'], [
   ['ricky@example.com', 'A00427 - Ricky Rampersad', 'A00427', '1', 'Branch Manager', 'Ricky Rampersad', 'Active']]);
 const P = env.PropertiesService.getScriptProperties();
+P.setProperty('AGENT_DAY_OFF', 'none'); // these tests use agents who were taken off on 12 Nov 2026
 const AG = (name, code) => ({ key: 'a-' + env.agSlug_(name), name, agentName: name, code, agentId: code, email: name.split(' ')[0].toLowerCase() + '@example.com', manager: 'um@example.com' });
 const people = {};
 [['Neil Ramnanan', 'A10024'], ['Fawwaz Mohamed', 'A12397'], ['Rajiv Soodoo', 'A14158'], ['Joy Barbara Sammah', 'A07347'], ['Darryl Manick', 'A11238'],
@@ -45,7 +46,7 @@ ok('a later run sends nothing again', mails.length === before);
 
 console.log('\nThe midday and the close-off:\n');
 run(12 * 60 + 5); run(17 * 60 + 35);
-ok('the five get the 5:30 close-off, no midday (8 Nov 2026)', five.every(n => to(n).length === 2), five.map(n => n.split(' ')[0] + ':' + to(n).length).join(' '));
+ok('the five get the midday and the 5:30 close-off (on again 13 Nov 2026)', five.every(n => to(n).length === 3), five.map(n => n.split(' ')[0] + ':' + to(n).length).join(' '));
 ok('still nobody else', ['Narissa Mohammed', 'Varun Seegolam'].every(n => to(n).length === 0));
 
 console.log('\nThe switches:\n');
