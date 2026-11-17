@@ -1946,7 +1946,11 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
     var y=val('uw_years'), uw=val('uw_uwexp');
     var yScore=/Over 10/.test(y)?1:/6 to 10/.test(y)?.85:/3 to 6/.test(y)?.6:.25;
     var uwScore=/with an insurer/.test(uw)?1:/delegated/.test(uw)?.8:/Some/.test(uw)?.4:0;
+    /* A Certificate is a qualification held, so it ranks above papers still
+       being sat: until 17 Nov 2026 it fell through every test here and scored
+       below "Studying, no papers yet". */
     var qScore=/Qualified|ACII|Diploma/i.test(val('uw_qstatus'))?1
+              :/Certificate/i.test(val('uw_qstatus'))?.85
               :/Part|Studying|sitting/i.test(val('uw_qstatus'))?.7
               :val('uw_quals')?.4:0;
     var parts={
