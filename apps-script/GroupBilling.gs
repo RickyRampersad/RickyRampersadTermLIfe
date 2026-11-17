@@ -2071,6 +2071,11 @@ function gblClientForm_(p) {
   var L = gcmLoad_(), a = gcmClientAuth_(L, p.lb, p.code);
   if (!a.ok) return a;
   var g = a.g, who = { role: 'client', name: String(p.name || 'the group').slice(0, 80), email: '' }, form = String(p.form || 'change').toLowerCase();
+  if (form === 'payroll') {   /* a pension or life plan through payroll: the people on the list bill, searched by name */
+    var ps = gblPayrollSearch_(g, p.q);
+    if (!ps.ok) return { ok: false, error: 'Our records are not available right now. Please try again shortly, or e-mail us.' };
+    return { ok: true, payroll: true, members: ps.members, total: ps.total, more: ps.more, plans: GBL_PAY.PLANS, joinSteps: GBL_PAY.JOIN_STEPS, companyNote: GBL_PAY.COMPANY_NOTE };
+  }
   if (form === 'enrol') {
     var e = gblEnrolData_(g, p, who), pb = null, perr = '';
     try { pb = gblEnrolPdf_(e); } catch (x) { perr = String(x && x.message ? x.message : x).slice(0, 200); }
@@ -2099,6 +2104,11 @@ function gblClientFormSend_(b) {
   if (!who.name) return { ok: false, error: 'Please give your name.' };
   if (!gcmYes_(b.authorised)) return { ok: false, error: 'Please confirm you are authorised to submit this for ' + g.name + '.' };
   b.admin = b.admin || who.name;
+  if (form === 'payroll') {
+    var pd = gblPayrollData_(g, b);
+    if (!pd.ok) return pd;
+    return gblPayrollSend_(g, who, pd.x);
+  }
   if (form === 'enrol') {
     var e = gblEnrolData_(g, b, who), re = gblEnrolSend_(g, who, e, {});
     if (!re.ok) return re;
@@ -2434,6 +2444,17 @@ function gblRoster_(g, L, forGroup) {
       q.sfId = q.sfId || m.id; q.contactId = q.contactId || m.contactId;
     }
   });
+  /* pensions and life plans paid through the group's payroll (17 November 2026): the employee's own policies on the list bill */
+  var PR = { ok: false, people: [] };
+  try { PR = gblPayroll_(g); } catch (e) {}
+  (PR.people || []).forEach(function (x) {
+    var live = x.policies.filter(function (q) { return q.live; });
+    if (!live.length) return;
+    var p = get(x.name), l = line(p, 'listbill');
+    l.sfLive = true; l.label = gblPayLabel_(live);
+    live.forEach(function (q) { if (q.issued && (!l.since || q.issued < l.since)) l.since = q.issued; });
+    p.contactId = p.contactId || x.contactId;
+  });
   /* the bills: who is on the latest bill of each line, and who this year's bills took off */
   var bills = gblBillRows_(g), lineRows = {};
   gblRows_(GBL.LINES).forEach(function (r) {
@@ -2463,9 +2484,9 @@ function gblRoster_(g, L, forGroup) {
   try { changes = gblChanges_(g); } catch (e2) {}
   changes.forEach(function (c) {
     if (!c.member) return;
-    var lnk = GBL_ROSTER.LINES.indexOf(c.line) >= 0 ? c.line : 'health';
-    if (c.kind === 'leaver' && c.source !== 'bill' && (c.effective || c.when) >= yr) { var p = get(c.member); p.leaving.push({ line: lnk, label: GBL.LABEL[lnk], date: c.effective, reported: c.when, by: c.source === 'client' ? 'you' : 'us', task: c.task, done: c.status === 'done' }); }
-    else if (c.kind === 'joiner' && c.source !== 'bill' && c.when >= yr && c.status !== 'done') { var q = get(c.member); q.joining.push({ line: lnk, label: GBL.LABEL[lnk], date: c.effective, reported: c.when, by: c.source === 'client' ? 'you' : 'us', task: c.task }); }
+    var lnk = GBL_ROSTER.LINES.indexOf(c.line) >= 0 || c.line === 'listbill' ? c.line : 'health';
+    if (c.kind === 'leaver' && c.source !== 'bill' && (c.effective || c.when) >= yr) { var p = get(c.member); p.leaving.push({ line: lnk, label: lnk === 'listbill' ? GBL_PAY.LABEL : GBL.LABEL[lnk], date: c.effective, reported: c.when, by: c.source === 'client' ? 'you' : 'us', task: c.task, done: c.status === 'done' }); }
+    else if (c.kind === 'joiner' && c.source !== 'bill' && c.when >= yr && c.status !== 'done') { var q = get(c.member); q.joining.push({ line: lnk, label: lnk === 'listbill' ? GBL_PAY.LABEL : GBL.LABEL[lnk], date: c.effective, reported: c.when, by: c.source === 'client' ? 'you' : 'us', task: c.task }); }
     else if (c.kind === 'post' && c.source === 'client') { var r = get(c.member); r.posts.push({ at: c.at, ts: c.ts, by: c.by, text: c.detail, on: c.note, feed: c.sfId, task: c.task }); }
   });
   /* the applications and increases still pending, in the pending panel's own words */
@@ -2721,7 +2742,7 @@ function gblDayInfo_(now) {
   var today = gcmYmd_(now), next = gblNextBillDay_(now), c = gblCycle_(now), run = gblNextRunDay_(now), rep = gblReportDayOf_(next);
   var moved = next.slice(8) !== ('0' + gblDayOfMonth_()).slice(-2);
   return { next: next, label: gblDayLabel_(next), date: tDmy_(next), daysTo: gcmDays_(today, next), isDay: c.isDay, dayOfMonth: gblDayOfMonth_(), hour: GBL_DAY.HOUR, drive: !!gblFolderId_(), live: gblLive_(),
-    run: run, runLabel: gblDayLabel_(run), late: run !== next, moved: moved, report: rep, reportLabel: GCM_DAYS[gcmDow_(rep)] + ' ' + tDmy_(rep).replace(/ \d{4}$/, '') + ', ' + GBL_DAY.REPORT_HOUR + ':00', reportHour: GBL_DAY.REPORT_HOUR };
+    run: run, runLabel: gblDayLabel_(run), late: run !== next, moved: moved, report: rep, reportLabel: GCM_DAYS[gcmDow_(rep)] + ' ' + tDmy_(rep).replace(/ \d{4}$/, '') + ', ' + GBL_DAY.REPORT_HOUR + ':00', reportHour: GBL_DAY.REPORT_HOUR, payroll: typeof gblPayroll_ === 'function' ? 1 : 0 };
 }
 function gblFolderId_() { try { return PropertiesService.getScriptProperties().getProperty(GBL_PDF.FOLDER_PROP) || ''; } catch (e) { return ''; } }
 function gblSubfolder_(name) {
@@ -3773,3 +3794,143 @@ function gblStatement_(p) {
 function gblStatementBlob_(g, month, bills, L) {
   try { var d = gblStatementData_(g, month, L, gblSf_(g), bills); return gblStatementPdf_(gblStatementHtml_(g, d, {}), gblStatementName_(g, month)); } catch (e) { return null; }
 }
+
+/* ── pensions and life plans paid from salary: someone joining, someone leaving (17 November 2026) ─────────────────
+ * Asked for as "what about termination and enrollment for health and pension and life?". Group Health and Group Life
+ * already had Guardian's own forms (GIO001 to enrol, EB0010 to terminate or change). A pension, or a life plan, paid
+ * through the employer's payroll is not on those forms: it is the employee's own policy, carried on the group's list
+ * bill. Nothing on the group's page joined anyone to one or took anyone off one, except a line of free text.
+ * The steps are the branch's own, read off the Servus case of October 2026 (an employee joining the Personal Pension
+ * Plan and the company IPI): HR tells us who wants to join; we call the employee and prepare the projection from the
+ * salary; the employee confirms the plans, the contribution and the first deduction; HR sends the latest payslip and
+ * the date of employment, the employee their ID, a utility bill not older than three months and the beneficiary's ID
+ * and relationship; we key the policies, send HR the policy numbers and the salary deduction form to stamp and sign.
+ * HR's payroll closes for additions each month, so the first deduction is the month HR names.
+ * Leaving: taking someone off the payroll does not end their policy. The deduction stops after the month HR names, our
+ * team contacts the employee about paying it another way (a mode change), and takes it off the list bill from the month
+ * after. A company-paid pension follows the plan's own rules for leavers, which our team goes through with the group.
+ * Each opens one task for the account owner in Salesforce, a line on the list bill's billing task, a row on Group
+ * Changes and an e-mail to the owner. No Guardian form goes from here: the salary deduction form is signed on paper. */
+var GBL_PAY = { CACHE_S: 600, MAX: 12, DUE_DAYS: 2, NOTE_MAX: 300,
+  PLANS: { personal: 'Personal Pension Plan', ipi: 'Company pension (IPI)', life: 'Life plan through payroll' },
+  LABEL: 'Pension or life plan through payroll',
+  JOIN_STEPS: ['Call the employee within two working days and confirm what they want: the plans, the contribution and the first salary deduction.',
+    'Prepare the projection from their salary and send it to them.',
+    'Once they confirm: ask the group for the latest payslip and the date of employment, and the employee for a valid ID, a utility bill not older than three months, and the beneficiary’s ID and relationship.',
+    'Key the policies, then send the group the policy numbers and the salary deduction form to stamp and sign.',
+    'Add them to the list bill from the first deduction month.'],
+  LEAVE_STEPS: ['Contact the employee within two working days: their policy is their own and stays in force only if the premiums carry on.',
+    'Offer the ways to keep paying (a mode change: bank debit, standing order or over the counter) and record what they choose.',
+    'Take the policy off the list bill from the month after the last salary deduction.',
+    'Tell the group when it is done.'],
+  COMPANY_NOTE: 'A company-paid pension follows the plan’s own rules when someone leaves: our team will go through them with you.' };
+
+/** The group's people on its list bill: every pension and personal life policy carrying one of the group's list bills,
+ *  grouped by person, kept ten minutes. */
+function gblPayroll_(g, fresh) {
+  var key = 'gbl-pay-' + g.key.slice(0, 40), cache = null;
+  try { cache = CacheService.getScriptCache(); if (!fresh) { var c = cache.get(key); if (c) return JSON.parse(c); } } catch (e) {}
+  var out = { ok: tSfOn_(), people: [], error: '' };
+  if (!out.ok) { out.error = 'Salesforce is not linked to this project.'; return out; }
+  var bills = [];
+  (g.bills || []).forEach(function (b) { [b, b.replace(/\s+/g, ''), b.replace(/^([A-Za-z]+)\s*(\d+)$/, '$1 $2')].forEach(function (v) { if (v && bills.indexOf(v) < 0) bills.push(v); }); });
+  if (!bills.length) return out;
+  try {
+    gcmQuery_('SELECT Id, POLICY__c, PLAN_NAME__c, RecordType.Name, Policy_Status_Description__c, Contact__c, Contact__r.Name, INSURED__c, Total_Premiums__c, Pension_Premiums__c, ' +
+      'Paid_To_Date__c, ISSUE_DATE__c, List_Bill__c, Ownership__c, Account__r.RecordType.Name FROM CLIENT_PORTFOLIO__c WHERE List_Bill__c IN (' + gcmIn_(bills) + ") AND RecordType.Name IN ('PENSION', 'LIFE') ORDER BY Contact__r.Name").forEach(function (p) {
+      var rt = gcmName_(p, 'RecordType'), st = String(p.Policy_Status_Description__c || ''), name = gcmName_(p, 'Contact__r') || String(p.INSURED__c || '').trim();
+      if (!name) return;
+      var arT = String((p.Account__r && p.Account__r.RecordType && p.Account__r.RecordType.Name) || '');
+      var pol = { id: String(p.Id), policy: String(p.POLICY__c || '').trim(), kind: /PENSION/i.test(rt) ? 'pension' : 'life', plan: String(p.PLAN_NAME__c || '').trim(), status: st, live: !GBL.GONE.test(st),
+        own: /company/i.test(p.Ownership__c || '') ? 'Company' : /personal/i.test(p.Ownership__c || '') ? 'Personal' : (/PENSION/i.test(rt) && /COMMERCIAL|BUSINESS/i.test(arT)) ? 'Company' : 'Personal',
+        premium: Number(p.Total_Premiums__c) || Number(p.Pension_Premiums__c) || 0, paidTo: gcmYmd_(p.Paid_To_Date__c), issued: gcmYmd_(p.ISSUE_DATE__c) };
+      var who = out.people.filter(function (x) { return gblSamePerson_(x.raw, name); })[0];
+      if (!who) { who = { raw: name, name: gblTitle_(gblNice_(name)), contactId: String(p.Contact__c || ''), policies: [] }; out.people.push(who); }
+      if (!who.contactId && p.Contact__c) who.contactId = String(p.Contact__c);
+      who.policies.push(pol);
+    });
+    out.people.forEach(function (x) { x.id = x.policies[0].id; x.live = x.policies.some(function (p) { return p.live; }); });
+    try { if (cache) cache.put(key, JSON.stringify(out), GBL_PAY.CACHE_S); } catch (e2) {}
+  } catch (e) { out.ok = false; out.error = String(e && e.message ? e.message : e).slice(0, 200); }
+  return out;
+}
+/** What a person holds through payroll, in the group's words: "Pension", "Life plan", "Pension and life plan". */
+function gblPayLabel_(pols) {
+  var k = {}; (pols || []).forEach(function (p) { k[p.kind] = 1; });
+  return (k.pension && k.life ? 'Pension and life plan' : k.pension ? 'Pension' : 'Life plan') + ' through payroll';
+}
+/** The people on the group's payroll plans whose name or policy carries every word typed, those still paying first. */
+function gblPayrollSearch_(g, q) {
+  var P = gblPayroll_(g); if (!P.ok) return P;
+  var words = String(q || '').toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').split(/\s+/).filter(String);
+  if (!words.length) return { ok: true, members: [], total: P.people.length };
+  var hits = P.people.filter(function (x) {
+    var hay = (x.name + ' ' + x.policies.map(function (p) { return p.policy; }).join(' ')).toLowerCase(), parts = hay.split(/[\s,;-]+/);
+    return words.every(function (w) { return parts.some(function (p) { return p.indexOf(w) === 0; }) || hay.indexOf(w) >= 0; });
+  }).sort(function (a, b) { return (b.live - a.live) || a.name.localeCompare(b.name); });
+  return { ok: true, total: P.people.length, more: hits.length > GBL_PAY.MAX, members: hits.slice(0, GBL_PAY.MAX).map(function (x) {
+    var live = x.policies.filter(function (p) { return p.live; }), show = live.length ? live : x.policies;
+    return { id: x.id, name: x.name, label: gblPayLabel_(show), policy: show.map(function (p) { return p.policy; }).filter(String).join(', '), status: live.length ? 'paying through your payroll' : 'no longer paying',
+      live: live.length > 0, since: show.map(function (p) { return p.issued; }).filter(String).sort()[0] || '', company: show.some(function (p) { return p.kind === 'pension' && p.own === 'Company'; }) };
+  }) };
+}
+function gblPayMonth_(s) { s = String(s || '').trim(); var m = /^(\d{4})-(\d{2})/.exec(s); return m && +m[2] >= 1 && +m[2] <= 12 ? m[1] + '-' + m[2] : ''; }
+/** Read and check what the group typed. Returns { ok, x } or { ok: false, error }. */
+function gblPayrollData_(g, b) {
+  var kind = String(b.pkind || '').toLowerCase(), clean = function (v, n) { return String(v || '').replace(/\s+/g, ' ').trim().slice(0, n); };
+  if (kind !== 'join' && kind !== 'leave') return { ok: false, error: 'Is someone joining, or leaving?' };
+  var x = { kind: kind, note: clean(b.reason, GBL_PAY.NOTE_MAX) };
+  if (kind === 'leave') {
+    var P = gblPayroll_(g); if (!P.ok) return { ok: false, error: 'Our records are not available right now. Please try again shortly, or e-mail us.' };
+    var p = P.people.filter(function (y) { return gcmId15_(y.id) === gcmId15_(b.member); })[0];
+    if (!p) return { ok: false, error: 'That person is not on a plan through your payroll with us.' };
+    x.person = p; x.name = p.name; x.pols = p.policies.filter(function (q) { return q.live; }); if (!x.pols.length) x.pols = p.policies;
+    x.last = gblPayMonth_(b.lastDeduction); x.leftOn = gcmYmd_(b.leftOn || '') || '';
+    if (!x.last) return { ok: false, error: 'Which month is the last salary deduction?' };
+    x.company = x.pols.some(function (q) { return q.kind === 'pension' && q.own === 'Company'; });
+    x.label = gblPayLabel_(x.pols);
+    return { ok: true, x: x };
+  }
+  x.first = clean(b.first, 40); x.last = clean(b.last, 60); x.first = gblTitle_(x.first); x.last = gblTitle_(x.last); x.name = (x.first + ' ' + x.last).trim();
+  x.email = clean(b.email, 120).toLowerCase(); x.mobile = clean(b.mobile, 30); x.employed = gcmYmd_(b.employed || '') || '';
+  x.start = gblPayMonth_(b.startMonth); x.contribution = clean(b.contribution, 80);
+  x.plans = String(b.plans || '').split(/[\s,]+/).filter(function (k) { return GBL_PAY.PLANS[k]; }).filter(function (k, i, a) { return a.indexOf(k) === i; });
+  if (!x.first || !x.last) return { ok: false, error: 'Please give the employee’s first name and surname.' };
+  if (x.email && !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(x.email)) return { ok: false, error: 'That e-mail address does not look right.' };
+  if (!x.email && x.mobile.replace(/\D/g, '').length < 7) return { ok: false, error: 'Please give a way to reach the employee: an e-mail or a mobile number.' };
+  if (!x.plans.length) return { ok: false, error: 'Which plan do they want to join?' };
+  if (!x.start) return { ok: false, error: 'Which month can the first salary deduction be?' };
+  x.label = x.plans.map(function (k) { return GBL_PAY.PLANS[k]; }).join(', ');
+  return { ok: true, x: x };
+}
+/** Open the owner's task, note the list bill's billing task, file the row and tell the owner. */
+function gblPayrollSend_(g, who, x) {
+  var join = x.kind === 'join', pension = join ? x.plans.some(function (k) { return k !== 'life'; }) : x.pols.some(function (p) { return p.kind === 'pension'; });
+  var head = (pension ? 'Pension' : 'Payroll Life') + (join ? ' Enrolment' : ' Leaver');
+  var month = join ? x.start : x.last, subject = (head + ' – ' + x.name + ' – ' + g.name + ' – ' + (join ? 'first deduction ' : 'last deduction ') + gblMonthLabel_(month)).slice(0, 255);
+  var facts = join ? ['Plans: ' + x.label, 'First salary deduction: ' + gblMonthLabel_(x.start), x.contribution ? 'Contribution in mind: ' + x.contribution : '', x.employed ? 'Date employed: ' + tDmy_(x.employed) : '',
+      x.email ? 'E-mail: ' + x.email : '', x.mobile ? 'Mobile: ' + x.mobile : '']
+    : ['Policies: ' + x.pols.map(function (p) { return p.policy + (p.plan ? ' (' + p.plan + ')' : '') + (p.premium ? ', ' + gcmMoney_(p.premium) + ' a month' : ''); }).join('; '),
+      'Last salary deduction: ' + gblMonthLabel_(x.last), x.leftOn ? 'Left on: ' + tDmy_(x.leftOn) : '', x.company ? 'A company-paid pension: go through the plan’s rules for leavers with the group.' : ''];
+  var steps = (join ? GBL_PAY.JOIN_STEPS : GBL_PAY.LEAVE_STEPS).map(function (s, i) { return (i + 1) + '. ' + s; });
+  var desc = 'Reported by ' + g.name + ' on their service page (' + who.name + ').\n' + facts.filter(String).join('\n') + (x.note ? '\nThe group wrote: ' + x.note : '') + '\n\nWhat to do:\n' + steps.join('\n');
+  var taskId = '', taskNote = '';
+  if (tSfOn_()) {
+    var ownerId = gblOwnerId_(g), acct = (g.acctsFull || g.accts)[0] || null;
+    var rec = { Subject: subject, WhatId: join ? acct : (x.pols[0] && x.pols[0].id) || acct, ActivityDate: gblPayDue_(), Status: 'Not Started', Priority: 'Normal', Description: desc.slice(0, 31000) };
+    if (!join && x.person.contactId) rec.WhoId = x.person.contactId;
+    if (ownerId) rec.OwnerId = ownerId;
+    var tries = [Object.assign({ Task_Type__c: 'Servicing' }, rec), rec, (function () { var r = Object.assign({}, rec); delete r.WhoId; r.WhatId = acct; return r; })()];
+    for (var i = 0; i < tries.length && !taskId; i++) { try { taskId = String(tSfSend_('post', '/sobjects/Task', tries[i]).id || ''); } catch (e) { taskNote = 'Salesforce task not opened: ' + String(e && e.message ? e.message : e).slice(0, 120); } }
+    if (taskId) taskNote = '';
+  }
+  var detail = (join ? 'Joining: ' + x.label + ', first salary deduction ' + gblMonthLabel_(x.start) : 'Leaving: ' + x.label + ', last salary deduction ' + gblMonthLabel_(x.last) + (x.leftOn ? ', left ' + tDmy_(x.leftOn) : '')) + (x.note ? '. ' + x.note : '');
+  gblAppend_(GBL.CHANGES, [{ When: new Date(), Group: g.name, Line: 'listbill', Kind: join ? 'joiner' : 'leaver', Member: x.name, Detail: detail.slice(0, 800), Effective: month + '-01', Amount: 0, Source: 'client',
+    By: who.name, Status: 'open', 'SF Task': taskId, 'SF Id': join ? '' : (x.pols[0] && x.pols[0].id) || '', Note: (taskNote || ('payroll: ' + x.kind)).slice(0, 300) }]);
+  try { gblPostBilling_(g, 'listbill', month, 'From ' + g.name + ' on their service page (' + who.name + '): ' + detail + (taskId ? '. Task opened for the account owner.' : '.'), who); } catch (e2) {}
+  try { gblTellOwner_(g, who.name, join ? 'joiner' : 'leaver', 'listbill', { member: x.name, effective: month + '-01', detail: detail }); } catch (e3) {}
+  return { ok: true, task: taskId, said: join
+    ? 'Thank you. Our team will call ' + x.first + ' within two working days to go through ' + (pension ? 'the pension and prepare a projection from their salary' : 'the plan and prepare a quote') + '. Once ' + x.first + ' confirms, we will ask you for their latest payslip and date of employment, and send you the policy numbers and the salary deduction form to stamp and sign.'
+    : 'Thank you. ' + x.name.split(' ')[0] + '’s ' + (pension ? 'pension' : 'plan') + ' is their own, so leaving does not end it: our team will contact them within two working days about paying it another way, and take it off your list bill from ' + gblMonthLabel_(gblAddMonths_(x.last, 1)) + '.' + (x.company ? ' ' + GBL_PAY.COMPANY_NOTE : '') };
+}
+function gblPayDue_() { var d = gcmToday_(), n = 0; while (n < GBL_PAY.DUE_DAYS) { d = gcmAddDays_(d, 1); if (typeof gblWorkingDay_ !== 'function' || gblWorkingDay_(d)) n++; } return d; }

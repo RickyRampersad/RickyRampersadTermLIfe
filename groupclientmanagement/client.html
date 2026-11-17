@@ -290,10 +290,11 @@ footer a{color:inherit}
 .chg .ok{background:var(--goodBg);border-radius:10px;padding:10px 12px;margin-top:10px;font-weight:600;color:var(--good)}
 .fprev{margin-top:12px}.fpt{font-size:13px;color:var(--muted);margin-bottom:6px}.fprev iframe{width:100%;height:560px;border:1px solid var(--line);border-radius:10px;background:#fff}
 .pdfv canvas{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:10px;background:#fff;margin:0 0 10px}
-.cfp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 14px}.cfpb{font:inherit;text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}.cfpb b{font-size:14px}.cfpb span{font-size:12px;color:var(--muted)}.cfpb.on{border-color:var(--primary);background:var(--primarySoft,#e8f0ff);box-shadow:0 0 0 2px var(--primarySoft,#e8f0ff) inset}
+.cfp{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 14px}@media (max-width:860px){.cfp{grid-template-columns:repeat(2,1fr)}}
+.pkind{display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap}.pkb{font:inherit;font-weight:600;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer;color:var(--ink)}.pkb.on{border-color:var(--primary);background:var(--primarySoft,#e8f0ff);color:var(--primary)}.pplans{display:flex;flex-wrap:wrap;gap:6px 18px;margin:2px 0 8px}.cfpb{font:inherit;text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}.cfpb b{font-size:14px}.cfpb span{font-size:12px;color:var(--muted)}.cfpb.on{border-color:var(--primary);background:var(--primarySoft,#e8f0ff);box-shadow:0 0 0 2px var(--primarySoft,#e8f0ff) inset}
 .esec{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}.esec>b{display:block;margin-bottom:6px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.02em}.ticks{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px}
 .deps .dep.wide{grid-template-columns:1fr 2fr 1fr 1fr 1.4fr}
-@media (max-width:560px){.deps .dep,.deps .dep.ben,.deps .dep.wide{grid-template-columns:1fr 1fr}.fprev iframe{height:420px}.cfp{grid-template-columns:1fr}}
+@media (max-width:560px){.deps .dep,.deps .dep.ben,.deps .dep.wide{grid-template-columns:1fr 1fr}.fprev iframe{height:420px}.cfp{grid-template-columns:repeat(2,1fr)}}
 .cyears{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:4px 0 8px}
 .cyears div{background:var(--sunken);border-radius:10px;padding:10px 12px}.cyears b{display:block;font-size:18px;color:#13408F}.cyears span{font-size:12.5px;color:var(--muted)}
 </style>
@@ -558,9 +559,11 @@ function bindBilling() {
 
 /* the change form (24 October 2026): search a member of your plan, Guardian Life's form EB0010 fills from our records,
    confirm the change, and it goes to Guardian Life with our branch copied */
-function cfFresh(form) { return { form: form || 'change', q: '', results: null, member: null, pick: null, kind: 'terminate', easiKind: 'change', pdf: '', missing: [], blocking: [], sent: '', err: '', busy: false, deps: [], bens: [], enrol: {}, easi: {}, policies: null }; }
+function cfFresh(form) { return { form: form || 'change', q: '', results: null, member: null, pick: null, kind: 'terminate', easiKind: 'change', pdf: '', missing: [], blocking: [], sent: '', err: '', busy: false, deps: [], bens: [], enrol: {}, easi: {}, policies: null, pkind: 'join', pay: {}, plans: [] }; }
 let CF = cfFresh('change');
-const CF_FORMS = [['change', 'Change or terminate', 'EB0010'], ['enrol', 'Enrol a new member', 'GIO001'], ['easi', 'Claim payment account', 'EASI Collect']];
+const CF_FORMS = [['change', 'Change or terminate', 'EB0010'], ['enrol', 'Enrol a new member', 'GIO001'], ['easi', 'Claim payment account', 'EASI Collect'], ['payroll', 'Pension or a plan from salary', 'Join or leave']];
+/* pensions and life plans paid through your payroll (17 November 2026): the employee's own policies on your list bill */
+const PAY_PLANS = [['personal', 'Personal Pension Plan'], ['ipi', 'Company pension (IPI)'], ['life', 'Life plan through payroll']];
 const CF_EASI = [['change', 'Change the account'], ['enrol', 'Enrol an account'], ['terminate', 'End the arrangement']];
 /* GIO001, Guardian's application form: what the group types, section by section */
 const ENR = [
@@ -578,10 +581,11 @@ const CF_KINDS = [['terminate', 'Terminate this member'], ['adddep', 'Add a depe
 const CF_RELS = ['SPOUSE', 'CHILD', 'CHILD', 'CHILD'];
 function chgHtml() {
   const f = CF.form;
-  let h = '<div class="chg" id="chg"><h3>Enrol, terminate or change a member</h3><p class="sub">Guardian Life’s own forms, filled from our records and what you give here. You confirm, and the form goes to Guardian Life with our branch copied.</p>' +
+  let h = '<div class="chg" id="chg"><h3>Enrol, terminate or change a member</h3><p class="sub">Group Health and Group Life go on Guardian Life’s own forms, filled from our records and what you give here: you confirm, and the form goes to Guardian Life with our branch copied. A pension or a life plan paid from salary is the employee’s own policy: tell us who is joining or leaving, and our team takes it from there.</p>' +
     '<div class="cfp">' + CF_FORMS.map(([k, l, c]) => '<button type="button" class="cfpb' + (f === k ? ' on' : '') + '" data-cform="' + k + '"><b>' + l + '</b><span>' + c + '</span></button>').join('') + '</div>';
   if (CF.sent) return h + '<div class="ok">' + esc(CF.sent) + '</div><button class="btn ghost" type="button" id="cfAnother" style="margin-top:8px">Another form</button></div>';
   if (f === 'enrol') h += enrolForm();
+  else if (f === 'payroll') h += payForm();
   else {
     h += '<label for="cq">The person’s name</label><div class="srch"><input class="field" id="cq" maxlength="80" placeholder="Surname or first name" value="' + esc(CF.q) + '" autocomplete="off"><button class="btn ghost" type="button" id="cqGo">Search</button></div><div id="cres">' + chgResults() + '</div>';
     if (CF.pick) h += f === 'easi' ? easiForm() : chgForm();
@@ -591,7 +595,7 @@ function chgHtml() {
 function chgResults() {
   if (CF.busy && !CF.results) return '<p class="sub">Looking in our records…</p>';
   if (!CF.results) return '';
-  if (!CF.results.length) return '<p class="sub">Nobody on your plan matches that. Try the surname alone, or part of it.</p>';
+  if (!CF.results.length) return '<p class="sub">' + (CF.form === 'payroll' ? 'Nobody paying a pension or life plan through your payroll matches that.' : 'Nobody on your plan matches that.') + ' Try the surname alone, or part of it.</p>';
   return '<ul class="cres">' + CF.results.map(m => '<li><button type="button" class="pickm' + (CF.pick && CF.pick.id === m.id ? ' on' : '') + '" data-pick="' + esc(m.id) + '"><b>' + esc(m.name) + '</b><span>' + esc(m.label) + ' · ' + esc(m.policy) + ' · ' + esc(m.status) + (m.since ? ' · since ' + esc(dmy(m.since)) : '') + (m.deps ? ' · ' + m.deps + ' dependent' + (m.deps === 1 ? '' : 's') + ' on record' : '') + '</span></button></li>').join('') + '</ul>' + (CF.results.more ? '<p class="sub">More match: add another word of the name.</p>' : '');
 }
 function chgTail(label) {
@@ -606,6 +610,30 @@ function depRowsHtml(list, label, n, attr, extra) {
     '<input class="field" placeholder="Full name" data-' + attr + '="name" data-i="' + i + '" value="' + esc(d.name || '') + '"><select class="field" data-' + attr + '="gender" data-i="' + i + '"><option value="">M/F</option><option' + (d.gender === 'M' ? ' selected' : '') + '>M</option><option' + (d.gender === 'F' ? ' selected' : '') + '>F</option></select><input class="field" type="date" data-' + attr + '="dob" data-i="' + i + '" value="' + esc(d.dob || '') + '">' +
     (extra === 'ben' ? '<input class="field" placeholder="%" inputmode="numeric" data-' + attr + '="pct" data-i="' + i + '" value="' + esc(d.pct || '') + '">' + (attr === 'ben' ? '<label class="tick"><input type="checkbox" data-' + attr + '="remove" data-i="' + i + '"' + (d.remove ? ' checked' : '') + '> remove</label>' : '') : '') +
     (extra === 'country' ? '<input class="field" placeholder="Country of residence" data-' + attr + '="country" data-i="' + i + '" value="' + esc(d.country || 'TRINIDAD AND TOBAGO') + '">' : '') + '</div>'; }).join('') + '</div>';
+}
+function payForm() {
+  const k = CF.pkind, x = CF.pay;
+  let h = '<div class="cform" id="cform"><div class="pkind" role="group" aria-label="Joining or leaving">' +
+    [['join', 'Someone is joining'], ['leave', 'Someone is leaving']].map(([v, l]) => '<button type="button" class="pkb' + (k === v ? ' on' : '') + '" data-pkind="' + v + '" aria-pressed="' + (k === v) + '">' + l + '</button>').join('') + '</div>';
+  if (k === 'join') {
+    h += '<p class="sub">Tell us who wants to join and when your payroll can start the deduction. Our team calls them, prepares ' + (CF.plans.some(p => p !== 'life') ? 'a projection from their salary' : 'what the plan would cost') + ', and once they confirm, asks you for their latest payslip and date of employment, and them for their ID, a utility bill and their beneficiary’s ID. We then send you the policy numbers and the salary deduction form to stamp and sign.</p>' +
+      '<div class="row2"><div><label for="pfirst">Employee’s first name</label><input class="field" id="pfirst" maxlength="40" value="' + esc(x.first || '') + '"></div><div><label for="plast">Surname</label><input class="field" id="plast" maxlength="60" value="' + esc(x.last || '') + '"></div></div>' +
+      '<div class="row2"><div><label for="pemail">Their e-mail</label><input class="field" id="pemail" type="email" maxlength="120" value="' + esc(x.email || '') + '"></div><div><label for="pmob">Their mobile</label><input class="field" id="pmob" type="tel" maxlength="30" value="' + esc(x.mobile || '') + '"></div></div>' +
+      '<label>Which plan do they want to join?</label><div class="pplans">' + PAY_PLANS.map(([v, l]) => '<label class="tick"><input type="checkbox" data-plan="' + v + '"' + (CF.plans.indexOf(v) >= 0 ? ' checked' : '') + '> ' + l + '</label>').join('') + '</div>' +
+      '<div class="row2"><div><label for="pstart">First salary deduction</label><input class="field" id="pstart" type="month" value="' + esc(x.startMonth || '') + '"></div><div><label for="pemp">Date employed</label><input class="field" id="pemp" type="date" value="' + esc(x.employed || '') + '"></div></div>' +
+      '<label for="pcon">The contribution they have in mind (optional)</label><input class="field" id="pcon" maxlength="80" placeholder="For example 5% of salary" value="' + esc(x.contribution || '') + '">';
+  } else {
+    h += '<p class="sub">Their policy is their own, so leaving your company does not end it. Tell us the last salary deduction: our team contacts them about paying it another way, and takes it off your list bill from the month after.</p>' +
+      '<label for="cq">The person’s name</label><div class="srch"><input class="field" id="cq" maxlength="80" placeholder="Surname or first name" value="' + esc(CF.q) + '" autocomplete="off"><button class="btn ghost" type="button" id="cqGo">Search</button></div><div id="cres">' + chgResults() + '</div>';
+    if (CF.pick) h += '<div class="picked"><b>' + esc(CF.pick.name) + '</b> · ' + esc(CF.pick.label) + (CF.pick.policy ? ' · ' + esc(CF.pick.policy) : '') + '</div>' +
+      (CF.pick.company ? '<p class="sub"><b>' + esc(CF.companyNote || 'A company-paid pension follows the plan’s own rules when someone leaves: our team will go through them with you.') + '</b></p>' : '') +
+      '<div class="row2"><div><label for="plastm">Last salary deduction</label><input class="field" id="plastm" type="month" value="' + esc(x.lastDeduction || '') + '"></div><div><label for="pleft">Date they leave (optional)</label><input class="field" id="pleft" type="date" value="' + esc(x.leftOn || '') + '"></div></div>';
+  }
+  if (k === 'join' || CF.pick) h += '<label for="creason">Anything our team should know (optional)</label><input class="field" id="creason" maxlength="300" value="' + esc(CF.reason || '') + '">' +
+    '<label for="cname">Your name</label><input class="field" id="cname" maxlength="80" value="' + esc(CF.name || A._who || '') + '">' +
+    '<label class="tick big"><input type="checkbox" id="cauth"' + (CF.auth ? ' checked' : '') + '> I am authorised to tell you this for ' + esc(D.group) + '</label>' +
+    '<button class="btn full" type="button" id="cgo">Send to our team</button>';
+  return h + '</div>';
 }
 function chgForm() {
   const m = CF.pick, k = CF.kind, deps = (CF.member && CF.member.deps) || [];
@@ -653,6 +681,10 @@ function chgRead() {
   const g = id => $(id) ? $(id).value.trim() : '';
   CF.kind = g('ckind') || CF.kind; CF.easiKind = g('ceasi') || CF.easiKind; CF.effective = g('ceff'); CF.marital = g('cmar'); CF.reason = g('creason'); CF.admin = g('cadmin'); CF.name = g('cname'); CF.address = g('caddr'); CF.bankName = g('cbank'); CF.bankAccount = g('cacct'); CF.bankBranch = g('cbr'); CF.auth = $('cauth') ? $('cauth').checked : false;
   if (CF.form === 'easi') CF.easi = { idType: g('cidt'), idNo: g('cidn'), bankName: g('cbank'), bankBranch: g('cbr'), bankAccount: g('cacct'), bankType: g('cbty') };
+  if (CF.form === 'payroll') {
+    if (CF.pkind === 'join') { CF.pay = Object.assign(CF.pay, { first: g('pfirst'), last: g('plast'), email: g('pemail'), mobile: g('pmob'), startMonth: g('pstart'), employed: g('pemp'), contribution: g('pcon') }); CF.plans = Array.from(document.querySelectorAll('[data-plan]')).filter(c => c.checked).map(c => c.dataset.plan); }
+    else CF.pay = Object.assign(CF.pay, { lastDeduction: g('plastm'), leftOn: g('pleft') });
+  }
   if (CF.form === 'enrol') document.querySelectorAll('[data-enr]').forEach(el => { CF.enrol[el.dataset.enr] = el.type === 'checkbox' ? (el.checked ? 'Y' : '') : el.value.trim(); });
   const rows = (attr, n) => { const out = []; for (let i = 0; i < n; i++) { const o = {}; document.querySelectorAll('[data-' + attr + '][data-i="' + i + '"]').forEach(el => { o[el.dataset[attr]] = el.type === 'checkbox' ? el.checked : el.value.trim(); }); if (o.name) out.push(o); } return out; };
   if (document.querySelector('[data-dep]')) CF.deps = rows('dep', 5);
@@ -662,6 +694,7 @@ function chgRead() {
 function chgBody() {
   const b = { lb: CRED.lb, code: CRED.code, form: CF.form, reason: CF.reason, admin: CF.admin, name: CF.name, deps: JSON.stringify(CF.deps), bens: JSON.stringify(CF.bens) };
   if (CF.form === 'enrol') return Object.assign(b, CF.enrol);
+  if (CF.form === 'payroll') return Object.assign(b, CF.pay, { pkind: CF.pkind, plans: CF.plans.join(','), member: CF.pick ? CF.pick.id : '' });
   Object.assign(b, { member: CF.pick ? CF.pick.id : '', kind: CF.kind, effective: CF.effective, marital: CF.marital, address: CF.address, bankName: CF.bankName, bankAccount: CF.bankAccount, bankBranch: CF.bankBranch });
   if (CF.form === 'easi') Object.assign(b, { easiKind: CF.easiKind, idType: CF.easi.idType || '', idNo: CF.easi.idNo || '', bankType: CF.easi.bankType || '' });
   return b;
@@ -672,10 +705,10 @@ async function chgSearch() {
   if (CF.q.length < 2) { CF.results = null; CF.pick = null; chgDraw(); return; }
   CF.busy = true; CF.results = null; chgDraw();
   let r;
-  try { r = JSON.parse(await (await fetch(SVC + '?action=gcm.clientForm&lb=' + encodeURIComponent(CRED.lb) + '&code=' + encodeURIComponent(CRED.code) + '&q=' + encodeURIComponent(CF.q) + '&z=' + Date.now())).text()); } catch (e) { r = { ok: false, error: 'We could not reach our records. Please try again.' }; }
+  try { r = JSON.parse(await (await fetch(SVC + '?action=gcm.clientForm&lb=' + encodeURIComponent(CRED.lb) + '&code=' + encodeURIComponent(CRED.code) + '&q=' + encodeURIComponent(CF.q) + (CF.form === 'payroll' ? '&form=payroll' : '') + '&z=' + Date.now())).text()); } catch (e) { r = { ok: false, error: 'We could not reach our records. Please try again.' }; }
   CF.busy = false;
   if (!r.ok) { CF.err = r.error || 'Not found.'; CF.results = []; chgDraw(); return; }
-  CF.results = r.members || []; CF.results.more = !!r.more; chgDraw();
+  CF.results = r.members || []; CF.results.more = !!r.more; if (r.companyNote) CF.companyNote = r.companyNote; chgDraw();
   $('cq').focus(); $('cq').setSelectionRange(CF.q.length, CF.q.length);
 }
 function bindChg() {
@@ -687,6 +720,8 @@ function bindChg() {
   el.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { CF.pick = CF.results.find(m => m.id === b.dataset.pick); CF.member = null; CF.pdf = ''; CF.missing = []; CF.blocking = []; CF.deps = []; CF.bens = []; chgDraw(); if (CF.form === 'change') chgPreview(true); });
   if ($('ckind')) $('ckind').onchange = () => { chgRead(); CF.pdf = ''; CF.deps = []; CF.bens = []; chgDraw(); };
   if ($('ceasi')) $('ceasi').onchange = () => { chgRead(); CF.pdf = ''; chgDraw(); };
+  el.querySelectorAll('[data-pkind]').forEach(b => b.onclick = () => { if (CF.pkind === b.dataset.pkind) return; chgRead(); CF.pkind = b.dataset.pkind; CF.err = ''; chgDraw(); });
+  el.querySelectorAll('[data-plan]').forEach(c => c.onchange = () => { chgRead(); chgDraw(); });
   if ($('cprev')) $('cprev').onclick = () => chgPreview(false);
   if ($('cgo')) $('cgo').onclick = chgSend;
   if ($('cfr') && CF.pdf) pdfPages($('cfr'), CF.pdf);
@@ -706,6 +741,14 @@ async function chgPreview(quiet) {
 }
 async function chgSend() {
   chgRead(); CF.err = '';
+  if (CF.form === 'payroll' && CF.pkind === 'join') {
+    const x = CF.pay;
+    if (!x.first || !x.last) { CF.err = 'Please give the employee’s first name and surname.'; return chgDraw(); }
+    if (!x.email && String(x.mobile || '').replace(/\D/g, '').length < 7) { CF.err = 'Please give a way to reach them: an e-mail or a mobile number.'; return chgDraw(); }
+    if (!CF.plans.length) { CF.err = 'Which plan do they want to join?'; return chgDraw(); }
+    if (!x.startMonth) { CF.err = 'Which month can the first salary deduction be?'; return chgDraw(); }
+  }
+  if (CF.form === 'payroll' && CF.pkind === 'leave' && !CF.pay.lastDeduction) { CF.err = 'Which month is the last salary deduction?'; return chgDraw(); }
   if (!CF.name) { CF.err = 'Please give your name.'; return chgDraw(); }
   if (!CF.auth) { CF.err = 'Please tick that you are authorised to submit this.'; return chgDraw(); }
   if (CF.form === 'change' && !CF.effective) { CF.err = 'Please give the effective date.'; return chgDraw(); }
@@ -764,7 +807,7 @@ function peopleHtml() {
   if (!PEO.data) return h + (PEO.err ? '<p class="err" role="alert">' + esc(PEO.err) + '</p><button class="btn ghost sm" type="button" id="pretry">Try again</button>'
     : '<p class="sub" aria-live="polite">Reading your people from our records and your latest bills…</p>') + '</section>';
   const R = PEO.data, c = R.counts;
-  h += '<p class="sub">Everyone on your Group Health and Group Life plans, from our records' + (R.bills.length ? ' and your latest bills (' + esc(R.bills.map(b => b.label + ', ' + b.month).join('; ')) + ')' : '') +
+  h += '<p class="sub">Everyone on your Group Health and Group Life plans, and anyone paying a pension or life plan through your payroll, from our records' + (R.bills.length ? ' and your latest bills (' + esc(R.bills.map(b => b.label + ', ' + b.month).join('; ')) + ')' : '') +
     '. Choose who to see. For each person: what is open with us, who on our team has it, and a box to tell us anything that is holding it up.</p>' +
     '<div class="pbar"><label for="pf">Show</label><select class="field" id="pf">' +
     [['pending', 'Pending applications', c.pending], ['active', 'Active members', c.active], ['off', 'Came off in ' + R.year, c.off], ['all', 'Everyone', c.all]]
