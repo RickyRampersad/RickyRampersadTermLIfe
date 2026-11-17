@@ -1,77 +1,77 @@
 {
- "tts/out/gcmw/01.mp3": [
+ "tts/out/gcmw2/01.mp3": [
   "en",
-  0.997,
+  0.996,
   "Here's what you'll see when you sign into your group's service page from the first screen to the last."
  ],
- "tts/out/gcmw/02.mp3": [
+ "tts/out/gcmw2/02.mp3": [
   "en",
   0.998,
   "Every Monday at 10, our report lands in your inbox. The button in it takes you straight to your page."
  ],
- "tts/out/gcmw/03.mp3": [
+ "tts/out/gcmw2/03.mp3": [
   "en",
   0.998,
-  "to sign in, type the list bill number from your bill and the access code in our email. That's all it takes."
+  "To sign in, type the list bill number from your bill and the access code in our email. That's all it takes."
  ],
- "tts/out/gcmw/04.mp3": [
+ "tts/out/gcmw2/04.mp3": [
   "en",
-  0.999,
-  "At the top, you'll see who looks after your account and three tabs, your service items, your billing, and your people."
+  0.998,
+  "At the top you'll see who looks after your account and three tabs, your service items, your billing, and your people."
  ],
- "tts/out/gcmw/05.mp3": [
+ "tts/out/gcmw2/05.mp3": [
   "en",
-  0.994,
-  "First come the applications and increases still pending with how long each is waited and who on our team has it."
+  0.995,
+  "First come the applications and increases still pending with how long each one has been waiting and who on our team has it."
  ],
- "tts/out/gcmw/06.mp3": [
+ "tts/out/gcmw2/06.mp3": [
   "en",
   0.998,
   "Below them is every open item. Open one to read its history. Then tell us if it's correct, if it needs a change, or if it isn't yours."
  ],
- "tts/out/gcmw/07.mp3": [
+ "tts/out/gcmw2/07.mp3": [
   "en",
   0.994,
-  "Coming up shows who's turning 65, which dependents are coming of age, and who's close to retiring, so nothing takes you by surprise."
+  "Coming up shows who's turning 65, which dependents are coming of age and who's close to retiring, so nothing takes you by surprise."
  ],
- "tts/out/gcmw/08.mp3": [
+ "tts/out/gcmw2/08.mp3": [
   "en",
-  0.996,
-  "Before you leave this tab, give us up to five stars for the week and add a word if you'd like."
+  0.995,
+  "Before you leave this tab, give us up to 5 stars for the week and add a word if you'd like."
  ],
- "tts/out/gcmw/09.mp3": [
+ "tts/out/gcmw2/09.mp3": [
   "en",
   0.998,
-  "Your billing tab opens on one clear statement. This month's bills, anything still unpaid, and the total to bring you up to date."
+  "Your billing tab opens on one clear statement. This month's bills, anything's still unpaid, and the total to bring you up to date."
  ],
- "tts/out/gcmw/10.mp3": [
+ "tts/out/gcmw2/10.mp3": [
+  "en",
+  0.997,
+  "Each plan has its own line with every month's bill and every payment. And on every bill, you can rate the person who looks after your account."
+ ],
+ "tts/out/gcmw2/11.mp3": [
   "en",
   0.996,
-  "Each plan has its own line with every month build and received. And on every bill, you can rate the person who looks after your account."
+  "Your people shows everyone on your plans who came off this year and who's still pending. Send us a note about anyone and it goes straight to the person handling it."
  ],
- "tts/out/gcmw/11.mp3": [
-  "en",
-  0.996,
-  "Your people shows everyone on your plans who came off this year and who's still pending right to us about anyone and it goes straight to the person handling it."
- ],
- "tts/out/gcmw/12.mp3": [
+ "tts/out/gcmw2/12.mp3": [
   "en",
   0.994,
   "someone joining or leaving your group life or health plan. Search their name and Guardian's own form fills itself in from our records."
  ],
- "tts/out/gcmw/13.mp3": [
+ "tts/out/gcmw2/13.mp3": [
   "en",
-  0.992,
-  "For a pension or a live plan paid from salary, tell us who's joining. We'll call them and prepare a projection from their salary."
+  0.995,
+  "For a pension, or life insurance paid from salary, tell us who's joining. We'll call them and prepare a projection from their salary."
  ],
- "tts/out/gcmw/14.mp3": [
-  "en",
-  0.998,
-  "When someone leaves, their policy is still theirs. Tell us the last salary deduction, and we'll help them keep it going."
- ],
- "tts/out/gcmw/15.mp3": [
+ "tts/out/gcmw2/14.mp3": [
   "en",
   0.997,
+  "When someone leaves, their policy is still theirs. Tell us the last salary deduction, and we'll help them keep it going."
+ ],
+ "tts/out/gcmw2/15.mp3": [
+  "en",
+  0.996,
   "Every answer you send reaches a real person on our team, and you'll see where it stands the next time you sign in."
  ]
 }
