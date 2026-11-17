@@ -3,28 +3,27 @@
  "rate": "+0%",
  "check": true,
  "voices": {
-  "gcmw2": "en-US-AndrewMultilingualNeural"
+  "pens1": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "gcmw2": "+0%"
+  "pens1": "+0%"
  },
  "films": {
-  "gcmw2": [
-   "Here's what you'll see when you sign in to your group's service page, from the first screen to the last.",
-   "Every Monday at ten, our report lands in your inbox. The button in it takes you straight to your page.",
-   "To sign in, type the list bill number from your bill, and the access code in our e-mail. That's all it takes.",
-   "At the top, you'll see who looks after your account, and three tabs: your service items, your billing and your people.",
-   "First come the applications and increases still pending, with how long each one has been waiting, and who on our team has it.",
-   "Below them is every open item. Open one to read its history, then tell us if it's correct, if it needs a change, or if it isn't yours.",
-   "Coming up shows who's turning sixty five, which dependents are coming of age, and who's close to retiring, so nothing takes you by surprise.",
-   "Before you leave this tab, give us up to five stars for the week, and add a word if you'd like.",
-   "Your billing tab opens on one clear statement: this month's bills, anything still unpaid, and the total to bring you up to date.",
-   "Each plan has its own line, with every month's bill and every payment. And on every bill, you can rate the person who looks after your account.",
-   "Your people shows everyone on your plans, who came off this year, and who's still pending. Send us a note about anyone, and it goes straight to the person handling it.",
-   "Someone joining or leaving your group life or health plan? Search their name, and Guardian's own form fills itself in from our records.",
-   "For a pension, or life insurance paid from salary, tell us who's joining. We'll call them, and prepare a projection from their salary.",
-   "When someone leaves, their policy is still theirs. Tell us the last salary deduction, and we'll help them keep it going.",
-   "Every answer you send reaches a real person on our team, and you'll see where it stands the next time you sign in."
+  "pens1": [
+   "Setting up a company pension in Trinidad has always meant piles of forms, a calculator and weeks of chasing. We've taken all of that away.",
+   "We've always kept our clients' records in order with strong systems like Salesforce. Now artificial intelligence helps us get better every week.",
+   "It starts with you, the employer. Sign in with your company code and see everyone on your plan, and where each one stands.",
+   "To add someone, fill in the company's part: the plan, the premium and their salary. Press send, and we write to your employee.",
+   "They get their own link by e-mail. Until their part is in, we remind them every morning, and you're copied on every message.",
+   "On their phone, they add what only they can give: who the money goes to, anything of their own, and photos of three documents. It takes about ten minutes.",
+   "If they have a question about the plan or our service, they can ask RIA, our assistant, right inside the form, or message us on WhatsApp, where every question is logged and answered.",
+   "Then the part that used to take days: the Section one thirty-four calculation. The contribution raises the very income it's measured against, so the ceiling has to be solved.",
+   "For this employee, the company may put in up to sixty-two thousand, six hundred and sixty dollars a year, with every line of the working shown.",
+   "Then every form fills itself: the Inland Revenue approval request, Declaration One, Declaration Two and the salary deduction form. Guardian's own forms, filled in exactly.",
+   "It all comes together in one package, checked by our branch before it goes to head office.",
+   "You get your copy by e-mail, ready to print, sign, stamp and send. Nothing to retype, and nothing to chase.",
+   "And everyone can see where it stands: you, your employee and our team, all the way to the policy being issued.",
+   "Too many forms used to hold pensions back. Now it's one link, a few minutes, and a team that stays with you. A journey, not a transaction."
   ]
  }
 }
