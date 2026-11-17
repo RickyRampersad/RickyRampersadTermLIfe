@@ -1,152 +1,77 @@
 {
- "tts/out/gcmc3/01.mp3": [
+ "tts/out/gcmw/01.mp3": [
+  "en",
+  0.997,
+  "Here's what you'll see when you sign into your group's service page from the first screen to the last."
+ ],
+ "tts/out/gcmw/02.mp3": [
+  "en",
+  0.998,
+  "Every Monday at 10, our report lands in your inbox. The button in it takes you straight to your page."
+ ],
+ "tts/out/gcmw/03.mp3": [
+  "en",
+  0.998,
+  "to sign in, type the list bill number from your bill and the access code in our email. That's all it takes."
+ ],
+ "tts/out/gcmw/04.mp3": [
+  "en",
+  0.999,
+  "At the top, you'll see who looks after your account and three tabs, your service items, your billing, and your people."
+ ],
+ "tts/out/gcmw/05.mp3": [
+  "en",
+  0.994,
+  "First come the applications and increases still pending with how long each is waited and who on our team has it."
+ ],
+ "tts/out/gcmw/06.mp3": [
+  "en",
+  0.998,
+  "Below them is every open item. Open one to read its history. Then tell us if it's correct, if it needs a change, or if it isn't yours."
+ ],
+ "tts/out/gcmw/07.mp3": [
+  "en",
+  0.994,
+  "Coming up shows who's turning 65, which dependents are coming of age, and who's close to retiring, so nothing takes you by surprise."
+ ],
+ "tts/out/gcmw/08.mp3": [
+  "en",
+  0.996,
+  "Before you leave this tab, give us up to five stars for the week and add a word if you'd like."
+ ],
+ "tts/out/gcmw/09.mp3": [
+  "en",
+  0.998,
+  "Your billing tab opens on one clear statement. This month's bills, anything still unpaid, and the total to bring you up to date."
+ ],
+ "tts/out/gcmw/10.mp3": [
+  "en",
+  0.996,
+  "Each plan has its own line with every month build and received. And on every bill, you can rate the person who looks after your account."
+ ],
+ "tts/out/gcmw/11.mp3": [
+  "en",
+  0.996,
+  "Your people shows everyone on your plans who came off this year and who's still pending right to us about anyone and it goes straight to the person handling it."
+ ],
+ "tts/out/gcmw/12.mp3": [
+  "en",
+  0.994,
+  "someone joining or leaving your group life or health plan. Search their name and Guardian's own form fills itself in from our records."
+ ],
+ "tts/out/gcmw/13.mp3": [
   "en",
   0.992,
-  "This is our branch's new way of looking after your group."
+  "For a pension or a live plan paid from salary, tell us who's joining. We'll call them and prepare a projection from their salary."
  ],
- "tts/out/gcmc3/02.mp3": [
-  "en",
-  0.991,
-  "your group life, health and pension plans with guardian life, all in one place, and always up to date. No more chasing us for answers."
- ],
- "tts/out/gcmc3/03.mp3": [
-  "en",
-  0.997,
-  "Every Monday at 10, you get one short report, what we finished, what's still open, and what we need from you."
- ],
- "tts/out/gcmc3/04.mp3": [
+ "tts/out/gcmw/14.mp3": [
   "en",
   0.998,
-  "Tap through to your own secure page. Your service items, your billing, and your people each have their own tab."
+  "When someone leaves, their policy is still theirs. Tell us the last salary deduction, and we'll help them keep it going."
  ],
- "tts/out/gcmc3/05.mp3": [
-  "en",
-  0.991,
-  "On the 26th, your bills arrive, check against our records with one clear statement of what's do."
- ],
- "tts/out/gcmc3/06.mp3": [
-  "en",
-  0.993,
-  "You'll see who's on your plans, who came off this year, and every application still pending with who has it on our team."
- ],
- "tts/out/gcmc3/07.mp3": [
+ "tts/out/gcmw/15.mp3": [
   "en",
   0.997,
-  "We'll tell you ahead of time when someone's turning 65 when a dependent comes of age or when someone's close to retiring."
- ],
- "tts/out/gcmc3/08.mp3": [
-  "en",
-  0.998,
-  "Someone joining or leaving. Tell us right there, the form fills itself in and we follow it through to the end."
- ],
- "tts/out/gcmc3/09.mp3": [
-  "en",
-  0.997,
-  "Give us up to five stars every week, and on every bill, rate the person who looks after your account."
- ],
- "tts/out/gcmc3/10.mp3": [
-  "en",
-  0.997,
-  "A real person reads every answer and acts on it. Behind it all is a name team and every step is recorded. Nothing slips through."
- ],
- "tts/out/gcmc3/11.mp3": [
-  "en",
-  0.998,
-  "Want this for your company? Call our branch on the number on your screen. Let's look after your people together."
- ],
- "tts/out/gcms3/01.mp3": [
-  "en",
-  0.998,
-  "group client management the new way. Here's how it works, and who does what?"
- ],
- "tts/out/gcms3/02.mp3": [
-  "en",
-  0.997,
-  "There are four parts. Our branch manager sets the standard and owns the result. Camilla, our branch manager's assistant, oversees the tasks. The support team looks after their own groups, and the system keeps time and keeps the record."
- ],
- "tts/out/gcms3/03.mp3": [
-  "en",
-  0.998,
-  "You sign in with your own number and password, so everything you do is recorded in your name."
- ],
- "tts/out/gcms3/04.mp3": [
-  "en",
-  0.995,
-  "Every week, you run the six checks and approve each group by Friday. At 10 on Monday, the letters go by themselves."
- ],
- "tts/out/gcms3/05.mp3": [
-  "en",
-  0.999,
-  "at 1030 groups that haven't rated us get a reminder. If one of your ready groups had no letter, you're asked why, and a task opens in your name. Reply by noon and close it with a reason."
- ],
- "tts/out/gcms3/06.mp3": [
-  "en",
-  0.994,
-  "At 11, if a group still has no letter, the whole team gets one note. It names each group and who's responsible."
- ],
- "tts/out/gcms3/07.mp3": [
-  "en",
-  0.999,
-  "Every month, the bills come in on the 25th. You upload them, check them, answer the questions, reconcile and approve. At 1 o'clock, the branch manager gets the report."
- ],
- "tts/out/gcms3/08.mp3": [
-  "en",
-  0.994,
-  "on the 26th at 10, every approved bill goes by itself with its statement. That's the deadline."
- ],
- "tts/out/gcms3/09.mp3": [
-  "en",
-  0.996,
-  "Open Billing, and 8 Steps Guide you, upload a bill, and every check against Salesforce comes back as a finding. Fix, check, note, or okay."
- ],
- "tts/out/gcms3/10.mp3": [
-  "en",
-  0.998,
-  "The upload does the typing for you too. It updates the month's billing record and sales force to match the bill. Then it opens a task for everyone who left or changed their cover and one more to query the adjustments."
- ],
- "tts/out/gcms3/11.mp3": [
-  "en",
-  0.998,
-  "Answer each question with a tap. Your answer goes on chatter in your name. Then update last month's tasks against this month's bill."
- ],
- "tts/out/gcms3/12.mp3": [
-  "en",
-  0.994,
-  "people joining or leaving go on guardians own forms filled in from sales force and they're chased every three working days. The people step shows who's turning 65 or coming of age."
- ],
- "tts/out/gcms3/13.mp3": [
-  "en",
-  0.997,
-  "The statement shows what's due and what's still unpaid. Tick reconciled only when you've checked it yourself. Then approve it for the billing day."
- ],
- "tts/out/gcms3/14.mp3": [
-  "en",
-  0.997,
-  "The bill's email greets the contact by name and asks them to rate the person who looks after their account. Those stars count on your record."
- ],
- "tts/out/gcms3/15.mp3": [
-  "en",
-  0.995,
-  "Miss the deadline, approve and send now will ask why. Give the real reason. It goes on the bill on chatter and straight to the branch manager."
- ],
- "tts/out/gcms3/16.mp3": [
-  "en",
-  0.996,
-  "Every press is recorded. Who, when, and why. So head office, the branch manager, or the group can see exactly what happened."
- ],
- "tts/out/gcms3/17.mp3": [
-  "en",
-  0.996,
-  "Camila checks the team dashboard every day, chases what's late, and steps in when someone's away. Camila and the branch manager can put one group or every group on hold with a reason. Nobody's chased for a group on hold."
- ],
- "tts/out/gcms3/18.mp3": [
-  "en",
-  0.995,
-  "until we go live. Every bill comes to you, mark test. But Salesforce is real and the upload rights to it. So check before you press."
- ],
- "tts/out/gcms3/19.mp3": [
-  "en",
-  0.991,
-  "Read the training program, take the test, and let's make every group feel looked after. This is our new way."
+  "Every answer you send reaches a real person on our team, and you'll see where it stands the next time you sign in."
  ]
 }
