@@ -1354,5 +1354,37 @@
   "h": 1920,
   "capsize": 50,
   "capwrap": 26
+ },
+ "h868c": {
+  "durs": [
+   7.978,
+   9.182,
+   8.414,
+   9.926,
+   9.614,
+   10.55,
+   9.038,
+   7.958,
+   9.59
+  ],
+  "dur": 82.2,
+  "vox": "voh868c",
+  "start": 0,
+  "musicgain": 0.5,
+  "duck": 0.45,
+  "dark": [],
+  "ticks": [],
+  "hits": [],
+  "capmode": "over",
+  "cap": "cap-h868c",
+  "out": "../../help868/for-clients.mp4",
+  "mix": "h868c-mix.wav",
+  "music": "bed-h868c.wav",
+  "sfx": "sfx-h868c.wav",
+  "ass": "captions-h868c.ass",
+  "w": 1080,
+  "h": 1920,
+  "capsize": 50,
+  "capwrap": 26
  }
 }
