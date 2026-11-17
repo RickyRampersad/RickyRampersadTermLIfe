@@ -1,97 +1,37 @@
 {
- "tts/out/henr1/01.mp3": [
-  "en",
-  0.993,
-  "Joining a group health plan used to mean a pile of paper, from going back and forth a signature missing in weeks before the cover started."
- ],
- "tts/out/henr1/02.mp3": [
-  "en",
-  1.0,
-  "Now it starts with one link. Your HR team sends it on WhatsApp or by email with your company and start date already filled in."
- ],
- "tts/out/henr1/03.mp3": [
-  "en",
-  0.995,
-  "The employee opens it on their phone. It takes a few minutes, one step at time."
- ],
- "tts/out/henr1/05.mp3": [
-  "en",
-  0.997,
-  "They had the family members to be covered and for group life who it pays and what Sherry each one gets."
- ],
- "tts/out/henr1/07.mp3": [
-  "en",
-  0.995,
-  "They sign on the screen with a finger, no printing, and no scanning."
- ],
- "tts/out/henr1/08.mp3": [
-  "en",
-  0.997,
-  "Before they send it, they see Guardians own application form, filled in from their answers, exactly as it will print."
- ],
- "tts/out/henr1/10.mp3": [
-  "en",
-  0.995,
-  "They press send. A reference comes back straight away and the whole application comes to our branch."
- ],
- "tts/out/henr1/11.mp3": [
-  "en",
-  0.998,
-  "We check every page, send it to Guardian, and follow it through until the cover is in place. Your HR team can also enroll someone straight from your group page on the same Guardian form."
- ],
- "tts/out/henr1/12.mp3": [
-  "en",
-  0.997,
-  "Joining your plan now takes minutes, not weeks. That's our branch, a journey, not a transaction."
- ],
- "tts/out/term1/01.mp3": [
-  "en",
-  0.998,
-  "When someone leave your company, their cover has to come off the plan. The form has to be right, and it has to reach guardian on time."
- ],
- "tts/out/term1/02.mp3": [
-  "en",
-  0.998,
-  "Now it's done for your own group page. You sign in with your list bill and your access code."
- ],
- "tts/out/term1/03.mp3": [
+ "tts/out/henr1b/01.mp3": [
   "en",
   0.992,
-  "Your people shows everyone on your plans who came off this year and anything's still pending."
+  "Joining a group health plan used to mean piles of paper, missing signatures, and weeks of waiting before the cover started."
  ],
- "tts/out/term1/04.mp3": [
+ "tts/out/henr1b/02.mp3": [
   "en",
-  0.998,
-  "Choose Guardians Forms, then Change or Terminate, and search for the person by name or certificate number."
+  0.995,
+  "They fill in their own details, then choose their cover. That's Group Health, Group Live for both."
  ],
- "tts/out/term1/06.mp3": [
-  "en",
-  0.998,
-  "Give a date, their cover ends. Anything we don't have is listed for you, never guest."
- ],
- "tts/out/term1/07.mp3": [
+ "tts/out/henr1b/03.mp3": [
   "en",
   0.997,
-  "You see Guardian's own policy change form, filled in exactly page by page before anything goes."
+  "Next, they add the family members to be covered. For group life, they name who it pays and the percentage for each one."
  ],
- "tts/out/term1/08.mp3": [
+ "tts/out/henr1b/04.mp3": [
   "en",
   0.999,
-  "Press Send. It goes straight to Guardian's EB customer care team with our branch copied."
+  "Next come the health questions. Most people are well, so a single tick answers no to every one of them. They can still change any answer."
  ],
- "tts/out/term1/09.mp3": [
-  "en",
-  0.999,
-  "Behind it, your account manager gets a task. If there's no reply, we follow it up every three working days until it's done."
- ],
- "tts/out/term1/10.mp3": [
+ "tts/out/henr1b/05.mp3": [
   "en",
   0.997,
-  "A pension or a plan paid from salary belongs to the person, so leaving doesn't end it. We contact them about another way to pay and take it off your list bill."
+  "They also see the declaration of insurability with each health answer and their signature already in place."
  ],
- "tts/out/term1/11.mp3": [
+ "tts/out/term1b/01.mp3": [
+  "en",
+  0.996,
+  "Now you do it on your own group page. You sign in with your list bill and your access code."
+ ],
+ "tts/out/term1b/02.mp3": [
   "en",
   0.998,
-  "No paper, no chasing, and nothing missed. That's how we look after your group."
+  "Pick the person and the form fills itself from our records. Their policy, their date of birth, their contact details, and any dependence on file."
  ]
 }
