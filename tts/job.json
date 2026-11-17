@@ -1,15 +1,14 @@
 {
  "voices": {
-  "h868ia": "en-US-AndrewMultilingualNeural"
+  "h868ic": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "h868ia": "+0%"
+  "h868ic": "+0%"
  },
  "check": true,
  "films": {
-  "h868ia": [
-   "And it's built right into Query Pal. The moment the questions are done, our assistant creates the ticket for you. Nothing to retype, and nothing to lose in an inbox.",
-   "Watch it happen. The chat on top, the ticket below, in the same second. The reference, the department and the target time, all filled in."
+  "h868ic": [
+   "We used to chase queries by email, back and forth, and some got lost. Now there's one green button on our website, and one number. Tap it, and your query is logged, with a reference."
   ]
  }
 }
