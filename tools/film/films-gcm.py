@@ -35,4 +35,8 @@ entries('gcmw', 'gcmw-timing.json', {'': 'what-you-see.mp4'},          # what th
         [(2, 'ten'), (8, 'five'), (12, 'fills'), (14, 'keep')], (('', WIDE),))
 entries('pens2', 'pens2-timing.json', {'': 'company-pension.mp4'},       # company pensions, without the paperwork (17 Nov 2026)
         [(4, 'send'), (9, 'sixty'), (10, 'exactly'), (12, 'stamp'), (14, 'journey')], (('', WIDE),))
+entries('henr1', 'henr1-timing.json', {'': 'health-enrolment.mp4'},      # joining the group health plan (17 Nov 2026)
+        [(2, 'link'), (6, 'tick'), (8, 'exactly'), (10, 'reference'), (12, 'journey')], (('', WIDE),))
+entries('term1', 'term1-timing.json', {'': 'terminations.mp4'},          # when someone leaves the plan (17 Nov 2026)
+        [(2, 'code'), (5, 'Pick'), (7, 'exactly'), (8, 'send'), (11, 'missed')], (('', WIDE),))
 json.dump(f, open('films.json', 'w'), indent=1)

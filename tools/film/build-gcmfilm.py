@@ -34,10 +34,11 @@ import base64, io, json, os, pathlib, re, sys
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 FILM = sys.argv[1] if len(sys.argv) > 1 else 'client'
-KEY = {'client': 'gcmc3', 'staff': 'gcms3', 'walk': 'gcmw', 'pension': 'pens2'}[FILM]
-SHOTS = pathlib.Path(os.environ.get('GCM_SHOTS', HERE / {'walk': 'gcmshots-walk', 'pension': 'pensionshots'}.get(FILM, 'gcmshots')))
+KEY = {'client': 'gcmc3', 'staff': 'gcms3', 'walk': 'gcmw', 'pension': 'pens2', 'henr': 'henr1', 'term': 'term1'}[FILM]
+SHOTS = pathlib.Path(os.environ.get('GCM_SHOTS', HERE / {'walk': 'gcmshots-walk', 'pension': 'pensionshots', 'henr': 'henrshots', 'term': 'termshots'}.get(FILM, 'gcmshots')))
 OUT = ROOT / 'groupclientmanagement' / ({'client': 'new-way-film.html', 'staff': 'staff-new-way-film.html', 'walk': 'what-you-see-film.html',
-                                        'pension': 'company-pension-film.html'}[FILM])
+                                        'pension': 'company-pension-film.html', 'henr': 'health-enrolment-film.html',
+                                        'term': 'terminations-film.html'}[FILM])
 TIMING = HERE / (KEY + '-timing.json')
 
 def b64(p, mime):
@@ -70,7 +71,7 @@ MARK = b64(ROOT / 'groupclientmanagement' / 'gcm-mark.png', 'image/png')
 PLEX = b64(HERE / 'fonts' / 'IBMPlexSans-latin.woff2', 'font/woff2')
 
 T = json.loads(TIMING.read_text()) if TIMING.exists() else {}
-N_LINES = {'client': 11, 'staff': 19, 'walk': 15, 'pension': 14}[FILM]
+N_LINES = {'client': 11, 'staff': 19, 'walk': 15, 'pension': 14, 'henr': 12, 'term': 11}[FILM]
 #  importvox writes SECONDS; data-d is MILLISECONDS.
 DURS = [int(round(d * 1000)) for d in (T.get('durs') or [6.0] * N_LINES)]
 WORDS = [l.get('words', []) for l in T.get('lines', [])]
@@ -92,7 +93,7 @@ def at(n, word, k=0, lead=0.0):
         sys.exit('TIMING: "%s" is not spoken in line %d' % (word, n))
     return 1.0
 
-TAG = '<span class="tag">Sample %s &middot; made-up figures</span>' % ('company' if FILM == 'pension' else 'group')
+TAG = '<span class="tag">Sample %s &middot; made-up figures</span>' % ({'pension': 'company', 'henr': 'employee', 'term': 'group'}.get(FILM, 'group'))
 
 #  Where the key buttons and panels sit on each screen, in that PNG's own pixels, written by the shooters.
 BOXES = {}
@@ -690,6 +691,215 @@ def pension():
         'blue'))
     return sc
 
+
+# ------------------------------------------------------------------------- group health enrolment (17 Nov 2026)
+def henr():
+    """Asked for on 17 November 2026: "do the same vid for the health and termination enrollments". The employee's own
+       enrolment link, benefits/enroll.html, on a made-up employee (Marcus Sample) of a made-up company (Harbour Point
+       Logistics Ltd), shot by the scratchpad's henr/shoot.js with the branch's webhook mocked, so nothing was filed."""
+    sc = []
+    away = at(1, 'weeks') + .9
+    sc.append(split(1,
+        eb('Group health &amp; life &middot; joining', .3) +
+        '<h1>%s</h1>' % kin('Joining your plan, without the paperwork.', .6, hi=('without',)) +
+        '<div class="tabs3">' + ''.join(chip('%s<i class="xs" style="--kd:%.2fs"></i>' % (t, away + i * .15), at(1, w), 'bad x')
+                                        for i, (t, w) in enumerate((('Piles of paper', 'paper'), ('Missing signatures', 'signature'), ('Weeks of waiting', 'weeks')))) + '</div>',
+        '<div class="pile">%s<div class="onelink" style="--kd:%.2fs"><img src="%s" alt=""><b>One link</b><span>for every new employee</span></div></div>'
+        % (''.join(paper(i, .2 + i * .12, away + i * .05) for i in range(6)), away + .35, MARK), 'wide'))
+    sc.append(split(2,
+        eb('It starts with your HR team') +
+        row('mail', 'One link for your team', at(2, 'link'), 'copied, or shared in one tap') +
+        row('chat', 'On WhatsApp or by e-mail', at(2, 'WhatsApp'), '') +
+        row('check', 'Your company already filled in', at(2, 'company'), 'and the date cover starts', 'ok'),
+        lap('s01-share.png', d=.3, n=2, w=558, h=350, moves=((at(2, 'link'), 'share', 1.25), (at(2, 'company') - .2, 'company', 1.25)),
+            taps=((at(2, 'WhatsApp'), 'wa'),), marks=((at(2, 'link') + .4, 'share'), (at(2, 'company') + .3, 'company'))),
+        'wide'))
+    sc.append(split(3,
+        eb('The employee&rsquo;s part') +
+        '<h2>%s</h2>' % kin('A few minutes, on their phone.', at(3, 'minutes', lead=.4), hi=('minutes,',)) +
+        '<div class="tabs3">' + chip('Details', at(3, 'step'), 'tab') + chip('Family', at(3, 'step') + .2, 'tab') +
+        chip('Health', at(3, 'step') + .4, 'tab') + chip('Sign', at(3, 'step') + .6, 'tab') + '</div>',
+        phone('p02-open.png', d=.3, n=3, marks=((at(3, 'step'), 'stepper'), (at(3, 'phone') + .3, 'company'))),
+        'wide2'))
+    sc.append(split(4,
+        eb('Their details and their cover') +
+        row('user', 'Their own details', at(4, 'details'), 'typed once') +
+        row('shield', 'Group health', at(4, 'health'), '') +
+        row('users', 'Group life, or both', at(4, 'life'), '', 'ok'),
+        '<div class="duo">%s%s</div>' % (
+            phone('p03-details.png', 'back', .2, n=4, w=200, marks=((at(4, 'details'), 'name'),)),
+            phone('p03b-cover.png', 'front', at(4, 'cover', lead=.4), n=4, marks=((at(4, 'health'), 'cover'),), taps=((at(4, 'both'), 'next'),))),
+        'wide2'))
+    sc.append(split(5,
+        eb('The family') +
+        row('users', 'Spouse and children to be covered', at(5, 'family'), '') +
+        row('doc', 'Who the life cover pays', at(5, 'pays'), '') +
+        row('check', 'And the percentage for each', at(5, 'percentage'), 'it has to total 100%', 'ok'),
+        '<div class="duo l">%s%s</div>' % (
+            lap('s04-deps.png', 'back', .2, n=5, w=520, h=320, moves=((at(5, 'family'), 'deps', 1.2),), marks=((at(5, 'family') + .4, 'deps'),)),
+            lap('s05-bens.png', 'front', at(5, 'pays', lead=.4), n=5, w=520, h=320, moves=((at(5, 'pays'), 'bens', 1.25),), marks=((at(5, 'percentage'), 'bens'),))),
+        'wide3'))
+    sc.append(split(6,
+        eb('The health questions') +
+        '<div class="punch" style="--kd:%.2fs">One tick.</div>' % at(6, 'tick') +
+        '<div class="note" style="--kd:%.2fs">&ldquo;No&rdquo; to every question, for everyone on the form.</div>' % (at(6, 'tick') + .5) +
+        '<div class="note" style="--kd:%.2fs">Any answer can still be changed.</div>' % at(6, 'change'),
+        '<div class="duo">%s%s</div>' % (
+            phone('p06-health.png', 'back', .2, n=6, w=200, marks=((at(6, 'questions'), 'host'),)),
+            phone('p06b-well.png', 'front', at(6, 'tick', lead=.5), n=6, marks=((at(6, 'tick') + .2, 'well'),), taps=((at(6, 'tick'), 'well'),))),
+        'wide2'))
+    sc.append(split(7,
+        eb('Signed on the screen') +
+        row('tick2', 'With a finger', at(7, 'finger'), 'theirs and their spouse&rsquo;s', 'ok') +
+        '<div class="tabs3">' + ''.join(chip('%s<i class="xs" style="--kd:%.2fs"></i>' % (t, at(7, w) + .4), at(7, w), 'bad x')
+                                        for t, w in (('Printing', 'printing'), ('Scanning', 'scanning'))) + '</div>',
+        phone('p07-sign.png', d=.3, n=7, marks=((at(7, 'sign'), 'sig'), (at(7, 'finger') + .4, 'sig2'))),
+        'wide2'))
+    sc.append(split(8,
+        eb('Guardian&rsquo;s own form') +
+        row('doc', 'The Group Health and Life Application', at(8, 'application'), 'filled in from their answers') +
+        '<div class="punch" style="--kd:%.2fs">Exactly as it will print.</div>' % at(8, 'exactly'),
+        pdfpage('s08-gio.png', at(8, 'Guardian', lead=.4), 470, 470, 'Group Health and Life Application &middot; GIO001', n=8,
+                moves=((at(8, 'application'), 'secA', 1.15), (at(8, 'filled'), 'cover', 1.15), (at(8, 'exactly'), 'deps', 1.1)),
+                marks=((at(8, 'filled') + .4, 'secA'),)),
+        'wide'))
+    sc.append(split(9,
+        eb('And the declaration') +
+        row('shield', 'The declaration of insurability', at(9, 'declaration'), '') +
+        row('list', 'Every health answer', at(9, 'health'), '') +
+        row('tick2', 'Their signature in place', at(9, 'signature'), '', 'ok'),
+        pdfpage('s09-doi.png', .3, 470, 470, 'Group Health Plan &middot; Declaration of Insurability', n=9,
+                moves=((at(9, 'health'), 'partC', 1.1), (at(9, 'signature'), None, 1.0)), marks=((at(9, 'declaration') + .2, 'partB'),)),
+        'wide'))
+    sc.append(split(10,
+        eb('Sent') +
+        row('check', 'A reference, straight away', at(10, 'reference'), '', 'ok') +
+        row('mail', 'The whole application to our branch', at(10, 'branch'), ''),
+        '<div class="duo m">%s%s</div>' % (
+            phone('p10-done.png', 'back', .2, n=10, w=210, marks=((at(10, 'send'), 'print'),)),
+            mailcard('New enrolment &middot; sample reference', 'To our branch &middot; Harbour Point Logistics Ltd',
+                     '<p><b>Marcus Sample</b> &middot; Group Health and Group Life</p>'
+                     '<p>Employee + family &middot; spouse and two children &middot; beneficiaries 60%% and 40%%</p>'
+                     '<p class="t">Cover from <b>1 December 2026</b></p>'
+                     '<div class="btnish sm" style="--kd:%.2fs">Guardian&rsquo;s form, ready</div>' % (at(10, 'branch') + .3), at(10, 'branch', lead=.4), 'front')),
+        'wide3'))
+    sc.append(split(11,
+        eb('Then it&rsquo;s ours') +
+        row('check', 'We check every page', at(11, 'check'), '') +
+        row('shield', 'Send it to Guardian', at(11, 'send'), '') +
+        row('clock', 'And follow it through', at(11, 'follow'), 'until the cover is in place', 'ok') +
+        '<div class="note" style="--kd:%.2fs">Or your HR team enrols someone straight from your group page.</div>' % at(11, 'HR'),
+        card('c10-form-search.png', d=.3, n=11, w=420, maxh=460, marks=((at(11, 'group'), 'forms'),)),
+        'wide2'))
+    sc.append(S(12,
+        '<div class="mid"><img class="mk" src="%s" alt="">%s<h1>%s</h1>'
+        '<div class="flow">%s%s%s</div>'
+        '<div class="sub" style="--kd:%.2fs">Group health &amp; life &middot; Ricky Rampersad Branch &middot; Guardian Life of the Caribbean</div>'
+        '<div class="url" style="--kd:%.2fs">support@rickyrampersadbranch.com &middot; HELP 868 on WhatsApp</div></div>'
+        % (MARK, eb('Joining your plan', .4), kin('Minutes, not weeks.', at(12, 'minutes', lead=.3), hi=('minutes,',)),
+           '<div class="fs" style="--kd:%.2fs">One link</div>' % (at(12, 'minutes') + .4),
+           '<div class="fs" style="--kd:%.2fs">Guardian&rsquo;s own forms</div>' % at(12, 'branch'),
+           '<div class="fs" style="--kd:%.2fs">A journey, not a transaction</div>' % at(12, 'journey'),
+           at(12, 'journey') + .6, at(12, 'transaction') + .6),
+        'blue'))
+    return sc
+
+# ------------------------------------------------------------------------------------- terminations (17 Nov 2026)
+def term():
+    """The group's own page (groupclientmanagement/client.html) on the made-up group of the walkthrough film: Darnell
+       Pierre terminated on Guardian's EB0010, filled from our records (the scratchpad's gcmwalk/make-pdf.js fills the
+       real blank the way GroupBilling.gs does), and a pension paid through payroll left. Nothing reached a backend."""
+    sc = []
+    sc.append(split(1,
+        eb('When someone leaves', .3) +
+        '<h1>%s</h1>' % kin('Their cover has to come off the plan.', .6, hi=('off',)) +
+        '<div class="tabs3">' + chip('The right form', at(1, 'right'), 'tab') + chip('On time', at(1, 'time'), 'tab') + '</div>',
+        pdfpage('seb1.png', at(1, 'form', lead=.4), 430, 470, 'Guardian&rsquo;s Group and Individual Policy Change Form &middot; EB0010', n=1,
+                marks=((at(1, 'right') + .3, 'removed'),)),
+        'wide'))
+    sc.append(split(2,
+        eb('Your own group page') +
+        row('lock', 'Sign in', at(2, 'sign'), 'with your list bill and access code') +
+        row('check', 'Everything in one place', at(2, 'group'), '', 'ok'),
+        phone('c01-signin.png', d=.3, n=2, marks=((at(2, 'list'), 'listbill'), (at(2, 'code'), 'code')), taps=((at(2, 'code') + .7, 'signin'),)),
+        'wide2'))
+    sc.append(split(3,
+        eb('Your people') +
+        row('users', 'Everyone on your plans', at(3, 'everyone'), '') +
+        row('clock', 'Who came off this year', at(3, 'came'), 'and when their cover ended') +
+        row('alert', 'Anything still pending', at(3, 'pending'), '', 'warn'),
+        phone('t01-people-off.png', d=.3, n=3, marks=((at(3, 'came'), 'dropdown'), (at(3, 'came') + .7, 'first-card'))),
+        'wide2'))
+    sc.append(split(4,
+        eb('Guardian&rsquo;s forms') +
+        '<div class="tabs3">' + chip('Change or terminate', at(4, 'terminate'), 'tab') + chip('EB0010', at(4, 'terminate') + .3, 'info') + '</div>' +
+        row('list', 'Search by name', at(4, 'search'), 'or certificate number'),
+        phone('c10-form-search.png', d=.3, n=4, marks=((at(4, 'forms'), 'forms'), (at(4, 'search'), 'search'), (at(4, 'certificate'), 'result1'))),
+        'wide2'))
+    sc.append(split(5,
+        eb('Filled from our records') +
+        '<div class="tabs3">' + chip('Policy', at(5, 'policy'), 'ok') + chip('Date of birth', at(5, 'birth'), 'ok') +
+        chip('Contact details', at(5, 'contact'), 'ok') + chip('Dependants on record', at(5, 'dependants'), 'ok') + '</div>',
+        phone('c10-form.png', d=.3, n=5, marks=((at(5, 'Pick'), 'picked'),), taps=((at(5, 'Pick') - .1, 'picked'),)),
+        'wide2'))
+    sc.append(split(6,
+        eb('You give the date') +
+        row('clock', 'The day their cover ends', at(6, 'date'), '') +
+        row('list', 'What we don&rsquo;t have', at(6, 'listed'), 'listed for you') +
+        '<div class="punch" style="--kd:%.2fs">Never guessed.</div>' % at(6, 'guessed'),
+        '<div class="duo">%s%s</div>' % (
+            phone('c10-form.png', 'back', .2, n=6, w=200, marks=((at(6, 'date'), 'effective'),)),
+            phone('c10b-form-pdf.png', 'front', at(6, 'listed', lead=.5), n=6, marks=((at(6, 'listed') + .2, 'preview-note'),))),
+        'wide2'))
+    sc.append(S(7,
+        '<div style="width:100%">' + eb('Guardian&rsquo;s own form') +
+        '<h2>%s</h2>' % kin('Filled in exactly, page by page.', at(7, 'exactly', lead=.4), hi=('exactly,',)) +
+        '<div class="pages4">' +
+        pdfpage('seb1.png', at(7, 'Guardian', lead=.3), 330, 400, 'Page 1 &middot; who and what changes', n=7, moves=((at(7, 'change'), 'secA', 1.0), (at(7, 'exactly'), 'removed', 1.0)),
+                marks=((at(7, 'exactly') + .5, 'removed'),)) +
+        pdfpage('seb2.png', at(7, 'page'), 330, 400, 'Page 2 &middot; signed off by your administrator', n=7) +
+        '</div></div>', ''))
+    sc.append(split(8,
+        eb('Sent') +
+        row('mail', 'Straight to Guardian&rsquo;s EB Customer Care', at(8, 'straight'), '') +
+        row('check', 'Our branch copied', at(8, 'copied'), '', 'ok'),
+        phone('t02-term-sent.png', d=.3, n=8, marks=((at(8, 'send') + .2, 'ok'),)),
+        'wide2'))
+    sc.append(split(9,
+        eb('Behind it') +
+        row('user', 'A task for your account manager', at(9, 'task'), '') +
+        row('clock', 'No reply? We follow it up', at(9, 'reply'), 'every three working days') +
+        row('check', 'Until it&rsquo;s done', at(9, 'done'), '', 'ok'),
+        '<div class="crm" style="--kd:.3s"><div class="ch"><b>Task &middot; on our records</b><span>Termination &middot; Darnell Pierre</span></div>'
+        '<div class="cr" style="--kd:%.2fs"><span>For</span><b>Your account manager</b></div>'
+        '<div class="cr" style="--kd:%.2fs"><span>Sent to</span><b>EB Customer Care</b></div>'
+        '<div class="cr" style="--kd:%.2fs"><span>Followed up</span><b>Day 3 &middot; day 6 &middot; day 9</b></div>'
+        '<div class="cr" style="--kd:%.2fs"><span>Closed</span><b>When Guardian confirms</b></div>'
+        '<div class="ai" style="--kd:%.2fs"><i></i>Every follow-up on the record</div>%s</div>'
+        % (at(9, 'task'), at(9, 'task') + .3, at(9, 'three'), at(9, 'done'), at(9, 'done') + .4, TAG),
+        'wide'))
+    sc.append(split(10,
+        eb('A pension or a plan from salary') +
+        row('shield', 'It belongs to the person', at(10, 'belongs'), 'leaving doesn&rsquo;t end it') +
+        row('phone', 'We contact them', at(10, 'contact'), 'about another way to pay') +
+        row('check', 'Off your list bill', at(10, 'list'), '', 'ok'),
+        '<div class="duo m">%s%s</div>' % (
+            phone('c14-pay-leave.png', 'back', .2, n=10, w=200, marks=((at(10, 'pension'), 'leave'), (at(10, 'belongs') + .3, 'result1'))),
+            card('c14c-pay-leave-sent-card.png', 'front', at(10, 'contact', lead=.4), n=10, w=300, maxh=470, moves=((at(10, 'contact'), 'ok', 1.0),), marks=((at(10, 'list'), 'ok'),))),
+        'wide3'))
+    sc.append(S(11,
+        '<div class="mid"><img class="mk" src="%s" alt="">%s<h1>%s</h1>'
+        '<div class="flow">%s%s%s</div>'
+        '<div class="sub" style="--kd:%.2fs">Leavers and changes &middot; Ricky Rampersad Branch &middot; Guardian Life of the Caribbean</div>'
+        '<div class="url" style="--kd:%.2fs">support@rickyrampersadbranch.com &middot; HELP 868 on WhatsApp</div></div>'
+        % (MARK, eb('When someone leaves', .4), kin('Nothing missed.', at(11, 'missed', lead=.3), hi=('missed.',)),
+           '<div class="fs" style="--kd:%.2fs">No paper</div>' % at(11, 'paper'),
+           '<div class="fs" style="--kd:%.2fs">No chasing</div>' % at(11, 'chasing'),
+           '<div class="fs" style="--kd:%.2fs">Nothing missed</div>' % at(11, 'missed'),
+           at(11, 'group') + .2, at(11, 'group') + .5),
+        'blue'))
+    return sc
+
 PEN_CSS = """
 .chip.x{position:relative}
 .xs{position:absolute;left:12px;right:12px;top:50%;height:3px;border-radius:2px;background:#D64545;transform:scaleX(0);transform-origin:left;
@@ -1154,11 +1364,12 @@ body.port .clock{font-size:76px}body.port .big{font-size:110px}
 """
 
 def main():
-    sc = {'client': client, 'walk': walk, 'staff': staff, 'pension': pension}[FILM]()
+    sc = {'client': client, 'walk': walk, 'staff': staff, 'pension': pension, 'henr': henr, 'term': term}[FILM]()
     if len(sc) != N_LINES:
         sys.exit('SCENES: %d scenes for %d lines' % (len(sc), N_LINES))
     title = {'client': 'Our new way of looking after your group', 'staff': 'Group client management, the new way', 'walk': 'What you see when you sign in',
-             'pension': 'Company pensions, without the paperwork'}[FILM]
+             'pension': 'Company pensions, without the paperwork', 'henr': 'Joining your group health plan',
+             'term': 'When someone leaves your plan'}[FILM]
     page = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex">'
             '<title>%s</title><style>' % title + (CSS + PEN_CSS).replace('__PLEX__', PLEX) + '</style></head><body>'
             '<div id="stage" style="--total:%dms"><div class="dots grain"></div><div class="glow g1"></div><div class="glow g2"></div><i id="prog" class="grain"></i>' % sum(DURS)
