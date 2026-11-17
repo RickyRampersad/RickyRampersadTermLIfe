@@ -1,15 +1,42 @@
 {
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
+ "check": true,
  "voices": {
-  "h868c2": "en-US-AndrewMultilingualNeural"
+  "henr1": "en-US-AndrewMultilingualNeural",
+  "term1": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "h868c2": "+0%"
+  "henr1": "+0%",
+  "term1": "+0%"
  },
- "check": true,
  "films": {
-  "h868c2": [
-   "It is one tap away. Press the green button on our website, and the chat opens. No app to download, and no forms to fill.",
-   "When it is resolved, you get a short summary. Then you can rate us from one to five stars. If you rate us low, we call you back."
+  "henr1": [
+   "Joining a group health plan used to mean a pile of paper. Forms going back and forth, a signature missing, and weeks before the cover started.",
+   "Now it starts with one link. Your HR team sends it on WhatsApp or by e-mail, with your company and start date already filled in.",
+   "The employee opens it on their phone. It takes a few minutes, one step at a time.",
+   "They give their details and choose their cover: group health, group life, or both.",
+   "They add the family members to be covered, and for group life, who it pays and what share each one gets.",
+   "Then the health questions. Most people are well, so one tick answers no to every question. Any answer can still be changed.",
+   "They sign on the screen with a finger. No printing, and no scanning.",
+   "Before they send it, they see Guardian's own application form, filled in from their answers, exactly as it will print.",
+   "And the declaration of insurability, with every health answer and their signature in place.",
+   "They press send. A reference comes back straight away, and the whole application comes to our branch.",
+   "We check every page, send it to Guardian, and follow it through until the cover is in place. Your HR team can also enrol someone straight from your group page, on the same Guardian form.",
+   "Joining your plan now takes minutes, not weeks. That's our branch. A journey, not a transaction."
+  ],
+  "term1": [
+   "When someone leaves your company, their cover has to come off the plan. The form has to be right, and it has to reach Guardian on time.",
+   "Now it's done from your own group page. You sign in with your list bill and your access code.",
+   "Your people shows everyone on your plans, who came off this year, and anything still pending.",
+   "Choose Guardian's forms, then change or terminate, and search for the person by name or certificate number.",
+   "Pick them, and everything we hold fills in: their policy, date of birth, contact details, and any dependants we have on record.",
+   "Give the date their cover ends. Anything we don't have is listed for you, never guessed.",
+   "You see Guardian's own policy change form, filled in exactly, page by page, before anything goes.",
+   "Press send. It goes straight to Guardian's E B Customer Care team, with our branch copied.",
+   "Behind it, your account manager gets a task. If there's no reply, we follow it up every three working days until it's done.",
+   "A pension or a plan paid from salary belongs to the person, so leaving doesn't end it. We contact them about another way to pay, and take it off your list bill.",
+   "No paper, no chasing, and nothing missed. That's how we look after your group."
   ]
  }
 }
