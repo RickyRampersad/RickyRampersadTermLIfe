@@ -1893,5 +1893,50 @@
   "music": "bed-gcmw.wav",
   "sfx": "sfx-gcmw.wav",
   "ass": "captions-gcmw.ass"
+ },
+ "pens2": {
+  "durs": [
+   10.7,
+   10.6,
+   8.5,
+   9.2,
+   9.3,
+   10.7,
+   11.7,
+   12.1,
+   10.3,
+   14.2,
+   7.5,
+   9.1,
+   8.7,
+   12.0
+  ],
+  "dur": 144.6,
+  "vox": "vopens2",
+  "start": 0,
+  "musicgain": 0.45,
+  "duck": 0.35,
+  "dark": [],
+  "ticks": [],
+  "hits": [
+   35.96,
+   86.46,
+   105.49,
+   118.73,
+   139.61
+  ],
+  "w": 1920,
+  "h": 1080,
+  "pic": 924,
+  "capmode": "strip",
+  "capsize": 44,
+  "capwrap": 62,
+  "capbg": "0F2A5E",
+  "cap": "cap-pens2",
+  "out": "../../groupclientmanagement/company-pension.mp4",
+  "mix": "pens2-mix.wav",
+  "music": "bed-pens2.wav",
+  "sfx": "sfx-pens2.wav",
+  "ass": "captions-pens2.ass"
  }
 }

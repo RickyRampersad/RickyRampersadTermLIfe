@@ -555,7 +555,7 @@ def pension():
         '<div class="duo l">%s%s</div>' % (
             lap('s01-door.png', 'back', .2, n=3, w=520, h=300, taps=((at(3, 'Sign') - .2, 'employer'),)),
             lap('s02-schedule.png', 'front', at(3, 'code', lead=.3), n=3, w=520, h=300,
-                moves=((at(3, 'everyone'), 'table', 1.15),), marks=((at(3, 'stands'), 'table'),))),
+                moves=((at(3, 'everyone'), 'table', 1.0),), marks=((at(3, 'stands'), 'table'),))),
         'wide3'))
     # 4 the company's part
     sc.append(split(4,

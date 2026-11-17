@@ -4330,6 +4330,29 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     plan", "each has waited" "each is waited"); screens in `tools/film/gcmshots-walk/` (re-shot from the live
     `client.html` on the made-up group, `gcmwalk/shoot.js` in the scratchpad). Music: his corporate tech track,
     `loopbars.py` to 134 s.
+  - **Company pensions, without the paperwork** (17 November 2026: "a small effective video to show how we as a branch
+    manage the pension plans for companies ... the link that goes out ... the company fills out their part, routed to the
+    employee ... automatically calculates everything", then "also show the calculations on the form ... section 134 ...
+    show the pdf"), 2 min 25 s, for employers and HR. `groupclientmanagement/company-pension.mp4`, poster
+    `company-pension.jpg`, page **`/groupmgt/pension/`** with chapters, linked from `/groupmgt/`.
+    - **What it shows is pensionplanstt.netlify.app**, the branch's company-owned (Section 134 / TopHat) pension wizard:
+      a separate Netlify site, uploaded by hand, with its own Apps Script register. Its source is in no repository.
+      The employer signs in with a company code (`CO…`) and enrols someone; the register writes to the employee with
+      their own code (`EM…`, `?code=` opens their door) and reminds them every morning at 9 with the employer copied;
+      the employee's part (beneficiaries, own contribution, ID, utility bill, pay slip) is on a phone; RIA (its AI,
+      `/api/pension-ai`) answers inside the form; the agent loads the case by the employee's code, the Section 134
+      maximum is solved, and the BIR request with its computation, Declarations 1 and 2 and Guardian's salary deduction
+      form (SD-L&P v.1NOV2014; the blanks are the site's `assets/RRB_*_blank.pdf`) fill themselves into one package.
+    - **The form has no WhatsApp button.** He described WhatsApp as integrated; the site offers RIA and an e-mail link.
+      So the film draws HELP 868 as its own phone screen ("Or WhatsApp · HELP 868"), never as a button inside the form.
+      Adding one needs the site's files.
+    - Built by `build-gcmfilm.py pension` from `pens-lines.json` and `pens2-timing.json` (Andrew Expressive, key
+      `pens2`; four lines re-worded after `pens1`: "Then the part" was heard "In the part", "put in up to" "put an up
+      to", "checked" "check", "your copy" "a copy"). Screens in `tools/film/pensionshots/`, shot from a local copy of the
+      site against a mocked register and AI (`pensionfilm/shoot.js` and `mock.js` in the scratchpad) on a made-up
+      company (Harbour Point Logistics Ltd) and employee; the package pages (`pkg*.jpg`) are the site's own PDF, with
+      mark boxes added by fraction. The figures ($62,660 maximum on a TT$240,000 salary and a TT$36,000 premium) are the
+      site's own calculation on those made-up inputs. Music: his corporate tech track, `loopbars.py` to 145 s.
 - **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
   forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
   training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
