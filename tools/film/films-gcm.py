@@ -33,4 +33,6 @@ entries('gcms3', 'gcms3-timing.json', {'': 'staff-new-way.mp4'},
         [(4, 'ten'), (7, 'twenty'), (8, 'twenty'), (18, 'test')], (('', WIDE),))
 entries('gcmw', 'gcmw-timing.json', {'': 'what-you-see.mp4'},          # what the group sees when it signs in (17 Nov 2026)
         [(2, 'ten'), (8, 'five'), (12, 'fills'), (14, 'keep')], (('', WIDE),))
+entries('pens2', 'pens2-timing.json', {'': 'company-pension.mp4'},       # company pensions, without the paperwork (17 Nov 2026)
+        [(4, 'send'), (9, 'sixty'), (10, 'exactly'), (12, 'stamp'), (14, 'journey')], (('', WIDE),))
 json.dump(f, open('films.json', 'w'), indent=1)

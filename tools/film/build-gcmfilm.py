@@ -34,9 +34,10 @@ import base64, io, json, os, pathlib, re, sys
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 FILM = sys.argv[1] if len(sys.argv) > 1 else 'client'
-KEY = {'client': 'gcmc3', 'staff': 'gcms3', 'walk': 'gcmw'}[FILM]
-SHOTS = pathlib.Path(os.environ.get('GCM_SHOTS', HERE / ('gcmshots-walk' if FILM == 'walk' else 'gcmshots')))
-OUT = ROOT / 'groupclientmanagement' / ({'client': 'new-way-film.html', 'staff': 'staff-new-way-film.html', 'walk': 'what-you-see-film.html'}[FILM])
+KEY = {'client': 'gcmc3', 'staff': 'gcms3', 'walk': 'gcmw', 'pension': 'pens2'}[FILM]
+SHOTS = pathlib.Path(os.environ.get('GCM_SHOTS', HERE / {'walk': 'gcmshots-walk', 'pension': 'pensionshots'}.get(FILM, 'gcmshots')))
+OUT = ROOT / 'groupclientmanagement' / ({'client': 'new-way-film.html', 'staff': 'staff-new-way-film.html', 'walk': 'what-you-see-film.html',
+                                        'pension': 'company-pension-film.html'}[FILM])
 TIMING = HERE / (KEY + '-timing.json')
 
 def b64(p, mime):
@@ -69,7 +70,7 @@ MARK = b64(ROOT / 'groupclientmanagement' / 'gcm-mark.png', 'image/png')
 PLEX = b64(HERE / 'fonts' / 'IBMPlexSans-latin.woff2', 'font/woff2')
 
 T = json.loads(TIMING.read_text()) if TIMING.exists() else {}
-N_LINES = {'client': 11, 'staff': 19, 'walk': 15}[FILM]
+N_LINES = {'client': 11, 'staff': 19, 'walk': 15, 'pension': 14}[FILM]
 #  importvox writes SECONDS; data-d is MILLISECONDS.
 DURS = [int(round(d * 1000)) for d in (T.get('durs') or [6.0] * N_LINES)]
 WORDS = [l.get('words', []) for l in T.get('lines', [])]
@@ -91,7 +92,7 @@ def at(n, word, k=0, lead=0.0):
         sys.exit('TIMING: "%s" is not spoken in line %d' % (word, n))
     return 1.0
 
-TAG = '<span class="tag">Sample group &middot; made-up figures</span>'
+TAG = '<span class="tag">Sample %s &middot; made-up figures</span>' % ('company' if FILM == 'pension' else 'group')
 
 #  Where the key buttons and panels sit on each screen, in that PNG's own pixels, written by the shooters.
 BOXES = {}
@@ -503,6 +504,266 @@ def walk():
         'ph'))
     return sc
 
+# ------------------------------------------------------------------------------------------- the pension film
+def pdfpage(name, d, w, vh, label='', n=0, moves=(), marks=(), cls=''):
+    """One page of the filled package, as the PDF prints it, with a light running down it as it 'fills'."""
+    return ('<div class="pdfc %s" style="--kd:%.2fs;width:%dpx">%s<i class="sweep" style="--kd:%.2fs"></i>%s</div>'
+            % (cls, d, w, cam(name, n, w, vh, moves, (), marks), d + .25,
+               ('<span class="pl" style="--kd:%.2fs">%s</span>' % (d + .4, label)) if label else ''))
+
+def paper(i, d, ko):
+    rot = (-14, 9, -5, 13, -9, 4)[i % 6]; x = (-60, 40, -20, 60, -40, 10)[i % 6]; y = (-30, -10, 20, 0, 40, 10)[i % 6]
+    return ('<div class="paper" style="--r:%ddeg;--x:%dpx;--y:%dpx;--kd:%.2fs;--ko:%.2fs;--fx:%dpx;--fy:%dpx">'
+            '<i></i><i></i><i></i><i></i><i></i><i></i></div>' % (rot, x, y, d, ko, (-1) ** i * (380 + 40 * i), -260 + 90 * i))
+
+def pension():
+    """Asked for on 17 November 2026: "a small effective video to show how we as a branch manage the pension plans for
+       companies ... the link that goes out ... the company fills out their part, routed to the employee ... any issue they
+       can query right inside the digital form ... when the employee completes it automatically calculates everything",
+       then, mid-build, "also show the calculations on the form ... especially section 134 ... show the pdf". Every screen is
+       pensionplanstt.netlify.app on a made-up company (Harbour Point Logistics Ltd) and employee (Marcus Alleyne), shot by
+       the scratchpad's pensionfilm/shoot.js with the register and the AI mocked; the PDFs are the site's own package."""
+    sc = []
+    away = at(1, 'away')
+    # 1 the pile of forms, gone
+    sc.append(split(1,
+        eb('Company pensions &middot; Section 134', .3) +
+        '<h1>%s</h1>' % kin('Company pensions, without the paperwork.', .6, hi=('without',)) +
+        '<div class="tabs3">' + ''.join(chip('%s<i class="xs" style="--kd:%.2fs"></i>' % (t, away + i * .15), at(1, w), 'bad x')
+                                        for i, (t, w) in enumerate((('Piles of forms', 'piles'), ('A calculator', 'calculator'), ('Weeks of chasing', 'weeks')))) + '</div>',
+        '<div class="pile">%s<div class="onelink" style="--kd:%.2fs"><img src="%s" alt=""><b>One link</b><span>for the whole team</span></div></div>'
+        % (''.join(paper(i, .2 + i * .12, away + i * .05) for i in range(6)), away + .35, MARK), 'wide'))
+    # 2 the systems behind it, and AI
+    sc.append(split(2,
+        eb('How we&rsquo;ve always worked') +
+        row('doc', 'Every client&rsquo;s record, in order', at(2, 'records'), 'in strong systems like Salesforce') +
+        row('star', 'Artificial intelligence', at(2, 'artificial'), 'helping us get better every week', 'ok') +
+        '<div class="note" style="--kd:%.2fs">So the paperwork is ours, not yours.</div>' % at(2, 'week'),
+        '<div class="crm" style="--kd:.3s"><div class="ch"><b>Client record</b><span>Harbour Point Logistics Ltd</span></div>'
+        '<div class="cr" style="--kd:%.2fs"><span>Company pension</span><b>3 employees</b></div>'
+        '<div class="cr" style="--kd:%.2fs"><span>Enrolment</span><b>Marcus Alleyne &middot; in progress</b></div>'
+        '<div class="cr" style="--kd:%.2fs"><span>Next step</span><b>Forms checked by the branch</b></div>'
+        '<div class="cr" style="--kd:%.2fs"><span>Every step</span><b>on the record</b></div>'
+        '<div class="ai" style="--kd:%.2fs"><i></i>RIA, our AI assistant, on every form</div>%s</div>'
+        % (at(2, 'records') + .2, at(2, 'records') + .5, at(2, 'Salesforce'), at(2, 'Salesforce') + .3, at(2, 'artificial') + .4, TAG), 'wide'))
+    # 3 the employer signs in
+    sc.append(split(3,
+        eb('It starts with the employer') +
+        row('lock', 'Sign in with your company code', at(3, 'code'), 'no password to remember') +
+        row('users', 'Everyone on your plan', at(3, 'everyone'), '') +
+        row('check', 'And where each one stands', at(3, 'stands'), '', 'ok'),
+        '<div class="duo l">%s%s</div>' % (
+            lap('s01-door.png', 'back', .2, n=3, w=520, h=300, taps=((at(3, 'Sign') - .2, 'employer'),)),
+            lap('s02-schedule.png', 'front', at(3, 'code', lead=.3), n=3, w=520, h=300,
+                moves=((at(3, 'everyone'), 'table', 1.15),), marks=((at(3, 'stands'), 'table'),))),
+        'wide3'))
+    # 4 the company's part
+    sc.append(split(4,
+        eb('The company&rsquo;s part') +
+        '<div class="tabs3">' + chip('The plan', at(4, 'plan'), 'tab') + chip('The premium', at(4, 'premium'), 'tab') +
+        chip('Their salary', at(4, 'salary'), 'tab') + '</div>' +
+        '<div class="punch" style="--kd:%.2fs">Press send.</div>' % at(4, 'send') +
+        '<div class="note" style="--kd:%.2fs">We write to your employee straight away.</div>' % at(4, 'write'),
+        lap('s03-enrol.png', d=.3, n=4, w=558, h=330,
+            moves=((at(4, 'plan'), 'plan', 1.35), (at(4, 'premium'), 'premium', 1.4), (at(4, 'salary'), 'salary', 1.4), (at(4, 'send') - .3, 'submit', 1.3)),
+            taps=((at(4, 'send'), 'submit'),)),
+        'wide'))
+    # 5 the link, and the chase
+    sc.append(split(5,
+        eb('Straight to your employee') +
+        row('mail', 'Their own link, by e-mail', at(5, 'link'), 'with their access code') +
+        row('clock', 'Reminded every morning at 9', at(5, 'morning'), 'until their part is in', 'warn') +
+        row('check', 'You&rsquo;re copied on every message', at(5, 'copied'), '', 'ok'),
+        '<div class="duo m">%s%s</div>' % (
+            card('s05-waiting.png', 'back', at(5, 'morning', lead=.6), n=5, w=400, maxh=430, moves=((at(5, 'morning'), 'card', 1.0),), marks=((at(5, 'morning') + .5, 'chase'),)),
+            mailcard('Your company pension: your part', 'To Marcus Alleyne &middot; copy to HR and the branch',
+                     '<p>Hi Marcus. Harbour Point Logistics Ltd has set up a company pension for you, and has done its part.</p>'
+                     '<p>There&rsquo;s one part only you can give: about ten minutes, on your phone.</p>'
+                     '<p class="t">Your access code <b>EM&#8209;MRA&#8209;2208</b></p>'
+                     '<div class="btnish sm" style="--kd:%.2fs">Open my part</div>' % (at(5, 'link') + .3), .3, 'front')),
+        'wide3'))
+    # 6 the employee's part, on a phone
+    sc.append(split(6,
+        eb('Their part &middot; about ten minutes') +
+        row('users', 'Who the money goes to', at(6, 'money'), 'and each person&rsquo;s share') +
+        row('cash', 'Anything of their own', at(6, 'own'), 'from salary, and it lowers their tax') +
+        row('doc', 'Photos of three documents', at(6, 'photos'), 'ID, a utility bill and a pay slip', 'ok'),
+        '<div class="duo">%s%s</div>' % (
+            phone('p06-ee-record.png', 'back', .2, n=6, w=200, marks=((at(6, 'only'), 'waiting'),)),
+            phone('p07-ee-part.png', 'front', at(6, 'phone', lead=.3), n=6,
+                  moves=((at(6, 'money'), 'bens', 1.0), (at(6, 'own'), 'own', 1.0), (at(6, 'photos'), 'files', 1.0), (at(6, 'minutes') - .2, 'send', 1.0)),
+                  taps=((at(6, 'minutes'), 'send'),))),
+        'wide2'))
+    # 7 questions, inside the form and on WhatsApp
+    sc.append(split(7,
+        eb('A question? Answered') +
+        row('chat', 'RIA, right inside the form', at(7, 'RIA'), 'our assistant, at any hour') +
+        row('phone', 'Or WhatsApp &middot; HELP 868', at(7, 'WhatsApp'), 'every question logged and answered', 'ok'),
+        '<div class="duo">%s%s</div>' % (
+            phone('p08-ria.png', 'back', .2, n=7, w=200, marks=((at(7, 'RIA') + .3, 'msgs'),)),
+            '<div class="phone front wa" style="--kd:%.2fs"><div class="wah"><b>HELP 868</b><span>WhatsApp &middot; Ricky Rampersad Branch</span></div>'
+            '<div class="wab"><p class="me" style="--kd:%.2fs">Hi, my company is setting up a pension for me. Can I change who I name later?</p>'
+            '<p class="it" style="--kd:%.2fs">Thanks, Marcus. Your question is logged and our team will answer it today.</p>'
+            '<p class="ref" style="--kd:%.2fs">Logged &middot; sample reference</p></div>%s</div>'
+            % (at(7, 'WhatsApp', lead=.4), at(7, 'WhatsApp') + .2, at(7, 'logged'), at(7, 'logged') + .5, TAG)),
+        'wide2'))
+    # 8 Section 134: solved, not guessed
+    sc.append(split(8,
+        eb('Section 134 &middot; the calculation') +
+        '<h2>%s</h2>' % kin('Solved, not guessed.', at(8, 'solved', lead=.5), hi=('solved,',)) +
+        '<div class="loop" style="--kd:%.2fs"><svg viewBox="0 0 420 210"><path d="M70 150 C 120 20, 300 20, 350 150"/>'
+        '<path d="M350 170 C 300 205, 120 205, 70 170"/></svg>'
+        '<div class="ln a" style="--kd:%.2fs"><b>Company contribution</b></div>'
+        '<div class="ln b" style="--kd:%.2fs"><b>Raises the income</b></div>'
+        '<div class="ln c" style="--kd:%.2fs"><b>That sets the ceiling</b></div></div>'
+        % (at(8, 'contribution'), at(8, 'contribution'), at(8, 'income'), at(8, 'ceiling')),
+        card('s12b-built.png', d=.3, n=8, w=560, maxh=470,
+             moves=((at(8, 'calculation'), 'built', 1.0), (at(8, 'ceiling'), 'which', 1.0)),
+             marks=((at(8, 'income') + .2, 'chargeable'), (at(8, 'solved'), 'third'))),
+        'wide'))
+    # 9 the figure, and every line of the working
+    sc.append(split(9,
+        eb('For this employee') +
+        '<div class="big c"><b class="cnt" data-to="62660" data-sep data-pre="$" data-at="%d">$62,660</b></div>' % (at(9, 'sixty') * 1000) +
+        '<div class="note big2" style="--kd:%.2fs">the most the company may put in, a year</div>' % at(9, 'year') +
+        '<div class="tabs3">' + chip('Line 10 &middot; No', at(9, 'working'), 'ok') + chip('Line 12 &middot; No', at(9, 'working') + .25, 'ok') +
+        chip('Within both limits', at(9, 'shown'), 'info') + '</div>',
+        '<div class="duo m">%s%s</div>' % (
+            card('s12a-max.png', 'back', .2, n=9, w=430, maxh=300, marks=((at(9, 'sixty') + .4, 'max'),)),
+            pdfpage('pkg03.png', at(9, 'working', lead=.6), 330, 430, 'Every line of the working', n=9, cls='front',
+                    moves=((at(9, 'working'), 'income', 1.0), (at(9, 'shown'), 'limits', 1.0)), marks=((at(9, 'shown') + .3, 'limits'),))),
+        'wide3'))
+    # 10 every form fills itself
+    f = [('pkg02.png', 'Inland', 'Inland Revenue approval', 'limits'), ('pkg04.png', 'One', 'Declaration 1', 'who'),
+         ('pkg09.png', 'Two', 'Declaration 2', 'who'), ('pkg14.png', 'deduction', 'Salary deduction', 'who')]
+    sc.append(S(10,
+        '<div style="width:100%">' + eb('Guardian&rsquo;s own forms') +
+        '<h2>%s</h2>' % kin('Every form fills itself.', .4, hi=('itself.',)) +
+        '<div class="pages4">' + ''.join(pdfpage(nm, at(10, w), 236, 300, lab, n=10, marks=((at(10, w) + .6, mk),)) for nm, w, lab, mk in f) + '</div>'
+        '<div class="punch" style="--kd:%.2fs;text-align:center">Filled in exactly. Nothing retyped.</div></div>' % at(10, 'exactly'),
+        ''))
+    # 11 one package, checked by the branch
+    sc.append(split(11,
+        eb('One package') +
+        row('list', 'Every form and document, in order', at(11, 'package'), 'one PDF, ready for head office') +
+        row('check', 'Checked by our branch', at(11, 'checks'), 'before it goes anywhere', 'ok') +
+        row('shield', 'Then on to head office', at(11, 'head'), ''),
+        '<div class="fan">%s</div>' % ''.join(
+            '<div class="fp" style="--r:%ddeg;--x:%dpx;--kd:%.2fs"><img src="%s" alt=""></div>' % (r, x, at(11, 'package') + i * .12, img(nm))
+            for i, (nm, r, x) in enumerate([('pkg14.png', 12, 120), ('pkg09.png', 7, 70), ('pkg04.png', 2, 25), ('pkg02.png', -3, -20), ('pkg01.png', -8, -70)]))
+        + '<div class="pg18" style="--kd:%.2fs"><b>18</b>pages, every one checked</div>' % at(11, 'checks'),
+        'wide'))
+    # 12 the employer's copy
+    sc.append(split(12,
+        eb('Your copy') +
+        '<div class="tabs3">' + chip('Print', at(12, 'print'), 'tab') + chip('Sign', at(12, 'sign'), 'tab') + chip('Stamp', at(12, 'stamp'), 'tab') +
+        chip('Send', at(12, 'send'), 'tab') + '</div>' +
+        '<div class="punch" style="--kd:%.2fs">Nothing to retype.</div>' % at(12, 'retype') +
+        '<div class="punch" style="--kd:%.2fs;margin-top:4px">Nothing to chase.</div>' % at(12, 'chase'),
+        '<div class="copyw">' +
+        mailcard('Your pension package: Marcus Alleyne', 'To HR &middot; Harbour Point Logistics Ltd',
+                 '<p>Here is the package for Marcus Alleyne, every form filled in. Please print it, sign and stamp where marked, and send it back to us.</p>'
+                 '<div class="att" style="--kd:%.2fs"><b>PDF</b><span>Pension package &middot; Marcus Alleyne<i>18 pages</i></span></div>' % (at(12, 'copy') + .3), .3) +
+        '<div class="stamp sm" style="--kd:%.2fs">SIGNED</div></div>' % at(12, 'stamp'),
+        'wide'))
+    # 13 everyone sees where it stands
+    sc.append(split(13,
+        eb('Everyone sees where it stands') +
+        row('user', 'You, the employer', at(13, 'you'), '') +
+        row('users', 'Your employee', at(13, 'employee'), '') +
+        row('shield', 'And our team', at(13, 'team'), 'all the way to the policy being issued', 'ok'),
+        '<div class="duo m">%s%s</div>' % (
+            card('s11-tracked.png', 'back', .2, n=13, w=420, maxh=440, moves=((at(13, 'you'), 'timeline', 1.0),), marks=((at(13, 'you') + .4, 'timeline'),)),
+            phone('p10-ee-track.png', 'front', at(13, 'employee', lead=.4), n=13, w=210, marks=((at(13, 'employee') + .3, 'timeline'),))),
+        'wide3'))
+    # 14 a journey, not a transaction
+    sc.append(S(14,
+        '<div class="mid"><img class="mk" src="%s" alt="">%s<h1>%s</h1>'
+        '<div class="flow">%s%s%s</div>'
+        '<div class="sub" style="--kd:%.2fs">Company pensions &middot; Ricky Rampersad Branch &middot; Guardian Life of the Caribbean</div>'
+        '<div class="url" style="--kd:%.2fs">support@rickyrampersadbranch.com &middot; HELP 868 on WhatsApp</div></div>'
+        % (MARK, eb('Too many forms used to hold pensions back', .4), kin('A journey, not a transaction.', at(14, 'journey', lead=.3), hi=('journey,',)),
+           '<div class="fs" style="--kd:%.2fs">One link</div>' % at(14, 'link'),
+           '<div class="fs" style="--kd:%.2fs">A few minutes</div>' % at(14, 'minutes'),
+           '<div class="fs" style="--kd:%.2fs">A team that stays with you</div>' % at(14, 'stays'),
+           at(14, 'journey') + .6, at(14, 'transaction') + .6),
+        'blue'))
+    return sc
+
+PEN_CSS = """
+.chip.x{position:relative}
+.xs{position:absolute;left:12px;right:12px;top:50%;height:3px;border-radius:2px;background:#D64545;transform:scaleX(0);transform-origin:left;
+  animation:sx .4s ease-out forwards;animation-delay:var(--kd)}
+.pile{position:relative;width:520px;height:440px}
+.paper{position:absolute;left:150px;top:70px;width:220px;height:290px;border-radius:6px;background:#fff;border:1px solid #D3DBE8;
+  box-shadow:0 14px 30px rgba(15,42,94,.18);padding:30px 24px;transform:translate(var(--x),var(--y)) rotate(var(--r));
+  animation:pin .55s cubic-bezier(.2,1.2,.4,1) both,pout .7s cubic-bezier(.5,0,.8,.4) forwards;animation-delay:var(--kd),var(--ko)}
+.paper i{display:block;height:9px;border-radius:4px;background:#E3E9F2;margin-bottom:22px}
+.paper i:nth-child(2n){width:70%}.paper i:first-child{background:#C9D6EA;width:60%}
+@keyframes pin{from{opacity:0;transform:translate(var(--x),-320px) rotate(calc(var(--r) * 3))}to{opacity:1;transform:translate(var(--x),var(--y)) rotate(var(--r))}}
+@keyframes pout{from{opacity:1;transform:translate(var(--x),var(--y)) rotate(var(--r))}to{opacity:0;transform:translate(var(--fx),var(--fy)) rotate(calc(var(--r) * 6))}}
+.onelink{position:absolute;left:110px;top:90px;width:300px;padding:30px 24px;border-radius:24px;text-align:center;
+  background:linear-gradient(160deg,#1D5BC4,#13408F);color:#fff;box-shadow:0 30px 60px rgba(19,64,143,.4);
+  animation:pop .7s cubic-bezier(.2,1.5,.4,1) both;animation-delay:var(--kd)}
+.onelink img{width:72px;height:72px;border-radius:16px;display:block;margin:0 auto 14px}
+.onelink b{display:block;font-size:40px}.onelink span{display:block;font-size:18px;color:#DCE8FB;margin-top:6px}
+.crm{position:relative;width:520px;border-radius:18px;overflow:hidden;background:#fff;border:1px solid #D5DEEA;
+  box-shadow:0 26px 54px rgba(15,42,94,.22);animation:ph .8s cubic-bezier(.2,.8,.25,1) both;animation-delay:var(--kd)}
+.crm .ch{padding:18px 22px;background:#0B2557;color:#fff}.crm .ch b{display:block;font-size:14px;letter-spacing:2px;text-transform:uppercase;color:#9FC2FF}
+.crm .ch span{display:block;font-size:24px;font-weight:600;margin-top:4px}
+.crm .cr{display:flex;justify-content:space-between;gap:12px;padding:15px 22px;border-bottom:1px solid #E6EBF2;font-size:17px;
+  animation:wup .45s both;animation-delay:var(--kd)}
+.crm .cr span{color:#4B586C}.crm .cr b{color:#142033}
+.crm .ai{display:flex;align-items:center;gap:12px;margin:16px 22px 22px;padding:14px 16px;border-radius:12px;background:#EBF2FD;color:#13408F;
+  font-size:17px;font-weight:600;animation:pop .5s cubic-bezier(.2,1.5,.4,1) both;animation-delay:var(--kd)}
+.crm .ai i{width:14px;height:14px;border-radius:50%;background:#1D5BC4;box-shadow:0 0 0 0 rgba(29,91,196,.5);animation:aip 1.4s ease-out infinite}
+@keyframes aip{from{box-shadow:0 0 0 0 rgba(29,91,196,.55)}to{box-shadow:0 0 0 16px rgba(29,91,196,0)}}
+.duo.m{width:662px;height:500px}
+.duo.m>.back{position:absolute;left:0;top:0}
+.duo.m>.front{position:absolute;right:0;bottom:0}
+.duo.l>.lap{position:absolute}
+.wa{width:232px;height:503px;background:#ECE5DD}
+.wa .wah{padding:14px 14px 12px;background:#128C7E;color:#fff}
+.wa .wah b{display:block;font-size:17px}.wa .wah span{display:block;font-size:11px;color:#D8F3EE}
+.wa .wab{padding:14px 10px}
+.wa p{max-width:88%;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.35;margin-bottom:10px;
+  box-shadow:0 1px 1px rgba(0,0,0,.08);animation:wup .45s both;animation-delay:var(--kd)}
+.wa p.me{margin-left:auto;background:#DCF8C6;color:#142033}
+.wa p.it{background:#fff;color:#142033}
+.wa p.ref{background:#fff;color:#128C7E;font-weight:600;font-size:12px}
+.loop{position:relative;width:420px;height:230px;margin-top:10px;animation:wup .5s both;animation-delay:var(--kd)}
+.loop svg{position:absolute;inset:0;width:420px;height:210px}
+.loop path{stroke:#1D5BC4;stroke-width:3;fill:none;stroke-dasharray:8 8;animation:dash 1.2s linear infinite}
+.loop .ln{position:absolute;padding:10px 14px;border-radius:12px;background:#fff;border:1.5px solid #B8CEF4;font-size:16px;
+  box-shadow:0 10px 22px rgba(15,42,94,.1);animation:pop .5s cubic-bezier(.2,1.4,.4,1) both;animation-delay:var(--kd)}
+.loop .ln.a{left:0;top:146px}.loop .ln.b{left:135px;top:0}.loop .ln.c{right:0;top:146px;background:#13408F;color:#fff;border-color:#13408F}
+.big.c b{font-weight:600}
+.pdfc{position:relative;display:inline-block;border-radius:6px;overflow:hidden;background:#fff;border:1px solid #CBD4E3;
+  box-shadow:0 22px 44px rgba(15,42,94,.22);animation:ph .7s cubic-bezier(.2,.8,.25,1) both;animation-delay:var(--kd)}
+.pdfc .sweep{position:absolute;left:0;right:0;top:0;height:70px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(42,111,216,0),rgba(42,111,216,.22),rgba(42,111,216,0));
+  animation:swp 1.3s ease-in-out both;animation-delay:var(--kd)}
+@keyframes swp{from{transform:translateY(-80px);opacity:1}to{transform:translateY(460px);opacity:0}}
+.pdfc .pl{display:block;padding:10px 12px;font-size:15px;font-weight:600;color:#13408F;background:#F3F6FB;border-top:1px solid #E1E7F0;
+  animation:wup .4s both;animation-delay:var(--kd)}
+.pages4{display:flex;justify-content:center;gap:22px;margin-top:6px}
+.fan{position:relative;width:520px;height:470px}
+.fp{position:absolute;left:150px;top:30px;width:270px;border-radius:6px;overflow:hidden;background:#fff;border:1px solid #CBD4E3;
+  box-shadow:0 18px 40px rgba(15,42,94,.22);transform:translateX(var(--x)) rotate(var(--r));
+  animation:fpin .6s cubic-bezier(.2,1.2,.4,1) both;animation-delay:var(--kd)}
+.fp img{display:block;width:270px}
+@keyframes fpin{from{opacity:0;transform:translate(0,80px) rotate(0)}to{opacity:1;transform:translateX(var(--x)) rotate(var(--r))}}
+.pg18{position:absolute;right:0;bottom:6px;padding:14px 18px;border-radius:14px;background:#13408F;color:#fff;font-size:16px;
+  box-shadow:0 14px 30px rgba(19,64,143,.35);animation:pop .55s cubic-bezier(.2,1.5,.4,1) both;animation-delay:var(--kd)}
+.pg18 b{display:block;font-size:40px;line-height:1}
+.copyw{position:relative}
+.att{display:flex;align-items:center;gap:12px;margin-top:8px;padding:12px;border:1px solid #DCE3EE;border-radius:12px;background:#F7F9FC;
+  animation:wup .45s both;animation-delay:var(--kd)}
+.att b{display:grid;place-items:center;width:44px;height:52px;border-radius:6px;background:#D64545;color:#fff;font-size:13px}
+.att span{font-size:15px;font-weight:600;color:#142033}.att i{display:block;font-style:normal;font-size:13px;font-weight:500;color:#4B586C}
+.stamp.sm{position:absolute;right:-18px;bottom:-26px;font-size:40px;padding:6px 18px;border-width:4px;letter-spacing:4px;background:rgba(255,255,255,.85)}
+"""
+
 # ---------------------------------------------------------------------------------------------- the staff film
 def staff():
     sc = []
@@ -893,12 +1154,13 @@ body.port .clock{font-size:76px}body.port .big{font-size:110px}
 """
 
 def main():
-    sc = client() if FILM == 'client' else walk() if FILM == 'walk' else staff()
+    sc = {'client': client, 'walk': walk, 'staff': staff, 'pension': pension}[FILM]()
     if len(sc) != N_LINES:
         sys.exit('SCENES: %d scenes for %d lines' % (len(sc), N_LINES))
-    title = {'client': 'Our new way of looking after your group', 'staff': 'Group client management, the new way', 'walk': 'What you see when you sign in'}[FILM]
+    title = {'client': 'Our new way of looking after your group', 'staff': 'Group client management, the new way', 'walk': 'What you see when you sign in',
+             'pension': 'Company pensions, without the paperwork'}[FILM]
     page = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex">'
-            '<title>%s</title><style>' % title + CSS.replace('__PLEX__', PLEX) + '</style></head><body>'
+            '<title>%s</title><style>' % title + (CSS + PEN_CSS).replace('__PLEX__', PLEX) + '</style></head><body>'
             '<div id="stage" style="--total:%dms"><div class="dots grain"></div><div class="glow g1"></div><div class="glow g2"></div><i id="prog" class="grain"></i>' % sum(DURS)
             + '\n'.join(sc) + '</div><div id="strip"></div><style>' + ''.join(EXTRA) + '</style>'
             '<script>'
@@ -919,7 +1181,7 @@ def main():
     #  render.js puts .act / .out on the live and outgoing section and reads .cnt for counters: a rule whose subject is
     #  one of those lands on the scene itself (the meeting film once clipped 420px off every frame that way).
     RESERVED = {'act', 'out', 'cnt', 'sc', 'in', 'rolling', 'grain'}
-    for m in re.finditer(r'([^{}]+)\{', CSS):
+    for m in re.finditer(r'([^{}]+)\{', CSS + PEN_CSS):
         for sel in m.group(1).split(','):
             subject = re.split(r'[\s>+~]+', sel.strip())[-1]
             if subject.startswith('@') or subject in ('from', 'to') or re.fullmatch(r'[\d.]+%?', subject):
