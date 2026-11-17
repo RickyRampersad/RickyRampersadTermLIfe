@@ -3,13 +3,13 @@
  "rate": "+0%",
  "check": true,
  "voices": {
-  "pens1": "en-US-AndrewMultilingualNeural"
+  "pens2": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "pens1": "+0%"
+  "pens2": "+0%"
  },
  "films": {
-  "pens1": [
+  "pens2": [
    "Setting up a company pension in Trinidad has always meant piles of forms, a calculator and weeks of chasing. We've taken all of that away.",
    "We've always kept our clients' records in order with strong systems like Salesforce. Now artificial intelligence helps us get better every week.",
    "It starts with you, the employer. Sign in with your company code and see everyone on your plan, and where each one stands.",
@@ -17,11 +17,11 @@
    "They get their own link by e-mail. Until their part is in, we remind them every morning, and you're copied on every message.",
    "On their phone, they add what only they can give: who the money goes to, anything of their own, and photos of three documents. It takes about ten minutes.",
    "If they have a question about the plan or our service, they can ask RIA, our assistant, right inside the form, or message us on WhatsApp, where every question is logged and answered.",
-   "Then the part that used to take days: the Section one thirty-four calculation. The contribution raises the very income it's measured against, so the ceiling has to be solved.",
-   "For this employee, the company may put in up to sixty-two thousand, six hundred and sixty dollars a year, with every line of the working shown.",
+   "The part that used to take days is the Section one thirty-four calculation. The contribution raises the very income it's measured against, so the ceiling has to be solved.",
+   "For this employee, the company may contribute up to sixty-two thousand, six hundred and sixty dollars a year, with every line of the working shown.",
    "Then every form fills itself: the Inland Revenue approval request, Declaration One, Declaration Two and the salary deduction form. Guardian's own forms, filled in exactly.",
-   "It all comes together in one package, checked by our branch before it goes to head office.",
-   "You get your copy by e-mail, ready to print, sign, stamp and send. Nothing to retype, and nothing to chase.",
+   "It all comes together in one package, and our branch checks every page before it goes to head office.",
+   "You get your own copy by e-mail, ready to print, sign, stamp and send. Nothing to retype, and nothing to chase.",
    "And everyone can see where it stands: you, your employee and our team, all the way to the policy being issued.",
    "Too many forms used to hold pensions back. Now it's one link, a few minutes, and a team that stays with you. A journey, not a transaction."
   ]
