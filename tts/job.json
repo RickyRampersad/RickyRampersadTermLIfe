@@ -1,22 +1,15 @@
 {
  "voices": {
-  "h868c": "en-US-AndrewMultilingualNeural"
+  "h868c2": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "h868c": "+0%"
+  "h868c2": "+0%"
  },
  "check": true,
  "films": {
-  "h868c": [
-   "Meet Help eight six eight. Our support line on WhatsApp, so you can message us any hour of the day.",
-   "Ask about your policy, a claim, a payment, or a quote. Update your details. Or ask to talk to a person.",
-   "Need a statement, a letter for the embassy, a health claim, or a change of address? Just tap what you need.",
-   "And it is one tap away. Press the green button on our website, and the chat opens. No app to download, and no forms to fill.",
-   "Say hello, and we show you a menu. Tap what you need, answer a couple of questions, and you get a receipt with your reference number and target time.",
-   "You are never left wondering. We send you an update every three working days until it is done. Our team follows up Monday to Friday, eight to four.",
-   "When it is resolved, you get a short summary. Then you can rate us from one to five stars, and a low rating gets a call back.",
-   "And your privacy matters. In the chat, we never ask for bank details, I D numbers, or passwords.",
-   "Help eight six eight. Tap the green button on our website, and say hello."
+  "h868c2": [
+   "It is one tap away. Press the green button on our website, and the chat opens. No app to download, and no forms to fill.",
+   "When it is resolved, you get a short summary. Then you can rate us from one to five stars. If you rate us low, we call you back."
   ]
  }
 }
