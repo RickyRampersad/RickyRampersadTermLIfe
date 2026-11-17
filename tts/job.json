@@ -3,26 +3,26 @@
  "rate": "+0%",
  "check": true,
  "voices": {
-  "gcmw": "en-US-AndrewMultilingualNeural"
+  "gcmw2": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "gcmw": "+0%"
+  "gcmw2": "+0%"
  },
  "films": {
-  "gcmw": [
+  "gcmw2": [
    "Here's what you'll see when you sign in to your group's service page, from the first screen to the last.",
    "Every Monday at ten, our report lands in your inbox. The button in it takes you straight to your page.",
    "To sign in, type the list bill number from your bill, and the access code in our e-mail. That's all it takes.",
    "At the top, you'll see who looks after your account, and three tabs: your service items, your billing and your people.",
-   "First come the applications and increases still pending, with how long each has waited, and who on our team has it.",
+   "First come the applications and increases still pending, with how long each one has been waiting, and who on our team has it.",
    "Below them is every open item. Open one to read its history, then tell us if it's correct, if it needs a change, or if it isn't yours.",
    "Coming up shows who's turning sixty five, which dependents are coming of age, and who's close to retiring, so nothing takes you by surprise.",
    "Before you leave this tab, give us up to five stars for the week, and add a word if you'd like.",
    "Your billing tab opens on one clear statement: this month's bills, anything still unpaid, and the total to bring you up to date.",
-   "Each plan has its own line, with every month billed and received. And on every bill, you can rate the person who looks after your account.",
-   "Your people shows everyone on your plans, who came off this year, and who's still pending. Write to us about anyone, and it goes straight to the person handling it.",
+   "Each plan has its own line, with every month's bill and every payment. And on every bill, you can rate the person who looks after your account.",
+   "Your people shows everyone on your plans, who came off this year, and who's still pending. Send us a note about anyone, and it goes straight to the person handling it.",
    "Someone joining or leaving your group life or health plan? Search their name, and Guardian's own form fills itself in from our records.",
-   "For a pension or a life plan paid from salary, tell us who's joining. We'll call them, and prepare a projection from their salary.",
+   "For a pension, or life insurance paid from salary, tell us who's joining. We'll call them, and prepare a projection from their salary.",
    "When someone leaves, their policy is still theirs. Tell us the last salary deduction, and we'll help them keep it going.",
    "Every answer you send reaches a real person on our team, and you'll see where it stands the next time you sign in."
   ]
