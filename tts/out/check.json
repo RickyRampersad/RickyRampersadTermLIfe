@@ -1,37 +1,12 @@
 {
- "tts/out/henr1b/01.mp3": [
-  "en",
-  0.992,
-  "Joining a group health plan used to mean piles of paper, missing signatures, and weeks of waiting before the cover started."
- ],
- "tts/out/henr1b/02.mp3": [
-  "en",
-  0.995,
-  "They fill in their own details, then choose their cover. That's Group Health, Group Live for both."
- ],
- "tts/out/henr1b/03.mp3": [
+ "tts/out/h868c2/01.mp3": [
   "en",
   0.997,
-  "Next, they add the family members to be covered. For group life, they name who it pays and the percentage for each one."
+  "It is one tap away, press the green button on our website and the chat opens. No app to download and no forms to fill."
  ],
- "tts/out/henr1b/04.mp3": [
-  "en",
-  0.999,
-  "Next come the health questions. Most people are well, so a single tick answers no to every one of them. They can still change any answer."
- ],
- "tts/out/henr1b/05.mp3": [
-  "en",
-  0.997,
-  "They also see the declaration of insurability with each health answer and their signature already in place."
- ],
- "tts/out/term1b/01.mp3": [
+ "tts/out/h868c2/02.mp3": [
   "en",
   0.996,
-  "Now you do it on your own group page. You sign in with your list bill and your access code."
- ],
- "tts/out/term1b/02.mp3": [
-  "en",
-  0.998,
-  "Pick the person and the form fills itself from our records. Their policy, their date of birth, their contact details, and any dependence on file."
+  "When it is resolved, you get a short summary. Then you can rate us from 1 to 5 stars. If you rate us low, we call you back."
  ]
 }
