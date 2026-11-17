@@ -172,7 +172,7 @@
 
     <div class="card" data-step="4">
       <h2>Declaration of Insurability — health details</h2>
-      <p class="note" style="margin-top:0"><b>Confidential.</b> These answers are <b>never stored online or shared with your employer</b> — they appear only on the printed declaration you sign, which goes to Guardian. Answer for every person to be covered.</p>
+      <p class="note" id="healthnote" style="margin-top:0"><b>Confidential.</b> These answers are <b>never stored online or shared with your employer</b> — they appear only on the printed declaration you sign, which goes to Guardian. Answer for every person to be covered.</p>
       <div id="healthhost"></div>
     </div>
 
@@ -206,23 +206,29 @@
       <button class="btn" type="button" id="nextbtn">Next →</button>
       <button class="btn" type="submit" id="submitbtn" style="display:none">✓ Confirm &amp; submit</button>
     </div>
-    <p class="note" style="text-align:center;margin-top:.8rem">On submit: logged with the branch, email confirmation to the employee, and the filled Guardian application ready to print for signature and company stamp.</p>
+    <p class="note" id="submitnote" style="text-align:center;margin-top:.8rem">On submit: logged with the branch, email confirmation to the employee, and the filled Guardian application ready to print for signature and company stamp.</p>
   </form>
 </div>
 
 <div id="printview">
   <div class="toolbar">
     <button class="btn" onclick="window.print()">🖨️ Print the Guardian form</button>
-    <button class="btn ghost" onclick="location.reload()">＋ Enroll another employee</button>
+    <button class="btn ghost" id="another" onclick="location.reload()">＋ Enroll another employee</button>
   </div>
   <div class="gio" id="gio"></div>
-  <p class="note" style="text-align:center;margin:1rem 0 2.5rem">Print → employee signs → plan administrator signs &amp; stamps → attach ID copy → send to the branch. Reference is logged with the branch already.</p>
+  <p class="note" id="printnote" style="text-align:center;margin:1rem 0 2.5rem">Print → employee signs → plan administrator signs &amp; stamps → attach ID copy → send to the branch. Reference is logged with the branch already.</p>
 </div>
 
 <script>
 const GUARDIAN_LOGO='data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAC2AV4DASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigBuRVaG8hmmkiRvmQ81X1S+FrD5asBK4+Ue3c1zsUrwyLIjEMDkGvEx+bLC1o01r3OqjhXUi5fcdpRVGwvlu4/Rx94Ver1aNaFaCnB6M55RcXZi0UUVsSFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAJUU0qQQtJIwVVGSTUvauG8c6yYkTToHwz/NIQeg7Csa9VUqbkbYei61RQRmahqUl5qLXIJABwg9BWha3C3KAr97uvpXM284mTn7w6itvSoijGY9+APWvhcb77c57n0dSlGELLob9uWtyrIcMOprdtLxbhcdHHUVgI4cZH4ilaYwYZDhu1LLsyqYWdt49jyqtH2nqdTRWXYaoLgCOXCyfoa1BX3GHxNPEQ54M86cJQdmLRRRXSQFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQBQ1XUIdL02e9uDiOFCx9/avC11ybUtSnlvG+edyynPT/Zrqfi34hKtb6JA/pNcYPb+Ff6/lXmiOGAYVhiaKqQ5WfQ5RQUYOb3Z2lqHM67D9T7V2NpMksK7OCBgr6Vx2iyH7KqzH98wzk9xWxFK8Mm9Dz396+MxtLmly9j0K8OY6LzfKBcnAA5NQxXqXZz0Yfwmsm51FblfKQ4x94VXVijBlOCOhFcUcM+XXc540Lq73OkBwcg8+orZ07U3x5c/Kjo/+NcxZ3vnMsTj5z0PrW0i7VAFVQxVbCTvBnFiKUWuWR06OrrkHj2p9c7BcSwnKNx3HatGLVYHbY52N79K+rwWcUa65Zu0jyqmHlHbU0aKzL/X9I0tc32o20HH8cgFczffFbwvaA+Xdvct2EKEg/jXsp3V0ZRhKTskdzSV5HffGlcYsNKY56NM+P0FZafELxPrRWO2KxM5wqwR5P5ms6lWNNXZ0LB1WrvQ9wyM4zzR+Fcr4U0K+s4/t2rXktxfSD7ruSsY9h611dVCTkrnPOKi7Ji0UUVZIUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAVDNIIoXlYEhFLEAZPFTUUAfKGr63PqviC+v7rcGuJi21uqDsPwGBU1kwWdWI3IDkj1r1zx98Modb8zU9IVIdQ6yR9Fm/wNeQpbXGmO1rdxPFMpw6OMFTW1bknT0Pcyyu2+R7HYQzJNGskZ47e1XG1RYYwkrASNwpPeuRtrt7Vt6HK9x2NJcXn2yYydugHpXzsstcp67HutJs6lXZW3Kx3etX4LtX+V+G/Q1yVnqbw/JL88fY9xXRaeqXQEynMY/U1wYrDOlvsKS0Os0+22J5rfeYcewrRSVk46j0rAgvZYeM7l9DWjDfRSjGdp9GrwK1OfNc86rTk3dmmbmMLljj0zVctu5rFvbrz5Nqn5FPHvUUd1NF91zj0NEcM7XFHD6XLuo6DperD/TrGKVj/EVw351kv8MNCkUFDcReyvkVt2F3LO/zqNq9TWtE7yuEjjLMfSt6eJxcHyU5M5qkeRnIwfDTRYSC7XEuOxfFdtoHhqy0qNXitUi/uqByPqa1LLT/ACwHmAZ/TsK0OK+nwGDrStVxMrvsedXxUpLliOooor3DjCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooASub8S+DtN8SwEXEeycD5J0HzD/GukpMUFQnKDvE+c/FPgrXPDTFvIa5ss/66IEj8R2rmopw/KnDdxX1eyK6lWAZT1B71yGufDTw9rTNN9mNrcHnzLc7c/UVqpxaszvpZjUUrzPDrVlmlVZDtXPLV1lsywxr5DYUDjBrUvfhNqNtn7BdxToOiyDa351kN4M8Uaex2WMj46iNgwNeZjMI63wnuU8dQnHWRpRXw6SD8RUc+oRSjy4ZFPqQaypdI8Xzjyv7AulU9WAGTU9n8P/ElyQfsZg9TI+K4I5RJayH9bw38xYSaRPusatW9xPNIECBifQVsab8Mb0YN7qZRe6xDP867XSfDGnaSv7mMvJ3kkO40/wCyW92clfM6MVaGpi6RpV3NGoaEQxd2bqfwrq7WzitUwi89yepqyBgUtduGy+jQfNFa9zxK2InVeotFFFd5zhRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFACVn6jrWm6THvv72C3H/AE0cA/lWL488VDwp4eku0Aa7lbyrdT/ePc+wHNeT+E/BWp/EG4l1jV76VbUuR5hOWkPcL6CtIU01zSehSXVnrcfxB8KyyeWutW+7oMkjP6V0FtdQXcKy20yTRno0bAj9K4B/g14aMGxTdLJj/Web/St3wZ4Ri8Hadc263T3Hmyl97cYUdBj8/wA6JqFvdYO3Q6qkrD0nxZoWt3bWmm6lFcTqhcogOQowM8j3FWdX17TNBhjl1S8S2jkbajPnk+nArOzvYk06KzoNZ0650ldUiu4jZMCwnJwuAcHr7jFc9P8AE/wpBN5Z1MOQcEopIpqMnsOzOypay9I1/S9dgM2m3kVwo+8FPK/UdqqHxdoI1VtMOqQC9RyjRHIII5Pt2o5XewWN6isHSvF2i61qEtjp16lxPEhdgoOMAgdfxFVNT+IXhrSro21xqSGZThljG7b9aOSTdgszW1DX9J0mdYb+/ht5GXeFkbBI9f0NOvtb03TYopb29igSb/Vs7YDfSvCvi5qllrGv6deWFwk8D2Iw6H/bfiu98caVoOp6Foa65rB01Y48xELneSq57fStPZJJX6j5T0K1uoL22jubaVZYZBlHU8EVPXPeHW0vRvB9l5N+kmnQxfJdOdoYZPNZ03xQ8KQy+X/aQf1ZEJFZ8jb0FY7Kis3Sdc07XLcz6bdxXEYODsPK/UVTbxdoCas2ltqcK3qsUMRyCCOT2xRyvYVjeorj5Pib4Uiu/s51NSQcFwpKj8a6m2uYbu3jngkWSGRdyupyCKHFrcLMnNQXFzBaQtLczJFGOrO2B+tNvbyGwsZ7y4bbFBG0jt6ADJr59lvNc+Knio2sMrRWgywjJ+SGP1PqelVTp82r2Glc9kk+IPhWKTy21q33d8EnH6Vr6drWm6um/T76C4H/AEzfJH4Vw1n8GPDsMAW5lup5Mcvv2/oKteHvhjY+HPE66ra3kzwpGwWFz0Y8Zz3GM05KnbRj0O/zRmsO+8W6DpmojTr3UYobs7cRMDnnp2qOHxjoVzri6RBqEct6xKhE55AJPPToKjlZNmdBS1z+s+MdC0B/K1C/jjmxnyhy35CodH8deHdcnFvZajGZ2+7G/wApP0zT5JWvYdmdNRWTrHiHStBWFtUvY7VZiRGXz82OvT6irljfW2o2cV5aSrLbyruSRejCpsxFmisG38X6Bdat/ZcGpQvfb2j8kA53LnI6dsGmv4z8PR6k+nvqsC3aOUaNiRtI65OMdqfKx2Z0FLXHf8LN8J/a/s/9qLnON+07fzrq4J4rmFJoZFkjcbldTkEUOLW4WJqKKKQgooooAKKKKACiiigAooooA8Y+Opk36IOfKxMfx+Su/wDh4sC+AtH8jG024Jx/eyd365qt8Q/CreKvDjQwbReW7ebBnuccr+P+FeY+B/H0/gxpdF1q1mFsrkgY+eFu/B6iuhLnpWj0L3idX4w8W+MtJ8R3dvpenmWwiVSknkFh9wE8/XNP+HPjjVfFd5qMGo+Tsht967ExyTir+o/FLwrJpk6x3kjvJEyqgjOckVxvwQXdrOrL62qj/wAepqPuNtWC2hT+C3/I8XH/AF4yf+hpXUfHP/kCaV/18t/6DXE+CdSi8EfECdNW3QxqslrKxH3eQQfp8o/OtP4reMdM8RxWNlpkhnSBzJJNtIXJGABn8a0cW6qa2H1O68H2Flqnwgs7LUWC2ksEgkYtjaPMbnPbFcne3nwu0mNrOOxN84G0yIC3P+8TVPW572H4H6CtsXW3kmZbgr6bnwD7Z/pV7wTq3gTRPDEV1eGJtTwTMskZZycnhe2KhRteXmFjnfhddGD4kW8Vo7paz+ahRj1TaxXPvwKg1fTm1f4uXmnLK0f2nUGjZ16hSef0zU/w+uFu/izbXKp5azTXEgT+6CjnFWoP+S8H/sJt/WtZaTb8h9TsfE+gaV8PfCF/qOixSRX00a2gmMhJwzDJ/Suc+FngfTfENjd6rq0ZnCzeTHGWOM4BJPr94V6J8TNJn1jwNfQ2yF5otsyoOrbTkj8s1558KvG+l+H9Ou9M1Wb7OrTedE5BI5ABH6CsYOTptrclbHP/ABN8OWXhvxNHbaerJbz24mEZOdp3MDj24rq/jF/yLvhn/cb/ANASuT+JviSy8TeJY7nTyz28FuIRIRjedzEkfnXWfGL/AJF3wz/uN/6AlaK94cw+x1nh3TtP1X4R2FnqbBLN7YeY5bbtw2c57c1xt9ffC7TYXsorBrtsbfNjBJ/76Jqp4qnvYvg/4YjgLi1kyJyvc87Qf1/KtLwhrPgTQfC0FzP5T6l5eZ1ePdIX9B2xUcrV5eYI5/4SXckHj9IIHYW88cqspPUAEjPvxVTX9PbVfi5d6esrRfadQ8ouvUA4B/Sp/hfKJ/ibBMF2CQTtt9MqxxU8n/Jdv+4oP51o9Jt+Q+p0nj/4e6Hovgqa/wBPgaK4tWjO8sTvBYKc/nmtX4LXstz4RubeRiy210Vjz2UqDj88/nWz8VP+Scar/wBsv/RqVzvwO/5F7U/+vof+gCsbuVFt9yd4nUfEkyD4fauY87vKUHHpvXP6ZrifgUsPkay3Hn7ogfXb839c16vqNjDqenXFjcLuhuI2jcexGK+frd9Z+FXi5mlhMls+UPZJ488EH1FKl71Nw6gtVY9a8fa1r+jWdo+g2huJJJGEoEe/Axx9K4PSPiZ4nm8WafpGowww+ddRRSoYtrAMw/oa7K2+LXha4thJLcywPjmN4zkflXl0+rWuufGWz1KxLG3m1C22Fhg8bFP8qqEPdakgSJfiwrv8SJFjOHMcIU+hxXoqeCtE8E6PNrsELy6jYWzyrM7n5n2EdOnevP8A4n/8lRH0g/pXt+v6cdW8Pahp6kBri3eNSexI4/WicrRggb2PD/hz4aj8b6/f6hrLvcRQYeQFuZHfOM+3Bq78UfBdl4ZSz1bR1a3jkl8p0VvuvjKkenQ1S+HHiaLwXr1/p+tK9vHPhJCV/wBW6E9fbk1d+KXjOy8SrZaRpDNcpHL5ryKp+ZsYAH5mtPe9p5Fa3KnjrWZte8BeFL+4OZ2M6St6su1c/jjP41638Pf+RB0b/r3H8zXl/jPwvd6T8L/DokjO+0kdrgAfcMvzc/Q4FdB4M+I2gaX4Js7a+ujHdWiGNoQhJbBOMdumKicean7vcT1WhyPhf/ktzf8AYQuv/alUr7TI9Z+L91p0zMsVxqTo5U87cnNP8DXf2/4s2t7s2faLqeXae25XOP1qO/1SLRfi9dajMrNFb6k7uF643HOK1s+bTsUd545+G2iWXhK6vtMtjb3NmnmAhid6jqD+FHwS1ae60nUdMmcslpIjxZPQPnI+mV/Wjx18SdEu/Cd1Y6Xc/aLm8j8vAUjYp65z7Zo+CWkzWukahqcyFVu3RIs91TOT9Mt+lYu/snzEfZ1PWKKKK5iAooooAKKKKACiiigAooooAKxdY8LaLrw/4mOnwzNjhyuGH41s0UJtbAcVH8K/CUcm8acW9mlYj+ddLpujabpERi06yhtlPURoBn61oUVTnJ7sd2c7rngrQfEMwn1GwV5gMeYpKsR7kVCngDwymnixGlQmEOHIIyS2CMk9+prqKKOeW1wuzMi0LTIdGGkLaR/YApUQMMrgnP8AM1h2vw08KWl4LmPTFZwcgOxZQfoa6+ikpSXULswLPwdoOn6qNTtdOijvAzMJF65bOf5mnL4Q0Jda/tgWEf2/zDL53fd61u0Uc0guxCoIwa5TUPhx4X1O8a6n01RKxy3lsUDH3ArrKKFJrYV2cxN4B8MTpCkmkQbYU2JgYwM5/mTV7VPDOkazBbwahZpPHbjESt/DwB/QVs0Uc0u47mYNC0z+x10k2cbWKrsELDKgViWXw38LWF2t1FpqmRW3KJGLAH2BrrqMihTktmF2YGneDdB0rURf2WnxQ3Q3YkXrz1px8H6EdZ/tc2Ef27zPN87vu9a3aKOaQXZS1PTbTV7CSxvoRNby43o3Q4II/UCodH0DTdAgkh021S3jkbe4XucYrTopXdrCFqlf6ZZapbtb31tFcRHqsi5FXaKL2A4mT4V+EpJN/wDZxXPOFlYD8s1saV4P0HRXWSx02COVekm3LD8a3aWqc5PdjuzA1HwfoWq6j/aF7p8c118v7xuvHSt6ilqW29xHPa14M0HxA/m6hYRyTYx5q/Kx/EVDo/gLw7odwLiz05BMv3ZJCXK/TNdNRVc8rWuO7ILm1hvLeS3uY1lhkXayOMhh71y0Xwy8Jw3n2kaWpYHIRmJT8uldhRSUmtguYFt4P0Gz1Yarb6dFHeBmcSKOQTnP8zXi8UMVx8b5YZkWSJ9SkV0YZBHNfQ9ZA8M6Iuqf2mNLtRfbzJ5/ljfuPfPrVwqct7jUrGKvwx8JLdfaf7LXOc7C52flnFdZDBHbwpFCipGgwqqMACpaPxqHJvcV2LRRRSEFFFFABRRRQAUUUUAFFFFAHMatcXV94ig0W3uHtYvs5uZ5Y/vsN20KD25zzUA1ew0OC9aO/ur6SFo1khmkLFMvsyCw9T+laWraK95eQX9ncfZ76BSiuV3K6HqrDuKzLrwreamb2W+vYhPcQJEhghKqmxy4PJOeaDeLg0k3oa8mtBdWn06OEvNFaC5BzgNkkBf0rIXxoqSXkVxbRiS3tXuQILgShgvUEgcHpRN4Xvb6S+mvdRTzrm0FsDDFtCAMTnrz15qNvB9zctM091bR77KSzVILfaq7sfN9726UDjGkt2Wf+EnupDbQxaWxurpTLHE0wGIhj5mOOOTjHNZ2ja5cz6jFHeSXAkk1K5iWMONqhUztb1A7YrXutAuBcWF3Y3Mcd1awG3YyRllkQ46gEEcjPWqtr4Qlinhmlv8AfIl1PcuVj25MqFcDnjGc0DTp2JY/FbDV4NPubWKNp2ZEMdysjKQCfmUDjp71Hp3i5rz+z5pLB4LO/k8qGUyAnfgnBHocHmorLwhdW8um+Zd2/lWD7lEcG1pflIyxz15q3beFTBpWjWX2sMdNuBMX2f6zG7jrx979KBS9mloT+Jrue0XSjBIyebqMMb7T1Uk5FS69eiztrVi8y+ZdxR/umAJ3Njn2pdf0mbV4LVYLhYJbe5S4V2TcCVzxjIqrcaHqV/BHHf6hFJ5VzFOhjg2/cbJHXvQZx5dLmJZ69cWl5rWo3wlMcNwLaGAS/JuO3CgdMknJb3roNH8QLqd7NZyxJFcxIJMJKJFZScZBHuOlVZ/CaT2uowtcZa7uxdRts/1bALgEdx8v61e0bS5rF5XuEsg7KAptoPL475OTntSNJum43W5DqGvzQahNY2Vg15LbxCWb95sCg5wBxyTg8VkSaxcax4j0YWjTJYywNc/JLs38r94e2cY75rVvtDvG1W4v9NvI7d7mFYphJFvHy52sORyMml0/wzHp95p8sMp8uztWtghXlskHdn8P1phFwir9RPFkM6aNd39vfXFvJbW7uqxNhWIGRmse5lv9KttFmhu7u7kuriMPHJJ97MbHHsM4/Kus1axOp6Td2Ify/tETR78Z25GM1TudDNwmlDz9v2CVZPu/fwpXHXjrQTGaSsyg3i5ILKeS6tWiuobhbYweYCGdgCMN6YOc/Wruja8NVuLm1eJYriAKzKkokUq2cEMPoe1Ur3wkt41/IbgeZPdR3UWUyI2RQuCM/MDg+nWtLR9MlsPNadLMO+APs0Hl8D15OaBy9ny6bmZIbnWvEl/ZC8ntrWwEYKwNtaR3G7JPXAGOKtXl1NoFnCkeLpSW3SXd0Ex7ZI5/+tReaNdrqr6npl0kE0yBJo5Y96SY+6eoIIzVe70HUbu7tb57u1e6ijeMq8BMYBOQQN2QRjGc0gTi7XehHD4x+1xaf9jsHlmvVlKp5gAQxkBsn0681QudcuhND9ja4kb+2JLd4nkHzYU/KD2XOK09J8KPps2nyveCU2guM/u8b/NYN68YxTJPCU4PmQXypKupSX6losj5gRtIz79aa2KvSUtNijqvie7aJIY4Xtr631C3jmhWQHernIAbjIYVot4tW0S/XUrVrea0jWUor7xIrHC7Tx34qvJ4Subrzrme/QX0t1DcGRIvkUR/dUAn681JJ4Tk1AX8mqXSSTXcSQqYY9qxqp3DAJOfm5oH+66ktn4oNzcS2slqiXQgM8aJcK6uBwRu/hOSKhi8Zpm+Se3j820tjc4gnEqso6jIHBofwrcXOn3FrNJZRNJGESS3ttjZBB+b5uQccimHwhczyXks93bobixazVIINqoCc7uvNIVqRf07xDJd6jBa3Nk1t9qgM9uxkDblGMg+h+YU68u508Y6bapKwgktpmdM8Egrg/qakXRCmp6bd+f/AMeVu8O3b9/cF59vu03VdHu7vVrPUbK8jt5beN48PFvDBse49KZneHNp2DVtRWx1XS0Zpv3pmO1GAVtsZb5vXpxWZD4uurgWDR6Q/wDp6k226YDJAyd3HAxkjrV6fQru9n0+4vb6N5rQy5KQ7QwdCo78Yzmi18NG2XQ1+07v7MVlPyf6zKbfXj9aCoumlrv/AMOVP+EiF6dOdYp4pnuZYGgDgLvRWyrHHI4qGw8V3CaA99qVsPMNy0EIVwPMbeyge2MdfYmrkHhUwXUE/wBqz5V9NeY2dfMBG3r2z1qD/hEXbTJrCS7Ro1uftNqfK5RixbDc4Yckdu9BV6drDx4yhS1vXuIMT2wQ+VDKJBJvOF2njvxTbHVNSuPGMVrdwm2iNg0nkiTepO9QDnA5wcVI/hiS50y5tp2tIZpChjktbfZsKnIJyTnkD0qew0W+j11dUv7uKWRbY24jiiKgAsDnqfSgT9nZ8p0dFFFBzhRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQB//9k=';
 const WEBHOOK='https://script.google.com/macros/s/AKfycbxMuWSrsMPhvF4Al19q87S545ocCeI5VptX8lPoke7eNe__gomBx2vWsqZHTLJhryBbrw/exec';
 const $=id=>document.getElementById(id);
+/* An employee's own link (17 November 2026): ?inv=<code>. Their employer sent it from their group page; their part comes
+   back to the branch, the employer checks it and completes Section F, and it goes to Guardian Life. Their health answers
+   go to Guardian Life, never to the employer. Without ?inv= the page works exactly as it always has. */
+const SVC='https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+const INVCODE=(new URLSearchParams(location.search).get('inv')||'').trim();
+let INV=null;
 
 /* Employer sends a link like  /enroll.html?co=Company — those details arrive pre-filled. */
 (function(){
@@ -322,7 +328,7 @@ function validateStep(n){
       if(Math.round(tot)!==100) return 'Beneficiary percentages total '+tot+'% — they must total 100%.'; }
   }
   if(n===4){ const m=validateHealth(); if(m) return m; }
-  if(n===5 && !$('tier').value) return 'Missing: coverage tier.';
+  if(n===5 && !INV && !$('tier').value) return 'Missing: coverage tier.';
   return null;
 }
 function showStep(n){
@@ -354,6 +360,7 @@ document.getElementById('f').addEventListener('submit',function(e){
   e.preventDefault();
   for(const n of [1,3,4,5]){ const m=validateStep(n); if(m){ stepError(m); return; } }
   const c=collect();
+  if(INV){ invSubmit(c); return; }
   try{
     fetch(WEBHOOK,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(c.d)}).catch(function(){});
   }catch(ex){}
@@ -474,7 +481,7 @@ function buildHealth(){
   const hasSpouse=getDeps().some(function(x){return x.rel==='Spouse';});
   h+='<div style="border:1.5px solid var(--line);border-radius:9px;padding:.8rem .9rem;margin-bottom:.4rem">'+
     '<b style="font-size:13.5px;color:var(--navy)">Sign the declaration</b>'+
-    '<p class="note" style="margin:.3rem 0 .5rem">Sign with your finger or mouse — your signature appears on the printed Guardian declaration. It is never stored online.</p>'+
+    '<p class="note" style="margin:.3rem 0 .5rem">'+(INV?'Sign with your finger or mouse: your signature goes on your Guardian application and declaration.':'Sign with your finger or mouse — your signature appears on the printed Guardian declaration. It is never stored online.')+'</p>'+
     '<label>Signature of Insured *</label>'+
     '<canvas id="sig_emp" width="560" height="130" style="width:100%;max-width:560px;height:130px;border:1.5px dashed var(--aqua);border-radius:8px;background:#fff;touch-action:none;display:block"></canvas>'+
     '<button type="button" class="btn ghost" data-sigclear="emp" style="padding:.3rem .8rem;font-size:11px;margin-top:.3rem">Clear</button>'+
@@ -705,10 +712,72 @@ function renderGio(d,deps,bens,target){
   '<tr class="sig"><td colspan="2"><span class="lbl">PLAN ADMINISTRATOR:</span> <b>'+esc(d.planAdmin||'')+'</b><br><span class="lbl">SIGNATURE: ______________________________ &nbsp; DATE: ____________</span></td><td style="height:56px"><span class="lbl">PLACE COMPANY STAMP HERE:</span></td></tr>'+
   '</table>'+
   '<div style="display:flex;justify-content:flex-end;margin-top:8px"><span style="border:1px solid #999;padding:2px 12px;font-size:10px">GIO001 – V.1/10-2016</span></div>'+
-  '<div style="text-align:center;font-size:9px;color:#888;margin-top:6px">Completed digitally via employeebenefitstt.com · Branch ref '+esc(d.ref)+'</div>'+
+  '<div style="text-align:center;font-size:9px;color:#888;margin-top:6px">Completed digitally via rickyrampersadbranch.com · Branch ref '+esc(d.ref)+'</div>'+
   renderDecl(d);
 }
 showStep(1);
+
+async function invInit(){
+  const host=document.createElement('div'); host.className='card'; host.id='invcard';
+  host.style.cssText='background:#eef7f8;border-color:#bfe0e6';
+  host.innerHTML='<p class="note" style="margin:0">Opening your enrolment…</p>';
+  const share=document.querySelector('#formview > .card:not([data-step])'); if(share) share.remove();
+  $('formview').insertBefore(host,$('formview').firstChild);
+  let r; try{ r=JSON.parse(await (await fetch(SVC+'?action=gcm.enrolGet&inv='+encodeURIComponent(INVCODE)+'&z='+Date.now())).text()); }catch(e){ r={ok:false,error:'We could not reach our system. Please check your connection and open the link again.'}; }
+  if(!r.ok){
+    host.innerHTML='<h2>Your enrolment</h2><p style="font-size:15px;margin:.2rem 0 .5rem">'+esc(r.error||'This link is not recognised.')+'</p><p class="note">Any question: reply to the e-mail we sent you, or send us a message on WhatsApp, HELP 868 at (868) 435-7868.</p>';
+    ['stepper','f'].forEach(function(id){ if($(id)) $(id).style.display='none'; });
+    const pb=document.querySelector('.pbar'); if(pb) pb.style.display='none';
+    return;
+  }
+  INV=r.invite;
+  const hp=document.querySelector('header p'); if(hp) hp.textContent='Your own part of your group enrolment · about ten minutes on your phone';
+  const cov=INV.cover.health&&INV.cover.life?'Group Health and Group Life':INV.cover.life?'Group Life':'Group Health';
+  $('company').value=INV.company; $('company').readOnly=true;
+  if(!$('empname').value) $('empname').value=INV.employee;
+  if(!$('email').value) $('email').value=INV.email;
+  if(INV.mobile&&!$('cell').value) $('cell').value=INV.mobile;
+  $('covHealth').checked=!!INV.cover.health; $('covLife').checked=!!INV.cover.life; $('covHealth').disabled=true; $('covLife').disabled=true;
+  if(INV.effective) $('dateEff').value=INV.effective;
+  $('admin').value=INV.admin;
+  host.innerHTML='<h2>Hello '+esc(INV.first)+'</h2><p style="font-size:15px;margin:.2rem 0 .5rem">'+esc(INV.admin)+' at <b>'+esc(INV.company)+'</b> has asked you to complete your part of your '+cov+' enrolment with Guardian Life'+(INV.effective?', from '+fmt(INV.effective):'')+'. It takes about ten minutes.</p>'+
+    '<p class="note" style="margin:0">Your health answers and your signature go to Guardian Life with your application. '+esc(INV.company)+' does not see your health answers.'+(INV.submitted?' <b>You sent this on '+esc(fmt(INV.submitted.slice(0,10)))+'; sending it again replaces it.</b>':'')+'</p>';
+  if($('healthnote')) $('healthnote').innerHTML='<b>Confidential.</b> These answers go to Guardian Life with your application, through our branch. They are <b>never shown to your employer</b>. Answer for every person to be covered.';
+  const s5=document.querySelector('.card[data-step="5"]');
+  if(s5){ s5.querySelectorAll('.row').forEach(function(x){ x.style.display='none'; });
+    const n=document.createElement('p'); n.className='note'; n.style.fontSize='14px';
+    n.innerHTML='<b>'+esc(INV.adminFirst||INV.admin)+'</b> at '+esc(INV.company)+' completes this part (your date of employment, the coverage tier'+(INV.cover.life?' and your salary for Group Life':'')+') when they check your application. Nothing to do here: press Next.';
+    s5.insertBefore(n,s5.querySelector('p.note')); }
+  if($('submitnote')) $('submitnote').textContent='On submit: your part goes to our branch, and '+(INV.adminFirst||INV.admin)+' at '+INV.company+' checks it and sends it to Guardian Life.';
+  if(step===4) buildHealth();
+}
+async function invSubmit(c){
+  const btn=$('submitbtn'); btn.disabled=true; btn.textContent='Sending…';
+  captureHealth();
+  const deps=getDeps(), bens=getBens();
+  const answers={ employee:$('empname').value.trim(), dob:$('dob').value, gender:$('gender').value, email:$('email').value.trim(),
+    telCell:$('cell').value.trim(), telHome:$('home').value.trim(), telWork:$('work').value.trim(),
+    marital:($('marital').value||'').toUpperCase(), occupation:$('occupation').value.trim(), address:$('address').value.trim(),
+    idType:c.d.idKind, idNo:c.d.idNumber, otherPlan:$('otherPlan').checked?'yes':'no', otherPlanName:$('planName').value.trim(), otherInsurer:$('planCo').value.trim(),
+    covVoluntary:$('xVol').checked, covDependentLife:$('xDep').checked,
+    deps:deps.map(function(x,i){ return {key:'d'+i, rel:x.rel==='Spouse'?'SPOUSE':'CHILD', name:x.name, gender:x.g, dob:x.dob, country:x.ctry}; }),
+    bens:bens.map(function(x){ return {rel:x.rel, name:x.name, gender:x.g, dob:x.dob, pct:x.pct}; }) };
+  const health={ persons:healthPersons(), answers:MED.answers, hw:MED.hw, preg:MED.preg, medUse:MED.medUse, detailNote:MED.detailNote, medNote:MED.medNote, physNote:MED.physNote||'', allWell:!!MED.allWell };
+  let r; try{ r=JSON.parse(await (await fetch(SVC,{method:'POST',body:JSON.stringify({action:'gcm.enrolSubmit',inv:INVCODE,answers:answers,health:health,sig:SIG.emp||'',sigSpouse:SIG.spouse||''})})).text()); }
+  catch(e){ r={ok:false,error:'We could not reach our system. Please check your connection and press Confirm again: nothing has been lost.'}; }
+  btn.disabled=false; btn.textContent='✓ Confirm & submit';
+  if(!r.ok){ stepError(r.error||'Your part did not send. Please try again.'); return; }
+  renderGio(c.d,c.deps,c.bens,'gio');
+  $('formview').style.display='none';
+  const done=document.createElement('div'); done.className='card'; done.id='invdone'; done.style.cssText='max-width:728px;width:calc(100% - 32px);margin:1.2rem auto 0;border-color:#9fd3a8;background:#eff8f0';
+  done.innerHTML='<h2 style="color:#2d6a3a;border-color:#3d8b4f">Your part is done</h2><p style="font-size:16px;margin:.2rem 0 .5rem"><b>'+esc(r.said||'Thank you.')+'</b></p><p class="note">Reference '+esc(r.ref||'')+'. Below is your copy of the application and your declaration. You do not need to print or sign anything else: we will be in touch if Guardian Life needs anything more, such as a copy of your ID or the top of a bank statement for claim payments.</p>';
+  $('printview').insertBefore(done,$('printview').firstChild);
+  if($('another')) $('another').style.display='none';
+  if($('printnote')) $('printnote').textContent='Your copy, for your records. '+(INV.adminFirst||INV.admin)+' at '+INV.company+' completes Section F and sends it to Guardian Life.';
+  $('printview').style.display='block';
+  window.scrollTo(0,0);
+}
+if(INVCODE) invInit();
 </script>
 <!-- rrb-views -->
 <script>

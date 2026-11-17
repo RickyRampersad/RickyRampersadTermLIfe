@@ -294,6 +294,11 @@ footer a{color:inherit}
 .pkind{display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap}.pkb{font:inherit;font-weight:600;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer;color:var(--ink)}.pkb.on{border-color:var(--primary);background:var(--primarySoft,#e8f0ff);color:var(--primary)}.pplans{display:flex;flex-wrap:wrap;gap:6px 18px;margin:2px 0 8px}.cfpb{font:inherit;text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}.cfpb b{font-size:14px}.cfpb span{font-size:12px;color:var(--muted)}.cfpb.on{border-color:var(--primary);background:var(--primarySoft,#e8f0ff);box-shadow:0 0 0 2px var(--primarySoft,#e8f0ff) inset}
 .esec{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}.esec>b{display:block;margin-bottom:6px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.02em}.ticks{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px}
 .deps .dep.wide{grid-template-columns:1fr 2fr 1fr 1fr 1.4fr}
+.cfpb b .cnt{display:inline-block;margin-left:6px;min-width:20px;padding:0 6px;border-radius:99px;background:var(--sunken);border:1px solid var(--line);font-size:12px;line-height:18px;text-align:center;color:var(--ink2)}.cfpb b .cnt.ready{background:var(--primary);border-color:var(--primary);color:#fff}
+.invp{border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 12px;background:var(--paper,#fff)}.invp h4{margin:0 0 4px;font-size:15px}.invl{list-style:none;margin:8px 0 0;padding:0}
+.invl>li{border-top:1px solid var(--line);padding:10px 0;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between}.invl>li:first-child{border-top:0}.invl .who{min-width:0;flex:1 1 220px}.invl .who b{display:block;overflow-wrap:anywhere}.invl .who span{font-size:13px;color:var(--muted)}
+.invl .acts{display:flex;gap:8px;flex-wrap:wrap}.invl .acts .btn{padding:8px 14px;font-size:14px}.invck{flex:1 1 100%;border:1px solid var(--primaryLine,#b8cef4);border-radius:10px;padding:10px 12px;background:var(--primarySoft,#ebf2fd)}
+.st.ready{background:var(--primary);border-color:var(--primary);color:#fff}.tagt{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--warn);background:var(--warnBg);border-radius:99px;padding:1px 7px}
 @media (max-width:560px){.deps .dep,.deps .dep.ben,.deps .dep.wide{grid-template-columns:1fr 1fr}.fprev iframe{height:420px}.cfp{grid-template-columns:repeat(2,1fr)}}
 .cyears{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:4px 0 8px}
 .cyears div{background:var(--sunken);border-radius:10px;padding:10px 12px}.cyears b{display:block;font-size:18px;color:#13408F}.cyears span{font-size:12.5px;color:var(--muted)}
@@ -559,8 +564,12 @@ function bindBilling() {
 
 /* the change form (24 October 2026): search a member of your plan, Guardian Life's form EB0010 fills from our records,
    confirm the change, and it goes to Guardian Life with our branch copied */
-function cfFresh(form) { return { form: form || 'change', q: '', results: null, member: null, pick: null, kind: 'terminate', easiKind: 'change', pdf: '', missing: [], blocking: [], sent: '', err: '', busy: false, deps: [], bens: [], enrol: {}, easi: {}, policies: null, pkind: 'join', pay: {}, plans: [] }; }
-let CF = cfFresh('change');
+function cfFresh(form) { return { form: form || 'change', q: '', results: null, member: null, pick: null, kind: 'terminate', easiKind: 'change', pdf: '', missing: [], blocking: [], sent: '', err: '', busy: false, deps: [], bens: [], enrol: {}, easi: {}, policies: null, pkind: 'join', pay: {}, plans: [], emode: 'link', inv: { covHealth: true } }; }
+/* ?form=enrol (the "ready for you to check" e-mail) opens the forms on "Enrol a new member" */
+let CF = cfFresh(/(^|[?&])form=enrol(&|$)/.test(location.search) ? 'enrol' : 'change');
+/* new members who fill in their own part (17 November 2026): the group sends the employee their own link, the employee
+   completes their part on their phone, and the group checks Guardian's GIO001, completes Section F and approves it */
+const INV = { list: null, counts: null, live: false, busy: false, err: '', said: '', open: '', pdf: '', blocking: [], missing: [], f: {}, sending: false };
 const CF_FORMS = [['change', 'Change or terminate', 'EB0010'], ['enrol', 'Enrol a new member', 'GIO001'], ['easi', 'Claim payment account', 'EASI Collect'], ['payroll', 'Pension or a plan from salary', 'Join or leave']];
 /* pensions and life plans paid through your payroll (17 November 2026): the employee's own policies on your list bill */
 /* the walkthrough of this page (17 November 2026), in place of the welcome film the backend names: every tab, the
@@ -585,7 +594,7 @@ const CF_RELS = ['SPOUSE', 'CHILD', 'CHILD', 'CHILD'];
 function chgHtml() {
   const f = CF.form;
   let h = '<div class="chg" id="chg"><h3>Enrol, terminate or change a member</h3><p class="sub">Group Health and Group Life go on Guardian Life’s own forms, filled from our records and what you give here: you confirm, and the form goes to Guardian Life with our branch copied. A pension or a life plan paid from salary is the employee’s own policy: tell us who is joining or leaving, and our team takes it from there.</p>' +
-    '<div class="cfp">' + CF_FORMS.map(([k, l, c]) => '<button type="button" class="cfpb' + (f === k ? ' on' : '') + '" data-cform="' + k + '"><b>' + l + '</b><span>' + c + '</span></button>').join('') + '</div>';
+    '<div class="cfp">' + CF_FORMS.map(([k, l, c]) => '<button type="button" class="cfpb' + (f === k ? ' on' : '') + '" data-cform="' + k + '"><b>' + l + (k === 'enrol' ? invBadge() : '') + '</b><span>' + c + '</span></button>').join('') + '</div>';
   if (CF.sent) return h + '<div class="ok">' + esc(CF.sent) + '</div><button class="btn ghost" type="button" id="cfAnother" style="margin-top:8px">Another form</button></div>';
   if (f === 'enrol') h += enrolForm();
   else if (f === 'payroll') h += payForm();
@@ -672,7 +681,10 @@ function enrolForm() {
     if (type === 'select') return '<div><label for="en_' + id + '">' + label + '</label><select class="field" id="en_' + id + '" data-enr="' + id + '">' + vals.map((o, i) => '<option value="' + o + '"' + (String(v) === o ? ' selected' : '') + '>' + (labels[i] || o) + '</option>').join('') + '</select></div>';
     return '<div><label for="en_' + id + '">' + label + '</label><input class="field" type="' + type + '" id="en_' + id + '" data-enr="' + id + '" value="' + esc(v) + '"' + (type === 'text' ? ' maxlength="80"' : '') + '></div>';
   };
-  let h = '<div class="cform" id="cform"><p class="sub">Guardian Life’s Group Health and Life Application Form (GIO001). Give what you have; what is left blank is listed with the preview, and the employee completes the Declaration of Insurability separately.</p>';
+  let h = invPanel() + '<div class="pkind" role="group" aria-label="How to enrol them">' +
+    [['link', 'Send them their own link'], ['fill', 'Fill it in for them']].map(([v, l]) => '<button type="button" class="pkb' + (CF.emode === v ? ' on' : '') + '" data-emode="' + v + '" aria-pressed="' + (CF.emode === v) + '">' + l + '</button>').join('') + '</div>';
+  if (CF.emode === 'link') return h + invForm();
+  h += '<div class="cform" id="cform"><p class="sub">Guardian Life’s Group Health and Life Application Form (GIO001). Give what you have; what is left blank is listed with the preview, and the employee completes the Declaration of Insurability separately.</p>';
   ['A', 'B'].forEach(k => { h += '<div class="esec"><b>' + ENR_SECTIONS[k] + '</b><div class="row2">' + sec[k].filter(f => f[3] !== 'check').map(field).join('') + '</div>' + (sec[k].some(f => f[3] === 'check') ? '<div class="ticks">' + sec[k].filter(f => f[3] === 'check').map(field).join('') + '</div>' : '') + '</div>'; });
   h += '<div class="esec"><b>' + ENR_SECTIONS.C + '</b>' + depRowsHtml(CF.deps, 'Spouse first, then children (up to five)', 5, 'dep', 'country') + '</div>';
   h += '<div class="esec"><b>' + ENR_SECTIONS.D + '</b>' + depRowsHtml(CF.bens, 'Relationship, name, gender, date of birth and share (total 100%)', 3, 'enb', 'ben') + '</div>';
@@ -680,7 +692,136 @@ function enrolForm() {
   h += '<label for="creason">Anything Guardian Life should know (optional)</label><input class="field" id="creason" maxlength="300" value="' + esc(CF.reason || '') + '">' + chgTail('GIO001 as it will go') + '</div>';
   return h;
 }
+/* ── new members who fill in their own part ── */
+function invBadge() {
+  const c = INV.counts; if (!c) return '';
+  const open = (c.waiting || 0) + (c.ready || 0); if (!open) return '';
+  return '<i class="cnt' + (c.ready ? ' ready' : '') + '" title="' + (c.ready ? c.ready + ' ready for you to check' : open + ' waiting on the employee') + '">' + (c.ready || open) + '</i>';
+}
+function invPanel() {
+  let h = '<div class="invp" id="invp"><h4>New members</h4><p class="sub" style="margin:0">Everyone you have sent a link to, and where each one stands.' + (INV.live === false && INV.list && INV.list.length ? ' <span class="tagt">TEST</span> Our branch has not switched the forms live yet: the e-mails go to your account manager, not to the employee or to Guardian Life.' : '') + '</p>';
+  if (INV.said) h += '<div class="ok">' + esc(INV.said) + '</div>';
+  if (INV.err) h += '<div class="err" role="alert" style="display:block">' + esc(INV.err) + '</div>';
+  if (!INV.list) return h + '<p class="sub">' + (INV.busy ? 'Looking in our records…' : '') + '</p></div>';
+  if (!INV.list.length) return h + '<p class="sub">Nobody yet: send a new member their own link below.</p></div>';
+  h += '<ul class="invl">' + INV.list.map(x => {
+    const cls = x.status === 'ready' ? ' ready' : x.status === 'sent' ? ' paid' : x.status === 'expired' ? ' late' : ' wait';
+    let li = '<li data-inv="' + esc(x.ref) + '"><div class="who"><b>' + esc(x.employee) + (x.test ? '<span class="tagt">TEST</span>' : '') + '</b><span>' + esc(x.cover.words) + (x.effective ? ' · from ' + esc(dmy(x.effective)) : '') + ' · ' + esc(x.ref) + (x.sentBy ? ' · sent by ' + esc(x.sentBy) : '') + '</span></div>' +
+      '<span class="st' + cls + '">' + esc(x.words) + '</span><div class="acts">' +
+      (x.status === 'ready' ? '<button class="btn" type="button" data-invck="' + esc(x.ref) + '">' + (INV.open === x.ref ? 'Close' : 'Check and approve') + '</button>' : '') +
+      (x.status === 'waiting' || x.status === 'expired' ? '<button class="btn ghost" type="button" data-invre="' + esc(x.ref) + '">Send the link again</button>' : '') + '</div>';
+    if (INV.open === x.ref) li += invCheck(x);
+    return li + '</li>';
+  }).join('') + '</ul>';
+  return h + '</div>';
+}
+function invCheck(x) {
+  const f = INV.f, life = x.cover.life, v = k => esc(f[k] || '');
+  return '<div class="invck" id="invck"><p class="sub" style="margin-top:0"><b>' + esc(x.first) + '</b> completed their part on ' + esc(x.completed.slice(0, 10) ? dmy(x.completed.slice(0, 10)) : '') + '. Check Guardian’s form below, then complete Section F and approve it. Their health answers go to Guardian Life with the form; they are not shown here.</p>' +
+    '<div class="row2"><div><label for="if_employed">Date employed</label><input class="field" type="date" id="if_employed" value="' + v('employed') + '"></div><div><label for="if_confirmed">Date of confirmation</label><input class="field" type="date" id="if_confirmed" value="' + v('confirmed') + '"></div></div>' +
+    '<div class="row2"><div><label for="if_effective">Effective date of coverage</label><input class="field" type="date" id="if_effective" value="' + v('effective') + '"></div><div><label for="if_tier">Coverage tier</label><select class="field" id="if_tier">' + [['', ''], ['SINGLE', 'Single'], ['EMPLOYEE + ONE', 'Employee + one'], ['EMPLOYEE + FAMILY', 'Employee + family']].map(([o, l]) => '<option value="' + o + '"' + ((f.tier || '') === o ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div></div>' +
+    '<div class="row2">' + (life ? '<div><label for="if_salary">Annual salary, TT$ (Group Life)</label><input class="field" id="if_salary" inputmode="decimal" maxlength="15" value="' + v('salary') + '"></div>' : '') + '<div><label for="if_admin">Plan administrator (Section F)</label><input class="field" id="if_admin" maxlength="80" value="' + v('admin') + '"></div></div>' +
+    '<label class="tick big"><input type="checkbox" id="invauth"' + (f.auth ? ' checked' : '') + '> I am authorised to approve this for ' + esc(D.group) + '</label>' +
+    '<div class="row2"><button class="btn ghost" type="button" id="invprev">Update the preview</button><button class="btn" type="button" id="invgo"' + (INV.pdf && !INV.blocking.length && !INV.sending ? '' : ' disabled') + '>' + (INV.sending ? 'Sending…' : 'Approve and send to Guardian Life') + '</button></div>' +
+    (INV.pdf || INV.blocking.length ? '<div class="fprev"><div class="fpt">GIO001 as it will go' + (INV.missing.length ? ' · not given: ' + esc(INV.missing.join(', ')) : '') + (INV.blocking.length ? ' · <b>still needed: ' + esc(INV.blocking.join(', ')) + '</b>' : '') + (INV.pdf ? ' · <a href="data:application/pdf;base64,' + INV.pdf + '" download="guardian-gio001.pdf">download the PDF</a>' : '') + '</div><div class="pdfv" id="invpdf"></div></div>' : '<p class="sub">Drawing the form…</p>') + '</div>';
+}
+function invForm() {
+  const x = CF.inv;
+  return '<div class="cform" id="cform"><p class="sub">They get their own link by e-mail and complete their part on their phone: their details, anyone to be covered, who their Group Life pays, a short health declaration and their signature. They are reminded each working day until it is done. You then check it here, complete Section F and approve it, and it goes to Guardian Life with our branch copied.</p>' +
+    '<div class="row2"><div><label for="ifirst">Employee’s first name</label><input class="field" id="ifirst" maxlength="40" value="' + esc(x.first || '') + '"></div><div><label for="ilast">Surname</label><input class="field" id="ilast" maxlength="60" value="' + esc(x.last || '') + '"></div></div>' +
+    '<div class="row2"><div><label for="iemail">Their e-mail (their link goes here)</label><input class="field" id="iemail" type="email" maxlength="120" value="' + esc(x.email || '') + '"></div><div><label for="imob">Their mobile (optional)</label><input class="field" id="imob" type="tel" maxlength="30" value="' + esc(x.mobile || '') + '"></div></div>' +
+    '<label>Cover they are joining</label><div class="ticks"><label class="tick"><input type="checkbox" id="ihealth"' + (x.covHealth ? ' checked' : '') + '> Group Health</label><label class="tick"><input type="checkbox" id="ilife"' + (x.covLife ? ' checked' : '') + '> Group Life</label></div>' +
+    '<div class="row2"><div><label for="ieff">Effective date of cover</label><input class="field" id="ieff" type="date" value="' + esc(x.effective || '') + '"></div><div><label for="irole">Your role (optional)</label><input class="field" id="irole" maxlength="60" placeholder="For example HR Manager" value="' + esc(x.role || '') + '"></div></div>' +
+    '<label for="cname">Your name</label><input class="field" id="cname" maxlength="80" value="' + esc(CF.name || A._who || '') + '">' +
+    '<label class="tick big"><input type="checkbox" id="cauth"' + (CF.auth ? ' checked' : '') + '> I am authorised to enrol them for ' + esc(D.group) + '</label>' +
+    '<button class="btn full" type="button" id="cgo">Send them their link</button></div>';
+}
+function invRead() {
+  const g = id => $(id) ? $(id).value.trim() : '';
+  if ($('ifirst')) CF.inv = Object.assign(CF.inv, { first: g('ifirst'), last: g('ilast'), email: g('iemail'), mobile: g('imob'), effective: g('ieff'), role: g('irole'), covHealth: $('ihealth').checked, covLife: $('ilife').checked });
+  if ($('invck')) INV.f = Object.assign(INV.f, { employed: g('if_employed'), confirmed: g('if_confirmed'), effective: g('if_effective'), tier: g('if_tier'), salary: g('if_salary'), admin: g('if_admin'), auth: $('invauth').checked });
+}
+function invRedraw() { chgRead(); chgDraw(); }
+async function invLoad() {
+  if (INV.busy) return;
+  INV.busy = true; let r;
+  try { r = JSON.parse(await (await fetch(SVC + '?action=gcm.clientForm&form=invite&lb=' + encodeURIComponent(CRED.lb) + '&code=' + encodeURIComponent(CRED.code) + '&z=' + Date.now())).text()); } catch (e) { r = { ok: false }; }
+  INV.busy = false;
+  if (r.ok && Array.isArray(r.invites)) { INV.list = r.invites; INV.counts = r.counts || null; INV.live = !!r.live; }
+  else if (!INV.list) INV.list = [];
+  invRedraw();
+}
+async function invPost(body) {
+  try { return JSON.parse(await (await fetch(SVC, { method: 'POST', body: JSON.stringify(Object.assign({ action: 'gcm.clientFormSend', form: 'invite', lb: CRED.lb, code: CRED.code, authorised: 'Y' }, body)) })).text()); }
+  catch (e) { return { ok: false, error: 'We could not reach our system. Please try again, or e-mail us.' }; }
+}
+async function invCreate() {
+  const x = CF.inv;
+  if (!x.first || !x.last) { CF.err = 'Please give the employee’s first name and surname.'; return chgDraw(); }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(x.email || '')) { CF.err = 'Please give the employee’s e-mail address: their link goes to it.'; return chgDraw(); }
+  if (!x.covHealth && !x.covLife) { CF.err = 'Which cover are they joining: Group Health, Group Life, or both?'; return chgDraw(); }
+  if (!x.effective) { CF.err = 'Please give the effective date of their cover.'; return chgDraw(); }
+  if (!CF.name) { CF.err = 'Please give your name.'; return chgDraw(); }
+  if (!CF.auth) { CF.err = 'Please tick that you are authorised to enrol them.'; return chgDraw(); }
+  $('cgo').disabled = true; $('cgo').textContent = 'Sending…';
+  const r = await invPost({ act: 'create', first: x.first, last: x.last, email: x.email, mobile: x.mobile, covHealth: x.covHealth ? 'Y' : '', covLife: x.covLife ? 'Y' : '', effective: x.effective, role: x.role, name: CF.name });
+  if (!r.ok) { CF.err = r.error || 'Not sent.'; return chgDraw(); }
+  try { localStorage.setItem(nameKey(), CF.name.slice(0, 80)); } catch (e) {}
+  INV.said = r.said; INV.err = ''; CF.inv = { covHealth: true }; CF.auth = false;
+  if (r.invite) { INV.list = [r.invite].concat(INV.list || []); INV.counts = INV.counts || { waiting: 0, ready: 0, sent: 0 }; INV.counts.waiting++; }
+  chgDraw(); const p = $('invp'); if (p) p.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  invLoad();
+}
+async function invPreview() {
+  invRead(); INV.err = '';
+  const f = INV.f, q = { ref: INV.open, employed: f.employed, confirmed: f.confirmed, effective: f.effective, tier: f.tier, salary: f.salary, admin: f.admin, name: CF.name || A._who || '' };
+  let r;
+  try { r = JSON.parse(await (await fetch(SVC + '?action=gcm.clientForm&form=invite&act=preview&lb=' + encodeURIComponent(CRED.lb) + '&code=' + encodeURIComponent(CRED.code) + '&' + Object.keys(q).map(k => k + '=' + encodeURIComponent(q[k] || '')).join('&') + '&z=' + Date.now())).text()); } catch (e) { r = { ok: false, error: 'We could not reach our records. Please try again.' }; }
+  if (!r.ok) { INV.err = r.error || 'Not available.'; return invRedraw(); }
+  INV.pdf = r.pdf || ''; INV.blocking = r.blocking || []; INV.missing = r.missing || [];
+  if (!INV.pdf) INV.err = r.pdfError ? 'The form could not be drawn: ' + r.pdfError : 'The form could not be drawn.';
+  if (r.sectionF && !INV.f.effective) INV.f.effective = r.sectionF.effective || '';
+  invRedraw();
+}
+async function invApprove() {
+  invRead(); INV.err = ''; INV.said = '';
+  const f = INV.f, x = (INV.list || []).find(i => i.ref === INV.open);
+  if (!x) return;
+  if (!f.tier || !f.employed || (x.cover.life && !f.salary)) { INV.err = 'Please complete Section F: the date employed, the coverage tier' + (x.cover.life ? ' and the annual salary' : '') + '.'; return invRedraw(); }
+  if (!f.auth) { INV.err = 'Please tick that you are authorised to approve this.'; return invRedraw(); }
+  INV.sending = true; invRedraw();
+  const r = await invPost({ act: 'approve', ref: INV.open, employed: f.employed, confirmed: f.confirmed, effective: f.effective, tier: f.tier, salary: f.salary, admin: f.admin, name: f.admin || CF.name || A._who || '' });
+  INV.sending = false;
+  if (!r.ok) { INV.err = r.error || 'Not sent.'; return invRedraw(); }
+  INV.said = r.said; INV.open = ''; INV.pdf = ''; INV.f = {};
+  invRedraw(); invLoad();
+}
+async function invResend(ref) {
+  INV.err = ''; INV.said = '';
+  const name = CF.name || A._who || '';
+  if (!name) { INV.err = 'Please give your name in the form below first.'; return invRedraw(); }
+  const r = await invPost({ act: 'resend', ref, name });
+  if (!r.ok) { INV.err = r.error || 'Not sent.'; return invRedraw(); }
+  INV.said = r.said; invRedraw(); invLoad();
+}
+function bindInv() {
+  const el = $('chg'); if (!el) return;
+  if (INV.list === null && !INV.busy && CRED.lb) invLoad();
+  el.querySelectorAll('[data-emode]').forEach(b => b.onclick = () => { if (CF.emode === b.dataset.emode) return; chgRead(); CF.emode = b.dataset.emode; CF.err = ''; chgDraw(); });
+  el.querySelectorAll('[data-invck]').forEach(b => b.onclick = () => {
+    chgRead(); const ref = b.dataset.invck;
+    if (INV.open === ref) { INV.open = ''; INV.pdf = ''; return chgDraw(); }
+    const x = INV.list.find(i => i.ref === ref);
+    INV.open = ref; INV.pdf = ''; INV.blocking = []; INV.missing = []; INV.said = ''; INV.err = ''; INV.f = { effective: x ? x.effective : '', admin: CF.name || A._who || '' };
+    chgDraw(); invPreview();
+  });
+  el.querySelectorAll('[data-invre]').forEach(b => b.onclick = () => { chgRead(); invResend(b.dataset.invre); });
+  if ($('invprev')) $('invprev').onclick = invPreview;
+  if ($('invgo')) $('invgo').onclick = invApprove;
+  if ($('invpdf') && INV.pdf) pdfPages($('invpdf'), INV.pdf);
+}
 function chgRead() {
+  invRead();
   const g = id => $(id) ? $(id).value.trim() : '';
   CF.kind = g('ckind') || CF.kind; CF.easiKind = g('ceasi') || CF.easiKind; CF.effective = g('ceff'); CF.marital = g('cmar'); CF.reason = g('creason'); CF.admin = g('cadmin'); CF.name = g('cname'); CF.address = g('caddr'); CF.bankName = g('cbank'); CF.bankAccount = g('cacct'); CF.bankBranch = g('cbr'); CF.auth = $('cauth') ? $('cauth').checked : false;
   if (CF.form === 'easi') CF.easi = { idType: g('cidt'), idNo: g('cidn'), bankName: g('cbank'), bankBranch: g('cbr'), bankAccount: g('cacct'), bankType: g('cbty') };
@@ -728,6 +869,7 @@ function bindChg() {
   if ($('cprev')) $('cprev').onclick = () => chgPreview(false);
   if ($('cgo')) $('cgo').onclick = chgSend;
   if ($('cfr') && CF.pdf) pdfPages($('cfr'), CF.pdf);
+  bindInv();
 }
 async function chgPreview(quiet) {
   chgRead(); CF.err = '';
@@ -744,6 +886,7 @@ async function chgPreview(quiet) {
 }
 async function chgSend() {
   chgRead(); CF.err = '';
+  if (CF.form === 'enrol' && CF.emode === 'link') return invCreate();
   if (CF.form === 'payroll' && CF.pkind === 'join') {
     const x = CF.pay;
     if (!x.first || !x.last) { CF.err = 'Please give the employee’s first name and surname.'; return chgDraw(); }

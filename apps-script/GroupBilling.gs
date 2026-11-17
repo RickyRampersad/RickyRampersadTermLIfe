@@ -1807,6 +1807,16 @@ function gblPdfFill_(code, fill, name) {
   (fill.check || []).forEach(function (k) { try { form.getCheckBox(k).check(); } catch (e) { notes.push(k + ': ' + String(e && e.message ? e.message : e).slice(0, 80)); } });
   Object.keys(fill.radio || {}).forEach(function (k) { try { form.getRadioGroup(k).select(fill.radio[k]); } catch (e) { notes.push(k + ': ' + String(e && e.message ? e.message : e).slice(0, 80)); } });
   (fill.draw || []).forEach(function (t) { var p = pages[(t.page || 1) - 1]; if (p && t.text !== '' && t.text !== undefined) p.drawText(String(t.text), { x: t.x, y: t.y, size: t.size || GBL_PDF.MAXSIZE, font: font }); });
+  /* an image (a signature drawn on screen, a PNG data URI) on a field's own line, dx points in from its left edge */
+  (fill.images || []).forEach(function (im) {
+    try {
+      var w = form.getField(im.field).acroField.getWidgets()[0], rect = w.getRectangle(), pref = typeof w.P === 'function' ? w.P() : null;
+      var page = pages.filter(function (pg) { return pref && pg.ref === pref; })[0] || pages[(im.page || 1) - 1] || pages[0];
+      var png = gblSync_(doc.embedPng(gblU8_(Utilities.base64Decode(String(im.png).replace(/^data:image\/png;base64,/, '')))), 'The signature');
+      var h = rect.height - 2, wmax = rect.width - (im.dx || 0) - 4, s = Math.min(h / png.height, wmax / png.width);
+      page.drawImage(png, { x: rect.x + (im.dx || 0), y: rect.y + 1, width: png.width * s, height: png.height * s });
+    } catch (e) { notes.push(im.field + ': ' + String(e && e.message ? e.message : e).slice(0, 80)); }
+  });
   try { form.updateFieldAppearances(font); } catch (e) {}
   var bytes = gblSync_(doc.save({ useObjectStreams: false, updateFieldAppearances: false }), 'Writing ' + code);
   var blob = Utilities.newBlob(gblSigned_(bytes), 'application/pdf', name + '.pdf');
@@ -1886,7 +1896,7 @@ function gblSendPack_(g, who, pack, opt) {
     '<p>Kind regards,<br><b>' + E(who.role === 'client' ? 'Ricky Rampersad Branch, for ' + g.name : gcmSigner_(who, g)) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br>9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</p>' +
     '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
   var subject = (test ? '[TEST] ' : '') + pack.code + ' ' + pack.title + ' – ' + g.name + ' – ' + pack.member + ' – ' + pack.kindLabel;
-  try { tMsSend_(to[0], subject, body, { cc: cc.concat(to.slice(1)), attachments: [pack.blob], replyTo: who.role === 'client' ? TRANSITION.MS_FROM : (who.email || TRANSITION.MS_FROM) }); }
+  try { tMsSend_(to[0], subject, body, { cc: cc.concat(to.slice(1)), attachments: [pack.blob].concat(pack.extra || []), replyTo: who.role === 'client' ? TRANSITION.MS_FROM : (who.email || TRANSITION.MS_FROM) }); }
   catch (e) { return { ok: false, error: 'Microsoft would not send it: ' + String(e && e.message ? e.message : e).slice(0, 200) }; }
   var kept = gblKeepSent_(pack.blob, g);
   var detail = (test ? '[TEST] ' : '') + pack.code + ' sent to ' + (test ? to[0] : 'EB Customer Care') + ' ' + gcmWhen_(new Date()) + ': ' + pack.kindLabel + (pack.reason ? '. ' + pack.reason : '');
@@ -1964,7 +1974,10 @@ function gblGio001Fill_(e) {
   text[M.employed] = dmy(e.employed); text[M.confirmed] = dmy(e.confirmed); text[M.effective] = dmy(e.effective);
   if (e.tier) radio[M.tier.group] = M.tier[e.tier];
   text[M.salary] = e.salary ? 'TT$ ' + e.salary : ''; text[M.admin.name] = e.admin.name;
-  return { text: text, check: check, radio: radio, draw: [], size: {} };
+  /* completed online (17 November 2026): the employee's signature on their line, and the day they signed */
+  var images = [];
+  if (e.signature) { images.push({ field: M.employeeSignature, png: e.signature, dx: GBL_INV.SIG_X }); if (e.signedOn) text[M.signedOn] = dmy(e.signedOn); }
+  return { text: text, check: check, radio: radio, draw: [], size: {}, images: images };
 }
 function gblEnrolName_(e) { return ('GIO001 Application - ' + e.employee + ' - ' + e.holder).replace(/[^\w\s\-&.]/g, '').replace(/\s+/g, ' ').slice(0, 120); }
 function gblEnrolPdf_(e) { var b = gblPdfFill_('GIO001', gblGio001Fill_(e), gblEnrolName_(e)); e.fillNotes = b.notes || []; return b; }
@@ -1974,11 +1987,18 @@ function gblEnrolSend_(g, who, e, opt) {
   lines.push('Please find attached Guardian Life’s form GIO001 (' + e.version + '), the application of <b>' + E(e.employee) + '</b> for ' + E(covs.join(' and ')) + ' under <b>' + E(e.holder) + '</b>' + (e.policyHealth || e.policyLife ? ' (policy ' + E([e.policyHealth, e.policyLife].filter(String).join(' / ')) + ')' : '') + ', effective <b>' + E(tDmy_(e.effective)) + '</b>' + (e.tier ? ', ' + E(e.tier.toLowerCase()) : '') + '.');
   if (e.deps.length) lines.push('Section C lists ' + e.deps.length + ' dependent' + (e.deps.length === 1 ? '' : 's') + ' to be covered: ' + E(e.deps.map(function (x) { return x.name + ' (' + x.rel.toLowerCase() + ')'; }).join(', ')) + '.');
   if (e.reason) lines.push('Note from the group: ' + E(e.reason) + '.');
-  lines.push('To follow from the employee and the group: ' + E(GBL_ENROL.FOLLOWS.join('; ')) + '.');
-  lines.push('The form carries what the group gave us' + (e.missing.length ? ' (not given: ' + E(e.missing.join(', ')) + ')' : '') + '. It was submitted by ' + E(e.submitted.by) + ', ' + E(e.submitted.role) + ', on ' + E(e.submitted.when) + '; the plan administrator named in Section F is ' + E(e.admin.name) + '.');
+  opt = opt || {};
+  if (e.online) {   /* the employee completed their own part online (17 November 2026) */
+    lines.push('The employee completed Sections A to D' + (opt.doi ? ' and the Declaration of Insurability' : '') + ' online on ' + E(tDmy_(String(e.online.completed).slice(0, 10))) + ' and signed on screen' + (opt.doi ? '; the Declaration is attached' : '') + '. The plan administrator, ' + E(e.admin.name) + ', completed Section F and approved it on ' + E(e.submitted.when) + ' (branch reference ' + E(e.online.ref) + ').');
+    var follows = GBL_ENROL.FOLLOWS.filter(function (x) { return opt.doi ? !/Declaration of Insurability/.test(x) : true; }).map(function (x) { return /employee’s signature on the form/.test(x) ? 'the plan administrator’s signature and stamp (Section F)' : x; });
+    lines.push('To follow from the employee and the group: ' + E(follows.join('; ')) + '.' + (e.missing.length ? ' Not given online: ' + E(e.missing.join(', ')) + '.' : ''));
+  } else {
+    lines.push('To follow from the employee and the group: ' + E(GBL_ENROL.FOLLOWS.join('; ')) + '.');
+    lines.push('The form carries what the group gave us' + (e.missing.length ? ' (not given: ' + E(e.missing.join(', ')) + ')' : '') + '. It was submitted by ' + E(e.submitted.by) + ', ' + E(e.submitted.role) + ', on ' + E(e.submitted.when) + '; the plan administrator named in Section F is ' + E(e.admin.name) + '.');
+  }
   var blob;
   try { blob = gblEnrolPdf_(e); } catch (err) { return { ok: false, error: 'The application form could not be filled: ' + String(err && err.message ? err.message : err).slice(0, 160) }; }
-  return gblSendPack_(g, who, { code: 'GIO001', title: GBL_PDF.TITLES.GIO001, kindLabel: 'Enrolment: ' + covs.join(' and '), member: gblTitle_(e.employee), line: e.coverage.health ? 'health' : 'life', effective: e.effective, reason: e.reason, blob: blob, lines: lines, missing: e.missing, blocking: e.blocking, changeKind: 'joiner' }, opt);
+  return gblSendPack_(g, who, { code: 'GIO001', title: GBL_PDF.TITLES.GIO001, kindLabel: 'Enrolment: ' + covs.join(' and '), member: gblTitle_(e.employee), line: e.coverage.health ? 'health' : 'life', effective: e.effective, reason: e.reason, blob: blob, extra: opt.extra || [], lines: lines, missing: e.missing, blocking: e.blocking, changeKind: 'joiner' }, opt);
 }
 
 /* ── EASI Collect: the ACH details for claim payments, on Guardian's flat form, drawn at its printed positions ─── */
@@ -2076,6 +2096,12 @@ function gblClientForm_(p) {
     if (!ps.ok) return { ok: false, error: 'Our records are not available right now. Please try again shortly, or e-mail us.' };
     return { ok: true, payroll: true, members: ps.members, total: ps.total, more: ps.more, plans: GBL_PAY.PLANS, joinSteps: GBL_PAY.JOIN_STEPS, companyNote: GBL_PAY.COMPANY_NOTE };
   }
+  if (form === 'invite') {   /* new members who fill in their own part: the list, or one ready to check with its GIO001 */
+    if (String(p.act || '') === 'preview') return gblInvPreview_(g, who, p);
+    var inv = gblInvForGroup_(g).map(gblInvView_);
+    return { ok: true, invites: inv, live: gblLive_(), tiers: GBL_ENROL.TIERS,
+      counts: { waiting: inv.filter(function (x) { return x.status === 'waiting'; }).length, ready: inv.filter(function (x) { return x.status === 'ready'; }).length, sent: inv.filter(function (x) { return x.status === 'sent'; }).length } };
+  }
   if (form === 'enrol') {
     var e = gblEnrolData_(g, p, who), pb = null, perr = '';
     try { pb = gblEnrolPdf_(e); } catch (x) { perr = String(x && x.message ? x.message : x).slice(0, 200); }
@@ -2104,6 +2130,13 @@ function gblClientFormSend_(b) {
   if (!who.name) return { ok: false, error: 'Please give your name.' };
   if (!gcmYes_(b.authorised)) return { ok: false, error: 'Please confirm you are authorised to submit this for ' + g.name + '.' };
   b.admin = b.admin || who.name;
+  if (form === 'invite') {
+    var act = String(b.act || 'create');
+    if (act === 'create') return gblInvCreate_(g, who, b);
+    if (act === 'approve') return gblInvApprove_(g, who, b);
+    if (act === 'resend') return gblInvResend_(g, who, b);
+    return { ok: false, error: 'Unknown action.' };
+  }
   if (form === 'payroll') {
     var pd = gblPayrollData_(g, b);
     if (!pd.ok) return pd;
@@ -3150,6 +3183,8 @@ function gblDay_(o) {
     list.owners.forEach(function (ow) { n += ow.sent.length + ow.missed.length; miss += ow.missed.length; });
     said.push('the next billing day is ' + info.label + (info.daysTo ? ', in ' + info.daysTo + ' day' + (info.daysTo === 1 ? '' : 's') : '') + ': ' + (n - miss) + ' of ' + n + ' billed groups sent or approved.');
   }
+  /* new members waiting on their own part: one reminder a working day, five at most (17 November 2026) */
+  try { out.invites = gblInvRemind_({ test: !!o.test }); if (out.invites.reminded.length || out.invites.told.length || out.invites.errors.length) said.push('New members: ' + out.invites.said); } catch (e) { said.push('New members: ' + String(e && e.message ? e.message : e).slice(0, 160)); }
   out.said = said.join(' ');
   return out;
 }
@@ -3934,3 +3969,376 @@ function gblPayrollSend_(g, who, x) {
     : 'Thank you. ' + x.name.split(' ')[0] + '’s ' + (pension ? 'pension' : 'plan') + ' is their own, so leaving does not end it: our team will contact them within two working days about paying it another way, and take it off your list bill from ' + gblMonthLabel_(gblAddMonths_(x.last, 1)) + '.' + (x.company ? ' ' + GBL_PAY.COMPANY_NOTE : '') };
 }
 function gblPayDue_() { var d = gcmToday_(), n = 0; while (n < GBL_PAY.DUE_DAYS) { d = gcmAddDays_(d, 1); if (typeof gblWorkingDay_ !== 'function' || gblWorkingDay_(d)) n++; } return d; }
+
+/* ── New members who fill in their own part (17 November 2026) ────────────────────────────────────────────────────
+ * "HR presses Enrol a new member on their group page, the employee gets their own link, fills their part, it lands on
+ * Guardian's real GIO001 PDF, HR checks it and approves their section, and it goes to EB Customer Care with the account
+ * owner's task and the follow-ups. The group page shows where each new member stands."
+ * The group (signed in with its list bill and code) creates an invite: a row on the Group Enrolments tab with a random
+ * code, and an e-mail from support@ to the employee with their own link to benefits/enroll.html?inv=<code>. The employee
+ * completes Sections A to D, the Declaration of Insurability and the signature on the page (gcm.enrolGet / gcm.enrolSubmit,
+ * keyed on the code alone); their health answers are kept in their own column and never reach the group. The group then
+ * sees "Ready for you to check", reads Guardian's GIO001 filled from the employee's answers, completes Section F and
+ * approves: the application goes through the enrolment pack (gblEnrolSend_ → gblSendPack_: EB Customer Care, the Group
+ * Changes row as a joiner, the owner's task, the follow-ups), with the employee's signature drawn on the form and the
+ * Declaration attached as a PDF. The employee is reminded once a working day, five times at most (the 10:30 group day),
+ * and then the group is told it is still waiting. Test mode (bills not live, gblGoLive) sends every e-mail to the account
+ * owner and the branch, marked TEST, never to the employee or the group. */
+var GBL_INV = { TAB: 'Group Enrolments', DAYS: 60, MAX_REMIND: 5, TRIES_KEY: 'gbl-inv-tries', TRIES: 40, MAX_SIG: 60000, MAX_JSON: 45000,
+  PAGE: 'https://rickyrampersadbranch.com/benefits/enroll.html', SIG_X: 110,
+  WORDS: { waiting: 'Waiting on the employee', ready: 'Ready for you to check', sending: 'Being sent', sent: 'Sent to Guardian Life', expired: 'Link expired' } };
+GBL_HEAD[GBL_INV.TAB] = ['Ref', 'Created', 'Expires', 'Group', 'Group key', 'Employee', 'First', 'E-mail', 'Mobile', 'Cover', 'Effective', 'Sent by', 'Sent by role', 'Code',
+  'Status', 'Reminders', 'Last reminder', 'Completed', 'Answers', 'Health', 'Signature', 'Approved by', 'Approved at', 'Section F', 'Sent ref', 'Test', 'Note'];
+/** A cell as written: dates and anything a sheet would read as a number, a date or a formula kept as text. */
+function gblInvCell_(v) {
+  if (v === undefined || v === null) return '';
+  if (typeof v === 'number') return v;
+  v = String(v);
+  return /^[=+\-@']/.test(v) || /^\d{4}-\d{2}/.test(v) || /^\d+([.,]\d+)?$/.test(v) ? "'" + v : v;
+}
+function gblInvRows_() { return gcmSS_().getSheetByName(GBL_INV.TAB) ? gcmRows_(GBL_INV.TAB) : []; }
+function gblInvAppend_(o) {
+  var sh = gblSheet_(GBL_INV.TAB), head = GBL_HEAD[GBL_INV.TAB];
+  sh.getRange(sh.getLastRow() + 1, 1, 1, head.length).setValues([head.map(function (h) { return gblInvCell_(o[h]); })]);
+}
+/** Write fields onto the invite's own row, found by its Ref at the moment of writing (a sorted tab moves rows). */
+function gblInvPatch_(ref, f) {
+  var sh = gblSheet_(GBL_INV.TAB), last = sh.getLastRow(); if (last < 2) return false;
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
+  var rc = head.indexOf('Ref'); if (rc < 0) return false;
+  var refs = sh.getRange(2, rc + 1, last - 1, 1).getValues(), n = -1;
+  for (var i = 0; i < refs.length; i++) if (String(refs[i][0]).trim() === ref) { n = i + 2; break; }
+  if (n < 0) return false;
+  Object.keys(f).forEach(function (k) { var c = head.indexOf(k); if (c >= 0) sh.getRange(n, c + 1).setValue(gblInvCell_(f[k])); });
+  return true;
+}
+function gblInvCode_() { return (Utilities.getUuid() + Utilities.getUuid()).replace(/[^a-f0-9]/gi, '').toLowerCase().slice(0, 32); }
+function gblInvRef_() {
+  var day = Utilities.formatDate(new Date(), tTz_(), 'yyMMdd'), n = gblInvRows_().filter(function (r) { return gcmText_(r.Ref).indexOf('EN-' + day + '-') === 0; }).length + 1;
+  return 'EN-' + day + '-' + ('00' + n).slice(-3);
+}
+/** A name as typed, written properly when it came in all capitals or all small letters. */
+function gblInvName_(n) { n = String(n || '').replace(/\s+/g, ' ').trim(); return n === n.toUpperCase() || n === n.toLowerCase() ? n.toLowerCase().replace(/(^|[\s'-])([a-z])/g, function (m, p, c) { return p + c.toUpperCase(); }) : n; }
+function gblInvStamp_() { return Utilities.formatDate(new Date(), tTz_(), 'yyyy-MM-dd HH:mm'); }
+function gblInvCover_(c) { var h = /health/i.test(c), l = /life/i.test(c); return { health: h, life: l, words: h && l ? 'Group Health and Group Life' : h ? 'Group Health' : l ? 'Group Life' : 'group cover' }; }
+function gblInvExpired_(r) { var x = gcmText_(r.Expires).slice(0, 10); return !!x && x < gcmToday_(); }
+function gblInvState_(r) { var s = gcmText_(r.Status) || 'waiting'; return s === 'waiting' && gblInvExpired_(r) ? 'expired' : s; }
+/** What the group's page shows of an invite. Never the health answers or the signature. */
+function gblInvView_(r) {
+  var st = gblInvState_(r), first = gcmText_(r.First), rem = Number(r.Reminders) || 0, cov = gblInvCover_(gcmText_(r.Cover));
+  var words = st === 'waiting' ? 'Waiting on ' + first + (rem ? ' · reminded ' + rem + ' time' + (rem === 1 ? '' : 's') : '') :
+    st === 'sent' ? 'Sent to Guardian Life ' + tDmy_(gcmText_(r['Approved at']).slice(0, 10)) + (gcmYes_(r.Test) ? ' (test copy)' : '') : (GBL_INV.WORDS[st] || st);
+  return { ref: gcmText_(r.Ref), employee: gcmText_(r.Employee), first: first, email: gcmText_(r['E-mail']), mobile: gcmText_(r.Mobile), cover: { health: cov.health, life: cov.life, words: cov.words },
+    effective: gcmText_(r.Effective).slice(0, 10), status: st, words: words, reminders: rem, created: gcmText_(r.Created), completed: gcmText_(r.Completed), sentBy: gcmText_(r['Sent by']),
+    approvedBy: gcmText_(r['Approved by']), approvedAt: gcmText_(r['Approved at']), test: gcmYes_(r.Test) };
+}
+function gblInvForGroup_(g) {
+  return gblInvRows_().filter(function (r) { return gcmText_(r['Group key']) === g.key; }).reverse();
+}
+/** The e-mail shell every invite e-mail uses: the branch's group masthead, the words, the TEST banner when it is one. */
+function gblInvShell_(headline, body, banner) {
+  var E = tEsc_;
+  return '<div style="background:#f3f5f9;padding:20px 0">' + (banner ? '<p style="max-width:640px;margin:0 auto 10px;background:#fdf1e1;padding:8px 12px;font:700 14px Arial,sans-serif;color:#a64b05">' + E(banner) + '</p>' : '') +
+    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-collapse:collapse;border:1px solid #e2e7ef">' +
+    '<tr><td style="padding:18px 26px;border-bottom:3px solid #1d5bc4"><table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
+    '<td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px"></td>' +
+    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#142033">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#5a687d">Guardian Life of the Caribbean</div></td></tr></table></td></tr>' +
+    '<tr><td style="padding:22px 26px 0"><div style="font:700 22px/1.3 Arial,sans-serif;color:#142033">' + E(headline) + '</div></td></tr>' +
+    '<tr><td style="padding:16px 26px 22px;font:15px/1.6 Arial,sans-serif;color:#142033">' + body + (typeof tLegal_ === 'function' ? tLegal_(null) : '') + '</td></tr></table></div>';
+}
+function gblInvButton_(href, label) {
+  return '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0 16px"><tr><td style="background:#1d5bc4;border-radius:6px"><a href="' + href + '" style="display:inline-block;padding:13px 22px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">' + tEsc_(label) + '</a></td></tr></table>';
+}
+function gblInvSign_(g, r) {
+  var carer = gblCarer_(g, gcmText_(r['Sent by']));
+  return '<p style="margin:16px 0 0;border-top:1px solid #e2e7ef;padding-top:12px">Warm regards,<br><b>' + tEsc_(carer.full || 'The Ricky Rampersad Branch team') + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br>9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</p>';
+}
+/** Who an e-mail goes to: live, as asked; in test mode the account owner (else the branch manager) with the branch copied. */
+function gblInvRoute_(g, to, cc) {
+  if (gblLive_()) return { to: to, cc: cc, test: false };
+  var t = g.ownerEmail || gcmDayManager_();
+  return { to: t ? [t] : [], cc: (TRANSITION.CC || []).filter(function (a) { return a && a !== t; }), test: true, would: to.concat(cc) };
+}
+function gblInvSend_(route, subject, html) {
+  if (!route.to.length) return { ok: false, error: 'There is no address to send it to.' };
+  if (!tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up on this project, so nothing can go from support@.' };
+  try { tMsSend_(route.to[0], (route.test ? '[TEST] ' : '') + subject, html, { cc: route.cc.concat(route.to.slice(1)), replyTo: TRANSITION.MS_FROM }); return { ok: true }; }
+  catch (e) { return { ok: false, error: 'Microsoft would not send it: ' + String(e && e.message ? e.message : e).slice(0, 200) }; }
+}
+/** The employee's e-mail: their own link (kind 'invite'), or a reminder of it. */
+function gblInvMailEmployee_(g, r, kind) {
+  var E = tEsc_, first = gcmText_(r.First) || 'there', cov = gblInvCover_(gcmText_(r.Cover)), link = GBL_INV.PAGE + '?inv=' + encodeURIComponent(gcmText_(r.Code));
+  var sender = gcmText_(r['Sent by']), eff = gcmText_(r.Effective).slice(0, 10), n = Number(r.Reminders) || 0;
+  var route = gblInvRoute_(g, [gcmText_(r['E-mail'])].filter(String), (GCM.COPY || []).slice());
+  var headline = kind === 'invite' ? 'Your ' + cov.words + ' with ' + g.name : 'A reminder: your ' + cov.words + ' enrolment';
+  var body = '<p style="margin:0 0 12px">Dear ' + E(first) + ',</p>' +
+    (kind === 'invite' ? '<p style="margin:0 0 12px">' + E(sender || 'Your plan administrator') + ' at ' + E(g.name) + ' has asked us to enrol you in ' + E(cov.words) + ' with Guardian Life of the Caribbean' + (eff ? ', from <b>' + E(tDmy_(eff)) + '</b>' : '') + '.</p>'
+      : '<p style="margin:0 0 12px">Your part of the ' + E(cov.words) + ' enrolment with ' + E(g.name) + ' is still waiting for you. Until it is done, it cannot go to Guardian Life.</p>') +
+    '<p style="margin:0 0 12px">Your part takes about ten minutes on your phone: your details, anyone you want covered' + (cov.life ? ', who your Group Life should pay' : '') + ', a short health declaration, and your signature on the screen.</p>' +
+    gblInvButton_(link, 'Complete my part') +
+    '<p style="margin:0 0 12px">Your health answers go to Guardian Life with your application. ' + E(g.name) + ' does not see them.</p>' +
+    '<p style="margin:0 0 12px;color:#5a687d;font-size:14px">This link is yours alone: please do not forward it. If the button does not open, copy this address into your browser: ' + E(link) + '</p>' +
+    '<p style="margin:0 0 4px">Any question: reply to this e-mail, or send us a message on WhatsApp, HELP 868 at (868) 435-7868.</p>' + gblInvSign_(g, r);
+  var banner = route.test ? 'TEST: this would go to ' + gcmText_(r['E-mail']) + ' (' + gcmText_(r.Employee) + '), copied to sales support. Nothing has reached the employee. Run gblGoLive to send for real.' : '';
+  var subject = kind === 'invite' ? 'Your ' + cov.words + ' enrolment with ' + g.name + ': your part' : 'Reminder ' + (n + 1) + ': your ' + cov.words + ' enrolment with ' + g.name;
+  var s = gblInvSend_(route, subject, gblInvShell_(headline, body, banner));
+  s.test = route.test;
+  return s;
+}
+/** The group's e-mail: an employee's part is in (kind 'ready'), or still waiting after the last reminder ('waiting'). */
+function gblInvMailGroup_(g, r, kind) {
+  var E = tEsc_, emp = gcmText_(r.Employee), first = gcmText_(r.First), sender = gcmText_(r['Sent by']), cov = gblInvCover_(gcmText_(r.Cover));
+  var to = (g.to || []).slice(0, 1), cc = [];
+  if (g.ownerEmail) cc.push(g.ownerEmail);
+  (typeof gcmCc_ === 'function' ? gcmCc_(g) : (GCM.COPY || [])).forEach(function (a) { if (cc.indexOf(a) < 0 && to.indexOf(a) < 0) cc.push(a); });
+  if (!to.length) { to = cc.slice(0, 1); cc = cc.slice(1); }
+  var route = gblInvRoute_(g, to, cc);
+  var page = GCM.SITE + 'client.html?tab=billing&form=enrol&from=enrol';
+  var headline = kind === 'ready' ? first + '’s part is in' : first + ' has not completed their part yet';
+  var body = '<p style="margin:0 0 12px">Dear ' + E(sender ? sender.split(' ')[0] : g.name + ' team') + ',</p>' +
+    (kind === 'ready' ? '<p style="margin:0 0 12px"><b>' + E(emp) + '</b> has completed their part of the ' + E(cov.words) + ' application (reference ' + E(gcmText_(r.Ref)) + '). Please check it on your service page, complete Section F (date employed, coverage tier' + (cov.life ? ', annual salary' : '') + ') and approve it. It then goes to Guardian Life with our branch copied.</p>'
+      : '<p style="margin:0 0 12px">We sent <b>' + E(emp) + '</b> their link and have reminded them ' + E(String(Number(r.Reminders) || 0)) + ' times, but their part is not in yet. A word from you may help; you can also send the link again from your service page.</p>') +
+    gblInvButton_(page, kind === 'ready' ? 'Check and approve' : 'Open your service page') +
+    '<p style="margin:0 0 4px;color:#5a687d;font-size:14px">Sign in with your list bill and access code, as in our weekly letter. Their health answers are not shown to you: they go to Guardian Life with the application.</p>' + gblInvSign_(g, r);
+  var banner = route.test ? 'TEST: this would go to ' + route.would.join(', ') + '. Nothing has reached the group.' : '';
+  var s = gblInvSend_(route, kind === 'ready' ? 'Ready for you to check: ' + emp + '’s enrolment (' + g.name + ')' : 'Still waiting: ' + emp + '’s enrolment (' + g.name + ')', gblInvShell_(headline, body, banner));
+  s.test = route.test;
+  return s;
+}
+
+/* ── the group's side: create, list, preview, approve, resend ─── */
+function gblInvCreate_(g, who, b) {
+  var clean = function (v, n) { return String(v || '').replace(/\s+/g, ' ').trim().slice(0, n || 80); };
+  var first = clean(b.first, 40), last = clean(b.last, 60), email = clean(b.email, 120).toLowerCase(), mobile = clean(b.mobile, 30);
+  var health = gcmYes_(b.covHealth), life = gcmYes_(b.covLife), eff = gcmYmd_(b.effective || '') || '';
+  if (!first || !last) return { ok: false, error: 'Please give the employee’s first name and surname.' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return { ok: false, error: 'Please give the employee’s e-mail address: their link goes to it.' };
+  if (!health && !life) return { ok: false, error: 'Which cover are they joining: Group Health, Group Life, or both?' };
+  if (!eff) return { ok: false, error: 'Please give the effective date of their cover.' };
+  var open = gblInvForGroup_(g).filter(function (r) { var s = gblInvState_(r); return (s === 'waiting' || s === 'ready') && gcmText_(r['E-mail']).toLowerCase() === email; })[0];
+  if (open) return { ok: false, error: first + ' already has a link (' + gcmText_(open.Ref) + '). Use “Send the link again” under New members.' };
+  var r = { Ref: gblInvRef_(), Created: gblInvStamp_(), Expires: gcmAddDays_(gcmToday_(), GBL_INV.DAYS), Group: g.name, 'Group key': g.key,
+    Employee: gblInvName_(first + ' ' + last), First: gblInvName_(first), 'E-mail': email, Mobile: mobile, Cover: [health ? 'Group Health' : '', life ? 'Group Life' : ''].filter(String).join(' + '),
+    Effective: eff, 'Sent by': who.name, 'Sent by role': clean(b.role, 60), Code: gblInvCode_(), Status: 'waiting', Reminders: 0, Test: gblLive_() ? '' : 'Y' };
+  var m = gblInvMailEmployee_(g, r, 'invite');
+  if (!m.ok) return m;
+  gblInvAppend_(r);
+  return { ok: true, ref: r.Ref, test: !!m.test, invite: gblInvView_(r),
+    said: m.test ? 'Test: ' + r.First + '’s link went to your account manager, not to ' + r.First + ' (reference ' + r.Ref + '). It will go to the employee once our branch switches the forms live.'
+      : r.First + ' has their own link by e-mail (reference ' + r.Ref + '). They are reminded each working day until their part is done, and you see it here as soon as it is in.' };
+}
+function gblInvFind_(g, ref) { ref = String(ref || '').trim(); return gblInvForGroup_(g).filter(function (r) { return gcmText_(r.Ref) === ref; })[0] || null; }
+/** The enrolment data for gblEnrolData_: the employee's answers, the invite's cover, and the group's Section F. */
+function gblInvEnrolInput_(r, f, who) {
+  var A = gblJ_(r.Answers, {}), cov = gblInvCover_(gcmText_(r.Cover));
+  f = f || {};
+  return { employee: A.employee || gcmText_(r.Employee), dob: A.dob, gender: A.gender, email: A.email || gcmText_(r['E-mail']), telHome: A.telHome, telWork: A.telWork, telCell: A.telCell || gcmText_(r.Mobile),
+    marital: A.marital, occupation: A.occupation, idType: A.idType, idNo: A.idNo, covHealth: cov.health ? 'Y' : '', covLife: cov.life ? 'Y' : '', covVoluntary: A.covVoluntary ? 'Y' : '', covDependentLife: A.covDependentLife ? 'Y' : '',
+    otherPlan: A.otherPlan, otherPlanName: A.otherPlanName, otherInsurer: A.otherInsurer, deps: gblArr_(A.deps), bens: gblArr_(A.bens),
+    effective: gcmYmd_(f.effective || '') || gcmText_(r.Effective).slice(0, 10), employed: f.employed, confirmed: f.confirmed, tier: f.tier, salary: f.salary,
+    admin: String(f.admin || who.name || '').trim(), policyHealth: f.policyHealth, policyLife: f.policyLife };
+}
+function gblInvSectionF_(b) {
+  var o = {}; ['employed', 'confirmed', 'effective', 'tier', 'salary', 'admin', 'policyHealth', 'policyLife'].forEach(function (k) { o[k] = String(b[k] || '').trim().slice(0, 80); });
+  return o;
+}
+function gblInvData_(g, r, f, who) {
+  var e = gblEnrolData_(g, gblInvEnrolInput_(r, f, who), who);
+  e.online = { completed: gcmText_(r.Completed), ref: gcmText_(r.Ref) };
+  e.signature = gcmText_(r.Signature);
+  e.signedOn = gcmText_(r.Completed).slice(0, 10);
+  /* the account for claim payments is never collected online: it follows on the bank statement */
+  e.missing = e.missing.filter(function (x) { return !/account for claim payments/.test(x); });
+  return e;
+}
+function gblInvPreview_(g, who, p) {
+  var r = gblInvFind_(g, p.ref);
+  if (!r) return { ok: false, error: 'That new member is not on your list.' };
+  var st = gblInvState_(r);
+  if (st !== 'ready' && st !== 'sent') return { ok: false, error: gcmText_(r.First) + '’s part is not in yet.' };
+  var f = st === 'sent' ? gblJ_(r['Section F'], {}) : gblInvSectionF_(p);
+  var e = gblInvData_(g, r, f, who), pb = null, perr = '';
+  try { pb = gblEnrolPdf_(e); } catch (x) { perr = String(x && x.message ? x.message : x).slice(0, 200); }
+  var blocking = st === 'sent' ? [] : e.blocking.slice();
+  if (st !== 'sent') { if (!e.tier) blocking.push('the coverage tier (Section F)'); if (!e.employed) blocking.push('the date employed (Section F)'); if (e.coverage.life && !e.salary) blocking.push('the annual salary (Section F, Group Life)'); }
+  return { ok: true, invite: gblInvView_(r), pdf: pb ? gblPdfB64_(pb) : '', pdfError: perr, missing: e.missing.filter(function (x) { return !/Section F/.test(x); }), blocking: blocking,
+    policies: { health: e.policyHealth, life: e.policyLife }, tiers: GBL_ENROL.TIERS, sectionF: f, deps: e.deps.length };
+}
+function gblInvApprove_(g, who, b) {
+  var r = gblInvFind_(g, b.ref);
+  if (!r) return { ok: false, error: 'That new member is not on your list.' };
+  var st = gblInvState_(r), ref = gcmText_(r.Ref);
+  if (st === 'sent' || st === 'sending') return { ok: false, error: 'This application has already gone to Guardian Life.' };
+  if (st !== 'ready') return { ok: false, error: gcmText_(r.First) + '’s part is not in yet.' };
+  var busy = 'gbl-inv-busy-' + ref, cache = null;
+  try { cache = CacheService.getScriptCache(); if (cache.get(busy)) return { ok: false, error: 'It is being sent already. Please wait a moment.' }; cache.put(busy, '1', 120); } catch (e) {}
+  var free = function () { try { if (cache) cache.remove(busy); } catch (x) {} };
+  var f = gblInvSectionF_(b), e = gblInvData_(g, r, f, who);
+  if (!e.tier) e.blocking.push('the coverage tier (Section F)');
+  if (!e.employed) e.blocking.push('the date employed (Section F)');
+  if (e.coverage.life && !e.salary) e.blocking.push('the annual salary (Section F, Group Life)');
+  if (e.blocking.length) { free(); return { ok: false, error: 'Still needed before it can go: ' + e.blocking.join(', ') + '.' }; }
+  var doi = null;
+  try { doi = gblInvDoiPdf_(g, r); } catch (x) { doi = null; }
+  gblInvPatch_(ref, { Status: 'sending' });
+  var res = gblEnrolSend_(g, who, e, { extra: doi ? [doi] : [], doi: !!doi });
+  if (!res.ok) { gblInvPatch_(ref, { Status: 'ready' }); free(); return res; }
+  gblInvPatch_(ref, { Status: 'sent', 'Approved by': who.name, 'Approved at': gblInvStamp_(), 'Section F': JSON.stringify(f), 'Sent ref': res.task || '', Test: res.test ? 'Y' : '' });
+  free();
+  try { gblTellOwner_(g, who.name, 'joiner', e.coverage.health ? 'health' : 'life', { member: e.employee, effective: e.effective, detail: 'GIO001 completed online by the employee and approved by ' + who.name + (doi ? '; the Declaration of Insurability attached' : '') }); } catch (x) {}
+  return { ok: true, test: !!res.test, said: res.test ? 'Test: the application for ' + gblTitle_(e.employee) + ' went to your account manager, not to Guardian Life. It goes to Guardian Life once our branch switches the forms live.'
+    : 'Thank you. ' + gblTitle_(e.employee) + '’s application has gone to Guardian Life’s EB Customer Care with our branch copied' + (res.task ? ', and our team has a task to see it through' : '') + '. Please send the papers listed with it (the ID copy, the top of a bank statement, and the plan administrator’s signature and stamp) to the same address.' };
+}
+function gblInvResend_(g, who, b) {
+  var r = gblInvFind_(g, b.ref);
+  if (!r) return { ok: false, error: 'That new member is not on your list.' };
+  var st = gblInvState_(r);
+  if (st !== 'waiting' && st !== 'expired') return { ok: false, error: st === 'ready' ? gcmText_(r.First) + '’s part is already in: check and approve it.' : 'This application has already gone to Guardian Life.' };
+  var ref = gcmText_(r.Ref), exp = gcmAddDays_(gcmToday_(), GBL_INV.DAYS);
+  r.Expires = exp;
+  var m = gblInvMailEmployee_(g, r, 'invite');
+  if (!m.ok) return m;
+  gblInvPatch_(ref, { Status: 'waiting', Expires: exp, Note: (gcmText_(r.Note) ? gcmText_(r.Note) + '; ' : '') + 'link sent again ' + gcmToday_() + ' by ' + who.name });
+  return { ok: true, test: !!m.test, said: m.test ? 'Test: the link went to your account manager again, not to ' + gcmText_(r.First) + '.' : 'Sent again to ' + gcmText_(r['E-mail']) + '. It is good for another ' + GBL_INV.DAYS + ' days.' };
+}
+
+/* ── the employee's side, keyed on the code alone ─── */
+function gblInvByCode_(code) {
+  code = String(code || '').trim().toLowerCase();
+  if (!/^[a-f0-9]{24,40}$/.test(code)) return null;
+  return gblInvRows_().filter(function (r) { return gcmText_(r.Code).toLowerCase() === code; })[0] || null;
+}
+function gblInvGate_(code) {
+  if (tTries_(GBL_INV.TRIES_KEY) >= GBL_INV.TRIES) return { ok: false, error: 'Too many tries. Please wait fifteen minutes and use the link in your e-mail.' };
+  var r = gblInvByCode_(code);
+  if (!r) { tTriesAdd_(GBL_INV.TRIES_KEY); return { ok: false, error: 'This link is not recognised. Please use the link in your e-mail, or ask your employer to send it again.' }; }
+  var st = gblInvState_(r);
+  if (st === 'sent' || st === 'sending') return { ok: false, done: true, error: 'Your part is done, and your application has gone to Guardian Life. Thank you.' };
+  if (st === 'expired') return { ok: false, error: 'This link has expired. Please ask your employer to send it again.' };
+  var L = gcmLoad_(), g = (L.reg || []).filter(function (x) { return x.key === gcmText_(r['Group key']); })[0] || null;
+  if (!g) return { ok: false, error: 'This link is not recognised. Please ask your employer to send it again.' };
+  return { ok: true, r: r, g: g, st: st };
+}
+function gblEnrolGet_(p) {
+  var a = gblInvGate_(p.inv);
+  if (!a.ok) return a;
+  var r = a.r, cov = gblInvCover_(gcmText_(r.Cover)), name = gcmText_(r.Employee).split(' ');
+  return { ok: true, invite: { ref: gcmText_(r.Ref), company: a.g.name, admin: gcmText_(r['Sent by']), adminFirst: gcmText_(r['Sent by']).split(' ')[0], effective: gcmText_(r.Effective).slice(0, 10),
+    first: gcmText_(r.First), last: name.slice(1).join(' '), employee: gcmText_(r.Employee), email: gcmText_(r['E-mail']), mobile: gcmText_(r.Mobile),
+    cover: { health: cov.health, life: cov.life }, submitted: a.st === 'ready' ? gcmText_(r.Completed) : '' } };
+}
+function gblInvPng_(s) { s = String(s || ''); return /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(s) && s.length <= GBL_INV.MAX_SIG ? s : ''; }
+function gblEnrolSubmit_(b) {
+  var a = gblInvGate_(b.inv);
+  if (!a.ok) return a;
+  var r = a.r, g = a.g, A = b.answers, H = b.health, sig = gblInvPng_(b.sig), sp = gblInvPng_(b.sigSpouse);
+  if (typeof A === 'string') A = gblJ_(A, null);
+  if (typeof H === 'string') H = gblJ_(H, null);
+  if (!A || typeof A !== 'object') return { ok: false, error: 'Your answers did not arrive. Please try again.' };
+  if (!H || typeof H !== 'object' || !H.answers || !H.answers.emp) return { ok: false, error: 'The health declaration is not complete.' };
+  if (!sig) return { ok: false, error: 'Please sign the declaration in the box.' };
+  if (!String(A.employee || '').trim() || !gcmYmd_(A.dob || '') || !gblGender_(A.gender)) return { ok: false, error: 'Please give your name, your date of birth and your gender.' };
+  var keep = {};
+  ['employee', 'dob', 'gender', 'email', 'telHome', 'telWork', 'telCell', 'marital', 'occupation', 'address', 'idType', 'idNo', 'otherPlan', 'otherPlanName', 'otherInsurer', 'covVoluntary', 'covDependentLife']
+    .forEach(function (k) { if (A[k] !== undefined && A[k] !== null) keep[k] = typeof A[k] === 'boolean' ? A[k] : String(A[k]).replace(/\s+/g, ' ').trim().slice(0, 200); });
+  keep.deps = gblArr_(A.deps).slice(0, 8).map(function (x, i) { x = x || {}; return { key: String(x.key || ('d' + i)).slice(0, 4), rel: String(x.rel || '').toUpperCase().slice(0, 12), name: String(x.name || '').replace(/\s+/g, ' ').trim().slice(0, 80), gender: gblGender_(x.gender), dob: gcmYmd_(x.dob || '') || '', country: String(x.country || '').slice(0, 40) }; }).filter(function (x) { return x.name; });
+  keep.bens = gblArr_(A.bens).slice(0, 5).map(function (x) { x = x || {}; return { rel: String(x.rel || '').slice(0, 30), name: String(x.name || '').replace(/\s+/g, ' ').trim().slice(0, 80), gender: gblGender_(x.gender), dob: gcmYmd_(x.dob || '') || '', pct: Number(x.pct) || 0 }; }).filter(function (x) { return x.name; });
+  var hj = JSON.stringify({ persons: gblArr_(H.persons).slice(0, 9), answers: H.answers || {}, hw: H.hw || {}, preg: H.preg || {}, medUse: String(H.medUse || ''), detailNote: String(H.detailNote || '').slice(0, 2000), medNote: String(H.medNote || '').slice(0, 2000), physNote: String(H.physNote || '').slice(0, 1000), allWell: !!H.allWell, sigSpouse: sp });
+  var aj = JSON.stringify(keep);
+  if (aj.length > GBL_INV.MAX_JSON || hj.length > GBL_INV.MAX_JSON) return { ok: false, error: 'Your answers are too long to send. Please shorten the details and try again.' };
+  var again = a.st === 'ready', ref = gcmText_(r.Ref);
+  gblInvPatch_(ref, { Answers: aj, Health: hj, Signature: sig, Completed: gblInvStamp_(), Status: 'ready' });
+  if (!again) { r.Status = 'ready'; try { gblInvMailGroup_(g, r, 'ready'); } catch (e) {} }
+  var hr = gcmText_(r['Sent by']).split(' ')[0] || 'Your plan administrator';
+  return { ok: true, ref: ref, company: g.name, hr: hr, again: again, said: 'Your part is done. ' + hr + ' at ' + g.name + ' will check it and send it to Guardian Life.' };
+}
+
+/* ── the reminders, from the 10:30 group day: one a working day, five at most, then the group is told ─── */
+function gblInvRemind_(o) {
+  o = o || {};
+  var out = { reminded: [], told: [], expired: [], errors: [], said: '' }, today = gcmToday_();
+  var rows = gblInvRows_().filter(function (r) { return (gcmText_(r.Status) || 'waiting') === 'waiting'; });
+  if (!rows.length) { out.said = 'nobody waiting on their link.'; return out; }
+  if (!gblWorkingDay_(today)) { out.said = 'not a working day.'; return out; }
+  var L = gcmLoad_(), byKey = {};
+  (L.reg || []).forEach(function (g) { byKey[g.key] = g; });
+  rows.forEach(function (r) {
+    var ref = gcmText_(r.Ref), g = byKey[gcmText_(r['Group key'])], n = Number(r.Reminders) || 0;
+    if (!g) return;
+    if (gblInvExpired_(r)) { if (!o.test) gblInvPatch_(ref, { Status: 'expired' }); out.expired.push(ref); return; }
+    var last = (gcmText_(r['Last reminder']) || gcmText_(r.Created)).slice(0, 10);
+    if (!last || last >= today) return;
+    if (n >= GBL_INV.MAX_REMIND) {
+      if (/still waiting told/.test(gcmText_(r.Note))) return;
+      if (!o.test) { var t = gblInvMailGroup_(g, r, 'waiting'); if (t.ok) gblInvPatch_(ref, { Note: (gcmText_(r.Note) ? gcmText_(r.Note) + '; ' : '') + 'still waiting told ' + today }); else { out.errors.push(ref + ': ' + t.error); return; } }
+      out.told.push(ref); return;
+    }
+    if (!o.test) {
+      var m = gblInvMailEmployee_(g, r, 'reminder');
+      if (!m.ok) { out.errors.push(ref + ': ' + m.error); return; }
+      gblInvPatch_(ref, { Reminders: n + 1, 'Last reminder': today });
+    }
+    out.reminded.push(ref);
+  });
+  out.said = (out.reminded.length ? out.reminded.length + ' reminded' : 'nobody reminded') + (out.told.length ? '; ' + out.told.length + ' group' + (out.told.length === 1 ? '' : 's') + ' told the employee has not answered' : '') +
+    (out.expired.length ? '; ' + out.expired.length + ' link' + (out.expired.length === 1 ? '' : 's') + ' expired' : '') + (out.errors.length ? '; ' + out.errors.join('; ') : '') + (o.test ? ' (test: nothing sent)' : '') + '.';
+  return out;
+}
+function gblInvRemindNow() { return tSay_(JSON.stringify(gblInvRemind_({}))); }
+function gblInvRemindPreview() { return tSay_(JSON.stringify(gblInvRemind_({ test: true }))); }
+
+/* ── the Declaration of Insurability (2005-09-EB012), drawn from the employee's own answers, attached as a PDF ─── */
+var GBL_DOI_QA = [['a', 'Disorder of eyes, ears, nose or throat?'], ['b', 'Dizziness, fainting, convulsions, headache, speech defect, paralysis or stroke, mental or nervous disorder?'],
+  ['c', 'Shortness of breath, persistent hoarseness or cough, blood spitting, bronchitis, pleurisy, asthma, emphysema, tuberculosis or chronic respiratory disorder?'],
+  ['d', 'Chest pain, palpitation, high blood pressure, rheumatic fever, heart murmur, heart attack or other disorder of the heart or blood vessels?'],
+  ['e', 'Jaundice, intestinal bleeding, ulcer, hernia, appendicitis, colitis, diverticulitis, hemorrhoids, recurrent indigestion or other disorder of the stomach, intestine, liver or gallbladder?'],
+  ['f', 'Sugar, albumin, blood or pus in urine, venereal disease, stone or other disorder of the kidney, bladder, prostate, or reproductive organs?'], ['g', 'Diabetes, thyroid or other endocrine disorders?'],
+  ['h', 'Gout, neuritis, sciatica, rheumatism, arthritis, or disorder of the muscles or bones, including the spine, back or joints?'], ['i', 'Deformity, lameness, amputation?'],
+  ['j', 'AIDS (Acquired Immune Deficiency Syndrome), ARC (Aids Related Complex) or any other immunological disorder?'], ['k', 'Enlargement of lymph nodes, glands, chronic diarrhoea, unusual skin lesions, cyst, tumor, cancer or unexplained infections?'],
+  ['l', 'Allergies, anaemia, or other disorder of the blood?']];
+var GBL_DOI_QB = [['ba', 'Had a check-up, consultation, illness, injury or surgery?'], ['bb', 'Had any mental or physical disorder not listed above?'], ['bc', 'Been advised to have any diagnostic test, hospitalization, or surgery which was not completed?']];
+function gblInvDoiHtml_(g, r) {
+  var E = tEsc_, A = gblJ_(r.Answers, {}), H = gblJ_(r.Health, {}), sig = gcmText_(r.Signature), done = gcmText_(r.Completed).slice(0, 10), dmy = gblDmy_;
+  var deps = gblArr_(A.deps), spouse = deps.filter(function (x) { return /SPOUSE/.test(x.rel); })[0] || null, kids = deps.filter(function (x) { return !/SPOUSE/.test(x.rel); });
+  var key = function (x) { return x ? (x.key || ('d' + deps.indexOf(x))) : null; };
+  var grid = [{ label: 'EMP', key: 'emp' }, { label: 'SPOUSE', key: key(spouse) }, { label: 'CHILD', key: key(kids[0]) }, { label: 'CHILD', key: key(kids[1]) }];
+  var ans = H.answers || {}, hw = H.hw || {}, tick = function (gk, q, v) { return gk && ans[gk] && ans[gk][q] === v ? '&#10003;' : ''; };
+  var age = function (ymd) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd || ''); if (!m) return ''; var t = /^(\d{4})-(\d{2})-(\d{2})/.exec(done || gcmToday_()); var y = +t[1] - +m[1]; if (+t[2] < +m[2] || (+t[2] === +m[2] && +t[3] < +m[3])) y--; return String(y); };
+  var split = function (full) { var t = String(full || '').trim().split(/\s+/); return t.length > 1 ? { last: t[t.length - 1], first: t.slice(0, -1).join(' ') } : { last: '', first: full || '' }; };
+  var td = 'style="border:1px solid #888;padding:3px 5px;font-size:9.5px"', th = 'style="border:1px solid #888;padding:3px 5px;font-size:8.5px;text-align:left;background:#eee"';
+  var en = split(A.employee || gcmText_(r.Employee)), rowsB = [['Insured', en.last, en.first, A.gender || '', dmy(A.dob), age(A.dob), (hw.emp || {}).h || '', (hw.emp || {}).w || '']];
+  var sp = spouse ? split(spouse.name) : null, sk = key(spouse);
+  rowsB.push(['Spouse', sp ? sp.last : '', sp ? sp.first : '', spouse ? spouse.gender : '', spouse ? dmy(spouse.dob) : '', spouse ? age(spouse.dob) : '', sk ? (hw[sk] || {}).h || '' : '', sk ? (hw[sk] || {}).w || '' : '']);
+  for (var i = 0; i < 6; i++) { var k = kids[i], kk = key(k), kn = k ? split(k.name) : null; rowsB.push(['Dependant', kn ? kn.last : '', kn ? kn.first : '', k ? k.gender : '', k ? dmy(k.dob) : '', k ? age(k.dob) : '', kk ? (hw[kk] || {}).h || '' : '', kk ? (hw[kk] || {}).w || '' : '']); }
+  var head = '<tr><th ' + th + '></th>' + grid.map(function () { return '<th ' + th + '>Yes</th><th ' + th + '>No</th>'; }).join('') + '</tr><tr><th ' + th + '></th>' + grid.map(function (x) { return '<th ' + th + ' colspan="2">' + x.label + '</th>'; }).join('') + '</tr>';
+  var qrow = function (q) { return '<tr><td ' + td + '>' + (q[0].length === 1 ? '(' + q[0] + ') ' : '') + E(q[1]) + '</td>' + grid.map(function (x) { return '<td ' + td + ' align="center">' + tick(x.key, q[0], 'Y') + '</td><td ' + td + ' align="center">' + tick(x.key, q[0], 'N') + '</td>'; }).join('') + '</tr>'; };
+  var preg = Object.keys(H.preg || {}).filter(function (k2) { return H.preg[k2]; }).map(function (k2) { var p = gblArr_(H.persons).filter(function (x) { return x && x.key === k2; })[0]; return E((p && p.label) || k2) + ': ' + E(H.preg[k2]); }).join(' · ');
+  var box = function (on) { return on ? '&#9746;' : '&#9744;'; };
+  var sigImg = function (src) { return src ? '<img src="' + src + '" style="height:40px">' : '<div style="height:40px"></div>'; };
+  var bar = function (t) { return '<p style="font-weight:bold;font-size:11px;background:#ddd;padding:3px;margin:8px 0 3px">' + t + '</p>'; };
+  return '<html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;color:#111;margin:18px">' +
+    '<div style="text-align:center;font-weight:bold;font-size:13px">GUARDIAN LIFE OF THE CARIBBEAN LIMITED<br>GROUP HEALTH PLAN<br>DECLARATION OF INSURABILITY</div>' +
+    '<p style="font-size:10px">PLAN# ____________________ &nbsp; CERT# ____________________</p>' + bar('PART A - GENERAL INFORMATION') +
+    '<table style="border-collapse:collapse;width:100%"><tr><td ' + td + ' colspan="2">POLICY HOLDER: <b>' + E(g.name) + '</b></td><td ' + td + '>Business Telephone No.: <b>' + E(A.telWork || '') + '</b></td></tr>' +
+    '<tr><td ' + td + ' colspan="2">Address: <b>' + E(A.address || '') + '</b></td><td ' + td + '>DATE EMPLOYED: <b></b></td></tr>' +
+    '<tr><td ' + td + '>INSURED: <b>' + E(A.employee || '') + '</b></td><td ' + td + '>MARITAL STATUS ' + box(/^SINGLE/i.test(A.marital || '')) + ' Single ' + box(/^MARRIED/i.test(A.marital || '')) + ' Married</td><td ' + td + '>Home Telephone No.: <b>' + E(A.telHome || A.telCell || '') + '</b></td></tr></table>' +
+    bar('PART B - PERSONS TO BE COVERED') +
+    '<table style="border-collapse:collapse;width:100%"><tr><th ' + th + '></th><th ' + th + '>LAST NAME</th><th ' + th + '>FIRST NAME</th><th ' + th + '>SEX</th><th ' + th + '>BIRTH DATE</th><th ' + th + '>AGE</th><th ' + th + '>HEIGHT</th><th ' + th + '>WEIGHT</th></tr>' +
+    rowsB.map(function (x) { return '<tr>' + x.map(function (v) { return '<td ' + td + '>' + E(v) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>' +
+    '<table style="border-collapse:collapse;width:100%;margin-top:4px"><tr><th ' + th + '>PERSONAL PHYSICIANS, ADDRESS, DATE LAST CONSULTED, REASON AND TREATMENT GIVEN</th></tr><tr><td ' + td + '>' + E(H.physNote || '') + '&nbsp;</td></tr></table>' +
+    bar('PART C - MEDICAL QUESTIONNAIRE FOR APPLICANT AND DEPENDANTS') +
+    '<p style="font-size:9.5px"><b>SECTION A</b> - Have you or any person in this application ever been treated for or ever had any known indication of:</p>' +
+    '<table style="border-collapse:collapse;width:100%">' + head + GBL_DOI_QA.map(qrow).join('') + '<tr><td ' + td + '>(m) Females only: Are you pregnant? If "YES", how far advanced?</td><td ' + td + ' colspan="8">' + preg + '</td></tr></table>' +
+    '<p style="font-size:9.5px"><b>SECTION B</b> - in addition to the conditions listed in SECTION A, to the best of your knowledge and belief has any person named in this application:</p>' +
+    '<table style="border-collapse:collapse;width:100%">' + head + GBL_DOI_QB.map(qrow).join('') + '</table>' +
+    (kids.length > 2 ? '<p style="font-size:9.5px">ADDITIONAL DEPENDANTS: <b>' + E(kids.slice(2).map(function (x) { return x.name; }).join(', ')) + '</b></p>' : '') +
+    '<table style="border-collapse:collapse;width:100%;margin-top:4px"><tr><td ' + td + '>SECTION C - IF ANY ANSWER IS "YES": DIAGNOSIS / SYMPTOM, DURATION DATES, DETAILS, RECOVERY<br><b>' + E(H.detailNote || 'None') + '</b></td></tr>' +
+    '<tr><td ' + td + '>2. Are you or any dependant listed as using or expected to be using medication or serum in the next three months? ' + box(H.medUse === 'Y') + ' YES ' + box(H.medUse === 'N') + ' NO' + (H.medUse === 'Y' ? '<br><b>' + E(H.medNote || '') + '</b>' : '') + '</td></tr></table>' +
+    '<p style="font-size:8.5px"><b>DECLARATION — All applicants must complete. NOTE THE INFORMATION ON THIS FORM IS TO BE CONSIDERED CONFIDENTIAL.</b><br>I/We hereby declare that the answers given and recorded herein are, to the best of my/our knowledge, complete and true at this date. I/We hereby authorize any licensed physician, medical practitioner, hospital, clinic, medical facility or organization which has records of my/our health to release such information to Guardian Life of the Caribbean Limited. A photocopy of this signed authorization shall be as valid as the original. I/We understand and agree that any injury that occured on or before the date of this application or any sickness, the signs of which first appeared on or before the date of this application, are not covered by this contract unless fully disclosed on this application. Failure to disclose such information could result in denial of a claim and the cancellation of coverage. I/We understand and agree that coverage shall not become effective until approved by Guardian Life of the Caribbean Limited.</p>' +
+    '<table style="width:100%"><tr><td style="width:50%;font-size:9.5px">Signature of Insured<br>' + sigImg(sig) + '<br>Dated: ' + E(dmy(done)) + '</td><td style="width:50%;font-size:9.5px">Signature of Spouse<br>' + sigImg(H.sigSpouse) + '<br>Dated: ' + (H.sigSpouse ? E(dmy(done)) : '____ / ____ / ______') + '</td></tr></table>' +
+    '<p style="text-align:right;font-size:9px">2005-09-EB012 · completed online on ' + E(dmy(done)) + ', Ricky Rampersad Branch reference ' + E(gcmText_(r.Ref)) + '</p></body></html>';
+}
+function gblInvDoiPdf_(g, r) {
+  var name = ('Declaration of Insurability - ' + gcmText_(r.Employee) + ' - ' + g.name).replace(/[^\w\s\-&.]/g, '').replace(/\s+/g, ' ').slice(0, 120);
+  return Utilities.newBlob(gblInvDoiHtml_(g, r), 'text/html', name + '.html').getAs('application/pdf').setName(name + '.pdf');
+}
