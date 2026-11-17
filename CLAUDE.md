@@ -4356,6 +4356,26 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       company (Harbour Point Logistics Ltd) and employee; the package pages (`pkg*.jpg`) are the site's own PDF, with
       mark boxes added by fraction. The figures ($62,660 maximum on a TT$240,000 salary and a TT$36,000 premium) are the
       site's own calculation on those made-up inputs. Music: his corporate tech track, `loopbars.py` to 145 s.
+  - **Joining the group health plan, and when someone leaves** (17 November 2026: "do the same vid for the health and
+    termination enrollments and /healthenrollment and /termnations", then "can this be done fast"). Two films in the
+    pension film's look, made from what already works, while the joined enrolment (HR's link, the employee's part,
+    Guardian's real GIO001, HR's approval) was built separately:
+    - **`/healthenrollment/`** (1 min 42 s, `groupclientmanagement/health-enrolment.mp4`): the employee's own link,
+      `benefits/enroll.html`, on a made-up employee (Marcus Sample, Harbour Point Logistics Ltd): HR's share card, the
+      steps on a phone, the "nothing to declare" tick, the on-screen signatures, and the filled GIO001 and Declaration of
+      Insurability from the review step. Shot by `henr/shoot.js` in the scratchpad with the branch webhook mocked;
+      screens in `tools/film/henrshots/`. The dependants and beneficiaries are shot on a laptop: on a phone the page's
+      five-column tables cut the names off (a fault of the page, not the film).
+    - **`/terminations/`** (1 min 30 s, `groupclientmanagement/terminations.mp4`; `/termnations/`, as he typed it,
+      forwards there): the group page's EB0010 on the walkthrough film's made-up group (sign-in, Your people on "Came off",
+      search, the form filled from our records, the PDF, sent to EB Customer Care), the account manager's task and the
+      3-working-day follow-up, and a pension paid through payroll left. Screens in `tools/film/termshots/` (the walkthrough
+      shooter, `gcmwalk/shoot.js t01 t02`, and the filled EB0010 pages from `gcmwalk/make-pdf.js` through pdftoppm).
+    - Built by `build-gcmfilm.py henr|term` from `henr1-lines.json` / `term1-lines.json` (Andrew Expressive, keys
+      `henr1`+`henr1b`, `term1`+`term1b`). Four lines were refused by the voice and re-worded, two re-worded after the
+      check: "Forms going back" was heard "from going back", "what share" "what sherry", "done from" "done for".
+      Accepted as heard: "group life" as "group live", "dependants" as "dependence", "never guessed" as "never guest"
+      (each is on screen). Music: his corporate tech track, `loopbars.py` to the film's length.
 - **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
   forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
   training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
