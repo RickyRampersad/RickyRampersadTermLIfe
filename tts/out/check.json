@@ -1,7 +1,47 @@
 {
- "tts/out/h868ic2/01.mp3": [
+ "tts/out/h868c/01.mp3": [
+  "en",
+  0.997,
+  "Meet Help 868, our support line on WhatsApp so you can message us any hour of the day."
+ ],
+ "tts/out/h868c/02.mp3": [
   "en",
   0.999,
-  "We used to chase queries by email, back and forth, and some got lost. Today, there's one green button on our website and one number. Tap it, and your query is logged with a reference."
+  "Ask about your policy, a claim, a payment, or a quote. Update your details or ask to talk to a person."
+ ],
+ "tts/out/h868c/03.mp3": [
+  "en",
+  0.997,
+  "need a statement, a letter for the embassy, a health claim, or a change of address. Just tap what you need."
+ ],
+ "tts/out/h868c/04.mp3": [
+  "en",
+  0.996,
+  "It is one tap away. Press the green button on our website and the chat opens. No app to download and no forms to fill."
+ ],
+ "tts/out/h868c/05.mp3": [
+  "en",
+  0.999,
+  "Say hello and we show you a menu. Tap what you need, answer a couple of questions, and you get a receipt with your reference number and target time."
+ ],
+ "tts/out/h868c/06.mp3": [
+  "en",
+  0.995,
+  "You're never left wondering. We send you an update every three working days until it is done. Our team follows up Monday to Friday. 8-4."
+ ],
+ "tts/out/h868c/07.mp3": [
+  "en",
+  0.997,
+  "When it is resolved, you get a short summary. Then you can rate us from one to five stars and a low rating get to call back."
+ ],
+ "tts/out/h868c/08.mp3": [
+  "en",
+  0.999,
+  "and your privacy matters. In the chat, we never ask for bank details, ID numbers, or passwords."
+ ],
+ "tts/out/h868c/09.mp3": [
+  "en",
+  0.996,
+  "Help 868. Tap the green button on our website and say hello."
  ]
 }
