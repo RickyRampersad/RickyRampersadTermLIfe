@@ -4334,7 +4334,10 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     manage the pension plans for companies ... the link that goes out ... the company fills out their part, routed to the
     employee ... automatically calculates everything", then "also show the calculations on the form ... section 134 ...
     show the pdf"), 2 min 25 s, for employers and HR. `groupclientmanagement/company-pension.mp4`, poster
-    `company-pension.jpg`, page **`/groupmgt/pension/`** with chapters, linked from `/groupmgt/`.
+    `company-pension.jpg`, page **`/pensionpresentationourprocess/`** with chapters (asked for by that name the same
+    day: "merge this to the branch /pensionpresentationourprocess"); `/groupmgt/pension/`, where it was first built,
+    forwards there. It went to `main` on its own, ahead of the rest of the group re-cut branch, so the films he had not
+    asked to publish did not go with it.
     - **What it shows is pensionplanstt.netlify.app**, the branch's company-owned (Section 134 / TopHat) pension wizard:
       a separate Netlify site, uploaded by hand, with its own Apps Script register. Its source is in no repository.
       The employer signs in with a company code (`CO…`) and enrols someone; the register writes to the employee with
