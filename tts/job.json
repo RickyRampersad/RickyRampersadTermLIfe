@@ -1,20 +1,15 @@
 {
  "voices": {
-  "xlwa": "en-US-AndrewMultilingualNeural"
+  "xlwafix": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "xlwa": "+0%"
+  "xlwafix": "+0%"
  },
  "check": true,
  "films": {
-  "xlwa": [
-   "Applying for Xpress Life is now as easy as sending a WhatsApp message. Just message Help, eight six eight.",
-   "Tell us your name, then tap your age group. There's nothing to type.",
-   "Tap male or female, then the cover your family needs, from one hundred thousand to five hundred thousand dollars.",
-   "We show you how the policy works, straight from the contract.",
-   "Then the five health questions, answered with a single tap. No medical details in the chat.",
-   "If you can apply, you get your rate and a link to apply from your phone, in about five minutes. Guardian's underwriters review every application, and our branch keeps you posted.",
-   "Xpress Life. Message Help, eight six eight, today."
+  "xlwafix": [
+   "Applying for Xpress Life is now as easy as sending a WhatsApp message. Send yours to Help, eight six eight.",
+   "Tap male or female. Then pick the cover your family needs, from one hundred thousand to five hundred thousand dollars."
   ]
  }
 }
