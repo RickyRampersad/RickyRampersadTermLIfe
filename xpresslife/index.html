@@ -1742,6 +1742,18 @@ document.querySelectorAll('.bands button').forEach(b=>b.addEventListener('click'
   this.classList.add('on');S.band=parseInt(this.dataset.b,10);renderQuote();
 }));
 renderQuote();
+/* A link from HELP 868 on WhatsApp opens with the answers already given: ?age=40&g=f&cover=300 (cover in thousands or in full). */
+(function prefillFromLink(){
+  try{
+    var q=new URLSearchParams(location.search),age=parseInt(q.get('age'),10),g=String(q.get('g')||'').toLowerCase().charAt(0),c=parseInt(String(q.get('cover')||'').replace(/\D/g,''),10);
+    var used=false;
+    if(age>=18&&age<=69&&ageSel.querySelector('option[value="'+age+'"]')){ageSel.value=String(age);used=true;}
+    if(g==='f'||g==='m'){document.getElementById(g==='f'?'gF':'gM').click();used=true;}
+    if(c>=1000)c=Math.round(c/1000);
+    if([100,200,300,400,500].indexOf(c)>=0){var bb=document.querySelector('#quote .bands button[data-b="'+(c/100-1)+'"]');if(bb){bb.click();used=true;}}
+    if(used){renderQuote();setTimeout(function(){var el=document.getElementById('quote');if(el)el.scrollIntoView({behavior:'auto',block:'start'});},250);}
+  }catch(e){}
+})();
 
 /* ---------- joint / spouse quote ---------- */
 let S2={gender:'M',age:40,band:1,monthly:0,annual:0};
