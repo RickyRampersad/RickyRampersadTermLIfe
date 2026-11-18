@@ -849,8 +849,42 @@ section.dark .eyebrow,.hero .eyebrow{color:var(--vio-d)!important}
 .ready-band{background:radial-gradient(90% 120% at 100% 0%,#7A5CFF 0%,transparent 60%),linear-gradient(150deg,#5B3DF5,#3E22C4)!important}
 .ready-band p{color:#EEE9FF!important}
 .ready-band .ready li{background:hsl(0 0% 100% / .12)!important;border-color:hsl(0 0% 100% / .22)!important;color:#F1EDFF!important}
-.hero h1{letter-spacing:-.035em!important}
+.hero h1{letter-spacing:-.035em!important;line-height:1.2!important}
+.hero h1 .bless{margin-top:.12em}
 .pc-years{grid-template-columns:26fr 26fr 48fr!important;gap:6px}
+
+/* ---------- launch ---------- */
+.launch{background:#fff;padding:clamp(56px,8vw,104px) 0;position:relative}
+.launch-grid{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:clamp(28px,5vw,72px);align-items:center}
+@media(max-width:900px){.launch-grid{grid-template-columns:1fr}}
+.launch-film{position:relative;max-width:360px;margin:0 auto;width:100%}
+.launch-film video{display:block;width:100%;aspect-ratio:9/16;border-radius:var(--r-lg);background:var(--vio-dd);box-shadow:0 50px 100px -40px hsl(var(--sh) / .6)}
+.live-tag{position:absolute;z-index:2;top:-14px;left:50%;translate:-50% 0;display:inline-flex;align-items:center;gap:8px;background:var(--coral);color:#fff;font:700 12px/1 var(--text);letter-spacing:.12em;text-transform:uppercase;padding:9px 14px;border-radius:999px;white-space:nowrap;box-shadow:0 10px 24px -10px hsl(10deg 90% 50% / .6)}
+.live-tag{background:#C7361A}
+.live-tag i{width:8px;height:8px;border-radius:50%;background:#fff}
+.ways{display:grid;gap:12px;margin-top:8px}
+.way{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;text-decoration:none;background:var(--gnd);border:1.5px solid var(--hair);border-radius:20px;padding:16px 18px;color:var(--c-ink);transition:border-color .15s,background-color .15s}
+.way:hover{border-color:var(--vio);background:#fff}
+.way b{display:block;font:800 1.15rem/1.2 var(--display);letter-spacing:-.01em}
+.way small{color:var(--c-mut);font-size:14px}
+.wn{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font:800 18px var(--display);background:var(--vio);color:#fff}
+.wn.wa{background:#0b7a6d}.wn.wa .wa-ic{width:24px;height:24px}
+.w3 .wn{background:var(--mango);color:var(--c-ink)}
+.wgo{font:800 22px var(--display);color:var(--vio-d)}
+.conduct{margin-top:clamp(36px,5vw,56px);display:grid;grid-template-columns:minmax(0,.55fr) minmax(0,1.45fr);gap:24px;align-items:start;background:var(--vio-soft);border:1px solid var(--vio-line);border-radius:var(--r-lg);padding:clamp(22px,3vw,34px)}
+@media(max-width:900px){.conduct{grid-template-columns:1fr}}
+.cd-head{display:flex;gap:12px;align-items:center}
+.cd-head svg{width:34px;height:38px;flex:none}
+.cd-head b{display:block;font:800 1.35rem/1.1 var(--display);color:var(--c-ink)}
+.cd-head small{color:var(--c-mut);font-size:13.5px}
+.conduct ul{list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 24px}
+@media(max-width:600px){.conduct ul{grid-template-columns:1fr}}
+.conduct li{font-size:14.5px;color:var(--c-body);line-height:1.5;padding-left:28px;position:relative}
+.conduct li::before{content:"";position:absolute;left:0;top:3px;width:18px;height:18px;border-radius:6px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M4.5 9.5l3 3L13.5 6' fill='none' stroke='%230A7C5C' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% no-repeat}
+.conduct li b{display:block;color:var(--c-ink)}
+
+/* ---------- the halo over "blessing" (asked back for) ---------- */
+.bless::after{content:""!important;display:block!important;position:absolute;left:50%;top:-.22em;width:1.1em;height:.28em;transform:translateX(-50%) rotate(-7deg);border-radius:50%;border:.06em solid #FFC75A;box-shadow:0 0 .25em .06em hsl(42deg 100% 70% / .9),0 0 .7em .2em hsl(42deg 100% 60% / .45),inset 0 0 .15em hsl(45deg 100% 85% / .9);pointer-events:none;animation:none!important}
 /* ===================== MOTION (opt-in) ===================== */
 @media (prefers-reduced-motion:no-preference){
   .aurora .a1{animation:drift1 22s ease-in-out infinite alternate}
@@ -889,6 +923,12 @@ section.dark .eyebrow,.hero .eyebrow{color:var(--vio-d)!important}
     .heart{animation:up linear both;animation-timeline:view();animation-range:entry 0% entry 60%}
     .trust-grid div{animation:up linear both;animation-timeline:view();animation-range:entry 5% entry 60%}
   }
+  .bless::after{animation:haloIn .8s cubic-bezier(.2,1.2,.4,1) .9s both,haloFloat 4.6s ease-in-out 1.7s infinite!important}
+  @keyframes haloIn{from{opacity:0;transform:translateX(-50%) translateY(-.4em) rotate(-7deg) scale(.6)}}
+  @keyframes haloFloat{50%{transform:translateX(-50%) translateY(-.06em) rotate(-4deg);box-shadow:0 0 .35em .1em hsl(42deg 100% 70% / 1),0 0 1em .3em hsl(42deg 100% 60% / .55),inset 0 0 .15em hsl(45deg 100% 85% / .9)}}
+  .live-tag i{animation:breathe2 1.6s ease-in-out infinite}
+  @keyframes breathe2{50%{opacity:.35}}
+  .way:hover .wgo{translate:4px 0}.wgo{transition:translate .15s}
   .hero.rest .aurora i,.hero.rest .ring,.hero.rest .pcard,.hero.rest .chip{animation-play-state:paused!important}
 }
 @media (prefers-reduced-motion:reduce){.journey::after{transform:none}}
@@ -1011,6 +1051,40 @@ document.addEventListener('click',function(e){
       <li><span class="n">3</span><span><b>Guardian reviews it</b><small>our branch keeps you posted</small></span></li>
     </ol>
     <p class="trust-line">Underwritten and issued by <b>Guardian Life of the Caribbean</b> · offered by the Ricky Rampersad Branch, a Guardian Life agency</p>
+  </div>
+</section>
+
+<!-- ================= LAUNCH ================= -->
+<section class="launch" id="launch">
+  <div class="wrap launch-grid">
+    <div class="launch-film">
+      <span class="live-tag"><i aria-hidden="true"></i>Launching today</span>
+      <video controls playsinline muted preload="metadata" poster="launch-poster.jpg" aria-label="Xpress Life launch film, 60 seconds, with captions">
+        <source src="launch.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="launch-copy">
+      <span class="eyebrow">New from the Ricky Rampersad Branch</span>
+      <h2 class="title">Xpress Life is here. <em>Three ways to start.</em></h2>
+      <p class="subtitle">No time for a medical? Get your rate, ask us anything on WhatsApp, or apply from your phone in about five minutes.</p>
+      <div class="ways">
+        <a class="way w1" href="#quote"><span class="wn">1</span><span><b>Get my rate</b><small>10 seconds · no name, no number</small></span><span class="wgo" aria-hidden="true">→</span></a>
+        <a class="way w2" data-wa="Hi HELP 868, I saw the Xpress Life launch. Can you help me?" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20saw%20the%20Xpress%20Life%20launch.%20Can%20you%20help%20me%3F" target="_blank" rel="noopener"><span class="wn wa"><svg class="wa-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.1 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9s.8 2.2.9 2.4c.1.1 1.6 2.5 4 3.5 1.5.6 2.1.7 2.8.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.4-.3z"/></svg></span><span><b>Ask HELP 868 on WhatsApp</b><small>1-868-HELP-868 · any hour</small></span><span class="wgo" aria-hidden="true">→</span></a>
+        <a class="way w3" href="#apply" onclick="__openApply();return false;"><span class="wn">3</span><span><b>Apply in about 5 minutes</b><small>100% online · Guardian reviews every application</small></span><span class="wgo" aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="conduct" aria-label="How we work">
+      <div class="cd-head"><svg viewBox="0 0 60 68" fill="none" aria-hidden="true"><path d="M30 2 L56 12 V36 C56 50 45 61 30 66 C15 61 4 50 4 34 V12 Z" fill="#5B3DF5"/><path d="M18 34 L27 43 L44 24" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span><b>How we work</b><small>Clear and above board, at every step</small></span></div>
+      <ul>
+        <li><b>A Guardian Life agency</b>The Ricky Rampersad Branch is an agency of Guardian Life of the Caribbean Limited.</li>
+        <li><b>Registered advisors</b>Our advisors are sales representatives of Guardian Life, registered with the Central Bank of Trinidad and Tobago under the Insurance Act, 2018.</li>
+        <li><b>Guardian decides</b>Every application is reviewed and decided by Guardian's underwriters. The branch cannot approve a policy.</li>
+        <li><b>Nothing hidden</b>Rates are indicative and confirmed at issue. The policy contract sets out the full terms: ask us for a copy before you apply.</li>
+        <li><b>Your details stay safe</b>Card and bank account numbers are never typed into this site.</li>
+      </ul>
+    </div>
   </div>
 </section>
 
