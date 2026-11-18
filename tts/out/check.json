@@ -1,12 +1,37 @@
 {
- "tts/out/h868c2/01.mp3": [
+ "tts/out/xlwa/01.mp3": [
+  "en",
+  0.995,
+  "Applying for Express Life is now as easy as sending a WhatsApp message. This message help 868."
+ ],
+ "tts/out/xlwa/02.mp3": [
   "en",
   0.997,
-  "It is one tap away, press the green button on our website and the chat opens. No app to download and no forms to fill."
+  "Tell us your name, then tap your age group. There's nothing to type."
  ],
- "tts/out/h868c2/02.mp3": [
+ "tts/out/xlwa/03.mp3": [
   "en",
-  0.996,
-  "When it is resolved, you get a short summary. Then you can rate us from 1 to 5 stars. If you rate us low, we call you back."
+  0.998,
+  "Tap male or female then to cover your family needs from $100,000 to $500,000."
+ ],
+ "tts/out/xlwa/04.mp3": [
+  "en",
+  0.997,
+  "We show you how the policy works straight from the contract."
+ ],
+ "tts/out/xlwa/05.mp3": [
+  "en",
+  0.998,
+  "then the five health questions answered with a single tap. No medical details in the chat."
+ ],
+ "tts/out/xlwa/06.mp3": [
+  "en",
+  0.997,
+  "If you can apply, you get your rate and a link to apply from your phone in about five minutes. Guardian's underwriters review every application and our branch keeps you posted."
+ ],
+ "tts/out/xlwa/07.mp3": [
+  "en",
+  0.978,
+  "Express life. Message help 868 today."
  ]
 }
