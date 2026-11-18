@@ -40,7 +40,17 @@ function makeEnv(opts = {}) {
       _textCells: textCells,
       getName: () => name,
       getSheetId: () => id,
-      getLastRow: () => { calls.getLastRow++; return grid.length; },
+      /*  Sheets' getLastRow() is the last row WITH CONTENT, so trailing
+          blank rows do not count. Returning grid.length instead meant a
+          range cleared with clearContent() still read as occupied, and
+          the next append landed below the blanks. */
+      getLastRow: () => {
+        calls.getLastRow++;
+        let n = grid.length;
+        const blank = r => !r || r.every(v => v === '' || v === null || v === undefined);
+        while (n > 0 && blank(grid[n - 1])) n--;
+        return n;
+      },
       getLastColumn: () => { calls.getLastColumn++;
         return grid.length ? Math.max(...grid.map(r => r.length)) : 0; },
       setFrozenRows: () => sh, setColumnWidth: () => sh, setColumnWidths: () => sh,
@@ -99,7 +109,19 @@ function makeEnv(opts = {}) {
         setHorizontalAlignment() { return this; }, setVerticalAlignment() { return this; },
         setBorder() { return this; }, setFontStyle() { return this; },
         setDataValidation() { return this; }, clearDataValidations() { return this; },
-        setNote() { return this; }, merge() { return this; }
+        setNote() { return this; }, merge() { return this; },
+        /*  Blanks the cells and leaves the rows, as Sheets does. With
+            getLastRow() ignoring trailing blanks, a cleared block at the
+            end of a tab reads as gone and the next append fills it. */
+        clearContent() {
+          for (let i = 0; i < nr; i++) {
+            const row = grid[r - 1 + i];
+            if (!row) continue;
+            for (let j = 0; j < nc; j++) row[c - 1 + j] = '';
+          }
+          return this;
+        },
+        clear() { return this.clearContent(); }
       })
     };
     sheets[name] = sh;
@@ -139,7 +161,10 @@ function makeEnv(opts = {}) {
       const api = { getProperty: k => (k in store ? store[k] : null),
                     setProperty: (k, v) => { store[k] = String(v); return api; },
                     deleteProperty: k => { delete store[k]; return api; },
-                    getProperties: () => Object.assign({}, store) };
+                    getProperties: () => Object.assign({}, store),
+                    /*  Apps Script's own Properties has getKeys; the fake did not, so code
+                        that prunes its own old keys threw here and read as a code fault. */
+                    getKeys: () => Object.keys(store) };
       return { getScriptProperties: () => api }; })(),
     Session: { getEffectiveUser: () => ({ getEmail: () => 'ricky@example.com' }),
                getScriptTimeZone: () => 'America/Port_of_Spain' },

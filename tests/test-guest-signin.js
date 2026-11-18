@@ -246,5 +246,77 @@ ok('under the visitor\'s own name, never "Visitor"',
    logged.some(r => String(r['Actor']) === 'Gregg Mannette'),
    JSON.stringify(logged.map(r => r['Actor'])));
 
+/* ── a branch member at the guest door is turned round, not let in ──
+ *
+ *  Found in the live visitors' book on 8 November 2026: four of the
+ *  branch's own staff had signed in with 0000 and were therefore absent
+ *  from every register the Builder holds, one of them on the morning of
+ *  a meeting that ran. Their own rows were on the roll the whole time. */
+console.log('\nSomebody on the roll at the guest door');
+env.appendRow_(env.MEET.TAB_PEOPLE, {
+  'Agent No': 'A09001', 'Email': 'pat@example.com',
+  'Name': 'A09001 - Pat Example', 'Role': 'staff', 'Unit': '',
+  'Active': 'Y', 'Access Code': '90000001' });
+
+const rollBefore = env.readPeople_().filter(p => p.role === 'guest').length;
+const onRoll = env.apiLogin_({ who: '0000', firstName: 'Pat', lastName: 'Example',
+                               jobTitle: 'Sales Support' });
+ok('refused', onRoll.ok === false, JSON.stringify(onRoll));
+ok('and says so with its own flag, so the page can put the form away',
+   onRoll.onRoll === true);
+ok('it is not the needGuest welcome, which would read as "try again"',
+   !onRoll.needGuest);
+ok('it names them and names their own way in',
+   /^Pat,/.test(String(onRoll.error)) && /agent number/i.test(String(onRoll.error)),
+   onRoll.error);
+ok('it says why, so nobody reads it as the door being broken',
+   /register/i.test(String(onRoll.error)) && /absent/i.test(String(onRoll.error)),
+   onRoll.error);
+ok('no visitor row is written for them',
+   env.readPeople_().filter(p => p.role === 'guest').length === rollBefore,
+   env.readPeople_().filter(p => p.role === 'guest').length);
+ok('and nothing is written to the visitors\' book',
+   env.readTab_(env.MEET.TAB_VISITORS)
+      .every(v => !/pat/i.test(String(v['Name']))));
+ok('no token, so they cannot get in as a visitor', !onRoll.token);
+
+/* The roster pull writes "A09001 - " in front of every name, so the match
+   has to drop it. agentKey_ is what does, on both sides. */
+ok('the number prefix on the roll does not hide the match',
+   env.guestOnRoll_('Pat Example') &&
+   env.guestOnRoll_('Pat Example').email === 'pat@example.com');
+ok('capitals and spacing do not either',
+   !!env.guestOnRoll_('  pat   EXAMPLE '));
+ok('a middle name still matches on first and last',
+   !!env.guestOnRoll_('Pat Quentin Example'));
+
+/* The standing visitor is the whole point of 0000 and must be untouched. */
+const exec = env.apiLogin_({ who: '0000', firstName: 'Gregg', lastName: 'Mannette',
+                             jobTitle: 'Head of Agency' });
+ok('an executive, who is on no roll, still looks in', exec.ok === true, exec.error);
+
+ok('a first name alone matches nobody, so it cannot turn a visitor away',
+   env.guestOnRoll_('Pat') === null);
+ok('a name on nobody\'s row matches nobody', env.guestOnRoll_('Nobody Here') === null);
+
+/* Two people answering to one name: their own number is the only thing
+   that can say which, so that is what they are sent to. */
+env.appendRow_(env.MEET.TAB_PEOPLE, {
+  'Agent No': 'A09002', 'Email': 'pat2@example.com',
+  'Name': 'A09002 - Pat Example', 'Role': 'agent', 'Unit': 'Unit One',
+  'Active': 'Y', 'Access Code': '90000002' });
+const ambi = env.apiLogin_({ who: '0000', firstName: 'Pat', lastName: 'Example',
+                             jobTitle: 'Sales Support' });
+ok('two on the roll with one name is still refused', ambi.ok === false && ambi.onRoll === true,
+   JSON.stringify(ambi));
+
+/* Somebody taken off the roll is not on it, so the door opens again. */
+(() => {
+  env.readPeople_().filter(p => p.email === 'pat@example.com' || p.email === 'pat2@example.com')
+    .forEach(p => env.setCell_(env.MEET.TAB_PEOPLE, p._row, 'Active', 'N'));
+})();
+ok('somebody no longer active is not on the roll, so they may look in',
+   env.guestOnRoll_('Pat Example') === null);
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');
 process.exit(fails ? 1 : 0);

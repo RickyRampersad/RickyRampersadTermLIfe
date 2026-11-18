@@ -628,15 +628,57 @@ server was being hit. They are back on the placeholder. The Intelligence URL
 belongs in the 23 pages that genuinely use it (`intelligence/`, `kpi/`,
 `premium-due/`, `myworkday/`, `wall/`) and nowhere else.
 
-**It has never recorded a view.** The "RRB Site View Counter" sheet was
-created 7 September 2026 and has not been written to since; there is no
-"RRB Views" script project in Drive, so `gs/views-counter.gs` has never been
-deployed. Until it is, all 157 beacons are inert — the guard
-`if(u.indexOf('http')!==0)return` makes an un-wired beacon cost the visitor
-nothing, which is why this has been invisible. Deploying needs a browser
-(Apps Script's API is not reachable from a session), so it is the branch
-manager's to do: **Deploy → New deployment → Web app, Execute as: Me, Who
-has access: Anyone**, then hand over the `/exec` URL.
+**It records views now.** The counter went live in the first days of November
+2026 (`/exec` wired by `tools/wire-views.py`, 169 beacon pages). Real traffic
+runs a few hundred views a day on a normal weekday (357 on Saturday 7 November)
+and was thin on the Divali Sunday. When reading the "RRB Site View Counter"
+sheet, drop test rows (`/__wire-test__`, `/home/user/...`, `/tmp/...`,
+localhost): they are mine, not visitors. The sheet is far over a hundred
+thousand characters, so read it by saving the CSV and filtering, never inline.
+
+**A zero in the counter means NOT MEASURED until the beacon is proved wired**
+(14 November 2026, asked in these words: *"You need to see a counter on the
+sheet did you"*). Read for how many people had met the broken administrator
+form, the sheet held **not one row** for `/buildwithus/`, `/clientmanager/`,
+`/joinourbranch/`, their three film pages or `/hiring/` — and the reason was
+that all seven still carried the inert `RRB_VIEWS_URL` placeholder. Every one
+of them was built after the wiring run of early November and nothing re-ran it,
+so the beacon was armed and silent. Ten pages were on the placeholder in all
+(those seven plus `career-path.html`, `meetinghowto/` and `xpresslife/`), out
+of 181; `tools/wire-views.py <the live /exec>` put every one right in one run,
+one line changed per page.
+
+**So answer "how many came?" with `tools/wire-views.py --check` first, never
+with a count off the sheet.** A page with no beacon and a page nobody visited
+read exactly alike, and the second reading is the one that gets acted on —
+here it would have said the ad had failed when the ad had never been measured.
+Hunting the beacon's URL with a bare `grep AKfycb` is also wrong: these pages
+carry the **Service Questionnaire** `/exec` as their own form backend, so the
+first match is the form's, not the beacon's. Read the block that follows
+`<!-- rrb-views -->`.
+
+**It is a test now**, for the two application pages that matter most:
+`tests/e2e-recruit-forms.js` fails if either carries the placeholder or does
+not ping on load. Its request probe keys on the **method** — the beacon is an
+`Image()` src, so a GET, while filing an application is a POST — because
+counting any request to `script.google.com` as "filed" failed nine checks on a
+page that was behaving correctly, the morning the beacons were wired. Never key
+it on the `/exec` URL: that deployment id changes whenever the counter is
+re-wired.
+
+## The homepage carries no hours, and no festival banner stays
+
+Decided 8 November 2026: *"Remember we are never closed, why do you keep having
+opening and closing numbers."* The homepage states no opening or closing times
+anywhere: not in the hero chip ("Always here for you, day or night"), not in the
+hours box ("We are never closed. Message us any time"), not in the call card,
+and not in the LocalBusiness JSON-LD. Do not reintroduce an open/closed chip or
+`openingHoursSpecification`. Hours on other pages have not been audited.
+
+A festival greeting is a one-day banner that removes itself and is then deleted
+from the source the next day. The Divali one (8 Nov 2026, until 10 pm Trinidad
+time) was saffron and maroon with diyas, lotus, rangoli and a marigold garland,
+symbols only: no deity is drawn in SVG. It was removed on 9 November.
 
 ---
 ---
@@ -3242,6 +3284,29 @@ voice under the new timing and the caption gives it away.
       the manager this week's form as it stands, marked TEST, and writes nothing. `transitionTransmittalNow` sends it at
       once.
     - `sq23/tx-test.js` in the scratchpad covers it (44 checks), and `sq16/sq-test.js` still passes with `TX.ON` false.
+- **A brief goes once, and the once-guard may not fail quietly** (10 November 2026). Found live while checking why the
+  agents' daily reports had stopped: one agent had had **the same Salesforce brief 55 times** between 8 and 9 November
+  (22 on the Sunday, 33 on the Monday), every fifteen to twenty minutes, each one naming four clients in its subject.
+  The agents' own morning reports from the tracker had gone out for the last time on **5 November**, eight of them in one
+  run and nothing since: the two are almost certainly one fault, because every e-mail in both projects is sent by the
+  same consumer Google account, whose allowance is about a hundred recipients a day.
+  - **Why it repeated.** The once-guard is the **Agent Briefs** tab, and `tBriefLog_` swallows its own failure. If the
+    tab cannot be made or written — a workbook at Google's ten-million-cell ceiling, a refused `insertSheet` — nothing
+    is recorded, `tBriefLogRead_` reads an empty log, and every run sends again. Nothing said so: the only trace was one
+    line in the log.
+  - **A record that is the only thing between a trigger and the branch's inbox may not be able to fail quietly.** So
+    each brief is also marked in a Script Property for the day (`T_BRIEF_DAY`, `tBriefDayRead_`, `tBriefDayMark_`),
+    written **the moment the brief has gone**, before the Salesforce write that follows it, so a throw after the send
+    cannot undo it. The tab stays the record, because it is what a person reads; the mark only bounds the damage, to
+    **one brief a client a day** instead of thirty-three. The marks are pruned after `KEEP` days in their own try (the
+    26 October store lesson), so this can never be what fills the store.
+  - **A broken tab is no longer quiet**: the log line says the once-guard is broken, and `brief_log_broken` carries the
+    day and the reason for a person to read.
+  - **The hand-stop, with no paste:** change the **Source** cell on those Household Assignments rows from `Salesforce`
+    to anything else. `tSfBriefsDue_` reads only `Source` = Salesforce, and `tHaSync_` rewrites only a row it wrote
+    itself, so the row is left alone and the briefs stop at once.
+  - `tests/test-brief-once.js` covers it (16 checks). The fake Properties in `tests/harness.js` had no `getKeys`, so
+    code that prunes its own old keys threw there and read as a code fault; it has one now.
 - **One client in full on the board: the history, their Salesforce tasks,
   and the team's comments** (3 October 2026, the same request: "so the agent
   can see the email and history and tasks opened on salesforce assigned to
@@ -4033,7 +4098,9 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 - **A group signs in with its list bill and its code, both.** The list bill is
   printed on every bill and known to the employees, so it is the name, never
   the password. List bills live on the policy records (`List_Bill__c` on
-  `CLIENT_PORTFOLIO__c`), typed several ways ("TGM 1099", "TGM1099"):
+  `CLIENT_PORTFOLIO__c`), typed several ways ("TGM 4417", "TGM4417" — an
+  invented example; 231 records carry a TGM list bill and the one first
+  written here was a real employer's, see the scan note below):
   compared as letters and digits only. The account fields `List_Bill_Life__c`
   and `List_Bill_Pension__c` are empty on all but one account.
   **A letter O counts as a zero** (`gcmSignKey_`, 27 October 2026), on both
@@ -4226,6 +4293,52 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     cropped to the dialog with the attached file's name painted out, because that name was a real group's.
   - Re-cut when the pages change: re-run `shots.js`, then `render.js` and `mix.py`. The figures, people and groups on
     screen are all invented.
+  - **Company pensions, without the paperwork** (17 November 2026: "a small effective video to show how we as a branch
+    manage the pension plans for companies ... the link that goes out ... the company fills out their part, routed to the
+    employee ... automatically calculates everything", then "also show the calculations on the form ... section 134 ...
+    show the pdf"), 2 min 25 s, for employers and HR. `groupclientmanagement/company-pension.mp4`, poster
+    `company-pension.jpg`, page **`/pensionpresentationourprocess/`** with chapters (asked for by that name the same
+    day: "merge this to the branch /pensionpresentationourprocess"); `/groupmgt/pension/`, where it was first built,
+    forwards there. It went to `main` on its own, ahead of the rest of the group re-cut branch, so the films he had not
+    asked to publish did not go with it.
+    - **What it shows is pensionplanstt.netlify.app**, the branch's company-owned (Section 134 / TopHat) pension wizard:
+      a separate Netlify site, uploaded by hand, with its own Apps Script register. Its source is in no repository.
+      The employer signs in with a company code (`CO…`) and enrols someone; the register writes to the employee with
+      their own code (`EM…`, `?code=` opens their door) and reminds them every morning at 9 with the employer copied;
+      the employee's part (beneficiaries, own contribution, ID, utility bill, pay slip) is on a phone; RIA (its AI,
+      `/api/pension-ai`) answers inside the form; the agent loads the case by the employee's code, the Section 134
+      maximum is solved, and the BIR request with its computation, Declarations 1 and 2 and Guardian's salary deduction
+      form (SD-L&P v.1NOV2014; the blanks are the site's `assets/RRB_*_blank.pdf`) fill themselves into one package.
+    - **The form has no WhatsApp button.** He described WhatsApp as integrated; the site offers RIA and an e-mail link.
+      So the film draws HELP 868 as its own phone screen ("Or WhatsApp · HELP 868"), never as a button inside the form.
+      Adding one needs the site's files.
+    - Built by `build-gcmfilm.py pension` from `pens-lines.json` and `pens2-timing.json` (Andrew Expressive, key
+      `pens2`; four lines re-worded after `pens1`: "Then the part" was heard "In the part", "put in up to" "put an up
+      to", "checked" "check", "your copy" "a copy"). Screens in `tools/film/pensionshots/`, shot from a local copy of the
+      site against a mocked register and AI (`pensionfilm/shoot.js` and `mock.js` in the scratchpad) on a made-up
+      company (Harbour Point Logistics Ltd) and employee; the package pages (`pkg*.jpg`) are the site's own PDF, with
+      mark boxes added by fraction. The figures ($62,660 maximum on a TT$240,000 salary and a TT$36,000 premium) are the
+      site's own calculation on those made-up inputs. Music: his corporate tech track, `loopbars.py` to 145 s.
+  - **Joining the group health plan, and when someone leaves** (17 November 2026: "do the same vid for the health and
+    termination enrollments and /healthenrollment and /termnations", then "can this be done fast"). Two films in the
+    pension film's look, made from what already works, while the joined enrolment (HR's link, the employee's part,
+    Guardian's real GIO001, HR's approval) was built separately:
+    - **`/healthenrollment/`** (1 min 42 s, `groupclientmanagement/health-enrolment.mp4`): the employee's own link,
+      `benefits/enroll.html`, on a made-up employee (Marcus Sample, Harbour Point Logistics Ltd): HR's share card, the
+      steps on a phone, the "nothing to declare" tick, the on-screen signatures, and the filled GIO001 and Declaration of
+      Insurability from the review step. Shot by `henr/shoot.js` in the scratchpad with the branch webhook mocked;
+      screens in `tools/film/henrshots/`. The dependants and beneficiaries are shot on a laptop: on a phone the page's
+      five-column tables cut the names off (a fault of the page, not the film).
+    - **`/terminations/`** (1 min 30 s, `groupclientmanagement/terminations.mp4`; `/termnations/`, as he typed it,
+      forwards there): the group page's EB0010 on the walkthrough film's made-up group (sign-in, Your people on "Came off",
+      search, the form filled from our records, the PDF, sent to EB Customer Care), the account manager's task and the
+      3-working-day follow-up, and a pension paid through payroll left. Screens in `tools/film/termshots/` (the walkthrough
+      shooter, `gcmwalk/shoot.js t01 t02`, and the filled EB0010 pages from `gcmwalk/make-pdf.js` through pdftoppm).
+    - Built by `build-gcmfilm.py henr|term` from `henr1-lines.json` / `term1-lines.json` (Andrew Expressive, keys
+      `henr1`+`henr1b`, `term1`+`term1b`). Four lines were refused by the voice and re-worded, two re-worded after the
+      check: "Forms going back" was heard "from going back", "what share" "what sherry", "done from" "done for".
+      Accepted as heard: "group life" as "group live", "dependants" as "dependence", "never guessed" as "never guest"
+      (each is on screen). Music: his corporate tech track, `loopbars.py` to the film's length.
 - **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
   forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
   training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
@@ -5515,6 +5628,604 @@ section links it.
 - `scenes.js` in the session scratchpad shoots every scene at a fraction of its length in either frame (the same
   seek render.js uses) and tiles them, which is how the layouts were checked before the voice came back.
 
+### The two feed ads, re-cut for the advisor — 12 November 2026
+
+**Superseded the same evening by the cut on the LIMRA cliff research, in the section below.** The scene content
+described here (A's three struck "not getting" lines, the 22-against-31 bar pair, the 39.4s/38.1s lengths) is no
+longer what the MP4s carry. Everything else — the palette arithmetic, the voice lessons, the cue-word guard,
+chapters.py and the agentmgt.com redirect — still stands and is not repeated below.
+
+Asked for in these words: *"remember we moved away from agentmanagement.com and it's ricky_branch/careers. And it
+must be advisors and it's a sales career… it's what they're not getting, and you need to firm up something that is
+catchy because you want to really post this."*
+
+**The address was fixed in the source on 9 November and the render never followed.** The lines files and the
+builder's five on-screen addresses were all changed that day; the MP4s were not re-rendered, so the files sitting at
+the public URL still said and printed `agentmgt.com` three days later. **A lines file and a builder changed without a
+render is a change nobody can see.** Check the MP4 — grab a frame — not the source.
+
+**Each ad now names the job in its first line and states the pay model rather than implying it.** A opens *"You are
+an insurance advisor. You are good at it. Why are you still doing it alone?"*; B says in as many words *"This is a
+sales career."* That sentence is the filter, not a disclosure: a person who wants a salary band reads it and leaves,
+which is the whole point, and it is LIMRA's own retention finding (honest expectations at recruitment).
+
+**The absence leads, because that is what he asked for.** Scene 2 of A is the three things a practising advisor does
+*not* get where they are — no leads, no clients handed to you, nobody asking how your week went — each entering and
+then struck through, before the branch answers all three. B's is *"what stops most people is being handed a contract
+and told to call their friends"*, struck, then *"Not here."* The struck list is `.miss`; the rule animates on `growx`,
+**never `grow`**, because this file defines `@keyframes grow` twice and the later scaleY one wins.
+
+**Scene 4 is the one number that sells to either reader**, and it replaced "Thirty-two years in Trinidad": 22 of 100
+still contracted at three years across the industry, against 31 of 100 still here at four in this branch. Two bars on
+an honest 0–100 track, so the shortness of *both* is the point rather than hidden by a clipped axis. Amber `#C97A3A`
+against teal `#0E93B0` on the film's own `#0d1f33` ground **passes all six of the validator's checks** (CVD ΔE 16.1
+protan and 25.2 tritan, normal-vision 23.5, both inside the dark band L 0.48–0.67), and each bar carries its own
+number and label, so identity is never colour alone. **The page's own `--amb #F5A25D` is not used here**: it measures
+L 0.78 against a dark band of 0.48–0.67, so it fails the lightness check on this surface even though its separation
+from the teal is excellent. The band is per-surface; a pair validated for one ground is not thereby validated for
+another.
+
+**39.4s and 38.1s**, both under the 40 seconds where the feeds stop paying out.
+
+**Three voice lessons, and the middle one is new.**
+- *"how your week went"* came back as *"you're weak went"* and *"a third of ours"* as *"a third of hours"*. Both
+  change the meaning, so both were re-worded. "ours"/"hours" was fixable; **"week"/"weak" is not** — they are the
+  same phonemes, no voice can distinguish them, the sentence parses only one way, and the screen spells it out. It
+  is accepted like "will"/"we'll". Knowing which homophones are worth chasing saves a runner job.
+- **edge-tts returned `NoAudioReceived` four times running** on *"In this branch, a third are still here at four"*
+  while the other line in the same job voiced clean — a deterministic refusal of one text, not an outage. *"Here, a
+  third are still with us at four"* voiced first time. **When a line will not voice, re-word it; do not retry it.**
+- The runner numbers a job's lines from 01, so the three fix jobs landed as `adAfix/01`, `adAfix2/01` and had to be
+  mapped back onto scenes 2 and 4. `stagevox.sh` in the scratchpad builds each vox directory **from scratch** by
+  walking the scene list — never by shifting, which cannot express "line 2 and line 4 changed, the rest stand".
+
+**Three cue words had gone stale and each one stopped the build, which is the guard working.** `tat(5,"Agent")` was
+keyed to the old spoken address and is now `"Go"`; films-recruit.py's `(2,'Not')` no longer existed in A's line (and
+in fact no longer exists in B's spoken line either — only in B's on-screen headline — so both now turn on `"here"`);
+and `(4,'Thirty')` went with the years line. A cue word that is not in the line exits **before** films.json is
+written, so a stale entry is never silently left behind.
+
+**chapters.py did not know these pages at all**, so the ads' chapter rails on the homepage, `/careersvideo/` and
+`/careers/` had been typed by hand and went stale at every re-cut — precisely what that tool exists to prevent. It
+now walks `agentmgt/`, `careersvideo/`, `careers/` and the repository root, knows the eight recruiting keys, and
+**keys its lookup on the basename**: every other film's `out` is a bare file name while the recruiting cuts carry a
+relative path, so the map and the lookup disagreed. Each ad scene now carries its own `data-ch`, because the fallback
+reads the scene's `h2`, which on scene 5 is the bare URL and on scene 1 the whole kinetic headline.
+
+**agentmgt.com is a redirect now, and the ads no longer name it.** It serves a meta refresh to `/careers/`, so the
+bare address still works for anyone holding it, but `agentmgt.com/anything` 404s: never link a path on that domain.
+
+### Both ads re-cut on the second-year cliff — 12 November 2026, the same evening
+
+Asked for in these words: *"I personally find this can be more impactful in the short time. You have memories, we do
+so much for persons because we want to make sure everyone succeeds. So attracting the insurance advisors who are with
+someone who's not getting the support and the new persons. So see deep research limera, what appeals to person, have
+the motions, have the graphics, and make it a wow, so when person click, they apply."*
+
+**The research changed the argument, which is why this is a re-cut and not a polish.** The morning's ads led on three
+things a practising advisor *is not getting* — leads, clients handed to you, anyone asking how your week went. That
+was a reasonable guess. LIMRA publishes something sharper and more universal, and it is the thing a practising
+advisor has actually lived:
+
+| finding | source |
+|---|---|
+| **"The second year, commonly referred to as the 'cliff' … Agents are on their own, without much of the support provided during the first year."** | LIMRA 2025 Annual Conference, session 16 — a public PDF, quoted on screen |
+| **"We have been sitting at an industry-wide 4-year retention of rate of 14% for years."** | same deck, sourced there to *The Path to Improving Retention*, LIMRA and FINSECA, 2022 |
+| One-year retention by who recruited: **Recruiter 44%, Sales Manager 50%, Office Head 55%** | same |
+| The cause of the cliff: new agents exhaust the friends-and-family market with no prospecting system behind it | LIMRA MarketFacts, 2025 |
+| Growth opportunities outweigh pay **2×** in choice of firm; only 2% would "absolutely" leave over a 2% pay cut | LIMRA-McKinsey, ~2,000 advisors with 3+ years' tenure (2012, dated — treat as background) |
+| Top two retention factors: early sales activity, and a strong selection process before hiring | LIMRA / FINSECA |
+
+So **A leads on the cliff** ("The industry has a name for your second year"), and **B leads on its cause** — the
+personal list emptying, name by name, which is the newcomer's real fear. That pay is *not* the lever is why neither
+ad leads on money, and the branch's own 67%-at-one-year / 31%-at-four sits exactly where LIMRA says a structured
+process puts you.
+
+**THE CHART PLOTS ONLY POINTS THAT HAVE A SOURCE.** LIMRA gives year one and year four and *names* year two without
+publishing a figure for it; the branch has two points of its own. A four-point curve would have meant inventing half
+of it, so it is a **slope chart** of two sourced endpoints per series, with year two annotated on the time axis and
+no marker pretending to be a reading. The footnote carries both sources. Amber `#C97A3A` against teal `#0E93B0` on
+`#0d1f33` is the pair already validated in the section above; each line is labelled in the key as well as coloured,
+and every number wears a text token, never the series colour.
+
+**The thirty-nine is read off the live page**, grouped as the careers page itself groups it (before you join 7,
+first 90 days 5, every day 10, every week 6, every month 6, your managers too 5), so the ad cannot drift from what
+it links to. That is "we do so much for persons" as a countable thing rather than an adjective.
+
+**40.4s and 40.6s**, a few tenths over the 40-second mark and carrying noticeably more than the 39.4s/38.1s cuts
+they replace. The air between scenes dropped from **1.15s to 0.95s** — five scenes at 1.15 spend nearly six seconds
+of a forty-second ad on silence, and a feed cut wants pace.
+
+**A PROPER-NOUN URL NEEDS A RUN-UP, and this is the new voice lesson.** Dropping "Go to" from the close — so the
+sentence began on *"Ricky Rampersad Branch dot com"* — collapsed the whole address into **"Hiki Humpir Saad, Brinche
+Dauticol, is Leshika Hears"** at 0.885–0.916 confidence, in both ads. With "Go to" restored it came back as
+`rickyrampersadbranch.com slash careers`, spelled exactly, at 0.993. The run-up is load-bearing: never start a
+spoken line on the address.
+
+**And a number opening a sentence before a noun.** *"Four years in"* came back as **"For years in"** in both ads —
+the same family as *"Four retired"* → *"for a tired"*. The fix is the same one that worked before: put the number
+last in its phrase. **"By year four"** voiced clean first time, which is unsurprising, since *"in year one"* in the
+very next line had always transcribed correctly.
+
+**`adpunch` never touches opacity** — it is `scale(.7)` → `1.09` → `1`. Anything set `opacity: 0` and animated with
+it stays invisible for ever, which is what happened to B's "Nobody left to call" chip. **Third element in this
+repository bitten by that**, after the journey ring and the AI badge. An entrance that has to fade in gets its own
+keyframe; `adpunch` is for something already visible.
+
+**The cliff label hangs above the line's own height at x=40, not above the mean of the two endpoints** — those are
+the same number only for a flat line. The first cut used the endpoint mean, which put the words level with the
+year-one dot and read as a label on *that reading* rather than an annotation of the descent. And when both lines are
+drawn it must clear the **higher** of the two, or it lands across the teal: B's scene 4 does not carry the label at
+all, because B never says "cliff" out loud.
+
+**The two ads no longer share a cue list.** `entries()` took one hitlist for both, which forced every punch word to
+appear in A's *and* B's line for that scene; after this re-cut they have no word in common at scene 4 ("Thirty-nine
+things" against "This branch keeps thirty-one"). `AD_HITS` in films-recruit.py now names each variant's own beats.
+
+**`build-recruitfilm.py` needs python3.13**, not the `python3` on the path: it uses nested same-type quotes inside
+f-strings (PEP 701, 3.12+), and on 3.11 it dies with `SyntaxError: f-string expression part cannot include a
+backslash` pointing at an unrelated line 400 lines away. The repo's own notes already run `sfx.py`, `usetrack.py`
+and `mixany.py` on 3.13; the builder belongs with them.
+
+**`adcheck.js` in the scratchpad measures the frames instead of eyeballing them**: it settles every animation at its
+end, then fails any scene with content in the bottom 16% — where the mixer burns the captions in on `over` mode —
+or running off the side, in all four frame combinations. It caught the chart's own source line sitting inside the
+caption band on the square cut, which three passes over a contact sheet had not.
+
+**A CAPTURE DIRECTORY KEEPS ITS `rendered.mp4` BETWEEN RUNS, and that is a silent-wrong-film hazard.** `mixany.py`
+reads `rendered.json` and `rendered.mp4` out of `cap-<key>/`; if a render is skipped or fails quietly, it pairs
+**last session's video with this session's audio** and says nothing — the same family as the 9 November fault where
+a lines file changed and the render never followed. `verify.py` in the scratchpad reads the finished MP4s rather
+than the source: duration, dimensions, that an audio stream exists at all, and the QR decoded off a real frame near
+the end with `cv2.QRCodeDetector`. Run it after every re-cut; mid-render it correctly reported `adBv: STALE by 34 min`.
+
+**CHECK EVERY LINK OF THE CHAIN, OR THE CHECK MANUFACTURES FALSE CONFIDENCE.** The chain is
+**page → capture → mix → mp4**, and the first cut of `verify.py` checked `page → capture` only. Minutes later
+`mixany.py` died outright on its own command line — **it takes the config JSON *and* the output path, and the
+re-cut script passed one argument** — so no mix ran at all, and `verify.py` printed **ALL CLEAR over four stale
+MP4s**. Every capture was genuinely newer than its page; the published files were from the previous cut. A
+verification that covers part of a chain and reports success on the whole is worse than no verification, because
+it is believed. It now checks `mp4 → capture` as well, and asserts each finished file's **duration against
+`films.json`** — the loudest signal of all, since the length is the one thing the built page decides, and
+39.4s against a page built for 40.4s cannot be explained away.
+
+### The branch's own first post: ad C — 13 November 2026
+
+Asked for in these words: *"forget about the service questionnaire, and it's your first ad you're going
+to post ... persons must know it's an insurance sales career ... more time, the way they work is not
+allowing them to grow, like solving problems ... you do have access to our POP7 ... deep dive and look
+at the memories and see the amount of things that we do ... What are they applying for? What will
+attract somebody to apply? And what our environment, which is unique, will be able to help someone
+with ... everything in the branch, it is digital."*
+
+**It answers those three questions in that order, and that order is the whole design.** A and B are
+40-second feed cuts aimed at a fear each; C is the branch's own announcement and has a different job.
+`agentmgt/ad-c.html`, seven scenes, square (`ad-c-square.mp4`) and tall (`ad-c-story.mp4`). It ran
+**63.9s** until 14 November 2026. That day scene 3 became the journey and scene 6 shed the 39-things
+claim, and then the process itself was corrected: the conversation that produces the fact find is now
+its own scene. It is **eight scenes and 75.2s**. The two sections below carry those cuts, in order.
+
+**Every fact is read off the live careers page, so the ad cannot drift from what it links to.** The 39
+things and their six moments (before you join 7, first 90 days 5, every day 10, every week 6, every
+month 6, your managers too 5) come from the page's own "Everything around you" inventory; the five
+gates and their wording come from its stepper; 14 against 31 by year four is already sourced in the
+section above.
+
+**The strongest thing the branch has is NOT the tools, and the ad is built on that.** Scene 5 is the
+argument: *you are profiled, market-mapped and trained BEFORE you are contracted, so you know whether
+it fits before you give anything up.* For somebody leaving a salaried job that is worth more than any
+list of systems, and almost nobody else in this market does it. The 39 things and "all of it digital"
+are the second argument, in scene 6, not the first.
+
+**Three things are deliberately absent:**
+
+- **No money figure.** The first-year numbers are still outstanding from him, and an invented average
+  is the one thing the pay panel itself promises not to print.
+- **No Guardian Group claim.** He asked for "the strength of Guardian" and there is no sourced figure
+  for its size, rating, years or policyholders in any record here. The name is on the card and the
+  branch's own thirty-two years are on the page; a figure in an MP4 at a public URL needs his source.
+- **No TT$200 per questionnaire** — "forget about the service questionnaire". It is an internal
+  orphan-campaign mechanic, not a reason anybody joins.
+
+**64 seconds is a decision, not a drift.** Everything he asked for does not fit in forty. This is the
+pinned post on the branch page, LinkedIn and WhatsApp; the paid-feed version drops scene 3 and runs
+about 45. (It is 75 seconds since 14 November, over eight scenes. A paid-feed cut would drop the
+journey scene, 4, and run about 61 — not scene 3, which is now the human-process scene and is the
+one thing in the ad nothing else in this market says.)
+
+#### Two lines would not voice at all, and one word is unsayable
+
+**edge-tts refused lines 2 and 6 outright**, four attempts each, `NoAudioReceived` — the deterministic
+per-text refusal already recorded for ad A. Re-worded, both voiced first time. **Never retry a
+refusal.** And check `words.json`'s count against the line before concluding anything: Whisper's
+transcript of line 2 displayed truncated and the audio was complete.
+
+**"LIMRA" came back as "a limer profile is read".** An acronym this voice cannot say is not fixed by
+re-wording around it — the voice carries the meaning (*"a scientific profile is read"*, which is the
+page's own phrase) and the **screen carries the name** (`POP7 · LIMRA's Career Profile+`). Same
+mitigation `Rampersad` → "Ramperset" already takes.
+
+#### The square-is-portrait trap, again, and it is worse than a size
+
+A square is "portrait" to `(orientation:portrait)`, so the tall cut's whole block applies to it. The
+portrait rule turned `.cgrail` into a one-column list with `.cgstep` as a two-column row and the
+connector hidden; the square block only *resized* the steps, so the gates rail rendered as a strip of
+tiny left-aligned type in the bottom-left corner — and `adcheck.js` passed it, because nothing was in
+the caption band and nothing overflowed. **Everything the portrait block CHANGES has to be changed
+BACK in the square block, not merely resized**: the columns, the connector's `display`, and the step's
+own layout. Caught by looking at the contact sheet, not by the measurement.
+
+The other square fault was geometric: `.dev.lap` is `aspect-ratio:16/10`, which is tall in a square
+box, and it pushed its own caption into the bottom 16% the mixer burns subtitles into.
+
+#### Re-cutting it
+
+```bash
+cd tools/film
+python3.13 importvox.py <staged vox> voadC 0.95 --timing recruit-adC-timing.json --lines recruit-adC-lines.json
+RECRUIT_MODE=ad RECRUIT_AD=C python3.13 build-recruitfilm.py && python3 films-recruit.py
+python3.13 sfx.py "$(…films.json adCq…)" sfx-adCq.wav     # and adCv
+python3.13 usetrack.py ../../rr-branch-theme.mp3 adCq adCv
+RENDER_W=1080 RENDER_H=1080 node render.js ../../agentmgt/ad-c.html cap-adCq 30   # and 1080x1920 → cap-adCv
+python3.13 mixany.py "$(…films.json adCq…)" ../../agentmgt/ad-c-square.mp4
+```
+
+Stage the vox directory **from scratch by walking the scene list** — this cut re-voiced 2, 5 and 6
+only, and the runner numbers every job's lines from 01, so `adCfix/01..03` are really scenes 2, 5 and
+6 and map back by hand. A shift cannot express that. `AD_HITS['C']` in `films-recruit.py` names its
+own punch words; a cue word that is not in the line exits before `films.json` is written.
+
+### Where the 31 comes from, and the ad and the page agreeing — 13 November 2026
+
+Asked in these words: *"how did you get the 31 we keep?"*, then *"so how we got so a bot of the data
+source so persons will not see we aremaking this up"*.
+
+**THE 31 IS THE BRANCH'S OWN FIGURE, NOT ONE COMPUTED HERE.** It came out of the four papers of 29
+October — the Three-Year Plan executive summary and the Production and Manpower Record 2014–2026 —
+which give 67% at one year and 31% at four against "about 16%". It went into the film and the ads on
+that authority and had never been checked against anything.
+
+**Checked now, and it is the conservative end of its own range.** Ninety-four agent Contacts on the
+branch's four units carrying a life licence date, measured from the earlier of licence and hire to
+the termination date, or to today while still on the books:
+
+| | cohort | still there | |
+|---|---|---|---|
+| 1 year | 84 | 67 | 80% |
+| **4 years** | **68** | **36** | **53%** |
+| 5 years | 65 | 30 | 46% |
+
+The gap to 31 is the **cohort, not the arithmetic**: everyone who ever sat on those units includes
+the 1993–2006 intake, all of whom passed four years. Narrowed to recent recruiting it lands on the
+published figure — 2016 onward 37%, **2017 onward 33%**, 2018 onward 36%. So every cut is at or above
+31, and 31 is the right one to publish: it is the figure in his own board papers, which is what an
+executive can be handed.
+
+**Ten records cannot be reconciled and are excluded from all of it** — two whose termination date is
+before their start date, eight off the books with no termination date at all. That is a real data job,
+not a rounding note: it is the difference between a number defensible line by line and one resting on
+exclusions nobody has seen. Names are in the session reply, never here.
+
+**The damaging fault was not a missing source — it was two numbers for one claim.** The ad said the
+industry keeps **14**; the page said **~15**, in four places. Somebody who watches the ad and taps
+through sees both, which is exactly what reads as invented. Settled on **14**, because it is the one
+with a traceable public citation (LIMRA and Finseca, *The Path to Improving Retention*, 2022, quoted
+verbatim in LIMRA's 2025 Annual Conference) where "~15% for agency systems built on recruiting the
+inexperienced" was a gloss with no source in the record. **A figure that appears in both an MP4 and
+the page it links to has to be the same figure, and the one to keep is the one that can be looked
+up.** The second chart's bars are on a 0–67 scale, so its width moved 22% → 21% with the number.
+
+**The method is published, under "See the figures, and how they are counted"**: the cohort, the
+exclusions, 53 across the whole roll, 33 across recent recruiting, and that the 31 on the page is the
+low end and is the one we print. Showing the working — including that our own data gives a better
+number than we claim — is worth more than any wording.
+
+**Ad C scene 6 carried no source at all**, where A and B both do. The two flat number cards became one
+0–100 track with its footnote under it. Deliberately **not** a hundred-square grid: on ad B that drew
+69 dark squares, which reads as a win to a practising advisor and as "two in three fail" to somebody
+deciding whether to leave a salaried job — and this post is aimed at both. Drawing only what is kept
+says the same thing without drawing anybody's failure.
+
+#### Two traps, and the first is invisible by design
+
+- **`var(--ease-out)` DOES NOT EXIST IN THIS BUILDER — the tokens are `--ease`, `--out` and `--pop`.**
+  An undefined custom property makes the whole `animation` shorthand invalid, so it is dropped
+  entirely and the element keeps its `transform: scaleX(0)` **for the life of the scene**. Both bars
+  rendered as empty grey tracks and nothing anywhere complained. It presents as a layout fault, not an
+  animation one. Check the token exists before using it in a shorthand; a typo in a longhand costs one
+  property, a typo in a shorthand costs all of them.
+- **A footnote cued off the last word of its own line lands after the line has finished.** `tat(6,
+  "thirty-one") + 1400` put the source on screen at 11,925ms of a 12,100ms scene — **175ms**, a flash
+  that looks like a cite and cannot be read, which is worse than no cite at all. Chart furniture is
+  cued off the word the chart ENTERS on, not the word it ends on: it now runs about five seconds.
+
+**And `.hb .tip` is not the chart's tip.** This page has two different components whose footnote is
+`.tip`, and the new `.meth` rule was written against the first one found by grep, so the method block
+rendered unstyled. Then `page.$('.chrt')` returned the *other* chart card, because it is first in
+document order — the recorded `page.$` lesson, twice in one hour. Scope from the element you mean:
+`document.querySelector('.meth').closest('.chrt')`.
+
+### The journey, not the transaction: ad C's scene 3 — 14 November 2026
+
+Asked for in these words: *"in the fact find, you can snap very quick what our digital fact find …
+it's built in-house in the branch … but it doesn't stop with the fact find. Our digital process …
+supports the agent from the very inception to the communication. So in that process, this is a flaw
+that most agents don't get support with … Clients need communication … Then it goes to the person to
+approve if this is what the agent said, and bring in market conduct guidelines. And for when the fact
+find is closed, what sends out to the client, sends out when the policy is received … So it's a
+journey, not a transaction … Agents want to see the screen."*
+
+**It cost five seconds, not fourteen, and that is the whole shape of the change.** He wants it short
+and he wants six more subjects in it. The way to have both was not to add scenes: scene 3 was rewritten
+from one line about the fact find into the whole journey, and **scene 6 gave up the "thirty-nine
+things, all digital" half** (12.1s → 6.4s), because the journey now *shows* six of those thirty-nine
+rather than counting them. The count survives as an eyebrow, which is free. 63.9s → 68.9s. **He then
+corrected the process itself the same afternoon — see the section below — and the ad is eight scenes
+and 75.2s; what follows describes the cut that produced it.**
+
+**Six of the branch's own screens, in the order a client meets them**, each landing on the word that
+names it — `CJ` in `build-recruitfilm.py`. The first three are cued to their own words; **the last
+three cascade, because the cascade is what "every stage after" means** — cued one per word they would
+pile into the closing two seconds.
+
+**Two screens are cropped, and both crops are the point rather than housekeeping:**
+
+- `ff/01-client-draft.jpg` ends on *"your fact find is now being reviewed by Akaash … **No action is
+  needed from you yet**"* — the order corrected on 29 October 2026, where the client approves FIRST and
+  a manager signs after. It was on screen for ten seconds in the live cut, and the new scene narrates
+  that order, so the screen would have contradicted the line. `agentmgt/img/ff-draft.jpg` stops above
+  that paragraph, on *"Is this right? … Nothing goes ahead until it is right"*, which is the correct
+  order in the client's own words.
+- `ff/08-manager-insights.jpg` carries an AGENTS table naming real colleagues beside ratios and TT$
+  figures, and a header reading *"Akaash · 60 fact finds in scope"*. `agentmgt/img/ff-branch.jpg` keeps
+  only the band between them — the four tiles and the adoption chart, no name at all. Same rule as
+  cropping `goals.jpg` above the per-agent rings: **crop the panel, don't trust the sample badge** — at
+  ad size that badge is four pixels tall.
+
+  **The line that rule actually draws**, applied across all six screens: a **comparative or negative**
+  figure beside a real name is out (Stephanie at 50%, Daniel at 58% — visible underperformance); a
+  **positive or neutral** one that is already published is fine. So Daniel's five stars on `ff/05`,
+  Elizabeth closing a task well on `jr/5` and Daniel's name on the draft all stay — each is a colleague
+  doing well, on sample data, already on `/wall/`, the careers page and `/howweworkvid/`. Asking "is
+  there a figure here anyone could read as a verdict on a named person?" settles it faster than
+  counting names.
+
+**Three of his asks are carried by text, not by voice, and cost nothing**: the eyebrow names the
+thirty-nine and the flaw ("The part most advisors never get"), two pills carry the sign-off and name
+**market conduct** outright, and the sample line says the screens were "built in this branch over
+fifteen years" — in-house, and the 2011 Salesforce date already verified for the full film. Changing
+text on a built scene needs only a rebuild; changing a spoken line costs a runner round trip, so look
+for the text answer first.
+
+**The one step with NO screen is the manager's sign-off**, and the line carries it with a pill instead.
+`ff/02-manager-signoff.jpg` contradicts itself on its face: its banner says *"Waiting on the client —
+they have not confirmed the draft yet. Agree is held until they do"* (correct) while its button reads
+*"Approve & sign — signs the fact find and releases it to the client"* (the old order). **That is a
+fact-find-analyzer fix, not a film one**, and a screen that argues with itself does not go in an MP4.
+
+**The page was running the old order too, and that is the ad-and-page rule again.** `#screens` on
+`agentmgt/index.html` ran draft → manager sign-off → client approves. The two tabs are swapped, the
+draft tab points at the cropped copy, and the sign-off caption now states the order ("Held until your
+client confirms the draft. Then a manager reads and signs it."). Re-run `tools/careers/sync.py` after.
+
+**What is still not in it**, all of it asked for: no money figure (the first-year numbers are still
+outstanding), no Guardian Group claim (no sourced figure in the record), and no client anything. "Fifteen
+years" is the 2011 Salesforce date already verified in the full film's section.
+
+#### The voice, and a note here that was wrong
+
+**"our fact find" → "our fact-fine" for the fourth time, and the recorded fix is what caused it.**
+The 29 October note says to end the clause on the word. Ending the *sentence* on it is exactly what
+breaks it; the clause that ships clean keeps going with a comma. Corrected in place at that note.
+
+**And the opening of a clip is rushed, not just a short opening clause.** With the line reordered so
+it began *"Most families have never seen their own numbers written down"*, that came back **"numbers
+run down"** — a phrase that has shipped clean twice when it sat second. Restoring the original opening
+sentence in front of it fixed it on the next take. The existing "a two-word opening clause gets
+slurred" note generalises: **give anything load-bearing a run-up**, the same lesson as the spoken URL.
+
+Three takes, and the third had every word right. "the industry keeps **14 and 100**" is the numerals
+artifact already accepted, and the chart on screen disambiguates it completely.
+
+#### A square is portrait, for the third time — in both directions
+
+The portrait block restacked the grid to two columns with square frames, which put stops 5 and 6 into
+the burned caption band and off the bottom of a 1080×1920. **Three columns is right in both frames**,
+so the portrait block only resizes and the square block undoes the two things a square cannot take
+(shorter 3/2 frames, tighter gaps) to lift the foot clear of the band. The rule stands and is easy to
+get backwards: whatever the portrait block *changes*, the square block must change back, not shrink.
+
+`adcheck.js` all clear in both frames; `scrtabs.js` drives the page's section **over HTTP, not
+`file://`** — the page's absolute `/wall/…` paths resolve to the filesystem root under `file://` and
+every image reads 0×0, which looks exactly like a broken page and is not.
+
+### The conversation comes before the laptop — 14 November 2026
+
+Asked for, two hours after the cut above, and it corrects the process itself rather than the film:
+*"most people have this mixed up … the agent meets with the client … The objective is to build a
+relationship, not to flash a screen. Even we are technical and digital, we believe in that human
+interaction … That should be done in the agent's quiet time, where time is taken to think about what
+the data that he's gathered, not typing in front of a client. That's never. Agents fail miserably and
+clients fall out … Ask the client the question, build the relationship, especially if it's a husband
+and a wife … Then in the quiet time, the agent prepares, types the document in our digital fact find …
+also placed on Guardian's approved form."* And: *"every 6 months, a check-in … And every year, a
+service review when they change age."*
+
+**So in an ad made of screens, scene 3 now has NO screen, and that is the argument.** Paper, questions,
+the time to listen, a husband and a wife who are never the same client, and a struck-through chip
+reading *"Typing in front of your client"*. The laptop appears only in the next scene, alone, in the
+agent's own time. **Do not "improve" that scene by putting a device in it** — its emptiness is the
+point, and the builder's comment says so.
+
+**The order, as he states it, end to end**: the meeting (paper, no screen) → quiet time, typed up onto
+Guardian's own approved form → the client reads the draft and agrees → **then** the manager reads,
+signs and comments → and then it never stops. The last step is the branch's own standing promise, so
+the cadence is in the branch's own words: a check-in every six months, a full review in the birthday
+month, for life.
+
+**That promotes `ff/02-manager-signoff.jpg` into the film**, which the cut above had deliberately kept
+out. It is safe here for a reason worth knowing: the manager now comes *after* the client, and a
+**top-anchored crop** of that screen shows the sign-off request and leaves its one self-contradicting
+line — the button reading *"releases it to the client"*, the pre-29-October order — off the frame. The
+banner that contradicts the button (*"Waiting on the client … Agree is held until they do"*) is the
+correct one. **Both sentences are still live in fact-find-analyzer**; that is a one-line product fix in
+another repository, not a film one.
+
+**The cadence is the foot, not a seventh screen.** There is no screenshot of a thing that happens every
+six months for the rest of someone's life, and inventing one would be the worst kind of mock-up.
+
+**Eight scenes, 75.2s.** He asks for compact and keeps adding subjects; this is the honest number, and
+it is still short for a pinned post. The builder's `assert len(TLINES) in (5, 7, 8)` is what caught the
+new line — keep that guard, it exists so a lines file out of step with the scene block stops the build.
+`CTA = len(TLINES)` renumbers the close by itself, which is why only the middle scenes needed shifting.
+
+**What he asked for and did NOT get, and why.** He asked to be framed as *"a top of the table FDRT
+member who have now dedicated their time to build and give back to the industry"*. **There is no source
+in this record for him personally holding Top of the Table.** The only Top of the Table reference tied
+to a person here is Akaash's two-time claim, which is itself marked unconfirmed and kept off the page
+until he or Akaash confirms it; the careers page's own MDRT / Court / Top of the Table card is about
+*the advisors you sit beside*, not about the Branch Manager. A professional credential in an MP4 at a
+public URL needs his word first. What did go in is **"Thirty-five years of doing it this way"** as the
+scene's eyebrow — his own figure from his own board papers, and a claim about *method*, not a title.
+
+**That reopened the 32-vs-35 question, and it is settled rather than ducked.** The careers page said
+*"Thirty-two years in"* (Salesforce gives his hire date as December 1993) while the ad now says
+thirty-five (his own figure, in the business, from the Three-Year Plan papers). Both are true and both
+are sourced, but one tap apart they read as two numbers for one man — the same ad-and-page fault as
+14-vs-15 the day before. The page now reconciles them explicitly: **"Thirty-two years at Guardian,
+thirty-five in the business."** It also gained the one sentence that carries the half of his framing
+that *is* sourced — that the tools on the page exist because he had them built here — since the whole
+of this repository is the evidence for it, and no credential is needed to say it.
+
+#### The near-miss: a chain backgrounded with `&` truncates itself
+
+`sfx … && usetrack … && nohup render &` backgrounds **the whole chain**, and `usetrack.py adCq adCv`
+was cut off after the first key: every other asset was 75.2s and **`bed-adCv.wav` was still 68.9s**,
+six seconds short, waiting for a mix ten minutes away. Caught by reading the four durations back rather
+than trusting that the command had run. Two rules: **rebuild the assets in the foreground, background
+only the render**, and **after rebuilding a timed asset, read its duration — not the exit code.** Same
+family as the stale `rendered.mp4`, one stage earlier in the chain.
+
+### Every recruiting film re-voiced in one session, and the fact find film — 15 November 2026
+
+Asked for in these words: *"Horrible with Andrew voice you are fucking it up!!!"*, then *"He is not he saying.
+Google app script like a fucking robot"*, then, shown five voices, *"I like Andrew and we need to fix it"*.
+
+**Keep Andrew Expressive (`en-US-AndrewMultilingualNeural`, +0%). Fix the script, not the voice.** He turned down
+plain Andrew on 21 October and Christopher on 15 November; the robotic quality came from what was read:
+- **a list of product names** ("Google Apps Script. Salesforce. An AI agent on WhatsApp.") — never voice one; the
+  names go on screen, the voice says "Google's own tools and Salesforce, with an AI assistant beside you";
+- **"You are", "There is", "it is"** — contractions throughout;
+- **"fourteen in a hundred"** comes back "14 and 100" — say "fourteen out of every hundred";
+- **the spoken address** mangles "Rampersad" — the close now says "Go to the link on your screen", and the
+  closing card (address, button, QR) cues **2.4 s before "Go"** (`max(300, tat(CTA,"Go") - 2400)`), so the QR is
+  up for several seconds rather than the last one;
+- **a line spliced in from another session sounds different** — re-voice a whole film in one job, never one line.
+
+Words this voice still gets wrong, each fixed by re-wording, never retried: "an insurer's invoice" → "and ensures"
+("every invoice from the insurer"); "works itself out" → "worse" ("does the arithmetic"); "adds a comment" →
+"add to comment"; "Court of the Table" → "quarter table" (only "He's qualified for the Court of the Table" read
+clean); "fact find with" → "fact fine" (carry on with a comma). "Rajiv" transcribes as "Rajeev": same sound.
+
+**The administrator film on the site is the 86-second board-look cut** (`tools/film/bwadmin-lines.json`, 12 lines,
+`build-boardfilm.py bwadmin`), not the 8-line engine cut in the scratchpad's `film/`. Its `film-f`/`film-v` are the
+older look and are not offered. After `importvox.py`, add the top-level ms `words` key before the build.
+
+**The fact find film** (`agentmgt/ad-f.html`, `ad-f-square.mp4`, `ad-f-story.mp4`, 86.7 s, `RECRUIT_AD=F`): *"the
+heart and soul of our operation ... show the draft ... the automatic motion of the needs analysis ... when the client
+approves ... when it goes back to the manager ... the automated reminder"*. Followed with **Rajiv by name, at the
+Branch Manager's word** (check with Rajiv before it is public); the client (Maya) and every figure are sample data.
+The screens are **cropped copies** in `agentmgt/img/ffr-*.jpg`, so no e-mail header names another advisor and nothing
+negative sits beside a real colleague's name. **His credentials are named here at his own word** (Court of the Table
+and Top of the Table, thirty-five years in the business): that reverses the 28 October "remove MDRT" for this film
+only, and the other recruiting films still carry no title.
+
+### Which ad brought them — 13 November 2026
+
+Asked for in these words: *"where is the link to click and when they scan what happens how is it profiled?"*
+
+**Only the conversation booking is ours to profile. The apply click is not.** `/careers/` has two doors and they
+behave completely differently, which is the whole of the answer:
+
+| | |
+|---|---|
+| **Book a confidential conversation** (`#talk`) | posts `q.quote` with `form: 'careers'` to the Service Questionnaire `/exec` → one row on **Quote Requests**, reference `QT-yyMMdd-nnn`, one e-mail to the **Branch Manager alone** (`to: 'manager'`, so `QUOTE.CC` is not copied: the person asking may be contracted elsewhere today), a receipt to them through `clientMail_`, and a card on **`/hiring/`** under Conversations (`HIRE.SEATS` carries `'careers'`) |
+| **Start the Selection** (`#apply`) | leaves the site for Guardian's TalentNest posting 215291. **Nothing about it reaches the branch** — the candidate creates an account in Guardian's own ATS and we learn of them when HR says so. No tag, no referrer and no reference survives that hop |
+
+**The tag rides the FIELDS array, so it needs no Apps Script paste.** Every post link carries `?from=<tag>`; the
+page maps it to readable words through `SRCW` and sends it as the **first** field, `k: 'src'`, label *Came from*.
+The fields table is what the Branch Manager's own e-mail prints and what the hiring board's card shows, so the
+source is the first line he reads on both. It goes on `page` too, for the sheet's own column. `ref_from` was
+already being sent by the page and **dropped by the backend** — `Quotes.gs` has no column for it — which is why the
+value travels as a field instead. The tags: `ad-a-li`, `ad-a-wa`, `ad-a-fb`, `ad-b-fb`, `ad-b-ig`, `ad-b-wa`,
+`film`, `careersvideo`, `qr`, `post`.
+
+**The tag is clamped on the page**, to `[a-z0-9-]` and 24 characters, because it is a URL parameter that ends up
+printed in an e-mail he reads.
+
+**An untagged visit says "Direct, or a QR scan" rather than arriving blank.** The QR baked into the four MP4s
+encodes `https://rickyrampersadbranch.com/careers/` with nothing after it, so **a scan cannot be told from a direct
+visit** — and tagging it would mean re-rendering all four ads. A blank field reads as a fault; the sentence reads
+as the fact it is.
+
+`srccheck.js` in the session scratchpad covers it (49 checks: the real page on a phone against a mocked backend,
+each tag, an untagged visit, a tag in capitals, a junk tag clamped, the three human answers still present, the
+`Page` value, the backend's own reference on screen, and that the QR carries no tag).
+
+### The leads do NOT come to them, and the experienced advisor has a door of their own — 14 November 2026
+
+Asked for in these words: *"a correction on the salesperson the leads don't not come to them as they do market
+surveys and acess their natural market they come into, what we do is ensure the leads does not run out"*, and then:
+*"on existing agents, they don't manage their book properly, they don't build it, they don't have the tools, the
+system to really help them grow. So you need to have that differentiation."*
+
+**Never write "the leads come to you", "leads from a board" as the pipeline, "not your phone contacts" or "a list of
+friends — not here" again.** A new advisor starts in their own market: the market survey maps it and scores it out of
+a hundred before they are contracted. What the branch promises is that it does not run dry — prospects who asked to
+be called, households matched with the file read, and a manager who sees a thinning week. That is also the stronger
+claim, because it lands on what LIMRA names as the cause of the second-year cliff (2025 MarketFacts: new agents
+"stop prospecting because they have not earned personal introductions to new people"), and LIMRA's own 2026
+catalogue teaches managers to help agents "expand their reach within their natural market" and "recognize signs of
+prospecting failure". The claim was on `/careers/` (four passages and the #leads heading), `/joinourbranch/` (title,
+share card, headline and five passages), `/joinourbranchvideo/`, the `/joinourbranch/` posters, the post copy in
+`AGENTMGT-SETUP.md` and `RECRUITING-SETUP.md`, and ad B's line 3, which was re-voiced and re-cut (43.5s now).
+
+**The experienced advisor's section is `/careers/#book`**: "A book is either looked after, or it leaks." It claims
+ONLY what reaches an advisor's whole book: the Premium Due Desk (whole dues extract, agent copied), their clients'
+work done daily and shown in their morning e-mail, the service desks, matched households and the fact find, with the
+branch's lapse rate (4.96% against 8.82% for the main branches, to 31 August) as the proof. **Not claimed, and not
+to be:** Match (never shown to an agent), the per-client read (it runs on the orphan books), and the six-month and
+birthday review (the `dailyServiceFollowUp` trigger is built and switched off). Nor "you'll keep what you move": after
+the September departures the branch cannot be seen inviting the same, and the Act's replacement rule applies — the
+section says instead that we will never ask anyone to move a client. The 4% named-beneficiary figure stays off the
+public page: the only books it was measured on are the departed agents', and nothing may characterise them.
+
+**Still saying it:** the `/joinourbranch/` film (`film-w/v/f.mp4`) opens "a list of your friends and good luck. That
+is not how it works here. Your leads come from a board." It is the cut series turned down on 6–7 November and
+`tools/film/beat/README.md` says not to rebuild that design, so it was left and flagged. The full 8:49 film's line 29
+still says it and needs a re-voice (its vox is gone with an old scratchpad, so all 33 lines go to the runner). Ad A
+never did; ad B, ad C (line 5) and the trailer (line 3) were re-voiced and re-cut the same day, and the re-cut also
+fixed the trailer's dead QR and its tall-cut door scene, whose third door ran into the caption band.
+
+**The captions spelled the spoken address**, "Go to Ricky Rampersad Branch dot com, slash careers.", on every
+recruiting cut, and dropped spaced em dashes, so ad C read "And then it never stops a check-in every six months".
+Both read as typos to the muted viewer the ads are for. `importvox.py`'s `caption_address()` writes the address as an
+address, and `repunct` keeps a spaced dash. **Splicing one line:** stage only that clip, renamed to its real index,
+run `importvox.py` with `--timing` to a scratch file, then merge that line's entry and `d` into the real timing
+file: run against the real one, it writes a timing file holding the single line.
+
+Three traps from doing it:
+- **`tools/adpages/build-adpages.py` is out of sync with two of its three pages and writes the inert beacon.** It
+  regresses `/underwritervideo/` (hand-changed for the Client Manager seat on 7 November) and `/buildwithusvideo/`,
+  and puts `RRB_VIEWS_URL` back in every page it writes. Run it, `git checkout` the pages you did not mean to change,
+  then `tools/wire-views.py <exec>` and `--check`. Edit `adpages.json` with string replacement: a `json.dump` round
+  trip reformats the whole file.
+- **The runner refused a line that had voiced cleanly before** (`NoAudioReceived` on ad B's old line 4, used as a
+  control). So a refusal is not always the text: send two wordings and a control in one job and take what comes back.
+- **A two-line burned caption climbs to about 77% of a square frame**, not the 84% the bottom-16% rule implies: that
+  rule is its baseline. A fourth row in ad B's scene 3 reached 82% and the last caption sat across it. Measure content
+  against 76% of the height.
+
 ## The renewal desk — general insurance, from last year to delivery
 
 `renewaldesk/` (staff), `myrenewal/` (the client) and `apps-script/GIRenewals.gs`, a sixth file in the Service
@@ -5590,7 +6301,10 @@ is separate and untouched.
   goes onto the renewal task's Chatter with the task's owner mentioned, and the person working it and the approvers are
   e-mailed. A yes taken on the phone is recorded on the desk with who, how and when. The client's page
   (`/myrenewal/`, `gcm.renCode` and `gcm.renIn`: a six-digit code, five tries, fifteen minutes, a six-hour sign-in; an
-  unknown address gets the same answer and no code) and a group's **Your renewals** tab (`gcm.renGroup`, its list bill and
+  unknown address gets the same answer and no code; one of our own addresses, the account the script runs as or a
+  `GIR_TEST_TO` address is told plainly that no letter has gone to it yet and where a practice letter goes, `girTester_`,
+  10 Nov 2026, after the branch manager tested with his own address and was told a code was on its way; `gcm.ping`
+  answers `renewals.build`) and a group's **Your renewals** tab (`gcm.renGroup`, its list bill and
   code, a name required) draw the same card, `myrenewal/renewal-card.js`. A group never sees a letter sent in test mode.
 - **Proceed to renew** (`girProceed_`, only on the client's yes and a read notice): a new `TRANSACTIONS__c` (the line's
   record type, the shell, account, contact, the renewal date, the holder as Owner), a `Risk_Details__c` per item copying
@@ -5599,6 +6313,123 @@ is separate and untouched.
   10:00. A field Salesforce refuses is left out and said (`gblSfwSave_`). The instruction goes from support@ to CRMS
   Renewals with CRMS SAL Support (personal motor and home) or CRMS Commercial, support@ and sales support copied; motor in
   Pawan's subject pattern ("Renewal Due -m/d/yyyy Policy #… - Vehicle # - … - Insured - …").
+- **A risk the client took off is not renewed, and a telephoned yes does not wipe what they said**
+  (10 November 2026). Two faults on one path, found on the question "when they confirm the value, only then is the
+  risk created with last year's details copied — is that correct?" It is, except that neither half honoured the
+  removals the client's own page had just been given the power to record.
+  - **`girProceed_` iterated every item**, so a vehicle the client had ticked off was renewed anyway, at last
+    year's figure. Everything now works off `keep` (the items with no entry in `answer.off`): the terms created,
+    the per-item-premium test, the billing record's `INSURANCE_PORTFOLIO__c` (the first item being **kept**, never
+    one taken off), the registrations in the motor subject line. Not creating a term IS how a risk leaves cover —
+    last year's term stays as the record of last year. The instruction tells Guardian General which to take off
+    cover and how many remain, each new term's `Asset_Description__c` names them, and the desk log records it.
+    Every risk taken off is refused outright: that is a cancellation, not a renewal.
+  - **`phoneYes` built a fresh `Client answer`**, so recording a yes on the telephone — the only way past the
+    `decision !== 'approve'` gate once a removal has turned the answer into `changes` — threw away the client's
+    own values, their removals and their words. It now carries `values`, `off` and the history forward and says
+    in the toast, the log and the Chatter what is still standing.
+  - **A removal is keyed `true`, never its label.** The first cut wrote `offIds[o.id] = o.label || ''`, and an
+    entry with no label is falsy, so the risk was quietly renewed. The test caught it; the code was wrong.
+  - `chk/proceed.js` in the session scratchpad covers it (43 checks, the real `girProceed_` and the real
+    `phoneYes` block in a VM, Salesforce and the mailer made of nothing).
+- **A motor notice comes in TWO layouts, and the second one read as an empty notice** (11 November 2026,
+  on the live desk: *"Still showing not on notice"* — Reconcile said 60 risks, **0 tie, 0 differ, 60 not on
+  notice**, and the notice total **TT$0.00**).
+  - Nothing was wrong with the fleet. `girread.js`'s `vehicles()` knew only the **private motor** layout,
+    which runs everything together and puts the premium **last**. A **commercial fleet** puts the premium on
+    the **description line** and the rest beneath it. The old pattern demanded the premium *after* `Reg#:`,
+    so on a fleet it matched nothing at all: the notice read as empty, and every one of our own risks
+    reported "not on notice" — which reads to a person as **the client's record being wrong when the fault
+    is entirely ours.** Same family as the Group Life seven-figure / ten-figure bill.
+  - The block is now cut into one segment per vehicle at the year that starts its description, and each
+    field is read wherever it falls. **The premium is the first UNLABELLED amount**: the labelled ones (sum
+    insured, windscreen, limit, excess) are stripped first, which lands on the description line's figure for
+    a fleet and on the trailing figure for a private motor — one rule, not two.
+  - **Three things on a real fleet that the old pattern could not survive**, each of which silently dropped
+    a vehicle: `Reg#:` **blank** (four trailers and plant items carry no registration — they are kept and
+    identified by chassis or engine); `Eng#:`/`Chassis#:` blank, where the value must never be allowed to be
+    the *label that follows it*; and **ten vehicles with no description at all** — the notice prints the year,
+    then the price, and the make and model are simply blank, so a year followed straight by the figure starts
+    a vehicle too and an item with no words to its name is kept.
+  - `Coverage:` is read with or without a space after the colon and stops at `HP:` as well, and is normalised
+    to **Third Party** or **Comprehensive**; anything else is kept as written rather than guessed at.
+  - **The proof is the notice checking itself:** on the real 63-vehicle fleet the reader now returns 63 items,
+    59 registrations, 4 blank, and the premiums add to **196,457.00 against the notice's own 196,457** — no
+    warnings. Before the fix it returned **nothing**.
+  - `chk/read.js` in the scratchpad covers it (32 checks, both layouts, invented registrations throughout,
+    and both again with the newlines removed — which is the shape `pdf.js` actually hands over, since
+    `GirRead.text()` joins rows with two spaces and emits none).
+- **The notice prints BEFORE tax; everything else here is AFTER it** (11 November 2026: *"the premiums are
+  tax exclusive and showed reflect the tax inclusive so ned to add the 6% to get the premiums on
+  salesfroce"*).
+  - **The notice says so itself**, at the foot: `Total Premium 196,457.00`, `Government Tax 11,787.50`,
+    `Total 208,244.50` — and that Total is the Renewal Amount. Every figure in the DETAILS column is
+    tax-exclusive. `Risk_Details__c` carries the same pair: `Premium_01_Cover_01__c` before tax,
+    `Total_Premiums_Gov_t_Inclusive__c` with it, and on the real fleet the two sum to 186,333.20 and
+    197,513.21 — 6% apart, to the cent, on every row.
+  - **So Salesforce was already right and the SCREEN was comparing unlike things.** `girRecon_` set our
+    inclusive figure (`x.total`) against their exclusive one (`n.premium`), so all sixty-odd rows
+    differed by the tax — which reads exactly like the no-match fault it looks like it is reporting.
+    Everything else in the product was already on the inclusive basis: the history and `lastPremium`
+    (`Total_Premiums_Gov_t_Inclusive__c`), the letter, the premium-rise insight, the client's page
+    ("this year, tax included"). The reconciliation was the one screen out of step.
+  - **`girProceed_` never wrote the inclusive field at all**, so a renewal the desk filed would have read
+    as a 6% fall on the year. It writes both now.
+  - **The rate comes from the notice, never from the code.** `taxItems` in `girread.js` reads it as
+    `tax ÷ premium`; `GIR_TAX.RATE`/`TAX_RATE` 6% is only the fallback for a notice that prints no
+    Government Tax line, and a notice at some other rate is followed **and** flagged.
+  - **The tax is APPORTIONED across the items, not rounded on each.** Guardian General's own per-item
+    rounding cannot be reproduced from the figures they print: on the 63-vehicle fleet, 6% rounded to
+    the nearest cent on each item gives 11,787.44 against their 11,787.50, and rounding up gives
+    11,787.54 — their internal premiums carry more decimals than the notice shows. Rounding each item
+    independently would leave every row a cent or two out, and on a screen built to compare our figure
+    against theirs, cents of noise on 63 rows is the same fault as no match. Largest remainder: each
+    item within a cent of the true rate (worst case measured, ¾ of a cent) and the items tie to the
+    notice's own Government Tax **exactly**, so the notice goes on checking itself.
+  - **A notice saved before this is grossed up** (`girIncl_`), so an old stored notice reconciles with no
+    re-read. A row of ours with no inclusive figure is compared **before** tax on both sides and says so,
+    rather than being grossed up: our own record is not a thing to guess at on a screen whose job is to
+    show what the record says.
+  - **Matched on the registration first, then the chassis or engine number.** A notice leaves `Reg#` blank
+    on plant and trailers carrying no plate — four of the sixty-three — and our record then holds the
+    chassis or serial in `Vehicle__c`. Reg-only matching left those unmatched on both sides at once,
+    which reads as seven risks gone astray when nothing has moved. Every registration is matched across
+    the whole notice before a chassis is tried, each match is one-to-one, and the row says which number
+    it matched on. A notice item with no registration is now **listed** rather than dropped: it was
+    skipped by `if (used[i] || !n.reg) return`, so the notice's own items no longer added to its total.
+  - **A figure against nothing is not a tie.** The state test read `ours && theirs && …`, so a risk the
+    notice charges for and our record carries no premium on came out as **Ties** — one live row on the
+    fleet the day before the renewal, waiting to be ticked.
+  - Measured on the real notice and the real rows: **51 tie, 5 differ, 2 ours, 7 theirs**, the notice
+    ties to itself at 208,244.50, where before every single row differed. `chk/tax.js` (56 checks) covers
+    it, `notice/real.js` runs it on the real pair (scratchpad only, client data).
+- **The cover the insured agrees, and comprehensive → third party** (11 November 2026: *"on the only
+  Comprehensive need to show the Assignee and the cover whats was last year and the proposed cover that has
+  to be agreed by the insured, make easy allow the choice of % from 5 to 25%"*, then *"ok 20% anything over
+  20 is a valuation needed"*).
+  - **On a comprehensive risk only**: the financier, last year's cover and the proposed cover side by side,
+    then the percentages that set it — **5, 10, 15, 20, 25, with 20 marked as the suggestion**. A third party
+    carries no figure of the client's own, so it is offered none of this, and neither is a property sum
+    insured offered the cover swap.
+  - **20% is both the suggestion and the limit.** A figure more than `VALUATION` (20) away from last year's,
+    **up or down**, says so on the card the moment it is chosen: *"Anything more than 20% needs a valuation."*
+    Exactly 20% does not — the rule is "more than". It is on the client's page rather than in somebody's head
+    at the desk so the client learns it while choosing, not after the letter has gone.
+  - **Moving to third party is a MOVE, never a removal.** The vehicle stays on the policy and a term **is**
+    created for it; what goes is the figure. `girThirdParty_` swaps only the cover word and keeps the class
+    the org uses in front of it (Private, Commercial), because that half is not ours to invent. `GIR_COPY`
+    brings last year's `Cover1__c`, `Windscreen__c`, `NCD__c` and cover type across, so all four are taken
+    **off** the body — leaving one would write a sum insured onto a term that insures nothing of theirs.
+  - **Taken off beats moved**, in the backend as well as the page: a risk ticked off is not renewed at all,
+    so a move ticked on the same risk counts for nothing.
+  - The answer carries `cover: {id: 'tp'}` beside `values` and `off`; only an id on the client's own stored
+    view counts, and only a risk that HAS a figure to give up. A move makes the answer a **change**, never a
+    plain approval, and writes the comment the page would otherwise insist on. Guardian General's instruction
+    gets its own block ("Please move these to third party at renewal"), as the removals do.
+  - `chk/tp.js` in the scratchpad covers it (44 checks: the swap, what the client may ask for, the term that
+    is actually created, and the card's percentages and valuation rule). Every registration in it is invented.
+  - **The test held the bug, again** — `card.html()` takes one renewal, not a list, so sixteen card checks
+    failed against a page that was right. Fifth time in this product: **check which side holds the bug.**
 - **The hourly run** (`girTick_`, from `gcmRefreshTick`, working days 8 to 17, once an hour): Guardian General's reply read
   from support@ (a Guardian address not ours, after the instruction); "ready for collection" moves the delivery to the
   next working day; no reply in 2 working days, a follow-up with the trail, every 2 working days, on the follow-up task's
@@ -5724,6 +6555,67 @@ about a second. The forms code is left as it was.
 **Needs, once:** Mail.ReadWrite (application) with admin consent on the Entra app, because a draft is changed, not
 sent. A 403 from Graph names it. The letter books themselves are client data and stay in Drive, never here.
 
+## One claims page, one address: claimstt.com forwards in — 13 November 2026
+
+Asked in these words, with the GoDaddy shell open: *"shall this point to my
+branch or when someone goes and clicks in my branch claims it routs to this
+site?"*
+
+**`rickyrampersadbranch.com/claims` is home. claimstt.com is a GoDaddy 301
+into it, Forward only.** The arrow points in, never out.
+
+**The binding reason is storage scope, not preference.** Both claims pages
+carry `localStorage.setItem(TOKEN_KEY, data.token)`, and `claims/index.html`
+also keeps a half-finished claim under `DRAFT_KEY`. **localStorage is per
+origin.** A second address for this page is two separate sign-in states for
+one person: a client who signed in on claimstt.com arrives at the branch
+address **signed out**, with nothing on screen to explain it, and their
+half-filled claim invisible. The staff desk splits identically. Nothing in the
+page can paper over it.
+
+So a second host for `claims/` was offered as a trade-off and **withdrawn as a
+fault**. `claims/netlify.toml` stays — inert on Pages, and what it is for is
+the day the whole site moves to Netlify — and its header says so, because a
+config file sitting in a folder reads as an endorsement of the thing it
+configures.
+
+The rest lines up behind it, and each piece is its own reason not to move home:
+
+- the homepage links `claims/` **six times, relatively**, plus the FAQ, the
+  footer, `404.html`, the `/claim` stub, `help868/`, and two branch-app tiles;
+- **every client e-mail, the staff notice and the Salesforce task body name
+  `rickyrampersadbranch.com/claims`** — and `Claims.gs` is pasted by hand, so
+  a half-done move leaves clients holding two addresses;
+- **HELP 868's prompt names it too**, at 9,988 of 10,000 characters, so
+  changing it means first finding room;
+- **a domain swap mid-journey is the shape of phishing**: a client who got a
+  letter from support@rickyrampersadbranch.com and is then sent to a domain
+  with no branch name in it cannot tell it is us, and the campaign's own rules
+  already ban "verify your details" wording for reading that way;
+- **the precedent, twice**: agentmgt.com asked the identical question and
+  forwards to `/careers/`.
+
+**Never "Forward with masking"**, which frames the page under the old address
+and breaks the six-digit sign-in, the uploads and the reference. `claims/`
+sets `X-Frame-Options: SAMEORIGIN` partly so it cannot work.
+
+**claimstt.com today serves a GoDaddy Website Builder shell** with none of the
+branch's content on it — Home / Contact / Services, `filler@godaddy.com` still
+showing as its sign-in placeholder, a "Claim Submission" item whose page is a
+404 — **and it is broken**: each page tried three times gave `200 200 000`,
+`000 200 000`, `000 200 000`. It fails about two requests in three. Unpublish
+that site before forwarding, or it keeps the DNS.
+
+**The page was made portable while this was settled, and that part is kept**:
+the two script tags are relative (resolving to the same files on the branch
+site) and the links off the page name the branch site, which is what a link
+labelled "Main site" should say from anywhere. **Those two scripts are not
+cosmetic** — `claim-checks.js` does the cover-term checks and
+`claim-forms.js` fills Guardian's own PDF — so a path that resolves to a
+wrong-but-existing file gives a page that looks perfect and silently cannot do
+either. Verified in a real browser on the live site at laptop and phone width
+by reading the APIs off `window`, never by a 200 on the file.
+
 ## The branch's own forms — no client link opens a JotForm
 
 `quote/`, `enrol/oas/`, `apply/xpress-life/`, the shared `forms/form.css`
@@ -5837,6 +6729,30 @@ fills in from your record", so nobody meets the sign-in by surprise.
   blank. A full-page screenshot caught it; the audit, which only tested with
   motion off, did not. Everything finishes inside half a second, and
   `@media print` forces the finished state.
+- **One table of what counts as answered, read by the gate, the rail and the
+  scroll alike.** Found on 14 November 2026 on `/buildwithus/`, reported as
+  *"sticking and not allowing it to click submit ... in red and not going
+  through"*: the gate wanted 10 characters in one box and the progress rail
+  counted it at one, so the page said **"18 of 18 answered · ready to send"**,
+  refused, restated the question the person had just answered, and **did not
+  move** — because the scroll asks the rail which field is empty and the rail
+  had no complaint. A badly formed phone or e-mail did the same. **A check
+  that returns only a sentence is a check that can refuse without moving**, so
+  each one now carries the name of its own field (`[field, message]`), and the
+  minimums and formats live in one `MIN`/`FMT` pair that everything reads. A
+  too-short answer is told it is too short rather than asked the question
+  again, and **the character counter states the minimum while they type** —
+  counting up to the *maximum* alone is what made a working refusal read as a
+  broken page. Every field with a minimum needs that counter row.
+  `/clientmanager/` had the same drift with a `querySelector('textarea')`
+  fallback, which sent people to the wrong question instead of freezing. The
+  full note is in `RECRUITING-SETUP.md` under the administrator;
+  `tests/e2e-recruit-forms.js` covers both (111 checks, nothing filed).
+- **`novalidate` stays on every branch form.** The browser's own validation
+  shows a bubble the page has no say over, and a `required` control inside a
+  collapsed or hidden section makes Chrome refuse the submit with a console
+  error and **no visible message at all** — the same "the button does nothing"
+  symptom from a different cause. The page's own gate is the only authority.
 - **A conditional field is hidden from everything**: out of the layout *and*
   `disabled`, so a stale answer can never travel with the form.
 - **A radio group's label is its `<legend class="q">`**, and it has to be
@@ -5854,6 +6770,70 @@ fills in from your record", so nobody meets the sign-in by surprise.
   forms** (petty cash, the gas log, licence renewals, the visitors log),
   already standing "each until it moves into the app". No link a *client*
   can reach opens a JotForm.
+
+### The hiring board — `hiring/`, 8 November 2026
+
+Asked for as *"anything further we can enhance for the ultimate
+experience"*. The answer was that the thing **receiving** the applications
+had become the weakest part: every one lands on the `Quote Requests` tab
+beside a client's property quote and an OAS enrolment, in the order it
+arrived, and is read in Gmail. `q.board` and `q.hire` in `Quotes.gs` read
+that tab and show the recruiting rows alone. **Service.gs already routes
+anything starting `q.` to `Quotes.gs`**, so the board needs no Service.gs
+change: it goes live with the paste he already owed.
+
+- **It opens for the Branch Manager, signed in as himself, and nobody
+  else — not the ABM, not staff, and NOT THE BRANCH CODE.** That is the
+  promise the three ad pages make in their own words: *"Nobody else in the
+  branch sees it, and nothing reaches your current employer."* A man
+  applying for the client manager's seat is employed somewhere today, and
+  the branch code is the wall's code, which whoever switches the wall on in
+  the morning has. The test is `tAs_`'s own shape — `user` (a real person,
+  not the bare code), not `viaBranch` (not the code with a name after it),
+  and `canTell`, which `tAs_` sets for `bm` alone and never for `abm`.
+  Signing in through the branch app satisfies it. **Do not widen this
+  without changing what the three pages promise.**
+- **"Not this time" sends the candidate nothing**, and that is deliberate.
+  The page told every applicant, above the form and again in their
+  confirmation, that silence inside two working days is the answer and
+  *"there will be no further letter"*. A rejection e-mail from the board
+  would contradict the branch's own written word to somebody who has
+  already understood it. Change the page first if that is ever to change.
+- **The promise clock is the point of the thing.** Two working days from
+  when it arrived, counted the way the branch counts them (through
+  `gblHolidays_` when GroupBilling.gs is in the project), with the day it
+  arrived counting once it is over. The board opens on the seat that has
+  somebody past it. Nothing else measures that promise.
+- **A new `Full` column holds every answer exactly as typed**, as JSON.
+  The `Answers` cell beside it stays what it always was — newlines
+  collapsed, each value cut at **600 characters** — because that cell is
+  what a person skims and what the e-mail prints. On a quote form 600 is
+  generous; on the three recruiting forms the written answers *are* the
+  decision and run to 800, so reading the board off that cell would show
+  less than the score was computed on. `quoteCols_` adds a missing header
+  to a tab that predates it, so rows already filed simply have no `Full`,
+  and the board falls back to `Answers` **and says on the card that those
+  answers are clipped** rather than passing them off as whole.
+- **The advisor seat is not on this board and the board says so.** Its
+  applications go to Guardian's own TalentNest posting; what reaches us
+  from `/joinourbranch/` and `/careers/#talk` is the conversation booking,
+  the `careers` form. An empty column would otherwise read as "nobody
+  applied".
+- **Nothing about a candidate is kept on the device.** Only the sign-in
+  goes in `localStorage` (`rrb-hire-code`, `rrb-hire-who`, which `sso.js`
+  fills from the branch app): no name, answers or e-mail, so a phone left
+  on a desk carries none of it and signing out leaves nothing.
+- **Every write finds its row by `Ref`, never by row number** — the tab is
+  sorted by hand often enough, and a stamp written to the wrong row is a
+  stamp on somebody else's application. Transition Send learned this on
+  30 September 2026.
+- The score is **never recomputed** here: the page that took the
+  application is the only place it is worked out, so the board can never
+  disagree with the e-mail about the same person.
+- `tests/test-hiring.js` covers it (119 checks: the backend in Node with
+  Sheets made of nothing — every role tried against the gate — then the
+  page in a browser on a laptop and a phone).
+
 ### The motion, added the same day
 
 Asked for as *"so review again enhance and more motion"*. What went in is
@@ -6918,6 +7898,129 @@ HELP 868 code and `tests/test-help868.js` fails if it ever does.
   in the session scratchpad, never in the repository.
 - Test: `tests/test-help868.js` (69 checks).
 
+### TWO systems wear the HELP 868 name, and only one of them is in this repo
+
+Checked end to end on 8 November 2026, because "is a Query Pal ticket logged?"
+cannot be answered from this file alone — and reading only `Help868.gs` leads
+to the wrong answer, which is the reason for this note.
+
+| | the agent side | the client side |
+|---|---|---|
+| code | `apps-script/Help868.gs`, routed from `Service.gs` | **not in this repository** |
+| who | an agent, verified by number **and** an e-mailed code | anyone on WhatsApp |
+| actions | `code`, `verify`, `pendings`, `case`, `increases`, `groups`, `enquiry` | one POST, from respond.io |
+| logs to | a **HELP868 Enquiries** tab, four categories, none of them claims | a **Query Pal** ticket, `RRB/2026/NNN/…` |
+| live? | **no** | **yes** |
+
+- **The agent side answers nothing today.** `?action=help868.ping` on the
+  Service Questionnaire `/exec` behaves exactly like a nonsense action — an
+  HTML page — while `gcm.ping` beside it answers JSON. So `Help868.gs` has
+  never been pasted into the live project. Its own gate (`HELP868_KEY`) is
+  moot until it is.
+- **The client side is live and has fired.** The published "HELP 868
+  Assistant." carries a `makeHttpRequest` action, *Log Query Pal ticket*, to
+  **Query Pal's own Apps Script** — a different deployment from every `/exec`
+  in this repository, which answers `RRB Query Pal logger is live.
+  v10.3-HARDENED`. Its shared key sits in that action's body in respond.io,
+  which is where it has to be; **it must never be copied into this
+  repository**, which is public and served.
+- **It logs a real ticket, with a real reference.** One client has been
+  through it (5 November 2026, run 118, still Open on the 8th). The run number
+  is assigned server-side, so a reference proves a row — the assistant is told
+  never to invent one, and to send a plain "noted, a team member will message
+  you" if the call returns none.
+- **55 query types across 10 categories**, each with its department and
+  turnaround, live in the assistant's instruction — Claims & Benefits, Health
+  & Medical and My Car & Home among them, which is how a claims tap on the
+  claims page becomes a ticket. (Counted from the prompt itself: 2, 3, 2, 6, 6,
+  12, 8, 6, 2, 8. An earlier note here said 52 across 11 from memory, which is
+  why the transcription check below counts rows rather than trusting a recall.)
+- **But every ticket goes to RR Branch Sales Support**, whatever its type: the
+  POST hard-codes that department, and the real one is named inside the
+  description as "Intended department: X". That is deliberate — a WhatsApp
+  message is from nobody verified and must not land straight on Guardian's
+  claims desk — and it is the difference between *a ticket is logged* and *it
+  reached the claims desk*. Do not "fix" it without being asked.
+- **After the ticket** the assistant writes five contact fields (`h868_ref`,
+  `h868_case`, `h868_opened`, `h868_email_given`, `h868_status`; all seven
+  exist, with `h868_rating` and `h868_handler`), adds an internal comment, and
+  assigns the conversation. On the one live ticket `h868_email_given` and the
+  assignee are both empty, so that tail is not reliably completing — worth
+  watching before the volume grows.
+- **The assistant read out the branch manager's own number** for an urgent
+  claim out of hours. It came off the claims page on 7 November at his word,
+  and a client taps "Ask us on WhatsApp" *because* it is gone. Changed on 8
+  November: both sentences now point at the claims form, which works at any
+  hour and files properly — see the HELP 868 contact-line note below.
+- **"Make a claim" on WhatsApp logged a ticket and filed no claim** — the one
+  place the two systems contradicted each other, fixed 8 November 2026. The tap
+  menu's *Make a claim* mapped to `Claims Life&Pension - Submission` (or *Health
+  claim* to `Claims Health - Submission`), and the receipt card came back with a
+  reference and a 3-working-day target while nothing had been collected: no date
+  of loss, no documents, no Guardian accident report form, no desk notice and no
+  `Claims_Revised__c` row. And the tap path proves it was never an oversight in
+  wording alone: pick a claim option → urgency → policy number → e-mail → hand
+  to the AI, with **no step anywhere that sends the form**.
+
+### A claim is a Claims Revised record. Everything else points at it.
+
+The one rule, decided 8 November 2026, after *"I don't want to have duplicate
+system. I'm in the process of cleaning up for one unified, not confusing
+experience."* Three systems, three jobs, and none of them is a copy of another:
+
+| | its one job | finished when |
+|---|---|---|
+| **Claims TT** (`claims/`) | **opens** a claim: the answers, the documents, Guardian's own form, the desk notice | the moment it is filed |
+| **`Claims_Revised__c`** | **is** the claim: Opened → Closed, Days Pending counting, head office sees it | the claim is settled |
+| **Query Pal** (WhatsApp) | **answers a question** about a claim | the question is answered |
+
+**The duplicate was real and it was in one place: Query Pal being used to log
+claims.** Measured that day — one closed Query Pal ticket, *"Death Claim
+Already Submitted"*, 43 comments, against the same client's `Claims_Revised__c`
+record **open at 137 days**; and a closed 2023 health ticket against health
+claims still open at 1,272 and 1,053 days. Five of Query Pal's 120 commented
+references are claim-shaped, three of them closed. **That is how a claim sits
+open for three and a half years without anyone noticing: the conversation gets
+closed and reads like the claim being closed.** Closing happens in
+`Claim_Status__c` and nowhere else.
+
+**The wording is the branch site's, everywhere.** Asked for in these words:
+*"the make a claim is consistent with claims.tt and the Ricky Rampersad branch
+with file a claim. So it needs to be consistent."* The site says **File a
+claim** in its nav, its FAQ, its footer and its tile ("File a Claim — Claims
+TT"), so WhatsApp says it too.
+
+**What changed in the live assistant** (`bundle.instruction`, 8 November 2026):
+a `# FILING A CLAIM` section — *"Filing any new claim: FIRST send \*File your
+claim: rickyrampersadbranch.com/claims\* — any hour, with your documents, and it
+gives a claim reference. Then log the ticket, whose reference is never a claim
+reference."*; the tap-menu bullet now ends *"(full name first; a new claim, the
+claims link first)"*, because the tap path is the live path and would otherwise
+contradict the rule; and both menus read **File a claim**. The ticket is still
+logged — a client who taps and never files would otherwise leave no trail — it
+is only never called a claim.
+
+**Two of the prompt's own sentences had to go to make room, and that is now the
+binding constraint: the prompt is at 9,988 of 10,000 characters.** The 3 November
+note here said 9,706; the 8 November contact-line edit grew it. So the next
+addition has to replace something, and anything written about this product has
+to measure before it drafts. What went: the duplicated *"An urgent claim can be
+filed any hour at…"* from `# WHAT YOU CAN SAY` (the new section carries it), and
+*"and our team has been alerted"* from the failed-request fallback, which the
+next sentence already promises.
+
+**The two tap buttons still read "Make or check a claim" and "Make a claim",
+and they are not to be changed through the API.** `update_workflow` is a **full
+replace** that needs the workflow stopped, and the live tap menu is **257
+steps**; its step schema is a subset of what `get_workflow` returns ("omitted
+keys get builder defaults"), so a round trip could silently change settings on
+the 255 steps nobody meant to touch — and a rollback through the same lossy
+schema would not restore them either. **A change that cannot be rolled back
+cleanly, on a live client-facing menu, for two words, is the wrong trade.**
+Change those two labels by hand in the respond.io Workflow Builder, which edits
+in place. The *behaviour* on the tap path is already right: the prompt's rule
+keys on "filing any new claim", not on what the button says.
+
 ## The claims intake — `claims/` and `apps-script/Claims.gs`
 
 The custom claims intake at rickyrampersadbranch.com/claims, with its own
@@ -7189,6 +8292,37 @@ about the department, not evidence of a shared inbox, and property stays blank.
 The question to put to the desk is narrow: which inbox a property first
 notification of loss should go to.
 
+**Life is `GLOC.IndividualLifeClaims@myguardiangroup.com`** (confirmed by the
+branch manager on 13 November 2026 — *"yes that is the life claims"*). It both
+sends and receives on the branch's own death and critical-illness claim
+threads, and it covers life and CI. `GLOC.AnnuityPaymentsQueries@` turned up in
+the same search and is **not** it: a payments queries desk, not a claims one.
+
+**On 8 November this note said no life claims desk existed in the record, and
+that was wrong.** The search terms were `lifeclaims`, `LifeClaimsTT` and
+`GLOCClaims`; all three came back empty, and the emptiness was recorded as a
+finding. None of them matches `GLOC.IndividualLifeClaims`, which was on those
+threads the whole time. **A search for a guess at the name proves nothing when
+it misses.** The method that has worked for all three confirmed desks is the
+same one: open a real claim thread of the branch's own and read the To line.
+Not the Log Book's Departments tab either, which gives a department's *name*
+and not its mailbox — and not Query Pal's routing labels ("Individual Life
+Claims", "GLOC Claims", "GGIL P&C Claims"), which are labels, not addresses.
+
+**Two lines still have no desk: property and pension.** Both for the same
+measured reason, which is a finding rather than an absence of looking: a
+property claim ran three months in mid-2026, and a death-and-pension claim ran
+from 10 to 25 August 2026 over some twenty messages, and **every message on
+both is addressed to named people** — not one department inbox in To or Cc
+anywhere on either. "Individual Life" is not pension, so the life desk is not
+assumed to cover it; and "P&C covers property too" is an argument about the
+department, not evidence of a shared inbox. So it is **two questions to
+Guardian**: whether `GGILPCClaims@` takes a property first notification of
+loss, and what inbox takes a pension one. Until each answer is in, that line
+stays off `DESK_OK` and the client gets the red "pass this on by hand" banner,
+which is the right failure: a claim nobody routed is better than a claim sent
+to a mailbox that may not be read.
+
 **The pattern behind that: a first notification goes to a department inbox,
 and everything after it goes to the representative assigned.** Both motor
 claims in the record show it — the notification to GGIL PC Claims and CRMS
@@ -7343,11 +8477,13 @@ Internal Notes.
   reference first because the point is that a reply finds the file. The **line**
   leads, not `submissionType_` alone, which gives "Collision" and says nothing
   about which desk; health keeps Guardian's own submission wording.
-- **Parents**: motor on the **Risk_Details__c term in force on the date of
-  loss** (not this year's), everything else on the `CLIENT_PORTFOLIO__c` policy
-  record, plus the client's Contact as `WhoId`. The policy register gained
-  `Contact Id` and `Portfolio Id` for it — `Portfolio` was the record's *name*,
-  which cannot be a parent.
+- **Parents**: the **`Claims_Revised__c` record itself** as `WhatId`, plus the
+  client's Contact as `WhoId`. Corrected 8 November 2026 — see the section below;
+  until then motor went on the **Risk_Details__c term in force on the date of
+  loss** and everything else on the `CLIENT_PORTFOLIO__c` policy record, and
+  those two are now the fall-back for a claim whose own record could not be
+  created. The policy register gained `Contact Id` and `Portfolio Id` for it —
+  `Portfolio` was the record's *name*, which cannot be a parent.
 - **A retry ladder, because what the org refuses must be dropped and never
   claimed as written** (`gblSfwSave_`'s rule): WhatId first (a custom object
   needs activities enabled), then `Task_Type__c` (`Claims/ Mat`, read off the
@@ -7374,12 +8510,44 @@ top-level function in the file** — a body only runs when it is called, so
 defining one that reaches for an unstubbed global is free.
 
 **Two real client registrations and a real plan number were in the published
-page**, as placeholders (`PDL 4471` in two places, `TQG0897-00014-00`) and in a
-comment. They are `TAA 1234` / `TBB 5678` / `TAA0001-00001-00` now. The leak
-check that found one of them only looked for `T**` plates and missed `PDL`; a
+page**, as placeholders in two places and in a comment. They are `TAA 1234` /
+`TBB 5678` / `TAA0001-00001-00` now. The leak check that found one of them only
+looked for `T**` plates and missed a prefix that does not start with a T; a
 Trinidad plate is **any** three letters and four digits. `claims/` is served
 from the repository root, so a placeholder is published — the same rule the
 films and these notes keep.
+
+**This note named them, which was the same leak one layer out — and so did two
+served scripts in `data/`** (5 November 2026). Writing a value into the record
+of its own removal republishes it: `CLAUDE.md` sits at the repository root, and
+so does `data/`, whose `netlify.toml` block is inert on Pages (see the hosting
+note). So the values are elided above, and
+`data/build-policy-register.py` and `data/build-vehicle-register.py` carry
+invented examples in their `norm_` docstrings instead of the real policy number
+and registration they were written with — that registration is on **seven**
+cover terms in Salesforce, so it is a live client's vehicle, not a stale one.
+Same correction as the two names elided from the `/branchmeet/` section on 30
+October. **Redact the value from the note that records the redaction, and grep
+every served directory, not only the page you were looking at.** The scan that
+finds these is `\b[A-Z]{3} ?[0-9]{4}\b` for a plate and `[A-Z]{3}[0-9]{4}-` for
+a policy number, run over `*.md`, `*.html`, `*.gs`, `*.js` **and `*.py`** — the
+pass that cleaned the page searched the first four and missed a docstring.
+
+**And the scan is for a client-shaped value, not for a plate, 8 November
+2026.** That pass printed a `TGM`-prefixed value in the group section above,
+and it was waved off as "not a plate" — which it is not. It is a real
+employer's **list bill**, carried by 66 policy records, and it had been on the
+open web in this file for weeks. It is the group's own sign-in *name* rather
+than its code, so nothing was exposed that its own employees do not read off
+every bill, but the standing rule is that an example in a note is published
+and must be invented. The lesson is the question to ask of a hit: not "is this
+a registration?" but **"is this a real anything?"** — one `COUNT(Id)` settles
+it, and one more proves the replacement is not real either. The shapes this
+branch actually uses, all worth scanning for:
+`\b(TPG|TGM) ?[0-9]{4}(-[0-9]{5}-[0-9]{2})?\b` for a list bill or a group
+policy, `\b[58][0-9]{9}\b` and `\b1000[0-9]{6}\b` for a policy number,
+`\b[A-Z]{3} ?[0-9]{4}\b` for a registration. `A#####` agent numbers are staff
+and are on the Central Bank's own public register, so they stay.
 
 Tests in the session scratchpad: `terms-test.js` (138 checks, Node, Salesforce
 and the sheet made up) and `terms-page.js` (32, Playwright, the real page
@@ -7535,6 +8703,793 @@ page, and changing it means re-checking every notice in Gmail first.
 two pages. Both now carry `[hidden]{display:none!important}` at the top of the
 sheet. Reveal with `el.hidden = false`, never `style.display`, or that
 `!important` wins instead.
+
+### HELP 868 on the claims page — ask us, never file here — 7 November 2026
+
+Asked for in these words: *"Also would like respond I.on what's app on this
+site can it be , also"* — respond.io / HELP 868 on the claims page too.
+
+Yes, and it is live rather than pending. Checked before building: the
+**"HELP 868 Assistant."** agent is `active: true`, and the **Tap Menu**
+workflow is **published** (updated 6 November), while the two that were
+restricted to the branch manager's own test number — "AI Pilot Test" and
+"Client Routing" — are both **stopped**. So a real client messaging
++1 868 435 7868 right now gets the welcome, the tap menu and the assistant.
+The 3 November note above ("one published test workflow") is superseded.
+
+**The whole rule of this change: it says ASK US, never FILE HERE.** The tap
+menu's own claims branch ("Make a claim / Check on a claim / Health claim /
+Motor or home claim") logs a Query Pal ticket for a person to answer — the
+assistant says in its own words that it cannot see the client's records. It
+does **not** file a claim and it cannot give a reference. Only the form on
+this page does that. A client who believes a WhatsApp message filed their
+claim has not filed one, and would find that out weeks later, which is the
+one failure this page exists to prevent.
+
+So every entry point is worded as a question:
+
+| | |
+|---|---|
+| the top bar | the glyph and **HELP 868**, with an `aria-label` because the words are `display:none` under 700px |
+| at the foot of the wizard | "Stuck on something, or would rather ask a person? **Ask us on WhatsApp**. A message reaches somebody at the branch — your claim is filed by this form." |
+| the FAQ lede | "If yours isn't here, **ask us on WhatsApp** — we would rather answer it than have you guess." |
+| the footer's "The branch" list | "HELP 868 on WhatsApp" |
+| the floating button | no words at all; its accessible name is *"Ask HELP 868 a question on WhatsApp. A message reaches a person — your claim is filed by the form on this page."* |
+
+All five prefill the same plain-ASCII line, `Hi HELP 868, I am on the branch
+claims page and need a hand.` — no apostrophe and no em dash, so nothing is
+mangled through `wa.me`'s query string. It tells whoever picks it up that this
+person is mid-form rather than starting a claim, and because typed text always
+reaches the assistant it is answered in context rather than running the menu's
+"Make a claim" branch. The same string is `CONFIG.WA_URL` for the three
+messages the script builds; the test fails if all six are not byte-identical.
+
+**The green is the button; the words take the page's accent.** WhatsApp's
+`#128c7e` measures **4.14:1** against white — over the **3:1** floor for a
+non-text graphic (WCAG 1.4.11) and under the **4.5:1** for text. So the green
+carries only an icon and an `aria-label`, exactly as the homepage's own button
+does, and every WhatsApp link written as words is `--teal-600` (7.38:1 on the
+ground, 13.11:1 on the navy footer). Never put words on the green.
+
+**One glyph, five uses: `#ic-wa` in the sprite.** It is the homepage's own
+mark — a stroke bubble with a filled handset — so the one floating button a
+client meets on both pages is visibly the same button. That makes it a brand
+mark rather than a UI icon, so it does not follow the house 24×24 / 2px-stroke
+set; what it does do is drive **both** halves from `currentColor` through
+presentation attributes on the paths, so one symbol reads white on the green
+and teal on paper, and it does not matter what an ancestor sets `fill` to.
+
+**The inline link is underlined.** It was written that way because it sat
+beside a `tel:` link in the same sentence, which the browser underlines — two
+links side by side, one underlined and one not, reads as a fault rather than
+as a choice. The `tel:` link has since gone (below) and the underline stays:
+it is a link in running prose, and prose is where an underline earns its keep.
+
+**The staff desk gets none of it**, and the test fails if one appears.
+HELP 868 is the client assistant; staff have the branch app. A client WhatsApp
+button on `claims/staff.html` would be a door pointing the wrong way.
+
+Measured after: 46 new checks, the existing 45-check audit still passing,
+16.7ms a frame over three passes, CLS 0.0012–0.0014, no sideways scroll at
+360/390/414, the button's own target 52px, and at all three phone widths it
+covers no control (checked with `elementsFromPoint`, not by eye).
+
+**Two test-side bugs, the recorded habit twice in one day.** The first cut
+measured every inline link against `document.body`'s background and failed the
+footer link at 1.06:1 — the footer sits on deep navy; it walks up for the first
+opaque background now. The second came with the check below that hands
+`renderTrack` a reply carrying a telephone number: rendering a result **adds a
+sixth WhatsApp link to the DOM**, which desynchronised the link list (captured
+before) from the background lookup (captured after) and failed the footer link
+again, this time at 1.13:1 against a track notice. A check that mutates the
+page runs on a page of its own, and colour and background are now read in one
+pass keyed by index. The page was right both times. **Check which side holds
+the bug before changing anything.**
+
+### His number comes off the claims page — 7 November 2026
+
+Asked for the same evening, in these words: *"No I don't want my number just
+the help868."* HELP 868 is the branch's own service line; **(868) 678-5921 is
+his**, and it was in the top bar of the claims page, beside the WhatsApp link
+at the foot of the wizard, and in the footer's "The branch" list.
+
+**It was in eight places, and four of them were not visible as a phone
+number.** Taking the three links out and calling it done would have left it on
+screen:
+
+- `CONFIG.AGENT_PHONE`, a constant in the page;
+- *"Claim tracking isn't connected yet — please call the branch on …"*, built
+  in script;
+- the same in the My-claims sign-in fallback;
+- **and the one that matters: `renderTrack` printed `d.agent.phone`, which the
+  BACKEND sends.** `Claims.gs` puts `agent: { name, phone }` in three replies,
+  so the live deployment — whatever was last pasted into it — could put his
+  number back on a page it had been taken off, and no change to this page's
+  markup would have stopped it.
+
+**So the page was fixed on the page's side, not the backend's.** It ignores
+`agent.phone` now. The live script is not in this repository's control and a
+paste is a human step; a page that cannot print the number whatever it is sent
+is the only version of this that stays true. `wa.js` hands `renderTrack` a
+reply carrying his number and fails if a digit of it reaches the screen.
+
+**What is left, and what replaced it:** five WhatsApp entry points (the table
+above), no `tel:` link except Police 999, Ambulance 811 and Fire 990, and
+`#ic-phone` deleted from the sprite — its one user was the number. Two lines
+that said *"call the branch"* with no number left to call became *"ask us on
+WhatsApp"*. The two in the wizard and the FAQ that say *"call us first"* about
+emergency work were **left alone**: they name no number, and a home that is
+unsafe is not a WhatsApp message to a line answered Monday to Friday.
+
+**The nav link gained an `aria-label` while it was being changed.** Under
+700px `.nav-tel span` is `display:none` and the glyph is `aria-hidden`, so the
+old link had no accessible name at all on every phone. The class keeps its
+name: the 44px-target rule and the hide-the-words rule both name `.nav-tel`,
+and renaming it buys nothing and breaks both.
+
+### HELP 868 is the one contact line — 8 November 2026
+
+Asked for in these words: *"need to only have help868 as the contact number."*
+That answers the question left open the night before, and it answers it the
+other way from the branch line I had offered.
+
+**`CLAIMS.AGENT_PHONE` is gone, not re-pointed.** It was in twelve places in
+`Claims.gs`, and a constant swap would have been wrong in nine of them,
+because **HELP 868 is a WhatsApp line and nobody answers voice on it** —
+*"Any question at all, call me on (868) 435-7868"* is a false sentence. So
+each one was reworded to *send us a message on*, and the key itself is gone,
+so nothing can quietly read it again.
+
+**`help868_(ref)` is the only way to render it**, and it holds three things in
+one place: the wording (*"HELP 868 on WhatsApp"*, the claims page's own words,
+never the number as link text, so nothing reads as a call), the number, and
+the prefilled message. Pass the claim reference and it rides in the prefill,
+so whoever picks the conversation up has the reference without asking.
+`help868Text_()` is the same thing in plain words, for the one reply the page
+prints as text rather than HTML. The signature carries the link *and* the
+number, because a client may want to save the contact.
+
+**Three of the twelve were the backend telling the page a contact**, which is
+how his number got onto the claims page in the first place. The page has
+ignored `d.agent.phone` since 7 November; the backend now sends **no contact
+at all** (`agent: { name }` only). The page has five HELP 868 entry points of
+its own and needs nothing from the server.
+
+**The HELP 868 page was telling clients to telephone him.**
+`help868/index.html` ended with *"Prefer a form? Quotes online · Call (868)
+678-5921"* — on the one page whose whole subject is the WhatsApp line. That is
+not a scope question, it is a page disagreeing with itself; the call link is
+now **File a claim**, a route that files the thing properly.
+
+**Still carrying it, and each needs a decision he has not made yet:** 58
+instances across 23 files, 13 of them `tel:` links a phone dials in one tap.
+**The branch site, 32 in 12 files**: the homepage (6, including
+**`"telephone"` in its JSON-LD**, which is what a search result offers to
+dial), `404.html`, `service/`, `your-policy/review.html`, the four renewal
+pages, two under `benefits/`, and `site.webmanifest`.
+**donthaveanagent.com, 18 in 6 files**, three of them `wa.me/18686785921` — a
+different brand with its own WhatsApp journey, and HELP 868's assistant knows
+nothing about the orphan flow, so swapping those would break a working path.
+**Apps Script, 8 in 5 files** (`Code.gs`, `Service.gs`, `Transition.gs`,
+`BranchEngine.gs`, `Staff.html`), each needing its own paste; `Transition.gs`
+is only `tBranchPhone_`'s fallback, since the orphan letters already carry the
+branch's own three lines. The homepage is the real decision in there: off the
+structured data, the branch publishes **no telephone number at all**.
+
+**The live WhatsApp assistant said it too, and that is changed.** Its prompt
+carried *"For an urgent claim outside those hours: call (868) 678-5921"* twice
+— in `# WHAT YOU CAN SAY` and in the fallback it sends when the ticket call
+returns no reference. Both now point at the claims form, which works at any
+hour and files properly, and the first adds *"Never give out a telephone
+number: HELP 868 on WhatsApp is the branch's only contact line"* so the
+assistant cannot volunteer one from elsewhere.
+
+**Three things about editing that prompt, each of which cost a run:**
+
+- **The ceiling is 10,000 characters and the prompt was at 9,706.** A first
+  edit came to 10,037 and the platform refused it outright (403), which is the
+  good failure — nothing changed. So a replacement has to be close in length
+  to what it replaces, not merely better worded; this one leaves 159 spare.
+- **`bundle.instruction` replaces only itself** — the four actions, the Query
+  Pal endpoint and its shared key are left alone — but **`knowledgeSourceIds`
+  is replaced on every update**, so omitting it would wipe them. This agent has
+  none, which is the only reason omitting it was safe.
+- **The whole prompt has to be re-sent, so it has to be transcribed.** Verify
+  the transcription by structure before sending, not by eye: 12 `#` sections,
+  10 `[headings]`, 55 query rows (2, 3, 2, 6, 6, 12, 8, 6, 2, 8), and the
+  distinctive characters — the en dash in *Statements – tax and csv*, the em
+  dash in *Urgent — client waiting*, `Claims Life&Pension` with no spaces,
+  `Change of Name-Life` with no space after the hyphen. Then diff the edited
+  copy against the transcription and read the two changed lines.
+
+`help868-mail.js` in the session scratchpad covers it (56 checks: the four
+client e-mails rendered rather than grepped, the signature, both helpers, the
+reference in every prefill, no `tel:` link, nothing that says *call me/us on*,
+and that the page and the e-mails offer the same number). It throws on the
+previous build, which is how I know it exercises the new code.
+
+Measured after: 69 checks in `wa.js` (46 before this change), the 45-check
+audit, `claims-visible` 44, `signedin-page` 69, `terms-page` 32, `staff-page`
+24, all passing; 16.7ms a frame over three passes, CLS 0.001.
+
+### What the JotForms asked, and what the revised intake kept — 8 November 2026
+
+Asked for in these words: *"I believe the claims on claims TT was routed
+through jot forms, and we have since deactivated these forms. The spreadsheet is
+still there. So you can model from the forms … See the process, more or less,
+and what we've revised … So we don't duplicate and we are consistent with our
+processes."*
+
+**He is right, and there were FOUR claim forms, not one.** Read out of the
+branch's own mailbox rather than from JotForm, which is the method worth keeping:
+**a JotForm notification e-mail lists every question and its answer**, so the
+whole form is recoverable from `from:noreply@jotform.com` long after the form is
+switched off. The client-facing autoresponder carries only the thank-you; it is
+the *owner* notification ("We have received your response for …", or an approval
+mail) that carries the field table.
+
+| form | id | shape |
+|---|---|---|
+| **Claim - Motor** | `212164658692059` | 39 questions; e-mail verification code; a **JotForm Approval** gate, so a human approved before the client got their copy; **two drawn signatures** (driver and insured); a **Drawing Board** sketch; Guardian's own accident-report questions (direction of travel both vehicles, speed, road surface, anti-theft in operation, occupants, witnesses, who was at fault, did they admit responsibility) |
+| **PROPERTY CLAIM FORM** | `223064468090051` | Guardian's numbered Q2–Q7; an **itemised schedule of loss** (Item # · Description · Purchase Date · Est. Value at Loss Date · Est. Value of Salvage · Net Amount Claimed); other insurances on the same property; losses in the last 5 years; signature **plus company stamp** |
+| **Claim Health E Form** | `230135714666051` | short, and its substance was a four-point **Form Checklist**: signed the form? · **have 90 days passed?** · receipts included? · referral letter? Promised **10 working days** and pointed at a portal |
+| **Employer's Notice Of A Claim Made by An Employee**, GG-CEL-CWC-CLM-07 10 | — | workers' compensation, employer-facing. Employer and business activities; the employee's job titles and both addresses; right or left handed; alive or deceased, dependants; Q1–Q8 (date, how it happened with a guided prompt, nature of injury, on location by instruction, supervised, first aid, medical facility, in or out patient, how notice was received); Total Wages |
+
+**The spreadsheet he means is JotForm Tables** — a form's own submission table,
+which survives the form being deactivated. **The JotForm connector needs
+authorising from his claude.ai connector settings before it can be read; Claude
+cannot start that flow.** Nothing was lost by that here, because the e-mails are
+the better record anyway.
+
+**The two `Untitled` tabs on the Claims TT sheet are NOT a JotForm import.**
+Both are header-only and empty: `Submitted · Ref · Type · Status · Status Date ·
+Client Name · Email · Phone · Policy · Vehicle Reg · Vehicle · Loss Date ·
+Location · Description · Damage · Police Station · Matched Client · PDF Link ·
+Docs Link · Docs Count · Follow-ups · Last Follow-up · Note` — an abandoned
+design from the sheet's creation on 6 August 2026. There is nothing in them to
+migrate.
+
+**What carried over, deliberately:** the e-mail verification code (now the
+six-digit sign-in), the 90-day health question (now **computed** from the loss
+date, so a client cannot answer it wrong), the **ten working days**
+(`REVIEW_WORKING_DAYS`, the same promise the old health form made), the portal
+(now claim tracking on the client's own sign-in), and the human gate (the old
+JotForm Approval; now the branch's own staff desk plus the Salesforce task).
+
+**What the revised route does that the forms could not:** five lines behind one
+door; it knows the client, so the loss is judged against the cover **in force on
+the day** (one row per vehicle per term); it fills **Guardian's own** PDF rather
+than a JotForm one; the documents **travel with the e-mail** (the old health
+form's own footer read *"Because the total size is more than 5MB the uploads are
+not attached"*); auto-chase at 3/7/14/21/30 days and desk nudges at 10/25/45; a
+`Claims_Revised__c` ledger row and one `Claims/ Mat` task per claim; a closing
+survey. And the required-whole-or-refused rule: the 13 August 2026 JotForm motor
+claim arrived with the insured **and** the date of accident both blank.
+
+**Five things the old forms asked and the revised one does not. Do not add any
+of them without being asked — each was a choice, not an omission:**
+
+- **No workers' compensation / employer's notice line at all.** Zero hits for
+  *employee*, *workmen* or *compensation* in `claims/index.html` and
+  `Claims.gs`. GG-CEL-CWC-CLM-07 has no successor, and the group product keeps
+  claims off a group's page by design (`GCM_PRIVATE`), so **an employer with an
+  injured employee has no door today**. This is the one real gap, and it is on
+  the group side.
+- **No itemised schedule of loss on property** — one *Estimated value of the
+  loss* box where Guardian's form has the six-column table. A burglary or
+  all-risks claim essentially *is* that table.
+- **No signature, by design.** The page says so in as many words, and the
+  printed form carries *"Declared true and complete online on <stamp>"*. The old
+  motor form took two and the property form took one plus a company stamp. The
+  motor-quote product already has a signature pad on Guardian's own PDFs
+  (`trimSig`), so the capability is one product over.
+- **No accident sketch**, where the old motor form had its Drawing Board and
+  Guardian's accident report form has a sketch box we leave blank.
+- **Only the motor form is filled.** `claims/forms/` holds
+  `gg-motor-accident-report.pdf` alone; health asks for the client's own signed
+  form as an upload, and property and workers' comp are not reproduced.
+
+**Three turnaround numbers, and two of them are the same thing said twice.**
+The old health form promised **10 working days**; the revised route keeps it
+(`REVIEW_WORKING_DAYS`) and says first contact is *usually within one working
+day of filing*. Query Pal's own table gives **3 days** for `Claims Health -
+Submission` and `Claims Life&Pension - Submission`. That is a *ticket*
+turnaround, not a claim turnaround — but a client who taps **Make a claim** on
+WhatsApp is told three days and a client who files on the page is told ten. See
+the two-systems note above: the WhatsApp tap logs a Query Pal ticket and files
+no claim, and that is the one place the two routes contradict each other.
+
+### The claim record named, and the task on it — 8 November 2026
+
+Asked in these words: *"It is the claims revised, not the claims maturity … So
+a claims revised is opened depending on the motor claim and the current year, so
+we could know it's a claim open this year and the task is more or less opened on
+it. So is this done? Does it need to revise? Because it needs to be consistent
+across all platforms."*
+
+Mostly done, and **two things were genuinely inconsistent.** Both were invisible
+from outside, which is why the ping now reports them.
+
+#### `Name` is plain text, so Salesforce generates nothing
+
+Every one of the 645 claim records the branch has made carries
+`CLAIM -YYYY-MM-NNN` — and the describe says `Name` is **`type: string`,
+length 80, label "Claims Revised Name"**: a plain Text field, **not an
+auto-number.** A continuously-running sequence that never resets by year
+(449 in Nov 2022, 508 in Jun 2023, 625 in Jan 2026, 645 in Nov 2026) looks
+exactly like an auto-number with the display format `CLAIM -{YYYY}-{MM}-{0}`,
+which is why it was worth checking rather than assuming: assume auto-number and
+you never set it, and the record lands **nameless** among 645 that are named.
+Nameless is how a claim stops being findable.
+
+**The year and month are the point**, which is what he was saying: the branch
+reads the name to see a claim was opened this year. They come from **today**, at
+creation — confirmed against the live data, where the oldest open claim is named
+for March 2025 and carries a `Date_Claim_Submitted__c` in May 2023, so the name
+tracks when the record was made, not when the claim came in.
+
+`sfClaimName_` reads the newest record's number and adds one. The sequence is
+monotonic with `CreatedDate` across all 21 of this year's records, so that is
+the next one. **If it cannot be read, Name is left unset and the log says a
+person must name it** — a nameless record is visible in a list view and
+fixable, where a wrongly numbered one silently corrupts a sequence the branch
+counts on. Two claims in the same moment would collide; at ~21 claims a year
+that is not worth a lock around a Salesforce round trip on a page a client is
+waiting on, and `Name` is not unique, so a collision is cosmetic.
+
+#### The task goes on the claim record, not the policy and not the vehicle
+
+**All 27 of the branch's own claim tasks have `WhatId` on the
+`Claims_Revised__c` record**, and `Task` is a child of that object by `WhatId`
+on the describe, so activities are enabled on it. Ours put a motor claim's task
+on the **vehicle** (the `Risk_Details__c` term) and every other claim's on the
+**policy record** — which is what "the task is more or less opened on it" was
+asking about. `claimsId` was already being passed into `sfClaimTask_` and used
+only for a line in the Description; now it is the first parent in the retry
+ladder, with the policy or vehicle kept one rung down for a claim whose own
+record could not be created (a missing master-detail parent): a task on the
+policy still reaches a person, where no task reaches nobody.
+
+**And that Description line named the wrong object** — `Claims__c`, which the
+branch abandoned in 2016. It now carries the **name**, because a person
+searches Salesforce for `CLAIM -2026-11-646`, never for a record id.
+
+`Task_Type__c` **`Claims/ Mat`** is right and is now pinned by a test so it is
+not "corrected" away: 24 of those 27 tasks carry it. "Claims revised, not claims
+maturity" is about the **object**, not the task type — two different fields, and
+the live data settles it.
+
+#### The ratios are in the Google Sheet because Salesforce has never held them
+
+He said the claims and the ratios are in a Google Sheet, and he is right. Why:
+of **599** `Claims_Revised__c` records, `Submitted_Charges__c` is filled on 235,
+**`Claims_Paid__c` on 1, and `Date_Closed__c` on 1.** A loss ratio cannot be
+computed in Salesforce at all. The sheet that holds it is **"Claims "** in his
+Drive (modified 7 November 2026): 633 rows of group health, one per claim —
+Claim #, Service Date, Patient Name, Status (PAID / PAYMENT PENDING / NIL
+PAYMENT), Charge, Patient Responsibility, Deductible, Paid, GROUP NAME. That is
+the same shape `gblClaims_`/`gblExperience_` reads out of Guardian's claims
+summary PDF for the group billing, at line level instead of monthly.
+
+**It holds patient names beside health claim amounts**, which is the most
+sensitive data in the whole operation, and it is in a personal Drive. It is his
+to move; `GCM_PRIVATE`'s rule ("never a member's health or a claim" reaches a
+group's page) is why none of it may be wired into anything client-facing.
+
+**"Claims Revised Status"** (2023) is the other half: the tracker sales support
+kept by hand — Days Pending, Agent, Policy #, Record Type, Claims revised name,
+Contact, Account, Claim Type, Date, Claim Ref No., Client portfolio, Claim
+status, NOTES. It is where the convention is written down, and it is 4 Closed
+against 7 Opened with 82 to 270 days pending, which is the same problem as
+today's.
+
+#### The close-out he is clamping down on, measured
+
+`Claim_Status__c` has **exactly two values, Opened and Closed**, so the
+discipline has one field to land in and nowhere to hide. On 8 November 2026,
+**36 claims read Opened** — 31 of them Health:
+
+| open for | claims |
+|---|---|
+| 1,000 days or more | 2 |
+| 700–999 | 4 |
+| 365–699 | 11 |
+| 180–364 | 9 |
+| 60–179 | 7 |
+| under 60 | 3 |
+
+**Seventeen have been open more than a year.** The oldest is 1,272 days, a
+health claim submitted in May 2023. Of the claims opened since January 2024,
+36 read Opened against 77 Closed, the open ones 415 days old on average.
+`Days_Pending__c` and `Days_Claim_O_S__c` compute themselves, so the list is
+one sort away in Salesforce.
+
+#### Three fields it now fills that nobody was filling
+
+`Claims_Revis__c` (the Account, off the Contact — filled on every record the
+branch makes, and neither register carries it, so it is one small read inside
+its own try), `Service_Date__c` and `Submitted_Charges__c`. The last one is half
+the ratio, so a claim filed this way is the first that can be measured in
+Salesforce at all.
+
+`Claim_Reference__c` keeps our own `CLM-` reference. It is not Guardian's claim
+number in practice: the live values read "Precert", "$700", "03102026PB 0044"
+and null — a free-text scratch field.
+
+**Never written**: `Policy__c`, `Record_Type__c`, `Client_Mobile__c`,
+`Owners_Name__c`, `Agent_Name__c`, `Agent_Email__c`,
+`Claims_Officer_First_Name__c`, `Gloc_Claims_Portal__c` — all **formula**
+fields, and the tell is that the describe reports every one of them as
+`length: 1300`, which is what a text formula reports. `Days_Pending__c` and
+`Days_Claim_O_S__c` compute themselves. `Vehiclee__c` is a dead duplicate.
+
+#### Two fixture gaps, each of which read as a fault in the code
+
+Sixth and seventh in this product. The harness's `fmtDate` had no `yyyy-MM`
+pattern and fell through to `toISOString()`, which would have named a claim
+`CLAIM -2026-11-08T...-646`; and a claim fixture with no `extra._policy` made
+the "assessed against the cover of" note legitimately not appear. **Fix the
+harness, not the code.**
+
+And three assertions in `terms-test.js` failed because they asserted the state
+this change deliberately replaced — the task on the cover term, and `Claims__c`
+in the body. That is the test's bug, for the third time here: **check which side
+holds the bug before changing anything.**
+
+`revised-test.js` in the session scratchpad covers it (58 checks; 19 of them
+fail on the build it replaces, which is how I know it exercises the change).
+609 Node checks across ten suites, none failing.
+
+#### Still true: it is built and has never run
+
+Salesforce is **not connected** on the claims project (`SF_DOMAIN`,
+`SF_CLIENT_ID`, `SF_CLIENT_SECRET` unset) and **test mode is on**, so not one
+claim record or task has ever been written. `?action=ping` now answers
+`writes.claimNaming` and `writes.taskParent` beside `claimObject`, because a
+task on the policy and a task on the claim record look identical from outside
+until somebody opens one.
+
+### Right colours, wrong site — 7 November 2026
+
+Asked in these words: *"the claims is the same old site I did some changes on
+rickyrampersadbranch and should you now do a overhaul?"*
+
+He was right, and the premise was worth checking before agreeing: the homepage
+has had **no** look change since the 5 November repaint (only the HELP 868
+button and the view counter), and the repaint itself **is** on `main`. So this
+was not a missing merge and not homepage drift.
+
+**The 5 November work was a token-aliasing job, and the token block said so
+out loud:** *"the old token names still carry the accent, so every rule that
+already referenced them keeps working"*. `--violet`, `--lime`, `--gold` and
+`--copper` were all pointed at one teal. Every colour then measured correctly
+against the homepage — `#faf9f2`, `#00728d`, `#0d3f5e`, identical — and the
+page still read as another company's. **Matching the palette is not matching
+the site.** What actually said "different site", in order of loudness:
+
+- **the display face.** It loaded **Newsreader**, a didone-ish serif, set at
+  weight 300 with an italic, while the homepage and all five quote forms load
+  **Inter Tight**. Warm cream + serif display + one accent is also the named
+  machine-generated tell recorded for agentmgt;
+- **the lockup**: "Claims TT / Ricky Rampersad Branch" — a different brand in
+  the top left from the one the client just left. So did the tab, the footer
+  heading and the sign-off;
+- **an empty hero half** where the homepage carries the hovering shield and
+  every quote form carries the orbit stage;
+- **a blocking font link**, the only served client page still with one.
+
+**It is not an overhaul, and that distinction is the whole answer.** The flow
+underneath — five steps, the cover-term checks, the sign-in, the uploads, the
+Guardian form fill — is 582 Node checks and 169 browser checks of work. The
+house rule earned twice already applies: **change the thing that was named and
+keep the rest.** Nothing below the skin was touched.
+
+**The hero stage: five chips, one ring, 72° apart.** No pairs and no cycling,
+so every line of business is on screen whether motion is allowed or not — the
+agentmgt rule, and it is why this ring needs no static-spread fallback. The
+centre is `/site-mark.svg` itself and the five icons are the page's own
+sprite; nothing is redrawn. The whole stage is `aria-hidden`, which is only
+safe because the lede names all five lines in prose immediately beside it.
+
+**The rings and the dot mesh are divs, not SVG, deliberately.** Both recorded
+SVG traps apply here and a `border-radius` has neither: an absolutely
+positioned SVG at `width:100%` inside a grid sized by `aspect-ratio` has no
+percentage basis to resolve against, and `svg:not([width])` outranks a bare
+class. The stage's own width must be definite — `min(…, 100%)` inside an
+`auto` track is circular — so the column is `minmax(0,.92fr)`.
+
+**A grotesque at a serif's display weight reads thin and wide.** Swapping the
+face without swapping the weights is the trap: 300/400 became 700, and the
+tracking went to the homepage's own −.032em. An `<em>` becomes upright and
+takes the accent, as "Protecting your **family**" does there — a synthesised
+oblique of Inter Tight is not an italic and looks like a fault.
+
+**The specificity trap caught the same change twice in one session.** The
+`.assur` three-column override was written beside the stage CSS, which sits
+*above* the base `.assur` rule. Both are (0,1,0), source order decides, and it
+silently did nothing — a 1024px laptop kept showing two stats on one row and
+one on the next. **A rule that overrides another has to come after it.**
+
+**The most expensive thing on the page was already there.** Measured by
+switching one thing off at a time rather than guessing: the hero's own
+`heroDrift` cost **23.4ms a frame against 16.9 with it off** — more than the
+entire new stage. It animates `transform: translate3d(…) scale(…)` on a
+1590×840 layer of three radial gradients, and **animating a scale
+re-rasterises the layer every frame**. A constant scale plus `will-change`
+got it to 20ms; what fixed it was composition, not optimisation — **one
+ambient motion per hero.** From 62rem the ring is the movement and the drift
+is off; below 62rem the stage is hidden, so the drift is what keeps the hero
+alive and it stays. Now 16.7ms over three passes, CLS 0.0014.
+
+**Three test-side bugs, none in the page**, which is the recorded habit of
+checking which side holds the bug: `.logo span` returns the first matching
+element in document order, which is the `aria-hidden` badge, so the lockup
+read `""`; `/serif$/` matches `sans-serif`; and `.steps-strip` is the "do
+these four things first" band, not the five-step wizard (`.wizard .progress
+.pstep`).
+
+The staff desk got the same two faces and the same lockup shape, so one
+product is not set in two typefaces. Its own flow was not touched.
+
+Measured after: 45 checks, no sideways scroll at 360/375/390/414/768/1024/
+1280/1366/1536/1920 **by attempting the scroll and reading `scrollX`**, every
+new colour over its floor (hero 10.53:1, the accent 5.25:1, chip labels
+10.53:1), 16.7ms a frame over three passes, CLS 0.0014, nothing animating and
+nothing invisible with motion off, and all 582 Node and 169 browser checks of
+the existing suites still passing.
+
+### The signed-in client's vehicles, and the claim record — 6 November 2026
+
+Asked for in these words: *"i am an existing client and it needs to put in my
+vehicle details when i log in as an existing client so i did state its pulling
+in all the vehicles on the risk object and if its a claim it will create a
+claim on the claim object releated to the risk etc."*
+
+Half of it was built against an endpoint that did not exist, and the other half
+was writing to an object the branch abandoned in 2016.
+
+#### The page called an action the backend never had
+
+`claims/index.html` has called `action: "myProfile"` since it was written.
+`doPost`'s switch had `myClaims` and no `myProfile`, so it answered *Unknown
+action*, `whoLoad()` caught it and returned `false`, and **a signed-in client
+saw nothing at all** — no welcome, no claims, no policies, no vehicles. The
+whole signed-in half of the page was dead and looked like a sign-in problem.
+
+It is invisible from outside because the failure is a silent `catch`. The same
+shape as the gate faults of 29 October: **a fallback that fires on error tells
+you nothing about which error.** `?action=ping` now answers `profile: true`
+and the register counts, so "does signing in do anything?" is answerable from
+a browser.
+
+`apiMyProfile_` returns the client's contact, their open and closed claims, and
+one card per policy — every vehicle from the Vehicle Register (which since
+5 November is **one row per vehicle per term, straight off `Risk_Details__c`**),
+each carrying all its terms, plus their non-motor policies. Tapping a card
+fills the claim in. **`chooseProfilePolicy` had to set `coverTerms` from the
+card**: `applyPrefill` copies `POLICY_FACTS` and never the terms, so a vehicle
+chosen from the profile would otherwise be judged on its newest term alone —
+the exact bug the per-term register was built to kill, reintroduced by the
+other door.
+
+**A client is never sent the Contact id, the Risk id or the portfolio id.**
+They live in the register for the write-back's sake and are stripped here, as
+`vehicleTermList_` already strips them.
+
+**`registerRowsFor_` matches as `claimsForIdentity_` does** — an e-mail
+exactly, a mobile on its last seven digits — then widens by **Contact id**, so
+a second car recorded under a work address still comes back once one row
+matched. A stranger's vehicle never does.
+
+#### Claims__c is dead; the live object is Claims_Revised__c
+
+Measured on the org, 6 November 2026:
+
+| | records | 2026 | last used |
+|---|---|---|---|
+| `Claims__c` | 3,509 | **1** | ~2016 (994 in 2015) |
+| `Claims_Revised__c` | 573 | **21** | continuously since 2019 |
+
+`sfLogClaim_` was writing `Claims__c`. A ledger row on the dead object is a row
+nobody opens — and `GIRenewals.gs` already reads `Claims_Revised__c` for a
+client's claims history, so the two halves of this repository disagreed about
+where a claim lives.
+
+**It would also have failed outright.** It set `Policy__c`, which is a
+**Formula (Text)** field on *both* objects. Salesforce rejects a write to a
+formula field, so the first real insert would have thrown. It had never fired
+because Salesforce is not connected and test mode skips it — a bug sitting
+behind two switches, which is the kind that ships.
+
+#### The vehicle or the transaction? Neither — they meet at the policy record
+
+Asked in those words on 6 November 2026. The **describe** is the authority
+here, not a field list: `Claims_Revised__c` has exactly five lookups —
+`Contact__c` (master-detail, **required**), `CLIENT_PORTFOLIO__c`
+(master-detail, **required**), `Claims_Officer__c` (a Contact),
+`Claims_Revis__c` (an Account) and `Requirement__c`. **No `Risk_Details__c`
+and no `TRANSACTIONS__c`**, and its only custom child is
+`Requirement_Claims__c`. All 25 of the most recent records agree: every one
+hangs off a `CLIENT_PORTFOLIO__c` whose record type is the line (MOTOR, HEALTH,
+HEALTH (GROUP), PROPERTY, LIFE) plus the client's Contact.
+
+**But the claim and the vehicle do meet, one hop apart, at the policy record.**
+`Risk_Details__c` — the vehicle — has **two required parents of its own**:
+`TRANSACTIONS__c` (the billing record) and `Client_Portfolio_Look_Up__c` (the
+policy record). The claim's own required parent is that same policy record. So
+"related to the risk" is already true without a new field: a claim written on
+the client's MOTOR policy record sits on the same parent as every vehicle term
+of that policy.
+
+That is why the vehicle register now carries **`Portfolio Id`**, read off the
+vehicle's own `Client_Portfolio_Look_Up__c`, and why **`sfClaimParents_` takes
+the matched term's policy record first** on a motor claim.
+
+**It is not a convenience, and this is the part that bites.** The policy
+register is built `WHERE POLICY__c != null`, and **one of the branch's only two
+motor claims hangs off a MOTOR policy record with a null policy number** — so
+that client is in no policy register at all, and `sfPortfolioIds_` has no
+number to ask by either. Before the vehicle carried its own policy record, that
+claim would have found no parent and been skipped. Taking it off the vehicle
+also lands the claim on the right **year**: the policy register is keyed on the
+policy number, which changes between terms while the vehicle does not.
+
+**`CLAIMS.SF_CLAIM.RISK_FIELD` is now `''`, deliberately.** The describe proves
+no such field exists, so sending one is a guaranteed failed insert on *every*
+claim — two Salesforce calls instead of one on a page a client is waiting on,
+and a Salesforce error in the log on every single claim, which is exactly the
+noise that hides a real one. Set it the day an admin adds the lookup; the
+attempt-and-drop (`gblSfwSave_`'s rule) still covers it if the org refuses.
+Meanwhile the vehicle is the **plate with no separator** in `Vehicle__c`
+(Text(7)) — the form `normKey_` and `norm_reg` produce — and the term and the
+`Risk_Details__c` id are named in `Notes__c`.
+
+**The term's policy record is read off the same row as its `Risk Id`**, not
+through `TERM_FIELDS`. A term's other fields take the *last* row's value while
+its Risk Id takes the *first* (the duplicate-term tie-break); if the policy
+record followed `TERM_FIELDS` a duplicate pair could parent the claim on one
+record while it names another in `Notes__c`.
+
+**Both parents are master-detail, so both are required**: there is no filing a
+claim record with a policy number alone. With either missing the claim is
+**skipped with a note saying why**, never thrown: the claim is filed, the desk
+has it, and a person can put it right. `sfPortfolioIds_` is the last resort and
+asks for exactly the two ids — `sfFindPortfolio_` next door selects neither,
+because it exists to prefill a form and a client is never shown an id.
+
+**`Claim_Type__c` is a picklist**: Health, Motor, Property, Life, Critical
+Illness, Accidental Death, Maturity, Other. `Claim_Status__c` is **Opened or
+Closed, nothing else**. Counted in use: Health 183, Motor 35, Property 14, Life
+3, Critical Illness 1, Other 1, and 362 with none — several PROPERTY-record-type
+claims are typed "Health" by hand, which is data entry rather than a missing
+value. Pension has no value of its own and takes Other.
+
+**`Vehiclee__c` is a dead duplicate field** — null on every record the branch
+has ever made. Never write to it.
+
+**`FieldDefinition` is not queryable on this org** (`INVALID_OPERATION`), so a
+field question is answered with `getObjectSchema` plus a live sample, never with
+a SOQL metadata query.
+
+#### Three traps, two of them mine
+
+- **`vehicleForClaim_` returns `{row, terms, matched}`, not a row.** Reading it
+  as a row gives `undefined` for every field and says nothing about it, so the
+  Contact id and the Risk id were both quietly empty. Caught by a test that
+  asserted the Risk id rather than just that the insert happened.
+- **I wrote three real client registrations into `Claims.gs`**, as examples in
+  the comment documenting the plate convention — in a file served from the
+  repository root. The leak checks in `terms-test.js` and `health-test.js`
+  failed and that is the only reason it did not ship. Same mistake as 5
+  November, one day later, in the note explaining the convention rather than in
+  the code. **Examples in a comment are published; invent them.**
+- **An incomplete test fixture reads exactly like a backend fault.**
+  `renderMyClaims` threw on a claim shape missing `type`/`filedOn`/`documents`,
+  `acctLoad` caught it and `acctSignOut(true)` cleared the token — so the
+  browser test looked like "the token is not being set". Check which side holds
+  the bug: it was the fixture, for the third time in this product.
+
+- **A test that asserts the state a change deliberately replaced fails, and
+  that is the test's bug.** Turning `RISK_FIELD` off broke two assertions ("it
+  tried with the lookup, then without") that were correct the day before. Same
+  as `desk-test`'s "motor has no desk" the day motor got one. Rewrite them to
+  the new contract and keep the old one under a block that *sets* the field, so
+  the attempt-and-drop stays covered for the day it is added.
+- **A missing method on a fake sheet reads as a backend fault.** The ping's
+  single-cell check reported `unknown` because `profile-test.js`'s fake
+  `getRange` had `getValues` and no `getValue`. Fourth fixture fault in this
+  product; fix the harness, not the code.
+
+Tests in the session scratchpad: `profile-test.js` (70, Node, Salesforce and
+the sheet made of nothing — every term, no ids leaked, the right object, the
+formula field never written, one insert and not a failed one plus a retry, the
+parent off the vehicle term and not this year's, a motor policy the policy
+register has never seen, the lookup attempted and dropped the day it exists, a
+claim with no parent skipped), `terms-test.js` (145, which now covers the
+`Portfolio Id` per term and that a duplicate's never wins) and
+`signedin-page.js` (69, Playwright on a laptop and a phone: sign in, both
+vehicles and the health policy on screen, tapping the car fills chassis and
+permit, all three terms travel with it, a loss in an earlier year judged on
+that year). **582 Node checks across twelve suites and 169 browser checks
+across four, none failing.**
+
+**`?action=ping` reports `registers.vehiclePortfolioIds`** — `yes`, `not synced
+yet`, `column missing` or `register empty` — so whether the register carries the
+policy-record id is answerable from a browser. `not synced yet` means re-run
+**Sync registers from Salesforce now** or a motor claim may find no parent. It
+is two cheap reads (the header and one row) on purpose: the endpoint needs no
+sign-in and must not invite a heavy scan.
+
+### A branch system is OWNED by the Workspace, not shared with it — 7 November 2026
+
+Asked for in these words: *"the work code claims is on my personal and would
+like to move to workspace"*. The Claims TT sheet ("CLAIMSTT — Claims Tracker",
+made 6 August 2026) is owned by the personal Gmail, and the same move has been
+made once before, for the motor quote on 21 October. The sentence recorded then
+is the whole of it and it is worth repeating here: **the sheet must be owned by
+support@, not shared with it.** An editor can run the script, and then Deploy
+refuses with *"You do not have permission to perform this action"* — which
+reads as a Google fault and is not. The fix is **File → Make a copy while
+signed in as support@ alone**.
+
+**Two reasons, and the second is the one that bites later.** A personal Google
+account allows about a hundred mail recipients a day, and every claim copies
+three addresses — the exact ceiling that made `MailRelay.gs` necessary for the
+tracker, where the afternoon's close-outs simply stopped going out. And every
+claim document lives in that account's Drive, so if the account is ever lost
+there is no admin anywhere who can recover a client's claim file.
+
+**What a copy does NOT carry, which is the step that gets missed:**
+
+| | |
+|---|---|
+| **Script Properties** | none of them. `SF_DOMAIN` / `SF_CLIENT_ID` / `SF_CLIENT_SECRET` (the **Connect Salesforce** menu item prompts for all three, so property names are never typed), `TEST_MODE`, `CLAIMS_TASK_OWNER`, `CLAIMS_TESTERS`. |
+| **Triggers** | none. `setupClaims` reinstalls `sweepAbandonedParts` and `claimsFollowUp`; **Connect Salesforce** installs `salesforceNightlySync`. |
+| **The deployment** | a new project means a new `/exec`, held in **two** files that must change together: `claims/index.html` and `claims/staff.html`. |
+| **The documents** | they stay in the old Drive, and the copied rows' links point at files the new owner cannot open. |
+
+**Two properties must deliberately NOT be carried.** `CLAIMS_ROOT_ID` points
+at a folder in the old Drive — it happens to be self-healing (`rootFolder_`
+tries the id, fails, and makes a fresh folder) but leaving it out is cleaner;
+and `CLAIM_SURVEY_SECRET` only signs feedback links, of which none is
+outstanding.
+
+**A fresh copy is LIVE, because no `TEST_MODE` property means live.** So the
+first thing done on a copy, before anything is deployed, is to turn test mode
+on. The menu does it and works today — every one of the three test claims'
+six e-mails carries `[TEST]` and "nothing was sent to the real recipients",
+so Guardian's health and motor desks got nothing — but the menu only exists
+once `onOpen` has run. `testModeOn_`'s trailing underscore makes it private to
+Apps Script and keeps it out of the editor's Run list, so on a fresh copy there
+was a window with no way to do it at all; `turnTestModeOn` and
+`turnTestModeOff` are reachable either way and the menu points at them now.
+
+**Two things change under the new owner, from one line of code.** `testInbox_`
+and `claimsTester_` both trust `Session.getEffectiveUser()`, so test-mode mail
+goes to support@ rather than the personal Gmail (set `TEST_INBOX` to keep it),
+and the personal Gmail **stops being a trusted tester** — which decides
+whether a sign-in code reaches you in test mode and whether the client door
+answers you plainly or with "if we have that on file".
+`Ricky.Rampersad@myguardiangroup.com` is on `MAIL_CC` and stays trusted.
+
+**`?action=ping` reports `runsAs` and `onWorkspace`**, so whether the move took
+is answerable from a browser. A bound script keeps its own `/exec`, so a moved
+project and an un-moved one are otherwise identical from outside — the failure
+this product has already paid for twice. Three answers: the branch domain;
+`gmail.com`, still on the personal account; and `""`, meaning the deployment is
+not *Execute as: Me* and nothing can be stored at all. **The domain only, never
+the address** — that endpoint needs no sign-in, support@ is published all over
+this repository and a personal address is not, and `ping-test.js` fails if the
+local part ever appears in the answer.
+
+**And the harness was thin again, for the fifth time in this product.**
+`claims-sandbox.js` stubbed `Session` with `getScriptTimeZone` alone, so
+`getEffectiveUser` threw, `testInbox_()` threw with it, and `runsAs` read `""`
+in every suite — a code fault's exact signature. It carries the account now, as
+`OWNER`, defaulting to the Workspace so every suite runs in the state the
+project is moving to, and a test sets it to see the old one. All 570 earlier
+checks still pass with the realistic stub, so nothing had been passing *because*
+of the throw.
 
 ## Standing rules
 
@@ -7911,6 +9866,7 @@ sheet. Reveal with `el.hidden = false`, never `style.display`, or that
 - **The managers' screen (29 Oct 2026, 2026-10-29f).** Ricky, 6:45am, on Akaash: "remove the agent's performance ... look at grouping so he can see ... chatter on the fly ... If there is no task open, he has the ability to open it ... see that timeline from agents, staff, and managers as the day goes by"; 2:10pm "i want to see the sample ... send me mines" (`tests/e2e-managers.js` draws his with a sample day). **`wdUnit_(sid, day)`** (cached `WD_UNIT.TTL` 180 s): `unitBook_` (now with `Agent__c` as `aid`) grouped by agent, the manager first then by name (never by count), pendings first then overdue in each, `o` who has it, `stale` days untouched; the unit's agents with nothing open listed; totals open, late, pend, closedToday; `timeline`: today's FeedItems and FeedComments on those tasks (`postWhoAll_`; the chase and the tracker's follow-ups out, ACTION REQUIRED and MOVED kept), who, role (agent, sales support, BMA, Unit Manager, Branch Manager), on which task, for which agent, newest first, `WD_UNIT.TL`. No performance figure. **`wdUnitAct_`** (act `unit`, managers only): `open` (notes, playbook), `note` / `close` (`umPostOrClose_`: headed `unitRole_` · name, the owner mentioned by `mgrPost_`; close needs a real note and never while the client wants an agent), `draft` (`umReplyDraft_`, pulled out of `umDraft_`; `claudeFor_`), `new` (a task for an agent: `WD_UNIT.OWNER` desk by type, Pendings Azariah, premium dues Sasha, servicing and new applications Elizabeth, else Kamla, or the desk he picks; `Agent__c` from the unit's tasks, a past task or a single Contact; his note first; logged), `plan` (`UM_CHECKS` numbers, `mgrWrite_`, signs him in, `umCopy_` for a unit manager). **Model:** `wdUnitModel_(m, sid, day)` for Akaash (`workdayModel_`) and for him (`workdayLeadModel_`, his Post-to `m.desks` kept; `m.newDesks`): `unit`, `unitLabel` (The branch / Your unit), `checks`, `utypes`, `unitEve`. **Page:** `unitCard` (agents as `<details>`, tasks drawn when opened: `unitFill`), `umCardHtml` (Draft my reply with Firmer / Shorter / Kinder, Post comment, Close for <agent>), `unitNewForm` (type picks the desk), `timelineCard` (tap: `unitGo` opens the agent and the task), `checksCard`; `goTo` knows unit, timeline, mychecks and `t=` a unit task; the update bar counts new notes. **E-mails:** `sendUnitManagerMorning_` and `sendUnitManagerProgress_` open `workGoUrl_(sid, 'unit')` (each task `go=unit&t=`), `wdMgrOldLine_` the old page below; the evening account (`umeve`) stays its page, linked from the numbers card. Tests: `tests/test-managers-workday.js`, `tests/e2e-managers.js`.
 - **Every agent, live (2 Nov 2026, 2026-10-29g).** Ricky, 6:42am: "the agents are not supposed to more or less be in draft now ... I presented last Friday and let the agents know from today. Their check-ins have been sent." **`AGENT_LIVE_FROM`** `2026-11-02`: from that day `agentMode_()` is `live` with no `AGENT_DAY` set (a leftover `preview` too); `AGENT_DAY = pilot` goes back to the five, `off` stops it, `live` stays live. No more [Preview] samples; an agent who had only a sample (`agp_`) that morning gets their own mail in the window. **`agentModeSet_()`** keeps the old meaning for `ffMode_`, so the fact-find chase does not start with this (its own `FF_CHASE`). **`agentPeople_`**: nobody on the wall's `wallLeft_()` list (Kerwyn, Gary and their units; Felicia stays) is an agent here even if Active on the Skill Bank, and the manager copy is only an Active Unit Manager not on that list (else `agentManagerEmail_` falls back: Akaash's unit, then the Branch Manager). Also from Felicia's sample: the morning e-mail says "due today" only for what is (the rest "due Tue 3 Nov"), and on a phone with Reduce motion on the agent tiles and the coach's lines show at once (they only appeared by animating in). From his 5:36am copy of Felicia's: `agByClient_` (each client once, "2 policies"), fact finds named from the record's Name and an interview saved twice counted once. **Copies (7:17am: "Akash gets his agents and I get my agents. Support is not copied at all, only the BMA"):** `agentCopies_(a)` = the direct manager (`agentManagerEmail_`, else the Branch Manager) and Kamla (`agentBmaEmail_`), on the morning, midday and 5:30 e-mails and the fact-find chase; the projection / close-off copy goes to the manager with `agentBma_` copied; sales support (`DAYSTART_CC_DEFAULT`) is on none of the agents' mail; the agents read "your manager and Mrs Dookran". Tests: `tests/test-agents-live.js`, `tests/e2e-agent-workday.js` (Reduce motion); `tests/test-managers-workday.js` now holds its clock.
 - **The agent's coach (2 Nov 2026, 2026-10-29h).** Ricky, 7:11–7:43am: the agent's first screen is their goal and what to do, from the sources; the month just gone with a reason; fact finds and the ask; the orphans; what should settle; what the branch is chasing; plan, midday, close-off; "think like an international sales manager ... different persons work differently ... don't make it too AI". **Switch:** `AGENT_COACH = live` (Script property) shows it to every agent and sends the coach's e-mails; unset, only a manager's view (`agViewAs_`: Branch Manager and BMA any agent, a Unit Manager his own; `as=` on My day; "See X's day" on the unit card; saves refused; "Send me X's morning e-mail" = `agCoachMailSample_`). **Data:** `agMonths_` (picked up by month from `CLIENT_PORTFOLIO__c` + `Policy_Increases__c` via `agPicked_`, cached 30 min; the month's goal `agMonthGoal_` = the quarter's API on the plan by the days, as the goal page counts; usual and best month in the twelve before FY27), `goalFor_` now carries `q` and `income`, `agAttendance_` (plans on Agent Day, quiet/streak counted from the agent's live date, usual close-off %), `agFFCases_` (FactFind360 `FFRevised` by header, open cases with chase counts, cached), `agOrphans_` (Household Assignments and Client Responses: clients, households, oldest, notes logged and sorted by `AG_COACH.NOTES`, call-backs waiting), `agPendings_` (the pending register by `iPendState_`/`iPendReason_` into settle / one step / stuck / underwriting, with the Salesforce Pendings task and its last note), `agCalls_`, `agSuggest_` (the week on the goal plan as a day). **`agCoach_`**: help, quiet, onpace, pipeline, prospect, service, start, each a title, note, one thing first and a manager's line in fixed words; the personal touch from their check-in win / in-the-way, streak, best month or title goal; the manager hears when the goal is 2× last year or more. **Acts:** `agplan` asks the month's reason on the first `AG_COACH.REVIEW_DAYS` working days (`agMonthSave_`, Agent Day Kind `month`, copied to manager + Kamla); `agmid` (Kind `mid`, "Need help" tells the manager); `agff` (`ffReplySave_`). **E-mails:** `agentMorningMail2_` (note first, then goal, fact finds, orphans, pendings, the branch, calls; gold `AGM_GOLD`, not MAIL.gold's cyan), `agCoachLine_` on top of midday and 5:30. **Page:** `agentNative2` (`cxHero`, `cxCheckin` with `cxReview` and steppers, `cxMid`, `cxGoal`, `cxFF`, `cxOrphans`, `cxPend`, `cxCalls`). Tests: `tests/test-agent-coach.js` (Felicia's real production by month), `tests/e2e-agent-coach.js`.
+- **Wednesday: what each agent brings, and the development plan, onto the meeting builder (10 Nov 2026, 2026-11-10a in Meetings.gs, 2026-11-10a in KPI.gs).** Ricky: "everything comes towards a meeting ... persons commit to what's working and a case that they're going to actually share, or some idea for the branch meeting or skill set ... and also identifying the training and development plan in terms of building into the meeting what we're observing". The morning coach's read is kept once a day (`wedNoteRead_`, Agent Day kind `obs`). `WED.READS` turns it into the ask (onpace and service: a case; pipeline: a case; prospect: a question; quiet and help: help) and into a development area with a training point. The morning brief's meeting line is `wedMailCard_`, My day has the card `cxWed` (act `agwed`, `wedSave_`, Agent Day kind `wed`, Item the meeting date), the 5:30 e-mail one line, and the close-off feedback's "idea for Wednesday" with words is saved as an idea. `wedBridge_` signs each call (`MEET_URL`, `MEET_BRIDGE_KEY`, the mail relay's HMAC) to `apiBridge_` in Meetings.gs, which lands it as a contribution brought in beforehand under What worked for me / Training / Open floor (help: staff only), upserted by `Topics` tag `tracker:<agent>.<date>.<kind>`. `wedTick_` (first thing in the 6pm roll-up run, once a day) sends what waited and writes the week's observations (`wedObserve_`) as one staff-only note under Training; the managers' 6pm e-mail carries the same block. Ping: `has.meetBridge`; the meeting builder's ping `bridge`. Test: `tests/test-wed-bridge.js` (both projects joined through a fake UrlFetchApp).
 - **Wall Intelligence, the new wall (20 Oct 2026, 2026-10-20g).** Ricky: "the wall needs to be redesigned with a lot of animation and motions and graphics ... what the managers do, what the agents do, and what staff actually does ... streamed outside as well as inside", then "I would like sound ... Andrew's voice, this song ... streams outside without client's name so the agents can see what is being actioned, who is doing what, who is out today ... and the gamification." **`/wall/` is now Wall Intelligence** (`wall/index.html`); the block wall moved to **`/wall/classic/`** (`tests/e2e-wall.js` and `tests/test-substance.js` read it there). **Feed** (`wallIntel_(day, outside)`, cached 5 minutes as `wall2_in_<day>` / `wall2_out_<day>`): `wallStaff_` (who is in, out today or later; cover from Workload Moves; tasks closed with a proper note by hour 7–17 and by kind `wallKind_`: new, orphan, retention, claims, other; par, quests, streaks, gain from the game), `wallAgents_` (`agentPeople_`, `agentFunnel_`, `ff360Agent_`, `goalFor_`, `agentDaySummary_` and Agent Day `At` times; the year as % of goal against % of the year gone), `wallManagers_` (My Day Log groups against `myTasks_` by `dayGroup_`, Akaash's unit, cover, Query Pal answered this week), and a running feed newest first. **Never on the wall, inside or out:** a client, a policy number, a note, a task subject, why someone is out. **Outside** also drops arrival times, lateness, points, dollars, agents with nothing yet, agent projection times, the inbox, Query Pal past turnaround, and gains below someone's usual. **Access:** `handle_` action `wall2` (signed in: the Branch Manager gets inside, anyone else outside) and `wallout` (no sign-in, `WALL_OUTSIDE_KEY`; run `wallOutsideLink()` in the editor for the link `https://rickyrampersadbranch.com/wall/?k=…`; a new key changes it). **Page:** an ident, then Staff (who is in / cover flow; hour by hour; the kind of work; the team game), Agents (the field today; review to cover and FY27), Managers, Live; heavy motion (rings, bars, donut, heat grid, flows, counters), warm graphite ground (no saturated blue), the branch bar and a ticker always along the bottom, captions. **Sound:** the branch Motivation track (`/rr-branch-theme.mp3`) under Andrew; recorded lines `wall/audio/v2/n0..n8.mp3` (made with `wall/audio/v2/build-voice.sh` on Ricky's computer, en-US-AndrewNeural at −12%, since the speech service is blocked from the sandbox) play on any screen, else Microsoft Edge's built-in plain Andrew voice reads the live lines with today's numbers, else captions only; `?voice=recorded|live|off`. `?demo=1` (and `&view=outside`) shows a marked sample. Pinned by `tests/test-wall2.js` and `tests/e2e-wall2.js`.
 
 - **The wall on a phone, more motion, and the Branch Manager's day (20 Oct 2026, 2026-10-20h).** Ricky: "viewing on mobile and it's not scaled ... more graphics and more animations and motions for a max impact", then "Can we also build the managers? I am doing a lot right now as the branch manager" and "remember my day starts at 5am". **Phones** (`sizeUp`: width under 900 or height under 560) get `body.mob`: a stacked layout that scrolls, a sticky header, the caption and the branch bar pinned at the foot, two-up tiles, one column of panels (game cards two-up), every row rebuilt for a narrow screen through `mq(tv, mob)`; a phone on its side adds `short`: smaller type, two columns, four-up tiles, a slim bar without the ticker, and Andrew's line only while he speaks. **Motion:** a channel bumper (a band of the channel's colour sweeps across with its name) on every change of channel, titles that land word by word, floating motes, an equaliser by LIVE (gold and faster with the sound on), shines on the tiles, counters that pop when they land, a ripple on the newest event. **Managers** is two scenes: the Branch Manager's day (`wallManagers_().bm`: My Day Log by the hour from `WALL2.BM_FROM_H` = 5am to 6pm, notes, closes, e-mails, moves, tasks, inbox, the busiest hour, his latest actions as kind and group only via `wallBmWhat_`, never the subject; his Salesforce notes and closes are read fresh with `dayLogSalesforce_` on each wall read; inside also his check-in time; his actions join the running feed as Mr Rampersad), then the unit and the desks. Andrew's recorded line for it is `n9`.
@@ -8239,6 +10195,494 @@ argument is FPS, not seconds**, and `importvox.py` writes `durs` in seconds
 while `data-d` is milliseconds.
 
 
+### The how-to film: bringing something to the meeting — 30 October 2026
+
+Asked for in these words: *"this is for the meeting tomorrow, how to use the
+builder etc and contributions etc"*, then *"and agents are supposed and all
+persons make the contributions and make a great meeting"*.
+
+`meetings/usefilm.mp4` (1:03), its page to post at **`/meetinghowto/`**, source
+`meetings/usefilm.html`, built by `tools/film/build-mtusefilm.py` from
+`mtuse-lines.json` and `mtuse-timing.json`.
+
+**IT IS NOT DATED TO ONE FRIDAY, AND THAT IS THE LESSON.** The first cut opened
+*"Tomorrow at noon"* and was stale by the next morning — the branch meets every
+week, so a how-to that names a day dies after one use. Line 1 was re-voiced
+undated (runner key `mtusefix`) and mapped back onto index 01. Nothing else in
+the script names a date.
+
+**THE COMPOSER IS ONLY OPEN BEFORE THE REGISTER IS**, which is why the film
+teaches bringing an item the night before and the register as a separate, later
+tap. `floorSection` draws the pre-meeting box only while
+`upcoming = !live && !m.past && !m.checkInOpen`, so it **shuts at 11:30** and the
+floor takes over. Anybody told at 11:20 to "put your item on the agenda" finds
+the box gone ten minutes later.
+
+**The screens are the real page**, shot by `tools/film/mtuseshots/shots.js`
+against a fully mocked backend, so nothing reached the live sheet. The agent,
+every name and every contribution on them are invented. The **agenda items are
+the branch's own standing rota items**, with their own `Detail` text as the
+question under each one, because that is what an agent opening the page actually
+sees — inventing an agenda would have taught a screen that is not there. Gold
+shield, not the board blue: the page it teaches carries gold.
+
+#### A tall card is cropped, not shrunk
+
+`.cardshot` is a 530×468 frame with `overflow:hidden`, so the composer card —
+1,176px tall because of its preamble — lost its own Send button, and the gate
+card lost its Sign in. Two fixes, and the first is the better one:
+
+- **Clip the region the line is about**, not the whole card. `clipTo` in the
+  shooter takes a page screenshot with a `clip` computed from two elements'
+  bounding boxes (`.row3` → `#fl-ask` for "pick the item";
+  `label[for="fl-body"]` → `#fl-go` for "press it"), with an optional third
+  selector naming the element whose **width** to take, since a label is narrow
+  and the crop still has to be card-wide. `document.querySelector` inside
+  `page.evaluate` is plain CSS — a Playwright `>> xpath=` selector throws there.
+- **`.cardshot.fit`** scales rather than crops, and needs `max-width` as well as
+  `max-height`: with height alone a 1.42-aspect crop came out 710px wide in a
+  530px column and squeezed the headline beside it to one word a line.
+
+#### Three smaller traps
+
+- **A class renamed in the CSS and not in the markup renders nothing.** `.kd`
+  became `.knd` in the stylesheet and the scene still emitted `class="kd k1"`,
+  so the four kind cards rendered as unstyled inline text. Grep the generated
+  page for the class, not just the builder — the same lesson as `/branchmeet/`.
+- **An element screenshot of anything tall catches the sticky nav across it**,
+  which reads as a rendering fault. `addStyleTag('.nav{position:static}')`
+  before any tall crop.
+- **PNG shots took the page to 2.4 MB**, since the builder folds every one in as
+  a data URI. The shooter writes JPEG at quality 88; it is 1 MB now.
+
+Re-cut: edit `mtuse-lines.json`, push `tts/job.json` to `tts-run`, then
+`importvox.py <out> vomtuse 1.15 --timing mtuse-timing.json --lines
+mtuse-lines.json`, `build-mtusefilm.py`, `sfx.py`,
+`usetrack.py ../../rr-branch-theme.mp3 mtuse`,
+`render.js ../../meetings/usefilm.html cap-mtuse 30 ../../meetings/usefilm.jpg`,
+`mixany.py`. Re-shoot first with `node mtuseshots/shots.js` if the page changed.
+
+### Strengths, weaknesses and what to drill, read off how people actually worked — 10 November 2026
+
+Asked for in these words: *"agents are logging calls onto the dashboard that have
+been assigned to them. They are logging their day, and you are also observing the
+trends. So calling out the agents, observing the strengths, the weakness, and
+because training was an ongoing thing we asked, but we will look at how persons
+operate and how they work and how they apply themselves. And that's the only way we
+can actually look at how we train and skills and drills. It's important ... And
+remember, it's daily."*
+
+**The point is the drill, not the verdict.** Training has been decided by whoever
+was willing to teach. `meetObserved_` in `KPI.gs` reads **ten working days** off the
+Agent Day tab and `peopleNormal_` and turns them into one thing to practise — per
+person for their own manager, and rolled up by how many share it for the room. It
+costs **one read** of that tab and no Salesforce.
+
+**Everybody is read against their own projection and their own normal.** An agent's
+strength and watch come from what *they* projected against what *they* did, line by
+line; a desk's from its own normal, its own overdue and its own untouched tasks.
+Nothing is ranked and nothing is scored, which is the rule every other screen in
+this branch already keeps. The words are from a fixed list (`OBS_DRILL`), so a bad
+fortnight can never write something nobody would say out loud, and **thin evidence
+says it is thin** rather than reading as a verdict: under three days on the record
+and the watch is "little on the record", with no claim about the work.
+
+**The drills are for the room; the people are for their managers.** `packFor_` in
+`Meetings.gs` strips `observed.agents` and `observed.desks` for anybody who is not
+staff, so an agent opening the page sees what the branch needs to train and not a
+reading of any person, **including themselves**. The roll-up carries the drill and
+a count and no names, which is what makes it safe on the screen.
+
+**The front line, and why it is not on the screen.** *"I've observed the staff
+continues to come sit down, put up their laptops, and don't make the contribution,
+and this has to stop ... between me and you, the staff needs to empower themselves
+more as they are on the front line."* The owed panel already names anybody with
+nothing in **today**; what he is describing is a run of weeks, which one week's
+panel cannot show. `heardHistory_` counts the last four meetings. It goes to staff
+and managers and into his own daily note, **and no further**, because he said so and
+because he is right: a count of today is a nudge, where a run of weeks read out in
+front of everybody is a reprimand, and it lands on the person least able to answer
+back. **A meeting somebody apologised for is not counted as silence** — being away
+is not refusing to speak.
+
+**It is daily, so it is in the daily note.** The branch manager's own Builder
+progress carries the front line and the drills every working day, not only on a
+Wednesday.
+
+**The test held the bug, for the seventh time.** A check that nobody is compared
+with anybody matched the bare word *than* and failed on "Does more **than is
+projected**" — which compares a person with their own projection, the rule itself.
+It names the words that would mean somebody else. And `.obs-row` is used by both the
+drill section and the front line, so a page check counted all twelve rows and failed
+on a front-line row that legitimately reads "3 of 4 meetings": scope a row check to
+its own section.
+
+`tests/test-observed.js` covers the read and who may see it (22 checks: each rule,
+thin evidence, no comparison and no other name in a read, and an agent sent nothing
+about any person). `tests/e2e-owed.js` covers the page (49).
+
+### Every item has a name on it, and the Wednesday builder does the two steps nobody was pressing — 10 November 2026
+
+Asked for in these words: *"I'm not seeing the staff being held accountable ...
+Kamla is the BMA, she's responsible for training, what the staff is being trained
+on, what happened, what is going to happen ... Also the three staff, Azariah, Liz,
+every morning we send things, and here is the meeting ... Akaash is the manager for
+his unit, and he makes a contribution. Things must change and hold the persons
+accountable"*, and *"I'm not seeing go back, deep dive into what we agreed on."*
+
+**The accountability panel had nobody to name.** It reads the agenda's owners, and
+`seedRota` wrote every owner blank — so the mechanism was right and its input was
+empty. The names go in the seed now, and they are **the branch's own desk split**
+rather than anybody's guess: the tracker already routes a new task by its type
+(pendings Azariah, premium dues Sasha, servicing and new applications Elizabeth,
+anything else the BMA), and the cover rule already keeps staffing, licensing,
+training, RR Operations and innovation with the BMA when she is out. A name on the
+tab is changed in a second; a blank one is nobody's for ever.
+
+**The one staff report became three, for the same eight minutes.** "What is
+breaching" with one owner is one person speaking for three desks, and the morning
+e-mail that goes to each of them asks each of them separately. Three items of three,
+three and two minutes put each desk's own book in front of the room under its own
+name and cost the meeting nothing.
+
+**The BMA's five minutes came out of the chair's own share**, by the rule the rota
+is built on: the production board was seven minutes of reading out a screen that is
+now on the wall before anybody sits down (7 → 3), and the opening included marking a
+register the app keeps (3 → 2). Fourteen items, **ninety minutes exactly**, the
+chair twenty of them. Her slot is deliberately *not* the rotating lesson, which
+still reads "not the manager, and not the BMA".
+
+**Owner Email stays blank, on purpose.** Addresses are not written into this
+repository and the file is published. A name alone is enough for the agenda, the
+load check and the panel; the branch puts the address in once, on the tab, and then
+what a person brings attaches to their own slot.
+
+**Two steps were a press nobody made**, which is the fault this product has now paid
+for three times:
+
+- **the rota.** `seedAgendaInto_` returned an error naming a menu item when there was
+  no rota, so the Wednesday builder could create the meeting and leave it with no
+  agenda. It seeds the rota itself now.
+- **last week's agreed actions.** `apiCarryForward_` was a staff button; nothing
+  carried an action over unless somebody pressed it on the day, so a meeting could
+  open with everything agreed the week before nowhere on the screen and the
+  accountability item nothing to read. `carryForwardInto_` is the body, the builder
+  calls it in its own try, and the run's log line says how many came over — or that
+  they did not, rather than going quiet.
+
+**`owedSame` folded the BMA into the Branch Manager**, which is the recorded
+`/^The Branch Manager\b/` collision one layer down, and it hid the one person the
+panel was rebuilt to name. Two guards: a part matches **whole**, never by prefix
+(manager against managers), and one name may carry **at most one part** the other
+does not — a married surname, a middle name, a surname the rota left off. Two extra
+parts is a different label, and the apostrophe-s a possessive leaves behind counts
+as one of them. It errs towards keeping people apart, which is the safe direction: a
+wrong merge hides somebody, where a wrong split shows them twice with their own
+items and is fixed by typing the full name. `owedList` also merges a person the
+roster writes more fully than the rota does, so "Sasha" and "SASHA LALLA" are one
+row with the fuller name shown.
+
+**A two-minute segment squeezed to "9:…" names nobody**, which is the one thing the
+rail is for. Each segment has a minimum width and the row wraps rather than shrinking
+past it; the times stay exact either way, because each segment prints its own. An
+item nobody owns reads **"Nobody yet"**, never "The room" — maturities and the
+campaign are seeded unowned on purpose, and a default that looks deliberate is worse
+than a blank.
+
+`tests/test-standing-order.js` covers the rota and the builder (28 checks: the
+arithmetic, the load, each named owner, no address in a published file, the agenda
+seeding its own rota, the actions carried once and not twice, and a meeting still
+built when they will not copy). `tests/e2e-owed.js` covers the page (40).
+
+### The branch's own numbers on the meeting screen — 10 November 2026
+
+Asked for in these words: *"so much we do daily, so much intelligence we drive ...
+I'm not seeing the numbers ... this pulls together daily actual live data."*
+
+**One signed call, no new secret.** The Builder is its own project with its own
+sheet and cannot see Salesforce, FactFind360 or the register. `meetPack_` in
+`KPI.gs` answers `action=meetpack`, signed with **`MEET_BRIDGE_KEY`** — the
+secret the Wednesday bridge already uses in the other direction — and
+`meetNumbers_` in `Meetings.gs` fetches it with **`TRACKER_URL`** and hangs it
+on the meeting payload as `pack`.
+
+**What goes through it:** the production board on the **picked-up** date, the
+fact finds, the open book by task type, what the desks closed in seven days, the
+orphan files open, **each desk by name** (check-in, closed today, a day against
+their own normal, overdue), and how many agents projected and closed off.
+
+**Counts, days and first names. No client, no client count, no money.** The
+fact-find feed hands back API, premium, cover and the protection gap in the same
+object and none of it travels: the meeting page is served from the open web.
+
+**Each desk against their own normal, never against each other.** `peopleNormal_`
+already measures it that way and the screen says so in as many words. Nobody is
+ranked.
+
+**Nothing depends on it.** No URL, no key, the tracker down or slow: the pack is
+left out, the meeting opens exactly as before, and the screen **names what to
+set** instead of showing a blank — a silently empty panel reads as a broken one.
+A tracker that fails is left alone for five minutes, so a page the room is
+waiting on never waits on a dead one twice. Every block inside the pack is read
+in its own try, so Salesforce being down costs that block and no other.
+
+**`.owed-head` was reused for the desks card** and the test caught it at once
+(two elements for one selector). Same family as the film builders' class guard:
+**grep the page's own stylesheet before naming a class**, even one you wrote an
+hour ago.
+
+`tests/e2e-owed.js` covers it (31 checks): the figures on screen, no money
+anywhere in the section, every desk by name, the absent one said to be absent,
+each against their own normal, and the no-pack state naming `TRACKER_URL`.
+
+### Who owes this meeting what, and the running order as a clock — 10 November 2026
+
+Asked for in these words: *"I'm not seeing the staff being held accountable ...
+our meeting could have a timeline as it goes, reminding us the times and who is
+responsible ... [she] continues to sit in our meetings and get away with
+craziness. Things must change and hold the persons accountable. Please help
+me."*
+
+**The mechanism is a named, visible, EMPTY slot.** Every agenda row already
+carries an owner — the Rota's own Owner column — and every contribution already
+carries a name. Put the two together and the screen says, in front of the room,
+which named person owes the meeting something and whether anything is in. It is
+computed from what `action=meeting` already returns: **no new call, no paste,
+nothing new from the backend**, so it works the first morning a meeting exists.
+`d.roster`, when the backend sends one, adds the people who own no item and
+still owe the room one thing.
+
+**ONE PERSON, ONE LINE, and the first cut got this wrong.** Listing one row per
+agenda *item* put the chair on the screen five times and painted fifteen of
+eighteen rows red — and a wall of red says nothing at all. A person owes the
+meeting something; the items they own are what they owe it *for*. Grouped, the
+same data reads "3 of 12 have put something in · 9 have not".
+
+**Nobody is ranked and nothing is scored.** It is in or it is not, with the name
+on it. An item the room owns ("Everyone", "The room") asks nobody for anything.
+
+**A hyphen is a space in `owedSame`.** The branch's own lists disagree with each
+other — the Agent Skill Bank writes "SASHA LALLA" where Salesforce writes "Sasha
+Lalla-Jagassar" — and *stripping* the hyphen glues the surname into one word
+that "Lalla" can never match. Same family as `gcmSameName_`, and the test caught
+it. A first name alone still matches nobody.
+
+**The running order is a clock** (`railBlock`): one segment per item, as wide as
+its minutes, carrying the time it starts and the name against it. **The times are
+worked out from the meeting's own start** plus the running total, because the
+Rota has no clock column and a clock the backend does send wins. During the
+meeting the item on now fills in real time and an over-run turns red, so the room
+sees the clock without anybody policing it. The fill carries a **negative
+animation delay of the elapsed seconds**, or the working view's fifteen-second
+refresh restarts it and the bar walks backwards in front of the room. Motion
+lives in `prefers-reduced-motion: no-preference` and the finished state is the
+plain default.
+
+**Both are on the full-screen working view too**, which is the screen the room
+actually watches: the rail under the top bar, and on the first slide "N of M
+have put something in · Nothing in yet: <names>".
+
+`tests/e2e-owed.js` covers it (21 checks). Its own first run failed on
+`/^The Branch Manager\b/`, which also matches *The Branch Manager's Assistant* —
+**the test held the bug**, for the sixth time in this repository.
+
+### 1899 on the home screen, and three stale rows — 11 November 2026
+
+Read off the live sheet at 7:20 on the morning of a 9:00 branch meeting, with
+`?action=ping` and the staff API, after he asked "is this ready to happen this
+morning?".
+
+**The banner would have said `starts Sat Dec 30 1899 09:00:00 GMT-0400
+(Atlantic Standard Time)`**, in front of the whole branch. `Start` and `End` are
+**time-only cells**, and Sheets keeps a time with no date on **30 December
+1899** — old enough to carry a local-mean-time offset, since Port of Spain ran
+at −04:06:04 until 1912. `publicMeeting_` hands the page `str_(m['Start'])`, so
+the page printed the whole date. **Every meeting on the sheet reads back this
+way, script-written ones included**, so it was not one bad row.
+
+**The fourth instance of the recorded Sheets-parsing trap**, after the claims
+intake's time of loss, the group billing month and the guest number stored as
+`0`. The rule those three arrived at is the fix here: **normalise at the one
+place the field is read, and never key anything on its spelling.**
+
+**It was fixed on the PAGE, not the backend**, and that choice is the point:
+`meetings/index.html` is served from GitHub Pages, so a push is live in a
+minute, where a backend fix waits on a paste and a New version. `timeMin` is
+the one parser; `timeWords` is for a person to read and `time24` for an
+`<input type="time">`, which takes 24-hour `HH:MM` and nothing else. The
+backend's own e-mails were already clean (`fmtTime_(atTime_(…))`); only
+`publicMeeting_` was raw, and the page now absorbs it.
+
+**It broke the timeline too**, which is the part he had asked for by name.
+`railBlock`'s fallback matched `/^(\d{1,2}):(\d{2})\s*([ap])/i` — anchored, and
+needing AM/PM — so the 1899 string gave `run = -1` and **every segment's time
+label came out blank**. On the previous page the test reads `["","","",""]`.
+
+**`clockText` was already taken.** It is the live session clock's minutes
+formatter, defined *later* in the file, so it won every one of my call sites and
+they all read `NaN min`. The page's one duplicate function name was the one I
+had just added. So: **grep the page's own script before naming a function** —
+the same lesson as the film builders' class guard, a third time — and
+`e2e-clock.js` now fails if any function on the page is defined twice.
+
+**Three stale rows, none of which the ping shows:**
+
+| | |
+|---|---|
+| `RRB-BM-W45-2026-11-03` | **still `live`** |
+| `RRB-BM-W46-2026-11-10` | an empty `draft` dated yesterday |
+| `MD-2026-10-30` | the one-off the ping reports as "the meeting" |
+
+**The `live` one is the one that matters: `apiHome_` returns `live || next`**, so
+a meeting left live on 3 November holds the home screen for everybody, however
+good today's agenda is. Closing it is one cell on the Meetings tab and needs no
+paste. A meeting is never left `live`.
+
+**The support team are not on the roll at all.** It holds 19 agents and
+managers; Kamla, Sasha, Elizabeth and Azariah exist **only as guest rows**
+(`@guest.invalid`), from signing in with `0000`. **Four of the fourteen rota
+items are theirs**, and `pullRoster` skips a row with neither an agent number
+nor an e-mail — so re-running it will not bring them in until the Agent Skill
+Bank carries one of the two for them. Their addresses were read off their active
+Salesforce user records rather than guessed, which is how the hyphen in
+`sasha.lalla-jagassar@` came out right where the guest row had derived
+`sasha.lalla.jagassar@`.
+
+**`apiSavePerson_` writes no Agent No**, so somebody added that way signs in
+with their e-mail until the Skill Bank is right.
+
+**What a cloud session cannot do.** Every write to the live sheet — adding the
+four staff, closing the 3 November meeting, creating the agenda — is refused by
+the sandbox as a shared resource, whatever route it is sent by. The reads are
+free. So this is a diagnose-and-hand-over job: the presses stay his.
+
+**The eighth test to hold the bug**, and the first to do it by the calendar:
+`test-standing-order.js` set `MEET.MEETING_DAY` to today, so on a **Wednesday**
+an earlier block had already built today's meeting and "meeting created" could
+never hold. It points at tomorrow and builds ahead.
+
+### The meeting page is light, and the meeting shows once — 10 November 2026
+
+Asked for in these words: *"I need to ensure it's not a black background that
+hurts everybody's eyes and they cannot see it. It's a proper, nice, clean
+dashboard where persons can see a proper visual layout and the meeting flows.
+It was very confusing over the last couple of days ... it must hold persons
+accountable and take the respective notes."*
+
+**The seventh dark ground turned down in this repository**, and the page was
+running on `#121820` — near-black. `meetings/index.html` now carries the
+**homepage's own tokens**, sampled from Guardian Life of the Caribbean's live
+stylesheet: ground `#faf9f2`, white cards, ink `#0d3f5e`, body `#2b3b47`, muted
+`#5b6670`, action `#00728d`, `--line` `#e4e0d4` for separators and
+`--line-strong` `#7d8890` for anything that outlines a control. **The token
+names are the old ones**, so every rule that already referenced them keeps
+working.
+
+**Gold and the old cyan cannot come back here, and it is arithmetic.** On this
+ground `#efc24b` measures 1.68:1 and `#00CFEA` 1.89:1, both under the 3:1 floor
+for a non-text mark. The page carries **`site-mark.svg`**; the gold shield stays
+in the e-mails, where the ground is navy.
+
+**`--dim` was the fault the contrast pass caught**, and it is worth writing
+down: it was `#7d8890`, which is the **control** floor (3.43:1), and the page
+used it as *text* in a dozen places — the minutes column on every agenda row,
+the time on every contribution, "Carried forward", the footer. A token whose
+value is right for a border is not thereby right for words. It is `#667079`
+now, and the 3.43 value lives on as `--line-strong`.
+
+**"Very confusing" was literal: the same meeting was on the home screen four
+times** — the banner, a card repeating the banner, the register card, and again
+under *Coming up*. The duplicate card went, *Coming up* leaves out the meeting
+the banner is about (and reads *After that* when there is one), and what is left
+is one block per thing a person has to do: what it is, the register, the run-up.
+
+**A default is not news.** Every agenda row carried an `EVERYONE` badge — eleven
+identical chips down one screen saying only "this one is not staff-only", so the
+one row that *is* staff-only disappeared among them. The badge is drawn when it
+is the exception. The presenter lost its "Presented by" line and is one line.
+
+**Accountability, from the list that was already there.** `accountabilityStrip`
+sits above the action table: still open, past the date, closed off, carried
+forward, then a chip per owner with what is open against them, the late ones in
+the stop colour. No new backend call — it is read from `d.actions`. **A name
+with what is open against it, never a league table:** the point is that nothing
+leaves the room without a name and a date.
+
+**Measured after:** WCAG AA on every text node on three views (agent home, agent
+meeting, manager meeting), composited through translucency; no sideways scroll
+and no page errors at 360/375/390/414/768/1280/1536 on both views; the four
+existing suites still green.
+
+**`tests/mockmeet.js`** is the page's fake backend — one agenda, three
+contributions, three action items, no real person and no real figure. It is what
+let these faults be *seen*: the first pass of it used invented field names, and
+every contribution and action rendered blank, which reads exactly like a page
+bug and is not. **Check which side holds the bug** — that is the fifth time in
+this repository.
+
+### Tomorrow's meeting on film — 10 November 2026
+
+Asked for first as *"I would need to already have a video as to what's going to
+happen tomorrow"*, then re-cut the same morning: *"the video should not be
+tonight post one thing. It's a polygon of all the things ... you do have access
+to all the data in the meetings and all the daily reminders ... show a sample of
+tomorrow what is going to happen with the live data."*
+
+`meetings/wed.mp4` (1:45, 14 scenes), its page at **`/meetingtomorrow/`**, source
+`meetings/wed.html`, built by `tools/film/build-mtwedfilm.py` from
+`mtwed-lines.json` and `mtwed-timing.json`.
+
+**The first cut was wrong and the correction is worth keeping.** It ended on
+*"bring one thing"* and taught the taps — which the sign-in film and the how-to
+film already do. What he wanted is the **whole machine**: nobody types the
+meeting up in the morning, it has been building all week by itself. So the film
+runs the chain — the agent's own day, the ask on it, one tap onto the agenda,
+the register — and then **the figures that will already be on the screen**.
+
+**Every figure was read that morning, and the sources are named here so a re-cut
+can read them again:**
+
+| on screen | read from |
+|---|---|
+| 60 applications, 72 policies picked up since 1 Oct | Salesforce `CLIENT_PORTFOLIO__c` on `Production_Picked_up_Date__c` |
+| 157 fact finds this year, 11 this month | FactFind360's own wall feed (`FF360` in `KPI.gs`) |
+| 121 renewals and premiums due, 32 pendings, 352 service requests | open `Task` by `Task_Type__c` |
+| 267 closed in seven days | closed `Task`, logged e-mails excluded |
+| 318 orphan files open | open `Task` with subject `Orphan%` |
+
+**Counts, never money, and never a client.** The fact-find feed hands back API,
+premium, cover and the protection gap in the same object, and all of it stays
+off: this file sits at a public URL and what the branch writes is nobody else's
+business. The same rule took the dollar figures out of `/branchmeet/`. A figures
+cut is possible, but it would have to live behind the meeting sign-in, not here.
+
+**A figure in a film goes stale.** Re-read the five sources and re-voice the
+lines that carry them before any re-cut; this one is dated to one Wednesday on
+purpose.
+
+**Scene 6 is why it exists at all.** Four branch staff were in the visitors' book
+instead of on the register, one of them two minutes after the chair opened the
+4 November session, because signing in is not the attendance mark.
+
+**Two traps caught by looking at the frames rather than the markup**: a counter
+with no label (`60` on its own said nothing), and scene 3 showing the **meetings
+gate** while the line is about the agent's own day — a screen that contradicts
+the narration is worse than no screen, so it is drawn now.
+
+**Two voice lessons, both the same family as the ones already recorded.**
+*"Training, taught by one of us"* came back as **"top by"**; re-worded inside a
+line of comma-separated fragments, the fragments' own function words then came
+back wrong (*Then*→"than", *What*→"but", *And*→"in"). **A line of short fragments
+is as risky as a two-word opening clause** — whole sentences fixed it. And *"the
+minutes, and every action"* came back as *"the minutes in every action"*, which
+changes the meaning. Homophones Whisper writes differently (*will*/"we'll",
+*due*/"do") are transcription artifacts and were kept.
+
+**A tall card is scaled, not cropped.** The composer shot
+(`mtuseshots/c-form.jpg`) is 940px tall and `.cardshot`'s `overflow:hidden` took
+the *Put it on the agenda* button off the bottom — the one thing that scene is
+about. `.cardshot.fit` sizes by height instead.
+
 ### The home screen says what to do, by role — 30 October 2026
 
 Asked for in these words, after he signed in as one of the agents the morning
@@ -8297,6 +10741,341 @@ stylesheet before naming a class.**
 Playwright against a mocked backend: an agent before and after check-in opens,
 an agent already on the register, and staff on a laptop; no sideways scroll at
 390, no page errors).
+
+### The daily Builder progress, the content ask, and the mail arithmetic under both — 8 November 2026
+
+Asked for in these words: *"Can I have a daily builder progress? I need to also in
+certain days ask for content from all in the workday can this be done and remind me
+on the process and any refinements??"*
+
+**The Builder had been running on nothing since 30 October.** The live deployment
+answered `version: 2026-10-28`, its only meeting was `MD-2026-10-30` — the one-off
+Friday — and there was none after it. `buildWednesday` writes the meeting and seeds
+the agenda from the standing rota at 6:00 on the meeting day, and it only fires if
+the week cycle has been installed. It had not been. So for nine days nobody could
+sign in, nobody could bring anything, and the register had nothing to measure, and
+**nothing anywhere said so.** That is why the progress note's first line, when there
+is no meeting, is loud rather than a footnote.
+
+**The daily note stays what it is.** `dailyMeetingNote` is each person's own — their
+item, their actions, their own measures, the one ask — with no league table and
+nobody else's figures, on the Chung, Narayandas and Chang evidence already recorded
+in `Meetings.gs`. That did not change. `builderProgress` is the other half and goes
+to **one person**: `MEET.ADMIN_EMAIL`, plus whoever the `PROGRESS_TO` property names.
+
+What it carries, all of it off tabs that already held it: the countdown, or that
+there is no meeting; items and whether the running order fits the room (read off the
+meeting row's own Start and End, not a constant, so a one-off at another time is
+judged against its own length); material promised and not in; **items with nothing
+in the `Detail` field**, because that is the question an agent reads under an item
+and the how-to film teaches them to look for it; who has brought something and who
+has not, by first name; open and overdue actions; the Monday brief answered; the two
+time blocks answered; last meeting's register and whether its minutes are published.
+Quiet at weekends, and quiet when the meeting is `PROGRESS.QUIET_FROM_DAYS` (4) or
+more working days off — **never** quiet when there is no meeting.
+
+**The content ask is a separate e-mail on purpose.** The ask already existed inside
+the 7:00 daily note, and already knew who had contributed; but it arrives with eight
+other things around it, and only inside two working days of the meeting, which on a
+Wednesday cadence means the last of those three days is the meeting morning itself.
+`contentAsk` is one question and one button, at `CONTENT_ASK_HOUR` (11:00) on the
+days `CONTENT_ASK_DAYS` names (Monday and Tuesday by default, `0` = Sunday). It
+**skips anybody who has already brought something to that meeting**, which is what
+stops an ask becoming the thing people filter, and it says nothing at all when there
+is no meeting or the meeting is more than three working days off.
+
+It is deliberately **not** bolted onto the 10:00 and 15:00 time-block checks. Those
+ask what a person did; this asks what they will bring. Putting the second inside the
+first lowers the answer rate of both, and a run that fails then takes two jobs down
+instead of one.
+
+**The floor it has to fit through:** `floorSection` draws the contribution box only
+while `!live && !m.past && !m.checkInOpen`, so the box shuts when check-in opens,
+half an hour before the start. An ask sent on the meeting morning is asking for
+something the branch has two hours left to do. Hence the two days before.
+
+**The mail arithmetic, which is the real refinement and was a hidden fault.** This
+project sends on the personal Google account that owns it: about **100 recipients a
+day**. With 19 on the roll it was already committing, on a Monday, up to 19 daily
+notes + 38 time-block checks + 19 Monday briefs = **76**. Adding the content ask
+would have taken a Monday past 90. And **every send in the file sat in a try/catch
+that only wrote to the log**, so the day the allowance ran out the notes would simply
+have stopped, to some people and not others, with nobody told — the quiet failure
+this branch has been bitten by before.
+
+So every send now goes through `meetMail_`, which tries the **branch relay**
+(`apps-script/MailRelay.gs`, under support@rickyrampersadbranch.com, a Workspace
+account, about 1,500 a day) that the KPI tracker has used since 20 October, and
+falls back to Gmail exactly as before. Until `MAIL_RELAY_URL` and `MAIL_RELAY_KEY`
+are both in this project's Script properties, nothing the branch receives changes.
+`MMAIL.FLOOR` (12) stops a run with a margin rather than at zero, because a run that
+reaches half the roll reads as favouritism; the margin exists so `mmHeldAlert_` can
+still tell the chair, once a day, naming the fix. The progress note nags about it
+until the relay is set.
+
+**Three Script properties read garbage as a valid answer**, and the test caught it:
+`num_()` answers `0` for anything it cannot read, and `0` passes a 0-to-6 or 0-to-23
+range check — so a mistyped `CONTENT_ASK_DAYS` became **Sunday** and a mistyped hour
+became **midnight**. `mmWhole_` reads them strictly: whole digits inside the range,
+or the default.
+
+**The version string was not bumped on 29 October**, when the guest sign-in fixes
+went in, so `?action=ping` cannot tell anybody which build is live — the ping says
+`2026-10-28` either way. Bump `MEET.VERSION` with every paste; a build marker that
+does not move is worse than none, because it is read as reassurance. The same lesson
+is recorded for the branch backend elsewhere in this file.
+
+**None of it runs until he pastes `Meetings.gs` and presses the menu items**:
+*Turn on the week cycle* (without which there is no meeting at all), *Turn on my
+daily Builder progress*, *Turn on the content ask*, and *Test the mail route*.
+
+`tests/test-builder-progress.js` covers it (89 checks, on the real script under the
+harness: the relay and its fallbacks, the hold and its alert, the model's figures
+against seeded tabs, the no-meeting headline, who the ask skips, and the installs).
+`tests/test-friday.js`, `e2e-meetings-gate.js` and `e2e-friday.js` still pass.
+
+### Moving the Builder to the Workspace, and the hold a copy starts in — 8 November 2026
+
+Asked for the same evening: *"Ok so this is suooosed to be moved to my workspace
+can you"*. Drive confirms **`Branch Meetings — Ricky Rampersad Branch`** is owned
+by the personal Gmail, which is where the mail arithmetic above comes from. The
+runbook is in `meetings/README.md`; the standing rule is the one recorded for the
+claims intake a day earlier and for the motor quote on 21 October — **the sheet
+must be owned by support@, not shared with it**, and the fix is *File → Make a
+copy while signed in as support@ alone*. A copy carries no Script properties, none
+of the **eight** trigger functions, a new `/exec`, and not the Drive folders.
+
+**A fresh copy of THIS project would have been worse than the claims one, and that
+is what the change here is for.** The claims note reads *"a fresh copy is LIVE,
+because no `TEST_MODE` property means live"*, and the remedy was to turn test mode
+on first. The Builder **had no test mode to turn on** — `TEST_MODE` appears nowhere
+in `Meetings.gs` — and every one of its sends goes to the whole branch, so a copy
+deployed with its triggers installed would have written to nineteen people from a
+deployment nobody had read a single e-mail from.
+
+So **`BRANCH_MAIL` unset means HELD, not live**, which inverts that trap instead of
+repeating it. One check at the top of `meetMail_`, which is already the single choke
+point every send goes through, and `'held'` is already a value all three runners
+count and report — so the hold cost almost nothing to wire.
+
+- **The gate decides who qualifies, never the caller.** There is deliberately no
+  flag a send can carry to exempt itself (the test sends one carrying `chair`,
+  `signIn` and `preview` and it is still held). The exemption is read from
+  `progressTo_()` — `MEET.ADMIN_EMAIL` plus the `PROGRESS_TO` property, both set by
+  a person in Script properties — so the chair's own progress note and every
+  preview arrive while the branch hears nothing. Same rule as `claimsTester_`.
+- **It is never quiet**, which is the only thing that makes a safe default
+  acceptable on a project that may already be running: a held run says what it held
+  in its own summary line, `mmHeldAlert_` e-mails the chair once a day **naming the
+  release rather than the mail allowance** (two different holds reach that alert and
+  the fix differs, so it must not guess), the progress note leads its "To act on"
+  list with it, and `mailRouteTest` says it outright. `releaseBranchMail` and
+  `holdBranchMail` carry **no trailing underscore** on purpose: a private name is
+  not in the editor's Run list, and on the claims copy that left a window with no
+  way to turn the hold on at all.
+
+**The ping now says which account it runs on**, because a bound script keeps its own
+`/exec` when its sheet is copied, so a moved project and an un-moved one are
+indistinguishable from outside — the fault the claims intake paid for twice.
+`runsAs` is **the domain only, never the address**: that endpoint needs no sign-in,
+support@ is published all over this repository and a personal address is not. Three
+answers, as for claims: the branch domain, `gmail.com`, or `""` meaning the
+deployment is not *Execute as: Me*. `branchMail` reads `held` or `live` beside it,
+and **`MEET.VERSION` was bumped**, which the section above had already noted as
+overdue.
+
+**Two traps worth keeping:**
+
+- **`meetings/index.html` holds the Builder's `/exec` in exactly one place**, its
+  `API_URL` line. The other four `script.google.com` addresses under `meetings/` are
+  the **view counter's** beacon, a different `/exec` altogether — the inverse of the
+  26 October fault where the Intelligence URL was pasted into six pages' beacons. A
+  blunt find-and-replace on the new deployment URL breaks the counter.
+- **The old project keeps working after the move.** Its `/exec` still answers and
+  its triggers still fire, so until they are deleted both Builders send and the
+  branch gets everything twice.
+
+**A pre-existing test caught the ping change, and the test held the bug.**
+`test-friday.js` guards the ping against leaking any of the fixture's names, codes
+and e-mail domain, `example.com` among them — and the harness's own script owner is
+`ricky@example.com`, so a correct `runsAs` reading collided with the fixture's
+people and read as a leak. The fix is on the test side: give the owner a domain of
+its own, so the guard keeps its full force and `runsAs` is checked as well. Do not
+weaken that guard.
+
+### The ping says what a copy did not carry — 10 November 2026
+
+Asked for in one word, **"Move the Builder to support@"**, choosing it over the
+claims intake. Drive confirms one copy of `Branch Meetings — Ricky Rampersad
+Branch`, owner the personal Gmail, modified 9 November; the live `/exec` still
+answers `version: 2026-10-28` with one meeting, `MD-2026-10-30`. So the move is
+his to make in Drive — but **what a copy silently lacks was still invisible from
+outside**, and that is the half worth fixing in code.
+
+**File → Make a copy carries the tabs and the code and nothing else: not one
+Script property, not one trigger.** Both have already cost this branch days
+nobody could see going wrong, and both failures read as somebody else's fault:
+
+- **a blank `JOIN_CODE` locks every person out**, and the refusal reads to the
+  agent as *their* number being wrong;
+- **the week cycle left uninstalled meant nine days with no meeting at all** —
+  `buildWednesday` never fired, so nobody could sign in, and the only trace was
+  a ping reporting one meeting from a fortnight before.
+
+So `?action=ping` now answers **`settings`** (which of the properties it needs
+are filled in) and **`jobs`** (which of the eight timed handlers are installed).
+Both are **names and booleans only, never a value** — the endpoint needs no
+sign-in, the `/exec` is in this public repository, and one of those settings is
+the branch code. `test-move-ready.js` plants a real-looking value in all eleven
+properties and fails if any one of them appears anywhere in the answer.
+
+**Two properties must never be carried across by hand: `MEETINGS_FOLDER_ID` and
+`ARCHIVE_FOLDER_ID`.** They point at folders in whichever Drive wrote them, so a
+copied value files the minutes and the archive back into the old account's Drive,
+where support@ may not be able to open them at all. **Blank is correct on a fresh
+copy** — the materials folder makes itself and the archive import writes the
+other. Same trap as the claims intake's `CLAIMS_ROOT_ID`, and the reason the ping
+reports those two: a value carried over is then visible rather than silent.
+
+**`TRACKER_URL`, `MEET_BRIDGE_KEY` and the three fact-find properties were
+missing from the README's own table**, so a move that followed it to the letter
+would have come up with the meeting screen's figures and the Wednesday bridge
+dead. They are in it now.
+
+**Nothing in the ping may throw**, which is the rule it was written under: a ping
+that fails is indistinguishable from a backend that is down, and that is the one
+thing it exists to tell apart. Both new blocks read inside their own try and
+answer `null` rather than a half-truth; the suite takes the properties store and
+the trigger list away in turn and checks the ping still answers.
+
+**And the suite was checked against the build it replaces** rather than trusted
+because it went green first time: on `2026-11-10a` both fields come back
+`undefined`.
+
+### "Build Wednesday's agenda now" on a Tuesday — 10 November 2026
+
+Asked for in four words, **"build wednesday agenda now"**, the evening before the
+meeting. He could not, and nothing about the screen said why: `buildWednesday`
+is the 6:00 Wednesday trigger and the menu item **both**, and its first line is
+`if (now.getDay() !== MEET.MEETING_DAY) return 'Not the meeting day.'` So the
+button answered that and built nothing, and tomorrow's agenda could not exist
+until tomorrow.
+
+**The cost is not the button; it is that nobody can bring anything.**
+`floorSection` draws the contribution box only while the meeting is upcoming and
+check-in has not opened, and check-in opens **half an hour before the start**. An
+agenda that first appears at 6:00 on the morning gives the branch about two
+hours to put something on it — which is the same squeeze the content ask was
+moved off the meeting morning to avoid.
+
+**So the trigger keeps its guard and a person's press does not.**
+`buildWednesday(opts)` takes `{ ahead: true }`, which `buildWednesdayFromMenu`
+passes and the trigger never does. The guard has to stay for the trigger: a
+trigger left behind on an old day fires, and without it would write a meeting
+for the wrong date — which is exactly why `installWeekCycle` already derives the
+day from `MEET.MEETING_DAY` rather than a fixed `WeekDay`.
+
+**Everything on the row is dated from the day it is built FOR, never from
+today**, and that is the part that would have been quietly wrong. `when` was a
+local `var` inside the create branch, built from `now`; it is now
+`nextMeetingDay_(now)` computed before the guard, and the duplicate check, the
+`Ref`, the `Week` and `chaseWeek_` for the subtitle all read it. Miss one and a
+press on Tuesday writes a Wednesday meeting with Tuesday's week stamp, or two
+rows a week apart that each look right on their own.
+
+**The alert names the day.** Pressed the day before, "meeting created" alone
+leaves the chair to guess which meeting that was, so the message opens `for
+Wednesday 11 Nov 2026: …`.
+
+Two things it does **not** change: the 6:00 build, so turning on the week cycle
+is still the thing that makes next week happen without anybody remembering; and
+the rule that **a one-off is never built by moving `MEET.MEETING_DAY`**, since
+that one number is where every sentence a person reads takes the day from.
+
+**The rota on the live sheet was the reason this mattered tonight, and it took
+reading the sheet to see it.** Eleven items from an earlier seeding, every Owner
+cell blank — so `seedRota`'s refusal ("already has rows, left alone") was doing
+its job and the branch still had a standing order with nobody's name on it,
+which is the whole of the accountability panel's input. It was the old eleven-item
+shape too, not today's fourteen in ninety minutes. Nothing on that tab had been
+hand-edited: every Detail matched the seeded text and Owner, Backup and Notes were
+empty, so replacing it lost nothing. **`seedRota({ replace: true })` is the only
+way past the refusal**, the menu passes it after a yes/no that says what goes, and
+the refusal now names how many rows it found and points at the menu. Code calling
+`seedRota()` still cannot overwrite a tab somebody edited.
+
+**Clearing a range is not the same as deleting rows**, and the fake sheet had no
+`clearContent` at all — the sixth harness gap in this repository. Worse than
+missing: `getLastRow()` returned `grid.length`, where Sheets returns the last row
+**with content**, so a cleared block still read as occupied and the next append
+would have landed below eleven blank rows. Both are fixed in `tests/harness.js`,
+and `getLastRow` ignoring trailing blanks is the faithful model rather than a
+patch for this one case.
+
+`tests/test-build-ahead.js` covers it (18 checks: the trigger still refusing and
+writing no row, the press building the upcoming day with the agenda and the
+carried actions in one run, every date field off that day and not today, and a
+second press finding the meeting rather than making another). Checked against
+`2026-11-10b`, where thirteen of them fail. The harness has no clock, so the
+suite moves `MEET.MEETING_DAY` to tomorrow instead of moving the date — the
+inverse of the trick `test-standing-order.js` already uses.
+
+### The branch signed in as guests, so the register has been empty — 8 November 2026
+
+Read out of the live book while answering "are the ideas coming in". It is the
+worst kind of fault: everything worked exactly as designed and the record came
+out blank.
+
+**Four of the branch's own staff are in the visitors' book**, having signed in
+with `0000` — the BMA, two of Sales Support and one more, two on 30 October and
+one at 9:04 on the morning of 4 November, two minutes after the chair opened
+the session. **A VISITOR IS NEVER ON THE REGISTER**, by design: `roster_()` is
+the denominator and it filters `role === 'guest'` out, so three executives
+looking in cannot push the branch past 100%. The cost of that is the other
+direction, which nobody had looked at — somebody who **is** on the roll and
+comes through the guest door is recorded as a visitor and **marked absent for a
+meeting they attended**. Their own rows were on the roll the whole time.
+
+The 4 November transcript catches the confusion in the room: *"It doesn't log
+in and send that, so which means have you log that afterwards."*
+
+**So the guest door turns a branch member round rather than letting them
+through it.** `guestOnRoll_` matches the typed name against the roll through
+`agentKey_`, which drops the `A07347 - ` the roster pull writes in front of
+every name; on a hit, `apiLogin_` refuses with their own route and **writes
+nothing** — no People row, no visitors' book line, no token — so they arrive at
+the number box with the register still correct. The page reads the new `onRoll`
+flag, puts the visitor form away and sends them back to the number: leaving the
+name boxes up reads as "try that again", which is the one thing not to do.
+
+- **An executive is not on the roll**, so the standing visitor is untouched.
+  That is the whole point of `0000` and the test pins it.
+- **Ambiguity is refused too.** Two people answering to one name on the roll
+  and only their own number can say which, so that is where they are sent.
+- **A first name alone matches nobody** (`agentKey_` needs both halves), so a
+  visitor called Pat is never turned away by a Pat on the roll.
+- **Inactive is not on the roll**, so somebody who has left may look in.
+
+**What the live book also shows, and it is the bigger finding:** Contributions,
+Uploads, Actions, Minutes and Chases are **all empty, header row only** — not
+one contribution has ever been made. Attendance holds five rows, all agents,
+all from 30 October. The Agenda's 18 rows belong to the 23 and 30 October
+meetings; the 4 November meeting has a **session opened at 9:02 and never
+closed, no agenda, no attendance, no minutes**, because `buildWednesday` only
+fires if the week cycle was installed and it was not. A meeting ran for two
+hours and eighteen minutes outside the Builder entirely.
+
+**And the move has not happened.** Drive holds exactly one copy of
+`Branch Meetings — Ricky Rampersad Branch`, owner the personal Gmail, modified
+6 November; the live `/exec` answers `version: 2026-10-28`, which predates the
+`runsAs` field, so nothing about the account is visible from outside yet. That
+is precisely the fault `runsAs` was added for: **a bound script keeps its own
+`/exec` when its sheet is copied**, so a moved project and an un-moved one are
+indistinguishable without it. Once `Meetings.gs` is pasted and a New version
+published, `?action=ping` settles it in seconds.
+
+`tests/test-guest-signin.js` covers it (16 new checks, 40 in all; run with
+`SHEETS_PARSE=1`).
 
 ## `/branchmeet/` — the FY27 rise, and what the film may not say
 
@@ -8834,6 +11613,12 @@ scratchpad; it normalises numerals both ways so only real differences show.
 - **"A proper fact find catches it early"** → *"a proper fact **fine**"*, the
   same fault as the 28 October cut. The fix that works is to end the clause on
   the word: "Early detection is the job of a proper fact find."
+  **This is wrong and cost a runner round trip on 14 November 2026.** Ending the
+  sentence on it is what BREAKS it: "That is the job of our fact find." came
+  back "fact-fine", while the near-identical "...of our fact find, and it does
+  the arithmetic while you talk" — a comma, the clause running on — has shipped
+  clean twice. The voice softens the final consonant when it releases a sentence.
+  **Carry it on with a comma; never end a sentence on "fact find".**
 
 Accepted as transcription artifacts rather than read faults, because the voice
 says them correctly and a listener has the context: `pendings`→"pinnings",
@@ -9572,3 +12357,19 @@ built in the browser by `wall.html` when the Spreadsheet button is pressed. Six
 tabs, of which only `Submitted` is live — the other five read the hardcoded
 `PROD` literal, frozen at its `asOf` date, because `PROD_ENDPOINT` is blank.
 Searching Drive for that workbook finds nothing; it has to be computed.
+
+**The QR was drawn in the wrong box, in all four recruiting cuts.** `qr.svg` was regenerated on 9 November for
+the careers address and came back a **29-module** grid where the agentmgt.com one had been **41**; the builder
+hardcoded `viewBox="0 0 41 41"` in four places, so the code drew at 71% in the top-left of its card with no quiet
+zone on two sides. It still scanned at square size and **did not scan at all in the tall cut** — which is the whole
+point of putting a QR on a Reel. The viewBox is read from `qr.svg` now, so a QR regenerated for a different address
+(a different version, a different module count) can never drift from its box again. Decode the rendered frame to
+check it (`cv2.QRCodeDetector`), never the markup: the markup looked right in both cases.
+
+**Where that leaves the longer cuts, as at 12 November 2026.** The two ads are re-rendered and both decode to
+`https://rickyrampersadbranch.com/careers/`. The **trailer** carries the right address but was rendered between the
+new QR and this fix, so its QR does not scan. The **full film** was never re-rendered after 9 November at all: it
+still says and prints `agentmgt.com`, and its QR is the old 41-module one, which **still works** because the domain
+now forwards. So the full film is dated but functional, and the trailer is the one with a dead QR. Re-cutting the
+trailer needs only a render (`votrailer` is on disk); re-cutting the full film needs all 33 lines re-voiced on the
+runner first, because `vorecruit` lives only in a deleted session scratchpad.

@@ -91,7 +91,8 @@ console.log('\nbigPut_ on a full store:\n');
 for (let i = 0; i < 60; i++) realSet('ix_deep_2026-10-23' + (i ? '_' + i : ''), piece);
 let threw = '';
 try { env.bigPut_('ix_deep_' + DAY, { big: 'y'.repeat(20000) }); } catch (e) { threw = e.message; }
-ok('saved after clearing', !threw && !!P.getProperty('ix_deep_' + DAY + '_2'), threw);
+env.bigStoreForget_ && env.bigStoreForget_();
+ok('saved (into the _store tab) on a full store', !threw && env.bigGet_('ix_deep_' + DAY, {}).big === 'y'.repeat(20000), threw);
 
 console.log('\nA timed send on a full store: no throw, and marked:\n');
 for (let i = 0; i < 70; i++) realSet('bm_deep_2026-10-22_' + i, piece);

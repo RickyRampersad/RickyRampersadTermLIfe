@@ -82,7 +82,7 @@ console.log('\nThe check-ins:\n');
 ok('7, 9 and 1 by default; a Script Property changes them', env.meNudgeTimes_().join() === '420,540,780' && (env.PropertiesService.getScriptProperties().setProperty('BM_NUDGES', '7:30, 10,13'), env.meNudgeTimes_().join() === '450,600,780'));
 mails.length = 0;
 env.sendMeNudge_('ricky', DAY, 7 * 60);
-ok('not planned: it says plan first', mails.length === 1 && /7:00am check-in · plan your day/.test(mails[0].subject) && /Your day is not planned yet/.test(mails[0].htmlBody) && /Plan my day now/.test(mails[0].htmlBody), mails[0] && mails[0].subject);
+ok('not planned: it says plan first', mails.length === 1 && /7:00am check-in · plan your day/.test(mails[0].subject) && /Your day is not planned yet/.test(mails[0].htmlBody) && /Check in and plan my day/.test(mails[0].htmlBody) && /myworkday\/\?p=ricky/.test(mails[0].htmlBody) && /Open My workday/.test(mails[0].htmlBody), mails[0] && mails[0].subject);
 ok('with the next three and the link, to Ricky alone', /Kamla asks you: Agent school list/.test(mails[0].htmlBody) && /f=me/.test(mails[0].htmlBody) && !mails[0].cc);
 env.mgrWrite_('ricky', DAY, 'plan', [{ Item: 'recruit', Question: 'Recruitment', Planned: '3', Note: '' }]);
 mails.length = 0;

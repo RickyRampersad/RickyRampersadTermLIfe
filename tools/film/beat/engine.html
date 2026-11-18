@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Recruiting film engine</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#17334a; --navy2:#1d4260; --navy3:#265475; --navy4:#31688c;
+  --ground:#f8f6ef; --paper:#fffef9; --ink:#14465f; --body:#36474f; --mute:#64717a;
+  --teal:#2e8296; --teal-ink:#00728d; --cyan:#7fd4de; --cyan-lit:#a9e4ea;
+  --pale:#c9dae6; --line:#e6e2d7;
+  --lg1:#fbfaf5; --lg2:#f8f6ef; --lg3:#eef2ee;
+  --dg1:#1b3b55; --dg2:#17334a; --dg3:#132b40;
+  --u:1px;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:#000}
+body{font-family:Inter,'DejaVu Sans',sans-serif;-webkit-font-smoothing:antialiased}
+#stage{position:relative;width:100vw;height:100vh;overflow:hidden;background:var(--navy)}
+#aur{position:absolute;inset:0;z-index:0;pointer-events:none}
+
+/* ── a scene is a stage: a camera that pushes in, holding words and a theatre ── */
+.sc{position:absolute;inset:0;opacity:0;will-change:opacity,transform}
+.cam{position:absolute;inset:0;will-change:transform;transform-origin:50% 50%}
+.light{background:linear-gradient(168deg,var(--lg1) 0%,var(--lg2) 46%,var(--lg3) 100%)}
+.dark{background:linear-gradient(168deg,var(--dg1) 0%,var(--dg2) 52%,var(--dg3) 100%)}
+.pad{position:relative;z-index:3;width:100%;height:100%;display:grid;
+  grid-template-columns:1fr 1fr;align-items:center;
+  gap:calc(54*var(--u));padding:calc(70*var(--u)) calc(74*var(--u))}
+.pad.one{grid-template-columns:1fr}
+
+/* ── the picture fills the frame and the words sit ON it ───────────────
+   The old template was a column of words beside a small floating diagram,
+   with empty ground above and below: a slide, not a shot. In `hero` the
+   visual covers the whole scene, bleeds off two edges, and the type sits
+   over a scrim in the lower left. Nothing floats in the middle of nothing. */
+.pad.hero{grid-template-columns:1fr;padding:0;align-items:end}
+.pad.hero .theatre{position:absolute;inset:0;height:100%;width:100%;display:block;z-index:0}
+.pad.hero .words{position:relative;z-index:3;align-self:end;
+  padding:calc(72*var(--u)) calc(74*var(--u)) calc(78*var(--u));
+  width:100%;max-width:calc(1120*var(--u))}
+.scrim{position:absolute;inset:0;z-index:2;pointer-events:none}
+.dark .scrim{background:
+  linear-gradient(to top,var(--dg2) 2%,rgba(7,15,38,.72) 34%,rgba(7,15,38,0) 72%),
+  linear-gradient(to right,var(--dg2) 0%,rgba(7,15,38,.45) 34%,rgba(7,15,38,0) 70%)}
+.light .scrim{background:
+  linear-gradient(to top,var(--lg2) 2%,rgba(255,255,255,.80) 36%,rgba(255,255,255,0) 72%),
+  linear-gradient(to right,var(--lg2) 0%,rgba(255,255,255,.55) 32%,rgba(255,255,255,0) 68%)}
+
+/* the statement scenes: the words ARE the picture, so they take the frame.
+   These rules sit AFTER the old centred ones on purpose — same specificity,
+   so source order decides, and the first cut of this stayed centred because
+   it was written above them. */
+.markbg{position:absolute;z-index:0;opacity:.16;right:-8%;top:-14%;
+  width:calc(900*var(--u));height:calc(900*var(--u))}
+.markbg img{width:100%;height:100%;display:block}
+.words{display:flex;flex-direction:column;gap:calc(18*var(--u));min-width:0}
+.theatre{position:relative;min-width:0;height:100%;display:grid;place-items:center;
+  perspective:calc(1600*var(--u));transform-style:preserve-3d}
+.pad.one .words{align-items:center;text-align:center}
+.pad.one .theatre{display:none}
+
+/* ── type: half what it was. The words share the frame now, they do not fill it ── */
+h1,h2{font-weight:800;letter-spacing:-.032em;line-height:1.05}
+.big{font-size:calc(84*var(--u))}
+.mid{font-size:calc(66*var(--u))}
+.sm{font-size:calc(38*var(--u));font-weight:600;line-height:1.25}
+.pad.one .big{font-size:calc(96*var(--u))}
+.pad.one .mid{font-size:calc(74*var(--u))}
+.pad.one .sm{font-size:calc(40*var(--u))}
+.w{display:inline-block;will-change:transform,opacity}
+.ink{color:var(--ink)} .pale2{color:var(--body)} .white{color:#fff}
+.cy{color:var(--cyan-lit)} .te{color:var(--teal-ink)}
+.dark .pale2{color:var(--pale)}
+
+.eyebrow{font-weight:700;font-size:calc(24*var(--u));letter-spacing:.2em;text-transform:uppercase;
+  color:var(--cyan);display:flex;align-items:center;gap:calc(14*var(--u));white-space:nowrap}
+.eyebrow.dk{color:var(--teal)}
+.eyebrow i{display:block;height:calc(4*var(--u));width:0;background:currentColor;border-radius:4px;
+  will-change:width}
+
+/* a rule that draws itself under the line the scene is about */
+.ul{height:calc(7*var(--u));width:0;border-radius:99px;background:var(--cyan);
+  margin-top:calc(6*var(--u));will-change:width}
+.light .ul{background:var(--teal)}
+
+/* ── theatre furniture ───────────────────────────────────────────── */
+.dev{position:absolute;border-radius:calc(22*var(--u));overflow:hidden;transform-style:preserve-3d;
+  box-shadow:0 calc(26*var(--u)) calc(70*var(--u)) rgba(2,8,16,.5);
+  border:calc(3*var(--u)) solid rgba(255,255,255,.22);background:#0b1b2d;
+  will-change:transform,opacity}
+.light .dev{border-color:rgba(13,63,94,.14);box-shadow:0 calc(22*var(--u)) calc(60*var(--u)) hsl(32deg 20% 42%/.24)}
+.dev img{display:block;width:100%;height:100%;object-fit:cover;object-position:top center}
+.dev.ph{aspect-ratio:9/18.5;max-height:94%}
+.dev.ph img{object-position:top center}
+.dev.lap{aspect-ratio:16/10;max-height:94%}
+.glare{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(118deg,transparent 36%,rgba(255,255,255,.26) 50%,transparent 64%);
+  will-change:transform}
+
+/* counters */
+.nums{display:grid;gap:calc(26*var(--u)) calc(30*var(--u));width:100%}
+.num{will-change:transform,opacity}
+.num b{display:block;font-size:calc(92*var(--u));font-weight:800;letter-spacing:-.045em;
+  font-variant-numeric:tabular-nums;line-height:1;color:#fff}
+.light .num b{color:var(--ink)}
+.num span{display:block;font-size:calc(26*var(--u));font-weight:600;color:var(--pale);
+  margin-top:calc(8*var(--u));line-height:1.25}
+.light .num span{color:var(--mute)}
+.num i{display:block;height:calc(5*var(--u));width:0;margin-top:calc(12*var(--u));border-radius:99px;
+  background:linear-gradient(90deg,var(--teal),var(--cyan));will-change:width}
+
+/* a stack: a row per line, each with a chip and a connector that draws down */
+.stack{position:relative;display:flex;flex-direction:column;gap:calc(18*var(--u));width:100%}
+.stack::before{content:"";position:absolute;left:calc(17*var(--u));top:calc(18*var(--u));
+  width:calc(3*var(--u));height:var(--h,0px);background:linear-gradient(180deg,var(--cyan),transparent);
+  will-change:height}
+.light .stack::before{background:linear-gradient(180deg,var(--teal),transparent)}
+.srow{display:flex;align-items:center;gap:calc(20*var(--u));font-size:calc(45*var(--u));
+  font-weight:700;color:#fff;letter-spacing:-.02em;will-change:transform,opacity;position:relative}
+.light .srow{color:var(--ink)}
+.srow b{display:grid;place-items:center;flex:none;
+  width:calc(36*var(--u));height:calc(36*var(--u));border-radius:50%;
+  background:var(--cyan);color:var(--navy);font-size:calc(19*var(--u));font-weight:800}
+.light .srow b{background:var(--teal);color:#fff}
+
+/* the ledger: struck through on the left, ticked on the right */
+.ledg{display:grid;grid-template-columns:1fr 1fr;gap:calc(26*var(--u));width:100%}
+.lcol{display:flex;flex-direction:column;gap:calc(13*var(--u))}
+.lh{font-size:calc(21*var(--u));font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.lcol.them .lh{color:#8aa0b8} .lcol.us .lh{color:var(--cyan)}
+.light .lcol.them .lh{color:var(--mute)} .light .lcol.us .lh{color:var(--teal)}
+.li{font-size:calc(31*var(--u));font-weight:600;line-height:1.3;color:#fff;position:relative;
+  will-change:transform,opacity;padding-left:calc(30*var(--u))}
+.light .li{color:var(--ink)}
+.li::before{content:"";position:absolute;left:0;top:calc(13*var(--u));
+  width:calc(16*var(--u));height:calc(16*var(--u));border-radius:50%;
+  border:calc(3*var(--u)) solid currentColor;opacity:.4}
+.lcol.us .li::before{border-color:var(--cyan);opacity:1}
+.light .lcol.us .li::before{border-color:var(--teal)}
+.li.them{color:#8aa0b8}
+.light .li.them{color:var(--mute)}
+.li.them s{text-decoration:none;position:relative}
+.li.them s::after{content:"";position:absolute;left:0;top:52%;height:calc(3*var(--u));
+  width:var(--sw,0%);background:currentColor;will-change:width}
+
+/* a pipeline with a dot riding it */
+.flow{position:relative;width:100%;display:flex;align-items:center;justify-content:space-between;
+  gap:calc(10*var(--u))}
+.flow::before{content:"";position:absolute;left:4%;right:4%;top:calc(30*var(--u));
+  height:calc(3*var(--u));background:rgba(255,255,255,.18)}
+.light .flow::before{background:var(--line)}
+.fst{position:relative;display:flex;flex-direction:column;align-items:center;gap:calc(13*var(--u));
+  width:0;flex:1 1 0;will-change:transform,opacity}
+.fdot{width:calc(68*var(--u));height:calc(68*var(--u));border-radius:50%;display:grid;place-items:center;
+  background:var(--navy3);border:calc(3*var(--u)) solid var(--cyan);color:#fff;
+  font-size:calc(24*var(--u));font-weight:800}
+.light .fdot{background:#fff;border-color:var(--teal);color:var(--teal)}
+.fst span{font-size:calc(24*var(--u));font-weight:600;color:var(--pale);text-align:center;line-height:1.25}
+.light .fst span{color:var(--mute)}
+.rider{position:absolute;top:calc(30*var(--u));left:4%;width:calc(18*var(--u));height:calc(18*var(--u));
+  margin-top:calc(-9*var(--u));margin-left:calc(-9*var(--u));border-radius:50%;background:var(--cyan);
+  box-shadow:0 0 calc(26*var(--u)) var(--cyan);will-change:transform;opacity:0}
+
+/* a form filling itself */
+.doc{width:92%;background:var(--paper);border-radius:calc(14*var(--u));
+  padding:calc(26*var(--u));display:flex;flex-direction:column;gap:calc(14*var(--u));
+  box-shadow:0 calc(24*var(--u)) calc(64*var(--u)) rgba(2,8,16,.45);will-change:transform,opacity}
+.drow{display:grid;grid-template-columns:40% 1fr;align-items:center;gap:calc(14*var(--u))}
+.dk{font-size:calc(22*var(--u));font-weight:600;color:var(--mute)}
+.dv{height:calc(30*var(--u));border-radius:calc(6*var(--u));background:#eef1f4;position:relative;overflow:hidden}
+.dv i{position:absolute;inset:0;width:0;background:linear-gradient(90deg,var(--teal),#2aa6bd);
+  will-change:width}
+.dstamp{align-self:flex-end;margin-top:calc(6*var(--u));font-size:calc(21*var(--u));font-weight:800;
+  letter-spacing:.12em;color:var(--teal);border:calc(3*var(--u)) solid var(--teal);
+  border-radius:calc(8*var(--u));padding:calc(5*var(--u)) calc(14*var(--u));
+  transform:rotate(-5deg) scale(.6);opacity:0;will-change:transform,opacity}
+
+/* a rail of terms */
+.rail{position:relative;width:100%;padding-top:calc(16*var(--u))}
+.rail::before{content:"";position:absolute;left:0;right:0;top:calc(44*var(--u));height:calc(3*var(--u));
+  background:rgba(255,255,255,.18)}
+.light .rail::before{background:var(--line)}
+.rbar{position:absolute;left:0;top:calc(44*var(--u));height:calc(3*var(--u));width:0;
+  background:linear-gradient(90deg,var(--teal),var(--cyan));will-change:width}
+.rstops{display:flex;justify-content:space-between;position:relative}
+.rst{display:flex;flex-direction:column;align-items:center;gap:calc(10*var(--u));
+  will-change:transform,opacity}
+.rst b{width:calc(22*var(--u));height:calc(22*var(--u));border-radius:50%;background:var(--cyan);
+  display:block;box-shadow:0 0 0 calc(6*var(--u)) rgba(0,207,234,.18)}
+.light .rst b{background:var(--teal);box-shadow:0 0 0 calc(6*var(--u)) rgba(0,114,141,.14)}
+.rst span{font-size:calc(23*var(--u));font-weight:600;color:var(--pale)}
+.light .rst span{color:var(--mute)}
+
+/* the shield */
+.markw{display:grid;place-items:center;position:relative}
+.markw img{width:calc(260*var(--u));height:calc(260*var(--u));display:block;will-change:transform}
+.ping{position:absolute;left:50%;top:50%;width:calc(260*var(--u));height:calc(260*var(--u));
+  margin:calc(-130*var(--u)) 0 0 calc(-130*var(--u));border-radius:50%;
+  border:calc(3*var(--u)) solid var(--cyan);opacity:0;will-change:transform,opacity}
+
+/* a cursor that presses */
+.cur{position:absolute;width:calc(34*var(--u));height:calc(34*var(--u));z-index:6;opacity:0;
+  will-change:transform,opacity;pointer-events:none}
+.cur svg{width:100%;height:100%;filter:drop-shadow(0 calc(4*var(--u)) calc(10*var(--u)) rgba(0,0,0,.5))}
+.tap{position:absolute;width:calc(74*var(--u));height:calc(74*var(--u));margin:calc(-37*var(--u)) 0 0 calc(-37*var(--u));
+  border-radius:50%;border:calc(3*var(--u)) solid var(--cyan);opacity:0;z-index:5;will-change:transform,opacity}
+
+/* the QR */
+.qrbox{display:flex;align-items:center;gap:calc(30*var(--u));min-width:0;max-width:100%;
+  will-change:transform,opacity}
+.qrbox img{flex:none;width:calc(210*var(--u));height:calc(210*var(--u));border-radius:calc(16*var(--u));
+  background:#fff;padding:calc(12*var(--u))}
+.url{font-size:calc(30*var(--u));font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1.2;
+  min-width:0;overflow-wrap:anywhere}
+.light .url{color:var(--ink)}
+.url small{display:block;font-size:calc(21*var(--u));font-weight:600;color:var(--pale);
+  margin-top:calc(12*var(--u));letter-spacing:0;line-height:1.3}
+.light .url small{color:var(--mute)}
+.scan{position:absolute;left:0;right:0;height:calc(4*var(--u));background:var(--cyan);
+  box-shadow:0 0 calc(22*var(--u)) var(--cyan);opacity:0;will-change:transform,opacity}
+
+/* ── atmosphere ───────────────────────────────────────────────────── */
+.field{position:absolute;inset:-22%;z-index:1;pointer-events:none;will-change:transform;
+  background:radial-gradient(40% 36% at 24% 20%,rgba(0,207,234,.20),transparent 62%),
+             radial-gradient(36% 32% at 80% 76%,rgba(0,114,141,.26),transparent 62%)}
+.light .field{background:radial-gradient(40% 36% at 22% 18%,rgba(0,114,141,.14),transparent 62%),
+             radial-gradient(36% 32% at 82% 78%,rgba(0,207,234,.14),transparent 62%)}
+.mote{position:absolute;border-radius:50%;background:var(--cyan);opacity:.2;z-index:2;
+  will-change:transform;pointer-events:none}
+.light .mote{background:var(--teal);opacity:.13}
+#rail{position:absolute;left:0;right:0;bottom:0;height:calc(7*var(--u));background:rgba(255,255,255,.1);z-index:9}
+#rail i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--cyan-lit))}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:8}
+/* a soft wipe that crosses on every cut, blurred so it reads as light not as a bar */
+#wipe{position:absolute;top:-10%;bottom:-10%;width:34%;left:-40%;z-index:7;opacity:0;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);
+  filter:blur(calc(26*var(--u)));will-change:transform,opacity}
+#sweep{position:absolute;inset:0;pointer-events:none;z-index:7;opacity:0;
+  background:linear-gradient(105deg,transparent 36%,rgba(127,212,222,.42) 50%,transparent 64%);
+  filter:blur(calc(6*var(--u)))}
+
+/* ── shapes: upright and 4:5 stack the words over the theatre ─────── */
+/* Stacked, the two rows must size to their content and the PAIR centre in the
+   frame. A 1fr theatre row absorbs the free space instead, which left the
+   visual stranded a third of the way down on some scenes and at the foot on
+   others. */
+body[data-shape="v"] .pad,body[data-shape="f"] .pad{
+  grid-template-columns:1fr;grid-template-rows:auto auto;align-content:center;
+  gap:calc(44*var(--u));padding:calc(96*var(--u)) calc(62*var(--u))}
+body[data-shape="v"] .pad.one,body[data-shape="f"] .pad.one{grid-template-rows:auto}
+body[data-shape="v"] .theatre,body[data-shape="f"] .theatre{height:auto;min-height:calc(420*var(--u))}
+body[data-shape="v"] .dev,body[data-shape="f"] .dev{max-height:calc(620*var(--u))}
+body[data-shape="v"] .big,body[data-shape="f"] .big{font-size:calc(86*var(--u))}
+body[data-shape="v"] .mid,body[data-shape="f"] .mid{font-size:calc(68*var(--u))}
+body[data-shape="v"] .sm,body[data-shape="f"] .sm{font-size:calc(40*var(--u))}
+body[data-shape="v"] .eyebrow,body[data-shape="f"] .eyebrow{font-size:calc(26*var(--u))}
+body[data-shape="v"] .srow,body[data-shape="f"] .srow{font-size:calc(46*var(--u))}
+body[data-shape="v"] .li,body[data-shape="f"] .li{font-size:calc(30*var(--u))}
+body[data-shape="v"] .num b,body[data-shape="f"] .num b{font-size:calc(92*var(--u))}
+body[data-shape="v"] .num span,body[data-shape="f"] .num span{font-size:calc(26*var(--u))}
+/* The wide cut plays at the same ~405px in a feed as the others, so its QR
+   has to be the same SHARE OF THE WIDTH, not the same number of units: at
+   210u it came out 14% of a 1920 frame, which is 53px on screen and decodes
+   as nothing. It stacks like the other two so the width is there to give. */
+body[data-shape="w"] .qrbox{flex-direction:column;text-align:center;gap:calc(22*var(--u))}
+body[data-shape="w"] .qrbox img{width:calc(490*var(--u));height:calc(490*var(--u))}
+body[data-shape="v"] .qrbox,body[data-shape="f"] .qrbox{flex-direction:column;text-align:center;gap:calc(26*var(--u))}
+body[data-shape="v"] .qrbox img,body[data-shape="f"] .qrbox img{width:calc(360*var(--u));height:calc(360*var(--u))}
+body[data-shape="v"] .fst span,body[data-shape="f"] .fst span{font-size:calc(24*var(--u))}
+
+/* ── the statement scenes, last in the sheet on purpose ───────────────
+   These override the centred `.pad.one` rules above at the same
+   specificity, so they only win from here. Written higher up they did
+   nothing, twice — the same source-order trap as the phone max-width. */
+.pad.one{align-content:end;padding-bottom:calc(104*var(--u))}
+.pad.one .words{align-items:flex-start;text-align:left;width:100%}
+.pad.one .big{font-size:calc(146*var(--u));line-height:.97;letter-spacing:-.04em}
+.pad.one .mid{font-size:calc(110*var(--u));line-height:1;letter-spacing:-.035em}
+body[data-shape="v"] .pad.one .big,body[data-shape="f"] .pad.one .big{font-size:calc(132*var(--u))}
+body[data-shape="v"] .pad.one .mid,body[data-shape="f"] .pad.one .mid{font-size:calc(104*var(--u))}
+
+/* a hero in the upright and feed cuts: the picture holds the top, the words
+   sit at the foot. The stacked shapes' own `align-content:center` rule would
+   otherwise park them halfway up a frame that is empty underneath. */
+body[data-shape="v"] .pad.hero,body[data-shape="f"] .pad.hero{
+  grid-template-rows:1fr auto;align-content:stretch}
+body[data-shape="v"] .pad.hero .words,body[data-shape="f"] .pad.hero .words{
+  grid-row:2;max-width:100%;padding-bottom:calc(96*var(--u))}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="aur"></canvas>
+  <div id="scenes"></div>
+  <div id="sweep"></div>
+  <div id="wipe"></div>
+  <div id="flash"></div>
+  <div id="rail"><i></i></div>
+</div>
+<script src="engine.js"></script>
+</body>
+</html>

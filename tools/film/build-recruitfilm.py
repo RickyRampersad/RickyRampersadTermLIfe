@@ -60,7 +60,13 @@ FONTS = '\n'.join([
     face('InterF', 'Inter-var.woff2', '100 900'),
 ])
 
-QR = re.search(r'd="([^"]+)"', open(os.path.join(ROOT, 'agentmgt', 'qr.svg')).read()).group(1)
+_qr = open(os.path.join(ROOT, 'agentmgt', 'qr.svg')).read()
+QR = re.search(r'd="([^"]+)"', _qr).group(1)
+# The viewBox comes from the file, never a literal. It was hardcoded "0 0 41 41" against a path whose own
+# grid is 29 modules, so the code drew at 71% in the top-left of its box with no quiet zone on two sides —
+# still scannable at square size, not at the tall cut's. A QR regenerated for a different address changes
+# version, and so changes this number; reading it keeps the two from drifting apart again.
+QRBOX = (re.search(r'viewBox="([^"]+)"', _qr) or [None, '0 0 29 29'])[1]
 
 def dur(n, T=None, L=None):
     T = T or timing; L = L or LINES
@@ -99,10 +105,16 @@ def typed(text, t0, per=38):
 
 MARK = '''<svg viewBox="6 3 76 82" class="mk" aria-hidden="true"><use href="#shield"/></svg>'''
 SAMPLE = '<span class="sample">sample figures</span>'
-def img64(rel, w=420, q=72):
-    """A wall screenshot (sample data, already public on /wall/) as a data URI, resized so the film stays light."""
+def img64(rel, w=420, q=72, base=('wall', 'img')):
+    """A wall screenshot (sample data, already public on /wall/) as a data URI, resized so the film stays light.
+
+    `base` points elsewhere for a screen this film crops for itself: agentmgt/img holds two, cropped because
+    the full screens cannot go in a forwardable MP4. ff-draft.jpg stops above "your fact find is now being
+    reviewed ... No action is needed from you yet", which is the order corrected on 29 October 2026 (the
+    client approves FIRST, then a manager signs) and would contradict the very line this scene narrates.
+    ff-branch.jpg stops above the AGENTS table, which names real colleagues beside ratios and TT$ figures."""
     from PIL import Image; import io
-    im = Image.open(os.path.join(ROOT, 'wall', 'img', rel)).convert('RGB')
+    im = Image.open(os.path.join(ROOT, *base, rel)).convert('RGB')
     im = im.resize((w, int(im.height * w / im.width)), Image.LANCZOS)
     b = io.BytesIO(); im.save(b, 'JPEG', quality=q, optimize=True)
     return 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()
@@ -677,7 +689,7 @@ S.append(scene(12, 's-leads', f'''
     <p class="eye in" style="--t0:200ms">Leads</p>
     <h2 class="h l">{words("Leads land on your board.", at(12,"Leads") - 200)}</h2>
     <p class="sub in" style="--t0:{at(12,"link")}ms">Your own link. Your own QR code. A prospect taps what is on their mind.</p>
-    <div class="qr mini in" style="--t0:{at(12,"QR")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><span>Your code</span></div>
+    <div class="qr mini in" style="--t0:{at(12,"QR")}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><span>Your code</span></div>
   </div>
   <div class="col">
     <div class="lead-wrap">
@@ -1022,14 +1034,14 @@ S.append(scene(32, 's-cta', f'''
 <div class="split cta">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Start here</p>
-    <h2 class="h url">{words("agentmgt.com", 400, 60)}</h2>
+    <h2 class="h url">{words("rickyrampersadbranch.com", 400, 60)}<br><em class="wine">{words("/careers", 760, 60)}</em></h2>
     <div class="btns">
       <span class="btn b1 in" style="--t0:{at(32,"Book")}ms">Book a confidential conversation →</span>
       <span class="btn b2 in" style="--t0:{at(32,"Take")}ms">Take the 60-second test first</span>
     </div>
   </div>
   <div class="col">
-    <div class="qr in" style="--t0:{at(32,"Go")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
+    <div class="qr in" style="--t0:{at(32,"Go")}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
   </div>
 </div>'''))
 
@@ -1038,7 +1050,7 @@ S.append(scene(33, 's-close dark', f'''
 <div class="full center">
   <div class="mark big in" style="--t0:200ms"><span class="ping"></span><span class="ping p2"></span><span class="ping p3"></span>{MARK}</div>
   <h1 class="h xl">{words("The environment decides.", 500, 110)}<br><em class="wine">{words("We select the driven.", at(33,"We") - 200, 110)}</em></h1>
-  <p class="foot in" style="--t0:{at(33,"driven")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>agentmgt.com</b></p>
+  <p class="foot in" style="--t0:{at(33,"driven")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>rickyrampersadbranch.com/careers</b></p>
 </div>'''))
 
 
@@ -1072,7 +1084,7 @@ if TLINES and MODE != 'ad':
     <div class="list in fl" style="--t0:{tat(3,"matched") - 200}ms">
       <div class="bd-h"><b>Your list</b><span>named to you</span></div>
       {''.join(f'<div class="hh" style="--t0:{tat(3,"matched") + i*380}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><span>{s}</span><em>named</em></div>' for i, (n, s) in enumerate(HH))}
-      <div class="lead-in" style="--t0:{tat(3,"Leads")}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>New lead</b><span>"Retiring properly" · landed on your board</span></div>
+      <div class="lead-in" style="--t0:{tat(3,"thin")}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>Your list runs thin</b><span>the branch keeps your week full</span></div>
       {SAMPLE}
     </div>
   </div>
@@ -1082,13 +1094,27 @@ if TLINES and MODE != 'ad':
         f'<p class="sub in" style="--t0:{tat(4,"admin")}ms">The system does the admin. He does the sitting with you.</p><p class="sub in" style="--t0:{tat(4,"alone")}ms"><em>Nobody here is left to figure it out alone.</em></p>',
         dict(strike="clock", coach="sitting", week="week", friday="Friday", note="e-mail", person="person"))))
     T.append(tscene(5, 's-seats tr', blk_seats(5, tat, TLINES)))
-    T.append(tscene(6, 's-door tr', blk_gate(6, tat, TLINES)))
+    # 9 November 2026: the one objection an agent who jumped ship still has is
+    # "is the company sound?". A rating is a factual claim about a regulated
+    # insurer, so it is on screen as well as spoken, and it is stated EXACTLY:
+    # A- (Excellent) for Guardian Life of the Caribbean, AM Best, affirmed
+    # 6 May 2026, stable. Never "A-rated": Guardian Life Insurance Company of
+    # America is a different company rated A++, and a loose word invites that
+    # reading. The assets are the GROUP's (Guardian Holdings), audited to
+    # 31 Dec 2025 and filed on the TT Stock Exchange — not the subsidiary's.
+    CRED = f'''
+<div class="full center credwrap"><div class="credbar in" style="--t0:{tat(6,"sound")}ms">
+  <span class="cred in" style="--t0:{tat(6,"rated")}ms"><b>A&minus;</b><small>Excellent &middot; AM&nbsp;Best<br>affirmed May 2026 &middot; stable</small></span>
+  <span class="cred in" style="--t0:{tat(6,"billion")}ms"><b>TT$39.8bn</b><small>group assets<br>audited, 31 Dec 2025</small></span>
+  <span class="cred in" style="--t0:{tat(6,"group")}ms"><b>32 yrs</b><small>this branch<br>in Trinidad</small></span>
+</div></div>'''
+    T.append(tscene(6, 's-door tr', CRED + blk_gate(6, tat, TLINES)))
     tb = tat(7, "Book")
     T.append(tscene(7, 's-cta tr', f'''
 <div class="split cta tr-cta">
   <div class="col">
     <p class="eye in" style="--t0:200ms">Start here</p>
-    <h2 class="h url">{words("agentmgt.com", 400, 60)}</h2>
+    <h2 class="h url">{words("rickyrampersadbranch.com", 400, 60)}<br><em class="wine">{words("/careers", 760, 60)}</em></h2>
     <div class="btns">
       <span class="btn b1 in" style="--t0:{tb}ms">Book a confidential conversation →</span>
       <span class="btn b2 in" style="--t0:{tat(7,"Take")}ms">Take the 60-second test first</span>
@@ -1104,136 +1130,718 @@ if TLINES and MODE != 'ad':
     </div>
   </div>
   <div class="col">
-    <div class="qr in" style="--t0:{tat(7,"Go")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
+    <div class="qr in" style="--t0:{tat(7,"Go")}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
   </div>
 </div>'''))
     T.append(tscene(8, 's-close dark tr', f'''
 <div class="full center">
   {blk_stage('closeS')}
   <h1 class="h xl">{words("The environment decides.", 500, 110)}<br><em class="wine">{words("We select the driven.", tat(8,"We") - 200, 110)}</em></h1>
-  <p class="foot in" style="--t0:{tat(8,"driven")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>agentmgt.com</b></p>
+  <p class="foot in" style="--t0:{tat(8,"driven")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas · <b>rickyrampersadbranch.com/careers</b></p>
 </div>'''))
 
 # ── the feed cut: five scenes, 35 seconds, one variant per audience ────────────
 # A speaks to an agent already contracted elsewhere; B to someone new to the work. Scenes 1 and 2 differ in words and
 # picture, 3 in its second half; 4 and 5 are the same. The bottom fifth of every frame stays clear for the burned captions.
 if MODE == 'ad':
-    assert len(TLINES) == 5, len(TLINES)
+    # A and B are the two 40-second feed cuts (already contracted / new to this). C is the branch's own first
+    # post, 13 November 2026, asked for in these words: "it's your first ad you're going to post ... persons
+    # must know it's an insurance sales career ... what are they applying for? What will attract somebody to
+    # apply? And what our environment, which is unique, will be able to help someone with". So C is seven
+    # scenes, not five, and it answers those three questions in that order: the career stated plainly, the
+    # work as problem-solving, and the thing nothing else in this market offers — you are profiled, mapped
+    # and trained BEFORE you are contracted, so you know whether it fits before you give anything up.
+    # 14 November 2026: C grew to eight. The conversation that produces the fact find is now its own scene
+    # ("the agent meets with the client ... not typing in front of a client. That's never"), and the journey
+    # that follows is another. The guard stays — a lines file out of step with this block is the fault it
+    # catches — it just knows the third shape now. A and B are still five.
+    assert len(TLINES) in (5, 6, 7, 8, 9, 10), len(TLINES)
     LEADS = [('Retiring properly', 'asked to be called · 9:12'), ('Cover for the children', 'asked to be called · 9:40'), ('Starting a business', 'asked to be called · 10:05')]
-    if AD == 'A':
-        T.append(tscene(1, 's-hook', f"""
+    # 12 Nov 2026, on LIMRA's own 2025 Annual Conference deck (session 16, public PDF): "The second year,
+    # commonly referred to as the 'cliff' ... Agents are on their own, without much of the support provided
+    # during the first year", and "We have been sitting at an industry-wide 4-year retention of rate of 14%
+    # for years" (sourced there to The Path to Improving Retention, LIMRA and FINSECA, 2022). The same deck
+    # gives one-year retention by who recruited: Recruiter 44%, Sales Manager 50%, Office Head 55%. So both
+    # ads now lead on the cliff — the thing a practising advisor has LIVED and a newcomer is walking into —
+    # rather than on a guess at what they are missing.
+    #
+    # THE CHART PLOTS ONLY POINTS THAT HAVE A SOURCE. LIMRA gives year one and year four and names year two;
+    # it does not publish a year-two or year-three figure, and the branch has two points of its own. So this
+    # is a SLOPE chart of two sourced endpoints per series, with year two ANNOTATED on the time axis and no
+    # marker pretending to be a reading. Drawing a four-point curve would have meant inventing half of it.
+    # Amber #C97A3A (industry) against teal #0E93B0 (ours) on this ground passes all six of the palette
+    # validator's checks (CVD dE 16.1 protan, 25.2 tritan; normal 23.5); each line carries its own numbers
+    # and label, so identity is never colour alone, and the text wears text tokens, never the series colour.
+    SL = {'ind': (55, 14), 'us': (67, 31)}
+    # 13 Nov 2026 — "the lines can be refined and professional as its looking like a novice did this".
+    # He was right and it was measurable. The slope is 780px wide on the square, so a viewBox unit is
+    # 7.8px: stroke-width 1.5 and 1.9 were drawing 12px and 15px lines, with a glow on ours and r=1.5
+    # dots rendering as 23px blobs, under 55px serif numbers. That is a marker-pen chart. The published
+    # discipline is thin marks, ~2px lines, >=8px markers and a recessive grid; these are 0.72/0.86
+    # units (5.6px and 6.7px, about 3px in a feed tile) with no glow and r=0.85 dots.
+    #
+    # The bigger fault was that the two lines FLOATED: no y-axis, no gridlines, and a value printed at
+    # one end only, so a reader could not see what either line fell FROM or where it sat on the scale.
+    # The grid is the context — it is what shows both series living in the bottom third of a 0-100
+    # scale, which is the real story and is the thing that reads as considered rather than decorative.
+    GY = [0, 20, 40, 60]
+    X1, X2 = 22, 78
+
+    def _y(v):
+        return round(50 - (v / 70.0) * 42, 2)
+
+    def slope(t_ind, t_cliff=None, t_quote=None, t_us=None, t_n=None):
+        """The retention slope. t_us None draws the industry alone (scene 2 of A); giving it lands ours on
+        the same geometry, so two consecutive scenes read as one continuous graphic."""
+        x1, x2 = X1, X2
+        grid = ''.join(
+            f'<line class="sl-g{" base" if g == 0 else ""}" x1="{x1 - 2.5}" y1="{_y(g)}" x2="{x2 + 2}" y2="{_y(g)}"/>'
+            f'<text class="sl-gy" x="{x1 - 4}" y="{_y(g) + 1.05}">{g}</text>' for g in GY)
+        # No value printed at the left end on purpose: with the grid there, a reader sees 55 sitting just
+        # under the 60 line and 67 just over it. A number on every point is the thing that makes a chart
+        # look busy; the two that are the POINT are called out, and the rest is read off the scale.
+        i1, i2 = (_y(v) for v in SL['ind'])
+        u1, u2 = (_y(v) for v in SL['us'])
+        us = '' if t_us is None else f"""
+      <path class="sl-us" pathLength="100" d="M{x1} {u1} L{x2} {u2}" style="--t0:{t_us}ms"/>
+      <circle class="sl-d us" cx="{x1}" cy="{u1}" r=".85" style="--t0:{t_us}ms"/>
+      <circle class="sl-d us" cx="{x2}" cy="{u2}" r=".85" style="--t0:{t_us + 700}ms"/>"""
+        # The label hangs ABOVE THE LINE'S OWN HEIGHT AT x=40, not above the midpoint of the two
+        # endpoints: those are the same number only for a flat line. The first cut used the endpoint
+        # mean, which put the words level with the year-one dot and read as a label on that reading
+        # rather than an annotation of the descent. Caught by looking at the rendered frame.
+        cx = 40
+        cy = round(i1 + (cx - x1) / (x2 - x1) * (i2 - i1), 2)
+        if t_us is not None:   # with ours drawn too, hang it above the HIGHER of the two, or it lands on the teal
+            cy = min(cy, round(u1 + (cx - x1) / (x2 - x1) * (u2 - u1), 2))
+        cliff = '' if t_cliff is None else f"""
+      <path class="sl-lead" d="M{cx} {round(cy - 11.5, 2)} L{cx} {round(cy - 2.4, 2)}" style="--t0:{t_cliff}ms"/>
+      <text class="sl-cliff" x="{cx}" y="{round(cy - 13.6, 2)}" style="--t0:{t_cliff}ms">YEAR TWO &middot; THE CLIFF</text>"""
+        quote = '' if t_quote is None else f"""
+  <p class="sl-q in" style="--t0:{t_quote}ms">&ldquo;Agents are on their own, without much of the support provided during the first year.&rdquo;<em>LIMRA, 2025</em></p>"""
+        # The value sits clear of its own dot, not jammed against it, and is set in a tabular face at a
+        # data label's size rather than a 55px serif: a number touching the mark it labels is the other
+        # thing that reads as unconsidered.
+        nums = '' if t_n is None else f"""
+      <text class="sl-n ind" x="{x2 + 4.5}" y="{i2 + 1.5}"><tspan class="cnt" data-to="14" data-at="{t_n}">14</tspan></text>
+      <text class="sl-n us" x="{x2 + 4.5}" y="{u2 + 1.5}"><tspan class="cnt" data-to="31" data-at="{t_n + 600}">31</tspan></text>"""
+        return f"""
+  <div class="slope">
+    <svg viewBox="0 0 100 58" role="img" aria-label="Of every hundred advisors, 55 are still contracted after one year and 14 after four across the industry; in this branch, 67 after one year and 31 after four.">
+      <g class="sl-grid">{grid}</g>
+      <text class="sl-x" x="{x1}" y="56">YEAR 1</text>
+      <text class="sl-x r" x="{x2}" y="56">YEAR 4</text>
+      <path class="sl-ind" pathLength="100" d="M{x1} {i1} L{x2} {i2}" style="--t0:{t_ind}ms"/>
+      <circle class="sl-d ind" cx="{x1}" cy="{i1}" r=".85" style="--t0:{t_ind}ms"/>
+      <circle class="sl-d ind" cx="{x2}" cy="{i2}" r=".85" style="--t0:{t_ind + 700}ms"/>{us}{cliff}{nums}
+    </svg>
+    <div class="sl-key">
+      <span class="in" style="--t0:{t_ind}ms"><i class="ind"></i>Across the industry</span>
+      {'' if t_us is None else f'<span class="in" style="--t0:{t_us}ms"><i class="us"></i>In this branch</span>'}
+    </div>
+    {'' if t_us is None else f'<p class="sl-ratio in" style="--t0:{t_us + 900}ms"><b>More than twice as many</b> still here at year four.</p>'}
+    <p class="adsrc in" style="--t0:{(t_us or t_ind) + 700}ms">Of every 100 advisors still contracted. Industry: LIMRA and Finseca, 2022. Branch: our own record.</p>{quote}
+  </div>"""
+
+    def unit100(t_ind, t_us, t_n, t_gap=None):
+        """Two hundreds, side by side: every advisor who starts, and the ones still there at year four.
+
+        13 Nov 2026 — "can you have some more impactful charts and motion that impacts!! professionally
+        done!!". The refined slope was correct and quiet: at feed-tile size two thin lines carrying 31
+        and 14 ask a reader to measure a gap, which nobody does while scrolling. The spoken line is
+        "the industry keeps FOURTEEN IN A HUNDRED", so the honest and far stronger form is the one the
+        words already describe — a unit chart, 100 squares per series, the kept ones lit. It is a named
+        editorial form (the Guardian, the FT and the NYT all run it for exactly this), it needs no axis
+        and no scale to read, and the comparison is done by the eye in one glance instead of by
+        arithmetic. Each square is one advisor in a hundred, so nothing is abstracted or rounded.
+
+        The motion is the message rather than decoration: the squares light one at a time at the same
+        pace in both blocks, so a viewer WATCHES ours keep going after the industry's has stopped. Then
+        the seventeen past the industry's fourteen pulse once together — that is the branch's whole
+        claim, drawn, and it is the only flourish on the frame."""
+        def block(key, n, t0, label):
+            # 34ms a square, not 42: the teal block is 31 of them, and at 42 it finished at 5927ms of a
+            # 7300ms scene, which left no room for the two beats that follow it. Read off the built page
+            # against its own data-d rather than guessed — adcheck.js now fails any cue that lands after
+            # its scene ends, because a beat scheduled past the cut simply never plays and nothing says so.
+            step = 34
+            cells = ''.join(
+                f'<i class="{"on" + (" xt" if key == "us" and i >= SL["ind"][1] else "") if i < n else ""}"'
+                f' style="--t0:{t0 + i * step}ms"></i>' for i in range(100))
+            return f"""
+    <div class="u1c">
+      <span class="u1h in" style="--t0:{max(0, t0 - 400)}ms"><i class="{key}"></i>{label}</span>
+      <div class="u1g {key}" style="--xt:{t0 + n * step}ms">{cells}</div>
+      <b class="u1n {key} in" style="--t0:{t0 + n * step}ms"><span class="cnt" data-to="{n}" data-at="{t_n if key == "ind" else t_n + 900}">{n}</span><em>of every 100</em></b>
+    </div>"""
+        gap = '' if t_gap is None else (
+            f'<p class="u1gap in" style="--t0:{t_gap}ms">'
+            f'<b>{SL["us"][1] - SL["ind"][1]} more in every hundred</b> still here at year four.</p>')
+        return f"""
+  <div class="unit100" role="img" aria-label="Of every 100 advisors contracted, 14 are still there after four years across the industry, and 31 in this branch.">
+    <div class="u1row">{block('ind', SL['ind'][1], t_ind, 'Across the industry')}{block('us', SL['us'][1], t_us, 'In this branch')}</div>
+    {gap}
+    <p class="adsrc in" style="--t0:{t_us + 1400}ms">Still contracted at year four. LIMRA and Finseca, 2022; our own record.</p>
+  </div>"""
+
+    # The 39 things, as the six moments the careers page itself groups them into, counted out as the line
+    # is spoken. The counts are read off the live page (before you join 7, first 90 days 5, every day 10,
+    # every week 6, every month 6, your managers too 5), so the ad cannot drift from what it links to.
+    MOMENTS = [('Before you join', 7), ('Your first 90 days', 5), ('Every day', 10), ('Every week', 6), ('Every month', 6), ('Your managers, too', 5)]
+
+    if AD == 'C':
+        # The five gates, in the order the careers page's own stepper runs them. The three the line names
+        # (the LIMRA profile, the market survey, the training) are on the rail with the two it does not,
+        # because the point of the scene is that ALL of it happens before the contract. They light evenly
+        # across the line rather than one per word: a step lit on a word it does not match is the "screen
+        # contradicts the narration" fault, and interpolating two of five would force exactly that.
+        GATES = [('Orientation', 'the career, the branch, the numbers'),
+                 ('The digital market survey', 'your market scored prospect by prospect'),
+                 ('POP7', "LIMRA's Career Profile+: survival and production"),
+                 ('Discovery', 'your questions, the Branch Manager out of the room'),
+                 ('Training, induction, boot camp', 'before you are contracted, not after')]
+        T.append(tscene(1, 's-hook nofade', f"""
 <div class="full center">
   <span class="ghost" aria-hidden="true">?</span>
-  <span class="spot" style="--t0:{tat(1,"stuck")}ms"></span>
-  <div class="mark top in" style="--t0:100ms">{MARK}</div>
-  <p class="eye in" style="--t0:300ms">A question</p>
-  <h1 class="h xl">{words("Good at what you do?", 400)}<br><em class="wine">{words("Stuck where you are?", tat(1,"stuck") - 200)}</em></h1>
-  <div class="ceil-line" style="--t0:{tat(1,"stuck")}ms"></div>
-</div>"""))
-        T.append(tscene(2, 's-match', f"""
+  <span class="spot" style="--t0:{tat(1,"top")}ms"></span>
+  <div class="mark top in now">{MARK}</div>
+  <p class="eye in now">An honest question</p>
+  <h1 class="h xl">{words("You are good at your job.", 400, cls='now')}<br><em class="wine">{words("And you can see the top of it.", max(700, tat(1,"top") - 1100))}</em></h1>
+  <div class="ceil-line" style="--t0:{tat(1,"top")}ms"></div>
+</div>""", 'data-ch="You can see the top of it"'))
+        T.append(tscene(2, 's-plain', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">What you would be applying for</p>
+  <h2 class="h xl">{words("An insurance sales career.", max(300, tat(2,"insurance") - 700), 95)}</h2>
+  <div class="c3row">
+    <div class="c3card in" style="--t0:{tat(2,"paid")}ms"><b>Commission</b><span>on what you write</span></div>
+    <div class="c3card in" style="--t0:{tat(2,"ceiling")}ms"><b>No ceiling</b><span>uncapped, from day one</span></div>
+    <div class="c3card in" style="--t0:{tat(2,"salary")}ms"><b>No salary</b><span>nothing holds the top down</span></div>
+  </div>
+  <p class="foot in" style="--t0:{tat(2,"salary") + 600}ms">Guardian Life of the Caribbean &middot; Ricky Rampersad Branch, Chaguanas</p>
+</div>""", 'data-ch="An insurance sales career"'))
+        # 14 November 2026, and this is the correction that matters most in the whole ad: "most people have
+        # this mixed up ... the agent meets with the client. The objective is to build a relationship, not to
+        # flash a screen. Even we are technical and digital, we believe in that human interaction ... That
+        # should be done in the agent's quiet time ... not typing in front of a client. That's never. Agents
+        # fail miserably and clients fall out." So in an ad made of screens, THIS SCENE HAS NO SCREEN. The
+        # meeting is paper and a conversation; the laptop appears only afterwards, alone, in scene 4. Do not
+        # "improve" this by adding a device to it — its emptiness is the argument.
+        HUMAN = [('chat', 'paper', 'At the table', 'Paper, questions, and the time to listen.'),
+                 ('users', 'listen', 'Everyone is different', 'A husband and a wife are never the same client.'),
+                 ('doc', 'afterwards', 'Afterwards, in your own time', "You type it up, onto Guardian's own approved form.")]
+        T.append(tscene(3, 's-human', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">Thirty-five years of doing it this way</p>
+  <h2 class="h l">{words("It starts with a conversation,", max(300, tat(3,"conversation") - 1400), 95)} <em class="wine">{words("not a laptop.", max(800, tat(3,"laptop") - 450), 95)}</em></h2>
+  <p class="hustrike in" style="--t0:{tat(3,"laptop") + 400}ms"><span>Typing in front of your client</span></p>
+  <div class="hu3">
+    {''.join(f'<div class="hucard in" style="--t0:{tat(3,w)}ms"><span class="huic"><svg class="ic"><use href="#i-{ic}"/></svg></span><b>{t}</b><span class="hud">{d}</span></div>' for ic, w, t, d in HUMAN)}
+  </div>
+  <p class="cjx in" style="--t0:{tat(3,"form")}ms">Then, and only then, the system starts.</p>
+</div>""", 'data-ch="It starts with a conversation"'))
+        # Scene 4: the journey, six of the branch's own screens in the order a client meets them, each landing
+        # on the word that names it. Two are cropped — see img64's note. ff/02 earns its place here now that
+        # the manager comes AFTER the client: a top-anchored crop shows the sign-off request and leaves its
+        # one self-contradicting line ("releases it to the client", the pre-29-October order) off the frame.
+        W = ('wall', 'img')
+        CJ = [('ff-draft.jpg', ('agentmgt', 'img'), 'draft', 0, 'The draft, in their own time', 'What you recommended, and why'),
+              ('ff/04-client-approval-page.jpg', W, 'agrees', 0, 'They read it and agree', 'Nothing goes ahead until it is right'),
+              ('ff/02-manager-signoff.jpg', W, 'signs', 0, 'Then your manager signs', 'Reads it, signs it, adds a comment'),
+              ('ff/05-client-sign-and-rate.jpg', W, 'comment', 500, 'They sign, and rate you', 'The rating goes to the branch'),
+              ('jr/4-delivered.jpg', W, 'never', 0, 'Delivered, and confirmed', 'In writing, the day it reaches them'),
+              ('jr/5-question.jpg', W, 'never', 520, 'Behind you, all the way', 'Support chases it and reports back')]
+        # The cadence is the foot, not a seventh screen: the promise is a sentence, and there is no screenshot
+        # of a thing that happens every six months for the rest of someone's life.
+        CUD = [('six', 'Every six months', 'a check-in'), ('birthday', 'Every birthday month', 'a full review'),
+               ('life', 'For life', 'it does not stop')]
+        T.append(tscene(4, 's-jrny', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">A journey, not a transaction</p>
+  <h2 class="h l">{words("And then", 300, 95)} <em class="wine">{words("it never stops.", 500, 95)}</em></h2>
+  <div class="cjwrap">
+    {''.join(f'<div class="cjstop in" style="--t0:{tat(4,w) + o}ms"><div class="cjshot"><span class="cjn">{k+1}</span><img src="{img64(rel, 480, 72, base=b)}" alt=""></div><b class="cjt">{t}</b><span class="cjd">{d}</span></div>' for k, (rel, b, w, o, t, d) in enumerate(CJ))}
+  </div>
+  <div class="cjfoot">
+    <div class="curail">{''.join(f'<span class="cum in" style="--t0:{tat(4,w)}ms"><b>{t}</b><span>{d}</span></span>' for w, t, d in CUD)}</div>
+    <small class="cjs in" style="--t0:{tat(4,"agrees") + 400}ms">Our own screens, built in this branch over fifteen years &middot; sample names and figures</small>
+  </div>
+</div>""", 'data-ch="And then it never stops"'))
+        # 14 Nov 2026: "the leads don't come to them ... what we do is ensure the leads does not run out".
+        # The line no longer says "The leads come to you": the advisor's own market comes first, and
+        # the rows are what keep it full. Every cue word must be in line 5, or tat() stops the build.
+        REFILL_C = [('users', 'people', 0, 'Your own market', 'mapped and scored · 72 of 100'),
+                    ('bolt', 'thin', 250, 'Asked to be called', '“Retiring properly” · on the board'),
+                    ('home', 'keeping', 150, 'A household matched to you', 'with the file already read')]
+        T.append(tscene(5, 's-fill', f"""
 <div class="split">
   <div class="col">
-    <p class="eye in" style="--t0:{tat(2,"Already")}ms">Already contracted?</p>
-    <h2 class="h l">{words("Move, and start from zero?", tat(2,"fear") - 200, 110)}</h2>
-    <h2 class="h l wine2">{words("Not here.", tat(2,"Not") - 150, 140)}</h2>
+    <h2 class="h l">{words("You start with", max(300, tat(5,"start") - 300), 95)} <em class="wine">{words("the people who know you.", tat(5,"people") - 150, 95)}</em></h2>
+    <p class="sub in" style="--t0:{tat(5,"thin")}ms">When that list runs thin, keeping your week full is our job.</p>
     <div class="pill-row">
-      <span class="ypill in" style="--t0:{tat(2,"matched")}ms">Clients matched to you</span>
-      <span class="ypill in" style="--t0:{tat(2,"household")}ms">Household by household</span>
-      <span class="ypill in" style="--t0:{tat(2,"Leads")}ms">Leads on your own board</span>
+      <span class="ypill in" style="--t0:{tat(5,"coach")}ms">A coach, not a clock</span>
     </div>
   </div>
   <div class="col">
-    <div class="list in fl" style="--t0:{tat(2,"Clients") - 200}ms">
-      <div class="bd-h"><b>Your list</b><span>named to you</span></div>
-      {''.join(f'<div class="hh" style="--t0:{tat(2,"matched") + i*380}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><span>{d}</span><em>named</em></div>' for i, (n, d) in enumerate(HH))}
-      <div class="lead-in" style="--t0:{tat(2,"Leads")}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>New lead</b><span>"Retiring properly" · landed on your board</span></div>
+    <div class="list in fl" style="--t0:{max(300, tat(5,"people") - 300)}ms">
+      <div class="bd-h"><b>Your list</b><span>kept full</span></div>
+      {''.join(f'<div class="lead-in" style="--t0:{tat(5,w) + o}ms"><svg class="ic"><use href="#i-{ic}"/></svg><b>{n}</b><span>{d}</span></div>' for ic, w, o, n, d in REFILL_C)}
       {SAMPLE}
     </div>
   </div>
-</div>"""))
-        coach_sub = f'<p class="sub in" style="--t0:{tat(3,"nobody")}ms"><em>And nobody will know you asked.</em></p>'
-        coach_chip = f'<div class="chip in fl" style="--t0:{tat(3,"asked")}ms"><svg class="ic"><use href="#i-lock"/></svg><b>Confidential. Nobody will know you asked.</b></div>'
-    else:
-        T.append(tscene(1, 's-hook', f"""
+</div>""", 'data-ch="Your list, kept full"'))
+        _g0, _g1 = tat(6, "contracted"), tat(6, "trained")
+        _gs = max(400, (_g1 - _g0) // len(GATES))
+        T.append(tscene(6, 's-gates', f"""
 <div class="full center">
-  <span class="ghost" aria-hidden="true">?</span>
-  <span class="spot" style="--t0:{tat(1,"afraid")}ms"></span>
-  <div class="mark top in" style="--t0:100ms">{MARK}</div>
-  <p class="eye in" style="--t0:300ms">A question</p>
-  <h1 class="h xl">{words("A career with no ceiling?", 400)}<br><em class="wine">{words("Afraid of the first year?", tat(1,"afraid") - 200)}</em></h1>
-  <div class="ceil-line" style="--t0:{tat(1,"ceiling")}ms"></div>
-</div>"""))
-        T.append(tscene(2, 's-match', f"""
+  <p class="eye in" style="--t0:200ms">{words("Before you are contracted.", 200, 110)}</p>
+  <h2 class="h l"><em class="wine">{words("You know whether it fits.", max(600, tat(6,"fits") - 900), 95)}</em></h2>
+  <p class="sub in" style="--t0:{tat(6,"fits") + 400}ms">Before you give anything up.</p>
+  <div class="cgrail">
+    {''.join(f'<div class="cgstep in" style="--t0:{_g0 + 200 + k*_gs}ms"><i>{k+1}</i><b>{nm}</b><span>{sub}</span></div>' for k, (nm, sub) in enumerate(GATES))}
+  </div>
+</div>""", 'data-ch="Before you are contracted"'))
+        # The "thirty-nine things, all digital" claim moved into the journey scene on 14 November 2026, where six
+        # of those thirty-nine are now shown rather than counted. Scene 6 keeps the one thing it can only state:
+        # the retention record, with its source. The MOMENTS grid stays in the file for the trailer's scene 4.
+        T.append(tscene(7, 's-all', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">The record</p>
+  <h2 class="h l">{words("Who is still here,", 400, 95)} <em class="wine">{words("four years in.", max(700, tat(7,"industry") - 1000), 95)}</em></h2>
+  <div class="cfig">
+    <div class="cfrow in" style="--t0:{max(400, tat(7,"industry") - 500)}ms"><span class="cflab">The industry</span><span class="cftrack"><i class="cfbar" style="--w:14%;--t0:{tat(7,"fourteen")}ms"></i></span><b class="cnt" data-to="14" data-at="{tat(7,"fourteen")}">14</b></div>
+    <div class="cfrow us in" style="--t0:{max(600, tat(7,"thirty-one") - 800)}ms"><span class="cflab">This branch</span><span class="cftrack"><i class="cfbar" style="--w:31%;--t0:{tat(7,"thirty-one")}ms"></i></span><b class="cnt" data-to="31" data-at="{tat(7,"thirty-one")}">31</b></div>
+    <p class="cfx in" style="--t0:{tat(7,"thirty-one") + 350}ms">More than twice as many</p>
+  </div>
+  <!-- The source lands WITH the chart, not after it. Cued off the last word it would have followed, it
+       entered 175ms before the scene ended — a flash nobody can read, which is worse than no source at
+       all, because it looks like a cite and cannot be checked. Footnote furniture belongs under the
+       chart from the moment the chart is there; this gives it about five seconds on screen. -->
+  <p class="adsrc in" style="--t0:{max(500, tat(7,"industry") - 300)}ms">Of every 100 contracted, still contracted at year four. Industry: LIMRA and Finseca, 2022. Branch: our own roll.</p>
+</div>""", 'data-ch="Thirty-nine things, and the record"'))
+    elif AD == 'F':
+        # 15 November 2026 — the fact find film, asked for in these words: "expand on the FactFind 360 ... this is
+        # the heart and soul of our operation. The support agents don't get, but they do get it in our branch ...
+        # show the draft ... the automatic motion of the needs analysis ... what goes to the client ... when the
+        # client approves and they scroll down ... when it goes back to the manager, and the email that's
+        # triggered ... the automated reminder ... what triggers out to the client". Followed with Rajiv, by name
+        # at the Branch Manager's word; every client, figure and screen is sample data. The screens are cropped
+        # (agentmgt/img/ffr-*.jpg) so no e-mail header carries another advisor's name, and nothing negative sits
+        # beside a real colleague's. The order is the corrected one: the client approves FIRST, then the manager.
+        A = ('agentmgt', 'img'); W = ('wall', 'img')
+        def card(rel, base, t0, cap, cls='', w=560):
+            return (f'<figure class="ffcard {cls} in" style="--t0:{t0}ms"><div class="ffscr"><img src="{img64(rel, w, 74, base=base)}" alt=""></div>'
+                    f'<figcaption>{cap}</figcaption></figure>')
+        T.append(tscene(1, 's-hook nofade', f"""
+<div class="full center">
+  <span class="spot" style="--t0:{tat(1,"never")}ms"></span>
+  <div class="mark top in now">{MARK}</div>
+  <p class="eye in now">The heart of how we work</p>
+  <h1 class="h xl">{words("What most advisors", 400, cls='now')}<br><em class="wine">{words("never get.", max(700, tat(1,"never") - 300))}</em></h1>
+  <div class="ffwho in" style="--t0:{tat(1,"Rajiv")}ms"><span class="ffav">R</span><span class="ffwt"><b>Follow one fact find with Rajiv</b><span>He went digital, and hasn&rsquo;t looked back</span></span></div>
+</div>""", 'data-ch="What most advisors never get"'))
+        # The sample figures agree across the whole film: the need adds up to the TT$2,150,000 shortfall on the
+        # manager's own screen (ffr-manager.jpg), and the plan is the draft's (ffr-draft.jpg).
+        NEED = [('Income, replaced', 1200000, 'listens'), ('Debts and the mortgage', 650000, 'types'),
+                ('The children&rsquo;s education', 250000, 'needs'), ('Final expenses', 50000, 'arithmetic')]
+        _nt = tat(2, "arithmetic")
+        T.append(tscene(2, 's-ffneed', f"""
 <div class="split">
   <div class="col">
-    <p class="eye in" style="--t0:{tat(2,"New")}ms">New to this?</p>
-    <h2 class="h l">{words("Months with nothing coming in?", tat(2,"fear") - 200, 110)}</h2>
-    <h2 class="h l wine2">{words("Not here.", tat(2,"Not") - 150, 140)}</h2>
-    <div class="pill-row">
-      <span class="ypill in" style="--t0:{tat(2,"Leads")}ms">Leads from people who asked to be called</span>
-      <span class="ypill in" style="--t0:{tat(2,"day")}ms">Your day, set every morning</span>
-      <span class="ypill in" style="--t0:{tat(2,"trained")}ms">Trained before you're contracted</span>
+    <p class="eye in" style="--t0:200ms">Step one &middot; the needs analysis</p>
+    <h2 class="h l">{words("He listens.", max(300, tat(2,"listens") - 500), 95)} <em class="wine">{words("The maths does itself.", max(700, tat(2,"needs") - 700), 95)}</em></h2>
+    <div class="ffchips">
+      <span class="ffchip in" style="--t0:{tat(2,"sits")}ms"><svg class="ic"><use href="#i-chat"/></svg>At the table: paper, questions, time</span>
+      <span class="ffchip in" style="--t0:{tat(2,"types")}ms"><svg class="ic"><use href="#i-doc"/></svg>Typed up later, in his own time</span>
     </div>
   </div>
   <div class="col">
-    <div class="list in fl" style="--t0:{tat(2,"Leads") - 200}ms">
-      <div class="bd-h"><b>Your board</b><span>this morning</span></div>
-      {''.join(f'<div class="lead-in" style="--t0:{tat(2,"people") + i*380}ms"><svg class="ic"><use href="#i-bolt"/></svg><b>{n}</b><span>{d}</span></div>' for i, (n, d) in enumerate(LEADS))}
-      <div class="hh" style="--t0:{tat(2,"day")}ms"><svg class="ic"><use href="#i-grid"/></svg><b>Your day</b><span>set at 6:00 · four calls, two fact finds</span><em>today</em></div>
-      <div class="hh" style="--t0:{tat(2,"trained")}ms"><svg class="ic"><use href="#i-spark"/></svg><b>Boot camp</b><span>training · induction · field work</span><em>first</em></div>
+    <div class="ffneed in fl" style="--t0:{max(300, tat(2,"listens") - 300)}ms">
+      <div class="ffnh"><b>Needs analysis</b><span>worked out as he types</span></div>
+      {''.join(f'<div class="ffrow" style="--t0:{tat(2,w) + k*120}ms"><span>{n}</span><i class="ffbar" style="--w:{round(v/12000)}%"></i><b>TT$<em class="cnt" data-to="{v}" data-sep data-at="{tat(2,w) + k*120}">{v:,}</em></b></div>' for k, (n, v, w) in enumerate(NEED))}
+      <div class="fftot in" style="--t0:{_nt + 400}ms"><span>The need, worked out</span><b>TT$<em class="cnt" data-to="2150000" data-sep data-at="{_nt + 400}">2,150,000</em></b></div>
       {SAMPLE}
     </div>
   </div>
-</div>"""))
-        coach_sub = f'<p class="sub in" style="--t0:{tat(3,"Nobody")}ms"><em>Nobody here is left to figure it out alone.</em></p>'
-        coach_chip = f'<div class="chip in fl" style="--t0:{tat(3,"alone")}ms"><svg class="ic"><use href="#i-chat"/></svg><b>And in person. He sits with you on it.</b></div>'
-    T.append(tscene(3, 's-coach2', f"""
+</div>""", 'data-ch="The needs analysis"'))
+        # 15 November 2026: "the confidential fact find when it's completed, how everything lines up. So our agent
+        # don't have to spend time to calculate. Our intelligence is built in ... a blitz when the agents input what
+        # comes and what goes to the client." What he types on one side, what the client receives on the other.
+        IN_ = [('Maya, 38', 'married, two children'), ('Income', 'TT$18,000 a month'), ('Mortgage', 'TT$650,000 left'),
+               ('Cover now', 'TT$500,000, through work'), ('Goals', 'university for both, retire at 60')]
+        OUT_ = [('Term Life', 'TT$1,500,000', 'replaces her income'), ('Education Plan', 'TT$250,000', 'the children&rsquo;s university'),
+                ('Critical Illness', 'TT$300,000', 'if she is seriously ill')]
+        _bi, _bo = tat(3, "enters"), tat(3, "client")
+        T.append(tscene(3, 's-ffblitz', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">The confidential fact find, complete</p>
+  <h2 class="h l">{words("Everything lines up.", max(300, tat(3,"lines") - 600), 95)} <em class="wine">{words("Nothing to calculate.", max(800, tat(3,"calculate") - 700), 95)}</em></h2>
+  <div class="ffbz">
+    <div class="ffbzc">
+      <p class="ffbzh in" style="--t0:{_bi - 300}ms">What Rajiv puts in</p>
+      {''.join(f'<div class="ffin" style="--t0:{_bi + k*170}ms"><b>{n}</b><span>{v}</span></div>' for k, (n, v) in enumerate(IN_))}
+    </div>
+    <div class="ffbzm in" style="--t0:{_bi + 500}ms"><i></i><i></i><i></i><span>calculated<br>for him</span></div>
+    <div class="ffbzc">
+      <p class="ffbzh in" style="--t0:{_bo - 300}ms">What the client gets</p>
+      {''.join(f'<div class="ffout" style="--t0:{_bo + k*260}ms"><b>{n}</b><em>{v}</em><span>{d}</span></div>' for k, (n, v, d) in enumerate(OUT_))}
+      <div class="ffout tot" style="--t0:{_bo + 900}ms"><b>Premium</b><em>TT$835 a month</em><span>21% of her monthly surplus</span></div>
+    </div>
+  </div>
+  <div class="pill-row ffbzp"><span class="ypill in" style="--t0:{tat(3,"intelligence")}ms"><svg class="ic"><use href="#i-spark"/></svg>The intelligence is built in</span></div>
+  {SAMPLE}
+</div>""", 'data-ch="Everything lines up"'))
+        T.append(tscene(4, 's-ffcopy', f"""
 <div class="split">
   <div class="col">
-    <p class="eye in" style="--t0:200ms">Your manager</p>
-    <h2 class="h xl">{words("A coach,", tat(3,"coach") - 200, 120)} <em class="wine">{words("not a clock.", tat(3,"clock") - 150, 120)}</em></h2>
-    <p class="sub in" style="--t0:{tat(3,"clock") + 500}ms">The system does the admin. He does the sitting with you.</p>
-    {coach_sub}
+    <p class="eye in" style="--t0:200ms">Step two &middot; finished</p>
+    <h2 class="h l">{words("His own copy.", max(300, tat(4,"copy") - 600), 95)} <em class="wine">{words("His manager, told at once.", max(700, tat(4,"manager") - 500), 95)}</em></h2>
+    <div class="pill-row"><span class="ypill in" style="--t0:{tat(4,"alone")}ms">Nobody here works alone</span></div>
+  </div>
+  <div class="col">{card('ffr-copy.jpg', A, max(300, tat(4,"finished") - 200), 'In Rajiv&rsquo;s inbox the moment he submits', 'tall pan')}</div>
+</div>""", 'data-ch="His copy, his manager told"'))
+        T.append(tscene(5, 's-ffclient', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">Step three &middot; the client</p>
+  <h2 class="h l">{words("Is this right?", max(300, tat(5,"right") - 600), 95)} <em class="wine">{words("They read it, and agree.", max(700, tat(5,"agree") - 900), 95)}</em></h2>
+  <div class="ffphones">
+    {card('ffr-draft.jpg', A, tat(5,"draft"), 'A draft, in plain words', 'ph pan', 480)}
+    {card('ff/04-client-approval-page.jpg', W, tat(5,"scroll"), 'They scroll through, and agree', 'ph pan', 480)}
+    {card('ffr-sign.jpg', A, tat(5,"sign"), 'Signed, and the advice rated', 'ph', 480)}
+  </div>
+</div>""", 'data-ch="The client reads it, and agrees"'))
+        T.append(tscene(6, 's-ffmgr', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Step four &middot; only then</p>
+    <h2 class="h l">{words("Then the manager", max(300, tat(6,"manager") - 700), 95)} <em class="wine">{words("signs it off.", max(700, tat(6,"signs") - 300), 95)}</em></h2>
+    <div class="ffchips">
+      <span class="ffchip in" style="--t0:{tat(6,"comment")}ms"><svg class="ic"><use href="#i-chat"/></svg>Signed off, with a comment</span>
+      <span class="ffchip in" style="--t0:{tat(6,"team")}ms"><svg class="ic"><use href="#i-users"/></svg>The Branch Manager and the team see every one</span>
+    </div>
+  </div>
+  <div class="col ffstack">
+    {card('ffr-manager.jpg', A, max(300, tat(6,"manager") - 200), 'The manager&rsquo;s sign-off, held until the client agrees')}
+    {card('ff-branch.jpg', A, tat(6,"team"), 'What the branch sees, every fact find')}
+  </div>
+</div>""", 'data-ch="The manager signs it off"'))
+        T.append(tscene(7, 's-ffnudge', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">The reminders</p>
+  <h2 class="h l"><em class="wine">{words("Nothing slips.", 300, 95)}</em></h2>
+  <div class="ff3">
+    {card('ffr-close.jpg', A, tat(7,"reminder"), 'To Rajiv: did they close?')}
+    {card('ffr-unsent.jpg', A, tat(7,"inbox"), 'To Rajiv: started, never sent')}
+    {card('jr/4-delivered.jpg', W, tat(7,"client"), 'To the client: confirmed in writing')}
+  </div>
+  <small class="cjs in" style="--t0:{tat(7,"client") + 500}ms">Our own screens, built in this branch &middot; sample names and figures</small>
+</div>""", 'data-ch="Nothing slips"'))
+        REC = [('Advice explained', 'in plain words'), ('Client confirmed', 'read, agreed, signed'), ('Manager signed', 'with a comment'),
+               ('On file', 'every step, dated'), ('Reviewed for life', 'six months and birthdays')]
+        _r0, _r1 = tat(8, "step"), tat(8, "conduct")
+        _rs = max(350, (_r1 - _r0) // len(REC))
+        T.append(tscene(8, 's-ffrec', f"""
+<div class="full center">
+  <div class="ffshield in" style="--t0:{tat(8,"protects")}ms"><svg class="ic"><use href="#i-shield"/></svg></div>
+  <p class="eye in" style="--t0:200ms">Market conduct, built in</p>
+  <h2 class="h l">{words("On the record.", max(300, tat(8,"record") - 500), 95)} <em class="wine">{words("Protected.", tat(8,"protects"), 95)}</em></h2>
+  <div class="cgrail">
+    {''.join(f'<div class="cgstep in" style="--t0:{_r0 + 200 + k*_rs}ms"><i>{k+1}</i><b>{nm}</b><span>{sub}</span></div>' for k, (nm, sub) in enumerate(REC))}
+  </div>
+  <p class="sub in" style="--t0:{tat(8,"protects", 1)}ms">It protects your client. And it protects you.</p>
+</div>""", 'data-ch="On the record, protected"'))
+        T.append(tscene(9, 's-ffbuild', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Who built it</p>
+    <h2 class="h l"><span class="cnt" data-to="35" data-at="{tat(9,"thirty-five")}">35</span> {words("years in.", tat(9,"thirty-five"), 95)} <em class="wine">{words("Then he built the system.", max(700, tat(9,"stepped") - 700), 95)}</em></h2>
+    <div class="pill-row">
+      <span class="ypill in" style="--t0:{tat(9,"Court")}ms">Court of the Table</span>
+      <span class="ypill in" style="--t0:{tat(9,"Top")}ms">Top of the Table</span>
+    </div>
   </div>
   <div class="col">
-    <div class="week in" style="--t0:{tat(3,"coach")}ms">{''.join(f'<span class="{"fri" if d == "Fri" else ""}" style="--t0:{tat(3,"clock") if d == "Fri" else 0}ms">{d}</span>' for d in ['Mon','Tue','Wed','Thu','Fri'])}</div>
-    <div class="note in" style="--t0:{tat(3,"clock") + 300}ms">
-      <small>From your manager · in your morning e-mail</small>
-      <p>{typed("Two fact finds this week, Priya. Let's book your Thursday calls together at eight.", tat(3,"clock") + 600, 24)}</p>
+    <div class="ffbio in fl" style="--t0:{max(300, tat(9,"Branch") - 200)}ms">
+      <div class="ffbh"><span class="ffav big">RR</span><span><b>Ricky Rampersad</b><span>Branch Manager &middot; Guardian Life of the Caribbean</span></span></div>
+      <div class="ffbl in" style="--t0:{tat(9,"stepped")}ms"><svg class="ic"><use href="#i-grid"/></svg><span><b>For the administration</b>the desks, the Log Book, the transmittal</span></div>
+      <div class="ffbl in" style="--t0:{tat(9,"stepped") + 600}ms"><svg class="ic"><use href="#i-target"/></svg><span><b>For every advisor</b>the fact find, the reminders, the coaching</span></div>
+      <div class="ffbl hi in" style="--t0:{tat(9,"succeed")}ms"><svg class="ic"><use href="#i-up"/></svg><span><b>So every advisor here can succeed</b></span></div>
     </div>
-    <div class="chips3">{coach_chip}</div>
   </div>
-</div>"""))
-    T.append(tscene(4, 's-seats', f"""
+</div>""", 'data-ch="Who built it"'))
+    elif AD == 'G':
+        # 15 November 2026 — the feed post, asked for in these words: "I'm posting this on LinkedIn, on Facebook. So
+        # how does it say to apply? ... it must state insurance, sales, career, and target for a new person want to
+        # enter unlimited cap earning what appeals to them ... include what we do for the experience ... you can't
+        # just only focus on that. So it needs to be very compact, precise, what somebody's looking for, the
+        # environment ... much more motion, graphics, and things and charts". Six scenes, in the order a reader in a
+        # feed asks: what is it and what does it pay (1), is it for me (2), will I have work (3), what is it like (4),
+        # does it last (5), how do I apply (6). The income chart is an ILLUSTRATION of a capped salary against
+        # commission and says so on screen: no figure is put on anyone's pay. The leads line keeps the 14 Nov rule:
+        # their own market first, and the branch keeps it from running dry, never "the leads come to you".
+        T.append(tscene(1, 's-gcap nofade', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in now">A career in insurance sales</p>
+    <h1 class="h xl">{words("Is your income capped?", 300, cls='now')}<br><em class="wine">{words("Not here.", max(700, tat(1,"Not") - 250), 120)}</em></h1>
+    <p class="sub in" style="--t0:{tat(1,"insurance")}ms">What you earn is decided by <em>the work you do</em>.</p>
+    <div class="gxpills">
+      <span class="ypill in" style="--t0:{tat(1,"insurance") + 300}ms">Insurance sales</span>
+      <span class="gxpill in" style="--t0:{tat(1,"insurance") + 550}ms">Guardian Life of the Caribbean</span>
+      <span class="gxpill in" style="--t0:{tat(1,"insurance") + 800}ms">Chaguanas</span>
+    </div>
+  </div>
+  <div class="col">
+    <div class="gxchart in fl" style="--t0:400ms">
+      <div class="gxch-h"><b>What you can earn</b><span>over the years</span></div>
+      <svg viewBox="0 0 400 250" aria-hidden="true">
+        <defs><linearGradient id="gxa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00CFEA" stop-opacity=".38"/><stop offset="1" stop-color="#00CFEA" stop-opacity="0"/></linearGradient></defs>
+        <g class="gxgrid">{''.join(f'<line x1="30" y1="{y}" x2="390" y2="{y}"/>' for y in (40, 90, 140, 190))}</g>
+        <line class="gxcap" x1="30" y1="128" x2="390" y2="128" style="--t0:{max(300, tat(1,"deciding") - 200)}ms"/>
+        <path class="gxsal" pathLength="100" d="M30 214 L130 160 L170 132 L390 132" style="--t0:{max(400, tat(1,"deciding"))}ms"/>
+        <path class="gxarea" d="M30 222 C150 214 250 160 390 26 L390 230 L30 230Z" style="--t0:{tat(1,"Not") + 900}ms"/>
+        <path class="gxinc" pathLength="100" d="M30 222 C150 214 250 160 390 26" style="--t0:{tat(1,"Not")}ms"/>
+        <circle class="gxend" cx="390" cy="26" r="7" style="--t0:{tat(1,"Not") + 1500}ms"/>
+        <circle class="gxboom" cx="300" cy="128" r="10" style="--t0:{tat(1,"Not") + 950}ms"/>
+        <g class="gxax">{''.join(f'<text x="{30 + i*90}" y="246">Year {i + 1}</text>' for i in range(5))}</g>
+      </svg>
+      <span class="gxlab cap in" style="--t0:{max(400, tat(1,"deciding"))}ms">a salary, capped</span>
+      <span class="gxlab inc in" style="--t0:{tat(1,"Not") + 1400}ms">your income here · no cap</span>
+      <span class="gxill">An illustration, not a promise</span>
+    </div>
+  </div>
+</div>""", 'data-ch="No cap on what you earn"'))
+        STEPS = [('Orientation', 'chat'), ('Market survey', 'target'), ('POP7 profile', 'chart'), ('Training', 'spark')]
+        TOOLS = [('Digital fact find', 'doc'), ('Branch Intelligence', 'bolt'), ('Live production wall', 'chart'), ('Delivery and service, tracked', 'shield')]
+        _tr, _ct = tat(2, "trained"), tat(2, "contracted")
+        _step = max(260, (_ct - _tr) // len(STEPS))
+        T.append(tscene(2, 's-gtwo', f"""
 <div class="full center">
-  <p class="eye in" style="--t0:200ms">FY27 · the first class</p>
-  <h2 class="h xl"><span class="cnt" data-to="7" data-at="{tat(4,"Seven")}">7</span> {words("places.", tat(4,"Seven"), 120)}</h2>
-  <div class="seatrow">{''.join(f'<i style="--t0:{tat(4,"Seven") + 200 + k*120}ms"><svg class="ic"><use href="#i-users"/></svg></i>' for k in range(7))}</div>
-  <p class="sub in" style="--t0:{tat(4,"Every")}ms">Every one gets <em>the full build</em>.</p>
-  <div class="figs row">
-    <div class="fig in" style="--t0:{tat(4,"Thirty")}ms"><b class="cnt" data-to="32" data-at="{tat(4,"Thirty")}">32</b><span>years in Trinidad</span></div>
-    <div class="fig in" style="--t0:{tat(4,"class")}ms"><b class="cnt" data-to="7" data-at="{tat(4,"class")}">7</b><span>places · one class</span></div>
+  <p class="eye in" style="--t0:200ms">Who it&rsquo;s for</p>
+  <h2 class="h l">{words("Two ways in.", 300, 120)}</h2>
+  <div class="gxtwo">
+    <div class="gxcard in fl" style="--t0:{max(300, tat(2,"New") - 200)}ms">
+      <div class="gxch"><i><svg class="ic"><use href="#i-spark"/></svg></i><span><b>New to sales?</b><small>Trained and coached before you&rsquo;re contracted</small></span></div>
+      <div class="gxrail" style="--t0:{_tr}ms;--d:{_step * len(STEPS)}ms">{''.join(f'<span style="--t0:{_tr + k*_step}ms"><i><svg class="ic"><use href="#i-{ic}"/></svg></i><em>{n}</em></span>' for k, (n, ic) in enumerate(STEPS))}</div>
+      <div class="gxstamp" style="--t0:{_ct + 200}ms">Then contracted</div>
+    </div>
+    <div class="gxcard in fl" style="--t0:{max(300, tat(2,"Already") - 200)}ms">
+      <div class="gxch"><i><svg class="ic"><use href="#i-users"/></svg></i><span><b>Already an advisor?</b><small>The tools you never had</small></span></div>
+      <div class="gxtools">{''.join(f'<span style="--t0:{tat(2,"tools") + k*220}ms"><i><svg class="ic"><use href="#i-{ic}"/></svg></i>{n}</span>' for k, (n, ic) in enumerate(TOOLS))}</div>
+    </div>
   </div>
-</div>"""))
-    T.append(tscene(5, 's-cta', f"""
+</div>""", 'data-ch="New to sales, or already an advisor"'))
+        LEADS2 = [('users', 'Your own market', 'mapped and scored', tat(3, "market")), ('bolt', 'Asked to be called', 'people who want a call', tat(3, "leads")),
+                  ('home', 'A household matched to you', 'the file already read', tat(3, "dry") - 200), ('fwd', 'Referrals', 'from clients you served', tat(3, "dry") + 200)]
+        T.append(tscene(3, 's-glead', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">Will you have people to see?</p>
+    <h2 class="h l">{words("Your leads", max(300, tat(3,"leads") - 300), 110)} <em class="wine">{words("never run dry.", tat(3,"never") - 150, 110)}</em></h2>
+    <p class="sub in" style="--t0:{tat(3,"market")}ms">Your own market comes first. Keeping your week full is our job.</p>
+    <div class="gxclock in" style="--t0:{tat(3,"coach") - 200}ms">
+      <svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="25"/><line class="h1" x1="30" y1="30" x2="30" y2="14"/><line class="h2" x1="30" y1="30" x2="41" y2="30"/><line class="x" pathLength="100" x1="8" y1="52" x2="52" y2="8" style="--t0:{tat(3,"clock")}ms"/></svg>
+      <span><b>A coach, not a clock</b><small>Your manager works your week with you</small></span>
+    </div>
+  </div>
+  <div class="col">
+    <div class="gxgauge in fl" style="--t0:{max(300, tat(3,"market") - 300)}ms">
+      <div class="gxring">
+        <svg viewBox="0 0 200 200" aria-hidden="true"><circle class="bg" cx="100" cy="100" r="82"/><circle class="fg" pathLength="100" cx="100" cy="100" r="82" style="--t0:{tat(3,"market")}ms;--d:{max(1200, tat(3,"dry") - tat(3,"market") + 600)}ms"/></svg>
+        <div class="gxrc"><b>Full</b><span>your week</span></div>
+      </div>
+      <div class="gxleads">{''.join(f'<div style="--t0:{t}ms"><svg class="ic"><use href="#i-{ic}"/></svg><b>{n}</b><span>{d}</span></div>' for ic, n, d, t in LEADS2)}</div>
+    </div>
+  </div>
+</div>""", 'data-ch="Your leads never run dry"'))
+        NEED2 = [('Income, replaced', 1200000), ('The mortgage', 650000), ('Education', 250000), ('Final expenses', 50000)]
+        FLOW = ['First meeting', 'Fact find', 'Client approves', 'Delivered', 'Reviewed every 6 months']
+        _ar, _pw, _rm, _cl = tat(4, "arithmetic"), tat(4, "paperwork"), tat(4, "reminders"), tat(4, "clients")
+        T.append(tscene(4, 's-gdig', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">All digital</p>
+  <h2 class="h l">{words("Done for you.", 300, 120)} <em class="wine">{words("Your time goes to clients.", _cl - 300, 90)}</em></h2>
+  <div class="gxtri">
+    <div class="gxt in fl" style="--t0:{_ar - 200}ms"><small>The arithmetic</small>
+      <div class="gxbars">{''.join(f'<div style="--t0:{_ar + k*160}ms"><span>{n}</span><i style="--w:{round(v/12000)}%"></i></div>' for k, (n, v) in enumerate(NEED2))}</div>
+      <b class="gxtot">TT$<em class="cnt" data-to="2150000" data-sep data-at="{_ar}">2,150,000</em></b>{SAMPLE}
+    </div>
+    <div class="gxt in fl" style="--t0:{_pw - 200}ms"><small>The paperwork</small>
+      <ul class="gxchk">{''.join(f'<li style="--t0:{_pw + k*240}ms"><i></i>{n}</li>' for k, n in enumerate(['Draft written', 'Client approves', 'Manager signs', 'On file']))}</ul>
+    </div>
+    <div class="gxt in fl" style="--t0:{_rm - 200}ms"><small>The reminders</small>
+      <div class="gxbell"><svg class="ic"><use href="#i-bolt"/></svg><em class="cnt" data-to="4" data-at="{_rm}">4</em></div>
+      <div class="gxdays">{''.join(f'<span style="--t0:{_rm + 300 + k*200}ms">{d} days</span>' for k, d in enumerate((45, 60, 75, 90)))}</div>
+    </div>
+  </div>
+  <div class="gxflow in" style="--t0:{_cl - 400}ms;--d:{max(1500, dur(4, ttiming, TLINES) - _cl)}ms"><i class="gxrid"></i>{''.join(f'<span style="--t0:{_cl - 300 + k*260}ms"><b></b>{n}</span>' for k, n in enumerate(FLOW))}</div>
+</div>""", 'data-ch="Done for you"'))
+        T.append(tscene(5, 's-hund', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">{words("Does it last?", 200, 120)}</p>
+  <h2 class="h l">{words("The industry keeps 14.", tat(5,"industry") - 200, 95)} <em class="wine">{words("This branch keeps 31.", tat(5,"Here") - 150, 95)}</em></h2>
+  {unit100(tat(5,"industry"), tat(5,"Here"), tat(5,"fourteen"), t_gap=tat(5,"Here") + 1300)}
+</div>""", 'data-ch="Fourteen against thirty-one"'))
+        _go = tat(6, "Go"); _ap = tat(6, "Applying"); _q = max(300, _go - 1500)
+        T.append(tscene(6, 's-cta s-gcta', f"""
 <div class="split cta">
   <div class="col">
-    <p class="eye in" style="--t0:200ms">Start here</p>
-    <div class="figs">
-      <div class="fig in" style="--t0:{tat(5,"One")}ms"><b><em class="cnt" data-to="1" data-at="{tat(5,"One")}">1</em></b><span>confidential conversation</span></div>
-      <div class="fig in" style="--t0:{tat(5,"Twenty")}ms"><b><em class="cnt" data-to="20" data-at="{tat(5,"Twenty")}">20</em> min</b><span>this week</span></div>
-    </div>
-    <h2 class="h url">{words("agentmgt.com", tat(5,"Agent") - 200, 60)}</h2>
-    <div class="btns">
-      <span class="btn b1 in" style="--t0:{tat(5,"Agent") + 500}ms">Book a confidential conversation →</span>
-    </div>
-    <p class="foot in" style="--t0:{tat(5,"week")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas</p>
+    <p class="eye in" style="--t0:200ms">How to apply</p>
+    <h2 class="h l"><span class="cnt" data-to="7" data-at="{tat(6,"seven")}">7</span> {words("places this year.", tat(6,"seven"), 110)}</h2>
+    <ol class="gxsteps">
+      <li class="in" style="--t0:{_go}ms"><b>1</b><span>Scan the code, or tap the link</span></li>
+      <li class="in" style="--t0:{_ap}ms"><b>2</b><span>Apply in <em>2 minutes</em></span></li>
+      <li class="in" style="--t0:{_ap + 700}ms"><b>3</b><span>We reply within <em>48 hours</em></span></li>
+    </ol>
+    <h2 class="h url">{words("rickyrampersadbranch.com", _q - 200, 55)}<br><em class="wine">{words("/careers", _q + 240, 55)}</em></h2>
+    <div class="btns"><span class="btn b1 in" style="--t0:{_q + 500}ms">Apply now →</span><span class="gxor in" style="--t0:{_q + 800}ms">or book a confidential conversation</span></div>
   </div>
   <div class="col">
     <div class="mark top in" style="--t0:200ms">{MARK}</div>
-    <div class="qr in" style="--t0:{tat(5,"Agent")}ms"><svg viewBox="0 0 41 41" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
+    <div class="qr in" style="--t0:{_q}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to apply</span></div>
+    <p class="foot in" style="--t0:{_q + 400}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas</p>
   </div>
-</div>"""))
+</div>""", 'data-ch="How to apply"'))
+    elif AD == 'A':
+        T.append(tscene(1, 's-hook nofade', f"""
+<div class="full center">
+  <span class="ghost" aria-hidden="true">?</span>
+  <span class="spot" style="--t0:{tat(1,"support")}ms"></span>
+  <div class="mark top in now">{MARK}</div>
+  <p class="eye in now">For a practising insurance advisor</p>
+  <h1 class="h xl">{words("Good at this.", 400, cls='now')}<br><em class="wine">{words("And the support stopped.", max(600, tat(1,"support") - 700))}</em></h1>
+  <div class="suppline" style="--t0:{tat(1,"good")}ms;--tc:{tat(1,"stopped")}ms"><i></i><b></b></div>
+</div>""", 'data-ch="And the support stopped"'))
+        # Scene 2 draws the industry line alone and names the cliff; scene 3 lands ours on the same
+        # geometry. Two beats on one picture, which is what the eleven seconds are for.
+        T.append(tscene(2, 's-cliff', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:{max(200, tat(2,"industry") - 300)}ms">The industry's own word for it</p>
+  <h2 class="h l">{words("The cliff.", tat(2,"cliff") - 250, 130)}</h2>
+  {slope(tat(2,"second"), t_cliff=tat(2,"cliff") + 200, t_quote=tat(2,"own"))}
+</div>""", 'data-ch="The cliff"'))
+        T.append(tscene(3, 's-cliff', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">By year four</p>
+  <h2 class="h l"><span class="cnt" data-to="14" data-at="{tat(3,"fourteen")}">14</span> {words("of a hundred left.", tat(3,"fourteen"), 110)} <em class="wine">{words("Here, 31.", tat(3,"branch") - 150, 130)}</em></h2>
+  {slope(0, t_us=tat(3,"branch"), t_n=tat(3,"fourteen"))}
+</div>""", 'data-ch="Fourteen of a hundred, and ours"'))
+        # Line 4 is the longest in the ad, so it carries three timed bands: the 39, the households, the coach.
+        T.append(tscene(4, 's-all', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:{max(200, tat(4,"nothing") - 300)}ms">{words("Here, nothing stops.", max(200, tat(4,"nothing") - 300), 110)}</p>
+  <h2 class="h xl"><span class="cnt" data-to="39" data-at="{tat(4,"Thirty-nine")}">39</span> {words("things this branch does for you.", tat(4,"Thirty-nine"), 90)}</h2>
+  <div class="mgrid">{''.join(f'<div class="mcol in" style="--t0:{tat(4,"Thirty-nine") + 150 + k*260}ms"><span class="mdots">{"".join(f"<i style=--t0:{tat(4,"Thirty-nine") + 250 + k*260 + d*42}ms></i>" for d in range(n))}</span><b>{n}</b><span class="mlab">{lab}</span></div>' for k, (lab, n) in enumerate(MOMENTS))}</div>
+  <div class="hrow">{''.join(f'<span class="in fl" style="--t0:{tat(4,"Clients") + i*230}ms"><svg class="ic"><use href="#i-home"/></svg><b>{n}</b><em>named to you</em></span>' for i, (n, d) in enumerate(HH))}</div>
+  <div class="pill-row mid">
+    <span class="ypill in" style="--t0:{tat(4,"coach")}ms">A coach, not a clock</span>
+    <span class="ypill lk in" style="--t0:{tat(4,"nobody")}ms"><svg class="ic"><use href="#i-lock"/></svg>Nobody will know you asked</span>
+  </div>
+</div>""", 'data-ch="Thirty-nine things"'))
+    else:
+        T.append(tscene(1, 's-hook nofade', f"""
+<div class="full center">
+  <span class="ghost" aria-hidden="true">?</span>
+  <span class="spot" style="--t0:{tat(1,"afraid")}ms"></span>
+  <div class="mark top in now">{MARK}</div>
+  <p class="eye in now">A question</p>
+  <h1 class="h xl">{words("A career with no ceiling?", 400, cls='now')}<br><em class="wine">{words("Afraid of the first year?", tat(1,"afraid") - 200)}</em></h1>
+  <div class="ceil-line" style="--t0:{tat(1,"ceiling")}ms"></div>
+</div>""", 'data-ch="No ceiling, and the first year"'))
+        # LIMRA names the CAUSE of the cliff as well as the cliff: new agents exhaust the friends-and-family
+        # market and have no prospecting system behind it. That is the newcomer's real fear, so B shows the
+        # personal list emptying — and the very next scene shows it being kept full.
+        NAMES = ['Your cousin', 'Your old boss', 'A neighbour', 'Someone from church', 'A friend from school']
+        # 14 Nov 2026, Ricky: "the leads don't come to them as they do market surveys and access their
+        # natural market they come into, what we do is ensure the leads does not run out". So scene 3 no
+        # longer says "Here, the leads come to you" — that was a promise the branch does not make. The
+        # advisor's own market comes FIRST, mapped and scored out of a hundred by the market survey before
+        # they are contracted, and the three rows under it are what refills it when it thins. LIMRA's 2026
+        # catalogue names the manager's half of this "expand their reach within their natural market" and
+        # "recognize signs of prospecting failure", which is the note on the left. (icon, cue word, ms after
+        # it, title, line) — every cue word must be in line 3, or tat() stops the build.
+        # THREE rows, not four. A fourth ("Your week · worked back from your income") pushed the panel to
+        # 82% of the square frame, and a two-line burned caption climbs to about 77%: the last caption sat
+        # straight across it. The bottom-16% rule is the caption's baseline, not its top.
+        REFILL = [('users', 'mapped', 0, 'Your own market', 'mapped and scored · 72 of 100'),
+                  ('bolt', 'thin', 250, 'Asked to be called', '“Retiring properly” · on the board'),
+                  ('home', 'keeping', 150, 'A household matched to you', 'with the file already read')]
+        T.append(tscene(2, 's-names', f"""
+<div class="split">
+  <div class="col">
+    <p class="eye in" style="--t0:{max(200, tat(2,"sales") - 300)}ms">Straight with you</p>
+    <h2 class="h l">{words("This is a sales career.", tat(2,"sales") - 200, 110)}</h2>
+    <p class="sub in" style="--t0:{tat(2,"breaks")}ms">The year that breaks people is not the first.</p>
+    <h2 class="h xl"><em class="wine">{words("It is the second.", tat(2,"second") - 200, 120)}</em></h2>
+    <p class="sub in" style="--t0:{tat(2,"names")}ms">When the names run out.</p>
+  </div>
+  <div class="col">
+    <div class="list in fl" style="--t0:{tat(2,"breaks") - 200}ms">
+      <div class="bd-h"><b>Everyone you know</b><span>your own list</span></div>
+      <div class="miss nmlist">{''.join(f'<span class="in" style="--t0:{tat(2,"breaks") + i*200}ms"><i>{n}</i></span>' for i, n in enumerate(NAMES))}</div>
+      <div class="empt in" style="--t0:{tat(2,"names")}ms">Nobody left to call</div>
+    </div>
+  </div>
+</div>""", 'data-ch="The year that breaks people"'))
+        T.append(tscene(3, 's-fill', f"""
+<div class="split">
+  <div class="col">
+    <h2 class="h l wine2">{words("Here, the names don’t run out.", max(200, tat(3,"market") - 250), 95)}</h2>
+    <p class="sub in" style="--t0:{tat(3,"mapped")}ms">Your own market comes first, mapped before you are contracted.</p>
+    <div class="pill-row">
+      <span class="ypill in" style="--t0:{tat(3,"full")}ms">Keeping your week full is our job</span>
+      <span class="ypill in" style="--t0:{tat(3,"coach")}ms">A coach, not a clock</span>
+    </div>
+    <div class="note in" style="--t0:{tat(3,"thin")}ms">
+      <small>From your manager · in your morning e-mail</small>
+      <p>{typed("Your list is getting thin, Priya. Let's work Thursday's calls together at eight.", tat(3,"keeping"), 22)}</p>
+    </div>
+  </div>
+  <div class="col">
+    <div class="list in fl" style="--t0:{tat(3,"market") - 200}ms">
+      <div class="bd-h"><b>Your list</b><span>kept full</span></div>
+      {''.join(f'<div class="lead-in" style="--t0:{tat(3,w) + o}ms"><svg class="ic"><use href="#i-{ic}"/></svg><b>{n}</b><span>{d}</span></div>' for ic, w, o, n, d in REFILL)}
+      {SAMPLE}
+    </div>
+  </div>
+</div>""", 'data-ch="The names don’t run out"'))
+        # B's scene 4 is the only one in either ad that is purely "14 against 31 of a hundred" with no
+        # time story in the line, so it takes the unit chart. A keeps the slope, because its scenes 2
+        # and 3 ARE a time story — the fall, and the cliff named at year two — and a unit chart has no
+        # time axis to hang that on. Two forms, each on the words it actually fits.
+        T.append(tscene(4, 's-hund', f"""
+<div class="full center">
+  <p class="eye in" style="--t0:200ms">{words("By year four.", 200, 120)}</p>
+  <h2 class="h l">{words("The industry keeps 14.", tat(4,"industry") - 200, 95)} <em class="wine">{words("This branch keeps 31.", tat(4,"branch") - 150, 95)}</em></h2>
+  {unit100(tat(4,"industry"), tat(4,"branch"), tat(4,"fourteen"), t_gap=tat(4,"branch") + 1300)}
+</div>""", 'data-ch="Fourteen against thirty-one"'))
+    # The address goes on two lines, as the full film's close already does. The old "agentmgt.com" was
+    # twelve characters and sat happily in this column; "rickyrampersadbranch.com/careers" is thirty-two,
+    # and on one line it ran under the QR card with "/careers" hidden behind it. Caught by looking at the
+    # rendered frame: the page reported no overflow, because the column simply overlapped the one beside it.
+    CTA = len(TLINES)   # 5 for the A and B feed cuts, 7 for the branch's own first post
+    _cta = None if AD == 'G' else (tscene(CTA, 's-cta', f"""
+<div class="split cta">
+  <div class="col">
+    <p class="eye in" style="--t0:200ms">FY27 &middot; the first class</p>
+    <h2 class="h l"><span class="cnt" data-to="7" data-at="{tat(CTA,"Seven")}">7</span> {words("places.", tat(CTA,"Seven"), 110)}</h2>
+    <div class="seatrow">{''.join(f'<i style="--t0:{tat(CTA,"Seven") + 150 + k*110}ms"><svg class="ic"><use href="#i-users"/></svg></i>' for k in range(7))}</div>
+    <div class="figs">
+      <div class="fig in" style="--t0:{tat(CTA,"One")}ms"><b><em class="cnt" data-to="1" data-at="{tat(CTA,"One")}">1</em></b><span>conversation</span></div>
+      <div class="fig in" style="--t0:{tat(CTA,"twenty")}ms"><b><em class="cnt" data-to="20" data-at="{tat(CTA,"twenty")}">20</em> min</b><span>this week</span></div>
+    </div>
+    <h2 class="h url">{words("rickyrampersadbranch.com", max(300, tat(CTA,"Go") - 2400) - 200, 55)}<br><em class="wine">{words("/careers", max(300, tat(CTA,"Go") - 2400) + 240, 55)}</em></h2>
+    <div class="btns">
+      <span class="btn b1 in" style="--t0:{max(300, tat(CTA,"Go") - 2400) + 500}ms">Book a confidential conversation →</span>
+    </div>
+    <p class="foot in" style="--t0:{tat(CTA,"screen")}ms">Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas</p>
+  </div>
+  <div class="col">
+    <div class="mark top in" style="--t0:200ms">{MARK}</div>
+    <div class="qr in" style="--t0:{max(300, tat(CTA,"Go") - 2400)}ms"><svg viewBox="{QRBOX}" aria-hidden="true"><path d="{QR}"/></svg><i class="scanl"></i><span>Scan to book</span></div>
+  </div>
+</div>""", 'data-ch="Seven places. Book the conversation"'))
+    if _cta: T.append(_cta)
 
 HTML = r'''<!DOCTYPE html>
 <html lang="en">
@@ -1291,7 +1899,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .h.xl{font-size:calc(var(--u)*10.5)}
 .h.l{font-size:calc(var(--u)*7)}
 .h.m{font-size:calc(var(--u)*5.2)}
-.h.url{font-size:calc(var(--u)*10);letter-spacing:-.03em;color:#fff;font-weight:700}
+.h.url{font-size:calc(var(--u)*6);letter-spacing:-.03em;color:#fff;font-weight:700;line-height:1.02}
 .h em,.wine{font-style:italic;font-weight:700;color:var(--aL)}
 .h.wine2{color:var(--aL);font-weight:700}
 .h.duo{margin-top:calc(var(--u)*2);font-weight:600}
@@ -1506,12 +2114,217 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .lead-in .ic{grid-row:span 2;font-size:calc(var(--u)*3.2)}
 .lead-in b{font:700 calc(var(--u)*2.2)/1.1 var(--text)}
 .lead-in span{font:500 calc(var(--u)*1.9)/1.2 var(--text);opacity:.9}
+/* ONE of these is a notification landing — a solid teal slab is right for that, and the film keeps it.
+   THREE stacked inside a board card are rows of a list, and three solid slabs read as three buttons
+   rather than as a product. So on the ad's board they take a surface tint with a teal rule down the
+   left edge and the bolt in teal: the hierarchy then runs card > row > icon instead of everything
+   shouting at one volume. Scoped to .s-fill so the film's single notification is untouched. */
+.s-fill .lead-in{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-left:calc(var(--u)*.45) solid var(--a);border-radius:calc(var(--u)*.5) calc(var(--u)*1.2) calc(var(--u)*1.2) calc(var(--u)*.5)}
+.s-fill .lead-in .ic{color:var(--aL)}
+.s-fill .lead-in span{color:var(--mute);opacity:1}
 .scene.act .lead-in{animation:slidein .6s var(--out) both;animation-delay:var(--t0)}
 @keyframes slidein{to{opacity:1;transform:none}}
 .seatrow{display:flex;justify-content:center;gap:calc(var(--u)*2);margin:calc(var(--u)*1) 0}
 .seatrow i{width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:calc(var(--u)*1.6);display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:var(--mute2);font-size:calc(var(--u)*3);opacity:0;transform:scale(.6)}
 .scene.act .seatrow i{animation:seat-on .55s var(--pop) both;animation-delay:var(--t0)}
 @keyframes seat-on{to{opacity:1;transform:scale(1);background:linear-gradient(145deg,var(--a),var(--aD));color:#fff;border-color:rgba(255,255,255,.3);box-shadow:0 0 calc(var(--u)*3) rgba(0,207,234,.5)}}
+
+/* The ad's own blocks, 12 Nov 2026. `.miss` is what the reader is NOT getting: it enters, then the rule
+   strikes across it, so the eye reads the thing and then the absence. The bars below are scaleX on `growx`,
+   never `grow`, because this file defines @keyframes grow TWICE and the later scaleY one wins. */
+.miss{display:grid;gap:calc(var(--u)*1.4);margin:calc(var(--u)*1.6) 0 calc(var(--u)*2.4)}
+.miss span{position:relative;align-self:start;justify-self:start;font:600 calc(var(--u)*3.1)/1.25 var(--text);color:var(--mute2);padding-right:.2em}
+.miss span::after{content:'';position:absolute;left:0;right:0;top:52%;height:calc(var(--u)*.38);background:#C97A3A;border-radius:2px;transform:scaleX(0);transform-origin:0 50%;box-shadow:0 0 calc(var(--u)*1.6) rgba(201,122,58,.55)}
+.scene.act .miss span::after{animation:growx .5s var(--out) both;animation-delay:calc(var(--t0) + 420ms)}
+.adbars{display:grid;gap:calc(var(--u)*3);width:min(100%,calc(var(--u)*82));margin:calc(var(--u)*3) auto 0;text-align:left}
+.adbar{display:grid;gap:calc(var(--u)*1)}
+.adlab{font:600 calc(var(--u)*2.6)/1 var(--text);color:var(--mute);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.adlab b{font:800 calc(var(--u)*6.4)/1 var(--display);color:#fff;letter-spacing:-.03em;margin-right:.18em}
+.adtrack{display:block;height:calc(var(--u)*3);border-radius:99px;background:rgba(255,255,255,.1);position:relative;overflow:hidden}
+.adtrack i{position:absolute;left:0;top:0;bottom:0;width:var(--w);border-radius:99px;transform:scaleX(0);transform-origin:0 50%;overflow:hidden}  /* the fill clips its own sheen: without this the light escapes the bar and runs along the empty
+     track, which reads as the bar being longer than it is — the one thing a 0-100 chart must not do */
+.adtrack i.ind{background:linear-gradient(90deg,#C97A3A,#a86230)}
+.adtrack i.us{background:linear-gradient(90deg,#0E93B0,#00CFEA);box-shadow:0 0 calc(var(--u)*2.6) rgba(0,207,234,.5)}
+.scene.act .adtrack i{animation:growx 1.1s var(--out) both;animation-delay:var(--t0)}
+.adleg{font:500 calc(var(--u)*2.3)/1.3 var(--text);color:var(--mute2);letter-spacing:.02em}
+.adleg b{color:var(--ink);font-weight:700}
+.adsrc{margin-top:calc(var(--u)*2.4);font:500 calc(var(--u)*2)/1.4 var(--text);color:var(--mute2)}
+
+/* ── The cliff, 12 Nov 2026. A SLOPE chart, because LIMRA publishes year one and year four and names
+   year two without giving a figure for it: two sourced endpoints a series, year two annotated on the
+   time axis, and no marker pretending to be a reading. Amber #C97A3A (industry) against teal #0E93B0
+   (ours) on this ground passes all six of the palette validator's checks. Every number and label wears
+   a text token, never the series colour, and each line is labelled in the key as well as coloured.
+   The lines draw on pathLength="100" with a dash of 100: with the real length they stay invisible until
+   the offset falls under it, which has cost a shot in another film. ─────────────────────────────── */
+.slope{width:min(100%,calc(var(--u)*86));margin:calc(var(--u)*1.5) auto 0}
+.slope svg{display:block;width:100%;height:auto;max-width:100%;overflow:visible}
+/* The grid is the context, so it is recessive: a hairline, the baseline a touch stronger, and the scale
+   labels small enough that the two series are what the eye lands on. */
+.sl-g{stroke:rgba(255,255,255,.09);stroke-width:.18}
+.sl-g.base{stroke:rgba(255,255,255,.26);stroke-width:.3}
+.sl-gy{fill:var(--mute2);opacity:.75;font:600 2.5px var(--text);text-anchor:end;font-variant-numeric:tabular-nums}
+.sl-x{fill:var(--mute2);font:700 2.9px var(--text);letter-spacing:.14em;text-anchor:start}
+.sl-x.r{text-anchor:end}
+/* 0.72 and 0.86 units = 5.6px and 6.7px at the square's 780px plot, about 3px in a feed tile: a drawn
+   line rather than a marker stroke. Ours is the heavier of the two and the only one at full opacity,
+   which is what makes it the subject — no glow, which was the single most amateur thing on the frame. */
+.sl-ind,.sl-us{fill:none;stroke-width:.72;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
+.sl-ind{stroke:#C97A3A;opacity:.82}
+.sl-us{stroke:#0E93B0;stroke-width:.86}
+.scene.act .sl-ind,.scene.act .sl-us{animation:sldraw 1.15s var(--out) both;animation-delay:var(--t0)}
+/* A 2px ring in the ground colour, so the dot reads as a data point sitting ON the line rather than a
+   blob swelling out of it — the published rule for a mark that overlaps another. */
+.sl-d{opacity:0;stroke:var(--bg);stroke-width:.26}
+.sl-d.ind{fill:#C97A3A}
+.sl-d.us{fill:#0E93B0}
+.scene.act .sl-d{animation:sldot .5s var(--pop) both;animation-delay:calc(var(--t0) + 120ms)}
+.sl-n{font:800 4.8px var(--text);letter-spacing:-.01em;text-anchor:start;font-variant-numeric:tabular-nums}
+.sl-n.ind{fill:#e3a86f;opacity:.86}
+.sl-n.us{fill:#7fe2f4}
+.sl-lead{stroke:var(--mute2);stroke-width:.3;stroke-dasharray:1 1.2;opacity:0}
+.sl-cliff{fill:var(--mute);font:800 3.2px var(--text);letter-spacing:.1em;text-anchor:middle;opacity:0}
+.scene.act .sl-lead,.scene.act .sl-cliff{animation:slcl .6s var(--out) both;animation-delay:var(--t0)}
+.sl-key{display:flex;justify-content:center;gap:calc(var(--u)*3.4);margin-top:calc(var(--u)*1)}
+.sl-key span{display:inline-flex;align-items:center;gap:calc(var(--u)*1);font:600 calc(var(--u)*2.2)/1 var(--text);color:var(--mute)}
+.sl-key i{width:calc(var(--u)*2.6);height:calc(var(--u)*.7);border-radius:99px;flex:none}
+.sl-key i.ind{background:#C97A3A}
+.sl-key i.us{background:#0E93B0}
+/* 13 Nov 2026. The y-axis here is zero-based (_y(0) lands on the axis), which is right and is also why
+   the two lines come out near-parallel: the gap grows only from 7.2 to 10.2 viewBox units. So the eye
+   reads "a bit better" off a picture whose whole point is "more than twice as many" — 31 against 14 is
+   2.2x. The honest fix is NOT to break the baseline to dramatise the gap; it is to state the ratio in
+   words, which the eye cannot compute off two sloping lines at feed-tile size. */
+.sl-ratio{margin-top:calc(var(--u)*1.6);text-align:center;font:500 calc(var(--u)*2.4)/1.35 var(--text);color:var(--mute)}
+.sl-ratio b{color:#5fd0e6;font-weight:800}
+/* ── the hundred (B's scene 4). One square = one advisor in a hundred. ─────────────────────────────── */
+.unit100{width:min(100%,calc(var(--u)*88));margin:calc(var(--u)*2.2) auto 0}
+.u1row{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*5);align-items:start}
+.u1c{display:grid;gap:calc(var(--u)*1.4);justify-items:center}
+.u1h{display:inline-flex;align-items:center;gap:calc(var(--u)*1);font:700 calc(var(--u)*2.3)/1 var(--text);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.u1h i{width:calc(var(--u)*2.4);height:calc(var(--u)*.65);border-radius:99px;flex:none}
+.u1h i.ind{background:#C97A3A}.u1h i.us{background:#0E93B0}
+/* 10 x 10. gap is a RATIO of the cell, so the block stays square and the grid reads as one object at
+   any width; aspect-ratio on the cell is what keeps the squares square without a fixed size. */
+.u1g{display:grid;grid-template-columns:repeat(10,1fr);gap:calc(var(--u)*.52);width:100%}
+.u1g i{aspect-ratio:1;border-radius:calc(var(--u)*.35);background:rgba(255,255,255,.07);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+/* The count sits on ONE line with its unit, not stacked over it: stacked cost 55px of height that the
+   grid needs, and a figure reads perfectly well beside its label when the label is small enough. */
+.u1n{display:flex;align-items:baseline;justify-content:center;gap:.4em;font:800 calc(var(--u)*6.2)/1 var(--display);
+  letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.u1n.ind{color:#e3a86f}.u1n.us{color:#7fe2f4}
+.u1n em{font:600 calc(var(--u)*2.1)/1 var(--text);font-style:normal;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--mute2)}
+.u1gap{margin-top:calc(var(--u)*2);text-align:center;font:500 calc(var(--u)*2.7)/1.35 var(--text);color:var(--mute)}
+.u1gap b{color:#7fe2f4;font-weight:800}
+/* The squares light one at a time at the SAME pace in both blocks, so the viewer watches ours keep
+   going after the industry's has stopped — the motion is the comparison. `both` fill means a square
+   that has not had its turn yet is at the keyframe's 0%, which is the unlit surface, so nothing is
+   ever stranded if the script does not run. */
+@keyframes u1on{from{background:rgba(255,255,255,.07);transform:scale(.55)}
+  55%{transform:scale(1.14)}to{background:var(--c);transform:none}}
+.u1g i{--c:#C97A3A}.u1g.us i{--c:#0E93B0}
+.scene.act .u1g i.on{animation:u1on .36s var(--pop) both;animation-delay:var(--t0)}
+/* The seventeen past the industry's fourteen pulse once, together, when the block is full: the branch's
+   whole claim, drawn. One flourish on the frame and it carries a meaning — not decoration.
+   The ring is a ::after whose OPACITY animates. Animating box-shadow itself is on web.dev's
+   do-not-animate list and this repository already keeps that rule for the homepage's hover lift;
+   seventeen squares re-painting their shadow every frame is exactly the case it exists for. */
+.u1g i.xt{position:relative}
+.u1g i.xt::after{content:"";position:absolute;inset:calc(var(--u)*-.42);border-radius:calc(var(--u)*.6);
+  box-shadow:0 0 0 calc(var(--u)*.24) rgba(127,226,244,.55);opacity:0;pointer-events:none}
+@keyframes u1pulse{0%,100%{opacity:0}45%{opacity:1}}
+.scene.act .u1g i.on.xt::after{animation:u1pulse .6s var(--ease) 2;animation-delay:calc(var(--xt) + .3s)}
+.sl-q{width:min(100%,calc(var(--u)*72));margin:calc(var(--u)*1.6) auto 0;padding-left:calc(var(--u)*2);border-left:calc(var(--u)*.4) solid #C97A3A;text-align:left;font:500 italic calc(var(--u)*2.3)/1.35 var(--text);color:var(--mute)}
+.sl-q em{display:block;margin-top:.45em;font:700 calc(var(--u)*1.9)/1 var(--text);font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:var(--mute2)}
+@keyframes sldraw{to{stroke-dashoffset:0}}
+@keyframes sldot{to{opacity:1}}
+@keyframes slcl{to{opacity:1}}
+
+/* The support that simply ends: the line draws across, then the right half drops away and a gap opens
+   where it used to be. The break lands on the word "stopped". */
+.suppline{position:relative;width:min(100%,calc(var(--u)*60));height:calc(var(--u)*.5);margin:calc(var(--u)*3) auto 0}
+.suppline i,.suppline b{position:absolute;top:0;height:100%;border-radius:99px;background:linear-gradient(90deg,rgba(0,207,234,.1),var(--aL));transform-origin:0 50%}
+.suppline i{left:0;width:52%;transform:scaleX(0)}
+.suppline b{left:56%;width:44%;background:linear-gradient(90deg,#C97A3A,rgba(201,122,58,.1));transform:scaleX(0)}
+.scene.act .suppline i{animation:growx .7s var(--out) both;animation-delay:var(--t0)}
+.scene.act .suppline b{animation:suppbrk 1.1s var(--out) both;animation-delay:var(--tc)}
+@keyframes suppbrk{0%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1) translateY(calc(var(--u)*3));opacity:0}}
+
+/* The thirty-nine, as the six moments the careers page itself groups them into, counting out as the
+   line is spoken. The counts are read off the live page, so the ad cannot drift from what it links to. */
+.mgrid{display:flex;justify-content:center;gap:calc(var(--u)*2.2);margin:calc(var(--u)*2.4) auto 0;width:min(100%,calc(var(--u)*92));flex-wrap:wrap}
+.mcol{flex:1 1 calc(var(--u)*12);min-width:0;display:grid;gap:calc(var(--u)*.8);justify-items:center;padding:calc(var(--u)*1.4) calc(var(--u)*.6);border-radius:calc(var(--u)*1.4);background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1)}
+.mcol>b{font:800 calc(var(--u)*3.4)/1 var(--display);color:var(--aL);letter-spacing:-.02em}
+.mdots{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(var(--u)*.52);max-width:calc(var(--u)*9)}
+.mdots i{width:calc(var(--u)*1.05);height:calc(var(--u)*1.05);border-radius:50%;background:var(--aL);opacity:0;transform:scale(.3)}
+.scene.act .mdots i{animation:mgdot .34s var(--pop) both;animation-delay:var(--t0)}
+.mlab{font:600 calc(var(--u)*1.75)/1.2 var(--text);color:var(--mute2);text-align:center;letter-spacing:.02em}
+@keyframes mgdot{to{opacity:1;transform:scale(1)}}
+
+/* The households, as a row rather than a panel: scene 4 of A has three bands to get through. */
+.hrow{display:flex;justify-content:center;gap:calc(var(--u)*1.6);margin:calc(var(--u)*2.2) auto 0;flex-wrap:wrap}
+.hrow span{display:inline-flex;align-items:center;gap:calc(var(--u)*1.1);padding:calc(var(--u)*1.1) calc(var(--u)*1.9);border-radius:99px;background:rgba(14,147,176,.14);border:1px solid rgba(0,207,234,.3)}
+.hrow .ic{width:calc(var(--u)*2.4);height:calc(var(--u)*2.4);color:var(--aL);flex:none}
+.hrow b{font:700 calc(var(--u)*2.3)/1 var(--text);color:#fff}
+.hrow em{font:600 calc(var(--u)*1.9)/1 var(--text);font-style:normal;color:var(--aT)}
+.pill-row.mid{justify-content:center;margin-top:calc(var(--u)*2.4)}
+.ypill.lk{display:inline-flex;align-items:center;gap:calc(var(--u)*1)}
+.ypill.lk .ic{width:calc(var(--u)*2.2);height:calc(var(--u)*2.2);flex:none}
+
+/* B's emptying list: the names a newcomer is told to call, struck off one by one — LIMRA's own stated
+   cause of the cliff — ending on nobody left. Tighter than the standard `.miss`, because there are five. */
+.miss.nmlist{gap:calc(var(--u)*.7);margin:calc(var(--u)*1.2) 0 calc(var(--u)*1.4)}
+.miss.nmlist span{font-size:calc(var(--u)*2.5)}
+.empt{align-self:start;padding:calc(var(--u)*1) calc(var(--u)*1.8);border-radius:99px;background:rgba(201,122,58,.16);border:1px solid rgba(201,122,58,.42);font:700 calc(var(--u)*2.1)/1 var(--text);letter-spacing:.04em;color:#e3a86f;opacity:0}
+/* NOT `adpunch`: it animates transform alone, so anything starting at opacity 0 stays invisible for ever.
+   Third element in this repository to be bitten by that — see the note on `numPop` in the branch film. */
+.scene.act .empt{animation:emptin .6s var(--pop) both;animation-delay:var(--t0)}
+@keyframes emptin{0%{opacity:0;transform:scale(.7)}55%{opacity:1;transform:scale(1.09)}100%{opacity:1;transform:scale(1)}}
+
+/* ── The ad's motion, 12 Nov 2026 ("a lot more motion … things that will make persons share the ad").
+   A rendered film is an MP4, so motion costs render minutes and nothing on the viewer's device; what it
+   must not cost is meaning. Each of these is tied to the thing it is about. New names are prefixed `ad`
+   because this file already defines @keyframes grow three times and slidein, ride, press and clkaway
+   twice each — the later one silently wins, and that has cost a shot before. ────────────────────── */
+
+/* 1. The absence is FELT. As the rule crosses it the line flinches, flashes the industry amber and
+      settles dimmer than it began, so the eye reads the thing and then its removal. The text sits in
+      its own <i> because `.in` already owns the span's single animation slot. */
+.miss span i{display:inline-block;font-style:normal;will-change:transform}
+.scene.act .miss span i{animation:adhit .62s var(--out) both;animation-delay:calc(var(--t0) + 400ms)}
+@keyframes adhit{
+  0%{transform:none;color:var(--mute2)}
+  30%{transform:translateX(calc(var(--u)*-.5)) scale(.982);color:#C97A3A}
+  60%{transform:translateX(calc(var(--u)*.12)) scale(1.004)}
+  100%{transform:none;color:#6d7f94}
+}
+
+/* 2. Each figure lands with a ring off it, so the proof arrives rather than appears. */
+.adlab b{position:relative}
+.adlab b::after{content:"";position:absolute;left:50%;top:50%;width:calc(var(--u)*7);height:calc(var(--u)*7);
+  margin:calc(var(--u)*-3.5) 0 0 calc(var(--u)*-3.5);border-radius:50%;border:2px solid currentColor;opacity:0;pointer-events:none}
+.scene.act .adbar.in .adlab b::after{animation:adring .95s var(--out) both;animation-delay:calc(var(--t0) + 260ms)}
+@keyframes adring{0%{opacity:.55;transform:scale(.45)}70%{opacity:.18}100%{opacity:0;transform:scale(2.6)}}
+
+/* 3. A light runs along each bar as it fills, in the direction it grows. */
+.adtrack i::after{content:"";position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.55) 50%,transparent 80%);
+  transform:translateX(-120%)}
+.scene.act .adtrack i::after{animation:adsheen 1.5s var(--out) both;animation-delay:calc(var(--t0) + 260ms)}
+@keyframes adsheen{to{transform:translateX(220%)}}
+
+/* 4. The screen is never quite still: the evidence card breathes on a long, slow cycle. Transform only,
+      never a shadow — box-shadow is on web.dev's do-not-animate list and this renders 1,182 frames. */
+.s-match .list{will-change:transform}
+.scene.act .s-match .list{animation:up .8s var(--out) both,adfloat 9s ease-in-out 1.1s infinite;animation-delay:var(--t0,0ms),1.1s}
+@keyframes adfloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(calc(var(--u)*-.9)) rotate(.22deg)}}
+
+/* 5. The open: the mark arrives with a punch, because the first second is the whole of a feed ad. */
+.scene.act .s-hook .mark.top{animation:up .8s var(--out) both,adpunch .7s var(--pop) .25s both}
+@keyframes adpunch{0%{transform:scale(.7)}55%{transform:scale(1.09)}100%{transform:scale(1)}}
 .jr.five{grid-template-columns:repeat(5,1fr);max-width:calc(var(--u)*120);margin-inline:auto}
 .jr.five .jline{left:10%;right:10%}
 /* scene 17: the wins */
@@ -1537,6 +2350,75 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--te
 .rule{width:calc(var(--u)*14);height:calc(var(--u)*.6);background:linear-gradient(90deg,var(--aL),var(--aD));transform:scaleX(0);transform-origin:50% 50%;margin-top:calc(var(--u)*2)}
 .scene.act .rule{animation:rule .8s var(--out) both;animation-delay:var(--t0)}
 @keyframes rule{to{transform:scaleX(1)}}
+/* ── the branch's own first post (ad C), 13 Nov 2026 ───────────────────────────────────────────────
+   Three blocks, all built from the palette already validated for this ground: teal #0E93B0 for ours,
+   amber #C97A3A for the industry, and text in text tokens, never in a series colour. */
+.c3row{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.6);width:min(100%,calc(var(--u)*82));margin:calc(var(--u)*2.6) auto 0}
+.c3card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);border-top:calc(var(--u)*.34) solid var(--a);
+  border-radius:calc(var(--u)*.5) calc(var(--u)*.5) calc(var(--u)*1.1) calc(var(--u)*1.1);padding:calc(var(--u)*1.7) calc(var(--u)*1.4);text-align:left}
+.c3card b{display:block;font:800 calc(var(--u)*3.5)/1.05 var(--display);letter-spacing:-.02em;color:var(--ink)}
+.c3card span{display:block;margin-top:calc(var(--u)*.55);font:500 calc(var(--u)*2)/1.3 var(--text);color:var(--mute)}
+.cgrail{display:grid;grid-template-columns:repeat(5,1fr);gap:calc(var(--u)*1.2);width:min(100%,calc(var(--u)*90));margin:calc(var(--u)*2.6) auto 0;position:relative}
+.cgrail::before{content:"";position:absolute;left:calc(var(--u)*1.6);right:calc(var(--u)*1.6);top:calc(var(--u)*1.6);height:2px;background:rgba(255,255,255,.12)}
+.cgstep{position:relative;text-align:center;padding-top:calc(var(--u)*.2)}
+.cgstep i{display:grid;place-items:center;width:calc(var(--u)*3.2);height:calc(var(--u)*3.2);margin:0 auto calc(var(--u)*.9);border-radius:50%;
+  background:var(--a);color:#06121d;font:800 calc(var(--u)*1.8)/1 var(--text);font-style:normal;position:relative;z-index:1}
+.cgstep b{display:block;font:800 calc(var(--u)*2)/1.15 var(--text);color:var(--ink)}
+.cgstep span{display:block;margin-top:calc(var(--u)*.4);font:500 calc(var(--u)*1.55)/1.3 var(--text);color:var(--mute)}
+/* ── Ad C scene 6: the retention comparison, 13 Nov 2026. Two flat number cards became ONE 0-100
+   track, so 14 and 31 are read against the same hundred and the source line under them says what
+   that hundred is. Deliberately NOT a hundred-square grid: on ad B that drew 69 dark squares,
+   which reads as a win to a practising advisor and as "two in three fail" to somebody deciding
+   whether to leave a salaried job — and this post is aimed at both. Drawing only what is KEPT
+   says the same thing without drawing anybody's failure.
+   The bar fills with `barfill` (scaleX). NEVER `grow`: this file defines @keyframes grow three
+   times and the later scaleY one wins, so a bar on it renders at zero width for the whole scene.
+   Text wears text tokens, never the series colour; each row is named as well as coloured. */
+.cfig{width:min(100%,calc(var(--u)*72));margin:calc(var(--u)*2.4) auto 0;display:grid;gap:calc(var(--u)*1.15)}
+.cfrow{display:grid;grid-template-columns:calc(var(--u)*15) 1fr calc(var(--u)*6.4);align-items:center;gap:calc(var(--u)*1.3)}
+.cflab{font:600 calc(var(--u)*1.8)/1.2 var(--text);color:var(--mute);text-align:right}
+.cftrack{position:relative;height:calc(var(--u)*2.1);border-radius:calc(var(--u)*1.05);background:rgba(255,255,255,.07);overflow:hidden}
+.cfbar{position:absolute;inset:0 auto 0 0;width:var(--w);border-radius:inherit;background:#C97A3A;
+  transform:scaleX(0);transform-origin:left center;animation:barfill .95s var(--out) both;animation-delay:var(--t0)}
+.cfrow.us .cfbar{background:#0E93B0}
+.cfrow>b{font:800 calc(var(--u)*4)/1 var(--display);color:var(--mute);font-variant-numeric:tabular-nums;text-align:left}
+.cfrow.us>b{color:var(--ink)}
+.cfx{margin-top:calc(var(--u)*.5);font:700 calc(var(--u)*2.05)/1.3 var(--display);color:var(--ink);text-align:center}
+/* The journey: six of the branch's own screens, 3x2 here, 2x3 portrait. Each frame shows the TOP of its
+   screen (object-position:top) — these are tall pages, and centring them would crop away the headline that
+   says what the screen is. The step number sits ON the screen in --a, where white measures 5.54:1. */
+.cjwrap{width:min(100%,calc(var(--u)*96));margin:calc(var(--u)*2) auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.5) calc(var(--u)*1.6)}
+.cjstop{display:grid;gap:calc(var(--u)*.5);align-content:start;min-width:0}
+.cjshot{position:relative;aspect-ratio:4/3;border-radius:calc(var(--u)*.9);overflow:hidden;background:#fff;border:calc(var(--u)*.26) solid #22527f;box-shadow:0 calc(var(--u)*1.2) calc(var(--u)*3) rgba(4,14,26,.5)}
+.cjshot img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.cjn{position:absolute;left:calc(var(--u)*.55);top:calc(var(--u)*.55);z-index:2;width:calc(var(--u)*2.1);height:calc(var(--u)*2.1);border-radius:50%;background:var(--a);color:#fff;font:800 calc(var(--u)*1.2)/calc(var(--u)*2.1) var(--display);text-align:center}
+.cjt{font:800 calc(var(--u)*1.7)/1.2 var(--display);color:var(--ink)}
+.cjd{font:500 calc(var(--u)*1.45)/1.3 var(--text);color:var(--mute)}
+.cjfoot{display:grid;justify-items:center;gap:calc(var(--u)*.75);margin-top:calc(var(--u)*1.9)}
+.cjpills{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(var(--u)*.8)}
+/* the cadence, as the foot of the journey: three marks on one rule, not a seventh screen */
+.curail{display:flex;flex-wrap:wrap;justify-content:center;align-items:stretch;gap:calc(var(--u)*1.6);
+  padding-top:calc(var(--u)*1.2);border-top:2px solid rgba(255,255,255,.14);width:min(100%,calc(var(--u)*82))}
+.cum{display:grid;gap:calc(var(--u)*.25);text-align:center;min-width:0}
+.cum>b{font:800 calc(var(--u)*2)/1.15 var(--display);color:var(--aL)}
+.cum>span{font:500 calc(var(--u)*1.5)/1.25 var(--text);color:var(--mute)}
+/* THE SCENE WITH NO SCREEN. Three drawn cards and a struck-through chip; nothing here is a device. */
+.hu3{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.6);width:min(100%,calc(var(--u)*88));margin:calc(var(--u)*2.2) auto 0}
+.hucard{display:grid;gap:calc(var(--u)*.7);justify-items:center;align-content:start;min-width:0;
+  padding:calc(var(--u)*2) calc(var(--u)*1.3);border-radius:calc(var(--u)*1.5);
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
+.huic{display:grid;place-items:center;width:calc(var(--u)*5);height:calc(var(--u)*5);border-radius:50%;
+  background:var(--a);color:#fff}
+.huic .ic{width:calc(var(--u)*2.6);height:calc(var(--u)*2.6)}
+.hucard>b{font:800 calc(var(--u)*2.1)/1.2 var(--display);color:var(--ink);text-align:center}
+.hud{font:500 calc(var(--u)*1.6)/1.35 var(--text);color:var(--mute);text-align:center}
+.hustrike{margin-top:calc(var(--u)*2.1);font:600 calc(var(--u)*2)/1.3 var(--text);color:var(--mute2)}
+.hustrike span{position:relative;display:inline-block}
+.hustrike span::after{content:"";position:absolute;left:calc(var(--u)*-.4);right:calc(var(--u)*-.4);top:52%;
+  height:3px;border-radius:2px;background:#C97A3A;transform:scaleX(0);transform-origin:left center;
+  animation:growx .5s var(--out) both;animation-delay:calc(var(--t0) + 320ms)}
+.cjx{font:800 calc(var(--u)*2.5)/1.2 var(--display);color:var(--ink);text-align:center}
+.cjs{font:500 calc(var(--u)*1.5)/1.3 var(--text);color:var(--mute2);text-align:center}
 .ceil-line{position:absolute;left:10%;right:10%;top:62%;height:2px;background:linear-gradient(90deg,transparent,var(--aL),transparent);transform:scaleX(0)}
 .scene.act .ceil-line{animation:rule 1.1s var(--out) both;animation-delay:var(--t0)}
 .card{position:relative;background:var(--bg3);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,6,10,.5)}
@@ -1999,7 +2881,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .scene{padding:calc(var(--u)*14) calc(var(--u)*7) calc(var(--u)*36)}
   .split,.split.wide{grid-template-columns:1fr;grid-template-rows:auto auto;gap:calc(var(--u)*6);align-content:center}
   .split .col:first-child{order:0}.split .col:last-child{order:1}
-  .h.xxl{font-size:calc(var(--u)*15)}.h.xl{font-size:calc(var(--u)*12.5)}.h.l{font-size:calc(var(--u)*8.6)}.h.m{font-size:calc(var(--u)*6)}.h.url{font-size:calc(var(--u)*12)}
+  .h.xxl{font-size:calc(var(--u)*15)}.h.xl{font-size:calc(var(--u)*12.5)}.h.l{font-size:calc(var(--u)*8.6)}.h.m{font-size:calc(var(--u)*6)}.h.url{font-size:calc(var(--u)*6.6)}
   .sub{font-size:calc(var(--u)*3.6)}.sub.big{font-size:calc(var(--u)*3.6)}
   .eye{font-size:calc(var(--u)*2.5)}
   .bars{height:calc(var(--u)*50)}
@@ -2043,7 +2925,7 @@ body.paused #bars i.run::after{animation-play-state:paused}
 @media (aspect-ratio:1/1){
   :root{--u:.84vw}
   .scene{padding:calc(var(--u)*6) calc(var(--u)*7) calc(var(--u)*30)}
-  .h.xl{font-size:calc(var(--u)*11.5)}.h.l{font-size:calc(var(--u)*7.6)}.h.url{font-size:calc(var(--u)*11)}
+  .h.xl{font-size:calc(var(--u)*11.5)}.h.l{font-size:calc(var(--u)*7.6)}.h.url{font-size:calc(var(--u)*6.2)}
   .split{gap:calc(var(--u)*3.5)}
   .ghost{font-size:calc(var(--u)*58);top:-8%}
   .qr svg{width:calc(var(--u)*24);height:calc(var(--u)*24)}
@@ -2052,6 +2934,8 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .seatrow i{width:calc(var(--u)*6);height:calc(var(--u)*6)}
   .s-match .h.l{font-size:calc(var(--u)*6.2)}.s-match .list{zoom:.76}.s-match .ypill{font-size:calc(var(--u)*2.2)}
   .cta{grid-template-columns:1.25fr .75fr;gap:calc(var(--u)*3)}.s-cta .qr svg{width:calc(var(--u)*21);height:calc(var(--u)*21)}.s-cta .mark.top{width:calc(var(--u)*6.5)}
+  /* the address is 32 characters now, on two lines; it still has to fit the narrower column */
+  .s-cta .h.url{font-size:calc(var(--u)*5)}
 }
 
 /* ── the trailer's blocks, 28 October 2026: drawn larger, each with its own graphic ── */
@@ -2065,6 +2949,11 @@ body.paused #bars i.run::after{animation-play-state:paused}
 .tr-ceil span{position:absolute;left:0;top:calc(var(--u)*-3.4);font:600 calc(var(--u)*2)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aT)}
 .tr-lab{position:absolute;right:calc(var(--u)*12);top:calc(var(--u)*-1);font:800 calc(var(--u)*3.6)/1 var(--display);color:var(--aL);opacity:0;font-style:normal;z-index:4}
 .scene.act .tr-lab{animation:pop .6s var(--pop) both;animation-delay:var(--t0)}
+.credwrap{margin:0 0 2.4vh}
+.credbar{display:flex;gap:1.6vw;justify-content:center;align-items:stretch;flex-wrap:wrap}
+.cred{display:flex;align-items:center;gap:1vw;padding:1.3vh 1.9vw;border-radius:.8vw;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
+.cred b{font-size:4.2vh;font-weight:800;letter-spacing:-.01em;line-height:1}
+.cred small{font-size:1.5vh;line-height:1.3;opacity:.82;text-align:left}
 .tr-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*3.2);width:100%;max-width:calc(var(--u)*172);margin:calc(var(--u)*2) auto 0}
 .tr-card{position:relative;background:#fff;color:#0d3f5e;border-radius:calc(var(--u)*2.4);padding:calc(var(--u)*3.2) calc(var(--u)*3.4);display:grid;gap:calc(var(--u)*1.5);text-align:left;box-shadow:0 calc(var(--u)*3) calc(var(--u)*9) rgba(4,6,10,.5);align-content:start}
 .tr-card small{font:600 calc(var(--u)*1.9)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:var(--aD)}
@@ -2229,6 +3118,12 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .s-door .who.mgr span{font-size:calc(var(--u)*2.4)}
   .s-door .who.mgr .lock-s{grid-column:2;grid-row:1/3;white-space:nowrap}
   .s-door .tr-line{font-size:calc(var(--u)*2.5)}.s-door .tr-line em{font-size:calc(var(--u)*4.2)}
+  /* the trailer's door carries the three credential cards above it, so in the tall frame the third door
+     (a sales manager) ran 200px into the burned caption band. Smaller stage, less air: 14 Nov 2026. */
+  .s-door.tr{padding-top:calc(var(--u)*3)}
+  .s-door.tr .h.xl{font-size:calc(var(--u)*8.6)}
+  .s-door.tr .gate-row .stage{width:calc(var(--u)*34)}
+  .s-door.tr .full{gap:calc(var(--u)*1)}
   .s-cta .tr-book{zoom:1}
   .s-cta .qr{zoom:.84}
   .s-close .stage.closeS{width:calc(var(--u)*40)}
@@ -2468,6 +3363,456 @@ body.paused #bars i.run::after{animation-play-state:paused}
   .fbadge b{font-size:calc(var(--u)*2.9)}.fbadge span{font-size:calc(var(--u)*2)}
   .frail{padding-top:calc(var(--u)*.6)}
 }
+
+/* ── The re-cut feed ads in their two frames, 12 Nov 2026. Both are 1080 wide (square 1080x1080, tall
+   1080x1920), so six moment columns across one row leaves about 160px each and the longest label
+   ("Your managers, too") will not sit in it: three to a row in both. A SQUARE IS "PORTRAIT" to the media
+   query — its height is not less than its width — so the square rules come after the portrait block and
+   only shrink what a square cannot hold. The captions are burned OVER the frame on these cuts, from 16%
+   of the height up, so the bottom fifth has to stay clear. ───────────────────────────────────────── */
+@media (orientation:portrait){
+  .s-cliff .h.l{font-size:calc(var(--u)*5.6)}
+  .slope{width:100%;margin-top:calc(var(--u)*2.4)}
+  .sl-key{gap:calc(var(--u)*2.6);margin-top:calc(var(--u)*1.6)}
+  .sl-key span{font-size:calc(var(--u)*2.6)}
+  .sl-q{font-size:calc(var(--u)*2.7);width:100%}
+  .sl-q em{font-size:calc(var(--u)*2.1)}
+  .adsrc{font-size:calc(var(--u)*2.1)}
+  .mgrid{gap:calc(var(--u)*1.8);margin-top:calc(var(--u)*2.8)}
+  .mcol{flex:0 1 calc((100% - var(--u)*3.6)/3);padding:calc(var(--u)*1.8) calc(var(--u)*1)}
+  .mcol>b{font-size:calc(var(--u)*4)}
+  .mdots{max-width:calc(var(--u)*14)}
+  .mdots i{width:calc(var(--u)*1.3);height:calc(var(--u)*1.3)}
+  .mlab{font-size:calc(var(--u)*2.1)}
+  .hrow{gap:calc(var(--u)*1.2);margin-top:calc(var(--u)*2.6)}
+  .hrow span{padding:calc(var(--u)*1.2) calc(var(--u)*2)}
+  .hrow b{font-size:calc(var(--u)*2.6)}.hrow em{font-size:calc(var(--u)*2.1)}
+  .miss.nmlist span{font-size:calc(var(--u)*3)}
+  .empt{font-size:calc(var(--u)*2.5)}
+  .suppline{width:100%}
+  /* ad C on the tall cut: the three facts stack, and the five gates become a vertical list — five
+     steps across a 1080-wide frame leaves each one about 190px, which cannot hold "Training,
+     induction, boot camp". The connector rule is a horizontal line, so it goes with the row. */
+  .c3row{grid-template-columns:1fr;gap:calc(var(--u)*1.3);width:100%;margin-top:calc(var(--u)*3)}
+  .c3card{padding:calc(var(--u)*1.9) calc(var(--u)*2.2);border-top-width:calc(var(--u)*.4)}
+  .c3card b{font-size:calc(var(--u)*4.6)}.c3card span{font-size:calc(var(--u)*2.7)}
+  .cgrail{grid-template-columns:1fr;gap:calc(var(--u)*1.5);width:100%;margin-top:calc(var(--u)*3)}
+  .cgrail::before{display:none}
+  .cgstep{display:grid;grid-template-columns:auto 1fr;gap:0 calc(var(--u)*1.6);text-align:left;align-items:center}
+  .cgstep i{width:calc(var(--u)*4.4);height:calc(var(--u)*4.4);margin:0;font-size:calc(var(--u)*2.4);grid-row:1/3}
+  .cgstep b{font-size:calc(var(--u)*2.9);align-self:end}
+  .cgstep span{font-size:calc(var(--u)*2.2);margin-top:calc(var(--u)*.2);align-self:start}
+  .cfig{width:100%;gap:calc(var(--u)*1.5);margin-top:calc(var(--u)*2.8)}
+  .cfrow{grid-template-columns:calc(var(--u)*19) 1fr calc(var(--u)*8);gap:calc(var(--u)*1.6)}
+  .cflab{font-size:calc(var(--u)*2.3)}
+  .cftrack{height:calc(var(--u)*2.8);border-radius:calc(var(--u)*1.4)}
+  .cfrow>b{font-size:calc(var(--u)*5.2)}
+  .cfx{font-size:calc(var(--u)*2.7)}
+  /* Three columns here too, NOT two. Two columns with the frames square makes each row ~490px, and three
+     rows of that puts stops 5 and 6 into the burned caption band and off the bottom of a 1080x1920. */
+  .cjwrap{width:100%;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.5) calc(var(--u)*1.3);margin-top:calc(var(--u)*2.2)}
+  /* Square frames here, where the extra height is going spare — these screens ARE the scene, so the
+     room buys more of each one rather than more empty ground. */
+  .cjshot{aspect-ratio:1/1;border-radius:calc(var(--u)*1)}
+  .cjn{width:calc(var(--u)*2.4);height:calc(var(--u)*2.4);font-size:calc(var(--u)*1.35);line-height:calc(var(--u)*2.4)}
+  .cjt{font-size:calc(var(--u)*1.95)}
+  .cjd{font-size:calc(var(--u)*1.65)}
+  .cjx{font-size:calc(var(--u)*3)}
+  .cjs{font-size:calc(var(--u)*1.7)}
+  .cjfoot{margin-top:calc(var(--u)*2.2);gap:calc(var(--u)*.9)}
+  .s-jrny .h.l{font-size:calc(var(--u)*5.2)}
+  .s-jrny .eye{font-size:calc(var(--u)*1.8)}
+  .cum>b{font-size:calc(var(--u)*2.3)}
+  .cum>span{font-size:calc(var(--u)*1.8)}
+  .hu3{gap:calc(var(--u)*1.8);margin-top:calc(var(--u)*3)}
+  .hucard{padding:calc(var(--u)*2.6) calc(var(--u)*1.5)}
+  .huic{width:calc(var(--u)*6.2);height:calc(var(--u)*6.2)}
+  .huic .ic{width:calc(var(--u)*3.2);height:calc(var(--u)*3.2)}
+  .hucard>b{font-size:calc(var(--u)*2.5)}
+  .hud{font-size:calc(var(--u)*1.9)}
+  .hustrike{font-size:calc(var(--u)*2.3);margin-top:calc(var(--u)*2.6)}
+  .cshot{width:100%}
+  /* THE FIRST FRAME IS THE THUMBNAIL. Measured 13 Nov 2026 on the rendered MP4: frame 0 of every ad cut
+     carried 0.00% ink — an empty navy square. In a feed that frame is what a person sees before autoplay
+     reaches the first keyframe, and on any surface where autoplay is off or slow it is the whole of the
+     first impression. Anything carrying `now` is painted at t=0 with no entrance; the rest of the scene
+     still builds as before. The resting state is copied from the `word` and `up` keyframes' own `to`
+     blocks, so a `now` element lands exactly where it would have. This rule sits last on purpose: it
+     ties on specificity with `.scene.act .in`, so source order is what makes it win. */
+  .scene.act .now,.scene.act .w.now i{animation:none;opacity:1;transform:none}
+  /* ...and the SCENE ITSELF has to skip its entrance, or none of that shows. `scene-in` runs
+     from opacity:0 / scale(1.05) / blur(10px) over .9s, so the container was still invisible at t=0
+     however many children were painted. The first scene has nothing to come in FROM — there is no
+     outgoing scene at t=0 — so the fade is pure cost there anyway.
+
+     THIS IS WHY THE BROWSER CHECK PASSED AND THE FILM WAS STILL BLANK: frame0.js measured the
+     children's computed opacity and found them at 1, which was true, while their ancestor sat at 0.
+     Only reading the rendered MP4 caught it. Measure the artifact, not the page that makes it.
+     `nofade` is on the ads' hook scenes alone (the film's scene 1 is also s-hook and is untouched). */
+  .scene.nofade.act{animation:none;opacity:1}
+}
+/* The square is the tight one: scene 4 of A stacks a headline, six columns, three chips and two pills,
+   and scene 5 now carries the seven places as well as the figures, the address and the QR. */
+@media (aspect-ratio:1/1){
+  /* ad C on the square: scene 6 is the tight one — a headline, six columns of dots and the two
+     figures all in one 1080 box — so the grid and the comparison both come down a step. */
+  .s-plain .h.xl{font-size:calc(var(--u)*8.6)}
+  .c3row{width:min(100%,calc(var(--u)*76));gap:calc(var(--u)*1.2);margin-top:calc(var(--u)*2.2)}
+  .c3card{padding:calc(var(--u)*1.4) calc(var(--u)*1.1)}
+  .c3card b{font-size:calc(var(--u)*3)}.c3card span{font-size:calc(var(--u)*1.8)}
+  .s-gates .h.l{font-size:calc(var(--u)*6.4)}
+  /* A SQUARE IS "PORTRAIT" TO THE MEDIA QUERY, so the whole of the portrait block above applies here
+     too and the rail had collapsed to the tall cut's one-column list — a narrow strip of 1.4vw type in
+     the bottom-left corner. Everything the portrait block changed has to be changed BACK, not merely
+     resized: the columns, the connector, and the step's own layout. The square's own block comes last
+     on purpose, which is what lets it win. */
+  .cgrail{grid-template-columns:repeat(5,1fr);gap:calc(var(--u)*1.1);margin-top:calc(var(--u)*4.2);width:min(100%,calc(var(--u)*102))}
+  .cgrail::before{display:block;top:calc(var(--u)*1.7)}
+  .cgstep{display:block;text-align:center}
+  .cgstep i{width:calc(var(--u)*3.4);height:calc(var(--u)*3.4);margin:0 auto calc(var(--u)*1);font-size:calc(var(--u)*1.9);grid-row:auto}
+  .cgstep b{font-size:calc(var(--u)*2.05)}.cgstep span{font-size:calc(var(--u)*1.55);margin-top:calc(var(--u)*.4)}
+  /* The square inherits the portrait block above, and for the comparison that is right — it is a row
+     either way, never a stack — so this only brings it down to fit the burned caption band. */
+  .cfig{zoom:.9;margin-top:calc(var(--u)*1.6);width:min(100%,calc(var(--u)*90))}
+  /* The square keeps the portrait block's three columns and only has to buy the foot its room: the pill,
+     the closing line and the sample note were landing INSIDE the burned caption band. Shorter frames
+     (3/2, not 4/3) and tighter gaps lift the whole foot clear of it. */
+  .cjwrap{gap:calc(var(--u)*1.1) calc(var(--u)*1.3);margin-top:calc(var(--u)*1.3);width:min(100%,calc(var(--u)*100))}
+  .cjshot{aspect-ratio:3/2;border-radius:calc(var(--u)*.9)}
+  .cjn{width:calc(var(--u)*2.1);height:calc(var(--u)*2.1);font-size:calc(var(--u)*1.2);line-height:calc(var(--u)*2.1);left:calc(var(--u)*.55);top:calc(var(--u)*.55)}
+  .cjt{font-size:calc(var(--u)*1.75)}
+  .cjd{font-size:calc(var(--u)*1.45)}
+  .cjx{font-size:calc(var(--u)*2.4)}
+  .cjs{font-size:calc(var(--u)*1.45)}
+  .cjfoot{margin-top:calc(var(--u)*1.1);gap:calc(var(--u)*.55)}
+  .s-jrny .h.l{font-size:calc(var(--u)*4.5)}
+  .s-jrny .eye{font-size:calc(var(--u)*1.6)}
+  .s-human .h.l{font-size:calc(var(--u)*5)}
+  .cum>b{font-size:calc(var(--u)*1.9)}
+  .cum>span{font-size:calc(var(--u)*1.45)}
+  .hu3{gap:calc(var(--u)*1.4);margin-top:calc(var(--u)*2)}
+  .hucard{padding:calc(var(--u)*1.9) calc(var(--u)*1.2)}
+  .huic{width:calc(var(--u)*4.6);height:calc(var(--u)*4.6)}
+  .huic .ic{width:calc(var(--u)*2.4);height:calc(var(--u)*2.4)}
+  .hucard>b{font-size:calc(var(--u)*2)}
+  .hud{font-size:calc(var(--u)*1.55)}
+  .hustrike{font-size:calc(var(--u)*1.9);margin-top:calc(var(--u)*1.9)}
+  .s-all .h.xl{font-size:calc(var(--u)*6.4)}
+  .mgrid{zoom:.9;margin-top:calc(var(--u)*2)}
+  .hrow{zoom:.92;margin-top:calc(var(--u)*1.8)}
+  .pill-row.mid{margin-top:calc(var(--u)*1.8)}
+  /* The captions burn into the bottom 16%, and the chart's source line was landing inside it. */
+  .s-cliff .slope{zoom:.86;margin-top:calc(var(--u)*1)}
+  .s-cliff .h.l{font-size:calc(var(--u)*5)}
+  .s-cliff .sl-q{font-size:calc(var(--u)*2.4)}
+  /* The hundred is a SQUARE block, so its height follows its width: on the 1:1 frame the two blocks are
+     narrowed until the whole thing — eyebrow, two-line headline, headings, grids, counts, the gap line
+     and the source — clears the burned caption band. adcheck.js failed it at 972 of 1080 first time. */
+  .s-hund .unit100{width:min(100%,calc(var(--u)*74));margin-top:calc(var(--u)*1.4)}
+  .s-hund .u1row{gap:calc(var(--u)*5)}
+  .s-hund .h.l{font-size:calc(var(--u)*7.4)}
+  .s-hund .u1h{font-size:calc(var(--u)*2.1)}
+  .s-hund .u1n{font-size:calc(var(--u)*5.4)}
+  .s-cta .seatrow i{width:calc(var(--u)*6.2);height:calc(var(--u)*6.2);font-size:calc(var(--u)*2.8)}
+  .s-cta .seatrow{gap:calc(var(--u)*1.4)}
+  .s-cta .h.url{font-size:calc(var(--u)*4.6)}
+  /* The close was two columns of very different length: the left ran 640px and the right held a mark and
+     a QR card inside 330px, each centred in its own column, so the right half read as a floating badge
+     over 400px of nothing. On the square the QR earns its own side — it is the one thing on the frame a
+     person acts on with their phone — so it takes a third of the width and the card grows with it. */
+  .cta{grid-template-columns:1.1fr .9fr;gap:calc(var(--u)*3)}
+  .s-cta .qr svg{width:calc(var(--u)*34);height:calc(var(--u)*34)}
+  .s-cta .qr{padding:calc(var(--u)*2.8)}
+  .s-cta .qr span{font-size:calc(var(--u)*2.4)}
+  /* 13 Nov 2026. The square was a 16:9 composition sitting in a 1:1 box: the padding was already right
+     (754px of usable height) but the type was sized for a 1280-wide page, so a short scene left 190px
+     of empty navy above AND below it. Measured on the rendered MP4: the lower 45% of the picture was
+     essentially empty in 9 of 81 samples. A square tile renders about 500px wide in a feed, so this is
+     the frame that needs the LARGEST type, not the smallest. The chart and scene 4 of A keep their own
+     sizes below — those rules are (0,2,0) and win over these whatever the order. */
+  .s-hook .h.xl{font-size:calc(var(--u)*15)}
+  .h.xl{font-size:calc(var(--u)*13.4)}.h.l{font-size:calc(var(--u)*9)}
+  .sub{font-size:calc(var(--u)*4)}
+  .eye{font-size:calc(var(--u)*2.9)}
+  /* The HEADLINES take the recovered room; the cards beside them do NOT. A first cut bumped the list and
+     board type too and adcheck.js failed scenes 2 and 3 of B at once — "Nobody left to call" at 920 of
+     1080 and the board's last lead at 927, both inside the burned caption band. A column that already
+     fills its box has no room to give, so on the square the scenes that are a headline ALONE grow and
+     the scenes built round a card keep the portrait sizes. */
+  .s-names .h.xl,.s-names .h.l,.s-fill .h.l{font-size:calc(var(--u)*7.8)}
+  .s-names .sub,.s-fill .sub{font-size:calc(var(--u)*3.4)}
+}
+
+/* ── the fact find film (ad F), 15 November 2026 ── */
+.ffwho{display:inline-flex;align-items:center;gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*3);padding:calc(var(--u)*1.2) calc(var(--u)*2.4) calc(var(--u)*1.2) calc(var(--u)*1.2);border-radius:99px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
+.ffav{display:grid;place-items:center;width:calc(var(--u)*6);height:calc(var(--u)*6);border-radius:50%;background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;font:800 calc(var(--u)*2.6)/1 var(--display);flex:none}
+.ffav.big{width:calc(var(--u)*7.4);height:calc(var(--u)*7.4);font-size:calc(var(--u)*2.8)}
+.ffwt{display:grid;text-align:left;gap:.2em}
+.ffwt b{font:700 calc(var(--u)*2.5)/1.15 var(--text);color:var(--ink)}
+.ffwt span{font:500 calc(var(--u)*1.9)/1.2 var(--text);color:var(--mute)}
+.ffchips{display:flex;flex-direction:column;gap:calc(var(--u)*1.1);align-items:flex-start}
+.ffchip{display:inline-flex;align-items:center;gap:.6em;font:600 calc(var(--u)*2.1)/1.25 var(--text);color:var(--ink);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:calc(var(--u)*1.2);padding:.65em 1em}
+.ffchip .ic{color:var(--aL);font-size:1.2em;flex:none}
+.ffneed{position:relative;background:#fff;color:#0d3f5e;border-radius:calc(var(--u)*1.8);padding:calc(var(--u)*2.6) calc(var(--u)*2.8) calc(var(--u)*4.4);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,14,26,.55);display:grid;gap:calc(var(--u)*1.35)}
+.ffnh{display:flex;justify-content:space-between;align-items:baseline;gap:1em;padding-bottom:calc(var(--u)*1.1);border-bottom:1px solid #e4e0d4}
+.ffnh b{font:800 calc(var(--u)*2.6)/1 var(--display)}
+.ffnh span{font:500 calc(var(--u)*1.7)/1 var(--text);color:#5b6670}
+.ffrow{display:grid;grid-template-columns:1fr 1fr auto;gap:calc(var(--u)*1.6);align-items:center;font:500 calc(var(--u)*1.95)/1.2 var(--text);opacity:0}
+.scene.act .ffrow{animation:up .6s var(--out) both;animation-delay:var(--t0)}
+.ffrow b{font:800 calc(var(--u)*2.2)/1 var(--display);font-variant-numeric:tabular-nums;text-align:right;min-width:7ch}
+.ffrow b em{font-style:normal}
+.ffbar{display:block;height:calc(var(--u)*1.3);border-radius:99px;background:linear-gradient(90deg,#0e93b0,#00728d);width:var(--w);transform:scaleX(0);transform-origin:left}
+.scene.act .ffrow .ffbar{animation:ffgrow .9s var(--out) both;animation-delay:calc(var(--t0) + 150ms)}
+@keyframes ffgrow{to{transform:scaleX(1)}}
+.fftot{display:flex;justify-content:space-between;align-items:baseline;gap:1em;margin-top:calc(var(--u)*.6);padding-top:calc(var(--u)*1.3);border-top:2px solid #0d3f5e}
+.fftot span{font:700 calc(var(--u)*2.1)/1 var(--text)}
+.fftot b{font:800 calc(var(--u)*3.6)/1 var(--display);color:#00728d;font-variant-numeric:tabular-nums}
+.fftot b em{font-style:normal}
+.ffneed .sample{color:#5b6670}
+.ffcard{margin:0;display:grid;gap:calc(var(--u)*.9);min-width:0}
+.ffscr{position:relative;border-radius:calc(var(--u)*1.2);overflow:hidden;background:#fff;border:calc(var(--u)*.3) solid #22527f;box-shadow:0 calc(var(--u)*2) calc(var(--u)*5) rgba(4,14,26,.55);aspect-ratio:16/10}
+.ffscr img{width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block}
+.ffcard.tall .ffscr{aspect-ratio:4/3.4}
+.ffcard.ph .ffscr{aspect-ratio:9/13;border-radius:calc(var(--u)*2);border-width:calc(var(--u)*.45)}
+.scene.act .ffcard.pan img{animation:ffpan 6s ease-in-out both;animation-delay:calc(var(--t0) + 900ms)}
+@keyframes ffpan{to{object-position:50% 100%}}
+.ffcard figcaption{font:600 calc(var(--u)*1.85)/1.25 var(--text);color:var(--mute);text-align:center}
+.ffphones{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.6);width:min(100%,calc(var(--u)*92));margin:calc(var(--u)*2.4) auto 0}
+.ffstack{gap:calc(var(--u)*2)}
+.ff3{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.2);width:min(100%,calc(var(--u)*100));margin:calc(var(--u)*2.6) auto calc(var(--u)*1.4)}
+.ff3 .ffscr{aspect-ratio:4/3.3}
+.ff3 .ffscr img{object-position:0 0}
+.ffshield{display:grid;place-items:center;width:calc(var(--u)*9);height:calc(var(--u)*9);margin:0 auto calc(var(--u)*1.2);border-radius:50%;background:radial-gradient(circle,rgba(0,207,234,.22),rgba(0,207,234,0) 70%);color:var(--aL);font-size:calc(var(--u)*6)}
+.ffbio{position:relative;background:var(--bg3);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2);padding:calc(var(--u)*2.8);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,14,26,.5);display:grid;gap:calc(var(--u)*1.5)}
+.ffbh{display:flex;align-items:center;gap:calc(var(--u)*1.8);padding-bottom:calc(var(--u)*1.4);border-bottom:1px solid rgba(255,255,255,.12)}
+.ffbh b{display:block;font:800 calc(var(--u)*3)/1.1 var(--display);color:var(--ink)}
+.ffbh span span{display:block;font:500 calc(var(--u)*1.8)/1.3 var(--text);color:var(--mute)}
+.ffbl{display:grid;grid-template-columns:auto 1fr;gap:calc(var(--u)*1.4);align-items:start;font:500 calc(var(--u)*1.95)/1.35 var(--text);color:var(--mute)}
+.ffbl .ic{color:var(--aL);font-size:calc(var(--u)*3);margin-top:.1em}
+.ffbl b{display:block;color:var(--ink);font:700 calc(var(--u)*2.15)/1.2 var(--text);margin-bottom:.15em}
+.ffbl.hi b{color:var(--aL);margin:0;font-size:calc(var(--u)*2.4)}
+@media (orientation:portrait){
+  .ffphones{width:100%;gap:calc(var(--u)*1.6)}
+  .ffcard figcaption{font-size:calc(var(--u)*2.3)}
+  .ff3{grid-template-columns:1fr;width:100%;gap:calc(var(--u)*2)}
+  .ff3 .ffcard{grid-template-columns:1.2fr 1fr;align-items:center}
+  .ff3 .ffcard figcaption{text-align:left;font-size:calc(var(--u)*2.8)}
+  .ffchip{font-size:calc(var(--u)*2.7)}
+  .ffstack{grid-template-columns:1fr;gap:calc(var(--u)*1.8)}
+  .ffstack .ffscr{aspect-ratio:16/7.2}
+  .ffstack .ffscr img{object-position:0 0}
+  .s-ffnudge .ff3{gap:calc(var(--u)*1.4);margin-bottom:calc(var(--u)*.8)}
+  .s-ffnudge .ff3 .ffscr{aspect-ratio:16/10.5}
+  .ffcard.ph .ffscr{aspect-ratio:9/17}
+  .ffstack .ffscr{aspect-ratio:16/7.2}
+  .ffneed,.ffbio{zoom:1.22}
+  .s-ffcopy .ffcard.tall .ffscr{aspect-ratio:800/680}
+  .ffwt b{font-size:calc(var(--u)*3)}.ffwt span{font-size:calc(var(--u)*2.4)}
+  .ffrow{font-size:calc(var(--u)*2.5)}.ffrow b{font-size:calc(var(--u)*2.7)}
+  .ffbl{font-size:calc(var(--u)*2.4)}.ffbl b{font-size:calc(var(--u)*2.7)}
+}
+@media (aspect-ratio:1/1){
+  .ff3{grid-template-columns:repeat(3,1fr);width:100%;gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*1.8)}
+  .ff3 .ffcard{grid-template-columns:1fr}
+  .ff3 .ffcard figcaption{text-align:center;font-size:calc(var(--u)*1.9)}
+  .ff3 .ffscr{aspect-ratio:4/3.6}
+  .ff3 .ffscr img,.ffstack .ffscr img{object-position:0 0}
+  .ffphones{width:100%}
+  .s-ffcopy .ffcard.tall .ffscr{aspect-ratio:16/6.6}
+  .s-ffcopy .h.l,.s-ffmgr .h.l{font-size:calc(var(--u)*5.4)}
+  .s-ffmgr .ffchips{flex-direction:row;flex-wrap:wrap}
+  .s-ffcopy .split,.s-ffmgr .split{gap:calc(var(--u)*3)}
+  .ffstack{grid-template-columns:1fr 1fr;gap:calc(var(--u)*1.6)}
+  .ffstack .ffscr{aspect-ratio:4/2.9}
+  .ffneed,.ffbio{zoom:1}
+  .ffcard.ph .ffscr{aspect-ratio:9/12}
+  .ffcard figcaption{font-size:calc(var(--u)*1.9)}
+  .ffchip{font-size:calc(var(--u)*2.1)}
+  .ffwt b{font-size:calc(var(--u)*2.5)}.ffwt span{font-size:calc(var(--u)*1.9)}
+  .ffrow{font-size:calc(var(--u)*1.95)}.ffrow b{font-size:calc(var(--u)*2.2)}
+  .ffbl{font-size:calc(var(--u)*1.95)}.ffbl b{font-size:calc(var(--u)*2.15)}
+}
+
+/* the blitz: what goes in, what the client gets */
+.ffbz{display:grid;grid-template-columns:1fr auto 1fr;gap:calc(var(--u)*2.4);align-items:center;width:min(100%,calc(var(--u)*104));margin:calc(var(--u)*2.4) auto 0;text-align:left}
+.ffbzc{display:grid;gap:calc(var(--u)*.9);min-width:0}
+.ffbzh{font:700 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.14em;text-transform:uppercase;color:var(--aL)}
+.ffin{display:flex;justify-content:space-between;gap:1em;align-items:baseline;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:calc(var(--u)*1);padding:.6em .9em;font:500 calc(var(--u)*1.9)/1.2 var(--text);color:var(--mute);opacity:0;transform:translateX(calc(var(--u)*-6))}
+.ffin b{color:var(--ink);font-weight:700}
+.scene.act .ffin{animation:ffzip .45s var(--out) both;animation-delay:var(--t0)}
+@keyframes ffzip{60%{opacity:1}to{opacity:1;transform:none}}
+.ffout{display:grid;grid-template-columns:1fr auto;gap:.15em 1em;background:#fff;color:#0d3f5e;border-radius:calc(var(--u)*1.1);padding:.7em 1em;box-shadow:0 calc(var(--u)*1.2) calc(var(--u)*3) rgba(4,14,26,.45);opacity:0;transform:scale(.8)}
+.ffout b{font:800 calc(var(--u)*2.1)/1.1 var(--display)}
+.ffout em{font:800 calc(var(--u)*2.1)/1.1 var(--display);font-style:normal;color:#00728d;text-align:right;font-variant-numeric:tabular-nums}
+.ffout span{grid-column:1/-1;font:500 calc(var(--u)*1.6)/1.2 var(--text);color:#5b6670}
+.ffout.tot{background:linear-gradient(135deg,var(--a),var(--aD));color:#fff}
+.ffout.tot em{color:#fff}.ffout.tot span{color:rgba(255,255,255,.85)}
+.scene.act .ffout{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.ffbzm{display:grid;justify-items:center;gap:calc(var(--u)*.8);color:var(--aL);font:700 calc(var(--u)*1.6)/1.2 var(--text);text-align:center;letter-spacing:.06em;text-transform:uppercase}
+.ffbzm i{display:block;width:calc(var(--u)*7);height:2px;background:linear-gradient(90deg,transparent,var(--aL),transparent);opacity:.35}
+.scene.act .ffbzm i{animation:ffflow 1.1s linear infinite;animation-delay:calc(var(--t0) + var(--d,0ms))}
+.ffbzm i:nth-child(2){--d:180ms}.ffbzm i:nth-child(3){--d:360ms}
+@keyframes ffflow{0%{opacity:.2;transform:translateX(-30%)}50%{opacity:1}100%{opacity:.2;transform:translateX(30%)}}
+.ffbzp{justify-content:center;margin-top:calc(var(--u)*2)}
+@media (orientation:portrait){
+  .ffbz{grid-template-columns:1fr;gap:calc(var(--u)*1.6);width:100%}
+  .ffbzm{grid-auto-flow:column;align-items:center}
+  .ffbzm i{width:calc(var(--u)*4)}
+  .ffin{font-size:calc(var(--u)*2.5)}.ffout b,.ffout em{font-size:calc(var(--u)*2.7)}.ffout span{font-size:calc(var(--u)*2.1)}
+  .ffbzh{font-size:calc(var(--u)*2.2)}
+}
+@media (aspect-ratio:1/1){
+  .ffbz{grid-template-columns:1fr auto 1fr;gap:calc(var(--u)*1.6);width:100%}
+  .ffbzm{grid-auto-flow:row}.ffbzm i{width:calc(var(--u)*5)}
+  .ffin{font-size:calc(var(--u)*1.75);padding:.5em .8em}.ffout{padding:.55em .85em}
+  .ffout b,.ffout em{font-size:calc(var(--u)*1.95)}.ffout span{font-size:calc(var(--u)*1.5)}
+  .s-ffblitz .h.l{font-size:calc(var(--u)*5.2)}
+}
+
+/* ── the feed post (ad G), 15 November 2026 ── */
+.gxpills{display:flex;flex-wrap:wrap;gap:calc(var(--u)*1.2)}
+.gxpill{display:inline-flex;align-items:center;font:600 calc(var(--u)*2.1)/1 var(--text);color:var(--ink);padding:.7em 1.1em;border-radius:99px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16)}
+.gxchart{position:relative;background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2.2);padding:calc(var(--u)*2.6) calc(var(--u)*2.6) calc(var(--u)*4.2);box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(4,14,26,.5)}
+.gxch-h{display:flex;justify-content:space-between;align-items:baseline;gap:1em;margin-bottom:calc(var(--u)*1)}
+.gxch-h b{font:700 calc(var(--u)*2.5)/1.1 var(--text)}.gxch-h span{font:500 calc(var(--u)*1.9)/1 var(--text);color:var(--mute)}
+.gxchart svg{display:block;width:100%;height:auto;overflow:visible}
+.gxgrid line{stroke:rgba(255,255,255,.08);stroke-width:1}
+.gxax text{fill:#8fa3b8;font:500 11px var(--text);text-anchor:middle}
+.gxcap{stroke:#C97A3A;stroke-width:2;stroke-dasharray:6 6;opacity:0}
+.scene.act .gxcap{animation:fade .6s ease both;animation-delay:var(--t0)}
+.gxsal{fill:none;stroke:#9aa8b8;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100;stroke-dashoffset:100}
+.gxinc{fill:none;stroke:#00CFEA;stroke-width:3.5;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;filter:drop-shadow(0 0 6px rgba(0,207,234,.6))}
+.scene.act .gxsal{animation:draw 1.4s var(--out) both;animation-delay:var(--t0)}
+.scene.act .gxinc{animation:draw 1.6s var(--ease) both;animation-delay:var(--t0)}
+.gxarea{fill:url(#gxa);opacity:0}
+.scene.act .gxarea{animation:fade 1s ease both;animation-delay:var(--t0)}
+.gxend{fill:#00CFEA;opacity:0;transform-box:fill-box;transform-origin:center}
+.scene.act .gxend{animation:pop .5s var(--pop) both,gxpulse 1.6s ease-in-out infinite;animation-delay:var(--t0),calc(var(--t0) + .5s)}
+@keyframes gxpulse{50%{transform:scale(1.5);opacity:.6}}
+.gxboom{fill:none;stroke:#fff;stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center}
+.scene.act .gxboom{animation:gxboom 1s var(--out) both;animation-delay:var(--t0)}
+@keyframes gxboom{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(4)}}
+.gxlab{position:absolute;font:700 calc(var(--u)*1.9)/1.1 var(--text);padding:.45em .8em;border-radius:99px;white-space:nowrap}
+.gxlab.cap{left:40%;top:38%;color:#f3d9c4;background:rgba(201,122,58,.22);border:1px solid rgba(201,122,58,.55)}
+.gxlab.inc{right:4%;top:20%;color:#08202f;background:#00CFEA}
+.gxill{position:absolute;left:calc(var(--u)*2.6);bottom:calc(var(--u)*1.4);font:500 calc(var(--u)*1.55)/1 var(--text);color:#8fa3b8;letter-spacing:.04em}
+.gxtwo{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*3);width:min(100%,calc(var(--u)*120));margin-top:calc(var(--u)*1.6);text-align:left}
+.gxcard{position:relative;background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2.2);padding:calc(var(--u)*2.8);display:grid;gap:calc(var(--u)*2.2);align-content:start}
+.gxch{display:grid;grid-template-columns:auto 1fr;gap:calc(var(--u)*1.6);align-items:center}
+.gxch>i{display:grid;place-items:center;width:calc(var(--u)*6.4);height:calc(var(--u)*6.4);border-radius:calc(var(--u)*1.6);background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;font-size:calc(var(--u)*3.2)}
+.gxch b{display:block;font:800 calc(var(--u)*3.3)/1.1 var(--display);color:#fff}
+.gxch small{display:block;margin-top:.3em;font:500 calc(var(--u)*2)/1.3 var(--text);color:var(--mute)}
+.gxrail{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*1)}
+.gxrail::before{content:'';position:absolute;left:12%;right:12%;top:calc(var(--u)*3);height:3px;background:rgba(255,255,255,.12)}
+.gxrail::after{content:'';position:absolute;left:12%;right:12%;top:calc(var(--u)*3);height:3px;background:linear-gradient(90deg,var(--aL),var(--a));transform:scaleX(0);transform-origin:left}
+.scene.act .gxrail::after{animation:growx var(--d) linear both;animation-delay:var(--t0)}
+.gxrail span{position:relative;z-index:1;display:grid;justify-items:center;gap:calc(var(--u)*.9);text-align:center}
+.gxrail i{display:grid;place-items:center;width:calc(var(--u)*6);height:calc(var(--u)*6);border-radius:50%;background:#14314f;border:2px solid rgba(255,255,255,.18);color:#8fa3b8;font-size:calc(var(--u)*2.6)}
+.scene.act .gxrail i{animation:gxlit .5s var(--pop) both;animation-delay:var(--t0)}
+@keyframes gxlit{to{background:var(--a);border-color:var(--aL);color:#fff;transform:scale(1.08)}}
+.gxrail em{font:600 calc(var(--u)*1.75)/1.2 var(--text);font-style:normal;color:var(--ink)}
+.gxstamp{justify-self:start;font:800 calc(var(--u)*2.2)/1 var(--text);letter-spacing:.08em;text-transform:uppercase;color:#08202f;background:var(--aL);padding:.55em 1em;border-radius:calc(var(--u)*1);opacity:0}
+.scene.act .gxstamp{animation:stamp .6s var(--pop) both;animation-delay:var(--t0)}
+.gxtools{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*1.2)}
+.gxtools span{display:grid;grid-template-columns:auto 1fr;gap:.6em;align-items:center;font:600 calc(var(--u)*2)/1.2 var(--text);color:var(--ink);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:calc(var(--u)*1.2);padding:.75em .9em;opacity:0;transform:scale(.7)}
+.gxtools i{color:var(--aL);font-size:1.3em;display:grid}
+.scene.act .gxtools span{animation:pop .5s var(--pop) both;animation-delay:var(--t0)}
+.gxclock{display:grid;grid-template-columns:auto 1fr;gap:calc(var(--u)*1.6);align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:calc(var(--u)*1.6);padding:calc(var(--u)*1.4) calc(var(--u)*2)}
+.gxclock svg{width:calc(var(--u)*7);height:calc(var(--u)*7);overflow:visible}
+.gxclock circle{fill:none;stroke:#9aa8b8;stroke-width:3}
+.gxclock .h1,.gxclock .h2{stroke:#9aa8b8;stroke-width:3;stroke-linecap:round;transform-origin:30px 30px}
+.scene.act .gxclock .h1{animation:spin 3s linear infinite}
+.scene.act .gxclock .h2{animation:spin 12s linear infinite}
+.gxclock .x{stroke:#e8735a;stroke-width:4;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
+.scene.act .gxclock .x{animation:draw .5s var(--out) both;animation-delay:var(--t0)}
+.gxclock b{display:block;font:700 calc(var(--u)*2.5)/1.2 var(--text)}.gxclock small{display:block;font:500 calc(var(--u)*1.9)/1.3 var(--text);color:var(--mute)}
+.gxgauge{position:relative;display:grid;grid-template-columns:auto 1fr;gap:calc(var(--u)*2.6);align-items:center;background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2.2);padding:calc(var(--u)*2.8) calc(var(--u)*2.8) calc(var(--u)*4)}
+.gxring{position:relative;width:calc(var(--u)*24);height:calc(var(--u)*24);display:grid;place-items:center}
+.gxring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.gxring .bg{fill:none;stroke:rgba(255,255,255,.1);stroke-width:14}
+.gxring .fg{fill:none;stroke:#00CFEA;stroke-width:14;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;filter:drop-shadow(0 0 8px rgba(0,207,234,.5))}
+.scene.act .gxring .fg{animation:gxfill var(--d) var(--ease) both;animation-delay:var(--t0)}
+@keyframes gxfill{to{stroke-dashoffset:2}}
+.gxrc{text-align:center}.gxrc b{display:block;font:800 calc(var(--u)*5)/1 var(--display);color:#fff}.gxrc span{font:500 calc(var(--u)*1.9)/1 var(--text);color:var(--mute)}
+.gxleads{display:grid;gap:calc(var(--u)*1.1)}
+.gxleads div{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:.7em;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:calc(var(--u)*1.2);padding:.7em .9em;opacity:0}
+.gxleads .ic{grid-row:1/3;color:var(--aL);font-size:calc(var(--u)*3)}
+.gxleads b{font:700 calc(var(--u)*2.1)/1.2 var(--text)}.gxleads span{font:500 calc(var(--u)*1.75)/1.2 var(--text);color:var(--mute)}
+.scene.act .gxleads div{animation:fly .7s var(--out) both;animation-delay:var(--t0)}
+.gxgauge .sample,.gxt .sample{position:absolute;right:calc(var(--u)*2);bottom:calc(var(--u)*1.2);font:500 calc(var(--u)*1.5)/1 var(--text);color:#8fa3b8}
+.gxtri{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.4);width:min(100%,calc(var(--u)*128));margin-top:calc(var(--u)*1.4);text-align:left}
+.gxt{position:relative;background:#fff;color:#0d3f5e;border-radius:calc(var(--u)*2);padding:calc(var(--u)*2.4) calc(var(--u)*2.4) calc(var(--u)*3.6);display:grid;gap:calc(var(--u)*1.2);align-content:start;box-shadow:0 calc(var(--u)*2.4) calc(var(--u)*6) rgba(4,14,26,.5)}
+.gxt>small{font:700 calc(var(--u)*1.7)/1 var(--text);letter-spacing:.12em;text-transform:uppercase;color:#00728d}
+.gxbars{display:grid;gap:calc(var(--u)*.8)}
+.gxbars div{display:grid;gap:.25em;opacity:0}
+.scene.act .gxbars div{animation:fade .4s ease both;animation-delay:var(--t0)}
+.gxbars span{font:600 calc(var(--u)*1.65)/1.1 var(--text);color:#2b3b47}
+.gxbars i{display:block;height:calc(var(--u)*1.2);width:var(--w);border-radius:99px;background:linear-gradient(90deg,#0e93b0,#00728d);transform:scaleX(0);transform-origin:left}
+.scene.act .gxbars i{animation:growx .8s var(--out) both;animation-delay:calc(var(--t0) + 120ms)}
+.gxtot{font:800 calc(var(--u)*3)/1 var(--display);color:#0a3350;font-variant-numeric:tabular-nums}.gxtot em{font-style:normal}
+.gxchk{list-style:none;display:grid;gap:calc(var(--u)*1.1)}
+.gxchk li{display:grid;grid-template-columns:auto 1fr;gap:.6em;align-items:center;font:600 calc(var(--u)*2)/1.2 var(--text);color:#2b3b47}
+.gxchk i{width:calc(var(--u)*3.2);height:calc(var(--u)*3.2);border-radius:50%;border:2px solid #b9c4cc;position:relative}
+.gxchk i::after{content:'';position:absolute;left:30%;top:16%;width:30%;height:50%;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg) scale(0)}
+.scene.act .gxchk i{animation:gxck .4s var(--pop) both;animation-delay:var(--t0)}
+.scene.act .gxchk i::after{animation:gxtick .35s var(--pop) both;animation-delay:calc(var(--t0) + 120ms)}
+@keyframes gxck{to{background:#1E7A4F;border-color:#1E7A4F}}
+@keyframes gxtick{to{transform:rotate(45deg) scale(1)}}
+.gxbell{display:flex;align-items:center;gap:calc(var(--u)*1.4);font-size:calc(var(--u)*6);color:#00728d}
+.scene.act .gxbell .ic{animation:sweep 1.2s ease-in-out infinite;animation-delay:calc(var(--t0,0ms) + 1s)}
+.gxbell em{font:800 calc(var(--u)*5)/1 var(--display);font-style:normal;color:#0a3350}
+.gxdays{display:flex;flex-wrap:wrap;gap:calc(var(--u)*.8)}
+.gxdays span{font:700 calc(var(--u)*1.75)/1 var(--text);color:#fff;background:#00728d;padding:.5em .75em;border-radius:99px;opacity:0;transform:scale(.6)}
+.scene.act .gxdays span{animation:pop .45s var(--pop) both;animation-delay:var(--t0)}
+.gxflow{position:relative;display:grid;grid-template-columns:repeat(5,1fr);width:min(100%,calc(var(--u)*128));margin-top:calc(var(--u)*2.4)}
+.gxflow::before{content:'';position:absolute;left:10%;right:10%;top:calc(var(--u)*1.1);height:2px;background:rgba(255,255,255,.18)}
+.gxflow span{position:relative;display:grid;justify-items:center;gap:calc(var(--u)*.9);font:600 calc(var(--u)*1.8)/1.2 var(--text);color:var(--mute);text-align:center;opacity:0}
+.scene.act .gxflow span{animation:up .6s var(--out) both;animation-delay:var(--t0)}
+.gxflow span b{width:calc(var(--u)*2.2);height:calc(var(--u)*2.2);border-radius:50%;background:var(--aL);box-shadow:0 0 0 calc(var(--u)*.6) rgba(0,207,234,.18)}
+.gxrid{position:absolute;top:calc(var(--u)*.4);left:10%;width:calc(var(--u)*1.6);height:calc(var(--u)*1.6);border-radius:50%;background:#fff;box-shadow:0 0 calc(var(--u)*2) #00CFEA;z-index:2;opacity:0}
+.scene.act .gxrid{animation:gxride var(--d) linear both;animation-delay:var(--t0)}
+@keyframes gxride{0%{opacity:0;left:10%}8%{opacity:1}92%{opacity:1}100%{opacity:1;left:89%}}
+.gxsteps{list-style:none;display:grid;gap:calc(var(--u)*1.2)}
+.gxsteps li{display:grid;grid-template-columns:auto 1fr;gap:calc(var(--u)*1.4);align-items:center;font:600 calc(var(--u)*2.6)/1.2 var(--text);color:var(--ink)}
+.gxsteps b{display:grid;place-items:center;width:calc(var(--u)*5);height:calc(var(--u)*5);border-radius:50%;background:linear-gradient(135deg,var(--a),var(--aD));color:#fff;font:800 calc(var(--u)*2.4)/1 var(--display)}
+.gxsteps em{font-style:normal;color:var(--aL)}
+.gxor{display:block;margin-top:calc(var(--u)*1);font:500 calc(var(--u)*2)/1.3 var(--text);color:var(--mute)}
+.s-gcta .btns{display:grid;justify-items:start}
+.s-gcta .foot{text-align:center;font-size:calc(var(--u)*1.8)}
+@media (orientation:portrait){
+  .gxtwo,.gxtri{grid-template-columns:1fr;width:100%;gap:calc(var(--u)*2.4)}
+  .gxchart,.gxgauge{width:100%}
+  .gxpill{font-size:calc(var(--u)*2.6)}
+  .gxch b{font-size:calc(var(--u)*4)}.gxch small{font-size:calc(var(--u)*2.5)}
+  .gxrail em,.gxtools span{font-size:calc(var(--u)*2.3)}
+  .gxleads b{font-size:calc(var(--u)*2.6)}.gxleads span{font-size:calc(var(--u)*2.2)}
+  .gxflow span{font-size:calc(var(--u)*2.2)}
+  .gxsteps li{font-size:calc(var(--u)*3.4)}
+  .s-gcap .h.xl{font-size:calc(var(--u)*10.6)}
+  .s-gcap .split{gap:calc(var(--u)*3.6)}
+  .s-gcap .gxchart svg{max-height:calc(var(--u)*40)}
+  .s-gtwo .gxstamp,.gxstamp{margin-top:calc(var(--u)*.6)}
+  .gxtri .gxt{grid-template-columns:1fr}
+  .gxlab{font-size:calc(var(--u)*2.4)}
+}
+@media (aspect-ratio:1/1){
+  .gxtwo,.gxtri{grid-template-columns:repeat(2,1fr);gap:calc(var(--u)*1.8)}
+  .gxtri{grid-template-columns:repeat(3,1fr)}
+  .gxtri .gxt{grid-template-columns:1fr}
+  .gxtri .gxt>small{grid-column:auto}
+  .gxch b{font-size:calc(var(--u)*3)}.gxch small{font-size:calc(var(--u)*1.9)}
+  .gxrail em,.gxtools span{font-size:calc(var(--u)*1.8)}
+  .gxpill{font-size:calc(var(--u)*2)}
+  .gxlab{font-size:calc(var(--u)*1.8)}
+  .gxsteps li{font-size:calc(var(--u)*2.5)}
+  .gxring{width:calc(var(--u)*20);height:calc(var(--u)*20)}
+  .s-gcap .split{grid-template-columns:1.02fr .98fr;gap:calc(var(--u)*3)}
+  .s-gcap .h.xl{font-size:calc(var(--u)*8.4)}
+  .s-gcap .sub{font-size:calc(var(--u)*2.7)}
+  .s-gcap .gxpill,.s-gcap .ypill{font-size:calc(var(--u)*1.85)}
+  .s-gtwo .gxtwo{zoom:1.2;width:calc(var(--u)*84)}
+  .s-gtwo .h.l{font-size:calc(var(--u)*8.6)}
+}
 </style>
 </head>
 <body>
@@ -2545,7 +3890,7 @@ page = (HTML.replace('{{FONTS}}', FONTS).replace('{{SCENES}}', '\n'.join(S))
         .replace('{{BARS}}', '<i></i>' * len(S)).replace('{{MOTES}}', MOTES))
 assert len(S) == len(LINES) == 33, (len(S), len(LINES))
 if MODE in ('trailer', 'ad'):
-    assert len(T) == len(TLINES) == (8 if MODE == 'trailer' else 5), (len(T), len(TLINES))
+    assert len(T) == len(TLINES) == (8 if MODE == 'trailer' else len(TLINES)), (len(T), len(TLINES))
     page = (HTML.replace('{{FONTS}}', FONTS).replace('{{SCENES}}', '\n'.join(T))
             .replace('{{BARS}}', '<i></i>' * len(T)).replace('{{MOTES}}', MOTES))
     open(OUT, 'w', encoding='utf-8').write(page)

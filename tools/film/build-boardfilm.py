@@ -51,16 +51,24 @@ ROOT = HERE.parent.parent
 SRC = ROOT / 'donthaveanagent' / 'client-film.html'
 KEY = sys.argv[1] if len(sys.argv) > 1 else 'boardmgr'
 PAGES = {'boardmgr': 'board-management.html', 'boardstaff': 'board-client-support.html', 'boardagent': 'board-agents.html',
-         'boardflow': 'board-workflow.html', 'lbagent': 'film-agents.html', 'lbstaff': 'film-staff.html', 'dbstaff': 'film.html'}
+         'boardflow': 'board-workflow.html', 'lbagent': 'film-agents.html', 'lbstaff': 'film-staff.html', 'dbstaff': 'film.html',
+         'bwadmin': 'film.html', 'uwadmin': 'film.html', 'cmadmin': 'film.html'}
 TITLES = {'boardmgr': 'The board, for management', 'boardstaff': 'The board, for Client Support', 'boardagent': 'The board, for agents',
           'boardflow': 'The client transition, start to finish',
-          'lbagent': 'The Log Book, for agents', 'lbstaff': 'The Log Book, for staff', 'dbstaff': 'The Delivery Book, for staff'}
+          'lbagent': 'The Log Book, for agents', 'lbstaff': 'The Log Book, for staff', 'dbstaff': 'The Delivery Book, for staff',
+          'bwadmin': 'Build with us', 'uwadmin': 'The underwriting seat', 'cmadmin': 'Client Manager, General Insurance'}
 LB = KEY.startswith('lb') or KEY.startswith('db')   # the Log Book films (17 October 2026) and the Delivery Book's (20 October): same look and machinery
 DBF = KEY.startswith('db')
-OUT = (ROOT / 'rroperations' / ('delivery-book' if DBF else 'logbook') if LB else ROOT / 'orphan-transition') / PAGES[KEY]
+BW = KEY.startswith('bw') or KEY.startswith('uw') or KEY.startswith('cm')                           # the administrator's film (7 November 2026): same look, the branch's own systems
+OUT = (ROOT / ('clientmanager' if KEY.startswith('cm') else 'underwriter' if KEY.startswith('uw') else 'buildwithus') if BW else
+       ROOT / 'rroperations' / ('delivery-book' if DBF else 'logbook') if LB else ROOT / 'orphan-transition') / PAGES[KEY]
 TM = json.load(open(HERE / f'{KEY}-timing.json'))
 SCRIPT = json.load(open(HERE / f'{KEY}-lines.json'))
 LINES, ROLE = SCRIPT['scenes'], SCRIPT['role']
+# "build more cinematic" (8 November 2026). Opt-in per film, because turning
+# it on changes every frame and each film has to be re-rendered to pick it up.
+CINE = bool(SCRIPT.get('cinematic'))
+GRAIN = (HERE / 'grain.b64').read_text().strip() if CINE else ''
 DUR = [int(round(d * 1000)) for d in TM['durs']]
 WORDS = TM['words']
 assert len(LINES) == len(DUR) == len(WORDS), 'script, timing and words disagree on the number of scenes'
@@ -421,13 +429,13 @@ def keeps(rows, ts, ics, off=None):
 
 def s_named(i, sc, D):
     ts = rows_at(i, sc, ['brief', 'list', 'Salesforce'])
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc.get("headline", "What happens <em>next</em>"), 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc.get("headline", "What happens <em>next</em>"), 350, "c")}'
             f'{keeps(sc["rows"], ts, ["mail", "list", "sync"])}</div>')
 
 def s_counts(i, sc, D):
     ts = rows_at(i, sc, ['log', 'comment', 'Campaign', 'Chatter'])
     ics = ['x' if r.get('off') else 'check' for r in sc['rows']]
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc.get("headline", "Three ways it <em>counts</em>"), 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc.get("headline", "Three ways it <em>counts</em>"), 350, "c")}'
             f'{keeps(sc["rows"], ts, ics, off=True)}</div>')
 
 def s_list(i, sc, D):
@@ -511,7 +519,7 @@ def s_close(i, sc, D):
     three = sc['words3']
     ws = [(w(i, x.split()[0]), x, k == 2) for k, x in enumerate(three)]
     ln = ''.join(at(t, 'at up cl' + (' last' if g else ''), inner=x) for (t, x, g) in ws)
-    return (f'<div class="center" id="finale"><div class="lockup sm"><i class="halo"></i><i class="halo h2"></i>{mark("big")}</div>'
+    return (f'<div class="center" id="finale">'
             f'{at(150, "at up ebw", inner=sc["eyebrow"])}<div class="cls">{ln}</div>'
             f'{at(ws[-1][0] + 600, "at up furl", inner=ico("arrow", "ii") + " " + sc["url"])}</div>')
 
@@ -675,7 +683,7 @@ def s_clock(i, sc, D):
     days = [('Named', 'user', tD), ('Day 1', '', tD + 150), ('Called', 'phone', tCv), ('Day 3', '', tCv + 150), ('Day 4', '', tCv + 300), ('Day 5', '', tCv + 450), ('Met', 'cal', tM)]
     track = '<div class="dtrk"><i class="dln" style="--at:' + ms(tD) + ';--to:' + ms(tM + 300) + '"></i>' + ''.join(
         at(t, 'at pop dnode' + (' hit' if ic else ''), inner=(ico(ic) if ic else '') + f'<span>{lab}</span>') for (lab, ic, t) in days) + '</div>'
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'<div class="clockrow">{ring}<div class="sts">{stats}</div></div>{track}'
             f'{at(tF, "at up aim", inner=ico("target", "ii") + " The aim: a conversation in the first two days, a meeting soon after.")}</div>')
 
@@ -759,7 +767,7 @@ def s_claim(i, sc, D):
         if k: row += f'<div class="arw" style="--at:{ms(t - 450)}"><i class="ln"></i><i class="pkt"></i><i class="pkt q2"></i></div>'
         row += at(t, f'at pop cms {c}', inner=f'<span class="kic{" spin" if ic == "clock" else ""}">{ico(ic)}</span><b>{b}</b><small>{s}</small>')
     fld = at(tD - 150, 'at up cmd', inner=f'<small>Date Comm Paid</small><span class="fld">{typed(tD, "4 Nov 2026", 70)}</span>')
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'{at(tM - 200, "at pop cma", inner=cnt(tM, 200, "", "TT$") + "<span>to the agent, for a review after the naming</span>")}'
             f'<div class="cmr">{row}</div>{fld}</div>')
 
@@ -768,7 +776,7 @@ def s_outcomes(i, sc, D):
     its = sc['items']; ts = [w(i, x['at']) for x in its]
     cards = ''.join(at(t, 'at pop occ' + (' key' if k == len(its) - 1 else ''), inner=f'<span class="ocn">{k + 1}</span><div><b>{x["b"]}</b><small>{x["i"]}</small></div>')
                     for k, (t, x) in enumerate(zip(ts, its)))
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'<div class="ocg">{cards}</div></div>')
 
 def s_test(i, sc, D):
@@ -1075,7 +1083,7 @@ def s_lbbag(i, sc, D):
              + docs + late +
              f'<div class="bnx at up" style="left:{HX(15, 0, W):.0f}px;--at:{ms(tNx - 300)}">{ico("bag")}<span>Next working day&rsquo;s bag</span></div>'
              + ''.join(f'<small class="bhr" style="left:{HX(h, 0, W):.0f}px">{h if h <= 12 else h - 12}{"am" if h < 12 else "pm"}</small>' for h in (7, 9, 11, 12, 13, 15, 17)) + '</div>')
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'<div class="bagrow">{clock}{track}</div>'
             f'<div class="bchips">{at(tTw, "at up bchip ok", inner=ico("check", "ii") + " In the branch&rsquo;s hands by 12 noon: today")}'
             f'{at(tAf, "at up bchip am", inner=ico("clock", "ii") + " After 12: the next working day")}</div></div>')
@@ -1095,7 +1103,7 @@ def s_lbhistory(i, sc, D):
     stat = (f'<div class="hstat at pop" style="--at:{ms(tF - 200)}"><b>{cnt(tF, 57)}<sup>%</sup></b><span>came in after 12 noon</span>'
             f'{at(tW, "at up hchip", inner=ico("clock", "ii") + " and waited a day")}'
             f'{at(tMo, "at up hchip cy", inner=ico("bolt", "ii") + " 12 to 1: the morning&rsquo;s rush, just too late")}</div>')
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
             f'<div class="hrow">{stat}{chart}</div></div>')
 
 def s_lbnudge(i, sc, D):
@@ -1135,7 +1143,7 @@ def s_lbbagday(i, sc, D):
     steps = [(400, 'file', 'Papers come in', 'until 12 noon'), (tCh, 'list', 'Checked', 'on their transmittals'), (tOne, 'bag', 'The bag comes in', '1 pm'),
              (tCl, 'users', 'Cleared', 'the mail given out'), (tBk, 'arrow', 'Back down', 'with the day&rsquo;s transmittals')]
     st = '<div class="bdst">' + ''.join(at(t, 'at up bdsi' + (' key' if k == 4 else ''), inner=f'<span>{ico(ic)}</span><b>{b}</b><i>{x_}</i>') for k, (t, ic, b, x_) in enumerate(steps)) + '</div>'
-    return f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}{tl}{st}</div>'
+    return f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}{tl}{st}</div>'
 
 def s_lbrota(i, sc, D):
     tWk, tS, tA, tL, tSt = w(i, 'week', 1), w(i, 'Sasha'), w(i, 'Azariah'), w(i, 'Liz'), w(i, 'still')
@@ -1153,7 +1161,7 @@ def s_lbrota(i, sc, D):
     day = (f'<div class="rday at up" style="--at:{ms(tSt)}"><div class="rdt"><i class="rdw"></i><i class="bmk bagm" style="left:{HX(13, 0, 640):.0f}px"><span>Bag done by 1 pm</span></i>'
            + ''.join(f'<i class="bmk home at pop" style="left:{HX(h, 0, 640):.0f}px;--at:{ms(tHome[k])}"><span>{h - 12} pm</span></i>' for k, (h, nm) in enumerate(((14, 'Sasha'), (15, 'Liz'), (16, 'Azariah'))))
            + f'</div><span class="rdl">{ico("home", "ii")} Sasha leaves at 2, Liz at 3, Azariah at 4</span></div>')
-    return (f'<div class="center">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}{style}'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}{style}'
             f'<div class="rrow">{bag}{cards}</div>{day}<p class="rnote at" style="--at:{ms(tSt + 400)}">Azariah, Liz, Sasha, then round again. Kamla does not do transmittals.</p></div>')
 
 def s_lbprep(i, sc, D):
@@ -1590,12 +1598,729 @@ LB_CSS = r"""
 .bf .lbds.red{border-color:var(--red)} .bf .lbds.amb{border-color:#B54708} .bf .lbds.gry{border-color:#94A3B8}
 """
 
+# ── "Build with us" / "The underwriting seat": the recruiting films ─────
+# Asked for on 7 November 2026, after eight cuts had missed: "i asked for motion
+# and a qualification as to what the person will do as to what you all work on
+# and a person who is somewheree with no tools", then "i want you graphics,
+# motion and cards" and "i dont want read persons icone and etc".
+#
+# So: the branch's own systems, named, drawn as cards that move — the
+# qualification is the middle of the film, not a line at the end — opening on
+# the person who has the problem and none of the tools. Nothing photographic,
+# no faces, no avatars. Every name on a card is a real file or a real system
+# of this branch; every figure on screen is one this repository can stand up.
+#
+# Every scene takes its content from <key>-lines.json, so one engine serves
+# both the administrator's film (bwadmin) and the underwriter's (uwadmin).
+# The defaults below are the administrator's, which is what they were written
+# for; a scene that passes nothing still draws that film exactly as before.
+
+BWFILES = ['Intelligence.gs', 'Transition.gs', 'GroupClients.gs', 'LogBook.gs', 'Claims.gs', 'GroupBilling.gs',
+           'PremiumDueDesk.gs', 'GIRenewals.gs', 'MotorQuote.gs', 'DeliveryBook.gs', 'Quotes.gs', 'KPI.gs']
+BWQR = {}
+
+
+def bwqr(sc):
+    """The code for this film, read off the scene (so each page has its own)."""
+    f = sc.get('qr', 'qr-bwadmin.png')
+    if f not in BWQR: BWQR[f] = base64.b64encode((HERE / f).read_bytes()).decode()
+    return BWQR[f]
+
+
+def s_bwopen(i, sc, D):
+    """A field of jobs nobody has fixed; one of them lifts, and you are the one who can see it."""
+    tA, tF = w(i, sc.get('at', 'administrator')), w(i, sc.get('at2', 'fixed'))
+    card = sc.get('card', ['Still done by hand', 'every week, by somebody'])
+    grid = ''.join(f'<i class="bwag" style="left:{2 + (k % 6) * 16.4}%;top:{2 + (k // 6) * 34}%;'
+                   f'--at:{ms(120 + k * 48)};--dl:{(k * 1.9) % 6:.1f}s"></i>' for k in range(18))
+    one = at(tA, 'at pop bwaone', inner=f'<span class="bwak">{ico(sc.get("icon", "file"))}</span>'
+             f'<div><b>{card[0]}</b><small>{card[1]}</small></div>')
+    ring = f'<i class="bwaring" style="--at:{ms(tF - 300)}"></i>'
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwafield">{grid}{one}{ring}</div></div>')
+
+
+BW_NOTOOLS = [{'at': 'spreadsheet', 'icon': 'list', 'title': 'tracker final v7', 'art': 'sheet', 'flag': 'typed twice'},
+              {'at': 'WhatsApp', 'icon': 'msg', 'title': 'the branch group', 'art': 'chat', 'flag': 'the process lives here'},
+              {'at': 'permission', 'icon': 'lock', 'title': 'request access', 'art': 'lock', 'flag': 'no permission', 'red': True}]
+
+
+def s_bwnotools(i, sc, D):
+    """What you have been given to work with. Three cards, each landing on its own word."""
+    out = ''
+    for c in sc.get('cards', BW_NOTOOLS):
+        t0 = w(i, c['at'])
+        art = c.get('art', 'sheet')
+        # The flag lands just after that card's own art has finished drawing, so
+        # the offset is per-art, not one number for all three.
+        if art == 'sheet':
+            rows = ''.join(f'<i class="bwsr" style="--at:{ms(t0 + 150 + k * 60)};width:{[88,64,80,52,76,60,84][k]}%"></i>'
+                           for k in range(7))
+            body = (f'<div class="bwsg">{rows}<i class="bwdup" style="--at:{ms(t0 + 700)};top:32%"></i>'
+                    f'<i class="bwdup" style="--at:{ms(t0 + 900)};top:62%"></i></div>')
+            flag = 1020
+        elif art == 'chat':
+            body = '<div class="bwbs">' + ''.join(
+                f'<i class="bwb" style="--at:{ms(t0 + 180 + k * 185)};width:{[72,54,86,62][k]}%;'
+                f'align-self:{"flex-end" if k % 2 else "flex-start"}"></i>' for k in range(4)) + '</div>'
+            flag = 940
+        else:
+            body = (f'<div class="bwlk"><i class="bwpad" style="--at:{ms(t0 + 240)}">{ico(c.get("padicon", "lock"))}</i>'
+                    f'<span>{c.get("wait", "Pending")}</span></div>')
+            flag = 760
+        out += at(t0 - 200, 'at pop bwcard', inner=(
+            f'<div class="bwch"><span class="bwci">{ico(c["icon"])}</span><b>{c["title"]}</b></div>{body}'
+            f'<span class="bwflag{" red" if c.get("red") else ""}" style="--at:{ms(t0 + flag)}">{c["flag"]}</span>'))
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwrow3">{out}</div></div>')
+
+
+def s_bwturn(i, sc, D):
+    """The turn: a branch that stopped waiting."""
+    tC, tW = w(i, sc.get('at', 'Chaguanas')), w(i, sc.get('at2', 'waiting'))
+    sub = sc.get('sub', 'An insurance branch that writes its own software.')
+    return (f'<div class="center"><div class="lockup"><i class="halo"></i><i class="halo h2"></i>{mark("big")}</div>'
+            f'{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], tC, "c")}'
+            f'{at(tW + 300, "at up bwasub", inner=sub)}</div>')
+
+
+def s_bwstack(i, sc, D):
+    """Thirty-six files and a hundred thousand lines, by their real names."""
+    tS, tD = w(i, sc.get('at', 'software')), w(i, sc.get('at3', 'developer'))
+    n1, n2 = sc.get('n1', ['six', 36, '', 'files, in production']), sc.get('n2', ['thousand', 100, 'k', 'lines of Apps Script'])
+    tN, tL = w(i, n1[0]), w(i, n2[0])
+    files = ''.join(f'<i class="bwf" style="--at:{ms(tS + 150 + k * 95)};--i:{k}">{x}</i>'
+                    for k, x in enumerate(sc.get('files', BWFILES)))
+    nums = (at(tN - 150, 'at pop bwnum', inner=cnt(tN, n1[1], n1[2]) + f'<span>{n1[3]}</span>')
+            + at(tL - 150, 'at pop bwnum key', inner=cnt(tL, n2[1], n2[2]) + f'<span>{n2[3]}</span>'))
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwstk">{files}</div><div class="bwnums">{nums}</div>'
+            f'{at(tD - 200, "at up bwaline", inner=sc.get("line", "Nobody here was hired as a developer."))}</div>')
+
+
+BWSYS = [('bag', 'The Log Book', 'every document in and out, signed for'),
+         ('file', 'The Delivery Book', 'contracts delivered, the client rates it'),
+         ('clock', 'The Premium Due Desk', '45, 60, 75, 90 days before it lapses'),
+         ('chart', 'Group billing', 'an insurer&rsquo;s invoice, checked line by line'),
+         ('flag', 'The claims intake', 'five lines of business, forms filled for you'),
+         ('target', 'The client board', 'who looks after whom, and what was said')]
+
+
+def s_bwgrid(i, sc, D):
+    """Six cards, landing in turn: the qualification itself."""
+    tW = w(i, sc.get('at', 'work'))
+    cards = sc.get('cards', BWSYS)
+    out = ''.join(at(tW - 400 + k * 230, 'at pop bwsys', inner=(
+        f'<span class="bwsi">{ico(c[0])}</span><b>{c[1]}</b><small>{c[2]}</small>')) for k, c in enumerate(cards))
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwgrid">{out}</div></div>')
+
+
+BW_LOG = {'steps': [['document', 'file', 'Policy contract', 'chosen, never typed'],
+                    ['logged', 'list', 'Logged 10:14', 'the agent, the client, the policy'],
+                    ['routed', 'swap', 'Records Management', 'routed from what it is'],
+                    ['signed', 'check', 'Signed for', 'by the staff member who took it']],
+          'sent': ['phone', 'Sent on today&rsquo;s bag &middot; 12:00'],
+          'cues': [[0, '3,634 documents a year'], [2, '25 departments, one list'], [-1, 'On to Guardian the same day']],
+          'title': 'Log Book', 'who': 'staff'}
+
+
+def s_bwlog(i, sc, D):
+    """A phone, filling itself in: the document, the department, the signature, sent."""
+    cfg = sc.get('phone', BW_LOG)
+    ts = [w(i, s[0]) for s in cfg['steps']]
+    body = ''.join(at(t, 'at l bwst', inner=f'<span class="bwsk">{ico(s[1])}</span><div><b>{s[2]}</b><small>{s[3]}</small></div>')
+                   for t, s in zip(ts, cfg['steps']))
+    tP = w(i, cfg['sent'][0])
+    body += at(tP, 'at pop bwsent', inner=f'{ico("mail", "ii")} {cfg["sent"][1]}')
+    extra = (cursor([(ts[0] - 500, 240, 300), (ts[0], '.bwst'), (ts[-1], '.bwst:nth-of-type(%d)' % len(ts))], kind='touch')
+             + click(ts[-1], '.bwst:nth-of-type(%d)' % len(ts)))
+    cues = [(tP if c[0] == -1 else ts[c[0]], c[1], c[0] == -1) for c in cfg['cues']]
+    return stage(side(i, sc, cues), phone(i, body, title=cfg['title'], who=cfg['who'], extra=extra))
+
+
+BW_DUES = {'stops': [[45, 'days'], [60, 'days'], [75, 'days'], [90, 'days']],
+           'at': 'lapses', 'at2': 'letter', 'at3': 'checks', 'icon': 'mail',
+           'mark': 'the policy lapses',
+           'check': ['A person ticks every one', 'nothing goes out unchecked']}
+
+
+def s_bwdues(i, sc, D):
+    """A rail with stops on it, each arriving on its own beat."""
+    cfg = sc.get('rail', BW_DUES)
+    tL, tLe, tC = w(i, cfg['at']), w(i, cfg['at2']), w(i, cfg['at3'])
+    stops = ''
+    for k, d in enumerate(cfg['stops']):
+        t = tLe - 500 + k * 260
+        stops += (f'<div class="bwstop" style="--at:{ms(t)}"><i class="bwdot"></i><b>{d[0]}</b><small>{d[1]}</small>'
+                  f'<i class="bwenv" style="--at:{ms(t + 220)}">{ico(cfg.get("icon", "mail"))}</i></div>')
+    rail = f'<i class="bwrail" style="--at:{ms(tL - 200)}"></i>'
+    mark = at(tL, 'at pop bwlapse', inner=f'{ico("x", "ii")} {cfg["mark"]}') if cfg.get('mark') else ''
+    ticks = ''.join(f'<i class="bwtick" style="--at:{ms(tC + k * 150)}">{ico("check")}</i>' for k in range(len(cfg['stops'])))
+    check = at(tC - 250, 'at up bwcheck', inner=f'<b>{cfg["check"][0]}</b>{ticks}<small>{cfg["check"][1]}</small>')
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwtl">{rail}{stops}{mark}</div>{check}</div>')
+
+
+BW_BILL = {'at': 'invoice', 'at2': 'line', 'at3': 'records', 'at4': 'pays',
+           'left': 'Their invoice', 'right': 'Our own records', 'out': 'Reconciled, then sent',
+           'rows': [['Group health', 1], ['Group life', 1], ['Pension list bill', 1], ['Adjustments', 0], ['Arrears', 1]]}
+
+
+def s_bwbill(i, sc, D):
+    """Two columns reconciled line by line, with one line that does not agree."""
+    cfg = sc.get('bill', BW_BILL)
+    tI, tLn, tR, tP = w(i, cfg['at']), w(i, cfg['at2']), w(i, cfg['at3']), w(i, cfg['at4'])
+    rows = cfg['rows']
+    left = ''.join(at(tI + 150 + k * 110, 'at l bwbr', inner=f'<span>{r[0]}</span><i class="bwbv"></i>') for k, r in enumerate(rows))
+    right = ''.join(at(tR + 100 + k * 110, 'at l bwbr', inner=f'<span>{r[0]}</span><i class="bwbv"></i>') for k, r in enumerate(rows))
+    links = ''.join(f'<i class="bwlink{"" if r[1] else " bad"}" style="--at:{ms(tLn + 120 + k * 150)};top:{14 + k * 19.6}%"></i>'
+                    for k, r in enumerate(rows))
+    out = at(tP - 300, 'at pop bwpay', inner=f'{ico("check", "ii")} {cfg["out"]}')
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwbill"><div class="bwbc">{at(tI - 150, "at up bwbh", inner=cfg["left"])}{left}</div>'
+            f'<div class="bwbm">{links}</div>'
+            f'<div class="bwbc">{at(tR - 150, "at up bwbh", inner=cfg["right"])}{right}</div></div>{out}</div>')
+
+
+BW_HALF = {'at': 'Half', 'at2': 'other', 'at3': 'smaller',
+           'l': ['The branch&rsquo;s admin', 'it has to be right'],
+           'r': ['Making it unnecessary', 'a form, a script, a page'],
+           'line': 'The first half gets smaller every month you are here.'}
+
+
+def s_bwhalf(i, sc, D):
+    """Two halves, and one of them shrinking — the slide he asked to make pop.
+
+    The bar drops in, a cyan divider travels with the shrink, a sheen crosses
+    the white half as it finishes, the blue half keeps a drifting light and an
+    edge that pulses outward, and the chips underneath tick the finished work
+    off on the left while the work that is yours lights up on the right.
+    `lchips`/`rchips` are optional: a scene without them draws the bar alone."""
+    cfg = sc.get('split', BW_HALF)
+    tH, tO, tS = w(i, cfg['at']), w(i, cfg['at2']), w(i, cfg['at3'])
+    lc = ''.join(f'<i class="bwhc bwhdone" style="--at:{ms(tS + 180 + k * 150)}">{ico("check")}<span>{x}</span></i>'
+                 for k, x in enumerate(cfg.get('lchips', [])))
+    rc = ''.join(f'<i class="bwhc bwhlive" style="--at:{ms(tO + 420 + k * 170)}"><span>{x}</span></i>'
+                 for k, x in enumerate(cfg.get('rchips', [])))
+    chips = (f'<div class="bwhchips"><div class="bwhcl">{lc}</div><div class="bwhcr">{rc}</div></div>'
+             if lc or rc else '')
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwsplit" style="--at:{ms(tH - 200)};--sh:{ms(tS)}">'
+            f'<i class="bwhl"><b>{cfg["l"][0]}</b><small>{cfg["l"][1]}</small></i>'
+            f'<i class="bwhr" style="--at:{ms(tO - 150)}"><b>{cfg["r"][0]}</b><small>{cfg["r"][1]}</small>'
+            f'<u class="bwhpulse"></u></i>'
+            f'<u class="bwhdiv"></u>'
+            f'</div>{chips}{at(tS + 300, "at up bwaline bwhfin", inner=cfg["line"])}</div>')
+
+
+BW_SCRIPT = {'at': 'hand', 'at2': 'script',
+             'lhead': 'By hand, every week', 'rhead': 'Apps Script &middot; the branch&rsquo;s own project',
+             'rows': ['Open the sheet', 'Copy the row', 'Type it again'],
+             'code': ['function fileIt_(row) {', "  const t = tab_('Log Book');", '  t.appendRow([now_(), row.doc,', '    dept_(row), who_()]);', '}'],
+             'badge': 'Deployed'}
+
+
+def s_bwscript(i, sc, D):
+    """By hand today, a rule tomorrow — the editor, and the rows that then tick themselves."""
+    cfg = sc.get('script', BW_SCRIPT)
+    tH, tS = w(i, cfg['at']), w(i, cfg['at2'])
+    by = ''.join(at(tH + 120 + k * 150, 'at l bwby', inner=f'<span>{x}</span><i class="bwclk">{ico("clock")}</i>')
+                 for k, x in enumerate(cfg['rows']))
+    ed = ''.join(f'<i class="bwcl" style="--at:{ms(tS + 150 + k * 260)}">{typed(tS + 150 + k * 260, H.escape(x), 26, "tyy bwtx")}</i>'
+                 for k, x in enumerate(cfg['code']))
+    # The ticks mean "and then these do themselves". Where the left column is a
+    # queue the rule REPLACES rather than automates, "ticks": false drops them —
+    # a green tick beside "wait for the release" reads as the wait being fine.
+    done = ('' if cfg.get('ticks') is False else
+            ''.join(f'<i class="bwdn" style="--at:{ms(tS + 1750 + k * 160)}">{ico("check")}</i>' for k in range(len(cfg['rows']))))
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwsc"><div class="bwcard2">{at(tH - 200, "at up bwch2", inner=cfg["lhead"])}{by}'
+            f'<div class="bwdns">{done}</div></div>'
+            f'<div class="bwarr" style="--at:{ms(tS - 300)}"><i class="bwln"></i></div>'
+            f'<div class="bwcard2 ed">{at(tS - 200, "at up bwch2", inner=cfg["rhead"])}{ed}'
+            f'<span class="bwdeploy" style="--at:{ms(tS + 1550)}">{cfg["badge"]}</span></div></div></div>')
+
+
+BWTOOLS = [['Apps', 'bolt', 'Apps Script', 'the branch&rsquo;s own 100,000 lines'],
+           ['Salesforce', 'sync', 'Salesforce', 'every client, every task'],
+           ['Workspace', 'mail', 'Google Workspace', 'Sheets, Drive, the mailbox'],
+           ['Claude', 'target', 'Claude', 'beside you, on the real work']]
+
+
+def s_bwkeys(i, sc, D):
+    """The tools, already paid for and already connected — and the request form, crossed out."""
+    tK, tR = w(i, sc.get('at', 'keys')), w(i, sc.get('at2', 'request'))
+    cards = ''
+    for c in sc.get('tools', BWTOOLS):
+        t = w(i, c[0])
+        cards += at(t - 200, 'at pop bwtool', inner=(
+            f'<span class="bwti">{ico(c[1])}</span><b>{c[2]}</b><small>{c[3]}</small>'
+            f'<i class="bwok" style="--at:{ms(t + 320)}">{ico("check")} {sc.get("ok", "connected")}</i>'))
+    keys = at(tK - 150, 'at pop bwkey', inner=f'<span class="bwki">{ico("bolt")}</span><b>{sc.get("keys", "You get the keys")}</b>')
+    form = at(tR - 150, 'at pop bwform', inner=f'<span class="bwfi">{ico("file")}</span><b>{sc.get("form", "Request form")}</b>'
+             f'<i class="bwx" style="--at:{ms(tR + 260)}"></i>')
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwtools">{cards}</div><div class="bwvs">{keys}{form}</div></div>')
+
+
+def s_bwclose(i, sc, D):
+    """The ask. The camera does not move here: a QR under a moving camera does not decode."""
+    ws = sc.get('lines', [['seat', 'One administrator&rsquo;s seat.'], ['Chaguanas', 'Chaguanas.'], ['build', 'Build with us.']])
+    ts = [w(i, x[0]) for x in ws]
+    ln = ''.join(at(t, 'at up cl' + (' last' if k == len(ws) - 1 else ''), inner=x[1])
+                 for k, (t, x) in enumerate(zip(ts, ws)))
+    # side by side, not stacked: the code needs height to stay scannable and a
+    # 16:9 frame has width to spare. The shield is in the chrome bar already.
+    return (f'<div class="center bwfin" id="finale">'
+            f'<div class="bwfl">{at(150, "at up ebw", inner=sc["eyebrow"])}<div class="cls">{ln}</div></div>'
+            f'<div class="bwend" style="--at:{ms(ts[0] + 250)}"><img class="bwqr" src="data:image/png;base64,{bwqr(sc)}" alt="">'
+            f'<div class="bwurl"><b>{sc["url"]}</b><span>{sc.get("urlsub", "Fifteen minutes.<br>He reads every one himself.")}</span></div></div></div>')
+
+
+def s_bwhelp(i, sc, D):
+    """HELP 868, the branch's WhatsApp line (15 November 2026: "we've just launched our branches WhatsApp, 868 help, and
+    need a dedicated person to really work on this, as it's MCP, it connects to Claude, it connects to our Salesforce
+    environment ... the next big thing"). A phone with the conversation, and the line drawn out to Claude and
+    Salesforce. The chat is sample: no client, and the reference is made up."""
+    tN, tW, tC, tS, tP = (w(i, sc.get(k, d)) for k, d in
+                          (('at', 'next'), ('at2', 'WhatsApp'), ('at3', 'Claude'), ('at4', 'Salesforce'), ('at5', 'person')))
+    msgs = [('in', 'Hi, can you check on my policy?'), ('out', 'Hi! I&rsquo;m HELP 868, the branch&rsquo;s assistant. What would you like to check?'),
+            ('in', 'A claim I sent last week'), ('out', 'Noted. Our team will message you today. Your reference is RRB/2026/042.')]
+    chat = ''.join(f'<i class="bwhm {d}" style="--at:{ms(tW + 200 + k * 420)}">{t}</i>' for k, (d, t) in enumerate(msgs))
+    phone = (f'<div class="bwhph at pop" style="--at:{ms(tN)}"><div class="bwhtop"><span class="bwhav">868</span>'
+             f'<span><b>HELP 868</b><small>Ricky Rampersad Branch</small></span></div><div class="bwhbody">{chat}</div></div>')
+    nodes = [(tW, 'msg', 'WhatsApp', 'where clients already are'), (tC, 'bolt', 'Claude', 'reads it and answers'),
+             (tS, 'sync', 'Salesforce', 'the client&rsquo;s record')]
+    net = ''.join(
+        (f'<i class="bwhln" style="--at:{ms(t - 250)}"><span>MCP</span></i>' if k else '') +
+        at(t, 'at pop bwhnd', inner=f'<span class="bwti">{ico(icn)}</span><b>{nm}</b><small>{sub}</small>')
+        for k, (t, icn, nm, sub) in enumerate(nodes))
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwhrow">{phone}<div class="bwhnet">{net}'
+            f'{at(tP, "at pop bwhyou", inner=ico("user") + "<b>" + sc.get("you", "One person to make it brilliant") + "</b>")}</div></div></div>')
+
+
+def s_bwcalls(i, sc, D):
+    """The problem this seat solves (15 November 2026, Ricky: "Currently, everyone calls me to fix it"). His phone rings
+    while a queue of 'it's stuck' messages lands beside it. Roles, never names: no colleague and no client is shown."""
+    tS, tC, tF = w(i, sc.get('at', 'stuck')), w(i, sc.get('at2', 'calls')), w(i, sc.get('at3', 'fix'))
+    msgs = sc.get('msgs', [['The front desk', 'The Log Book won&rsquo;t open'], ['An agent', 'My letter didn&rsquo;t go out'],
+                           ['Sales support', 'It&rsquo;s stuck on the server'], ['The renewals desk', 'The form won&rsquo;t send'],
+                           ['An agent', 'Can you check the script?'], ['The front desk', 'The board isn&rsquo;t updating']])
+    q = ''.join(f'<i class="bwcqm" style="--at:{ms(tS - 300 + k * 330)}"><span class="bwcqi">{ico("msg")}</span>'
+                f'<span><small>{m[0]}</small><b>{m[1]}</b></span><em>now</em></i>' for k, m in enumerate(msgs))
+    ph = (f'<div class="bwcqph at pop" style="--at:{ms(max(300, tS - 600))}"><div class="bwcqring"><i></i><i></i><i></i>'
+          f'<span class="bwcqav">{ico("phone")}</span></div><b>Incoming call</b><small>the branch</small>'
+          f'<div class="bwcqbtns"><span class="no">{ico("x")}</span><span class="yes">{ico("phone")}</span></div>'
+          f'<i class="bwcqbadge" style="--at:{ms(tC)}">{cnt(tC, 9, "+")}</i></div>')
+    who = at(tF + 200, 'at up bwcqwho', inner=sc.get('who', '&ldquo;Everyone calls me to fix it.&rdquo; &mdash; Ricky Rampersad, Branch Manager'))
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwcqrow">{ph}<div class="bwcqq">{q}</div></div>{who}</div>')
+
+
+BWPLAT = [['Salesforce', 'sync', 'every client, every task'], ['Apps Script', 'bolt', 'our own 100,000 lines'],
+          ['Microsoft 365', 'mail', 'the support mailbox'], ['HELP 868', 'msg', 'the WhatsApp line'],
+          ['Claude', 'target', 'the AI beside you']]
+
+
+def s_bwplat(i, sc, D):
+    """Five platforms joined to one hub, then the two things you learn about each: the workflow and the rules."""
+    tP, tT, tW, tR = (w(i, sc.get(k, d)) for k, d in (('at', 'platforms'), ('at2', 'together'), ('at3', 'workflow'), ('at4', 'rules')))
+    cards = sc.get('plats', BWPLAT)
+    n = len(cards)
+    nodes = ''.join(at(tP - 250 + k * 240, 'at pop bwpln', inner=f'<span class="bwti">{ico(c[1])}</span><b>{c[0]}</b><small>{c[2]}</small>',
+                       style=f'--k:{k}') for k, c in enumerate(cards))
+    wires = ''.join(f'<i class="bwplw" style="--at:{ms(tT - 200 + k * 120)};left:{10 + k * 80 / (n - 1):.1f}%"></i>' for k in range(n))
+    hub = at(tT, 'at pop bwplh', inner=f'{mark()}<b>{sc.get("hub", "One branch")}</b>')
+    rows = (at(tW - 150, 'at up bwplr', inner=f'{ico("swap", "ii")}<b>The workflow</b><span>what happens, in what order, and who it reaches</span>')
+            + at(tR - 150, 'at up bwplr', inner=f'{ico("lock", "ii")}<b>The rules</b><span>what each one may and may not do</span>'))
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwpl"><div class="bwplns">{nodes}</div><div class="bwplws">{wires}</div>{hub}</div>'
+            f'<div class="bwplrs">{rows}</div></div>')
+
+
+BWFIX = [['The Log Book', 1], ['The Premium Due Desk', 1], ['Group billing', 0], ['HELP 868', 1], ['The claims intake', 1], ['The client board', 1]]
+
+
+def s_bwfix(i, sc, D):
+    """Stuck on the server, sorted: the status board with one red row, the log typing why, the fix, the amendment, all green."""
+    tS, tY, tF, tA = (w(i, sc.get(k, d)) for k, d in (('at', 'stuck'), ('at2', 'why'), ('at3', 'fix'), ('at4', 'amendment')))
+    tG = wo(i, sc.get('at5', 'again')) or tA + 900
+    rows = ''.join(f'<div class="bwfxr{"" if ok else " bad"}" style="--at:{ms(max(250, tS - 700) + k * 110)};--fx:{ms(tF + 250)}">'
+                   f'<i class="bwfxd"></i><span>{nm}</span><em class="bwfxs">{"running" if ok else "stuck"}</em>'
+                   f'{"" if ok else "<em class=bwfxok>running</em>"}</div>' for k, (nm, ok) in enumerate(sc.get('rows', BWFIX)))
+    log = sc.get('log', ['&gt; Exception: the run timed out', '&gt; why: the trigger was never re-installed', '&gt; fixed: trigger installed, run again'])
+    lines = ''.join(f'<i class="bwfxl" style="--at:{ms(t)}">{typed(t, x, 22, "tyy bwfxt")}</i>'
+                    for t, x in zip((tS + 200, tY + 100, tF + 100), log))
+    amend = at(tA - 100, 'at pop bwfxa', inner=f'{ico("file", "ii")}<b>{sc.get("amend", "Amendment written")}</b><small>{sc.get("amend2", "so it doesn&rsquo;t happen again")}</small>')
+    allok = at(tG, 'at pop bwfxg', inner=f'{ico("check", "ii")} {sc.get("all", "Every system running")}')
+    return (f'<div class="center bwc">{at(150, "at up ebw", inner=sc["eyebrow"])}{hx("h2", sc["headline"], 350, "c")}'
+            f'<div class="bwfx"><div class="bwfxb">{rows}</div><div class="bwfxc"><div class="bwfxcon">{lines}</div>{amend}</div></div>{allok}</div>')
+
+
+R_BW = {'bwopen': s_bwopen, 'bwnotools': s_bwnotools, 'bwturn': s_bwturn, 'bwstack': s_bwstack, 'bwgrid': s_bwgrid,
+        'bwlog': s_bwlog, 'bwdues': s_bwdues, 'bwbill': s_bwbill, 'bwhalf': s_bwhalf, 'bwscript': s_bwscript,
+        'bwkeys': s_bwkeys, 'bwhelp': s_bwhelp, 'bwclose': s_bwclose,
+        'bwcalls': s_bwcalls, 'bwplat': s_bwplat, 'bwfix': s_bwfix}
+
+BW_CSS = r"""
+/* the calls: the problem this seat solves (15 November 2026) */
+.bf .bwcqrow{display:flex;gap:34px;align-items:center;justify-content:center;margin-top:22px}
+.bf .bwcqph{position:relative;width:230px;border-radius:28px;background:#0b141a;border:6px solid #22527f;padding:26px 18px 20px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.bf .bwcqph>b{display:block;font:700 18px var(--head);color:#fff;margin-top:14px}
+.bf .bwcqph>small{display:block;font:500 13px var(--body);color:var(--lav);margin-top:3px}
+.bf .bwcqring{position:relative;width:86px;height:86px;margin:0 auto;display:grid;place-items:center}
+.bf .bwcqring i{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(0,229,255,.6);opacity:0}
+.scene.act .bwcqring i{animation:bwcqPing 1.6s ease-out infinite}
+.bf .bwcqring i:nth-child(2){animation-delay:.53s!important}.bf .bwcqring i:nth-child(3){animation-delay:1.06s!important}
+@keyframes bwcqPing{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(1.7)}}
+.bf .bwcqav{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#1D5BC4,#13408F);color:#fff;display:grid;place-items:center;position:relative;z-index:1}
+.scene.act .bwcqav{animation:bwcqBuzz .5s ease-in-out infinite}
+@keyframes bwcqBuzz{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+.bf .bwcqav .ico{width:30px;height:30px}
+.bf .bwcqbtns{display:flex;justify-content:space-around;margin-top:20px}
+.bf .bwcqbtns span{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:#fff}
+.bf .bwcqbtns .no{background:#B91C1C}.bf .bwcqbtns .yes{background:#15803D}
+.bf .bwcqbtns .ico{width:20px;height:20px}
+.bf .bwcqbadge{position:absolute;top:-14px;right:-16px;min-width:52px;height:52px;border-radius:26px;background:#E5484D;color:#fff;display:grid;place-items:center;font-style:normal;box-shadow:0 8px 22px rgba(229,72,77,.55);opacity:0}
+.bf .bwcqbadge b{font:800 20px var(--head);color:#fff}
+.scene.act .bwcqbadge{animation:bfPop .45s var(--at) both}
+.bf .bwcqq{display:flex;flex-direction:column;gap:9px;width:470px}
+.bf .bwcqm{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:center;background:#fff;border-radius:12px;padding:10px 13px;font-style:normal;text-align:left;box-shadow:0 14px 34px rgba(0,0,0,.45);opacity:0;transform:translateX(40px)}
+.scene.act .bwcqm{animation:bwcqIn .45s cubic-bezier(.2,.9,.3,1) var(--at) both,bwShake .4s calc(var(--at) + .45s) both}
+@keyframes bwcqIn{to{opacity:1;transform:none}}
+.bf .bwcqi{width:32px;height:32px;border-radius:9px;background:#FDE8E7;color:var(--red);display:grid;place-items:center}
+.bf .bwcqi .ico{width:17px;height:17px}
+.bf .bwcqm small{display:block;font:600 11px var(--body);color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
+.bf .bwcqm b{display:block;font:700 14.5px var(--head);color:var(--ink)}
+.bf .bwcqm em{font:600 11px var(--body);font-style:normal;color:var(--red)}
+.bf .bwcqwho{font:italic 600 17px var(--head);color:var(--lav);margin-top:18px}
+
+/* the five platforms */
+.bf .bwpl{position:relative;width:1060px;margin-top:22px;display:grid;justify-items:center}
+.bf .bwplns,.bf .bwplws{width:100%}
+.bf .bwplns{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.bf .bwpln{background:#fff;border-radius:14px;padding:13px 12px;text-align:center;box-shadow:0 18px 44px rgba(0,0,0,.45);display:grid;justify-items:center;gap:4px}
+.scene.act .bwpln{animation:bfPop .45s var(--at) both,bwCardFloat 6s ease-in-out calc(var(--at) + .6s + var(--k) * .4s) infinite}
+.bf .bwpln b{font:700 15px var(--head);color:var(--ink)}.bf .bwpln small{font:500 11.5px var(--body);color:var(--mute)}
+.bf .bwplws{position:relative;height:46px}
+.bf .bwplw{position:absolute;top:0;width:2px;height:46px;background:linear-gradient(180deg,var(--cyan),rgba(0,229,255,.1));transform:scaleY(0);transform-origin:top}
+.scene.act .bwplw{animation:bfGrowY .45s var(--at) both}
+.bf .bwplh{display:inline-flex;align-items:center;gap:10px;margin:0 auto;background:linear-gradient(135deg,#1D5BC4,#13408F);border-radius:14px;padding:11px 22px;box-shadow:0 18px 48px rgba(47,111,232,.6),0 0 0 1px rgba(0,229,255,.5)}
+.bf .bwplh b{font:700 17px var(--head);color:#fff}.bf .bwplh .mk{width:26px;height:28px}
+.bf .bwplrs{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:900px;margin-top:18px}
+.bf .bwplr{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:10px;text-align:left;background:rgba(255,255,255,.07);border:1px solid rgba(191,211,247,.2);border-radius:12px;padding:11px 14px}
+.bf .bwplr .ico{grid-row:1/3;width:24px;height:24px;color:var(--cyan)}
+.bf .bwplr b{font:700 15px var(--head);color:#fff}.bf .bwplr span{font:500 12.5px var(--body);color:var(--lav)}
+
+/* stuck on the server, sorted */
+.bf .bwfx{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:1000px;margin-top:22px;text-align:left}
+.bf .bwfxb{background:#fff;border-radius:14px;padding:10px 14px;box-shadow:0 18px 44px rgba(0,0,0,.45)}
+.bf .bwfxr{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #EDF1F5;opacity:0;position:relative}
+.bf .bwfxr:last-child{border:0}
+.scene.act .bwfxr{animation:bfInL .4s var(--at) both}
+.bf .bwfxr span{font:600 14px var(--head);color:var(--ink)}
+.bf .bwfxd{width:11px;height:11px;border-radius:50%;background:#15803D;box-shadow:0 0 0 4px rgba(21,128,61,.15)}
+.bf .bwfxs{font:700 11px var(--body);font-style:normal;text-transform:uppercase;letter-spacing:.05em;color:#15803D}
+.bf .bwfxr.bad .bwfxd{background:#B91C1C;box-shadow:0 0 0 4px rgba(185,28,28,.18)}
+.scene.act .bwfxr.bad .bwfxd{animation:bwfxBlink .7s steps(2) infinite,bwfxGreen .3s var(--fx) forwards}
+@keyframes bwfxBlink{50%{opacity:.35}}
+@keyframes bwfxGreen{to{background:#15803D;box-shadow:0 0 0 4px rgba(21,128,61,.15);opacity:1}}
+.bf .bwfxr.bad .bwfxs{color:#B91C1C}
+.scene.act .bwfxr.bad .bwfxs{animation:fadeOutX .2s var(--fx) forwards}
+@keyframes fadeOutX{to{opacity:0}}
+.bf .bwfxok{position:absolute;right:0;font:700 11px var(--body);font-style:normal;text-transform:uppercase;letter-spacing:.05em;color:#15803D;opacity:0}
+.scene.act .bwfxok{animation:bfPop .35s var(--fx) both}
+.scene.act .bwfxr.bad{animation:bfInL .4s var(--at) both,bwfxRow 1.2s ease-in-out calc(var(--at) + .4s) 2}
+@keyframes bwfxRow{50%{background:#FDE8E7}}
+.bf .bwfxc{display:grid;gap:12px;align-content:start}
+.bf .bwfxcon{background:#0b1220;border:1px solid rgba(0,229,255,.25);border-radius:12px;padding:14px 16px;min-height:118px;display:grid;gap:8px;align-content:start}
+.bf .bwfxl{font-style:normal;display:block}
+.bf .bwfxt{font:500 13.5px ui-monospace,monospace;color:#9FE7F5}
+.bf .bwfxa{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:10px;background:#fff;border-radius:12px;padding:11px 14px;box-shadow:0 14px 34px rgba(0,0,0,.4)}
+.bf .bwfxa .ico{grid-row:1/3;width:24px;height:24px;color:var(--blue)}
+.bf .bwfxa b{font:700 15px var(--head);color:var(--ink)}.bf .bwfxa small{font:500 12px var(--body);color:var(--mute)}
+.bf .bwfxg{display:inline-flex;align-items:center;gap:8px;margin-top:16px;background:#15803D;color:#fff;font:700 15px var(--head);border-radius:99px;padding:9px 20px;box-shadow:0 12px 30px rgba(21,128,61,.45)}
+.bf .bwfxg .ico{width:18px;height:18px}
+
+/* ══ Build with us · the administrator's film (7 November 2026) ═══════════
+   Cards on the midnight ground, every one landing on the word that names it.
+   Class names all start bw-: the shell and the board sheet both style short
+   names, and a scene that borrows one by accident is the fault that drew a
+   toast as a second phone. */
+.bf .bwc h2{color:#fff}
+.bf .bwafield{position:relative;width:1000px;height:238px;margin-top:22px}
+.bf .bwag{position:absolute;width:13.6%;height:28%;border-radius:12px;background:rgba(255,255,255,.055);
+  border:1px solid rgba(191,211,247,.16);opacity:0}
+.scene.act .bwag{animation:bfIn .5s var(--at) both,bwDrift 7s ease-in-out var(--dl) infinite}
+@keyframes bwDrift{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.bf .bwaone{position:absolute;left:31%;top:34%;width:38%;display:flex;gap:12px;align-items:center;z-index:3;
+  background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 0 1px rgba(0,229,255,.4)}
+.bf .bwaone b{display:block;font:700 17px var(--head);color:var(--ink)}
+.bf .bwaone small{display:block;font:500 12.5px var(--body);color:var(--mute);margin-top:2px}
+.bf .bwak{width:36px;height:36px;border-radius:10px;background:var(--sky);color:var(--blue);display:grid;place-items:center;flex:none}
+.bf .bwak .ico{width:19px;height:19px}
+.bf .bwaring{position:absolute;left:29%;top:30%;width:42%;height:36%;border-radius:18px;z-index:2;
+  border:2px solid var(--cyan);box-shadow:0 0 34px rgba(0,229,255,.55);opacity:0}
+.scene.act .bwaring{animation:bwRing .9s cubic-bezier(.2,.9,.3,1) var(--at) both}
+@keyframes bwRing{0%{opacity:0;transform:scale(1.22)}60%{opacity:1}100%{opacity:1;transform:none}}
+.bf .bwasub{font:500 17px var(--body);color:var(--lav);margin-top:16px;text-align:center}
+.bf .bwaline{font:600 18px var(--head);color:#fff;margin-top:18px;text-align:center;
+  border-top:1px solid rgba(191,211,247,.3);padding-top:14px}
+
+/* where you are now */
+.bf .bwrow3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;width:100%;margin-top:22px}
+.bf .bwcard{background:#fff;border-radius:16px;padding:14px;box-shadow:0 20px 48px rgba(0,0,0,.5);position:relative}
+.bf .bwch{display:flex;gap:9px;align-items:center;margin-bottom:11px}
+.bf .bwch b{font:700 14.5px var(--head);color:var(--ink)}
+.bf .bwci{width:28px;height:28px;border-radius:8px;background:var(--sky);color:var(--blue);display:grid;place-items:center;flex:none}
+.bf .bwci .ico{width:15px;height:15px}
+.bf .bwsg{position:relative;display:flex;flex-direction:column;gap:7px;height:94px;background:#F4F7FB;border-radius:9px;padding:10px}
+.bf .bwsr{height:8px;border-radius:4px;background:#D7E0EC;opacity:0}
+.scene.act .bwsr{animation:bfInL .4s var(--at) both}
+.bf .bwdup{position:absolute;left:8%;width:46%;height:8px;border-radius:4px;background:var(--red);opacity:0}
+.scene.act .bwdup{animation:bwFlash .5s var(--at) both}
+@keyframes bwFlash{0%{opacity:0}30%{opacity:1}100%{opacity:.85}}
+.bf .bwbs{display:flex;flex-direction:column;gap:8px;height:94px;background:#F4F7FB;border-radius:9px;padding:10px}
+.bf .bwb{height:14px;border-radius:7px;background:#CFDDEE;opacity:0}
+.scene.act .bwb{animation:bfPop .4s var(--at) both}
+.bf .bwlk{height:94px;background:#F4F7FB;border-radius:9px;display:grid;place-items:center;gap:6px;align-content:center}
+.bf .bwlk span{font:600 12.5px var(--body);color:var(--mute)}
+.bf .bwpad{width:34px;height:34px;border-radius:50%;background:#FDE8E7;color:var(--red);display:grid;place-items:center;opacity:0}
+.scene.act .bwpad{animation:bfPop .4s var(--at) both,bwShake .5s calc(var(--at) + .4s) both}
+@keyframes bwShake{0%,100%{transform:none}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.bf .bwpad .ico{width:17px;height:17px}
+.bf .bwflag{position:absolute;right:10px;bottom:-11px;font:700 11px var(--head);letter-spacing:.04em;text-transform:uppercase;
+  background:var(--ambbg);color:var(--amb);border-radius:7px;padding:4px 9px;opacity:0}
+.scene.act .bwflag{animation:bfPop .4s var(--at) both}
+.bf .bwflag.red{background:var(--redbg);color:var(--red)}
+
+/* the stack of files */
+.bf .bwstk{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;width:860px;margin-top:20px}
+.bf .bwf{font:600 12.5px ui-monospace,monospace;color:#CFE0FB;background:rgba(29,91,196,.26);
+  border:1px solid rgba(0,229,255,.3);border-radius:8px;padding:6px 11px;opacity:0}
+.scene.act .bwf{animation:bwFly .55s cubic-bezier(.2,.9,.3,1) var(--at) both}
+@keyframes bwFly{from{opacity:0;transform:translateY(22px) scale(.86)}to{opacity:1;transform:none}}
+.bf .bwstk{position:relative;overflow:hidden;padding:4px 0}
+.bf .bwstk::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 40%,rgba(0,229,255,.16) 50%,transparent 60%);transform:translateX(-120%)}
+.scene.act .bwstk::after{animation:bwStkSheen 2.6s ease-in-out 1.6s infinite}
+@keyframes bwStkSheen{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
+.bf .bwnums{display:flex;gap:16px;margin-top:20px}
+.bf .bwnum{background:#fff;border-radius:14px;padding:12px 22px;text-align:center;box-shadow:0 18px 44px rgba(0,0,0,.45)}
+.bf .bwnum b{display:block;font:700 34px var(--head);color:var(--blue);line-height:1}
+.bf .bwnum span{display:block;font:600 12px var(--body);color:var(--mute);margin-top:4px}
+.bf .bwnum.key{background:linear-gradient(135deg,#1D5BC4,#13408F);box-shadow:0 18px 48px rgba(47,111,232,.6),0 0 0 1px rgba(0,229,255,.5)}
+.bf .bwnum.key b,.bf .bwnum.key span{color:#fff}
+
+/* the six systems */
+.bf .bwgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:1000px;margin-top:24px}
+.bf .bwsys{background:#fff;border-radius:14px;padding:15px 16px;box-shadow:0 18px 44px rgba(0,0,0,.45);text-align:left}
+.scene.act .bwsys{animation:bwCardFloat 6.4s ease-in-out calc(var(--at) + .6s) infinite}
+@keyframes bwCardFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.bf .bwsys b{display:block;font:700 16px var(--head);color:var(--ink);margin-top:9px}
+.bf .bwsys small{display:block;font:500 12.5px var(--body);color:var(--mute);margin-top:3px;line-height:1.35}
+.bf .bwsi{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#1D5BC4,#13408F);color:#fff;display:grid;place-items:center}
+.bf .bwsi .ico{width:18px;height:18px}
+
+/* the Log Book, in the phone */
+.bf .bwst{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--rule);border-radius:11px;padding:9px 11px;margin-bottom:8px}
+.bf .bwst b{display:block;font:700 13.5px var(--head);color:var(--ink)}
+.bf .bwst small{display:block;font:500 11.5px var(--body);color:var(--mute);margin-top:1px}
+.bf .bwsk{width:28px;height:28px;border-radius:8px;background:var(--sky);color:var(--blue);display:grid;place-items:center;flex:none}
+.bf .bwsk .ico{width:15px;height:15px}
+.bf .bwsent{display:block;text-align:center;font:700 13px var(--head);color:#fff;background:linear-gradient(135deg,#1D5BC4,#13408F);
+  border-radius:10px;padding:10px;margin-top:4px}
+
+/* the premium due timeline */
+.bf .bwtl{position:relative;display:flex;justify-content:space-between;align-items:flex-end;width:900px;height:132px;margin-top:26px}
+.bf .bwrail{position:absolute;left:0;right:0;bottom:34px;height:3px;border-radius:2px;background:rgba(191,211,247,.3);transform-origin:left;opacity:0}
+.scene.act .bwrail{animation:bwGrow .8s cubic-bezier(.3,.9,.3,1) var(--at) both}
+@keyframes bwGrow{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:none}}
+.bf .bwstop{position:relative;display:grid;justify-items:center;gap:2px;width:120px;opacity:0}
+.scene.act .bwstop{animation:bfInU .5s var(--at) both}
+.bf .bwstop b{font:700 25px var(--head);color:#fff;order:2}
+.bf .bwstop small{font:600 11px var(--body);color:var(--lav);order:3;text-transform:uppercase;letter-spacing:.14em}
+.bf .bwdot{width:13px;height:13px;border-radius:50%;background:var(--cyan);box-shadow:0 0 18px rgba(0,229,255,.8);order:4;margin-top:8px}
+.bf .bwenv{width:34px;height:34px;border-radius:9px;background:#fff;color:var(--blue);display:grid;place-items:center;order:1;opacity:0}
+.scene.act .bwenv{animation:bwFly .5s var(--at) both}
+.bf .bwenv .ico{width:18px;height:18px}
+.bf .bwlapse{position:absolute;right:-96px;bottom:72px;font:700 13px var(--head);color:#fff;background:var(--red);
+  border-radius:9px;padding:7px 12px}
+.bf .bwcheck{margin-top:20px;background:#fff;border-radius:13px;padding:12px 20px;display:flex;gap:12px;align-items:center;
+  box-shadow:0 18px 44px rgba(0,0,0,.45)}
+.bf .bwcheck b{font:700 15px var(--head);color:var(--ink)}
+.bf .bwcheck small{font:500 12.5px var(--body);color:var(--mute)}
+.bf .bwtick{width:24px;height:24px;border-radius:7px;background:var(--grnbg);color:var(--grn);display:grid;place-items:center;opacity:0}
+.scene.act .bwtick{animation:bfPop .36s var(--at) both}
+.bf .bwtick .ico{width:14px;height:14px}
+
+/* group billing */
+.bf .bwbill{display:grid;grid-template-columns:1fr 88px 1fr;gap:10px;width:900px;margin-top:22px;align-items:start}
+.bf .bwbc{background:#fff;border-radius:14px;padding:12px;box-shadow:0 18px 44px rgba(0,0,0,.45)}
+.bf .bwbh{font:700 13px var(--head);color:var(--blue);text-transform:uppercase;letter-spacing:.12em;margin-bottom:9px}
+.bf .bwbr{display:flex;justify-content:space-between;align-items:center;padding:7px 2px;border-top:1px solid var(--rule);
+  font:600 13px var(--body);color:var(--ink)}
+.bf .bwbv{width:46px;height:8px;border-radius:4px;background:#DCE3ED}
+.bf .bwbm{position:relative;height:100%}
+.bf .bwlink{position:absolute;left:0;right:0;height:2px;background:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,.7);
+  transform-origin:left;opacity:0}
+.scene.act .bwlink{animation:bwGrow .45s var(--at) both}
+.bf .bwlink.bad{background:#F79009;box-shadow:0 0 12px rgba(247,144,9,.8);height:3px}
+.bf .bwpay{margin-top:18px;font:700 14px var(--head);color:#fff;background:linear-gradient(135deg,#1D5BC4,#13408F);
+  border-radius:10px;padding:10px 20px}
+
+/* half and half — the slide he asked to make pop (7 November 2026) */
+.bf .bwsplit{position:relative;display:flex;width:900px;height:118px;margin-top:26px;border-radius:16px;overflow:hidden;
+  box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.scene.act .bwsplit{animation:bwSplitIn .62s cubic-bezier(.2,.9,.25,1) var(--at) both,
+  bwSplitBreathe 7s ease-in-out calc(var(--sh) + 2s) infinite}
+@keyframes bwSplitIn{from{opacity:0;transform:translateY(18px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes bwSplitBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.008)}}
+.bf .bwsplit i{display:grid;align-content:center;gap:4px;padding:0 24px}
+.bf .bwsplit b{font:700 19px var(--head)}
+.bf .bwsplit small{font:500 13px var(--body);opacity:.8}
+.bf .bwhl{position:relative;overflow:hidden;background:#fff;color:var(--ink);width:50%;transform-origin:left}
+.scene.act .bwhl{animation:bwShrink 1.5s cubic-bezier(.4,0,.2,1) var(--sh) both}
+@keyframes bwShrink{to{width:28%}}
+/* the sheen that crosses the white half as it finishes */
+.bf .bwhl::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(105deg,transparent 32%,rgba(29,91,196,.20) 50%,transparent 68%);transform:translateX(-130%)}
+.scene.act .bwhl::after{animation:bwSheenX 1.35s ease-out var(--sh) both}
+@keyframes bwSheenX{to{transform:translateX(130%)}}
+.bf .bwhr{position:relative;overflow:hidden;background:linear-gradient(135deg,#1D5BC4,#13408F);color:#fff;flex:1;opacity:0}
+.scene.act .bwhr{animation:bfIn .5s var(--at) both}
+/* a light drifting inside the blue half, and an edge that keeps leaving it */
+.bf .bwhr::before{content:"";position:absolute;inset:-45%;z-index:0;pointer-events:none;
+  background:radial-gradient(circle at 32% 50%,rgba(0,229,255,.26),transparent 56%)}
+.scene.act .bwhr::before{animation:bwGlowDrift 6.5s ease-in-out infinite}
+@keyframes bwGlowDrift{0%,100%{transform:translateX(-11%)}50%{transform:translateX(11%)}}
+.bf .bwhr b,.bf .bwhr small{position:relative;z-index:1}
+.bf .bwhpulse{position:absolute;right:0;top:0;bottom:0;width:3px;background:var(--cyan);opacity:0;
+  transform-origin:right;z-index:2}
+.scene.act .bwhpulse{animation:bwEdgeOut 2.4s ease-out calc(var(--sh) + .4s) infinite}
+@keyframes bwEdgeOut{0%{opacity:.85;transform:scaleX(1)}100%{opacity:0;transform:scaleX(7)}}
+/* the divider, travelling with the shrink */
+.bf .bwhdiv{position:absolute;top:0;bottom:0;left:50%;width:2px;z-index:4;opacity:0;
+  background:linear-gradient(180deg,transparent,var(--cyan) 22%,var(--cyan) 78%,transparent);
+  box-shadow:0 0 20px 3px rgba(0,229,255,.5)}
+.scene.act .bwhdiv{animation:bfIn .4s var(--at) both,bwDivMove 1.5s cubic-bezier(.4,0,.2,1) var(--sh) both}
+@keyframes bwDivMove{to{left:28%}}
+/* what is finished, and what is yours */
+.bf .bwhchips{display:flex;width:900px;margin-top:14px;gap:12px;align-items:flex-start}
+.bf .bwhcl{width:28%;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.bf .bwhcr{flex:1;display:flex;gap:8px;flex-wrap:wrap}
+.bf .bwhc{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;opacity:0;
+  font:600 11.5px var(--head);white-space:nowrap}
+.bf .bwhc.bwhdone{background:rgba(255,255,255,.07);color:#9FB4D6;border:1px solid rgba(191,211,247,.18)}
+.bf .bwhc.bwhdone .ico{width:12px;height:12px;color:var(--cyan)}
+.bf .bwhc.bwhlive{background:linear-gradient(135deg,#1D5BC4,#2A6DE0);color:#fff;
+  box-shadow:0 8px 22px rgba(29,91,196,.45)}
+.scene.act .bwhc{animation:bwChipIn .5s cubic-bezier(.2,.9,.25,1) var(--at) both}
+.scene.act .bwhc.bwhlive{animation:bwChipIn .5s cubic-bezier(.2,.9,.25,1) var(--at) both,
+  bwChipFloat 3.2s ease-in-out calc(var(--at) + .5s) infinite}
+@keyframes bwChipIn{from{opacity:0;transform:translateY(9px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes bwChipFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+/* the closing line draws its own rule */
+.bf .bwhfin{position:relative}
+.bf .bwhfin::after{content:"";position:absolute;left:50%;bottom:-9px;height:2px;width:0;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);transform:translateX(-50%)}
+.scene.act .bwhfin::after{animation:bwRuleOut .9s cubic-bezier(.2,.9,.25,1) calc(var(--at) + .35s) both}
+@keyframes bwRuleOut{to{width:62%}}
+
+/* by hand, then a script */
+.bf .bwsc{display:grid;grid-template-columns:1fr 70px 1fr;gap:10px;width:960px;margin-top:22px;align-items:center}
+.bf .bwcard2{position:relative;background:#fff;border-radius:14px;padding:14px 14px 40px;box-shadow:0 18px 44px rgba(0,0,0,.45);min-height:182px}
+.bf .bwcard2.ed{background:#0B1B33;box-shadow:0 18px 48px rgba(0,0,0,.6),0 0 0 1px rgba(0,229,255,.3)}
+.bf .bwch2{font:700 12px var(--head);color:var(--blue);text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px}
+.bf .bwcard2.ed .bwch2{color:var(--cyan)}
+.bf .bwby{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--rule);
+  font:600 13.5px var(--body);color:var(--ink)}
+.bf .bwclk{color:var(--amb);display:grid;place-items:center}
+.bf .bwclk .ico{width:15px;height:15px}
+.bf .bwdns{display:flex;gap:7px;position:absolute;right:14px;bottom:12px}
+.bf .bwdn{width:22px;height:22px;border-radius:6px;background:var(--grnbg);color:var(--grn);display:grid;place-items:center;opacity:0}
+.scene.act .bwdn{animation:bfPop .34s var(--at) both}
+.bf .bwdn .ico{width:13px;height:13px}
+.bf .bwarr{display:grid;place-items:center;opacity:0}
+.scene.act .bwarr{animation:bfIn .5s var(--at) both}
+.bf .bwln{width:56px;height:3px;border-radius:2px;background:var(--cyan);box-shadow:0 0 14px rgba(0,229,255,.8)}
+.bf .bwcl{display:block;font:600 12.5px ui-monospace,monospace;color:#9FE8F5;white-space:pre;margin-bottom:3px;opacity:0}
+.scene.act .bwcl{animation:bfIn .3s var(--at) both}
+.bf .bwtx{color:#9FE8F5}
+.bf .bwdeploy{position:absolute;right:14px;bottom:12px;font:700 11.5px var(--head);letter-spacing:.06em;text-transform:uppercase;
+  background:var(--cyan);color:#06243A;border-radius:7px;padding:5px 11px;opacity:0}
+.scene.act .bwdeploy{animation:bfPop .4s var(--at) both}
+
+/* the tools, and the request form */
+.bf .bwtools{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;width:980px;margin-top:22px}
+.bf .bwtool{position:relative;background:#fff;border-radius:14px;padding:14px;box-shadow:0 18px 44px rgba(0,0,0,.45);text-align:left}
+.bf .bwtool b{display:block;font:700 15.5px var(--head);color:var(--ink);margin-top:9px}
+.bf .bwtool small{display:block;font:500 12px var(--body);color:var(--mute);margin-top:3px;line-height:1.35}
+.bf .bwti{width:32px;height:32px;border-radius:9px;background:var(--sky);color:var(--blue);display:grid;place-items:center}
+.bf .bwti .ico{width:17px;height:17px}
+.bf .bwok{display:inline-flex;gap:4px;align-items:center;margin-top:9px;font:700 11px var(--head);text-transform:uppercase;
+  letter-spacing:.08em;color:var(--grn);background:var(--grnbg);border-radius:6px;padding:3px 8px;opacity:0}
+.scene.act .bwok{animation:bfPop .34s var(--at) both}
+.bf .bwok .ico{width:12px;height:12px}
+.bf .bwvs{display:flex;gap:16px;align-items:center;margin-top:20px}
+.bf .bwkey{display:flex;gap:11px;align-items:center;background:linear-gradient(135deg,#1D5BC4,#13408F);color:#fff;
+  border-radius:13px;padding:13px 22px;box-shadow:0 18px 48px rgba(47,111,232,.6),0 0 0 1px rgba(0,229,255,.5)}
+.bf .bwkey b{font:700 18px var(--head)}
+.bf .bwki{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center}
+.bf .bwki .ico{width:16px;height:16px}
+.bf .bwform{position:relative;display:flex;gap:10px;align-items:center;background:#fff;border-radius:13px;padding:13px 22px;opacity:.75}
+.bf .bwform b{font:700 16px var(--head);color:var(--mute)}
+.bf .bwfi{width:28px;height:28px;border-radius:8px;background:#EEF2F7;color:var(--mute);display:grid;place-items:center}
+.bf .bwfi .ico{width:15px;height:15px}
+.bf .bwx{position:absolute;left:10%;right:10%;top:50%;height:3px;border-radius:2px;background:var(--red);transform-origin:left;opacity:0}
+.scene.act .bwx{animation:bwGrow .4s var(--at) both}
+
+/* the ask: nothing here moves, so the code decodes */
+.bf .bwend{display:grid;justify-items:center;gap:14px;margin:0;background:rgba(255,255,255,.07);
+  border:1px solid rgba(191,211,247,.3);border-radius:16px;padding:14px 20px;opacity:0}
+.scene.act .bwend{animation:bfIn .5s var(--at) both}
+.bf .bwqr{width:272px;height:272px;background:#fff;padding:15px;border-radius:10px;display:block;image-rendering:pixelated}
+.bf .bwurl b{display:block;text-align:center;font:700 22px var(--head);color:#fff;letter-spacing:-.01em}
+.bf .bwurl span{display:block;text-align:center;font:500 13.5px var(--body);color:var(--lav);margin-top:6px;line-height:1.45}
+.bf .bwfin{flex-direction:row;gap:60px;align-items:center;justify-content:center}
+.bf .bwfin .ebw{text-align:left;margin-bottom:16px}
+.bf .bwfin .cls{text-align:left;justify-items:start;gap:10px}
+
+/* HELP 868: the phone, and the line out to Claude and Salesforce */
+.bf .bwhrow{display:flex;gap:46px;align-items:center;justify-content:center;margin-top:22px}
+.bf .bwhph{width:300px;border-radius:30px;background:#0b141a;border:6px solid #22527f;box-shadow:0 24px 60px rgba(0,0,0,.55);overflow:hidden;text-align:left}
+.bf .bwhtop{display:flex;gap:10px;align-items:center;background:#075E54;padding:11px 13px;color:#fff}
+.bf .bwhtop b{display:block;font:700 15px var(--head)}
+.bf .bwhtop small{display:block;font:500 11px var(--body);opacity:.85}
+.bf .bwhav{width:34px;height:34px;border-radius:50%;background:#25D366;color:#06243A;display:grid;place-items:center;font:800 11px var(--head)}
+.bf .bwhbody{display:flex;flex-direction:column;gap:8px;padding:13px 11px 16px;min-height:250px;background:#0b141a}
+.bf .bwhm{font:500 13px/1.35 var(--body);font-style:normal;padding:8px 11px;border-radius:11px;max-width:82%;opacity:0;transform:translateY(8px)}
+.bf .bwhm.in{align-self:flex-end;background:#005C4B;color:#E9FBF3;border-bottom-right-radius:3px}
+.bf .bwhm.out{align-self:flex-start;background:#202C33;color:#E9EDEF;border-bottom-left-radius:3px}
+.scene.act .bwhm{animation:bfPop .38s var(--at) both}
+.bf .bwhnet{display:flex;flex-direction:column;align-items:center;gap:0}
+.bf .bwhnd{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:11px;align-items:center;width:330px;background:#fff;border-radius:14px;padding:12px 15px;box-shadow:0 18px 44px rgba(0,0,0,.45);text-align:left}
+.bf .bwhnd .bwti{grid-row:1/3}
+.bf .bwhnd b{font:700 16px var(--head);color:var(--ink)}
+.bf .bwhnd small{font:500 12px var(--body);color:var(--mute)}
+.bf .bwhln{position:relative;display:block;width:3px;height:34px;background:linear-gradient(var(--cyan),#2A6DE0);transform:scaleY(0);transform-origin:top}
+.scene.act .bwhln{animation:bfGrowY .4s var(--at) both}
+@keyframes bfGrowY{to{transform:scaleY(1)}}
+.bf .bwhln span{position:absolute;left:12px;top:50%;transform:translateY(-50%);font:800 10.5px var(--head);letter-spacing:.12em;color:var(--cyan)}
+.bf .bwhyou{display:flex;gap:9px;align-items:center;margin-top:18px;background:linear-gradient(135deg,#1D5BC4,#13408F);color:#fff;border-radius:12px;padding:11px 18px;box-shadow:0 18px 48px rgba(47,111,232,.6),0 0 0 1px rgba(0,229,255,.5)}
+.bf .bwhyou b{font:700 16px var(--head)}
+.bf .bwhyou .ico{width:17px;height:17px}
+"""
+
 R = {'sftask': s_sftask, 'since': s_since, 'reassign': s_reassign, 'unit': s_unit, 'yourcalls': s_yourcalls, 'staffcall': s_staffcall, 'rules': s_counts,
      'yourwork': s_yourwork, 'clock': s_clock, 'title': s_title, 'flow': s_flow, 'signin': s_signin, 'urgent': s_urgent, 'agents': s_agents, 'table': s_table, 'batches': s_batches,
      'assign': s_assign, 'named': s_named, 'list': s_list, 'client': s_client, 'logcall': s_logcall, 'comment': s_comment, 'counts': s_counts,
      'sees': s_sees, 'close': s_close, 'letter': s_letter, 'family': s_family, 'record': s_record, 'claim': s_claim, 'outcomes': s_outcomes, 'test': s_test}
-R.update(R_LB); R.update(R_DB)
-BLUE = {'title', 'flow', 'named', 'counts', 'rules', 'clock', 'close', 'claim', 'outcomes', 'lbbag', 'lbhistory', 'lbbagday', 'lbrota'}
+R.update(R_LB); R.update(R_DB); R.update(R_BW)
+BLUE = {'title', 'flow', 'named', 'counts', 'rules', 'clock', 'close', 'claim', 'outcomes', 'lbbag', 'lbhistory', 'lbbagday', 'lbrota',
+        'bwopen', 'bwturn', 'bwhalf', 'bwclose'}
 
 def bgfx(i, blue):
     if blue:
@@ -1610,7 +2335,11 @@ for i, sc in enumerate(LINES):
     ROLE = sc.get('role', SCRIPT['role'])            # a scene may show another sign-in's board (the workflow film shows Client Support's calls)
     body = R[v](i, sc, D)
     html.append(f'<!-- {i + 1} · {v} -->\n<section class="scene bf{" blue" if blue else ""}" data-d="{D}" style="--D:{D}ms">'
-                f'<div class="wv">{bgfx(i, blue)}<div class="inner">{body}</div></div><i class="wband"></i></section>')
+                f'<div class="wv">{bgfx(i, blue)}<div class="inner">{body}</div>'
+                + ('<div class="cine"><i class="bfvig"></i><i class="bfgrain"></i></div>' if CINE else '')
+                + f'</div><i class="wband"></i>'
+                + ('<i class="cineopen"></i>' if CINE and i == 0 else '')
+                + '</section>')
 SCENES = '\n'.join(html)
 # every number that counts up is a punch in the sound, and every chapter scene opens on a sub impact (sfx.py)
 _starts = [sum(DUR[:k]) / 1000 for k in range(len(DUR))]
@@ -1659,7 +2388,33 @@ body{background:var(--ground)}
   background:linear-gradient(90deg,rgba(255,255,255,0) 0,rgba(0,229,255,.55) 40%,rgba(255,255,255,.95) 50%,rgba(47,111,232,.6) 60%,rgba(255,255,255,0) 100%)}
 .scene.act .wband{animation:bfStreak .72s cubic-bezier(.3,0,.2,1) both}
 @keyframes bfStreak{0%{left:-30%;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:110%;opacity:0}}
+.scene.act .bgfx{animation:bfPush var(--D) linear both}
+@keyframes bfPush{from{transform:scale(1.015)}to{transform:scale(1.075)}}
+.scene.act .bfgrain{animation:bfGrain .9s steps(1,end) infinite}
+@keyframes bfGrain{0%{background-position:0 0}12.5%{background-position:-37px 19px}25%{background-position:23px -41px}
+  37.5%{background-position:-19px -11px}50%{background-position:41px 29px}62.5%{background-position:-29px 43px}
+  75%{background-position:11px -23px}87.5%{background-position:-43px -31px}}
+.scene.act .cineopen{animation:bfOpen 1.35s cubic-bezier(.4,0,.2,1) both}
+@keyframes bfOpen{to{opacity:0}}
 .scene.bf .inner{max-width:none;width:1224px;text-align:left;zoom:var(--k,1);position:relative}
+
+/* ══ the cinematic layer ═══════════════════════════════════════════════════
+   Three things, and every one of them is an OVERLAY or a background: nothing
+   here moves, scales or clips the content, because bwfit.js has already
+   measured that content to sit inside the 1280x616 the mixer keeps.
+   · a slow push on the BACKGROUND only, so the frame breathes and the words
+     stay exactly where they were measured;
+   · a vignette, which is what makes a flat screen read as a lens;
+   · grain, one 96px tile stepped eight ways, at 3.5% — film grain is the
+     cheapest thing on this list and the one the eye reads as "shot".
+   A first frame fade-up from black opens the film.                        */
+.bf .cine{position:absolute;inset:0;z-index:21;pointer-events:none}
+.bf .cine i{position:absolute;inset:0;display:block}
+.bf .bfvig{background:radial-gradient(118% 94% at 50% 46%,transparent 52%,rgba(3,8,22,.30) 82%,rgba(3,8,22,.58) 100%)}
+.bf.blue .bfvig{background:radial-gradient(120% 96% at 50% 46%,transparent 48%,rgba(2,6,18,.26) 80%,rgba(2,6,18,.52) 100%)}
+.bf .bfgrain{background-image:url(data:image/png;base64,__GRAIN__);background-repeat:repeat;
+  opacity:.035;mix-blend-mode:overlay;background-size:96px 96px}
+.bf .cineopen{position:absolute;inset:0;z-index:40;background:#02050f;pointer-events:none}
 
 /* what moves behind: an aurora that drifts, a grid, soft light, an orbit; on the chapter scenes, rings, rays and motes */
 .bf .bgfx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -2223,10 +2978,10 @@ chrome_end = s.index('</div>', s.index('<div id="chrome">')) + len('</div>')
 tap = s.index('<div class="tapzone" id="zL"')
 out = s[:chrome_end] + '\n' + SCENES + '\n\n' + s[tap:]
 last = out.rindex('</style>')
-out = out[:last] + CSS.replace('__PLEX__', PLEX).replace('__LOGO__', LOGO) + (LB_CSS if LB else '') + (DB_CSS if DBF else '') + '\n' + out[last:]
+out = out[:last] + CSS.replace('__PLEX__', PLEX).replace('__LOGO__', LOGO).replace('__GRAIN__', GRAIN) + (LB_CSS if LB else '') + (DB_CSS if DBF else '') + (BW_CSS if BW else '') + '\n' + out[last:]
 out = re.sub(r'<title>.*?</title>', '<title>' + TITLES[KEY] + ' — Ricky Rampersad Branch</title>', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="mark" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="mark mk"></i>', out, count=1, flags=re.S)
-out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>' + ('Delivery Book' if DBF else 'Log Book' if LB else 'Client transition board') + '</i></span>', out, count=1, flags=re.S)
+out = re.sub(r'<span class="who">.*?</span>', '<span class="who">Ricky Rampersad Branch<i>' + ('General insurance' if KEY.startswith('cm') else 'The underwriting seat' if KEY.startswith('uw') else 'Build with us' if BW else 'Delivery Book' if DBF else 'Log Book' if LB else 'Client transition board') + '</i></span>', out, count=1, flags=re.S)
 out = re.sub(r'<span class="live">.*?</span>', '', out, count=1, flags=re.S)
 out = re.sub(r'<svg class="biglogo" viewBox="0 0 88 88" aria-hidden="true">.*?</svg>', lambda m: '<i class="biglogo mk"></i>', out, count=1, flags=re.S)
 FAVICON = 'data:image/svg+xml,' + (ROOT / 'favicon.svg').read_text().replace('#', '%23').replace('<', '%3C').replace('>', '%3E').replace('"', "'").replace('\n', '')
@@ -2234,10 +2989,10 @@ out = re.sub(r'(<link rel="icon" href=")[^"]*(")', lambda m: m.group(1) + FAVICO
 out = re.sub(r'const cols = \[[^\]]*\]', 'const cols = ["#ffffff", "#00E5FF", "#1D5BC4", "#BFD3F7", "#7FA6EE"]', out, count=1)
 out = re.sub(r'<h1>The launch of<br>donthaveanagent<em>\.com</em></h1>', '<h1>' + TITLES[KEY].replace(', ', ',<br><em>') + '</em></h1>', out, count=1)
 out = re.sub(r'<div class="eyebrow" style="margin-top:16px">[^<]*</div>', '<div class="eyebrow" style="margin-top:16px">A Ricky Rampersad Branch film</div>', out, count=1)
-out = re.sub(r'<button id="playBtn"><span class="tri"></span>[^<]*</button>', '<button id="playBtn"><span class="tri"></span>Watch — ' + ('under two minutes' if sum(DUR) < 120000 else 'two and a half minutes' if sum(DUR) < 160000 else f'{round(sum(DUR) / 60000)} minutes') + '</button>', out, count=1)
-out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', ('Handed over, recorded, and the client told: the same day.' if DBF else 'Log it, hand it in, see it sent: the same day.' if LB else 'One client, start to finish: what happens, who does it, and what counts.' if KEY == 'boardflow' else 'How the branch names agents, and how agents report back.'), out, count=1)
-MSG = ('const MSG = "' + TITLES[KEY] + ': ' + ('a short film on recording cheques and contracts.' if DBF else 'a short film on the new Log Book.' if LB else 'a short film on the client transition board.') + '\\n\\n" +\n'
-       '  "▶ https://rickyrampersadbranch.com/' + ('deliverybook-film' if DBF else 'logbook-films' if LB else 'orphan-transition/board-films.html') + '";')
+out = re.sub(r'<button id="playBtn"><span class="tri"></span>[^<]*</button>', '<button id="playBtn"><span class="tri"></span>Watch — ' + ('under two minutes' if sum(DUR) < 118000 else 'just over two minutes' if sum(DUR) < 142000 else 'two and a half minutes' if sum(DUR) < 170000 else f'{round(sum(DUR) / 60000)} minutes') + '</button>', out, count=1)
+out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.', ('The book you would look after, and what you would change.' if KEY.startswith('cm') else 'What you would actually be underwriting, and what you would build.' if KEY.startswith('uw') else 'What you would actually work on, and what you would build.' if BW else 'Handed over, recorded, and the client told: the same day.' if DBF else 'Log it, hand it in, see it sent: the same day.' if LB else 'One client, start to finish: what happens, who does it, and what counts.' if KEY == 'boardflow' else 'How the branch names agents, and how agents report back.'), out, count=1)
+MSG = ('const MSG = "' + TITLES[KEY] + ': ' + ('one seat, and a book of a hundred and three clients already on it.' if KEY.startswith('cm') else 'one underwriting seat in a new general insurance agency.' if KEY.startswith('uw') else 'one personal assistant\'s seat, and what the job actually is.' if BW else 'a short film on recording cheques and contracts.' if DBF else 'a short film on the new Log Book.' if LB else 'a short film on the client transition board.') + '\\n\\n" +\n'
+       '  "▶ https://rickyrampersadbranch.com/' + ('clientmanager' if KEY.startswith('cm') else 'underwriter' if KEY.startswith('uw') else 'buildwithus' if BW else 'deliverybook-film' if DBF else 'logbook-films' if LB else 'orphan-transition/board-films.html') + '";')
 out = re.sub(r'const MSG = ".*?";', lambda m: MSG, out, count=1, flags=re.S)
 out = out.replace('document.getElementById("waBtn").href =', 'if (document.getElementById("waBtn")) document.getElementById("waBtn").href =')
 # the narration and the bed are in the MP4; the page itself plays no music of its own

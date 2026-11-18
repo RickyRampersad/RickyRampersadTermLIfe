@@ -219,8 +219,16 @@ j = json.loads(p1.stderr[p1.stderr.rindex('{'):p1.stderr.rindex('}')+1])
 af = (f"loudnorm=I=-14:TP=-2.0:LRA=11:measured_I={j['input_i']}:measured_TP={j['input_tp']}"
       f":measured_LRA={j['input_lra']}:measured_thresh={j['input_thresh']}"
       f":offset={j['target_offset']}:linear=true")
+# CRF 27 preset medium is the house standard for these films, set by the 9 November shrink: the branch
+# site had reached 1.1 GB against GitHub Pages' 1 GB hard limit and the deploy was timing out during
+# syncing_files, and on this flat-graphic, text-heavy content 27 measured 40-55% smaller with no visible
+# loss. This encoder still wrote 22, so EVERY re-render silently undid the shrink for its own file (the
+# trailer came back 15.0 MB against the 8 MB in git) and the file then had to be encoded a second time to
+# get back down — which is lossier than encoding once at 27. A film that genuinely needs more can set
+# "crf" in its own films.json entry.
+CRF = str(CFG.get('crf', 27)); PRESET = CFG.get('preset', 'medium')
 r = subprocess.run([FF,'-y','-i',webm,'-i',CFG['mix'],'-map','0:v','-map','1:a',
-  '-c:v','libx264','-preset','slow','-crf','22','-pix_fmt','yuv420p','-r','30','-vf',VF,'-af',af,
+  '-c:v','libx264','-preset',PRESET,'-crf',CRF,'-pix_fmt','yuv420p','-r','30','-vf',VF,'-af',af,
   '-c:a','aac','-b:a','160k','-ar','44100','-ac','2','-shortest','-movflags','+faststart', OUT],
   capture_output=True,text=True)
 if r.returncode: raise SystemExit(r.stderr[-1500:])

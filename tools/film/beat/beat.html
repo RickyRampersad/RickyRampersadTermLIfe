@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Beat film</title>
+<style>
+/* ── A cut-on-the-beat film ────────────────────────────────────────────
+   The narrated engine holds each shot about five seconds, which is an
+   explainer's pace. This one cuts every one or two beats and carries no
+   voice at all: the words are on screen and the music drives it.
+   98.7 BPM, so a beat is 0.608s and a bar is 2.432s.                    */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#070F26; --navy2:#0d1b3d; --blue:#13408F; --blue2:#1D5BC4; --blue3:#2A6DE0;
+  --cyan:#00E5FF; --cyan2:#7df0ff; --paper:#ffffff; --ink:#0a1430;
+  --u:1px;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:#000}
+body{font-family:Inter,'DejaVu Sans',sans-serif;-webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility}
+
+#stage{position:relative;width:100vw;height:100vh;overflow:hidden;background:var(--navy)}
+#grain{position:absolute;inset:0;z-index:9;pointer-events:none;opacity:.05;
+  background-image:radial-gradient(circle at 1px 1px,#fff 1px,transparent 0);
+  background-size:3px 3px;mix-blend-mode:overlay}
+#flash{position:absolute;inset:0;z-index:8;background:#fff;opacity:0;pointer-events:none}
+
+/* ── a hit: one card, held for a whole number of beats ───────────────── */
+.hit{position:absolute;inset:0;opacity:0;display:grid;place-items:center;
+  will-change:opacity,transform;overflow:hidden}
+.bg{position:absolute;inset:0;z-index:0}
+.bg.navy{background:radial-gradient(120% 90% at 22% 18%,var(--navy2) 0%,var(--navy) 62%)}
+.bg.blue{background:linear-gradient(142deg,var(--blue2) 0%,var(--blue) 58%,#0b2a66 100%)}
+.bg.cyan{background:linear-gradient(142deg,var(--cyan) 0%,#17b9d8 54%,var(--blue2) 100%)}
+.bg.paper{background:linear-gradient(142deg,#ffffff 0%,#eef3ff 100%)}
+
+.inner{position:relative;z-index:3;width:100%;height:100%;display:grid;
+  align-content:center;gap:calc(14*var(--u));
+  padding:calc(66*var(--u)) calc(62*var(--u))}
+.inner.left{justify-items:start;text-align:left}
+.inner.mid{justify-items:center;text-align:center}
+
+/* type: a card carries two to five words, so it can be enormous */
+.line{font-weight:800;letter-spacing:-.042em;line-height:.93;color:#fff;
+  text-transform:uppercase}
+.paper .line{color:var(--ink)}
+/* white on electric cyan is about 1.5:1 and unreadable at a glance; a card on
+   that ground takes the dark ink instead, like the paper one. */
+.oncyan .line{color:var(--ink)}
+.oncyan .sub{color:#123a63}
+.oncyan .rule{background:var(--ink)}
+.oncyan .cyanink{color:#fff;-webkit-text-stroke:0}
+.cyanink{color:var(--cyan)}
+.paper .cyanink{color:var(--blue)}
+.w{display:inline-block;will-change:transform,opacity;padding-right:.22em}
+.sub{font-weight:600;letter-spacing:.004em;line-height:1.16;color:#cfe0ff;
+  font-size:calc(46*var(--u));text-transform:none}
+.paper .sub{color:#405074}
+
+/* a rule that wipes in under a word */
+.rule{height:calc(13*var(--u));background:var(--cyan);width:0;border-radius:99px;
+  will-change:width}
+.paper .rule{background:var(--blue2)}
+
+/* a screen punched in, bleeding off the frame */
+.shotw{position:absolute;z-index:1;inset:0;overflow:hidden}
+.shotw img{position:absolute;display:block;will-change:transform;
+  box-shadow:0 calc(30*var(--u)) calc(90*var(--u)) rgba(0,0,0,.55);
+  border-radius:calc(16*var(--u));border:calc(3*var(--u)) solid rgba(255,255,255,.22)}
+.veil{position:absolute;inset:0;z-index:2;
+  background:linear-gradient(to top,rgba(7,15,38,.97) 8%,rgba(7,15,38,.86) 44%,rgba(7,15,38,.52) 100%)}
+
+/* the shield, big enough to be the picture */
+.mk{position:absolute;z-index:1;will-change:transform,opacity}
+.mk img{width:100%;height:100%;display:block}
+
+/* the closing card */
+.qr{display:grid;justify-items:center;gap:calc(22*var(--u));z-index:3}
+.qr img{width:calc(560*var(--u));height:calc(560*var(--u));background:#fff;
+  padding:calc(20*var(--u));border-radius:calc(20*var(--u))}
+.url{font-weight:800;font-size:calc(52*var(--u));letter-spacing:-.015em;color:#fff;
+  text-align:center;line-height:1.2}
+.urls{font-weight:600;font-size:calc(32*var(--u));color:var(--cyan2);text-transform:none;
+  margin-top:calc(8*var(--u))}
+body[data-shape="w"] .qr img{width:calc(470*var(--u));height:calc(470*var(--u))}
+
+/* the beat bar along the foot, so the cut is felt as well as seen */
+#bar{position:absolute;left:0;bottom:0;height:calc(9*var(--u));z-index:7;
+  background:var(--cyan);width:0}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="hits"></div>
+  <div id="bar"></div>
+  <div id="flash"></div>
+  <div id="grain"></div>
+</div>
+<script src="beat.js"></script>
+</body>
+</html>

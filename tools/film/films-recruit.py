@@ -27,9 +27,32 @@ entries('recruit', 'recruit-timing.json', 'vorecruit', 'recruit',
 if os.path.exists('recruit-trailer-timing.json'):
     entries('trailer', 'recruit-trailer-timing.json', 'votrailer', 'trailer',
             [(2, 'income'), (3, 'zero'), (4, 'coach'), (5, 'Seven'), (5, 'Thirty'), (5, 'Seven', 1), (6, 'open'), (6, 'Twenty')], [8], ticks=((4, 5, 0.5),))
-# the 35-second feed cuts: square for the LinkedIn and Facebook feed, tall for Reels and Stories; no landscape
-for v in 'AB':
+# The 40-second feed cuts: square for the LinkedIn and Facebook feed, tall for Reels and Stories; no landscape.
+# A cue word that is not in the line exits before films.json is written, so a stale entry is never left
+# behind — which is what caught the old (2, 'here') and (4, 'third') on the 12 Nov re-cut. The two ads used
+# to share one cue list, which forced every punch word to appear in BOTH lines for that scene; after the
+# re-cut on the cliff research they have no word in common at scene 4 ("Thirty-nine things" against "This
+# branch keeps thirty-one"), so each variant now names its own beats: A punches on the cliff, on its own
+# figure landing beside the industry's, and on the thirty-nine; B on the second year, on the leads arriving,
+# and on the same comparison. Both close on the seats.
+# C is the branch's own first post and runs seven scenes, so its punches are spread over the whole
+# argument rather than the feed cut's four: the career named, the work named, the gates, and the two
+# figures landing beside each other in scene 6.
+AD_HITS = {'A': [(2, 'cliff'), (3, 'thirty'), (4, 'Thirty-nine'), (5, 'Seven')],
+           # (3,'leads') went with "Here, the leads come to you" on 14 November 2026: the advisor's own
+           # market comes first and the branch keeps it full, so the punch lands on 'full'.
+           'B': [(2, 'second'), (3, 'full'), (4, 'thirty'), (5, 'Seven')],
+           # (6,'thirty-nine') went with the 39-things claim on 14 November 2026 — the journey scene shows six
+           # of them now. Its punch moves to (3,'journey'), the line the scene is built to land on.
+           'C': [(2, 'insurance'), (3, 'conversation'), (4, 'stops'), (6, 'contracted'), (7, 'thirty-one'), (8, 'Seven')],
+           # F, 15 November 2026: the fact find film, followed with Rajiv. Punches on the total need, the
+           # manager's sign-off, "protects", the thirty-five years and the seven places.
+           'F': [(2, 'arithmetic'), (3, 'calculate'), (6, 'signs'), (8, 'protects'), (9, 'thirty-five'), (10, 'Seven')],
+           # G, 15 November 2026: the feed post. Punches on "Not here", the tools, the leads, "thirty-one" and
+           # the seven places.
+           'G': [(1, 'Not'), (2, 'tools'), (3, 'dry'), (5, 'thirty-one'), (6, 'seven')]}
+for v in 'ABCFG':
     if os.path.exists(f'recruit-ad{v}-timing.json'):
         entries(f'ad{v}', f'recruit-ad{v}-timing.json', f'voad{v}', f'ad-{v.lower()}',
-                [(2, 'Not'), (4, 'Seven'), (4, 'Thirty'), (5, 'One'), (5, 'Twenty')], [], shapes=('q', 'v'))
+                AD_HITS[v], [], shapes=('q', 'v'))
 json.dump(f, open('films.json', 'w'), indent=1)

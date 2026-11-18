@@ -234,6 +234,14 @@
     { sec: 'Every day', id: 'premium', name: 'Premium Due Desk', ic: 'clock', to: 'sm', href: '/premium-due/',
       tags: 'premium due letters 45 day 90 day lapse',
       blurb: 'Before 10 am: check the 45 to 90 day letters' },
+    /* The Branch Manager's alone: the three ad pages promise every applicant
+       that nobody else in the branch sees their application, and the board's
+       own backend refuses anyone else, the branch code included. It is in
+       'Every day' because the pages promise a reply in two working days and
+       the board is the only thing measuring that. */
+    { sec: 'Every day', id: 'hiring', name: 'Hiring board', ic: 'people', to: 'm', href: '/hiring/',
+      tags: 'hiring recruit recruiting applicant applications candidate client manager administrator advisor cv seat vacancy',
+      blurb: 'Every application for the branch’s own seats, strongest first, with the two-day clock' },
 
     { sec: 'Clients and queries', id: 'quote', name: 'Quote & apply', ic: 'shield', to: 'alsm', href: '/quote/',
       tags: 'quote quotation motor property critical illness key person oas enrolment xpress life apply application new business jotform',
@@ -281,6 +289,9 @@
     { sec: 'Goals and reports', id: 'goals', name: 'FY27 Flight Plan', ic: 'target', to: 'alm', href: 'https://factfind360.com/goals', si: 'ff',
       tags: 'goals goal flight plan fy27 targets alignment',
       blurb: { a: 'Your goals for the year, and where you are against them', l: 'Your team\'s goals and where they stand', m: 'Every agent\'s goals and where they stand' } },
+    { sec: 'Goals and reports', id: 'careerpath', name: 'Career Path Tracker', ic: 'target', to: 'alm', href: '/career-path.html', si: 'open',
+      tags: 'career path promotion qualify requirements fscp mdrt elp designation unit manager executive agent ladder',
+      blurb: { a: 'Every position, what it takes, and how far along you are', l: 'The management track, and where you stand on it', m: 'The whole ladder, and what each position needs' } },
     { sec: 'Goals and reports', id: 'insights', name: 'Fact Find insights', ic: 'chart', to: 'lm', href: 'https://factfind360.com/insights', si: 'ff',
       tags: 'insights reports fact find report activity',
       blurb: 'What the fact finds show, by agent' },

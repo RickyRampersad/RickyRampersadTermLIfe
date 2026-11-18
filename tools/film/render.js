@@ -58,7 +58,7 @@ const fs = require('fs'), path = require('path'), { execFileSync } = require('ch
         // four-figure count reads 2,495 rather than 2495, which is the kind of
         // thing a room notices and a reader does not forgive. data-dec keeps a
         // decimal (3.4m), for the fact find's API figure.
-        const shown = dec ? v.toFixed(dec) : (el.dataset.sep ? Math.round(v).toLocaleString('en-GB') : String(Math.round(v)));
+        const shown = dec ? v.toFixed(dec) : (el.hasAttribute('data-sep') ? Math.round(v).toLocaleString('en-GB') : String(Math.round(v)));
         el.textContent = (el.dataset.pre || '') + shown + (el.dataset.suf || '');
       });
     }, { n, t, T, D });

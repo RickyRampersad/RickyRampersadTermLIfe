@@ -1,0 +1,45 @@
+{
+ "note": "Joining a group health plan through the branch, 17 Nov 2026. Andrew Expressive (en-US-AndrewMultilingualNeural, +0%) on tts-run, keys henr1 and henr1b (lines 1, 4, 5, 6, 9 re-worded after henr1).",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
+ "scenes": [
+  {
+   "say": "Joining a group health plan used to mean piles of paper, missing signatures, and weeks of waiting before the cover started.",
+   "extra": 0.5
+  },
+  {
+   "say": "Now it starts with one link. Your HR team sends it on WhatsApp or by e-mail, with your company and start date already filled in."
+  },
+  {
+   "say": "The employee opens it on their phone. It takes a few minutes, one step at a time."
+  },
+  {
+   "say": "They fill in their own details, then choose their cover. That's group health, group life, or both."
+  },
+  {
+   "say": "Next, they add the family members to be covered. For group life, they name who it pays, and the percentage for each one."
+  },
+  {
+   "say": "Next come the health questions. Most people are well, so a single tick answers no to every one of them. They can still change any answer."
+  },
+  {
+   "say": "They sign on the screen with a finger. No printing, and no scanning."
+  },
+  {
+   "say": "Before they send it, they see Guardian's own application form, filled in from their answers, exactly as it will print."
+  },
+  {
+   "say": "They also see the declaration of insurability, with each health answer and their signature already in place."
+  },
+  {
+   "say": "They press send. A reference comes back straight away, and the whole application comes to our branch."
+  },
+  {
+   "say": "We check every page, send it to Guardian, and follow it through until the cover is in place. Your HR team can also enrol someone straight from your group page, on the same Guardian form."
+  },
+  {
+   "say": "Joining your plan now takes minutes, not weeks. That's our branch. A journey, not a transaction.",
+   "extra": 2.0
+  }
+ ]
+}

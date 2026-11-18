@@ -1,0 +1,281 @@
+{
+  "role": "branch",
+  "cinematic": true,
+  "scenes": [
+    {
+      "visual": "bwopen",
+      "eyebrow": "The seat",
+      "headline": "You know this work.<br>There is a book here <em>that has been waiting</em>",
+      "at": "knows",
+      "at2": "missing",
+      "icon": "file",
+      "card": [
+        "Reads a schedule and sees what is missing",
+        "Knows what a surveyor&rsquo;s report is worth"
+      ],
+      "say": "Somewhere right now there is someone who knows general insurance inside out. Someone who can read a schedule and see exactly what is missing. This is for them."
+    },
+    {
+      "visual": "bwstack",
+      "eyebrow": "The book",
+      "headline": "You would not be building one. / <em>It is already there</em>",
+      "at": "one",
+      "at3": "endorsement",
+      "files": [
+        "Motor",
+        "Household",
+        "Commercial property",
+        "Public liability",
+        "Workers&rsquo; compensation",
+        "Machinery and contract works",
+        "Marine and cargo",
+        "Money",
+        "Burglary",
+        "Bonds"
+      ],
+      "n1": [
+        "Ten",
+        10,
+        "",
+        "lines written here"
+      ],
+      "n2": [
+        "twelve",
+        12,
+        "",
+        "months with renewals in them"
+      ],
+      "line": "Personal and commercial, fleets included. Seven in force today &mdash; and three with nothing current, which is room.",
+      "say": "Nobody is asking you to build a book. There is one: ten lines written here, seven of them in force today, renewals in all twelve months, every endorsement written to the Act."
+    },
+    {
+      "visual": "bwdues",
+      "eyebrow": "Before you open the file",
+      "headline": "Every term since the policy began",
+      "rail": {
+        "at": "screen",
+        "at2": "covered",
+        "at3": "claims",
+        "icon": "file",
+        "mark": "",
+        "stops": [
+          [
+            "2014",
+            "first term"
+          ],
+          [
+            "2018",
+            "renewed"
+          ],
+          [
+            "2021",
+            "renewed"
+          ],
+          [
+            "2024",
+            "renewed"
+          ]
+        ],
+        "check": [
+          "Cover, value, premium, claims",
+          "already on the screen when you open it"
+        ]
+      },
+      "say": "Before you open a file, every term since the policy began is on the screen. What was covered, at what value, what was paid, and the claims."
+    },
+    {
+      "visual": "bwbill",
+      "eyebrow": "The insurer&rsquo;s notice",
+      "headline": "Read for you, / and <em>checked against our record</em>",
+      "bill": {
+        "at": "notice",
+        "at2": "checked",
+        "at3": "record",
+        "at4": "disagree",
+        "left": "The insurer&rsquo;s notice",
+        "right": "Our own record",
+        "out": "The desk says so, before it reaches the client",
+        "rows": [
+          [
+            "Period",
+            1
+          ],
+          [
+            "Premium",
+            1
+          ],
+          [
+            "Sum insured",
+            0
+          ],
+          [
+            "Vehicles and locations",
+            1
+          ],
+          [
+            "Requirements",
+            1
+          ]
+        ]
+      },
+      "say": "The insurer's notice is read for you, and every figure checked against our own record. If the two disagree, the desk says so before it reaches the client."
+    },
+    {
+      "visual": "bwkeys",
+      "eyebrow": "What we run on",
+      "headline": "We did not buy this. / <em>We write it</em>",
+      "at": "journey",
+      "at2": "transaction",
+      "ok": "connected",
+      "keys": "A journey",
+      "form": "A transaction",
+      "tools": [
+        [
+          "write",
+          "file",
+          "Our own software",
+          "written here, not bought in"
+        ],
+        [
+          "week",
+          "clock",
+          "Changing every week",
+          "the change you ask for runs that week"
+        ],
+        [
+          "reaches",
+          "bolt",
+          "Every system we deal with",
+          "the insurer's, our records, the mailbox"
+        ]
+      ],
+      "say": "We did not buy this software. We write it ourselves, and it changes every week. It reaches into every system we deal with and pulls the client's whole file into one place. So a client here is not a transaction. They are a journey."
+    },
+    {
+      "visual": "bwlog",
+      "eyebrow": "The client&rsquo;s side",
+      "headline": "Nobody is left / <em>waiting on somebody&rsquo;s memory</em>",
+      "phone": {
+        "title": "Your renewal",
+        "who": "the client&rsquo;s own page",
+        "steps": [
+          [
+            "reminded",
+            "mail",
+            "A reminder goes",
+            "fourteen days out, then ten"
+          ],
+          [
+            "call",
+            "clock",
+            "A call opens itself",
+            "at seven, if nobody has spoken to them"
+          ],
+          [
+            "read",
+            "msg",
+            "They sign in and read it",
+            "every year of their own cover"
+          ],
+          [
+            "confirm",
+            "check",
+            "They confirm and sign",
+            "on their own phone"
+          ]
+        ],
+        "sent": [
+          "phone",
+          "Nothing waits on anybody&rsquo;s memory"
+        ],
+        "cues": [
+          [
+            0,
+            "Reminded before it matters"
+          ],
+          [
+            2,
+            "Their own history, in their hands"
+          ],
+          [
+            -1,
+            "Nobody chases from memory"
+          ]
+        ]
+      },
+      "say": "And the client is never left waiting on somebody's memory. They are reminded at fourteen days, then ten. If nobody has spoken to them, a call opens itself at seven. They sign in, read every year of their own cover, confirm it and sign, on their phone."
+    },
+    {
+      "visual": "bwgrid",
+      "eyebrow": "What the seat actually is",
+      "headline": "The part <em>a system cannot do</em>",
+      "at": "conversation",
+      "cards": [
+        [
+          "clock",
+          "The renewal conversation",
+          "thirty days ahead, not three"
+        ],
+        [
+          "msg",
+          "Telling them plainly",
+          "what the cover does, and what it does not"
+        ],
+        [
+          "lock",
+          "Compliance, driven",
+          "the Act and market conduct &mdash; we do not wait to be told"
+        ]
+      ],
+      "say": "Which leaves you the part no system can do. The renewal conversation. Telling a client plainly what the cover does and what it does not. We drive compliance here, and do not wait to be told."
+    },
+    {
+      "visual": "bwscript",
+      "eyebrow": "The part most people in this work never get",
+      "headline": "A change is not a ticket. / <em>It is a decision</em>",
+      "script": {
+        "at": "ticket",
+        "at2": "written",
+        "lhead": "Where you are now",
+        "ticks": false,
+        "rows": [
+          "Raise a ticket",
+          "Join the queue",
+          "Wait for the release"
+        ],
+        "rhead": "Here &middot; the rule, in the desk",
+        "code": [
+          "rule('sum not moved', r =>",
+          "  r.years_unchanged >= 3 &&",
+          "  r.class === 'property')",
+          "  .flag('before the renewal');"
+        ],
+        "badge": "Running"
+      },
+      "say": "And a change you ask for is not a ticket that goes somewhere else to wait. It is written into the desk, and runs that week."
+    },
+    {
+      "visual": "bwclose",
+      "eyebrow": "Client manager &middot; General insurance",
+      "lines": [
+        [
+          "manager",
+          "Client manager."
+        ],
+        [
+          "insurance",
+          "General insurance."
+        ],
+        [
+          "after",
+          "Look after the book."
+        ]
+      ],
+      "url": "rickyrampersadbranch.com/clientmanager",
+      "qr": "qr-cmadmin.png",
+      "urlsub": "Your CV and fifteen minutes.<br>Read by the Branch Manager alone.",
+      "extra": 2.2,
+      "say": "Client manager, general insurance. If you are good at this, there is a book here big enough for it. Come and look after it."
+    }
+  ]
+}

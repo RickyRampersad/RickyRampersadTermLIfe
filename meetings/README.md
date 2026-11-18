@@ -593,6 +593,60 @@ the meeting is more than two working days off, and none to a person who owes
 nothing, has no open actions and no measures. A note that arrives every morning
 regardless is a note people filter.
 
+### The chair's own note — the Builder filling up, or not
+
+The daily note above goes to every person and carries their own figures. This is the
+other half, and it goes to **you alone**: *Branch Meetings → Turn on my daily Builder
+progress*, read it now with *Send me the progress note now*.
+
+- **No meeting on the books** is the first line, and it is loud. The Builder sat with
+  no meeting after 30 October while the week cycle was off, and nothing said so.
+- The agenda, and whether the running order fits the room.
+- **Material promised and not in**, and who owes it.
+- **Items with nothing in the Detail field** — the question an agent reads under an
+  item. An item without one leaves them nothing to answer.
+- Who has brought something, and who has not, by first name.
+- Open and overdue actions; the Monday brief answered; the two time blocks answered;
+  last meeting's register, and whether its minutes are published.
+
+It is quiet at weekends and when the meeting is four or more working days off — never
+when there is no meeting. Add a second reader with the `PROGRESS_TO` Script property
+and move the hour with `PROGRESS_HOUR`.
+
+### The content ask — the whole branch, on the days you choose
+
+*Branch Meetings → Turn on the content ask.* One short e-mail, one question, one
+button, at **11:00 on Monday and Tuesday** by default: *what are you bringing to
+Wednesday?* It offers the agenda's own questions to answer, because an agent who
+cannot think of anything in the abstract can answer a question.
+
+- It **skips anybody who has already brought something** to that meeting. Nagging the
+  people who are doing the thing you asked for is how an ask becomes noise.
+- It says nothing when there is no meeting, or the meeting is more than three working
+  days off.
+- The days are yours: `CONTENT_ASK_DAYS`, comma-separated, `0` = Sunday — so `1,2` is
+  Monday and Tuesday and `2` is Tuesday alone. The hour is `CONTENT_ASK_HOUR`. Change
+  either and run the menu item again.
+
+Why two days before and not the morning of: the contribution box shuts when check-in
+opens, half an hour before the meeting starts. An ask on the day is asking for
+something the branch has two hours left to do.
+
+### The mail allowance, and the relay
+
+This project sends on the Google account that owns it, which allows about **100
+recipients a day**. With 19 on the roll a Monday already commits up to 76 — 19 daily
+notes, 38 time-block checks, 19 Monday briefs. Every send used to sit in a try/catch
+that only wrote to the log, so the day the allowance ran out the notes would have
+stopped for some people and not others with nobody told.
+
+Every send now goes through the **branch relay** the KPI tracker uses
+(support@rickyrampersadbranch.com, about 1,500 a day), falling back to the Gmail
+account exactly as before. Put `MAIL_RELAY_URL` and `MAIL_RELAY_KEY` into this
+project's Script properties — the same two values the tracker holds — and run
+*Branch Meetings → Test the mail route*, which says which way it went. A run stopped
+by the allowance e-mails you once a day rather than going quiet.
+
 ### Why it is not a daily production chase
 
 This was decided against the evidence rather than by preference. Chung,
@@ -714,6 +768,64 @@ The tab is long and thin — one row per person per block per day, about 280 row
 a week for a branch of 28 — because the categories will change and a column per
 activity is a shape nobody maintains.
 
+## What the agents bring, from their own day — the tracker's bridge (10 November 2026)
+
+Asked for in these words: *"everything comes towards a meeting ... persons commit to what's working and a case
+that they're going to actually share, or some idea for the branch meeting or skill set ... and also identifying the
+training and development plan in terms of building into the meeting what we're observing."*
+
+The agents' day lives in the KPI tracker, not here. Each morning its coach reads every agent's record and names what
+it sees: ahead of plan, business waiting to close, no fact finds, premiums slipping, quiet, asked for help. That read
+is now kept (Agent Day, kind `obs`) and turned into one ask in the morning brief and on My day: **bring a case that
+worked, a point you can teach, a question for the room, an idea, or (privately) the help you need**. One tap and a
+line.
+
+Each commitment arrives here at once as a contribution **brought in beforehand** (offset −1, exactly as one made
+before the register opens), under the item it belongs to:
+
+| They bring | Lands under | Seen by |
+| --- | --- | --- |
+| A case that worked | What worked for me | everyone |
+| A point I can teach | Training | everyone |
+| A question for the room | Open floor | everyone |
+| An idea for the branch | Open floor | everyone |
+| Help I need | Open floor | staff and the manager only (and their manager is e-mailed the same minute) |
+
+Changing it on the phone rewrites the same row; it never doubles. Each evening the tracker also writes **one
+staff-only note under Training**: the development areas it saw that week and who each is for (with how many mornings),
+who is ahead of plan and could teach, a suggested training point, what the agents are bringing, and who has not
+committed. The chair walks in with the development plan drafted.
+
+**The door is signed.** `apiBridge_` answers only a call signed with `MEET_BRIDGE_KEY` and under ten minutes old. Put
+the same value in this project's Script Properties and in the tracker's, with the tracker's `MEET_URL` set to this
+project's `/exec`. Without them nothing is lost: commitments are kept in the tracker, shown to the managers at 6pm,
+and go across on the first evening the bridge answers. `?action=ping` reports `bridge: true` once the key is set.
+
+The meeting must exist for anything to land: an agent's commitment for a meeting not yet built is kept and sent the
+evening it is. Items are matched by title (*What worked for me*, *Training*, *Open floor*), so a meeting built from
+the standing rota takes them as they are.
+
+## On the screen, and a meeting built from a spec (10 November 2026)
+
+Asked for in these words: *"the meeting is a working meeting, so it moves along the slides ... it's going to be appearing
+on the screen"*, and *"too many times staff comes in, flip up their laptops and sit down and does nothing"*.
+
+**Put it on the screen** (a button on every meeting page) opens a full-screen view for the TV. Before the meeting it
+shows the agenda, each item with its owner and minutes, and what was brought in beforehand; the arrow keys step through
+the items. Once the meeting is started it follows the item marked *On now*: the item's section, title and owner, the
+facts in its Detail, the **question set apart** (everything after `Question:` in the Detail), the item's own countdown,
+and **what the room has posted against that item, live** (it re-reads the meeting every fifteen seconds). Space or
+**Move on** advances it for whoever runs the meeting; Escape closes it. It needs nothing new from the backend.
+
+That is where people post their notes: on their phone, on the meeting page, against the item. A laptop in the room is
+for the owner of the item on now and for the person taking the record.
+
+**`MeetingSeed.gs`** builds a meeting from a spec: `seedMeetingFrom_(spec)` finds it by Ref, or takes over the branch
+meeting already on that date, publishes it, sets the register for the day and rebuilds its agenda, with presenters
+resolved by first name from the People tab. A spec holds names and the branch's figures, so **it is never committed**:
+it goes into the project as its own private file defining one function (for example `seedWednesday11Nov`) that calls
+`seedMeetingFrom_`. Tests: `tests/test-meeting-seed.js`, `tests/e2e-meeting-screen.js`.
+
 ## Attendance, from 6 October 2026
 
 The JotForm register is disbanded. There is one register and it is this app.
@@ -785,6 +897,148 @@ both a *"CONFIDENTIAL — BM EYES ONLY"* footer and a *"Branch Manager's Talking
 Points — not for distribution"* section, which staff should not see either.
 
 ---
+
+## Signing in as a guest when you are on the roll
+
+`0000` is for someone who is **not** branch. A visitor is deliberately never on
+the register — that is what keeps three executives looking in from pushing the
+branch past 100% — so a branch member who comes through the guest door is
+recorded as a visitor and **marked absent for a meeting they were at**.
+
+Since 8 November 2026 the guest door checks the name typed against the roll and
+turns a branch member round, naming their own way in and writing nothing. If
+you are on the roll, **your agent number is the whole sign-in**: no password,
+no `0000`. And the number is only the door — the **"I am here"** button on the
+meeting card is the register.
+
+If your own number is refused, tell the branch: your row has not been pulled
+across from the Agent Skill Bank yet. Run **Pull the roster** from the menu.
+
+## Moving it to the Workspace — 8 November 2026
+
+Asked for in these words: *"Ok so this is suooosed to be moved to my workspace
+can you"*.
+
+The sheet is **`Branch Meetings — Ricky Rampersad Branch`**, and Drive says it
+is owned by **the personal Gmail**. That is why the mail arithmetic bites: the
+account allows about **100 recipients a day**, and on a Monday the daily note,
+the two time blocks and the Monday brief together commit up to **76** of them
+across nineteen people. Owned by **support@rickyrampersadbranch.com** it is
+about **1,500**, and every e-mail comes from the branch's own address rather
+than a personal Gmail — which is the real reason to move it, the allowance
+being only the arithmetic underneath.
+
+**It has to be OWNED by support@, not shared with it.** This is the sentence
+the claims intake and the motor quote each paid for: an editor can run the
+script, and then **Deploy** refuses with *"You do not have permission to
+perform this action"*, which reads as a Google fault and is not. Sharing the
+sheet with support@ does not help. The fix is **File → Make a copy while
+signed in as support@ alone**.
+
+### What a copy does NOT carry
+
+| | |
+|---|---|
+| **Script properties** | none of them |
+| **Triggers** | none of the eight |
+| **The deployment** | a new `/exec`, so the page must be re-pointed |
+| **The Drive folders** | the archive and every meeting's Materials folder stay in the old Drive |
+| **Revision history** | the tabs come across as values |
+
+The properties, and how each is set:
+
+| property | set by |
+|---|---|
+| `JOIN_CODE` | 🔑 Set the branch code — **without it nobody signs in** |
+| `ROSTER_SHEET_ID` | 🪪 Pull the roster from the Agent Skill Bank — **without it nobody is on the roll** |
+| `TRACKER_URL` | by hand: the tracker's `/exec`, for the branch's own numbers on the screen |
+| `MEET_BRIDGE_KEY` | by hand: the same secret the tracker holds, both ways |
+| `PORTFOLIO_SHEET_ID` | 📊 Connect the Branch Portfolio |
+| `SERVICE_SHEET_IDS` | 🤝 Connect the service sheets |
+| `FACTFIND_WALL_URL`, `FACTFIND_WALL_KEY`, `FACTFIND_GOAL_TOKEN` | by hand, for the fact-find figures |
+| `MAIL_RELAY_URL`, `MAIL_RELAY_KEY` | by hand — **optional once support@ owns it** |
+| `PROGRESS_TO`, `PROGRESS_HOUR`, `CONTENT_ASK_DAYS`, `CONTENT_ASK_HOUR` | by hand, optional |
+| `BRANCH_MAIL` | the menu, or `releaseBranchMail` — leave it unset until you are ready |
+
+**Two properties must NOT be carried across by hand: `MEETINGS_FOLDER_ID` and
+`ARCHIVE_FOLDER_ID`.** They point at folders in whichever Drive wrote them, so
+a copied value files the minutes and the archive back into the old account's
+Drive — where support@ may not be able to open them at all. Blank is correct on
+a fresh copy: the materials folder makes itself, and 📥 Import the meeting
+archive writes the archive one. Same trap as the claims intake's root folder.
+
+`MAIL_RELAY_LAST` and `mm_relay_left` are written by the code. Do not copy them.
+
+The eight trigger functions: `dailyMeetingNote`, `activityMorning`,
+`activityAfternoon`, `mondayBrief`, `weekClose`, `buildWednesday`,
+`builderProgress`, `contentAsk`. The menu items install all of them.
+
+### A fresh copy starts HELD, and that is deliberate
+
+The claims note records that *"a fresh copy is LIVE, because no `TEST_MODE`
+property means live"*, and that the first thing done on a copy is to turn test
+mode on. **The Builder had no test mode to turn on** — `TEST_MODE` appears
+nowhere in `Meetings.gs` — and its sends go to the whole branch, so a copy
+deployed with its triggers installed would write to nineteen people from a
+deployment nobody had tested.
+
+So **unset means held here, not live.** While it holds, your own progress note
+and every preview still arrive, so you can read each e-mail exactly as the
+branch would get it before the branch gets one. Nothing about it is quiet: a
+held run says what it held in its own summary line, you are e-mailed once a day
+naming the release, the progress note leads its "To act on" list with it, and
+`mailRouteTest` says it outright. When you are ready:
+
+> **✉️ Release the mail to the branch** on the Meeting Builder menu, or
+> `releaseBranchMail` from the editor. `holdBranchMail` puts it back.
+
+### The order
+
+1. **Sign in as support@ alone** — a second Google account signed in to the
+   same browser is what makes Apps Script refuse to open a page at all.
+2. **File → Make a copy.** Name it the same.
+3. **Extensions → Apps Script**, paste `apps-script/Meetings.gs`, and leave
+   `BRANCH_MAIL` unset.
+4. **Deploy → New deployment → Web app**, *Execute as: Me*, *Who has access:
+   Anyone*. Copy the `/exec`.
+5. **Put the new `/exec` into `meetings/index.html`** — the `API_URL` line, and
+   **only** that line. The other `script.google.com` addresses under
+   `meetings/` are the **view counter's** beacon, a different `/exec`
+   altogether; a blunt find-and-replace breaks it. Then merge.
+6. **Re-enter the properties** from the table above, and press the menu items
+   — **the week cycle first**, without which there is no meeting at all and
+   nobody can sign in.
+7. **Check it from outside, from a browser, with no sign-in:**
+   `?action=ping` answers the whole state of the move.
+   - `runsAs` — the domain only, never the address.
+     `"rickyrampersadbranch.com"` means the move took; `"gmail.com"` means it
+     is still on the personal account; `""` means the deployment is not
+     *Execute as: Me* and nothing can be stored at all.
+   - `version` — which build is live. If it is not the one you just pasted,
+     the New version was never published.
+   - `settings` — **which of the properties above are filled in**, as plain
+     true or false. Never a value: this answer is public and one of them is
+     the branch code. `branchCode: false` or `rosterSheet: false` is the
+     state in which every agent is correctly told they are not on the roll,
+     and nothing else says why.
+   - `jobs` — **which of the timed jobs are installed.**
+     `buildWednesday: false` is the state that cost nine days in October:
+     no meeting is created, so nobody can sign in, and the only trace was a
+     ping reporting one meeting from a fortnight before.
+   - `branchMail` — `held` or `live`.
+   - `roster.onTheRoll` — against the branch's real headcount. **1 is never
+     right**; it means the roster pull has not been run.
+8. **Read each e-mail while it still holds** — the progress note, a preview of
+   the daily note, a time-block check, the content ask.
+9. **Release the mail to the branch.**
+10. **Turn the old project off.** Its `/exec` keeps answering and its triggers
+    keep firing, so until its triggers are deleted both Builders send and the
+    branch gets everything twice.
+
+Afterwards the branch relay (`MAIL_RELAY_URL`, `MAIL_RELAY_KEY`) is no longer
+the fix for the allowance — `MailApp` sends from support@ by itself, under the
+Workspace's own allowance, as the motor quote does. Setting it anyway is
+harmless and keeps one From address across the tracker and the Builder.
 
 ## Setting it up — about ten minutes, once
 
@@ -945,6 +1199,32 @@ Run it again as often as you like. It finds the meeting by its `Ref`, brings
 the row into line with the spec and rebuilds the agenda, so editing `FRIDAY`
 at the top of the file is one Run from being live. Attendance, contributions
 and actions already recorded are never touched.
+
+**Set up the standing rota, before the first build.** *Branch Meetings → Set up
+the standing rota* writes the fourteen items, the minutes and a name against each.
+It will not touch a tab that already has rows — the rota is the one place a person
+edits the standing order — so pressing it again asks whether to replace what is
+there, and says plainly that anything typed into Owner, Owner E-mail, Backup or
+Notes goes with it. Meetings already built keep the agenda they have: the rota is
+the template the next one is built from. A rota with blank owners is the one state
+to look out for: **the accountability panel reads the agenda's owners, so blank
+owners leave it nobody to name.**
+
+**The button builds the UPCOMING meeting day, whatever day you press it on.**
+*Branch Meetings → Build Wednesday's agenda now* is a person asking for the next
+meeting, so pressed on a Tuesday evening it writes tomorrow's: the meeting row,
+the agenda off the standing rota, and last week's still-open actions carried
+forward, all in one press. The alert names the day it built for. Press it twice
+and the second press finds the meeting rather than making another.
+
+The **6:00 trigger** keeps its own guard and builds nothing on a day that is not
+the meeting day — otherwise a trigger left behind on an old day would write a
+meeting for the wrong date. So *Turn on the week cycle* and the button do
+different jobs, and both are worth having: the cycle means next week happens
+without anybody remembering, the button means tonight's agenda exists tonight,
+and agents can bring something to it before the morning. The contribution box
+shuts when check-in opens, half an hour before the start, so an agenda that only
+appears at 6:00 on the day gives them two hours.
 
 **A one-off is never built by moving `MEET.MEETING_DAY`.** The branch meets on
 a Wednesday, that one number is where every sentence a person reads takes the
@@ -1206,3 +1486,33 @@ the branch manager rather than recovered.
   no entry, and a rate.
 - **A printed copy.** Every screen prints clean to PDF — the register, the
   minutes, the action tracker.
+
+## The branch's own numbers on the meeting screen — 10 November 2026
+
+Asked for in these words: *"so much we do daily, so much intelligence we drive ... I'm not
+seeing the numbers ... this pulls together daily actual live data."*
+
+This project has its own sheet and cannot see Salesforce, FactFind360 or the register. The
+**tracker** can see all three, so it answers **one signed call** — `action=meetpack`, signed
+with `MEET_BRIDGE_KEY`, the same secret the Wednesday bridge already uses in the other
+direction. There is no new secret.
+
+**To switch it on:** set **`TRACKER_URL`** in this project's Script Properties to the
+tracker's `/exec`, and make sure **`MEET_BRIDGE_KEY`** holds the same value in both projects.
+Then paste `KPI.gs` into the tracker and `Meetings.gs` here, and publish a New version of
+each.
+
+What comes across, and nothing else: the production board on the **picked-up** date
+(applications, policies, this week), the fact finds (year, month), the open book by kind, what
+the desks closed in seven days, the orphan files open, each desk by name with their check-in,
+what they closed today, what they close a day **against their own normal**, what they hold
+overdue, and how many agents projected and closed off their day.
+
+**Counts, days and first names only.** No client, no client count and no money figure: the
+page is served from the open web, and the fact-find feed hands back API, premium and cover in
+the same object, all of which stays behind.
+
+**Nothing depends on it.** No URL, no key, the tracker down or slow: the pack is left out, the
+meeting opens exactly as before, and the screen says what to set rather than showing a blank.
+A tracker that fails is left alone for five minutes, so a page the room is waiting on never
+waits on a dead one twice.

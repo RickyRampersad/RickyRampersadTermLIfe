@@ -53,11 +53,40 @@ def tick(dur=0.14):
     n = int(dur*SR); t = np.arange(n)/SR
     return hp(lp(rng.standard_normal(n), 7000), 2600)*np.exp(-t/0.02)
 
+def lpv(x, cuts):
+    """One-pole low-pass with a cutoff that MOVES, one value per sample.
+       lp()/hp() take a scalar; handing them an array makes the coefficient an
+       array and the state a vector, which fails deep inside the loop with
+       "setting an array element with a sequence"."""
+    a = np.exp(-2*np.pi*np.asarray(cuts, float)/SR)
+    y = np.empty_like(x); p = 0.0
+    for i in range(len(x)): p = (1-a[i])*x[i] + a[i]*p; y[i] = p
+    return y
+
+def hpv(x, cuts):
+    a = np.exp(-2*np.pi*np.asarray(cuts, float)/SR)
+    y = np.empty_like(x); p = 0.0; px = 0.0
+    for i in range(len(x)): p = a[i]*(p + x[i] - px); px = x[i]; y[i] = p
+    return y
+
+def riser(dur=2.6):
+    """The lift into a scene that matters: noise climbing through the
+       spectrum against a tone bending up, both landing exactly on the cut so
+       the picture change is the release. 8 November 2026, "more cinematic"."""
+    n = int(dur*SR); t = np.arange(n)/SR; k = t/dur
+    nz = rng.standard_normal(n)
+    air = hpv(lpv(nz, 1200 + 9000*k**2), 300 + 2600*k**2) * (k**2.2)
+    f = 110 * (2 ** (2.4*k))
+    tn = np.sin(2*np.pi*np.cumsum(f)/SR) * (k**3) * 0.35
+    out = (air*0.9 + tn)
+    out[-int(0.05*SR):] *= np.linspace(1, 0, int(0.05*SR))   # cut it dead on the hit
+    return out
+
 def tone(n):
     """Room tone: a whisper of filtered noise so silence has texture."""
     return lp(rng.standard_normal(n), 480)*0.0016
 
-def build(dur, starts, dark_idx, tick_scenes, out, hits=()):
+def build(dur, starts, dark_idx, tick_scenes, out, hits=(), risers=()):
     n = int(dur*SR)
     L = tone(n); R = tone(n)
     def put(sig, at, g, pan=0.0):
@@ -77,6 +106,8 @@ def build(dur, starts, dark_idx, tick_scenes, out, hits=()):
             put(tick(), st + 0.75 + k*gap, 0.055, (k%2)*0.5-0.25)
     for h in hits:                      # a number lands on screen: a punch under it (films.json `hits`, in seconds)
         put(hit(), float(h) - 0.02, 0.24)
+    for r in risers:                    # a lift INTO a cut (films.json `risers`, the second it lands on)
+        put(riser(), float(r) - 2.6, 0.17)
     pk = max(np.abs(L).max(), np.abs(R).max(), 1e-9)
     if pk > 0.85: L, R = L/pk*0.85, R/pk*0.85
     st = np.empty(n*2); st[0::2], st[1::2] = L, R
@@ -85,10 +116,12 @@ def build(dur, starts, dark_idx, tick_scenes, out, hits=()):
         w.writeframes((np.clip(st,-1,1)*32767).astype('<i2').tobytes())
     rms = np.sqrt(((L+R)/2 ** 2).mean()) if False else np.sqrt((((L+R)/2)**2).mean())
     print(f'{out} · {dur:.0f}s · {len(starts)-1} sweeps · {len(dark_idx)} impacts · '
-          f'RMS {20*np.log10(max(rms,1e-9)):.1f} dB · peak {20*np.log10(max(np.abs(L).max(),1e-9)):.1f} dB')
+          f'{len(risers)} risers · RMS {20*np.log10(max(rms,1e-9)):.1f} dB · '
+          f'peak {20*np.log10(max(np.abs(L).max(),1e-9)):.1f} dB')
 
 if __name__ == '__main__':
     cfg = json.loads(sys.argv[1]); out = sys.argv[2]
     durs = cfg['durs']
     starts = [sum(durs[:i]) for i in range(len(durs)+1)]
-    build(cfg['dur'], starts, cfg.get('dark', []), cfg.get('ticks', []), out, cfg.get('hits', []))
+    build(cfg['dur'], starts, cfg.get('dark', []), cfg.get('ticks', []), out, cfg.get('hits', []),
+          cfg.get('risers', []))

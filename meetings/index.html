@@ -37,72 +37,94 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
 
 
 
+  /*  LIGHT, ON THE BRANCH'S OWN GROUND (10 November 2026).
+   *  Ricky, for the seventh time across this repository: "it's not a black
+   *  background that hurts everybody's eyes and they cannot see it."  The page
+   *  ran on #121820, which is near-black.  These are the homepage's own values,
+   *  sampled from Guardian Life of the Caribbean's live stylesheet, with their
+   *  measured ratios on the ground:
+   *      --ink   #0d3f5e  10.53:1      --body/--text #2b3b47  10.94:1
+   *      --muted #5b6670   5.56:1      --accent      #00728d   5.25:1
+   *  GOLD AND THE OLD CYAN CANNOT COME BACK AS AN ACCENT HERE, and that is
+   *  arithmetic rather than taste: on this ground #efc24b measures 1.68:1 and
+   *  #00CFEA 1.89:1, both under the 3:1 floor for a non-text mark.  They only
+   *  ever worked because the page was dark.
+   *  TWO TOKENS FOR BORDERS: --line is decorative (separators), --line-strong
+   *  is for anything that defines a control, which has to reach 3:1.
+   *  The names are the old ones on purpose, so every rule that already
+   *  referenced them keeps working. */
   :root{
-    --bg:#121820; --bg2:#1C242E; --card:#25303C; --card2:#2E3B49;
-    --accent:#3B9EFF; --accent-dark:#2C7FD4; --text:#EAF0F6; --muted:#9CAEBF; --dim:#6C7E90;
-    --line:rgba(255,255,255,.08); --support:#3FC9B0; --support-dark:#2FA68F;
-    --green:#3DD68C; --amber:#E0A458; --red:#F0705F; --violet:#9A8BE0;
+    --bg:#faf9f2; --bg2:#f4f1e7; --card:#ffffff; --card2:#fdfcf7;
+    --accent:#00728d; --accent-dark:#005f77; --ink:#0d3f5e;
+    --text:#2b3b47; --muted:#5b6670; --dim:#667079;
+    --line:#e4e0d4; --line-strong:#7d8890; --support:#09685c; --support-dark:#05564a;
+    --green:#1f7a4d; --amber:#8a5a00; --red:#b3261e; --violet:#5b4bb8;
+    --tint:rgba(13,63,94,.035); --tint2:rgba(13,63,94,.06);
+    --sh:32deg 20% 42%;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{
     font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
-    background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(59,158,255,.07),transparent),
-      linear-gradient(180deg,var(--bg) 0%,var(--bg2) 50%,var(--bg) 100%);
+    background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(0,114,141,.06),transparent),
+      linear-gradient(180deg,var(--bg) 0%,var(--bg2) 60%,var(--bg) 100%);
     background-attachment:fixed;
   }
   a{color:inherit}
   .wrap{max-width:1060px;margin:0 auto;padding:0 16px}
-  h1,h2,h3,h4{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif}
+  h1,h2,h3,h4{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;color:var(--ink)}
 
   /* ---------- sign in ---------- */
   #gate,#door{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;
-    background:var(--bg);background-image:radial-gradient(ellipse 60% 40% at 50% 25%,rgba(59,158,255,.09),transparent)}
+    background:var(--bg);background-image:radial-gradient(ellipse 60% 40% at 50% 25%,rgba(0,114,141,.08),transparent)}
   .gate-card{width:min(420px,100%);background:linear-gradient(160deg,var(--card),var(--card2));
     border:1px solid var(--line);border-radius:22px;padding:34px 28px}
-  /* The branch mark is logo-mark.png — a gold shield carrying a white check.
-     Nothing here draws a substitute; see CLAUDE.md. */
-  .mark{border-radius:13px;overflow:hidden;background:#121820;display:grid;place-items:center}
+  /* The mark is site-mark.svg — favicon.svg's own shield and check in the
+     page's own teal and navy, with no tile, as every light page in this
+     repository carries. The gold shield stays on the e-mails, where the
+     ground is navy: on #faf9f2 it measures 1.68:1 and cannot read as a
+     shape at all. Nothing here draws a substitute; see CLAUDE.md. */
+  .mark{border-radius:13px;overflow:hidden;display:grid;place-items:center}
   .mark img{width:100%;height:100%;display:block}
   .gate-card .mark{width:58px;height:58px;margin:0 auto 14px}
   .gate-card h1{font-weight:800;font-size:20px;text-align:center;color:var(--accent);margin-bottom:6px}
   .gate-card .sub{font-size:12.5px;color:var(--muted);text-align:center;margin-bottom:22px;line-height:1.6}
   label{display:block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.6px;
     text-transform:uppercase;color:var(--accent-dark);margin:0 0 6px}
-  input,select,textarea{width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line);
-    background:rgba(0,0,0,.3);color:var(--text);
+  input,select,textarea{width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line-strong);
+    background:#fff;color:var(--text);
     /* max(16px, 1rem), never 14.5px: iOS zooms the page in when a control
        it focuses computes under 16px, and it does not zoom back out. The
        floor composer is typed into on a phone, in the room. */
     font-size:max(16px, 1rem);font-family:'DM Sans', 'DM Sans Fallback', 'DM Sans Fallback R',sans-serif;outline:none}
-  input:focus,select:focus,textarea:focus{border-color:rgba(0,207,234,.55)}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,114,141,.18)}
   textarea{resize:vertical;min-height:92px;line-height:1.65}
-  select option{background:#1C242E}
+  select option{background:#fff}
   .field{margin-bottom:14px}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
   @media(max-width:620px){.row2,.row3{grid-template-columns:1fr}}
 
   button{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;cursor:pointer;border:none;border-radius:11px;font-weight:800}
-  .btn{padding:13px 18px;font-size:13.5px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#06141F;width:100%}
+  .btn{padding:13px 18px;font-size:13.5px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;width:100%}
   .btn:disabled{opacity:.45;cursor:not-allowed}
-  .btn.teal{background:linear-gradient(135deg,var(--support),var(--support-dark));color:#06201C}
-  .btn.ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--line)}
-  .btn.danger{background:rgba(255,122,122,.14);color:var(--red);border:1px solid rgba(255,122,122,.35)}
+  .btn.teal{background:linear-gradient(135deg,var(--support),var(--support-dark));color:#fff}
+  .btn.ghost{background:var(--tint2);color:var(--text);border:1px solid var(--line)}
+  .btn.danger{background:rgba(179,38,30,.14);color:var(--red);border:1px solid rgba(179,38,30,.35)}
   .btn.sm{padding:8px 13px;font-size:12px;width:auto}
   .btn.auto{width:auto}
   .btn-row{display:flex;gap:8px;flex-wrap:wrap}
 
   .msg{border-radius:11px;padding:12px 14px;margin-top:12px;font-size:13px;line-height:1.55;display:none}
-  .msg.err{display:block;background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.4);color:var(--red)}
-  .msg.ok{display:block;background:rgba(53,208,127,.12);border:1px solid rgba(53,208,127,.4);color:var(--green)}
-  .msg.info{display:block;background:rgba(0,207,234,.1);border:1px solid rgba(0,207,234,.3);color:var(--support)}
+  .msg.err{display:block;background:rgba(179,38,30,.12);border:1px solid rgba(179,38,30,.4);color:var(--red)}
+  .msg.ok{display:block;background:rgba(31,122,77,.12);border:1px solid rgba(31,122,77,.4);color:var(--green)}
+  .msg.info{display:block;background:rgba(10,125,112,.1);border:1px solid rgba(10,125,112,.3);color:var(--support)}
   .hint{font-size:11.5px;color:var(--dim);margin-top:10px;line-height:1.6}
   .switch{text-align:center;margin-top:16px;font-size:12.5px;color:var(--muted)}
   .switch a{color:var(--support);text-decoration:none;font-weight:700;cursor:pointer}
 
   /* ---------- shell ---------- */
   #app{display:none}
-  .nav{position:sticky;top:0;z-index:100;background:rgba(6,17,29,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav{position:sticky;top:0;z-index:100;background:rgba(250,249,242,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
   .nav-inner{max-width:1060px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:12px;height:60px}
   .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto;min-width:0}
   .nav-brand .mark{width:30px;height:30px;flex-shrink:0}
@@ -110,7 +132,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .nav-brand span{font-size:10.5px;color:var(--dim)}
   .who{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted);white-space:nowrap}
   .avatar{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));
-    color:#06141F;display:grid;place-items:center;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:12px}
+    color:#fff;display:grid;place-items:center;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:12px}
   .who .out{color:var(--dim);cursor:pointer;text-decoration:none;font-weight:700;font-size:11.5px}
   .who .out:hover{color:var(--red)}
   @media(max-width:600px){.who .nm{display:none}}
@@ -119,13 +141,13 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .tabs::-webkit-scrollbar{display:none}
   .tab{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:12px;font-weight:700;padding:9px 14px;border-radius:10px;
     color:var(--muted);background:none;white-space:nowrap;border:1px solid transparent}
-  .tab:hover{color:var(--text);background:rgba(255,255,255,.05)}
+  .tab:hover{color:var(--text);background:var(--tint2)}
   /* The framework tab is a link, not a view, so it needs the anchor
      defaults flattened to match the buttons beside it. */
   a.tab{text-decoration:none;display:inline-block;line-height:normal}
-  .tab.on{color:var(--accent);background:rgba(59,158,255,.1);border-color:rgba(59,158,255,.28)}
+  .tab.on{color:var(--accent);background:rgba(0,114,141,.1);border-color:rgba(0,114,141,.28)}
   .tab .pip{display:inline-block;min-width:17px;padding:0 5px;margin-left:6px;border-radius:9px;
-    background:rgba(255,122,122,.22);color:var(--red);font-size:10.5px;line-height:17px;text-align:center}
+    background:rgba(179,38,30,.22);color:var(--red);font-size:10.5px;line-height:17px;text-align:center}
 
   .page-head{padding:26px 0 4px}
   .page-head .kicker{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:10.5px;letter-spacing:2.6px;
@@ -135,11 +157,11 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   section{padding:24px 0 4px}
   .section-label{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:10px;font-weight:700;letter-spacing:2.4px;
     text-transform:uppercase;color:var(--accent);margin-bottom:13px;display:flex;align-items:center;gap:10px}
-  .section-label::after{content:'';flex:1;height:1px;background:rgba(59,158,255,.2)}
+  .section-label::after{content:'';flex:1;height:1px;background:rgba(0,114,141,.2)}
 
   .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
     border-radius:16px;padding:18px 20px;margin-bottom:12px}
-  .card.flat{background:rgba(255,255,255,.03)}
+  .card.flat{background:var(--tint)}
   .card h3{font-size:15px;font-weight:800;margin-bottom:4px}
   .card .meta{font-size:12px;color:var(--muted);line-height:1.6}
 
@@ -149,19 +171,132 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
 
   .badge{display:inline-block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:9.5px;font-weight:800;
     letter-spacing:1.1px;text-transform:uppercase;padding:3px 8px;border-radius:6px;vertical-align:middle}
-  .b-all{background:rgba(0,207,234,.14);color:var(--support);border:1px solid rgba(0,207,234,.3)}
-  .b-staff{background:rgba(59,158,255,.14);color:var(--accent);border:1px solid rgba(59,158,255,.32)}
-  .b-chair{background:rgba(167,139,250,.16);color:var(--violet);border:1px solid rgba(167,139,250,.35)}
-  .b-green{background:rgba(53,208,127,.14);color:var(--green);border:1px solid rgba(53,208,127,.32)}
-  .b-amber{background:rgba(245,165,36,.14);color:var(--amber);border:1px solid rgba(245,165,36,.32)}
-  .b-red{background:rgba(255,122,122,.14);color:var(--red);border:1px solid rgba(255,122,122,.34)}
-  .b-dim{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--line)}
+  .b-all{background:rgba(10,125,112,.14);color:var(--support);border:1px solid rgba(10,125,112,.3)}
+  .b-staff{background:rgba(0,114,141,.14);color:var(--accent);border:1px solid rgba(0,114,141,.32)}
+  .b-chair{background:rgba(91,75,184,.16);color:var(--violet);border:1px solid rgba(91,75,184,.35)}
+  .b-green{background:rgba(31,122,77,.14);color:var(--green);border:1px solid rgba(31,122,77,.32)}
+  .b-amber{background:rgba(138,90,0,.14);color:var(--amber);border:1px solid rgba(138,90,0,.32)}
+  .b-red{background:rgba(179,38,30,.14);color:var(--red);border:1px solid rgba(179,38,30,.34)}
+  .b-dim{background:var(--tint2);color:var(--muted);border:1px solid var(--line)}
 
-  .stat{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:13px;padding:14px 16px;text-align:center}
+  .stat{background:var(--tint);border:1px solid var(--line);border-radius:13px;padding:14px 16px;text-align:center}
   .stat b{display:block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:24px;font-weight:900;line-height:1.1}
   .stat span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1.3px;font-weight:700}
   .stat.green b{color:var(--green)} .stat.amber b{color:var(--amber)}
   .stat.red b{color:var(--red)} .stat.teal b{color:var(--support)} .stat.gold b{color:var(--accent)}
+
+  .acct .acct-nums{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,7.5rem),1fr));margin-bottom:12px}
+  .acct .acct-who{display:flex;flex-wrap:wrap;gap:7px}
+  .acct-chip{display:inline-flex;align-items:baseline;gap:7px;font-size:12px;color:var(--muted);
+    background:var(--tint);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+  .acct-chip b{color:var(--ink);font-weight:700;font-size:12.5px}
+  .acct-chip.late{background:rgba(179,38,30,.07);border-color:rgba(179,38,30,.32);color:var(--red)}
+  .acct-chip.late b{color:var(--red)}
+
+  /* ---------- who owes what, and the running order as a clock ---------- */
+  .owed .owed-head{font-size:14px;color:var(--muted);margin-bottom:12px}
+  .owed .owed-head b{font-family:'Montserrat','Montserrat Fallback',sans-serif;font-size:20px;color:var(--ink);font-weight:900}
+  .owed-out{display:inline-block;margin-left:8px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;
+    background:rgba(179,38,30,.08);border:1px solid rgba(179,38,30,.32);color:var(--red)}
+  .owed-rows{display:flex;flex-direction:column;gap:2px}
+  .owed-row{display:grid;grid-template-columns:22px minmax(8.5rem,1.1fr) minmax(0,2fr) auto;
+    gap:4px 12px;align-items:baseline;padding:9px 10px;border-radius:10px}
+  .owed-row:nth-child(odd){background:var(--tint)}
+  .owed-row .mk{font-weight:900;color:var(--green)}
+  .owed-row.no .mk{color:var(--red)}
+  .owed-row .nm{font-family:'Montserrat','Montserrat Fallback',sans-serif;font-weight:700;font-size:13px;color:var(--ink)}
+  .owed-row .wt{font-size:13px;color:var(--muted)}
+  .owed-row .nm .rl{display:inline-block;margin-left:6px;font-size:10px;font-weight:700;letter-spacing:.8px;
+    text-transform:uppercase;color:var(--muted);font-family:'DM Sans','DM Sans Fallback',sans-serif}
+  .owed-row .st{font-size:11.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--green);text-align:right}
+  .owed-row.no .st{color:var(--red)}
+  .owed-row.no .nm{color:var(--red)}
+  .owed-row .sd{grid-column:2 / -1;font-size:12.5px;color:var(--muted);line-height:1.55}
+  @media(max-width:620px){
+    .owed-row{grid-template-columns:20px 1fr auto}
+    .owed-row .wt{grid-column:2 / -1;font-size:12px}
+    .owed-row .sd{grid-column:2 / -1}
+  }
+
+  .drl{display:flex;flex-direction:column;gap:2px}
+  .drl-row{display:flex;gap:12px;align-items:center;padding:9px 10px;border-radius:9px}
+  .drl-row:nth-child(odd){background:var(--tint)}
+  .drl-row.top{background:var(--tint2);box-shadow:inset 3px 0 0 var(--accent)}
+  .drl-row .n{flex:0 0 3.2rem;font:800 20px/1 var(--ui);color:var(--ink);text-align:center}
+  .drl-row .n i{display:block;font:600 9.5px/1.4 var(--ui);font-style:normal;letter-spacing:.6px;
+    text-transform:uppercase;color:var(--muted);margin-top:3px}
+  .drl-row .pt{font-size:14px;color:var(--text);line-height:1.45}
+  .obs{display:flex;flex-direction:column;gap:2px}
+  .obs-row{display:grid;grid-template-columns:minmax(7rem,12rem) 1fr;gap:10px;align-items:start;
+    padding:9px 10px;border-radius:9px}
+  .obs-row:nth-child(odd){background:var(--tint)}
+  .obs-row .nm{font-weight:700;color:var(--ink);font-size:13.5px;overflow-wrap:anywhere}
+  .obs-row .bd{display:flex;flex-direction:column;gap:3px;font-size:12.5px;line-height:1.45}
+  .obs-row .good{color:var(--green)}
+  .obs-row .watch{color:var(--red)}
+  .obs-row .quiet{color:var(--muted)}
+  .obs-row .trn{color:var(--text);font-weight:600}
+  @media(max-width:620px){
+    .obs-row{grid-template-columns:1fr;gap:4px}
+    .drl-row{gap:9px}.drl-row .n{flex-basis:2.6rem;font-size:17px}
+  }
+  .rail2{display:flex;flex-wrap:wrap;gap:3px 4px;margin:2px 0 14px;align-items:stretch}
+  /*  As wide as its minutes, but never narrower than its own time can be
+      read: a two-minute desk report squeezed to "9:…" names nobody, which
+      is the one thing the rail is for. The times stay exact either way,
+      because each segment prints its own, and the row wraps rather than
+      shrinking past it. */
+  .rail2 .seg{flex:var(--m) 1 0;min-width:5.2rem;display:flex;flex-direction:column;gap:3px}
+  .rail2.sm .seg{min-width:2.4rem}
+  .rail2 .seg .bar{display:block;height:9px;border-radius:5px;background:var(--line);overflow:hidden}
+  .rail2 .seg .bar i{display:block;height:100%;width:0;border-radius:5px;background:var(--accent)}
+  .rail2 .seg.done .bar{background:var(--accent)}
+  .rail2 .seg.on .bar{background:rgba(0,114,141,.22)}
+  .rail2 .seg.on .bar i{width:100%;background:var(--accent);
+    transform-origin:left center;animation:railfill linear forwards;
+    animation-duration:calc(var(--m) * 60s);animation-delay:calc(var(--el,0) * -1s)}
+  .rail2 .seg .tm{font-size:10.5px;font-weight:700;letter-spacing:.6px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rail2 .seg .ti{font-size:11.5px;color:var(--ink);line-height:1.3;overflow:hidden;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .rail2 .seg .ow{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rail2 .seg.on .tm,.rail2 .seg.on .ti{color:var(--accent)}
+  .rail2 .seg.done .ti,.rail2 .seg.done .ow,.rail2 .seg.done .tm{opacity:.55}
+  .rail2.sm .ti,.rail2.sm .ow{display:none}
+  .rail2.sm .seg .bar{height:7px}
+  @media(max-width:760px){.rail2 .ti,.rail2 .ow{display:none}.rail2 .tm{font-size:9.5px}
+    .rail2 .seg{min-width:2.2rem}}
+  @keyframes railfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  @media(prefers-reduced-motion:reduce){.rail2 .seg.on .bar i{animation:none;width:100%}}
+
+  /* ---------- the branch's numbers ---------- */
+  .nmrow{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr))}
+  .nmrow.sm{margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,7.5rem),1fr))}
+  .nmt{background:var(--tint);border:1px solid var(--line);border-radius:12px;padding:13px 14px;text-align:center}
+  .nmt b{display:block;font-family:'Montserrat','Montserrat Fallback',sans-serif;font-size:27px;font-weight:900;
+    line-height:1.05;color:var(--ink)}
+  .nmrow.sm .nmt b{font-size:22px}
+  .nmt span{display:block;font-size:11px;color:var(--muted);margin-top:5px;line-height:1.35}
+  .nmt.good b{color:var(--green)} .nmt.warn b{color:var(--amber)}
+
+  .dsk-head{font-size:14px;color:var(--muted);margin-bottom:12px}
+  .dsk-head b{font-family:'Montserrat','Montserrat Fallback',sans-serif;font-size:17px;color:var(--ink);font-weight:900}
+  .dsk{display:flex;flex-direction:column;gap:2px}
+  .dsk-row{display:grid;grid-template-columns:minmax(5rem,1fr) minmax(6rem,1.2fr) repeat(3,minmax(4.5rem,.9fr));
+    gap:10px;align-items:baseline;padding:9px 10px;border-radius:10px}
+  .dsk-row:nth-child(odd){background:var(--tint)}
+  .dsk-row.no{background:rgba(179,38,30,.06)}
+  .dsk-row .nm{font-family:'Montserrat','Montserrat Fallback',sans-serif;font-weight:700;font-size:13px;color:var(--ink)}
+  .dsk-row .st{font-size:12px;color:var(--muted)}
+  .dsk-row.no .st{color:var(--red);font-weight:700}
+  .dsk-row .n{font-family:'Montserrat','Montserrat Fallback',sans-serif;font-weight:800;font-size:17px;color:var(--ink);text-align:right}
+  .dsk-row .n.bad{color:var(--red)}
+  .dsk-row .n i{display:block;font-style:normal;font-family:'DM Sans','DM Sans Fallback',sans-serif;
+    font-weight:400;font-size:10.5px;color:var(--muted);margin-top:2px}
+  @media(max-width:700px){
+    .dsk-row{grid-template-columns:1fr 1fr 1fr;gap:6px 10px}
+    .dsk-row .nm,.dsk-row .st{grid-column:span 3}
+    .dsk-row .n{text-align:left}
+  }
 
   .empty{text-align:center;padding:44px 20px;color:var(--dim);font-size:13.5px;line-height:1.7}
   .empty .big{font-size:32px;display:block;margin-bottom:12px;opacity:.55}
@@ -170,7 +305,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .mtg{display:flex;gap:14px;align-items:flex-start;background:linear-gradient(160deg,var(--card),var(--card2));
     border:1px solid var(--line);border-radius:15px;padding:15px 17px;margin-bottom:10px;
     cursor:pointer;transition:transform .16s,border-color .16s;text-align:left;width:100%;color:inherit}
-  .mtg:hover{transform:translateY(-2px);border-color:rgba(59,158,255,.4)}
+  .mtg:hover{transform:translateY(-2px);border-color:rgba(0,114,141,.4)}
   .mtg .when{flex-shrink:0;width:56px;text-align:center;border-right:1px solid var(--line);padding-right:12px}
   .mtg .when b{display:block;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:20px;font-weight:900;color:var(--accent);line-height:1}
   .mtg .when span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;font-weight:700}
@@ -180,14 +315,14 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .mtg .tags{margin-top:7px;display:flex;gap:5px;flex-wrap:wrap}
 
   /* ---------- check in ---------- */
-  .checkin{background:linear-gradient(150deg,rgba(53,208,127,.13),rgba(0,207,234,.08));
-    border:1px solid rgba(53,208,127,.32);border-radius:18px;padding:22px;text-align:center;margin-bottom:14px}
+  .checkin{background:linear-gradient(150deg,rgba(31,122,77,.13),rgba(10,125,112,.08));
+    border:1px solid rgba(31,122,77,.32);border-radius:18px;padding:22px;text-align:center;margin-bottom:14px}
   .checkin h2{font-size:17px;font-weight:800;margin-bottom:6px}
   .checkin p{font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:16px;max-width:460px;margin-inline:auto}
   .checkin .big-btn{padding:17px 30px;font-size:15px;letter-spacing:.4px;width:auto;min-width:230px;
-    background:linear-gradient(135deg,var(--green),#2BB377);color:#04220f}
-  .checkin.done{background:linear-gradient(150deg,rgba(53,208,127,.1),transparent);border-color:rgba(53,208,127,.28)}
-  .checkin.shut{background:rgba(255,255,255,.03);border-color:var(--line)}
+    background:linear-gradient(135deg,var(--green),#2BB377);color:#fff}
+  .checkin.done{background:linear-gradient(150deg,rgba(31,122,77,.1),transparent);border-color:rgba(31,122,77,.28)}
+  .checkin.shut{background:var(--tint);border-color:var(--line)}
 
   /*  THE AGENDA AS THE BRANCH BUILT IT.
    *  What came in before anybody sat down, grouped three ways. The
@@ -197,15 +332,15 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .btwrap{margin-top:4px}
   .btstrip{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5rem),1fr));
     margin-bottom:14px}
-  .btfig{background:linear-gradient(150deg,rgba(59,158,255,.16),rgba(63,201,176,.07));
-    border:1px solid rgba(59,158,255,.3);border-radius:14px;padding:13px 15px;min-width:0}
+  .btfig{background:linear-gradient(150deg,rgba(0,114,141,.16),rgba(10,125,112,.07));
+    border:1px solid rgba(0,114,141,.3);border-radius:14px;padding:13px 15px;min-width:0}
   .btfig b{display:block;font-size:27px;font-weight:800;line-height:1.1;color:var(--text);
     font-variant-numeric:tabular-nums}
   .btfig span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.45}
   .btseg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
   .btseg button{font:600 12.5px/1 inherit;padding:9px 14px;border-radius:999px;cursor:pointer;
     background:var(--card);color:var(--muted);border:1px solid var(--line)}
-  .btseg button.on{background:var(--accent);border-color:var(--accent);color:#07131f}
+  .btseg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .btgrp{margin-bottom:16px}
   .btgh{display:flex;align-items:baseline;gap:9px;margin-bottom:9px;flex-wrap:wrap}
   .btgh h3{font-size:14px;font-weight:800;margin:0;color:var(--text)}
@@ -233,13 +368,13 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
    *  their four jobs, so the jobs are written out, numbered, by role.
    */
   .mnow{border-radius:16px;padding:18px 20px;margin-bottom:12px;
-    background:linear-gradient(135deg,rgba(59,158,255,.18),rgba(63,201,176,.08));
-    border:1px solid rgba(59,158,255,.34)}
+    background:linear-gradient(135deg,rgba(0,114,141,.18),rgba(10,125,112,.08));
+    border:1px solid rgba(0,114,141,.34)}
   .mnow .lbl{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent)}
   .mnow .big{font-size:25px;font-weight:800;line-height:1.22;margin:5px 0 3px}
   .mnow .sub{font-size:13px;color:var(--muted);line-height:1.65}
   .mnow .cd{display:inline-block;margin-top:11px;font-size:12px;font-weight:700;
-    background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:999px;padding:7px 14px}
+    background:hsl(var(--sh) / .22);border:1px solid var(--line);border-radius:999px;padding:7px 14px}
   .todo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:12px}
   .todo h2{font-size:16px;font-weight:800;margin-bottom:3px}
   /*  Never .who: the header's user chip owns that class and carries
@@ -261,28 +396,28 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .rail li .dot{position:absolute;left:0;top:2px;width:24px;height:24px;border-radius:50%;
     border:2px solid var(--line);background:var(--bg2);display:grid;place-items:center;
     font-size:11px;font-weight:800;color:var(--dim)}
-  .rail li.done .dot{background:var(--green);border-color:var(--green);color:#07131f}
-  .rail li.now .dot{background:var(--accent);border-color:var(--accent);color:#07131f}
+  .rail li.done .dot{background:var(--green);border-color:var(--green);color:#fff}
+  .rail li.now .dot{background:var(--accent);border-color:var(--accent);color:#fff}
   /*  No negative margin on the live stop: it does not overflow
    *  visibly, but it grows the card's scrollWidth and the page then
    *  reports a sideways scroll at 390. The highlight is a background
    *  on the row's own box instead.
    */
-  .rail li.now{background:rgba(59,158,255,.08);border-radius:12px;
-    box-shadow:0 0 0 1px rgba(59,158,255,.2)}
+  .rail li.now{background:rgba(0,114,141,.08);border-radius:12px;
+    box-shadow:0 0 0 1px rgba(0,114,141,.2)}
   .rail .at{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
   .rail .at .mine{color:var(--support);margin-left:7px}
-  .rail .at .thm{color:var(--dim);margin-left:7px}
+  .rail .at .thm{color:var(--muted);margin-left:7px}
   .rail .ti{font-size:14.5px;font-weight:700;line-height:1.45;margin-top:2px}
   .rail li.done .ti{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--dim)}
   .rail .nt{font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:3px}
-  .tick{width:52px;height:52px;border-radius:50%;background:rgba(53,208,127,.16);border:2px solid var(--green);
+  .tick{width:52px;height:52px;border-radius:50%;background:rgba(31,122,77,.16);border:2px solid var(--green);
     color:var(--green);display:grid;place-items:center;font-size:26px;margin:0 auto 12px}
 
   /* ---------- running the meeting ---------- */
-  .live{background:linear-gradient(150deg,rgba(255,122,122,.12),rgba(59,158,255,.07));
-    border:1px solid rgba(255,122,122,.34);border-radius:18px;padding:18px 20px;margin-bottom:14px}
-  .live.idle{background:rgba(255,255,255,.03);border-color:var(--line)}
+  .live{background:linear-gradient(150deg,rgba(179,38,30,.12),rgba(0,114,141,.07));
+    border:1px solid rgba(179,38,30,.34);border-radius:18px;padding:18px 20px;margin-bottom:14px}
+  .live.idle{background:var(--tint);border-color:var(--line)}
   .live-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
   .live-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;
     animation:pulse 1.6s ease-in-out infinite}
@@ -291,7 +426,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     letter-spacing:-.5px;font-variant-numeric:tabular-nums}
   .live-clock.over{color:var(--red)}
   .live-meta{font-size:12px;color:var(--muted);line-height:1.6}
-  .live-now{background:rgba(0,0,0,.25);border-radius:11px;padding:11px 14px;margin-top:10px;font-size:12.5px}
+  .live-now{background:hsl(var(--sh) / .25);border-radius:11px;padding:11px 14px;margin-top:10px;font-size:12.5px}
   .live-now b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:13.5px}
 
   /*  THE TICKER.
@@ -302,7 +437,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
    *  once a minute does not change that. This one counts the current item
    *  down in seconds, in front of everybody, and turns amber then red —
    *  so the person speaking knows before the chair has to say it.        */
-  .tick{background:rgba(0,0,0,.28);border-radius:13px;padding:14px 16px;margin-top:10px}
+  .tick{background:hsl(var(--sh) / .28);border-radius:13px;padding:14px 16px;margin-top:10px}
   .tick-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
   .tick-head .lbl{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
     font-weight:700;color:var(--red)}
@@ -313,11 +448,50 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .tick-num.warn{color:var(--amber)}
   .tick-num.over{color:var(--red)}
   .tick-sub{font-size:12px;color:var(--dim);padding-bottom:4px}
-  .tick-bar{height:5px;border-radius:999px;background:rgba(255,255,255,.1);margin-top:11px;overflow:hidden}
+  .tick-bar{height:5px;border-radius:999px;background:var(--tint2);margin-top:11px;overflow:hidden}
   .tick-bar i{display:block;height:100%;width:0;border-radius:999px;background:var(--green);
     transition:width .9s linear,background .3s}
   .tick-bar i.warn{background:var(--amber)}
   .tick-bar i.over{background:var(--red)}
+
+  /*  THE SCREEN (10 Nov 2026). Ricky: "the meeting is a working meeting, so it moves along the slides ... it's going to be
+   *  appearing on the screen". One item at a time, full screen, for the TV: whose item it is, the question they answer, the
+   *  facts behind it, the clock, and what the room has put on the record against it, live. Nobody reads the screen aloud:
+   *  the owner speaks to it. It follows the item the chair marks as On now, and before the meeting starts it steps through
+   *  the agenda with the arrow keys. */
+  #scr{position:fixed;inset:0;z-index:200;background:var(--bg);color:var(--text);display:grid;grid-template-rows:auto 1fr auto;
+    padding:max(18px,env(safe-area-inset-top,0px)) max(28px,env(safe-area-inset-right,0px)) max(18px,env(safe-area-inset-bottom,0px)) max(28px,env(safe-area-inset-left,0px));gap:18px}
+  #scr[hidden]{display:none}
+  .scr-top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+  .scr-top b{color:var(--text)} .scr-top .sp{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .scr-dots{display:flex;gap:5px;flex-wrap:wrap} .scr-dots i{width:22px;height:5px;border-radius:3px;background:var(--line)} .scr-dots i.on{background:var(--accent)} .scr-dots i.done{background:var(--dim)}
+  .scr-main{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:28px;min-height:0}
+  .scr-item{display:flex;flex-direction:column;gap:14px;min-width:0;overflow:auto}
+  .scr-eyebrow{font:700 clamp(12px,1.1vw,16px)/1 'Montserrat','Montserrat Fallback',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .scr-title{font:900 clamp(30px,3.6vw,62px)/1.06 'Montserrat','Montserrat Fallback',sans-serif;letter-spacing:-.02em;margin:0;text-wrap:balance}
+  .scr-owner{font-size:clamp(16px,1.5vw,24px);color:var(--muted)} .scr-owner b{color:var(--text)}
+  .scr-det{font-size:clamp(17px,1.55vw,27px);line-height:1.5;color:var(--text);max-width:62ch}
+  .scr-det .q{display:block;margin-top:14px;padding:14px 18px;border-left:5px solid var(--accent);background:var(--card);border-radius:0 12px 12px 0}
+  .scr-side{display:flex;flex-direction:column;gap:14px;min-width:0;min-height:0}
+  .scr-owed{background:var(--card);border-radius:16px;padding:16px 20px;margin-bottom:14px}
+  .scr-owed h3{font:800 clamp(14px,1.15vw,19px)/1.3 'Montserrat','Montserrat Fallback',sans-serif;color:var(--ink);margin-bottom:8px}
+  .scr-owed .no{font-size:clamp(13px,1.05vw,17px);line-height:1.6;color:var(--red)}
+  .scr-owed .no b{color:var(--red)}
+  .scr-owed .yes{font-size:clamp(13px,1.05vw,17px);color:var(--green);font-weight:700}
+
+  .scr-clock{background:var(--card);border-radius:16px;padding:16px 20px}
+  .scr-clock .n{font:900 clamp(44px,5vw,88px)/1 'Montserrat','Montserrat Fallback',sans-serif;font-variant-numeric:tabular-nums;color:var(--green)}
+  .scr-clock .n.warn{color:var(--amber)} .scr-clock .n.over{color:var(--red)}
+  .scr-clock small{display:block;color:var(--muted);font-size:14px;margin-top:6px}
+  .scr-rec{background:var(--card);border-radius:16px;padding:14px 18px;flex:1;min-height:0;overflow:auto}
+  .scr-rec h3{margin:0 0 8px;font:800 13px/1 'Montserrat','Montserrat Fallback',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .scr-rec .c{padding:9px 0;border-top:1px solid var(--card2);font-size:clamp(14px,1.15vw,19px);line-height:1.45} .scr-rec .c:first-of-type{border-top:0}
+  .scr-rec .c b{color:var(--accent)} .scr-rec .none{color:var(--dim);font-size:15px}
+  .scr-foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:15px;color:var(--muted)}
+  .scr-foot b{color:var(--text)} .scr-foot .rule{margin-left:auto;font-size:13px;color:var(--dim)}
+  .scr-list{display:grid;gap:6px;font-size:clamp(15px,1.3vw,22px)} .scr-list div{display:grid;grid-template-columns:5.5em 1fr auto;gap:14px;padding:8px 0;border-top:1px solid var(--card2)}
+  .scr-list .t{color:var(--muted);font-variant-numeric:tabular-nums} .scr-list .o{color:var(--muted);text-align:right}
+  @media (max-width:820px){.scr-main{grid-template-columns:1fr}}
   .tick-next{margin-top:10px;font-size:12px;color:var(--dim);
     border-top:1px solid var(--line);padding-top:9px}
   .tick-next b{color:var(--muted);font-weight:600}
@@ -329,8 +503,8 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .said:last-child{border-bottom:none}
   .said .av{width:32px;height:32px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;
     font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-weight:800;font-size:11px;
-    background:rgba(0,207,234,.14);color:var(--support);border:1px solid rgba(0,207,234,.28)}
-  .said .av.staff{background:rgba(59,158,255,.14);color:var(--accent);border-color:rgba(59,158,255,.3)}
+    background:var(--support);color:#fff;border:1px solid var(--support)}
+  .said .av.staff{background:var(--accent);color:#fff;border-color:var(--accent)}
   .said .c{flex:1;min-width:0}
   .said .c .hd{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
   .said .c .hd b{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:12.5px}
@@ -339,13 +513,13 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .said .c .tp{margin-top:6px;display:flex;gap:5px;flex-wrap:wrap}
 
   .rec-btn{display:inline-flex;align-items:center;gap:8px}
-  .rec-btn.on{background:linear-gradient(135deg,#F0705F,#D85445);color:#2b0808}
+  .rec-btn.on{background:linear-gradient(135deg,#F0705F,#D85445);color:#fff}
   .rec-time{font-variant-numeric:tabular-nums;font-weight:800}
 
   .topic-chip{display:inline-block;font-size:11px;padding:3px 9px;border-radius:20px;
-    background:rgba(167,139,250,.14);color:var(--violet);border:1px solid rgba(167,139,250,.3);
+    background:rgba(91,75,184,.14);color:var(--violet);border:1px solid rgba(91,75,184,.3);
     cursor:pointer;font-weight:600}
-  .topic-chip:hover{background:rgba(167,139,250,.24)}
+  .topic-chip:hover{background:rgba(91,75,184,.24)}
 
   /* ---------- agenda ---------- */
   .ag{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
@@ -354,10 +528,12 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .ag .main{flex:1;min-width:0}
   .ag .main b{font-size:14px;font-weight:700;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;display:block;margin-bottom:3px}
   .ag .main .det{font-size:12.5px;color:var(--muted);line-height:1.65;margin-top:3px;white-space:pre-wrap}
-  .ag .main .who2{font-size:11.5px;color:var(--dim);margin-top:5px}
+  .ag .main .who2{font-size:12px;color:var(--muted);margin-top:5px}
+  .ag .main .who2 b{color:var(--ink);font-weight:700}
+  .ag .tags:empty{display:none}
   .ag .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;align-items:center}
 
-  .mat{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.22);border:1px solid var(--line);
+  .mat{display:flex;align-items:center;gap:10px;background:hsl(var(--sh) / .22);border:1px solid var(--line);
     border-radius:10px;padding:9px 12px;margin-top:7px;font-size:12.5px}
   .mat .ico{font-size:15px;flex-shrink:0}
   .mat .nm2{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -367,18 +543,18 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px}
   table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px}
   th{font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;
-    color:var(--accent-dark);text-align:left;padding:9px 11px;border-bottom:1px solid rgba(59,158,255,.22);white-space:nowrap}
+    color:var(--accent-dark);text-align:left;padding:9px 11px;border-bottom:1px solid rgba(0,114,141,.22);white-space:nowrap}
   td{padding:10px 11px;border-bottom:1px solid var(--line);color:var(--text);vertical-align:top;line-height:1.55}
   tr:last-child td{border-bottom:none}
-  tbody tr:hover{background:rgba(255,255,255,.025)}
+  tbody tr:hover{background:var(--tint)}
   td .sub2{color:var(--dim);font-size:11px;display:block;margin-top:2px}
 
   /* ---------- people chips ---------- */
   .chips{display:flex;flex-wrap:wrap;gap:6px}
-  .chip{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;
+  .chip{background:var(--tint2);border:1px solid var(--line);border-radius:8px;
     padding:5px 10px;font-size:12px;color:var(--text)}
-  .chip.gold{border-color:rgba(59,158,255,.3);background:rgba(59,158,255,.08)}
-  .chip.red{border-color:rgba(255,122,122,.3);background:rgba(255,122,122,.08);color:var(--red)}
+  .chip.gold{border-color:rgba(0,114,141,.3);background:rgba(0,114,141,.08)}
+  .chip.red{border-color:rgba(179,38,30,.3);background:rgba(179,38,30,.08);color:var(--red)}
   .chip .t{color:var(--dim);font-size:10.5px;margin-left:5px}
 
   /* ---------- modal ---------- */
@@ -393,22 +569,22 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .modal-close:hover{color:var(--red)}
 
   /* ---------- misc ---------- */
-  .bar{height:7px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:7px}
+  .bar{height:7px;border-radius:5px;background:var(--tint2);overflow:hidden;margin-top:7px}
   .bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green),var(--support))}
   .back{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);
     text-decoration:none;cursor:pointer;font-weight:700;font-family:'Montserrat', 'Montserrat Fallback', 'Montserrat Fallback R',sans-serif;margin-bottom:4px}
   .back:hover{color:var(--support)}
-  .spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.25);
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(13,63,94,.22);
     border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
   @keyframes sp{to{transform:rotate(360deg)}}
   .loading{text-align:center;padding:48px;color:var(--dim);font-size:13px}
-  footer{margin-top:44px;border-top:1px solid var(--line);background:rgba(0,0,0,.25);padding:24px 0 32px;text-align:center}
-  footer p{color:var(--dim);font-size:12px;line-height:1.7}
+  footer{margin-top:44px;border-top:1px solid var(--line);background:var(--bg2);padding:24px 0 32px;text-align:center}
+  footer p{color:var(--muted);font-size:12px;line-height:1.7}
   footer a{color:var(--support-dark);text-decoration:none}
-  .setup{max-width:720px;margin:60px auto;padding:26px;background:rgba(245,165,36,.08);
-    border:1px solid rgba(245,165,36,.34);border-radius:16px;color:var(--text);font-size:13.5px;line-height:1.75}
+  .setup{max-width:720px;margin:60px auto;padding:26px;background:rgba(138,90,0,.08);
+    border:1px solid rgba(138,90,0,.34);border-radius:16px;color:var(--text);font-size:13.5px;line-height:1.75}
   .setup h2{color:var(--amber);font-size:16px;margin-bottom:10px}
-  .setup code{background:rgba(0,0,0,.4);padding:2px 7px;border-radius:5px;font-size:12.5px;color:var(--accent)}
+  .setup code{background:hsl(var(--sh) / .4);padding:2px 7px;border-radius:5px;font-size:12.5px;color:var(--accent)}
   .setup ol{margin:12px 0 0 20px} .setup li{margin-bottom:7px}
 
   @media print{
@@ -437,7 +613,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
 <!-- ============================ SIGN IN ============================ -->
 <div id="gate" style="display:none">
   <div class="gate-card">
-    <div class="mark"><img src="/logo-mark.png" alt=""></div>
+    <div class="mark"><img src="/site-mark.svg" alt=""></div>
 
     <!-- sign in -->
     <div id="gate-login">
@@ -522,7 +698,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   <nav class="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="https://rickyrampersadbranch.com/staff.html">
-        <div class="mark"><img src="/logo-mark.png" alt=""></div>
+        <div class="mark"><img src="/site-mark.svg" alt=""></div>
         <b>Meeting Builder<span>Ricky Rampersad Branch</span></b>
       </a>
       <div class="who">
@@ -822,6 +998,19 @@ function doLogin() {
         }
         return say("li-msg", res.error || "Tell us your name and your role.", "info");
       }
+      //  On the roll, so turned round at the guest door rather than
+      //  recorded as a visitor and marked absent (see guestOnRoll_). Put
+      //  the visitor form away and send them back to the number box: the
+      //  message tells them what to type, and leaving the name boxes up
+      //  reads as "try that again", which is the one thing not to do.
+      if (res.onRoll) {
+        $("li-guest").style.display = "none";
+        if ($("li-help")) $("li-help").style.display = "";
+        $("li-go").textContent = "Sign in";
+        $("li-email").value = "";
+        $("li-email").focus();
+        return say("li-msg", res.error || "You are on the branch roll — sign in with your agent number.");
+      }
       if (!res.ok) {
         //  NO PASSWORD BOX HERE, EVER AGAIN. One used to appear the first
         //  time a number alone was turned away — a bridge for the window
@@ -907,6 +1096,9 @@ function drawTabs() {
     '<a class="tab" href="/meetings/framework.html#' + esc(role) + '">How a meeting runs</a>' +
     '<a class="tab" href="/meetings/template.html">The template</a>' +
     '<a class="tab" href="/meetings/walkthrough.html">Watch the walkthrough</a>' +
+    //  One minute each: how to bring something, and how the register works.
+    '<a class="tab" href="/meetinghowto/">Film: bring one thing</a>' +
+    '<a class="tab" href="/meetingvideo/">Film: signing in</a>' +
     /*  The branch's own walls, in the nav rather than in somebody's memory.
      *  Both take the SAME agent number and access code as this app, so a
      *  person who is signed in here is one tap from the board their numbers
@@ -1000,12 +1192,16 @@ function viewHome() {
         : "") + "</div>";
   }
 
-  out += "<section><div class=\"section-label\">Coming up</div>";
-  out += upcoming.length
-    ? upcoming.map(meetingRow).join("")
-    : '<div class="empty"><span class="big">📅</span>No meeting scheduled yet.' +
-      (isStaff() ? "<br>Use <b>New meeting</b> above to build one." : "") + "</div>";
-  out += "</section>";
+  /*  The meeting the banner is about is not listed again under Coming up. */
+  var later = upcoming.filter(function (m) { return !next || m.id !== next.id; });
+  if (later.length || !next) {
+    out += "<section><div class=\"section-label\">" + (next ? "After that" : "Coming up") + "</div>";
+    out += later.length
+      ? later.map(meetingRow).join("")
+      : '<div class="empty"><span class="big">📅</span>No meeting scheduled yet.' +
+        (isStaff() ? "<br>Use <b>New meeting</b> above to build one." : "") + "</div>";
+    out += "</section>";
+  }
 
   if (past.length) {
     out += '<section><div class="section-label">The record — ' + past.length + " past meeting" +
@@ -1056,7 +1252,7 @@ function meetingBanner(m) {
     '<div class="lbl">' + esc(when) + " \u00b7 " + esc(m.type || "Branch meeting") + "</div>" +
     '<div class="big">' + esc(m.title) + "</div>" +
     '<div class="sub">' + esc(m.date) +
-    (m.start ? " \u00b7 starts <b>" + esc(m.start) + "</b>" : "") +
+    (timeWords(m.start) ? " \u00b7 starts <b>" + esc(timeWords(m.start)) + "</b>" : "") +
     (m.location ? " \u00b7 " + esc(m.location) : "") +
     (m.format && !m.location ? " \u00b7 " + esc(m.format) : "") + "</div>" +
     (m.checkInOpensAt
@@ -1081,9 +1277,60 @@ function meetingBanner(m) {
  *  "I am here" writes the attendance row. The branch read the sign-in
  *  as the register, so the stop that matters says it outright.
  */
+/*  A MEETING TIME IS NOT WHAT WAS TYPED INTO IT.
+ *
+ *  Start and End are time-only cells, and Google Sheets stores a time with
+ *  no date on 30 December 1899 — a date old enough to carry a local-mean-time
+ *  offset, since Port of Spain ran at -04:06:04 until 1912. So the backend
+ *  hands this page back "Sat Dec 30 1899 09:00:00 GMT-0400 (Atlantic Standard
+ *  Time)" where a person typed 9:00, and printing it raw put that whole string
+ *  on the home screen under "starts". Found on the live sheet, 11 November
+ *  2026, on every meeting it holds, script-written ones included.
+ *
+ *  The same trap has bitten the claims intake, the group billing month and the
+ *  guest number, so the rule is the one those three arrived at: normalise at
+ *  the ONE place the field is read, and never key anything on its spelling.
+ *
+ *  timeMin is that one place. timeWords is for a person to read and clock24 is
+ *  for an <input type="time">, which takes 24-hour HH:MM and nothing else. */
+function timeMin(v) {
+  var s = String(v == null ? "" : v);
+  if (!s) return -1;
+  var h, mi;
+  //  "9:00 AM", and a stamp that carries one, such as "11 Nov 2026, 9:00 AM".
+  var m = /(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp])\.?[Mm]?/.exec(s);
+  if (m) {
+    h = Number(m[1]) % 12;
+    if (/[Pp]/.test(m[3])) h += 12;
+    mi = Number(m[2]);
+  } else {
+    //  "09:00" on the 24-hour clock, and the 1899 date above, whose first
+    //  clock reading is the time somebody meant.
+    m = /(\d{1,2}):(\d{2})/.exec(s);
+    if (!m) return -1;
+    h = Number(m[1]);
+    mi = Number(m[2]);
+  }
+  if (!(h >= 0 && h <= 23) || !(mi >= 0 && mi <= 59)) return -1;
+  return h * 60 + mi;
+}
+
+function timeWords(v) {
+  var n = timeMin(v);
+  if (n < 0) return "";
+  var h = Math.floor(n / 60) % 24, mi = n % 60;
+  return ((h % 12) || 12) + ":" + (mi < 10 ? "0" : "") + mi + " " + (h < 12 ? "AM" : "PM");
+}
+
+function time24(v) {
+  var n = timeMin(v);
+  if (n < 0) return "";
+  var h = Math.floor(n / 60) % 24, mi = n % 60;
+  return (h < 10 ? "0" : "") + h + ":" + (mi < 10 ? "0" : "") + mi;
+}
+
 function justTime(stamp) {
-  var m = /(\d{1,2}:\d{2}\s*(?:AM|PM|am|pm))/.exec(String(stamp || ""));
-  return m ? m[1].toUpperCase() : "";
+  return timeWords(stamp);
 }
 
 function runUpBlock(m) {
@@ -1223,14 +1470,14 @@ function runUpBlock(m) {
 
 /** The card at the top: one button, and it is the register. */
 function nextMeetingBlock(m) {
-  var head = '<div class="section-label">' + (m.status === "live" ? "Happening now" : "Your next meeting") + "</div>" +
-    '<div class="card" style="margin-bottom:10px">' +
-    "<h3>" + esc(m.title) + "</h3>" +
-    '<div class="meta">' + esc(m.type) + " · " + esc(m.date) +
-    (m.start ? " · " + esc(m.start) : "") +
-    (m.location ? " · " + esc(m.location) : "") + "</div>" +
-    '<div style="margin-top:9px">' + statusBadge(m.status) +
-    (m.week ? ' <span class="badge b-dim">' + esc(m.week) + "</span>" : "") + "</div></div>";
+  /*  ONE MEETING, ONCE (10 November 2026). Ricky: "it was very confusing over
+      the last couple of days." It was: the same meeting was on this screen
+      four times — the banner, a card repeating the banner, this register card,
+      and again under Coming up. The card went; the banner above already says
+      the title, the date, the time and the format, and Coming up now leaves
+      out the meeting the banner is about. What is left is one block per thing
+      a person has to DO. */
+  var head = '<div class="section-label">' + (m.status === "live" ? "Happening now" : "The register") + "</div>";
 
   if (m.me && (m.me.status === "present" || m.me.status === "late")) {
     return head + '<div class="checkin done">' +
@@ -1287,7 +1534,7 @@ function meetingRow(m) {
     '<div class="when"><b>' + d.d + "</b><span>" + d.m + "</span></div>" +
     '<div class="body"><b>' + esc(m.title) + "</b>" +
     '<div class="meta">' + esc(m.type) +
-    (m.start ? " · " + esc(m.start) : "") +
+    (timeWords(m.start) ? " · " + esc(timeWords(m.start)) : "") +
     (m.format ? " · " + esc(m.format) : "") +
     (m.location ? "<br>" + esc(m.location) : "") + "</div>" +
     '<div class="tags">' + tags + "</div></div></button>";
@@ -1421,7 +1668,8 @@ function drawMeeting() {
   // The facts of the meeting, laid out the way the branch's own
   // agendas head their first table.
   var facts = [
-    ["Date", m.date + (m.start ? " · " + m.start + (m.end ? "–" + m.end : "") : "")],
+    ["Date", m.date + (timeWords(m.start) ? " · " + timeWords(m.start) +
+       (timeWords(m.end) ? "–" + timeWords(m.end) : "") : "")],
     ["Format", m.format], ["Location", m.location], ["Chair", m.chair],
     ["Guest", m.guest], ["Pre-read", m.preRead], ["Anchor document", m.anchor]
   ].filter(function (r) { return r[1]; });
@@ -1437,6 +1685,7 @@ function drawMeeting() {
   out += "</div>";
 
   // The clock, then check-in. Both belong above everything else.
+  out += '<div style="display:flex;justify-content:flex-end;margin:0 0 8px"><button class="btn ghost auto sm" id="scr-open" type="button">Put it on the screen</button></div>';
   out += liveBlock(d);
   if (m.status !== "closed" && !m.archiveLink) out += checkinBlock(m);
 
@@ -1457,9 +1706,20 @@ function drawMeeting() {
       (isStaff() ? "<br>Open <b>Edit the agenda</b> to build one, or start from the branch's standing order." : "") +
       "</div>";
   } else {
+    /*  The ninety minutes as a clock, above the rows: the time each item
+        starts and the name against it, so the room can see where it is
+        without anybody policing it. */
+    out += railBlock(d);
     out += '<div class="card">' + d.agenda.map(agendaRow).join("") + "</div>";
   }
   out += "</section>";
+
+  //  the branch's own numbers, then who owes what: the two things read first
+  out += numbersBlock(d);
+  out += owedBlock(d);
+  //  what the record says to drill, and who has not been heard from
+  out += drillBlock(d);
+  out += heardBlock(d);
 
   // ---- the floor ----
   out += floorSection(d);
@@ -1513,7 +1773,7 @@ function drawMeeting() {
       '<button class="btn teal sm" id="add-action">+ Add</button></div>';
   }
   out += "</div>";
-  out += d.actions.length ? actionsTable(d.actions)
+  out += d.actions.length ? accountabilityStrip(d.actions) + actionsTable(d.actions)
     : '<div class="empty" style="padding:26px"><span class="big">✅</span>Nothing tracked against this meeting' +
       (isStaff() ? " yet." : " for you.") + "</div>";
   out += "</section>";
@@ -1815,7 +2075,11 @@ function checkinBlock(m) {
 }
 
 function agendaRow(a) {
-  var tags = visBadge(a.visibility);
+  /*  THE DEFAULT IS NOT NEWS (10 November 2026). Every row carried an
+      EVERYONE badge, eleven times down one screen, saying only "this one is
+      not staff-only" — so the one row that IS staff-only disappeared into a
+      column of identical chips. The badge is drawn when it is the exception. */
+  var tags = a.visibility && a.visibility !== "all" ? visBadge(a.visibility) : "";
   if (a.materialsRequired) {
     tags += a.ready ? ' <span class="badge b-green">Material in</span>'
                     : ' <span class="badge b-red">Material outstanding</span>';
@@ -1831,12 +2095,12 @@ function agendaRow(a) {
   var live = S.detail && S.detail.session && S.detail.session.running && S.detail.canRun;
   var isNow = S.detail && S.detail.session && S.detail.session.currentAgendaId === a.id;
 
-  return '<div class="ag"' + (isNow ? ' style="background:rgba(59,158,255,.06);border-radius:10px"' : "") + ">" +
+  return '<div class="ag"' + (isNow ? ' style="background:rgba(0,114,141,.06);border-radius:10px"' : "") + ">" +
     '<div class="clock">' + esc(a.clock) + (a.minutes ? '<br><span style="color:var(--dim);font-weight:400;font-size:10.5px">' + a.minutes + " min</span>" : "") + "</div>" +
     '<div class="main"><b>' + esc(a.title) + "</b>" +
     (a.section ? '<div style="font-size:10.5px;color:var(--accent-dark);letter-spacing:1.2px;text-transform:uppercase;font-weight:700">' + esc(a.section) + "</div>" : "") +
     (a.detail ? '<div class="det">' + escLines(a.detail) + "</div>" : "") +
-    (a.presenter ? '<div class="who2">Presented by <b style="color:var(--text)">' + esc(a.presenter) + "</b></div>" : "") +
+    (a.presenter ? '<div class="who2"><b>' + esc(a.presenter) + "</b></div>" : "") +
     '<div class="tags">' + tags +
     (live ? (isNow
       ? ' <span class="badge b-green">On now</span>'
@@ -1957,7 +2221,7 @@ function builtHtml(d) {
   var nItems = Object.keys(items).length;
 
   var out = '<div class="page-head"><div class="kicker">' + esc(m.date) +
-    (m.start ? " \u00b7 " + esc(m.start) : "") + "</div>" +
+    (timeWords(m.start) ? " \u00b7 " + esc(timeWords(m.start)) : "") + "</div>" +
     "<h1>The agenda, as the branch built it</h1>" +
     "<p>Everything brought in before anybody sat down. It is read in the room before " +
     "anybody speaks.</p></div>";
@@ -2710,6 +2974,46 @@ function uploadModal(meetingId, agendaId, maxMB) {
 
 /* ---------------- action items ---------------- */
 
+/*  WHO IS ACCOUNTABLE, BEFORE THE TABLE (10 November 2026).
+ *  Ricky: "it must hold persons accountable and take the respective notes so
+ *  we continue building on powerful meetings and holding persons responsible."
+ *  The table already carried the owner and the date; what it did not do was
+ *  say, in one line, how the room stands — so the overdue item sat in a column
+ *  of identical rows. This is read from the same list the table draws: no new
+ *  call, nothing from the backend that was not already here.
+ *  A name is shown with what is open against it, never a league table: the
+ *  point is that nothing leaves the room without a name and a date, not that
+ *  anybody is ranked. */
+function accountabilityStrip(list) {
+  var open = 0, late = 0, done = 0, by = {};
+  list.forEach(function (a) {
+    var st = String(a.status || "").toLowerCase();
+    if (st === "done" || st === "closed" || st === "complete") { done++; return; }
+    open++;
+    if (a.overdue) late++;
+    var who = String(a.owner || "").trim() || "Nobody named";
+    by[who] = by[who] || { n: 0, late: 0 };
+    by[who].n++;
+    if (a.overdue) by[who].late++;
+  });
+  var names = Object.keys(by).sort(function (x, y) { return by[y].late - by[x].late || by[y].n - by[x].n; });
+  var carried = list.filter(function (a) { return a.origin && a.origin !== a.meetingId; }).length;
+  return '<div class="card acct"><div class="acct-nums">' +
+    '<div class="stat' + (open ? "" : " green") + '"><b>' + open + "</b><span>still open</span></div>" +
+    '<div class="stat' + (late ? " red" : "") + '"><b>' + late + "</b><span>past the date</span></div>" +
+    '<div class="stat green"><b>' + done + "</b><span>closed off</span></div>" +
+    '<div class="stat"><b>' + carried + "</b><span>carried forward</span></div>" +
+    "</div>" +
+    (names.length
+      ? '<div class="acct-who">' + names.map(function (n) {
+          return '<span class="acct-chip' + (by[n].late ? " late" : "") + '"><b>' + esc(n) + "</b>" +
+            by[n].n + (by[n].late ? " · " + by[n].late + " past the date" : "") + "</span>";
+        }).join("") + "</div>"
+      : "") +
+    '<div class="hint" style="margin-top:10px">Nothing leaves the room without a name and a date. ' +
+    "Every one of these is read out at the next meeting and answered for.</div></div>";
+}
+
 function actionsTable(list) {
   return '<div class="card"><div class="tbl-scroll"><table><thead><tr>' +
     "<th>Action item</th><th>Owner</th><th>Raised by</th><th>Due</th><th>Status</th>" +
@@ -3192,8 +3496,8 @@ function buildForm(d) {
     '<div class="row3">' +
     '<div class="field"><label for="b-date">Date</label><input id="b-date" type="date" value="' +
       esc((m.dateISO || "").slice(0, 10)) + '"/></div>' +
-    '<div class="field"><label for="b-start">Starts</label><input id="b-start" type="time" value="' + esc(m.start || "09:00") + '"/></div>' +
-    '<div class="field"><label for="b-end">Ends</label><input id="b-end" type="time" value="' + esc(m.end || "") + '"/></div></div>' +
+    '<div class="field"><label for="b-start">Starts</label><input id="b-start" type="time" value="' + esc(time24(m.start) || "09:00") + '"/></div>' +
+    '<div class="field"><label for="b-end">Ends</label><input id="b-end" type="time" value="' + esc(time24(m.end)) + '"/></div></div>' +
 
     '<div class="row3">' +
     '<div class="field"><label for="b-format">Format</label><select id="b-format">' +
@@ -3267,7 +3571,7 @@ function buildForm(d) {
       var total = d.agenda.reduce(function (n, a) { return n + (a.minutes || 0); }, 0);
       out += '<div class="card"><div style="font-size:12px;color:var(--muted);margin-bottom:10px">' +
         d.agenda.length + " items · " + total + " minutes allotted" +
-        (m.start ? " · runs " + esc(d.agenda[0].clock) + " to " + esc(endClock(m.start, total)) : "") + "</div>" +
+        (m.start ? " · runs " + esc(d.agenda[0].clock) + " to " + esc(endClock(time24(m.start), total)) : "") + "</div>" +
         '<div class="tbl-scroll"><table><thead><tr><th>Time</th><th>Item</th><th>Presenter</th>' +
         "<th>Min</th><th>Seen by</th><th></th></tr></thead><tbody>" +
         d.agenda.map(function (a, i) {
@@ -3688,7 +3992,7 @@ function resultCard(x) {
     (x.inTitle ? ' <span class="badge b-green">In the title</span>' : "") + "</div></div>" +
     '<div style="margin-top:11px">' + x.snippets.map(function (sn) {
       return '<div style="font-size:12.5px;line-height:1.75;color:var(--muted);padding:9px 12px;' +
-        'background:rgba(0,0,0,.2);border-left:2px solid var(--accent);border-radius:0 8px 8px 0;' +
+        'background:hsl(var(--sh) / .2);border-left:2px solid var(--accent);border-radius:0 8px 8px 0;' +
         'margin-bottom:7px">' + highlight(sn, AR.q) + "</div>";
     }).join("") + "</div>" +
     '<div class="btn-row" style="margin-top:10px">' +
@@ -3701,7 +4005,7 @@ function highlight(text, q) {
   if (!q) return safe;
   var needle = esc(q).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return safe.replace(new RegExp(needle, "gi"), function (m) {
-    return '<mark style="background:rgba(59,158,255,.28);color:var(--text);' +
+    return '<mark style="background:rgba(0,114,141,.28);color:var(--text);' +
       'padding:1px 3px;border-radius:3px">' + m + "</mark>";
   });
 }
@@ -3954,7 +4258,7 @@ function viewTopic() {
           '<button class="btn ghost sm" data-open="' + esc(t.meeting.id) + '">Open</button></div>' +
           (t.items.length
             ? '<div style="margin-top:11px">' + t.items.map(function (a) {
-                return '<div style="padding:9px 12px;background:rgba(0,0,0,.2);border-left:2px solid var(--accent);' +
+                return '<div style="padding:9px 12px;background:hsl(var(--sh) / .2);border-left:2px solid var(--accent);' +
                   'border-radius:0 8px 8px 0;margin-bottom:6px">' +
                   '<b style="font-family:Montserrat;font-size:12.5px">' + esc(a.title) + "</b>" +
                   (a.presenter ? '<span style="color:var(--dim);font-size:11.5px"> · ' + esc(a.presenter) + "</span>" : "") +
@@ -4086,6 +4390,433 @@ function resume() {
     say("li-msg", "Could not reach the branch system. Sign in again when you have a connection.");
   });
 }
+
+/* ---------------- the screen (10 Nov 2026) ---------------- */
+var SCR = { idx: 0, follow: true, timer: null, tick: null };
+/* =====================================================================
+ *  THE BRANCH'S OWN NUMBERS, ON THE MEETING SCREEN (10 November 2026)
+ *
+ *  Ricky: "so much we do daily, so much intelligence we drive ... I'm not
+ *  seeing the numbers ... this pulls together daily actual live data."
+ *
+ *  d.pack comes from the tracker through one signed call (see meetNumbers_
+ *  in Meetings.gs). Every block is drawn only if its part arrived, so
+ *  Salesforce being down costs that block and nothing else — and when no
+ *  pack arrives at all the section says where the numbers come from rather
+ *  than showing a blank, because a screen that is silently empty reads as a
+ *  screen that is broken.
+ *
+ *  COUNTS AND FIRST NAMES. No client, no client count, no money: the page is
+ *  served from the open web.
+ * ===================================================================== */
+function numTile(n, label, cls) {
+  return '<div class="nmt' + (cls ? " " + cls : "") + '"><b>' + esc(String(n)) + "</b><span>" + esc(label) + "</span></div>";
+}
+
+function numbersBlock(d) {
+  var k = d.pack;
+  if (!k) {
+    return '<section><div class="section-label">The branch, this morning</div>' +
+      '<div class="card flat"><div class="hint" style="margin:0">The live figures come from the ' +
+      "tracker. Set <b>TRACKER_URL</b> on this project and <b>MEET_BRIDGE_KEY</b> on both, and they " +
+      "are on this screen at nine o’clock: the production board, the fact finds, the open book, " +
+      "the campaign and every desk’s day.</div></div></section>";
+  }
+  var out = '<section><div class="section-label">The branch, this morning</div>';
+  var p = k.production, w = k.work, f = k.factfind;
+
+  if (p || w || f) {
+    out += '<div class="card"><div class="nmrow">' +
+      (p ? numTile(p.apps, "applications since 1 Oct") + numTile(p.policies, "policies picked up") +
+           numTile(p.week, "this week") : "") +
+      (f ? numTile(f.year, "fact finds this year") + numTile(f.month, "this month") : "") +
+      (w ? numTile(w.closed7, "closed in 7 days", "good") : "") +
+      "</div>";
+    if (w) {
+      out += '<div class="nmrow sm">' +
+        numTile(w.renewals, "renewals and premiums due", "warn") +
+        numTile(w.pendings, "pendings", "warn") +
+        numTile(w.servicing, "service requests") +
+        numTile(w.claims, "claims and maturities") +
+        numTile(w.orphanOpen, "orphan files open") + "</div>";
+    }
+    out += '<div class="hint" style="margin-top:10px">Read at ' + esc(k.asOf || "") +
+      " from Salesforce and the fact find. Counts, not money.</div></div>";
+  }
+
+  /*  THE DESKS, BY NAME. Each against their own normal, never each other's. */
+  if (k.people && k.people.length) {
+    out += '<div class="card"><div class="dsk-head"><b>The desks</b> · today</div>' +
+      '<div class="dsk">' + k.people.map(function (x) {
+        var state = x.absent ? "absent" : x.at ? (x.late ? "in, " + x.late + " min late" : "in at " + x.at) : "not in yet";
+        return '<div class="dsk-row' + (x.absent ? " no" : "") + '">' +
+          '<span class="nm">' + esc(x.name) + "</span>" +
+          '<span class="st">' + esc(state) + "</span>" +
+          '<span class="n">' + x.today + "<i>closed today</i></span>" +
+          '<span class="n">' + x.recent + "<i>a day, against " + x.normal + "</i></span>" +
+          '<span class="n' + (x.overdue >= 10 ? " bad" : "") + '">' + x.overdue + "<i>overdue</i></span>" +
+          "</div>";
+      }).join("") + "</div>" +
+      '<div class="hint" style="margin-top:10px">Each against their own normal, never against each other.</div></div>';
+  }
+
+  if (k.agents && k.agents.total) {
+    out += '<div class="card flat"><div class="nmrow sm">' +
+      numTile(k.agents.planned + " of " + k.agents.total, "agents projected today") +
+      numTile(k.agents.closed + " of " + k.agents.total, "closed the day off") + "</div></div>";
+  }
+
+  var gaps = ["production", "work", "factfind", "people", "agents"].filter(function (x) {
+    return (k.parts || []).indexOf(x) < 0;
+  });
+  if (gaps.length) {
+    out += '<div class="hint">Not read this time: ' + esc(gaps.join(", ")) +
+      ". The rest is as at " + esc(k.asOf || "") + ".</div>";
+  }
+  return out + "</section>";
+}
+
+/* =====================================================================
+ *  WHAT THE RECORD SHOWS ABOUT HOW WE WORK  (10 November 2026)
+ *
+ *  "Calling out the agents, observing the strengths, the weakness ... we will
+ *  look at how persons operate and how they work and how they apply themselves.
+ *  And that's the only way we can actually look at how we train and skills and
+ *  drills."
+ *
+ *  THE DRILLS ARE FOR THE ROOM; THE PEOPLE ARE FOR THEIR MANAGERS. The backend
+ *  sends the per-person read only to staff and managers (packFor_), so an agent
+ *  opening this page sees what the branch needs to train and not a reading of
+ *  anybody. Nobody is ranked here and nobody is scored: each person is read
+ *  against their OWN projection and their OWN normal.
+ * ===================================================================== */
+function drillBlock(d) {
+  var o = (d.pack || {}).observed;
+  if (!o) return "";
+  var out = '<section><div class="section-label">What to drill, from how we actually worked</div>';
+
+  if (o.train && o.train.length) {
+    out += '<div class="card"><div class="dsk-head"><b>Skills and drills</b> · ' +
+      "read off " + o.days + " working days, not asked for</div>" +
+      '<div class="drl">' + o.train.map(function (t, i) {
+        return '<div class="drl-row' + (i === 0 ? " top" : "") + '">' +
+          '<span class="n">' + t.n + "<i>" + (t.n === 1 ? "person" : "people") + "</i></span>" +
+          '<span class="pt">' + esc(t.point) + "</span></div>";
+      }).join("") + "</div>" +
+      '<div class="hint" style="margin-top:10px">Counts only. Who is who is their own ' +
+      "manager’s to read, and it is on their own page.</div></div>";
+  } else if (o.agents || o.desks) {
+    out += '<div class="card flat"><div class="hint" style="margin:0">Nothing to drill this ' +
+      "fortnight: everybody is landing what they project.</div></div>";
+  }
+
+  /*  Staff and managers only — the backend does not send this to anybody else. */
+  if (o.agents && o.agents.length) {
+    out += '<div class="card"><div class="dsk-head"><b>The agents</b> · each against their own projection</div>' +
+      '<div class="obs">' + o.agents.map(obsRow).join("") + "</div></div>";
+  }
+  if (o.desks && o.desks.length) {
+    out += '<div class="card"><div class="dsk-head"><b>The desks</b> · each against their own normal</div>' +
+      '<div class="obs">' + o.desks.map(obsRow).join("") + "</div></div>";
+  }
+  return out + "</section>";
+}
+
+function obsRow(x) {
+  return '<div class="obs-row">' +
+    '<span class="nm">' + esc(x.name) + "</span>" +
+    '<span class="bd">' +
+      (x.strength ? '<span class="good">✓ ' + esc(x.strength) + "</span>" : "") +
+      (x.watch ? '<span class="watch">• ' + esc(x.watch) + "</span>" : "") +
+      (!x.strength && !x.watch ? '<span class="quiet">Steady</span>' : "") +
+      (x.train ? '<span class="trn">Drill: ' + esc(x.train) + "</span>" : "") +
+    "</span></div>";
+}
+
+/*  THE FRONT LINE. A run of quiet meetings, which one week's panel cannot show.
+ *  Staff and managers only, deliberately: a count of today is a nudge, where a
+ *  run of weeks read out in front of everybody is a reprimand. */
+function heardBlock(d) {
+  var h = d.heard;
+  if (!h || !h.meetings) return "";
+  var fl = (h.frontLine || []);
+  if (!fl.length) return "";
+  var quiet = fl.filter(function (x) { return !x.spoke && x.meetings; });
+  return '<section><div class="section-label">The front line</div><div class="card">' +
+    '<div class="dsk-head"><b>' + (fl.length - quiet.length) + " of " + fl.length +
+      "</b> of the staff have spoken in the last " + h.meetings + " meetings" +
+      (quiet.length ? ' <span class="owed-out">' + quiet.length + " have not</span>" : "") + "</div>" +
+    '<div class="obs">' + fl.map(function (x) {
+      var no = !x.spoke;
+      return '<div class="obs-row' + (no ? " no" : "") + '">' +
+        '<span class="nm">' + esc(x.name) + "</span>" +
+        '<span class="bd"><span class="' + (no ? "watch" : "good") + '">' +
+          (no ? "Nothing in " + x.meetings + " meetings" : x.spoke + " of " + x.meetings + " meetings") +
+          "</span>" + (x.now ? '<span class="quiet">Something in for this one</span>' : "") +
+        "</span></div>";
+    }).join("") + "</div>" +
+    '<div class="hint" style="margin-top:10px">Staff and managers only. Being away is not ' +
+    "silence: a meeting somebody apologised for is not counted against them.</div></div></section>";
+}
+
+/* =====================================================================
+ *  WHO OWES THIS MEETING WHAT, AND THE RUNNING ORDER AS A CLOCK
+ *  (10 November 2026)
+ *
+ *  Ricky: "I'm not seeing the staff being held accountable ... our meeting
+ *  could have a timeline as it goes, reminding us the times and who is
+ *  responsible ... [she] continues to sit in our meetings and get away with
+ *  craziness.  Things must change and hold the persons accountable."
+ *
+ *  THE MECHANISM IS A NAMED, VISIBLE, EMPTY SLOT.  Every agenda row already
+ *  carries an owner — the Rota's own Owner column — and every contribution
+ *  already carries a name.  Put the two together and the screen can say, in
+ *  front of the room, which named person owes which item and whether anything
+ *  is in.  Nobody is ranked and nothing is scored: it is either in or it is
+ *  not, with the name on it.
+ *
+ *  It is computed from what action=meeting ALREADY returns.  No new call, no
+ *  paste, nothing new from the backend — so it works the first morning the
+ *  meeting exists.  d.roster, when the backend sends one, adds the people who
+ *  own no item but are expected to bring one thing.
+ * ===================================================================== */
+
+/** "Everyone", "The room", blank: an item the whole room owns, not a person. */
+function owedIsRoom(who) {
+  return !who || /^(everyone|the room|all|the branch|branch)$/i.test(String(who).trim());
+}
+/*  The same person, written two ways.  The branch's own lists do not agree
+ *  with each other: the Agent Skill Bank writes "SASHA LALLA" where Salesforce
+ *  writes "Sasha Lalla-Jagassar", and a married name is the ordinary case, not
+ *  the exception.  A HYPHEN IS A SPACE here — stripping it instead glues
+ *  "Lalla-Jagassar" into one word that "Lalla" can never match.  A first name
+ *  alone matches nobody: it has to be the same first name and every other part
+ *  of the shorter name found in the longer, a part of a double-barrelled name
+ *  counting as found because the hyphen has already become a space.
+ *
+ *  TWO GUARDS, BOTH EARNED BY ONE COLLISION. "The Branch Manager" folded into
+ *  "The Branch Manager's Assistant" and took her items with it, so the BMA
+ *  vanished from the one panel built to name her — the same collision a test
+ *  here hit on /^The Branch Manager\b/, one layer down. A part must match
+ *  WHOLE, never by prefix (manager against managers), and one name may carry
+ *  AT MOST ONE PART the other does not: a married surname, a middle name, a
+ *  surname the rota left off. Two extra parts is a different label, not the
+ *  same person, and the apostrophe-s the possessive leaves behind counts as
+ *  one of them. It errs towards keeping people apart, which is the safe
+ *  direction here: a wrong merge hides somebody, where a wrong split shows
+ *  them twice with their own items and is fixed by typing the full name. */
+function owedSame(a, b) {
+  var norm = function (v) {
+    return String(v || "").toLowerCase().replace(/[-'\u2019]/g, " ")
+      .replace(/[^a-z ]/g, "").trim().split(/\s+/).filter(Boolean);
+  };
+  var x = norm(a), y = norm(b);
+  if (!x[0] || !y[0]) return false;
+  if (x.join(" ") === y.join(" ")) return true;
+  var sh = x.length <= y.length ? x : y, lo = x.length <= y.length ? y : x;
+  if (sh[0] !== lo[0]) return false;
+  if (lo.length - sh.length > 1) return false;
+  return sh.every(function (w) {
+    return lo.some(function (z) { return z === w; });
+  });
+}
+
+/*  ONE PERSON, ONE LINE.  The first cut listed one row per agenda ITEM, which
+ *  put the Branch Manager on the screen five times and painted fifteen of
+ *  eighteen rows red — and a wall of red says nothing at all.  A person owes
+ *  this meeting something; the items they own are what they owe it FOR.
+ *  Returns [{who, role, items[], in, n, said}], owners first, then everyone
+ *  else on the roster who owes the room one thing. */
+function owedList(d) {
+  var cons = d.contributions || [], order = [], by = {};
+  /*  ONE PERSON IS ONE ROW EVEN WRITTEN TWO WAYS. The rota carries the
+   *  owner the branch typed ("Elizabeth", "Sasha Lalla") and the roster
+   *  carries the Agent Skill Bank's ("ELIZABETH ...", "SASHA LALLA"), so
+   *  keying on the spelling alone put the same person on the screen
+   *  twice and counted her as owing two things. An existing row whose
+   *  name owedSame-matches wins, and the fuller spelling is the one
+   *  shown. */
+  var add = function (name, role, item) {
+    var k = String(name || "").toLowerCase().trim(); if (!k) return;
+    if (!by[k]) {
+      for (var i = 0; i < order.length; i++) {
+        if (owedSame(name, by[order[i]].who)) { k = order[i]; break; }
+      }
+    }
+    if (!by[k]) { by[k] = { who: name, role: role || "", items: [], n: 0, said: "" }; order.push(k); }
+    else if (String(name).trim().split(/\s+/).length > String(by[k].who).trim().split(/\s+/).length) {
+      by[k].who = name;
+    }
+    if (item && by[k].items.indexOf(item) < 0) by[k].items.push(item);
+    if (role && !by[k].role) by[k].role = role;
+  };
+  (d.agenda || []).forEach(function (a) { if (!owedIsRoom(a.presenter)) add(a.presenter, "", a.title); });
+  (d.roster || []).forEach(function (p) { add(p.name, p.role, ""); });
+  cons.forEach(function (c) {
+    order.forEach(function (k) {
+      if (!owedSame(c.name, by[k].who)) return;
+      by[k].n++; if (!by[k].said) by[k].said = c.body;
+    });
+  });
+  return order.map(function (k) { var r = by[k]; r["in"] = r.n > 0; return r; });
+}
+
+function owedBlock(d) {
+  var rows = owedList(d);
+  if (!rows.length) return "";
+  var inN = rows.filter(function (r) { return r["in"]; }).length;
+  var out = rows.length - inN;
+  return '<section><div class="section-label">Who owes this meeting what</div>' +
+    '<div class="card owed">' +
+    '<div class="owed-head"><b>' + inN + " of " + rows.length + "</b> have put something in" +
+    (out ? ' <span class="owed-out">' + out + " have not</span>" : " \u2014 all of them") + "</div>" +
+    '<div class="owed-rows">' + rows.map(function (r) {
+      var what = r.items.length ? r.items.join(" \u00b7 ")
+        : (r.role ? "One thing for the room" : "One thing for the room");
+      return '<div class="owed-row' + (r["in"] ? " yes" : " no") + '">' +
+        '<span class="mk" aria-hidden="true">' + (r["in"] ? "\u2713" : "\u2014") + "</span>" +
+        '<span class="nm">' + esc(r.who) + (r.role ? ' <span class="rl">' + esc(r.role) + "</span>" : "") + "</span>" +
+        '<span class="wt">' + esc(what) + "</span>" +
+        '<span class="st">' + (r["in"] ? (r.n > 1 ? r.n + " in" : "in") : "nothing in") + "</span>" +
+        (r["in"] && r.said ? '<span class="sd">' + esc(String(r.said).slice(0, 130)) + "</span>" : "") +
+        "</div>";
+    }).join("") + "</div>" +
+    '<div class="hint" style="margin-top:12px">The owners come off the Rota\u2019s own Owner column. ' +
+    "An empty line is read out with the name on it.</div></div></section>";
+}
+
+/*  THE RUNNING ORDER AS A CLOCK.  One segment per item, as wide as its
+ *  minutes, with the time it starts and who owns it.  Before the meeting it is
+ *  the shape of the ninety minutes; during it, the item on now fills in real
+ *  time and an over-run turns red, so the room can see the clock without
+ *  anybody policing it.  Motion lives inside prefers-reduced-motion:
+ *  no-preference, and the finished state is the plain default. */
+function railBlock(d, compact) {
+  var ag = (d.agenda || []).filter(function (a) { return a.minutes; });
+  if (!ag.length) return "";
+  var sn = d.session || {}, tot = ag.reduce(function (n, a) { return n + a.minutes; }, 0);
+  var el = sn.itemStartedISO ? Math.max(0, Math.floor((Date.now() - Date.parse(sn.itemStartedISO)) / 1000)) : 0;
+  /*  "Reminding us the times": the Rota has no clock column, so the times are
+      worked out from the meeting's own start and each item's minutes. A clock
+      the backend does send wins. */
+  var run = timeMin((d.meeting || {}).start);
+  var hhmm = function (n) {
+    var h = Math.floor(n / 60) % 24, m2 = n % 60;
+    return ((h % 12) || 12) + ":" + (m2 < 10 ? "0" : "") + m2;
+  };
+  var at = -1;
+  ag.forEach(function (a, i) { if (sn.currentAgendaId && a.id === sn.currentAgendaId) at = i; });
+  return '<div class="rail2' + (compact ? " sm" : "") + '" style="--n:' + tot + '">' +
+    ag.map(function (a, i) {
+      var st = at < 0 ? "" : i < at ? " done" : i === at ? " on" : "";
+      return '<div class="seg' + st + '" style="--m:' + a.minutes +
+        (st === " on" ? ";--el:" + el : "") + '" title="' + esc(a.title) + '">' +
+        '<span class="bar"><i></i></span>' +
+        '<span class="tm">' + esc(a.clock || (run >= 0 ? hhmm(run + ag.slice(0, i).reduce(function (n, x) { return n + x.minutes; }, 0)) : "")) + "</span>" +
+        '<span class="ti">' + esc(a.title) + "</span>" +
+        '<span class="ow">' + esc(!String(a.presenter || "").trim() ? "Nobody yet"
+            : owedIsRoom(a.presenter) ? "The room" : a.presenter) + " · " + a.minutes + "m</span>" +
+        "</div>";
+    }).join("") + "</div>";
+}
+
+function scrSlides(d) { return [{ overview: true }].concat(d.agenda || []); }
+function scrDet(det) {
+  var t = String(det || ""), k = t.search(/\bQuestion:/);
+  if (k < 0) return escLines(t);
+  return escLines(t.slice(0, k).trim()) + '<span class="q">' + escLines(t.slice(k).replace(/^Question:\s*/, "")) + "</span>";
+}
+function scrDraw() {
+  var d = S.detail, box = $("scr"); if (!d || !box || box.hidden) return;
+  var m = d.meeting, sn = d.session || {}, sl = scrSlides(d), live = !!sn.running;
+  if (live && SCR.follow && sn.currentAgendaId) { for (var i = 1; i < sl.length; i++) if (sl[i].id === sn.currentAgendaId) SCR.idx = i; }
+  SCR.idx = Math.max(0, Math.min(sl.length - 1, SCR.idx));
+  var a = sl[SCR.idx], cur = live && a && a.id === sn.currentAgendaId;
+  var dots = sl.slice(1).map(function (x, k) { return '<i class="' + (k + 1 === SCR.idx ? "on" : k + 1 < SCR.idx ? "done" : "") + '"></i>'; }).join("");
+  var head = '<div class="scr-top"><b>' + esc(m.title) + "</b><span>" + esc(m.date || "") + (timeWords(m.start) ? " · " + esc(timeWords(m.start)) : "") + "</span>" +
+    (live ? '<span style="color:var(--green)">● Live · ' + esc(clockText(sn.elapsed)) + "</span>" : "") + '<span class="scr-dots">' + dots + "</span>" +
+    '<span class="sp"><button class="btn ghost sm" type="button" data-scr="prev">◀</button><button class="btn ghost sm" type="button" data-scr="next">▶</button>' +
+    (live && d.canRun && sn.nextAgendaId ? '<button class="btn teal sm" type="button" data-scr="move">Move on</button>' : "") +
+    '<button class="btn ghost sm" type="button" data-scr="close">Close</button></span></div>' +
+    railBlock(d, true);
+  var main, side;
+  if (a.overview) {
+    var tot = (d.agenda || []).reduce(function (n, x) { return n + (x.minutes || 0); }, 0);
+    main = '<div class="scr-item"><div class="scr-eyebrow">The agenda · ' + tot + ' minutes</div><h1 class="scr-title">' + esc(m.title) + "</h1>" +
+      (m.subtitle ? '<div class="scr-owner">' + esc(m.subtitle) + "</div>" : "") +
+      '<div class="scr-list">' + (d.agenda || []).map(function (x) { return '<div><span class="t">' + esc(x.clock || "") + "</span><span>" + esc(x.title) + '</span><span class="o">' + esc(x.presenter || "Everyone") + " · " + (x.minutes || 0) + "</span></div>"; }).join("") + "</div></div>";
+    var pre = (d.contributions || []).filter(function (c) { return (c.offset || 0) < 0; });
+    /*  The room sees, on the first slide, who has put something in and who has
+        not. The names are the Rota's own owners and the roster — nobody is
+        ranked and nothing is scored; it is in or it is not. */
+    var ow = owedList(d), owIn = ow.filter(function (r) { return r["in"]; }).length;
+    var owOut = ow.filter(function (r) { return !r["in"]; });
+    side = '<div class="scr-side">' +
+      (ow.length ? '<div class="scr-owed"><h3>' + owIn + " of " + ow.length + " have put something in</h3>" +
+        (owOut.length ? '<div class="no">Nothing in yet: <b>' +
+          owOut.map(function (r) { return esc(r.who); }).join("</b>, <b>") + "</b></div>"
+          : '<div class="yes">All of them.</div>') + "</div>" : "") +
+      '<div class="scr-rec"><h3>Brought in before the meeting · ' + pre.length + "</h3>" +
+      (pre.length ? pre.slice(0, 12).map(function (c) { return '<div class="c"><b>' + esc(c.name) + "</b> · " + esc(c.body) + "</div>"; }).join("") : '<div class="none">Nothing yet. Anything posted on the meeting page before 9:00 shows here.</div>') + "</div></div>";
+  } else {
+    var on = (d.contributions || []).filter(function (c) { return c.agendaId === a.id; }).slice().reverse();
+    main = '<div class="scr-item"><div class="scr-eyebrow">' + esc(a.section || "") + " · " + SCR.idx + " of " + (sl.length - 1) + (cur ? " · on now" : "") + "</div>" +
+      '<h1 class="scr-title">' + esc(a.title) + "</h1>" +
+      '<div class="scr-owner">' + (a.presenter ? "Owned by <b>" + esc(a.presenter) + "</b>" : "<b>The room</b>") + " · " + (a.minutes || 0) + " minutes" + (a.clock ? " · " + esc(a.clock) : "") + "</div>" +
+      '<div class="scr-det">' + scrDet(a.detail) + "</div></div>";
+    side = '<div class="scr-side">' + (cur ? '<div class="scr-clock"><div class="n" id="scr-n">—</div><small id="scr-s"></small></div>' : "") +
+      '<div class="scr-rec"><h3>On the record for this item · ' + on.length + "</h3>" +
+      (on.length ? on.slice(0, 16).map(function (c) { return '<div class="c"><b>' + esc(c.name) + "</b>" + (c.kind && c.kind !== "Point" ? " · " + esc(c.kind) : "") + "<br>" + esc(c.body) + "</div>"; }).join("")
+        : '<div class="none">Nothing yet. Post from your phone on the meeting page: it appears here.</div>') + "</div></div>";
+  }
+  var nx = sl[SCR.idx + 1];
+  var foot = '<div class="scr-foot">' + (nx && !nx.overview ? "Next: <b>" + esc(nx.title) + "</b>" + (nx.presenter ? " · " + esc(nx.presenter) : "") : "Last item.") +
+    '<span class="rule">Nobody reads the screen. The owner speaks to it. Every item ends with a name and a date.</span></div>';
+  box.innerHTML = head + '<div class="scr-main">' + main + side + "</div>" + foot;
+  if (SCR.tick) { clearInterval(SCR.tick); SCR.tick = null; }
+  if (cur && sn.itemStartedISO) {
+    var t0 = Date.parse(sn.itemStartedISO), cap = (sn.currentAllotted || 0) * 60;
+    var run = function () { var n = $("scr-n"); if (!n) { clearInterval(SCR.tick); SCR.tick = null; return; }
+      var t = tickState(Math.max(0, Math.floor((Date.now() - t0) / 1000)), cap, sn.currentAllotted); n.textContent = t.text; n.className = "n" + (t.cls ? " " + t.cls : ""); $("scr-s").textContent = t.sub; };
+    run(); SCR.tick = setInterval(run, 1000);
+  }
+}
+function scrRefresh() {
+  if (!S.meetingId || $("scr").hidden) return;
+  apiGet("meeting", { token: S.token, id: S.meetingId }).then(function (res) { if (res && res.ok) { S.detail = res; scrDraw(); } }).catch(function () {});
+}
+function scrOpen() {
+  var box = $("scr"); if (!box) { box = document.createElement("div"); box.id = "scr"; box.setAttribute("role", "dialog"); box.setAttribute("aria-label", "The meeting on the screen"); document.body.appendChild(box); }
+  box.hidden = false; SCR.follow = true; SCR.idx = 0; scrDraw();
+  try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {}); } catch (e) {}
+  if (SCR.timer) clearInterval(SCR.timer); SCR.timer = setInterval(scrRefresh, 15000);
+}
+function scrClose() {
+  var box = $("scr"); if (box) box.hidden = true;
+  if (SCR.timer) { clearInterval(SCR.timer); SCR.timer = null; } if (SCR.tick) { clearInterval(SCR.tick); SCR.tick = null; }
+  try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {}); } catch (e) {}
+  if (S.detail) drawMeeting();
+}
+function scrMove() {
+  var d = S.detail, sn = d && d.session; if (!sn || !sn.nextAgendaId || !d.canRun) return;
+  post("currentItem", { meetingId: S.meetingId, agendaId: sn.nextAgendaId }).then(function () { SCR.follow = true; scrRefresh(); });
+}
+document.addEventListener("click", function (e) {
+  var t = e.target && e.target.closest ? e.target : null; if (!t) return;
+  if (t.closest("#scr-open")) { scrOpen(); return; }
+  var b = t.closest("[data-scr]"); if (!b) return;
+  var k = b.getAttribute("data-scr");
+  if (k === "close") scrClose(); else if (k === "move") scrMove();
+  else { SCR.follow = false; SCR.idx += k === "next" ? 1 : -1; scrDraw(); }
+});
+document.addEventListener("keydown", function (e) {
+  var box = $("scr"); if (!box || box.hidden) return;
+  if (e.key === "Escape") { scrClose(); return; }
+  if (e.key === "ArrowRight" || e.key === "PageDown") { SCR.follow = false; SCR.idx++; scrDraw(); e.preventDefault(); }
+  else if (e.key === "ArrowLeft" || e.key === "PageUp") { SCR.follow = false; SCR.idx--; scrDraw(); e.preventDefault(); }
+  else if (e.key === " " || e.key === "Enter") { var d = S.detail; if (d && d.session && d.session.running && d.canRun) { scrMove(); e.preventDefault(); } }
+  else if (e.key === "f" || e.key === "F") { SCR.follow = true; scrDraw(); }
+});
 
 boot();
 </script>

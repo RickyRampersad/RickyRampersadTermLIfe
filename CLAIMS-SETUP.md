@@ -20,6 +20,10 @@ steps, and only three of them are yours.
 claimant types their own policy number instead of it filling itself in, and
 nothing writes back to `Claims__c`. Everything else is unchanged.
 
+**Before step 2, read "Moving it on to the Workspace" below.** The sheet is on
+the personal Gmail today, and which account owns it decides the `/exec` — so
+doing the move first saves re-wiring the two pages twice.
+
 ### Re-paste `Claims.gs` — 4 November 2026 · **DONE, and verified live**
 
 Pasted and deployed on 4 November. The same `/exec` was kept, so nothing had
@@ -103,6 +107,192 @@ and publish a New version.** What it carries:
 
 Nothing to do on the site for this one; it is all backend.
 
+## Moving it on to the Workspace — 7 November 2026
+
+Asked for in these words: *"the work code claims is on my personal and would
+like to move to workspace"*. He is right, and it is the same move the motor
+quote made on 21 October — see `CLAUDE.md`, which has the one sentence that
+matters: **the sheet has to be OWNED by support@, not shared with it.** An
+editor can run the script, and then Deploy refuses with *"You do not have
+permission to perform this action"*, which looks like a Google fault and is
+not.
+
+**Where it is now.** "CLAIMSTT — Claims Tracker",
+`1taKGaSprdP_BCt4KCNQiQNcXt1ZRubC4CAtlrdxlKHo`, owned by the personal Gmail,
+made 6 August 2026. Three test claims on it and nothing real.
+
+**Re-measured 12 November 2026, and it changes the route.** Every tab was read:
+three test claims, seven test document rows, eight log lines, one Staff row —
+and **Vehicle Register and Policy Register are header-only**, because Salesforce
+has never been connected, so the registers have never synced. There is nothing
+on this sheet to carry. That makes **starting fresh** better than copying
+(below), and it makes this the cheapest moment the move will ever have.
+
+**It landed on `support002@`, and that is settled.** On 12 November the browser
+doing this was signed in as `support002@rickyrampersadbranch.com`, a second
+account in the same Workspace, and Google answered the sheet with "You need
+access" — which reads as a broken link and is not. It then turned out to be the
+only account in the domain that can be signed in to, so **support002@ owns the
+project**. What that costs, and what was done about it:
+
+- **The ping still reads `onWorkspace: true`.** It compares the *domain* against
+  `CLAIMS.OWNER_DOMAIN`, not the mailbox, so the move registers either way — and
+  the daily mail allowance and the Drive recoverability, which are the two
+  reasons for the move, belong to the Workspace whichever account holds it.
+- **Test mail goes to support002@**, because `TEST_INBOX` is blank and falls
+  back to the owner. Fine as long as somebody reads that inbox; set `TEST_INBOX`
+  to send it elsewhere.
+- **`MailApp` sends as the owner, so a client's acknowledgement would come From
+  support002@** — an address no client has ever seen, and a reply to it would
+  land in a mailbox nobody watches. **Fixed in build `2026-11-12a`:** `sendMail_`
+  puts `CLAIMS.REPLY_TO` (`support@rickyrampersadbranch.com`, which is read
+  every five minutes) on every e-mail that does not already name one. The desk
+  notice *does* name one — the client's own address, so that a Guardian claims
+  desk replying reaches the person who filed — and an explicit `replyTo` wins.
+- **Worth asking a Workspace admin for, if it is ever easy:** add
+  `support@rickyrampersadbranch.com` as a verified *Send mail as* alias on
+  support002@. The From would then read support@ as well, which is the Log
+  Book's own pattern (`lbGmailFrom_` reads `GmailApp.getAliases()`). The
+  reply-to above makes that a nicety rather than a blocker.
+
+**Why it is worth doing, beyond tidiness.** Two things, and the second is the
+one that bites later:
+
+- **The daily mail allowance.** A personal Google account allows about a
+  hundred recipients a day, and every claim copies three addresses, so about
+  thirty claims' notices in a day — before the acknowledgement, the chases and
+  the follow-up run. That exact ceiling is why `MailRelay.gs` had to be built
+  for the tracker. Under the Workspace it is roughly 1,500 and `MailApp` sends
+  as support@ by itself, so the `MS_*` Graph properties are never needed here.
+- **Every claim document lives in that account's Drive.** The folder is
+  "Claims TT — Ricky Rampersad Branch" and the claim rows link into it. On a
+  personal account nobody at the branch can reach a client's documents if the
+  account is ever lost, and there is no admin who can recover it.
+
+### First, thirty seconds that could save the whole job
+
+Open the sheet → **Share** → add `support@rickyrampersadbranch.com` as an
+editor → then the ⋮ beside that name and look for **Transfer ownership**.
+
+- **Offered?** Take it. The file id, the data, the Drive folder, the bound
+  script and every Script Property stay exactly as they are, and the `/exec`
+  URL does not change, so nothing on the site has to be re-wired. Then sign in
+  as support@, open Extensions → Apps Script, and publish **Deploy → Manage
+  deployments → ✏️ → New version** so the web app runs as the new owner.
+
+  **Then deal with the triggers, which a transfer does not move.** An Apps
+  Script trigger belongs to the person who installed it, not to the file, so a
+  transferred sheet goes on firing under the Gmail account and goes on spending
+  its mail allowance — the very thing this move exists to escape. Delete all
+  three on the old account (⏰ **Triggers**) and run **1. Set up / repair
+  everything** as support@ to install them again. Measure both halves rather
+  than assume: the ping's `runsAs` says whether the web app moved, and the
+  Triggers screen, opened as each account in turn, says whether the triggers
+  did.
+- **Not offered?** That is the likely answer — Google does not generally allow
+  an ownership transfer across the line between a personal account and a
+  Workspace in another organisation. Do the copy below instead.
+
+Either way, **check it took**: open
+`…/exec?action=ping` and read **`runsAs`**. It should say
+`rickyrampersadbranch.com`. `gmail.com` means the move has not happened, and
+`""` means the deployment is not *Execute as: Me* and nothing can be stored at
+all. That field is new in build `2026-11-07a` — a bound script keeps its own
+`/exec`, so until now a moved project and an un-moved one looked identical
+from outside, which is the failure this guide has already paid for twice.
+
+### Start fresh — the route to take while the sheet is empty
+
+Sign in as **support@rickyrampersadbranch.com and nothing else** — not a
+second account in the same browser, which is what breaks Apps Script pages.
+Then:
+
+1. **A new blank Google Sheet**, named **Claims TT**. Extensions → Apps Script,
+   name the project **Claims TT**, select everything in the default `Code.gs`
+   and paste the current `apps-script/Claims.gs` over it. Save.
+
+   Not **File → Make a copy**. A copy brings the three test claims, the two junk
+   tabs named *Untitled* and *Copy of Untitled*, and — worse — rows whose Drive
+   links point into the personal Drive, so support@ opens a claim and cannot
+   read its own documents. `setupClaims` builds all seven tabs out of nothing,
+   so the copy buys you only the rubbish; and the script has to be pasted either
+   way, because the live one is four pastes behind. Copy instead of starting
+   fresh **only if real claims are on the sheet by then**, and delete those rows
+   and both junk tabs on the copy before anything else.
+2. **Reload the sheet tab in the browser.** `onOpen` has never run on a sheet
+   this new, so the **Claims TT** menu is not there yet. One reload and it
+   appears. (Everything below can also be run from the Apps Script editor's own
+   Run button, which is the way through if the menu still does not show.)
+3. **Set test mode before you deploy anything.** A new project has no
+   `TEST_MODE` property, and no property means **live** — so the first claim
+   through it would e-mail Guardian's real health and motor desks. Claims TT
+   menu → **Turn test mode ON**; or, if the menu has not appeared yet,
+   Extensions → Apps Script → Run **`turnTestModeOn`**, which is new in this
+   build for exactly that gap.
+4. Run **1. Set up / repair everything** and grant the permissions. This is
+   where the new Drive folder is made in support@'s own Drive, the triggers are
+   installed, and support@ is added to the **Staff** tab.
+5. **Enter the Script Properties. A new project has none of them, and neither
+   would a copy.** This is the step that gets missed:
+
+   | Property | How | If it is missing |
+   |---|---|---|
+   | `SF_DOMAIN`, `SF_CLIENT_ID`, `SF_CLIENT_SECRET` | Claims TT menu → **Connect Salesforce**, which prompts for all three — you never type the property names | No prefill, no ledger row, no task. The ping says so. |
+   | `TEST_MODE` | step 3 above | **Live on day one** |
+   | `CLAIMS_TASK_OWNER` | only if the task should not go to sales support | The task files on the default |
+   | `CLAIMS_TESTERS` | see the note below | Your Gmail stops being a trusted tester |
+
+   **Do not copy `CLAIMS_ROOT_ID`.** It points at a folder in the personal
+   Drive. It is the one property that is safe either way — `rootFolder_` tries
+   the id, fails, and makes a fresh folder — but leaving it out is cleaner.
+   **Do not copy `CLAIM_SURVEY_SECRET`** either: it only signs feedback links,
+   and no claim has been closed yet, so there is nothing to break.
+6. **Deploy → New deployment → Web app**, Execute as **Me**, Who has access
+   **Anyone**. Copy the new `/exec`.
+7. Send me that URL. It goes in **two** places — the `API_URL` near the top of
+   `claims/index.html` and of `claims/staff.html` (lines 1362 and 410 as this is
+   written; find them by searching for `API_URL`, never by line number) — and
+   they have to change together, or the client page and the staff desk talk to
+   two different backends.
+
+   **Each of those two files holds a second `/exec` further down**
+   (`claims/index.html` line 3693, `claims/staff.html` line 789). That one is
+   the view-counter beacon, a different Apps Script entirely; overwrite it and
+   every visitor fires an unauthenticated request at the claims backend, which
+   is the fault six other pages already carried for weeks. Change `API_URL`
+   only.
+8. **Switch the old one off, and that means its triggers too.** On the personal
+   account: Extensions → Apps Script → ⏰ **Triggers**, and delete all three —
+   `sweepAbandonedParts` (every 6 hours), `claimsFollowUp` (daily at 9) and
+   `salesforceNightlySync` if it is there. Then Deploy → Manage deployments →
+   archive the deployment, and turn test mode on as a belt.
+
+   **Archiving alone is not enough, and the sheet proves it.** The Claim Log
+   shows `auto-chase · Reminder 2` firing on **12 November**, eight days after a
+   test claim was filed and four days after Reminder 1 — still running, still
+   spending the personal account's mail allowance on a claim marked *TEST CLAIM
+   — please delete*. A trigger left behind chases for ever out of an inbox
+   nobody reads, against the exact quota this move exists to escape. And the old
+   `/exec` keeps answering, so a client holding an old link files into a sheet
+   nobody is watching — the kind of failure that looks like a handled claim
+   until somebody asks why nothing happened.
+
+### Two things that change under support@, and are easy to miss
+
+Both come from the same line of code: the script trusts the account that owns
+it, and that account is about to be a different person.
+
+- **Test-mode mail goes to support@, not to your Gmail.** `TEST_INBOX` is
+  blank, so the test inbox falls back to the owner. If you would rather keep
+  reading the tests in Gmail, set `TEST_INBOX` to your own address.
+- **Your Gmail stops being a trusted tester.** `claimsTester_` trusts the
+  staff list, the three `MAIL_CC` addresses and the owner — so
+  `Ricky.Rampersad@myguardiangroup.com` is still trusted and
+  `rampersadricky@gmail.com` is not. That matters for two things only: a
+  sign-in code reaching you in test mode, and the client door answering you
+  plainly instead of "if we have that on file". Either test from your Guardian
+  address, or put the Gmail in `CLAIMS_TESTERS`.
+
 ### Testing the Salesforce link
 
 Setting `SF_LOGIN_URL`, `SF_KEY` and `SF_SECRET` does not fill the registers —
@@ -142,8 +332,8 @@ A synced register answers with the vehicle and a way to confirm it is yours.
 ### Before you turn test mode off: the desk addresses
 
 A claim is only forwarded to a line's claims desk when that line is listed in
-`CLAIMS.DESK_OK`. **`health` and `motor` are**, because only those two
-addresses are confirmed.
+`CLAIMS.DESK_OK`. **`health`, `life` and `motor` are**, because only those
+three addresses are confirmed.
 
 **Health** is `healthclaimstt@myguardiangroup.com`, with
 `EBCustomercare@myguardiangroup.com` copied. That ordering is the branch's own
@@ -162,6 +352,15 @@ representative who handled it. The branch's own first notification of loss went
 to the same desk. Only department inboxes are configured, never the individual
 representative on one claim — people move, and a desk is what gets read.
 
+**Life** is `GLOC.IndividualLifeClaims@myguardiangroup.com`, with **nothing
+copied beside it**. Confirmed 13 November 2026 by the branch manager — *"yes
+that is the life claims"* — and by the branch's own record, where that inbox
+both sends and receives on death and critical-illness threads. It covers life
+and CI. `GLOC.AnnuityPaymentsQueries@` turned up in the same search and is not
+it: a payments queries desk, not a claims one. No second department inbox
+appears on those threads, so none is configured — a Cc added on a hunch is a
+mailbox nobody has agreed to read.
+
 **A motor claim's subject is Guardian General's own, not ours.** Their desk has
 filed this branch's claims under `Vehicle # - <plate> Insured - <name> Date of
 Accident - <date>` for years, and every reply quotes it, so a thread that does
@@ -170,32 +369,36 @@ shape with our reference on the end; health and the rest keep
 `RRB CLAIMS SUBMISSION - <type> - <client> - <ref>`, the form sales support has
 always used. One format for all five would be wrong on four of them.
 
-The other three shipped as guesses and the branch's own record contradicts
-them, so they are now blank. A claim on an unconfirmed line still files, still
+**Property and pension are blank**, and a claim on either still files, still
 goes into Drive, still acknowledges the client, and still e-mails you and
 sales support — with a red banner saying **"Pass this on by hand"** and which
 address to set. Nothing is ever sent to an address nobody has confirmed: a
 claim landing in an unwatched mailbox reads as handled, to us and to the
 client, until somebody asks why nothing happened.
 
-The addresses are in the **Log Book's own Departments tab**, which is where
-the branch really keeps them. `LB_DEPTS` in `LogBook.gs` says which department
-each document goes to, measured over 3,634 real lines:
+**Both are blank because the record has no desk inbox for them**, not because
+nobody looked. A property claim ran three months in mid-2026, and a
+death-and-pension claim ran from 10 to 25 August 2026 over some twenty
+messages, and every message on both went to **named representatives** — no
+department inbox in To or Cc on any of them. P&C does mean Property &
+Casualty, so for property the department is right and the inbox is the open
+question; and "Individual Life" is not pension, so the life desk above is not
+assumed to cover it.
 
-| Line | Department the Log Book uses |
-|---|---|
-| health | **EBD HEALTH CLAIMS** (19 of 31) or **EBD CUSTOMER CARE** (12) — *settled: Health Claims TT* |
-| life | **GLOC CLAIMS - CUSTOMER SUPPORT** (17 of 23 Claim Submission Forms) |
-| motor, property | **Guardian General — Motor Claims Department** (a different company from Guardian Life) — *motor settled: GGIL PC Claims* |
-| pension | not yet seen in the Log Book — ask sales support |
+**So it is two questions to Guardian**, and the whole of it:
 
-**Property is blank because the record has no desk inbox for it**, not because
-nobody looked. A property claim ran three months in mid-2026 and every message
-on it went to **named representatives** of Guardian General's own P&C Claims
-Solutions Department — no department inbox on any of them. P&C does mean
-Property & Casualty, so the department is right; the inbox is the open
-question. Ask the desk which inbox a **property first notification of loss**
-should go to, and that is the whole of it.
+1. Does `GGILPCClaims@` take a **property first notification of loss**?
+2. Which inbox takes a **pension** one?
+
+**Find the answer the way all three confirmed desks were found: open a real
+claim thread of the branch's own and read the To line.** Not the Log Book's
+Departments tab — it gives a department's *name* and not its mailbox — and not
+Query Pal's routing labels, which are labels in a table. And never a search
+for a guess at the name: on 8 November this mailbox was searched for
+`lifeclaims`, `LifeClaimsTT` and `GLOCClaims`, all three came back empty, and
+"life has no claims desk" was written down as a finding. It is
+`GLOC.IndividualLifeClaims@`, which none of those three matches, and it was on
+the branch's own threads the whole time. A search that misses proves nothing.
 
 That is the pattern on both motor claims in the record too: the first
 notification goes to a department inbox, and the thread after it runs with the
@@ -203,16 +406,20 @@ one representative assigned. The intake only ever sends a first notification,
 so a department inbox is the right target — and an individual, who moves, is
 the wrong one.
 
-Copy each address off that tab into `CLAIMS.DESK`, add the key to
+Once an answer is in: put the address in `CLAIMS.DESK`, add the key to
 `CLAIMS.DESK_OK`, and file one test claim on that line to watch it arrive.
 
 ### Where claimstt.com fits
 
-Nowhere, yet — and it is not in the way. GitHub Pages takes **one** custom
-domain per site and this one is `rickyrampersadbranch.com`, so claimstt.com
-can only redirect there until hosting moves. Go live on
-`rickyrampersadbranch.com/claims/` and treat the domain as a separate job;
-see *Pointing claimstt.com at it* below.
+**It forwards to the branch site, and the arrow never points the other way.**
+`rickyrampersadbranch.com/claims` is home; claimstt.com is the short thing you
+say out loud, 301'd into it. Pages takes **one** custom domain per repository
+and the root `CNAME` holds `rickyrampersadbranch.com`, so claimstt.com could
+not be a second Pages domain anyway — but the binding reason is that both
+claims pages keep the client's sign-in in `localStorage`, which is per origin,
+so a second address would mean the same person being signed in on one and
+signed out on the other. Two minutes in the GoDaddy account; see *Pointing
+claimstt.com at it* below.
 
 ---
 
@@ -237,8 +444,9 @@ other end:
 - **automatic follow-up** that chases the client for missing documents and
   nudges the desk on stalled claims, and stops the moment the claim closes.
 
-Everything runs on free tiers: Netlify (hosting) + Google Apps Script
-(storage, email, PDF). No servers, no monthly cost.
+Everything runs on free tiers: GitHub Pages at
+`rickyrampersadbranch.com/claims` + Google Apps Script for storage, email and
+PDF. No servers, no monthly cost.
 
 ---
 
@@ -308,6 +516,21 @@ has three forms: test mode; live with lines that have no desk, which it names;
 and live with every line routed, plus a sentence each for Salesforce not being
 connected and for nobody being on the staff list.
 
+**Probe with GET and the ping; do NOT read a POST's refusal as a verdict on the
+build.** `doPost` rejects any body whose `siteKey` does not match
+`CLAIMS.SITE_KEY`, and the wording it uses is *"This form is out of date.
+Please refresh the page and try again."* — which is right for a client holding
+a stale page, and badly misleading for anyone probing with `curl`, because a
+hand-made POST never carries the key. On 8 November 2026 two such probes were
+read as proof that client and staff sign-in were dead on the live deployment.
+They were not: the same two probes return the same message against a
+brand-new, correctly deployed backend. The ping's `build` field had already
+dated that deployment independently and honestly; the POST added nothing but a
+wrong conclusion. If a POST must be probed, send `siteKey` (it is in
+`claims/index.html`, so it is public by construction — an anti-abuse token, not
+a credential), and note that a `requestCode` probe really does send, so in test
+mode a `[TEST]` copy lands in the test inbox.
+
 **`staffCanSignIn` is a count, never the addresses** — this endpoint needs no
 sign-in. **Zero is the state to look for**: the staff sign-in then answers
 every address with "a code is on its way" and sends nothing, which is exactly
@@ -376,18 +599,100 @@ hosting moves to Netlify — GitHub Pages cannot do redirects.)
 
 ### Pointing claimstt.com at it
 
-`claimstt.com` is currently a GoDaddy placeholder. Two options:
+**claimstt.com is not a placeholder, and it is a dead end for clients.** Found
+10 November 2026, when the branch manager opened it expecting the new page: it
+serves a **GoDaddy** site (DNS resolves to GoDaddy's IPs, not GitHub's
+`185.199.108-111.153`), at that point with one of the retired JotForms
+embedded, showing JotForm's own *"Form not found. This form is disabled."*
+card. Anybody who goes to claimstt.com cannot file a claim, and nothing on the
+page says where to go instead.
 
-- **Stay on GitHub Pages:** GoDaddy DNS → CNAME `claimstt.com` (and `www`) to
-  `rickyrampersad.github.io`. But note a GitHub Pages site takes **one**
-  custom domain, and this one already uses rickyrampersadbranch.com — so
-  claimstt.com would redirect there rather than stand alone.
-- **Move hosting to Netlify** (free, imports this repo directly): both
-  domains can then point at the same site, the `netlify.toml` short links
-  and `/data/*` blocking come alive, and the repo could go private without
-  taking the site down. This is the better end state.
+**Re-measured 13 November 2026, when the branch manager hit a timeout on it.**
+The retired JotForm is gone; what is there now is a **GoDaddy Website Builder
+shell** with none of the branch's content on it — a template with Home /
+Contact / Services, `Copyright © 2025`, a sign-in still showing
+`filler@godaddy.com` as its placeholder, and a "Claim Submission" menu item
+whose page is a **404**. **And it is genuinely broken**: each page tried three
+times gave `200 200 000`, `000 200 000`, `000 200 000`. It fails about two
+requests in three, so a client is as likely to get a timeout as a page.
 
-Until then everything works at `rickyrampersadbranch.com/claims/`.
+**This repository has never served that domain.** The GoDaddy site is outside
+the repository and outside Apps Script, and the GoDaddy connector available in
+a session reads domain availability only — it cannot change DNS. Both routes
+below are presses in the GoDaddy account.
+
+### Route A — forward it (two minutes, nothing to maintain)
+
+My Products → claimstt.com → Manage → **Forwarding** → forward to
+`https://rickyrampersadbranch.com/claims`, **Permanent (301)**, **Forward only
+— never "Forward with masking"**. Masking serves the page inside a frame under
+the old address, which breaks the six-digit sign-in, the uploads and the claim
+reference, and `claims/netlify.toml` sets `X-Frame-Options: SAMEORIGIN` partly
+to make sure it cannot work. If GoDaddy refuses because a Websites + Marketing
+site is published on the domain, **unpublish that site first** — it is the
+shell described above, and it holds the DNS.
+
+The client types claimstt.com and lands on the claims page; the address bar
+reads `rickyrampersadbranch.com/claims`. This is what **agentmgt.com** does
+today, and it is the recommended route.
+
+### Route B — a second host for claimstt.com. Rejected, 13 November 2026
+
+Putting this page on its own Netlify site so claimstt.com stays in the address
+bar was offered as a trade-off and then withdrawn, because it is a fault
+rather than a cost. **Both pages keep the sign-in on the device**:
+
+```
+claims/index.html   localStorage.setItem(TOKEN_KEY, data.token)
+                    localStorage.getItem(DRAFT_KEY)   ← a half-finished claim
+claims/staff.html   localStorage.setItem(TOKEN_KEY, data.token)
+```
+
+**localStorage is per origin.** Two addresses for this page is two separate
+sign-in states for the same person: a client who signed in on claimstt.com
+arrives at `rickyrampersadbranch.com/claims` **signed out**, with nothing on
+screen to say why, and the claim they had half-filled under `DRAFT_KEY` is
+invisible from the other side. The staff desk splits the same way. Nothing in
+the page can paper over it — it is how browsers scope storage.
+
+**So the arrow points IN, never out: claimstt.com forwards to the branch
+site.** The reasons line up behind the first one:
+
+- **Everything already points in.** The homepage links `claims/` six times
+  relatively, plus the FAQ, the footer, `404.html`, the `/claim` stub,
+  `help868/`, and two tiles in the branch app.
+- **Every client e-mail, the staff notice and the Salesforce task body name
+  `rickyrampersadbranch.com/claims`.** Moving home means moving all of them
+  by hand in a file that is pasted into Apps Script, and a half-done move
+  leaves clients holding two different addresses.
+- **HELP 868's prompt names it too**, and that prompt sits at 9,988 of 10,000
+  characters, so changing it means first finding room.
+- **A domain swap mid-journey is the shape of phishing.** A client who got a
+  letter from support@rickyrampersadbranch.com and is then sent to a domain
+  with no branch name in it has no way to tell it is us. The campaign's own
+  rules already ban "verify your details" wording for reading that way.
+- **The precedent, twice.** agentmgt.com asked this identical question and
+  forwards to `/careers/`.
+
+**What claimstt.com is for, and a forward delivers it fully:** the thing you
+say out loud and print. A client types it and arrives.
+
+`claims/netlify.toml` stays in the repository, and its header now says all of
+this. It is **inert on GitHub Pages**, so it changes nothing about what is
+served today; what it is for is the day the whole branch site moves to
+Netlify, which the notes already float as the better end state because it
+would let the repository go private without taking the site down.
+
+The page was made portable while this was being worked out, and those changes
+are worth keeping either way: the two script tags are relative, which resolves
+to the same files on the branch site, and the links off the page name the
+branch site, which is what a link labelled "Main site" should say from
+anywhere. Checked in a real browser on the live site, laptop and phone:
+both scripts running and their APIs present, the wizard rendering, the shield
+loaded, no 404, no page errors, no sideways scroll.
+
+Everything works at `rickyrampersadbranch.com/claims/`, which is live and
+current — check the live page before assuming otherwise.
 
 ---
 
@@ -401,9 +706,10 @@ Apps Script project may only have one `doGet` and one `doPost`, and `Code.gs`
 2. **Extensions → Apps Script**, delete the placeholder, paste all of
    [`apps-script/Claims.gs`](apps-script/Claims.gs).
 3. Edit the `CLAIMS` config at the top:
-   - `DESK` — the claims address for each line of business. **Check these
-     before going live**; the health, life and pension addresses are best
-     guesses and the motor/property one is the general claims desk.
+   - `DESK` — the claims address for each line of business. Motor, health and
+     life are confirmed off the branch's own claim threads; **property and
+     pension are blank** and a claim on those two is passed on by hand until
+     Guardian confirms an inbox.
    - `MAIL_CC` — already set to you, sales support and the branch inbox.
    - `SITE_KEY` — change it, and change it to match in `claims/index.html`.
 4. **Run → setupClaims**, and approve the permissions (Sheets, Drive, Gmail).
@@ -863,22 +1169,29 @@ now* to receive one yourself.
 
 ## Still to plug in
 
-- [ ] **Apps Script `/exec` URL** → `CONFIG.API_URL` in `claims/index.html`.
-      Until this is set the site is in preview mode: nothing is filed, nothing
-      is chased, the ten-working-day clock never starts, and the page tells
-      every visitor so. The whole of `Claims.gs` is idle behind this one line.
-- [ ] **The same `/exec` URL** → `CLAIMS.SURVEY_URL` in `Claims.gs`, which is
-      where the feedback link in a closing email points. Left blank, a closed
-      claim logs `survey-skipped` rather than mailing a dead link.
+- [x] **Apps Script `/exec` URL** → `CONFIG.API_URL` in **both**
+      `claims/index.html` **and** `claims/staff.html`. Set 13 November 2026 to
+      the Workspace project. Until it is set the site is in preview mode:
+      nothing is filed, nothing is chased, the ten-working-day clock never
+      starts, and the page tells every visitor so.
+- [x] **The feedback link finds its own address** — `surveyUrl_()` reads the
+      running web app's own `/exec` and notes it in the `CLAIMS_EXEC_URL`
+      Script Property, so `CLAIMS.SURVEY_URL` no longer has to be pasted after
+      every deploy. It never was, which is why client feedback had been off
+      from the day it was built. Needs build `2026-11-13b` or later.
 - [ ] **`SITE_KEY`** changed from the default, in both files
-- [ ] **Claims desk addresses** confirmed for health, life and pension
+- [ ] **Claims desk addresses** — health, life and motor are confirmed;
+      **property and pension** are the two still open
 - [ ] **Staff emails** added to the `Staff` tab (Active=Y) so the team can
       sign in at `/claims/staff.html`
 - [ ] **Salesforce Connected App** created by an admin (see *Connect
       Salesforce* above) and its key/secret entered via the Claims TT menu —
-      this switches on nightly register sync, live policy lookup, and
-      automatic `Claims__c` write-back. Until then, the register CSVs
-      delivered privately in the Claude session work as a manual fallback.
+      this switches on nightly register sync, live policy lookup, and the
+      `Claims_Revised__c` record and its task. (**Not `Claims__c`** — that
+      object was abandoned in 2016 and holds one record from this year; the
+      live one is `Claims_Revised__c`.) Until then the registers stay empty,
+      so a signed-in client sees no vehicles and a motor claim cannot be
+      judged against the cover in force on the day of loss.
 - [ ] **Moveable T&T holidays** topped up in `CLAIMS.HOLIDAYS` each January
 - [x] **Rotate `STAFF_KEY`** — now read from Script Properties
       (`RENEWAL_STAFF_KEY`) rather than from `Code.gs`, and the published
@@ -887,7 +1200,13 @@ now* to receive one yourself.
       with it, so send the team the new one.
 - [ ] **Git history**: purge the client-data commits, or make the repo
       private and move hosting to Netlify — see *Read this first*
-- [ ] **claimstt.com DNS** repointed from the GoDaddy placeholder
+- [ ] **claimstt.com forwarded** to `rickyrampersadbranch.com/claims` —
+      GoDaddy 301, **Forward only**, never with masking. Unpublish the
+      Websites + Marketing site on the domain first or it keeps the DNS. Today
+      it serves a GoDaddy builder shell with none of our content on it and
+      times out about two requests in three, so a client is as likely to get
+      nothing as a page. Never a second host for this page: the sign-in is
+      stored per origin. See *Pointing claimstt.com at it*
 - [ ] **Guardian compliance sign-off** before the site takes live client data
 
 That last one is not a formality. The system holds names, addresses, policy

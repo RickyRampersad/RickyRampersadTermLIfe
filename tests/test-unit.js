@@ -40,7 +40,9 @@ const q = s => Object.fromEntries(new URL(s).searchParams);
 console.log('\nA value too long for one property:\n');
 const big = Array.from({ length: 60 }, (_, i) => ({ id: '00T' + i, s: 'SQ- Laura Goberdhan- 5004185506/8004274889/5003944438/1000463745/1000463737/500356230 ' + 'x'.repeat(60) }));
 env.bigPut_('k_test', big);
-ok('kept in pieces and read back whole', JSON.stringify(env.bigGet_('k_test', [])) === JSON.stringify(big) && Number(P.getProperty('k_test_n')) > 1, P.getProperty('k_test_n'));
+// Since 6 Nov 2026 a big value lives in the '_store' tab, not in Script Properties.
+env.bigStoreForget_();
+ok('kept whole in the _store tab and read back', JSON.stringify(env.bigGet_('k_test', [])) === JSON.stringify(big) && P.getProperty('k_test') == null && !!env.__sheets._store);
 P.setProperty('k_old', JSON.stringify([{ id: 'a' }]));
 ok('a value kept the old way still reads', env.bigGet_('k_old', [])[0].id === 'a');
 env.bigPut_('k_test', [{ id: 'small' }]);
@@ -91,7 +93,7 @@ const agTasks = [{ id: '00TA1', subject: 'Pending: medical for a new application
 let agOut = null;
 try { agOut = env.agentMorningMail_(AG, DAY, { open: { 'a-darryl': agTasks }, ff: {}, f360: {}, goal: {}, q: {}, orphan: {} }, {}); } catch (e) { agOut = { error: String(e) }; }
 const agHtml = agOut && (agOut.htmlBody || agOut.html || agOut.body || (mails.length && mails[mails.length - 1].htmlBody) || JSON.stringify(agOut)) || '';
-ok('an agent\'s morning: comment links to his My day (29 Oct 2026), none to Salesforce', !/sf\.example\/00TA/.test(agHtml) && /go=agitems&(amp;)?t=00TA1/.test(agHtml) && /comment &rarr;/.test(agHtml), String(agHtml).slice(0, 120));
+ok('an agent\'s morning: comment links to his My day (29 Oct 2026), none to Salesforce', !/sf\.example\/00TA/.test(agHtml) && /go=agitems&(amp;)?t=00TA1/.test(agHtml) && /(comment|post) &rarr;/.test(agHtml), String(agHtml).slice(0, 120));
 let agPage = '';
 try { agPage = env.agReplyPage_({ agent: AG }, DAY, 'ag').getContent(); } catch (e) { agPage = 'ERR ' + e; }
 ok('an agent\'s page: the history under each task, speak to comment, no Salesforce', /No notes on Chatter yet\.|The whole history|Please call the client today/.test(agPage) && /Type or speak your comment/.test(agPage) && !/sf\.example\/00TA/.test(agPage) && /id="i00TA1"/.test(agPage), agPage.slice(0, 100));

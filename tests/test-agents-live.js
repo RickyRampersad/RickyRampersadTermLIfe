@@ -14,6 +14,7 @@ let DAY = '2026-11-02';
 const env = makeEnv();
 env.todayISO_ = () => DAY;
 const P = env.PropertiesService.getScriptProperties();
+P.setProperty('AGENT_DAY_OFF', 'none'); // these tests use agents who were taken off on 12 Nov 2026
 P.setProperty('MANAGER_EMAIL', 'ricky@example.com');
 
 console.log('\nWho is an agent here, from the Skill Bank:\n');
@@ -68,6 +69,7 @@ P.deleteProperty('FF_CHASE');
 
 console.log('\nThe morning e-mail says when each is due:\n');
 {
+  P.setProperty('AGENT_COACH', 'off');   // the plain morning e-mail; the coach's is covered in test-agent-coach.js
   env.__mkSheet('Agent Day', 1, env.AGDAY.head, []);
   const got = []; const keep = env.mailSend_; env.mailSend_ = o => { got.push(o); return 'relay'; };
   const F = people['a-felicia-rampersad'];
@@ -91,12 +93,13 @@ console.log('\nThe morning e-mail says when each is due:\n');
   env.agentMiddayMail_(N, DAY, { open: { [N.key]: [] }, closed: { [N.key]: [] }, ff: { [N.key]: [] }, f360: {}, goal: {}, q: {}, orphan: {} });
   ok('Neil\'s copied to Akaash and Kamla', got[0] && got[0].cc === 'akaash@example.com,kamla@example.com', got[0] && got[0].cc);
   got.length = 0; env.agentEveningMail_(N, DAY, { open: { [N.key]: [] }, closed: { [N.key]: [] }, ff: { [N.key]: [] }, f360: {}, goal: {}, q: {}, orphan: {} });
-  ok('the 5:30 too', got[0] && got[0].cc === 'akaash@example.com,kamla@example.com', got[0] && got[0].cc);
+  ok('the 5:30 goes to Neil alone (8 Nov 2026: his manager gets the 6:30 roll-up)', got[0] && !got[0].cc, got[0] && got[0].cc);
   got.length = 0; env.agCopy_(N, DAY, false, [{ Item: 'calls', Question: 'Calls to make', Planned: '10', Note: '' }], []);
   ok('his projection goes to Akaash, Kamla copied, not sales support', got[0] && got[0].to === 'akaash@example.com' && got[0].cc === 'kamla@example.com', got[0] && (got[0].to + ' / ' + got[0].cc));
   ok('and nothing anywhere to sales support', !got.concat([]).some(m => /salessupport/.test(String(m.to) + String(m.cc))));
   env.emailFor_ = keepE;
   env.mailSend_ = keep;
+  P.deleteProperty('AGENT_COACH');
 }
 
 console.log('\nEach client once; fact finds named and once (from his 5:36am copy of Felicia\'s):\n');
@@ -131,9 +134,13 @@ ok('Felicia gets hers', to(people['a-felicia-rampersad']).length === 1);
 ok('Neil is not sent a second', to(people['a-neil-ramnanan']).length === 0);
 ok('no [Preview] samples to Mr Rampersad', !mails.some(m => /\[Preview\]/.test(m.subject)));
 run(12 * 60 + 5); run(17 * 60 + 35);
-ok('the midday and the 5:30 go to all three', Object.keys(people).every(k => to(people[k]).filter(m => /^(md|pm) /.test(m.subject)).length === 2));
+ok('the midday (on again 13 Nov) and the 5:30 go to all three, once each', Object.keys(people).every(k => to(people[k]).filter(m => /^md /.test(m.subject)).length === 1 && to(people[k]).filter(m => /^pm /.test(m.subject)).length === 1));
 const n = mails.length; run(17 * 60 + 50);
 ok('and once only', mails.length === n);
+env.PropertiesService.getScriptProperties().setProperty('AGENT_MIDDAY', 'off');
+ok('AGENT_MIDDAY = off stops the midday', env.agMiddayMode_() === 'off');
+env.PropertiesService.getScriptProperties().deleteProperty('AGENT_MIDDAY');
+ok('unset, the midday is on', env.agMiddayMode_() === 'on');
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall green');
 process.exit(fails ? 1 : 0);

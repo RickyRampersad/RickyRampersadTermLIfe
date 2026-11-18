@@ -11,7 +11,11 @@
  */
 (function () {
   'use strict';
-  var PAIRS = [['rrb-transition-code', 'rrb-assign-who'], ['rrb-gcm-code', 'rrb-gcm-who']];
+  var PAIRS = [['rrb-transition-code', 'rrb-assign-who'], ['rrb-gcm-code', 'rrb-gcm-who'],
+               /* The hiring board, /hiring. Its backend opens it for the Branch
+                  Manager alone and never for the branch code, so carrying the
+                  app's token here signs him in and signs nobody else in. */
+               ['rrb-hire-code', 'rrb-hire-who']];
   var s = null;
   try { s = JSON.parse(localStorage.getItem('rrb-ops-session') || 'null'); } catch (e) {}
   window.RRB_OPS_SESSION = s && s.token ? s : null;

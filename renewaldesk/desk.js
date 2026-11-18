@@ -123,7 +123,107 @@ function rowHtml(r) {
 }
 
 /* ── one renewal ── */
-const STEPS = ['Last year', 'Notice', 'Values', 'Letter', 'Approve', 'Client', 'Proceed', 'Guardian General', 'Delivered'];
+const STEPS = ['Last year', 'Notice', 'Reconcile', 'Letter', 'Approve', 'Client', 'Proceed', 'Guardian General', 'Delivered'];
+
+/* ── Reconcile ────────────────────────────────────────────────────────────────────────────
+   Our record beside Guardian General's notice, risk by risk, which is the branch's own
+   "Recon". Tick what is right; query what is not, and send the queries to them as one
+   clarification. On a fleet this is the whole job: sixty registrations on each side, and
+   the only way to find the one that moved is to set them side by side.
+
+   A motor notice gives the PREMIUM per vehicle, not the sum insured, so the premium is
+   what reconciles. The sum insured is ours until the client confirms it on their page.
+
+   BOTH SIDES ARE TAX-INCLUSIVE. The notice prints its premiums before tax and adds the
+   government tax once at the foot; Salesforce holds both figures. Every row shows the
+   inclusive figure, which is what the client pays and what the rest of this product reads,
+   with the notice's own before-tax figure under it — so a person checking against the paper
+   in their hand sees the number that is actually printed on it. */
+const RSTATE = {
+  same:    { word: 'Ties',          cls: 'ok'   },
+  differs: { word: 'Differs',       cls: 'bad'  },
+  ours:    { word: 'Not on notice', cls: 'warn' },
+  theirs:  { word: 'Not on record', cls: 'warn' }
+};
+function reconRow(x, n) {
+  const s = RSTATE[x.state] || RSTATE.same; n = n || {};
+  return '<tr class="rrow' + (x.ok ? ' isok' : '') + (x.q ? ' isq' : '') + '" data-rid="' + esc(x.id) + '">' +
+    '<td><b>' + esc(x.label) + '</b>' + (x.coverage ? '<br><span class="muted small">' + esc(x.coverage) + '</span>' : '') +
+      (x.on ? '<br><span class="muted small">Matched on the ' + esc(x.on) + ' number: the notice leaves the registration blank</span>' : '') +
+      (x.ex ? '<br><span class="small" style="color:var(--warn)">Compared before tax: our record carries no tax-inclusive figure</span>' : '') +
+      (x.asked ? '<br><span class="small" style="color:#0F7A54">Queried with them ' + esc(x.asked) + '</span>' : '') + '</td>' +
+    '<td class="num">' + (x.ours ? money(x.ours) + (!x.ex && x.oursEx ? '<br><span class="muted small">' + money(x.oursEx) + ' + tax</span>' : '') : '–') + '</td>' +
+    '<td class="num">' + (x.theirs ? money(x.theirs) + (!x.ex && x.theirsEx ? '<br><span class="muted small">' + money(x.theirsEx) + ' + tax</span>' : '') : '–') + '</td>' +
+    '<td class="num">' + (x.diff ? '<b class="' + (x.diff > 0 ? 'up' : 'down') + '">' + (x.diff > 0 ? '+' : '') + money(x.diff) + '</b>' : '') + '</td>' +
+    '<td><span class="pill ' + s.cls + '">' + s.word + '</span></td>' +
+    '<td class="rtick"><label><input type="checkbox" data-rok="' + esc(x.id) + '"' + (x.ok ? ' checked' : '') + '> OK</label></td>' +
+    '<td><input class="field small" data-rq="' + esc(x.id) + '" placeholder="Query…" value="' + esc(x.q) + '" aria-label="Query on ' + esc(x.label) + '"></td>' +
+    /* The sum insured is ours until the client confirms it, and a client who telephones it
+       in is confirmed here. Only where there is a figure of theirs to set. */
+    (n.values ? '<td>' + (x.cover ? '<input class="field small" inputmode="decimal" data-rval="' + esc(x.id) + '" placeholder="' + Math.round(x.cover) +
+      '" value="' + (n.set && n.set[x.id] ? Math.round(n.set[x.id].value) : '') + '" aria-label="Confirmed value for ' + esc(x.label) + '">' +
+      (n.set && n.set[x.id] ? '<br><span class="small muted">' + esc(n.set[x.id].by || '') + '</span>' : '') : '<span class="muted">–</span>') + '</td>' : '') +
+    '</tr>';
+}
+function reconStep(d, r) {
+  const k = d.recon || { rows: [], counts: {} }, c = k.counts || {};
+  if (!d.notice) return '<h2>Reconcile</h2><p class="lead">Read Guardian General\'s notice first: there is nothing to reconcile against until it is in.</p>' +
+    '<div class="acts"><button class="btn" type="button" onclick="STEP=1;drawOne()">Go to the notice</button></div>';
+  const tiles = [
+    ['Risks', k.risks], ['Tie', c.same || 0], ['Differ', c.differs || 0],
+    ['Not on notice', c.ours || 0], ['Not on record', c.theirs || 0], ['Still to check', k.open]
+  ].map(t => '<div class="rtile"><b>' + t[1] + '</b><span>' + t[0] + '</span></div>').join('');
+  const gap = Math.abs((k.theirPremium || 0) - (k.ourPremium || 0)) >= 1;
+  const vals = (k.rows || []).some(x => x.cover);
+  const pct = Math.round((k.taxRate || 0) * 10000) / 100;
+  return '<h2>Reconcile</h2><p class="lead">Our record beside Guardian General\'s notice, risk by risk, <b>tax included on both sides</b> — the notice prints its premiums before tax, and the figure under each one is what it prints. Tick what ties; write a query on what does not, then send the queries to them as one clarification. A motor notice gives the premium per vehicle, not the sum insured: the client confirms values on their own page.</p>' +
+    '<div class="rtiles">' + tiles + '</div>' +
+    (k.itemsTie ? '' : '<div class="banner warn"><b>The notice does not add up.</b> Its own items come to ' + money(k.noticeItems) +
+      ' against a notice total of ' + money(k.noticeTotal) + '. Query that first: nothing else can be trusted until it ties.</div>') +
+    '<div class="banner ' + (gap ? 'warn' : 'info') + '"><b>Premium, tax included:</b> our record ' + money(k.ourPremium) + ' · the notice ' + money(k.theirPremium) +
+      (gap ? ' · <b>' + money(Math.abs(k.theirPremium - k.ourPremium)) + ' apart</b>' : ' · they tie') + '.' +
+      (k.noticeTax ? '<br><span class="small">The notice prints ' + money(k.noticeBeforeTax) + ' before tax and adds ' + money(k.noticeTax) +
+        ' government tax (' + pct + '%), for ' + money(k.noticeTotal) + '.</span>'
+        : '<br><span class="small">The notice prints no tax line, so ' + pct + '% government tax is added here, which is how Salesforce holds it.</span>') +
+      '</div>' +
+    (k.exRows ? '<div class="banner warn"><b>' + k.exRows + ' risk' + (k.exRows === 1 ? ' has' : 's have') + ' no tax-inclusive premium on our record.</b> ' +
+      (k.exRows === 1 ? 'It is' : 'They are') + ' compared before tax instead, on both sides, and marked in the table. Put the figure on the risk in Salesforce so the whole policy reads on one basis.</div>' : '') +
+    '<div class="rwrap"><table class="rtab"><thead><tr><th>Risk</th><th class="num">Our record<br><span class="muted small">tax incl.</span></th><th class="num">The notice<br><span class="muted small">tax incl.</span></th><th class="num">Difference</th><th>Where it stands</th><th>Right</th><th>Clarification</th>' +
+    (vals ? '<th>Value to insure</th>' : '') + '</tr></thead>' +
+    '<tbody>' + k.rows.map(x => reconRow(x, { values: vals, set: d.values || {} })).join('') + '</tbody></table></div>' +
+    (vals ? '<p class="small muted">The premium is what reconciles against the notice. <b>Value to insure</b> is the sum insured, which is ours until the client confirms it: type it here if they telephone it in, or leave it and they set it on their own renewal page.</p>' : '') +
+    '<div class="acts"><button class="btn ghost" type="button" id="rAllOk">Tick every one that ties</button>' +
+    '<button class="btn" type="button" id="rSave">Save the reconciliation</button></div>' +
+    '<h4 class="sub">Clarification to Guardian General</h4>' +
+    '<p class="small muted">Every query above goes in one e-mail' + (d.live ? ' to their renewal desk' : ', and in test mode it comes to you instead') + '. Add anything else here.</p>' +
+    (k.asked ? '<div class="banner info"><b>Last sent ' + esc(k.asked.at) + ' by ' + esc(k.asked.by) + '</b> · ' + k.asked.n + ' query/queries to ' + esc(k.asked.to) + (k.asked.test ? ' (test copy)' : '') + '</div>' : '') +
+    '<textarea class="field" id="rAsk" style="min-height:80px" placeholder="Anything else to ask them"></textarea>' +
+    '<div class="acts"><button class="btn" type="button" id="rAskGo">Send the clarification</button>' +
+    '<button class="btn ghost" type="button" onclick="STEP=3;drawOne()">Next: the letter</button></div>';
+}
+/* What the rows do as they are filled in. Beside the renderer rather than in the desk's
+   wiring, so it is the same function a test drives. */
+function reconWire(root) {
+  const el = root || document, pick = (k, id) => el.querySelector('[data-' + k + '="' + CSS.escape(id) + '"]');
+  el.querySelectorAll('[data-rq]').forEach(q => q.addEventListener('input', () => {
+    /* a query and a tick are never both true: a question is not a thing you have passed */
+    const t = pick('rok', q.dataset.rq); if (t && q.value.trim()) t.checked = false;
+    const row = q.closest('.rrow'); if (row) { row.classList.toggle('isq', !!q.value.trim()); if (q.value.trim()) row.classList.remove('isok'); }
+  }));
+  el.querySelectorAll('[data-rok]').forEach(t => t.addEventListener('change', () => {
+    const row = t.closest('.rrow'); if (row) row.classList.toggle('isok', t.checked);
+  }));
+}
+/** Every row a person has ticked or queried, for the save. */
+function reconRows(root) {
+  const el = root || document, o = {};
+  el.querySelectorAll('[data-rok]').forEach(t => {
+    const id = t.dataset.rok, q = el.querySelector('[data-rq="' + CSS.escape(id) + '"]');
+    const text = q ? (q.value || '').trim() : '';
+    if (t.checked || text) o[id] = { ok: t.checked, q: text };
+  });
+  return o;
+}
 function stepNow(o) {
   const s = o.stage;
   if (s === 'renewed' || s === 'lost' || s === 'done') return 0;
@@ -196,14 +296,7 @@ function panel(i) {
       '<div class="acts"><button class="btn" type="button" id="nFind">Find it in support@</button><label class="btn ghost" for="nFile" style="cursor:pointer">Upload the PDF</label><input id="nFile" type="file" accept="application/pdf" hidden><button class="btn ghost" type="button" id="nType">Type the figures</button></div>' +
       '<div id="nFound" class="found"></div><div id="nForm"></div>' + reqHtml(d);
   }
-  if (i === 2) {
-    const n = d.notice || {};
-    return '<h2>The values</h2><p class="lead">From 45 days before the renewal, the client confirms each vehicle\'s value or the sums insured. Type the figure they give; leave it blank to keep last year\'s. They can also change it themselves on their renewal page.</p>' +
-      r.items.map(x => { const nn = (n.items || []).find(v => v.reg && x.vehicle && v.reg.replace(/\W/g, '') === x.vehicle.replace(/\W/g, '')), v = (d.values || {})[x.id];
-        return '<div class="pt"><b>' + esc(itemLabel(x)) + '</b><div class="grid2 small" style="margin:6px 0"><span>Last year: <b>' + (x.value || x.cover ? whole(x.value || x.cover) : '–') + '</b></span>' + (nn && nn.value ? '<span>Guardian General\'s notice: <b>' + whole(nn.value) + '</b></span>' : '') + (v ? '<span>Confirmed: <b>' + whole(v.value) + '</b> (' + esc(v.by || '') + ')</span>' : '') + '</div>' +
-          '<label class="l" for="v_' + esc(x.id) + '">Confirmed value</label><input class="field" inputmode="decimal" id="v_' + esc(x.id) + '" data-id="' + esc(x.id) + '" placeholder="' + esc(String(Math.round(x.value || x.cover || 0))) + '" value="' + (v ? Math.round(v.value) : '') + '"></div>'; }).join('') +
-      '<div class="acts"><button class="btn" type="button" id="vSave">Save the values</button><button class="btn ghost" type="button" onclick="STEP=3;drawOne()">Next: the letter</button></div>';
-  }
+  if (i === 2) return reconStep(d, r);
   if (i === 3) {
     const L = d.letter;
     if (!d.notice) return '<h2>The letter</h2><p class="lead">Read Guardian General\'s notice first: the letter states the new premium.</p><div class="acts"><button class="btn" type="button" onclick="STEP=1;drawOne()">Go to the notice</button></div>';
@@ -231,6 +324,9 @@ function panel(i) {
       (!d.sentAt ? '<p class="muted">The letter has not gone yet.</p>' : '') +
       (a ? '<div class="ans"><b>' + ({ approve: 'Approved', changes: 'Asked for changes', '': 'Wrote to us' }[a.decision || ''] || esc(a.decision)) + '</b> · ' + esc(a.at) + (a.name ? ' · ' + esc(a.name) : '') + (a.comment ? '<p style="margin:6px 0 0">“' + esc(a.comment) + '”</p>' : '') +
         (a.values && Object.keys(a.values).length ? '<p class="small" style="margin:6px 0 0">New values: ' + Object.keys(a.values).map(id => { const x = d.r.items.find(z => z.id === id); return esc(x ? itemLabel(x) : id) + ' ' + whole(a.values[id]); }).join('; ') + '</p>' : '') +
+        /* risks the client ticked as no longer theirs — a fleet loses vehicles every year, and
+           before this it was a sentence in the comment box that nobody could act on risk by risk */
+        ((a.off || []).length ? '<p class="small" style="margin:6px 0 0"><b>No longer theirs (' + a.off.length + '):</b> ' + a.off.map(z => { const x = d.r.items.find(y => y.id === z.id); return esc(x ? itemLabel(x) : z.label || z.id); }).join('; ') + ' — take these off before you instruct.</p>' : '') +
         ((a.history || []).length ? '<details class="small"><summary>Earlier</summary><ul>' + a.history.map(h => '<li>' + esc(h.at) + ' · ' + esc(h.name || '') + ': ' + esc(h.text || '') + '</li>').join('') + '</ul></details>' : '') + '</div>' : (d.sentAt ? '<p>No answer yet.</p>' : '')) +
       (d.sentAt ? '<p class="small muted">Reminders: ' + (['r14', 'r10', 'call'].map(k => rem[k] ? ({ r14: '14 days', r10: '10 days', call: 'call at 7 days' }[k]) + ' ' + esc(rem[k].at) : '').filter(String).join(' · ') || 'none yet') + '</p>' : '') +
       '<label class="l" for="pYes">They said yes on the phone, by e-mail or in person</label><textarea class="field" id="pYes" style="min-height:60px" placeholder="Who said yes, how, and when"></textarea><div class="acts"><button class="btn ghost" type="button" id="pYesGo">Record their yes</button></div>' +
@@ -395,7 +491,30 @@ function wire(i) {
     on('rqGo', async () => { const b = $('rqGo'); b.disabled = true; b.textContent = 'Opening it in Salesforce…'; const r = await doAct('reqtask', { to: $('rqTo') ? $('rqTo').value : '', really: $('rqReal') && $('rqReal').checked ? 'Y' : '' }); if (!r.ok) { b.disabled = false; b.textContent = 'Open the task for sales support'; } });
     on('rqForm', reqForm);
   }
-  if (i === 2) on('vSave', async () => { const v = {}; document.querySelectorAll('[data-id]').forEach(el => { const n = Number(el.value.replace(/[^0-9.]/g, '')); if (n > 0) v[el.dataset.id] = n; }); if (!Object.keys(v).length) { toast('Type at least one value.', true); return; } await doAct('values', { values: v }); });
+  if (i === 2) {
+    const gather = () => reconRows();
+    reconWire();
+    on('rAllOk', () => {
+      let n = 0;
+      (ONE.recon.rows || []).forEach(x => { if (x.state !== 'same') return; const t = document.querySelector('[data-rok="' + CSS.escape(x.id) + '"]'); const q = document.querySelector('[data-rq="' + CSS.escape(x.id) + '"]');
+        if (t && !t.checked && !(q && q.value.trim())) { t.checked = true; n++; const row = t.closest('.rrow'); if (row) row.classList.add('isok'); } });
+      toast(n ? n + ' ticked. Save to keep it.' : 'Nothing left that ties.');
+    });
+    on('rSave', async () => {
+      const rows = gather(), v = {};
+      document.querySelectorAll('[data-rval]').forEach(el => { const n = Number(String(el.value).replace(/[^0-9.]/g, '')); if (n > 0) v[el.dataset.rval] = n; });
+      if (!Object.keys(rows).length && !Object.keys(v).length) { toast('Tick a risk, write a query, or type a value first.', true); return; }
+      if (Object.keys(v).length) await doAct('values', { values: v });
+      if (Object.keys(rows).length) await doAct('recon', { rows: rows });
+    });
+    on('rAskGo', async () => {
+      const rows = gather(), text = $('rAsk').value.trim();
+      const anyQ = Object.keys(rows).some(id => rows[id].q);
+      if (!anyQ && !text) { toast('Write a query on a risk, or a question below.', true); return; }
+      if (Object.keys(rows).length) await doAct('recon', { rows: rows, quiet: 'Y' });
+      await doAct('reconAsk', { text: text });
+    });
+  }
   if (i === 3) {
     on('lAi', async () => { const b = $('lAi'); b.disabled = true; b.textContent = 'Drafting… about 20 seconds'; await doAct('draft', { ai: 'Y' }); });
     on('lPlain', async () => { if (ONE.letter && !confirm('Replace the letter with the plain one?')) return; await doAct('draft', {}); });

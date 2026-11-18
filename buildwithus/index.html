@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Personal Assistant — Apps Script, Salesforce, AI — Ricky Rampersad Branch</title>
+<meta name="description" content="Ricky Rampersad is hiring a personal assistant: an automation and systems seat in a Trinidad insurance branch that writes its own software: 101,000 lines of Google Apps Script across 36 files, 44 scheduled triggers, 261 Salesforce fields and the Claude API in production. You would own and extend it. Contract title is Administrative Assistant; the work is automation, workflow and process. One seat, Chaguanas, Trinidad.">
+<link rel="canonical" href="https://rickyrampersadbranch.com/buildwithus/">
+<link rel="icon" type="image/svg+xml" href="/site-icon.svg">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<meta name="theme-color" content="#faf9f2">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Ricky Rampersad Branch">
+<meta property="og:title" content="You have the ideas. We have the tools.">
+<meta property="og:description" content="Ricky Rampersad is hiring a personal assistant to keep the branch’s own systems running: Salesforce, Apps Script, Microsoft 365, HELP 868 and Claude. The tools are paid for, you use them every day, and they go on your CV.">
+<meta property="og:url" content="https://rickyrampersadbranch.com/buildwithus/">
+<meta property="og:image" content="https://rickyrampersadbranch.com/buildwithus/film-w.jpg">
+<meta property="og:image:width" content="1920">
+<meta property="og:image:height" content="1080">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="You have the ideas. We have the tools.">
+<meta name="twitter:description" content="Ricky Rampersad is hiring a personal assistant to keep the branch’s own systems running. Everyone calls him to fix it; this seat fixes it. The tools are paid for, and they go on your CV.">
+<meta name="twitter:image" content="https://rickyrampersadbranch.com/buildwithus/film-w.jpg">
+<meta name="geo.region" content="TT-CTT">
+<meta name="geo.placename" content="Chaguanas, Trinidad and Tobago">
+
+<!-- Fonts: non-blocking, with the homepage's own measured metric-matched fallbacks, so the swap moves nothing. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+
+<style>
+/* ── the homepage's own metric-matched fallbacks (measured from the font files) ── */
+@font-face{font-family:'Inter Fallback';font-weight:100 500;src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:106.88%;ascent-override:90.64%;descent-override:22.57%;line-gap-override:0%}
+@font-face{font-family:'Inter Fallback';font-weight:600 900;src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:101.96%;ascent-override:95.01%;descent-override:23.66%;line-gap-override:0%}
+@font-face{font-family:'Inter Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:107.37%;ascent-override:90.23%;descent-override:22.47%;line-gap-override:0%}
+@font-face{font-family:'Inter Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:108.69%;ascent-override:89.13%;descent-override:22.19%;line-gap-override:0%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:100 500;src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:96.22%;ascent-override:100.68%;descent-override:25.07%;line-gap-override:0%}
+@font-face{font-family:'Inter Tight Fallback';font-weight:600 900;src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('Arimo');size-adjust:95.31%;ascent-override:101.64%;descent-override:25.31%;line-gap-override:0%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:100 500;src:local('Roboto');size-adjust:96.66%;ascent-override:100.22%;descent-override:24.95%;line-gap-override:0%}
+@font-face{font-family:'Inter Tight Fallback R';font-weight:600 900;src:local('Roboto');size-adjust:101.60%;ascent-override:95.35%;descent-override:23.74%;line-gap-override:0%}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TOKENS — the branch site's own palette, sampled from Guardian Life of the
+   Caribbean's live stylesheet. No gold: on this ground #efc24b measures
+   1.68:1, below even the 3:1 floor for a non-text mark. No flat black
+   either — every dark surface is a tint of --d0 and shadows take the
+   ground's own hue.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#faf9f2; --bg2:#f1efe6; --card:#fff;
+  --ink:#0d3f5e; --body:#2b3b47; --muted:#5b6670; --line:#e4e0d4; --line-strong:#7d8890;
+  --a:#00728d; --aD:#005a70; --aL:#00CFEA; --a-tint:#e8f3f6; --a-tint2:#cde8ee;
+  --d0:#0d1f33; --d1:#14314f; --d2:#1b4268; --d3:#22527f;
+  --dT:#f3f6fa; --dT2:#b9cadd; --dT3:#b1c3d5;
+  --ok:#0f7a52; --warn:#8a5a00;
+  --display:'Inter Tight','Inter Tight Fallback','Inter Tight Fallback R',system-ui,-apple-system,sans-serif;
+  --text:'Inter','Inter Fallback','Inter Fallback R',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;
+  --sh:32 20% 42%;
+  --e1:0 1px 2px hsl(var(--sh)/.06),0 2px 6px hsl(var(--sh)/.05);
+  --e2:0 4px 14px hsl(var(--sh)/.08),0 1px 3px hsl(var(--sh)/.06);
+  --e3:0 18px 40px hsl(var(--sh)/.14),0 4px 10px hsl(var(--sh)/.07);
+  --r:1.1rem; --r-s:.7rem;
+  --ease:cubic-bezier(.2,.7,.2,1); --ease-out:cubic-bezier(.16,1,.3,1);
+  --f--2:clamp(.75rem,.72rem + .15vw,.8125rem);
+  --f--1:clamp(.875rem,.84rem + .2vw,.9375rem);
+  --f-0:clamp(1rem,.95rem + .3vw,1.125rem);
+  --f-1:clamp(1.125rem,1.05rem + .45vw,1.375rem);
+  --f-2:clamp(1.375rem,1.2rem + .9vw,1.875rem);
+  --f-3:clamp(1.75rem,1.4rem + 1.6vw,2.75rem);
+  --f-4:clamp(2.1rem,1.5rem + 3vw,4rem);
+  --sp-2xs:.25rem; --sp-xs:.5rem; --sp-s:.85rem; --sp-m:1.25rem; --sp-l:2rem; --sp-xl:3rem;
+  --sp-2xl:clamp(3.5rem,3rem + 3vw,6rem);
+  --bar:4rem; --wrap:72rem;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+/* scroll-behavior:smooth is NOT switched off by prefers-reduced-motion on its
+   own, and smooth scrolling is exactly the kind of movement that causes
+   vestibular trouble — so it lives in the no-preference query with the rest. */
+html{-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{margin:0;background:var(--bg);color:var(--body);font:400 var(--f-0)/1.65 var(--text);
+  overflow-x:clip;-webkit-font-smoothing:antialiased}
+img,svg,video{max-width:100%}
+h1,h2,h3,h4{font-family:var(--display);color:var(--ink);line-height:1.1;letter-spacing:-.02em;margin:0 0 var(--sp-s)}
+h1{font-size:var(--f-4);font-weight:700;letter-spacing:-.035em}
+h2{font-size:var(--f-3);font-weight:700;letter-spacing:-.03em}
+h3{font-size:var(--f-1);font-weight:600}
+p{margin:0 0 var(--sp-m)}
+a{color:var(--a);text-underline-offset:3px}
+a:hover{color:var(--aD)}
+strong,b{color:var(--ink);font-weight:600}
+code,kbd{font-family:var(--mono);font-size:.88em;background:var(--a-tint);color:var(--aD);
+  padding:.1em .38em;border-radius:.35rem;overflow-wrap:anywhere}
+:focus-visible{outline:3px solid var(--a);outline-offset:3px;border-radius:.4rem}
+.wrap{width:100%;max-width:var(--wrap);margin-inline:auto;padding-inline:1rem}
+@media (min-width:36rem){.wrap{padding-inline:1.5rem}}
+section{padding-block:var(--sp-2xl)}
+/* the bar is sticky, so an anchored heading would otherwise park under it */
+section[id],[id]{scroll-margin-top:calc(var(--bar) + .75rem)}
+.alt{background:var(--bg2);border-block:1px solid var(--line)}
+.dark{background:var(--d0);color:var(--dT2);border-block:1px solid var(--d2)}
+.dark h2,.dark h3,.dark strong,.dark b{color:#fff}
+.dark a{color:var(--aL)}
+.dark code{background:rgba(0,207,234,.1);color:var(--aL)}
+.eyebrow{display:inline-flex;align-items:center;gap:.5rem;font:600 var(--f--2)/1 var(--text);
+  letter-spacing:.11em;text-transform:uppercase;color:var(--a);margin-bottom:var(--sp-s)}
+.dark .eyebrow{color:var(--aL)}
+.eyebrow::before{content:"";width:1.6rem;height:2px;background:currentColor;border-radius:2px}
+.lede{font-size:var(--f-1);color:var(--body);max-width:46ch}
+.small{font-size:var(--f--1);color:var(--muted)}
+.ic{width:24px;height:24px;flex:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;
+  stroke-linejoin:round;fill:none;display:block}
+
+/* ── the mark ── */
+.mark{display:grid;place-items:center;width:2.4rem;height:2.4rem;flex:none}
+.mark img{width:100%;height:100%;display:block}
+
+/* ── top bar ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(250,249,242,.94);
+  border-bottom:1px solid var(--line);backdrop-filter:saturate(1.6) blur(10px)}
+.topbar .wrap{min-height:var(--bar);display:flex;align-items:center;gap:var(--sp-m)}
+.brand{display:flex;align-items:center;gap:.6rem;text-decoration:none;color:var(--ink);
+  font:600 var(--f--1)/1.2 var(--display);letter-spacing:-.01em}
+/* .brand span would match the mark's wrapper too, so the shield vanished from
+   the topbar on a phone. Only the wordmark folds away. */
+.brand .bn{display:none}
+@media (min-width:30rem){.brand .bn{display:block}}
+.topnav{margin-left:auto;display:none;gap:1.1rem;align-items:center}
+@media (min-width:62rem){.topnav{display:flex}}
+.topnav a{color:var(--body);text-decoration:none;font:500 var(--f--1)/1 var(--text)}
+.topnav a:hover{color:var(--a)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+  padding:.8rem 1.25rem;border-radius:999px;border:1.5px solid transparent;cursor:pointer;
+  font:600 var(--f--1)/1.1 var(--text);text-decoration:none;text-align:center;
+  transition:translate var(--t,.18s) var(--ease),background var(--t,.18s),color var(--t,.18s),border-color var(--t,.18s)}
+.btn:hover{translate:0 -2px}
+.btn-1{background:linear-gradient(135deg,#007a95,var(--aD));color:#fff;box-shadow:var(--e2)}
+.btn-1:hover{color:#fff;background:var(--aD)}
+.btn-2{background:var(--card);color:var(--ink);border-color:var(--line-strong)}
+.btn-2:hover{color:var(--ink);border-color:var(--a)}
+.btn-3{background:transparent;color:var(--a);border-color:transparent;padding-inline:.4rem}
+.dark .btn-2{background:transparent;color:#fff;border-color:var(--d3)}
+.dark .btn-2:hover{color:#fff;border-color:var(--aL)}
+.ctas{display:flex;flex-wrap:wrap;gap:var(--sp-s);align-items:center}
+
+/* ── hero ── */
+.hero{position:relative;overflow:clip;padding-block:clamp(2.5rem,2rem + 4vw,5rem) var(--sp-2xl)}
+.hero .wrap{position:relative;z-index:2}
+.field{position:absolute;inset:-10% -8% auto -8%;height:120%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(38rem 30rem at 18% 12%,rgba(0,114,141,.13),transparent 62%),
+    radial-gradient(30rem 26rem at 88% 70%,rgba(0,207,234,.12),transparent 62%)}
+.hgrid{display:grid;gap:var(--sp-xl);align-items:center}
+@media (min-width:60rem){.hgrid{grid-template-columns:1.08fr .92fr;gap:var(--sp-2xl)}}
+
+/* ── the hero: the film is the hero, 9 November 2026 ────────────────────────
+   Measured before the change: the film started 2581–3400px down and was 0%
+   visible in the first screen at every one of eight real sizes — 2.4 to 5
+   whole screens of scrolling. "A person should not scroll, I want to see the
+   video." Same shape the client manager page proved: lead and rest stack in
+   the left column, the film spans both rows on the right, one column on a
+   phone with the film straight after the headline. The terminal that used to
+   sit here is not lost — it is #runs, directly below, where proof belongs. */
+.hgrid{align-items:center}
+.hero-film{display:grid;gap:var(--sp-s);align-content:start}
+/* --dT3 is the dark-theme token: on this light hero it measures 1.71:1.
+   The client manager carries the same rule correctly, because ITS hero is
+   dark (9.63:1 there). Never copy a colour between pages without measuring
+   it against the ground it lands on. */
+.vnote{margin:0;font-size:var(--f--2);line-height:1.5;color:var(--muted)}
+.vnote b{color:var(--ink)}
+@media (min-width:60rem){
+  .hgrid{grid-template-columns:1.22fr .78fr;column-gap:var(--sp-2xl);
+    row-gap:var(--sp-m);align-items:start}
+  .hero-lead{grid-column:1;grid-row:1}
+  .hero-rest{grid-column:1;grid-row:2}
+  .hero-film{grid-column:2;grid-row:1 / span 2;align-self:start}
+}
+/* A grid item's default min-width is auto, so the terminal's `white-space:pre`
+   lines set the column's min-content width and dragged every sibling 62px past
+   a 390px viewport — clipped by .hero, so it caused no sideways scroll and the
+   copy was simply cut off. min-width:0 lets the panel scroll inside itself
+   instead. The same guard belongs on every grid with explicit columns. */
+.hgrid > *,.fgrid > *,.jobs > *,.ledger > *,.talk-grid > *{min-width:0}
+/* ═══ THE STACK, IN THE FIRST SCREEN (10 November 2026) ═══
+   The seat was advertised as "Administrator & branch builder", which neither reaches
+   nor selects the person it is actually for. Somebody who writes Apps Script and
+   Salesforce automation does not search "administrative assistant", and a generic
+   office-efficiency headline tells them nothing. The real estate they would inherit —
+   measured from the repository, not claimed — is the whole pitch, so it leads. */
+/* This page is LIGHT. The first cut of this block used --dT/--dT2/--dT3 and white
+   borders — the dark-band tokens — so the whole thing rendered near-invisible on
+   #faf9f2. Light ground, light tokens. */
+/* This headline is longer than the one it replaced, so it takes a step down from
+   --f-4 or it runs to five lines and pushes the stack and the stat tiles off the
+   first screen — which is the whole point of putting them there. */
+.hero h1{font-size:clamp(1.95rem,1.3rem + 2.3vw,3.15rem);line-height:1.08;text-wrap:balance}
+.hero-stack{margin:var(--sp-s) 0 0;max-width:56ch;font-size:var(--f-0);line-height:1.55;color:var(--body)}
+.hero-stack strong{color:var(--ink);font-weight:700}
+.hstats{list-style:none;margin:var(--sp-m) 0 0;padding:0;display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));gap:.55rem}
+.hstats li{min-width:0;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-s,.6rem);padding:.65rem .75rem;display:grid;gap:.1rem}
+.hstats b{font:800 var(--f-1)/1.05 var(--display);color:var(--a);font-variant-numeric:tabular-nums}
+.hstats span{font-size:var(--f--2);line-height:1.3;color:var(--muted)}
+.dark .hero-stack{color:var(--dT2)} .dark .hero-stack strong{color:var(--dT)}
+.dark .hstats li{background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.14)}
+.dark .hstats b{color:var(--aL)} .dark .hstats span{color:var(--dT3)}
+@media (max-width:46rem){.hstats{grid-template-columns:1fr 1fr}}
+.term{min-width:0;max-width:100%}
+h1 em{font-style:normal;color:var(--a);display:block}
+.hsub{font-size:var(--f-1);max-width:42ch;color:var(--body)}
+/* ── the vacancy badge and the attraction line (7 November 2026) ──────────
+   The ad has to read as a hiring ad at a glance, then say the one thing that
+   makes the right person stop. The badge is a word as well as a colour; the
+   dot's pulse is opt-in motion only. */
+.vac{display:inline-flex;align-items:center;gap:.55rem;margin:0 0 var(--sp-s);
+  padding:.4rem .9rem .4rem .7rem;border-radius:999px;
+  font:700 var(--f--2)/1 var(--text);letter-spacing:.06em;text-transform:uppercase;
+  background:var(--a-tint);border:1px solid var(--a);color:var(--aD)}
+.vac i{width:.55rem;height:.55rem;border-radius:50%;background:var(--a);flex:none;
+  box-shadow:0 0 0 .28rem rgba(0,114,141,.18)}
+@media (prefers-reduced-motion:no-preference){
+  .vac i{animation:vacPulse 2.4s var(--ease) infinite}
+  @keyframes vacPulse{0%,100%{box-shadow:0 0 0 .22rem rgba(0,114,141,.22)}
+                      50%{box-shadow:0 0 0 .55rem rgba(0,114,141,0)}}
+}
+.pull{margin:var(--sp-m) 0 0;padding-left:var(--sp-m);max-width:46ch;
+  border-left:4px solid var(--a);color:var(--ink);
+  font:700 var(--f-1)/1.32 var(--display);letter-spacing:-.01em}
+
+.hnote{display:flex;flex-wrap:wrap;gap:.4rem 1rem;font:500 var(--f--1)/1.4 var(--text);color:var(--muted);
+  margin-top:var(--sp-m)}
+.hnote span{display:inline-flex;align-items:center;gap:.4rem}
+.hnote .ic{width:16px;height:16px;color:var(--a)}
+
+/* the terminal: the real stack, named */
+.term{background:var(--d0);border:1px solid var(--d2);border-radius:var(--r);overflow:hidden;
+  box-shadow:var(--e3);font-family:var(--mono);font-size:clamp(.72rem,.62rem + .4vw,.86rem);line-height:1.85}
+.term-bar{display:flex;align-items:center;gap:.45rem;padding:.7rem .9rem;background:var(--d1);
+  border-bottom:1px solid var(--d2)}
+.term-bar i{width:.6rem;height:.6rem;border-radius:50%;background:var(--d3);display:block}
+.term-bar b{margin-left:.5rem;font:500 .72rem/1 var(--text);color:var(--dT3);letter-spacing:.04em}
+.term-body{padding:.9rem 1rem 1.1rem;color:var(--dT2);overflow-x:auto}
+.term-body div{white-space:pre;min-height:1.85em}
+/* The terminal is a dark panel inside a LIGHT section, so `.dark a` never
+   reaches it and the light-ground action colour measures 3.01:1 here. The
+   branch teal is the one that works on navy. */
+.term-body a{color:var(--aL);text-decoration-color:rgba(0,207,234,.45)}
+.term-body a:hover{color:#7fe3f2}
+.term-body .p{color:var(--aL)}
+.term-body .c{color:#8aa0bb}
+.term-body .k{color:#ffd79a}
+.term-body .s{color:#9ff0c6}
+
+/* ── the film ── */
+.filmgrid{display:grid;gap:var(--sp-l);align-items:center}
+@media (min-width:52rem){.filmgrid{grid-template-columns:1.25fr .75fr;gap:var(--sp-xl)}}
+.filmgrid > *{min-width:0}
+.vwrap{position:relative;border-radius:var(--r);overflow:hidden;background:var(--d0);
+  aspect-ratio:16/9;box-shadow:var(--e3)}
+.vwrap video{width:100%;height:100%;display:block;object-fit:contain;background:var(--d0)}
+
+/* ── counters ── */
+.band{background:var(--d0);color:var(--dT2);border-block:1px solid var(--d2);padding-block:var(--sp-l)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,8rem),1fr));gap:var(--sp-m) var(--sp-s);text-align:center}
+.cgrid b{display:block;font:700 clamp(1.5rem,1.1rem + 1.8vw,2.4rem)/1 var(--display);color:#fff;
+  letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.cgrid span{display:block;font-size:var(--f--2);color:var(--dT3);line-height:1.35;margin-top:.3rem}
+
+/* ── generic cards ── */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:var(--sp-m);
+  list-style:none;margin:var(--sp-l) 0 0;padding:0}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:var(--sp-m);box-shadow:var(--e1)}
+.card::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:var(--e3);
+  opacity:0;transition:opacity .25s var(--ease);pointer-events:none}
+.card:hover::after{opacity:1}
+.card h3{display:flex;align-items:flex-start;gap:.6rem;font-size:var(--f-0);margin-bottom:.4rem}
+.card h3 .ic{color:var(--a);margin-top:.1rem}
+.card p{margin:0;font-size:var(--f--1);color:var(--body)}
+.card p + p{margin-top:.6rem}
+.dark .card{background:var(--d1);border-color:var(--d2)}
+.dark .card p{color:var(--dT2)}
+.dark .card h3 .ic{color:var(--aL)}
+
+/* ── the ledger: what you've heard / what is true here ── */
+.ledger{display:grid;gap:var(--sp-m);margin-top:var(--sp-l)}
+@media (min-width:48rem){.ledger{grid-template-columns:1fr 1fr}}
+.led{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-m);
+  box-shadow:var(--e1)}
+.led > b{display:block;font:600 var(--f--1)/1.3 var(--text);color:var(--muted);letter-spacing:.06em;
+  text-transform:uppercase;font-size:var(--f--2);margin-bottom:var(--sp-s);
+  padding-bottom:var(--sp-s);border-bottom:1px solid var(--line)}
+.led.yes > b{color:var(--a)}
+.led ul{list-style:none;margin:0;padding:0;display:grid;gap:.7rem}
+.led li{display:flex;gap:.55rem;align-items:flex-start;font-size:var(--f--1);line-height:1.5}
+.led li .ic{width:18px;height:18px;margin-top:.22rem}
+.led.no li{color:var(--muted)}
+.led.no li .ic{color:var(--line-strong)}
+.led.yes li .ic{color:var(--ok)}
+
+/* ── the week ── */
+.week{display:grid;gap:0;margin-top:var(--sp-l);border-left:2px solid var(--a-tint2);padding-left:var(--sp-m)}
+.week div{position:relative;padding-block:var(--sp-s)}
+.week div + div{border-top:1px solid var(--line)}
+.week div::before{content:"";position:absolute;left:calc(-1 * var(--sp-m) - 6px);top:1.35rem;
+  width:10px;height:10px;border-radius:50%;background:var(--a);border:2px solid var(--bg)}
+.week b{display:block;font:600 var(--f--1)/1.3 var(--text);color:var(--ink)}
+.week span{display:block;font-size:var(--f--1);color:var(--muted)}
+
+/* ── the two jobs on the table ── */
+.jobs{display:grid;gap:var(--sp-m);margin-top:var(--sp-l)}
+@media (min-width:52rem){.jobs{grid-template-columns:1fr 1fr}}
+.job{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--a);
+  border-radius:var(--r);padding:var(--sp-m);box-shadow:var(--e1)}
+.job .tag{display:inline-block;font:600 var(--f--2)/1 var(--text);letter-spacing:.08em;
+  text-transform:uppercase;color:var(--a);background:var(--a-tint);padding:.35rem .6rem;
+  border-radius:999px;margin-bottom:.6rem}
+.job h3{font-size:var(--f-0)}
+.job ul{margin:.6rem 0 0;padding-left:1.1rem;font-size:var(--f--1);color:var(--body)}
+.job li{margin-bottom:.35rem}
+
+/* ── gates ── */
+.gates{counter-reset:g;display:grid;gap:var(--sp-m);margin-top:var(--sp-l);list-style:none;padding:0}
+.gate{counter-increment:g;position:relative;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r);padding:var(--sp-m) var(--sp-m) var(--sp-m) 3.9rem;box-shadow:var(--e1)}
+.gate::before{content:counter(g);position:absolute;left:var(--sp-m);top:var(--sp-m);
+  width:2.1rem;height:2.1rem;border-radius:50%;background:var(--a);color:#fff;display:grid;
+  place-items:center;font:700 var(--f--1)/1 var(--display)}
+.gate h3{font-size:var(--f-0);margin-bottom:.35rem}
+.gate p{margin:0;font-size:var(--f--1)}
+.gate p + p{margin-top:.5rem}
+
+/* ── team ── */
+.team{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));gap:var(--sp-m);
+  margin-top:var(--sp-l);list-style:none;padding:0}
+.team li{text-align:center}
+.team .av{width:3.4rem;height:3.4rem;margin:0 auto .6rem;border-radius:50%;display:grid;place-items:center;
+  background:var(--a-tint);color:var(--aD);font:600 var(--f-0)/1 var(--display);border:1.5px solid var(--a-tint2)}
+.team li.seat .av{background:var(--d0);color:#fff;border-color:var(--d2);border-style:dashed}
+.team b{display:block;font:600 var(--f--1)/1.3 var(--text);color:var(--ink)}
+.team span{display:block;font-size:var(--f--2);color:var(--muted);line-height:1.4}
+
+/* ── statement ── */
+.statement{background:var(--d0);color:#fff;border-block:1px solid var(--d2);text-align:center}
+.statement p{font:700 var(--f-3)/1.2 var(--display);letter-spacing:-.03em;max-width:34ch;
+  margin:0 auto;color:#fff}
+.statement .small{color:var(--dT3);margin-top:var(--sp-m)}
+
+/* ── the form ── */
+.fgrid{display:grid;gap:var(--sp-xl)}
+@media (min-width:62rem){.fgrid{grid-template-columns:.85fr 1.15fr;gap:var(--sp-2xl)}}
+.form{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:var(--sp-m);box-shadow:var(--e2);display:grid;gap:var(--sp-m)}
+@media (min-width:36rem){.form{padding:var(--sp-l)}}
+.form .two{display:grid;gap:var(--sp-m)}
+@media (min-width:30rem){.form .two{grid-template-columns:1fr 1fr}}
+label{display:block;font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.4rem}
+label small{font-weight:400;color:var(--muted)}
+input[type=text],input[type=tel],input[type=email],input[type=url],textarea,select{
+  width:100%;padding:.75rem .85rem;border:1.5px solid var(--line-strong);border-radius:var(--r-s);
+  background:#fff;color:var(--body);font:400 max(16px,1rem)/1.5 var(--text)}
+textarea{resize:vertical;min-height:5.5rem}
+input:focus,textarea:focus,select:focus{border-color:var(--a);outline:2px solid var(--a-tint2);outline-offset:0}
+fieldset{border:0;padding:0;margin:0}
+legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem;padding:0}
+.pills{display:flex;flex-wrap:wrap;gap:.5rem}
+.pills label{position:relative;margin:0;font-weight:500}
+.pills input{position:absolute;opacity:0;width:1px;height:1px}
+.pills span{display:block;padding:.6rem .9rem;border:1.5px solid var(--line-strong);border-radius:999px;
+  cursor:pointer;font:500 max(16px,.95rem)/1.2 var(--text);color:var(--body);
+  transition:border-color .18s var(--ease),background .18s var(--ease),color .18s var(--ease)}
+.pills span:hover{border-color:var(--a)}
+.pills input:checked + span{background:var(--a);border-color:var(--a);color:#fff}
+.pills input:focus-visible + span{outline:3px solid var(--a);outline-offset:3px}
+.cc{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.2rem .5rem;font-size:var(--f--2);color:var(--muted);margin-top:.3rem}
+/* what is still needed, while they type: a minimum nobody is told about is
+   one that reads as the page refusing for no reason */
+.cc .need{color:var(--muted)}
+.cc .need.on{color:#a3301f;font-weight:600}
+/* the progress rail — moves on input, never on scroll */
+.rail{position:sticky;top:var(--bar);z-index:20;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-s);padding:.7rem .9rem;margin:0 0 var(--sp-s);box-shadow:var(--e1)}
+.rail-top{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;
+  font:600 var(--f--1)/1.3 var(--text);color:var(--ink);margin-bottom:.45rem}
+.rail-top span{font-weight:400;color:var(--muted);font-size:var(--f--2)}
+.rail-bar{height:6px;border-radius:4px;background:var(--line);overflow:hidden}
+.rail-bar i{display:block;height:100%;width:0;border-radius:4px;
+  background:linear-gradient(90deg,#007a95,var(--aD));transition:width .35s var(--ease)}
+.rail.full .rail-bar i{background:linear-gradient(90deg,#0f7a52,#0b5f40)}
+.rail.full .rail-top{color:var(--ok)}
+/* form sections */
+.fsec{border-top:1px solid var(--line);padding-top:var(--sp-m);margin-top:var(--sp-xs)}
+.fsec:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.fsec > h3{display:flex;align-items:center;gap:.6rem;font-size:var(--f-0);margin-bottom:.2rem}
+.fsec > h3 b{flex:none;width:1.7rem;height:1.7rem;border-radius:50%;background:var(--a-tint);color:var(--aD);
+  display:grid;place-items:center;font:600 var(--f--2)/1 var(--display);transition:background .25s,color .25s}
+.fsec.secok > h3 b{background:var(--ok);color:#fff}
+.fsec.secok > h3 b::before{content:"\2713"}
+.fsec.secok > h3 b i{display:none}
+.fsec > .hint{margin:0 0 var(--sp-m);font-size:var(--f--1);color:var(--muted)}
+.fsec .grid{display:grid;gap:var(--sp-m)}
+/* the tool grid: checkboxes, none required */
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:.5rem}
+.tools label{display:flex;align-items:flex-start;gap:.55rem;margin:0;padding:.6rem .7rem;
+  border:1.5px solid var(--line);border-radius:var(--r-s);cursor:pointer;font-weight:400;
+  font-size:max(16px,.95rem);line-height:1.35;transition:border-color .18s,background .18s}
+.tools label:hover{border-color:var(--a)}
+.tools input{flex:none;width:1.15rem;height:1.15rem;margin:.1rem 0 0;accent-color:var(--a)}
+.tools label:has(input:checked){border-color:var(--a);background:var(--a-tint)}
+.tools label:has(input:focus-visible){outline:3px solid var(--a);outline-offset:2px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.err{margin:0;color:#a3301f;font:600 var(--f--1)/1.4 var(--text);display:none}
+.err.on{display:block}
+.fine{margin:0;font-size:var(--f--2);color:var(--muted)}
+.done{display:none;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:var(--sp-l) var(--sp-m);box-shadow:var(--e2)}
+.done.on{display:block}
+.done .ref{font-family:var(--mono);font-size:var(--f-1);background:var(--a-tint);color:var(--aD);
+  padding:.5rem .8rem;border-radius:var(--r-s);display:inline-block;margin:.6rem 0 var(--sp-m);
+  overflow-wrap:anywhere}
+.done .warn{color:var(--warn);font-size:var(--f--1)}
+.steps{counter-reset:s;list-style:none;margin:var(--sp-m) 0 0;padding:0;display:grid;gap:.8rem}
+.steps li{counter-increment:s;display:flex;gap:.7rem;font-size:var(--f--1);line-height:1.5}
+.steps li::before{content:counter(s);flex:none;width:1.6rem;height:1.6rem;border-radius:50%;
+  background:var(--a-tint);color:var(--aD);display:grid;place-items:center;
+  font:600 var(--f--2)/1 var(--display);margin-top:.15rem}
+
+/* ── faq ── */
+details{background:var(--card);border:1px solid var(--line);border-radius:var(--r-s);
+  padding:var(--sp-s) var(--sp-m);margin-bottom:.7rem}
+details[open]{box-shadow:var(--e1)}
+/* min-height, because the computed line box lands at 23px — one pixel under
+   WCAG 2.2 2.5.8's floor, which is exactly the kind of miss only a measured
+   check finds. */
+summary{cursor:pointer;font:600 var(--f-0)/1.4 var(--display);color:var(--ink);list-style:none;
+  display:flex;justify-content:space-between;gap:var(--sp-s);align-items:flex-start;
+  min-height:28px;padding-block:.15rem}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";flex:none;width:12px;height:12px;margin-top:.45rem;
+  border-right:2px solid var(--a);border-bottom:2px solid var(--a);rotate:45deg;
+  transition:rotate .2s var(--ease)}
+details[open] summary::after{rotate:225deg}
+details p{margin:var(--sp-s) 0 0;font-size:var(--f--1)}
+details p:last-child{margin-bottom:.3rem}
+
+/* ── footer ── */
+footer{background:var(--d0);color:var(--dT3);padding-block:var(--sp-l);border-top:1px solid var(--d2)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:var(--sp-s) var(--sp-l);align-items:center;
+  justify-content:space-between;font-size:var(--f--1)}
+footer a{color:var(--dT2);text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
+footer a:hover{color:var(--aL)}
+footer .ic{width:16px;height:16px}
+
+/* ── sticky ── */
+.sticky{position:fixed;left:0;right:0;bottom:0;z-index:48;padding:.7rem 1rem calc(.7rem + env(safe-area-inset-bottom));
+  background:rgba(250,249,242,.95);border-top:1px solid var(--line);
+  backdrop-filter:saturate(1.6) blur(10px);display:none;justify-content:center}
+@media (max-width:56rem){.sticky{display:flex}body{padding-bottom:4.5rem}}
+.sticky .btn{width:100%;max-width:26rem}
+
+/* ═══════════ MOTION — every finished state above is the default; nothing
+   below can strand content, and none of it runs when motion is not wanted.
+   ═══════════ */
+@media (prefers-reduced-motion:no-preference){
+  .field{animation:drift 26s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate3d(2.5%,-2%,0) scale(1.06)}}
+  .rv{opacity:0;translate:0 1.4rem}
+  html.js .rv{transition:opacity .6s var(--ease-out),translate .6s var(--ease-out)}
+  html.js .rv.in,html:not(.js) .rv{opacity:1;translate:none}
+  html.js .rv.in [style*="--i"]{animation:rise .55s var(--ease-out) both;animation-delay:calc(var(--i) * 70ms)}
+  @keyframes rise{from{opacity:0;translate:0 .8rem}}
+  html.js [data-words] .w{display:inline-block;animation:wordin .6s var(--ease-out) both;
+    animation-delay:calc(var(--wi) * 55ms)}
+  @keyframes wordin{from{opacity:0;translate:0 .5em;filter:blur(4px)}}
+  .term-body div{animation:lineon .3s var(--ease) both;animation-delay:calc(var(--l) * 160ms + .2s)}
+  @keyframes lineon{from{opacity:0}}
+  .term-body div::after{content:"";display:inline-block;width:.55em;height:1.05em;
+    vertical-align:-.18em;background:var(--aL);margin-left:.15em;opacity:0;
+    animation:cur .9s step-end 6;animation-delay:calc(var(--l) * 160ms + .2s)}
+  @keyframes cur{0%,49%{opacity:.9}50%,100%{opacity:0}}
+  .term-body div:last-child::after{animation:cur 1.1s step-end infinite;
+    animation-delay:calc(var(--l) * 160ms + .2s)}
+  .pills input:checked + span{animation:pop .3s var(--ease)}
+  @keyframes pop{40%{scale:1.06}}
+  .gate:hover::before{animation:pop .35s var(--ease)}
+}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;translate:none}}
+@media print{.rv{opacity:1!important;translate:none!important}.sticky,.topbar{display:none}}
+
+/* ── the form that is the interview ─────────────────────────────────────
+   The sheet is deliberately ugly: a photocopied internal form, grey rules,
+   a form number and a revision date from twelve years ago. That is what
+   makes the person this seat wants wince before they have read a word of
+   the job description. Everything around it is the page's own system. */
+.fixsec{background:var(--bg2)}
+.fixns{margin-top:var(--sp-m);padding:var(--sp-s) var(--sp-m);border-left:3px solid var(--a);
+  background:var(--card);color:var(--body);max-width:62ch}
+.fixgrid{display:grid;gap:var(--sp-l);margin-top:var(--sp-l);
+  grid-template-columns:minmax(0,1.55fr) minmax(min(100%,17rem),1fr);align-items:start}
+@media (max-width:60rem){.fixgrid{grid-template-columns:1fr}}
+@media (max-width:34rem){
+  .srows li{padding:.05rem 0}
+  .spot{min-height:2.2rem;padding:.25rem .35rem}
+  .sheet{padding:.9rem .7rem}
+}
+/* the tally is a long scroll away on a phone, so a mark answers for itself
+   where the thumb is. It sits above the page's own apply bar, never under. */
+#mToast{position:fixed;left:50%;transform:translate(-50%,1.2rem);z-index:60;
+  bottom:calc(4.6rem + env(safe-area-inset-bottom,0px));
+  background:var(--ink);color:#fff;border-radius:999px;padding:.55rem 1.1rem;
+  font:600 var(--f--1)/1 var(--text);box-shadow:var(--e3);
+  opacity:0;pointer-events:none;transition:opacity .18s var(--ease),transform .18s var(--ease)}
+#mToast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){#mToast{transition:none}}
+@media (min-width:60.01rem){#mToast{display:none}}
+
+.sheet{background:#fff;border:1px solid #cfcabc;border-radius:2px;min-width:0;
+  box-shadow:var(--e2);font-family:var(--mono);color:#2a2a28;
+  padding:clamp(.9rem,.5rem + 1.6vw,1.6rem)}
+.shead{border-bottom:2px solid #2a2a28;padding-bottom:.55rem;margin-bottom:.9rem;
+  display:flex;flex-wrap:wrap;gap:.4rem .9rem;align-items:baseline;justify-content:space-between}
+.shead b{font-size:var(--f--1);letter-spacing:.06em}
+.shead span{font-size:var(--f--2);color:#6d6a62}
+.sttl{font-size:var(--f--1);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+
+.srows{list-style:none;margin:0;padding:0;display:grid;gap:.1rem}
+.srows li{display:grid;grid-template-columns:1.6rem minmax(0,10.5rem) minmax(0,1fr);
+  gap:.2rem .5rem;align-items:center;padding:.18rem 0;border-bottom:1px dotted #ded9cc}
+@media (max-width:34rem){.srows li{grid-template-columns:1.4rem minmax(0,1fr);}
+  .srows li .spot{grid-column:1/-1}}
+.sn{color:#9a968c;font-size:var(--f--2)}
+.sl{font-size:var(--f--2);color:#4a4740;text-transform:uppercase;letter-spacing:.03em}
+.sl em{text-transform:none;letter-spacing:0;color:#8a867c}
+
+/* a spot is a real button, so it is reachable by keyboard and announced */
+.spot{appearance:none;background:transparent;border:1.5px dashed transparent;
+  border-radius:4px;cursor:pointer;width:100%;text-align:left;
+  padding:.35rem .4rem;min-height:2.6rem;display:flex;flex-wrap:wrap;
+  align-items:center;gap:.4rem;font:inherit;color:inherit;position:relative;
+  transition:background .14s var(--ease),border-color .14s var(--ease)}
+.spot:hover{background:#fff8e6;border-color:#d9c48a}
+.spot:focus-visible{outline:3px solid var(--a);outline-offset:2px}
+.spot .rule{flex:1 1 6rem;min-width:4rem;height:1px;background:#b9b4a6;align-self:flex-end;
+  margin-bottom:.45rem}
+.spot em{font-size:var(--f--2);color:#8a867c;font-style:italic}
+.spot.tiny{max-width:9rem}
+.spot .yn{font-weight:700;letter-spacing:.06em;font-size:var(--f--2)}
+.spot.sums{display:grid;grid-template-columns:1fr;gap:.1rem;max-width:22rem}
+.sum{display:flex;justify-content:space-between;gap:.6rem;font-size:var(--f--2)}
+.sum i{font-style:normal;color:#6d6a62}
+.sum.tot{border-top:1px solid #2a2a28;padding-top:.2rem;font-weight:700}
+.spot.line{display:block;font-size:var(--f--2);color:#4a4740;min-height:0;padding:.4rem}
+.sfoot{margin-top:.9rem;padding-top:.6rem;border-top:1px solid #ded9cc;display:grid;gap:.15rem}
+.spot.office{display:grid;gap:.3rem;background:#f1efe6;border:1.5px dashed #cfcabc}
+.spot.office:hover{background:#fff8e6;border-color:#d9c48a}
+.ol{font-size:var(--f--2);text-transform:uppercase;letter-spacing:.08em;color:#6d6a62}
+.orow{display:flex;flex-wrap:wrap;gap:.4rem .7rem;align-items:flex-end}
+.orow i{font-style:normal;font-size:var(--f--2);color:#6d6a62}
+.orow .rule{flex:1 1 3.5rem}
+
+/* marked */
+.spot[aria-pressed="true"]{background:var(--a-tint);border-color:var(--a);border-style:solid}
+.spot[aria-pressed="true"]::after{content:attr(data-n);position:absolute;top:-.6rem;left:-.6rem;
+  width:1.45rem;height:1.45rem;border-radius:999px;background:var(--a);color:#fff;
+  font:700 .75rem/1.45rem var(--text);text-align:center;box-shadow:var(--e1)}
+
+/* the tally */
+.marks{position:relative;min-width:0}
+.mstick{position:sticky;top:calc(var(--bar) + .75rem);background:var(--card);
+  border:1px solid var(--line);border-radius:var(--r-s);padding:var(--sp-m);
+  box-shadow:var(--e2);display:grid;gap:var(--sp-s)}
+.mcount{margin:0;display:grid;gap:.15rem}
+.mcount b{font:700 var(--f-1)/1.15 var(--display);color:var(--ink)}
+.mcount span{font-size:var(--f--1);color:var(--muted)}
+.mlist{list-style:none;margin:0;padding:0;display:grid;gap:.5rem}
+.mlist li{display:grid;gap:.3rem;padding:.5rem .6rem;background:var(--bg2);border-radius:var(--r-s)}
+.mlist .mt{display:flex;gap:.5rem;align-items:baseline;justify-content:space-between}
+.mlist .mt b{font-size:var(--f--1);color:var(--ink);font-weight:600}
+.mlist .mx{appearance:none;background:none;border:0;cursor:pointer;color:var(--muted);
+  font-size:var(--f--2);text-decoration:underline;padding:.2rem;min-height:2rem}
+.mlist textarea,#mElseBox textarea{width:100%;font:400 max(16px,var(--f--1))/1.45 var(--text);
+  color:var(--body);background:var(--card);border:1px solid var(--line-strong);
+  border-radius:var(--r-s);padding:.45rem .55rem;resize:vertical}
+.mlist textarea:focus-visible,#mElseBox textarea:focus-visible{outline:2px solid var(--a);outline-offset:1px}
+#mElseBox{display:grid;gap:.3rem;margin-top:.5rem}
+#mElseBox label{font-size:var(--f--2);color:var(--muted)}
+.wfull{width:100%;justify-content:center}
+.mfoot{color:var(--muted)}
+
+</style>
+</head>
+<body>
+<script>document.documentElement.className+=' js';</script>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+<symbol id="i-code" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></symbol>
+<symbol id="i-git" viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8Z"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><path d="M15.5 21a13.5 13.5 0 0 1-12.5-12.5A2 2 0 0 1 5 6.3h2.6a1.5 1.5 0 0 1 1.5 1.2l.6 2.5a1.5 1.5 0 0 1-.6 1.6l-1.2.8a11 11 0 0 0 4 4l.8-1.2a1.5 1.5 0 0 1 1.6-.6l2.5.6a1.5 1.5 0 0 1 1.2 1.5V19a2 2 0 0 1-2.2 2Z"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H8l-5 3 1.4-4.6A8 8 0 1 1 21 12Z"/></symbol>
+<symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></symbol>
+<symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M4.2 7.2l2.1 2.1M17.7 14.7l2.1 2.1M3 12h3M18 12h3M4.2 16.8l2.1-2.1M17.7 9.3l2.1-2.1"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5M9 14h6M9 17h4"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"/><circle cx="9" cy="7" r="3.2"/><path d="M22 20v-1.5a4 4 0 0 0-3-3.8M16.5 4.2a3.2 3.2 0 0 1 0 6.1"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-rocket" viewBox="0 0 24 24"><path d="M5 16s-2 1-2 5c4 0 5-2 5-2M9 15l-3-3c0-6 5-10 11-10 0 6-4 11-10 11l2 2Z"/><circle cx="14" cy="8" r="1.4"/></symbol>
+</defs></svg>
+
+<header class="topbar" id="top">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="mark"><img src="/site-mark.svg" alt=""></span><span class="bn">Ricky Rampersad Branch</span></a>
+    <nav class="topnav" aria-label="This page">
+      <a href="#real">The seat</a>
+      <a href="#stack">The stack</a>
+      <a href="#code">Our code</a>
+      <a href="#slim">Your first job</a>
+      <a href="#fix">The test</a>
+    </nav>
+    <a class="btn btn-1" href="#apply" style="margin-left:auto">Apply <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+  </div>
+</header>
+
+<!-- ══════════════════ HERO ══════════════════ -->
+<section class="hero" id="hero">
+  <div class="field" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="hgrid">
+      <div class="hero-lead">
+        <p class="vac"><i aria-hidden="true"></i>The Ricky Rampersad Branch is hiring &middot; one personal assistant &middot; Chaguanas</p>
+        <span class="eyebrow">Personal assistant to Ricky Rampersad &middot; Apps Script &middot; Salesforce &middot; AI in production</span>
+        <h1 data-words>A hundred thousand lines of Apps Script already run this branch. <em>Come and own them.</em></h1>
+        <p class="hero-stack">Thirty-six server-side files. Forty-four scheduled triggers firing every working day. Two hundred and sixty-one Salesforce fields read and written. The Claude API drafting, marking and reading notes in production. <strong>Nobody maintains it full time. That is the job.</strong></p>
+        <ul class="hstats" aria-label="Running in the branch today">
+          <li><b>101,508</b><span>lines of Apps&nbsp;Script</span></li>
+          <li><b>44</b><span>scheduled triggers</span></li>
+          <li><b>261</b><span>Salesforce fields</span></li>
+          <li><b>347</b><span>pages served</span></li>
+        </ul>
+      </div>
+      <div class="hero-film">
+        <div class="vwrap">
+          <video id="fv" playsinline preload="metadata" poster="film-w.jpg"
+                 controls controlslist="nodownload" aria-label="A minute and forty seconds on the seat, the platforms, the tools and what we stand for">
+            <source src="film-w.mp4" type="video/mp4">
+          </video>
+        </div>
+        <p class="vnote"><b>A minute and forty seconds.</b> The problem this seat solves, the platforms, the tools, and the one thing we are looking for. The words are on screen the whole way through, so it reads with the sound off. Every file name in it is a real file in the branch&rsquo;s backend; every figure is illustrative and no client appears.</p>
+      </div>
+      <div class="hero-rest">
+        <p class="pull">If you have ever fixed something at work on your own time, because waiting for somebody else to fix it was unbearable &mdash; this is the one to read.</p>
+        <p class="hsub"><strong>&ldquo;Everyone calls me to fix it.&rdquo;</strong> Right now, when a script stalls, a trigger stops or something is stuck on a server, the whole branch rings the Branch Manager. This seat is the person who keeps every system we have built up and running, so that call comes to you, and gets answered.</p>
+        <p class="hsub"><strong>The next big thing:</strong> HELP 868, the branch&rsquo;s new WhatsApp line, connected to Claude and to Salesforce. It needs one dedicated person to make it brilliant.</p>
+        <div class="ctas">
+          <a class="btn btn-1" href="#fix">Fix our form <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-2" href="#real">What the job actually is</a>
+          <a class="btn btn-2" href="#cv">What goes on your CV</a>
+        </div>
+        <p class="hnote">
+          <span><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg>Chaguanas, Central Trinidad</span>
+          <span><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>Read within 48 hours</span>
+          <span><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>Read by the Branch Manager alone</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ WHAT RUNS HERE — the stack, promoted out of the hero 9 Nov 2026 ════ -->
+<section class="alt" id="runs">
+  <div class="wrap">
+    <div class="filmgrid rv">
+          <div class="term" role="img" aria-label="The branch's own stack: Google Apps Script, Salesforce, respond.io on WhatsApp, the Claude API, Microsoft Graph, Google Sheets and Drive, GitHub Pages, Playwright. Thirty-six backend files, about one hundred thousand lines.">
+            <div class="term-bar"><i></i><i></i><i></i><b>rickyrampersadbranch.com &mdash; what runs here</b></div>
+            <div class="term-body" aria-hidden="true">
+  <div style="--l:0"><span class="c"># the backend, written in-branch</span></div>
+  <div style="--l:1"><span class="p">&rsaquo;</span> <span class="k">Google Apps Script</span>   <span class="s">36 files &middot; ~100,000 lines</span></div>
+  <div style="--l:2"><span class="p">&rsaquo;</span> <span class="k">Salesforce</span>           <span class="s">OAuth &middot; SOQL &middot; composite &middot; Chatter</span></div>
+  <div style="--l:3"><span class="p">&rsaquo;</span> <span class="k">respond.io</span>           <span class="s">a WhatsApp agent, live</span></div>
+  <div style="--l:4"><span class="p">&rsaquo;</span> <span class="k">Claude API</span>           <span class="s">structured output &middot; guardrails</span></div>
+  <div style="--l:5"><span class="p">&rsaquo;</span> <span class="k">Microsoft Graph</span>      <span class="s">the branch mailbox</span></div>
+  <div style="--l:6"><span class="p">&rsaquo;</span> <span class="k">Sheets &middot; Drive</span>       <span class="s">the datastore</span></div>
+  <div style="--l:7"><span class="p">&rsaquo;</span> <span class="k">pdf-lib &middot; pdf.js</span>    <span class="s">forms filled and read</span></div>
+  <div style="--l:8"><span class="p">&rsaquo;</span> <span class="k">Playwright</span>           <span class="s">175 test files</span></div>
+  <div style="--l:9"><span class="c"># and the front: 338 pages, 593 commits so far</span></div>
+  <div style="--l:10"><span class="p">&rsaquo;</span> <span class="s">all of it public. github.com &rarr; read it.</span></div>
+            </div>
+          </div>
+      <div>
+        <span class="eyebrow">What runs here</span>
+        <h2 data-words>What the branch runs on, this morning.</h2>
+        <p>Every line of that is in production today, carrying real client work. The person in this seat writes in all of it &mdash; and on the first day, in the part of it they choose.</p>
+        <p class="small">All of it public: the repository is open, and you can read the code before you apply.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ THE TEST IS THE AD ══════════════════
+     The interview for this seat has always been one question: find something
+     here that is clumsy, missing, or would save somebody an hour, and say how
+     you would fix it. So the page asks it on the way in, with a real branch
+     form, rather than describing it in a paragraph nobody reads.
+
+     Twelve things are wrong with the form below. The number is never shown
+     and the faults are never named on screen: the moment a candidate can see
+     the answers it stops being a judgement and becomes a puzzle hunt, and the
+     thing being measured is what they NOTICE, not what they can guess. The
+     explanations live in FIXES[] and travel to the Branch Manager only. -->
+<section id="fix" class="fixsec" aria-labelledby="fixh">
+  <div class="wrap">
+    <div class="rv">
+      <span class="eyebrow">No CV. No cover letter.</span>
+      <h2 id="fixh" data-words>This is the job you have now. <em>Fix it.</em></h2>
+      <p class="lede">Below is the kind of form a branch runs on &mdash; ours looked like this once. <strong>Tap anything that is wrong with it.</strong> You do not have to know how to fix it, and there is no list of right answers. We only want to see what you notice.</p>
+    </div>
+
+    <noscript><p class="fixns">This part needs a script to run, and your browser is blocking it. The application further down the page works without one &mdash; or write to us and say what you would have marked.</p></noscript>
+
+    <div class="fixgrid" id="fixgrid" hidden>
+      <!-- the sheet: a photocopied internal form, which is what makes the
+           person we want wince on sight -->
+      <div class="sheet" role="group" aria-label="A branch form with things wrong with it. Tap any part you think is wrong.">
+        <div class="shead">
+          <div><b>GL&nbsp;114</b> <span>Rev. 2014</span></div>
+          <div class="sttl">Petty Cash &amp; Document Transmittal Request</div>
+        </div>
+
+        <ol class="srows">
+          <li><span class="sn">1</span>
+            <span class="sl">Date</span>
+            <button type="button" class="spot" data-f="date" aria-pressed="false"><span class="rule"></span><em>e.g. 03/04/26</em></button>
+          </li>
+
+          <li><span class="sn">2</span>
+            <span class="sl">Client name</span>
+            <button type="button" class="spot" data-f="name3" aria-pressed="false"><span class="rule"></span></button>
+          </li>
+
+          <li><span class="sn">3</span>
+            <span class="sl">Policy No.</span>
+            <button type="button" class="spot" data-f="policy" aria-pressed="false"><span class="rule"></span><em>e.g. TTCPL0100001 or 100001</em></button>
+          </li>
+
+          <li><span class="sn">4</span>
+            <span class="sl">Department to receive</span>
+            <button type="button" class="spot" data-f="dept" aria-pressed="false"><span class="rule"></span></button>
+          </li>
+
+          <li><span class="sn">5</span>
+            <span class="sl">Document(s) enclosed</span>
+            <button type="button" class="spot" data-f="onefm" aria-pressed="false"><span class="rule"></span><em>one form per document</em></button>
+          </li>
+
+          <li><span class="sn">6</span>
+            <span class="sl">Amounts</span>
+            <button type="button" class="spot sums" data-f="total" aria-pressed="false">
+              <span class="sum"><i>Paid out</i> <b>$ 240.00</b></span>
+              <span class="sum"><i>Stamp duty</i> <b>$ 25.00</b></span>
+              <span class="sum"><i>Courier</i> <b>$ 60.00</b></span>
+              <span class="sum tot"><i>TOTAL &mdash; write in</i> <b>$ ________</b></span>
+            </button>
+          </li>
+
+          <li><span class="sn">7</span>
+            <span class="sl">Name of client <em>(as on policy)</em></span>
+            <button type="button" class="spot" data-f="name3b" aria-pressed="false"><span class="rule"></span></button>
+          </li>
+
+          <li><span class="sn">8</span>
+            <span class="sl">Reason</span>
+            <button type="button" class="spot tiny" data-f="reason" aria-pressed="false"><span class="rule"></span></button>
+          </li>
+
+          <li><span class="sn">9</span>
+            <span class="sl">Receipt attached?</span>
+            <button type="button" class="spot" data-f="receipt" aria-pressed="false"><b class="yn">YES</b> <span class="sl">/</span> <b class="yn">NO</b></button>
+          </li>
+
+          <li><span class="sn">10</span>
+            <span class="sl">Client</span>
+            <button type="button" class="spot" data-f="name3c" aria-pressed="false"><span class="rule"></span></button>
+          </li>
+
+          <li><span class="sn">11</span>
+            <span class="sl">Signature</span>
+            <button type="button" class="spot" data-f="print" aria-pressed="false"><span class="rule"></span><em>print, sign, scan and e-mail to the branch</em></button>
+          </li>
+        </ol>
+
+        <div class="sfoot">
+          <button type="button" class="spot line" data-f="mistake" aria-pressed="false">If you make a mistake, do not alter. Complete a new form.</button>
+          <button type="button" class="spot line" data-f="nocopy" aria-pressed="false">No copy of this form will be sent to you.</button>
+          <button type="button" class="spot office" data-f="office" aria-pressed="false">
+            <span class="ol">For office use only</span>
+            <span class="orow"><i>Received by</i><span class="rule"></span><i>Keyed by</i><span class="rule"></span><i>Batch</i><span class="rule"></span></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- what they found -->
+      <aside class="marks" aria-live="polite">
+        <div class="mstick">
+          <p class="mcount"><b id="mN">Nothing marked yet</b><span id="mHint">Tap any part of the form.</span></p>
+          <ul class="mlist" id="mList"></ul>
+
+          <div class="melse">
+            <button type="button" class="btn btn-2 wfull" id="mElse">Something else about it is wrong</button>
+            <div id="mElseBox" hidden>
+              <label for="mElseT">What else?</label>
+              <textarea id="mElseT" rows="3" maxlength="400" placeholder="Anything the form does not even ask about."></textarea>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-1 wfull" id="mSend" hidden>
+            Send what I found <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </button>
+          <p class="small mfoot" id="mFoot" hidden>It goes with your application, below. Mr Rampersad reads both.</p>
+        </div>
+      </aside>
+    </div>
+    <p id="mToast" role="status" aria-live="polite"></p>
+  </div>
+</section>
+
+
+
+<div class="band">
+  <div class="wrap">
+    <div class="cgrid">
+      <div><b class="cnt" data-to="36">36</b><span>backend files we wrote ourselves</span></div>
+      <div><b class="cnt" data-to="100" data-suf="k">100k</b><span>lines of Apps Script, in production</span></div>
+      <div><b class="cnt" data-to="338">338</b><span>pages on the branch site</span></div>
+      <div><b class="cnt" data-to="593">593</b><span>commits so far, every one readable</span></div>
+      <div><b class="cnt" data-to="175">175</b><span>test files, because it ships to clients</span></div>
+      <div><b>1</b><span>seat open for the person who builds the next part</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ THE REAL SEAT ══════════════════ -->
+<section id="real">
+  <div class="wrap">
+    <div class="rv">
+      <span class="eyebrow">Straight, before anything else</span>
+      <h2 data-words>The title says Personal Assistant. <em>Read what the job is.</em></h2>
+      <p class="lede">We are not going to dress this up, because the one thing that wastes both our time is you arriving to find a different job than the one you were sold.</p>
+    </div>
+    <div class="jobs">
+      <div class="job rv">
+        <span class="tag">Half the day</span>
+        <h3>The branch's administration, done properly</h3>
+        <p class="small">Real admin, and it matters. If it slips, an agent cannot work and a client waits.</p>
+        <ul>
+          <li>Licence renewals, and the deadlines that go with them</li>
+          <li>Petty cash, the fuel log, the visitors book</li>
+          <li>Documents in and out, and the record of where each one is</li>
+          <li>Keeping the branch's own data clean &mdash; names, numbers, dates</li>
+          <li>Reports the Branch Manager and head office need on time</li>
+        </ul>
+      </div>
+      <div class="job rv">
+        <span class="tag">The other half</span>
+        <h3>Making that admin not need doing next month</h3>
+        <p class="small">This is the half nobody else will offer you, and the reason this page exists.</p>
+        <ul>
+          <li>Keep it running: when a script stalls or something is stuck on a server, find out why, fix it, and write the amendment so it does not happen again</li>
+          <li>Learn the workflow and the rules behind each platform we work on: Salesforce, Apps Script, Microsoft 365, HELP 868 and Claude, and the new ones as they arrive</li>
+          <li>Take a job you do by hand and turn it into a form, a script, a page</li>
+          <li>Write the Apps Script that files it, e-mails it and logs it</li>
+          <li>Wire it to Salesforce so nobody types the same thing twice</li>
+          <li>Put it on the branch app where the team can actually reach it</li>
+          <li>Then measure it, and tell us whether it worked</li>
+        </ul>
+      </div>
+    </div>
+    <p class="small rv" style="margin-top:var(--sp-m);max-width:60ch"><strong>You do not need to be a developer. You do need to have already written something.</strong> A Google Apps Script. A formula that got out of hand. A Zap. A page. Something you talked an AI through until it worked. Nobody in this branch was hired as a developer and none of us would pass a developer's interview &mdash; we learned it on the branch's own work, with AI beside us, and you would carry on from where we have got to, with Apps Script, Google Workspace, Salesforce and Claude already paid for and already connected. What cannot be taught is the instinct: you notice a bad process and you cannot leave it alone.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ WHO ══════════════════ -->
+<section class="alt" id="who">
+  <div class="wrap">
+    <div class="rv">
+      <span class="eyebrow">Who this is for</span>
+      <h2 data-words>If any of this is you, we should talk.</h2>
+    </div>
+    <div class="ledger">
+      <div class="led no rv">
+        <b>Where you are now</b>
+        <ul>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg><span>You can see three things in your office that could be fixed this week, and you have told someone, and nothing happened.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg><span>You have already written something &mdash; a script, a formula that got out of hand, a Zap, a page &mdash; because it was the only way to get the job done. Nobody paid you for it and nobody uses it but you.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg><span>You are the person everyone comes to when the system breaks, and it is not in your job description or your pay.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg><span>You type the same information into two systems and it bothers you every single time.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg><span>Your CV says what you were responsible for. It does not say what you built, because you were never allowed to build anything.</span></li>
+        </ul>
+      </div>
+      <div class="led yes rv">
+        <b>What changes here</b>
+        <ul>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>You see something broken, you say so, and the answer is usually &ldquo;go on then&rdquo;. The branch runs on things somebody decided to fix.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>The branch pays for the tools and you use them every day: Apps Script, Salesforce, Microsoft 365, respond.io, Claude. You get the keys, not a request form.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>When it breaks, it breaks in front of the whole branch and you fix it. That is how everyone here learned.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>Typing the same thing twice is treated as a defect, not as the job.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span>In a year your CV names systems in production, with public commits anybody can read. That is yours to keep wherever you go next.</span></li>
+        </ul>
+      </div>
+    </div>
+    <p class="small rv" style="margin-top:var(--sp-l);max-width:62ch"><strong>And who it is not for.</strong> Somebody who wants a quiet desk and a fixed list &mdash; that is an honourable job and this is not it. Somebody who wants to write code all day and never speak to an agent about a client's file &mdash; this branch is an insurance branch first. And somebody who is careless with a number: a wrong figure here goes out in a letter to a real family, so care is not negotiable.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ THE STACK ══════════════════ -->
+<section class="dark" id="stack">
+  <div class="wrap">
+    <div class="rv">
+      <span class="eyebrow">The tools, named</span>
+      <h2 data-words>Everything on this list is live in the branch today.</h2>
+      <p class="lede" style="color:var(--dT2)">Not a roadmap, not a pilot. These are the things you would have your hands on in your first month.</p>
+    </div>
+    <ul class="cards">
+      <li class="card rv" style="--i:0"><h3><svg class="ic" aria-hidden="true"><use href="#i-code"/></svg>Google Apps Script</h3><p>36 files and about 100,000 lines run the branch: the letters, the reminders, the boards, the claims, the renewals, the billing checks. Deployed as web apps on triggers. This is the single most useful thing you will learn here, and it is plain JavaScript.</p></li>
+      <li class="card rv" style="--i:1"><h3><svg class="ic" aria-hidden="true"><use href="#i-db"/></svg>Salesforce</h3><p>We read and write it from our own code &mdash; OAuth, SOQL, composite requests, tasks, Chatter posts. Not clicking through screens: querying it, reconciling it, and writing back what the record should say.</p></li>
+      <li class="card rv" style="--i:2"><h3><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg>HELP 868, the branch&rsquo;s WhatsApp line</h3><p>Just launched, and the next big thing here. Built on respond.io, connected to Claude over MCP and to Salesforce: it answers on WhatsApp, logs every query with a reference, and hands over to a person. It needs one person to make it brilliant, and that would be you.</p></li>
+      <li class="card rv" style="--i:3"><h3><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>The Claude API</h3><p>Used all over the branch to read a long history and draft a reply, with structured output and hard rules about what it may never say. You will learn to put guardrails on a model, which is a skill the market is paying for right now.</p></li>
+      <li class="card rv" style="--i:4"><h3><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>Microsoft Graph</h3><p>The branch mailbox sends and reads through Graph, with the application permissions to match. Every client letter the branch sends goes out this way.</p></li>
+      <li class="card rv" style="--i:5"><h3><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg>pdf-lib and pdf.js</h3><p>Guardian's own forms are read in the browser and filled, field by field, from the record &mdash; so nobody retypes a policy number. Including a scanned form that needed its pages rotated to make it work.</p></li>
+      <li class="card rv" style="--i:6"><h3><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Playwright and 175 test files</h3><p>It goes to clients, so it gets tested. You would write tests, and more than once a test you wrote will stop something wrong reaching a real family. That is the job.</p></li>
+      <li class="card rv" style="--i:7"><h3><svg class="ic" aria-hidden="true"><use href="#i-git"/></svg>Git, GitHub, GitHub Pages</h3><p>The website is the repository &mdash; 338 pages, nearly six hundred commits, and no build step. You commit, it is live. Your work is in the open with your name on it.</p></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════ OUR CODE IS PUBLIC ══════════════════ -->
+<section id="code">
+  <div class="wrap">
+    <div class="rv">
+      <span class="eyebrow">Proof, not adjectives</span>
+      <h2 data-words>A job description tells you very little. <em>So here is the whole workshop.</em></h2>
+      <p class="lede">A good environment is easy to claim and hard to check, so here is ours to check. Everything this branch has built is out in the open &mdash; you can look through all of it, today, before you decide whether to spend fifteen minutes applying.</p>
+      <p class="small" style="max-width:58ch">It lives on a site called GitHub, which is where people keep the things they build. <strong>You do not need an account and you do not need to understand all of it.</strong> Open it, scroll, and see whether this looks like somewhere you would want to be.</p>
+    </div>
+    <div class="rv" style="margin-top:var(--sp-l)">
+      <div class="term">
+        <div class="term-bar"><i></i><i></i><i></i><b>the repository &mdash; public, no sign-in</b></div>
+        <div class="term-body">
+<div style="--l:0"><span class="c"># one link. nothing to install, nothing to sign up for.</span></div>
+<div style="--l:1"><span class="p">&rsaquo;</span> <a href="https://github.com/RickyRampersad/RickyRampersadTermLIfe" target="_blank" rel="noopener">github.com/RickyRampersad/RickyRampersadTermLIfe</a></div>
+<div style="--l:2"></div>
+<div style="--l:3"><span class="c"># three folders worth opening, in this order</span></div>
+<div style="--l:4"><span class="p">&rsaquo;</span> <span class="k">CLAUDE.md</span>      <span class="s">what we built, and what broke</span></div>
+<div style="--l:5"><span class="p">&rsaquo;</span> <span class="k">apps-script/</span>   <span class="s">the 36 files that run the branch</span></div>
+<div style="--l:6"><span class="p">&rsaquo;</span> <span class="k">claims/</span>        <span class="s">a page a real client fills in</span></div>
+          </div>
+      </div>
+    </div>
+    <ul class="cards">
+      <li class="card rv" style="--i:0"><h3><svg class="ic" aria-hidden="true"><use href="#i-file"/></svg>Start with the notes</h3><p>A long file called <code>CLAUDE.md</code> &mdash; the branch's own working diary. What we built, what broke, and what we decided never to do again. It is honest about the mistakes. If reading it makes you want to join in, you are probably the person.</p></li>
+      <li class="card rv" style="--i:1"><h3><svg class="ic" aria-hidden="true"><use href="#i-code"/></svg>Then the machinery</h3><p>One file tracks every document through the branch. Another checks an insurer's monthly invoice against our own records, line by line, and tells us where they disagree. You do not have to follow the code &mdash; look at how much of it there is.</p></li>
+      <li class="card rv" style="--i:2"><h3><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>And the pages themselves</h3><p>The claims form, the motor quote, this very page. Everything a client or an agent touches is in there, exactly as it is served. Nothing is a mock-up.</p></li>
+    </ul>
+    <div class="ctas rv" style="margin-top:var(--sp-l)">
+      <a class="btn btn-1" href="https://github.com/RickyRampersad/RickyRampersadTermLIfe" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-git"/></svg>Look inside the workshop</a>
+      <a class="btn btn-3" href="#how">Then see what we ask of you <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+    </div>
+    <p class="small rv" style="margin-top:var(--sp-m)">Nothing in that repository is client data, and that is deliberate &mdash; the rule is written down in it. Client records live in a private sheet behind tokens and never touch the code. You will learn that discipline here too.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ THE SLIM-DOWN ══════════════════ -->
+<section class="alt" id="slim">
+  <div class="wrap">
+    <div class="rv">
+      <span class="eyebrow">Your first job, already waiting</span>
+      <h2 data-words>Two real jobs. <em>Nobody has done them yet.</em></h2>
+      <p class="lede">We are not going to invent an exercise for you. Here are two things genuinely sitting undone in this branch right now. One of them is very likely your first fortnight.</p>
+    </div>
+    <ol class="gates">
+      <li class="gate rv">
+        <h3>Nineteen forms that are still somebody else's</h3>
+        <p>The branch moved almost everything onto its own pages &mdash; quotes, claims, renewals, the document log &mdash; but nineteen staff forms are still on an outside form builder. Petty cash. The fuel log. Licence renewals. The visitors book. They do not talk to anything, nothing is filed where the branch can read it, and no report comes out of them.</p>
+        <p><strong>Four of those forms are the administrator's own.</strong> You would rebuild them as branch pages that file to a sheet, e-mail who needs to know, and report themselves. There are five or six finished examples in the repository to copy the shape from &mdash; that is the point of building them all the same way.</p>
+      </li>
+      <li class="gate rv">
+        <h3>338 pages, and we cannot tell you which one is read most</h3>
+        <p>Every page on the branch site carries a view counter. There are 157 of them in place. Not one has ever recorded a single view, because the small script behind them was written and never deployed. So the branch publishes constantly and is honestly guessing about what anybody reads.</p>
+        <p><strong>This is a one-afternoon job with a permanent payoff.</strong> Deploy it, confirm it records, and then every Monday the branch knows what its clients and agents actually open. Small, finishable, and it changes a decision every week after.</p>
+      </li>
+    </ol>
+    <p class="small rv" style="margin-top:var(--sp-m);max-width:60ch">If you want to see what finishing one looks like, both are described in <code>CLAUDE.md</code> in the repository, in the branch's own words, including why neither has been done yet.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ A WEEK ══════════════════ -->
+<section id="week">
+  <div class="wrap">
+    <div class="rv">
+      <span class="eyebrow">What the week looks like</span>
+      <h2 data-words>Not a job description. The actual shape of it.</h2>
+    </div>
+    <div class="week rv">
+      <div><b>Every morning, before anything else</b><span>The branch's own system sets your day and you sign in on your phone &mdash; your list, what is overdue, what was promised to whom. The admin that must happen, happens first.</span></div>
+      <div><b>Monday</b><span>The reports that have to go out, out. Then an hour on whatever you are building, because if it is not in the diary it never happens.</span></div>
+      <div><b>Tuesday and Wednesday</b><span>The branch meets Wednesday morning. Things break in meetings &mdash; somebody says &ldquo;why do we still do that by hand?&rdquo; and that sentence becomes your next job.</span></div>
+      <div><b>Any day something goes wrong</b><span>A letter does not send, a figure reads wrong, a form refuses. You find out why. This is where you will learn fastest, and it is the part that is genuinely hard.</span></div>
+      <div><b>Friday</b><span>Ship something. A form, a page, a script, a fix &mdash; and tell the branch what it now does that it could not do on Monday.</span></div>
+      <div><b>Every few weeks</b><span>Something you made becomes the way the branch works. That is the whole job, and it does not stop being satisfying.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ THE TEAM ══════════════════ -->
+<section class="alt" id="team">
+  <div class="wrap">
+    <div class="rv">
+      <span class="eyebrow">Who you would sit with</span>
+      <h2 data-words>A small team. You would not be a department of one.</h2>
+      <p class="lede">A branch of agents and managers, with a support team who hold the whole operation together. Every one of them uses the tools you would be building.</p>
+    </div>
+    <ul class="team">
+      <li class="rv" style="--i:0"><span class="av">RR</span><b>Ricky Rampersad</b><span>Branch Manager. Reads your application himself and runs the conversation.</span></li>
+      <li class="rv" style="--i:1"><span class="av">BA</span><b>Branch Manager's Assistant</b><span>Oversees the support team's work and the branch's deadlines. Your closest colleague.</span></li>
+      <li class="rv" style="--i:2"><span class="av">CS</span><b>Three on Client Support</b><span>They answer the clients and the agents. Their day is the best possible brief for what to build next.</span></li>
+      <li class="rv" style="--i:3"><span class="av">UM</span><b>A unit manager and the agents</b><span>The people in front of clients. If a tool does not help them sell or serve, it was the wrong tool.</span></li>
+      <li class="rv seat" style="--i:4"><span class="av">?</span><b>This seat</b><span>The one who takes the branch's admin and makes it run itself.</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════ CV ══════════════════ -->
+<section id="cv">
+  <div class="wrap">
+    <div class="rv">
+      <span class="eyebrow">What you take with you</span>
+      <h2 data-words>Twelve months from now, <em>this is on your CV.</em></h2>
+      <p class="lede">We mean this literally. Everything below is work the branch does today, so it is work you would be able to point at and say &ldquo;I built that, here is the commit&rdquo;.</p>
+    </div>
+    <ul class="cards">
+      <li class="card rv" style="--i:0"><h3><svg class="ic" aria-hidden="true"><use href="#i-code"/></svg>Automation at production scale</h3><p>Google Apps Script running a real business every day, on triggers, against live data &mdash; not a course project.</p></li>
+      <li class="card rv" style="--i:1"><h3><svg class="ic" aria-hidden="true"><use href="#i-db"/></svg>A CRM integration you wrote</h3><p>Reading and writing Salesforce from your own code. On a CV in this market, that sentence opens doors by itself.</p></li>
+      <li class="card rv" style="--i:2"><h3><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>AI in production, with guardrails</h3><p>Not &ldquo;I use ChatGPT&rdquo;. Structured output, rules a model may not break, and a human check before anything reaches a client.</p></li>
+      <li class="card rv" style="--i:3"><h3><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg>A WhatsApp assistant you grew</h3><p>HELP 868: respond.io, Claude and Salesforce, on a real line with real clients and an audit trail. Very few people have actually shipped one.</p></li>
+      <li class="card rv" style="--i:4"><h3><svg class="ic" aria-hidden="true"><use href="#i-git"/></svg>A public commit history</h3><p>Your work, in the open, with your name on it. The single most persuasive thing you can hand a future employer.</p></li>
+      <li class="card rv" style="--i:5"><h3><svg class="ic" aria-hidden="true"><use href="#i-rocket"/></svg>And the one that matters most</h3><p>That you took a process and made it take half the time, and can say by how much. Everything else is a tool. That is the skill.</p></li>
+    </ul>
+  </div>
+</section>
+
+<section class="statement">
+  <div class="wrap">
+    <p>Ideas are cheap everywhere. What is rare is somewhere they get built.</p>
+    <p class="small">This branch wrote its own software because nobody was going to write it for us. That is still true, and that is the offer.</p>
+  </div>
+</section>
+
+
+<!-- ══════════════════ THE TWO GATES ══════════════════ -->
+<section class="alt" id="how">
+  <div class="wrap">
+    <div class="rv">
+      <span class="eyebrow">How we choose</span>
+      <h2 data-words>Three gates. <em>None of them is a CV sift.</em></h2>
+      <p class="lede">We do care where you have worked and what you were paid &mdash; the form asks both, plainly, so that the conversation can be honest. But none of that decides it. What decides it is what you do when something is badly designed.</p>
+    </div>
+    <ol class="gates">
+      <li class="gate rv"><h3>The form below &mdash; about fifteen minutes</h3><p>Where you have worked, what you changed there, what you are earning now, and three questions in your own words. It is longer than most application forms on purpose. <strong>If fifteen minutes is too long to spend on this, then it is honestly not the job</strong> &mdash; and we would both rather know that now.</p><p>Write it yourself, plainly. Four honest lines about a spreadsheet you built beats a polished paragraph that says nothing.</p></li>
+      <li class="gate rv"><h3>Then: one thing you would fix here</h3><p>You have already done the short version of this at the top of the page. If the form reads like you, we ask for the long one, and it is the whole interview. Look through what we have built, find something clumsy, missing, or that would save somebody an hour, and tell us about it &mdash; what is wrong, why it matters, and roughly how you would fix it.</p><p>A page, a form, a process on this very site. You do not have to write the fix and you do not have to be right. We are reading for whether you can walk into an unfamiliar system, find a real problem and explain it to somebody else. <strong>That is the job, so that is the test.</strong></p><p class="small" style="margin-top:.6rem"><strong>Send it however you like</strong> &mdash; an e-mail, a voice note, a page of writing. If you happen to use GitHub, you can post it there as an issue instead and we will see it. Most people do not, and it counts for nothing either way.</p></li>
+      <li class="gate rv"><h3>Then a conversation, and a decision</h3><p>Twenty minutes with the Branch Manager about what you found and what you wrote. Terms and pay are discussed there, openly, against the figures you gave us. If it is not right for either of us, we say so and that is the end of it, with no hard feelings.</p></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ══════════════════ APPLY ══════════════════ -->
+<section id="apply">
+  <div class="wrap">
+    <div class="fgrid">
+      <div class="rv">
+        <span class="eyebrow">Apply</span>
+        <h2 data-words>Fifteen minutes. <em>Read by one person.</em></h2>
+        <p>Your name, your figures and your answers reach Mr Rampersad and nobody else &mdash; not an inbox the branch shares. If you are employed today, that matters, and we treat it that way.</p>
+        <p class="small">It is a long form and that is deliberate. We are filling one seat, not sorting a hundred CVs, so we would rather read fifteen minutes of your actual thinking than scan a page of job titles.</p>
+        <ol class="steps">
+          <li>He reads it himself, within 48 hours.</li>
+          <li>If it reads like you, he asks you for one thing you would fix here.</li>
+          <li>Then twenty minutes on the phone, and a straight answer either way.</li>
+        </ol>
+        <p class="small" style="margin-top:var(--sp-l)">Ricky Rampersad is making this hire himself, for his own branch in Chaguanas. Terms and pay are discussed on the call. Prefer to write instead? <a href="mailto:Ricky.Rampersad@myguardiangroup.com?subject=Build%20with%20us%20%E2%80%94%20the%20personal%20assistant%27s%20seat">E-mail him directly</a> or call <a href="tel:+18686785821">678-5821</a>.</p>
+      </div>
+      <div class="rv">
+        <form class="form" id="jf" novalidate autocomplete="on">
+          <div class="rail" id="rail" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="How much of the application is filled in">
+            <p class="rail-top" aria-hidden="true"><b id="railN">0 of 18 answered</b><span id="railS">about 15 minutes</span></p>
+            <div class="rail-bar"><i id="railI"></i></div>
+          </div>
+
+          <!-- 1 ─────────────────────────────────────────────── -->
+          <div class="fsec" data-sec>
+            <h3><b><i>1</i></b>You</h3>
+            <div class="grid">
+              <div class="two">
+                <div><label for="jName">Your name</label><input id="jName" name="name" type="text" autocomplete="name" required></div>
+                <div><label for="jPhone">Phone</label><input id="jPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required></div>
+              </div>
+              <div class="two">
+                <div><label for="jMail">E-mail</label><input id="jMail" name="email" type="email" inputmode="email" autocomplete="email" required></div>
+                <div><label for="jTown">Where do you live? <small>&middot; town or area</small></label><input id="jTown" name="town" type="text" autocomplete="address-level2" required placeholder="the branch is in Chaguanas"></div>
+              </div>
+              <fieldset><legend>Getting to Chaguanas</legend>
+                <div class="pills">
+                  <label><input type="radio" name="travel" value="I drive, own vehicle" required><span>I drive</span></label>
+                  <label><input type="radio" name="travel" value="Public transport"><span>Public transport</span></label>
+                  <label><input type="radio" name="travel" value="Dropped, or within walking distance"><span>Dropped or walking</span></label>
+                  <label><input type="radio" name="travel" value="Would need to work it out"><span>Would work it out</span></label>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+
+          <!-- 2 ─────────────────────────────────────────────── -->
+          <div class="fsec" data-sec>
+            <h3><b><i>2</i></b>Where you have worked</h3>
+            <p class="hint">Two jobs is plenty. We are reading the third box, not the first two.</p>
+            <div class="grid">
+              <fieldset><legend>How long have you been working?</legend>
+                <div class="pills">
+                  <label><input type="radio" name="exp" value="Under 2 years" required><span>Under 2 years</span></label>
+                  <label><input type="radio" name="exp" value="2 to 5 years"><span>2&ndash;5 years</span></label>
+                  <label><input type="radio" name="exp" value="5 to 10 years"><span>5&ndash;10 years</span></label>
+                  <label><input type="radio" name="exp" value="Over 10 years"><span>Over 10 years</span></label>
+                </div>
+              </fieldset>
+              <div class="two">
+                <div><label for="e1c">Your current or most recent employer</label><input id="e1c" name="emp_co" type="text" autocomplete="organization" required></div>
+                <div><label for="e1r">Your role there</label><input id="e1r" name="emp_role" type="text" autocomplete="organization-title" required></div>
+              </div>
+              <div><label for="e1d">From and to <small>&middot; e.g. March 2023 &ndash; now</small></label><input id="e1d" name="emp_dates" type="text" required></div>
+              <div>
+                <label for="e1w">What is different there because you worked there?</label>
+                <textarea id="e1w" name="emp_changed" maxlength="500" rows="3" required placeholder="Not your duties — anybody can list duties. One thing that was not the same after you arrived."></textarea>
+                <p class="cc"><span>This is the box that matters most in this section.</span><span><b data-cc="e1w">0</b>/500</span></p>
+              </div>
+              <div class="two">
+                <div><label for="e2c">The employer before that <small>&middot; optional</small></label><input id="e2c" name="emp2_co" type="text"></div>
+                <div><label for="e2r">Your role there <small>&middot; optional</small></label><input id="e2r" name="emp2_role" type="text"></div>
+              </div>
+              <div><label for="jEdu">Highest qualification or training <small>&middot; in plain words, whatever it is</small></label><input id="jEdu" name="edu" type="text" required placeholder="CXC, a diploma, a short course, self-taught — all fine"></div>
+            </div>
+          </div>
+
+          <!-- 3 ─────────────────────────────────────────────── -->
+          <div class="fsec" data-sec>
+            <h3><b><i>3</i></b>Pay, honestly, both ways</h3>
+            <p class="hint">We ask so that the conversation is straight and nobody's time is wasted. You can decline either one and it is not held against you.</p>
+            <div class="grid">
+              <div class="two">
+                <div>
+                  <label for="payNow">What you earn now <small>&middot; monthly, TT$</small></label>
+                  <select id="payNow" name="pay_now" required>
+                    <option value="">Choose&hellip;</option>
+                    <option>Under $4,000</option><option>$4,000 &ndash; $6,000</option>
+                    <option>$6,000 &ndash; $8,000</option><option>$8,000 &ndash; $10,000</option>
+                    <option>$10,000 &ndash; $14,000</option><option>Over $14,000</option>
+                    <option>Not working at the moment</option><option>Prefer not to say</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="payWant">What you are looking for <small>&middot; monthly, TT$</small></label>
+                  <select id="payWant" name="pay_want" required>
+                    <option value="">Choose&hellip;</option>
+                    <option>Under $4,000</option><option>$4,000 &ndash; $6,000</option>
+                    <option>$6,000 &ndash; $8,000</option><option>$8,000 &ndash; $10,000</option>
+                    <option>$10,000 &ndash; $14,000</option><option>Over $14,000</option>
+                    <option>Open — tell me what the job is worth</option><option>Prefer not to say</option>
+                  </select>
+                </div>
+              </div>
+              <fieldset><legend>If we agreed, when could you start?</legend>
+                <div class="pills">
+                  <label><input type="radio" name="start" value="Immediately" required><span>Immediately</span></label>
+                  <label><input type="radio" name="start" value="Two weeks' notice"><span>Two weeks</span></label>
+                  <label><input type="radio" name="start" value="One month's notice"><span>One month</span></label>
+                  <label><input type="radio" name="start" value="Longer than a month"><span>Longer</span></label>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+
+          <!-- 4 ─────────────────────────────────────────────── -->
+          <div class="fsec" data-sec>
+            <h3><b><i>4</i></b>What you can already do</h3>
+            <p class="hint">Tick anything you have genuinely used, even badly, even once. <strong>Ticking nothing is a real answer</strong> and it does not rule you out &mdash; it only tells us where to start you.</p>
+            <div class="grid">
+              <div class="tools" id="tools">
+                <label><input type="checkbox" name="tool" value="Excel or Sheets formulas"><span>Excel or Sheets formulas</span></label>
+                <label><input type="checkbox" name="tool" value="Pivot tables"><span>Pivot tables</span></label>
+                <label><input type="checkbox" name="tool" value="Google Forms"><span>Google Forms</span></label>
+                <label><input type="checkbox" name="tool" value="Mail merge"><span>Mail merge</span></label>
+                <label><input type="checkbox" name="tool" value="Canva or design"><span>Canva or design</span></label>
+                <label><input type="checkbox" name="tool" value="A CRM (Salesforce or another)"><span>A CRM, any CRM</span></label>
+                <label><input type="checkbox" name="tool" value="WhatsApp Business"><span>WhatsApp Business</span></label>
+                <label><input type="checkbox" name="tool" value="Zapier, Make or Power Automate"><span>Zapier or Make</span></label>
+                <label><input type="checkbox" name="tool" value="AI tools (ChatGPT, Claude, Copilot)"><span>AI tools</span></label>
+                <label><input type="checkbox" name="tool" value="Built a website or a page"><span>Built a page or site</span></label>
+                <label><input type="checkbox" name="tool" value="Google Apps Script"><span>Google Apps Script</span></label>
+                <label><input type="checkbox" name="tool" value="Written code of any kind"><span>Written code, any kind</span></label>
+                <label><input type="checkbox" name="tool" value="None of these yet"><span>None of these yet</span></label>
+              </div>
+              <div><label for="jSelf">Something you taught yourself <small>&middot; it does not have to be work</small></label><input id="jSelf" name="self_taught" type="text" placeholder="optional, but we do read it"></div>
+            </div>
+          </div>
+
+          <!-- 5 ─────────────────────────────────────────────── -->
+          <div class="fsec" data-sec>
+            <h3><b><i>5</i></b>In your own words</h3>
+            <p class="hint">These three decide it. Take your time on them and write them yourself.</p>
+            <div class="grid">
+              <div>
+                <label for="w1">One thing you built or set up that nobody asked you to <small>&middot; what was annoying, what you made, who used it</small></label>
+                <textarea id="w1" name="w_built" maxlength="700" rows="4" required></textarea>
+                <p class="cc"><span>Plain words. A spreadsheet counts.</span><span><b data-cc="w1">0</b>/700</span></p>
+              </div>
+              <div>
+                <label for="w2">The slim-down <small>&middot; pick either job from <a href="#slim">Two real jobs</a> above</small></label>
+                <textarea id="w2" name="w_slim" maxlength="700" rows="4" required placeholder="How would you make it take half the time? You are not expected to know our systems — we want to see how you think about it."></textarea>
+                <p class="cc"><span>How you'd approach it, not a finished plan.</span><span><b data-cc="w2">0</b>/700</span></p>
+              </div>
+              <div>
+                <label for="w3">What do you want on your CV in two years that is not there now?</label>
+                <textarea id="w3" name="w_cv" maxlength="400" rows="3" required></textarea>
+                <p class="cc"><span>Be specific. &ldquo;Growth&rdquo; tells us nothing.</span><span><b data-cc="w3">0</b>/400</span></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6 ─────────────────────────────────────────────── -->
+          <div class="fsec" data-sec>
+            <h3><b><i>6</i></b>Last things</h3>
+            <div class="grid">
+              <div class="two">
+                <div><label for="jLink">A link to anything you made <small>&middot; optional</small></label><input id="jLink" name="link" type="url" inputmode="url" placeholder="https://"></div>
+                <div><label for="jGh">GitHub username <small>&middot; optional, and almost nobody has one</small></label><input id="jGh" name="gh" type="text" autocomplete="off"></div>
+              </div>
+              <fieldset><legend>Best time for a call</legend>
+                <div class="pills">
+                  <label><input type="radio" name="when" value="Morning" checked><span>Morning</span></label>
+                  <label><input type="radio" name="when" value="Afternoon"><span>Afternoon</span></label>
+                  <label><input type="radio" name="when" value="Evening"><span>Evening</span></label>
+                </div>
+              </fieldset>
+              <div><label for="jHeard">Where did you see this? <small>&middot; optional</small></label><input id="jHeard" name="heard" type="text" placeholder="LinkedIn, WhatsApp, someone told me…"></div>
+            </div>
+          </div>
+
+          <div class="hp" aria-hidden="true"><label for="jWeb" tabindex="-1">Website</label><input id="jWeb" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+          <p class="err" id="jErr" role="alert"></p>
+          <button class="btn btn-1" type="submit" id="jSend">Send it to Mr Rampersad <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <p class="fine">Read by the Branch Manager alone. Nothing is sent to anyone else, and nothing reaches your current employer. Your pay answers are used for the conversation and nothing else.</p>
+        </form>
+        <div class="done" id="jDone" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ THE OTHER DOOR ══════════════════ -->
+<section class="dark" id="agents">
+  <div class="wrap">
+    <div class="rv" style="max-width:52rem">
+      <span class="eyebrow">The other door</span>
+      <h2 data-words>Came for this and found yourself reading about the agents?</h2>
+      <p class="lede" style="color:var(--dT2)">It happens, and it is not a wrong turn. This page is one seat in the back office. The branch's other door is the one in front of clients &mdash; a licensed advisor, building your own book, paid on what you write rather than on a salary.</p>
+      <p style="color:var(--dT2)">Same branch, same tools, same people. Newcomers are trained, licensed and put through a full build before they are contracted, and practising advisors move across confidentially. If that sounds more like you than a desk does, go and look &mdash; the conversation is with the same person either way.</p>
+      <div class="ctas" style="margin-top:var(--sp-m)">
+        <a class="btn btn-1" href="/careers/">The advisor path <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-2" href="/careers/#quiz">Their 60-second test</a>
+      </div>
+      <p class="small" style="color:var(--dT3);margin-top:var(--sp-m)">And if you cannot decide which you are, say so in the form above. It is a fair thing not to know, and he will tell you straight which door he thinks is yours.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ FAQ ══════════════════ -->
+<section class="alt" id="faq">
+  <div class="wrap">
+    <div class="rv"><span class="eyebrow">Fair questions</span><h2 data-words>What people ask us.</h2></div>
+    <div class="rv" style="margin-top:var(--sp-l);max-width:52rem">
+      <details><summary>I am not a developer. Am I wasting my time?</summary><p>No. Nobody in this branch was hired as a developer and none of us would pass a developer's interview. But you do need to arrive having written <em>something</em> &mdash; an Apps Script, a formula that got away from you, a Zap, a page, something you got an AI to help you finish. That is the bar: low enough for somebody entirely self-taught, high enough that you are building in your first month instead of watching. What cannot be taught is the instinct for a bad process, and that is what we are really reading for.</p></details>
+      <details><summary>I have never touched Apps Script, or Salesforce.</summary><p>Neither had anybody here. They are learnable in weeks if you have already written anything at all, and you would be learning them on real work with AI beside you rather than on a course. What we would ask at the interview is not whether you know them &mdash; it is what you have built with whatever you did have.</p></details>
+      <details><summary>Is this really a personal assistant's job, or a developer's job with a cheaper title?</summary><p>It is genuinely a personal assistant's job. There is real admin every day and it has to be right, because an agent cannot work and a client waits if it is not. The difference from every other admin job is that the second half of your time is spent making the first half smaller, and you are given the tools and the authority to do that. If you only want to build, this is the wrong seat.</p></details>
+      <details><summary>Why is your code public? Is that not a risk?</summary><p>The website is served straight from the repository, so the pages are public by necessity. Client data is the opposite &mdash; it never goes near the code, it lives in a private sheet behind per-client tokens, and the rule is written into the repository's own notes. Keeping those two things apart is one of the first disciplines you would learn.</p></details>
+      <details><summary>I am employed. Will my current employer find out?</summary><p>No. The form goes to the Branch Manager's own address, not to a shared branch inbox, and he is the only person who reads it. We take that seriously because we ask for the same discretion from practising advisors on our other recruiting page.</p></details>
+      <details><summary>What about pay?</summary><p>Discussed openly on the call, once we both know the job is the right one. We will not print a figure here and we will not haggle at the end &mdash; you will hear it plainly before you ever have to decide anything.</p></details>
+      <details><summary>Where is it, and are the hours fixed?</summary><p>The branch is in Chaguanas, Central Trinidad, and this is a seat in the branch &mdash; the admin is physical as well as digital. Hours are the branch's working day; the specifics are part of the conversation.</p></details>
+      <details><summary>What if I do the GitHub issue and you say no?</summary><p>You will have read a real production codebase and written a clear technical issue about it, in public, with your name on it. That is a genuinely useful thing to have done either way, and we will tell you plainly why rather than leaving you guessing.</p></details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Ricky Rampersad Branch &middot; Chaguanas &middot; hiring personally</span>
+    <span style="display:flex;flex-wrap:wrap;gap:0 1.25rem">
+      <a href="https://github.com/RickyRampersad/RickyRampersadTermLIfe" target="_blank" rel="noopener"><svg class="ic" aria-hidden="true"><use href="#i-git"/></svg>Our code</a>
+      <a href="mailto:Ricky.Rampersad@myguardiangroup.com"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>Ricky.Rampersad@myguardiangroup.com</a>
+      <a href="tel:+18686785821"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>678-5821</a>
+    </span>
+  </div>
+</footer>
+
+<div class="sticky"><a class="btn btn-1" href="#apply">Apply &mdash; 15 minutes</a></div>
+
+<script>
+(function(){
+  'use strict';
+  var d=document, noMotion=matchMedia('(prefers-reduced-motion: reduce)');
+
+  /* ── the one table of minimum lengths ────────────────────────────────────
+     The gate, the progress rail and the character counters all read THIS,
+     and that is the whole point of it being here.
+
+     Reported on 14 November 2026: the form would not send and showed a red
+     line. Three separate faults, all of them from the gate and the rail
+     keeping their own idea of what counts as answered:
+
+     1. `w_cv` needed 10 characters at the gate and any single character on
+        the rail. So "IT skills" gave "18 of 18 answered · ready to send",
+        the gate refused, and the scroll-to-the-field loop — which asks the
+        RAIL which field is unfilled — found nothing wrong and did not move.
+        A page that says it is complete, refuses, restates a question the
+        person has just answered and then sits still reads as broken, and it
+        is: pressing the button again does the same thing for ever.
+     2. A badly formed phone or e-mail refused the same way. Both are
+        "filled", so again nothing moved.
+     3. Nothing on the page ever said a minimum existed. The counter counts
+        up to the MAXIMUM, so "A petty cash tracker" — a perfectly good
+        answer — was turned away by "we do need them".
+
+     So: one table, every check carries the name of the field it is about,
+     and the counter says what is still needed while they are typing. Add a
+     new minimum here and nothing else has to know. ── */
+  var MIN={emp_changed:20,w_built:40,w_slim:40,w_cv:10};
+  /* and the two format rules, for the same reason: with these in the gate
+     alone, "call me" in the phone box still read as 18 of 18 · ready to
+     send. One rule, no exceptions — if the gate will refuse it, the rail
+     must not call it answered. */
+  var FMT={phone:/^[+\d][\d\s().-]{6,}$/,email:/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/};
+
+  /* ── reveals: the finished state is the CSS default, so nothing can be stranded ── */
+  (function(){
+    var els=[].slice.call(d.querySelectorAll('.rv'));
+    if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return}
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){
+      if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -8% 0px',threshold:.08});
+    els.forEach(function(e){io.observe(e)});
+  })();
+
+  /* ── kinetic headlines: word by word, never letter by letter, and the whole
+        sentence goes on as an aria-label first so a screen reader reads prose ── */
+  if(!noMotion.matches){
+    [].slice.call(d.querySelectorAll('[data-words]')).forEach(function(h){
+      var txt=h.textContent.replace(/\s+/g,' ').trim();
+      h.setAttribute('aria-label',txt);
+      var i=0;
+      [].slice.call(h.childNodes).forEach(function(n){
+        if(n.nodeType===3){
+          var frag=d.createDocumentFragment();
+          n.nodeValue.split(/(\s+)/).forEach(function(t){
+            if(!t)return;
+            if(/^\s+$/.test(t)){frag.appendChild(d.createTextNode(t));return}
+            var s=d.createElement('span');s.className='w';s.style.setProperty('--wi',i++);s.textContent=t;frag.appendChild(s);
+          });
+          n.parentNode.replaceChild(frag,n);
+        } else if(n.nodeType===1){
+          [].slice.call(n.childNodes).forEach(function(c){
+            if(c.nodeType!==3)return;
+            var frag=d.createDocumentFragment();
+            c.nodeValue.split(/(\s+)/).forEach(function(t){
+              if(!t)return;
+              if(/^\s+$/.test(t)){frag.appendChild(d.createTextNode(t));return}
+              var s=d.createElement('span');s.className='w';s.style.setProperty('--wi',i++);s.textContent=t;frag.appendChild(s);
+            });
+            c.parentNode.replaceChild(frag,c);
+          });
+        }
+      });
+      h.setAttribute('aria-hidden','false');
+      [].slice.call(h.querySelectorAll('.w')).forEach(function(w){w.setAttribute('aria-hidden','true')});
+      var sr=d.createElement('span');sr.textContent=txt;
+      sr.style.cssText='position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)';
+      h.appendChild(sr);
+    });
+  }
+
+  /* ── counters count UP TO the figure already in the markup, never to it, so
+        no script and no thrown error still leaves the right number on screen ── */
+  (function(){
+    var els=[].slice.call(d.querySelectorAll('.cnt'));
+    if(!els.length||noMotion.matches||!('IntersectionObserver' in window))return;
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){
+      if(!e.isIntersecting)return; io.unobserve(e.target);
+      var el=e.target, to=parseFloat(el.dataset.to||'0'), suf=el.dataset.suf||'', t0=0;
+      function f(t){ if(!t0)t0=t; var p=Math.min(1,(t-t0)/1100), v=Math.round(to*(1-Math.pow(1-p,3)));
+        el.textContent=v.toLocaleString('en')+suf; if(p<1)requestAnimationFrame(f); }
+      requestAnimationFrame(f);
+    })},{threshold:.5});
+    els.forEach(function(e){io.observe(e)});
+  })();
+
+  /* ── character counters ── */
+  [].slice.call(d.querySelectorAll('[data-cc]')).forEach(function(out){
+    var ta=d.getElementById(out.getAttribute('data-cc')); if(!ta)return;
+    /* the counter also says what is still NEEDED, because a minimum nobody
+       is told about is a minimum that reads as the page being broken */
+    var m=MIN[ta.name]||0, need=null, cnt=out.parentNode, row=cnt&&cnt.parentNode;
+    if(m&&row){need=d.createElement('span');need.className='need';row.insertBefore(need,cnt)}
+    function up(){
+      var n=ta.value.length; out.textContent=String(n);
+      if(need){
+        need.textContent=n>=m?'':(n?(m-n)+' more':'about '+m+' characters');
+        need.classList.toggle('on',n<m&&n>0);
+      }
+    }
+    ta.addEventListener('input',up); up();
+  });
+
+/* ── the form that is the interview ─────────────────────────────────────
+     Twelve faults are planted in the sheet. `where` is what the candidate is
+     told they marked — the PLACE, never the fault, because naming the fault
+     turns a judgement into a quiz with the answers printed. `why` is the
+     branch's own note and goes only to the Branch Manager, in the e-mail. */
+  (function(){
+    var FIXES={
+      date:   {where:'The date field',
+               why:'No format. 03/04/26 is two different dates depending on who is reading it.'},
+      name3:  {where:'Client name (line 2)',
+               why:'The client is asked for three times on one form (2, 7, 10).'},
+      name3b: {where:'Name of client (line 7)',
+               why:'The second of three times the same client is asked for.'},
+      name3c: {where:'Client (line 10)',
+               why:'The third of three times the same client is asked for.'},
+      policy: {where:'The policy number',
+               why:'Two different formats in its own example, and nothing checks either.'},
+      dept:   {where:'Department to receive',
+               why:'Free text. The branch had 25 departments typed about 90 ways before this was a list.'},
+      onefm:  {where:'Documents enclosed',
+               why:'One form per document. Six documents is six forms, six signatures, six scans.'},
+      total:  {where:'The amounts',
+               why:'The total is added up by hand and nothing checks it against the three lines above.'},
+      reason: {where:'The reason box',
+               why:'A line and a half to explain a payment, so nobody explains it.'},
+      receipt:{where:'Receipt attached? YES / NO',
+               why:'Asks whether a receipt is attached instead of taking the receipt.'},
+      print:  {where:'The signature line',
+               why:'Print, sign, scan, e-mail. A form that is digital until the one step that matters.'},
+      mistake:{where:'"Complete a new form"',
+               why:'A correction means starting again, so people overwrite it in pen instead.'},
+      nocopy: {where:'"No copy will be sent to you"',
+               why:'The person who filled it in has no record that they did.'},
+      office: {where:'The office-use block',
+               why:'"Office use only" on a sheet anybody can type into. It is not a control, it is a hope.'}
+    };
+    var TOTAL=12;  /* distinct faults; the three name fields count once */
+  
+    var grid=document.getElementById('fixgrid'); if(!grid) return;
+    grid.hidden=false;
+  
+    var listEl=document.getElementById('mList'), nEl=document.getElementById('mN'),
+        hintEl=document.getElementById('mHint'), sendBtn=document.getElementById('mSend'),
+        footEl=document.getElementById('mFoot'), elseBtn=document.getElementById('mElse'),
+        elseBox=document.getElementById('mElseBox'), elseT=document.getElementById('mElseT');
+    var spots=[].slice.call(grid.querySelectorAll('.spot'));
+    var toast=document.getElementById('mToast'), toastT=0;
+    function say(msg){
+      if(!toast)return;
+      toast.textContent=msg; toast.classList.add('on');
+      clearTimeout(toastT); toastT=setTimeout(function(){toast.classList.remove('on')},1700);
+    }
+    var order=[], notes={};
+  
+    function save(){
+      try{
+        sessionStorage.setItem('rrbFixFound',order.join(','));
+        sessionStorage.setItem('rrbFixNotes',JSON.stringify(notes));
+        sessionStorage.setItem('rrbFixElse',elseT?elseT.value:'');
+      }catch(x){}
+    }
+    function load(){
+      try{
+        var f=sessionStorage.getItem('rrbFixFound');
+        if(f)order=f.split(',').filter(Boolean);
+        var n=sessionStorage.getItem('rrbFixNotes'); if(n)notes=JSON.parse(n)||{};
+        var e=sessionStorage.getItem('rrbFixElse'); if(e&&elseT){elseT.value=e;elseBox.hidden=false}
+      }catch(x){}
+    }
+  
+    /* The three client-name fields are one fault. Marking any of them is the
+       insight; marking all three is not three times the insight. */
+    function distinct(keys){
+      var seen={},n=0;
+      keys.forEach(function(k){
+        var g=(k==='name3'||k==='name3b'||k==='name3c')?'name':k;
+        if(!seen[g]){seen[g]=1;n++}
+      });
+      return n;
+    }
+  
+    function draw(){
+      spots.forEach(function(s){
+        var i=order.indexOf(s.dataset.f);
+        s.setAttribute('aria-pressed',i>=0?'true':'false');
+        if(i>=0)s.dataset.n=String(i+1); else s.removeAttribute('data-n');
+      });
+      listEl.innerHTML='';
+      order.forEach(function(k,i){
+        var f=FIXES[k]||{where:k};
+        var li=document.createElement('li');
+        var t=document.createElement('div'); t.className='mt';
+        var b=document.createElement('b'); b.textContent=(i+1)+'. '+f.where;
+        var x=document.createElement('button'); x.type='button'; x.className='mx';
+        x.textContent='remove'; x.setAttribute('aria-label','Remove the mark on '+f.where);
+        x.addEventListener('click',function(){
+          order=order.filter(function(j){return j!==k}); delete notes[k]; draw(); save();
+        });
+        t.appendChild(b); t.appendChild(x); li.appendChild(t);
+        var ta=document.createElement('textarea'); ta.rows=2; ta.maxLength=300;
+        ta.placeholder='What is wrong with it? (optional)';
+        ta.value=notes[k]||'';
+        ta.setAttribute('aria-label','What is wrong with '+f.where);
+        ta.addEventListener('input',function(){notes[k]=ta.value;save()});
+        li.appendChild(ta);
+        listEl.appendChild(li);
+      });
+  
+      var n=distinct(order);
+      if(!n){ nEl.textContent='Nothing marked yet'; hintEl.textContent='Tap any part of the form.'; }
+      else {
+        nEl.textContent='You have marked '+n+(n===1?' thing':' things');
+        /* never "n of 12": the count of what is there is the answer sheet */
+        hintEl.textContent=n<3?'Keep going. There is more than that.'
+              :n<6?'Good. Most people stop about here.'
+              :'That is more than most. Send it.';
+      }
+      var any=order.length>0||(elseT&&elseT.value.trim());
+      sendBtn.hidden=!any; footEl.hidden=!any;
+    }
+  
+    spots.forEach(function(s){
+      s.addEventListener('click',function(){
+        var k=s.dataset.f, i=order.indexOf(k), had=distinct(order);
+        if(i>=0)order.splice(i,1); else order.push(k);
+        draw(); save();
+        var n=distinct(order);
+        say(i>=0 ? 'Unmarked' : (n>had ? 'Marked \u2014 '+n+(n===1?' thing':' things')
+                                       : 'Already marked on another line'));
+      });
+    });
+  
+    if(elseBtn)elseBtn.addEventListener('click',function(){
+      elseBox.hidden=!elseBox.hidden;
+      if(!elseBox.hidden&&elseT)elseT.focus();
+    });
+    if(elseT)elseT.addEventListener('input',function(){save();draw()});
+  
+    sendBtn.addEventListener('click',function(){
+      save();
+      var ap=document.getElementById('apply');
+      if(ap)ap.scrollIntoView({behavior:(window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'),block:'start'});
+    });
+  
+    /* what the Branch Manager reads: what they found, in their order, with the
+       branch's own note on each so he does not have to hold twelve faults in
+       his head, and anything they found that was never planted. */
+    window.__rrbFix=function(){
+      var found=order.map(function(k){
+        var f=FIXES[k]||{where:k,why:''};
+        return f.where+(notes[k]?' — "'+notes[k].trim()+'"':'')+'  ['+f.why+']';
+      });
+      var missed=Object.keys(FIXES).filter(function(k){
+        return order.indexOf(k)<0 && k!=='name3b' && k!=='name3c';
+      }).map(function(k){return FIXES[k].where});
+      return {
+        n:distinct(order), total:TOTAL,
+        found:found.join('\n'),
+        missed:missed.join('; '),
+        other:(elseT&&elseT.value.trim())||''
+      };
+    };
+  
+    load(); draw();
+  })();
+
+  /* ════════════════════ the form ════════════════════
+     Posts q.quote to the Service Questionnaire deployment with form key
+     'admin', the same road every branch form takes. text/plain, so Apps
+     Script never gets a CORS preflight it cannot answer. If the backend does
+     not answer inside 12 seconds the reference is still shown and the mail
+     app opens with the same answers — nothing is lost to a bad minute of
+     signal. */
+  (function(){
+    var API='https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+    var TO='Ricky.Rampersad@myguardiangroup.com';
+    var f=d.getElementById('jf'), done=d.getElementById('jDone'),
+        err=d.getElementById('jErr'), btn=d.getElementById('jSend');
+    if(!f)return;
+    /* An unchecked radio group answers NOTHING. Without the type test the
+       fallback returns the first radio in the group, so a question nobody
+       touched reads as answered: the rail opened at "4 of 18", the gate let
+       the form through, and the first option was filed as the candidate's own
+       answer. A fabricated answer is worse than a blank one. */
+    function val(n){
+      var ch=f.querySelector('[name="'+n+'"]:checked');
+      if(ch)return String(ch.value||'').trim();
+      var el=f.querySelector('[name="'+n+'"]');
+      if(!el||el.type==='radio'||el.type==='checkbox')return '';
+      return String(el.value||'').trim();
+    }
+    function localRef(){var t=new Date(),p=function(n){return(n<10?'0':'')+n};
+      return 'QB-'+String(t.getFullYear()).slice(2)+p(t.getMonth()+1)+p(t.getDate())+'-'+p(t.getHours())+p(t.getMinutes())}
+    function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+    function show(ref,sent,first,when){
+      f.style.display='none';
+      done.innerHTML='<span class="eyebrow">Sent</span><h3>Thank you, '+esc(first)+'. It is with Mr Rampersad.</h3>'
+        +'<div class="ref" aria-label="'+esc(ref)+'" title="'+esc(ref)+'">'+esc(ref)+'</div>'
+        +'<p>He reads it himself, within 48 hours. If it reads like you, he will ask you for one thing you would fix here &mdash; so you may as well '
+        +'<a href="https://github.com/RickyRampersad/RickyRampersadTermLIfe" target="_blank" rel="noopener">start looking through what we have built</a> now, '
+        +'and have your answer ready. Keep the reference if you need to reach him: <a href="tel:+18686785821">678-5821</a>.</p>'
+        +(sent?'':'<p class="warn">We could not reach our system just now, so your mail app has opened with the same answers addressed to him. Press send there and it reaches him the same way.</p>');
+      done.classList.add('on');
+      done.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
+    }
+    function mailRoad(body,ref){
+      var t='BUILD WITH US — THE PERSONAL ASSISTANT\'S SEAT\nReference: '+ref+'\n\n'
+        +'Name: '+body.core.name+'\nPhone: '+body.core.phone+'\nE-mail: '+body.core.email+'\n\n';
+      body.fields.forEach(function(x){if(x.value)t+=x.label+':\n'+x.value+'\n\n'});
+      location.href='mailto:'+TO+'?subject='+encodeURIComponent('Build with us — '+ref)+'&body='+encodeURIComponent(t);
+    }
+    /* ── the progress rail: moves on input, never on scroll, and a section
+          ticks only when everything it needs is really filled in ── */
+    var REQ=['name','phone','email','town','travel','exp','emp_co','emp_role','emp_dates',
+             'emp_changed','edu','pay_now','pay_want','start','w_built','w_slim','w_cv','when'];
+    var rail=d.getElementById('rail'), railN=d.getElementById('railN'),
+        railI=d.getElementById('railI'), railS=d.getElementById('railS');
+    /* reads MIN and FMT, so the rail can never say "ready to send" about an
+       answer the gate is going to refuse. That disagreement was the bug. */
+    function filled(n){var v=val(n);
+      return MIN[n]?v.length>=MIN[n]:FMT[n]?FMT[n].test(v):!!v}
+    function tick(){
+      var n=0; REQ.forEach(function(k){if(filled(k))n++});
+      var pc=Math.round(n/REQ.length*100);
+      if(railI)railI.style.width=pc+'%';
+      if(railN)railN.textContent=n+' of '+REQ.length+' answered';
+      if(rail){rail.setAttribute('aria-valuenow',String(pc));rail.classList.toggle('full',n===REQ.length)}
+      if(railS)railS.textContent=n===REQ.length?'ready to send':n>REQ.length/2?'nearly there':'about 15 minutes';
+      /* A section with nothing required would otherwise never tick, which
+         reads as broken rather than optional — so it ticks once everything
+         required is in AND the person has actually answered something in it. */
+      [].slice.call(f.querySelectorAll('[data-sec]')).forEach(function(s){
+        var need=[].slice.call(s.querySelectorAll('[required]'))
+          .map(function(e){return e.name}).filter(function(v,i,a){return a.indexOf(v)===i});
+        var any=[].slice.call(s.querySelectorAll('input,select,textarea')).some(function(e){
+          return (e.type==='checkbox'||e.type==='radio') ? e.checked : String(e.value||'').trim()!=='';
+        });
+        s.classList.toggle('secok',need.every(filled)&&any);
+      });
+    }
+    f.addEventListener('input',tick); f.addEventListener('change',tick); tick();
+
+    f.addEventListener('submit',function(e){
+      e.preventDefault();
+      var name=val('name'), phone=val('phone'), email=val('email');
+
+      /* Every check names the field it is about, in the order the questions
+         are asked, so whatever refuses the form can always be scrolled to.
+         Before this the gate returned a sentence and the scroll asked the
+         RAIL which field was empty — and for a too-short answer, a letter in
+         the phone or a malformed e-mail the rail had no complaint, so the
+         page refused and did not move. See MIN at the top of this script.
+
+         A length rule says what is wrong rather than repeating the question:
+         somebody who has just written a line reads the question again as the
+         page being broken. */
+      function tooShort(n,ask){
+        var v=val(n), m=MIN[n];
+        if(v.length>=m)return '';
+        return v?'Just a little more on this one — about '+m+' characters, and you have '+v.length+'.':ask;
+      }
+      var checks=[
+        ['name',  !name?'We need your name.':''],
+        ['phone', !FMT.phone.test(phone)?'We need a phone number he can call.':''],
+        ['email', !FMT.email.test(email)?'That e-mail address does not look right.':''],
+        ['town',  !val('town')?'Which town or area do you live in?':''],
+        ['travel',!val('travel')?'How would you get to Chaguanas?':''],
+        ['exp',   !val('exp')?'How long have you been working?':''],
+        ['emp_co',  !val('emp_co')?'Who do you work for now, or last?':''],
+        ['emp_role',!val('emp_role')?'What is, or was, your role there?':''],
+        ['emp_dates',!val('emp_dates')?'Roughly when were you there?':''],
+        ['emp_changed',tooShort('emp_changed','What is different at that job because you were there? One honest line.')],
+        ['edu',   !val('edu')?'Your highest qualification or training — whatever it is.':''],
+        ['pay_now', !val('pay_now')?'What you earn now. "Prefer not to say" is a real option.':''],
+        ['pay_want',!val('pay_want')?'What you are looking for. "Open" is a real option.':''],
+        ['start', !val('start')?'When could you start?':''],
+        ['w_built',tooShort('w_built','Tell us about one thing you built — a few honest lines is plenty, but we do need them.')],
+        ['w_slim', tooShort('w_slim','The slim-down answer is the one he reads most carefully. A few lines.')],
+        ['w_cv',   tooShort('w_cv','What do you want on your CV in two years?')]
+      ];
+      var bad='', badField='';
+      for(var ci=0;ci<checks.length;ci++){
+        if(checks[ci][1]){badField=checks[ci][0];bad=checks[ci][1];break}
+      }
+      err.textContent=bad; err.classList.toggle('on',!!bad);
+      if(bad){
+        var first=f.querySelector('[name="'+badField+'"]');
+        if(first){
+          var sec=first.closest('[data-sec]')||first;
+          sec.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
+          setTimeout(function(){try{first.focus({preventScroll:true})}catch(x){first.focus()}},noMotion.matches?0:320);
+        }
+        return;
+      }
+      if(f.dataset.sending)return;
+      f.dataset.sending='1'; var was=btn.innerHTML; btn.disabled=true; btn.textContent='Sending…';
+      var w1=val('w_built'), w2=val('w_slim'), w3=val('w_cv');
+      var when=val('when'), gh=val('gh'), link=val('link');
+      var tools=[].slice.call(f.querySelectorAll('[name="tool"]:checked')).map(function(x){return x.value}).join(', ');
+      /* what they marked on the form at the top of the page. It travels
+         whether or not they pressed "send what I found": the marks are the
+         application, and a person who scrolled past the button has still
+         told us what they noticed. */
+      var fx=(typeof window.__rrbFix==='function')?window.__rrbFix():{n:0,total:12,found:'',missed:'',other:''};
+      var score=fx.n?(fx.n+' of '+fx.total+' found'):'did not mark the form';
+      var body={action:'q.quote',form:'admin',code:'QB',line:'Build with us',
+        title:'Personal assistant',
+        core:{name:name,email:email,phone:phone,reach:'call',when:when,agent:'',
+              notes:w1,website:val('website')},
+        fields:[
+          {section:'The form',k:'score',label:'What they found on the form',value:score},
+          {section:'The form',k:'fix_found',label:'In the order they found them',value:fx.found},
+          {section:'The form',k:'fix_other',label:'Something else they saw',value:fx.other},
+          {section:'The form',k:'fix_missed',label:'What they walked past',value:fx.missed},
+          {section:'Them',k:'town',label:'Where they live',value:val('town')},
+          {section:'Them',k:'travel',label:'Getting to Chaguanas',value:val('travel')},
+          {section:'Them',k:'when_talk',label:'Best time for a call',value:when},
+          {section:'Where they have worked',k:'exp',label:'Years working',value:val('exp')},
+          {section:'Where they have worked',k:'emp_co',label:'Current or most recent employer',value:val('emp_co')},
+          {section:'Where they have worked',k:'emp_role',label:'Role there',value:val('emp_role')},
+          {section:'Where they have worked',k:'emp_dates',label:'From and to',value:val('emp_dates')},
+          {section:'Where they have worked',k:'emp_changed',label:'What is different there because of them',value:val('emp_changed')},
+          {section:'Where they have worked',k:'emp2_co',label:'Employer before that',value:val('emp2_co')},
+          {section:'Where they have worked',k:'emp2_role',label:'Role there',value:val('emp2_role')},
+          {section:'Where they have worked',k:'edu',label:'Highest qualification or training',value:val('edu')},
+          {section:'Pay',k:'pay_now',label:'Earning now (monthly, TT$)',value:val('pay_now')},
+          {section:'Pay',k:'pay_want',label:'Looking for (monthly, TT$)',value:val('pay_want')},
+          {section:'Pay',k:'start',label:'Could start',value:val('start')},
+          {section:'What they can do',k:'tools',label:'Tools they have used',value:tools},
+          {section:'What they can do',k:'self_taught',label:'Something they taught themselves',value:val('self_taught')},
+          {section:'In their own words',k:'w_built',label:'One thing they built that nobody asked for',value:w1},
+          {section:'In their own words',k:'w_slim',label:'The slim-down: how they would halve it',value:w2},
+          {section:'In their own words',k:'w_cv',label:'What they want on their CV in two years',value:w3},
+          {section:'Last things',k:'link',label:'A link to something they made',value:link},
+          {section:'Last things',k:'gh',label:'GitHub username',value:gh},
+          {section:'Last things',k:'heard',label:'Where they saw it',value:val('heard')}
+        ],
+        page:location.pathname,
+        ref_from:(new URLSearchParams(location.search)).get('from')||'',
+        at:new Date().toISOString()};
+      var ref='', sent=false, first=name.split(' ')[0];
+      function finish(){f.dataset.sending='';btn.disabled=false;btn.innerHTML=was;
+        if(!ref)ref=localRef(); show(ref,sent,first,when);
+        if(!sent)setTimeout(function(){mailRoad(body,ref)},60)}
+      var ac=('AbortController' in window)?new AbortController():null,
+          to=setTimeout(function(){if(ac)ac.abort()},12000);
+      fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify(body),signal:ac?ac.signal:undefined})
+        .then(function(r){return r.json().catch(function(){return{}})})
+        .then(function(x){sent=!!(x&&x.ok!==false&&x.ref);ref=(x&&x.ref)||''})
+        .catch(function(){sent=false})
+        .then(function(){clearTimeout(to);finish()});
+    });
+    /* Enter moves on rather than sending: on a form this long a stray Enter
+       halfway down is a submission nobody meant. */
+    f.addEventListener('keydown',function(e){
+      if(e.key!=='Enter'||e.target.tagName==='TEXTAREA'||e.target.type==='submit')return;
+      e.preventDefault();
+      var fs=[].slice.call(f.querySelectorAll('input:not([type=radio]):not([tabindex="-1"]),textarea')),
+          k=fs.indexOf(e.target);
+      if(k>-1&&fs[k+1])fs[k+1].focus(); else btn.focus();
+    });
+  })();
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

@@ -76,7 +76,7 @@ var MEET = {
   /*  Bumped whenever this file changes in a way a deployment has to
    *  carry. `?action=ping` reports it, so a browser can tell a live
    *  build from one pasted six weeks ago without anybody guessing. */
-  VERSION: '2026-10-28',
+  VERSION: '2026-11-10d',
 
   /* Typed once, when someone sets their PIN for the first time. It
      stops a stranger who guesses a branch email address from claiming
@@ -1136,6 +1136,33 @@ function guestPerson_(name, job) {
   return made;
 }
 
+/** Is the name a visitor typed the name of somebody already on the roll?
+ *
+ *  A VISITOR IS NEVER ON THE REGISTER, by design: roster_() is the
+ *  denominator the register is measured against and it filters role
+ *  'guest' out, so three executives looking in cannot push the branch
+ *  past 100%. The cost of that, found in the live book on 8 November
+ *  2026, is that somebody who IS on the roll and signs in with 0000 is
+ *  recorded as a visitor and marked ABSENT for the meeting they attended:
+ *  four of the branch's own staff are in the visitors' book that way, one
+ *  of them on the morning of a meeting that ran. Their own rows were
+ *  sitting on the roll the whole time.
+ *
+ *  So the guest door turns a branch member round rather than letting them
+ *  through it. An executive looking in is not on the roll, so the
+ *  standing visitor is untouched.
+ *
+ *  Matched on first and last name through agentKey_, which drops the
+ *  "A07347 - " the roster pull writes in front of every name. Ambiguity
+ *  is refused too: if two people on the roll answer to the name, their
+ *  own number is the only thing that can say which. */
+function guestOnRoll_(name) {
+  var k = agentKey_(name);
+  if (!k || k.indexOf('|') < 1) return null;
+  var hits = roster_().filter(function (p) { return agentKey_(p.name) === k; });
+  return hits.length ? hits[0] : null;
+}
+
 /** One line in the visitors' book, once per visitor per meeting.
  *
  *  This, not the Attendance tab, is where a visit is recorded: a guest in
@@ -1240,6 +1267,19 @@ function apiLogin_(body) {
     if (!gJob) {
       return { ok: false, needGuest: true, haveName: gName,
                error: 'And your role, so we know who we had with us.' };
+    }
+
+    //  Turned round rather than let in: see guestOnRoll_ for why a branch
+    //  member signing in with 0000 is marked absent for a meeting they
+    //  were at. Nothing is written — no visitor row, no token — so they
+    //  arrive at their own sign-in with the register still correct.
+    var onRoll = guestOnRoll_(gName);
+    if (onRoll) {
+      return { ok: false, onRoll: true, haveName: gName,
+               error: firstName_(gName) + ', you are on the branch roll, so 0000 is not '
+                 + 'your way in: a guest is never on the register, and it would mark you '
+                 + 'absent from a meeting you were at. Sign in with your agent number '
+                 + 'instead \u2014 it is the whole sign-in, and there is no password to type.' };
     }
 
     var g = guestPerson_(gName, gJob);
@@ -1512,6 +1552,51 @@ function apiMeetings_(token) {
 
 /** One meeting in full — agenda, materials, actions, minutes — with
  *  everything the person may not see removed on the server. */
+/* ---- THE BRANCH'S NUMBERS, FROM THE TRACKER (10 November 2026) ----------------------------
+ *  Ricky: "so much we do daily, so much intelligence we drive ... I'm not seeing the numbers
+ *  ... this pulls together daily actual live data."
+ *
+ *  This project has its own sheet and cannot see Salesforce, the fact find or the register.
+ *  The tracker can see all three, so it answers one signed call — action=meetpack, signed
+ *  with MEET_BRIDGE_KEY, the same secret the Wednesday bridge already uses in the other
+ *  direction. TRACKER_URL is the tracker's /exec.
+ *
+ *  NOTHING DEPENDS ON IT. No URL, no key, the tracker down, the tracker slow: the pack is
+ *  left out, the meeting opens exactly as it did, and the screen says where the numbers come
+ *  from rather than showing a blank. A meeting that will not open because a figure did not
+ *  arrive is worse than a meeting with no figures.                                        */
+var MPACK = { PROP_URL: 'TRACKER_URL', CACHE_SEC: 240, TIMEOUT_NOTE: 'the tracker did not answer' };
+
+function mpackProp_(k) { try { return str_(PropertiesService.getScriptProperties().getProperty(k)); } catch (e) { return ''; } }
+
+/** The branch's numbers, or null. Never throws, never waits twice on a tracker that is down. */
+function meetNumbers_() {
+  var url = mpackProp_(MPACK.PROP_URL), key = bridgeKey_();
+  if (!url || !key) return null;
+  var c = null;
+  try {
+    c = CacheService.getScriptCache();
+    if (c.get('mpack_down')) return null;
+    var hit = c.get('mpack'); if (hit) return JSON.parse(hit);
+  } catch (e) {}
+  try {
+    var t = String(Date.now());
+    var res = UrlFetchApp.fetch(url + '?action=meetpack&t=' + t +
+      '&s=' + encodeURIComponent(bridgeSign_('pack|' + t, key)),
+      { muteHttpExceptions: true, followRedirects: true });
+    if (res.getResponseCode() !== 200) throw new Error('HTTP ' + res.getResponseCode());
+    var out = JSON.parse(res.getContentText());
+    if (!out || out.ok !== true) throw new Error(str_(out && out.error) || 'refused');
+    try { if (c) c.put('mpack', JSON.stringify(out), MPACK.CACHE_SEC); } catch (e) {}
+    return out;
+  } catch (e) {
+    /*  Down for five minutes rather than on every request: a meeting page that
+        waits on a dead tracker opens slowly for everybody in the room. */
+    try { if (c) c.put('mpack_down', '1', 300); } catch (e2) {}
+    return null;
+  }
+}
+
 function apiMeeting_(token, id) {
   var me = requireUser_(token);
   var m = findMeeting_(id);
@@ -1656,7 +1741,19 @@ function apiMeeting_(token, id) {
     apologyOther: APOLOGY_OTHER,
     // The role held for THIS meeting, which the chair and a presenter
     // need in order to be shown their own part of the framework.
-    myRole: roleInMeeting_(m, me, agenda)
+    myRole: roleInMeeting_(m, me, agenda),
+    //  The branch's own numbers, when the tracker is linked. Absent is fine.
+    //  The per-person read of how people work goes to staff and managers; the
+    //  drills it rolls up to carry no names and are for the room.
+    pack: packFor_(meetNumbers_(), me),
+    //  The whole branch, so the accountability panel can name anybody with
+    //  nothing in, not only the people who own an agenda item.
+    roster: rosterFor_(m).map(function (p) {
+      return { name: p.name, role: p.role, unit: p.unit || '' };
+    }),
+    //  A RUN of quiet meetings, which one week's panel cannot show. Staff and
+    //  managers only, deliberately: see the note on heardHistory_.
+    heard: isStaff_(me) ? heardHistory_(m) : null
   };
 
   // The register itself is staff material. An agent sees that they
@@ -2655,7 +2752,7 @@ function dailyMeetingNote() {
     return 'No meeting within two working days — no note.';
   }
 
-  var sent = 0, quiet = 0;
+  var sent = 0, quiet = 0, held = 0;
   everyone_().forEach(function (p) {
     if (!p.email) return;
     var per = noteContextFor_(p, ctx);
@@ -2665,15 +2762,18 @@ function dailyMeetingNote() {
     if (!note.must && !note.hasKpi && !note.openCases && per.daysToMeeting > 1 &&
         !per.myItems.length && !per.openActions.length) { quiet++; return; }
     try {
-      MailApp.sendEmail({ to: p.email, subject: note.subject, htmlBody: note.html,
-                          name: MEET.BRANCH });
+      var via = meetMail_({ to: p.email, subject: note.subject, htmlBody: note.html,
+                            name: MEET.BRANCH });
+      if (via === 'held') { held++; return; }
       sent++;
     } catch (err) {
       Logger.log('Could not write to ' + p.email + ': ' + err);
     }
   });
 
-  var msg = sent + ' note' + (sent === 1 ? '' : 's') + ' sent, ' + quiet + ' had nothing to say.';
+  var msg = sent + ' note' + (sent === 1 ? '' : 's') + ' sent, ' + quiet + ' had nothing to say' +
+    (held ? ', ' + held + ' HELD: the mail allowance is nearly out' : '') + '.';
+  if (held) mmHeldAlert_('the daily note', held, sent);
   log_('daily-note', 'system', '', ctx.meeting ? str_(ctx.meeting['Ref']) : '', msg);
   Logger.log(msg);
   return msg;
@@ -2704,8 +2804,8 @@ function previewDailyNote() {
   if (!me) throw new Error('Nobody on the People tab yet.');
   var ctx = dailyNoteContext_(new Date());
   var note = dailyNoteFor_(me, noteContextFor_(me, ctx));
-  MailApp.sendEmail({ to: me.email, subject: '[Preview] ' + note.subject,
-                      htmlBody: note.html, name: MEET.BRANCH });
+  meetMail_({ to: me.email, subject: '[Preview] ' + note.subject,
+              htmlBody: note.html, name: MEET.BRANCH });
   var msg = 'Preview sent to ' + me.email + '.';
   Logger.log(msg);
   return msg;
@@ -2850,14 +2950,27 @@ function loadOf_(m, agenda) {
  *  and the cadence — in particular WHICH items are the chair's, which
  *  is now three of fourteen rather than six of twelve, and which come
  *  round the room.                                                   */
-function seedRota() {
+function seedRota(opts) {
   var sh = tab_(MEET.TAB_ROTA);
-  if (sh.getLastRow() > 1) {
-    var msg = 'The Rota tab already has rows — left alone. Clear it first to re-seed.';
+  var had = Math.max(0, sh.getLastRow() - 1);
+
+  /*  IT WILL NOT WRITE OVER A ROTA SOMEBODY HAS EDITED, and `{ replace:
+   *  true }` is the only way past that — passed by the menu, after a
+   *  person has read what goes. Found on the live sheet, 10 November
+   *  2026: eleven items from an earlier seeding, every Owner cell blank.
+   *  So the refusal was doing its job and the branch still had a rota
+   *  with nobody's name on it, which is the whole of the accountability
+   *  panel's input. */
+  if (had && !(opts && opts.replace)) {
+    var msg = 'The Rota tab already has ' + had + ' row' + (had === 1 ? '' : 's') +
+              ' — left alone. Press the menu item again and say yes to replace it, ' +
+              'or type the owners in by hand.';
     Logger.log(msg);
     return msg;
   }
-  /*  ELEVEN ITEMS IN NINETY MINUTES, 9:00 to 10:30.
+  if (had) sh.getRange(2, 1, had, sh.getMaxColumns()).clearContent();
+  /*  FOURTEEN ITEMS IN NINETY MINUTES, 9:00 to 10:30, AND EVERY ONE OF
+   *  THEM HAS A NAME ON IT.
    *
    *  The shape this replaced ran fifteen items over 101 minutes and spent
    *  forty-one of them having five separate reports read out — outstanding
@@ -2871,61 +2984,130 @@ function seedRota() {
    *  breaching. The time bought back went to the thing that did not exist —
    *  asking, by name, who answered Monday's brief and who did not.
    *
+   *  WHY THE OWNERS ARE SEEDED AND NOT LEFT BLANK, decided 10 November
+   *  2026. The branch manager: "I'm not seeing the staff being held
+   *  accountable ... Kamla is the BMA, she's responsible for training, what
+   *  the staff is being trained on ... Also the three staff, Azariah, Liz,
+   *  every morning we send things ... Akaash is the manager for his unit,
+   *  and he makes a contribution. Things must change and hold the persons
+   *  accountable."
+   *
+   *  Every owner was seeded blank, and the whole accountability mechanism —
+   *  who owes this meeting something, and whether anything is in — reads
+   *  the agenda's owners. Blank owners meant it had nobody to name. So the
+   *  names go in here, and they are the branch's OWN desk split rather than
+   *  anybody's guess: the tracker already routes a new task by its type
+   *  (pendings to Azariah, premium dues to Sasha, servicing and new
+   *  applications to Elizabeth, anything else to the BMA), and the cover
+   *  rule already keeps staffing, licensing, training, RR Operations and
+   *  innovation with the BMA when she is out. A name here is changed on the
+   *  tab in a second; a blank one is nobody's, for ever.
+   *
+   *  THE ONE STAFF REPORT BECAME THREE, for the same eight minutes. "What
+   *  is breaching" with one owner is one person speaking for three desks,
+   *  and the morning e-mail that goes to each of them asks each of them
+   *  separately. Three items of two and three minutes put each desk's own
+   *  book in front of the room under its own name, and cost the meeting
+   *  nothing.
+   *
+   *  WHERE THE BMA'S FIVE MINUTES CAME FROM: the chair's own share. The
+   *  production board was seven minutes of reading out a screen that is
+   *  now on the wall before anybody sits down, and the opening's three
+   *  included marking a register the app now keeps. Both shrank, by the
+   *  rule the rota is built on. The chair holds twenty of the ninety.
+   *
    *  The arithmetic is deliberate and the template on the wall depends on
-   *  it: ninety minutes exactly, fifteen of them the chair's, sixteen
-   *  belonging to the room, two items rotating so they come round rather
-   *  than landing on whoever is willing.                                */
+   *  it: ninety minutes exactly, twenty of them the chair's, eighteen
+   *  rotating so they come round the room rather than landing on whoever
+   *  is willing, eight the room's own.
+   *
+   *  Owner Email is deliberately left blank — addresses are not written
+   *  into this repository, and the file is published. The branch puts each
+   *  one in once, on the tab; until then the name alone is enough for the
+   *  agenda, the load check and the accountability panel.               */
   var rows = [
-    [0, 'Open | Mission Statement | Moment of Silence', 3, 'all', 'chair',
-     'Three minutes. The register is the app; nobody is marked in from the front.'],
+    [0, 'Open | Mission Statement | Moment of Silence', 2, 'all', 'chair', '',
+     'Two minutes. The register is the app; nobody is marked in from the front.'],
 
-    /*  PRODUCTION LEADS. Items two to five are thirty-eight of the ninety
-     *  minutes and they are the first thing after the door closes. The
-     *  branch does not open on admin and work its way towards selling;
-     *  it opens on what was written and what is there to write.       */
-    [3, 'The production board', 7, 'all', 'chair',
-     'Written this week against target, by unit. The screen is up \u2014 only the exceptions are spoken aloud.'],
-    [3, 'This week\u2019s call list', 12, 'all', 'fixed',
+    /*  PRODUCTION LEADS. The branch does not open on admin and work its
+     *  way towards selling; it opens on what was written and what is
+     *  there to write.                                                */
+    [3, 'The production board', 3, 'all', 'chair', '',
+     'Written this week against target, by unit. The board is on the screen before anybody sits down \u2014 only the exceptions are spoken aloud.'],
+    [3, 'This week\u2019s call list', 12, 'all', 'fixed', 'Akaash Kalladeen',
      'The cross-sell band the sheet scored "call this week" \u2014 the gap named and the question already written for each one. Who called, what was asked, what closed.'],
-    [3, 'Maturities \u2014 money in motion', 10, 'all', 'fixed',
+    [3, 'Maturities \u2014 money in motion', 10, 'all', 'fixed', '',
      'Every policy reaching maturity is a conversation about where the money goes next. Nothing converts better than money already moving.'],
-    [3, 'The campaign \u2014 the orphan book', 9, 'all', 'fixed',
+    [3, 'The campaign \u2014 the orphan book', 9, 'all', 'fixed', '',
      'Against target, with the pace needed to finish on time. A review filed is the unit measured.'],
 
-    [3, 'Accountability \u2014 Monday\u2019s brief and last week\u2019s actions', 10, 'all', 'fixed',
-     'Answered against sent, contact made against answered, the names who sent nothing back, and every action carried forward with its owner.'],
-    [2, 'Conservation and exceptions', 8, 'staff', 'fixed',
-     'What we are about to lose, and what is breaching its standard \u2014 dues, lapses, requirements, persistency, contracts, 85-day. Only the breaches.'],
+    /*  THE THREE DESKS, EACH FOR ITS OWN BOOK. Eight minutes between
+     *  them, which is what the single staff report cost.             */
+    [2, 'Premiums due and lapses \u2014 what we are about to lose', 3, 'staff', 'fixed', 'Sasha Lalla',
+     'Her own book: what is overdue, what lapses next, and what came back from this week\u2019s letters. Only what is breaching.'],
+    [2, 'Pendings and requirements \u2014 what is holding business up', 3, 'staff', 'fixed', 'Azariah',
+     'Her own book: requirements outstanding, first premiums not paid, and whose application is waiting on whom. Only what is breaching.'],
+    [2, 'Service, contracts and the 85-day', 2, 'staff', 'fixed', 'Elizabeth',
+     'Her own book: contracts undelivered, service requests past their standard, and the 85-day. Only what is breaching.'],
 
-    [3, 'What worked for me', 8, 'all', 'rotate',
+    [3, 'Accountability \u2014 Monday\u2019s brief and last week\u2019s actions', 10, 'all', 'chair', '',
+     'Answered against sent, contact made against answered, the names who sent nothing back, and every action carried forward with its owner and its date.'],
+
+    [5, 'Training and staffing \u2014 the BMA\u2019s report', 5, 'all', 'fixed', 'Kamla Dookran',
+     'What the staff were trained on this week, what came of it, what is next, and where licensing and staffing stand. Five minutes, every week, in her own name.'],
+
+    [3, 'What worked for me', 8, 'all', 'rotate', '',
      'One agent, one case, what they actually did. Comes round the room.'],
-    [5, 'Training \u2014 one point, taught by one of us', 10, 'all', 'rotate',
-     'Not the manager. A product, an objection, a system.'],
-    [6, 'Open floor', 8, 'all', 'fixed',
+    [5, 'Training \u2014 one point, taught by one of us', 10, 'all', 'rotate', '',
+     'Not the manager, and not the BMA. A product, an objection, a system.'],
+    [6, 'Open floor', 8, 'all', 'fixed', 'Everyone',
      'The room\u2019s time. Anything not on the agenda.'],
-    [7, 'Close \u2014 each unit commits its number', 5, 'all', 'chair',
+    [7, 'Close \u2014 each unit commits its number', 5, 'all', 'chair', '',
      'Every unit says what it will have written by next ' + meetingDayName_() + '. That is what next week opens on.']
   ];
   appendRows_(MEET.TAB_ROTA, rows.map(function (r, i) {
     return {
       'Order': (i + 1) * 10, 'Section': SECTIONS[r[0]], 'Item': r[1],
-      'Detail': r[5], 'Minutes': r[2], 'Visibility': r[3], 'Cadence': r[4],
-      'Owner': '', 'Owner Email': '', 'Backup': '', 'Backup Email': '',
+      'Detail': r[6], 'Minutes': r[2], 'Visibility': r[3], 'Cadence': r[4],
+      'Owner': r[5], 'Owner Email': '', 'Backup': '', 'Backup Email': '',
       'Active': 'Y', 'Notes': ''
     };
   }));
-  var out = rows.length + ' standing items written to the Rota tab.\n\n' +
-    'Put an Owner Email against each one. Two items rotate by themselves and ' +
-    'need no owner. Only the opening and the closing are the chair’s.\n\n' +
-    'Any item left without an owner is seeded unowned, and the meeting will ' +
-    'say so when it is opened.';
+  var mins = rows.reduce(function (t, r) { return t + r[2]; }, 0);
+  var out = rows.length + ' standing items written to the Rota tab, ' + mins + ' minutes in all.\n\n' +
+    'Nine of them arrive with a name on them, taken from the branch\u2019s own desk ' +
+    'split: the call list is the unit manager\u2019s, premiums and lapses Sasha\u2019s, ' +
+    'pendings Azariah\u2019s, service and contracts Elizabeth\u2019s, training and ' +
+    'staffing the BMA\u2019s, and four are the chair\u2019s. Change any of them on the ' +
+    'tab \u2014 what matters is that no item is nobody\u2019s.\n\n' +
+    'Put an Owner Email against each named one, so what they bring attaches to ' +
+    'their own slot. Two items rotate by themselves and need no owner, and the ' +
+    'open floor belongs to the room.\n\n' +
+    'Maturities and the campaign are seeded unowned on purpose: the branch ' +
+    'decides those two, and the meeting says so when it is opened.';
   Logger.log(out);
   return out;
 }
 
 function seedRotaFromMenu() {
   var ui = SpreadsheetApp.getUi();
-  ui.alert('The rota', seedRota(), ui.ButtonSet.OK);
+  var had = Math.max(0, tab_(MEET.TAB_ROTA).getLastRow() - 1);
+
+  /*  A rota already there is replaced only on a yes, and the question
+   *  says what goes: the tab is the one place a person edits the
+   *  standing order, so it is never overwritten behind their back. */
+  if (had) {
+    var ask = ui.alert('Replace the standing rota?',
+      'The Rota tab has ' + had + ' item' + (had === 1 ? '' : 's') + ' on it.\n\n' +
+      'Replacing it writes the standing order afresh \u2014 the items, the minutes, ' +
+      'and a name against each one. Anything you have typed into Owner, Owner ' +
+      'E-mail, Backup or Notes goes with it.\n\n' +
+      'Meetings already built keep the agenda they have: this is the template ' +
+      'the next one is built from.',
+      ui.ButtonSet.YES_NO);
+    if (ask !== ui.Button.YES) { ui.alert('The rota', 'Left as it is.', ui.ButtonSet.OK); return; }
+  }
+  ui.alert('The rota', seedRota({ replace: true }), ui.ButtonSet.OK);
 }
 
 function apiSeedAgenda_(body) {
@@ -2957,10 +3139,21 @@ function seedAgendaInto_(m, byEmail) {
    *  already owned by other people. The hard-coded list that used to
    *  live here gave six of twelve items to the chair by default and
    *  left the rest blank, which in practice meant the chair again. */
+  /*  THE ROTA WRITES ITSELF IF THERE IS NONE. Until 10 November 2026 this
+   *  returned an error naming a menu item, which meant the Wednesday
+   *  builder could create the meeting and leave it with no agenda at all,
+   *  waiting on a press nobody had been told about — the exact fault the
+   *  note above this function records. The standing order is the branch's
+   *  own and is seeded with its owners, so a meeting built at six in the
+   *  morning arrives named. */
   var rota = rotaRows_();
   if (!rota.length) {
-    return { ok: false, error: 'There is no rota yet. Run "Set up the standing rota" from the ' +
-                               'Branch Meetings menu, then put an owner against each item.' };
+    try { seedRota(); } catch (e) {}
+    rota = rotaRows_();
+  }
+  if (!rota.length) {
+    return { ok: false, error: 'There is no rota yet and one could not be written. Run ' +
+                               '"Set up the standing rota" from the Branch Meetings menu.' };
   }
 
   // One rotating slot per person per meeting: handed to presenterFor_
@@ -3256,13 +3449,19 @@ function apiDeleteAction_(body) {
   return { ok: true };
 }
 
-/** Bring every still-open item from an earlier meeting onto this one,
- *  keeping the meeting it was first raised in. */
-function apiCarryForward_(body) {
-  var me = requireStaff_(body.token);
-  var to = findMeeting_(body.meetingId);
-  if (!to) return { ok: false, error: 'That meeting no longer exists.' };
-
+/*  BRING EVERY STILL-OPEN ITEM FROM AN EARLIER MEETING ONTO THIS ONE,
+ *  keeping the meeting it was first raised in.
+ *
+ *  Pulled out of the button on 10 November 2026, because the button was
+ *  the whole of it: nothing carried an action forward unless a staff
+ *  member pressed "carry forward" on the day, and in the meantime a
+ *  meeting opened with last week's agreed actions nowhere on it. The
+ *  branch manager, 10 November: "I'm not seeing go back, deep dive into
+ *  what we agreed on." So the Wednesday builder now calls this itself,
+ *  before anybody is awake, and the button still works for a meeting
+ *  built by hand. Same lesson as the agenda seed above: a step the branch
+ *  is told happens by itself must not in fact be somebody remembering. */
+function carryForwardInto_(to) {
   var already = {};
   readTab_(MEET.TAB_ACTIONS).forEach(function (x) {
     if (str_(x['Meeting ID']) === str_(to['ID'])) already[str_(x['Item']).toLowerCase()] = 1;
@@ -3286,8 +3485,16 @@ function apiCarryForward_(body) {
     carried++;
   });
 
-  log_('carry-forward', me.name, me.role, str_(to['Ref']), carried + ' open items carried forward');
   return { ok: true, carried: carried };
+}
+
+function apiCarryForward_(body) {
+  var me = requireStaff_(body.token);
+  var to = findMeeting_(body.meetingId);
+  if (!to) return { ok: false, error: 'That meeting no longer exists.' };
+  var out = carryForwardInto_(to);
+  log_('carry-forward', me.name, me.role, str_(to['Ref']), out.carried + ' open items carried forward');
+  return out;
 }
 
 /* ======================== minutes ======================== */
@@ -3953,6 +4160,102 @@ function contributionsFor_(m, person) {
       return (da ? da.getTime() : 0) - (db ? db.getTime() : 0);
     })
     .map(contribCard_);
+}
+
+/* ===================== WHO HAS BEEN HEARD FROM, AND WHO HAS NOT ==============
+ *
+ *  10 November 2026, the branch manager: "I've observed the staff continues to
+ *  come sit down, put up their laptops, and don't make the contribution, and
+ *  this has to stop ... the staff needs to empower themselves more as they are
+ *  on the front line."
+ *
+ *  WHO OWES THIS MEETING WHAT already names anybody with nothing in TODAY. The
+ *  thing he is describing is not one quiet week, it is a run of them, and one
+ *  week's panel cannot show a run. This counts the last few meetings and names
+ *  the people who have put nothing into any of them.
+ *
+ *  IT IS NOT FOR THE ROOM. He said it in those words — "between me and you" —
+ *  and he is right that it should not be: a count of today is a nudge, where a
+ *  run of weeks read out in front of everybody is a reprimand, and the person
+ *  it lands on is usually the one least able to answer back. It goes to staff
+ *  and managers, and into the branch manager's own daily note.
+ *
+ *  A person who apologised for a meeting is not counted absent from it: being
+ *  away is not refusing to speak.                                           */
+var HEARD = { MEETINGS: 4, QUIET: 3 };
+
+/*  The pack a person may see. Everyone gets the branch's figures and the drills
+ *  the branch needs, which carry counts and no names. The per-person read —
+ *  who is strong at what, and what each one has to work on — is a manager's
+ *  reading of their own people, so it goes to staff and managers only. */
+function packFor_(pk, me) {
+  if (!pk || isStaff_(me)) return pk || null;
+  var out = {}, k;
+  for (k in pk) if (Object.prototype.hasOwnProperty.call(pk, k)) out[k] = pk[k];
+  if (out.observed) {
+    var o = out.observed;
+    out.observed = { days: o.days, from: o.from, to: o.to,
+                     train: o.train || [], plannedShare: o.plannedShare };
+  }
+  return out;
+}
+
+function heardHistory_(m) {
+  var here = str_(m && m['ID']);
+  /*  The last few meetings before this one, newest first: branch meetings that
+      actually happened, never a cancelled one and never this one. */
+  var past = meetingRows_().filter(function (r) {
+    if (str_(r['ID']) === here) return false;
+    if (low_(r['Status']) === 'cancelled' || low_(r['Status']) === 'draft') return false;
+    var d = asDate_(r['Date']); if (!d) return false;
+    return d.getTime() <= Date.now();
+  }).sort(function (a, b) {
+    return (asDate_(b['Date']) || 0) - (asDate_(a['Date']) || 0);
+  }).slice(0, HEARD.MEETINGS);
+
+  var ids = {}; past.forEach(function (r) { ids[str_(r['ID'])] = str_(r['Ref']) || fmtDate_(r['Date']); });
+  ids[here] = 'now';
+
+  var said = {};          /* email -> { meetingId: true } */
+  readTab_(MEET.TAB_CONTRIB).forEach(function (c) {
+    var mid = str_(c['Meeting ID']); if (!ids[mid]) return;
+    var k = low_(c['Email']) || low_(c['Name']); if (!k) return;
+    if (!said[k]) said[k] = {};
+    said[k][mid] = true;
+  });
+
+  var away = {};          /* email -> { meetingId: true }, apologies and absences */
+  readTab_(MEET.TAB_ATTENDANCE).forEach(function (a) {
+    var mid = str_(a['Meeting ID']); if (!ids[mid]) return;
+    if (!/^(apolog|absent|excus)/i.test(str_(a['Status']))) return;
+    var k = low_(a['Email']); if (!k) return;
+    if (!away[k]) away[k] = {};
+    away[k][mid] = true;
+  });
+
+  var rows = rosterFor_(m).map(function (p) {
+    var mine = said[p.email] || {}, out = away[p.email] || {};
+    var chances = 0, spoke = 0, run = 0, running = true;
+    past.forEach(function (r) {
+      var id = str_(r['ID']);
+      if (out[id]) return;                 /* away is not silence */
+      chances++;
+      if (mine[id]) { spoke++; running = false; }
+      else if (running) run++;
+    });
+    return { name: p.name, role: p.role, unit: p.unit || '',
+             meetings: chances, spoke: spoke, run: run,
+             now: !!mine[here], quiet: chances >= HEARD.QUIET && spoke === 0 };
+  });
+
+  return {
+    meetings: past.length,
+    labels: past.map(function (r) { return str_(r['Ref']) || fmtDate_(r['Date']); }),
+    people: rows,
+    quiet: rows.filter(function (r) { return r.quiet; }).map(function (r) { return r.name; }),
+    frontLine: rows.filter(function (r) { return /staff|support/i.test(String(r.role)); })
+                   .map(function (r) { return { name: r.name, spoke: r.spoke, meetings: r.meetings, now: r.now }; })
+  };
 }
 
 /** Who actually said something, and how much. Silence is visible too. */
@@ -5216,7 +5519,7 @@ function activityCheck_(blockKey) {
   if (!url) throw new Error('The web app is not deployed yet, so there is no link to send.');
 
   var day = dayKey_(now);
-  var sent = 0, skipped = 0, failed = 0;
+  var sent = 0, skipped = 0, failed = 0, held = 0;
 
   everyone_().forEach(function (p) {
     if (!p.email) { skipped++; return; }
@@ -5237,8 +5540,9 @@ function activityCheck_(blockKey) {
 
     var mail = activityEmail_(p, row, block, url);
     try {
-      MailApp.sendEmail({ to: p.email, subject: mail.subject, htmlBody: mail.html,
-                          name: MEET.BRANCH });
+      var via = meetMail_({ to: p.email, subject: mail.subject, htmlBody: mail.html,
+                            name: MEET.BRANCH });
+      if (via === 'held') { held++; return; }
       sent++;
     } catch (err) {
       failed++;
@@ -5246,7 +5550,9 @@ function activityCheck_(blockKey) {
     }
   });
 
-  var msg = block.label + ': ' + sent + ' sent, ' + skipped + ' not asked, ' + failed + ' failed.';
+  var msg = block.label + ': ' + sent + ' sent, ' + skipped + ' not asked, ' + failed + ' failed' +
+    (held ? ', ' + held + ' HELD: the mail allowance is nearly out' : '') + '.';
+  if (held) mmHeldAlert_(block.label, held, sent);
   log_('activity-check', 'system', '', block.key, msg);
   Logger.log(msg);
   return msg;
@@ -5298,7 +5604,7 @@ function previewActivityCheck() {
     row = findActivity_(day, block.key, me.email);
   }
   var mail = activityEmail_(me, row, block, url);
-  MailApp.sendEmail({ to: me.email, subject: '[Preview] ' + mail.subject,
+  meetMail_({ to: me.email, subject: '[Preview] ' + mail.subject,
                       htmlBody: mail.html, name: MEET.BRANCH });
   return 'Sent to ' + me.email + '.';
 }
@@ -5663,17 +5969,19 @@ function mondayBrief() {
     (by[low_(r['Email'])] = by[low_(r['Email'])] || []).push(r);
   });
 
-  var sent = 0;
+  var sent = 0, held = 0;
   Object.keys(by).forEach(function (e) {
     var rows = by[e];
     var mail = chaseEmail_(e, rows, url);
     try {
-      MailApp.sendEmail({ to: e, subject: mail.subject, htmlBody: mail.html, name: MEET.BRANCH });
+      if (meetMail_({ to: e, subject: mail.subject, htmlBody: mail.html, name: MEET.BRANCH }) === 'held') { held++; return; }
       rows.forEach(function (r) { setCell_(CHASE.TAB, r._row, 'Sent', now); });
       sent++;
     } catch (err) { Logger.log('Monday brief to ' + e + ': ' + err); }
   });
-  var msg = sent + ' agent' + (sent === 1 ? '' : 's') + ' written to for week ' + week + '.';
+  var msg = sent + ' agent' + (sent === 1 ? '' : 's') + ' written to for week ' + week +
+    (held ? ', ' + held + ' HELD: the mail allowance is nearly out' : '') + '.';
+  if (held) mmHeldAlert_('the Monday brief', held, sent);
   log_('monday-brief', 'system', '', week, msg);
   return msg;
 }
@@ -6836,6 +7144,7 @@ function apiPing_() {
     app: 'Branch Meeting Builder',
     branch: MEET.BRANCH,
     version: MEET.VERSION,
+    bridge: !!bridgeKey_(),
     /* The register has three states a person can put themselves in,
        and only three. See apiExcuse_. */
     register: {
@@ -6843,6 +7152,84 @@ function apiPing_() {
       lateAfterMinutes: MEET.LATE_AFTER_MINUTES
     }
   };
+
+  /*  WHICH ACCOUNT IS THIS RUNNING ON, and is its mail held?
+   *
+   *  A bound script keeps its own /exec when its sheet is copied, so a
+   *  project moved to the Workspace and one still on the personal Gmail
+   *  are indistinguishable from outside — the fault the claims intake paid
+   *  for twice, where the only honest answer was a guess. Three answers:
+   *  the branch domain, 'gmail.com' (still on the personal account), or
+   *  '' meaning the deployment is not Execute as: Me and nothing can be
+   *  stored at all.
+   *
+   *  The DOMAIN only, never the address. This endpoint needs no sign-in;
+   *  support@ is published all over this repository and a personal address
+   *  is not. */
+  try {
+    var who = str_(Session.getEffectiveUser().getEmail());
+    var at = who.indexOf('@');
+    out.runsAs = at < 0 ? '' : who.slice(at + 1).toLowerCase();
+    out.onWorkspace = (out.runsAs === 'rickyrampersadbranch.com');
+  } catch (e) { out.runsAs = ''; out.onWorkspace = false; }
+
+  try { out.branchMail = meetBranchMailLive_() ? 'live' : 'held'; }
+  catch (e) { out.branchMail = 'unknown'; }
+
+  /*  WHAT A COPY DOES NOT CARRY — so the move is checkable from here.
+   *
+   *  File > Make a copy carries the tabs and the code and NOTHING
+   *  else: not one Script property, not one trigger. Both are
+   *  invisible from outside, and both have already cost this branch
+   *  real days. A blank branch code locks every person out of the
+   *  page. The week cycle left uninstalled meant NINE DAYS with no
+   *  meeting at all, and nothing anywhere said so.
+   *
+   *  So: which settings are filled in, and which timed jobs are
+   *  installed. NAMES AND BOOLEANS ONLY, never a value — this answer
+   *  is public, and one of these settings is the branch code.      */
+  try {
+    var pr = PropertiesService.getScriptProperties();
+    var has = function (k) { return !!str_(pr.getProperty(k)); };
+    out.settings = {
+      /* Without these two nobody signs in and nobody is on the roll. */
+      branchCode: has('JOIN_CODE'),
+      rosterSheet: has('ROSTER_SHEET_ID'),
+      /* The branch's own numbers on the meeting screen. */
+      trackerUrl: has('TRACKER_URL'),
+      bridgeKey: has('MEET_BRIDGE_KEY'),
+      /* The mail route. Without the relay every send falls to Gmail. */
+      relayUrl: has('MAIL_RELAY_URL'),
+      relayKey: has('MAIL_RELAY_KEY'),
+      /* The Monday brief's own sources. */
+      portfolioSheet: has('PORTFOLIO_SHEET_ID'),
+      serviceSheets: has('SERVICE_SHEET_IDS'),
+      factFindWall: has('FACTFIND_WALL_URL'),
+      /*  THESE TWO MUST NOT BE CARRIED OVER BY HAND. They point at
+       *  folders in whichever Drive wrote them, so a copied value
+       *  files the minutes and the archive back into the old
+       *  account's Drive. Blank is CORRECT on a fresh copy: the
+       *  folders make themselves in the new one. Same trap as the
+       *  claims intake's root folder.                              */
+      meetingsFolder: has('MEETINGS_FOLDER_ID'),
+      archiveFolder: has('ARCHIVE_FOLDER_ID')
+    };
+  } catch (e) { out.settings = null; }
+
+  /*  The timed jobs. A fresh copy has none, and the week cycle is the
+   *  one that decides whether there is a meeting at all: without
+   *  buildWednesday nobody has anything to sign in to.             */
+  try {
+    var want = ['buildWednesday', 'weekClose', 'dailyMeetingNote',
+                'mondayBrief', 'builderProgress', 'contentAsk',
+                'activityMorning', 'activityAfternoon'];
+    var on = {}, i;
+    ScriptApp.getProjectTriggers().forEach(function (t) {
+      on[str_(t.getHandlerFunction())] = true;
+    });
+    out.jobs = {};
+    for (i = 0; i < want.length; i++) out.jobs[want[i]] = !!on[want[i]];
+  } catch (e) { out.jobs = null; }
 
   /* Is the one-off file in the project at all? */
   try { out.oneOff = (typeof seedFridayMeeting === 'function'); }
@@ -6900,6 +7287,124 @@ function apiPing_() {
   return out;
 }
 
+/* ======================== the tracker's bridge (10 November 2026) ========================
+ *
+ *  Ricky: "everything comes towards a meeting ... persons commit to what's working and a case that they're going to
+ *  actually share, or some idea for the branch meeting or skill set ... and also identifying the training and
+ *  development plan ... building into the meeting what we're observing."
+ *
+ *  The agents' day lives in the KPI tracker (another Apps Script project): the morning brief reads each agent's record
+ *  and says what it sees; the close-off is where they answer. What an agent commits to bring arrives here as a
+ *  contribution BROUGHT IN BEFOREHAND (offset -1, exactly as apiAddContribution_ takes one before the register opens),
+ *  against the agenda item it belongs to:
+ *
+ *    case      a case that worked            -> What worked for me
+ *    skill     a point I can teach           -> Training
+ *    question  a question for the room       -> Open floor
+ *    idea      an idea for the branch        -> Open floor
+ *    help      help I need (staff only)      -> Open floor, visible to staff and the manager alone
+ *
+ *  and what the tracker OBSERVES across the agents (who is short of fact finds, whose pipeline is stuck, who is ahead
+ *  and could teach it) is one staff-only note against the Training item, rewritten each evening, so the chair walks in
+ *  with the development plan already drafted.
+ *
+ *  Only the tracker can use this door: every call is signed with MEET_BRIDGE_KEY (the same value set in both projects'
+ *  Script Properties), carries the time, and is refused after ten minutes. No key set, no door. Nothing here can sign
+ *  anybody in, read a meeting, or reach the register.                                                              */
+var BRIDGE = {
+  PROP: 'MEET_BRIDGE_KEY', MAX_AGE_MS: 10 * 60 * 1000,
+  KINDS: {
+    'case':     { slot: /^what worked/i, kind: 'Commitment', vis: 'all',   label: 'A case that worked' },
+    'skill':    { slot: /^training/i,    kind: 'Commitment', vis: 'all',   label: 'A point I can teach' },
+    'question': { slot: /^open floor/i,  kind: 'Question',   vis: 'all',   label: 'A question for the room' },
+    'idea':     { slot: /^open floor/i,  kind: 'Point',      vis: 'all',   label: 'An idea for the branch' },
+    'help':     { slot: /^open floor/i,  kind: 'Concern',    vis: 'staff', label: 'Help I need' }
+  },
+  OBS_SLOT: /^training/i, TAG: 'tracker:'
+};
+
+function bridgeKey_() { try { return str_(PropertiesService.getScriptProperties().getProperty(BRIDGE.PROP)); } catch (e) { return ''; } }
+function bridgeSign_(text, key) {
+  return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(String(text), String(key))).replace(/=+$/, '');
+}
+
+/** The branch meeting on that date (yyyy-MM-dd), else the next branch meeting from today; null when none is built. */
+function bridgeMeeting_(iso) {
+  var tz = tz_(), rows = meetingRows_().filter(function (m) {
+    var st = low_(m['Status']);
+    return st !== 'cancelled' && st !== 'closed' && cleanScope_(m['Scope']) === 'branch' && asDate_(m['Date']);
+  });
+  if (iso) {
+    var on = rows.filter(function (m) { return Utilities.formatDate(asDate_(m['Date']), tz, 'yyyy-MM-dd') === iso; })[0];
+    if (on) return on;
+  }
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  return rows.filter(function (m) { return asDate_(m['Date']).getTime() >= today.getTime(); })
+    .sort(function (a, b) { return asDate_(a['Date']).getTime() - asDate_(b['Date']).getTime(); })[0] || null;
+}
+
+/** The agenda item on that meeting whose title matches; '' when the meeting has no such item. */
+function bridgeSlot_(meetingId, re) {
+  var it = readTab_(MEET.TAB_AGENDA).filter(function (a) { return str_(a['Meeting ID']) === meetingId && re.test(str_(a['Title'])); })
+    .sort(function (a, b) { return Number(a['Order'] || 0) - Number(b['Order'] || 0); })[0];
+  return it ? { id: str_(it['ID']), title: str_(it['Title']) } : { id: '', title: '' };
+}
+
+/** Write a contribution, or rewrite the one already carrying this tag, so a commitment changed on the phone is one row. */
+function bridgeUpsert_(tag, row) {
+  var have = readTab_(MEET.TAB_CONTRIB).filter(function (c) { return str_(c['Topics']).indexOf(tag) > -1; })[0];
+  if (have) {
+    ['Meeting ID', 'Agenda ID', 'Kind', 'Body', 'Visibility', 'Name', 'Role', 'Email'].forEach(function (h) { setCell_(MEET.TAB_CONTRIB, have._row, h, row[h]); });
+    setCell_(MEET.TAB_CONTRIB, have._row, 'Edited', new Date());
+    return { id: str_(have['ID']), updated: true };
+  }
+  var id = uid_('CON');
+  row['ID'] = id; row['When'] = new Date(); row['Offset (min)'] = -1; row['Topics'] = tag;
+  appendRow_(MEET.TAB_CONTRIB, row);
+  return { id: id, updated: false };
+}
+
+function apiBridge_(body) {
+  var key = bridgeKey_();
+  if (!key) return { ok: false, error: 'The bridge is not set up: put MEET_BRIDGE_KEY in Script Properties.' };
+  var ts = Number(body.ts || 0), payload = body.payload || {}, op = str_(body.op);
+  if (!ts || Math.abs(Date.now() - ts) > BRIDGE.MAX_AGE_MS) return { ok: false, error: 'Too old.' };
+  if (str_(body.sig) !== bridgeSign_(op + '|' + ts + '|' + JSON.stringify(payload), key)) return { ok: false, error: 'Not signed.' };
+
+  if (op === 'ping') return { ok: true, meeting: (function (m) { return m ? { id: str_(m['ID']), date: Utilities.formatDate(asDate_(m['Date']), tz_(), 'yyyy-MM-dd'), title: str_(m['Title']) } : null; })(bridgeMeeting_(str_(payload.date))) };
+
+  var m = bridgeMeeting_(str_(payload.date));
+  if (!m) return { ok: true, held: 'No branch meeting is built for ' + (str_(payload.date) || 'the coming week') + ' yet. It goes on the moment it is.' };
+  var mid = str_(m['ID']), mdate = Utilities.formatDate(asDate_(m['Date']), tz_(), 'yyyy-MM-dd');
+
+  if (op === 'commit') {
+    var k = BRIDGE.KINDS[str_(payload.kind)], text = str_(payload.text).slice(0, 1500), ref = str_(payload.ref).replace(/[^A-Za-z0-9_.:-]/g, '');
+    if (!k || text.length < 5 || !ref) return { ok: false, error: 'Nothing to bring.' };
+    var who = findPersonByEmail_(low_(payload.email)) || (payload.agentNo ? findPersonByAgentNo_(payload.agentNo) : null);
+    var slot = bridgeSlot_(mid, k.slot);
+    var res = bridgeUpsert_(BRIDGE.TAG + ref, {
+      'Meeting ID': mid, 'Agenda ID': slot.id, 'Kind': k.kind,
+      'Body': k.label + ': ' + text, 'Visibility': k.vis,
+      'Email': who ? who.email : low_(payload.email), 'Name': who ? who.name : str_(payload.name), 'Role': who ? who.role : 'agent'
+    });
+    log_('bridge commit', who ? who.name : str_(payload.name), 'tracker', str_(m['Ref']) || mid, str_(payload.kind) + ': ' + text.slice(0, 60));
+    return { ok: true, id: res.id, updated: res.updated, meeting: mdate, item: slot.title || '(the meeting has no matching item: it sits on the floor)' };
+  }
+
+  if (op === 'observe') {
+    var obs = str_(payload.text).slice(0, 6000);
+    if (!obs) return { ok: false, error: 'Nothing observed.' };
+    var ts2 = bridgeSlot_(mid, BRIDGE.OBS_SLOT);
+    var r2 = bridgeUpsert_(BRIDGE.TAG + 'obs:' + mid, {
+      'Meeting ID': mid, 'Agenda ID': ts2.id, 'Kind': 'Point', 'Body': obs, 'Visibility': 'staff',
+      'Email': '', 'Name': 'Branch Intelligence', 'Role': 'manager'
+    });
+    return { ok: true, id: r2.id, updated: r2.updated, meeting: mdate, item: ts2.title };
+  }
+  return { ok: false, error: 'Unknown bridge op.' };
+}
+
+
 function doPost(e) {
   var body = {};
   try { body = JSON.parse((e && e.postData && e.postData.contents) || '{}'); }
@@ -6951,6 +7456,7 @@ function doPost(e) {
       case 'attachRecording':   out = apiAttachRecording_(body); break;
 
       case 'contribute':        out = apiAddContribution_(body); break;
+      case 'bridge':            out = apiBridge_(body); break;
       case 'editContribution':  out = apiEditContribution_(body); break;
       case 'uploadClip':        out = apiUploadClip_(body); break;
 
@@ -7052,6 +7558,18 @@ function weekClose() {
   return msg;
 }
 
+/*  THE DAY THE MEETING IS BUILT FOR.
+ *
+ *  Today when today is the meeting day, otherwise the next one. Midnight
+ *  local, because every other date on the row is derived from it. */
+function nextMeetingDay_(from) {
+  var d = new Date((from || new Date()).getTime());
+  d.setHours(0, 0, 0, 0);
+  var ahead = (MEET.MEETING_DAY - d.getDay() + 7) % 7;
+  if (ahead) d.setDate(d.getDate() + ahead);
+  return d;
+}
+
 /*  WEDNESDAY MORNING. The meeting row first, then the agenda off the rota,
  *  so the chair opens something already owned, timed and sequenced.
  *
@@ -7061,16 +7579,30 @@ function weekClose() {
  *  It builds the meeting on MEET.MEETING_DAY, and whatever that day is,
  *  the name stays: the installed trigger calls this function by name, so
  *  renaming it would stop the build without a word.                      */
-function buildWednesday() {
+function buildWednesday(opts) {
   var now = new Date();
-  if (now.getDay() !== MEET.MEETING_DAY) {
+  var ahead = !!(opts && opts.ahead);
+
+  /*  THE TRIGGER KEEPS ITS GUARD; A PERSON'S PRESS DOES NOT.
+   *
+   *  The 6:00 trigger fires on the meeting day and must build nothing on
+   *  any other, or a trigger left behind on an old day writes a meeting
+   *  for the wrong date. A press of "Build <day>'s agenda now" is a
+   *  person asking for the upcoming meeting, and asking for it the day
+   *  before is the ordinary case: asked for in those words on Tuesday 10
+   *  November 2026, when the button answered "Not the meeting day" and
+   *  the branch therefore could not have an agenda — or bring anything
+   *  to it — before the Wednesday morning itself. Everything on the row
+   *  is derived from the day it is built FOR, never from today. */
+  var when = nextMeetingDay_(now);
+  if (now.getDay() !== MEET.MEETING_DAY && !ahead) {
     Logger.log('Not the meeting day — nothing built.');
     return 'Not the meeting day.';
   }
 
   var m = meetingRows_().filter(function (r) {
     var st = low_(r['Status']);
-    return st !== 'cancelled' && sameDay_(r['Date'], now);
+    return st !== 'cancelled' && sameDay_(r['Date'], when);
   })[0] || null;
 
   var made = false;
@@ -7078,12 +7610,11 @@ function buildWednesday() {
     /*  Nobody created it. The branch meets every Wednesday whether or not
      *  somebody remembered to open the app, so the row is written here
      *  rather than leaving the morning with no meeting to sign in to. */
-    var when = new Date(now.getTime()); when.setHours(0, 0, 0, 0);
     var id = uid_('MTG');
     appendRow_(MEET.TAB_MEETINGS, {
       'ID': id, 'Ref': 'RRB-' + Utilities.formatDate(when, tz_(), 'yyyy-MM-dd'),
       'Type': 'Branch Meeting', 'Title': 'Branch Meeting',
-      'Subtitle': 'Week of ' + weekLabel_(chaseWeek_(now)),
+      'Subtitle': 'Week of ' + weekLabel_(chaseWeek_(when)),
       'Week': weekOf_(when), 'Date': when,
       'Start': CYCLE.START, 'End': CYCLE.END,
       'Format': 'In-person', 'Location': MEET.BRANCH,
@@ -7100,8 +7631,27 @@ function buildWednesday() {
   }
 
   var out = seedAgendaInto_(m, MEET.ADMIN_EMAIL);
-  var note = (made ? 'meeting created; ' : 'meeting already there; ') +
-             (out.ok ? out.added + ' items written from the rota' : str_(out.error));
+
+  /*  LAST WEEK'S AGREED ACTIONS ARE PART OF BUILDING THE MEETING, not a
+   *  button somebody presses on the day. Until 10 November 2026 nothing
+   *  carried them over unless a staff member pressed "carry forward",
+   *  so a meeting could open with every action agreed the week before
+   *  nowhere on the screen, and the accountability item had nothing to
+   *  read. It runs in its own try: an action that will not copy must
+   *  never be the reason the branch has no meeting to sign in to. */
+  var carried = 0, carryWhy = '';
+  try { carried = carryForwardInto_(m).carried; }
+  catch (e) { carryWhy = String(e && e.message || e).slice(0, 80); }
+
+  /*  THE ALERT SAYS WHICH DAY IT BUILT FOR.  Pressed on a Tuesday it
+   *  builds tomorrow's, and a message that said only "meeting created"
+   *  would leave the chair to guess which meeting that was. */
+  var forDay = dayName_(when.getDay()) + ' ' + fmtDate_(when);
+  var note = 'for ' + forDay + ': ' +
+             (made ? 'meeting created; ' : 'meeting already there; ') +
+             (out.ok ? out.added + ' items written from the rota' : str_(out.error)) +
+             '; ' + (carryWhy ? 'open actions did not carry (' + carryWhy + ')'
+                              : carried + ' open action' + (carried === 1 ? '' : 's') + ' carried forward');
   log_('build-wednesday', 'system', 'manager', str_(m['Ref']), note);
   Logger.log(note);
   return note;
@@ -7136,7 +7686,10 @@ function weekCloseFromMenu() {
 }
 
 function buildWednesdayFromMenu() {
-  SpreadsheetApp.getUi().alert(buildWednesday());
+  /*  A person pressing the button means the upcoming meeting, whatever
+   *  day they press it on. The trigger calls buildWednesday() with no
+   *  argument and keeps its own guard. */
+  SpreadsheetApp.getUi().alert(buildWednesday({ ahead: true }));
 }
 
 function onOpen() {
@@ -7156,6 +7709,17 @@ function onOpen() {
     .addSeparator()
     .addItem('⏱  Turn on the daily time blocks', 'installActivityChecksFromMenu')
     .addItem('👁  Send me a time-block check to read', 'previewActivityCheck')
+    .addSeparator()
+    .addItem('📈  Turn on my daily Builder progress', 'installBuilderProgressFromMenu')
+    .addItem('👁  Send me the progress note now', 'previewBuilderProgress')
+    .addItem('🗣  Turn on the content ask (' + contentAskDays_().map(dayName_).join(', ') + ')', 'installContentAskFromMenu')
+    .addItem('👁  Send me the content ask to read', 'previewContentAsk')
+    .addItem('✉️  Test the mail route', 'mailRouteTest')
+    .addItem(meetBranchMailLive_()
+      ? '🔒  Hold the mail to the branch'
+      : '✉️  Release the mail to the branch (held now)',
+      meetBranchMailLive_() ? 'holdBranchMail' : 'releaseBranchMail')
+    .addSeparator()
     .addItem('📋  Turn on the Monday brief', 'installMondayBriefFromMenu')
     .addItem('🔄  Turn on the week cycle (Sunday close, ' + meetingDayName_() + ' build)', 'installWeekCycleFromMenu')
     .addItem('🔒  Close the week now', 'weekCloseFromMenu')
@@ -7407,4 +7971,990 @@ function showAppUrl() {
   SpreadsheetApp.getUi().alert('Branch Meeting Builder\n\n' +
     (url ? url : 'Not deployed yet — Deploy > New deployment > Web app.') +
     '\n\nPaste this into CONFIG.API_URL in meetings/index.html.');
+}
+
+
+/* ============================================================
+ *  THE MAIL ROUTE — through the branch relay, not the Gmail
+ *  account that happens to own this project
+ * ============================================================
+ *
+ *  WHY THIS EXISTS, and it is arithmetic rather than preference.
+ *
+ *  This project sends on the owner's personal Google account, which
+ *  allows about 100 recipients a day. Count what the Builder already
+ *  asks of that allowance with 19 people on the roll:
+ *
+ *      the daily note           up to 19   Mon, Tue, Wed
+ *      the two time blocks      up to 38   every working day
+ *      the Monday brief         up to 19   Monday
+ *                               -------
+ *      a Monday                 up to 76
+ *
+ *  So a Monday is already at three-quarters of the allowance before
+ *  anything new, and asking the whole branch for meeting content on
+ *  the same day would take it past 90. Worse, every send in this file
+ *  sits in a try/catch that only writes to the log, so the day the
+ *  allowance runs out, the notes simply stop and nobody is told. That
+ *  is the quiet failure the branch has been bitten by before.
+ *
+ *  The branch already owns the answer: apps-script/MailRelay.gs, a
+ *  small project under support@rickyrampersadbranch.com, a Workspace
+ *  account, which allows about 1,500 a day and which the KPI tracker
+ *  has sent through since 20 October. This routes the Builder the same
+ *  way, so the branch's meeting mail and its tracker mail share one
+ *  allowance and one From address.
+ *
+ *  Until MAIL_RELAY_URL and MAIL_RELAY_KEY are both in this project's
+ *  Script properties, every send behaves exactly as it did before:
+ *  MailApp, from the owner's account. Nothing about this changes what
+ *  the branch receives until those two values are set.
+ */
+var MMAIL = {
+  /*  Stop sending at this many recipients left, rather than at zero.
+   *  A run that dies halfway through the roll sends some people their
+   *  note and not others, which reads as favouritism; stopping with a
+   *  margin and saying so is better than a half-sent run. */
+  FLOOR: 12,
+
+  /*  A relay that is down is not asked again for this long. Without
+   *  this, nineteen sends each wait for the same dead URL and the run
+   *  hits Apps Script's six-minute ceiling. */
+  DOWN_MIN: 15
+};
+
+function mmProps_() { return PropertiesService.getScriptProperties(); }
+
+/** Both halves of the relay's sign-in, or neither. */
+function mmRelayReady_() {
+  var p = mmProps_();
+  return !!(str_(p.getProperty('MAIL_RELAY_URL')) && str_(p.getProperty('MAIL_RELAY_KEY')));
+}
+
+/** Send one message through the relay. True if the relay sent it. */
+function mmViaRelay_(o) {
+  if (!mmRelayReady_()) return false;
+  var cache = CacheService.getScriptCache();
+  try { if (cache.get('mm_relay_down')) return false; } catch (e) { /* carry on */ }
+
+  var p = mmProps_();
+  var url = str_(p.getProperty('MAIL_RELAY_URL'));
+  var key = str_(p.getProperty('MAIL_RELAY_KEY'));
+  var m = JSON.stringify({
+    to: str_(o.to), subject: str_(o.subject), name: str_(o.name || MEET.BRANCH),
+    cc: str_(o.cc), replyTo: str_(o.replyTo), htmlBody: str_(o.htmlBody), body: str_(o.body)
+  });
+  var t = String(Date.now());
+  var sig = Utilities.base64EncodeWebSafe(
+    Utilities.computeHmacSha256Signature(m + '|' + t, key)).replace(/=+$/, '');
+
+  try {
+    var res = UrlFetchApp.fetch(url, {
+      method: 'post', contentType: 'application/json',
+      payload: JSON.stringify({ m: m, t: t, s: sig }),
+      muteHttpExceptions: true, followRedirects: true
+    });
+    var body = JSON.parse(res.getContentText() || '{}');
+    if (body && body.ok) {
+      if (body.left !== undefined && body.left !== null) {
+        p.setProperty('mm_relay_left', String(body.left));
+      }
+      return true;
+    }
+    p.setProperty('MAIL_RELAY_LAST', str_(body && body.error) || 'the relay refused it');
+  } catch (err) {
+    p.setProperty('MAIL_RELAY_LAST', String(err && err.message ? err.message : err).slice(0, 200));
+    /*  Unreachable, not merely refused: stop asking for a quarter of an
+     *  hour so one dead URL cannot eat the whole run. */
+    try { cache.put('mm_relay_down', '1', MMAIL.DOWN_MIN * 60); } catch (e) { /* carry on */ }
+  }
+  return false;
+}
+
+/** Recipients left on this account today, or null when it cannot be read. */
+function mmLeft_() {
+  try { return MailApp.getRemainingDailyQuota(); } catch (err) { return null; }
+}
+
+/*  BRANCH MAIL IS HELD UNTIL SOMEBODY RELEASES IT, and on a fresh copy
+ *  of this sheet that means held.
+ *
+ *  This is the one lesson the claims intake paid for when it moved to the
+ *  Workspace on 7 November: a copy carries no Script properties, and there
+ *  "no TEST_MODE property means live", so the first thing done on a copy
+ *  is to turn test mode on. The Builder had no test mode to turn on —
+ *  TEST_MODE appears nowhere in this file — and its sends go to the whole
+ *  branch. So a copy of this sheet, deployed and with its triggers
+ *  installed, would write to nineteen people from a deployment nobody had
+ *  tested. Unset therefore means HELD here, not live, which inverts that
+ *  trap rather than repeating it.
+ *
+ *  THE GATE DECIDES WHO QUALIFIES, NEVER THE CALLER. There is deliberately
+ *  no flag a send can carry to get itself out of the hold: the exemption
+ *  is read from progressTo_(), which is MEET.ADMIN_EMAIL plus the
+ *  PROGRESS_TO property — both set by a person in Script properties. So
+ *  the chair's own progress note and every preview still arrive while the
+ *  branch hears nothing, and no later caller can reach for a back door.
+ *
+ *  It is never silent. A held run is counted and reported in its own
+ *  summary line, mmHeldAlert_ e-mails the chair once a day naming the
+ *  release, the progress note carries it in "To act on", and
+ *  mailRouteTest says it outright. A quiet hold would be worse than no
+ *  hold at all.
+ */
+function meetBranchMailLive_() {
+  try {
+    return str_(mmProps_().getProperty('BRANCH_MAIL')).toLowerCase() === 'live';
+  } catch (e) { return false; }
+}
+
+/** True when this address must not be written to yet. */
+function meetHeld_(to) {
+  var a = str_(to).toLowerCase();
+  if (!a) return false;
+  if (meetBranchMailLive_()) return false;
+  var chair;
+  try { chair = progressTo_(); } catch (e) { chair = [str_(MEET.ADMIN_EMAIL).toLowerCase()]; }
+  /*  A comma list is held unless every address on it is the chair's. */
+  var parts = a.split(',');
+  for (var i = 0; i < parts.length; i++) {
+    if (chair.indexOf(str_(parts[i]).toLowerCase()) < 0) return true;
+  }
+  return false;
+}
+
+/** Release branch mail. Reachable from the editor's Run list on purpose:
+ *  a private name with a trailing underscore is not, and on the claims
+ *  copy that left a window with no way to turn the hold on at all. */
+function releaseBranchMail() {
+  mmProps_().setProperty('BRANCH_MAIL', 'live');
+  var msg = 'Branch mail is LIVE. The daily note, the time blocks, the Monday ' +
+    'brief and the content ask will now reach the branch.';
+  Logger.log(msg);
+  return msg;
+}
+
+/** Hold it again. */
+function holdBranchMail() {
+  mmProps_().deleteProperty('BRANCH_MAIL');
+  var msg = 'Branch mail is HELD. Your own progress note and every preview ' +
+    'still arrive; nobody else is written to.';
+  Logger.log(msg);
+  return msg;
+}
+
+/** Every send in this file goes through here.
+ *
+ *  Returns 'relay', 'gmail', or 'held' — held either because branch mail
+ *  has not been released, or because the Gmail allowance is too near its
+ *  end to start another round of the roll. A held send is not an error the
+ *  caller should swallow: the counts a run reports are what tells the
+ *  branch manager it happened. */
+function meetMail_(o) {
+  if (meetHeld_(o && o.to)) return 'held';
+  if (mmViaRelay_(o)) return 'relay';
+  var left = mmLeft_();
+  if (left !== null && left < MMAIL.FLOOR) return 'held';
+  MailApp.sendEmail(o);
+  return 'gmail';
+}
+
+/** From the editor: one e-mail to the branch manager, and which way it went. */
+function mailRouteTest() {
+  var to = str_(MEET.ADMIN_EMAIL);
+  if (!to) return 'No ADMIN_EMAIL set.';
+  try { CacheService.getScriptCache().remove('mm_relay_down'); } catch (e) { /* carry on */ }
+  var via = meetMail_({
+    to: to, name: MEET.BRANCH,
+    subject: 'Meeting Builder mail route test',
+    htmlBody: '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;' +
+      'max-width:520px;color:#0b2238;line-height:1.6;font-size:14px">' +
+      '<p style="margin:0 0 10px">If this came from <b>support@rickyrampersadbranch.com</b>, ' +
+      'the Meeting Builder is sending through the branch relay and has about 1,500 ' +
+      'recipients a day to work with.</p>' +
+      '<p style="margin:0">If it came from the Gmail account that owns this project, ' +
+      'the relay is not set up here yet and the Builder is sharing that account’s ' +
+      'hundred-a-day allowance.</p></div>'
+  });
+  var msg = via === 'relay'
+    ? 'Sent through the relay, from support@. Relay recipients left today: ' +
+      (str_(mmProps_().getProperty('mm_relay_left')) || 'not reported')
+    : via === 'held'
+      ? (!meetBranchMailLive_()
+          ? 'Held: branch mail has not been released on this project. Run ' +
+            'releaseBranchMail when you are ready. (Your own address is exempt, ' +
+            'so a route test to you should not reach this.)'
+          : 'Held: the Gmail allowance is down to ' + mmLeft_() + ' recipients.')
+      : (mmRelayReady_()
+          ? 'Sent from Gmail: the relay refused or did not answer. ' +
+            str_(mmProps_().getProperty('MAIL_RELAY_LAST'))
+          : 'Sent from Gmail: MAIL_RELAY_URL and MAIL_RELAY_KEY are not both ' +
+            'in this project’s Script properties yet. Gmail recipients left today: ' +
+            mmLeft_() + '.');
+  Logger.log(msg);
+  return msg;
+}
+
+
+/** A run cut short by the mail allowance tells the branch manager, once
+ *  a day. The whole point of MMAIL.FLOOR is that the margin it leaves is
+ *  enough to send this: a run that silently reaches half the branch is
+ *  the failure the branch cannot see, and the one it has been bitten by. */
+function mmHeldAlert_(what, held, sent) {
+  var to = str_(MEET.ADMIN_EMAIL);
+  if (!to) return;
+  var cache = CacheService.getScriptCache();
+  var key = 'mm_held_' + dayKey_(new Date());
+  try { if (cache.get(key)) return; cache.put(key, '1', 20 * 3600); } catch (e) { /* carry on */ }
+  var left = mmLeft_();
+
+  /*  Two different holds reach this alert and the fix is different for
+   *  each, so it must never guess. */
+  if (!meetBranchMailLive_()) {
+    try {
+      MailApp.sendEmail({
+        to: to, name: MEET.BRANCH,
+        subject: 'The Meeting Builder is holding its mail to the branch',
+        htmlBody: '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;' +
+          'max-width:540px;color:#0b2238;line-height:1.6;font-size:14px">' +
+          '<p style="margin:0 0 10px"><b>' + esc_(what) + '</b> wrote to ' + sent +
+          ' and held <b>' + held + '</b>. Branch mail has not been released on ' +
+          'this project yet, so nobody but you is being written to.</p>' +
+          '<p style="margin:0 0 10px">That is the state a fresh copy of this sheet ' +
+          'starts in, on purpose. Your own progress note and every preview still ' +
+          'arrive, so you can read each e-mail as the branch would get it before ' +
+          'the branch gets one.</p>' +
+          '<p style="margin:0 0 10px">When you are ready, run ' +
+          '<b>releaseBranchMail</b> from the script editor, or press ' +
+          '<b>\u2709\ufe0f Release the mail to the branch</b> on the Meeting Builder menu. ' +
+          '<b>holdBranchMail</b> puts it back.</p>' +
+          '<p style="margin:14px 0 0;font-size:11px;color:#a8bccf">Internal \u2014 ' +
+          esc_(MEET.BRANCH) + '. Nobody else receives this.</p></div>'
+      });
+    } catch (err) {
+      Logger.log('Could not even send the held-mail alert: ' + err);
+    }
+    return;
+  }
+
+  try {
+    MailApp.sendEmail({
+      to: to, name: MEET.BRANCH,
+      subject: 'The Meeting Builder has run out of mail for today',
+      htmlBody: '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;' +
+        'max-width:540px;color:#0b2238;line-height:1.6;font-size:14px">' +
+        '<p style="margin:0 0 10px"><b>' + esc_(what) + '</b> reached ' + sent +
+        ' of the branch and stopped. <b>' + held + '</b> ' +
+        (held === 1 ? 'person was' : 'people were') + ' not written to.</p>' +
+        '<p style="margin:0 0 10px">This project sends on the Google account that owns it, ' +
+        'which allows about 100 recipients a day. ' +
+        (left === null ? '' : 'It has <b>' + left + '</b> left today. ') +
+        'With 19 people on the roll, the daily note, the two time blocks and the Monday ' +
+        'brief together come close to that on a Monday.</p>' +
+        '<p style="margin:0 0 10px">The fix is the branch relay the KPI tracker already ' +
+        'sends through, which allows about 1,500 a day. Put <b>MAIL_RELAY_URL</b> and ' +
+        '<b>MAIL_RELAY_KEY</b> into this project’s Script properties and run ' +
+        '<b>mailRouteTest</b>.</p>' +
+        '<p style="margin:14px 0 0;font-size:11px;color:#a8bccf">Internal — ' +
+        esc_(MEET.BRANCH) + '. Nobody else receives this.</p></div>'
+    });
+  } catch (err) {
+    Logger.log('Could not even send the held-mail alert: ' + err);
+  }
+}
+
+
+/* ============================================================
+ *  THE DAILY BUILDER PROGRESS — one note to the chair, not to
+ *  the branch
+ * ============================================================
+ *
+ *  WHAT THIS IS NOT. The daily note (dailyMeetingNote) is each
+ *  person's own: their item, their actions, their own measures, and
+ *  the one ask. By design it carries no league table and nobody
+ *  else's figures, on the Chung, Narayandas and Chang evidence
+ *  recorded further up this file. None of that changes.
+ *
+ *  This is the other half, and it goes to one person. The chair is
+ *  the only one who needs to see the meeting filling up — or not
+ *  filling up — in time to do something about it: an agenda with
+ *  four items and ninety minutes to carry, material promised and not
+ *  in, eleven people who have brought nothing this week, an action
+ *  tracker going stale. Every one of those is already on a tab. The
+ *  branch manager has had to open the app and read five screens to
+ *  learn it.
+ *
+ *  It says the quiet part too. If there is no meeting on the books,
+ *  that is the first line and it is loud, because the Builder has sat
+ *  with no meeting after 30 October while the week cycle was off, and
+ *  nothing anywhere said so.
+ */
+var PROGRESS = {
+  /*  The hour it goes. Default 7, the same hour as the daily note:
+   *  Apps Script fires a time trigger inside the hour, not on the
+   *  minute, so the two arrive together rather than in a fixed order.
+   *  Move it with the PROGRESS_HOUR Script property. */
+  HOUR: 7,
+
+  /*  Who else, besides MEET.ADMIN_EMAIL. The BMA is the obvious
+   *  second reader, since she chases the material. Comma-separated,
+   *  in the PROGRESS_TO Script property; empty means the chair alone. */
+  TO: '',
+
+  /*  Silence on the days it would say nothing new: after the meeting
+   *  and before the week turns. 0 = the meeting day, so Thursday is 5
+   *  working days out on a Wednesday cadence. */
+  QUIET_FROM_DAYS: 4
+};
+
+
+/*  num_() answers 0 for anything it cannot read, and 0 passes a 0-to-6 or
+ *  0-to-23 range check — so a mistyped Script property quietly became
+ *  Sunday, or midnight, rather than being ignored. These three read the
+ *  property strictly: whole digits inside the range, or the default. */
+function mmWhole_(raw, lo, hi, dflt) {
+  var v = str_(raw);
+  if (!/^\d{1,2}$/.test(v)) return dflt;
+  var n = Number(v);
+  return (n >= lo && n <= hi) ? n : dflt;
+}
+
+function progressHour_() {
+  return mmWhole_(mmProps_().getProperty('PROGRESS_HOUR'), 0, 23, PROGRESS.HOUR);
+}
+
+function progressTo_() {
+  var out = [], seen = {};
+  [str_(MEET.ADMIN_EMAIL)]
+    .concat(str_(mmProps_().getProperty('PROGRESS_TO') || PROGRESS.TO).split(/[,;]/))
+    .forEach(function (e) {
+      var v = low_(e);
+      if (v && v.indexOf('@') > 0 && !seen[v]) { seen[v] = 1; out.push(v); }
+    });
+  return out;
+}
+
+/** Everything the report says, read once. Separate from the HTML so
+ *  the editor can read the figures without sending anything. */
+function progressModel_(now) {
+  now = now || new Date();
+  var ctx = dailyNoteContext_(now);
+  var m = ctx.meeting;
+  var people = everyone_();
+  var roll = people.filter(function (p) { return !isGuestNo_(p.agentNo); });
+
+  /* ---- the agenda ---- */
+  var items = (ctx.agenda || []).map(function (a) {
+    var files = (ctx.uploads || []).filter(function (u) {
+      return str_(u['Agenda ID']) === str_(a['ID']);
+    });
+    return {
+      title: str_(a['Title']),
+      presenter: str_(a['Presenter Name']) || str_(a['Presenter Email']),
+      minutes: num_(a['Allotted (min)']),
+      /*  The question under the item. An item with no Detail leaves an
+       *  agent nothing to answer, which is exactly what the how-to film
+       *  teaches them to look for. */
+      hasQuestion: !!str_(a['Detail']),
+      required: yes_(a['Materials Required']) && str_(a['Materials Required']).toUpperCase() !== 'N',
+      ready: str_(a['Ready']).toUpperCase() === 'Y' || files.length > 0
+    };
+  });
+  var minutes = 0;
+  items.forEach(function (i) { minutes += i.minutes; });
+
+  /* ---- who has brought something to this meeting ---- */
+  var broughtBy = {};
+  (ctx.contribs || []).forEach(function (c) {
+    var e = low_(c['Email']);
+    if (e) broughtBy[e] = (broughtBy[e] || 0) + 1;
+  });
+  var brought = [], silent = [];
+  roll.forEach(function (p) {
+    (broughtBy[low_(p.email)] ? brought : silent).push(p);
+  });
+
+  /* ---- the action tracker ---- */
+  var today = new Date(now); today.setHours(0, 0, 0, 0);
+  var open = (ctx.actions || []).filter(function (a) {
+    return low_(a['Status']) !== 'complete';
+  });
+  var overdue = open.filter(function (a) {
+    var d = asDate_(a['Due']);
+    return d && d < today;
+  });
+
+  /* ---- the Monday brief ---- */
+  var chases = ctx.chases || [];
+  var answered = chases.filter(function (c) { return str_(c['Answered']); });
+
+  /* ---- the two time blocks, today ---- */
+  var day = dayKey_(now);
+  var acts = activityRows_().filter(function (r) { return str_(r['Day']) === day; });
+  var blocks = ACTIVITY_BLOCKS.map(function (b) {
+    var rows = acts.filter(function (r) { return str_(r['Block']) === b.key; });
+    return {
+      label: b.label, hour: b.hour, sent: rows.length,
+      answered: rows.filter(function (r) { return str_(r['Answered']); }).length
+    };
+  });
+
+  /* ---- the meeting before this one ---- */
+  var past = meetingRows_().filter(function (r) {
+    var d = asDate_(r['Date']);
+    return d && d < today && low_(r['Status']) !== 'cancelled';
+  }).sort(function (a, b) { return asDate_(b['Date']) - asDate_(a['Date']); })[0] || null;
+  var last = null;
+  if (past) {
+    var att = readTab_(MEET.TAB_ATTENDANCE).filter(function (r) {
+      return str_(r['Meeting ID']) === str_(past['ID']);
+    });
+    var here = att.filter(function (r) { return low_(r['Status']) === 'present' || low_(r['Status']) === 'late'; });
+    last = {
+      title: str_(past['Title']) || 'Branch meeting',
+      when: Utilities.formatDate(asDate_(past['Date']), tz_(), 'd MMM'),
+      roll: roll.length, here: here.length,
+      late: att.filter(function (r) { return low_(r['Status']) === 'late'; }).length,
+      excused: att.filter(function (r) { return low_(r['Status']) === 'excused'; }).length,
+      minutesPublished: low_(past['Minutes Status']) === 'published'
+    };
+  }
+
+  return {
+    now: now, meeting: m, daysToMeeting: ctx.daysToMeeting,
+    when: m ? Utilities.formatDate(asDate_(m['Date']), tz_(), 'EEEE d MMMM') : '',
+    clock: m && str_(m['Start']) ? Utilities.formatDate(atTime_(m['Date'], m['Start']), tz_(), 'h:mm a') : '',
+    items: items, minutes: minutes,
+    /*  The room's own length, off the meeting row rather than a constant:
+     *  a one-off at another time has its own Start and End. */
+    allotted: (function () {
+      if (!m) return 90;
+      var a1 = atTime_(m['Date'], m['Start']), b1 = atTime_(m['Date'], m['End']);
+      return (a1 && b1 && b1 > a1) ? Math.round((b1 - a1) / 60000) : 90;
+    })(),
+    roll: roll.length, brought: brought, silent: silent,
+    contribs: (ctx.contribs || []).length,
+    open: open.length, overdue: overdue,
+    chases: chases.length, chasesAnswered: answered.length,
+    blocks: blocks, last: last,
+    week: ctx.week, weekLabel: ctx.weekLabel,
+    relay: mmRelayReady_(), mailLeft: mmLeft_(),
+    branchMail: meetBranchMailLive_(),
+    appUrl: ctx.appUrl,
+    /*  DAILY, not weekly: "remember, it's daily". The run of quiet meetings and
+     *  the drills the record is asking for both go in the branch manager's own
+     *  note, which is the one place this belongs before it is anybody else's
+     *  business. Each in its own try: a tracker that will not answer must never
+     *  stop the note. */
+    heard: (function () { try { return m ? heardHistory_(m) : null; } catch (e) { return null; } })(),
+    drill: (function () {
+      try { var k = meetNumbers_(); return (k && k.observed) || null; } catch (e) { return null; }
+    })()
+  };
+}
+
+
+/** The report, as one e-mail. Figures only — no judgement of anybody,
+ *  and no client anywhere. */
+function progressHtml_(o) {
+  var day = meetingDayName_();
+  var pill = function (label, value, tone) {
+    var bg = tone === 'bad' ? '#fdecec' : tone === 'warn' ? '#fff5e6' : '#eef6fb';
+    var br = tone === 'bad' ? '#e7a6a6' : tone === 'warn' ? '#f0c674' : '#cfe3f0';
+    return '<td style="padding:0 8px 8px 0" valign="top"><div style="background:' + bg +
+      ';border:1px solid ' + br + ';border-radius:10px;padding:9px 11px;min-width:84px">' +
+      '<div style="font-size:21px;font-weight:700;line-height:1.1">' + esc_(value) + '</div>' +
+      '<div style="font-size:11px;color:#49637d;margin-top:2px">' + esc_(label) + '</div>' +
+      '</div></td>';
+  };
+  var h = '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;' +
+    'max-width:600px;color:#0b2238;line-height:1.6">' +
+    '<p style="margin:0 0 4px;font-size:13px;color:#8aa3bb">' + esc_(MEET.BRANCH) + '</p>' +
+    '<h2 style="margin:0 0 2px;font-size:19px">The Builder, this morning.</h2>';
+
+  /* ---- no meeting is the headline, because it has happened ---- */
+  if (!o.meeting) {
+    h += '<div style="background:#fdecec;border:1px solid #e7a6a6;border-radius:10px;' +
+      'padding:12px 14px;margin:10px 0 16px">' +
+      '<p style="margin:0 0 6px;font-weight:700;font-size:14px">' +
+      'There is no meeting on the books.</p>' +
+      '<p style="margin:0;font-size:13.5px">Nobody can sign in, nobody can bring anything, ' +
+      'and the register has nothing to measure. Build it: <i>Branch Meetings → Build ' +
+      esc_(day) + '’s agenda now</i>, or turn on the week cycle so it is written at ' +
+      CYCLE.BUILD_HOUR + ':00 every ' + esc_(day) + ' without being asked.</p></div>';
+  } else {
+    h += '<p style="margin:0 0 14px;font-size:13.5px;color:#49637d">' +
+      esc_(str_(o.meeting['Title']) || 'Branch meeting') + ' — <b>' + esc_(o.when) + '</b>' +
+      (o.clock ? ', ' + esc_(o.clock) : '') + '. ' +
+      (o.daysToMeeting === 0 ? 'That is this morning.'
+        : o.daysToMeeting === 1 ? 'One working day to go.'
+        : o.daysToMeeting + ' working days to go.') + '</p>';
+  }
+
+  /* ---- the figures ---- */
+  h += '<table style="border-collapse:collapse;margin:0 0 6px"><tr>' +
+    pill('on the agenda', o.items.length, o.items.length ? '' : 'bad') +
+    pill('minutes of ' + o.allotted, o.minutes,
+         o.minutes > o.allotted ? 'bad' : (o.minutes && o.minutes < o.allotted * 0.6 ? 'warn' : '')) +
+    pill('brought something', o.brought.length + ' of ' + o.roll,
+         o.brought.length === 0 ? 'bad' : (o.brought.length < o.roll / 3 ? 'warn' : '')) +
+    pill('open actions', o.open, o.overdue.length ? 'warn' : '') +
+    (o.overdue.length ? pill('past the date', o.overdue.length, 'bad') : '') +
+    '</tr></table>';
+
+  /* ---- what the chair has to act on ---- */
+  var act = [];
+  /*  First, because while this holds nothing below it reaches anybody. */
+  if (!o.branchMail) {
+    act.push('<b>Branch mail is held on this project.</b> Your own note and every ' +
+      'preview still arrive; nobody else is written to. Run <b>releaseBranchMail</b>, ' +
+      'or press <b>\u2709\ufe0f Release the mail to the branch</b> on the menu, when you ' +
+      'are ready for the branch to start hearing from it.');
+  }
+  o.items.filter(function (i) { return i.required && !i.ready; }).forEach(function (i) {
+    act.push('Material for <b>' + esc_(i.title) + '</b> is not in' +
+      (i.presenter ? ' — ' + esc_(firstName_(i.presenter)) : '') + '.');
+  });
+  var noQ = o.items.filter(function (i) { return !i.hasQuestion; });
+  if (noQ.length) {
+    act.push('<b>' + noQ.length + '</b> item' + (noQ.length === 1 ? '' : 's') +
+      ' carry no question in the Detail field, so an agent opening the Builder has ' +
+      'nothing to answer under ' + (noQ.length === 1 ? 'it' : 'them') + ': ' +
+      noQ.slice(0, 3).map(function (i) { return esc_(i.title); }).join('; ') +
+      (noQ.length > 3 ? '…' : '') + '.');
+  }
+  if (o.minutes > o.allotted) {
+    act.push('The running order is <b>' + (o.minutes - o.allotted) +
+      ' minutes</b> longer than the room. Something gets cut in the room or by you now.');
+  }
+  if (o.overdue.length) {
+    act.push('<b>' + o.overdue.length + '</b> action item' + (o.overdue.length === 1 ? '' : 's') +
+      ' past the date: ' + o.overdue.slice(0, 3).map(function (a) {
+        return esc_(str_(a['Item'])) + ' (' + esc_(firstName_(str_(a['Owner']))) + ')';
+      }).join('; ') + (o.overdue.length > 3 ? '…' : '') + '.');
+  }
+  if (o.last && !o.last.minutesPublished) {
+    act.push('The minutes of ' + esc_(o.last.when) + ' are not published yet.');
+  }
+  if (!o.relay) {
+    act.push('This project still sends on the Gmail account that owns it' +
+      (o.mailLeft === null ? '' : ' — <b>' + o.mailLeft + '</b> recipients left today') +
+      '. Set MAIL_RELAY_URL and MAIL_RELAY_KEY to send through the branch relay.');
+  }
+  if (act.length) {
+    h += '<div style="background:#fff5e6;border:1px solid #f0c674;border-radius:10px;' +
+      'padding:11px 13px;margin:10px 0 14px">' +
+      '<p style="margin:0 0 6px;font-weight:700;font-size:13px">To act on</p>' +
+      '<ul style="margin:0;padding-left:18px;font-size:13.5px">' +
+      act.map(function (x) { return '<li style="margin-bottom:5px">' + x + '</li>'; }).join('') +
+      '</ul></div>';
+  }
+
+  /* ---- the running order ---- */
+  if (o.items.length) {
+    h += '<p style="margin:14px 0 4px;font-size:11px;letter-spacing:.12em;' +
+      'text-transform:uppercase;color:#8aa3bb">The running order</p>' +
+      '<table style="border-collapse:collapse;width:100%;font-size:13px">' +
+      o.items.map(function (i) {
+        var mark = i.required ? (i.ready ? '✓' : '—') : '';
+        return '<tr>' +
+          '<td style="padding:4px 10px 4px 0">' + esc_(i.title) +
+            (i.hasQuestion ? '' : ' <span style="color:#c2703f;font-size:11px">no question</span>') +
+            '</td>' +
+          '<td style="padding:4px 10px 4px 0;color:#49637d">' +
+            esc_(firstName_(i.presenter) || '—') + '</td>' +
+          '<td style="padding:4px 0;color:#8aa3bb;white-space:nowrap">' + i.minutes + ' min ' +
+            mark + '</td></tr>';
+      }).join('') + '</table>';
+  }
+
+  /* ---- who has brought something, and who has not ---- */
+  h += '<p style="margin:16px 0 4px;font-size:11px;letter-spacing:.12em;' +
+    'text-transform:uppercase;color:#8aa3bb">Contributions · ' + o.contribs +
+    ' from ' + o.brought.length + ' of ' + o.roll + '</p>';
+  h += '<p style="margin:0 0 4px;font-size:13.5px"><b>Brought something:</b> ' +
+    (o.brought.length
+      ? o.brought.map(function (p) { return esc_(firstName_(p.name)); }).join(', ')
+      : 'nobody yet') + '.</p>';
+  if (o.silent.length) {
+    h += '<p style="margin:0 0 14px;font-size:13.5px;color:#49637d">' +
+      '<b>Nothing yet:</b> ' + o.silent.map(function (p) {
+        return esc_(firstName_(p.name));
+      }).join(', ') + '.</p>';
+  }
+
+  /* ---- the front line, over a run of meetings ----
+     One quiet week is nothing; four is a pattern, and the pattern is the thing
+     he described. This is in HIS note and nowhere else: a count of today is a
+     nudge, a run of weeks in front of the room is a reprimand. */
+  if (o.heard && o.heard.meetings) {
+    var fl = (o.heard.frontLine || []), mute = fl.filter(function (x) { return !x.spoke; });
+    if (fl.length) {
+      h += '<p style="margin:16px 0 4px;font-size:11px;letter-spacing:.12em;' +
+        'text-transform:uppercase;color:#8aa3bb">The front line · last ' + o.heard.meetings +
+        ' meetings</p>' +
+        '<p style="margin:0 0 4px;font-size:13.5px"><b>' + (fl.length - mute.length) + ' of ' +
+        fl.length + '</b> of the staff have spoken in the room.</p>';
+      if (mute.length) {
+        h += '<p style="margin:0 0 14px;font-size:13.5px;color:#b3261e"><b>Nothing at all:</b> ' +
+          mute.map(function (x) { return esc_(firstName_(x.name)) + ' (' + x.meetings + ')'; }).join(', ') +
+          '. Being away is not counted against anybody.</p>';
+      }
+    }
+  }
+
+  /* ---- what the record is asking us to train ----
+     Not what anybody volunteered to teach: the drills the last fortnight's own
+     work says people need, commonest first, with no names in the count. */
+  if (o.drill && o.drill.train && o.drill.train.length) {
+    h += '<p style="margin:16px 0 4px;font-size:11px;letter-spacing:.12em;' +
+      'text-transform:uppercase;color:#8aa3bb">Skills and drills · from ' + o.drill.days +
+      ' working days</p><table style="border-collapse:collapse;width:100%;font-size:13.5px">' +
+      o.drill.train.map(function (t) {
+        return '<tr><td style="padding:4px 10px 4px 0;font-weight:800;color:#14284b;' +
+          'white-space:nowrap">' + t.n + '</td><td style="padding:4px 0">' + esc_(t.point) +
+          '</td></tr>';
+      }).join('') + '</table>' +
+      '<p style="margin:4px 0 14px;font-size:12px;color:#8aa3bb">Read off how people actually ' +
+      'worked, not asked for. Who is who is in the Builder, under ' +
+      '\u201cWhat to drill\u201d.</p>';
+  }
+
+  /* ---- the rest of the week's machinery ---- */
+  var mach = [];
+  if (o.chases) {
+    mach.push('Monday’s brief: <b>' + o.chasesAnswered + '</b> of <b>' + o.chases +
+      '</b> cases answered.');
+  }
+  o.blocks.forEach(function (b) {
+    if (b.sent) {
+      mach.push(esc_(b.label) + ' (' + b.hour + ':00): <b>' + b.answered + '</b> of <b>' +
+        b.sent + '</b> answered.');
+    }
+  });
+  if (o.last) {
+    mach.push('Last meeting, ' + esc_(o.last.when) + ': <b>' + o.last.here + '</b> of <b>' +
+      o.last.roll + '</b> on the register' +
+      (o.last.late ? ', ' + o.last.late + ' late' : '') +
+      (o.last.excused ? ', ' + o.last.excused + ' excused' : '') + '.');
+  }
+  if (mach.length) {
+    h += '<ul style="margin:6px 0 14px;padding-left:18px;font-size:13.5px;color:#49637d">' +
+      mach.map(function (x) { return '<li style="margin-bottom:4px">' + x + '</li>'; }).join('') +
+      '</ul>';
+  }
+
+  h += '<p style="margin:16px 0 18px"><a href="' + esc_(o.appUrl) +
+    '" style="background:#0b2238;color:#efc24b;text-decoration:none;padding:10px 18px;' +
+    'border-radius:9px;font-weight:700;font-size:13.5px;display:inline-block">' +
+    'Open the Builder</a></p>' +
+    '<p style="margin:0;font-size:11px;color:#a8bccf">Internal — ' + esc_(MEET.BRANCH) +
+    '. The branch does not receive this: each person gets their own note instead.</p>' +
+    '</div>';
+  return h;
+}
+
+/** The runner. Quiet at weekends and on the days it would say nothing new. */
+function builderProgress() {
+  var now = new Date();
+  var w = now.getDay();
+  if (w === 0 || w === 6) { Logger.log('Weekend — no progress note.'); return 'Weekend.'; }
+
+  var o = progressModel_(now);
+
+  /*  Far from the meeting there is nothing to act on and the note
+   *  becomes wallpaper — except when there is no meeting at all, which
+   *  is precisely when the chair has to hear it. */
+  if (o.meeting && o.daysToMeeting >= PROGRESS.QUIET_FROM_DAYS) {
+    Logger.log('Meeting is ' + o.daysToMeeting + ' working days off — no progress note.');
+    return o.daysToMeeting + ' working days off — nothing to say yet.';
+  }
+
+  var to = progressTo_();
+  if (!to.length) { Logger.log('No ADMIN_EMAIL set.'); return 'No ADMIN_EMAIL set.'; }
+
+  var subject = !o.meeting
+    ? 'No meeting on the books'
+    : (o.daysToMeeting === 0 ? 'Today: ' : o.daysToMeeting === 1 ? 'Tomorrow: ' : '') +
+      o.items.length + ' item' + (o.items.length === 1 ? '' : 's') + ', ' +
+      o.brought.length + ' of ' + o.roll + ' have brought something' +
+      (o.overdue.length ? ', ' + o.overdue.length + ' overdue' : '');
+
+  var via = meetMail_({ to: to.join(','), name: MEET.BRANCH,
+                        subject: subject, htmlBody: progressHtml_(o) });
+  var msg = via === 'held'
+    ? 'Held: the mail allowance is nearly out.'
+    : 'Progress note sent to ' + to.join(', ') + ' (' + via + ').';
+  log_('builder-progress', 'system', 'manager',
+       o.meeting ? str_(o.meeting['Ref']) : '', msg);
+  Logger.log(msg);
+  return msg;
+}
+
+/** Install the morning trigger. Safe to run again. */
+function installBuilderProgress() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'builderProgress') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('builderProgress').timeBased()
+    .atHour(progressHour_()).everyDays(1).create();
+  return 'The Builder progress note is on, for about ' + progressHour_() + ':00 each working ' +
+    'morning, to ' + progressTo_().join(', ') + '. It stays quiet at weekends and when the ' +
+    'meeting is ' + PROGRESS.QUIET_FROM_DAYS + ' or more working days off — but never ' +
+    'when there is no meeting on the books.';
+}
+
+function installBuilderProgressFromMenu() {
+  var ui = SpreadsheetApp.getUi();
+  ui.alert('The Builder progress note', installBuilderProgress() +
+    '\n\nApps Script fires a time trigger inside the hour, not on the minute.', ui.ButtonSet.OK);
+}
+
+/** Read it now, whatever day it is, without waiting for the trigger. */
+function previewBuilderProgress() {
+  var to = progressTo_();
+  if (!to.length) throw new Error('No ADMIN_EMAIL set.');
+  var o = progressModel_(new Date());
+  var via = meetMail_({ to: to[0], name: MEET.BRANCH,
+    subject: '[Preview] The Builder, this morning',
+    htmlBody: progressHtml_(o) });
+  var msg = 'Preview sent to ' + to[0] + ' (' + via + ').';
+  Logger.log(msg);
+  return msg;
+}
+
+
+/* ============================================================
+ *  THE CONTENT ASK — the whole branch, on the days the chair
+ *  chooses, in the middle of the working day
+ * ============================================================
+ *
+ *  WHAT ALREADY EXISTS, so this does not duplicate it. The daily note
+ *  already carries the ask — "add one thing to Wednesday's agenda" —
+ *  and already knows who has brought something this week. But it goes
+ *  at 7:00, with eight other things around it, and only inside two
+ *  working days of the meeting. On a Wednesday cadence that is Monday,
+ *  Tuesday and Wednesday, and on the Wednesday it is too late to
+ *  prepare anything.
+ *
+ *  This is one short e-mail that asks for one thing and nothing else,
+ *  in the middle of the working day, on the days the chair picks. It
+ *  skips anybody who has already brought something to this meeting,
+ *  so it can never nag the people who are doing the thing it asks for
+ *  — which is what turns an ask into noise.
+ *
+ *  It is deliberately NOT bolted onto the 10:00 and 15:00 time-block
+ *  checks. Those ask what a person did; this asks what they will
+ *  bring. Put the second inside the first and the answer rate of both
+ *  falls, and a run that fails takes two jobs down instead of one.
+ *
+ *  THE FLOOR, which is the window this has to fit through. The
+ *  contribution box in the Builder shuts when check-in opens, half an
+ *  hour before the meeting starts — floorSection draws it only while
+ *  `!live && !m.past && !m.checkInOpen`. So an ask that goes out on
+ *  the meeting morning is asking for something the branch has about
+ *  two hours left to do. The default days are the two before.
+ */
+var CONTENT_ASK = {
+  /*  Days of the week, 0 = Sunday. Default Monday and Tuesday: two
+   *  clear days before a Wednesday meeting, which is long enough for
+   *  somebody to actually prepare what they bring. Change it with the
+   *  CONTENT_ASK_DAYS Script property, comma-separated — "1,2" for
+   *  Monday and Tuesday, "2" for Tuesday alone. */
+  DAYS: [1, 2],
+
+  /*  The hour. 11:00: after the morning time-block check at 10:00 and
+   *  before lunch. CONTENT_ASK_HOUR overrides it. */
+  HOUR: 11,
+
+  /*  Who is asked. The same three roles the time blocks ask, so nobody
+   *  is asked for content who is not asked for anything else. */
+  SEND_TO: ['agent', 'manager', 'staff'],
+
+  /*  Do not ask when the meeting is further off than this many working
+   *  days: an ask five days out is answered by nobody. */
+  MAX_DAYS: 3
+};
+
+function contentAskDays_() {
+  var raw = str_(mmProps_().getProperty('CONTENT_ASK_DAYS'));
+  if (!raw) return CONTENT_ASK.DAYS;
+  var out = [];
+  raw.split(/[,;\s]+/).forEach(function (v) {
+    if (!str_(v)) return;
+    var n = mmWhole_(v, 0, 6, -1);
+    if (n > -1 && out.indexOf(n) === -1) out.push(n);
+  });
+  out.sort(function (x, y) { return x - y; });
+  return out.length ? out : CONTENT_ASK.DAYS;
+}
+
+function contentAskHour_() {
+  return mmWhole_(mmProps_().getProperty('CONTENT_ASK_HOUR'), 0, 23, CONTENT_ASK.HOUR);
+}
+
+function dayName_(n) {
+  return ['Sunday', 'Monday', 'Tuesday', 'Wednesday',
+          'Thursday', 'Friday', 'Saturday'][n] || String(n);
+}
+
+/** One person's ask. Short on purpose: one question, one button. */
+function contentAskEmail_(person, o) {
+  var day = meetingDayName_();
+  /*  The items with a question under them are the hook: an agent who
+   *  cannot think of anything in the abstract can answer a question.
+   *  An item with no Detail is no use here, which is the other reason
+   *  the progress note nags the chair about them. */
+  var qs = o.items.filter(function (i) { return i.hasQuestion; }).slice(0, 3);
+  return {
+    subject: 'What are you bringing to ' + day + '?',
+    html: '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;' +
+      'max-width:520px;color:#0b2238;line-height:1.6">' +
+      '<p style="margin:0 0 4px;font-size:13px;color:#8aa3bb">' + esc_(MEET.BRANCH) + '</p>' +
+      '<h2 style="margin:0 0 10px;font-size:19px">' + esc_(firstName_(person.name)) +
+      ', bring one thing to ' + esc_(day) + '.</h2>' +
+      '<p style="margin:0 0 14px;font-size:14px">A question, a concern, or something that ' +
+      'worked. It takes ten seconds, and it is the difference between a meeting you ' +
+      'attend and one you are in.</p>' +
+      (o.meeting
+        ? '<p style="margin:0 0 14px;font-size:13.5px;color:#49637d">' +
+          esc_(o.when) + (o.clock ? ', ' + esc_(o.clock) : '') + '. ' +
+          (o.daysToMeeting === 0
+            ? '<b>The agenda closes when check-in opens, half an hour before we start.</b>'
+            : o.daysToMeeting === 1
+              ? 'One working day to go.'
+              : o.daysToMeeting + ' working days to go.') + '</p>'
+        : '') +
+      (qs.length
+        ? '<p style="margin:0 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;' +
+          'color:#8aa3bb">On the agenda already — answer one of these if it is easier</p>' +
+          '<ul style="margin:0 0 14px;padding-left:18px;font-size:13.5px;color:#49637d">' +
+          qs.map(function (i) {
+            return '<li style="margin-bottom:4px"><b style="color:#0b2238">' +
+              esc_(i.title) + '</b> — ' + esc_(i.question) + '</li>';
+          }).join('') + '</ul>'
+        : '') +
+      '<p style="margin:0 0 18px"><a href="' + esc_(o.appUrl) +
+      '" style="background:#0b2238;color:#efc24b;text-decoration:none;padding:11px 20px;' +
+      'border-radius:9px;font-weight:700;font-size:14px;display:inline-block">' +
+      'Put it on the agenda</a></p>' +
+      '<p style="margin:0 0 8px;font-size:12px;color:#8aa3bb">Your agent number opens the ' +
+      'page. Bringing something does <b>not</b> mark you present — that is the ' +
+      '“I am here” button on the day.</p>' +
+      '<p style="margin:0;font-size:11px;color:#a8bccf">Internal — ' +
+      esc_(MEET.BRANCH) + '.</p></div>'
+  };
+}
+
+/** The runner. Only on the chosen days, only when the meeting is near,
+ *  and never to somebody who has already brought something. */
+function contentAsk() {
+  var now = new Date();
+  var w = now.getDay();
+  if (w === 0 || w === 6) { Logger.log('Weekend — no ask.'); return 'Weekend.'; }
+  var days = contentAskDays_();
+  if (days.indexOf(w) === -1) {
+    var m0 = 'Not one of the ask days (' + days.map(dayName_).join(', ') + ').';
+    Logger.log(m0); return m0;
+  }
+
+  var o = progressModel_(now);
+  /*  Carry the question text, which progressModel_ does not keep —
+   *  it only needs to know whether there is one. */
+  var det = {};
+  (o.meeting ? readTab_(MEET.TAB_AGENDA) : []).forEach(function (a) {
+    if (str_(a['Meeting ID']) === str_(o.meeting['ID'])) det[str_(a['Title'])] = str_(a['Detail']);
+  });
+  o.items.forEach(function (i) { i.question = det[i.title] || ''; });
+
+  if (!o.meeting) {
+    var m1 = 'No meeting on the books — nobody is asked for content for a meeting ' +
+             'that does not exist.';
+    Logger.log(m1);
+    log_('content-ask', 'system', 'manager', '', m1);
+    return m1;
+  }
+  if (o.daysToMeeting > CONTENT_ASK.MAX_DAYS) {
+    var m2 = 'The meeting is ' + o.daysToMeeting + ' working days off — too far to ask yet.';
+    Logger.log(m2); return m2;
+  }
+
+  /*  Who has already brought something to THIS meeting. Nagging them
+   *  is how an ask becomes something people filter. */
+  var done = {};
+  o.brought.forEach(function (p) { done[low_(p.email)] = 1; });
+
+  var sent = 0, already = 0, skipped = 0, held = 0, failed = 0;
+  everyone_().forEach(function (p) {
+    if (!p.email) { skipped++; return; }
+    if (isGuestNo_(p.agentNo)) { skipped++; return; }
+    if (CONTENT_ASK.SEND_TO.indexOf(low_(p.role)) === -1) { skipped++; return; }
+    if (done[low_(p.email)]) { already++; return; }
+    var mail = contentAskEmail_(p, o);
+    try {
+      var via = meetMail_({ to: p.email, subject: mail.subject,
+                            htmlBody: mail.html, name: MEET.BRANCH });
+      if (via === 'held') { held++; return; }
+      sent++;
+    } catch (err) {
+      failed++;
+      Logger.log('Could not write to ' + p.email + ': ' + err);
+    }
+  });
+
+  var msg = 'Content ask: ' + sent + ' asked, ' + already + ' had already brought something, ' +
+    skipped + ' not asked, ' + failed + ' failed' +
+    (held ? ', ' + held + ' HELD: the mail allowance is nearly out' : '') + '.';
+  if (held) mmHeldAlert_('the content ask', held, sent);
+  log_('content-ask', 'system', 'manager', str_(o.meeting['Ref']), msg);
+  Logger.log(msg);
+  return msg;
+}
+
+/** Install one trigger per chosen day. Safe to run again. */
+function installContentAsk() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'contentAsk') ScriptApp.deleteTrigger(t);
+  });
+  var days = contentAskDays_(), hour = contentAskHour_();
+  var names = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+  days.forEach(function (d) {
+    ScriptApp.newTrigger('contentAsk').timeBased()
+      .onWeekDay(ScriptApp.WeekDay[names[d]]).atHour(hour).create();
+  });
+  return 'The content ask is on for ' + days.map(dayName_).join(' and ') +
+    ' at about ' + hour + ':00. It skips anybody who has already brought something, ' +
+    'and says nothing when there is no meeting on the books or the meeting is more than ' +
+    CONTENT_ASK.MAX_DAYS + ' working days off.';
+}
+
+function installContentAskFromMenu() {
+  var ui = SpreadsheetApp.getUi();
+  ui.alert('The content ask', installContentAsk() +
+    '\n\nChange the days with the CONTENT_ASK_DAYS Script property ' +
+    '(0 = Sunday, so "1,2" is Monday and Tuesday) and the hour with ' +
+    'CONTENT_ASK_HOUR, then run this again.', ui.ButtonSet.OK);
+}
+
+/** Read it before the branch does. Sends one copy, to the chair, whatever day it is. */
+function previewContentAsk() {
+  var to = progressTo_();
+  if (!to.length) throw new Error('No ADMIN_EMAIL set.');
+  var me = findPersonByEmail_(MEET.ADMIN_EMAIL) || readPeople_()[0];
+  if (!me) throw new Error('Nobody on the People tab yet.');
+  var o = progressModel_(new Date());
+  var det = {};
+  if (o.meeting) {
+    readTab_(MEET.TAB_AGENDA).forEach(function (a) {
+      if (str_(a['Meeting ID']) === str_(o.meeting['ID'])) det[str_(a['Title'])] = str_(a['Detail']);
+    });
+  }
+  o.items.forEach(function (i) { i.question = det[i.title] || ''; });
+  var mail = contentAskEmail_(me, o);
+  var via = meetMail_({ to: to[0], subject: '[Preview] ' + mail.subject,
+                        htmlBody: mail.html, name: MEET.BRANCH });
+  var msg = 'Preview sent to ' + to[0] + ' (' + via + '). ' +
+    'On the day it would go to everyone who has not brought something yet.';
+  Logger.log(msg);
+  return msg;
 }
