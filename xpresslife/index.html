@@ -366,6 +366,38 @@ body.locked{overflow:hidden}
 .confetti{position:fixed;top:-12px;border-radius:2px;pointer-events:none;z-index:200;animation:fall linear forwards}
 @keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.9}}
 
+/* HELP 868 on WhatsApp */
+.wa-ic{width:1.15em;height:1.15em;flex:none}
+.wa-pill .wa-ic{width:15px;height:15px}
+.wa-pill{white-space:nowrap}
+.btn-wa{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:#0b7a6d;color:#fff;border:none;text-decoration:none}
+.btn-wa:hover{background:#08665b}
+.btn-wa .wa-ic{width:20px;height:20px}
+.wa-rate{display:flex;align-items:center;gap:10px;margin-top:12px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.22);color:#fff;text-decoration:none;font-size:13.5px;line-height:1.35}
+.wa-rate .wa-ic{width:22px;height:22px;color:#5fe3b6}
+.wa-rate:hover{background:rgba(255,255,255,.14)}
+.wa-sec{background:linear-gradient(180deg,#eef8f9,#faf9f2)}
+.wa-card{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:28px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:0 18px 40px hsl(32deg 20% 42% / .12)}
+@media(max-width:760px){.wa-card{grid-template-columns:1fr;padding:22px;gap:20px}}
+.wa-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0b7a6d}
+.wa-eyebrow .wa-ic{width:18px;height:18px}
+.wa-card h2{font-size:clamp(1.6rem,4vw,2.2rem);color:var(--deep);margin:8px 0 10px}
+.wa-lede{color:var(--ink);font-size:15.5px;line-height:1.6}
+.wa-list{list-style:none;margin:14px 0 18px;display:grid;gap:8px}
+.wa-list li{position:relative;padding-left:26px;font-size:14.5px;color:var(--ink);line-height:1.5}
+.wa-list li::before{content:"";position:absolute;left:0;top:4px;width:16px;height:16px;border-radius:50%;background:#0b7a6d url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat}
+.btn-wa-lg{padding:15px 24px;font-size:16px;font-weight:800;border-radius:999px}
+.wa-fine{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.5}
+.wa-taps{display:grid;gap:10px;background:#e7f4f1;border-radius:18px;padding:18px}
+.wa-tap-h{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#0a4f60}
+.wa-tap{display:block;background:#fff;border:1.5px solid #bfe3da;border-radius:16px 16px 16px 4px;padding:12px 14px;font-size:14.5px;font-weight:700;color:#0a3350;text-decoration:none;min-height:44px}
+.wa-tap:hover{border-color:#0b7a6d}
+.wa-fab{position:fixed;right:21px;bottom:160px;z-index:70;width:52px;height:52px;border-radius:50%;background:#0b7a6d;color:#fff;display:grid;place-items:center;box-shadow:0 10px 26px rgba(4,14,26,.3)}
+.wa-fab .wa-ic{width:28px;height:28px}
+.wa-fab:hover{background:#08665b}
+@media (prefers-reduced-motion:no-preference){.wa-fab{animation:waIn .5s ease-out .8s backwards}.wa-tap{transition:transform .15s}.wa-tap:hover{transform:translateX(3px)}}
+@keyframes waIn{from{opacity:0;transform:scale(.6)}}
+
 /* footer + sticky */
 footer{background:var(--foot);color:var(--foottxt);padding:36px 0 100px;font-size:12.5px}
 footer .brand-name{color:#fff}
@@ -541,12 +573,25 @@ console.log('%cRRB Xpress Life — Build '+window.__BUILD,'color:#0e93b0;font-we
 <!-- ============ CONFIG — EDIT THESE LINES ============ -->
 <script>
 const CONFIG = {
-  WHATSAPP: "18686785921",                   // branch WhatsApp, digits only incl. 1868
+  WHATSAPP: "18684357868",                   // HELP 868 on WhatsApp (1-868-HELP-868), answered through Respond.io; digits only
   EMAIL: "apply@rickyrampersadbranch.com",   // EDIT: branch applications inbox
   LOCATION: "Endeavour Industrial Estate, Chaguanas, Trinidad & Tobago",
   ISSUE_PROMISE_HOURS: 24,
   GAS_URL: "https://script.google.com/macros/s/AKfycbzv59iKByTcRtvlezmzLmy1L5vUPrFt7-nzDn4JX19qpHxCFHB_p42LLH3l-VhEHLWM/exec"
 };
+</script>
+<script>
+/* HELP 868: every WhatsApp link builds from CONFIG.WHATSAPP; the rate link carries the client's rate */
+function waUrl(t){return 'https://wa.me/'+CONFIG.WHATSAPP+'?text='+encodeURIComponent(t);}
+document.addEventListener('click',function(e){
+  var a=e.target.closest&&e.target.closest('a[data-wa]'); if(!a) return;
+  var t=a.getAttribute('data-wa');
+  if(t==='rate'){
+    var amt=(document.getElementById('sbAmt')||{}).textContent||'', cov=(document.getElementById('sbCover')||{}).textContent||'';
+    t=(amt&&amt!=='\u2014')?'Hi HELP 868, my Xpress Life rate is $'+amt.replace(/\s+/g,' ').trim()+' for '+cov+'. Can you help me with the next step?':'Hi HELP 868, I have a question about my Xpress Life rate.';
+  }
+  a.href=waUrl(t);
+},true);
 </script>
 <!-- =================================================== -->
 
@@ -561,7 +606,7 @@ const CONFIG = {
       </svg>
       <span><span class="brand-name">Ricky Rampersad Branch</span><br><span class="brand-sub">A Guardian Life agency · Trinidad</span></span>
     </a>
-    <span style="display:flex;align-items:center"><a class="track-link" href="#track">Track</a><a class="wa-pill" id="waTop" href="https://wa.me/18686785921?text=Hi%2C%20I%20have%20a%20question%20about%20Xpress%20Life" target="_blank" rel="noopener">Help</a></span>
+    <span style="display:flex;align-items:center"><a class="track-link" href="#track">Track</a><a class="wa-pill" id="waTop" data-wa="Hi HELP 868, I have a question about Xpress Life." href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20have%20a%20question%20about%20Xpress%20Life." target="_blank" rel="noopener"><svg class="wa-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.1 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9s.8 2.2.9 2.4c.1.1 1.6 2.5 4 3.5 1.5.6 2.1.7 2.8.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.4-.3z"/></svg>HELP 868</a></span>
   </div>
 </header>
 
@@ -581,6 +626,7 @@ const CONFIG = {
     </div>
     <div class="ctas">
       <a class="btn btn-gold" href="#quote">See my rate now</a>
+      <a class="btn btn-wa" data-wa="Hi HELP 868, I'm interested in Xpress Life. Can you help me?" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%27m%20interested%20in%20Xpress%20Life.%20Can%20you%20help%20me%3F" target="_blank" rel="noopener"><svg class="wa-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.1 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9s.8 2.2.9 2.4c.1.1 1.6 2.5 4 3.5 1.5.6 2.1.7 2.8.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.4-.3z"/></svg>Chat on WhatsApp</a>
       <button class="btn btn-ghost-l" onclick="openRai()">Ask RAI</button>
     </div>
     <a class="watch-link" href="#explainer"><span class="pl" aria-hidden="true"></span>Watch how it works · 0:59</a>
@@ -650,6 +696,36 @@ const CONFIG = {
           <div id="riBody"></div>
         </div>
         <a class="btn btn-gold apply-cta" id="startApply" href="#apply" onclick="__openApply();return false;">Protect them now — apply in 5 minutes</a>
+        <a class="wa-rate" id="waRate" data-wa="rate" href="https://wa.me/18684357868" target="_blank" rel="noopener"><svg class="wa-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.1 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9s.8 2.2.9 2.4c.1.1 1.6 2.5 4 3.5 1.5.6 2.1.7 2.8.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.4-.3z"/></svg><span>Not ready yet? Send this rate to <b>HELP 868</b> on WhatsApp and ask us anything</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HELP 868 ON WHATSAPP ================= -->
+<section class="pad wa-sec" id="whatsapp">
+  <div class="wrap">
+    <div class="wa-card">
+      <div class="wa-copy">
+        <span class="wa-eyebrow"><svg class="wa-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.1 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9s.8 2.2.9 2.4c.1.1 1.6 2.5 4 3.5 1.5.6 2.1.7 2.8.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.4-.3z"/></svg>HELP 868 · WhatsApp</span>
+        <h2>Ask us before you decide.</h2>
+        <p class="wa-lede">Message <b>1-868-HELP-868</b> any hour. Our assistant answers straight away and logs your question, and a member of the Ricky Rampersad Branch team picks it up, Monday to Friday, 8:00 to 4:00.</p>
+        <ul class="wa-list">
+          <li><b>Your rate</b> for the cover you want, in plain numbers</li>
+          <li><b>Whether you can apply</b> on the five health questions</li>
+          <li><b>How the cover builds up:</b> premiums back in year 1, half in year 2, full from year 3</li>
+          <li><b>Not a fit?</b> We'll find you another Guardian plan</li>
+        </ul>
+        <a class="btn btn-wa btn-wa-lg" data-wa="Hi HELP 868, I'm interested in Xpress Life. Can you help me?" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%27m%20interested%20in%20Xpress%20Life.%20Can%20you%20help%20me%3F" target="_blank" rel="noopener"><svg class="wa-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.1 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9s.8 2.2.9 2.4c.1.1 1.6 2.5 4 3.5 1.5.6 2.1.7 2.8.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.4-.3z"/></svg>Chat with HELP 868</a>
+        <p class="wa-fine">One tap opens WhatsApp with your message ready. Please don't send ID numbers, bank details or medical information in the chat: we'll tell you the safe way to share them.</p>
+      </div>
+      <div class="wa-taps" aria-label="Start with one of these questions">
+        <span class="wa-tap-h">Tap to ask</span>
+        <a class="wa-tap" data-wa="Hi HELP 868, what would Xpress Life cost me?" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20what%20would%20Xpress%20Life%20cost%20me%3F" target="_blank" rel="noopener">What would it cost me?</a>
+        <a class="wa-tap" data-wa="Hi HELP 868, can I apply for Xpress Life?" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20can%20I%20apply%20for%20Xpress%20Life%3F" target="_blank" rel="noopener">Can I apply?</a>
+        <a class="wa-tap" data-wa="Hi HELP 868, how does Xpress Life pay out in the first years?" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20how%20does%20Xpress%20Life%20pay%20out%20in%20the%20first%20years%3F" target="_blank" rel="noopener">How does the cover build up?</a>
+        <a class="wa-tap" data-wa="Hi HELP 868, I don't think Xpress Life fits me. What other Guardian plans are there?" href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20don%27t%20think%20Xpress%20Life%20fits%20me.%20What%20other%20Guardian%20plans%20are%20there%3F" target="_blank" rel="noopener">Other Guardian plans</a>
+        <a class="wa-tap" data-wa="Hi HELP 868, I'd like a person to call me about Xpress Life." href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%27d%20like%20a%20person%20to%20call%20me%20about%20Xpress%20Life." target="_blank" rel="noopener">Talk to a person</a>
       </div>
     </div>
   </div>
@@ -1025,6 +1101,8 @@ const CONFIG = {
   <div class="sb-amt">$<span id="sbAmt">—</span><small id="sbCover">—</small><small class="sb-on">100% online · no paperwork</small></div>
   <a class="btn btn-gold" id="sbApply" href="#apply" onclick="__openApply();return false;">Apply now</a>
 </div>
+
+<a class="wa-fab" id="waFab" data-wa="Hi HELP 868, I have a question about Xpress Life." href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20have%20a%20question%20about%20Xpress%20Life." target="_blank" rel="noopener" aria-label="WhatsApp HELP 868"><svg class="wa-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.1 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9s.8 2.2.9 2.4c.1.1 1.6 2.5 4 3.5 1.5.6 2.1.7 2.8.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.4-.3z"/></svg></a>
 
 <!-- RAI -->
 <div class="rai-hello" id="raiHello" role="status">Hi, I'm <b style="color:#00728d">RAI</b> 🐢 Ask me anything — or get your rate in 10 seconds.</div>
@@ -2037,7 +2115,7 @@ addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();document.g
 
 const goQuote={label:'Get my rate ➜',action:()=>{closeRai();document.getElementById('quote').scrollIntoView({behavior:'smooth'});}};
 const goApply={label:'Apply now ➜',action:()=>{closeRai();openApply();}};
-const goHuman={label:'📧 Email the branch',action:()=>{window.open('mailto:'+CONFIG.EMAIL+'?subject=Xpress%20Life%20question','_blank');}};
+const goHuman={label:'WhatsApp HELP 868',action:()=>{window.open(waUrl('Hi HELP 868, I have a question about Xpress Life.'),'_blank','noopener');}};
 
 function parseQuoteFrom(t){
   const nums=(t.match(/[\d,]+(?:\.\d+)?\s*k?/gi)||[]).map(x=>{let v=parseFloat(x.replace(/,/g,''));if(/k/i.test(x))v*=1000;return v;});
