@@ -46,7 +46,7 @@ const RICKY = { staffId:'ricky', name:'Ricky Rampersad', role:'bm', manager:true
 console.log('\nEach person is measured against their own start:\n');
 // The hours from 17 October 2026: Sasha at 7, Azariah at 8, Ashley at 9. Liz was at 7 and is at 8 from
 // Friday 23 October 2026 (Kamla to the agents, 6:22am: "Elizabeth will now be operating from 8:00 AM to 4:00 PM").
-ok('a seven o\'clock desk starts at 420', env.startFor_('sasha') === 420);
+ok('a seven o\'clock day starts at 420, and Sasha\'s 8 to 4 from 18 Nov at 480', env.startFor_('sasha', '2026-11-10') === 420 && env.startFor_('sasha', '2026-11-18') === 480);
 ok('Liz is an eight o\'clock desk from 23 Oct, ending at 4', env.startFor_('elizabeth') === 480 && env.startFor_('elizabeth', '2026-10-23') === 480 && env.endFor_('elizabeth') === 960);
 ok('and was a seven o\'clock desk on the days before', env.startFor_('elizabeth', '2026-10-22') === 420 && env.startFor_('elizabeth', '2026-10-12') === 420);
 ok('7:20 on 12 Oct was late and stays late; 7:20 now is early', env.lateBy_('elizabeth', '07:20', '2026-10-12') === 20 && env.lateBy_('elizabeth', '07:20', '2026-10-23') === 0 && env.lateBy_('elizabeth', '07:20') === 0);
@@ -62,7 +62,7 @@ ok('08:05 is on time for an eight o\'clock start', env.lateBy_('azariah', '08:05
 ok('08:07 is late by seven minutes', env.lateBy_('azariah', '08:07') === 7);
 ok('08:25 is late by twenty-five', env.lateBy_('azariah', '08:25') === 25);
 ok('and 09:05 is on time for a nine o\'clock start', env.lateBy_('ashley', '09:05') === 0);
-ok('08:07 is an hour and seven minutes after a seven o\'clock start', env.lateBy_('sasha', '08:07') === 67);
+ok('08:07 is an hour and seven minutes after a seven o\'clock start', env.lateBy_('sasha', '08:07', '2026-11-10') === 67 && env.lateBy_('sasha', '08:04', '2026-11-18') === 0);
 
 console.log('\nThe first sign-in of the day is the start of the day:\n');
 env.resetRequestMemo_();

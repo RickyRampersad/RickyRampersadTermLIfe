@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-16a';
+var SCRIPT_VERSION = '2026-11-18a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -549,10 +549,12 @@ var BLOCK_IDS = ['KPI1', 'KPI2', 'PM1', 'PM2', 'EVE'];
    'focus' is the work of the role in the words of the job document. */
 var SCHEDULE = {
   sasha: {
-    // Sales Support 1. 7 to 3 from Monday 2 November 2026 (Ricky, 27 October; 7 to 2 before
-    // that); 8 to 4 the week of 26 October, in SCHEDULE_DATED.
-    hours: '7am – 3pm', lunch: '12:00 – 12:30pm',
-    blocks: { KPI1: { time: '7am – 3pm', focus: 'Premium dues and surveys, health billing, orphan adoption, quotations, branch meeting reports', kpi: 'Renewa/PDl/Bill' } }
+    // Sales Support 1. 8 to 4 from Wednesday 18 November 2026, like Liz and Azariah (Ricky:
+    // "Sasha has reverted back from 8 to 4"), lunch 2 to 3 so the three lunches stagger
+    // (Liz 12, Azariah 1, Sasha 2). 7 to 3 from 2 to 17 November, 8 to 4
+    // the week of 26 October (SCHEDULE_DATED), 7 to 2 before that.
+    hours: '8am – 4pm', lunch: '2:00 – 3:00pm',
+    blocks: { KPI1: { time: '8am – 4pm', focus: 'Premium dues and surveys, health billing, orphan adoption, quotations, branch meeting reports', kpi: 'Renewa/PDl/Bill' } }
   },
   azariah: {
     // Sales Support 3. 8 to 4, lunch 1 to 2.
@@ -670,8 +672,11 @@ var REPORTS_TO = {
    the day's block) and the lunch (and so the close-off-for-lunch e-mail; 'Flexible'
    sends none). Everything that asks scheduleFor_ follows on the day. */
 var SCHEDULE_DATED = {
-  // Her 7 to 2 before the week needs no entry: late is judged on the start, 7am either way.
-  sasha: [{ from: '2026-10-26', until: '2026-10-30', hours: '8am – 4pm', lunch: '2:00 – 3:00pm' }],
+  // Her days before 18 November 2026 on the hours she kept then (7 to 2 before 26 October is
+  // read as 7 to 3: late is judged on the start, 7am either way). From 18 November SCHEDULE is 8 to 4.
+  sasha: [{ from: '2026-10-01', until: '2026-10-25', hours: '7am – 3pm', lunch: '12:00 – 12:30pm' },
+          { from: '2026-10-26', until: '2026-10-30', hours: '8am – 4pm', lunch: '2:00 – 3:00pm' },
+          { from: '2026-10-31', until: '2026-11-17', hours: '7am – 3pm', lunch: '12:00 – 12:30pm' }],
   kamla: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }],
   pawan: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }]
 };
@@ -11187,7 +11192,7 @@ function markNotClosed_(sid, day) {
  *   · A clean close (every item answered) is the "day closed off" point in the game.
  */
 var CLOSEOUT = {
-  AT: { sasha: 14 * 60 + 15, elizabeth: 15 * 60 + 15, azariah: 15 * 60 + 15, kamla: 16 * 60 + 15 },   // Liz 3:15 from 23 Oct 2026 (her day is now 8 to 4); Sasha 2:15 on her 7 to 3 (closeoutAt_ moves it on other hours)
+  AT: { sasha: 15 * 60 + 15, elizabeth: 15 * 60 + 15, azariah: 15 * 60 + 15, kamla: 16 * 60 + 15 },   // Liz 3:15 from 23 Oct 2026 and Sasha 3:15 from 18 Nov 2026 (both 8 to 4; closeoutAt_ moves it on other hours)
   MGR_AT: 15 * 60, MGR_CHECK_AFTER: 45,           // Mr Rampersad and the Unit Manager: 3:00, and the check at 3:45
   BMA: 'kamla', KAMLA_AT_RUN: 2, RICKY_AT_RUN: 3, LOOK_BACK: 5, MAX_TASKS: 40
 };
@@ -22221,10 +22226,11 @@ function facts_(staffId, from, to, entries, closedByType, nowBlock, needs, billi
     if (isSubstantive_(r.Innovation) && f.innovation.length < 3) f.innovation.push({ date: d, text: String(r.Innovation).slice(0, 140) });
   });
   f.mailAm = 0; f.mailAmEarly = 0; f.mailPm = 0; f.mailDays = 0;
-  var startPlusHour = startFor_(staffId) + 60;
   entries.forEach(function (r) {
     var am = parseMail_(r.MailAM), pm = parseMail_(r.MailPM);
     if (am || pm) f.mailDays++;
+    // Each day against the hours kept that day, so a change of hours never rewrites the past.
+    var startPlusHour = startFor_(staffId, String(r.Date || '').slice(0, 10) || null) + 60;
     if (am) { f.mailAm++; var m = minutesOf_(am.at); if (m != null && m <= startPlusHour) f.mailAmEarly++; }
     if (pm) f.mailPm++;
   });

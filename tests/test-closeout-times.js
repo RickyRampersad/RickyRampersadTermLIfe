@@ -46,7 +46,7 @@ const fresh = () => { env.resetRequestMemo_ && env.resetRequestMemo_(); env.Cach
 // ---- the times --------------------------------------------------------------------------------
 const at = s => env.twelve_(env.mmText_(env.closeoutAt_(s)));
 // Liz 3:15 from 23 Oct 2026: her day is now 8 to 4 (it was 2:15 on her 7 to 3 day).
-ok('Sasha 1:15, Liz 3:15, Azariah 3:15, Kamla 4:15', at('sasha') === '1:15pm' && at('elizabeth') === '3:15pm' && at('azariah') === '3:15pm' && at('kamla') === '4:15pm',
+ok('Sasha 2:15 (her 7 to 3 day), Liz 3:15, Azariah 3:15, Kamla 4:15', at('sasha') === '2:15pm' && at('elizabeth') === '3:15pm' && at('azariah') === '3:15pm' && at('kamla') === '4:15pm',
   ['sasha', 'elizabeth', 'azariah', 'kamla'].map(at).join(' '));
 ok('Pawan as before: half an hour before his 5pm', at('pawan') === '4:30pm', at('pawan'));
 ok('Akaash\'s account of the day at 3:00, checked at 3:45', env.UM_EVENING_AT === 15 * 60 && env.CLOSEOUT.MGR_AT + env.CLOSEOUT.MGR_CHECK_AFTER === 15 * 60 + 45);
