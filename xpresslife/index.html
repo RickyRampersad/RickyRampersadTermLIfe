@@ -1747,7 +1747,11 @@ renderQuote();
   try{
     var q=new URLSearchParams(location.search),age=parseInt(q.get('age'),10),g=String(q.get('g')||'').toLowerCase().charAt(0),c=parseInt(String(q.get('cover')||'').replace(/\D/g,''),10);
     var used=false;
-    if(age>=18&&age<=69&&ageSel.querySelector('option[value="'+age+'"]')){ageSel.value=String(age);used=true;}
+    /* HELP 868 sends an age group ("30-39"): start at its first age and ask for the exact one, so the rate shown is the client's own */
+    var grp=String(q.get('age')||'').match(/^(\d{1,2})\s*-\s*(\d{1,2})$/);
+    if(grp&&age>=18&&age<=69&&ageSel.querySelector('option[value="'+age+'"]')){ageSel.value=String(age);used=true;
+      try{var tip=document.createElement('p');tip.className='xl-agetip';tip.setAttribute('role','status');tip.textContent='You told us '+grp[1]+' to '+grp[2]+'. Choose your exact age here for your exact rate.';tip.style.cssText='margin:.5rem 0 0;padding:.55rem .75rem;border-radius:10px;background:#FFF1D6;color:#1B1340;font-weight:600;font-size:.95rem';ageSel.insertAdjacentElement('afterend',tip);ageSel.addEventListener('change',function(){tip.remove();},{once:true});}catch(e){}}
+    else if(age>=18&&age<=69&&ageSel.querySelector('option[value="'+age+'"]')){ageSel.value=String(age);used=true;}
     if(g==='f'||g==='m'){document.getElementById(g==='f'?'gF':'gM').click();used=true;}
     if(c>=1000)c=Math.round(c/1000);
     if([100,200,300,400,500].indexOf(c)>=0){var bb=document.querySelector('#quote .bands button[data-b="'+(c/100-1)+'"]');if(bb){bb.click();used=true;}}

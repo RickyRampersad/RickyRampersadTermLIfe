@@ -47,4 +47,10 @@ ok(r.ok && r.salesforce === 'off' && w.sent.length === 0 && w.rows.length === 1,
 w = world();
 r = w.ctx.help868Route_(Object.assign({}, lead, { phone: '' }));
 ok(!r.ok, 'no number, no lead');
+w = world();
+r = w.ctx.help868Route_(Object.assign({}, lead, { age: '30-39' }));
+ok(r.ok && w.rows[0][3] === '30 to 39' && /age 30 to 39/.test(w.sent[0].body.Description), 'an age group from the tap reads "30 to 39", never 30 and never a date');
+w = world();
+r = w.ctx.help868Route_(Object.assign({}, lead, { age: '70 or over', result: 'refer' }));
+ok(r.ok && w.rows[0][3] === '70 or over', 'the 70 or over tap is kept as words');
 console.log(fails ? '\n' + fails + ' failed' : '\nall passed'); process.exit(fails ? 1 : 0);

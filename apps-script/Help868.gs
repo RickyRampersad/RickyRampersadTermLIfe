@@ -564,7 +564,12 @@ function help868XlLead_(p) {
   try { var c = CacheService.getScriptCache(), k = 'xl_' + digits, n = Number(c.get(k) || 0) + 1; if (n > XLL.PER_HOUR) return { ok: false, error: 'Too many in an hour.' }; c.put(k, String(n), 3600); } catch (e) {}
   var name = help868Clean_(p.name).replace(/[^\p{L}\p{M} .'-]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
   if (!name) return { ok: false, error: 'No name came with the lead.' };
-  var age = parseInt(p.age, 10); age = age >= 16 && age <= 99 ? age : '';
+  /* the flow asks an age GROUP by tap ("30-39", "Under 18", "70 or over"); an older flow sent a typed age. Kept as words, so the sheet never reads "30-39" as a date. */
+  var ar = String(p.age || '').trim(), am = ar.match(/^(\d{1,2})\s*(?:-|to)\s*(\d{1,2})$/i), age;
+  if (am) age = am[1] + ' to ' + am[2];
+  else if (/^under\s*18$/i.test(ar)) age = 'under 18';
+  else if (/^70\s*(or|\+)/i.test(ar)) age = '70 or over';
+  else { age = parseInt(ar, 10); age = age >= 16 && age <= 99 ? age : ''; }
   var g = /^f/i.test(String(p.gender || '')) ? 'Female' : /^m/i.test(String(p.gender || '')) ? 'Male' : '';
   var cover = help868XlCover_(p.cover);
   var next = /^(eligible|apply|yes)/i.test(String(p.result || '')) ? 'Apply online' : 'Branch to suggest another Guardian plan';
