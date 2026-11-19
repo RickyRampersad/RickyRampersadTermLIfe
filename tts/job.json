@@ -1,18 +1,14 @@
 {
  "voices": {
-  "xlmc": "en-US-AndrewMultilingualNeural"
+  "xlmc2": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "xlmc": "+0%"
+  "xlmc2": "+0%"
  },
  "check": true,
  "films": {
-  "xlmc": [
-   "Most people think life cover costs a lot, and needs a medical. It often costs less than you think.",
-   "Guardian's Xpress Life plan covers your family for one hundred thousand to five hundred thousand dollars. Prices start under six dollars a day, with no medical exam.",
-   "Your cover builds over the first two years, and your premium stays the same for twenty years.",
-   "A licensed Guardian advisor from our branch picks it up straight away, and Guardian's underwriters review every application.",
-   "Scan the code, or message Help, eight six eight, today. Leave them a blessing, not a bill."
+  "xlmc2": [
+   "Scan the QR code on your screen, or message Help, eight six eight, today. Leave them a blessing, not a bill."
   ]
  }
 }
