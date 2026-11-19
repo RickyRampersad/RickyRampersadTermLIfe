@@ -1,7 +1,12 @@
 {
- "tts/out/xl30b/01.mp3": [
+ "tts/out/xl30A/01.mp3": [
   "en",
-  0.998,
-  "One day, the people you love will get that phone call. Leave them a blessing. Not a bill. With Guardians Express Live Plan, you get up to $500,000 of cover with no medical exam. Prices begin under $6 a day and full cover builds by year three. Four taps on WhatsApp tell you if you can apply. A licensed advisor from our branch takes it from there. Just scan a QR code today."
+  0.997,
+  "One day, the people you love will get that phone call. Leave them a blessing, not a bill. With Guardians Express Live Plan, you get up to $500,000 of cover with no medical exam. Prices begin under $6 a day, and full cover builds by year 3. For taps on WhatsApp tell you if you can apply. A licensed advisor from our branch takes it from there. Just scan the QR code today."
+ ],
+ "tts/out/xl30B/01.mp3": [
+  "en",
+  0.997,
+  "One day, the people you love will get that phone call. Leave them a blessing, not a bill. It's called Express Life from Guardian. Up to $500,000 of cover with no medical exam. Prices begin under $6 a day and full cover bills by year three. Four taps on WhatsApp tell you if you can apply. A licensed advisor from our branch takes it from there. Just scan the QR code today."
  ]
 }
