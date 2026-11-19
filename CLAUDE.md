@@ -4293,6 +4293,52 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     cropped to the dialog with the attached file's name painted out, because that name was a real group's.
   - Re-cut when the pages change: re-run `shots.js`, then `render.js` and `mix.py`. The figures, people and groups on
     screen are all invented.
+  - **Company pensions, without the paperwork** (17 November 2026: "a small effective video to show how we as a branch
+    manage the pension plans for companies ... the link that goes out ... the company fills out their part, routed to the
+    employee ... automatically calculates everything", then "also show the calculations on the form ... section 134 ...
+    show the pdf"), 2 min 25 s, for employers and HR. `groupclientmanagement/company-pension.mp4`, poster
+    `company-pension.jpg`, page **`/pensionpresentationourprocess/`** with chapters (asked for by that name the same
+    day: "merge this to the branch /pensionpresentationourprocess"); `/groupmgt/pension/`, where it was first built,
+    forwards there. It went to `main` on its own, ahead of the rest of the group re-cut branch, so the films he had not
+    asked to publish did not go with it.
+    - **What it shows is pensionplanstt.netlify.app**, the branch's company-owned (Section 134 / TopHat) pension wizard:
+      a separate Netlify site, uploaded by hand, with its own Apps Script register. Its source is in no repository.
+      The employer signs in with a company code (`CO…`) and enrols someone; the register writes to the employee with
+      their own code (`EM…`, `?code=` opens their door) and reminds them every morning at 9 with the employer copied;
+      the employee's part (beneficiaries, own contribution, ID, utility bill, pay slip) is on a phone; RIA (its AI,
+      `/api/pension-ai`) answers inside the form; the agent loads the case by the employee's code, the Section 134
+      maximum is solved, and the BIR request with its computation, Declarations 1 and 2 and Guardian's salary deduction
+      form (SD-L&P v.1NOV2014; the blanks are the site's `assets/RRB_*_blank.pdf`) fill themselves into one package.
+    - **The form has no WhatsApp button.** He described WhatsApp as integrated; the site offers RIA and an e-mail link.
+      So the film draws HELP 868 as its own phone screen ("Or WhatsApp · HELP 868"), never as a button inside the form.
+      Adding one needs the site's files.
+    - Built by `build-gcmfilm.py pension` from `pens-lines.json` and `pens2-timing.json` (Andrew Expressive, key
+      `pens2`; four lines re-worded after `pens1`: "Then the part" was heard "In the part", "put in up to" "put an up
+      to", "checked" "check", "your copy" "a copy"). Screens in `tools/film/pensionshots/`, shot from a local copy of the
+      site against a mocked register and AI (`pensionfilm/shoot.js` and `mock.js` in the scratchpad) on a made-up
+      company (Harbour Point Logistics Ltd) and employee; the package pages (`pkg*.jpg`) are the site's own PDF, with
+      mark boxes added by fraction. The figures ($62,660 maximum on a TT$240,000 salary and a TT$36,000 premium) are the
+      site's own calculation on those made-up inputs. Music: his corporate tech track, `loopbars.py` to 145 s.
+  - **Joining the group health plan, and when someone leaves** (17 November 2026: "do the same vid for the health and
+    termination enrollments and /healthenrollment and /termnations", then "can this be done fast"). Two films in the
+    pension film's look, made from what already works, while the joined enrolment (HR's link, the employee's part,
+    Guardian's real GIO001, HR's approval) was built separately:
+    - **`/healthenrollment/`** (1 min 42 s, `groupclientmanagement/health-enrolment.mp4`): the employee's own link,
+      `benefits/enroll.html`, on a made-up employee (Marcus Sample, Harbour Point Logistics Ltd): HR's share card, the
+      steps on a phone, the "nothing to declare" tick, the on-screen signatures, and the filled GIO001 and Declaration of
+      Insurability from the review step. Shot by `henr/shoot.js` in the scratchpad with the branch webhook mocked;
+      screens in `tools/film/henrshots/`. The dependants and beneficiaries are shot on a laptop: on a phone the page's
+      five-column tables cut the names off (a fault of the page, not the film).
+    - **`/terminations/`** (1 min 30 s, `groupclientmanagement/terminations.mp4`; `/termnations/`, as he typed it,
+      forwards there): the group page's EB0010 on the walkthrough film's made-up group (sign-in, Your people on "Came off",
+      search, the form filled from our records, the PDF, sent to EB Customer Care), the account manager's task and the
+      3-working-day follow-up, and a pension paid through payroll left. Screens in `tools/film/termshots/` (the walkthrough
+      shooter, `gcmwalk/shoot.js t01 t02`, and the filled EB0010 pages from `gcmwalk/make-pdf.js` through pdftoppm).
+    - Built by `build-gcmfilm.py henr|term` from `henr1-lines.json` / `term1-lines.json` (Andrew Expressive, keys
+      `henr1`+`henr1b`, `term1`+`term1b`). Four lines were refused by the voice and re-worded, two re-worded after the
+      check: "Forms going back" was heard "from going back", "what share" "what sherry", "done from" "done for".
+      Accepted as heard: "group life" as "group live", "dependants" as "dependence", "never guessed" as "never guest"
+      (each is on screen). Music: his corporate tech track, `loopbars.py` to the film's length.
 - **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
   forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
   training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
@@ -9717,6 +9763,13 @@ of the throw.
   Pinned by `tests/test-claude-json.js` and `tests/test-um-draft.js`.
 
 - **Elizabeth on 8 to 4 (23 Oct 2026, 2026-10-23a).** Kamla to the agents' WhatsApp, Fri 6:22am, shared by Ricky: "Elizabeth will now be operating from 8:00 AM to 4:00 PM" (was 7 to 3). `SCHEDULE.elizabeth` is `8am – 4pm` (lunch 12 to 1 unchanged), so everything that reads her hours moves with it: the morning e-mail at 7:30 (start − 30), absent at 8:05 (`ABSENT_AFTER_MIN`), her work to colleagues at 8:30 (`COVER.AFTER_MIN`), the finish at 4. `CLOSEOUT.AT.elizabeth` is 3:15 (was 2:15, the same 45 minutes before the finish as the others). `LB.BAG.ROTA` has her going home at 4:00 pm; a **Bag Rota** tab, if the sheet has one, overrides it and needs her Leaves At changed there. **A past day is judged against the hours kept that day:** `SCHEDULE_WAS` (`elizabeth: [{ until: '2026-10-22', hours: '7am – 3pm' }]`) and `hoursOn_(sid, day)`; `startFor_(sid, day)` and `lateBy_(sid, at, day)` take the day, and the month's lates on the attendance report, the game's on-time point and streak (`gameScoreDay_`, `gameStreak_`) and `attOut_` pass it, so her 7:20 on the 12th stays late. Today's clocks always read `SCHEDULE`. The 21 Oct morning-retry and 20 Oct close-out tests pin her old hours (the incidents were on them). Tests: `tests/test-attendance.js`, `tests/test-closeout-times.js`, `tests/test-logbook.js`.
+- **Sasha on 8 to 4 (18 Nov 2026, 2026-11-18a).** Ricky, 7:50am: "Sasha has reverted back from 8 to 4 ... adjust her timing to the same as Liz and Azaria". `SCHEDULE.sasha` is `8am – 4pm`, lunch 2 to 3 (Liz 12, Azariah 1, Sasha 2, so the desk is never empty); `CLOSEOUT.AT.sasha` 3:15. So her morning e-mail goes at 7:30, absent at 8:05, cover at 8:30, the close-out notice 3:15 and the lunch close-off 1:55. Her past days keep the hours she kept: `SCHEDULE_DATED.sasha` reads 7 to 3 for 1 to 25 October and 31 October to 17 November (the 26–30 October week stays 8 to 4), so a past late is never re-judged. The mail-sweep count in the review (`startPlusHour`) now reads each day's own start. Tests: `test-attendance`, `test-schedule-week`, `test-closeout-times`, `test-score` updated for the new base.
+- **Claude is his alone; one set of drafts; the Chatter trail everywhere (19 Nov 2026, 2026-11-19a).** Ricky, 6:19am, with his 5:00 mail (13 drafts) beside My workday ("Claude has not written this one yet" on 19 items): "Claude drafting, only I have that privilege and no others, as I do not want to waste my credits", "can I see the percentage of my day ... and check in from my inbox", and, after Liz said she did not know the rule, "continue the trails on the chatter ... I need to see the chatter trails, and so does the agents viewing their logs".
+  - **Claude:** `claudeFor_` is `ricky` alone: Kamla's and Akaash's Draft my reply, Brief me and Akaash's 3pm drafts (`umDraftsMake_`) are refused. The tracker's background calls (`rateReads_`, `chaseWrite_`, `gameBestNote_`) use their plain wording unless the Script Property `CLAUDE_SYSTEM` reads `on` (`claudeSystemOn_`).
+  - **One set of drafts:** My workday's Waiting on you (`leadWaiting_`) reads the full-depth drafts (`bm_deep_`), then the quick read the 5:00 mail falls back to (`bmd_adv_` in the cache, `depth: 'quick'`). `BM_DEEP.ASK` is 40, so the full read covers every ask. Each ask has **Draft with Claude** (`act=draft`, `workdayDraft_`, his alone; his typed words guide it; kept with the morning's drafts). An answer posted from My workday takes the item off his list at once (`lead_<day>.answered`).
+  - **The 5:00 mail** opens on his day's number (`bmMailProgress_`: % cleared, the bar, % of the day gone, how many wait), and its button is `go=checkin`: My workday checks him in on opening (never under `navigator.webdriver`), then shows what waits.
+  - **THE TRAIL RULE everywhere (it was in place since 3 Nov for the ratings only):** every note the tracker posts on a task goes through `sfNote_` → `sfTrailPost_`: a reply under the task's live post, a new post only when the task has no Chatter in `TRAIL_DAYS`. `mgrPost_` replies through Connect (`/chatter/feed-elements/<id>/capabilities/comments/items`) so the @mention and the e-mail still go. **Every count of notes reads the replies too** (`sfkNotes_`: the same SOQL asked of FeedComment, CommentBody as Body): `bmWaiting_` (asks and his answers), `leadProgress_`, `dayLogSalesforce_`, `workdayNoteBars_`, `sfkDayFor_`, `deskToday_`, `gameCloses_`, `ownerNoted_`, `coverReturn_`. A new reader of notes must use `sfkNotes_`, never a bare FeedItem query, or a note on the trail is invisible to it.
+  - **The trail on screen:** his waiting items carry the whole trail (`wdTrail_`, `LEAD.TRAIL` 25, oldest first, folded); the agent's tasks, the staff card (`WD_ONE.NOTES`) and the unit card (`WD_UNIT.NOTES`) show 25 notes oldest first with "The Chatter trail, oldest first. Your note goes on this trail." Tests: `tests/test-trail-notes.js`, `tests/e2e-workday.js`.
 - **Claude reviews every inbox item, and the deep drafts go a wave at a time (23 Oct 2026, 2026-10-23b).** Ricky, Fri 8:53am, on My day's inbox: "i am not seeing any intelligence built in to post after analyzing ... all ai claude codes are in and must be intelligent"; 8:56: "also reviewing the inbox scrub if a task should be open for a person to follow up and what was done". The scrub sorted each mail and left the note box empty.
   - **The review (`ixDeepWarm_`, kept as `ix_deep_<day>`, keyed by the inbox Key).** For each open item (up to `IX_DEEP.MAX` 24), on the drafting model: the Gmail conversation from the item's Link, last `IX_DEEP.THREAD` messages, replies included (`ixThread_` via `inboxParse_`); the task it is about (`ixTaskFor_`: the one made from it, else the newest open task whose Subject has the same 7–13 digit policy number, else the client named in capitals in the mail's subject), with `umTaskContext_`, its whole Chatter (`cmdChatter_`, `IX_DEEP.NOTES`), the playbook, and `bmDeepMail_` for other mail about the client. Claude returns `done` (what has been done, by whom, when), `read`, `to` (a desk from `cmdTargets_`; anything else falls back to the task's holder, the scrub's owner, then ricky), `task` / `task_subject` / `due` (0–5 working days), `post` (the Chatter note in his voice), `check`, `action` (post, task, call, reply, decide, close, wait). Redrafted only when the item's Received, TaskId or Status changes. `INBOX_STAFF` is the staff line both inbox prompts share.
   - **When.** 4:40 the deep drafts alone; the next run (4:50) `inboxScrub_(day, 'pre')` then the review (`ixdeep_<day>`), ready for 5:00; then every hour at `IX_DEEP.SLOT_MIN` (:35, `ixai_hr`), never in the run that did the :20 drafts (`aiRan`). From the editor, `reviewMyInboxNow()`; `draftMyRepliesNow()` now does the inbox too when there is time left.

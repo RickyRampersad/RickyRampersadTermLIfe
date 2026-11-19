@@ -86,7 +86,9 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     const rk = model({ sid: 'ricky', name: 'Ricky Rampersad', first: 'Ricky', fullLabel: 'Open My day', barsLabel: 'your own notes each day',
       progress: { lead: true, sf: true, target: 20, cleared: 9, you: 6, team: 3, pct: 45, dayPct: 54, behind: true, waiting: 11, asks: 7, inbox: 3, mineDue: 1, yourNotes: 6,
         sys: { 'chases in your voice': 15, 'absence handovers': 11, 'questions from Branch Intelligence': 30 } },
-      waiting: [{ k: 'ask', id: '00TA', s: 'Orphan response - Radicia Julal', by: 'Sasha Lalla-Jagassar', said: 'Mr Rampersad, which agent should take Radicia Julal?', read: 'Sasha has asked since 10:54; Waterloo area.', next: 'Name the agent today', draft: 'Sasha, assign Radicia Julal to Fawwaz. Please send the introduction today.' },
+      waiting: [{ k: 'ask', id: '00TA', s: 'Orphan response - Radicia Julal', by: 'Sasha Lalla-Jagassar', said: 'Mr Rampersad, which agent should take Radicia Julal?', read: 'Sasha has asked since 10:54; Waterloo area.', next: 'Name the agent today', draft: 'Sasha, assign Radicia Julal to Fawwaz. Please send the introduction today.', depth: 'full',
+          trail: [{ by: 'Sales Support · Sasha Lalla', day: 'Mon 16 Nov', text: 'Client called back, wants an agent in Waterloo.', reply: false }, { by: 'Ricky Rampersad', day: 'Tue 17 Nov', text: 'Which areas does she cover?', reply: true }] },
+        { k: 'ask', id: '00TC', s: 'Courtesy Reminder - Health Insurance Renewal', by: 'Elizabeth Lee', said: 'called client, will pay online at end of November', read: '', next: '', draft: '', trail: [] },
         { k: 'inbox', id: 'kB-20261023', s: 'Dear Mr. Bisnath,', by: 'kamla.dookran@myguardiangroup.com', said: 'Review and approve the reply', done: 'Kamla drafted the reply.', next: 'open a task for Kamla, due Mon 26 Oct', draft: 'Kamla, the reply reads well. Send it on Monday.', to: 'kamla' }],
       desks: [{ sid: 'kamla', first: 'Kamla' }, { sid: 'sasha', first: 'Sasha' }, { sid: 'ricky', first: 'Me' }],
       achieved: [{ k: 'note', s: 'Note on CDD form', at: '11:41am' }, { k: 'email', s: 'To Natalie Ramdhan: Brentwood Towers', at: '9:22am', g: 'Other' }],
@@ -102,7 +104,17 @@ const model = (o = {}) => Object.assign({ ok: true, v: '2026-10-23c', sid: 'sash
     ok('two colours: by him, then by the team', Math.abs(yw / bw - 0.30) < 0.03 && Math.abs(tw / bw - 0.15) < 0.03, (yw / bw).toFixed(2) + ' / ' + (tw / bw).toFixed(2));
     ok('who still waits, and the staff waiting on his word', /11<\/b> still waiting on you/.test(await page.innerHTML('#pace')) && /<b>7<\/b>staff waiting on your word/.test(await page.innerHTML('#chips')));
     ok('what the system did for him, apart', /Done for you by the system today: <b>30<\/b> questions from Branch Intelligence · <b>15<\/b> chases in your voice/.test(await page.innerHTML('#sys')));
-    ok('waiting on him, with Claude\'s words in the box', (await page.$$('#waiting .wt')).length === 2 && (await page.$eval('#waiting .wt textarea', e => e.value)).startsWith('Sasha, assign Radicia Julal to Fawwaz'));
+    ok('the whole Chatter trail on a waiting item, folded, oldest first (19 Nov 2026)', /The Chatter trail · 2 notes/.test(await page.textContent('#waiting .wt')) && /Client called back[\s\S]*Which areas/.test(await page.textContent('#waiting .wt .trail')));
+    ok('an item Claude has not written yet: a Draft with Claude button, not a dead end', /Draft with Claude/.test(await page.textContent('#waiting .wt[data-id="00TC"]')) && /Tap Draft with Claude/.test(await page.getAttribute('#waiting .wt[data-id="00TC"] textarea', 'placeholder')));
+    await page.unroute(/script\.google\.com\/macros/);
+    await page.route(/script\.google\.com\/macros/, r => { const pd = r.request().postData() || '';
+      if (/act=draft/.test(pd)) { posted.push(pd); return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, draft: 'Elizabeth, noted: confirm the payment on 30 Nov and close it then.', next: 'Elizabeth confirms 30 Nov' }) }); }
+      if (r.request().method() === 'POST') { posted.push(pd); return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, res: "posted on Sasha's task" }) }); }
+      return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(rk) }); });
+    await page.click('#waiting .wt[data-id="00TC"] [data-draft]'); await page.waitForTimeout(600);
+    ok('one tap: Branch Intelligence writes it into the box', posted.length === 1 && /act=draft/.test(posted[0]) && /id=00TC/.test(posted[0]) && (await page.$eval('#waiting .wt[data-id="00TC"] textarea', e => e.value)).startsWith('Elizabeth, noted'), posted[0]);
+    posted = [];
+    ok('waiting on him, with Claude\'s words in the box', (await page.$$('#waiting .wt')).length === 3 && (await page.$eval('#waiting .wt textarea', e => e.value)).startsWith('Sasha, assign Radicia Julal to Fawwaz'));
     ok('a mail\'s note has the desk Claude chose', (await page.$eval('#waiting .wt[data-k="inbox"] select', e => e.value)) === 'kamla');
     ok('the team, each against the day', (await page.$$('.team .row')).length === 3 && /absent/.test(await page.textContent('.team')) && /6\/14/.test(await page.textContent('.team')));
     ok('his notes and e-mails among what he achieved; his bars are his notes', /E-mail · 9:22am/.test(await page.textContent('#main')) && /your own notes each day/.test(await page.textContent('#main')));

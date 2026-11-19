@@ -76,7 +76,7 @@ r = env.wdUnitAct_(person, 'akaash', DAY, { sub: 'close', id: '00TD1', text: 'Sp
 ok('with one, it is closed for Darryl, his note the closing note', r.ok && r.closed && patched.some(p => p[0] === '00TD1' && p[1].Status === 'Completed') && /closed for Darryl/.test(inserted[inserted.length - 1][1].Body), JSON.stringify(r));
 let asked = 0; env.umReplyDraft_ = (sid, day, it, o) => { asked++; return { ok: true, reply: 'Azariah, ' + it.a + '...', said: o.said }; };
 r = env.wdUnitAct_(person, 'akaash', DAY, { sub: 'draft', id: '00TD2', said: 'chase uw' });
-ok('Draft my reply: Claude, for the task, with his words', r.ok && asked === 1 && r.said === 'chase uw');
+ok('Draft my reply: refused for the Unit Manager (19 Nov 2026: Claude is the Branch Manager\'s alone)', !r.ok && asked === 0, JSON.stringify(r));
 console.log('\nA task for an agent with nothing open:\n');
 r = env.wdUnitAct_(person, 'akaash', DAY, { sub: 'new', agent: 'Rajiv Soodoo', subject: 'Boodram - signature for 1000123456', type: 'Pendings', text: 'Azariah, Rajiv brings the signed page Friday.' });
 const task = inserted.filter(x => x[0] === 'Task').pop();
