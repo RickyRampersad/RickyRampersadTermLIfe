@@ -1,14 +1,14 @@
 {
  "voices": {
-  "xl30": "en-US-AndrewMultilingualNeural"
+  "xl30b": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "xl30": "-4%"
+  "xl30b": "-4%"
  },
  "check": true,
  "films": {
-  "xl30": [
-   "One day, the people you love will get that phone call. Leave them a blessing, not a bill. Guardian's Xpress Life plan gives up to five hundred thousand dollars of cover, with no medical exam. Prices start under six dollars a day, and full cover builds by year three. Four taps on WhatsApp tell you if you can apply. A licensed advisor from our branch takes it from there. Just scan the QR code today."
+  "xl30b": [
+   "One day, the people you love will get that phone call. Leave them a blessing, not a bill. With Guardian's Xpress Life plan, you get up to five hundred thousand dollars of cover, with no medical exam. Prices begin under six dollars a day, and full cover builds by year three. Four taps on WhatsApp tell you if you can apply. A licensed advisor from our branch takes it from there. Just scan the QR code today."
   ]
  }
 }
