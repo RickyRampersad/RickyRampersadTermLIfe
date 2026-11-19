@@ -1,15 +1,16 @@
 {
  "voices": {
-  "xlwafix": "en-US-AndrewMultilingualNeural"
+  "xlwa2": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "xlwafix": "+0%"
+  "xlwa2": "+0%"
  },
  "check": true,
  "films": {
-  "xlwafix": [
-   "Applying for Xpress Life is now as easy as sending a WhatsApp message. Send yours to Help, eight six eight.",
-   "Tap male or female. Then pick the cover your family needs, from one hundred thousand to five hundred thousand dollars."
+  "xlwa2": [
+   "If you can apply, you get a link. One tap opens your application, with your answers already filled in. You only pick your exact age.",
+   "You apply in about five minutes. Guardian's underwriters review every application, and our branch keeps you posted.",
+   "Behind the scenes, the chat is handed to our team straight away. Kamla gets your details, a note and a follow up task in Salesforce, so nobody waits."
   ]
  }
 }
