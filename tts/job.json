@@ -1,14 +1,29 @@
 {
  "voices": {
-  "xlmc2": "en-US-AndrewMultilingualNeural"
+  "vsbrian": "en-US-BrianMultilingualNeural",
+  "vsava": "en-US-AvaMultilingualNeural",
+  "vsemma": "en-US-EmmaMultilingualNeural",
+  "vsandrew": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "xlmc2": "+0%"
+  "vsbrian": "-4%",
+  "vsava": "-4%",
+  "vsemma": "-4%",
+  "vsandrew": "-8%"
  },
  "check": true,
  "films": {
-  "xlmc2": [
-   "Scan the QR code on your screen, or message Help, eight six eight, today. Leave them a blessing, not a bill."
+  "vsbrian": [
+   "One day, the people you love will get that phone call. Will it leave them a bill, or a blessing? With Guardian's Xpress Life plan, your family is covered from one hundred thousand to five hundred thousand dollars, and prices start under six dollars a day. Four quick taps on WhatsApp tell you if you can apply."
+  ],
+  "vsava": [
+   "One day, the people you love will get that phone call. Will it leave them a bill, or a blessing? With Guardian's Xpress Life plan, your family is covered from one hundred thousand to five hundred thousand dollars, and prices start under six dollars a day. Four quick taps on WhatsApp tell you if you can apply."
+  ],
+  "vsemma": [
+   "One day, the people you love will get that phone call. Will it leave them a bill, or a blessing? With Guardian's Xpress Life plan, your family is covered from one hundred thousand to five hundred thousand dollars, and prices start under six dollars a day. Four quick taps on WhatsApp tell you if you can apply."
+  ],
+  "vsandrew": [
+   "One day, the people you love will get that phone call. Will it leave them a bill, or a blessing? With Guardian's Xpress Life plan, your family is covered from one hundred thousand to five hundred thousand dollars, and prices start under six dollars a day. Four quick taps on WhatsApp tell you if you can apply."
   ]
  }
 }
