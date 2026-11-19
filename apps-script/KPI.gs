@@ -556,12 +556,8 @@ var SCHEDULE = {
   },
   azariah: {
     // Sales Support 3. 8 to 4, lunch 1 to 2.
-    // From 19 November 2026 (Ricky: "Azariah's morning KPI will be that of innovation on this new
-    // platform ... 1.5 hours every morning ... a report as to what was learned, what has been
-    // implemented, and what is the initiative"). Her Pendings and Scripts tasks went to Liz and
-    // Sasha the same day, so Pendings is no longer her KPI.
     hours: '8am – 4pm', lunch: '1:00 – 2:00pm',
-    blocks: { KPI1: { time: '8am – 4pm', focus: 'Innovation on the HELP 868 / respond.io platform: 1.5 hours every morning after the managers\' correspondence, then a written report (what was learned, what was implemented, the initiative); servicing, Query Pal and surveys after', kpi: 'Innovation&Creativity' } }
+    blocks: { KPI1: { time: '8am – 4pm', focus: 'Pendings, increases and group apps, reinstatements and lapses, Query Pal and surveys, reports', kpi: 'Pendings' } }
   },
   kamla: {
     // The BMA: 8 to 5 (Ricky, 17 October 2026). She manages Sales Support 1, 2
@@ -625,7 +621,6 @@ var SCHEDULE = {
 var BLOCK_TYPE = {
   'Renewa/PDl/Bill':                                 'Renewa/PDl/Bill',
   'Pendings':                                        'Pendings',
-  'Innovation&Creativity':                           'Innovation&Creativity',
   'Scripts/CB':                                      'Scripts/CB',
   'Lic/Staffing/SA/HR':                              'Lic/Staffing/SA/HR',
   'Opportunity':                                     'Opportunity',
@@ -17265,7 +17260,7 @@ function wdNews_(sid, day, inM) {
  *  numbers for the day. A task opens as a card: its notes, what to do, Draft my reply (Claude), Post (on its Chatter, headed as
  *  his and the owner mentioned, mgrPost_), Close it for the agent (umPostOrClose_'s rules). With no task for what he needs, he
  *  opens one for the agent (wdUnitOpen_): in a desk's name by the type of work, his note on it first. No performance figures. */
-var WD_UNIT = { TTL: 180, TL: 30, NOTES: 8, TASKS: 500, OWNER: { 'Pendings': 'sasha', 'Scripts/CB': 'elizabeth', 'Renewa/PDl/Bill': 'sasha', 'New Application Process': 'elizabeth', 'Servicing': 'elizabeth' } };
+var WD_UNIT = { TTL: 180, TL: 30, NOTES: 8, TASKS: 500, OWNER: { 'Pendings': 'azariah', 'Renewa/PDl/Bill': 'sasha', 'New Application Process': 'elizabeth', 'Servicing': 'elizabeth' } };
 function wdUnitDesk_(ty) { return WD_UNIT.OWNER[ty] || 'kamla'; }
 /** The unit's open work and the day's notes on it, kept WD_UNIT.TTL seconds. */
 function wdUnit_(sid, day) {
