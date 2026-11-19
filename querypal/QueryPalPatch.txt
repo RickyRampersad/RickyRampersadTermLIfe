@@ -2360,6 +2360,9 @@ function qpChaseCc_(row, mgr, sup) {
   add(row[10]);                     // col 11 servicing agent
   add(mgr);
   add(BRANCH_SUPPORT);
+  /* Section 23: the agent's own support follows the case through the chase as
+     well, not just the first email. Unknown agent gives '', which add ignores. */
+  try { add(qpAgentSupport_(row[10])); } catch (e4) {}
   /* Sales support was on the original routed email and then fell off every
      chase, because the fallback CC was only [agent, manager, branch support].
      They drive the branch's half of these, so they belong on the chase too. */
@@ -3456,6 +3459,187 @@ function qpWarmHeldReport() {
         + 'and said the branch was working on something nobody had received.\n\n' + out.join('\n')
         + '\n\nWith edit 32 in, the next sweep sends each one as the request itself.'
       : 'Every open case has reached its department. Nothing is being held back.'
+  ].join('\n');
+  Logger.log(msg);
+  return msg;
+}
+
+
+/* ═══ 23. A SUPPORT CASE GOES TO THE AGENT'S OWN SUPPORT ═══
+   A support-type query goes to rickyrampersadsalessupport@myguardiangroup.com,
+   a shared mailbox, and sendRoutedEmail then deletes that address from the CC
+   so it appears once. Four people read that mailbox and each agent already has
+   one of them assigned. A request landing in a shared tray has to be picked up
+   before it can be worked; a request addressed to the person whose job it is
+   does not.
+
+   So: TO is the agent's assigned support, and the shared mailbox moves to CC
+   rather than being dropped. Nobody loses sight of anything — the mailbox still
+   sees every one — but there is a name on it.
+
+   WHERE THE ASSIGNMENT COMES FROM. In Salesforce the agents are not Users;
+   they are Contacts, and the Contact's OWNER is their support. Premchand
+   Dookran's contact is owned by Sasha Lalla-Jagassar, Fawwaz Mohamed's by
+   Azariah Griffith. That is the mapping, and on 19 November it covers 36 of
+   the 39 people on the Agent Codes tab.
+
+   Apps Script cannot read Salesforce without a connected app and a stored
+   refresh token, and a token in Script Properties is a credential this branch
+   would then own for ever. The mapping also changes rarely — an agent moves
+   support maybe once. So it lives on a sheet tab, "Agent Support", read the
+   same way Agent Codes and KPI Assignments already are, and refreshed from
+   Salesforce when it moves. No credential, and it is visible to the branch.
+
+   TWO THINGS THE SALESFORCE DATA WILL DO IF TRUSTED BLINDLY, both real:
+
+   An agent's email sits on contacts that are not the agent. varun.seegolam@
+   is on three: Varun himself, owned by Azariah Griffith, and two clients with
+   his address on file, owned by Anita Sankar and Nyomi Hutchinson — neither of
+   whom works at this branch. alyssa.joseph@ is on a client owned by Felicia
+   Rampersad. Taking the first contact that matches an email would send branch
+   mail to another branch's staff.
+
+   So the support address is checked against QP_SUPPORT_STAFF, the branch's own
+   list, exactly as a department override is checked against the branch's own
+   departments. Anything else is ignored and the shared mailbox is used — the
+   behaviour this replaces, which is never wrong, only slower.
+
+   Code.gs edit 35, one line, in sendRoutedEmail. The line that sets `to` and
+   `cc` together hands both to qpSupportRoute_. The string to search for is in
+   PATCH-INSTRUCTIONS.md under edit 35; search Code.gs with it, not this file.
+
+   The chase needs no edit: qpChaseCc_ went in with edit 27 and now adds the
+   agent's support to every follow-up CC by itself.                           */
+
+var QP_SUPPORT_TAB = 'Agent Support';
+var QP_SUPPORT_MAP = null;
+
+/* The only addresses this branch may route a support case to. A name on this
+   list is a person at Branch 26000 who reads the sales support mailbox. */
+var QP_SUPPORT_STAFF = [
+  'azariah.griffith@myguardiangroup.com',
+  'elizabeth.lee@myguardiangroup.com',
+  'sasha.lalla-jagassar@myguardiangroup.com',
+  'kamla.dookran@myguardiangroup.com'
+];
+
+function qpSupportStaffOk_(addr) {
+  addr = String(addr || '').toLowerCase().trim();
+  if (!addr) return false;
+  for (var i = 0; i < QP_SUPPORT_STAFF.length; i++) {
+    if (QP_SUPPORT_STAFF[i].toLowerCase() === addr) return true;
+  }
+  return false;
+}
+
+/* agent email -> { name, support, supportName }, read once per run.
+   Headings are matched by name so the columns can be reordered. */
+function qpSupportMap_() {
+  if (QP_SUPPORT_MAP) return QP_SUPPORT_MAP;
+  var map = {};
+  try {
+    var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(QP_SUPPORT_TAB);
+    if (sh && sh.getLastRow() > 1) {
+      var w = Math.max(2, Math.min(8, sh.getLastColumn()));
+      var d = sh.getRange(1, 1, sh.getLastRow(), w).getValues();
+      var head = d[0].map(function (h) { return String(h || '').toLowerCase().trim(); });
+      var col = function (want) {
+        for (var i = 0; i < head.length; i++) if (head[i].indexOf(want) > -1) return i;
+        return -1;
+      };
+      var cAg = col('agent email'), cAn = col('agent name'),
+          cSu = col('support email'), cSn = col('support name');
+      if (cAg < 0) cAg = 0;
+      if (cSu < 0) cSu = 3;
+      for (var r = 1; r < d.length; r++) {
+        var ag = String(d[r][cAg] || '').toLowerCase().trim();
+        var su = String(d[r][cSu] || '').trim();
+        if (!ag || ag.indexOf('@') < 0) continue;
+        map[ag] = { name: cAn > -1 ? String(d[r][cAn] || '') : '',
+                    support: su,
+                    supportName: cSn > -1 ? String(d[r][cSn] || '') : '' };
+      }
+    }
+  } catch (e) { /* no tab yet: every case falls back to the shared mailbox */ }
+  QP_SUPPORT_MAP = map;
+  return map;
+}
+
+function qpSupportMapClear_() { QP_SUPPORT_MAP = null; }
+
+/* The address to send this agent's support case to, or '' to use the mailbox. */
+function qpAgentSupport_(agentEmail) {
+  var k = String(agentEmail || '').toLowerCase().trim();
+  if (!k || k.indexOf('@') < 0) return '';
+  var hit = qpSupportMap_()[k];
+  if (!hit || !hit.support) return '';
+  return qpSupportStaffOk_(hit.support) ? hit.support : '';
+}
+
+/* TO and CC for a routed email. `support` is isSupportCase_'s verdict and
+   ccSet is the map sendRoutedEmail has already built. */
+function qpSupportRoute_(support, d, ccSet) {
+  var set = {};
+  for (var k in (ccSet || {})) set[String(k).toLowerCase()] = ccSet[k];
+
+  var to;
+  if (!support) {
+    to = (d && d.departmentEmail) || '';
+  } else {
+    var mine = qpAgentSupport_(d && d.agentEmail);
+    to = mine || ((typeof RR_SUPPORT !== 'undefined') ? RR_SUPPORT : ((d && d.departmentEmail) || ''));
+    /* The shared mailbox is copied, not dropped: four people watch it and the
+       branch's own record of the request lives there. */
+    if (typeof RR_SUPPORT !== 'undefined') set[RR_SUPPORT.toLowerCase()] = RR_SUPPORT;
+  }
+
+  if (to) delete set[String(to).toLowerCase()];     // never To and CC at once
+  var out = [];
+  for (var k2 in set) out.push(set[k2]);
+  return { to: to, cc: out.join(','), named: !!(support && qpAgentSupport_(d && d.agentEmail)) };
+}
+
+/* Who each agent's support case will reach, and who still falls back.
+   Read-only. Run it after pasting or editing the Agent Support tab. */
+function qpSupportAudit() {
+  var map = qpSupportMap_();
+  var named = [], fell = [], bad = [];
+  for (var ag in map) {
+    var su = map[ag].support;
+    if (!su) fell.push('  ' + ag + '  (no support set)');
+    else if (!qpSupportStaffOk_(su)) bad.push('  ' + ag + '  ->  ' + su + '  NOT on the branch list');
+    else named.push('  ' + ag + '  ->  ' + su);
+  }
+  named.sort(); fell.sort(); bad.sort();
+
+  var codes = 0, missing = [];
+  try {
+    var tab = codeTable_();
+    for (var i = 0; i < tab.length; i++) {
+      var em = String(tab[i].email || '').toLowerCase().trim();
+      if (!em) continue;
+      codes++;
+      if (!map[em]) missing.push('  ' + em);
+    }
+  } catch (e) {}
+  missing.sort();
+
+  var msg = ['AGENT SUPPORT ROUTING — read-only, nothing is sent', '',
+    'Tab: "' + QP_SUPPORT_TAB + '"   rows read: ' + named.concat(fell, bad).length,
+    '',
+    named.length ? named.length + ' agent(s) route to a named person:\n' + named.join('\n')
+                 : 'No agent routes to a named person yet.',
+    bad.length ? '\n' + bad.length + ' row(s) name somebody who is NOT branch support.\n'
+               + 'These are IGNORED and use the shared mailbox. Fix the tab or add the\n'
+               + 'person to QP_SUPPORT_STAFF if they really are support here:\n' + bad.join('\n') : '',
+    fell.length ? '\n' + fell.length + ' row(s) have no support set, so they use the mailbox:\n'
+                + fell.join('\n') : '',
+    missing.length ? '\n' + missing.length + ' of ' + codes + ' people on Agent Codes are not on this tab\n'
+                   + 'at all. Their support cases go to the shared mailbox, as before:\n'
+                   + missing.join('\n') : '',
+    '',
+    'Anything not routed to a named person behaves exactly as it does today.',
+    'The shared mailbox is always copied, so nothing is hidden from it.'
   ].join('\n');
   Logger.log(msg);
   return msg;

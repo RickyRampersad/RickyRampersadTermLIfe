@@ -1371,3 +1371,78 @@ qpWarmHeldReport()
 
 Read-only. It names every open case whose department never received it, and how
 many progress updates already went out saying otherwise.
+
+---
+
+### 35 — a support case goes to the agent's own support
+
+**One line.** A support-type query goes to the shared mailbox
+`rickyrampersadsalessupport@myguardiangroup.com`, and `sendRoutedEmail` then
+deletes that address from the CC. Four people read that tray and every agent
+already has one of them assigned, so the request has to be picked up before it
+can be worked.
+
+After this edit the request is **addressed to the agent's own support**, and the
+shared mailbox is **copied instead of dropped** — nobody loses sight of
+anything, but there is a name on it.
+
+Ctrl+F in `Code.gs` for this line (it is inside `sendRoutedEmail`):
+
+```js
+var to = support ? RR_SUPPORT : d.departmentEmail, cc = Object.values(ccSet).join(',');
+```
+
+and change it to:
+
+```js
+var __r = qpSupportRoute_(support, d, ccSet); var to = __r.to, cc = __r.cc;
+```
+
+**Confirm Ctrl+F says 1 of 1 before you replace it.** The line above it —
+`if (support) delete ccSet[RR_SUPPORT.toLowerCase()];` — can be left exactly as
+it is; `qpSupportRoute_` puts the mailbox back on the CC itself, so there is
+nothing to delete and nothing to break.
+
+The chase needs **no edit at all**. `qpChaseCc_` went in with edit 27 and now
+adds the agent's support to every follow-up CC by itself.
+
+### The "Agent Support" tab
+
+The mapping is a sheet tab, not a live Salesforce call. Apps Script cannot read
+Salesforce without a connected app and a stored refresh token, and that token
+would be a credential this branch then owns for ever. The mapping also moves
+rarely — an agent changes support perhaps once.
+
+In Salesforce the agents are **Contacts, not Users**, and the Contact's
+**Owner** is their support. On 19 November 2026 that covers 36 of the 39 people
+on the Agent Codes tab.
+
+Add a tab named exactly **`Agent Support`** and paste the table in, headings and
+all. The columns are matched by heading name, so they can be reordered:
+
+```
+Agent Email | Agent Name | Support Name | Support Email | Source
+```
+
+Then run:
+
+```
+qpSupportAudit()
+```
+
+Read-only. It lists who now routes to a named person, which rows point at
+somebody who is **not** branch support (those are ignored), and which people on
+Agent Codes are missing from the tab.
+
+**Why the branch list matters.** An agent's address sits on contacts that are
+not the agent. `varun.seegolam@` is on three: Varun himself, owned by Azariah
+Griffith, and two clients carrying his address on file, owned by Anita Sankar
+and Nyomi Hutchinson — neither of whom works at this branch. Taking the first
+contact that matches an email would send branch mail to another branch's staff.
+So every support address is checked against `QP_SUPPORT_STAFF` first, exactly
+as a department override is checked against the branch's own departments.
+Anything else is ignored and the shared mailbox is used — which is never wrong,
+only slower.
+
+If somebody joins or leaves support, edit `QP_SUPPORT_STAFF` at the top of
+section 23. The tab alone cannot grant anyone branch mail.
