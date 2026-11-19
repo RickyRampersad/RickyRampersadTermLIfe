@@ -1,17 +1,7 @@
 {
- "tts/out/xlwa2/01.mp3": [
+ "tts/out/xlwa3/01.mp3": [
   "en",
-  0.999,
-  "If you can apply, you get a link. One tap opens your application with your answers already filled in. You only pick your exact age."
- ],
- "tts/out/xlwa2/02.mp3": [
-  "en",
-  0.997,
-  "You apply in about five minutes. Guardians Underwriters review every application, and our branch keeps you posted."
- ],
- "tts/out/xlwa2/03.mp3": [
-  "en",
-  0.996,
-  "Behind the scenes, the chat is handed to our team straight away. Camille gets her details, a note, and a follow-up task in Salesforce, so nobody waits."
+  0.995,
+  "Behind the scenes, the chat goes straight to our team. The details, a note, and a follow-up task planned in Salesforce at once, so nobody waits."
  ]
 }
