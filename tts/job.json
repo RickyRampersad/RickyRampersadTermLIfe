@@ -1,16 +1,14 @@
 {
  "voices": {
-  "xlwa2": "en-US-AndrewMultilingualNeural"
+  "xlwa3": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "xlwa2": "+0%"
+  "xlwa3": "+0%"
  },
  "check": true,
  "films": {
-  "xlwa2": [
-   "If you can apply, you get a link. One tap opens your application, with your answers already filled in. You only pick your exact age.",
-   "You apply in about five minutes. Guardian's underwriters review every application, and our branch keeps you posted.",
-   "Behind the scenes, the chat is handed to our team straight away. Kamla gets your details, a note and a follow up task in Salesforce, so nobody waits."
+  "xlwa3": [
+   "Behind the scenes, the chat goes straight to our team. The details, a note and a follow up task land in Salesforce at once, so nobody waits."
   ]
  }
 }
