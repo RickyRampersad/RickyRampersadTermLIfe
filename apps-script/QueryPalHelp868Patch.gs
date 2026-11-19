@@ -27,7 +27,7 @@ function h868KeyOk_(key) {
 
 function h868Close_(ref, score, key) {
   if (!h868KeyOk_(key)) return json({ ok: false, error: 'refused' });
-  var hit = findRowByRef_(ref);
+  var hit = h868Find_(ref);
   if (!hit) return json({ ok: false, error: 'reference not found' });
   var sh = hit.sh, r = hit.r, now = new Date();
   var opened = sh.getRange(r, 3).getValue();
@@ -41,10 +41,35 @@ function h868Close_(ref, score, key) {
 
 function h868Reopen_(ref, key) {
   if (!h868KeyOk_(key)) return json({ ok: false, error: 'refused' });
-  var hit = findRowByRef_(ref);
+  var hit = h868Find_(ref);
   if (!hit) return json({ ok: false, error: 'reference not found' });
   hit.sh.getRange(hit.r, 4).setValue('Open');
   hit.sh.getRange(hit.r, 21).clearContent();
   hit.sh.getRange(hit.r, 22).clearContent();
   return json({ ok: true, ref: String(ref), status: 'Open' });
 }
+
+/* A reference can arrive with its subject shortened or re-spaced by WhatsApp, so match on the first three parts
+   (RRB/year/number) instead of the whole string. Row is returned without its values: callers use sh and r only. */
+function h868Find_(ref) {
+  var parts = String(ref || '').split('/');
+  if (parts.length < 3) return findRowByRef_(ref);
+  var key = parts.slice(0, 3).join('/').toUpperCase();
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return null;
+  var col = sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues();
+  for (var i = 0; i < col.length; i++) {
+    var v = String(col[i][0] || '').trim().toUpperCase();
+    if (v === key || v.indexOf(key + '/') === 0) return { sh: sh, r: i + 2, row: null };
+  }
+  return null;
+}
+
+/* ONE-LINE CHANGE IN doPost (29 Nov 2026 design, HELP 868 agent routing):
+   The HELP 868 assistant now sends "assignedTo": the first name of the agent's support person (their Salesforce
+   owner) when the sender is an agent, and "" for a client. In doPost, replace
+       const asg = assignFor_(d.queryType, d.category, d.department);
+   with
+       const asg = d.assignedTo ? { name: clean(d.assignedTo) } : assignFor_(d.queryType, d.category, d.department);
+   so "Assigned To" is the agent's support person, and the query-type pick from "KPI Assignments" still applies to
+   clients. The departments' automated e-mails are unchanged. The mapping lives in respond.io only: no lookup tab here. */
