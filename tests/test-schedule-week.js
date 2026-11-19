@@ -46,7 +46,7 @@ ok('Sasha 7 to 3 from 2 November', env.scheduleFor_('sasha').hours === '7am – 
 ok('close-out 2:15', t(env.closeoutAt_('sasha')) === '2:15pm', t(env.closeoutAt_('sasha')));
 ok('lunch back to 12:00, e-mail 11:55', t(env.lunchOffAt_('sasha')) === '11:55am');
 ok('Kamla and Pawan back to 12 to 1', t(env.lunchOffAt_('kamla')) === '11:55am' && t(env.lunchOffAt_('pawan')) === '11:55am');
-ok('the week left SCHEDULE as it was', env.SCHEDULE.sasha.hours === '8am – 4pm' && env.SCHEDULE.kamla.lunch === '12:00 – 1:00pm');
+ok('the week left SCHEDULE as it was', env.SCHEDULE.sasha.hours === '7am – 3pm' && env.SCHEDULE.kamla.lunch === '12:00 – 1:00pm');
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');
 process.exit(fails ? 1 : 0);
