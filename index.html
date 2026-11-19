@@ -1379,7 +1379,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
       <a href="#portals">Portals</a>
       <a href="#faq">FAQ</a>
       <a class="nav-tel" href="tel:+18686785921"><svg aria-hidden="true" focusable="false"><use href="#i-phone"/></svg>(868)&nbsp;678-5921</a>
-      <a class="btn btn-1" href="#quotes">Get a Quote</a>
+      <a class="btn btn-1" href="#quote-lines">Get a Quote</a>
     </div>
     <button class="nav-burger" id="burger" aria-label="Open menu" aria-expanded="false">
       <svg aria-hidden="true" focusable="false" width="24" height="24"><use href="#i-menu"/></svg>
@@ -1398,7 +1398,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
       <h1 data-words>Protecting your <em>family</em> and everything else that matters to you</h1>
       <p class="hero-sub">Life, critical illness, health, pensions, motor, property and employee benefits — with online quotes and applications you can start from your phone in minutes.</p>
       <div class="hero-cta">
-        <a class="btn btn-1" href="#quotes">Request a Quote<svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-1" href="#quote-lines">Request a Quote<svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a>
         <a class="btn btn-2 ext" href="https://factfind360.com" target="_blank" rel="noopener">Needs Analysis</a>
       </div>
       <ul class="hero-marks">
@@ -1592,7 +1592,7 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
     </div>
   </div>
 
-  <h3 class="group-h">Quote it yourself, online <span>six systems live</span></h3>
+  <h3 class="group-h" id="quote-lines" style="scroll-margin-top:6rem">Quote it yourself, online <span>seven systems live</span></h3>
   <div class="rows">
     <a class="row rise" href="/xpresslife/">
       <span class="row-ic"><svg aria-hidden="true" focusable="false"><use href="#i-heart"/></svg></span>
@@ -2297,7 +2297,9 @@ dialog::backdrop { background: hsl(var(--sh) / .34); }
 <script src="/orphan-video/player.js" defer></script>
 <!-- rrb-views -->
 <script>
-(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{
+(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;
+/* A real visit only. location.pathname of a file:// preview is a filesystem path, which put 299 rows on the sheet; a local test server put 20 more. The guard above checks the COUNTER's address, never the page's own. */
+if(location.protocol.indexOf('http')!==0||/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname))return;try{
 (new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
 }catch(e){}})();
 </script>

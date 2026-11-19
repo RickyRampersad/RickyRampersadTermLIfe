@@ -333,7 +333,9 @@ def page(f, common):
 
 <!-- rrb-views -->
 <script>
-(function(){{var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{{
+(function(){{var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;
+/* A real visit only. location.pathname of a file:// preview is a filesystem path, which put 299 rows on the sheet; a local test server put 20 more. The guard above checks the COUNTER's address, never the page's own. */
+if(location.protocol.indexOf('http')!==0||/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname))return;try{{
 (new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
 }}catch(e){{}}}})();
 </script>
@@ -473,7 +475,9 @@ def index(forms):
 
 <!-- rrb-views -->
 <script>
-(function(){{var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{{
+(function(){{var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;
+/* A real visit only. location.pathname of a file:// preview is a filesystem path, which put 299 rows on the sheet; a local test server put 20 more. The guard above checks the COUNTER's address, never the page's own. */
+if(location.protocol.indexOf('http')!==0||/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname))return;try{{
 (new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
 }}catch(e){{}}}})();
 </script>

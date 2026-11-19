@@ -666,6 +666,109 @@ page that was behaving correctly, the morning the beacons were wired. Never key
 it on the `/exec` URL: that deployment id changes whenever the counter is
 re-wired.
 
+**The beacon guards the COUNTER's address, never the page's own — and that put
+321 junk rows on the sheet** (19 November 2026). The guard has always been
+`if(u.indexOf('http')!==0)return;`, which asks whether the *counter* is wired.
+It never asked whether the *page* was being served. So every time a Claude
+session opened one of these pages from disk to look at it, the beacon fired
+with `location.pathname` — which for a `file://` URL is the filesystem path —
+and the sheet took a row reading `/home/user/RickyRampersadTermLIfe/index.html`.
+Measured over the 3,644 rows to 19 November: **299 `file://` previews and 20
+from a local test server**, 8.8% of the whole log, which is why CLAUDE.md has
+always had to tell the reader to drop them by hand. Those rows are mine, not
+visitors', and the fix is to not send them:
+
+```js
+if(u.indexOf('http')!==0)return;
+if(location.protocol.indexOf('http')!==0
+   ||/^(localhost|127\.0\.0\.1|\[?::1\]?)$/.test(location.hostname))return;
+```
+
+Both halves earn their place against the real log (299 and 20). The two
+`/__wire-test__` rows stay: those are `tools/wire-views.py`'s own probe.
+
+**The templates had to move with the pages, or the next build reverts it.**
+Three generators write a beacon — `tools/letters/build-letters.py`,
+`tools/adpages/build-adpages.py` and `tools/forms/build-forms.py` (in two
+places) — and a page rebuilt from an un-patched template comes back
+unguarded. `tools/careers/sync.py` only checks a beacon is present, and
+`tools/wire-views.py` only rewrites the URL, so neither needed changing.
+
+**`tools/wire-views.py` could not see `meetingflow/index.html` at all**, which
+is why that page sat on the inert placeholder while the other 185 were armed.
+Its matcher is `var\s+u\s*=\s*'` — a **single** quote — and that page's
+beacon was hand-written with double quotes and `try{` before `var u`. So the
+page was invisible to the one tool that arms a beacon, and no amount of
+re-running it would ever have fixed the page. The beacon there is normalised to
+the canonical shape now and the tool sees 186 of 186. **A page whose beacon is
+not the canonical shape is a page the wiring tool silently skips**: if
+`--check` ever reports fewer pages than `grep -l rrb-views` finds, that gap is
+the bug, not the count.
+
+**Proving it needs both halves, and the second is the one that matters.** A
+guard that blocks everything is indistinguishable from a guard that works until
+a real visit is tried. The check serves the page under its own hostname through
+Playwright's `route`, so `location.protocol` is `https:` and
+`location.hostname` is `rickyrampersadbranch.com`, and asserts the beacon
+**fires**; then `file://`, `127.0.0.1` and `localhost` and asserts it does not.
+And it keys on the counter's own deployment id, not on `script.google.com`:
+`/careers/` and `/agentmgt/` both call FactFind360's `action=pulse` on load to
+refresh their figures, so a probe that counts any request to that host reports
+two failures on two pages that are behaving correctly. That is the same mistake
+`tests/e2e-recruit-forms.js` already records one paragraph above, made again.
+
+## The quote CTAs land on the doors, not on the heading
+
+Decided 19 November 2026, after reading the counter: **239 homepage views in 18
+days against about 7 views of any quote form**, and of 81 referrals from
+outside, **not one has ever landed on a quote page**.
+
+**"Get a Quote" and "Request a Quote" now point at `#quote-lines`**, the
+`group-h` above the seven rows, carrying `scroll-margin-top:6rem` exactly as
+`#claim` already does. Measured on a 390px phone with the section's own
+numbers: before, tapping "Request a Quote" scrolled to the section heading and
+left **0 of 7 doors on screen**, the first of them 1.6 screens further down,
+because the section opens with the Xpress Life card and the FactFind360 card
+before the list. After, **5 of 7 are on screen** and the heading sits clear of
+the 57px nav.
+
+**The nav, the footer and the phone menu keep `#quotes`.** Those three say
+"Quotes" and are navigation: they should land on the section, promos first.
+The two that say *do it* are calls to action and land on the doors. That split
+is the whole change — three attribute values and one id.
+
+**It deliberately does NOT point at `/quote/`, and the reason is on that page.**
+`/quote/`'s own lede reads "Every one of these is our own form. It files on the
+branch's worklist the moment you press send." That is true of its six, and it
+would stop being true the moment health, personal accident and employee
+benefits were added — three live quote tools the homepage carries and `/quote/`
+does not, each on its own hosting chain
+(`healthquotee.netlify.app`, `personalaccident.netlify.app`,
+`www.employeebenefitstt.com`, all answering 200 on 19 November). Neither page is
+a superset of the other: `/quote/` alone has key person and the OAS enrolment.
+They are two pages with two different promises, and widening either to match
+the other breaks the promise rather than fixing the path.
+
+**An anchor is invisible to the counter**, so this change cannot be measured as
+a page view and the funnel still starts at the form. That is accepted: the
+visitor's path is worth more than my instrumentation, and the destinations
+themselves all carry beacons.
+
+**"six systems live" said six and there were seven.** The row list had gained
+Employee Benefits and the count in the heading had not moved. It reads seven.
+
+**Two measurement traps, both of which produced a confident wrong answer.**
+The first: the position of `#quotes` was read off its **line number** in
+`index.html` — 1573 of 2100, reported as "60% down the page". About 1,370 of
+those lines are CSS and the inline SVG sprite, so by rendered position it is
+the **third section of ten**, 4.35 screens down a 22.5-screen page. Never
+measure where something sits on a page by its offset in the file. The second:
+`document.querySelector('header')` returns `<header class="hero">`, which is
+1,144px tall, so a nav-height check built on it declared every door hidden on a
+page where five were plainly visible. The sticky bar is `nav#nav`. A comma list
+(`'header, .nav, nav'`) does not help: it returns the first match in **document
+order**, not the first selector that matches.
+
 ## The homepage carries no hours, and no festival banner stays
 
 Decided 8 November 2026: *"Remember we are never closed, why do you keep having
