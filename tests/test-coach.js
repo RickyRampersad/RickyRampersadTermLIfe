@@ -148,7 +148,7 @@ ok('a busy day: the most pressing 60 kept, all of them counted', JSON.parse(env.
 POSTS.length = 0; POSTS.push(...keepPosts);
 
 console.log('\nClaude for the managers and the BMA:\n');
-ok('Mr Rampersad, Kamla and Akaash; not the desks', env.claudeFor_('ricky') && env.claudeFor_('kamla') && env.claudeFor_('akaash') && !['sasha', 'azariah', 'elizabeth', 'pawan'].some(env.claudeFor_));
+ok('Mr Rampersad alone (19 Nov 2026: his credits); not Kamla, Akaash or the desks', env.claudeFor_('ricky') && !['kamla', 'akaash', 'sasha', 'azariah', 'elizabeth', 'pawan'].some(env.claudeFor_));
 env.replyPerson_ = sid => ({ staffId: sid, name: NM[sid] });
 env.bigPut_('sd_list_sasha_' + DAY, [{ id: '00TOLD1', s: 'Pending - 1000123456 RAMLAL', ty: 'Pendings' }]);
 let calls = 0; env.UrlFetchApp = { fetch: () => { calls++; return { getResponseCode: () => 200, getContentText: () => '{}' }; } };
@@ -157,9 +157,9 @@ let r = env.cardAct_({ rs: 'sasha', d: DAY, k: env.replySig_('sasha', DAY, 'card
 ok('a desk\'s card: no Claude, and nobody is called', !r.ok && /own words/.test(r.error) && calls === 0, JSON.stringify(r));
 const pb = { todo: 'x', label: 'Pending', close: '' };
 ok('her day page card has no Draft with Claude', !/Draft with Claude/.test(env.tcardHtml_({ id: '00T1', s: 'x', ty: 'Pendings' }, pb, DAY, 'sasha')) && /own words/.test(env.tcardHtml_({ id: '00T1', s: 'x' }, pb, DAY, 'sasha')));
-ok('Kamla\'s does', /Draft with Claude/.test(env.tcardHtml_({ id: '00T1', s: 'x', ty: 'Pendings' }, pb, DAY, 'kamla')));
+ok('Kamla\'s does not either (19 Nov 2026)', !/Draft with Claude/.test(env.tcardHtml_({ id: '00T1', s: 'x', ty: 'Pendings' }, pb, DAY, 'kamla')));
 r = env.umDraft_({ rs: 'sasha', d: DAY, k: env.replySig_('sasha', DAY, 'card'), id: '00TOLD1', via: 'card' });
-ok('Brief me on her day page: not for a desk', !r.ok && /managers and the BMA/.test(r.error) && calls === 0, JSON.stringify(r));
+ok('Brief me on her day page: not for a desk', !r.ok && /Branch Manager\'s alone/.test(r.error) && calls === 0, JSON.stringify(r));
 ok('the page is told who has Claude', /m\.claude = claudeFor_\(sid\)/.test(env.workdayModel_.toString()));
 
 console.log('\nWhat createTask_ marks:\n');

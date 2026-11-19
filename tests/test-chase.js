@@ -77,6 +77,7 @@ console.log('\nClaude writes the note when a key is set:\n');
 env.todayISO_ = () => '2026-10-23';
 posts.length = 0;
 env.PropertiesService.getScriptProperties().setProperty('ANTHROPIC_API_KEY', 'test-key');
+env.PropertiesService.getScriptProperties().setProperty('CLAUDE_SYSTEM', 'on');   // 19 Nov 2026: off by default, his credits
 let sentPrompt = '';
 env.UrlFetchApp = { fetch: (u, o) => { sentPrompt = JSON.parse(o.payload).messages[0].content;
   return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ content: [{ type: 'text', text: '{"00T1":"Elizabeth, the medical for Darryl\'s client has had no note since the 14th. Has the clinic booked it, and when will the results reach underwriting?"}' }] }) }; } };

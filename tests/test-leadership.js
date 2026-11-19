@@ -118,6 +118,8 @@ ok('her subject: lunch, close off, the morning\'s number', /^Lunch at 12:00pm ·
 ok('the close with no note, flagged', /Closed with no note \(1\): add one before lunch/.test(m.htmlBody) && /JANE ROE/.test(m.htmlBody));
 ok('what is still open, with what to do', /Still open today/.test(m.htmlBody) && /Change of address/.test(m.htmlBody) && /What to do:<\/b> Confirm the new address/.test(m.htmlBody));
 ok('the button to My workday, to her alone (and sales support copied, as every day mail)', /myworkday\/\?p=sasha/.test(m.htmlBody) && m.to === 'sasha@example.com', m.to + ' cc ' + m.cc);
+ok('an answer posted from My workday takes it off his list at once (19 Nov 2026)', !env.leadItems_(DAY).now.some(x => x.t === '00TB'));
+(function () { const lk = env.bigGet_(env.leadKey_(DAY), null); delete lk.answered; env.bigPut_(env.leadKey_(DAY), lk); })();   // ask it again, for the lunch mail
 env.sendLunchOff_({ staffId: 'ricky', name: 'Ricky Rampersad' }, DAY, new Date());
 m = mails[mails.length - 1];
 ok('his: what is cleared, who still waits, Claude\'s words, the button', /^Lunch at 12:00pm · \d+ of \d+ cleared/.test(m.subject) && /Still waiting on you/.test(m.htmlBody) && /Claude:<\/b> Kamla, yes: send it today/.test(m.htmlBody) && /myworkday\/\?p=ricky/.test(m.htmlBody) && m.to === 'ricky@example.com' && !m.cc, m.subject);

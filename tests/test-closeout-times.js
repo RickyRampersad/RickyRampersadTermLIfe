@@ -46,7 +46,7 @@ const fresh = () => { env.resetRequestMemo_ && env.resetRequestMemo_(); env.Cach
 // ---- the times --------------------------------------------------------------------------------
 const at = s => env.twelve_(env.mmText_(env.closeoutAt_(s)));
 // Liz 3:15 from 23 Oct 2026: her day is now 8 to 4 (it was 2:15 on her 7 to 3 day).
-ok('Sasha 1:15, Liz 3:15, Azariah 3:15, Kamla 4:15', at('sasha') === '1:15pm' && at('elizabeth') === '3:15pm' && at('azariah') === '3:15pm' && at('kamla') === '4:15pm',
+ok('Sasha 2:15 (her 7 to 3 day), Liz 3:15, Azariah 3:15, Kamla 4:15', at('sasha') === '2:15pm' && at('elizabeth') === '3:15pm' && at('azariah') === '3:15pm' && at('kamla') === '4:15pm',
   ['sasha', 'elizabeth', 'azariah', 'kamla'].map(at).join(' '));
 ok('Pawan as before: half an hour before his 5pm', at('pawan') === '4:30pm', at('pawan'));
 ok('Akaash\'s account of the day at 3:00, checked at 3:45', env.UM_EVENING_AT === 15 * 60 && env.CLOSEOUT.MGR_AT + env.CLOSEOUT.MGR_CHECK_AFTER === 15 * 60 + 45);
@@ -182,7 +182,7 @@ ok('nothing is posted by itself: the reply box starts empty, the button only fil
 const UMIT = [{ id: '00TUNIT00000000001', s: 'Production- 1000909221- Persad', a: 'Darryl Manick', due: '2026-10-19', late: true, k: 'pend' }];
 env.bigPut_(env.umItemsKey_('akaash', DAY) + '_eve', UMIT);
 const dr = env.umDraftsMake_('akaash', DAY, UMIT);
-ok('his comments: one per task, from Claude', dr['00TUNIT00000000001'] && /Go ahead with Thursday/.test(dr['00TUNIT00000000001'].note) && /Unit Manager/.test(asked[asked.length - 1].messages[0].content));
+ok('his comments: none from Claude (19 Nov 2026: Claude is the Branch Manager\'s alone)', !Object.keys(dr || {}).length);
 env.mgrRows_ = () => ({}); mails = [];
 ok('3:45, account not in: the reminder, with the comment to post', env.umCloseoutCheck_('akaash', DAY) === true && /^Your account of the day is not in yet · from the 3:00pm e-mail/.test(mails[0].subject) &&
   /Darryl Manick/.test(mails[0].htmlBody) && /Claude's reply/.test(mails[0].htmlBody), mails[0] && mails[0].subject);
