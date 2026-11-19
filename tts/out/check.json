@@ -1,7 +1,42 @@
 {
- "tts/out/xlwa4/01.mp3": [
+ "tts/out/xlad/01.mp3": [
   "en",
   0.997,
-  "Behind the scenes, the chat goes straight to our team with the details, a note, and a follow-up task and sales force. Nobody waits."
+  "One day, the people you love will get that phone call."
+ ],
+ "tts/out/xlad/02.mp3": [
+  "en",
+  0.98,
+  "Will it leave them a bill or a blessing?"
+ ],
+ "tts/out/xlad/03.mp3": [
+  "en",
+  0.998,
+  "Most people think life cover is expensive and full of medicals. It isn't."
+ ],
+ "tts/out/xlad/04.mp3": [
+  "en",
+  0.996,
+  "Express Live from Guardian gives your family up to $500,000 from under $6 a day. No medical exam."
+ ],
+ "tts/out/xlad/05.mp3": [
+  "en",
+  0.997,
+  "and now it starts on WhatsApp. For tabs, and you know if you can apply."
+ ],
+ "tts/out/xlad/06.mp3": [
+  "en",
+  0.995,
+  "Then one tap opens your rate and your application, already filled in."
+ ],
+ "tts/out/xlad/07.mp3": [
+  "en",
+  0.999,
+  "Our team picks it up straight away and Guardians Underwriters review every application. A real person every step."
+ ],
+ "tts/out/xlad/08.mp3": [
+  "en",
+  0.984,
+  "Message help 868 today. Leave them a blessing, not a bill."
  ]
 }
