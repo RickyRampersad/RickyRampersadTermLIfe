@@ -1,29 +1,14 @@
 {
  "voices": {
-  "vsbrian": "en-US-BrianMultilingualNeural",
-  "vsava": "en-US-AvaMultilingualNeural",
-  "vsemma": "en-US-EmmaMultilingualNeural",
-  "vsandrew": "en-US-AndrewMultilingualNeural"
+  "xlfull": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "vsbrian": "-4%",
-  "vsava": "-4%",
-  "vsemma": "-4%",
-  "vsandrew": "-8%"
+  "xlfull": "-8%"
  },
  "check": true,
  "films": {
-  "vsbrian": [
-   "One day, the people you love will get that phone call. Will it leave them a bill, or a blessing? With Guardian's Xpress Life plan, your family is covered from one hundred thousand to five hundred thousand dollars, and prices start under six dollars a day. Four quick taps on WhatsApp tell you if you can apply."
-  ],
-  "vsava": [
-   "One day, the people you love will get that phone call. Will it leave them a bill, or a blessing? With Guardian's Xpress Life plan, your family is covered from one hundred thousand to five hundred thousand dollars, and prices start under six dollars a day. Four quick taps on WhatsApp tell you if you can apply."
-  ],
-  "vsemma": [
-   "One day, the people you love will get that phone call. Will it leave them a bill, or a blessing? With Guardian's Xpress Life plan, your family is covered from one hundred thousand to five hundred thousand dollars, and prices start under six dollars a day. Four quick taps on WhatsApp tell you if you can apply."
-  ],
-  "vsandrew": [
-   "One day, the people you love will get that phone call. Will it leave them a bill, or a blessing? With Guardian's Xpress Life plan, your family is covered from one hundred thousand to five hundred thousand dollars, and prices start under six dollars a day. Four quick taps on WhatsApp tell you if you can apply."
+  "xlfull": [
+   "One day, the people you love will get that phone call. Will it leave them a bill, or a blessing? Most people think life cover costs a lot, and needs a medical. It often costs less than you think. Guardian's Xpress Life plan covers your family for one hundred thousand to five hundred thousand dollars. Prices start under six dollars a day, with no medical exam. Your cover builds over the first two years, and your premium stays the same for twenty years. After twenty years, you never pay again. You're covered anywhere in the world, and at about age one hundred, the cover is paid to you. And now it starts on WhatsApp. Just four quick taps tell you if you can apply. Then one tap opens your rate and your application, already filled in. A licensed Guardian advisor from our branch picks it up straight away, and Guardian's underwriters review every application. Scan the QR code on your screen, or message Help, eight six eight, today. Leave them a blessing, not a bill."
   ]
  }
 }
