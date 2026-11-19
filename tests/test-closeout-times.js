@@ -182,7 +182,7 @@ ok('nothing is posted by itself: the reply box starts empty, the button only fil
 const UMIT = [{ id: '00TUNIT00000000001', s: 'Production- 1000909221- Persad', a: 'Darryl Manick', due: '2026-10-19', late: true, k: 'pend' }];
 env.bigPut_(env.umItemsKey_('akaash', DAY) + '_eve', UMIT);
 const dr = env.umDraftsMake_('akaash', DAY, UMIT);
-ok('his comments: one per task, from Claude', dr['00TUNIT00000000001'] && /Go ahead with Thursday/.test(dr['00TUNIT00000000001'].note) && /Unit Manager/.test(asked[asked.length - 1].messages[0].content));
+ok('his comments: none from Claude (19 Nov 2026: Claude is the Branch Manager\'s alone)', !Object.keys(dr || {}).length);
 env.mgrRows_ = () => ({}); mails = [];
 ok('3:45, account not in: the reminder, with the comment to post', env.umCloseoutCheck_('akaash', DAY) === true && /^Your account of the day is not in yet · from the 3:00pm e-mail/.test(mails[0].subject) &&
   /Darryl Manick/.test(mails[0].htmlBody) && /Claude's reply/.test(mails[0].htmlBody), mails[0] && mails[0].subject);

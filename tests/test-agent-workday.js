@@ -49,7 +49,7 @@ ok('from the branch app, an agent outside the pilot is still told it is coming',
 
 console.log('\nThe day, as data:\n');
 ok('the seven lines, nothing projected yet', m.metrics.length === 7 && m.metrics.every(x => x.planned === '' && x.done === '') && m.metrics[0].p === 'Calls to make' && m.metrics[0].d === 'Calls made');
-ok('the tasks being worked: who has each, overdue, its last two notes and how many more', m.items.length === 2 && m.items[0].o === 'Sasha' && m.items[0].late && m.items[0].notes.length === 2 && m.items[0].more === 1 && m.items[0].notes[0].who === 'Sasha' && /Called, no answer/.test(m.items[0].notes[0].s), JSON.stringify(m.items[0]));
+ok('the tasks being worked: who has each, overdue, the whole Chatter trail oldest first (19 Nov 2026)', m.items.length === 2 && m.items[0].o === 'Sasha' && m.items[0].late && m.items[0].notes.length === 3 && m.items[0].more === 0 && m.items[0].notes[0].s === 'Older' && /Called, no answer/.test(m.items[0].notes[2].s), JSON.stringify(m.items[0]));
 ok('what the branch closed for him today, ticked on the list', m.closedToday.length === 1 && m.closedToday[0].o === 'Azariah' && m.items[1].done === true);
 ok('the tiles: 1 still being worked, 1 overdue, 1 closed', m.tiles.worked === 1 && m.tiles.late === 1 && m.tiles.closed === 1, JSON.stringify(m.tiles));
 ok('past 10:30 with no projection: said so', m.lateForPlan === true && m.absentAt === '10:30am');

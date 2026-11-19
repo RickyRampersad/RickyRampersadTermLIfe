@@ -25,7 +25,7 @@ env.sfkQuery_ = q => {
   if (/FROM Task WHERE Id IN/.test(q)) return inserts.filter(i => i.o === 'Task').map(i => ({ Id: i.id, IsClosed: !!closedIds[i.id] }));
   if (/FROM FeedItem/.test(q)) return feed;
   return []; };
-let n = 0; env.sfkInsert_ = (o, b) => { const id = (o === 'Task' ? '00T' : '0D5') + (++n); inserts.push({ o, id, b }); if (o === 'FeedItem') feed.push({ ParentId: b.ParentId, Body: b.Body, CreatedById: '005ME', CreatedDate: DAY + 'T10:00:00.000+0000' }); return id; };
+let n = 0; env.sfkInsert_ = (o, b) => { const id = (o === 'Task' ? '00T' : '0D5') + (++n); inserts.push({ o, id, b }); if (o === 'FeedItem' || o === 'FeedComment') feed.push({ ParentId: b.ParentId, Body: b.Body || b.CommentBody, CreatedById: '005ME', CreatedDate: DAY + 'T10:00:00.000+0000' }); return id; };
 const mails = []; env.mailSend_ = o => { mails.push(o); return 'relay'; };
 
 console.log('\nWhat is found on Neil\'s book:\n');
