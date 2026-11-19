@@ -1,15 +1,15 @@
 {
  "voices": {
-  "xladf": "en-US-AndrewMultilingualNeural"
+  "xladg": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "xladf": "+0%"
+  "xladg": "+0%"
  },
  "check": true,
  "films": {
-  "xladf": [
-   "With Xpress Life from Guardian, your family gets up to five hundred thousand dollars, from under six dollars a day. No medical exam.",
-   "And now it starts on WhatsApp. Just four quick taps tell you if you can apply."
+  "xladg": [
+   "With Guardian's Xpress Life plan, your family gets up to five hundred thousand dollars, from under six dollars a day. No medical exam.",
+   "Guardian's Xpress Life plan gives your family up to five hundred thousand dollars, from under six dollars a day. No medical exam."
   ]
  }
 }
