@@ -1,14 +1,21 @@
 {
  "voices": {
-  "xlwa4": "en-US-AndrewMultilingualNeural"
+  "xlad": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "xlwa4": "+0%"
+  "xlad": "+0%"
  },
  "check": true,
  "films": {
-  "xlwa4": [
-   "Behind the scenes, the chat goes straight to our team, with the details, a note, and a follow up task in Salesforce. Nobody waits."
+  "xlad": [
+   "One day, the people you love will get that phone call.",
+   "Will it leave them a bill, or a blessing?",
+   "Most people think life cover is expensive, and full of medicals. It isn't.",
+   "Xpress Life from Guardian gives your family up to five hundred thousand dollars, from under six dollars a day. No medical exam.",
+   "And now it starts on WhatsApp. Four taps, and you know if you can apply.",
+   "Then one tap opens your rate and your application, already filled in.",
+   "Our team picks it up straight away, and Guardian's underwriters review every application. A real person, every step.",
+   "Message Help, eight six eight, today. Leave them a blessing, not a bill."
   ]
  }
 }
