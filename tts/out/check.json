@@ -1,12 +1,27 @@
 {
- "tts/out/xladg/01.mp3": [
+ "tts/out/xlmc/01.mp3": [
   "en",
-  0.996,
-  "With Guardians Express Life Plan, your family gets up to $500,000 from under $6 a day. No medical exam."
+  0.998,
+  "Most people think life cover costs a lot and need a medical. It often costs less than you think."
  ],
- "tts/out/xladg/02.mp3": [
+ "tts/out/xlmc/02.mp3": [
   "en",
   0.995,
-  "Guardians Express Live Plan gives your family up to $500,000 from under $6 a day. No medical exam."
+  "Guardians Express Life Plan covers your family for $100,000 to $500,000. Prices start under $6 a day with no medical exam."
+ ],
+ "tts/out/xlmc/03.mp3": [
+  "en",
+  0.994,
+  "Your cover builds over the first two years, and your premium stays the same for 20 years."
+ ],
+ "tts/out/xlmc/04.mp3": [
+  "en",
+  0.998,
+  "a licensed guardian advisor from our branch picks it up straight away and guardian's underwriters review every application."
+ ],
+ "tts/out/xlmc/05.mp3": [
+  "en",
+  0.986,
+  "Skin the code or message help 868 today. Leave them a blessing, not a bill."
  ]
 }
