@@ -1,12 +1,17 @@
 {
- "tts/out/xlwafix/01.mp3": [
+ "tts/out/xlwa2/01.mp3": [
   "en",
-  0.995,
-  "Applying for Express Life is now as easy as sending a WhatsApp message. Send yours to help 868."
+  0.999,
+  "If you can apply, you get a link. One tap opens your application with your answers already filled in. You only pick your exact age."
  ],
- "tts/out/xlwafix/02.mp3": [
+ "tts/out/xlwa2/02.mp3": [
   "en",
-  0.998,
-  "Tap male or female. Then pick the cover your family needs from $100,000 to $500,000."
+  0.997,
+  "You apply in about five minutes. Guardians Underwriters review every application, and our branch keeps you posted."
+ ],
+ "tts/out/xlwa2/03.mp3": [
+  "en",
+  0.996,
+  "Behind the scenes, the chat is handed to our team straight away. Camille gets her details, a note, and a follow-up task in Salesforce, so nobody waits."
  ]
 }
