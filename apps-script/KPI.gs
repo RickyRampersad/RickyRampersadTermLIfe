@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-19a';
+var SCRIPT_VERSION = '2026-11-20a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -549,9 +549,9 @@ var BLOCK_IDS = ['KPI1', 'KPI2', 'PM1', 'PM2', 'EVE'];
    'focus' is the work of the role in the words of the job document. */
 var SCHEDULE = {
   sasha: {
-    // Sales Support 1. 8 to 4 from Wednesday 18 November 2026, like Liz and Azariah (Ricky:
-    // "Sasha has reverted back from 8 to 4"), lunch 2 to 3 so the three lunches stagger
-    // (Liz 12, Azariah 1, Sasha 2). 7 to 3 from 2 to 17 November, 8 to 4
+    // Sales Support 1. 8 to 4 from Wednesday 18 November 2026, lunch 2 to 3 (Liz 12, Azariah 1,
+    // Sasha 2). Ricky, 20 Nov: "Sasha leaves at 2pm as this is her lunch and goes to pick up her
+    // daughter and on line from 3-4pm": 8 to 4 stands, the last hour worked online. 7 to 3 from 2 to 17 November, 8 to 4
     // the week of 26 October (SCHEDULE_DATED), 7 to 2 before that.
     hours: '8am – 4pm', lunch: '2:00 – 3:00pm',
     blocks: { KPI1: { time: '8am – 4pm', focus: 'Premium dues and surveys, health billing, orphan adoption, quotations, branch meeting reports', kpi: 'Renewa/PDl/Bill' } }
