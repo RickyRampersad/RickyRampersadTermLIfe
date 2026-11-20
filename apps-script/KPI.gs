@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-19b';
+var SCRIPT_VERSION = '2026-11-20a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -549,11 +549,12 @@ var BLOCK_IDS = ['KPI1', 'KPI2', 'PM1', 'PM2', 'EVE'];
    'focus' is the work of the role in the words of the job document. */
 var SCHEDULE = {
   sasha: {
-    // Sales Support 1. 7 to 3 again from Thursday 19 November 2026 (Ricky: "Sasha comes out
-    // from 7 to 3, so please amend"), lunch 12 to 12:30. 8 to 4 on 18 November and the week of
-    // 26 October (SCHEDULE_DATED), 7 to 3 from 2 to 17 November, 7 to 2 before that.
-    hours: '7am – 3pm', lunch: '12:00 – 12:30pm',
-    blocks: { KPI1: { time: '7am – 3pm', focus: 'Premium dues and surveys, health billing, orphan adoption, quotations, branch meeting reports', kpi: 'Renewa/PDl/Bill' } }
+    // Sales Support 1. 8 to 4 from Wednesday 18 November 2026, lunch 2 to 3 (Liz 12, Azariah 1,
+    // Sasha 2). Ricky, 20 Nov: "Sasha leaves at 2pm as this is her lunch and goes to pick up her
+    // daughter and on line from 3-4pm": 8 to 4 stands, the last hour worked online. 7 to 3 from 2 to 17 November, 8 to 4
+    // the week of 26 October (SCHEDULE_DATED), 7 to 2 before that.
+    hours: '8am – 4pm', lunch: '2:00 – 3:00pm',
+    blocks: { KPI1: { time: '8am – 4pm', focus: 'Premium dues and surveys, health billing, orphan adoption, quotations, branch meeting reports', kpi: 'Renewa/PDl/Bill' } }
   },
   azariah: {
     // Sales Support 3. 8 to 4, lunch 1 to 2.
@@ -671,10 +672,11 @@ var REPORTS_TO = {
    the day's block) and the lunch (and so the close-off-for-lunch e-mail; 'Flexible'
    sends none). Everything that asks scheduleFor_ follows on the day. */
 var SCHEDULE_DATED = {
-  // Her days on 8 to 4 (the week of 26 October and 18 November 2026) keep those hours; every
-  // other day is SCHEDULE's 7 to 3 (7 to 2 before 26 October is read as 7 to 3: late is judged on the start).
-  sasha: [{ from: '2026-10-26', until: '2026-10-30', hours: '8am – 4pm', lunch: '2:00 – 3:00pm' },
-          { from: '2026-11-18', until: '2026-11-18', hours: '8am – 4pm', lunch: '2:00 – 3:00pm' }],
+  // Her days before 18 November 2026 on the hours she kept then (7 to 2 before 26 October is
+  // read as 7 to 3: late is judged on the start, 7am either way). From 18 November SCHEDULE is 8 to 4.
+  sasha: [{ from: '2026-10-01', until: '2026-10-25', hours: '7am – 3pm', lunch: '12:00 – 12:30pm' },
+          { from: '2026-10-26', until: '2026-10-30', hours: '8am – 4pm', lunch: '2:00 – 3:00pm' },
+          { from: '2026-10-31', until: '2026-11-17', hours: '7am – 3pm', lunch: '12:00 – 12:30pm' }],
   kamla: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }],
   pawan: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }]
 };
@@ -11211,7 +11213,7 @@ function markNotClosed_(sid, day) {
  *   · A clean close (every item answered) is the "day closed off" point in the game.
  */
 var CLOSEOUT = {
-  AT: { sasha: 14 * 60 + 15, elizabeth: 15 * 60 + 15, azariah: 15 * 60 + 15, kamla: 16 * 60 + 15 },   // Liz 3:15 from 23 Oct 2026 (8 to 4); Sasha 2:15 (7 to 3 from 19 Nov 2026; closeoutAt_ moves it on other hours)
+  AT: { sasha: 15 * 60 + 15, elizabeth: 15 * 60 + 15, azariah: 15 * 60 + 15, kamla: 16 * 60 + 15 },   // Liz 3:15 from 23 Oct 2026 and Sasha 3:15 from 18 Nov 2026 (both 8 to 4; closeoutAt_ moves it on other hours)
   MGR_AT: 15 * 60, MGR_CHECK_AFTER: 45,           // Mr Rampersad and the Unit Manager: 3:00, and the check at 3:45
   BMA: 'kamla', KAMLA_AT_RUN: 2, RICKY_AT_RUN: 3, LOOK_BACK: 5, MAX_TASKS: 40
 };
