@@ -26,7 +26,7 @@ var ADV = {
          'Advisor named', 'Notice accepted', 'respond.io contact', 'Owner told', 'Opened in fact find'],
   NEEDS: ['Life cover for my family', 'Cover for my mortgage', 'Critical illness cover', 'Retirement or pension',
           "Children's education", 'Health cover', 'Personal accident', 'Savings or investment', 'Something else'],
-  COVERS: ['Under TT$250,000', 'TT$250,000 to TT$500,000', 'TT$500,000 to TT$1 million', 'Over TT$1 million', 'Not sure yet'],
+  COVERS: ['Under TT$250,000', 'TT$250,000 to TT$500,000', 'TT$500,000 to TT$1m', 'Over TT$1m', 'Not sure yet'],  // WhatsApp list rows hold 24 characters
   TIMES: ['Morning', 'Afternoon', 'Evening'],
   FF: 'https://factfind360.com/ffproject',
   PER_DAY: 4, DUPE_MIN: 15, LINK_DAYS: 60, VERSION: '2026-11-20a'
