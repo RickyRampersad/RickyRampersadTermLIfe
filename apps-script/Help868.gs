@@ -46,6 +46,7 @@ function help868Route_(p) {
   var action = String(p.action || '');
   if (action === 'help868.ping') return { ok: true, on: help868On_(), agents: help868Allow_().length, salesforce: help868SfOn_(), salesforceReady: help868SfReady_(),
     claudeReady: help868AiReady_(), mailReady: help868MailReady_(), pendingReport: help868ReportFound_(), pendingsChase: !!help868Chase_() };
+  if (action === 'help868.xllead') return help868XlLead_(p);   // its own key (XL_LEAD_KEY): the Xpress Life lead needs none of the agent side
   if (!help868On_()) return { ok: false, error: 'HELP 868 is not switched on.' };
   if (!help868KeyOk_(p.key)) return { ok: false, error: 'Not allowed.' };
   var digits = help868Digits_(p.phone);
@@ -506,4 +507,106 @@ function help868Enquiry_(p, digits) {
   }
   return { ok: true, filed: true, ref: reference, category: H868.CATS[cat], codeVerifiedAgent: !!s, ownerNotified: mailed, salesforce: /^00T/.test(sf) ? 'task opened' : sf,
       message: 'Filed as ' + reference + '. A team member will review it. No time has been promised.' };
+}
+
+
+/* ───────── Xpress Life leads from WhatsApp → a Salesforce Contact (18 Nov 2026) ─────────
+   The respond.io workflow "HELP 868 — Xpress Life" posts here once a person has given their name, age, gender and cover and
+   tapped whether the five health questions are all No. It files the lead on the "Xpress Life Leads" tab of this project's sheet,
+   then in Salesforce: the person found by their WhatsApp number (any record type), else a new Contact of record type PROSPECT;
+   and one open task for the team on that Contact. Never twice in a day for one number.
+   What it keeps is only what the person typed and which way they tapped. A single health answer is never sent here, and
+   Salesforce reads "Next step: apply online" or "Next step: branch to suggest another Guardian plan", never why.
+   Script properties: XL_LEAD_KEY (16+ characters, the same value as the workflow's `key`); XL_LEAD_SF = off keeps Salesforce out
+   (the tab still fills); XL_LEAD_OWNER, a Salesforce user id to own the tasks (else the integration user). */
+var XLL = { TAB: 'Xpress Life Leads', HEAD: ['When', 'Name', 'Number ending', 'Age', 'Gender', 'Cover', 'Next step', 'Salesforce', 'Contact Id', 'Task Id', 'respond.io contact'],
+  PER_HOUR: 6, COVERS: ['100,000', '200,000', '300,000', '400,000', '500,000'] };
+function help868XlKeyOk_(key) {
+  var want = help868Prop_('XL_LEAD_KEY'), got = String(key || '');
+  if (want.length < 16 || want.length !== got.length) return false;
+  var diff = 0; for (var i = 0; i < want.length; i++) diff |= want.charCodeAt(i) ^ got.charCodeAt(i);
+  return diff === 0;
+}
+function help868XlCover_(v) {
+  var n = parseInt(String(v || '').replace(/[^\d]/g, ''), 10); if (!n) return '';
+  if (n < 1000) n = n * 1000;
+  var t = String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return XLL.COVERS.indexOf(t) >= 0 ? t : '';
+}
+/** A Contact with this number in any phone field, by Salesforce's own phone search (it ignores the formatting). */
+function help868XlFind_(digits) {
+  var tok = svcSfToken_(), seen = {};
+  var tries = [digits, digits.slice(-7)];
+  for (var i = 0; i < tries.length; i++) {
+    var q = 'FIND {' + tries[i] + '} IN PHONE FIELDS RETURNING Contact(Id, Name, RecordType.Name, MobilePhone, Phone ORDER BY LastModifiedDate DESC LIMIT 5)';
+    var res = UrlFetchApp.fetch(tok.instance_url + '/services/data/' + SVCSF.API + '/search/?q=' + encodeURIComponent(q),
+      { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + tok.access_token } });
+    if (res.getResponseCode() !== 200) continue;
+    var rows = (JSON.parse(res.getContentText()).searchRecords || []).filter(function (r) {
+      return [r.MobilePhone, r.Phone].some(function (ph) { return help868Digits_(ph) === digits || String(ph || '').replace(/\D/g, '').slice(-7) === digits.slice(-7); });
+    });
+    if (rows.length) return rows[0];
+    seen[tries[i]] = 1;
+  }
+  return null;
+}
+function help868XlProspectRt_() {
+  var c = CacheService.getScriptCache(), k = 'xl_rt_prospect', have = c.get(k);
+  if (have) return have === '-' ? '' : have;
+  var r = tSfQuery_("SELECT Id FROM RecordType WHERE SobjectType = 'Contact' AND DeveloperName = 'PROSPECT' AND IsActive = true LIMIT 1")[0];
+  c.put(k, (r && r.Id) || '-', 21600);
+  return (r && r.Id) || '';
+}
+function help868XlLead_(p) {
+  if (!help868XlKeyOk_(p.key)) return { ok: false, error: 'Not switched on.' };
+  var digits = help868Digits_(p.phone);
+  if (!digits) return { ok: false, error: 'No WhatsApp number came with the lead.' };
+  try { var c = CacheService.getScriptCache(), k = 'xl_' + digits, n = Number(c.get(k) || 0) + 1; if (n > XLL.PER_HOUR) return { ok: false, error: 'Too many in an hour.' }; c.put(k, String(n), 3600); } catch (e) {}
+  var name = help868Clean_(p.name).replace(/[^\p{L}\p{M} .'-]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+  if (!name) return { ok: false, error: 'No name came with the lead.' };
+  /* the flow asks an age GROUP by tap ("30-39", "Under 18", "70 or over"); an older flow sent a typed age. Kept as words, so the sheet never reads "30-39" as a date. */
+  var ar = String(p.age || '').trim(), am = ar.match(/^(\d{1,2})\s*(?:-|to)\s*(\d{1,2})$/i), age;
+  if (am) age = am[1] + ' to ' + am[2];
+  else if (/^under\s*18$/i.test(ar)) age = 'under 18';
+  else if (/^70\s*(or|\+)/i.test(ar)) age = '70 or over';
+  else { age = parseInt(ar, 10); age = age >= 16 && age <= 99 ? age : ''; }
+  var g = /^f/i.test(String(p.gender || '')) ? 'Female' : /^m/i.test(String(p.gender || '')) ? 'Male' : '';
+  var cover = help868XlCover_(p.cover);
+  var next = /^(eligible|apply|yes)/i.test(String(p.result || '')) ? 'Apply online' : 'Branch to suggest another Guardian plan';
+  var stamp = Utilities.formatDate(new Date(), help868Tz_(), 'yyyy-MM-dd HH:mm'), today = help868Today_();
+  var ss = help868Own_(), sh = ss ? help868Tab_(ss, XLL.TAB, XLL.HEAD) : null;
+
+  /* one lead a number a day: a second run (a restart, a test) answers with the first and writes nothing more */
+  if (sh && sh.getLastRow() >= 2) {
+    var from = Math.max(2, sh.getLastRow() - 199), v = sh.getRange(from, 1, sh.getLastRow() - from + 1, XLL.HEAD.length).getValues();
+    for (var i = v.length - 1; i >= 0; i--) if (String(v[i][2]) === digits.slice(-4) && String(v[i][1]) === name && String(v[i][0]).slice(0, 10) === today)
+      return { ok: true, repeat: true, salesforce: String(v[i][7]), contactId: String(v[i][8]), message: 'Already filed today.' };
+  }
+  var out = { ok: true, salesforce: 'off', contactId: '', taskId: '' };
+  if (!/^off$/i.test(help868Prop_('XL_LEAD_SF')) && help868SfReady_()) {
+    try {
+      var found = help868XlFind_(digits), id = '';
+      if (found) { id = found.Id; out.salesforce = 'existing'; }
+      else {
+        var parts = name.split(' '), last = parts.pop(), first = parts.join(' ');
+        var body = { FirstName: first.slice(0, 40), LastName: last.slice(0, 80) || 'WhatsApp lead', MobilePhone: '(' + digits.slice(0, 3) + ') ' + digits.slice(3, 6) + '-' + digits.slice(6),
+          Description: 'Xpress Life enquiry on WhatsApp (HELP 868), ' + today + '. As typed by the person, not verified: age ' + (age || 'not given') + (g ? ', ' + g.toLowerCase() : '') + (cover ? ', cover TT$' + cover : '') + '. Next step: ' + next.toLowerCase() + '.' };
+        var rt = help868XlProspectRt_(); if (rt) body.RecordTypeId = rt;
+        var owner = help868Prop_('XL_LEAD_OWNER'); if (/^005[\w]{12,15}$/.test(owner)) body.OwnerId = owner;
+        var made = tSfSend_('post', '/sobjects/Contact', body);
+        id = made.id; out.salesforce = 'created';
+      }
+      out.contactId = id;
+      var task = { Subject: 'Xpress Life lead (WhatsApp): ' + name + ' · ' + next, WhoId: id, Status: 'Not Started', Priority: 'High', ActivityDate: today, Task_Type__c: 'Servicing',
+        Description: 'From HELP 868 on WhatsApp, ' + stamp + '.\nAge ' + (age || 'not given') + (g ? ' · ' + g : '') + (cover ? ' · cover TT$' + cover : '') + '.\nNext step: ' + next + '.\n' +
+          (next === 'Apply online' ? 'They were sent rickyrampersadbranch.com/xpresslife with their answers filled in. Call to help them finish if no application arrives today.'
+                                   : 'Call them to talk about another Guardian plan. Do not ask why on WhatsApp.') + '\nThe conversation is in respond.io.' };
+      var owner2 = help868Prop_('XL_LEAD_OWNER'); if (/^005[\w]{12,15}$/.test(owner2)) task.OwnerId = owner2;
+      try { out.taskId = String((tSfSend_('post', '/sobjects/Task', task) || {}).id || ''); }
+      catch (e) { delete task.Task_Type__c; try { out.taskId = String((tSfSend_('post', '/sobjects/Task', task) || {}).id || ''); } catch (e2) { help868Log_('Xpress Life task failed: ' + (e2 && e2.message)); } }
+    } catch (e) { out.salesforce = 'failed'; help868Log_('Xpress Life lead to Salesforce failed: ' + (e && e.message)); }
+  }
+  if (sh) try { sh.appendRow([stamp, name, digits.slice(-4), age, g, cover ? 'TT$' + cover : '', next, out.salesforce, out.contactId, out.taskId, String(p.rcontact || '').slice(0, 40)]); } catch (e) {}
+  out.message = out.salesforce === 'created' ? 'Added to Salesforce as a new contact.' : out.salesforce === 'existing' ? 'Already in Salesforce; a task was opened.' : 'Logged for the team.';
+  return out;
 }
