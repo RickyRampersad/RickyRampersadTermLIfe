@@ -1,62 +1,42 @@
 {
- "tts/out/h868clip/01.mp3": [
-  "en",
-  0.999,
-  "For the first time, we can see how we really work with live data."
- ],
- "tts/out/h868clip/02.mp3": [
-  "en",
-  0.997,
-  "No more e-mail back and forth. Ask once and it's track to the end."
- ],
- "tts/out/h868clip/03.mp3": [
-  "en",
-  0.997,
-  "A real case, Neil needed a tax statement, help 868 answer 9 seconds, and Aziraya picked it up."
- ],
- "tts/out/h868clip/04.mp3": [
+ "tts/out/h868v4/01.mp3": [
   "en",
   0.998,
-  "The next day his cash value statements were printed and sent. Closed, confirmed, five stores."
+  "This is how we really work now. Real data, a real team, and one conversation."
  ],
- "tts/out/h868clip/05.mp3": [
-  "en",
-  0.997,
-  "This is the real conversation, one thread, one reference, nothing lost in anyone's inbox."
- ],
- "tts/out/h868clip/06.mp3": [
-  "en",
-  0.993,
-  "9 seconds to a first reply, 7 minutes to a named person, 5 out of 5."
- ],
- "tts/out/h868clip/07.mp3": [
-  "en",
-  0.994,
-  "Since launch, 37 people have messaged us. 29 requests logged, 16 closed."
- ],
- "tts/out/h868clip/08.mp3": [
-  "en",
-  0.999,
-  "Most come in for policy documents and premiums. This used to be email."
- ],
- "tts/out/h868clip/09.mp3": [
-  "en",
-  0.999,
-  "Reply's take under a minute. Closing takes about four days. Now we can fix that together."
- ],
- "tts/out/h868clip/10.mp3": [
+ "tts/out/h868v4/02.mp3": [
   "en",
   0.998,
-  "Ask on WhatsApp, get updates in the same chat. It's a shared record, not a watch list."
+  "Every week the data tells us more, 37 people have messaged us, 29 requests log, 16 closed, and the first reply takes 9 seconds."
  ],
- "tts/out/h868clip/11.mp3": [
+ "tts/out/h868v4/03.mp3": [
   "en",
-  0.999,
-  "Nearly four in ten policyholders rarely hear from us after buying. A fast reply changes that."
+  0.991,
+  "We're building one live view of all of it. What's open? What's late? And who holds what? So nobody has to ask."
  ],
- "tts/out/h868clip/12.mp3": [
+ "tts/out/h868v4/04.mp3": [
+  "en",
+  0.997,
+  "Behind the scenes, it's a team. The assistant logs the request and routes it to the right support person if they're online. If someone's at lunch, their cover takes it. We can reassign in one tab and the client confirms before we close."
+ ],
+ "tts/out/h868v4/05.mp3": [
   "en",
   0.996,
-  "heard, answered, rated, messages anytime on help 868."
+  "We keep reprogramming work that used to take sales support hours, closing with the client's confirmation, reopening when they say not yet, asking for a rating, and routing to the right person which is next to go live."
+ ],
+ "tts/out/h868v4/06.mp3": [
+  "en",
+  0.996,
+  "We read the real chats and found four things to fix. Messages are for clients, comments are for us. If a client chases twice, we ping the handler, fewer taps in the menu, and a career's route."
+ ],
+ "tts/out/h868v4/07.mp3": [
+  "en",
+  0.995,
+  "So please keep testing it every day. Ask your real questions. When it goes public, we want fast answers and we're building that now together."
+ ],
+ "tts/out/h868v4/08.mp3": [
+  "en",
+  0.997,
+  "This is part of every meeting now, how things get resolved and what's new. Messages on Help 868"
  ]
 }
