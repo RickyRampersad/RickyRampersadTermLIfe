@@ -1,14 +1,25 @@
 {
  "voices": {
-  "xl30C": "en-US-AndrewMultilingualNeural"
+  "h868clip": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "xl30C": "-4%"
+  "h868clip": "+0%"
  },
  "check": true,
  "films": {
-  "xl30C": [
-   "One day, the people you love will get that phone call. Leave them a blessing, not a bill. It's called Xpress Life, from Guardian. Up to five hundred thousand dollars of cover, with no medical exam. Prices begin under six dollars a day, and you're fully covered from year three. Four taps on WhatsApp tell you if you can apply. A licensed advisor from our branch takes it from there. Just scan the QR code today."
+  "h868clip": [
+   "For the first time, we can see how we really work, with live data.",
+   "No more email back and forth. Ask once, and it's tracked to the end.",
+   "A real case. Neil needed a tax statement. Help eight six eight answered in nine seconds, and Azariah picked it up.",
+   "The next day, his cash value statements were printed and sent. Closed, confirmed, five stars.",
+   "This is the real conversation. One thread, one reference. Nothing lost in anyone's inbox.",
+   "Nine seconds to a first reply. Seven minutes to a named person. Five out of five.",
+   "Since launch, thirty-seven people have messaged us. Twenty-nine requests logged, sixteen closed.",
+   "Most come in for policy documents and premiums. This used to be email.",
+   "Replies take under a minute. Closing takes about four days. Now we can fix that together.",
+   "Ask on WhatsApp. Get updates in the same chat. It's a shared record, not a watch list.",
+   "Nearly four in ten policyholders rarely hear from us after buying. A fast reply changes that.",
+   "Heard. Answered. Rated. Message us any time on Help eight six eight."
   ]
  }
 }
