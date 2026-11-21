@@ -1,25 +1,21 @@
 {
  "voices": {
-  "h868clip": "en-US-AndrewMultilingualNeural"
+  "h868v4": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "h868clip": "+0%"
+  "h868v4": "+0%"
  },
  "check": true,
  "films": {
-  "h868clip": [
-   "For the first time, we can see how we really work, with live data.",
-   "No more email back and forth. Ask once, and it's tracked to the end.",
-   "A real case. Neil needed a tax statement. Help eight six eight answered in nine seconds, and Azariah picked it up.",
-   "The next day, his cash value statements were printed and sent. Closed, confirmed, five stars.",
-   "This is the real conversation. One thread, one reference. Nothing lost in anyone's inbox.",
-   "Nine seconds to a first reply. Seven minutes to a named person. Five out of five.",
-   "Since launch, thirty-seven people have messaged us. Twenty-nine requests logged, sixteen closed.",
-   "Most come in for policy documents and premiums. This used to be email.",
-   "Replies take under a minute. Closing takes about four days. Now we can fix that together.",
-   "Ask on WhatsApp. Get updates in the same chat. It's a shared record, not a watch list.",
-   "Nearly four in ten policyholders rarely hear from us after buying. A fast reply changes that.",
-   "Heard. Answered. Rated. Message us any time on Help eight six eight."
+  "h868v4": [
+   "This is how we really work now. Real data, a real team, and one conversation.",
+   "Every week, the data tells us more. Thirty seven people have messaged us. Twenty nine requests logged, sixteen closed. And the first reply takes nine seconds.",
+   "We're building one live view of all of it. What's open, what's late, and who holds what. So nobody has to ask.",
+   "Behind the scenes, it's a team. The assistant logs the request and routes it to the right support person, if they're online. If someone's at lunch, their cover takes it. We can reassign in one tap, and the client confirms before we close.",
+   "We keep reprogramming work that used to take sales support hours. Closing, with the client's confirmation. Reopening, when they say not yet. Asking for a rating. And routing to the right person, which is next to go live.",
+   "We read the real chats, and found four things to fix. Messages are for clients, comments are for us. If a client chases twice, we ping the handler. Fewer taps in the menu. And a careers route.",
+   "So please keep testing it, every day. Ask your real questions. When it goes public, we want fast answers, and we're building that now, together.",
+   "This is part of every meeting now: how things get resolved, and what's new. Message us on Help eight six eight."
   ]
  }
 }
