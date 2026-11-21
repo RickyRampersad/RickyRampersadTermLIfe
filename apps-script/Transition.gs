@@ -1108,6 +1108,12 @@ function tFileNotes_(note) {
   return out;
 }
 
+/* How long a save on the board waits for the script lock (21 November 2026): 45 seconds, from 15. The five-minute runs
+   hold the lock while they file answers, and a save that came in during one was refused. Nothing is written when a
+   save is refused, so the board tries it again by itself (busy: true). */
+var T_BOARD_LOCK_MS = 45000;
+var T_BUSY_MSG = 'The sheet is busy with the five-minute run. Nothing was saved: press Save again in a minute.';
+
 /** Every five minutes, installed by transitionSetup. The e-mails taken on calls go onto their rows, held, first. */
 function transitionReceipts() {
   var startedAt = Date.now();
@@ -1117,14 +1123,25 @@ function transitionReceipts() {
     try { tSharedInboxRows_(); } catch (e) { log_('transition', 'shared-inbox-failed', String(e && e.message ? e.message : e)); }
     try { tAgainCol_(); } catch (e) { log_('transition', 'send-again-column-failed', String(e && e.message ? e.message : e)); }
     try { tFilePhoneEmails_(); } catch (e) { log_('transition', 'phone-emails-failed', String(e && e.message ? e.message : e)); }
-    var hs = null;
-    try { hs = tHaSync_(false); } catch (e) { log_('transition', 'household-assignments-failed', String(e && e.message ? e.message : e)); }
-    /* after each sync (every T_HA.EVERY_MIN minutes): the brief for a client the branch named in Salesforce (22 October 2026) */
-    if (hs && !hs.skipped) { try { tSfBriefs_(); } catch (e) { log_('transition', 'salesforce-briefs-failed', String(e && e.message ? e.message : e)); } }
     var out = tReceipts_();
     try { tIntroPicks_(); } catch (e) { log_('transition', 'intro-picks-failed', String(e && e.message ? e.message : e)); }   // a client's time for the agent's call
-    tClaimsRun_(false);   // the TT$200 retention claims, after the receipts; never throws
   } finally { lock.releaseLock(); }
+  /* The Salesforce steps run after the lock (21 November 2026). They are the slow part of the run, and while they held
+     the lock a call logged on the board waited and was refused with "The sheet is busy" (an agent's note, Saturday
+     afternoon). None of them writes Client Responses; tHaSync_ writes by token, read again before each write. A cache
+     flag keeps two runs from doing them at once. */
+  var sfc = null;
+  try { sfc = CacheService.getScriptCache(); } catch (e) {}
+  if (!sfc || !sfc.get('receipts-sf-running')) {
+    try { if (sfc) sfc.put('receipts-sf-running', '1', 600); } catch (e) {}
+    try {
+      var hs = null;
+      try { hs = tHaSync_(false); } catch (e) { log_('transition', 'household-assignments-failed', String(e && e.message ? e.message : e)); }
+      /* after each sync (every T_HA.EVERY_MIN minutes): the brief for a client the branch named in Salesforce (22 October 2026) */
+      if (hs && !hs.skipped) { try { tSfBriefs_(); } catch (e) { log_('transition', 'salesforce-briefs-failed', String(e && e.message ? e.message : e)); } }
+      tClaimsRun_(false);   // the TT$200 retention claims, after the receipts; never throws
+    } finally { try { if (sfc) sfc.remove('receipts-sf-running'); } catch (e) {} }
+  }
   /* the Client Profile, when the morning build left it due: after the lock, so a save on the board never waits on it */
   try { tProfileDue_(false); } catch (e) { log_('transition', 'client-profile-failed', String(e && e.message ? e.message : e)); }
   /* Branch Intelligence (22 October 2026): the 5:00 list, the named-client clock at 11:00, the hourly note check; after the
@@ -4159,7 +4176,7 @@ function tFamilyOnly_(w, tok, fam, notFam) {
   if (!ra || !rb) return { ok: false, error: 'That client is not on the send list.' };
   var who = w.me && w.me.name ? w.me.name : 'branch';
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+  if (!lock.tryLock(T_BOARD_LOCK_MS)) return { ok: false, busy: true, error: T_BUSY_MSG };
   try {
     var nameB = tText_(rb.Client) || tText_(rb['First name']) || 'that client';
     if (notFam) {
@@ -6094,7 +6111,7 @@ function transitionAssign_(p) {
     });
   } catch (e) {}
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+  if (!lock.tryLock(T_BOARD_LOCK_MS)) return { ok: false, busy: true, error: T_BUSY_MSG };
   try {
     var b = tBoard_({ ok: true, role: 'branch', me: null }, true, true), map = {};
     b.clients.forEach(function (c) { map[c.token] = c; });
@@ -6361,7 +6378,7 @@ function transitionUpdate_(p) {
   if (back && !tCanAssign_(w)) return { ok: false, refused: true, error: 'Only the branch and Client Support flag a call-back.' };
   var who = w.me && w.me.name ? w.me.name : 'branch';
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+  if (!lock.tryLock(T_BOARD_LOCK_MS)) return { ok: false, busy: true, error: T_BUSY_MSG };
   try {
     var sh = ss_().getSheetByName(SVC.RESP_SHEET), last = sh ? sh.getLastRow() : 0;
     if (!sh || last < 2) return { ok: false, error: 'No responses yet.' };
@@ -7361,7 +7378,7 @@ function tAnswerApi_(p, w) {
     if (!key) return { ok: false, error: 'Which answer?' };
     var text = clean(p.text, T_REPLY.MAX);
     var lock = LockService.getScriptLock();
-    if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+    if (!lock.tryLock(T_BOARD_LOCK_MS)) return { ok: false, busy: true, error: T_BUSY_MSG };
     try {
       var safe = function (s) { return /^[=+\-@]/.test(s) ? "'" + s : s; };
       tReplyTab_().appendRow([new Date(), o.tok, tText_(o.row.Client) || tText_(o.row['First name']), key, safe(clean(p.q, T_REPLY.Q)), safe(clean(p.a, T_REPLY.Q)),
@@ -11596,7 +11613,7 @@ function transitionComment_(p) {
   if (!o.ok) return o;
   var by = w.me && w.me.name ? w.me.name : 'The branch', role = w.me ? (w.me.title || '') : '';
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+  if (!lock.tryLock(T_BOARD_LOCK_MS)) return { ok: false, busy: true, error: T_BUSY_MSG };
   try {
     var sh = tCmtTab_(), at = new Date(), client = tText_(o.row.Client) || tText_(o.row['First name']);
     /* a comment beginning = + - or @ would be a formula in the sheet: the apostrophe keeps it text, and the sheet never shows it */

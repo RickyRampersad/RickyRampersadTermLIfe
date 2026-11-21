@@ -1114,12 +1114,23 @@ function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one +
 /* ---- the gate ---- */
 /* every call after the gate carries who is signed in: the password alone opens nothing */
 function signed(p) { p.code = CODE; if (WHO) p.who = WHO; return p; }
-function api(params) {
+function api(params, tries) {
   if (STALE && /^(assign|update|comment)$/.test(params.action || '')) return Promise.resolve({ ok: false, error: STALE_MSG });
   var q = Object.keys(params).map(function (k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
   return fetch(SVC + '?' + q + '&z=' + Date.now()).then(function (r) { return r.text(); }).then(function (txt) {
-    try { return JSON.parse(txt); }
+    var r;
+    try { r = JSON.parse(txt); }
     catch (e) { return { ok: false, notUpdated: /<\s*(html|meta|p)\b/i.test(txt), error: 'The backend answered with a page instead of data.' }; }
+    /* a save refused because the five-minute run held the sheet wrote nothing (21 November 2026), so it is tried again
+       by itself, twice, twenty seconds apart, and the box keeps what was typed */
+    var n = tries || 0;
+    if (r && !r.ok && n < 2 && /^(assign|update|comment|board)$/.test(params.action || '') && (r.busy || /sheet is busy/i.test(r.error || ''))) {
+      if (params.action !== 'board' || params.answer || params.profile || params.watch) {
+        try { toast('The sheet is busy with the five-minute run. Saving again in 20 seconds, keep this open…', false); } catch (e) {}
+        return new Promise(function (res) { setTimeout(res, 20000); }).then(function () { return api(params, n + 1); });
+      }
+    }
+    return r;
   });
 }
 function load() {
