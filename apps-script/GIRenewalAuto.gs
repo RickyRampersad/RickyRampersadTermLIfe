@@ -82,11 +82,19 @@ function giaBtn_(href, text, bg) {
   return '<a href="' + href + '" style="display:inline-block;background:' + (bg || '#0d1f33') + ';color:#fff;text-decoration:none;font-weight:700;padding:11px 18px;border-radius:9px;margin:4px 6px 4px 0">' + tEsc_(text) + '</a>';
 }
 
+/** A loyalty line for the top of the messages: how long they have been with us and, when we hold it, their no-claim discount. */
+function giaLoyaltyHtml_(view) {
+  var out = '', since = gcmText_(view && view.since), y = /^\d{4}/.test(since) ? Number(gcmToday_().slice(0, 4)) - Number(since.slice(0, 4)) : 0;
+  if (y >= 1) out += 'You have been with us since ' + since.slice(0, 4) + ', ' + y + (y === 1 ? ' year' : ' years') + '. Thank you. ';
+  if (Number(view && view.ncd) > 0) out += 'Your no-claim discount is ' + Number(view.ncd) + '%. ';
+  return out ? '<p><b>' + tEsc_(out.trim()) + '</b></p>' : '';
+}
+
 /** Message 1: due in two weeks, with the value options for a motor policy. */
 function giaValueHtml_(st, view, days, email) {
   var key = gcmText_(st.Key), line = gcmText_(st.Line), isMotor = /motor/i.test(line);
   var items = (view.items || []).filter(function (x) { return x.value; });
-  var html = '<p>Hello,</p><p>Your ' + tEsc_(line.toLowerCase()) + ' policy <b>' + tEsc_(gcmText_(st.Policy)) + '</b> renews on <b>' + tEsc_(tDmy_(gcmYmd_(st.Renewal))) + '</b>, in ' + days + ' days.</p>';
+  var html = '<p>Hello,</p><p>Your ' + tEsc_(line.toLowerCase()) + ' policy <b>' + tEsc_(gcmText_(st.Policy)) + '</b> renews on <b>' + tEsc_(tDmy_(gcmYmd_(st.Renewal))) + '</b>, in ' + days + ' days.</p>' + giaLoyaltyHtml_(view);
   items.forEach(function (x) {
     html += '<p style="margin:14px 0 4px"><b>' + tEsc_(x.label) + '</b> · currently insured for <b>' + tEsc_(girMoney_(x.value)) + '</b></p>';
     if (isMotor && x.kind === 'vehicle' && view.agreed) {
@@ -108,7 +116,7 @@ function giaValueHtml_(st, view, days, email) {
 /** Message 2: the premium is ready, proceed yes or no. */
 function giaPremiumHtml_(st, view, days, email) {
   var key = gcmText_(st.Key), ans = girJ_(st['Client answer'], null) || {}, vals = ans.values || {};
-  var html = '<p>Hello,</p><p>Your renewal premium is ready. Your ' + tEsc_(gcmText_(st.Line).toLowerCase()) + ' policy <b>' + tEsc_(gcmText_(st.Policy)) + '</b> renews on <b>' + tEsc_(tDmy_(gcmYmd_(st.Renewal))) + '</b>, in ' + days + ' days.</p>';
+  var html = '<p>Hello,</p><p>Your renewal premium is ready. Your ' + tEsc_(gcmText_(st.Line).toLowerCase()) + ' policy <b>' + tEsc_(gcmText_(st.Policy)) + '</b> renews on <b>' + tEsc_(tDmy_(gcmYmd_(st.Renewal))) + '</b>, in ' + days + ' days.</p>' + giaLoyaltyHtml_(view);
   (view.items || []).forEach(function (x) { html += '<p style="margin:4px 0">' + tEsc_(x.label) + ': insured for <b>' + tEsc_(girMoney_(vals[x.id] || x.value)) + '</b></p>'; });
   html += '<p style="font-size:18px">Premium: <b>' + tEsc_(girMoney_(view.total)) + '</b> <span style="font-size:13px;color:#4b5a6a">tax included</span></p>';
   if (Object.keys(vals).length) html += '<p style="font-size:13px;color:#4b5a6a">You chose a different value from last year. If the premium above was worked out on the old value, we will confirm the new one before anything is renewed.</p>';
@@ -165,7 +173,7 @@ function giaSeedEthan(agreed) {
   if (!gcmEmailOk_(email)) return tSay_('Set the GIA_ETHAN_EMAIL Script property to the test client\'s address, then run this again.');
   var today = gcmToday_(), ren = gcmAddDays_(today, GIA.VALUE_DAYS), key = 'TEST-ETHAN-' + (agreed === true ? 'AV-' : '') + ren;
   var view = { key: key, policy: 'TTAPG0000001', line: 'Motor', client: 'Ethan Test', ren: ren, lastPremium: 4800, premium: 0, tax: 0, total: 0,
-    agreed: agreed === true, benefits: giaBenefits_(agreed === true),
+    since: '2014-03-01', ncd: 50, agreed: agreed === true, benefits: giaBenefits_(agreed === true),
     items: [{ id: 'TEST1', label: 'Toyota Aqua PDF 1234', vehicle: 'PDF 1234', value: 120000, lastValue: 120000, kind: 'vehicle', bank: '' }], years: [], points: [], reqs: [] };
   girSave_(key, { Policy: 'TTAPG0000001', Line: 'Motor', Client: 'Ethan Test', 'E-mail': email, Renewal: ren, Stage: 'sent', Holder: 'Ricky Rampersad', 'Holder e-mail': GIR.TEST_TO[0],
     'Client view': view, 'Sent at': new Date(), 'Sent to': [email].concat(giaViewers_(), giaNotify_()).join(', '), Test: 'Y', Reminders: {}, 'Client answer': '' });
