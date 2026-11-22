@@ -102,7 +102,7 @@ function giaValueHtml_(st, view, days, email) {
     } else if (isMotor && x.kind === 'vehicle') {
       html += '<table style="border-collapse:collapse;width:100%;font-size:14px"><tr style="background:#eef3f8"><td style="padding:6px 8px">Insure it for</td><td style="padding:6px 8px">Value</td><td></td></tr>';
       giaOptions_(x.value).forEach(function (o) {
-        html += '<tr style="border-top:1px solid #dde5ee"><td style="padding:6px 8px">' + (o.pct ? o.pct + '% lower' : 'The same as now') + (o.pct === GIA.RECOMMEND ? ' <b>(most clients choose this)</b>' : '') + '</td><td style="padding:6px 8px">' + tEsc_(girMoney_(o.value)) +
+        html += '<tr style="border-top:1px solid #dde5ee"><td style="padding:6px 8px">' + (o.pct ? o.pct + '% lower' : 'The same as now') + (o.pct === GIA.RECOMMEND ? ' <b>(a common choice)</b>' : '') + '</td><td style="padding:6px 8px">' + tEsc_(girMoney_(o.value)) +
           '</td><td style="padding:6px 8px">' + '<a href="' + giaLink_(email, key, '&pct=' + o.pct) + '">Choose</a></td></tr>';
       });
       html += '</table><p style="font-size:13px;color:#4b5a6a">A vehicle usually loses value each year, so many comprehensive policyholders lower the value by about ' + GIA.RECOMMEND + '%, which lowers the premium. The trade-off: on a total loss we pay the market value or the value insured, whichever is less, so too low a figure can leave you short. Pick what you think the vehicle is worth today.</p>';
