@@ -132,6 +132,7 @@
       '<div class="rc-sec"><h4>' + ICON.check + 'Every claim on our records</h4>' + ((v.claims || []).length ? '<ul style="margin:0;padding-left:20px">' + v.claims.map(function (c) { return '<li>' + esc(dmy(c.on)) + ' · ' + esc(c.type) + (c.status ? ' · ' + esc(c.status) : '') + '</li>'; }).join('') + '</ul>' : '<p style="margin:0">None on our records.</p>') + '</div>' +
       ((v.points || []).length ? '<div class="rc-sec"><h4>' + ICON.doc + 'Worth a look before you approve</h4>' + v.points.map(function (p) { return '<div class="rc-pt"><b>' + esc(p.title) + '</b>' + esc(p.text) + '</div>'; }).join('') + '</div>' : '') +
       ((v.reqs || []).length ? '<div class="rc-sec"><h4>' + ICON.doc + 'Guardian General needs these with your renewal</h4><ul style="margin:0;padding-left:20px">' + v.reqs.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ul></div>' : '') +
+      ((v.benefits || []).length ? '<div class="rc-sec"><h4>' + ICON.shield + 'Your MotorGuard benefits, in brief</h4>' + v.benefits.map(function (k) { return '<div class="rc-pt"><b>' + esc(k.t) + '</b>' + esc(k.x) + '</div>'; }).join('') + '</div>' : '') +
       (a && a.decision ? '<div class="rc-ans' + (a.decision === 'changes' ? ' chg' : '') + '">' + ICON.check + '<div><b>' + (a.decision === 'approve' ? 'You approved your renewal' : 'You asked for changes') + '</b> · ' + esc(a.at) + (a.name ? ' · ' + esc(a.name) : '') + '<br>' + esc(v.stageLabel || '') + '</div></div>' : '') +
       ((v.comments || []).length ? '<div class="rc-sec"><h4>What you told us</h4>' + v.comments.map(function (c) { return '<div class="rc-cm"><b>' + esc(c.at || '') + '</b>' + (c.name ? ' · ' + esc(c.name) : '') + '<br>' + esc(c.text || '') + '</div>'; }).join('') + '</div>' : '') +
       (open ? '<form class="rc-q" data-rcform="' + esc(v.key) + '"><h4 style="font-size:1.08rem">Your answer</h4><p style="margin:4px 0 0;font-size:.92rem">Nothing is renewed until you say yes. ' + esc(v.holder ? v.holder + ' reads every answer.' : 'A person reads every answer.') + '</p>' +
@@ -139,6 +140,7 @@
         '<label class="rc-opt"><input type="radio" name="d-' + esc(v.key) + '" value="approve"' + ((a && a.decision === 'approve') || GO === 'yes' ? ' checked' : '') + '>Yes, renew it</label>' +
         '<label class="rc-opt"><input type="radio" name="d-' + esc(v.key) + '" value="changes"' + (a && a.decision === 'changes' ? ' checked' : '') + '>Something has changed</label>' +
         '<label class="rc-opt"><input type="radio" name="d-' + esc(v.key) + '" value="question"' + (GO === 'no' ? ' checked' : '') + '>I have a question</label></div>' +
+        ((v.benefits || []).length ? '<label class="rc-opt" style="margin-top:10px"><input type="checkbox" data-rcread' + (a && a.read ? ' checked' : '') + '>I have read my benefits above and my policy schedule</label>' : '') +
         '<label class="rc-l" for="c-' + esc(v.key) + '">Anything to tell us (needed for a change or a question)</label><textarea id="c-' + esc(v.key) + '" data-rcc></textarea>' +
         (o.group ? '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr));gap:0 12px"><div><label class="rc-l" for="n-' + esc(v.key) + '">Your name</label><input class="rc-in" id="n-' + esc(v.key) + '" data-rcn autocomplete="name"></div><div><label class="rc-l" for="r-' + esc(v.key) + '">Your role</label><input class="rc-in" id="r-' + esc(v.key) + '" data-rcr autocomplete="organization-title"></div></div>' : '') +
         '<button class="rc-go" type="submit">' + ICON.check + 'Send my answer</button><div class="rc-err" role="alert"></div></form>' : '') +
@@ -155,6 +157,8 @@
         err.textContent = '';
         if (!pick) { err.textContent = 'Choose yes, a change or a question.'; return; }
         var body = { key: key, decision: pick.value, comment: (f.querySelector('[data-rcc]').value || '').trim(), values: {} };
+        var rd = f.querySelector('[data-rcread]'); body.read = rd && rd.checked ? 'Y' : '';
+        if (rd && body.decision === 'approve' && !rd.checked) { err.textContent = 'Please tick that you have read your benefits.'; return; }
         if (body.decision !== 'approve' && body.comment.length < 3) { err.textContent = body.decision === 'changes' ? 'Tell us what has changed.' : 'Write your question.'; return; }
         card.querySelectorAll('[data-rcv]').forEach(function (i) { var n = Number(String(i.value).replace(/[^0-9.]/g, '')); if (n > 0) body.values[i.getAttribute('data-rcv')] = n; });
         var nm = f.querySelector('[data-rcn]'), rl = f.querySelector('[data-rcr]');

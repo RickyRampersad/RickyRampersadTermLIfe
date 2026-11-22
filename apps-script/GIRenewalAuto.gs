@@ -43,6 +43,31 @@ function giaOptions_(value) {
   return GIA.OPTIONS.map(function (p) { return { pct: p, value: Math.round(value * (1 - p / 100) / 100) * 100 }; });
 }
 
+/** What MotorGuard (private motor) gives, from Guardian General's policy wording GG-MOT-POL-APV-10/09 and its MotorGuard
+ *  value-proposition sheet. Every line says "if it is on your schedule" where it is an option; the client's own schedule
+ *  holds the exact limits. COMPLIANCE SIGNS OFF THIS WORDING before it goes live. */
+function giaBenefits_(agreed) {
+  var b = [
+    { t: 'Your schedule', x: 'Your policy schedule and policy document set out your exact limits, excesses and extras. This is a summary.' },
+    { t: 'Total loss', x: agreed
+        ? 'You have Agreed Value: we pay the sum insured regardless of market value, less 15% depreciation a year (pro rata) and your excess. The sum insured must come from a written valuation by an approved valuator each year.'
+        : 'We pay the market value or the value insured, whichever is less. A higher value does not raise what is paid, and a lower one can leave you short.' },
+    { t: 'Windscreen', x: 'A claim for windscreen or glass damage alone has no excess and does not affect your no-claim discount. If the glass is replaced, the cover is reinstated free once a year for up to $2,500. It can also be added to third-party policies.' },
+    { t: 'Waiver of Excess (if on your schedule)', x: 'Removes the excess for any authorised driver, named young and inexperienced drivers, total and partial losses, and collisions.' },
+    { t: 'Courtesy car / loss of use (if on your schedule)', x: 'A substitute vehicle, or up to $100 a day towards a rental, for the days stated in your schedule, while your vehicle is being repaired or the total-loss claim is being finalised.' },
+    { t: 'Personal accident (if on your schedule)', x: 'Up to $10,000 per person and $40,000 in total per policy year.' },
+    { t: 'Hospitalisation (if on your schedule)', x: 'A maximum benefit of $15,000 per 12-month period.' },
+    { t: 'Other benefits', x: 'Damage to your garage by fire, replacement of car keys, damage to a child car seat, no-claim-discount protection and a six-month policy option, where they apply to your policy.' },
+    { t: 'No-claim discount (comprehensive)', x: '30% after one claim-free year, 40% after two, 50% after three and 60% after four. A claim can reduce it, even if you are not at fault.' },
+    { t: 'Who may drive', x: 'The persons in your schedule, or any drivers you have declared to us. Tell us if anyone else will drive.' },
+    { t: 'Your duties', x: 'Keep the vehicle road-worthy, give us accurate information, tell us of changes to the vehicle, and report a claim within 30 days.' }
+  ];
+  return b;
+}
+function giaBenefitsHtml_(agreed) {
+  return '<h3>Your Guardian MotorGuard benefits, in brief</h3><ul>' + giaBenefits_(agreed).map(function (x) { return '<li><b>' + tEsc_(x.t) + ':</b> ' + tEsc_(x.x) + '</li>'; }).join('') + '</ul>';
+}
+
 function giaLink_(email, key, extra) {
   return GIR.SITE + '?e=' + encodeURIComponent(email) + '&k=' + encodeURIComponent(key) + (extra || '');
 }
@@ -61,15 +86,18 @@ function giaValueHtml_(st, view, days, email) {
   var html = '<p>Hello,</p><p>Your ' + tEsc_(line.toLowerCase()) + ' policy <b>' + tEsc_(gcmText_(st.Policy)) + '</b> renews on <b>' + tEsc_(tDmy_(gcmYmd_(st.Renewal))) + '</b>, in ' + days + ' days.</p>';
   items.forEach(function (x) {
     html += '<p style="margin:14px 0 4px"><b>' + tEsc_(x.label) + '</b> · currently insured for <b>' + tEsc_(girMoney_(x.value)) + '</b></p>';
-    if (isMotor && x.kind === 'vehicle') {
+    if (isMotor && x.kind === 'vehicle' && view.agreed) {
+      html += '<p>Your policy has <b>Agreed Value</b>, so the value insured should come from a written valuation report by one of Guardian General\'s approved valuators. Please arrange one before your renewal and send it to us; we will set the value from it. Lowering the value by a percentage is not the right step for you.</p>';
+    } else if (isMotor && x.kind === 'vehicle') {
       html += '<table style="border-collapse:collapse;width:100%;font-size:14px"><tr style="background:#eef3f8"><td style="padding:6px 8px">Insure it for</td><td style="padding:6px 8px">Value</td><td></td></tr>';
       giaOptions_(x.value).forEach(function (o) {
         html += '<tr style="border-top:1px solid #dde5ee"><td style="padding:6px 8px">' + (o.pct ? o.pct + '% lower' : 'The same as now') + (o.pct === GIA.RECOMMEND ? ' <b>(most clients choose this)</b>' : '') + '</td><td style="padding:6px 8px">' + tEsc_(girMoney_(o.value)) +
           '</td><td style="padding:6px 8px">' + '<a href="' + giaLink_(email, key, '&pct=' + o.pct) + '">Choose</a></td></tr>';
       });
-      html += '</table><p style="font-size:13px;color:#4b5a6a">A vehicle usually loses value each year, so many comprehensive policyholders lower the value by about ' + GIA.RECOMMEND + '%, which lowers the premium. The trade-off: if the vehicle were a total loss, we pay up to the value insured, so too low a figure leaves you short. Pick what you think the vehicle is worth today.</p>';
+      html += '</table><p style="font-size:13px;color:#4b5a6a">A vehicle usually loses value each year, so many comprehensive policyholders lower the value by about ' + GIA.RECOMMEND + '%, which lowers the premium. The trade-off: on a total loss we pay the market value or the value insured, whichever is less, so too low a figure can leave you short. Pick what you think the vehicle is worth today.</p>';
     }
   });
+  if (isMotor) html += giaBenefitsHtml_(!!view.agreed) + '<p>You will be asked to confirm that you have read these benefits when you answer.</p>';
   html += '<p>We will send your renewal premium as soon as Guardian General confirms it. We renew only once you say yes.</p><p>' + giaBtn_(giaLink_(email, key), 'Review my renewal') + '</p>';
   return giaShell_(html);
 }
@@ -126,14 +154,18 @@ function giaTick_(rows, o) {
 }
 
 /** A made-up renewal for the test client, 14 days out, with an invented car. Set GIA_ETHAN_EMAIL first. */
-function giaSeedEthan() {
+/** Other people who may sign in as the test client (the GIA_TEST_VIEWERS Script property, comma-separated). */
+function giaViewers_() { try { return String(PropertiesService.getScriptProperties().getProperty('GIA_TEST_VIEWERS') || '').split(/[,;\s]+/).filter(function (a) { return /@/.test(a); }); } catch (e) { return []; } }
+function giaSeedEthanAgreed() { return giaSeedEthan(true); }
+function giaSeedEthan(agreed) {
   var p = PropertiesService.getScriptProperties(), email = String(p.getProperty(GIA.ETHAN_PROP) || '').trim();
   if (!gcmEmailOk_(email)) return tSay_('Set the GIA_ETHAN_EMAIL Script property to the test client\'s address, then run this again.');
-  var today = gcmToday_(), ren = gcmAddDays_(today, GIA.VALUE_DAYS), key = 'TEST-ETHAN-' + ren;
+  var today = gcmToday_(), ren = gcmAddDays_(today, GIA.VALUE_DAYS), key = 'TEST-ETHAN-' + (agreed === true ? 'AV-' : '') + ren;
   var view = { key: key, policy: 'TTAPG0000001', line: 'Motor', client: 'Ethan Test', ren: ren, lastPremium: 4800, premium: 0, tax: 0, total: 0,
+    agreed: agreed === true, benefits: giaBenefits_(agreed === true),
     items: [{ id: 'TEST1', label: 'Toyota Aqua PDF 1234', vehicle: 'PDF 1234', value: 120000, lastValue: 120000, kind: 'vehicle', bank: '' }], years: [], points: [], reqs: [] };
   girSave_(key, { Policy: 'TTAPG0000001', Line: 'Motor', Client: 'Ethan Test', 'E-mail': email, Renewal: ren, Stage: 'sent', Holder: 'Ricky Rampersad', 'Holder e-mail': GIR.TEST_TO[0],
-    'Client view': view, 'Sent at': new Date(), 'Sent to': [email].concat(giaNotify_()).join(', '), Test: 'Y', Reminders: {}, 'Client answer': '' });
+    'Client view': view, 'Sent at': new Date(), 'Sent to': [email].concat(giaViewers_(), giaNotify_()).join(', '), Test: 'Y', Reminders: {}, 'Client answer': '' });
   return tSay_('Test renewal created for ' + email + ' (renews ' + ren + '). Run giaTickNow to send the two-week message; giaSetEthanPremium then giaTickNow sends the premium message.');
 }
 /** Pretend the notice was read: a made-up premium, and the date moved to 7 days out so the premium message is due. */

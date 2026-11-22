@@ -986,7 +986,8 @@ function girClientView_(r, notice, letter, hist, claims, values) {
     since: hist ? hist.since : '',
     summary: hist && hist.summary ? { terms: hist.summary.terms, since: hist.summary.since, claims: hist.summary.claims, clean: hist.summary.clean } : null,
     claims: (claims || []).map(function (c) { return { on: c.on, type: c.type, status: c.status }; }),
-    points: letter ? letter.points || [] : [], opening: letter ? letter.opening : '', reqs: notice ? notice.reqs || [] : [] };
+    points: letter ? letter.points || [] : [], opening: letter ? letter.opening : '', reqs: notice ? notice.reqs || [] : [],
+    benefits: /motor/i.test(r.lineLabel || '') && typeof giaBenefits_ === 'function' ? giaBenefits_(false) : undefined };
 }
 
 /* ── Salesforce helpers ────────────────────────────────────────────────────────────────── */
@@ -1796,10 +1797,12 @@ function girTakeAnswer_(st, b, name, via) {
   var vals = {}, got = girJ_(b.values, null) || b.values || {};
   var view = girJ_(st['Client view'], {}) || {};
   (view.items || []).forEach(function (x) { var n = girNum_(got[x.id]); if (n > 0 && Math.abs(n - (x.value || 0)) >= 1) vals[x.id] = n; });
+  if (decision === 'approve' && view.benefits && !gcmYes_(b.read)) return { ok: false, error: 'Please tick that you have read your benefits.' };
   var old = girJ_(st['Client answer'], null), hist = old ? (old.history || []).concat(old.comment ? [{ at: old.at, text: old.comment, name: old.name, decision: old.decision }] : []) : [];
   /* a question leaves the decision where it was */
   var ans = { decision: decision === 'question' ? (old ? old.decision : '') : decision, at: gcmWhen_(new Date()), name: String(name || '').slice(0, 80), comment: comment,
-    values: Object.keys(vals).length ? vals : (old && old.values) || {}, via: via, history: hist.slice(-12) };
+    values: Object.keys(vals).length ? vals : (old && old.values) || {}, via: via, history: hist.slice(-12),
+    read: decision === 'approve' ? (gcmYes_(b.read) ? gcmWhen_(new Date()) : '') : (old && old.read) || '' };
   var next = decision === 'approve' ? 'approved' : decision === 'changes' ? 'changes' : stage;
   girSave_(key, { 'Client answer': ans, Stage: next });
   var r = { key: key, policy: gcmText_(st.Policy), client: gcmText_(st.Client) };
