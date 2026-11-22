@@ -161,8 +161,84 @@ function giaTick_(rows, o) {
     } catch (e) { girLog_(key, r, 'automatic renewal message failed', 'the desk', String(e && e.message ? e.message : e).slice(0, 200)); }
     if (changed) girSave_(key, { Reminders: rem });
   });
+  try { out.reports = giaReports_(); } catch (e) {}
   return out;
 }
+
+/* ── the daily reports: one short list a person, an hour before they finish; one page for the branch manager at 4:00 ──
+ * Staff: GIA_REPORT_STAFF (Script property, JSON [{"email":"","name":"","finish":16}]) overrides the defaults below; finish is
+ * the hour they leave (24-hour). They hold renewals by the desk's Holder e-mail; the Branch Manager's Assistant sees every one.
+ * Agents are not in the renewal desk's rows, so an agent's morning list is a later step. Nothing is sent when a list is empty. */
+var GIA_STAFF = [
+  { email: 'elizabeth.lee@myguardiangroup.com', name: 'Elizabeth', finish: 16 },
+  { email: 'azariah.griffith@myguardiangroup.com', name: 'Azariah', finish: 16 },
+  { email: 'sasha.lalla-jagassar@myguardiangroup.com', name: 'Sasha', finish: 15 },
+  { email: 'kamla.dookran@myguardiangroup.com', name: 'Kamla', finish: 17, all: true }
+];
+var GIA_BOSS = { email: 'ricky.rampersad@myguardiangroup.com', name: 'Ricky', at: 16 };
+
+function giaStaff_() {
+  try { var j = JSON.parse(PropertiesService.getScriptProperties().getProperty('GIA_REPORT_STAFF') || 'null'); if (j && j.length) return j; } catch (e) {}
+  return GIA_STAFF;
+}
+/** Renewals that need a person, from the desk's rows. kind: yes (client said yes, proceed), reply (asked for a change or a question), quiet (no answer yet). */
+function giaItems_() {
+  var today = gcmToday_(), live = girLive_(), out = [];
+  girRows_(GIR.TAB).forEach(function (st) {
+    var stage = gcmText_(st.Stage), ren = gcmYmd_(st.Renewal);
+    if (!ren || ['sent', 'changes', 'approved'].indexOf(stage) < 0) return;
+    var test = gcmText_(st.Test) === 'Y'; if (test && live) return;
+    var days = gcmDays_(today, ren); if (days < -3 || days > 21) return;
+    var rem = girJ_(st.Reminders, {}), kind = stage === 'approved' ? 'yes' : stage === 'changes' ? 'reply' : 'quiet';
+    if (kind === 'quiet' && !st['Sent at']) return;
+    out.push({ key: gcmText_(st.Key), client: gcmText_(st.Client), policy: gcmText_(st.Policy), line: gcmText_(st.Line), days: days, kind: kind, test: test,
+      holder: gcmText_(st['Holder e-mail']).toLowerCase(), sentDays: st['Sent at'] ? gcmDays_(gcmYmd_(st['Sent at']), today) : 0, call: !!rem.call });
+  });
+  var rank = { yes: 0, reply: 1, quiet: 2 };
+  out.sort(function (a, b) { return rank[a.kind] - rank[b.kind] || a.days - b.days; });
+  return out;
+}
+function giaItemHtml_(it) {
+  var what = it.kind === 'yes' ? 'said YES: proceed to renew' : it.kind === 'reply' ? 'asked a question or a change: reply' : 'no answer yet' + (it.sentDays ? ' (' + it.sentDays + ' days since we wrote)' : '') + (it.call ? ', call task open' : '');
+  return '<li><b>' + tEsc_(it.client) + '</b> · ' + tEsc_(it.line) + ' ' + tEsc_(it.policy) + ' · renews ' + (it.days < 0 ? Math.abs(it.days) + ' days ago' : it.days === 0 ? 'today' : 'in ' + it.days + ' days') + ' · ' + tEsc_(what) +
+    ' · <a href="' + GIR.DESK + '#' + encodeURIComponent(it.key) + '">open</a></li>';
+}
+function giaTop_(list, n) {
+  if (!list.length) return '<p>Nothing waiting. 👍</p>';
+  var more = list.length > n ? '<p>and ' + (list.length - n) + ' more on the desk.</p>' : '';
+  return '<ol>' + list.slice(0, n).map(giaItemHtml_).join('') + '</ol>' + more;
+}
+function giaFirstLine_(list) {
+  var y = list.filter(function (i) { return i.kind === 'yes'; })[0], r = list.filter(function (i) { return i.kind === 'reply'; })[0], q = list.filter(function (i) { return i.kind === 'quiet' && i.days <= 7; })[0];
+  return y ? 'Proceed to renew ' + y.client + ' first: they said yes.' : r ? 'Reply to ' + r.client + ' first: they asked a question or a change.' : q ? 'Call ' + q.client + ': renews in ' + q.days + ' days with no answer.' : 'Nothing urgent. Well done.';
+}
+/** Called from giaTick_ every working hour. Sends each person's list inside the hour before they finish, once a day. */
+function giaReports_() {
+  var tz = tTz_(), now = new Date(), h = Number(Utilities.formatDate(now, tz, 'H')), today = gcmToday_(), props = PropertiesService.getScriptProperties(), sent = [], items = null;
+  function once(k) { var key = 'GIA_RPT_' + k + '_' + today; if (props.getProperty(key)) return false; props.setProperty(key, '1'); return true; }
+  giaStaff_().forEach(function (p) {
+    if (h !== p.finish - 1) return;
+    items = items || giaItems_();
+    var mine = items.filter(function (i) { return p.all || i.holder === String(p.email).toLowerCase(); });
+    if (!mine.length || !once(p.email)) return;
+    girInternal_(p.email, 'Your renewals before you finish · ' + mine.length + ' waiting',
+      '<p>Hi ' + tEsc_(p.name) + ', here is what is waiting on you, most urgent first.</p><p><b>Start with:</b> ' + tEsc_(giaFirstLine_(mine)) + '</p>' + giaTop_(mine, 10));
+    sent.push(p.name);
+  });
+  if (h === GIA_BOSS.at) {
+    items = items || giaItems_();
+    if (items.length && once(GIA_BOSS.email)) {
+      var c = { yes: 0, reply: 0, quiet: 0 }, byHolder = {};
+      items.forEach(function (i) { c[i.kind]++; var k = i.holder || 'nobody holds it'; byHolder[k] = (byHolder[k] || 0) + 1; });
+      girInternal_(GIA_BOSS.email, 'Renewals today · ' + items.length + ' need a person',
+        '<p><b>' + c.yes + '</b> said yes and are waiting to be renewed · <b>' + c.reply + '</b> asked a question or a change · <b>' + c.quiet + '</b> have not answered.</p>' +
+        '<p>Held by: ' + Object.keys(byHolder).map(function (k) { return tEsc_(k) + ' (' + byHolder[k] + ')'; }).join(', ') + '.</p>' + giaTop_(items, 10));
+      sent.push(GIA_BOSS.name);
+    }
+  }
+  return sent;
+}
+function giaReportsNow() { var p = PropertiesService.getScriptProperties(); Object.keys(p.getProperties()).forEach(function (k) { if (/^GIA_RPT_/.test(k)) p.deleteProperty(k); }); return tSay_('Sent to: ' + giaReports_().join(', ') + ' (only people whose hour has come).'); }
 
 /** A made-up renewal for the test client, 14 days out, with an invented car. Set GIA_ETHAN_EMAIL first. */
 /** Other people who may sign in as the test client (the GIA_TEST_VIEWERS Script property, comma-separated). */
