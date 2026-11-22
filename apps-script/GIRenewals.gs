@@ -1719,6 +1719,7 @@ function girTick_(o) {
       }
     } catch (e) { girLog_(key, r, 'hourly run failed', 'the desk', String(e && e.message ? e.message : e).slice(0, 200)); }
   });
+  try { if (typeof giaTick_ === 'function') done.auto = giaTick_(rows, o); } catch (e) {}
   return { ok: true, done: done };
 }
 function girMoveEvent_(id, day) {

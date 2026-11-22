@@ -7,6 +7,9 @@
  * RenewalCard.bind(root, send)               wires the answer form; send(key, body) returns a Promise of { ok, said, error }
  * No client data lives here: everything comes from the backend at request time. */
 (function (root) {
+  /* ?pct=10 on the link from the two-week e-mail fills each vehicle's value that much lower; ?go=yes|no preselects the answer */
+  var QSP = new URLSearchParams(root.location ? root.location.search : ''), PCT = Number(QSP.get('pct')) || 0, GO = QSP.get('go') || '';
+  function pctVal(x) { return PCT > 0 && PCT < 50 && x.kind === 'vehicle' && x.value ? Math.round(x.value * (1 - PCT / 100) / 100) * 100 : ''; }
   'use strict';
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
@@ -120,7 +123,7 @@
         var nv = a && a.values && a.values[x.id];
         return '<div class="rc-it"><div><div class="lb">' + esc(x.label) + '</div>' + (x.bank ? '<div class="sm">A copy of the certificate goes to ' + esc(x.bank) + '</div>' : '') + (x.lastValue && x.value && x.lastValue !== x.value ? '<div class="sm">Last year ' + whole(x.lastValue) + '</div>' : '') + '</div>' +
           '<div class="v">' + (x.value ? whole(nv || x.value) : '') + '</div>' +
-          (open && x.value ? '<label>' + (x.kind === 'vehicle' ? 'If the vehicle\'s value is different, type it' : 'If the sum insured should change, type it') + ' <input inputmode="decimal" data-rcv="' + esc(x.id) + '" placeholder="' + esc(String(Math.round(x.value))) + '" value="' + (nv ? Math.round(nv) : '') + '" aria-label="New value for ' + esc(x.label) + '"></label>' : '') + '</div>';
+          (open && x.value ? '<label>' + (x.kind === 'vehicle' ? 'If the vehicle\'s value is different, type it' : 'If the sum insured should change, type it') + ' <input inputmode="decimal" data-rcv="' + esc(x.id) + '" placeholder="' + esc(String(Math.round(x.value))) + '" value="' + (nv ? Math.round(nv) : pctVal(x)) + '" aria-label="New value for ' + esc(x.label) + '"></label>' : '') + '</div>';
       }).join('') + '</div>' +
       (years.length ? '<div class="rc-sec"><h4>' + ICON.shield + 'Your history with us since ' + esc((v.since || years[0].year || '').slice(0, 4)) + '</h4>' + summaryLine(v) + '<div class="rc-hist">' + years.map(function (y) {
         return '<div class="rc-hb' + (y.now ? ' now' : '') + '"><b>' + esc(String(y.year).slice(0, 4)) + '</b><div class="tr"><i style="width:' + Math.max(3, Math.round((y.premium || 0) / max * 100)) + '%"></i></div><div class="v">' + money(y.premium) + '</div></div>'; }).join('') + '</div>' +
@@ -133,9 +136,9 @@
       ((v.comments || []).length ? '<div class="rc-sec"><h4>What you told us</h4>' + v.comments.map(function (c) { return '<div class="rc-cm"><b>' + esc(c.at || '') + '</b>' + (c.name ? ' · ' + esc(c.name) : '') + '<br>' + esc(c.text || '') + '</div>'; }).join('') + '</div>' : '') +
       (open ? '<form class="rc-q" data-rcform="' + esc(v.key) + '"><h4 style="font-size:1.08rem">Your answer</h4><p style="margin:4px 0 0;font-size:.92rem">Nothing is renewed until you say yes. ' + esc(v.holder ? v.holder + ' reads every answer.' : 'A person reads every answer.') + '</p>' +
         '<div class="rc-opts" role="radiogroup" aria-label="Your answer">' +
-        '<label class="rc-opt"><input type="radio" name="d-' + esc(v.key) + '" value="approve"' + (a && a.decision === 'approve' ? ' checked' : '') + '>Yes, renew it</label>' +
+        '<label class="rc-opt"><input type="radio" name="d-' + esc(v.key) + '" value="approve"' + ((a && a.decision === 'approve') || GO === 'yes' ? ' checked' : '') + '>Yes, renew it</label>' +
         '<label class="rc-opt"><input type="radio" name="d-' + esc(v.key) + '" value="changes"' + (a && a.decision === 'changes' ? ' checked' : '') + '>Something has changed</label>' +
-        '<label class="rc-opt"><input type="radio" name="d-' + esc(v.key) + '" value="question">I have a question</label></div>' +
+        '<label class="rc-opt"><input type="radio" name="d-' + esc(v.key) + '" value="question"' + (GO === 'no' ? ' checked' : '') + '>I have a question</label></div>' +
         '<label class="rc-l" for="c-' + esc(v.key) + '">Anything to tell us (needed for a change or a question)</label><textarea id="c-' + esc(v.key) + '" data-rcc></textarea>' +
         (o.group ? '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr));gap:0 12px"><div><label class="rc-l" for="n-' + esc(v.key) + '">Your name</label><input class="rc-in" id="n-' + esc(v.key) + '" data-rcn autocomplete="name"></div><div><label class="rc-l" for="r-' + esc(v.key) + '">Your role</label><input class="rc-in" id="r-' + esc(v.key) + '" data-rcr autocomplete="organization-title"></div></div>' : '') +
         '<button class="rc-go" type="submit">' + ICON.check + 'Send my answer</button><div class="rc-err" role="alert"></div></form>' : '') +
