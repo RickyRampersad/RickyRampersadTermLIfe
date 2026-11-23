@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-23e';
+var SCRIPT_VERSION = '2026-11-23f';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -678,8 +678,9 @@ var SCHEDULE_DATED = {
           { from: '2026-10-26', until: '2026-10-30', hours: '8am – 4pm', lunch: '2:00 – 3:00pm' },
           { from: '2026-10-31', until: '2026-11-17', hours: '7am – 3pm', lunch: '12:00 – 12:30pm' },
           // Sasha, 23 Nov 2026 (Branch Admin Team WhatsApp): "I am 7-3 this week and next week.
-          // Lunch is from 2-3". Wins over the rota for those two weeks; close-out notice 2:15.
-          { from: '2026-11-23', until: '2026-12-04', hours: '7am – 3pm', lunch: '2:00 – 3:00pm' }],
+          // Lunch is from 2-3". Wins over the rota for those two weeks. Close-out notice 1:30pm,
+          // before she goes to lunch at 2 (Mr Rampersad, 23 Nov 2026, 2:30pm).
+          { from: '2026-11-23', until: '2026-12-04', hours: '7am – 3pm', lunch: '2:00 – 3:00pm', closeout: '1:30pm' }],
   kamla: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }],
   pawan: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }]
 };
@@ -723,6 +724,7 @@ function scheduleFor_(staffId, day) {
   });
   out.blocks = blocks;
   if (hit.label) out.week = hit.label;
+  if (hit.closeout) out.closeout = hit.closeout;
   return out;
 }
 
@@ -11291,6 +11293,9 @@ var CLOSEOUT = {
 };
 /** When this desk's close-out notice goes. */
 function closeoutAt_(sid) {
+  // A dated entry may set the notice itself (Sasha 1:30pm, 23 Nov to 4 Dec 2026, before her 2pm lunch).
+  var fix = String(scheduleFor_(sid).closeout || ''), fm = fix.match(/^(\d{1,2}):(\d{2})\s*([ap])m$/i);
+  if (fm) return (+fm[1] % 12 + (fm[3].toLowerCase() === 'p' ? 12 : 0)) * 60 + +fm[2];
   if (CLOSEOUT.AT[sid] == null) return endFor_(sid) - HK_LEAD_MIN;
   // On a day with other hours (SCHEDULE_DATED) the notice moves with the finish: Sasha 3:15 on her 8 to 4 week.
   var base = parseSpan_((SCHEDULE[sid] || {}).hours || ''), on = parseSpan_(scheduleFor_(sid).hours || '');

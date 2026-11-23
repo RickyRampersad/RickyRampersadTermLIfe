@@ -12,7 +12,7 @@ const at = d => { TODAY = d; const s = env.scheduleFor_('sasha'); return { h: s.
 
 let x = at('2026-11-23');
 ok('Mon 23 Nov: Sasha, in her own words, 7 to 3, lunch 2 to 3 (wins over the rota)', x.h === '7am – 3pm' && !x.w, x.h + ' ' + x.w);
-ok('  start 7, close-out 2:15, lunch e-mail 1:55', x.st === '7:00am' && x.co === '2:15pm' && x.lu === '1:55pm', [x.st, x.co, x.lu].join(' '));
+ok('  start 7, close-out 1:30, lunch e-mail 1:55', x.st === '7:00am' && x.co === '1:30pm' && x.lu === '1:55pm', [x.st, x.co, x.lu].join(' '));
 x = at('2026-11-30');
 ok('Mon 30 Nov still 7 to 3', x.h === '7am – 3pm' && !x.w);
 x = at('2026-12-04');
