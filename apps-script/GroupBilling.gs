@@ -1118,7 +1118,7 @@ function gblAct_(b) {
   if (act === 'answer') return gblAnswer_(g, who, b, L);
   if (act === 'taskUpdate') return gblTaskUpdate_(g, who, b);
   if (act === 'memberLetter') return gblMemberLetter_(g, who, b, L);
-  if (['members', 'form', 'formSend', 'enrol', 'enrolSend', 'easi', 'easiSend'].indexOf(act) >= 0) return gblFormAct_(g, who, b);
+  if (['members', 'form', 'formSend', 'enrol', 'enrolSend', 'easi', 'easiSend', 'invites', 'inviteMake', 'inviteAgain'].indexOf(act) >= 0) return gblFormAct_(g, who, b);
   return { ok: false, error: 'Unknown action.' };
 }
 function gblBillPatch_(bill, fields) {
@@ -2069,6 +2069,10 @@ function gcmOurAddress_(e) { e = String(e || '').toLowerCase(); return /@(myguar
 function gblFormAct_(g, who, b) {
   var act = String(b.act || '');
   if (act === 'members') return gblMemberSearch_(g, b.q, gcmYes_(b.fresh));
+  /* the staff page's "Links to send" (23 November 2026): each new member's own link to copy into respond.io */
+  if (act === 'invites') return { ok: true, live: gblLive_(), contact: g.contact || '', invites: gblInvForGroup_(g).map(gblInvStaffView_) };
+  if (act === 'inviteMake') return gblInvCreate_(g, who, b, { staff: true });
+  if (act === 'inviteAgain') return gblInvResend_(g, who, b);
   if (act === 'enrol' || act === 'enrolSend') {
     var e = gblEnrolData_(g, b, who);
     if (act === 'enrol') { var pb = null, perr = ''; try { pb = gblEnrolPdf_(e); } catch (x) { perr = String(x && x.message ? x.message : x).slice(0, 200); } return { ok: true, data: e, pdf: pb ? gblPdfB64_(pb) : '', pdfError: perr, missing: e.missing, blocking: e.blocking, live: gblLive_(), to: GBL_FORM.TO, cc: GBL_FORM.CC, group: (g.to || [])[0] || '', policies: { health: e.policyHealth, life: e.policyLife } }; }
@@ -4032,6 +4036,13 @@ function gblInvView_(r) {
     effective: gcmText_(r.Effective).slice(0, 10), status: st, words: words, reminders: rem, created: gcmText_(r.Created), completed: gcmText_(r.Completed), sentBy: gcmText_(r['Sent by']),
     approvedBy: gcmText_(r['Approved by']), approvedAt: gcmText_(r['Approved at']), test: gcmYes_(r.Test) };
 }
+/** The staff page's view of an invite: the group's view, plus the employee's own link while it can still be used. */
+function gblInvStaffView_(r) {
+  var v = gblInvView_(r);
+  v.link = v.status === 'waiting' || v.status === 'ready' ? gblInvLink_(r) : '';
+  v.expires = gcmText_(r.Expires).slice(0, 10); v.madeBy = gcmText_(r['Sent by role']); v.cover = gblInvCover_(gcmText_(r.Cover)).words;
+  return v;
+}
 function gblInvForGroup_(g) {
   return gblInvRows_().filter(function (r) { return gcmText_(r['Group key']) === g.key; }).reverse();
 }
@@ -4066,8 +4077,10 @@ function gblInvSend_(route, subject, html) {
   catch (e) { return { ok: false, error: 'Microsoft would not send it: ' + String(e && e.message ? e.message : e).slice(0, 200) }; }
 }
 /** The employee's e-mail: their own link (kind 'invite'), or a reminder of it. */
+/** The employee's own link: the one thing that opens their part of the enrolment. */
+function gblInvLink_(r) { return GBL_INV.PAGE + '?inv=' + encodeURIComponent(gcmText_(r.Code)); }
 function gblInvMailEmployee_(g, r, kind) {
-  var E = tEsc_, first = gcmText_(r.First) || 'there', cov = gblInvCover_(gcmText_(r.Cover)), link = GBL_INV.PAGE + '?inv=' + encodeURIComponent(gcmText_(r.Code));
+  var E = tEsc_, first = gcmText_(r.First) || 'there', cov = gblInvCover_(gcmText_(r.Cover)), link = gblInvLink_(r);
   var sender = gcmText_(r['Sent by']), eff = gcmText_(r.Effective).slice(0, 10), n = Number(r.Reminders) || 0;
   var route = gblInvRoute_(g, [gcmText_(r['E-mail'])].filter(String), (GCM.COPY || []).slice());
   var headline = kind === 'invite' ? 'Your ' + cov.words + ' with ' + g.name : 'A reminder: your ' + cov.words + ' enrolment';
@@ -4107,22 +4120,36 @@ function gblInvMailGroup_(g, r, kind) {
 }
 
 /* ── the group's side: create, list, preview, approve, resend ─── */
-function gblInvCreate_(g, who, b) {
+/* opt.staff (23 November 2026, "copy and paste the link into respond io"): the branch makes the link from the staff page, in
+   the group's name, and may leave the e-mail out so it can be pasted into WhatsApp instead. The employee then reads the
+   group's contact, never the staff member, as the person who asked; the row says who at the branch made it. */
+function gblInvCreate_(g, who, b, opt) {
+  opt = opt || {};
   var clean = function (v, n) { return String(v || '').replace(/\s+/g, ' ').trim().slice(0, n || 80); };
   var first = clean(b.first, 40), last = clean(b.last, 60), email = clean(b.email, 120).toLowerCase(), mobile = clean(b.mobile, 30);
   var health = gcmYes_(b.covHealth), life = gcmYes_(b.covLife), eff = gcmYmd_(b.effective || '') || '';
+  var send = opt.staff ? gcmYes_(b.send) : true, admin = opt.staff ? clean(b.admin || g.contact, 80) : who.name;
   if (!first || !last) return { ok: false, error: 'Please give the employee’s first name and surname.' };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return { ok: false, error: 'Please give the employee’s e-mail address: their link goes to it.' };
+  if (send && !email) return { ok: false, error: 'Please give the employee’s e-mail address: their link goes to it.' };
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return { ok: false, error: 'That e-mail address does not look right. Please check it.' };
+  if (!email && !mobile) return { ok: false, error: 'Please give the employee’s e-mail address or mobile number.' };
+  if (!admin) return { ok: false, error: 'Whose name should the employee see as their contact at ' + g.name + '? Their HR or plan administrator.' };
   if (!health && !life) return { ok: false, error: 'Which cover are they joining: Group Health, Group Life, or both?' };
   if (!eff) return { ok: false, error: 'Please give the effective date of their cover.' };
-  var open = gblInvForGroup_(g).filter(function (r) { var s = gblInvState_(r); return (s === 'waiting' || s === 'ready') && gcmText_(r['E-mail']).toLowerCase() === email; })[0];
-  if (open) return { ok: false, error: first + ' already has a link (' + gcmText_(open.Ref) + '). Use “Send the link again” under New members.' };
+  var fullKey = gblInvName_(first + ' ' + last).toLowerCase();
+  var open = gblInvForGroup_(g).filter(function (r) { var s = gblInvState_(r); return (s === 'waiting' || s === 'ready') && (email ? gcmText_(r['E-mail']).toLowerCase() === email : gcmText_(r.Employee).toLowerCase() === fullKey); })[0];
+  if (open) return { ok: false, error: first + ' already has a link (' + gcmText_(open.Ref) + ').' + (opt.staff ? ' Copy it from the list, or send it again.' : ' Use “Send the link again” under New members.') };
   var r = { Ref: gblInvRef_(), Created: gblInvStamp_(), Expires: gcmAddDays_(gcmToday_(), GBL_INV.DAYS), Group: g.name, 'Group key': g.key,
     Employee: gblInvName_(first + ' ' + last), First: gblInvName_(first), 'E-mail': email, Mobile: mobile, Cover: [health ? 'Group Health' : '', life ? 'Group Life' : ''].filter(String).join(' + '),
-    Effective: eff, 'Sent by': who.name, 'Sent by role': clean(b.role, 60), Code: gblInvCode_(), Status: 'waiting', Reminders: 0, Test: gblLive_() ? '' : 'Y' };
-  var m = gblInvMailEmployee_(g, r, 'invite');
+    Effective: eff, 'Sent by': admin, 'Sent by role': opt.staff ? 'made at the branch by ' + who.name : clean(b.role, 60), Code: gblInvCode_(), Status: 'waiting', Reminders: 0, Test: gblLive_() ? '' : 'Y',
+    Note: opt.staff && !send ? 'link made by ' + who.name + ' ' + gcmToday_() + ' to send on WhatsApp, not e-mailed' : '' };
+  var m = send ? gblInvMailEmployee_(g, r, 'invite') : { ok: true, test: !gblLive_() };
   if (!m.ok) return m;
   gblInvAppend_(r);
+  if (opt.staff) return { ok: true, ref: r.Ref, test: !!m.test, invite: gblInvStaffView_(r),
+    said: !send ? 'Link made for ' + r.First + ' (' + r.Ref + '). Copy it and paste it into respond.io.' + (m.test ? ' Test mode: their application goes to the account manager, not to Guardian Life, until the forms are switched live.' : '')
+      : m.test ? 'Test: ' + r.First + '’s e-mail went to the account manager, not to ' + r.First + ' (' + r.Ref + '). You can still copy the link below.'
+      : r.First + ' has their link by e-mail (' + r.Ref + '). You can also copy it below for WhatsApp.' };
   return { ok: true, ref: r.Ref, test: !!m.test, invite: gblInvView_(r),
     said: m.test ? 'Test: ' + r.First + '’s link went to your account manager, not to ' + r.First + ' (reference ' + r.Ref + '). It will go to the employee once our branch switches the forms live.'
       : r.First + ' has their own link by e-mail (reference ' + r.Ref + '). They are reminded each working day until their part is done, and you see it here as soon as it is in.' };
@@ -4194,11 +4221,14 @@ function gblInvResend_(g, who, b) {
   if (!r) return { ok: false, error: 'That new member is not on your list.' };
   var st = gblInvState_(r);
   if (st !== 'waiting' && st !== 'expired') return { ok: false, error: st === 'ready' ? gcmText_(r.First) + '’s part is already in: check and approve it.' : 'This application has already gone to Guardian Life.' };
-  var ref = gcmText_(r.Ref), exp = gcmAddDays_(gcmToday_(), GBL_INV.DAYS);
+  var ref = gcmText_(r.Ref), exp = gcmAddDays_(gcmToday_(), GBL_INV.DAYS), mail = !(b.send === 'N' || b.send === false);
+  if (mail && !gcmText_(r['E-mail'])) return { ok: false, error: 'There is no e-mail address for ' + gcmText_(r.First) + '. Copy the link and send it on WhatsApp instead.' };
   r.Expires = exp;
-  var m = gblInvMailEmployee_(g, r, 'invite');
+  var m = mail ? gblInvMailEmployee_(g, r, 'invite') : { ok: true, test: !gblLive_() };
   if (!m.ok) return m;
-  gblInvPatch_(ref, { Status: 'waiting', Expires: exp, Note: (gcmText_(r.Note) ? gcmText_(r.Note) + '; ' : '') + 'link sent again ' + gcmToday_() + ' by ' + who.name });
+  gblInvPatch_(ref, { Status: 'waiting', Expires: exp, Note: (gcmText_(r.Note) ? gcmText_(r.Note) + '; ' : '') + (mail ? 'link sent again ' : 'link renewed for WhatsApp ') + gcmToday_() + ' by ' + who.name });
+  r.Status = 'waiting';
+  if (!mail) return { ok: true, test: !!m.test, invite: gblInvStaffView_(r), said: gcmText_(r.First) + '’s link is good for another ' + GBL_INV.DAYS + ' days. Copy it and paste it into respond.io.' };
   return { ok: true, test: !!m.test, said: m.test ? 'Test: the link went to your account manager again, not to ' + gcmText_(r.First) + '.' : 'Sent again to ' + gcmText_(r['E-mail']) + '. It is good for another ' + GBL_INV.DAYS + ' days.' };
 }
 
@@ -4268,6 +4298,7 @@ function gblInvRemind_(o) {
     if (gblInvExpired_(r)) { if (!o.test) gblInvPatch_(ref, { Status: 'expired' }); out.expired.push(ref); return; }
     var last = (gcmText_(r['Last reminder']) || gcmText_(r.Created)).slice(0, 10);
     if (!last || last >= today) return;
+    if (!gcmText_(r['E-mail'])) return;   /* a link sent on WhatsApp with no e-mail address: the branch follows it up there */
     if (n >= GBL_INV.MAX_REMIND) {
       if (/still waiting told/.test(gcmText_(r.Note))) return;
       if (!o.test) { var t = gblInvMailGroup_(g, r, 'waiting'); if (t.ok) gblInvPatch_(ref, { Note: (gcmText_(r.Note) ? gcmText_(r.Note) + '; ' : '') + 'still waiting told ' + today }); else { out.errors.push(ref + ': ' + t.error); return; } }

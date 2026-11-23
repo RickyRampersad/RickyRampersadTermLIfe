@@ -4973,6 +4973,26 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       under the synchronous Promise) and `tests/e2e-enrol-invite.js` (75, Playwright, a phone and a laptop: the group
       page's invite, panel, check and approve; the employee's page from the link to "Your part is done"; a wrong link;
       the page without one). `SHOTS=<folder>` saves screenshots.
+  - **Links to send, on the staff page, to paste into respond.io** (23 November 2026: "if the staff even me is on and this
+    is supposed to be up we should be able to copy and paste the link into the respond io"). A panel under each group's
+    account bar on `groupclientmanagement/index.html` (`linksHtml`, `bindLinks`, `invHtml`):
+    - **This group's links**, open by default, each with **Copy link**: their service page, and the films
+      `/groupmgt/yourpage/`, `/healthenrollment/`, `/terminations/`, `/pensionpresentationourprocess/`, `/groupmgt/client/`
+      (`LINKS` in the page; change a film's length there with the film). Anyone signed in may copy them.
+    - **New members' own enrolment links**, for whoever looks after the group, the deputy and the branch manager (`gcm.billAct`
+      acts `invites`, `inviteMake`, `inviteAgain`, through `gblFormAct_`, so Service.gs needs no paste). Each waiting or ready
+      invite shows its link (`gblInvStaffView_`, `gblInvLink_`) with **Copy link** and **Copy WhatsApp message** (`waText`: greets
+      them, names the group, the cover and the date, says the link is theirs alone). An expired link has **Renew** (another 60
+      days, nothing e-mailed).
+    - **Make a link for a new member** (`gblInvCreate_` with `opt.staff`): first name, surname, mobile, e-mail optional, effective
+      date, cover, and the group's contact, filled from Salesforce (`g.contact`). The employee reads that contact as who asked,
+      never the staff member; `Sent by role` says who at the branch made it, and the Note says it went on WhatsApp. "Also e-mail
+      it" is off by default. A link with no e-mail address is never reminded by e-mail (`gblInvRemind_` passes over it): the
+      branch follows it up on WhatsApp.
+    - **The group's own page is never sent an employee's link**, in the list or in the answer to its "send it again"; the link is
+      the employee's alone. In test mode the panel says so: an application from a copied link goes to the account manager, not
+      to Guardian Life.
+    - `tests/test-enrol-invite.js` (98) and `tests/e2e-staff-links.js` (41, a laptop and a phone, the clipboard read back) cover it.
   - **The billing day: the 26th at 10:00, or the next working day; approved by staff, sent by the system, reported on the
     25th at 13:00, chased at 10:30** (24 October 2026: "on the 26th group billings go out and weekly on a Monday at 10am
     the queries go out but staff has to approve". On 25 October it went to a Tuesday for a few hours, so a client would
