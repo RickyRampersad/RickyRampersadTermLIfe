@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-23c';
+var SCRIPT_VERSION = '2026-11-23d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -676,7 +676,10 @@ var SCHEDULE_DATED = {
   // read as 7 to 3: late is judged on the start, 7am either way). From 18 November SCHEDULE is 8 to 4.
   sasha: [{ from: '2026-10-01', until: '2026-10-25', hours: '7am – 3pm', lunch: '12:00 – 12:30pm' },
           { from: '2026-10-26', until: '2026-10-30', hours: '8am – 4pm', lunch: '2:00 – 3:00pm' },
-          { from: '2026-10-31', until: '2026-11-17', hours: '7am – 3pm', lunch: '12:00 – 12:30pm' }],
+          { from: '2026-10-31', until: '2026-11-17', hours: '7am – 3pm', lunch: '12:00 – 12:30pm' },
+          // Sasha, 23 Nov 2026 (Branch Admin Team WhatsApp): "I am 7-3 this week and next week.
+          // Lunch is from 2-3". Wins over the rota for those two weeks; close-out notice 2:15.
+          { from: '2026-11-23', until: '2026-12-04', hours: '7am – 3pm', lunch: '2:00 – 3:00pm' }],
   kamla: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }],
   pawan: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }]
 };
