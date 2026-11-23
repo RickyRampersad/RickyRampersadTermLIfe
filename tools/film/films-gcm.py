@@ -39,4 +39,6 @@ entries('henr1', 'henr1-timing.json', {'': 'health-enrolment.mp4'},      # joini
         [(2, 'link'), (6, 'tick'), (8, 'exactly'), (10, 'reference'), (12, 'journey')], (('', WIDE),))
 entries('term1', 'term1-timing.json', {'': 'terminations.mp4'},          # when someone leaves the plan (17 Nov 2026)
         [(2, 'code'), (5, 'Pick'), (7, 'exactly'), (8, 'send'), (11, 'missed')], (('', WIDE),))
+entries('slink1', 'slink1-timing.json', {'': 'new-member-link.mp4'},     # a new member's own link, from the staff page (23 Nov 2026)
+        [(1, 'link'), (4, 'second'), (5, 'sixty'), (6, 'ten'), (8, 'approves'), (11, 'journey')], (('', WIDE),))
 json.dump(f, open('films.json', 'w'), indent=1)

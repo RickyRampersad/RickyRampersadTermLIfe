@@ -4993,6 +4993,23 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       the employee's alone. In test mode the panel says so: an application from a copied link goes to the account manager, not
       to Guardian Life.
     - `tests/test-enrol-invite.js` (98) and `tests/e2e-staff-links.js` (41, a laptop and a phone, the clipboard read back) cover it.
+    - **The film: `/groupmgt/newmember/`** (asked for the same afternoon, with that panel on screen: "how will this work? i need a
+      short vid and example", then "lot of motion and graphics and charts and make an impact use andrew voice").
+      `groupclientmanagement/new-member-link.mp4`, 1 min 37 s, poster `new-member-link.jpg`, for the branch team (`noindex`), and
+      linked from the panel's own heading ("How it works · film").
+      - **What it shows:** making the link, the WhatsApp message pasted into respond.io, the employee's phone, HR's Check and
+        approve on the group page, and the panel's three states.
+      - **The graphics:** a five-stop journey bar with a dot riding it under the steps (`jr`), a ten-minute timer ring (`ring`),
+        the link's 60 days filling in (`days60`), the follow-ups every three working days as bars (`cadence`), and the panel's
+        states as a stacked bar (`stacked`, sample counts, marked).
+      - **How it is built:** `build-gcmfilm.py slink` from `slink1-lines.json` and `slink1-timing.json`. Andrew Expressive, keys
+        `slink1` and `slink1b`. Line 5's "theirs alone" was heard as "there's a loan", so it now says "Only they can open that
+        link". Line 6 lost its "it", so it now says "open the link".
+      - **The screens** are `tools/film/slinkshots/`, shot by `slink/shoot.js` in the scratchpad against the real pages, on a
+        made-up group (Harbour Point Logistics Ltd), employee (Marcus Sample) and HR contact (Pat Admin), with every call mocked.
+      - **Music:** the corporate tech track (`loopbars.py` to 97 s; not in the repository).
+    - **The employee's page asks for their e-mail even when the link went on WhatsApp**: `benefits/enroll.html` stops on step 1 with
+      "A valid email is needed for the confirmation", so the employee types their own. The link needs no e-mail to be made.
   - **The billing day: the 26th at 10:00, or the next working day; approved by staff, sent by the system, reported on the
     25th at 13:00, chased at 10:30** (24 October 2026: "on the 26th group billings go out and weekly on a Monday at 10am
     the queries go out but staff has to approve". On 25 October it went to a Tuesday for a few hours, so a client would

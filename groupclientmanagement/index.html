@@ -727,7 +727,7 @@ function invHtml(r) {
   const inv = r.invites || [];
   const today = new Date().toISOString().slice(0, 10);
   return (r.live ? '' : '<div class="note" style="margin:10px 0">Test mode: an application made from these links goes to the account manager, not to Guardian Life, until the forms are switched live (gblGoLive). Send a link only to yourself or a colleague to try it.</div>') +
-    '<h4 style="margin:14px 0 6px">New members’ own enrolment links <span class="muted small">' + (inv.length ? inv.length : 'none yet') + '</span></h4>' +
+    '<h4 style="margin:14px 0 6px">New members’ own enrolment links <span class="muted small">' + (inv.length ? inv.length : 'none yet') + '</span> <a class="small" href="/groupmgt/newmember/" target="_blank" rel="noopener">How it works · film 1 min 37 s</a></h4>' +
     inv.map(invRow).join('') +
     '<details class="lkg" id="mkBox"' + (inv.length ? '' : ' open') + '><summary>Make a link for a new member</summary><form id="mkF" class="mkf" autocomplete="off">' +
     '<div class="g2"><label>First name<input class="field" name="first" required maxlength="40"></label><label>Surname<input class="field" name="last" required maxlength="60"></label>' +

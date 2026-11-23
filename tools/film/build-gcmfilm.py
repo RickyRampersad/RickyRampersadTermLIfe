@@ -34,11 +34,11 @@ import base64, io, json, os, pathlib, re, sys
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 FILM = sys.argv[1] if len(sys.argv) > 1 else 'client'
-KEY = {'client': 'gcmc3', 'staff': 'gcms3', 'walk': 'gcmw', 'pension': 'pens2', 'henr': 'henr1', 'term': 'term1'}[FILM]
-SHOTS = pathlib.Path(os.environ.get('GCM_SHOTS', HERE / {'walk': 'gcmshots-walk', 'pension': 'pensionshots', 'henr': 'henrshots', 'term': 'termshots'}.get(FILM, 'gcmshots')))
+KEY = {'client': 'gcmc3', 'staff': 'gcms3', 'walk': 'gcmw', 'pension': 'pens2', 'henr': 'henr1', 'term': 'term1', 'slink': 'slink1'}[FILM]
+SHOTS = pathlib.Path(os.environ.get('GCM_SHOTS', HERE / {'walk': 'gcmshots-walk', 'pension': 'pensionshots', 'henr': 'henrshots', 'term': 'termshots', 'slink': 'slinkshots'}.get(FILM, 'gcmshots')))
 OUT = ROOT / 'groupclientmanagement' / ({'client': 'new-way-film.html', 'staff': 'staff-new-way-film.html', 'walk': 'what-you-see-film.html',
                                         'pension': 'company-pension-film.html', 'henr': 'health-enrolment-film.html',
-                                        'term': 'terminations-film.html'}[FILM])
+                                        'term': 'terminations-film.html', 'slink': 'new-member-link-film.html'}[FILM])
 TIMING = HERE / (KEY + '-timing.json')
 
 def b64(p, mime):
@@ -71,7 +71,7 @@ MARK = b64(ROOT / 'groupclientmanagement' / 'gcm-mark.png', 'image/png')
 PLEX = b64(HERE / 'fonts' / 'IBMPlexSans-latin.woff2', 'font/woff2')
 
 T = json.loads(TIMING.read_text()) if TIMING.exists() else {}
-N_LINES = {'client': 11, 'staff': 19, 'walk': 15, 'pension': 14, 'henr': 12, 'term': 11}[FILM]
+N_LINES = {'client': 11, 'staff': 19, 'walk': 15, 'pension': 14, 'henr': 12, 'term': 11, 'slink': 11}[FILM]
 #  importvox writes SECONDS; data-d is MILLISECONDS.
 DURS = [int(round(d * 1000)) for d in (T.get('durs') or [6.0] * N_LINES)]
 WORDS = [l.get('words', []) for l in T.get('lines', [])]
@@ -1363,15 +1363,277 @@ body.port .net{transform:scale(.72);transform-origin:top center;width:900px;marg
 body.port .clock{font-size:76px}body.port .big{font-size:110px}
 """
 
+
+# ------------------------------------------------------------------------- a new member's own link (23 Nov 2026)
+SL_CSS = """
+.jr{width:500px;margin-top:22px;animation:wup .5s both;animation-delay:var(--kd)}
+.jrw{position:relative;margin:0 46px;height:70px}
+.jrt{position:absolute;left:0;right:0;top:13px;height:6px;border-radius:3px;background:#D5E0F1}
+.jrf{position:absolute;inset:0;border-radius:3px;background:linear-gradient(90deg,#2A6FD8,#5FA0FF);transform-origin:left;
+  transform:scaleX(var(--b));animation:jfill 1.2s cubic-bezier(.4,0,.2,1) both;animation-delay:calc(var(--kd) + .35s)}
+@keyframes jfill{from{transform:scaleX(var(--a))}to{transform:scaleX(var(--b))}}
+.jrd{position:absolute;top:-5px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#FFD36B;left:var(--lb);
+  box-shadow:0 0 0 5px rgba(255,211,107,.35),0 0 16px #FFB300;animation:jdot 1.2s cubic-bezier(.4,0,.2,1) both;animation-delay:calc(var(--kd) + .35s)}
+@keyframes jdot{from{left:var(--la)}to{left:var(--lb)}}
+.js{position:absolute;top:0;width:92px;margin-left:-46px;text-align:center;animation:pop .45s cubic-bezier(.2,1.5,.4,1) both;animation-delay:var(--kd)}
+.js i{display:grid;place-items:center;width:32px;height:32px;margin:0 auto;border-radius:50%;background:#fff;border:2px solid #B8CEF4;
+  color:#7A8BA6;font-style:normal;font-weight:600;font-size:14px;position:relative;z-index:2}
+.js.done i{background:#1D5BC4;border-color:#1D5BC4;color:#fff}
+.js.cur i{background:#FFD36B;border-color:#F5B82E;color:#13284D;animation:jping 1.6s ease-out infinite;animation-delay:var(--kd)}
+@keyframes jping{from{box-shadow:0 0 0 0 rgba(245,184,46,.6)}to{box-shadow:0 0 0 18px rgba(245,184,46,0)}}
+.js span{display:block;font-size:12px;font-weight:600;color:#4B586C;margin-top:6px;line-height:1.2}
+.js.cur span{color:#13408F}
+.rg{position:relative;width:176px;height:176px;margin-top:18px;animation:pop .55s cubic-bezier(.2,1.4,.4,1) both;animation-delay:var(--kd)}
+.rg svg{width:176px;height:176px;transform:rotate(-90deg)}
+.rg circle{fill:none;stroke-width:11}
+.rg .rb{stroke:#D5E0F1}
+.rg .rf{stroke:#1D5BC4;stroke-linecap:round;stroke-dasharray:327;stroke-dashoffset:0;animation:rdash 1.6s cubic-bezier(.4,0,.2,1) both;animation-delay:var(--kd)}
+@keyframes rdash{from{stroke-dashoffset:327}to{stroke-dashoffset:0}}
+.rgv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.rgv b{font-size:56px;font-weight:600;color:#13408F;line-height:1}.rgv span{font-size:14px;color:#4B586C;margin-top:4px}
+.rgrow{display:flex;align-items:center;gap:24px}
+.cal{display:flex;align-items:center;gap:22px;margin-top:20px;padding:18px 20px;border-radius:16px;background:#fff;border:1px solid #DCE3EE;
+  box-shadow:0 10px 24px rgba(15,42,94,.08);animation:wup .5s both;animation-delay:var(--kd)}
+.calg{display:grid;grid-template-columns:repeat(12,14px);gap:5px}
+.calg i{width:14px;height:14px;border-radius:4px;background:#1D5BC4;animation:pop .3s cubic-bezier(.2,1.5,.4,1) both;animation-delay:var(--kd)}
+.calg i:nth-child(12n){background:#5FA0FF}
+.calv b{display:block;font-size:52px;font-weight:600;color:#13408F;line-height:1}.calv span{font-size:15px;color:#4B586C}
+.cad{margin-top:14px;padding:18px 20px 14px;border-radius:16px;background:#fff;border:1px solid #DCE3EE;box-shadow:0 10px 24px rgba(15,42,94,.08);
+  animation:wup .5s both;animation-delay:var(--kd)}
+.cadh{font-size:15px;font-weight:600;color:#13408F;margin-bottom:30px}
+.cadc{display:flex;align-items:flex-end;gap:10px;height:112px;border-bottom:2px solid #D5E0F1}
+.cd{flex:1;text-align:center;position:relative}
+.cd i{display:block;height:var(--h);border-radius:6px 6px 2px 2px;background:#D5E0F1;transform-origin:bottom;
+  animation:grow .6s cubic-bezier(.2,1.3,.4,1) both;animation-delay:var(--kd)}
+.cd.hit i{background:linear-gradient(180deg,#FFD36B,#2A6FD8)}
+.cd.hit b{position:absolute;left:50%;top:-26px;transform:translateX(-50%);font-size:11px;font-weight:600;color:#9A6200;white-space:nowrap;
+  animation:wup .4s both;animation-delay:calc(var(--kd) + .35s)}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.cadx{display:flex;gap:10px;margin-top:6px}.cadx span{flex:1;text-align:center;font-size:12px;color:#4B586C}
+.cadl{font-size:13px;color:#4B586C;margin-top:6px}
+.stk{margin-top:18px;padding:18px 20px;border-radius:16px;background:#fff;border:1px solid #DCE3EE;box-shadow:0 10px 24px rgba(15,42,94,.08);
+  animation:wup .5s both;animation-delay:var(--kd)}
+.stkb{display:flex;height:26px;border-radius:13px;overflow:hidden;gap:3px;background:#fff}
+.stkb i{display:block;height:100%;transform-origin:left;animation:sx .7s cubic-bezier(.4,0,.2,1) both;animation-delay:var(--kd)}
+.stkl{display:flex;gap:10px;margin-top:14px}
+.stkl div{flex:1;padding:10px 12px;border-radius:12px;background:#F3F6FB;animation:pop .45s cubic-bezier(.2,1.4,.4,1) both;animation-delay:var(--kd)}
+.stkl b{display:flex;align-items:center;gap:8px;font-size:30px;font-weight:600;color:#142033;line-height:1.1}
+.stkl b:before{content:'';width:12px;height:12px;border-radius:3px;background:var(--c)}
+.stkl span{display:block;font-size:13px;color:#4B586C;margin-top:4px}
+.stk .sm2{font-size:12px;color:#7A8BA6;margin-top:10px}
+.wap .wa2{width:236px;height:510px;background:#ECE5DD;display:flex;flex-direction:column}
+.wa2 .wah{padding:12px 14px 10px;background:#128C7E;color:#fff}
+.wa2 .wah b{display:block;font-size:16px}.wa2 .wah span{display:block;font-size:11px;color:#D8F3EE}
+.wa2 .wab{padding:12px 9px;flex:1}
+.wa2 .bub{max-width:92%;margin-left:auto;padding:9px 11px 16px;border-radius:12px 2px 12px 12px;background:#DCF8C6;color:#142033;font-size:10.6px;
+  line-height:1.38;margin-bottom:9px;position:relative;box-shadow:0 1px 1px rgba(0,0,0,.08);animation:bub .5s cubic-bezier(.2,1.3,.4,1) both;
+  animation-delay:var(--kd);transform-origin:right top}
+@keyframes bub{from{opacity:0;transform:scale(.6) translateY(12px)}to{opacity:1;transform:none}}
+.wa2 .bub u{color:#1D5BC4;text-decoration:underline;word-break:break-all}
+.wa2 .bub em{position:absolute;right:8px;bottom:3px;font-style:normal;font-size:9px;color:#6A7A6A}
+.wa2 .tk2{color:#9AA4AE;animation:tkb .01s both;animation-delay:var(--kt)}
+@keyframes tkb{to{color:#34B7F1}}
+.wa2 .prev{margin:0 0 6px;padding:8px;border-radius:8px;background:#C9EDB0;font-size:10px}
+.wa2 .prev b{display:block;font-size:10.5px;color:#0B4F2A}
+.wa2 .typ{display:inline-flex;gap:4px;padding:10px 12px;border-radius:12px;background:#fff;animation:typo .3s both;animation-delay:var(--ke)}
+.wa2 .typ i{width:6px;height:6px;border-radius:50%;background:#9AA4AE;animation:tdot 1s ease-in-out infinite}
+.wa2 .typ i:nth-child(2){animation-delay:.15s}.wa2 .typ i:nth-child(3){animation-delay:.3s}
+@keyframes tdot{50%{transform:translateY(-4px);background:#128C7E}}
+@keyframes typo{to{opacity:0;height:0;padding:0;margin:0}}
+.rio{display:inline-flex;align-items:center;gap:10px;margin-top:6px;padding:12px 18px;border-radius:14px;background:#0E1E3A;color:#fff;font-size:20px;
+  font-weight:600;animation:pop .5s cubic-bezier(.2,1.5,.4,1) both;animation-delay:var(--kd)}
+.rio i{width:14px;height:14px;border-radius:50%;background:#25D366;box-shadow:0 0 0 0 rgba(37,211,102,.6);animation:aip 1.4s ease-out infinite}
+.stp4{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.stp4>div{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;background:#fff;border:1px solid #DCE3EE;
+  box-shadow:0 8px 20px rgba(15,42,94,.06);font-size:19px;font-weight:600;animation:wup .45s both;animation-delay:var(--kd)}
+.stp4 b{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#E5F5EC;color:#1B7A45;flex:0 0 34px;
+  animation:pop .45s cubic-bezier(.2,1.6,.4,1) both;animation-delay:var(--kt)}
+.stp4 b svg{width:20px;height:20px}
+.stp4 p{line-height:1.2}.stp4 span{display:block;font-size:13px;font-weight:500;color:#4B586C;margin-top:2px}
+.burst{position:absolute;left:50%;top:118px;width:10px;height:10px;pointer-events:none}
+.burst i{position:absolute;left:-150px;top:-150px;width:300px;height:300px;border-radius:50%;border:2px solid rgba(255,211,107,.7);
+  animation:bst 2.4s cubic-bezier(.2,.6,.3,1) infinite;animation-delay:var(--kd)}
+@keyframes bst{from{transform:scale(.25);opacity:1}to{transform:scale(1.6);opacity:0}}
+.ok3{display:flex;justify-content:center;gap:14px;margin-top:24px}
+.ok3 div{padding:16px 22px;border-radius:16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);font-size:21px;font-weight:600;
+  animation:pop .5s cubic-bezier(.2,1.4,.4,1) both;animation-delay:var(--kd)}
+.ok3 div b{color:#FFD36B;margin-right:8px}
+"""
+
+JR = ('You make the link', 'They fill it in', 'HR approves', 'To Guardian Life', 'Followed up')
+
+def jr(cur, d, frm=None):
+    """The journey under the steps: five stops, the line filling to this one, a dot riding it."""
+    frm = max(0, cur - 1) if frm is None else frm
+    a, b = frm / 4.0, cur / 4.0
+    stops = ''.join('<div class="js%s" style="left:%.1f%%;--kd:%.2fs"><i>%s</i><span>%s</span></div>' % (
+        ' done' if i < cur else (' cur' if i == cur else ''), i * 25.0, d + .1 + i * .07,
+        '&#10003;' if i < cur else str(i + 1), t) for i, t in enumerate(JR))
+    return ('<div class="jr" style="--kd:%.2fs;--a:%.3f;--b:%.3f;--la:%.1f%%;--lb:%.1f%%"><div class="jrw">'
+            '<div class="jrt"><i class="jrf"></i><i class="jrd"></i></div>%s</div></div>' % (d, a, b, a * 100, b * 100, stops))
+
+def ring(n, d, label):
+    return ('<div class="rg" style="--kd:%.2fs"><svg viewBox="0 0 120 120"><circle class="rb" cx="60" cy="60" r="52"/>'
+            '<circle class="rf" cx="60" cy="60" r="52"/></svg><div class="rgv"><b class="cnt" data-to="%d" data-at="%d">%d</b>'
+            '<span>%s</span></div></div>' % (d, n, d * 1000, n, label))
+
+def days60(d):
+    cells = ''.join('<i style="--kd:%.2fs"></i>' % (d + i * .02) for i in range(60))
+    return ('<div class="cal" style="--kd:%.2fs"><div class="calg">%s</div><div class="calv"><b class="cnt" data-to="60" data-at="%d">60</b>'
+            '<span>days the link stays open</span></div></div>' % (d - .2, cells, d * 1000))
+
+def cadence(d):
+    cols = ''.join('<div class="cd%s" style="--kd:%.2fs"><i style="--h:%dpx"></i>%s</div>' % (
+        ' hit' if i % 3 == 0 else '', d + i * .08, 86 if i % 3 == 0 else 16 + (i % 2) * 6, '<b>follow-up</b>' if i % 3 == 0 else '')
+        for i in range(1, 11))
+    return ('<div class="cad" style="--kd:%.2fs"><div class="cadh">Working days after it goes to Guardian Life</div><div class="cadc">%s</div>'
+            '<div class="cadx">%s</div><div class="cadl">A follow-up on the task every three working days, until Guardian Life confirms.</div></div>'
+            % (d - .2, cols, ''.join('<span>%d</span>' % i for i in range(1, 11))))
+
+def stacked(d):
+    segs = (('Waiting on them', '#F5B82E', 2), ('Ready to check', '#2A6FD8', 1), ('Sent to Guardian Life', '#1B7A45', 4))
+    tot = sum(x[2] for x in segs)
+    bar = ''.join('<i style="flex:%d;background:%s;--kd:%.2fs"></i>' % (n, c, d + i * .25) for i, (t, c, n) in enumerate(segs))
+    leg = ''.join('<div style="--c:%s;--kd:%.2fs"><b><span class="cnt" data-to="%d" data-at="%d">%d</span></b><span>%s</span></div>'
+                  % (c, d + .3 + i * .25, n, (d + .3 + i * .25) * 1000, n, t) for i, (t, c, n) in enumerate(segs))
+    return ('<div class="stk" style="--kd:%.2fs"><div class="stkb">%s</div><div class="stkl">%s</div>'
+            '<div class="sm2">Sample group &middot; %d new members, made-up figures</div></div>' % (d - .2, bar, leg, tot))
+
+def wa_phone(d, ksend):
+    txt = (SHOTS / 'wa.txt').read_text().strip().split('\n\n')
+    esc = lambda t: t.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+    first = esc(txt[0])
+    first = re.sub(r'(https://\S+)', r'<u>\1</u>', first)
+    rest = esc(txt[1]) if len(txt) > 1 else ''
+    tick = '<span class="tk2" style="--kt:%.2fs">&#10003;&#10003;</span>' % ksend
+    return ('<div class="phone wap" style="--kd:%.2fs"><div class="wa2"><div class="wah"><b>Marcus Sample</b><span>WhatsApp &middot; sent from respond.io</span></div>'
+            '<div class="wab"><div class="typ" style="--ke:%.2fs"><i></i><i></i><i></i></div>'
+            '<div class="bub" style="--kd:%.2fs"><div class="prev"><b>rickyrampersadbranch.com</b>Group Health &amp; Life &middot; your own part</div>%s<em>1:21 pm %s</em></div>'
+            '<div class="bub" style="--kd:%.2fs">%s<em>1:21 pm %s</em></div></div></div>%s</div>'
+            % (d, d + .9, d + .9, first, tick, d + 1.3, rest, tick, TAG))
+
+def steps4(items):
+    return '<div class="stp4">' + ''.join(
+        '<div style="--kd:%.2fs"><b style="--kt:%.2fs">%s</b><p>%s<span>%s</span></p></div>' % (d, kt, ICON['check'], t, sub)
+        for t, sub, d, kt in items) + '</div>'
+
+def slink():
+    """Asked for on 23 November 2026, with the staff page's "Links to send" open: "how will this work? i need a short vid
+       and example", then "lot of motion and graphics and charts and make an impact use andrew voice". The staff page,
+       the employee's phone and the group's Check and approve, on a made-up group (Harbour Point Logistics Ltd), employee
+       (Marcus Sample) and HR contact (Pat Admin), every backend call mocked (slink/shoot.js in the scratchpad)."""
+    sc = []
+    away = at(1, 'signatures') + .7
+    sc.append(split(1,
+        eb('Group health &amp; life &middot; a new member', .3) +
+        '<h1>%s</h1>' % kin('One link. Their own.', .6, hi=('own.',)) +
+        '<div class="tabs3">' + ''.join(chip('%s<i class="xs" style="--kd:%.2fs"></i>' % (t, away + i * .15), at(1, w), 'bad x')
+                                        for i, (t, w) in enumerate((('No paper form', 'paper'), ('No chasing signatures', 'signatures')))) + '</div>',
+        '<div class="pile">%s<div class="onelink" style="--kd:%.2fs"><img src="%s" alt=""><b>One link</b><span>made on the staff page, in a second</span></div></div>'
+        % (''.join(paper(i, .2 + i * .12, away + i * .05) for i in range(6)), at(1, 'link') - .2, MARK), 'wide'))
+    sc.append(split(2,
+        eb('On the staff page') +
+        row('users', 'Open the group', at(2, 'group'), 'any group you look after') +
+        row('list', 'Links to send', at(2, 'links'), 'copy, then paste into respond.io') +
+        row('user', 'Make a link for a new member', at(2, 'make'), '', 'ok') + jr(0, at(2, 'make') + .4),
+        lap('s1-links.png', d=.3, n=2, w=560, h=350, moves=((at(2, 'links'), 'glinks', 1.15), (at(2, 'make'), 'mksum', 1.6)),
+            marks=((at(2, 'make') + .35, 'mksum'),)),
+        'wide'))
+    sc.append(split(3,
+        eb('Four things to type') +
+        row('user', 'Their name and mobile', at(3, 'name'), 'e-mail only if you want it sent there too') +
+        row('clock', 'The date their cover starts', at(3, 'date'), '') +
+        row('shield', 'The plans they&rsquo;re joining', at(3, 'plans'), 'Group Health, Group Life, or both') +
+        row('check', 'Their HR contact, already filled in', at(3, 'HR'), 'straight from Salesforce', 'ok'),
+        lap('s2-form.png', d=.3, n=3, w=560, h=350,
+            moves=((at(3, 'name'), 'first', 1.9), (at(3, 'date'), 'effective', 1.9), (at(3, 'plans'), 'cover', 1.9), (at(3, 'HR'), 'admin', 1.9)),
+            marks=((at(3, 'name') + .3, 'first'), (at(3, 'mobile'), 'mobile'), (at(3, 'date') + .3, 'effective'),
+                   (at(3, 'plans') + .3, 'cover'), (at(3, 'Salesforce'), 'admin'))),
+        'wide'))
+    sc.append(split(4,
+        eb('Make the link') +
+        '<div class="punch" style="--kd:%.2fs">Ready in a second.</div>' % at(4, 'second', lead=.2) +
+        row('chat', 'A WhatsApp message, written for you', at(4, 'WhatsApp'), 'their name, the group, the cover, the date', 'ok') +
+        row('doc', 'Or just the link', at(4, 'copy'), 'Copy link', ''),
+        '<div class="duo l">%s%s</div>' % (
+            lap('s2-form.png', 'back', .2, n=4, w=520, h=325, moves=((.2, 'go', 1.7),), taps=((at(4, 'Press') + .3, 'go'),)),
+            lap('s3-made.png', 'front', at(4, 'copy', lead=.5), n=4, w=520, h=325, moves=((at(4, 'copy'), 'row', 1.55),),
+                taps=((at(4, 'copy') + .5, 'copy'), (at(4, 'WhatsApp') + .2, 'wa')), marks=((at(4, 'second'), 'link'),))),
+        'wide3'))
+    sc.append(split(5,
+        eb('Paste and send') +
+        '<div class="rio" style="--kd:%.2fs"><i></i>respond.io &middot; WhatsApp</div>' % at(5, 'respond') +
+        row('lock', 'Only they can open it', at(5, 'Only'), 'it is never forwarded, and never shared', 'ok') +
+        days60(at(5, 'sixty')),
+        wa_phone(.3, at(5, 'send') + .2),
+        'wide2'))
+    sc.append(split(6,
+        eb('On their phone') +
+        steps4((('Their name', 'already there', at(6, 'name'), at(6, 'name') + .3),
+                ('Their company', 'already there', at(6, 'company'), at(6, 'company') + .3),
+                ('Their cover', 'already ticked', at(6, 'cover'), at(6, 'cover') + .3),
+                ('The start date', 'from the link', at(6, 'cover') + .3, at(6, 'cover') + .6))) +
+        '<div class="rgrow">%s<div class="note big2" style="--kd:%.2fs">About ten minutes,<br>one step at a time.</div></div>'
+        % (ring(10, at(6, 'ten', lead=.3), 'minutes'), at(6, 'ten') + .5) + jr(1, at(6, 'phone')),
+        phone('p1-hello.png', d=.3, n=6, marks=((at(6, 'name'), 'invcard'), (at(6, 'company') + .2, 'company'))),
+        'wide2'))
+    sc.append(split(7,
+        eb('Their part') +
+        steps4((('Their details', 'typed once', at(7, 'details'), at(7, 'details') + .3),
+                ('Their family', 'who is covered', at(7, 'family'), at(7, 'family') + .3),
+                ('Health questions', 'one tick if all well', at(7, 'health'), at(7, 'tick') + .2),
+                ('Signed on the screen', 'with a finger', at(7, 'sign'), at(7, 'finger') + .2))) +
+        '<div class="note" style="--kd:%.2fs">Health answers go to Guardian Life, never to the employer.</div>' % (at(7, 'finger') + .5),
+        '<div class="duo">%s%s</div>' % (
+            phone('p3-health.png', 'back', .2, n=7, w=200, marks=((at(7, 'tick'), 'well'),), taps=((at(7, 'tick'), 'well'),)),
+            phone('p4-sign.png', 'front', at(7, 'sign', lead=.4), n=7, marks=((at(7, 'sign') + .2, 'sig'),))),
+        'wide2'))
+    sc.append(split(8,
+        eb('Then HR') +
+        row('mail', 'HR is told it&rsquo;s ready to check', at(8, 'ready'), 'the moment it is sent') +
+        row('doc', 'Guardian&rsquo;s own form, filled in', at(8, 'Guardian'), 'GIO001 and the declaration') +
+        row('tick2', 'The employer&rsquo;s part, Section F', at(8, 'employer'), 'and HR approves it', 'ok') + jr(2, at(8, 'moment'), 1),
+        '<div class="duo l">%s%s</div>' % (
+            lap('sg1-panel.png', 'back', .2, n=8, w=520, h=325, moves=((at(8, 'ready') - .3, 'marcus', 1.5),),
+                marks=((at(8, 'ready'), 'marcus'),), taps=((at(8, 'ready') + .8, 'check'),)),
+            lap('sg2-check.png', 'front', at(8, 'reads', lead=.6), n=8, w=520, h=325,
+                moves=((at(8, 'Guardian'), 'pdf', 1.25), (at(8, 'employer'), 'secf', 1.45), (at(8, 'approves') - .3, 'go', 1.6)),
+                marks=((at(8, 'employer') + .4, 'secf'),), taps=((at(8, 'approves') + .2, 'go'),))),
+        'wide3'))
+    sc.append(split(9,
+        eb('Sent, and seen through') +
+        row('shield', 'Straight to Guardian Life', at(9, 'Guardian'), 'EB Customer Care, with the forms attached') +
+        row('mail', 'Our branch copied', at(9, 'copied'), '') +
+        row('check', 'A task for our team', at(9, 'task'), 'in Salesforce, on the group', 'ok') + jr(4, at(9, 'Guardian'), 2),
+        '<div style="width:560px">%s%s</div>' % (
+            lap('sg3-sent.png', d=.3, n=9, w=560, h=230, moves=((at(9, 'Guardian'), 'sent', 1.5),), marks=((at(9, 'Guardian') + .4, 'sent'),)),
+            cadence(at(9, 'three'))),
+        'wide'))
+    sc.append(split(10,
+        eb('Where everyone stands') +
+        '<h2>%s</h2>' % kin('Every new member, one glance.', at(10, 'stands', lead=.5), hi=('glance.',)) + stacked(at(10, 'Waiting')),
+        lap('s4-status.png', d=.3, n=10, w=560, h=350, moves=((at(10, 'stands'), 'rows', 1.5),),
+            marks=((at(10, 'Waiting'), 'wait'), (at(10, 'sent'), 'sent'))),
+        'wide'))
+    sc.append(S(11,
+        '<div class="mid"><div class="burst">%s</div><img class="mk" src="%s" alt="">%s<h1>%s</h1>'
+        '<div class="ok3"><div style="--kd:%.2fs"><b>&#10003;</b>Nothing retyped</div><div style="--kd:%.2fs"><b>&#10003;</b>Every step on the record</div>'
+        '<div style="--kd:%.2fs"><b>&#10003;</b>A journey, not a transaction</div></div>'
+        '<div class="sub" style="--kd:%.2fs">Group health &amp; life &middot; Ricky Rampersad Branch &middot; Guardian Life of the Caribbean</div></div>'
+        % (''.join('<i style="--kd:%.2fs"></i>' % (k * .8) for k in range(3)), MARK, eb('A new member&rsquo;s own link', .4),
+           kin('One link.', at(11, 'link', lead=.3), hi=('link.',)), at(11, 'retyped'), at(11, 'record'), at(11, 'journey'), at(11, 'transaction') + .6),
+        'blue'))
+    return sc
+
 def main():
-    sc = {'client': client, 'walk': walk, 'staff': staff, 'pension': pension, 'henr': henr, 'term': term}[FILM]()
+    sc = {'client': client, 'walk': walk, 'staff': staff, 'pension': pension, 'henr': henr, 'term': term, 'slink': slink}[FILM]()
     if len(sc) != N_LINES:
         sys.exit('SCENES: %d scenes for %d lines' % (len(sc), N_LINES))
     title = {'client': 'Our new way of looking after your group', 'staff': 'Group client management, the new way', 'walk': 'What you see when you sign in',
              'pension': 'Company pensions, without the paperwork', 'henr': 'Joining your group health plan',
-             'term': 'When someone leaves your plan'}[FILM]
+             'term': 'When someone leaves your plan', 'slink': 'A new member’s own link'}[FILM]
     page = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex">'
-            '<title>%s</title><style>' % title + (CSS + PEN_CSS).replace('__PLEX__', PLEX) + '</style></head><body>'
+            '<title>%s</title><style>' % title + (CSS + PEN_CSS + SL_CSS).replace('__PLEX__', PLEX) + '</style></head><body>'
             '<div id="stage" style="--total:%dms"><div class="dots grain"></div><div class="glow g1"></div><div class="glow g2"></div><i id="prog" class="grain"></i>' % sum(DURS)
             + '\n'.join(sc) + '</div><div id="strip"></div><style>' + ''.join(EXTRA) + '</style>'
             '<script>'
@@ -1392,7 +1654,7 @@ def main():
     #  render.js puts .act / .out on the live and outgoing section and reads .cnt for counters: a rule whose subject is
     #  one of those lands on the scene itself (the meeting film once clipped 420px off every frame that way).
     RESERVED = {'act', 'out', 'cnt', 'sc', 'in', 'rolling', 'grain'}
-    for m in re.finditer(r'([^{}]+)\{', CSS + PEN_CSS):
+    for m in re.finditer(r'([^{}]+)\{', CSS + PEN_CSS + SL_CSS):
         for sel in m.group(1).split(','):
             subject = re.split(r'[\s>+~]+', sel.strip())[-1]
             if subject.startswith('@') or subject in ('from', 'to') or re.fullmatch(r'[\d.]+%?', subject):

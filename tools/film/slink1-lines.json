@@ -1,0 +1,40 @@
+{
+ "note": "A new member's own link, from the staff page, 23 Nov 2026. Andrew Expressive (en-US-AndrewMultilingualNeural, +0%) on tts-run, key slink1. Lines 5 and 6 re-worded and re-voiced as slink1b (\"theirs alone\" was heard \"there's a loan\"; \"open it\" lost its \"it\").",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
+ "scenes": [
+  {
+   "say": "A new member is joining one of your groups. There's no paper form, and no chasing signatures. You send them a link of their own."
+  },
+  {
+   "say": "Open the group on the staff page. Under links to send, open the box that says make a link for a new member."
+  },
+  {
+   "say": "Type their name, their mobile, the date their cover starts, and the plans they're joining. Their HR contact is already filled in, straight from Salesforce."
+  },
+  {
+   "say": "Press make the link. It's ready to copy in a second, with a WhatsApp message already written around it."
+  },
+  {
+   "say": "Paste it into respond dot I O, and send it. Only they can open that link, and it stays open for sixty days."
+  },
+  {
+   "say": "They open the link on their phone. Their name, their company and their cover are already there. It takes about ten minutes."
+  },
+  {
+   "say": "They add their own details and their family, answer the health questions with a single tick, and sign on the screen with a finger."
+  },
+  {
+   "say": "The moment they send it, their HR contact sees it's ready to check. HR reads Guardian's own form, fills in the employer's part, and approves it."
+  },
+  {
+   "say": "It goes straight to Guardian Life, with our branch copied. Our team gets the task, and follows it up every three working days."
+  },
+  {
+   "say": "And on the staff page, you see where every new member stands. Waiting on them, ready to check, or sent to Guardian Life."
+  },
+  {
+   "say": "One link. Nothing retyped, and every step on the record. That's our branch. A journey, not a transaction."
+  }
+ ]
+}

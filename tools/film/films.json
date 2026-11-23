@@ -2023,5 +2023,48 @@
   "music": "bed-term1.wav",
   "sfx": "sfx-term1.wav",
   "ass": "captions-term1.ass"
+ },
+ "slink1": {
+  "durs": [
+   8.8,
+   7.6,
+   11.4,
+   7.3,
+   8.0,
+   8.3,
+   7.9,
+   10.7,
+   8.7,
+   9.2,
+   8.8
+  ],
+  "dur": 96.7,
+  "vox": "voslink1",
+  "start": 0,
+  "musicgain": 0.45,
+  "duck": 0.35,
+  "dark": [],
+  "ticks": [],
+  "hits": [
+   6.9,
+   30.62,
+   41.04,
+   49.55,
+   68.24,
+   93.88
+  ],
+  "w": 1920,
+  "h": 1080,
+  "pic": 924,
+  "capmode": "strip",
+  "capsize": 44,
+  "capwrap": 62,
+  "capbg": "0F2A5E",
+  "cap": "cap-slink1",
+  "out": "../../groupclientmanagement/new-member-link.mp4",
+  "mix": "slink1-mix.wav",
+  "music": "bed-slink1.wav",
+  "sfx": "sfx-slink1.wav",
+  "ass": "captions-slink1.ass"
  }
 }
