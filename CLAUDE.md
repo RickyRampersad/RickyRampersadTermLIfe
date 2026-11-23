@@ -918,6 +918,28 @@ or the wall and the responses page lock everyone out.
 *New deployment* instead issues a fresh `/exec` URL and every front end has to
 be re-wired.
 
+**Moving the project to the Workspace: `Move.gs`** (23 November 2026, asked for as *"i was of the
+opinion we moved to my workspace since i am paying for this"*). It had not moved: the Service
+Questionnaires sheet, and Branch Portfolio, Group Client Management, the Log and Delivery Book, Branch
+Meetings, the KPI Tracker and CLAIMSTT with it, are all still owned by the personal Gmail. Google will
+not transfer a sheet from a personal account to a Workspace one, so the move is File → Make a copy,
+signed in as support@, and a copy carries the tabs and code but no Script property, no timed job and
+a new `/exec`. `Move.gs` carries the rest. In the old project: `moveExport` (every property, the timed
+jobs and each tab's row count onto a hidden `_move` tab, values as text after `v:` so Sheets parses
+nothing), then `moveStopOld` (deletes every trigger, so the two never both send). Make the copy as
+support@. In the copy: `moveImport` (sets the properties, rebuilds each timed job with the project's
+own installer, names a one-off such as `gcmWelcomeTick` for a person rather than guessing it, checks
+every sheet and folder the settings name can be opened as support@, deletes the copy's `_move` tab).
+Deploy the copy as a web app, then `python3 tools/move/repoint.py <old /exec> <new /exec>` changes the
+44 places that hold the address (never CLAUDE.md). Back in the old project, `moveCatchUp` lists rows
+written there after the copy, to carry by hand, and `moveCleanUp` deletes its `_move` tab, which holds
+the secrets for the length of the move. Before it: share with support@ every sheet and folder the
+project opens (moveImport names any it cannot). After it: the KPI Tracker reads the Agent Skill Bank by
+the `BOOK_SKILL` Script property (set it to the new sheet's id, and share the new sheet with the account
+that runs the tracker). donthaveanagent.com's live pages call no `/exec` at all (the Netlify snapshot),
+so the move does not touch them. `tests/test-move.js` covers it (91 checks: two fake projects end to
+end, and the real project files loaded beside `Move.gs`, every scheduled handler mapped).
+
 **Front ends holding `API_URL`** — all six must be updated together if the
 deployment URL ever changes: `donthaveanagent/agents.html`, `how-we-work.html`,
 `review.html`, `status.html`, `wall.html`, and root `service/index.html`. Both
