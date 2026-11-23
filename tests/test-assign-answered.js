@@ -43,5 +43,22 @@ ok('and no stray field reaches Salesforce', ins[0] && Object.keys(ins[0].b).sort
 env.sfNote_({ ParentId: '00TOPEN', Body: 'A plain note.' });
 ok('without one, the live trail as before', ins[1] && ins[1].b.FeedItemId === '0D5LIVE', JSON.stringify(ins[1]));
 
+console.log('\nThe agent already named goes into Claude\'s draft:\n');
+env.sfkQuery_ = q => {
+  if (/FROM Task WHERE Id IN/.test(q) && /WhatId/.test(q)) return [{ Id: '00TOPEN', WhatId: 'a02PF1', WhoId: '003C1' }];
+  if (/FROM CLIENT_PORTFOLIO__c/.test(q)) return [{ Id: 'a02PF1', POLICY__c: '5004108374', Contact__c: '003C1', Assigned_Agent__r: { Name: 'Darryl Manick' }, Date_Assigned_to_Agent__c: '2026-11-18' }];
+  return [];
+};
+const nm = env.taskAgentNamed_(['00TOPEN']);
+ok('the naming is read off the policy record the task sits on', nm['00TOPEN'] && nm['00TOPEN'].agent === 'Darryl Manick' && nm['00TOPEN'].on === '2026-11-18' && nm['00TOPEN'].policy === '5004108374', JSON.stringify(nm));
+env.umTaskContext_ = () => ({ record: null, related: [] });
+env.playbookFor_ = () => ({});
+const pr = env.bmDeepPrompt_('2026-11-23', [{ id: '00TOPEN', k: 'ask', s: 'Orphan response', by: 'Azariah Griffith', said: 'Please advise who to assign this to', named: nm['00TOPEN'], askedAfter: true }], '', {}, []);
+ok('Claude is told who was named, when, and on which policy', /"agent_already_named":\{"agent":"Darryl Manick","named_on":"2026-11-18","policy_record":"5004108374","asked_after_it_was_named":true\}/.test(pr.prompt), pr.prompt.slice(-400));
+ok('and to ask for an official response, never to put the naming back to him', /official response/.test(pr.prompt) && /never leave the naming as a \[blank\]/.test(pr.prompt));
+const plain = env.namedAskNote_({ by: 'Azariah Griffith', named: nm['00TOPEN'], askedAfter: true });
+ok('without Claude, a plain note says it and asks why', /^Azariah: this was decided\. Darryl Manick was named on .+5004108374/.test(plain) && /official response/.test(plain), plain);
+ok('an ask before the naming is not asked why', !/official response/.test(env.namedAskNote_({ by: 'Sasha L', named: nm['00TOPEN'], askedAfter: false })));
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall green');
 process.exit(fails ? 1 : 0);
