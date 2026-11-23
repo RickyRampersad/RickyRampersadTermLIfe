@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-23b';
+var SCRIPT_VERSION = '2026-11-23c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -681,12 +681,33 @@ var SCHEDULE_DATED = {
   pawan: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }]
 };
 
+/* HOURS THAT TURN WEEK BY WEEK (23 November 2026). Kamla's schedule for Sasha, "01-Oct-26 &
+   Thereafter", sent 20 Nov and confirmed by Mr Rampersad on 23 Nov: Week 1, office only, 7am to
+   2pm, and her lunch at 2pm ends her day; Weeks 2 and 3, 8am to 4pm, lunch 2 to 3, the last hour
+   worked online. Week 1 is the week of 1 October 2026 (Monday 28 September), so the cycle runs
+   Week 1 on 30 Nov, 21 Dec, 11 Jan ... Applied from 'from' on; earlier days keep SCHEDULE_DATED. */
+var SCHEDULE_ROTA = {
+  sasha: { from: '2026-11-23', anchor: '2026-09-28', weeks: [
+    { hours: '7am – 2pm', lunch: 'None: her lunch at 2pm ends the day', label: 'Week 1 · office only' },
+    { hours: '8am – 4pm', lunch: '2:00 – 3:00pm', label: 'Week 2 · office, then online 3 to 4' },
+    { hours: '8am – 4pm', lunch: '2:00 – 3:00pm', label: 'Week 3 · office, then online 3 to 4' }] }
+};
+/** Which of the rota's weeks "2026-11-30" falls in: the entry, or null. */
+function rotaWeek_(staffId, day) {
+  var r = SCHEDULE_ROTA[staffId], d = String(day || '');
+  if (!r || !r.weeks || !r.weeks.length || !/^\d{4}-\d{2}-\d{2}$/.test(d) || d < r.from) return null;
+  var ms = function (x) { var p = x.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); };
+  var t = ms(d), dow = (new Date(t).getUTCDay() + 6) % 7, wk = Math.floor((t - dow * 864e5 - ms(r.anchor)) / (7 * 864e5));
+  var n = r.weeks.length, i = ((wk % n) + n) % n, w = r.weeks[i];
+  return { hours: w.hours, lunch: w.lunch, label: w.label, index: i + 1 };
+}
+
 /** A desk's schedule on a day ("2026-10-27"), today's when no day is given. */
 function scheduleFor_(staffId, day) {
-  var base = SCHEDULE[staffId] || DEFAULT_SCHEDULE, list = SCHEDULE_DATED[staffId];
-  if (!list || !list.length) return base;
+  var base = SCHEDULE[staffId] || DEFAULT_SCHEDULE, list = SCHEDULE_DATED[staffId] || [];
   var d = String(day || todayISO_()), hit = null;
   for (var i = 0; i < list.length && !hit; i++) if ((!list[i].from || d >= list[i].from) && (!list[i].until || d <= list[i].until)) hit = list[i];
+  if (!hit) hit = rotaWeek_(staffId, d);
   if (!hit) return base;
   var out = {}, blocks = {};
   Object.keys(base).forEach(function (k) { out[k] = base[k]; });
@@ -698,6 +719,7 @@ function scheduleFor_(staffId, day) {
     blocks[b] = x;
   });
   out.blocks = blocks;
+  if (hit.label) out.week = hit.label;
   return out;
 }
 
