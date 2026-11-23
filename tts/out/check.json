@@ -1,57 +1,12 @@
 {
- "tts/out/slink1/01.mp3": [
-  "en",
-  0.994,
-  "A new member is joining one of your groups. There's no paper form and no chasing signatures. You send them a link of their own."
- ],
- "tts/out/slink1/02.mp3": [
-  "en",
-  0.991,
-  "Open the group on the staff page. Under links to send, open the box that says make a link for a new member."
- ],
- "tts/out/slink1/03.mp3": [
+ "tts/out/slink1b/01.mp3": [
   "en",
   0.995,
-  "Type their name, their mobile, the date their cover starts, and the plans they're joining. Their HR contact is already filled in straight from Salesforce."
+  "Paste it into respond.io and send it. Only they can open that link and it stays open for 60 days."
  ],
- "tts/out/slink1/04.mp3": [
+ "tts/out/slink1b/02.mp3": [
   "en",
   0.995,
-  "Press make the link. It's ready to copy in a second, with a WhatsApp message already written around it."
- ],
- "tts/out/slink1/05.mp3": [
-  "en",
-  0.993,
-  "Paste it into respond.io and send it. That link is there's a loan and it's good for 60 days."
- ],
- "tts/out/slink1/06.mp3": [
-  "en",
-  0.996,
-  "They open on their phone, their name, their company, and their cover are already there. It takes about 10 minutes."
- ],
- "tts/out/slink1/07.mp3": [
-  "en",
-  0.994,
-  "They add their own details and their family, answer the health questions with a single tick and sign on the screen with a finger."
- ],
- "tts/out/slink1/08.mp3": [
-  "en",
-  0.997,
-  "The moment they send it, their HR contact sees it's ready to check. HR reads Guardian's own form, fills in the employer's part, and approves it."
- ],
- "tts/out/slink1/09.mp3": [
-  "en",
-  0.997,
-  "It goes straight to Guardian Life with our branch copied. Our team gets the task and follows it up every three working days."
- ],
- "tts/out/slink1/10.mp3": [
-  "en",
-  0.995,
-  "And on the staff page, you see where every new member stands. Waiting on them, ready to check or sent to Guardian Life."
- ],
- "tts/out/slink1/11.mp3": [
-  "en",
-  0.997,
-  "One link, nothing re-typed, and every step on the record. That's our branch. A journey, not a transaction."
+  "They open the link on their phone, their name, their company, and their cover are already there. It takes about 10 minutes."
  ]
 }
