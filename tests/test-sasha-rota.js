@@ -11,12 +11,12 @@ const t = m => m == null ? null : env.twelve_(env.mmText_(m));
 const at = d => { TODAY = d; const s = env.scheduleFor_('sasha'); return { h: s.hours, w: s.week || '', co: t(env.closeoutAt_('sasha')), lu: t(env.lunchOffAt_('sasha')), st: t(env.startFor_('sasha', d)) }; };
 
 let x = at('2026-11-23');
-ok('Mon 23 Nov: Sasha, in her own words, 7 to 3, lunch 2 to 3 (wins over the rota)', x.h === '7am – 3pm' && !x.w, x.h + ' ' + x.w);
-ok('  start 7, close-out 1:30, lunch e-mail 1:55', x.st === '7:00am' && x.co === '1:30pm' && x.lu === '1:55pm', [x.st, x.co, x.lu].join(' '));
+ok('Mon 23 Nov: Sasha, in her own words, 7 to 2, her lunch at 2 ends the day (wins over the rota)', x.h === '7am – 2pm' && !x.w, x.h + ' ' + x.w);
+ok('  start 7, close-out 1:30, no lunch e-mail', x.st === '7:00am' && x.co === '1:30pm' && x.lu == null, [x.st, x.co, x.lu].join(' '));
 x = at('2026-11-30');
-ok('Mon 30 Nov still 7 to 3', x.h === '7am – 3pm' && !x.w);
+ok('Mon 30 Nov still 7 to 2', x.h === '7am – 2pm' && !x.w);
 x = at('2026-12-04');
-ok('Fri 4 Dec still 7 to 3', x.h === '7am – 3pm' && !x.w);
+ok('Fri 4 Dec still 7 to 2', x.h === '7am – 2pm' && !x.w);
 x = at('2026-12-07'); ok('Mon 7 Dec Week 2: 8 to 4', x.h === '8am – 4pm' && /Week 2/.test(x.w));
 x = at('2026-12-14'); ok('Mon 14 Dec Week 3', /Week 3/.test(x.w));
 x = at('2026-12-21'); ok('Mon 21 Dec Week 1 again', /Week 1/.test(x.w) && x.h === '7am – 2pm');

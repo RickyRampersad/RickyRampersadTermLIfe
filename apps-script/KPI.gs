@@ -678,9 +678,9 @@ var SCHEDULE_DATED = {
           { from: '2026-10-26', until: '2026-10-30', hours: '8am – 4pm', lunch: '2:00 – 3:00pm' },
           { from: '2026-10-31', until: '2026-11-17', hours: '7am – 3pm', lunch: '12:00 – 12:30pm' },
           // Sasha, 23 Nov 2026 (Branch Admin Team WhatsApp): "I am 7-3 this week and next week.
-          // Lunch is from 2-3". Wins over the rota for those two weeks. Close-out notice 1:30pm,
-          // before she goes to lunch at 2 (Mr Rampersad, 23 Nov 2026, 2:30pm).
-          { from: '2026-11-23', until: '2026-12-04', hours: '7am – 3pm', lunch: '2:00 – 3:00pm', closeout: '1:30pm' }],
+          // Lunch is from 2-3". Mr Rampersad, 23 Nov 2:31pm: "Sasha finishes at 2 p.m." So 7 to 2,
+          // her lunch at 2 ends the day (no lunch e-mail), close-out notice 1:30pm. Wins over the rota.
+          { from: '2026-11-23', until: '2026-12-04', hours: '7am – 2pm', lunch: 'None: her lunch at 2pm ends the day', closeout: '1:30pm' }],
   kamla: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }],
   pawan: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }]
 };
