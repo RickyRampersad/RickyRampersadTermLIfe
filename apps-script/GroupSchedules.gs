@@ -283,7 +283,7 @@ function gsbLookup_(b) {
   return { ok: true, found: true, group: g.name, schedule: true, link: gsbLink_(g), plans: plans, matched: hits,
     rule: 'Answer only from these lines of ' + g.name + '’s schedule. Quote the amount or percentage exactly as written. Say what the schedule says, not whether a claim will be paid: Guardian Life assesses every claim. If the lines do not answer the question, say so and offer to log a request.' };
 }
-/** A member number as typed: capitals, no spaces; "TPI 4784-00001-00" and "tpi4784-00001-00" are one number. */
+/** A member number as typed: capitals, no spaces; "ABC 1234-00012-00" and "abc1234-00012-00" are one number. */
 function gsbCard_(s) { return String(s || '').toUpperCase().replace(/[\s.]+/g, '').replace(/[–—]/g, '-').replace(/[^A-Z0-9\-\/]/g, '').slice(0, 30); }
 /** The group a member number belongs to: its policy record on the group's account or list bill, Group Health or Life. */
 function gsbGroupByCard_(card) {
