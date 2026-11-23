@@ -215,6 +215,7 @@ function gcmDoPost_(b) {
       case 'gcm.renAct':         return typeof girAct_ === 'function' ? girAct_(b) : { ok: false, error: 'GIRenewals.gs is not in the project yet.' };
       case 'gcm.renCode':        return typeof girCode_ === 'function' ? girCode_(b) : { ok: false, error: 'Renewals are being updated. Please call the branch.' };
       case 'gcm.renIn':          return typeof girIn_ === 'function' ? girIn_(b) : { ok: false, error: 'Renewals are being updated. Please call the branch.' };
+      case 'gcm.renTap':         return typeof giaTap_ === 'function' ? giaTap_(b) : { ok: false, error: 'GIRenewalAuto.gs is not in the project yet.' };
       case 'gcm.renAnswer':      return typeof girAnswer_ === 'function' ? girAnswer_(b) : { ok: false, error: 'Renewals are being updated. Please call the branch.' };
       case 'gcm.renGroupAnswer': return typeof girGroupAnswer_ === 'function' ? girGroupAnswer_(b) : { ok: false, error: 'Renewals are being updated. Please call the branch.' };
     }

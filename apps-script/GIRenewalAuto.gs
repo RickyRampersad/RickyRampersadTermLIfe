@@ -240,6 +240,56 @@ function giaReports_() {
 }
 function giaReportsNow() { var p = PropertiesService.getScriptProperties(); Object.keys(p.getProperties()).forEach(function (k) { if (/^GIA_RPT_/.test(k)) p.deleteProperty(k); }); return tSay_('Sent to: ' + giaReports_().join(', ') + ' (only people whose hour has come).'); }
 
+/* ── the WhatsApp taps: respond.io's workflow POSTs each button tap here (gcm.renTap) ───────────────────────────────────
+ * Body: { secret, key | email, tap }  tap = keep | lower | pct5 | pct10 | pct15 | call | notyet | yes | read
+ * The secret is the GIA_TAP_KEY Script property (the workflow sends it; never put it in a page). Every tap goes through the
+ * desk's own answer (girTakeAnswer_), so it reaches the renewal task's Chatter and the people who hold the renewal, and a
+ * "call me" opens a call task. A Yes is accepted only after the client has tapped that they read their benefits. */
+function giaTap_(b) {
+  var want = String(PropertiesService.getScriptProperties().getProperty('GIA_TAP_KEY') || '');
+  if (!want || String(b.secret || '') !== want) return { ok: false, error: 'Not allowed.' };
+  var tap = String(b.tap || '').toLowerCase(), key = String(b.key || ''), email = String(b.email || '').trim().toLowerCase();
+  var rows = girRows_(GIR.TAB).filter(function (st) {
+    if (['sent', 'changes', 'approved'].indexOf(gcmText_(st.Stage)) < 0) return false;
+    return key ? gcmText_(st.Key) === key : email && (gcmText_(st['E-mail']).toLowerCase() === email || girSentTo_(st).some(function (a) { return a.toLowerCase() === email; }));
+  }).sort(function (a, b2) { return gcmText_(a.Renewal) < gcmText_(b2.Renewal) ? -1 : 1; });
+  var st = rows[0];
+  if (!st) return { ok: false, error: 'No open renewal found for that client.' };
+  var k = gcmText_(st.Key), view = girJ_(st['Client view'], null) || {}, rem = girJ_(st.Reminders, {}), who = gcmText_(st.Client) || 'the client';
+  var item = (view.items || []).filter(function (x) { return x.value; })[0];
+  function logTap(detail) { girLog_(k, { policy: gcmText_(st.Policy), client: who }, 'WhatsApp tap: ' + tap, who, detail || ''); }
+  if (tap === 'keep') { logTap('keep the value as it is'); return { ok: true, next: 'thanks' }; }
+  if (tap === 'lower') { logTap('asked to see the value options'); return { ok: true, next: 'send_options', options: item ? giaOptions_(item.value) : [] }; }
+  if (/^pct(5|10|15)$/.test(tap)) {
+    if (!item) return { ok: false, error: 'No vehicle value on file.' };
+    var pct = Number(tap.slice(3)), v = giaOptions_(item.value).filter(function (o) { return o.pct === pct; })[0].value, vals = {}; vals[item.id] = v;
+    var r = girTakeAnswer_(st, { decision: 'changes', comment: 'Chose a value ' + pct + '% lower on WhatsApp: ' + girMoney_(v) + '. Please confirm the premium for this value.', values: vals }, who, 'WhatsApp');
+    return Object.assign({ next: 'confirm_value', value: v }, r);
+  }
+  if (tap === 'call' || tap === 'notyet') {
+    var r2 = girTakeAnswer_(st, { decision: 'question', comment: 'Asked for a call on WhatsApp' + (tap === 'notyet' ? ' (not ready to renew yet)' : '') + '.' }, who, 'WhatsApp');
+    var tid = '';
+    try {
+      if (tSfOn_() && gcmText_(st.Test) !== 'Y') {
+        var owner = girUserId_(gcmText_(st['Holder e-mail']));
+        var tk = { Subject: 'Call the client: renewal ' + girMdy_(gcmYmd_(st.Renewal)) + ' Policy # ' + gcmText_(st.Policy) + ' - ' + who + ' asked for a call on WhatsApp', ActivityDate: gcmToday_(), Priority: 'High', Status: 'Not Started', Task_Type__c: 'Renewa/PDl/Bill',
+          Description: 'The client tapped "' + (tap === 'notyet' ? 'Not yet, call me' : 'Call me') + '" on the WhatsApp renewal message. Call them today. Nothing is renewed without their yes.' };
+        if (owner) tk.OwnerId = owner;
+        tid = String(gblSfwSave_('post', '/sobjects/Task', tk).res.id || '');
+      }
+    } catch (e) {}
+    rem.call = { at: gcmWhen_(new Date()), task: tid, via: 'WhatsApp' }; girSave_(k, { Reminders: rem }); logTap('call task ' + (tid || '(none: test mode)'));
+    return Object.assign({ next: 'call_booked', task: tid }, r2);
+  }
+  if (tap === 'read') { rem.read = { at: gcmWhen_(new Date()), via: 'WhatsApp' }; girSave_(k, { Reminders: rem }); logTap('client confirmed they read their benefits'); return { ok: true, next: 'thanks' }; }
+  if (tap === 'yes') {
+    if (view.benefits && !rem.read) return { ok: true, needRead: true, next: 'send_benefits' };
+    var r3 = girTakeAnswer_(st, { decision: 'approve', comment: 'Said yes on WhatsApp.', read: 'Y' }, who, 'WhatsApp');
+    return Object.assign({ next: 'confirmed' }, r3);
+  }
+  return { ok: false, error: 'Unknown tap.' };
+}
+
 /** A made-up renewal for the test client, 14 days out, with an invented car. Set GIA_ETHAN_EMAIL first. */
 /** Other people who may sign in as the test client (the GIA_TEST_VIEWERS Script property, comma-separated). */
 function giaViewers_() { try { return String(PropertiesService.getScriptProperties().getProperty('GIA_TEST_VIEWERS') || '').split(/[,;\s]+/).filter(function (a) { return /@/.test(a); }); } catch (e) { return []; } }
