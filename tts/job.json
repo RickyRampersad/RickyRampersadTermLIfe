@@ -3,24 +3,15 @@
  "rate": "+0%",
  "check": true,
  "voices": {
-  "slink1": "en-US-AndrewMultilingualNeural"
+  "slink1b": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "slink1": "+0%"
+  "slink1b": "+0%"
  },
  "films": {
-  "slink1": [
-   "A new member is joining one of your groups. There's no paper form, and no chasing signatures. You send them a link of their own.",
-   "Open the group on the staff page. Under links to send, open the box that says make a link for a new member.",
-   "Type their name, their mobile, the date their cover starts, and the plans they're joining. Their HR contact is already filled in, straight from Salesforce.",
-   "Press make the link. It's ready to copy in a second, with a WhatsApp message already written around it.",
-   "Paste it into respond dot I O, and send it. That link is theirs alone, and it's good for sixty days.",
-   "They open it on their phone. Their name, their company and their cover are already there. It takes about ten minutes.",
-   "They add their own details and their family, answer the health questions with a single tick, and sign on the screen with a finger.",
-   "The moment they send it, their HR contact sees it's ready to check. HR reads Guardian's own form, fills in the employer's part, and approves it.",
-   "It goes straight to Guardian Life, with our branch copied. Our team gets the task, and follows it up every three working days.",
-   "And on the staff page, you see where every new member stands. Waiting on them, ready to check, or sent to Guardian Life.",
-   "One link. Nothing retyped, and every step on the record. That's our branch. A journey, not a transaction."
+  "slink1b": [
+   "Paste it into respond dot I O, and send it. Only they can open that link, and it stays open for sixty days.",
+   "They open the link on their phone. Their name, their company and their cover are already there. It takes about ten minutes."
   ]
  }
 }
