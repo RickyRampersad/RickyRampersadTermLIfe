@@ -150,7 +150,9 @@ function gcmDoGet_(p) {
                                    bills: (function () { try { if (typeof gblDayInfo_ !== 'function') return 0; var d = gblDayInfo_();
                                      return { next: d.label, report: d.reportLabel || '', live: !!d.live, drive: !!d.drive }; } catch (e) { return 0; } })(),
                                    /* the general insurance renewal desk (GIRenewals.gs) */
-                                   renewals: (function () { try { return typeof girPing_ === 'function' ? girPing_() : 0; } catch (e) { return 0; } })() };
+                                   renewals: (function () { try { return typeof girPing_ === 'function' ? girPing_() : 0; } catch (e) { return 0; } })(),
+                                   /* each group's schedule of benefits for its employees (GroupSchedules.gs) */
+                                   plans: (function () { try { return typeof gsbPing_ === 'function' ? gsbPing_() : 0; } catch (e) { return 0; } })() };
       case 'gcm.draft':   return gcmDraft_(p);
       case 'gcm.board':   return gcmBoard_(p);
       case 'gcm.group':   return gcmGroupView_(p);
@@ -185,6 +187,9 @@ function gcmDoGet_(p) {
       case 'gcm.renMine':       return typeof girMine_ === 'function' ? girMine_(p) : { ok: false, error: 'Renewals are being updated. Please call the branch.' };
       case 'gcm.renGroup':      return typeof girGroupView_ === 'function' ? girGroupView_(p) : { ok: true, renewals: [] };
     }
+    /* anything else goes to the files that add to the group pages (GroupSchedules.gs, 23 November 2026), so a new route
+       there never needs this file pasted again */
+    if (typeof gsbRoute_ === 'function') { var more = gsbRoute_(p, 'get'); if (more) return more; }
     return { ok: false, error: 'Unknown action' };
   } catch (e) {
     return { ok: false, error: String(e && e.message ? e.message : e).slice(0, 300) };
@@ -223,6 +228,7 @@ function gcmDoPost_(b) {
       case 'gcm.renAnswer':      return typeof girAnswer_ === 'function' ? girAnswer_(b) : { ok: false, error: 'Renewals are being updated. Please call the branch.' };
       case 'gcm.renGroupAnswer': return typeof girGroupAnswer_ === 'function' ? girGroupAnswer_(b) : { ok: false, error: 'Renewals are being updated. Please call the branch.' };
     }
+    if (typeof gsbRoute_ === 'function') { var more = gsbRoute_(b, 'post'); if (more) return more; }
     return { ok: false, error: 'Unknown action' };
   } catch (e) {
     return { ok: false, error: String(e && e.message ? e.message : e).slice(0, 300) };

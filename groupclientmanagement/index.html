@@ -10,8 +10,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
 <noscript><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
-<link rel="stylesheet" href="gcm.css?v=2026-11-23a">
+<link rel="stylesheet" href="gcm.css?v=2026-11-23b">
 <script src="/rroperations/sso.js"></script>
+<script src="/mybenefits/sob-render.js"></script>
+<script src="schedules-ui.js"></script>
 </head>
 <body>
 <header class="mast"><div class="wrap mrow">
@@ -631,7 +633,7 @@ function drawGroup() {
     '<p class="small muted">Account owner in Salesforce <b>' + esc(g.assigned || 'nobody') + '</b>' + (g.assigned && !g.ownerActive ? ' <b style="color:var(--badText)">(no longer active: change the owner in Salesforce)</b>' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') +
     ' · Letter goes to ' + (g.to.length ? toLine(g) : '<b style="color:var(--badText)">nobody: give the account a Contact Person with an e-mail in Salesforce, then Refresh</b>') + '</p>' +
     (g.personal && g.personal.length ? '<div class="note warn">' + esc(g.personal.join(', ')) + ' is a personal mailbox, and the letter carries the group’s access code. Make sure it is still the group’s contact; if not, change the account’s Contact Person in Salesforce.</div>' : '') +
-    accountBar(d) + linksHtml(d) +
+    accountBar(d) + linksHtml(d) + (typeof sobHtml === 'function' ? sobHtml(d) : '') +
     pendHtml(d) + comingHtml(d) +
     (d.canAct === false ? '<div class="note">Looked after by <b>' + esc(g.assigned || 'nobody') + '</b>. You can read everything here and leave a comment for the team on any item; approving the letter and anything the group sees is for ' + esc(g.assigned ? g.assigned.split(' ')[0] + ', ' : '') + 'the assistant branch manager or the branch manager.</div>' : '') +
     (d.feedError ? '<div class="note bad">Chatter could not be read: ' + esc(d.feedError) + '</div>' : '') +
@@ -772,6 +774,7 @@ function bindLinks(d) {
   sec.querySelectorAll('.lkg [data-copy]').forEach(b => b.onclick = () => doCopy($(b.dataset.copy).value, 'The link'));
   sec.querySelectorAll('input.lku').forEach(i => i.onfocus = () => i.select());
   loadInv();
+  if (typeof loadSob === 'function') loadSob();
 }
 /* the top of a group: its welcome, its last letter, and the buttons to send them */
 function accountBar(d) {

@@ -5333,6 +5333,38 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - `tests/test-payroll.js` (45 checks, the file in a sandbox with Salesforce made up) and `gcmwalk/paycheck.js` in the
     scratchpad (30, Playwright, a phone and a laptop, the mock world) cover it. `gcm.ping`'s `bills` carries `payroll: 1`
     once GroupBilling.gs is pasted.
+- **Each group's Schedule of Benefits, for its employees, on a page and on WhatsApp** (23 November 2026: "can the schedule of
+  benefits be available to the employee and any question they ask online as we have integrated what's app and our benefits
+  assistant is the 24/7 to answer any questions"). `apps-script/GroupSchedules.gs`, a file in the Service Questionnaire
+  project; GroupClients.gs now hands it any action it does not know (`gsbRoute_`), so a change there never needs
+  GroupClients.gs pasted again. `gcm.ping` answers `plans`.
+  - **Where the schedules were**: nowhere the system could read. They arrive as PDFs on renewal mail; respond.io's HELP 868
+    agent had no knowledge sources. So staff upload them: **Schedule of benefits** on a group's page
+    (`groupclientmanagement/schedules-ui.js`): the PDF is read on the device with pdf.js (a row a line, wide gaps as ` | `,
+    running headers dropped), staff check the text against the PDF, see it exactly as employees will
+    (`mybenefits/sob-render.js` is both drawings), save a draft and press **Publish**. One published schedule a group and
+    line (`Group Health`, `Group Life`, `Dental and vision`, `Other benefits`); publishing replaces the last. Whoever looks
+    after the group, the deputy and the branch manager may upload, publish or take down; anyone may read and copy the link.
+    Rows on the **Group Schedules** tab of the group sheet (Ref `SB-yyMMdd-nnn`); the PDF in the Drive folder's "Schedules
+    of benefits" (`GCM_FORMS_FOLDER`), else the text alone.
+  - **Employees: `/mybenefits/?k=<code>`**, the link staff copy ("Copy message for HR" gives HR the WhatsApp/e-mail words).
+    The code is an HMAC of the group's key (`GSB_SECRET`, made on first use), 20 hex characters: the address names no
+    employer, and no other group can be reached from it. The page: the group's name, a tab a plan, the schedule as a table,
+    a search with one-tap chips (dentist finds Dental, glasses Vision), the PDF to download, and HELP 868 on WhatsApp with
+    the group and the plan code in the message. `no-referrer`, so the code never leaves in a referrer.
+  - **WhatsApp: `gcm.planLookup`**, for respond.io, with the shared key in the **`PLAN_LOOKUP_KEY`** Script property
+    (`gsbMakeLookupKey` in the editor makes it and logs it once). It takes the member number on the health card (matched
+    in Salesforce to a Group Health or Group Life record on a register group's account or list bill) or the page's plan
+    code, and the question, and returns only the lines of THAT group's schedule bearing on the question, under their
+    headings, with the rule to answer only from them. Never a member's own record: no name, no claims, no balance. A
+    terminated card gets no schedule; a group with nothing published is told so. Forty look-ups a day per phone, eight
+    numbers not found per fifteen minutes. Every question is a row on **Plan Questions** (the phone's last four digits
+    only), and the group's panel lists the latest, flagging any the schedule could not answer.
+  - **respond.io is not changed yet**: the endpoint and its instruction are written (in the reply of 23 November) and
+    go on the live HELP 868 agent once the backend is pasted and the key made. The prompt was 14,820 characters that
+    day, so the guidance rides in the endpoint's own instruction and the prompt gets one line.
+  - `tests/test-schedules.js` (52) and `tests/e2e-schedules.js` (70, a laptop and a phone; `PDFJS_DIR` serves a local
+    pdf.js to read a PDF made with pdf-lib, else that step is skipped and said).
 
 ## agentmgt.com — the recruiting page, rebuilt in this repository
 

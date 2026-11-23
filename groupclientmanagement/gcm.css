@@ -400,3 +400,20 @@ h2{font-size:21px}
 .lnk .mkf .cov label,.lnk .mkf .chk{display:flex;gap:8px;align-items:center;margin-top:6px}
 .lnk .mkf input[type=checkbox]{width:18px;height:18px}
 @media (max-width:760px){.lnk .lk{grid-template-columns:1fr}}
+
+/* Schedule of benefits on a group's page (23 November 2026): the rows staff publish, and the preview drawn exactly as
+   the employee page draws it (mybenefits/sob-render.js) */
+.sob .sobrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.sob .sobact{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.sob .sobview{grid-column:1/-1}
+.sob .sobq{margin:6px 0 0;padding-left:18px}
+.sob .sobq li{margin:4px 0}
+.sobprev{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:#fff}
+.mb .sob-h{font-size:15px;margin:14px 0 6px;color:var(--ink)}
+.mb .sob-sec:first-child .sob-h{margin-top:4px}
+.mb .sob-t{width:100%;border-collapse:collapse;font-size:14px}
+.mb .sob-t th,.mb .sob-t td{text-align:left;padding:7px 8px;border-top:1px solid var(--line);vertical-align:top}
+.mb .sob-t th{font-weight:500;color:var(--ink2);width:46%}
+.mb .sob-t td{font-weight:600;color:var(--ink)}
+.mb .sob-p{margin:6px 0;font-size:14px;color:var(--ink2)}
+@media (max-width:640px){.sob .sobrow{grid-template-columns:1fr}.sob .sobact{justify-content:flex-start}}

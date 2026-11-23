@@ -301,6 +301,18 @@ something is written.
 - **Script properties**: none new. `GCM_BILL_LIVE` is set by `gblGoLive`. The AI read uses `ANTHROPIC_API_KEY` as
   the rest of the page does. While the bills are in test mode (before `gblGoLive`) the 10:30 asks nobody and opens no task; the branch manager's summary says what it would have asked.
 
+## Schedules of benefits for employees (23 November 2026)
+
+- **Paste** `GroupSchedules.gs` (new) and `GroupClients.gs` into the Service Questionnaire project, then Manage
+  deployments → pencil → New version. `?action=gcm.ping` then carries `plans`.
+- **On a group's page**, under Links to send: upload the schedule PDF Guardian sent, check the text, Save as a draft,
+  Publish. Copy the employees' link (or the message for HR) and send it to the group's contact.
+- **WhatsApp**: run `gsbMakeLookupKey` once in the editor, copy the key from the log, and paste it into the HELP 868
+  agent's "Look up the member's plan" request body in respond.io (`key`). Until then the panel says HELP 868 is not
+  answering plan questions.
+- Script properties: `PLAN_LOOKUP_KEY` (made by `gsbMakeLookupKey`), `GSB_SECRET` (made by itself). The PDF is kept
+  only when `GCM_FORMS_FOLDER` names a Drive folder.
+
 ## Tests
 
 The scripts are tested in Node on made-up groups (61 checks: the refresh, who
