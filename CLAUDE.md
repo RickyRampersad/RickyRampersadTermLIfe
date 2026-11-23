@@ -4272,7 +4272,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 - **The new-way films** (26 October 2026: "a video that will go to the clients on our new process moving forward, a
   video for the staff on the new process forward … very short … a new initiative of the Ricky Rampersad branch … this
   will go viral … motions and graphics … sample data").
-  - **For groups: `/groupmgt/client/`** (`groupmgt/client/index.html`; `/groupnewway/` and `/groupmgt/` forward to it), "Our new way of looking after your group", 1 min 23 s:
+  - **For groups: `/groupmgt/client/`** (`groupmgt/client/index.html`; `/groupnewway/` and `/groupmgt/` forward to it), "Our new way of looking after your group", 1 min 30 s since the 16 November re-cut (1 min 23 s before):
     `groupclientmanagement/new-way.mp4` (wide, 1920x1080) and `new-way-phone.mp4` (upright, 1080x1920, for Reels,
     Status and Stories), with posters `new-way.jpg` and `new-way-phone.jpg` and the share card `new-way-card.jpg` for the
     Open Graph preview. A phone held upright opens on the phone cut; buttons switch. Ten scenes: the promise, the Monday
@@ -4293,6 +4293,43 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     cropped to the dialog with the attached file's name painted out, because that name was a real group's.
   - Re-cut when the pages change: re-run `shots.js`, then `render.js` and `mix.py`. The figures, people and groups on
     screen are all invented.
+  - **Re-cut 16 November 2026, and kept in the repository this time** (the `films26/` scratchpad was gone). Asked
+    for as "shall the group video be enhanced with the changes we made and the background music changed", then the
+    branch manager's own track ("Cooperate tech presentation music", sent in the chat) and "a lot more motion, graphic,
+    scaling and a pop". `tools/film/build-gcmfilm.py client|staff` writes `new-way-film.html` (1:30, the group's film,
+    wide and upright) and `staff-new-way-film.html` (3:25); `films-gcm.py` writes their films.json entries.
+    - **What changed in the words:** the group's film names Guardian Life group life, health and pension, adds the
+      people coming up (65, coming of age, retiring) and the rating of the account manager on every bill, and never says
+      "Rampersad" aloud (the name is on screen). The staff film adds the Monday 11:00 team note, the upload that updates
+      the billing record in Salesforce and opens the tasks, the bill e-mail's stars on the staff member's record, and holds.
+    - **Voice:** Andrew Expressive, both films voiced whole in one job (keys `gcmc3`, `gcms3`). The first pass (`gcmc2`,
+      `gcms2`) dropped one line and was heard wrong on four ("tier" → "here", "She or" → "Shear", "leavers" →
+      "levers", "one to five" → "one of five"); those were re-worded, not retried. "Kamla" transcribes as "Camila";
+      her name is on screen.
+    - **Music:** his track is 60 s at 125.28 bpm with four-bar phrases, so `loopbars.py` repeats bars 8 to 24 on the
+      beat and lands the track's own ending on the film's last seconds. The track is not in the repository (licence
+      unknown, and the repository is the public site); a re-cut needs it again.
+    - **Screens:** `tools/film/gcmshots/` (JPEG, with `boxes-client.json` and `boxes-staff.json`: each key element's
+      box in its PNG's pixels). The camera (`cam()`) eases to the element the voice names, a tap ring lands on a
+      button, an outline marks a panel. Shot on an invented branch (Harbour Point Logistics Ltd and seven others);
+      the shooters and mocks were in the scratchpad.
+    - The shots found two faults on the live pages, fixed with the films: the statement's figure tiles ran 19px past
+      the panel on a phone (`client.html`), and the hold banner's rule drew the small "On hold" tag as a grey block
+      (`gcm.css`, now `.hold:not(.chip)`).
+    - The group's film says bills come on the 26th and ask the group to rate their account manager: true only once
+      `gblGoLive` has been run.
+  - **What the group sees when it signs in** (17 November 2026: "and what does the client see I need a video"), 2 min
+    14 s: the group's own page screen by screen, the Monday report and its button, signing in, the top and the three
+    tabs, what is pending, an open item and the three answers, coming up, the week's stars, the statement, each plan's
+    line and rating the account manager, Your people, Guardian's forms, and pensions and life insurance from salary,
+    joining and leaving. `groupclientmanagement/what-you-see.mp4` (wide), poster `what-you-see.jpg`, page
+    **`/groupmgt/yourpage/`** with chapters. The group page's "How this page works" pill now opens it (`PAGE_FILM` in
+    `client.html`, over the welcome film the backend still names; the welcome e-mail still links `welcome.html`).
+    Built by `build-gcmfilm.py walk` from `gcmw-lines.json` and `gcmw-timing.json` (Andrew Expressive, key `gcmw2`;
+    four lines re-worded after the first pass: "billed" was heard "build", "Write to us" "right to us", "life plan" "live
+    plan", "each has waited" "each is waited"); screens in `tools/film/gcmshots-walk/` (re-shot from the live
+    `client.html` on the made-up group, `gcmwalk/shoot.js` in the scratchpad). Music: his corporate tech track,
+    `loopbars.py` to 134 s.
   - **Company pensions, without the paperwork** (17 November 2026: "a small effective video to show how we as a branch
     manage the pension plans for companies ... the link that goes out ... the company fills out their part, routed to the
     employee ... automatically calculates everything", then "also show the calculations on the form ... section 134 ...
@@ -4882,6 +4919,60 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       scratchpad placed in a mocked Drive folder) and `billing/page-test.js` (99, pdf.js from the vendor copies); the
       harness (`gcmlive/env-sq.js`) mocks `DriveApp`, serves the site's forms from the repository and pdf-lib from the
       scratchpad. `forms/gas-sync.js` there is the proof that pdf-lib runs under the synchronous Promise.
+  - **A new member fills in their own part: HR sends the link, checks it and approves Section F** (17 November 2026,
+    Ricky's "yes" to: "HR presses Enrol a new member on their group page, the employee gets their own link, fills their
+    part, it lands on Guardian's real GIO001 PDF, HR checks it and approves their section, and it goes to EB Customer Care
+    with the account owner's task and the follow-ups. The group page shows where each new member stands.").
+    - **The group's page** (`client.html`): "Enrol a new member" opens on **Send them their own link** (first name,
+      surname, e-mail, mobile, Group Health / Group Life, effective date, who is sending it), beside **Fill it in for
+      them** (the GIO001 form as before). A **New members** panel lists every invite with where it stands (Waiting on
+      <first> · reminded n times, Ready for you to check, Sent to Guardian Life, Link expired, a TEST tag in test mode)
+      and a count on the form pill. **Check and approve** draws Guardian's GIO001 filled from the employee's answers
+      (`pdfPages`), asks Section F (date employed, date of confirmation, effective date, tier, annual salary for Group
+      Life, plan administrator) and an "I am authorised" tick; **Send the link again** for a waiting or expired one.
+      `?form=enrol` opens the forms there (the "ready for you to check" e-mail links `client.html?tab=billing&form=enrol`).
+    - **The employee's page** is `benefits/enroll.html?inv=<code>`: greeted by name from their employer, company, name,
+      e-mail, mobile and cover filled in (cover locked), every step as before (Sections A to D, the health declaration
+      with "Nothing to declare", the on-screen signatures), Section F left to the employer, the review of the Guardian
+      pack, then "Your part is done. <HR first name> at <company> will check it and send it to Guardian Life." Without
+      `?inv=` the page is exactly as it was (and still posts to `BranchEngine.gs`). Its printed footer now names
+      rickyrampersadbranch.com, not employeebenefitstt.com.
+    - **The backend** (`GroupBilling.gs`, `GBL_INV`): the group's side through `gcm.clientForm` / `gcm.clientFormSend`
+      with `form=invite` (list, `act=preview`; `act=create`, `approve`, `resend`), behind the group's own sign-in; the
+      employee's side through **`gcm.enrolGet`** and **`gcm.enrolSubmit`**, keyed on the code alone (routed in
+      `GroupClients.gs`). The code is 32 random hex characters, never made from the name; a wrong code counts towards
+      forty tries in fifteen minutes; a link is good for 60 days (sending it again renews it); a code already approved
+      or expired is refused; the read returns only that invite's own fields. Rows are on the **Group Enrolments** tab of
+      the group sheet (Ref `EN-yyMMdd-nnn`, Created, Expires, Group, Group key, Employee, First, E-mail, Mobile, Cover,
+      Effective, Sent by, Code, Status, Reminders, Last reminder, Completed, Answers, Health, Signature, Approved by,
+      Approved at, Section F, Sent ref, Test, Note), dates and numbers written as text (`gblInvCell_`, the Sheets
+      parsing trap), and found by Ref at the moment of writing.
+    - **Health answers never reach the group**: they are kept in their own Health column, never in Answers, never in a
+      list, a preview or an e-mail to the group. On approval `gblInvDoiPdf_` draws the Declaration of Insurability
+      (2005-09-EB012) from them as HTML and converts it to PDF (`getAs('application/pdf')`); it is attached beside
+      GIO001. The employee's signature is drawn on GIO001's employee signature line (`fill.images` in `gblPdfFill_`, 110
+      points in from the field's left edge) with the date they signed in its date box.
+    - **Approval** maps the answers and Section F onto `gblEnrolData_` and sends through `gblEnrolSend_` →
+      `gblSendPack_` (EB Customer Care with sales support and support@ copied, the Group Changes joiner row, the account
+      owner's task, the billing task note, the 3-working-day chase); the cover note says the employee completed their
+      part online and the plan administrator approved Section F, and what follows no longer asks for the Declaration or
+      the employee's signature. A second approval is refused (status `sending`/`sent`, a two-minute cache guard).
+    - **The e-mails** go from support@ (`tMsSend_`) in the group look: the employee's link (sales support copied, signed
+      by whoever looks after the group), "Ready for you to check" to the group's contact with the account owner and
+      `gcmCc_` copied, and "Still waiting" to the group after the fifth reminder. **Reminders** (`gblInvRemind_`, from
+      `gblDay_` in the 10:30 group day): one a working day, from the day after the link, five at most, then the group is
+      told once; `gblInvRemindNow` / `gblInvRemindPreview` from the editor.
+    - **Test mode is the bills' own** (`gblLive_`, until `gblGoLive`): every e-mail of it (the employee's link and
+      reminders, the group's notices, the pack) goes to the account owner (else the branch manager) with the branch
+      copied, marked TEST with a banner naming who would have had it; never to the employee or the group's contact. The
+      directive was the HR sender's own address; the account owner was chosen to match `gblSendPack_`'s rule for a
+      group's press in test mode, so no real client receives a TEST e-mail.
+    - **Paste** `GroupBilling.gs` and `GroupClients.gs`, then Manage deployments → New version. `gcm.ping` answers
+      `enrol: 1` once both are in.
+    - Tests: `tests/test-enrol-invite.js` (83, GroupBilling.gs in a sandbox with Guardian's real GIO001 filled by pdf-lib
+      under the synchronous Promise) and `tests/e2e-enrol-invite.js` (75, Playwright, a phone and a laptop: the group
+      page's invite, panel, check and approve; the employee's page from the link to "Your part is done"; a wrong link;
+      the page without one). `SHOTS=<folder>` saves screenshots.
   - **The billing day: the 26th at 10:00, or the next working day; approved by staff, sent by the system, reported on the
     25th at 13:00, chased at 10:30** (24 October 2026: "on the 26th group billings go out and weekly on a Monday at 10am
     the queries go out but staff has to approve". On 25 October it went to a Tuesday for a few hours, so a client would
@@ -5197,6 +5288,31 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - Tests in the scratchpad: `people/people-test.js` (30, Node, the made-up branch with an invented application, a
     medical requirement, a leaver and a private claim item) and `people/page-test.js` (29, Playwright, a desk and a
     phone, with screenshots).
+- **Pensions and life insurance paid from salary: someone joining, someone leaving** (17 November 2026: "what about
+  termination and enrollment for health and pension and life?"). Group Health and Group Life already had Guardian's own
+  forms (GIO001 to enrol, EB0010 to terminate or change). A pension, or a life plan, paid through the employer's payroll
+  is the employee's **own** policy on the group's list bill (on 17 November about 426 pension and 230 personal life
+  policies carried a list bill), and the group's page had nothing for it but a line of free text.
+  - **On the group's page**, a fourth choice beside the Guardian forms, "Pension or a plan from salary" (`payForm` in
+    `client.html`, `form=payroll` on `gcm.clientForm` / `gcm.clientFormSend`, so `GroupClients.gs` needs no paste):
+    *Someone is joining* (name, e-mail or mobile, which plan: Personal Pension, Company pension (IPI), life plan; the
+    first salary deduction; date employed and the contribution in mind, optional) or *Someone is leaving* (search the
+    people on the list bill, `gblPayroll_`, then the last salary deduction and the leaving date). No PDF goes: the
+    salary deduction form is signed on paper.
+  - **The steps are the branch's own**, read off the Servus case of October 2026 (`GBL_PAY.JOIN_STEPS`): call the
+    employee, a projection from the salary, the payslip and date of employment from HR, ID, a utility bill and the
+    beneficiary's ID from the employee, key the policies, send HR the policy numbers and the salary deduction form.
+    Leaving (`LEAVE_STEPS`): the policy is theirs and does not end; contact them about another way to pay (a mode
+    change), take it off the list bill from the month after the last deduction. A company-paid pension (Ownership, else
+    a commercial account) gets a line that it follows the plan's own rules for leavers. Never advice.
+  - **Each send** (`gblPayrollSend_`): one Salesforce task for the account owner (`Pension Enrolment – <name> – <group> –
+    first deduction <Month>`, or `Pension Leaver – … – last deduction <Month>`; `Payroll Life …` when only life),
+    Servicing, due in two working days, on the account (joining) or the person's policy with their Contact (leaving);
+    a line on the list bill's billing task; a Group Changes row (Line `listbill`); the owner e-mailed. **Your people**
+    now shows who pays through payroll ("Pension through payroll") and a reported leaver.
+  - `tests/test-payroll.js` (45 checks, the file in a sandbox with Salesforce made up) and `gcmwalk/paycheck.js` in the
+    scratchpad (30, Playwright, a phone and a laptop, the mock world) cover it. `gcm.ping`'s `bills` carries `payroll: 1`
+    once GroupBilling.gs is pasted.
 
 ## agentmgt.com — the recruiting page, rebuilt in this repository
 

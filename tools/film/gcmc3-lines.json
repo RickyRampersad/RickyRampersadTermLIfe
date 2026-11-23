@@ -1,0 +1,51 @@
+{
+ "note": "The group film, re-cut 16 Nov 2026. Andrew Expressive (en-US-AndrewMultilingualNeural, +0%) on tts-run, key gcmc3.",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
+ "scenes": [
+  {
+   "say": "This is our branch's new way of looking after your group.",
+   "extra": 0.5
+  },
+  {
+   "say": "Your group life, health and pension plans with Guardian Life, all in one place, and always up to date. No more chasing us for answers.",
+   "extra": 0
+  },
+  {
+   "say": "Every Monday at ten, you get one short report: what we finished, what's still open, and what we need from you.",
+   "extra": 0
+  },
+  {
+   "say": "Tap through to your own secure page. Your service items, your billing and your people each have their own tab.",
+   "extra": 0
+  },
+  {
+   "say": "On the twenty-sixth, your bills arrive, checked against our records, with one clear statement of what's due.",
+   "extra": 0
+  },
+  {
+   "say": "You'll see who's on your plans, who came off this year, and every application still pending, with who has it on our team.",
+   "extra": 0
+  },
+  {
+   "say": "We'll tell you ahead of time when someone's turning sixty-five, when a dependent comes of age, or when someone's close to retiring.",
+   "extra": 0
+  },
+  {
+   "say": "Someone joining or leaving? Tell us right there. The form fills itself in, and we follow it through to the end.",
+   "extra": 0
+  },
+  {
+   "say": "Give us up to five stars every week. And on every bill, rate the person who looks after your account.",
+   "extra": 0
+  },
+  {
+   "say": "A real person reads every answer, and acts on it. Behind it all is a named team, and every step is recorded. Nothing slips through.",
+   "extra": 0
+  },
+  {
+   "say": "Want this for your company? Call our branch on the number on your screen. Let's look after your people together.",
+   "extra": 0.5
+  }
+ ]
+}
