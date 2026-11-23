@@ -546,7 +546,7 @@
     var body = auth(new URLSearchParams()); body.set("act", "draft"); body.set("id", row.getAttribute("data-id")); if (said && !row.getAttribute("data-drafted")) body.set("text", said);
     fetch(TRACKER, { method: "POST", body: body, redirect: "follow" }).then(function (r) { return r.json(); }).then(function (r) {
       btn.disabled = false;
-      if (!r || !r.ok) { btn.textContent = was; toast((r && r.error) || "That did not write. Try again."); return; }
+      if (!r || !r.ok) { btn.textContent = was; toast(r && r.error === "Nothing to do." ? "The tracker on Google is an older version without drafting. Paste KPI.gs and publish a New version." : (r && r.error) || "That did not write. Try again."); return; }
       ta.value = r.draft; row.setAttribute("data-drafted", "1"); btn.textContent = "Write it again";
       var src = row.querySelector(".dsrc"); if (!src) { src = document.createElement("div"); src.className = "dsrc"; ta.parentNode.insertBefore(src, ta); }
       src.textContent = "Branch Intelligence read the whole trail and wrote this." + (r.next ? " Next: " + r.next : "");

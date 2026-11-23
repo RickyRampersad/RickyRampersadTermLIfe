@@ -41,7 +41,7 @@ const burst = ['11:05', '11:05', '11:05', '11:06', '11:06'].map(t => post('Liz, 
 env.postWhoAll_(burst, ME, D);
 ok('five of his within a minute or two is the chase; one alone later is his', burst.slice(0, 5).every(p => p.who === 'chase') && burst[5].who === 'ricky', burst.map(p => p.who).join(','));
 const kinds = env.postSysKinds_(env.postWhoAll_([post('Branch Intelligence · Fri 23 Oct 9:23am x', '13:23'), post('MOVED Fri 23 Oct.', '12:42'), post('MOVED Fri 23 Oct.', '12:42')].concat(burst), ME, D));
-ok('what the system did for him, by kind', kinds['questions from Branch Intelligence'] === 1 && kinds['absence handovers'] === 2 && kinds['chases in your voice'] === 5, JSON.stringify(kinds));
+ok('what the system did for him, by kind', kinds['questions from Branch Intelligence'] === 1 && kinds['absence handovers'] === 2 && !kinds['chases in your voice'], JSON.stringify(kinds));
 
 console.log('\nStaff waiting to be told what to do:\n');
 let FEED = [];
@@ -60,6 +60,10 @@ ok('the tracker\'s note and the chase on it do not answer her', w.ask[0].id === 
 FEED.push(post('Sasha, assign Fawwaz. Please send the introduction today.', '15:20', ME, '00TA'));
 w = env.bmWaiting_(DAY);
 ok('his own words do', w.ask.length === 0, JSON.stringify(w.ask));
+// 23 Nov 2026 (2026-11-23e): his answers in a batch, headed Branch Manager, answer the ask too.
+FEED.pop(); ['15:30', '15:30', '15:31', '15:31'].forEach(function (t, i) { FEED.push(post('<p>Branch Manager · Ricky Rampersad · Fri 23 Oct</p><p>Sasha: answered on Wed. Fawwaz is named.</p>', t, ME, i ? '00TZ' + i : '00TA')); });
+w = env.bmWaiting_(DAY);
+ok('his answers in a batch answer her too', w.ask.length === 0, JSON.stringify(w.ask));
 
 console.log('\nHis bar:\n');
 let WAIT = { ask: [{ id: '00TA', subject: 'Orphan response - Radicia Julal', by: 'Sasha Lalla-Jagassar', said: 'which agent?', at: T('14:54') }, { id: '00TB', subject: 'Bond letter', by: 'Kamla Dookran', said: 'send it?', at: T('13:00') }],
@@ -79,6 +83,10 @@ ok('cleared: the number stays, by him and by the team', g.target === 7 && g.clea
 WAIT = Object.assign({}, WAIT, { ask: WAIT.ask.concat([{ id: '00TC', subject: 'New question', by: 'Elizabeth Lee', said: '?', at: T('15:30') }]) });
 g = env.leadProgress_(DAY, new Date());
 ok('a new question joins the number', g.target === 8 && g.waiting === 4);
+// 23 Nov 2026 (2026-11-23e): a task of his he has written on today is worked, not waiting, and counts as cleared by him.
+FEED.push(post('<p>Branch Manager · Ricky Rampersad · Fri 23 Oct</p><p>Closed: not proceeding with the S&P plan.</p>', '13:20', ME, '00TL1'));
+g = env.leadProgress_(DAY, new Date());
+ok('a task of his he has written on today is cleared by him', g.target === 8 && g.you === 4 && g.waiting === 3 && g.yourNotes === 2, JSON.stringify({ t: g.target, y: g.you, w: g.waiting, n: g.yourNotes }));
 
 console.log('\nOne tap posts it:\n');
 P.setProperty('ANTHROPIC_API_KEY', 'k');

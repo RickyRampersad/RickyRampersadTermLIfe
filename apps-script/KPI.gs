@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-23d';
+var SCRIPT_VERSION = '2026-11-23e';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4833,8 +4833,7 @@ function postWhoAll_(posts, me, deskById) {
 function postSysKinds_(posts) {
   var out = {}, add = function (k) { out[k] = (out[k] || 0) + 1; };
   (posts || []).forEach(function (p) {
-    if (p.who === 'chase') return add('chases in your voice');
-    if (p.who !== 'system') return;
+    if (p.who !== 'system') return;   // his voice, batches included, is counted as his notes (2026-11-23e)
     var t = postPlain_(p.Body);
     if (/^\s*Branch Intelligence/.test(t)) add('questions from Branch Intelligence');
     else if (/^\s*ACTION REQUIRED/.test(t)) add('action-required notes');
@@ -4903,7 +4902,9 @@ function bmWaiting_(day) {
   var lastMine = {}, asks = {};
   posts.forEach(function (p) {
     if (String(p.ParentId).slice(0, 3) !== '00T') return;
-    if (p.who === 'ricky') { lastMine[p.ParentId] = p.CreatedDate; return; }
+    // 23 Nov 2026 (2026-11-23e): his answers now go out in batches from his assistant, headed Branch Manager, and a batch reads as
+    // the chase. Anything in his voice after the ask answers it: on 23 Nov eight answers at 6:27am left five asks on his list.
+    if (p.who === 'ricky' || p.who === 'chase') { lastMine[p.ParentId] = p.CreatedDate; return; }
     // 23 Nov 2026: an agent named on the task is his answer to "who do I assign?": the staff kept asking after the AGENT NAMED post,
     // and those asks sat on his list as if he had never decided.
     if (p.who === 'system' && /^\s*AGENT NAMED\b/i.test(postPlain_(p.Body))) { lastMine[p.ParentId] = p.CreatedDate; return; }
@@ -19419,7 +19420,18 @@ function leadItems_(day) {
 }
 /** The leadership numbers: today's number, cleared by him and by the team, what still waits, and what the system did for him. */
 function leadProgress_(day, now) {
-  var L = leadItems_(day), still = {}; L.now.forEach(function (x) { still[x.id] = 1; });
+  var L = leadItems_(day), posts = [], sys = {}, touched = {};
+  try {
+    var me = bmSfId_(), users = sfkUsers_() || {}, desk = {};
+    DAY_MAIL_DESKS.forEach(function (s) { if (users[s]) desk[users[s].id] = s; });
+    posts = postWhoAll_(sfkNotes_("SELECT Id, ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND CreatedById = '" + me + "' AND CreatedDate >= " + sfkUtcAt_(day, 0) + ' LIMIT 2000') || [], me, desk);
+    sys = postSysKinds_(posts);
+  } catch (e) {}
+  // 23 Nov 2026 (2026-11-23e): Ricky, 8:39, at 0% with dozens of notes posted: "even though in the background I'm closing, I'm commenting
+  // on tasks ... it's not reflecting my percentages". One of his own tasks he has written on today is worked, not waiting.
+  posts.forEach(function (p) { if (p.who === 'ricky' || p.who === 'chase') touched[p.ParentId] = 1; });
+  L.now = L.now.filter(function (x) { return !(x.k === 'mine' && touched[x.t]); });
+  var still = {}; L.now.forEach(function (x) { still[x.id] = 1; });
   var rows = {}; try { (L.v && L.v.items || []).forEach(function (x) { rows[x.k] = x; }); } catch (e) {}
   var you = 0, team = 0;
   L.all.forEach(function (x) {
@@ -19431,17 +19443,10 @@ function leadProgress_(day, now) {
   var sched = scheduleFor_('ricky'), hrs = parseSpan_(sched.hours || '') || { start: 300, end: 900 }, nowM = minutesOf_(hhmm_(now));
   var done = workedMins_('ricky', nowM), whole = workedMins_('ricky', hrs.end);
   var pct = target ? Math.round(100 * cleared / target) : 100, dayPct = whole ? Math.round(100 * done / whole) : 0;
-  var posts = [], sys = {};
-  try {
-    var me = bmSfId_(), users = sfkUsers_() || {}, desk = {};
-    DAY_MAIL_DESKS.forEach(function (s) { if (users[s]) desk[users[s].id] = s; });
-    posts = postWhoAll_(sfkNotes_("SELECT Id, ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND CreatedById = '" + me + "' AND CreatedDate >= " + sfkUtcAt_(day, 0) + ' LIMIT 500') || [], me, desk);
-    sys = postSysKinds_(posts);
-  } catch (e) {}
   return { lead: true, sf: true, target: target, cleared: cleared, you: you, team: team, pct: pct, dayPct: dayPct,
     behind: target > 0 && pct < dayPct, waiting: L.now.length, asks: L.now.filter(function (x) { return x.k === 'ask'; }).length,
     inbox: L.now.filter(function (x) { return x.k === 'inbox'; }).length, mineDue: L.now.filter(function (x) { return x.k === 'mine'; }).length,
-    yourNotes: posts.filter(function (p) { return p.who === 'ricky'; }).length, sys: sys,
+    yourNotes: posts.filter(function (p) { return p.who === 'ricky' || p.who === 'chase'; }).length, sys: sys,
     _now: L.now, _posts: posts };
 }
 /** What still waits on him, for My workday: each with Claude's words to post. */
