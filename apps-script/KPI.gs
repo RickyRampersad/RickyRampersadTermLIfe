@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-20a';
+var SCRIPT_VERSION = '2026-11-23a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4838,7 +4838,7 @@ function bmWaiting_(day) {
   // 2. The team's last three working days of notes: any that names him, with no
   //    post from him on that task after it.
   var since = sfkUtcAt_(lastWorkdays_(day, 3)[0], 0);
-  var posts = sfkNotes_("SELECT ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND CreatedDate >= " + since +
+  var posts = sfkNotes_("SELECT Id, ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND CreatedDate >= " + since +
     ' AND (CreatedById IN (' + deskIds.join(',') + ") OR CreatedById = '" + me + "') ORDER BY CreatedDate ASC LIMIT 2000");
   // 23 Oct 2026: who wrote each (postWho_). Only his own words answer a question; a desk's note from her day page, posted in his
   // name, is hers and can ask him; the tracker's own notes and the chase in his voice neither ask nor answer.
@@ -4847,9 +4847,12 @@ function bmWaiting_(day) {
   posts.forEach(function (p) {
     if (String(p.ParentId).slice(0, 3) !== '00T') return;
     if (p.who === 'ricky') { lastMine[p.ParentId] = p.CreatedDate; return; }
+    // 23 Nov 2026: an agent named on the task is his answer to "who do I assign?": the staff kept asking after the AGENT NAMED post,
+    // and those asks sat on his list as if he had never decided.
+    if (p.who === 'system' && /^\s*AGENT NAMED\b/i.test(postPlain_(p.Body))) { lastMine[p.ParentId] = p.CreatedDate; return; }
     if (DAY_MAIL_DESKS.indexOf(p.who) < 0) return;
     var text = noteParts_(postPlain_(p.Body)).body.replace(/\s+/g, ' ').trim();
-    if (/\b(Mr\.?\s*Rampersad|Ricky|Branch Manager|BM)\b/i.test(text)) asks[p.ParentId] = { at: p.CreatedDate, by: p.who, body: text };
+    if (/\b(Mr\.?\s*Rampersad|Ricky|Branch Manager|BM)\b/i.test(text)) asks[p.ParentId] = { at: p.CreatedDate, by: p.who, body: text, thread: p.thread || '' };
   });
   var askIds = Object.keys(asks).filter(function (id) { return !lastMine[id] || lastMine[id] < asks[id].at; });
   if (askIds.length) {
@@ -4859,7 +4862,7 @@ function bmWaiting_(day) {
         .forEach(function (r) { if (!r.IsClosed) subj[r.Id] = r.Subject; });
     } catch (e) {}
     out.ask = askIds.filter(function (id) { return subj[id]; }).map(function (id) {
-      return { id: id, subject: shorten_(subj[id], 90), by: nameFor_(asks[id].by), said: shorten_(asks[id].body, 160), at: asks[id].at };
+      return { id: id, subject: shorten_(subj[id], 90), by: nameFor_(asks[id].by), said: shorten_(asks[id].body, 160), at: asks[id].at, thread: asks[id].thread };
     }).sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
   }
 
@@ -5387,7 +5390,8 @@ function mgrPost_(obj, sid) {
   if (!ownerId || ownerId === mgrPosterSfId_(sid)) return sfNote_(obj);
   var cut = body.indexOf('\n\n'), head = cut > -1 ? body.slice(0, cut) : '', rest = cut > -1 ? body.slice(cut + 2) : body, id = '';
   var segs = (head ? [{ type: 'Text', text: head + '\n\n' }] : []).concat([{ type: 'Mention', id: ownerId }, { type: 'Text', text: ' ' + rest }]);
-  var under = ''; try { under = sfTrailPick_(taskId); } catch (e) {}   // 19 Nov 2026: on the trail, under the task's live thread
+  // 19 Nov 2026: on the trail, under the task's live thread. 23 Nov: an answer goes under the post that asked (obj.under), when given.
+  var under = /^0D5/.test(String(obj.under || '')) ? String(obj.under) : ''; if (!under) { try { under = sfTrailPick_(taskId); } catch (e) {} }
   try {
     var res = under ? sfkConnectPost_('/chatter/feed-elements/' + under + '/capabilities/comments/items', { body: { messageSegments: segs } })
                     : sfkConnectPost_('/chatter/feed-elements', { feedElementType: 'FeedItem', subjectId: taskId, body: { messageSegments: segs } });
@@ -19332,7 +19336,7 @@ function leadItems_(day) {
   try { w = bmWaiting_(day) || w; } catch (e) {}
   try { v = inboxView_(day); } catch (e) {}
   var now = [];
-  (w.ask || []).forEach(function (a) { now.push({ id: 'a:' + a.id, t: a.id, k: 'ask', s: a.subject, by: a.by, said: a.said, at: a.at }); });
+  (w.ask || []).forEach(function (a) { now.push({ id: 'a:' + a.id, t: a.id, k: 'ask', s: a.subject, by: a.by, said: a.said, at: a.at, u: a.thread || '' }); });
   ((v && v.open) || []).filter(function (x) { return x.u === 'now' || x.u === 'today'; }).forEach(function (x) { now.push({ id: 'i:' + x.k, ik: x.k, k: 'inbox', s: x.subject, by: x.from, ask: x.ask }); });
   var mine = w.mine || [], late = mine.filter(function (t) { return t.late; });
   mine.filter(function (t) { return !t.late; }).concat(late.slice(0, Math.ceil(late.length / LEAD.OVERDUE_SHARE)))
@@ -19447,7 +19451,7 @@ function workdayPostNote_(p, day) {
   var at = hhmm_(new Date()), head = unitRole_('ricky') + ' · ' + nameFor_('ricky') + ' · ' + shortDate_(day) + ' ' + twelve_(at), name = 'Mr Rampersad';
   if (kind === 'ask') {
     var x = known['a:' + id]; if (!x) return { ok: false, error: 'That is not on your list today. Refresh and try again.' };
-    try { mgrPost_({ ParentId: id, Body: head + '\n\n' + text }, 'ricky'); }
+    try { mgrPost_({ ParentId: id, Body: head + '\n\n' + text, under: x.u || '' }, 'ricky'); }   // under the very post that asked
     catch (e) { return { ok: false, error: 'Salesforce did not take it: ' + String(e && e.message || e).slice(0, 120) }; }
     try { var lk = bigGet_(leadKey_(day), null); if (lk) { lk.answered = lk.answered || {}; lk.answered[id] = Date.now(); bigPut_(leadKey_(day), lk); } } catch (e) {}
     try { dayLogMany_(day, [{ at: at, kind: 'note', group: dayGroup_('', x.s), what: 'Answered ' + String(x.by || '').split(' ')[0] + ' on ' + x.s, ref: 'wd:' + id + ':' + Date.now() }]); } catch (e) {}
@@ -23512,7 +23516,7 @@ function sfTrailPick_(taskId, opt) {
 }
 function sfTrailPost_(taskId, text, opt) {
   taskId = String(taskId || '');
-  var under = sfTrailPick_(taskId, opt);
+  var under = (opt && /^0D5/.test(String(opt.under || ''))) ? String(opt.under) : sfTrailPick_(taskId, opt);   // 23 Nov: under the asking post when known
   if (under) {
     try { return { id: sfkInsert_('FeedComment', { FeedItemId: under, CommentBody: String(text).slice(0, 9900) }), kind: 'comment', under: under }; }
     catch (e) { try { runlog_('trail reply refused on ' + taskId + ': ' + (e && e.message)); } catch (e2) {} }
@@ -23523,7 +23527,7 @@ function sfTrailPost_(taskId, text, opt) {
 function sfNote_(obj) {
   var pid = String(obj.ParentId || '');
   if (pid.slice(0, 3) !== '00T') return sfkInsert_('FeedItem', obj);
-  return sfTrailPost_(pid, obj.Body).id;
+  return sfTrailPost_(pid, obj.Body, obj.under ? { under: obj.under } : undefined).id;
 }
 /** Notes: a FeedItem query, with the same question asked of FeedComment, so a reply on the trail counts as a note everywhere
  *  the tracker counts notes (19 Nov 2026). Rows carry Body either way. */
@@ -23534,7 +23538,10 @@ function sfkNotes_(q) {
     .replace(/\s+AND\s+Type\s+IN\s*\([^)]*\)/g, '').replace(/Type\s+IN\s*\([^)]*\)\s+AND\s+/g, '');
   var cut = cq.indexOf(' FROM FeedComment');
   cq = cq.slice(0, cut).replace(/\bBody\b/g, 'CommentBody') + cq.slice(cut);
-  var comments = []; try { comments = (sfkQuery_(cq) || []).map(function (r) { if (r.CommentBody != null) r.Body = r.CommentBody; return r; }); } catch (e) {}
+  // 23 Nov 2026: a select that asks for Id also gets each reply's thread, so an answer can go under the very post that asked.
+  if (/^\s*SELECT\s+Id\s*,/i.test(cq)) cq = cq.replace(/^\s*SELECT\s+Id\s*,/i, 'SELECT Id, FeedItemId,');
+  items.forEach(function (r) { if (r && r.Id) r.thread = r.Id; });
+  var comments = []; try { comments = (sfkQuery_(cq) || []).map(function (r) { if (r.CommentBody != null) r.Body = r.CommentBody; if (r.FeedItemId) r.thread = r.FeedItemId; return r; }); } catch (e) {}
   return items.concat(comments);
 }
 /** An edit to a record (PATCH): true, or throws with what Salesforce said. */
