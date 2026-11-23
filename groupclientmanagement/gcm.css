@@ -386,3 +386,17 @@ h2{font-size:21px}
 .hold.on{border-color:#F3C58C;border-left-color:var(--warnMark);background:#FFF6E6;color:#5A3A00}
 .hold.idle{background:transparent;border-style:dashed;border-left-style:solid}
 
+/* Links to send (23 November 2026): copy, then paste into respond.io */
+.lnk{padding:14px 18px;margin:12px 0;box-shadow:var(--shadow)}
+.lnk .lk{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:6px 14px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.lnk .lk:first-of-type{border-top:0}
+.lnk .lkr{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-width:0}
+.lnk .lku{flex:1 1 14rem;min-width:0;padding:8px 10px;font-size:14px;color:var(--ink2);background:var(--sunken)}
+.lnk .lkg>summary{cursor:pointer;font-weight:600;padding:6px 0;color:var(--primary)}
+.lnk .mkf .g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));gap:4px 14px}
+.lnk .mkf label{display:block;font-size:14px;margin-top:8px}
+.lnk .mkf .cov{border:0;padding:0;margin:10px 0 0;display:flex;gap:18px;flex-wrap:wrap}
+.lnk .mkf .cov legend{font-size:14px;padding:0;margin-bottom:4px}
+.lnk .mkf .cov label,.lnk .mkf .chk{display:flex;gap:8px;align-items:center;margin-top:6px}
+.lnk .mkf input[type=checkbox]{width:18px;height:18px}
+@media (max-width:760px){.lnk .lk{grid-template-columns:1fr}}
