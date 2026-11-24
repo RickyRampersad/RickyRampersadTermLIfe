@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-24j';
+var SCRIPT_VERSION = '2026-11-24l';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -17735,7 +17735,47 @@ function wallIssued_(day) {
     .filter(function (a) { return a.n || (a.usual >= 0.5 && !gone(a.agent)); })
     .sort(function (a, b) { var x = String(a.agent).toLowerCase(), y = String(b.agent).toLowerCase(); return x < y ? -1 : x > y ? 1 : 0; });   // name order: nobody is ranked
   out.weeks = out.weeks.map(function (n, i) { return { k: (i * 7 + 1) + (i < 4 ? '–' + (i * 7 + 7) : '+'), n: n }; });
+  // 24 Nov 2026 (2026-11-24l): Ricky, "why is there no data on the issued wall?". The newest production report was 27 October, so
+  // November read nothing. When the report does not reach this month, the wall reads Salesforce instead (wallIssuedSf_), the whole
+  // stop from one source, and says so; each agent keeps the unit the report last gave them.
+  if (!repDay || repDay.slice(0, 7) < ym) {
+    try { var unitOf = {}; Object.keys(A).forEach(function (k) { unitOf[String(k).toLowerCase()] = A[k].unit; });
+      var sf = wallIssuedSf_(day, unitOf, unitLabel); if (sf) { sf.reportTab = tab.getName(); out = sf; } } catch (e) { out.sfError = String(e && e.message || e); }
+  }
   try { cache.put(key, JSON.stringify(out), WALL_ISSUED.TTL); } catch (e) {}
+  return out;
+}
+/** The issued wall from Salesforce: CLIENT_PORTFOLIO__c settled (Date_Settled__c) this month, last month to the same day and the usual
+ *  months before, in the same shape as the report's. Premium is Total_API__c. Agents by AGENT__r.Name, never a client. */
+function wallIssuedSf_(day, unitOf, unitLabel) {
+  var ym = day.slice(0, 7), per = WALL_ISSUED.USUAL_MONTHS, from = wallYm_(ym, -per) + '-01', dom = Number(day.slice(8, 10)), prevYm = wallYm_(ym, -1), wk7 = shiftDays_(day, -6);
+  var rows = sfkQuery_("SELECT Id, Date_Settled__c, Total_API__c, AGENT__r.Name FROM CLIENT_PORTFOLIO__c WHERE Date_Settled__c >= " + from + " AND Date_Settled__c <= " + day + " LIMIT 5000") || [];
+  var left = wallLeft_(), gone = function (n) { return wallIsLeft_(n, left); };
+  var nice = function (n) { n = String(n || '').trim(); if (!n) return 'No agent on record'; return n === n.toUpperCase() ? n.toLowerCase().replace(/\b([a-z])/g, function (m) { return m.toUpperCase(); }) : n; };
+  var inUsual = {}; for (var i = 1; i <= per; i++) inUsual[wallYm_(ym, -i)] = 1;
+  var out = { source: 'salesforce', month: ym, asOf: 'Salesforce, settled date, ' + prettyDate_(day).replace(/ \d{4}$/, ''), monthLabel: wallMonth_(ym), prevLabel: wallMonth_(prevYm), day: dom,
+              usualMonths: per, usualFrom: wallMonth_(wallYm_(ym, -per)), policies: 0, prem: 0, last7: 0, prevAtPoint: 0, prevMonth: 0, usual: 0, weeks: [0, 0, 0, 0, 0], units: [], agents: [] };
+  var U = {}, A = {}, usualAll = 0;
+  var uOf = function (name) { return (unitOf || {})[String(name).toLowerCase()] || unitLabel(''); };
+  var gu = function (k) { return U[k] = U[k] || { k: k, code: k, n: 0, prem: 0, hist: 0 }; };
+  var ga = function (name) { return A[name] = A[name] || { agent: name, n: 0, hist: 0, unit: uOf(name) }; };
+  rows.forEach(function (r) {
+    var d = String(r.Date_Settled__c || '').slice(0, 10), sm = d.slice(0, 7), name = nice(r.AGENT__r && r.AGENT__r.Name), api = Number(r.Total_API__c) || 0;
+    if (inUsual[sm] && !gone(name)) { usualAll++; gu(uOf(name)).hist++; ga(name).hist++; }
+    if (sm === prevYm && !gone(name)) { out.prevMonth++; if (Number(d.slice(8, 10)) <= dom) out.prevAtPoint++; }
+    if (sm !== ym) return;
+    out.policies++; out.prem += api; if (d >= wk7) out.last7++;
+    out.weeks[Math.min(4, Math.floor((Math.max(1, Number(d.slice(8, 10)) || 1) - 1) / 7))]++;
+    var u = gu(uOf(name)); u.n++; u.prem += api; ga(name).n++;
+  });
+  var r1 = function (x) { return Math.round(x * 10) / 10; };
+  out.prem = Math.round(out.prem); out.usual = r1(usualAll / per);
+  out.units = Object.keys(U).map(function (k) { var u = U[k]; return { k: u.k, code: u.code, n: u.n, prem: Math.round(u.prem), usual: r1(u.hist / per) }; })
+    .filter(function (u) { return u.n || u.usual >= 0.5; }).sort(function (a, b) { return a.k < b.k ? -1 : 1; });
+  out.agents = Object.keys(A).map(function (k) { var a = A[k]; return { agent: a.agent, n: a.n, usual: r1(a.hist / per), unit: a.unit }; })
+    .filter(function (a) { return a.n || (a.usual >= 0.5 && !gone(a.agent)); })
+    .sort(function (a, b) { var x = String(a.agent).toLowerCase(), y = String(b.agent).toLowerCase(); return x < y ? -1 : x > y ? 1 : 0; });
+  out.weeks = out.weeks.map(function (n, i) { return { k: (i * 7 + 1) + (i < 4 ? '–' + (i * 7 + 7) : '+'), n: n }; });
   return out;
 }
 /* ── The pending wall, from the newest pending report (27 October 2026) ──
@@ -18420,7 +18460,7 @@ function wallHourOf_(iso) {
 }
 function wallIsEmail_(subject) { return /^email:/i.test(String(subject || '').replace(/<[^>]*>/g, '').replace(/&quot;|&#34;/g, '"').replace(/^[\s"']+/, '')); }
 function wallDayHours_(day) {
-  var cache = CacheService.getScriptCache(), key = 'wall_hours3_' + day, hit = cache.get(key);
+  var cache = CacheService.getScriptCache(), key = 'wall_hours4_' + day, hit = cache.get(key);
   if (hit) { try { return JSON.parse(hit); } catch (e) {} }
   var users = sfkUsers_() || {}, bySf = {}, ids = [], order = DAY_MAIL_DESKS.concat(['ricky']);
   order.forEach(function (s) { var id = s === 'ricky' ? bmSfId_() : (users[s] && users[s].id); if (id) { bySf[id] = s; ids.push("'" + id + "'"); } });
@@ -18438,6 +18478,7 @@ function wallDayHours_(day) {
       byType: {}, autoTypes: {}, open: 0, openResp: 0, pend: 0, pendResp: 0, pendClosed: 0, _r: {}, hours: Array.apply(null, Array(NH)).map(function () { return { c: 0, w: 0, a: 0, t: {} }; }), ages: [0, 0, 0, 0], oldest: 0, _w: {} }; };
   order.forEach(function (s) { if (s === 'ricky' || users[s]) desk(s); });
   var hours = Array.apply(null, Array(NH)).map(function (_, i) { return { h: H0 + i, closed: {}, worked: 0, auto: 0 }; });
+  var acts = {}, act = function (sid, tid, at) { if (!sid || sid === 'ricky') return; var m = Date.parse(String(at || '').replace(/\+0000$/, 'Z')); if (isNaN(m)) return; (acts[sid] = acts[sid] || []).push({ ms: m, tid: tid, h: wallHourOf_(at) }); };
   var agents = {}, byId = {}, sinceMs = new Date(since).getTime(), today = new Date(day + 'T12:00:00Z').getTime();
   var ageBand = function (created) { var d = Math.max(0, Math.round((today - new Date(String(created).slice(0, 10) + 'T12:00:00Z').getTime()) / 86400000)), A = WALL_HOURS.AGES;
     return { d: d, b: d <= A[0] ? 0 : d <= A[1] ? 1 : d <= A[2] ? 2 : 3 }; };
@@ -18470,6 +18511,7 @@ function wallDayHours_(day) {
       }
       var ty = tyOf(t.Task_Type__c);
       if (ty === 'Pendings') d.pendClosed++;
+      act(owner, t.Id, t.CompletedDateTime);
       d.closed++; d.byType[ty] = (d.byType[ty] || 0) + 1; d.hours[i].c++; d.hours[i].t[ty] = (d.hours[i].t[ty] || 0) + 1; hours[i].closed[ty] = (hours[i].closed[ty] || 0) + 1;
       serve(t, owner, 'c');
       return;
@@ -18483,6 +18525,7 @@ function wallDayHours_(day) {
     var sid = bySf[n.CreatedById], t = byId[n.ParentId]; if (!sid) return;
     if (D[sid]) { D[sid].noted++; if (sid === 'ricky') D[sid].hours[wallHourOf_(n.CreatedDate) - H0].n = (D[sid].hours[wallHourOf_(n.CreatedDate) - H0].n || 0) + 1; }
     if (t && !t.IsClosed && sid !== 'ricky') work(sid, t, n.CreatedDate);   // his notes are instructions and the automation's, counted as notes
+    act(sid, n.ParentId, n.CreatedDate);
     if (D[sid] && sid !== 'ricky') { var hi = wallHourOf_(n.CreatedDate) - H0; if (!D[sid]._r[n.ParentId]) D[sid]._r[n.ParentId] = hi; }
   });
   // Responses on what they hold (24 Nov 2026, Ricky: "staff on actual responses on tasks pending"): every open task each desk owns,
@@ -18517,6 +18560,8 @@ function wallDayHours_(day) {
     });
   } catch (e) {}
   try { out.asks = wallBmAsks_(day, users, bySf); } catch (e) { out.asks = { error: String(e && e.message || e) }; }
+  try { var fu = wallFirstUp_(out.asks._list || [], acts, H0, NH); desks.forEach(function (d) { if (fu[d.sid]) d.firstUp = fu[d.sid]; }); } catch (e) {}
+  if (out.asks) delete out.asks._list;
   try { out.rio = wallRio_(day); } catch (e) { out.rio = { error: String(e && e.message || e) }; }
   try { out.me = wallMe_(day, H0, NH); } catch (e) { out.me = { error: String(e && e.message || e) }; }
   try { cache.put(key, JSON.stringify(out), WALL_HOURS.TTL); } catch (e) {}
@@ -18583,7 +18628,7 @@ function rioEvent_(b) {
   });
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try { sh.appendRow(row); } finally { lock.releaseLock(); }
-  try { CacheService.getScriptCache().remove('wall_hours3_' + todayISO_()); } catch (e) {}
+  try { CacheService.getScriptCache().remove('wall_hours4_' + todayISO_()); } catch (e) {}
   return { ok: true };
 }
 /** A respond.io duration in minutes: "h:mm:ss", seconds, or milliseconds. */
@@ -18623,6 +18668,7 @@ function wallBmAsks_(day, users, bySf) {
   var deskById = {}; Object.keys(bySf).forEach(function (id) { if (bySf[id] !== 'ricky') deskById[id] = bySf[id]; });
   var mine = postWhoAll_(sfkNotes_("SELECT Id, ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND CreatedById = '" + me + "' AND CreatedDate >= " + since + ' LIMIT 2000'), me, deskById)
     .filter(function (p) { return (p.who === 'ricky' || p.who === 'chase') && /^00T/.test(String(p.ParentId || '')); });
+  var list = [];
   var D = {}, desk = function (sid) { return D[sid] = D[sid] || { sid: sid, name: String(nameFor_(sid)).split(' ')[0], asked: 0, answered: 0, inHour: 0, waiting: 0, oldestMin: 0, mins: [],
     emails: 0, emailsDone: 0, hours: Array.apply(null, Array(NH)).map(function () { return { a: 0, r: 0 }; }), waits: [] }; };
   DAY_MAIL_DESKS.forEach(function (s) { if (users[s]) desk(s); });
@@ -18642,11 +18688,11 @@ function wallBmAsks_(day, users, bySf) {
       var t = T[p.ParentId]; if (!t || done[p.ParentId]) return; var sid = bySf[t.OwnerId]; if (!sid || sid === 'ricky') return;
       done[p.ParentId] = 1;
       var d = desk(sid), at = ms(p.CreatedDate), h = hourOf(p.CreatedDate);
-      d.asked++; d.hours[h].a++;
+      d.asked++; d.hours[h].a++; var rec = { sid: sid, tid: p.ParentId, at: at, ans: null }; list.push(rec);
       var ans = (after[p.ParentId] || []).filter(function (n) { return n.who === sid && n.at > at; }).map(function (n) { return n.at; });
       if (t.IsClosed && ms(t.CompletedDateTime) > at) ans.push(ms(t.CompletedDateTime));
       if (ans.length) {
-        var first = Math.min.apply(null, ans), mins = Math.round((first - at) / 60000);
+        var first = Math.min.apply(null, ans), mins = Math.round((first - at) / 60000); rec.ans = first;
         d.answered++; d.mins.push(mins); if (mins <= WALL_ASKS.HOUR_MIN) d.inHour++;
         d.hours[Math.max(0, Math.min(NH - 1, hourOf(new Date(first).toISOString())))].r++;
       } else {
@@ -18668,7 +18714,32 @@ function wallBmAsks_(day, users, bySf) {
   var med = function (a) { if (!a.length) return null; a = a.slice().sort(function (x, y) { return x - y; }); return a[Math.floor(a.length / 2)]; };
   var desks = Object.keys(D).map(function (k) { var d = D[k]; d.median = med(d.mins); delete d.mins; d.waits.sort(function (a, b) { return b.min - a.min; }); d.waits = d.waits.slice(0, 6); return d; });
   var tot = function (f) { return desks.reduce(function (a, d) { return a + (d[f] || 0); }, 0); };
-  return { desks: desks, asked: tot('asked'), answered: tot('answered'), inHour: tot('inHour'), waiting: tot('waiting'), emails: inbox.routed, emailsDone: inbox.done, inboxError: inbox.error || '' };
+  return { desks: desks, asked: tot('asked'), answered: tot('answered'), inHour: tot('inHour'), waiting: tot('waiting'), emails: inbox.routed, emailsDone: inbox.done, inboxError: inbox.error || '', _list: list };
+}
+
+/* ── The manager's word first (24 Nov 2026, 2026-11-24k) ──
+ *  Ricky: "managers are to be actioned on their correspondence in the mornings, and in the timeblocks their tasks are followed
+ *  up first". For each desk: their first piece of work of the day, and their first in each hour. Where a task the Branch
+ *  Manager asked about was open and unanswered at that moment, the first piece of work should have been on it: first (yes) or
+ *  not (no). Hours with nothing of his waiting, or with no work, are not judged. */
+function wallFirstUp_(asks, acts, H0, NH) {
+  var out = {};
+  Object.keys(acts).forEach(function (sid) {
+    var a = (acts[sid] || []).slice().sort(function (x, y) { return x.ms - y.ms; }); if (!a.length) return;
+    var mine = (asks || []).filter(function (q) { return q.sid === sid; });
+    var openAt = function (ms) { var o = {}; mine.forEach(function (q) { if (q.at < ms && (q.ans == null || q.ans >= ms)) o[q.tid] = 1; }); return o; };
+    var r = { morning: null, morningWaiting: 0, blocks: 0, first: 0, hours: Array.apply(null, Array(NH)).map(function () { return 0; }) };
+    var o0 = openAt(a[0].ms), n0 = Object.keys(o0).length;
+    if (n0) { r.morning = !!o0[a[0].tid]; r.morningWaiting = n0; }
+    var seen = {};
+    a.forEach(function (x) {
+      var i = x.h - H0; if (i < 0 || i >= NH || seen[i]) return; seen[i] = 1;
+      var o = openAt(x.ms); if (!Object.keys(o).length) return;
+      r.blocks++; if (o[x.tid]) { r.first++; r.hours[i] = 1; } else r.hours[i] = -1;
+    });
+    out[sid] = r;
+  });
+  return out;
 }
 
 /* ── My workday is the one screen (29 October 2026, 2026-10-29a) ──

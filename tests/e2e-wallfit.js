@@ -35,7 +35,6 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
 
 // Every story in the rotation. index.html is served from the directory.
 const PAGES = [
-  ['The day so far',    '/intelligence/wall/day.html'],
   ['The day, hour by hour', '/intelligence/wall/blocks.html'],
   ['The transmittal',   '/intelligence/wall/transmittal.html'],
   ['Pending · policies',     '/intelligence/wall/pending.html'],

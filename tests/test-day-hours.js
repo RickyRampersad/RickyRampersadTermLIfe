@@ -75,7 +75,7 @@ const raj = d.agents.find(a => a.k === 'Rajiv Soodoo');
 ok('the agents served, in name order, each with closes, worked-on and the desks that served them', raj.c === 2 && raj.w === 0 && raj.by[0].k === 'Sasha' && raj.by[0].n === 2 && d.agents.map(a => a.k).join('|') === [...d.agents.map(a => a.k)].sort((x, y) => x.toLowerCase() < y.toLowerCase() ? -1 : 1).join('|'), JSON.stringify(d.agents));
 ok('no subject and no client anywhere in the feed', !/Client Name|Payment Received|Happy Birthday/.test(JSON.stringify(d)));
 ok('ten hour columns, seven to four', d.hours.length === 10 && d.hours[0].h === 7 && d.hours[9].h === 16);
-ok('it is kept four minutes', env.CacheService.getScriptCache().get('wall_hours3_2026-10-28') != null);
+ok('it is kept four minutes', env.CacheService.getScriptCache().get('wall_hours4_2026-10-28') != null);
 asked = []; env.wallDayHours_('2026-10-28');
 ok('and read from the copy in that time', asked.length === 0);
 ok('intel.day carries it as hours', /j\.data\.hours = wallDayHours_\(todayISO_\(\)\)/.test(env.wallFeedOut_.toString()));
