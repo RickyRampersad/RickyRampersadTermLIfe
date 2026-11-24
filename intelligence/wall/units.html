@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<!-- THE PENDING WALL · UNITS, SETTLEMENT AND UNDERWRITING (24 November 2026, tracker 2026-11-24a). From the newest Branch Pending tab, carried on intel.pending as `live` (units, hold, uw, team). Units from the Agent Skill Bank; anyone who has left reads Orphans. Agents, units and Guardian staff ids only; no client, no policy number. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Branch Pending · Units & underwriting</title>
+<meta name="description" content="Guardian's pending report by unit: what is holding settlement, what underwriting is waiting on, and what the team moved today.">
+<meta name="theme-color" content="#0E1116">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null">
+<style>
+  :root{
+    --bg:#0E1116; --panel:rgba(255,255,255,.045); --line:rgba(255,255,255,.10);
+    --ink:#F4F1EA; --dim:#B4B0A8; --faint:#837E77;
+    --gold:#E3B85A; --amber:#EF9A4B; --teal:#4FC1B0; --green:#78D198; --coral:#EF8A6B; --red:#E8625A; --violet:#AB94E8;
+    --fd:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,sans-serif; --fb:Inter,system-ui,-apple-system,Segoe UI,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  html{font-size:min(calc(100vw / 120), calc(100vh / 67.5))}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--ink);overflow:hidden}
+  body{font-family:var(--fb);display:flex;flex-direction:column;position:relative}
+  .glow{position:fixed;border-radius:50%;filter:blur(7rem);opacity:.30;pointer-events:none;z-index:0}
+  .g1{width:44rem;height:44rem;left:-14rem;top:-18rem;background:#E3B85A;animation:drift 24s ease-in-out infinite alternate}
+  .g2{width:40rem;height:40rem;right:-12rem;bottom:-20rem;background:#4FC1B0;opacity:.18;animation:drift 30s ease-in-out infinite alternate-reverse}
+  .g3{width:28rem;height:28rem;left:40%;top:30%;background:#EF8A6B;opacity:.12;animation:drift 36s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate(8rem,4rem) scale(1.12)}}
+
+  header{position:relative;z-index:2;display:flex;align-items:center;gap:1.1rem;padding:1.5rem 2.2rem .5rem}
+  header .plate{flex:none;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:.55rem .95rem;border-radius:.8rem;
+    background:linear-gradient(135deg,#F3CE6E,#D99B2E);color:#1B1A22;box-shadow:0 .5rem 1.4rem rgba(217,155,46,.35)}
+  header .plate b{font:900 1.05rem var(--fd);letter-spacing:.12em;line-height:1.1}
+  header .plate span{font:700 .85rem var(--fd);letter-spacing:.22em;text-transform:uppercase;opacity:.8}
+  header h1{font:800 2rem/1.05 var(--fd);letter-spacing:-.02em}
+  header .sub{font-size:1rem;color:var(--dim);margin-top:.2rem}
+  header .sub b{color:var(--ink)}
+  .right{margin-left:auto;display:flex;align-items:center;gap:1.1rem}
+  .btn{font:800 1rem var(--fd);color:var(--ink);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:.8rem;padding:.6rem 1rem;cursor:pointer}
+  .btn.on{background:var(--gold);color:#16171B}
+  .live{display:flex;align-items:center;gap:.5rem;font:700 .95rem var(--fd);color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
+  .live i{width:.75rem;height:.75rem;border-radius:50%;background:var(--faint)}
+  .live.on i{background:var(--green);animation:ping 1.8s infinite}
+  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(120,209,152,.7)}70%{box-shadow:0 0 0 .8rem rgba(120,209,152,0)}100%{box-shadow:0 0 0 0 rgba(120,209,152,0)}}
+  .clock{font:800 1.9rem var(--fd);font-variant-numeric:tabular-nums}
+
+  main{position:relative;z-index:1;flex:1;display:grid;grid-template-columns:30rem minmax(0,1fr);gap:1.3rem;padding:.9rem 2.2rem 1rem;min-height:0}
+  .col{display:flex;flex-direction:column;gap:.9rem;min-height:0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:1.5rem;padding:1.1rem 1.35rem;min-height:0;position:relative;overflow:hidden;
+        opacity:0;transform:translateY(1.4rem);animation:rise .9s var(--ease) forwards;animation-delay:var(--d,0s)}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .kick{font:800 .9rem var(--fd);letter-spacing:.15em;text-transform:uppercase;color:var(--gold)}
+  .cap{font-size:.95rem;color:var(--dim);margin-top:.3rem;line-height:1.4}
+  .cap b{color:var(--ink)}
+  .ticker{position:relative;z-index:2;overflow:hidden;border-top:1px solid var(--line);background:rgba(0,0,0,.25);height:3rem;display:flex;align-items:center}
+  .ticker .in{display:flex;gap:4rem;white-space:nowrap;animation:tick 70s linear infinite;padding-left:100%}
+  .ticker span{font:700 1.1rem var(--fd);color:var(--dim)} .ticker span b{color:var(--gold)}
+  @keyframes tick{to{transform:translateX(-100%)}}
+
+
+  main{position:relative;z-index:1;flex:1;display:grid;gap:1.1rem;padding:.8rem 2.2rem .9rem;min-height:0}
+  .col{display:flex;flex-direction:column;gap:1rem;min-height:0}
+  .big{font:800 5rem/1 var(--fd);letter-spacing:-.04em;margin-top:.25rem;font-variant-numeric:tabular-nums}
+  .of{font:600 1rem/1.4 var(--fb);color:var(--dim);margin-top:.35rem} .of b{color:var(--ink)}
+  .bars .br{padding:.32rem 0;border-bottom:1px solid rgba(255,255,255,.06)} .bars .br:last-child{border-bottom:0}
+  .br .l{display:flex;align-items:baseline;gap:.6rem} .br .l b{font:700 1.02rem var(--fd);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .br .l span{font:800 1.2rem var(--fd);font-variant-numeric:tabular-nums} .br .l small{font:600 .85rem var(--fb);color:var(--faint);white-space:nowrap}
+  .br .t{height:.5rem;border-radius:1rem;background:rgba(255,255,255,.07);overflow:hidden;margin-top:.28rem}
+  .br .t i{display:block;height:100%;width:0;border-radius:1rem;transition:width 1.6s var(--ease)}
+  .br em{display:block;font-style:normal;font:500 .85rem/1.3 var(--fb);color:var(--dim);margin-top:.2rem}
+  .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.7rem;margin-top:.7rem}
+  .tile{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:1rem;padding:.65rem .8rem}
+  .tile b{display:block;font:800 2rem/1 var(--fd);font-variant-numeric:tabular-nums} .tile span{display:block;font:600 .85rem/1.3 var(--fb);color:var(--dim);margin-top:.3rem}
+  .tile.red b{color:var(--red)} .tile.amber b{color:var(--amber)} .tile.green b{color:var(--green)} .tile.gold b{color:var(--gold)}
+  .tbl{width:100%;border-collapse:collapse;margin-top:.6rem}
+  .tbl th{font:800 .8rem var(--fd);letter-spacing:.06em;text-transform:uppercase;color:var(--faint);text-align:right;padding:.3rem .4rem;border-bottom:1px solid var(--line);white-space:nowrap}
+  .tbl th:first-child,.tbl td:first-child{text-align:left}
+  .tbl td{font:800 1.15rem var(--fd);text-align:right;padding:.42rem .4rem;border-bottom:1px solid rgba(255,255,255,.06);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tbl td:first-child{font:700 1.05rem var(--fd);max-width:16rem;overflow:hidden;text-overflow:ellipsis}
+  .tbl td small{display:block;font:600 .78rem var(--fb);color:var(--faint)}
+  .tbl td.z{color:rgba(255,255,255,.22);font-weight:600} .tbl td.red{color:var(--red)} .tbl td.amber{color:var(--amber)} .tbl td.green{color:var(--green)} .tbl td.gold{color:var(--gold)}
+  .tbl tr.orph td:first-child{color:var(--coral)}
+  .rw{opacity:0;transform:translateX(-1rem);animation:slide .7s var(--ease) forwards;animation-delay:var(--d,0s)}
+  @keyframes slide{to{opacity:1;transform:none}}
+  .stack{display:flex;height:1.3rem;border-radius:1rem;overflow:hidden;margin-top:.7rem;background:rgba(255,255,255,.07)}
+  .stack i{display:block;height:100%;width:0;transition:width 1.6s var(--ease)}
+  .sk{display:flex;flex-wrap:wrap;gap:.4rem 1.1rem;margin-top:.5rem;font:600 .9rem var(--fb);color:var(--dim)}
+  .sk b{font:800 1.1rem var(--fd);color:var(--ink);margin-left:.25rem}
+  .sk i{display:inline-block;width:.7rem;height:.7rem;border-radius:.2rem;margin-right:.35rem}
+  .chip{display:inline-block;font:800 .8rem var(--fd);padding:.18rem .5rem;border-radius:.45rem;white-space:nowrap}
+  .chip.red{background:rgba(232,98,90,.18);color:var(--red)} .chip.ok{background:rgba(120,209,152,.15);color:var(--green)} .chip.amb{background:rgba(239,154,75,.16);color:var(--amber)}
+  .chip.dim{background:rgba(255,255,255,.07);color:var(--dim)}
+  .empty{font:600 1.05rem/1.5 var(--fb);color:var(--dim);margin-top:.8rem}
+  .note{margin-top:.5rem;font:500 .88rem/1.4 var(--fb);color:var(--faint)} .note b{color:var(--dim)}
+  @media (max-width:900px){
+    html{font-size:11px} html,body{height:auto;overflow:auto}
+    header{flex-wrap:wrap;padding:1.2rem 1.4rem .6rem} .right{margin-left:0;width:100%;justify-content:space-between}
+    main{grid-template-columns:1fr!important;padding:1rem 1.4rem} .glow{display:none} .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .scroll{overflow-x:auto}
+  }
+
+  main{grid-template-columns:29rem minmax(0,1fr)}
+  .rt{display:grid;grid-template-rows:auto minmax(0,1fr);gap:1rem;min-height:0}
+  .duo{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:1rem;min-height:0}
+
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} .card,.rw{opacity:1;transform:none} }
+</style>
+</head>
+<body>
+<i class="glow g1"></i><i class="glow g2"></i><i class="glow g3"></i>
+<header>
+  <div class="plate"><b>PENDING</b><span>wall</span></div>
+  <div><h1>The Units, and What Is Holding Settlement</h1><div class="sub" id="sub">Guardian's pending report &middot; units and counts, no client</div></div>
+  <div class="right"><button class="btn" id="sound" onclick="toggleSound()">▶ Narrate</button><div class="live" id="live"><i></i><span id="liveTxt">connecting</span></div><div class="clock" id="clock">--:--</div></div>
+</header>
+<main>
+  <section class="col">
+    <div class="card" style="--d:0s"><div class="kick">One item from settlement</div>
+      <div class="big" id="hN">0</div><div class="of" id="hOf">Reading the pending report&hellip;</div></div>
+    <div class="card" style="--d:.1s;flex:1"><div class="kick">The last item, and who moves it</div>
+      <div class="cap">Policies with a single requirement left between them and issue.</div>
+      <div class="bars" id="last"></div></div>
+  </section>
+  <section class="rt">
+    <div class="card" style="--d:.06s"><div class="kick">The units &middot; who is holding settlement</div>
+      <div class="cap">Each unit's pending policies and what is outstanding on them. A task is the Salesforce Pendings task on the policy.</div>
+      <div class="scroll"><table class="tbl" id="units"></table></div></div>
+    <div class="duo">
+      <div class="card" style="--d:.14s"><div class="kick">Underwriting</div>
+        <div class="stack" id="dec"></div><div class="sk" id="deck"></div>
+        <div class="tiles" id="uwt"></div>
+        <div class="scroll"><table class="tbl" id="uw"></table></div></div>
+      <div class="card" style="--d:.2s"><div class="kick">The team &middot; what is moving</div>
+        <div class="tiles" id="tmt" style="grid-template-columns:repeat(3,minmax(0,1fr))"></div>
+        <div class="bars" id="tm" style="margin-top:.6rem"></div>
+        <div class="note" id="tmn"></div></div>
+    </div>
+  </section>
+</main>
+<div class="ticker"><div class="in" id="tk"></div></div>
+<script>
+var PEND_URL = "https://script.google.com/macros/s/AKfycbympAk9o8Ns8un0UXKY1PHkS__nYa-Hx6Q3TzbCRSMyezkFhRtFFrz56qOCuSug1-34OQ/exec";
+var D = null, $ = function (s) { return document.querySelector(s); };
+var ORPH = "Orphans · to reassign";
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function fmt(n){ return Math.round(Number(n)||0).toLocaleString("en-US"); }
+function first(n){ n=String(n||""); return n===ORPH ? "Orphans" : (n.split(" ")[0] || "Not named"); }
+function clock(){ var t=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Port_of_Spain"})); $("#clock").textContent=("0"+t.getHours()).slice(-2)+":"+("0"+t.getMinutes()).slice(-2); }
+clock(); setInterval(clock, 15000);
+function count(el, to, pre){ if(!el) return; to=Math.max(0,Math.round(Number(to)||0)); var from=Number(el.getAttribute("data-v")||0), t0=performance.now(), dur=1500; el.setAttribute("data-v",to);
+  (function step(t){ var k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3); el.textContent=(pre||"")+Math.round(from+(to-from)*e).toLocaleString("en-US"); if(k<1) requestAnimationFrame(step); })(t0); }
+function later(f){ requestAnimationFrame(function(){ setTimeout(f, 220); }); }
+function grow(){ later(function(){ Array.prototype.forEach.call(document.querySelectorAll("[data-w]"), function(i){ i.style.width=i.getAttribute("data-w")+"%"; }); }); }
+function feed(url, body, tries){
+  tries = tries === undefined ? 3 : tries;
+  return fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)})
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .catch(function(err){ if(tries<=1) throw err; return new Promise(function(go){ setTimeout(go,4000); }).then(function(){ return feed(url,body,tries-1); }); });
+}
+function ticker(bits){ bits=bits.filter(String); $("#tk").innerHTML = bits.concat(bits).map(function(b){ return "<span>"+b+"</span>"; }).join(""); }
+var reflow = null; addEventListener("resize", function(){ clearTimeout(reflow); reflow = setTimeout(function(){ if(D) paint(); }, 250); });
+var NARRATION = [];   // not voiced yet
+function toggleSound(){}
+window.addEventListener("message", function(){});
+(function(){ var b=$("#sound"); if(b){ b.disabled=true; b.title="Narration not built yet"; } })();
+
+function paint(){
+  var L = D && D.live;
+  if(!L || L.error){ $("#hOf").textContent = (L && L.error) || (D && D.error) || "Reading the pending report…"; return; }
+  $("#sub").innerHTML = "Guardian's pending report, uploaded <b>"+esc(L.asOf)+"</b> &middot; units, agents and counts, no client";
+  if(!L.units){ $("#hOf").innerHTML = "This slide fills once the tracker carries the units (paste KPI.gs, New version)."; return; }
+  var H = L.hold || {};
+  count($("#hN"), H.oneLeft);
+  $("#hOf").innerHTML = "of <b>"+fmt(L.policies)+"</b> pending policies &middot; <b>"+fmt(H.ready)+"</b> wait only on the first premium"+(H.readyHeld ? ", <b>"+fmt(H.readyHeld)+"</b> with money already held" : "");
+  var who = H.who || [], wmax = Math.max.apply(null, who.map(function(w){ return w.n; }).concat([1]));
+  var COL = function(k){ return /^agent$/i.test(k) ? "var(--gold)" : /exam|doctor/i.test(k) ? "var(--teal)" : /client/i.test(k) ? "var(--amber)" : /underwrit|guardian|reinsur/i.test(k) ? "rgba(255,255,255,.45)" : "var(--violet)"; };
+  $("#last").innerHTML = who.map(function(w){
+    return '<div class="br"><div class="l"><b>'+esc(w.k)+'</b><span>'+fmt(w.n)+'</span></div><div class="t"><i data-w="'+(100*w.n/wmax).toFixed(1)+'" style="background:'+COL(w.k)+'"></i></div>'
+      + '<em>'+(w.kinds||[]).map(function(k){ return esc(k.k)+' '+fmt(k.n); }).join(' &middot; ')+'</em></div>'; }).join("") || '<div class="empty">No policy is down to its last item.</div>';
+  var U = L.units || [];
+  $("#units").innerHTML = '<tr><th>Unit</th><th>Agents</th><th>Policies</th><th>First premium</th><th>Medical</th><th>Papers</th><th>Ready</th><th>Red</th><th>90+ days</th><th>Task open</th><th>No task</th></tr>'
+    + U.map(function(u,i){ var z=function(n,c){ return '<td class="'+(n?(c||''):'z')+'">'+fmt(n)+'</td>'; };
+      return '<tr class="rw'+(/Orphans/.test(u.k)?' orph':'')+'" style="--d:'+(0.05*i).toFixed(2)+'s"><td>'+esc(u.k)+'<small>'+(u.top||[]).slice(0,3).map(function(k){ return esc(k.k)+' '+fmt(k.n); }).join(' · ')+'</small></td>'
+        + '<td>'+fmt(u.agents)+'</td><td>'+fmt(u.policies)+'</td>'+z(u.cash,'gold')+z(u.medical)+z(u.docs)+z(u.ready,'green')+z(u.red,'red')+z(u.past90,'amber')+z(u.open)+z(u.never,'red')+'</tr>'; }).join("");
+  var W = L.uw || {}, S = W.states || {}, tot = Object.keys(S).reduce(function(a,k){ return a+S[k]; },0) || 1;
+  var ST = [["settle","Approved · settle it","var(--green)"],["info","More info asked","var(--amber)"],["uw","With underwriting","rgba(255,255,255,.45)"],["decl","Declined","var(--red)"],["none","No decision yet","rgba(255,255,255,.18)"]];
+  $("#dec").innerHTML = ST.map(function(s){ return '<i data-w="'+(100*(S[s[0]]||0)/tot).toFixed(1)+'" style="background:'+s[2]+'"></i>'; }).join("");
+  $("#deck").innerHTML = ST.filter(function(s){ return S[s[0]]; }).map(function(s){ return '<span><i style="background:'+s[2]+'"></i>'+s[1]+'<b>'+fmt(S[s[0]])+'</b></span>'; }).join("");
+  $("#uwt").innerHTML = [["green",W.approvedWaiting,"approved, waiting on us"],["red",W.followOver,"Guardian's follow-up date passed"],["amber",W.followSoon,"follow-up due in 3 days"],["gold",W.wroteWeek,"underwriting wrote this week"]]
+    .map(function(t){ return '<div class="tile '+t[0]+'"><b>'+fmt(t[1])+'</b><span>'+t[2]+'</span></div>'; }).join("");
+  $("#uw").innerHTML = '<tr><th>Underwriter</th><th>Policies</th><th>Info asked</th><th>Red</th><th>Follow-up passed</th><th>Avg days</th></tr>'
+    + (W.byUw||[]).slice(0,5).map(function(w,i){ return '<tr class="rw" style="--d:'+(0.05*i).toFixed(2)+'s"><td>'+esc(w.k)+'</td><td>'+fmt(w.policies)+'</td><td class="'+(w.info?'amber':'z')+'">'+fmt(w.info)+'</td><td class="'+(w.red?'red':'z')+'">'+fmt(w.red)+'</td><td class="'+(w.followOver?'red':'z')+'">'+fmt(w.followOver)+'</td><td>'+fmt(w.avgDays)+'</td></tr>'; }).join("");
+  var T = L.team || {}, C = L.chase || {}, td = (L.today && L.today.desks) || [];
+  $("#tmt").innerHTML = [["amber",T.waiting,"papers signed for, not sent yet"],["green",T.sentWeek,"papers sent this week"],["gold",(L.today&&L.today.notes)||0,"notes on Pendings tasks today"]]
+    .map(function(t){ return '<div class="tile '+t[0]+'"><b>'+fmt(t[1])+'</b><span>'+t[2]+'</span></div>'; }).join("");
+  var rows = td.filter(function(d){ return d.notes || d.closed; }).map(function(d){ return { k: d.name, n: (d.notes||0)+(d.closed||0), s: fmt(d.notes)+' notes · '+fmt(d.closed)+' closed today' }; });
+  (T.by||[]).forEach(function(b){ var r = rows.filter(function(x){ return x.k===b.k; })[0]; var s='holding '+fmt(b.n)+' paper'+(b.n===1?'':'s')+(b.oldest?' (oldest '+fmt(b.oldest)+' days)':''); if(r) r.s += ' · '+s; else rows.push({ k: b.k, n: 0, s: s }); });
+  var rmax = Math.max.apply(null, rows.map(function(r){ return r.n; }).concat([1]));
+  $("#tm").innerHTML = rows.map(function(r){ return '<div class="br"><div class="l"><b>'+esc(r.k)+'</b><span>'+(r.n?fmt(r.n):'')+'</span></div><div class="t"><i data-w="'+(100*r.n/rmax).toFixed(1)+'" style="background:var(--teal)"></i></div><em>'+esc(r.s)+'</em></div>'; }).join("")
+    || '<div class="empty">Nothing logged on the Pendings tasks yet today.</div>';
+  $("#tmn").innerHTML = C.never != null ? "<b>"+fmt(C.never)+"</b> pending polic"+(C.never===1?"y has":"ies have")+" never had a Salesforce Pendings task; <b>"+fmt(C.overdue)+"</b> open tasks are past their date." : (T.error ? esc(T.error) : "");
+  grow();
+  var u0 = U[0];
+  ticker(["<b>"+fmt(H.oneLeft)+"</b> policies are one item from settlement",
+    H.ready ? "<b>"+fmt(H.ready)+"</b> wait only on the first premium" : "",
+    u0 ? "<b>"+esc(u0.k)+"</b> holds <b>"+fmt(u0.policies)+"</b> pending policies" : "",
+    W.followOver ? "<b>"+fmt(W.followOver)+"</b> policies are past Guardian's own follow-up date" : "",
+    T.waiting ? "<b>"+fmt(T.waiting)+"</b> papers are signed for and not yet sent" : "",
+    "From the pending report of <b>"+esc(L.asOf)+"</b>"]);
+}
+function load(){
+  feed(PEND_URL,{action:"intel.pending"})
+    .then(function(j){ if(!j||!j.ok||!j.data) throw new Error("bad feed"); D=j.data; paint(); $("#live").classList.add("on"); $("#liveTxt").textContent="live"; })
+    .catch(function(){ if(!D){ D={live:{error:"The tracker did not answer. Trying again shortly."}}; paint(); } $("#live").classList.remove("on"); $("#liveTxt").textContent="no feed"; });
+}
+load(); setInterval(load, 10*60*1000);
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
+
