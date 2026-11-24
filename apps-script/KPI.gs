@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-24e';
+var SCRIPT_VERSION = '2026-11-24f';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -18118,24 +18118,25 @@ function wallClawLive_(day) {
   } catch (e) { out.gaps.push('The Log Book could not be read, so acknowledgements sent from the branch are not counted.'); }
   // Salesforce: the policy record and client, their open tasks, and the replacements.
   var sfOn = typeof sfkConfigured_ === 'function' && sfkConfigured_();
-  var openOn = {}, ids = {}, contact = {}, firstN = {}, agSt = {}, owners = {}, lifeC = {}, ciC = {};
+  var openOn = {}, ids = {}, contact = {}, firstN = {}, agSt = {}, agNm = {}, owners = {}, lifeC = {}, ciC = {};
   if (sfOn && C.length) {
     try {
       var q = C.map(function (x) { return "'" + x.pol + "'"; });
-      var polQ = function (sel, i) { return sfkQuery_('SELECT ' + sel + ' FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + q.slice(i, i + 150).join(',') + ')'); };
-      for (var i = 0; i < q.length; i += 150) {
+      var polQ = function (sel, i) { return sfkQuery_('SELECT ' + sel + ' FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + q.slice(i, i + 60).join(',') + ')'); };
+      for (var i = 0; i < q.length; i += 60) {
         var prs; try { prs = polQ('Id, POLICY__c, Contact__c, Contact__r.FirstName, AGENT__r.Name, AGENT__r.Employment_Status__c, Life_Coverage__c, Critical_Illness_Coverage__c', i); }
         catch (e0) { try { prs = polQ('Id, POLICY__c, Contact__c, Contact__r.FirstName, Life_Coverage__c', i); } catch (e1) { prs = polQ('Id, POLICY__c, Contact__c, Contact__r.FirstName', i); } }
         prs.forEach(function (r) { var pol = String(r.POLICY__c || '').replace(/\D/g, ''); ids[r.Id] = pol;
           if (r.Contact__r && r.Contact__r.FirstName) firstN[pol] = String(r.Contact__r.FirstName).trim().split(/\s+/)[0];
           if (r.AGENT__r && r.AGENT__r.Employment_Status__c) agSt[pol] = String(r.AGENT__r.Employment_Status__c);
+          if (r.AGENT__r && r.AGENT__r.Name) agNm[pol] = String(r.AGENT__r.Name).trim();
           if (Number(r.Life_Coverage__c) > 0) lifeC[pol] = Number(r.Life_Coverage__c);
           if (Number(r.Critical_Illness_Coverage__c) > 0) ciC[pol] = Number(r.Critical_Illness_Coverage__c);
           if (r.Contact__c) { contact[pol] = r.Contact__c; ids[r.Contact__c] = ids[r.Contact__c] || pol; } });
       }
       var who = Object.keys(ids).map(function (x) { return "'" + x + "'"; });
-      for (var j = 0; j < who.length; j += 150) {
-        var chunk = who.slice(j, j + 150).join(',');
+      for (var j = 0; j < who.length; j += 40) {   // two IN lists per query: 150 ran past URL Fetch's address limit
+        var chunk = who.slice(j, j + 40).join(',');
         sfkQuery_('SELECT WhatId, WhoId, Owner.Name FROM Task WHERE IsClosed = false AND (WhatId IN (' + chunk + ') OR WhoId IN (' + chunk + '))')
           .forEach(function (t) { var on = t.Owner && t.Owner.Name ? String(t.Owner.Name).split(' ')[0] : '';
             [t.WhatId, t.WhoId].forEach(function (x) { if (x && ids[x]) { openOn[ids[x]] = true; if (on) owners[ids[x]] = on; } }); });
@@ -18150,7 +18151,7 @@ function wallClawLive_(day) {
     try {
       var cs = {}; Object.keys(contact).forEach(function (p2) { cs[contact[p2]] = 1; });
       var cq = Object.keys(cs).map(function (x) { return "'" + x + "'"; }), ended = {};
-      for (var e2 = 0; e2 < cq.length; e2 += 150) sfkQuery_("SELECT POLICY__c, Contact__c, Paid_To_Date__c FROM CLIENT_PORTFOLIO__c WHERE Contact__c IN (" + cq.slice(e2, e2 + 150).join(',') +
+      for (var e2 = 0; e2 < cq.length; e2 += 60) sfkQuery_("SELECT POLICY__c, Contact__c, Paid_To_Date__c FROM CLIENT_PORTFOLIO__c WHERE Contact__c IN (" + cq.slice(e2, e2 + 60).join(',') +
         ") AND (Policy_Status_Description__c LIKE '%LAPSE%' OR Policy_Status_Description__c LIKE '%SURRENDER%')")
         .forEach(function (r) { (ended[r.Contact__c] = ended[r.Contact__c] || []).push({ pol: String(r.POLICY__c || '').replace(/\D/g, ''), at: dOf(r.Paid_To_Date__c) }); });
       C.forEach(function (x) {
@@ -18168,7 +18169,11 @@ function wallClawLive_(day) {
     var st = agSt[x.pol]; if (st) return /^active$/i.test(st.trim());
     return !wallIsLeft_(x.agent, left);
   };
+  var title = function (n) { return String(n || '').toLowerCase().replace(/(^|[\s'-])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); }); };
   C.forEach(function (x) {
+    if (/^agent\s+[a-z]?\d+$/i.test(x.agent) && agNm[x.pol]) x.agent = agNm[x.pol];
+    if (x.agent === x.agent.toUpperCase()) x.agent = title(x.agent);
+    x.amt = Math.abs(x.amt);
     if (x.repl) { out.replacements++; out.replAmount += x.amt; return; }
     var l = lb[x.pol] || null;
     var state = (x.ack || /^(y|yes|ack|received|acknowledged)/i.test(x.ackSt) || (l && l.sent)) ? 'submitted' : (l && l.withUs) ? 'withUs' : 'none';
