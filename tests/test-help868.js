@@ -23,7 +23,7 @@ function sheet(name, rows) {
     })
   });
 }
-const RH = ['POLICY', 'application_number', 'Agent Name', 'REQUIREMENT_CODE', 'requirement_name', 'WHO_ACTS_NEXT', 'RAG_STATUS', 'REQUIREMENT_STATUS', 'DAYS_SINCE_SUBMISSION', 'DecisionType', 'mode_premium', 'SUSPENDED_AMOUNT'];
+const RH = ['POLICY', 'application_number', 'Agent Name', 'REQUIREMENT_CODE', 'requirement_name', 'WHO_ACTS_NEXT', 'RAG_STATUS', 'REQUIREMENT_STATUS', 'DAYS_SINCE_SUBMISSION', 'DecisionType', 'mode_premium', 'SUSPENDED_AMOUNT', 'Client Name', 'requirement_comment', 'REQUIREMENT_DATE', 'underwriter_id', 'service_associate_id'];
 const tabs = [
   sheet('HELP868 Agents', [['Agent no.', 'Name', 'WhatsApp number', 'Active', 'Pendings'],
     ['', 'Neil Ramnanan', '+1 (868) 555-0101', 'Yes', ''], ['A10031', 'Joy Sammah', '868 555 0102', 'No', ''], ['', 'Rajiv Soodoo', '8685550103', 'Yes', 'No'], ['', 'Seven Digits', '5550104', 'Yes', ''], ['A06869', 'Akaash Kalladeen', '8685550201', 'Yes', ''], ['SL002', 'Sasha Lalla', '8685550202', 'Yes', '']]),
@@ -33,11 +33,11 @@ const tabs = [
     ['7000000001', 'Neil Ramnanan', '', '', '', 0, 0, '', '', '', '[]', '2 Nov 2026, 6:00 AM'],
     ['5000000003', 'Someone Else', 'x', 'Azariah Griffith', '2026-11-05', 1, 0, '', '', 'secret', '[]', '2 Nov 2026, 6:00 AM']]),
   sheet('Branch Pendings_2026-11-02-0800', [RH,
-    ['5000000001', '1000000001', 'Neil Ramnanan', 'FUTPY', 'Future premium payment', 'Agent', 'Red', 'Ordered - awaiting receipt', 21, 'Standard', '999', '555'],
-    ['5000000001', '1000000001', 'Neil Ramnanan', 'FACTF', 'Fact find form', 'Underwriting', 'Green', 'Received and accepted', 21, 'Standard', '999', '555'],
-    ['5000000002', '', 'Neil Ramnanan', 'AGEAD', 'Proof of identity', 'Agent', 'Amber', 'Ordered - awaiting receipt', 9, '', '', ''],
-    ['7000000001', '', 'Neil Ramnanan', 'PRADD', 'Proof of address', 'Agent', 'Amber', 'Ordered - awaiting receipt', 5, '', '', ''],
-    ['5000000003', '', 'Someone Else', 'FINQ', 'Financial questionnaire', 'Agent', 'Red', 'Ordered - awaiting receipt', 40, '', '', '']])
+    ['5000000001', '1000000001', 'Neil Ramnanan', 'FUTPY', 'Future premium payment', 'Agent', 'Red', 'Ordered - awaiting receipt', 21, 'Standard', '999', '555', 'Pat Sample', 'E-bill not accepted, bill itself required', '2026-10-20', 'UW07', 'SA12'],
+    ['5000000001', '1000000001', 'Neil Ramnanan', 'FACTF', 'Fact find form', 'Underwriting', 'Green', 'Received and accepted', 21, 'Standard', '999', '555', 'Pat Sample', '', '2026-10-12', 'UW07', 'SA12'],
+    ['5000000002', '', 'Neil Ramnanan', 'AGEAD', 'Proof of identity', 'Agent', 'Amber', 'Ordered - awaiting receipt', 9, '', '', '', 'Lee Sample', '', '', '', ''],
+    ['7000000001', '', 'Neil Ramnanan', 'PRADD', 'Proof of address', 'Agent', 'Amber', 'Ordered - awaiting receipt', 5, '', '', '', 'Kim Sample', '', '', '', ''],
+    ['5000000003', '', 'Someone Else', 'FINQ', 'Financial questionnaire', 'Agent', 'Red', 'Ordered - awaiting receipt', 40, '', '', '', 'Other Client', '', '', '', '']])
 ];
 const ss = { getSheets: () => tabs, getSheetByName: n => tabs.find(t => t.getName() === n) || null, insertSheet: n => { const s = sheet(n, []); tabs.push(s); return s; } };
 env.ss_ = () => ss; env.SpreadsheetApp.openById = () => ss; env.tBookId_ = () => 'BOOK'; env.tTz_ = () => 'America/Port_of_Spain'; env.log_ = () => {};
@@ -104,12 +104,14 @@ ok('five wrong tries void the code even for the right one', route({ ...base, act
 // pendings and case, signed in (session from the first code is still open)
 r = route({ ...base, action: 'help868.pendings' });
 ok('signed in: own cases only', r.verified && r.total === 3 && r.cases.length === 3, JSON.stringify(r).slice(0, 200));
-ok('list shows the last four digits only, first names only', r.cases[0].policy === '••••0001' && r.cases[0].withTeam === 'Sasha' && !/SMITH|medical|secret|Someone/.test(JSON.stringify(r)));
+ok('list shows the full policy number (24 Nov 2026), first names for the team, and nobody else\'s case', r.cases[0].policy === '5000000001' && r.cases[0].withTeam === 'Sasha' && !/medical|secret|Someone/.test(JSON.stringify(r)));
 let c = route({ ...base, action: 'help868.case', policy: '5000000001' });
 ok('case by full number: decision, days, open and closed requirements', c.found && c.daysSinceSubmission === 21 && c.decision === 'Standard' && c.openRequirements === 1 && c.closedRequirements === 1, JSON.stringify(c).slice(0, 300));
 ok('requirement carries code, name, status and who acts next', c.requirements[0].code === 'FUTPY' && c.requirements[0].whoActsNext === 'Agent' && c.requirements[0].name === 'Future premium payment');
 ok('task facts: open, overdue, who has it, last noted', c.task.openTasks === 1 && c.task.overdue === 1 && c.task.withTeam === 'Sasha' && c.task.lastNoteBy === 'Sasha');
-ok('no money, client name or note words anywhere', !/999|555|SMITH|medical|secret/.test(JSON.stringify(c)));
+ok('the case names the client, underwriting\'s comment with its date, the underwriter and the case officer', c.client === 'Pat Sample' && c.underwritingComments.length === 1 && c.underwritingComments[0].date === '2026-10-20' && /E-bill/.test(c.underwritingComments[0].text) && c.underwriter === 'UW07' && c.caseOfficer === 'SA12');
+ok('the list names each of the agent\'s own clients and never another agent\'s', r.cases.some(function (x) { return x.client === 'Pat Sample'; }) && !/Other Client/.test(JSON.stringify(r)));
+ok('the agent\'s own case carries its premium and suspense; staff note words never appear', c.premium === '999' && c.suspense === '555' && !/medical|secret/.test(JSON.stringify(c)));
 c = route({ ...base, action: 'help868.case', policy: '0002' });
 ok('last digits that fit one case find it', c.found && c.policy === '5000000002', JSON.stringify(c).slice(0, 120));
 ok('digits that fit two cases ask for more', /2 cases you can see/.test(route({ ...base, action: 'help868.case', policy: '0001' }).message));
@@ -179,7 +181,7 @@ ok('no key and an agent-owned requirement: the rules say waiting on the agent, a
 
 // increases and groups (Salesforce, for the signed-in agent)
 let inc = route({ ...base, action: 'help868.increases' });
-ok('increases: those whose status is Pending, with last four digits', inc.found && inc.pending === 2 && inc.increases[0].policy === '••••0009', JSON.stringify(inc).slice(0, 220));
+ok('increases: those whose status is Pending, with the full policy number', inc.found && inc.pending === 2 && inc.increases[0].policy === '6000000009', JSON.stringify(inc).slice(0, 220));
 ok('increases: days outstanding from Salesforce, else worked out', inc.increases[0].daysOutstanding === 32 && inc.increases[1].daysOutstanding >= 0 && inc.over30Days === 1);
 ok('increases: only the Pending status is read, no second query and no other status', sfQ.filter(q => /Policy_Increases__c/.test(q)).length === 1 && /Policy_Description_Status__c = 'Pending'/.test(sfQ.filter(q => /Policy_Increases__c/.test(q))[0]) && !/Premium Paying|Date_Settled/.test(sfQ.join(' ')) && inc.premiumPayingWithNoSettledDate === undefined);
 ok('increases: no amounts, no phone-like numbers in the requirement text', !/888|5551234567/.test(JSON.stringify(inc)) && /\[number removed\]/.test(inc.increases[0].requirement));
@@ -188,7 +190,7 @@ ok('increases are asked of Salesforce by the matched agent only', sfQ.some(q => 
 let gr = route({ ...base, action: 'help868.groups' });
 const byLine = n => gr.byLine.filter(l => l.line === n)[0].pending;
 ok('groups: pending only, counted by line in a fixed order', gr.found && gr.pending === 3 && gr.byLine.map(l => l.line).join() === 'Group Life,Group Health,Pension' && byLine('Group Life') === 1 && byLine('Group Health') === 2 && byLine('Pension') === 0, JSON.stringify(gr.byLine));
-ok('groups: each pending record by line, last four digits and days since received', gr.cases[0].line === 'Group Health' && gr.cases[0].policy === '••••0555' && gr.cases[0].daysSinceReceived > 0, JSON.stringify(gr.cases[0]));
+ok('groups: each pending record by line, full policy number and days since received', gr.cases[0].line === 'Group Health' && /7000000555/.test(gr.cases[0].policy) && gr.cases[0].daysSinceReceived > 0, JSON.stringify(gr.cases[0]));
 const gq = sfQ.filter(q => /FROM CLIENT_PORTFOLIO__c/.test(q) && /RecordType/.test(q)).pop();
 ok('groups: the one query asks for status Pending only', /Policy_Status_Description__c = 'Pending'/.test(gq) && !/GROUP BY|PREMIUM/i.test(gq), gq);
 ok('groups: records, not employers, and no names', /records and not employers/.test(gr.note) && !/Ltd|Limited|Company/.test(JSON.stringify(gr)));

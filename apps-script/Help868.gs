@@ -22,7 +22,7 @@
  *                      agent's case.
  *    help868.increases signed in only: that agent's increases whose Salesforce status is Pending, and nothing else.
  *    help868.groups    signed in only: that agent's Group Life, Group Health and Pension policy records whose status is Pending,
- *                      and nothing else: counts by line, then each by last four digits and days since received.
+ *                      and nothing else: counts by line, then each by policy number and days since received.
  *    help868.enquiry   anyone: files an enquiry on the "HELP868 Enquiries" tab with a reference and e-mails the owner.
  *
  *  Where the data is: the pending report ("Branch Pendings_…") and "Pendings Chase" are tabs of the Branch Portfolio workbook
@@ -214,9 +214,10 @@ function help868Pendings_(p, digits) {
   if (!ch) return { ok: true, verified: true, name: help868First_(s.name), ready: false, message: 'The pending list is not ready right now. A team member can check.' };
   var sc = help868Scope_(s, p.agent);
   if (sc.refused) return { ok: true, verified: true, name: help868First_(s.name), ready: true, total: 0, message: 'That agent is not one you can see.' };
+  var names = help868ReportNames_();
   var rows = ch.rows.filter(function (r) { return sc.test(String(r[ch.cg] || '')); }).map(function (r) {
     var pol = String(r[ch.cp] || '');
-    return { agent: help868First_(r[ch.cg]), agentName: String(r[ch.cg] || ''), policy: '••••' + pol.slice(-4), openTasks: Number(r[ch.cop] || 0) || 0, overdue: Number(r[ch.cov] || 0) || 0, due: String(r[ch.cdue] || ''),
+    return { agent: help868First_(r[ch.cg]), agentName: String(r[ch.cg] || ''), policy: pol, client: names[pol] || '', openTasks: Number(r[ch.cop] || 0) || 0, overdue: Number(r[ch.cov] || 0) || 0, due: String(r[ch.cdue] || ''),
       withTeam: help868First_(r[ch.co]), lastNote: String(r[ch.cla] || ''), lastNoteBy: help868First_(r[ch.clb]) };
   }).sort(function (x, y) { return (y.overdue - x.overdue) || ((x.openTasks ? 0 : 1) - (y.openTasks ? 0 : 1)) || String(x.due || '9').localeCompare(String(y.due || '9')); });
   var byAgent = {}; rows.forEach(function (x) { var a = byAgent[x.agentName] = byAgent[x.agentName] || { agent: x.agentName, cases: 0, overdue: 0, noOpenTask: 0 };
@@ -228,6 +229,21 @@ function help868Pendings_(p, digits) {
     shown: Math.min(rows.length, H868.MAX_ROWS), cases: rows.slice(0, H868.MAX_ROWS),
     note: 'Ask which policy they want to look at, by its number or last digits, and use the case call. With byAgent, a manager can name one agent (agent) to see only theirs.' };
 }
+/** Policy -> client name, from the newest pending report (empty when it cannot be read). Agents see their own clients by name
+ *  (Ricky, 24 Nov 2026: "they should be able to see their policy number and all details ... and the client name"). */
+function help868ReportNames_() {
+  var out = {};
+  try {
+    var ss = help868Book_(); if (!ss) return out;
+    var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(H868.REPORT) === 0; })
+      .sort(function (a, b) { return a.getName() < b.getName() ? 1 : -1; });
+    if (!tabs.length) return out;
+    var v = tabs[0].getDataRange().getValues(), h = v[0].map(function (x) { return String(x).trim(); }), cp = h.indexOf('POLICY'), cn = h.indexOf('Client Name');
+    if (cp < 0 || cn < 0) return out;
+    v.slice(1).forEach(function (r) { var p = String(r[cp] || '').trim(); if (p && !out[p]) out[p] = String(r[cn] || '').trim(); });
+  } catch (e) {}
+  return out;
+}
 /** The newest pending report's rows for one agent's policy: { policy, app, ... } or a reason. */
 function help868Report_(agentTest, typed) {
   var ss = help868Book_();
@@ -238,7 +254,9 @@ function help868Report_(agentTest, typed) {
   var v = tabs[0].getDataRange().getValues(); if (v.length < 2) return { none: 'The pending report is empty.' };
   var h = v[0].map(function (x) { return String(x).trim(); }), ix = function (n) { return h.indexOf(n); };
   var c = { pol: ix('POLICY'), app: ix('application_number'), agent: ix('Agent Name'), code: ix('REQUIREMENT_CODE'), name: ix('requirement_name'), who: ix('WHO_ACTS_NEXT'),
-    rag: ix('RAG_STATUS'), st: ix('REQUIREMENT_STATUS'), days: ix('DAYS_SINCE_SUBMISSION'), dec: ix('DecisionType') };
+    rag: ix('RAG_STATUS'), st: ix('REQUIREMENT_STATUS'), days: ix('DAYS_SINCE_SUBMISSION'), dec: ix('DecisionType'),
+    client: ix('Client Name'), cmt: ix('requirement_comment'), rdate: ix('REQUIREMENT_DATE') > -1 ? ix('REQUIREMENT_DATE') : ix('ordered_date'),
+    uw: ix('underwriter_id'), so: ix('service_associate_id'), nf: ix('NEXT_FOLLOWUP_DATE'), susp: ix('SUSPENDED_AMOUNT'), prem: ix('mode_premium'), last: ix('LAST_REQT_TO_SETTLE') };
   if (c.pol < 0 || c.agent < 0) return { none: 'The pending report is not in the layout expected.' };
   var cell = function (r, i) { return i > -1 && r[i] != null ? String(r[i]).trim() : ''; };
   var mine = v.slice(1).filter(function (r) {
@@ -251,9 +269,13 @@ function help868Report_(agentTest, typed) {
   if (!keys.length) return { none: 'No pending case you can see matches those digits.' };
   if (keys.length > 1) return { ambiguous: true, count: keys.length };
   var closedRe = /closed|received|waived|complete|cancel/i, open = mine.filter(function (r) { return !closedRe.test(cell(r, c.st)); });
-  return { policy: keys[0], agent: cell(mine[0], c.agent), app: cell(mine[0], c.app), days: Math.max.apply(null, mine.map(function (r) { return Number(cell(r, c.days)) || 0; })), decision: cell(mine[0], c.dec),
+  var comments = [], seenC = {};
+  mine.forEach(function (r) { var t = cell(r, c.cmt); if (t && !seenC[t]) { seenC[t] = 1; comments.push({ text: t.slice(0, 400), date: cell(r, c.rdate).slice(0, 10), requirement: cell(r, c.name) }); } });
+  var nf = mine.map(function (r) { return cell(r, c.nf).slice(0, 10); }).filter(Boolean).sort()[0] || '';
+  return { policy: keys[0], agent: cell(mine[0], c.agent), app: cell(mine[0], c.app), client: cell(mine[0], c.client), comments: comments.slice(0, 4), nextFollowUp: nf,
+    underwriter: cell(mine[0], c.uw), caseOfficer: cell(mine[0], c.so), suspense: cell(mine[0], c.susp), premium: cell(mine[0], c.prem), days: Math.max.apply(null, mine.map(function (r) { return Number(cell(r, c.days)) || 0; })), decision: cell(mine[0], c.dec),
     openCount: open.length, closedCount: mine.length - open.length,
-    requirements: open.slice(0, H868.MAX_REQS).map(function (r) { return { code: cell(r, c.code), name: cell(r, c.name), status: cell(r, c.st), whoActsNext: cell(r, c.who), rag: cell(r, c.rag) }; }) };
+    requirements: open.slice(0, H868.MAX_REQS).map(function (r) { return { code: cell(r, c.code), name: cell(r, c.name), status: cell(r, c.st), whoActsNext: cell(r, c.who), rag: cell(r, c.rag), since: cell(r, c.rdate).slice(0, 10), lastToSettle: /^y/i.test(cell(r, c.last)) }; }) };
 }
 function help868Case_(p, digits) {
   var s = help868Session_(digits); if (!s) return H868_NEED_CODE;
@@ -262,7 +284,8 @@ function help868Case_(p, digits) {
   var rep = help868Report_(help868Scope_(s).test, typed);
   if (rep.ambiguous) return { ok: true, verified: true, found: false, message: rep.count + ' cases you can see end that way. Ask for more of the number.' };
   if (rep.none) return { ok: true, verified: true, found: false, message: rep.none };
-  var out = { ok: true, verified: true, found: true, name: help868First_(s.name), agent: help868First_(rep.agent), policy: rep.policy, applicationNo: rep.app, daysSinceSubmission: rep.days, decision: rep.decision,
+  var out = { ok: true, verified: true, found: true, name: help868First_(s.name), agent: help868First_(rep.agent), policy: rep.policy, client: rep.client, applicationNo: rep.app,
+    underwritingComments: rep.comments, nextFollowUp: rep.nextFollowUp, underwriter: rep.underwriter, caseOfficer: rep.caseOfficer, suspense: rep.suspense, premium: rep.premium, daysSinceSubmission: rep.days, decision: rep.decision,
     openRequirements: rep.openCount, closedRequirements: rep.closedCount, requirements: rep.requirements };
   var ch = help868Chase_();
   if (ch) {
@@ -272,7 +295,7 @@ function help868Case_(p, digits) {
   }
   var task = help868PendTask_(rep);
   try { out.stall = help868Stall_(rep, out.task, task); } catch (e) { help868Log_('the stall read failed: ' + (e && e.message)); }
-  out.note = 'Requirement names, who acts next, who has the task, and a read of what is holding it up. The words of staff notes and e-mails are never shown: a team member can give those.';
+  out.note = 'The full policy, the client, underwriting\'s own comments with their dates, each requirement, who acts next, who has the task, and a read of what is holding it up. Staff notes and e-mails are never quoted: a team member can give those. Start with the requirement that is last to settle, else the oldest.';
   out.salesforce = help868SfNoteCase_(s, rep, task);
   return out;
 }
@@ -454,7 +477,7 @@ function help868Increases_(p, digits) {
   } catch (e) { help868Log_('increases read failed: ' + (e && e.message)); return H868_NO_SF; }
   var today = help868Today_(), list = rows.map(function (r) {
     var sub = String(r.Submitted_Date__c || ''), days = Number(r.Days_O_S__c) || (sub ? Math.max(0, help868Days_(sub, today) || 0) : 0);
-    return { policy: '••••' + String(r.Policy__c || '').replace(/\D/g, '').slice(-4), submitted: sub, daysOutstanding: days,
+    return { policy: String(r.Policy__c || ''), submitted: sub, daysOutstanding: days,
       requirement: help868Clean_(r.Policy_Requirements__c).slice(0, 120), supportedBy: help868First_(r.Support__c), pickedUpForProduction: String(r.Picked_Up_For_Production__c || '') };
   }).sort(function (a, b) { return b.daysOutstanding - a.daysOutstanding; });
   return { ok: true, verified: true, found: true, name: help868First_(s.name), pending: list.length, over30Days: list.filter(function (x) { return x.daysOutstanding > 30; }).length,
@@ -474,7 +497,7 @@ function help868Groups_(p, digits) {
   var label = { 'LIFE(GROUP)': 'Group Life', 'HEALTH (GROUP)': 'Group Health', 'PENSION': 'Pension' }, count = { 'Group Life': 0, 'Group Health': 0, 'Pension': 0 }, today = help868Today_();
   var list = rows.map(function (r) { var line = label[r.RecordType && r.RecordType.Name] || ''; if (line) count[line]++;
     var rec = String(r.App_Received_Date__c || '');
-    return { line: line, policy: '••••' + String(r.POLICY__c || '').replace(/\D/g, '').slice(-4), received: rec, daysSinceReceived: rec ? help868Days_(rec, today) : null }; });
+    return { line: line, policy: String(r.POLICY__c || ''), received: rec, daysSinceReceived: rec ? help868Days_(rec, today) : null }; });
   return { ok: true, verified: true, found: true, name: help868First_(s.name), pending: list.length,
     byLine: Object.keys(count).map(function (k) { return { line: k, pending: count[k] }; }),
     shown: Math.min(list.length, H868.MAX_ROWS), cases: list.slice(0, H868.MAX_ROWS),
