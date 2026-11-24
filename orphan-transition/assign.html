@@ -578,11 +578,12 @@
   .tkbar input{flex:1 1 220px}
   .tkn{font-size:13.5px;color:var(--dim);margin:2px 0 6px} .tkn b{color:var(--ink)}
   .tkrow{border-top:1px solid var(--line2);padding:10px 2px;min-width:0} .tkrow:first-of-type{border-top:0}
+  .dkform{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end;margin-top:8px;padding:10px;background:#f8fafc;border:1px solid var(--line);border-radius:var(--r2)} .dkform label{display:flex;flex-direction:column;font-size:12.5px;color:var(--dim);gap:3px} .dkform label.wide{flex:1 1 260px} .dkform select,.dkform input{font:inherit;font-size:max(16px,1rem);padding:8px;border:1px solid var(--line-strong,#7d8890);border-radius:8px;min-height:44px}
   .pdreq{margin:6px 0 2px;padding-left:20px;font-size:13.5px;color:var(--body)} .pdreq li{margin:2px 0}
   .tkh{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline} .tkh a{color:var(--ink);text-decoration:none} .tkh a:hover{text-decoration:underline} .tks{color:var(--body);font-size:14.5px;overflow-wrap:anywhere}
   .tkm{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;font-size:13px;color:var(--dim);margin-top:4px} .tkm b{color:var(--body);font-weight:600}
   .tkl{font-size:13.5px;color:var(--body);margin-top:5px;padding-left:9px;border-left:3px solid var(--line);overflow-wrap:anywhere} .tkl b{color:var(--ink)}
-  .tka{display:flex;gap:12px;margin-top:6px;font-size:13.5px} .tka a{color:var(--tdark);font-weight:600} .tka a.tkgo{color:#fff;background:var(--navy);padding:4px 11px;border-radius:999px;text-decoration:none}
+  .tka{display:flex;gap:12px;margin-top:6px;font-size:13.5px} .tka a{color:var(--tdark);font-weight:600} .tka a.tkgo{color:#fff;background:var(--navy);padding:4px 11px;border-radius:999px;text-decoration:none} .tka{flex-wrap:wrap;align-items:center} .tka button{font:inherit;font-size:13.5px;font-weight:600;min-height:36px;padding:4px 12px;border-radius:999px;border:1px solid var(--line-strong,#7d8890);background:#fff;color:var(--tdark);cursor:pointer} .tka button.tkgo{color:#fff;background:var(--navy);border-color:var(--navy)} .dkform button.tkgo{font:inherit;font-weight:700;min-height:44px;padding:8px 16px;border-radius:999px;border:0;color:#fff;background:var(--navy);cursor:pointer}
   .tkown th{white-space:nowrap} .tkown tr[data-tko]{cursor:pointer} .tkown tr.on td{background:#eef6ff} .dh2{font:700 14px var(--fh);color:var(--ink);margin:0 0 6px}
   .task.picked{border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,128,150,.18)}
   .tpost{margin-left:auto;font:600 13px var(--fb);color:var(--tdark);background:#fff;border:1px solid var(--field);border-radius:999px;padding:4px 11px;cursor:pointer}
@@ -958,6 +959,21 @@
         <div class="card dcard" id="fuClients"></div>
         <div class="card dcard" id="fuBranch"></div>
         <p class="pnote" id="fuHow"></p>
+      </div>
+    </div>
+
+    <!-- The staff desk and the daily report (24 November 2026) -->
+    <div class="pane" id="paneDesk" hidden>
+      <div class="panehead"><h2 id="dkTitle">My desk</h2><span id="dkSub">What is yours to report on today, from the pending report and the Log Book</span></div>
+      <div class="agstate" id="dkState"></div>
+      <div id="dkBody" hidden>
+        <div class="card dcard"><div class="dtiles" id="dkTiles"></div><p class="pnote" id="dkWhat"></p></div>
+        <div class="card dcard">
+          <div class="tkbar"><select id="dkWho" aria-label="Whose desk"></select><select id="dkKind" aria-label="Which items"></select><input type="search" id="dkQ" placeholder="Search a client, policy or agent" aria-label="Search the desk"></div>
+          <div id="dkList"></div>
+        </div>
+        <div class="card dcard" id="dkTeam"></div>
+        <div class="card dcard" id="dkToday"></div>
       </div>
     </div>
 
@@ -1353,6 +1369,8 @@ var TABDEF = {
   dash: { label: 'Dashboard', grp: 'act', pane: 'paneDash' },
   agents: { label: 'Agents', grp: 'act', pane: 'paneAgents' },
   tasks: { label: 'Tasks', grp: 'act', pane: 'paneTasks' },
+  desk: { label: 'My desk', grp: 'you', pane: 'paneDesk', hot: true },
+  bdesk: { label: 'Staff desks', grp: 'act', pane: 'paneDesk' },
   pend: { label: 'My pendings', grp: 'you', pane: 'panePend' },
   claw: { label: 'My clawbacks', grp: 'you', pane: 'paneClaw' },
   bpend: { label: 'Pendings', grp: 'act', pane: 'panePend' },
@@ -1373,12 +1391,12 @@ function tabsFor(d) {
   var r = d.role, claims = !!(d.claims && d.claims.rows && d.claims.rows.length);
   /* Match (8 October 2026) for whoever names agents, once the backend sends it */
   var match = d.match ? ['match'] : [];
-  if (r === 'branch') return ['urgent', 'follow', 'dash', 'agents', 'tasks', 'bpend', 'bclaw'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights', 'profiles']);
+  if (r === 'branch') return ['urgent', 'follow', 'dash', 'agents', 'tasks', 'bdesk', 'bpend', 'bclaw'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights', 'profiles']);
   /* "Your work" for anyone signed in as themselves (8 October 2026: "can staff place the notes … and see what they have done") */
   var work = d.me && d.me.name ? ['work'] : [];
   var prof = d.me && d.me.name ? ['profile'] : [];
   /* Team for staff too (15 October 2026: "all staff and managers are supposed to see the progress each support has") */
-  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, prof, ['pend', 'claw', 'urgent', 'tasks', 'assign', 'agents'], match, ['calls', 'progress', 'done', 'households', 'all', 'team']);
+  if (r === 'staff') return ['desk'].concat(d.clients.some(myCall) ? ['mine'] : [], work, prof, ['pend', 'claw', 'urgent', 'tasks', 'assign', 'agents'], match, ['calls', 'progress', 'done', 'households', 'all', 'team']);
   var out = ['open', 'pend', 'claw'].concat(work, prof, ['tasks'], claims ? ['claims'] : []);
   if (r === 'unit') out.push('dash', 'agents');
   if (d.clients.some(urgentOf)) out.push('urgent');
@@ -1548,7 +1566,7 @@ function pickTab(t, keep) {
 }
 function showPane() {
   var def = TABDEF[TAB] || {}, pane = def.pane || 'paneList';
-  ['paneList', 'paneHouseholds', 'paneDash', 'paneAgents', 'paneTasks', 'panePend', 'paneClaw', 'paneFollow', 'paneMatch', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims', 'paneProfile'].forEach(function (p) { $(p).hidden = p !== pane; });
+  ['paneList', 'paneHouseholds', 'paneDash', 'paneAgents', 'paneTasks', 'panePend', 'paneClaw', 'paneDesk', 'paneFollow', 'paneMatch', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims', 'paneProfile'].forEach(function (p) { $(p).hidden = p !== pane; });
   if (pane !== 'paneAgents') AG_VISIBLE = false;
   if (pane === 'paneList') listPane();
   else if (pane === 'paneHouseholds') householdsPane();
@@ -1557,6 +1575,7 @@ function showPane() {
   else if (pane === 'paneAgents') agentsPane(true);
   else if (pane === 'paneTasks') tasksPane();
   else if (pane === 'panePend') pendPane();
+  else if (pane === 'paneDesk') deskPane();
   else if (pane === 'paneClaw') clawPane();
   else if (pane === 'paneFollow') followPane();
   else if (pane === 'paneMatch') matchPane();
@@ -3310,6 +3329,89 @@ function clawPane() {
   $('cwRepl').hidden = !rp.length;
   if (rp.length) $('cwRepl').innerHTML = '<div class="dh2">Replacements, kept off the agents’ screens (' + rp.length + ')</div><p class="pnote">The same client had another policy lapse or be surrendered from six months before to a year after this one was issued. For the branch to decide; agents and unit managers do not see these.</p>' + rp.map(row).join('');
 }
+/* ---- The staff desk (24 November 2026: "a robust reporting structure in the findings they are to report daily ... hold
+   them accountable ... staff also see their colleagues ... trigger the WhatsApp and follow through") ----
+   tDeskView_: each item is hers when she signed for the papers in the Log Book, else when she supports the agent. Each is
+   reported in fixed fields; the report goes on the Desk Reports tab and under the existing post on the Pendings task.
+   An item with no report by the next working day is late, and the branch manager's 5pm summary names it. */
+var DKV = null, DKV_AT = 0, DKV_BUSY = false, DKF = { who: 'me', kind: '', q: '' }, DK_OPEN = {};
+function dkLoad(force) {
+  if (!D || DKV_BUSY || (!force && DKV && Date.now() - DKV_AT < 300000)) return;
+  DKV_BUSY = true; if (TABDEF[TAB] && TABDEF[TAB].pane === 'paneDesk') $('dkState').innerHTML = 'Reading the pending report, the Log Book and today&rsquo;s reports&hellip;';
+  api(signed({ action: 'board', desk: '1' })).then(function (r) {
+    DKV_BUSY = false;
+    var nv = r && r.ok ? (r.deskView || { on: false, why: PD_OLD.replace('My pendings', 'The desk') }) : { on: false, why: (r && r.error) || 'The sheet did not answer.' };
+    if (nv.on || !(DKV && DKV.on)) DKV = nv; DKV_AT = Date.now();
+    if (TABDEF[TAB] && TABDEF[TAB].pane === 'paneDesk') deskPane();
+  }).catch(function () { DKV_BUSY = false; if (!DKV) DKV = { on: false, why: 'The sheet did not answer.' }; if (TABDEF[TAB] && TABDEF[TAB].pane === 'paneDesk') deskPane(); });
+}
+function dkOpts(list, pick) { return '<option value="">choose&hellip;</option>' + list.map(function (x) { return '<option' + (x === pick ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join(''); }
+function dkWaText(it) { return 'Update on ' + it.policy + (it.client ? ' (' + it.client + ')' : '') + ': ' + it.why.replace(/ The agent hears it today\./, '') + ' Please reply: Got it, Done, or I need help.'; }
+function deskPane() {
+  if (!D) return;
+  var v = DKV;
+  if (!v) { $('dkBody').hidden = true; $('dkState').innerHTML = 'Reading the pending report, the Log Book and today&rsquo;s reports&hellip;'; dkLoad(); return; }
+  if (!v.on) { $('dkBody').hidden = true; $('dkState').innerHTML = '<span class="stop">' + esc(v.why) + '</span>'; return; }
+  $('dkState').innerHTML = (DKV_BUSY ? 'Reading again&hellip; ' : '') + ((v.gaps || []).length ? '<span class="mut">' + esc(v.gaps.join(' ')) + '</span>' : '');
+  $('dkBody').hidden = false; if (Date.now() - DKV_AT > 300000) dkLoad();
+  var role = D.role, staff = role === 'staff';
+  if (!staff && DKF.who === 'me') DKF.who = '';
+  $('dkTitle').textContent = staff ? 'My desk' : 'Staff desks';
+  $('dkSub').textContent = 'From the pending report, the Log Book and the reports filed today · read ' + (v.at || '') + ' · report each item by the end of the day: what you found, what you did, who you told, what is next and by when';
+  var owners = {}; (v.items || []).forEach(function (it) { owners[it.owner || '(nobody)'] = 1; });
+  $('dkWho').innerHTML = (staff ? '<option value="me">my desk</option>' : '') + '<option value="">everyone</option>' + Object.keys(owners).sort().map(function (o) { return '<option value="' + esc(o) + '">' + esc(o) + '</option>'; }).join('');
+  $('dkWho').value = DKF.who;
+  var KIND = { suspense: 'Money in suspense', new: 'New from underwriting', handed: 'Handed in, not moving', chase: 'Chase the case officer', approved: 'Approved: first premium left', settled: 'Contract to deliver' };
+  $('dkKind').innerHTML = '<option value="">every item</option><option value="late">not reported</option>' + Object.keys(KIND).map(function (k) { return '<option value="' + k + '">' + esc(KIND[k]) + '</option>'; }).join('');
+  $('dkKind').value = DKF.kind; if ($('dkQ').value !== DKF.q) $('dkQ').value = DKF.q;
+  var scope = (v.items || []).filter(function (it) { return DKF.who === 'me' ? it.mine : !DKF.who || (it.owner || '(nobody)') === DKF.who; });
+  var cnt = function (k) { return scope.filter(function (it) { return it.kind === k; }).length; }, late = scope.filter(function (it) { return it.late; }).length, done = scope.filter(function (it) { return it.report && it.report.day === new Date().toISOString().slice(0, 10); }).length;
+  $('dkTiles').innerHTML = dTile(scope.length, 'On the desk', '', '', 'k:') + dTile(late, 'Not reported', 'due by the end of the working day', late ? 'crit' : '', 'k:late') + dTile(done, 'Reported today', '') +
+    (cnt('suspense') ? dTile(cnt('suspense'), 'Money in suspense', '30 days and not settled', 'crit', 'k:suspense') : '') + dTile(cnt('new'), 'New from underwriting', 'the agent hears it today', cnt('new') ? 'crit' : '', 'k:new') +
+    dTile(cnt('handed') + cnt('chase'), 'Handed in, not moving', 'confirm it went, then chase', '', 'k:handed') + dTile(cnt('approved'), 'Approved', 'only the first premium left', '', 'k:approved') + dTile(cnt('settled'), 'Contracts to deliver', 'within 20 days of settling', '', 'k:settled');
+  $('dkWhat').innerHTML = late ? '<b>' + late + '</b> item' + (late === 1 ? ' has' : 's have') + ' no report. Each needs one today: the summary to Mr Rampersad and Mrs Dookran goes at 5pm.' : (scope.length ? 'Every item here has a report.' : '');
+  var rows = scope.filter(function (it) {
+    if (DKF.kind === 'late' && !it.late) return false;
+    if (DKF.kind && DKF.kind !== 'late' && it.kind !== DKF.kind && !(DKF.kind === 'handed' && it.kind === 'chase')) return false;
+    return !DKF.q || [it.client, it.policy, it.agent, it.owner].join(' ').toLowerCase().indexOf(DKF.q.toLowerCase()) >= 0;
+  });
+  var L = v.lists || { found: [], did: [], told: [] };
+  $('dkList').innerHTML = '<p class="tkn"><b>' + rows.length + '</b> item' + (rows.length === 1 ? '' : 's') + '</p>' + (rows.length ? rows.slice(0, 80).map(function (it, i) {
+    var r = it.report, rp = it.reply, open = DK_OPEN[it.key];
+    var wa = it.agentWa ? 'https://wa.me/' + it.agentWa + '?text=' + encodeURIComponent(dkWaText(it)) : '';
+    return '<div class="tkrow" data-key="' + esc(it.key) + '"><div class="tkh"><b>' + esc(it.policy) + (it.client ? ' · ' + esc(it.client) : '') + '</b><span class="tks">' + esc(it.label) + (it.agent ? ' · ' + esc(firstName(it.agent)) : '') + ' · ' + esc(it.owner || 'nobody') + ' (' + esc(it.via) + ')</span></div>' +
+      '<div class="tkl">' + esc(it.why) + (it.suspense ? ' Held: TT$' + Number(it.suspense).toFixed(2) + '.' : '') + '</div>' +
+      '<div class="tkm">' + (it.late ? '<span class="pill late">not reported</span>' : r ? '<span class="pill done">reported ' + esc(r.day) + ' by ' + esc(firstName(r.staff)) + '</span>' : '<span class="pill named">report by the end of today</span>') +
+      (it.officer ? '<span>case officer <b>' + esc(it.officer) + '</b></span>' : '') + (it.uw ? '<span>underwriter <b>' + esc(it.uw) + '</b></span>' : '') +
+      (rp ? '<span>agent: <b>' + esc(rp.answer) + '</b> ' + esc(rp.when) + '</span>' : '') + '</div>' +
+      (r ? '<div class="tkm"><span>Found <b>' + esc(r.found) + '</b> · did <b>' + esc(r.did) + '</b> · told <b>' + esc(r.told) + '</b>' + (r.next ? ' · next: ' + esc(r.next) + (r.nextDate ? ' by <b>' + esc(r.nextDate) + '</b>' : '') : '') + '</span></div>' : '') +
+      (it.chase ? '<div class="tkl" id="dkc' + i + '">' + esc(it.chase.text) + '</div>' : '') +
+      '<div class="tka"><button type="button" class="tkgo" data-rep="' + esc(it.key) + '">' + (r ? 'Report again' : 'Report') + '</button>' + (it.chase ? '<button type="button" data-copy="dkc' + i + '">Copy the chase</button>' : '') +
+      (wa ? '<a target="_blank" rel="noopener" data-wa="' + esc(it.key) + '" href="' + esc(wa) + '">WhatsApp ' + esc(firstName(it.agent)) + '</a>' : (it.agent ? '<span class="mut">' + esc(firstName(it.agent)) + ' is not on the HELP 868 list yet</span>' : '')) + '</div>' +
+      (open ? '<form class="dkform" data-form="' + esc(it.key) + '"><label>Found <select name="found">' + dkOpts(L.found) + '</select></label><label>Did <select name="did">' + dkOpts(L.did) + '</select></label><label>Told <select name="told">' + dkOpts(L.told) + '</select></label>' +
+        '<label class="wide">Next <input name="next" maxlength="300" placeholder="What happens next"></label><label>By <input name="nextDate" type="date"></label><button type="submit" class="tkgo">Save the report</button><span class="mut">It goes on the desk and under the task&rsquo;s existing post in Salesforce.</span></form>' : '') + '</div>';
+  }).join('') : '<p class="dnone">Nothing on this desk.</p>');
+  /* the team */
+  $('dkTeam').innerHTML = '<div class="dh2">The team today</div><div class="svwrap"><table class="svlist"><tr><th>Staff</th><th>On the desk</th><th>Reported today</th><th>Not reported</th></tr>' +
+    (v.team || []).map(function (t) { return '<tr data-dkw="' + esc(t.name) + '"><td>' + esc(t.name) + '</td><td class="n">' + t.items + '</td><td class="n">' + t.reportedToday + '</td><td class="n' + (t.late ? ' late' : '') + '">' + t.late + '</td></tr>'; }).join('') + '</table></div><p class="pnote">Tap a name to open that desk. Anyone may report on a colleague&rsquo;s item when covering; the report shows who made it.</p>';
+  $('dkToday').innerHTML = '<div class="dh2">Reported today</div>' + ((v.today || []).length ? (v.today || []).map(function (r) { return '<div class="tkm"><span><b>' + esc(firstName(r.staff)) + '</b> ' + esc(r.when.slice(11)) + ' · ' + esc(r.policy) + (r.client ? ' · ' + esc(r.client) : '') + ' · found ' + esc(r.found) + ' · ' + esc(r.did) + '</span></div>'; }).join('') : '<p class="dnone">Nothing reported yet today.</p>');
+  each('#dkTiles [data-go]', function (b) { b.addEventListener('click', function () { DKF.kind = b.getAttribute('data-go').slice(2); deskPane(); }); });
+  each('#dkTeam tr[data-dkw]', function (tr) { tr.addEventListener('click', function () { DKF.who = tr.getAttribute('data-dkw'); deskPane(); }); });
+  each('#dkList [data-rep]', function (b) { b.addEventListener('click', function () { var k = b.getAttribute('data-rep'); DK_OPEN[k] = !DK_OPEN[k]; deskPane(); }); });
+  each('#dkList [data-copy]', function (b) { b.addEventListener('click', function () { try { navigator.clipboard.writeText($(b.getAttribute('data-copy')).textContent); b.textContent = 'Copied'; } catch (e) {} }); });
+  each('#dkList [data-wa]', function (a) { a.addEventListener('click', function () { var it = (v.items || []).filter(function (x) { return x.key === a.getAttribute('data-wa'); })[0]; if (it) api(signed({ action: 'board', desktold: '1', policy: it.policy, agent: it.agent })).catch(function () {}); }); });
+  each('#dkList form[data-form]', function (f) { f.addEventListener('submit', function (e) {
+    e.preventDefault(); var k = f.getAttribute('data-form'), fd = {}; ['found', 'did', 'told', 'next', 'nextDate'].forEach(function (n) { fd[n] = f.elements[n].value; });
+    var btn = f.querySelector('button'); btn.disabled = true; btn.textContent = 'Saving…';
+    api(signed({ action: 'board', deskreport: '1', key: k, found: fd.found, did: fd.did, told: fd.told, next: fd.next, nextDate: fd.nextDate })).then(function (r) {
+      if (r && r.ok) { toast('Reported · ' + (r.salesforce || '')); DK_OPEN[k] = false; dkLoad(true); }
+      else { toast((r && r.error) || 'Not saved.', true); btn.disabled = false; btn.textContent = 'Save the report'; }
+    }).catch(function () { toast('The sheet did not answer. Try again.', true); btn.disabled = false; btn.textContent = 'Save the report'; });
+  }); });
+}
+$('dkWho').addEventListener('change', function () { DKF.who = $('dkWho').value; deskPane(); });
+$('dkKind').addEventListener('change', function () { DKF.kind = $('dkKind').value; deskPane(); });
+(function () { var qt = null; $('dkQ').addEventListener('input', function () { clearTimeout(qt); qt = setTimeout(function () { DKF.q = $('dkQ').value.trim(); deskPane(); }, 250); }); })();
 $('pdAgent').addEventListener('change', function () { PDF.agent = $('pdAgent').value; PD_N = 40; pendPane(); });
 $('pdShow').addEventListener('change', function () { PDF.show = $('pdShow').value; PD_N = 40; pendPane(); });
 $('cwAgent').addEventListener('change', function () { CWF.agent = $('cwAgent').value; clawPane(); });

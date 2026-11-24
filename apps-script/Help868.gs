@@ -59,6 +59,7 @@ function help868Route_(p) {
   if (action === 'help868.increases') return help868Increases_(p, digits);
   if (action === 'help868.groups') return help868Groups_(p, digits);
   if (action === 'help868.enquiry') return help868Enquiry_(p, digits);
+  if (action === 'help868.ack') return help868Ack_(p, digits);
   return { ok: false, error: 'Unknown HELP 868 action.' };
 }
 
@@ -659,4 +660,31 @@ function help868XlLead_(p) {
   if (sh) try { sh.appendRow([stamp, name, digits.slice(-4), age, g, cover ? 'TT$' + cover : '', next, out.salesforce, out.contactId, out.taskId, String(p.rcontact || '').slice(0, 40)]); } catch (e) {}
   out.message = out.salesforce === 'created' ? 'Added to Salesforce as a new contact.' : out.salesforce === 'existing' ? 'Already in Salesforce; a task was opened.' : 'Logged for the team.';
   return out;
+}
+
+/* ───────── the agent's one-tap answer (24 November 2026) ─────────
+ *  Each update a staff member sends through HELP 868 carries three quick replies: "Got it", "Done, it's in", "I need help".
+ *  respond.io calls help868.ack with the WhatsApp number, the policy and the answer. The answer is kept on the
+ *  "Agent Replies" tab, which the staff desk reads, so the board shows whether the agent acted and how long it took.
+ *  "I need help" e-mails the agent's support person at once. Only an agent on the HELP868 Agents tab can answer. */
+var H868_ACK = { got: 'Got it', done: "Done, it's in", help: 'I need help' };
+function help868Ack_(p, digits) {
+  var who = help868Listed_(digits); if (!who) return { ok: false, error: 'This number is not on the HELP 868 list.' };
+  var pol = String(p.policy || '').replace(/\D/g, ''), ans = H868_ACK[String(p.answer || '').toLowerCase()];
+  if (!pol || !ans) return { ok: false, error: 'Send the policy and one of got, done or help.' };
+  var ss = help868Own_(), sh = ss.getSheetByName('Agent Replies');
+  if (!sh) { sh = ss.insertSheet('Agent Replies'); sh.appendRow(['When', 'Phone', 'Agent', 'Policy', 'Answer', 'By']); }
+  sh.appendRow([Utilities.formatDate(new Date(), help868Tz_(), 'yyyy-MM-dd HH:mm'), '·' + digits.slice(-4), who.name, "'" + pol, ans, 'agent']);
+  if (ans === H868_ACK.help) {
+    try {
+      var sup = tSupportFor_(who.name), mail = sup.name ? help868StaffMail_(sup.name) : '';
+      if (mail) MailApp.sendEmail({ to: mail, subject: 'HELP 868: ' + help868First_(who.name) + ' needs help on ' + pol,
+        htmlBody: '<p>' + help868Esc_(who.name) + ' tapped <b>I need help</b> on policy ' + help868Esc_(pol) + ' in HELP 868. Please call them today and report it on your desk.</p>' });
+    } catch (e) { help868Log_('help alert failed: ' + (e && e.message)); }
+  }
+  return { ok: true, recorded: ans, message: ans === H868_ACK.help ? 'Thanks. Your support person has been told and will call you.' : 'Thanks, noted.' };
+}
+/** A staff member's e-mail off the Agent Skill Bank, by name. */
+function help868StaffMail_(name) {
+  try { var t = tTeam_(); var hit = (t.people || t || []).filter(function (x) { return tSameClient_(x.name, name); })[0]; return hit && hit.email || ''; } catch (e) { return ''; }
 }
