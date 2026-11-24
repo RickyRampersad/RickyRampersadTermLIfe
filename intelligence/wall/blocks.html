@@ -415,21 +415,24 @@ function asksPage(){
   var H = D.hours || {}, A = H.asks || {}, box = $("#p3"); if(!box) return;
   if(A.error || !A.desks){ box.innerHTML = '<div class="aw"><div class="kick">Your asks &middot; who answered</div><div class="of">'+esc(A.error || 'This page fills once the tracker carries it (version 2026-11-24g).')+'</div></div>'; return; }
   var desk = {}; (H.desks||[]).forEach(function(d){ desk[d.sid] = d; });
+  var R = H.rio || {}, RP = {}; (R.people||[]).forEach(function(p){ if(p.sid) RP[p.sid] = p; });
   var nowMin = (H.nowH == null ? H.from : H.nowH) * 60;
   var rows = A.desks.map(function(a){
     var d = desk[a.sid] || {}, exp = (d.target && d.end > d.start) ? Math.round(d.target * Math.max(0, Math.min(nowMin, d.end) - d.start) / (d.end - d.start)) : null;
     var paceTxt = exp == null ? '<span class="z">no target</span>' : d.absent ? '<span class="z">away</span>' : '<span class="'+((d.closed||0) >= exp ? 'green' : 'red')+'">'+fmt(d.closed||0)+' / '+fmt(exp)+'</span>';
-    var rate = a.asked ? Math.round(100*a.answered/a.asked) : null;
+    var rate = a.asked ? Math.round(100*a.answered/a.asked) : null, rp = RP[a.sid];
+    var waTxt = rp ? fmt(rp.closed)+(rp.firstMin!=null?'<small>first reply '+fmt(rp.firstMin)+' min</small>':'') : '<span class="z">–</span>';
     return '<tr><td><b>'+esc(a.name)+'</b></td><td>'+paceTxt+'</td><td>'+fmt(a.asked)+'</td><td class="'+(rate==null?'z':rate>=80?'green':rate>=50?'amber':'red')+'">'+(rate==null?'–':fmt(a.answered)+' · '+rate+'%')+'</td>'
       + '<td>'+(a.inHour?fmt(a.inHour):'<span class="z">0</span>')+'</td><td>'+(a.median==null?'<span class="z">–</span>':fmt(a.median)+' min')+'</td>'
       + '<td class="'+(a.waiting?'red':'z')+'">'+fmt(a.waiting)+(a.waiting?'<small>oldest '+(a.oldestMin>=60?Math.floor(a.oldestMin/60)+'h '+(a.oldestMin%60)+'m':a.oldestMin+' min')+'</small>':'')+'</td>'
-      + '<td>'+(a.emails?'<span class="'+(a.emailsDone>=a.emails?'green':'amber')+'">'+fmt(a.emailsDone)+' / '+fmt(a.emails)+'</span>':'<span class="z">–</span>')+'</td></tr>'; }).join("");
+      + '<td>'+(a.emails?'<span class="'+(a.emailsDone>=a.emails?'green':'amber')+'">'+fmt(a.emailsDone)+' / '+fmt(a.emails)+'</span>':'<span class="z">–</span>')+'</td><td>'+waTxt+'</td></tr>'; }).join("");
   var waits = []; A.desks.forEach(function(a){ (a.waits||[]).forEach(function(w){ waits.push({ n: a.name, w: w }); }); });
   waits.sort(function(x, y){ return y.w.min - x.w.min; });
   box.innerHTML = '<div class="aw"><div class="kick">Your asks today &middot; who answered &middot; closes against the KPI so far</div>'
     + '<div class="of"><b>'+fmt(A.asked)+'</b> notes from you on the desks\' tasks &middot; <b>'+fmt(A.answered)+'</b> answered, <b>'+fmt(A.inHour)+'</b> inside the hour &middot; <b style="color:#E8625A">'+fmt(A.waiting)+'</b> still waiting'
     + (A.emails ? ' &middot; <b>'+fmt(A.emailsDone)+'</b> of <b>'+fmt(A.emails)+'</b> e-mails routed to them dealt with' : '')+'</div>'
-    + '<table class="atb"><tr><th>Desk</th><th>Closed / KPI so far</th><th>Your asks</th><th>Answered</th><th>Within the hour</th><th>Median reply</th><th>Still waiting</th><th>E-mails dealt with</th></tr>'+rows+'</table>'
+    + '<table class="atb"><tr><th>Desk</th><th>Closed / KPI so far</th><th>Your asks</th><th>Answered</th><th>Within the hour</th><th>Median reply</th><th>Still waiting</th><th>E-mails dealt with</th><th>WhatsApp closed</th></tr>'+rows+'</table>'
+    + (R.total ? '<div class="wl">WhatsApp (respond.io) today: <span><b>'+fmt(R.total)+'</b> conversations closed</span>'+(R.firstMin!=null?'<span>median first reply <b>'+fmt(R.firstMin)+' min</b></span>':'')+(R.byBot?'<span><b>'+fmt(R.byBot)+'</b> by the assistant</span>':'')+'</div>' : '')
     + (waits.length ? '<div class="wl">Waiting longest: '+waits.slice(0,6).map(function(x){ return '<span><b>'+esc(x.n)+'</b> '+esc(x.w.type)+' &middot; asked '+esc(x.w.at)+'</span>'; }).join("")+'</div>' : '')+'</div>';
 }
 /* The line where the clock is, between the hour columns it falls in. */
