@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-24i';
+var SCRIPT_VERSION = '2026-11-24j';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -18420,7 +18420,7 @@ function wallHourOf_(iso) {
 }
 function wallIsEmail_(subject) { return /^email:/i.test(String(subject || '').replace(/<[^>]*>/g, '').replace(/&quot;|&#34;/g, '"').replace(/^[\s"']+/, '')); }
 function wallDayHours_(day) {
-  var cache = CacheService.getScriptCache(), key = 'wall_hours2_' + day, hit = cache.get(key);
+  var cache = CacheService.getScriptCache(), key = 'wall_hours3_' + day, hit = cache.get(key);
   if (hit) { try { return JSON.parse(hit); } catch (e) {} }
   var users = sfkUsers_() || {}, bySf = {}, ids = [], order = DAY_MAIL_DESKS.concat(['ricky']);
   order.forEach(function (s) { var id = s === 'ricky' ? bmSfId_() : (users[s] && users[s].id); if (id) { bySf[id] = s; ids.push("'" + id + "'"); } });
@@ -18430,10 +18430,12 @@ function wallDayHours_(day) {
   var tyOf = function (v) { v = String(v || '').trim(); return typeKey[v] || (v ? 'Other' : 'Not typed'); };
   var tasks = sfkQuery_('SELECT Id, OwnerId, Task_Type__c, IsClosed, CompletedDateTime, LastModifiedDate, LastModifiedById, CreatedDate, Agent__r.Name, Agent__r.Employment_Status__c, Subject FROM Task' +
     ' WHERE OwnerId IN (' + ids.join(',') + ') AND (LastModifiedDate >= ' + since + ' OR CompletedDateTime >= ' + since + ') LIMIT 5000');
-  var notes = []; try { notes = sfkQuery_("SELECT ParentId, CreatedById, CreatedDate FROM FeedItem WHERE Type = 'TextPost' AND CreatedById IN (" + ids.join(',') + ') AND CreatedDate >= ' + since + ' LIMIT 5000'); } catch (e) {}
+  // 24 Nov 2026 (2026-11-24j): the replies too (sfkNotes_ adds FeedComment), because the trail rule puts most notes under a post.
+  var notes = []; try { notes = sfkNotes_("SELECT ParentId, CreatedById, CreatedDate FROM FeedItem WHERE Type = 'TextPost' AND CreatedById IN (" + ids.join(',') + ') AND CreatedDate >= ' + since + ' LIMIT 5000') || []; } catch (e) {}
+  var openT = []; try { openT = sfkQuery_('SELECT Id, OwnerId, Task_Type__c FROM Task WHERE OwnerId IN (' + ids.join(',') + ') AND IsClosed = false LIMIT 5000') || []; } catch (e) {}
   var D = {}, desk = function (sid) {
     return D[sid] = D[sid] || { sid: sid, name: String(nameFor_(sid)).split(' ')[0], auto: sid === 'ricky', closed: 0, worked: 0, emails: 0, automated: 0, noted: 0,
-      byType: {}, autoTypes: {}, hours: Array.apply(null, Array(NH)).map(function () { return { c: 0, w: 0, a: 0, t: {} }; }), ages: [0, 0, 0, 0], oldest: 0, _w: {} }; };
+      byType: {}, autoTypes: {}, open: 0, openResp: 0, pend: 0, pendResp: 0, pendClosed: 0, _r: {}, hours: Array.apply(null, Array(NH)).map(function () { return { c: 0, w: 0, a: 0, t: {} }; }), ages: [0, 0, 0, 0], oldest: 0, _w: {} }; };
   order.forEach(function (s) { if (s === 'ricky' || users[s]) desk(s); });
   var hours = Array.apply(null, Array(NH)).map(function (_, i) { return { h: H0 + i, closed: {}, worked: 0, auto: 0 }; });
   var agents = {}, byId = {}, sinceMs = new Date(since).getTime(), today = new Date(day + 'T12:00:00Z').getTime();
@@ -18467,6 +18469,7 @@ function wallDayHours_(day) {
         return;
       }
       var ty = tyOf(t.Task_Type__c);
+      if (ty === 'Pendings') d.pendClosed++;
       d.closed++; d.byType[ty] = (d.byType[ty] || 0) + 1; d.hours[i].c++; d.hours[i].t[ty] = (d.hours[i].t[ty] || 0) + 1; hours[i].closed[ty] = (hours[i].closed[ty] || 0) + 1;
       serve(t, owner, 'c');
       return;
@@ -18480,9 +18483,18 @@ function wallDayHours_(day) {
     var sid = bySf[n.CreatedById], t = byId[n.ParentId]; if (!sid) return;
     if (D[sid]) { D[sid].noted++; if (sid === 'ricky') D[sid].hours[wallHourOf_(n.CreatedDate) - H0].n = (D[sid].hours[wallHourOf_(n.CreatedDate) - H0].n || 0) + 1; }
     if (t && !t.IsClosed && sid !== 'ricky') work(sid, t, n.CreatedDate);   // his notes are instructions and the automation's, counted as notes
+    if (D[sid] && sid !== 'ricky') { var hi = wallHourOf_(n.CreatedDate) - H0; if (!D[sid]._r[n.ParentId]) D[sid]._r[n.ParentId] = hi; }
+  });
+  // Responses on what they hold (24 Nov 2026, Ricky: "staff on actual responses on tasks pending"): every open task each desk owns,
+  // and how many of them carry a word from that desk today; the Pendings apart, with those closed today counted as dealt with.
+  openT.forEach(function (t) {
+    var sid = bySf[t.OwnerId], d = D[sid]; if (!d || sid === 'ricky') return;
+    var resp = d._r[t.Id] != null, pend = String(t.Task_Type__c || '') === 'Pendings';
+    d.open++; if (resp) d.openResp++;
+    if (pend) { d.pend++; if (resp) { d.pendResp++; var hr = d.hours[d._r[t.Id]]; if (hr) hr.p = (hr.p || 0) + 1; } }
   });
   var list = function (o) { return Object.keys(o).map(function (k) { return { k: k, n: o[k] }; }).sort(function (a, b) { return b.n - a.n; }); };
-  var desks = order.filter(function (s) { return D[s]; }).map(function (s) { var d = D[s]; delete d._w; d.byType = list(d.byType); d.autoTypes = list(d.autoTypes); return d; });
+  var desks = order.filter(function (s) { return D[s]; }).map(function (s) { var d = D[s]; delete d._w; delete d._r; d.byType = list(d.byType); d.autoTypes = list(d.autoTypes); return d; });
   var sum = function (f, onlyDesks) { return desks.reduce(function (a, d) { return a + (onlyDesks && d.auto ? 0 : d[f]); }, 0); };
   var typesSeen = {}; hours.forEach(function (h) { Object.keys(h.closed).forEach(function (k) { typesSeen[k] = (typesSeen[k] || 0) + h.closed[k]; }); });
   var labels = {}; WALL_HOURS.TYPES.forEach(function (t) { labels[t[0]] = t[1]; });
@@ -18506,7 +18518,41 @@ function wallDayHours_(day) {
   } catch (e) {}
   try { out.asks = wallBmAsks_(day, users, bySf); } catch (e) { out.asks = { error: String(e && e.message || e) }; }
   try { out.rio = wallRio_(day); } catch (e) { out.rio = { error: String(e && e.message || e) }; }
+  try { out.me = wallMe_(day, H0, NH); } catch (e) { out.me = { error: String(e && e.message || e) }; }
   try { cache.put(key, JSON.stringify(out), WALL_HOURS.TTL); } catch (e) {}
+  return out;
+}
+
+/* ── The Branch Manager's own day on the wall (24 Nov 2026, 2026-11-24j) ──
+ *  Ricky: "where am I, my emails, responses etc, I have responded a lot today, how am I to reflect this". His own words on
+ *  Salesforce by hour (never the tracker's notes or the chase in his voice, which are counted apart), the e-mails he replied to
+ *  or wrote (the My Day Log: his Gmail replies and his Guardian replies copied to the branch mailbox), when he checked in, and
+ *  what waited on him today against what he cleared (leadProgress_, the same number as My workday's bar). Counts only. */
+function wallMe_(day, H0, NH) {
+  var me = bmSfId_(), hrs = function () { return Array.apply(null, Array(NH)).map(function () { return 0; }); };
+  var out = { notes: 0, chase: 0, system: 0, emails: 0, closes: 0, notesH: hrs(), emailsH: hrs(), checkin: '' };
+  var hourIdx = function (hhmm) { var m = minutesOf_(String(hhmm || '')); if (m == null) return -1; return Math.max(0, Math.min(NH - 1, Math.floor(m / 60) - H0)); };
+  if (me) {
+    try {
+      postWhoAll_(sfkNotes_("SELECT Id, ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND CreatedById = '" + me + "' AND CreatedDate >= " + sfkUtcAt_(day, 0) + ' LIMIT 2000') || [], me, {})
+        .forEach(function (p) {
+          if (p.who === 'ricky') { out.notes++; var i = wallHourOf_(p.CreatedDate) - H0; if (i >= 0 && i < NH) out.notesH[i]++; }
+          else if (p.who === 'chase') out.chase++; else out.system++;
+        });
+    } catch (e) { out.notesError = 'Salesforce did not answer.'; }
+  }
+  try {
+    dayLogRows_(day).forEach(function (r) {
+      var k = String(r.Kind || ''), i = hourIdx(r.At);
+      if (k === 'email') { out.emails++; if (i >= 0) out.emailsH[i]++; }
+      else if (k === 'close') out.closes++;
+      else if (k === 'checkin' && !out.checkin) out.checkin = twelve_(String(r.At || ''));
+    });
+  } catch (e) {}
+  try {
+    var L = leadProgress_(day, new Date());
+    out.lead = { target: L.target, cleared: L.cleared, you: L.you, team: L.team, pct: L.pct, dayPct: L.dayPct, waiting: L.waiting, asks: L.asks, inbox: L.inbox, mine: L.mineDue };
+  } catch (e) {}
   return out;
 }
 
@@ -18537,7 +18583,7 @@ function rioEvent_(b) {
   });
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try { sh.appendRow(row); } finally { lock.releaseLock(); }
-  try { CacheService.getScriptCache().remove('wall_hours2_' + todayISO_()); } catch (e) {}
+  try { CacheService.getScriptCache().remove('wall_hours3_' + todayISO_()); } catch (e) {}
   return { ok: true };
 }
 /** A respond.io duration in minutes: "h:mm:ss", seconds, or milliseconds. */

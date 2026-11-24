@@ -80,7 +80,7 @@
   .kpi .big{font:800 4.6rem/1 var(--fd);letter-spacing:-.04em;color:var(--green);font-variant-numeric:tabular-nums;margin-top:.2rem}
   .kpi .of{font:600 .98rem/1.45 var(--fb);color:var(--dim);margin-top:.3rem}
   .kpi .of b{color:var(--ink)}
-  .kpi .gone{margin-top:.7rem;height:.5rem;border-radius:1rem;background:rgba(255,255,255,.08);overflow:hidden}
+  .kpi .gone{margin-top:.7rem;height:.8rem;border-radius:1rem;background:rgba(255,255,255,.08);overflow:hidden}
   .kpi .gone i{display:block;height:100%;width:0;background:var(--gold);transition:width 1.6s var(--ease)}
   .kpi .gk{font:600 .85rem var(--fb);color:var(--faint);margin-top:.35rem}
   /* the chart: closes up, worked-on down, one column an hour */
@@ -89,7 +89,7 @@
   .hc .up{height:8.6rem;display:flex;flex-direction:column-reverse;justify-content:flex-start;align-items:stretch;padding:0 .35rem;position:relative}
   .hc .up i{display:block;height:0;border-radius:.35rem .35rem 0 0;transition:height 1.4s var(--ease);margin-top:1px}
   .hc .up b{position:absolute;left:0;right:0;text-align:center;font:800 1.15rem var(--fd);font-variant-numeric:tabular-nums;transition:bottom 1.4s var(--ease)}
-  .hc .ax{height:2px;background:rgba(255,255,255,.18)}
+  .hc .ax{height:4px;background:rgba(255,255,255,.18)}
   .hc .dn{height:5.2rem;padding:0 .35rem;position:relative}
   .hc .dn i{display:block;height:0;background:var(--wk);border-radius:0 0 .35rem .35rem;transition:height 1.4s var(--ease)}
   .hc .dn b{position:absolute;left:0;right:0;text-align:center;font:700 .9rem var(--fb);color:var(--dim);transition:top 1.4s var(--ease)}
@@ -97,7 +97,7 @@
   .hc.now .lab{color:var(--gold)}
   .hc.fut{opacity:.35}
   .hc .auto{position:absolute;top:-2.05rem;left:50%;transform:translateX(-50%);font:800 .9rem var(--fd);color:#1B1A22;background:var(--rose);border-radius:1rem;padding:.18rem .6rem;white-space:nowrap;box-shadow:0 0 0 .3rem rgba(229,143,176,.16)}
-  .nowline{position:absolute;top:1.3rem;bottom:1.4rem;width:.18rem;border-radius:.2rem;background:var(--gold);box-shadow:0 0 1rem rgba(227,184,90,.7);left:0;transition:left 1.8s var(--ease);pointer-events:none}
+  .nowline{position:absolute;top:1.3rem;bottom:1.4rem;width:.32rem;border-radius:.2rem;background:var(--gold);box-shadow:0 0 1rem rgba(227,184,90,.7);left:0;transition:left 1.8s var(--ease);pointer-events:none}
   .nowline::after{content:"now";position:absolute;top:-1.25rem;left:50%;transform:translateX(-50%);font:800 .82rem var(--fd);letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
   .axk{position:absolute;left:-.2rem;font:800 .82rem var(--fd);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);writing-mode:vertical-rl;transform:rotate(180deg)}
   /* the top turns between two pages, as slide 3 does: the hours, then each desk's ring (28 Oct 2026, 1:25pm) */
@@ -122,7 +122,7 @@
   .rc .fact{align-self:stretch}
   .rc .fact .l{display:flex;justify-content:space-between;font:700 .85rem var(--fb);color:var(--dim)}
   .rc .fact .l b{color:var(--ink)}
-  .rc .fact .bar{height:.5rem;border-radius:1rem;background:rgba(255,255,255,.08);overflow:hidden;margin-top:.2rem}
+  .rc .fact .bar{height:.85rem;border-radius:1rem;background:rgba(255,255,255,.08);overflow:hidden;margin-top:.2rem}
   .rc .fact .bar i{display:block;height:100%;width:0;border-radius:1rem;transition:width 1.6s var(--ease)}
   .rc .od{align-self:stretch;display:flex;justify-content:space-between;font:600 .82rem var(--fb);color:var(--faint)}
   .rc .od b{color:var(--ink)} .rc .od .hot b{color:var(--coral)}
@@ -168,20 +168,21 @@
   .cell b{position:relative;font:800 1.35rem var(--fd);color:var(--green);font-variant-numeric:tabular-nums}
   .cell em{position:absolute;right:.35rem;bottom:.2rem;font:700 .82rem var(--fb);font-style:normal;color:var(--ink);opacity:.75}
   .cell.fut{background:repeating-linear-gradient(135deg,rgba(255,255,255,.03) 0 .35rem,transparent .35rem .7rem)}
-  .cell.now{box-shadow:inset 0 0 0 2px rgba(227,184,90,.75);animation:glow 2.4s ease-in-out infinite}
+  .cell.now{box-shadow:inset 0 0 0 3px rgba(227,184,90,.85);animation:glow 2.4s ease-in-out infinite}
   @keyframes glow{50%{box-shadow:inset 0 0 0 2px rgba(227,184,90,.25)}}
   .cell.auto b{color:var(--rose)}
   .dk .st{display:grid;grid-template-columns:7rem 6.6rem 5.4rem minmax(0,1fr);gap:.6rem;align-items:center}
   .dk .st .cl{display:flex;flex-direction:column;align-items:flex-end;gap:.25rem}
-  .dk .st .cl .tb{display:flex;height:.4rem;width:5.2rem;border-radius:1rem;overflow:hidden;background:rgba(255,255,255,.07)}
+  .dk .st .cl .tb{display:flex;height:.7rem;width:5.2rem;border-radius:1rem;overflow:hidden;background:rgba(255,255,255,.07)}
   .dk .st .cl .tb i{display:block;height:100%;width:0;transition:width 1.4s var(--ease)}
   .dk .st .v small{display:block;font:700 .82rem var(--fb);color:var(--faint);letter-spacing:.04em;text-transform:uppercase;margin-top:.05rem}
   .dk .st .v{text-align:right;font:800 1.45rem var(--fd);font-variant-numeric:tabular-nums}
   .dk .st .v.z{color:rgba(255,255,255,.22);font-weight:600}
   .v.green{color:var(--green)} .v.ink{color:var(--ink)} .v.rose{color:var(--rose)}
   .mini{display:flex;flex-direction:column;gap:.25rem;min-width:0}
-  .mini .bar{display:flex;height:.55rem;border-radius:1rem;overflow:hidden;background:rgba(255,255,255,.07)}
+  .mini .bar{display:flex;height:.85rem;border-radius:1rem;overflow:hidden;background:rgba(255,255,255,.07)}
   .mini .bar i{display:block;height:100%;width:0;transition:width 1.4s var(--ease)}
+  .mini small.rs{color:var(--dim)} .mini small.rs b{color:var(--ink)} .mini small.rs.bad b{color:#E8625A} .mini .bar.rsp{background:rgba(232,98,90,.4)}
   .mini small{font:600 .82rem var(--fb);color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
   .dk.me .nm b{color:var(--rose)}
   .foot{display:flex;align-items:center;gap:.6rem;flex-wrap:nowrap;overflow:hidden;padding:.55rem .2rem 0;border-top:1px solid var(--line);margin-top:.2rem}
@@ -216,22 +217,23 @@
   .pnm{font:800 1.7rem var(--fd)} .pin{font:600 .9rem var(--fb);color:var(--dim)}
   .prw{position:relative;width:9.5rem;height:9.5rem;margin:.5rem auto .3rem} .prw .pr{width:100%;height:100%} .prw .arc{transition:stroke-dashoffset 1.6s var(--ease)}
   .pin2{position:absolute;inset:0;display:grid;place-content:center;text-align:center} .pin2 b{font:800 2.4rem var(--fd)} .pin2 small{font:600 .85rem var(--fb);color:var(--dim)}
-  .pk{text-align:center;font:800 .95rem var(--fd)} .pk.g{color:var(--green)} .pk.r{color:#E8625A}
+  .pk{text-align:center;font:800 .82rem var(--fd);white-space:normal;max-width:14rem;margin:0 auto} .pk.g{color:var(--green)} .pk.r{color:#E8625A}
   .pst{display:flex;flex-wrap:wrap;gap:.25rem .9rem;font:600 .88rem var(--fb);color:var(--dim);margin-top:.35rem} .pst b{color:var(--ink);font-family:var(--fd)} .pst .red b{color:#E8625A}
   .hbs{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:.35rem;height:9.5rem;margin-top:.4rem}
   .hb{position:relative;display:flex;flex-direction:column;justify-content:flex-end;border-radius:.4rem;background:rgba(255,255,255,.03)}
   .hb .st{display:flex;flex-direction:column-reverse;height:calc(100% - 1.3rem)} .hb .st i{display:block;width:100%;border-radius:.15rem}
-  .hb u{position:absolute;left:-.1rem;right:-.1rem;height:0;border-top:2px dashed rgba(255,255,255,.55);margin-bottom:1.3rem}
+  .hb u{position:absolute;left:-.15rem;right:-.15rem;height:0;border-top:4px dashed rgba(255,255,255,.8);margin-bottom:1.3rem}
   .hb b{position:absolute;top:-.05rem;left:0;right:0;text-align:center;font:800 .85rem var(--fd)} .hb span{text-align:center;font:600 .72rem var(--fb);color:var(--faint);height:1.3rem;line-height:1.3rem}
-  .hb.met{box-shadow:inset 0 0 0 2px rgba(120,209,152,.6)} .hb.miss{box-shadow:inset 0 0 0 2px rgba(232,98,90,.65)}
-  .tbar{display:flex;height:.8rem;border-radius:.5rem;overflow:hidden;margin-top:.35rem;background:rgba(255,255,255,.06)} .tbar i{display:block;height:100%}
+  .hb.met{box-shadow:inset 0 0 0 3.5px rgba(120,209,152,.85)} .hb.miss{box-shadow:inset 0 0 0 3.5px rgba(232,98,90,.9)}
+  .tbar{display:flex;height:1.3rem;border-radius:.5rem;overflow:hidden;margin-top:.35rem;background:rgba(255,255,255,.06)} .tbar i{display:block;height:100%}
   .tl{display:flex;flex-wrap:wrap;gap:.25rem .8rem;margin-top:.35rem;font:600 .85rem var(--fb);color:var(--dim)} .tl b{color:var(--ink)} .tl i{display:inline-block;width:.65rem;height:.65rem;border-radius:.2rem;margin-right:.25rem} .tl .ina{color:var(--coral)}
-  .ar{display:flex;align-items:center;gap:.7rem;margin-top:.4rem} .ar b{font:800 1.05rem var(--fd);white-space:nowrap} .arb{flex:1;height:.7rem;border-radius:.5rem;background:rgba(232,98,90,.35);overflow:hidden} .arb i{display:block;height:100%;background:var(--green)}
+  .ar{display:flex;align-items:center;gap:.7rem;margin-top:.4rem} .ar b{font:800 1.05rem var(--fd);white-space:nowrap} .arb{flex:1;height:1.15rem;border-radius:.5rem;background:rgba(232,98,90,.35);overflow:hidden} .arb i{display:block;height:100%;background:var(--green)}
+  .mrs{display:flex;flex-direction:column;gap:.45rem;margin-top:.6rem} .mr{display:grid;grid-template-columns:6.5rem minmax(0,1fr) 3.6rem 6rem;align-items:center;gap:.6rem;font:700 .95rem var(--fb)} .mr b{font:800 1rem var(--fd);text-align:right} .mr em{font-style:normal;font-size:.85rem;color:var(--dim)} .mr em.red{color:#E8625A}
   .wl2{display:flex;flex-direction:column;gap:.15rem;margin-top:.35rem;font:600 .82rem var(--fb);color:var(--dim)} .wl2 b{color:#E8625A}
   .cell.pace{box-shadow:inset 0 -.28rem 0 #78D198} .cell.behind{box-shadow:inset 0 -.28rem 0 #E8625A}
   .cell.met{box-shadow:inset 0 0 0 2px rgba(120,209,152,.65)} .cell.miss{box-shadow:inset 0 0 0 2px rgba(232,98,90,.7)} .cell b .tz{color:var(--dim)} .cell.miss b .tz{color:#E8625A}
   .cell b i.pl{font-style:normal;font-size:.75em;color:var(--dim);margin:0 .25rem}
-  .cell .tyb{position:absolute;left:.35rem;right:.35rem;top:.3rem;height:.28rem;border-radius:.3rem;overflow:hidden;display:flex} .cell .tyb i{display:block;height:100%}
+  .cell .tyb{position:absolute;left:.3rem;right:.3rem;top:.28rem;height:.5rem;border-radius:.3rem;overflow:hidden;display:flex} .cell .tyb i{display:block;height:100%}
   .tylg{display:flex;flex-wrap:wrap;gap:.3rem 1rem;font:600 .85rem var(--fb);color:var(--dim);margin:.1rem 0 .35rem} .tylg i{display:inline-block;width:.7rem;height:.7rem;border-radius:.2rem;margin-right:.3rem;vertical-align:-.05rem}
   .bub.ina .nm{color:var(--coral)} .bub .tg{font:800 .62rem var(--fd);letter-spacing:.06em;text-transform:uppercase;padding:.08rem .35rem;border-radius:.3rem;margin-top:.15rem}
   .bub .tg.a{background:rgba(120,209,152,.15);color:var(--green)} .bub .tg.i{background:rgba(239,138,107,.18);color:var(--coral)}
@@ -329,14 +331,15 @@ function paint(){
   var team = {}; (((D.system||{}).team)||[]).forEach(function(t){ team[String(t.name||"").split(" ")[0]] = t; });
   var maxDW = Math.max.apply(null, H.desks.map(function(d){ return Math.max.apply(null, d.hours.map(function(x){ return x.w; })); }).concat([1]));
   $("#desks").innerHTML = H.desks.map(function(d, di){
-    var t = team[d.name] || {}, chip = d.auto ? '<span>automated &middot; and you</span>' : t.absent ? '<span class="out">away today</span>' : t.at ? '<span class="'+(t.late>0?'late':'ok')+'">in '+esc(t.at)+(t.late>0?' &middot; '+fmt(t.late)+' min late':'')+'</span>' : '<span class="out">not checked in</span>';
+    var ME = H.me || {}, t = team[d.name] || {}, chip = d.auto ? '<span>'+(ME.checkin ? 'in '+esc(ME.checkin)+' &middot; ' : '')+'you and the automation</span>' : t.absent ? '<span class="out">away today</span>' : t.at ? '<span class="'+(t.late>0?'late':'ok')+'">in '+esc(t.at)+(t.late>0?' &middot; '+fmt(t.late)+' min late':'')+'</span>' : '<span class="out">not checked in</span>';
     var AK = {}; ((H.asks||{}).desks||[]).forEach(function(a){ AK[a.sid] = a; }); var ak = AK[d.sid];
     var cum = 0, pace = function(i){ if(!d.target || d.start == null || d.end == null || d.end <= d.start) return ""; var hEnd = (H.from + i + 1) * 60;
       var exp = d.target * Math.max(0, Math.min(hEnd, d.end) - d.start) / (d.end - d.start); if(exp < 0.5) return ""; return cum >= exp ? " pace" : " behind"; };
     var cells = d.hours.map(function(x, i){ var h = H.from + i, cls = h + 1 <= nowH ? "" : (h <= nowH ? " now" : " fut");
       cum += x.c || 0; if(!cls && !d.auto && !t.absent) cls += pace(i);
       var am = ak && ak.hours && ak.hours[i] ? ak.hours[i] : null, askTag = am && (am.a || am.r) ? '<u class="ask">'+(am.a ? '✉'+am.a : '')+(am.r ? ' ↩'+am.r : '')+'</u>' : '';
-      if(d.auto) return '<div class="cell auto'+cls+'">'+(x.a ? '<b>'+fmt(x.a)+'</b>' : '')+(x.n ? '<em>'+fmt(x.n)+' notes</em>' : '')+'</div>';
+      if(d.auto){ var yn = ME.notesH ? ME.notesH[i] : (x.n||0), ye = ME.emailsH ? ME.emailsH[i] : 0;
+        return '<div class="cell auto'+cls+'">'+(yn || ye ? '<b>'+fmt(yn)+(ye ? '<s> +'+fmt(ye)+'✉</s>' : '')+'</b>' : '')+(x.a ? '<em>'+fmt(x.a)+' auto</em>' : '')+'</div>'; }
       // Each hour is a block with its own share of the day's KPI (24 Nov 2026: "staff operate in blocks ... I am only seeing
       // green numbers, which does not make sense"): closed in the block against the block's goal, the cell green when met and
       // red when missed once the hour is over, "off" outside their hours, and what was worked on and not closed beneath.
@@ -351,12 +354,17 @@ function paint(){
     var closedCell = '<div class="cl"><div class="v'+(d.closed?' green':' z')+'" data-k="closed">'+fmt(d.closed)+'</div>'+(d.byType.length ? tbar(d.byType) : '')+'</div>';
     var tyTxt = function (list) { return list.map(function(x){ return fmt(x.n)+' '+esc(x.k==="Renewa/PDl/Bill"?"renewals":String(x.k).toLowerCase()); }).join(" · "); };
     var stats = d.auto
-      ? closedCell + '<div class="v'+(d.noted?' ink':' z')+'" data-k="notes">'+fmt(d.noted)+'<small>notes</small></div><div class="v'+(d.automated?' rose':' z')+'" data-k="automated">'+fmt(d.automated)+'</div>'
-        + '<div class="mini"><div class="bar">'+(d.autoTypes||[]).map(function(x){ return '<i data-w="'+(100*x.n/((d.autoTypes||[]).reduce(function(a,y){ return a+y.n; },0)||1)).toFixed(1)+'" style="background:'+(TYC[x.k]||TYC.Other)+'"></i>'; }).join("")+'</div><small>'+((d.autoTypes||[]).length ? fmt(d.automated)+' birthday e-mails · '+tyTxt(d.autoTypes).replace(/^\d+ /,'') : 'nothing automated yet')+'</small></div>'
+      ? closedCell + '<div class="v'+((ME.notes!=null?ME.notes:d.noted)?' ink':' z')+'" data-k="notes">'+fmt(ME.notes!=null?ME.notes:d.noted)+'<small>your notes</small></div>'
+        + '<div class="v'+(ME.emails?' ink':' z')+'" data-k="e-mails">'+fmt(ME.emails||0)+'<small>e-mails</small></div>'
+        + (ME.lead ? '<div class="mini"><div class="bar"><i data-w="'+(ME.lead.target ? (100*ME.lead.cleared/ME.lead.target).toFixed(1) : 0)+'" style="background:var(--rose)"></i></div><small class=\"rs\">Your day: <b>'+fmt(ME.lead.cleared)+'/'+fmt(ME.lead.target)+' cleared</b> · <b>'+fmt(ME.lead.waiting)+'</b> waiting</small>' : '<div class="mini">')
+        + '<div class="bar" style="height:.5rem">'+(d.autoTypes||[]).map(function(x){ return '<i data-w="'+(100*x.n/((d.autoTypes||[]).reduce(function(a,y){ return a+y.n; },0)||1)).toFixed(1)+'" style="background:'+(TYC[x.k]||TYC.Other)+'"></i>'; }).join("")+'</div><small>'+fmt(d.automated)+' automated'+(ME.chase ? ' · '+fmt(ME.chase)+' chase notes' : '')+'</small></div>'
       : closedCell + '<div class="v'+(d.worked?' ink':' z')+'" data-k="worked">'+fmt(d.worked)+'</div><div class="v'+(d.emails?' ink':' z')+'" data-k="e-mails">'+fmt(d.emails)+'</div>'
         + '<div class="mini"><div class="bar">'+d.ages.map(function(n, i){ return '<i data-w="'+(100*n/ageN).toFixed(1)+'" style="background:'+AGEC[i]+'"></i>'; }).join("")+'</div>'
-        + '<small>'+(d.worked ? fmt(d.ages[1]+d.ages[2]+d.ages[3])+' of '+fmt(d.worked)+' over a week old · oldest '+fmt(d.oldest)+' days' : 'nothing touched yet')+'</small></div>';
-    return '<div class="g dk'+(d.auto?' me':'')+'" style="--d:'+(0.08*di).toFixed(2)+'s"><div class="nm"'+(d.auto?'':' onclick="openPerson(\''+d.sid+'\')" style="cursor:pointer" title="Open '+esc(d.name)+'\'s day in depth"')+'><b>'+esc(d.name)+'</b>'+chip+'</div>'+cells+'<div class="st">'+stats+'</div></div>'; }).join("");
+        + '<small>'+(d.worked ? fmt(d.ages[1]+d.ages[2]+d.ages[3])+' of '+fmt(d.worked)+' over a week old · oldest '+fmt(d.oldest)+' days' : 'nothing touched yet')+'</small>'
+        + (d.open != null ? '<div class="bar rsp"><i data-w="'+(d.pend ? (100*d.pendResp/d.pend).toFixed(1) : 0)+'" style="background:var(--green)"></i></div>'
+          + '<small class="rs'+(d.pend && d.pendResp < d.pend/2 ? ' bad' : '')+'">Pendings answered <b>'+fmt(d.pendResp||0)+'/'+fmt(d.pend||0)+' today</b></small>' : '')
+        + '</div>';
+    return '<div class="g dk'+(d.auto?' me':'')+'" style="--d:'+(0.08*di).toFixed(2)+'s"><div class="nm" onclick="openPerson(\''+d.sid+'\')" style="cursor:pointer" title="Open '+esc(d.name)+'\'s day in depth"><b>'+esc(d.name)+'</b>'+chip+'</div>'+cells+'<div class="st">'+stats+'</div></div>'; }).join("");
   // the foot
   var A = H.agents || [];
   var Ac = A.filter(function(a){ return a.c > 0; });
@@ -395,8 +403,8 @@ function paint(){
 var RCOL = ["#4FC1B0","#E3B85A","#AB94E8","#EF8A6B","#78D198","#EF9A4B"];
 function ring(pct, dayPct, col){
   var C=2*Math.PI*44, off=C*(1-Math.max(0,Math.min(100,pct||0))/100), ang=(Math.max(0,Math.min(100,dayPct||0))/100)*360;
-  return '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="9"/>'+
-    '<circle class="arc" data-off="'+off.toFixed(1)+'" cx="50" cy="50" r="44" fill="none" stroke="'+col+'" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+C.toFixed(1)+'"/>'+
+  return '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="12"/>'+
+    '<circle class="arc" data-off="'+off.toFixed(1)+'" cx="50" cy="50" r="44" fill="none" stroke="'+col+'" stroke-width="12" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+C.toFixed(1)+'"/>'+
     (dayPct==null ? '' : '<g class="tick" data-rot="'+ang.toFixed(1)+'"><line x1="50" y1="1" x2="50" y2="12" stroke="#F4F1EA" stroke-width="2.6" stroke-linecap="round" opacity=".9"/></g>')+'</svg>';
 }
 function rings(){
@@ -432,8 +440,8 @@ function bubbles(){
   $("#p2").innerHTML = A.map(function(a, i){
     var sz = small + (big - small) * Math.sqrt(a.n / max), share = a.n ? a.c / a.n : 0;
     return '<div class="bub'+(isIn(a)?' ina':'')+'" style="--d:'+(0.06*i).toFixed(2)+'s;--f:'+(-(i*0.7)%5.5).toFixed(1)+'s;--s:'+sz.toFixed(2)+'rem">'
-      + '<div class="o"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(244,241,234,.22)" stroke-width="8"/>'
-      + '<circle class="arc" data-off="'+(C*(1-share)).toFixed(1)+'" cx="50" cy="50" r="44" fill="none" stroke="'+(isIn(a)?'var(--coral)':'var(--green)')+'" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+C.toFixed(1)+'"/></svg>'
+      + '<div class="o"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(244,241,234,.22)" stroke-width="11"/>'
+      + '<circle class="arc" data-off="'+(C*(1-share)).toFixed(1)+'" cx="50" cy="50" r="44" fill="none" stroke="'+(isIn(a)?'var(--coral)':'var(--green)')+'" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+C.toFixed(1)+'"/></svg>'
       + '<div class="in"><div><b>'+fmt(a.n)+'</b>'+(sz >= 5 ? '<small>'+(a.c ? fmt(a.c)+' closed' : 'worked on')+'</small>' : '')+'</div></div></div>'
       + '<div class="nm">'+esc(nameOf(a.k))+'</div><span class="tg '+(isIn(a)?'i">Inactive':'a">Active')+'</span>'+(sz >= 4.2 ? '<div class="by">'+(a.by||[]).slice(0,3).map(function(b){ return esc(b.k)+' '+fmt(b.n); }).join(' · ')+'</div>' : '')+'</div>'; }).join("");
 }
@@ -446,9 +454,10 @@ var tpT = null, tpAt = 0, holdUntil = 0, pAt = -1;
    tap on a desk's name opens theirs and holds it for a minute. */
 function personPage(sid){
   var H = D && D.hours; if(!H || !H.desks) return;
-  var list = H.desks.filter(function(d){ return !d.auto; }); if(!list.length){ $("#p4").innerHTML = '<div class="empty">No desk yet today.</div>'; return; }
+  var list = H.desks.slice(); if(!list.length){ $("#p4").innerHTML = '<div class="empty">No desk yet today.</div>'; return; }
   var d = sid ? list.filter(function(x){ return x.sid === sid; })[0] : null;
   if(!d){ pAt = (pAt + 1) % list.length; d = list[pAt]; } else pAt = list.indexOf(d);
+  if(d.auto) return mePage(d, H);
   var A = {}; ((H.asks||{}).desks||[]).forEach(function(a){ A[a.sid] = a; }); var a = A[d.sid] || {};
   var R = {}; (((H.rio||{}).people)||[]).forEach(function(p){ if(p.sid) R[p.sid] = p; }); var r = R[d.sid];
   var tm = {}; (((D.system||{}).team)||[]).forEach(function(t){ tm[String(t.name||"").split(" ")[0]] = t; }); var t = tm[d.name] || {};
@@ -456,8 +465,8 @@ function personPage(sid){
   var expNow = span && d.target ? Math.round(d.target * Math.max(0, Math.min(nowMin, d.end) - d.start) / span) : null;
   var pct = d.target ? Math.min(1, (d.closed||0) / d.target) : 0, dayPct = span ? Math.max(0, Math.min(1, (nowMin - d.start) / span)) : 0;
   var C = 2*Math.PI*44, onPace = expNow == null || (d.closed||0) >= expNow;
-  var ringSvg = '<svg viewBox="0 0 100 100" class="pr"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="9"/>'
-    + '<circle class="arc" data-off="'+(C*(1-pct)).toFixed(1)+'" cx="50" cy="50" r="44" fill="none" stroke="'+(onPace?'var(--green)':'var(--red,#E8625A)')+'" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+C.toFixed(1)+'" transform="rotate(-90 50 50)"/>'
+  var ringSvg = '<svg viewBox="0 0 100 100" class="pr"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="12"/>'
+    + '<circle class="arc" data-off="'+(C*(1-pct)).toFixed(1)+'" cx="50" cy="50" r="44" fill="none" stroke="'+(onPace?'var(--green)':'var(--red,#E8625A)')+'" stroke-width="12" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+C.toFixed(1)+'" transform="rotate(-90 50 50)"/>'
     + '<line x1="50" y1="2" x2="50" y2="14" stroke="#fff" stroke-width="2.5" transform="rotate('+(360*dayPct).toFixed(1)+' 50 50)"/></svg>';
   // hours chart: stacked by type, the block's goal as a tick
   var nh = d.hours.length, mx = 1; d.hours.forEach(function(x){ mx = Math.max(mx, x.c||0); });
@@ -469,7 +478,7 @@ function personPage(sid){
     var cls = g && past ? ((x.c||0) >= Math.round(g) ? ' met' : ' miss') : '';
     return '<div class="hb'+cls+'"><div class="st">'+segs+'</div>'+(g ? '<u style="bottom:'+(100*g/mx).toFixed(1)+'%"></u>' : '')+'<b>'+(x.c||'')+'</b><span>'+hlab(H.from+i)+'</span></div>'; }).join("");
   var types = (d.byType||[]), tn = types.reduce(function(s,x){ return s+x.n; },0) || 1;
-  var rate = a.asked ? Math.round(100*a.answered/a.asked) : null;
+  var rate = a.asked ? Math.round(100*a.answered/a.asked) : null, prate = d.pend ? Math.round(100*(d.pendResp||0)/d.pend) : null;
   var ags = ((H.agents)||[]).map(function(g){ var hit = (g.by||[]).filter(function(b){ return b.k === d.name; })[0]; return hit ? { k: g.k, n: hit.n, active: g.active !== false && g.k !== ORPH } : null; }).filter(Boolean).sort(function(x,y){ return y.n-x.n; });
   $("#p4").innerHTML = '<div class="pp">'
     + '<div class="pc1"><div class="pnm">'+esc(d.name)+'</div><div class="pin">'+(t.absent?'away today':t.at?'in '+esc(t.at)+(t.late>0?' &middot; '+fmt(t.late)+' min late':''):'not checked in')+'</div>'
@@ -484,7 +493,38 @@ function personPage(sid){
     + '<div class="pst"><span><b>'+fmt(a.inHour||0)+'</b> within the hour</span><span><b>'+(a.median==null?'–':fmt(a.median)+' min')+'</b> median reply</span><span class="'+(a.waiting?'red':'')+'"><b>'+fmt(a.waiting||0)+'</b> waiting</span></div>'
     + ((a.waits||[]).length ? '<div class="wl2">'+a.waits.slice(0,4).map(function(w){ return '<span>'+esc(w.type)+' &middot; asked '+esc(w.at)+' &middot; <b>'+(w.min>=60?Math.floor(w.min/60)+'h '+(w.min%60)+'m':w.min+' min')+'</b></span>'; }).join("")+'</div>' : '')
     + '<div class="pst" style="margin-top:.45rem"><span>E-mails routed <b>'+fmt(a.emailsDone||0)+' / '+fmt(a.emails||0)+'</b> dealt with</span><span>WhatsApp <b>'+(r?fmt(r.closed)+' closed'+(r.firstMin!=null?', first reply '+fmt(r.firstMin)+' min':''):'none yet')+'</b></span></div>'
+    + '<div class="kick" style="margin-top:.45rem">Their pendings: answered today</div>'
+    + '<div class="ar"><div class="arb"><i style="width:'+(prate||0)+'%"></i></div><b>'+(d.pend==null?'after the paste':fmt(d.pendResp||0)+' of '+fmt(d.pend)+' open')+'</b></div>'
+    + '<div class="pst"><span><b>'+fmt(d.pendClosed||0)+'</b> pendings closed</span><span class="'+(d.pend && d.pendResp < d.pend ? 'red' : '')+'"><b>'+fmt(Math.max(0,(d.pend||0)-(d.pendResp||0)))+'</b> no word today</span><span>any open task <b>'+fmt(d.openResp||0)+' / '+fmt(d.open||0)+'</b></span></div>'
     + '<div class="kick" style="margin-top:.45rem">Agents served</div><div class="tl">'+(ags.length?ags.slice(0,8).map(function(g){ return '<span class="'+(g.active?'':'ina')+'">'+esc(g.k===ORPH?'Agents who left':first(g.k))+' <b>'+fmt(g.n)+'</b></span>'; }).join(""):'<span>none yet</span>')+'</div></div></div>';
+  later(function(){ Array.prototype.forEach.call($("#p4").querySelectorAll(".arc"), function(x){ x.style.strokeDashoffset = x.getAttribute("data-off"); }); });
+}
+/* The Branch Manager's own page (24 Nov 2026: "where am I, my e-mails, responses ... I have responded a lot today"): his own words
+   on Salesforce and the e-mails he answered, hour by hour, what waited on him cleared, and the asks he put to each desk with how
+   they answered. The tracker's notes and the chase in his voice are counted apart, never as his. */
+function mePage(d, H){
+  var M = H.me || {}, L = M.lead || {}, nh = d.hours.length, A = ((H.asks||{}).desks||[]);
+  var mx = 1; for(var i=0;i<nh;i++) mx = Math.max(mx, (M.notesH?M.notesH[i]:0) + (M.emailsH?M.emailsH[i]:0));
+  var bars = d.hours.map(function(x, i){ var n = M.notesH ? M.notesH[i] : 0, e = M.emailsH ? M.emailsH[i] : 0;
+    return '<div class="hb"><div class="st">'+(n ? '<i style="height:'+(100*n/mx).toFixed(1)+'%;background:var(--rose)"></i>' : '')+(e ? '<i style="height:'+(100*e/mx).toFixed(1)+'%;background:var(--gold)"></i>' : '')+'</div><b>'+((n+e)||'')+'</b><span>'+hlab(H.from+i)+'</span></div>'; }).join("");
+  var C = 2*Math.PI*44, pct = L.target ? Math.min(1, L.cleared/L.target) : 0, dayPct = (L.dayPct||0)/100, onPace = !L.target || (L.pct||0) >= (L.dayPct||0);
+  var ring = '<svg viewBox="0 0 100 100" class="pr"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="12"/>'
+    + '<circle class="arc" data-off="'+(C*(1-pct)).toFixed(1)+'" cx="50" cy="50" r="44" fill="none" stroke="'+(onPace?'var(--green)':'#E8625A')+'" stroke-width="12" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+C.toFixed(1)+'" transform="rotate(-90 50 50)"/>'
+    + '<line x1="50" y1="0" x2="50" y2="15" stroke="#fff" stroke-width="3.5" transform="rotate('+(360*dayPct).toFixed(1)+' 50 50)"/></svg>';
+  var ask = A.reduce(function(s,a){ s.asked+=a.asked; s.answered+=a.answered; s.waiting+=a.waiting; return s; }, {asked:0,answered:0,waiting:0});
+  var rows = A.map(function(a){ var r = a.asked ? Math.round(100*a.answered/a.asked) : 0;
+    return '<div class="mr"><span>'+esc(a.name)+'</span><div class="arb"><i style="width:'+r+'%"></i></div><b>'+fmt(a.answered)+'/'+fmt(a.asked)+'</b><em class="'+(a.waiting?'red':'')+'">'+fmt(a.waiting)+' waiting</em></div>'; }).join("");
+  $("#p4").innerHTML = '<div class="pp">'
+    + '<div class="pc1"><div class="pnm" style="color:var(--rose)">'+esc(d.name)+' &middot; you</div><div class="pin">'+(M.checkin?'in '+esc(M.checkin):'Branch Manager')+'</div>'
+    + '<div class="prw">'+ring+'<div class="pin2"><b>'+fmt(L.cleared||0)+'</b><small>of '+(L.target?fmt(L.target):'–')+' cleared</small></div></div>'
+    + '<div class="pk '+(onPace?'g':'r')+'">'+(L.target==null?'waiting on you: after the paste':(L.pct||0)+'% cleared · day '+(L.dayPct||0)+'% gone')+'</div>'
+    + '<div class="pst"><span><b>'+fmt(M.notes||0)+'</b> your notes</span><span><b>'+fmt(M.emails||0)+'</b> e-mails</span><span><b>'+fmt(d.closed||0)+'</b> closed</span></div></div>'
+    + '<div class="pc2"><div class="kick">Each hour: <span style="color:var(--rose)">your notes on Salesforce</span> and <span style="color:var(--gold)">your e-mails</span></div><div class="hbs">'+bars+'</div>'
+    + '<div class="pst" style="margin-top:.6rem"><span>Done for you by the system: <b>'+fmt(d.automated||0)+'</b> automated e-mails, <b>'+fmt(M.chase||0)+'</b> chase notes in your voice, <b>'+fmt(M.system||0)+'</b> tracker notes</span></div>'
+    + '<div class="pst"><span>Still waiting on you: <b class="'+(L.waiting?'red':'')+'">'+fmt(L.waiting||0)+'</b>'+(L.asks?' &middot; '+fmt(L.asks)+' staff asks':'')+(L.inbox?' &middot; '+fmt(L.inbox)+' in the inbox':'')+(L.mine?' &middot; '+fmt(L.mine)+' of your tasks':'')+'</span></div></div>'
+    + '<div class="pc3"><div class="kick">Your asks to the desks, and their answers</div>'
+    + '<div class="ar"><div class="arb"><i style="width:'+(ask.asked?Math.round(100*ask.answered/ask.asked):0)+'%"></i></div><b>'+fmt(ask.answered)+' of '+fmt(ask.asked)+' answered</b></div>'
+    + '<div class="mrs">'+(rows||'<span class="pin">No ask today yet.</span>')+'</div></div></div>';
   later(function(){ Array.prototype.forEach.call($("#p4").querySelectorAll(".arc"), function(x){ x.style.strokeDashoffset = x.getAttribute("data-off"); }); });
 }
 function openPerson(sid){
