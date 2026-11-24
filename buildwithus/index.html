@@ -1892,6 +1892,10 @@ footer .ic{width:16px;height:16px}
          whether or not they pressed "send what I found": the marks are the
          application, and a person who scrolled past the button has still
          told us what they noticed. */
+      /* which post brought them: every link we share carries ?from=<tag> (24 Nov 2026) */
+      var SRCW={'ig':'Instagram post','ig-story':'Instagram Story','fb':'Facebook post','fb-ad':'Facebook or Instagram boosted ad','li':'LinkedIn post','li-job':'LinkedIn job listing','li-dm':'A private LinkedIn message from Mr Rampersad','wa':'WhatsApp Status, shared by our team','group':'A Facebook job group','ref':'Referred by someone in the branch','uni':'A university or college careers office','tt':'TikTok'};
+      var from=String((new URLSearchParams(location.search)).get('from')||'').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,24);
+      var src=SRCW[from]||(from?'Tagged “'+from+'”':'Direct, or not tagged');
       var fx=(typeof window.__rrbFix==='function')?window.__rrbFix():{n:0,total:12,found:'',missed:'',other:''};
       var score=fx.n?(fx.n+' of '+fx.total+' found'):'did not mark the form';
       var body={action:'q.quote',form:'admin',code:'QB',line:'Build with us',
@@ -1899,6 +1903,7 @@ footer .ic{width:16px;height:16px}
         core:{name:name,email:email,phone:phone,reach:'call',when:when,agent:'',
               notes:w1,website:val('website')},
         fields:[
+          {section:'The form',k:'src',label:'Came from',value:src},
           {section:'The form',k:'score',label:'What they found on the form',value:score},
           {section:'The form',k:'fix_found',label:'In the order they found them',value:fx.found},
           {section:'The form',k:'fix_other',label:'Something else they saw',value:fx.other},
@@ -1928,8 +1933,8 @@ footer .ic{width:16px;height:16px}
           {section:'Last things',k:'cv_later',label:'CV',value:(!hasCv()&&cvLater&&cvLater.checked)?'Not attached: they will e-mail it quoting the reference':''},
           {section:'The form',k:'review',label:'Sent after the read-back with',value:(shown.length?shown.map(function(k){return {fix:'the form not marked',w_built:'a short "one thing you built"',w_slim:'a short slim-down answer',emp_changed:'a short "what is different"',w_cv:'a general two-year line',gh:'an e-mail in the GitHub box',link:'a link with no https',tool:'no tools ticked',cv:'the CV to follow by e-mail'}[k]||k}).filter(function(k){return k}).join('; '):'')}
         ],
-        page:location.pathname,
-        ref_from:(new URLSearchParams(location.search)).get('from')||'',
+        page:location.pathname+(from?'?from='+from:''),
+        ref_from:from,
         at:new Date().toISOString()};
       var ref='', sent=false, first=name.split(' ')[0], cvBack=false;
       readCv().then(function(cv){
