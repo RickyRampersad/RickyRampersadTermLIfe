@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-23b';
+var SCRIPT_VERSION = '2026-11-24a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -676,17 +676,42 @@ var SCHEDULE_DATED = {
   // read as 7 to 3: late is judged on the start, 7am either way). From 18 November SCHEDULE is 8 to 4.
   sasha: [{ from: '2026-10-01', until: '2026-10-25', hours: '7am – 3pm', lunch: '12:00 – 12:30pm' },
           { from: '2026-10-26', until: '2026-10-30', hours: '8am – 4pm', lunch: '2:00 – 3:00pm' },
-          { from: '2026-10-31', until: '2026-11-17', hours: '7am – 3pm', lunch: '12:00 – 12:30pm' }],
+          { from: '2026-10-31', until: '2026-11-17', hours: '7am – 3pm', lunch: '12:00 – 12:30pm' },
+          // Sasha, 23 Nov 2026 (Branch Admin Team WhatsApp): "I am 7-3 this week and next week.
+          // Lunch is from 2-3". Mr Rampersad, 23 Nov 2:31pm: "Sasha finishes at 2 p.m." So 7 to 2,
+          // her lunch at 2 ends the day (no lunch e-mail), close-out notice 1:30pm. Wins over the rota.
+          { from: '2026-11-23', until: '2026-12-04', hours: '7am – 2pm', lunch: 'None: her lunch at 2pm ends the day', closeout: '1:30pm' }],
   kamla: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }],
   pawan: [{ from: '2026-10-26', until: '2026-10-30', lunch: 'Flexible' }]
 };
 
+/* HOURS THAT TURN WEEK BY WEEK (23 November 2026). Kamla's schedule for Sasha, "01-Oct-26 &
+   Thereafter", sent 20 Nov and confirmed by Mr Rampersad on 23 Nov: Week 1, office only, 7am to
+   2pm, and her lunch at 2pm ends her day; Weeks 2 and 3, 8am to 4pm, lunch 2 to 3, the last hour
+   worked online. Week 1 is the week of 1 October 2026 (Monday 28 September), so the cycle runs
+   Week 1 on 30 Nov, 21 Dec, 11 Jan ... Applied from 'from' on; earlier days keep SCHEDULE_DATED. */
+var SCHEDULE_ROTA = {
+  sasha: { from: '2026-11-23', anchor: '2026-09-28', weeks: [
+    { hours: '7am – 2pm', lunch: 'None: her lunch at 2pm ends the day', label: 'Week 1 · office only' },
+    { hours: '8am – 4pm', lunch: '2:00 – 3:00pm', label: 'Week 2 · office, then online 3 to 4' },
+    { hours: '8am – 4pm', lunch: '2:00 – 3:00pm', label: 'Week 3 · office, then online 3 to 4' }] }
+};
+/** Which of the rota's weeks "2026-11-30" falls in: the entry, or null. */
+function rotaWeek_(staffId, day) {
+  var r = SCHEDULE_ROTA[staffId], d = String(day || '');
+  if (!r || !r.weeks || !r.weeks.length || !/^\d{4}-\d{2}-\d{2}$/.test(d) || d < r.from) return null;
+  var ms = function (x) { var p = x.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); };
+  var t = ms(d), dow = (new Date(t).getUTCDay() + 6) % 7, wk = Math.floor((t - dow * 864e5 - ms(r.anchor)) / (7 * 864e5));
+  var n = r.weeks.length, i = ((wk % n) + n) % n, w = r.weeks[i];
+  return { hours: w.hours, lunch: w.lunch, label: w.label, index: i + 1 };
+}
+
 /** A desk's schedule on a day ("2026-10-27"), today's when no day is given. */
 function scheduleFor_(staffId, day) {
-  var base = SCHEDULE[staffId] || DEFAULT_SCHEDULE, list = SCHEDULE_DATED[staffId];
-  if (!list || !list.length) return base;
+  var base = SCHEDULE[staffId] || DEFAULT_SCHEDULE, list = SCHEDULE_DATED[staffId] || [];
   var d = String(day || todayISO_()), hit = null;
   for (var i = 0; i < list.length && !hit; i++) if ((!list[i].from || d >= list[i].from) && (!list[i].until || d <= list[i].until)) hit = list[i];
+  if (!hit) hit = rotaWeek_(staffId, d);
   if (!hit) return base;
   var out = {}, blocks = {};
   Object.keys(base).forEach(function (k) { out[k] = base[k]; });
@@ -698,6 +723,8 @@ function scheduleFor_(staffId, day) {
     blocks[b] = x;
   });
   out.blocks = blocks;
+  if (hit.label) out.week = hit.label;
+  if (hit.closeout) out.closeout = hit.closeout;
   return out;
 }
 
@@ -4808,8 +4835,7 @@ function postWhoAll_(posts, me, deskById) {
 function postSysKinds_(posts) {
   var out = {}, add = function (k) { out[k] = (out[k] || 0) + 1; };
   (posts || []).forEach(function (p) {
-    if (p.who === 'chase') return add('chases in your voice');
-    if (p.who !== 'system') return;
+    if (p.who !== 'system') return;   // his voice, batches included, is counted as his notes (2026-11-23e)
     var t = postPlain_(p.Body);
     if (/^\s*Branch Intelligence/.test(t)) add('questions from Branch Intelligence');
     else if (/^\s*ACTION REQUIRED/.test(t)) add('action-required notes');
@@ -4878,7 +4904,9 @@ function bmWaiting_(day) {
   var lastMine = {}, asks = {};
   posts.forEach(function (p) {
     if (String(p.ParentId).slice(0, 3) !== '00T') return;
-    if (p.who === 'ricky') { lastMine[p.ParentId] = p.CreatedDate; return; }
+    // 23 Nov 2026 (2026-11-23e): his answers now go out in batches from his assistant, headed Branch Manager, and a batch reads as
+    // the chase. Anything in his voice after the ask answers it: on 23 Nov eight answers at 6:27am left five asks on his list.
+    if (p.who === 'ricky' || p.who === 'chase') { lastMine[p.ParentId] = p.CreatedDate; return; }
     // 23 Nov 2026: an agent named on the task is his answer to "who do I assign?": the staff kept asking after the AGENT NAMED post,
     // and those asks sat on his list as if he had never decided.
     if (p.who === 'system' && /^\s*AGENT NAMED\b/i.test(postPlain_(p.Body))) { lastMine[p.ParentId] = p.CreatedDate; return; }
@@ -8512,7 +8540,7 @@ function rateRun_(day, since) {
     try { (sfkQuery_('SELECT Id, Name, FirstName, Email, RecordType.Name FROM Contact WHERE Id IN (' + ckeys.slice(i, i + 150).map(soqlStr_).join(',') + ')') || [])
       .forEach(function (c) { cons[c.Id] = c; }); } catch (e) {}
   }
-  var active = {}, anyActive = false; try { var ap = agentPeople_() || {}; Object.keys(ap).forEach(function (k) { var a = ap[k]; if (a.email) { active[String(a.email).toLowerCase()] = 1; anyActive = true; } }); } catch (e) {}
+  var active = {}, anyActive = false; try { var ap = agentPeople_() || {}; Object.keys(ap).forEach(function (k) { var a = ap[k]; if (a.email && !agentDayOff_(a)) { active[String(a.email).toLowerCase()] = 1; anyActive = true; } }); } catch (e) {}
   var bmEmails = {}; try { managerEmails_().forEach(function (m) { bmEmails[String(m).toLowerCase()] = 1; }); } catch (e) {}
   var bmName = bkNk_(nameFor_('ricky'));
   var rows = rateRows_(), today = {}, recent = {}, opted = {}, cool = shiftDays_(day, -RATE.CLIENT_COOL_DAYS);
@@ -10628,8 +10656,14 @@ function agentInPilot_(a) {
  *  submit the weekly Time & Income Control by hand instead, as their contract requires.
  *  Everything else from the branch is unchanged. Script Property AGENT_DAY_OFF (names or
  *  agent numbers, comma separated) replaces the list; "none" clears it. */
+/*  Widened 24 Nov 2026 (Ricky: "remove all the agents who do not log and leave the active ones ... it's crowding up my
+ *  inbox ... it stops intelligence and everything"): every agent who has not projected and closed off their day. The
+ *  list also stops the fact-find chase and the service-rating requests to them (both used to ignore it). The agents
+ *  left on are those who log: Rajiv Soodoo, Fawwaz Mohamed, Joy Sammah, Neil Ramnanan, Premchand Dookran. */
 var AGENT_DAY_OFF = ['Darryl Manick', 'Stephanie Rajkumar', 'Daniel Bhagwandas',
-                     'Faizal Mohammed', 'Felicia Rampersad', 'Varun Seegolam'];
+                     'Faizal Mohammed', 'Felicia Rampersad', 'Varun Seegolam',
+                     'Malcolm Sooknanan', 'Petra Chadee', 'Richard Ramdwar', 'Steven Blanc',
+                     'Narissa Mohammed', 'Jamil Sean Khan', 'Randolph Gonzales', 'Meera Persad Khan'];
 function agentDayOffList_() {
   var p = ''; try { p = PropertiesService.getScriptProperties().getProperty('AGENT_DAY_OFF') || ''; } catch (e) {}
   if (/^\s*none\s*$/i.test(p)) return [];
@@ -11265,6 +11299,9 @@ var CLOSEOUT = {
 };
 /** When this desk's close-out notice goes. */
 function closeoutAt_(sid) {
+  // A dated entry may set the notice itself (Sasha 1:30pm, 23 Nov to 4 Dec 2026, before her 2pm lunch).
+  var fix = String(scheduleFor_(sid).closeout || ''), fm = fix.match(/^(\d{1,2}):(\d{2})\s*([ap])m$/i);
+  if (fm) return (+fm[1] % 12 + (fm[3].toLowerCase() === 'p' ? 12 : 0)) * 60 + +fm[2];
   if (CLOSEOUT.AT[sid] == null) return endFor_(sid) - HK_LEAD_MIN;
   // On a day with other hours (SCHEDULE_DATED) the notice moves with the finish: Sasha 3:15 on her 8 to 4 week.
   var base = parseSpan_((SCHEDULE[sid] || {}).hours || ''), on = parseSpan_(scheduleFor_(sid).hours || '');
@@ -13742,6 +13779,7 @@ function ffChaseTick_(day, mins) {
   }
   if (!list) return [];
   var people = agentPeople_(), resp = null, sent = 0;
+  list = list.filter(function (x) { return !agentDayOff_(people[x.k]); });   // off the platform: no chase (24 Nov 2026)
   if (dow === 1 || dow === 2) {
     if (mode === 'preview') {
       if (dow !== 1 || props.getProperty('ff_prev_' + week) || !list.length) return [];
@@ -19394,7 +19432,18 @@ function leadItems_(day) {
 }
 /** The leadership numbers: today's number, cleared by him and by the team, what still waits, and what the system did for him. */
 function leadProgress_(day, now) {
-  var L = leadItems_(day), still = {}; L.now.forEach(function (x) { still[x.id] = 1; });
+  var L = leadItems_(day), posts = [], sys = {}, touched = {};
+  try {
+    var me = bmSfId_(), users = sfkUsers_() || {}, desk = {};
+    DAY_MAIL_DESKS.forEach(function (s) { if (users[s]) desk[users[s].id] = s; });
+    posts = postWhoAll_(sfkNotes_("SELECT Id, ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND CreatedById = '" + me + "' AND CreatedDate >= " + sfkUtcAt_(day, 0) + ' LIMIT 2000') || [], me, desk);
+    sys = postSysKinds_(posts);
+  } catch (e) {}
+  // 23 Nov 2026 (2026-11-23e): Ricky, 8:39, at 0% with dozens of notes posted: "even though in the background I'm closing, I'm commenting
+  // on tasks ... it's not reflecting my percentages". One of his own tasks he has written on today is worked, not waiting.
+  posts.forEach(function (p) { if (p.who === 'ricky' || p.who === 'chase') touched[p.ParentId] = 1; });
+  L.now = L.now.filter(function (x) { return !(x.k === 'mine' && touched[x.t]); });
+  var still = {}; L.now.forEach(function (x) { still[x.id] = 1; });
   var rows = {}; try { (L.v && L.v.items || []).forEach(function (x) { rows[x.k] = x; }); } catch (e) {}
   var you = 0, team = 0;
   L.all.forEach(function (x) {
@@ -19406,17 +19455,10 @@ function leadProgress_(day, now) {
   var sched = scheduleFor_('ricky'), hrs = parseSpan_(sched.hours || '') || { start: 300, end: 900 }, nowM = minutesOf_(hhmm_(now));
   var done = workedMins_('ricky', nowM), whole = workedMins_('ricky', hrs.end);
   var pct = target ? Math.round(100 * cleared / target) : 100, dayPct = whole ? Math.round(100 * done / whole) : 0;
-  var posts = [], sys = {};
-  try {
-    var me = bmSfId_(), users = sfkUsers_() || {}, desk = {};
-    DAY_MAIL_DESKS.forEach(function (s) { if (users[s]) desk[users[s].id] = s; });
-    posts = postWhoAll_(sfkNotes_("SELECT Id, ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND CreatedById = '" + me + "' AND CreatedDate >= " + sfkUtcAt_(day, 0) + ' LIMIT 500') || [], me, desk);
-    sys = postSysKinds_(posts);
-  } catch (e) {}
   return { lead: true, sf: true, target: target, cleared: cleared, you: you, team: team, pct: pct, dayPct: dayPct,
     behind: target > 0 && pct < dayPct, waiting: L.now.length, asks: L.now.filter(function (x) { return x.k === 'ask'; }).length,
     inbox: L.now.filter(function (x) { return x.k === 'inbox'; }).length, mineDue: L.now.filter(function (x) { return x.k === 'mine'; }).length,
-    yourNotes: posts.filter(function (p) { return p.who === 'ricky'; }).length, sys: sys,
+    yourNotes: posts.filter(function (p) { return p.who === 'ricky' || p.who === 'chase'; }).length, sys: sys,
     _now: L.now, _posts: posts };
 }
 /** What still waits on him, for My workday: each with Claude's words to post. */
