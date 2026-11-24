@@ -794,7 +794,7 @@
   }
   function agentNative(m) {
     return (m.preview ? '<div class="agpv">Preview: this is ' + esc(m.first) + "'s day as " + esc(m.first) + " will see it. Anything saved here is saved for " + esc(m.first) + ".</div>" : "") +
-      agTiles(m) + agPlanCard(m) + agItemsCard(m) + agCloseCard(m) + agDoneCard(m) +
+      agTiles(m) + agPlanCard(m) + cxOpps(m) + agItemsCard(m) + agCloseCard(m) + agDoneCard(m) +
       '<div class="card"><div class="tip">If this screen will not open on your phone, the same pages: <a href="' + esc(m.project.url) + '" target="_blank" rel="noopener">projection</a> · <a href="' + esc(m.close.url) + '" target="_blank" rel="noopener">close-off</a>. <a href="' + esc(m.film) + '">Watch the 2-minute film &rarr;</a></div></div>';
   }
   function agSave(btn) {
