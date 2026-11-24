@@ -184,13 +184,14 @@ function paint(){
   if(!C || C.error){ $("#hOf").textContent = (C && C.error) || "Reading the clawback report…"; return; }
   $("#sub").innerHTML = "Guardian's clawback report, <b>"+esc(C.asOf)+"</b> &middot; replacements kept off &middot; average <b>TT$"+fmt(C.avg)+"</b> a clawback"+(C.lagMedian!=null?" &middot; clawed back a median <b>"+fmt(C.lagMedian)+" days</b> after dispatch":"");
   var A1=C.active||{n:0,amount:0,red:0,agents:0}, I1=C.inactive||{n:0,amount:0,red:0,agents:0};
-  $("#sp").innerHTML = '<div class="tile green"><b>'+fmt(A1.n)+'</b><span>active agents ('+fmt(A1.agents)+') &middot; '+fmt(A1.red)+' red</span><em>TT$'+fmt(A1.amount)+'</em></div>'
-    + '<div class="tile"><b style="color:var(--coral)">'+fmt(I1.n)+'</b><span>inactive agents ('+fmt(I1.agents)+') &middot; '+fmt(I1.red)+' red</span><em>TT$'+fmt(I1.amount)+'</em></div>';
+  $("#sp").innerHTML = '<div class="tile green"><b>'+fmt(A1.n)+'</b><span>active agents ('+fmt(A1.agents)+') &middot; '+fmt(A1.red)+' red</span><em>TT$'+fmt(A1.amount)+'</em><span>cover TT$'+fmt(A1.life||0)+'</span></div>'
+    + '<div class="tile"><b style="color:var(--coral)">'+fmt(I1.n)+'</b><span>inactive agents ('+fmt(I1.agents)+') &middot; '+fmt(I1.red)+' red</span><em>TT$'+fmt(I1.amount)+'</em><span>cover TT$'+fmt(I1.life||0)+'</span></div>';
   var G=C.ages||[], gm=Math.max.apply(null,G.map(function(g){return g.n;}).concat([1]));
   $("#ages").innerHTML = G.map(function(g){ return '<div class="br"><div class="l"><b>'+esc(g.k)+'</b><small>TT$'+fmt(g.amount)+' &middot; '+fmt(g.red)+' red</small><span>'+fmt(g.n)+'</span></div><div class="t"><i data-w="'+(100*g.n/gm).toFixed(1)+'" style="background:var(--coral)"></i></div></div>'; }).join("");
   count($("#hN"), C.total);
   $("#hM").innerHTML = "TT$"+fmt(C.amount)+"<small>out of agents' income</small>";
-  $("#hOf").innerHTML = "<b>"+fmt(C.red)+"</b> flagged red &middot; <b>"+fmt(C.none)+"</b> with nothing submitted &middot; <b>"+fmt(C.noTask)+"</b> with no open task";
+  var CV=C.cover||{};
+  $("#hOf").innerHTML = (CV.life||CV.ci ? "<b style='color:var(--gold)'>TT$"+fmt(CV.life)+"</b> life cover"+(CV.ci?" and <b style='color:var(--gold)'>TT$"+fmt(CV.ci)+"</b> critical illness":"")+" clawed back"+(CV.noFigure?" ("+fmt(CV.noFigure)+" with no cover figure)":"")+"<br>" : "") + "<b>"+fmt(C.red)+"</b> flagged red &middot; <b>"+fmt(C.none)+"</b> with nothing submitted &middot; <b>"+fmt(C.noTask)+"</b> with no open task";
   var mx = Math.max(C.none, C.submitted, C.withUs, 1);
   $("#st").innerHTML = ["none","submitted","withUs"].map(function(k){ var s=STATE[k];
     return '<div class="br"><div class="l"><b>'+s[0]+'</b><span>'+fmt(C[k])+'</span></div><div class="t"><i data-w="'+(100*C[k]/mx).toFixed(1)+'" style="background:'+s[2]+'"></i></div></div>'; }).join("");
@@ -201,16 +202,16 @@ function paint(){
   } else { $("#tk2").style.display="none"; $("#tkk").innerHTML = ""; }
   $("#rp").innerHTML = (C.replChecked ? "<b>"+fmt(C.replacements)+"</b> replacement"+(C.replacements===1?"":"s")+" kept off (TT$"+fmt(C.replAmount)+"). " : "")
     + (C.reversed ? "<b>"+fmt(C.reversed)+"</b> already reversed. " : "") + (C.gaps||[]).map(esc).join(" ");
-  $("#ag").innerHTML = '<tr><th>Agent</th><th>Clawbacks</th><th>TT$</th><th>Nothing submitted</th><th>Submitted, still standing</th><th>With us</th><th>No task</th><th>Red</th><th>Oldest</th></tr>'
+  $("#ag").innerHTML = '<tr><th>Agent</th><th>Clawbacks</th><th>TT$</th><th>Life cover</th><th>Nothing submitted</th><th>Submitted, still standing</th><th>With us</th><th>No task</th><th>Red</th><th>Oldest</th></tr>'
     + (C.agents||[]).map(function(a,i){ var z=function(n,c){ return '<td class="'+(n?(c||''):'z')+'">'+fmt(n)+'</td>'; };
-      return '<tr class="rw'+(a.active===false?' inact':'')+'" style="--d:'+(0.05*i).toFixed(2)+'s"><td>'+esc(a.agent)+pill(a.active!==false)+'</td><td>'+fmt(a.n)+'</td><td class="gold">'+fmt(a.amount||0)+'</td>'+z(a.none,'red')+z(a.submitted,'amber')+z(a.withUs)+z(a.noTask,'red')+z(a.red,'red')+'<td>'+(a.oldest?fmt(a.oldest)+'d':'')+'</td></tr>'; }).join("");
+      return '<tr class="rw'+(a.active===false?' inact':'')+'" style="--d:'+(0.05*i).toFixed(2)+'s"><td>'+esc(a.agent)+pill(a.active!==false)+'</td><td>'+fmt(a.n)+'</td><td class="gold">'+fmt(a.amount||0)+'</td><td>'+(a.life?fmt(a.life):'')+'</td>'+z(a.none,'red')+z(a.submitted,'amber')+z(a.withUs)+z(a.noTask,'red')+z(a.red,'red')+'<td>'+(a.oldest?fmt(a.oldest)+'d':'')+'</td></tr>'; }).join("");
   clearInterval(window.agT); var ab=$("#agbox"); ab.scrollTop=0;
   if(ab.scrollHeight>ab.clientHeight+4 && !window.matchMedia("(max-width:900px)").matches) window.agT=setInterval(function(){ var n=ab.scrollTop+ab.clientHeight-40; ab.scrollTo({top: n>=ab.scrollHeight-ab.clientHeight+1 && ab.scrollTop>0 ? 0 : n, behavior:"smooth"}); }, 7000);
   var L = C.list || [];
   var row = function(x){ var s = STATE[x.state] || STATE.none;
     var pol = x.first5 ? esc(x.first5)+'…' : '…'+esc(x.last4);
     return '<div class="lr'+(x.red?' red':'')+'"><div class="a">'+esc(x.client||'—')+'</div><div class="p">'+pol+'</div><div class="a">'+esc(x.agent)+(x.active===false?' <span class="pill ina">Inactive</span>':'')+'</div><div class="pl">'+esc(x.plan||'')+'</div>'
-      + '<div class="d">'+(x.days!=null ? fmt(x.days)+' days' : 'not dated')+'</div><div class="d" style="color:var(--gold)">'+(x.amt!=null?'TT$'+fmt(x.amt):'')+'</div><div><span class="chip '+s[3]+'">'+s[0]+'</span></div>'
+      + '<div class="d">'+(x.days!=null ? fmt(x.days)+' days' : 'not dated')+'</div><div class="d" style="color:var(--gold)">'+(x.amt!=null?'TT$'+fmt(x.amt):'')+(x.life?'<small style="display:block;color:var(--dim);font-weight:600">cover '+fmt(x.life)+'</small>':'')+'</div><div><span class="chip '+s[3]+'">'+s[0]+'</span></div>'
       + '<div>'+(x.task===true ? '<span class="chip ok">'+esc(x.owner||'Yes')+'</span>' : x.task===false ? '<span class="chip red">No task</span>' : '<span class="chip dim">Not checked</span>')+'</div></div>'; };
   var box = $("#rows");
   if(!L.length){ box.innerHTML = '<div class="empty">No clawback standing.</div>'; $("#pager").innerHTML=""; }
@@ -228,6 +229,7 @@ function paint(){
     C.none ? "<b>"+fmt(C.none)+"</b> have nothing submitted" : "",
     C.submitted ? "<b>"+fmt(C.submitted)+"</b> were acknowledged and still stand: follow them through" : "",
     C.noTask ? "<b>"+fmt(C.noTask)+"</b> have no open task" : "",
+    CV.life ? "<b>TT$"+fmt(CV.life)+"</b> of life cover clawed back"+(CV.ci?", <b>TT$"+fmt(CV.ci)+"</b> critical illness":"") : "",
     C.inactive && C.inactive.n ? "<b>"+fmt(C.inactive.n)+"</b> sit with inactive agents, <b>TT$"+fmt(C.inactive.amount)+"</b>" : "",
     (C.plans||[]).slice(0,3).map(function(p){ return esc(p.k)+" <b>"+fmt(p.n)+"</b>"; }).join(" &middot; "),
     (C.owners||[]).filter(function(o){return o.k!=="No task";}).map(function(o){ return esc(o.k)+" holds <b>"+fmt(o.n)+"</b>"; }).join(" &middot; "),
