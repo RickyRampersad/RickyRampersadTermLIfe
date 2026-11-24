@@ -2066,5 +2066,50 @@
   "music": "bed-slink1.wav",
   "sfx": "sfx-slink1.wav",
   "ass": "captions-slink1.ass"
+ },
+ "enrp1": {
+  "durs": [
+   10.2,
+   8.3,
+   7.7,
+   6.8,
+   8.1,
+   11.1,
+   10.4,
+   9.4,
+   6.9,
+   10.9,
+   9.2,
+   8.9,
+   8.8
+  ],
+  "dur": 116.7,
+  "vox": "voenrp1",
+  "start": 0,
+  "musicgain": 0.45,
+  "duck": 0.35,
+  "dark": [],
+  "ticks": [],
+  "hits": [
+   8.74,
+   24.66,
+   30.89,
+   75.93,
+   94.94,
+   113.68
+  ],
+  "w": 1920,
+  "h": 1080,
+  "pic": 924,
+  "capmode": "strip",
+  "capsize": 44,
+  "capwrap": 62,
+  "capbg": "0F2A5E",
+  "cap": "cap-enrp1",
+  "out": "../../groupclientmanagement/enrolment-process.mp4",
+  "mix": "enrp1-mix.wav",
+  "music": "bed-enrp1.wav",
+  "sfx": "sfx-enrp1.wav",
+  "ass": "captions-enrp1.ass"
  }
 }

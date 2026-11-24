@@ -1,0 +1,46 @@
+{
+ "note": "The enrolment process, start to finish, from HR's service page (24 Nov 2026). Andrew Expressive on tts-run, key enrp1. Lines 1, 2, 5, 8, 9, 11 and 12 re-worded and re-voiced as enrp1b: Whisper heard 'typed' as 'type', 'enrol' as 'and roll', 'you get an e-mail' as 'you can email', 'tick that' as 'take that', 'gets a task' as 'get to task', 'sent to Guardian' as 'centiguardium', and the 'are' in line 5 was lost. Line 1 re-worded again as enrp1c: 'nothing entered twice' came back as 'nothing inner twice'.",
+ "voice": "en-US-AndrewMultilingualNeural",
+ "rate": "+0%",
+ "scenes": [
+  {
+   "say": "Here's how a new member joins your group plan now. There are no paper forms, and nobody fills anything in twice. It all starts with one link."
+  },
+  {
+   "say": "It starts on your service page. Under your billing, open the form to enrol a new member, and choose send them their own link."
+  },
+  {
+   "say": "Type their name, their e-mail, the plans they're joining, and the date their cover starts. Then press send."
+  },
+  {
+   "say": "They get their own link by e-mail. Only they can open it, and it stays open for sixty days."
+  },
+  {
+   "say": "On their phone, it's already filled in: their name, their company, and their cover. It takes about ten minutes."
+  },
+  {
+   "say": "They add their details and their family, and for group life, who it pays. The health questions take a single tick for most people, and they sign on the screen with a finger."
+  },
+  {
+   "say": "When they're done, they're told so. If they haven't finished, they get a reminder every working day, and after five reminders, we let you know."
+  },
+  {
+   "say": "Then an e-mail tells you it's ready for you to check. You see Guardian's own form, already filled in, and you never see their health answers."
+  },
+  {
+   "say": "You complete the employer's part, confirm that you're authorised, and approve it. That's your last step."
+  },
+  {
+   "say": "It goes straight to Guardian Life's group benefits team, on their own application form, with the health declaration and the signature attached. Our branch is copied."
+  },
+  {
+   "say": "A task opens for our team at the same moment, and we follow Guardian up every three working days until the cover is in place."
+  },
+  {
+   "say": "On your page, you see where every new member stands. Waiting on them, ready for you to check, or with Guardian Life."
+  },
+  {
+   "say": "One link, nothing retyped, and every step on the record. That's our branch. A journey, not a transaction."
+  }
+ ]
+}

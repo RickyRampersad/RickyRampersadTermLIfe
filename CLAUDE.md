@@ -4360,7 +4360,8 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     termination enrollments and /healthenrollment and /termnations", then "can this be done fast"). Two films in the
     pension film's look, made from what already works, while the joined enrolment (HR's link, the employee's part,
     Guardian's real GIO001, HR's approval) was built separately:
-    - **`/healthenrollment/`** (1 min 42 s, `groupclientmanagement/health-enrolment.mp4`): the employee's own link,
+    - **`/healthenrollment/`** (1 min 42 s, `groupclientmanagement/health-enrolment.mp4`; replaced on the page on 24 November
+      by the start-to-finish film, see the new-member link section): the employee's own link,
       `benefits/enroll.html`, on a made-up employee (Marcus Sample, Harbour Point Logistics Ltd): HR's share card, the
       steps on a phone, the "nothing to declare" tick, the on-screen signatures, and the filled GIO001 and Declaration of
       Insurability from the review step. Shot by `henr/shoot.js` in the scratchpad with the branch webhook mocked;
@@ -5008,6 +5009,31 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       - **The screens** are `tools/film/slinkshots/`, shot by `slink/shoot.js` in the scratchpad against the real pages, on a
         made-up group (Harbour Point Logistics Ltd), employee (Marcus Sample) and HR contact (Pat Admin), with every call mocked.
       - **Music:** the corporate tech track (`loopbars.py` to 97 s; not in the repository).
+    - **The whole process on film: `/healthenrollment/`** (24 November 2026: "so whats the flow process for enrollments what
+      actually happens when the form is filled", then "Ok so can you do a vid to show the enrollment process?").
+      `groupclientmanagement/enrolment-process.mp4`, 1 min 57 s, poster `enrolment-process.jpg`, for HR and the branch alike. It
+      replaced the 17 November film on that page (the employee's own link with no HR invite, `health-enrolment.mp4`, which stays
+      in the repository unlinked), and the page's steps became the four the film shows. Its "Enrolling someone now?" box opens
+      the service page on the enrolment form first, the form on its own second.
+      - **What it shows, in order:** HR on the service page (Your billing, Enrol a new member, Send them their own link, the
+        four things typed); the link e-mail and its 60 days; the employee's phone (filled in for them, their part, the health
+        tick, the finger signature, "your part is done"); the reminders, five pips and then HR told; the "ready for you to
+        check" e-mail and Guardian's GIO001 filled in, health answers never shown; Section F, authorised, Approve; the pack to
+        EB Customer Care with the filled GIO001 and the declaration attached, branch copied; the account manager's Salesforce
+        task with its Chatter follow-ups on days 3, 6 and 8 (drawn, `sftask`); the New members panel; the close.
+      - **The real e-mails** are the HTML `GroupBilling.gs` writes, rendered by `enrp/mails.js` in the scratchpad, and the
+        GIO001 page is Guardian's own PDF filled by pdf-lib with a drawn sample signature. Made-up group, employee and HR
+        contact as the link film; the account manager on screen is a made-up name too.
+      - **How it is built:** `build-gcmfilm.py enrp` from `enrp1-lines.json` and `enrp1-timing.json`; screens in
+        `tools/film/enrpshots/` (with `boxes.json`, the GIO001 boxes measured by hand). Andrew Expressive, keys `enrp1`,
+        `enrp1b` (seven lines re-worded) and `enrp1c` (line 1 again). Heard wrong and re-worded: "typed" as "type", "enrol"
+        as "and roll", "you get an e-mail" as "you can email", "tick that" as "take that", "gets a task" as "get to task",
+        "sent to Guardian" as "centiguardium", "nothing entered twice" as "nothing inner twice". The journey bar (`jr`)
+        now takes its own stops: this film's are HR sends the link, They fill it in, HR approves, To Guardian Life,
+        Followed up (`EJR`).
+      - **A struck-through chip names the OLD way, never the new one.** The first cut struck through "No paper forms",
+        which reads as "there are paper forms"; the chips are "Paper forms" and "Filling it in twice".
+      - **Music:** the corporate tech track (`loopbars.py` to 117 s; not in the repository).
     - **The employee's page asks for their e-mail even when the link went on WhatsApp**: `benefits/enroll.html` stops on step 1 with
       "A valid email is needed for the confirmation", so the employee types their own. The link needs no e-mail to be made.
   - **The billing day: the 26th at 10:00, or the next working day; approved by staff, sent by the system, reported on the

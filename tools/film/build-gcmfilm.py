@@ -34,11 +34,12 @@ import base64, io, json, os, pathlib, re, sys
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 FILM = sys.argv[1] if len(sys.argv) > 1 else 'client'
-KEY = {'client': 'gcmc3', 'staff': 'gcms3', 'walk': 'gcmw', 'pension': 'pens2', 'henr': 'henr1', 'term': 'term1', 'slink': 'slink1'}[FILM]
-SHOTS = pathlib.Path(os.environ.get('GCM_SHOTS', HERE / {'walk': 'gcmshots-walk', 'pension': 'pensionshots', 'henr': 'henrshots', 'term': 'termshots', 'slink': 'slinkshots'}.get(FILM, 'gcmshots')))
+KEY = {'client': 'gcmc3', 'staff': 'gcms3', 'walk': 'gcmw', 'pension': 'pens2', 'henr': 'henr1', 'term': 'term1', 'slink': 'slink1', 'enrp': 'enrp1'}[FILM]
+SHOTS = pathlib.Path(os.environ.get('GCM_SHOTS', HERE / {'walk': 'gcmshots-walk', 'pension': 'pensionshots', 'henr': 'henrshots', 'term': 'termshots', 'slink': 'slinkshots', 'enrp': 'enrpshots'}.get(FILM, 'gcmshots')))
 OUT = ROOT / 'groupclientmanagement' / ({'client': 'new-way-film.html', 'staff': 'staff-new-way-film.html', 'walk': 'what-you-see-film.html',
                                         'pension': 'company-pension-film.html', 'henr': 'health-enrolment-film.html',
-                                        'term': 'terminations-film.html', 'slink': 'new-member-link-film.html'}[FILM])
+                                        'term': 'terminations-film.html', 'slink': 'new-member-link-film.html',
+                                        'enrp': 'enrolment-process-film.html'}[FILM])
 TIMING = HERE / (KEY + '-timing.json')
 
 def b64(p, mime):
@@ -71,7 +72,7 @@ MARK = b64(ROOT / 'groupclientmanagement' / 'gcm-mark.png', 'image/png')
 PLEX = b64(HERE / 'fonts' / 'IBMPlexSans-latin.woff2', 'font/woff2')
 
 T = json.loads(TIMING.read_text()) if TIMING.exists() else {}
-N_LINES = {'client': 11, 'staff': 19, 'walk': 15, 'pension': 14, 'henr': 12, 'term': 11, 'slink': 11}[FILM]
+N_LINES = {'client': 11, 'staff': 19, 'walk': 15, 'pension': 14, 'henr': 12, 'term': 11, 'slink': 11, 'enrp': 13}[FILM]
 #  importvox writes SECONDS; data-d is MILLISECONDS.
 DURS = [int(round(d * 1000)) for d in (T.get('durs') or [6.0] * N_LINES)]
 WORDS = [l.get('words', []) for l in T.get('lines', [])]
@@ -93,7 +94,7 @@ def at(n, word, k=0, lead=0.0):
         sys.exit('TIMING: "%s" is not spoken in line %d' % (word, n))
     return 1.0
 
-TAG = '<span class="tag">Sample %s &middot; made-up figures</span>' % ({'pension': 'company', 'henr': 'employee', 'term': 'group'}.get(FILM, 'group'))
+TAG = '<span class="tag">Sample %s &middot; made-up figures</span>' % ({'pension': 'company', 'henr': 'employee', 'term': 'group', 'enrp': 'group and employee'}.get(FILM, 'group'))
 
 #  Where the key buttons and panels sit on each screen, in that PNG's own pixels, written by the shooters.
 BOXES = {}
@@ -1188,6 +1189,7 @@ h2{font-size:38px;font-weight:600;line-height:1.16;letter-spacing:-.5px;margin-b
 .duo.l .lap{position:absolute}
 .duo.l .back{left:0;top:0}
 .duo.l .front{right:0;bottom:0}
+.duo.l>.cardshot{position:absolute}
 
 .cardshot{position:relative;display:inline-block;border-radius:18px;overflow:hidden;border:1px solid #D5DEEA;background:#fff;
   box-shadow:0 26px 54px rgba(15,42,94,.22);animation:ph .8s cubic-bezier(.2,.8,.25,1) both;animation-delay:var(--kd)}
@@ -1462,13 +1464,14 @@ SL_CSS = """
 
 JR = ('You make the link', 'They fill it in', 'HR approves', 'To Guardian Life', 'Followed up')
 
-def jr(cur, d, frm=None):
+def jr(cur, d, frm=None, stops=None):
     """The journey under the steps: five stops, the line filling to this one, a dot riding it."""
+    stops = stops or JR
     frm = max(0, cur - 1) if frm is None else frm
     a, b = frm / 4.0, cur / 4.0
     stops = ''.join('<div class="js%s" style="left:%.1f%%;--kd:%.2fs"><i>%s</i><span>%s</span></div>' % (
         ' done' if i < cur else (' cur' if i == cur else ''), i * 25.0, d + .1 + i * .07,
-        '&#10003;' if i < cur else str(i + 1), t) for i, t in enumerate(JR))
+        '&#10003;' if i < cur else str(i + 1), t) for i, t in enumerate(stops))
     return ('<div class="jr" style="--kd:%.2fs;--a:%.3f;--b:%.3f;--la:%.1f%%;--lb:%.1f%%"><div class="jrw">'
             '<div class="jrt"><i class="jrf"></i><i class="jrd"></i></div>%s</div></div>' % (d, a, b, a * 100, b * 100, stops))
 
@@ -1625,15 +1628,186 @@ def slink():
         'blue'))
     return sc
 
+# ------------------------------------------------------------------------------------- the enrolment, start to finish
+EJR = ('HR sends the link', 'They fill it in', 'HR approves', 'To Guardian Life', 'Followed up')
+def ejr(cur, d, frm=None):
+    return jr(cur, d, frm, EJR)
+
+def remind5(d, kend):
+    """Five working days, a reminder each, then HR is told: the cadence the system keeps for a link not yet finished."""
+    pips = ''.join('<div class="erp" style="--kd:%.2fs"><i>%s</i><span>Day %d</span></div>' % (d + i * .22, ICON['mail'], i + 1) for i in range(5))
+    return ('<div class="er5" style="--kd:%.2fs"><div class="er5h">Not finished yet?</div><div class="er5r">%s'
+            '<div class="erp hr" style="--kd:%.2fs"><i>%s</i><span>HR told</span></div></div>'
+            '<div class="er5l">A reminder each working day, up to five. Then HR is told, once.</div></div>' % (d - .2, pips, kend, ICON['user']))
+
+def sftask(d, kc):
+    """The task our team gets, drawn as Salesforce lays one out (made-up group and member), with the follow-ups on it."""
+    posts = (('Day 3', 'Branch Intelligence · follow-up sent to EB Customer Care'), ('Day 6', 'Branch Intelligence · follow-up sent'), ('Day 8', 'EB Customer Care · Marcus Sample added, cover from 1 December'))
+    pl = ''.join('<div class="ept%s" style="--kd:%.2fs"><b>%s</b><span>%s</span></div>' % (' ok' if i == 2 else '', kc + i * .35, t, x) for i, (t, x) in enumerate(posts))
+    return ('<div class="etk" style="--kd:%.2fs"><div class="etkh"><i>%s</i><div><span>Task</span><b>Group Health and Group Life Member Enrolment &ndash; Marcus Sample &ndash; Harbour Point Logistics Ltd</b></div></div>'
+            '<div class="etkg"><div><span>Assigned to</span><b>Account manager</b></div><div><span>Due</span><b>in 2 working days</b></div><div><span>Status</span><b>Not Started</b></div></div>'
+            '<div class="etkc"><span>Chatter</span>%s</div>%s</div>' % (d, ICON['check'], pl, TAG))
+
+EN_CSS = """
+.er5{margin-top:18px;padding:16px 18px;border-radius:16px;background:#fff;border:1px solid #DCE3EE;box-shadow:0 10px 24px rgba(15,42,94,.08);animation:wup .5s both;animation-delay:var(--kd)}
+.er5h{font-size:15px;font-weight:600;color:#13408F;margin-bottom:12px}
+.er5r{display:flex;gap:8px;align-items:flex-end}
+.erp{flex:1;text-align:center;animation:pop .45s cubic-bezier(.2,1.5,.4,1) both;animation-delay:var(--kd)}
+.erp i{display:grid;place-items:center;width:42px;height:42px;margin:0 auto;border-radius:12px;background:#EBF2FD;color:#1D5BC4}
+.erp i svg{width:22px;height:22px}
+.erp span{display:block;font-size:12px;color:#4B586C;margin-top:6px;font-weight:600}
+.erp.hr i{background:#FFD36B;color:#13284D;box-shadow:0 0 0 0 rgba(245,184,46,.6);animation:jping 1.6s ease-out infinite;animation-delay:var(--kd)}
+.erp.hr span{color:#9A6200}
+.er5l{font-size:13px;color:#4B586C;margin-top:12px}
+.etk{position:relative;width:540px;padding:18px 20px 16px;border-radius:16px;background:#fff;border:1px solid #DCE3EE;box-shadow:0 18px 40px rgba(15,42,94,.16);
+  animation:wup .55s both;animation-delay:var(--kd)}
+.etkh{display:flex;gap:14px;align-items:flex-start}
+.etkh i{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:10px;background:#3BA755;color:#fff}.etkh i svg{width:22px;height:22px}
+.etkh span{display:block;font-size:12px;color:#4B586C;text-transform:uppercase;letter-spacing:.06em}
+.etkh b{display:block;font-size:16px;line-height:1.3;color:#142033;margin-top:2px}
+.etkg{display:flex;gap:10px;margin:14px 0 12px}
+.etkg div{flex:1;padding:8px 10px;border-radius:10px;background:#F3F6FB}
+.etkg span{display:block;font-size:11px;color:#4B586C}.etkg b{display:block;font-size:14px;color:#142033;margin-top:2px}
+.etkc>span{display:block;font-size:12px;font-weight:600;color:#13408F;margin-bottom:6px}
+.ept{display:flex;gap:10px;align-items:baseline;padding:8px 10px;border-left:3px solid #B8CEF4;margin-top:6px;background:#FAFBFD;border-radius:0 8px 8px 0;
+  animation:wup .45s both;animation-delay:var(--kd)}
+.ept b{flex:none;font-size:12px;color:#13408F}.ept span{font-size:13px;color:#2B374C}
+.ept.ok{border-left-color:#3BA755}.ept.ok b{color:#1B7A45}
+"""
+
+def enrp():
+    """Asked for on 24 November 2026, after "so whats the flow process for enrollments what actually happens when the form
+       is filled": "Ok so can you do a vid to show the enrollment process?". The whole process, start to finish, from the
+       group's own service page: HR sends the link, the employee's part on their phone, the reminders, HR checks Guardian's
+       form and approves Section F, it goes to EB Customer Care on GIO001 with the declaration, our team's task and the
+       follow-ups, and where every new member stands. The real pages and the real e-mails (the HTML GroupBilling.gs
+       writes), on a made-up group (Harbour Point Logistics Ltd), employee (Marcus Sample) and HR contact (Pat Admin),
+       every backend call mocked (enrp/shoot.js and enrp/mails.js in the scratchpad)."""
+    sc = []
+    away = at(1, 'twice') + .6
+    sc.append(split(1,
+        eb('Group health &amp; life &middot; enrolment', .3) +
+        '<h1>%s</h1>' % kin('One link. Start to finish.', .6, hi=('finish.',)) +
+        '<div class="tabs3">' + ''.join(chip('%s<i class="xs" style="--kd:%.2fs"></i>' % (t, away + i * .15), at(1, w), 'bad x')
+                                        for i, (t, w) in enumerate((('Paper forms', 'paper'), ('Filling it in twice', 'twice')))) + '</div>' + ejr(0, at(1, 'link'), 0),
+        '<div class="pile">%s<div class="onelink" style="--kd:%.2fs"><img src="%s" alt=""><b>One link</b><span>from your HR team to Guardian Life</span></div></div>'
+        % (''.join(paper(i, .2 + i * .12, away + i * .05) for i in range(6)), at(1, 'link') - .2, MARK), 'wide'))
+    sc.append(split(2,
+        eb('On your service page') +
+        row('users', 'Your service page', at(2, 'service'), 'your list bill and access code') +
+        row('cash', 'Your billing', at(2, 'billing'), 'where the Guardian forms are') +
+        row('user', 'Enrol a new member', at(2, 'enrol'), '') +
+        row('mail', 'Send them their own link', at(2, 'send'), 'they complete their own part', 'ok') + ejr(0, at(2, 'send') + .4),
+        lap('h1-start.png', d=.3, n=2, w=560, h=350, moves=((at(2, 'billing'), 'forms', 1.2), (at(2, 'enrol'), 'enrol', 2.0), (at(2, 'send'), 'link', 1.9)),
+            marks=((at(2, 'enrol') + .35, 'enrol'), (at(2, 'send') + .35, 'link')), taps=((at(2, 'enrol') + .2, 'enrol'),)),
+        'wide'))
+    sc.append(split(3,
+        eb('Four things to type') +
+        row('user', 'Their name', at(3, 'name'), '') +
+        row('mail', 'Their e-mail', at(3, 'e-mail'), 'their link goes there') +
+        row('shield', 'The plans they&rsquo;re joining', at(3, 'plans'), 'Group Health, Group Life, or both') +
+        row('clock', 'The date their cover starts', at(3, 'date'), '', 'ok'),
+        lap('h2-typed.png', d=.3, n=3, w=560, h=350,
+            moves=((at(3, 'name'), 'name', 1.6), (at(3, 'e-mail'), 'email', 1.9), (at(3, 'plans'), 'cover', 1.9), (at(3, 'date'), 'eff', 1.9), (at(3, 'press') - .3, 'go', 1.5)),
+            marks=((at(3, 'name') + .3, 'name'), (at(3, 'e-mail') + .3, 'email'), (at(3, 'plans') + .3, 'cover'), (at(3, 'date') + .3, 'eff')),
+            taps=((at(3, 'send') + .1, 'go'),)),
+        'wide'))
+    sc.append(split(4,
+        eb('Their own link') +
+        row('mail', 'By e-mail, from our branch', at(4, 'e-mail'), 'support@rickyrampersadbranch.com') +
+        row('lock', 'Only they can open it', at(4, 'Only'), 'never forwarded, never shared', 'ok') +
+        days60(at(4, 'sixty')),
+        '<div class="duo">%s%s</div>' % (
+            lap('h3-sent.png', 'back', .2, n=4, w=460, h=290, moves=((.2, 'marcus', 1.6),), marks=((.8, 'marcus'),)),
+            phone('m1-link.png', 'front', at(4, 'link', lead=.4), n=4, moves=((at(4, 'Only'), 'button', 1.25),), marks=((at(4, 'Only') + .4, 'button'),))),
+        'wide2'))
+    sc.append(split(5,
+        eb('On their phone') +
+        steps4((('Their name', 'already there', at(5, 'name'), at(5, 'name') + .3),
+                ('Their company', 'already there', at(5, 'company'), at(5, 'company') + .3),
+                ('Their cover', 'already ticked', at(5, 'cover'), at(5, 'cover') + .3),
+                ('The start date', 'from the link', at(5, 'filled'), at(5, 'filled') + .3))) +
+        '<div class="rgrow">%s<div class="note big2" style="--kd:%.2fs">About ten minutes,<br>one step at a time.</div></div>'
+        % (ring(10, at(5, 'ten', lead=.3), 'minutes'), at(5, 'ten') + .5) + ejr(1, at(5, 'phone')),
+        phone('p1-hello.png', d=.3, n=5, marks=((at(5, 'name'), 'invcard'), (at(5, 'company') + .2, 'company'))),
+        'wide2'))
+    sc.append(split(6,
+        eb('Their part') +
+        steps4((('Their details and family', 'who is covered', at(6, 'details'), at(6, 'family') + .2),
+                ('Who group life pays', 'and the share for each', at(6, 'pays'), at(6, 'pays') + .3),
+                ('Health questions', 'one tick if all is well', at(6, 'health'), at(6, 'tick') + .2),
+                ('Signed on the screen', 'with a finger', at(6, 'sign'), at(6, 'finger') + .2))),
+        '<div class="duo">%s%s</div>' % (
+            phone('p3-health.png', 'back', .2, n=6, w=200, marks=((at(6, 'tick'), 'well'),), taps=((at(6, 'tick'), 'well'),)),
+            phone('p4-sign.png', 'front', at(6, 'sign', lead=.4), n=6, marks=((at(6, 'sign') + .2, 'sig'),))),
+        'wide2'))
+    sc.append(split(7,
+        eb('Sent, or reminded') +
+        row('check', 'They&rsquo;re told it&rsquo;s done', at(7, 'done'), 'and who checks it next', 'ok') +
+        remind5(at(7, 'reminder'), at(7, 'know')),
+        phone('p5-done.png', d=.3, n=7, marks=((at(7, 'told') + .2, 'done'),)),
+        'wide2'))
+    sc.append(split(8,
+        eb('Then you, at HR') +
+        row('mail', 'An e-mail: ready for you to check', at(8, 'e-mail'), 'sent the moment they finish') +
+        row('doc', 'Guardian&rsquo;s own form, filled in', at(8, 'form'), 'GIO001, exactly as it prints') +
+        row('lock', 'Their health answers stay private', at(8, 'health'), 'they go to Guardian Life, not to you', 'ok') + ejr(2, at(8, 'check'), 1),
+        '<div class="duo l">%s%s</div>' % (
+            lap('m2-ready.png', 'back', .2, n=8, w=520, h=325, moves=((.3, 'subj', 1.3), (at(8, 'check') - .2, 'button', 1.7)), marks=((at(8, 'check'), 'button'),)),
+            lap('sg2-check.png', 'front', at(8, 'see', lead=.6), n=8, w=520, h=325, moves=((at(8, 'form'), 'pdf', 1.25),), marks=((at(8, 'form') + .4, 'pdf'),))),
+        'wide3'))
+    sc.append(split(9,
+        eb('Your last step') +
+        row('doc', 'The employer&rsquo;s part', at(9, 'employer'), 'Section F: dates, tier, salary') +
+        row('tick2', 'Confirm you&rsquo;re authorised', at(9, 'confirm'), 'for the company') +
+        row('check', 'Approve', at(9, 'approve'), 'and it goes to Guardian Life', 'ok') +
+        '<div class="punch" style="--kd:%.2fs">That&rsquo;s your last step.</div>' % at(9, 'last', lead=.2) + ejr(2, at(9, 'approve'), 2),
+        '<div class="duo l">%s%s</div>' % (
+            lap('sg2-check.png', 'back', .2, n=9, w=520, h=325, moves=((.2, 'secf', 1.5),), marks=((at(9, 'employer') + .3, 'secf'),)),
+            lap('sg2b-approve.png', 'front', at(9, 'confirm', lead=.5), n=9, w=520, h=325, moves=((at(9, 'confirm'), 'auth', 1.6), (at(9, 'approve') - .2, 'go', 1.7)),
+                marks=((at(9, 'authorised'), 'auth'),), taps=((at(9, 'approve') + .2, 'go'),))),
+        'wide3'))
+    sc.append(split(10,
+        eb('Straight to Guardian Life') +
+        row('shield', 'Guardian&rsquo;s group benefits team', at(10, 'Guardian'), 'EB Customer Care') +
+        row('doc', 'On Guardian&rsquo;s own form', at(10, 'application'), 'GIO001, filled from their answers') +
+        row('tick2', 'The declaration and the signature', at(10, 'declaration'), 'attached') +
+        row('mail', 'Our branch copied', at(10, 'copied'), '', 'ok') + ejr(3, at(10, 'straight'), 2),
+        '<div class="duo l">%s%s</div>' % (
+            lap('m3-pack.png', 'back', .2, n=10, w=520, h=325, moves=((.3, 'to', 1.4), (at(10, 'declaration') - .3, 'atts', 1.6)), marks=((at(10, 'declaration'), 'atts'),)),
+            card('g1-gio.png', 'front', at(10, 'application', lead=.5), n=10, w=300, maxh=400, moves=((at(10, 'signature') - .2, 'sig', 2.2),), marks=((at(10, 'signature') + .4, 'sig'),))),
+        'wide3'))
+    sc.append(split(11,
+        eb('Seen through by our team') +
+        row('check', 'A task the same moment', at(11, 'task'), 'for the account manager, in Salesforce', 'ok') +
+        cadence(at(11, 'three')) + ejr(4, at(11, 'task'), 3),
+        sftask(.3, at(11, 'follow')),
+        'wide'))
+    sc.append(split(12,
+        eb('Where everyone stands') +
+        '<h2>%s</h2>' % kin('Every new member, one glance.', at(12, 'stands', lead=.5), hi=('glance.',)) + stacked(at(12, 'Waiting')),
+        lap('sg3-sent.png', d=.3, n=12, w=560, h=350, moves=((at(12, 'stands'), 'panel', 1.3),), marks=((at(12, 'Guardian'), 'sent'),)),
+        'wide'))
+    sc.append(S(13,
+        '<div class="mid"><div class="burst">%s</div><img class="mk" src="%s" alt="">%s<h1>%s</h1>'
+        '<div class="ok3"><div style="--kd:%.2fs"><b>&#10003;</b>Nothing retyped</div><div style="--kd:%.2fs"><b>&#10003;</b>Every step on the record</div>'
+        '<div style="--kd:%.2fs"><b>&#10003;</b>A journey, not a transaction</div></div>'
+        '<div class="sub" style="--kd:%.2fs">Group health &amp; life &middot; Ricky Rampersad Branch &middot; Guardian Life of the Caribbean</div></div>'
+        % (''.join('<i style="--kd:%.2fs"></i>' % (k * .8) for k in range(3)), MARK, eb('Joining your group plan', .4),
+           kin('One link.', at(13, 'link', lead=.3), hi=('link.',)), at(13, 'retyped'), at(13, 'record'), at(13, 'journey'), at(13, 'transaction') + .6),
+        'blue'))
+    return sc
+
 def main():
-    sc = {'client': client, 'walk': walk, 'staff': staff, 'pension': pension, 'henr': henr, 'term': term, 'slink': slink}[FILM]()
+    sc = {'client': client, 'walk': walk, 'staff': staff, 'pension': pension, 'henr': henr, 'term': term, 'slink': slink, 'enrp': enrp}[FILM]()
     if len(sc) != N_LINES:
         sys.exit('SCENES: %d scenes for %d lines' % (len(sc), N_LINES))
     title = {'client': 'Our new way of looking after your group', 'staff': 'Group client management, the new way', 'walk': 'What you see when you sign in',
              'pension': 'Company pensions, without the paperwork', 'henr': 'Joining your group health plan',
-             'term': 'When someone leaves your plan', 'slink': 'A new member’s own link'}[FILM]
+             'term': 'When someone leaves your plan', 'slink': 'A new member’s own link',
+             'enrp': 'Joining your group plan, start to finish'}[FILM]
     page = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex">'
-            '<title>%s</title><style>' % title + (CSS + PEN_CSS + SL_CSS).replace('__PLEX__', PLEX) + '</style></head><body>'
+            '<title>%s</title><style>' % title + (CSS + PEN_CSS + SL_CSS + EN_CSS).replace('__PLEX__', PLEX) + '</style></head><body>'
             '<div id="stage" style="--total:%dms"><div class="dots grain"></div><div class="glow g1"></div><div class="glow g2"></div><i id="prog" class="grain"></i>' % sum(DURS)
             + '\n'.join(sc) + '</div><div id="strip"></div><style>' + ''.join(EXTRA) + '</style>'
             '<script>'
@@ -1654,7 +1828,7 @@ def main():
     #  render.js puts .act / .out on the live and outgoing section and reads .cnt for counters: a rule whose subject is
     #  one of those lands on the scene itself (the meeting film once clipped 420px off every frame that way).
     RESERVED = {'act', 'out', 'cnt', 'sc', 'in', 'rolling', 'grain'}
-    for m in re.finditer(r'([^{}]+)\{', CSS + PEN_CSS + SL_CSS):
+    for m in re.finditer(r'([^{}]+)\{', CSS + PEN_CSS + SL_CSS + EN_CSS):
         for sel in m.group(1).split(','):
             subject = re.split(r'[\s>+~]+', sel.strip())[-1]
             if subject.startswith('@') or subject in ('from', 'to') or re.fullmatch(r'[\d.]+%?', subject):
