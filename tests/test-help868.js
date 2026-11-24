@@ -26,7 +26,7 @@ function sheet(name, rows) {
 const RH = ['POLICY', 'application_number', 'Agent Name', 'REQUIREMENT_CODE', 'requirement_name', 'WHO_ACTS_NEXT', 'RAG_STATUS', 'REQUIREMENT_STATUS', 'DAYS_SINCE_SUBMISSION', 'DecisionType', 'mode_premium', 'SUSPENDED_AMOUNT'];
 const tabs = [
   sheet('HELP868 Agents', [['Agent no.', 'Name', 'WhatsApp number', 'Active', 'Pendings'],
-    ['', 'Neil Ramnanan', '+1 (868) 555-0101', 'Yes', ''], ['A10031', 'Joy Sammah', '868 555 0102', 'No', ''], ['', 'Rajiv Soodoo', '8685550103', 'Yes', 'No'], ['', 'Seven Digits', '5550104', 'Yes', '']]),
+    ['', 'Neil Ramnanan', '+1 (868) 555-0101', 'Yes', ''], ['A10031', 'Joy Sammah', '868 555 0102', 'No', ''], ['', 'Rajiv Soodoo', '8685550103', 'Yes', 'No'], ['', 'Seven Digits', '5550104', 'Yes', ''], ['A06869', 'Akaash Kalladeen', '8685550201', 'Yes', ''], ['SL002', 'Sasha Lalla', '8685550202', 'Yes', '']]),
   sheet('Pendings Chase', [['Policy', 'Agent', 'Task', 'Owner', 'Due', 'Open tasks', 'Overdue', 'Last note at', 'Last note by', 'Last note', 'Earlier notes', 'Updated'],
     ['5000000001', 'Neil Ramnanan', 'Pending forms - CLIENT SMITH', 'Sasha Lalla-Jagassar', '2026-10-30', 1, 1, '1 Nov, 9:00 AM', 'Sasha Lalla-Jagassar', 'CLIENT SMITH medical booked', '[]', '2 Nov 2026, 6:00 AM'],
     ['5000000002', 'Neil Ramnanan', '', '', '', 0, 0, '', '', '', '[]', '2 Nov 2026, 6:00 AM'],
@@ -52,7 +52,10 @@ env.tTeam_ = () => ({ people: [
   { name: 'Neil Ramnanan', no: 'A10024', email: 'neil@example.com', role: 'agent', active: true },
   { name: 'Joy Sammah', no: 'A10031', email: 'joy@example.com', role: 'agent', active: true },
   { name: 'Rajiv Soodoo', no: 'A10040', email: 'rajiv@example.com', role: 'agent', active: true },
-  { name: 'Sasha Lalla', no: 'S1', email: 'sasha@example.com', role: 'staff', active: true }] });
+  { name: 'Sasha Lalla', no: 'SL002', email: 'sasha@example.com', role: 'staff', active: true },
+  { name: 'Akaash Kalladeen', no: 'A06869', email: 'akaash@example.com', role: 'um', unit: 'Akaash Kalladeen', active: true },
+  { name: 'Someone Else', no: 'A20002', email: 'se@example.com', role: 'agent', unit: 'Akaash Kalladeen', active: true },
+  { name: 'Staff Two', no: 'A00002', email: 's2@example.com', role: 'agent', active: true }] });
 let aiKey = '';
 env.gcmAiKey_ = () => aiKey;
 let sfReady = false; env.tSfOn_ = () => sfReady;
@@ -109,7 +112,7 @@ ok('task facts: open, overdue, who has it, last noted', c.task.openTasks === 1 &
 ok('no money, client name or note words anywhere', !/999|555|SMITH|medical|secret/.test(JSON.stringify(c)));
 c = route({ ...base, action: 'help868.case', policy: '0002' });
 ok('last digits that fit one case find it', c.found && c.policy === '5000000002', JSON.stringify(c).slice(0, 120));
-ok('digits that fit two cases ask for more', /2 of this agent/.test(route({ ...base, action: 'help868.case', policy: '0001' }).message));
+ok('digits that fit two cases ask for more', /2 cases you can see/.test(route({ ...base, action: 'help868.case', policy: '0001' }).message));
 ok('another agent\'s policy is not found', route({ ...base, action: 'help868.case', policy: '5000000003' }).found === false);
 ok('under four digits asks for more', /last four/.test(route({ ...base, action: 'help868.case', policy: '123' }).message));
 ok('Salesforce is off by default', c.salesforce === 'off');
@@ -219,11 +222,27 @@ let limited = false; for (let i = 0; i < 45; i++) if (route({ key: KEY, action: 
 ok('one number is rate limited', limited);
 
 const out = route({ action: 'help868.ping' });
-ok('ping says what is ready, as true or false, and nothing else about it', out.ok === true && out.on === true && out.agents === 3 && out.pendingReport === true && out.pendingsChase === true && out.salesforceReady === true && out.claudeReady === false && out.mailReady === true && Object.keys(out).sort().join() === 'agents,claudeReady,mailReady,ok,on,pendingReport,pendingsChase,salesforce,salesforceReady', JSON.stringify(out));
+ok('ping says what is ready, as true or false, and nothing else about it', out.ok === true && out.on === true && out.agents === 5 && out.pendingReport === true && out.pendingsChase === true && out.salesforceReady === true && out.claudeReady === false && out.mailReady === true && Object.keys(out).sort().join() === 'agents,claudeReady,mailReady,ok,on,pendingReport,pendingsChase,salesforce,salesforceReady', JSON.stringify(out));
 aiKey = 'sk-test-0123456789'; ok('claudeReady follows the Anthropic key', route({ action: 'help868.ping' }).claudeReady === true); aiKey = '';
 const fs = require('fs'), svc = fs.readFileSync(__dirname + '/../apps-script/Service.gs', 'utf8');
 ok('Service.gs routes help868 actions on both GET and POST', (svc.match(/help868Route_\(p\)/g) || []).length === 1 && (svc.match(/help868Route_\(body\)/g) || []).length === 1);
 const kpi = fs.readFileSync(__dirname + '/../apps-script/KPI.gs', 'utf8');
 ok('the tracker carries no HELP 868 code', !/help868/i.test(kpi));
 ok('the enquiry route takes no script lock', !/LockService|waitLock/.test(require('fs').readFileSync(__dirname + '/../apps-script/Help868.gs', 'utf8')));
+// who sees what (24 Nov 2026): the branch and staff everything, a unit manager his unit, an agent their own
+const signIn = (phone, no) => { cache.remove('h868g_' + phone); cache.remove('h868_' + phone); route({ key: KEY, phone, action: 'help868.code', agentNo: no }); const c = lastCode(); return route({ key: KEY, phone, action: 'help868.verify', code: c }); };
+const sv = signIn('8685550202', 'SL002');
+ok('staff sign in, by their own code (SL002 is not agent 2)', sv.verified === true && /whole branch/.test(sv.sees), JSON.stringify(sv));
+let sp = route({ key: KEY, phone: '8685550202', action: 'help868.pendings' });
+ok('staff see every agent, with a count by agent', sp.total === 4 && sp.byAgent && sp.byAgent.length === 2, JSON.stringify(sp).slice(0, 200));
+ok('staff can narrow to one agent', route({ key: KEY, phone: '8685550202', action: 'help868.pendings', agent: 'Someone Else' }).total === 1);
+ok('staff can open any agent\'s case', route({ key: KEY, phone: '8685550202', action: 'help868.case', policy: '0003' }).found === true);
+const uv = signIn('8685550201', 'A06869');
+ok('a unit manager signs in to his unit', uv.verified === true && /your unit \(1 agents\)/.test(uv.sees), JSON.stringify(uv));
+let up = route({ key: KEY, phone: '8685550201', action: 'help868.pendings' });
+ok('a unit manager sees his agents and nobody else\'s', up.total === 1 && up.cases[0].agent === 'Someone', JSON.stringify(up).slice(0, 200));
+ok('a unit manager opens his agent\'s case', route({ key: KEY, phone: '8685550201', action: 'help868.case', policy: '0003' }).found === true);
+ok('a unit manager cannot open another unit\'s case', route({ key: KEY, phone: '8685550201', action: 'help868.case', policy: '0002' }).found === false);
+ok('naming an agent outside the unit is refused, never widened', /not one you can see/.test(route({ key: KEY, phone: '8685550201', action: 'help868.pendings', agent: 'Neil Ramnanan' }).message || ''));
+ok('agent numbers: A10024 and 10024 are one; SL002 and A00002 are not', env.help868AgentNo_('A10024') === env.help868AgentNo_('10024') && env.help868AgentNo_('SL002') !== env.help868AgentNo_('A00002') && env.help868AgentNo_('A06869 - Akaash Kalladeen') === '6869');
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed'); process.exit(fails ? 1 : 0);
