@@ -228,6 +228,44 @@
   .tbar{display:flex;height:1.3rem;border-radius:.5rem;overflow:hidden;margin-top:.35rem;background:rgba(255,255,255,.06)} .tbar i{display:block;height:100%}
   .tl{display:flex;flex-wrap:wrap;gap:.25rem .8rem;margin-top:.35rem;font:600 .85rem var(--fb);color:var(--dim)} .tl b{color:var(--ink)} .tl i{display:inline-block;width:.65rem;height:.65rem;border-radius:.2rem;margin-right:.25rem} .tl .ina{color:var(--coral)}
   .ar{display:flex;align-items:center;gap:.7rem;margin-top:.4rem} .ar b{font:800 1.05rem var(--fd);white-space:nowrap} .arb{flex:1;height:1.15rem;border-radius:.5rem;background:rgba(232,98,90,.35);overflow:hidden} .arb i{display:block;height:100%;background:var(--green)}
+  .fu{position:absolute;left:.3rem;top:.85rem;font:900 .95rem var(--fd);font-style:normal} .fu.ok{color:var(--gold)} .fu.no{color:#E8625A} .tylg .fu{position:static;transform:none} .tylg s{text-decoration:none;color:var(--dim)}
+  .dk .nm span.fuc{font-weight:800} .dk .nm span.fuc.ok{color:var(--gold)} .dk .nm span.fuc.no{color:#E8625A}
+
+  /* the drill-in: the whole slide for one person */
+  .drill{position:absolute;inset:.9rem 2.2rem 1rem;z-index:6;display:flex;flex-direction:column;gap:.8rem;padding:1rem 1.4rem;background:linear-gradient(180deg,rgba(24,26,34,.98),rgba(18,20,27,.98))}
+  .drill[hidden]{display:none}
+  body.drilling main > section:not(.drill){visibility:hidden}
+  .dh{display:flex;align-items:center;gap:.9rem}
+  .dh button{font:800 1.3rem var(--fd);color:var(--ink);background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:.8rem;padding:.4rem .9rem;cursor:pointer}
+  .dh .dx{margin-left:auto;font-size:1rem}
+  .dn b{display:block;font:800 1.9rem var(--fd)} .dn span{font:600 .9rem var(--fb);color:var(--faint)}
+  .dd{display:flex;flex-wrap:wrap;gap:.35rem;margin-left:1rem} .dd i{font:700 .9rem var(--fb);font-style:normal;color:var(--dim);background:rgba(255,255,255,.05);border-radius:1rem;padding:.25rem .7rem;cursor:pointer}
+  .dd i.on{background:var(--gold);color:#1B1A22} .dd i.me{color:var(--rose)} .dd i.me.on{background:var(--rose);color:#1B1A22}
+  .dtop{height:22rem;flex:none;position:relative}
+  .dtop .hbs{height:12rem} .dtop .pnm{display:none} .dtop .prw{width:11rem;height:11rem} .dtop .pst{font-size:.98rem} .dtop .tl{font-size:.95rem}
+  .dhr{flex:1;min-height:0;display:grid;grid-template-columns:12rem repeat(10,minmax(0,1fr));gap:.45rem}
+  .hc2{display:grid;grid-template-rows:2.2rem 3.6rem repeat(5,minmax(2.2rem,1fr));gap:.3rem;background:rgba(255,255,255,.035);border-radius:.8rem;padding:.3rem .25rem}
+  .hc2.lab{background:none} .hc2.lab .r{justify-content:flex-start;font:700 .95rem var(--fb);color:var(--dim)} .hc2.lab .r.big2{color:var(--ink)}
+  .hc2 .hh{display:flex;align-items:center;justify-content:center;font:800 1rem var(--fd);color:var(--faint)} .hc2 .hh.now{color:var(--gold)}
+  .hc2 .r{display:flex;align-items:center;justify-content:center;font:800 1.15rem var(--fd);color:var(--ink);border-top:1px solid rgba(255,255,255,.06)}
+  .hc2 .r.big2{font-size:1.7rem;color:var(--green)} .hc2 .r.big2 s{text-decoration:none;font-size:.7em;color:var(--dim)}
+  .hc2 .r.rose{color:var(--rose)} .hc2 .r.gold{color:var(--gold)}
+  .hc2 .fu{position:static;transform:none;font-size:1.4rem}
+  .hc2.met{box-shadow:inset 0 0 0 3.5px rgba(120,209,152,.85)} .hc2.miss{box-shadow:inset 0 0 0 3.5px rgba(232,98,90,.9)}
+  .hc2.fut{opacity:.4} .hc2.off .offk{grid-row:2 / -1;color:var(--faint);font:700 .9rem var(--fb);text-transform:uppercase;letter-spacing:.1em;border:0}
+  @media (max-width:900px){ .drill{position:fixed;inset:0;overflow:auto} .dtop{height:auto} .dhr{grid-template-columns:8rem repeat(10,6rem);overflow-x:auto} .dd{display:none} }
+  .dgo{display:flex;gap:.5rem;margin-top:.7rem} .dgo button{font:800 .9rem var(--fd);color:#1B1A22;background:var(--gold);border:0;border-radius:.7rem;padding:.45rem .8rem;cursor:pointer} .dgo button.me{background:var(--rose)}
+  .dban{display:flex;align-items:center;gap:1.2rem;border-radius:1rem;padding:.7rem 1.2rem;font:600 1.05rem var(--fb);color:var(--ink)}
+  .dban:empty{display:none} .dban b{font:900 2rem var(--fd);letter-spacing:.02em;white-space:nowrap} .dban em{font-style:normal;font-weight:900;font-size:1.3em}
+  .dban.off{background:linear-gradient(90deg,rgba(232,98,90,.45),rgba(232,98,90,.12));box-shadow:inset 0 0 0 3px rgba(232,98,90,.9);animation:alarm 1.6s ease-in-out infinite} .dban.off b{color:#FFB3AC}
+  .dban.ok{background:linear-gradient(90deg,rgba(120,209,152,.35),rgba(120,209,152,.08));box-shadow:inset 0 0 0 3px rgba(120,209,152,.8)} .dban.ok b{color:var(--green)}
+  @keyframes alarm{50%{box-shadow:inset 0 0 0 3px rgba(232,98,90,.35),0 0 2.2rem rgba(232,98,90,.35)}}
+  .hc2{position:relative} .stamp{position:absolute;left:50%;top:1.05rem;transform:translate(-50%,-50%) rotate(-6deg);font:900 1rem var(--fd);letter-spacing:.08em;padding:.25rem .55rem;border-radius:.4rem;white-space:nowrap;pointer-events:none;z-index:2}
+  .stamp.no{color:#FF8A80;border:3px solid #E8625A;background:rgba(40,12,12,.75)} .stamp.ok{color:var(--green);border:3px solid rgba(120,209,152,.8);background:rgba(10,30,18,.6);opacity:.8}
+  .hc2.miss{background:rgba(232,98,90,.12)}
+  .dk.offt{box-shadow:inset .45rem 0 0 #E8625A;animation:slide .7s var(--ease) forwards,offt 1.8s ease-in-out .7s infinite;animation-delay:var(--d,0s),calc(var(--d,0s) + .7s)} @keyframes offt{50%{box-shadow:inset .45rem 0 0 rgba(232,98,90,.3)}}
+  .dk.offt .nm{padding-left:.9rem} .dk .nm span.beh{font:900 .85rem var(--fd);color:#1B1A22;background:#E8625A;border-radius:.4rem;padding:.08rem .45rem;align-self:flex-start;margin-top:.15rem}
+  @media (prefers-reduced-motion:reduce){ .dban.off{animation:none} .dk.offt{animation:slide .01s forwards} }
   .mrs{display:flex;flex-direction:column;gap:.45rem;margin-top:.6rem} .mr{display:grid;grid-template-columns:6.5rem minmax(0,1fr) 3.6rem 6rem;align-items:center;gap:.6rem;font:700 .95rem var(--fb)} .mr b{font:800 1rem var(--fd);text-align:right} .mr em{font-style:normal;font-size:.85rem;color:var(--dim)} .mr em.red{color:#E8625A}
   .wl2{display:flex;flex-direction:column;gap:.15rem;margin-top:.35rem;font:600 .82rem var(--fb);color:var(--dim)} .wl2 b{color:#E8625A}
   .cell.pace{box-shadow:inset 0 -.28rem 0 #78D198} .cell.behind{box-shadow:inset 0 -.28rem 0 #E8625A}
@@ -262,7 +300,8 @@
   <section class="card top g" id="top" style="--d:0s">
     <div class="kpi"><div class="kick">Closed today &middot; the desks</div><div class="big" id="kN">0</div>
       <div class="of" id="kOf">Reading Salesforce&hellip;</div><div class="gone"><i id="kGone"></i></div><div class="gk" id="kGk"></div>
-      <div class="tdots" id="tdots"><i class="on"></i><i></i><i></i><i></i><i></i><span id="tdk">hour by hour</span></div></div>
+      <div class="tdots" id="tdots"><i class="on"></i><i></i><i></i><i></i><i></i><span id="tdk">hour by hour</span></div>
+      <div class="dgo"><button onclick="drillShow(0)">Drill in: each person &#9654;</button><button class="me" onclick="openPerson('ricky')">My day &#9654;</button></div></div>
     <div class="tp" id="tp">
       <div class="tpage p0" id="p0"><div class="chart" id="chart"></div><div class="legend" id="legend"></div></div>
       <div class="tpage p1 out" id="p1"></div>
@@ -277,6 +316,13 @@
     <div class="tylg" id="tylg"></div>
     <div id="desks" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
     <div class="foot" id="foot"></div>
+  </section>
+  <section class="card drill" id="drill" hidden>
+    <div class="dh"><button id="dPrev" aria-label="Previous person">&#9664;</button><div class="dn"><b id="dName"></b><span id="dPos"></span></div><button id="dNext" aria-label="Next person">&#9654;</button>
+      <div class="dd" id="dDots"></div><button class="dx" id="dClose" aria-label="Back to the whole branch">&times; the whole branch</button></div>
+    <div class="dban" id="dBan"></div>
+    <div class="dtop" id="dTop"></div>
+    <div class="dhr" id="dHours"></div>
   </section>
 </main>
 <div class="ticker"><div class="in" id="tk"></div></div>
@@ -333,11 +379,14 @@ function paint(){
   $("#desks").innerHTML = H.desks.map(function(d, di){
     var ME = H.me || {}, t = team[d.name] || {}, chip = d.auto ? '<span>'+(ME.checkin ? 'in '+esc(ME.checkin)+' &middot; ' : '')+'you and the automation</span>' : t.absent ? '<span class="out">away today</span>' : t.at ? '<span class="'+(t.late>0?'late':'ok')+'">in '+esc(t.at)+(t.late>0?' &middot; '+fmt(t.late)+' min late':'')+'</span>' : '<span class="out">not checked in</span>';
     var AK = {}; ((H.asks||{}).desks||[]).forEach(function(a){ AK[a.sid] = a; }); var ak = AK[d.sid];
+    var PC = !d.auto && !t.absent ? paceOf(d, H) : null; if(PC && PC.gap > 0) chip += '<span class="beh">BEHIND BY '+fmt(PC.gap)+' &middot; close '+fmt(PC.byNext)+' by '+PC.at+'</span>';
+    var FU = d.firstUp; if(FU && FU.blocks) chip += '<span class="fuc '+(FU.first >= FU.blocks/2 ? 'ok' : 'no')+'">Yours first '+fmt(FU.first)+'/'+fmt(FU.blocks)+' hrs'+(FU.morning === false ? ' &middot; not this am' : FU.morning ? ' &middot; first this am' : '')+'</span>';
     var cum = 0, pace = function(i){ if(!d.target || d.start == null || d.end == null || d.end <= d.start) return ""; var hEnd = (H.from + i + 1) * 60;
       var exp = d.target * Math.max(0, Math.min(hEnd, d.end) - d.start) / (d.end - d.start); if(exp < 0.5) return ""; return cum >= exp ? " pace" : " behind"; };
     var cells = d.hours.map(function(x, i){ var h = H.from + i, cls = h + 1 <= nowH ? "" : (h <= nowH ? " now" : " fut");
       cum += x.c || 0; if(!cls && !d.auto && !t.absent) cls += pace(i);
       var am = ak && ak.hours && ak.hours[i] ? ak.hours[i] : null, askTag = am && (am.a || am.r) ? '<u class="ask">'+(am.a ? '✉'+am.a : '')+(am.r ? ' ↩'+am.r : '')+'</u>' : '';
+      var fuH = d.firstUp && d.firstUp.hours ? d.firstUp.hours[i] : 0; if(fuH) askTag += '<i class="fu '+(fuH > 0 ? 'ok">★' : 'no">!')+'</i>';
       if(d.auto){ var yn = ME.notesH ? ME.notesH[i] : (x.n||0), ye = ME.emailsH ? ME.emailsH[i] : 0;
         return '<div class="cell auto'+cls+'">'+(yn || ye ? '<b>'+fmt(yn)+(ye ? '<s> +'+fmt(ye)+'✉</s>' : '')+'</b>' : '')+(x.a ? '<em>'+fmt(x.a)+' auto</em>' : '')+'</div>'; }
       // Each hour is a block with its own share of the day's KPI (24 Nov 2026: "staff operate in blocks ... I am only seeing
@@ -364,7 +413,7 @@ function paint(){
         + (d.open != null ? '<div class="bar rsp"><i data-w="'+(d.pend ? (100*d.pendResp/d.pend).toFixed(1) : 0)+'" style="background:var(--green)"></i></div>'
           + '<small class="rs'+(d.pend && d.pendResp < d.pend/2 ? ' bad' : '')+'">Pendings answered <b>'+fmt(d.pendResp||0)+'/'+fmt(d.pend||0)+' today</b></small>' : '')
         + '</div>';
-    return '<div class="g dk'+(d.auto?' me':'')+'" style="--d:'+(0.08*di).toFixed(2)+'s"><div class="nm" onclick="openPerson(\''+d.sid+'\')" style="cursor:pointer" title="Open '+esc(d.name)+'\'s day in depth"><b>'+esc(d.name)+'</b>'+chip+'</div>'+cells+'<div class="st">'+stats+'</div></div>'; }).join("");
+    return '<div class="g dk'+(d.auto?' me':'')+(PC && PC.gap > 0 ? ' offt' : '')+'" style="--d:'+(0.08*di).toFixed(2)+'s"><div class="nm" onclick="openPerson(\''+d.sid+'\')" style="cursor:pointer" title="Open '+esc(d.name)+'\'s day in depth"><b>'+esc(d.name)+'</b>'+chip+'</div>'+cells+'<div class="st">'+stats+'</div></div>'; }).join("");
   // the foot
   var A = H.agents || [];
   var Ac = A.filter(function(a){ return a.c > 0; });
@@ -375,9 +424,9 @@ function paint(){
         return (act.length ? '<span class="fk a">Active</span>'+act.map(function(a,i){ return chip(a,i,''); }).join("") : '')
           + (ina.length ? '<span class="fk i">Inactive</span>'+ina.map(function(a,i){ return chip(a,i,' ina'); }).join("") : ''); })()
     + '<span class="ages">'+AGEK.map(function(k, i){ return '<span><i style="background:'+AGEC[i]+'"></i>'+k+'</span>'; }).join("")+'</span>';
-  $("#tylg").innerHTML = '<span style="color:var(--ink);font-weight:800">Each hour: tasks closed by type / the hour\'s KPI &middot; green outline met, red missed</span>'
+  $("#tylg").innerHTML = '<span style="color:var(--ink);font-weight:800">How to read an hour: <b style="color:var(--green)">2</b><s>/3</s> = 2 closed of the hour\'s KPI of 3 &middot; each number in its task type\'s colour &middot; green outline met, red missed &middot; ✉ your asks that hour, ↩ answered &middot; <i class="fu ok">★</i> your task came first, <i class="fu no">!</i> other work first while yours waited</span>'
     + Object.keys(TYC).filter(function(k){ return k!=="Not typed"; }).map(function(k){ return '<span><i style="background:'+TYC[k]+'"></i>'+(k==="Renewa/PDl/Bill"?"Renewals · PDL · Billing":k)+'</span>'; }).join("");
-  rings(); bubbles(); asksPage(); turnTop();
+  rings(); bubbles(); asksPage(); turnTop(); drillRefresh();
   // motion
   later(function(){
     Array.prototype.forEach.call(document.querySelectorAll(".arc"), function(a){ a.style.strokeDashoffset = a.getAttribute("data-off"); });
@@ -452,12 +501,12 @@ var tpT = null, tpAt = 0, holdUntil = 0, pAt = -1;
    each block's goal, the work they touched by type, your asks to them and how fast they answered with what still waits, their
    WhatsApp conversations, and the agents they served. The wall turns through the desks one each time this page comes round; a
    tap on a desk's name opens theirs and holds it for a minute. */
-function personPage(sid){
-  var H = D && D.hours; if(!H || !H.desks) return;
-  var list = H.desks.slice(); if(!list.length){ $("#p4").innerHTML = '<div class="empty">No desk yet today.</div>'; return; }
+function personPage(sid, el){
+  el = el || $("#p4"); var H = D && D.hours; if(!H || !H.desks) return;
+  var list = H.desks.slice(); if(!list.length){ el.innerHTML = '<div class="empty">No desk yet today.</div>'; return; }
   var d = sid ? list.filter(function(x){ return x.sid === sid; })[0] : null;
   if(!d){ pAt = (pAt + 1) % list.length; d = list[pAt]; } else pAt = list.indexOf(d);
-  if(d.auto) return mePage(d, H);
+  if(d.auto) return mePage(d, H, el);
   var A = {}; ((H.asks||{}).desks||[]).forEach(function(a){ A[a.sid] = a; }); var a = A[d.sid] || {};
   var R = {}; (((H.rio||{}).people)||[]).forEach(function(p){ if(p.sid) R[p.sid] = p; }); var r = R[d.sid];
   var tm = {}; (((D.system||{}).team)||[]).forEach(function(t){ tm[String(t.name||"").split(" ")[0]] = t; }); var t = tm[d.name] || {};
@@ -480,7 +529,7 @@ function personPage(sid){
   var types = (d.byType||[]), tn = types.reduce(function(s,x){ return s+x.n; },0) || 1;
   var rate = a.asked ? Math.round(100*a.answered/a.asked) : null, prate = d.pend ? Math.round(100*(d.pendResp||0)/d.pend) : null;
   var ags = ((H.agents)||[]).map(function(g){ var hit = (g.by||[]).filter(function(b){ return b.k === d.name; })[0]; return hit ? { k: g.k, n: hit.n, active: g.active !== false && g.k !== ORPH } : null; }).filter(Boolean).sort(function(x,y){ return y.n-x.n; });
-  $("#p4").innerHTML = '<div class="pp">'
+  el.innerHTML = '<div class="pp">'
     + '<div class="pc1"><div class="pnm">'+esc(d.name)+'</div><div class="pin">'+(t.absent?'away today':t.at?'in '+esc(t.at)+(t.late>0?' &middot; '+fmt(t.late)+' min late':''):'not checked in')+'</div>'
     + '<div class="prw">'+ringSvg+'<div class="pin2"><b>'+fmt(d.closed||0)+'</b><small>of '+(d.target?fmt(d.target):'–')+'</small></div></div>'
     + '<div class="pk '+(onPace?'g':'r')+'">'+(expNow==null?'no target set':(onPace?'on pace':'behind')+' &middot; '+fmt(d.closed||0)+' by now, '+fmt(expNow)+' due')+'</div>'
@@ -493,16 +542,17 @@ function personPage(sid){
     + '<div class="pst"><span><b>'+fmt(a.inHour||0)+'</b> within the hour</span><span><b>'+(a.median==null?'–':fmt(a.median)+' min')+'</b> median reply</span><span class="'+(a.waiting?'red':'')+'"><b>'+fmt(a.waiting||0)+'</b> waiting</span></div>'
     + ((a.waits||[]).length ? '<div class="wl2">'+a.waits.slice(0,4).map(function(w){ return '<span>'+esc(w.type)+' &middot; asked '+esc(w.at)+' &middot; <b>'+(w.min>=60?Math.floor(w.min/60)+'h '+(w.min%60)+'m':w.min+' min')+'</b></span>'; }).join("")+'</div>' : '')
     + '<div class="pst" style="margin-top:.45rem"><span>E-mails routed <b>'+fmt(a.emailsDone||0)+' / '+fmt(a.emails||0)+'</b> dealt with</span><span>WhatsApp <b>'+(r?fmt(r.closed)+' closed'+(r.firstMin!=null?', first reply '+fmt(r.firstMin)+' min':''):'none yet')+'</b></span></div>'
+    + (d.firstUp ? '<div class="kick" style="margin-top:.45rem">Mr Rampersad\'s tasks first?</div><div class="pst"><span>This morning <b class="'+(d.firstUp.morning===false?'red':'')+'">'+(d.firstUp.morning==null?'nothing of his waiting':d.firstUp.morning?'yes, his came first':'no, other work first ('+fmt(d.firstUp.morningWaiting)+' of his waiting)')+'</b></span><span>Each hour <b>'+fmt(d.firstUp.first)+' of '+fmt(d.firstUp.blocks)+'</b> started on his</span></div>' : '')
     + '<div class="kick" style="margin-top:.45rem">Their pendings: answered today</div>'
     + '<div class="ar"><div class="arb"><i style="width:'+(prate||0)+'%"></i></div><b>'+(d.pend==null?'after the paste':fmt(d.pendResp||0)+' of '+fmt(d.pend)+' open')+'</b></div>'
     + '<div class="pst"><span><b>'+fmt(d.pendClosed||0)+'</b> pendings closed</span><span class="'+(d.pend && d.pendResp < d.pend ? 'red' : '')+'"><b>'+fmt(Math.max(0,(d.pend||0)-(d.pendResp||0)))+'</b> no word today</span><span>any open task <b>'+fmt(d.openResp||0)+' / '+fmt(d.open||0)+'</b></span></div>'
     + '<div class="kick" style="margin-top:.45rem">Agents served</div><div class="tl">'+(ags.length?ags.slice(0,8).map(function(g){ return '<span class="'+(g.active?'':'ina')+'">'+esc(g.k===ORPH?'Agents who left':first(g.k))+' <b>'+fmt(g.n)+'</b></span>'; }).join(""):'<span>none yet</span>')+'</div></div></div>';
-  later(function(){ Array.prototype.forEach.call($("#p4").querySelectorAll(".arc"), function(x){ x.style.strokeDashoffset = x.getAttribute("data-off"); }); });
+  later(function(){ Array.prototype.forEach.call(el.querySelectorAll(".arc"), function(x){ x.style.strokeDashoffset = x.getAttribute("data-off"); }); });
 }
 /* The Branch Manager's own page (24 Nov 2026: "where am I, my e-mails, responses ... I have responded a lot today"): his own words
    on Salesforce and the e-mails he answered, hour by hour, what waited on him cleared, and the asks he put to each desk with how
    they answered. The tracker's notes and the chase in his voice are counted apart, never as his. */
-function mePage(d, H){
+function mePage(d, H, el){
   var M = H.me || {}, L = M.lead || {}, nh = d.hours.length, A = ((H.asks||{}).desks||[]);
   var mx = 1; for(var i=0;i<nh;i++) mx = Math.max(mx, (M.notesH?M.notesH[i]:0) + (M.emailsH?M.emailsH[i]:0));
   var bars = d.hours.map(function(x, i){ var n = M.notesH ? M.notesH[i] : 0, e = M.emailsH ? M.emailsH[i] : 0;
@@ -514,7 +564,7 @@ function mePage(d, H){
   var ask = A.reduce(function(s,a){ s.asked+=a.asked; s.answered+=a.answered; s.waiting+=a.waiting; return s; }, {asked:0,answered:0,waiting:0});
   var rows = A.map(function(a){ var r = a.asked ? Math.round(100*a.answered/a.asked) : 0;
     return '<div class="mr"><span>'+esc(a.name)+'</span><div class="arb"><i style="width:'+r+'%"></i></div><b>'+fmt(a.answered)+'/'+fmt(a.asked)+'</b><em class="'+(a.waiting?'red':'')+'">'+fmt(a.waiting)+' waiting</em></div>'; }).join("");
-  $("#p4").innerHTML = '<div class="pp">'
+  el.innerHTML = '<div class="pp">'
     + '<div class="pc1"><div class="pnm" style="color:var(--rose)">'+esc(d.name)+' &middot; you</div><div class="pin">'+(M.checkin?'in '+esc(M.checkin):'Branch Manager')+'</div>'
     + '<div class="prw">'+ring+'<div class="pin2"><b>'+fmt(L.cleared||0)+'</b><small>of '+(L.target?fmt(L.target):'–')+' cleared</small></div></div>'
     + '<div class="pk '+(onPace?'g':'r')+'">'+(L.target==null?'waiting on you: after the paste':(L.pct||0)+'% cleared · day '+(L.dayPct||0)+'% gone')+'</div>'
@@ -525,9 +575,87 @@ function mePage(d, H){
     + '<div class="pc3"><div class="kick">Your asks to the desks, and their answers</div>'
     + '<div class="ar"><div class="arb"><i style="width:'+(ask.asked?Math.round(100*ask.answered/ask.asked):0)+'%"></i></div><b>'+fmt(ask.answered)+' of '+fmt(ask.asked)+' answered</b></div>'
     + '<div class="mrs">'+(rows||'<span class="pin">No ask today yet.</span>')+'</div></div></div>';
-  later(function(){ Array.prototype.forEach.call($("#p4").querySelectorAll(".arc"), function(x){ x.style.strokeDashoffset = x.getAttribute("data-off"); }); });
+  later(function(){ Array.prototype.forEach.call(el.querySelectorAll(".arc"), function(x){ x.style.strokeDashoffset = x.getAttribute("data-off"); }); });
 }
+/* THE DRILL-IN (24 Nov 2026: "can we have on the slide how each staff is working, this can be flicked, and drill in, as there is
+   more real estate for accountability", then "and what's on mine, how can I drill into my day?"). The whole slide given to one
+   person, the Branch Manager included: their day in depth across the top, and below it every hour as a column with what that
+   hour asked of them and what they did. For a desk: closed by type against the hour's KPI, worked on, your asks and their
+   answers, whether your task came first, their pendings answered. For the Branch Manager: his own notes, his e-mails, what the
+   automation sent and what he closed. Tap a name to open it; flick with the arrows, a swipe or the arrow keys; Esc or the button
+   goes back to the whole branch. ?drill=1 turns through everyone by itself, for the TV; ?drill=ricky opens his. */
+var DR = { at: 0, auto: /[?&]drill=1\b/.test(location.search), first: (location.search.match(/[?&]drill=([a-z]+)/)||[])[1] || "", t: null };
+function drillList(){ var H = D && D.hours; return H && H.desks ? H.desks.slice() : []; }
+function drillHours(d, H){
+  var nh = d.hours.length, A = {}; ((H.asks||{}).desks||[]).forEach(function(a){ A[a.sid] = a; }); var a = A[d.sid] || {}, M = H.me || {}, nowH = H.nowH == null ? 99 : H.nowH;
+  var span = d.end > d.start ? d.end - d.start : 0;
+  var goalOf = function(i){ var hs=(H.from+i)*60, he=hs+60; if(!d.target || !span || he <= d.start || hs >= d.end) return 0; return Math.max(1, Math.round(d.target * (Math.min(he,d.end)-Math.max(hs,d.start)) / span)); };
+  var col = function(i){ var x = d.hours[i] || {}, h = H.from + i, fut = h > nowH, now = h <= nowH && h + 1 > nowH;
+    var head = '<div class="hh'+(now?' now':'')+'">'+hlab(h)+'</div>';
+    if(d.auto){ var n = M.notesH ? M.notesH[i] : (x.n||0), e = M.emailsH ? M.emailsH[i] : 0;
+      var qa = 0, qr = 0; ((H.asks||{}).desks||[]).forEach(function(q){ var hh = (q.hours||[])[i]; if(hh){ qa += hh.a||0; qr += hh.r||0; } });
+      return '<div class="hc2'+(fut?' fut':'')+'">'+head+'<div class="r big2 rose">'+(n||'·')+'</div><div class="r gold">'+(e||'·')+'</div><div class="r">'+(qa ? '✉'+qa : '·')+'</div><div class="r">'+(qr ? '↩'+qr : '·')+'</div><div class="r">'+(x.c||'·')+'</div><div class="r">'+(x.a||'·')+'</div></div>'; }
+    var g = goalOf(i), past = h + 1 <= nowH, met = g && past ? ((x.c||0) >= g ? ' met' : ' miss') : '', am = (a.hours||[])[i] || {}, fu = d.firstUp && d.firstUp.hours ? d.firstUp.hours[i] : 0;
+    var inDay = d.start == null || ((h*60+60) > d.start && h*60 < d.end);
+    if(!inDay) return '<div class="hc2 off">'+head+'<div class="r offk">off</div></div>';
+    var stamp = met === ' miss' ? '<div class="stamp no">MISSED '+fmt(Math.max(0, g-(x.c||0)))+'</div>' : met === ' met' ? '<div class="stamp ok">MET</div>' : '';
+    return '<div class="hc2'+(fut?' fut':'')+met+'">'+stamp+head
+      + '<div class="r big2">'+tyNums(x)+(g ? '<s>/'+fmt(g)+'</s>' : '')+'</div>'
+      + '<div class="r">'+(x.w||'·')+'</div>'
+      + '<div class="r">'+(am.a ? '✉'+am.a : '·')+'</div>'
+      + '<div class="r">'+(am.r ? '↩'+am.r : '·')+'</div>'
+      + '<div class="r">'+(fu > 0 ? '<i class="fu ok">★</i>' : fu < 0 ? '<i class="fu no">!</i>' : '·')+'</div>'
+      + '<div class="r">'+(x.p ? x.p : '·')+'</div></div>'; };
+  var labels = d.auto ? ['Your notes', 'Your e-mails', 'Asks to the desks ✉', 'Desks answered ↩', 'Closed', 'Automated'] : ['Closed / KPI', 'Worked on', 'Your asks ✉', 'Answered ↩', 'Yours first', 'Pendings answered'];
+  var cols = []; for(var i=0;i<nh;i++) cols.push(col(i));
+  return '<div class="hc2 lab"><div class="hh">Hour by hour</div>'+labels.map(function(l, k){ return '<div class="r'+(k?'':' big2')+'">'+l+'</div>'; }).join("")+'</div>'+cols.join("");
+}
+function drillShow(i){
+  var L = drillList(); if(!L.length) return; DR.at = (i + L.length) % L.length; var d = L[DR.at], H = D.hours;
+  $("#drill").hidden = false; document.body.classList.add("drilling");
+  $("#dName").textContent = d.auto ? d.name + " · you" : d.name;
+  $("#dPos").textContent = (DR.at + 1) + " of " + L.length + (DR.t ? " · turning every 15 seconds" : " · ◀ ▶ or swipe to flick");
+  $("#dDots").innerHTML = L.map(function(x, k){ return '<i class="'+(k===DR.at?'on':'')+(x.auto?' me':'')+'" data-k="'+k+'">'+esc(x.name)+'</i>'; }).join("");
+  personPage(d.sid, $("#dTop"));
+  $("#dHours").innerHTML = drillHours(d, H);
+  var b = drillBanner(d, H); $("#dBan").className = "dban " + b.k; $("#dBan").innerHTML = b.h;
+}
+/* Off track, made impossible to miss (24 Nov 2026: "make more impactful when they are off so it will psychologically have a
+   picture to get things done"): the distance to pace as one number, the hour to close it by, and what is waiting on them. On pace
+   reads green and says so. Counts only, about the work, never a comparison with anyone else. */
+function paceOf(d, H){
+  var nowMin = (H.nowH == null ? H.from : H.nowH) * 60, span = d.end > d.start ? d.end - d.start : 0;
+  if(!d.target || !span) return null;
+  var exp = Math.round(d.target * Math.max(0, Math.min(nowMin, d.end) - d.start) / span), gap = exp - (d.closed||0);
+  var hEnd = Math.min(d.end, (Math.floor(nowMin/60)+1)*60), byNext = Math.round(d.target * Math.max(0, hEnd - d.start) / span) - (d.closed||0);
+  return { exp: exp, gap: gap, byNext: Math.max(0, byNext), at: hlab(Math.floor(hEnd/60)), left: Math.max(0, d.target - (d.closed||0)) };
+}
+function drillBanner(d, H){
+  if(d.auto){ var L = (H.me||{}).lead || {}; if(!L.target) return { k: "", h: "" };
+    var w = L.waiting || 0; return L.pct >= L.dayPct ? { k: "ok", h: '<b>✓ On pace</b><span>'+fmt(L.cleared)+' of '+fmt(L.target)+' cleared · '+fmt(w)+' still waiting on you</span>' }
+      : { k: "off", h: '<b>'+fmt(w)+' waiting on you</b><span>'+fmt(L.pct)+'% cleared with '+fmt(L.dayPct)+'% of the day gone · the staff are waiting on your word</span>' }; }
+  var P = paceOf(d, H), A = {}; ((H.asks||{}).desks||[]).forEach(function(a){ A[a.sid] = a; }); var a = A[d.sid] || {};
+  var miss = (d.hours||[]).filter(function(x, i){ var h = H.from + i; return h + 1 <= (H.nowH||0) && x._miss; }).length;
+  if(!P) return { k: "", h: "" };
+  var extra = [];
+  if(a.waiting) extra.push(fmt(a.waiting)+' of Mr Rampersad\'s asks waiting'+(a.oldestMin ? ', oldest '+(a.oldestMin>=60?Math.floor(a.oldestMin/60)+'h '+(a.oldestMin%60)+'m':a.oldestMin+' min') : ''));
+  if(d.pend && d.pend > (d.pendResp||0)) extra.push(fmt(d.pend - (d.pendResp||0))+' pendings with no word today');
+  if(d.firstUp && d.firstUp.blocks && d.firstUp.first < d.firstUp.blocks) extra.push('his task came first in '+fmt(d.firstUp.first)+' of '+fmt(d.firstUp.blocks)+' hours');
+  if(P.gap <= 0) return { k: "ok", h: '<b>✓ On pace</b><span>'+fmt(d.closed)+' closed, '+fmt(P.exp)+' due by now · '+fmt(P.left)+' to go for the day'+(extra.length ? ' · '+extra.join(' · ') : '')+'</span>' };
+  return { k: "off", h: '<b>BEHIND BY '+fmt(P.gap)+'</b><span>Close <em>'+fmt(P.byNext)+'</em> by '+P.at+' to get back on pace · '+fmt(d.closed)+' closed, '+fmt(P.exp)+' due by now'+(extra.length ? '<br>'+extra.join(' · ') : '')+'</span>' };
+}
+function drillClose(){ $("#drill").hidden = true; document.body.classList.remove("drilling"); clearInterval(DR.t); DR.t = null; DR.auto = false; }
+function drillRefresh(){ if(!$("#drill").hidden) drillShow(DR.at); else if(DR.auto && !DR.t){ DR.t = setInterval(function(){ drillShow(DR.at + 1); }, 15000); drillShow(0); }
+  else if(DR.first){ var L = drillList(), f = DR.first; DR.first = ""; L.forEach(function(x, k){ if(x.sid === f) drillShow(k); }); } }
+(function(){
+  $("#dPrev").onclick = function(){ drillShow(DR.at - 1); }; $("#dNext").onclick = function(){ drillShow(DR.at + 1); }; $("#dClose").onclick = drillClose;
+  $("#dDots").onclick = function(e){ var k = e.target && e.target.getAttribute("data-k"); if(k != null) drillShow(+k); };
+  document.addEventListener("keydown", function(e){ if($("#drill").hidden) return; if(e.key === "ArrowRight") drillShow(DR.at + 1); else if(e.key === "ArrowLeft") drillShow(DR.at - 1); else if(e.key === "Escape") drillClose(); });
+  var x0 = null; $("#drill").addEventListener("touchstart", function(e){ x0 = e.touches[0].clientX; }, { passive: true });
+  $("#drill").addEventListener("touchend", function(e){ if(x0 == null) return; var dx = e.changedTouches[0].clientX - x0; x0 = null; if(Math.abs(dx) > 50) drillShow(DR.at + (dx < 0 ? 1 : -1)); }, { passive: true });
+})();
 function openPerson(sid){
+  var L = drillList(), k = -1; L.forEach(function(x, i){ if(x.sid === sid) k = i; }); if(k > -1){ drillShow(k); return; }
   var P = [$("#p0"), $("#p1"), $("#p2"), $("#p3"), $("#p4")], dots = $("#tdots").querySelectorAll("i");
   P.forEach(function(x, i){ x.classList.toggle("out", i !== 4); dots[i].classList.toggle("on", i === 4); }); tpAt = 4; $("#tdk").textContent = "one person, in depth";
   personPage(sid); holdUntil = Date.now() + 60000;
