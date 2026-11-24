@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-16a';
+var SCRIPT_VERSION = '2026-11-24a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2249,6 +2249,8 @@ function handle_(action, data, token) {
              claude: (function () { try { var pp = PropertiesService.getScriptProperties();
                return { draftModel: claudeDraftModel_(), readModel: String(pp.getProperty('ANTHROPIC_MODEL') || CLAUDE_READ.MODEL).trim(), fullDepthToday: Object.keys(bmDeepGet_(todayISO_())).length, inboxReviewedToday: Object.keys(ixDeepGet_(todayISO_())).length }; } catch (e) { return null; } })() };
   }
+  // The newest report tab of the Branch Portfolio, for the daily pendings watch (24 Nov 2026). Keyed; see sheetExport_.
+  if (action === 'sheetexport') { try { return sheetExport_(data || {}); } catch (e) { return { ok: false, error: String(e && e.message || e).slice(0, 160) }; } }
   if (action === 'login') return login_(data.who || data.email, data.password);
   // The wall's outside link: no sign-in, the outside read only (20 Oct 2026).
   if (action === 'wallout') return wallOutside_(data.k);
@@ -17654,6 +17656,33 @@ function wallReqKind_(cat, name) {
              [/financial/i, 'Financials'], [/underwriting decision/i, 'Acceptance'], [/underwriting/i, 'Underwriting'], [/corporate/i, 'Company papers']];
   for (var i = 0; i < map.length; i++) if (map[i][0].test(c)) return map[i][1];
   return c || String(name || 'Other');
+}
+/** The newest report tab of the Branch Portfolio, whole, for the daily pendings watch (24 Nov 2026).
+ *  Asked for in these words: "you need to read the file on branch portfolio … I cannot upload this daily as the data is
+ *  stored on the sheet". The workbook is past the size Drive will export, so the sheet hands the one tab over itself.
+ *  GET ?action=sheetexport&kind=pend|claw|prod&k=<SHEET_EXPORT_KEY>. Only those three tab kinds, only the newest of each
+ *  (by name, as the reports are labelled <prefix>_yyyy-mm-dd-hhmm), never any other tab. The key is a Script Property of
+ *  32 characters or more; with none set the route answers nothing. The answer carries client data, so the key never goes in
+ *  this repository and a wrong key is told only that it is wrong. */
+var SHEET_EXPORT = { KINDS: { pend: 'Branch Pendings', claw: 'Clawback', prod: 'Branch Production' }, MIN_KEY: 32, MAX_ROWS: 5000 };
+function sheetExport_(p) {
+  var want = String(PropertiesService.getScriptProperties().getProperty('SHEET_EXPORT_KEY') || '').trim();
+  if (want.length < SHEET_EXPORT.MIN_KEY) return { ok: false, error: 'Not switched on.' };
+  var got = String(p.k || ''), diff = got.length ^ want.length;
+  for (var i = 0; i < want.length; i++) diff |= (want.charCodeAt(i) ^ (got.charCodeAt(i) || 0));
+  if (diff) return { ok: false, error: 'Not authorised.' };
+  var prefix = SHEET_EXPORT.KINDS[String(p.kind || 'pend')];
+  if (!prefix) return { ok: false, error: 'kind must be one of: ' + Object.keys(SHEET_EXPORT.KINDS).join(', ') };
+  var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
+  if (!ss) return { ok: false, error: 'The Branch Portfolio would not open.' };
+  var tabs = ss.getSheets().map(function (sh) { return sh.getName(); })
+    .filter(function (n) { return n.toLowerCase().indexOf(prefix.toLowerCase()) === 0; }).sort().reverse();
+  if (!tabs.length) return { ok: false, error: 'No "' + prefix + '" tab in the Branch Portfolio.' };
+  var sh = ss.getSheetByName(tabs[0]), vals = sh.getDataRange().getValues().slice(0, SHEET_EXPORT.MAX_ROWS + 1);
+  var tz = Session.getScriptTimeZone();
+  var rows = vals.map(function (r) { return r.map(function (v) {
+    return v instanceof Date ? Utilities.formatDate(v, tz, v.getHours() || v.getMinutes() ? "yyyy-MM-dd'T'HH:mm" : 'yyyy-MM-dd') : v; }); });
+  return { ok: true, kind: String(p.kind || 'pend'), tab: tabs[0], others: tabs.slice(1, 6), rows: rows.length - 1, data: rows };
 }
 function wallPendLive_(day) {
   var cache = CacheService.getScriptCache(), key = 'wall_pend_' + day, hit = cache.get(key);
