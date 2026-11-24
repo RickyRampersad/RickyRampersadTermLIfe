@@ -722,7 +722,7 @@ if (LONE) {
 
    It fails quiet: a wall that cannot reach the script already says "no feed"
    on every screen, and a second red bar for the same fault is noise. */
-var WANT_SCRIPT = '2026-09-17l';
+var WANT_SCRIPT = '2026-11-24a';
 var PING_URL = 'https://script.google.com/macros/s/AKfycbympAk9o8Ns8un0UXKY1PHkS__nYa-Hx6Q3TzbCRSMyezkFhRtFFrz56qOCuSug1-34OQ/exec';
 
 function versionCheck() {
@@ -733,7 +733,7 @@ function versionCheck() {
       .then(function (j) {
         var got = j && (j.version || (j.data && j.data.version));
         if (!got) return;
-        var bad = String(got) !== WANT_SCRIPT;
+        var bad = String(got) < WANT_SCRIPT;  // older only: a newer script is fine
         var el = document.getElementById('stale');
         if (bad) {
           document.getElementById('staleGot').textContent = got;

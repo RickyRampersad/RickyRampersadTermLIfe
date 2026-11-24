@@ -207,7 +207,7 @@ function help868Chase_() {
 }
 /** Whether the newest "Branch Pendings" tab is in the Branch Portfolio. A yes or no only: the ping carries no data. */
 function help868ReportFound_() {
-  try { var ss = help868Book_(); return !!ss && ss.getSheets().some(function (sh) { return sh.getName().indexOf(H868.REPORT) === 0; }); } catch (e) { return false; }
+  try { var ss = help868Book_(); return !!ss && help868Tabs_(ss).length > 0; } catch (e) { return false; }
 }
 function help868Pendings_(p, digits) {
   var s = help868Session_(digits); if (!s) return H868_NEED_CODE;
@@ -230,14 +230,18 @@ function help868Pendings_(p, digits) {
     shown: Math.min(rows.length, H868.MAX_ROWS), cases: rows.slice(0, H868.MAX_ROWS),
     note: 'Ask which policy they want to look at, by its number or last digits, and use the case call. With byAgent, a manager can name one agent (agent) to see only theirs.' };
 }
+/** The pending report tabs, newest first, by the date in the name (tReportTabs_ in Transition.gs, the same project). */
+function help868Tabs_(ss) {
+  if (typeof tReportTabs_ === 'function') return tReportTabs_(ss.getSheets(), H868.REPORT);
+  return ss.getSheets().filter(function (sh) { return /^branch[ _-]*pendings?(?![a-z])/i.test(sh.getName()); });
+}
 /** Policy -> client name, from the newest pending report (empty when it cannot be read). Agents see their own clients by name
  *  (Ricky, 24 Nov 2026: "they should be able to see their policy number and all details ... and the client name"). */
 function help868ReportNames_() {
   var out = {};
   try {
     var ss = help868Book_(); if (!ss) return out;
-    var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(H868.REPORT) === 0; })
-      .sort(function (a, b) { return a.getName() < b.getName() ? 1 : -1; });
+    var tabs = help868Tabs_(ss);
     if (!tabs.length) return out;
     var v = tabs[0].getDataRange().getValues(), h = v[0].map(function (x) { return String(x).trim(); }), cp = h.indexOf('POLICY'), cn = h.indexOf('Client Name');
     if (cp < 0 || cn < 0) return out;
@@ -249,8 +253,7 @@ function help868ReportNames_() {
 function help868Report_(agentTest, typed) {
   var ss = help868Book_();
   if (!ss) return { none: 'The pending report is not reachable right now.' };
-  var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(H868.REPORT) === 0; })
-    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  var tabs = help868Tabs_(ss);
   if (!tabs.length) return { none: 'The pending report is not ready right now.' };
   var v = tabs[0].getDataRange().getValues(); if (v.length < 2) return { none: 'The pending report is empty.' };
   var h = v[0].map(function (x) { return String(x).trim(); }), ix = function (n) { return h.indexOf(n); };

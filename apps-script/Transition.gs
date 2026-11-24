@@ -13961,9 +13961,26 @@ function transitionCupReadNow() {
    them apart. Nothing here is written anywhere: it is a read. */
 var T_PEND = { CACHE_S: 300, KEY: 'pend-v1', LOGBOOK: '1EAc0X0648Im2HQJMB-jTVNZFWr5Y1hKh9Ok2a_472uo', CHASE_DAYS: 3, CHASE2_DAYS: 2,
   REPL_BEFORE: 183, REPL_AFTER: 366, MAX: 600, SCRIPT_RE: /script|contract|policy (document|pack)|acknowledg/i };
+/** The newest report tab of a kind in the Branch Portfolio (24 Nov 2026). Ricky added "Branch Pending 2026 11 23rd 1336": a
+ *  name no longer always "Branch Pendings_yyyy-mm-dd-hhmm". So the kind is matched on words, any case, with or without the
+ *  "s", with any separators; and "newest" is the date and time written in the name, never the alphabet (an underscore sorts
+ *  after a space, so the alphabet put an older tab above a newer one). A tab with no readable date counts as oldest. */
+function tReportTabs_(sheets, prefix) {
+  var norm = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+  var want = norm(prefix).replace(/s$/, '');
+  var stamp = function (n) {
+    var m = /(20\d{2})\D{0,3}(\d{1,2})\D{0,3}(\d{1,2})(?:st|nd|rd|th)?(?:\D{0,3}(\d{1,2}):?(\d{2}))?/i.exec(String(n));
+    if (!m) return 0;
+    var p = function (x, w) { x = String(x || '0'); while (x.length < w) x = '0' + x; return x; };
+    return Number(m[1] + p(m[2], 2) + p(m[3], 2) + p(m[4], 2) + p(m[5], 2));
+  };
+  var hit = sheets.filter(function (sh) {
+    var n = norm(sh.getName()); return n.indexOf(want) === 0 && !/chase/.test(n.slice(want.length)); });
+  hit.sort(function (a, b) { var d = stamp(b.getName()) - stamp(a.getName()); return d || (a.getName() < b.getName() ? 1 : -1); });
+  return hit;
+}
 function tPendTab_(book, prefix) {
-  var tabs = book.getSheets().filter(function (sh) { return sh.getName().indexOf(prefix) === 0; })
-    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  var tabs = tReportTabs_(book.getSheets(), prefix);
   if (!tabs.length) return null;
   var v = tabs[0].getDataRange().getValues();
   return { name: tabs[0].getName(), head: v[0].map(function (x) { return String(x).trim(); }), rows: v.slice(1) };

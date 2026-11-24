@@ -17646,8 +17646,7 @@ function wallIssued_(day) {
   if (hit) { try { return JSON.parse(hit); } catch (e) {} }
   var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
   if (!ss) return { error: 'The Branch Portfolio would not open.' };
-  var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(WALL_ISSUED.PREFIX) === 0; })
-    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  var tabs = reportTabs_(ss.getSheets(), WALL_ISSUED.PREFIX);
   if (!tabs.length) return { error: 'No "' + WALL_ISSUED.PREFIX + '" tab in the Branch Portfolio yet: upload Guardian\'s production report.' };
   var tab = tabs[0], vals = tab.getDataRange().getValues();
   if (vals.length < 2) return { error: tab.getName() + ' is empty.' };
@@ -17733,6 +17732,24 @@ function wallReqKind_(cat, name) {
   for (var i = 0; i < map.length; i++) if (map[i][0].test(c)) return map[i][1];
   return c || String(name || 'Other');
 }
+/** The newest report tab of a kind in the Branch Portfolio (24 Nov 2026). Ricky added "Branch Pending 2026 11 23rd 1336": a
+ *  name no longer always "Branch Pendings_yyyy-mm-dd-hhmm". So the kind is matched on words, any case, with or without the
+ *  "s", with any separators; and "newest" is the date and time written in the name, never the alphabet (an underscore sorts
+ *  after a space, so the alphabet put an older tab above a newer one). A tab with no readable date counts as oldest. */
+function reportTabs_(sheets, prefix) {
+  var norm = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+  var want = norm(prefix).replace(/s$/, '');
+  var stamp = function (n) {
+    var m = /(20\d{2})\D{0,3}(\d{1,2})\D{0,3}(\d{1,2})(?:st|nd|rd|th)?(?:\D{0,3}(\d{1,2}):?(\d{2}))?/i.exec(String(n));
+    if (!m) return 0;
+    var p = function (x, w) { x = String(x || '0'); while (x.length < w) x = '0' + x; return x; };
+    return Number(m[1] + p(m[2], 2) + p(m[3], 2) + p(m[4], 2) + p(m[5], 2));
+  };
+  var hit = sheets.filter(function (sh) {
+    var n = norm(sh.getName()); return n.indexOf(want) === 0 && !/chase/.test(n.slice(want.length)); });
+  hit.sort(function (a, b) { var d = stamp(b.getName()) - stamp(a.getName()); return d || (a.getName() < b.getName() ? 1 : -1); });
+  return hit;
+}
 /** The newest report tab of the Branch Portfolio, whole, for the daily pendings watch (24 Nov 2026).
  *  Asked for in these words: "you need to read the file on branch portfolio … I cannot upload this daily as the data is
  *  stored on the sheet". The workbook is past the size Drive will export, so the sheet hands the one tab over itself.
@@ -17751,8 +17768,7 @@ function sheetExport_(p) {
   if (!prefix) return { ok: false, error: 'kind must be one of: ' + Object.keys(SHEET_EXPORT.KINDS).join(', ') };
   var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
   if (!ss) return { ok: false, error: 'The Branch Portfolio would not open.' };
-  var tabs = ss.getSheets().map(function (sh) { return sh.getName(); })
-    .filter(function (n) { return n.toLowerCase().indexOf(prefix.toLowerCase()) === 0; }).sort().reverse();
+  var tabs = reportTabs_(ss.getSheets(), prefix).map(function (sh) { return sh.getName(); });
   if (!tabs.length) return { ok: false, error: 'No "' + prefix + '" tab in the Branch Portfolio.' };
   var sh = ss.getSheetByName(tabs[0]), vals = sh.getDataRange().getValues().slice(0, SHEET_EXPORT.MAX_ROWS + 1);
   var tz = Session.getScriptTimeZone();
@@ -17765,8 +17781,7 @@ function wallPendLive_(day) {
   if (hit) { try { return JSON.parse(hit); } catch (e) {} }
   var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
   if (!ss) return { error: 'The Branch Portfolio would not open.' };
-  var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(WALL_PEND.PREFIX) === 0; })
-    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  var tabs = reportTabs_(ss.getSheets(), WALL_PEND.PREFIX);
   if (!tabs.length) return { error: 'No "' + WALL_PEND.PREFIX + '" tab in the Branch Portfolio yet.' };
   var tab = tabs[0], vals = tab.getDataRange().getValues();
   if (vals.length < 2) return { error: tab.getName() + ' is empty.' };
@@ -17776,8 +17791,9 @@ function wallPendLive_(day) {
             app: ix('application_number'), cat: ix('REQUIREMENT_CATEGORY'), days: ix('DAYS_SINCE_SUBMISSION'), susp: ix('SUSPENDED_AMOUNT'), dec: ix('DecisionType') };
   if (c.pol < 0 || c.code < 0) return { error: tab.getName() + ' has no POLICY or REQUIREMENT_CODE column.' };
   var cell = function (r, i) { return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
-  var m = /(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})/.exec(tab.getName());
-  var out = { tab: tab.getName(), asOf: m ? prettyDate_(m[1] + '-' + m[2] + '-' + m[3]).replace(/ \d{4}$/, '') + ', ' + twelve_(m[4] + ':' + m[5]) : tab.getName(),
+  var m = /(20\d{2})\D{0,3}(\d{1,2})\D{0,3}(\d{1,2})(?:st|nd|rd|th)?\D{0,3}(\d{1,2}):?(\d{2})/i.exec(tab.getName());
+  var two = function (x) { return ('0' + x).slice(-2); };
+  var out = { tab: tab.getName(), asOf: m ? prettyDate_(m[1] + '-' + two(m[2]) + '-' + two(m[3])).replace(/ \d{4}$/, '') + ', ' + twelve_(two(m[4]) + ':' + m[5]) : tab.getName(),
               reqs: 0, policies: 0, newWeek: 0, rag: { Red: 0, Amber: 0, Green: 0 }, ages: [], byReq: [], who: [], first: { policies: 0, prem: 0, agents: [] }, agents: 0 };
   var pols = {}, ages = {}, reqs = {}, who = {}, agentOf = {}, firstBy = {}, firstPol = {}, agentsSeen = {}, P = {}, numOf = {}, codes = {}, whoPol = {};
   vals.slice(1).forEach(function (r) {
@@ -17931,8 +17947,7 @@ function pendSyncTick_(force) {
 }
 /** The newest pending report, policy by policy: { tab, pols: { policy: { agent, app } }, numOf: { number: policy } }. */
 function pendReportPolicies_(ss) {
-  var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(WALL_PEND.PREFIX) === 0; })
-    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  var tabs = reportTabs_(ss.getSheets(), WALL_PEND.PREFIX);
   if (!tabs.length) return null;
   var vals = tabs[0].getDataRange().getValues(); if (vals.length < 2) return null;
   var h = vals[0].map(function (x) { return String(x).trim(); });
