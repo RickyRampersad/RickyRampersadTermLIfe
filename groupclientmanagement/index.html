@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
 <noscript><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
-<link rel="stylesheet" href="gcm.css?v=2026-10-27c">
+<link rel="stylesheet" href="gcm.css?v=2026-11-23a">
 <script src="/rroperations/sso.js"></script>
 </head>
 <body>
@@ -631,7 +631,7 @@ function drawGroup() {
     '<p class="small muted">Account owner in Salesforce <b>' + esc(g.assigned || 'nobody') + '</b>' + (g.assigned && !g.ownerActive ? ' <b style="color:var(--badText)">(no longer active: change the owner in Salesforce)</b>' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') +
     ' · Letter goes to ' + (g.to.length ? toLine(g) : '<b style="color:var(--badText)">nobody: give the account a Contact Person with an e-mail in Salesforce, then Refresh</b>') + '</p>' +
     (g.personal && g.personal.length ? '<div class="note warn">' + esc(g.personal.join(', ')) + ' is a personal mailbox, and the letter carries the group’s access code. Make sure it is still the group’s contact; if not, change the account’s Contact Person in Salesforce.</div>' : '') +
-    accountBar(d) +
+    accountBar(d) + linksHtml(d) +
     pendHtml(d) + comingHtml(d) +
     (d.canAct === false ? '<div class="note">Looked after by <b>' + esc(g.assigned || 'nobody') + '</b>. You can read everything here and leave a comment for the team on any item; approving the letter and anything the group sees is for ' + esc(g.assigned ? g.assigned.split(' ')[0] + ', ' : '') + 'the assistant branch manager or the branch manager.</div>' : '') +
     (d.feedError ? '<div class="note bad">Chatter could not be read: ' + esc(d.feedError) + '</div>' : '') +
@@ -654,6 +654,7 @@ function drawGroup() {
   $('bk').onclick = render;
   if ($('bkBill')) $('bkBill').onclick = () => openBilling(g.key);
   bindPend();
+  bindLinks(d);
   $('app').querySelectorAll('[data-act]').forEach(b => b.onclick = () => openAct(b.dataset.act, b.dataset.k));
   $('pv').onclick = preview;
   if ($('unap')) $('unap').onclick = async () => { const r = await post({ action: 'gcm.unapprove', group: GROUP.group.key }); if (!r.ok) return toast(r.error || 'Not cancelled', true); toast('Approval cancelled. Nothing goes on Monday until you approve again.'); openGroup(GROUP.group.key); };
@@ -672,6 +673,105 @@ function drawGroup() {
     toast('Draft ready. Read it, change anything that is not right, then press Post. Nothing is shared until you do.');
   });
   window.scrollTo(0, 0);
+}
+/* Links to send (23 November 2026: "we should be able to copy and paste the link into the respond io"). The group's own
+   links anyone may copy; a new member's own enrolment link, made here in the group's name without e-mailing it if need be,
+   for whoever looks after the group, the deputy and the branch manager. Nothing is pasted anywhere by itself. */
+const SITE = 'https://rickyrampersadbranch.com';
+const LINKS = [
+  { t: 'Their service page', u: SITE + '/groupclientmanagement/client.html', n: 'They sign in with their list bill and access code.' },
+  { t: 'What they see when they sign in · film', u: SITE + '/groupmgt/yourpage/', n: '2 min 14 s' },
+  { t: 'Joining the group health plan · film', u: SITE + '/healthenrollment/', n: '1 min 42 s' },
+  { t: 'When someone leaves the plan · film', u: SITE + '/terminations/', n: '1 min 30 s' },
+  { t: 'Company pensions · film', u: SITE + '/pensionpresentationourprocess/', n: '2 min 25 s' },
+  { t: 'Our new way of looking after your group · film', u: SITE + '/groupmgt/client/', n: '1 min 30 s' }
+];
+let LNK = null;
+function linkRow(id, title, url, note, extra) {
+  return '<div class="lk"><div class="lkt"><b>' + esc(title) + '</b>' + (note ? ' <span class="muted small">' + esc(note) + '</span>' : '') + '</div>' +
+    '<div class="lkr"><input class="field lku" id="' + id + '" value="' + esc(url) + '" readonly aria-label="' + esc(title) + ' link">' +
+    '<button class="btn sm" type="button" data-copy="' + id + '">Copy link</button>' + (extra || '') + '</div></div>';
+}
+function linksHtml(d) {
+  return '<section class="drawer lnk" id="lnk" aria-labelledby="lnkh"><h3 id="lnkh" style="margin-top:0">Links to send <span class="muted small">copy, then paste into respond.io</span></h3>' +
+    '<details class="lkg" open><summary>This group’s links (' + LINKS.length + ')</summary>' + LINKS.map((l, i) => linkRow('lg' + i, l.t, l.u, l.n)).join('') + '</details>' +
+    '<div id="lnkInv">' + (d.canAct === false ? '<p class="small muted" style="margin:10px 0 0">New members’ own enrolment links are for ' + esc(d.group.assigned || 'the account owner') + ', the assistant branch manager or the branch manager.</p>' : '<p class="small muted" style="margin:10px 0 0">Reading new members’ links…</p>') + '</div></section>';
+}
+function waText(v) {
+  const g = GROUP.group;
+  return 'Hi ' + v.first + ', ' + g.name + ' has asked us at the Ricky Rampersad Branch to enrol you in ' + v.cover + ' with Guardian Life of the Caribbean' + (v.effective ? ', from ' + dmy(v.effective) : '') + '. ' +
+    'Your part takes about ten minutes on your phone: your details, anyone you want covered, a short health declaration and your signature on the screen. ' +
+    'Please open your own link: ' + v.link + '\n\nThis link is yours alone, so please do not forward it. Any question, just reply here.';
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+  const t = document.createElement('textarea'); t.value = text; t.setAttribute('readonly', ''); t.style.cssText = 'position:fixed;left:-9999px;top:0';
+  document.body.appendChild(t); t.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) {} t.remove(); return ok;
+}
+async function doCopy(text, what) {
+  if (await copyText(text)) toast(what + ' copied. Paste it into respond.io.');
+  else toast('Your browser would not copy it: press and hold the link, then Copy.', true);
+}
+function invRow(v, i) {
+  const st = { waiting: 'warn', ready: 'good', sent: 'good', expired: 'bad', sending: '' }[v.status] || '';
+  let h = '<div class="lk inv"><div class="lkt"><b>' + esc(v.employee) + '</b> <span class="chip ' + st + '"><i></i>' + esc(v.words) + '</span>' + (v.test ? ' <span class="chip">TEST</span>' : '') +
+    '<div class="small muted">' + esc(v.cover) + (v.effective ? ' from ' + esc(dmy(v.effective)) : '') + (v.mobile ? ' · ' + esc(v.mobile) : '') + (v.email ? ' · ' + esc(v.email) : ' · no e-mail: WhatsApp only') +
+    (v.link && v.expires ? ' · link good to ' + esc(dmy(v.expires)) : '') + (v.madeBy ? ' · ' + esc(v.madeBy) : v.sentBy ? ' · asked for by ' + esc(v.sentBy) : '') + '</div></div>';
+  if (v.link) h += '<div class="lkr"><input class="field lku" id="li' + i + '" value="' + esc(v.link) + '" readonly aria-label="' + esc(v.employee) + '’s link">' +
+    '<button class="btn sm" type="button" data-copy="li' + i + '">Copy link</button><button class="btn ghost sm" type="button" data-wa="' + i + '">Copy WhatsApp message</button></div>';
+  else if (v.status === 'expired') h += '<div class="lkr"><button class="btn ghost sm" type="button" data-renew="' + esc(v.ref) + '">Renew the link for ' + esc(v.first) + '</button></div>';
+  return h + '</div>';
+}
+function invHtml(r) {
+  if (!r.ok) return '<div class="note bad" style="margin:10px 0 0">' + esc(r.error || 'New members could not be read.') + (/Unknown action/i.test(r.error || '') ? ' GroupBilling.gs needs pasting and a New version publishing.' : '') + '</div>';
+  const inv = r.invites || [];
+  const today = new Date().toISOString().slice(0, 10);
+  return (r.live ? '' : '<div class="note" style="margin:10px 0">Test mode: an application made from these links goes to the account manager, not to Guardian Life, until the forms are switched live (gblGoLive). Send a link only to yourself or a colleague to try it.</div>') +
+    '<h4 style="margin:14px 0 6px">New members’ own enrolment links <span class="muted small">' + (inv.length ? inv.length : 'none yet') + '</span></h4>' +
+    inv.map(invRow).join('') +
+    '<details class="lkg" id="mkBox"' + (inv.length ? '' : ' open') + '><summary>Make a link for a new member</summary><form id="mkF" class="mkf" autocomplete="off">' +
+    '<div class="g2"><label>First name<input class="field" name="first" required maxlength="40"></label><label>Surname<input class="field" name="last" required maxlength="60"></label>' +
+    '<label>Mobile<input class="field" name="mobile" inputmode="tel" maxlength="30" placeholder="868 …"></label><label>E-mail <span class="muted small">(optional)</span><input class="field" name="email" type="email" maxlength="120"></label>' +
+    '<label>Effective date<input class="field" name="effective" type="date" required min="' + today + '"></label><label>Their contact at ' + esc(GROUP.group.name) + '<input class="field" name="admin" maxlength="80" value="' + esc(r.contact || '') + '" placeholder="HR or plan administrator"></label></div>' +
+    '<fieldset class="cov"><legend>Joining</legend><label><input type="checkbox" name="covHealth" checked> Group Health</label><label><input type="checkbox" name="covLife"> Group Life</label></fieldset>' +
+    '<label class="chk"><input type="checkbox" name="send"> Also e-mail the link to them</label>' +
+    '<div style="margin-top:10px"><button class="btn" type="submit" id="mkGo">Make the link</button></div></form></details>';
+}
+async function loadInv() {
+  const box = $('lnkInv'); if (!box || GROUP.canAct === false) return;
+  const r = await post({ action: 'gcm.billAct', group: GROUP.group.key, act: 'invites' });
+  if (!$('lnkInv')) return;
+  LNK = r; $('lnkInv').innerHTML = invHtml(r); bindInv();
+}
+function bindInv() {
+  const box = $('lnkInv'); if (!box) return;
+  box.querySelectorAll('[data-copy]').forEach(b => b.onclick = () => doCopy($(b.dataset.copy).value, 'The link'));
+  box.querySelectorAll('[data-wa]').forEach(b => b.onclick = () => doCopy(waText(LNK.invites[+b.dataset.wa]), 'The message'));
+  box.querySelectorAll('[data-renew]').forEach(b => b.onclick = async () => {
+    b.disabled = true; const r = await post({ action: 'gcm.billAct', group: GROUP.group.key, act: 'inviteAgain', ref: b.dataset.renew, send: 'N' });
+    if (!r.ok) { b.disabled = false; return toast(r.error || 'Not renewed', true); }
+    toast(r.said); loadInv();
+  });
+  const f = $('mkF');
+  if (f) f.onsubmit = async e => {
+    e.preventDefault();
+    const x = Object.fromEntries(new FormData(f).entries());
+    x.covHealth = f.covHealth.checked ? 'Y' : 'N'; x.covLife = f.covLife.checked ? 'Y' : 'N'; x.send = f.send.checked ? 'Y' : 'N';
+    if (x.send === 'Y' && !x.email) return toast('Give their e-mail address, or untick “Also e-mail the link”.', true);
+    $('mkGo').disabled = true; $('mkGo').textContent = 'Making the link…';
+    const r = await post(Object.assign({ action: 'gcm.billAct', group: GROUP.group.key, act: 'inviteMake' }, x));
+    $('mkGo').disabled = false; $('mkGo').textContent = 'Make the link';
+    if (!r.ok) return toast(r.error || 'Not made', true);
+    toast(r.said); await loadInv();
+    const i = (LNK && LNK.invites || []).findIndex(v => v.ref === r.ref);
+    const row = i >= 0 && $('li' + i); if (row) { row.scrollIntoView({ block: 'center' }); row.focus(); row.select(); }
+  };
+}
+function bindLinks(d) {
+  const sec = $('lnk'); if (!sec) return;
+  sec.querySelectorAll('.lkg [data-copy]').forEach(b => b.onclick = () => doCopy($(b.dataset.copy).value, 'The link'));
+  sec.querySelectorAll('input.lku').forEach(i => i.onfocus = () => i.select());
+  loadInv();
 }
 /* the top of a group: its welcome, its last letter, and the buttons to send them */
 function accountBar(d) {

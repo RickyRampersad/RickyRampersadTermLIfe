@@ -418,6 +418,36 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 .tools label:has(input:focus-visible){outline:3px solid var(--a);outline-offset:2px}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .err{margin:0;color:#a3301f;font:600 var(--f--1)/1.4 var(--text);display:none}
+/* the CV field: a real target, not the browser's 21px default */
+input[type=file]{width:100%;min-height:2.9rem;padding:.6rem .7rem;
+  border:1.5px dashed var(--line-strong);border-radius:var(--r-s);background:#fff;
+  color:var(--body);font:400 max(16px,1rem)/1.5 var(--text);cursor:pointer}
+input[type=file]::file-selector-button{margin-right:.7rem;padding:.42rem .8rem;border:0;
+  border-radius:999px;background:var(--a-tint);color:var(--aD);cursor:pointer;
+  font:700 var(--f--2)/1 var(--text)}
+input[type=file]:focus{border-color:var(--a);outline:2px solid var(--a-tint2);outline-offset:0}
+.later{display:flex;align-items:flex-start;gap:.55rem;margin:0;font-weight:400;
+  font-size:max(16px,.95rem);line-height:1.4;cursor:pointer}
+.later input{flex:none;width:1.15rem;height:1.15rem;margin:.15rem 0 0;accent-color:var(--a)}
+.later b{overflow-wrap:anywhere}
+/* the read-back before sending: a second pair of eyes, never a wall */
+.review{border:1.5px solid var(--a);background:var(--a-tint);border-radius:var(--r);
+  padding:var(--sp-m);display:grid;gap:.85rem}
+.review:focus{outline:3px solid var(--a-tint2);outline-offset:2px}
+.review h4{margin:0;font:700 var(--f-0)/1.3 var(--display);color:var(--ink)}
+.review .good{margin:0;font-size:var(--f--1);color:var(--ok);font-weight:600}
+.review ul{list-style:none;margin:0;padding:0;display:grid;gap:.6rem}
+.review li{display:grid;grid-template-columns:1fr auto;gap:.5rem .8rem;align-items:center;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r-s);padding:.7rem .8rem;
+  font-size:var(--f--1);line-height:1.45}
+.review li > span{min-width:0}
+.review li b{color:var(--ink)}
+.review li button{font:600 var(--f--2)/1 var(--text);padding:.55rem .8rem;min-height:2.4rem;
+  border-radius:999px;border:1.5px solid var(--a);background:#fff;color:var(--aD);cursor:pointer;white-space:nowrap}
+.review li button:hover{background:var(--a-tint2)}
+@media (max-width:30rem){.review li{grid-template-columns:1fr}.review li button{justify-self:start}}
+.review .acts{display:flex;flex-wrap:wrap;gap:.6rem}
+.review .acts .btn{min-height:2.9rem}
 .err.on{display:block}
 .fine{margin:0;font-size:var(--f--2);color:var(--muted)}
 .done{display:none;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
@@ -1093,7 +1123,7 @@ footer .ic{width:16px;height:16px}
         <span class="eyebrow">Apply</span>
         <h2 data-words>Fifteen minutes. <em>Read by one person.</em></h2>
         <p>Your name, your figures and your answers reach Mr Rampersad and nobody else &mdash; not an inbox the branch shares. If you are employed today, that matters, and we treat it that way.</p>
-        <p class="small">It is a long form and that is deliberate. We are filling one seat, not sorting a hundred CVs, so we would rather read fifteen minutes of your actual thinking than scan a page of job titles.</p>
+        <p class="small">It is a long form and that is deliberate. We are filling one seat, not sorting a hundred CVs, so we would rather read fifteen minutes of your actual thinking than scan a page of job titles. <strong>Have your CV on this device</strong> as a PDF or Word file; it is asked for near the end. Before anything is sent, the form reads your answers back to you and points out anything worth a second look.</p>
         <ol class="steps">
           <li>He reads it himself, within 48 hours.</li>
           <li>If it reads like you, he asks you for one thing you would fix here.</li>
@@ -1248,8 +1278,27 @@ footer .ic{width:16px;height:16px}
           </div>
 
           <!-- 6 ─────────────────────────────────────────────── -->
+          <!-- The CV, added 19 Nov 2026: until then this form took none, and
+               two people sent theirs by e-mail instead. Asked for at the end,
+               never first, because the answers above matter more. A phone
+               often has no CV on it, so "I will e-mail it" is a real answer:
+               the gate accepts either, and the review asks once. -->
           <div class="fsec" data-sec>
-            <h3><b><i>6</i></b>Last things</h3>
+            <h3><b><i>6</i></b>Your CV</h3>
+            <p class="hint">PDF or Word, up to 6 MB. It goes to Mr Rampersad with your answers and nowhere else.</p>
+            <div class="grid">
+              <div>
+                <label for="jCv">Attach your CV</label>
+                <input id="jCv" name="cv" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                <p class="cc"><span id="jCvNote">Nothing attached yet.</span><span></span></p>
+              </div>
+              <label class="later"><input type="checkbox" name="cv_later" id="jCvLater" value="yes"><span>It is not on this device. I will e-mail it to <b>support@rickyrampersadbranch.com</b> quoting the reference I am given.</span></label>
+            </div>
+          </div>
+
+          <!-- 7 ─────────────────────────────────────────────── -->
+          <div class="fsec" data-sec>
+            <h3><b><i>7</i></b>Last things</h3>
             <div class="grid">
               <div class="two">
                 <div><label for="jLink">A link to anything you made <small>&middot; optional</small></label><input id="jLink" name="link" type="url" inputmode="url" placeholder="https://"></div>
@@ -1268,6 +1317,7 @@ footer .ic{width:16px;height:16px}
 
           <div class="hp" aria-hidden="true"><label for="jWeb" tabindex="-1">Website</label><input id="jWeb" name="website" type="text" tabindex="-1" autocomplete="off"></div>
           <p class="err" id="jErr" role="alert"></p>
+          <div class="review" id="jRev" hidden tabindex="-1" aria-labelledby="jRevH"></div>
           <button class="btn btn-1" type="submit" id="jSend">Send it to Mr Rampersad <svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></button>
           <p class="fine">Read by the Branch Manager alone. Nothing is sent to anyone else, and nothing reaches your current employer. Your pay answers are used for the conversation and nothing else.</p>
         </form>
@@ -1615,8 +1665,30 @@ footer .ic{width:16px;height:16px}
     var API='https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
     var TO='Ricky.Rampersad@myguardiangroup.com';
     var f=d.getElementById('jf'), done=d.getElementById('jDone'),
-        err=d.getElementById('jErr'), btn=d.getElementById('jSend');
+        err=d.getElementById('jErr'), btn=d.getElementById('jSend'),
+        rev=d.getElementById('jRev'), cvIn=d.getElementById('jCv'),
+        cvNote=d.getElementById('jCvNote'), cvLater=d.getElementById('jCvLater');
     if(!f)return;
+    var MAXB=6*1024*1024, OKEXT=/\.(pdf|docx?)$/i;
+    function hasCv(){return !!(cvIn&&cvIn.files&&cvIn.files.length)}
+    if(cvIn)cvIn.addEventListener('change',function(){
+      var fl=cvIn.files&&cvIn.files[0];
+      if(!fl){cvNote.textContent='Nothing attached yet.';return}
+      if(!OKEXT.test(fl.name)){cvNote.textContent='That is not a PDF or a Word document. Try again.';cvIn.value='';tick();return}
+      if(fl.size>MAXB){cvNote.textContent='That file is over 6 MB. A smaller copy, please.';cvIn.value='';tick();return}
+      cvNote.textContent=fl.name+' \u2014 '+(fl.size/1048576).toFixed(1)+' MB, ready to go.';
+      if(cvLater)cvLater.checked=false;
+    });
+    function readCv(){
+      return new Promise(function(res){
+        var fl=cvIn&&cvIn.files&&cvIn.files[0];
+        if(!fl)return res(null);
+        var r=new FileReader();
+        r.onload=function(){res({name:fl.name,type:fl.type||(/\.pdf$/i.test(fl.name)?'application/pdf':/\.docx$/i.test(fl.name)?'application/vnd.openxmlformats-officedocument.wordprocessingml.document':'application/msword'),data:String(r.result||'')})};
+        r.onerror=function(){res(null)};
+        r.readAsDataURL(fl);
+      });
+    }
     /* An unchecked radio group answers NOTHING. Without the type test the
        fallback returns the first radio in the group, so a question nobody
        touched reads as answered: the rail opened at "4 of 18", the gate let
@@ -1632,14 +1704,17 @@ footer .ic{width:16px;height:16px}
     function localRef(){var t=new Date(),p=function(n){return(n<10?'0':'')+n};
       return 'QB-'+String(t.getFullYear()).slice(2)+p(t.getMonth()+1)+p(t.getDate())+'-'+p(t.getHours())+p(t.getMinutes())}
     function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-    function show(ref,sent,first,when){
+    function show(ref,sent,first,when,cvState){
       f.style.display='none';
       done.innerHTML='<span class="eyebrow">Sent</span><h3>Thank you, '+esc(first)+'. It is with Mr Rampersad.</h3>'
         +'<div class="ref" aria-label="'+esc(ref)+'" title="'+esc(ref)+'">'+esc(ref)+'</div>'
         +'<p>He reads it himself, within 48 hours. If it reads like you, he will ask you for one thing you would fix here &mdash; so you may as well '
         +'<a href="https://github.com/RickyRampersad/RickyRampersadTermLIfe" target="_blank" rel="noopener">start looking through what we have built</a> now, '
         +'and have your answer ready. Keep the reference if you need to reach him: <a href="tel:+18686785821">678-5821</a>.</p>'
-        +(sent?'':'<p class="warn">We could not reach our system just now, so your mail app has opened with the same answers addressed to him. Press send there and it reaches him the same way.</p>');
+        +(sent&&cvState==='ok'?'<p class="small">Your CV went with it.</p>':'')
+        +(sent&&cvState==='lost'?'<p class="warn">Your answers are filed, but the CV did not come through. Please e-mail it to <b>support@rickyrampersadbranch.com</b> quoting '+esc(ref)+'.</p>':'')
+        +(sent&&cvState==='later'?'<p class="small">When you e-mail your CV to <b>support@rickyrampersadbranch.com</b>, put '+esc(ref)+' in the subject so it lands with your answers.</p>':'')
+        +(sent?'':'<p class="warn">We could not reach our system just now, so your mail app has opened with the same answers addressed to him. Press send there, and attach your CV to that e-mail.</p>');
       done.classList.add('on');
       done.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
     }
@@ -1647,17 +1722,20 @@ footer .ic{width:16px;height:16px}
       var t='BUILD WITH US — THE PERSONAL ASSISTANT\'S SEAT\nReference: '+ref+'\n\n'
         +'Name: '+body.core.name+'\nPhone: '+body.core.phone+'\nE-mail: '+body.core.email+'\n\n';
       body.fields.forEach(function(x){if(x.value)t+=x.label+':\n'+x.value+'\n\n'});
+      t+='(Please attach your CV to this e-mail.)\n';
       location.href='mailto:'+TO+'?subject='+encodeURIComponent('Build with us — '+ref)+'&body='+encodeURIComponent(t);
     }
     /* ── the progress rail: moves on input, never on scroll, and a section
           ticks only when everything it needs is really filled in ── */
     var REQ=['name','phone','email','town','travel','exp','emp_co','emp_role','emp_dates',
-             'emp_changed','edu','pay_now','pay_want','start','w_built','w_slim','w_cv','when'];
+             'emp_changed','edu','pay_now','pay_want','start','w_built','w_slim','w_cv','cv','when'];
     var rail=d.getElementById('rail'), railN=d.getElementById('railN'),
         railI=d.getElementById('railI'), railS=d.getElementById('railS');
     /* reads MIN and FMT, so the rail can never say "ready to send" about an
        answer the gate is going to refuse. That disagreement was the bug. */
-    function filled(n){var v=val(n);
+    function filled(n){
+      if(n==='cv')return hasCv()||!!(cvLater&&cvLater.checked);
+      var v=val(n);
       return MIN[n]?v.length>=MIN[n]:FMT[n]?FMT[n].test(v):!!v}
     function tick(){
       var n=0; REQ.forEach(function(k){if(filled(k))n++});
@@ -1673,7 +1751,8 @@ footer .ic{width:16px;height:16px}
         var need=[].slice.call(s.querySelectorAll('[required]'))
           .map(function(e){return e.name}).filter(function(v,i,a){return a.indexOf(v)===i});
         var any=[].slice.call(s.querySelectorAll('input,select,textarea')).some(function(e){
-          return (e.type==='checkbox'||e.type==='radio') ? e.checked : String(e.value||'').trim()!=='';
+          return (e.type==='checkbox'||e.type==='radio') ? e.checked
+               : e.type==='file' ? !!(e.files&&e.files.length) : String(e.value||'').trim()!=='';
         });
         s.classList.toggle('secok',need.every(filled)&&any);
       });
@@ -1716,7 +1795,8 @@ footer .ic{width:16px;height:16px}
         ['start', !val('start')?'When could you start?':''],
         ['w_built',tooShort('w_built','Tell us about one thing you built — a few honest lines is plenty, but we do need them.')],
         ['w_slim', tooShort('w_slim','The slim-down answer is the one he reads most carefully. A few lines.')],
-        ['w_cv',   tooShort('w_cv','What do you want on your CV in two years?')]
+        ['w_cv',   tooShort('w_cv','What do you want on your CV in two years?')],
+        ['cv',     !filled('cv')?'Attach your CV, PDF or Word up to 6 MB, or tick that you will e-mail it.':'']
       ];
       var bad='', badField='';
       for(var ci=0;ci<checks.length;ci++){
@@ -1724,7 +1804,7 @@ footer .ic{width:16px;height:16px}
       }
       err.textContent=bad; err.classList.toggle('on',!!bad);
       if(bad){
-        var first=f.querySelector('[name="'+badField+'"]');
+        var first=(badField==='cv')?cvIn:f.querySelector('[name="'+badField+'"]');
         if(first){
           var sec=first.closest('[data-sec]')||first;
           sec.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
@@ -1732,6 +1812,77 @@ footer .ic{width:16px;height:16px}
         }
         return;
       }
+      /* The read-back. Everything above is a gate; this is a second pair of
+         eyes, and it never refuses. It runs once: if it finds anything worth
+         a look it says so, with a button to each, and "Send it as it is"
+         sends. A second press of the main button sends without asking again.
+         It is written against what the applicants of 16-19 Nov 2026 did:
+         all nine scrolled past the form at the top, several put an e-mail
+         address in the GitHub box, and the strongest answers named a tool, a
+         person and a result while the weakest named none. */
+      if(!f.dataset.reviewed){
+        var tips=review();
+        if(tips.items.length){drawReview(tips);return}
+      }
+      sendIt();
+    });
+
+    function words(n){return val(n).split(/\s+/).filter(Boolean).length}
+    /* a specific answer names something concrete: a number, a tool, a
+       system, a person or a result. "I organised things" names none. */
+    var CONCRETE=/\b(\d[\d,.]*%?|excel|sheets?|google|forms?|apps script|script|code|salesforce|crm|zapier|power automate|make\.com|chatgpt|claude|copilot|ai|website|database|system|template|report|dashboard|teams|sharepoint|quickbooks|payroll|manager|director|client|customer|staff|team|saved|reduced|cut|hours?|days?|weeks?|minutes?|automat\w*)\b/i;
+    function thin(n,minWords){var v=val(n);return v&&(words(n)<minWords||!CONCRETE.test(v))}
+    function review(){
+      var fx=(typeof window.__rrbFix==='function')?window.__rrbFix():{n:0,total:12};
+      var items=[], good=[];
+      if(!fx.n)items.push({k:'fix',t:'<b>You have not marked the form at the top of the page.</b> It is the first thing Mr Rampersad reads: spot what is wrong with a real branch form. About two minutes.',b:'Take me there'});
+      else good.push('you found '+fx.n+' of '+fx.total+' on the form');
+      if(thin('w_built',25))items.push({k:'w_built',t:'<b>"One thing you built"</b> reads short or general. Name the tool, who used it, and what changed because of it.',b:'Add to it'});
+      if(thin('w_slim',25))items.push({k:'w_slim',t:'<b>The slim-down answer</b> is the one he reads most carefully. A first step you would actually take, in one or two lines, makes it yours.',b:'Add to it'});
+      if(thin('emp_changed',15))items.push({k:'emp_changed',t:'<b>"What is different there because of you"</b> could use one concrete result: something faster, fewer errors, a process that now exists.',b:'Add to it'});
+      var w3=val('w_cv');
+      if(/^(to )?(grow|growth|experience|more experience|success|be successful|improve)\b/i.test(w3)||words('w_cv')<6)
+        items.push({k:'w_cv',t:'<b>Your two-year CV line</b> is general. A skill, a qualification or a result you want to be able to name is stronger.',b:'Sharpen it'});
+      var gh=val('gh');
+      if(gh&&(/@|\s/.test(gh)))items.push({k:'gh',t:'<b>The GitHub box has an e-mail address in it.</b> It is only for a GitHub username, and it is optional. Most people leave it empty.',b:'Clear it',act:'cleargh'});
+      var link=val('link');
+      if(link&&!/^https?:\/\//i.test(link))items.push({k:'link',t:'<b>Your link</b> needs to start with https:// to open.',b:'Fix it',act:'fixlink'});
+      var tools=f.querySelectorAll('[name="tool"]:checked').length;
+      if(!tools)items.push({k:'tool',t:'<b>No tools ticked.</b> That is a real answer, but if you have used Excel, Google Forms or WhatsApp Business even once, tick it.',b:'Look again'});
+      else good.push(tools+' tool'+(tools===1?'':'s')+' ticked');
+      if(!hasCv()&&cvLater&&cvLater.checked)items.push({k:'cv',t:'<b>You will e-mail your CV.</b> If it is on this device after all, attaching it now saves you a step.',b:'Attach it'});
+      else if(hasCv())good.push('CV attached');
+      return {items:items,good:good,fx:fx};
+    }
+    var shown=[];
+    function drawReview(tips){
+      shown=tips.items.map(function(x){return x.k});
+      var first=val('name').split(' ')[0]||'';
+      rev.innerHTML='<h4 id="jRevH">Before it goes'+(first?', '+esc(first):'')+': '+tips.items.length+' thing'+(tips.items.length===1?'':'s')+' worth a second look</h4>'
+        +(tips.good.length?'<p class="good">\u2713 '+esc(tips.good.join(' \u00b7 '))+'</p>':'')
+        +'<ul>'+tips.items.map(function(x,i){return '<li><span>'+x.t+'</span><button type="button" data-i="'+i+'">'+esc(x.b)+'</button></li>'}).join('')+'</ul>'
+        +'<p class="fine">None of these stop you sending. They are what a careful reader would notice first.</p>'
+        +'<div class="acts"><button type="button" class="btn btn-1" data-send>Send it as it is</button></div>';
+      rev.hidden=false; f.dataset.reviewed='1';
+      err.textContent=''; err.classList.remove('on');
+      rev.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
+      setTimeout(function(){try{rev.focus({preventScroll:true})}catch(x){}},noMotion.matches?0:320);
+      [].slice.call(rev.querySelectorAll('button[data-i]')).forEach(function(b){
+        b.addEventListener('click',function(){go(tips.items[+b.getAttribute('data-i')],b)});
+      });
+      rev.querySelector('[data-send]').addEventListener('click',function(){rev.hidden=true;sendIt()});
+    }
+    function go(x,b){
+      if(x.act==='cleargh'){var g=f.querySelector('[name="gh"]');g.value='';b.closest('li').remove();tick();return}
+      if(x.act==='fixlink'){var l=f.querySelector('[name="link"]');l.value='https://'+l.value.replace(/^\/+/,'');b.closest('li').remove();return}
+      var el=x.k==='fix'?d.getElementById('fix'):x.k==='cv'?cvIn:x.k==='tool'?f.querySelector('[name="tool"]'):f.querySelector('[name="'+x.k+'"]');
+      if(!el)return;
+      (x.k==='fix'?el:(el.closest('[data-sec]')||el)).scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:x.k==='fix'?'start':'center'});
+      if(x.k!=='fix')setTimeout(function(){try{el.focus({preventScroll:true})}catch(y){el.focus()}},noMotion.matches?0:320);
+    }
+
+    function sendIt(){
+      var name=val('name'), phone=val('phone'), email=val('email');
       if(f.dataset.sending)return;
       f.dataset.sending='1'; var was=btn.innerHTML; btn.disabled=true; btn.textContent='Sending…';
       var w1=val('w_built'), w2=val('w_slim'), w3=val('w_cv');
@@ -1773,24 +1924,31 @@ footer .ic{width:16px;height:16px}
           {section:'In their own words',k:'w_cv',label:'What they want on their CV in two years',value:w3},
           {section:'Last things',k:'link',label:'A link to something they made',value:link},
           {section:'Last things',k:'gh',label:'GitHub username',value:gh},
-          {section:'Last things',k:'heard',label:'Where they saw it',value:val('heard')}
+          {section:'Last things',k:'heard',label:'Where they saw it',value:val('heard')},
+          {section:'Last things',k:'cv_later',label:'CV',value:(!hasCv()&&cvLater&&cvLater.checked)?'Not attached: they will e-mail it quoting the reference':''},
+          {section:'The form',k:'review',label:'Sent after the read-back with',value:(shown.length?shown.map(function(k){return {fix:'the form not marked',w_built:'a short "one thing you built"',w_slim:'a short slim-down answer',emp_changed:'a short "what is different"',w_cv:'a general two-year line',gh:'an e-mail in the GitHub box',link:'a link with no https',tool:'no tools ticked',cv:'the CV to follow by e-mail'}[k]||k}).filter(function(k){return k}).join('; '):'')}
         ],
         page:location.pathname,
         ref_from:(new URLSearchParams(location.search)).get('from')||'',
         at:new Date().toISOString()};
-      var ref='', sent=false, first=name.split(' ')[0];
-      function finish(){f.dataset.sending='';btn.disabled=false;btn.innerHTML=was;
-        if(!ref)ref=localRef(); show(ref,sent,first,when);
-        if(!sent)setTimeout(function(){mailRoad(body,ref)},60)}
-      var ac=('AbortController' in window)?new AbortController():null,
-          to=setTimeout(function(){if(ac)ac.abort()},12000);
-      fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify(body),signal:ac?ac.signal:undefined})
-        .then(function(r){return r.json().catch(function(){return{}})})
-        .then(function(x){sent=!!(x&&x.ok!==false&&x.ref);ref=(x&&x.ref)||''})
-        .catch(function(){sent=false})
-        .then(function(){clearTimeout(to);finish()});
-    });
+      var ref='', sent=false, first=name.split(' ')[0], cvBack=false;
+      readCv().then(function(cv){
+        body.cv=cv;
+        function finish(){f.dataset.sending='';btn.disabled=false;btn.innerHTML=was;
+          if(!ref)ref=localRef();
+          show(ref,sent,first,when,cv?(cvBack?'ok':'lost'):(cvLater&&cvLater.checked?'later':''));
+          if(!sent)setTimeout(function(){mailRoad(body,ref)},60)}
+        /* a CV adds up to 8 MB of text to the post, so it gets longer */
+        var ac=('AbortController' in window)?new AbortController():null,
+            to=setTimeout(function(){if(ac)ac.abort()},cv?40000:12000);
+        fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+          body:JSON.stringify(body),signal:ac?ac.signal:undefined})
+          .then(function(r){return r.json().catch(function(){return{}})})
+          .then(function(x){sent=!!(x&&x.ok!==false&&x.ref);ref=(x&&x.ref)||'';cvBack=!!(x&&x.cv)})
+          .catch(function(){sent=false})
+          .then(function(){clearTimeout(to);finish()});
+      });
+    }
     /* Enter moves on rather than sending: on a form this long a stray Enter
        halfway down is a submission nobody meant. */
     f.addEventListener('keydown',function(e){
