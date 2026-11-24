@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-24h';
+var SCRIPT_VERSION = '2026-11-24i';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -18420,7 +18420,7 @@ function wallHourOf_(iso) {
 }
 function wallIsEmail_(subject) { return /^email:/i.test(String(subject || '').replace(/<[^>]*>/g, '').replace(/&quot;|&#34;/g, '"').replace(/^[\s"']+/, '')); }
 function wallDayHours_(day) {
-  var cache = CacheService.getScriptCache(), key = 'wall_hours_' + day, hit = cache.get(key);
+  var cache = CacheService.getScriptCache(), key = 'wall_hours2_' + day, hit = cache.get(key);
   if (hit) { try { return JSON.parse(hit); } catch (e) {} }
   var users = sfkUsers_() || {}, bySf = {}, ids = [], order = DAY_MAIL_DESKS.concat(['ricky']);
   order.forEach(function (s) { var id = s === 'ricky' ? bmSfId_() : (users[s] && users[s].id); if (id) { bySf[id] = s; ids.push("'" + id + "'"); } });
@@ -18428,12 +18428,12 @@ function wallDayHours_(day) {
   var since = sfkUtcAt_(day, 0), H0 = WALL_HOURS.FROM, NH = WALL_HOURS.TO - WALL_HOURS.FROM;
   var typeKey = {}; WALL_HOURS.TYPES.forEach(function (t) { typeKey[t[0]] = t[0]; });
   var tyOf = function (v) { v = String(v || '').trim(); return typeKey[v] || (v ? 'Other' : 'Not typed'); };
-  var tasks = sfkQuery_('SELECT Id, OwnerId, Task_Type__c, IsClosed, CompletedDateTime, LastModifiedDate, LastModifiedById, CreatedDate, Agent__r.Name, Subject FROM Task' +
+  var tasks = sfkQuery_('SELECT Id, OwnerId, Task_Type__c, IsClosed, CompletedDateTime, LastModifiedDate, LastModifiedById, CreatedDate, Agent__r.Name, Agent__r.Employment_Status__c, Subject FROM Task' +
     ' WHERE OwnerId IN (' + ids.join(',') + ') AND (LastModifiedDate >= ' + since + ' OR CompletedDateTime >= ' + since + ') LIMIT 5000');
   var notes = []; try { notes = sfkQuery_("SELECT ParentId, CreatedById, CreatedDate FROM FeedItem WHERE Type = 'TextPost' AND CreatedById IN (" + ids.join(',') + ') AND CreatedDate >= ' + since + ' LIMIT 5000'); } catch (e) {}
   var D = {}, desk = function (sid) {
     return D[sid] = D[sid] || { sid: sid, name: String(nameFor_(sid)).split(' ')[0], auto: sid === 'ricky', closed: 0, worked: 0, emails: 0, automated: 0, noted: 0,
-      byType: {}, autoTypes: {}, hours: Array.apply(null, Array(NH)).map(function () { return { c: 0, w: 0, a: 0 }; }), ages: [0, 0, 0, 0], oldest: 0, _w: {} }; };
+      byType: {}, autoTypes: {}, hours: Array.apply(null, Array(NH)).map(function () { return { c: 0, w: 0, a: 0, t: {} }; }), ages: [0, 0, 0, 0], oldest: 0, _w: {} }; };
   order.forEach(function (s) { if (s === 'ricky' || users[s]) desk(s); });
   var hours = Array.apply(null, Array(NH)).map(function (_, i) { return { h: H0 + i, closed: {}, worked: 0, auto: 0 }; });
   var agents = {}, byId = {}, sinceMs = new Date(since).getTime(), today = new Date(day + 'T12:00:00Z').getTime();
@@ -18441,10 +18441,11 @@ function wallDayHours_(day) {
     return { d: d, b: d <= A[0] ? 0 : d <= A[1] ? 1 : d <= A[2] ? 2 : 3 }; };
   // The agents served (28 Oct 2026, 3:43pm: "and where is the agent served?"): whose work each close and each task worked on
   // was, and which desks did it. Once a task.
-  var served = {};
+  var served = {}, leftK = wallLeft_();
   var serve = function (t, sid, how) {
     var ag = t && t.Agent__r && String(t.Agent__r.Name || '').trim(); if (!ag) return;
-    var a = agents[ag] = agents[ag] || { k: ag, c: 0, w: 0, by: {} }, key = t.Id + '|' + how;
+    var st = t.Agent__r.Employment_Status__c, act = wallStays_(ag) || (st ? /^active$/i.test(String(st).trim()) : !wallIsLeft_(ag, leftK));
+    var a = agents[ag] = agents[ag] || { k: ag, active: act, c: 0, w: 0, by: {} }, key = t.Id + '|' + how;
     if (served[key]) return; served[key] = 1;
     a[how]++; var dn = D[sid] ? D[sid].name : sid; a.by[dn] = (a.by[dn] || 0) + 1;
   };
@@ -18466,7 +18467,7 @@ function wallDayHours_(day) {
         return;
       }
       var ty = tyOf(t.Task_Type__c);
-      d.closed++; d.byType[ty] = (d.byType[ty] || 0) + 1; d.hours[i].c++; hours[i].closed[ty] = (hours[i].closed[ty] || 0) + 1;
+      d.closed++; d.byType[ty] = (d.byType[ty] || 0) + 1; d.hours[i].c++; d.hours[i].t[ty] = (d.hours[i].t[ty] || 0) + 1; hours[i].closed[ty] = (hours[i].closed[ty] || 0) + 1;
       serve(t, owner, 'c');
       return;
     }
@@ -18489,7 +18490,7 @@ function wallDayHours_(day) {
     types: WALL_HOURS.TYPES.map(function (t) { return { k: t[0], label: t[1], n: typesSeen[t[0]] || 0 }; })
       .concat(['Other', 'Not typed'].filter(function (k) { return typesSeen[k]; }).map(function (k) { return { k: k, label: k, n: typesSeen[k] }; })),
     hours: hours, desks: desks,
-    agents: Object.keys(agents).map(function (k) { var a = agents[k]; return { k: a.k, c: a.c, w: a.w, n: a.c + a.w, by: list(a.by) }; })
+    agents: Object.keys(agents).map(function (k) { var a = agents[k]; return { k: a.k, active: a.active, c: a.c, w: a.w, n: a.c + a.w, by: list(a.by) }; })
       .sort(function (x, y) { var a = String(x.k).toLowerCase(), b = String(y.k).toLowerCase(); return a < b ? -1 : a > b ? 1 : 0; }),   // name order: nobody ranked
     totals: { closed: sum('closed', true), worked: sum('worked', true), emails: sum('emails', true), automated: sum('automated'), mine: (D.ricky || {}).closed || 0 } };
   // The day's KPI against the clock (24 Nov 2026, 2026-11-24g): each desk's target for the day, spread over their own hours,
@@ -18536,7 +18537,7 @@ function rioEvent_(b) {
   });
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try { sh.appendRow(row); } finally { lock.releaseLock(); }
-  try { CacheService.getScriptCache().remove('wall_hours_' + todayISO_()); } catch (e) {}
+  try { CacheService.getScriptCache().remove('wall_hours2_' + todayISO_()); } catch (e) {}
   return { ok: true };
 }
 /** A respond.io duration in minutes: "h:mm:ss", seconds, or milliseconds. */

@@ -212,7 +212,13 @@
   }
   @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} .card,.dk,.ag{opacity:1;transform:none} }
   .cell.pace{box-shadow:inset 0 -.28rem 0 #78D198} .cell.behind{box-shadow:inset 0 -.28rem 0 #E8625A}
-  .cell.met{background:rgba(120,209,152,.16)} .cell.miss{background:rgba(232,98,90,.16)} .cell.miss b{color:#E8625A} .cell.now b,.cell.fut b{color:var(--ink)}
+  .cell.met{box-shadow:inset 0 0 0 2px rgba(120,209,152,.65)} .cell.miss{box-shadow:inset 0 0 0 2px rgba(232,98,90,.7)} .cell b .tz{color:var(--dim)} .cell.miss b .tz{color:#E8625A}
+  .cell b i.pl{font-style:normal;font-size:.75em;color:var(--dim);margin:0 .25rem}
+  .cell .tyb{position:absolute;left:.35rem;right:.35rem;top:.3rem;height:.28rem;border-radius:.3rem;overflow:hidden;display:flex} .cell .tyb i{display:block;height:100%}
+  .tylg{display:flex;flex-wrap:wrap;gap:.3rem 1rem;font:600 .85rem var(--fb);color:var(--dim);margin:.1rem 0 .35rem} .tylg i{display:inline-block;width:.7rem;height:.7rem;border-radius:.2rem;margin-right:.3rem;vertical-align:-.05rem}
+  .bub.ina .nm{color:var(--coral)} .bub .tg{font:800 .62rem var(--fd);letter-spacing:.06em;text-transform:uppercase;padding:.08rem .35rem;border-radius:.3rem;margin-top:.15rem}
+  .bub .tg.a{background:rgba(120,209,152,.15);color:var(--green)} .bub .tg.i{background:rgba(239,138,107,.18);color:var(--coral)}
+  .ag.ina{color:var(--coral)} .fk{font:800 .78rem var(--fd);letter-spacing:.08em;text-transform:uppercase;margin-left:.6rem} .fk.a{color:var(--green)} .fk.i{color:var(--coral)}
   .cell b s{text-decoration:none;font-size:.75em;color:var(--dim);margin-left:.1rem}
   .cell em{font-size:.7rem!important} .cell.off{opacity:.45} .cell .offk{font:700 .75rem var(--fb);color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
   .cell u.ask{position:absolute;top:.15rem;right:.25rem;text-decoration:none;font:800 .72rem var(--fd,system-ui);color:#E3B85A;white-space:nowrap}
@@ -248,6 +254,7 @@
   <section class="card rows" style="--d:.1s;padding:.9rem 1.2rem .7rem">
     <div class="g rh"><div>Desk &middot; each hour: closed / the hour's KPI</div><div id="hh" style="grid-column:2 / span var(--nh,10);display:grid;grid-template-columns:repeat(var(--nh,10),minmax(0,1fr));column-gap:.45rem;text-align:center"></div>
       <div><span>Closed</span><span>Worked on</span><span>E-mails</span><span>How old the work is</span></div></div>
+    <div class="tylg" id="tylg"></div>
     <div id="desks" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
     <div class="foot" id="foot"></div>
   </section>
@@ -320,7 +327,7 @@ function paint(){
       if(!inDay && !d.auto) return '<div class="cell off'+(cls.indexOf('fut')>-1?' fut':'')+'"><span class="offk">off</span></div>';
       var blk = goal && cls.indexOf('fut') < 0 && cls.indexOf('now') < 0 && !t.absent ? ((x.c||0) >= goal ? ' met' : ' miss') : '';
       return '<div class="cell'+cls+blk+'"><div class="w" data-o="'+(x.w ? (0.12 + 0.5*x.w/maxDW).toFixed(2) : 0)+'"></div>'
-        + '<b>'+fmt(x.c||0)+(goal ? '<s>/'+fmt(goal)+'</s>' : '')+'</b>'+(x.w ? '<em>+'+fmt(x.w)+' worked</em>' : '')+askTag+'</div>'; }).join("");
+        + '<b>'+tyNums(x)+(goal ? '<s>/'+fmt(goal)+'</s>' : '')+'</b>'+tyBar(x)+(x.w ? '<em>+'+fmt(x.w)+' worked</em>' : '')+askTag+'</div>'; }).join("");
     var ageN = d.ages.reduce(function(a,x){ return a+x; },0) || 1;
     var tbar = function (list) { var n = list.reduce(function(a,x){ return a+x.n; },0) || 1; return '<div class="tb">'+list.map(function(x){ return '<i data-w="'+(100*x.n/n).toFixed(1)+'" style="background:'+(TYC[x.k]||TYC.Other)+'" title="'+esc(x.k)+'"></i>'; }).join("")+'</div>'; };
     var closedCell = '<div class="cl"><div class="v'+(d.closed?' green':' z')+'" data-k="closed">'+fmt(d.closed)+'</div>'+(d.byType.length ? tbar(d.byType) : '')+'</div>';
@@ -336,8 +343,14 @@ function paint(){
   var A = H.agents || [];
   var Ac = A.filter(function(a){ return a.c > 0; });
   $("#foot").innerHTML = '<span class="k">Agents served today</span><span class="ag" style="--d:0s"><b>'+fmt(A.filter(function(a){ return a.n > 0; }).length)+'</b> agents</span>'
-    + '<span class="ag" style="--d:.05s">closed for <b>'+fmt(Ac.length)+'</b></span>' + Ac.map(function(a, i){ return '<span class="ag'+(a.k===ORPH?' orph':'')+'" style="--d:'+(0.1+0.05*i).toFixed(2)+'s">'+esc(a.k===ORPH?'Orphans':first(a.k))+'<b>'+fmt(a.c)+'</b></span>'; }).join("")
+    + '<span class="ag" style="--d:.05s">closed for <b>'+fmt(Ac.length)+'</b></span>'
+    + (function(){ var isIn = function(a){ return a.k===ORPH || a.active===false; }, act = Ac.filter(function(a){ return !isIn(a); }), ina = Ac.filter(isIn);
+        var chip = function(a, i, c){ return '<span class="ag'+c+'" style="--d:'+(0.1+0.05*i).toFixed(2)+'s">'+esc(a.k===ORPH?'Agents who left':first(a.k))+'<b>'+fmt(a.c)+'</b></span>'; };
+        return (act.length ? '<span class="fk a">Active</span>'+act.map(function(a,i){ return chip(a,i,''); }).join("") : '')
+          + (ina.length ? '<span class="fk i">Inactive</span>'+ina.map(function(a,i){ return chip(a,i,' ina'); }).join("") : ''); })()
     + '<span class="ages">'+AGEK.map(function(k, i){ return '<span><i style="background:'+AGEC[i]+'"></i>'+k+'</span>'; }).join("")+'</span>';
+  $("#tylg").innerHTML = '<span style="color:var(--ink);font-weight:800">Each hour: tasks closed by type / the hour\'s KPI &middot; green outline met, red missed</span>'
+    + Object.keys(TYC).filter(function(k){ return k!=="Not typed"; }).map(function(k){ return '<span><i style="background:'+TYC[k]+'"></i>'+(k==="Renewa/PDl/Bill"?"Renewals · PDL · Billing":k)+'</span>'; }).join("");
   rings(); bubbles(); asksPage(); turnTop();
   // motion
   later(function(){
@@ -387,7 +400,8 @@ function rings(){
 }
 function bubbles(){
   var A = ((D.hours||{}).agents||[]).filter(function(a){ return a.n > 0; });
-  A = A.filter(function(a){ return a.k !== ORPH; }).concat(A.filter(function(a){ return a.k === ORPH; }));   // name order, Orphans last
+  var isIn = function(a){ return a.k === ORPH || a.active === false; };
+  A = A.filter(function(a){ return !isIn(a); }).concat(A.filter(isIn));   // active agents first, then those no longer active, each in name order
   if(!A.length){ $("#p2").innerHTML = '<div class="empty">No agent\u2019s work has been touched yet today.</div>'; return; }
   // Sized to the room: one row when they fit, two when there are many; the biggest bubble is the most work, the rest by area.
   var box = $("#p2"), rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
@@ -396,14 +410,14 @@ function bubbles(){
   var slot = Math.min(11, (W - (per - 1) * 1) / per), big = Math.max(3.2, Math.min(slot * 0.92, (Hh - rows * 3.2) / rows - .4)), small = Math.max(3.6, big * 0.58);
   box.style.setProperty("--slot", slot.toFixed(2) + "rem");
   var max = Math.max.apply(null, A.map(function(a){ return a.n; }));
-  var C = 2 * Math.PI * 44, nameOf = function(n){ return n === ORPH ? "Orphans" : first(n); };
+  var C = 2 * Math.PI * 44, nameOf = function(n){ return n === ORPH ? "Agents who left" : first(n); };
   $("#p2").innerHTML = A.map(function(a, i){
     var sz = small + (big - small) * Math.sqrt(a.n / max), share = a.n ? a.c / a.n : 0;
-    return '<div class="bub'+(a.k===ORPH?' orph':'')+'" style="--d:'+(0.06*i).toFixed(2)+'s;--f:'+(-(i*0.7)%5.5).toFixed(1)+'s;--s:'+sz.toFixed(2)+'rem">'
+    return '<div class="bub'+(isIn(a)?' ina':'')+'" style="--d:'+(0.06*i).toFixed(2)+'s;--f:'+(-(i*0.7)%5.5).toFixed(1)+'s;--s:'+sz.toFixed(2)+'rem">'
       + '<div class="o"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(244,241,234,.22)" stroke-width="8"/>'
-      + '<circle class="arc" data-off="'+(C*(1-share)).toFixed(1)+'" cx="50" cy="50" r="44" fill="none" stroke="var(--green)" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+C.toFixed(1)+'"/></svg>'
+      + '<circle class="arc" data-off="'+(C*(1-share)).toFixed(1)+'" cx="50" cy="50" r="44" fill="none" stroke="'+(isIn(a)?'var(--coral)':'var(--green)')+'" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+C.toFixed(1)+'"/></svg>'
       + '<div class="in"><div><b>'+fmt(a.n)+'</b>'+(sz >= 5 ? '<small>'+(a.c ? fmt(a.c)+' closed' : 'worked on')+'</small>' : '')+'</div></div></div>'
-      + '<div class="nm">'+esc(nameOf(a.k))+'</div>'+(sz >= 4.2 ? '<div class="by">'+(a.by||[]).slice(0,3).map(function(b){ return esc(b.k)+' '+fmt(b.n); }).join(' · ')+'</div>' : '')+'</div>'; }).join("");
+      + '<div class="nm">'+esc(nameOf(a.k))+'</div><span class="tg '+(isIn(a)?'i">Inactive':'a">Active')+'</span>'+(sz >= 4.2 ? '<div class="by">'+(a.by||[]).slice(0,3).map(function(b){ return esc(b.k)+' '+fmt(b.n); }).join(' · ')+'</div>' : '')+'</div>'; }).join("");
 }
 var tpT = null, tpAt = 0;
 function turnTop(){
@@ -422,6 +436,17 @@ function turnTop(){
    timeblock goes by it must reflect the KPI ... to hold persons accountable"). From hours.asks (wallBmAsks_): his notes on each
    desk's tasks today and the e-mails routed to them, answered or still waiting; and each desk's closes against their KPI for
    the hours gone. Task types and first names only. */
+/* The closes in an hour, each number in its task type's colour (24 Nov 2026: "the number must have a color in it so you
+   will know if it's servicing, pendings"), and a thin bar of the same colours. An older tracker sends no types: plain. */
+function tyNums(x){
+  var t = x.t || {}, ks = Object.keys(t).filter(function(k){ return t[k] > 0; });
+  if(!ks.length) return '<span class="tz">'+fmt(x.c||0)+'</span>';
+  return ks.sort(function(a,b){ return t[b]-t[a]; }).map(function(k){ return '<span style="color:'+(TYC[k]||TYC.Other)+'" title="'+esc(k)+'">'+fmt(t[k])+'</span>'; }).join('<i class="pl">+</i>');
+}
+function tyBar(x){
+  var t = x.t || {}, n = Object.keys(t).reduce(function(a,k){ return a+t[k]; },0); if(!n) return '';
+  return '<div class="tyb">'+Object.keys(t).map(function(k){ return '<i style="width:'+(100*t[k]/n).toFixed(1)+'%;background:'+(TYC[k]||TYC.Other)+'"></i>'; }).join("")+'</div>';
+}
 function asksPage(){
   var H = D.hours || {}, A = H.asks || {}, box = $("#p3"); if(!box) return;
   if(A.error || !A.desks){ box.innerHTML = '<div class="aw"><div class="kick">Your asks &middot; who answered</div><div class="of">'+esc(A.error || 'This page fills once the tracker carries it (version 2026-11-24g).')+'</div></div>'; return; }
