@@ -4784,6 +4784,11 @@ function transitionBoard_(p) {
       try { return { ok: true, tasksView: tTasksView_(w) }; }
       catch (err) { return { ok: true, tasksView: { on: false, why: 'The tasks could not be read: ' + String(err && err.message ? err.message : err) } }; }
     }
+    /* My pendings and My clawbacks (tPendView_, 24 November 2026): each person's own, a unit manager's team, the branch and staff everyone's */
+    if (/^(1|yes|true)$/i.test(String(p.pend || ''))) {
+      try { return { ok: true, pendView: tPendView_(w) }; }
+      catch (err) { return { ok: true, pendView: { on: false, why: 'The pendings could not be read: ' + String(err && err.message ? err.message : err).slice(0, 200) } }; }
+    }
     /* Branch Intelligence on the named clients (tWatchApi_, 22 October 2026): the branch alone */
     if (p.watch) {
       try { return tWatchApi_(p, w); }
@@ -13929,4 +13934,189 @@ function tCupRun_(opts) {
 function transitionCupReadNow() {
   var r = tCupRun_({ force: true, max: 400, budget: 290000 });
   return tSay_('The AI read ' + r.read + ' timelines' + (r.left ? '; ' + r.left + ' are left for the next run.' : '.'));
+}
+
+/* ── My pendings and My clawbacks on the board ──────────────────────────────────────────────────────────────────────
+   24 November 2026, the branch manager: the agents "log in and see their orphans", and the same board is to carry their
+   pendings, "the underwriting notes ... the date this comment was posted and was anything done", "the underwriter on the
+   case as well case officer", what to tackle first, a chase drafted when "they have submitted ... and have not seen any
+   movement", and "the clawbacks not reversed ... the exact names and tasks opened and scripts submitted ... with the
+   exception of replacements" ("leave replacement if they hit a clawback out of this").
+   Read from the Branch Portfolio (tBookId_): the newest "Branch Pendings" tab, the newest "Clawback" tab and "Pendings
+   Chase" (the tracker rewrites it every ten minutes); the Log Book (LOG & DELIVERY BOOK) for what went in and when; and
+   Salesforce, when linked, for the replacements. Asked for as action=board&pend=1, so Service.gs needs no paste.
+   Who sees what: an agent their own, a unit manager his team's, the branch and staff everyone's. Staff see no money.
+   A replacement is our own rule: the same client had another policy lapse or be surrendered between six months before
+   and a year after this one was issued. Replacements never reach an agent's or a unit manager's screen; the branch sees
+   them apart. Nothing here is written anywhere: it is a read. */
+var T_PEND = { CACHE_S: 300, KEY: 'pend-v1', LOGBOOK: '1EAc0X0648Im2HQJMB-jTVNZFWr5Y1hKh9Ok2a_472uo', CHASE_DAYS: 3, CHASE2_DAYS: 2,
+  REPL_BEFORE: 183, REPL_AFTER: 366, MAX: 600, SCRIPT_RE: /script|contract|policy (document|pack)|acknowledg/i };
+function tPendTab_(book, prefix) {
+  var tabs = book.getSheets().filter(function (sh) { return sh.getName().indexOf(prefix) === 0; })
+    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  if (!tabs.length) return null;
+  var v = tabs[0].getDataRange().getValues();
+  return { name: tabs[0].getName(), head: v[0].map(function (x) { return String(x).trim(); }), rows: v.slice(1) };
+}
+function tPendDay_(x) {
+  if (x instanceof Date) return Utilities.formatDate(x, tTz_(), 'yyyy-MM-dd');
+  var s = String(x == null ? '' : x).trim(), m = /^(\d{4}-\d{2}-\d{2})/.exec(s);
+  if (m) return m[1];
+  var d = s ? new Date(s) : null;
+  return d && !isNaN(d) ? Utilities.formatDate(d, tTz_(), 'yyyy-MM-dd') : '';
+}
+function tPendNum_(x) { var n = Number(String(x == null ? '' : x).replace(/[^\d.-]/g, '')); return isFinite(n) ? n : 0; }
+/** Everything for everyone, read once every five minutes; tPendView_ cuts it for the person. */
+function tPendRaw_() {
+  var cache = null;
+  try { cache = CacheService.getScriptCache(); var hit = tCacheGetBig_(cache, T_PEND.KEY); if (hit) return hit; } catch (e) {}
+  var out = { at: Utilities.formatDate(new Date(), tTz_(), 'd MMM, h:mm a'), cases: [], claws: [], gaps: [] };
+  var book = null;
+  try { book = SpreadsheetApp.openById(tBookId_()); } catch (e) { out.gaps.push('The Branch Portfolio could not be opened.'); return out; }
+  /* what went into the Log Book, by policy */
+  var lb = {};
+  try {
+    var lbook = SpreadsheetApp.openById(String(PropertiesService.getScriptProperties().getProperty('LOGBOOK_SHEET_ID') || T_PEND.LOGBOOK).trim());
+    var lsh = lbook.getSheetByName('Log Book'), lv = lsh ? lsh.getDataRange().getValues() : [];
+    if (lv.length > 1) {
+      var lh = lv[0].map(function (x) { return String(x).trim(); }), li = function (n) { return lh.indexOf(n); };
+      var cP = li('Policy #'), cD = li('Document'), cS = li('Status'), cL = li('Logged At'), cR = li('Received At'), cRB = li('Received By'), cT = li('Transmittal'), cSA = li('Sent At');
+      lv.slice(1).forEach(function (r) {
+        var pol = String(r[cP] || '').replace(/\D/g, ''); if (!pol || /cancel/i.test(String(r[cS] || ''))) return;
+        (lb[pol] = lb[pol] || []).push({ doc: String(r[cD] || ''), status: String(r[cS] || ''), logged: tPendDay_(r[cL]), received: tPendDay_(r[cR]),
+          receivedBy: String(r[cRB] || '').split(/\s+/)[0], trans: String(r[cT] || ''), sent: tPendDay_(r[cSA]) });
+      });
+    }
+  } catch (e) { out.gaps.push('The Log Book could not be read, so what went in is not shown.'); }
+  /* the Salesforce task facts the tracker keeps */
+  var chase = {};
+  try {
+    var ch = book.getSheetByName('Pendings Chase'), cv = ch ? ch.getDataRange().getValues() : [];
+    if (cv.length > 1) {
+      var chh = cv[0].map(function (x) { return String(x).trim(); }), ci = function (n) { return chh.indexOf(n); };
+      cv.slice(1).forEach(function (r) {
+        chase[String(r[ci('Policy')] || '').replace(/\D/g, '')] = { open: tPendNum_(r[ci('Open tasks')]), overdue: tPendNum_(r[ci('Overdue')]), owner: String(r[ci('Owner')] || ''),
+          due: tPendDay_(r[ci('Due')]), lastAt: String(r[ci('Last note at')] || ''), lastBy: String(r[ci('Last note by')] || '') };
+      });
+    }
+  } catch (e) {}
+  /* the pending report */
+  var rep = null;
+  try { rep = tPendTab_(book, 'Branch Pendings'); } catch (e) {}
+  if (!rep) out.gaps.push('No "Branch Pendings" tab in the Branch Portfolio.');
+  else {
+    out.report = rep.name;
+    var h = rep.head, ix = function (n) { return h.indexOf(n); }, cell = function (r, n) { var i = ix(n); return i > -1 && r[i] != null ? String(r[i]).trim() : ''; };
+    var by = {}, closedRe = /closed|received|waived|complete|cancel|accepted/i;
+    rep.rows.forEach(function (r) {
+      var pol = cell(r, 'POLICY').replace(/\D/g, ''); if (!pol) return;
+      var c = by[pol] = by[pol] || { policy: pol, app: cell(r, 'application_number'), client: cell(r, 'Client Name'), agent: cell(r, 'Agent Name'), decision: cell(r, 'DecisionType'),
+        days: 0, uw: cell(r, 'underwriter_id'), officer: cell(r, 'service_associate_id'), premium: tPendNum_(cell(r, 'mode_premium')), suspense: tPendNum_(cell(r, 'SUSPENDED_AMOUNT')),
+        nextFollow: '', isNew: /^y/i.test(cell(r, 'NEW_THIS_WEEK')), reqs: [], comments: [] };
+      c.days = Math.max(c.days, tPendNum_(cell(r, 'DAYS_SINCE_SUBMISSION')));
+      var nf = tPendDay_(cell(r, 'NEXT_FOLLOWUP_DATE')); if (nf && (!c.nextFollow || nf < c.nextFollow)) c.nextFollow = nf;
+      var since = tPendDay_(cell(r, 'REQUIREMENT_DATE') || cell(r, 'ordered_date')), st = cell(r, 'REQUIREMENT_STATUS');
+      var cm = cell(r, 'requirement_comment');
+      if (cm && !c.comments.some(function (x) { return x.text === cm; })) c.comments.push({ text: cm.slice(0, 500), date: since, req: cell(r, 'requirement_name') });
+      if (!closedRe.test(st)) c.reqs.push({ code: cell(r, 'REQUIREMENT_CODE'), name: cell(r, 'requirement_name'), who: cell(r, 'WHO_ACTS_NEXT'), status: st, rag: cell(r, 'RAG_STATUS'),
+        since: since, last: /^y/i.test(cell(r, 'LAST_REQT_TO_SETTLE')) });
+    });
+    var today = new Date();
+    Object.keys(by).forEach(function (pol) {
+      var c = by[pol]; c.task = chase[pol] || null; c.log = (lb[pol] || []).slice(-6);
+      /* what was done since underwriting's last comment: anything in the Log Book on or after its date */
+      var lastC = c.comments.map(function (x) { return x.date; }).filter(Boolean).sort().pop() || '';
+      c.doneSince = lastC ? c.log.filter(function (l) { return (l.received || l.logged) >= lastC; }).length : null;
+      /* the first thing to do, in the order that settles cases fastest */
+      var agentReqs = c.reqs.filter(function (q) { return /agent|client|branch/i.test(q.who); });
+      var onlyPrem = c.reqs.length && c.reqs.every(function (q) { return /FUTPY|premium|payment/i.test(q.code + ' ' + q.name); });
+      var lastIn = c.log.filter(function (l) { return l.sent || l.received; }).map(function (l) { return l.sent || l.received; }).sort().pop() || '';
+      var quiet = lastIn ? tWorkingDays_(new Date(lastIn + 'T12:00:00'), today) : null;
+      c.lastIn = lastIn; c.quiet = quiet;
+      if (/declin|postpon/i.test(c.decision)) { c.first = 'Underwriting declined or postponed it: talk to the client about another plan.'; c.rank = 5; }
+      else if (onlyPrem) { c.first = 'Only the first premium is left: collect it and it issues.'; c.rank = 0; }
+      else if (lastIn && quiet >= T_PEND.CHASE_DAYS && c.reqs.length) {
+        c.first = 'You sent it on ' + lastIn + ' and nothing has moved in ' + quiet + ' working days: your support person chases the case officer.'; c.rank = 1;
+        c.chase = { second: quiet >= T_PEND.CHASE_DAYS + T_PEND.CHASE2_DAYS, text: 'Policy ' + pol + (c.client ? ', ' + c.client : '') + '. ' +
+          c.log.filter(function (l) { return (l.sent || l.received) === lastIn; }).map(function (l) { return l.doc; }).join(', ') + ' was submitted on ' + lastIn +
+          (c.log.filter(function (l) { return l.trans; }).slice(-1)[0] ? ' on transmittal ' + c.log.filter(function (l) { return l.trans; }).slice(-1)[0].trans : '') +
+          '. We have not seen any movement on the requirement. Kindly confirm receipt and advise if anything further is needed.' };
+      }
+      else if (agentReqs.length) {
+        var pick = agentReqs.filter(function (q) { return q.last; })[0] || agentReqs.slice().sort(function (a, b) { return String(a.since || '9').localeCompare(String(b.since || '9')); })[0];
+        c.first = 'Get the ' + pick.name.toLowerCase() + ' in' + (pick.last ? ': it is the last thing before it settles.' : (pick.since ? ': asked for on ' + pick.since + '.' : '.')); c.rank = c.comments.length && !c.doneSince ? 2 : 3;
+      } else { c.first = 'With underwriting or a department: nothing needed from you right now.'; c.rank = 4; }
+      out.cases.push(c);
+    });
+    out.cases.sort(function (a, b) { return a.rank - b.rank || b.days - a.days; });
+  }
+  /* the clawback list */
+  var cl = null;
+  try { cl = tPendTab_(book, 'Clawback'); } catch (e) {}
+  if (!cl) out.gaps.push('No "Clawback" tab in the Branch Portfolio.');
+  else {
+    out.clawReport = cl.name;
+    var kh = cl.head, kx = function (r, n) { var i = kh.indexOf(n); return i > -1 && r[i] != null ? r[i] : ''; };
+    cl.rows.forEach(function (r) {
+      var st = String(kx(r, 'STATUS')).trim(); if (/^reversed/i.test(st)) return;   // "NOT REVERSED" stays
+      var pol = String(kx(r, 'POLICY_ID')).replace(/\D/g, ''); if (!pol) return;
+      var scripts = (lb[pol] || []).filter(function (l) { return T_PEND.SCRIPT_RE.test(l.doc); });
+      out.claws.push({ policy: pol, client: (String(kx(r, 'GIVEN_NAME')).trim() + ' ' + String(kx(r, 'SURNAME')).trim()).trim(), agent: String(kx(r, 'AGENT_NAME')).trim(),
+        plan: String(kx(r, 'PLAN')).trim(), issued: tPendDay_(kx(r, 'ISSUE_DATE')), dispatched: tPendDay_(kx(r, 'DISPATCH_DATE')), ack: tPendDay_(kx(r, 'ACK_DATE')),
+        ackStatus: String(kx(r, 'ACK_STATUS')).trim(), date: tPendDay_(kx(r, 'CLAWBACK_DATE')), reason: String(kx(r, 'REASON_CODES')).trim(), amount: tPendNum_(kx(r, 'CLAWED_BACK_AMT')),
+        status: st, script: scripts.slice(-1)[0] || null, task: chase[pol] || null, replacement: false });
+    });
+    tPendReplacements_(out.claws, out.gaps);
+  }
+  try { if (cache) tCachePutBig_(cache, T_PEND.KEY, out, T_PEND.CACHE_S); } catch (e) {}
+  return out;
+}
+/** Marks each clawback whose client had another policy lapse or be surrendered from six months before to a year after it
+ *  was issued. Without Salesforce nothing is marked, and the gap says so, so the branch knows the list is not filtered. */
+function tPendReplacements_(claws, gaps) {
+  if (!claws.length) return;
+  if (!tSfOn_()) { gaps.push('Salesforce is not linked, so replacements could not be taken off the clawback list.'); return; }
+  try {
+    var pols = claws.map(function (c) { return "'" + c.policy + "'"; });
+    var contact = {}, cs = {};
+    for (var i = 0; i < pols.length; i += 150) tSfQuery_('SELECT POLICY__c, Contact__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + pols.slice(i, i + 150).join(',') + ')')
+      .forEach(function (r) { if (r.Contact__c) { contact[String(r.POLICY__c).replace(/\D/g, '')] = r.Contact__c; cs[r.Contact__c] = 1; } });
+    var ids = Object.keys(cs).map(function (x) { return "'" + x + "'"; }), ended = {};
+    for (var j = 0; j < ids.length; j += 150) tSfQuery_("SELECT POLICY__c, Contact__c, Policy_Status_Description__c, Paid_To_Date__c FROM CLIENT_PORTFOLIO__c WHERE Contact__c IN (" + ids.slice(j, j + 150).join(',') +
+      ") AND (Policy_Status_Description__c LIKE '%LAPSE%' OR Policy_Status_Description__c LIKE '%SURRENDER%')")
+      .forEach(function (r) { (ended[r.Contact__c] = ended[r.Contact__c] || []).push({ pol: String(r.POLICY__c || '').replace(/\D/g, ''), at: tPendDay_(r.Paid_To_Date__c) }); });
+    claws.forEach(function (c) {
+      var k = contact[c.policy]; if (!k || !c.issued || !ended[k]) return;
+      var iss = new Date(c.issued + 'T12:00:00').getTime();
+      c.replacement = ended[k].some(function (e) {
+        if (!e.at || e.pol === c.policy) return false;
+        var d = (new Date(e.at + 'T12:00:00').getTime() - iss) / 86400000;
+        return d >= -T_PEND.REPL_BEFORE && d <= T_PEND.REPL_AFTER;
+      });
+    });
+  } catch (e) { gaps.push('Salesforce did not answer, so replacements could not be taken off the clawback list.'); }
+}
+/** The person's cut of it. */
+function tPendView_(w) {
+  var raw = tPendRaw_(), mine = null;
+  if (w.role === 'unit') mine = (w.team || []).slice();
+  else if (w.role === 'agent') mine = [w.me && w.me.name || ''];
+  var isMine = function (n) { return !mine || mine.some(function (m) { return tSameClient_(m, n); }); };
+  var money = w.role !== 'staff', branch = w.role === 'branch';
+  var strip = function (o) { var c = {}; Object.keys(o).forEach(function (k) { c[k] = o[k]; }); if (!money) { delete c.premium; delete c.suspense; delete c.amount; } return c; };
+  var cases = raw.cases.filter(function (c) { return isMine(c.agent); }).slice(0, T_PEND.MAX).map(strip);
+  var allClaws = (raw.claws || []).filter(function (c) { return isMine(c.agent); });
+  var claws = allClaws.filter(function (c) { return !c.replacement; }).map(strip);
+  var repl = branch ? allClaws.filter(function (c) { return c.replacement; }).map(strip) : [];
+  var byAgent = {};
+  cases.forEach(function (c) { var a = byAgent[c.agent] = byAgent[c.agent] || { agent: c.agent, cases: 0, near: 0, waitingYou: 0, chase: 0, claws: 0, days: 0 };
+    a.cases++; a.days += c.days; if (c.rank === 0) a.near++; if (c.rank === 2) a.waitingYou++; if (c.chase) a.chase++; });
+  claws.forEach(function (c) { (byAgent[c.agent] = byAgent[c.agent] || { agent: c.agent, cases: 0, near: 0, waitingYou: 0, chase: 0, claws: 0, days: 0 }).claws++; });
+  return { on: true, at: raw.at, report: raw.report || '', clawReport: raw.clawReport || '', gaps: raw.gaps, money: money, role: w.role,
+    counts: { cases: cases.length, near: cases.filter(function (c) { return c.rank === 0; }).length, waitingYou: cases.filter(function (c) { return c.rank === 2; }).length,
+      chase: cases.filter(function (c) { return c.chase; }).length, claws: claws.length, noScript: claws.filter(function (c) { return !c.script; }).length, replacements: repl.length,
+      clawed: money ? claws.reduce(function (s, c) { return s + (c.amount || 0); }, 0) : undefined },
+    cases: cases, claws: claws, replacements: repl,
+    agents: w.role === 'agent' ? [] : Object.keys(byAgent).map(function (k) { var a = byAgent[k]; a.avgDays = a.cases ? Math.round(a.days / a.cases) : 0; delete a.days; return a; })
+      .sort(function (a, b) { return b.cases - a.cases; }) };
 }
