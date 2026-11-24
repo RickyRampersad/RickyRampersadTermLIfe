@@ -2229,6 +2229,10 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
 
     readCv().then(function(cv){
       /* what they did with the file on this page; harmless if they skipped it */
+      /* which post brought them: every link we share carries ?from=<tag> (24 Nov 2026) */
+      var SRCW={'ig':'Instagram post','ig-story':'Instagram Story','fb':'Facebook post','fb-ad':'Facebook or Instagram boosted ad','li':'LinkedIn post','li-job':'LinkedIn job listing','li-dm':'A private LinkedIn message from Mr Rampersad','wa':'WhatsApp Status, shared by our team','group':'A Facebook job group','ref':'Referred by someone in the branch','uni':'A university or college careers office','tt':'TikTok'};
+      var from=String((new URLSearchParams(location.search)).get('from')||'').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,24);
+      var src=SRCW[from]||(from?'Tagged “'+from+'”':'Direct, or not tagged');
       var file_=(typeof window.__rrbFile==='function')?window.__rrbFile()
         :{n:0,picked:'',missed:'',ask:'',prem:''};
       if(!file_.picked)file_.picked='did not read the file';
@@ -2238,6 +2242,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
               notes:val('uw_declined'),website:val('website')},
         cv:cv,
         fields:(function(s){return [
+          {section:'At a glance',k:'src',label:'Came from',value:src},
           {section:'At a glance',k:'scan_score',label:'Weighted fit',value:weigh(file_)},
           {section:'At a glance',k:'scan_bar',label:'The bar',value:bar(file_)},
           {section:'At a glance',k:'scan_fit',label:'Fit',value:s[0]},
@@ -2272,8 +2277,8 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
           {section:'The file',k:'file_prem',label:'What they would do about the premium',value:file_.prem},
           {section:'The file',k:'file_missed',label:'What they walked past',value:file_.missed}
         ]})(scan(file_)),
-        page:location.pathname,
-        ref_from:(new URLSearchParams(location.search)).get('from')||'',
+        page:location.pathname+(from?'?from='+from:''),
+        ref_from:from,
         at:new Date().toISOString()};
 
       var ref='', sent=false, cvOk=false, first=name.split(' ')[0];
