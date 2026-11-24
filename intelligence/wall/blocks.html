@@ -97,6 +97,37 @@
   .hc.now .lab{color:var(--gold)}
   .hc.fut{opacity:.35}
   .hc .auto{position:absolute;top:-2.05rem;left:50%;transform:translateX(-50%);font:800 .9rem var(--fd);color:#1B1A22;background:var(--rose);border-radius:1rem;padding:.18rem .6rem;white-space:nowrap;box-shadow:0 0 0 .3rem rgba(229,143,176,.16)}
+  /* the trend, the agents by task type, and calmer rows (24 Nov 2026, 2:10pm) */
+  .trend{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+  .trend .tline{fill:none;stroke:#F4F1EA;stroke-width:3.2;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 .35rem rgba(244,241,234,.45))}
+  .trend .tpace{fill:none;stroke:rgba(227,184,90,.75);stroke-width:2;stroke-dasharray:7 6}
+  .trend .tdot{fill:#F4F1EA;stroke:#1B1A22;stroke-width:2}
+  .trend .tlab{font:800 15px var(--fd);fill:#F4F1EA;paint-order:stroke;stroke:#14131a;stroke-width:4px}
+  .trend .tpl{font:700 13px var(--fb);fill:var(--gold);paint-order:stroke;stroke:#14131a;stroke-width:4px}
+  @media (prefers-reduced-motion: no-preference){ .trend .tline{stroke-dasharray:3000;stroke-dashoffset:3000;animation:tdraw 2.2s var(--ease) .6s forwards} @keyframes tdraw{to{stroke-dashoffset:0}} }
+  .p2 > .agw{width:100%;align-self:stretch}
+  .agw{height:100%;display:flex;flex-direction:column;gap:.55rem;min-height:0}
+  .agh .kick{margin-bottom:.35rem}
+  .ags{display:flex;flex-wrap:wrap;gap:.4rem 1.1rem;align-items:center;font:700 .92rem var(--fb);color:var(--dim)}
+  .ags b{font:800 1.15rem var(--fd);margin-right:.2rem} .ags .s0 b{color:var(--green)} .ags .s1 b{color:var(--amber)} .ags .s2 b{color:var(--faint)}
+  .ags .key{display:inline-flex;align-items:center;gap:.35rem;margin-left:auto;color:var(--faint)} .ags .key i{display:inline-block;width:1.1rem;height:.7rem;border-radius:.2rem;margin-left:.4rem}
+  .ags .key i.c{background:#AEB4BF} .ags .key i.w{background:rgba(174,180,191,.4)} .ags .key i.o{box-shadow:inset 0 0 0 2px #AEB4BF}
+  .ags .tyk{display:flex;gap:.7rem;flex-wrap:wrap} .ags .tyk em{font-style:normal;display:inline-flex;align-items:center;gap:.3rem} .ags .tyk i{width:.7rem;height:.7rem;border-radius:.2rem;display:inline-block}
+  .agg{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(var(--per),minmax(0,1fr));column-gap:2rem;row-gap:.2rem}
+  .agl{display:grid;grid-template-columns:8.5rem minmax(0,1fr) 13.5rem;align-items:center;gap:.7rem;min-height:0;opacity:0;animation:slide .6s var(--ease) forwards;animation-delay:var(--d,0s)}
+  .agl .an{font:800 1.05rem var(--fd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:.45rem}
+  .agl .dot{width:.6rem;height:.6rem;border-radius:50%;flex:none;background:var(--green);box-shadow:0 0 .5rem rgba(120,209,152,.7)}
+  .agl.r1 .dot{background:var(--amber);box-shadow:none} .agl.r2 .dot{background:rgba(255,255,255,.25);box-shadow:none} .agl.r2 .an{color:var(--faint)} .agl.r1 .an{color:var(--dim)}
+  .agl .abar{display:flex;height:1rem;gap:2px;background:rgba(255,255,255,.04);border-radius:.3rem;overflow:hidden}
+  .agl .abar i{display:block;height:100%;width:0;flex:none;transition:width 1.4s var(--ease)}
+  .agl .abar i.c{background:var(--c)} .agl .abar i.w{background:var(--c);opacity:.42} .agl .abar i.o{box-shadow:inset 0 0 0 2px var(--c);opacity:.85}
+  .agl .anum{font:600 .9rem var(--fb);color:var(--dim);white-space:nowrap;text-align:right} .agl .anum b{font:800 1rem var(--fd);color:var(--ink)} .agl .anum b.agd{color:var(--green)} .agl .anum b.ago{color:var(--amber)}
+  .agm{font:700 .85rem var(--fb);color:var(--faint);text-align:right}
+  .mini{gap:.12rem} .mini .bar{height:.55rem} .mini small{font-size:.76rem;line-height:1.15}
+  .cell b{font-size:1.5rem}
+  .cell{flex-direction:column;gap:.05rem} .cell .tyb{top:auto;bottom:.22rem;height:.32rem}
+  .cell em{position:static!important;font-size:.68rem!important;opacity:.7;line-height:1}
+  .cell u.ask{top:.12rem;right:.3rem} .cell b{line-height:1}
   .nowline{position:absolute;top:1.3rem;bottom:1.4rem;width:.32rem;border-radius:.2rem;background:var(--gold);box-shadow:0 0 1rem rgba(227,184,90,.7);left:0;transition:left 1.8s var(--ease);pointer-events:none}
   .nowline::after{content:"now";position:absolute;top:-1.25rem;left:50%;transform:translateX(-50%);font:800 .82rem var(--fd);letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
   .axk{position:absolute;left:-.2rem;font:800 .82rem var(--fd);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);writing-mode:vertical-rl;transform:rotate(180deg)}
@@ -416,9 +447,8 @@ function paint(){
         + '<div class="bar" style="height:.5rem">'+(d.autoTypes||[]).map(function(x){ return '<i data-w="'+(100*x.n/((d.autoTypes||[]).reduce(function(a,y){ return a+y.n; },0)||1)).toFixed(1)+'" style="background:'+(TYC[x.k]||TYC.Other)+'"></i>'; }).join("")+'</div><small>'+fmt(d.automated)+' automated'+(ME.chase ? ' · '+fmt(ME.chase)+' notes in batches' : '')+'</small></div>'
       : closedCell + '<div class="v'+(d.worked?' ink':' z')+'" data-k="worked">'+fmt(d.worked)+'</div><div class="v'+(d.emails?' ink':' z')+'" data-k="e-mails">'+fmt(d.emails)+'</div>'
         + '<div class="mini"><div class="bar">'+d.ages.map(function(n, i){ return '<i data-w="'+(100*n/ageN).toFixed(1)+'" style="background:'+AGEC[i]+'"></i>'; }).join("")+'</div>'
-        + '<small>'+(d.worked ? fmt(d.ages[1]+d.ages[2]+d.ages[3])+' of '+fmt(d.worked)+' over a week old · oldest '+fmt(d.oldest)+' days' : 'nothing touched yet')+'</small>'
-        + (d.open != null ? '<div class="bar rsp"><i data-w="'+(d.pend ? (100*d.pendResp/d.pend).toFixed(1) : 0)+'" style="background:var(--green)"></i></div>'
-          + '<small class="rs'+(d.pend && d.pendResp < d.pend/2 ? ' bad' : '')+'">Pendings answered <b>'+fmt(d.pendResp||0)+'/'+fmt(d.pend||0)+' today</b></small>' : '')
+        + '<small>'+(d.worked ? fmt(d.ages[1]+d.ages[2]+d.ages[3])+' of '+fmt(d.worked)+' over a week old · oldest '+fmt(d.oldest)+'d' : 'nothing touched yet')+'</small>'
+        + (d.open != null && d.pend ? '<small class="rs'+(d.pendResp < d.pend/2 ? ' bad' : '')+'">Pendings answered today <b>'+fmt(d.pendResp||0)+' of '+fmt(d.pend)+'</b></small>' : '')
         + '</div>';
     return '<div class="g dk'+(d.auto?' me':'')+(PC && PC.gap > 0 ? ' offt' : '')+'" style="--d:'+(0.08*di).toFixed(2)+'s"><div class="nm" onclick="openPerson(\''+d.sid+'\')" style="cursor:pointer" title="Open '+esc(d.name)+'\'s day in depth"><b>'+esc(d.name)+'</b>'+chip+'</div>'+cells+'<div class="st">'+stats+'</div></div>'; }).join("");
   // the foot
@@ -444,7 +474,7 @@ function paint(){
     Array.prototype.forEach.call(document.querySelectorAll("[data-t]"), function(b){ b.style.top = "calc(" + b.getAttribute("data-t") + "% + .15rem)"; });
     Array.prototype.forEach.call(document.querySelectorAll("[data-w]"), function(i){ i.style.width = i.getAttribute("data-w") + "%"; });
     Array.prototype.forEach.call(document.querySelectorAll("[data-o]"), function(i){ i.style.opacity = i.getAttribute("data-o"); });
-    placeNow(nowH);
+    placeNow(nowH); drawTrend(nowH);
   });
   var busiest = H.hours.slice().sort(function(a,b){ var x=Object.keys(a.closed).reduce(function(s,k){return s+a.closed[k];},0), y=Object.keys(b.closed).reduce(function(s,k){return s+b.closed[k];},0); return y-x; })[0];
   var bits = ["<b>"+fmt(T.closed)+"</b> tasks closed by the desks today, <b>"+fmt(T.worked)+"</b> worked on and not closed",
@@ -517,26 +547,33 @@ function rings(){
   $("#p1").innerHTML = cards.join("") || '<div class="empty">The desks show here once they check in.</div>';
   ringLoop();
 }
+/* THE AGENTS, BY TASK TYPE (24 Nov 2026, 2:10pm: "show the type of task type, so you would see what was done and what's
+   outstanding for these agents, and you'd see who's active and who is really not active"). One line an agent: a bar of their
+   work by task type, solid for closed today, half-tone for worked on today, outlined for what the desks still hold open for
+   them; and a status: worked on today, nothing today (open work, untouched), or no longer with us. First names only. */
 function bubbles(){
-  var A = ((D.hours||{}).agents||[]).filter(function(a){ return a.n > 0; });
-  var isIn = function(a){ return a.k === ORPH || a.active === false; };
-  A = A.filter(function(a){ return !isIn(a); }).concat(A.filter(isIn));   // active agents first, then those no longer active, each in name order
-  if(!A.length){ $("#p2").innerHTML = '<div class="empty">No agent\u2019s work has been touched yet today.</div>'; return; }
-  // Sized to the room: one row when they fit, two when there are many; the biggest bubble is the most work, the rest by area.
-  var box = $("#p2"), rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-  var W = (box.clientWidth || $("#tp").clientWidth || 1200) / rem, Hh = ($("#p0").clientHeight || 300) / rem;
-  var rows = window.matchMedia("(max-width:900px)").matches ? Math.ceil(A.length / 4) : (A.length > 12 ? 2 : 1), per = Math.ceil(A.length / rows);
-  var slot = Math.min(11, (W - (per - 1) * 1) / per), big = Math.max(3.2, Math.min(slot * 0.92, (Hh - rows * 3.2) / rows - .4)), small = Math.max(3.6, big * 0.58);
-  box.style.setProperty("--slot", slot.toFixed(2) + "rem");
-  var max = Math.max.apply(null, A.map(function(a){ return a.n; }));
-  var C = 2 * Math.PI * 44, nameOf = function(n){ return n === ORPH ? "Agents who left" : first(n); };
-  $("#p2").innerHTML = A.map(function(a, i){
-    var sz = small + (big - small) * Math.sqrt(a.n / max), share = a.n ? a.c / a.n : 0;
-    return '<div class="bub'+(isIn(a)?' ina':'')+'" style="--d:'+(0.06*i).toFixed(2)+'s;--f:'+(-(i*0.7)%5.5).toFixed(1)+'s;--s:'+sz.toFixed(2)+'rem">'
-      + '<div class="o"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(244,241,234,.22)" stroke-width="11"/>'
-      + '<circle class="arc" data-off="'+(C*(1-share)).toFixed(1)+'" cx="50" cy="50" r="44" fill="none" stroke="'+(isIn(a)?'var(--coral)':'var(--green)')+'" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+C.toFixed(1)+'"/></svg>'
-      + '<div class="in"><div><b>'+fmt(a.n)+'</b>'+(sz >= 5 ? '<small>'+(a.c ? fmt(a.c)+' closed' : 'worked on')+'</small>' : '')+'</div></div></div>'
-      + '<div class="nm">'+esc(nameOf(a.k))+'</div><span class="tg '+(isIn(a)?'i">Inactive':'a">Active')+'</span>'+(sz >= 4.2 ? '<div class="by">'+(a.by||[]).slice(0,3).map(function(b){ return esc(b.k)+' '+fmt(b.n); }).join(' · ')+'</div>' : '')+'</div>'; }).join("");
+  var A = ((D.hours||{}).agents||[]).filter(function(a){ return (a.n||0) + (a.o||0) > 0; }), box = $("#p2");
+  if(!A.length){ box.innerHTML = '<div class="empty">No agent’s work has been touched yet today.</div>'; return; }
+  var left = function(a){ return a.k === ORPH || a.active === false; }, today = function(a){ return (a.n||0) > 0; };
+  var rank = function(a){ return left(a) ? 2 : today(a) ? 0 : 1; };
+  A.sort(function(x, y){ var r = rank(x) - rank(y); if(r) return r; var p = first(x.k).toLowerCase(), q = first(y.k).toLowerCase(); return p < q ? -1 : p > q ? 1 : 0; });
+  var nW = A.filter(function(a){ return rank(a) === 0; }).length, nQ = A.filter(function(a){ return rank(a) === 1; }).length, nL = A.length - nW - nQ;
+  var tot = function(a){ return (a.c||0) + (a.w||0) + (a.o||0); }, max = Math.max.apply(null, A.map(tot).concat([1]));
+  var rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16, Hh = ($("#tp").clientHeight || 300) / rem;
+  var per = Math.max(4, Math.floor((Hh - 4.2) / 1.85)), cols = 2, room = per * cols, shown = A.slice(0, room), more = A.length - shown.length;
+  var seg = function(list, cls){ return (list||[]).map(function(x){ return '<i class="'+cls+'" data-w="'+(100*x.n/max).toFixed(2)+'" style="--c:'+(TYC[x.k]||TYC.Other)+'" title="'+esc(x.k)+' '+x.n+'"></i>'; }).join(""); };
+  var nm = function(n){ return n === ORPH ? "Agents who left" : first(n); };
+  var line = function(a, i){ var r = rank(a);
+    return '<div class="agl r'+r+'" style="--d:'+(0.04*i).toFixed(2)+'s"><span class="an"><i class="dot"></i>'+esc(nm(a.k))+'</span>'
+      + '<span class="abar">'+seg(a.ct,'c')+seg(a.wt,'w')+seg(a.ot,'o')+'</span>'
+      + '<span class="anum">'+(a.c ? '<b class="agd">'+fmt(a.c)+'</b> done ' : '')+(a.w ? '<b>'+fmt(a.w)+'</b> worked ' : '')+(a.o ? '<b class="ago">'+fmt(a.o)+'</b> open' : '')+(!a.c && !a.w && !a.o ? '<span class="z">–</span>' : '')+'</span></div>'; };
+  var types = {}; A.forEach(function(a){ ['ct','wt','ot'].forEach(function(f){ (a[f]||[]).forEach(function(x){ types[x.k] = 1; }); }); });
+  box.innerHTML = '<div class="agw"><div class="agh"><div class="kick">The agents &middot; what was done and what is outstanding, by task type</div>'
+    + '<div class="ags"><span class="s0"><b>'+fmt(nW)+'</b> worked on today</span><span class="s1"><b>'+fmt(nQ)+'</b> nothing today, work open</span>'+(nL ? '<span class="s2"><b>'+fmt(nL)+'</b> no longer active</span>' : '')
+    + '<span class="key"><i class="c"></i>closed <i class="w"></i>worked on <i class="o"></i>open</span>'
+    + '<span class="tyk">'+Object.keys(types).map(function(k){ return '<em><i style="background:'+(TYC[k]||TYC.Other)+'"></i>'+esc(tyName(k))+'</em>'; }).join("")+'</span></div></div>'
+    + '<div class="agg" style="--per:'+per+'">'+shown.map(line).join("")+'</div>'
+    + (more > 0 ? '<div class="agm">+'+fmt(more)+' more agents with open work and nothing today</div>' : '')+'</div>';
 }
 var tpT = null, tpAt = 0, holdUntil = 0, pAt = -1;
 /* ONE PERSON, IN DEPTH (24 Nov 2026: "polish up slide 2 to have multiple levels driving deep insights with graphics and charts,
@@ -705,7 +742,7 @@ function openPerson(sid){
   personPage(sid); holdUntil = Date.now() + 60000;
 }
 function turnTop(){
-  clearInterval(tpT); tpAt = 0; var P = [$("#p0"), $("#p1"), $("#p2"), $("#p3"), $("#p4")], dots = $("#tdots").querySelectorAll("i"), K = ["hour by hour", "each desk's day", "agents served", "your asks · who answered", "one person, in depth"];
+  clearInterval(tpT); tpAt = 0; var P = [$("#p0"), $("#p1"), $("#p2"), $("#p3"), $("#p4")], dots = $("#tdots").querySelectorAll("i"), K = ["hour by hour", "each desk's day", "the agents, by task type", "your asks · who answered", "one person, in depth"];
   P.forEach(function(x, i){ x.classList.toggle("out", i > 0); dots[i].classList.toggle("on", !i); }); $("#tdk").textContent = K[0];
   if(window.matchMedia("(max-width:900px)").matches){ P[1].classList.remove("out"); P[2].classList.remove("out"); P[3].classList.remove("out"); P[4].classList.remove("out"); return; }
   tpT = setInterval(function(){
@@ -723,10 +760,8 @@ function turnTop(){
    the hours gone. Task types and first names only. */
 /* The closes in an hour, each number in its task type's colour (24 Nov 2026: "the number must have a color in it so you
    will know if it's servicing, pendings"), and a thin bar of the same colours. An older tracker sends no types: plain. */
-function tyNums(x){
-  var t = x.t || {}, ks = Object.keys(t).filter(function(k){ return t[k] > 0; });
-  if(!ks.length) return '<span class="tz">'+fmt(x.c||0)+'</span>';
-  return ks.sort(function(a,b){ return t[b]-t[a]; }).map(function(k){ return '<span style="color:'+(TYC[k]||TYC.Other)+'" title="'+esc(k)+'">'+fmt(t[k])+'</span>'; }).join('<i class="pl">+</i>');
+function tyNums(x){   // 24 Nov 2026, 2:10pm ("the words are jumbled up"): one number a cell; the type colours live in the bar beneath
+  return '<span'+((x.c||0) ? '' : ' class="tz"')+'>'+fmt(x.c||0)+'</span>';
 }
 function tyBar(x){
   var t = x.t || {}, n = Object.keys(t).reduce(function(a,k){ return a+t[k]; },0); if(!n) return '';
@@ -757,6 +792,27 @@ function asksPage(){
     + (waits.length ? '<div class="wl">Waiting longest: '+waits.slice(0,6).map(function(x){ return '<span><b>'+esc(x.n)+'</b> '+esc(x.w.type)+' &middot; asked '+esc(x.w.at)+'</span>'; }).join("")+'</div>' : '')+'</div>';
 }
 /* The line where the clock is, between the hour columns it falls in. */
+/* THE TREND (24 Nov 2026, 2:10pm: "for that to be trending"): the running total of closes, hour by hour, drawn over the
+   chart against the pace the desks' targets set for the day. Its own scale, read off the labels at its end. */
+function drawTrend(nowH){
+  var H = D && D.hours, ch = $("#chart"), cols = document.querySelectorAll("#chart .hc"); if(!H || !ch || !cols.length) return;
+  var old = $("#trend"); if(old) old.remove();
+  var tgt = (H.desks||[]).reduce(function(a,d){ return a + (d.auto ? 0 : (d.target||0)); }, 0), cum = 0, pts = [];
+  H.hours.forEach(function(h, i){ cum += Object.keys(h.closed).reduce(function(a,k){ return a+h.closed[k]; },0); if(h.h + 1 <= nowH + 0.001 || (h.h <= nowH && nowH < h.h + 1)) pts.push({ i: i, v: cum, part: h.h + 1 > nowH }); });
+  if(!pts.length) return;
+  var up = cols[0].querySelector(".up"), top = up.offsetTop + 6, hgt = up.offsetHeight - 12, mx = Math.max(cum, tgt, 1);
+  var X = function(i, f){ var c = cols[i]; return c.offsetLeft + c.offsetWidth * (f == null ? 1 : f); }, Y = function(v){ return top + hgt * (1 - v / mx); };
+  var path = pts.map(function(p, k){ var f = p.part ? Math.max(0.05, nowH - H.hours[p.i].h) : 1; return (k ? 'L' : 'M') + X(p.i, f).toFixed(1) + ' ' + Y(p.v).toFixed(1); }).join(' ');
+  path = 'M' + X(0, 0).toFixed(1) + ' ' + Y(0).toFixed(1) + ' ' + path.replace(/^M/, 'L');
+  var last = pts[pts.length - 1], lx = X(last.i, last.part ? Math.max(0.05, nowH - H.hours[last.i].h) : 1), ly = Y(last.v);
+  var pace = tgt ? '<path d="M'+X(0,0).toFixed(1)+' '+Y(0).toFixed(1)+' L'+X(cols.length-1).toFixed(1)+' '+Y(tgt).toFixed(1)+'" class="tpace"/>'
+    + '<text x="'+(X(cols.length-1)-4).toFixed(1)+'" y="'+(Y(tgt)-8).toFixed(1)+'" text-anchor="end" class="tpl">pace to '+fmt(tgt)+'</text>' : '';
+  var behind = tgt ? Math.round(tgt * Math.max(0, Math.min(1, (nowH - H.from) / (H.to - H.from)))) : 0;
+  var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.id = "trend"; svg.setAttribute("class", "trend");
+  svg.innerHTML = pace + '<path d="'+path+'" class="tline"/><circle cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="6" class="tdot"/>'
+    + '<text x="'+(lx+12).toFixed(1)+'" y="'+(ly+5).toFixed(1)+'" class="tlab">'+fmt(cum)+' so far'+(behind ? ' · pace says '+fmt(behind) : '')+'</text>';
+  ch.appendChild(svg);
+}
 function placeNow(nowH){
   var H = D && D.hours, line = $("#nowline"), cols = document.querySelectorAll("#chart .hc"); if(!H || !line || !cols.length) return;
   var x = nowH - H.from, i = Math.max(0, Math.min(cols.length - 1, Math.floor(x))), f = Math.max(0, Math.min(1, x - i));
