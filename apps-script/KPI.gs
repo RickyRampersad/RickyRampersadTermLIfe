@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-24l';
+var SCRIPT_VERSION = '2026-11-24m';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -18581,8 +18581,10 @@ function wallMe_(day, H0, NH) {
     try {
       postWhoAll_(sfkNotes_("SELECT Id, ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND CreatedById = '" + me + "' AND CreatedDate >= " + sfkUtcAt_(day, 0) + ' LIMIT 2000') || [], me, {})
         .forEach(function (p) {
-          if (p.who === 'ricky') { out.notes++; var i = wallHourOf_(p.CreatedDate) - H0; if (i >= 0 && i < NH) out.notesH[i]++; }
-          else if (p.who === 'chase') out.chase++; else out.system++;
+          // 24 Nov 2026: his answers go out in batches, which postWhoAll_ reads as 'chase'. On the wall they are his (as bmWaiting_ has
+          // taken them since 23 Nov); out.chase still says how many came in batches. Only the tracker's own notes are automation.
+          if (p.who === 'ricky' || p.who === 'chase') { out.notes++; if (p.who === 'chase') out.chase++; var i = wallHourOf_(p.CreatedDate) - H0; if (i >= 0 && i < NH) out.notesH[i]++; }
+          else out.system++;
         });
     } catch (e) { out.notesError = 'Salesforce did not answer.'; }
   }
