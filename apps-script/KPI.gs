@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-23f';
+var SCRIPT_VERSION = '2026-11-24a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -8540,7 +8540,7 @@ function rateRun_(day, since) {
     try { (sfkQuery_('SELECT Id, Name, FirstName, Email, RecordType.Name FROM Contact WHERE Id IN (' + ckeys.slice(i, i + 150).map(soqlStr_).join(',') + ')') || [])
       .forEach(function (c) { cons[c.Id] = c; }); } catch (e) {}
   }
-  var active = {}, anyActive = false; try { var ap = agentPeople_() || {}; Object.keys(ap).forEach(function (k) { var a = ap[k]; if (a.email) { active[String(a.email).toLowerCase()] = 1; anyActive = true; } }); } catch (e) {}
+  var active = {}, anyActive = false; try { var ap = agentPeople_() || {}; Object.keys(ap).forEach(function (k) { var a = ap[k]; if (a.email && !agentDayOff_(a)) { active[String(a.email).toLowerCase()] = 1; anyActive = true; } }); } catch (e) {}
   var bmEmails = {}; try { managerEmails_().forEach(function (m) { bmEmails[String(m).toLowerCase()] = 1; }); } catch (e) {}
   var bmName = bkNk_(nameFor_('ricky'));
   var rows = rateRows_(), today = {}, recent = {}, opted = {}, cool = shiftDays_(day, -RATE.CLIENT_COOL_DAYS);
@@ -10656,8 +10656,14 @@ function agentInPilot_(a) {
  *  submit the weekly Time & Income Control by hand instead, as their contract requires.
  *  Everything else from the branch is unchanged. Script Property AGENT_DAY_OFF (names or
  *  agent numbers, comma separated) replaces the list; "none" clears it. */
+/*  Widened 24 Nov 2026 (Ricky: "remove all the agents who do not log and leave the active ones ... it's crowding up my
+ *  inbox ... it stops intelligence and everything"): every agent who has not projected and closed off their day. The
+ *  list also stops the fact-find chase and the service-rating requests to them (both used to ignore it). The agents
+ *  left on are those who log: Rajiv Soodoo, Fawwaz Mohamed, Joy Sammah, Neil Ramnanan, Premchand Dookran. */
 var AGENT_DAY_OFF = ['Darryl Manick', 'Stephanie Rajkumar', 'Daniel Bhagwandas',
-                     'Faizal Mohammed', 'Felicia Rampersad', 'Varun Seegolam'];
+                     'Faizal Mohammed', 'Felicia Rampersad', 'Varun Seegolam',
+                     'Malcolm Sooknanan', 'Petra Chadee', 'Richard Ramdwar', 'Steven Blanc',
+                     'Narissa Mohammed', 'Jamil Sean Khan', 'Randolph Gonzales', 'Meera Persad Khan'];
 function agentDayOffList_() {
   var p = ''; try { p = PropertiesService.getScriptProperties().getProperty('AGENT_DAY_OFF') || ''; } catch (e) {}
   if (/^\s*none\s*$/i.test(p)) return [];
@@ -13773,6 +13779,7 @@ function ffChaseTick_(day, mins) {
   }
   if (!list) return [];
   var people = agentPeople_(), resp = null, sent = 0;
+  list = list.filter(function (x) { return !agentDayOff_(people[x.k]); });   // off the platform: no chase (24 Nov 2026)
   if (dow === 1 || dow === 2) {
     if (mode === 'preview') {
       if (dow !== 1 || props.getProperty('ff_prev_' + week) || !list.length) return [];

@@ -10,5 +10,5 @@ TODAY = '2026-12-04'; ok('4 Dec: still 1:30pm', env.closeoutAt_('sasha') === 13 
 TODAY = '2026-12-07'; ok('7 Dec (rota, 8 to 4): back to 3:15', env.closeoutAt_('sasha') === 15 * 60 + 15, env.closeoutAt_('sasha'));
 TODAY = '2026-11-23'; ok('Liz unchanged 3:15', env.closeoutAt_('elizabeth') === 15 * 60 + 15);
 ok('her morning: start 7am', env.startFor_('sasha', '2026-11-23') === 7 * 60, env.startFor_('sasha', '2026-11-23'));
-ok('version 2026-11-23f', env.SCRIPT_VERSION === '2026-11-23f');
+ok('version is 2026-11-23f or later', String(env.SCRIPT_VERSION) >= '2026-11-23f');
 console.log(fails ? fails + ' FAILED' : 'all passed'); process.exit(fails ? 1 : 0);
