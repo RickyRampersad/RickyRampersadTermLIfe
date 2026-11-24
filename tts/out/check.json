@@ -1,12 +1,67 @@
 {
- "tts/out/slink1b/01.mp3": [
+ "tts/out/enrp1/01.mp3": [
   "en",
-  0.995,
-  "Paste it into respond.io and send it. Only they can open that link and it stays open for 60 days."
+  0.996,
+  "Here's how a new member joins your group plan now. No paper forms and nothing type twice. It all starts with one link."
  ],
- "tts/out/slink1b/02.mp3": [
+ "tts/out/enrp1/02.mp3": [
+  "en",
+  0.993,
+  "It starts on your service page, under your billing, choose and roll a new member, then send them their own link."
+ ],
+ "tts/out/enrp1/03.mp3": [
+  "en",
+  0.994,
+  "Type their name, their email, the plans they're joining, and the date their cover starts. Then press Send."
+ ],
+ "tts/out/enrp1/04.mp3": [
+  "en",
+  0.996,
+  "They get their own link by email. Only they can open it and it stays open for 60 days."
+ ],
+ "tts/out/enrp1/05.mp3": [
+  "en",
+  0.996,
+  "on their phone, their name, their company, and their cover already filled in. It takes about 10 minutes."
+ ],
+ "tts/out/enrp1/06.mp3": [
   "en",
   0.995,
-  "They open the link on their phone, their name, their company, and their cover are already there. It takes about 10 minutes."
+  "They add their details and their family and for group life who it pays. The health questions take a single tick for most people and they sign on the screen with a finger."
+ ],
+ "tts/out/enrp1/07.mp3": [
+  "en",
+  0.999,
+  "When they're done, they're told so. If they haven't finished, they get a reminder every working day and after five reminders, we let you know."
+ ],
+ "tts/out/enrp1/08.mp3": [
+  "en",
+  0.997,
+  "Then you can email, saying it's ready for you to check. You see Guardians own form, already filled in, and you never see their health answers."
+ ],
+ "tts/out/enrp1/09.mp3": [
+  "en",
+  0.999,
+  "You complete the employer's part, take that you're authorized, and approve it. That's your last step."
+ ],
+ "tts/out/enrp1/10.mp3": [
+  "en",
+  0.996,
+  "It goes straight to Guardian Life's Group Benefits Team on their own application form with the health declaration and the signature attached. Our branch is copied."
+ ],
+ "tts/out/enrp1/11.mp3": [
+  "en",
+  0.993,
+  "Our team get to task the same moment and we follow Guardian up every three working days until the cover is in place."
+ ],
+ "tts/out/enrp1/12.mp3": [
+  "en",
+  0.996,
+  "On your page, you see where every new member stands, waiting on them ready for you to check or centiguardium life."
+ ],
+ "tts/out/enrp1/13.mp3": [
+  "en",
+  0.996,
+  "One link, nothing re-typed, and every step on the record. That's our branch. A journey, not a transaction."
  ]
 }
