@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-24m';
+var SCRIPT_VERSION = '2026-11-24n';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -18459,8 +18459,9 @@ function wallHourOf_(iso) {
   return Math.max(WALL_HOURS.FROM, Math.min(WALL_HOURS.TO - 1, isNaN(h) ? WALL_HOURS.FROM : h));
 }
 function wallIsEmail_(subject) { return /^email:/i.test(String(subject || '').replace(/<[^>]*>/g, '').replace(/&quot;|&#34;/g, '"').replace(/^[\s"']+/, '')); }
+var WALL_AG_HIDE = /\bjavid\b|\baleema\b/i;
 function wallDayHours_(day) {
-  var cache = CacheService.getScriptCache(), key = 'wall_hours4_' + day, hit = cache.get(key);
+  var cache = CacheService.getScriptCache(), key = 'wall_hours5_' + day, hit = cache.get(key);
   if (hit) { try { return JSON.parse(hit); } catch (e) {} }
   var users = sfkUsers_() || {}, bySf = {}, ids = [], order = DAY_MAIL_DESKS.concat(['ricky']);
   order.forEach(function (s) { var id = s === 'ricky' ? bmSfId_() : (users[s] && users[s].id); if (id) { bySf[id] = s; ids.push("'" + id + "'"); } });
@@ -18472,7 +18473,7 @@ function wallDayHours_(day) {
     ' WHERE OwnerId IN (' + ids.join(',') + ') AND (LastModifiedDate >= ' + since + ' OR CompletedDateTime >= ' + since + ') LIMIT 5000');
   // 24 Nov 2026 (2026-11-24j): the replies too (sfkNotes_ adds FeedComment), because the trail rule puts most notes under a post.
   var notes = []; try { notes = sfkNotes_("SELECT ParentId, CreatedById, CreatedDate FROM FeedItem WHERE Type = 'TextPost' AND CreatedById IN (" + ids.join(',') + ') AND CreatedDate >= ' + since + ' LIMIT 5000') || []; } catch (e) {}
-  var openT = []; try { openT = sfkQuery_('SELECT Id, OwnerId, Task_Type__c FROM Task WHERE OwnerId IN (' + ids.join(',') + ') AND IsClosed = false LIMIT 5000') || []; } catch (e) {}
+  var openT = []; try { openT = sfkQuery_('SELECT Id, OwnerId, Task_Type__c, Agent__r.Name, Agent__r.Employment_Status__c FROM Task WHERE OwnerId IN (' + ids.join(',') + ') AND IsClosed = false LIMIT 5000') || []; } catch (e) {}
   var D = {}, desk = function (sid) {
     return D[sid] = D[sid] || { sid: sid, name: String(nameFor_(sid)).split(' ')[0], auto: sid === 'ricky', closed: 0, worked: 0, emails: 0, automated: 0, noted: 0,
       byType: {}, autoTypes: {}, open: 0, openResp: 0, pend: 0, pendResp: 0, pendClosed: 0, _r: {}, hours: Array.apply(null, Array(NH)).map(function () { return { c: 0, w: 0, a: 0, t: {} }; }), ages: [0, 0, 0, 0], oldest: 0, _w: {} }; };
@@ -18488,9 +18489,11 @@ function wallDayHours_(day) {
   var serve = function (t, sid, how) {
     var ag = t && t.Agent__r && String(t.Agent__r.Name || '').trim(); if (!ag) return;
     var st = t.Agent__r.Employment_Status__c, act = wallStays_(ag) || (st ? /^active$/i.test(String(st).trim()) : !wallIsLeft_(ag, leftK));
-    var a = agents[ag] = agents[ag] || { k: ag, active: act, c: 0, w: 0, by: {} }, key = t.Id + '|' + how;
+    if (WALL_AG_HIDE.test(ag)) return;   // Javid's and Aleema's work stays off the wall
+    var a = agents[ag] = agents[ag] || { k: ag, active: act, c: 0, w: 0, o: 0, by: {}, ct: {}, wt: {}, ot: {} }, key = t.Id + '|' + how;
     if (served[key]) return; served[key] = 1;
     a[how]++; var dn = D[sid] ? D[sid].name : sid; a.by[dn] = (a.by[dn] || 0) + 1;
+    var ty = tyOf(t.Task_Type__c); if (how === 'c') a.ct[ty] = (a.ct[ty] || 0) + 1; else a.wt[ty] = (a.wt[ty] || 0) + 1;
   };
   var work = function (sid, t, at) {          // worked on, not closed: once a task, in the hour it last moved
     var d = D[sid]; if (!d) return;
@@ -18532,6 +18535,14 @@ function wallDayHours_(day) {
   // and how many of them carry a word from that desk today; the Pendings apart, with those closed today counted as dealt with.
   openT.forEach(function (t) {
     var sid = bySf[t.OwnerId], d = D[sid]; if (!d || sid === 'ricky') return;
+    // 24 Nov 2026, 2:10pm ("show the task type, so you would see what was done and what's outstanding for these agents, and
+    // who's active and who is really not"): every open task the desks hold for an agent, by type.
+    var agn = t.Agent__r && String(t.Agent__r.Name || '').trim();
+    if (agn && !WALL_AG_HIDE.test(agn)) {
+      var st2 = t.Agent__r.Employment_Status__c, act2 = wallStays_(agn) || (st2 ? /^active$/i.test(String(st2).trim()) : !wallIsLeft_(agn, leftK));
+      var ag2 = agents[agn] = agents[agn] || { k: agn, active: act2, c: 0, w: 0, o: 0, by: {}, ct: {}, wt: {}, ot: {} }, ty2 = tyOf(t.Task_Type__c);
+      ag2.o++; ag2.ot[ty2] = (ag2.ot[ty2] || 0) + 1;
+    }
     var resp = d._r[t.Id] != null, pend = String(t.Task_Type__c || '') === 'Pendings';
     d.open++; if (resp) d.openResp++;
     if (pend) { d.pend++; if (resp) { d.pendResp++; var hr = d.hours[d._r[t.Id]]; if (hr) hr.p = (hr.p || 0) + 1; } }
@@ -18545,7 +18556,7 @@ function wallDayHours_(day) {
     types: WALL_HOURS.TYPES.map(function (t) { return { k: t[0], label: t[1], n: typesSeen[t[0]] || 0 }; })
       .concat(['Other', 'Not typed'].filter(function (k) { return typesSeen[k]; }).map(function (k) { return { k: k, label: k, n: typesSeen[k] }; })),
     hours: hours, desks: desks,
-    agents: Object.keys(agents).map(function (k) { var a = agents[k]; return { k: a.k, active: a.active, c: a.c, w: a.w, n: a.c + a.w, by: list(a.by) }; })
+    agents: Object.keys(agents).map(function (k) { var a = agents[k]; return { k: a.k, active: a.active, c: a.c, w: a.w, o: a.o, n: a.c + a.w, by: list(a.by), ct: list(a.ct), wt: list(a.wt), ot: list(a.ot) }; })
       .sort(function (x, y) { var a = String(x.k).toLowerCase(), b = String(y.k).toLowerCase(); return a < b ? -1 : a > b ? 1 : 0; }),   // name order: nobody ranked
     totals: { closed: sum('closed', true), worked: sum('worked', true), emails: sum('emails', true), automated: sum('automated'), mine: (D.ricky || {}).closed || 0 } };
   // The day's KPI against the clock (24 Nov 2026, 2026-11-24g): each desk's target for the day, spread over their own hours,
@@ -18630,7 +18641,7 @@ function rioEvent_(b) {
   });
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try { sh.appendRow(row); } finally { lock.releaseLock(); }
-  try { CacheService.getScriptCache().remove('wall_hours4_' + todayISO_()); } catch (e) {}
+  try { CacheService.getScriptCache().remove('wall_hours5_' + todayISO_()); } catch (e) {}
   return { ok: true };
 }
 /** A respond.io duration in minutes: "h:mm:ss", seconds, or milliseconds. */
