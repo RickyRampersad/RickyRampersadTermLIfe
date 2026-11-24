@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- THE CLAWBACK WALL (24 November 2026, tracker 2026-11-24a). From the newest Clawback tab of the Branch Portfolio through wall.clawbacks. Replacements kept off; reversed ones gone. Branch total in dollars, per agent counts only; the policy's last four digits only; no client. -->
+<!-- THE CLAWBACK WALL (24 November 2026, revised for tracker 2026-11-24d). From the newest Clawback tab of the Branch Portfolio through wall.clawbacks. Replacements kept off; reversed ones gone. Ricky, 24 Nov: every agent by name, active and inactive, never 'Orphans'; the client's first name and the policy's first five digits; amounts, ages, plans, who holds the task. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -81,7 +81,11 @@
   .tbl td:first-child{font:700 1.05rem var(--fd);max-width:16rem;overflow:hidden;text-overflow:ellipsis}
   .tbl td small{display:block;font:600 .78rem var(--fb);color:var(--faint)}
   .tbl td.z{color:rgba(255,255,255,.22);font-weight:600} .tbl td.red{color:var(--red)} .tbl td.amber{color:var(--amber)} .tbl td.green{color:var(--green)} .tbl td.gold{color:var(--gold)}
-  .tbl tr.orph td:first-child{color:var(--coral)}
+  .tbl tr.inact td:first-child{color:var(--coral)}
+  .pill{display:inline-block;font:800 .72rem var(--fd);letter-spacing:.05em;text-transform:uppercase;padding:.12rem .42rem;border-radius:.4rem;margin-left:.45rem;vertical-align:middle}
+  .pill.act{background:rgba(120,209,152,.15);color:var(--green)} .pill.ina{background:rgba(239,138,107,.18);color:var(--coral)}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-top:.6rem}
+  .split .tile b{font-size:1.7rem} .split .tile em{display:block;font-style:normal;font:800 1.05rem var(--fd);color:var(--coral);margin-top:.25rem}
   .rw{opacity:0;transform:translateX(-1rem);animation:slide .7s var(--ease) forwards;animation-delay:var(--d,0s)}
   @keyframes slide{to{opacity:1;transform:none}}
   .stack{display:flex;height:1.3rem;border-radius:1rem;overflow:hidden;margin-top:.7rem;background:rgba(255,255,255,.07)}
@@ -106,14 +110,14 @@
   .money{font:800 2.2rem var(--fd);color:var(--coral);margin-top:.4rem} .money small{font:600 1rem var(--fb);color:var(--dim);margin-left:.4rem}
   #rows{position:relative;flex:1;min-height:0;overflow:hidden;margin-top:.3rem}
   .page{position:absolute;inset:0;transition:opacity .7s var(--ease)} .page.out{opacity:0;pointer-events:none}
-  .lr{display:grid;grid-template-columns:5.5rem minmax(0,1fr) minmax(0,1fr) 7.5rem 13.5rem 6rem;gap:.7rem;align-items:center;padding:.42rem 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .lr{display:grid;grid-template-columns:7rem 6.5rem minmax(0,1fr) minmax(0,1fr) 6.5rem 6.5rem 12.5rem 6.5rem;gap:.7rem;align-items:center;padding:.42rem 0;border-bottom:1px solid rgba(255,255,255,.06)}
   .lr.h{font:800 .8rem var(--fd);letter-spacing:.06em;text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--line)}
   .lr .p{font:800 1.1rem var(--fd);font-variant-numeric:tabular-nums} .lr .a{font:700 1.05rem var(--fd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .lr .pl{font:500 .95rem var(--fb);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .lr .d{font:700 .95rem var(--fb);color:var(--dim)}
   .lr.red .p{color:var(--red)}
   .pager{display:flex;gap:.4rem;align-items:center} .pager i{width:.6rem;height:.6rem;border-radius:50%;background:rgba(255,255,255,.18)} .pager i.on{background:var(--gold)}
   .top{display:flex;justify-content:space-between;align-items:baseline;gap:1rem}
-  @media (max-width:900px){ #rows{overflow:visible} .page{position:static} .page.out{display:none} .lr{grid-template-columns:repeat(3,auto)} .lr.h{display:none} }
+  @media (max-width:900px){ #agbox{max-height:none!important} #rows{overflow:visible} .page{position:static} .page.out{display:none} .lr{grid-template-columns:repeat(3,auto)} .lr.h{display:none} }
 
   @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} .card,.rw{opacity:1;transform:none} }
 </style>
@@ -122,24 +126,26 @@
 <i class="glow g1"></i><i class="glow g2"></i><i class="glow g3"></i>
 <header>
   <div class="plate"><b>CLAWBACK</b><span>wall</span></div>
-  <div><h1>Clawbacks, and Who Is Following Them Through</h1><div class="sub" id="sub">Guardian's clawback report &middot; agents' names and counts, no client</div></div>
+  <div><h1>Clawbacks, and Who Is Following Them Through</h1><div class="sub" id="sub">Guardian's clawback report</div></div>
   <div class="right"><button class="btn" id="sound" onclick="toggleSound()">▶ Narrate</button><div class="live" id="live"><i></i><span id="liveTxt">connecting</span></div><div class="clock" id="clock">--:--</div></div>
 </header>
 <main>
   <section class="col">
     <div class="card" style="--d:0s"><div class="kick">Clawbacks standing</div>
-      <div class="big" id="hN">0</div><div class="money" id="hM"></div><div class="of" id="hOf">Reading the clawback report&hellip;</div></div>
+      <div class="big" id="hN">0</div><div class="money" id="hM"></div><div class="of" id="hOf">Reading the clawback report&hellip;</div><div class="note" id="rp"></div></div>
+    <div class="card" style="--d:.05s"><div class="kick">Active and inactive agents</div><div class="split" id="sp"></div></div>
     <div class="card" style="--d:.1s;flex:1"><div class="kick">Where each one stands</div>
       <div class="bars" id="st"></div>
       <div class="stack" id="tk2"></div><div class="sk" id="tkk"></div>
-      <div class="note" id="rp"></div></div>
+      <div class="kick" style="margin-top:.8rem">How old</div><div class="bars" id="ages"></div>
+</div>
   </section>
   <section class="rt">
     <div class="card" style="--d:.06s"><div class="kick">By agent &middot; red is anything with no task or nothing submitted</div>
-      <div class="scroll"><table class="tbl" id="ag"></table></div></div>
+      <div class="scroll" id="agbox" style="max-height:15.5rem;overflow:hidden"><table class="tbl" id="ag"></table></div></div>
     <div class="card" style="--d:.14s;display:flex;flex-direction:column;min-height:0">
       <div class="top"><div class="kick">Every clawback &middot; red first</div><div class="pager" id="pager"></div></div>
-      <div class="lr h"><div>Policy</div><div>Agent</div><div>Plan</div><div>Clawed back</div><div>Acknowledgement</div><div>Open task</div></div>
+      <div class="lr h"><div>Client</div><div>Policy</div><div>Agent</div><div>Plan</div><div>Clawed back</div><div>Amount</div><div>Acknowledgement</div><div>Task with</div></div>
       <div id="rows"></div></div>
   </section>
 </main>
@@ -147,10 +153,9 @@
 <script>
 var PEND_URL = "https://script.google.com/macros/s/AKfycbzb9gzh3TldhLCQA7MCz3vdyWLAWTHpR9X7M3uvPNtqJbnnYRMcDSkm0D1C8SgENvn44g/exec";
 var D = null, $ = function (s) { return document.querySelector(s); };
-var ORPH = "Orphans · to reassign";
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
 function fmt(n){ return Math.round(Number(n)||0).toLocaleString("en-US"); }
-function first(n){ n=String(n||""); return n===ORPH ? "Orphans" : (n.split(" ")[0] || "Not named"); }
+function pill(a){ return a ? '<span class="pill act">Active</span>' : '<span class="pill ina">Inactive</span>'; }
 function clock(){ var t=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Port_of_Spain"})); $("#clock").textContent=("0"+t.getHours()).slice(-2)+":"+("0"+t.getMinutes()).slice(-2); }
 clock(); setInterval(clock, 15000);
 function count(el, to, pre){ if(!el) return; to=Math.max(0,Math.round(Number(to)||0)); var from=Number(el.getAttribute("data-v")||0), t0=performance.now(), dur=1500; el.setAttribute("data-v",to);
@@ -177,13 +182,18 @@ var STATE = { none: ["Nothing submitted", "No acknowledgement anywhere: nothing 
 function paint(){
   var C = D;
   if(!C || C.error){ $("#hOf").textContent = (C && C.error) || "Reading the clawback report…"; return; }
-  $("#sub").innerHTML = "Guardian's clawback report, <b>"+esc(C.asOf)+"</b> &middot; replacements kept off &middot; agents' names and counts, no client";
+  $("#sub").innerHTML = "Guardian's clawback report, <b>"+esc(C.asOf)+"</b> &middot; replacements kept off &middot; average <b>TT$"+fmt(C.avg)+"</b> a clawback"+(C.lagMedian!=null?" &middot; clawed back a median <b>"+fmt(C.lagMedian)+" days</b> after dispatch":"");
+  var A1=C.active||{n:0,amount:0,red:0,agents:0}, I1=C.inactive||{n:0,amount:0,red:0,agents:0};
+  $("#sp").innerHTML = '<div class="tile green"><b>'+fmt(A1.n)+'</b><span>active agents ('+fmt(A1.agents)+') &middot; '+fmt(A1.red)+' red</span><em>TT$'+fmt(A1.amount)+'</em></div>'
+    + '<div class="tile"><b style="color:var(--coral)">'+fmt(I1.n)+'</b><span>inactive agents ('+fmt(I1.agents)+') &middot; '+fmt(I1.red)+' red</span><em>TT$'+fmt(I1.amount)+'</em></div>';
+  var G=C.ages||[], gm=Math.max.apply(null,G.map(function(g){return g.n;}).concat([1]));
+  $("#ages").innerHTML = G.map(function(g){ return '<div class="br"><div class="l"><b>'+esc(g.k)+'</b><small>TT$'+fmt(g.amount)+' &middot; '+fmt(g.red)+' red</small><span>'+fmt(g.n)+'</span></div><div class="t"><i data-w="'+(100*g.n/gm).toFixed(1)+'" style="background:var(--coral)"></i></div></div>'; }).join("");
   count($("#hN"), C.total);
   $("#hM").innerHTML = "TT$"+fmt(C.amount)+"<small>out of agents' income</small>";
   $("#hOf").innerHTML = "<b>"+fmt(C.red)+"</b> flagged red &middot; <b>"+fmt(C.none)+"</b> with nothing submitted &middot; <b>"+fmt(C.noTask)+"</b> with no open task";
   var mx = Math.max(C.none, C.submitted, C.withUs, 1);
   $("#st").innerHTML = ["none","submitted","withUs"].map(function(k){ var s=STATE[k];
-    return '<div class="br"><div class="l"><b>'+s[0]+'</b><span>'+fmt(C[k])+'</span></div><div class="t"><i data-w="'+(100*C[k]/mx).toFixed(1)+'" style="background:'+s[2]+'"></i></div><em>'+s[1]+'</em></div>'; }).join("");
+    return '<div class="br"><div class="l"><b>'+s[0]+'</b><span>'+fmt(C[k])+'</span></div><div class="t"><i data-w="'+(100*C[k]/mx).toFixed(1)+'" style="background:'+s[2]+'"></i></div></div>'; }).join("");
   if(C.tasks){
     var all = (C.task + C.noTask) || 1;
     $("#tk2").innerHTML = '<i data-w="'+(100*C.task/all).toFixed(1)+'" style="background:var(--green)"></i><i data-w="'+(100*C.noTask/all).toFixed(1)+'" style="background:var(--red)"></i>';
@@ -191,14 +201,17 @@ function paint(){
   } else { $("#tk2").style.display="none"; $("#tkk").innerHTML = ""; }
   $("#rp").innerHTML = (C.replChecked ? "<b>"+fmt(C.replacements)+"</b> replacement"+(C.replacements===1?"":"s")+" kept off (TT$"+fmt(C.replAmount)+"). " : "")
     + (C.reversed ? "<b>"+fmt(C.reversed)+"</b> already reversed. " : "") + (C.gaps||[]).map(esc).join(" ");
-  $("#ag").innerHTML = '<tr><th>Agent</th><th>Clawbacks</th><th>Nothing submitted</th><th>Submitted, still standing</th><th>With us</th><th>No task</th><th>Red</th></tr>'
+  $("#ag").innerHTML = '<tr><th>Agent</th><th>Clawbacks</th><th>TT$</th><th>Nothing submitted</th><th>Submitted, still standing</th><th>With us</th><th>No task</th><th>Red</th><th>Oldest</th></tr>'
     + (C.agents||[]).map(function(a,i){ var z=function(n,c){ return '<td class="'+(n?(c||''):'z')+'">'+fmt(n)+'</td>'; };
-      return '<tr class="rw'+(a.agent===ORPH?' orph':'')+'" style="--d:'+(0.05*i).toFixed(2)+'s"><td>'+esc(a.agent===ORPH?'Orphans':a.agent)+'</td><td>'+fmt(a.n)+'</td>'+z(a.none,'red')+z(a.submitted,'amber')+z(a.withUs)+z(a.noTask,'red')+z(a.red,'red')+'</tr>'; }).join("");
+      return '<tr class="rw'+(a.active===false?' inact':'')+'" style="--d:'+(0.05*i).toFixed(2)+'s"><td>'+esc(a.agent)+pill(a.active!==false)+'</td><td>'+fmt(a.n)+'</td><td class="gold">'+fmt(a.amount||0)+'</td>'+z(a.none,'red')+z(a.submitted,'amber')+z(a.withUs)+z(a.noTask,'red')+z(a.red,'red')+'<td>'+(a.oldest?fmt(a.oldest)+'d':'')+'</td></tr>'; }).join("");
+  clearInterval(window.agT); var ab=$("#agbox"); ab.scrollTop=0;
+  if(ab.scrollHeight>ab.clientHeight+4 && !window.matchMedia("(max-width:900px)").matches) window.agT=setInterval(function(){ var n=ab.scrollTop+ab.clientHeight-40; ab.scrollTo({top: n>=ab.scrollHeight-ab.clientHeight+1 && ab.scrollTop>0 ? 0 : n, behavior:"smooth"}); }, 7000);
   var L = C.list || [];
   var row = function(x){ var s = STATE[x.state] || STATE.none;
-    return '<div class="lr'+(x.red?' red':'')+'"><div class="p">…'+esc(x.last4)+'</div><div class="a">'+esc(first(x.agent))+'</div><div class="pl">'+esc(x.plan||'')+'</div>'
-      + '<div class="d">'+(x.days!=null ? fmt(x.days)+' days ago' : 'not dated')+'</div><div><span class="chip '+s[3]+'">'+s[0]+'</span></div>'
-      + '<div>'+(x.task===true ? '<span class="chip ok">Yes</span>' : x.task===false ? '<span class="chip red">No</span>' : '<span class="chip dim">Not checked</span>')+'</div></div>'; };
+    var pol = x.first5 ? esc(x.first5)+'…' : '…'+esc(x.last4);
+    return '<div class="lr'+(x.red?' red':'')+'"><div class="a">'+esc(x.client||'—')+'</div><div class="p">'+pol+'</div><div class="a">'+esc(x.agent)+(x.active===false?' <span class="pill ina">Inactive</span>':'')+'</div><div class="pl">'+esc(x.plan||'')+'</div>'
+      + '<div class="d">'+(x.days!=null ? fmt(x.days)+' days' : 'not dated')+'</div><div class="d" style="color:var(--gold)">'+(x.amt!=null?'TT$'+fmt(x.amt):'')+'</div><div><span class="chip '+s[3]+'">'+s[0]+'</span></div>'
+      + '<div>'+(x.task===true ? '<span class="chip ok">'+esc(x.owner||'Yes')+'</span>' : x.task===false ? '<span class="chip red">No task</span>' : '<span class="chip dim">Not checked</span>')+'</div></div>'; };
   var box = $("#rows");
   if(!L.length){ box.innerHTML = '<div class="empty">No clawback standing.</div>'; $("#pager").innerHTML=""; }
   else {
@@ -215,6 +228,9 @@ function paint(){
     C.none ? "<b>"+fmt(C.none)+"</b> have nothing submitted" : "",
     C.submitted ? "<b>"+fmt(C.submitted)+"</b> were acknowledged and still stand: follow them through" : "",
     C.noTask ? "<b>"+fmt(C.noTask)+"</b> have no open task" : "",
+    C.inactive && C.inactive.n ? "<b>"+fmt(C.inactive.n)+"</b> sit with inactive agents, <b>TT$"+fmt(C.inactive.amount)+"</b>" : "",
+    (C.plans||[]).slice(0,3).map(function(p){ return esc(p.k)+" <b>"+fmt(p.n)+"</b>"; }).join(" &middot; "),
+    (C.owners||[]).filter(function(o){return o.k!=="No task";}).map(function(o){ return esc(o.k)+" holds <b>"+fmt(o.n)+"</b>"; }).join(" &middot; "),
     "From the clawback report of <b>"+esc(C.asOf)+"</b>"]);
 }
 function load(){

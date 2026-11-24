@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-24c';
+var SCRIPT_VERSION = '2026-11-24d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2237,7 +2237,7 @@ function doPost(e) {
   var body = {};
   try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
   // The wall's Issued this month, from the newest production report (28 Oct 2026).
-  if (String(body.action || '') === 'wall.clawbacks') { try { return json_({ ok: true, data: wallScrub_(wallClawLive_(todayISO_())) }); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); } }
+  if (String(body.action || '') === 'wall.clawbacks') { try { return json_({ ok: true, data: wallClawLive_(todayISO_()) }); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); } }
   if (String(body.action || '') === 'wall.issued') { try { return json_({ ok: true, data: wallScrub_(wallIssued_(todayISO_())) }); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); } }
   if (typeof intelRoute_ === 'function') {
     try {
@@ -18061,10 +18061,16 @@ function wallPendDeep_(out, P, chase, day) {
  *  And for each: an open Salesforce task on it (on the policy record or the client, or naming the policy) or not. No task is
  *  red. A replacement (the client's other policy lapsed or was surrendered from six months before to a year after this one
  *  was issued) is counted apart and kept off the list, as the branch decided. The branch total in dollars; per agent, the
- *  counts. No client name; the policy's last four digits only. */
-var WALL_CLAW = { PREFIX: 'Clawback', TTL: 300, ACK_RE: /acknowledg|ack letter|script|contract|policy (document|pack)/i, REPL_BEFORE: 183, REPL_AFTER: 366, LIST: 60 };
+ *  counts. No client name; the policy's last four digits only.
+ *  Revised 24 Nov 2026 (2026-11-24d), Ricky: "dont say orphans, have active and inactive agents list the same and list the
+ *  first names for the clients and the 1st 5 numbers ... drive a lot more data". Every agent by name, marked active or not
+ *  (Salesforce Employment Status on the policy's agent, else the wall's own leavers list); the client's first name and the
+ *  policy's first five digits; the amount per clawback and per agent; age bands, plans, the task's owner, and the days
+ *  from dispatch to the clawback. The route no longer runs wallScrub_, which would fold the leavers into Orphans. */
+var WALL_CLAW = { PREFIX: 'Clawback', TTL: 300, ACK_RE: /acknowledg|ack letter|script|contract|policy (document|pack)/i, REPL_BEFORE: 183, REPL_AFTER: 366, LIST: 200,
+  AGES: [[0, 30, '0-30 days'], [31, 90, '31-90 days'], [91, 180, '91-180 days'], [181, 99999, 'Over 180 days']] };
 function wallClawLive_(day) {
-  var cache = CacheService.getScriptCache(), key = 'wall_claw_' + day, hit = cache.get(key);
+  var cache = CacheService.getScriptCache(), key = 'wall_claw2_' + day, hit = cache.get(key);
   if (hit) { try { return JSON.parse(hit); } catch (e) {} }
   var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
   if (!ss) return { error: 'The Branch Portfolio would not open.' };
@@ -18110,22 +18116,30 @@ function wallClawLive_(day) {
   } catch (e) { out.gaps.push('The Log Book could not be read, so acknowledgements sent from the branch are not counted.'); }
   // Salesforce: the policy record and client, their open tasks, and the replacements.
   var sfOn = typeof sfkConfigured_ === 'function' && sfkConfigured_();
-  var openOn = {}, ids = {}, contact = {};
+  var openOn = {}, ids = {}, contact = {}, firstN = {}, agSt = {}, owners = {};
   if (sfOn && C.length) {
     try {
       var q = C.map(function (x) { return "'" + x.pol + "'"; });
-      for (var i = 0; i < q.length; i += 150) sfkQuery_('SELECT Id, POLICY__c, Contact__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + q.slice(i, i + 150).join(',') + ')')
-        .forEach(function (r) { var pol = String(r.POLICY__c || '').replace(/\D/g, ''); ids[r.Id] = pol; if (r.Contact__c) { contact[pol] = r.Contact__c; ids[r.Contact__c] = ids[r.Contact__c] || pol; } });
+      var polQ = function (sel, i) { return sfkQuery_('SELECT ' + sel + ' FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + q.slice(i, i + 150).join(',') + ')'); };
+      for (var i = 0; i < q.length; i += 150) {
+        var prs; try { prs = polQ('Id, POLICY__c, Contact__c, Contact__r.FirstName, AGENT__r.Name, AGENT__r.Employment_Status__c', i); }
+        catch (e0) { prs = polQ('Id, POLICY__c, Contact__c, Contact__r.FirstName', i); }
+        prs.forEach(function (r) { var pol = String(r.POLICY__c || '').replace(/\D/g, ''); ids[r.Id] = pol;
+          if (r.Contact__r && r.Contact__r.FirstName) firstN[pol] = String(r.Contact__r.FirstName).trim().split(/\s+/)[0];
+          if (r.AGENT__r && r.AGENT__r.Employment_Status__c) agSt[pol] = String(r.AGENT__r.Employment_Status__c);
+          if (r.Contact__c) { contact[pol] = r.Contact__c; ids[r.Contact__c] = ids[r.Contact__c] || pol; } });
+      }
       var who = Object.keys(ids).map(function (x) { return "'" + x + "'"; });
       for (var j = 0; j < who.length; j += 150) {
         var chunk = who.slice(j, j + 150).join(',');
-        sfkQuery_('SELECT WhatId, WhoId FROM Task WHERE IsClosed = false AND (WhatId IN (' + chunk + ') OR WhoId IN (' + chunk + '))')
-          .forEach(function (t) { [t.WhatId, t.WhoId].forEach(function (x) { if (x && ids[x]) openOn[ids[x]] = true; }); });
+        sfkQuery_('SELECT WhatId, WhoId, Owner.Name FROM Task WHERE IsClosed = false AND (WhatId IN (' + chunk + ') OR WhoId IN (' + chunk + '))')
+          .forEach(function (t) { var on = t.Owner && t.Owner.Name ? String(t.Owner.Name).split(' ')[0] : '';
+            [t.WhatId, t.WhoId].forEach(function (x) { if (x && ids[x]) { openOn[ids[x]] = true; if (on) owners[ids[x]] = on; } }); });
       }
       for (var k = 0; k < C.length; k += 25) {
         var like = C.slice(k, k + 25).map(function (x) { return "Subject LIKE '%" + x.pol + "%'"; }).join(' OR ');
-        sfkQuery_('SELECT Subject FROM Task WHERE IsClosed = false AND (' + like + ')').forEach(function (t) {
-          (String(t.Subject || '').match(/\d{7,}/g) || []).forEach(function (n) { if (seen[n]) openOn[n] = true; }); });
+        sfkQuery_('SELECT Subject, Owner.Name FROM Task WHERE IsClosed = false AND (' + like + ')').forEach(function (t) {
+          (String(t.Subject || '').match(/\d{7,}/g) || []).forEach(function (n) { if (seen[n]) { openOn[n] = true; if (t.Owner && t.Owner.Name && !owners[n]) owners[n] = String(t.Owner.Name).split(' ')[0]; } }); });
       }
       out.tasks = true;
     } catch (e) { out.gaps.push('Salesforce did not answer, so open tasks could not be checked.'); }
@@ -18142,7 +18156,13 @@ function wallClawLive_(day) {
       out.replChecked = true;
     } catch (e) { out.gaps.push('Salesforce did not answer, so replacements could not be taken off.'); }
   } else out.gaps.push('Salesforce is not linked, so open tasks and replacements could not be checked.');
-  var A = {}, R = {}, M = {};
+  var A = {}, R = {}, M = {}, P = {}, G = {}, O = {}, left = wallLeft_(), lag = [];
+  out.active = { n: 0, amount: 0, red: 0, agents: 0 }; out.inactive = { n: 0, amount: 0, red: 0, agents: 0 };
+  var isActive = function (x) {
+    if (wallStays_(x.agent)) return true;
+    var st = agSt[x.pol]; if (st) return /^active$/i.test(st.trim());
+    return !wallIsLeft_(x.agent, left);
+  };
   C.forEach(function (x) {
     if (x.repl) { out.replacements++; out.replAmount += x.amt; return; }
     var l = lb[x.pol] || null;
@@ -18150,15 +18170,30 @@ function wallClawLive_(day) {
     var task = out.tasks ? !!openOn[x.pol] : null;
     var red = state === 'none' || task === false;
     out.total++; out.amount += x.amt; out[state]++; if (task === true) out.task++; else if (task === false) out.noTask++; if (red) out.red++;
-    var a = A[x.agent] = A[x.agent] || { agent: x.agent, n: 0, submitted: 0, withUs: 0, none: 0, noTask: 0, red: 0 };
-    a.n++; a[state]++; if (task === false) a.noTask++; if (red) a.red++;
+    var act = isActive(x), side = act ? out.active : out.inactive;
+    side.n++; side.amount += x.amt; if (red) side.red++;
+    var a = A[x.agent] = A[x.agent] || { agent: x.agent, active: act, n: 0, amount: 0, submitted: 0, withUs: 0, none: 0, noTask: 0, red: 0, oldest: 0 };
+    a.n++; a.amount += x.amt; a[state]++; if (task === false) a.noTask++; if (red) a.red++;
+    var age = x.date ? Math.max(0, daysBetween_(x.date, day) || 0) : null; if (age != null && age > a.oldest) a.oldest = age;
+    var pk = x.plan || 'Plan not given', pp = P[pk] = P[pk] || { k: pk, n: 0, amount: 0 }; pp.n++; pp.amount += x.amt;
+    WALL_CLAW.AGES.forEach(function (b) { if (age != null && age >= b[0] && age <= b[1]) { var g = G[b[2]] = G[b[2]] || { k: b[2], n: 0, amount: 0, red: 0 }; g.n++; g.amount += x.amt; if (red) g.red++; } });
+    var ow = task ? (owners[x.pol] || 'Someone') : 'No task'; O[ow] = (O[ow] || 0) + 1;
+    if (x.dispatched && x.date) { var dl = daysBetween_(x.dispatched, x.date); if (dl != null && dl >= 0) lag.push(dl); }
     var rs = x.reason || 'No reason given'; R[rs] = (R[rs] || 0) + 1;
     var mk = (x.date || '').slice(0, 7) || 'Not dated'; M[mk] = (M[mk] || 0) + 1;
-    out.list.push({ last4: x.pol.slice(-4), agent: x.agent, plan: x.plan, date: x.date, days: x.date ? Math.max(0, daysBetween_(x.date, day) || 0) : null,
+    out.list.push({ last4: x.pol.slice(-4), first5: x.pol.slice(0, 5), client: firstN[x.pol] || '', agent: x.agent, active: act, plan: x.plan, date: x.date,
+      days: age, amt: Math.round(x.amt), owner: task ? (owners[x.pol] || '') : '', dispatched: x.dispatched,
       state: state, ack: x.ack || (l && l.sent) || '', task: task, red: red, reason: x.reason });
   });
   out.amount = Math.round(out.amount); out.replAmount = Math.round(out.replAmount);
-  out.agents = Object.keys(A).map(function (k) { return A[k]; }).sort(function (a, b) { return (b.red - a.red) || (b.n - a.n); });
+  out.agents = Object.keys(A).map(function (k) { A[k].amount = Math.round(A[k].amount); return A[k]; }).sort(function (a, b) { return (b.red - a.red) || (b.n - a.n); });
+  out.agents.forEach(function (a) { (a.active ? out.active : out.inactive).agents++; });
+  out.active.amount = Math.round(out.active.amount); out.inactive.amount = Math.round(out.inactive.amount);
+  out.plans = Object.keys(P).map(function (k) { P[k].amount = Math.round(P[k].amount); return P[k]; }).sort(function (a, b) { return b.n - a.n; }).slice(0, 8);
+  out.ages = WALL_CLAW.AGES.map(function (b) { var g = G[b[2]] || { k: b[2], n: 0, amount: 0, red: 0 }; g.amount = Math.round(g.amount); return g; });
+  out.owners = Object.keys(O).map(function (k) { return { k: k, n: O[k] }; }).sort(function (a, b) { return b.n - a.n; });
+  lag.sort(function (a, b) { return a - b; }); out.lagMedian = lag.length ? lag[Math.floor(lag.length / 2)] : null;
+  out.avg = out.total ? Math.round(out.amount / out.total) : 0;
   out.reasons = Object.keys(R).map(function (k) { return { k: k, n: R[k] }; }).sort(function (a, b) { return b.n - a.n; }).slice(0, 8);
   out.months = Object.keys(M).sort().map(function (k) { return { k: k, n: M[k] }; });
   var rank = function (x) { return x.state === 'none' ? 0 : x.task === false ? 1 : x.state === 'withUs' ? 2 : 3; };
