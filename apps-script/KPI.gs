@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-24f';
+var SCRIPT_VERSION = '2026-11-24g';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -18491,8 +18491,84 @@ function wallDayHours_(day) {
     agents: Object.keys(agents).map(function (k) { var a = agents[k]; return { k: a.k, c: a.c, w: a.w, n: a.c + a.w, by: list(a.by) }; })
       .sort(function (x, y) { var a = String(x.k).toLowerCase(), b = String(y.k).toLowerCase(); return a < b ? -1 : a > b ? 1 : 0; }),   // name order: nobody ranked
     totals: { closed: sum('closed', true), worked: sum('worked', true), emails: sum('emails', true), automated: sum('automated'), mine: (D.ricky || {}).closed || 0 } };
+  // The day's KPI against the clock (24 Nov 2026, 2026-11-24g): each desk's target for the day, spread over their own hours,
+  // so each hour that has passed reads on pace or behind. The target is the one My workday uses (workdayTeam_).
+  try {
+    var tm = {}; workdayTeam_(day).forEach(function (t) { tm[t.sid] = t; });
+    desks.forEach(function (d) {
+      var t = tm[d.sid]; if (!t) return;
+      var sp = parseSpan_(t.hours || '') || null;
+      d.target = Number(t.target) || 0; d.at = t.at || ''; d.absent = !!t.absent; d.late = t.late || 0;
+      if (sp) { d.start = sp.start; d.end = sp.end; }
+    });
+  } catch (e) {}
+  try { out.asks = wallBmAsks_(day, users, bySf); } catch (e) { out.asks = { error: String(e && e.message || e) }; }
   try { cache.put(key, JSON.stringify(out), WALL_HOURS.TTL); } catch (e) {}
   return out;
+}
+
+/* ── What the Branch Manager asked today, and who answered (24 Nov 2026, 2026-11-24g) ──
+ *  Ricky: "the workday must show the branch manager's emails and staff responding, it's important, also as the timeblock goes by
+ *  it must reflect the KPI ... deeper insights to hold persons accountable". Two kinds of ask, each with the desk it is for:
+ *    a note in his own words (or his chase) on a task a desk owns, today: answered when the desk posts on that task, or closes
+ *      it, after the ask;
+ *    an e-mail the inbox scrub routed to a desk today: dealt with when its row reads anything but open.
+ *  Per desk: asked, answered, how many inside the hour, the median minutes to an answer, still waiting and the oldest wait;
+ *  per hour the asks made and answered. Task types only, never a client or a subject. */
+var WALL_ASKS = { HOUR_MIN: 60 };
+function wallBmAsks_(day, users, bySf) {
+  var me = bmSfId_(); if (!me) return { error: 'The Branch Manager is not linked to Salesforce.' };
+  var since = sfkUtcAt_(day, 0), H0 = WALL_HOURS.FROM, NH = WALL_HOURS.TO - WALL_HOURS.FROM, nowMs = Date.now();
+  var ms = function (x) { var t = Date.parse(String(x || '').replace(/\+0000$/, 'Z')); return isNaN(t) ? 0 : t; };
+  var deskById = {}; Object.keys(bySf).forEach(function (id) { if (bySf[id] !== 'ricky') deskById[id] = bySf[id]; });
+  var mine = postWhoAll_(sfkNotes_("SELECT Id, ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE Type = 'TextPost' AND CreatedById = '" + me + "' AND CreatedDate >= " + since + ' LIMIT 2000'), me, deskById)
+    .filter(function (p) { return (p.who === 'ricky' || p.who === 'chase') && /^00T/.test(String(p.ParentId || '')); });
+  var D = {}, desk = function (sid) { return D[sid] = D[sid] || { sid: sid, name: String(nameFor_(sid)).split(' ')[0], asked: 0, answered: 0, inHour: 0, waiting: 0, oldestMin: 0, mins: [],
+    emails: 0, emailsDone: 0, hours: Array.apply(null, Array(NH)).map(function () { return { a: 0, r: 0 }; }), waits: [] }; };
+  DAY_MAIL_DESKS.forEach(function (s) { if (users[s]) desk(s); });
+  var hourOf = function (iso) { return wallHourOf_(iso) - H0; };
+  if (mine.length) {
+    var tids = {}; mine.forEach(function (p) { tids[p.ParentId] = 1; });
+    var tl = Object.keys(tids), T = {};
+    for (var i = 0; i < tl.length; i += 60) sfkQuery_('SELECT Id, OwnerId, IsClosed, CompletedDateTime, Task_Type__c FROM Task WHERE Id IN (' + tl.slice(i, i + 60).map(function (x) { return "'" + x + "'"; }).join(',') + ')')
+      .forEach(function (t) { T[t.Id] = t; });
+    var after = {};
+    for (var j = 0; j < tl.length; j += 60) {
+      postWhoAll_(sfkNotes_("SELECT Id, ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE ParentId IN (" + tl.slice(j, j + 60).map(function (x) { return "'" + x + "'"; }).join(',') + ') AND CreatedDate >= ' + since + ' LIMIT 2000'), me, deskById)
+        .forEach(function (n) { if (n.who && n.who !== 'ricky' && n.who !== 'chase' && n.who !== 'system' && n.who !== 'other') (after[n.ParentId] = after[n.ParentId] || []).push({ who: n.who, at: ms(n.CreatedDate) }); });
+    }
+    var done = {};   // one ask a task: the first of the day, answered by the first word after it
+    mine.sort(function (a, b) { return ms(a.CreatedDate) - ms(b.CreatedDate); }).forEach(function (p) {
+      var t = T[p.ParentId]; if (!t || done[p.ParentId]) return; var sid = bySf[t.OwnerId]; if (!sid || sid === 'ricky') return;
+      done[p.ParentId] = 1;
+      var d = desk(sid), at = ms(p.CreatedDate), h = hourOf(p.CreatedDate);
+      d.asked++; d.hours[h].a++;
+      var ans = (after[p.ParentId] || []).filter(function (n) { return n.who === sid && n.at > at; }).map(function (n) { return n.at; });
+      if (t.IsClosed && ms(t.CompletedDateTime) > at) ans.push(ms(t.CompletedDateTime));
+      if (ans.length) {
+        var first = Math.min.apply(null, ans), mins = Math.round((first - at) / 60000);
+        d.answered++; d.mins.push(mins); if (mins <= WALL_ASKS.HOUR_MIN) d.inHour++;
+        d.hours[Math.max(0, Math.min(NH - 1, hourOf(new Date(first).toISOString())))].r++;
+      } else {
+        var w = Math.round((nowMs - at) / 60000); d.waiting++; if (w > d.oldestMin) d.oldestMin = w;
+        d.waits.push({ min: w, at: twelve_(Utilities.formatDate(new Date(at), CONFIG.TZ, 'HH:mm')), type: String(t.Task_Type__c || 'Not typed') });
+      }
+    });
+  }
+  // E-mails the inbox scrub routed to a desk today, and whether the desk dealt with them.
+  var inbox = { routed: 0, done: 0 };
+  try {
+    inboxRows_().forEach(function (r) {
+      var d0 = r.Date instanceof Date ? Utilities.formatDate(r.Date, CONFIG.TZ, 'yyyy-MM-dd') : String(r.Date || '').slice(0, 10);
+      if (d0 !== day) return; var sid = inboxOwnerSid_(String(r.Owner || '').trim()); if (!sid || sid === 'ricky' || !D[sid]) return;
+      var st = String(r.Status || '').trim(), ok = st && !/^(open|new|)$/i.test(st);
+      D[sid].emails++; inbox.routed++; if (ok) { D[sid].emailsDone++; inbox.done++; }
+    });
+  } catch (e) { inbox.error = 'The inbox scrub could not be read.'; }
+  var med = function (a) { if (!a.length) return null; a = a.slice().sort(function (x, y) { return x - y; }); return a[Math.floor(a.length / 2)]; };
+  var desks = Object.keys(D).map(function (k) { var d = D[k]; d.median = med(d.mins); delete d.mins; d.waits.sort(function (a, b) { return b.min - a.min; }); d.waits = d.waits.slice(0, 6); return d; });
+  var tot = function (f) { return desks.reduce(function (a, d) { return a + (d[f] || 0); }, 0); };
+  return { desks: desks, asked: tot('asked'), answered: tot('answered'), inHour: tot('inHour'), waiting: tot('waiting'), emails: inbox.routed, emailsDone: inbox.done, inboxError: inbox.error || '' };
 }
 
 /* ── My workday is the one screen (29 October 2026, 2026-10-29a) ──

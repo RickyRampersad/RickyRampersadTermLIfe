@@ -128,6 +128,7 @@
   .rc .od b{color:var(--ink)} .rc .od .hot b{color:var(--coral)}
   .rc.me .nm b{color:var(--rose)}
   /* the agents served: a bubble an agent, sized by the work done for them, its ring the share closed (3:43pm) */
+  .p3{position:absolute;inset:0;overflow:hidden;padding:.2rem 0}
   .p2{position:absolute;inset:0;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;align-items:flex-end;gap:.6rem 1rem;padding:.3rem 0;overflow:hidden}
   .bub{display:flex;flex-direction:column;align-items:center;opacity:0;transform:scale(.4);animation:pop .9s var(--ease) forwards;animation-delay:var(--d,0s)}
   @keyframes pop{to{opacity:1;transform:none}}
@@ -198,6 +199,7 @@
     .g{grid-template-columns:repeat(var(--nh,10),minmax(0,1fr));row-gap:.4rem}
     .kpi,.legend,.rh > div:first-child,.rh > div:last-child,.tp{grid-column:1 / -1}
     .p0{grid-template-columns:repeat(var(--nh,10),minmax(0,1fr))} .p0 .chart,.p0 .legend{grid-column:1 / -1}
+    .p3{position:static;margin-top:1rem;overflow:auto}
     .p1{position:static;flex-wrap:wrap;margin-top:1rem} .rc{flex:1 1 45%} .tdots{display:none}
     .rh > div:last-child{display:none}
     .dk{max-height:none}
@@ -209,6 +211,16 @@
     .dk .st{grid-template-columns:repeat(3,auto) minmax(0,1fr);justify-content:space-between}
   }
   @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} .card,.dk,.ag{opacity:1;transform:none} }
+  .cell.pace{box-shadow:inset 0 -.28rem 0 #78D198} .cell.behind{box-shadow:inset 0 -.28rem 0 #E8625A}
+  .cell u.ask{position:absolute;top:.15rem;right:.25rem;text-decoration:none;font:800 .72rem var(--fd,system-ui);color:#E3B85A;white-space:nowrap}
+  .cell{position:relative}
+  .aw{padding:.2rem .3rem} .aw .of{margin:.3rem 0 .4rem}
+  .atb{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  .atb th{font:800 .78rem system-ui;letter-spacing:.06em;text-transform:uppercase;color:#837E77;text-align:right;padding:.3rem .45rem;border-bottom:1px solid rgba(255,255,255,.1)}
+  .atb td{font:800 1.12rem system-ui;text-align:right;padding:.42rem .45rem;border-bottom:1px solid rgba(255,255,255,.06)}
+  .atb th:first-child,.atb td:first-child{text-align:left} .atb td small{display:block;font:600 .75rem system-ui;color:#837E77}
+  .atb .green{color:#78D198} .atb .red{color:#E8625A} .atb .amber{color:#EF9A4B} .atb .z{color:rgba(255,255,255,.25)}
+  .wl{margin-top:.5rem;display:flex;flex-wrap:wrap;gap:.3rem 1rem;font:600 .9rem system-ui;color:#B4B0A8} .wl b{color:#F4F1EA}
 </style>
 </head>
 <body>
@@ -222,11 +234,12 @@
   <section class="card top g" id="top" style="--d:0s">
     <div class="kpi"><div class="kick">Closed today &middot; the desks</div><div class="big" id="kN">0</div>
       <div class="of" id="kOf">Reading Salesforce&hellip;</div><div class="gone"><i id="kGone"></i></div><div class="gk" id="kGk"></div>
-      <div class="tdots" id="tdots"><i class="on"></i><i></i><i></i><span id="tdk">hour by hour</span></div></div>
+      <div class="tdots" id="tdots"><i class="on"></i><i></i><i></i><i></i><span id="tdk">hour by hour</span></div></div>
     <div class="tp" id="tp">
       <div class="tpage p0" id="p0"><div class="chart" id="chart"></div><div class="legend" id="legend"></div></div>
       <div class="tpage p1 out" id="p1"></div>
       <div class="tpage p2 out" id="p2"></div>
+      <div class="tpage p3 out" id="p3"></div>
     </div>
   </section>
   <section class="card rows" style="--d:.1s;padding:.9rem 1.2rem .7rem">
@@ -289,9 +302,14 @@ function paint(){
   var maxDW = Math.max.apply(null, H.desks.map(function(d){ return Math.max.apply(null, d.hours.map(function(x){ return x.w; })); }).concat([1]));
   $("#desks").innerHTML = H.desks.map(function(d, di){
     var t = team[d.name] || {}, chip = d.auto ? '<span>automated &middot; and you</span>' : t.absent ? '<span class="out">away today</span>' : t.at ? '<span class="'+(t.late>0?'late':'ok')+'">in '+esc(t.at)+(t.late>0?' &middot; '+fmt(t.late)+' min late':'')+'</span>' : '<span class="out">not checked in</span>';
+    var AK = {}; ((H.asks||{}).desks||[]).forEach(function(a){ AK[a.sid] = a; }); var ak = AK[d.sid];
+    var cum = 0, pace = function(i){ if(!d.target || d.start == null || d.end == null || d.end <= d.start) return ""; var hEnd = (H.from + i + 1) * 60;
+      var exp = d.target * Math.max(0, Math.min(hEnd, d.end) - d.start) / (d.end - d.start); if(exp < 0.5) return ""; return cum >= exp ? " pace" : " behind"; };
     var cells = d.hours.map(function(x, i){ var h = H.from + i, cls = h + 1 <= nowH ? "" : (h <= nowH ? " now" : " fut");
+      cum += x.c || 0; if(!cls && !d.auto && !t.absent) cls += pace(i);
+      var am = ak && ak.hours && ak.hours[i] ? ak.hours[i] : null, askTag = am && (am.a || am.r) ? '<u class="ask">'+(am.a ? '✉'+am.a : '')+(am.r ? ' ↩'+am.r : '')+'</u>' : '';
       if(d.auto) return '<div class="cell auto'+cls+'">'+(x.a ? '<b>'+fmt(x.a)+'</b>' : '')+(x.n ? '<em>'+fmt(x.n)+' notes</em>' : '')+'</div>';
-      return '<div class="cell'+cls+'"><div class="w" data-o="'+(x.w ? (0.12 + 0.7*x.w/maxDW).toFixed(2) : 0)+'"></div>'+(x.c ? '<b>'+fmt(x.c)+'</b>' : '')+(x.w ? '<em>'+fmt(x.w)+'</em>' : '')+'</div>'; }).join("");
+      return '<div class="cell'+cls+'"><div class="w" data-o="'+(x.w ? (0.12 + 0.7*x.w/maxDW).toFixed(2) : 0)+'"></div>'+(x.c ? '<b>'+fmt(x.c)+'</b>' : '')+(x.w ? '<em>'+fmt(x.w)+'</em>' : '')+askTag+'</div>'; }).join("");
     var ageN = d.ages.reduce(function(a,x){ return a+x; },0) || 1;
     var tbar = function (list) { var n = list.reduce(function(a,x){ return a+x.n; },0) || 1; return '<div class="tb">'+list.map(function(x){ return '<i data-w="'+(100*x.n/n).toFixed(1)+'" style="background:'+(TYC[x.k]||TYC.Other)+'" title="'+esc(x.k)+'"></i>'; }).join("")+'</div>'; };
     var closedCell = '<div class="cl"><div class="v'+(d.closed?' green':' z')+'" data-k="closed">'+fmt(d.closed)+'</div>'+(d.byType.length ? tbar(d.byType) : '')+'</div>';
@@ -309,7 +327,7 @@ function paint(){
   $("#foot").innerHTML = '<span class="k">Agents served today</span><span class="ag" style="--d:0s"><b>'+fmt(A.filter(function(a){ return a.n > 0; }).length)+'</b> agents</span>'
     + '<span class="ag" style="--d:.05s">closed for <b>'+fmt(Ac.length)+'</b></span>' + Ac.map(function(a, i){ return '<span class="ag'+(a.k===ORPH?' orph':'')+'" style="--d:'+(0.1+0.05*i).toFixed(2)+'s">'+esc(a.k===ORPH?'Orphans':first(a.k))+'<b>'+fmt(a.c)+'</b></span>'; }).join("")
     + '<span class="ages">'+AGEK.map(function(k, i){ return '<span><i style="background:'+AGEC[i]+'"></i>'+k+'</span>'; }).join("")+'</span>';
-  rings(); bubbles(); turnTop();
+  rings(); bubbles(); asksPage(); turnTop();
   // motion
   later(function(){
     Array.prototype.forEach.call(document.querySelectorAll(".arc"), function(a){ a.style.strokeDashoffset = a.getAttribute("data-off"); });
@@ -378,9 +396,9 @@ function bubbles(){
 }
 var tpT = null, tpAt = 0;
 function turnTop(){
-  clearInterval(tpT); tpAt = 0; var P = [$("#p0"), $("#p1"), $("#p2")], dots = $("#tdots").querySelectorAll("i"), K = ["hour by hour", "each desk's day", "agents served"];
+  clearInterval(tpT); tpAt = 0; var P = [$("#p0"), $("#p1"), $("#p2"), $("#p3")], dots = $("#tdots").querySelectorAll("i"), K = ["hour by hour", "each desk's day", "agents served", "your asks · who answered"];
   P.forEach(function(x, i){ x.classList.toggle("out", i > 0); dots[i].classList.toggle("on", !i); }); $("#tdk").textContent = K[0];
-  if(window.matchMedia("(max-width:900px)").matches){ P[1].classList.remove("out"); P[2].classList.remove("out"); return; }
+  if(window.matchMedia("(max-width:900px)").matches){ P[1].classList.remove("out"); P[2].classList.remove("out"); P[3].classList.remove("out"); return; }
   tpT = setInterval(function(){
     P[tpAt].classList.add("out"); dots[tpAt].classList.remove("on"); tpAt = (tpAt + 1) % P.length; P[tpAt].classList.remove("out"); dots[tpAt].classList.add("on"); $("#tdk").textContent = K[tpAt];
     // Each page plays again as it comes round: the rings fill, the numbers count, the bubbles pop.
@@ -388,6 +406,31 @@ function turnTop(){
       Array.prototype.forEach.call(P[tpAt].querySelectorAll(".cnt"), function(c){ c.setAttribute("data-v", 0); count(c, c.getAttribute("data-to")); });
       Array.prototype.forEach.call(P[tpAt].querySelectorAll(".bub"), function(b){ b.style.animation="none"; void b.offsetWidth; b.style.animation=""; }); }
   }, 10000);
+}
+/* YOUR ASKS, AND WHO ANSWERED (24 Nov 2026: "the workday must show the branch managers emails and staff responding ... as the
+   timeblock goes by it must reflect the KPI ... to hold persons accountable"). From hours.asks (wallBmAsks_): his notes on each
+   desk's tasks today and the e-mails routed to them, answered or still waiting; and each desk's closes against their KPI for
+   the hours gone. Task types and first names only. */
+function asksPage(){
+  var H = D.hours || {}, A = H.asks || {}, box = $("#p3"); if(!box) return;
+  if(A.error || !A.desks){ box.innerHTML = '<div class="aw"><div class="kick">Your asks &middot; who answered</div><div class="of">'+esc(A.error || 'This page fills once the tracker carries it (version 2026-11-24g).')+'</div></div>'; return; }
+  var desk = {}; (H.desks||[]).forEach(function(d){ desk[d.sid] = d; });
+  var nowMin = (H.nowH == null ? H.from : H.nowH) * 60;
+  var rows = A.desks.map(function(a){
+    var d = desk[a.sid] || {}, exp = (d.target && d.end > d.start) ? Math.round(d.target * Math.max(0, Math.min(nowMin, d.end) - d.start) / (d.end - d.start)) : null;
+    var paceTxt = exp == null ? '<span class="z">no target</span>' : d.absent ? '<span class="z">away</span>' : '<span class="'+((d.closed||0) >= exp ? 'green' : 'red')+'">'+fmt(d.closed||0)+' / '+fmt(exp)+'</span>';
+    var rate = a.asked ? Math.round(100*a.answered/a.asked) : null;
+    return '<tr><td><b>'+esc(a.name)+'</b></td><td>'+paceTxt+'</td><td>'+fmt(a.asked)+'</td><td class="'+(rate==null?'z':rate>=80?'green':rate>=50?'amber':'red')+'">'+(rate==null?'–':fmt(a.answered)+' · '+rate+'%')+'</td>'
+      + '<td>'+(a.inHour?fmt(a.inHour):'<span class="z">0</span>')+'</td><td>'+(a.median==null?'<span class="z">–</span>':fmt(a.median)+' min')+'</td>'
+      + '<td class="'+(a.waiting?'red':'z')+'">'+fmt(a.waiting)+(a.waiting?'<small>oldest '+(a.oldestMin>=60?Math.floor(a.oldestMin/60)+'h '+(a.oldestMin%60)+'m':a.oldestMin+' min')+'</small>':'')+'</td>'
+      + '<td>'+(a.emails?'<span class="'+(a.emailsDone>=a.emails?'green':'amber')+'">'+fmt(a.emailsDone)+' / '+fmt(a.emails)+'</span>':'<span class="z">–</span>')+'</td></tr>'; }).join("");
+  var waits = []; A.desks.forEach(function(a){ (a.waits||[]).forEach(function(w){ waits.push({ n: a.name, w: w }); }); });
+  waits.sort(function(x, y){ return y.w.min - x.w.min; });
+  box.innerHTML = '<div class="aw"><div class="kick">Your asks today &middot; who answered &middot; closes against the KPI so far</div>'
+    + '<div class="of"><b>'+fmt(A.asked)+'</b> notes from you on the desks\' tasks &middot; <b>'+fmt(A.answered)+'</b> answered, <b>'+fmt(A.inHour)+'</b> inside the hour &middot; <b style="color:#E8625A">'+fmt(A.waiting)+'</b> still waiting'
+    + (A.emails ? ' &middot; <b>'+fmt(A.emailsDone)+'</b> of <b>'+fmt(A.emails)+'</b> e-mails routed to them dealt with' : '')+'</div>'
+    + '<table class="atb"><tr><th>Desk</th><th>Closed / KPI so far</th><th>Your asks</th><th>Answered</th><th>Within the hour</th><th>Median reply</th><th>Still waiting</th><th>E-mails dealt with</th></tr>'+rows+'</table>'
+    + (waits.length ? '<div class="wl">Waiting longest: '+waits.slice(0,6).map(function(x){ return '<span><b>'+esc(x.n)+'</b> '+esc(x.w.type)+' &middot; asked '+esc(x.w.at)+'</span>'; }).join("")+'</div>' : '')+'</div>';
 }
 /* The line where the clock is, between the hour columns it falls in. */
 function placeNow(nowH){
