@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-24d';
+var SCRIPT_VERSION = '2026-11-24e';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -18070,7 +18070,7 @@ function wallPendDeep_(out, P, chase, day) {
 var WALL_CLAW = { PREFIX: 'Clawback', TTL: 300, ACK_RE: /acknowledg|ack letter|script|contract|policy (document|pack)/i, REPL_BEFORE: 183, REPL_AFTER: 366, LIST: 200,
   AGES: [[0, 30, '0-30 days'], [31, 90, '31-90 days'], [91, 180, '91-180 days'], [181, 99999, 'Over 180 days']] };
 function wallClawLive_(day) {
-  var cache = CacheService.getScriptCache(), key = 'wall_claw2_' + day, hit = cache.get(key);
+  var cache = CacheService.getScriptCache(), key = 'wall_claw3_' + day, hit = cache.get(key);
   if (hit) { try { return JSON.parse(hit); } catch (e) {} }
   var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
   if (!ss) return { error: 'The Branch Portfolio would not open.' };
@@ -18081,7 +18081,8 @@ function wallClawLive_(day) {
   var h = vals[0].map(function (x) { return String(x).trim().toUpperCase(); }), ix = function () { for (var i = 0; i < arguments.length; i++) { var j = h.indexOf(arguments[i]); if (j > -1) return j; } return -1; };
   var c = { pol: ix('POLICY_ID', 'POLICY', 'POLICY NUMBER'), agent: ix('AGENT_NAME', 'AGENT NAME', 'WRITING_AGENT_NAME'), plan: ix('PLAN', 'PLAN_NAME'),
     issue: ix('ISSUE_DATE'), disp: ix('DISPATCH_DATE'), ack: ix('ACK_DATE'), ackSt: ix('ACK_STATUS'), date: ix('CLAWBACK_DATE'),
-    reason: ix('REASON_CODES', 'REASON'), amt: ix('CLAWED_BACK_AMT', 'CLAWBACK_AMOUNT', 'AMOUNT'), st: ix('STATUS') };
+    reason: ix('REASON_CODES', 'REASON'), amt: ix('CLAWED_BACK_AMT', 'CLAWBACK_AMOUNT', 'AMOUNT'), st: ix('STATUS'),
+    sa: ix('SUM_ASSURED', 'SUM ASSURED', 'FACE_AMOUNT', 'FACE AMOUNT', 'SUMASSURED') };
   if (c.pol < 0) return { error: tab.getName() + ' has no POLICY_ID column.' };
   var dOf = function (x) { if (x instanceof Date) return Utilities.formatDate(x, CONFIG.TZ, 'yyyy-MM-dd'); var s2 = String(x == null ? '' : x).trim(); var m = /^(\d{4}-\d{2}-\d{2})/.exec(s2); if (m) return m[1]; var d = s2 ? new Date(s2) : null; return d && !isNaN(d) ? Utilities.formatDate(d, CONFIG.TZ, 'yyyy-MM-dd') : ''; };
   var cell = function (r, i) { return i < 0 || r[i] == null ? '' : r[i]; };
@@ -18096,7 +18097,8 @@ function wallClawLive_(day) {
     if (seen[pol]) return; seen[pol] = 1;
     C.push({ pol: pol, agent: String(cell(r, c.agent)).trim() || 'No agent named', plan: String(cell(r, c.plan)).trim(), issued: dOf(cell(r, c.issue)),
       dispatched: dOf(cell(r, c.disp)), ack: dOf(cell(r, c.ack)), ackSt: String(cell(r, c.ackSt)).trim(), date: dOf(cell(r, c.date)),
-      reason: String(cell(r, c.reason)).trim(), amt: Number(String(cell(r, c.amt)).replace(/[^\d.-]/g, '')) || 0 });
+      reason: String(cell(r, c.reason)).trim(), amt: Number(String(cell(r, c.amt)).replace(/[^\d.-]/g, '')) || 0,
+      sa: Number(String(cell(r, c.sa)).replace(/[^\d.-]/g, '')) || 0 });
   });
   // The Log Book: an acknowledgement or contract for the policy, sent or still with us.
   var lb = {};
@@ -18116,17 +18118,19 @@ function wallClawLive_(day) {
   } catch (e) { out.gaps.push('The Log Book could not be read, so acknowledgements sent from the branch are not counted.'); }
   // Salesforce: the policy record and client, their open tasks, and the replacements.
   var sfOn = typeof sfkConfigured_ === 'function' && sfkConfigured_();
-  var openOn = {}, ids = {}, contact = {}, firstN = {}, agSt = {}, owners = {};
+  var openOn = {}, ids = {}, contact = {}, firstN = {}, agSt = {}, owners = {}, lifeC = {}, ciC = {};
   if (sfOn && C.length) {
     try {
       var q = C.map(function (x) { return "'" + x.pol + "'"; });
       var polQ = function (sel, i) { return sfkQuery_('SELECT ' + sel + ' FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + q.slice(i, i + 150).join(',') + ')'); };
       for (var i = 0; i < q.length; i += 150) {
-        var prs; try { prs = polQ('Id, POLICY__c, Contact__c, Contact__r.FirstName, AGENT__r.Name, AGENT__r.Employment_Status__c', i); }
-        catch (e0) { prs = polQ('Id, POLICY__c, Contact__c, Contact__r.FirstName', i); }
+        var prs; try { prs = polQ('Id, POLICY__c, Contact__c, Contact__r.FirstName, AGENT__r.Name, AGENT__r.Employment_Status__c, Life_Coverage__c, Critical_Illness_Coverage__c', i); }
+        catch (e0) { try { prs = polQ('Id, POLICY__c, Contact__c, Contact__r.FirstName, Life_Coverage__c', i); } catch (e1) { prs = polQ('Id, POLICY__c, Contact__c, Contact__r.FirstName', i); } }
         prs.forEach(function (r) { var pol = String(r.POLICY__c || '').replace(/\D/g, ''); ids[r.Id] = pol;
           if (r.Contact__r && r.Contact__r.FirstName) firstN[pol] = String(r.Contact__r.FirstName).trim().split(/\s+/)[0];
           if (r.AGENT__r && r.AGENT__r.Employment_Status__c) agSt[pol] = String(r.AGENT__r.Employment_Status__c);
+          if (Number(r.Life_Coverage__c) > 0) lifeC[pol] = Number(r.Life_Coverage__c);
+          if (Number(r.Critical_Illness_Coverage__c) > 0) ciC[pol] = Number(r.Critical_Illness_Coverage__c);
           if (r.Contact__c) { contact[pol] = r.Contact__c; ids[r.Contact__c] = ids[r.Contact__c] || pol; } });
       }
       var who = Object.keys(ids).map(function (x) { return "'" + x + "'"; });
@@ -18157,7 +18161,8 @@ function wallClawLive_(day) {
     } catch (e) { out.gaps.push('Salesforce did not answer, so replacements could not be taken off.'); }
   } else out.gaps.push('Salesforce is not linked, so open tasks and replacements could not be checked.');
   var A = {}, R = {}, M = {}, P = {}, G = {}, O = {}, left = wallLeft_(), lag = [];
-  out.active = { n: 0, amount: 0, red: 0, agents: 0 }; out.inactive = { n: 0, amount: 0, red: 0, agents: 0 };
+  out.active = { n: 0, amount: 0, red: 0, agents: 0, life: 0 }; out.inactive = { n: 0, amount: 0, red: 0, agents: 0, life: 0 };
+  out.cover = { life: 0, ci: 0, withCover: 0, noFigure: 0 };
   var isActive = function (x) {
     if (wallStays_(x.agent)) return true;
     var st = agSt[x.pol]; if (st) return /^active$/i.test(st.trim());
@@ -18171,9 +18176,11 @@ function wallClawLive_(day) {
     var red = state === 'none' || task === false;
     out.total++; out.amount += x.amt; out[state]++; if (task === true) out.task++; else if (task === false) out.noTask++; if (red) out.red++;
     var act = isActive(x), side = act ? out.active : out.inactive;
-    side.n++; side.amount += x.amt; if (red) side.red++;
-    var a = A[x.agent] = A[x.agent] || { agent: x.agent, active: act, n: 0, amount: 0, submitted: 0, withUs: 0, none: 0, noTask: 0, red: 0, oldest: 0 };
-    a.n++; a.amount += x.amt; a[state]++; if (task === false) a.noTask++; if (red) a.red++;
+    var life = lifeC[x.pol] || x.sa || 0, ci = ciC[x.pol] || 0;
+    out.cover.life += life; out.cover.ci += ci; if (life || ci) out.cover.withCover++; else out.cover.noFigure++;
+    side.n++; side.amount += x.amt; side.life += life; if (red) side.red++;
+    var a = A[x.agent] = A[x.agent] || { agent: x.agent, active: act, n: 0, amount: 0, life: 0, ci: 0, submitted: 0, withUs: 0, none: 0, noTask: 0, red: 0, oldest: 0 };
+    a.n++; a.amount += x.amt; a.life += life; a.ci += ci; a[state]++; if (task === false) a.noTask++; if (red) a.red++;
     var age = x.date ? Math.max(0, daysBetween_(x.date, day) || 0) : null; if (age != null && age > a.oldest) a.oldest = age;
     var pk = x.plan || 'Plan not given', pp = P[pk] = P[pk] || { k: pk, n: 0, amount: 0 }; pp.n++; pp.amount += x.amt;
     WALL_CLAW.AGES.forEach(function (b) { if (age != null && age >= b[0] && age <= b[1]) { var g = G[b[2]] = G[b[2]] || { k: b[2], n: 0, amount: 0, red: 0 }; g.n++; g.amount += x.amt; if (red) g.red++; } });
@@ -18182,12 +18189,14 @@ function wallClawLive_(day) {
     var rs = x.reason || 'No reason given'; R[rs] = (R[rs] || 0) + 1;
     var mk = (x.date || '').slice(0, 7) || 'Not dated'; M[mk] = (M[mk] || 0) + 1;
     out.list.push({ last4: x.pol.slice(-4), first5: x.pol.slice(0, 5), client: firstN[x.pol] || '', agent: x.agent, active: act, plan: x.plan, date: x.date,
-      days: age, amt: Math.round(x.amt), owner: task ? (owners[x.pol] || '') : '', dispatched: x.dispatched,
+      days: age, amt: Math.round(x.amt), life: Math.round(life), ci: Math.round(ci), owner: task ? (owners[x.pol] || '') : '', dispatched: x.dispatched,
       state: state, ack: x.ack || (l && l.sent) || '', task: task, red: red, reason: x.reason });
   });
   out.amount = Math.round(out.amount); out.replAmount = Math.round(out.replAmount);
   out.agents = Object.keys(A).map(function (k) { A[k].amount = Math.round(A[k].amount); return A[k]; }).sort(function (a, b) { return (b.red - a.red) || (b.n - a.n); });
-  out.agents.forEach(function (a) { (a.active ? out.active : out.inactive).agents++; });
+  out.agents.forEach(function (a) { (a.active ? out.active : out.inactive).agents++; a.life = Math.round(a.life); a.ci = Math.round(a.ci); });
+  out.cover.life = Math.round(out.cover.life); out.cover.ci = Math.round(out.cover.ci);
+  out.active.life = Math.round(out.active.life); out.inactive.life = Math.round(out.inactive.life);
   out.active.amount = Math.round(out.active.amount); out.inactive.amount = Math.round(out.inactive.amount);
   out.plans = Object.keys(P).map(function (k) { P[k].amount = Math.round(P[k].amount); return P[k]; }).sort(function (a, b) { return b.n - a.n; }).slice(0, 8);
   out.ages = WALL_CLAW.AGES.map(function (b) { var g = G[b[2]] || { k: b[2], n: 0, amount: 0, red: 0 }; g.amount = Math.round(g.amount); return g; });
