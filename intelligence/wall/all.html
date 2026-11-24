@@ -279,6 +279,10 @@ var SLIDES = [
      who is holding each requirement, which is the other way to read the
      same join and the one a branch meeting argues from. */
   { file:'codes.html',      tab:'Pending \u00b7 code by code', secs:34 },
+  /* 24 November 2026, for the branch meeting: the pending wall by unit (what is holding settlement, underwriting, the
+     team), then the clawbacks, replacements kept off, red where nothing went in or no task is open. */
+  { file:'units.html',      tab:'Pending \u00b7 units & underwriting', secs:32 },
+  { file:'clawbacks.html',  tab:'Clawbacks', secs:32 },
   /* WHAT BECAME A POLICY, asked for on 28 October 2026: "and what about the
      policies issued this month by agent and unit?". After the four pending
      stops, the month's issued business from Guardian's production report:
@@ -722,7 +726,7 @@ if (LONE) {
 
    It fails quiet: a wall that cannot reach the script already says "no feed"
    on every screen, and a second red bar for the same fault is noise. */
-var WANT_SCRIPT = '2026-09-17l';
+var WANT_SCRIPT = '2026-11-24a';
 var PING_URL = 'https://script.google.com/macros/s/AKfycbympAk9o8Ns8un0UXKY1PHkS__nYa-Hx6Q3TzbCRSMyezkFhRtFFrz56qOCuSug1-34OQ/exec';
 
 function versionCheck() {
@@ -733,7 +737,7 @@ function versionCheck() {
       .then(function (j) {
         var got = j && (j.version || (j.data && j.data.version));
         if (!got) return;
-        var bad = String(got) !== WANT_SCRIPT;
+        var bad = String(got) < WANT_SCRIPT;  // older only: a newer script is fine
         var el = document.getElementById('stale');
         if (bad) {
           document.getElementById('staleGot').textContent = got;

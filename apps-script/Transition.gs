@@ -1108,6 +1108,12 @@ function tFileNotes_(note) {
   return out;
 }
 
+/* How long a save on the board waits for the script lock (21 November 2026): 45 seconds, from 15. The five-minute runs
+   hold the lock while they file answers, and a save that came in during one was refused. Nothing is written when a
+   save is refused, so the board tries it again by itself (busy: true). */
+var T_BOARD_LOCK_MS = 45000;
+var T_BUSY_MSG = 'The sheet is busy with the five-minute run. Nothing was saved: press Save again in a minute.';
+
 /** Every five minutes, installed by transitionSetup. The e-mails taken on calls go onto their rows, held, first. */
 function transitionReceipts() {
   var startedAt = Date.now();
@@ -1117,14 +1123,25 @@ function transitionReceipts() {
     try { tSharedInboxRows_(); } catch (e) { log_('transition', 'shared-inbox-failed', String(e && e.message ? e.message : e)); }
     try { tAgainCol_(); } catch (e) { log_('transition', 'send-again-column-failed', String(e && e.message ? e.message : e)); }
     try { tFilePhoneEmails_(); } catch (e) { log_('transition', 'phone-emails-failed', String(e && e.message ? e.message : e)); }
-    var hs = null;
-    try { hs = tHaSync_(false); } catch (e) { log_('transition', 'household-assignments-failed', String(e && e.message ? e.message : e)); }
-    /* after each sync (every T_HA.EVERY_MIN minutes): the brief for a client the branch named in Salesforce (22 October 2026) */
-    if (hs && !hs.skipped) { try { tSfBriefs_(); } catch (e) { log_('transition', 'salesforce-briefs-failed', String(e && e.message ? e.message : e)); } }
     var out = tReceipts_();
     try { tIntroPicks_(); } catch (e) { log_('transition', 'intro-picks-failed', String(e && e.message ? e.message : e)); }   // a client's time for the agent's call
-    tClaimsRun_(false);   // the TT$200 retention claims, after the receipts; never throws
   } finally { lock.releaseLock(); }
+  /* The Salesforce steps run after the lock (21 November 2026). They are the slow part of the run, and while they held
+     the lock a call logged on the board waited and was refused with "The sheet is busy" (an agent's note, Saturday
+     afternoon). None of them writes Client Responses; tHaSync_ writes by token, read again before each write. A cache
+     flag keeps two runs from doing them at once. */
+  var sfc = null;
+  try { sfc = CacheService.getScriptCache(); } catch (e) {}
+  if (!sfc || !sfc.get('receipts-sf-running')) {
+    try { if (sfc) sfc.put('receipts-sf-running', '1', 600); } catch (e) {}
+    try {
+      var hs = null;
+      try { hs = tHaSync_(false); } catch (e) { log_('transition', 'household-assignments-failed', String(e && e.message ? e.message : e)); }
+      /* after each sync (every T_HA.EVERY_MIN minutes): the brief for a client the branch named in Salesforce (22 October 2026) */
+      if (hs && !hs.skipped) { try { tSfBriefs_(); } catch (e) { log_('transition', 'salesforce-briefs-failed', String(e && e.message ? e.message : e)); } }
+      tClaimsRun_(false);   // the TT$200 retention claims, after the receipts; never throws
+    } finally { try { if (sfc) sfc.remove('receipts-sf-running'); } catch (e) {} }
+  }
   /* the Client Profile, when the morning build left it due: after the lock, so a save on the board never waits on it */
   try { tProfileDue_(false); } catch (e) { log_('transition', 'client-profile-failed', String(e && e.message ? e.message : e)); }
   /* Branch Intelligence (22 October 2026): the 5:00 list, the named-client clock at 11:00, the hourly note check; after the
@@ -1132,6 +1149,7 @@ function transitionReceipts() {
   try {
     var wc = CacheService.getScriptCache();
     if (!wc.get('watch-running')) { wc.put('watch-running', '1', 300); try { tWatchRun_(startedAt); } finally { wc.remove('watch-running'); } }
+    try { tDeskDaily_(); } catch (e) { Logger.log('desk daily: ' + e); }   // the staff desks' 5pm summary (24 November 2026)
   } catch (e) { log_('transition', 'watch-failed', String(e && e.message ? e.message : e)); }
   return out;
 }
@@ -4159,7 +4177,7 @@ function tFamilyOnly_(w, tok, fam, notFam) {
   if (!ra || !rb) return { ok: false, error: 'That client is not on the send list.' };
   var who = w.me && w.me.name ? w.me.name : 'branch';
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+  if (!lock.tryLock(T_BOARD_LOCK_MS)) return { ok: false, busy: true, error: T_BUSY_MSG };
   try {
     var nameB = tText_(rb.Client) || tText_(rb['First name']) || 'that client';
     if (notFam) {
@@ -4766,6 +4784,20 @@ function transitionBoard_(p) {
     if (/^(1|yes|true)$/i.test(String(p.tasks || ''))) {
       try { return { ok: true, tasksView: tTasksView_(w) }; }
       catch (err) { return { ok: true, tasksView: { on: false, why: 'The tasks could not be read: ' + String(err && err.message ? err.message : err) } }; }
+    }
+    /* the staff desk and its daily report (tDeskView_, tDeskReport_, 24 November 2026): staff and the branch */
+    if (/^(1|yes|true)$/i.test(String(p.desk || ''))) {
+      try { return { ok: true, deskView: tDeskView_(w) }; }
+      catch (err) { return { ok: true, deskView: { on: false, why: 'The desk could not be read: ' + String(err && err.message ? err.message : err).slice(0, 200) } }; }
+    }
+    if (/^(1|yes|true)$/i.test(String(p.deskreport || ''))) {
+      try { return tDeskReport_(p, w); } catch (err) { return { ok: false, error: 'The report could not be saved: ' + String(err && err.message ? err.message : err).slice(0, 200) }; }
+    }
+    if (/^(1|yes|true)$/i.test(String(p.desktold || ''))) { try { return tDeskTold_(p, w); } catch (err) { return { ok: false }; } }
+    /* My pendings and My clawbacks (tPendView_, 24 November 2026): each person's own, a unit manager's team, the branch and staff everyone's */
+    if (/^(1|yes|true)$/i.test(String(p.pend || ''))) {
+      try { return { ok: true, pendView: tPendView_(w) }; }
+      catch (err) { return { ok: true, pendView: { on: false, why: 'The pendings could not be read: ' + String(err && err.message ? err.message : err).slice(0, 200) } }; }
     }
     /* Branch Intelligence on the named clients (tWatchApi_, 22 October 2026): the branch alone */
     if (p.watch) {
@@ -6094,7 +6126,7 @@ function transitionAssign_(p) {
     });
   } catch (e) {}
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+  if (!lock.tryLock(T_BOARD_LOCK_MS)) return { ok: false, busy: true, error: T_BUSY_MSG };
   try {
     var b = tBoard_({ ok: true, role: 'branch', me: null }, true, true), map = {};
     b.clients.forEach(function (c) { map[c.token] = c; });
@@ -6361,7 +6393,7 @@ function transitionUpdate_(p) {
   if (back && !tCanAssign_(w)) return { ok: false, refused: true, error: 'Only the branch and Client Support flag a call-back.' };
   var who = w.me && w.me.name ? w.me.name : 'branch';
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+  if (!lock.tryLock(T_BOARD_LOCK_MS)) return { ok: false, busy: true, error: T_BUSY_MSG };
   try {
     var sh = ss_().getSheetByName(SVC.RESP_SHEET), last = sh ? sh.getLastRow() : 0;
     if (!sh || last < 2) return { ok: false, error: 'No responses yet.' };
@@ -7361,7 +7393,7 @@ function tAnswerApi_(p, w) {
     if (!key) return { ok: false, error: 'Which answer?' };
     var text = clean(p.text, T_REPLY.MAX);
     var lock = LockService.getScriptLock();
-    if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+    if (!lock.tryLock(T_BOARD_LOCK_MS)) return { ok: false, busy: true, error: T_BUSY_MSG };
     try {
       var safe = function (s) { return /^[=+\-@]/.test(s) ? "'" + s : s; };
       tReplyTab_().appendRow([new Date(), o.tok, tText_(o.row.Client) || tText_(o.row['First name']), key, safe(clean(p.q, T_REPLY.Q)), safe(clean(p.a, T_REPLY.Q)),
@@ -8880,6 +8912,20 @@ function transitionSyncAssignments() {
 /** Brings the agent columns of the Household Assignments tab up to date from Salesforce and the board. Inside the
  *  five-minute receipts run, which holds the script lock; at most every EVERY_MIN minutes unless forced.
  *  Never writes when the tab was sorted while it read (the tokens are checked again first). */
+/** Salesforce's name for an agent, written the way the Agent Skill Bank writes it (17 November 2026: Salesforce names
+ *  "Jamil Sean Khan", the Skill Bank "Jamil Khan", and the board matches names letter for letter, so every client named
+ *  to him in Salesforce was missing from his list). The same letters first, else the one person tProfSame_ finds;
+ *  two or none, and Salesforce's name stands. */
+function tRosterName_(name) {
+  if (!name) return name;
+  var people = [];
+  try { people = tTeam_().people || []; } catch (e) { return name; }
+  var k = tNameKey_(name);
+  for (var i = 0; i < people.length; i++) if (tNameKey_(people[i].name) === k) return people[i].name;
+  var hits = people.filter(function (p) { return tProfSame_(p.name, name); });
+  return hits.length === 1 ? hits[0].name : name;
+}
+
 function tHaSync_(force) {
   var props = PropertiesService.getScriptProperties();
   var last = Number(props.getProperty(T_HA.PROP) || 0);
@@ -8905,6 +8951,7 @@ function tHaSync_(force) {
     });
     sf.forEach(function (rec) {
       var agent = rec.Assigned_Agent__r && rec.Assigned_Agent__r.Name ? String(rec.Assigned_Agent__r.Name).replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim() : '';
+      agent = tRosterName_(agent);
       var day = tDay_(rec.Date_Assigned_to_Agent__c);
       if (!agent || !day) return;
       var hit = byPol[tPolNo_(rec.POLICY__c)] || byCno[tCno_(rec.Client_Number__c)];
@@ -11581,7 +11628,7 @@ function transitionComment_(p) {
   if (!o.ok) return o;
   var by = w.me && w.me.name ? w.me.name : 'The branch', role = w.me ? (w.me.title || '') : '';
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+  if (!lock.tryLock(T_BOARD_LOCK_MS)) return { ok: false, busy: true, error: T_BUSY_MSG };
   try {
     var sh = tCmtTab_(), at = new Date(), client = tText_(o.row.Client) || tText_(o.row['First name']);
     /* a comment beginning = + - or @ would be a formula in the sheet: the apostrophe keeps it text, and the sheet never shows it */
@@ -13898,3 +13945,403 @@ function transitionCupReadNow() {
   var r = tCupRun_({ force: true, max: 400, budget: 290000 });
   return tSay_('The AI read ' + r.read + ' timelines' + (r.left ? '; ' + r.left + ' are left for the next run.' : '.'));
 }
+
+/* ── My pendings and My clawbacks on the board ──────────────────────────────────────────────────────────────────────
+   24 November 2026, the branch manager: the agents "log in and see their orphans", and the same board is to carry their
+   pendings, "the underwriting notes ... the date this comment was posted and was anything done", "the underwriter on the
+   case as well case officer", what to tackle first, a chase drafted when "they have submitted ... and have not seen any
+   movement", and "the clawbacks not reversed ... the exact names and tasks opened and scripts submitted ... with the
+   exception of replacements" ("leave replacement if they hit a clawback out of this").
+   Read from the Branch Portfolio (tBookId_): the newest "Branch Pendings" tab, the newest "Clawback" tab and "Pendings
+   Chase" (the tracker rewrites it every ten minutes); the Log Book (LOG & DELIVERY BOOK) for what went in and when; and
+   Salesforce, when linked, for the replacements. Asked for as action=board&pend=1, so Service.gs needs no paste.
+   Who sees what: an agent their own, a unit manager his team's, the branch and staff everyone's. Staff see no money.
+   A replacement is our own rule: the same client had another policy lapse or be surrendered between six months before
+   and a year after this one was issued. Replacements never reach an agent's or a unit manager's screen; the branch sees
+   them apart. Nothing here is written anywhere: it is a read. */
+var T_PEND = { CACHE_S: 300, KEY: 'pend-v1', LOGBOOK: '1EAc0X0648Im2HQJMB-jTVNZFWr5Y1hKh9Ok2a_472uo', CHASE_DAYS: 3, CHASE2_DAYS: 2,
+  REPL_BEFORE: 183, REPL_AFTER: 366, MAX: 600, SCRIPT_RE: /script|contract|policy (document|pack)|acknowledg/i };
+/** The newest report tab of a kind in the Branch Portfolio (24 Nov 2026). Ricky added "Branch Pending 2026 11 23rd 1336": a
+ *  name no longer always "Branch Pendings_yyyy-mm-dd-hhmm". So the kind is matched on words, any case, with or without the
+ *  "s", with any separators; and "newest" is the date and time written in the name, never the alphabet (an underscore sorts
+ *  after a space, so the alphabet put an older tab above a newer one). A tab with no readable date counts as oldest. */
+function tReportTabs_(sheets, prefix) {
+  var norm = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+  var want = norm(prefix).replace(/s$/, '');
+  var stamp = function (n) {
+    var m = /(20\d{2})\D{0,3}(\d{1,2})\D{0,3}(\d{1,2})(?:st|nd|rd|th)?(?:\D{0,3}(\d{1,2}):?(\d{2}))?/i.exec(String(n));
+    if (!m) return 0;
+    var p = function (x, w) { x = String(x || '0'); while (x.length < w) x = '0' + x; return x; };
+    return Number(m[1] + p(m[2], 2) + p(m[3], 2) + p(m[4], 2) + p(m[5], 2));
+  };
+  var hit = sheets.filter(function (sh) {
+    var n = norm(sh.getName()); return n.indexOf(want) === 0 && !/chase/.test(n.slice(want.length)); });
+  hit.sort(function (a, b) { var d = stamp(b.getName()) - stamp(a.getName()); return d || (a.getName() < b.getName() ? 1 : -1); });
+  return hit;
+}
+function tPendTab_(book, prefix) {
+  var tabs = tReportTabs_(book.getSheets(), prefix);
+  if (!tabs.length) return null;
+  var v = tabs[0].getDataRange().getValues();
+  return { name: tabs[0].getName(), head: v[0].map(function (x) { return String(x).trim(); }), rows: v.slice(1) };
+}
+function tPendDay_(x) {
+  if (x instanceof Date) return Utilities.formatDate(x, tTz_(), 'yyyy-MM-dd');
+  var s = String(x == null ? '' : x).trim(), m = /^(\d{4}-\d{2}-\d{2})/.exec(s);
+  if (m) return m[1];
+  var d = s ? new Date(s) : null;
+  return d && !isNaN(d) ? Utilities.formatDate(d, tTz_(), 'yyyy-MM-dd') : '';
+}
+function tPendNum_(x) { var n = Number(String(x == null ? '' : x).replace(/[^\d.-]/g, '')); return isFinite(n) ? n : 0; }
+/** Everything for everyone, read once every five minutes; tPendView_ cuts it for the person. */
+function tPendRaw_() {
+  var cache = null;
+  try { cache = CacheService.getScriptCache(); var hit = tCacheGetBig_(cache, T_PEND.KEY); if (hit) return hit; } catch (e) {}
+  var out = { at: Utilities.formatDate(new Date(), tTz_(), 'd MMM, h:mm a'), cases: [], claws: [], gaps: [] };
+  var book = null;
+  try { book = SpreadsheetApp.openById(tBookId_()); } catch (e) { out.gaps.push('The Branch Portfolio could not be opened.'); return out; }
+  /* what went into the Log Book, by policy */
+  var lb = {};
+  try {
+    var lbook = SpreadsheetApp.openById(String(PropertiesService.getScriptProperties().getProperty('LOGBOOK_SHEET_ID') || T_PEND.LOGBOOK).trim());
+    var lsh = lbook.getSheetByName('Log Book'), lv = lsh ? lsh.getDataRange().getValues() : [];
+    if (lv.length > 1) {
+      var lh = lv[0].map(function (x) { return String(x).trim(); }), li = function (n) { return lh.indexOf(n); };
+      var cP = li('Policy #'), cD = li('Document'), cS = li('Status'), cL = li('Logged At'), cR = li('Received At'), cRB = li('Received By'), cT = li('Transmittal'), cSA = li('Sent At');
+      lv.slice(1).forEach(function (r) {
+        var pol = String(r[cP] || '').replace(/\D/g, ''); if (!pol || /cancel/i.test(String(r[cS] || ''))) return;
+        (lb[pol] = lb[pol] || []).push({ doc: String(r[cD] || ''), status: String(r[cS] || ''), logged: tPendDay_(r[cL]), received: tPendDay_(r[cR]),
+          receivedBy: String(r[cRB] || '').split(/\s+/)[0], trans: String(r[cT] || ''), sent: tPendDay_(r[cSA]) });
+      });
+    }
+  } catch (e) { out.gaps.push('The Log Book could not be read, so what went in is not shown.'); }
+  /* the Salesforce task facts the tracker keeps */
+  var chase = {};
+  try {
+    var ch = book.getSheetByName('Pendings Chase'), cv = ch ? ch.getDataRange().getValues() : [];
+    if (cv.length > 1) {
+      var chh = cv[0].map(function (x) { return String(x).trim(); }), ci = function (n) { return chh.indexOf(n); };
+      cv.slice(1).forEach(function (r) {
+        chase[String(r[ci('Policy')] || '').replace(/\D/g, '')] = { open: tPendNum_(r[ci('Open tasks')]), overdue: tPendNum_(r[ci('Overdue')]), owner: String(r[ci('Owner')] || ''),
+          due: tPendDay_(r[ci('Due')]), lastAt: String(r[ci('Last note at')] || ''), lastBy: String(r[ci('Last note by')] || '') };
+      });
+    }
+  } catch (e) {}
+  /* the pending report */
+  var rep = null;
+  try { rep = tPendTab_(book, 'Branch Pendings'); } catch (e) {}
+  if (!rep) out.gaps.push('No "Branch Pendings" tab in the Branch Portfolio.');
+  else {
+    out.report = rep.name;
+    var h = rep.head, ix = function (n) { return h.indexOf(n); }, cell = function (r, n) { var i = ix(n); return i > -1 && r[i] != null ? String(r[i]).trim() : ''; };
+    var by = {}, closedRe = /closed|received|waived|complete|cancel|accepted/i;
+    rep.rows.forEach(function (r) {
+      var pol = cell(r, 'POLICY').replace(/\D/g, ''); if (!pol) return;
+      var c = by[pol] = by[pol] || { policy: pol, app: cell(r, 'application_number'), client: cell(r, 'Client Name'), agent: cell(r, 'Agent Name'), decision: cell(r, 'DecisionType'),
+        days: 0, uw: cell(r, 'underwriter_id'), officer: cell(r, 'service_associate_id'), premium: tPendNum_(cell(r, 'mode_premium')), suspense: tPendNum_(cell(r, 'SUSPENDED_AMOUNT')),
+        nextFollow: '', isNew: /^y/i.test(cell(r, 'NEW_THIS_WEEK')), reqs: [], comments: [] };
+      c.days = Math.max(c.days, tPendNum_(cell(r, 'DAYS_SINCE_SUBMISSION')));
+      var nf = tPendDay_(cell(r, 'NEXT_FOLLOWUP_DATE')); if (nf && (!c.nextFollow || nf < c.nextFollow)) c.nextFollow = nf;
+      var since = tPendDay_(cell(r, 'REQUIREMENT_DATE') || cell(r, 'ordered_date')), st = cell(r, 'REQUIREMENT_STATUS');
+      var cm = cell(r, 'requirement_comment');
+      if (cm && !c.comments.some(function (x) { return x.text === cm; })) c.comments.push({ text: cm.slice(0, 500), date: since, req: cell(r, 'requirement_name') });
+      if (!closedRe.test(st)) c.reqs.push({ code: cell(r, 'REQUIREMENT_CODE'), name: cell(r, 'requirement_name'), who: cell(r, 'WHO_ACTS_NEXT'), status: st, rag: cell(r, 'RAG_STATUS'),
+        since: since, last: /^y/i.test(cell(r, 'LAST_REQT_TO_SETTLE')) });
+    });
+    var today = new Date();
+    Object.keys(by).forEach(function (pol) {
+      var c = by[pol]; c.task = chase[pol] || null; c.log = (lb[pol] || []).slice(-6);
+      /* what was done since underwriting's last comment: anything in the Log Book on or after its date */
+      var lastC = c.comments.map(function (x) { return x.date; }).filter(Boolean).sort().pop() || '';
+      c.doneSince = lastC ? c.log.filter(function (l) { return (l.received || l.logged) >= lastC; }).length : null;
+      /* the first thing to do, in the order that settles cases fastest */
+      var agentReqs = c.reqs.filter(function (q) { return /agent|client|branch/i.test(q.who); });
+      var onlyPrem = c.reqs.length && c.reqs.every(function (q) { return /FUTPY|premium|payment/i.test(q.code + ' ' + q.name); });
+      var lastIn = c.log.filter(function (l) { return l.sent || l.received; }).map(function (l) { return l.sent || l.received; }).sort().pop() || '';
+      var quiet = lastIn ? tWorkingDays_(new Date(lastIn + 'T12:00:00'), today) : null;
+      c.lastIn = lastIn; c.quiet = quiet;
+      if (/declin|postpon/i.test(c.decision)) { c.first = 'Underwriting declined or postponed it: talk to the client about another plan.'; c.rank = 5; }
+      else if (onlyPrem) { c.first = 'Only the first premium is left: collect it and it issues.'; c.rank = 0; }
+      else if (lastIn && quiet >= T_PEND.CHASE_DAYS && c.reqs.length) {
+        c.first = 'You sent it on ' + lastIn + ' and nothing has moved in ' + quiet + ' working days: your support person chases the case officer.'; c.rank = 1;
+        c.chase = { second: quiet >= T_PEND.CHASE_DAYS + T_PEND.CHASE2_DAYS, text: 'Policy ' + pol + (c.client ? ', ' + c.client : '') + '. ' +
+          c.log.filter(function (l) { return (l.sent || l.received) === lastIn; }).map(function (l) { return l.doc; }).join(', ') + ' was submitted on ' + lastIn +
+          (c.log.filter(function (l) { return l.trans; }).slice(-1)[0] ? ' on transmittal ' + c.log.filter(function (l) { return l.trans; }).slice(-1)[0].trans : '') +
+          '. We have not seen any movement on the requirement. Kindly confirm receipt and advise if anything further is needed.' };
+      }
+      else if (agentReqs.length) {
+        var pick = agentReqs.filter(function (q) { return q.last; })[0] || agentReqs.slice().sort(function (a, b) { return String(a.since || '9').localeCompare(String(b.since || '9')); })[0];
+        c.first = 'Get the ' + pick.name.toLowerCase() + ' in' + (pick.last ? ': it is the last thing before it settles.' : (pick.since ? ': asked for on ' + pick.since + '.' : '.')); c.rank = c.comments.length && !c.doneSince ? 2 : 3;
+      } else { c.first = 'With underwriting or a department: nothing needed from you right now.'; c.rank = 4; }
+      out.cases.push(c);
+    });
+    out.cases.sort(function (a, b) { return a.rank - b.rank || b.days - a.days; });
+  }
+  /* the clawback list */
+  var cl = null;
+  try { cl = tPendTab_(book, 'Clawback'); } catch (e) {}
+  if (!cl) out.gaps.push('No "Clawback" tab in the Branch Portfolio.');
+  else {
+    out.clawReport = cl.name;
+    var kh = cl.head, kx = function (r, n) { var i = kh.indexOf(n); return i > -1 && r[i] != null ? r[i] : ''; };
+    cl.rows.forEach(function (r) {
+      var st = String(kx(r, 'STATUS')).trim(); if (/^reversed/i.test(st)) return;   // "NOT REVERSED" stays
+      var pol = String(kx(r, 'POLICY_ID')).replace(/\D/g, ''); if (!pol) return;
+      var scripts = (lb[pol] || []).filter(function (l) { return T_PEND.SCRIPT_RE.test(l.doc); });
+      out.claws.push({ policy: pol, client: (String(kx(r, 'GIVEN_NAME')).trim() + ' ' + String(kx(r, 'SURNAME')).trim()).trim(), agent: String(kx(r, 'AGENT_NAME')).trim(),
+        plan: String(kx(r, 'PLAN')).trim(), issued: tPendDay_(kx(r, 'ISSUE_DATE')), dispatched: tPendDay_(kx(r, 'DISPATCH_DATE')), ack: tPendDay_(kx(r, 'ACK_DATE')),
+        ackStatus: String(kx(r, 'ACK_STATUS')).trim(), date: tPendDay_(kx(r, 'CLAWBACK_DATE')), reason: String(kx(r, 'REASON_CODES')).trim(), amount: tPendNum_(kx(r, 'CLAWED_BACK_AMT')),
+        status: st, script: scripts.slice(-1)[0] || null, task: chase[pol] || null, replacement: false });
+    });
+    tPendReplacements_(out.claws, out.gaps);
+  }
+  try { if (cache) tCachePutBig_(cache, T_PEND.KEY, out, T_PEND.CACHE_S); } catch (e) {}
+  return out;
+}
+/** Marks each clawback whose client had another policy lapse or be surrendered from six months before to a year after it
+ *  was issued. Without Salesforce nothing is marked, and the gap says so, so the branch knows the list is not filtered. */
+function tPendReplacements_(claws, gaps) {
+  if (!claws.length) return;
+  if (!tSfOn_()) { gaps.push('Salesforce is not linked, so replacements could not be taken off the clawback list.'); return; }
+  try {
+    var pols = claws.map(function (c) { return "'" + c.policy + "'"; });
+    var contact = {}, cs = {};
+    for (var i = 0; i < pols.length; i += 150) tSfQuery_('SELECT POLICY__c, Contact__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + pols.slice(i, i + 150).join(',') + ')')
+      .forEach(function (r) { if (r.Contact__c) { contact[String(r.POLICY__c).replace(/\D/g, '')] = r.Contact__c; cs[r.Contact__c] = 1; } });
+    var ids = Object.keys(cs).map(function (x) { return "'" + x + "'"; }), ended = {};
+    for (var j = 0; j < ids.length; j += 150) tSfQuery_("SELECT POLICY__c, Contact__c, Policy_Status_Description__c, Paid_To_Date__c FROM CLIENT_PORTFOLIO__c WHERE Contact__c IN (" + ids.slice(j, j + 150).join(',') +
+      ") AND (Policy_Status_Description__c LIKE '%LAPSE%' OR Policy_Status_Description__c LIKE '%SURRENDER%')")
+      .forEach(function (r) { (ended[r.Contact__c] = ended[r.Contact__c] || []).push({ pol: String(r.POLICY__c || '').replace(/\D/g, ''), at: tPendDay_(r.Paid_To_Date__c) }); });
+    claws.forEach(function (c) {
+      var k = contact[c.policy]; if (!k || !c.issued || !ended[k]) return;
+      var iss = new Date(c.issued + 'T12:00:00').getTime();
+      c.replacement = ended[k].some(function (e) {
+        if (!e.at || e.pol === c.policy) return false;
+        var d = (new Date(e.at + 'T12:00:00').getTime() - iss) / 86400000;
+        return d >= -T_PEND.REPL_BEFORE && d <= T_PEND.REPL_AFTER;
+      });
+    });
+  } catch (e) { gaps.push('Salesforce did not answer, so replacements could not be taken off the clawback list.'); }
+}
+/** The person's cut of it. */
+function tPendView_(w) {
+  var raw = tPendRaw_(), mine = null;
+  if (w.role === 'unit') mine = (w.team || []).slice();
+  else if (w.role === 'agent') mine = [w.me && w.me.name || ''];
+  var isMine = function (n) { return !mine || mine.some(function (m) { return tSameClient_(m, n); }); };
+  var money = w.role !== 'staff', branch = w.role === 'branch';
+  var strip = function (o) { var c = {}; Object.keys(o).forEach(function (k) { c[k] = o[k]; }); if (!money) { delete c.premium; delete c.suspense; delete c.amount; } return c; };
+  var cases = raw.cases.filter(function (c) { return isMine(c.agent); }).slice(0, T_PEND.MAX).map(strip);
+  var allClaws = (raw.claws || []).filter(function (c) { return isMine(c.agent); });
+  var claws = allClaws.filter(function (c) { return !c.replacement; }).map(strip);
+  var repl = branch ? allClaws.filter(function (c) { return c.replacement; }).map(strip) : [];
+  var byAgent = {};
+  cases.forEach(function (c) { var a = byAgent[c.agent] = byAgent[c.agent] || { agent: c.agent, cases: 0, near: 0, waitingYou: 0, chase: 0, claws: 0, days: 0 };
+    a.cases++; a.days += c.days; if (c.rank === 0) a.near++; if (c.rank === 2) a.waitingYou++; if (c.chase) a.chase++; });
+  claws.forEach(function (c) { (byAgent[c.agent] = byAgent[c.agent] || { agent: c.agent, cases: 0, near: 0, waitingYou: 0, chase: 0, claws: 0, days: 0 }).claws++; });
+  return { on: true, at: raw.at, report: raw.report || '', clawReport: raw.clawReport || '', gaps: raw.gaps, money: money, role: w.role,
+    counts: { cases: cases.length, near: cases.filter(function (c) { return c.rank === 0; }).length, waitingYou: cases.filter(function (c) { return c.rank === 2; }).length,
+      chase: cases.filter(function (c) { return c.chase; }).length, claws: claws.length, noScript: claws.filter(function (c) { return !c.script; }).length, replacements: repl.length,
+      clawed: money ? claws.reduce(function (s, c) { return s + (c.amount || 0); }, 0) : undefined },
+    cases: cases, claws: claws, replacements: repl,
+    agents: w.role === 'agent' ? [] : Object.keys(byAgent).map(function (k) { var a = byAgent[k]; a.avgDays = a.cases ? Math.round(a.days / a.cases) : 0; delete a.days; return a; })
+      .sort(function (a, b) { return b.cases - a.cases; }) };
+}
+
+/* ── The staff desk, the daily report, and the team (24 November 2026) ────────────────────────────────────────────
+   The branch manager: "a robust reporting structure in the findings they are to report daily. Long gone are telling the
+   agent what they know but to hold them accountable ... approvals they are supposed to be on top of, especially when
+   agents have handed in the documents ... staff also see their colleagues ... trigger the WhatsApp and follow through",
+   then "yes" to three more: the agent answers with one tap, money in suspense, and the contract after a case settles.
+   Each staff member's desk is built from the pending report (tPendRaw_): what she signed for in the Log Book that has not
+   moved, cases approved with only the first premium left, anything new from underwriting since yesterday, the chases due,
+   money in suspense 30 days on, and cases that left the report whose contract is to be delivered in 20 days. An item is
+   hers when she received the papers in the Log Book, else when she supports the agent (tSupportFor_). For each item she
+   reports in fixed fields (found, did, told, next, by when): a row on "Desk Reports", and a comment under the existing
+   post on the case's Pendings task (a new post only on a task with no Chatter). An item not reported is late the next
+   working day. At 5pm the branch manager and the BMA get one summary. Asked for as action=board&desk=1 (read) and
+   action=board&deskreport=1 (save), so Service.gs needs no paste. */
+var T_DESK = { SEEN: 'Pendings Seen', REPORTS: 'Desk Reports', REPLIES: 'Agent Replies', HANDED_DAYS: 2, SUSP_DAYS: 30, DELIVER_DAYS: 20, SETTLED_KEEP: 45,
+  SUMMARY_HOUR: 17, SUMMARY_TO: 'Ricky.Rampersad@myguardiangroup.com,Kamla.Dookran@myguardiangroup.com', HEAD: 'Sales Support',
+  FOUND: ['Received by the department', 'Not received: sent again', 'Still with underwriting', 'Waiting on the agent', 'Waiting on the client', 'Approved: first premium due', 'Settled', 'Contract delivered', 'Other'],
+  DID: ['Told the agent', 'Chased the case officer', 'Called the client', 'Sent the document again', 'Requested the reversal', 'Arranged the delivery', 'Nothing yet'],
+  TOLD: ['The agent', 'The client', 'The case officer', 'The underwriter', 'The department', 'Nobody yet'],
+  KIND: { suspense: 'Money in suspense', new: 'New from underwriting', handed: 'Handed in, not moving', chase: 'Chase the case officer', approved: 'Approved: first premium left', settled: 'Contract to deliver' },
+  ORDER: ['suspense', 'new', 'handed', 'chase', 'approved', 'settled'] };
+function tDeskTab_(name, head) {
+  var ss = ss_(), sh = ss.getSheetByName(name);
+  if (!sh) { sh = ss.insertSheet(name); sh.appendRow(head); try { sh.setFrozenRows(1); } catch (e) {} }
+  return sh;
+}
+function tDeskToday_() { return Utilities.formatDate(new Date(), tTz_(), 'yyyy-MM-dd'); }
+/** What the report showed before: requirement codes and comments with the day each was first seen, and each policy's
+ *  last day on the report. Updated once a day; the first ever run is the baseline, so nothing reads as new on day one. */
+function tDeskSeen_(raw) {
+  var sh = tDeskTab_(T_DESK.SEEN, ['Key', 'Policy', 'What', 'First seen', 'Last seen']), v = sh.getDataRange().getValues(), today = tDeskToday_();
+  var map = {}, baseline = v.length < 2;
+  v.slice(1).forEach(function (r) { map[String(r[0])] = { pol: String(r[1]), what: String(r[2]), first: tPendDay_(r[3]), last: tPendDay_(r[4]) }; });
+  var props = PropertiesService.getScriptProperties(), done = props.getProperty('desk_seen_day') === today;
+  if (!done && raw.report) {
+    var put = function (k, pol, what) { var m = map[k]; if (m) m.last = today; else map[k] = { pol: pol, what: what, first: baseline ? '' : today, last: today }; };
+    raw.cases.forEach(function (c) {
+      put(c.policy + '|P', c.policy, c.client || '');
+      c.reqs.forEach(function (q) { put(c.policy + '|R|' + (q.code || q.name), c.policy, q.name); });
+      c.comments.forEach(function (m) { put(c.policy + '|C|' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, m.text)).slice(0, 12), c.policy, m.text.slice(0, 120)); });
+    });
+    var cut = new Date(Date.now() - 120 * 86400000), keep = Object.keys(map).filter(function (k) { return !map[k].last || new Date(map[k].last + 'T12:00:00') >= cut; });
+    var out = [['Key', 'Policy', 'What', 'First seen', 'Last seen']].concat(keep.map(function (k) { var m = map[k]; return [k, "'" + m.pol, m.what, m.first, m.last]; }));
+    sh.clearContents(); sh.getRange(1, 1, out.length, 5).setValues(out);
+    props.setProperty('desk_seen_day', today);
+  }
+  return map;
+}
+/** The Delivery Book's deliveries, by policy: the day each was delivered. */
+function tDeskDelivered_() {
+  var out = {};
+  try {
+    var b = SpreadsheetApp.openById(String(PropertiesService.getScriptProperties().getProperty('LOGBOOK_SHEET_ID') || T_PEND.LOGBOOK).trim()), sh = b.getSheetByName('Deliveries');
+    var v = sh ? sh.getDataRange().getValues() : []; if (v.length < 2) return out;
+    var h = v[0].map(function (x) { return String(x).trim(); }), cp = h.indexOf('Policy #'), cd = h.indexOf('Delivered At');
+    v.slice(1).forEach(function (r) { var p = String(r[cp] || '').replace(/\D/g, ''); if (p) out[p] = tPendDay_(r[cd]) || 'yes'; });
+  } catch (e) {}
+  return out;
+}
+/** Every report, the newest per item. */
+function tDeskReports_() {
+  var sh = tDeskTab_(T_DESK.REPORTS, ['When', 'Day', 'Staff', 'Key', 'Kind', 'Policy', 'Client', 'Agent', 'Found', 'Did', 'Told', 'Next', 'Next date', 'Salesforce']);
+  var v = sh.getDataRange().getValues(), last = {}, all = [];
+  v.slice(1).forEach(function (r) {
+    var o = { when: String(r[0]), day: tPendDay_(r[1]), staff: String(r[2]), key: String(r[3]), kind: String(r[4]), policy: String(r[5]).replace(/\D/g, ''), client: String(r[6]), agent: String(r[7]),
+      found: String(r[8]), did: String(r[9]), told: String(r[10]), next: String(r[11]), nextDate: tPendDay_(r[12]), sf: String(r[13]) };
+    all.push(o); last[o.key] = o;
+  });
+  return { last: last, all: all };
+}
+/** The agents' one-tap answers from HELP 868 (help868Ack_), the newest per policy. */
+function tDeskReplies_() {
+  var out = {};
+  try {
+    var sh = ss_().getSheetByName(T_DESK.REPLIES), v = sh ? sh.getDataRange().getValues() : [];
+    v.slice(1).forEach(function (r) { var p = String(r[3] || '').replace(/\D/g, ''); if (p) out[p] = { when: String(r[0]), agent: String(r[2]), answer: String(r[4]) }; });
+  } catch (e) {}
+  return out;
+}
+/** Every desk item, for everyone; tDeskView_ cuts it. */
+function tDeskItems_() {
+  var raw = tPendRaw_(), seen = {}, today = tDeskToday_(), now = new Date();
+  try { seen = tDeskSeen_(raw); } catch (e) { raw.gaps = (raw.gaps || []).concat(['What is new since yesterday could not be worked out.']); }
+  var staffKeys = {}; ['Sasha Lalla-Jagassar', 'Azariah Griffith', 'Elizabeth Lee', 'Kamla Dookran'].concat(T_SUPPORT && T_SUPPORT.POOL || []).forEach(function (n) { staffKeys[tNameKey_(n).slice(0, 5)] = n; });
+  var support = {}, ownerOf = function (c) {
+    var rec = (c.log || []).filter(function (l) { return l.receivedBy; }).slice(-1)[0];
+    if (rec) { var hit = Object.keys(staffKeys).filter(function (k) { return tNameKey_(rec.receivedBy).indexOf(k.slice(0, 4)) === 0; })[0]; if (hit) return { name: tNiceName_(staffKeys[hit]), via: 'signed for the papers' }; }
+    if (!(c.agent in support)) support[c.agent] = tSupportFor_(c.agent).name || '';
+    return { name: support[c.agent], via: 'supports ' + firstNameOf_(c.agent) };
+  };
+  var items = [], add = function (c, kind, key, why, since) {
+    var o = ownerOf(c);
+    items.push({ key: kind + '|' + key, kind: kind, label: T_DESK.KIND[kind], policy: c.policy, client: c.client || '', agent: c.agent || '', owner: o.name, via: o.via, why: why, since: since || '',
+      uw: c.uw || '', officer: c.officer || '', days: c.days || 0, suspense: c.suspense || 0, chase: c.chase || null });
+  };
+  raw.cases.forEach(function (c) {
+    if (c.suspense > 0 && c.days >= T_DESK.SUSP_DAYS) add(c, 'suspense', c.policy, 'Money is held in suspense and the case has not settled in ' + c.days + ' days.', '');
+    var fresh = [];
+    c.reqs.forEach(function (q) { var s = seen[c.policy + '|R|' + (q.code || q.name)]; if (s && s.first === today) fresh.push(q.name); });
+    c.comments.forEach(function (m) { var k = c.policy + '|C|' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, m.text)).slice(0, 12); if (seen[k] && seen[k].first === today) fresh.push('comment: ' + m.text.slice(0, 160)); });
+    if (fresh.length) add(c, 'new', c.policy + '|' + today, 'New today: ' + fresh.join('; ') + '. The agent hears it today.', today);
+    if (c.chase) add(c, 'chase', c.policy + '|' + c.lastIn, 'Went in on ' + c.lastIn + ', no movement in ' + c.quiet + ' working days' + (c.chase.second ? ': second chase, copy Mrs Dookran.' : '.'), c.lastIn);
+    else if (c.lastIn && c.quiet >= T_DESK.HANDED_DAYS && c.reqs.length) add(c, 'handed', c.policy + '|' + c.lastIn, 'Handed in and logged ' + c.lastIn + ', still not showing as received after ' + c.quiet + ' working days: confirm it went on a transmittal and the department has it.', c.lastIn);
+    if (c.rank === 0) add(c, 'approved', c.policy, 'Approved: only the first premium is left. Tell the agent and follow it until it settles.', '');
+  });
+  /* cases that left the report: the contract is to be delivered within 20 days, until the Delivery Book shows it */
+  var onReport = {}; raw.cases.forEach(function (c) { onReport[c.policy] = 1; });
+  var delivered = tDeskDelivered_();
+  Object.keys(seen).filter(function (k) { return /\|P$/.test(k); }).forEach(function (k) {
+    var s = seen[k], pol = s.pol.replace(/\D/g, '');
+    if (onReport[pol] || !s.last || s.last >= today || delivered[pol]) return;
+    var gone = new Date(s.last + 'T12:00:00'); gone.setDate(gone.getDate() + 1);
+    if ((now - gone) / 86400000 > T_DESK.SETTLED_KEEP) return;
+    var due = new Date(gone.getTime() + T_DESK.DELIVER_DAYS * 86400000), dueS = Utilities.formatDate(due, tTz_(), 'yyyy-MM-dd');
+    var c = { policy: pol, client: s.what, agent: '', log: [] };
+    add(c, 'settled', pol, 'Off the pending report since ' + Utilities.formatDate(gone, tTz_(), 'yyyy-MM-dd') + ': if it settled, the contract is to be delivered by ' + dueS + '. Not in the Delivery Book yet.', Utilities.formatDate(gone, tTz_(), 'yyyy-MM-dd'));
+  });
+  var rep = tDeskReports_(), replies = tDeskReplies_();
+  items.forEach(function (it) {
+    var r = rep.last[it.key]; it.report = r || null;
+    it.reply = replies[it.policy] || null;
+    var start = it.since ? new Date(it.since + 'T12:00:00') : null;
+    it.late = !r && (!start || tWorkingDays_(start, now) >= 1) && it.kind !== 'new' ? true : (!r && it.kind === 'new' && false);
+    if (!r && it.kind === 'new') it.late = false;           // due by the end of today
+    if (r && r.nextDate && r.nextDate < today && r.day < r.nextDate) it.late = true; // the date they set themselves has passed
+  });
+  items.sort(function (a, b) { return T_DESK.ORDER.indexOf(a.kind) - T_DESK.ORDER.indexOf(b.kind) || b.days - a.days; });
+  return { at: raw.at, gaps: raw.gaps || [], items: items, reports: rep.all };
+}
+function firstNameOf_(n) { return String(n || '').trim().split(/\s+/)[0] || ''; }
+/** The person's desk and the team's. Staff and the branch only. */
+function tDeskView_(w) {
+  if (w.role !== 'staff' && w.role !== 'branch') return { on: false, why: 'The desk is for the staff and the branch.' };
+  var d = tDeskItems_(), me = w.me && w.me.name || '', today = tDeskToday_();
+  var mine = function (it) { return w.role === 'staff' && tSameClient_(it.owner, me); };
+  var team = {};
+  d.items.forEach(function (it) {
+    var k = it.owner || '(nobody)', t = team[k] = team[k] || { name: k, items: 0, reportedToday: 0, late: 0, suspense: 0 };
+    t.items++; if (it.report && it.report.day === today) t.reportedToday++; if (it.late) t.late++; if (it.kind === 'suspense') t.suspense++;
+  });
+  var items = d.items.map(function (it) { var o = {}; Object.keys(it).forEach(function (k) { o[k] = it[k]; }); o.mine = mine(it); if (w.role === 'staff') delete o.suspense; return o; });
+  var wa = {};
+  try { help868Allow_().forEach(function (a) { if (a.name && a.digits) wa[tNameKey_(a.name)] = a.digits; }); } catch (e) {}
+  items.forEach(function (o) { var n = wa[tNameKey_(o.agent)]; if (n) o.agentWa = n; });
+  return { on: true, at: d.at, gaps: d.gaps, me: me, role: w.role, items: items,
+    team: Object.keys(team).map(function (k) { return team[k]; }).sort(function (a, b) { return b.late - a.late || b.items - a.items; }),
+    today: d.reports.filter(function (r) { return r.day === today; }).reverse().slice(0, 60),
+    lists: { found: T_DESK.FOUND, did: T_DESK.DID, told: T_DESK.TOLD } };
+}
+/** One report: the row, and a comment under the existing post on the case's Pendings task. */
+function tDeskReport_(p, w) {
+  if (w.role !== 'staff' && w.role !== 'branch') return { ok: false, error: 'Only the staff and the branch report on the desk.' };
+  var key = String(p.key || ''), it = tDeskItems_().items.filter(function (x) { return x.key === key; })[0];
+  if (!it) return { ok: false, error: 'That item is no longer on the desk.' };
+  var found = String(p.found || ''), did = String(p.did || ''), told = String(p.told || ''), next = String(p.next || '').trim().slice(0, 300), nextDate = String(p.nextDate || '').slice(0, 10);
+  if (T_DESK.FOUND.indexOf(found) < 0 || T_DESK.DID.indexOf(did) < 0 || T_DESK.TOLD.indexOf(told) < 0) return { ok: false, error: 'Choose what you found, what you did and who you told.' };
+  if (!/settled|delivered/i.test(found) && (!next || !/^\d{4}-\d{2}-\d{2}$/.test(nextDate))) return { ok: false, error: 'Say what happens next and by what date.' };
+  var who = w.me && w.me.name ? tNiceName_(w.me.name) : 'Branch Manager · Ricky Rampersad', now = new Date(), today = tDeskToday_();
+  var body = (w.me && w.me.name ? T_DESK.HEAD + ' · ' + who : who) + ' · ' + Utilities.formatDate(now, tTz_(), 'EEE d MMM') + '\n' + it.label + ' · ' + it.policy + (it.client ? ' · ' + it.client : '') +
+    '\nFound: ' + found + '\nDid: ' + did + '\nTold: ' + told + (next ? '\nNext: ' + next + (nextDate ? ' by ' + nextDate : '') : '');
+  var sf = 'not posted';
+  try {
+    var task = help868PendTask_({ policy: it.policy, app: '' });
+    if (task && task.Id) {
+      var rows = tSfQuery_("SELECT Id FROM FeedItem WHERE ParentId = '" + String(task.Id).replace(/'/g, '') + "' AND Type IN ('TextPost','ContentPost','LinkPost') ORDER BY CreatedDate DESC LIMIT 1") || [];
+      if (rows.length) { tSfSend_('post', '/sobjects/FeedComment', { FeedItemId: rows[0].Id, CommentBody: body }); sf = 'comment on the task'; }
+      else { tSfSend_('post', '/sobjects/FeedItem', { ParentId: task.Id, Body: body }); sf = 'post on the task'; }
+    } else sf = 'no open Pendings task';
+  } catch (e) { sf = 'Salesforce refused: ' + String(e && e.message || e).slice(0, 80); }
+  tDeskTab_(T_DESK.REPORTS, ['When', 'Day', 'Staff', 'Key', 'Kind', 'Policy', 'Client', 'Agent', 'Found', 'Did', 'Told', 'Next', 'Next date', 'Salesforce'])
+    .appendRow([Utilities.formatDate(now, tTz_(), 'yyyy-MM-dd HH:mm'), today, who, key, it.kind, "'" + it.policy, it.client, it.agent, found, did, told, next, nextDate, sf]);
+  return { ok: true, salesforce: sf };
+}
+/** A staff member pressed "Message the agent": the time is kept, so the agent's answer time is measured. */
+function tDeskTold_(p, w) {
+  if (w.role !== 'staff' && w.role !== 'branch') return { ok: false };
+  tDeskTab_(T_DESK.REPLIES, ['When', 'Phone', 'Agent', 'Policy', 'Answer', 'By']).appendRow([Utilities.formatDate(new Date(), tTz_(), 'yyyy-MM-dd HH:mm'), '', String(p.agent || ''), "'" + String(p.policy || '').replace(/\D/g, ''), 'Message sent by staff', w.me && w.me.name || 'branch']);
+  return { ok: true };
+}
+/** 5pm on a working day: one summary to the branch manager and the BMA. Run from the five-minute run; once a day. */
+function tDeskDaily_() {
+  var now = new Date(), wd = now.getDay(), today = tDeskToday_(), props = PropertiesService.getScriptProperties();
+  if (wd === 0 || wd === 6 || now.getHours() < T_DESK.SUMMARY_HOUR || props.getProperty('desk_daily') === today) return;
+  props.setProperty('desk_daily', today);
+  var d = tDeskItems_(), team = {};
+  d.items.forEach(function (it) { var t = team[it.owner || '(nobody)'] = team[it.owner || '(nobody)'] || { items: 0, rep: 0, late: [] }; t.items++; if (it.report && it.report.day === today) t.rep++; if (it.late) t.late.push(it); });
+  var rows = Object.keys(team).sort().map(function (n) { var t = team[n];
+    return '<tr><td style="padding:6px 10px;border-bottom:1px solid #e4e0d4"><b>' + tEscH_(n) + '</b></td><td style="padding:6px 10px;border-bottom:1px solid #e4e0d4">' + t.items + '</td><td style="padding:6px 10px;border-bottom:1px solid #e4e0d4">' + t.rep + '</td><td style="padding:6px 10px;border-bottom:1px solid #e4e0d4;color:' + (t.late.length ? '#B42318' : '#1F7A4D') + '">' + t.late.length + '</td></tr>'; }).join('');
+  var late = d.items.filter(function (it) { return it.late; }).slice(0, 40).map(function (it) { return '<li>' + tEscH_(it.owner || 'nobody') + ': ' + tEscH_(it.label) + ' · ' + tEscH_(it.policy) + (it.client ? ' · ' + tEscH_(it.client) : '') + '</li>'; }).join('');
+  var susp = d.items.filter(function (it) { return it.kind === 'suspense'; }).map(function (it) { return '<li>' + tEscH_(it.policy) + ' · ' + tEscH_(it.client) + ' · ' + tEscH_(firstNameOf_(it.agent)) + ' · ' + it.days + ' days · TT$' + Number(it.suspense).toFixed(2) + '</li>'; }).join('');
+  var html = '<div style="font-family:Arial,sans-serif;color:#14284B;max-width:760px"><h2 style="margin:0 0 6px">Staff desks · ' + today + '</h2><p style="color:#4A5A78;margin:0 0 14px">From the pending report, the Log Book and the reports the staff filed today. Internal: do not forward outside the branch.</p>' +
+    '<table style="border-collapse:collapse;font-size:14px"><tr><th style="text-align:left;padding:6px 10px">Staff</th><th style="text-align:left;padding:6px 10px">On the desk</th><th style="text-align:left;padding:6px 10px">Reported today</th><th style="text-align:left;padding:6px 10px">Not reported</th></tr>' + rows + '</table>' +
+    (late ? '<h3 style="margin:18px 0 6px">Not reported</h3><ul>' + late + '</ul>' : '<p><b>Every item on every desk has a report.</b></p>') +
+    (susp ? '<h3 style="margin:18px 0 6px">Money in suspense, not settled after 30 days</h3><ul>' + susp + '</ul>' : '') + '</div>';
+  try { MailApp.sendEmail({ to: String(PropertiesService.getScriptProperties().getProperty('DESK_SUMMARY_TO') || T_DESK.SUMMARY_TO), subject: 'Staff desks · ' + today + ' · ' + d.items.filter(function (it) { return it.late; }).length + ' not reported', htmlBody: html }); }
+  catch (e) { Logger.log('desk summary failed: ' + e); }
+}
+function tEscH_(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }

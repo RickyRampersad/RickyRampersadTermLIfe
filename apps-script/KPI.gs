@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-24a';
+var SCRIPT_VERSION = '2026-11-24c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2237,6 +2237,7 @@ function doPost(e) {
   var body = {};
   try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
   // The wall's Issued this month, from the newest production report (28 Oct 2026).
+  if (String(body.action || '') === 'wall.clawbacks') { try { return json_({ ok: true, data: wallScrub_(wallClawLive_(todayISO_())) }); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); } }
   if (String(body.action || '') === 'wall.issued') { try { return json_({ ok: true, data: wallScrub_(wallIssued_(todayISO_())) }); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); } }
   if (typeof intelRoute_ === 'function') {
     try {
@@ -2281,6 +2282,8 @@ function handle_(action, data, token) {
              claude: (function () { try { var pp = PropertiesService.getScriptProperties();
                return { draftModel: claudeDraftModel_(), readModel: String(pp.getProperty('ANTHROPIC_MODEL') || CLAUDE_READ.MODEL).trim(), fullDepthToday: Object.keys(bmDeepGet_(todayISO_())).length, inboxReviewedToday: Object.keys(ixDeepGet_(todayISO_())).length }; } catch (e) { return null; } })() };
   }
+  // The newest report tab of the Branch Portfolio, for the daily pendings watch (24 Nov 2026). Keyed; see sheetExport_.
+  if (action === 'sheetexport') { try { return sheetExport_(data || {}); } catch (e) { return { ok: false, error: String(e && e.message || e).slice(0, 160) }; } }
   if (action === 'login') return login_(data.who || data.email, data.password);
   // The wall's outside link: no sign-in, the outside read only (20 Oct 2026).
   if (action === 'wallout') return wallOutside_(data.k);
@@ -2868,6 +2871,9 @@ function keepWarm() {
   try { var pc = pendSyncTick_(); if (pc && /Portal note/.test(pc)) runlog_(pc); } catch (e) { try { runlog_('pending chase failed: ' + (e && e.message)); } catch (e2) {} }
   // The wall copies no clock rebuilt: increases and group hourly, the premium dues copy when its midnight build missed (28 Oct 2026).
   try { wallFeedsTick_(kw0); } catch (e) {}
+  // The day's opportunities (Opportunities.gs, 24 Nov 2026): built once, from 4:30, before the agents' morning e-mails.
+  try { var ob = bigGet_(OPP.KEY, null), oh = new Date().getHours() * 60 + new Date().getMinutes();
+    if (oh >= 270 && (!ob || ob.day !== iIso_(iToday_())) && Date.now() - kw0 < 120000) oppBuild_(); } catch (e) { try { runlog_('opportunities build failed: ' + (e && e.message)); } catch (e2) {} }
 }
 
 function installTriggers() {
@@ -17679,8 +17685,7 @@ function wallIssued_(day) {
   if (hit) { try { return JSON.parse(hit); } catch (e) {} }
   var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
   if (!ss) return { error: 'The Branch Portfolio would not open.' };
-  var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(WALL_ISSUED.PREFIX) === 0; })
-    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  var tabs = reportTabs_(ss.getSheets(), WALL_ISSUED.PREFIX);
   if (!tabs.length) return { error: 'No "' + WALL_ISSUED.PREFIX + '" tab in the Branch Portfolio yet: upload Guardian\'s production report.' };
   var tab = tabs[0], vals = tab.getDataRange().getValues();
   if (vals.length < 2) return { error: tab.getName() + ' is empty.' };
@@ -17766,24 +17771,70 @@ function wallReqKind_(cat, name) {
   for (var i = 0; i < map.length; i++) if (map[i][0].test(c)) return map[i][1];
   return c || String(name || 'Other');
 }
+/** The newest report tab of a kind in the Branch Portfolio (24 Nov 2026). Ricky added "Branch Pending 2026 11 23rd 1336": a
+ *  name no longer always "Branch Pendings_yyyy-mm-dd-hhmm". So the kind is matched on words, any case, with or without the
+ *  "s", with any separators; and "newest" is the date and time written in the name, never the alphabet (an underscore sorts
+ *  after a space, so the alphabet put an older tab above a newer one). A tab with no readable date counts as oldest. */
+function reportTabs_(sheets, prefix) {
+  var norm = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+  var want = norm(prefix).replace(/s$/, '');
+  var stamp = function (n) {
+    var m = /(20\d{2})\D{0,3}(\d{1,2})\D{0,3}(\d{1,2})(?:st|nd|rd|th)?(?:\D{0,3}(\d{1,2}):?(\d{2}))?/i.exec(String(n));
+    if (!m) return 0;
+    var p = function (x, w) { x = String(x || '0'); while (x.length < w) x = '0' + x; return x; };
+    return Number(m[1] + p(m[2], 2) + p(m[3], 2) + p(m[4], 2) + p(m[5], 2));
+  };
+  var hit = sheets.filter(function (sh) {
+    var n = norm(sh.getName()); return n.indexOf(want) === 0 && !/chase/.test(n.slice(want.length)); });
+  hit.sort(function (a, b) { var d = stamp(b.getName()) - stamp(a.getName()); return d || (a.getName() < b.getName() ? 1 : -1); });
+  return hit;
+}
+/** The newest report tab of the Branch Portfolio, whole, for the daily pendings watch (24 Nov 2026).
+ *  Asked for in these words: "you need to read the file on branch portfolio … I cannot upload this daily as the data is
+ *  stored on the sheet". The workbook is past the size Drive will export, so the sheet hands the one tab over itself.
+ *  GET ?action=sheetexport&kind=pend|claw|prod&k=<SHEET_EXPORT_KEY>. Only those three tab kinds, only the newest of each
+ *  (by name, as the reports are labelled <prefix>_yyyy-mm-dd-hhmm), never any other tab. The key is a Script Property of
+ *  32 characters or more; with none set the route answers nothing. The answer carries client data, so the key never goes in
+ *  this repository and a wrong key is told only that it is wrong. */
+var SHEET_EXPORT = { KINDS: { pend: 'Branch Pendings', claw: 'Clawback', prod: 'Branch Production' }, MIN_KEY: 32, MAX_ROWS: 5000 };
+function sheetExport_(p) {
+  var want = String(PropertiesService.getScriptProperties().getProperty('SHEET_EXPORT_KEY') || '').trim();
+  if (want.length < SHEET_EXPORT.MIN_KEY) return { ok: false, error: 'Not switched on.' };
+  var got = String(p.k || ''), diff = got.length ^ want.length;
+  for (var i = 0; i < want.length; i++) diff |= (want.charCodeAt(i) ^ (got.charCodeAt(i) || 0));
+  if (diff) return { ok: false, error: 'Not authorised.' };
+  var prefix = SHEET_EXPORT.KINDS[String(p.kind || 'pend')];
+  if (!prefix) return { ok: false, error: 'kind must be one of: ' + Object.keys(SHEET_EXPORT.KINDS).join(', ') };
+  var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
+  if (!ss) return { ok: false, error: 'The Branch Portfolio would not open.' };
+  var tabs = reportTabs_(ss.getSheets(), prefix).map(function (sh) { return sh.getName(); });
+  if (!tabs.length) return { ok: false, error: 'No "' + prefix + '" tab in the Branch Portfolio.' };
+  var sh = ss.getSheetByName(tabs[0]), vals = sh.getDataRange().getValues().slice(0, SHEET_EXPORT.MAX_ROWS + 1);
+  var tz = Session.getScriptTimeZone();
+  var rows = vals.map(function (r) { return r.map(function (v) {
+    return v instanceof Date ? Utilities.formatDate(v, tz, v.getHours() || v.getMinutes() ? "yyyy-MM-dd'T'HH:mm" : 'yyyy-MM-dd') : v; }); });
+  return { ok: true, kind: String(p.kind || 'pend'), tab: tabs[0], others: tabs.slice(1, 6), rows: rows.length - 1, data: rows };
+}
 function wallPendLive_(day) {
   var cache = CacheService.getScriptCache(), key = 'wall_pend_' + day, hit = cache.get(key);
   if (hit) { try { return JSON.parse(hit); } catch (e) {} }
   var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
   if (!ss) return { error: 'The Branch Portfolio would not open.' };
-  var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(WALL_PEND.PREFIX) === 0; })
-    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  var tabs = reportTabs_(ss.getSheets(), WALL_PEND.PREFIX);
   if (!tabs.length) return { error: 'No "' + WALL_PEND.PREFIX + '" tab in the Branch Portfolio yet.' };
   var tab = tabs[0], vals = tab.getDataRange().getValues();
   if (vals.length < 2) return { error: tab.getName() + ' is empty.' };
   var h = vals[0].map(function (x) { return String(x).trim(); }), ix = function (n) { return h.indexOf(n); };
   var c = { pol: ix('POLICY'), agent: ix('Agent Name'), code: ix('REQUIREMENT_CODE'), name: ix('requirement_name'), who: ix('WHO_ACTS_NEXT'),
             rag: ix('RAG_STATUS'), age: ix('AGEING_BUCKET'), nw: ix('NEW_THIS_WEEK'), prem: ix('mode_premium'), st: ix('REQUIREMENT_STATUS'),
-            app: ix('application_number'), cat: ix('REQUIREMENT_CATEGORY'), days: ix('DAYS_SINCE_SUBMISSION'), susp: ix('SUSPENDED_AMOUNT'), dec: ix('DecisionType') };
+            app: ix('application_number'), cat: ix('REQUIREMENT_CATEGORY'), days: ix('DAYS_SINCE_SUBMISSION'), susp: ix('SUSPENDED_AMOUNT'), dec: ix('DecisionType'),
+            last: ix('LAST_REQT_TO_SETTLE'), uw: ix('underwriter_id'), so: ix('service_associate_id'), nf: ix('NEXT_FOLLOWUP_DATE'),
+            cmt: ix('requirement_comment'), rdate: ix('REQUIREMENT_DATE') > -1 ? ix('REQUIREMENT_DATE') : ix('ordered_date') };
   if (c.pol < 0 || c.code < 0) return { error: tab.getName() + ' has no POLICY or REQUIREMENT_CODE column.' };
   var cell = function (r, i) { return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
-  var m = /(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})/.exec(tab.getName());
-  var out = { tab: tab.getName(), asOf: m ? prettyDate_(m[1] + '-' + m[2] + '-' + m[3]).replace(/ \d{4}$/, '') + ', ' + twelve_(m[4] + ':' + m[5]) : tab.getName(),
+  var m = /(20\d{2})\D{0,3}(\d{1,2})\D{0,3}(\d{1,2})(?:st|nd|rd|th)?\D{0,3}(\d{1,2}):?(\d{2})/i.exec(tab.getName());
+  var two = function (x) { return ('0' + x).slice(-2); };
+  var out = { tab: tab.getName(), asOf: m ? prettyDate_(m[1] + '-' + two(m[2]) + '-' + two(m[3])).replace(/ \d{4}$/, '') + ', ' + twelve_(two(m[4]) + ':' + m[5]) : tab.getName(),
               reqs: 0, policies: 0, newWeek: 0, rag: { Red: 0, Amber: 0, Green: 0 }, ages: [], byReq: [], who: [], first: { policies: 0, prem: 0, agents: [] }, agents: 0 };
   var pols = {}, ages = {}, reqs = {}, who = {}, agentOf = {}, firstBy = {}, firstPol = {}, agentsSeen = {}, P = {}, numOf = {}, codes = {}, whoPol = {};
   vals.slice(1).forEach(function (r) {
@@ -17795,7 +17846,7 @@ function wallPendLive_(day) {
     if (/^y/i.test(cell(r, c.nw))) out.newWeek++;
     var rg = cell(r, c.rag); if (out.rag[rg] != null) out.rag[rg]++;
     // The policy, once: its requirements by kind, the money held on it, its decision and its age.
-    var p = P[pol] = P[pol] || { ag: ag, reqs: 0, med: 0, docs: 0, pay: 0, red: 0, days: 0, susp: 0, dec: '', nw: 0, kinds: {} };
+    var p = P[pol] = P[pol] || { ag: ag, reqs: 0, med: 0, docs: 0, pay: 0, red: 0, days: 0, susp: 0, dec: '', nw: 0, kinds: {}, items: [], uw: '', so: '', nf: '', cmtAt: '' };
     var cat = cell(r, c.cat), isPay = /^payment/i.test(cat) || cell(r, c.code).toUpperCase() === 'FUTPY';
     p.reqs++; if (isPay) p.pay++; else if (/^medical/i.test(cat)) p.med++; else p.docs++;
     if (rg === 'Red') p.red++;
@@ -17805,6 +17856,12 @@ function wallPendLive_(day) {
     if (/^y/i.test(cell(r, c.nw))) p.nw = 1;
     var kd = isPay ? 'First premium' : wallReqKind_(cat, cell(r, c.name));
     var kk = p.kinds[kd] = p.kinds[kd] || { n: 0, red: 0, amber: 0 }; kk.n++; if (rg === 'Red') kk.red++; else if (rg === 'Amber') kk.amber++;
+    // For the deeper picture (24 Nov 2026): what each item is and who moves it, Guardian's own follow-up date, the underwriter.
+    var dOf = function (v) { return v instanceof Date ? Utilities.formatDate(v, CONFIG.TZ, 'yyyy-MM-dd') : String(v == null ? '' : v).trim().slice(0, 10); };
+    p.items.push({ kind: kd, who: cell(r, c.who) || 'Not said', last: /^y/i.test(cell(r, c.last)), red: rg === 'Red' });
+    if (!p.uw) p.uw = cell(r, c.uw); if (!p.so) p.so = cell(r, c.so);
+    var nfd = c.nf < 0 ? '' : dOf(r[c.nf]); if (/^\d{4}-\d{2}-\d{2}$/.test(nfd) && (!p.nf || nfd < p.nf)) p.nf = nfd;
+    if (cell(r, c.cmt)) { var cd = c.rdate < 0 ? '' : dOf(r[c.rdate]); if (/^\d{4}/.test(cd) && cd > p.cmtAt) p.cmtAt = cd; }
     var a = cell(r, c.age) || 'Not dated'; ages[a] = (ages[a] || 0) + 1;
     var nm = cell(r, c.name) || cell(r, c.code); reqs[nm] = (reqs[nm] || 0) + 1;
     var w = cell(r, c.who) || 'Not said'; who[w] = (who[w] || 0) + 1;
@@ -17835,6 +17892,7 @@ function wallPendLive_(day) {
   try { out.today = wallPendToday_(day, agentOf, numOf); } catch (e) { out.today = { error: String(e && e.message || e) }; }
   var chase = null; try { chase = wallPendChase_(day, numOf); } catch (e) { out.chase = { error: String(e && e.message || e) }; }
   wallPendPolicies_(out, P, chase);
+  try { wallPendDeep_(out, P, chase, day); } catch (e) { out.deepError = String(e && e.message || e); }
   try { cache.put(key, JSON.stringify(out), WALL_PEND.TTL); } catch (e) {}
   return out;
 }
@@ -17891,6 +17949,224 @@ function wallPendPolicies_(out, P, chase) {
                   open: T.open, overdue: T.overdue, quiet: T.quiet, today: T.today };
   }
 }
+/* ── The pending wall, deeper: the units, what is holding settlement, underwriting, the team (24 Nov 2026) ──
+ *  Ricky, for the branch meeting of 25 Nov: "different insights driving different analytics ... the wall that the agents see
+ *  on a daily basis ... collaboration with the team on what is outstanding and what is happening ... a proper structured
+ *  picture with the teams, the unit is holding back the settlement, and deep insights from underwriting to get these
+ *  requirements out". Read off the same newest report as every other pending slide, so the figures always agree.
+ *    units   each unit (the Unit column of the Agent Skill Bank; anyone who has left folds to Orphans), its policies, what is
+ *            holding them, the cash still to collect, ready to settle, red at Guardian, and the Salesforce tasks on them;
+ *    hold    the policies one item from settlement: what that last item is, who moves it, ready (only the premium left);
+ *    uw      underwriting: the decision on each policy, Guardian's own follow-up dates passed, items underwriting wrote on
+ *            this week, the work by underwriter and by case officer (their Guardian ids, never a client);
+ *    team    the Log Book: papers handed in on these policies, signed for and not yet sent, and sent this week.
+ *  Counts, agents' names and Guardian staff ids only. No client, no policy number. */
+var WALL_DEEP = { WEEK: 7, TOP_UW: 8 };
+function wallUnitOf_(name, sb, left) {
+  if (!name || name === 'No agent named') return 'No agent named';
+  try { if (wallIsLeft_(name, left)) return 'Orphans · to reassign'; } catch (e) {}
+  var k = bkNk_(name), p = sb[k];
+  if (!p) {
+    var t = k.split(' '), f = t[0], l = t[t.length - 1];
+    Object.keys(sb).some(function (x) { var u = x.split(' '); if (u[0] === f && u[u.length - 1] === l) { p = sb[x]; return true; } return false; });
+  }
+  if (!p) return 'Not on the Skill Bank';
+  var unit = p.isUM ? p.name : (p.unit || '');
+  if (!unit) return 'No unit named';
+  var first = String(unit).replace(/^[A-Za-z]{1,3}[\s-]*\d{3,6}\s*-\s*/, '').trim().split(/\s+/)[0];
+  return first ? first.charAt(0).toUpperCase() + first.slice(1).toLowerCase() + '’s unit' : unit;
+}
+function wallPendDeep_(out, P, chase, day) {
+  var sb = {}; try { sb = skillBank_(); } catch (e) {}
+  var left = {}; try { left = wallLeft_(); } catch (e) {}
+  var week = shiftDays_(day, -WALL_DEEP.WEEK), pols = Object.keys(P);
+  var U = {}, H = { kinds: {}, who: {}, oneLeft: 0, ready: 0, readyHeld: 0 }, UW = {}, SO = {}, D = {};
+  var uw = { followOver: 0, followSoon: 0, wroteWeek: 0, approvedWaiting: 0 };
+  pols.forEach(function (pol) {
+    var p = P[pol], ch = chase ? chase[pol] || null : null, unit = wallUnitOf_(p.ag, sb, left);
+    var u = U[unit] = U[unit] || { k: unit, agents: {}, policies: 0, reqs: 0, cash: 0, medical: 0, docs: 0, ready: 0, oneLeft: 0, red: 0, past90: 0,
+      held: 0, open: 0, overdue: 0, quiet: 0, never: 0, today: 0, kinds: {} };
+    u.agents[p.ag] = 1; u.policies++; u.reqs += p.reqs; u.red += p.red ? 1 : 0; if (p.days > 90) u.past90++;
+    if (p.pay) u.cash++; if (p.med) u.medical++; if (p.docs) u.docs++; if (p.susp > 0) u.held++;
+    if (ch) { u.open += ch.open ? 1 : 0; u.overdue += ch.overdue ? 1 : 0; u.quiet += ch.quiet ? 1 : 0; u.today += ch.today ? 1 : 0; } else if (chase) u.never++;
+    p.items.forEach(function (it) { u.kinds[it.kind] = (u.kinds[it.kind] || 0) + 1; });
+    // What stands between this policy and settlement: the item Guardian marks last to settle, else the only one left.
+    var lastIt = p.items.filter(function (it) { return it.last; })[0] || (p.items.length === 1 ? p.items[0] : null);
+    if (p.items.length === 1 || (lastIt && p.items.filter(function (it) { return it.last; }).length === p.items.length)) {
+      H.oneLeft++; u.oneLeft++;
+    }
+    if (p.items.length === 1) {
+      var it1 = p.items[0]; H.kinds[it1.kind] = (H.kinds[it1.kind] || 0) + 1;
+      var hw = H.who[it1.who] = H.who[it1.who] || { k: it1.who, n: 0, kinds: {} }; hw.n++; hw.kinds[it1.kind] = (hw.kinds[it1.kind] || 0) + 1;
+    }
+    if (p.pay > 0 && p.pay === p.reqs) { H.ready++; u.ready++; if (p.susp > 0) H.readyHeld++; }
+    // Underwriting
+    var dec = String(p.dec || ''), state = /^(standard|loaded|terms)/i.test(dec) ? 'settle' : /additional/i.test(dec) ? 'info' : /refer/i.test(dec) ? 'uw' : /declin/i.test(dec) ? 'decl' : 'none';
+    if (state === 'settle' && p.reqs > 0) uw.approvedWaiting++;
+    if (p.nf && p.nf < day) uw.followOver++; else if (p.nf && p.nf <= shiftDays_(day, 3)) uw.followSoon++;
+    if (p.cmtAt && p.cmtAt >= week) uw.wroteWeek++;
+    var uid = p.uw || 'Not assigned';
+    var w = UW[uid] = UW[uid] || { k: uid, policies: 0, reqs: 0, red: 0, days: 0, info: 0, followOver: 0 };
+    w.policies++; w.reqs += p.reqs; if (p.red) w.red++; w.days += p.days; if (state === 'info') w.info++; if (p.nf && p.nf < day) w.followOver++;
+    var sid = p.so || 'Not assigned', so = SO[sid] = SO[sid] || { k: sid, policies: 0, red: 0 }; so.policies++; if (p.red) so.red++;
+    D[state] = (D[state] || 0) + 1;
+  });
+  var kindTop = function (o) { return Object.keys(o).map(function (k) { return { k: k, n: o[k] }; }).sort(function (a, b) { return b.n - a.n; }); };
+  out.units = Object.keys(U).map(function (k) {
+    var u = U[k]; u.agents = Object.keys(u.agents).length; u.top = kindTop(u.kinds).slice(0, 4); delete u.kinds; return u;
+  }).sort(function (a, b) {
+    var rank = function (x) { return /Orphans/.test(x.k) ? 2 : /^(No |Not )/.test(x.k) ? 3 : 0; };
+    return (rank(a) - rank(b)) || (b.policies - a.policies);
+  });
+  out.hold = { oneLeft: H.oneLeft, ready: H.ready, readyHeld: H.readyHeld, kinds: kindTop(H.kinds),
+    who: Object.keys(H.who).map(function (k) { var x = H.who[k]; return { k: x.k, n: x.n, kinds: kindTop(x.kinds).slice(0, 3) }; }).sort(function (a, b) { return b.n - a.n; }) };
+  out.uw = { states: D, followOver: uw.followOver, followSoon: uw.followSoon, wroteWeek: uw.wroteWeek, approvedWaiting: uw.approvedWaiting,
+    byUw: Object.keys(UW).map(function (k) { var w = UW[k]; w.avgDays = w.policies ? Math.round(w.days / w.policies) : 0; delete w.days; return w; })
+      .sort(function (a, b) { return b.policies - a.policies; }).slice(0, WALL_DEEP.TOP_UW),
+    byOfficer: Object.keys(SO).map(function (k) { return SO[k]; }).sort(function (a, b) { return b.policies - a.policies; }).slice(0, WALL_DEEP.TOP_UW) };
+  // The team: papers handed in on these policies (Log Book), signed for and still to go out, and sent this week.
+  try {
+    var lb = SpreadsheetApp.openById(String(PropertiesService.getScriptProperties().getProperty('LOGBOOK_SHEET_ID') || BOOKS.DELIVERY.id).trim());
+    var sh = lb.getSheetByName(BOOKS.DELIVERY.log), v = sh ? sh.getDataRange().getValues() : [];
+    var on = {}; pols.forEach(function (x) { on[String(x).replace(/\D/g, '')] = x; });
+    var T = { handed: 0, waiting: 0, sentWeek: 0, oldest: 0, by: {} };
+    if (v.length > 1) {
+      var h = v[0].map(function (x) { return String(x).trim(); }), li = function (n) { return h.indexOf(n); };
+      var cP = li('Policy #'), cS = li('Status'), cR = li('Received At'), cRB = li('Received By'), cSA = li('Sent At');
+      var dOf = function (x) { return x instanceof Date ? Utilities.formatDate(x, CONFIG.TZ, 'yyyy-MM-dd') : String(x || '').slice(0, 10); };
+      v.slice(1).forEach(function (r) {
+        var pol = on[String(r[cP] || '').replace(/\D/g, '')]; if (!pol || /cancel/i.test(String(r[cS] || ''))) return;
+        T.handed++;
+        var rec = dOf(r[cR]), sent = dOf(r[cSA]), who = String(r[cRB] || '').trim().split(/\s+/)[0] || 'Not signed for';
+        if (sent) { if (sent >= week) T.sentWeek++; return; }
+        T.waiting++; var b = T.by[who] = T.by[who] || { k: who, n: 0, oldest: 0 }; b.n++;
+        if (/^\d{4}/.test(rec)) { var d = Math.max(0, daysBetween_(rec, day) || 0); b.oldest = Math.max(b.oldest, d); T.oldest = Math.max(T.oldest, d); }
+      });
+    }
+    out.team = { handed: T.handed, waiting: T.waiting, sentWeek: T.sentWeek, oldest: T.oldest,
+      by: Object.keys(T.by).map(function (k) { return T.by[k]; }).sort(function (a, b) { return b.n - a.n; }) };
+  } catch (e) { out.team = { error: 'The Log Book could not be read.' }; }
+}
+
+/* ── The clawback wall (24 Nov 2026) ──
+ *  Ricky: "the clawback wall ... policies not reused [not taken up], with the exception of replacements ... if the
+ *  acknowledgement letter is submitted and it's [still] showing, it meant that the staff did not follow up. Is there an open
+ *  task on it? Yes, no, to flag red. If there's no acknowledgement, it means that nothing was submitted. This has to be
+ *  visible because this is a clawback in the agent's income." From the newest "Clawback" tab of the Branch Portfolio (rows
+ *  whose STATUS reads "reversed" are already put right and leave the wall). Each clawback is one of three:
+ *    submitted   the acknowledgement is in (Guardian's ACK_DATE on the report, or an acknowledgement or contract sent in the
+ *                Log Book) and the clawback still stands: the staff have not followed it through;
+ *    withUs      handed in to the branch (Log Book) and not sent yet;
+ *    none        no acknowledgement anywhere: nothing was submitted.
+ *  And for each: an open Salesforce task on it (on the policy record or the client, or naming the policy) or not. No task is
+ *  red. A replacement (the client's other policy lapsed or was surrendered from six months before to a year after this one
+ *  was issued) is counted apart and kept off the list, as the branch decided. The branch total in dollars; per agent, the
+ *  counts. No client name; the policy's last four digits only. */
+var WALL_CLAW = { PREFIX: 'Clawback', TTL: 300, ACK_RE: /acknowledg|ack letter|script|contract|policy (document|pack)/i, REPL_BEFORE: 183, REPL_AFTER: 366, LIST: 60 };
+function wallClawLive_(day) {
+  var cache = CacheService.getScriptCache(), key = 'wall_claw_' + day, hit = cache.get(key);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
+  if (!ss) return { error: 'The Branch Portfolio would not open.' };
+  var tabs = reportTabs_(ss.getSheets(), WALL_CLAW.PREFIX);
+  if (!tabs.length) return { error: 'No "Clawback" tab in the Branch Portfolio yet.' };
+  var tab = tabs[0], vals = tab.getDataRange().getValues();
+  if (vals.length < 2) return { error: tab.getName() + ' is empty.' };
+  var h = vals[0].map(function (x) { return String(x).trim().toUpperCase(); }), ix = function () { for (var i = 0; i < arguments.length; i++) { var j = h.indexOf(arguments[i]); if (j > -1) return j; } return -1; };
+  var c = { pol: ix('POLICY_ID', 'POLICY', 'POLICY NUMBER'), agent: ix('AGENT_NAME', 'AGENT NAME', 'WRITING_AGENT_NAME'), plan: ix('PLAN', 'PLAN_NAME'),
+    issue: ix('ISSUE_DATE'), disp: ix('DISPATCH_DATE'), ack: ix('ACK_DATE'), ackSt: ix('ACK_STATUS'), date: ix('CLAWBACK_DATE'),
+    reason: ix('REASON_CODES', 'REASON'), amt: ix('CLAWED_BACK_AMT', 'CLAWBACK_AMOUNT', 'AMOUNT'), st: ix('STATUS') };
+  if (c.pol < 0) return { error: tab.getName() + ' has no POLICY_ID column.' };
+  var dOf = function (x) { if (x instanceof Date) return Utilities.formatDate(x, CONFIG.TZ, 'yyyy-MM-dd'); var s2 = String(x == null ? '' : x).trim(); var m = /^(\d{4}-\d{2}-\d{2})/.exec(s2); if (m) return m[1]; var d = s2 ? new Date(s2) : null; return d && !isNaN(d) ? Utilities.formatDate(d, CONFIG.TZ, 'yyyy-MM-dd') : ''; };
+  var cell = function (r, i) { return i < 0 || r[i] == null ? '' : r[i]; };
+  var m = /(20\d{2})\D{0,3}(\d{1,2})\D{0,3}(\d{1,2})(?:st|nd|rd|th)?(?:\D{0,3}(\d{1,2}):?(\d{2}))?/i.exec(tab.getName()), two = function (x) { return ('0' + x).slice(-2); };
+  var out = { tab: tab.getName(), asOf: m ? prettyDate_(m[1] + '-' + two(m[2]) + '-' + two(m[3])).replace(/ \d{4}$/, '') + (m[4] ? ', ' + twelve_(two(m[4]) + ':' + m[5]) : '') : tab.getName(),
+    total: 0, amount: 0, submitted: 0, withUs: 0, none: 0, noTask: 0, task: 0, red: 0, replacements: 0, replAmount: 0, reversed: 0,
+    agents: [], reasons: [], months: [], list: [], tasks: false, replChecked: false, gaps: [] };
+  var C = [], seen = {};
+  vals.slice(1).forEach(function (r) {
+    var pol = String(cell(r, c.pol)).replace(/\D/g, ''); if (!pol) return;
+    var st = String(cell(r, c.st)).trim(); if (/^reversed/i.test(st)) { out.reversed++; return; }   // "NOT REVERSED" stays
+    if (seen[pol]) return; seen[pol] = 1;
+    C.push({ pol: pol, agent: String(cell(r, c.agent)).trim() || 'No agent named', plan: String(cell(r, c.plan)).trim(), issued: dOf(cell(r, c.issue)),
+      dispatched: dOf(cell(r, c.disp)), ack: dOf(cell(r, c.ack)), ackSt: String(cell(r, c.ackSt)).trim(), date: dOf(cell(r, c.date)),
+      reason: String(cell(r, c.reason)).trim(), amt: Number(String(cell(r, c.amt)).replace(/[^\d.-]/g, '')) || 0 });
+  });
+  // The Log Book: an acknowledgement or contract for the policy, sent or still with us.
+  var lb = {};
+  try {
+    var lbs = SpreadsheetApp.openById(String(PropertiesService.getScriptProperties().getProperty('LOGBOOK_SHEET_ID') || BOOKS.DELIVERY.id).trim());
+    var lsh = lbs.getSheetByName(BOOKS.DELIVERY.log), lv = lsh ? lsh.getDataRange().getValues() : [];
+    if (lv.length > 1) {
+      var lh = lv[0].map(function (x) { return String(x).trim(); }), li = function (n) { return lh.indexOf(n); };
+      var cP = li('Policy #'), cD = li('Document'), cS = li('Status'), cSA = li('Sent At'), cR = li('Received At');
+      lv.slice(1).forEach(function (r) {
+        var pol = String(r[cP] || '').replace(/\D/g, ''); if (!pol || !seen[pol] || /cancel/i.test(String(r[cS] || ''))) return;
+        if (!WALL_CLAW.ACK_RE.test(String(r[cD] || ''))) return;
+        var b = lb[pol] = lb[pol] || { sent: '', withUs: false }; var sent = dOf(r[cSA]);
+        if (sent) { if (sent > b.sent) b.sent = sent; } else b.withUs = true;
+      });
+    }
+  } catch (e) { out.gaps.push('The Log Book could not be read, so acknowledgements sent from the branch are not counted.'); }
+  // Salesforce: the policy record and client, their open tasks, and the replacements.
+  var sfOn = typeof sfkConfigured_ === 'function' && sfkConfigured_();
+  var openOn = {}, ids = {}, contact = {};
+  if (sfOn && C.length) {
+    try {
+      var q = C.map(function (x) { return "'" + x.pol + "'"; });
+      for (var i = 0; i < q.length; i += 150) sfkQuery_('SELECT Id, POLICY__c, Contact__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + q.slice(i, i + 150).join(',') + ')')
+        .forEach(function (r) { var pol = String(r.POLICY__c || '').replace(/\D/g, ''); ids[r.Id] = pol; if (r.Contact__c) { contact[pol] = r.Contact__c; ids[r.Contact__c] = ids[r.Contact__c] || pol; } });
+      var who = Object.keys(ids).map(function (x) { return "'" + x + "'"; });
+      for (var j = 0; j < who.length; j += 150) {
+        var chunk = who.slice(j, j + 150).join(',');
+        sfkQuery_('SELECT WhatId, WhoId FROM Task WHERE IsClosed = false AND (WhatId IN (' + chunk + ') OR WhoId IN (' + chunk + '))')
+          .forEach(function (t) { [t.WhatId, t.WhoId].forEach(function (x) { if (x && ids[x]) openOn[ids[x]] = true; }); });
+      }
+      for (var k = 0; k < C.length; k += 25) {
+        var like = C.slice(k, k + 25).map(function (x) { return "Subject LIKE '%" + x.pol + "%'"; }).join(' OR ');
+        sfkQuery_('SELECT Subject FROM Task WHERE IsClosed = false AND (' + like + ')').forEach(function (t) {
+          (String(t.Subject || '').match(/\d{7,}/g) || []).forEach(function (n) { if (seen[n]) openOn[n] = true; }); });
+      }
+      out.tasks = true;
+    } catch (e) { out.gaps.push('Salesforce did not answer, so open tasks could not be checked.'); }
+    try {
+      var cs = {}; Object.keys(contact).forEach(function (p2) { cs[contact[p2]] = 1; });
+      var cq = Object.keys(cs).map(function (x) { return "'" + x + "'"; }), ended = {};
+      for (var e2 = 0; e2 < cq.length; e2 += 150) sfkQuery_("SELECT POLICY__c, Contact__c, Paid_To_Date__c FROM CLIENT_PORTFOLIO__c WHERE Contact__c IN (" + cq.slice(e2, e2 + 150).join(',') +
+        ") AND (Policy_Status_Description__c LIKE '%LAPSE%' OR Policy_Status_Description__c LIKE '%SURRENDER%')")
+        .forEach(function (r) { (ended[r.Contact__c] = ended[r.Contact__c] || []).push({ pol: String(r.POLICY__c || '').replace(/\D/g, ''), at: dOf(r.Paid_To_Date__c) }); });
+      C.forEach(function (x) {
+        var kk = contact[x.pol]; if (!kk || !x.issued || !ended[kk]) return;
+        x.repl = ended[kk].some(function (e) { if (!e.at || e.pol === x.pol) return false; var d = daysBetween_(x.issued, e.at); return d != null && d >= -WALL_CLAW.REPL_BEFORE && d <= WALL_CLAW.REPL_AFTER; });
+      });
+      out.replChecked = true;
+    } catch (e) { out.gaps.push('Salesforce did not answer, so replacements could not be taken off.'); }
+  } else out.gaps.push('Salesforce is not linked, so open tasks and replacements could not be checked.');
+  var A = {}, R = {}, M = {};
+  C.forEach(function (x) {
+    if (x.repl) { out.replacements++; out.replAmount += x.amt; return; }
+    var l = lb[x.pol] || null;
+    var state = (x.ack || /^(y|yes|ack|received|acknowledged)/i.test(x.ackSt) || (l && l.sent)) ? 'submitted' : (l && l.withUs) ? 'withUs' : 'none';
+    var task = out.tasks ? !!openOn[x.pol] : null;
+    var red = state === 'none' || task === false;
+    out.total++; out.amount += x.amt; out[state]++; if (task === true) out.task++; else if (task === false) out.noTask++; if (red) out.red++;
+    var a = A[x.agent] = A[x.agent] || { agent: x.agent, n: 0, submitted: 0, withUs: 0, none: 0, noTask: 0, red: 0 };
+    a.n++; a[state]++; if (task === false) a.noTask++; if (red) a.red++;
+    var rs = x.reason || 'No reason given'; R[rs] = (R[rs] || 0) + 1;
+    var mk = (x.date || '').slice(0, 7) || 'Not dated'; M[mk] = (M[mk] || 0) + 1;
+    out.list.push({ last4: x.pol.slice(-4), agent: x.agent, plan: x.plan, date: x.date, days: x.date ? Math.max(0, daysBetween_(x.date, day) || 0) : null,
+      state: state, ack: x.ack || (l && l.sent) || '', task: task, red: red, reason: x.reason });
+  });
+  out.amount = Math.round(out.amount); out.replAmount = Math.round(out.replAmount);
+  out.agents = Object.keys(A).map(function (k) { return A[k]; }).sort(function (a, b) { return (b.red - a.red) || (b.n - a.n); });
+  out.reasons = Object.keys(R).map(function (k) { return { k: k, n: R[k] }; }).sort(function (a, b) { return b.n - a.n; }).slice(0, 8);
+  out.months = Object.keys(M).sort().map(function (k) { return { k: k, n: M[k] }; });
+  var rank = function (x) { return x.state === 'none' ? 0 : x.task === false ? 1 : x.state === 'withUs' ? 2 : 3; };
+  out.list.sort(function (a, b) { return (rank(a) - rank(b)) || ((b.days || 0) - (a.days || 0)); });
+  out.list = out.list.slice(0, WALL_CLAW.LIST);
+  try { cache.put(key, JSON.stringify(out), WALL_CLAW.TTL); } catch (e) {}
+  return out;
+}
 /** The Salesforce Pendings tasks on the report's policies, matched by any policy or application number in the subject. */
 function wallPendChase_(day, numOf) {
   if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return null;
@@ -17937,8 +18213,7 @@ function pendSyncTick_(force) {
 }
 /** The newest pending report, policy by policy: { tab, pols: { policy: { agent, app } }, numOf: { number: policy } }. */
 function pendReportPolicies_(ss) {
-  var tabs = ss.getSheets().filter(function (sh) { return sh.getName().indexOf(WALL_PEND.PREFIX) === 0; })
-    .sort(function (a, b) { return a.getName() < b.getName() ? 1 : a.getName() > b.getName() ? -1 : 0; });
+  var tabs = reportTabs_(ss.getSheets(), WALL_PEND.PREFIX);
   if (!tabs.length) return null;
   var vals = tabs[0].getDataRange().getValues(); if (vals.length < 2) return null;
   var h = vals[0].map(function (x) { return String(x).trim(); });
@@ -18620,6 +18895,7 @@ function workdayLeadModel_(m, day, now, base) {
   m.team = workdayTeam_(day);
   var post = m.desks; wdUnitModel_(m, 'ricky', day); m.desks = post;   // his Post-to list stays the inbox's
   m.newDesks = DAY_MAIL_DESKS.map(function (d) { return { sid: d, first: String(nameFor_(d)).split(' ')[0] }; });
+  try { m.oppBranch = oppBranch_(); } catch (e) { m.oppBranch = { error: String(e && e.message || e).slice(0, 140) }; }
   return m;
 }
 /** His own notes per working day, the last WORKDAY.BARS of them (postWho_: his words only). */
@@ -18824,6 +19100,8 @@ function agentDayModel_(a, day, opt) {
       mood: mid.mood ? String(mid.mood.Note || '') : '', rows: AGENT_METRICS.map(function (x) { return { id: x.id, v: val(mid[x.id], 'Done') }; }) };
     if (opt && opt.viewAs) { m.viewAs = { by: String(nameFor_(opt.viewAs) || '').split(' ')[0] || 'You', key: a.key }; m.preview = false; }
   }
+  // Opportunities on the agent's own book (24 Nov 2026): maturities, cover ending, milestones.
+  try { m.opps = oppForAgent_(a); } catch (e) { m.opps = { error: String(e && e.message || e).slice(0, 140) }; }
   return m;
 }
 /** What the branch closed for this agent's clients today, kept three minutes (the morning's list is in ag_items_). */
@@ -19330,7 +19608,12 @@ function workdayPost_(p) {
   if (a.error) return { ok: false, error: a.error };
   if (a.agent) {   // the agent's projection, close-off and updates on the tasks, from this screen (29 Oct 2026)
     var aact = String(p.act || ''), pv = !!a.link && !agentLiveFor_(a.agent);
-    if (['agplan', 'agclose', 'agnote', 'agmid', 'agff', 'agwed'].indexOf(aact) < 0 || !(agentLiveFor_(a.agent) || pv)) return { ok: false, error: 'Nothing to do here.' };
+    if (['agplan', 'agclose', 'agnote', 'agmid', 'agff', 'agwed', 'opp'].indexOf(aact) < 0 || !(agentLiveFor_(a.agent) || pv)) return { ok: false, error: 'Nothing to do here.' };
+    if (aact === 'opp') {
+      if (pv) return { ok: false, error: 'This is a preview: only the agent can log it.' };
+      var orr = oppAct_(a.agent, p, a.agent.key); if (!orr.ok) return orr;
+      var omod = agentDayModel_(a.agent, day, {}); omod.saved = { act: 'opp' }; return omod;
+    }
     if (aact === 'agwed') {
       if (pv) return { ok: false, error: 'This is a preview: only the agent can commit.' };
       try { var wr = wedSave_(a.agent, day, p); if (!wr.ok) return { ok: false, error: wr.error };

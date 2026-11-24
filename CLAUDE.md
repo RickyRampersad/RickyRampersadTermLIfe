@@ -21,7 +21,7 @@ the room notices.
 
 **One exception, decided 17 September 2026**: the Branch Pending Wall slides
 (`intelligence/wall/pending.html`, `intelligence/wall/reqs.html`,
-`intelligence/wall/increases.html`, `intelligence/wall/codes.html`) carry a gold **nameplate** instead — `<div class="plate"><b>PENDING</b><span>wall</span></div>`
+`intelligence/wall/increases.html`, `intelligence/wall/codes.html`, and since 24 November 2026 `intelligence/wall/units.html` and the clawback slide `intelligence/wall/clawbacks.html`, whose plate reads CLAWBACK) carry a gold **nameplate** instead — `<div class="plate"><b>PENDING</b><span>wall</span></div>`
 — because that is the one wall the branch stands in front of and argues from,
 it runs over several slides, and the room has to know which wall it is watching.
 Asked for in those words: *"remove the shield in this wall so persons will know
@@ -7112,6 +7112,10 @@ Moved onto the branch site on 29 October 2026 (*"i want this as a link to one of
 - **What the product is, from the contract and Guardian's specification:** TT$100K–500K in steps of 100K, ages 18–69, five questions all answered No (one asks whether the person was **ever rated, postponed or declined**, so it is never a product for someone already refused cover), year 1 returns premiums, year 2 pays half, full cover from year 3, premiums for 20 years, surrender only in year 21 for premiums back without interest, covered anywhere in the world at the same premium (clause 11), no third-party policies, TT$500K across all Xpress Life. Never "term", "instant", "pre-approved" or "approved": Guardian reviews every application.
 - **It is one door of the branch, not the offer.** The ad and the page say: no time for a medical, Xpress Life; health issues or more cover, the branch finds another Guardian plan.
 - Guardian's written approval of the page and the ad (Market Conduct Guideline 5.5.3(a)) is still outstanding.
+- **Xpress Life has its own look, decided 18 November 2026** ("a totally different color experience and site layout ... not associating it to our colors"). Light lilac ground `#F6F4FC`, ink `#1B1340`, action violet `#5B3DF5` (white on it 6.1:1), mango `#FFB547` only as a fill under ink text, mint `#0A7C5C` for ticks; Bricolage Grotesque for display, Instrument Sans for copy, with measured metric fallbacks. The mark is `favicon.svg`'s own shield in a violet gradient with the white check, never redrawn. The layout: a two-column hero with a living policy card and chips, a three-step band, the rate as intro plus calculator, the WhatsApp section, the film beside its words, "How your cover grows" as a year 1 to age 100 timeline, the contract summary with a sticky heading, a violet "have these ready" band, the statement, RAI, tracking, trust and FAQ, a light footer. The new styles are one block at the end of the `<style>` ("XPRESS LIFE · AURORA"); the old rules above it still carry the wizard and RAI. All motion is inside `prefers-reduced-motion: no-preference`; the timeline, statement and trust row reveal on `animation-timeline: view()`, so a full-page screenshot shows them blank: scroll to them to check. No dark ground anywhere. Every id the script uses is unchanged.
+- **The launch, 18 November 2026** ("we're launching this morning"): a section straight after the hero plays the 60-second launch ad (`launch.mp4`, 720×1280 re-encode of ad v4, poster `launch-poster.jpg`), with three ways to start (rate, HELP 868, apply) and a "How we work" panel for market conduct: a Guardian Life agency, advisors registered with the Central Bank under the Insurance Act 2018, Guardian decides, rates confirmed at issue, card numbers never typed here. The halo over "blessing" came back at his word ("I had like the halo"), in gold, drifting; keep it. The ad's end card still says xpresslifett.com and (868) 226-6461.
+- **Applying on WhatsApp, and every lead into Salesforce (18 November 2026).** "HELP 868 — Xpress Life" (Respond.io workflow 1795001462961590, a draft until the branch publishes it) asks the name, age, gender and cover, sets out the contract's facts, and asks the five health questions as ONE tap ("all five are No", "at least one is Yes", "not sure"), so no health answer is ever stored question by question. All No: a link to `/xpresslife/?age=&g=&cover=&from=wa#quote`, which the page reads (`prefillFromLink`) to fill the rate. Anything else, or outside 18 to 69: the branch finds another Guardian plan. It never says approved; Guardian decides. Every path POSTs `help868.xllead` to the Service Questionnaire `/exec` (`help868XlLead_` in Help868.gs, routed before the HELP868_KEY check, with its own key `XL_LEAD_KEY`, 16+ characters, never in this repository): a row on the "Xpress Life Leads" tab, the person found by phone in Salesforce or made a PROSPECT Contact, and a High task (owner `XL_LEAD_OWNER`, else the integration user; `XL_LEAD_SF=off` keeps Salesforce out). Once a day per name and number. The Description carries the next step only, never a health answer. The tap menu's "Xpress Life" option and its Trigger Another Workflow step are added by hand in the builder (the 257-step menu is not edited by API). `tests/test-xl-lead.js` covers the backend.
+- **The chat is HELP 868 on WhatsApp, +1 868 435 7868 (1-868-HELP-868)**, answered through Respond.io (18 November 2026: "embed the WhatsApp button to HELP868 … can we more or less sell this product on the page?"). `CONFIG.WHATSAPP` holds it, and every WhatsApp link on the page uses it: the top pill, a hero button, the floating button above RAI, RAI's "talk to a person", the "Ask us before you decide" section after the rate (what to ask, five tap-to-ask questions, each a prefilled message), and a link under the rate result that sends the client's own rate (`data-wa="rate"`, filled on the tap from `#sbAmt` and `#sbCover`). A link carrying `data-wa` gets its message built on the tap by `waUrl`, so the number lives in one place. The old 678-5921 link is gone from this page. The HELP 868 assistant in Respond.io never quotes a price; the page says the team picks the question up.
 
 ## The English B essay workshop — it asks, the student writes
 
@@ -9636,6 +9640,18 @@ of the throw.
   to their own insurer.
 - **Branch:** develop and push to `claude/service-questioner-automation-6ihjzn`.
   No pull request unless asked for one.
+- **Chatter continues on the trail; it never starts a new one** (Ricky, 4 and 11 Nov
+  2026). On any task that already has Chatter, every note, follow-up and reminder is
+  a comment under the most relevant existing post, never a new post. A new post only
+  on a task with no Chatter at all.
+- **An orphan task is not closed until a conversation is had** (Ricky, 11 Nov 2026:
+  "The objective of the orphan is not to close a task, but it's to make contact to
+  understand the reason and the rationale behind it. Everyone has a different
+  story"). An orphan task closed with no agent named is reopened, on its own trail,
+  asking the staff member who closed it for the reason.
+- **Everything for Ricky to send goes into Outlook Drafts without asking** (10 Nov
+  2026). Client letters, staff messages and WhatsApp texts are drafted in support@,
+  never sent, and never put to him as a question first.
 - **Two marks, two products, on purpose.** The branch site
   (rickyrampersadbranch.com) carries the gold shield in `logo-mark.png` — the
   house rule above. donthaveanagent.com carries **The Knot** in Ink & Coral,
@@ -12527,3 +12543,7 @@ still says and prints `agentmgt.com`, and its QR is the old 41-module one, which
 now forwards. So the full film is dated but functional, and the trailer is the one with a dead QR. Re-cutting the
 trailer needs only a render (`votrailer` is on disk); re-cutting the full film needs all 33 lines re-voiced on the
 runner first, because `vorecruit` lives only in a deleted session scratchpad.
+
+## Opportunities — maturities, cover ending, milestones (24 November 2026)
+
+`apps-script/Opportunities.gs` (tracker project, beside KPI.gs and Intelligence.gs). Maturities and milestone birthdays (40, 50, 60, 65) come from the **Branch Portfolio's in-force tab**, never Salesforce's `Maturity_Date__c` (filled on under one policy in ten, with 1930s dates on premium-paying policies). Riders and cover ending (critical illness, waiver, accident, life) come from Salesforce `CLIENT_PORTFOLIO__c` where the date is filled; a blank is never guessed. Built once a day from 4:30 by `keepWarm` (`oppBuild_`, `opportunitiesBuildNow` in the editor), kept with `bigPut_`. The agent's My day shows "Your opportunities today" (`m.opps`, five at a time, a reason and a "Say first" line each, one tap logs it on the **Opportunity Log** tab: Review booked, Called, Not interested, Already done). The Branch Manager's My workday shows the roll-up by agent (`m.oppBranch`), untouched inside 30 days first. Facts and a reason to call only; never advice to cancel or replace. Needs Opportunities.gs and KPI.gs pasted and a New version.
