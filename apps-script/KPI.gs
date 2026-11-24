@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-24g';
+var SCRIPT_VERSION = '2026-11-24h';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -1817,7 +1817,7 @@ function joinBlocker_(blocker, owner) {
 /** Training is one row per session in its own register, so "who trained whom
  *  on what" is a list you can read, not something buried across 28 columns.
  *  A re-save replaces that person's rows for that day rather than piling up. */
-function saveTraining_(staffId, date, trainer, blocks, now) {
+function saveTrainingOld_(staffId, date, trainer, blocks, now) {   // overridden by saveTraining_ below; renamed 24 Nov 2026 so the file can be split safely
   var sh = trainingSheet_();
   var head = headerOf_(sh);
   var idx = colMap_(sh);
@@ -2237,6 +2237,7 @@ function doPost(e) {
   var body = {};
   try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
   // The wall's Issued this month, from the newest production report (28 Oct 2026).
+  if (String(body.action || '') === 'rio.event') { try { return json_(rioEvent_(body)); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); } }
   if (String(body.action || '') === 'wall.clawbacks') { try { return json_({ ok: true, data: wallClawLive_(todayISO_()) }); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); } }
   if (String(body.action || '') === 'wall.issued') { try { return json_({ ok: true, data: wallScrub_(wallIssued_(todayISO_())) }); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); } }
   if (typeof intelRoute_ === 'function') {
@@ -18503,6 +18504,7 @@ function wallDayHours_(day) {
     });
   } catch (e) {}
   try { out.asks = wallBmAsks_(day, users, bySf); } catch (e) { out.asks = { error: String(e && e.message || e) }; }
+  try { out.rio = wallRio_(day); } catch (e) { out.rio = { error: String(e && e.message || e) }; }
   try { cache.put(key, JSON.stringify(out), WALL_HOURS.TTL); } catch (e) {}
   return out;
 }
@@ -18516,6 +18518,57 @@ function wallDayHours_(day) {
  *  Per desk: asked, answered, how many inside the hour, the median minutes to an answer, still waiting and the oldest wait;
  *  per hour the asks made and answered. Task types only, never a client or a subject. */
 var WALL_ASKS = { HOUR_MIN: 60 };
+
+/* ── respond.io conversations on the wall (24 Nov 2026, 2026-11-24h) ──
+ *  Ricky: "we also need to bring in respond io on the conversations". The respond.io workflow "RRB Wall — conversation
+ *  report" posts each closed conversation here (action rio.event): who had it, the first reply time, the resolution time,
+ *  who closed it and how. One row a conversation on the "Respond Conversations" tab; no message text, no name, no number.
+ *  wallRio_ counts today's per person for the day wall. Unsigned (respond.io holds no key here), so it only ever appends a
+ *  row of counts; a junk row costs a wrong count, never a client's data. */
+var RIOTAB = { must: ['Received', 'Contact', 'Assignee', 'FirstResponse'], name: 'Respond Conversations',
+  head: ['Received', 'Contact', 'Assignee', 'FirstAssignee', 'FirstResponseBy', 'FirstResponse', 'AssignToResponse', 'AvgResponse', 'Resolution',
+         'ClosedBy', 'ClosedBySource', 'OpenedBy', 'Opened', 'Closed', 'Category', 'Sentiment', 'Incoming', 'Outgoing', 'Responses'] };
+function rioEvent_(b) {
+  var sh = hrTab_(RIOTAB, true), head = headerOf_(sh), clip = function (v) { return String(v == null ? '' : v).replace(/[\r\n]+/g, ' ').slice(0, 120); };
+  var row = head.map(function (h) {
+    if (h === 'Received') return Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd HH:mm:ss');
+    var k = h.charAt(0).toLowerCase() + h.slice(1); return clip(b[k]);
+  });
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try { sh.appendRow(row); } finally { lock.releaseLock(); }
+  try { CacheService.getScriptCache().remove('wall_hours_' + todayISO_()); } catch (e) {}
+  return { ok: true };
+}
+/** A respond.io duration in minutes: "h:mm:ss", seconds, or milliseconds. */
+function rioMin_(v) {
+  var t = String(v == null ? '' : v).trim(); if (!t) return null;
+  if (/:/.test(t)) { var p = t.split(':').map(Number); if (p.some(isNaN)) return null; while (p.length < 3) p.unshift(0); return (p[0] * 3600 + p[1] * 60 + p[2]) / 60; }
+  var n = Number(t); if (isNaN(n) || n < 0) return null;
+  return n > 1e7 ? n / 60000 : n / 60;
+}
+function wallRio_(day) {
+  var sh = hrTab_(RIOTAB, false); if (!sh || sh.getLastRow() < 2) return { none: true, total: 0, people: [] };
+  var head = headerOf_(sh), vals = sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues(), ix = function (n) { return head.indexOf(n); };
+  var P = {}, total = 0, byBot = 0, mins = [];
+  var deskOf = function (name) { var f = String(name || '').trim().split(/[\s@.]/)[0].toLowerCase(); if (!f) return '';
+    var hit = ''; DAY_MAIL_DESKS.concat(['ricky']).forEach(function (s) { if (!hit && String(nameFor_(s)).split(' ')[0].toLowerCase() === f) hit = s; }); return hit; };
+  vals.forEach(function (r) {
+    var rec = r[ix('Received')], d0 = rec instanceof Date ? Utilities.formatDate(rec, CONFIG.TZ, 'yyyy-MM-dd') : String(rec || '').slice(0, 10);
+    if (d0 !== day) return; total++;
+    var src = String(r[ix('ClosedBySource')] || '').toLowerCase(), who = String(r[ix('Assignee')] || r[ix('FirstResponseBy')] || '').trim();
+    if (/bot|workflow|ai|automation/.test(src) && !who) { byBot++; return; }
+    var sid = deskOf(who), key = sid || who || 'Not assigned';
+    var p = P[key] = P[key] || { sid: sid, name: sid ? String(nameFor_(sid)).split(' ')[0] : (who || 'Not assigned'), closed: 0, first: [], resolution: [], negative: 0 };
+    p.closed++;
+    var fr = rioMin_(r[ix('FirstResponse')]), rs = rioMin_(r[ix('Resolution')]);
+    if (fr != null) { p.first.push(fr); mins.push(fr); } if (rs != null) p.resolution.push(rs);
+    if (/neg/i.test(String(r[ix('Sentiment')] || ''))) p.negative++;
+  });
+  var med = function (a) { if (!a.length) return null; a = a.slice().sort(function (x, y) { return x - y; }); return Math.round(a[Math.floor(a.length / 2)]); };
+  var people = Object.keys(P).map(function (k) { var p = P[k]; return { sid: p.sid, name: p.name, closed: p.closed, firstMin: med(p.first), resolutionMin: med(p.resolution), negative: p.negative }; })
+    .sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
+  return { total: total, byBot: byBot, firstMin: med(mins), people: people };
+}
 function wallBmAsks_(day, users, bySf) {
   var me = bmSfId_(); if (!me) return { error: 'The Branch Manager is not linked to Salesforce.' };
   var since = sfkUtcAt_(day, 0), H0 = WALL_HOURS.FROM, NH = WALL_HOURS.TO - WALL_HOURS.FROM, nowMs = Date.now();
