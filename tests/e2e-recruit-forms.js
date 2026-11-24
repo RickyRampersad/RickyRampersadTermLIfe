@@ -54,7 +54,9 @@ async function open(br, url, w = 390) {
        tools/wire-views.py is re-run. */
     if (r.request().method() === 'POST') {
       state.posted = true;
-      await r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"ref":"TEST-0001"}' });
+      try { state.body = JSON.parse(r.request().postData() || '{}'); } catch (e) { state.body = null; }
+      const cvBack = !!(state.body && state.body.cv);
+      await r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, ref: 'TEST-0001', cv: cvBack }) });
       return;
     }
     state.pings++;
@@ -100,7 +102,7 @@ const CM = { name: 'Test Applicant', phone: '868 555 0100', email: 't@example.co
   uw_declined: LONG, uw_endorse: LONG, uw_right: LONG, uw_stopped: LONG, uw_learned: LONG, uw_renewals: LONG };
 
 const FORMS = {
-  admin: { url: '/buildwithus/', err: '#jErr', base: ADMIN, cv: false,
+  admin: { url: '/buildwithus/', err: '#jErr', base: ADMIN, cv: true,
            min: { emp_changed: 20, w_built: 40, w_slim: 40, w_cv: 10 } },
   cm:    { url: '/clientmanager/', err: '#uErr', base: CM, cv: true,
            min: { uw_declined: 40, uw_endorse: 40, uw_right: 40, uw_stopped: 40, uw_learned: 30, uw_renewals: 30 } }
@@ -142,6 +144,9 @@ async function sends(br, key, label) {
   await fill(p, form, {});
   const railS = await read(p, '#railS', e => e.textContent.trim(), '');
   await submit(p);
+  /* the read-back may stop to point things out; "Send it as it is" sends */
+  const asIs = await p.$('#jRev:not([hidden]) [data-send]');
+  if (asIs) { await asIs.click(); }
   await p.waitForTimeout(1200);
   const red = await read(p, form.err, e => e.classList.contains('on') ? e.textContent.trim() : '', '');
   console.log('· ' + label);
@@ -150,6 +155,60 @@ async function sends(br, key, label) {
   ok('  the rail says it is ready', railS === 'ready to send', railS);
   ok('  no script errors', state.errs.length === 0, state.errs[0] || '');
   await p.close();
+}
+
+/* The CV and the read-back (19 Nov 2026). No CV and no "I will e-mail it"
+   is refused at the CV box; with the box ticked, the read-back names what a
+   careful reader would notice (the form not marked, an e-mail in the GitHub
+   box, thin answers), fixes the GitHub box in one tap, and "Send it as it is"
+   files with what they sent past. A strong application with a CV goes
+   straight through, and the CV travels. */
+async function reviewFlow(br) {
+  const form = FORMS.admin;
+  console.log('· the CV and the read-back before sending');
+  { const { p, state } = await open(br, form.url);
+    await fill(p, Object.assign({}, form, { cv: false }), {});
+    await submit(p);
+    const red = await read(p, form.err, e => e.classList.contains('on') ? e.textContent.trim() : '', '');
+    const focus = await p.evaluate(() => (document.activeElement || {}).id || '');
+    ok('  no CV and no "I will e-mail it" is refused', !state.posted && /CV/.test(red), red);
+    ok('  it takes you to the CV box', focus === 'jCv', focus);
+    await p.close(); }
+  { const { p, state } = await open(br, form.url);
+    await fill(p, Object.assign({}, form, { cv: false }), { gh: 'someone@gmail.com', w_cv: 'growth and more experience' });
+    await p.check('#jCvLater');
+    await submit(p);
+    const shown = await read(p, '#jRev', e => e.hidden ? '' : e.textContent, '');
+    ok('  the read-back opens instead of sending', !state.posted && !!shown);
+    ok('  it points to the form at the top', /not marked the form/.test(shown), shown.slice(0, 120));
+    ok('  it notices the e-mail in the GitHub box', /GitHub box/.test(shown));
+    ok('  it notices the general two-year line', /two-year CV line/.test(shown));
+    const btns = await p.$$('#jRev li button');
+    for (const b of btns) { if (/Clear it/.test(await b.textContent())) { await b.click(); break; } }
+    const gh = await p.$eval('[name="gh"]', e => e.value);
+    ok('  "Clear it" empties the GitHub box', gh === '', gh);
+    await p.click('#jRev [data-send]');
+    await p.waitForTimeout(1200);
+    const f = (state.body && state.body.fields) || [];
+    const get = k => ((f.find(x => x.k === k) || {}).value || '');
+    ok('  "Send it as it is" files it', state.posted);
+    ok('  it says the CV will follow by e-mail', /will e-mail it/.test(get('cv_later')), get('cv_later'));
+    ok('  it records what they sent past', /form not marked/.test(get('review')), get('review'));
+    const done = await read(p, '#jDone', e => e.textContent, '');
+    ok('  the thank-you tells them to quote the reference with the CV', /TEST-0001 in the subject/.test(done));
+    await p.close(); }
+  { const { p, state } = await open(br, form.url, 390);
+    const STRONG = 'I built a Google Sheets tracker with an Apps Script that e-mails the manager each morning; it cut our follow-up time from two days to one hour for a team of six.';
+    await fill(p, form, { w_built: STRONG, w_slim: STRONG, emp_changed: STRONG, w_cv: 'A Salesforce Administrator certification and two automations I built that the branch still uses.', tool: 'x' });
+    await p.evaluate(() => { const b = [...document.querySelectorAll('button.spot')].slice(0, 3); b.forEach(x => x.click()); });
+    await submit(p);
+    await p.waitForTimeout(1200);
+    ok('  a strong application with a CV goes straight through', state.posted);
+    ok('  the CV travels with it', !!(state.body && state.body.cv && /^data:application\/pdf;base64,/.test(state.body.cv.data)));
+    const done = await read(p, '#jDone', e => e.textContent, '');
+    ok('  the thank-you says the CV went', /CV went with it/.test(done));
+    ok('  no script errors', state.errs.length === 0, state.errs[0] || '');
+    await p.close(); }
 }
 
 /* a minimum nobody is told about is a minimum that reads as the page refusing
@@ -235,6 +294,7 @@ async function beacon(br, key) {
   await refuses(br, 'admin', 'an e-mail with no domain', { email: 'me@home' }, { focus: 'email' });
   await refuses(br, 'admin', 'the CV question left empty', { w_cv: '' }, { focus: 'w_cv', red: 'CV in two years' });
   await sends(br, 'admin', 'a complete application');
+  await reviewFlow(br);
   await counters(br, 'admin');
   await noSideways(br, 'admin');
   await beacon(br, 'admin');

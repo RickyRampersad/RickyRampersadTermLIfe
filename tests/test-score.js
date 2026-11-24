@@ -111,7 +111,7 @@ const hkUrl = env.replyUrl_('sasha', DAY, 'hk');
 const hk = env.replyClick_({ parameter: q(hkUrl) }).getContent();
 ok('what she set out to do, done and not, and her share of the branch', /What you set out to do this morning/.test(hk) && /1 of 3 you set out to do, done/.test(hk) && /of the branch's 15 closed today/.test(hk) && /&#10007; Group renewal/.test(hk));
 ok('a reason and a new date for each not done, both required', (hk.match(/name="r_00B[12]" required/g) || []).length === 2 && (hk.match(/type="date" name="d_00B[12]" required/g) || []).length === 2);
-ok('it says this is the sign-out, and when the register will say otherwise', /This is your sign-out/.test(hk) && /Not closed by 2:30pm/.test(hk) && /name="out" value="1" checked/.test(hk) && /Close my day and sign out/.test(hk));
+ok('it says this is the sign-out, and when the register will say otherwise', /This is your sign-out/.test(hk) && /Not closed by \d{1,2}:\d{2}[ap]m/.test(hk) && /name="out" value="1" checked/.test(hk) && /Close my day and sign out/.test(hk));
 ok('and how much of her day has gone', /% of your day gone/.test(hk));
 const base = q(hkUrl);
 const noDate = env.replyPost_({ parameter: Object.assign({}, base, { r_00B1: 'Waiting on the agent', r_00B2: 'Calls not finished' }), parameters: {} }).getContent();

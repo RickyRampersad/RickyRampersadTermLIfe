@@ -143,6 +143,8 @@ function gcmDoGet_(p) {
     switch (String(p.action || '')) {
       case 'gcm.ping':    return { ok: true, gcm: 1, salesforce: tSfOn_(), mail: !!tMsCreds_(), ai: !!gcmAiKey_(), train: !!gcmTrainId_(), orphanTrain: !!gcmTrainId_(GCM_COURSES.orphan), refreshed: gcmRefreshed_(),
                                    sends: gcmSendLabel_(gcmNextSend_()), monday: gcmHasMondayTrigger_(),
+                                   /* new members who fill in their own part (GroupBilling.gs, 17 November 2026) */
+                                   enrol: typeof gblEnrolGet_ === 'function' ? 1 : 0,
                                    hold: (function () { try { var h = gcmHoldState_(); return { all: !!h.all, groups: Object.keys(h.groups).length + h.legacy.length }; } catch (e) { return 0; } })(),
                                    /* the group bills' day and report, so a browser can tell which GroupBilling.gs is live */
                                    bills: (function () { try { if (typeof gblDayInfo_ !== 'function') return 0; var d = gblDayInfo_();
@@ -160,6 +162,8 @@ function gcmDoGet_(p) {
       case 'gcm.client':  return gcmClient_(p);
       case 'gcm.clientPeople': return typeof gblClientPeople_ === 'function' ? gblClientPeople_(p) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.clientForm': return typeof gblClientForm_ === 'function' ? gblClientForm_(p) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
+      /* a new member's own part of their enrolment, by the code in their link (GroupBilling.gs, 17 November 2026) */
+      case 'gcm.enrolGet': return typeof gblEnrolGet_ === 'function' ? gblEnrolGet_(p) : { ok: false, error: 'Online enrolment is being set up. Please ask your employer for the paper form.' };
       case 'gcm.wall':    return gcmWall_(p);
       case 'gcm.train':   return gcmTrain_(p);
       case 'gcm.trainView': return gcmTrainView_(p);
@@ -211,6 +215,7 @@ function gcmDoPost_(b) {
       case 'gcm.clientPost':  return typeof gblClientPost_ === 'function' ? gblClientPost_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.clientTell':  return typeof gblClientTell_ === 'function' ? gblClientTell_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
       case 'gcm.clientFormSend': return typeof gblClientFormSend_ === 'function' ? gblClientFormSend_(b) : { ok: false, error: 'Our service pages are being updated. Please e-mail us instead.' };
+      case 'gcm.enrolSubmit': return typeof gblEnrolSubmit_ === 'function' ? gblEnrolSubmit_(b) : { ok: false, error: 'Online enrolment is being set up. Please ask your employer for the paper form.' };
       /* general insurance renewals (GIRenewals.gs): a press on the desk, the client's code and answer, a group's answer */
       case 'gcm.renAct':         return typeof girAct_ === 'function' ? girAct_(b) : { ok: false, error: 'GIRenewals.gs is not in the project yet.' };
       case 'gcm.renCode':        return typeof girCode_ === 'function' ? girCode_(b) : { ok: false, error: 'Renewals are being updated. Please call the branch.' };

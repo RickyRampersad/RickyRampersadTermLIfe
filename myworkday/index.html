@@ -76,7 +76,12 @@
   .fill2{position:absolute;top:0;bottom:0;left:0;width:0;border-radius:0 10px 10px 0;background:var(--good);opacity:.38;transition:left 1.4s var(--ease),width 1.4s var(--ease)}
   .sys{font-size:12.5px;color:var(--muted);margin:-6px 0 14px}
   .sys b{color:var(--ink)}
-  .wt{padding:12px 0;border-top:1px solid var(--line);max-height:900px} .wt:first-of-type{border-top:0}
+  .wt{padding:12px 0;border-top:1px solid var(--line)} .wt:first-of-type{border-top:0}
+  .wt .trail{margin:6px 0 8px;font-size:13px;color:var(--muted)} .wt .trail summary{cursor:pointer;font-weight:700;color:var(--ink);padding:4px 0}
+  .wt .trail div{margin-top:4px;overflow-wrap:anywhere;line-height:1.45} .wt .trail b{color:var(--ink)}
+  .trh{font-size:11.5px;font-weight:700;letter-spacing:.02em;color:var(--muted);margin:2px 0 4px}
+  .wt .dsrc{font-size:12px;color:var(--muted);margin:2px 0 4px}
+  .wt .act .c2{flex:none;height:48px;padding:0 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:700 14px var(--fb);cursor:pointer}
   .wt .who{font:800 14.5px/1.3 var(--fd);color:var(--navy);overflow-wrap:anywhere} .wt .who span{font:600 13px/1.3 var(--fb);color:var(--muted)}
   .wt .said{color:var(--muted);font-size:13.5px;margin:3px 0 0;font-style:italic;overflow-wrap:anywhere}
   .wt .rd{font-size:13px;background:var(--soft);border-radius:10px;padding:7px 10px;margin:8px 0 6px;overflow-wrap:anywhere}
@@ -528,6 +533,27 @@
   // A task type in words, from the tracker's own labels when it sent them (29 Oct 2026: "Renewa/PDl/Bill" read as code).
   function tyName(t) { var l = M && M.types ? M.types.filter(function (x) { return x.k === t; })[0] : null; return l && l.l ? l.l : t; }
   function firstOf(by) { var b = String(by || "").trim(); if (!b) return "Someone"; if (b.indexOf("@") > -1) b = b.split("@")[0].split(/[._-]/)[0]; b = b.split(/\s+/)[0]; return b.charAt(0).toUpperCase() + b.slice(1); }
+  /* The whole Chatter trail on a waiting item (19 Nov 2026): folded, oldest first, and the answer goes on it as a reply. */
+  function trailHtml(t) {
+    if (!t || !t.length) return "";
+    return '<details class="trail"><summary>The Chatter trail · ' + t.length + " note" + (t.length === 1 ? "" : "s") + "</summary>" + t.map(function (n) {
+      return "<div>" + (n.reply ? "&#8627; " : "") + "<b>" + esc(n.by || "Someone") + "</b>" + (n.day ? " · " + esc(n.day) : "") + ": " + esc(n.text) + "</div>"; }).join("") +
+      '<div class="trh">Your answer goes on this trail, as a reply.</div></details>';
+  }
+  function draft(btn) {
+    var row = btn.closest(".wt"), ta = row.querySelector("textarea"), said = (ta.value || "").trim();
+    btn.disabled = true; var was = btn.textContent; btn.textContent = "Writing…";
+    var body = auth(new URLSearchParams()); body.set("act", "draft"); body.set("id", row.getAttribute("data-id")); if (said && !row.getAttribute("data-drafted")) body.set("text", said);
+    fetch(TRACKER, { method: "POST", body: body, redirect: "follow" }).then(function (r) { return r.json(); }).then(function (r) {
+      btn.disabled = false;
+      if (!r || !r.ok) { btn.textContent = was; toast((r && r.error) || "That did not write. Try again."); return; }
+      ta.value = r.draft; row.setAttribute("data-drafted", "1"); btn.textContent = "Write it again";
+      var src = row.querySelector(".dsrc"); if (!src) { src = document.createElement("div"); src.className = "dsrc"; ta.parentNode.insertBefore(src, ta); }
+      src.textContent = "Branch Intelligence read the whole trail and wrote this." + (r.next ? " Next: " + r.next : "");
+      ta.focus(); toast("Written. Read it, change anything, then Post.");
+    }).catch(function () { btn.disabled = false; btn.textContent = was; toast("That did not reach the tracker. Try again."); });
+  }
+  document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-draft]"); if (b) { e.preventDefault(); draft(b); } });
   function waitingCard(m) {
     var w = m.waiting; if (!w) return "";
     if (!w.length) return '<div class="card"><div class="ch"><h2>Waiting on you</h2></div><div class="empty">Nobody is waiting on your word. Well done.</div></div>';
@@ -537,8 +563,10 @@
       return '<div class="wt' + (wi >= 10 ? ' more' : '') + '"' + (wi >= 10 ? ' hidden' : '') + ' data-k="' + esc(x.k) + '" data-id="' + esc(x.id) + '"><div class="who">' + esc(firstOf(x.by)) + " <span>· " + esc(x.s) + "</span></div>" +
         (x.said ? '<div class="said">"' + esc(x.said) + '"</div>' : "") +
         (x.read || x.next || x.done ? '<div class="rd">' + (x.done ? "<b>Done so far:</b> " + esc(x.done) + "<br>" : "") + (x.read ? "<b>Claude:</b> " + esc(x.read) : "") + (x.next ? (x.read ? "<br>" : "") + "<b>Next:</b> " + esc(x.next) : "") + "</div>" : "") +
-        '<textarea aria-label="Your answer" placeholder="' + (x.draft ? "" : "Claude has not written this one yet. Type your answer.") + '">' + esc(x.draft || "") + "</textarea>" +
-        '<div class="act">' + sel + '<button class="go" data-post>Post</button></div></div>';
+        trailHtml(x.trail) +
+        (x.draft ? '<div class="dsrc">' + (x.depth === "quick" ? "Claude's quick draft. Tap Write it in full for a reply built on the whole trail." : "Branch Intelligence read the whole trail and wrote this.") + "</div>" : "") +
+        '<textarea aria-label="Your answer" placeholder="' + (x.draft ? "" : (x.k === "ask" ? "Not written yet. Tap Draft with Claude, or type your answer. Words you type first guide the draft." : "Type your answer.")) + '">' + esc(x.draft || "") + "</textarea>" +
+        '<div class="act">' + sel + (x.k === "ask" && m.claude !== false ? '<button type="button" class="c2" data-draft>' + (x.draft && x.depth !== "quick" ? "Write it again" : x.draft ? "Write it in full" : "Draft with Claude") + "</button>" : "") + '<button class="go" data-post>Post</button></div></div>';
     }).join("") + (w.length > 10 ? '<button type="button" class="showmore" data-more>Show ' + (w.length - 10) + " more</button>" : "") + "</div>";
   }
   function achievedCard(m) {
@@ -735,7 +763,7 @@
       var wait = x.tag && x.tag.indexOf("w:") === 0 ? " · waiting on " + esc(x.tag.slice(2)) : "";
       return '<li class="tk" data-ag="' + esc(x.id) + '" style="animation-delay:' + Math.min(i, 12) * 0.04 + 's"><span class="ic ' + (x.done ? "" : x.late ? "late" : "due") + '">' + (x.done ? "&#10003;" : x.late ? "!" : "&#8226;") + "</span>" +
         '<div class="li"><div class="s' + (x.done ? " done" : "") + '" data-agopen role="button" tabindex="0">' + tag + esc(x.s) + "</div><small>" + (x.done ? "closed today" : x.due ? (x.late ? "overdue since " : "due ") + esc(x.due) : "") + wait + "</small></div>" +
-        '<div class="tc" hidden><div class="notes">' + (notes || "No notes on Chatter yet.") + (x.more ? "<div>and " + x.more + " earlier</div>" : "") + "</div>" +
+        '<div class="tc" hidden><div class="notes">' + (notes ? '<div class="trh">The Chatter trail, oldest first. Your update goes on this trail.</div>' + (x.more ? "<div>" + x.more + " earlier notes are in Salesforce</div>" : "") + notes : "No notes on Chatter yet.") + "</div>" +
         '<textarea data-agtext placeholder="Your update: what you did or know, in the client\'s words. It goes on the task."></textarea>' +
         '<div class="cbt" style="grid-template-columns:1fr"><button type="button" class="c" data-agnote>Post my update</button></div><div class="cst"></div></div></li>';
     };
@@ -1019,7 +1047,7 @@
     var first = String(c.a || "the agent").split(" ")[0];
     return '<div class="lab"><span class="bdg">' + esc(c.label || "Task") + "</span>" + esc(c.a || "") + (c.o ? " · with " + esc(c.o) : "") + "</div>" +
       (c.todo ? '<div class="todo"><b>What to do:</b> ' + esc(c.todo) + "</div>" : "") + (c.next ? '<div class="nx">' + esc(c.next) + "</div>" : "") +
-      '<div class="notes">' + (notes || "No notes on Chatter yet.") + (c.more ? "<div>and " + c.more + " earlier</div>" : "") + "</div>" +
+      '<div class="notes">' + (notes ? '<div class="trh">The Chatter trail, oldest first. Your note goes on this trail.</div>' + (c.more ? "<div>" + c.more + " earlier notes are in Salesforce</div>" : "") + notes : "No notes on Chatter yet.") + "</div>" +
       '<div class="rd2" data-uread hidden></div>' +
       '<textarea data-unote placeholder="Your comment. It goes on the task\'s Chatter as yours, and whoever has it is told."></textarea>' +
       (M && M.claude ? '<button type="button" class="cai" data-uact="draft">&#10024; Draft my reply</button><div class="tone" data-utone hidden><button type="button" data-uact="draft" data-tone="firmer">Firmer</button><button type="button" data-uact="draft" data-tone="shorter">Shorter</button><button type="button" data-uact="draft" data-tone="kinder">Kinder</button></div>' : "") +
@@ -1252,6 +1280,8 @@
   function goTo() {
     if (!GO && !GOT) return;
     var g = GO, t = GOT; GO = ""; GOT = "";
+    // go=checkin (19 Nov 2026): the 5:00 mail's button checks him in on opening, then shows what waits. Never in a scripted browser (a mail scanner).
+    if (g === "checkin") { var cb = $("ci"); if (cb && !cb.disabled && !navigator.webdriver) { cb.click(); } g = "waiting"; }
     try { var u = new URL(location.href); u.searchParams.delete("go"); u.searchParams.delete("t"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch (e) {}
     setTimeout(function () {
       var li = t ? document.querySelector('li.tk[data-id="' + t + '"]') : null;
@@ -1331,7 +1361,7 @@
     var notes = (c.notes || []).map(function (n) { return "<div>" + (n.reply ? "&#8627; " : "") + "<b>" + esc(n.who) + "</b>" + (n.day ? " · " + esc(n.day) : "") + ": " + esc(n.s) + "</div>"; }).join("");
     return '<div class="lab"><span class="bdg' + (c.must ? " r" : "") + '">' + esc(c.label || "Task") + "</span>" + (c.client ? esc(c.client) : "") + (c.policy ? " · " + esc(c.policy) : "") + "</div>" +
       '<div class="todo"><b>What to do:</b> ' + esc(c.todo) + "</div>" + (c.next ? '<div class="nx">' + esc(c.next) + "</div>" : "") + (c.close ? '<div class="hint">' + esc(c.close) + "</div>" : "") +
-      '<div class="notes">' + (notes || "No notes on Chatter yet.") + (c.more ? "<div>and " + c.more + " earlier</div>" : "") + "</div>" +
+      '<div class="notes">' + (notes ? '<div class="trh">The Chatter trail, oldest first. Your note goes on this trail.</div>' + (c.more ? "<div>" + c.more + " earlier notes are in Salesforce</div>" : "") + notes : "No notes on Chatter yet.") + "</div>" +
       '<div class="tpl">' + (c.tpl || []).map(function (t) { return '<button type="button" data-tpl data-a="' + esc(t.a) + '" data-n="' + esc(t.n) + '"><i class="' + (t.a === "close" ? "c" : t.a === "move" ? "m" : "") + '">' + (t.a === "close" ? "closes" : t.a === "move" ? "moves" : "note") + "</i>" + esc(t.n) + "</button>"; }).join("") + "</div>" +
       '<textarea data-note placeholder="What was done, who you spoke to, the outcome and the next step. It goes on the task\'s Chatter."></textarea>' +
       (M && M.claude ? '<button type="button" class="cai" data-cact="draft">&#10024; Draft with Claude</button>' : "") +

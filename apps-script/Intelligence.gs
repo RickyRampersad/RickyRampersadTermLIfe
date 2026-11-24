@@ -8129,6 +8129,33 @@ function iStat_(label, value, tone) {
     '<div style="font-size:22px;font-weight:700;color:' + colour + ';margin-top:3px">' + iEsc_(value) + '</div></td>';
 }
 
+/* ── Who never gets "Your branch list" (19 Nov 2026) ─────────────────────
+   Ricky: "from the daily posting, you are to remove Faisal, ... Petra, ...
+   Stephen, ... Richard ... You are to remove all of those agents." The test
+   run of that morning also mailed Javid and Aleema (who get no intelligence
+   from the branch, 3 Nov 2026) and the agents who left in September. So the
+   list is: the names below, Javid and Aleema always, and anyone the wall
+   reads as having left. Script Property INTEL_DIGEST_OFF (names, comma
+   separated) replaces the names below; Javid, Aleema and the leavers stay off. */
+var INTEL_DIGEST_OFF = ['Faizal Mohammed', 'Petra Chadee', 'Stephanie Rajkumar', 'Richard Ramdwar'];
+var INTEL_DIGEST_NEVER = ['Javid Ali', 'Aleema Mohammed-Ali'];
+function iDigestOffList_() {
+  var raw = String(iProp_('INTEL_DIGEST_OFF') || '').trim(), out = {};
+  (raw ? raw.split(',') : INTEL_DIGEST_OFF).concat(INTEL_DIGEST_NEVER).forEach(function (n) { var k = iNameKey_(n); if (k) out[k] = true; });
+  return out;
+}
+function iDigestOff_(name, off) {
+  if (iExcludes_(off || iDigestOffList_(), name)) return true;
+  try {
+    if (typeof wallLeft_ === 'function' && typeof wallIsLeft_ === 'function') {
+      var left = wallLeft_();
+      // wallIsLeft_ keeps Javid and Aleema in (they are with the company); this list has already taken them off.
+      if (wallIsLeft_(String(name || ''), left)) return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
 /* ── Each agent's own morning list ────────────────────────────────────────
    Only what they can act on today: arrears past the grace period, cases where
    their client's own money is sitting in suspense, and anything they promised
@@ -8141,13 +8168,15 @@ function intelAgentDigest() {
   if (day === 0 || day === 6) return 'Weekend — skipped.';
 
   var directory = iAgentDirectory_();
-  var sent = 0, skipD = iExcluded_();
+  var sent = 0, skipD = iExcluded_(), offD = iDigestOffList_();
 
   Object.keys(directory).forEach(function (key) {
     var person = directory[key];
     if (!person.email) return;
     /* An excluded agent is off every report, their own digest included. */
     if (iExcludes_(skipD, person.agentName || person.name || '')) return;
+    /* Off this morning list (19 Nov 2026), whatever the access tab says. */
+    if (iDigestOff_(person.agentName || person.name || '', offD)) return;
 
     /* Staff and managers have no personal book; the branch digest is theirs,
        not an agent list that would always come back empty. */
