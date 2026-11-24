@@ -3,26 +3,20 @@
  "rate": "+0%",
  "check": true,
  "voices": {
-  "enrp1": "en-US-AndrewMultilingualNeural"
+  "enrp1b": "en-US-AndrewMultilingualNeural"
  },
  "rates": {
-  "enrp1": "+0%"
+  "enrp1b": "+0%"
  },
  "films": {
-  "enrp1": [
-   "Here's how a new member joins your group plan now. No paper forms, and nothing typed twice. It all starts with one link.",
-   "It starts on your service page. Under your billing, choose enrol a new member, then send them their own link.",
-   "Type their name, their e-mail, the plans they're joining, and the date their cover starts. Then press send.",
-   "They get their own link by e-mail. Only they can open it, and it stays open for sixty days.",
-   "On their phone, their name, their company and their cover are already filled in. It takes about ten minutes.",
-   "They add their details and their family, and for group life, who it pays. The health questions take a single tick for most people, and they sign on the screen with a finger.",
-   "When they're done, they're told so. If they haven't finished, they get a reminder every working day, and after five reminders, we let you know.",
-   "Then you get an e-mail saying it's ready for you to check. You see Guardian's own form, already filled in, and you never see their health answers.",
-   "You complete the employer's part, tick that you're authorised, and approve it. That's your last step.",
-   "It goes straight to Guardian Life's group benefits team, on their own application form, with the health declaration and the signature attached. Our branch is copied.",
-   "Our team gets a task the same moment, and we follow Guardian up every three working days until the cover is in place.",
-   "On your page, you see where every new member stands. Waiting on them, ready for you to check, or sent to Guardian Life.",
-   "One link, nothing retyped, and every step on the record. That's our branch. A journey, not a transaction."
+  "enrp1b": [
+   "Here's how a new member joins your group plan now. No paper forms, and nothing entered twice. It all starts with one link.",
+   "It starts on your service page. Under your billing, open the form to enrol a new member, and choose send them their own link.",
+   "On their phone, it's already filled in: their name, their company, and their cover. It takes about ten minutes.",
+   "Then an e-mail tells you it's ready for you to check. You see Guardian's own form, already filled in, and you never see their health answers.",
+   "You complete the employer's part, confirm that you're authorised, and approve it. That's your last step.",
+   "A task opens for our team at the same moment, and we follow Guardian up every three working days until the cover is in place.",
+   "On your page, you see where every new member stands. Waiting on them, ready for you to check, or with Guardian Life."
   ]
  }
 }
