@@ -12534,3 +12534,7 @@ still says and prints `agentmgt.com`, and its QR is the old 41-module one, which
 now forwards. So the full film is dated but functional, and the trailer is the one with a dead QR. Re-cutting the
 trailer needs only a render (`votrailer` is on disk); re-cutting the full film needs all 33 lines re-voiced on the
 runner first, because `vorecruit` lives only in a deleted session scratchpad.
+
+## Opportunities — maturities, cover ending, milestones (24 November 2026)
+
+`apps-script/Opportunities.gs` (tracker project, beside KPI.gs and Intelligence.gs). Maturities and milestone birthdays (40, 50, 60, 65) come from the **Branch Portfolio's in-force tab**, never Salesforce's `Maturity_Date__c` (filled on under one policy in ten, with 1930s dates on premium-paying policies). Riders and cover ending (critical illness, waiver, accident, life) come from Salesforce `CLIENT_PORTFOLIO__c` where the date is filled; a blank is never guessed. Built once a day from 4:30 by `keepWarm` (`oppBuild_`, `opportunitiesBuildNow` in the editor), kept with `bigPut_`. The agent's My day shows "Your opportunities today" (`m.opps`, five at a time, a reason and a "Say first" line each, one tap logs it on the **Opportunity Log** tab: Review booked, Called, Not interested, Already done). The Branch Manager's My workday shows the roll-up by agent (`m.oppBranch`), untouched inside 30 days first. Facts and a reason to call only; never advice to cancel or replace. Needs Opportunities.gs and KPI.gs pasted and a New version.

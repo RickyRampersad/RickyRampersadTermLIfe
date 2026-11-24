@@ -2843,6 +2843,9 @@ function keepWarm() {
   try { var pc = pendSyncTick_(); if (pc && /Portal note/.test(pc)) runlog_(pc); } catch (e) { try { runlog_('pending chase failed: ' + (e && e.message)); } catch (e2) {} }
   // The wall copies no clock rebuilt: increases and group hourly, the premium dues copy when its midnight build missed (28 Oct 2026).
   try { wallFeedsTick_(kw0); } catch (e) {}
+  // The day's opportunities (Opportunities.gs, 24 Nov 2026): built once, from 4:30, before the agents' morning e-mails.
+  try { var ob = bigGet_(OPP.KEY, null), oh = new Date().getHours() * 60 + new Date().getMinutes();
+    if (oh >= 270 && (!ob || ob.day !== iIso_(iToday_())) && Date.now() - kw0 < 120000) oppBuild_(); } catch (e) { try { runlog_('opportunities build failed: ' + (e && e.message)); } catch (e2) {} }
 }
 
 function installTriggers() {
@@ -18611,6 +18614,7 @@ function workdayLeadModel_(m, day, now, base) {
   m.team = workdayTeam_(day);
   var post = m.desks; wdUnitModel_(m, 'ricky', day); m.desks = post;   // his Post-to list stays the inbox's
   m.newDesks = DAY_MAIL_DESKS.map(function (d) { return { sid: d, first: String(nameFor_(d)).split(' ')[0] }; });
+  try { m.oppBranch = oppBranch_(); } catch (e) { m.oppBranch = { error: String(e && e.message || e).slice(0, 140) }; }
   return m;
 }
 /** His own notes per working day, the last WORKDAY.BARS of them (postWho_: his words only). */
@@ -18815,6 +18819,8 @@ function agentDayModel_(a, day, opt) {
       mood: mid.mood ? String(mid.mood.Note || '') : '', rows: AGENT_METRICS.map(function (x) { return { id: x.id, v: val(mid[x.id], 'Done') }; }) };
     if (opt && opt.viewAs) { m.viewAs = { by: String(nameFor_(opt.viewAs) || '').split(' ')[0] || 'You', key: a.key }; m.preview = false; }
   }
+  // Opportunities on the agent's own book (24 Nov 2026): maturities, cover ending, milestones.
+  try { m.opps = oppForAgent_(a); } catch (e) { m.opps = { error: String(e && e.message || e).slice(0, 140) }; }
   return m;
 }
 /** What the branch closed for this agent's clients today, kept three minutes (the morning's list is in ag_items_). */
@@ -19321,7 +19327,12 @@ function workdayPost_(p) {
   if (a.error) return { ok: false, error: a.error };
   if (a.agent) {   // the agent's projection, close-off and updates on the tasks, from this screen (29 Oct 2026)
     var aact = String(p.act || ''), pv = !!a.link && !agentLiveFor_(a.agent);
-    if (['agplan', 'agclose', 'agnote', 'agmid', 'agff', 'agwed'].indexOf(aact) < 0 || !(agentLiveFor_(a.agent) || pv)) return { ok: false, error: 'Nothing to do here.' };
+    if (['agplan', 'agclose', 'agnote', 'agmid', 'agff', 'agwed', 'opp'].indexOf(aact) < 0 || !(agentLiveFor_(a.agent) || pv)) return { ok: false, error: 'Nothing to do here.' };
+    if (aact === 'opp') {
+      if (pv) return { ok: false, error: 'This is a preview: only the agent can log it.' };
+      var orr = oppAct_(a.agent, p, a.agent.key); if (!orr.ok) return orr;
+      var omod = agentDayModel_(a.agent, day, {}); omod.saved = { act: 'opp' }; return omod;
+    }
     if (aact === 'agwed') {
       if (pv) return { ok: false, error: 'This is a preview: only the agent can commit.' };
       try { var wr = wedSave_(a.agent, day, p); if (!wr.ok) return { ok: false, error: wr.error };

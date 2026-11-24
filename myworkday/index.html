@@ -955,12 +955,35 @@
       '<textarea data-wedtext maxlength="600" placeholder="In a line: what, and why it matters. No client names."></textarea>' +
       '<button type="button" class="go" data-cxsave="wed">Put it on Wednesday\'s agenda</button><div class="cst" data-st></div></details></div>';
   }
+  /* Opportunities (24 Nov 2026): maturities, cover ending and milestones from the Branch Portfolio and Salesforce. */
+  var OPPC = { maturity: "r", ci: "a", wp: "a", addap: "a", life: "a", age: "g" };
+  function cxOpps(m) {
+    var o = m.opps; if (!o || o.error || !o.total) return o && o.error ? '<div class="card"><div class="ch"><h2>Your opportunities</h2></div><div class="tip">Not loaded today: ' + esc(o.error) + "</div></div>" : "";
+    var mx = Math.max.apply(null, o.bands.map(function (b) { return b.n; }).concat([1]));
+    return '<div class="card" id="agopps"><div class="ch"><h2>Your opportunities today</h2><span class="n">' + o.open + " to act on</span></div>" +
+      '<div class="uchips">' + (o.soon ? '<span class="chip bad"><b>' + o.soon + "</b>inside 30 days</span>" : "") + '<span class="chip"><b>' + o.total + "</b>in your book, next 90 days</span>" + (o.booked ? '<span class="chip good"><b>' + o.booked + "</b>reviews booked</span>" : "") + "</div>" +
+      o.today.map(function (x) { return '<div class="cxp" data-oppid="' + esc(x.id) + '"><div class="cxl"><span><b>' + esc(x.plan || "Policy") + "</b> · " + esc(x.pol) + (x.c ? " · " + esc(x.c) : "") + '</span><span class="cxtag ' + (OPPC[x.k] || "") + '">' + esc(x.t) + "</span></div>" +
+        '<div class="cxm">' + esc(x.why) + (x.when ? " (" + esc(x.when) + ")" : "") + '</div><div class="cxm" style="margin-top:4px"><b>Say first:</b> ' + esc(x.say) + "</div>" +
+        '<div class="cxch" style="margin-top:6px">' + ["Review booked", "Called", "Not interested", "Already done"].map(function (a) { return '<button type="button" class="chip" data-oppact="' + esc(a) + '">' + esc(a) + "</button>"; }).join("") + "</div></div>"; }).join("") +
+      '<div style="margin-top:10px">' + o.bands.map(function (b) { return '<div class="cxl"><span>' + esc(b.l) + '</span><b>' + b.n + "</b></div>" + '<div style="height:6px;background:var(--line,#e4e0d4);border-radius:3px;margin:2px 0 6px"><div style="height:6px;border-radius:3px;background:var(--acc,#00728d);width:' + Math.round(100 * b.n / mx) + '%"></div></div>'; }).join("") + "</div>" +
+      '<div class="tip">Facts and a reason to call. Never advise a client to cancel or replace a policy.</div></div>';
+  }
+  function oppBranchCard(m) {
+    var o = m.oppBranch; if (!o) return "";
+    if (o.error) return '<div class="card"><div class="ch"><h2>Opportunities · the branch</h2></div><div class="tip">Not loaded: ' + esc(o.error) + "</div></div>";
+    return '<div class="card" id="oppbranch"><div class="ch"><h2>Opportunities · the branch</h2><span class="n">next 90 days</span></div>' +
+      '<div class="uchips"><span class="chip"><b>' + o.total + '</b>opportunities</span><span class="chip bad"><b>' + o.untouched + '</b>inside 30 days, nothing logged</span><span class="chip"><b>' + o.acted + '</b>acted on</span><span class="chip good"><b>' + o.booked + "</b>reviews booked</span>" +
+      (o.fund ? '<span class="chip"><b>TT$' + Number(o.fund).toLocaleString() + "</b>maturing</span>" : "") + "</div>" +
+      '<div class="cxm" style="margin:6px 0">' + o.kinds.filter(function (k) { return k.n; }).map(function (k) { return k.n + " " + esc(k.l.toLowerCase()); }).join(" · ") + "</div>" +
+      o.agents.map(function (r) { return '<div class="cxl"><span><b>' + esc(r.a) + "</b> · " + r.due + " due · " + r.acted + " acted · " + r.booked + " booked</span>" + (r.cold ? '<span class="cxtag r">' + r.cold + " untouched</span>" : '<span class="cxtag g">on it</span>') + "</div>"; }).join("") +
+      (o.errors && o.errors.length ? '<div class="tip">' + esc(o.errors.join(" · ")) + "</div>" : "") + "</div>";
+  }
   function agentNative2(m) {
     var va = m.viewAs, co = (m.coach || {}).coach || {};
     return (va ? '<div class="agpv"><a href="#" data-myown style="float:right;font-weight:800">&larr; My day</a><b>You are seeing ' + esc(m.first) + "'s day as " + esc(m.first) + " sees it.</b> For you: " + esc(co.mgr || "") +
       ' <button type="button" class="ghost" data-cxmailme style="margin-top:8px;width:100%">Send me ' + esc(m.first) + "'s morning e-mail</button></div>" : "") +
       (m.coachError ? '<div class="agpv">Some of your day did not load: ' + esc(m.coachError) + "</div>" : "") +
-      cxHero(m) + cxCheckin(m) + cxMid(m) + (m.close && m.close.open ? agCloseCard(m) : "") + cxWed(m) +
+      cxHero(m) + cxCheckin(m) + cxOpps(m) + cxMid(m) + (m.close && m.close.open ? agCloseCard(m) : "") + cxWed(m) +
       cxGoal(m) + cxFF(m) + cxOrphans(m) + cxPend(m) + agItemsCard(m).replace("<h2>Being worked for your clients</h2>", "<h2>5 · The branch is working on</h2>") + cxCalls(m) + agDoneCard(m) +
       '<div class="card"><div class="tip">If this screen will not open on your phone: <a href="' + esc(m.project.url) + '" target="_blank" rel="noopener">your plan</a> · <a href="' + esc(m.close.url) + '" target="_blank" rel="noopener">close-off</a>.</div></div>';
   }
@@ -997,6 +1020,15 @@
   }
   document.addEventListener("click", function (e) {
     var t = e.target.closest ? e.target : null; if (!t) return; var b;
+    if ((b = t.closest("[data-oppact]"))) {
+      if (M && (M.viewAs || M.preview)) { toast("Only the agent can log this."); return; }
+      var row = b.closest("[data-oppid]"); Array.prototype.forEach.call(row.querySelectorAll("[data-oppact]"), function (x) { x.disabled = true; });
+      api({ act: "opp", id: row.getAttribute("data-oppid"), outcome: b.getAttribute("data-oppact") }).then(function (m) {
+        if (!m || !m.ok) { toast((m && m.error) || "That did not save. Try again."); Array.prototype.forEach.call(row.querySelectorAll("[data-oppact]"), function (x) { x.disabled = false; }); return; }
+        m._t = Date.now(); store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false); toast("Logged. On to the next one.");
+      }).catch(function () { toast("That did not reach the tracker. Try again."); Array.prototype.forEach.call(row.querySelectorAll("[data-oppact]"), function (x) { x.disabled = false; }); });
+      return;
+    }
     if ((b = t.closest("[data-cxstep]"))) { var v = b.parentNode.querySelector("b"); if (v) v.textContent = String(Math.max(0, Math.min(99, Number(v.textContent || 0) + Number(b.getAttribute("data-cxstep"))))); return; }
     if ((b = t.closest("[data-cxopen]"))) { var sh = b.parentNode.querySelector('[data-cxsheet="' + b.getAttribute("data-cxopen") + '"]'); if (sh) { sh.hidden = false; b.hidden = true; sh.scrollIntoView({ behavior: "smooth", block: "start" }); } return; }
     if ((b = t.closest("[data-wedk]"))) { Array.prototype.forEach.call(b.parentNode.querySelectorAll(".chip"), function (c) { c.classList.toggle("on", c === b); }); var hh = b.closest(".card").querySelector("[data-wedhint]"); if (hh) hh.textContent = b.getAttribute("data-wedh") || ""; var tx = b.closest(".card").querySelector("[data-wedtext]"); if (tx) tx.focus(); return; }
@@ -1223,7 +1255,7 @@
     // One screen (29 Oct 2026): no "Open My day" foot; what the white page did is here.
     // The coach on top (29 Oct 2026, Ricky: "we can put a note on top there"); before check-in, the check-in first.
     var inYet = !!(m.checkin && m.checkin.at);
-    $("main").innerHTML = (inYet ? coachCard(m) + newsCard(m) + checkinCard(m) : checkinCard(m) + coachCard(m) + newsCard(m)) + waitingCard(m) + attCard(m) + unitCard(m) + timelineCard(m) + checksCard(m) + listCard(m) + scrubCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + closeCard(m);
+    $("main").innerHTML = (inYet ? coachCard(m) + newsCard(m) + checkinCard(m) : checkinCard(m) + coachCard(m) + newsCard(m)) + waitingCard(m) + oppBranchCard(m) + attCard(m) + unitCard(m) + timelineCard(m) + checksCard(m) + listCard(m) + scrubCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + closeCard(m);
     if (!m._t) m._t = Date.now();
     coachTick();
     $("upd").hidden = true; pending = null;
