@@ -212,6 +212,9 @@
   }
   @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} .card,.dk,.ag{opacity:1;transform:none} }
   .cell.pace{box-shadow:inset 0 -.28rem 0 #78D198} .cell.behind{box-shadow:inset 0 -.28rem 0 #E8625A}
+  .cell.met{background:rgba(120,209,152,.16)} .cell.miss{background:rgba(232,98,90,.16)} .cell.miss b{color:#E8625A} .cell.now b,.cell.fut b{color:var(--ink)}
+  .cell b s{text-decoration:none;font-size:.75em;color:var(--dim);margin-left:.1rem}
+  .cell em{font-size:.7rem!important} .cell.off{opacity:.45} .cell .offk{font:700 .75rem var(--fb);color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
   .cell u.ask{position:absolute;top:.15rem;right:.25rem;text-decoration:none;font:800 .72rem var(--fd,system-ui);color:#E3B85A;white-space:nowrap}
   .cell{position:relative}
   .aw{padding:.2rem .3rem} .aw .of{margin:.3rem 0 .4rem}
@@ -243,7 +246,7 @@
     </div>
   </section>
   <section class="card rows" style="--d:.1s;padding:.9rem 1.2rem .7rem">
-    <div class="g rh"><div>Desk &middot; checked in</div><div id="hh" style="grid-column:2 / span var(--nh,10);display:grid;grid-template-columns:repeat(var(--nh,10),minmax(0,1fr));column-gap:.45rem;text-align:center"></div>
+    <div class="g rh"><div>Desk &middot; each hour: closed / the hour's KPI</div><div id="hh" style="grid-column:2 / span var(--nh,10);display:grid;grid-template-columns:repeat(var(--nh,10),minmax(0,1fr));column-gap:.45rem;text-align:center"></div>
       <div><span>Closed</span><span>Worked on</span><span>E-mails</span><span>How old the work is</span></div></div>
     <div id="desks" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
     <div class="foot" id="foot"></div>
@@ -309,7 +312,15 @@ function paint(){
       cum += x.c || 0; if(!cls && !d.auto && !t.absent) cls += pace(i);
       var am = ak && ak.hours && ak.hours[i] ? ak.hours[i] : null, askTag = am && (am.a || am.r) ? '<u class="ask">'+(am.a ? '✉'+am.a : '')+(am.r ? ' ↩'+am.r : '')+'</u>' : '';
       if(d.auto) return '<div class="cell auto'+cls+'">'+(x.a ? '<b>'+fmt(x.a)+'</b>' : '')+(x.n ? '<em>'+fmt(x.n)+' notes</em>' : '')+'</div>';
-      return '<div class="cell'+cls+'"><div class="w" data-o="'+(x.w ? (0.12 + 0.7*x.w/maxDW).toFixed(2) : 0)+'"></div>'+(x.c ? '<b>'+fmt(x.c)+'</b>' : '')+(x.w ? '<em>'+fmt(x.w)+'</em>' : '')+askTag+'</div>'; }).join("");
+      // Each hour is a block with its own share of the day's KPI (24 Nov 2026: "staff operate in blocks ... I am only seeing
+      // green numbers, which does not make sense"): closed in the block against the block's goal, the cell green when met and
+      // red when missed once the hour is over, "off" outside their hours, and what was worked on and not closed beneath.
+      var hs = h*60, he = hs+60, inDay = d.start == null || (he > d.start && hs < d.end);
+      var goal = (d.target && d.end > d.start && inDay) ? Math.max(1, Math.round(d.target * (Math.min(he, d.end) - Math.max(hs, d.start)) / (d.end - d.start))) : 0;
+      if(!inDay && !d.auto) return '<div class="cell off'+(cls.indexOf('fut')>-1?' fut':'')+'"><span class="offk">off</span></div>';
+      var blk = goal && cls.indexOf('fut') < 0 && cls.indexOf('now') < 0 && !t.absent ? ((x.c||0) >= goal ? ' met' : ' miss') : '';
+      return '<div class="cell'+cls+blk+'"><div class="w" data-o="'+(x.w ? (0.12 + 0.5*x.w/maxDW).toFixed(2) : 0)+'"></div>'
+        + '<b>'+fmt(x.c||0)+(goal ? '<s>/'+fmt(goal)+'</s>' : '')+'</b>'+(x.w ? '<em>+'+fmt(x.w)+' worked</em>' : '')+askTag+'</div>'; }).join("");
     var ageN = d.ages.reduce(function(a,x){ return a+x; },0) || 1;
     var tbar = function (list) { var n = list.reduce(function(a,x){ return a+x.n; },0) || 1; return '<div class="tb">'+list.map(function(x){ return '<i data-w="'+(100*x.n/n).toFixed(1)+'" style="background:'+(TYC[x.k]||TYC.Other)+'" title="'+esc(x.k)+'"></i>'; }).join("")+'</div>'; };
     var closedCell = '<div class="cl"><div class="v'+(d.closed?' green':' z')+'" data-k="closed">'+fmt(d.closed)+'</div>'+(d.byType.length ? tbar(d.byType) : '')+'</div>';
