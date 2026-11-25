@@ -1,17 +1,7 @@
 {
- "tts/out/pdfix/01.mp3": [
-  "en",
-  0.995,
-  "We're moving our premium reminders to WhatsApp, friendly, personal, and set from our own branch number."
- ],
- "tts/out/pdfix/02.mp3": [
+ "tts/out/pdfix2/01.mp3": [
   "en",
   0.996,
-  "Then comes your check, filter your agent's clients by band, check off every box on the list and mark whether the agent is active or has left us."
- ],
- "tts/out/pdfix/03.mp3": [
-  "en",
-  0.996,
-  "There are five bands from 45 days overdue all the way to the day of policy lapses. Each band has its own message."
+  "Removing our premium reminders to WhatsApp. Friendly, personal, and from our own branch number."
  ]
 }
