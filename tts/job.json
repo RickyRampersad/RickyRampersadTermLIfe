@@ -3,10 +3,8 @@
  "rate": "+0%",
  "check": true,
  "films": {
-  "pdfix": [
-   "We're moving our premium reminders to WhatsApp. Friendly, personal, and sent from our own branch number.",
-   "Then comes your check. Filter your agents' clients by band, check off every box on the list, and mark whether the agent is active, or has left us.",
-   "There are five bands. From forty five days overdue, all the way to the day a policy lapses. Each band has its own message."
+  "pdfix2": [
+   "We're moving our premium reminders to WhatsApp. Friendly, personal, and from our own branch number."
   ]
  }
 }
