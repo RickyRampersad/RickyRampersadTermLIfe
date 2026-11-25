@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-24n';
+var SCRIPT_VERSION = '2026-11-25a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -13786,7 +13786,7 @@ function ffChaseTick_(day, mins) {
   }
   if (!list) return [];
   var people = agentPeople_(), resp = null, sent = 0;
-  list = list.filter(function (x) { return !agentDayOff_(people[x.k]); });   // off the platform: no chase (24 Nov 2026)
+  // The fact-find chase still goes to agents off the daily platform: Mr Rampersad, 25 Nov 2026, "fact finds remain as is".
   if (dow === 1 || dow === 2) {
     if (mode === 'preview') {
       if (dow !== 1 || props.getProperty('ff_prev_' + week) || !list.length) return [];
