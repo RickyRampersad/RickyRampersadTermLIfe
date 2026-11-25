@@ -1,6 +1,7 @@
 // The billings door's speed (25 November 2026): a big group's Salesforce read and member list kept in the cache (they
-// were over the 100 KB a cache value holds, so every screen read Salesforce again), support@'s inbox read once for every
-// group and kept, and the upload's tasks opened in one Salesforce call with one sheet write. GroupBilling.gs runs in a
+// were over the 100 KB a cache value holds, so every screen read Salesforce again), the group's e-mails to support@ asked
+// for on request and searched for by the group's own addresses (never the whole inbox), and the upload's tasks opened in
+// one Salesforce call with one sheet write. GroupBilling.gs runs in a
 // sandbox; Salesforce, the cache and Microsoft are made of nothing, and every group, member and policy is invented.
 // Run: node tests/test-billing-speed.js
 const fs = require('fs'), path = require('path'), vm = require('vm'), zlib = require('zlib');
@@ -79,13 +80,30 @@ ok('read once', qm1 > qm && mem1.members.length === 340);
 const mem2 = sb.gblMembers_(G, false);
 ok('the next read is the cache', LOG.queries === qm1 && mem2.members.length === 340);
 
-console.log('\nsupport@\'s inbox, read once for every group and kept:\n');
-const L = { reg: [] };
-const i1 = sb.gblInbox_(L, G, false), i2 = sb.gblInbox_(L, { key: 'other' }, false);
-ok('one read of the inbox for two groups', LOG.mail === 1);
-ok('each group gets its own e-mails', i1.ok && i1.mails.length === 1 && i2.mails.length === 1 && i2.mails[0].from === 'x@other.example');
-sb.gblInbox_(L, G, true);
-ok('"Read Salesforce again" reads the inbox again too', LOG.mail === 2);
+console.log('\nThe group\'s e-mails to support@: asked for, and only the group\'s:\n');
+const FETCH = [];
+const msg = (from, subject, daysAgo) => ({ id: 'm' + FETCH.length + subject.length, subject, from: { emailAddress: { address: from } }, receivedDateTime: new Date(Date.now() - daysAgo * 86400000).toISOString() });
+Object.assign(sb, {
+  tMsCreds_: () => true, tMsToken_: () => 'token', TRANSITION: { MS_FROM: 'support@rickyrampersadbranch.com' },
+  GCM_PUBLIC_MAIL: /@(gmail|yahoo|hotmail|outlook|live|icloud|aol|msn|ymail|me)\./i, GCM_RATE: { AUTO_REPLY: /automatic reply|out of office/i }, gcmWhen_: d => d.toISOString().slice(0, 10),
+  UrlFetchApp: { fetch: u => { FETCH.push(decodeURIComponent(u)); return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ value: [
+    msg('hr@harbour.example', 'Payment for November premium', 3), msg('accounts@harbour.example', 'Health bill query', 10), msg('hr@harbour.example', 'Christmas lunch', 2),
+    msg('hr@harbour.example', 'Old invoice', 90), msg('someone@elsewhere.example', 'Payment', 1)] }) }; } }
+});
+const GI = Object.assign({}, G, { to: ['hr@harbour.example'], cc: ['boss@gmail.com', 'ricky@rickyrampersadbranch.com'] });
+const mail0 = LOG.mail;
+let ib = sb.gblInbox_({ reg: [] }, GI, false);
+ok('one search, not a read of the whole inbox', FETCH.length === 1 && LOG.mail === mail0, FETCH.length + ' / ' + (LOG.mail - mail0));
+ok('it asks Microsoft for the company domain and the personal address, nothing of ours', /\$search="from:harbour\.example OR from:boss@gmail\.com"/.test(FETCH[0]) && !/rickyrampersadbranch\.com OR|from:ricky/.test(FETCH[0]), FETCH[0]);
+ok('only the group\'s, about money, in the last 60 days, newest first', ib.ok && ib.mails.length === 2 && ib.mails[0].subject === 'Payment for November premium' && ib.mails[1].from === 'accounts@harbour.example', JSON.stringify(ib.mails));
+sb.gblInbox_({ reg: [] }, GI, false);
+ok('kept: asked again, no second search', FETCH.length === 1);
+sb.gblInbox_({ reg: [] }, GI, true);
+ok('"Read Salesforce again" searches again', FETCH.length === 2);
+ib = sb.gblInbox_({ reg: [] }, Object.assign({}, G, { key: 'noaddr', to: [], cc: [] }), false);
+ok('a group with no address is told so, with no search', ib.ok && !ib.mails.length && /No e-mail address/.test(ib.said) && FETCH.length === 2);
+const src = fs.readFileSync(path.join(ROOT, 'apps-script/GroupBilling.gs'), 'utf8'), view = src.slice(src.indexOf('function gblView_('), src.indexOf('function gblBillOut_('));
+ok('the page\'s first read never reads the inbox', (view.match(/gblInbox_\(/g) || []).length === 1 && /if \(gcmYes_\(p\.inbox\)\) return \{ ok: true, inbox: gblInbox_/.test(view));
 
 console.log('\nThe upload\'s tasks, in one call:\n');
 const recs = [1, 2, 3].map(i => ({ Subject: 'Group Health Termination – Invented Person ' + i, WhatId: '0010000000000HPAAA', ActivityDate: '2026-11-27', Status: 'Not Started', Priority: 'Normal', Description: 'x' }));

@@ -5173,8 +5173,14 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       - `gblCachePut_` / `gblCacheGet_` keep a value too big to keep whole gzipped, in pieces under one pointer (the
         `tCachePutBig_` pattern); a piece gone is a miss, never a wrong answer. `gblSf_` and `gblMembers_` use them.
         **Anything cached whole in this project must stay under 100 KB or go through this pair.**
-      - The inbox is read once for every group and kept 15 minutes (`GBL.INBOX_S`); "Read Salesforce again" reads it
-        afresh, and a failed read is kept 5 minutes so it is not retried on every load.
+      - **The inbox is not read when the door opens** (asked the same afternoon: "can we remove anything unnecessary? Like
+        the inbox? And filter if it's" the group). On Last month's tasks a button, "Look in support@ for <group>'s
+        e-mails", asks for it (`gcm.billing` with `inbox=Y`, so GroupClients.gs needs no paste), and `gblInbox_` asks
+        Microsoft only for mail from the group's own addresses and its company's domain (`$search="from:<domain> OR
+        from:<personal address>"`, never one of ours), the last 60 days, about money, kept 15 minutes (`GBL.INBOX_S`);
+        "Read Salesforce again" asks again. Until then each opening read up to 60 days of every message to support@.
+      - **Only the questions are read ahead** (`dPrefetch`). Last month's tasks, the members and the statement are read
+        when their step is opened, not all four with the door.
       - The upload's tasks go in one composite call (`gblSfInsertTasks_`, Servicing, again without the type for any the
         org refuses, and a task at a time only for those not made when the batch itself is refused, so never a second
         copy) and are logged on Group Changes in one write.
@@ -5194,8 +5200,8 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       finding changes when Salesforce answers, and the month is read once quietly behind it; a send that fails opens the
       panel again with what was typed. A comment on a task shows on its card at once, with no reload.
     - Paste **GroupBilling.gs** and publish a New version; the pages go live with the merge (`billing-ui.js` and
-      `billing-door.js` are `?v=2026-11-25a`). `tests/test-billing-speed.js` (20 checks; it fails on the code before) and
-      `tests/e2e-billing-door.js` (41, Playwright, a laptop and a phone, the backend mocked on an invented group) cover it.
+      `billing-door.js` are `?v=2026-11-25a`). `tests/test-billing-speed.js` (24 checks; it fails on the code before) and
+      `tests/e2e-billing-door.js` (47, Playwright, a laptop and a phone, the backend mocked on an invented group) cover it.
   - **A month is read back as a month** (27 October 2026, the first bill stored live: a group's October health bill).
     Google Sheets turns "2026-10" written into a cell into the date 1 October, which read back as "2026-10-01" and never
     matched "2026-10" again: the page said nothing was uploaded, opened itself as `m=2026-10-01`, looked in Salesforce for

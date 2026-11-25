@@ -65,7 +65,7 @@ var GBL = {
   LABEL: { health: 'Group Health', life: 'Group Life', listbill: 'Pensions and life (list bill)' },
   GONE: /LAPSED|TERMINAT|CANCEL|SURRENDER|NPW|NOT PROCEED|EXPIRED|DECEASED|DEATH|^X$|^0$/i,
   CACHE_S: 600,
-  INBOX_S: 900,                         // support@'s inbox read for the door, kept a quarter of an hour (25 November 2026)
+  INBOX_S: 900,                         // a group's e-mails to support@, asked for from the door, kept a quarter of an hour (25 November 2026)
   AI_MAX_FINDINGS: 40
 };
 var GBL_HEAD = {
@@ -501,6 +501,7 @@ function gblView_(p) {
   if (!who.ok) return who;
   var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
   if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+  if (gcmYes_(p.inbox)) return { ok: true, inbox: gblInbox_(L, g, gcmYes_(p.fresh)) };   // asked for on its own, from Last month's tasks
   var today = L.today, sf = gblSf_(g, gcmYes_(p.fresh));
   var bills = gblBillRows_(g), month = /^\d{4}-\d{2}$/.test(String(p.month || '')) ? p.month : gblDefaultMonth_(bills, sf, today);
   var lines = gblLinesOf_(g, sf, bills);
@@ -530,7 +531,7 @@ function gblView_(p) {
   }).sort(function (a, b) { return (b.late - a.late) || ((b.age || 0) - (a.age || 0)); });
   out.feedError = feed._error || '';
   /* the group's e-mails to support@ about money, the last 60 days */
-  out.inbox = gblInbox_(L, g, gcmYes_(p.fresh));
+  out.inbox = { ok: false, onAsk: true, mails: [], error: 'not read when the page opens, so it opens faster: press Look in support@ on Last month’s tasks' };
   out.people = gblPeople_(g, who);
   out.changes = gblChanges_(g).slice(-40).reverse();
   out.claimsUploaded = gblClaimsRows_(g).length > 0;
@@ -569,19 +570,44 @@ function gblIsBillingTask_(t) {
  *  line in it, from the contact or the company's domain, in the last 60 days. Read through the inbox reader the star
  *  reminder uses; never thrown. */
 function gblInbox_(L, g, fresh) {
+  /* Never on the page's first read since 25 November 2026: the door asks for it (?inbox=Y) when someone presses "Look in
+     support@" on Last month's tasks. And never the whole inbox: Microsoft is asked only for mail from the group's own
+     addresses and its company's domain (until then, up to 60 days of every message to support@, a page of 100 at a time,
+     to find one group's few). Kept a quarter of an hour; "Read Salesforce again" asks again. */
   try {
-    /* read once for every group and kept (GBL.INBOX_S): until 25 November 2026 each opening of the door read up to 60 days
-       of support@'s whole inbox, a page of 100 at a time, for the few e-mails of one group */
-    var key = 'gbl-mailin-60', m = fresh ? null : gblCacheGet_(key);
-    if (!m) {
-      var r = gcmMailIn_(L, Date.now() - 60 * 86400000);
-      m = { ok: !!r.ok, error: r.error || '', by: r.by || {} };
-      gblCachePut_(key, m, m.ok ? GBL.INBOX_S : 300);
+    if (typeof tMsCreds_ !== 'function' || !tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up', mails: [] };
+    var key = 'gbl-inbox-' + g.key.slice(0, 40), hit = fresh ? null : gblCacheGet_(key);
+    if (hit) return hit;
+    var addrs = [], doms = [];
+    (g.to || []).concat(g.cc || []).forEach(function (a) {
+      a = String(a || '').trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(a) || /@(myguardiangroup\.com|rickyrampersadbranch\.com)$/.test(a)) return;
+      if (addrs.indexOf(a) < 0) addrs.push(a);
+      var d = a.split('@')[1];
+      if (d && !GCM_PUBLIC_MAIL.test(a) && doms.indexOf(d) < 0) doms.push(d);
+    });
+    if (!addrs.length) { var none = { ok: true, mails: [], said: 'No e-mail address for the group on the register or in Salesforce, so there was nothing to look for.' }; gblCachePut_(key, none, GBL.INBOX_S); return none; }
+    var terms = doms.map(function (d) { return 'from:' + d; }).concat(addrs.filter(function (a) { return doms.indexOf(a.split('@')[1]) < 0; }).map(function (a) { return 'from:' + a; }));
+    var since = Date.now() - 60 * 86400000, token = tMsToken_(), mails = [];
+    var url = 'https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(TRANSITION.MS_FROM) + '/mailFolders/inbox/messages?$select=id,subject,from,receivedDateTime&$top=50&$search=' +
+      encodeURIComponent('"' + terms.join(' OR ') + '"');
+    for (var pages = 0; url && pages < 3; pages++) {
+      var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + token } }), code = res.getResponseCode();
+      if (code !== 200) throw new Error('HTTP ' + code + (code === 403 ? ': the Entra app needs the Graph permission Mail.Read' : ''));
+      var j = JSON.parse(res.getContentText());
+      (j.value || []).forEach(function (m) {
+        var from = String(((m.from || {}).emailAddress || {}).address || '').toLowerCase(), ts = new Date(m.receivedDateTime).getTime(), subj = String(m.subject || '');
+        if (!(ts >= since) || (addrs.indexOf(from) < 0 && doms.indexOf(from.split('@')[1]) < 0)) return;
+        if (!/bill|premium|payment|paid|invoice|statement|arrear|receipt|wire|transfer|cheque|pension|life|health/i.test(subj)) return;
+        mails.push({ ts: ts, at: gcmWhen_(new Date(ts)), from: from, subject: subj.slice(0, 140), auto: GCM_RATE.AUTO_REPLY.test(subj) });
+      });
+      url = j['@odata.nextLink'] || '';
     }
-    if (!m.ok) return { ok: false, error: m.error, mails: [] };
-    var mails = (m.by[g.key] || []).filter(function (x) { return /bill|premium|payment|paid|invoice|statement|arrear|receipt|wire|transfer|cheque|pension|life|health/i.test(x.subject); }).slice(0, 12);
-    return { ok: true, mails: mails };
-  } catch (e) { return { ok: false, error: String(e && e.message ? e.message : e).slice(0, 120), mails: [] }; }
+    mails.sort(function (a, b) { return b.ts - a.ts; });
+    var out = { ok: true, mails: mails.slice(0, 12), looked: terms.length };
+    gblCachePut_(key, out, GBL.INBOX_S);
+    return out;
+  } catch (e) { return { ok: false, error: String(e && e.message ? e.message : e).slice(0, 160), mails: [] }; }
 }
 /** What to do next, in order, from where the lines stand: the page shows it at the top. */
 function gblGuide_(v) {

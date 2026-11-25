@@ -116,7 +116,7 @@ function dGroupCard(g) {
 const D_STEPS = [['upload', 'Upload the bills'], ['check', 'What was found'], ['tasks', 'Last month’s tasks'], ['members', 'The members'], ['statement', 'The statement'], ['approve', 'Approve and send']];
 const D_ALIAS = { findings: 'check', ask: 'check', changes: 'members', people: 'members' };
 let DOOR = dFresh();
-function dFresh() { return { step: '', sig: '', chk: {}, ask: null, upd: null, people: null, stmt: null, aiRead: null, aiBusy: false, loading: {}, posted: {}, letters: {}, seenStmt: false }; }
+function dFresh() { return { step: '', sig: '', chk: {}, inbox: null, ask: null, upd: null, people: null, stmt: null, aiRead: null, aiBusy: false, loading: {}, posted: {}, letters: {}, seenStmt: false }; }
 function dSig(d) { return d.lines.map(o => o.bill ? [o.bill.checkedAt, o.bill.reconciledAt, o.bill.sentAt, Object.keys(o.bill.resolved || {}).length, o.steps.status].join('~') : '').join('|') + '|' + (d.tasks || []).length + '|' + (d.changes || []).length; }
 async function openBilling(key, month) {
   const same = VIEW === 'billing' && BILL && BILL.group.key === key && (!month || month === BILL.month);
@@ -145,7 +145,7 @@ function drawBilling() {
   $('app').innerHTML = h;
   $('blBack').onclick = () => backToList();
   $('blMonth').onchange = () => openBilling(g.key, $('blMonth').value);
-  $('blFresh').onclick = async () => { $('blFresh').disabled = true; const r = await api({ action: 'gcm.billing', group: g.key, month: d.month, fresh: 'Y' }); if (r.ok) { BILL = r; DOOR.sig = dSig(r); DOOR.ask = DOOR.upd = DOOR.stmt = DOOR.people = null; drawBilling(); toast('Salesforce read again.'); } else { $('blFresh').disabled = false; toast(r.error || 'Not read', true); } };
+  $('blFresh').onclick = async () => { $('blFresh').disabled = true; const r = await api({ action: 'gcm.billing', group: g.key, month: d.month, fresh: 'Y' }); if (r.ok) { BILL = r; DOOR.sig = dSig(r); DOOR.ask = DOOR.upd = DOOR.stmt = DOOR.people = DOOR.inbox = null; DOOR.inboxFresh = true; drawBilling(); toast('Salesforce read again.'); } else { $('blFresh').disabled = false; toast(r.error || 'Not read', true); } };
   dBindStrip(); dPlace(); dBindPanel(); dAfterDraw(DOOR.step);
   dPrefetch();
   window.scrollTo(0, 0);
@@ -190,7 +190,7 @@ function dStates() {
   const nCh = (d.changes || []).filter(c => /^(joiner|leaver|tier|dependent)$/.test(c.kind) && (c.effective || '').slice(0, 7) === d.month).length;
   S.changes = { state: 'info', badge: nCh || '' };
   const P = DOOR.people, acts = P && P.ok ? P.counts.convert + P.counts.depAge + P.counts.retire : null, chk = P && P.ok ? P.counts.over65 + P.counts.depOver + P.counts.tierDeps + P.counts.tierSingle + P.counts.nodob + P.counts.nosf : 0;
-  S.people = { state: !withBill.length ? 'wait' : !P ? 'todo' : acts ? 'todo' : chk ? 'check' : 'done', badge: !withBill.length ? '' : !P ? '…' : acts ? acts : chk ? chk : '✓' };
+  S.people = { state: !withBill.length ? 'wait' : !P ? 'todo' : acts ? 'todo' : chk ? 'check' : 'done', badge: !withBill.length || !P ? '' : acts ? acts : chk ? chk : '✓' };
   S.statement = { state: !withBill.length ? 'wait' : DOOR.seenStmt ? 'done' : 'todo', badge: '' };
   const worst = (a, b) => ['todo', 'check', 'wait', 'info', 'done'].find(x => a.state === x || b.state === x) || 'done';
   S.check = { state: !withBill.length ? 'wait' : worst(S.findings, S.ask), badge: !withBill.length ? '' : A && A.ok ? (left || (fixes + checks ? '' : '✓')) : (fixes + checks || '…') };
@@ -229,6 +229,7 @@ function dBindPanel() {
   app.querySelectorAll('[data-enrol]').forEach(b => b.onclick = () => blFormPanel(b.dataset.enrol || '', '', null, 'enrol'));
   const pdf = $('dPdf'); if (pdf) pdf.onclick = dPdf;
   const ml = $('dMail'); if (ml) ml.onclick = dMail;
+  const ib = $('dInbox'); if (ib) ib.onclick = dInbox;
   const ai = $('dAiGo'); if (ai) ai.onclick = () => { DOOR.aiRead = null; dAiRead(true); };
 }
 function dAfterDraw(step) {
@@ -237,8 +238,10 @@ function dAfterDraw(step) {
   if (step === 'members' && !DOOR.people && !DOOR.loading.people) dLoad('people');
   if (step === 'statement') { DOOR.seenStmt = true; if (!DOOR.stmt) dLoad('stmt'); else dDrawStrip(); }
 }
-/** The four slow reads start the moment the door opens, so the badges fill in while the first step is being worked. */
-function dPrefetch() { if (!BILL.lines.some(o => o.bill)) return; ['ask', 'upd', 'people', 'stmt'].forEach(k => { if (!DOOR[k] && !DOOR.loading[k]) dLoad(k); }); }
+/** Only the questions are read ahead, for the step the door usually opens on. Last month's tasks, the members and the
+ *  statement are read when their step is opened (25 November 2026: until then all four started with the door, four
+ *  more reads of Salesforce, Chatter and the AI at once for steps that might not be opened). */
+function dPrefetch() { if (!BILL.lines.some(o => o.bill)) return; ['ask'].forEach(k => { if (!DOOR[k] && !DOOR.loading[k]) dLoad(k); }); }
 const D_ROUTE = { ask: 'gcm.billAsk', upd: 'gcm.billTaskUpdates', people: 'gcm.billPeople', stmt: 'gcm.billStatement' }, D_STEP = { ask: 'check', upd: 'tasks', people: 'members', stmt: 'statement' };
 async function dLoad(k) {
   const d = BILL, key = d.group.key, month = d.month; DOOR.loading[k] = true;
@@ -390,6 +393,23 @@ function dPreset(kind, member) {
   const m = $('tkMember'); if (m && member) { m.value = member; m.dispatchEvent(new Event('input')); }
 }
 
+/* the group's own e-mails to support@ about money: asked for, never read when the door opens (25 November 2026) */
+function dInboxHtml() {
+  const d = BILL, ib = DOOR.inbox || d.inbox;
+  if (ib && !ib.onAsk) return blInboxHtml(Object.assign({}, d, { inbox: ib })) + (ib.said ? '<p class="small muted">' + esc(ib.said) + '</p>' : '');
+  return '<h3 class="blsec">The group’s e-mails to support@ about money <span class="muted small">last 60 days</span></h3>' +
+    '<p class="small" id="dInboxBox"><button class="btn sm ghost" type="button" id="dInbox">Look in support@ for ' + esc(d.group.name) + '’s e-mails</button> <span class="muted">Only this group’s mail is asked for, by its contact’s address and company domain.</span></p>';
+}
+async function dInbox() {
+  const b = $('dInbox'); if (b) { b.disabled = true; b.textContent = 'Looking…'; }
+  const key = BILL.group.key, month = BILL.month;
+  const r = await api(Object.assign({ action: 'gcm.billing', group: key, month, inbox: 'Y' }, DOOR.inboxFresh ? { fresh: 'Y' } : {}));
+  DOOR.inboxFresh = false;
+  if (!BILL || BILL.group.key !== key || BILL.month !== month) return;
+  DOOR.inbox = r.ok && r.inbox ? r.inbox : { ok: false, mails: [], error: r.error || 'the inbox could not be read' };
+  if (DOOR.step === 'tasks') dDrawPanel();
+}
+
 /* ── step 4: last month's tasks, read against this month ── */
 const D_VERDICT = { cleared: ['good', 'Settled by this month’s bills'], open: ['warn', 'Still open'], worse: ['bad', 'Got worse'] };
 function dTasks() {
@@ -405,7 +425,7 @@ function dTasks() {
     if (U.feedError) h += '<div class="note bad">Chatter could not be read: ' + esc(U.feedError) + '</div>';
     h += U.tasks.map(t => dUCard(t, can)).join('');
   }
-  h += blInboxHtml(d);
+  h += dInboxHtml();
   return h + dNav('tasks');
 }
 function dUCard(t, can) {

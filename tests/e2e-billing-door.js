@@ -29,7 +29,7 @@ function billing() {
       { line: 'health', label: 'Group Health', rt: 'T-HEALTH GROUP', bill: bill('health', [NOTIN, OKF, TIER, CREDIT]), steps: { upload: true, verify: true, fixed: false, open: 3, fixes: 1, checks: 2, status: 'to fix' }, sf: { rec: { name: 'T-0001', billed: 5000, paid: 0 }, pays: [], history: [] }, stored: [], claims: null },
       { line: 'life', label: 'Group Life', rt: 'T-LIFE GROUP', bill: bill('life', [LIFEF]), steps: { upload: true, verify: true, fixed: true, open: 0, status: 'checked' }, sf: { rec: { name: 'T-0002', billed: 1200, paid: 0 }, pays: [], history: [] }, stored: [], claims: null }],
     tasks: [{ id: '00T000000000001', title: 'Group Health billing December', subject: 'Group Health billing', line: 'health', status: 'Not Started', owner: 'Kerry Sample', opened: '2026-11-20', age: 5, due: '2026-11-30', late: false, posts: [], shown: false }],
-    inbox: { ok: true, mails: [] }, people: [{ id: '005000000000OWN', name: 'Kerry Sample', owner: true, me: true }, { id: '005000000000SUP', name: 'Sam Support' }],
+    inbox: { ok: false, onAsk: true, mails: [], error: 'not read when the page opens' }, people: [{ id: '005000000000OWN', name: 'Kerry Sample', owner: true, me: true }, { id: '005000000000SUP', name: 'Sam Support' }],
     changes: [], day: { date: '2026-11-26', label: 'Thu 26 Nov', hour: 10, isDay: false, daysTo: 1 }, guide: [] };
 }
 const BOARD = { ok: true, me: 'Kerry Sample', role: 'staff', title: 'Support team', today: '2026-11-25', refreshed: '25 Nov 2026, 8:00',
@@ -50,6 +50,7 @@ async function mock(page, W) {
     if (req.method() === 'POST') { try { b = JSON.parse(req.postData() || '{}'); a = b.action; } catch (e) { b = {}; } W.posts.push(b); } else W.gets.push(q);
     if (!a) return route.fulfill({ status: 200, contentType: 'image/gif', body: Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64') });
     if (a === 'gcm.board') return json(route, BOARD);
+    if (a === 'gcm.billing' && q.inbox === 'Y') return json(route, { ok: true, inbox: { ok: true, mails: [{ ts: 1, at: '22 Nov 2026', from: 'hr@harbour.example', subject: 'Payment for November premium', auto: false }] } });
     if (a === 'gcm.billing') return json(route, W.bill);
     if (a === 'gcm.billAsk') return json(route, W.ask);
     if (a === 'gcm.billTaskUpdates') return json(route, { ok: true, tasks: [] });
@@ -100,6 +101,9 @@ async function openDoor(browser, opt, W) {
     ok('the questions come first in it', /The questions/.test(await page.$eval('#dpanel', e => e.textContent)) && (await page.$$('#dpanel .qcard')).length === 2);
     ok('every check is under them, folded by line', (await page.$$('#dpanel details.lchk')).length === 2);
     ok('no sideways scroll', await noSideways(page));
+    const early = W.gets.map(g => g.action);
+    ok('the door opens with one read ahead, the questions, not four', early.includes('gcm.billAsk') && !early.some(a => /billPeople|billStatement|billTaskUpdates/.test(a)), early.join(','));
+    ok('and never reads the inbox when it opens', !W.gets.some(g => g.inbox === 'Y'));
     await shot(page, '1-laptop-found');
 
     console.log('\nA task from a finding: one short screen\n');
@@ -156,6 +160,16 @@ async function openDoor(browser, opt, W) {
     ok('the answer’s kind shapes the note, still with no blanks', /These are tier changes/.test(T3) && !/\[[^\]]{1,40}\]/.test(T3), T3);
     ok('and the kind is the one the answer chose', await page.$eval('#tkKinds .chip.on', e => e.dataset.kind) === 'tier');
     await page.click('#tkCancel');
+
+    console.log('\nLast month\'s tasks: the inbox only when asked\n');
+    await page.click('#dstrip [data-go="tasks"]');
+    await sleep(400);
+    ok('a button, not an inbox read', await page.isVisible('#dInbox') && !W.gets.some(g => g.inbox === 'Y'));
+    ok('the step\'s own read starts when it opens', W.gets.some(g => g.action === 'gcm.billTaskUpdates'));
+    await page.click('#dInbox');
+    await page.waitForFunction(() => !document.querySelector('#dInbox'), null, { timeout: 5000 });
+    ok('asked for on its own, for this group', W.gets.some(g => g.action === 'gcm.billing' && g.inbox === 'Y' && g.group === 'harbour'));
+    ok('the group\'s e-mail is listed', /Payment for November premium/.test(await page.$eval('#dpanel', e => e.textContent)));
 
     console.log('\nThe members, in one step\n');
     await page.click('#dstrip [data-go="members"]');
