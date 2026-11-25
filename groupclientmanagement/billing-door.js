@@ -1,4 +1,4 @@
-/* The Billings door (25 October 2026): billing.html, one group and one month at a time, in eight steps.
+/* The Billings door (25 October 2026): billing.html, one group and one month at a time, in six steps (eight until 25 November 2026).
  *
  * "the objective is to upload the November 2026 group health, life and pension billing and the claims experience, also
  * build in intelligence from AI to ask the questions and run the analysis, as we need to also produce Guardian Life
@@ -7,7 +7,8 @@
  * simple and interactive, a site that will pop and not confuse the weekly query and task update" and "the analysis for
  * all persons re dependants and persons coming of age to convert".
  *
- * The steps: Upload · Found · Questions · Last month's tasks · Changes · People · Statement · Approve. The weekly letters
+ * The steps: Upload · What was found (its questions with it) · Last month’s tasks · The members (changes and people) ·
+ * Statement · Approve, down the side on a laptop and down the page on a phone. The weekly letters
  * stay on index.html and nothing of them is here. This file defines the page's helpers ($, esc, api, post, toast, dmy,
  * BOARD, openGroup, render) the way index.html does, so billing-ui.js (the line cards' pieces, the findings, the task
  * panel, the forms, the payment box, the approve and send actions) runs unchanged; it then replaces openBilling and
@@ -110,9 +111,12 @@ function dGroupCard(g) {
 }
 
 /* ── the door: one group, one month, eight steps ── */
-const D_STEPS = [['upload', 'Upload the bills'], ['findings', 'What was found'], ['ask', 'Answer the questions'], ['tasks', 'Last month’s tasks'], ['changes', 'Terminations and changes'], ['people', 'The people'], ['statement', 'The statement'], ['approve', 'Approve and send']];
+/* six steps since 25 November 2026 ("the 6 steps at the side coming down, much more easy"): what was found and its
+   questions are one step, and the changes and the people are one (the members); the old names still open them */
+const D_STEPS = [['upload', 'Upload the bills'], ['check', 'What was found'], ['tasks', 'Last month’s tasks'], ['members', 'The members'], ['statement', 'The statement'], ['approve', 'Approve and send']];
+const D_ALIAS = { findings: 'check', ask: 'check', changes: 'members', people: 'members' };
 let DOOR = dFresh();
-function dFresh() { return { step: '', sig: '', ask: null, upd: null, people: null, stmt: null, aiRead: null, aiBusy: false, loading: {}, posted: {}, letters: {}, seenStmt: false }; }
+function dFresh() { return { step: '', sig: '', chk: {}, inbox: null, ask: null, upd: null, people: null, stmt: null, aiRead: null, aiBusy: false, loading: {}, posted: {}, letters: {}, seenStmt: false }; }
 function dSig(d) { return d.lines.map(o => o.bill ? [o.bill.checkedAt, o.bill.reconciledAt, o.bill.sentAt, Object.keys(o.bill.resolved || {}).length, o.steps.status].join('~') : '').join('|') + '|' + (d.tasks || []).length + '|' + (d.changes || []).length; }
 async function openBilling(key, month) {
   const same = VIEW === 'billing' && BILL && BILL.group.key === key && (!month || month === BILL.month);
@@ -137,22 +141,38 @@ function drawBilling() {
     '<div class="dhead"><div><h2>' + esc(g.name) + ' <span class="muted">· ' + esc(d.monthLabel) + '</span></h2><p class="sub">List bill ' + esc(g.bills.join(', ') || 'none') + ' · bills go to ' + esc(g.contact || g.to.join(', ') || 'nobody yet') +
     (d.canAct === false ? ' · <b>read only</b>: ' + esc(g.assigned || 'its owner') + ', the assistant branch manager or the branch manager act here' : '') + (d.salesforce ? '' : ' · <b>Salesforce is not linked</b>') + ' <span id="dsync" class="muted"></span></p></div>' +
     '<div class="dctl"><label class="sel">Month <select id="blMonth">' + opts + '</select></label><button class="btn ghost sm" type="button" id="blFresh">Read Salesforce again</button></div></div>';
-  h += '<div id="dstrip">' + dStripHtml(S) + '</div><div class="dpanel" id="dpanel">' + dPanel(DOOR.step) + '</div>';
+  h += '<div class="dwrap" id="dwrap"><nav class="drail" id="dstrip" aria-label="The steps">' + dStripHtml(S) + '</nav><div class="dpanel" id="dpanel">' + dPanel(DOOR.step) + '</div></div>';
   $('app').innerHTML = h;
   $('blBack').onclick = () => backToList();
   $('blMonth').onchange = () => openBilling(g.key, $('blMonth').value);
-  $('blFresh').onclick = async () => { $('blFresh').disabled = true; const r = await api({ action: 'gcm.billing', group: g.key, month: d.month, fresh: 'Y' }); if (r.ok) { BILL = r; DOOR.sig = dSig(r); DOOR.ask = DOOR.upd = DOOR.stmt = DOOR.people = null; drawBilling(); toast('Salesforce read again.'); } else { $('blFresh').disabled = false; toast(r.error || 'Not read', true); } };
-  dBindStrip(); dBindPanel(); dAfterDraw(DOOR.step);
+  $('blFresh').onclick = async () => { $('blFresh').disabled = true; const r = await api({ action: 'gcm.billing', group: g.key, month: d.month, fresh: 'Y' }); if (r.ok) { BILL = r; DOOR.sig = dSig(r); DOOR.ask = DOOR.upd = DOOR.stmt = DOOR.people = DOOR.inbox = null; DOOR.inboxFresh = true; drawBilling(); toast('Salesforce read again.'); } else { $('blFresh').disabled = false; toast(r.error || 'Not read', true); } };
+  dBindStrip(); dPlace(); dBindPanel(); dAfterDraw(DOOR.step);
   dPrefetch();
   window.scrollTo(0, 0);
 }
 function dBindStrip() { $('dstrip').querySelectorAll('[data-go]').forEach(b => b.onclick = () => dGo(b.dataset.go)); }
-function dDrawStrip() { const el = $('dstrip'); if (!el) return; el.innerHTML = dStripHtml(dStates()); dBindStrip(); }
+function dDrawStrip() { const el = $('dstrip'), p = $('dpanel'), w = $('dwrap'); if (!el) return; if (p && w && el.contains(p)) w.appendChild(p); el.innerHTML = dStripHtml(dStates()); dBindStrip(); dPlace(); }
 function dDrawPanel() { const el = $('dpanel'); if (!el) return; el.innerHTML = dPanel(DOOR.step); dBindPanel(); dAfterDraw(DOOR.step); }
-function dGo(step) { if (!D_STEPS.some(([k]) => k === step)) return; DOOR.step = step; dDrawStrip(); dDrawPanel(); const p = $('dpanel'); if (p) p.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+/** On a laptop the steps run down the side and the open step sits beside them; on a phone the steps come down the page
+ *  and the open step opens under its own row. */
+const D_NARROW = window.matchMedia ? window.matchMedia('(max-width: 900px)') : { matches: false };
+function dPlace() {
+  const p = $('dpanel'), w = $('dwrap'), rail = $('dstrip'); if (!p || !w || !rail) return;
+  const cur = rail.querySelector('[aria-current="step"]'), li = cur && cur.closest('li');
+  if (D_NARROW.matches && li) { if (p.parentNode !== li) li.appendChild(p); }
+  else if (p.parentNode !== w) w.appendChild(p);
+}
+if (D_NARROW.addEventListener) D_NARROW.addEventListener('change', dPlace);
+function dGo(step) {
+  step = D_ALIAS[step] || step;
+  if (!D_STEPS.some(([k]) => k === step)) return;
+  DOOR.step = step; dDrawStrip(); dDrawPanel();
+  const p = $('dpanel'), cur = $('dstrip') && $('dstrip').querySelector('[aria-current="step"]'), at = D_NARROW.matches && cur ? cur : p;
+  if (at) at.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 function dStripHtml(S) {
   const done = D_STEPS.filter(([k]) => S[k].state === 'done').length;
-  return '<div class="prog"><span>' + done + ' of ' + D_STEPS.length + ' steps done</span><div class="track"><div class="fill" style="width:' + Math.round(100 * done / D_STEPS.length) + '%"></div></div>' + (BILL.live ? '' : '<span class="chip" title="A send goes to you and the branch, marked TEST, until gblGoLive"><i style="background:var(--warnMark)"></i>Test mode</span>') + '</div>' +
+  return '<div class="prog"><span>' + done + ' of ' + D_STEPS.length + ' done</span><div class="track"><div class="fill" style="width:' + Math.round(100 * done / D_STEPS.length) + '%"></div></div>' + (BILL.live ? '' : '<span class="chip" title="A send goes to you and the branch, marked TEST, until gblGoLive"><i style="background:var(--warnMark)"></i>Test mode</span>') + '</div>' +
     '<ol class="dsteps" aria-label="The steps">' + D_STEPS.map(([k, l], i) => { const s = S[k]; return '<li><button type="button" class="dstep ' + esc(s.state) + '" data-go="' + k + '"' + (DOOR.step === k ? ' aria-current="step"' : '') + '><span class="n">' + (s.state === 'done' ? '✓' : i + 1) + '</span><span class="l">' + l + '</span>' + (s.badge !== '' && s.badge != null ? '<span class="b">' + esc(s.badge) + '</span>' : '') + '</button></li>'; }).join('') + '</ol>';
 }
 /** Where each step stands: done, todo, check (amber), wait (nothing to do yet), info. */
@@ -170,8 +190,11 @@ function dStates() {
   const nCh = (d.changes || []).filter(c => /^(joiner|leaver|tier|dependent)$/.test(c.kind) && (c.effective || '').slice(0, 7) === d.month).length;
   S.changes = { state: 'info', badge: nCh || '' };
   const P = DOOR.people, acts = P && P.ok ? P.counts.convert + P.counts.depAge + P.counts.retire : null, chk = P && P.ok ? P.counts.over65 + P.counts.depOver + P.counts.tierDeps + P.counts.tierSingle + P.counts.nodob + P.counts.nosf : 0;
-  S.people = { state: !withBill.length ? 'wait' : !P ? 'todo' : acts ? 'todo' : chk ? 'check' : 'done', badge: !withBill.length ? '' : !P ? '…' : acts ? acts : chk ? chk : '✓' };
+  S.people = { state: !withBill.length ? 'wait' : !P ? 'todo' : acts ? 'todo' : chk ? 'check' : 'done', badge: !withBill.length || !P ? '' : acts ? acts : chk ? chk : '✓' };
   S.statement = { state: !withBill.length ? 'wait' : DOOR.seenStmt ? 'done' : 'todo', badge: '' };
+  const worst = (a, b) => ['todo', 'check', 'wait', 'info', 'done'].find(x => a.state === x || b.state === x) || 'done';
+  S.check = { state: !withBill.length ? 'wait' : worst(S.findings, S.ask), badge: !withBill.length ? '' : A && A.ok ? (left || (fixes + checks ? '' : '✓')) : (fixes + checks || '…') };
+  S.members = { state: S.people.state, badge: S.people.badge };
   const sentOrApp = withBill.filter(o => o.bill.sentAt || o.steps.status === 'approved').length, toApprove = withBill.filter(o => o.bill.reconciledAt && !o.bill.sentAt && o.steps.status !== 'approved').length;
   S.approve = { state: !withBill.length ? 'wait' : sentOrApp >= withBill.length ? 'done' : 'todo', badge: !withBill.length ? '' : toApprove ? toApprove : sentOrApp + '/' + withBill.length };
   return S;
@@ -185,11 +208,9 @@ function dNav(step) {
 function dPanel(step) {
   switch (step) {
     case 'upload': return dUpload();
-    case 'findings': return dFindings();
-    case 'ask': return dAsk();
+    case 'check': return dCheck();
     case 'tasks': return dTasks();
-    case 'changes': return dChanges();
-    case 'people': return dPeople();
+    case 'members': return dMembers();
     case 'statement': return dStatement();
     default: return dApprove();
   }
@@ -198,6 +219,7 @@ function dBindPanel() {
   const app = $('dpanel'); if (!app) return;
   blBindLines(); blBindTasks(); blBindChanges();
   app.querySelectorAll('[data-go]').forEach(b => b.onclick = () => dGo(b.dataset.go));
+  app.querySelectorAll('details.lchk > summary').forEach(x => x.onclick = () => { const d = x.parentNode; DOOR.chk[d.id] = !d.open; });   // a tap, never the drawing, is remembered
   const dn = $('dDone'); if (dn) dn.onclick = () => backToList();
   app.querySelectorAll('[data-ans]').forEach(b => b.onclick = () => dAnswer(b.dataset.ans, b.dataset.v, b));
   app.querySelectorAll('[data-upd]').forEach(b => b.onclick = () => dPostUpdate(b.dataset.upd, b));
@@ -207,18 +229,20 @@ function dBindPanel() {
   app.querySelectorAll('[data-enrol]').forEach(b => b.onclick = () => blFormPanel(b.dataset.enrol || '', '', null, 'enrol'));
   const pdf = $('dPdf'); if (pdf) pdf.onclick = dPdf;
   const ml = $('dMail'); if (ml) ml.onclick = dMail;
+  const ib = $('dInbox'); if (ib) ib.onclick = dInbox;
   const ai = $('dAiGo'); if (ai) ai.onclick = () => { DOOR.aiRead = null; dAiRead(true); };
 }
 function dAfterDraw(step) {
-  if (step === 'findings') dAiRead(false);
-  if (step === 'ask' && !DOOR.ask) dLoad('ask');
-  if (step === 'tasks' && !DOOR.upd) dLoad('upd');
-  if (step === 'people' && !DOOR.people) dLoad('people');
+  if (step === 'check') { dAiRead(false); if (!DOOR.ask && !DOOR.loading.ask) dLoad('ask'); }
+  if (step === 'tasks' && !DOOR.upd && !DOOR.loading.upd) dLoad('upd');
+  if (step === 'members' && !DOOR.people && !DOOR.loading.people) dLoad('people');
   if (step === 'statement') { DOOR.seenStmt = true; if (!DOOR.stmt) dLoad('stmt'); else dDrawStrip(); }
 }
-/** The four slow reads start the moment the door opens, so the badges fill in while the first step is being worked. */
-function dPrefetch() { if (!BILL.lines.some(o => o.bill)) return; ['ask', 'upd', 'people', 'stmt'].forEach(k => { if (!DOOR[k] && !DOOR.loading[k]) dLoad(k); }); }
-const D_ROUTE = { ask: 'gcm.billAsk', upd: 'gcm.billTaskUpdates', people: 'gcm.billPeople', stmt: 'gcm.billStatement' }, D_STEP = { ask: 'ask', upd: 'tasks', people: 'people', stmt: 'statement' };
+/** Only the questions are read ahead, for the step the door usually opens on. Last month's tasks, the members and the
+ *  statement are read when their step is opened (25 November 2026: until then all four started with the door, four
+ *  more reads of Salesforce, Chatter and the AI at once for steps that might not be opened). */
+function dPrefetch() { if (!BILL.lines.some(o => o.bill)) return; ['ask'].forEach(k => { if (!DOOR[k] && !DOOR.loading[k]) dLoad(k); }); }
+const D_ROUTE = { ask: 'gcm.billAsk', upd: 'gcm.billTaskUpdates', people: 'gcm.billPeople', stmt: 'gcm.billStatement' }, D_STEP = { ask: 'check', upd: 'tasks', people: 'members', stmt: 'statement' };
 async function dLoad(k) {
   const d = BILL, key = d.group.key, month = d.month; DOOR.loading[k] = true;
   const r = await api({ action: D_ROUTE[k], group: key, month });
@@ -234,7 +258,11 @@ async function dRefreshBill() {
   const d = await api({ action: 'gcm.billing', group: key, month });
   if (!d.ok || !BILL || BILL.group.key !== key || BILL.month !== month) return;
   const sig = dSig(d); BILL = d;
-  if (sig !== DOOR.sig) { DOOR.sig = sig; DOOR.stmt = null; if (step !== 'ask') DOOR.ask = null; dDrawStrip(); if (step !== 'ask') dDrawPanel(); }
+  if (sig !== DOOR.sig) {
+    DOOR.sig = sig; DOOR.stmt = null; DOOR.ask = null; dDrawStrip();
+    /* what was found keeps what is typed in it: its questions are read again and the step drawn once they are in */
+    if (step === 'check') dLoad('ask'); else dDrawPanel();
+  }
 }
 const dSfRow = o => { const rec = o.sf.rec; return '<div class="sfrow">' + (rec ? '<span class="chip"><i style="background:var(--bar)"></i>Salesforce ' + esc(rec.name) + ': billed ' + esc(blMoney(rec.billed)) + (rec.paid ? ', paid ' + esc(blMoney(rec.paid)) : ', nothing paid yet') + (rec.reconciled ? ' · reconciled' : '') + '</span>' : '<span class="chip warn"><i></i>No ' + esc(o.rt) + ' record for ' + esc(BILL.monthLabel) + ' in Salesforce</span>') + o.sf.pays.map(p => '<span class="chip good"><i></i>' + esc(blMoney(p.amount)) + ' paid ' + esc(dmy(p.paidOn)) + (p.method ? ' by ' + esc(p.method) : '') + '</span>').join('') + '</div>'; };
 
@@ -268,14 +296,30 @@ function dUploadCard(o) {
   return h + '</section>';
 }
 
-/* ── step 2: what was found ── */
-function dFindings() {
-  const d = BILL, withBill = d.lines.filter(o => o.bill);
-  let h = '<h3 class="ptitle">What the checks found</h3><p class="plead">Every bill against Salesforce: the month’s record and its amount, the arrears, every member on the bill and on the record, who joined or left, the back-charges, the rates, the list bill. Fix what is marked <b>fix</b>, confirm what is marked <b>check</b>; the rest is for the record. The AI reads the whole month for you first.</p>';
-  if (!withBill.length) return h + '<div class="dnote">No bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>' + dNav('findings');
+/* ── step 2: what was found, and the questions it asks ── */
+const dInner = h => h.replace(/^<h3 class="ptitle">[\s\S]*?<\/h3><p class="plead">[\s\S]*?<\/p>/, '');
+function dCheck() {
+  const d = BILL, withBill = d.lines.filter(o => o.bill), A = DOOR.ask;
+  let h = '<h3 class="ptitle">What was found</h3><p class="plead">Every bill checked against Salesforce. Answer each question with one tap: the answer goes onto the line’s billing task under your name, settles what was found, or opens what comes next. Every check is underneath, line by line.</p>';
+  if (!withBill.length) return h + '<div class="dnote">No bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>' + dNav('check');
   if (d.ai) h += '<div id="blAiBox">' + (DOOR.aiRead ? dAiHtml(DOOR.aiRead) : '<div class="drawer ai"><p class="muted" style="margin:0">' + (DOOR.aiBusy ? 'Reading this month with AI: the findings as counts, the Salesforce figures, the open tasks…' : 'The AI read of this month comes here.') + '</p></div>') + '</div>';
-  withBill.forEach(o => { h += '<section class="bline" id="line-' + o.line + '"><div class="blt"><h3>' + esc(o.label) + '</h3>' + blSteps(o.steps) + '</div>' + dSfRow(o) + blSfwPanel(o) + blFindings(o) + '</section>'; });
-  return h + dNav('findings');
+  h += '<h3 class="blsec">The questions</h3>' + dInner(dAsk(true));
+  h += '<h3 class="blsec" style="margin-top:20px">Every check, line by line</h3>';
+  h += withBill.map(o => {
+    const R = o.bill.resolved || {}, F = (o.bill.findings || []).filter(f => !R[f.id]), fx = F.filter(f => f.level === 'fix').length, ck = F.filter(f => f.level === 'check').length;
+    const kept = DOOR.chk['line-' + o.line], open = kept != null ? kept : (fx || ck) && !(A && A.ok && A.questions.length);   // the questions carry them; the list opens itself when there are none, and stays as it was left
+    return '<details class="lchk" id="line-' + o.line + '"' + (open ? ' open' : '') + '><summary><b>' + esc(o.label) + '</b><span class="muted small">' + (fx ? fx + ' to fix' : '') + (fx && ck ? ' · ' : '') + (ck ? ck + ' to confirm' : '') + (!fx && !ck ? 'nothing open' : '') + '</span></summary>' +
+      blSteps(o.steps) + dSfRow(o) + blSfwPanel(o) + blFindings(o) + '</details>';
+  }).join('');
+  return h + dNav('check');
+}
+
+/* ── step 4: the members ── */
+function dMembers() {
+  let h = '<h3 class="ptitle">The members</h3><p class="plead">Who joined, left or changed on this month’s bills, and everyone on them matched to Salesforce: who turns 65, which dependants come of age, who retires, and the records to put right. Record a change, fill Guardian’s own form, or open a task.</p>';
+  h += '<h3 class="blsec">Terminations, enrolments and changes</h3>' + dInner(dChanges(true));
+  h += '<h3 class="blsec" style="margin-top:20px">The people on the bills</h3>' + dInner(dPeople(true));
+  return h + dNav('members');
 }
 function dAiHtml(r) {
   if (!r.ok) return '<div class="note bad">' + esc(r.error) + ' <button class="lnk" type="button" id="dAiGo">Try again</button></div>';
@@ -294,19 +338,19 @@ async function dAiRead(force) {
 }
 
 /* ── step 3: the questions ── */
-function dAsk() {
+function dAsk(inner) {
   const d = BILL, A = DOOR.ask, can = d.canAct !== false;
   let h = '<h3 class="ptitle">Answer the questions</h3><p class="plead">The checks ask what only a person knows, and the AI adds its own from the figures. One tap answers each. Every answer goes onto the line’s billing task in Salesforce under your name, settles the finding it came from, or opens what comes next: a task, a payment, the termination form.</p>';
-  if (!d.lines.some(o => o.bill)) return h + '<div class="dnote">No bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>' + dNav('ask');
-  if (!A) return h + '<div class="dnote"><p class="muted" style="margin:0">Reading the findings and asking the AI…</p></div>' + dNav('ask');
-  if (!A.ok) return h + '<div class="note bad">' + esc(A.error) + '</div>' + dNav('ask');
+  if (!d.lines.some(o => o.bill)) return h + '<div class="dnote">No bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>' + (inner ? '' : dNav('ask'));
+  if (!A) return h + '<div class="dnote"><p class="muted" style="margin:0">Reading the findings and asking the AI…</p></div>' + (inner ? '' : dNav('ask'));
+  if (!A.ok) return h + '<div class="note bad">' + esc(A.error) + '</div>' + (inner ? '' : dNav('ask'));
   const left = A.total - A.answered;
   h += '<div class="prog"><span>' + A.answered + ' of ' + A.total + ' answered</span><div class="track"><div class="fill" style="width:' + (A.total ? Math.round(100 * A.answered / A.total) : 100) + '%"></div></div></div>';
   if (A.aiError) h += '<div class="note">The AI could not add its questions: ' + esc(A.aiError) + '</div>';
   if (!A.questions.length) h += '<div class="dnote" style="border-left:4px solid var(--good)">' + esc(A.said) + '</div>';
   else if (!left) h += '<div class="dnote" style="border-left:4px solid var(--good)"><b>Every question is answered.</b> Change an answer below if something turns out differently.</div>';
   h += A.questions.map(q => dQCard(q, can)).join('');
-  return h + dNav('ask');
+  return h + (inner ? '' : dNav('ask'));
 }
 function dQCard(q, can) {
   const a = q.answered, lvl = q.kind === 'ai' ? 'ai' : (q.level || 'note');
@@ -341,12 +385,29 @@ function dNext(n, q) {
   if (n.kind === 'reup') { BILL_READ[n.line] = { part: null, names: [], warnings: [], again: true }; dGo('upload'); const b = $('preview-' + n.line); if (b) b.innerHTML = ''; toast('Upload the ' + (BL_LABEL[n.line] || '') + ' bill again.'); }
   else if (n.kind === 'fix' && (n.fix === 'sfAmount' || n.fix === 'sfWrite')) { toast('Writing to Salesforce…'); post({ action: 'gcm.billAct', group: BILL.group.key, line: n.line, month: BILL.month, act: n.fix }).then(r => { toast(r.ok ? r.said : (r.error || 'Not set'), !r.ok); if (r.ok) { DOOR.ask = null; dRefreshBill().then(() => dLoad('ask')); } }); }
   else if (n.kind === 'pay') blPayment(n.line, n.month || BILL.month, n.amount);
-  else if (n.kind === 'task') { blTaskPanel(n.line || 'health', /^a\d+$/.test(q.id) ? '' : q.id); dPreset(n.task, n.member || ''); }
+  else if (n.kind === 'task') { const fid = /^a\d+$/.test(q.id) ? '' : q.id; if (fid) blTaskPanel(n.line || 'health', fid, n.task, n.member || ''); else { blTaskPanel(n.line || 'health', ''); dPreset(n.task, n.member || ''); } }
   else if (n.kind === 'leavers') { const M = n.members || []; blFormPanel(M[0] ? blNice(M[0]) : '', 'terminate', null, 'change'); if (M.length > 1) toast('One form a person: ' + M.map(blNice).join(', ') + '.'); }
 }
 function dPreset(kind, member) {
   const chip = document.querySelector('#tkKinds .chip[data-kind="' + kind + '"]'); if (chip) chip.click();
   const m = $('tkMember'); if (m && member) { m.value = member; m.dispatchEvent(new Event('input')); }
+}
+
+/* the group's own e-mails to support@ about money: asked for, never read when the door opens (25 November 2026) */
+function dInboxHtml() {
+  const d = BILL, ib = DOOR.inbox || d.inbox;
+  if (ib && !ib.onAsk) return blInboxHtml(Object.assign({}, d, { inbox: ib })) + (ib.said ? '<p class="small muted">' + esc(ib.said) + '</p>' : '');
+  return '<h3 class="blsec">The group’s e-mails to support@ about money <span class="muted small">last 60 days</span></h3>' +
+    '<p class="small" id="dInboxBox"><button class="btn sm ghost" type="button" id="dInbox">Look in support@ for ' + esc(d.group.name) + '’s e-mails</button> <span class="muted">Only this group’s mail is asked for, by its contact’s address and company domain.</span></p>';
+}
+async function dInbox() {
+  const b = $('dInbox'); if (b) { b.disabled = true; b.textContent = 'Looking…'; }
+  const key = BILL.group.key, month = BILL.month;
+  const r = await api(Object.assign({ action: 'gcm.billing', group: key, month, inbox: 'Y' }, DOOR.inboxFresh ? { fresh: 'Y' } : {}));
+  DOOR.inboxFresh = false;
+  if (!BILL || BILL.group.key !== key || BILL.month !== month) return;
+  DOOR.inbox = r.ok && r.inbox ? r.inbox : { ok: false, mails: [], error: r.error || 'the inbox could not be read' };
+  if (DOOR.step === 'tasks') dDrawPanel();
 }
 
 /* ── step 4: last month's tasks, read against this month ── */
@@ -364,7 +425,7 @@ function dTasks() {
     if (U.feedError) h += '<div class="note bad">Chatter could not be read: ' + esc(U.feedError) + '</div>';
     h += U.tasks.map(t => dUCard(t, can)).join('');
   }
-  h += blInboxHtml(d);
+  h += dInboxHtml();
   return h + dNav('tasks');
 }
 function dUCard(t, can) {
@@ -406,21 +467,21 @@ function dMoreOnTask(id) {
 }
 
 /* ── step 5: terminations and changes ── */
-function dChanges() {
+function dChanges(inner) {
   const d = BILL, cnt = k => d.lines.reduce((n, o) => n + (o.bill ? (o.bill.findings || []).filter(f => f.kind === k).reduce((s, f) => s + ((f.members || []).length || 1), 0) : 0), 0);
   let h = '<h3 class="ptitle">Terminations, enrolments and changes</h3><p class="plead">What this month’s bills show against last month’s, and everything reported from the bills, the group’s page and this desk. Record a change to open the task for whoever acts on it, or fill Guardian’s own form from the record: EB0010 to terminate or change a member, GIO001 to enrol one, EASI Collect for the claim payment account.</p>';
   if (d.lines.some(o => o.bill)) h += '<div class="dtiles"><div class="dtile good"><b>' + cnt('joined') + '</b><span>joined since last month, on the bills</span></div><div class="dtile warn"><b>' + cnt('left') + '</b><span>came off the bills</span></div><div class="dtile"><b>' + cnt('moved') + '</b><span>changed tier or premium</span></div><div class="dtile act"><b>' + (d.changes || []).filter(c => /^(joiner|leaver|tier|dependent)$/.test(c.kind) && (c.effective || '').slice(0, 7) === d.month).length + '</b><span>recorded for ' + esc(d.monthLabel) + '</span></div></div>';
   h += blChangesHtml(d).replace(/^<h3 class="blsec">[\s\S]*?<\/h3>/, '');
-  return h + dNav('changes');
+  return h + (inner ? '' : dNav('changes'));
 }
 
 /* ── step 6: the people ── */
-function dPeople() {
+function dPeople(inner) {
   const d = BILL, P = DOOR.people, can = d.canAct !== false;
   let h = '<h3 class="ptitle">The people on the bills</h3><p class="plead">Everyone on the health and life bills, matched to their Salesforce record: their dependants, who turns 65 (the group cover ends and an individual plan is offered), which dependants reach the dependant age, who retires on the company pension within five years, and the records to put right. The group’s page shows counts only; the names stay here.</p>';
-  if (!d.lines.some(o => o.bill && o.line !== 'listbill')) return h + '<div class="dnote">No health or life bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>' + dNav('people');
-  if (!P) return h + '<div class="dnote"><p class="muted" style="margin:0">Matching every member to Salesforce…</p></div>' + dNav('people');
-  if (!P.ok) return h + '<div class="note bad">' + esc(P.error) + '</div>' + dNav('people');
+  if (!d.lines.some(o => o.bill && o.line !== 'listbill')) return h + '<div class="dnote">No health or life bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>' + (inner ? '' : dNav('people'));
+  if (!P) return h + '<div class="dnote"><p class="muted" style="margin:0">Matching every member to Salesforce…</p></div>' + (inner ? '' : dNav('people'));
+  if (!P.ok) return h + '<div class="note bad">' + esc(P.error) + '</div>' + (inner ? '' : dNav('people'));
   const c = P.counts;
   if (!P.salesforce) h += '<div class="note bad">Salesforce is not linked' + (P.sfError ? ': ' + esc(P.sfError) : '') + ', so nobody can be matched to a record.</div>';
   h += '<div class="dtiles"><div class="dtile"><b>' + c.members + '</b><span>on the bills</span></div><div class="dtile"><b>' + c.matched + '</b><span>matched to Salesforce</span></div><div class="dtile act"><b>' + c.convert + '</b><span>turning ' + P.convertAge + ': convert</span></div><div class="dtile act"><b>' + c.depAge + '</b><span>dependants reaching ' + P.depAge + '</span></div>' +
@@ -432,7 +493,7 @@ function dPeople() {
   if (P.onRecord && P.onRecord.length) h += '<h3 class="blsec" style="margin-top:18px">On record, not on these bills <span class="muted small">' + P.onRecord.length + '</span></h3><p class="small muted" style="margin:0 0 8px">From the Group Milestones tab: the pension plans and anyone the bills do not carry.</p><ul class="feed">' + P.onRecord.map(r => '<li><b>' + esc(r.person) + '</b>' + (r.member ? ' (dependant of ' + esc(r.member) + ')' : '') + ' · ' + esc(({ convert65: 'turns ' + P.convertAge, dependent: 'dependant reaches ' + P.depAge, retire: 'retires' + (r.ownership ? ' on the ' + (r.ownership === 'Company' ? 'company' : 'personal') + ' pension' : ''), nodob: 'no date of birth on record' })[r.kind] || r.kind) + (r.date ? ' · ' + esc(dmy(r.date)) + (r.inDays != null ? ' (' + (r.inDays >= 0 ? 'in ' + r.inDays : Math.abs(r.inDays) + ' days ago') + (r.inDays >= 0 ? ' days' : '') + ')' : '') : '') + (r.task ? ' · ' + esc(r.task) : '') + (r.assumed ? ' · assumed age' : '') + '</li>').join('') + '</ul>';
   h += '<details class="hist" style="margin-top:14px"><summary>Everyone on the bills <span class="n">' + P.people.length + '</span></summary><div class="scroll"><table class="t small"><thead><tr><th>Member</th><th>Lines</th><th>Tier</th><th class="num">Age</th><th>Dependants on record</th><th>Record</th></tr></thead><tbody>' +
     P.people.map(p => '<tr><td><b>' + esc(p.name) + '</b></td><td>' + p.lines.map(l => esc(BL_LABEL[l] || l)).join(', ') + '</td><td>' + esc(p.tier || '–') + '</td><td class="num">' + (p.age == null ? '–' : p.age) + '</td><td>' + (p.deps.length ? p.deps.map(x => esc(x.name) + (x.rel ? ' (' + esc(String(x.rel).toLowerCase()) + (x.age != null ? ', ' + x.age : '') + ')' : '')).join(', ') : '–') + '</td><td>' + (p.sf ? '<span class="chip good"><i></i>matched</span>' : '<span class="chip bad"><i></i>no record</span>') + '</td></tr>').join('') + '</tbody></table></div></details>';
-  return h + dNav('people');
+  return h + (inner ? '' : dNav('people'));
 }
 function dLetterSent(kind, name) { return DOOR.letters[kind + '|' + name] || (BILL.changes || []).some(c => c.kind === 'letter' && c.note === kind && blSame(c.member, name)); }
 const blSame = (a, b) => { const k = s => String(s || '').toLowerCase().replace(/[^a-z]/g, ''); const x = k(a), y = k(b); return !!x && (x === y || (String(a || '').split(/[\s,]+/).filter(Boolean).every(w => k(b).indexOf(k(w)) >= 0))); };

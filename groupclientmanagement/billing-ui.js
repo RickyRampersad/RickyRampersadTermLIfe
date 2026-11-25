@@ -281,54 +281,128 @@ function blLineTasks(o) {
   h += list.length ? '<div class="items">' + list.map(blTaskCard).join('') + '</div>' : '<p class="small muted">No open billing task on this line' + (can ? ': open one for whoever should act, or for the account owner.' : '.') + '</p>';
   return h + '</div>';
 }
-/** The guided panel. */
-function blTaskPanel(line, fid) {
+/** A task from a finding, written from the finding's own figures: no [blanks] to fill (25 November 2026: "it's taking too
+ *  long to log a task and there's unnecessary information"). The note says what the check found, member by member when it
+ *  names members, and what the person is asked to do; the kind follows the finding, or the answer that opened it. */
+/* a name as the check writes it (gblNice_): "SURNAME, FIRST" or "SURNAME; FIRST" reads "First Surname" */
+const blName = s => { s = String(s || '').replace(/\s*;\s*/, ', ').trim(); const cap = x => x.toLowerCase().replace(/(^|[\s'’-])([a-z])/g, (q, p, c) => p + c.toUpperCase()); const m = /^(.+?),\s*(.+)$/.exec(s); return m ? cap(m[2]) + ' ' + cap(m[1]) : cap(s); };
+function blQuick(f, o, preset) {
+  const d = BILL, line = o.line, lab = BL_LABEL[line] || 'Billing', mon = blMon(d.month), fd = f.data || {}, M = f.members || [];
+  const lead = (f.text.split(/:\s|\.\s/)[0] || f.text).replace(/\.$/, '');
+  const short = lead.length > 72 ? lead.slice(0, 72).replace(/\s+\S*$/, '') + '…' : lead;
+  let kind = preset && BL_TASKS[preset] ? preset : '', member = '', eff = '', amount = '', subject = '', ask = '';
+  /* one person, from the bill's credits or the statement: the branch's own subject pattern, a joiner or a leaver */
+  if (fd.name && /^(joiner|leaver)$/.test(fd.kind)) {
+    kind = fd.kind; member = blName(fd.name); eff = fd.month ? String(fd.month).slice(0, 7) + '-01' : ''; amount = fd.amount != null ? Number(fd.amount).toFixed(2) : '';
+    subject = lab + (kind === 'leaver' ? ' Termination – ' : ' Member Enrolment – ') + member + ' – ' + d.group.name + (eff ? ' – effective ' + dmy(eff) : '');
+    ask = kind === 'leaver' ? 'Please confirm the termination and its date with the group, end the member’s ' + lab + ' policy record in Salesforce, and note on this task who confirmed it.'
+                            : 'Please confirm the change with the group, add or update the member’s ' + lab + ' policy record in Salesforce, and note on this task who confirmed it.';
+    return { kind, member, eff, amount, subject, text: 'On the ' + mon + ' ' + lab + ' bill: ' + f.text + '\n\n' + ask };
+  }
+  if (!kind) kind = f.kind === 'tier' || f.kind === 'notInSf' || f.kind === 'inSfOnly' || f.kind === 'status' ? 'data' : f.action === 'sfWrite' || f.action === 'sfAmount' ? 'amount' : blKindOf(f);
+  if (/^(joiner|leaver|tier|dependent|convert|depage)$/.test(kind) && M.length !== 1) kind = kind === 'tier' ? 'tier' : 'data';
+  if (M.length === 1) member = blName(M[0].name);
+  const row = m => '• ' + blName(m.name) + (m.bill != null && m.sf != null ? ': the bill ' + blMoney(m.bill) + ', Salesforce ' + blMoney(m.sf)
+    : (m.id ? ' (' + m.id + ')' : '') + (m.start ? ', from ' + dmy(m.start) : '') + (m.tier ? ', ' + m.tier : '') + (m.premium != null ? ', ' + blMoney(m.premium) : '') + (m.issued ? ', issued ' + dmy(m.issued) : ''));
+  const what = M.length ? lead + ' on the ' + mon + ' ' + lab + ' bill:\n' + M.map(row).join('\n') : 'On the ' + mon + ' ' + lab + ' bill: ' + f.text;
+  if (f.kind === 'tier') ask = preset === 'tier' ? 'These are tier changes. Please update each member’s ' + lab + ' policy record in Salesforce to the tier and premium on the bill, and note on this task what was changed.'
+    : preset === 'rate' ? 'Salesforce has the right tier for these, so the bill looks wrong. Please query the premiums with Head Office and note on this task what they say.'
+    : 'Please check each against the member’s tier on the bill. Where the bill is right, update the ' + lab + ' policy record in Salesforce; where it is not, query the premium with Head Office. Note on this task what was done for each.';
+  else if (f.kind === 'notInSf') ask = 'Please add their ' + lab + ' policy records in Salesforce, or confirm with the group that they are not on this plan. Note on this task what was done.';
+  else if (f.kind === 'inSfOnly') ask = 'Please confirm with the group whether each has left. Mark the policies of those who left; for anyone who should still be covered, query Head Office. Note on this task what was done.';
+  else if (f.action === 'sfWrite' || f.action === 'sfAmount') ask = 'Please bring the ' + lab + ' billing record for ' + mon + ' in Salesforce in line with the bill, or note on this task why the bill is wrong.';
+  else ask = { salesforce: 'Please put the Salesforce record right and note on this task what was changed.', headoffice: 'Please query it with Head Office and note on this task what they say.',
+               group: 'Please ask the group and note on this task what they say.' }[f.who] || 'Please look into it and note on this task what was done.';
+  subject = lab + ' Billing – ' + d.group.name + ' – ' + mon + ' – ' + short;
+  return { kind, member, eff, amount, subject, text: what + (M.length || /[.:!?]$/.test(what) ? '' : '.') + '\n\n' + ask };
+}
+/** The task panel. From a finding (fid) it is one short screen: who it is for, by when, and the note written from the
+ *  finding; the kind, subject and the rest are folded under "Change the details". Opened on its own it is the guided
+ *  panel, the kind's prompts and its [blanks]. preset: the kind an answer chose; member: a person to put on it. */
+let BL_TP_LAST = null;
+function blTaskPanel(line, fid, preset, presetMember) {
   const d = BILL, o = d.lines.find(x => x.line === line) || d.lines[0], f = fid && o && o.bill ? (o.bill.findings || []).find(x => x.id === fid) : null;
   line = o ? o.line : 'health';
-  const people = d.people || [], owner = people.find(p => p.owner), kind0 = f ? blKindOf(f) : 'other', fd = Object.assign({}, (f && f.data) || {});
-  if (!fd.name && f && f.members && f.members.length === 1) { fd.name = f.members[0].name; if (fd.amount == null && f.members[0].premium != null) fd.amount = f.members[0].bill != null ? f.members[0].bill : f.members[0].premium; if (!fd.month && f.members[0].start) fd.month = String(f.members[0].start).slice(0, 7); }
+  const people = d.people || [], owner = people.find(p => p.owner), Q = f ? blQuick(f, o, preset) : null;
+  const kind0 = Q ? Q.kind : (preset && BL_TASKS[preset] ? preset : 'other'), fd = Object.assign({}, (f && f.data) || {});
+  if (Q) { fd.name = Q.member || ''; fd.amount = Q.amount; fd.month = Q.eff ? Q.eff.slice(0, 7) : ''; }
+  if (presetMember) fd.name = presetMember;
+  const keep = BL_TP_LAST && BL_TP_LAST.fid === (fid || '') && BL_TP_LAST.line === line ? BL_TP_LAST : null;   // what was typed, when a send failed
   $('dlgT').textContent = 'Open a task · ' + d.group.name;
-  $('dlgB').innerHTML = '<div class="tsteps">' +
-    '<section class="tstep"><h4><span class="n">1</span>What is it about?</h4><div class="chips kinds" id="tkKinds">' + Object.keys(BL_TASKS).map(k => '<button type="button" class="chip' + (k === kind0 ? ' on' : '') + '" data-kind="' + k + '">' + esc(BL_TASKS[k].label) + '</button>').join('') + '</div>' +
-      '<div class="grid4"><label class="sel">Line <select id="tkLine">' + d.lines.map(x => '<option value="' + x.line + '"' + (x.line === line ? ' selected' : '') + '>' + esc(x.label) + '</option>').join('') + '</select></label>' +
-      '<label class="sel">Person, if it is about one member <input class="field" id="tkMember" value="' + esc(fd.name || '') + '" placeholder="Surname, first name"></label><label class="sel">Effective <input class="field" type="date" id="tkEff" value="' + esc(fd.month ? fd.month + '-01' : '') + '"></label><label class="sel">Amount (TT$) <input class="field" type="number" step="0.01" id="tkAmount" value="' + esc(fd.amount != null ? fd.amount : '') + '"></label></div>' +
-      '<label class="sel">Subject, in the branch’s pattern <input class="field" id="tkSubject" maxlength="255"></label></section>' +
-    '<section class="tstep"><h4><span class="n">2</span>Who should act on it?</h4><select class="field" id="tkTo">' + (people.length ? people.map(p => '<option value="' + esc(p.id) + '"' + (p.owner ? ' selected' : '') + '>' + esc(p.name) + (p.owner ? ' · looks after this account' : p.me ? ' · you' : '') + '</option>').join('') : '<option value="">Nobody with a Salesforce login was found</option>') + '</select>' +
-      (owner ? '<p class="small muted">' + esc(owner.name) + ' looks after this account in Salesforce, so the task goes to them unless you pick someone else.</p>' : '<p class="small muted">' + esc(d.group.assigned || 'The account owner') + ' has no active Salesforce login, so the task cannot go to them: pick someone else.</p>') + '</section>' +
-    '<section class="tstep"><h4><span class="n">3</span>By when?</h4><div class="uprow"><label class="sel">Due <input class="field" type="date" id="tkDue"></label><label class="sel">Priority <select id="tkPri"><option>Normal</option><option>High</option></select></label><span class="small muted" id="tkDueWhy"></span></div></section>' +
-    '<section class="tstep"><h4><span class="n">4</span>What do they need to know?</h4><ul class="ask" id="tkAsk"></ul><textarea class="field" id="tkText" rows="6" maxlength="4000"></textarea>' + (f ? '<p class="small"><b>From the check:</b> ' + esc(f.text) + '</p>' : '') +
+  const who = '<label class="sel">For <select class="field" id="tkTo">' + (people.length ? people.map(p => '<option value="' + esc(p.id) + '"' + (p.owner ? ' selected' : '') + '>' + esc(p.name) + (p.owner ? ' · looks after this account' : p.me ? ' · you' : '') + '</option>').join('') : '<option value="">Nobody with a Salesforce login was found</option>') + '</select></label>';
+  const due = '<label class="sel">Due <input class="field" type="date" id="tkDue"></label>';
+  const pri = '<label class="sel">Priority <select class="field" id="tkPri"><option>Normal</option><option>High</option></select></label>';
+  const ownerNote = owner ? '' : '<p class="small muted">' + esc(d.group.assigned || 'The account owner') + ' has no active Salesforce login, so pick someone else.</p>';
+  const details = '<div class="chips kinds" id="tkKinds">' + Object.keys(BL_TASKS).map(k => '<button type="button" class="chip' + (k === kind0 ? ' on' : '') + '" data-kind="' + k + '">' + esc(BL_TASKS[k].label) + '</button>').join('') + '</div>' +
+    '<div class="grid4"><label class="sel">Line <select id="tkLine">' + d.lines.map(x => '<option value="' + x.line + '"' + (x.line === line ? ' selected' : '') + '>' + esc(x.label) + '</option>').join('') + '</select></label>' +
+    '<label class="sel">Person, if it is about one member <input class="field" id="tkMember" value="' + esc(fd.name || '') + '" placeholder="Surname, first name"></label><label class="sel">Effective <input class="field" type="date" id="tkEff" value="' + esc(fd.month ? fd.month + '-01' : '') + '"></label><label class="sel">Amount (TT$) <input class="field" type="number" step="0.01" id="tkAmount" value="' + esc(fd.amount != null ? fd.amount : '') + '"></label></div>' +
+    '<label class="sel">Subject, in the branch’s pattern <input class="field" id="tkSubject" maxlength="255"></label>';
+  if (Q) $('dlgB').innerHTML = '<div class="tquick">' +
+      '<div class="grid3">' + who + due + pri + '</div>' + ownerNote +
+      '<label class="sel" for="tkText">The task, as they will read it</label><textarea class="field" id="tkText" rows="9" maxlength="4000"></textarea>' +
+      '<details class="tmore"><summary>Change the details: the kind, the subject, one member, the amount</summary><ul class="ask" id="tkAsk" hidden></ul>' + details + '</details>' +
+      '<p class="small muted">It goes onto the account in Salesforce under your name, the finding is marked done, and the person is told by e-mail from support@.</p></div>' +
+    '<div class="row"><button class="btn" type="button" id="tkGo">Open the task</button><button class="btn ghost" type="button" id="tkCancel">Cancel</button></div>';
+  else $('dlgB').innerHTML = '<div class="tsteps">' +
+    '<section class="tstep"><h4><span class="n">1</span>What is it about?</h4>' + details + '</section>' +
+    '<section class="tstep"><h4><span class="n">2</span>Who should act on it?</h4>' + who.replace('<label class="sel">For ', '<label class="sel">') +
+      (owner ? '<p class="small muted">' + esc(owner.name) + ' looks after this account in Salesforce, so the task goes to them unless you pick someone else.</p>' : ownerNote) + '</section>' +
+    '<section class="tstep"><h4><span class="n">3</span>By when?</h4><div class="uprow">' + due + pri + '<span class="small muted" id="tkDueWhy"></span></div></section>' +
+    '<section class="tstep"><h4><span class="n">4</span>What do they need to know?</h4><ul class="ask" id="tkAsk"></ul><textarea class="field" id="tkText" rows="6" maxlength="4000"></textarea>' +
       '<p class="small muted">Fill in every [blank]. The task carries your name, the month and the line, goes onto the account in Salesforce, and the person is told by e-mail from support@.</p></section>' +
     '</div><div class="row"><button class="btn" type="button" id="tkGo">Open the task</button><button class="btn ghost" type="button" id="tkCancel">Cancel</button></div>';
   const touched = { subject: false, text: false };
+  let quick = !!Q;   // the note is the finding's until a kind is picked by hand
   const fillers = () => ({ line: BL_LABEL[$('tkLine').value] || 'Billing', group: d.group.name, month: blMon(d.month), member: $('tkMember').value.trim() || '[name]', date: $('tkEff').value ? dmy($('tkEff').value) : '[date]', amount: $('tkAmount').value ? Number($('tkAmount').value).toFixed(2) : '[amount]', eff: $('tkEff').value ? ' – effective ' + dmy($('tkEff').value) : '' });
   const fill = s => { const F = fillers(); return s.replace(/\{(\w+)\}/g, (m, k) => F[k] != null ? F[k] : m); };
   const kindNow = () => { const b = $('tkKinds').querySelector('.chip.on'); return b ? b.dataset.kind : 'other'; };
   const draw = () => {
     const K = BL_TASKS[kindNow()];
-    if (!touched.subject) $('tkSubject').value = fill(K.subj);
-    if (!touched.text) $('tkText').value = fill(K.text) + (f && !/^(joiner|leaver)$/.test(kindNow()) ? '\n\nWhat the check found: ' + f.text : '');
-    $('tkAsk').innerHTML = K.ask.map(x => '<li>' + esc(x) + '</li>').join('');
-    $('tkDue').value = blWorkDays(K.days); $('tkDueWhy').textContent = K.days + ' working days, as the branch standard; change it if it must be sooner.';
+    if (!touched.subject) $('tkSubject').value = quick ? Q.subject : fill(K.subj);
+    if (!touched.text) $('tkText').value = quick ? Q.text : fill(K.text) + (f && !/^(joiner|leaver)$/.test(kindNow()) ? '\n\nWhat the check found: ' + f.text : '');
+    $('tkAsk').innerHTML = K.ask.map(x => '<li>' + esc(x) + '</li>').join(''); $('tkAsk').hidden = quick;
+    $('tkDue').value = blWorkDays(K.days); const why = $('tkDueWhy'); if (why) why.textContent = K.days + ' working days, as the branch standard; change it if it must be sooner.';
   };
-  $('tkKinds').querySelectorAll('.chip').forEach(b => b.onclick = () => { $('tkKinds').querySelectorAll('.chip').forEach(x => x.classList.remove('on')); b.classList.add('on'); touched.subject = false; touched.text = false; draw(); });
-  ['tkLine', 'tkMember', 'tkEff', 'tkAmount'].forEach(id => $(id).oninput = $(id).onchange = draw);
+  $('tkKinds').querySelectorAll('.chip').forEach(b => b.onclick = () => { $('tkKinds').querySelectorAll('.chip').forEach(x => x.classList.remove('on')); b.classList.add('on'); quick = false; touched.subject = false; touched.text = false; draw(); });
+  ['tkLine', 'tkMember', 'tkEff', 'tkAmount'].forEach(id => $(id).oninput = $(id).onchange = () => { if (!quick) draw(); });
   $('tkSubject').oninput = () => touched.subject = true; $('tkText').oninput = () => touched.text = true;
-  $('tkCancel').onclick = () => dlg.close();
+  $('tkCancel').onclick = () => { BL_TP_LAST = null; dlg.close(); };
   draw();
+  if (keep) { $('tkSubject').value = keep.subject; $('tkText').value = keep.text; touched.subject = touched.text = true; if (keep.to) $('tkTo').value = keep.to; if (keep.due) $('tkDue').value = keep.due; }
   if (!dlg.open) dlg.showModal();
-  $('tkGo').onclick = async () => {
+  $('tkGo').onclick = () => {
     const subject = $('tkSubject').value.trim(), text = $('tkText').value.trim();
     if (!subject) return toast('The task needs a subject.', true);
     if (blBlank(subject) || blBlank(text)) return toast('Fill in every [blank] first.', true);
     if (text.length < 20) return toast('Say what the person needs to know.', true);
     if (!$('tkTo').value) return toast('Pick who should act on it.', true);
-    $('tkGo').disabled = true;
-    const r = await post({ action: 'gcm.billAct', group: d.group.key, line: $('tkLine').value, month: d.month, act: 'task', kind: kindNow(), subject, text, to: $('tkTo').value, due: $('tkDue').value, priority: $('tkPri').value, member: $('tkMember').value, effective: $('tkEff').value, amount: $('tkAmount').value, finding: fid || '' });
-    $('tkGo').disabled = false;
-    toast(r.ok ? r.said : (r.error || 'Not opened'), !r.ok);
-    if (r.ok) { dlg.close(); openBilling(d.group.key, d.month); }
+    const to = $('tkTo').value, toName = ($('tkTo').selectedOptions[0] || {}).textContent || 'them';
+    const body = { action: 'gcm.billAct', group: d.group.key, line: $('tkLine').value, month: d.month, act: 'task', kind: kindNow(), subject, text, to, due: $('tkDue').value, priority: $('tkPri').value, member: $('tkMember').value, effective: $('tkEff').value, amount: $('tkAmount').value, finding: fid || '' };
+    BL_TP_LAST = { fid: fid || '', line, subject, text, to, due: body.due };
+    blTaskSend(body, toName.split(' · ')[0], line, fid, preset, presetMember);
   };
 }
+/** The task goes while the page carries on: the panel closes at once, the finding shows it is on its way, and only that
+ *  finding changes when Salesforce answers. A send that fails opens the panel again with what was typed. */
+async function blTaskSend(body, toName, line, fid, preset, presetMember) {
+  dlg.close();
+  const o = BILL.lines.find(x => x.line === line), key = BILL.group.key, month = BILL.month;
+  blBusy('Opening the task for ' + toName + '…');
+  const fa = fid ? document.querySelector('[data-task="' + line + '"][data-f="' + fid + '"]') : null;
+  if (fa) fa.closest('.fa').innerHTML = '<span class="small muted">Opening the task for ' + esc(toName) + '…</span>';
+  const r = await post(body);
+  toast(r.ok ? r.said : (r.error || 'Not opened'), !r.ok);
+  if (!BILL || BILL.group.key !== key || BILL.month !== month) return;
+  if (!r.ok) { if (fa) blRedraw(); blTaskPanel(line, fid, preset, presetMember); return; }
+  BL_TP_LAST = null;
+  if (fid && o && o.bill && r.resolved) { o.bill.resolved = o.bill.resolved || {}; o.bill.resolved[fid] = { by: 'you', at: 'just now', note: 'Task opened for ' + (r.to || toName) }; }
+  blRedraw();
+  if (typeof dRefreshBill === 'function') dRefreshBill(); else openBilling(key, month);
+}
+/** A message that stays until the next one replaces it (toast() hides itself after a few seconds). */
+function blBusy(msg) { const t = $('toast'); if (!t) return; t.textContent = msg; t.className = 'toast on'; clearTimeout(t._t); }
+/** The open step drawn again from what the page holds, without a trip to the backend. */
+function blRedraw() { if (typeof dDrawStrip === 'function' && typeof dDrawPanel === 'function') { dDrawStrip(); dDrawPanel(); } else drawBilling(); }
 
 /* ── the EB0010 change form, filled from Salesforce: search a member, confirm the change, send to EB Customer Care ── */
 const BL_FORM_KINDS = [['terminate', 'Terminate the primary insured'], ['adddep', 'Add dependent(s)'], ['removedep', 'Remove dependent(s)'], ['address', 'Change of address'], ['beneficiary', 'Beneficiary change'], ['bank', 'Bank account for claim payments'], ['plan', 'Policy change (plan, deductible, major medical)']];
@@ -710,9 +784,15 @@ function blBindTasks() {
   const go = async (id, forGroup) => {
     const t = $('tn-' + id); if (!t.value.trim()) return toast('Write it first.', true);
     const n = app.querySelector('[data-notify="' + id + '"]');
-    const r = await post({ action: 'gcm.billAct', group: BILL.group.key, act: 'note', task: id, text: t.value, forGroup: forGroup ? 'Y' : '', notify: !forGroup && n && n.checked ? 'Y' : '' });
+    const said = t.value.trim(); t.disabled = true; blBusy('Posting…');
+    const r = await post({ action: 'gcm.billAct', group: BILL.group.key, act: 'note', task: id, text: said, forGroup: forGroup ? 'Y' : '', notify: !forGroup && n && n.checked ? 'Y' : '' });
+    t.disabled = false;
     toast(r.ok ? (forGroup ? 'Posted to Chatter, and shown to the group.' : (r.said || 'Posted to the task’s Chatter for the team.')) : (r.error || 'Not posted'), !r.ok);
-    if (r.ok) openBilling(BILL.group.key, BILL.month);
+    if (!r.ok) return;
+    /* the post shows on its card at once; nothing else on the page changed, so nothing is read again (25 November 2026) */
+    const task = (BILL.tasks || []).find(x => x.id === id);
+    if (task) { task.posts = [{ by: (typeof BOARD !== 'undefined' && BOARD && BOARD.me) || 'You', when: 'just now', text: (forGroup ? '' : 'Comment for the team: ') + said, replies: [] }].concat(task.posts || []); blRedraw(); }
+    else t.value = '';
   };
   app.querySelectorAll('[data-tcmt]').forEach(b => b.onclick = () => go(b.dataset.tcmt, false));
   app.querySelectorAll('[data-task]').forEach(b => b.onclick = () => blTaskPanel(b.dataset.task, b.dataset.f || ''));

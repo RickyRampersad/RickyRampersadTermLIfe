@@ -65,6 +65,7 @@ var GBL = {
   LABEL: { health: 'Group Health', life: 'Group Life', listbill: 'Pensions and life (list bill)' },
   GONE: /LAPSED|TERMINAT|CANCEL|SURRENDER|NPW|NOT PROCEED|EXPIRED|DECEASED|DEATH|^X$|^0$/i,
   CACHE_S: 600,
+  INBOX_S: 900,                         // a group's e-mails to support@, asked for from the door, kept a quarter of an hour (25 November 2026)
   AI_MAX_FINDINGS: 40
 };
 var GBL_HEAD = {
@@ -185,8 +186,8 @@ function gblSamePerson_(a, b) {
 
 /* ── Salesforce: what the branch holds about a group's billing ───────────────────────── */
 function gblSf_(g, fresh) {
-  var key = 'gbl-sf-' + g.key.slice(0, 40), cache = CacheService.getScriptCache();
-  if (!fresh) { try { var c = cache.get(key); if (c) return JSON.parse(c); } catch (e) {} }
+  var key = 'gbl-sf-' + g.key.slice(0, 40);
+  if (!fresh) { var c = gblCacheGet_(key); if (c) return c; }
   var out = { ok: tSfOn_(), trans: [], pays: [], health: [], life: [], list: [], users: {}, error: '' };
   if (!out.ok) { out.error = 'Salesforce is not linked to this project.'; return out; }
   try {
@@ -227,8 +228,42 @@ function gblSf_(g, fresh) {
       });
     }
   } catch (e) { out.error = String(e && e.message ? e.message : e).slice(0, 200); }
-  try { cache.put(key, JSON.stringify(out), GBL.CACHE_S); } catch (e2) {}
+  gblCachePut_(key, out, GBL.CACHE_S);
   return out;
+}
+/* A cache value holds 100 KB, and a big group's Salesforce read is more than that. On 25 November 2026 a group of about
+ * 330 member policies was the case: cache.put threw, the throw was swallowed, and every screen of the billings door
+ * (the page, the questions, last month's tasks, the people, the statement, the AI read) read Salesforce afresh, several
+ * at once. Its member list (gblMembers_) did the same. Now a value too big to keep whole is gzipped and kept in pieces
+ * under one pointer, the way tCachePutBig_ keeps the wall's answer; a piece gone is a miss, never a wrong answer. */
+var GBL_CACHE = { PLAIN: 90000, PIECE: 90000, MAX_PIECES: 20 };
+function gblCachePut_(key, obj, ttl) {
+  var cache, s;
+  try { cache = CacheService.getScriptCache(); s = JSON.stringify(obj); } catch (e) { return false; }
+  if (s.length <= GBL_CACHE.PLAIN) { try { cache.put(key, s, ttl); return true; } catch (e1) {} }
+  try {
+    var z = Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(s, 'application/json')).getBytes());
+    var n = Math.ceil(z.length / GBL_CACHE.PIECE);
+    if (n > GBL_CACHE.MAX_PIECES) return false;
+    var stamp = String(Date.now()), all = {};
+    for (var i = 0; i < n; i++) all[key + '.' + stamp + '.' + i] = z.slice(i * GBL_CACHE.PIECE, (i + 1) * GBL_CACHE.PIECE);
+    cache.putAll(all, ttl);
+    cache.put(key, 'gz:' + stamp + ':' + n, ttl);   // last, so the pointer never names pieces not yet written
+    return true;
+  } catch (e2) { return false; }
+}
+function gblCacheGet_(key) {
+  try {
+    var cache = CacheService.getScriptCache(), v = cache.get(key);
+    if (!v) return null;
+    var m = /^gz:(\d+):(\d+)$/.exec(v);
+    if (!m) return JSON.parse(v);
+    var keys = [];
+    for (var i = 0; i < Number(m[2]); i++) keys.push(key + '.' + m[1] + '.' + i);
+    var got = cache.getAll(keys), z = '';
+    for (var j = 0; j < keys.length; j++) { if (got[keys[j]] == null) return null; z += got[keys[j]]; }
+    return JSON.parse(Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(z), 'application/x-gzip')).getDataAsString());
+  } catch (e) { return null; }
 }
 function gblLineOfRt_(rt) {
   var u = String(rt || '').toUpperCase().replace(/\s+/g, '');
@@ -466,6 +501,7 @@ function gblView_(p) {
   if (!who.ok) return who;
   var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
   if (!g) return { ok: false, error: 'That group is not on the Group Register.' };
+  if (gcmYes_(p.inbox)) return { ok: true, inbox: gblInbox_(L, g, gcmYes_(p.fresh)) };   // asked for on its own, from Last month's tasks
   var today = L.today, sf = gblSf_(g, gcmYes_(p.fresh));
   var bills = gblBillRows_(g), month = /^\d{4}-\d{2}$/.test(String(p.month || '')) ? p.month : gblDefaultMonth_(bills, sf, today);
   var lines = gblLinesOf_(g, sf, bills);
@@ -495,7 +531,7 @@ function gblView_(p) {
   }).sort(function (a, b) { return (b.late - a.late) || ((b.age || 0) - (a.age || 0)); });
   out.feedError = feed._error || '';
   /* the group's e-mails to support@ about money, the last 60 days */
-  out.inbox = gblInbox_(L, g);
+  out.inbox = { ok: false, onAsk: true, mails: [], error: 'not read when the page opens, so it opens faster: press Look in support@ on Last month’s tasks' };
   out.people = gblPeople_(g, who);
   out.changes = gblChanges_(g).slice(-40).reverse();
   out.claimsUploaded = gblClaimsRows_(g).length > 0;
@@ -533,13 +569,45 @@ function gblIsBillingTask_(t) {
 /** The group's e-mails to support@ that read as billing: a subject with bill, premium, payment, invoice, statement or the
  *  line in it, from the contact or the company's domain, in the last 60 days. Read through the inbox reader the star
  *  reminder uses; never thrown. */
-function gblInbox_(L, g) {
+function gblInbox_(L, g, fresh) {
+  /* Never on the page's first read since 25 November 2026: the door asks for it (?inbox=Y) when someone presses "Look in
+     support@" on Last month's tasks. And never the whole inbox: Microsoft is asked only for mail from the group's own
+     addresses and its company's domain (until then, up to 60 days of every message to support@, a page of 100 at a time,
+     to find one group's few). Kept a quarter of an hour; "Read Salesforce again" asks again. */
   try {
-    var m = gcmMailIn_(L, Date.now() - 60 * 86400000);
-    if (!m.ok) return { ok: false, error: m.error, mails: [] };
-    var mails = (m.by[g.key] || []).filter(function (x) { return /bill|premium|payment|paid|invoice|statement|arrear|receipt|wire|transfer|cheque|pension|life|health/i.test(x.subject); }).slice(0, 12);
-    return { ok: true, mails: mails };
-  } catch (e) { return { ok: false, error: String(e && e.message ? e.message : e).slice(0, 120), mails: [] }; }
+    if (typeof tMsCreds_ !== 'function' || !tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up', mails: [] };
+    var key = 'gbl-inbox-' + g.key.slice(0, 40), hit = fresh ? null : gblCacheGet_(key);
+    if (hit) return hit;
+    var addrs = [], doms = [];
+    (g.to || []).concat(g.cc || []).forEach(function (a) {
+      a = String(a || '').trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(a) || /@(myguardiangroup\.com|rickyrampersadbranch\.com)$/.test(a)) return;
+      if (addrs.indexOf(a) < 0) addrs.push(a);
+      var d = a.split('@')[1];
+      if (d && !GCM_PUBLIC_MAIL.test(a) && doms.indexOf(d) < 0) doms.push(d);
+    });
+    if (!addrs.length) { var none = { ok: true, mails: [], said: 'No e-mail address for the group on the register or in Salesforce, so there was nothing to look for.' }; gblCachePut_(key, none, GBL.INBOX_S); return none; }
+    var terms = doms.map(function (d) { return 'from:' + d; }).concat(addrs.filter(function (a) { return doms.indexOf(a.split('@')[1]) < 0; }).map(function (a) { return 'from:' + a; }));
+    var since = Date.now() - 60 * 86400000, token = tMsToken_(), mails = [];
+    var url = 'https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(TRANSITION.MS_FROM) + '/mailFolders/inbox/messages?$select=id,subject,from,receivedDateTime&$top=50&$search=' +
+      encodeURIComponent('"' + terms.join(' OR ') + '"');
+    for (var pages = 0; url && pages < 3; pages++) {
+      var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + token } }), code = res.getResponseCode();
+      if (code !== 200) throw new Error('HTTP ' + code + (code === 403 ? ': the Entra app needs the Graph permission Mail.Read' : ''));
+      var j = JSON.parse(res.getContentText());
+      (j.value || []).forEach(function (m) {
+        var from = String(((m.from || {}).emailAddress || {}).address || '').toLowerCase(), ts = new Date(m.receivedDateTime).getTime(), subj = String(m.subject || '');
+        if (!(ts >= since) || (addrs.indexOf(from) < 0 && doms.indexOf(from.split('@')[1]) < 0)) return;
+        if (!/bill|premium|payment|paid|invoice|statement|arrear|receipt|wire|transfer|cheque|pension|life|health/i.test(subj)) return;
+        mails.push({ ts: ts, at: gcmWhen_(new Date(ts)), from: from, subject: subj.slice(0, 140), auto: GCM_RATE.AUTO_REPLY.test(subj) });
+      });
+      url = j['@odata.nextLink'] || '';
+    }
+    mails.sort(function (a, b) { return b.ts - a.ts; });
+    var out = { ok: true, mails: mails.slice(0, 12), looked: terms.length };
+    gblCachePut_(key, out, GBL.INBOX_S);
+    return out;
+  } catch (e) { return { ok: false, error: String(e && e.message ? e.message : e).slice(0, 160), mails: [] }; }
 }
 /** What to do next, in order, from where the lines stand: the page shows it at the top. */
 function gblGuide_(v) {
@@ -1012,18 +1080,27 @@ function gblSfwTasks_(g, who, line, month, f, recId, sf) {
       return s.indexOf(lab) >= 0 && (p.kind === 'leaver' ? /Termination/i : /Tier Change/i).test(s) && gblNamedIn_(p.member, s);
     });
   };
-  var ownerId = gblOwnerId_(g), due = gblSfwDue_();
+  var ownerId = gblOwnerId_(g), due = gblSfwDue_(), go = [];
   plan.forEach(function (p) {
-    if (dup(p)) { out.skipped.push('Already in Salesforce: ' + p.subject); return; }
-    if (out.tasks.length >= GBL_SFW.MAX_TASKS) { out.skipped.push('Not opened, more than ' + GBL_SFW.MAX_TASKS + ' at once: ' + p.subject); return; }
-    var rec = { Subject: p.subject.slice(0, 255), WhatId: p.what || acct, ActivityDate: due, Status: 'Not Started', Priority: p.priority || 'Normal', Description: p.text.slice(0, 31000) }, id = '';
-    if (ownerId) rec.OwnerId = ownerId;
-    try { id = String(tSfSend_('post', '/sobjects/Task', Object.assign({ Task_Type__c: 'Servicing' }, rec)).id || ''); }
-    catch (e) { try { id = String(tSfSend_('post', '/sobjects/Task', rec).id || ''); } catch (e2) { out.errors.push('Not opened: ' + p.subject + ' (' + String(e2 && e2.message ? e2.message : e2).slice(0, 120) + ')'); return; } }
-    out.tasks.push({ id: id, kind: p.kind, subject: p.subject, member: p.member || '' });
-    have.push({ Id: id, Subject: p.subject });
-    gblAppend_(GBL.CHANGES, [{ When: new Date(), Group: g.name, Line: line, Kind: 'task', Member: p.member || '', Detail: p.subject, Effective: month + '-01', Amount: 0, Source: 'bill', By: who.name, Status: 'open', 'SF Task': id, 'SF Id': recId || '', Note: 'opened by the upload, due ' + tDmy_(due) }]);
+    if (dup(p) || go.some(function (q) { return q.subject === p.subject; })) { out.skipped.push('Already in Salesforce: ' + p.subject); return; }
+    if (go.length >= GBL_SFW.MAX_TASKS) { out.skipped.push('Not opened, more than ' + GBL_SFW.MAX_TASKS + ' at once: ' + p.subject); return; }
+    go.push(p);
   });
+  /* every task in one call, and one line each on Group Changes in one write (25 November 2026: until then a task at a time,
+     each with its own Salesforce call and its own sheet write, which is what kept the upload waiting) */
+  var recs = go.map(function (p) {
+    var rec = { Subject: p.subject.slice(0, 255), WhatId: p.what || acct, ActivityDate: due, Status: 'Not Started', Priority: p.priority || 'Normal', Description: p.text.slice(0, 31000) };
+    if (ownerId) rec.OwnerId = ownerId;
+    return rec;
+  });
+  var made = gblSfInsertTasks_(recs), log = [];
+  go.forEach(function (p, i) {
+    var r = made[i] || {};
+    if (!r.id) { out.errors.push('Not opened: ' + p.subject + ' (' + String(r.error || 'Salesforce gave no id').slice(0, 120) + ')'); return; }
+    out.tasks.push({ id: r.id, kind: p.kind, subject: p.subject, member: p.member || '' });
+    log.push({ When: new Date(), Group: g.name, Line: line, Kind: 'task', Member: p.member || '', Detail: p.subject, Effective: month + '-01', Amount: 0, Source: 'bill', By: who.name, Status: 'open', 'SF Task': r.id, 'SF Id': recId || '', Note: 'opened by the upload, due ' + tDmy_(due) });
+  });
+  if (log.length) gblAppend_(GBL.CHANGES, log);
   /* the owner hears once, with the list */
   if (out.tasks.length && g.ownerEmail && String(g.ownerEmail).toLowerCase() !== String(who.email || '').toLowerCase()) {
     var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
@@ -1034,6 +1111,36 @@ function gblSfwTasks_(g, who, line, month, f, recId, sf) {
   return out;
 }
 
+/** Tasks into Salesforce in one composite call ({ id } or { error } for each, in order), as Servicing; a task the org refuses
+ *  with the type goes again without it, as a single insert always did. When the composite call itself is refused, the ones
+ *  not yet made go a task at a time, as before. */
+function gblSfInsertTasks_(recs) {
+  var out = recs.map(function () { return {}; });
+  if (!recs.length) return out;
+  var one = function (rec) {
+    try { return { id: String(tSfSend_('post', '/sobjects/Task', Object.assign({ Task_Type__c: 'Servicing' }, rec)).id || '') }; }
+    catch (e) { try { return { id: String(tSfSend_('post', '/sobjects/Task', rec).id || '') }; } catch (e2) { return { error: String(e2 && e2.message ? e2.message : e2) }; } }
+  };
+  var batch = function (list, typed) {
+    var res = tSfSend_('post', '/composite/sobjects', { allOrNone: false, records: list.map(function (r) { return Object.assign({ attributes: { type: 'Task' } }, typed ? { Task_Type__c: 'Servicing' } : {}, r); }) });
+    if (!res || typeof res.length !== 'number' || res.length !== list.length) throw new Error('Salesforce answered the batch with something else');
+    return res;
+  };
+  try {
+    for (var i = 0; i < recs.length; i += 200) {
+      var part = recs.slice(i, i + 200), res = batch(part, true), again = [];
+      res.forEach(function (r, k) { if (r && r.success && r.id) out[i + k] = { id: String(r.id) }; else again.push(k); });
+      if (again.length) {
+        var res2 = batch(again.map(function (k) { return part[k]; }), false);
+        res2.forEach(function (r, j) {
+          var k = again[j], e = (r && r.errors && r.errors[0]) || {};
+          out[i + k] = r && r.success && r.id ? { id: String(r.id) } : { error: (e.statusCode ? e.statusCode + ': ' : '') + (e.message || 'not opened') };
+        });
+      }
+    }
+  } catch (e) { out = out.map(function (o, k) { return o.id ? o : one(recs[k]); }); }   // never a second copy of a task already made
+  return out;
+}
 /** An action on a stored bill: set the Salesforce amount, mark reconciled, resolve a finding, record a payment, open a
  *  task for a change, or post a note on a billing task. Each Salesforce write is a signed-in person's press, logged. */
 function gblAct_(b) {
@@ -1493,8 +1600,8 @@ var GBL_FORM = { CODE: 'EB0010', VERSION: '2024/3', TO: 'EBCustomercare@myguardi
 /** The group's members on Group Health and Group Life, with everything the form asks for: read from Salesforce in one
  *  query, their dependents from Relationship Groups in a second, kept ten minutes. */
 function gblMembers_(g, fresh) {
-  var key = 'gbl-mem-' + g.key.slice(0, 40), cache = null;
-  try { cache = CacheService.getScriptCache(); if (!fresh) { var c = cache.get(key); if (c) return JSON.parse(c); } } catch (e) {}
+  var key = 'gbl-mem-' + g.key.slice(0, 40);
+  if (!fresh) { var c = gblCacheGet_(key); if (c) return c; }
   var out = { ok: tSfOn_(), members: [], error: '' };
   if (!out.ok) { out.error = 'Salesforce is not linked to this project.'; return out; }
   try {
@@ -1538,7 +1645,7 @@ function gblMembers_(g, fresh) {
         (byContact[gcmId15_(r.Primary_Name__c)] || []).forEach(function (m) { m.deps = m.deps.concat(deps); });
       });
     }
-    try { if (cache) cache.put(key, JSON.stringify(out), GBL_FORM.CACHE_S); } catch (e2) {}
+    gblCachePut_(key, out, GBL_FORM.CACHE_S);
   } catch (e) { out.ok = false; out.error = String(e && e.message ? e.message : e).slice(0, 200); }
   return out;
 }
