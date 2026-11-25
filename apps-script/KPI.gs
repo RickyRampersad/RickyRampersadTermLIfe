@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-25a';
+var SCRIPT_VERSION = '2026-11-25b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -4316,6 +4316,50 @@ function absentDueAt_(sid, day, startM, props) {
   return at == null ? due : Math.max(due, at + ABSENT_GRACE_MIN);
 }
 
+/* SALESFORCE SAYS THEY ARE HERE (25 Nov 2026). Sasha signed in at 7:00 and logged in to Salesforce at 7:09; at
+   7:38 the clock still marked her absent and ran the cover, because the register it read had no sign-in for her.
+   The register is not the only proof of a person at work. Before the clock marks anybody absent, and again before
+   it moves anybody's work, it asks Salesforce: a successful log-in today, a note or a closed task, is presence.
+   The register is then written "in" at that time, so every page and report agrees. Returns "HH:MM" or ''. */
+var _sfHere = {};
+function sfPresentAt_(sid, day) {
+  var k = sid + '|' + day;
+  if (_sfHere.hasOwnProperty(k)) return _sfHere[k];
+  var at = '';
+  try {
+    if (sfkConfigured_()) {
+      var u = (sfkUsers_() || {})[sid], id = sid === 'ricky' ? bmSfId_() : (u && u.id);
+      if (id) {
+        var since = sfkUtcAt_(day, 0), tz = ssTz_(), first = null;
+        var take = function (v) { if (!v) return; var d = new Date(String(v).replace(/\+0000$/, 'Z')); if (!isNaN(d.getTime()) && (!first || d < first)) first = d; };
+        try { sfkQuery_("SELECT LoginTime FROM LoginHistory WHERE UserId = '" + id + "' AND Status = 'Success' AND LoginTime >= " + since + ' ORDER BY LoginTime LIMIT 1')
+          .forEach(function (r) { take(r.LoginTime); }); } catch (e) {}
+        try { sfkNotes_("SELECT CreatedDate FROM FeedItem WHERE CreatedById = '" + id + "' AND CreatedDate >= " + since + ' ORDER BY CreatedDate LIMIT 1')
+          .forEach(function (r) { take(r.CreatedDate); }); } catch (e) {}
+        try { sfkQuery_("SELECT CompletedDateTime FROM Task WHERE OwnerId = '" + id + "' AND IsClosed = true AND CompletedDateTime >= " + since + " AND (NOT Subject LIKE 'Email:%') ORDER BY CompletedDateTime LIMIT 1")
+          .forEach(function (r) { take(r.CompletedDateTime); }); } catch (e) {}
+        if (first) at = Utilities.formatDate(first, tz, 'HH:mm');
+      }
+    }
+  } catch (e) {}
+  return (_sfHere[k] = at);
+}
+/** A desk Salesforce shows at work today: written "in" on the register (never over a sign-in already there). */
+function attFromSalesforce_(sid, day, at) {
+  var sh = attSheet_(), rows = sheetObjects_(sh), now = new Date(), found = attRow_(rows, day, sid);
+  if (found && timeStr_(found.row.FirstSignIn)) return false;
+  var patch = { FirstSignIn: at, LastSeen: at, Status: 'in', MarkedBy: 'tracker', UpdatedAt: now,
+                Reason: 'At work from ' + twelve_(at) + ' (Salesforce)' + (found && String(found.row.Status || '').toLowerCase() === 'absent' ? ': the automatic absence taken off' : '') };
+  if (found) writeRow_(sh, found.at, colMap_(sh), patch);
+  else {
+    var o = Object.assign({ Date: day, StaffId: sid, Name: nameFor_(sid), SignedOut: '' }, patch);
+    sh.appendRow(headerOf_(sh).map(function (h) { return o[h] != null ? o[h] : ''; }));
+  }
+  forgetHr_(ATT);
+  try { CacheService.getScriptCache().remove('att_' + sid + '_' + day); } catch (e) {}
+  return true;
+}
+
 /** Start + 5 and no sign-in (the morning e-mail gone first): absent. Returns the desks marked this run. */
 function autoAbsentTick_(day, mins, present, absent) {
   if (!autoAbsentOn_(day)) return [];
@@ -4328,6 +4372,8 @@ function autoAbsentTick_(day, mins, present, absent) {
     if (due == null || mins < due) return;
     var key = 'autoabs_' + sid + '_' + day;
     if (props.getProperty(key)) return;
+    var here = sfPresentAt_(sid, day);
+    if (here) { try { attFromSalesforce_(sid, day, here); } catch (e) {} present[sid] = here; try { runlog_('absent not marked: ' + sid + ' at work in Salesforce from ' + here); } catch (e) {} return; }
     props.setProperty(key, hhmm_(new Date()));
     try { if (writeAutoAbsent_(sid, day, due - ABSENT_AFTER_MIN)) { absent[sid] = 1; out.push(sid); } } catch (e) {}
   });
@@ -4412,6 +4458,15 @@ function coverTick_(day, mins, present, absent) {
     var first = !props.getProperty(key) && mins >= at;
     var second = !first && !!props.getProperty(key) && !props.getProperty(key2) && mins >= Math.max(COVER.SECOND_AT, at + 15);
     if (!first && !second) return;
+    // The last word before anybody's work moves: the register read afresh, then Salesforce (25 Nov 2026).
+    var row = null; try { forgetHr_(ATT); row = attRow_(hrRows_(ATT, true) || [], day, sid); } catch (e) {}
+    var here = row && timeStr_(row.row.FirstSignIn) ? timeStr_(row.row.FirstSignIn) : (known ? '' : sfPresentAt_(sid, day));
+    if (here) {
+      if (!(row && timeStr_(row.row.FirstSignIn))) { try { attFromSalesforce_(sid, day, here); } catch (e) {} }
+      delete absent[sid]; present[sid] = here; props.setProperty(key, 'present ' + here); props.setProperty(key2, 'present ' + here);
+      out.push(nameFor_(sid) + ' not covered: at work from ' + twelve_(here));
+      return;
+    }
     props.setProperty(first ? key : key2, hhmm_(new Date()));
     try {
       var cv = coverRun_(day, sid, present, absent, first, {});
