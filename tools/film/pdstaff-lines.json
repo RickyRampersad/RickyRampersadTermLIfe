@@ -1,13 +1,31 @@
 {
   "scenes": [
-    {"say": "We're moving our premium reminders to WhatsApp. Friendly, personal, and sent from the branch's own number."},
-    {"say": "Every morning at nine, the premium due report lands. It's the first thing you open."},
-    {"say": "Then comes your check. Filter your agents' clients by band, tick every box on the checklist, and mark whether the agent is active, or has left us."},
-    {"say": "There are five bands. From forty five days overdue, all the way to a policy that lapsed today. Each band has its own message."},
-    {"say": "This is what your client sees. A warm hello from the branch, the last four digits of their policy, and three easy buttons."},
-    {"say": "When they tap, it becomes a ticket with a reference number. It goes to the staff owner, with a target time to answer."},
-    {"say": "At four o'clock, Kamla reviews the board. How many went out, who tapped, what's still open, and what's past its time."},
-    {"say": "Your name is on every tick. If it isn't verified, it doesn't go."},
-    {"say": "This isn't only about premiums. It's about showing every client that their branch is looking out for them."}
+    {
+      "say": "We're moving our premium reminders to WhatsApp. Friendly, personal, and sent from our own branch number."
+    },
+    {
+      "say": "Every morning at nine, the premium due report lands. It's the first thing you open."
+    },
+    {
+      "say": "Then comes your check. Filter your agents' clients by band, check off every box on the list, and mark whether the agent is active, or has left us."
+    },
+    {
+      "say": "There are five bands. From forty five days overdue, all the way to the day a policy lapses. Each band has its own message."
+    },
+    {
+      "say": "This is what your client sees. A warm hello from the branch, the last four digits of their policy, and three easy buttons."
+    },
+    {
+      "say": "When they tap, it becomes a ticket with a reference number. It goes to the staff owner, with a target time to answer."
+    },
+    {
+      "say": "At four o'clock, Kamla reviews the board. How many went out, who tapped, what's still open, and what's past its time."
+    },
+    {
+      "say": "Your name is on every tick. If it isn't verified, it doesn't go."
+    },
+    {
+      "say": "This isn't only about premiums. It's about showing every client that their branch is looking out for them."
+    }
   ]
 }

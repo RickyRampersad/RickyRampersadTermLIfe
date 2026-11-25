@@ -1386,5 +1386,33 @@
   "h": 1920,
   "capsize": 50,
   "capwrap": 26
+ },
+ "pdfb": {
+  "durs": [
+   5.626,
+   6.11,
+   6.23,
+   5.246,
+   8.822
+  ],
+  "dur": 32.0,
+  "vox": "vopdfb",
+  "start": 0,
+  "musicgain": 0.5,
+  "duck": 0.45,
+  "dark": [],
+  "ticks": [],
+  "hits": [],
+  "capmode": "over",
+  "cap": "cap-pdfb",
+  "out": "../../premiumdue/pdfb.mp4",
+  "mix": "pdfb-mix.wav",
+  "music": "bed-pdfb.wav",
+  "sfx": "sfx-pdfb.wav",
+  "ass": "captions-pdfb.ass",
+  "w": 1080,
+  "h": 1920,
+  "capsize": 50,
+  "capwrap": 26
  }
 }
