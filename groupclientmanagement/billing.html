@@ -12,7 +12,7 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="gcm.css?v=2026-10-27b">
 <style>
-/* The Billings door (25 October 2026): one group, one month, eight steps. "make much more simple and interactive, a site
+/* The Billings door (25 October 2026): one group, one month, six steps since 25 November 2026. "make much more simple and interactive, a site
    that will pop and not confuse the weekly query and task update". The weekly letters stay on index.html; nothing of them
    is here. The look is gcm.css; what follows is the door's own. */
 .dhead{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;justify-content:space-between;margin:6px 0 12px}
@@ -22,21 +22,48 @@
 .prog{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-size:13px;color:var(--muted);font-weight:600}
 .prog .track{flex:1;height:8px;border-radius:99px;background:var(--track);overflow:hidden;max-width:420px}
 .prog .fill{height:100%;background:linear-gradient(90deg,var(--primary),#2A78D6);border-radius:99px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
-.dsteps{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;list-style:none;margin:0 0 16px;padding:0;counter-reset:s}
-.dsteps li{min-width:0}
-.dstep{width:100%;height:100%;border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:10px 10px 9px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow);transition:transform .15s,border-color .15s,box-shadow .15s;position:relative;font:inherit;color:var(--ink)}
-.dstep:hover{border-color:var(--primaryLine);transform:translateY(-1px);box-shadow:0 8px 20px -12px rgba(16,24,40,.25)}
-.dstep .n{width:26px;height:26px;border-radius:50%;background:var(--sunken);color:var(--muted);display:grid;place-items:center;font-size:13px;font-weight:600;flex:none}
-.dstep .l{font-size:12.5px;font-weight:600;line-height:1.25;color:var(--ink2)}
-.dstep .b{position:absolute;top:8px;right:8px;font-size:11px;font-weight:700;border-radius:99px;padding:1px 7px;background:var(--sunken);color:var(--muted);min-width:20px;text-align:center}
-.dstep.done{border-color:#BFE3CB;background:#F3FAF5}.dstep.done .n{background:var(--good);color:#fff}
+/* the steps down the side (25 November 2026: "the 6 steps at the side coming down, much more easy"): on a laptop a rail
+   beside the open step; on a phone the steps come down the page and the open step opens under its own row */
+.dwrap{display:grid;grid-template-columns:248px minmax(0,1fr);gap:24px;align-items:start}
+.drail{position:sticky;top:12px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+.drail .prog{flex-wrap:wrap;margin:0 0 10px}.drail .prog .track{flex-basis:100%;order:3}
+.dsteps{display:flex;flex-direction:column;gap:4px;list-style:none;margin:0;padding:0;position:relative}
+.dsteps li{min-width:0;position:relative}
+.dsteps li+li::before{content:"";position:absolute;left:24px;top:-6px;height:10px;width:2px;background:var(--line2);border-radius:2px}
+.dstep{width:100%;border:1px solid transparent;border-radius:11px;background:transparent;padding:9px 10px;text-align:left;cursor:pointer;display:flex;flex-direction:row;align-items:center;gap:10px;transition:background-color .15s,border-color .15s;font:inherit;color:var(--ink);min-height:48px}
+.dstep:hover{background:var(--sunken)}
+.dstep .n{width:28px;height:28px;border-radius:50%;background:var(--sunken);color:var(--muted);display:grid;place-items:center;font-size:13px;font-weight:600;flex:none;border:1px solid var(--line)}
+.dstep .l{font-size:14px;font-weight:600;line-height:1.25;color:var(--ink2);flex:1;min-width:0}
+.dstep .b{flex:none;font-size:11.5px;font-weight:700;border-radius:99px;padding:2px 8px;background:var(--sunken);color:var(--muted);min-width:22px;text-align:center}
+.dstep.done .n{background:var(--good);color:#fff;border-color:var(--good)}
 .dstep.todo .b{background:var(--badBg);color:var(--badText)}.dstep.check .b{background:var(--warnBg);color:var(--warn)}.dstep.done .b{background:var(--goodBg);color:var(--good)}
-.dstep[aria-current="step"]{border-color:var(--primary);background:var(--primarySoft);box-shadow:0 0 0 3px var(--primaryLine)}
-.dstep[aria-current="step"] .n{background:var(--primary);color:#fff}
+.dstep[aria-current="step"]{border-color:var(--primary);background:var(--primarySoft)}
+.dstep[aria-current="step"] .n{background:var(--primary);color:#fff;border-color:var(--primary)}
+.dstep[aria-current="step"] .l{color:var(--ink)}
 @media (prefers-reduced-motion:no-preference){.dstep[aria-current="step"] .n{animation:dpulse 2.4s ease-in-out infinite}}
 @keyframes dpulse{0%,100%{box-shadow:0 0 0 0 rgba(29,91,196,.35)}50%{box-shadow:0 0 0 7px rgba(29,91,196,0)}}
-@media (max-width:900px){.dsteps{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media (max-width:520px){.dsteps{grid-template-columns:repeat(2,minmax(0,1fr))}.dstep .l{font-size:12px}}
+@media (max-width:900px){
+  .dwrap{display:block}
+  .drail{position:static;padding:10px}
+  .dsteps li>.dpanel{margin:10px 0 16px;padding:2px 2px 0;border-top:1px solid var(--line)}
+  .dsteps li>.dpanel .dnav{margin-top:16px}
+}
+/* the details of a line's checks, folded under the questions */
+details.lchk{background:var(--paper);border:1px solid var(--line);border-radius:12px;margin:0 0 10px;box-shadow:var(--shadow)}
+details.lchk>summary{cursor:pointer;padding:12px 14px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font-size:15px}
+details.lchk[open]>summary{border-bottom:1px solid var(--line)}
+details.lchk>*:not(summary){margin-left:14px;margin-right:14px}
+details.lchk>.findings{margin-bottom:12px}
+/* a task from a finding: one short screen */
+.tquick{display:flex;flex-direction:column;gap:10px}
+.tquick .grid3{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,.8fr);gap:10px}
+.tquick .sel{display:flex;flex-direction:column;align-items:stretch;text-align:left;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+.tquick .field,.tquick select,.tquick .sel select,.tquick .sel input{width:100%;max-width:100%;box-sizing:border-box;min-width:0;align-self:stretch}
+.tstep .sel select,.tstep .sel input{width:100%;max-width:100%;box-sizing:border-box}
+.tquick textarea{font-size:max(16px,1rem);line-height:1.45}
+.tquick details.tmore>summary{cursor:pointer;color:var(--primary);font-weight:600;font-size:13.5px}
+.tquick details.tmore[open]{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--sunken)}
+@media (max-width:640px){.tquick .grid3{grid-template-columns:1fr 1fr}.tquick .grid3 .sel:first-child{grid-column:1/-1}}
 .dpanel{animation:din .35s ease-out both}
 @keyframes din{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.dpanel{animation:none}}
@@ -114,8 +141,8 @@
 <dialog class="dlg" id="dlg" aria-labelledby="dlgT"><div class="dh"><h3 id="dlgT">Send</h3><button type="button" id="dlgX">Close</button></div><div class="db" id="dlgB"></div></dialog>
 
 <script src="billread.js?v=2026-10-27"></script>
-<script src="billing-ui.js?v=2026-11-04a"></script>
-<script src="billing-door.js?v=2026-11-04a"></script>
+<script src="billing-ui.js?v=2026-11-25a"></script>
+<script src="billing-door.js?v=2026-11-25a"></script>
 <!-- rrb-views -->
 <script>
 (function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{

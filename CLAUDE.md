@@ -5160,6 +5160,42 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     statement), `billing/door-test.js` (81, Playwright: the staff page's button into the door, every step, the group's
     page in its tabs, a phone) and `billing/page-test.js` (46). The harness (`wow/setup.js`) now serves `.css` as
     `text/css`: until then a stylesheet linked from a page was refused by the browser and the screenshots were bare.
+  - **Six steps down the side, a task from a finding in one screen, and a door that no longer reads Salesforce on every
+    screen** (25 November 2026, uploading a big group's health and life bills on a phone: "the 6 steps at the side coming
+    down, much more easy. I find the delay is long ... it's taking too long to log a task and there's unnecessary
+    information").
+    - **Why it was slow, measured on that group** (about 330 member policies). Its Salesforce read (`gblSf_`) and member
+      list (`gblMembers_`) were each over the 100 KB a cache value holds, so `cache.put` threw, the throw was swallowed, and
+      every screen of the door (the page, the questions, last month's tasks, the people, the statement, the AI read)
+      read Salesforce again, several at once when the door opened. Each page load also read up to 60 days of support@'s
+      whole inbox (`gblInbox_`, up to 2,500 messages a page of 100 at a time) for one group's few e-mails, and opening a
+      task reloaded the whole door after it. Now:
+      - `gblCachePut_` / `gblCacheGet_` keep a value too big to keep whole gzipped, in pieces under one pointer (the
+        `tCachePutBig_` pattern); a piece gone is a miss, never a wrong answer. `gblSf_` and `gblMembers_` use them.
+        **Anything cached whole in this project must stay under 100 KB or go through this pair.**
+      - The inbox is read once for every group and kept 15 minutes (`GBL.INBOX_S`); "Read Salesforce again" reads it
+        afresh, and a failed read is kept 5 minutes so it is not retried on every load.
+      - The upload's tasks go in one composite call (`gblSfInsertTasks_`, Servicing, again without the type for any the
+        org refuses, and a task at a time only for those not made when the batch itself is refused, so never a second
+        copy) and are logged on Group Changes in one write.
+    - **The steps** (`D_STEPS`): Upload · What was found (the questions first, every check under them folded by line) ·
+      Last month's tasks · The members (changes and the people) · The statement · Approve and send. On a laptop a rail
+      down the left beside the open step; on a phone (under 900px) the steps come down the page and the open step opens
+      under its own row (`dPlace`). The old step names still open their step (`D_ALIAS`). A line's checks stay open or
+      shut as the user left them (`DOOR.chk`, recorded on a tap of the heading only: the toggle event also fires when a
+      section is drawn open).
+    - **A task from a finding is one short screen** (`blQuick`, `blTaskPanel(line, fid, preset, member)`): who it is
+      for (the account owner), due, priority, and the note written from the finding's own figures, member by member,
+      with what to do and **no [blank] to fill**; the kind, subject, member and amount fold under "Change the details",
+      and picking a kind by hand goes back to the guided template. A one-person finding takes the branch's own subject
+      ("Group Health Termination – <member> – <group> – effective <date>"). An answer in the questions that opens a task
+      shapes the note (a tier change, or a rate to query). Opened on its own, the panel is the guided one as before.
+    - **The panel closes the moment Open is pressed** (`blTaskSend`): the finding says the task is on its way, only that
+      finding changes when Salesforce answers, and the month is read once quietly behind it; a send that fails opens the
+      panel again with what was typed. A comment on a task shows on its card at once, with no reload.
+    - Paste **GroupBilling.gs** and publish a New version; the pages go live with the merge (`billing-ui.js` and
+      `billing-door.js` are `?v=2026-11-25a`). `tests/test-billing-speed.js` (20 checks; it fails on the code before) and
+      `tests/e2e-billing-door.js` (41, Playwright, a laptop and a phone, the backend mocked on an invented group) cover it.
   - **A month is read back as a month** (27 October 2026, the first bill stored live: a group's October health bill).
     Google Sheets turns "2026-10" written into a cell into the date 1 October, which read back as "2026-10-01" and never
     matched "2026-10" again: the page said nothing was uploaded, opened itself as `m=2026-10-01`, looked in Salesforce for
