@@ -1414,5 +1414,37 @@
   "h": 1920,
   "capsize": 50,
   "capwrap": 26
+ },
+ "pdstaff": {
+  "durs": [
+   8.626,
+   6.854,
+   10.526,
+   10.022,
+   9.302,
+   8.39,
+   8.918,
+   5.678,
+   11.15
+  ],
+  "dur": 79.5,
+  "vox": "vopdstaff",
+  "start": 0,
+  "musicgain": 0.5,
+  "duck": 0.45,
+  "dark": [],
+  "ticks": [],
+  "hits": [],
+  "capmode": "over",
+  "cap": "cap-pdstaff",
+  "out": "../../premiumdue/pdstaff.mp4",
+  "mix": "pdstaff-mix.wav",
+  "music": "bed-pdstaff.wav",
+  "sfx": "sfx-pdstaff.wav",
+  "ass": "captions-pdstaff.ass",
+  "w": 1080,
+  "h": 1920,
+  "capsize": 50,
+  "capwrap": 26
  }
 }
