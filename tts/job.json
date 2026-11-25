@@ -2,15 +2,24 @@
  "voice": "en-US-AndrewMultilingualNeural",
  "rate": "+0%",
  "check": true,
- "voices": {
-  "enrp1b": "en-US-AndrewMultilingualNeural"
- },
- "rates": {
-  "enrp1b": "+0%"
- },
  "films": {
-  "enrp1c": [
-   "Here's how a new member joins your group plan now. There are no paper forms, and nobody fills anything in twice. It all starts with one link."
+  "pdstaff": [
+   "We're moving our premium reminders to WhatsApp. Friendly, personal, and sent from the branch's own number.",
+   "Every morning at nine, the premium due report lands. It's the first thing you open.",
+   "Then comes your check. Filter your agents' clients by band, tick every box on the checklist, and mark whether the agent is active, or has left us.",
+   "There are five bands. From forty five days overdue, all the way to a policy that lapsed today. Each band has its own message.",
+   "This is what your client sees. A warm hello from the branch, the last four digits of their policy, and three easy buttons.",
+   "When they tap, it becomes a ticket with a reference number. It goes to the staff owner, with a target time to answer.",
+   "At four o'clock, Kamla reviews the board. How many went out, who tapped, what's still open, and what's past its time.",
+   "Your name is on every tick. If it isn't verified, it doesn't go.",
+   "This isn't only about premiums. It's about showing every client that their branch is looking out for them."
+  ],
+  "pdfb": [
+   "Hello from Ricky Rampersad Branch. We're now on WhatsApp.",
+   "You may get a short, friendly note about your policy, so nothing slips by.",
+   "Tap a button to tell us you've paid, ask for help, or ask us to call you.",
+   "Prefer not to get these? Just reply stop, and we'll stop.",
+   "Message Help eight six eight on WhatsApp any time. We're here for you."
   ]
  }
 }
