@@ -788,7 +788,9 @@ const CF_FORMS = [['change', 'Change or terminate', 'EB0010'], ['enrol', 'Enrol 
 /* pensions and life plans paid through your payroll (17 November 2026): the employee's own policies on your list bill */
 /* the walkthrough of this page (17 November 2026), in place of the welcome film the backend names: every tab, the
    forms, and pensions and life insurance paid from salary */
-const PAGE_FILM = { href: '/groupmgt/yourpage/', length: '2 min 14 s' };
+/* The walkthrough film was cut on the old tabs (17 Nov). Until it is re-cut on this layout, no button points at it:
+   a film that shows a different page from the one in front of the group confuses more than no film. Set href to bring it back. */
+const PAGE_FILM = { href: '', length: '' };
 const PAY_PLANS = [['personal', 'Personal Pension Plan'], ['ipi', 'Company pension (IPI)'], ['life', 'Life plan through payroll']];
 const CF_EASI = [['change', 'Change the account'], ['enrol', 'Enrol an account'], ['terminate', 'End the arrangement']];
 /* GIO001, Guardian's application form: what the group types, section by section */
@@ -1314,7 +1316,7 @@ function homeHtml(hasBill) {
   h += '<div class="grid2"><section class="pnl" aria-labelledby="careh"><div class="h"><h2 id="careh">Who looks after you</h2></div><div class="pb"><div class="care"><div class="avb" aria-hidden="true">' + esc(ini) + '</div><div>' +
     (D.staff ? '<p><b>' + esc(D.staff) + '</b> and our branch team look after your account.</p>' : '<p>Our branch team looks after your account.</p>') +
     '<p class="muted">' + (D.lastAnswer ? 'You last answered us on ' + esc(D.lastAnswer.at) + (D.lastAnswer.name ? ' (' + esc(D.lastAnswer.name) + ')' : '') + '. ' : '') + (D.nextLetter ? 'Your next letter comes ' + esc(D.nextLetter) + '.' : '') + '</p>' +
-    '<div class="acts"><a class="btn wa s2" href="' + WA + '" target="_blank" rel="noopener">' + ico('help') + 'Message us on WhatsApp</a><a class="btn sec s2" href="' + PAGE_FILM.href + '" target="_blank" rel="noopener">How this page works</a></div></div></div></div></section>' +
+    '<div class="acts"><a class="btn wa s2" href="' + WA + '" target="_blank" rel="noopener">' + ico('help') + 'Message us on WhatsApp</a>' + (PAGE_FILM.href ? '<a class="btn sec s2" href="' + PAGE_FILM.href + '" target="_blank" rel="noopener">How this page works</a>' : '') + '</div></div></div></div></section>' +
     yearHtml() + '</div>';
   return h;
 }
@@ -1402,7 +1404,7 @@ function helpHtml() {
   return pageHead('Help &amp; contact', 'We are here. Pick whichever is easiest for you.') + '<div class="hgrid">' +
     '<section class="pnl hcard"><div class="pb"><span class="wad">' + WA_ICON + '</span><h2>HELP 868 on WhatsApp</h2><p>Message us any time: a question about your bill, an employee, a form or this page. A person at our branch answers' + (C.first ? ', and ' + esc(C.first) + ' sees it too' : '') + '.</p><a class="btn wa" href="' + WA + '" target="_blank" rel="noopener">Open WhatsApp</a></div></section>' +
     '<section class="pnl hcard"><div class="pb"><span class="avb" aria-hidden="true">' + esc(ini) + '</span><h2>' + (C.who ? esc(C.who) : 'Our branch team') + '</h2><p>' + (C.who ? 'Looks after your account: your bills, your items and your people’s applications.' : 'Looks after your bills, your items and your people’s applications.') + '</p><a class="btn sec" href="mailto:rickyrampersadsalessupport@myguardiangroup.com">E-mail our team</a></div></section>' +
-    '<section class="pnl hcard"><div class="pb"><span class="avb play" aria-hidden="true">▶</span><h2>How this page works</h2><p>A short film of every part of this page, ' + esc(PAGE_FILM.length) + '.</p><a class="btn sec" href="' + PAGE_FILM.href + '" target="_blank" rel="noopener">Watch the film</a></div></section>' +
+    (PAGE_FILM.href ? '<section class="pnl hcard"><div class="pb"><span class="avb play" aria-hidden="true">▶</span><h2>How this page works</h2><p>A short film of every part of this page, ' + esc(PAGE_FILM.length) + '.</p><a class="btn sec" href="' + PAGE_FILM.href + '" target="_blank" rel="noopener">Watch the film</a></div></section>' : '') +
     '</div>';
 }
 function render() {

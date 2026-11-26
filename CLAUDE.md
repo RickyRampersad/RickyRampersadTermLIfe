@@ -4529,7 +4529,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   - Where each link opens: no address and `from=welcome` on Home, `from=letter` and `from=reminder` on Your items,
     `tab=billing` on Billing, `form=` on Join & leave.
   - `tests/e2e-group-portal.js` covers it (108 checks: phone, both tablets, laptop, every e-mail link).
-  - The walkthrough film (`/groupmgt/yourpage/`) shows the old tabs until it is re-cut.
+  - The walkthrough film (`/groupmgt/yourpage/`) shows the old tabs until it is re-cut, so nothing points at it: the page's "How this page works" button and help card are hidden while `PAGE_FILM.href` is empty, and the staff page's copy-a-link panel leaves it out. Set the href and put the link back when the film is re-cut. The welcome film (`welcome.html`), `/groupmgt/client/`, `/healthenrollment/`, `/terminations/` and the training manual's `group-view.mp4` were also filmed on the old page.
 - **Every account on the team dashboard, and send or resend from the page** (14 October 2026: "the team dashboard so
   staff can view all the accounts and owners and they can also have the ability to resend or send … this has to pop
   and be a wow experience for the staff, client", then "a much more professional look, filters and scaling and colors
