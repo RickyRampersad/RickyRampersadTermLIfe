@@ -5051,7 +5051,9 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       nothing), `gblBillReportNow`.
     - **A browser can tell which version is live**: `?action=gcm.ping` carries `bills` (the next billing day, the report,
       live or test, the Drive folder linked). A GroupBilling.gs older than the 26th answers no `report`; with no
-      GroupBilling.gs at all, `bills` is 0.
+      GroupBilling.gs at all, `bills` is 0. Since 26 November 2026 it also answers `bills.build` (`GBL_BUILD` in
+      GroupBilling.gs, through GroupClients.gs's ping): move it with every change worth pasting. A paste of one file
+      without the other answers `build` empty or missing, which says which file is old.
     - **Approve** (`gblApprove_`, act `approve`): a reconciled line (fixes closed, or the branch forces), the group with
       a contact we may write to. The PDFs read in the session travel with the approval and wait in the Drive folder's
       "Bills to send" (`gblKeepQueued_`, under `GCM_FORMS_FOLDER`), named by month, group and line; the row carries

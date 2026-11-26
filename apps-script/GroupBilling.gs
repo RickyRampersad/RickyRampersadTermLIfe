@@ -2822,6 +2822,9 @@ function gblPostMail_(g, name, role, p, item, text, taskId, owner, opened) {
  *  branch manager gets the report of who has worked each group's bills and what is left (gblMondayReport_, its old name
  *  kept), the staff copied. At 10:30 on the billing day the group day asks each staff member whose group had no bill why,
  *  and opens the KPI task. When the 26th is a Monday the bills and the weekly letters both go at 10:00 that morning. */
+/* Which GroupBilling.gs is live: gcm.ping answers it as bills.build. Move it with every change worth pasting. */
+var GBL_BUILD = '2026-11-26a';
+
 var GBL_DAY = {
   DAY: 26,                      // the bills go on this day (the GCM_BILL_DAY Script property overrides, 1 to 28)
   HOUR: 10,                     // at 10:00, as the Monday letters
@@ -2923,7 +2926,7 @@ function gblDayInfo_(now) {
   var today = gcmYmd_(now), next = gblNextBillDay_(now), c = gblCycle_(now), run = gblNextRunDay_(now), rep = gblReportDayOf_(next);
   var moved = next.slice(8) !== ('0' + gblDayOfMonth_()).slice(-2);
   return { next: next, label: gblDayLabel_(next), date: tDmy_(next), daysTo: gcmDays_(today, next), isDay: c.isDay, dayOfMonth: gblDayOfMonth_(), hour: GBL_DAY.HOUR, drive: !!gblFolderId_(), live: gblLive_(),
-    run: run, runLabel: gblDayLabel_(run), late: run !== next, moved: moved, report: rep, reportLabel: GCM_DAYS[gcmDow_(rep)] + ' ' + tDmy_(rep).replace(/ \d{4}$/, '') + ', ' + GBL_DAY.REPORT_HOUR + ':00', reportHour: GBL_DAY.REPORT_HOUR, payroll: typeof gblPayroll_ === 'function' ? 1 : 0 };
+    run: run, runLabel: gblDayLabel_(run), late: run !== next, moved: moved, report: rep, reportLabel: GCM_DAYS[gcmDow_(rep)] + ' ' + tDmy_(rep).replace(/ \d{4}$/, '') + ', ' + GBL_DAY.REPORT_HOUR + ':00', reportHour: GBL_DAY.REPORT_HOUR, payroll: typeof gblPayroll_ === 'function' ? 1 : 0, build: GBL_BUILD };
 }
 function gblFolderId_() { try { return PropertiesService.getScriptProperties().getProperty(GBL_PDF.FOLDER_PROP) || ''; } catch (e) { return ''; } }
 function gblSubfolder_(name) {

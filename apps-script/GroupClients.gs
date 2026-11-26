@@ -148,7 +148,7 @@ function gcmDoGet_(p) {
                                    hold: (function () { try { var h = gcmHoldState_(); return { all: !!h.all, groups: Object.keys(h.groups).length + h.legacy.length }; } catch (e) { return 0; } })(),
                                    /* the group bills' day and report, so a browser can tell which GroupBilling.gs is live */
                                    bills: (function () { try { if (typeof gblDayInfo_ !== 'function') return 0; var d = gblDayInfo_();
-                                     return { next: d.label, report: d.reportLabel || '', live: !!d.live, drive: !!d.drive }; } catch (e) { return 0; } })(),
+                                     return { next: d.label, report: d.reportLabel || '', live: !!d.live, drive: !!d.drive, build: d.build || '' }; } catch (e) { return 0; } })(),
                                    /* the general insurance renewal desk (GIRenewals.gs) */
                                    renewals: (function () { try { return typeof girPing_ === 'function' ? girPing_() : 0; } catch (e) { return 0; } })() };
       case 'gcm.draft':   return gcmDraft_(p);
